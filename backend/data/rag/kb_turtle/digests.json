@@ -1,0 +1,1146 @@
+{
+  "agent": "TURTLE",
+  "generatedAt": "2026-08-22T14:54:38.525Z",
+  "digests": [
+    {
+      "name": "basquiat_real_story",
+      "agent": "TURTLE",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 2533,
+      "durationSec": 1013,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:37.847Z",
+      "contentHash": "bb1ab0dfb883",
+      "title": "you can say something right now and would inspired me to write a song",
+      "thesis": "well I mean things like Punic Wars I remember that was in one of your oh that was from uh a a guide book on Roman history using inspiration from poetry Anatomy",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Mother · Anatomy · Puerto",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "of 2017 his Untitled painting sold for 110.5 million to Japanese billionaire yaku maawa which at the time was the priciest work ever sold by a us [Music] artist Washington Bridge in",
+              "t": 46,
+              "tsEstimate": true
+            },
+            {
+              "text": "well I mean things like Punic Wars I remember that was in one of your oh that was from uh a a guide book on Roman history using inspiration from poetry Anatomy",
+              "t": 126,
+              "tsEstimate": true
+            },
+            {
+              "text": "old bad's Journey Begins in Brooklyn New York in 1960 born to a Haitian father and Puerto Rican mother he had a multicultural upbringing which heavily influenced his art Basia experienced adversity",
+              "t": 170,
+              "tsEstimate": true
+            },
+            {
+              "text": "which served as poetic and satirical advertising slogans same old tags were different from other tags at the time because there was always a message attached to it a deeper form of",
+              "t": 313,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "well I mean things like Punic Wars I remember that was in one of your oh that was from uh a a guide book on Roman history using inspiration from poetry Anatomy",
+            "t": 126,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Where · Film · City",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "and impact that collectively made in the art World artist Keith Herring had been following the same old graffiti and befriended bosot that year hering recalled I still hadn't met Jam Melle",
+              "t": 416,
+              "tsEstimate": true
+            },
+            {
+              "text": "but did they know that this would eventually lead into a full-on professional relationship later that year bosia began working on O'Brien's independent film downtown 81 the feature film wouldn't actually get",
+              "t": 583,
+              "tsEstimate": true
+            },
+            {
+              "text": "released until the year 2000 almost 20 years later he was homeless at the time of the movie and slept in the production office the film vividly depicts life in Manhattan's downtown",
+              "t": 596,
+              "tsEstimate": true
+            },
+            {
+              "text": "explosive art and music scene between 1980 and 1981 bat's first public exhibition was at the Time Square show in New York in June of 1980 where Jeffrey D was the first",
+              "t": 608,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "released until the year 2000 almost 20 years later he was homeless at the time of the movie and slept in the production office the film vividly depicts life in Manhattan's downtown",
+            "t": 596,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Gallery · Nose · Andy",
+          "t0": 640,
+          "t1": 960,
+          "insights": [
+            {
+              "text": "so in a very short amount of time bosia went from being a homeless relatively unknown artist to becoming an absolute superstar that same year in October of 1982 Bishop Berger would",
+              "t": 772,
+              "tsEstimate": true
+            },
+            {
+              "text": "to work together frequently and created famous works such as Armen Hammer 2 and Untitled General Electric too it made for a timely combination as Warhol in the early 80s was struggling",
+              "t": 834,
+              "tsEstimate": true
+            },
+            {
+              "text": "and the relationship never recovered from there on February 22nd 1987 Andy warhall passed away his heart stopped beating after he had been recovering from gallbladder surgery basad struggled to cope with",
+              "t": 894,
+              "tsEstimate": true
+            },
+            {
+              "text": "12th 1988 from a heroin overdose he was found unresponsive in his home by his girlfriend Kelly imman the greatest black contemporary artist of his generation was Gone Too Soon at the",
+              "t": 929,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and the relationship never recovered from there on February 22nd 1987 Andy warhall passed away his heart stopped beating after he had been recovering from gallbladder surgery basad struggled to cope with",
+            "t": 894,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Only · National · Recognition",
+          "t0": 960,
+          "t1": 1013,
+          "insights": [
+            {
+              "text": "but the fact is that he has created enough work to Intrigue generations to come only now will people begin to understand the magnitude of his contribution bosia left the world with",
+              "t": 963,
+              "tsEstimate": true
+            },
+            {
+              "text": "over a thousand paintings and drawings after his death the New York Times indicated that bosia was the most famous of only a small number of young black artists who have achieved",
+              "t": 976,
+              "tsEstimate": true
+            },
+            {
+              "text": "National recognition his stamp on pop culture is unparalleled from references by musicians to his influence and fashion Basia was able to leave his mark in the world contributing the best way",
+              "t": 989,
+              "tsEstimate": true
+            },
+            {
+              "text": "he knew how from rebellious Street kid to a legend in the art World a leader in the neoexpressionism movement Jean Michelle's work will continue to reverberate Through Time",
+              "t": 1002,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "National recognition his stamp on pop culture is unparalleled from references by musicians to his influence and fashion Basia was able to leave his mark in the world contributing the best way",
+            "t": 989,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "and the relationship never recovered from there on February 22nd 1987 Andy warhall passed away his heart stopped beating after he had been recovering from gallbladder surgery basad struggled to cope with",
+        "well I mean things like Punic Wars I remember that was in one of your oh that was from uh a a guide book on Roman history using inspiration from poetry Anatomy",
+        "which served as poetic and satirical advertising slogans same old tags were different from other tags at the time because there was always a message attached to it a deeper form of",
+        "National recognition his stamp on pop culture is unparalleled from references by musicians to his influence and fashion Basia was able to leave his mark in the world contributing the best way",
+        "but the main reason for him leaving was because despite his several warnings she sold multiple paintings of his that that to him were finished Bishop Burger would"
+      ],
+      "quotes": [
+        {
+          "text": "well I mean things like Punic Wars I remember that was in one of your oh that was from uh a a guide book on Roman history using inspiration from poetry Anatomy",
+          "t": 126,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "released until the year 2000 almost 20 years later he was homeless at the time of the movie and slept in the production office the film vividly depicts life in Manhattan's downtown",
+          "t": 596,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and the relationship never recovered from there on February 22nd 1987 Andy warhall passed away his heart stopped beating after he had been recovering from gallbladder surgery basad struggled to cope with",
+          "t": 894,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "National recognition his stamp on pop culture is unparalleled from references by musicians to his influence and fashion Basia was able to leave his mark in the world contributing the best way",
+          "t": 989,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about he?",
+        "What does the source teach about his?",
+        "What does the source teach about him?",
+        "What does the source teach about same?",
+        "How does basquiat real story apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410477878_8ggp4a"
+    },
+    {
+      "name": "kanye_7_principles",
+      "agent": "TURTLE",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 1301,
+      "durationSec": 520,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:37.953Z",
+      "contentHash": "8ef8c050e021",
+      "title": "um so for establishing purposes would you please introduce yourself what's up I'm Kanye",
+      "thesis": "and this combination is uh you know it's how people Define their textures and who they are I've grown for once let's go ah he doesn't stop my father asked me that",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Couldn · Everybody · Stand",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "and this combination is uh you know it's how people Define their textures and who they are I've grown for once let's go ah he doesn't stop my father asked me that",
+              "t": 46,
+              "tsEstimate": true
+            },
+            {
+              "text": "breathe creativity stuff in the city Tantrums based off the way we was branded it I feel like everything that anybody ever said in life would be a disadvantage to me imma",
+              "t": 119,
+              "tsEstimate": true
+            },
+            {
+              "text": "because of where my heart is because I won't confide to what people say a lot of stuff I feel like 90 10 of life is what happens to you 90 is",
+              "t": 206,
+              "tsEstimate": true
+            },
+            {
+              "text": "and compare that to Jesus walks All Falls Down stand up Overnight Celebrity hold on I'm not feeling I'm gonna name everything nominated slow jams but if I could play you that",
+              "t": 231,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and compare that to Jesus walks All Falls Down stand up Overnight Celebrity hold on I'm not feeling I'm gonna name everything nominated slow jams but if I could play you that",
+            "t": 231,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Never · Day · Focus",
+          "t0": 320,
+          "t1": 520,
+          "insights": [
+            {
+              "text": "and get the [&nbsp;__&nbsp;] knocking you know for the episode right now and you're gonna go crazy I'm gonna tell you something this young man does y'all they get up every morning",
+              "t": 348,
+              "tsEstimate": true
+            },
+            {
+              "text": "okay go to the YMCA they play basketball lift weights Focus get the energy out get the chi up and then he goes to the studio and he stays there from four",
+              "t": 383,
+              "tsEstimate": true
+            },
+            {
+              "text": "and do it again the next day the way everything happened though was like Focus energy yo and actually I never seen that from a laughable you know people can write right",
+              "t": 405,
+              "tsEstimate": true
+            },
+            {
+              "text": "it's it's the best respect that we can pay to like great artists that have inspired us so much is to never [&nbsp;__&nbsp;] never sell out we gotta fight you know you",
+              "t": 501,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and do it again the next day the way everything happened though was like Focus energy yo and actually I never seen that from a laughable you know people can write right",
+            "t": 405,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "and do it again the next day the way everything happened though was like Focus energy yo and actually I never seen that from a laughable you know people can write right",
+        "it's it's the best respect that we can pay to like great artists that have inspired us so much is to never [&nbsp;__&nbsp;] never sell out we gotta fight you know you",
+        "but one thing I could do is go to the studio and turn it up loud and that's the reason why a lot of the music on there are you know they",
+        "feel like maybe a lot of the rules of hip-hop like a lot of your aggression and the negativity that people have towards people maybe I'm not hip-hop because of that",
+        "and I'm not trying to do it the best way that I know how what what little information I get all these people that you know fought so hard you know"
+      ],
+      "quotes": [
+        {
+          "text": "and compare that to Jesus walks All Falls Down stand up Overnight Celebrity hold on I'm not feeling I'm gonna name everything nominated slow jams but if I could play you that",
+          "t": 231,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and do it again the next day the way everything happened though was like Focus energy yo and actually I never seen that from a laughable you know people can write right",
+          "t": 405,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about like?",
+        "What does the source teach about know?",
+        "What does the source teach about people?",
+        "What does the source teach about me?",
+        "How does kanye 7 principles apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410477989_585sfi"
+    },
+    {
+      "name": "kanye_creative_process",
+      "agent": "TURTLE",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 977,
+      "durationSec": 391,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:38.044Z",
+      "contentHash": "965352bcac80",
+      "title": "I'll be working on home designs and looking at references from 3,000 years ago",
+      "thesis": "a manager I used to work with a really rude email about how every time he wore this wool jacket with leather sleeves he set culture back by 10 years so",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Never · Looking · 000",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "wear a garment of cloth made of two kinds of material and I tell the my apparel team that the clothes that were used in like a single material I remember sending",
+              "t": 45,
+              "tsEstimate": true
+            },
+            {
+              "text": "a manager I used to work with a really rude email about how every time he wore this wool jacket with leather sleeves he set culture back by 10 years so",
+              "t": 58,
+              "tsEstimate": true
+            },
+            {
+              "text": "and the shapes and the color palettes and the general mood of the film had always been a big inspiration for easy",
+              "t": 109,
+              "tsEstimate": true
+            },
+            {
+              "text": "let's say we're looking at 2,000 shoes how many do you think are prototypes that will never be available outside of the circle I'm not a numbers guy okay",
+              "t": 222,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "let's say we're looking at 2,000 shoes how many do you think are prototypes that will never be available outside of the circle I'm not a numbers guy okay",
+            "t": 222,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Flows · Picasso · Warhol",
+          "t0": 320,
+          "t1": 390,
+          "insights": [
+            {
+              "text": "and this is how connected we are as as human beings all of them have a spirit they're all of the family there's not one bad shoe any of these shoes that",
+              "t": 336,
+              "tsEstimate": true
+            },
+            {
+              "text": "even didn't make it 20 years from now you'll look up and that she would be you know worse to the numbers guys you know you know what's that what you know",
+              "t": 348,
+              "tsEstimate": true
+            },
+            {
+              "text": "what's a Picasso sketch work a Warhol sketch look from this put yourself in the center just walk right here you can step on some of these come to the middle don't",
+              "t": 361,
+              "tsEstimate": true
+            },
+            {
+              "text": "worry about stepping on them I know the maker how do you feel still patient and blessed or any of them talking to you right",
+              "t": 374,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "what's a Picasso sketch work a Warhol sketch look from this put yourself in the center just walk right here you can step on some of these come to the middle don't",
+            "t": 361,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "let's say we're looking at 2,000 shoes how many do you think are prototypes that will never be available outside of the circle I'm not a numbers guy okay",
+        "and the shapes and the color palettes and the general mood of the film had always been a big inspiration for easy",
+        "wear a garment of cloth made of two kinds of material and I tell the my apparel team that the clothes that were used in like a single material I remember sending",
+        "look at these ideas all together the proto's the the versions that you've seen in actuality and the versions that never quite made it to be able to",
+        "and I remember the guy said I couldn't even touch the car and I was obsessed with this car as a child you know is there any shoe that that Countach is"
+      ],
+      "quotes": [
+        {
+          "text": "let's say we're looking at 2,000 shoes how many do you think are prototypes that will never be available outside of the circle I'm not a numbers guy okay",
+          "t": 222,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "what's a Picasso sketch work a Warhol sketch look from this put yourself in the center just walk right here you can step on some of these come to the middle don't",
+          "t": 361,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about know?",
+        "What does the source teach about like?",
+        "What does the source teach about shoes?",
+        "What does the source teach about love?",
+        "How does kanye creative process apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410478082_p2yomd"
+    },
+    {
+      "name": "kanye_genius_creative",
+      "agent": "TURTLE",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 1824,
+      "durationSec": 730,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:38.154Z",
+      "contentHash": "61803587e6f8",
+      "title": "from I'mma let you finish to Trump to running for president Kanye West is",
+      "thesis": "and even physical problems fear comes in many forms from letting your parents down to not making enough money to falling behind your friends fear makes us feel like we're constantly competing",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Us · Then · Control",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "from I'mma let you finish to Trump to running for president Kanye West is one of the most misunderstood artists of Our Generation to some he may come off as crazy",
+              "t": 0,
+              "tsEstimate": true
+            },
+            {
+              "text": "and even physical problems fear comes in many forms from letting your parents down to not making enough money to falling behind your friends fear makes us feel like we're constantly competing",
+              "t": 207,
+              "tsEstimate": true
+            },
+            {
+              "text": "with each other I don't believe in the concept of an enemy we have been conditioned to always being competition stop looking for something to beat",
+              "t": 220,
+              "tsEstimate": true
+            },
+            {
+              "text": "and enjoy your own imagination it's better than any movie but that's somewhat of a new distraction we're facing one of the oldest distractions that we still face today is impressing others",
+              "t": 307,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and even physical problems fear comes in many forms from letting your parents down to not making enough money to falling behind your friends fear makes us feel like we're constantly competing",
+            "t": 207,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Trends · Think · True",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "and to be in the club in the freezing Cod at 3:00 a.m. the places they go to pick up a girl if you can focus that energy into something valuable put",
+              "t": 343,
+              "tsEstimate": true
+            },
+            {
+              "text": "because when you're held back back from your ideas and being the real you you will never reach your full potential you'll lose focus and start creating something that sounds manufactured",
+              "t": 448,
+              "tsEstimate": true
+            },
+            {
+              "text": "and they aren't saying how they feel anymore they're not expressing themselves they're just chasing trends for approval but as Kanye says trend is always late Kanye hardly ever chased Trends he",
+              "t": 495,
+              "tsEstimate": true
+            },
+            {
+              "text": "front of everyone as long as his ideas help the next person let's be less concerned with ownership ideas it is important that our ideas",
+              "t": 613,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "because when you're held back back from your ideas and being the real you you will never reach your full potential you'll lose focus and start creating something that sounds manufactured",
+            "t": 448,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Take · Different · Update",
+          "t0": 640,
+          "t1": 729,
+          "insights": [
+            {
+              "text": "and update them at your will all great artists take and update this is one of the most important concepts of his creative process While most artists are too concerned with being",
+              "t": 652,
+              "tsEstimate": true
+            },
+            {
+              "text": "original Kanye doesn't care Kanye will take ideas from others and create something new new and different Pablo Picasso said it best good artist copy great artist steal as an artist it's",
+              "t": 665,
+              "tsEstimate": true
+            },
+            {
+              "text": "magical about it it's about confidence love authenticity discipline and courage Kanye is no different than any of us he just listens to his gut",
+              "t": 712,
+              "tsEstimate": true
+            },
+            {
+              "text": "and goes for it I hope this video inspires you to pursue what you love thank you for watching",
+              "t": 722,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and update them at your will all great artists take and update this is one of the most important concepts of his creative process While most artists are too concerned with being",
+            "t": 652,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "because when you're held back back from your ideas and being the real you you will never reach your full potential you'll lose focus and start creating something that sounds manufactured",
+        "and they aren't saying how they feel anymore they're not expressing themselves they're just chasing trends for approval but as Kanye says trend is always late Kanye hardly ever chased Trends he",
+        "with each other I don't believe in the concept of an enemy we have been conditioned to always being competition stop looking for something to beat",
+        "front of everyone as long as his ideas help the next person let's be less concerned with ownership ideas it is important that our ideas",
+        "and some people are going to think you're crazy for doing so they don't want you to step out of line they want you to stay right there and follow the rules"
+      ],
+      "quotes": [
+        {
+          "text": "and even physical problems fear comes in many forms from letting your parents down to not making enough money to falling behind your friends fear makes us feel like we're constantly competing",
+          "t": 207,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "because when you're held back back from your ideas and being the real you you will never reach your full potential you'll lose focus and start creating something that sounds manufactured",
+          "t": 448,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and update them at your will all great artists take and update this is one of the most important concepts of his creative process While most artists are too concerned with being",
+          "t": 652,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about kanye?",
+        "What does the source teach about people?",
+        "What does the source teach about re?",
+        "What does the source teach about he?",
+        "How does kanye genius creative apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410478195_e52xxh"
+    },
+    {
+      "name": "picasso_cubism",
+      "agent": "TURTLE",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 2583,
+      "durationSec": 1033,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:38.269Z",
+      "contentHash": "ecb3f83bf5ad",
+      "title": "it's an expression a reflection of the world as we see it or sometimes",
+      "thesis": "yes that was his full name he was born on October 25th 1881 in Malaga Spain Picasso's childhood was anything but ordinary from a young age it was clear that Pablo wasn't",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Father · Man · Took",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "yes that was his full name he was born on October 25th 1881 in Malaga Spain Picasso's childhood was anything but ordinary from a young age it was clear that Pablo wasn't",
+              "t": 58,
+              "tsEstimate": true
+            },
+            {
+              "text": "family moved to Laruna where his younger sister kcha fell seriously ill her death at the age of seven profoundly affected Pablo causing him to withdraw",
+              "t": 119,
+              "tsEstimate": true
+            },
+            {
+              "text": "Paris in 1901 Picasso was living in near poverty struggling to sell his art during this period his friend Carlos casimus took his own life after a failed romantic relationship the shock",
+              "t": 200,
+              "tsEstimate": true
+            },
+            {
+              "text": "connected with the viewer's soul during the blue period Picasso lived in in Mont martra Paris an area known for its vibrant Bohemian atmosphere he rented a small Studio that lacked Heating",
+              "t": 276,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "Paris in 1901 Picasso was living in near poverty struggling to sell his art during this period his friend Carlos casimus took his own life after a failed romantic relationship the shock",
+            "t": 200,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Always · Rose · Influence",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "town Always On The Fringe of society and always putting on a performance during this period Picasso's love for classical art began to surface again while he still painted in his distinctive",
+              "t": 377,
+              "tsEstimate": true
+            },
+            {
+              "text": "but as always with Picasso the rose period was just a stepping stone his mind was constantly moving forward searching for something new something unseen something that would soon shake the very",
+              "t": 423,
+              "tsEstimate": true
+            },
+            {
+              "text": "and fellow artist George Brock revolutionized art with a style that had never been seen before cubism cubism was an entirely new way of looking at the world instead of portraying subjects",
+              "t": 446,
+              "tsEstimate": true
+            },
+            {
+              "text": "be willing to destroy what came before this philosophy permeated every aspect of his work whether it was cubism surrealism or classical art Picasso always sought to dismantle the traditional forms in",
+              "t": 621,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "be willing to destroy what came before this philosophy permeated every aspect of his work whether it was cubism surrealism or classical art Picasso always sought to dismantle the traditional forms in",
+            "t": 621,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "War · History · Spain",
+          "t0": 640,
+          "t1": 960,
+          "insights": [
+            {
+              "text": "war the chaotic composition features distorted figures crying women and slain animals all tangled in a scene of chaos and Devastation the mural sized painting is a raw depiction of the trauma",
+              "t": 692,
+              "tsEstimate": true
+            },
+            {
+              "text": "and his dictatorship in Spain despite receiving multiple invitations to return to his homeland Picasso refused to do so until Spain was was liberated from Franco's rule his opposition to Fascism was",
+              "t": 728,
+              "tsEstimate": true
+            },
+            {
+              "text": "Decades of his life he remained as prolific as ever he continued to create often working on multiple paintings sculptures and prints at the same time his passion for art never faded",
+              "t": 766,
+              "tsEstimate": true
+            },
+            {
+              "text": "and innovating until the very end on April 8th 1973 at the age of 91 Pablo Picasso passed away in muan France his death marked the end of an era",
+              "t": 859,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and his dictatorship in Spain despite receiving multiple invitations to return to his homeland Picasso refused to do so until Spain was was liberated from Franco's rule his opposition to Fascism was",
+            "t": 728,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Challenge · Experience · Itself",
+          "t0": 960,
+          "t1": 1033,
+          "insights": [
+            {
+              "text": "Norms of his time to dismantle reality and to reassemble it in a way that forced the world to look at itself differently from the cubis movement to the surrealist experiment from",
+              "t": 977,
+              "tsEstimate": true
+            },
+            {
+              "text": "his depictions of love to the horrors of War Picasso's work covers the entire spectrum of human emotion and experience he taught us that art is about exploring about going beyond what",
+              "t": 990,
+              "tsEstimate": true
+            },
+            {
+              "text": "we know to discover What Lies Beneath Picasso's Legacy is not just a body of work it's a challenge a challenge to artists to thinkers to dreamers to",
+              "t": 1002,
+              "tsEstimate": true
+            },
+            {
+              "text": "and Legacy of Pablo p Caso be sure to subscribe for more deep dives into the world's greatest artists and their enduring impact on culture",
+              "t": 1023,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "his depictions of love to the horrors of War Picasso's work covers the entire spectrum of human emotion and experience he taught us that art is about exploring about going beyond what",
+            "t": 990,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "be willing to destroy what came before this philosophy permeated every aspect of his work whether it was cubism surrealism or classical art Picasso always sought to dismantle the traditional forms in",
+        "town Always On The Fringe of society and always putting on a performance during this period Picasso's love for classical art began to surface again while he still painted in his distinctive",
+        "and his dictatorship in Spain despite receiving multiple invitations to return to his homeland Picasso refused to do so until Spain was was liberated from Franco's rule his opposition to Fascism was",
+        "and fellow artist George Brock revolutionized art with a style that had never been seen before cubism cubism was an entirely new way of looking at the world instead of portraying subjects",
+        "but as always with Picasso the rose period was just a stepping stone his mind was constantly moving forward searching for something new something unseen something that would soon shake the very"
+      ],
+      "quotes": [
+        {
+          "text": "Paris in 1901 Picasso was living in near poverty struggling to sell his art during this period his friend Carlos casimus took his own life after a failed romantic relationship the shock",
+          "t": 200,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "be willing to destroy what came before this philosophy permeated every aspect of his work whether it was cubism surrealism or classical art Picasso always sought to dismantle the traditional forms in",
+          "t": 621,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and his dictatorship in Spain despite receiving multiple invitations to return to his homeland Picasso refused to do so until Spain was was liberated from Franco's rule his opposition to Fascism was",
+          "t": 728,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "his depictions of love to the horrors of War Picasso's work covers the entire spectrum of human emotion and experience he taught us that art is about exploring about going beyond what",
+          "t": 990,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about his?",
+        "What does the source teach about picasso?",
+        "What does the source teach about art?",
+        "What does the source teach about he?",
+        "How does picasso cubism apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410478307_0ajbyv"
+    },
+    {
+      "name": "picasso_untold_story",
+      "agent": "TURTLE",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 6869,
+      "durationSec": 2748,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:38.412Z",
+      "contentHash": "db2d30981055",
+      "title": "He's a very special figure, a genius unequivocally. [music] &gt;&gt; When we sat in",
+      "thesis": "&gt;&gt; Just off 5th Avenue, on a site long occupied by the old-fashioned town dwellings of the Rockefeller family, stands the spanking new home of a nationally important institution, the New York Museum of Modern Art.",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Young · Pepe · Fine",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "&gt;&gt; [music] &gt;&gt; Pablo Picasso was born on the 25th [music] of October to father Don Jose Ruiz Blasco, nicknamed Pepe, and his mother [music] Maria Picasso y Lopez.",
+              "t": 52,
+              "tsEstimate": true
+            },
+            {
+              "text": "He began by drawing animals such as donkeys [music] and dogs, completing the images with a single line, beginning at the head and ending at the tail.",
+              "t": 101,
+              "tsEstimate": true
+            },
+            {
+              "text": "In 1892, Picasso [music] began studying at the School of Fine Arts in La Coruña, where his father Don José taught.",
+              "t": 155,
+              "tsEstimate": true
+            },
+            {
+              "text": "In 1899, Picasso attended [music] a cafe named Els Quatre Gats to meet a circle of avant-garde artists.",
+              "t": 285,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "In 1892, Picasso [music] began studying at the School of Fine Arts in La Coruña, where his father Don José taught.",
+            "t": 155,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Carles · Guitarist · Blue",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "The two settled in a vacant studio whilst attending exhibitions such as the Universal, which raked in over 32 million visitors, all pining to see [music] the next influx of creative talent.",
+              "t": 325,
+              "tsEstimate": true
+            },
+            {
+              "text": "On the 17th of February, 1901, in a Paris cafe, Carles put a gun to his temple and ended his own life in attendance of his friends.",
+              "t": 383,
+              "tsEstimate": true
+            },
+            {
+              "text": "The continued use of blue sets a melodramatic tone for the painting conveying a sense of sadness, despair, and isolation reflecting the emotional state of the subject alongside the artist himself during this period of his life.",
+              "t": 510,
+              "tsEstimate": true
+            },
+            {
+              "text": "The old guitarist's world-weary expression and the stark [music] simplicity of the composition invite contemplation of the human condition and the universal themes of suffering, resilience, [music] and the redemptive power of art.",
+              "t": 619,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "The two settled in a vacant studio whilst attending exhibitions such as the Universal, which raked in over 32 million visitors, all pining to see [music] the next influx of creative talent.",
+            "t": 325,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Her · She · Salon",
+          "t0": 640,
+          "t1": 960,
+          "insights": [
+            {
+              "text": "His desire was to expand and fundamentally break the [music] rules of what had been traditionally depicted.",
+              "t": 700,
+              "tsEstimate": true
+            },
+            {
+              "text": "Gertrude sat for hours in a broken arm chair in her home number 27 Rue de Fleurus.",
+              "t": 832,
+              "tsEstimate": true
+            },
+            {
+              "text": "On the 11th of May, 1906, [music] they ventured to Gósol, a small village northwest of Comarca Berguedà in Catalonia.",
+              "t": 849,
+              "tsEstimate": true
+            },
+            {
+              "text": "Its archaic minimalism served as the core inspiration [music] for Gertrude's mask-like face alongside ethnographic motifs [music] inspired by Iberian sculptures Picasso had observed at the Louvre.",
+              "t": 863,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "Gertrude sat for hours in a broken arm chair in her home number 27 Rue de Fleurus.",
+            "t": 832,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Said · Me · Picture",
+          "t0": 960,
+          "t1": 1280,
+          "insights": [
+            {
+              "text": "&gt;&gt; Well, we knew when it was bought that there was something on the &gt;&gt; [music] &gt;&gt; back, but we didn't know how important, how brilliant a picture it was until we removed the backing of the frame and saw that it was picture painted in oil 4 y…",
+              "t": 1029,
+              "tsEstimate": true
+            },
+            {
+              "text": "&gt;&gt; Just off 5th Avenue, on a site long occupied by the old-fashioned town dwellings of the Rockefeller family, stands the spanking new home of a nationally important institution, the New York Museum of Modern Art.",
+              "t": 1072,
+              "tsEstimate": true
+            },
+            {
+              "text": "&gt;&gt; Well, I think we went started initially in in the '50s, '54, something like this, but in 1963, uh &gt;&gt; [music] &gt;&gt; we went as usual during the summer holidays with the children, and so on.",
+              "t": 1112,
+              "tsEstimate": true
+            },
+            {
+              "text": "And he took [music] something out of his white coat, which was a little medallion like this, and with a with a ribbon, he pinned it round Sheila's neck, [music] and said that he much preferred to give presents to women than he did to men.",
+              "t": 1176,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "&gt;&gt; Just off 5th Avenue, on a site long occupied by the old-fashioned town dwellings of the Rockefeller family, stands the spanking new home of a nationally important institution, the New York Museum of Modern Art.",
+            "t": 1072,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 5,
+          "label": "Humor · Jacqueline · Last",
+          "t0": 1280,
+          "t1": 1600,
+          "insights": [
+            {
+              "text": "&gt;&gt; Picasso bought his first painting in 1908, a portrait of a woman made in 1895 by French artist [music] Henri Rousseau.",
+              "t": 1366,
+              "tsEstimate": true
+            },
+            {
+              "text": "Recent art frauds and record-breaking high prices for master works have kept all kinds of art in the world news spotlight.",
+              "t": 1419,
+              "tsEstimate": true
+            },
+            {
+              "text": "In 1909, the two temporarily [music] settled in a Paris studio, and together they visited Horta, a neighborhood in Barcelona.",
+              "t": 1436,
+              "tsEstimate": true
+            },
+            {
+              "text": "It's very much a a paean to uh to Jacqueline, um his last uh and and longest-lasting muse of his life, um who he would marry about 5 years after this picture was painted.",
+              "t": 1530,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "It's very much a a paean to uh to Jacqueline, um his last uh and and longest-lasting muse of his life, um who he would marry about 5 years after this picture was painted.",
+            "t": 1530,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 6,
+          "label": "Company · Influence · Things",
+          "t0": 1600,
+          "t1": 1920,
+          "insights": [
+            {
+              "text": "He continued to develop on Cubism, working alongside Braque [music] on Analytic Cubism to Synthetic, effectively incorporating real-world materials into their artwork [music] to create depth in its messaging.",
+              "t": 1602,
+              "tsEstimate": true
+            },
+            {
+              "text": "His father was a great Anglophile and was known as El Inglés because of his passion for all things English and Picasso told [music] his biographer Roland Penrose that he was on his way to London in 1900 when he [music] stopped off in Paris and and never carri…",
+              "t": 1745,
+              "tsEstimate": true
+            },
+            {
+              "text": "&gt;&gt; There are about a dozen works by Picasso, including the most important, uh a portrait of Serge Lifar executed by Picasso in 1960, estimated [music] at uh 300 to 500,000 francs.",
+              "t": 1787,
+              "tsEstimate": true
+            },
+            {
+              "text": "This collaboration marked an important intersection of visual art, music, and dance, showcasing Picasso's innovative approach to stage design, and his influence on avant-garde performance art.",
+              "t": 1824,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "&gt;&gt; There are about a dozen works by Picasso, including the most important, uh a portrait of Serge Lifar executed by Picasso in 1960, estimated [music] at uh 300 to 500,000 francs.",
+            "t": 1787,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 7,
+          "label": "Looking · Studies · Color",
+          "t0": 1920,
+          "t1": 2240,
+          "insights": [
+            {
+              "text": "He painted it in 1955 &gt;&gt; [music] &gt;&gt; and it is simply the single most important work by Picasso remaining in private hands.",
+              "t": 2140,
+              "tsEstimate": true
+            },
+            {
+              "text": "[music] Matisse dies and Picasso, over a period of 2 months, starts his Herculean project of Les Femmes d'Alger, 80 [music] studies on paper, 14 studies in oil, with and without color, looking on its form and color, looking at changing the persons around the…",
+              "t": 2156,
+              "tsEstimate": true
+            },
+            {
+              "text": "It's estimated at around $140 million, which is which in itself is already the most expensive work of art ever sold at auction.",
+              "t": 2187,
+              "tsEstimate": true
+            },
+            {
+              "text": "When a major work of art by a major artist comes up, There's sufficient global interest and the various economies are still strong enough to mean that they're pushed to to price levels which we haven't seen before.",
+              "t": 2228,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "When a major work of art by a major artist comes up, There's sufficient global interest and the various economies are still strong enough to mean that they're pushed to to price levels which we haven't seen before.",
+            "t": 2228,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 8,
+          "label": "War · Guernica · Spanish",
+          "t0": 2240,
+          "t1": 2560,
+          "insights": [
+            {
+              "text": "Though he was being watched, the artist continued to resist [music] alongside his fellow Parisians, signing partitions against fascism and oppression, and taking part in secret resistance gatherings who were opposed to the Nazi atrocities.",
+              "t": 2361,
+              "tsEstimate": true
+            },
+            {
+              "text": "He never visited Guernica itself, the Basque town obliterated by German bombers in the Spanish Civil War.",
+              "t": 2412,
+              "tsEstimate": true
+            },
+            {
+              "text": "Measuring 3.49 m tall and 7.76 m wide, the painting is rendered in a stark monochromatic palette of black, white, and grays, which enhances [music] its dramatic impact and evokes the feel of newspaper photographs, contemporary accounts of the bombing, and per…",
+              "t": 2440,
+              "tsEstimate": true
+            },
+            {
+              "text": "Initially [music] displayed at the Spanish Pavilion of the 1937 World's Fair in Paris, it became a touring [music] exhibition to raise awareness and funds for Spanish war relief.",
+              "t": 2489,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "He never visited Guernica itself, the Basque town obliterated by German bombers in the Spanish Civil War.",
+            "t": 2412,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 9,
+          "label": "Career · Death · Just",
+          "t0": 2560,
+          "t1": 2747,
+          "insights": [
+            {
+              "text": "This was one of 120 figures he created, [music] most of which featured nude females, with some animals such as owls, bulls, and monkeys, &gt;&gt; [music] [music] &gt;&gt; Pablo Picasso [music] produced around 13,500 paintings in his impressive 78-year career.",
+              "t": 2564,
+              "tsEstimate": true
+            },
+            {
+              "text": "The show of late Picasso at the Tate offers a careful [music] selection from the last 20 years of his life, from 1953 to '73.",
+              "t": 2641,
+              "tsEstimate": true
+            },
+            {
+              "text": "\"If I spit,\" he said, \"they'll take it, frame it, and sell it as great art.\" &gt;&gt; [music] &gt;&gt; Picasso died at the Mas Notre Dame de Vie in Mougins on the 8th of April, 1978.",
+              "t": 2661,
+              "tsEstimate": true
+            },
+            {
+              "text": "He didn't just do paintings, so it's basically always constructions, going into ceramics.",
+              "t": 2688,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "\"If I spit,\" he said, \"they'll take it, frame it, and sell it as great art.\" &gt;&gt; [music] &gt;&gt; Picasso died at the Mas Notre Dame de Vie in Mougins on the 8th of April, 1978.",
+            "t": 2661,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "&gt;&gt; Just off 5th Avenue, on a site long occupied by the old-fashioned town dwellings of the Rockefeller family, stands the spanking new home of a nationally important institution, the New York Museum of Modern Art.",
+        "His father was a great Anglophile and was known as El Inglés because of his passion for all things English and Picasso told [music] his biographer Roland Penrose that he was on his way to London in 1900 when he [music]…",
+        "Though he was being watched, the artist continued to resist [music] alongside his fellow Parisians, signing partitions against fascism and oppression, and taking part in secret resistance gatherings who were opposed to…",
+        "&gt;&gt; Well, we knew when it was bought that there was something on the &gt;&gt; [music] &gt;&gt; back, but we didn't know how important, how brilliant a picture it was until we removed the backing of the frame and sa…",
+        "&gt;&gt; There are about a dozen works by Picasso, including the most important, uh a portrait of Serge Lifar executed by Picasso in 1960, estimated [music] at uh 300 to 500,000 francs."
+      ],
+      "quotes": [
+        {
+          "text": "In 1892, Picasso [music] began studying at the School of Fine Arts in La Coruña, where his father Don José taught.",
+          "t": 155,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "The two settled in a vacant studio whilst attending exhibitions such as the Universal, which raked in over 32 million visitors, all pining to see [music] the next influx of creative talent.",
+          "t": 325,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "Gertrude sat for hours in a broken arm chair in her home number 27 Rue de Fleurus.",
+          "t": 832,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "&gt;&gt; Just off 5th Avenue, on a site long occupied by the old-fashioned town dwellings of the Rockefeller family, stands the spanking new home of a nationally important institution, the New York Museum of Modern Art.",
+          "t": 1072,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "It's very much a a paean to uh to Jacqueline, um his last uh and and longest-lasting muse of his life, um who he would marry about 5 years after this picture was painted.",
+          "t": 1530,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "&gt;&gt; There are about a dozen works by Picasso, including the most important, uh a portrait of Serge Lifar executed by Picasso in 1960, estimated [music] at uh 300 to 500,000 francs.",
+          "t": 1787,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "When a major work of art by a major artist comes up, There's sufficient global interest and the various economies are still strong enough to mean that they're pushed to to price levels which we haven't seen before.",
+          "t": 2228,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "He never visited Guernica itself, the Basque town obliterated by German bombers in the Spanish Civil War.",
+          "t": 2412,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about gt?",
+        "What does the source teach about music?",
+        "What does the source teach about his?",
+        "What does the source teach about picasso?",
+        "How does picasso untold story apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410478461_jpjk55"
+    }
+  ]
+}

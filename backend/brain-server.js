@@ -22,6 +22,7 @@ const express = require('express');
 
 const brainIndex = require('./brain-index');
 const ragIndex = require('./rag-index');
+const knowledge = require('./lib/knowledge');
 
 const BRAIN_DIR = process.env.SHADDAI_BRAIN_DIR ||
   path.join('C:', 'Users', 'Brittany', 'Documents', 'SHADDAI-SYSTEM', 'rag');
@@ -120,10 +121,37 @@ function loadRagStats() {
 // Search one agent's knowledge: prefer the full corpus adapter (brain-index),
 // fall back to the populated per-agent RAG store (backend/data/rag/kb_*) — the
 // store that /api/mcp/status reports live on Render. Never dead-ends the council.
+// v2: carries timestamps + doc kind through every result shape. Corpus hits
+// (brain-index predates timestamps) are enriched from the per-agent rag store.
+function normTitle(t) { return String(t || '').toLowerCase().replace(/^(digest_|mastery_)/, '').replace(/\.txt$/, ''); }
 function searchChunks2(agent, q, k, opts) {
+  // metadata map for timestamp/kind enrichment (built once per call)
+  let docMeta = null;
+  const metaFor = title => {
+    if (!docMeta) {
+      docMeta = new Map();
+      try {
+        (ragIndex.listUserDocs('kb_' + agent.toLowerCase()) || []).forEach(d => docMeta.set(normTitle(d.name), d));
+      } catch (_) {}
+    }
+    return docMeta.get(normTitle(title)) || null;
+  };
   try {
     const hits = brainIndex.searchChunks(kb(agent), q, k, opts);
-    if (hits && hits.length) return hits;
+    if (hits && hits.length) return hits.map(h => {
+      const isDigest = /^DIGEST_|^MASTERY_/i.test(h.title || '');
+      const meta = metaFor(h.title);
+      const videoId = meta && meta.videoId;
+      const t0 = h.t0 != null ? h.t0 : (meta && meta.t0) || 0;
+      const t1 = h.t1 != null ? h.t1 : (meta && meta.t1) || ((meta && meta.durationSec) || 0);
+      return {
+        ...h,
+        kind: h.kind || (isDigest ? 'digest' : 'transcript'),
+        timeLabel: h.timeLabel || (h.t0 != null || meta ? ragIndex._internal.fmtTime(t0) + '–' + ragIndex._internal.fmtTime(t1) : undefined),
+        tsEstimate: h.tsEstimate != null ? h.tsEstimate : !!(meta && meta.tsMode === 'estimate'),
+        deepLink: h.deepLink || (videoId && h.t0 != null ? ragIndex._internal.deepLink(videoId, h.t0) : null),
+      };
+    });
   } catch (_) {}
   try {
     return ragIndex.searchUser(kb(agent), q, Math.max(1, Math.min(k, 12))).map(h => ({
@@ -134,8 +162,12 @@ function searchChunks2(agent, q, k, opts) {
       system: '',
       topic: '',
       channel: '',
-      video_id: h.docId || '',
+      video_id: h.videoIdOf || h.docId || '',
       words: 0,
+      kind: /^DIGEST_|^MASTERY_/.test(h.docName || '') ? 'digest' : 'transcript',
+      t0: h.t0, t1: h.t1,
+      timeLabel: h.timeLabel, tsEstimate: h.tsEstimate,
+      deepLink: h.deepLink || null,
     }));
   } catch (_) { return []; }
 }
@@ -167,7 +199,9 @@ async function groundedLLM(agentId, query, chunks) {
   const context = (chunks || []).slice(0, 5).map((c, i) =>
     `[${i + 1}] (${c.system || c.topic || 'knowledge'}) ${(c.text || '').slice(0, 900)}`
   ).join('\n\n');
-  const sys = `${SYSTEM_PROMPTS[agentId] || SYSTEM_PROMPTS.SHADDAI}\n\nGrounded knowledge excerpts (use them, cite sources naturally):\n${context}`;
+  // five-layer grounding: route guidance + digested knowledge + tools ledger
+  const layers = knowledge.contextFor(agentId, query);
+  const sys = `${SYSTEM_PROMPTS[agentId] || SYSTEM_PROMPTS.SHADDAI}\n\n${layers}\n\nGrounded knowledge excerpts (use them, cite sources naturally — when a ≈timestamp is present, mention it):\n${context}`;
   try {
     const r = await llm.callLLM(
       [{ role: 'system', content: sys }, { role: 'user', content: query }],
@@ -251,6 +285,76 @@ router.get('/search', (req, res) => {
   }
 
   res.json({ results, ms: Date.now() - start });
+});
+
+// ── digests (organized knowledge from the digestion pipeline) ───────────────
+router.get('/digests', (req, res) => {
+  const agent = String(req.query.agent || 'SHADDAI').trim().toUpperCase();
+  const ns = knowledge.nsFor(agent);
+  try {
+    const file = path.join(RAG_KB_DIR, 'kb_' + agent.toLowerCase(), 'digests.json');
+    if (!fs.existsSync(file)) return res.json({ agent, digests: [] });
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8')).digests || [];
+    const list = raw.map(d => ({
+      name: d.name,
+      source: d.source,
+      title: d.title,
+      thesis: String(d.thesis || '').slice(0, 240),
+      chapters: (d.chapters || []).length,
+      insights: (d.chapters || []).reduce((n, c) => n + ((c.insights || []).length), 0),
+      quotes: (d.quotes || []).length,
+      runtimeLabel: d.runtimeLabel,
+      tsMode: d.tsMode,
+      generatedAt: d.generatedAt,
+    }));
+    res.json({ agent, count: list.length, digests: list });
+  } catch (e) {
+    res.status(500).json({ error: 'digests unavailable', detail: String(e.message || e) });
+  }
+});
+
+router.get('/digest', (req, res) => {
+  const agent = String(req.query.agent || '').trim().toUpperCase();
+  const name = String(req.query.name || '').trim();
+  if (!agent || !name) return res.status(400).json({ error: 'agent and name required' });
+  try {
+    const file = path.join(RAG_KB_DIR, 'kb_' + agent.toLowerCase(), 'digests.json');
+    const d = (JSON.parse(fs.readFileSync(file, 'utf8')).digests || [])
+      .find(x => x.name === name || x.source === name ||
+                 x.name === 'DIGEST_' + name || 'DIGEST_' + x.name === name);
+    if (!d) return res.status(404).json({ error: 'digest not found' });
+    res.json(d);
+  } catch (e) {
+    res.status(500).json({ error: 'digest unavailable', detail: String(e.message || e) });
+  }
+});
+
+// ── routes of use (goal → playbook → sources per agent) ─────────────────────
+router.get('/routes', (req, res) => {
+  const agent = String(req.query.agent || '').trim().toUpperCase();
+  const q = String(req.query.q || '').trim();
+  const all = knowledge.routesIndex().routes || {};
+  if (!agent) {
+    const counts = {}; Object.entries(all).forEach(([a, rs]) => { counts[a] = rs.length; });
+    return res.json({ routes: all, counts });
+  }
+  const list = all[agent] || [];
+  if (q) {
+    const matched = knowledge.matchRoute(agent, q);
+    return res.json({
+      agent, query: q,
+      route: matched,
+      context: matched ? knowledge.routeContext(agent, q) : null,
+      digestRecall: knowledge.digestRecall(agent, q, 3),
+    });
+  }
+  res.json({ agent, count: list.length, routes: list });
+});
+
+// ── tools ledger (living registry of the stack) ──────────────────────────────
+router.get('/tools', (req, res) => {
+  const led = knowledge.toolsLedger();
+  res.json({ version: led.version, updated: led.updated, policy: led.policy, tools: led.tools || [] });
 });
 
 // ── summary ──────────────────────────────────────────────────────────────────
@@ -341,6 +445,10 @@ router.get('/ask', async (req, res) => {
       agent, title: h.title, score: h.score,
       snippet: (h.text || '').slice(0, 200),
       video_id: h.video_id,
+      kind: h.kind || 'transcript',
+      timeLabel: h.timeLabel || null,
+      tsEstimate: !!h.tsEstimate,
+      deepLink: h.deepLink || null,
     })),
   });
 });

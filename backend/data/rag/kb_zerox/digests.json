@@ -1,0 +1,2991 @@
+{
+  "agent": "ZEROX",
+  "generatedAt": "2026-08-22T14:54:36.175Z",
+  "digests": [
+    {
+      "name": "buffett_advice_success",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 1520,
+      "durationSec": 608,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:45:03.065Z",
+      "contentHash": "66b7221bc2b3",
+      "title": "Warren how would you define true success well I've said many times that that",
+      "thesis": "and business and they're learning all these complicated formulas all that if they just learned to communicate better and both in writing and person they increase their value at least 50%",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Love · Make · Seen",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "and business and they're learning all these complicated formulas all that if they just learned to communicate better and both in writing and person they increase their value at least 50%",
+              "t": 71,
+              "tsEstimate": true
+            },
+            {
+              "text": "take it a shorter course not by talking later on but it it's just hugely important and you if you invest in yourself nobody can take it away from you I mean",
+              "t": 107,
+              "tsEstimate": true
+            },
+            {
+              "text": "it what about life advice well I've advises you know the most important thing aside from the things I've talked about already is it's really who you associate with you want to",
+              "t": 178,
+              "tsEstimate": true
+            },
+            {
+              "text": "and you hope they don't figure it out too fast great biggest mistakes people make when investing well they they try to",
+              "t": 252,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and you hope they don't figure it out too fast great biggest mistakes people make when investing well they they try to",
+            "t": 252,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Much · Cash · Carry",
+          "t0": 320,
+          "t1": 608,
+          "insights": [
+            {
+              "text": "and said you're gonna live one year longer you know instead of living to 88 you lived 89 or whatever it may be if you eat nothing but broccoli and Brussels sprouts",
+              "t": 371,
+              "tsEstimate": true
+            },
+            {
+              "text": "and I didn't really see much reason all right last questions the lightning rounds there's a few do you ever drink water only under duress what is your favorite all-time song it's",
+              "t": 502,
+              "tsEstimate": true
+            },
+            {
+              "text": "and sees whether all the hundreds are gone six of you it's pretty simple and a credit cards I've got an American Express card which I got in 1964",
+              "t": 587,
+              "tsEstimate": true
+            },
+            {
+              "text": "but I I pay cash 98% of the time if I'm an arrest always pay cash it's just easier Warren Buffett thanks very much",
+              "t": 598,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and I didn't really see much reason all right last questions the lightning rounds there's a few do you ever drink water only under duress what is your favorite all-time song it's",
+            "t": 502,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "and business and they're learning all these complicated formulas all that if they just learned to communicate better and both in writing and person they increase their value at least 50%",
+          "t": 71,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "and I didn't really see much reason all right last questions the lightning rounds there's a few do you ever drink water only under duress what is your favorite all-time song it's",
+        "but I I pay cash 98% of the time if I'm an arrest always pay cash it's just easier Warren Buffett thanks very much",
+        "and you hope they don't figure it out too fast great biggest mistakes people make when investing well they they try to",
+        "undoubtedly it's my way what about movie favorite movie well I like the Bridge on the River Kwai because of the lot there were a lot of lessons in that pleasant was",
+        "III I I am NOT venturesome in that area like how you lumped in onions with broccoli and Brussels sprouts never heard them I just don't have like onions I don't put"
+      ],
+      "quotes": [
+        {
+          "text": "and you hope they don't figure it out too fast great biggest mistakes people make when investing well they they try to",
+          "t": 252,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and I didn't really see much reason all right last questions the lightning rounds there's a few do you ever drink water only under duress what is your favorite all-time song it's",
+          "t": 502,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about know?",
+        "What does the source teach about people?",
+        "What does the source teach about don?",
+        "What does the source teach about just?",
+        "How does buffett advice success apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787409904031_2b6mtd"
+    },
+    {
+      "name": "buffett_buy_hold",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 3049,
+      "durationSec": 1220,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:45:04.514Z",
+      "contentHash": "730eba9ae972",
+      "title": "I'm not recommending that people buy stocks today or tomorrow or next week or",
+      "thesis": "in an index fund longterm is gone would you please provide your thoughts on this topic particularly in regards to an investment time span of 10 years",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Day · Hold · Investing",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "the virus it strikes uh some people with uh much greater ferocity than than than others and and fear is uh fear is something I really never felt financially but",
+              "t": 128,
+              "tsEstimate": true
+            },
+            {
+              "text": "that came in from Kevin he says the last few weeks we've been hearing from active money managers that the day of passing passive investing is over the historical safety of investing",
+              "t": 201,
+              "tsEstimate": true
+            },
+            {
+              "text": "in an index fund longterm is gone would you please provide your thoughts on this topic particularly in regards to an investment time span of 10 years",
+              "t": 214,
+              "tsEstimate": true
+            },
+            {
+              "text": "day of investing in America is over I would disagree quite violently and then is there something special about index funds being a terrible way to invest uh I just don't think",
+              "t": 261,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "in an index fund longterm is gone would you please provide your thoughts on this topic particularly in regards to an investment time span of 10 years",
+            "t": 214,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Buybacks · Want · Spend",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "look to the essence of investment management Burkshire has invested in many companies with stock buyback programs recently there's been a backlash against BuyBacks what are your views on this subject",
+              "t": 375,
+              "tsEstimate": true
+            },
+            {
+              "text": "and we only we the only shareholders we would not establish a 100% dividend payout for everybody and we wouldn't freeze the one that wanted to get out either the logical thing",
+              "t": 446,
+              "tsEstimate": true
+            },
+            {
+              "text": "and this is a point that's never mentioned they should be buying it back below what they think it's worth now they'll make mistakes in that",
+              "t": 589,
+              "tsEstimate": true
+            },
+            {
+              "text": "but you read about all these buyback programs they say we're going to spend five billion buying it back or 10 billion well that's like saying I'm going to go out",
+              "t": 624,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and we only we the only shareholders we would not establish a 100% dividend payout for everybody and we wouldn't freeze the one that wanted to get out either the logical thing",
+            "t": 446,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Time · Obviously · Back",
+          "t0": 640,
+          "t1": 960,
+          "insights": [
+            {
+              "text": "but this is from Mark Blakeley who writes in from Tulsa Oklahoma and he says like many I'm a proud birkshire Hathaway shareholder however in comparing the performance of Berkshire with the",
+              "t": 835,
+              "tsEstimate": true
+            },
+            {
+              "text": "attribute berkshire's under performance while I can't imagine ever selling my Burkshire stock at some point money is money well I I agree with everything that I forget his name",
+              "t": 860,
+              "tsEstimate": true
+            },
+            {
+              "text": "single investment can be uh in in terms of uh earning reasonable returns over time but I I would not want to bet my life on whether we beat the S&amp;P 500",
+              "t": 885,
+              "tsEstimate": true
+            },
+            {
+              "text": "I mentioned earlier that 1954 was my best year but but I was working with absolutely with peanuts unfortunately and and I think if you work with small sums of money I",
+              "t": 920,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "single investment can be uh in in terms of uh earning reasonable returns over time but I I would not want to bet my life on whether we beat the S&amp;P 500",
+            "t": 885,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Doesn · Huge · Energy",
+          "t0": 960,
+          "t1": 1219,
+          "insights": [
+            {
+              "text": "ready for hundred billion dollars of investment opportunities there if we just look at the business over the next 10 years and the infrastructure that's required",
+              "t": 1090,
+              "tsEstimate": true
+            },
+            {
+              "text": "because we don't have dividend requirements we've retained 28 billion of earnings over 20 years that that you can't do it if you run a a normal public company",
+              "t": 1132,
+              "tsEstimate": true
+            },
+            {
+              "text": "and Berkshire should participate in a huge way we can do things in insurance nobody else can do uh that doesn't mean much at many times but occasionally it may be important",
+              "t": 1176,
+              "tsEstimate": true
+            },
+            {
+              "text": "to double our money that's a billion pre-tax and that's that's 790 million after tax and on a market value of 450 billion or whatever it may be it it doesn't amount",
+              "t": 1202,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and Berkshire should participate in a huge way we can do things in insurance nobody else can do uh that doesn't mean much at many times but occasionally it may be important",
+            "t": 1176,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "but you make mistakes in a lot of business decision but over that should be the guiding principle and to my knowledge uh JP Morgan Jamie Diamond said it once",
+          "t": 599,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "single investment can be uh in in terms of uh earning reasonable returns over time but I I would not want to bet my life on whether we beat the S&amp;P 500",
+        "and Berkshire should participate in a huge way we can do things in insurance nobody else can do uh that doesn't mean much at many times but occasionally it may be important",
+        "the virus it strikes uh some people with uh much greater ferocity than than than others and and fear is uh fear is something I really never felt financially but",
+        "and this is a point that's never mentioned they should be buying it back below what they think it's worth now they'll make mistakes in that",
+        "and psychologically to hold them the same way you would hold a farm and never look at a quote and never uh never pay it you don't need to pay attention to"
+      ],
+      "quotes": [
+        {
+          "text": "in an index fund longterm is gone would you please provide your thoughts on this topic particularly in regards to an investment time span of 10 years",
+          "t": 214,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and we only we the only shareholders we would not establish a 100% dividend payout for everybody and we wouldn't freeze the one that wanted to get out either the logical thing",
+          "t": 446,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "single investment can be uh in in terms of uh earning reasonable returns over time but I I would not want to bet my life on whether we beat the S&amp;P 500",
+          "t": 885,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and Berkshire should participate in a huge way we can do things in insurance nobody else can do uh that doesn't mean much at many times but occasionally it may be important",
+          "t": 1176,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about uh?",
+        "What does the source teach about re?",
+        "What does the source teach about think?",
+        "What does the source teach about there?",
+        "How does buffett buy hold apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787409905394_41k2th"
+    },
+    {
+      "name": "buffett_investing",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 888,
+      "durationSec": 355,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:31.751Z",
+      "contentHash": "782ba4b6e0f3",
+      "title": "most important thing is to decide is to be able to define which ones",
+      "thesis": "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Ones · Because · 20",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
+              "t": 0,
+              "tsEstimate": true
+            },
+            {
+              "text": "Berkshire doesn't pay a dividend.\" And he said, \"Well, you can keep track of your portfolio.\" And I said, \"I only have one stock.\" I said I I mean And he says, \"It's going to change everything.\" And I said, \"Well, will it change whether people chew gum?\" And…",
+              "t": 41,
+              "tsEstimate": true
+            },
+            {
+              "text": "Now, he was at a disadvantage because if the count was 0 and 2 or 1 and 2 or so on even if that ball was down where he was only going to bat 230, he had to swing at it.",
+              "t": 139,
+              "tsEstimate": true
+            },
+            {
+              "text": "In fact, I've told students if when they got out of school, they got a punch card with 20 punches on it, and that's all the investment decisions they got to make in their entire life, they would get very rich because they would think very hard about each one.",
+              "t": 211,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
+            "t": 0,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "127 · Years · History",
+          "t0": 320,
+          "t1": 355,
+          "insights": [
+            {
+              "text": "So, uh you know, and I've got about 127 years of history that would indicate it.",
+              "t": 324,
+              "tsEstimate": true
+            },
+            {
+              "text": "And you may have an entirely different field of expertise than I would have.",
+              "t": 335,
+              "tsEstimate": true
+            },
+            {
+              "text": "And probably much more up-to-date in terms of the kind of businesses that we're seeing above.",
+              "t": 340,
+              "tsEstimate": true
+            },
+            {
+              "text": "And you can get very rich if you just understand a few of them and and and understand their future.",
+              "t": 347,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "So, uh you know, and I've got about 127 years of history that would indicate it.",
+            "t": 324,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [],
+      "takeaways": [
+        "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
+        "He said the most important thing in hitting is waiting for the right pitch."
+      ],
+      "quotes": [
+        {
+          "text": "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
+          "t": 0,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "So, uh you know, and I've got about 127 years of history that would indicate it.",
+          "t": 324,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about he?",
+        "What does the source teach about said?",
+        "What does the source teach about don?",
+        "What does the source teach about understand?",
+        "How does buffett investing apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410472011_dlb8ic"
+    },
+    {
+      "name": "hormozi_100m_offer",
+      "agent": "ZEROX",
+      "engine": "extractive-v1+mastery",
+      "videoId": null,
+      "url": null,
+      "words": 1400,
+      "durationSec": 560,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:32.507Z",
+      "contentHash": "ad312fcfa2b9",
+      "title": "MASTERY CARD — \"$100M Offers: The Value Equation\" (Alex Hormozi)",
+      "thesis": "Value is engineered, not guessed. By systematically maximizing a value equation and",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "000 · Surgeon · Uh",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "But within, let's say weight loss given the example we're talking about, if we're B2C, how is it that you can have a $5 PDF and a $50,000 liposuction thing?",
+              "t": 84,
+              "tsEstimate": true
+            },
+            {
+              "text": "So taking the liposuction example, if you're a surgeon or you're a girl and you're you're thinking about getting liposuction, uh and there's one surgeon that's uh just fresh out of medical school, hasn't done a surgery yet, and there's another physician who's…",
+              "t": 110,
+              "tsEstimate": true
+            },
+            {
+              "text": "And so to use the example of personal training versus the liposuction, personal training you got to arm wrestle somebody for an hour to get them to buy a $2,000 package of of personal training.",
+              "t": 187,
+              "tsEstimate": true
+            },
+            {
+              "text": "And the reason for that is because they might get their six-pack, you know, 12 to 18 months later.",
+              "t": 201,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "And the reason for that is because they might get their six-pack, you know, 12 to 18 months later.",
+            "t": 201,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Kind · Price · Close",
+          "t0": 320,
+          "t1": 560,
+          "insights": [
+            {
+              "text": "And so looking at what happens immediately before and immediately post purchase, uh all the little steps, and then trying to de-constrain each of those steps for them, and then including those things in the offer, ultimately creates a much more valuable A off…",
+              "t": 330,
+              "tsEstimate": true
+            },
+            {
+              "text": "And this is where you get these massive stepwise increases in terms of company value because all of a sudden we can double the price or triple the price for offer and close at a higher percentage.",
+              "t": 350,
+              "tsEstimate": true
+            },
+            {
+              "text": "And so that's when these crazy kind of like Lollapalooza effects occur in the business where they go from two million to 10 in a year changing nothing but what the core offer of what they said was.",
+              "t": 364,
+              "tsEstimate": true
+            },
+            {
+              "text": "And so a lot of those things that you can make an irresistible offer or a grand slam offer from the book is by looking at each of those problems and creating kind of a bonus stack that solves each of them.",
+              "t": 442,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "And so that's when these crazy kind of like Lollapalooza effects occur in the business where they go from two million to 10 in a year changing nothing but what the core offer of what they said was.",
+            "t": 364,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "Agent: ZEROX · Source: hormozi_100m_offer · Type: business/offer-construction",
+          "t": null,
+          "located": false,
+          "tsEstimate": true
+        },
+        {
+          "text": "So, the core if there was one framework in the book that it relates to, it's the value equation, which is that you have to understand how to create value so that you can charge as much as possible, right?",
+          "t": 12,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "And then we have the bottom side of the equation, which is time delay.",
+          "t": 176,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "1. Itemize EVERY little step immediately before and after the purchase (e.g. weight loss also",
+        "means: shop differently, learn to meal-prep).",
+        "2. For each step ask: What increases their risk? What makes it take longer? What makes them",
+        "start doing things they hate? What makes them stop doing things they love?",
+        "3. Create a solution/bonus for each constraint → a \"bonus stack.\"",
+        "4. Result: a more valuable AND higher-converting offer → double or triple price, close at a"
+      ],
+      "quotes": [
+        {
+          "text": "We just add value rather than taking away price.",
+          "t": 494,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "They go from two million to ten in a year changing nothing but... the core offer.",
+          "t": null,
+          "located": false,
+          "tsEstimate": true
+        },
+        {
+          "text": "And the reason for that is because they might get their six-pack, you know, 12 to 18 months later.",
+          "t": 201,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "And so that's when these crazy kind of like Lollapalooza effects occur in the business where they go from two million to 10 in a year changing nothing but what the core offer of what they said was.",
+          "t": 364,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about then?",
+        "What does the source teach about things?",
+        "What does the source teach about like?",
+        "What does the source teach about re?",
+        "How does hormozi 100m offer apply today?"
+      ],
+      "mergedFromMastery": true,
+      "docId": "doc_1787410472722_b9ptp1"
+    },
+    {
+      "name": "hormozi_ecommerce",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 3043,
+      "durationSec": 1217,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:33.098Z",
+      "contentHash": "f89e5887091a",
+      "title": "i am pissed not really but i recently uh was on a podcast a",
+      "thesis": "and i disagree and that is why i'm making this video to break down why the value equation and the things inside of the 100 million dollar offers book which pretty much",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Lot · 30 · 100",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "and i disagree and that is why i'm making this video to break down why the value equation and the things inside of the 100 million dollar offers book which pretty much",
+              "t": 36,
+              "tsEstimate": true
+            },
+            {
+              "text": "then lead to profits all right and so in the book i do give a lot of uh service based examples uh both b2b and b2c",
+              "t": 92,
+              "tsEstimate": true
+            },
+            {
+              "text": "right or a lot of people might want to look skinny but they'll work with the physician that has worked with 10 000 patients rather than their first patient",
+              "t": 157,
+              "tsEstimate": true
+            },
+            {
+              "text": "amazon lenses and of course it's taken him 30 years to build this thing right but we can still think if this is the theoretical that we need to try",
+              "t": 298,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "right or a lot of people might want to look skinny but they'll work with the physician that has worked with 10 000 patients rather than their first patient",
+            "t": 157,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Jean · Cool · Say",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "me achieving this cool look all right well first off is reviews if i have lots of five star reviews on my page and i can read them",
+              "t": 410,
+              "tsEstimate": true
+            },
+            {
+              "text": "then it became commonplace because it increased the perceived likelihood of achievement right what else can we do and i actually saw this levi's did this for selling a jean jack which",
+              "t": 433,
+              "tsEstimate": true
+            },
+            {
+              "text": "is why i'm giving the example because it was so masterful and how they did it what they did is that i saw this video it was uh maybe 90 seconds",
+              "t": 446,
+              "tsEstimate": true
+            },
+            {
+              "text": "video that demonstrated it right these variables apply to services and e-commerce just the same it's just the way that we show someone how to experience the dream outcome they desire differ",
+              "t": 496,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "is why i'm giving the example because it was so masterful and how they did it what they did is that i saw this video it was uh maybe 90 seconds",
+            "t": 446,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Only · Left · Urgency",
+          "t0": 640,
+          "t1": 960,
+          "insights": [
+            {
+              "text": "now finally of these four variables we have effort and sacrifice and so the purchasing decision here amazon has one click purchases with everything on file save",
+              "t": 651,
+              "tsEstimate": true
+            },
+            {
+              "text": "so that you can buy sorry you can sell more stuffs okay so let's look at amazon for example what do they have under virtually every single item how many they have",
+              "t": 707,
+              "tsEstimate": true
+            },
+            {
+              "text": "but a lightning deal for example where they said we're only giving this price for for 60 minutes that is absolutely urgency all",
+              "t": 781,
+              "tsEstimate": true
+            },
+            {
+              "text": "well amazon took this one step further not only did they already have a money back guarantee right because it's satisfaction you don't have to do anything you just send it back",
+              "t": 801,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "but a lightning deal for example where they said we're only giving this price for for 60 minutes that is absolutely urgency all",
+            "t": 781,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Next · Higher · Ll",
+          "t0": 960,
+          "t1": 1217,
+          "insights": [
+            {
+              "text": "apply the 100 offer framework to make your stuff more buyable so that people increase in higher amounts at higher percentages and they do so willing to pay higher prices",
+              "t": 1055,
+              "tsEstimate": true
+            },
+            {
+              "text": "and they find out that there is no scarcity so as far as they're concerned they can buy this whenever so they can come back next week if they feel like it",
+              "t": 1101,
+              "tsEstimate": true
+            },
+            {
+              "text": "business all right so mostly nation i love you guys keep being awesome and i'll catch you guys in the next vid bye mozzie nation if you enjoyed that video smash the",
+              "t": 1184,
+              "tsEstimate": true
+            },
+            {
+              "text": "subscribe button and hit the little notification bell the reason for that is because i don't actually have a cadence when i make these videos",
+              "t": 1196,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "subscribe button and hit the little notification bell the reason for that is because i don't actually have a cadence when i make these videos",
+            "t": 1196,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "and i disagree and that is why i'm making this video to break down why the value equation and the things inside of the 100 million dollar offers book which pretty much",
+          "t": 36,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "apply the 100 offer framework to make your stuff more buyable so that people increase in higher amounts at higher percentages and they do so willing to pay higher prices",
+          "t": 1055,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "right that is how you can apply the 100 offers framework including the value equation and the other things that i talk about enhancing value from the book to a physical product",
+          "t": 1171,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "look at the other ratchets that i said these are inside of the book are enhancers of value they do even more to increase the value equation in your favor",
+          "t": 695,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "subscribe button and hit the little notification bell the reason for that is because i don't actually have a cadence when i make these videos",
+        "and they find out that there is no scarcity so as far as they're concerned they can buy this whenever so they can come back next week if they feel like it"
+      ],
+      "quotes": [
+        {
+          "text": "right or a lot of people might want to look skinny but they'll work with the physician that has worked with 10 000 patients rather than their first patient",
+          "t": 157,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "is why i'm giving the example because it was so masterful and how they did it what they did is that i saw this video it was uh maybe 90 seconds",
+          "t": 446,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "but a lightning deal for example where they said we're only giving this price for for 60 minutes that is absolutely urgency all",
+          "t": 781,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "subscribe button and hit the little notification bell the reason for that is because i don't actually have a cadence when i make these videos",
+          "t": 1196,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about right?",
+        "What does the source teach about because?",
+        "What does the source teach about re?",
+        "What does the source teach about like?",
+        "How does hormozi ecommerce apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410473304_wb3cw5"
+    },
+    {
+      "name": "hormozi_sell_stupid",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 4507,
+      "durationSec": 1803,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:33.751Z",
+      "contentHash": "14431341afaf",
+      "title": "I recently read a book titled 100 million dollar offers how to make offers",
+      "thesis": "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Book · Month · Avoid",
+          "t0": 0,
+          "t1": 320,
+          "insights": [
+            {
+              "text": "I recently read a book titled 100 million dollar offers how to make offers so good people feel stupid saying no by Alex hermosi this is a type of book that if",
+              "t": 0,
+              "tsEstimate": true
+            },
+            {
+              "text": "learned currently the book has over 9400 reviews with a 4.9 star rating this rating alone should tell you something about it so let's get started I have four big takeaways and",
+              "t": 38,
+              "tsEstimate": true
+            },
+            {
+              "text": "and still go bankrupt just be patient we'll get there for now remember this if your product is like nothing else on the market it'll be difficult to compare prices which means",
+              "t": 216,
+              "tsEstimate": true
+            },
+            {
+              "text": "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
+              "t": 241,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
+            "t": 241,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Power · Find · Subscribers",
+          "t0": 320,
+          "t1": 640,
+          "insights": [
+            {
+              "text": "always buy what you are offering number two look for purchasing power even if you find a perfect system for helping people improve their resumes to get more job interviews you'll have",
+              "t": 349,
+              "tsEstimate": true
+            },
+            {
+              "text": "and relationships the reason is that these are very painful when you lack them so if you can find a smaller subgroup within one of these larger markets that are growing has",
+              "t": 522,
+              "tsEstimate": true
+            },
+            {
+              "text": "well think about it lonely senior citizens are likely to suffer more pain for being alone have more buying power and are easy to Target also there are more people turning 60",
+              "t": 557,
+              "tsEstimate": true
+            },
+            {
+              "text": "than 20 so it's a growing Market let's say you have found a market that has all four components we talked about what do you do next this is the important point",
+              "t": 570,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "than 20 so it's a growing Market let's say you have found a market that has all four components we talked about what do you do next this is the important point",
+            "t": 570,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Pay · Thousand · Start",
+          "t0": 640,
+          "t1": 960,
+          "insights": [
+            {
+              "text": "then you buy the moment value drops below the price the sale is canceled it's very important that you understand the difference",
+              "t": 790,
+              "tsEstimate": true
+            },
+            {
+              "text": "but the person who buys that product thinks the value they're getting is worth the price whether it is quality Beauty durability status or any other personal reason it doesn't matter there's",
+              "t": 816,
+              "tsEstimate": true
+            },
+            {
+              "text": "most value if you charge premium prices here's why when you raise your prices two important things happen number one you increase your clients emotional investment this is important especially if you",
+              "t": 865,
+              "tsEstimate": true
+            },
+            {
+              "text": "calls them the four drivers number one dream outcome let's suppose you own a gym what's the desire that your customer has that you can help them fulfill remember you're not selling",
+              "t": 941,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "but the person who buys that product thinks the value they're getting is worth the price whether it is quality Beauty durability status or any other personal reason it doesn't matter there's",
+            "t": 816,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Effort · Psychological · Dream",
+          "t0": 960,
+          "t1": 1280,
+          "insights": [
+            {
+              "text": "them short-term experiences that occur while they don't get there for example as they begin to exercise they might feel more energized or relaxed make sure their experience is Pleasant enough to",
+              "t": 1043,
+              "tsEstimate": true
+            },
+            {
+              "text": "and by airplane for example or Uber versus walking that's why Amazon has been investing so much in their quick drone deliveries 4. effort",
+              "t": 1068,
+              "tsEstimate": true
+            },
+            {
+              "text": "but think about it how much time and effort can you save if you go through liposuction instead of buying a gym membership humans will always search for the quickest easiest Solutions",
+              "t": 1112,
+              "tsEstimate": true
+            },
+            {
+              "text": "and how it will allow you to do things for your clients that others can't remember you are not just charging a higher price you are also delivering higher value it's important",
+              "t": 1233,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "but think about it how much time and effort can you save if you go through liposuction instead of buying a gym membership humans will always search for the quickest easiest Solutions",
+            "t": 1112,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 5,
+          "label": "Step · Problems · Healthy",
+          "t0": 1280,
+          "t1": 1600,
+          "insights": [
+            {
+              "text": "here are a few examples of dream outcomes make my first million dollars feel more beautiful impress my friends with my new car since we're pretending that we work with gym clients",
+              "t": 1302,
+              "tsEstimate": true
+            },
+            {
+              "text": "for this example I'll go with lose 14 kilograms in seven weeks step number two list problems Now list each core thing that someone has to do to achieve their dream outcome",
+              "t": 1314,
+              "tsEstimate": true
+            },
+            {
+              "text": "but you'll also notice that some of the solutions apply to more than one problem as you think of possibilities don't rule anything out just yet even if you don't want to",
+              "t": 1516,
+              "tsEstimate": true
+            },
+            {
+              "text": "do it or don't think it's reasonable you might have some completely crazy and impractical Solutions there keep them for a while step number five trim and stack now finally we'll",
+              "t": 1528,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "do it or don't think it's reasonable you might have some completely crazy and impractical Solutions there keep them for a while step number five trim and stack now finally we'll",
+            "t": 1528,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 6,
+          "label": "Grocery · Small · Video",
+          "t0": 1600,
+          "t1": 1802,
+          "insights": [
+            {
+              "text": "and stressful solution how to buy healthy food fast easily cheaply name foolproof bargain grocery system short explanation it'll save you hundreds of dollars per month on food",
+              "t": 1682,
+              "tsEstimate": true
+            },
+            {
+              "text": "DIY grocery calculator number four each plan comes with its own list for each week number five grocery buddy system number six pre-made grocery carts for delivery this six item list is",
+              "t": 1706,
+              "tsEstimate": true
+            },
+            {
+              "text": "and you'll never feel like you're a fraud for charging a premium price for it this was a pretty long video with a lot of information I congratulate you if you made",
+              "t": 1765,
+              "tsEstimate": true
+            },
+            {
+              "text": "it to the end most people wouldn't even click on such videos I have one small request from you if you introduce something valuable to someone they associate that value with you",
+              "t": 1778,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "it to the end most people wouldn't even click on such videos I have one small request from you if you introduce something valuable to someone they associate that value with you",
+            "t": 1778,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "now it's time to finally create your offer step one identify dream outcome imagine your customer Avatar asking for your help as they State their dream outcome what are they asking you",
+          "t": 1279,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "but the person who buys that product thinks the value they're getting is worth the price whether it is quality Beauty durability status or any other personal reason it doesn't matter there's",
+        "but think about it how much time and effort can you save if you go through liposuction instead of buying a gym membership humans will always search for the quickest easiest Solutions",
+        "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
+        "than 20 so it's a growing Market let's say you have found a market that has all four components we talked about what do you do next this is the important point",
+        "do it or don't think it's reasonable you might have some completely crazy and impractical Solutions there keep them for a while step number five trim and stack now finally we'll"
+      ],
+      "quotes": [
+        {
+          "text": "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
+          "t": 241,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "than 20 so it's a growing Market let's say you have found a market that has all four components we talked about what do you do next this is the important point",
+          "t": 570,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "but the person who buys that product thinks the value they're getting is worth the price whether it is quality Beauty durability status or any other personal reason it doesn't matter there's",
+          "t": 816,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "but think about it how much time and effort can you save if you go through liposuction instead of buying a gym membership humans will always search for the quickest easiest Solutions",
+          "t": 1112,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "do it or don't think it's reasonable you might have some completely crazy and impractical Solutions there keep them for a while step number five trim and stack now finally we'll",
+          "t": 1528,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "it to the end most people wouldn't even click on such videos I have one small request from you if you introduce something valuable to someone they associate that value with you",
+          "t": 1778,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about ll?",
+        "What does the source teach about product?",
+        "What does the source teach about value?",
+        "What does the source teach about market?",
+        "How does hormozi sell stupid apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410474012_n5el0w"
+    },
+    {
+      "name": "kiyosaki_rich_dad_full",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 56405,
+      "durationSec": 22562,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:34.521Z",
+      "contentHash": "de488eb52b47",
+      "title": "rich dad poor dad what the rich teach their kids about money that the",
+      "thesis": "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Both · School · Business",
+          "t0": 0,
+          "t1": 1200,
+          "insights": [
+            {
+              "text": "and northwestern university to do his advanced studies all on full financial scholarships the other father never finished the eighth grade both men were successful in their careers working hard all their",
+              "t": 74,
+              "tsEstimate": true
+            },
+            {
+              "text": "lives both earned substantial incomes yet one always struggled financially the other would become one of the richest men in hawaii one died leaving tens of millions of dollars to his family",
+              "t": 87,
+              "tsEstimate": true
+            },
+            {
+              "text": "and your needs he was always concerned about pay raises retirement plans medical benefits sick leave vacation days and other perks he was impressed with two of his uncles who joined the",
+              "t": 528,
+              "tsEstimate": true
+            },
+            {
+              "text": "with puzzled looks most adults consented with a smile some asked us what we were doing to which we replied we can't tell you it's a business secret my mom grew distressed",
+              "t": 1180,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and northwestern university to do his advanced studies all on full financial scholarships the other father never finished the eighth grade both men were successful in their careers working hard all their",
+            "t": 74,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Re · Him · Down",
+          "t0": 1200,
+          "t1": 2400,
+          "insights": [
+            {
+              "text": "and our family's hibachi grill was glowing with red hot coals at maximum heat dad walked up cautiously having to park the car at the base of the driveway since the production",
+              "t": 1291,
+              "tsEstimate": true
+            },
+            {
+              "text": "mind decisively then you'll never learn to make money anyway opportunities come and go being able to know when to make quick decisions is an important skill you have the opportunity that",
+              "t": 1948,
+              "tsEstimate": true
+            },
+            {
+              "text": "talking on the phone and ignoring me i was ready to walk out but for some reason i stayed finally fifteen minutes later at exactly nine o'clock rich dad walked out of",
+              "t": 2286,
+              "tsEstimate": true
+            },
+            {
+              "text": "angrily you haven't even talked to me once since i agreed to work for peanuts 10 cents an hour i should notify the government about you we have child labor laws you",
+              "t": 2394,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "talking on the phone and ignoring me i was ready to walk out but for some reason i stayed finally fifteen minutes later at exactly nine o'clock rich dad walked out of",
+            "t": 2286,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Working · Ll · Cents",
+          "t0": 2400,
+          "t1": 3600,
+          "insights": [
+            {
+              "text": "and a few like you fight rich dad stood and shut the creaky old wooden window that needed repair if you learn this lesson you will grow into a wise wealthy",
+              "t": 2542,
+              "tsEstimate": true
+            },
+            {
+              "text": "playing it safe doing the right things saving yourself for some event that never happens then you die a boring old man you'll have lots of friends who really like you",
+              "t": 2606,
+              "tsEstimate": true
+            },
+            {
+              "text": "but again accepting a small paycheck i sat staring at the floor beginning to understand the lesson rich dad was presenting i could sense it was a taste of life finally i",
+              "t": 2834,
+              "tsEstimate": true
+            },
+            {
+              "text": "but for some reason i was now thankful i had decided to work for 10 cents an hour i sensed that i was about to learn something my friends wouldn't learn in",
+              "t": 3135,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and a few like you fight rich dad stood and shut the creaky old wooden window that needed repair if you learn this lesson you will grow into a wise wealthy",
+            "t": 2542,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Fear · Emotions · Desire",
+          "t0": 3600,
+          "t1": 4800,
+          "insights": [
+            {
+              "text": "of job security and looking forward to a three-week vacation each year and maybe a skimpy pension after 45 years of service if that excites you i'll give you a raise to",
+              "t": 3607,
+              "tsEstimate": true
+            },
+            {
+              "text": "and get good grades so you can find a safe secure job i interjected somewhat confused yes i understand he says that said rich dad smiling most people recommend that",
+              "t": 4344,
+              "tsEstimate": true
+            },
+            {
+              "text": "see what the mrs martins of this world couldn't see he used examples that sounded cruel at the time but i've never forgotten them my vision widened that day",
+              "t": 4421,
+              "tsEstimate": true
+            },
+            {
+              "text": "close one's mind look school is very important you go to school to learn a skill or profession to become a contributing member of society every culture needs teachers doctors mechanics artists",
+              "t": 4659,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "close one's mind look school is very important you go to school to learn a skill or profession to become a contributing member of society every culture needs teachers doctors mechanics artists",
+            "t": 4659,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 5,
+          "label": "Comic · Book · Books",
+          "t0": 4800,
+          "t1": 6000,
+          "insights": [
+            {
+              "text": "work for this store and do not resell them remember our old business partnership well mike and i revived it using a spare room in mike's basement we began piling hundreds of",
+              "t": 5368,
+              "tsEstimate": true
+            },
+            {
+              "text": "following story the richest businessman in 1923 a group of our greatest leaders and richest businessmen held a meeting at the edgewater beach hotel in chicago among them were charles schwab head",
+              "t": 5647,
+              "tsEstimate": true
+            },
+            {
+              "text": "and jesse livermore two of the biggest stock speculators and albert fall a member of president harding's cabinet 25 years later nine of these titans ended their lives as follows schwab died",
+              "t": 5683,
+              "tsEstimate": true
+            },
+            {
+              "text": "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
+              "t": 5795,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
+            "t": 5795,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 6,
+          "label": "Simple · Fear · Tax",
+          "t0": 6000,
+          "t1": 7200,
+          "insights": [
+            {
+              "text": "because of this is a powerful military presence in the world the jewel symbolizes the power of money there is some degree of truth to the saying remember the golden rule he",
+              "t": 6836,
+              "tsEstimate": true
+            },
+            {
+              "text": "the mirror they would have asked themselves does this make sense all too often instead of trusting their inner wisdom that genius inside most people follow the crowd they do things",
+              "t": 6888,
+              "tsEstimate": true
+            },
+            {
+              "text": "and i couldn't go along with the standard dogma our teachers preached and that caused problems whenever the teacher said if you don't get good grades you won't do",
+              "t": 7108,
+              "tsEstimate": true
+            },
+            {
+              "text": "and our classmates my highly educated dad never pressured me about my grades but we did begin to argue about money by the time i was 16 i probably had a far",
+              "t": 7169,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and our classmates my highly educated dad never pressured me about my grades but we did begin to argue about money by the time i was 16 i probably had a far",
+            "t": 7169,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 7,
+          "label": "Assets · Business · Column",
+          "t0": 7200,
+          "t1": 8400,
+          "insights": [
+            {
+              "text": "retired so the increase put a strain on their retirement budget and they felt forced to move four houses do not always go up in value i have friends who owe a",
+              "t": 7316,
+              "tsEstimate": true
+            },
+            {
+              "text": "to pay for the house my educated dad's personal financial statement best demonstrates the life of someone caught in the rat race his expenses match his income never allowing him enough left",
+              "t": 7450,
+              "tsEstimate": true
+            },
+            {
+              "text": "massive loss of jobs in recent times proves how shaky the middle class really is financially company pension plans are being replaced by 401k plans social security is obviously in trouble",
+              "t": 7547,
+              "tsEstimate": true
+            },
+            {
+              "text": "financial crisis i assume most of us have filled out a credit application to buy a house or a car it's always interesting to look at the net worth section",
+              "t": 8376,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "massive loss of jobs in recent times proves how shaky the middle class really is financially company pension plans are being replaced by 401k plans social security is obviously in trouble",
+            "t": 7547,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 8,
+          "label": "Government · Taxes · Middle",
+          "t0": 8400,
+          "t1": 9600,
+          "insights": [
+            {
+              "text": "keep expenses low reduce liabilities and diligently build a base of solid assets for young people who have not yet left home it is important for parents to teach them the difference",
+              "t": 8531,
+              "tsEstimate": true
+            },
+            {
+              "text": "i remember in school being told the story of robin hood and his merry men my teacher thought it was a wonderful story of a romantic hero who robbed from the rich",
+              "t": 8985,
+              "tsEstimate": true
+            },
+            {
+              "text": "tea party in boston harbor an incident that helped ignite the revolutionary war it took approximately 50 years in both england",
+              "t": 9115,
+              "tsEstimate": true
+            },
+            {
+              "text": "this war between the haves and have-nots has raged for hundreds of years the battle is waged whenever and wherever laws are made",
+              "t": 9532,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "this war between the haves and have-nots has raged for hundreds of years the battle is waged whenever and wherever laws are made",
+            "t": 9532,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 9,
+          "label": "Corporation · Own · Tax",
+          "t0": 9600,
+          "t1": 10800,
+          "insights": [
+            {
+              "text": "right you're not afraid of fighting back even if you are taking on robin hood and his band of merry men my highly educated dad always encouraged me to land a good",
+              "t": 9858,
+              "tsEstimate": true
+            },
+            {
+              "text": "i would be a docile cow ready for milking when i told my rich dad of my father's advice he only chuckled why not own the ladder was always said as a",
+              "t": 9884,
+              "tsEstimate": true
+            },
+            {
+              "text": "and complained that the company ownership was unfair a terminated manager of about 45 years of age had his wife and two babies at the plant",
+              "t": 10510,
+              "tsEstimate": true
+            },
+            {
+              "text": "and to let their genius convert that fear into power and brilliance it works for some and just terrifies others i have come to realize that for most people when it comes",
+              "t": 10670,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "right you're not afraid of fighting back even if you are taking on robin hood and his band of merry men my highly educated dad always encouraged me to land a good",
+            "t": 9858,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 10,
+          "label": "Her · She · Game",
+          "t0": 10800,
+          "t1": 12000,
+          "insights": [
+            {
+              "text": "because she had never liked math the rest of her table waited while her friend continued explaining the relationship between the income statement balance sheet",
+              "t": 10957,
+              "tsEstimate": true
+            },
+            {
+              "text": "and what they need to learn most importantly games reflect behavior they are instant feedback systems instead of the teacher lecturing you the game is giving you a personalized lecture one that",
+              "t": 11050,
+              "tsEstimate": true
+            },
+            {
+              "text": "show when a financial planner came on and began forecasting doom and gloom his advice was to save money put 100 away every month he said in 40 years you will be",
+              "t": 11654,
+              "tsEstimate": true
+            },
+            {
+              "text": "you 10 interest on your money and the promissory note is good for thirty years i hope they never pay me the one hundred ninety thousand dollars i have to pay a",
+              "t": 11901,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and what they need to learn most importantly games reflect behavior they are instant feedback systems instead of the teacher lecturing you the game is giving you a personalized lecture one that",
+            "t": 11050,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 11,
+          "label": "Market · Estate · Five",
+          "t0": 12000,
+          "t1": 13200,
+          "insights": [
+            {
+              "text": "and federal regulations i recommend playing by the rules it is this basic foundation or the combination of these skills that is needed to be successful in the pursuit of wealth whether",
+              "t": 12224,
+              "tsEstimate": true
+            },
+            {
+              "text": "month i found a 12 unit apartment house right next to the intel plant in beaverton oregon the owners lived in germany had no idea what the place was worth",
+              "t": 12607,
+              "tsEstimate": true
+            },
+            {
+              "text": "the stock plays i personally invested in were extremely high risk for most people and absolutely not recommended i have been playing that game since 1979",
+              "t": 12935,
+              "tsEstimate": true
+            },
+            {
+              "text": "of the city prime bargains are overlooked by most people in singapore with their high real estate prices there are still bargains to be found within a short driving distance",
+              "t": 13076,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "the stock plays i personally invested in were extremely high risk for most people and absolutely not recommended i have been playing that game since 1979",
+            "t": 12935,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 12,
+          "label": "She · Her · Educated",
+          "t0": 13200,
+          "t1": 14400,
+          "insights": [
+            {
+              "text": "areas of his companies for a while i worked in his accounting department although i would probably never have been an accountant he wanted me to learn via osmosis rich dad knew",
+              "t": 14052,
+              "tsEstimate": true
+            },
+            {
+              "text": "i would pick up jargon and a sense of what is important and what is not i also worked as a busboy and construction worker as well as in sales reservations",
+              "t": 14065,
+              "tsEstimate": true
+            },
+            {
+              "text": "so as a student i made cargo runs navigating large freighters oil tankers and passenger ships to the far east and the south pacific rich dad emphasized that i should stay in",
+              "t": 14144,
+              "tsEstimate": true
+            },
+            {
+              "text": "houses i was studying trade people business styles and cultures in japan taiwan thailand singapore hong kong vietnam korea tahiti samoa and the philippines i was partying also",
+              "t": 14170,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "houses i was studying trade people business styles and cultures in japan taiwan thailand singapore hong kong vietnam korea tahiti samoa and the philippines i was partying also",
+            "t": 14170,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 13,
+          "label": "Skills · Fear · Union",
+          "t0": 14400,
+          "t1": 15600,
+          "insights": [
+            {
+              "text": "book the retirement myth craig s carpel writes i visited the headquarters of a major national pension consulting firm and met with a managing director who specializes in designing lush retirement plans",
+              "t": 14514,
+              "tsEstimate": true
+            },
+            {
+              "text": "and security which i admit are important i suggest they take a second job that will teach them a second skill often i recommend joining a network marketing company also called multi-level",
+              "t": 14633,
+              "tsEstimate": true
+            },
+            {
+              "text": "i am always glad i talked myself into going if you are unwilling to work to learn something new and instead insist on becoming highly specialized within your field make sure the",
+              "t": 14743,
+              "tsEstimate": true
+            },
+            {
+              "text": "financially literate people may still not develop abundant asset columns that could produce a large cash flow the five reasons are one fear two cynicism three laziness four bad habits five arrogance",
+              "t": 15430,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "financially literate people may still not develop abundant asset columns that could produce a large cash flow the five reasons are one fear two cynicism three laziness four bad habits five arrogance",
+            "t": 15430,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 14,
+          "label": "Losing · Failure · Never",
+          "t0": 15600,
+          "t1": 16800,
+          "insights": [
+            {
+              "text": "an inspiring story worthy of study nonetheless it's still a tragic military defeat they got their butts kicked so how did texans handle failure they still shout remember the alamo mike",
+              "t": 15754,
+              "tsEstimate": true
+            },
+            {
+              "text": "japanese admiral says to his cheering subordinates i am afraid we have awakened a sleeping giant remember pearl harbor became a rallying cry it turned one of america's greatest losses into the",
+              "t": 15914,
+              "tsEstimate": true
+            },
+            {
+              "text": "and the media lynch recalls the time during the 1950s when the threat of nuclear war was so prevalent in the news that people began building fallout shelters and storing food",
+              "t": 16308,
+              "tsEstimate": true
+            },
+            {
+              "text": "well done a drug company runs a tv commercial in february showing people catching the flu colds go up as well as sales of cold medicine most people are poor",
+              "t": 16346,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "japanese admiral says to his cheering subordinates i am afraid we have awakened a sleeping giant remember pearl harbor became a rallying cry it turned one of america's greatest losses into the",
+            "t": 15914,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 15,
+          "label": "Little · Afford · Us",
+          "t0": 16800,
+          "t1": 18000,
+          "insights": [
+            {
+              "text": "years statistics i had never seen before even though i already owned substantial shares of an existing oil company with that information i immediately began looking for",
+              "t": 16816,
+              "tsEstimate": true
+            },
+            {
+              "text": "and never pay themselves you know the story of the 98 pound weakling who gets sand kicked in his face i nodded i see that ad for weight lifting",
+              "t": 17658,
+              "tsEstimate": true
+            },
+            {
+              "text": "ignorant in a subject start educating yourself by finding an expert in the field or a book on the subject chapter 8 getting started there is gold everywhere most people are not",
+              "t": 17788,
+              "tsEstimate": true
+            },
+            {
+              "text": "go out and find nothing even looking in the same neighborhood the reason is that they have not taken the time to develop their financial genius i offer you the following 10",
+              "t": 17959,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and never pay themselves you know the story of the 98 pound weakling who gets sand kicked in his face i nodded i see that ad for weight lifting",
+            "t": 17658,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 16,
+          "label": "Friends · Learned · Formula",
+          "t0": 18000,
+          "t1": 19200,
+          "insights": [
+            {
+              "text": "but it was the deep emotional reasons that kept me standing up and going forward i wanted to be free by age 40",
+              "t": 18140,
+              "tsEstimate": true
+            },
+            {
+              "text": "and audio books the reason i can easily review what i just heard i was listening to an investor say something i completely disagreed with instead of becoming arrogant",
+              "t": 18406,
+              "tsEstimate": true
+            },
+            {
+              "text": "but i always learned something new i have attended classes designed for derivative traders commodity option traders and chaologists i was way out of my league being in a room full of",
+              "t": 19011,
+              "tsEstimate": true
+            },
+            {
+              "text": "and community colleges have classes on financial planning and buying traditional investments they are good places to start but i always search for faster formula that is why on a fairly regular",
+              "t": 19036,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and community colleges have classes on financial planning and buying traditional investments they are good places to start but i always search for faster formula that is why on a fairly regular",
+            "t": 19036,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 17,
+          "label": "Yourself · Broker · Many",
+          "t0": 19200,
+          "t1": 20400,
+          "insights": [
+            {
+              "text": "and the power of internal fortitude as my rich dad taught me the first month i worked for him most people allow the world to push them around a bill collector calls",
+              "t": 19343,
+              "tsEstimate": true
+            },
+            {
+              "text": "and middle class people insist on tipping restaurant help 15 to 20 percent even for bad service but complain about paying a broker three to seven percent they enjoyed tipping people in",
+              "t": 19733,
+              "tsEstimate": true
+            },
+            {
+              "text": "is so important for example i found a small condominium that was in foreclosure a few blocks from where i lived the bank wanted sixty thousand dollars",
+              "t": 19931,
+              "tsEstimate": true
+            },
+            {
+              "text": "of focus a friend's child has been developing a nasty habit of burning a hole in his pocket just 16 he wanted his own car the excuse all his friends parents gave",
+              "t": 20134,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and the power of internal fortitude as my rich dad taught me the first month i worked for him most people allow the world to push them around a bill collector calls",
+            "t": 19343,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 18,
+          "label": "Heroes · Always · Look",
+          "t0": 20400,
+          "t1": 21600,
+          "insights": [
+            {
+              "text": "and you shall receive the power of giving both of my dads were teachers my rich dad taught me a lesson i have carried all my life the necessity of being charitable",
+              "t": 20667,
+              "tsEstimate": true
+            },
+            {
+              "text": "here are some to do's many people may not be satisfied with my 10 steps they see them more as philosophies than actions i think understanding the philosophy is just as important",
+              "t": 20922,
+              "tsEstimate": true
+            },
+            {
+              "text": "yes i always make offers with escape clauses in real estate i make an offer with language that details subject-to contingencies such as the approval of a business partner never specify who",
+              "t": 21235,
+              "tsEstimate": true
+            },
+            {
+              "text": "world before he was thirty action always beats inaction these are just a few of the things i have done and continue to do to recognize opportunities the important words are have",
+              "t": 21590,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "yes i always make offers with escape clauses in real estate i make an offer with language that details subject-to contingencies such as the approval of a business partner never specify who",
+            "t": 21235,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 19,
+          "label": "Income · Cash · Flow",
+          "t0": 21600,
+          "t1": 22562,
+          "insights": [
+            {
+              "text": "now final thoughts i would like to share some final thoughts with you the main reason i wrote this book and the reason it has remained a bestseller since 2000 was to",
+              "t": 21612,
+              "tsEstimate": true
+            },
+            {
+              "text": "a 1031 tax deferred exchange suddenly he had nearly eighty thousand dollars to operate with i called another friend in austin texas who",
+              "t": 21824,
+              "tsEstimate": true
+            },
+            {
+              "text": "then poured back into the college fund a couple of years later the mini warehouse sold and he received a check for nearly 330 as proceeds from the sale he rolled those",
+              "t": 21846,
+              "tsEstimate": true
+            },
+            {
+              "text": "converting earned income into passive and portfolio income the games we create are important because they teach what books cannot teach for example you would never learn to ride a bicycle by",
+              "t": 22218,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "now final thoughts i would like to share some final thoughts with you the main reason i wrote this book and the reason it has remained a bestseller since 2000 was to",
+            "t": 21612,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "and community colleges have classes on financial planning and buying traditional investments they are good places to start but i always search for faster formula that is why on a fairly regular",
+          "t": 19036,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "because of this is a powerful military presence in the world the jewel symbolizes the power of money there is some degree of truth to the saying remember the golden rule he",
+          "t": 6836,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "and unique subjects i call them formulas i buy how-to books on formulas i know nothing about for example in the bookstore i found the book the 16 solution by joel moskowitz",
+          "t": 20988,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "buy real estate foreclosures i learned a formula the next trick was to have the discipline to actually put into action what i had learned that is where most people stop for",
+          "t": 18977,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "or you're not making enough it's simply a case of changing the formula via which you make money years ago when i was 26 i took a weekend class called how to",
+          "t": 18964,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "always push you around anyway if you do not like financial pressure then find a formula that works for you a good one is to cut expenses put your money in the",
+          "t": 19563,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "and never pay themselves you know the story of the 98 pound weakling who gets sand kicked in his face i nodded i see that ad for weight lifting",
+        "japanese admiral says to his cheering subordinates i am afraid we have awakened a sleeping giant remember pearl harbor became a rallying cry it turned one of america's greatest losses into the",
+        "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
+        "an inspiring story worthy of study nonetheless it's still a tragic military defeat they got their butts kicked so how did texans handle failure they still shout remember the alamo mike",
+        "the stock plays i personally invested in were extremely high risk for most people and absolutely not recommended i have been playing that game since 1979"
+      ],
+      "quotes": [
+        {
+          "text": "and northwestern university to do his advanced studies all on full financial scholarships the other father never finished the eighth grade both men were successful in their careers working hard all their",
+          "t": 74,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "talking on the phone and ignoring me i was ready to walk out but for some reason i stayed finally fifteen minutes later at exactly nine o'clock rich dad walked out of",
+          "t": 2286,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and a few like you fight rich dad stood and shut the creaky old wooden window that needed repair if you learn this lesson you will grow into a wise wealthy",
+          "t": 2542,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "close one's mind look school is very important you go to school to learn a skill or profession to become a contributing member of society every culture needs teachers doctors mechanics artists",
+          "t": 4659,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
+          "t": 5795,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "and our classmates my highly educated dad never pressured me about my grades but we did begin to argue about money by the time i was 16 i probably had a far",
+          "t": 7169,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "massive loss of jobs in recent times proves how shaky the middle class really is financially company pension plans are being replaced by 401k plans social security is obviously in trouble",
+          "t": 7547,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "this war between the haves and have-nots has raged for hundreds of years the battle is waged whenever and wherever laws are made",
+          "t": 9532,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about money?",
+        "What does the source teach about he?",
+        "What does the source teach about rich?",
+        "What does the source teach about people?",
+        "How does kiyosaki rich dad full apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410474782_6nk5uw"
+    },
+    {
+      "name": "napoleon_hill_think_grow_rich",
+      "agent": "ZEROX",
+      "engine": "extractive-v1",
+      "videoId": null,
+      "url": null,
+      "words": 95688,
+      "durationSec": 38275,
+      "tsMode": "estimate",
+      "generatedAt": "2026-08-22T14:54:35.535Z",
+      "contentHash": "e74790ce1d84",
+      "title": "The Secret of success in every chapter of this book mention is made of",
+      "thesis": "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
+      "chapters": [
+        {
+          "idx": 1,
+          "label": "Secret · President · Carnegie",
+          "t0": 0,
+          "t1": 1200,
+          "insights": [
+            {
+              "text": "and patented 140 Innovations for natural gas and oil production Cyrus HK Curtis starting with a small agricultural weekly Curtis turned it into Ladies Home Journal created Saturday evening post",
+              "t": 751,
+              "tsEstimate": true
+            },
+            {
+              "text": "Orville became the first Americans to fly heavier than air aircraft and pioneered the aviation industry William Jennings briyan newspaper publisher Presidential nominee Secretary of State under President William McKinley",
+              "t": 818,
+              "tsEstimate": true
+            },
+            {
+              "text": "defended teaching the theory of evolution at the Scopes Monkey Trial woodr Wilson 28th president of the United States of America from 1913 to 1921 William Howard Taft 27th president of the",
+              "t": 1041,
+              "tsEstimate": true
+            },
+            {
+              "text": "inspired by the Carnegie secret went to law school after age 40 and also helped publish Napoleon Hills Magazine Dr Frank crane a noted psychologist essayist",
+              "t": 1151,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "Orville became the first Americans to fly heavier than air aircraft and pioneered the aviation industry William Jennings briyan newspaper publisher Presidential nominee Secretary of State under President William McKinley",
+            "t": 818,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 2,
+          "label": "Edison · Rich · Barnes",
+          "t0": 1200,
+          "t1": 2400,
+          "insights": [
+            {
+              "text": "Amos Mary Kay Ash Ken Blanchard Adelaide Bry Chicken Soup for the Soul authors Jack Canfield and Mark Victor Hansen Debbie Fields shaky gain John Gray Susan Jeffers Bruce Jenner Charlie tremendous",
+              "t": 1288,
+              "tsEstimate": true
+            },
+            {
+              "text": "Jones Tommy lorta art link letter Joan London Dr Maxwell maltz James Redfield Dr Bernie seagull Jose Silva Brian Tracy Lillian Vernon",
+              "t": 1301,
+              "tsEstimate": true
+            },
+            {
+              "text": "author in this Edition that text appears as chapter 1 and is renamed the secret of success the chapters that follow are renumbered sequentially",
+              "t": 1616,
+              "tsEstimate": true
+            },
+            {
+              "text": "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
+              "t": 2349,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
+            "t": 2349,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 3,
+          "label": "Principles · Child · Uncle",
+          "t0": 2400,
+          "t1": 3600,
+          "insights": [
+            {
+              "text": "editor's comment a 50 Cent lesson in persistence shortly after Mr Darby received his degree from the University of hard KNX he witnessed something that proved to him that",
+              "t": 2425,
+              "tsEstimate": true
+            },
+            {
+              "text": "no small degree to the lesson he had learned from the child Mr Darby pointed out every time a prospect tried to Bow me out without buying I saw that child standing",
+              "t": 2703,
+              "tsEstimate": true
+            },
+            {
+              "text": "and made it a Cornerstone of his own philosophy that young man became a congressman and an important factor in President Franklin D Roosevelt's Administration he wrote me a letter in which",
+              "t": 3334,
+              "tsEstimate": true
+            },
+            {
+              "text": "become one of the nation's leading Airline Executives a great inspirational speaker and a United States senator from West Virginia 35 years after I made that speech it was my pleasure to",
+              "t": 3491,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "editor's comment a 50 Cent lesson in persistence shortly after Mr Darby received his degree from the University of hard KNX he witnessed something that proved to him that",
+            "t": 2425,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 4,
+          "label": "Edison · Yourself · Riches",
+          "t0": 3600,
+          "t1": 4800,
+          "insights": [
+            {
+              "text": "desire it is not sufficient merely to say I want plenty of money be definite about the amount there is a psychological reason for such definiteness explained in subsequent chapters two determine",
+              "t": 4030,
+              "tsEstimate": true
+            },
+            {
+              "text": "Hill believe the actual Act of writing and speaking your goals is important and if psychologists and motivational experts agree then you would be foolish not to follow this simple advice just",
+              "t": 4340,
+              "tsEstimate": true
+            },
+            {
+              "text": "young Merl was a series of juvenile detention centers at 16 he quit school and for the next four years the only Mark Merl Haggard made in the world was a wrap",
+              "t": 4713,
+              "tsEstimate": true
+            },
+            {
+              "text": "sheet for stolen cars burglaries and bogus checks by the age of 20 he was serving time in San Quenton and gaining a reputation as a hard gase con",
+              "t": 4726,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "sheet for stolen cars burglaries and bogus checks by the age of 20 he was serving time in San Quenton and gaining a reputation as a hard gase con",
+            "t": 4726,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 5,
+          "label": "Hear · World · Hearing",
+          "t0": 4800,
+          "t1": 6000,
+          "insights": [
+            {
+              "text": "and shows he was still in high school when he got the contract to automate the Time Square New Year's Eve ball though he went on to attend University he never bothered",
+              "t": 4832,
+              "tsEstimate": true
+            },
+            {
+              "text": "anyone's assistance in 2001 Cayman hit the front pages when he introduced the segue a oneperson people mover based on his iBot technology it's a two whe scooter like device that zips",
+              "t": 4916,
+              "tsEstimate": true
+            },
+            {
+              "text": "and W sold his expensive hulet Packard scientific calculator to raise $1,300 to start their new company they took the money convinced the local electronic suppliers to grant them a line of",
+              "t": 5081,
+              "tsEstimate": true
+            },
+            {
+              "text": "credit and started production of the apple one they revolutionized the computer hardware and software industry released in 1976 and priced at $666 the Apple One earned them $774,000 2 years later",
+              "t": 5094,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "anyone's assistance in 2001 Cayman hit the front pages when he introduced the segue a oneperson people mover based on his iBot technology it's a two whe scooter like device that zips",
+            "t": 4916,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 6,
+          "label": "Belief · Conscious · Physical",
+          "t0": 6000,
+          "t1": 7200,
+          "insights": [
+            {
+              "text": "give up the idea buy a sewing machine and go to work you can never be a singer never is a long time the director of the Vienna Court Opera may have",
+              "t": 6170,
+              "tsEstimate": true
+            },
+            {
+              "text": "said nothing but his own desire to live saved him he never would have pulled through if he had not refused to accept the possibility of death editors comments by the 1980s",
+              "t": 6296,
+              "tsEstimate": true
+            },
+            {
+              "text": "the phenomenon that Napoleon Hill wrote about in the preceding paragraph Was embraced by a growing segment of the population among the adherence were numerous medical professionals who Incorporated the concept under",
+              "t": 6309,
+              "tsEstimate": true
+            },
+            {
+              "text": "and think thinking process that produces hunches flashes of insight and leaps of logic Hill's concept has similarities to what psychologist Carl Jung called the collective unconscious",
+              "t": 6528,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "said nothing but his own desire to live saved him he never would have pulled through if he had not refused to accept the possibility of death editors comments by the 1980s",
+            "t": 6296,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 7,
+          "label": "Schwab · Steel · Story",
+          "t0": 7200,
+          "t1": 8400,
+          "insights": [
+            {
+              "text": "of the editor's comment a pretty after dinner speech for a billion dollars when on the evening of December 12th 1900 some 80 of the nation's Financial nobility gathered in the banquet",
+              "t": 8139,
+              "tsEstimate": true
+            },
+            {
+              "text": "a recent visit to Pittsburgh had arranged the dinner to introduce the 38-year-old Steelman to Eastern banking Society but they didn't expect him to Stampede the convention they warned him in fact",
+              "t": 8177,
+              "tsEstimate": true
+            },
+            {
+              "text": "90 minutes Morgan led the orator to a recessed window where dangling their legs from the high uncomfortable seat they talked for an hour more the magic of the Schwab personality had",
+              "t": 8304,
+              "tsEstimate": true
+            },
+            {
+              "text": "Morgan in slapping together a steel trust after the pattern of the biscuit wireing hoop sugar rubber whiskey oil or chewing gum combinations editors comments the Random House college dictionary defines a",
+              "t": 8330,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "a recent visit to Pittsburgh had arranged the dinner to introduce the 38-year-old Steelman to Eastern banking Society but they didn't expect him to Stampede the convention they warned him in fact",
+            "t": 8177,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 8,
+          "label": "Schwab · Steel · Carnegie",
+          "t0": 8400,
+          "t1": 9600,
+          "insights": [
+            {
+              "text": "as personal telegrapher and secretary to the head of the Pennsylvania Railroad it wasn't long before he'd worked his way up the ranks to superintendent of the Pittsburgh division which in turn",
+              "t": 8536,
+              "tsEstimate": true
+            },
+            {
+              "text": "no trust at all a plum pudding as one writer said without the plums Schwab's speech on the night of December 12th 1900 undoubtedly car carried the inference though not the pledge",
+              "t": 8712,
+              "tsEstimate": true
+            },
+            {
+              "text": "street upon which Carnegie was resolved Never To Tread then it was suggested by John W Gates the goet that if Schwab happened to be in the Belleview Hotel in Philadelphia JP",
+              "t": 8896,
+              "tsEstimate": true
+            },
+            {
+              "text": "well worth the effort this is the end of the editor's comments a quitter never wins and a winner never quits chapter 5 Autos suggestion the medium for influencing the subconscious mind",
+              "t": 9457,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "well worth the effort this is the end of the editor's comments a quitter never wins and a winner never quits chapter 5 Autos suggestion the medium for influencing the subconscious mind",
+            "t": 9457,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 9,
+          "label": "Suggestion · Autos · Intend",
+          "t0": 9600,
+          "t1": 10800,
+          "insights": [
+            {
+              "text": "see yourself rendering the service or delivering the merchandise you intend to give in return for this money this is important editors comments the basic principle underlying Autos suggestion is closely related",
+              "t": 10084,
+              "tsEstimate": true
+            },
+            {
+              "text": "suggestion a contemp AR of Sigman Freud Kua operated a clinic that treated patients diagnosed with psychosomatic ailments individuals who have convinced themselves they are ill and even show symptoms",
+              "t": 10153,
+              "tsEstimate": true
+            },
+            {
+              "text": "and authors have developed systems based on the same principles Dr Maxwell maltz a noted plastic surgeon found that often it was as important for his patients to change their inner perception",
+              "t": 10381,
+              "tsEstimate": true
+            },
+            {
+              "text": "country Jose Silva's best-selling book The Silva mind control method has also sold many millions of copies in 1978 50 years after Napoleon Hill wrote about visualization in law of success Shak",
+              "t": 10417,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and authors have developed systems based on the same principles Dr Maxwell maltz a noted plastic surgeon found that often it was as important for his patients to change their inner perception",
+            "t": 10381,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 10,
+          "label": "Specialized · Education · Ford",
+          "t0": 10800,
+          "t1": 12000,
+          "insights": [
+            {
+              "text": "and Einstein academic accomplishment has never been a sure indicator of success the October 27th 20 3 issue of Time Magazine made a similar point in their cover story about the changes",
+              "t": 11565,
+              "tsEstimate": true
+            },
+            {
+              "text": "and comparing corporate managers EI with their IQ to analyze which has the greatest positive effect on the financial bottom line Daniel Goldman's theories have caused some significant changes within educational circles",
+              "t": 11626,
+              "tsEstimate": true
+            },
+            {
+              "text": "course when you would otherwise drop it I learned this from experience when I enrolled for a home study course in advertising after completing eight or 10 lessons I stopped studying",
+              "t": 11737,
+              "tsEstimate": true
+            },
+            {
+              "text": "the course which I had legally obligated myself to do I should complete the lessons and get my money's worth correspondent schools are well-organized businesses at the time I felt that their",
+              "t": 11762,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and Einstein academic accomplishment has never been a sure indicator of success the October 27th 20 3 issue of Time Magazine made a similar point in their cover story about the changes",
+            "t": 11565,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 11,
+          "label": "Her · She · Job",
+          "t0": 12000,
+          "t1": 13200,
+          "insights": [
+            {
+              "text": "burning desire heated up the day his friend and fellow computer Club member Paul Allen bought a copy of the January 1975 issue of popular Electronics on the cover was a picture",
+              "t": 12130,
+              "tsEstimate": true
+            },
+            {
+              "text": "the best example of merchandising personal services I have ever seen when the presentation had been completed it contained nearly 50 pages of beautifully typed properly organized information it told the story",
+              "t": 12481,
+              "tsEstimate": true
+            },
+            {
+              "text": "vice president was a job that most would be proud to earn through 10 years of loyal effort but help and turn the trick in little more than 6 months one of",
+              "t": 12785,
+              "tsEstimate": true
+            },
+            {
+              "text": "believed enough in her idea that she spent $495 to take a small ad in 17 magazine the ad brought in $32,000 in orders that was when Lilian Vernon started to gather",
+              "t": 13179,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "vice president was a job that most would be proud to earn through 10 years of loyal effort but help and turn the trick in little more than 6 months one of",
+            "t": 12785,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 12,
+          "label": "Synthesized · Creative · Ideas",
+          "t0": 13200,
+          "t1": 14400,
+          "insights": [
+            {
+              "text": "and Direct Mail as she imagined having her own catalog she started by mailing a 16-page black and white catalog to 125,000 customers who had bought products from her in the past",
+              "t": 13212,
+              "tsEstimate": true
+            },
+            {
+              "text": "well over 100 full color pages are mailed to millions of people many times each year and generate approximately $250 million in annual sales there is another story about Gathering specialized knowledge",
+              "t": 13236,
+              "tsEstimate": true
+            },
+            {
+              "text": "at 5 cents an hour he was always taking courses and learning what he could about steam engines and by 1905 he had worked his way up through the ranks until he",
+              "t": 13273,
+              "tsEstimate": true
+            },
+            {
+              "text": "and the light never lasted more than a few minutes Edison failed more than 10,000 times in his attempt to control this heat when he found the method it was by applying",
+              "t": 13804,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and the light never lasted more than a few minutes Edison failed more than 10,000 times in his attempt to control this heat when he found the method it was by applying",
+            "t": 13804,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 13,
+          "label": "Kettle · Old · Years",
+          "t0": 14400,
+          "t1": 15600,
+          "insights": [
+            {
+              "text": "and handed it over to the doctor the roll contained exactly $500 the clerk's entire savings the doctor handed over a small slip of paper on which was written a secret formula",
+              "t": 14640,
+              "tsEstimate": true
+            },
+            {
+              "text": "extended to every city Town Village and cross roads of the world now here's the most important thing to remember the ideas you create may have the possibility of duplicating the enormous",
+              "t": 14898,
+              "tsEstimate": true
+            },
+            {
+              "text": "today there are almost 12,000 KFC locations in more than 80 countries with sales of nearly $10 billion a Year Debbie Fields was a 20-year-old housewife who loved to bake cookies she",
+              "t": 15010,
+              "tsEstimate": true
+            },
+            {
+              "text": "arches Ray Crocs in ination paid off in billions of hamburgers sold in 1982 Howard Schultz went to work as the director of marketing for a small coffee importer wholesaler called Starbucks",
+              "t": 15197,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "arches Ray Crocs in ination paid off in billions of hamburgers sold in 1982 Howard Schultz went to work as the director of marketing for a small coffee importer wholesaler called Starbucks",
+            "t": 15197,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 14,
+          "label": "Store · Stores · Million",
+          "t0": 15600,
+          "t1": 16800,
+          "insights": [
+            {
+              "text": "well as science and engineering courses in 1949 The Institute of Design founded in 1937 also merged with IIT followed in 1969 by the Chicago Kent College of Law",
+              "t": 15818,
+              "tsEstimate": true
+            },
+            {
+              "text": "and giving pads of postage to receptionists secretaries and anyone else who would listen whereas 3m's conventional marketing Machinery had failed giving Post-its to the people who would actually use them did",
+              "t": 16145,
+              "tsEstimate": true
+            },
+            {
+              "text": "just liked to be able to walk around listening to their favorite music then came the imaginative idea that made all the difference ibuka remembered that another division was working on lightweight",
+              "t": 16328,
+              "tsEstimate": true
+            },
+            {
+              "text": "Southern retail store one day he was standing with a tray in his hands waiting his turn in a cafeteria he had never earned more than $20 a week before then and",
+              "t": 16366,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and giving pads of postage to receptionists secretaries and anyone else who would listen whereas 3m's conventional marketing Machinery had failed giving Post-its to the people who would actually use them did",
+            "t": 16145,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 15,
+          "label": "Plans · Leader · Leaders",
+          "t0": 16800,
+          "t1": 18000,
+          "insights": [
+            {
+              "text": "now here's the twist to the story David gold was running a liquor store that he had inherited from his father he noticed that whenever he put out a display of goods",
+              "t": 16816,
+              "tsEstimate": true
+            },
+            {
+              "text": "offer them to the public at 9 9 he found them and they even had brand named products of everything from Hardware to panty hose cleaning products motor oil kitchen wear Cosmetics",
+              "t": 16875,
+              "tsEstimate": true
+            },
+            {
+              "text": "and still make a profit David gold opened his first well-lighted brightly colored green INF fuchsia wide aisle store in Englewood California in 1982 by 2003 he had 142 stores in California",
+              "t": 16896,
+              "tsEstimate": true
+            },
+            {
+              "text": "be added to the list Ed Amin Francisco Franco Saddam Hussein Ferdinand Marcos Swan mosovich Juan Pon General Augusto Pinos PA pot General suharto the Taliban leaders in Afghanistan Marshall yoseph Bros",
+              "t": 17782,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "be added to the list Ed Amin Francisco Franco Saddam Hussein Ferdinand Marcos Swan mosovich Juan Pon General Augusto Pinos PA pot General suharto the Taliban leaders in Afghanistan Marshall yoseph Bros",
+            "t": 17782,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 16,
+          "label": "Comment · Position · Job",
+          "t0": 18000,
+          "t1": 19200,
+          "insights": [
+            {
+              "text": "right a leader is someone who does the right thing Admiral Grace Hopper was the ranking female Navy officer when she was interviewed for 60 minutes she said you manage things you",
+              "t": 18128,
+              "tsEstimate": true
+            },
+            {
+              "text": "and it is a rule of thumb in advertising that a single single ad rarely sells anything it usually requires multiple exposures before the buyer the potential employer is motivated to buy",
+              "t": 18303,
+              "tsEstimate": true
+            },
+            {
+              "text": "service or experience you have to offer letters should be neatly typed always and signed by hand you should include a complete resume or outline of your qualifications both the letter of",
+              "t": 18328,
+              "tsEstimate": true
+            },
+            {
+              "text": "so demanding that employers filling responsible positions are very cautious about whom they hire in the first place there are rules about such things as the difference between salaried",
+              "t": 18751,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and it is a rule of thumb in advertising that a single single ad rarely sells anything it usually requires multiple exposures before the buyer the potential employer is motivated to buy",
+            "t": 18303,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 17,
+          "label": "Services · Service · Failure",
+          "t0": 19200,
+          "t1": 20400,
+          "insights": [
+            {
+              "text": "Pleasant conditions you must adopt and follow the qqs formula qqs means that quality plus quantity plus the proper Spirit of cooperation equals perfect salesmanship of service remember the qqs formula",
+              "t": 19682,
+              "tsEstimate": true
+            },
+            {
+              "text": "sells merchandise I emphasize this because many people who live by the sale of personal services make the mistake of considering themselves free from the rules of conduct",
+              "t": 19849,
+              "tsEstimate": true
+            },
+            {
+              "text": "and overindulgence in sex lack of proper physical exercise an inadequate supply of fresh air due to improper breathing seven unfavorable environmental influences during childhood as The Twig is bent",
+              "t": 20194,
+              "tsEstimate": true
+            },
+            {
+              "text": "so shall the tree grow most people who have criminal Tendencies acquire them as the result of bad environment and improper Associates during their childhood or youth procrastination this is one of",
+              "t": 20206,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "so shall the tree grow most people who have criminal Tendencies acquire them as the result of bad environment and improper Associates during their childhood or youth procrastination this is one of",
+            "t": 20206,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 18,
+          "label": "Freedom · Services · Analysis",
+          "t0": 20400,
+          "t1": 21600,
+          "insights": [
+            {
+              "text": "choosing overcaution is as bad as under caution both are extremes to be guarded against life itself is filled with the element of chance 17 wrong selection of Associates in business this",
+              "t": 20544,
+              "tsEstimate": true
+            },
+            {
+              "text": "fatal to success 29 guessing instead of thinking most people are too indifferent or lazy to acquire facts with which to think accurately they prefer to act on opinions created by guesswork",
+              "t": 20797,
+              "tsEstimate": true
+            },
+            {
+              "text": "I been intemperate in any of my personal habits 16 have I expressed either openly or secretly any form of egotism 17 has my conduct toward my associates been such that they",
+              "t": 21126,
+              "tsEstimate": true
+            },
+            {
+              "text": "and see what the United States of America offers the person seeking riches to begin with remember that we live in a country where every law-abiding citizen enjoys freedom of thought",
+              "t": 21330,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "fatal to success 29 guessing instead of thinking most people are too indifferent or lazy to acquire facts with which to think accurately they prefer to act on opinions created by guesswork",
+            "t": 20797,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 19,
+          "label": "Decision · Riches · Men",
+          "t0": 21600,
+          "t1": 22800,
+          "insights": [
+            {
+              "text": "because they Supply the entire fabric of which all education Enlightenment and human progress consist money without brains is always dangerous properly used it is the most important essential of civilization to",
+              "t": 21679,
+              "tsEstimate": true
+            },
+            {
+              "text": "would turn thousands of friends and political supporters against him when the rulers of Athens gave Socrates the choice of disclaiming his teachings or being sentenced to death Socrates 's decision to",
+              "t": 22593,
+              "tsEstimate": true
+            },
+            {
+              "text": "dates and the names of the men who fought we remember Valley Forge and Yorktown we remember George Washington and Lord Cornwallis",
+              "t": 22667,
+              "tsEstimate": true
+            },
+            {
+              "text": "events that gave birth to this power The Story begins with an incident in Boston on March 5th 1770 British soldiers were patrolling the streets openly threatening the citizens by the presence",
+              "t": 22722,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "would turn thousands of friends and political supporters against him when the rulers of Athens gave Socrates the choice of disclaiming his teachings or being sentenced to death Socrates 's decision to",
+            "t": 22593,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 20,
+          "label": "Adams · Decision · Persistence",
+          "t0": 22800,
+          "t1": 24000,
+          "insights": [
+            {
+              "text": "destined to change the entire trend of civilization ation Richard Henry Lee became an important factor in this story because he and Samuel Adams corresponded frequently sharing freely their fears",
+              "t": 22814,
+              "tsEstimate": true
+            },
+            {
+              "text": "an act of Henry VII by which persons can be sent to England for trial for treason or mis prian of treason at the discretion of a governor of a Province",
+              "t": 22987,
+              "tsEstimate": true
+            },
+            {
+              "text": "to be held in Philadelphia September 5th 1774 remember this date it is more important than July 4th 1776 if there had been",
+              "t": 23161,
+              "tsEstimate": true
+            },
+            {
+              "text": "he was subject to prosecution for high treason against his Majesty's government inspired by the threat one of Jefferson's colleagues Patrick Henry boldly spoke his mind concluding his remarks with a sentence",
+              "t": 23209,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "he was subject to prosecution for high treason against his Majesty's government inspired by the threat one of Jefferson's colleagues Patrick Henry boldly spoke his mind concluding his remarks with a sentence",
+            "t": 23209,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 21,
+          "label": "Me · Turning · Point",
+          "t0": 24000,
+          "t1": 25200,
+          "insights": [
+            {
+              "text": "but Broadway is not easily nor quickly conquered Broadway acknowledges Talent recognizes genius and pays off in money only after a person has refused to quit the secret is always inseparably attached",
+              "t": 24208,
+              "tsEstimate": true
+            },
+            {
+              "text": "manufacturing plant and began to Train Ordinary machinists in automobile assembly and repair work the school prospered paying me over $1,000 a month in net profits my banker knew that I was",
+              "t": 24656,
+              "tsEstimate": true
+            },
+            {
+              "text": "he had met while working at the White House and by early January of 1919 Hills Golden Rule magazine was on the news stands the first issue was 48 pages in the",
+              "t": 25080,
+              "tsEstimate": true
+            },
+            {
+              "text": "of 1920 he simply left by April of 1921 he had raised the money for a new publication Napoleon Hills Magazine the foundation of which was again the golden rule",
+              "t": 25124,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "he had met while working at the White House and by early January of 1919 Hills Golden Rule magazine was on the news stands the first issue was 48 pages in the",
+            "t": 25080,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 22,
+          "label": "Persistence · Lucky · Criticism",
+          "t0": 25200,
+          "t1": 26400,
+          "insights": [
+            {
+              "text": "and resolved to finish the challenge Carnegie had posed almost 20 years earlier Hill went to Phil Philadelphia convinced a publisher to put up the money then worked night",
+              "t": 25288,
+              "tsEstimate": true
+            },
+            {
+              "text": "the stock market crash of 20 n hit the bottom fell out of everything including the market for books though he never gave up on his vision like the rest of America",
+              "t": 25324,
+              "tsEstimate": true
+            },
+            {
+              "text": "for all the shortcuts to riches trying to get without giving a fair equivalent usually reflected in the habit of gambling or trying to drive unfair bargain 16 fear of criticism resulting",
+              "t": 25678,
+              "tsEstimate": true
+            },
+            {
+              "text": "make luck seven Secrets lucky people use to succeed in it he tells of a study that was done by the psychology department at the University of herfordshire near London they assembled",
+              "t": 25938,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "the stock market crash of 20 n hit the bottom fell out of everything including the market for books though he never gave up on his vision like the rest of America",
+            "t": 25324,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 23,
+          "label": "Mastermind · Muhammad · Group",
+          "t0": 26400,
+          "t1": 27600,
+          "insights": [
+            {
+              "text": "and ridicule yet before another 10 years had passed he was dictator of all Arabia ruler of Mecca and the head of a new world religion which was to sweep to the",
+              "t": 26582,
+              "tsEstimate": true
+            },
+            {
+              "text": "man woman or child was spared but the Christians did accept one Muslim idea the place of learning the University [Music] the ladder of success is never crowded at the top chapter",
+              "t": 26804,
+              "tsEstimate": true
+            },
+            {
+              "text": "and within 25 years he made himself one of the richest men in America how did he do it here is an important clue Mr Ford's most rapid strides became noticeable from",
+              "t": 27358,
+              "tsEstimate": true
+            },
+            {
+              "text": "and Paul Allen launching Microsoft or Steven Spielberg Jeffrey kenberg and David geffin creating DreamWorks skg or it could be a large group such as the Mastermind Alliance of 30 regional directors",
+              "t": 27510,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "and ridicule yet before another 10 years had passed he was dictator of all Arabia ruler of Mecca and the head of a new world religion which was to sweep to the",
+            "t": 26582,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 24,
+          "label": "Mastermind · Stone · Napoleon",
+          "t0": 27600,
+          "t1": 28800,
+          "insights": [
+            {
+              "text": "left out is far more important than what is included don't try to force the group along too quickly allow for those who want to test ideas by Playing devil's advocate compensating",
+              "t": 27735,
+              "tsEstimate": true
+            },
+            {
+              "text": "has ever been taken from the earth chapter 12 sexuality Charisma and creativity the 10th step toward riches editors comments what motivates human beings is the subject of continuing scientific research",
+              "t": 28494,
+              "tsEstimate": true
+            },
+            {
+              "text": "forces starting with the basic physiological and safety needs then ascends through belonging and love esteem understanding Aesthetics self-actualization and Transcendence other psychologists and sociologists have defined and arranged the categories differently",
+              "t": 28539,
+              "tsEstimate": true
+            },
+            {
+              "text": "but in almost all cases there is agreement that after the primary life- sustaining needs are met sex and love are the next most important motivating forces Napoleon Hill also compiled a",
+              "t": 28552,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "left out is far more important than what is included don't try to force the group along too quickly allow for those who want to test ideas by Playing devil's advocate compensating",
+            "t": 27735,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 25,
+          "label": "Creative · Faculty · Charisma",
+          "t0": 28800,
+          "t1": 30000,
+          "insights": [
+            {
+              "text": "and shapely it is also a fact that the success of those who are short balding plump or plain isn't always due to Superior skill or luck clearly there is another kind",
+              "t": 28857,
+              "tsEstimate": true
+            },
+            {
+              "text": "the editor's comments when employing salespeople a good sales manager looks for personal magnetism or Charisma as the first requirement people who lack this kind of Sexual Energy will never become enthusiastic",
+              "t": 28896,
+              "tsEstimate": true
+            },
+            {
+              "text": "Lincoln Ralph Waldo Emerson Robert Burns Thomas Jefferson Albert hubard Albert H Gary woodro Wilson John H Patterson Andrew Jackson enrio Caruso wherever there was evidence available in connection with the lives",
+              "t": 29210,
+              "tsEstimate": true
+            },
+            {
+              "text": "and the art bearing in mind that biographical information is always subjective the reader can now find ample material from which to draw a conclusion as to whether Hill's theory about sexuality",
+              "t": 29283,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "the editor's comments when employing salespeople a good sales manager looks for personal magnetism or Charisma as the first requirement people who lack this kind of Sexual Energy will never become enthusiastic",
+            "t": 28896,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 26,
+          "label": "Love · Intelligence · Infinite",
+          "t0": 30000,
+          "t1": 31200,
+          "insights": [
+            {
+              "text": "Nobel Prize in medicine and as mentioned above James Watson's breakthrough in the structure of DNA May Mozart Shelly kidge Huxley deart Robert Lewis Stevenson all claimed intuition played a role in",
+              "t": 30076,
+              "tsEstimate": true
+            },
+            {
+              "text": "their Creations William Blake learned the secret to a copper engraving process from a dream British prime minister Winston Churchill firmly believed a premonition saved him from being killed by a bomb",
+              "t": 30088,
+              "tsEstimate": true
+            },
+            {
+              "text": "terms infinite intelligence however in the 1970s and 80s The public's interest was piqued by well researched books such as the intuitive Edge by Philip Goldberg creative Dreaming by Patricia Garfield",
+              "t": 30114,
+              "tsEstimate": true
+            },
+            {
+              "text": "and goes away without warning accept and enjoy it while it remains but spend no time worrying about its departure worry will never bring it back dismiss the thought that love only",
+              "t": 30477,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "their Creations William Blake learned the secret to a copper engraving process from a dream British prime minister Winston Churchill firmly believed a premonition saved him from being killed by a bomb",
+            "t": 30088,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 27,
+          "label": "Emotions · Thoughts · Emotion",
+          "t0": 31200,
+          "t1": 32400,
+          "insights": [
+            {
+              "text": "mixed with feeling or emotion than it is by thoughts originating solely in the reasoning portion of the Mind in fact there is much evidence to support the theory that only emotionalized",
+              "t": 31360,
+              "tsEstimate": true
+            },
+            {
+              "text": "well mixed with emotion are acted upon more readily than thought impulses originating in cold reason editors comments W Clement Stone Napoleon Hills friend mentor",
+              "t": 31432,
+              "tsEstimate": true
+            },
+            {
+              "text": "using the word try is just one example of the care that should be taken when formulating affirmations and using autosuggestion the following are some other rules of thumb that most modern",
+              "t": 31732,
+              "tsEstimate": true
+            },
+            {
+              "text": "ritual of meaningless words and because most people who pray do so only after everything else has failed they go to prayer with their minds filled with fear and doubt because fear",
+              "t": 31887,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "well mixed with emotion are acted upon more readily than thought impulses originating in cold reason editors comments W Clement Stone Napoleon Hills friend mentor",
+            "t": 31432,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 28,
+          "label": "Brain · Sense · Sixth",
+          "t0": 32400,
+          "t1": 33600,
+          "insights": [
+            {
+              "text": "and which areas affect memory emotions reasoning and many other subtleties related to the thinking process through surgery medication and other techniques we know how to prevent the brain from having certain",
+              "t": 32549,
+              "tsEstimate": true
+            },
+            {
+              "text": "now appeared the author eh Wright a attempts to summarize what has been learned or what it seems reasonable to infer regarding the exact nature of these extra sensory modes of perception",
+              "t": 32954,
+              "tsEstimate": true
+            },
+            {
+              "text": "but on the contrary when is most wide awake and alert Ryan discovered that a narcotic will invariably lower a percipient score while a stimulant will always send it higher the most",
+              "t": 33048,
+              "tsEstimate": true
+            },
+            {
+              "text": "sacrifice and is never the result of selfishness chapter 15 The Sixth Sense the door to the Temple of wisdom the 13th step toward riches the 13th principle is known as The",
+              "t": 33333,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "now appeared the author eh Wright a attempts to summarize what has been learned or what it seems reasonable to infer regarding the exact nature of these extra sensory modes of perception",
+            "t": 32954,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 29,
+          "label": "Sense · Character · Me",
+          "t0": 33600,
+          "t1": 34800,
+          "insights": [
+            {
+              "text": "which you have uncovered so many of Nature's Secrets the spirit of unremitting toil with which you have so often rested Victory from defeat the startling power of imagination my method of",
+              "t": 33838,
+              "tsEstimate": true
+            },
+            {
+              "text": "characteristics that surprised me for example Lincoln developed the habit of always being late than walking around in solemn parade he always wore an expression of seriousness on his face rarely did",
+              "t": 33876,
+              "tsEstimate": true
+            },
+            {
+              "text": "so well defined in the author's mind that the personalities of the characters themselves begin to suggest plot points and dialogue that the author never planned often the thoughts that come to",
+              "t": 34032,
+              "tsEstimate": true
+            },
+            {
+              "text": "you read indecision crystallizes into doubt the two blend and become fear the blending process often is slow this is one reason why these three enemies are so dangerous they germinate",
+              "t": 34445,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "characteristics that surprised me for example Lincoln developed the habit of always being late than walking around in solemn parade he always wore an expression of seriousness on his face rarely did",
+            "t": 33876,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 30,
+          "label": "Self · Lack · Poverty",
+          "t0": 34800,
+          "t1": 36000,
+          "insights": [
+            {
+              "text": "reason destroys the imagination kills off self-reliance undermines enthusiasm discourages initiative leads to uncertainty of purpose encourages procrastination wipes out enthusiasm and makes self-control",
+              "t": 34809,
+              "tsEstimate": true
+            },
+            {
+              "text": "men of course I do not mean the shuffling hags of the city streets who are the opposite number of the confirmed male bums I mean reasonably young decent",
+              "t": 35369,
+              "tsEstimate": true
+            },
+            {
+              "text": "switch almost daily always completing the job with a statement you'll land in a Penitentiary before you are 20 he was sent to a Reformatory at the age of 17 editors comments",
+              "t": 35591,
+              "tsEstimate": true
+            },
+            {
+              "text": "subtle hypnotherapists have found that common phrases such as don't you ever say no to me again I'm afraid she'll never get over it or you're just like your father can hamper",
+              "t": 35625,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "switch almost daily always completing the job with a statement you'll land in a Penitentiary before you are 20 he was sent to a Reformatory at the age of 17 editors comments",
+            "t": 35591,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 31,
+          "label": "Death · Habit · Love",
+          "t0": 36000,
+          "t1": 37200,
+          "insights": [
+            {
+              "text": "man's habit of stealing his neighbor mate and taking liberties with her whenever he could though amusing this Theory does not take into account that women fear the loss of a love",
+              "t": 36166,
+              "tsEstimate": true
+            },
+            {
+              "text": "because you have reached the age of 40 or 50 instead of reversing the rule and expressing gratitude for having reached the age of wisdom and understanding three inappropriate dress",
+              "t": 36432,
+              "tsEstimate": true
+            },
+            {
+              "text": "produces feedback in more ways than one first and perhaps most important to be remembered the person who releases thoughts of a destructive nature must suffer damage through the breaking down of",
+              "t": 36945,
+              "tsEstimate": true
+            },
+            {
+              "text": "call this evil susceptibility to negative influences those who accumulate great riches always protect themselves against negative influences the poverty stricken never do those who succeed in any calling must prepare their",
+              "t": 37066,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "because you have reached the age of 40 or 50 instead of reversing the rule and expressing gratitude for having reached the age of wisdom and understanding three inappropriate dress",
+            "t": 36432,
+            "tsEstimate": true
+          }
+        },
+        {
+          "idx": 32,
+          "label": "Why · Aliis · Yourself",
+          "t0": 37200,
+          "t1": 38275,
+          "insights": [
+            {
+              "text": "inferior to you how much time out of every 24 hours do you devote to your occupation sleep play and relaxation acquiring useful knowledge plain wasted time who among your acquaintances encourages",
+              "t": 37559,
+              "tsEstimate": true
+            },
+            {
+              "text": "he would go broke trying to run a store on 5 and 10 cent sales he did not believe them he knew that he could do anything within reason if he backed",
+              "t": 37763,
+              "tsEstimate": true
+            },
+            {
+              "text": "not succeed have one distinguishing trait in common they know all the reasons for failure and have what they believe to be airtight aliis to explain away their own lack of achievement",
+              "t": 37866,
+              "tsEstimate": true
+            },
+            {
+              "text": "but a reflection of my own nature Elbert hubard philosopher author publisher of the fra magazine and founder of the Roy crofters community of artists said it has always been a mystery",
+              "t": 38149,
+              "tsEstimate": true
+            }
+          ],
+          "quote": {
+            "text": "but a reflection of my own nature Elbert hubard philosopher author publisher of the fra magazine and founder of the Roy crofters community of artists said it has always been a mystery",
+            "t": 38149,
+            "tsEstimate": true
+          }
+        }
+      ],
+      "frameworks": [
+        {
+          "text": "sacrifice and is never the result of selfishness chapter 15 The Sixth Sense the door to the Temple of wisdom the 13th step toward riches the 13th principle is known as The",
+          "t": 33333,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "of 1920 he simply left by April of 1921 he had raised the money for a new publication Napoleon Hills Magazine the foundation of which was again the golden rule",
+          "t": 25124,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "and authors have developed systems based on the same principles Dr Maxwell maltz a noted plastic surgeon found that often it was as important for his patients to change their inner perception",
+          "t": 10381,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "and handed it over to the doctor the roll contained exactly $500 the clerk's entire savings the doctor handed over a small slip of paper on which was written a secret formula",
+          "t": 14640,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "Pleasant conditions you must adopt and follow the qqs formula qqs means that quality plus quantity plus the proper Spirit of cooperation equals perfect salesmanship of service remember the qqs formula",
+          "t": 19682,
+          "located": true,
+          "tsEstimate": true
+        },
+        {
+          "text": "see yourself rendering the service or delivering the merchandise you intend to give in return for this money this is important editors comments the basic principle underlying Autos suggestion is closely related",
+          "t": 10084,
+          "located": true,
+          "tsEstimate": true
+        }
+      ],
+      "takeaways": [
+        "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
+        "Orville became the first Americans to fly heavier than air aircraft and pioneered the aviation industry William Jennings briyan newspaper publisher Presidential nominee Secretary of State under President William McKinley",
+        "their Creations William Blake learned the secret to a copper engraving process from a dream British prime minister Winston Churchill firmly believed a premonition saved him from being killed by a bomb",
+        "he had met while working at the White House and by early January of 1919 Hills Golden Rule magazine was on the news stands the first issue was 48 pages in the",
+        "and giving pads of postage to receptionists secretaries and anyone else who would listen whereas 3m's conventional marketing Machinery had failed giving Post-its to the people who would actually use them did"
+      ],
+      "quotes": [
+        {
+          "text": "Orville became the first Americans to fly heavier than air aircraft and pioneered the aviation industry William Jennings briyan newspaper publisher Presidential nominee Secretary of State under President William McKinley",
+          "t": 818,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
+          "t": 2349,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "editor's comment a 50 Cent lesson in persistence shortly after Mr Darby received his degree from the University of hard KNX he witnessed something that proved to him that",
+          "t": 2425,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "sheet for stolen cars burglaries and bogus checks by the age of 20 he was serving time in San Quenton and gaining a reputation as a hard gase con",
+          "t": 4726,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "anyone's assistance in 2001 Cayman hit the front pages when he introduced the segue a oneperson people mover based on his iBot technology it's a two whe scooter like device that zips",
+          "t": 4916,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "said nothing but his own desire to live saved him he never would have pulled through if he had not refused to accept the possibility of death editors comments by the 1980s",
+          "t": 6296,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "a recent visit to Pittsburgh had arranged the dinner to introduce the 38-year-old Steelman to Eastern banking Society but they didn't expect him to Stampede the convention they warned him in fact",
+          "t": 8177,
+          "tsEstimate": true,
+          "located": true
+        },
+        {
+          "text": "well worth the effort this is the end of the editor's comments a quitter never wins and a winner never quits chapter 5 Autos suggestion the medium for influencing the subconscious mind",
+          "t": 9457,
+          "tsEstimate": true,
+          "located": true
+        }
+      ],
+      "questions": [
+        "What does the source teach about he?",
+        "What does the source teach about his?",
+        "What does the source teach about mind?",
+        "What does the source teach about had?",
+        "How does napoleon hill think grow rich apply today?"
+      ],
+      "mergedFromMastery": false,
+      "docId": "doc_1787410475745_r3lix1"
+    }
+  ]
+}

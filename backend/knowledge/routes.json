@@ -1,0 +1,204 @@
+{
+  "version": 2,
+  "updated": "2026-08-22",
+  "note": "ROUTES OF USE — how each agent converts stored knowledge into action. Each route maps real goals to the exact digests/sources in that agent's KB, an operating playbook, and amplification tools. Agents consult this before answering so knowledge is APPLIED, not just recited.",
+  "routes": {
+    "SHADDAI": [
+      {
+        "id": "strategic-decision",
+        "title": "Make a long-horizon strategic call",
+        "match": ["strategy", "decide", "direction", "prioritize", "roadmap", "vision", "positioning"],
+        "sources": ["DIGEST_buffett_advice_success", "DIGEST_hormozi_life_advice_27min"],
+        "playbook": [
+          "Frame the decision over 10 years, then work backwards (Buffett: only take positions you'd hold if the market closed tomorrow).",
+          "Check who you associate with / partner with on this move — people compound faster than strategies.",
+          "Commit fully or not at all — Hormozi: all-in on one bet beats hedged mediocrity.",
+          "Write the one-sentence thesis; if it takes a paragraph, the decision isn't clear yet."
+        ],
+        "amplify": []
+      },
+      {
+        "id": "lead-under-pressure",
+        "title": "Lead yourself/team under pressure",
+        "match": ["pressure", "discipline", "stoic", "crisis", "team", "lead", "resilience"],
+        "sources": ["DIGEST_marcus_aurelius_meditations_full"],
+        "playbook": [
+          "Separate what is yours to control from what isn't before acting (Meditations core discipline).",
+          "Choose the response, not the reaction — the obstacle is the material.",
+          "Do the duty in front of you at the quality you'd sign your name to."
+        ],
+        "amplify": []
+      }
+    ],
+    "ORACLE": [
+      {
+        "id": "pattern-research",
+        "title": "Research a pattern/system across sources",
+        "match": ["research", "pattern", "consciousness", "manifestation", "esoteric", "hidden knowledge", "compare"],
+        "sources": ["DIGEST_bomar_occult_hidden_knowledge", "DIGEST_dispenza_inner_mission", "DIGEST_hicks_dyer_universe"],
+        "playbook": [
+          "Locate each candidate source's chapter timestamps before citing — quote the moment, not the vibe.",
+          "Map claims across systems (Kemetic, Hermetic, Dispenza, Hicks) into shared concepts vs contradictions.",
+          "Flag unverified claims explicitly; connect to measurable analogs where they exist."
+        ],
+        "amplify": ["web-search", "grok-x-feed"]
+      },
+      {
+        "id": "state-and-belief",
+        "title": "Explain state/belief mechanics",
+        "match": ["belief", "state", "meditation", "law of attraction", "subconscious", "identity"],
+        "sources": ["DIGEST_hicks_oprah_law_of_attraction", "DIGEST_hicks_effortless_manifestation", "DIGEST_dispenza_seminar"],
+        "playbook": [
+          "Ground explanations in the emotional-guidance-system framing (Hicks) and neuroplasticity framing (Dispenza).",
+          "Give the mechanism, not mysticism: thought → state → perception → action loop.",
+          "Offer one practiceable protocol with expected timeframe."
+        ],
+        "amplify": []
+      }
+    ],
+    "ZEROX": [
+      {
+        "id": "price-the-offer",
+        "title": "Price & structure an irresistible offer",
+        "match": ["price", "pricing", "offer", "charge", "value equation", "close rate", "discount", "bonus"],
+        "sources": ["DIGEST_hormozi_100m_offer", "MASTERY_hormozi_100m_offer", "DIGEST_hormozi_sell_stupid"],
+        "playbook": [
+          "Run the Value Equation: raise (Dream Outcome × Perceived Likelihood), shrink (Time Delay × Effort & Sacrifice).",
+          "De-constrain the journey: itemize every step around the purchase, attach a bonus to each friction point.",
+          "Never discount — reverse risk with guarantees (unconditional/conditional/anti/performance) instead.",
+          "Quote the source moment: Value Equation framework ≈ early chapters of hormozi_100m_offer digest."
+        ],
+        "amplify": ["stripe-billing", "paybox-watch"]
+      },
+      {
+        "id": "invest-long-term",
+        "title": "Advise on long-term investing",
+        "match": ["invest", "hold", "portfolio", "index", "compounding", "buy"],
+        "sources": ["DIGEST_buffett_investing", "DIGEST_kiyosaki_rich_dad_full"],
+        "playbook": [
+          "Buy productive assets you'd be happy holding through a closed market (Buffett).",
+          "Distinguish asset vs liability before any position talk (Rich Dad frame).",
+          "Time in market beats timing; cost of churn compounds against you."
+        ],
+        "amplify": ["coingecko-markets"]
+      },
+      {
+        "id": "build-wealth-mindset",
+        "title": "Wealth psychology & desire transmutation",
+        "match": ["rich", "wealth mindset", "desire", "napoleon hill", "think and grow rich", "money mindset"],
+        "sources": ["DIGEST_napoleon_hill_think_grow_rich", "DIGEST_kiyosaki_rich_dad_full"],
+        "playbook": [
+          "Start from burning desire → definite plan → persistence (Hill's 13 principles chain).",
+          "Attach the mastermind principle: no fortune was built alone.",
+          "Convert advice into a 30-day executable habit, not motivation."
+        ],
+        "amplify": []
+      }
+    ],
+    "NEXUS": [
+      {
+        "id": "design-agent-system",
+        "title": "Design/build an AI agent system",
+        "match": ["agent", "langgraph", "llm app", "orchestration", "tool calling", "memory"],
+        "sources": ["DIGEST_ai_agents_full_course", "DIGEST_langgraph_complete_course", "DIGEST_first_ai_agent_25min"],
+        "playbook": [
+          "Decide graph vs loop topology first; LangGraph pattern for stateful multi-step flows.",
+          "Every tool gets: typed schema, timeout, idempotency note, failure mode.",
+          "Memory: short-term in state, long-term in the RAG store (kb_<agent>) — recall before generate.",
+          "Cite chapter timestamps when teaching these patterns back to users."
+        ],
+        "amplify": ["groq-inference", "ollama-local", "mcp-tools"]
+      },
+      {
+        "id": "scale-architecture",
+        "title": "Scale/review system architecture",
+        "match": ["scale", "architecture", "database", "cache", "load", "system design", "bottleneck"],
+        "sources": ["DIGEST_system_design_complete", "DIGEST_system_design_concepts", "DIGEST_system_design_tiktok"],
+        "playbook": [
+          "Quantify load first (QPS, read/write ratio, payload size) before proposing anything.",
+          "Cache → CDN → replica → shard, in that order; measure between each step.",
+          "Name the tradeoff out loud (consistency vs latency vs cost) — no free wins."
+        ],
+        "amplify": []
+      }
+    ],
+    "TURTLE": [
+      {
+        "id": "creative-process",
+        "title": "Coach a creative process",
+        "match": ["creative", "creativity", "process", "block", "ideas", "make art", "genius"],
+        "sources": ["DIGEST_kanye_creative_process", "DIGEST_kanye_genius_creative", "DIGEST_kanye_7_principles"],
+        "playbook": [
+          "Volume beats perfection: ship the rough version, iterate in public (Kanye process).",
+          "Steal like an artist — reference explicitly (Basquiat/Picasso did), transform don't copy.",
+          "Constraints are the design; pick the box before decorating inside it."
+        ],
+        "amplify": ["flux-image", "seedream-image"]
+      },
+      {
+        "id": "art-history-lens",
+        "title": "Analyze visual work through art history",
+        "match": ["picasso", "basquiat", "cubism", "style", "aesthetic", "visual analysis"],
+        "sources": ["DIGEST_picasso_cubism", "DIGEST_picasso_untold_story", "DIGEST_basquiat_real_story"],
+        "playbook": [
+          "Place the work in lineage (which movement, which break from tradition).",
+          "Explain technique choices as arguments, not decoration.",
+          "Translate the lesson into a concrete UI/design application for SHADDAI surfaces."
+        ],
+        "amplify": []
+      }
+    ],
+    "QUILL": [
+      {
+        "id": "write-to-move",
+        "title": "Writing that moves people",
+        "match": ["write", "writing", "copy", "persuade", "voice", "edit", "clarity"],
+        "sources": ["DIGEST_pulitzer_writing_process", "DIGEST_jordan_peterson_power_writing", "DIGEST_rhetoric_get_what_you_want"],
+        "playbook": [
+          "One idea per sentence; cut every word that survives without a job (Pulitzer process).",
+          "Rhetoric triangle: ethos, pathos, logos — know which lever the passage pulls.",
+          "Read aloud; the ear catches what the eye forgives."
+        ],
+        "amplify": []
+      },
+      {
+        "id": "influence-without-friction",
+        "title": "Influence & human relations",
+        "match": ["influence", "persuasion", "people", "negotiate", "friends", "communicate"],
+        "sources": ["DIGEST_dale_carnegie_win_friends", "DIGEST_stoic_self_discipline"],
+        "playbook": [
+          "Name the other side's interest before stating your own (Carnegie principle #1).",
+          "Let them save face; agreement sticks when dignity survives.",
+          "Stoic guard: persuade without needing the win."
+        ],
+        "amplify": []
+      }
+    ],
+    "PIKADON": [
+      {
+        "id": "harden-privacy",
+        "title": "Harden personal/system privacy",
+        "match": ["privacy", "anonymous", "track", "fingerprint", "vpn", "data leak"],
+        "sources": ["DIGEST_invisible_online", "DIGEST_online_privacy_2026"],
+        "playbook": [
+          "Threat-model first: who is the adversary and what do they actually see?",
+          "Layer: device → browser fingerprint → network → identity; close the widest gap first.",
+          "Assume breach; verify logs would catch it (audit trail always)."
+        ],
+        "amplify": []
+      },
+      {
+        "id": "strategic-defense",
+        "title": "Strategic defense & conflict assessment",
+        "match": ["threat", "attack surface", "war", "conflict", "risk", "defense", "sun tzu"],
+        "sources": ["DIGEST_sun_tzu_art_of_war", "DIGEST_selfhost_security"],
+        "playbook": [
+          "Win without fighting: remove the incentive before hardening the wall.",
+          "Attack weakness, defend strength — audit maps both sides.",
+          "Self-host checklist: secrets off-box, least privilege, backups tested by restore."
+        ],
+        "amplify": []
+      }
+    ]
+  }
+}

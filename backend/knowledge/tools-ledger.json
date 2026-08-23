@@ -1,0 +1,91 @@
+{
+  "version": 3,
+  "updated": "2026-08-22",
+  "policy": "LIVING TOOLS LEDGER — the brain tracks its own instrumentation. When a new tool lands (PayBox, Grok bot, anything), add an entry here and agents amplify it automatically: ORACLE scouts it, NEXUS wires it, ZEROX prices it, PIKADON gates it. status: active | pilot | watchlist | sunset.",
+  "tools": [
+    {
+      "name": "Groq",
+      "category": "inference",
+      "status": "active",
+      "what": "Primary cloud LLM chain (llama-3.3-70b class, fastest tokens/sec) for rag_ask, distillation, agent reasoning.",
+      "useFor": ["fast synthesis", "distillation passes", "agent loop reasoning"],
+      "agents": ["ALL"],
+      "integrateWith": "backend/llm-client.js cascade"
+    },
+    {
+      "name": "Ollama",
+      "category": "inference-local",
+      "status": "active",
+      "what": "Local fallback model host (phi4-mini default) — zero-cost offline reasoning when no API key is present.",
+      "useFor": ["offline fallback", "private data processing"],
+      "agents": ["ALL"],
+      "integrateWith": "backend/llm-client.js cascade"
+    },
+    {
+      "name": "Stripe",
+      "category": "payments",
+      "status": "active",
+      "what": "Subscription billing rails for SHADDAI tiers (checkout, webhooks, portal).",
+      "useFor": ["subscriptions", "tier limits", "webhook-driven entitlements"],
+      "agents": ["ZEROX", "NEXUS"],
+      "integrateWith": "backend/stripe-routes.js + stripe-webhook.js"
+    },
+    {
+      "name": "Grok (xAI)",
+      "category": "research/x-data",
+      "status": "watchlist",
+      "what": "xAI model family with realtime X/Twitter firehose grounding. Scout: does live social sentiment beat our current Polymarket+CoinGecko mix for early signal?",
+      "useFor": ["realtime social research", "early signal detection", "council cross-talk grounding"],
+      "agents": ["ORACLE", "ZEROX"],
+      "integrateWith": "candidate for backend/external-apis.js adapter",
+      "decision": "Pilot when an API key is available; compare signal latency vs current feeds on 5 tracked markets."
+    },
+    {
+      "name": "PayBox",
+      "category": "payments",
+      "status": "watchlist",
+      "what": "Payments aggregator candidate. Evaluate: coverage vs Stripe, fees, crypto rails, payout speed for marketplace sellers.",
+      "useFor": ["alt payment rails", "regional coverage", "marketplace payouts"],
+      "agents": ["ZEROX", "PIKADON"],
+      "integrateWith": "candidate alongside backend/payment-providers.js",
+      "decision": "Keep on watchlist until fee table + compliance review pass PIKADON gate."
+    },
+    {
+      "name": "Polymarket CLOB",
+      "category": "prediction-markets",
+      "status": "active",
+      "what": "Prediction market odds feed powering POLY tabs and swarm scenario inputs.",
+      "useFor": ["probability grounding", "event trading signals"],
+      "agents": ["ORACLE", "ZEROX"],
+      "integrateWith": "/api/polymarket/markets"
+    },
+    {
+      "name": "CoinGecko / DexScreener / Jupiter",
+      "category": "market-data",
+      "status": "active",
+      "what": "Crypto price/market data stack — majors, Solana ecosystem, meme pairs.",
+      "useFor": ["market panels", "signal computation", "portfolio marks"],
+      "agents": ["ZEROX", "ORACLE"],
+      "integrateWith": "mirofish adapters + pro-signals intel"
+    },
+    {
+      "name": "MCP Bridge",
+      "category": "interop",
+      "status": "active",
+      "what": "stdio MCP server exposing the council + RAG KBs to Claude Desktop/Cursor/etc. The brain's external nervous system.",
+      "useFor": ["external clients", "rag_search/rag_ask/run_agent tools"],
+      "agents": ["ALL"],
+      "integrateWith": "backend/mcp-server-rag.js"
+    },
+    {
+      "name": "AceDataCloud skill pack",
+      "category": "generation",
+      "status": "active",
+      "what": "Image/video/music generation skills (Flux, Seedream, Veo, Suno...) available to TURTLE/QUILL lesson-plan production.",
+      "useFor": ["lesson visuals", "digest-to-video pipeline (planned)", "branding assets"],
+      "agents": ["TURTLE", "QUILL"],
+      "integrateWith": "~/.agents/skills/*"
+    }
+  ],
+  "amplifyRule": "Any tool reaching 'pilot' gets a digest card ingested into kb_oracle + kb_nexus within 24h so the whole council can reason about it."
+}
