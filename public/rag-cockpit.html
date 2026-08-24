@@ -358,6 +358,7 @@ import * as D from './js/cockpit-data.js';
 import { buildCompartments, applyExplode, projectLabels } from './js/head-explode.js';
 
 const AGENTS = [
+  {id:'SHADDAI',color:'#ffd23d'},   // orchestrator — renders as an orb, not a head
   {id:'NEXUS',color:'#5bc8d4'},{id:'PIKADON',color:'#f0a060'},{id:'TURTLE',color:'#4dd4a0'},
   {id:'ZEROX',color:'#b87fdf'},{id:'QUILL',color:'#e87f7f'},{id:'ORACLE',color:'#f0d080'},
 ];
@@ -448,9 +449,45 @@ const loader = new GLTFLoader();
 let parts = [];            // compartment shells
 let explodeT = 0;
 
+/* SHADDAI has no head — it is the orchestrator, so it reads as a core, not a
+   face. Procedural orb: nested shells + a particle cloud, no asset needed. */
+function buildOrb(colorHex){
+  const g = new THREE.Group();
+  const col = new THREE.Color(colorHex);
+  g.add(new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.15, 3),
+    new THREE.MeshBasicMaterial({color:col.clone(), wireframe:true, transparent:true, opacity:.30})));
+  // Nucleus must glow, not block — an opaque sphere at this scale reads as a
+  // flat disc filling the viewport.
+  g.add(new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.42, 2),
+    new THREE.MeshStandardMaterial({color:col.clone(), emissive:col.clone(),
+      emissiveIntensity:1.5, roughness:.35, metalness:.4,
+      transparent:true, opacity:.55})));
+  const N=1400, pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const u=Math.random()*2-1, th=Math.random()*Math.PI*2, s=Math.sqrt(1-u*u), r=1.3+Math.random()*.5;
+    pos[i*3]=Math.cos(th)*s*r; pos[i*3+1]=u*r; pos[i*3+2]=Math.sin(th)*s*r;
+  }
+  const pg=new THREE.BufferGeometry();
+  pg.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.add(new THREE.Points(pg, new THREE.PointsMaterial({
+    color:col.clone(), size:.035, transparent:true, opacity:.8,
+    blending:THREE.AdditiveBlending, depthWrite:false})));
+  g.userData.isOrb = true;
+  return g;
+}
+
 function loadMask(agentId){
   while(slot.children.length) slot.remove(slot.children[0]);
   parts = [];
+  if(agentId === 'SHADDAI'){
+    const orb = buildOrb(current.color);
+    orb.scale.setScalar(1.15);
+    slot.add(orb);
+    cmpLayer.innerHTML = '';          // an orb has no compartments to label
+    return;
+  }
   const tryFiles = [`assets/council/${agentId}-head.glb`, `assets/council/SKULL-head.glb`];
   (function next(i){
     if(i>=tryFiles.length) return;
@@ -467,8 +504,42 @@ function loadMask(agentId){
       o.visible = false;
       parts.forEach(p => slot.add(p.group));
       buildCmpLabels();
+      buildCore(current.color);   // what's inside, revealed as the shells part
     }, undefined, ()=>next(i+1));
   })(0);
+}
+
+/* ── the interior ────────────────────────────────────────────────────────
+   Opening the head should reveal something, not an empty cavity. A glowing
+   core with an orbiting particle shell sits inside, hidden while closed and
+   fading up as the shells part. */
+let core = null;
+function buildCore(colorHex){
+  if(core){ slot.remove(core); core = null; }
+  const col = new THREE.Color(colorHex);
+  core = new THREE.Group();
+  // Read as an energy core, not a solid ball: small emissive nucleus inside a
+  // larger open lattice, both well under the head's cavity size.
+  core.add(new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.34, 2),
+    new THREE.MeshStandardMaterial({color:col.clone(), emissive:col.clone(),
+      emissiveIntensity:1.6, roughness:.3, metalness:.4,
+      transparent:true, opacity:0})));
+  core.add(new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.78, 1),
+    new THREE.MeshBasicMaterial({color:col.clone(), wireframe:true,
+      transparent:true, opacity:0})));
+  const N=700, pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const u=Math.random()*2-1, th=Math.random()*Math.PI*2, s=Math.sqrt(1-u*u), r=1.0+Math.random()*.35;
+    pos[i*3]=Math.cos(th)*s*r; pos[i*3+1]=u*r; pos[i*3+2]=Math.sin(th)*s*r;
+  }
+  const pg=new THREE.BufferGeometry();
+  pg.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  core.add(new THREE.Points(pg, new THREE.PointsMaterial({
+    color:col.clone(), size:.03, transparent:true, opacity:0,
+    blending:THREE.AdditiveBlending, depthWrite:false})));
+  slot.add(core);
 }
 
 /* ── compartments → real payloads ───────────────────────────────────────── */
@@ -885,6 +956,20 @@ function frame(){
     n.scale.setScalar(n.userData.base*puff);
     n.position.copy(n.userData.home).multiplyScalar(1 + explodeT*0.30);
   });
+
+  // interior fades up only once the shells have actually parted
+  if(core){
+    const vis = Math.max(0, (explodeT - 0.12) / 0.88);
+    core.rotation.y += dt*0.35; core.rotation.x = Math.sin(acc*0.4)*0.2;
+    core.visible = vis > 0.01;
+    core.children.forEach((c,i)=>{
+      if(c.material) c.material.opacity = vis * (i===0 ? .85 : i===1 ? .28 : .7);
+    });
+    core.scale.setScalar(0.85 + vis*0.25);
+  }
+  // SHADDAI's orb breathes instead of opening
+  const orb = slot.children.find(c=>c.userData && c.userData.isOrb);
+  if(orb){ orb.rotation.y += dt*0.18; orb.rotation.x = Math.sin(acc*0.3)*0.12; }
 
   if(parts.length){
     applyExplode(parts, explodeT);

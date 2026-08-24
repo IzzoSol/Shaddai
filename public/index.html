@@ -6803,9 +6803,21 @@ window.enter3DWorld=function(){
       #brainView .brn-hit .t{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.82)}
       #brainView .brn-muted{color:var(--text-muted);font-size:12px;font-family:'Share Tech Mono',monospace}
     </style>
-    <div class="brn-hero">
-      <div class="brn-title">🧠 THE BRAIN</div>
-      <div class="brn-sub" id="brainStats">wiring to the council's knowledge…</div>
+    <div class="brn-hero" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div class="brn-title">🧠 THE BRAIN</div>
+        <div class="brn-sub" id="brainStats">wiring to the council's knowledge…</div>
+      </div>
+      <a href="rag-cockpit.html"
+         style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;
+                text-decoration:none;color:#12061f;background:#b16cff;border-radius:9px;padding:11px 18px;
+                display:inline-flex;align-items:center;gap:8px;white-space:nowrap">
+        🧬 Open the 3D Brain
+      </a>
+    </div>
+    <div class="brn-sub" style="margin:-8px 0 14px;color:rgba(255,255,255,.45)">
+      Search and ask below, or open the 3D brain to take a council head apart and
+      run its knowledge, tools, skills and scripts directly.
     </div>
     <div class="card" style="padding:18px">
       <div class="brn-chips" id="brainAgents"></div>
