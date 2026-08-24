@@ -492,8 +492,23 @@ function loadMask(agentId){
       const o=g.scene;
       const b=new THREE.Box3().setFromObject(o), s=b.getSize(new THREE.Vector3()), c=b.getCenter(new THREE.Vector3());
       const k=3.5/Math.max(s.x,s.y,s.z); o.scale.setScalar(k); o.position.sub(c.multiplyScalar(k));
+      // Untextured meshes (Meshy preview stage, no refine pass) come in flat
+      // grey. Tint those to the agent's colour so they read as that character
+      // instead of a clay model; textured meshes are left alone.
+      const tint = new THREE.Color(current.color);
       o.traverse(n=>{ if(n.isMesh&&n.material){ const m=[].concat(n.material);
-        m.forEach(x=>{ if(x.emissive) x.emissive.setHex(0x081018); if(x.roughness!==undefined) x.roughness=Math.max(x.roughness,.4); }); }});
+        m.forEach(x=>{
+          const untextured = !x.map;
+          if(untextured && x.color){
+            // Keep the agent's hue but land it dark — lerping toward white
+            // washed the mesh out to a near-white clay bust.
+            x.color.copy(tint).multiplyScalar(0.34);
+            if(x.metalness!==undefined) x.metalness = .72;
+            if(x.roughness!==undefined) x.roughness = .38;
+          }
+          if(x.emissive) x.emissive.setHex(untextured ? 0x0d1a26 : 0x081018);
+          if(x.roughness!==undefined) x.roughness=Math.max(x.roughness,.4);
+        }); }});
       slot.add(o);
       // Build the clipped compartment shells from the loaded head and hide the
       // whole head — from here the four shells ARE the head.
