@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Start — SHADDAI</title>
+<style>
+  :root { --bg:#0b0b0d; --panel:#16161a; --ink:#f5f6f8; --muted:#9aa0aa; --accent:#00e5ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, Segoe UI, sans-serif; display:flex; flex-direction:column; }
+  header { padding: 20px; text-align:center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  header h1 { margin:0; font-size: 20px; }
+  main { flex:1; max-width: 480px; width:100%; margin: 0 auto; padding: 24px 20px 40px; display:flex; flex-direction:column; }
+  .card { background: var(--panel); border-radius: 16px; padding: 24px; }
+  .picker-grid { display:grid; gap: 12px; }
+  .picker-item { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px; text-align:left; color:var(--ink); font-size: 16px; cursor:pointer; display:flex; gap:12px; align-items:center; }
+  .picker-item:active { transform: scale(0.98); }
+  .picker-item .icon { font-size: 28px; }
+  .picker-item .meta { display:flex; flex-direction:column; gap:2px; }
+  .picker-item .desc { color: var(--muted); font-size: 13px; }
+  .progress { display:flex; gap:6px; justify-content:center; margin-bottom: 20px; }
+  .progress .dot { width:8px; height:8px; border-radius:50%; background: rgba(255,255,255,0.15); }
+  .progress .dot.active { background: var(--accent); }
+  .prompt { font-size: 18px; font-weight:600; margin-bottom: 16px; }
+  input[type=text], input[type=email], textarea, select {
+    width:100%; padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+    background: #0d0d10; color: var(--ink); font-size: 16px; margin-bottom: 20px;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  .btn-row { display:flex; gap:10px; }
+  button { flex:1; padding: 14px; border-radius: 10px; border:none; font-size:16px; font-weight:600; cursor:pointer; }
+  .btn-next { background: var(--accent); color:#001318; }
+  .btn-back { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,0.15); }
+  .spinner { text-align:center; padding: 40px 0; color: var(--muted); }
+  .result-frame { width:100%; height: 50vh; border:none; border-radius: 12px; background:#fff; margin-bottom:16px; }
+  .result-url { display:block; text-align:center; color: var(--accent); word-break: break-all; margin-bottom: 16px; }
+  .result-text { white-space: pre-wrap; background:#0d0d10; border-radius:10px; padding:16px; font-size:14px; }
+</style>
+</head>
+<body>
+<header><h1>⚡ Quick Start</h1></header>
+<main id="app"><div class="spinner">Loading...</div></main>
+
+<script>
+(function () {
+  const app = document.getElementById('app');
+  let useCases = [];
+  let current = null;   // the selected use case object
+  let step = 0;         // index into current.questions
+  let answers = {};
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function loadUseCases() {
+    const res = await fetch('/api/quickstart/usecases');
+    const data = await res.json();
+    useCases = (data && data.useCases) || [];
+    renderPicker();
+  }
+
+  function renderPicker() {
+    current = null; step = 0; answers = {};
+    app.innerHTML = `
+      <div class="picker-grid">
+        ${useCases.map((u, i) => `
+          <button class="picker-item" data-idx="${i}">
+            <span class="icon">${esc(u.icon || '✨')}</span>
+            <span class="meta">
+              <strong>${esc(u.label)}</strong>
+              <span class="desc">${esc(u.description || '')}</span>
+            </span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    app.querySelectorAll('.picker-item').forEach((el) => {
+      el.addEventListener('click', () => {
+        current = useCases[Number(el.dataset.idx)];
+        step = 0;
+        renderQuestion();
+      });
+    });
+  }
+
+  function renderProgress() {
+    return `<div class="progress">${current.questions.map((_, i) =>
+      `<span class="dot${i <= step ? ' active' : ''}"></span>`).join('')}</div>`;
+  }
+
+  function renderQuestion() {
+    const q = current.questions[step];
+    let field;
+    if (q.type === 'textarea') {
+      field = `<textarea id="qfield" placeholder="${esc(q.placeholder || '')}">${esc(answers[q.key] || '')}</textarea>`;
+    } else if (q.type === 'select') {
+      field = `<select id="qfield">${q.options.map((o) =>
+        `<option value="${esc(o.value)}" ${answers[q.key] === o.value ? 'selected' : ''}>${esc(o.label)}</option>`
+      ).join('')}</select>`;
+    } else {
+      field = `<input type="${q.type === 'email' ? 'email' : 'text'}" id="qfield" placeholder="${esc(q.placeholder || '')}" value="${esc(answers[q.key] || '')}">`;
+    }
+    app.innerHTML = `
+      <div class="card">
+        ${renderProgress()}
+        <div class="prompt">${esc(q.prompt)}</div>
+        ${field}
+        <div class="btn-row">
+          <button class="btn-back" id="backBtn">${step === 0 ? 'Cancel' : 'Back'}</button>
+          <button class="btn-next" id="nextBtn">${step === current.questions.length - 1 ? 'Finish' : 'Next'}</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('backBtn').addEventListener('click', () => {
+      if (step === 0) { renderPicker(); return; }
+      answers[q.key] = document.getElementById('qfield').value;
+      step -= 1;
+      renderQuestion();
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      answers[q.key] = document.getElementById('qfield').value;
+      if (step === current.questions.length - 1) {
+        runUseCase();
+      } else {
+        step += 1;
+        renderQuestion();
+      }
+    });
+  }
+
+  async function runUseCase() {
+    app.innerHTML = '<div class="spinner">Working on it…</div>';
+    try {
+      const res = await fetch(`/api/quickstart/run/${encodeURIComponent(current.id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Something went wrong');
+      renderResult(data);
+    } catch (e) {
+      app.innerHTML = `<div class="card"><div class="prompt">Something went wrong</div><p>${esc(e.message)}</p>
+        <div class="btn-row"><button class="btn-back" id="retryBtn">Start Over</button></div></div>`;
+      document.getElementById('retryBtn').addEventListener('click', renderPicker);
+    }
+  }
+
+  function renderResult(data) {
+    let body = '';
+    if (data.outputType === 'website') {
+      body = `
+        <iframe class="result-frame" srcdoc="${esc(data.previewHtml)}"></iframe>
+        <a class="result-url" href="${esc(data.url)}" target="_blank">${esc(location.origin + data.url)}</a>
+      `;
+    } else {
+      body = `<div class="result-text">${esc(data.content || '')}</div>`;
+    }
+    app.innerHTML = `
+      <div class="card">
+        <div class="prompt">🎉 Done!</div>
+        ${body}
+        <div class="btn-row"><button class="btn-next" id="againBtn">Make Another</button></div>
+      </div>
+    `;
+    document.getElementById('againBtn').addEventListener('click', renderPicker);
+  }
+
+  loadUseCases();
+})();
+</script>
+</body>
+</html>

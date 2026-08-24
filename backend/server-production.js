@@ -445,6 +445,19 @@ app.use(express.static(path.join(__dirname, '../public'), {
   }
 }));
 
+// Quick Start generated sites — served with directory-index enabled so a generated
+// site is reachable at the pretty URL /sites/<slug>/ . The global static mount above
+// sets index:false, so without this a directory request falls through to the SPA
+// catch-all and returns the dashboard instead of the generated page.
+app.use('/sites', express.static(path.join(__dirname, '../public/sites'), {
+  index: 'index.html',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
+
 // Request tracking middleware
 app.use((req, res, next) => {
   const requestId = crypto.randomBytes(8).toString('hex');
