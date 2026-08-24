@@ -40,10 +40,22 @@ export function initBrainHead(container, opts = {}) {
 
   const root = new THREE.Group();
   scene.add(root);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-  const key = new THREE.PointLight(0xffffff, 1.4, 40);
-  key.position.set(3, 4, 5);
+  // Meshy heads come in dark against an obsidian ground — light them properly:
+  // ambient for base readability, a key from camera-side, and two coloured rims
+  // so the silhouette separates from the shell behind it.
+  scene.add(new THREE.AmbientLight(0xffffff, 1.6));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(2, 3, 6);
   scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.8);
+  fill.position.set(-3, 1, 4);
+  scene.add(fill);
+  const rimL = new THREE.PointLight(0x66e0ff, 2.0, 18);
+  rimL.position.set(-3.4, 1.2, -2.2);
+  scene.add(rimL);
+  const rimR = new THREE.PointLight(0xffc964, 1.6, 18);
+  rimR.position.set(3.4, -0.6, -2.2);
+  scene.add(rimR);
 
   let accent = new THREE.Color('#4dd4a0');
 
@@ -86,8 +98,11 @@ export function initBrainHead(container, opts = {}) {
   root.add(orb);
 
   // ── head (GLB if generated, else portrait billboard) ───────────────────────
+  // Deliberately NOT parented to `root`: the shell, orb and genre ring orbit
+  // around the face, but the face itself holds still and meets your eye. When
+  // it span with everything else you could never actually look into it.
   const headSlot = new THREE.Group();
-  root.add(headSlot);
+  scene.add(headSlot);
   const loader = new GLTFLoader();
   const texLoader = new THREE.TextureLoader();
 
@@ -106,7 +121,22 @@ export function initBrainHead(container, opts = {}) {
     clearSlot();
     loader.load(
       `assets/council/${agentId}-head.glb`,
-      (gltf) => { fitToBox(gltf.scene, 2.1); headSlot.add(gltf.scene); },
+      (gltf) => {
+        fitToBox(gltf.scene, 2.3);
+        // Meshy busts already face +Z (the camera) — verified by render, an
+        // extra PI here shows the back of the skull. headYaw is per-asset trim.
+        gltf.scene.rotation.y = opts.headYaw ?? 0;
+        gltf.scene.traverse((n) => {
+          if (!n.isMesh || !n.material) return;
+          const mats = Array.isArray(n.material) ? n.material : [n.material];
+          mats.forEach((m) => {
+            if (m.emissive) m.emissive.setHex(0x0a0f16);
+            if (m.metalness !== undefined) m.metalness = Math.min(m.metalness, 0.55);
+            if (m.roughness !== undefined) m.roughness = Math.max(m.roughness, 0.42);
+          });
+        });
+        headSlot.add(gltf.scene);
+      },
       undefined,
       () => {
         // No Meshy head yet — portrait billboard keeps the view whole.
@@ -135,7 +165,9 @@ export function initBrainHead(container, opts = {}) {
     list.forEach(([name, count], i) => {
       const a = (i / Math.max(1, list.length)) * Math.PI * 2;
       const mesh = new THREE.Mesh(nodeGeo, new THREE.MeshBasicMaterial({ color: accent.clone() }));
-      mesh.position.set(Math.cos(a) * 3.05, Math.sin(a) * 0.55, Math.sin(a) * 3.05);
+      // Wider than the shell and dropped below eye-line: at the old radius the
+      // front node sat between camera and face, blocking it.
+      mesh.position.set(Math.cos(a) * 3.7, -1.15 + Math.sin(a * 2) * 0.22, Math.sin(a) * 3.7);
       mesh.userData = { topic: name, count, baseScale: 1 + Math.min(1.1, (count || 0) / 900) };
       mesh.scale.setScalar(mesh.userData.baseScale);
       ring.add(mesh);
