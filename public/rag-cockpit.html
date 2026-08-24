@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Neural Cockpit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --void:#04060a; --crt:#0a2f8f; --cyan:#00e5ff; --acid:#39ff5a;
+  --magenta:#ff2fb8; --alarm:#ff2b3d; --bone:#cfe3e8; --amber:#ffb63d;
+  --bezel:#0b1626; --edge:rgba(0,229,255,.28);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--void); color:var(--bone);
+  font-family:'IBM Plex Mono',ui-monospace,monospace; overflow:hidden;
+}
+/* CRT: scanlines + vignette over the whole cockpit */
+body::after{
+  content:""; position:fixed; inset:0; z-index:50; pointer-events:none;
+  background:
+    repeating-linear-gradient(180deg, rgba(0,0,0,.30) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.72) 100%);
+  mix-blend-mode:multiply;
+}
+.grid-bg{
+  position:fixed; inset:0; z-index:0; opacity:.5;
+  background-image:
+    linear-gradient(rgba(10,47,143,.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,47,143,.55) 1px, transparent 1px);
+  background-size:26px 26px;
+  mask-image:radial-gradient(ellipse 90% 80% at 50% 45%, #000 30%, transparent 78%);
+}
+
+.cockpit{
+  position:relative; z-index:1; height:100%;
+  display:grid; grid-template-columns:238px 1fr 238px; grid-template-rows:34px 1fr 74px;
+  gap:8px; padding:8px;
+}
+header{
+  grid-column:1/-1; display:flex; align-items:center; gap:14px;
+  border:1px solid var(--edge); background:linear-gradient(180deg,#08192c,#050c15);
+  padding:0 12px;
+}
+h1{
+  font-family:'Silkscreen',monospace; font-size:.72rem; letter-spacing:.16em;
+  margin:0; color:var(--cyan); text-shadow:0 0 10px var(--cyan);
+}
+.tag{font-size:.58rem; letter-spacing:.16em; color:rgba(207,227,232,.5)}
+.stamp{
+  margin-left:auto; font-family:'Silkscreen',monospace; font-size:.58rem;
+  letter-spacing:.14em; padding:3px 7px; border:1px solid var(--alarm); color:var(--alarm);
+}
+.stamp.live{border-color:var(--acid); color:var(--acid)}
+
+.col{display:flex; flex-direction:column; gap:8px; min-height:0; overflow:hidden}
+.panel{
+  border:1px solid var(--edge); background:linear-gradient(180deg,rgba(10,47,143,.20),rgba(4,6,10,.85));
+  padding:6px 8px 8px; position:relative; min-height:0; min-width:0;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.panel::before{
+  content:""; position:absolute; inset:2px; border:1px solid rgba(0,229,255,.08); pointer-events:none;
+}
+.panel h2{
+  font-family:'Silkscreen',monospace; font-size:.52rem; letter-spacing:.1em;
+  margin:0 0 5px; color:var(--cyan); text-transform:uppercase; display:flex; gap:6px; align-items:center;
+}
+.panel h2 .idx{color:rgba(207,227,232,.35)}
+.panel.hot{border-color:var(--acid); box-shadow:0 0 18px rgba(57,255,90,.28)}
+canvas.inst{width:100%; display:block; flex:1; min-height:0}
+
+/* canvases MUST be width:100% — without it they take the 300px intrinsic
+   canvas width and burst out of the 238px instrument columns. */
+.rings{display:grid; grid-template-columns:1fr 1fr; gap:4px; min-width:0}
+.rings canvas{height:78px; width:100%; display:block; min-width:0}
+.gauges{display:grid; grid-template-columns:1fr 1fr; gap:4px; min-width:0}
+.gauges canvas{height:84px; width:100%; display:block; min-width:0}
+
+#shards{font-family:'VT323',monospace; font-size:1.02rem; line-height:1.28; overflow:auto; flex:1; min-height:0}
+.shard{color:rgba(207,227,232,.5); display:flex; align-items:center; gap:6px; letter-spacing:.06em}
+.shard .dot{width:5px;height:5px;background:rgba(207,227,232,.25);flex:0 0 auto}
+.shard.on{color:var(--acid); text-shadow:0 0 8px var(--acid)}
+.shard.on .dot{background:var(--acid); box-shadow:0 0 7px var(--acid)}
+
+.pads{display:grid; grid-template-columns:repeat(4,1fr); gap:4px}
+.pad{
+  height:26px; border:1px solid rgba(255,43,61,.5); background:rgba(255,43,61,.14);
+  cursor:pointer; font-family:'Silkscreen',monospace; font-size:.46rem; color:#ff8a95;
+  display:flex; align-items:center; justify-content:center;
+}
+.pad:hover{background:rgba(255,43,61,.3)}
+.pad:active,.pad.fired{background:var(--alarm); color:#fff; box-shadow:0 0 16px var(--alarm)}
+
+#ladder{height:100%; width:100%; min-width:0; flex:1}
+.ladder-wrap{display:flex; gap:6px; flex:1; min-height:0; min-width:0}
+.ladder-nums{font-family:'VT323',monospace; font-size:1.1rem; color:var(--cyan); display:flex; flex-direction:column; justify-content:space-between}
+
+#mutlog{font-size:.56rem; line-height:1.5; overflow:auto; flex:1; min-height:0}
+.ml-row{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ml-tag{display:inline-block; width:34px; color:rgba(207,227,232,.4)}
+.ml-in{color:rgba(207,227,232,.7)}
+.ml-exp{color:var(--amber)}
+.ml-out{color:var(--acid)}
+
+.knob-wrap{display:flex; align-items:center; gap:8px}
+.knob{
+  width:52px;height:52px;border-radius:50%;flex:0 0 auto; cursor:ns-resize;
+  background:radial-gradient(circle at 35% 30%,#1b3350,#070d16 70%);
+  border:1px solid var(--edge); position:relative;
+}
+.knob::after{
+  content:""; position:absolute; left:50%; top:5px; width:2px; height:16px;
+  background:var(--amber); box-shadow:0 0 8px var(--amber); transform-origin:50% 21px;
+  transform:translateX(-50%) rotate(var(--rot,0deg));
+}
+.knob-read{font-family:'VT323',monospace; font-size:1.4rem; color:var(--amber)}
+
+main{position:relative; border:1px solid var(--edge); overflow:hidden; min-height:0}
+#skullStage{position:absolute; inset:0}
+#laser{position:absolute; inset:0; pointer-events:none}
+.masks{
+  position:absolute; left:8px; bottom:8px; display:flex; gap:4px; z-index:3;
+}
+.mask{
+  width:34px;height:34px;border:1px solid rgba(0,229,255,.35); cursor:pointer;
+  background-size:cover; background-position:top center; filter:saturate(.5) brightness(.8);
+}
+.mask:hover{filter:none}
+.mask.on{border-color:var(--acid); filter:none; box-shadow:0 0 12px rgba(57,255,90,.5)}
+.viewport-tag{
+  position:absolute; top:8px; left:10px; z-index:3;
+  font-family:'Silkscreen',monospace; font-size:.5rem; letter-spacing:.12em; color:rgba(207,227,232,.45);
+}
+
+footer{
+  grid-column:1/-1; border:1px solid var(--edge); padding:6px 12px;
+  background:linear-gradient(180deg,rgba(10,47,143,.18),rgba(4,6,10,.85));
+  display:flex; align-items:center; gap:16px;
+}
+.rail{flex:1; display:flex; align-items:center; gap:10px}
+.rail label{font-family:'Silkscreen',monospace; font-size:.5rem; letter-spacing:.1em; color:var(--alarm); white-space:nowrap}
+input[type=range]{
+  flex:1; -webkit-appearance:none; appearance:none; height:4px; background:rgba(255,43,61,.25);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:12px; height:20px; background:var(--alarm);
+  box-shadow:0 0 10px var(--alarm); cursor:ew-resize;
+}
+input[type=range]::-moz-range-thumb{
+  width:12px;height:20px;border:0;background:var(--alarm);box-shadow:0 0 10px var(--alarm);cursor:ew-resize;
+}
+.rail-read{font-family:'VT323',monospace; font-size:1.2rem; color:var(--alarm); width:104px}
+.fire{
+  font-family:'Silkscreen',monospace; font-size:.56rem; letter-spacing:.12em; padding:8px 14px;
+  background:transparent; color:var(--acid); border:1px solid var(--acid); cursor:pointer;
+}
+.fire:hover{background:rgba(57,255,90,.14)}
+:focus-visible{outline:2px solid var(--acid); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important} }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<div class="cockpit">
+  <header>
+    <h1>NEURAL COCKPIT</h1>
+    <span class="tag">RAG BRAIN · CORE MODULE</span>
+    <span class="tag" id="agentTag">MASK: NEXUS</span>
+    <span class="stamp" id="stamp">SIM</span>
+  </header>
+
+  <!-- LEFT COLUMN -->
+  <div class="col">
+    <div class="panel" style="flex:1.1">
+      <h2><span class="idx">L1</span> Retrieval Velocity Trace</h2>
+      <canvas class="inst" id="velocity"></canvas>
+    </div>
+    <div class="panel">
+      <h2><span class="idx">L2</span> Corpus Composition</h2>
+      <div class="rings">
+        <canvas id="ring1"></canvas>
+        <canvas id="ring2"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <h2><span class="idx">L3</span> Load / Risk</h2>
+      <div class="gauges">
+        <canvas id="gLoad"></canvas>
+        <canvas id="gRisk"></canvas>
+      </div>
+    </div>
+    <div class="panel" style="flex:1">
+      <h2><span class="idx">L4</span> Active Shard IDs</h2>
+      <div id="shards"></div>
+    </div>
+    <div class="panel">
+      <h2><span class="idx">L5</span> Force Re-index</h2>
+      <div class="pads" id="pads"></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <main>
+    <span class="viewport-tag">OPTICAL FEED · GROUNDING LASER ARMED</span>
+    <div id="skullStage"></div>
+    <canvas id="laser"></canvas>
+    <div class="masks" id="masks"></div>
+  </main>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+    <div class="panel" style="flex:1.4">
+      <h2><span class="idx">R1</span> Attention Heat Ladder</h2>
+      <div class="ladder-wrap">
+        <canvas class="inst" id="ladder"></canvas>
+        <div class="ladder-nums"><span id="ladTop">941</span><span id="ladBot">807</span></div>
+      </div>
+    </div>
+    <div class="panel" style="flex:1.2">
+      <h2><span class="idx">R2</span> Query Mutation Log</h2>
+      <div id="mutlog"></div>
+    </div>
+    <div class="panel">
+      <h2><span class="idx">R3</span> Creativity Override</h2>
+      <div class="knob-wrap">
+        <div class="knob" id="knob" tabindex="0" role="slider"
+             aria-label="Creativity override" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35"></div>
+        <div>
+          <div class="knob-read" id="knobRead">0.35</div>
+          <div class="tag" id="knobWarn" style="font-size:.5rem">stable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="rail">
+      <label for="strict">Citation Strictness</label>
+      <input type="range" id="strict" min="0" max="100" value="72">
+      <span class="rail-read" id="strictRead">ENFORCED</span>
+    </div>
+    <button class="fire" id="fire">Fire grounding laser</button>
+  </footer>
+</div>
+
+<script src="js/perf-governor.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as I from './js/rag-cockpit.js';
+
+const AGENTS = [
+  {id:'NEXUS',color:'#5bc8d4'},{id:'PIKADON',color:'#f0a060'},{id:'TURTLE',color:'#4dd4a0'},
+  {id:'ZEROX',color:'#b87fdf'},{id:'QUILL',color:'#e87f7f'},{id:'ORACLE',color:'#f0d080'},
+];
+const state = I.makeState();
+let current = AGENTS[0];
+
+/* ── skull viewport ─────────────────────────────────────────────────────── */
+const stage = document.getElementById('skullStage');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(0, 0.05, 4.3);
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+stage.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.35));
+const key = new THREE.DirectionalLight(0xffffff, 2.1); key.position.set(2,3,6); scene.add(key);
+const rimL = new THREE.PointLight(0x00e5ff, 2.4, 18); rimL.position.set(-3.2,1.1,-1.8); scene.add(rimL);
+const rimR = new THREE.PointLight(0xff2fb8, 1.5, 18); rimR.position.set(3.2,-0.5,-1.8); scene.add(rimR);
+
+const wire = new THREE.Group(); scene.add(wire);
+for(let i=0;i<9;i++){
+  const pts=[]; const r=1.9+(i%3)*0.08;
+  for(let a=0;a<=64;a++){const t=(a/64)*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(t)*r,Math.sin(t)*r,0));}
+  const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0x39ff5a,transparent:true,opacity:.16}));
+  l.rotation.set((i/9)*Math.PI, i*2.399, 0); wire.add(l);
+}
+
+const slot = new THREE.Group(); scene.add(slot);
+const loader = new GLTFLoader();
+function loadMask(agentId){
+  while(slot.children.length) slot.remove(slot.children[0]);
+  const tryFiles = [`assets/council/SKULL-head.glb`, `assets/council/${agentId}-head.glb`];
+  (function next(i){
+    if(i>=tryFiles.length) return;
+    loader.load(tryFiles[i], (g)=>{
+      const o=g.scene;
+      const b=new THREE.Box3().setFromObject(o), s=b.getSize(new THREE.Vector3()), c=b.getCenter(new THREE.Vector3());
+      const k=2.35/Math.max(s.x,s.y,s.z); o.scale.setScalar(k); o.position.sub(c.multiplyScalar(k));
+      o.traverse(n=>{ if(n.isMesh&&n.material){ const m=[].concat(n.material);
+        m.forEach(x=>{ if(x.emissive) x.emissive.setHex(0x081018); if(x.roughness!==undefined) x.roughness=Math.max(x.roughness,.4); }); }});
+      slot.add(o);
+    }, undefined, ()=>next(i+1));
+  })(0);
+}
+
+const gov = (window.createGovernor||(()=>({update(){},getTier:()=>({name:'MEDIUM',pr:1})})))({
+  onTierChange:(_i,t)=>{ renderer.setPixelRatio(Math.min(devicePixelRatio||1,t.pr)); size(); }
+});
+function size(){
+  const w=stage.clientWidth||600,h=stage.clientHeight||400;
+  camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
+  const lc=document.getElementById('laser'); lc.width=w; lc.height=h; lc.style.width=w+'px'; lc.style.height=h+'px';
+}
+window.addEventListener('resize',()=>{size();paintAll();});
+
+/* ── grounding laser ────────────────────────────────────────────────────── */
+const laser = document.getElementById('laser');
+const lx = laser.getContext('2d');
+let beam = null;
+function fireLaser(targetPanel){
+  const mr = document.querySelector('main').getBoundingClientRect();
+  const pr = targetPanel.getBoundingClientRect();
+  beam = { t:0, to:{ x: pr.left + pr.width/2 - mr.left, y: pr.top + pr.height/2 - mr.top } };
+  targetPanel.classList.add('hot');
+  setTimeout(()=>targetPanel.classList.remove('hot'), 1600);
+}
+function drawBeam(dt){
+  lx.clearRect(0,0,laser.width,laser.height);
+  if(!beam) return;
+  beam.t += dt;
+  if(beam.t>1.6){ beam=null; return; }
+  const from = { x: laser.width/2 - 18, y: laser.height/2 - 14 };  // optical sensor
+  const p = Math.min(1, beam.t/0.35);
+  const x = from.x + (beam.to.x-from.x)*p, y = from.y + (beam.to.y-from.y)*p;
+  const fade = beam.t>1.1 ? 1-(beam.t-1.1)/0.5 : 1;
+  lx.globalAlpha = Math.max(0,fade);
+  lx.strokeStyle = '#39ff5a'; lx.lineWidth = 1.6;
+  lx.shadowColor='#39ff5a'; lx.shadowBlur=12;
+  lx.beginPath(); lx.moveTo(from.x,from.y); lx.lineTo(x,y); lx.stroke();
+  lx.beginPath(); lx.arc(x,y,3.5,0,Math.PI*2); lx.fillStyle='#39ff5a'; lx.fill();
+  lx.shadowBlur=0; lx.globalAlpha=1;
+}
+
+/* ── instruments ────────────────────────────────────────────────────────── */
+const SHARD_POOL = ['618531','726899','900143','0H7265','408531','ET6899','A41B02','77C3F1'];
+let shards = SHARD_POOL.slice(0,6), activeShard = 0;
+
+function paintAll(){
+  I.velocityTrace(document.getElementById('velocity'), state);
+  I.compositionRing(document.getElementById('ring1'),
+    [{v:.62,c:I.PALETTE.cyan},{v:.24,c:I.PALETTE.magenta},{v:.14,c:I.PALETTE.amber}], 'CORPUS');
+  I.compositionRing(document.getElementById('ring2'),
+    [{v:.48,c:I.PALETTE.acid},{v:.33,c:I.PALETTE.cyan},{v:.19,c:I.PALETTE.magenta}], 'SHARDS');
+  I.gauge(document.getElementById('gLoad'), state.contextLoad, I.PALETTE.cyan, 'CONTEXT LOAD');
+  I.gauge(document.getElementById('gRisk'), state.risk,
+    state.risk>0.6?I.PALETTE.alarm:I.PALETTE.acid, 'HALLUC RISK');
+  I.heatLadder(document.getElementById('ladder'), state.attention);
+  I.shardStack(document.getElementById('shards'), shards, activeShard);
+}
+
+const MUT = [
+  {tag:'IN', kind:'in',   text:'how do agents keep timestamps'},
+  {tag:'EXP',kind:'expand',text:'+ synonym: cite, seek, offset'},
+  {tag:'EXP',kind:'expand',text:'+ agent scope: kb_nexus'},
+  {tag:'OUT',kind:'out',  text:'vector query → 6 shards'},
+];
+I.mutationLog(document.getElementById('mutlog'), MUT);
+
+/* re-index pads */
+const PADS=['CORE','VIDEO','BOOK','TOOL'];
+document.getElementById('pads').innerHTML = PADS.map(p=>`<button class="pad" data-p="${p}">${p}</button>`).join('');
+document.getElementById('pads').addEventListener('click',(e)=>{
+  const b=e.target.closest('.pad'); if(!b) return;
+  b.classList.add('fired'); setTimeout(()=>b.classList.remove('fired'),420);
+  MUT.push({tag:'IDX',kind:'expand',text:`re-embedding ${b.dataset.p} domain…`});
+  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+});
+
+/* creativity knob */
+const knob=document.getElementById('knob'), knobRead=document.getElementById('knobRead'), knobWarn=document.getElementById('knobWarn');
+function setTemp(v){
+  state.temperature=Math.max(0,Math.min(1,v));
+  knob.style.setProperty('--rot',(state.temperature*270-135)+'deg');
+  knobRead.textContent=state.temperature.toFixed(2);
+  knob.setAttribute('aria-valuenow',Math.round(state.temperature*100));
+  const danger=state.temperature>0.8;
+  knobWarn.textContent = danger ? 'context collapse risk' : state.temperature>0.6 ? 'drifting' : 'stable';
+  knobWarn.style.color = danger ? 'var(--alarm)' : state.temperature>0.6 ? 'var(--amber)' : 'rgba(207,227,232,.5)';
+}
+let kd=null;
+knob.addEventListener('pointerdown',e=>{kd=e.clientY;knob.setPointerCapture(e.pointerId);});
+knob.addEventListener('pointermove',e=>{ if(kd===null)return; setTemp(state.temperature+(kd-e.clientY)*0.006); kd=e.clientY; });
+knob.addEventListener('pointerup',()=>kd=null);
+knob.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='ArrowRight'){e.preventDefault();setTemp(state.temperature+0.05);}
+  if(e.key==='ArrowDown'||e.key==='ArrowLeft'){e.preventDefault();setTemp(state.temperature-0.05);}
+});
+setTemp(0.35);
+
+/* strictness rail */
+const strict=document.getElementById('strict'), strictRead=document.getElementById('strictRead');
+function setStrict(){
+  const v=+strict.value/100; state.strictness=v;
+  strictRead.textContent = v>0.8?'LOCKED':v>0.55?'ENFORCED':v>0.3?'LOOSE':'FREE SYNTH';
+}
+strict.addEventListener('input',setStrict); setStrict();
+
+/* mask rail */
+document.getElementById('masks').innerHTML = AGENTS.map((a,i)=>
+  `<button class="mask${i===0?' on':''}" data-i="${i}" title="${a.id}"
+     style="background-image:url(assets/council/${a.id}.png)" aria-label="Load ${a.id} mask"></button>`).join('');
+document.getElementById('masks').addEventListener('click',e=>{
+  const b=e.target.closest('.mask'); if(!b) return;
+  document.querySelectorAll('.mask').forEach(m=>m.classList.remove('on'));
+  b.classList.add('on');
+  current = AGENTS[+b.dataset.i];
+  document.getElementById('agentTag').textContent = 'MASK: ' + current.id;
+  loadMask(current.id);
+});
+
+/* fire */
+const PANEL_TARGETS = ['#shards','#mutlog','#velocity'].map(s=>document.querySelector(s).closest('.panel'));
+document.getElementById('fire').addEventListener('click',()=>{
+  activeShard = Math.floor(Math.random()*shards.length);
+  fireLaser(PANEL_TARGETS[Math.floor(Math.random()*PANEL_TARGETS.length)]);
+  MUT.push({tag:'OUT',kind:'out',text:`grounded → shard ${shards[activeShard]}`});
+  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+  paintAll();
+});
+
+/* live telemetry when the brain API answers; otherwise the SIM stamp stands */
+fetch('/api/overview').then(r=>r.ok?r.json():Promise.reject()).then(d=>{
+  state.live=true;
+  const s=document.getElementById('stamp'); s.textContent='LIVE'; s.classList.add('live');
+  const a=(d.agents||[])[0];
+  if(a&&a.topics&&a.topics.length) shards = a.topics.slice(0,6).map(t=>String(t[0]).slice(0,7).toUpperCase());
+  paintAll();
+}).catch(()=>{});
+
+/* loop */
+size(); loadMask(current.id); paintAll();
+let acc=0; const clock=new THREE.Clock();
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(clock.getDelta(),.1); acc+=dt; gov.update(dt);
+  wire.rotation.y+=dt*0.12; wire.rotation.x=Math.sin(acc*0.2)*0.14;
+  slot.rotation.y=Math.sin(acc*0.25)*0.14;
+  if(acc>0.6){ I.advance(state); paintAll(); acc=0; }
+  document.getElementById('ladTop').textContent=Math.round(880+state.attention[0]*120);
+  document.getElementById('ladBot').textContent=Math.round(760+state.attention[9]*120);
+  drawBeam(dt);
+  renderer.render(scene,camera);
+}
+frame();
+</script>
+</body>
+</html>
