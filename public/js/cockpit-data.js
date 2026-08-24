@@ -153,6 +153,7 @@ export async function loadSkills(agent) {
     mineTotal: mine.length,
     items: mine.slice(0, 80).map((s) => ({
       title: s.name, detail: s.category || s.description || '',
+      runnable: true, kind: 'skill', ref: s.id || s.name,
     })),
   };
 }
@@ -224,8 +225,49 @@ export async function askCouncil(query, k = 4) {
   return { ok: true, agents: r.data?.agents || [], ms: r.data?.ms };
 }
 
+/**
+ * Skills execute ASYNCHRONOUSLY: /api/skills/run returns a taskId, and the
+ * actual work (tool steps + result) lands later on /api/agent/task/:id.
+ * Fire, then poll until it settles, so the UI can show what really happened.
+ */
+export async function runSkill(skillId, agent, onTick, input) {
+  const body = { skillId, agent };
+  // The runner reads arguments from a NESTED `input` object and passes them
+  // straight through as tool params — flat top-level keys are ignored. Spread
+  // the one value across the common param names so whichever the tool wants is
+  // there (verified: input:{repo:'owner/name'} reaches get_github_repo).
+  if (input) {
+    body.input = { input, query: input, topic: input, symbol: input, repo: input, url: input, text: input };
+  }
+  const started = await post('/api/skills/run', body);
+  if (!started.ok) return { ok: false, note: started.note || started.data?.error || 'failed to start' };
+  const taskId = started.data?.taskId;
+  if (!taskId) return { ok: true, status: 'started', steps: [], result: started.data };
+
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    const t = await get(`/api/agent/task/${taskId}`, 15000);
+    if (!t.ok) continue;
+    const d = t.data || {};
+    if (onTick) onTick(d);
+    if (d.status === 'completed' || d.status === 'failed' || d.status === 'error') {
+      return {
+        ok: d.status === 'completed',
+        status: d.status,
+        steps: d.steps || [],
+        result: d.result,
+        tools: d.tools_used || [],
+        taskId,
+      };
+    }
+  }
+  return { ok: false, note: 'still running', taskId };
+}
+
 export async function runTool(tool, args = {}) { return post('/api/tools/run', { tool, args }); }
-export async function runWorkflow(ref)         { return post('/api/ainl/run', { workflow: ref, inputs: {} }); }
+export async function runWorkflow(ref, input) {
+  return post('/api/ainl/run', { workflow: ref, inputs: input ? { input, topic: input, query: input } : {} });
+}
 
 export const SLOT_LOADERS = {
   knowledge: loadKnowledge,

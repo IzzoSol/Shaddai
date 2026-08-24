@@ -204,8 +204,12 @@ main{position:relative; border:1px solid var(--edge); overflow:hidden; min-heigh
 }
 .ditem button:hover{background:rgba(57,255,90,.16)}
 .dempty{color:var(--amber); font-size:.6rem; padding:10px}
-#askbar{
+#askbar,#runbar{
   display:flex; gap:6px; padding:6px 10px; border-bottom:1px solid var(--edge);
+}
+#runin{
+  flex:1; background:rgba(0,0,0,.5); border:1px solid var(--edge); color:var(--bone);
+  font-family:'IBM Plex Mono',monospace; font-size:.62rem; padding:5px 7px;
 }
 #askq{
   flex:1; background:rgba(0,0,0,.5); border:1px solid var(--edge); color:var(--bone);
@@ -306,6 +310,10 @@ input[type=range]::-moz-range-thumb{
         <input id="askq" placeholder="Ask this agent's knowledge…">
         <button class="fire" id="askgo" style="padding:4px 10px">ASK</button>
       </div>
+      <div id="runbar" style="display:none">
+        <input id="runin" placeholder="Input for the next run — e.g. a repo, ticker, or topic">
+        <span class="src" style="align-self:center;white-space:nowrap;opacity:.6">passed to RUN</span>
+      </div>
       <div id="askout" style="display:none"></div>
       <div class="dlist" id="drawerList"></div>
     </div>
@@ -363,7 +371,9 @@ const AGENTS = [
   {id:'ZEROX',color:'#b87fdf'},{id:'QUILL',color:'#e87f7f'},{id:'ORACLE',color:'#f0d080'},
 ];
 const state = I.makeState();
-let current = AGENTS[0];
+// Boot into a head, not SHADDAI's orb — the orb has no compartments, so
+// landing on it hides the whole open-the-brain interaction.
+let current = AGENTS.find(a => a.id === 'NEXUS') || AGENTS[0];
 
 /* ── skull viewport ─────────────────────────────────────────────────────── */
 const stage = document.getElementById('skullStage');
@@ -539,6 +549,31 @@ function buildCore(colorHex){
   core.add(new THREE.Points(pg, new THREE.PointsMaterial({
     color:col.clone(), size:.03, transparent:true, opacity:0,
     blending:THREE.AdditiveBlending, depthWrite:false})));
+
+  // Guts: curved cable bundles running up the cavity so an opened head shows
+  // internals rather than a hollow shell. Colour-coded per compartment slot.
+  const CABLE = [
+    {c:0x22f0ff, y0:-1.5, y1: 1.5, r:0.30, turns:2.2},
+    {c:0x4dff6a, y0:-1.3, y1: 1.4, r:0.46, turns:1.6},
+    {c:0xff3df0, y0:-1.4, y1: 1.2, r:0.38, turns:2.8},
+    {c:0xffd23d, y0:-1.2, y1: 1.5, r:0.54, turns:1.2},
+  ];
+  CABLE.forEach((cb, idx)=>{
+    const pts=[];
+    for(let i=0;i<=48;i++){
+      const t=i/48, a=t*Math.PI*2*cb.turns + idx*1.4;
+      const wob = 1 + Math.sin(t*Math.PI*3)*0.16;
+      pts.push(new THREE.Vector3(
+        Math.cos(a)*cb.r*wob,
+        cb.y0 + (cb.y1-cb.y0)*t,
+        Math.sin(a)*cb.r*wob));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const tube = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 60, 0.022, 6, false),
+      new THREE.MeshBasicMaterial({color:cb.c, transparent:true, opacity:0}));
+    core.add(tube);
+  });
   slot.add(core);
 }
 
@@ -571,6 +606,8 @@ async function openCompartment(slotName, id){
   drawerCount.textContent = 'loading…';
   drawerList.innerHTML = '';
   askbar.style.display = slotName==='knowledge' ? 'flex' : 'none';
+  // tools, skills and scripts can all take an argument
+  document.getElementById('runbar').style.display = slotName==='knowledge' ? 'none' : 'flex';
   askout.style.display = 'none';
 
   const loaderFn = D.SLOT_LOADERS[slotName];
@@ -596,18 +633,50 @@ async function openCompartment(slotName, id){
   drawerList.querySelectorAll('button[data-run]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const it = res.items[+btn.dataset.run];
-      btn.textContent='…';
-      const out = it.kind ? await D.runWorkflow(it.ref) : await D.runTool(it.tool||it.title, {});
+      btn.textContent='…'; btn.disabled = true;
+      MUT.push({tag:'RUN',kind:'in',text:it.title});
+      I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+
+      const arg = (document.getElementById('runin').value || '').trim();
+      let out;
+      if(it.kind === 'skill'){
+        // async: report each tool step as it lands
+        out = await D.runSkill(it.ref, current.id, (t)=>{
+          const last = (t.steps||[]).slice(-1)[0];
+          if(last) btn.textContent = (last.tool||'…').slice(0,7);
+        }, arg);
+      } else if(it.kind){
+        out = await D.runWorkflow(it.ref, arg);
+      } else {
+        out = await D.runTool(it.tool||it.title, arg ? {input:arg, query:arg, symbol:arg, repo:arg} : {});
+      }
+
+      btn.disabled = false;
       btn.textContent = out.ok ? 'OK' : 'ERR';
       btn.style.borderColor = out.ok ? 'var(--acid)' : 'var(--alarm)';
       btn.style.color = out.ok ? 'var(--acid)' : 'var(--alarm)';
-      MUT.push({tag: out.ok?'RUN':'ERR', kind: out.ok?'out':'expand',
-                text: `${it.title} → ${out.ok ? 'ok' : (out.note||'failed')}`});
+      showRunResult(it, out);
+      const steps = (out.steps||[]).length;
+      MUT.push({tag: out.ok?'DONE':'ERR', kind: out.ok?'out':'expand',
+                text: `${it.title} → ${out.ok ? (steps?`${steps} steps`:'ok') : (out.note||out.status||'failed')}`});
       I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
     });
   });
 }
 function esc(s){ return String(s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+/* Show what a run actually DID — the tool steps and the result, not just OK. */
+function showRunResult(item, out){
+  askout.style.display='block';
+  if(!out.ok){
+    askout.innerHTML = `<span style="color:var(--alarm)">${esc(item.title)} failed — ${esc(out.note||out.status||'unknown')}</span>`;
+    return;
+  }
+  const steps = (out.steps||[]).map(s=>`
+    <div class="src">▸ ${esc(s.tool||'step')} <span style="opacity:.6">${esc(String(s.resultPreview||'').slice(0,140))}</span></div>`).join('');
+  const result = out.result ? `<div style="margin-top:6px">${esc(typeof out.result==='string'?out.result.slice(0,700):JSON.stringify(out.result).slice(0,700))}</div>` : '';
+  askout.innerHTML = `<div style="color:var(--acid)">${esc(item.title)} · ${out.status||'ok'}</div>${steps}${result}`;
+}
 
 document.getElementById('drawerClose').addEventListener('click', ()=>{
   drawer.classList.remove('open'); openSlot=null;
@@ -827,7 +896,7 @@ strict.addEventListener('input',setStrict); setStrict();
 
 /* mask rail */
 document.getElementById('masks').innerHTML = AGENTS.map((a,i)=>
-  `<button class="mask${i===0?' on':''}" data-i="${i}" title="${a.id}"
+  `<button class="mask${a.id===current.id?' on':''}" data-i="${i}" title="${a.id}"
      style="background-image:url(assets/council/${a.id}.png)" aria-label="Load ${a.id} mask"></button>`).join('');
 document.getElementById('masks').addEventListener('click',e=>{
   const b=e.target.closest('.mask'); if(!b) return;
@@ -963,7 +1032,8 @@ function frame(){
     core.rotation.y += dt*0.35; core.rotation.x = Math.sin(acc*0.4)*0.2;
     core.visible = vis > 0.01;
     core.children.forEach((c,i)=>{
-      if(c.material) c.material.opacity = vis * (i===0 ? .85 : i===1 ? .28 : .7);
+      // 0 nucleus · 1 lattice · 2 particles · 3+ cable bundles
+      if(c.material) c.material.opacity = vis * (i===0 ? .85 : i===1 ? .28 : i===2 ? .7 : .62);
     });
     core.scale.setScalar(0.85 + vis*0.25);
   }
