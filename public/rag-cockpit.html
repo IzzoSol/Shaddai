@@ -134,6 +134,65 @@ main{position:relative; border:1px solid var(--edge); overflow:hidden; min-heigh
   position:absolute; top:8px; left:10px; z-index:3;
   font-family:'Silkscreen',monospace; font-size:.5rem; letter-spacing:.12em; color:rgba(207,227,232,.45);
 }
+/* compartment labels track their 3D shell */
+.cmp-layer{position:absolute; inset:0; pointer-events:none; z-index:4}
+.cmp{
+  position:absolute; transform:translate(-50%,-50%); pointer-events:auto; cursor:pointer;
+  font-family:'Silkscreen',monospace; font-size:.5rem; letter-spacing:.1em;
+  color:var(--cyan); background:rgba(4,10,18,.82); border:1px solid var(--edge);
+  padding:3px 6px; white-space:nowrap; opacity:0; transition:opacity .25s;
+}
+.cmp.show{opacity:1}
+.cmp:hover,.cmp.on{border-color:var(--acid); color:var(--acid); box-shadow:0 0 12px rgba(57,255,90,.4)}
+.cmp .n{color:rgba(207,227,232,.5); margin-left:5px}
+.explode-ctl{
+  position:absolute; right:10px; bottom:10px; z-index:5; display:flex; align-items:center; gap:8px;
+  background:rgba(4,10,18,.85); border:1px solid var(--edge); padding:6px 9px;
+}
+.explode-ctl label{font-family:'Silkscreen',monospace; font-size:.46rem; letter-spacing:.1em; color:var(--cyan)}
+#explode{width:120px}
+/* compartment drawer */
+.drawer{
+  position:absolute; left:0; right:0; bottom:0; z-index:6; max-height:56%;
+  background:linear-gradient(180deg,rgba(4,10,18,.94),rgba(4,6,10,.98));
+  border-top:1px solid var(--acid); display:none; flex-direction:column;
+}
+.drawer.open{display:flex}
+.drawer header{
+  grid-column:auto; border:0; border-bottom:1px solid var(--edge); background:transparent;
+  padding:6px 10px; display:flex; align-items:center; gap:10px; height:auto;
+}
+.drawer h3{
+  font-family:'Silkscreen',monospace; font-size:.56rem; letter-spacing:.12em;
+  margin:0; color:var(--acid);
+}
+.drawer .count{font-size:.56rem; color:rgba(207,227,232,.5)}
+.drawer .x{
+  margin-left:auto; background:transparent; border:1px solid var(--edge); color:var(--bone);
+  font-family:'Silkscreen',monospace; font-size:.5rem; padding:3px 7px; cursor:pointer;
+}
+.dlist{overflow:auto; padding:6px 10px 10px; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:5px}
+.ditem{
+  border-left:2px solid var(--edge); padding:4px 7px; background:rgba(10,47,143,.14);
+  font-size:.58rem; line-height:1.35; display:flex; gap:7px; align-items:flex-start;
+}
+.ditem b{color:var(--bone); font-weight:500; display:block}
+.ditem span{color:rgba(207,227,232,.55); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.ditem button{
+  margin-left:auto; flex:0 0 auto; background:transparent; border:1px solid var(--acid);
+  color:var(--acid); font-family:'Silkscreen',monospace; font-size:.42rem; padding:2px 5px; cursor:pointer;
+}
+.ditem button:hover{background:rgba(57,255,90,.16)}
+.dempty{color:var(--amber); font-size:.6rem; padding:10px}
+#askbar{
+  display:flex; gap:6px; padding:6px 10px; border-bottom:1px solid var(--edge);
+}
+#askq{
+  flex:1; background:rgba(0,0,0,.5); border:1px solid var(--edge); color:var(--bone);
+  font-family:'IBM Plex Mono',monospace; font-size:.62rem; padding:5px 7px;
+}
+#askout{padding:8px 10px; font-size:.62rem; line-height:1.5; color:var(--bone); overflow:auto}
+#askout .src{color:var(--acid); font-size:.55rem}
 
 footer{
   grid-column:1/-1; border:1px solid var(--edge); padding:6px 12px;
@@ -208,7 +267,25 @@ input[type=range]::-moz-range-thumb{
     <span class="viewport-tag">OPTICAL FEED · GROUNDING LASER ARMED</span>
     <div id="skullStage"></div>
     <canvas id="laser"></canvas>
+    <div class="cmp-layer" id="cmpLayer"></div>
     <div class="masks" id="masks"></div>
+    <div class="explode-ctl">
+      <label for="explode">Open compartments</label>
+      <input type="range" id="explode" min="0" max="100" value="0">
+    </div>
+    <div class="drawer" id="drawer">
+      <header>
+        <h3 id="drawerTitle">CRANIUM</h3>
+        <span class="count" id="drawerCount"></span>
+        <button class="x" id="drawerClose">CLOSE</button>
+      </header>
+      <div id="askbar" style="display:none">
+        <input id="askq" placeholder="Ask this agent's knowledge…">
+        <button class="fire" id="askgo" style="padding:4px 10px">ASK</button>
+      </div>
+      <div id="askout" style="display:none"></div>
+      <div class="dlist" id="drawerList"></div>
+    </div>
   </main>
 
   <!-- RIGHT COLUMN -->
@@ -255,6 +332,8 @@ input[type=range]::-moz-range-thumb{
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as I from './js/rag-cockpit.js';
+import * as D from './js/cockpit-data.js';
+import { buildCompartments, applyExplode, projectLabels } from './js/head-explode.js';
 
 const AGENTS = [
   {id:'NEXUS',color:'#5bc8d4'},{id:'PIKADON',color:'#f0a060'},{id:'TURTLE',color:'#4dd4a0'},
@@ -287,9 +366,13 @@ for(let i=0;i<9;i++){
 
 const slot = new THREE.Group(); scene.add(slot);
 const loader = new GLTFLoader();
+let parts = [];            // compartment shells
+let explodeT = 0;
+
 function loadMask(agentId){
   while(slot.children.length) slot.remove(slot.children[0]);
-  const tryFiles = [`assets/council/SKULL-head.glb`, `assets/council/${agentId}-head.glb`];
+  parts = [];
+  const tryFiles = [`assets/council/${agentId}-head.glb`, `assets/council/SKULL-head.glb`];
   (function next(i){
     if(i>=tryFiles.length) return;
     loader.load(tryFiles[i], (g)=>{
@@ -299,9 +382,110 @@ function loadMask(agentId){
       o.traverse(n=>{ if(n.isMesh&&n.material){ const m=[].concat(n.material);
         m.forEach(x=>{ if(x.emissive) x.emissive.setHex(0x081018); if(x.roughness!==undefined) x.roughness=Math.max(x.roughness,.4); }); }});
       slot.add(o);
+      // Build the clipped compartment shells from the loaded head and hide the
+      // whole head — from here the four shells ARE the head.
+      parts = buildCompartments(THREE, o, renderer);
+      o.visible = false;
+      parts.forEach(p => slot.add(p.group));
+      buildCmpLabels();
     }, undefined, ()=>next(i+1));
   })(0);
 }
+
+/* ── compartments → real payloads ───────────────────────────────────────── */
+const cmpLayer = document.getElementById('cmpLayer');
+const drawer = document.getElementById('drawer');
+const drawerList = document.getElementById('drawerList');
+const drawerTitle = document.getElementById('drawerTitle');
+const drawerCount = document.getElementById('drawerCount');
+const askbar = document.getElementById('askbar');
+const askout = document.getElementById('askout');
+let openSlot = null;
+
+function buildCmpLabels(){
+  cmpLayer.innerHTML = parts.map(p =>
+    `<button class="cmp" data-id="${p.id}" data-slot="${p.slot}">${p.label}<span class="n">${p.slot}</span></button>`
+  ).join('');
+}
+
+cmpLayer.addEventListener('click', e => {
+  const b = e.target.closest('.cmp'); if(!b) return;
+  openCompartment(b.dataset.slot, b.dataset.id);
+});
+
+async function openCompartment(slotName, id){
+  openSlot = slotName;
+  document.querySelectorAll('.cmp').forEach(c=>c.classList.toggle('on', c.dataset.slot===slotName));
+  drawer.classList.add('open');
+  drawerTitle.textContent = (parts.find(p=>p.id===id)?.label || slotName).toUpperCase();
+  drawerCount.textContent = 'loading…';
+  drawerList.innerHTML = '';
+  askbar.style.display = slotName==='knowledge' ? 'flex' : 'none';
+  askout.style.display = 'none';
+
+  const loaderFn = D.SLOT_LOADERS[slotName];
+  const res = await loaderFn(current.id);
+
+  if(!res.ok || !res.items.length){
+    drawerCount.textContent = '';
+    drawerList.innerHTML = `<div class="dempty">No ${slotName} available — ${res.note || 'empty'}. Start the backend on :3000 to load real data.</div>`;
+    return;
+  }
+  const extra = res.mineTotal!=null ? ` · ${res.mineTotal} for ${current.id} of ${res.total}`
+              : res.total!=null ? ` · ${res.total} total` : '';
+  drawerCount.textContent = `${res.items.length} shown${extra}`;
+  drawerList.innerHTML = res.items.map((it,i)=>`
+    <div class="ditem">
+      <div style="min-width:0">
+        <b>${esc(it.title)}</b><span>${esc(it.detail||'')}</span>
+      </div>
+      ${it.runnable ? `<button data-run="${i}">RUN</button>` : ''}
+    </div>`).join('');
+
+  drawerList.querySelectorAll('button[data-run]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const it = res.items[+btn.dataset.run];
+      btn.textContent='…';
+      const out = it.kind ? await D.runWorkflow(it.ref) : await D.runTool(it.tool||it.title, {});
+      btn.textContent = out.ok ? 'OK' : 'ERR';
+      btn.style.borderColor = out.ok ? 'var(--acid)' : 'var(--alarm)';
+      btn.style.color = out.ok ? 'var(--acid)' : 'var(--alarm)';
+      MUT.push({tag: out.ok?'RUN':'ERR', kind: out.ok?'out':'expand',
+                text: `${it.title} → ${out.ok ? 'ok' : (out.note||'failed')}`});
+      I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+    });
+  });
+}
+function esc(s){ return String(s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+document.getElementById('drawerClose').addEventListener('click', ()=>{
+  drawer.classList.remove('open'); openSlot=null;
+  document.querySelectorAll('.cmp').forEach(c=>c.classList.remove('on'));
+});
+
+/* ask this agent's knowledge — real grounded retrieval */
+document.getElementById('askgo').addEventListener('click', doAsk);
+document.getElementById('askq').addEventListener('keydown', e=>{ if(e.key==='Enter') doAsk(); });
+async function doAsk(){
+  const q = document.getElementById('askq').value.trim();
+  if(!q) return;
+  askout.style.display='block';
+  askout.textContent = 'retrieving…';
+  const r = await D.ask(q, current.id);
+  if(!r.ok){ askout.innerHTML = `<span style="color:var(--amber)">No answer — ${r.note}. Backend offline?</span>`; return; }
+  const srcs = (r.sources||[]).slice(0,4)
+    .map(s=>`<div class="src">▸ ${esc(s.title||s.agent||'source')}${s.score?` (${(+s.score).toFixed(3)})`:''}</div>`).join('');
+  askout.innerHTML = `<div>${esc(r.answer||'(no answer text)')}</div>${srcs}
+    <div class="src" style="opacity:.6">provider: ${esc(r.provider)}${r.ms?` · ${r.ms}ms`:''}</div>`;
+  if(r.sources?.length) fireLaser(PANEL_TARGETS[0]);
+  MUT.push({tag:'ASK',kind:'in',text:q});
+  MUT.push({tag:'OUT',kind:'out',text:`${r.sources?.length||0} sources · ${r.provider}`});
+  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+}
+
+/* explode control */
+const explodeEl = document.getElementById('explode');
+explodeEl.addEventListener('input', ()=>{ explodeT = +explodeEl.value/100; });
 
 const gov = (window.createGovernor||(()=>({update(){},getTier:()=>({name:'MEDIUM',pr:1})})))({
   onTierChange:(_i,t)=>{ renderer.setPixelRatio(Math.min(devicePixelRatio||1,t.pr)); size(); }
@@ -444,7 +628,22 @@ function frame(){
   requestAnimationFrame(frame);
   const dt=Math.min(clock.getDelta(),.1); acc+=dt; gov.update(dt);
   wire.rotation.y+=dt*0.12; wire.rotation.x=Math.sin(acc*0.2)*0.14;
-  slot.rotation.y=Math.sin(acc*0.25)*0.14;
+  // Hold the head still while it's open — you can't inspect a spinning cutaway.
+  slot.rotation.y = explodeT>0.02 ? slot.rotation.y*0.92 : Math.sin(acc*0.25)*0.14;
+
+  // Pull the camera back as it opens so the spread shells stay in frame.
+  camera.position.z += ((4.3 + explodeT*2.1) - camera.position.z) * 0.12;
+
+  if(parts.length){
+    applyExplode(parts, explodeT);
+    const projected = projectLabels(THREE, parts, camera, stage.clientWidth, stage.clientHeight);
+    projected.forEach(pr=>{
+      const el = cmpLayer.querySelector(`[data-id="${pr.id}"]`);
+      if(!el) return;
+      el.style.left = pr.x+'px'; el.style.top = pr.y+'px';
+      el.classList.toggle('show', explodeT>0.08 && pr.visible);
+    });
+  }
   if(acc>0.6){ I.advance(state); paintAll(); acc=0; }
   document.getElementById('ladTop').textContent=Math.round(880+state.attention[0]*120);
   document.getElementById('ladBot').textContent=Math.round(760+state.attention[9]*120);
