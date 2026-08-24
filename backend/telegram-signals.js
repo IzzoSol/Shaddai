@@ -494,7 +494,13 @@ function _cfg() {
 // Weekday non-peak: floor rises to $15K (5K-15K weekday = 0% win rate in ZEROX data)
 // HARD CAP at $2M for trending (tighter than bonded); reject pump-bait coins
 const HARD_FDV_CAP = 5000000;  // $5M absolute ceiling
+const HARD_FDV_CAP_MAX = HARD_FDV_CAP;  // alias — used by validator/audit endpoint
 const HARD_FDV_CAP_TRENDING = 2000000;  // $2M for trending (tighter filter)
+const RUG_MIN_SCORE = 60;               // default cfg.rugMinScore floor (matches _cfg() default)
+const AGE_GATE_SECONDS = 30;            // matches _passesAgeGate's 30s minimum
+const MULTIPLIER_CAP_DISCOVERY = 3;     // matches _passesMultiplierGate's 3x cap
+const LP_LOCK_PERCENT_MINIMUM = 80;     // matches _lpLockedOk's 80% requirement
+const BUNDLE_MAX_PERCENT = 12;          // matches _cfg() default maxBundlerPct
 function _passesFdv(cfg, fdv) {
   if (fdv >= HARD_FDV_CAP) return false;  // reject established coins >= $5M
   const effMin = _effectiveMinFdv(cfg);
@@ -1632,17 +1638,17 @@ DESIGN SPECIFICATIONS:
 - **Layout**: Clean, minimalist, professional trading UI aesthetic
 
 CONTENT TO INCLUDE (in order of visual hierarchy):
-1. **Token Symbol** (top, large, golden): $${SYMBOL}
-2. **Main Multiplier Display** (center-large, color-coded, bold): ${MULTIPLIER}×
+1. **Token Symbol** (top, large, golden): $\${SYMBOL}
+2. **Main Multiplier Display** (center-large, color-coded, bold): \${MULTIPLIER}×
    - If >5x: BRIGHT GREEN (#00ff41) with glow
    - If 3-5x: GOLD (#e8a020)
    - If 2-3x: ORANGE (#ffc84a)
    - If 1-2x: YELLOW (#ffaa00)
    - If <1x: RED (#ff3c3c)
-3. **PnL Percentage** (large): ${PNL_PCT}% ${ARROW}
-4. **Entry Price**: Entry: $${ENTRY_PRICE}
-5. **Current Price**: Current: $${CURRENT_PRICE}
-6. **Timestamp**: ${TIMESTAMP}
+3. **PnL Percentage** (large): \${PNL_PCT}% \${ARROW}
+4. **Entry Price**: Entry: $\${ENTRY_PRICE}
+5. **Current Price**: Current: $\${CURRENT_PRICE}
+6. **Timestamp**: \${TIMESTAMP}
 7. **Branding Footer**: "⚡ ZEROX SIGNALS ⚡" or "ZEROX TRADING INTELLIGENCE"
 8. **Status Badge**: "🚀 WINNING" or "📉 TRACKING" or "🔴 ALERT"
 
