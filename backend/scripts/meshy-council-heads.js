@@ -45,9 +45,11 @@ const COUNCIL = {
     shape: 'armored sentinel helmet bust, angular faceplate mask, horned crest, stylized game character, clean topology',
     texture: 'black and crimson armored war mask, glowing red visor eyes, molten orange seams, battle-worn metal',
   },
+  // Corrected from the owner's TURTLE character sheet (council/_src/TURTLE-sheet.jpg):
+  // teal-green twin buns with gold cuffs, deep bronze skin, black bodysuit w/ green trim.
   TURTLE: {
-    shape: 'stylized young woman head bust with a sleek tech visor cap and side headphones, anime game character, clean topology',
-    texture: 'vivid emerald green hair, pale skin, black tech visor cap, glowing green and orange headphone rings',
+    shape: 'stylized young woman head bust with twin rounded hair buns and a high collar, anime game character, clean topology',
+    texture: 'vivid teal-green hair in twin buns with gold cuffs, deep bronze skin, green eyes, black high collar with glowing green trim lines',
   },
   ZEROX: {
     shape: 'stylized woman head bust with twin hair buns, sleek high collar, anime game character, clean topology',

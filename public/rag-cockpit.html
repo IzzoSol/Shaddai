@@ -483,6 +483,41 @@ async function doAsk(){
   I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
 }
 
+/* Shard click → materialise the real passage behind it (blueprint L4).
+   Real retrieval, verbatim text, with timestamp + deep link when the chunk
+   carries them. This is the "why did it say that?" path. */
+document.getElementById('shards').addEventListener('click', async (e)=>{
+  const row = e.target.closest('.shard'); if(!row) return;
+  const term = row.textContent.trim();
+  document.querySelectorAll('.shard').forEach(s=>s.classList.remove('on'));
+  row.classList.add('on');
+
+  drawer.classList.add('open');
+  drawerTitle.textContent = 'SHARD ' + term;
+  drawerCount.textContent = 'retrieving…';
+  askbar.style.display='none'; askout.style.display='none';
+  drawerList.innerHTML='';
+  fireLaser(PANEL_TARGETS[0]);
+
+  const r = await D.inspectShard(term, current.id);
+  if(!r.ok || !r.passages.length){
+    drawerCount.textContent='';
+    drawerList.innerHTML = `<div class="dempty">No passage for “${esc(term)}” — ${r.note||'no match'}. Start the backend to inspect real chunks.</div>`;
+    return;
+  }
+  drawerCount.textContent = `${r.passages.length} passages${r.ms?` · ${r.ms}ms`:''}`;
+  drawerList.innerHTML = r.passages.map(p=>`
+    <div class="ditem" style="grid-column:1/-1">
+      <div style="min-width:0">
+        <b>${esc(p.title)}${p.time?` <span style="color:var(--acid)">[${esc(p.time)}]</span>`:''}${p.score!=null?` <span style="color:rgba(207,227,232,.4)">${(+p.score).toFixed(3)}</span>`:''}</b>
+        <span style="white-space:normal">${esc(String(p.text).slice(0,420))}${String(p.text).length>420?'…':''}</span>
+        ${p.link?`<a href="${p.link}" target="_blank" rel="noopener" style="color:var(--acid);font-size:.55rem">open source ▸</a>`:''}
+      </div>
+    </div>`).join('');
+  MUT.push({tag:'SHRD',kind:'out',text:`${term} → ${r.passages.length} passages`});
+  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+});
+
 /* explode control */
 const explodeEl = document.getElementById('explode');
 explodeEl.addEventListener('input', ()=>{ explodeT = +explodeEl.value/100; });
@@ -539,7 +574,14 @@ function paintAll(){
   I.gauge(document.getElementById('gRisk'), state.risk,
     state.risk>0.6?I.PALETTE.alarm:I.PALETTE.acid, 'HALLUC RISK');
   I.heatLadder(document.getElementById('ladder'), state.attention);
-  I.shardStack(document.getElementById('shards'), shards, activeShard);
+  // Shards are INTERACTIVE, so they must not be rebuilt on every telemetry
+  // tick — re-rendering mid-click detaches the row and the click is lost.
+  // Only redraw when the list or selection actually changed.
+  const sig = shards.join('|') + '#' + activeShard;
+  if (sig !== paintAll._shardSig) {
+    I.shardStack(document.getElementById('shards'), shards, activeShard);
+    paintAll._shardSig = sig;
+  }
 }
 
 const MUT = [

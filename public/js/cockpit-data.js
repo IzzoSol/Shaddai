@@ -163,6 +163,27 @@ export async function ask(query, agent) {
   };
 }
 
+/**
+ * Materialise the actual chunk behind a shard — the "why did it say that?"
+ * path. Uses real retrieval; returns the top passages verbatim.
+ */
+export async function inspectShard(term, agent) {
+  const r = await get(`/api/search?q=${encodeURIComponent(term)}&agent=${encodeURIComponent(agent)}&k=3`);
+  if (!r.ok) return { ok: false, note: r.note, passages: [] };
+  const rows = r.data?.results || [];
+  return {
+    ok: true,
+    ms: r.data?.ms,
+    passages: rows.map((c) => ({
+      title: c.title || c.docName || c.video_id || 'chunk',
+      text: c.text || c.chunkText || '',
+      score: c.score,
+      time: c.timeLabel || null,
+      link: c.deepLink || null,
+    })),
+  };
+}
+
 export async function runTool(tool, args = {}) { return post('/api/tools/run', { tool, args }); }
 export async function runWorkflow(ref)         { return post('/api/ainl/run', { workflow: ref, inputs: {} }); }
 
