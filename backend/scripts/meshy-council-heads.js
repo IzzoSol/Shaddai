@@ -42,9 +42,21 @@ async function balance() {
   return j.balance;
 }
 
+// Prefer a preprocessed head crop when one exists. Meshy times out on the full
+// 1024px portraits (busy background + full-body detail); a 512px head-only crop
+// is the "simplify your input" its own timeout error asks for. Make crops with:
+//   ffmpeg -i council/<A>.png -vf "crop=W:H:X:Y,scale=512:512" council/_src/<A>-head.png
+function sourceFile(agent) {
+  const crop = path.join(COUNCIL_DIR, '_src', `${agent}-head.png`);
+  if (fs.existsSync(crop)) return crop;
+  const full = path.join(COUNCIL_DIR, `${agent}.png`);
+  if (fs.existsSync(full)) return full;
+  throw new Error(`no source image for ${agent} (looked for ${crop} and ${full})`);
+}
+
 function dataUri(agent) {
-  const file = path.join(COUNCIL_DIR, `${agent}.png`);
-  if (!fs.existsSync(file)) throw new Error(`portrait not found: ${file}`);
+  const file = sourceFile(agent);
+  console.log(`[meshy] ${agent}: source ${path.relative(COUNCIL_DIR, file)}`);
   return `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
 }
 
