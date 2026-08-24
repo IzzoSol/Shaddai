@@ -20,7 +20,33 @@
 
 const TIMEOUT_MS = 9000;
 
+// The cockpit is often opened from a static file server (python http.server on
+// :8123) while the API lives on the backend's own port. Probe same-origin first
+// and fall back to :3000 so it works either way without hand-editing URLs.
+export let API_BASE = '';
+let _resolved = null;
+
+export function resolveBase() {
+  if (_resolved) return _resolved;
+  _resolved = (async () => {
+    for (const base of ['', 'http://localhost:3000']) {
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 3500);
+        const r = await fetch(base + '/api/overview', { signal: ctl.signal });
+        clearTimeout(t);
+        if (r.ok) { API_BASE = base; return base; }
+      } catch (_) { /* try next */ }
+    }
+    API_BASE = '';
+    return '';
+  })();
+  return _resolved;
+}
+
 async function get(url) {
+  await resolveBase();
+  url = API_BASE + url;
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {
@@ -33,6 +59,8 @@ async function get(url) {
 }
 
 async function post(url, body) {
+  await resolveBase();
+  url = API_BASE + url;
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 60000);
   try {
@@ -111,13 +139,17 @@ export async function loadTools(agent) {
 
 /** JAW — what the agent knows how to do. */
 export async function loadSkills(agent) {
-  const r = await get('/api/skills/catalog');
+  // The catalog is PAGINATED (default 60/page of ~3,163). Ask for a large page
+  // and read the real corpus size off `total`, not the page length — otherwise
+  // the drawer reports "of 60" for a 3,163-skill catalog.
+  const r = await get('/api/skills/catalog?limit=1000');
   if (!r.ok) return { ok: false, note: r.note, items: [] };
   const all = r.data?.skills || [];
   const mine = all.filter((s) => String(s.agent || '').toUpperCase() === agent);
   return {
     ok: true,
-    total: all.length,
+    total: r.data?.total ?? all.length,
+    loaded: all.length,
     mineTotal: mine.length,
     items: mine.slice(0, 80).map((s) => ({
       title: s.name, detail: s.category || s.description || '',

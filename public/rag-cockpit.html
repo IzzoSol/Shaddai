@@ -431,8 +431,9 @@ async function openCompartment(slotName, id){
     drawerList.innerHTML = `<div class="dempty">No ${slotName} available — ${res.note || 'empty'}. Start the backend on :3000 to load real data.</div>`;
     return;
   }
-  const extra = res.mineTotal!=null ? ` · ${res.mineTotal} for ${current.id} of ${res.total}`
-              : res.total!=null ? ` · ${res.total} total` : '';
+  const extra = res.mineTotal!=null
+    ? ` · ${res.mineTotal} for ${current.id}${res.loaded&&res.total>res.loaded?` (scanned ${res.loaded} of ${res.total})`:` of ${res.total}`}`
+    : res.total!=null ? ` · ${res.total} total` : '';
   drawerCount.textContent = `${res.items.length} shown${extra}`;
   drawerList.innerHTML = res.items.map((it,i)=>`
     <div class="ditem">
@@ -642,6 +643,8 @@ document.getElementById('masks').addEventListener('click',e=>{
   current = AGENTS[+b.dataset.i];
   document.getElementById('agentTag').textContent = 'MASK: ' + current.id;
   loadMask(current.id);
+  applyAgentStats();                       // swap in that agent's real numbers
+  if(openSlot) openCompartment(openSlot, openSlot);
 });
 
 /* fire */
@@ -655,13 +658,28 @@ document.getElementById('fire').addEventListener('click',()=>{
 });
 
 /* live telemetry when the brain API answers; otherwise the SIM stamp stands */
-fetch('/api/overview').then(r=>r.ok?r.json():Promise.reject()).then(d=>{
-  state.live=true;
+let OVERVIEW = null;
+async function goLive(){
+  const o = await D.loadOverview();
+  if(!o.ok) return;                      // stays SIM, honestly
+  OVERVIEW = o;
+  state.live = true;
   const s=document.getElementById('stamp'); s.textContent='LIVE'; s.classList.add('live');
-  const a=(d.agents||[])[0];
-  if(a&&a.topics&&a.topics.length) shards = a.topics.slice(0,6).map(t=>String(t[0]).slice(0,7).toUpperCase());
+  document.querySelector('.tag').textContent =
+    `${o.videos.toLocaleString()} VIDEOS · ${o.chunks.toLocaleString()} CHUNKS`;
+  applyAgentStats();
+}
+function applyAgentStats(){
+  if(!OVERVIEW) return;
+  const a = (OVERVIEW.agents||[]).find(x=>String(x.id||'').toUpperCase()===current.id);
+  if(!a) return;
+  // Real shard labels from this agent's actual top topics.
+  if(a.topics?.length) shards = a.topics.slice(0,6).map(t=>String(t[0]).slice(0,9).toUpperCase());
+  // Context load = this agent's share of the whole corpus.
+  if(OVERVIEW.chunks) state.contextLoad = Math.max(0.04, Math.min(0.98, (a.chunks||0)/OVERVIEW.chunks));
   paintAll();
-}).catch(()=>{});
+}
+goLive();
 
 /* loop */
 size(); loadMask(current.id); paintAll();
