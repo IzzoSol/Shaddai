@@ -27,9 +27,14 @@ body::after{
     radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.72) 100%);
   mix-blend-mode:multiply;
 }
-/* dense fluorescent grid — the reference's signature ground */
+/* drifting neon PCB traces — the deepest ground layer */
+#circuit{
+  position:fixed; inset:0; width:100%; height:100%; z-index:0;
+  opacity:.55; pointer-events:none;
+}
+/* dense fluorescent grid, over the traces */
 .grid-bg{
-  position:fixed; inset:0; z-index:0; opacity:.95;
+  position:fixed; inset:0; z-index:0; opacity:.45;
   background-image:
     linear-gradient(rgba(23,69,255,.85) 1px, transparent 1px),
     linear-gradient(90deg, rgba(23,69,255,.85) 1px, transparent 1px),
@@ -246,6 +251,7 @@ input[type=range]::-moz-range-thumb{
 </style>
 </head>
 <body>
+<canvas id="circuit"></canvas>
 <div class="grid-bg"></div>
 
 <div class="cockpit">
@@ -342,6 +348,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as I from './js/rag-cockpit.js';
 import * as D from './js/cockpit-data.js';
+import { initCircuitBg } from './js/circuit-bg.js';
+if(!location.search.includes('nobg')) initCircuitBg(document.getElementById('circuit'), { density: 1 });
 import { buildCompartments, applyExplode, projectLabels } from './js/head-explode.js';
 
 const AGENTS = [
