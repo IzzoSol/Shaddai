@@ -545,7 +545,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <div class="tb-title">ORACLE TERMINAL</div>
   <div class="tb-pill tb-pro">PRO</div>
   <div class="tb-pill tb-live">● LIVE</div>
-  <button onclick="window.location.href='3d-trading-floor.html'" style="padding:6px 14px;background:linear-gradient(135deg,#00d4dc,#00ff9c);color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:11px;letter-spacing:1px;transition:all .2s;margin-right:12px" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">⚡ 3D ⚡</button>
   <div class="tb-sp"></div>
   <canvas class="tb-osc" id="osc"></canvas>
   <div class="tb-stat" id="tbhr">rate <em>—</em></div>
@@ -557,10 +556,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <div class="th-sw sw2"        title="Blood Mkt"   onclick="setTheme('blood')"     data-t="blood"></div>
     <div class="th-sw sw3"        title="Ice Terminal" onclick="setTheme('ice')"       data-t="ice"></div>
   </div>
-  <div class="tb-pill" id="tbmiro" onclick="openMiroTab()" style="cursor:pointer;border-color:rgba(0,212,220,.45);color:rgba(0,212,220,.9);" title="Open the MiroFish swarm terminal (embedded)">🐟 MIRO</div>
-  <div class="tb-pill" onclick="openSimPanel()" style="cursor:pointer;border-color:rgba(176,127,255,.45);color:rgba(176,127,255,.9);" title="Open MiroFish quick-sim panel">🐟 SIM</div>
   <div class="tb-pill" id="tbpgl" onclick="openGallery()" style="cursor:pointer;border-color:rgba(244,200,66,.45);color:rgba(244,200,66,.9);" title="PNL image gallery">🖼 PNL <span id="pgcnt" style="font-size:8px;opacity:.8"></span></div>
-  <div class="tb-pill" id="tbana" onclick="openAnalyticsWindow()" style="cursor:pointer;border-color:rgba(0,255,156,.45);color:rgba(0,255,156,.9);" title="Signal quality metrics & dead coin analysis">📈 QUALITY</div>
   <div class="tb-pill" id="tbal" onclick="openAlerts()" title="Armed price alerts">🔔 <span id="alcount"></span></div>
   <div class="tb-clk" id="clk">--:--:--</div>
   <button class="rc-toggle" id="rc-toggle-btn" onclick="toggleRC()" title="Toggle data panel">▐ PANEL</button>
@@ -573,10 +569,9 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <div class="left-col">
     <div id="ltabs">
       <div class="ltab on"  onclick="openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana'])">🍌 MEMES</div>
-      <div class="ltab"     onclick="openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities'])">📈 FINANCE</div>
+      <div class="ltab"     onclick="openFullscreen('finance','💱 ALT',['forex','commodities','bonds','crypto-macro'])">💱 ALT</div>
+      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy'])">📊 STOCKS</div>
       <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro'])">📰 NEWS</div>
-      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance'])">📊 STOCKS</div>
-      <div class="ltab"     onclick="openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy'])">🎯 POLYMARKET</div>
     </div>
 
     <!-- signals -->
@@ -2064,7 +2059,6 @@ else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){
 
 // FULL-SCREEN TAB SYSTEM
 function openFullscreen(tabName,title,subtabs=[]) {
-  console.log('[openFullscreen] starting',tabName,title);
   _fsTab=tabName;_fsSubTab=subtabs[0]||'all';
 
   const fsv=document.getElementById('fullscreen-view');
@@ -2072,8 +2066,6 @@ function openFullscreen(tabName,title,subtabs=[]) {
   const fsst=document.getElementById('fs-subtabs');
   const app=document.getElementById('app');
   const fsc=document.getElementById('fs-content');
-
-  console.log('[openFullscreen] elements:',{fsv:!!fsv, fst:!!fst, fsst:!!fsst, app:!!app, fsc:!!fsc});
 
   if(!fsv||!fst||!fsst||!app||!fsc){
     console.error('[openFullscreen] MISSING elements!');
@@ -2084,15 +2076,10 @@ function openFullscreen(tabName,title,subtabs=[]) {
     fst.textContent=title;
     fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
 
-    console.log('[openFullscreen] calling renderFS');
     renderFS();
 
-    console.log('[openFullscreen] showing fullscreen-view, hiding app');
     fsv.style.display='flex';
-    fsv.style.zIndex='9999';
     app.style.display='none';
-
-    console.log('[openFullscreen] SUCCESS - fsv visible:', getComputedStyle(fsv).display);
   } catch(e) {
     console.error('[openFullscreen] error:',e.message,e.stack);
   }
@@ -2102,7 +2089,7 @@ function closeFullscreen() {
   const fsv=document.getElementById('fullscreen-view');
   const app=document.getElementById('app');
   if(fsv)fsv.style.display='none';
-  if(app)app.style.display='flex';
+  if(app)app.style.display='grid';
   _fsTab=null;_fsSubTab=null;
 }
 
@@ -2264,47 +2251,6 @@ function renderFS() {
         <div>$${g.price.toFixed(2)}</div>
         <div>Vol: <span style="color:var(--P)">${g.vol}M</span></div>
         <div>P/E: <span style="color:${g.pe>50?'var(--A)':'var(--S)'}">${g.pe}</span></div>
-      </div>
-    </div>`).join('');
-  } else if(_fsTab==='poly') {
-    let markets=[
-      {q:'2024 Election Winner',yes:62,no:38,pooled:2.3,category:'politics',volume:8400},
-      {q:'Bitcoin $100K by EOY',yes:75,no:25,pooled:1.8,category:'crypto',volume:12500},
-      {q:'AI Regulation Bill Passes',yes:48,no:52,pooled:0.89,category:'policy',volume:3200},
-      {q:'Tech IPO Market Recovers',yes:71,no:29,pooled:1.2,category:'tech',volume:5800},
-      {q:'Gold Hits $3K',yes:58,no:42,pooled:0.65,category:'commodity',volume:2100},
-      {q:'Fed Rate Cut Next Meeting',yes:65,no:35,pooled:1.5,category:'economy',volume:7600},
-      {q:'Crypto Adoption in Banks',yes:72,no:28,pooled:0.98,category:'crypto',volume:4200},
-      {q:'US Inflation Under 3%',yes:52,no:48,pooled:1.1,category:'economy',volume:6300}
-    ];
-
-    // Filter by search
-    if(searchVal) markets=markets.filter(m=>m.q.toLowerCase().includes(searchVal));
-
-    // Filter by subtab
-    if(_fsSubTab==='crypto') markets=markets.filter(m=>m.category==='crypto');
-    else if(_fsSubTab==='politics') markets=markets.filter(m=>m.category==='politics');
-    else if(_fsSubTab==='economy') markets=markets.filter(m=>m.category==='economy');
-
-    // Sort
-    if(sortVal==='mult') markets=[...markets].sort((a,b)=>b.yes-a.yes);
-    else if(sortVal==='score') markets=[...markets].sort((a,b)=>b.volume-a.volume);
-
-    html=markets.map(m=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-      <div style="color:var(--P);font-weight:700;font-size:11px;margin-bottom:8px">${m.q}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
-        <div style="border-radius:4px;padding:8px;background:var(--bg3);text-align:center">
-          <div style="color:var(--S);font-weight:700;font-size:14px">YES</div>
-          <div style="color:var(--text2);font-size:10px">${m.yes}%</div>
-        </div>
-        <div style="border-radius:4px;padding:8px;background:var(--bg3);text-align:center">
-          <div style="color:var(--A);font-weight:700;font-size:14px">NO</div>
-          <div style="color:var(--text2);font-size:10px">${m.no}%</div>
-        </div>
-      </div>
-      <div style="font-size:9px;color:var(--text2);display:flex;justify-content:space-between">
-        <div>💰 <span style="color:var(--P)">$${m.pooled}M</span></div>
-        <div>📊 <span style="color:var(--P)">${m.volume.toLocaleString()}</span> vol</div>
       </div>
     </div>`).join('');
   }
@@ -2537,25 +2483,6 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
 });
 
-// Wire tab clicks to full-screen
-function setupTabHandlers(){
-  const tabs=document.querySelectorAll('.ltab');
-  console.log('[tab handler] found',tabs.length,'tabs');
-  tabs.forEach((tab,i)=>{
-    tab.addEventListener('click',function(e){
-      e.preventDefault();e.stopPropagation();
-      const txt=e.target.textContent;
-      console.log('[tab click]',i,'text:',txt);
-      if(txt.includes('MEMES')){console.log('[opening] memes');openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana']);}
-      else if(txt.includes('FINANCE')){console.log('[opening] finance');openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities']);}
-      else if(txt.includes('NEWS')){console.log('[opening] news');openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro']);}
-      else if(txt.includes('STOCKS')){console.log('[opening] stocks');openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance']);}
-      else if(txt.includes('POLYMARKET')){console.log('[opening] poly');openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy']);}
-    });
-  });
-}
-document.addEventListener('DOMContentLoaded',setupTabHandlers);
-setTimeout(setupTabHandlers,500);
 </script>
 </body>
 </html>
