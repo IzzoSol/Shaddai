@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Council Mind</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --obsidian:#06080b; --panel:#0d121a; --line:rgba(232,196,92,.16);
+    --ink:#ece6d6; --muted:#8a90a0; --gold:#e8c45c;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--obsidian); color:var(--ink);
+    font-family:'IBM Plex Mono',ui-monospace,monospace; overflow:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(ellipse 800px 500px at 20% -10%, rgba(232,196,92,.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 20%, rgba(77,212,160,.06), transparent 55%);
+  }
+  .wrap{position:relative; z-index:1; height:100%; display:grid; grid-template-columns:210px 1fr 250px; gap:0}
+  h1{font-family:'Cinzel',serif; font-size:1rem; letter-spacing:.06em; margin:0}
+  .eyebrow{font-size:.62rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted)}
+
+  aside{border-right:1px solid var(--line); padding:18px 14px; display:flex; flex-direction:column; gap:14px; overflow:auto}
+  aside.right{border-right:none; border-left:1px solid var(--line)}
+  .agent{
+    display:flex; align-items:center; gap:10px; padding:8px 9px; border-radius:8px; cursor:pointer;
+    border:1px solid transparent; background:var(--panel); transition:border-color .15s, transform .15s;
+  }
+  .agent:hover{transform:translateX(2px)}
+  .agent.on{border-color:currentColor}
+  .agent img{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:top center;background:#000}
+  .agent .nm{font-family:'Cinzel',serif; font-size:.8rem; line-height:1.15}
+  .agent .rl{font-size:.58rem; color:var(--muted)}
+
+  main{position:relative}
+  #stage{position:absolute; inset:0}
+  .topbar{position:absolute; top:14px; left:50%; transform:translateX(-50%); text-align:center; z-index:2; pointer-events:none}
+  .hint{position:absolute; bottom:12px; left:50%; transform:translateX(-50%); font-size:.62rem; color:var(--muted); z-index:2}
+
+  .genre{padding:7px 9px; border-left:2px solid currentColor; background:var(--panel); border-radius:0 6px 6px 0; cursor:pointer; margin-bottom:6px}
+  .genre .g-n{font-size:.72rem}
+  .genre .g-c{font-size:.58rem; color:var(--muted)}
+  .sec-title{font-size:.62rem; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin:0 0 8px}
+  button.act{
+    width:100%; padding:9px; background:transparent; color:var(--gold);
+    border:1px solid rgba(232,196,92,.45); border-radius:7px; cursor:pointer;
+    font-family:inherit; font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
+  }
+  button.act:hover{background:rgba(232,196,92,.1)}
+  button.act:focus-visible, .agent:focus-visible, .genre:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){ .agent{transition:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <aside>
+    <div>
+      <span class="eyebrow">The Council</span>
+      <h1>Minds</h1>
+    </div>
+    <div id="roster"></div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <span class="eyebrow" id="tbEyebrow">Select a mind</span>
+      <h1 id="tbName">—</h1>
+    </div>
+    <div id="stage"></div>
+    <div class="hint">drag to orbit · click a genre node to drill in</div>
+  </main>
+
+  <aside class="right">
+    <div>
+      <p class="sec-title">Genres in this mind</p>
+      <div id="genres"></div>
+    </div>
+    <button class="act" id="retrieveBtn">Retrieve chunks</button>
+  </aside>
+
+</div>
+
+<!-- plain script (NOT type=module): defines window.createGovernor -->
+<script src="js/perf-governor.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import { initBrainHead } from './js/brain-head.js';
+
+const AGENT_META = [
+  {id:'SHADDAI', role:'Supreme Orchestrator',    color:'#e8c45c', cat:'Strategy & Mindset'},
+  {id:'NEXUS',   role:'Technical Architect',     color:'#5bc8d4', cat:'Technical / AI Engineering'},
+  {id:'ZEROX',   role:'Wealth & Revenue Engine', color:'#b87fdf', cat:'Wealth / Crypto / Finance'},
+  {id:'ORACLE',  role:'Research & Intelligence', color:'#f0d080', cat:'Research / Learning'},
+  {id:'TURTLE',  role:'UI/UX & Creative',        color:'#4dd4a0', cat:'Creative / Design / Art'},
+  {id:'QUILL',   role:'Writing & Communication', color:'#e87f7f', cat:'Writing / Rhetoric'},
+  {id:'PIKADON', role:'Security & Compliance',   color:'#f0a060', cat:'Security / Defense'}
+];
+
+const stage    = document.getElementById('stage');
+const rosterEl = document.getElementById('roster');
+const genresEl = document.getElementById('genres');
+const tbName   = document.getElementById('tbName');
+const tbEyebrow= document.getElementById('tbEyebrow');
+
+const head = initBrainHead(stage, {
+  onTopic: (topic, count) => drillTopic(topic, count),
+});
+
+let agents = AGENT_META.map(a => ({...a, docs:0, words:0, topics:[]}));
+let current = null;
+
+// Real numbers when the brain API is up; the view still works when it isn't.
+async function hydrate(){
+  try{
+    const r = await fetch('/api/overview');
+    if(!r.ok) throw new Error('overview ' + r.status); // fall through to placeholders
+    const data = await r.json();
+    const byId = {};
+    (data.agents || []).forEach(a => { byId[String(a.id||a.agent||'').toUpperCase()] = a; });
+    agents = agents.map(a => {
+      const live = byId[a.id];
+      return live ? {...a, docs:live.docs ?? live.videos ?? 0, words:live.words ?? 0, topics:live.topics ?? []} : a;
+    });
+  }catch(_){ /* offline: placeholders below */ }
+  agents = agents.map(a => a.topics && a.topics.length ? a : {...a, topics: placeholderTopics(a)});
+  renderRoster();
+  select(agents[0]);
+}
+
+function placeholderTopics(a){
+  return a.cat.split(/[/&]/).map(s=>s.trim()).filter(Boolean).map((t,i)=>[t, 120 - i*20]);
+}
+
+function renderRoster(){
+  rosterEl.innerHTML = '';
+  agents.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'agent'; el.style.color = a.color; el.tabIndex = 0;
+    el.innerHTML = `<img src="assets/council/${a.id}.png" alt="" onerror="this.style.visibility='hidden'">
+      <div><div class="nm">${a.id}</div><div class="rl">${a.role}</div></div>`;
+    const go = () => select(a);
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
+    rosterEl.appendChild(el);
+  });
+}
+
+function select(a){
+  current = a;
+  [...rosterEl.children].forEach((c,i)=>c.classList.toggle('on', agents[i].id===a.id));
+  tbName.textContent = a.id;
+  tbName.style.color = a.color;
+  tbEyebrow.textContent = a.role;
+  head.focusAgent(a);
+  renderGenres(a);
+}
+
+function renderGenres(a){
+  genresEl.innerHTML = '';
+  (a.topics||[]).slice(0,12).forEach(([name,count])=>{
+    const el = document.createElement('div');
+    el.className = 'genre'; el.style.color = a.color; el.tabIndex = 0;
+    el.innerHTML = `<div class="g-n">${name}</div><div class="g-c">${count} chunks</div>`;
+    const go = () => drillTopic(name, count);
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
+    genresEl.appendChild(el);
+  });
+}
+
+function drillTopic(topic, count){
+  head.setReadouts([
+    `AGENT ${current.id}`,
+    `GENRE ${String(topic).slice(0,22)}`,
+    `CHUNKS ${count ?? '—'}`,
+    `KB kb_${current.id.toLowerCase()}`,
+  ]);
+  head.burstChunks(Math.max(40, Math.min(400, count || 120)));
+}
+
+document.getElementById('retrieveBtn').addEventListener('click', ()=>{
+  if(current) head.burstChunks(220);
+});
+
+hydrate();
+</script>
+</body>
+</html>
