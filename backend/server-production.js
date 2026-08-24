@@ -1416,11 +1416,11 @@ app.get('/api/signals/analytics', (req, res) => {
     const siggen = require('./telegram-signals');
     const analysis = siggen._analyzeDeadCoins();
 
-    // Calculate overall metrics
-    const all = siggen._loadCallHistory() || [];
-    const recent = all.slice(-100);  // Last 100 calls
-    const recent2x = recent.filter(c => c.multiplier >= 2).length;
-    const recent5x = recent.filter(c => c.multiplier >= 5).length;
+    // Calculate overall metrics — callsJson() returns newest-first, so slice(0,100) = most recent 100
+    const all = siggen._loadCallHistory();
+    const recent = all.slice(0, 100);
+    const recent2x = recent.filter(c => (c.peakMult || 1) >= 2).length;
+    const recent5x = recent.filter(c => (c.peakMult || 1) >= 5).length;
 
     // Score each source by win rate
     const sourceScores = {};

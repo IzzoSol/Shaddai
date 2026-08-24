@@ -145,53 +145,38 @@ function _validateCall(callData, cfg) {
 }
 
 // ── CALL TRACKING & VALIDATION ──────────────────────────────────────────
-// Tracks all called signals for performance analysis and call-quality improvement
-const _CALL_HISTORY_FILE = path.join(__dirname, 'data', 'signal-calls-history.json');
-let _callHistory = [];
-function _loadCallHistory() {
-  try {
-    const raw = JSON.parse(fs.readFileSync(_CALL_HISTORY_FILE, 'utf8'));
-    if (Array.isArray(raw)) _callHistory = raw.slice(-500); // keep last 500
-  } catch (e) { _callHistory = []; }
+// Reads the REAL call log (backend/data/tg-calls.json, written by telegram-pnl.js's
+// recordCall() from every polling path — trending/bonded/pre_bonding/helius/boosted/
+// pipeline — and kept live-updated with curMult/peakMult by its tracker tick).
+// A parallel signal-calls-history.json store used to exist here but nothing ever
+// wrote to it (_recordCallHistory/_updateCallPerformance had zero callers), so
+// _analyzeDeadCoins()/_sourceScore() always saw empty data and _qualityMult()'s
+// win-rate-based gate tightening silently never fired. Fixed by reading the one
+// real store instead of maintaining a second that nothing feeds.
+function _loadCallHistory(opts) {
+  try { return require('./telegram-pnl').callsJson(Object.assign({ limit: 2000 }, opts || {})); }
+  catch (e) { return []; }
 }
-function _recordCallHistory(mint, symbol, entryFdv, entryPrice, source) {
-  _callHistory.push({
-    mint, symbol, entryFdv, entryPrice, source,
-    calledAt: Date.now(),
-    lastChecked: Date.now(),
-    currentFdv: null,
-    currentPrice: null,
-    multiplier: 1,
-    status: 'active' // active, hit2x, hit5x, dead
-  });
-  if (_callHistory.length > 500) _callHistory.shift();
-  try { fs.writeFileSync(_CALL_HISTORY_FILE, JSON.stringify(_callHistory)); } catch (e) {}
-}
-function _updateCallPerformance(mint, currentFdv, currentPrice) {
-  const call = _callHistory.find(c => c.mint === mint);
-  if (!call) return;
-  call.currentFdv = currentFdv;
-  call.currentPrice = currentPrice;
-  call.multiplier = currentPrice / call.entryPrice;
-  call.lastChecked = Date.now();
-  if (call.multiplier >= 5) call.status = 'hit5x';
-  else if (call.multiplier >= 2) call.status = 'hit2x';
-  else if (call.multiplier < 0.5) call.status = 'dead';
-}
-_loadCallHistory();
 
 // ── DEAD COIN ANALYZER ──────────────────────────────────────────────────
-// Learn from failed calls to improve future filtering
+// Learn from failed calls to improve future filtering.
+// "Dead" = currentMult < 0.5 (down 50%+ from entry). "Winner" = peakMult >= 5 (mooned).
+// Only considers calls old enough to have had a chance to move (>30 min) so fresh
+// calls aren't misclassified as dead before the tracker has re-priced them.
 function _analyzeDeadCoins() {
-  const deadCoins = _callHistory.filter(c => c.status === 'dead' && c.multiplier < 0.5);
-  const winners = _callHistory.filter(c => c.status === 'hit5x');
+  const all = _loadCallHistory();
+  const aged = all.filter(c => (Date.now() - (c.ts || 0)) > 30 * 60 * 1000);
+  if (aged.length === 0) return null;
 
-  if (deadCoins.length === 0) return null;
+  const deadCoins = aged.filter(c => (c.currentMult || 1) < 0.5);
+  const winners = aged.filter(c => (c.peakMult || 1) >= 5);
+
+  if (deadCoins.length === 0 && winners.length === 0) return null;
 
   const analysis = {
     deadCount: deadCoins.length,
     winCount: winners.length,
-    winRate: (winners.length / _callHistory.length * 100).toFixed(1) + '%',
+    winRate: (winners.length / aged.length * 100).toFixed(1) + '%',
     topFailPatterns: [],
     topWinPatterns: []
   };
@@ -326,12 +311,12 @@ function _isDeadHour() {
   return h === 9 || h === 13 || h === 15 || h === 22;
 }
 function _sourceScore(source) {
-  // Calculates 0-100 source quality score from call history
-  const hist = _loadCallHistory() || [];
+  // Calculates 0-100 source quality score from real call history (peakMult >= 2 = win)
+  const hist = _loadCallHistory();
   const sourceCalls = hist.filter(c => (c.source || '').toLowerCase() === (source || '').toLowerCase());
   if (sourceCalls.length < 3) return 50;  // Need minimum calls to score
 
-  const winners = sourceCalls.filter(c => c.multiplier >= 2).length;
+  const winners = sourceCalls.filter(c => (c.peakMult || 1) >= 2).length;
   const rate = (winners / sourceCalls.length) * 100;
 
   // Score = win rate % (0-100) with min/max bounds
@@ -2246,7 +2231,6 @@ module.exports = {
   // Analytics exports for /api/signals/analytics endpoint
   _analyzeDeadCoins,
   _loadCallHistory,
-  _recordCallHistory,
   _sourceScore,
   // Validation exports for /api/signals/validate endpoint
   _validateCall,
