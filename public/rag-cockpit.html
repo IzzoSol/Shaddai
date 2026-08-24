@@ -261,7 +261,7 @@ input[type=range]::-moz-range-thumb{
 
   <!-- LEFT COLUMN -->
   <div class="col">
-    <div class="panel" style="flex:1.1">
+    <div class="panel" style="flex:0 0 190px">
       <h2><span class="idx">L1</span> Search speed<span class="sub">how fast answers come back</span></h2>
       <canvas class="inst" id="velocity"></canvas>
     </div>
@@ -278,14 +278,6 @@ input[type=range]::-moz-range-thumb{
         <canvas id="gLoad"></canvas>
         <canvas id="gRisk"></canvas>
       </div>
-    </div>
-    <div class="panel" style="flex:1">
-      <h2><span class="idx">L4</span> Top topics<span class="sub">click one to read its sources</span></h2>
-      <div id="shards"></div>
-    </div>
-    <div class="panel">
-      <h2><span class="idx">L5</span> Rebuild index<span class="sub">re-read a knowledge area</span></h2>
-      <div class="pads" id="pads"></div>
     </div>
   </div>
 
@@ -332,22 +324,9 @@ input[type=range]::-moz-range-thumb{
       <h2><span class="idx">R2</span> Activity log<span class="sub">what the brain just did</span></h2>
       <div id="mutlog"></div>
     </div>
-    <div class="panel">
-      <h2><span class="idx">R3</span> Creativity<span class="sub">strict facts &rarr; loose ideas</span></h2>
-      <div class="knob-wrap">
-        <div class="knob" id="knob" tabindex="0" role="slider"
-             aria-label="Creativity override" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35"></div>
-        <div>
-          <div class="knob-read" id="knobRead">0.35</div>
-          <div class="tag" id="knobWarn" style="font-size:.5rem">stable</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel" style="flex:0 0 auto;padding-bottom:6px">
-      <h2 style="margin-bottom:3px"><span class="idx">R4</span> Citation mode
-        <span class="rail-read" id="strictRead" style="width:auto;margin-left:auto;font-size:.85rem">ENFORCED</span>
-      </h2>
-      <input type="range" id="strict" min="0" max="100" value="72" style="width:100%">
+    <div class="panel" style="flex:1.5">
+      <h2><span class="idx">R3</span> Top topics<span class="sub">click one to read its sources</span></h2>
+      <div id="shards"></div>
     </div>
   </div>
 
@@ -855,44 +834,12 @@ const MUT = [
 ];
 I.mutationLog(document.getElementById('mutlog'), MUT);
 
-/* re-index pads */
-const PADS=['CORE','VIDEO','BOOK','TOOL'];
-document.getElementById('pads').innerHTML = PADS.map(p=>`<button class="pad" data-p="${p}">${p}</button>`).join('');
-document.getElementById('pads').addEventListener('click',(e)=>{
-  const b=e.target.closest('.pad'); if(!b) return;
-  b.classList.add('fired'); setTimeout(()=>b.classList.remove('fired'),420);
-  MUT.push({tag:'IDX',kind:'expand',text:`re-embedding ${b.dataset.p} domain…`});
-  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
-});
-
-/* creativity knob */
-const knob=document.getElementById('knob'), knobRead=document.getElementById('knobRead'), knobWarn=document.getElementById('knobWarn');
-function setTemp(v){
-  state.temperature=Math.max(0,Math.min(1,v));
-  knob.style.setProperty('--rot',(state.temperature*270-135)+'deg');
-  knobRead.textContent=state.temperature.toFixed(2);
-  knob.setAttribute('aria-valuenow',Math.round(state.temperature*100));
-  const danger=state.temperature>0.8;
-  knobWarn.textContent = danger ? 'context collapse risk' : state.temperature>0.6 ? 'drifting' : 'stable';
-  knobWarn.style.color = danger ? 'var(--alarm)' : state.temperature>0.6 ? 'var(--amber)' : 'rgba(207,227,232,.5)';
-}
-let kd=null;
-knob.addEventListener('pointerdown',e=>{kd=e.clientY;knob.setPointerCapture(e.pointerId);});
-knob.addEventListener('pointermove',e=>{ if(kd===null)return; setTemp(state.temperature+(kd-e.clientY)*0.006); kd=e.clientY; });
-knob.addEventListener('pointerup',()=>kd=null);
-knob.addEventListener('keydown',e=>{
-  if(e.key==='ArrowUp'||e.key==='ArrowRight'){e.preventDefault();setTemp(state.temperature+0.05);}
-  if(e.key==='ArrowDown'||e.key==='ArrowLeft'){e.preventDefault();setTemp(state.temperature-0.05);}
-});
-setTemp(0.35);
-
-/* strictness rail */
-const strict=document.getElementById('strict'), strictRead=document.getElementById('strictRead');
-function setStrict(){
-  const v=+strict.value/100; state.strictness=v;
-  strictRead.textContent = v>0.8?'LOCKED':v>0.55?'ENFORCED':v>0.3?'LOOSE':'FREE SYNTH';
-}
-strict.addEventListener('input',setStrict); setStrict();
+/* Removed: re-index pads, creativity knob, citation-strictness rail.
+   All three set local state that was never sent to any endpoint — the pads
+   logged without re-embedding, and strictness/temperature never reached a
+   request. They looked like controls and controlled nothing, so they are gone
+   rather than left as props. If a real re-index or generation-parameter
+   endpoint lands, they can come back wired. */
 
 /* mask rail */
 document.getElementById('masks').innerHTML = AGENTS.map((a,i)=>
