@@ -219,10 +219,24 @@ export async function inspectShard(term, agent) {
 }
 
 /** Put the question to every agent at once. */
-export async function askCouncil(query, k = 4) {
-  const r = await get(`/api/council?q=${encodeURIComponent(query)}&k=${k}`, 90000);
+export async function askCouncil(query, k = 3) {
+  // Council can take ~35s: it runs retrieval for all seven agents.
+  const r = await get(`/api/council?q=${encodeURIComponent(query)}&k=${k}`, 120000);
   if (!r.ok) return { ok: false, note: r.note, agents: [] };
-  return { ok: true, agents: r.data?.agents || [], ms: r.data?.ms };
+  // Shape is { agents:[{id, role, color, score, chunks, results:[{title,text}]}] }
+  // — there is no `answer` field; earlier code looked for one and rendered blanks.
+  const agents = (r.data?.agents || []).map((a) => ({
+    id: String(a.id || a.agent || '').toUpperCase(),
+    role: a.role || '',
+    color: a.color || null,
+    score: a.score,
+    chunks: a.chunks,
+    passages: (a.results || []).map((x) => ({
+      title: x.title || 'source',
+      text: x.text || '',
+    })),
+  })).sort((x, y) => (y.score || 0) - (x.score || 0));
+  return { ok: true, agents, ms: r.data?.ms };
 }
 
 /**

@@ -894,25 +894,39 @@ async function askOne(){
 async function askAll(){
   const q = qEl.value.trim(); if(!q) return;
   openAnswer('COUNCIL · ' + q.slice(0,40));
+  // The council runs retrieval across all seven agents and has measured
+  // 35-105s. Say so, rather than leaving a bare 'thinking…' for two minutes.
+  drawerCount.textContent = 'asking all seven agents — this takes up to two minutes…';
+  let secs = 0;
+  const tick = setInterval(()=>{
+    secs += 1;
+    drawerCount.textContent = `asking all seven agents — ${secs}s elapsed (can take up to two minutes)`;
+  }, 1000);
   MUT.push({tag:'CNCL',kind:'in',text:q});
   I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
 
   const r = await D.askCouncil(q);
+  clearInterval(tick);
   if(!r.ok || !r.agents.length){
     drawerCount.textContent='';
     askout.innerHTML=`<span style="color:var(--amber)">Council unavailable — ${r.note||'no agents answered'}.</span>`;
     return;
   }
-  drawerCount.textContent = `${r.agents.length} agents${r.ms?` · ${r.ms}ms`:''}`;
+  drawerCount.textContent = `${r.agents.length} agents ranked by relevance${r.ms?` · ${(r.ms/1000).toFixed(1)}s`:''}`;
   askout.style.display='none';
   const byId = Object.fromEntries(AGENTS.map(a=>[a.id,a.color]));
   drawerList.innerHTML = r.agents.map(a=>{
-    const id = String(a.agent||a.id||'').toUpperCase();
-    const col = byId[id] || 'var(--cyan)';
+    const col = a.color || byId[a.id] || 'var(--cyan)';
+    const best = a.passages[0];
+    const more = a.passages.slice(1).map(p=>
+      `<div class="src" style="opacity:.6">▸ ${esc(p.title)}</div>`).join('');
     return `<div class="ditem" style="grid-column:1/-1;border-left-color:${col}">
       <div style="min-width:0">
-        <b style="color:${col}">${esc(id)}</b>
-        <span style="white-space:normal">${esc(String(a.answer||a.text||'').slice(0,500))}</span>
+        <b style="color:${col}">${esc(a.id)}
+          <span style="opacity:.55;font-weight:400">${esc(a.role)} · score ${(a.score??0).toFixed(3)} · ${a.chunks??0} chunks</span></b>
+        ${best ? `<span style="white-space:normal">${esc(String(best.text).slice(0,420))}</span>
+                  <div class="src">from: ${esc(best.title)}</div>` : '<span>no passages returned</span>'}
+        ${more}
       </div></div>`;
   }).join('');
   fireLaser(PANEL_TARGETS[0]);
