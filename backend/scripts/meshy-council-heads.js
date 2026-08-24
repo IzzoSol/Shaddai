@@ -38,33 +38,33 @@ const OUT_DIR = path.join(__dirname, '..', '..', 'public', 'assets', 'council');
 // Shape + texture prompts derived from each council portrait.
 const COUNCIL = {
   NEXUS: {
-    shape: 'futuristic cyborg human head bust, sleek angular tech helmet, stylized game character, clean topology',
+    shape: 'left half young man face with smooth skin, right half exposed chrome robot endoskeleton with cables and vents, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'sleek cyborg head, dark gunmetal armor plating, glowing cyan circuit lines, orange amber accent lights, high-tech',
   },
   PIKADON: {
-    shape: 'armored sentinel helmet bust, angular faceplate mask, horned crest, stylized game character, clean topology',
+    shape: 'left half stern man face, right half armored crimson war-mask plating with glowing red optic, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'black and crimson armored war mask, glowing red visor eyes, molten orange seams, battle-worn metal',
   },
   // Corrected from the owner's TURTLE character sheet (council/_src/TURTLE-sheet.jpg):
   // teal-green twin buns with gold cuffs, deep bronze skin, black bodysuit w/ green trim.
   TURTLE: {
-    shape: 'stylized young woman head bust with twin rounded hair buns and a high collar, anime game character, clean topology',
+    shape: 'left half young woman face with hair swept over, right half exposed chrome robot endoskeleton with cables, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'vivid teal-green hair in twin buns with gold cuffs, deep bronze skin, green eyes, black high collar with glowing green trim lines',
   },
   ZEROX: {
-    shape: 'stylized woman head bust with twin hair buns, sleek high collar, anime game character, clean topology',
+    shape: 'left half young woman face with hair bun, right half exposed chrome robot endoskeleton with cables, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'dark navy hair, deep bronze skin, glossy black bodysuit collar with glowing electric cyan trim lines',
   },
   QUILL: {
-    shape: 'bearded scholar head bust with swept hair and a high hooded collar, stylized game character, clean topology',
+    shape: 'left half bearded scholar face, right half exposed brass and chrome clockwork endoskeleton, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'deep violet scholar hood and robe, warm skin, dark trimmed beard, soft gold rune glow',
   },
   ORACLE: {
-    shape: 'stylized woman head bust with a high sleek ponytail and turtleneck collar, game character, clean topology',
+    shape: 'left half woman face with high ponytail, right half exposed chrome robot endoskeleton with cables, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'dark bronze skin, black glossy turtleneck, luminous violet rim light, glowing amethyst eyes',
   },
   SHADDAI: {
-    shape: 'regal masked sovereign head bust, crowned geometric halo, stylized game character, clean topology',
+    shape: 'left half radiant ethereal spirit face made of smooth glowing energy, right half exposed chrome robot endoskeleton with cables, clean vertical seam down centre of face, head bust, hard surface, game ready, clean topology',
     texture: 'obsidian black mask with radiant gold filigree, glowing warm gold eyes, sacred geometry engraving',
   },
 };
