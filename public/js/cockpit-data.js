@@ -44,11 +44,11 @@ export function resolveBase() {
   return _resolved;
 }
 
-async function get(url) {
+async function get(url, timeout = TIMEOUT_MS) {
   await resolveBase();
   url = API_BASE + url;
   const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  const t = setTimeout(() => ctl.abort(), timeout);
   try {
     const r = await fetch(url, { signal: ctl.signal });
     if (!r.ok) return { ok: false, note: `HTTP ${r.status}` };
@@ -142,7 +142,7 @@ export async function loadSkills(agent) {
   // The catalog is PAGINATED (default 60/page of ~3,163). Ask for a large page
   // and read the real corpus size off `total`, not the page length — otherwise
   // the drawer reports "of 60" for a 3,163-skill catalog.
-  const r = await get('/api/skills/catalog?limit=1000');
+  const r = await get('/api/skills/catalog?limit=1000', 30000);
   if (!r.ok) return { ok: false, note: r.note, items: [] };
   const all = r.data?.skills || [];
   const mine = all.filter((s) => String(s.agent || '').toUpperCase() === agent);
@@ -183,7 +183,8 @@ export async function loadScripts() {
 
 /** Grounded query — the grounding laser's actual payload. */
 export async function ask(query, agent) {
-  const r = await get(`/api/ask?q=${encodeURIComponent(query)}&agent=${encodeURIComponent(agent)}`);
+  // Retrieval loads a large TF-IDF index on first call — 9s is not enough.
+  const r = await get(`/api/ask?q=${encodeURIComponent(query)}&agent=${encodeURIComponent(agent)}`, 60000);
   if (!r.ok) return { ok: false, note: r.note };
   const d = r.data || {};
   return {
@@ -200,7 +201,7 @@ export async function ask(query, agent) {
  * path. Uses real retrieval; returns the top passages verbatim.
  */
 export async function inspectShard(term, agent) {
-  const r = await get(`/api/search?q=${encodeURIComponent(term)}&agent=${encodeURIComponent(agent)}&k=3`);
+  const r = await get(`/api/search?q=${encodeURIComponent(term)}&agent=${encodeURIComponent(agent)}&k=3`, 45000);
   if (!r.ok) return { ok: false, note: r.note, passages: [] };
   const rows = r.data?.results || [];
   return {
@@ -214,6 +215,13 @@ export async function inspectShard(term, agent) {
       link: c.deepLink || null,
     })),
   };
+}
+
+/** Put the question to every agent at once. */
+export async function askCouncil(query, k = 4) {
+  const r = await get(`/api/council?q=${encodeURIComponent(query)}&k=${k}`, 90000);
+  if (!r.ok) return { ok: false, note: r.note, agents: [] };
+  return { ok: true, agents: r.data?.agents || [], ms: r.data?.ms };
 }
 
 export async function runTool(tool, args = {}) { return post('/api/tools/run', { tool, args }); }

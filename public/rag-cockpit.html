@@ -7,9 +7,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
-  --void:#04060a; --crt:#0a2f8f; --cyan:#00e5ff; --acid:#39ff5a;
-  --magenta:#ff2fb8; --alarm:#ff2b3d; --bone:#cfe3e8; --amber:#ffb63d;
-  --bezel:#0b1626; --edge:rgba(0,229,255,.28);
+  /* fluorescent: saturated electric grid on true black, like the reference */
+  --void:#01030a; --crt:#1745ff; --cyan:#22f0ff; --acid:#4dff6a;
+  --magenta:#ff3df0; --alarm:#ff2f52; --bone:#e8f6ff; --amber:#ffd23d;
+  --violet:#a855ff;
+  --bezel:#08132b; --edge:rgba(34,240,255,.45);
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -25,18 +27,23 @@ body::after{
     radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.72) 100%);
   mix-blend-mode:multiply;
 }
+/* dense fluorescent grid — the reference's signature ground */
 .grid-bg{
-  position:fixed; inset:0; z-index:0; opacity:.5;
+  position:fixed; inset:0; z-index:0; opacity:.95;
   background-image:
-    linear-gradient(rgba(10,47,143,.55) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(10,47,143,.55) 1px, transparent 1px);
-  background-size:26px 26px;
-  mask-image:radial-gradient(ellipse 90% 80% at 50% 45%, #000 30%, transparent 78%);
+    linear-gradient(rgba(23,69,255,.85) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23,69,255,.85) 1px, transparent 1px),
+    linear-gradient(rgba(34,240,255,.30) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,240,255,.30) 1px, transparent 1px);
+  background-size:64px 64px, 64px 64px, 16px 16px, 16px 16px;
+  mask-image:radial-gradient(ellipse 95% 85% at 50% 45%, #000 42%, transparent 88%);
 }
 
 .cockpit{
   position:relative; z-index:1; height:100%;
-  display:grid; grid-template-columns:238px 1fr 238px; grid-template-rows:34px 1fr 74px;
+  /* strictness moved into the right column — the bottom rail was eating the
+     vertical space the 3D viewport needs */
+  display:grid; grid-template-columns:236px 1fr 236px; grid-template-rows:34px 1fr;
   gap:8px; padding:8px;
 }
 header{
@@ -49,8 +56,14 @@ h1{
   margin:0; color:var(--cyan); text-shadow:0 0 10px var(--cyan);
 }
 .tag{font-size:.58rem; letter-spacing:.16em; color:rgba(207,227,232,.5)}
+#q{
+  margin-left:auto; width:min(340px,32vw); background:rgba(0,0,0,.55);
+  border:1px solid var(--edge); color:var(--bone);
+  font-family:'IBM Plex Mono',monospace; font-size:.62rem; padding:5px 8px;
+}
+header .fire{padding:5px 10px; font-size:.5rem}
 .stamp{
-  margin-left:auto; font-family:'Silkscreen',monospace; font-size:.58rem;
+  font-family:'Silkscreen',monospace; font-size:.58rem;
   letter-spacing:.14em; padding:3px 7px; border:1px solid var(--alarm); color:var(--alarm);
 }
 .stamp.live{border-color:var(--acid); color:var(--acid)}
@@ -69,6 +82,13 @@ h1{
   margin:0 0 5px; color:var(--cyan); text-transform:uppercase; display:flex; gap:6px; align-items:center;
 }
 .panel h2 .idx{color:rgba(207,227,232,.35)}
+/* plain-language hint under every panel title — say what it's for */
+.panel h2 .sub{
+  display:block; width:100%; margin-top:2px;
+  font-family:'IBM Plex Mono',monospace; font-size:.5rem; letter-spacing:0;
+  text-transform:none; color:rgba(232,246,255,.45);
+}
+.panel h2{flex-wrap:wrap}
 .panel.hot{border-color:var(--acid); box-shadow:0 0 18px rgba(57,255,90,.28)}
 canvas.inst{width:100%; display:block; flex:1; min-height:0}
 
@@ -229,42 +249,45 @@ input[type=range]::-moz-range-thumb{
     <h1>NEURAL COCKPIT</h1>
     <span class="tag">RAG BRAIN · CORE MODULE</span>
     <span class="tag" id="agentTag">MASK: NEXUS</span>
+    <input id="q" placeholder="Ask the brain…" aria-label="Ask the brain">
+    <button class="fire" id="askAgent">Ask NEXUS</button>
+    <button class="fire" id="askCouncil">Ask council</button>
     <span class="stamp" id="stamp">SIM</span>
   </header>
 
   <!-- LEFT COLUMN -->
   <div class="col">
     <div class="panel" style="flex:1.1">
-      <h2><span class="idx">L1</span> Retrieval Velocity Trace</h2>
+      <h2><span class="idx">L1</span> Search speed<span class="sub">how fast answers come back</span></h2>
       <canvas class="inst" id="velocity"></canvas>
     </div>
     <div class="panel">
-      <h2><span class="idx">L2</span> Corpus Composition</h2>
+      <h2><span class="idx">L2</span> What's in the brain<span class="sub">where knowledge comes from</span></h2>
       <div class="rings">
         <canvas id="ring1"></canvas>
         <canvas id="ring2"></canvas>
       </div>
     </div>
     <div class="panel">
-      <h2><span class="idx">L3</span> Load / Risk</h2>
+      <h2><span class="idx">L3</span> Load &amp; confidence<span class="sub">how full, how sure</span></h2>
       <div class="gauges">
         <canvas id="gLoad"></canvas>
         <canvas id="gRisk"></canvas>
       </div>
     </div>
     <div class="panel" style="flex:1">
-      <h2><span class="idx">L4</span> Active Shard IDs</h2>
+      <h2><span class="idx">L4</span> Top topics<span class="sub">click one to read its sources</span></h2>
       <div id="shards"></div>
     </div>
     <div class="panel">
-      <h2><span class="idx">L5</span> Force Re-index</h2>
+      <h2><span class="idx">L5</span> Rebuild index<span class="sub">re-read a knowledge area</span></h2>
       <div class="pads" id="pads"></div>
     </div>
   </div>
 
   <!-- CENTER -->
   <main>
-    <span class="viewport-tag">OPTICAL FEED · GROUNDING LASER ARMED</span>
+    <span class="viewport-tag" id="vpTag">drag to turn · scroll to zoom · click a node to read it</span>
     <div id="skullStage"></div>
     <canvas id="laser"></canvas>
     <div class="cmp-layer" id="cmpLayer"></div>
@@ -291,18 +314,18 @@ input[type=range]::-moz-range-thumb{
   <!-- RIGHT COLUMN -->
   <div class="col">
     <div class="panel" style="flex:1.4">
-      <h2><span class="idx">R1</span> Attention Heat Ladder</h2>
+      <h2><span class="idx">R1</span> Agent activity<span class="sub">which parts are working</span></h2>
       <div class="ladder-wrap">
         <canvas class="inst" id="ladder"></canvas>
         <div class="ladder-nums"><span id="ladTop">941</span><span id="ladBot">807</span></div>
       </div>
     </div>
     <div class="panel" style="flex:1.2">
-      <h2><span class="idx">R2</span> Query Mutation Log</h2>
+      <h2><span class="idx">R2</span> Activity log<span class="sub">what the brain just did</span></h2>
       <div id="mutlog"></div>
     </div>
     <div class="panel">
-      <h2><span class="idx">R3</span> Creativity Override</h2>
+      <h2><span class="idx">R3</span> Creativity<span class="sub">strict facts &rarr; loose ideas</span></h2>
       <div class="knob-wrap">
         <div class="knob" id="knob" tabindex="0" role="slider"
              aria-label="Creativity override" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35"></div>
@@ -312,16 +335,13 @@ input[type=range]::-moz-range-thumb{
         </div>
       </div>
     </div>
+    <div class="panel">
+      <h2><span class="idx">R4</span> Citation mode<span class="sub">how hard sources are enforced</span></h2>
+      <input type="range" id="strict" min="0" max="100" value="72" style="width:100%">
+      <div class="rail-read" id="strictRead" style="width:auto;margin-top:3px">ENFORCED</div>
+    </div>
   </div>
 
-  <footer>
-    <div class="rail">
-      <label for="strict">Citation Strictness</label>
-      <input type="range" id="strict" min="0" max="100" value="72">
-      <span class="rail-read" id="strictRead">ENFORCED</span>
-    </div>
-    <button class="fire" id="fire">Fire grounding laser</button>
-  </footer>
 </div>
 
 <script src="js/perf-governor.js"></script>
@@ -331,6 +351,7 @@ input[type=range]::-moz-range-thumb{
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as I from './js/rag-cockpit.js';
 import * as D from './js/cockpit-data.js';
 import { buildCompartments, applyExplode, projectLabels } from './js/head-explode.js';
@@ -350,18 +371,75 @@ camera.position.set(0, 0.05, 4.3);
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 stage.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 1.35));
-const key = new THREE.DirectionalLight(0xffffff, 2.1); key.position.set(2,3,6); scene.add(key);
-const rimL = new THREE.PointLight(0x00e5ff, 2.4, 18); rimL.position.set(-3.2,1.1,-1.8); scene.add(rimL);
-const rimR = new THREE.PointLight(0xff2fb8, 1.5, 18); rimR.position.set(3.2,-0.5,-1.8); scene.add(rimR);
+// The fluorescent grid is bright, so the head needs real light to hold its
+// own against it — it read as a dark silhouette at the previous levels.
+scene.add(new THREE.AmbientLight(0xffffff, 2.2));
+const key = new THREE.DirectionalLight(0xffffff, 3.2); key.position.set(2,3,6); scene.add(key);
+const fill = new THREE.DirectionalLight(0xbfe9ff, 1.2); fill.position.set(-3,1,4); scene.add(fill);
+const rimL = new THREE.PointLight(0x22f0ff, 3.0, 20); rimL.position.set(-3.2,1.1,-1.8); scene.add(rimL);
+const rimR = new THREE.PointLight(0xff3df0, 2.0, 20); rimR.position.set(3.2,-0.5,-1.8); scene.add(rimR);
+
+/* orbit / swivel — drag to rotate, wheel to dolly */
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 2.4; controls.maxDistance = 11;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 0, 0);
+// Stop auto-spin the moment the user takes hold, and don't fight them after.
+controls.addEventListener('start', () => { controls.autoRotate = false; });
 
 const wire = new THREE.Group(); scene.add(wire);
 for(let i=0;i<9;i++){
   const pts=[]; const r=1.9+(i%3)*0.08;
   for(let a=0;a<=64;a++){const t=(a/64)*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(t)*r,Math.sin(t)*r,0));}
   const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({color:0x39ff5a,transparent:true,opacity:.16}));
+    new THREE.LineBasicMaterial({color:0x4dff6a,transparent:true,opacity:.22}));
   l.rotation.set((i/9)*Math.PI, i*2.399, 0); wire.add(l);
+}
+
+/* ── knowledge constellation ─────────────────────────────────────────────
+   The old brain's node-graph, brought forward: each of the agent's real
+   topics becomes a node tethered to the head, sized by chunk count. They
+   drift outward from the brain and link to their neighbours. */
+const constellation = new THREE.Group(); scene.add(constellation);
+let nodeMeshes = [];
+const NODE_GEO = new THREE.SphereGeometry(0.052, 10, 10);
+
+function buildConstellation(topics, colorHex){
+  while(constellation.children.length) constellation.remove(constellation.children[0]);
+  nodeMeshes = [];
+  const list = (topics||[]).slice(0,18);
+  if(!list.length) return;
+  const maxN = Math.max(...list.map(t=>t[1]||1));
+  const col = new THREE.Color(colorHex);
+
+  const positions = [];
+  list.forEach(([name,count],i)=>{
+    // golden-spiral shell so nodes spread evenly instead of banding
+    const y = 1 - (i/Math.max(1,list.length-1))*2;
+    const rad = Math.sqrt(Math.max(0,1-y*y));
+    const th = i * 2.399;
+    const R = 2.55 + (i%3)*0.22;
+    const p = new THREE.Vector3(Math.cos(th)*rad*R, y*R*0.72, Math.sin(th)*rad*R);
+    positions.push(p);
+
+    // keep nodes readable as dots, not blobs — big topics get modest emphasis
+    const scale = 0.55 + 0.75*Math.sqrt((count||1)/maxN);
+    const m = new THREE.Mesh(NODE_GEO, new THREE.MeshBasicMaterial({color:col.clone()}));
+    m.position.copy(p); m.scale.setScalar(scale);
+    m.userData = { topic:name, count, base:scale, home:p.clone() };
+    constellation.add(m); nodeMeshes.push(m);
+  });
+
+  // tether each node back toward the brain, plus a link to its neighbour
+  const seg = [];
+  positions.forEach((p,i)=>{
+    seg.push(p.clone().multiplyScalar(0.42), p);
+    if(i>0) { seg.push(positions[i-1], p); }
+  });
+  const lg = new THREE.BufferGeometry().setFromPoints(seg);
+  constellation.add(new THREE.LineSegments(lg,
+    new THREE.LineBasicMaterial({color:col.clone(), transparent:true, opacity:.28})));
 }
 
 const slot = new THREE.Group(); scene.add(slot);
@@ -482,6 +560,49 @@ async function doAsk(){
   MUT.push({tag:'ASK',kind:'in',text:q});
   MUT.push({tag:'OUT',kind:'out',text:`${r.sources?.length||0} sources · ${r.provider}`});
   I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+}
+
+/* Click a constellation node → inspect that topic's real passages.
+   OrbitControls owns pointer drag, so only treat it as a click when the
+   pointer barely moved — otherwise every orbit would open a drawer. */
+const _ray = new THREE.Raycaster(); const _ndc = new THREE.Vector2();
+let _down = null;
+renderer.domElement.addEventListener('pointerdown', e => { _down = {x:e.clientX, y:e.clientY}; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if(!_down) return;
+  const moved = Math.hypot(e.clientX-_down.x, e.clientY-_down.y);
+  _down = null;
+  if(moved > 4 || !nodeMeshes.length) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  _ndc.x = ((e.clientX-r.left)/r.width)*2-1;
+  _ndc.y = -((e.clientY-r.top)/r.height)*2+1;
+  _ray.setFromCamera(_ndc, camera);
+  const hit = _ray.intersectObjects(nodeMeshes, false)[0];
+  if(hit) inspectTopic(hit.object.userData.topic, hit.object.userData.count);
+});
+
+async function inspectTopic(topic, count){
+  drawer.classList.add('open');
+  drawerTitle.textContent = 'TOPIC ' + String(topic).toUpperCase();
+  drawerCount.textContent = `${count?.toLocaleString?.()||count||''} chunks · retrieving…`;
+  askbar.style.display='none'; askout.style.display='none';
+  drawerList.innerHTML='';
+  fireLaser(PANEL_TARGETS[0]);
+  const r = await D.inspectShard(topic, current.id);
+  if(!r.ok || !r.passages.length){
+    drawerCount.textContent='';
+    drawerList.innerHTML = `<div class="dempty">No passage for “${esc(topic)}” — ${r.note||'no match'}.</div>`;
+    return;
+  }
+  drawerCount.textContent = `${count?.toLocaleString?.()||count||''} chunks · ${r.passages.length} passages${r.ms?` · ${r.ms}ms`:''}`;
+  drawerList.innerHTML = r.passages.map(p=>`
+    <div class="ditem" style="grid-column:1/-1">
+      <div style="min-width:0">
+        <b>${esc(p.title)}${p.time?` <span style="color:var(--acid)">[${esc(p.time)}]</span>`:''}</b>
+        <span style="white-space:normal">${esc(String(p.text).slice(0,420))}${String(p.text).length>420?'…':''}</span>
+        ${p.link?`<a href="${p.link}" target="_blank" rel="noopener" style="color:var(--acid);font-size:.55rem">open source ▸</a>`:''}
+      </div>
+    </div>`).join('');
 }
 
 /* Shard click → materialise the real passage behind it (blueprint L4).
@@ -642,20 +763,76 @@ document.getElementById('masks').addEventListener('click',e=>{
   b.classList.add('on');
   current = AGENTS[+b.dataset.i];
   document.getElementById('agentTag').textContent = 'MASK: ' + current.id;
+  document.getElementById('askAgent').textContent = 'Ask ' + current.id;
   loadMask(current.id);
   applyAgentStats();                       // swap in that agent's real numbers
   if(openSlot) openCompartment(openSlot, openSlot);
 });
 
-/* fire */
+/* ── the real work: ask this agent, or the whole council ────────────────── */
 const PANEL_TARGETS = ['#shards','#mutlog','#velocity'].map(s=>document.querySelector(s).closest('.panel'));
-document.getElementById('fire').addEventListener('click',()=>{
-  activeShard = Math.floor(Math.random()*shards.length);
-  fireLaser(PANEL_TARGETS[Math.floor(Math.random()*PANEL_TARGETS.length)]);
-  MUT.push({tag:'OUT',kind:'out',text:`grounded → shard ${shards[activeShard]}`});
+const qEl = document.getElementById('q');
+
+function openAnswer(title){
+  drawer.classList.add('open');
+  drawerTitle.textContent = title;
+  drawerCount.textContent = 'thinking…';
+  askbar.style.display='none';
+  askout.style.display='block';
+  askout.textContent='';
+  drawerList.innerHTML='';
+}
+
+async function askOne(){
+  const q = qEl.value.trim(); if(!q) return;
+  openAnswer('ANSWER · ' + current.id);
+  MUT.push({tag:'ASK',kind:'in',text:q});
   I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
-  paintAll();
-});
+
+  const r = await D.ask(q, current.id);
+  if(!r.ok){ drawerCount.textContent=''; askout.innerHTML=`<span style="color:var(--amber)">No answer — ${r.note}.</span>`; return; }
+  drawerCount.textContent = `${r.sources.length} sources${r.ms?` · ${r.ms}ms`:''} · ${r.provider}`;
+  askout.innerHTML = `<div>${esc(r.answer||'(no answer text)')}</div>`;
+  drawerList.innerHTML = (r.sources||[]).map(s=>`
+    <div class="ditem"><div style="min-width:0">
+      <b>${esc(s.title||s.agent||'source')}</b>
+      <span>${s.score!=null?`score ${(+s.score).toFixed(3)}`:''} ${esc(s.agent||'')}</span>
+    </div></div>`).join('');
+  if(r.sources?.length) fireLaser(PANEL_TARGETS[0]);   // laser now marks a REAL grounding
+  MUT.push({tag:'OUT',kind:'out',text:`${r.sources.length} sources · ${r.provider}`});
+  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+}
+
+async function askAll(){
+  const q = qEl.value.trim(); if(!q) return;
+  openAnswer('COUNCIL · ' + q.slice(0,40));
+  MUT.push({tag:'CNCL',kind:'in',text:q});
+  I.mutationLog(document.getElementById('mutlog'), MUT.slice(-14));
+
+  const r = await D.askCouncil(q);
+  if(!r.ok || !r.agents.length){
+    drawerCount.textContent='';
+    askout.innerHTML=`<span style="color:var(--amber)">Council unavailable — ${r.note||'no agents answered'}.</span>`;
+    return;
+  }
+  drawerCount.textContent = `${r.agents.length} agents${r.ms?` · ${r.ms}ms`:''}`;
+  askout.style.display='none';
+  const byId = Object.fromEntries(AGENTS.map(a=>[a.id,a.color]));
+  drawerList.innerHTML = r.agents.map(a=>{
+    const id = String(a.agent||a.id||'').toUpperCase();
+    const col = byId[id] || 'var(--cyan)';
+    return `<div class="ditem" style="grid-column:1/-1;border-left-color:${col}">
+      <div style="min-width:0">
+        <b style="color:${col}">${esc(id)}</b>
+        <span style="white-space:normal">${esc(String(a.answer||a.text||'').slice(0,500))}</span>
+      </div></div>`;
+  }).join('');
+  fireLaser(PANEL_TARGETS[0]);
+}
+
+document.getElementById('askAgent').addEventListener('click', askOne);
+document.getElementById('askCouncil').addEventListener('click', askAll);
+qEl.addEventListener('keydown', e=>{ if(e.key==='Enter') (e.shiftKey?askAll:askOne)(); });
 
 /* live telemetry when the brain API answers; otherwise the SIM stamp stands */
 let OVERVIEW = null;
@@ -673,6 +850,7 @@ function applyAgentStats(){
   if(!OVERVIEW) return;
   const a = (OVERVIEW.agents||[]).find(x=>String(x.id||'').toUpperCase()===current.id);
   if(!a) return;
+  buildConstellation(a.topics, current.color);   // real topics become real nodes
   // Real shard labels from this agent's actual top topics.
   if(a.topics?.length) shards = a.topics.slice(0,6).map(t=>String(t[0]).slice(0,9).toUpperCase());
   // Context load = this agent's share of the whole corpus.
@@ -688,11 +866,24 @@ function frame(){
   requestAnimationFrame(frame);
   const dt=Math.min(clock.getDelta(),.1); acc+=dt; gov.update(dt);
   wire.rotation.y+=dt*0.12; wire.rotation.x=Math.sin(acc*0.2)*0.14;
-  // Hold the head still while it's open — you can't inspect a spinning cutaway.
-  slot.rotation.y = explodeT>0.02 ? slot.rotation.y*0.92 : Math.sin(acc*0.25)*0.14;
+  // Orbit owns rotation now — keep the head square to its own axis so the user
+  // controls the view rather than fighting an idle sway.
+  slot.rotation.y *= 0.92;
 
-  // Pull the camera back as it opens so the spread shells stay in frame.
-  camera.position.z += ((4.3 + explodeT*2.1) - camera.position.z) * 0.12;
+  controls.update();
+  // Ease the orbit radius out as compartments open so shells stay in frame,
+  // without stomping the angle the user has chosen.
+  const want = 4.3 + explodeT*2.4;
+  const d = camera.position.length();
+  if(Math.abs(d-want) > 0.05) camera.position.multiplyScalar(1 + ((want-d)/d)*0.10);
+
+  // constellation breathes and drifts outward as the head opens
+  constellation.rotation.y -= dt*0.06;
+  nodeMeshes.forEach((n,i)=>{
+    const puff = 1 + Math.sin(acc*1.5 + i)*0.10;
+    n.scale.setScalar(n.userData.base*puff);
+    n.position.copy(n.userData.home).multiplyScalar(1 + explodeT*0.30);
+  });
 
   if(parts.length){
     applyExplode(parts, explodeT);
