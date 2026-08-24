@@ -2447,6 +2447,8 @@ try { app.use('/api/coin-launch', require('./coin-launch-routes')); console.log(
 catch (e) { console.warn('[prod] coin-launch failed:', e.message); }
 try { app.use('/api/thread-pack', require('./thread-pack-routes')); console.log('[prod] thread pack mounted'); }
 catch (e) { console.warn('[prod] thread-pack failed:', e.message); }
+try { app.use(require('./quickstart-routes')); console.log('[prod] quickstart wizard mounted'); }
+catch (e) { console.warn('[prod] quickstart failed:', e.message); }
 app.use('/games', express.static(path.join(__dirname, '..', 'games')));
 
 // ── Shaddai Realms — 2.5D isometric RPG (Vite/Phaser SPA), served static (MUST be before the catch-all) ──
