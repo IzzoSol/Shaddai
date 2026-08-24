@@ -80,11 +80,23 @@ async function createTask(agent) {
   return j.result || j.id || j.task_id;
 }
 
-async function pollTask(taskId) {
-  const r = await fetch(`${API}/image-to-3d/${taskId}`, { headers: authHeaders() });
-  const text = await r.text();
-  if (!r.ok) throw new Error(`status failed: ${r.status} ${text}`);
-  return JSON.parse(text);
+// Transient network blips must not kill a 10+ minute generation: a bare
+// `fetch failed` here once orphaned a live task. Retry a few times before
+// giving up, and let the caller keep polling.
+async function pollTask(taskId, tries = 4) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(`${API}/image-to-3d/${taskId}`, { headers: authHeaders() });
+      const text = await r.text();
+      if (!r.ok) throw new Error(`status ${r.status}: ${text}`);
+      return JSON.parse(text);
+    } catch (e) {
+      lastErr = e;
+      await new Promise((res) => setTimeout(res, 4000 * (i + 1)));
+    }
+  }
+  throw lastErr;
 }
 
 async function downloadGlb(url, agent) {
@@ -96,10 +108,15 @@ async function downloadGlb(url, agent) {
   return { out, bytes: buf.length };
 }
 
-async function runAgent(agent) {
-  console.log(`[meshy] ${agent}: creating image-to-3D task...`);
-  const taskId = await createTask(agent);
-  console.log(`[meshy] ${agent}: task ${taskId} created; polling (this takes a few minutes)`);
+async function runAgent(agent, existingTaskId) {
+  let taskId = existingTaskId;
+  if (taskId) {
+    console.log(`[meshy] ${agent}: reattaching to existing task ${taskId}`);
+  } else {
+    console.log(`[meshy] ${agent}: creating image-to-3D task...`);
+    taskId = await createTask(agent);
+    console.log(`[meshy] ${agent}: task ${taskId} created; polling (this takes a few minutes)`);
+  }
 
   const started = Date.now();
   const TIMEOUT_MS = 15 * 60 * 1000;
@@ -133,6 +150,15 @@ async function main() {
 
   const statusId = get('--status=');
   if (statusId) { console.log(JSON.stringify(await pollTask(statusId), null, 2)); return; }
+
+  // Reattach to a task that's already generating (e.g. after a poller crash)
+  // instead of paying for a fresh render: --wait=<taskId> --agent=<NAME>
+  const waitId = get('--wait=');
+  if (waitId) {
+    const agent = (get('--agent=') || 'NEXUS').toUpperCase();
+    await runAgent(agent, waitId);
+    return;
+  }
 
   const before = await balance();
   console.log(`[meshy] credits before: ${before}`);
