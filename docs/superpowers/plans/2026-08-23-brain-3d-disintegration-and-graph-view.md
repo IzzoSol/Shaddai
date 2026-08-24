@@ -240,7 +240,7 @@ git commit -m "feat: add reusable perf-governor module for brain.html 3D views"
 - Modify: `public/brain.html` — add a `<script type="importmap">` (three.js 0.180.0) and a `<script type="module" src="js/brain-disintegration.js"></script>` include, plus a small wiring call from the existing per-agent click handler.
 
 **Interfaces:**
-- Consumes: `createGovernor` from `public/js/perf-governor.js` (Task 1) — `import { createGovernor } from './perf-governor.js'`. Consumes `AGENTS` (global array already defined in `brain.html`, each entry has `{id, color, role, cat, docs, tools, words, topics: [[topicName, chunkCount], ...], ...}` — confirmed at `public/brain.html:695`) and the existing `openPanel(ci)` function (`public/brain.html:1115`) for detail-panel reuse.
+- Consumes: `createGovernor` from `public/js/perf-governor.js` (Task 1) — **as `window.createGovernor`, NOT an ESM import.** Task 1 established (verified empirically, see its ledger ruling) that `perf-governor.js` cannot carry an ESM `export` statement: Jest's module runtime throws `SyntaxError: Unexpected token 'export'` and its whole suite fails to load. The module therefore uses CJS `module.exports` (for tests) plus a `window.createGovernor` global (for the browser). Load it in `brain.html` with a plain `<script src="js/perf-governor.js"></script>` **before** the module scripts, and reference `window.createGovernor` — do NOT write `import { createGovernor } from './perf-governor.js'`, which will be undefined at runtime. Consumes `AGENTS` (global array already defined in `brain.html`, each entry has `{id, color, role, cat, docs, tools, words, topics: [[topicName, chunkCount], ...], ...}` — confirmed at `public/brain.html:695`) and the existing `openPanel(ci)` function (`public/brain.html:1115`) for detail-panel reuse.
 - Produces: `initDisintegration(containerEl, agents)` — mounts a three.js canvas into `containerEl`, returns `{ triggerDisintegrate(agentIndex) }`. Called once at page load; `triggerDisintegrate(ci)` is what the existing agent-cluster click handler calls instead of (or alongside) today's `openPanel(ci)`.
 
 - [ ] **Step 1: Confirm the GLB filenames match `AGENTS[].id`**
@@ -264,6 +264,8 @@ Find `brain.html`'s `<head>` (or wherever other `<script>` tags for this page li
   }
 }
 </script>
+<!-- plain script, NOT type="module" — sets window.createGovernor; must come first -->
+<script src="js/perf-governor.js"></script>
 <script type="module" src="js/brain-disintegration.js"></script>
 ```
 
@@ -273,7 +275,9 @@ Find `brain.html`'s `<head>` (or wherever other `<script>` tags for this page li
 // public/js/brain-disintegration.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { createGovernor } from './perf-governor.js';
+// perf-governor is loaded as a plain (non-module) script that sets a global —
+// it cannot carry an ESM export without breaking its Jest suite. See Task 1.
+const createGovernor = window.createGovernor;
 
 const loader = new GLTFLoader(); // no DRACOLoader — confirmed agent GLBs are plain glTF, not Draco-compressed
 
