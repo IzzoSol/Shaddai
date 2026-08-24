@@ -335,10 +335,11 @@ input[type=range]::-moz-range-thumb{
         </div>
       </div>
     </div>
-    <div class="panel">
-      <h2><span class="idx">R4</span> Citation mode<span class="sub">how hard sources are enforced</span></h2>
+    <div class="panel" style="flex:0 0 auto;padding-bottom:6px">
+      <h2 style="margin-bottom:3px"><span class="idx">R4</span> Citation mode
+        <span class="rail-read" id="strictRead" style="width:auto;margin-left:auto;font-size:.85rem">ENFORCED</span>
+      </h2>
       <input type="range" id="strict" min="0" max="100" value="72" style="width:100%">
-      <div class="rail-read" id="strictRead" style="width:auto;margin-top:3px">ENFORCED</div>
     </div>
   </div>
 
@@ -367,7 +368,7 @@ let current = AGENTS[0];
 const stage = document.getElementById('skullStage');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-camera.position.set(0, 0.05, 4.3);
+camera.position.set(0, 0.05, 5.2);
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 stage.appendChild(renderer.domElement);
 
@@ -390,7 +391,7 @@ controls.addEventListener('start', () => { controls.autoRotate = false; });
 
 const wire = new THREE.Group(); scene.add(wire);
 for(let i=0;i<9;i++){
-  const pts=[]; const r=1.9+(i%3)*0.08;
+  const pts=[]; const r=2.9+(i%3)*0.10;
   for(let a=0;a<=64;a++){const t=(a/64)*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(t)*r,Math.sin(t)*r,0));}
   const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
     new THREE.LineBasicMaterial({color:0x4dff6a,transparent:true,opacity:.22}));
@@ -419,7 +420,7 @@ function buildConstellation(topics, colorHex){
     const y = 1 - (i/Math.max(1,list.length-1))*2;
     const rad = Math.sqrt(Math.max(0,1-y*y));
     const th = i * 2.399;
-    const R = 2.55 + (i%3)*0.22;
+    const R = 3.7 + (i%3)*0.28;   // clear of the (now larger) head
     const p = new THREE.Vector3(Math.cos(th)*rad*R, y*R*0.72, Math.sin(th)*rad*R);
     positions.push(p);
 
@@ -456,13 +457,13 @@ function loadMask(agentId){
     loader.load(tryFiles[i], (g)=>{
       const o=g.scene;
       const b=new THREE.Box3().setFromObject(o), s=b.getSize(new THREE.Vector3()), c=b.getCenter(new THREE.Vector3());
-      const k=2.35/Math.max(s.x,s.y,s.z); o.scale.setScalar(k); o.position.sub(c.multiplyScalar(k));
+      const k=3.5/Math.max(s.x,s.y,s.z); o.scale.setScalar(k); o.position.sub(c.multiplyScalar(k));
       o.traverse(n=>{ if(n.isMesh&&n.material){ const m=[].concat(n.material);
         m.forEach(x=>{ if(x.emissive) x.emissive.setHex(0x081018); if(x.roughness!==undefined) x.roughness=Math.max(x.roughness,.4); }); }});
       slot.add(o);
       // Build the clipped compartment shells from the loaded head and hide the
       // whole head — from here the four shells ARE the head.
-      parts = buildCompartments(THREE, o, renderer);
+      parts = buildCompartments(THREE, o, renderer, slot, new THREE.Color(current.color).getHex());
       o.visible = false;
       parts.forEach(p => slot.add(p.group));
       buildCmpLabels();
@@ -482,7 +483,7 @@ let openSlot = null;
 
 function buildCmpLabels(){
   cmpLayer.innerHTML = parts.map(p =>
-    `<button class="cmp" data-id="${p.id}" data-slot="${p.slot}">${p.label}<span class="n">${p.slot}</span></button>`
+    `<button class="cmp" data-id="${p.id}" data-slot="${p.slot}">${p.label}</button>`
   ).join('');
 }
 
@@ -873,7 +874,7 @@ function frame(){
   controls.update();
   // Ease the orbit radius out as compartments open so shells stay in frame,
   // without stomping the angle the user has chosen.
-  const want = 4.3 + explodeT*2.4;
+  const want = 5.2 + explodeT*4.6;
   const d = camera.position.length();
   if(Math.abs(d-want) > 0.05) camera.position.multiplyScalar(1 + ((want-d)/d)*0.10);
 

@@ -12,11 +12,14 @@
 'use strict';
 
 // Fractions measured from the model's own bounding box, top → bottom.
+// Directions fan OUTWARD in a ring rather than sliding sideways, so opened
+// shells sit around the head like satellites on tethers instead of drifting
+// off one axis.
 export const COMPARTMENTS = [
-  { id: 'cranium', label: 'CRANIUM',  from: 0.74, to: 1.00, dir: [ 0.0,  1.0,  0.15], slot: 'knowledge' },
-  { id: 'optics',  label: 'OPTICS',   from: 0.52, to: 0.74, dir: [-1.0,  0.25, 0.35], slot: 'tools'     },
-  { id: 'jaw',     label: 'JAW',      from: 0.24, to: 0.52, dir: [ 1.0, -0.1,  0.35], slot: 'skills'    },
-  { id: 'column',  label: 'COLUMN',   from: 0.00, to: 0.24, dir: [ 0.0, -1.0,  0.15], slot: 'scripts'   },
+  { id: 'cranium', label: 'KNOWLEDGE', from: 0.74, to: 1.00, dir: [ 0.10,  1.00,  0.30], slot: 'knowledge' },
+  { id: 'optics',  label: 'TOOLS',     from: 0.52, to: 0.74, dir: [-1.00,  0.34,  0.42], slot: 'tools'     },
+  { id: 'jaw',     label: 'SKILLS',    from: 0.24, to: 0.52, dir: [ 1.00,  0.02,  0.42], slot: 'skills'    },
+  { id: 'column',  label: 'SCRIPTS',   from: 0.00, to: 0.24, dir: [-0.10, -1.00,  0.30], slot: 'scripts'   },
 ];
 
 /**
@@ -27,7 +30,7 @@ export const COMPARTMENTS = [
  * fragile on arbitrary meshes), each compartment gets a CLONE of the head
  * clipped by local clipping planes. The renderer must have localClippingEnabled.
  */
-export function buildCompartments(THREE, source, renderer) {
+export function buildCompartments(THREE, source, renderer, tetherParent, tetherColor = 0x22f0ff) {
   renderer.localClippingEnabled = true;
 
   const box = new THREE.Box3().setFromObject(source);
@@ -58,8 +61,23 @@ export function buildCompartments(THREE, source, renderer) {
     });
 
     group.add(clone);
+
+    // Visible tether: each shell stays wired back to the head it came from.
+    let tether = null;
+    if (tetherParent) {
+      const tg = new THREE.BufferGeometry();
+      tg.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(6), 3));
+      tether = new THREE.Line(tg, new THREE.LineBasicMaterial({
+        color: tetherColor, transparent: true, opacity: 0.35,
+      }));
+      tether.visible = false;
+      tether.frustumCulled = false;
+      tetherParent.add(tether);
+    }
+
     return {
       id: c.id,
+      tether,
       label: c.label,
       slot: c.slot,
       group,
@@ -79,12 +97,23 @@ export function buildCompartments(THREE, source, renderer) {
  * Drive compartment positions. `t` is 0 (assembled) → 1 (fully apart).
  * Eased so the parts settle rather than sliding linearly.
  */
-export function applyExplode(parts, t, distance = 0.8) {
+export function applyExplode(parts, t, distance = 1.05) {
   const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // easeInOutQuad
   parts.forEach((p, i) => {
     const stagger = Math.max(0, Math.min(1, e * 1.25 - i * 0.06));
     p.group.position.copy(p.dir).multiplyScalar(stagger * distance);
-    p.group.rotation.z = p.dir.x * stagger * 0.12;
+    // open outward AND turn to face the viewer as they separate
+    p.group.rotation.z = p.dir.x * stagger * 0.22;
+    p.group.rotation.x = -p.dir.y * stagger * 0.16;
+    if (p.tether) {
+      const g = p.tether.geometry;
+      const a = g.attributes.position;
+      a.setXYZ(0, p.dir.x * 0.35, p.dir.y * 0.35, p.dir.z * 0.35);
+      a.setXYZ(1, p.group.position.x, p.group.position.y, p.group.position.z);
+      a.needsUpdate = true;
+      p.tether.visible = stagger > 0.02;
+      p.tether.material.opacity = 0.20 + stagger * 0.45;
+    }
     // Carry the cut with the shell: both planes are horizontal (normal ±Y), so
     // only the Y component of the offset shifts them.
     if (p.planes && p.baseConst) {
