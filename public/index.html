@@ -5470,7 +5470,8 @@ window.enter3DWorld=function(){
 
     <!-- ── E4: "⚡ Workflow Runner / Research → Build" box REMOVED per owner —
          its features are superseded by the consolidated WORKFLOW CENTER below.
-         (Legacy runWorkflowFromUI()/WF_AGENTS JS kept as dead code; no other caller.) -->
+         (Legacy runWorkflowFromUI()/_runWorkflowClientSide()/WF_AGENTS/clearWorkflowOutput()
+         JS confirmed to have zero remaining callers and fully deleted 2026-08-22.) -->
 
     <!-- ══════════════════════════════════════════════════════════════════════
          E4: WORKFLOW CENTER — consolidated Chains + Scheduled + Webhooks.
@@ -5645,6 +5646,50 @@ window.enter3DWorld=function(){
                   <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🔐 Site Security Audit</div>
                     <button onclick="runSavedWorkflow('site-security-audit')" style="font-size:7px;padding:2px 7px;background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:3px;cursor:pointer">▶ RUN</button></div>
                   <div style="font-size:7px;color:var(--text-muted);margin-top:3px">ssl_check · security_headers · dns_lookup</div></div>
+                <!-- 7-agent council chains -->
+                <div style="font-size:8px;font-family:'Share Tech Mono',monospace;color:rgba(0,229,160,0.55);letter-spacing:1px;margin:4px 0 2px">🏛️ COUNCIL CHAINS</div>
+                <div class="card" style="padding:10px;border-color:rgba(0,196,255,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">📣 Social Content</div>
+                    <button onclick="runSavedWorkflow('social-content')" style="font-size:7px;padding:2px 7px;background:rgba(0,196,255,0.1);border:1px solid #00c4ff;color:#00c4ff;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(0,196,255,0.5)">ORACLE → QUILL → PIKADON → TURTLE</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(255,176,32,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🎙️ Voiceover Production</div>
+                    <button onclick="runSavedWorkflow('voiceover-production')" style="font-size:7px;padding:2px 7px;background:rgba(255,176,32,0.1);border:1px solid #ffb020;color:#ffb020;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(255,176,32,0.5)">QUILL → TURTLE → NEXUS</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(139,92,246,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🔐 Security Review (Council)</div>
+                    <button onclick="runSavedWorkflow('security-review')" style="font-size:7px;padding:2px 7px;background:rgba(139,92,246,0.1);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(139,92,246,0.5)">PIKADON → ORACLE → QUILL</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(0,229,160,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">💵 Financial Modeling</div>
+                    <button onclick="runSavedWorkflow('financial-modeling')" style="font-size:7px;padding:2px 7px;background:rgba(0,229,160,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(0,229,160,0.5)">ZEROX → ORACLE → SHADDAI</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(244,63,94,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">🏗️ API Design</div>
+                    <button onclick="runSavedWorkflow('api-design')" style="font-size:7px;padding:2px 7px;background:rgba(244,63,94,0.12);border:1px solid #f43f5e;color:#f43f5e;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(244,63,94,0.5)">NEXUS → PIKADON → QUILL</div>
+                </div>
+                <div class="card" style="padding:10px;border-color:rgba(255,215,0,0.2)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif">📊 Quarterly Business Review</div>
+                    <button onclick="runSavedWorkflow('qbr')" style="font-size:7px;padding:2px 7px;background:rgba(255,215,0,0.1);border:1px solid #ffd700;color:#ffd700;border-radius:3px;cursor:pointer">▶ RUN</button>
+                  </div>
+                  <div style="font-size:7px;font-family:'Share Tech Mono',monospace;color:rgba(255,215,0,0.5)">ZEROX → ORACLE → SHADDAI → QUILL</div>
+                </div>
                 <div id="userWorkflowsList"></div>
               </div>
             </div>
@@ -6758,9 +6803,27 @@ window.enter3DWorld=function(){
       #brainView .brn-hit .t{font-size:13px;line-height:1.6;color:rgba(255,255,255,0.82)}
       #brainView .brn-muted{color:var(--text-muted);font-size:12px;font-family:'Share Tech Mono',monospace}
     </style>
-    <div class="brn-hero">
-      <div class="brn-title">🧠 THE BRAIN</div>
-      <div class="brn-sub" id="brainStats">wiring to the council's knowledge…</div>
+    <div class="brn-hero" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div class="brn-title">🧠 THE BRAIN</div>
+        <div class="brn-sub" id="brainStats">wiring to the council's knowledge…</div>
+      </div>
+      <a href="rag-cockpit.html"
+         style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;
+                text-decoration:none;color:#12061f;background:#b16cff;border-radius:9px;padding:11px 18px;
+                display:inline-flex;align-items:center;gap:8px;white-space:nowrap">
+        🧬 Open the 3D Brain
+      </a>
+    </div>
+    <!-- The 3D cockpit is the primary brain; the text search/ask below is the
+         fast path and reads the same endpoints. Same brain, two front doors. -->
+    <div style="margin:0 0 14px;border:1px solid rgba(177,108,255,.28);border-radius:14px;overflow:hidden;background:#01030a">
+      <iframe src="rag-cockpit.html" title="3D Neural Cockpit" loading="lazy"
+              style="width:100%;height:620px;border:0;display:block"></iframe>
+    </div>
+    <div class="brn-sub" style="margin:-6px 0 14px;color:rgba(255,255,255,.45)">
+      Above: take a council head apart and run its knowledge, tools, skills and
+      scripts. Below: the fast text search and ask, on the same knowledge base.
     </div>
     <div class="card" style="padding:18px">
       <div class="brn-chips" id="brainAgents"></div>
@@ -14854,6 +14917,12 @@ function setAgentRole(agentName, role) {
 const _msgStore = {};
 
 // Workflow templates
+// NOTE: this is a LIVE parallel workflow-chain system (not dead) — powers the
+// "Workflow Chains" buttons + #workflowList under Office ▸ Task Scheduler
+// (runWorkflow()/runWorkflowChain()/renderWorkflows()/deleteWorkflow()), separate
+// from the confirmed-live Workflow Center (runSavedWorkflow's `prebuilt` dict,
+// #workflowCenter). Flagged 2026-08-22 for future consolidation into that
+// `prebuilt` dict — do not delete without re-verifying callers first.
 const WORKFLOW_TEMPLATES = {
   'research-to-build': [
     { agent: 'ORACLE', prompt: 'Research this topic comprehensively: {input}', extract: 'full' },
@@ -14870,8 +14939,8 @@ const WORKFLOW_TEMPLATES = {
     { agent: 'ZEROX', prompt: 'Financial analysis based on forecast: {prev}', extract: 'full' },
     { agent: 'SHADDAI', prompt: 'Strategic recommendation based on analysis: {prev}', extract: 'full' }
   ],
-  // Aligned with the canonical WF_AGENTS['idea-to-product'] chain (SHADDAI→NEXUS→TURTLE→ZEROX)
-  // so the two agent-based definitions no longer disagree on steps/order.
+  // Was aligned with the now-deleted legacy WF_AGENTS['idea-to-product'] chain
+  // (SHADDAI→NEXUS→TURTLE→ZEROX); that dead code was removed 2026-08-22.
   'idea-to-product': [
     { agent: 'SHADDAI', prompt: 'Break down this product idea into a clear MVP feature set — what to build first and why: {input}', extract: 'full' },
     { agent: 'NEXUS', prompt: 'Architecture and tech stack for this MVP: {prev}', extract: 'full' },
@@ -15676,187 +15745,6 @@ const PERMISSIONS_ENGINE = {
 
 // Initialize permissions engine in state
 S.permissions = PERMISSIONS_ENGINE;
-
-// ================== WORKFLOW ENGINE ==================
-// Deterministic pipelines with queues, retries, human approvals
-const WORKFLOW_ENGINE = {
-  workflows: {},
-  activeWorkflows: [],
-  workflowHistory: [],
-  maxHistory: 500,
-
-  // Define a workflow
-  define(name, steps) {
-    this.workflows[name] = {
-      name,
-      steps: steps.map((s, i) => ({
-        ...s,
-        id: i,
-        status: 'pending',
-        retries: 0,
-        maxRetries: s.maxRetries || 3
-      })),
-      createdAt: new Date().toISOString()
-    };
-    log(`Workflow defined: ${name} (${steps.length} steps)`, 'ok', 'WORKFLOW');
-  },
-
-  // Execute a workflow
-  async execute(name, input, options = {}) {
-    const workflow = this.workflows[name];
-    if (!workflow) throw new Error(`Workflow not found: ${name}`);
-
-    const execution = {
-      id: Date.now(),
-      name,
-      input,
-      status: 'running',
-      currentStep: 0,
-      steps: workflow.steps.map(s => ({ ...s, status: 'pending', output: null, error: null })),
-      startedAt: new Date().toISOString(),
-      completedAt: null,
-      totalCost: 0,
-      agent: options.agent || 'NEXUS'
-    };
-
-    this.activeWorkflows.push(execution);
-
-    try {
-      let prevOutput = input;
-
-      for (let i = 0; i < workflow.steps.length; i++) {
-        const step = workflow.steps[i];
-        execution.currentStep = i;
-        execution.steps[i].status = 'running';
-
-        // Check if step requires approval
-        if (step.requiresApproval) {
-          const approval = PERMISSIONS_ENGINE.requiresApproval(step.agent, step.action || 'workflow:execute', { cost: step.cost || 0 });
-          if (approval.required) {
-            await PERMISSIONS_ENGINE.requestApproval(step.agent, step.action || 'workflow:execute', { workflow: name, step: step.name }, (approved) => {
-              log(`Step ${step.name} approved`, 'ok', 'WORKFLOW');
-            });
-          }
-        }
-
-        // Build prompt with previous output
-        const prompt = step.extract === 'full' ? prevOutput : (step.prompt.replace('{prev}', prevOutput).replace('{input}', input));
-
-        // Execute step via agent
-        const result = await this._executeStep(step, prompt, options);
-        execution.steps[i].status = 'completed';
-        execution.steps[i].output = result;
-        execution.steps[i].duration = result.duration || 0;
-        execution.totalCost += step.cost || 0;
-
-        prevOutput = result.response || result;
-
-        // Track usage
-        if (step.cost) {
-          PERMISSIONS_ENGINE.trackUsage(step.agent, step.cost);
-        }
-      }
-
-      execution.status = 'completed';
-      execution.completedAt = new Date().toISOString();
-
-    } catch (error) {
-      execution.status = 'failed';
-      execution.error = error.message;
-      execution.completedAt = new Date().toISOString();
-    }
-
-    // Move to history
-    this.activeWorkflows = this.activeWorkflows.filter(w => w.id !== execution.id);
-    this.workflowHistory.unshift(execution);
-    if (this.workflowHistory.length > this.maxHistory) {
-      this.workflowHistory = this.workflowHistory.slice(0, this.maxHistory);
-    }
-
-    return execution;
-  },
-
-  // Execute individual step via agent
-  async _executeStep(step, prompt, options) {
-    const startTime = Date.now();
-
-    try {
-      // Use the appropriate agent
-      const agentName = step.agent || options.agent || 'SHADDAI';
-
-      // This would call the actual agent system
-      const response = await sendToAgent(agentName, prompt);
-
-      return {
-        response,
-        duration: Date.now() - startTime,
-        agent: agentName
-      };
-    } catch (error) {
-      // Handle retry
-      if (step.retries < step.maxRetries) {
-        step.retries++;
-        log(`Step ${step.name} failed, retry ${step.retries}/${step.maxRetries}`, 'warn', 'WORKFLOW');
-        return this._executeStep(step, prompt, options);
-      }
-      throw error;
-    }
-  },
-
-  // Get workflow status
-  getStatus(workflowId) {
-    return this.activeWorkflows.find(w => w.id === workflowId) || this.workflowHistory.find(w => w.id === workflowId);
-  },
-
-  // Get all active workflows
-  getActive() {
-    return this.activeWorkflows;
-  },
-
-  // Get workflow history
-  getHistory(filters = {}) {
-    let history = [...this.workflowHistory];
-    if (filters.name) history = history.filter(w => w.name === filters.name);
-    if (filters.status) history = history.filter(w => w.status === filters.status);
-    return history;
-  },
-
-  // Cancel workflow
-  cancel(workflowId) {
-    const workflow = this.activeWorkflows.find(w => w.id === workflowId);
-    if (workflow) {
-      workflow.status = 'cancelled';
-      workflow.completedAt = new Date().toISOString();
-      this.activeWorkflows = this.activeWorkflows.filter(w => w.id !== workflowId);
-      this.workflowHistory.unshift(workflow);
-      log(`Workflow cancelled: ${workflow.name}`, 'warn', 'WORKFLOW');
-      return true;
-    }
-    return false;
-  }
-};
-
-// Define built-in workflows
-WORKFLOW_ENGINE.define('research-to-build', [
-  { name: 'Research', agent: 'ORACLE', prompt: 'Research this topic comprehensively: {input}', cost: 0.01 },
-  { name: 'Design', agent: 'TURTLE', prompt: 'Based on this research, design a solution: {prev}', cost: 0.01 },
-  { name: 'Plan', agent: 'NEXUS', prompt: 'Create a technical implementation plan for: {prev}', cost: 0.01 }
-]);
-
-WORKFLOW_ENGINE.define('market-analysis', [
-  { name: 'Forecast', agent: 'ORACLE', prompt: 'Trend forecast for: {input}', cost: 0.01 },
-  { name: 'Analyze', agent: 'ZEROX', prompt: 'Financial analysis based on forecast: {prev}', cost: 0.01 },
-  { name: 'Recommend', agent: 'SHADDAI', prompt: 'Strategic recommendation based on analysis: {prev}', cost: 0.01 }
-]);
-
-WORKFLOW_ENGINE.define('content-pipeline', [
-  { name: 'Research', agent: 'ORACLE', prompt: 'Research trending topics for: {input}', cost: 0.005 },
-  { name: 'Write', agent: 'QUILL', prompt: 'Write content based on research: {prev}', cost: 0.005 },
-  { name: 'Review', agent: 'SHADDAI', prompt: 'Review and enhance content: {prev}', cost: 0.005 }
-]);
-
-// Initialize workflow engine in state
-S.workflowEngine = WORKFLOW_ENGINE;
 
 // ================== DURABLE MEMORY ==================
 // Structured storage for customers, projects, wallets, permissions
@@ -30873,6 +30761,57 @@ async function runSavedWorkflow(id) {
         {step:2, agent:'nexus', prompt:'From this security scan: {step1}\nWhat are the top 3 concrete hardening recommendations?'},
         {step:3, agent:'quill', prompt:'Write a brief executive security report with action items from: {step2}'}
       ]
+    },
+    // ── 7-agent council chains (2026-08-22) ──
+    'social-content': {
+      name:'Social Content', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'oracle', prompt:'Find the top 3 trending angles, stats, and hooks worth posting about for SHADDAI right now.'},
+        {step:2, agent:'quill', prompt:'From these angles: {step1}\nWrite platform-optimized posts: a Twitter thread, a LinkedIn post, and a short-form caption.'},
+        {step:3, agent:'pikadon', prompt:'Review this content for compliance/brand-safety issues — false claims, risky wording, anything to soften: {step2}'},
+        {step:4, agent:'turtle', prompt:'Given this content and PIKADON\'s review: {step2}\n{step3}\nDescribe the visual direction — hero image concept, layout, and style for each post.'}
+      ]
+    },
+    'voiceover-production': {
+      name:'Voiceover Production', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'quill', prompt:'Write a tight ~60-second voiceover script broken into segments for a SHADDAI feature explainer.'},
+        {step:2, agent:'turtle', prompt:'From this script: {step1}\nDescribe the visual storyboard — one shot per segment, style and mood.'},
+        {step:3, agent:'nexus', prompt:'Given the script and storyboard: {step1}\n{step2}\nLay out the technical production plan — which tools/APIs handle TTS, video assembly, and export.'}
+      ]
+    },
+    'security-review': {
+      name:'Security Review (Council)', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'pikadon', prompt:'Audit the SHADDAI backend for vulnerabilities, risks, and attack vectors. Be specific with severities.'},
+        {step:2, agent:'oracle', prompt:'For the issues found: {step1}\nResearch known CVEs, industry best practices, and precedent fixes for each.'},
+        {step:3, agent:'quill', prompt:'Write a clean security report combining the audit and research: {step1}\n{step2}\nFormat as markdown with severity badges.'}
+      ]
+    },
+    'financial-modeling': {
+      name:'Financial Modeling', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'zerox', prompt:'Build a pricing and unit-economics model for the SHADDAI Pro tier — costs, margins, break-even.'},
+        {step:2, agent:'oracle', prompt:'Given this model: {step1}\nResearch how 2-3 comparable products price and package similar tiers.'},
+        {step:3, agent:'shaddai', prompt:'Given the model and competitor research: {step1}\n{step2}\nMake a final pricing recommendation with reasoning.'}
+      ]
+    },
+    'api-design': {
+      name:'API Design', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'nexus', prompt:'Design a REST API for a new SHADDAI feature — endpoints, request/response shapes, auth.'},
+        {step:2, agent:'pikadon', prompt:'Security-review this API design: {step1}\nFlag auth gaps, injection risks, rate-limit needs.'},
+        {step:3, agent:'quill', prompt:'Write clean API documentation from the design and security notes: {step1}\n{step2}'}
+      ]
+    },
+    'qbr': {
+      name:'Quarterly Business Review', trigger:'manual', output:'inbox',
+      steps:[
+        {step:1, agent:'zerox', prompt:'Summarize this quarter\'s financial performance for SHADDAI — revenue, costs, unit economics trend.'},
+        {step:2, agent:'oracle', prompt:'Given this financial picture: {step1}\nResearch the competitive/market landscape shifts this quarter.'},
+        {step:3, agent:'shaddai', prompt:'Given the financials and market research: {step1}\n{step2}\nMake the key strategic calls for next quarter.'},
+        {step:4, agent:'quill', prompt:'Write the final QBR document combining all of the above: {step1}\n{step2}\n{step3}'}
+      ]
     }
   };
   const wf = prebuilt[id];
@@ -33281,44 +33220,6 @@ async function _dexPipe(tokenAddress) {
   } catch(e) { return 'DEX error: ' + e.message; }
 }
 
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PRESET WORKFLOWS + IMPORT/CREATE — v43.33
-// ═══════════════════════════════════════════════════════════════════════════
-
-const PRESET_WORKFLOWS = {
-  'research-to-build': [
-    { type:'coingecko', config:{value:'solana'} },
-    { type:'dexscreener', config:{value:''} },
-    { type:'ollama', config:{value:'Summarize the market research above and suggest a build strategy'} },
-    { type:'telegraph', config:{value:'Research Report'} }
-  ],
-  'full-audit': [
-    { type:'coingecko', config:{value:''} },
-    { type:'dexscreener', config:{value:''} },
-    { type:'ollama', config:{value:'Audit this data: check for red flags, rug pull indicators, and provide a safety score 1-10'} }
-  ],
-  'market-analysis': [
-    { type:'coingecko', config:{value:'solana'} },
-    { type:'jupiter', config:{value:'SOL'} },
-    { type:'dexscreener', config:{value:'solana'} },
-    { type:'ollama', config:{value:'Provide a comprehensive market analysis with price predictions, support/resistance levels, and trading recommendations'} }
-  ],
-  'idea-to-product': [
-    { type:'ollama', config:{value:'Break this idea into an MVP spec: features, tech stack, timeline, monetization strategy'} },
-    { type:'ollama', config:{value:'Generate a marketing plan and launch strategy for the product above'} },
-    { type:'telegraph', config:{value:'Product Launch Plan'} }
-  ]
-};
-
-function loadPresetWorkflow(name) {
-  const preset = PRESET_WORKFLOWS[name];
-  if(!preset) { notify('Preset not found'); return; }
-  S.pipeline = preset.map(s => ({ ...s, id: Date.now() + Math.random()*1000|0, result: null }));
-  renderPipeline();
-  notify('Loaded preset: ' + name);
-  log('Preset workflow loaded: ' + name, 'ok', 'PIPELINE');
-}
 
 function importWorkflowJSON() {
   const json = prompt('Paste workflow JSON:');
@@ -54285,118 +54186,6 @@ window.pushStandbyNotif = pushStandbyNotif;
 // PROXY is already declared globally (const PROXY='' near the top); re-declaring it here with
 // `var PROXY` threw "Identifier 'PROXY' has already been declared", killing this whole block
 // (workflow runner + 3 more systems). Removed — this block now uses the existing global PROXY.
-
-// ── 1. WORKFLOW RUNNER ───────────────────────────────────────────────
-async function runWorkflowFromUI() {
-  var wf = document.getElementById('wfSelect')?.value || 'research-to-build';
-  var input = document.getElementById('wfInput')?.value?.trim() || '';
-  var stepsEl = document.getElementById('wfSteps');
-  var statusEl = document.getElementById('wfRunStatus');
-  var finalEl = document.getElementById('wfFinalOutput');
-  if (!input) { notify('Enter a topic/input for the workflow'); return; }
-  if (stepsEl) stepsEl.innerHTML = '';
-  if (finalEl) { finalEl.style.display='none'; finalEl.innerHTML=''; }
-  if (statusEl) { statusEl.textContent='RUNNING'; statusEl.style.color='#00f0ff'; }
-
-  // Always run the verified client-side chain. Each step calls getResp(taskText, agent)
-  // through the /api/model/chat gateway with its OWN distinct, on-topic prompt and the
-  // PREVIOUS step's output chained forward. The old backend SSE path (/api/workflows/run)
-  // was removed here because it emitted identical output per step and leaked the
-  // stock/market-analysis template regardless of the task. See _runWorkflowClientSide.
-  _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl);
-}
-
-async function _runWorkflowClientSide(wf, input, stepsEl, statusEl, finalEl) {
-  if (statusEl) { statusEl.textContent='RUNNING (AI)'; statusEl.style.color='#ffd700'; }
-  notify('⚡ Running workflow client-side via AI chain...');
-  // ── SINGLE SOURCE OF TRUTH for the Workflow Runner ──────────────────────────
-  // These are the canonical multi-agent chains. Each step's task is distinct and
-  // on-topic; {input} = raw user input (step 1), {prev} = previous step's output
-  // (chained forward). Do NOT reintroduce the market/stock-analysis template here.
-  const WF_AGENTS = {
-    'research-to-build': [
-      {agent:'ORACLE', task:'Research and analyze this topic thoroughly, covering background, current state, key insights, and opportunities: {input}'},
-      {agent:'NEXUS',  task:'Based on this research, architect a technical solution — stack, structure, key components:\n\n{prev}'},
-      {agent:'TURTLE', task:'Design the user interface and experience for this solution. Describe layout, flow, and visual style:\n\n{prev}'},
-      {agent:'SHADDAI',task:'Final strategic review. What is the highest-leverage action to take right now?\n\n{prev}'}
-    ],
-    'content-pipeline': [
-      {agent:'ORACLE', task:'Research trending angles, stats, and viral hooks for this topic: {input}'},
-      {agent:'QUILL',  task:'Write platform-optimized content (Twitter thread + LinkedIn post + short-form caption) using this research:\n\n{prev}'},
-      {agent:'TURTLE', task:'Suggest visual formats, layout ideas, and design tips to make this content pop:\n\n{prev}'}
-    ],
-    'market-analysis': [
-      {agent:'ORACLE', task:'Analyze current market data, trends, and signals for: {input}'},
-      {agent:'ZEROX',  task:'Identify the top 3 revenue opportunities from this market analysis:\n\n{prev}'},
-      {agent:'SHADDAI',task:'Give the single most important strategic action to take based on all of this:\n\n{prev}'}
-    ],
-    'security-audit': [
-      {agent:'NEXUS',  task:'Review code architecture and surface-level risks for: {input}'},
-      {agent:'PIKADON',task:'Deep security audit — find vulnerabilities, attack vectors, and critical risks based on:\n\n{prev}'},
-      {agent:'SHADDAI',task:'Executive risk summary and ordered priority fixes from this audit:\n\n{prev}'}
-    ],
-    'agent-council': [
-      {agent:'NEXUS',  task:'Technical assessment of: {input}'},
-      {agent:'ZEROX',  task:'Business case and revenue model for:\n{prev}'},
-      {agent:'ORACLE', task:'Market validation and competitive landscape for:\n{prev}'},
-      {agent:'TURTLE', task:'UX, design, and user experience angle for:\n{prev}'},
-      {agent:'SHADDAI',task:'Council decision — synthesize all agent inputs into a single clear recommendation and action plan:\n\n{prev}'}
-    ],
-    'market-brief': [
-      {agent:'ORACLE', task:'Give a detailed crypto market brief right now. Cover BTC, ETH, SOL price levels, trends, fear/greed, and top movers. Topic focus: {input}'},
-      {agent:'ZEROX',  task:'From this market brief, identify the top 2 actionable opportunities for traders or builders:\n\n{prev}'},
-      {agent:'QUILL',  task:'Write a punchy 5-tweet thread from these insights that would get engagement:\n\n{prev}'}
-    ],
-    'revenue-intel': [
-      {agent:'ZEROX',  task:'Build a concrete $0 to $1,000/month roadmap for an AI agent marketplace. Topic: {input}'},
-      {agent:'ORACLE', task:'What are 3 specific things competitors are doing better, based on:\n{prev}'},
-      {agent:'SHADDAI',task:'The single most important strategic decision to make this week, given:\n{prev}'}
-    ],
-    'idea-to-product': [
-      {agent:'SHADDAI',task:'Break down this product idea into a clear MVP feature set — what to build first and why: {input}'},
-      {agent:'NEXUS',  task:'Architecture and tech stack for this MVP:\n\n{prev}'},
-      {agent:'TURTLE', task:'User flow and UI sketch — describe screens, interactions, visual direction:\n\n{prev}'},
-      {agent:'ZEROX',  task:'Monetization model, pricing tiers, and path to first $1K MRR:\n\n{prev}'}
-    ]
-  };
-  const steps = WF_AGENTS[wf] || WF_AGENTS['research-to-build'];
-  let prevOutput = '';
-  for (var i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    // Build the prompt: replace {input} with user input, {prev} with last step's output
-    let taskText = step.task
-      .replace(/\{input\}/g, input)
-      .replace(/\{prev\}/g, prevOutput.slice(0, 800) || input);
-    if (stepsEl) {
-      var div = document.createElement('div');
-      div.id = 'wf-step-cs-'+i;
-      div.style.cssText = 'background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.2);border-radius:6px;padding:10px;font-size:9px;margin-bottom:6px;transition:border-color 0.3s';
-      div.innerHTML = '<div style="font-weight:700;color:#00f0ff;margin-bottom:4px">▶ Step '+(i+1)+'/'+steps.length+': '+escH(step.agent)+'</div><div style="color:var(--text-muted);font-size:8.5px">'+escH(taskText.slice(0,120))+(taskText.length>120?'…':'')+'</div><div style="color:rgba(255,200,0,0.6);font-size:8px;margin-top:4px;font-style:italic">Processing…</div>';
-      stepsEl.appendChild(div); stepsEl.scrollTop = stepsEl.scrollHeight;
-    }
-    var output = '';
-    try { output = await getResp(taskText, step.agent); } catch(e) { output = '['+step.agent+' error: '+e.message+']'; }
-    prevOutput = output;
-    var stepDiv = document.getElementById('wf-step-cs-'+i);
-    if (stepDiv) {
-      stepDiv.style.borderColor='rgba(0,229,160,0.35)';
-      stepDiv.innerHTML='<div style="font-weight:700;color:#00ff88;margin-bottom:4px">✓ Step '+(i+1)+': '+escH(step.agent)+'</div><div style="color:var(--text-secondary);font-size:9px;line-height:1.6;white-space:pre-wrap;max-height:120px;overflow-y:auto">'+escH(output.slice(0,400))+(output.length>400?'…':'')+'</div>';
-    }
-  }
-  if (statusEl) { statusEl.textContent='DONE'; statusEl.style.color='#00ff88'; }
-  if (finalEl) {
-    finalEl.style.display='block';
-    finalEl.innerHTML='<div style="font-weight:700;color:#00f0ff;margin-bottom:8px;font-size:11px">✅ Workflow Complete — '+escH(wf)+'</div><div style="white-space:pre-wrap;font-size:10px;line-height:1.7;color:var(--text-primary)">'+escH(prevOutput)+'</div>';
-  }
-  if (typeof pushStandbyNotif==='function') pushStandbyNotif('WORKFLOW','Workflow "'+wf+'" complete');
-  checkCollectibleUnlocks();
-  notify('✅ Workflow "'+wf+'" complete!');
-}
-function clearWorkflowOutput() {
-  var el=document.getElementById('wfSteps'); if(el) el.innerHTML='';
-  var fo=document.getElementById('wfFinalOutput'); if(fo){fo.style.display='none';fo.innerHTML='';}
-  var st=document.getElementById('wfRunStatus'); if(st){st.textContent='IDLE';st.style.color='var(--text-muted)';}
-}
 
 // ── 2. CHART ANALYSIS (ORACLE) ────────────────────────────────────────
 async function runChartAnalysis() {

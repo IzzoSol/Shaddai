@@ -818,6 +818,8 @@ app.post('/api/mcp/search', express.json(), (req, res) => {
           docs: hits.length,
           results: hits.map(r => ({
             source: r.docName, chunk: String(r.chunkText || '').slice(0, 300), score: +r.score.toFixed(4),
+            kind: /^DIGEST_|^MASTERY_/.test(r.docName || '') ? 'digest' : 'transcript',
+            timeLabel: r.timeLabel || null, tsEstimate: !!r.tsEstimate, deepLink: r.deepLink || null,
           })),
         });
       } catch (_) { perAgent.push({ agent: id, docs: 0, results: [] }); }
@@ -1648,6 +1650,8 @@ app.post('/api/mastery/search', express.json(), async (req, res) => {
     const rag = require('./rag-index');
     const ragHits = (rag.searchUser(namespace, q, 5) || []).map(r => ({
       source: String(r.docName || 'mastery'), chunk: String(r.chunkText || '').slice(0, 300), score: r.score, corpus: 'mastery',
+      kind: /^DIGEST_|^MASTERY_/.test(r.docName || '') ? 'digest' : 'transcript',
+      timeLabel: r.timeLabel || null, deepLink: r.deepLink || null,
     }));
     let brainHits = [];
     try {
