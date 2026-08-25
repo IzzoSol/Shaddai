@@ -424,16 +424,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 </style>
 </head>
 <body>
-<!-- The 3D neural cockpit is the primary brain. The original brain below is
-     kept intact and reads the same endpoints, so nothing is lost. -->
-<div style="position:relative;background:#01030a;border-bottom:1px solid rgba(34,240,255,.45)">
-  <iframe src="rag-cockpit.html" title="3D Neural Cockpit"
-          style="width:100%;height:100vh;border:0;display:block"></iframe>
-  <a href="#legacy-brain" style="position:absolute;right:14px;bottom:14px;z-index:5;
-     font:600 12px/1 system-ui,sans-serif;letter-spacing:.06em;text-decoration:none;
-     color:#01030a;background:#22f0ff;border-radius:8px;padding:9px 14px">Classic brain below ↓</a>
+<div style="position:fixed;top:0;left:0;right:0;height:44px;z-index:99999;display:flex;gap:8px;align-items:center;padding:0 12px;background:#01030a;border-bottom:1px solid #22f0ff">
+<button onclick="showTab(0)" id="tb0" style="font:700 12px system-ui;padding:8px 16px;cursor:pointer;border:1px solid #22f0ff;background:#22f0ff;color:#01030a;border-radius:6px">3D BRAIN</button>
+<button onclick="showTab(1)" id="tb1" style="font:700 12px system-ui;padding:8px 16px;cursor:pointer;border:1px solid #22f0ff;background:transparent;color:#22f0ff;border-radius:6px">CLASSIC BRAIN</button>
 </div>
-<div id="legacy-brain">
+<div id="pane0" style="position:fixed;inset:44px 0 0 0;z-index:9999"><iframe src="rag-cockpit.html" style="width:100%;height:100%;border:0;display:block"></iframe></div>
+<div id="pane1" style="display:none;padding-top:44px">
 
 <!-- iframe close + query badge (shown when embedded from landing) -->
 <div id="brain-topbar" style="position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;pointer-events:none">
@@ -2546,5 +2542,6 @@ window.addEventListener('message',e=>{if(e.data==='open-brain'){document.getElem
 init();
 </script>
 </div>
+<script>function showTab(i){document.getElementById("pane0").style.display=i?"none":"block";document.getElementById("pane1").style.display=i?"block":"none";document.getElementById("tb0").style.background=i?"transparent":"#22f0ff";document.getElementById("tb0").style.color=i?"#22f0ff":"#01030a";document.getElementById("tb1").style.background=i?"#22f0ff":"transparent";document.getElementById("tb1").style.color=i?"#01030a":"#22f0ff";}</script>
 </body>
 </html>
