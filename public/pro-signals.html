@@ -275,6 +275,8 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 /* ── SIGNALS LIST ─────────────────────────────────── */
 #slist{flex:1;overflow-y:auto;overflow-x:hidden;counter-reset:sn;}
+.newsrow{transition:box-shadow .2s;}
+.newsrow:hover{box-shadow:0 8px 16px rgba(232,160,32,.2);}
 #slist::-webkit-scrollbar{width:2px;}
 #slist::-webkit-scrollbar-thumb{background:var(--P3);}
 
@@ -568,10 +570,10 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <!-- LEFT -->
   <div class="left-col">
     <div id="ltabs">
-      <div class="ltab on"  onclick="openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana'])">🍌 MEMES</div>
-      <div class="ltab"     onclick="openFullscreen('finance','💱 ALT',['forex','commodities','bonds','crypto-macro'])">💱 ALT</div>
-      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy'])">📊 STOCKS</div>
-      <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro'])">📰 NEWS</div>
+      <div class="ltab on"  onclick="openFullscreen('finance','💱 ALT',[])">💱 ALT</div>
+      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',[])">📊 STOCKS</div>
+      <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',[])">📰 NEWS</div>
+      <div class="ltab"     onclick="openMiroTab(this)">🐟 MIROFISH</div>
     </div>
 
     <!-- signals -->
@@ -1122,7 +1124,7 @@ function card(c,i){
 function swarmCall(mint){
   const c=_calls.find(x=>x.mint===mint)||{};
   const sym=c.symbol||'';
-  switchTab('swarm',document.querySelectorAll('.ltab')[1]);
+  switchTab('swarm',document.querySelectorAll('.ltab')[3]);
   const t=document.getElementById('sw-tok'),n=document.getElementById('sw-news');
   if(t) t.value=sym;
   if(n) n.value=(sym?sym+' — ':'')+'live signal call — pump or dump in 7 days?';
@@ -1485,7 +1487,7 @@ function toggleMiro(){
   if(_miroHidden){ switchTab('sig',document.querySelectorAll('.ltab')[0]); toast('MIRO PANEL HIDDEN'); }
   else { openSimPanel(); toast('MIRO PANEL SHOWN'); }
 }
-function openMiroTab(){ switchTab('swarm',document.querySelectorAll('.ltab')[1]); }
+function openMiroTab(el){ switchTab('swarm',el||document.querySelectorAll('.ltab')[3]); }
 function openSimPanel(){ const t=document.querySelector('#rc-tabs .rtab'); if(t) rTab('miro',t); checkMiro(); }
 function loadScenario(q){
   document.getElementById('mwtok').value='';
@@ -2111,148 +2113,62 @@ function renderFS() {
 
   let html='';
 
-  if(_fsTab==='memes') {
-    let mockCoins=[
-      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true,mult:2.3},
-      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false,mult:1.8},
-      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true,mult:5.2},
-      {symbol:'COPE',holders:9800,vol24:28000,fdv:95000,holders24h:9600,dex:true,paid:false,mult:0.9},
-      {symbol:'BODEN',holders:18900,vol24:72000,fdv:280000,holders24h:19200,dex:true,paid:true,mult:3.1},
-      {symbol:'TRUMP',holders:22100,vol24:95000,fdv:350000,holders24h:22400,dex:true,paid:true,mult:4.7},
-      {symbol:'RENDER',holders:10500,vol24:35000,fdv:125000,holders24h:10800,dex:true,paid:false,mult:1.5},
-      {symbol:'ORCA',holders:14200,vol24:52000,fdv:180000,holders24h:14500,dex:true,paid:false,mult:2.1}
-    ];
-
-    // Filter by search
-    if(searchVal) mockCoins=mockCoins.filter(c=>c.symbol.toLowerCase().includes(searchVal));
-
-    // Filter by subtab
-    if(_fsSubTab==='top-25') mockCoins=mockCoins.slice(0,3);
-    else if(_fsSubTab==='hot-new') mockCoins=mockCoins.filter(c=>c.holders<15000);
-    else if(_fsSubTab==='top-24h') mockCoins=[...mockCoins].sort((a,b)=>b.vol24-a.vol24).slice(0,5);
-
-    // Sort
-    if(sortVal==='mult') mockCoins=[...mockCoins].sort((a,b)=>b.mult-a.mult);
-    else if(sortVal==='score') mockCoins=[...mockCoins].sort((a,b)=>b.holders-a.holders);
-
-    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><span style="color:var(--P);font-weight:700;font-size:13px">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P);background:rgba(232,160,32,.2);padding:2px 4px;border-radius:3px">⭐ PAID</span>':''}</div>
-        <span style="color:${c.mult>=2?'var(--S)':'var(--A)'};font-weight:800;font-size:12px">${c.mult>=1?'+':''}${(c.mult-1).toFixed(1)}x</span>
-      </div>
-      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div>💰 <span style="color:var(--P)">${c.holders.toLocaleString()}</span>h</div>
-        <div>📊 <span style="color:var(--P)">$${(c.vol24/1000).toFixed(0)}K</span></div>
-        <div>📈 <span style="color:var(--P)">${(c.fdv/1000).toFixed(0)}K</span> FDV</div>
-      </div>
-      ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
-    </div>`).join('');
-  } else if(_fsTab==='finance') {
-    let stocks=[
-      {sym:'SPY',price:450.25,chg:1.2,vol:85,category:'etf'},
-      {sym:'QQQ',price:385.10,chg:2.1,vol:72,category:'etf'},
-      {sym:'IWM',price:198.50,chg:0.8,vol:45,category:'etf'},
-      {sym:'GLD',price:201.20,chg:1.5,vol:38,category:'commodity'},
-      {sym:'TLT',price:92.80,chg:-0.5,vol:62,category:'bond'},
-      {sym:'USO',price:76.30,chg:2.3,vol:41,category:'commodity'},
-      {sym:'DXY',price:107.15,chg:0.3,vol:29,category:'forex'},
-      {sym:'EEM',price:42.10,chg:1.8,vol:55,category:'etf'},
-      {sym:'BND',price:75.50,chg:-0.2,vol:48,category:'bond'},
-      {sym:'VNQ',price:88.90,chg:1.1,vol:36,category:'etf'}
-    ];
-
-    // Filter by search
-    if(searchVal) stocks=stocks.filter(s=>s.sym.toLowerCase().includes(searchVal));
-
-    // Filter by subtab
-    if(_fsSubTab==='crypto') stocks=stocks.filter(s=>false); // placeholder
-    else if(_fsSubTab==='commodity') stocks=stocks.filter(s=>s.category==='commodity');
-    else if(_fsSubTab==='bonds') stocks=stocks.filter(s=>s.category==='bond');
-
-    // Sort
-    if(sortVal==='mult') stocks=[...stocks].sort((a,b)=>b.chg-a.chg);
-    else if(sortVal==='score') stocks=[...stocks].sort((a,b)=>b.vol-a.vol);
-
-    html=stocks.map(s=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="color:var(--P);font-weight:700;font-size:13px">${s.sym}</span>
-        <span style="color:${s.chg>0?'var(--S)':'var(--A)'};font-weight:700">$${s.price.toFixed(2)} ${s.chg>0?'+':''}${s.chg}%</span>
-      </div>
-      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:flex;justify-content:space-between">
-        <div>Vol: <span style="color:var(--P)">${s.vol}M</span></div>
-        <div>Type: <span style="color:var(--P)">${s.category}</span></div>
-      </div>
-    </div>`).join('');
+  if(_fsTab==='finance'||_fsTab==='stocks') {
+    // Real TradingView Market Overview widget — bulletproof (pure iframe, no app JS can break it).
+    // finance tab defaults to Forex/Bonds/Commodities view; stocks tab defaults to Indices view.
+    const tab = _fsTab==='stocks' ? 'index' : 'forex';
+    fsc.innerHTML = '<div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div>';
+    const container = fsc.querySelector('.tradingview-widget-container__widget');
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      colorTheme: 'dark', dateRange: '12M', showChart: true, locale: 'en',
+      width: '100%', height: '100%', largeChartUrl: '', isTransparent: true,
+      showSymbolLogo: true, showFloatingTooltip: true,
+      tabs: [
+        { title: 'Indices', symbols: [
+          { s: 'FOREXCOM:SPXUSD', d: 'S&P 500' }, { s: 'FOREXCOM:NSXUSD', d: 'Nasdaq 100' },
+          { s: 'FOREXCOM:DJI', d: 'Dow 30' }, { s: 'INDEX:NKY', d: 'Nikkei 225' }
+        ]},
+        { title: 'Forex', symbols: [
+          { s: 'FX:EURUSD', d: 'EUR/USD' }, { s: 'FX:GBPUSD', d: 'GBP/USD' },
+          { s: 'FX:USDJPY', d: 'USD/JPY' }, { s: 'FX:USDCAD', d: 'USD/CAD' }
+        ]},
+        { title: 'Commodities', symbols: [
+          { s: 'TVC:GOLD', d: 'Gold' }, { s: 'TVC:SILVER', d: 'Silver' },
+          { s: 'TVC:USOIL', d: 'Crude Oil' }, { s: 'TVC:UKOIL', d: 'Brent Oil' }
+        ]},
+        { title: 'Bonds', symbols: [
+          { s: 'TVC:US10Y', d: 'US 10Y' }, { s: 'TVC:US02Y', d: 'US 2Y' },
+          { s: 'TVC:DE10Y', d: 'DE 10Y' }, { s: 'TVC:JP10Y', d: 'JP 10Y' }
+        ]}
+      ],
+      defaultColumn: 'overview'
+    });
+    if(container) container.appendChild(script);
+    return;
   } else if(_fsTab==='news') {
-    let news=[
-      {title:'🚀 Major Exchange Listing',time:'2h',mentions:1200,sentiment:'bullish',score:92},
-      {title:'📊 Earnings Beat Expectations',time:'4h',mentions:856,sentiment:'bullish',score:88},
-      {title:'⚡ Partnership Announced',time:'6h',mentions:2300,sentiment:'bullish',score:95},
-      {title:'🔴 SEC Investigation Update',time:'8h',mentions:1900,sentiment:'bearish',score:45},
-      {title:'💰 Fund Raise Milestone Hit',time:'10h',mentions:742,sentiment:'bullish',score:85},
-      {title:'📈 Price Target Raised',time:'12h',mentions:1100,sentiment:'bullish',score:89},
-      {title:'🎯 Expansion into New Market',time:'14h',mentions:890,sentiment:'bullish',score:87},
-      {title:'💼 Executive Leadership Change',time:'16h',mentions:1500,sentiment:'neutral',score:72}
-    ];
-
-    // Filter by search
-    if(searchVal) news=news.filter(n=>n.title.toLowerCase().includes(searchVal));
-
-    // Filter by subtab
-    if(_fsSubTab==='sentiment') news=news.filter(n=>n.sentiment==='bullish');
-    else if(_fsSubTab==='technical') news=news.slice(0,4);
-    else if(_fsSubTab==='macro') news=news.slice(0,3);
-
-    // Sort
-    if(sortVal==='mult') news=[...news].sort((a,b)=>b.score-a.score);
-    else if(sortVal==='score') news=[...news].sort((a,b)=>b.mentions-a.mentions);
-
-    html=news.map(n=>`<div style="padding:12px;border-left:4px solid var(--P);background:var(--cgrd);margin-bottom:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.boxShadow='none'">
-      <div style="display:flex;justify-content:space-between;align-items:start">
-        <div style="flex:1">
-          <div style="color:var(--P);font-weight:700;font-size:11px">${n.title}</div>
-          <div style="font-size:9px;color:var(--text2);margin-top:4px">${n.time} ago • <span style="color:var(--S)">${n.mentions.toLocaleString()}</span> mentions</div>
-        </div>
-        <span style="background:${n.sentiment==='bullish'?'rgba(0,255,156,.15)':n.sentiment==='bearish'?'rgba(255,60,42,.15)':'rgba(200,200,200,.1)'};color:${n.sentiment==='bullish'?'var(--S)':n.sentiment==='bearish'?'var(--A)':'var(--text2)'};font-size:9px;padding:4px 8px;border-radius:3px;font-weight:600">${n.sentiment}</span>
-      </div>
-    </div>`).join('');
-  } else if(_fsTab==='stocks') {
-    let gainers=[
-      {sym:'NVDA',price:135.42,chg:3.2,vol:92,volatility:'High',pe:65},
-      {sym:'TSLA',price:242.80,chg:2.8,vol:115,volatility:'High',pe:72},
-      {sym:'AMZN',price:195.50,chg:1.9,vol:78,volatility:'Medium',pe:58},
-      {sym:'MSFT',price:428.15,chg:1.5,vol:65,volatility:'Low',pe:42},
-      {sym:'GOOGL',price:156.30,chg:2.1,vol:71,volatility:'Medium',pe:48},
-      {sym:'META',price:512.40,chg:4.2,vol:88,volatility:'High',pe:38},
-      {sym:'NFLX',price:598.20,chg:2.5,vol:52,volatility:'Medium',pe:28},
-      {sym:'UBER',price:72.85,chg:1.7,vol:68,volatility:'Medium',pe:-15},
-      {sym:'AMD',price:168.90,chg:3.6,vol:84,volatility:'High',pe:52},
-      {sym:'PLTR',price:45.30,chg:2.2,vol:156,volatility:'High',pe:198}
-    ];
-
-    // Filter by search
-    if(searchVal) gainers=gainers.filter(g=>g.sym.toLowerCase().includes(searchVal));
-
-    // Filter by subtab
-    if(_fsSubTab==='tech') gainers=gainers.filter(g=>['NVDA','TSLA','AMZN','MSFT','GOOGL','META'].includes(g.sym));
-    else if(_fsSubTab==='top-vol') gainers=[...gainers].sort((a,b)=>b.vol-a.vol).slice(0,5);
-    else if(_fsSubTab==='gainers') gainers=[...gainers].sort((a,b)=>b.chg-a.chg).slice(0,5);
-
-    // Sort
-    if(sortVal==='mult') gainers=[...gainers].sort((a,b)=>b.chg-a.chg);
-    else if(sortVal==='score') gainers=[...gainers].sort((a,b)=>b.vol-a.vol);
-
-    html=gainers.map(g=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="color:var(--P);font-weight:700;font-size:13px">${g.sym}</span>
-        <span style="color:var(--S);font-weight:700">+${g.chg}%</span>
-      </div>
-      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div>$${g.price.toFixed(2)}</div>
-        <div>Vol: <span style="color:var(--P)">${g.vol}M</span></div>
-        <div>P/E: <span style="color:${g.pe>50?'var(--A)':'var(--S)'}">${g.pe}</span></div>
-      </div>
-    </div>`).join('');
+    fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">LOADING LIVE NEWS…</div>';
+    fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
+      .then(r=>r.json())
+      .then(j=>{
+        let items = j.articles || j.results || [];
+        if(searchVal) items = items.filter(n=>(n.title||'').toLowerCase().includes(searchVal));
+        if(!items.length){ fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">NO NEWS AVAILABLE RIGHT NOW</div>'; return; }
+        fsc.innerHTML = items.slice(0,40).map(n=>{
+          const src = (n.source && n.source.name) || n.source || 'news';
+          const when = n.publishedAt || n.published_at || '';
+          return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
+            '<div class="newsrow" style="padding:12px;border-left:4px solid var(--P);background:var(--cgrd);margin-bottom:8px;cursor:pointer">'+
+              '<div style="color:var(--P);font-weight:700;font-size:11px">'+esc(n.title||'')+'</div>'+
+              '<div style="font-size:9px;color:var(--text2);margin-top:4px">'+esc(src)+' • '+esc(when)+'</div>'+
+            '</div></a>';
+        }).join('');
+      })
+      .catch(()=>{ fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">NEWS FEED UNAVAILABLE — RETRY SHORTLY</div>'; });
+    return;
   }
 
   if(fsc){
