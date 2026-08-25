@@ -556,10 +556,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <div class="th-sw sw2"        title="Blood Mkt"   onclick="setTheme('blood')"     data-t="blood"></div>
     <div class="th-sw sw3"        title="Ice Terminal" onclick="setTheme('ice')"       data-t="ice"></div>
   </div>
-  <div class="tb-pill" id="tbmiro" onclick="openMiroTab()" style="cursor:pointer;border-color:rgba(0,212,220,.45);color:rgba(0,212,220,.9);" title="Open the MiroFish swarm terminal (embedded)">🐟 MIRO</div>
-  <div class="tb-pill" onclick="openSimPanel()" style="cursor:pointer;border-color:rgba(176,127,255,.45);color:rgba(176,127,255,.9);" title="Open MiroFish quick-sim panel">🐟 SIM</div>
   <div class="tb-pill" id="tbpgl" onclick="openGallery()" style="cursor:pointer;border-color:rgba(244,200,66,.45);color:rgba(244,200,66,.9);" title="PNL image gallery">🖼 PNL <span id="pgcnt" style="font-size:8px;opacity:.8"></span></div>
-  <div class="tb-pill" id="tbana" onclick="openAnalyticsWindow()" style="cursor:pointer;border-color:rgba(0,255,156,.45);color:rgba(0,255,156,.9);" title="Signal quality metrics & dead coin analysis">📈 QUALITY</div>
   <div class="tb-pill" id="tbal" onclick="openAlerts()" title="Armed price alerts">🔔 <span id="alcount"></span></div>
   <div class="tb-clk" id="clk">--:--:--</div>
   <button class="rc-toggle" id="rc-toggle-btn" onclick="toggleRC()" title="Toggle data panel">▐ PANEL</button>
@@ -571,11 +568,10 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <!-- LEFT -->
   <div class="left-col">
     <div id="ltabs">
-      <div class="ltab on"  onclick="switchTab('memes',this)">🍌 MEMES</div>
-      <div class="ltab"     onclick="switchTab('finance',this)">📈 FINANCE</div>
-      <div class="ltab"     onclick="switchTab('news',this)">📰 NEWS</div>
-      <div class="ltab"     onclick="switchTab('stocks',this)">📊 STOCKS</div>
-      <div class="ltab"     onclick="switchTab('poly',this)">🎯 POLYMARKET</div>
+      <div class="ltab on"  onclick="openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana'])">🍌 MEMES</div>
+      <div class="ltab"     onclick="openFullscreen('finance','💱 ALT',['forex','commodities','bonds','crypto-macro'])">💱 ALT</div>
+      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy'])">📊 STOCKS</div>
+      <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro'])">📰 NEWS</div>
     </div>
 
     <!-- signals -->
@@ -2064,23 +2060,36 @@ else{ const gi=document.getElementById('gatePin'); if(gi) setTimeout(function(){
 // FULL-SCREEN TAB SYSTEM
 function openFullscreen(tabName,title,subtabs=[]) {
   _fsTab=tabName;_fsSubTab=subtabs[0]||'all';
+
   const fsv=document.getElementById('fullscreen-view');
   const fst=document.getElementById('fs-title');
   const fsst=document.getElementById('fs-subtabs');
+  const app=document.getElementById('app');
+  const fsc=document.getElementById('fs-content');
 
-  fst.textContent=title;
-  fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
-  renderFS();
+  if(!fsv||!fst||!fsst||!app||!fsc){
+    console.error('[openFullscreen] MISSING elements!');
+    return;
+  }
 
-  fsv.style.display='flex';
-  document.getElementById('app').style.display='none';
+  try {
+    fst.textContent=title;
+    fsst.innerHTML=subtabs.map((s,i)=>`<button onclick="switchSubtab('${s}',this)" style="padding:6px 12px;border:${i===0?'1px solid var(--P)':'1px solid var(--border2)'};color:${i===0?'var(--P)':'var(--text)'};background:transparent;cursor:pointer;font-size:8px;letter-spacing:1px">${s.toUpperCase()}</button>`).join('');
+
+    renderFS();
+
+    fsv.style.display='flex';
+    app.style.display='none';
+  } catch(e) {
+    console.error('[openFullscreen] error:',e.message,e.stack);
+  }
 }
 
 function closeFullscreen() {
   const fsv=document.getElementById('fullscreen-view');
   const app=document.getElementById('app');
   if(fsv)fsv.style.display='none';
-  if(app)app.style.display='flex';
+  if(app)app.style.display='grid';
   _fsTab=null;_fsSubTab=null;
 }
 
@@ -2095,48 +2104,162 @@ function switchSubtab(name,btn) {
 }
 function renderFS() {
   const fsc=document.getElementById('fs-content');
+  if(!fsc){console.error('[renderFS] fs-content not found');return;}
+
+  const searchVal=(document.getElementById('fs-search')?.value||'').toLowerCase();
+  const sortVal=document.getElementById('fs-sort')?.value||'newest';
+
   let html='';
 
   if(_fsTab==='memes') {
-    const mockCoins=[
-      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true},
-      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false},
-      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true}
+    let mockCoins=[
+      {symbol:'BONK',holders:12400,vol24:45000,fdv:150000,holders24h:12600,dex:true,paid:true,mult:2.3},
+      {symbol:'WIF',holders:8900,vol24:32000,fdv:120000,holders24h:8700,dex:true,paid:false,mult:1.8},
+      {symbol:'POPCAT',holders:15200,vol24:58000,fdv:200000,holders24h:15400,dex:false,paid:true,mult:5.2},
+      {symbol:'COPE',holders:9800,vol24:28000,fdv:95000,holders24h:9600,dex:true,paid:false,mult:0.9},
+      {symbol:'BODEN',holders:18900,vol24:72000,fdv:280000,holders24h:19200,dex:true,paid:true,mult:3.1},
+      {symbol:'TRUMP',holders:22100,vol24:95000,fdv:350000,holders24h:22400,dex:true,paid:true,mult:4.7},
+      {symbol:'RENDER',holders:10500,vol24:35000,fdv:125000,holders24h:10800,dex:true,paid:false,mult:1.5},
+      {symbol:'ORCA',holders:14200,vol24:52000,fdv:180000,holders24h:14500,dex:true,paid:false,mult:2.1}
     ];
-    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--P)'" onmouseout="this.style.borderColor='var(--border)'">
+
+    // Filter by search
+    if(searchVal) mockCoins=mockCoins.filter(c=>c.symbol.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='top-25') mockCoins=mockCoins.slice(0,3);
+    else if(_fsSubTab==='hot-new') mockCoins=mockCoins.filter(c=>c.holders<15000);
+    else if(_fsSubTab==='top-24h') mockCoins=[...mockCoins].sort((a,b)=>b.vol24-a.vol24).slice(0,5);
+
+    // Sort
+    if(sortVal==='mult') mockCoins=[...mockCoins].sort((a,b)=>b.mult-a.mult);
+    else if(sortVal==='score') mockCoins=[...mockCoins].sort((a,b)=>b.holders-a.holders);
+
+    html=mockCoins.map(c=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><span style="color:var(--P);font-weight:700">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P)">⭐ PAID</span>':''}</div>
-        <span style="color:var(--S);font-weight:800">+${Math.floor(Math.random()*300)}%</span>
+        <div><span style="color:var(--P);font-weight:700;font-size:13px">${c.symbol}</span>${c.paid?'<span style="margin-left:6px;font-size:8px;color:var(--P);background:rgba(232,160,32,.2);padding:2px 4px;border-radius:3px">⭐ PAID</span>':''}</div>
+        <span style="color:${c.mult>=2?'var(--S)':'var(--A)'};font-weight:800;font-size:12px">${c.mult>=1?'+':''}${(c.mult-1).toFixed(1)}x</span>
       </div>
-      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>Holders: <span style="color:var(--P)">${c.holders.toLocaleString()}</span></div>
-        <div>Vol: <span style="color:var(--P)">$${(c.vol24/1000).toFixed(1)}K</span></div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>💰 <span style="color:var(--P)">${c.holders.toLocaleString()}</span>h</div>
+        <div>📊 <span style="color:var(--P)">$${(c.vol24/1000).toFixed(0)}K</span></div>
+        <div>📈 <span style="color:var(--P)">${(c.fdv/1000).toFixed(0)}K</span> FDV</div>
       </div>
       ${c.dex?'<div style="font-size:8px;margin-top:6px;padding:6px;background:var(--bg3);border-radius:4px;color:var(--C)">📊 DEX Chart Available</div>':''}
     </div>`).join('');
   } else if(_fsTab==='finance') {
-    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="color:var(--P);font-weight:700">SPY</div>
-      <div style="font-size:9px;color:var(--S)">$${(450+Math.random()*5).toFixed(2)} +1.2%</div>
-    </div>`;
+    let stocks=[
+      {sym:'SPY',price:450.25,chg:1.2,vol:85,category:'etf'},
+      {sym:'QQQ',price:385.10,chg:2.1,vol:72,category:'etf'},
+      {sym:'IWM',price:198.50,chg:0.8,vol:45,category:'etf'},
+      {sym:'GLD',price:201.20,chg:1.5,vol:38,category:'commodity'},
+      {sym:'TLT',price:92.80,chg:-0.5,vol:62,category:'bond'},
+      {sym:'USO',price:76.30,chg:2.3,vol:41,category:'commodity'},
+      {sym:'DXY',price:107.15,chg:0.3,vol:29,category:'forex'},
+      {sym:'EEM',price:42.10,chg:1.8,vol:55,category:'etf'},
+      {sym:'BND',price:75.50,chg:-0.2,vol:48,category:'bond'},
+      {sym:'VNQ',price:88.90,chg:1.1,vol:36,category:'etf'}
+    ];
+
+    // Filter by search
+    if(searchVal) stocks=stocks.filter(s=>s.sym.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='crypto') stocks=stocks.filter(s=>false); // placeholder
+    else if(_fsSubTab==='commodity') stocks=stocks.filter(s=>s.category==='commodity');
+    else if(_fsSubTab==='bonds') stocks=stocks.filter(s=>s.category==='bond');
+
+    // Sort
+    if(sortVal==='mult') stocks=[...stocks].sort((a,b)=>b.chg-a.chg);
+    else if(sortVal==='score') stocks=[...stocks].sort((a,b)=>b.vol-a.vol);
+
+    html=stocks.map(s=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--P);font-weight:700;font-size:13px">${s.sym}</span>
+        <span style="color:${s.chg>0?'var(--S)':'var(--A)'};font-weight:700">$${s.price.toFixed(2)} ${s.chg>0?'+':''}${s.chg}%</span>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:flex;justify-content:space-between">
+        <div>Vol: <span style="color:var(--P)">${s.vol}M</span></div>
+        <div>Type: <span style="color:var(--P)">${s.category}</span></div>
+      </div>
+    </div>`).join('');
   } else if(_fsTab==='news') {
-    html=`<div style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:8px">
-      <div style="color:var(--P);font-weight:700;font-size:10px">🚀 Major Exchange Listing</div>
-      <div style="font-size:8px;color:var(--text2);margin-top:4px">2 hours ago • 1.2K mentions</div>
-    </div>`;
+    let news=[
+      {title:'🚀 Major Exchange Listing',time:'2h',mentions:1200,sentiment:'bullish',score:92},
+      {title:'📊 Earnings Beat Expectations',time:'4h',mentions:856,sentiment:'bullish',score:88},
+      {title:'⚡ Partnership Announced',time:'6h',mentions:2300,sentiment:'bullish',score:95},
+      {title:'🔴 SEC Investigation Update',time:'8h',mentions:1900,sentiment:'bearish',score:45},
+      {title:'💰 Fund Raise Milestone Hit',time:'10h',mentions:742,sentiment:'bullish',score:85},
+      {title:'📈 Price Target Raised',time:'12h',mentions:1100,sentiment:'bullish',score:89},
+      {title:'🎯 Expansion into New Market',time:'14h',mentions:890,sentiment:'bullish',score:87},
+      {title:'💼 Executive Leadership Change',time:'16h',mentions:1500,sentiment:'neutral',score:72}
+    ];
+
+    // Filter by search
+    if(searchVal) news=news.filter(n=>n.title.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='sentiment') news=news.filter(n=>n.sentiment==='bullish');
+    else if(_fsSubTab==='technical') news=news.slice(0,4);
+    else if(_fsSubTab==='macro') news=news.slice(0,3);
+
+    // Sort
+    if(sortVal==='mult') news=[...news].sort((a,b)=>b.score-a.score);
+    else if(sortVal==='score') news=[...news].sort((a,b)=>b.mentions-a.mentions);
+
+    html=news.map(n=>`<div style="padding:12px;border-left:4px solid var(--P);background:var(--cgrd);margin-bottom:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div style="flex:1">
+          <div style="color:var(--P);font-weight:700;font-size:11px">${n.title}</div>
+          <div style="font-size:9px;color:var(--text2);margin-top:4px">${n.time} ago • <span style="color:var(--S)">${n.mentions.toLocaleString()}</span> mentions</div>
+        </div>
+        <span style="background:${n.sentiment==='bullish'?'rgba(0,255,156,.15)':n.sentiment==='bearish'?'rgba(255,60,42,.15)':'rgba(200,200,200,.1)'};color:${n.sentiment==='bullish'?'var(--S)':n.sentiment==='bearish'?'var(--A)':'var(--text2)'};font-size:9px;padding:4px 8px;border-radius:3px;font-weight:600">${n.sentiment}</span>
+      </div>
+    </div>`).join('');
   } else if(_fsTab==='stocks') {
-    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--P);font-weight:700">NVDA</span><span style="color:var(--S)">+3.2%</span></div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">Vol: 52M | Volatility: High</div>
-    </div>`;
-  } else if(_fsTab==='poly') {
-    html=`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px">
-      <div style="color:var(--P);font-weight:700;font-size:10px">2024 Election Winner</div>
-      <div style="font-size:9px;color:var(--text2);margin-top:4px">Yes: 62% | No: 38% | $2.3M pooled</div>
-    </div>`;
+    let gainers=[
+      {sym:'NVDA',price:135.42,chg:3.2,vol:92,volatility:'High',pe:65},
+      {sym:'TSLA',price:242.80,chg:2.8,vol:115,volatility:'High',pe:72},
+      {sym:'AMZN',price:195.50,chg:1.9,vol:78,volatility:'Medium',pe:58},
+      {sym:'MSFT',price:428.15,chg:1.5,vol:65,volatility:'Low',pe:42},
+      {sym:'GOOGL',price:156.30,chg:2.1,vol:71,volatility:'Medium',pe:48},
+      {sym:'META',price:512.40,chg:4.2,vol:88,volatility:'High',pe:38},
+      {sym:'NFLX',price:598.20,chg:2.5,vol:52,volatility:'Medium',pe:28},
+      {sym:'UBER',price:72.85,chg:1.7,vol:68,volatility:'Medium',pe:-15},
+      {sym:'AMD',price:168.90,chg:3.6,vol:84,volatility:'High',pe:52},
+      {sym:'PLTR',price:45.30,chg:2.2,vol:156,volatility:'High',pe:198}
+    ];
+
+    // Filter by search
+    if(searchVal) gainers=gainers.filter(g=>g.sym.toLowerCase().includes(searchVal));
+
+    // Filter by subtab
+    if(_fsSubTab==='tech') gainers=gainers.filter(g=>['NVDA','TSLA','AMZN','MSFT','GOOGL','META'].includes(g.sym));
+    else if(_fsSubTab==='top-vol') gainers=[...gainers].sort((a,b)=>b.vol-a.vol).slice(0,5);
+    else if(_fsSubTab==='gainers') gainers=[...gainers].sort((a,b)=>b.chg-a.chg).slice(0,5);
+
+    // Sort
+    if(sortVal==='mult') gainers=[...gainers].sort((a,b)=>b.chg-a.chg);
+    else if(sortVal==='score') gainers=[...gainers].sort((a,b)=>b.vol-a.vol);
+
+    html=gainers.map(g=>`<div style="padding:12px;border:1px solid var(--border);background:var(--cgrd);margin-bottom:8px;border-radius:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--P)';this.style.boxShadow='0 8px 16px rgba(232,160,32,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--P);font-weight:700;font-size:13px">${g.sym}</span>
+        <span style="color:var(--S);font-weight:700">+${g.chg}%</span>
+      </div>
+      <div style="font-size:9px;color:var(--text2);margin-top:6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>$${g.price.toFixed(2)}</div>
+        <div>Vol: <span style="color:var(--P)">${g.vol}M</span></div>
+        <div>P/E: <span style="color:${g.pe>50?'var(--A)':'var(--S)'}">${g.pe}</span></div>
+      </div>
+    </div>`).join('');
   }
 
-  fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px">Loading '+_fsTab+'...</div>';
+  if(fsc){
+    fsc.innerHTML=html||'<div style="color:var(--muted);padding:40px;text-align:center;font-weight:700">Loading '+_fsTab+'...<br><span style="font-size:9px;margin-top:10px">Tab: '+_fsTab+'</span></div>';
+  }else{
+    console.error('[renderFS] fs-content still null after check');
+  }
 }
 
 // WINDOW MANAGER
@@ -2281,6 +2404,7 @@ async function loadAnalytics(){
 
     const analysis=data.analysis||{};
     const metrics=data.metrics||{};
+    const scores=data.sourceScores||{};
 
     let html=`<div style="display:flex;flex-direction:column;gap:10px;font-size:11px">`;
 
@@ -2306,22 +2430,32 @@ async function loadAnalytics(){
       </div>`;
     }
 
-    // Top Fail Patterns
-    if(analysis.topFailPatterns && analysis.topFailPatterns.length){
-      html+=`<div style="padding:10px;background:rgba(255,60,42,.05);border:1px solid rgba(255,60,42,.2);border-radius:4px">
-        <div style="color:var(--A);font-weight:700;margin-bottom:4px">⚠️ WORST SOURCES</div>
-        <div style="display:flex;flex-direction:column;gap:3px;color:var(--text2)">
-          ${analysis.topFailPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
+    // Source Scores
+    if(Object.keys(scores).length > 0){
+      const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+      html+=`<div style="padding:10px;background:rgba(232,160,32,.05);border:1px solid rgba(232,160,32,.15);border-radius:4px">
+        <div style="color:var(--P);font-weight:700;margin-bottom:6px">⭐ SOURCE QUALITY SCORES</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${sorted.slice(0,5).map(([src,score])=>{
+            const color=score>=70?'var(--S)':score>=50?'var(--P)':'var(--A)';
+            return `<div style="display:flex;align-items:center;gap:6px;color:var(--text2)">
+              <span style="flex:1">${src.slice(0,15)}</span>
+              <div style="width:40px;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:${Math.min(score,100)}%;background:${color}"></div>
+              </div>
+              <span style="color:${color};font-weight:600;min-width:28px;text-align:right">${score}</span>
+            </div>`;
+          }).join('')}
         </div>
       </div>`;
     }
 
-    // Top Win Patterns
-    if(analysis.topWinPatterns && analysis.topWinPatterns.length){
-      html+=`<div style="padding:10px;background:rgba(0,255,156,.05);border:1px solid rgba(0,255,156,.2);border-radius:4px">
-        <div style="color:var(--S);font-weight:700;margin-bottom:4px">⭐ BEST SOURCES</div>
+    // Top Fail Patterns
+    if(analysis.topFailPatterns && analysis.topFailPatterns.length){
+      html+=`<div style="padding:10px;background:rgba(255,60,42,.05);border:1px solid rgba(255,60,42,.2);border-radius:4px">
+        <div style="color:var(--A);font-weight:700;margin-bottom:4px">⚠️ WATCH OUT</div>
         <div style="display:flex;flex-direction:column;gap:3px;color:var(--text2)">
-          ${analysis.topWinPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
+          ${analysis.topFailPatterns.slice(0,3).map(s=>`<div>• ${s}</div>`).join('')}
         </div>
       </div>`;
     }
@@ -2349,19 +2483,6 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
 });
 
-// Wire tab clicks to full-screen
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.ltab').forEach(tab=>{
-    tab.addEventListener('click',function(e){
-      const txt=e.target.textContent;
-      if(txt.includes('MEMES')) openFullscreen('memes','🍌 MEMES',['top-25','hot-new','top-24h','top-month','leverage','binance','solana']);
-      else if(txt.includes('FINANCE')) openFullscreen('finance','📈 FINANCE',['stocks','crypto','forex','leverage','bonds','commodities']);
-      else if(txt.includes('NEWS')) openFullscreen('news','📰 NEWS',['trending','sentiment','technical','fundamental','macro']);
-      else if(txt.includes('STOCKS')) openFullscreen('stocks','📊 STOCKS',['gainers','losers','top-vol','tech','energy','finance']);
-      else if(txt.includes('POLYMARKET')) openFullscreen('poly','🎯 POLYMARKET',['politics','crypto','sports','science','economy']);
-    });
-  });
-});
 </script>
 </body>
 </html>

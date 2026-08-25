@@ -21,6 +21,22 @@ const THEMES = [
     prompt: 'ZEROX, a mysterious AI crypto agent in a trench coat and glowing gold visor in a rainy neon cyberpunk city, holographic candlesticks rising, purple and gold neon reflections, cinematic, ultra detailed digital art' },
   { id: 'lambo', label: 'LAMBO', accent: '#fbbf24', bg: ['#16120a', '#0a0805', '#030201'],
     prompt: 'ZEROX, a flashy AI crypto agent in a gold tracksuit leaning on a matte black Lamborghini, firing a money gun of cash, night city, gold glow, cinematic, ultra detailed digital art' },
+  { id: 'vault', label: 'VAULT BREAKER', accent: '#f4c842', bg: ['#1a1508', '#0c0a03', '#040301'],
+    prompt: 'ZEROX, an AI crypto agent standing before a massive open bank vault door with gold bars spilling out, dramatic gold light beam, cinematic heist scene, ultra detailed digital art' },
+  { id: 'diamond', label: 'DIAMOND HANDS', accent: '#7fe8ff', bg: ['#081824', '#03101a', '#01060a'],
+    prompt: 'ZEROX, an AI crypto agent gripping a giant glowing diamond with both hands, refracted rainbow light, ice-blue cinematic atmosphere, ultra detailed digital art' },
+  { id: 'phoenix', label: 'RISING PHOENIX', accent: '#ff6a3d', bg: ['#241005', '#140902', '#060301'],
+    prompt: 'ZEROX, an AI crypto agent transforming into a blazing phoenix rising from ash and embers, dramatic orange and gold firelight, cinematic rebirth scene, ultra detailed digital art' },
+  { id: 'matrix', label: 'THE MATRIX', accent: '#00ff66', bg: ['#020a04', '#010602', '#000200'],
+    prompt: 'ZEROX, an AI crypto agent standing in a digital void of falling green code rain, glowing terminal glyphs, cinematic hacker aesthetic, ultra detailed digital art' },
+  { id: 'viking', label: 'VIKING RAID', accent: '#c8d8e8', bg: ['#0a1620', '#050c14', '#020509'],
+    prompt: 'ZEROX, an AI crypto agent as a viking captain on a longship in stormy seas, chests of gold treasure on deck, dramatic stormlight, cinematic, ultra detailed digital art' },
+  { id: 'desert', label: 'DESERT KING', accent: '#f0a860', bg: ['#241608', '#140b03', '#060301'],
+    prompt: 'ZEROX, an AI crypto agent as a desert king overlooking golden pyramids at sunset, gold dunes and a camel silhouette, epic warm cinematic light, ultra detailed digital art' },
+  { id: 'arcade', label: 'JACKPOT', accent: '#ff4fa3', bg: ['#180a20', '#0c0512', '#040208'],
+    prompt: 'ZEROX, an AI crypto agent celebrating a jackpot at a retro arcade slot machine, coins spilling out, neon pink and gold arcade lights, cinematic, ultra detailed digital art' },
+  { id: 'throne', label: 'CROWNED', accent: '#ffd700', bg: ['#1c1408', '#0e0a03', '#050301'],
+    prompt: 'ZEROX, an AI crypto agent seated on a golden throne wearing a jeweled crown, red velvet and gold hall, dramatic regal cinematic lighting, ultra detailed digital art' },
 ];
 
 function pickTheme(excludeId) {
@@ -253,6 +269,107 @@ const SVG_SCENES = {
     <g transform="translate(${W * 0.72},${H * 0.16})">
       <rect x="0" y="0" width="26" height="40" rx="3" fill="#00ff9c" opacity="0.55"/>
       <rect x="30" y="6" width="26" height="40" rx="3" fill="#00ff9c" opacity="0.75"/>
+    </g>`,
+  vault: (W, H) => `
+    <rect x="${W * 0.28}" y="${H * 0.14}" width="${W * 0.44}" height="${H * 0.72}" rx="18" fill="#0e0a03" opacity="0.9"/>
+    <circle cx="${W * 0.5}" cy="${H * 0.5}" r="120" fill="url(#gold)" opacity="0.18" filter="url(#soft)"/>
+    <circle cx="${W * 0.5}" cy="${H * 0.5}" r="90" fill="none" stroke="url(#gold)" stroke-width="6" opacity="0.85"/>
+    <circle cx="${W * 0.5}" cy="${H * 0.5}" r="60" fill="none" stroke="url(#gold)" stroke-width="3" opacity="0.6"/>
+    <circle cx="${W * 0.5}" cy="${H * 0.5}" r="14" fill="url(#gold)" opacity="0.9"/>
+    <g transform="translate(${W * 0.5},${H * 0.5})">
+      ${[0,45,90,135,180,225,270,315].map(a=>`<rect x="-4" y="-92" width="8" height="24" fill="url(#gold)" opacity="0.7" transform="rotate(${a})"/>`).join('')}
+    </g>
+    <g transform="translate(${W * 0.18},${H * 0.78})">
+      <rect x="0" y="0" width="90" height="46" rx="4" fill="url(#gold)" opacity="0.85"/>
+      <rect x="0" y="16" width="90" height="4" fill="#7a5a10" opacity="0.6"/>
+      <rect x="30" y="-30" width="90" height="46" rx="4" fill="url(#gold)" opacity="0.65"/>
+    </g>`,
+  diamond: (W, H) => `
+    <circle cx="${W * 0.5}" cy="${H * 0.44}" r="140" fill="#7fe8ff" opacity="0.1" filter="url(#soft)"/>
+    <g transform="translate(${W * 0.5},${H * 0.42})">
+      <path d="M -70 -10 L 0 -80 L 70 -10 L 0 90 Z" fill="#bff4ff" opacity="0.85"/>
+      <path d="M -70 -10 L 0 -80 L 0 90 Z" fill="#7fd8f0" opacity="0.7"/>
+      <path d="M -70 -10 L 70 -10 L 0 -80 Z" fill="#e8fbff" opacity="0.9"/>
+      <path d="M -70 -10 L 0 90 L -30 -10 Z" fill="#5fc0e0" opacity="0.6"/>
+      <path d="M 70 -10 L 0 90 L 30 -10 Z" fill="#a0e8f8" opacity="0.6"/>
+      <line x1="-70" y1="-10" x2="70" y2="-10" stroke="#fff" stroke-width="1.5" opacity="0.5"/>
+      <line x1="0" y1="-80" x2="0" y2="90" stroke="#fff" stroke-width="1" opacity="0.4"/>
+    </g>
+    <circle cx="${W * 0.24}" cy="${H * 0.2}" r="2" fill="#fff" opacity="0.8"/>
+    <circle cx="${W * 0.7}" cy="${H * 0.16}" r="1.5" fill="#fff" opacity="0.7"/>
+    <circle cx="${W * 0.76}" cy="${H * 0.3}" r="2" fill="#fff" opacity="0.6"/>
+    <text x="${W / 2}" y="${H * 0.86}" text-anchor="middle" font-family="Arial Black, Arial" font-weight="900" font-size="30" fill="#7fe8ff" letter-spacing="3" opacity="0.8">DIAMOND HANDS</text>`,
+  phoenix: (W, H) => `
+    <circle cx="${W * 0.5}" cy="${H * 0.5}" r="160" fill="#ff6a3d" opacity="0.14" filter="url(#glow)"/>
+    <g transform="translate(${W * 0.5},${H * 0.48})">
+      <path d="M 0 -80 C -50 -60, -70 0, -40 50 C -20 20, 0 10, 0 60 C 0 10, 20 20, 40 50 C 70 0, 50 -60, 0 -80 Z" fill="#ff7c44" opacity="0.9"/>
+      <path d="M 0 -50 C -20 -30, -30 0, -10 30 C 0 10, 10 30, 0 60 C -10 30, 0 10, 10 30 C 30 0, 20 -30, 0 -50 Z" fill="#ffd07a" opacity="0.9"/>
+    </g>
+    <g fill="#f4c842" opacity="0.5">
+      <circle cx="${W * 0.3}" cy="${H * 0.82}" r="4"/><circle cx="${W * 0.42}" cy="${H * 0.9}" r="3"/>
+      <circle cx="${W * 0.58}" cy="${H * 0.88}" r="4"/><circle cx="${W * 0.68}" cy="${H * 0.8}" r="3"/>
+    </g>
+    <text x="${W / 2}" y="${H * 0.94}" text-anchor="middle" font-family="Arial Black, Arial" font-weight="900" font-size="28" fill="#ff9a6a" letter-spacing="3" opacity="0.75">FROM THE ASHES</text>`,
+  matrix: (W, H) => `
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#020a04"/>
+    ${Array.from({length:22}).map((_,i)=>{const x=(i/22)*W+10;const len=6+((i*37)%10);return `<g fill="#00ff66" opacity="0.5" font-family="monospace" font-size="16">`+
+      Array.from({length:len}).map((__,j)=>`<text x="${x}" y="${(j*22)+((i*53)%200)}" opacity="${1-(j/len)}">${(i*7+j*13)%2===0?'1':'0'}</text>`).join('')+`</g>`}).join('')}
+    <circle cx="${W * 0.5}" cy="${H * 0.46}" r="120" fill="#00ff66" opacity="0.06" filter="url(#soft)"/>
+    <circle cx="${W * 0.5}" cy="${H * 0.46}" r="60" fill="none" stroke="#00ff66" stroke-width="2" opacity="0.6"/>`,
+  viking: (W, H) => `
+    <rect x="0" y="${H * 0.64}" width="${W}" height="${H * 0.36}" fill="#050c14"/>
+    <path d="M0 ${H * 0.68} Q ${W * 0.25} ${H * 0.6}, ${W * 0.5} ${H * 0.68} T ${W} ${H * 0.66} L ${W} ${H} L 0 ${H} Z" fill="#0d1c28" opacity="0.7"/>
+    <g transform="translate(${W * 0.5},${H * 0.58})">
+      <path d="M -140 40 C -120 60, 120 60, 140 40 L 130 20 L -130 20 Z" fill="#1a1006" opacity="0.9"/>
+      <rect x="-4" y="-100" width="8" height="120" fill="#3a2810"/>
+      <path d="M -4 -100 C 40 -90, 70 -60, 76 -20 L -4 -20 Z" fill="#c8d8e0" opacity="0.85"/>
+      <circle cx="20" cy="-70" r="14" fill="none" stroke="url(#gold)" stroke-width="3" opacity="0.8"/>
+    </g>
+    <g transform="translate(${W * 0.24},${H * 0.8})">
+      <rect x="0" y="0" width="54" height="34" rx="3" fill="url(#gold)" opacity="0.85"/>
+      <rect x="0" y="12" width="54" height="4" fill="#7a5a10" opacity="0.6"/>
+    </g>
+    <path d="M0 ${H * 0.2} Q ${W * 0.5} ${H * 0.05}, ${W} ${H * 0.24}" stroke="#c8d8e8" stroke-width="2" fill="none" opacity="0.2"/>`,
+  desert: (W, H) => `
+    <circle cx="${W * 0.5}" cy="${H * 0.22}" r="70" fill="#f0a860" opacity="0.8" filter="url(#glow)"/>
+    <path d="M0 ${H * 0.7} L ${W * 0.28} ${H * 0.4} L ${W * 0.5} ${H * 0.7} Z" fill="#5a3a1a" opacity="0.85"/>
+    <path d="M ${W * 0.18} ${H * 0.7} L ${W * 0.44} ${H * 0.32} L ${W * 0.68} ${H * 0.7} Z" fill="#7a5222" opacity="0.9"/>
+    <path d="M ${W * 0.4} ${H * 0.7} L ${W * 0.6} ${H * 0.46} L ${W * 0.82} ${H * 0.7} Z" fill="#6a4818" opacity="0.8"/>
+    <path d="M0 ${H * 0.7} Q ${W * 0.3} ${H * 0.64}, ${W * 0.6} ${H * 0.72} T ${W} ${H * 0.68} L ${W} ${H} L 0 ${H} Z" fill="#241608" opacity="0.6"/>
+    <g transform="translate(${W * 0.12},${H * 0.82}) scale(0.8)">
+      <path d="M0 0 Q 10 -20, 24 -14 Q 30 -30, 40 -20 Q 50 -34, 58 -18 L 66 0 Z" fill="#0a0805" opacity="0.7"/>
+    </g>`,
+  arcade: (W, H) => `
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#0c0512"/>
+    <g stroke="#ff4fa3" stroke-width="1" opacity="0.15">
+      ${Array.from({length:12}).map((_,i)=>`<line x1="0" y1="${(i/12)*H}" x2="${W}" y2="${(i/12)*H}"/>`).join('')}
+      ${Array.from({length:14}).map((_,i)=>`<line x1="${(i/14)*W}" y1="0" x2="${(i/14)*W}" y2="${H}"/>`).join('')}
+    </g>
+    <g transform="translate(${W * 0.5},${H * 0.46})">
+      <rect x="-130" y="-70" width="260" height="140" rx="16" fill="#1a0a22" stroke="#ff4fa3" stroke-width="3"/>
+      <circle cx="-80" cy="0" r="24" fill="url(#gold)" opacity="0.9"/>
+      <circle cx="0" cy="0" r="24" fill="url(#gold)" opacity="0.9"/>
+      <circle cx="80" cy="0" r="24" fill="url(#gold)" opacity="0.9"/>
+      <text x="0" y="-90" text-anchor="middle" font-family="Arial Black, Arial" font-weight="900" font-size="26" fill="#ff4fa3">JACKPOT</text>
+    </g>
+    <g fill="url(#gold)" opacity="0.7">
+      <circle cx="${W * 0.2}" cy="${H * 0.86}" r="10"/><circle cx="${W * 0.28}" cy="${H * 0.92}" r="8"/>
+      <circle cx="${W * 0.76}" cy="${H * 0.88}" r="10"/><circle cx="${W * 0.68}" cy="${H * 0.94}" r="7"/>
+    </g>`,
+  throne: (W, H) => `
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#0e0a03"/>
+    <rect x="${W * 0.1}" y="${H * 0.5}" width="${W * 0.8}" height="${H * 0.5}" fill="#3a0a0a" opacity="0.4"/>
+    <g transform="translate(${W * 0.5},${H * 0.56})">
+      <path d="M -90 60 L -90 -60 C -90 -100, -60 -110, -40 -90 L -40 60 Z" fill="#5a0e0e" opacity="0.85"/>
+      <path d="M 90 60 L 90 -60 C 90 -100, 60 -110, 40 -90 L 40 60 Z" fill="#5a0e0e" opacity="0.85"/>
+      <rect x="-40" y="-30" width="80" height="90" fill="#6a1010" opacity="0.9"/>
+      <path d="M -90 -60 C -90 -100, -60 -110, -40 -90 L -40 -70 C -55 -80, -75 -75, -75 -55 Z" fill="url(#gold)" opacity="0.9"/>
+      <path d="M 90 -60 C 90 -100, 60 -110, 40 -90 L 40 -70 C 55 -80, 75 -75, 75 -55 Z" fill="url(#gold)" opacity="0.9"/>
+      <circle cx="0" cy="-10" r="4" fill="url(#gold)" opacity="0.6"/>
+    </g>
+    <g transform="translate(${W * 0.5},${H * 0.22})">
+      <path d="M -34 20 L -24 -16 L -12 6 L 0 -22 L 12 6 L 24 -16 L 34 20 Z" fill="url(#gold)"/>
+      <circle cx="-24" cy="-16" r="4" fill="#e8306a"/><circle cx="0" cy="-22" r="4" fill="#22d3ee"/><circle cx="24" cy="-16" r="4" fill="#e8306a"/>
     </g>`,
 };
 

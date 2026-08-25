@@ -58,3 +58,30 @@ describe('boostCanonicalArtist', () => {
     expect(out.map((t) => t.artist)).toEqual(['', 'Some Other Band']);
   });
 });
+
+describe('filterKnockoffs — Audius-specific tightening', () => {
+  test('drops Audius remix/mashup/DJ-mix/boot/live results by default, but keeps the same-titled Deezer result', () => {
+    const tracks = [
+      { source: 'deezer', name: 'Get Lucky', artist: 'Daft Punk' },
+      { source: 'audius', name: 'Get Lucky (FRASER Remix)', artist: 'FRASER' },
+      { source: 'audius', name: 'Get Lucky (DJ Luciano Velocity Mix)', artist: 'Luciano Deejay' },
+      { source: 'audius', name: 'Get Lucky Disco Funk Mashup', artist: 'DJ michbuze' },
+      { source: 'audius', name: 'Get Lucky (DZ Live Boot)', artist: 'David Duriez' },
+    ];
+    const out = src.filterKnockoffs(tracks, 'daft punk get lucky');
+    expect(out).toHaveLength(1);
+    expect(out[0].source).toBe('deezer');
+  });
+
+  test('does not apply the Audius-specific filter to non-Audius sources', () => {
+    const tracks = [{ source: 'deezer', name: 'Some Remix Mix', artist: 'A Real Label Artist' }];
+    const out = src.filterKnockoffs(tracks, 'query with no knockoff words');
+    expect(out).toHaveLength(1);
+  });
+
+  test('keeps an Audius remix when the query itself asks for a remix', () => {
+    const tracks = [{ source: 'audius', name: 'Get Lucky (FRASER Remix)', artist: 'FRASER' }];
+    const out = src.filterKnockoffs(tracks, 'get lucky fraser remix');
+    expect(out).toHaveLength(1);
+  });
+});
