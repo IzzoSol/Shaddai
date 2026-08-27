@@ -1288,18 +1288,14 @@ async function _pollBonded() {
       if (usdMc > 20000) { _seenBond.add(mint); continue; }
       if (_overCap(cfg, usdMc, rs)) continue;         // standard maxFdv check (catches anything above global maxFdv)
       if (!_holdersOk(cfg, rs)) continue;
-      if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }      // LP — not flexed
-      // DEX FLEX for bonded: paid boost gets headroom on top10/bundlers/snipers
-      let _bondFlex = false;
-      if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
-        const _bst = _boostInfo(mint);
-        if (_bst && _bst.amount > 0) {
-          const _fc = Object.assign({}, cfg, { maxTop10Pct: (cfg.maxTop10Pct || 25) + 5, maxBundlerPct: (cfg.maxBundlerPct || 3) + 7, maxSnipersPct: (cfg.maxSnipersPct || 5) + 5 });
-          if (_top10Ok(_fc, rs) && _snipersOk(_fc, rs) && _bundlersOk(_fc, rs)) _bondFlex = true;
-          else continue;
-        } else continue;
-      }
-      card = card + (_bondFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '');
+      if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }
+      // No paid-boost flex on concentration/sniper/bundler checks (removed 2026-08-27):
+      // live data showed 'bonded' scoring 15/100 (worst of all real sources) — a paid boost
+      // does not make a concentrated/sniped/bundled token safer, so it no longer earns
+      // headroom on these checks. Same standard bar for everyone.
+      if (!_top10Ok(cfg, rs)) continue;
+      if (!_snipersOk(cfg, rs)) continue;
+      if (!_bundlersOk(cfg, rs)) continue;
     }
     // BANNER REQUIRED at $30K–$75K FDV: DexScreener banners cost ~$200 to publish.
     // Projects that paid for a banner at this MC are committed — rugs don't pay $200 to brand
@@ -2043,17 +2039,30 @@ async function _pollBoosts() {
       if (vol1h < 8000) continue;          // at least $8K in last hour
       if (chg1h < 10) continue;            // must be up at least 10% in last hour
       if (fdv < cfg.minFdv) continue;
-      if (fdv > 500000) continue;          // boosted plays up to $500K (BULLMOJI/WIZCAT/WALRUS range)
+      // FDV ceiling tightened $500K -> $150K (2026-08-27, live data: 'boosted' was the single
+      // worst-performing source — score 26/100, 38 deaths vs. 6 wins on aged calls — while also
+      // being the highest-volume source, dragging overall win rate down the most). A paid
+      // DexScreener boost signals marketing budget, not fundamentals — high-FDV boosted plays
+      // are disproportionately late-stage pumps bought as exit liquidity.
+      if (fdv > 150000) continue;
       if (liq < cfg.minLiq) continue;
       // Buy pressure check — skip if clearly dumping
       const _bp = _buyPressure(pair);
       if (_bp.bullish === false && _bp.ratio < 0.40) continue;
-      // Rug check
+      // Rug check — NO discount for paid boosts (previously halved to ~30 vs the standard 60;
+      // a token's owner paying for exposure says nothing about its fundamentals, and the
+      // discount correlated with 'boosted' being the worst-scoring live source).
       let rs = null;
       if (cfg.rugFilter) rs = await _rugScore(mint);
-      const _boostRugMin = Math.max(20, Math.floor(cfg.rugMinScore * 0.5));
-      if (rs && rs.checked && rs.score < _boostRugMin) continue;
+      if (rs && rs.checked && rs.score < cfg.rugMinScore) continue;
       if (!_holdersOk(cfg, rs)) continue;
+      // Concentration/insider checks — boosted previously had NONE of these (trending and
+      // bonded both did). A paid boost cannot buy past top10 concentration, sniper presence,
+      // or bundler risk; no flex loophole here either, for the same reason as above.
+      if (!_top10Ok(cfg, rs)) continue;
+      if (!_snipersOk(cfg, rs)) continue;
+      if (!_bundlersOk(cfg, rs)) continue;
+      if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }
       // GoPlus hard block
       const gp = await _goplusCheck(mint);
       if (gp && !gp.ok) continue;
