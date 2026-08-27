@@ -635,13 +635,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
   <!-- LEFT -->
   <div class="left-col">
-    <div id="ltabs">
-      <div class="ltab on"  onclick="openWindow('alt-mkt','💱 ALT',80,70,720,520)">💱 ALT</div>
-      <div class="ltab"     onclick="openWindow('stocks-mkt','📊 STOCKS',80,70,720,520)">📊 STOCKS</div>
-      <div class="ltab"     onclick="openWindow('news-mkt','📰 NEWS',80,70,480,600)">📰 NEWS</div>
-      <div class="ltab"     onclick="openWindow('mirofish','🐟 MIROFISH',80,70,700,450)">🐟 MIROFISH</div>
-    </div>
-
     <!-- signals -->
     <div class="ltp on" id="tab-sig">
       <div id="fw">
@@ -668,10 +661,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
         </div>
       </div>
       <div id="slist"><div class="empty">CONNECTING TO ORACLE FEED…</div></div>
-      <div id="mksub">
-        <div id="mkbar" onclick="togMk()"><span>📊 MARKETS <span style="opacity:.5;font-size:8px;letter-spacing:2px">CRYPTO · FOREX · EQUITIES</span></span><span id="mkcaret">▾</span></div>
-        <div id="tab-mkt" style="display:none"><div class="mload">FETCHING LIVE MARKET DATA…</div></div>
-      </div>
     </div>
 
     <!-- alerts moved to modal (topbar 🔔 pill) -->
@@ -766,6 +755,8 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <!-- tabs -->
     <div id="rc-tabs">
       <div class="rtab on"  onclick="rTab('intel',this)">📡 INTEL</div>
+      <div class="rtab"     onclick="rTab('stocks',this)">📊 STOCKS</div>
+      <div class="rtab"     onclick="rTab('news',this)">📰 NEWS</div>
       <div class="rtab"     onclick="rTab('poly',this)">🎯 POLY <span id="polycnt" style="font-size:5px;opacity:.6"></span></div>
       <div class="rtab"     onclick="rTab('miro',this)">🐟 MIRO</div>
     </div>
@@ -832,6 +823,18 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       </div>
     </div>
 
+    <!-- STOCKS tab -->
+    <div class="rpane" id="rpane-stocks">
+      <div id="stocks-tv-container" style="height:340px;width:100%"></div>
+    </div>
+
+    <!-- NEWS tab -->
+    <div class="rpane" id="rpane-news">
+      <div class="rpane-scroll">
+        <div id="news-list"><div class="mload">LOADING LIVE NEWS…</div></div>
+      </div>
+    </div>
+
     <!-- POLYMARKET tab -->
     <div class="rpane" id="rpane-poly">
       <div class="rpane-scroll">
@@ -852,7 +855,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
           <div class="mwacts">
             <button class="mwb" onclick="checkMiro()">PING</button>
             <button class="mwb" id="mwrun" onclick="runMiro()" style="display:none">SIMULATE →</button>
-            <button class="mwb" onclick="openMiroTab()" style="border-color:rgba(176,127,255,.35)">FULL SWARM →</button>
           </div>
           <div class="mwr" id="mwres"></div>
         </div>
@@ -1191,12 +1193,14 @@ function card(c,i){
 function swarmCall(mint){
   const c=_calls.find(x=>x.mint===mint)||{};
   const sym=c.symbol||'';
-  switchTab('swarm',document.querySelectorAll('.ltab')[3]);
-  const t=document.getElementById('sw-tok'),n=document.getElementById('sw-news');
+  const miroBtn=document.querySelector(".rtab[onclick*=\"'miro'\"]");
+  if(miroBtn) rTab('miro',miroBtn);
+  const sim=document.getElementById('mwsim');if(sim) sim.style.display='flex';
+  const t=document.getElementById('mwtok'),n=document.getElementById('mwnws');
   if(t) t.value=sym;
   if(n) n.value=(sym?sym+' — ':'')+'live signal call — pump or dump in 7 days?';
   toast('SWARM LAUNCHED ON '+(sym||mint).toUpperCase());
-  setTimeout(runSwarm,400);
+  setTimeout(runMiro,400);
 }
 function cca(m){if(!m)return;navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
 
@@ -1461,6 +1465,7 @@ const CI={btc:'₿',eth:'Ξ',sol:'◎',bonk:'🐶',doge:'🐕',pepe:'🐸',ton:'
 async function fetchMkts(){
   _mktLoaded=true;
   const el=document.getElementById('tab-mkt');
+  if(!el)return; // markets accordion removed from the main feed — Stocks/News now live in the sidebar
   try{
     const [sR,cR,fR]=await Promise.allSettled([
       fetch(BASE+'/api/markets/stocks').then(r=>r.json()),
@@ -1773,8 +1778,49 @@ function rTab(name, el){
   el.classList.add('on');
   document.getElementById('rpane-'+name).classList.add('on');
   if(name==='poly'&&!_polyLoaded) fetchPoly();
+  if(name==='stocks'&&!_stocksLoaded) loadSidebarStocks();
+  if(name==='news'&&!_newsLoaded) loadSidebarNews();
 }
 let _polyLoaded=false;
+let _stocksLoaded=false, _newsLoaded=false;
+
+function loadSidebarStocks(){
+  _stocksLoaded=true;
+  const c=document.getElementById('stocks-tv-container');
+  if(!c)return;
+  try{
+    const cfg={colorTheme:'dark',dateRange:'12M',showChart:true,locale:'en',width:'100%',height:'100%',largeChartUrl:'',isTransparent:false,showSymbolLogo:true,showFloatingTooltip:true,
+      tabs:[
+        {title:'Indices',symbols:[{s:'FOREXCOM:SPXUSD',d:'S&P 500'},{s:'FOREXCOM:NSXUSD',d:'Nasdaq 100'},{s:'FOREXCOM:DJI',d:'Dow 30'}]},
+        {title:'Crypto',symbols:[{s:'COINBASE:BTCUSD',d:'Bitcoin'},{s:'COINBASE:ETHUSD',d:'Ethereum'},{s:'COINBASE:SOLUSD',d:'Solana'}]},
+        {title:'Forex',symbols:[{s:'FX:EURUSD',d:'EUR/USD'},{s:'FX:GBPUSD',d:'GBP/USD'}]},
+        {title:'Commodities',symbols:[{s:'TVC:GOLD',d:'Gold'},{s:'TVC:USOIL',d:'Crude Oil'}]}
+      ],defaultColumn:'overview'};
+    const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
+    c.innerHTML='<iframe src="'+src+'" style="width:100%;height:100%;border:0" loading="lazy" title="Markets"></iframe>';
+  }catch(e){ c.innerHTML='<div style="padding:16px;color:#ff3d5a;font-size:10px">ERROR: '+esc(e.message)+'</div>'; }
+}
+function loadSidebarNews(){
+  _newsLoaded=true;
+  const el=document.getElementById('news-list');
+  if(!el)return;
+  fetch(BASE+'/api/news/actually-relevant')
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(j=>{
+      const items=(j.articles||j.results||[]).slice(0,25);
+      if(!items.length){ el.innerHTML='<div class="mload">NO NEWS RIGHT NOW</div>'; return; }
+      el.innerHTML=items.map(n=>{
+        const src=(n.source&&n.source.name)||n.source||'news';
+        const when=n.publishedAt||n.published_at||'';
+        return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
+          '<div class="newsrow" style="padding:8px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:6px">'+
+            '<div style="color:var(--P);font-weight:700;font-size:9px">'+esc(n.title||'')+'</div>'+
+            '<div style="font-size:7px;color:var(--text2);margin-top:3px">'+esc(src)+' • '+esc(when)+'</div>'+
+          '</div></a>';
+      }).join('');
+    })
+    .catch(e=>{ el.innerHTML='<div class="mload" style="color:#ff3d5a">ERROR: '+esc(e.message)+'</div>'; });
+}
 
 /* ══════════════════════════════════════════════════════
    EXTENDED DATA FEEDS
