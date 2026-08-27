@@ -670,12 +670,12 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <div class="ltp on" id="tab-sig">
       <div id="fw">
         <div id="fr1">
-          <button class="fb on" data-s="all">ALL <span class="fbc"></span></button>
-          <button class="fb" data-s="pre_bond">PRE-BOND <span class="fbc"></span></button>
-          <button class="fb" data-s="bonded">BONDED <span class="fbc"></span></button>
-          <button class="fb" data-s="trending">TREND <span class="fbc"></span></button>
-          <button class="fb" data-s="new_pools">POOLS <span class="fbc"></span></button>
-          <button class="fb" data-s="boosted">BOOST <span class="fbc"></span></button>
+          <button class="fb on" data-s="all" title="Every call from every source">ALL <span class="fbc"></span></button>
+          <button class="fb" data-s="pre_bond" title="Pump.fun tokens still on the bonding curve — earliest possible entry, highest risk">PRE-BOND <span class="fbc"></span></button>
+          <button class="fb" data-s="bonded" title="Pump.fun tokens that just graduated (bonded) onto Raydium">BONDED <span class="fbc"></span></button>
+          <button class="fb" data-s="trending" title="Top 25 on DexScreener right now — card shows its live rank">TREND <span class="fbc"></span></button>
+          <button class="fb" data-s="new_pools" title="Brand-new liquidity pools (GeckoTerminal)">POOLS <span class="fbc"></span></button>
+          <button class="fb" data-s="boosted" title="Tokens that just paid for a DexScreener boost">BOOST <span class="fbc"></span></button>
           <input class="fq" id="fq" placeholder="SEARCH SYMBOL / MINT…" oninput="onFil('q',this.value)">
           <div style="flex:1"></div>
           <span class="fcnt" id="fcnt"></span>
@@ -1309,7 +1309,7 @@ function card(c,i){
     <div class="stop">
       ${ih}
       <span class="ssym" style="color:${col};text-shadow:0 0 10px ${col}55">${esc(c.symbol||'???')}</span>
-      <span class="sp sp-${src}">${src.replace('_',' ')}</span>
+      <span class="sp sp-${src}">${src.replace('_',' ')}</span>${c.rank?`<span class="sp" style="background:rgba(34,211,238,.15);color:#22d3ee;border-color:rgba(34,211,238,.4)" title="Was #${c.rank} on DexScreener when called">#${c.rank} DEX</span>`:''}
       <span class="ssp"></span>
       <span class="smlt ${mcs}">${ms}</span>
     </div>

@@ -171,6 +171,7 @@ function recordCall(c) {
       bundlers: !!c.bundlers,
       snipers: !!c.snipers,
       rugScore: Number(c.rugScore) || 0,
+      rank: Number(c.rank) || 0,
       // Calculated ratios
       liqRatio: fdv > 0 ? ((liq / fdv) * 100).toFixed(2) : 0,
       holderDensity: holders > 0 ? (fdv / holders).toFixed(0) : 0,
@@ -676,6 +677,7 @@ function _shape(c) {
     mint: c.mint || '',
     chain: c.chain || '',
     source: c.source || '',
+    rank: Number(c.rank) || 0,
     entryFdv: Number(c.entryFdv) || 0,
     entryPrice: Number(c.entryPrice) || 0,
     currentMult: Number((c.curMult || 1).toFixed ? +Number(c.curMult || 1).toFixed(4) : c.curMult) || 1,

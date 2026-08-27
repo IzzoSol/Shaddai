@@ -34,6 +34,12 @@ const TG_API = (token, method) => `https://api.telegram.org/bot${token}/${method
 // log the full feature fingerprint of a posted call → token-db (powers ZEROX winner/loser analysis)
 function _logFeatures(o) { try { require('./token-db').recordOutcome(o); } catch (e) { console.warn('[token-db] _logFeatures error:', e.message); } }
 const DS_BOOSTS = 'https://api.dexscreener.com/token-boosts/latest/v1';
+// TOP boosts = the tokens sitting highest on DexScreener right now (ranked by total boost).
+// This is what the TREND feed reads. Previously _pollOnce read DS_BOOSTS (latest) — the exact
+// same endpoint _pollBoosts uses — so "trending" and "boosted" were the same data under two
+// names. TREND now means "top of DexScreener right now (with rank)", BOOST means "just got
+// a boost", which is what those labels are supposed to mean.
+const DS_BOOSTS_TOP = 'https://api.dexscreener.com/token-boosts/top/v1';
 const DS_TOKEN = (chain, addr) => `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
 // pump.fun graduated ("bonded") coins — unofficial public API, best-effort.
 const PF_COINS = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=created_timestamp&order=DESC&includeNsfw=false';
@@ -966,11 +972,16 @@ async function _pollOnce() {
   _refreshProfiles().catch(() => {});
   let boosts;
   try {
-    const r = await fetch(DS_BOOSTS);
+    const r = await fetch(DS_BOOSTS_TOP);   // TREND feed = top of DexScreener right now
     if (!r.ok) return;
     boosts = await r.json();
   } catch (e) { return; }
   if (!Array.isArray(boosts)) return;
+  // Rank = position in DexScreener's top list at call time. Only the top 25 count as
+  // "trending"; past that it's just a boosted token and _pollBoosts' job.
+  const _rankOf = new Map();
+  boosts.slice(0, 25).forEach((it, i) => { if (it && it.tokenAddress) _rankOf.set(it.tokenAddress, i + 1); });
+  boosts = boosts.slice(0, 25);
   // populate boost map — every boosted token gets tracked (for cards + PnL)
   for (const item of boosts) {
     if (item && item.tokenAddress) {
@@ -1048,6 +1059,8 @@ async function _pollOnce() {
     }
 
     let card = _signalCard(chain, pair, social ? social.label : '');
+    const _rank = _rankOf.get(addr);
+    if (_rank) card = `📈 <b>#${_rank} TRENDING ON DEXSCREENER</b>\n` + card;
     let rs = null;
     if (cfg.rugFilter && chain === 'solana') rs = await _rugScore(addr);
     // STRICT rug bar for trending: no half-off bonus. Trending often has worse fundamentals.
@@ -1115,7 +1128,7 @@ async function _pollOnce() {
       ) > 0;
     }
     _seen.add(addr);
-    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers) }); } catch (e) {}
+    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rank: _rank || 0 }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
