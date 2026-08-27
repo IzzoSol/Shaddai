@@ -302,7 +302,7 @@ function frame(t){
   px.clearRect(0,0,W,H);
   const bg=px.createRadialGradient(W*0.42,H*0.42,0,W*0.42,H*0.42,H); bg.addColorStop(0,'#0e131c'); bg.addColorStop(1,'#05070b');
   px.fillStyle=bg; px.fillRect(0,0,W,H);
-  const stageCx=(148 + (W-280))/2, feetY=H*0.66, radius=Math.min(190,(W-430)*0.34);
+  const stageCx=(148 + (W-280))/2, feetY=H*0.66, radius=Math.max(24,Math.min(190,(W-430)*0.34));
   // enshrine glow — a soft aureole rising behind the traveler so they read as revered, not lost
   const halo=px.createRadialGradient(stageCx,feetY-radius*0.9,0,stageCx,feetY-radius*0.9,radius*2.4);
   halo.addColorStop(0,'rgba(0,255,156,0.11)');
