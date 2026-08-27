@@ -41,6 +41,33 @@
 <header><h1>⚡ Quick Start</h1></header>
 <main id="app"><div class="spinner">Loading...</div></main>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+// Identify the caller so the server can scope generated sites per owner and enforce
+// its login gate. Same public web config as the dashboard (Firebase web keys are not
+// secret). If Firebase is blocked or the visitor is signed out we simply send no token
+// — the server decides whether that is allowed via REQUIRE_AUTH.
+window.SHD_AUTH = { token: null, uid: null };
+try {
+  if (window.firebase && firebase.initializeApp) {
+    firebase.initializeApp({ apiKey: "AIzaSyB9QzPlI9AiAnisSO-jK-UUJ-ZwtmHlzjw", authDomain: "shaddai999.firebaseapp.com", projectId: "shaddai999", storageBucket: "shaddai999.firebasestorage.app", messagingSenderId: "706335788411", appId: "1:706335788411:web:6b64d985f6b0c1bf8441de" });
+    firebase.auth().onAuthStateChanged(async function (u) {
+      window.SHD_AUTH.uid = u ? u.uid : null;
+      window.SHD_AUTH.token = u ? await u.getIdToken().catch(function () { return null; }) : null;
+    });
+  }
+} catch (e) { /* offline / blocked — stays anonymous */ }
+
+function shdAuthHeaders() {
+  const h = {};
+  if (window.SHD_AUTH && window.SHD_AUTH.token) h['Authorization'] = 'Bearer ' + window.SHD_AUTH.token;
+  let uid = (window.SHD_AUTH && window.SHD_AUTH.uid) || null;
+  if (!uid) { try { uid = localStorage.getItem('shd_userid'); } catch (_) {} }
+  if (uid) h['x-user-id'] = uid;
+  return h;
+}
+</script>
 <script>
 (function () {
   const app = document.getElementById('app');
@@ -54,10 +81,20 @@
   }
 
   async function loadUseCases() {
-    const res = await fetch('/api/quickstart/usecases');
-    const data = await res.json();
-    useCases = (data && data.useCases) || [];
-    renderPicker();
+    try {
+      const res = await fetch('/api/quickstart/usecases', { headers: shdAuthHeaders() });
+      // In a locked-down deployment even the catalog is behind the login gate, so a
+      // signed-out visitor must be sent to sign in rather than left on a dead "Loading…".
+      if (res.status === 401) return renderSignInPrompt();
+      const data = await res.json();
+      useCases = (data && data.useCases) || [];
+      renderPicker();
+    } catch (e) {
+      app.innerHTML = `<div class="card"><div class="prompt">Couldn't load</div>
+        <p style="color:#9aa0aa">${esc(e.message)}</p>
+        <div class="btn-row"><button class="btn-next" id="reloadBtn">Try Again</button></div></div>`;
+      document.getElementById('reloadBtn').addEventListener('click', loadUseCases);
+    }
   }
 
   function renderPicker() {
@@ -134,10 +171,12 @@
     try {
       const res = await fetch(`/api/quickstart/run/${encodeURIComponent(current.id)}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, shdAuthHeaders()),
         body: JSON.stringify({ answers }),
       });
+      if (res.status === 401) return renderSignInPrompt();
       const data = await res.json();
+      if (res.status === 429) throw new Error(data.error || 'Too many requests — give it a minute.');
       if (!data.ok) throw new Error(data.error || 'Something went wrong');
       renderResult(data);
     } catch (e) {
@@ -145,6 +184,28 @@
         <div class="btn-row"><button class="btn-back" id="retryBtn">Start Over</button></div></div>`;
       document.getElementById('retryBtn').addEventListener('click', renderPicker);
     }
+  }
+
+  // The server refused because nobody is signed in. Keep the answers in memory so
+  // signing in and coming back doesn't cost the visitor their typing.
+  function renderSignInPrompt() {
+    app.innerHTML = `
+      <div class="card">
+        <div class="prompt">Sign in to finish</div>
+        <p style="color:#9aa0aa">Your answers are saved on this screen. Sign in and hit Try Again — we'll build it right away.</p>
+        <div class="btn-row">
+          <button class="btn-back" id="qsSignIn">Sign In</button>
+          <button class="btn-next" id="qsRetry">Try Again</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('qsSignIn').addEventListener('click', () => {
+      location.href = '/index.html';
+    });
+    // Retry whatever we were blocked on: the catalog load, or the run itself.
+    document.getElementById('qsRetry').addEventListener('click', () => {
+      if (current) runUseCase(); else loadUseCases();
+    });
   }
 
   function renderResult(data) {
