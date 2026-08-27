@@ -1360,86 +1360,95 @@ function composePnl(){
 function _drawPnl(){
   const cv=document.getElementById('pnlcanv'),img=document.getElementById('pnlimg');
   if(!cv||!_pnl.c||!_pnl._img) return;
-  const W=1600,H=900,LW=960;
+  const W=1080,H=1350; // 4:5 — the aspect ratio that renders largest on X/Twitter and Instagram feeds
   cv.width=W;cv.height=H;
   const x=cv.getContext('2d');
   const im=_pnl._img,j=_pnl.art,c=_pnl.c;
-  const sc=Math.max(LW/im.width,H/im.height);
-  const dw=im.width*sc,dh=im.height*sc;
-  x.fillStyle='#000';x.fillRect(0,0,W,H);
-  x.drawImage(im,(LW-dw)/2,(H-dh)/2,dw,dh);
-  // theme tag on art
-  x.save();
-  x.font='700 22px "Share Tech Mono",monospace';
-  x.fillStyle='rgba(0,0,0,.5)';
-  x.fillRect(12,12,x.measureText('THEME · '+j.themeLabel).width+26,34);
-  x.fillStyle='#f0c060';x.fillText('THEME · '+j.themeLabel,25,35);
-  x.restore();
-  // right panel
-  const g=x.createLinearGradient(LW,0,W,0);
-  g.addColorStop(0,'#0d1317');g.addColorStop(1,'#04070a');
-  x.fillStyle=g;x.fillRect(LW,0,640,H);
-  x.fillStyle='#f0c060';x.fillRect(LW,0,2,H);
-  x.save();
-  x.textAlign='center';
-  // brand
-  x.fillStyle='rgba(240,192,96,.06)';x.fillRect(LW,0,640,170);
-  x.font='700 40px "Syncopate",sans-serif';
-  x.fillStyle='#f0c060';x.fillText('SHADDAI SIGNALS',LW+320,74);
-  x.fillStyle='rgba(240,192,96,.4)';
-  x.fillRect(LW+150,92,340,2);
-  // ticker
-  x.font='800 92px "Exo 2",sans-serif';
-  x.fillStyle='#ffe9a8';
-  x.shadowColor='rgba(240,192,96,.55)';x.shadowBlur=24;
-  x.fillText('$'+(c.symbol||'???'),LW+320,205);
-  x.shadowBlur=0;
-  if(c.name){x.font='400 22px "Exo 2",sans-serif';x.fillStyle='rgba(200,210,215,.6)';x.fillText(c.name.slice(0,26),LW+320,238);}
-  // date + source
-  x.font='16px "Share Tech Mono",monospace';
-  x.fillStyle='rgba(200,210,215,.5)';
-  x.fillText(pnlDate(c.ts)+'  ·  '+String(j.data.source||c.source||'signals').replace('_',' '),LW+320,268);
-  // stats panel
   const cur=typeof c.currentMult==='number'?c.currentMult:c.curMult||1;
   const peak=c.peakMult||1;
-  const box={x:LW+36,y:300,w:568,h:250};
-  x.fillStyle='rgba(0,0,0,.35)';
-  x.fillRect(box.x,box.y,box.w,box.h);
-  x.strokeStyle='rgba(240,192,96,.22)';x.strokeRect(box.x,box.y,box.w,box.h);
-  const rows=[
-    ['ENTRY MC',usd(c.entryFdv),'rgba(200,210,215,.85)'],
-    ['ATH AT PNL',peak.toFixed(1)+'× · '+usd((c.entryFdv||0)*peak),'#00ff9c'],
-    ['NOW',(cur>=1?cur.toFixed(1)+'×':'↓'+Math.round((1-cur)*100)+'%')+' · '+usd((c.entryFdv||0)*cur),cur>=1?'#00ff9c':'#ff3d5a'],
-    ['ENTRY PRICE',fmtPrice(c.entryPrice),'rgba(200,210,215,.85)'],
-  ];
+  const entryMc=c.entryFdv||0;
+  const peakMc=entryMc*peak;
+  const nowMc=entryMc*cur;
+  const winning=peak>=2||cur>=1;
+  const accent=peak>=5?'#00ff41':peak>=2?'#00ff9c':cur>=1?'#f4c842':'#ff3d5a';
+
+  // ── FULL-BLEED BACKGROUND — the AI art fills the entire card, cropped to cover ──
+  const sc=Math.max(W/im.width,H/im.height);
+  const dw=im.width*sc,dh=im.height*sc;
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);
+
+  // Dark gradient scrims top+bottom so text stays legible over any art — the "cool
+  // graphic" stays fully visible in the middle, text sits in the readable zones.
+  let g=x.createLinearGradient(0,0,0,H*0.32);
+  g.addColorStop(0,'rgba(0,0,0,.75)');g.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=g;x.fillRect(0,0,W,H*0.32);
+  g=x.createLinearGradient(0,H*0.58,0,H);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.88)');
+  x.fillStyle=g;x.fillRect(0,H*0.58,W,H*0.42);
+
+  x.save();
   x.textAlign='left';
-  rows.forEach((r,i)=>{
-    const y=box.y+54+i*52;
-    x.font='15px "Share Tech Mono",monospace';
-    x.fillStyle='rgba(148,163,172,.7)';x.fillText(r[0],box.x+24,y);
-    x.textAlign='right';
-    x.font='700 24px "Share Tech Mono",monospace';
-    x.fillStyle=r[2];x.fillText(r[1],box.x+box.w-24,y);
-    x.textAlign='left';
-  });
-  // giant mult
-  x.textAlign='center';
-  x.font='800 120px "Exo 2",sans-serif';
-  x.fillStyle='rgba(240,192,96,.9)';
-  x.shadowColor='rgba(240,192,96,.4)';x.shadowBlur=40;
-  x.fillText(peak.toFixed(1)+'×',LW+320,648);
+
+  // ── TOP: ShaddaiAI brand + theme ──
+  x.font='800 30px "Syncopate",sans-serif';
+  x.fillStyle='#ffffff';
+  x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=12;
+  x.fillText('⚡ SHADDAI SIGNALS',40,66);
+  x.font='700 16px "Share Tech Mono",monospace';
+  x.fillStyle=accent;
+  x.fillText('THEME · '+(j.themeLabel||'').toUpperCase(),40,94);
   x.shadowBlur=0;
-  x.font='14px "Share Tech Mono",monospace';
-  x.fillStyle='rgba(240,192,96,.55)';x.fillText('PEAK MULTIPLE',LW+320,672);
-  // footer
-  x.fillStyle='rgba(148,163,172,.35)';
-  x.font='14px "Share Tech Mono",monospace';
-  x.fillText('GENERATED · '+pnlDate(Date.now()),LW+320,H-26);
+
+  // ── CENTER-LOW: ticker + giant multiplier (the shareable headline) ──
+  x.textAlign='center';
+  x.font='700 34px "Exo 2",sans-serif';
+  x.fillStyle='rgba(255,255,255,.92)';
+  x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=16;
+  x.fillText('$'+(c.symbol||'???').toUpperCase()+(c.name?'  ·  '+c.name.slice(0,22):''),W/2,H*0.60);
+
+  x.font='900 150px "Exo 2",sans-serif';
+  x.fillStyle=accent;
+  x.shadowColor=accent;x.shadowBlur=50;
+  x.fillText((winning?'+':'')+(peak>=1?peak.toFixed(1):((cur-1)*100).toFixed(0)+'%')+(peak>=1?'×':''),W/2,H*0.72);
+  x.shadowBlur=0;
+  x.font='700 22px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(255,255,255,.7)';
+  x.fillText('PEAK MULTIPLE',W/2,H*0.745);
+
+  // ── BOTTOM: MC entry/peak/now + called-on date, in a stat strip ──
+  x.textAlign='left';
+  const statY=H*0.85;
+  const stats=[
+    ['CALLED', pnlDate(c.ts)],
+    ['ENTRY MC', usd(entryMc)],
+    ['PEAK MC', usd(peakMc)],
+    ['NOW MC', usd(nowMc)],
+  ];
+  const colW=(W-80)/4;
+  stats.forEach((s,i)=>{
+    const sx=40+i*colW;
+    x.font='700 14px "Share Tech Mono",monospace';
+    x.fillStyle='rgba(255,255,255,.55)';
+    x.fillText(s[0],sx,statY);
+    x.font='800 24px "Share Tech Mono",monospace';
+    x.fillStyle=i===2?accent:'#ffffff';
+    x.fillText(s[1],sx,statY+32);
+  });
+
+  // Divider + footer branding — always present so a shared screenshot is self-explanatory
+  x.strokeStyle='rgba(255,255,255,.15)';x.lineWidth=1;
+  x.beginPath();x.moveTo(40,statY+56);x.lineTo(W-40,statY+56);x.stroke();
+
+  x.font='800 20px "Syncopate",sans-serif';
+  x.fillStyle='#ffffff';
+  x.fillText('ShaddaiAI',40,H-30);
   x.textAlign='right';
-  x.font='700 18px "Exo 2",sans-serif';
-  x.fillStyle='rgba(240,192,96,.7)';
-  x.fillText('ShaddaiAI',W-28,H-24);
+  x.font='14px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(255,255,255,.6)';
+  x.fillText('shaddai-g81x.onrender.com/pro-signals.html',W-40,H-30);
   x.restore();
+
   // show
   const spin=document.getElementById('pnlspin');
   _pnl.dataUrl=cv.toDataURL('image/png');
