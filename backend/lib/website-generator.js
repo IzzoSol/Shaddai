@@ -22,9 +22,20 @@ const STYLES = {
 };
 function styleOf(key) { return STYLES[key] || STYLES.minimal_dark; }
 
+// A hex colour from an agent record is the only value allowed to reach the stylesheet,
+// and only after it is proven to be exactly #rrggbb. Anything else falls back, so a
+// malformed or hostile colour can never break out of the CSS value into a style block.
+function safeHex(c, fallback) {
+  return /^#[0-9a-fA-F]{6}$/.test(String(c || '')) ? String(c) : fallback;
+}
+
 function renderWebsite(answers) {
   const a = answers || {};
-  const st = styleOf(a.style);
+  // The agent that built the site owns its look: their palette is the default and their
+  // accent colour themes it, unless the user explicitly picked a style themselves.
+  const agent = a.agent || null;
+  const st = { ...styleOf(a.style || (agent && agent.palette)) };
+  if (agent && agent.accent) st.accent = safeHex(agent.accent, st.accent);
   const siteName = esc(a.siteName || 'My Site');
   const tagline = esc(a.tagline || '');
   const about = esc(a.about || '');
@@ -53,6 +64,8 @@ function renderWebsite(answers) {
   .section { background: var(--panel); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
   footer { text-align:center; padding: 30px 20px; color: var(--muted); font-size: 14px; }
   .contact { color: var(--accent); text-decoration:none; }
+  .built-by { margin: 12px 0 0; font-size: 12px; opacity: 0.6; }
+  .section { border-left: 3px solid var(--accent); }
 </style>
 </head>
 <body>
@@ -66,6 +79,7 @@ function renderWebsite(answers) {
   </main>
   <footer>
     ${contact}
+    ${agent ? `<p class="built-by">${esc(agent.emoji || '')} Built by ${esc(agent.name)}</p>` : ''}
   </footer>
 </body>
 </html>`;

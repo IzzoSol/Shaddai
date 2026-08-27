@@ -65,15 +65,17 @@ describe('POST /api/quickstart/run/make-website', () => {
   });
 });
 
-describe('POST /api/quickstart/run/:id for a stub use case', () => {
-  test('returns a text placeholder without erroring', async () => {
+describe('POST /api/quickstart/run/:id for a text use case', () => {
+  test('reports honestly when no AI provider is connected', async () => {
+    // llm-client is absent in the test environment, so the runner must say so in plain
+    // language rather than pretending it produced something.
     const res = await request(buildApp())
       .post('/api/quickstart/run/write-social-post')
-      .send({ answers: { topic: 'test', platform: 'twitter', tone: 'fun' } });
-    expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
-    expect(res.body.outputType).toBe('text');
-    expect(typeof res.body.content).toBe('string');
+      .set('x-user-id', 'user-text')
+      .send({ answers: { topic: 'test', platform: 'X / Twitter', tone: 'fun' } });
+    expect(res.status).toBe(502);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toMatch(/provider|too long|went wrong/i);
   });
 });
 
