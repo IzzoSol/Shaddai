@@ -77,6 +77,49 @@
   --hdrgrd:linear-gradient(90deg,#dce6f4,#e6eef8);
   --card-border:rgba(30,60,160,0.14);
 }
+/* Ice theme readability guard: several elements hardcode a light/gold text
+   color tuned for the dark themes instead of using var(--text) — force those
+   back to dark text so nothing goes invisible-on-white. */
+[data-theme="ice"] body,[data-theme="ice"] .sc,[data-theme="ice"] .smeta,
+[data-theme="ice"] .newsrow,[data-theme="ice"] #fs-content,[data-theme="ice"] .window-content{color:#060d20;}
+[data-theme="ice"] .ssym,[data-theme="ice"] .newsrow>div:first-child{color:var(--P)!important;}
+
+[data-theme="synthwave2"] {
+  --bg0:#150a2e;--bg1:#1e0f3d;--bg2:#2a1550;--bg3:#361c63;--bg4:#442476;
+  --border:rgba(255,60,180,.2);--border2:rgba(255,60,180,.4);
+  --P:#ff3cb4;--P2:#ff7ad4;--P3:#c8208c;--S:#3cffc8;--A:#ff5050;--C:#3cd4ff;
+  --text:#fff0fa;--text2:#ffb0e4;--label:#ff8ad0;--muted:rgba(255,220,245,.7);
+  --cgrd:linear-gradient(135deg,rgba(255,60,180,.1),rgba(60,212,255,.04));
+  --ctop:linear-gradient(90deg,rgba(255,60,180,.2),transparent);
+  --gP:0 0 18px rgba(255,60,180,.5);--gS:0 0 14px rgba(60,255,200,.4);--gA:0 0 10px rgba(255,80,80,.4);
+  --bgrd:linear-gradient(90deg,#c8208c,#ff3cb4,#3cd4ff);
+  --hdrgrd:linear-gradient(90deg,#1e0f3d,#2a1550);
+  --card-border:rgba(255,60,180,0.2);
+}
+[data-theme="emerald"] {
+  --bg0:#031a12;--bg1:#052419;--bg2:#083222;--bg3:#0c422e;--bg4:#10533a;
+  --border:rgba(0,230,150,.2);--border2:rgba(0,230,150,.4);
+  --P:#00e696;--P2:#4dffbe;--P3:#00a86a;--S:#ffd23c;--A:#ff5a5a;--C:#3ce8ff;
+  --text:#e6fff5;--text2:#8affd4;--label:#4dd4a8;--muted:rgba(220,255,240,.7);
+  --cgrd:linear-gradient(135deg,rgba(0,230,150,.08),rgba(0,230,150,.02));
+  --ctop:linear-gradient(90deg,rgba(0,230,150,.2),transparent);
+  --gP:0 0 16px rgba(0,230,150,.5);--gS:0 0 12px rgba(255,210,60,.4);--gA:0 0 10px rgba(255,90,90,.4);
+  --bgrd:linear-gradient(90deg,#00a86a,#00e696,#4dffbe);
+  --hdrgrd:linear-gradient(90deg,#052419,#083222);
+  --card-border:rgba(0,230,150,0.2);
+}
+[data-theme="sunset"] {
+  --bg0:#1a0e08;--bg1:#26140c;--bg2:#341b10;--bg3:#442414;--bg4:#552e18;
+  --border:rgba(255,140,60,.22);--border2:rgba(255,140,60,.42);
+  --P:#ff8c3c;--P2:#ffb26a;--P3:#c85a14;--S:#ffe066;--A:#ff4560;--C:#ff6ab4;
+  --text:#fff0e0;--text2:#ffc89a;--label:#e8a060;--muted:rgba(255,230,210,.7);
+  --cgrd:linear-gradient(135deg,rgba(255,140,60,.1),rgba(255,60,150,.03));
+  --ctop:linear-gradient(90deg,rgba(255,140,60,.2),transparent);
+  --gP:0 0 18px rgba(255,140,60,.5);--gS:0 0 14px rgba(255,224,102,.4);--gA:0 0 10px rgba(255,69,96,.4);
+  --bgrd:linear-gradient(90deg,#c85a14,#ff8c3c,#ff6ab4);
+  --hdrgrd:linear-gradient(90deg,#26140c,#341b10);
+  --card-border:rgba(255,140,60,0.2);
+}
 [data-theme="synthwave"] {
   --bg0:#0d0221;--bg1:#1a034d;--bg2:#2d0a6d;--bg3:#3d1d7d;--bg4:#4d2d8d;
   --border:rgba(255,0,127,.15);--border2:rgba(255,0,127,.3);
@@ -2114,44 +2157,64 @@ function renderFS() {
   let html='';
 
   if(_fsTab==='finance'||_fsTab==='stocks') {
-    // TradingView's plain iframe embed — no injected <script> timing/currentScript
-    // dependency, guaranteed to render regardless of how the container was inserted.
-    const cfg = {
-      colorTheme:'dark', dateRange:'12M', showChart:true, locale:'en',
-      width:'100%', height:'100%', largeChartUrl:'', isTransparent:true,
-      showSymbolLogo:true, showFloatingTooltip:true,
-      tabs:[
-        { title:'Indices', symbols:[
-          { s:'FOREXCOM:SPXUSD', d:'S&P 500' }, { s:'FOREXCOM:NSXUSD', d:'Nasdaq 100' },
-          { s:'FOREXCOM:DJI', d:'Dow 30' }, { s:'INDEX:NKY', d:'Nikkei 225' }
-        ]},
-        { title:'Forex', symbols:[
-          { s:'FX:EURUSD', d:'EUR/USD' }, { s:'FX:GBPUSD', d:'GBP/USD' },
-          { s:'FX:USDJPY', d:'USD/JPY' }, { s:'FX:USDCAD', d:'USD/CAD' }
-        ]},
-        { title:'Commodities', symbols:[
-          { s:'TVC:GOLD', d:'Gold' }, { s:'TVC:SILVER', d:'Silver' },
-          { s:'TVC:USOIL', d:'Crude Oil' }, { s:'TVC:UKOIL', d:'Brent Oil' }
-        ]},
-        { title:'Bonds', symbols:[
-          { s:'TVC:US10Y', d:'US 10Y' }, { s:'TVC:US02Y', d:'US 2Y' },
-          { s:'TVC:DE10Y', d:'DE 10Y' }, { s:'TVC:JP10Y', d:'JP 10Y' }
-        ]}
-      ],
-      defaultColumn:'overview'
-    };
-    const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
-    fsc.innerHTML='<iframe src="'+src+'" style="width:100%;height:100%;border:0" loading="lazy" title="Market Overview"></iframe>';
+    // DIAGNOSTIC BANNER: proves renderFS actually ran and reached this branch,
+    // regardless of what happens to the iframe below. If a user reports a black
+    // screen and does NOT see this lime bar, the bug is upstream of renderFS
+    // (click handler / CSS visibility) not the TradingView embed.
+    const stamp = '<div style="background:#00ff41;color:#000;font-weight:800;font-size:11px;padding:6px 10px;text-align:center">LOADED '+_fsTab.toUpperCase()+' · '+new Date().toLocaleTimeString()+'</div>';
+    try {
+      const cfg = {
+        colorTheme:'dark', dateRange:'12M', showChart:true, locale:'en',
+        width:'100%', height:'100%', largeChartUrl:'', isTransparent:false,
+        showSymbolLogo:true, showFloatingTooltip:true,
+        tabs:[
+          { title:'Indices', symbols:[
+            { s:'FOREXCOM:SPXUSD', d:'S&P 500' }, { s:'FOREXCOM:NSXUSD', d:'Nasdaq 100' },
+            { s:'FOREXCOM:DJI', d:'Dow 30' }, { s:'INDEX:NKY', d:'Nikkei 225' }
+          ]},
+          { title:'Forex', symbols:[
+            { s:'FX:EURUSD', d:'EUR/USD' }, { s:'FX:GBPUSD', d:'GBP/USD' },
+            { s:'FX:USDJPY', d:'USD/JPY' }, { s:'FX:USDCAD', d:'USD/CAD' }
+          ]},
+          { title:'Commodities', symbols:[
+            { s:'TVC:GOLD', d:'Gold' }, { s:'TVC:SILVER', d:'Silver' },
+            { s:'TVC:USOIL', d:'Crude Oil' }, { s:'TVC:UKOIL', d:'Brent Oil' }
+          ]},
+          { title:'Bonds', symbols:[
+            { s:'TVC:US10Y', d:'US 10Y' }, { s:'TVC:US02Y', d:'US 2Y' },
+            { s:'TVC:DE10Y', d:'DE 10Y' }, { s:'TVC:JP10Y', d:'JP 10Y' }
+          ]}
+        ],
+        defaultColumn:'overview'
+      };
+      const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
+      fsc.innerHTML = stamp
+        + '<div id="fs-iframe-wrap" style="height:calc(100% - 30px);width:100%;position:relative">'
+        +   '<div id="fs-iframe-status" style="position:absolute;top:8px;left:8px;color:#f4c842;font-size:10px;font-family:monospace;z-index:2;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px">connecting to tradingview.com…</div>'
+        +   '<iframe id="fs-tv-iframe" src="'+src+'" style="width:100%;height:100%;border:0;position:relative;z-index:1" loading="eager" title="Market Overview" '
+        +     'onload="const s=document.getElementById(\'fs-iframe-status\');if(s)s.remove();" '
+        +     'onerror="const s=document.getElementById(\'fs-iframe-status\');if(s){s.textContent=\'IFRAME FAILED TO LOAD — likely blocked by an ad-blocker or browser privacy setting\';s.style.color=\'#ff3d5a\';}">'
+        +   '</iframe>'
+        + '</div>';
+      // If the iframe never fires onload within 6s (blocked, offline, etc.), surface it.
+      setTimeout(()=>{
+        const s=document.getElementById('fs-iframe-status');
+        if(s) s.textContent='STILL LOADING (6s+) — if this stays, your browser/network is blocking tradingview.com. Try disabling ad-blocker or a different network.';
+      },6000);
+    } catch(e) {
+      fsc.innerHTML = stamp + '<div style="padding:20px;color:#ff3d5a;font-family:monospace;font-size:12px">RENDER ERROR: '+esc(e.message)+'</div>';
+    }
     return;
   } else if(_fsTab==='news') {
-    fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">LOADING LIVE NEWS…</div>';
+    const stamp = '<div style="background:#00ff41;color:#000;font-weight:800;font-size:11px;padding:6px 10px;text-align:center">LOADED NEWS · '+new Date().toLocaleTimeString()+'</div>';
+    fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:var(--muted)">LOADING LIVE NEWS…</div>';
     fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
-      .then(r=>r.json())
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(j=>{
         let items = j.articles || j.results || [];
         if(searchVal) items = items.filter(n=>(n.title||'').toLowerCase().includes(searchVal));
-        if(!items.length){ fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">NO NEWS AVAILABLE RIGHT NOW</div>'; return; }
-        fsc.innerHTML = items.slice(0,40).map(n=>{
+        if(!items.length){ fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:var(--muted)">NO NEWS AVAILABLE RIGHT NOW</div>'; return; }
+        fsc.innerHTML = stamp + items.slice(0,40).map(n=>{
           const src = (n.source && n.source.name) || n.source || 'news';
           const when = n.publishedAt || n.published_at || '';
           return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
@@ -2161,7 +2224,7 @@ function renderFS() {
             '</div></a>';
         }).join('');
       })
-      .catch(()=>{ fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">NEWS FEED UNAVAILABLE — RETRY SHORTLY</div>'; });
+      .catch(e=>{ fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:#ff3d5a;font-family:monospace;font-size:11px">NEWS FEED ERROR: '+esc(e.message)+'</div>'; });
     return;
   }
 
@@ -2224,7 +2287,7 @@ function openWindow(id,title,x,y,w,h){
 function closeWindow(id){if(windows[id]){windows[id].close();delete windows[id]}}
 
 // THEME CYCLING (9 premium themes)
-const themes=['phosphor','neon-noir','blood','ice','synthwave','aurora','cyberpunk','matrix'];let _themeIdx=0;
+const themes=['phosphor','neon-noir','blood','ice','synthwave','aurora','cyberpunk','matrix','synthwave2','emerald','sunset'];let _themeIdx=0;
 function cycleTheme() {
   _themeIdx=(_themeIdx+1)%themes.length;
   document.documentElement.setAttribute('data-theme',themes[_themeIdx]);
