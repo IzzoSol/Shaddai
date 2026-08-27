@@ -728,7 +728,7 @@ const COMMITTED_KB={videos:126,chunks:2194,terms:24051,words:1062641,systems:['S
 const FREE_LIMIT=3;
 const IN_IFRAME=window.self!==window.top;
 
-function isPro(){const p=localStorage.getItem('shd_plan')||'';const a=localStorage.getItem('shd_signed_in');return!!(a&&(p==='pro'||p==='alpha'||p==='builder'));}
+function isPro(){const p=(localStorage.getItem('shd_plan')||'').toLowerCase();const a=localStorage.getItem('shd_signed_in');return!!(a&&p&&p!=='free');}
 function queriesLeft(){if(isPro())return Infinity;return Math.max(0,FREE_LIMIT-(parseInt(localStorage.getItem('shd_rag_queries')||'0',10)));}
 function bumpQuery(){if(!isPro()){const u=parseInt(localStorage.getItem('shd_rag_queries')||'0',10);localStorage.setItem('shd_rag_queries',u+1);}}
 function updateQueryBadge(){
