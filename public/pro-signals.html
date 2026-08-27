@@ -318,6 +318,36 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 /* ── SIGNALS LIST ─────────────────────────────────── */
 #slist{flex:1;overflow-y:auto;overflow-x:hidden;counter-reset:sn;}
+
+/* ── VIEW SWITCHER ─────────────────────────────────── */
+#vmrow{display:flex;gap:4px;padding:6px 12px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;}
+.vmb{padding:5px 10px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.5px;cursor:pointer;border-radius:4px;transition:all .15s;}
+.vmb:hover{border-color:var(--P);color:var(--P);}
+.vmb.on{background:var(--cgrd);border-color:var(--P);color:var(--P);font-weight:700;}
+
+/* ── BUBBLES VIEW ──────────────────────────────────── */
+.bubblewrap{display:flex;flex-wrap:wrap;gap:10px;padding:16px;align-content:flex-start;justify-content:center;}
+.bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;text-align:center;line-height:1.2;}
+.bubble:hover{transform:scale(1.12);z-index:2;}
+.bubble b{display:block;font-family:'Share Tech Mono',monospace;}
+.bubble span{display:block;font-family:'Share Tech Mono',monospace;font-weight:700;}
+
+/* ── HEATMAP VIEW ──────────────────────────────────── */
+.heatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:3px;padding:12px;}
+.heatcell{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;color:#000;font-family:'Share Tech Mono',monospace;}
+.heatcell:hover{transform:scale(1.06);z-index:2;box-shadow:0 4px 12px rgba(0,0,0,.5);}
+.heatcell span{font-size:8px;font-weight:700;opacity:.85;}
+.heatcell b{font-size:11px;}
+
+/* ── RANKED VIEW ───────────────────────────────────── */
+.rankwrap{display:flex;flex-direction:column;padding:8px 12px;}
+.rankrow{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;}
+.rankrow:hover{background:var(--cgrd);}
+.ranknum{width:28px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--label);flex-shrink:0;}
+.ranksym{width:70px;font-weight:700;font-size:11px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rankbar{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.rankbar-f{height:100%;border-radius:4px;transition:width .3s;}
+.rankmult{width:56px;text-align:right;font-family:'Share Tech Mono',monospace;font-weight:700;font-size:11px;flex-shrink:0;}
 .newsrow{transition:box-shadow .2s;}
 .newsrow:hover{box-shadow:0 8px 16px rgba(232,160,32,.2);}
 #slist::-webkit-scrollbar{width:2px;}
@@ -660,6 +690,12 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
           <div class="fg"><div class="fl">SORT</div><select class="fsel" id="fsrt" onchange="onFil('sort',this.value)"><option value="newest">Newest</option><option value="mult">Highest ×</option><option value="fdv">Entry FDV</option><option value="holders">Holders</option></select></div>
         </div>
       </div>
+      <div id="vmrow">
+        <button class="vmb on" onclick="setView('list',this)" title="List view">📋 LIST</button>
+        <button class="vmb" onclick="setView('bubbles',this)" title="Bubble size = entry FDV, color = performance">🫧 BUBBLES</button>
+        <button class="vmb" onclick="setView('heatmap',this)" title="Dense color grid — scan many calls at once">🔲 HEATMAP</button>
+        <button class="vmb" onclick="setView('ranked',this)" title="Ranked by peak multiplier">🏆 RANKED</button>
+      </div>
       <div id="slist"><div class="empty">CONNECTING TO ORACLE FEED…</div></div>
     </div>
 
@@ -993,6 +1029,14 @@ function initOsc(){
 /* INIT */
 function init(){
   tickClk();initOsc();reqNotif();
+  const savedView=localStorage.getItem('ot_view');
+  if(savedView&&savedView!=='list'){
+    _viewMode=savedView;
+    document.querySelectorAll('.vmb').forEach(b=>b.classList.remove('on'));
+    const idx=['list','bubbles','heatmap','ranked'].indexOf(savedView);
+    const btn=document.querySelectorAll('.vmb')[idx];
+    if(btn) btn.classList.add('on');
+  }
   fetchCalls();fetchStats();fetchPoly();
   setTimeout(checkMiro,2000);
   // New data feeds
@@ -1109,8 +1153,16 @@ function restoreFil(){
 /* RENDER SIGNALS */
 const SC={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee',pre_bonding:'#b07fff',pipeline:'#5fe0ff',helius:'#ff6f6f'};
 
-function renderSigs(){
-  const el=document.getElementById('slist');
+let _viewMode='list';
+function setView(mode,el){
+  _viewMode=mode;
+  document.querySelectorAll('.vmb').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  localStorage.setItem('ot_view',mode);
+  renderSigs();
+}
+
+function _getFilteredRows(){
   let rows=_calls.slice();
   if(_src!=='all'){
     if(_src==='pre_bond') rows=rows.filter(c=>(c.source||'').startsWith('pre_bond'));
@@ -1131,6 +1183,12 @@ function renderSigs(){
   else if(s==='fdv') rows.sort((a,b)=>(a.entryFdv||0)-(b.entryFdv||0));
   else if(s==='holders')rows.sort((a,b)=>(b.holders||0)-(a.holders||0));
   else rows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  return rows;
+}
+
+function renderSigs(){
+  const el=document.getElementById('slist');
+  const rows=_getFilteredRows();
   document.getElementById('scnt').textContent=rows.length;
   const hits=rows.filter(c=>(c.peakMult||0)>=2).length;
   document.getElementById('tbhr').innerHTML='rate <em>'+(rows.length?Math.round(hits/rows.length*100):0)+'%</em>';
@@ -1143,7 +1201,67 @@ function renderSigs(){
     }
     return;
   }
-  el.innerHTML=rows.slice(0,1500).map((c,i)=>card(c,i)).join('');
+  if(_viewMode==='bubbles') renderBubbles(el,rows);
+  else if(_viewMode==='heatmap') renderHeatmap(el,rows);
+  else if(_viewMode==='ranked') renderRanked(el,rows);
+  else el.innerHTML=rows.slice(0,1500).map((c,i)=>card(c,i)).join('');
+}
+
+// ── VISUAL VIEWS ──────────────────────────────────────────────────────
+// Same filtered/sorted `rows` as the list view — just three different ways
+// to scan the same data at a glance: bubbles (size=conviction, color=perf),
+// heatmap grid (dense color-coded squares, best for scanning many at once),
+// ranked bars (sorted leaderboard, best for "what's actually winning").
+function _perfColor(mult){
+  if(mult>=5) return '#00ff41';
+  if(mult>=2) return '#00ff9c';
+  if(mult>=1) return '#f4c842';
+  if(mult>=0.7) return '#ff8c3c';
+  return '#ff3d5a';
+}
+function renderBubbles(el,rows){
+  const list=rows.slice(0,80);
+  const maxFdv=Math.max(1,...list.map(c=>c.entryFdv||1));
+  el.innerHTML='<div class="bubblewrap">'+list.map(c=>{
+    const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+    const size=18+Math.round(Math.sqrt((c.entryFdv||1)/maxFdv)*70);
+    const col=_perfColor(peak>=2?peak:cur);
+    return '<div class="bubble" title="'+esc(c.symbol||'?')+' — '+usd(c.entryFdv)+' entry, peak '+peak.toFixed(1)+'×" '+
+      'style="width:'+size+'px;height:'+size+'px;background:radial-gradient(circle at 35% 30%,'+col+'55,'+col+'15);border:2px solid '+col+';font-size:'+Math.max(8,Math.round(size/5))+'px" '+
+      'onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      '<b style="color:'+col+'">'+esc((c.symbol||'?').slice(0,6))+'</b>'+
+      '<span style="color:'+col+'">'+(peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%'))+'</span>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function renderHeatmap(el,rows){
+  const list=rows.slice(0,150);
+  el.innerHTML='<div class="heatgrid">'+list.map(c=>{
+    const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+    const mult=peak>=2?peak:cur;
+    const col=_perfColor(mult);
+    const intensity=Math.min(1,Math.abs(mult-1)/4+.25);
+    return '<div class="heatcell" title="'+esc(c.symbol||'?')+' — peak '+peak.toFixed(1)+'×" '+
+      'style="background:'+col+';opacity:'+intensity.toFixed(2)+'" onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      '<span>'+esc((c.symbol||'?').slice(0,5))+'</span>'+
+      '<b>'+(peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%'))+'</b>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function renderRanked(el,rows){
+  const list=[...rows].sort((a,b)=>(b.peakMult||0)-(a.peakMult||0)).slice(0,60);
+  const maxMult=Math.max(1,...list.map(c=>c.peakMult||1));
+  el.innerHTML='<div class="rankwrap">'+list.map((c,i)=>{
+    const peak=c.peakMult||1;
+    const col=_perfColor(peak);
+    const w=Math.max(4,Math.round((peak/maxMult)*100));
+    return '<div class="rankrow" onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      '<span class="ranknum">#'+(i+1)+'</span>'+
+      '<span class="ranksym" style="color:'+col+'">'+esc(c.symbol||'?')+'</span>'+
+      '<div class="rankbar"><div class="rankbar-f" style="width:'+w+'%;background:'+col+'"></div></div>'+
+      '<span class="rankmult" style="color:'+col+'">'+peak.toFixed(1)+'×</span>'+
+    '</div>';
+  }).join('')+'</div>';
 }
 
 function card(c,i){
