@@ -613,10 +613,10 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <!-- LEFT -->
   <div class="left-col">
     <div id="ltabs">
-      <div class="ltab on"  onclick="openFullscreen('finance','💱 ALT',[])">💱 ALT</div>
-      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',[])">📊 STOCKS</div>
-      <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',[])">📰 NEWS</div>
-      <div class="ltab"     onclick="openMiroTab(this)">🐟 MIROFISH</div>
+      <div class="ltab on"  onclick="openWindow('alt-mkt','💱 ALT',80,70,720,520)">💱 ALT</div>
+      <div class="ltab"     onclick="openWindow('stocks-mkt','📊 STOCKS',80,70,720,520)">📊 STOCKS</div>
+      <div class="ltab"     onclick="openWindow('news-mkt','📰 NEWS',80,70,480,600)">📰 NEWS</div>
+      <div class="ltab"     onclick="openWindow('mirofish','🐟 MIROFISH',80,70,700,450)">🐟 MIROFISH</div>
     </div>
 
     <!-- signals -->
@@ -2313,7 +2313,56 @@ function loadMiroFish() {
 // Window content loaders
 function loadWindowContent(id) {
   const body=document.getElementById(id+'-body');
-  if(id==='analytics') {
+  if(id==='alt-mkt'||id==='stocks-mkt') {
+    try {
+      const cfg = {
+        colorTheme:'dark', dateRange:'12M', showChart:true, locale:'en',
+        width:'100%', height:'100%', largeChartUrl:'', isTransparent:false,
+        showSymbolLogo:true, showFloatingTooltip:true,
+        tabs:[
+          { title:'Indices', symbols:[
+            { s:'FOREXCOM:SPXUSD', d:'S&P 500' }, { s:'FOREXCOM:NSXUSD', d:'Nasdaq 100' },
+            { s:'FOREXCOM:DJI', d:'Dow 30' }, { s:'INDEX:NKY', d:'Nikkei 225' }
+          ]},
+          { title:'Forex', symbols:[
+            { s:'FX:EURUSD', d:'EUR/USD' }, { s:'FX:GBPUSD', d:'GBP/USD' },
+            { s:'FX:USDJPY', d:'USD/JPY' }, { s:'FX:USDCAD', d:'USD/CAD' }
+          ]},
+          { title:'Commodities', symbols:[
+            { s:'TVC:GOLD', d:'Gold' }, { s:'TVC:SILVER', d:'Silver' },
+            { s:'TVC:USOIL', d:'Crude Oil' }, { s:'TVC:UKOIL', d:'Brent Oil' }
+          ]},
+          { title:'Bonds', symbols:[
+            { s:'TVC:US10Y', d:'US 10Y' }, { s:'TVC:US02Y', d:'US 2Y' },
+            { s:'TVC:DE10Y', d:'DE 10Y' }, { s:'TVC:JP10Y', d:'JP 10Y' }
+          ]}
+        ],
+        defaultColumn:'overview'
+      };
+      const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
+      body.innerHTML='<iframe src="'+src+'" style="width:100%;height:100%;border:0" loading="eager" title="Market Overview"></iframe>';
+    } catch(e) {
+      body.innerHTML='<div style="padding:20px;color:#ff3d5a;font-family:monospace;font-size:11px">ERROR: '+esc(e.message)+'</div>';
+    }
+  } else if(id==='news-mkt') {
+    body.innerHTML='<div style="padding:16px;text-align:center;color:var(--text2)">LOADING LIVE NEWS…</div>';
+    fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(j=>{
+        const items=(j.articles||j.results||[]).slice(0,30);
+        if(!items.length){ body.innerHTML='<div style="padding:16px;text-align:center;color:var(--text2)">NO NEWS RIGHT NOW</div>'; return; }
+        body.innerHTML=items.map(n=>{
+          const src=(n.source&&n.source.name)||n.source||'news';
+          const when=n.publishedAt||n.published_at||'';
+          return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
+            '<div class="newsrow" style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:6px">'+
+              '<div style="color:var(--P);font-weight:700;font-size:10px">'+esc(n.title||'')+'</div>'+
+              '<div style="font-size:8px;color:var(--text2);margin-top:3px">'+esc(src)+' • '+esc(when)+'</div>'+
+            '</div></a>';
+        }).join('');
+      })
+      .catch(e=>{ body.innerHTML='<div style="padding:16px;text-align:center;color:#ff3d5a;font-size:10px">NEWS ERROR: '+esc(e.message)+'</div>'; });
+  } else if(id==='analytics') {
     body.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2);font-size:10px">LOADING QUALITY METRICS…</div>`;
     loadAnalytics();
   } else if(id==='dex-img') {
