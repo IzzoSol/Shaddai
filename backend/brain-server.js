@@ -168,58 +168,59 @@ function loadRagStats() {
   return out;
 }
 
-// Search one agent's knowledge: prefer the full corpus adapter (brain-index),
-// fall back to the populated per-agent RAG store (backend/data/rag/kb_*) — the
-// store that /api/mcp/status reports live on Render. Never dead-ends the council.
-// v2: carries timestamps + doc kind through every result shape. Corpus hits
-// (brain-index predates timestamps) are enriched from the per-agent rag store.
-function normTitle(t) { return String(t || '').toLowerCase().replace(/^(digest_|mastery_)/, '').replace(/\.txt$/, ''); }
+// Search one agent's knowledge by MERGING two indexes:
+//   • per-agent rag store (backend/data/rag/kb_*) — carries the digestion
+//     pipeline's DIGEST_/MASTERY_ docs with ≈timestamps + deep links
+//   • 95k-chunk corpus adapter (brain-index) — human-titled knowledge cards,
+//     no chunk timestamps (predates the pipeline), so none are invented
+// Digest hits get a score boost so ORGANIZED knowledge outranks raw walls.
+function normScores(arr) {
+  const m = Math.max(1e-9, ...arr.map(h => h.score || 0));
+  arr.forEach(h => { h.score = (h.score || 0) / m; });
+  return arr;
+}
 function searchChunks2(agent, q, k, opts) {
-  // metadata map for timestamp/kind enrichment (built once per call)
-  let docMeta = null;
-  const metaFor = title => {
-    if (!docMeta) {
-      docMeta = new Map();
-      try {
-        (ragIndex.listUserDocs('kb_' + agent.toLowerCase()) || []).forEach(d => docMeta.set(normTitle(d.name), d));
-      } catch (_) {}
-    }
-    return docMeta.get(normTitle(title)) || null;
-  };
+  const ns = kb(agent);
+  let ragHits = [];
   try {
-    const hits = brainIndex.searchChunks(kb(agent), q, k, opts);
-    if (hits && hits.length) return hits.map(h => {
-      const isDigest = /^DIGEST_|^MASTERY_/i.test(h.title || '');
-      const meta = metaFor(h.title);
-      const videoId = meta && meta.videoId;
-      const t0 = h.t0 != null ? h.t0 : (meta && meta.t0) || 0;
-      const t1 = h.t1 != null ? h.t1 : (meta && meta.t1) || ((meta && meta.durationSec) || 0);
-      return {
-        ...h,
-        kind: h.kind || (isDigest ? 'digest' : 'transcript'),
-        timeLabel: h.timeLabel || (h.t0 != null || meta ? ragIndex._internal.fmtTime(t0) + '–' + ragIndex._internal.fmtTime(t1) : undefined),
-        tsEstimate: h.tsEstimate != null ? h.tsEstimate : !!(meta && meta.tsMode === 'estimate'),
-        deepLink: h.deepLink || (videoId && h.t0 != null ? ragIndex._internal.deepLink(videoId, h.t0) : null),
-      };
-    });
-  } catch (_) {}
-  try {
-    return ragIndex.searchUser(kb(agent), q, Math.max(1, Math.min(k, 12))).map(h => ({
+    ragHits = (ragIndex.searchUser(ns, q, Math.max(4, Math.min(k, 12))) || []).map(h => ({
       agent,
       title: h.docName || '',
       score: h.score || 0,
       text: h.chunkText || '',
-      system: '',
-      topic: '',
-      channel: '',
+      system: '', topic: '', channel: '', words: 0,
       video_id: h.videoIdOf || h.docId || '',
-      words: 0,
       kind: /^DIGEST_|^MASTERY_/.test(h.docName || '') ? 'digest' : 'transcript',
       t0: h.t0, t1: h.t1,
-      timeLabel: h.timeLabel, tsEstimate: h.tsEstimate,
+      timeLabel: h.timeLabel || null, tsEstimate: !!h.tsEstimate,
       deepLink: h.deepLink || null,
     }));
-  } catch (_) { return []; }
+    normScores(ragHits);
+    ragHits.forEach(h => { h.score *= h.kind === 'digest' ? 1.35 : 1.05; });
+  } catch (_) {}
+  let corpusHits = [];
+  try {
+    corpusHits = (brainIndex.searchChunks(ns, q, k, opts) || []).map(h => ({
+      ...h,
+      kind: h.kind || 'corpus',
+      timeLabel: null, tsEstimate: false, deepLink: null,
+    }));
+    normScores(corpusHits);
+  } catch (_) {}
+  const seen = new Set();
+  const merged = [];
+  for (const h of [
+    ...ragHits.filter(x => x.kind === 'digest'),
+    ...corpusHits,
+    ...ragHits.filter(x => x.kind !== 'digest'),
+  ]) {
+    const key = String(h.text || '').slice(0, 60).toLowerCase() + '|' + String(h.title || '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(h);
+  }
+  merged.sort((a, b) => b.score - a.score);
+  return merged.slice(0, Math.max(k, 1));
 }
 
 function listUserDocs2(agent, opts) {
@@ -347,13 +348,15 @@ router.get('/digests', (req, res) => {
     const raw = JSON.parse(fs.readFileSync(file, 'utf8')).digests || [];
     const list = raw.map(d => ({
       name: d.name,
-      source: d.source,
+      source: d.source || d.name,
+      videoId: d.videoId || null,
+      url: d.url || null,
       title: d.title,
       thesis: String(d.thesis || '').slice(0, 240),
       chapters: (d.chapters || []).length,
       insights: (d.chapters || []).reduce((n, c) => n + ((c.insights || []).length), 0),
       quotes: (d.quotes || []).length,
-      runtimeLabel: d.runtimeLabel,
+      runtimeLabel: d.runtimeLabel || (d.durationSec ? ragIndex._internal.fmtTime(d.durationSec) : ''),
       tsMode: d.tsMode,
       generatedAt: d.generatedAt,
     }));

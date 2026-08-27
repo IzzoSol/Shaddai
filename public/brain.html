@@ -110,6 +110,39 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .rr-snip{font-size:10px;line-height:1.6;opacity:.55;margin-top:6px;letter-spacing:.2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .rr.open .rr-snip{-webkit-line-clamp:99}
 .rr.open{border-color:currentColor}
+/* ── DIGESTED / SYSTEM TABS ── */
+.kind-badge{font-size:7px;letter-spacing:2px;padding:2px 6px;border:1px solid;flex-shrink:0}
+.k-digest{color:#e8c45c;border-color:#e8c45c66;background:rgba(232,196,92,.07)}
+.k-corpus{color:#7fb3d5;border-color:#7fb3d544}
+.k-transcript{color:#9a9a9a;border-color:#9a9a9a33}
+.t-chip{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.5px;color:#e8c45c;background:rgba(232,196,92,.08);border:1px solid rgba(232,196,92,.25);padding:2px 7px;flex-shrink:0;text-decoration:none;cursor:pointer}
+.t-chip.est{color:#b9a46a;border-style:dashed;opacity:.85}
+.t-chip:hover{background:rgba(232,196,92,.18)}
+.dg-card{padding:12px 14px;border:1px solid rgba(255,255,255,.07);margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.dg-card:hover{border-color:rgba(232,196,92,.4)}
+.dg-title{font-size:11px;line-height:1.4;letter-spacing:.3px;color:#e8e0cc;margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.dg-thesis{font-size:10px;line-height:1.65;opacity:.6;letter-spacing:.2px}
+.dg-stats{font-size:8px;letter-spacing:1.5px;opacity:.35;margin-top:8px}
+.dg-chapter{border-left:2px solid rgba(232,196,92,.25);padding:10px 12px;margin-bottom:12px}
+.dg-ch-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.dg-ch-label{font-size:10px;letter-spacing:2px;color:#e8c45c;font-family:'Cinzel',serif}
+.dg-insight{font-size:10px;line-height:1.7;opacity:.75;margin-bottom:6px;padding-left:14px;position:relative}
+.dg-insight:before{content:'◆';position:absolute;left:0;top:0;font-size:7px;color:var(--g);opacity:.7}
+.dg-quote{font-style:italic;font-size:10px;line-height:1.7;opacity:.55;border-left:1px solid rgba(232,196,92,.3);padding:4px 12px;margin:8px 0}
+.rt-card{padding:12px 14px;border:1px solid rgba(255,255,255,.07);margin-bottom:10px}
+.rt-name{font-size:11px;letter-spacing:.5px;color:#e8e0cc;margin-bottom:4px}
+.rt-goal{font-size:8px;letter-spacing:1.5px;opacity:.4;margin-bottom:8px}
+.rt-step{font-size:10px;line-height:1.65;opacity:.68;margin-bottom:5px;padding-left:16px;position:relative}
+.rt-step:before{content:attr(data-n);position:absolute;left:0;top:1px;font-size:8px;color:var(--g);opacity:.8}
+.rt-src{font-size:8px;letter-spacing:1px;opacity:.45;margin-top:8px;color:#e8c45c}
+.tl-row{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border:1px solid rgba(255,255,255,.05);margin-bottom:8px;flex-wrap:wrap}
+.tl-name{font-size:11px;letter-spacing:.5px;flex-shrink:0}
+.tl-status{font-size:7px;letter-spacing:2px;padding:2px 7px;border:1px solid;flex-shrink:0}
+.st-active{color:#7fd67f;border-color:#7fd75544}
+.st-pilot{color:#e8c45c;border-color:#e8c45c55}
+.st-watchlist{color:#b9a46a;border-color:#b9a46a40;border-style:dashed}
+.st-sunset{color:#888;border-color:#88833333;text-decoration:line-through}
+.tl-what{font-size:9px;line-height:1.6;opacity:.55;flex-basis:100%}
 
 /* ── CHAT BAR ── */
 #chatbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:stretch;width:min(1180px,97vw);box-shadow:0 0 80px rgba(232,196,92,.08),0 4px 32px rgba(0,0,0,.6)}
@@ -465,9 +498,11 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   </div>
   <div id="ptabs">
     <button class="ptab on" data-tab="insights">INSIGHTS</button>
+    <button class="ptab" data-tab="digested">DIGESTED</button>
     <button class="ptab" data-tab="rag">RAG SEARCH</button>
     <button class="ptab" data-tab="summary">SUMMARY</button>
     <button class="ptab" data-tab="docs">KNOWLEDGE</button>
+    <button class="ptab" data-tab="system">SYSTEM</button>
   </div>
   <div id="pbody">
     <div id="tab-insights">
@@ -475,6 +510,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <div id="ins-list"></div>
       <div class="ins-title" style="margin-top:20px">// SIGNATURE TERMS</div>
       <div id="ins-terms"></div>
+    </div>
+    <div id="tab-digested" class="pad" style="display:none">
+      <div class="ins-title">// ORGANIZED KNOWLEDGE — DIGESTED, TIMESTAMPED</div>
+      <div id="dig-status"></div>
+      <div id="dig-list"></div>
+      <div id="dig-detail"></div>
     </div>
     <div id="tab-rag" class="pad" style="display:none">
       <div class="ins-title">// LIVE RAG SEARCH ACROSS THIS AGENT'S KNOWLEDGE</div>
@@ -495,6 +536,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
     <div id="tab-docs" class="pad" style="display:none">
       <div class="docs-hdr"><span>// ABSORBED SOURCES</span><span id="doc-count"></span></div>
       <div id="pdocs"></div>
+    </div>
+    <div id="tab-system" class="pad" style="display:none">
+      <div class="ins-title">// ROUTES OF USE — HOW THIS BRAIN APPLIES WHAT IT KNOWS</div>
+      <div id="rt-list"></div>
+      <div class="ins-title" style="margin-top:20px">// TOOLS LEDGER — WHAT THE EMPIRE RUNS ON</div>
+      <div id="tls-list"></div>
     </div>
   </div>
   <button id="pcls">✕</button>
@@ -1106,9 +1153,11 @@ document.querySelectorAll('.ptab').forEach(btn=>{
     document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
     btn.classList.add('on');
     document.getElementById('tab-insights').style.display=activeTab==='insights'?'block':'none';
+    document.getElementById('tab-digested').style.display=activeTab==='digested'?'block':'none';
     document.getElementById('tab-rag').style.display=activeTab==='rag'?'block':'none';
     document.getElementById('tab-summary').style.display=activeTab==='summary'?'block':'none';
     document.getElementById('tab-docs').style.display=activeTab==='docs'?'block':'none';
+    document.getElementById('tab-system').style.display=activeTab==='system'?'block':'none';
   };
 });
 
@@ -1135,6 +1184,8 @@ function openPanel(ci){
   renderDocs(ag);
   resetSummary(ag);
   resetRag(ag);
+  loadDigests(ag);
+  loadSystem(ag);
   panEl.classList.add('open');
   applyHL();
 }
@@ -1188,12 +1239,84 @@ function showTab(name){
   activeTab=name;
   document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
   document.getElementById('tab-insights').style.display=name==='insights'?'block':'none';
+  document.getElementById('tab-digested').style.display=name==='digested'?'block':'none';
   document.getElementById('tab-rag').style.display=name==='rag'?'block':'none';
   document.getElementById('tab-summary').style.display=name==='summary'?'block':'none';
   document.getElementById('tab-docs').style.display=name==='docs'?'block':'none';
+  document.getElementById('tab-system').style.display=name==='system'?'block':'none';
 }
 
 document.getElementById('pcls').onclick=()=>{panEl.classList.remove('open');openCluster=-1;};
+
+// ── DIGESTED TAB — organized knowledge from the digestion pipeline ──
+const digStatus=document.getElementById('dig-status');
+const digList=document.getElementById('dig-list');
+const digDetail=document.getElementById('dig-detail');
+const fmtT=s=>{s=Math.max(0,Math.floor(Number(s)||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`;};
+async function loadDigests(ag){
+  digStatus.textContent='loading digestion...';digList.innerHTML='';digDetail.innerHTML='';
+  try{
+    const r=await fetch(`/api/digests?agent=${ag.id}`);
+    const d=await r.json();
+    if(!d.digests||!d.digests.length){digStatus.textContent='// no digests yet — run: node backend/digest-brain.js';return;}
+    digStatus.textContent=`// ${d.count} sources digested into organized knowledge`;
+    d.digests.forEach(g=>{
+      const c=document.createElement('div');c.className='dg-card';
+      c.innerHTML=`<div class="dg-title"><span>${(g.title||g.source).replace(/^MASTERY CARD — /,'')}</span><span style="font-size:8px;letter-spacing:1px;opacity:.5">${g.runtimeLabel||''}</span></div>
+        <div class="dg-thesis">${g.thesis||''}</div>
+        <div class="dg-stats">${g.chapters} CHAPTERS · ${g.insights} INSIGHTS · ${g.quotes} QUOTES · TS:${g.tsMode==='estimate'?'≈EST':'EXACT'}</div>`;
+      c.onclick=()=>openDigest(ag,g.name);
+      digList.appendChild(c);
+    });
+  }catch(e){digStatus.textContent='// digestion offline';}
+}
+async function openDigest(ag,name){
+  digDetail.innerHTML='<div class="ins-title" style="margin-top:16px">// OPENING DIGEST...</div>';
+  try{
+    const d=await (await fetch(`/api/digest?agent=${ag.id}&name=${encodeURIComponent(name)}`)).json();
+    let html=`<div class="ins-title" style="margin-top:16px">// ${(d.title||d.source)} — FULL DIGEST ${d.runtimeLabel?'· RUNTIME '+d.runtimeLabel:''}</div>`;
+    html+=`<div class="dg-thesis" style="margin-bottom:14px">${d.thesis||''}</div>`;
+    (d.chapters||[]).forEach(ch=>{
+      html+=`<div class="dg-chapter"><div class="dg-ch-head"><span class="t-chip${ch.tsMode==='estimate'?' est':''}" title="${ch.tsMode==='estimate'?'estimated timestamps':'exact timestamps'}">≈${fmtT(ch.t0)}–${fmtT(ch.t1)}</span><span class="dg-ch-label">CH ${String(ch.idx).padStart(2,'0')} · ${ch.label}</span></div>`;
+      (ch.insights||[]).forEach(i=>{html+=`<div class="dg-insight">${i}</div>`;});
+      (ch.quotes||[]).forEach(q=>{html+=`<div class="dg-quote">“${q.text}” <span style="opacity:.5;font-style:normal">— ≈${fmtT(q.at)}</span></div>`;});
+      html+='</div>';
+    });
+    if(d.nextSteps&&d.nextSteps.length)html+=`<div class="ins-title">// APPLY IT</div>`+d.nextSteps.map(s=>`<div class="dg-insight">${s}</div>`).join('');
+    digDetail.innerHTML=html;
+    digDetail.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){digDetail.innerHTML='<div class="ins-text" style="opacity:.4">// digest unavailable</div>';}
+}
+
+// ── SYSTEM TAB — routes of use + tools ledger ──
+async function loadSystem(ag){
+  const rt=document.getElementById('rt-list'),tls=document.getElementById('tls-list');
+  rt.innerHTML='<div class="ins-text" style="opacity:.4">loading...</div>';tls.innerHTML='';
+  try{
+    const d=await (await fetch(`/api/routes?agent=${ag.id}`)).json();
+    rt.innerHTML='';
+    (d.routes||[]).forEach(r=>{
+      const c=document.createElement('div');c.className='rt-card';
+      const steps=(r.playbook||[]).map((s,i)=>`<div class="rt-step" data-n="${i+1}.">${s}</div>`).join('');
+      const src=(r.sources||[]).length?`<div class="rt-src">GROUNDED IN: ${r.sources.join(' · ')}</div>`:'';
+      const amp=(r.amplify||[]).length?`<div class="rt-src">AMPLIFY WITH: ${r.amplify.join(' · ')}</div>`:'';
+      c.innerHTML=`<div class="rt-name">${r.title}</div><div class="rt-goal">MATCHES: ${(r.match||[]).slice(0,6).join(', ')}</div>${steps}${src}${amp}`;
+      rt.appendChild(c);
+    });
+    if(!(d.routes||[]).length)rt.innerHTML='<div class="ins-text" style="opacity:.4">// no routes defined</div>';
+  }catch(e){rt.innerHTML='<div class="ins-text" style="opacity:.4">// routes unavailable</div>';}
+  try{
+    const t=await (await fetch('/api/tools')).json();
+    tls.innerHTML='';
+    (t.tools||[]).forEach(x=>{
+      const row=document.createElement('div');row.className='tl-row';
+      const mine=(x.agents||[]).includes('ALL')||(x.agents||[]).includes(ag.id);
+      row.style.opacity=mine?'1':'.45';
+      row.innerHTML=`<span class="tl-name">${x.name}</span><span class="tl-status st-${x.status}">${String(x.status).toUpperCase()}</span><span style="font-size:8px;letter-spacing:1px;opacity:.4">${(x.agents||[]).join('/')}</span><div class="tl-what">${x.what||''}</div>`;
+      tls.appendChild(row);
+    });
+  }catch(e){tls.innerHTML='<div class="ins-text" style="opacity:.4">// ledger unavailable</div>';}
+}
 
 // ── RAG SEARCH (panel) ──
 const tsrchIn=document.getElementById('tsrch-in');
@@ -1212,17 +1335,8 @@ async function ragSearch(q){
   try{
     const data=await perAgentSearch(q,ag.id,6);
     if(!data.results.length){tsrchStatus.textContent='// no matches in this brain';tsrchGo.disabled=false;return;}
-    tsrchStatus.textContent=`// ${data.results.length} hits${data.ms?` · ${data.ms}ms`:''}${serverOnline?'':' · CLOUD'}`;
-    data.results.forEach(r=>{
-      const div=document.createElement('div');div.className='rr';div.style.color=ag.color;
-      div.innerHTML=`
-        <div class="rr-top"><span class="rr-title">${fmtDoc(r.title)}</span><span class="rr-score">${(r.score*100).toFixed(0)}%</span></div>
-        <div class="rr-meta">${r.system||''} · ${r.topic||''} · ${r.channel||''}</div>
-        <div class="rr-snip">${r.text||''}</div>
-        <div class="rr-meta" style="margin-top:4px">${r.video_id}${serverOnline?` · <a href="https://www.youtube.com/watch?v=${r.video_id}" target="_blank" style="color:${ag.color}">watch ↗</a>`:''}</div>`;
-      div.onclick=()=>div.classList.toggle('open');
-      tsrchRes.appendChild(div);
-    });
+    renderRagResults(data.results);
+    if(data.ms)tsrchStatus.textContent=`// ${data.results.length} hits · ${data.ms}ms${serverOnline?'':' · CLOUD'}`;
   }catch(e){
     tsrchStatus.textContent='// brain server offline';
   }
@@ -1232,13 +1346,13 @@ async function ragSearch(q){
 async function perAgentSearch(q,agId,k){
   if(serverOnline){
     const d=await fetch(`${API}/api/search?q=${encodeURIComponent(q)}&agent=${agId}&k=${k||6}`,{signal:AbortSignal.timeout(30000)}).then(r=>r.json());
-    return {results:(d.results||[]).map(r=>({title:r.title,score:r.score,text:r.text,system:r.system||'',topic:r.topic||'',channel:r.channel||'',video_id:r.video_id||''})),ms:d.ms||0};
+    return {results:(d.results||[]).map(r=>({title:r.title,score:r.score,text:r.text,system:r.system||'',topic:r.topic||'',channel:r.channel||'',video_id:r.video_id||'',kind:r.kind||'corpus',t0:r.t0!=null?r.t0:null,t1:r.t1!=null?r.t1:null,timeLabel:r.timeLabel||null,tsEstimate:!!r.tsEstimate,deepLink:r.deepLink||null})),ms:d.ms||0};
   }
   const d=await fetch(`${RENDER_API}/api/mcp/search`,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({q,agent:agId,topK:k||6}),signal:AbortSignal.timeout(30000)}).then(r=>r.json());
   const a=(d.results||[])[0];
-  return {results:(a&&a.results||[]).map(h=>({title:h.source,score:h.score,text:h.chunk,system:'',topic:'',channel:'',video_id:''})),ms:0};
+  return {results:(a&&a.results||[]).map(h=>({title:h.source,score:h.score,text:h.chunk,system:'',topic:'',channel:'',video_id:'',kind:h.kind||'transcript',t0:null,t1:null,timeLabel:h.timeLabel||null,tsEstimate:!!h.tsEstimate,deepLink:h.deepLink||null})),ms:0};
 }
 
 async function cloudCouncil(q){
@@ -1381,11 +1495,17 @@ function renderRagResults(results){
   tsrchStatus.textContent=`// ${results.length} hits`;
   results.forEach(r=>{
     const div=document.createElement('div');div.className='rr';div.style.color=ag.color;
+    const kind=(r.kind||'transcript').toUpperCase();
+    const kcls=kind==='DIGEST'?'k-digest':(kind==='CORPUS'?'k-corpus':'k-transcript');
+    const chip=r.timeLabel?`<span class="t-chip${r.tsEstimate?' est':''}" title="${r.tsEstimate?'timestamps estimated from runtime — verify before citing':'exact timestamps'}">${r.tsEstimate?'≈':''}${r.timeLabel}</span>`:'';
+    const t0=r.t0!=null?r.t0:null;
+    let link='';
+    if(r.deepLink)link=`<a href="${r.deepLink}" target="_blank" style="color:${ag.color}">watch @ ${r.timeLabel||''} ↗</a>`;
+    else if(r.video_id&&/^[A-Za-z0-9_-]{11}$/.test(r.video_id))link=`<a href="https://www.youtube.com/watch?v=${r.video_id}${t0!=null?'&t='+Math.floor(t0)+'s':''}" target="_blank" style="color:${ag.color}">watch ↗</a>`;
     div.innerHTML=`
-      <div class="rr-top"><span class="rr-title">${fmtDoc(r.title)}</span><span class="rr-score">${(r.score*100).toFixed(0)}%</span></div>
-      <div class="rr-meta">${r.system||''} · ${r.topic||''} · ${r.channel||''}</div>
+      <div class="rr-top"><span class="kind-badge ${kcls}">${kind}</span><span class="rr-title">${fmtDoc(r.title)}</span>${chip}<span class="rr-score">${Math.min(100,Math.round((r.score<=1.5?r.score/1.5:r.score)*100))}%</span></div>
       <div class="rr-snip">${r.text||''}</div>
-      <div class="rr-meta" style="margin-top:4px">${r.video_id}${serverOnline?` · <a href="https://www.youtube.com/watch?v=${r.video_id}" target="_blank" style="color:${ag.color}">watch ↗</a>`:''}</div>`;
+      <div class="rr-meta" style="margin-top:4px">${r.video_id||''}${link?' · '+link:''}</div>`;
     div.onclick=()=>div.classList.toggle('open');
     tsrchRes.appendChild(div);
   });
