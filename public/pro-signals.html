@@ -639,7 +639,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
         <div id="fr2">
           <div class="fg"><div class="fl">MIN MULT <span class="fv" id="fvM">0×</span></div><input type="range" class="frng" id="fmult" min="0" max="10" step=".5" value="0" oninput="onFil('mult',this.value)"></div>
           <div class="fg"><div class="fl">MAX ENTRY FDV</div><select class="fsel" id="ffdv" onchange="onFil('fdv',this.value)"><option value="0">Any</option><option value="5000">Under $5K</option><option value="10000">Under $10K</option><option value="25000">Under $25K</option><option value="50000">Under $50K</option><option value="100000">Under $100K</option></select></div>
-          <div class="fg"><div class="fl">AGE</div><select class="fsel" id="fage" onchange="onFil('age',this.value)"><option value="0">Any</option><option value="3600000">1H</option><option value="86400000">24H</option><option value="604800000">7D</option></select></div>
+          <div class="fg"><div class="fl">AGE</div><select class="fsel" id="fage" onchange="onFil('age',this.value)"><option value="0">Any</option><option value="3600000">1H</option><option value="86400000" selected>24H</option><option value="604800000">7D</option></select></div>
           <div class="fg"><div class="fl">STATUS</div><select class="fsel" id="fst" onchange="onFil('status',this.value)"><option value="all">All</option><option value="active">Active</option><option value="2x">2×+</option><option value="5x">5×+</option><option value="10x">10×+</option></select></div>
           <div class="fg"><div class="fl">SORT</div><select class="fsel" id="fsrt" onchange="onFil('sort',this.value)"><option value="newest">Newest</option><option value="mult">Highest ×</option><option value="fdv">Entry FDV</option><option value="holders">Holders</option></select></div>
         </div>
@@ -953,6 +953,7 @@ function setTheme(t){
 let _calls=[],_period='week',_src='all';
 const _img={};
 const _F=JSON.parse(localStorage.getItem('ot_fil')||'{}');
+if(_F.age==null) _F.age=86400000; // default: only show calls from the last 24h — no stale calls sitting in the feed by default
 let _alerts=JSON.parse(localStorage.getItem('ot_al')||'[]');
 let _notif=Notification.permission==='granted';
 let _mktLoaded=false;
