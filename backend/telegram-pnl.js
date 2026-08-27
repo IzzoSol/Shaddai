@@ -61,6 +61,84 @@ function _write(o) { try { const d = path.dirname(FILE); if (!fs.existsSync(d)) 
 
 let _state = _read();
 
+// Calculate comprehensive risk score (0-100, higher = riskier)
+function _calcRiskScore(c) {
+  let risk = 30;  // baseline
+
+  // Top 10 concentration penalty
+  const top10 = Number(c.top10Pct) || 0;
+  if (top10 > 50) risk += 25;
+  else if (top10 > 40) risk += 15;
+  else if (top10 > 30) risk += 8;
+
+  // Insider/sniper presence
+  if (c.insiders > 0) risk += (Math.min(c.insiders, 5) * 3);
+  if (c.snipers) risk += 12;
+  if (c.bundlers) risk += 10;
+
+  // LP lock status (good indicator)
+  const lpPct = Number(c.lpPct) || 0;
+  if (lpPct < 50) risk += 20;
+  else if (lpPct < 70) risk += 8;
+  else if (lpPct >= 90) risk -= 10;  // heavily locked = safer
+
+  // Liquidity ratio
+  const fdv = Number(c.entryFdv) || 1;
+  const liqRatio = fdv > 0 ? ((Number(c.liq) || 0) / fdv) * 100 : 0;
+  if (liqRatio < 1) risk += 15;
+  else if (liqRatio < 2) risk += 8;
+  else if (liqRatio > 15) risk -= 5;  // good liquidity
+
+  // Volume metrics
+  const vol24 = Number(c.vol24) || 0;
+  const vol1h = Number(c.vol1h) || 0;
+  if (vol24 < 10000) risk += 10;  // low volume
+  if (vol1h > 0 && vol24 > 0 && (vol1h / vol24) > 0.3) risk -= 5;  // good volume acceleration
+
+  // Holder count indicator
+  const holders = Number(c.holders) || 0;
+  if (holders < 100) risk += 12;
+  else if (holders < 500) risk += 6;
+  else if (holders > 5000) risk -= 5;
+
+  // Cap at 0-100 range
+  return Math.max(0, Math.min(100, risk));
+}
+
+// Calculate viability score (0-100, higher = better quality signal)
+function _calcViabilityScore(c) {
+  let score = 50;
+
+  // Source reputation boost
+  const srcBonus = { trending: 5, bonded: 10, boosted: 3, helius: 4, gecko: 2, pipeline: 6 };
+  score += (srcBonus[c.source] || 0);
+
+  // LP locked bonus (strong indicator)
+  const lpPct = Number(c.lpPct) || 0;
+  if (lpPct >= 90) score += 15;
+  else if (lpPct >= 70) score += 8;
+
+  // Liquidity quality
+  const fdv = Number(c.entryFdv) || 1;
+  const liqRatio = fdv > 0 ? ((Number(c.liq) || 0) / fdv) * 100 : 0;
+  if (liqRatio >= 10) score += 12;
+  else if (liqRatio >= 3) score += 6;
+
+  // Holder diversity
+  const holders = Number(c.holders) || 0;
+  if (holders >= 5000) score += 10;
+  else if (holders >= 1000) score += 6;
+  else if (holders >= 500) score += 3;
+
+  // Volume momentum
+  const vol24 = Number(c.vol24) || 0;
+  if (vol24 >= 100000) score += 8;
+  else if (vol24 >= 50000) score += 4;
+
+  // Cap at 0-100
+  return Math.max(0, Math.min(100, score));
+}
+
 // Log a fresh call (dedupe: one active entry per mint).
 function recordCall(c) {
   try {
@@ -69,17 +147,42 @@ function recordCall(c) {
     const entry = Number(c && (c.entryFdv || c.entryMcap)) || 0;
     if (!mint || entry <= 0) return;                       // need a mint + a starting mcap to compute Xs
     if (_state.calls.some(x => x.mint === mint && !x.closed)) return;   // already tracking
-    _state.calls.push({
+
+    // Calculate risk and viability scores
+    const riskScore = _calcRiskScore(c);
+    const viabilityScore = _calcViabilityScore(c);
+
+    // Calculate key ratios
+    const fdv = Number(c.entryFdv) || 1;
+    const liq = Number(c.liq) || 0;
+    const holders = Number(c.holders) || 0;
+    const vol24 = Number(c.vol24) || 0;
+
+    const callRecord = {
       mint, chain: (c.chain || '').toLowerCase(), name: c.name || '', symbol: c.symbol || '',
       source: c.source || '', entryFdv: entry, entryPrice: Number(c.entryPrice) || 0,
-      holders: Number(c.holders) || 0,
-      liq: Number(c.liq) || 0,
-      vol1h: Number(c.vol1h) || 0,
-      vol24: Number(c.vol24) || 0,
+      // Risk metrics
+      riskScore, viabilityScore,
+      // On-chain metrics
+      holders, liq, vol1h: Number(c.vol1h) || 0, vol24,
+      top10Pct: Number(c.top10Pct) || 0,
+      lpPct: Number(c.lpPct) || 0,
+      insiders: Number(c.insiders) || 0,
+      bundlers: !!c.bundlers,
+      snipers: !!c.snipers,
+      rugScore: Number(c.rugScore) || 0,
+      // Calculated ratios
+      liqRatio: fdv > 0 ? ((liq / fdv) * 100).toFixed(2) : 0,
+      holderDensity: holders > 0 ? (fdv / holders).toFixed(0) : 0,
+      vol24Ratio: vol24 > 0 ? ((vol24 / fdv) * 100).toFixed(2) : 0,
+      // Tracking
       ts: _now, peakMult: 1, curMult: 1, curFdv: entry, milestones: [], closed: false,
-    });
+    };
+
+    _state.calls.push(callRecord);
     if (_state.calls.length > 5000) _state.calls = _state.calls.slice(-5000);
     _write(_state);
+
     // Also log to token-db for ZEROX learning (bridge the two databases)
     try { require('./token-db').recordOutcome(c); } catch (e) { console.warn('[pnl] token-db recordOutcome error:', e.message); }
   } catch (e) { console.warn('[pnl] recordCall error:', e.message); }
@@ -630,4 +733,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages };
+module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages, _calcRiskScore, _calcViabilityScore };

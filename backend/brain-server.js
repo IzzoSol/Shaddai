@@ -60,6 +60,56 @@ function getLLM() {
   return _llm.get;
 }
 
+// ── free/pro quota gate (server-side — the client-side counter in brain.html is
+// UX only and trivially bypassable by calling /api/ask directly or clearing
+// localStorage). Pro/Alpha/Builder tier = unlimited; everyone else gets
+// FREE_ASK_LIMIT grounded queries per day. Mirrors brain.html's FREE_LIMIT=3.
+// In-memory (matches auth-guard.js's rateLimit pattern) — resets on restart,
+// which is fine for a soft daily cap; swap for Firestore if it needs to survive
+// restarts before this goes to real paid enforcement.
+const FREE_ASK_LIMIT = 3;
+const _freeAskUsage = new Map(); // "userId:YYYY-MM-DD" -> count
+let _billing = null, _billingTried = false;
+function getBilling() {
+  if (_billingTried) return _billing;
+  _billingTried = true;
+  try { _billing = require('./billing-service'); } catch (_) { _billing = null; }
+  return _billing;
+}
+function isProUser(userId) {
+  if (!userId || userId === 'local' || userId === 'anon') return false;
+  const billing = getBilling();
+  if (!billing) return false;
+  try {
+    const customer = billing.getCustomer(userId);
+    // Canonical tiers live in billing-service.js's TIER_CONFIG: free/pro/elite.
+    // (brain.html's client-side counter checks a stale pro/alpha/builder set
+    // from an older pricing scheme — that's UI-only cosmetics, not authoritative;
+    // this is the real gate, so it must match TIER_CONFIG.)
+    return !!(customer && customer.tier && customer.tier !== 'free');
+  } catch (_) { return false; }
+}
+function checkFreeQuota(req, res) {
+  const isProd = process.env.NODE_ENV === 'production';
+  const uid = (isProd ? '' : (req.headers['x-user-id'] || '')) ||
+    (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || 'anon';
+  if (isProUser(uid)) return true;
+  const day = new Date().toISOString().slice(0, 10);
+  const key = uid + ':' + day;
+  const count = _freeAskUsage.get(key) || 0;
+  if (count >= FREE_ASK_LIMIT) {
+    res.status(402).json({
+      error: 'free query limit reached',
+      limit: FREE_ASK_LIMIT,
+      message: `Free tier gets ${FREE_ASK_LIMIT} grounded queries/day. Upgrade to Pro for unlimited.`,
+      upgrade: '/pricing.html',
+    });
+    return false;
+  }
+  _freeAskUsage.set(key, count + 1);
+  return true;
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 function kb(agent) { return 'kb_' + String(agent || '').toLowerCase(); }
 
@@ -391,6 +441,7 @@ router.get('/summary', async (req, res) => {
 
 // ── council ──────────────────────────────────────────────────────────────────
 router.get('/council', async (req, res) => {
+  if (!checkFreeQuota(req, res)) return;
   const q = String(req.query.q || '').trim();
   const k = Math.max(1, Math.min(parseInt(req.query.k, 10) || 3, 10));
   if (!q) return res.json({ agents: [], ms: 0 });
@@ -417,6 +468,7 @@ router.get('/council', async (req, res) => {
 
 // ── ask (single agent, LLM-grounded) ────────────────────────────────────────
 router.get('/ask', async (req, res) => {
+  if (!checkFreeQuota(req, res)) return;
   const q = String(req.query.q || '').trim();
   const agent = String(req.query.agent || 'SHADDAI').trim().toUpperCase();
   const k = Math.max(1, Math.min(parseInt(req.query.k, 10) || 6, 15));
@@ -455,6 +507,7 @@ router.get('/ask', async (req, res) => {
 
 // ── synthesize (all 7 agents, LLM-grounded per agent) ───────────────────────
 router.get('/synthesize', async (req, res) => {
+  if (!checkFreeQuota(req, res)) return;
   const q = String(req.query.q || '').trim();
   if (!q) return res.status(400).json({ error: 'missing q' });
 
@@ -484,6 +537,7 @@ router.get('/synthesize', async (req, res) => {
 
 // ── crosstalk ───────────────────────────────────────────────────────────────
 router.get('/crosstalk', (req, res) => {
+  if (!checkFreeQuota(req, res)) return;
   const q = String(req.query.q || '').trim();
   if (!q) return res.json({ thread: [], ms: 0, agents_with_signal: 0 });
 

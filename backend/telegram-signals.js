@@ -48,54 +48,135 @@ let _bondSeeded = false;          // first bonded poll only SEEDS (no dump of ex
 let _trendSeeded = false;         // first trending poll only SEEDS (prevents re-post spree on restart)
 const _SEEN_CAP = 4000;
 
+// ── PRE-POSTING CALL VALIDATOR ─────────────────────────────────────────────
+// Comprehensive validation before signal is posted. Returns { pass, reason, riskScore, viabilityScore }
+function _validateCall(callData, cfg) {
+  const reasons = [];
+  let riskOk = true;
+
+  // Must have minimum data
+  if (!callData.mint || !callData.entryFdv || callData.entryFdv <= 0) {
+    return { pass: false, reason: 'insufficient_data', data: {} };
+  }
+
+  // FDV gates
+  if (callData.entryFdv < (cfg.minFdv || 0)) {
+    reasons.push(`FDV ${callData.entryFdv} below min ${cfg.minFdv}`);
+  }
+  if (callData.entryFdv > HARD_FDV_CAP_MAX) {
+    reasons.push(`FDV ${callData.entryFdv} exceeds hard cap ${HARD_FDV_CAP_MAX}`);
+  }
+
+  // Rug score minimum
+  if (callData.rugScore != null && callData.rugScore < RUG_MIN_SCORE) {
+    reasons.push(`Rug score ${callData.rugScore} below ${RUG_MIN_SCORE}`);
+  }
+
+  // Top 10 concentration
+  const top10 = callData.top10Pct || 0;
+  if (cfg.maxTop10Pct && top10 > cfg.maxTop10Pct) {
+    reasons.push(`Top 10 ${top10}% exceeds max ${cfg.maxTop10Pct}%`);
+  }
+
+  // Holder requirements
+  const holders = callData.holders || 0;
+  if (cfg.minHolders && holders < cfg.minHolders) {
+    reasons.push(`${holders} holders below min ${cfg.minHolders}`);
+  }
+
+  // LP lock requirement
+  const lpPct = callData.lpPct || 0;
+  if (cfg.requireLocked && lpPct < 80) {
+    reasons.push(`LP only ${lpPct}% locked, need 80%+`);
+  }
+
+  // Liquidity ratio
+  const liqRatio = callData.liq > 0 && callData.entryFdv > 0 ? (callData.liq / callData.entryFdv * 100) : 0;
+  if (cfg.minLiqRatio && liqRatio < cfg.minLiqRatio) {
+    reasons.push(`Liq ratio ${liqRatio.toFixed(1)}% below ${cfg.minLiqRatio}%`);
+  }
+
+  // Insider/sniper/bundler checks
+  if (cfg.rejectInsiders && callData.insiders > 0) {
+    reasons.push(`${callData.insiders} insiders detected`);
+  }
+  if (cfg.rejectSnipers && callData.snipers) {
+    reasons.push(`Snipers detected`);
+  }
+  if (cfg.rejectBundlers && callData.bundlers) {
+    reasons.push(`Bundlers detected`);
+  }
+
+  // Age gate
+  if (callData.ts && !_passesAgeGate(callData.ts)) {
+    reasons.push(`Token too fresh: ${(Date.now() - callData.ts) / 1000}s old`);
+  }
+
+  // Calculate scores
+  const pnl = require('./telegram-pnl');
+  const riskScore = pnl._calcRiskScore ? pnl._calcRiskScore(callData) : 50;
+  const viabilityScore = pnl._calcViabilityScore ? pnl._calcViabilityScore(callData) : 50;
+
+  // Risk score gate
+  if (cfg.maxRiskScore && riskScore > cfg.maxRiskScore) {
+    reasons.push(`Risk score ${riskScore} exceeds max ${cfg.maxRiskScore}`);
+  }
+
+  const pass = reasons.length === 0;
+
+  return {
+    pass,
+    reason: pass ? 'approved' : reasons[0],
+    reasons,
+    riskScore,
+    viabilityScore,
+    metrics: {
+      fdv: callData.entryFdv,
+      holders,
+      lpPct,
+      liqRatio: liqRatio.toFixed(2),
+      top10Pct: top10,
+      rugScore: callData.rugScore || 'unchecked',
+      insiders: callData.insiders || 0,
+      bundlers: callData.bundlers || false,
+      snipers: callData.snipers || false
+    }
+  };
+}
+
 // ── CALL TRACKING & VALIDATION ──────────────────────────────────────────
-// Tracks all called signals for performance analysis and call-quality improvement
-const _CALL_HISTORY_FILE = path.join(__dirname, 'data', 'signal-calls-history.json');
-let _callHistory = [];
-function _loadCallHistory() {
-  try {
-    const raw = JSON.parse(fs.readFileSync(_CALL_HISTORY_FILE, 'utf8'));
-    if (Array.isArray(raw)) _callHistory = raw.slice(-500); // keep last 500
-  } catch (e) { _callHistory = []; }
+// Reads the REAL call log (backend/data/tg-calls.json, written by telegram-pnl.js's
+// recordCall() from every polling path — trending/bonded/pre_bonding/helius/boosted/
+// pipeline — and kept live-updated with curMult/peakMult by its tracker tick).
+// A parallel signal-calls-history.json store used to exist here but nothing ever
+// wrote to it (_recordCallHistory/_updateCallPerformance had zero callers), so
+// _analyzeDeadCoins()/_sourceScore() always saw empty data and _qualityMult()'s
+// win-rate-based gate tightening silently never fired. Fixed by reading the one
+// real store instead of maintaining a second that nothing feeds.
+function _loadCallHistory(opts) {
+  try { return require('./telegram-pnl').callsJson(Object.assign({ limit: 2000 }, opts || {})); }
+  catch (e) { return []; }
 }
-function _recordCallHistory(mint, symbol, entryFdv, entryPrice, source) {
-  _callHistory.push({
-    mint, symbol, entryFdv, entryPrice, source,
-    calledAt: Date.now(),
-    lastChecked: Date.now(),
-    currentFdv: null,
-    currentPrice: null,
-    multiplier: 1,
-    status: 'active' // active, hit2x, hit5x, dead
-  });
-  if (_callHistory.length > 500) _callHistory.shift();
-  try { fs.writeFileSync(_CALL_HISTORY_FILE, JSON.stringify(_callHistory)); } catch (e) {}
-}
-function _updateCallPerformance(mint, currentFdv, currentPrice) {
-  const call = _callHistory.find(c => c.mint === mint);
-  if (!call) return;
-  call.currentFdv = currentFdv;
-  call.currentPrice = currentPrice;
-  call.multiplier = currentPrice / call.entryPrice;
-  call.lastChecked = Date.now();
-  if (call.multiplier >= 5) call.status = 'hit5x';
-  else if (call.multiplier >= 2) call.status = 'hit2x';
-  else if (call.multiplier < 0.5) call.status = 'dead';
-}
-_loadCallHistory();
 
 // ── DEAD COIN ANALYZER ──────────────────────────────────────────────────
-// Learn from failed calls to improve future filtering
+// Learn from failed calls to improve future filtering.
+// "Dead" = currentMult < 0.5 (down 50%+ from entry). "Winner" = peakMult >= 5 (mooned).
+// Only considers calls old enough to have had a chance to move (>30 min) so fresh
+// calls aren't misclassified as dead before the tracker has re-priced them.
 function _analyzeDeadCoins() {
-  const deadCoins = _callHistory.filter(c => c.status === 'dead' && c.multiplier < 0.5);
-  const winners = _callHistory.filter(c => c.status === 'hit5x');
+  const all = _loadCallHistory();
+  const aged = all.filter(c => (Date.now() - (c.ts || 0)) > 30 * 60 * 1000);
+  if (aged.length === 0) return null;
 
-  if (deadCoins.length === 0) return null;
+  const deadCoins = aged.filter(c => (c.currentMult || 1) < 0.5);
+  const winners = aged.filter(c => (c.peakMult || 1) >= 5);
+
+  if (deadCoins.length === 0 && winners.length === 0) return null;
 
   const analysis = {
     deadCount: deadCoins.length,
     winCount: winners.length,
-    winRate: (winners.length / _callHistory.length * 100).toFixed(1) + '%',
+    winRate: (winners.length / aged.length * 100).toFixed(1) + '%',
     topFailPatterns: [],
     topWinPatterns: []
   };
@@ -229,6 +310,19 @@ function _isDeadHour() {
   // Corpus: 09h=0%, 13h=0%, 15h=0%, 22h=3% — confirmed dead on 20+ call samples
   return h === 9 || h === 13 || h === 15 || h === 22;
 }
+function _sourceScore(source) {
+  // Calculates 0-100 source quality score from real call history (peakMult >= 2 = win)
+  const hist = _loadCallHistory();
+  const sourceCalls = hist.filter(c => (c.source || '').toLowerCase() === (source || '').toLowerCase());
+  if (sourceCalls.length < 3) return 50;  // Need minimum calls to score
+
+  const winners = sourceCalls.filter(c => (c.peakMult || 1) >= 2).length;
+  const rate = (winners / sourceCalls.length) * 100;
+
+  // Score = win rate % (0-100) with min/max bounds
+  return Math.max(15, Math.min(95, Math.round(rate)));
+}
+
 function _qualityMult() {
   // Use analytics to improve quality multiplier based on historical performance
   const analysis = _analyzeDeadCoins();
@@ -385,7 +479,13 @@ function _cfg() {
 // Weekday non-peak: floor rises to $15K (5K-15K weekday = 0% win rate in ZEROX data)
 // HARD CAP at $2M for trending (tighter than bonded); reject pump-bait coins
 const HARD_FDV_CAP = 5000000;  // $5M absolute ceiling
+const HARD_FDV_CAP_MAX = HARD_FDV_CAP;  // alias — used by validator/audit endpoint
 const HARD_FDV_CAP_TRENDING = 2000000;  // $2M for trending (tighter filter)
+const RUG_MIN_SCORE = 60;               // default cfg.rugMinScore floor (matches _cfg() default)
+const AGE_GATE_SECONDS = 30;            // matches _passesAgeGate's 30s minimum
+const MULTIPLIER_CAP_DISCOVERY = 3;     // matches _passesMultiplierGate's 3x cap
+const LP_LOCK_PERCENT_MINIMUM = 80;     // matches _lpLockedOk's 80% requirement
+const BUNDLE_MAX_PERCENT = 12;          // matches _cfg() default maxBundlerPct
 function _passesFdv(cfg, fdv) {
   if (fdv >= HARD_FDV_CAP) return false;  // reject established coins >= $5M
   const effMin = _effectiveMinFdv(cfg);
@@ -1015,7 +1115,7 @@ async function _pollOnce() {
       ) > 0;
     }
     _seen.add(addr);
-    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0 }); } catch (e) {}
+    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers) }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
@@ -1261,7 +1361,7 @@ async function _pollBonded() {
     ) > 0;
     if (ok) {
       _trackSym(_bondSym); core.markAlerted(mint); posted++;
-      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0 }); } catch (e) {}
+      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers) }); } catch (e) {}
       _logFeatures({ mint, chain: 'solana', name: c.name, symbol: c.symbol, source: 'bonded', entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: c.holders || (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), devPct: c.devPct || 0, venue: pair.dexId || 'pump', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: liq, sourceCount: 1 });
     }
   }
@@ -1523,17 +1623,17 @@ DESIGN SPECIFICATIONS:
 - **Layout**: Clean, minimalist, professional trading UI aesthetic
 
 CONTENT TO INCLUDE (in order of visual hierarchy):
-1. **Token Symbol** (top, large, golden): $${SYMBOL}
-2. **Main Multiplier Display** (center-large, color-coded, bold): ${MULTIPLIER}×
+1. **Token Symbol** (top, large, golden): $\${SYMBOL}
+2. **Main Multiplier Display** (center-large, color-coded, bold): \${MULTIPLIER}×
    - If >5x: BRIGHT GREEN (#00ff41) with glow
    - If 3-5x: GOLD (#e8a020)
    - If 2-3x: ORANGE (#ffc84a)
    - If 1-2x: YELLOW (#ffaa00)
    - If <1x: RED (#ff3c3c)
-3. **PnL Percentage** (large): ${PNL_PCT}% ${ARROW}
-4. **Entry Price**: Entry: $${ENTRY_PRICE}
-5. **Current Price**: Current: $${CURRENT_PRICE}
-6. **Timestamp**: ${TIMESTAMP}
+3. **PnL Percentage** (large): \${PNL_PCT}% \${ARROW}
+4. **Entry Price**: Entry: $\${ENTRY_PRICE}
+5. **Current Price**: Current: $\${CURRENT_PRICE}
+6. **Timestamp**: \${TIMESTAMP}
 7. **Branding Footer**: "⚡ ZEROX SIGNALS ⚡" or "ZEROX TRADING INTELLIGENCE"
 8. **Status Badge**: "🚀 WINNING" or "📉 TRACKING" or "🔴 ALERT"
 
@@ -1727,7 +1827,7 @@ async function _pollGecko() {
             core.markAlerted(_dk);
             _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
             posted++;
-            try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0 }); } catch (e) {}
+            try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0, liq, vol24: vol, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers) }); } catch (e) {}
             const _venue = (p.relationships && p.relationships.dex && p.relationships.dex.data && p.relationships.dex.data.id) || '';
             _logFeatures({ mint: _taddr || _dk, chain: net, name: a.name, source: kind, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: _venue, vol24h: vol, liquidity: liq, sourceCount: 1 });
           }
@@ -2131,7 +2231,9 @@ module.exports = {
   // Analytics exports for /api/signals/analytics endpoint
   _analyzeDeadCoins,
   _loadCallHistory,
-  _recordCallHistory,
+  _sourceScore,
+  // Validation exports for /api/signals/validate endpoint
+  _validateCall,
   // Config exports for /api/signals/audit endpoint
   HARD_FDV_CAP_TRENDING,
   HARD_FDV_CAP_MAX,

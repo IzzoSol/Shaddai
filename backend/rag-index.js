@@ -157,7 +157,7 @@ function deepLink(videoId, sec) {
 }
 
 // ─── storage ─────────────────────────────────────────────────────────────────
-const RAG_ROOT = path.join(__dirname, 'data', 'rag');
+const RAG_ROOT = process.env.SHADDAI_RAG_ROOT_OVERRIDE_FOR_TEST || path.join(__dirname, 'data', 'rag');
 
 function safeUser(user) {
   // Whitelist; collapse weird chars to underscore. Empty → 'guest'.
@@ -304,6 +304,56 @@ function addDocument(user, name, text, meta) {
   return { docId, chunks: doc.chunks.length };
 }
 
+/**
+ * Insert multiple documents for a user in one batch: builds every item's
+ * chunks first, appends them all to the in-memory doc list, then rebuilds
+ * TF-IDF vectors and writes docs.json/idf.json exactly once. Use this for
+ * bulk/corpus ingestion instead of calling addDocument() in a loop — see
+ * Task 3 of docs/superpowers/plans/2026-08-23-rag-brain-corpus-ingestion.md
+ * for why per-call vector rebuilds don't scale to thousands of documents.
+ *
+ * items: Array<{ name, text, meta? }> — same validation/shape as addDocument.
+ * Returns { docIds: string[], totalChunks: number }.
+ */
+function addDocumentsBulk(user, items) {
+  if (!Array.isArray(items) || !items.length) throw new Error('items array required');
+  const docs = loadDocs(user);
+  const docIds = [];
+  let totalChunks = 0;
+
+  for (const item of items) {
+    const { name, text, meta } = item || {};
+    if (!text || typeof text !== 'string') throw new Error('text required for every item');
+    const docId = 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const m = meta && typeof meta === 'object' ? meta : {};
+    const built = buildChunks(docId, text, m);
+    if (!built.chunks.length) throw new Error(`No content found in text for item "${name}"`);
+
+    docs.push({
+      id: docId,
+      name: String(name || 'untitled').slice(0, 200),
+      text: text.slice(0, 1_000_000),
+      uploadedAt: new Date().toISOString(),
+      kind: m.kind ? String(m.kind).slice(0, 40) : undefined,
+      videoId: m.videoId ? String(m.videoId).slice(0, 32) : undefined,
+      url: m.url ? String(m.url).slice(0, 500) : undefined,
+      title: m.title ? String(m.title).slice(0, 300) : undefined,
+      source: m.source ? String(m.source).slice(0, 200) : undefined,
+      durationSec: Number(m.durationSec) > 0 ? Math.round(Number(m.durationSec)) : undefined,
+      tsMode: built.hasReal ? 'markers' : (Number(m.durationSec) > 0 ? 'duration' : 'estimate'),
+      chunks: built.chunks,
+    });
+    docIds.push(docId);
+    totalChunks += built.chunks.length;
+  }
+
+  const metaOut = rebuildVectors(docs);
+  fs.writeFileSync(path.join(userDir(user), 'idf.json'), JSON.stringify(metaOut.idf), 'utf8');
+  saveDocs(user, docs);
+
+  return { docIds, totalChunks };
+}
+
 function _loadIdf(user) {
   const p = path.join(userDir(user), 'idf.json');
   if (!fs.existsSync(p)) return {};
@@ -418,10 +468,19 @@ function deleteDocument(user, docId) {
 
 module.exports = {
   addDocument,
+  addDocumentsBulk,
   searchUser,
   listUserDocs,
   deleteDocument,
   backfillTimestamps,
   // exposed for testing
-  _internal: { tokenize, termFrequency, cosineSim, chunkText, buildChunks, parseTimeMarkers, fmtTime, deepLink },
+  _internal: {
+    tokenize, termFrequency, cosineSim, chunkText, buildChunks, parseTimeMarkers, fmtTime, deepLink,
+    // NOTE: this is a snapshot alias to the module-private saveDocs, not a live
+    // indirection — addDocumentsBulk/addDocument call the local `saveDocs`
+    // binding directly, so jest.spyOn(_internal, 'saveDocsForTest') does NOT
+    // intercept those internal calls. Kept for introspection/manual use only;
+    // see rag-index-bulk.test.js for how call-count is actually verified.
+    saveDocsForTest: saveDocs,
+  },
 };
