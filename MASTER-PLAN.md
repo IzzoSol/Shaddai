@@ -91,8 +91,12 @@ Both are powered by:
 - [x] Task 5: MCP grounding — **done**, `backend/lib/grounding.js`, 16/16 tests pass, verified live-run 2026-08-27
 - [x] Verify: asked each agent a grounded question, confirmed real corpus-backed answers (not generic) — **done**
 - [x] Landing page visual bug (`brain-head.html` black screen, `pixel-forge.html` gradient crash) — **fixed**, committed `28771c9` in worktree
-- [ ] **Merge worktree `rag-brain-corpus-ingestion` into `main`** — 51 commits sitting unmerged, this is the only remaining step to make Phase 1 actually live outside the worktree
-- [ ] Wire lesson-layer design (`2026-08-23-rag-brain-lesson-layer-design.md`) — this is what lets agents "create content and lesson plans based on the RAG brain" and keep improving as it's fed. Not yet verified as built — check after merge.
+- [x] **Merged worktree `rag-brain-corpus-ingestion` into `main`** — done 2026-08-27 (`51ef19d`), clean merge, no conflicts. Brings the 3D cockpit, council GLB heads, digest-ranked search, DIGESTED/SYSTEM tabs, all of it, onto `main`.
+- [x] **Server-side free/pro quota gate** — added on `/ask`, `/synthesize`, `/council`, `/crosstalk` (`b7de985`). Previously client-side-only (localStorage), trivially bypassed. Free tier: 3 grounded queries/day, then 402 + upgrade prompt. Pro/elite: unlimited, checked against `billing-service.js`'s real `TIER_CONFIG` (free/pro/elite) — not the stale pro/alpha/builder vocabulary the old client code used.
+- [x] **"Clickable, summarizable knowledge"** — already built, just uncommitted: DIGESTED tab shows each source as chapters/insights/quotes with clickable ≈timestamp chips (deep-links into source video); backed by `/api/digests`, `/api/digest`, all 7 agents' pre-generated `digests.json`. SYSTEM tab shows routes-of-use + tools ledger. Committed `a11c4b7`.
+- [x] **Search now favors organized knowledge over raw walls** — `searchChunks2` merges the digestion-pipeline index with the raw corpus, dedupes, and score-boosts digest hits 1.35x so a chapter/insight card outranks a raw transcript chunk for the same query.
+- [ ] Wire lesson-layer design (`2026-08-23-rag-brain-lesson-layer-design.md`) — the piece that makes the brain **evolving** (agents author new lesson-plan content back into the RAG store as it's fed, not just read from it). Not yet verified as built — check next.
+- [ ] Free-quota counter is in-memory (resets on server restart) — fine for a soft cap now; before Paybox billing goes live (Phase 2), move it to persistent storage so it can't be trivially reset by restarting the process.
 
 **Model:** Sonnet for the merge + lesson-layer wiring, Haiku for test iteration.
 
