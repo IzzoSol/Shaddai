@@ -366,7 +366,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .smeta{display:flex;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap;font-family:'Share Tech Mono',monospace;}
 .smeta b{color:var(--text);}
 .sms{margin-top:5px;font-size:10px;color:#f4c842;letter-spacing:1px;text-shadow:0 0 10px rgba(244,200,66,.5);}
-.sacts{display:flex;gap:5px;margin-top:7px;}
+.sacts{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;}
 .sa{padding:6px 14px;border:2px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:'Syncopate',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;border-radius:3px;}
 .sa:hover{border-color:var(--P);color:var(--P);box-shadow:var(--gP);background:rgba(232,160,32,.07);}
 .sa.g:hover{border-color:var(--S);color:var(--S);box-shadow:var(--gS);background:rgba(0,255,156,.07);}
@@ -567,6 +567,29 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .sent-ai-h{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:3px;color:#b07fff;margin-bottom:5px;}
 
 @media(max-width:860px){#app{grid-template-columns:1fr;}#rc{display:none;}}
+
+/* ── MOBILE (≤640px) ─────────────────────────────────
+   Topbar/filter row are dense desktop-terminal layouts by design (flex-wrap
+   already prevents hard overflow on the filter rows), so this focuses on the
+   two things that actually break usability on a phone: the topbar packing
+   too many decorative pills/canvas into one non-wrapping 50px strip, and
+   window panels (fixed by JS, handled separately in the Window class) —
+   here we just decline the least-essential topbar chrome and let the rest
+   scroll horizontally instead of clipping or squeezing unreadable. */
+@media(max-width:640px){
+  #topbar{overflow-x:auto;gap:6px;padding:0 8px;}
+  #topbar::-webkit-scrollbar{height:0;}
+  .tb-osc,.th-row{display:none;} /* oscillator + theme-swatch row: still reachable via 🎨 THEME cycler */
+  .tb-title{display:none;}
+  .tb-pill{padding:4px 8px;font-size:8px;}
+  #ltabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  #ltabs::-webkit-scrollbar{height:0;}
+  .ltab{white-space:nowrap;padding:10px 14px;font-size:10px;} /* bigger tap target */
+  .window-close{width:36px;height:36px;font-size:16px;} /* real touch target, not a 24px nub */
+  .window-header{padding:12px 14px;}
+  .fq{max-width:none;}
+  .gate-pin{font-size:20px;letter-spacing:10px;} /* PIN entry stays comfortably tappable */
+}
 </style>
 </head>
 <body>
@@ -2247,7 +2270,15 @@ class Window{
   create(x,y,w,h){
     const el=document.createElement('div');
     el.className='window';el.id=this.id;
-    el.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    // On narrow viewports, ignore the requested desktop x/y/w/h — clamp to a
+    // near-fullscreen sheet the user can actually see and close, instead of a
+    // 700px-wide panel that starts off-screen on a 375px phone (including its
+    // own close button, leaving no way to escape it without a hard refresh).
+    const mobile = window.innerWidth <= 640;
+    const cssText = mobile
+      ? `left:8px;top:8px;right:8px;bottom:8px;width:auto;height:auto;`
+      : `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    el.style.cssText = cssText;
     el.innerHTML=`<div class="window-header"><span>${this.title}</span><div class="window-close" onclick="closeWindow('${this.id}')">✕</div></div><div class="window-content" id="${this.id}-body"></div>`;
     el.querySelector('.window-header').addEventListener('mousedown',(e)=>this.startDrag(e));
     document.body.appendChild(el);
@@ -2255,6 +2286,7 @@ class Window{
   }
   startDrag(e){
     if(e.target.classList.contains('window-close'))return;
+    if(window.innerWidth<=640)return; // mobile sheet fills the viewport — dragging would just misplace it
     this.dragging=true;
     this.dragX=e.clientX-this.el.offsetLeft;
     this.dragY=e.clientY-this.el.offsetTop;
