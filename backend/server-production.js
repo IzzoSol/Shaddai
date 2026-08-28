@@ -1686,8 +1686,6 @@ app.post('/api/mastery/search', express.json(), async (req, res) => {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }
 });
-// ⭐ WORLD LABS INTEGRATION — Dynamic world generation (World Labs API + Higgs Physics + Hugging Face)
-app.use('/api/worlds', require('./routes/worlds-api'));
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
 app.use('/api/gridiron', require('./routes/gridiron-routes'));
 // CRYPTO DATA API — keyless, read-only façade over existing market proxies (/api/data/v1/*)
@@ -2715,12 +2713,6 @@ if (!process.env.VERCEL_ENV) {
     console.log('  GET  /api/batch/jobs/:jobId');
 
     console.log('\n✓ World Labs API Endpoints:');
-    console.log('  POST /api/worlds/create (generate world)');
-    console.log('  GET  /api/worlds/:id (fetch world)');
-    console.log('  GET  /api/worlds (list all)');
-    console.log('  POST /api/worlds/:id/physics (update physics)');
-    console.log('  POST /api/worlds/:id/seed (add entities)');
-    console.log('  POST /api/worlds/:id/districts/visit (navigate)');
     console.log('  → Viewer: http://localhost:' + PORT + '/worlds-viewer.html');
 
     console.log('\n✓ WebSocket Events:');
