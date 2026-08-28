@@ -74,6 +74,42 @@
     mix-blend-mode:multiply;
   }
   .noscript-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);}
+
+/* ══ ORACLE SKY — the reading that resolves in the dome finale ══════════
+   Fades in with uPDome, so it arrives as the constellation dome and the
+   Kether crown do. Pointer-events off: it must never eat the drag that
+   steers the dome. */
+#oracleSky{
+  position:fixed; left:50%; top:12vh; transform:translate(-50%,-14px);
+  z-index:60; display:flex; gap:20px; align-items:center;
+  padding:18px 24px; max-width:min(560px,92vw);
+  background:linear-gradient(180deg,rgba(6,8,11,.62),rgba(6,8,11,.42));
+  border:1px solid rgba(232,196,92,.20); border-radius:3px;
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+  opacity:0; pointer-events:none; visibility:hidden;
+  transition:opacity 1.6s cubic-bezier(.22,.7,.2,1), transform 1.6s cubic-bezier(.22,.7,.2,1);
+  color:#e9efe9; font-family:'Fraunces',Georgia,serif;
+}
+#oracleSky.lit{ opacity:1; transform:translate(-50%,0); visibility:visible; }
+#oracleSky .os-moon{ flex:0 0 auto; line-height:0; }
+#oracleSky .os-body{ min-width:0; }
+#oracleSky .os-kicker{ font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.24em;
+  text-transform:uppercase; color:rgba(232,196,92,.75); }
+#oracleSky .os-phase{ font-family:'Cinzel',serif; font-weight:700; font-size:clamp(17px,2.6vw,23px);
+  letter-spacing:.09em; margin-top:5px; }
+#oracleSky .os-meta{ display:flex; gap:14px; margin-top:5px;
+  font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:rgba(233,239,233,.5); }
+#oracleSky .os-signs{ display:flex; flex-wrap:wrap; gap:14px; margin-top:9px;
+  font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.1em; color:rgba(95,224,255,.85); }
+#oracleSky .os-signs i{ font-style:normal; font-size:13px; color:#e8c45c; margin-right:3px; }
+#oracleSky .os-read{ margin-top:10px; font-size:13.5px; line-height:1.5;
+  color:rgba(233,239,233,.82); font-style:italic; }
+@media(max-width:560px){
+  #oracleSky{ top:auto; bottom:calc(16px + env(safe-area-inset-bottom)); gap:14px; padding:14px 16px; }
+  #oracleSky .os-read{ font-size:12.5px; }
+}
+@media (prefers-reduced-motion: reduce){ #oracleSky{ transition-duration:.01s; } }
 </style>
 </head>
 <body>
@@ -94,7 +130,28 @@
 <div id="scrollHint">SCROLL TO DESCEND THROUGH SCALE · CLICK &amp; DRAG UNDER THE DOME<span class="arw">&#8595;</span></div>
 <div id="scrollDriver"></div>
 
+<!-- ORACLE's reading, revealed under the dome at the top of the ascent -->
+<div id="oracleSky" aria-live="polite"></div>
+
 <noscript><div class="noscript-msg">JavaScript required to render the Quantum Lattice.</div></noscript>
+
+<script src="/js/oracle-sky.js"></script>
+<script>
+/* ORACLE SKY reveal — the reading resolves as the constellation dome does.
+   Rendered once on first reveal (never per-frame), then this is a class
+   toggle so it costs nothing inside the render loop. */
+var __osEl = null, __osDrawn = false;
+function revealOracleSky(pDome){
+  if(!__osEl){ __osEl = document.getElementById('oracleSky'); if(!__osEl) return; }
+  var show = pDome > 0.78;
+  if(show && !__osDrawn){
+    __osDrawn = true;
+    try { window.OracleSky.render(__osEl); }
+    catch(e){ console.warn('[oracle-sky]', e); __osEl = null; return; }
+  }
+  __osEl.classList.toggle('lit', show);
+}
+</script>
 
 <script>
 "use strict";
@@ -2477,6 +2534,7 @@
     gl.uniform1f(uScene('uPWater'),  pWater);
     gl.uniform1f(uScene('uPDesert'), pDesert);
     gl.uniform1f(uScene('uPDome'),   pDome);
+    revealOracleSky(pDome);
     gl.uniform1f(uScene('uYaw'),     yaw);
     gl.uniform1f(uScene('uPitch'),   pitch);
     window.__DBG = {p:p, pMol:pMol, pWater:pWater, pDesert:pDesert, pDome:pDome, yaw:yaw, pitch:pitch, dragging:dragging};
