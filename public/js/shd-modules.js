@@ -268,9 +268,15 @@
       art: '/assets/nav/aura.jpg',
       blurb: 'The RAG brain — the council’s shared memory, and every answer cited to its source.',
       items: [
-        { id: 'ask',    name: 'ASK',      accent: C.emerald, art: '/assets/nav/aura.jpg',  href: '/brain.html', blurb: 'Ask the brain. Every answer traced back to the passage it came from.' },
-        { id: 'codex',  name: 'CODEX',    accent: C.gold,    art: '/assets/nav/apis.jpg',  href: '/codex.html', blurb: 'The almanac — the written record of the empire.' },
-        { id: 'learn',  name: 'LEARN',    accent: C.cyan,    art: '/assets/nav/chat.jpg',  href: '/learn.html', blurb: 'Guided paths through what the council knows.' }
+        // both brain surfaces, not just one: the library view and the cockpit
+        { id: 'ask',     name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/aura.jpg', href: '/brain.html',
+          blurb: 'The knowledge base itself — search, digested chapters, and every answer cited to the passage it came from.' },
+        { id: 'cockpit', name: 'COCKPIT',   accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/rag-cockpit.html',
+          blurb: 'The neural cockpit — the brain as a live 3D instrument you fly through rather than a list you scroll.' },
+        { id: 'council', name: 'THE COUNCIL', accent: C.violet, art: '/assets/agents/SHADDAI-portrait.png', href: '/brain-head.html',
+          blurb: 'Council Mind — all seven agents reasoning on the same question at once.' },
+        { id: 'codex',   name: 'CODEX',     accent: C.gold,    art: '/assets/nav/apis.jpg',  href: '/codex.html', blurb: 'The almanac — the written record of the empire.' },
+        { id: 'learn',   name: 'LEARN',     accent: C.rose,    art: '/assets/nav/chat.jpg',  href: '/learn.html', blurb: 'Guided paths through what the council knows.' }
       ]
     },
     {
