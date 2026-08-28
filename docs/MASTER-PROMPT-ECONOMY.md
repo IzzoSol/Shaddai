@@ -165,3 +165,52 @@ Steps 1–3 are worth shipping on their own. Round-up → Sparks → a visible
 balance is a complete, useful product, and letting the fee pool accumulate
 real numbers before anything pays out is what makes step 5 safe to design.
 Plots and payouts do not need to ship in the same week.
+
+---
+
+## 9. Owner's tier design (2026-08-28) — build this
+
+Captured from the owner directly. Tiers are ordinary SaaS and carry no
+regulatory weight; build them freely.
+
+| Tier | Price | Gets |
+|---|---|---|
+| Free | $0 | Simple Mode, limited brain queries |
+| **Pro** | **$30/mo** | Pro Signals terminal, ZEROX sentiment, RAG brain |
+| Higher | TBD | RAG brain *lessons*, full book library, priority routing |
+
+Sparks stay the unit underneath ($1 = 1 Spark, fixed). A subscription is just
+a recurring Spark grant plus feature flags — do not invent a second currency
+for it.
+
+### The one line that has to be drawn
+
+The owner also wants NFTs (plots/buildings — "basically made already") to pay
+**a share of dashboard revenue over time**, and "rev share" as a high-tier
+perk. Those two are NOT the same as the tiers above, and must not be built
+the same way.
+
+**Safe — build now:**
+- Selling *access*: terminals, brain, lessons, books, higher limits.
+- An NFT granting *utility*: a plot in the 2D world, cosmetics, priority
+  routing, exclusive tools, a bigger Spark allowance.
+- **Creators earning from their OWN agent's work.** If someone's forged agent
+  completes a task and is paid in Sparks, that is income for services
+  rendered. This is the flywheel's real engine and it is not a security.
+
+**Not safe without legal review — do not ship on assumption:**
+- An NFT sold for money that pays its holder a share of *platform* revenue
+  they did not work for. Money in + common enterprise + profit expected from
+  the platform's efforts is the Howey shape, and the wrapper (NFT, plot,
+  building, coin, "rev share tier") does not change the substance.
+
+**The reframe that keeps the flywheel intact:** make a plot productive rather
+than passive. A plot owner earns because *their* agent works, hosts, or
+creates from that plot — not because they hold it. Same incentive to buy,
+same land economy, same burn/buyback dynamics, but the return comes from
+work performed rather than from the platform's earnings. That is the version
+to design first.
+
+If the owner still wants passive platform revenue share after reading this,
+STOP and tell them it needs a securities lawyer before a line is written.
+That is the honest answer, not a refusal.
