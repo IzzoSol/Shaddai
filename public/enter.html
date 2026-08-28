@@ -18,6 +18,10 @@
    Spec: docs/FRONT-DOOR-MASTER-PROMPT.md
    ══════════════════════════════════════════════════════════════════════ */
 :root{
+  /* Each skin carries a three-stop aurora (--g1/--g2/--g3) painted behind the
+     grid, not just flat tokens — that is what makes a theme read as designed
+     rather than as a recoloured background. */
+  --g1:rgba(0,255,156,.075); --g2:rgba(95,224,255,.065); --g3:rgba(232,196,92,.05);
   --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --edge:rgba(120,150,140,.14);
   --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --violet:#b07cff; --rose:#ff6f6f;
   --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#4f5d57;
@@ -33,6 +37,11 @@ html[data-theme-skin="terminal"]{ --void:#030a03; --void2:#041004; --panel:#0618
 html[data-theme-skin="amber"]   { --void:#0a0600; --void2:#120c02; --panel:#160f03; --ink:#ffcf7a; --ink-soft:rgba(255,176,32,.65); --edge:rgba(255,176,32,.20); }
 html[data-theme-skin="void"]    { --void:#000; --void2:#050505; --panel:#0a0a0a; --ink:#f2f2f2; --ink-soft:#8f8f8f; --edge:rgba(255,255,255,.10); }
 html[data-theme-skin="brutalist"]{ --void:#f5f4f0; --void2:#eceae4; --panel:#fff; --ink:#0a0804; --ink-soft:#5a5248; --ink-faint:#8b8378; --edge:rgba(10,8,4,.18); }
+html[data-theme-skin="terminal"]{ --g1:rgba(0,255,65,.10); --g2:rgba(0,255,65,.04); --g3:rgba(0,120,40,.06); }
+html[data-theme-skin="amber"]   { --g1:rgba(255,176,32,.10); --g2:rgba(255,110,20,.06); --g3:rgba(120,60,0,.07); }
+html[data-theme-skin="void"]    { --g1:rgba(255,255,255,.05); --g2:rgba(160,160,180,.04); --g3:rgba(90,90,120,.05); }
+html[data-theme-skin="brutalist"]{ --g1:rgba(245,192,0,.13); --g2:rgba(255,120,0,.07); --g3:rgba(0,0,0,.04); }
+html[data-theme-skin="serif"]   { --g1:rgba(58,107,74,.10); --g2:rgba(160,140,90,.08); --g3:rgba(0,0,0,.03); }
 html[data-theme-skin="serif"]   { --void:#f8f6f0; --void2:#efece4; --panel:#fff; --ink:#1c1710; --ink-soft:#6b5f4e; --ink-faint:#9a8e7c; --edge:rgba(38,28,8,.12); }
 
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -54,11 +63,14 @@ button{ font:inherit; color:inherit; background:none; border:none; cursor:pointe
   background:radial-gradient(125% 95% at 50% 40%, transparent 48%, rgba(0,0,0,.78) 100%); }
 html[data-theme-skin="brutalist"] .vignette, html[data-theme-skin="serif"] .vignette{
   background:radial-gradient(125% 95% at 50% 40%, transparent 55%, rgba(0,0,0,.14) 100%); }
-.aura{ position:fixed; inset:0; pointer-events:none; z-index:0;
+.aura{ position:fixed; inset:-20%; pointer-events:none; z-index:0;
   background:
-    radial-gradient(60% 45% at 20% 12%, rgba(0,255,156,.055), transparent 62%),
-    radial-gradient(55% 42% at 82% 22%, rgba(95,224,255,.05), transparent 62%),
-    radial-gradient(70% 50% at 50% 100%, rgba(232,196,92,.045), transparent 66%); }
+    radial-gradient(52% 40% at 18% 14%, var(--g1), transparent 63%),
+    radial-gradient(48% 38% at 84% 20%, var(--g2), transparent 63%),
+    radial-gradient(64% 46% at 50% 96%, var(--g3), transparent 66%);
+  animation:drift 34s ease-in-out infinite alternate; }
+@keyframes drift{ to{ transform:translate3d(2.5%,-2%,0) scale(1.06); } }
+@media (prefers-reduced-motion: reduce){ .aura{ animation:none; } }
 
 /* the shared WebGL layer. Transparent, above the tile art, below nothing —
    tile text reads straight through it, and each tile's solid is scissored
@@ -94,11 +106,18 @@ html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{ back
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
 @media(max-width:520px){ .ctl{ padding:0 10px; font-size:10px; } .ctl .lbl-long{ display:none; } }
+.brand .sh b{ font-weight:900; }
+.brand .sh .sh-mini{ display:none; }
 @media(max-width:440px){
-  header{ padding-left:14px; padding-right:14px; gap:8px; }
-  .brand .sh{ font-size:16px; letter-spacing:.14em; }
+  header{ padding-left:12px; padding-right:12px; gap:8px; }
+  .brand .sh{ font-size:17px; letter-spacing:.16em; }
+  .brand .sh .sh-full{ display:none; }
+  .brand .sh .sh-mini{ display:inline; }
   .controls{ gap:6px; }
-  .ctl{ padding:0 9px; min-height:40px; }
+  /* 44px is the thumb floor — the room comes from the wordmark and the
+     'bios' label instead of from the targets */
+  .ctl{ padding:0 10px; min-height:44px; min-width:44px; }
+  #btnDwell span:not(.dot){ display:none; }
 }
 
 /* ── the grid ───────────────────────────────────────────────────────── */
@@ -115,6 +134,12 @@ main{ position:relative; z-index:10; flex:1; display:flex; flex-direction:column
   grid-template-columns:repeat(2,1fr);
 }
 @media(max-width:760px){ .grid{ grid-template-columns:1fr; max-width:520px; } }
+body.full .grid{ grid-template-columns:repeat(3,1fr); max-width:1320px; }
+body.full .slot{ min-height:clamp(150px,19vh,200px); }
+body.full .slot .name{ font-size:clamp(22px,2.6vw,32px); }
+@media(max-width:1100px){ body.full .grid{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:760px){ body.full .grid{ grid-template-columns:1fr; }
+  body.full .slot{ min-height:clamp(140px,17vh,180px); } }
 
 /* ── a slot ─────────────────────────────────────────────────────────── */
 .slot{
@@ -259,7 +284,7 @@ footer b{ color:var(--ink-soft); font-weight:400; }
 
 <header>
   <div class="brand">
-    <span class="sh">SHADDAI</span>
+    <span class="sh"><b class="sh-full">SHADDAI</b><b class="sh-mini">SH</b></span>
     <span class="sub">Choose your threshold</span>
   </div>
   <div class="controls">
@@ -267,6 +292,7 @@ footer b{ color:var(--ink-soft); font-weight:400; }
       <span class="dot"></span><span>bios</span>
     </button>
     <button class="ctl" id="btnTheme" type="button" title="Change theme">◈ <span class="lbl-long">theme</span></button>
+    <button class="ctl" id="btnAll" type="button" title="Show every module">◳ <span class="lbl-long">all</span></button>
     <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">✎ <span class="lbl-long">edit</span></button>
     <button class="ctl out" id="btnAuth" type="button"><span class="dot"></span><span id="authLbl">sign in</span></button>
   </div>
@@ -329,9 +355,16 @@ footer b{ color:var(--ink-soft); font-weight:400; }
   var slots = M.readSlots();
   var editing = false, pendingSlot = -1;
 
+  /* Full mode shows every module in the library instead of the four slots.
+     Same tile, same dwell, same 3D — only the source list and the density
+     change, so there is no second code path to keep in sync. */
+  var showAll = false;
+  try { showAll = localStorage.getItem('shd_enter_full') === '1'; } catch (e) {}
+
   function render() {
     grid.innerHTML = '';
-    slots.forEach(function (id, i) {
+    var list = showAll ? M.MODULES.map(function (m) { return m.id; }) : slots;
+    list.forEach(function (id, i) {
       var m = M.byId(id); if (!m) return;
       var a = document.createElement('a');
       a.className = 'slot';
@@ -345,7 +378,7 @@ footer b{ color:var(--ink-soft); font-weight:400; }
         '<div class="wash"></div>' +
         '<div class="frame"></div><i class="corner tl"></i><i class="corner br"></i>' +
         '<div class="body">' +
-          '<span class="idx">' + ROMAN[i] + '</span>' +
+          '<span class="idx">' + (showAll ? '' : ROMAN[i]) + '</span>' +
           '<span class="kicker">' + m.kicker + '</span>' +
           '<span class="name">' + m.name + '</span>' +
           '<span class="go">enter →</span>' +
@@ -355,7 +388,7 @@ footer b{ color:var(--ink-soft); font-weight:400; }
       grid.appendChild(a);
     });
     wire();
-    window.dispatchEvent(new CustomEvent('shd:slots', { detail: slots.slice() }));
+    window.dispatchEvent(new CustomEvent('shd:slots', { detail: list.slice() }));
   }
 
   /* dwell: sitting on a tile for 5s opens its bio. One mechanic for thumb,
@@ -405,7 +438,27 @@ footer b{ color:var(--ink-soft); font-weight:400; }
     footNote.textContent = on ? 'tap a door to swap it' : 'tap ✎ to rearrange';
     if (!on) { grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); }); }
   }
-  document.getElementById('btnEdit').addEventListener('click', function () { setEditing(!editing); });
+  document.getElementById('btnEdit').addEventListener('click', function () {
+    if (showAll) setShowAll(false);          // editing only applies to the four slots
+    setEditing(!editing);
+  });
+
+  var btnAll = document.getElementById('btnAll');
+  function setShowAll(on) {
+    showAll = !!on;
+    try { localStorage.setItem('shd_enter_full', showAll ? '1' : '0'); } catch (e) {}
+    document.body.classList.toggle('full', showAll);
+    btnAll.classList.toggle('on', showAll);
+    btnAll.title = showAll ? 'Back to your four doors' : 'Show every module';
+    if (showAll && editing) setEditing(false);
+    document.querySelector('.lede h1').textContent = showAll ? 'Everything' : 'Four ways in';
+    document.querySelector('.lede p').textContent = showAll
+      ? 'Every module in the empire. Tap ◳ again to go back to your four.'
+      : "One empire. Pick the door — or rearrange them until they're yours.";
+    footNote.textContent = showAll ? 'tap ◳ to return to your four' : 'tap ✎ to rearrange';
+    render();
+  }
+  btnAll.addEventListener('click', function () { setShowAll(!showAll); });
 
   function openLib(slotIndex) {
     pendingSlot = slotIndex;
@@ -465,13 +518,13 @@ footer b{ color:var(--ink-soft); font-weight:400; }
   function paintAuth() {
     var u = C.user();
     authBtn.classList.toggle('out', !u);
-    authLbl.textContent = u ? C.shortId(u) : 'sign in';
+    authLbl.textContent = u ? C.shortId(u) : (window.innerWidth <= 440 ? 'in' : 'sign in');
   }
   authBtn.addEventListener('click', function () { C.openAuth(); });
   C.onAuth(paintAuth);
 
   paintAuth();
-  render();
+  setShowAll(showAll);   // renders once, in the mode the visitor left it in
 })();
 </script>
 
