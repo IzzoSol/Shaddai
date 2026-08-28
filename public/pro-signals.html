@@ -77,6 +77,49 @@
   --hdrgrd:linear-gradient(90deg,#dce6f4,#e6eef8);
   --card-border:rgba(30,60,160,0.14);
 }
+/* Ice theme readability guard: several elements hardcode a light/gold text
+   color tuned for the dark themes instead of using var(--text) — force those
+   back to dark text so nothing goes invisible-on-white. */
+[data-theme="ice"] body,[data-theme="ice"] .sc,[data-theme="ice"] .smeta,
+[data-theme="ice"] .newsrow,[data-theme="ice"] #fs-content,[data-theme="ice"] .window-content{color:#060d20;}
+[data-theme="ice"] .ssym,[data-theme="ice"] .newsrow>div:first-child{color:var(--P)!important;}
+
+[data-theme="synthwave2"] {
+  --bg0:#150a2e;--bg1:#1e0f3d;--bg2:#2a1550;--bg3:#361c63;--bg4:#442476;
+  --border:rgba(255,60,180,.2);--border2:rgba(255,60,180,.4);
+  --P:#ff3cb4;--P2:#ff7ad4;--P3:#c8208c;--S:#3cffc8;--A:#ff5050;--C:#3cd4ff;
+  --text:#fff0fa;--text2:#ffb0e4;--label:#ff8ad0;--muted:rgba(255,220,245,.7);
+  --cgrd:linear-gradient(135deg,rgba(255,60,180,.1),rgba(60,212,255,.04));
+  --ctop:linear-gradient(90deg,rgba(255,60,180,.2),transparent);
+  --gP:0 0 18px rgba(255,60,180,.5);--gS:0 0 14px rgba(60,255,200,.4);--gA:0 0 10px rgba(255,80,80,.4);
+  --bgrd:linear-gradient(90deg,#c8208c,#ff3cb4,#3cd4ff);
+  --hdrgrd:linear-gradient(90deg,#1e0f3d,#2a1550);
+  --card-border:rgba(255,60,180,0.2);
+}
+[data-theme="emerald"] {
+  --bg0:#031a12;--bg1:#052419;--bg2:#083222;--bg3:#0c422e;--bg4:#10533a;
+  --border:rgba(0,230,150,.2);--border2:rgba(0,230,150,.4);
+  --P:#00e696;--P2:#4dffbe;--P3:#00a86a;--S:#ffd23c;--A:#ff5a5a;--C:#3ce8ff;
+  --text:#e6fff5;--text2:#8affd4;--label:#4dd4a8;--muted:rgba(220,255,240,.7);
+  --cgrd:linear-gradient(135deg,rgba(0,230,150,.08),rgba(0,230,150,.02));
+  --ctop:linear-gradient(90deg,rgba(0,230,150,.2),transparent);
+  --gP:0 0 16px rgba(0,230,150,.5);--gS:0 0 12px rgba(255,210,60,.4);--gA:0 0 10px rgba(255,90,90,.4);
+  --bgrd:linear-gradient(90deg,#00a86a,#00e696,#4dffbe);
+  --hdrgrd:linear-gradient(90deg,#052419,#083222);
+  --card-border:rgba(0,230,150,0.2);
+}
+[data-theme="sunset"] {
+  --bg0:#1a0e08;--bg1:#26140c;--bg2:#341b10;--bg3:#442414;--bg4:#552e18;
+  --border:rgba(255,140,60,.22);--border2:rgba(255,140,60,.42);
+  --P:#ff8c3c;--P2:#ffb26a;--P3:#c85a14;--S:#ffe066;--A:#ff4560;--C:#ff6ab4;
+  --text:#fff0e0;--text2:#ffc89a;--label:#e8a060;--muted:rgba(255,230,210,.7);
+  --cgrd:linear-gradient(135deg,rgba(255,140,60,.1),rgba(255,60,150,.03));
+  --ctop:linear-gradient(90deg,rgba(255,140,60,.2),transparent);
+  --gP:0 0 18px rgba(255,140,60,.5);--gS:0 0 14px rgba(255,224,102,.4);--gA:0 0 10px rgba(255,69,96,.4);
+  --bgrd:linear-gradient(90deg,#c85a14,#ff8c3c,#ff6ab4);
+  --hdrgrd:linear-gradient(90deg,#26140c,#341b10);
+  --card-border:rgba(255,140,60,0.2);
+}
 [data-theme="synthwave"] {
   --bg0:#0d0221;--bg1:#1a034d;--bg2:#2d0a6d;--bg3:#3d1d7d;--bg4:#4d2d8d;
   --border:rgba(255,0,127,.15);--border2:rgba(255,0,127,.3);
@@ -254,6 +297,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 }
 .fb:hover{border-color:var(--P);color:var(--P);background:rgba(232,160,32,.06);box-shadow:0 0 12px rgba(232,160,32,.2);}
 .fb.on{border-color:var(--P);color:var(--P);background:rgba(232,160,32,.1);box-shadow:0 0 0 1px var(--P),var(--gP);text-shadow:var(--gP);font-weight:800;}
+.fbc{font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:400;opacity:.6;margin-left:2px;}
 .fb[data-s="bonded"].on{border-color:#f4c842;color:#f4c842;box-shadow:0 0 0 1px #f4c842,0 0 14px rgba(244,200,66,.35);background:rgba(244,200,66,.08);text-shadow:0 0 10px rgba(244,200,66,.5);}
 .fb[data-s="trending"].on{border-color:#22d3ee;color:#22d3ee;box-shadow:0 0 0 1px #22d3ee,0 0 14px rgba(34,211,238,.35);background:rgba(34,211,238,.08);text-shadow:0 0 10px rgba(34,211,238,.5);}
 .fb[data-s="new_pools"].on{border-color:#ff7c44;color:#ff7c44;box-shadow:0 0 0 1px #ff7c44,0 0 14px rgba(255,124,68,.35);background:rgba(255,124,68,.08);text-shadow:0 0 10px rgba(255,124,68,.5);}
@@ -275,6 +319,36 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 /* ── SIGNALS LIST ─────────────────────────────────── */
 #slist{flex:1;overflow-y:auto;overflow-x:hidden;counter-reset:sn;}
+
+/* ── VIEW SWITCHER ─────────────────────────────────── */
+#vmrow{display:flex;gap:4px;padding:6px 12px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;}
+.vmb{padding:5px 10px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.5px;cursor:pointer;border-radius:4px;transition:all .15s;}
+.vmb:hover{border-color:var(--P);color:var(--P);}
+.vmb.on{background:var(--cgrd);border-color:var(--P);color:var(--P);font-weight:700;}
+
+/* ── BUBBLES VIEW ──────────────────────────────────── */
+.bubblewrap{display:flex;flex-wrap:wrap;gap:10px;padding:16px;align-content:flex-start;justify-content:center;}
+.bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;text-align:center;line-height:1.2;}
+.bubble:hover{transform:scale(1.12);z-index:2;}
+.bubble b{display:block;font-family:'Share Tech Mono',monospace;}
+.bubble span{display:block;font-family:'Share Tech Mono',monospace;font-weight:700;}
+
+/* ── HEATMAP VIEW ──────────────────────────────────── */
+.heatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:3px;padding:12px;}
+.heatcell{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;color:#000;font-family:'Share Tech Mono',monospace;}
+.heatcell:hover{transform:scale(1.06);z-index:2;box-shadow:0 4px 12px rgba(0,0,0,.5);}
+.heatcell span{font-size:8px;font-weight:700;opacity:.85;}
+.heatcell b{font-size:11px;}
+
+/* ── RANKED VIEW ───────────────────────────────────── */
+.rankwrap{display:flex;flex-direction:column;padding:8px 12px;}
+.rankrow{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;}
+.rankrow:hover{background:var(--cgrd);}
+.ranknum{width:28px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--label);flex-shrink:0;}
+.ranksym{width:70px;font-weight:700;font-size:11px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rankbar{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.rankbar-f{height:100%;border-radius:4px;transition:width .3s;}
+.rankmult{width:56px;text-align:right;font-family:'Share Tech Mono',monospace;font-weight:700;font-size:11px;flex-shrink:0;}
 .newsrow{transition:box-shadow .2s;}
 .newsrow:hover{box-shadow:0 8px 16px rgba(232,160,32,.2);}
 #slist::-webkit-scrollbar{width:2px;}
@@ -323,7 +397,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .smeta{display:flex;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap;font-family:'Share Tech Mono',monospace;}
 .smeta b{color:var(--text);}
 .sms{margin-top:5px;font-size:10px;color:#f4c842;letter-spacing:1px;text-shadow:0 0 10px rgba(244,200,66,.5);}
-.sacts{display:flex;gap:5px;margin-top:7px;}
+.sacts{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;}
 .sa{padding:6px 14px;border:2px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:'Syncopate',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;border-radius:3px;}
 .sa:hover{border-color:var(--P);color:var(--P);box-shadow:var(--gP);background:rgba(232,160,32,.07);}
 .sa.g:hover{border-color:var(--S);color:var(--S);box-shadow:var(--gS);background:rgba(0,255,156,.07);}
@@ -524,6 +598,29 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .sent-ai-h{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:3px;color:#b07fff;margin-bottom:5px;}
 
 @media(max-width:860px){#app{grid-template-columns:1fr;}#rc{display:none;}}
+
+/* ── MOBILE (≤640px) ─────────────────────────────────
+   Topbar/filter row are dense desktop-terminal layouts by design (flex-wrap
+   already prevents hard overflow on the filter rows), so this focuses on the
+   two things that actually break usability on a phone: the topbar packing
+   too many decorative pills/canvas into one non-wrapping 50px strip, and
+   window panels (fixed by JS, handled separately in the Window class) —
+   here we just decline the least-essential topbar chrome and let the rest
+   scroll horizontally instead of clipping or squeezing unreadable. */
+@media(max-width:640px){
+  #topbar{overflow-x:auto;gap:6px;padding:0 8px;}
+  #topbar::-webkit-scrollbar{height:0;}
+  .tb-osc,.th-row{display:none;} /* oscillator + theme-swatch row: still reachable via 🎨 THEME cycler */
+  .tb-title{display:none;}
+  .tb-pill{padding:4px 8px;font-size:8px;}
+  #ltabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  #ltabs::-webkit-scrollbar{height:0;}
+  .ltab{white-space:nowrap;padding:10px 14px;font-size:10px;} /* bigger tap target */
+  .window-close{width:36px;height:36px;font-size:16px;} /* real touch target, not a 24px nub */
+  .window-header{padding:12px 14px;}
+  .fq{max-width:none;}
+  .gate-pin{font-size:20px;letter-spacing:10px;} /* PIN entry stays comfortably tappable */
+}
 </style>
 </head>
 <body>
@@ -569,23 +666,16 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
   <!-- LEFT -->
   <div class="left-col">
-    <div id="ltabs">
-      <div class="ltab on"  onclick="openFullscreen('finance','💱 ALT',[])">💱 ALT</div>
-      <div class="ltab"     onclick="openFullscreen('stocks','📊 STOCKS',[])">📊 STOCKS</div>
-      <div class="ltab"     onclick="openFullscreen('news','📰 NEWS',[])">📰 NEWS</div>
-      <div class="ltab"     onclick="openMiroTab(this)">🐟 MIROFISH</div>
-    </div>
-
     <!-- signals -->
     <div class="ltp on" id="tab-sig">
       <div id="fw">
         <div id="fr1">
-          <button class="fb on" data-s="all">ALL</button>
-          <button class="fb" data-s="pre_bond">PRE-BOND</button>
-          <button class="fb" data-s="bonded">BONDED</button>
-          <button class="fb" data-s="trending">TREND</button>
-          <button class="fb" data-s="new_pools">POOLS</button>
-          <button class="fb" data-s="boosted">BOOST</button>
+          <button class="fb on" data-s="all" title="Every call from every source">ALL <span class="fbc"></span></button>
+          <button class="fb" data-s="pre_bond" title="Pump.fun tokens still on the bonding curve — earliest possible entry, highest risk">PRE-BOND <span class="fbc"></span></button>
+          <button class="fb" data-s="bonded" title="Pump.fun tokens that just graduated (bonded) onto Raydium">BONDED <span class="fbc"></span></button>
+          <button class="fb" data-s="trending" title="Top 25 on DexScreener right now — card shows its live rank">TREND <span class="fbc"></span></button>
+          <button class="fb" data-s="new_pools" title="Brand-new liquidity pools (GeckoTerminal)">POOLS <span class="fbc"></span></button>
+          <button class="fb" data-s="boosted" title="Tokens that just paid for a DexScreener boost">BOOST <span class="fbc"></span></button>
           <input class="fq" id="fq" placeholder="SEARCH SYMBOL / MINT…" oninput="onFil('q',this.value)">
           <div style="flex:1"></div>
           <span class="fcnt" id="fcnt"></span>
@@ -601,11 +691,13 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
           <div class="fg"><div class="fl">SORT</div><select class="fsel" id="fsrt" onchange="onFil('sort',this.value)"><option value="newest">Newest</option><option value="mult">Highest ×</option><option value="fdv">Entry FDV</option><option value="holders">Holders</option></select></div>
         </div>
       </div>
-      <div id="slist"><div class="empty">CONNECTING TO ORACLE FEED…</div></div>
-      <div id="mksub">
-        <div id="mkbar" onclick="togMk()"><span>📊 MARKETS <span style="opacity:.5;font-size:8px;letter-spacing:2px">CRYPTO · FOREX · EQUITIES</span></span><span id="mkcaret">▾</span></div>
-        <div id="tab-mkt" style="display:none"><div class="mload">FETCHING LIVE MARKET DATA…</div></div>
+      <div id="vmrow">
+        <button class="vmb on" onclick="setView('list',this)" title="List view">📋 LIST</button>
+        <button class="vmb" onclick="setView('bubbles',this)" title="Bubble size = entry FDV, color = performance">🫧 BUBBLES</button>
+        <button class="vmb" onclick="setView('heatmap',this)" title="Dense color grid — scan many calls at once">🔲 HEATMAP</button>
+        <button class="vmb" onclick="setView('ranked',this)" title="Ranked by peak multiplier">🏆 RANKED</button>
       </div>
+      <div id="slist"><div class="empty">CONNECTING TO ORACLE FEED…</div></div>
     </div>
 
     <!-- alerts moved to modal (topbar 🔔 pill) -->
@@ -700,6 +792,8 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <!-- tabs -->
     <div id="rc-tabs">
       <div class="rtab on"  onclick="rTab('intel',this)">📡 INTEL</div>
+      <div class="rtab"     onclick="rTab('stocks',this)">📊 STOCKS</div>
+      <div class="rtab"     onclick="rTab('news',this)">📰 NEWS</div>
       <div class="rtab"     onclick="rTab('poly',this)">🎯 POLY <span id="polycnt" style="font-size:5px;opacity:.6"></span></div>
       <div class="rtab"     onclick="rTab('miro',this)">🐟 MIRO</div>
     </div>
@@ -766,6 +860,18 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       </div>
     </div>
 
+    <!-- STOCKS tab -->
+    <div class="rpane" id="rpane-stocks">
+      <div id="stocks-tv-container" style="height:340px;width:100%"></div>
+    </div>
+
+    <!-- NEWS tab -->
+    <div class="rpane" id="rpane-news">
+      <div class="rpane-scroll">
+        <div id="news-list"><div class="mload">LOADING LIVE NEWS…</div></div>
+      </div>
+    </div>
+
     <!-- POLYMARKET tab -->
     <div class="rpane" id="rpane-poly">
       <div class="rpane-scroll">
@@ -786,7 +892,6 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
           <div class="mwacts">
             <button class="mwb" onclick="checkMiro()">PING</button>
             <button class="mwb" id="mwrun" onclick="runMiro()" style="display:none">SIMULATE →</button>
-            <button class="mwb" onclick="openMiroTab()" style="border-color:rgba(176,127,255,.35)">FULL SWARM →</button>
           </div>
           <div class="mwr" id="mwres"></div>
         </div>
@@ -910,6 +1015,11 @@ function setTheme(t){
 let _calls=[],_period='week',_src='all';
 const _img={};
 const _F=JSON.parse(localStorage.getItem('ot_fil')||'{}');
+// NOTE: age intentionally defaults to "Any" (no cutoff). A 24h default was tried and
+// reverted — the bot's recent output is heavily skewed to one source (e.g. 24h of
+// boosted-only), so a hard age cut made BONDED/TREND/POOLS/PRE-BOND silently render
+// empty and look broken. Freshness is handled by sorting newest-first instead, and
+// each source button now shows its live count so an empty result is self-evident.
 let _alerts=JSON.parse(localStorage.getItem('ot_al')||'[]');
 let _notif=Notification.permission==='granted';
 let _mktLoaded=false;
@@ -924,6 +1034,14 @@ function initOsc(){
 /* INIT */
 function init(){
   tickClk();initOsc();reqNotif();
+  const savedView=localStorage.getItem('ot_view');
+  if(savedView&&savedView!=='list'){
+    _viewMode=savedView;
+    document.querySelectorAll('.vmb').forEach(b=>b.classList.remove('on'));
+    const idx=['list','bubbles','heatmap','ranked'].indexOf(savedView);
+    const btn=document.querySelectorAll('.vmb')[idx];
+    if(btn) btn.classList.add('on');
+  }
   fetchCalls();fetchStats();fetchPoly();
   setTimeout(checkMiro,2000);
   // New data feeds
@@ -1040,8 +1158,16 @@ function restoreFil(){
 /* RENDER SIGNALS */
 const SC={bonded:'#f4c842',trending:'#22d3ee',new_pools:'#ff7c44',boosted:'#00ff9c',trending_pools:'#22d3ee',pre_bonding:'#b07fff',pipeline:'#5fe0ff',helius:'#ff6f6f'};
 
-function renderSigs(){
-  const el=document.getElementById('slist');
+let _viewMode='list';
+function setView(mode,el){
+  _viewMode=mode;
+  document.querySelectorAll('.vmb').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  localStorage.setItem('ot_view',mode);
+  renderSigs();
+}
+
+function _getFilteredRows(){
   let rows=_calls.slice();
   if(_src!=='all'){
     if(_src==='pre_bond') rows=rows.filter(c=>(c.source||'').startsWith('pre_bond'));
@@ -1062,6 +1188,27 @@ function renderSigs(){
   else if(s==='fdv') rows.sort((a,b)=>(a.entryFdv||0)-(b.entryFdv||0));
   else if(s==='holders')rows.sort((a,b)=>(b.holders||0)-(a.holders||0));
   else rows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  return rows;
+}
+
+// Live per-source counts on the filter buttons — respects every active filter EXCEPT
+// the source itself, so each button shows how many calls you'd actually get by clicking
+// it. Makes an empty result obviously "no calls from this source" rather than "broken".
+function updSrcCounts(){
+  const saved=_src;
+  document.querySelectorAll('.fb[data-s]').forEach(b=>{
+    _src=b.dataset.s;
+    const n=_getFilteredRows().length;
+    const badge=b.querySelector('.fbc');
+    if(badge){ badge.textContent=n; badge.style.opacity=n?'.85':'.35'; }
+  });
+  _src=saved;
+}
+
+function renderSigs(){
+  const el=document.getElementById('slist');
+  const rows=_getFilteredRows();
+  updSrcCounts();
   document.getElementById('scnt').textContent=rows.length;
   const hits=rows.filter(c=>(c.peakMult||0)>=2).length;
   document.getElementById('tbhr').innerHTML='rate <em>'+(rows.length?Math.round(hits/rows.length*100):0)+'%</em>';
@@ -1069,12 +1216,78 @@ function renderSigs(){
     if(!_calls.length){
       el.innerHTML='<div class="empty">OFFLINE — NO CALLS LOADED<br><span style="font-size:8px;color:rgba(232,160,32,.4)">check server /api/signals/calls</span><br><button class="eret" onclick="fetchCalls()">RETRY CONNECTION</button></div>';
     }else{
-      const fcnt=(document.getElementById('fcnt')||{}).textContent||'';
-      el.innerHTML='<div class="empty">0 MATCH — '+_calls.length+' CALLS IN FEED · '+fcnt+'<br><span style="font-size:8px;color:rgba(232,160,32,.4)">'+(_src!=='all'?'source: '+_src+(_F.mult||_F.fdv||_F.age||_F.status||_F.q?' · ':''):'')+'</span><br><button class="eret" onclick="rstFilters()">✕ RESET FILTERS</button></div>';
+      // Explain WHY it's empty: is this source genuinely empty, or are other filters cutting it?
+      const srcTotal=_src==='all'?_calls.length:_calls.filter(c=>_src==='pre_bond'?(c.source||'').startsWith('pre_bond'):c.source===_src).length;
+      const otherFilters=!!(_F.mult||_F.fdv||_F.age||_F.status||_F.q);
+      let why;
+      if(srcTotal===0) why='No <b>'+_src.replace('_',' ').toUpperCase()+'</b> calls in the feed at all — the bot hasn\'t posted from this source recently.';
+      else if(otherFilters) why='<b>'+srcTotal+'</b> '+_src.replace('_',' ').toUpperCase()+' calls exist, but your other filters (age/mult/FDV/status/search) exclude them all.';
+      else why='No matches.';
+      el.innerHTML='<div class="empty">0 MATCH · '+_calls.length+' CALLS IN FEED<br><span style="font-size:9px;color:var(--text2);display:block;margin:8px 20px;line-height:1.5">'+why+'</span><button class="eret" onclick="rstFilters()">✕ RESET FILTERS</button></div>';
     }
     return;
   }
-  el.innerHTML=rows.slice(0,1500).map((c,i)=>card(c,i)).join('');
+  if(_viewMode==='bubbles') renderBubbles(el,rows);
+  else if(_viewMode==='heatmap') renderHeatmap(el,rows);
+  else if(_viewMode==='ranked') renderRanked(el,rows);
+  else el.innerHTML=rows.slice(0,1500).map((c,i)=>card(c,i)).join('');
+}
+
+// ── VISUAL VIEWS ──────────────────────────────────────────────────────
+// Same filtered/sorted `rows` as the list view — just three different ways
+// to scan the same data at a glance: bubbles (size=conviction, color=perf),
+// heatmap grid (dense color-coded squares, best for scanning many at once),
+// ranked bars (sorted leaderboard, best for "what's actually winning").
+function _perfColor(mult){
+  if(mult>=5) return '#00ff41';
+  if(mult>=2) return '#00ff9c';
+  if(mult>=1) return '#f4c842';
+  if(mult>=0.7) return '#ff8c3c';
+  return '#ff3d5a';
+}
+function renderBubbles(el,rows){
+  const list=rows.slice(0,80);
+  const maxFdv=Math.max(1,...list.map(c=>c.entryFdv||1));
+  el.innerHTML='<div class="bubblewrap">'+list.map(c=>{
+    const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+    const size=18+Math.round(Math.sqrt((c.entryFdv||1)/maxFdv)*70);
+    const col=_perfColor(peak>=2?peak:cur);
+    return '<div class="bubble" title="'+esc(c.symbol||'?')+' — '+usd(c.entryFdv)+' entry, peak '+peak.toFixed(1)+'×" '+
+      'style="width:'+size+'px;height:'+size+'px;background:radial-gradient(circle at 35% 30%,'+col+'55,'+col+'15);border:2px solid '+col+';font-size:'+Math.max(8,Math.round(size/5))+'px" '+
+      'onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      '<b style="color:'+col+'">'+esc((c.symbol||'?').slice(0,6))+'</b>'+
+      '<span style="color:'+col+'">'+(peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%'))+'</span>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function renderHeatmap(el,rows){
+  const list=rows.slice(0,150);
+  el.innerHTML='<div class="heatgrid">'+list.map(c=>{
+    const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+    const mult=peak>=2?peak:cur;
+    const col=_perfColor(mult);
+    const intensity=Math.min(1,Math.abs(mult-1)/4+.25);
+    return '<div class="heatcell" title="'+esc(c.symbol||'?')+' — peak '+peak.toFixed(1)+'×" '+
+      'style="background:'+col+';opacity:'+intensity.toFixed(2)+'" onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      '<span>'+esc((c.symbol||'?').slice(0,5))+'</span>'+
+      '<b>'+(peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%'))+'</b>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function renderRanked(el,rows){
+  const list=[...rows].sort((a,b)=>(b.peakMult||0)-(a.peakMult||0)).slice(0,60);
+  const maxMult=Math.max(1,...list.map(c=>c.peakMult||1));
+  el.innerHTML='<div class="rankwrap">'+list.map((c,i)=>{
+    const peak=c.peakMult||1;
+    const col=_perfColor(peak);
+    const w=Math.max(4,Math.round((peak/maxMult)*100));
+    return '<div class="rankrow" onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      '<span class="ranknum">#'+(i+1)+'</span>'+
+      '<span class="ranksym" style="color:'+col+'">'+esc(c.symbol||'?')+'</span>'+
+      '<div class="rankbar"><div class="rankbar-f" style="width:'+w+'%;background:'+col+'"></div></div>'+
+      '<span class="rankmult" style="color:'+col+'">'+peak.toFixed(1)+'×</span>'+
+    '</div>';
+  }).join('')+'</div>';
 }
 
 function card(c,i){
@@ -1096,7 +1309,7 @@ function card(c,i){
     <div class="stop">
       ${ih}
       <span class="ssym" style="color:${col};text-shadow:0 0 10px ${col}55">${esc(c.symbol||'???')}</span>
-      <span class="sp sp-${src}">${src.replace('_',' ')}</span>
+      <span class="sp sp-${src}">${src.replace('_',' ')}</span>${c.rank?`<span class="sp" style="background:rgba(34,211,238,.15);color:#22d3ee;border-color:rgba(34,211,238,.4)" title="Was #${c.rank} on DexScreener when called">#${c.rank} DEX</span>`:''}
       <span class="ssp"></span>
       <span class="smlt ${mcs}">${ms}</span>
     </div>
@@ -1124,12 +1337,14 @@ function card(c,i){
 function swarmCall(mint){
   const c=_calls.find(x=>x.mint===mint)||{};
   const sym=c.symbol||'';
-  switchTab('swarm',document.querySelectorAll('.ltab')[3]);
-  const t=document.getElementById('sw-tok'),n=document.getElementById('sw-news');
+  const miroBtn=document.querySelector(".rtab[onclick*=\"'miro'\"]");
+  if(miroBtn) rTab('miro',miroBtn);
+  const sim=document.getElementById('mwsim');if(sim) sim.style.display='flex';
+  const t=document.getElementById('mwtok'),n=document.getElementById('mwnws');
   if(t) t.value=sym;
   if(n) n.value=(sym?sym+' — ':'')+'live signal call — pump or dump in 7 days?';
   toast('SWARM LAUNCHED ON '+(sym||mint).toUpperCase());
-  setTimeout(runSwarm,400);
+  setTimeout(runMiro,400);
 }
 function cca(m){if(!m)return;navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
 
@@ -1171,86 +1386,95 @@ function composePnl(){
 function _drawPnl(){
   const cv=document.getElementById('pnlcanv'),img=document.getElementById('pnlimg');
   if(!cv||!_pnl.c||!_pnl._img) return;
-  const W=1600,H=900,LW=960;
+  const W=1080,H=1350; // 4:5 — the aspect ratio that renders largest on X/Twitter and Instagram feeds
   cv.width=W;cv.height=H;
   const x=cv.getContext('2d');
   const im=_pnl._img,j=_pnl.art,c=_pnl.c;
-  const sc=Math.max(LW/im.width,H/im.height);
-  const dw=im.width*sc,dh=im.height*sc;
-  x.fillStyle='#000';x.fillRect(0,0,W,H);
-  x.drawImage(im,(LW-dw)/2,(H-dh)/2,dw,dh);
-  // theme tag on art
-  x.save();
-  x.font='700 22px "Share Tech Mono",monospace';
-  x.fillStyle='rgba(0,0,0,.5)';
-  x.fillRect(12,12,x.measureText('THEME · '+j.themeLabel).width+26,34);
-  x.fillStyle='#f0c060';x.fillText('THEME · '+j.themeLabel,25,35);
-  x.restore();
-  // right panel
-  const g=x.createLinearGradient(LW,0,W,0);
-  g.addColorStop(0,'#0d1317');g.addColorStop(1,'#04070a');
-  x.fillStyle=g;x.fillRect(LW,0,640,H);
-  x.fillStyle='#f0c060';x.fillRect(LW,0,2,H);
-  x.save();
-  x.textAlign='center';
-  // brand
-  x.fillStyle='rgba(240,192,96,.06)';x.fillRect(LW,0,640,170);
-  x.font='700 40px "Syncopate",sans-serif';
-  x.fillStyle='#f0c060';x.fillText('SHADDAI SIGNALS',LW+320,74);
-  x.fillStyle='rgba(240,192,96,.4)';
-  x.fillRect(LW+150,92,340,2);
-  // ticker
-  x.font='800 92px "Exo 2",sans-serif';
-  x.fillStyle='#ffe9a8';
-  x.shadowColor='rgba(240,192,96,.55)';x.shadowBlur=24;
-  x.fillText('$'+(c.symbol||'???'),LW+320,205);
-  x.shadowBlur=0;
-  if(c.name){x.font='400 22px "Exo 2",sans-serif';x.fillStyle='rgba(200,210,215,.6)';x.fillText(c.name.slice(0,26),LW+320,238);}
-  // date + source
-  x.font='16px "Share Tech Mono",monospace';
-  x.fillStyle='rgba(200,210,215,.5)';
-  x.fillText(pnlDate(c.ts)+'  ·  '+String(j.data.source||c.source||'signals').replace('_',' '),LW+320,268);
-  // stats panel
   const cur=typeof c.currentMult==='number'?c.currentMult:c.curMult||1;
   const peak=c.peakMult||1;
-  const box={x:LW+36,y:300,w:568,h:250};
-  x.fillStyle='rgba(0,0,0,.35)';
-  x.fillRect(box.x,box.y,box.w,box.h);
-  x.strokeStyle='rgba(240,192,96,.22)';x.strokeRect(box.x,box.y,box.w,box.h);
-  const rows=[
-    ['ENTRY MC',usd(c.entryFdv),'rgba(200,210,215,.85)'],
-    ['ATH AT PNL',peak.toFixed(1)+'× · '+usd((c.entryFdv||0)*peak),'#00ff9c'],
-    ['NOW',(cur>=1?cur.toFixed(1)+'×':'↓'+Math.round((1-cur)*100)+'%')+' · '+usd((c.entryFdv||0)*cur),cur>=1?'#00ff9c':'#ff3d5a'],
-    ['ENTRY PRICE',fmtPrice(c.entryPrice),'rgba(200,210,215,.85)'],
-  ];
+  const entryMc=c.entryFdv||0;
+  const peakMc=entryMc*peak;
+  const nowMc=entryMc*cur;
+  const winning=peak>=2||cur>=1;
+  const accent=peak>=5?'#00ff41':peak>=2?'#00ff9c':cur>=1?'#f4c842':'#ff3d5a';
+
+  // ── FULL-BLEED BACKGROUND — the AI art fills the entire card, cropped to cover ──
+  const sc=Math.max(W/im.width,H/im.height);
+  const dw=im.width*sc,dh=im.height*sc;
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);
+
+  // Dark gradient scrims top+bottom so text stays legible over any art — the "cool
+  // graphic" stays fully visible in the middle, text sits in the readable zones.
+  let g=x.createLinearGradient(0,0,0,H*0.32);
+  g.addColorStop(0,'rgba(0,0,0,.75)');g.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=g;x.fillRect(0,0,W,H*0.32);
+  g=x.createLinearGradient(0,H*0.58,0,H);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.88)');
+  x.fillStyle=g;x.fillRect(0,H*0.58,W,H*0.42);
+
+  x.save();
   x.textAlign='left';
-  rows.forEach((r,i)=>{
-    const y=box.y+54+i*52;
-    x.font='15px "Share Tech Mono",monospace';
-    x.fillStyle='rgba(148,163,172,.7)';x.fillText(r[0],box.x+24,y);
-    x.textAlign='right';
-    x.font='700 24px "Share Tech Mono",monospace';
-    x.fillStyle=r[2];x.fillText(r[1],box.x+box.w-24,y);
-    x.textAlign='left';
-  });
-  // giant mult
-  x.textAlign='center';
-  x.font='800 120px "Exo 2",sans-serif';
-  x.fillStyle='rgba(240,192,96,.9)';
-  x.shadowColor='rgba(240,192,96,.4)';x.shadowBlur=40;
-  x.fillText(peak.toFixed(1)+'×',LW+320,648);
+
+  // ── TOP: ShaddaiAI brand + theme ──
+  x.font='800 30px "Syncopate",sans-serif';
+  x.fillStyle='#ffffff';
+  x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=12;
+  x.fillText('⚡ SHADDAI SIGNALS',40,66);
+  x.font='700 16px "Share Tech Mono",monospace';
+  x.fillStyle=accent;
+  x.fillText('THEME · '+(j.themeLabel||'').toUpperCase(),40,94);
   x.shadowBlur=0;
-  x.font='14px "Share Tech Mono",monospace';
-  x.fillStyle='rgba(240,192,96,.55)';x.fillText('PEAK MULTIPLE',LW+320,672);
-  // footer
-  x.fillStyle='rgba(148,163,172,.35)';
-  x.font='14px "Share Tech Mono",monospace';
-  x.fillText('GENERATED · '+pnlDate(Date.now()),LW+320,H-26);
+
+  // ── CENTER-LOW: ticker + giant multiplier (the shareable headline) ──
+  x.textAlign='center';
+  x.font='700 34px "Exo 2",sans-serif';
+  x.fillStyle='rgba(255,255,255,.92)';
+  x.shadowColor='rgba(0,0,0,.9)';x.shadowBlur=16;
+  x.fillText('$'+(c.symbol||'???').toUpperCase()+(c.name?'  ·  '+c.name.slice(0,22):''),W/2,H*0.60);
+
+  x.font='900 150px "Exo 2",sans-serif';
+  x.fillStyle=accent;
+  x.shadowColor=accent;x.shadowBlur=50;
+  x.fillText((winning?'+':'')+(peak>=1?peak.toFixed(1):((cur-1)*100).toFixed(0)+'%')+(peak>=1?'×':''),W/2,H*0.72);
+  x.shadowBlur=0;
+  x.font='700 22px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(255,255,255,.7)';
+  x.fillText('PEAK MULTIPLE',W/2,H*0.745);
+
+  // ── BOTTOM: MC entry/peak/now + called-on date, in a stat strip ──
+  x.textAlign='left';
+  const statY=H*0.85;
+  const stats=[
+    ['CALLED', pnlDate(c.ts)],
+    ['ENTRY MC', usd(entryMc)],
+    ['PEAK MC', usd(peakMc)],
+    ['NOW MC', usd(nowMc)],
+  ];
+  const colW=(W-80)/4;
+  stats.forEach((s,i)=>{
+    const sx=40+i*colW;
+    x.font='700 14px "Share Tech Mono",monospace';
+    x.fillStyle='rgba(255,255,255,.55)';
+    x.fillText(s[0],sx,statY);
+    x.font='800 24px "Share Tech Mono",monospace';
+    x.fillStyle=i===2?accent:'#ffffff';
+    x.fillText(s[1],sx,statY+32);
+  });
+
+  // Divider + footer branding — always present so a shared screenshot is self-explanatory
+  x.strokeStyle='rgba(255,255,255,.15)';x.lineWidth=1;
+  x.beginPath();x.moveTo(40,statY+56);x.lineTo(W-40,statY+56);x.stroke();
+
+  x.font='800 20px "Syncopate",sans-serif';
+  x.fillStyle='#ffffff';
+  x.fillText('ShaddaiAI',40,H-30);
   x.textAlign='right';
-  x.font='700 18px "Exo 2",sans-serif';
-  x.fillStyle='rgba(240,192,96,.7)';
-  x.fillText('ShaddaiAI',W-28,H-24);
+  x.font='14px "Share Tech Mono",monospace';
+  x.fillStyle='rgba(255,255,255,.6)';
+  x.fillText('shaddai-g81x.onrender.com/pro-signals.html',W-40,H-30);
   x.restore();
+
   // show
   const spin=document.getElementById('pnlspin');
   _pnl.dataUrl=cv.toDataURL('image/png');
@@ -1394,6 +1618,7 @@ const CI={btc:'₿',eth:'Ξ',sol:'◎',bonk:'🐶',doge:'🐕',pepe:'🐸',ton:'
 async function fetchMkts(){
   _mktLoaded=true;
   const el=document.getElementById('tab-mkt');
+  if(!el)return; // markets accordion removed from the main feed — Stocks/News now live in the sidebar
   try{
     const [sR,cR,fR]=await Promise.allSettled([
       fetch(BASE+'/api/markets/stocks').then(r=>r.json()),
@@ -1706,8 +1931,49 @@ function rTab(name, el){
   el.classList.add('on');
   document.getElementById('rpane-'+name).classList.add('on');
   if(name==='poly'&&!_polyLoaded) fetchPoly();
+  if(name==='stocks'&&!_stocksLoaded) loadSidebarStocks();
+  if(name==='news'&&!_newsLoaded) loadSidebarNews();
 }
 let _polyLoaded=false;
+let _stocksLoaded=false, _newsLoaded=false;
+
+function loadSidebarStocks(){
+  _stocksLoaded=true;
+  const c=document.getElementById('stocks-tv-container');
+  if(!c)return;
+  try{
+    const cfg={colorTheme:'dark',dateRange:'12M',showChart:true,locale:'en',width:'100%',height:'100%',largeChartUrl:'',isTransparent:false,showSymbolLogo:true,showFloatingTooltip:true,
+      tabs:[
+        {title:'Indices',symbols:[{s:'FOREXCOM:SPXUSD',d:'S&P 500'},{s:'FOREXCOM:NSXUSD',d:'Nasdaq 100'},{s:'FOREXCOM:DJI',d:'Dow 30'}]},
+        {title:'Crypto',symbols:[{s:'COINBASE:BTCUSD',d:'Bitcoin'},{s:'COINBASE:ETHUSD',d:'Ethereum'},{s:'COINBASE:SOLUSD',d:'Solana'}]},
+        {title:'Forex',symbols:[{s:'FX:EURUSD',d:'EUR/USD'},{s:'FX:GBPUSD',d:'GBP/USD'}]},
+        {title:'Commodities',symbols:[{s:'TVC:GOLD',d:'Gold'},{s:'TVC:USOIL',d:'Crude Oil'}]}
+      ],defaultColumn:'overview'};
+    const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
+    c.innerHTML='<iframe src="'+src+'" style="width:100%;height:100%;border:0" loading="lazy" title="Markets"></iframe>';
+  }catch(e){ c.innerHTML='<div style="padding:16px;color:#ff3d5a;font-size:10px">ERROR: '+esc(e.message)+'</div>'; }
+}
+function loadSidebarNews(){
+  _newsLoaded=true;
+  const el=document.getElementById('news-list');
+  if(!el)return;
+  fetch(BASE+'/api/news/actually-relevant')
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(j=>{
+      const items=(j.articles||j.results||[]).slice(0,25);
+      if(!items.length){ el.innerHTML='<div class="mload">NO NEWS RIGHT NOW</div>'; return; }
+      el.innerHTML=items.map(n=>{
+        const src=(n.source&&n.source.name)||n.source||'news';
+        const when=n.publishedAt||n.published_at||'';
+        return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
+          '<div class="newsrow" style="padding:8px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:6px">'+
+            '<div style="color:var(--P);font-weight:700;font-size:9px">'+esc(n.title||'')+'</div>'+
+            '<div style="font-size:7px;color:var(--text2);margin-top:3px">'+esc(src)+' • '+esc(when)+'</div>'+
+          '</div></a>';
+      }).join('');
+    })
+    .catch(e=>{ el.innerHTML='<div class="mload" style="color:#ff3d5a">ERROR: '+esc(e.message)+'</div>'; });
+}
 
 /* ══════════════════════════════════════════════════════
    EXTENDED DATA FEEDS
@@ -2114,50 +2380,64 @@ function renderFS() {
   let html='';
 
   if(_fsTab==='finance'||_fsTab==='stocks') {
-    // Real TradingView Market Overview widget — bulletproof (pure iframe, no app JS can break it).
-    // finance tab defaults to Forex/Bonds/Commodities view; stocks tab defaults to Indices view.
-    const tab = _fsTab==='stocks' ? 'index' : 'forex';
-    fsc.innerHTML = '<div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div>';
-    const container = fsc.querySelector('.tradingview-widget-container__widget');
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      colorTheme: 'dark', dateRange: '12M', showChart: true, locale: 'en',
-      width: '100%', height: '100%', largeChartUrl: '', isTransparent: true,
-      showSymbolLogo: true, showFloatingTooltip: true,
-      tabs: [
-        { title: 'Indices', symbols: [
-          { s: 'FOREXCOM:SPXUSD', d: 'S&P 500' }, { s: 'FOREXCOM:NSXUSD', d: 'Nasdaq 100' },
-          { s: 'FOREXCOM:DJI', d: 'Dow 30' }, { s: 'INDEX:NKY', d: 'Nikkei 225' }
-        ]},
-        { title: 'Forex', symbols: [
-          { s: 'FX:EURUSD', d: 'EUR/USD' }, { s: 'FX:GBPUSD', d: 'GBP/USD' },
-          { s: 'FX:USDJPY', d: 'USD/JPY' }, { s: 'FX:USDCAD', d: 'USD/CAD' }
-        ]},
-        { title: 'Commodities', symbols: [
-          { s: 'TVC:GOLD', d: 'Gold' }, { s: 'TVC:SILVER', d: 'Silver' },
-          { s: 'TVC:USOIL', d: 'Crude Oil' }, { s: 'TVC:UKOIL', d: 'Brent Oil' }
-        ]},
-        { title: 'Bonds', symbols: [
-          { s: 'TVC:US10Y', d: 'US 10Y' }, { s: 'TVC:US02Y', d: 'US 2Y' },
-          { s: 'TVC:DE10Y', d: 'DE 10Y' }, { s: 'TVC:JP10Y', d: 'JP 10Y' }
-        ]}
-      ],
-      defaultColumn: 'overview'
-    });
-    if(container) container.appendChild(script);
+    // DIAGNOSTIC BANNER: proves renderFS actually ran and reached this branch,
+    // regardless of what happens to the iframe below. If a user reports a black
+    // screen and does NOT see this lime bar, the bug is upstream of renderFS
+    // (click handler / CSS visibility) not the TradingView embed.
+    const stamp = '<div style="background:#00ff41;color:#000;font-weight:800;font-size:11px;padding:6px 10px;text-align:center">LOADED '+_fsTab.toUpperCase()+' · '+new Date().toLocaleTimeString()+'</div>';
+    try {
+      const cfg = {
+        colorTheme:'dark', dateRange:'12M', showChart:true, locale:'en',
+        width:'100%', height:'100%', largeChartUrl:'', isTransparent:false,
+        showSymbolLogo:true, showFloatingTooltip:true,
+        tabs:[
+          { title:'Indices', symbols:[
+            { s:'FOREXCOM:SPXUSD', d:'S&P 500' }, { s:'FOREXCOM:NSXUSD', d:'Nasdaq 100' },
+            { s:'FOREXCOM:DJI', d:'Dow 30' }, { s:'INDEX:NKY', d:'Nikkei 225' }
+          ]},
+          { title:'Forex', symbols:[
+            { s:'FX:EURUSD', d:'EUR/USD' }, { s:'FX:GBPUSD', d:'GBP/USD' },
+            { s:'FX:USDJPY', d:'USD/JPY' }, { s:'FX:USDCAD', d:'USD/CAD' }
+          ]},
+          { title:'Commodities', symbols:[
+            { s:'TVC:GOLD', d:'Gold' }, { s:'TVC:SILVER', d:'Silver' },
+            { s:'TVC:USOIL', d:'Crude Oil' }, { s:'TVC:UKOIL', d:'Brent Oil' }
+          ]},
+          { title:'Bonds', symbols:[
+            { s:'TVC:US10Y', d:'US 10Y' }, { s:'TVC:US02Y', d:'US 2Y' },
+            { s:'TVC:DE10Y', d:'DE 10Y' }, { s:'TVC:JP10Y', d:'JP 10Y' }
+          ]}
+        ],
+        defaultColumn:'overview'
+      };
+      const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
+      fsc.innerHTML = stamp
+        + '<div id="fs-iframe-wrap" style="height:calc(100% - 30px);width:100%;position:relative">'
+        +   '<div id="fs-iframe-status" style="position:absolute;top:8px;left:8px;color:#f4c842;font-size:10px;font-family:monospace;z-index:2;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px">connecting to tradingview.com…</div>'
+        +   '<iframe id="fs-tv-iframe" src="'+src+'" style="width:100%;height:100%;border:0;position:relative;z-index:1" loading="eager" title="Market Overview" '
+        +     'onload="const s=document.getElementById(\'fs-iframe-status\');if(s)s.remove();" '
+        +     'onerror="const s=document.getElementById(\'fs-iframe-status\');if(s){s.textContent=\'IFRAME FAILED TO LOAD — likely blocked by an ad-blocker or browser privacy setting\';s.style.color=\'#ff3d5a\';}">'
+        +   '</iframe>'
+        + '</div>';
+      // If the iframe never fires onload within 6s (blocked, offline, etc.), surface it.
+      setTimeout(()=>{
+        const s=document.getElementById('fs-iframe-status');
+        if(s) s.textContent='STILL LOADING (6s+) — if this stays, your browser/network is blocking tradingview.com. Try disabling ad-blocker or a different network.';
+      },6000);
+    } catch(e) {
+      fsc.innerHTML = stamp + '<div style="padding:20px;color:#ff3d5a;font-family:monospace;font-size:12px">RENDER ERROR: '+esc(e.message)+'</div>';
+    }
     return;
   } else if(_fsTab==='news') {
-    fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">LOADING LIVE NEWS…</div>';
+    const stamp = '<div style="background:#00ff41;color:#000;font-weight:800;font-size:11px;padding:6px 10px;text-align:center">LOADED NEWS · '+new Date().toLocaleTimeString()+'</div>';
+    fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:var(--muted)">LOADING LIVE NEWS…</div>';
     fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
-      .then(r=>r.json())
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(j=>{
         let items = j.articles || j.results || [];
         if(searchVal) items = items.filter(n=>(n.title||'').toLowerCase().includes(searchVal));
-        if(!items.length){ fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">NO NEWS AVAILABLE RIGHT NOW</div>'; return; }
-        fsc.innerHTML = items.slice(0,40).map(n=>{
+        if(!items.length){ fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:var(--muted)">NO NEWS AVAILABLE RIGHT NOW</div>'; return; }
+        fsc.innerHTML = stamp + items.slice(0,40).map(n=>{
           const src = (n.source && n.source.name) || n.source || 'news';
           const when = n.publishedAt || n.published_at || '';
           return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
@@ -2167,7 +2447,7 @@ function renderFS() {
             '</div></a>';
         }).join('');
       })
-      .catch(()=>{ fsc.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">NEWS FEED UNAVAILABLE — RETRY SHORTLY</div>'; });
+      .catch(e=>{ fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:#ff3d5a;font-family:monospace;font-size:11px">NEWS FEED ERROR: '+esc(e.message)+'</div>'; });
     return;
   }
 
@@ -2189,7 +2469,15 @@ class Window{
   create(x,y,w,h){
     const el=document.createElement('div');
     el.className='window';el.id=this.id;
-    el.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    // On narrow viewports, ignore the requested desktop x/y/w/h — clamp to a
+    // near-fullscreen sheet the user can actually see and close, instead of a
+    // 700px-wide panel that starts off-screen on a 375px phone (including its
+    // own close button, leaving no way to escape it without a hard refresh).
+    const mobile = window.innerWidth <= 640;
+    const cssText = mobile
+      ? `left:8px;top:8px;right:8px;bottom:8px;width:auto;height:auto;`
+      : `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    el.style.cssText = cssText;
     el.innerHTML=`<div class="window-header"><span>${this.title}</span><div class="window-close" onclick="closeWindow('${this.id}')">✕</div></div><div class="window-content" id="${this.id}-body"></div>`;
     el.querySelector('.window-header').addEventListener('mousedown',(e)=>this.startDrag(e));
     document.body.appendChild(el);
@@ -2197,6 +2485,7 @@ class Window{
   }
   startDrag(e){
     if(e.target.classList.contains('window-close'))return;
+    if(window.innerWidth<=640)return; // mobile sheet fills the viewport — dragging would just misplace it
     this.dragging=true;
     this.dragX=e.clientX-this.el.offsetLeft;
     this.dragY=e.clientY-this.el.offsetTop;
@@ -2230,7 +2519,7 @@ function openWindow(id,title,x,y,w,h){
 function closeWindow(id){if(windows[id]){windows[id].close();delete windows[id]}}
 
 // THEME CYCLING (9 premium themes)
-const themes=['phosphor','neon-noir','blood','ice','synthwave','aurora','cyberpunk','matrix'];let _themeIdx=0;
+const themes=['phosphor','neon-noir','blood','ice','synthwave','aurora','cyberpunk','matrix','synthwave2','emerald','sunset'];let _themeIdx=0;
 function cycleTheme() {
   _themeIdx=(_themeIdx+1)%themes.length;
   document.documentElement.setAttribute('data-theme',themes[_themeIdx]);
@@ -2256,7 +2545,56 @@ function loadMiroFish() {
 // Window content loaders
 function loadWindowContent(id) {
   const body=document.getElementById(id+'-body');
-  if(id==='analytics') {
+  if(id==='alt-mkt'||id==='stocks-mkt') {
+    try {
+      const cfg = {
+        colorTheme:'dark', dateRange:'12M', showChart:true, locale:'en',
+        width:'100%', height:'100%', largeChartUrl:'', isTransparent:false,
+        showSymbolLogo:true, showFloatingTooltip:true,
+        tabs:[
+          { title:'Indices', symbols:[
+            { s:'FOREXCOM:SPXUSD', d:'S&P 500' }, { s:'FOREXCOM:NSXUSD', d:'Nasdaq 100' },
+            { s:'FOREXCOM:DJI', d:'Dow 30' }, { s:'INDEX:NKY', d:'Nikkei 225' }
+          ]},
+          { title:'Forex', symbols:[
+            { s:'FX:EURUSD', d:'EUR/USD' }, { s:'FX:GBPUSD', d:'GBP/USD' },
+            { s:'FX:USDJPY', d:'USD/JPY' }, { s:'FX:USDCAD', d:'USD/CAD' }
+          ]},
+          { title:'Commodities', symbols:[
+            { s:'TVC:GOLD', d:'Gold' }, { s:'TVC:SILVER', d:'Silver' },
+            { s:'TVC:USOIL', d:'Crude Oil' }, { s:'TVC:UKOIL', d:'Brent Oil' }
+          ]},
+          { title:'Bonds', symbols:[
+            { s:'TVC:US10Y', d:'US 10Y' }, { s:'TVC:US02Y', d:'US 2Y' },
+            { s:'TVC:DE10Y', d:'DE 10Y' }, { s:'TVC:JP10Y', d:'JP 10Y' }
+          ]}
+        ],
+        defaultColumn:'overview'
+      };
+      const src='https://s.tradingview.com/embed-widget/market-overview/?locale=en#'+encodeURIComponent(JSON.stringify(cfg));
+      body.innerHTML='<iframe src="'+src+'" style="width:100%;height:100%;border:0" loading="eager" title="Market Overview"></iframe>';
+    } catch(e) {
+      body.innerHTML='<div style="padding:20px;color:#ff3d5a;font-family:monospace;font-size:11px">ERROR: '+esc(e.message)+'</div>';
+    }
+  } else if(id==='news-mkt') {
+    body.innerHTML='<div style="padding:16px;text-align:center;color:var(--text2)">LOADING LIVE NEWS…</div>';
+    fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(j=>{
+        const items=(j.articles||j.results||[]).slice(0,30);
+        if(!items.length){ body.innerHTML='<div style="padding:16px;text-align:center;color:var(--text2)">NO NEWS RIGHT NOW</div>'; return; }
+        body.innerHTML=items.map(n=>{
+          const src=(n.source&&n.source.name)||n.source||'news';
+          const when=n.publishedAt||n.published_at||'';
+          return '<a href="'+(n.url||'#')+'" target="_blank" rel="noopener" style="text-decoration:none">'+
+            '<div class="newsrow" style="padding:10px;border-left:3px solid var(--P);background:var(--cgrd);margin-bottom:6px">'+
+              '<div style="color:var(--P);font-weight:700;font-size:10px">'+esc(n.title||'')+'</div>'+
+              '<div style="font-size:8px;color:var(--text2);margin-top:3px">'+esc(src)+' • '+esc(when)+'</div>'+
+            '</div></a>';
+        }).join('');
+      })
+      .catch(e=>{ body.innerHTML='<div style="padding:16px;text-align:center;color:#ff3d5a;font-size:10px">NEWS ERROR: '+esc(e.message)+'</div>'; });
+  } else if(id==='analytics') {
     body.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2);font-size:10px">LOADING QUALITY METRICS…</div>`;
     loadAnalytics();
   } else if(id==='dex-img') {
