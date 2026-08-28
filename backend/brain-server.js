@@ -354,6 +354,44 @@ router.get('/overview', (req, res) => {
 });
 
 // ── search (per-agent or whole brain) ────────────────────────────────────────
+
+/* ── knowledge map + routing ──────────────────────────────────────────────
+   GET /api/knowledge-map            what every agent knows, by subject
+   GET /api/knowledge-map?agent=zerox one agent's organized index
+   GET /api/route?q=...              which agent owns this request
+   Pure set logic over the digest topics — no model call, so it is instant
+   and free to hit on every keystroke. */
+const kmap = require('./lib/knowledge-map');
+
+router.get('/knowledge-map', (req, res) => {
+  try {
+    const a = String(req.query.agent || '').trim();
+    if (a) {
+      const one = kmap.forAgent(a);
+      if (!one) return res.status(404).json({ error: 'unknown agent', agents: kmap.AGENTS });
+      return res.json(one);
+    }
+    res.json(kmap.all());
+  } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+});
+
+router.get('/route', (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.status(400).json({ error: 'q required' });
+    const r = kmap.route(q, { limit: Number(req.query.limit) || 3 });
+    const best = r.ranked[0];
+    res.json({
+      query: q,
+      ...r,
+      // what the winning agent can bring to it, so the caller can show why
+      knows: best ? (kmap.forAgent(best.agent) || {}).subjects
+        ?.filter((s2) => r.matchedTopics.includes(s2.topic))
+        ?.map((s2) => ({ topic: s2.topic, sources: s2.count })) || [] : [],
+    });
+  } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+});
+
 router.get('/search', (req, res) => {
   const q = String(req.query.q || '').trim();
   const agent = String(req.query.agent || '').trim().toUpperCase();
