@@ -54,6 +54,8 @@ Verified by actually running it in the `rag-brain-corpus-ingestion` worktree, no
 1. **Payments:** Keep MoonPay as-is (production, working). Add **Paybox alongside it** as a second checkout path for crypto/card ordering (workflow purchases, insight paywalls, coin buys). Do not touch MoonPay code while building Paybox.
 2. **x402:** Build it for real. It's the right protocol for **agent-to-agent and pay-per-insight micropayments** (hit-rate-based charging on ZEROX signals, forge trading fees). Scope: Phase 2, after Paybox checkout ships.
 3. **Docs home:** This file (`MASTER-PLAN.md`) is the single canonical source of truth at repo root. Existing specs are NOT deleted — they're either linked below as still-valid detail docs, or marked superseded. No Obsidian vault gets built.
+4. **Sparks unit (owner-approved 2026-08-27):** 1 Spark = $1 USD, fixed, never floats. SOL/ETH/USDC/Paybox/MoonPay are all *payment rails into* Sparks (convert-then-credit at spend time), not the unit of account itself. Every price in the product stays human-readable ("this costs 5 Sparks") regardless of what someone actually paid with. Do not make Sparks a tradeable/floating token — that's what SHADDAI coin is for, a separate, later, explicitly speculative asset (§7).
+5. **Paybox MCP added** to `.mcp.json` (`https://api.paybox.sh/mcp`) — requires a session restart to connect. `PAYBOX_API_KEY` needs to be set by the owner in `backend/.env`; the guard (`backend/paybox-guard.js`) fails closed without it and stays `enabled:false` in `backend/data/paybox-config.json` until explicitly flipped on.
 
 ---
 
@@ -79,7 +81,107 @@ Both are powered by:
 
 ---
 
-## 3. PHASE PLAN
+## 3. MODEL ACCESS STRATEGY & 0→1M ROADMAP (owner vision, captured 2026-08-27)
+
+### The positioning: don't compete on models, compete on outcome
+Grok, GPT, Gemini, Claude, etc. are commodity inputs, not the product. SHADDAI's
+differentiation is: the SAME frontier models, run THROUGH our 7 agents, our RAG
+brain (grounded in real, growing, cited knowledge — §Phase 1 of the RAG plan),
+our skill catalog (3,437 skills), and our tool/API connections — producing a
+different, better-fit creative and analytical OUTPUT than using that model raw.
+A user asking Grok directly gets Grok's generic answer. A user asking SHADDAI
+(which may route to Grok, Claude, GPT, or whatever's best for the job under the
+hood) gets an answer grounded in digested mastery content, routed through the
+right specialist agent's persona and tools, citing real sources. **We're not
+building a better foundation model. We're building the layer that makes any
+foundation model worth more when it runs through us.**
+
+Practically, this means:
+- **Model routing stays invisible to the user.** They pick an agent or a task,
+  not a model. Under the hood, `agent-engine.js`'s provider chain already does
+  this (groq → gemini → openrouter → anthropic → openai → ollama, cheapest/
+  fastest first, degrading gracefully) — extend it, don't replace it, as
+  "premium model access" becomes a paid tier feature (higher-tier users route
+  to stronger/pricier models; free tier gets the cheap/fast chain).
+- **Tool/API access is the other differentiator.** As the empire scales,
+  connecting more APIs (image/video gen, on-chain data, Higgs Field, whatever's
+  next) through the MCP/tool layer means SHADDAI agents can DO more than a raw
+  chat model ever could alone — this is the moat, not the LLM choice.
+- **This is the same reason the MCP servers matter**: `mcp-server-rag.js` +
+  the eventual Paybox MCP mean SHADDAI's grounded-agent-plus-tools stack is
+  something OTHER tools (Claude Desktop, a Grok-based bot, whatever) can plug
+  into and get the differentiated output too — the RAG brain + skills +
+  tool access become licensable/usable infrastructure, not just a dashboard
+  feature.
+
+### The pipeline (how everything connects)
+Sparks (§1.4, $1 fixed unit) is the metering/billing spine that every piece
+below plugs into:
+
+```
+User pays (MoonPay / Paybox / SOL / ETH)
+        ↓ converts to
+     Sparks ledger ($1 = 1 Spark, fixed)
+        ↓ spent on
+┌───────────────────────────────────────────────────────────┐
+│ Agent workflows (content, research, code, design, pricing) │
+│ Model access (premium routing, "use the best model" tier)  │
+│ Video clipper + AI generation (image/video/music tools)    │
+│ Forge / 3D marketplace (presets today, Meshy generative)   │
+│ Pro Signals (ZEROX market/coin sentiment, pay-per-insight) │
+│ Dreamers (2D game today, 3D spaces/podcasts later)         │
+└───────────────────────────────────────────────────────────┘
+        ↓ eventually settles through
+     x402 (Solana micropayments, Phase 2) + SHADDAI/DREAM coin (Phase 5)
+        ↓ unlocks
+     NFTs (Forge output, collectibles), token utility, DAO/governance (Dreamers)
+```
+
+Coin + NFTs + the token launch are explicitly LATER (Phase 5+, not blocking
+anything above) — the pipeline above needs to work on Sparks + fiat/crypto-in
+first. Don't let "we need a token" block shipping the Sparks-metered product.
+
+### 0 → 1,000,000 (users, not necessarily dollars — revenue follows usage)
+
+**Stage 0 → 100 (founders + earliest users):** what exists today plus what's
+in flight is enough — 7 real agents, RAG-grounded MCP, 2D world, MoonPay
+payments, DIGESTED/SYSTEM knowledge tabs. Goal here is NOT more features, it's
+proving 10-20 real people get real value and pay real Sparks for it. Access-
+code-gated is fine and expected at this stage (per owner note: Forge/marketplace/
+2D world can ship "in progress, access-code only").
+
+**Stage 100 → 1,000 (Paybox + Sparks live, model-tier differentiation live):**
+Sparks ledger fully wired (see Phase plan below), Paybox checkout live
+alongside MoonPay, premium model routing as a paid-tier feature. This is where
+"pay-per-insight" (ZEROX hit-rate charging) and workflow purchases start being
+real recurring revenue, not just subscriptions.
+
+**Stage 1,000 → 10,000 (MCP as licensable infra, x402 live):** other
+tools/bots (a Grok-based bot, third-party agents) can plug into SHADDAI's
+MCP server and get the grounded/tooled output — this is where "not competing
+on models" becomes a real product, not just positioning. x402 micropayments
+make agent-to-agent and pay-per-call metering possible at this scale without
+a human clicking checkout every time.
+
+**Stage 10,000 → 100,000 (Forge/Meshy live, coin launches, NFTs):** 3D
+marketplace goes from presets to real generative 3D (funding permitting),
+SHADDAI coin + DREAM coin mint, NFT pipeline (Forge output → mintable
+collectibles) goes live, Dreamers' 3D spaces/podcasts ship.
+
+**Stage 100,000 → 1,000,000:** desktop-agent form factor (owner's "mini 3D
+form like three.ws" vision) — SHADDAI agents running as a local presence on a
+user's own machine, not just a web dashboard. This is explicitly a LATER
+platform bet, not near-term scope; flag it here so it's not lost, but nothing
+before Stage 10,000 should be built assuming this exists yet.
+
+**Ordering discipline:** each stage's revenue proof gates the next stage's
+build. Don't build Stage 3 features (coin/NFT) while Stage 1 (Sparks + Paybox)
+isn't proven with real paying users — that's the single biggest risk to this
+plan (chasing token/NFT excitement before the metering spine actually works).
+
+---
+
+## 4. PHASE PLAN
 
 ### Phase 0 — Clean the floor (before anything else, ~1 day)
 - [ ] Commit or revert the 10 uncommitted files in `Shaddai` main (`git status --short` to see them — includes `brain-server.js`, `public/brain.html`, agent data JSONs)
@@ -103,13 +205,16 @@ Both are powered by:
 
 **Model:** Sonnet for the merge + lesson-layer wiring, Haiku for test iteration.
 
-### Phase 2 — Payments: Paybox + x402
-- [ ] Paybox checkout integration (new payment option, alongside MoonPay, not replacing it)
-- [ ] Wire Paybox to: workflow purchases, tier upgrades, coin pre-orders
-- [ ] x402 micropayment layer for pay-per-insight (ZEROX signals, hit-rate billing)
+### Phase 2 — Payments: Sparks ledger + Paybox + x402
+- [x] Paybox added: MCP (`.mcp.json`) + guarded agent tool (`paybox_pay`, `backend/paybox-guard.js`) — off by default, needs `PAYBOX_API_KEY` + `enabled:true`. Endpoint shape NOT yet verified against real Paybox docs (`e741b7a`).
+- [ ] **Sparks ledger** (new, owner-locked 2026-08-27): 1 Spark = $1 USD fixed. Build as its own ledger (mirror `billing-service.js`'s credit ledger pattern) that MoonPay, Paybox, and eventually SOL/ETH direct-pay all credit INTO. Every priced thing in the product (workflow runs, premium model routing, pay-per-insight) debits Sparks, never a raw currency amount.
+- [ ] Wire Paybox checkout to: workflow purchases, tier upgrades, Sparks top-ups (NOT coin pre-orders yet — coin is Phase 5, don't conflate)
+- [ ] Real Paybox endpoint verification — owner needs to supply their API docs/dashboard so `paybox-guard.js`'s generic `callPaybox()` gets the exact real request/response shape
+- [ ] Premium model routing as a paid Sparks-metered feature (§3: "best models thru us") — extend `agent-engine.js`'s existing provider chain so higher Sparks spend / higher tier can route to stronger models, not just cheapest-first
+- [ ] x402 micropayment layer for pay-per-insight (ZEROX signals, hit-rate billing) — settles into the same Sparks ledger
 - [ ] Forge trading fee hook (stub now, activate when Forge marketplace is live)
 
-**Model:** Sonnet for integration/webhooks, Opus for x402 economic design (fee structure, hit-rate formula).
+**Model:** Sonnet for ledger + integration/webhooks, Opus for x402 economic design (fee structure, hit-rate formula) and model-routing tier design.
 
 ### Phase 3 — Agent activation for real use
 - [ ] Confirm each agent's `backend/data/agents/*.md` spec matches what's actually invokable via MCP (audit found specs exist — verify dashboard/Forge/2D world actually call live agent skills, not cached responses — audit flagged this as unclear, gap #9)
@@ -139,7 +244,7 @@ Both are powered by:
 
 ---
 
-## 4. WHAT NOT TO DO
+## 5. WHAT NOT TO DO
 - Don't rebuild the 7 agents from scratch — they exist. Extend, don't replace.
 - Don't touch MoonPay while building Paybox — additive only.
 - Don't start Meshy work until funding is confirmed (original plan, still valid).
@@ -148,7 +253,7 @@ Both are powered by:
 
 ---
 
-## 5. DETAIL DOCS STILL VALID (linked, not duplicated)
+## 6. DETAIL DOCS STILL VALID (linked, not duplicated)
 - Agent specs: `backend/data/agents/{QUILL,ORACLE,PIKADON,NEXUS,TURTLE,ZEROX,SHADDAI}.md`
 - Agent skills: `backend/agents/agents/*/SKILL.md`
 - RAG state: `backend/data/rag/README.md`, `backend/MCP-RAG-SETUP.md`
@@ -160,8 +265,12 @@ Both are powered by:
 
 ---
 
-## 6. NEXT IMMEDIATE ACTION
+## 7. NEXT IMMEDIATE ACTION
 
-Phase 0 first (clean git state), then Phase 1 (finish RAG ingest CLI + MCP grounding) — everything else depends on agents actually being grounded in real, growing knowledge instead of static specs.
+Phase 1's core (RAG grounding) is done and verified. Phase 2 is now active:
 
-**Do not start Phase 2+ work until Phase 1 is verified working.**
+1. **Build the Sparks ledger** ($1 = 1 Spark, fixed) — this is the metering spine everything else in §3's pipeline plugs into. Nothing in Stage 100→1,000 of the roadmap works without it.
+2. **Owner: supply real Paybox API docs** so `paybox-guard.js` can be corrected from its generic placeholder to the real endpoint shape.
+3. Then: wire Paybox checkout to Sparks top-ups + workflow purchases.
+
+**Do not start Phase 3+ (coin, NFTs, Meshy) until Sparks + Paybox are proven with real paying users** — per §3's ordering discipline, chasing token/NFT work before the metering spine works is the single biggest risk to this plan.
