@@ -36,7 +36,7 @@ Verified by actually running it in the `rag-brain-corpus-ingestion` worktree, no
 - Paybox
 - Meshy 3D generation integration
 - SHADDAI coin / DREAM coin contracts
-- Obsidian vault (does not exist on disk — knowledge is 4,295 scattered `.md` files)
+- ~~Obsidian vault (does not exist on disk)~~ — **CORRECTION (2026-08-28): it does exist**, at `OneDrive/OBSIDIAN/SHADDAI OBSIDIAN/` (includes a `07 Credentials/` folder with API keys — HF tokens, FAL_KEY, etc). The earlier audit missed it because it searched under `C:\Users\Brittany\Shaddai` and top-level user dirs, not OneDrive. See memory note `API_KEYS_VAULT_AND_HF_PROVIDERS` for the HF provider gotcha found there (hf-inference returns 410 Gone, not a dead key — route via nscale/fal-ai/wavespeed instead). Don't re-search for this — it's found, use it.
 
 ### Known contradictions in old docs
 - Dreamers Climb spec (`DREAMERS_CLIMB_V16.39_MASTER_PLAN.md`) says 3 radios + "VS mode coming soon"; actual code has 8 radios and no VS mode. Spec is stale — trust the code.
@@ -51,11 +51,12 @@ Verified by actually running it in the `rag-brain-corpus-ingestion` worktree, no
 
 ## 1. DECISIONS LOCKED (owner-approved 2026-08-27)
 
-1. **Payments:** Keep MoonPay as-is (production, working). Add **Paybox alongside it** as a second checkout path for crypto/card ordering (workflow purchases, insight paywalls, coin buys). Do not touch MoonPay code while building Paybox.
+1. **Payments — CORRECTED (2026-08-28):** Paybox is NOT a Stripe-like checkout processor — it's a non-custodial AI-agent WALLET (MPC-sharded keys, agents never touch keys directly, policy-gated/approval-workflow transfers, works across any chain/model/app/exchange, from the MoonPay team's Open Wallet Standard). Wrong to treat it as a second checkout path; `paybox-guard.js`'s generic REST "charge" abstraction is the wrong shape and needs rebuilding once its real MCP tool surface is known (connect via `.mcp.json`, restart, list its tools). Its actual fit: give agents (ZEROX for trading, PIKADON for policy oversight) a real scoped wallet to operate on-chain — closer to what `moonpay-agent.js` already does manually (user signs locally via CLI) than to Stripe checkout. **Keep Stripe as the checkout/subscription rail — it's already live and wired to Sparks (§Phase 2). Don't replace it.**
 2. **x402:** Build it for real. It's the right protocol for **agent-to-agent and pay-per-insight micropayments** (hit-rate-based charging on ZEROX signals, forge trading fees). Scope: Phase 2, after Paybox checkout ships.
 3. **Docs home:** This file (`MASTER-PLAN.md`) is the single canonical source of truth at repo root. Existing specs are NOT deleted — they're either linked below as still-valid detail docs, or marked superseded. No Obsidian vault gets built.
 4. **Sparks unit (owner-approved 2026-08-27):** 1 Spark = $1 USD, fixed, never floats. SOL/ETH/USDC/Paybox/MoonPay are all *payment rails into* Sparks (convert-then-credit at spend time), not the unit of account itself. Every price in the product stays human-readable ("this costs 5 Sparks") regardless of what someone actually paid with. Do not make Sparks a tradeable/floating token — that's what SHADDAI coin is for, a separate, later, explicitly speculative asset (§7).
-5. **Paybox MCP added** to `.mcp.json` (`https://api.paybox.sh/mcp`) — requires a session restart to connect. `PAYBOX_API_KEY` needs to be set by the owner in `backend/.env`; the guard (`backend/paybox-guard.js`) fails closed without it and stays `enabled:false` in `backend/data/paybox-config.json` until explicitly flipped on.
+5. **Paybox MCP added** to `.mcp.json` (`https://api.paybox.sh/mcp`) — requires a session restart to connect. Once connected, LIST ITS TOOLS FIRST before writing any more integration code — `backend/paybox-guard.js`'s current REST "charge" shape is a wrong guess (see correction above) and needs rebuilding around Paybox's real wallet-operation tools (likely: create/vault a wallet, set a policy, agent-initiated transfer/swap under that policy, approve/reject a pending action) — not a generic checkout charge.
+6. **Model access for Pro (owner decision needed, 2026-08-28):** keep the existing Stripe billing as the subscription/tier rail. For "high-end models without users adding their own API key" — use a model-aggregator platform behind ONE key SHADDAI holds (OpenRouter is already wired into `agent-engine.js`'s provider chain — reuse it rather than adding a new aggregator) and gate provider selection by tier: Free routes cheap/fast first (groq/ollama), Pro/Elite routes to stronger models first (openrouter/anthropic/openai). This is the concrete version of §3's "best models thru us" positioning.
 
 ---
 
@@ -206,10 +207,10 @@ plan (chasing token/NFT excitement before the metering spine actually works).
 **Model:** Sonnet for the merge + lesson-layer wiring, Haiku for test iteration.
 
 ### Phase 2 — Payments: Sparks ledger + Paybox + x402
-- [x] Paybox added: MCP (`.mcp.json`) + guarded agent tool (`paybox_pay`, `backend/paybox-guard.js`) — off by default, needs `PAYBOX_API_KEY` + `enabled:true`. Endpoint shape NOT yet verified against real Paybox docs (`e741b7a`).
+- [x] Paybox MCP added to `.mcp.json` — off by default. **CORRECTED (2026-08-28):** Paybox is a non-custodial agent wallet (MPC/TEE, scoped/revocable, policy-gated), not checkout — `paybox-guard.js`'s REST "charge" tool is the wrong shape and needs rebuilding around its real wallet-operation tools once the MCP is connected and its tool list is inspected. Not a Sparks top-up rail; more likely: give ZEROX/PIKADON a real scoped wallet for on-chain agent actions.
 - [x] **CORRECTION (2026-08-28):** the Sparks ledger already existed and is genuinely well-built — `backend/economy-service.js` + `backend/economy-routes.js` (`/api/economy/*`). Postgres-or-atomic-file store, idempotent `grant`/`spend`, integer-only amounts, catalog + inventory, deliberately closed-loop (no cash-out — keeps SHADDAI out of money-transmitter territory). The earlier plan entry here calling for a new ledger was wrong — don't rebuild it.
 - [x] **The real gap, found and fixed:** `stripe-webhook.js` (already live, signature-verified, idempotent) only ever granted the OLD SEPARATE `billing-service.js` "credits" system (LLM usage metering) — a real Stripe payment never touched the Sparks economy at all. Fixed (`7fa9d76`): `checkout.session.completed` now also grants Sparks computed from the actual amount Stripe charged (`session.amount_total`), at the owner-locked 1 Spark = $1 rate, idempotent on the Stripe session id. Verified: grant + retry-of-same-key → `replayed:true`, balance unchanged.
-- [ ] Wire Paybox checkout the same way once its endpoint shape is confirmed: on successful charge, `economyService.grant(userId, sparksFromRealAmountPaid, 'paybox_topup:...', chargeId)`
+- [ ] ~~Wire Paybox checkout~~ — not applicable, Paybox is a wallet not a checkout processor (see correction above). Sparks top-ups stay on Stripe (done) + eventually direct SOL/ETH/USDC convert-then-credit.
 - [ ] SOL/ETH/USDC direct-pay → convert to USD at payment time, then grant Sparks 1:1 the same way (never let Sparks float with crypto price)
 - [ ] Consider whether tier subscription purchases (not just credit packs) should also grant a Sparks bonus — currently only the raw `amount_total` converts; deliberate decision needed, not yet made
 - [ ] Premium model routing as a paid Sparks-metered feature (§3: "best models thru us") — extend `agent-engine.js`'s existing provider chain so higher Sparks spend / higher tier can route to stronger models, not just cheapest-first. Debit via `economyService.spend()`.
@@ -272,8 +273,9 @@ plan (chasing token/NFT excitement before the metering spine actually works).
 Phase 1's core (RAG grounding) is done and verified. Phase 2 is now active — and further along than expected, since the Sparks ledger already existed:
 
 1. **Done:** Stripe payments now actually credit Sparks (1 Spark = $1, computed from the real amount charged) — the ledger itself (`economy-service.js`) was already solid, it just wasn't connected to the one live payment rail.
-2. **Owner: supply real Paybox API docs** so `paybox-guard.js` can be corrected from its generic placeholder to the real endpoint shape, then wire Paybox's successful-charge event the same way Stripe's now is.
-3. **Owner: decide** whether tier subscription purchases should also grant a Sparks bonus (not yet decided — only raw credit-pack/one-off amounts convert right now).
-4. Then: premium model routing as a Sparks-metered feature, x402 for pay-per-insight, Forge trading fees via the catalog system that already exists.
+2. **Building now: tier-gated model routing** — Pro/Elite users get access to stronger models (via OpenRouter, already wired) without adding their own API key, Free tier stays on the cheap/fast chain. This is the concrete "high-end models thru us" feature.
+3. **After session restart with Paybox MCP connected**, list its tools and rebuild `paybox-guard.js` around what it actually offers (agent wallet operations, not checkout).
+4. **Owner: decide** whether tier subscription purchases should also grant a Sparks bonus (not yet decided — only raw credit-pack/one-off amounts convert right now).
+5. Then: x402 for pay-per-insight, Forge trading fees via the catalog system that already exists.
 
 **Do not start Phase 3+ (coin, NFTs, Meshy) until Sparks + Paybox are proven with real paying users** — per §3's ordering discipline, chasing token/NFT work before the metering spine works is the single biggest risk to this plan.
