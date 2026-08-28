@@ -5903,36 +5903,80 @@ router.post('/content/insights', async (req, res) => {
 const SCHEDULED_JOBS_FILE = path.join(DATA_DIR, 'scheduled_jobs.json');
 let _scheduledJobs = loadJSON(SCHEDULED_JOBS_FILE, []);
 
+/* ── scheduled jobs: OWNER-SCOPED ─────────────────────────────────────────
+   These five routes had no auth and no owner scoping at all. GET returned
+   every user's jobs to anyone (including the prompt text, which routinely
+   carries private business detail), and PUT/DELETE/run accepted any job id
+   from any caller — so one user could read, edit, delete or EXECUTE another
+   user's automation.
+
+   Jobs now carry `userId`, set from the authenticated identity at creation,
+   and every route resolves against the caller.
+
+   Not-found is returned instead of forbidden when the caller does not own a
+   job, so the API never confirms that someone else's job id exists.
+
+   Legacy jobs stored before this fix have no owner. They are NOT served to
+   anyone rather than being guessed at — the data is left untouched on disk,
+   and an owner can claim one by adding "userId" to it in
+   backend/data/scheduled_jobs.json. */
+function _jobOwner(req) {
+  return String(
+    (req && req.userId)
+    || (req && req.user && (req.user.id || req.user.userId))
+    || (req && req.headers && req.headers['x-user-id'])
+    || ''
+  ).trim();
+}
+function _ownsJob(job, uid) { return !!uid && !!job && job.userId === uid; }
+
 router.get('/jobs/scheduled', (req, res) => {
-  res.json({ jobs: _scheduledJobs, count: _scheduledJobs.length });
+  const uid = _jobOwner(req);
+  if (!uid) return res.json({ jobs: [], count: 0, note: 'sign in to see your scheduled jobs' });
+  const mine = _scheduledJobs.filter((j) => _ownsJob(j, uid));
+  res.json({ jobs: mine, count: mine.length });
 });
 
 router.post('/jobs/scheduled', (req, res) => {
+  const uid = _jobOwner(req);
+  if (!uid) return res.status(401).json({ error: 'sign in to schedule a job' });
   const { name, trigger, steps, output, enabled = true } = req.body;
   if (!name || !steps?.length) return res.status(400).json({ error: 'name and steps required' });
-  const job = { id: `job_${Date.now()}`, name, trigger, steps, output, enabled, created: new Date().toISOString(), lastRun: null, runCount: 0 };
+  const job = {
+    id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    userId: uid,
+    name, trigger, steps, output, enabled,
+    created: new Date().toISOString(), lastRun: null, runCount: 0,
+  };
   _scheduledJobs.push(job);
   saveJSON(SCHEDULED_JOBS_FILE, _scheduledJobs);
   res.json({ success: true, job });
 });
 
 router.put('/jobs/scheduled/:id', (req, res) => {
-  const idx = _scheduledJobs.findIndex(j => j.id === req.params.id);
+  const uid = _jobOwner(req);
+  const idx = _scheduledJobs.findIndex((j) => j.id === req.params.id && _ownsJob(j, uid));
   if (idx === -1) return res.status(404).json({ error: 'Job not found' });
-  _scheduledJobs[idx] = { ..._scheduledJobs[idx], ...req.body };
+  // userId and id are not client-writable, or ownership could be reassigned
+  const { userId: _drop, id: _dropId, ...patch } = req.body || {};
+  _scheduledJobs[idx] = { ..._scheduledJobs[idx], ...patch };
   saveJSON(SCHEDULED_JOBS_FILE, _scheduledJobs);
   res.json({ success: true, job: _scheduledJobs[idx] });
 });
 
 router.delete('/jobs/scheduled/:id', (req, res) => {
-  _scheduledJobs = _scheduledJobs.filter(j => j.id !== req.params.id);
+  const uid = _jobOwner(req);
+  const before = _scheduledJobs.length;
+  _scheduledJobs = _scheduledJobs.filter((j) => !(j.id === req.params.id && _ownsJob(j, uid)));
+  if (_scheduledJobs.length === before) return res.status(404).json({ error: 'Job not found' });
   saveJSON(SCHEDULED_JOBS_FILE, _scheduledJobs);
   res.json({ success: true });
 });
 
 // POST /api/jobs/scheduled/:id/run — manually trigger a scheduled job
 router.post('/jobs/scheduled/:id/run', async (req, res) => {
-  const job = _scheduledJobs.find(j => j.id === req.params.id);
+  const _uid = _jobOwner(req);
+  const job = _scheduledJobs.find(j => j.id === req.params.id && _ownsJob(j, _uid));
   if (!job) return res.status(404).json({ error: 'Job not found' });
   const task_id = `sched_${Date.now()}`;
   res.json({ success: true, task_id, message: `Job "${job.name}" triggered` });
