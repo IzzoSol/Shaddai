@@ -233,43 +233,11 @@ body.editing .slot .go{ display:none; }
 .lib .row .chip{ width:40px; height:40px; border-radius:2px; background-size:cover; background-position:center;
   border:1px solid color-mix(in srgb, var(--ac) 40%, transparent); flex-shrink:0; opacity:.8; }
 .lib .row .txt{ min-width:0; flex:1; }
-.lib .row .n{ font-family:var(--f-display); font-weight:700; font-size:15px; letter-spacing:.09em; color:var(--ink); }
-.lib .row .k{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ac); margin-top:2px; }
+.lib .row .n{ display:block; font-family:var(--f-display); font-weight:700; font-size:15px; letter-spacing:.09em; color:var(--ink); }
+.lib .row .k{ display:block; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ac); margin-top:3px; }
 .lib .row .state{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-faint); border:1px solid var(--edge); padding:4px 8px; border-radius:2px; flex-shrink:0; }
 .lib .row.placed .state{ color:var(--ac); border-color:color-mix(in srgb, var(--ac) 42%, transparent); }
-
-/* ── sign-in sheet ──────────────────────────────────────────────────── */
-.field{ display:block; margin-top:12px; }
-.field span{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); }
-.field input{
-  width:100%; margin-top:6px; background:var(--panel); border:1px solid var(--edge); border-radius:2px;
-  color:var(--ink); font-family:var(--f-mono); font-size:15px; padding:13px 14px; min-height:48px; outline:none;
-  transition:border-color .25s var(--ease);
-}
-.field input:focus{ border-color:var(--emerald); }
-.btn{
-  width:100%; margin-top:15px; min-height:50px; border-radius:2px;
-  font-family:var(--f-mono); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
-  border:1px solid var(--emerald); color:var(--void); background:var(--emerald); font-weight:600;
-  transition:filter .2s var(--ease), opacity .2s var(--ease);
-}
-.btn:hover{ filter:brightness(1.1); }
-.btn[disabled]{ opacity:.45; cursor:default; }
-.btn.ghost{ background:none; color:var(--ink); border-color:var(--edge); }
-.btn.ghost:hover{ border-color:var(--violet); color:var(--violet); filter:none; }
-.or{ text-align:center; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.24em;
-  text-transform:uppercase; color:var(--ink-faint); margin:16px 0 2px; }
-.msg{ font-family:var(--f-mono); font-size:11px; letter-spacing:.05em; margin-top:12px; min-height:16px; color:var(--ink-faint); }
-.msg.bad{ color:var(--rose); } .msg.good{ color:var(--emerald); }
-
-/* theme picker row */
-.skins{ display:flex; flex-wrap:wrap; gap:7px; margin-top:16px; }
-.skins button{ display:flex; align-items:center; gap:8px; border:1px solid var(--edge); border-radius:2px;
-  padding:0 13px; min-height:44px; font-family:var(--f-mono); font-size:10.5px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--ink-soft); transition:border-color .25s var(--ease), color .25s var(--ease); }
-.skins button:hover, .skins button.on{ color:var(--ink); border-color:var(--emerald); }
-.skins button i{ width:9px; height:9px; border-radius:50%; background:var(--d); display:block; }
 
 footer{ position:relative; z-index:10; text-align:center; font-family:var(--f-mono); font-size:9.5px;
   letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint);
@@ -323,31 +291,8 @@ footer b{ color:var(--ink-soft); font-weight:400; }
   <div class="lib" id="lib"></div>
 </div>
 
-<!-- ── sign-in ─────────────────────────────────────────────────────── -->
-<div class="sheet" id="sheetAuth" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-  <button class="close" id="authClose" type="button">✕ close</button>
-  <h2 id="authTitle">Sign in</h2>
-  <p class="hint">Optional. Nothing here is locked behind it — signing in just carries your work between the doors.</p>
-  <form id="authForm" autocomplete="on">
-    <label class="field"><span>email</span><input id="authEmail" type="email" name="email" autocomplete="email" inputmode="email" placeholder="you@example.com" /></label>
-    <label class="field"><span>password</span><input id="authPass" type="password" name="password" autocomplete="current-password" placeholder="••••••••" /></label>
-    <button class="btn" id="authGo" type="submit">Enter</button>
-  </form>
-  <div class="or">or</div>
-  <button class="btn ghost" id="authWallet" type="button">◎ Connect Solana wallet</button>
-  <div class="msg" id="authMsg"></div>
-  <button class="btn ghost" id="authOut" type="button" style="display:none">Sign out</button>
-</div>
-
-<!-- ── theme ───────────────────────────────────────────────────────── -->
-<div class="sheet" id="sheetTheme" role="dialog" aria-modal="true" aria-labelledby="thTitle">
-  <button class="close" id="thClose" type="button">✕ close</button>
-  <h2 id="thTitle">Theme</h2>
-  <p class="hint">Shared with the rest of SHADDAI — your choice follows you into the dashboard.</p>
-  <div class="skins" id="skins"></div>
-</div>
-
 <script src="/js/shd-modules.js"></script>
+<script src="/js/shd-chrome.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    THE FRONT DOOR — slots, dwell-bios, swapping, sign-in, theme.
@@ -360,49 +305,23 @@ footer b{ color:var(--ink-soft); font-weight:400; }
   var M = window.SHDModules;
   var ROMAN = ['I', 'II', 'III', 'IV'];
 
-  /* ── theme ────────────────────────────────────────────────────────── */
-  var SKINS = [
-    { id: 'glitch', name: 'Obsidian', dot: '#00ff9c' },
-    { id: 'void', name: 'Void', dot: '#e8e8e8' },
-    { id: 'terminal', name: 'Terminal', dot: '#00ff41' },
-    { id: 'amber', name: 'Amber', dot: '#ffb000' },
-    { id: 'brutalist', name: 'Brutalist', dot: '#f5c000' },
-    { id: 'serif', name: 'Serif', dot: '#3a6b4a' }
-  ];
-  function getSkin() { try { return localStorage.getItem('shd_theme_skin') || 'glitch'; } catch (e) { return 'glitch'; } }
-  function setSkin(id) {
-    document.documentElement.setAttribute('data-theme-skin', id);
-    try { localStorage.setItem('shd_theme_skin', id); } catch (e) {}
-    document.querySelectorAll('#skins button').forEach(function (b) { b.classList.toggle('on', b.dataset.skin === id); });
-    window.dispatchEvent(new CustomEvent('shd:skin', { detail: id }));
-  }
-  var skinsEl = document.getElementById('skins');
-  SKINS.forEach(function (s) {
-    var b = document.createElement('button');
-    b.type = 'button'; b.dataset.skin = s.id; b.style.setProperty('--d', s.dot);
-    b.innerHTML = '<i></i>' + s.name;
-    b.addEventListener('click', function () { setSkin(s.id); });
-    skinsEl.appendChild(b);
-  });
-  setSkin(getSkin());
+  var C = window.SHDChrome.init();
+  document.getElementById('btnTheme').addEventListener('click', function () { C.openTheme(); });
 
-  /* ── dwell-bio preference ─────────────────────────────────────────── */
-  var dwellOn = true;
-  try { dwellOn = localStorage.getItem('shd_dwell_bios') !== '0'; } catch (e) {}
+  /* ── dwell-bio preference (shared with Simple Mode) ─────────────────── */
   var btnDwell = document.getElementById('btnDwell');
+  function dwellOn() { return C.dwell(); }
   function paintDwell() {
-    btnDwell.classList.toggle('on', dwellOn);
-    btnDwell.classList.toggle('out', !dwellOn);
-    btnDwell.title = dwellOn
+    var on = C.dwell();
+    btnDwell.classList.toggle('on', on);
+    btnDwell.classList.toggle('out', !on);
+    btnDwell.title = on
       ? 'Bios on — sit on a tile for 5 seconds to read what it is'
       : 'Bios off — tiles stay quiet';
+    if (!on) document.querySelectorAll('.slot').forEach(clearDwell);
   }
-  btnDwell.addEventListener('click', function () {
-    dwellOn = !dwellOn;
-    try { localStorage.setItem('shd_dwell_bios', dwellOn ? '1' : '0'); } catch (e) {}
-    if (!dwellOn) document.querySelectorAll('.slot').forEach(clearDwell);
-    paintDwell();
-  });
+  btnDwell.addEventListener('click', function () { C.setDwell(!C.dwell()); });
+  C.onDwell(paintDwell);
   paintDwell();
 
   /* ── slots ────────────────────────────────────────────────────────── */
@@ -443,7 +362,7 @@ footer b{ color:var(--ink-soft); font-weight:400; }
      mouse, and keyboard — hover doesn't exist on a phone, and this rewards
      hesitation instead of punishing it. */
   function startDwell(el) {
-    if (!dwellOn || editing || el.classList.contains('bio-open')) return;
+    if (!dwellOn() || editing || el.classList.contains('bio-open')) return;
     clearDwell(el);
     el.classList.add('dwelling');
     el._dwellT = setTimeout(function () { el.classList.remove('dwelling'); el.classList.add('bio-open'); }, 5000);
@@ -524,142 +443,32 @@ footer b{ color:var(--ink-soft); font-weight:400; }
   }
 
   /* ── sheets ───────────────────────────────────────────────────────── */
-  var sheetAuth = document.getElementById('sheetAuth');
-  var sheetTheme = document.getElementById('sheetTheme');
   function openSheet(el) {
-    closeSheets(true);
     scrim.classList.add('on'); el.classList.add('on');
-    var f = el.querySelector('input, button');
-    if (f && !('ontouchstart' in window)) setTimeout(function () { f.focus(); }, 380);
   }
-  function closeSheets(keepScrim) {
-    [sheetLib, sheetAuth, sheetTheme].forEach(function (s) { s.classList.remove('on'); });
-    if (!keepScrim) {
-      scrim.classList.remove('on');
-      grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); });
-    }
+  function closeSheets() {
+    sheetLib.classList.remove('on');
+    scrim.classList.remove('on');
+    grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); });
   }
   scrim.addEventListener('click', function () { closeSheets(); });
   document.getElementById('libClose').addEventListener('click', function () { closeSheets(); });
-  document.getElementById('authClose').addEventListener('click', function () { closeSheets(); });
-  document.getElementById('thClose').addEventListener('click', function () { closeSheets(); });
-  document.getElementById('btnTheme').addEventListener('click', function () { openSheet(sheetTheme); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') { closeSheets(); if (editing) setEditing(false); }
   });
 
-  /* ── sign-in (optional, never gates entry) ────────────────────────────
-     Uses endpoints that already exist. Nothing under backend/ is modified:
-       POST /api/auth/login                       — email + password
-       GET  /api/wallet/nonce → POST /api/wallet/session — Solana signature
-     Identity is stored the way the rest of the app already reads it
-     (shd_userid / shd_token), so shd-tier.js picks it up unchanged. */
+  /* ── sign-in ─────────────────────────────────────────────────────────
+     Implemented once in shd-chrome.js and shared with Simple Mode. It uses
+     endpoints that already exist; no backend file is modified. */
   var authBtn = document.getElementById('btnAuth');
   var authLbl = document.getElementById('authLbl');
-  var authMsg = document.getElementById('authMsg');
-  var authOut = document.getElementById('authOut');
-
-  function currentUser() {
-    try {
-      var u = localStorage.getItem('shd_userid');
-      if (u && u.indexOf('guest') !== 0 && u !== 'local') return u;
-    } catch (e) {}
-    return null;
-  }
-  function shortId(u) { return u.length > 16 ? u.slice(0, 6) + '…' + u.slice(-4) : u; }
   function paintAuth() {
-    var u = currentUser();
+    var u = C.user();
     authBtn.classList.toggle('out', !u);
-    authLbl.textContent = u ? shortId(u) : 'sign in';
-    authOut.style.display = u ? '' : 'none';
+    authLbl.textContent = u ? C.shortId(u) : 'sign in';
   }
-  function saveIdentity(userId, token) {
-    try {
-      if (userId) localStorage.setItem('shd_userid', userId);
-      if (token) localStorage.setItem('shd_token', token);
-    } catch (e) {}
-    paintAuth();
-  }
-  authBtn.addEventListener('click', function () { authMsg.textContent = ''; authMsg.className = 'msg'; openSheet(sheetAuth); });
-  authOut.addEventListener('click', function () {
-    try { localStorage.removeItem('shd_userid'); localStorage.removeItem('shd_token'); } catch (e) {}
-    paintAuth(); authMsg.textContent = 'Signed out.'; authMsg.className = 'msg good';
-  });
-
-  document.getElementById('authForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var email = document.getElementById('authEmail').value.trim();
-    var pass = document.getElementById('authPass').value;
-    if (!email || !pass) { authMsg.textContent = 'Email and password, please.'; authMsg.className = 'msg bad'; return; }
-    var go = document.getElementById('authGo');
-    go.disabled = true; authMsg.textContent = 'Checking…'; authMsg.className = 'msg';
-    fetch('/api/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pass })
-    })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-      .then(function (res) {
-        if (!res.ok) throw new Error(res.j && res.j.error ? res.j.error : 'Sign-in failed.');
-        var j = res.j || {};
-        saveIdentity((j.user && (j.user.id || j.user.userId)) || j.userId || email, j.token || j.accessToken);
-        authMsg.textContent = 'Signed in.'; authMsg.className = 'msg good';
-        setTimeout(closeSheets, 700);
-      })
-      .catch(function (err) { authMsg.textContent = err.message || 'Sign-in failed.'; authMsg.className = 'msg bad'; })
-      .then(function () { go.disabled = false; });
-  });
-
-  /* Solana: nonce → wallet signs it → session. Phantom (or any injected
-     provider exposing signMessage) only; no libraries, no network spend. */
-  document.getElementById('authWallet').addEventListener('click', function () {
-    var provider = window.solana || (window.phantom && window.phantom.solana);
-    if (!provider || !provider.connect) {
-      authMsg.textContent = 'No Solana wallet found in this browser.';
-      authMsg.className = 'msg bad';
-      return;
-    }
-    authMsg.textContent = 'Waiting for your wallet…'; authMsg.className = 'msg';
-    var address;
-    provider.connect()
-      .then(function (res) {
-        address = String((res && res.publicKey ? res.publicKey : provider.publicKey));
-        return fetch('/api/wallet/nonce?wallet=' + encodeURIComponent(address)).then(function (r) { return r.json(); });
-      })
-      .then(function (n) {
-        var message = n.message || n.nonce;
-        if (!message) throw new Error('Could not get a challenge from the server.');
-        var signed = provider.signMessage(new TextEncoder().encode(message), 'utf8');
-        return signed.then(function (s) { return { message: message, sig: s.signature || s }; });
-      })
-      .then(function (p) {
-        // base58 is what the verifier expects; encode the raw signature bytes.
-        return fetch('/api/wallet/session', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet_address: address, message: p.message, signature: b58(p.sig) })
-        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
-      })
-      .then(function (res) {
-        if (!res.ok) throw new Error((res.j && res.j.error) || 'Wallet sign-in failed.');
-        saveIdentity(address, res.j.token);
-        authMsg.textContent = 'Wallet connected.'; authMsg.className = 'msg good';
-        setTimeout(closeSheets, 700);
-      })
-      .catch(function (err) { authMsg.textContent = err.message || 'Wallet sign-in failed.'; authMsg.className = 'msg bad'; });
-  });
-
-  var B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  function b58(bytes) {
-    var d = [], i, j, c;
-    for (i = 0; i < bytes.length; i++) {
-      c = bytes[i];
-      for (j = 0; j < d.length; j++) { c += d[j] << 8; d[j] = c % 58; c = (c / 58) | 0; }
-      while (c > 0) { d.push(c % 58); c = (c / 58) | 0; }
-    }
-    var out = '';
-    for (i = 0; i < bytes.length && bytes[i] === 0; i++) out += '1';
-    for (i = d.length - 1; i >= 0; i--) out += B58[d[i]];
-    return out;
-  }
+  authBtn.addEventListener('click', function () { C.openAuth(); });
+  C.onAuth(paintAuth);
 
   paintAuth();
   render();
