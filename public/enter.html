@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>SHADDAI · Enter</title>
+<meta name="description" content="Four ways into the empire. Choose your threshold — the cinematic descent, the full story, the command hub, or one thumb and everything." />
+<meta name="theme-color" content="#06080b" />
+<meta property="og:title" content="SHADDAI — Enter" />
+<meta property="og:description" content="Four ways in. Choose your threshold." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SHADDAI · THE FRONT DOOR — tokens mirror home.html / journey.html.
+   Obsidian ground, emerald/gold/cyan/violet accents. Do not invent hues.
+   Spec: docs/FRONT-DOOR-MASTER-PROMPT.md
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+  --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --edge:rgba(120,150,140,.14);
+  --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --violet:#b07cff; --rose:#ff6f6f;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#4f5d57;
+  --f-display:'Cinzel', serif; --f-serif:'Fraunces', Georgia, serif; --f-mono:'IBM Plex Mono', monospace;
+  --ease:cubic-bezier(.22,.7,.2,1);
+  --accent:var(--emerald);
+}
+/* The six shared skins (same localStorage key as the rest of the app:
+   shd_theme_skin). We remap our OWN tokens rather than loading
+   theme-switcher.js, whose repaint pass is written for the dashboard's
+   markup and would fight this page's art direction. Choice still carries. */
+html[data-theme-skin="terminal"]{ --void:#030a03; --void2:#041004; --panel:#061806; --ink:#00ff41; --ink-soft:rgba(0,255,65,.62); --edge:rgba(0,255,65,.22); }
+html[data-theme-skin="amber"]   { --void:#0a0600; --void2:#120c02; --panel:#160f03; --ink:#ffcf7a; --ink-soft:rgba(255,176,32,.65); --edge:rgba(255,176,32,.20); }
+html[data-theme-skin="void"]    { --void:#000; --void2:#050505; --panel:#0a0a0a; --ink:#f2f2f2; --ink-soft:#8f8f8f; --edge:rgba(255,255,255,.10); }
+html[data-theme-skin="brutalist"]{ --void:#f5f4f0; --void2:#eceae4; --panel:#fff; --ink:#0a0804; --ink-soft:#5a5248; --ink-faint:#8b8378; --edge:rgba(10,8,4,.18); }
+html[data-theme-skin="serif"]   { --void:#f8f6f0; --void2:#efece4; --panel:#fff; --ink:#1c1710; --ink-soft:#6b5f4e; --ink-faint:#9a8e7c; --edge:rgba(38,28,8,.12); }
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ background:var(--void); -webkit-text-size-adjust:100%; }
+body{
+  background:var(--void); color:var(--ink); font-family:var(--f-serif);
+  -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:hidden;
+  min-height:100dvh; display:flex; flex-direction:column;
+}
+a{ color:inherit; text-decoration:none; }
+button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+::selection{ background:var(--emerald); color:#022; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+
+/* ── atmosphere ─────────────────────────────────────────────────────── */
+.grain{ position:fixed; inset:0; pointer-events:none; z-index:40; mix-blend-mode:overlay; opacity:.32;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.5'/></svg>"); }
+.vignette{ position:fixed; inset:0; pointer-events:none; z-index:38;
+  background:radial-gradient(125% 95% at 50% 40%, transparent 48%, rgba(0,0,0,.78) 100%); }
+html[data-theme-skin="brutalist"] .vignette, html[data-theme-skin="serif"] .vignette{
+  background:radial-gradient(125% 95% at 50% 40%, transparent 55%, rgba(0,0,0,.14) 100%); }
+.aura{ position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(60% 45% at 20% 12%, rgba(0,255,156,.055), transparent 62%),
+    radial-gradient(55% 42% at 82% 22%, rgba(95,224,255,.05), transparent 62%),
+    radial-gradient(70% 50% at 50% 100%, rgba(232,196,92,.045), transparent 66%); }
+
+/* the shared WebGL layer. Transparent, above the tile art, below nothing —
+   tile text reads straight through it, and each tile's solid is scissored
+   into the upper region of its own rect so they never collide. */
+#gl{ position:fixed; inset:0; width:100%; height:100%; z-index:15; pointer-events:none; }
+
+/* ── header ─────────────────────────────────────────────────────────── */
+header{
+  position:relative; z-index:20; display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:clamp(14px,2.4vw,24px) clamp(16px,4vw,42px);
+  padding-top:calc(clamp(14px,2.4vw,24px) + env(safe-area-inset-top));
+}
+.brand{ display:flex; align-items:baseline; gap:10px; min-width:0; overflow:hidden; }
+.brand .sh{
+  font-family:var(--f-display); font-weight:900; font-size:clamp(19px,2.5vw,26px);
+  letter-spacing:.20em; color:var(--ink);
+  text-shadow:0 0 24px rgba(0,255,156,.28);
+}
+.brand .sub{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; color:var(--ink-faint); text-transform:uppercase; white-space:nowrap; }
+@media(max-width:640px){ .brand .sub{ display:none; } }
+
+.controls{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.ctl{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
+  min-height:38px; padding:0 13px; display:inline-flex; align-items:center; gap:7px;
+  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
+html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{ background:rgba(255,255,255,.6); }
+.ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
+.ctl.on{ background:rgba(0,255,156,.09); }
+.ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
+.ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
+@media(max-width:520px){ .ctl{ padding:0 10px; font-size:10px; } .ctl .lbl-long{ display:none; } }
+@media(max-width:440px){
+  header{ padding-left:14px; padding-right:14px; gap:8px; }
+  .brand .sh{ font-size:16px; letter-spacing:.14em; }
+  .controls{ gap:6px; }
+  .ctl{ padding:0 9px; min-height:40px; }
+}
+
+/* ── the grid ───────────────────────────────────────────────────────── */
+main{ position:relative; z-index:10; flex:1; display:flex; flex-direction:column; justify-content:center;
+  padding:clamp(6px,1.6vw,18px) clamp(16px,4vw,42px) clamp(18px,3vw,32px); }
+.lede{ text-align:center; margin:0 auto clamp(16px,2.6vw,30px); max-width:600px; }
+.lede h1{ font-family:var(--f-display); font-weight:500; font-size:clamp(15px,2vw,20px); letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-soft); }
+.lede p{ font-size:clamp(13px,1.5vw,15px); color:var(--ink-faint); margin-top:7px; font-style:italic; }
+
+.grid{
+  display:grid; gap:clamp(12px,1.7vw,20px); width:100%;
+  max-width:1180px; margin:0 auto;
+  grid-template-columns:repeat(2,1fr);
+}
+@media(max-width:760px){ .grid{ grid-template-columns:1fr; max-width:520px; } }
+
+/* ── a slot ─────────────────────────────────────────────────────────── */
+.slot{
+  position:relative; display:block; width:100%; text-align:left; overflow:hidden;
+  border:1px solid var(--edge); border-radius:3px; background:var(--panel);
+  min-height:clamp(190px,25vh,270px); isolation:isolate;
+  transition:border-color .4s var(--ease), transform .4s var(--ease), box-shadow .4s var(--ease);
+  -webkit-tap-highlight-color:transparent;
+}
+@media(max-width:760px){ .slot{ min-height:clamp(168px,23vh,210px); } }
+/* the art plate — dimmed hard and pushed toward the module's own colour */
+.slot .art{
+  position:absolute; inset:0; z-index:0; background-size:cover; background-position:center;
+  opacity:.30; filter:saturate(.55) contrast(1.06);
+  transform:scale(1.04); transition:opacity .55s var(--ease), transform .8s var(--ease);
+}
+.slot .wash{
+  position:absolute; inset:0; z-index:1; transition:opacity .5s var(--ease);
+  background:
+    linear-gradient(180deg, rgba(6,8,11,.42) 0%, rgba(6,8,11,.74) 52%, rgba(6,8,11,.95) 100%),
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 66%);
+}
+html[data-theme-skin="brutalist"] .slot .wash, html[data-theme-skin="serif"] .slot .wash{
+  background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.86) 60%, rgba(255,255,255,.96) 100%); }
+/* the accent hairline that traces the frame */
+.slot .frame{
+  position:absolute; inset:0; z-index:3; pointer-events:none; border:1px solid transparent;
+  transition:border-color .4s var(--ease), box-shadow .4s var(--ease);
+}
+.slot .corner{ position:absolute; z-index:3; width:13px; height:13px; pointer-events:none;
+  border:1px solid var(--accent); opacity:.34; transition:opacity .4s var(--ease), width .4s var(--ease), height .4s var(--ease); }
+.slot .corner.tl{ top:9px; left:9px; border-right:0; border-bottom:0; }
+.slot .corner.br{ bottom:9px; right:9px; border-left:0; border-top:0; }
+
+.slot .body{ position:relative; z-index:4; height:100%; display:flex; flex-direction:column;
+  justify-content:flex-end; padding:clamp(15px,2vw,22px); gap:3px; min-height:inherit; }
+.slot .idx{ position:absolute; top:clamp(13px,1.8vw,19px); right:clamp(15px,2vw,22px);
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.2em; color:var(--ink-faint); }
+.slot .kicker{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent); opacity:.9; }
+.slot .name{
+  font-family:var(--f-display); font-weight:900; letter-spacing:.06em; line-height:.98;
+  font-size:clamp(30px,4.6vw,50px); color:var(--ink);
+  text-shadow:0 2px 30px rgba(0,0,0,.6);
+}
+@media(max-width:760px){ .slot .name{ font-size:clamp(32px,10vw,46px); } }
+html[data-theme-skin="brutalist"] .slot .name, html[data-theme-skin="serif"] .slot .name{ text-shadow:none; }
+.slot .go{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-faint); margin-top:6px; display:flex; align-items:center; gap:7px;
+  opacity:0; transform:translateY(4px); transition:opacity .4s var(--ease), transform .4s var(--ease); }
+
+/* awake state — pointer hover, keyboard focus, or touch-press all share it */
+.slot:hover, .slot:focus-visible, .slot.touched{ transform:translateY(-3px); border-color:color-mix(in srgb, var(--accent) 52%, transparent); }
+.slot:hover .art, .slot:focus-visible .art, .slot.touched .art{ opacity:.46; transform:scale(1.0); }
+.slot:hover .frame, .slot:focus-visible .frame, .slot.touched .frame{
+  border-color:color-mix(in srgb, var(--accent) 34%, transparent);
+  box-shadow:inset 0 0 44px color-mix(in srgb, var(--accent) 12%, transparent), 0 14px 46px rgba(0,0,0,.5); }
+.slot:hover .corner, .slot:focus-visible .corner, .slot.touched .corner{ opacity:.95; width:20px; height:20px; }
+.slot:hover .go, .slot:focus-visible .go, .slot.touched .go{ opacity:1; transform:none; }
+
+/* ── dwell bio (5s) ─────────────────────────────────────────────────── */
+.slot .bio{
+  position:absolute; inset:auto 0 0 0; z-index:6; padding:clamp(15px,2vw,22px);
+  background:linear-gradient(180deg, transparent, rgba(6,8,11,.94) 26%);
+  transform:translateY(101%); transition:transform .55s var(--ease);
+  font-size:13.5px; line-height:1.5; color:var(--ink-soft);
+  border-top:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+html[data-theme-skin="brutalist"] .slot .bio, html[data-theme-skin="serif"] .slot .bio{
+  background:linear-gradient(180deg, transparent, rgba(255,255,255,.97) 26%); }
+.slot.bio-open .bio{ transform:translateY(0); }
+.slot .bio b{ color:var(--accent); font-weight:400; font-family:var(--f-mono); font-size:9.5px;
+  letter-spacing:.2em; text-transform:uppercase; display:block; margin-bottom:6px; }
+/* the dwell timer hairline, filling left→right over 5s */
+.slot .dwell{ position:absolute; left:0; bottom:0; z-index:5; height:1.5px; width:0; background:var(--accent);
+  box-shadow:0 0 8px var(--accent); opacity:.75; }
+.slot.dwelling .dwell{ width:100%; transition:width 5s linear; }
+
+/* ── edit mode ──────────────────────────────────────────────────────── */
+body.editing .slot{ cursor:copy; }
+body.editing .slot::after{
+  content:'swap'; position:absolute; z-index:7; inset:auto 12px 12px auto;
+  font-family:var(--f-mono); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--void); background:var(--accent); padding:6px 10px; border-radius:2px;
+}
+body.editing .slot.pending{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 0 46px color-mix(in srgb, var(--accent) 26%, transparent); }
+body.editing .slot .go{ display:none; }
+
+/* ── drawer ─────────────────────────────────────────────────────────── */
+.scrim{ position:fixed; inset:0; z-index:60; background:rgba(3,5,7,.72); opacity:0; pointer-events:none;
+  transition:opacity .35s var(--ease); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.scrim.on{ opacity:1; pointer-events:auto; }
+.sheet{
+  position:fixed; z-index:61; left:50%; bottom:0; width:min(560px,100%);
+  transform:translate(-50%,102%); transition:transform .45s var(--ease);
+  background:var(--void2); border:1px solid var(--edge); border-bottom:0;
+  border-radius:6px 6px 0 0; padding:20px clamp(16px,4vw,26px);
+  padding-bottom:calc(22px + env(safe-area-inset-bottom));
+  max-height:82dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+.sheet.on{ transform:translate(-50%,0); }
+.sheet h2{ font-family:var(--f-display); font-weight:700; font-size:16px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink); }
+.sheet .hint{ font-size:13px; color:var(--ink-faint); margin-top:5px; font-style:italic; }
+.sheet .close{ position:absolute; top:14px; right:14px; font-family:var(--f-mono); font-size:11px;
+  letter-spacing:.14em; color:var(--ink-faint); min-height:40px; min-width:40px; }
+.sheet .close:hover{ color:var(--ink); }
+
+.lib{ display:flex; flex-direction:column; gap:7px; margin-top:16px; }
+.lib .row{
+  display:flex; align-items:center; gap:13px; width:100%; text-align:left;
+  border:1px solid var(--edge); border-radius:3px; background:var(--panel);
+  padding:10px 13px; min-height:60px; transition:border-color .25s var(--ease), background .25s var(--ease);
+}
+.lib .row:hover{ border-color:color-mix(in srgb, var(--ac) 50%, transparent); background:var(--void2); }
+.lib .row .chip{ width:40px; height:40px; border-radius:2px; background-size:cover; background-position:center;
+  border:1px solid color-mix(in srgb, var(--ac) 40%, transparent); flex-shrink:0; opacity:.8; }
+.lib .row .txt{ min-width:0; flex:1; }
+.lib .row .n{ font-family:var(--f-display); font-weight:700; font-size:15px; letter-spacing:.09em; color:var(--ink); }
+.lib .row .k{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ac); margin-top:2px; }
+.lib .row .state{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); border:1px solid var(--edge); padding:4px 8px; border-radius:2px; flex-shrink:0; }
+.lib .row.placed .state{ color:var(--ac); border-color:color-mix(in srgb, var(--ac) 42%, transparent); }
+
+/* ── sign-in sheet ──────────────────────────────────────────────────── */
+.field{ display:block; margin-top:12px; }
+.field span{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); }
+.field input{
+  width:100%; margin-top:6px; background:var(--panel); border:1px solid var(--edge); border-radius:2px;
+  color:var(--ink); font-family:var(--f-mono); font-size:15px; padding:13px 14px; min-height:48px; outline:none;
+  transition:border-color .25s var(--ease);
+}
+.field input:focus{ border-color:var(--emerald); }
+.btn{
+  width:100%; margin-top:15px; min-height:50px; border-radius:2px;
+  font-family:var(--f-mono); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
+  border:1px solid var(--emerald); color:var(--void); background:var(--emerald); font-weight:600;
+  transition:filter .2s var(--ease), opacity .2s var(--ease);
+}
+.btn:hover{ filter:brightness(1.1); }
+.btn[disabled]{ opacity:.45; cursor:default; }
+.btn.ghost{ background:none; color:var(--ink); border-color:var(--edge); }
+.btn.ghost:hover{ border-color:var(--violet); color:var(--violet); filter:none; }
+.or{ text-align:center; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--ink-faint); margin:16px 0 2px; }
+.msg{ font-family:var(--f-mono); font-size:11px; letter-spacing:.05em; margin-top:12px; min-height:16px; color:var(--ink-faint); }
+.msg.bad{ color:var(--rose); } .msg.good{ color:var(--emerald); }
+
+/* theme picker row */
+.skins{ display:flex; flex-wrap:wrap; gap:7px; margin-top:16px; }
+.skins button{ display:flex; align-items:center; gap:8px; border:1px solid var(--edge); border-radius:2px;
+  padding:0 13px; min-height:44px; font-family:var(--f-mono); font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-soft); transition:border-color .25s var(--ease), color .25s var(--ease); }
+.skins button:hover, .skins button.on{ color:var(--ink); border-color:var(--emerald); }
+.skins button i{ width:9px; height:9px; border-radius:50%; background:var(--d); display:block; }
+
+footer{ position:relative; z-index:10; text-align:center; font-family:var(--f-mono); font-size:9.5px;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint);
+  padding:0 16px calc(16px + env(safe-area-inset-bottom)); }
+footer b{ color:var(--ink-soft); font-weight:400; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition-duration:.001s !important; animation-duration:.001s !important; }
+  .slot.dwelling .dwell{ transition:width 5s linear !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="aura" aria-hidden="true"></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<header>
+  <div class="brand">
+    <span class="sh">SHADDAI</span>
+    <span class="sub">Choose your threshold</span>
+  </div>
+  <div class="controls">
+    <button class="ctl" id="btnDwell" type="button" title="Sit on a tile for 5 seconds to read what it is">
+      <span class="dot"></span><span>bios</span>
+    </button>
+    <button class="ctl" id="btnTheme" type="button" title="Change theme">◈ <span class="lbl-long">theme</span></button>
+    <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">✎ <span class="lbl-long">edit</span></button>
+    <button class="ctl out" id="btnAuth" type="button"><span class="dot"></span><span id="authLbl">sign in</span></button>
+  </div>
+</header>
+
+<main>
+  <div class="lede">
+    <h1>Four ways in</h1>
+    <p>One empire. Pick the door — or rearrange them until they're yours.</p>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>Seven agents · one council · <b id="footNote">tap ✎ to rearrange</b></footer>
+
+<!-- ── drawer: swap a module into a slot ───────────────────────────── -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheetLib" role="dialog" aria-modal="true" aria-labelledby="libTitle">
+  <button class="close" id="libClose" type="button">✕ close</button>
+  <h2 id="libTitle">Swap this door</h2>
+  <p class="hint">Choose what lives in slot <b id="libSlotNo">1</b>. If it's already in another slot, the two trade places.</p>
+  <div class="lib" id="lib"></div>
+</div>
+
+<!-- ── sign-in ─────────────────────────────────────────────────────── -->
+<div class="sheet" id="sheetAuth" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <button class="close" id="authClose" type="button">✕ close</button>
+  <h2 id="authTitle">Sign in</h2>
+  <p class="hint">Optional. Nothing here is locked behind it — signing in just carries your work between the doors.</p>
+  <form id="authForm" autocomplete="on">
+    <label class="field"><span>email</span><input id="authEmail" type="email" name="email" autocomplete="email" inputmode="email" placeholder="you@example.com" /></label>
+    <label class="field"><span>password</span><input id="authPass" type="password" name="password" autocomplete="current-password" placeholder="••••••••" /></label>
+    <button class="btn" id="authGo" type="submit">Enter</button>
+  </form>
+  <div class="or">or</div>
+  <button class="btn ghost" id="authWallet" type="button">◎ Connect Solana wallet</button>
+  <div class="msg" id="authMsg"></div>
+  <button class="btn ghost" id="authOut" type="button" style="display:none">Sign out</button>
+</div>
+
+<!-- ── theme ───────────────────────────────────────────────────────── -->
+<div class="sheet" id="sheetTheme" role="dialog" aria-modal="true" aria-labelledby="thTitle">
+  <button class="close" id="thClose" type="button">✕ close</button>
+  <h2 id="thTitle">Theme</h2>
+  <p class="hint">Shared with the rest of SHADDAI — your choice follows you into the dashboard.</p>
+  <div class="skins" id="skins"></div>
+</div>
+
+<script src="/js/shd-modules.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   THE FRONT DOOR — slots, dwell-bios, swapping, sign-in, theme.
+   Plain script (no build step). The WebGL layer is a separate ES module
+   below and is entirely optional — if it fails or WebGL is unavailable,
+   every tile still renders and works from this script alone.
+   ══════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var M = window.SHDModules;
+  var ROMAN = ['I', 'II', 'III', 'IV'];
+
+  /* ── theme ────────────────────────────────────────────────────────── */
+  var SKINS = [
+    { id: 'glitch', name: 'Obsidian', dot: '#00ff9c' },
+    { id: 'void', name: 'Void', dot: '#e8e8e8' },
+    { id: 'terminal', name: 'Terminal', dot: '#00ff41' },
+    { id: 'amber', name: 'Amber', dot: '#ffb000' },
+    { id: 'brutalist', name: 'Brutalist', dot: '#f5c000' },
+    { id: 'serif', name: 'Serif', dot: '#3a6b4a' }
+  ];
+  function getSkin() { try { return localStorage.getItem('shd_theme_skin') || 'glitch'; } catch (e) { return 'glitch'; } }
+  function setSkin(id) {
+    document.documentElement.setAttribute('data-theme-skin', id);
+    try { localStorage.setItem('shd_theme_skin', id); } catch (e) {}
+    document.querySelectorAll('#skins button').forEach(function (b) { b.classList.toggle('on', b.dataset.skin === id); });
+    window.dispatchEvent(new CustomEvent('shd:skin', { detail: id }));
+  }
+  var skinsEl = document.getElementById('skins');
+  SKINS.forEach(function (s) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.dataset.skin = s.id; b.style.setProperty('--d', s.dot);
+    b.innerHTML = '<i></i>' + s.name;
+    b.addEventListener('click', function () { setSkin(s.id); });
+    skinsEl.appendChild(b);
+  });
+  setSkin(getSkin());
+
+  /* ── dwell-bio preference ─────────────────────────────────────────── */
+  var dwellOn = true;
+  try { dwellOn = localStorage.getItem('shd_dwell_bios') !== '0'; } catch (e) {}
+  var btnDwell = document.getElementById('btnDwell');
+  function paintDwell() {
+    btnDwell.classList.toggle('on', dwellOn);
+    btnDwell.classList.toggle('out', !dwellOn);
+    btnDwell.title = dwellOn
+      ? 'Bios on — sit on a tile for 5 seconds to read what it is'
+      : 'Bios off — tiles stay quiet';
+  }
+  btnDwell.addEventListener('click', function () {
+    dwellOn = !dwellOn;
+    try { localStorage.setItem('shd_dwell_bios', dwellOn ? '1' : '0'); } catch (e) {}
+    if (!dwellOn) document.querySelectorAll('.slot').forEach(clearDwell);
+    paintDwell();
+  });
+  paintDwell();
+
+  /* ── slots ────────────────────────────────────────────────────────── */
+  var grid = document.getElementById('grid');
+  var slots = M.readSlots();
+  var editing = false, pendingSlot = -1;
+
+  function render() {
+    grid.innerHTML = '';
+    slots.forEach(function (id, i) {
+      var m = M.byId(id); if (!m) return;
+      var a = document.createElement('a');
+      a.className = 'slot';
+      a.href = m.href;
+      a.dataset.slot = String(i);
+      a.dataset.module = m.id;
+      a.style.setProperty('--accent', m.accent);
+      a.setAttribute('aria-label', m.name + ' — ' + m.kicker + '. ' + m.blurb);
+      a.innerHTML =
+        '<div class="art" style="background-image:url(\'' + m.art + '\')"></div>' +
+        '<div class="wash"></div>' +
+        '<div class="frame"></div><i class="corner tl"></i><i class="corner br"></i>' +
+        '<div class="body">' +
+          '<span class="idx">' + ROMAN[i] + '</span>' +
+          '<span class="kicker">' + m.kicker + '</span>' +
+          '<span class="name">' + m.name + '</span>' +
+          '<span class="go">enter →</span>' +
+        '</div>' +
+        '<div class="dwell"></div>' +
+        '<div class="bio"><b>' + m.name + '</b>' + m.blurb + '</div>';
+      grid.appendChild(a);
+    });
+    wire();
+    window.dispatchEvent(new CustomEvent('shd:slots', { detail: slots.slice() }));
+  }
+
+  /* dwell: sitting on a tile for 5s opens its bio. One mechanic for thumb,
+     mouse, and keyboard — hover doesn't exist on a phone, and this rewards
+     hesitation instead of punishing it. */
+  function startDwell(el) {
+    if (!dwellOn || editing || el.classList.contains('bio-open')) return;
+    clearDwell(el);
+    el.classList.add('dwelling');
+    el._dwellT = setTimeout(function () { el.classList.remove('dwelling'); el.classList.add('bio-open'); }, 5000);
+  }
+  function clearDwell(el) {
+    if (el._dwellT) { clearTimeout(el._dwellT); el._dwellT = null; }
+    el.classList.remove('dwelling', 'bio-open');
+  }
+
+  function wire() {
+    grid.querySelectorAll('.slot').forEach(function (el) {
+      el.addEventListener('mouseenter', function () { startDwell(el); });
+      el.addEventListener('mouseleave', function () { clearDwell(el); el.classList.remove('touched'); });
+      el.addEventListener('focus', function () { el.classList.add('touched'); startDwell(el); });
+      el.addEventListener('blur', function () { clearDwell(el); el.classList.remove('touched'); });
+      // touch: a finger resting on the tile is the dwell. Moving cancels it so
+      // a scroll gesture never opens a bio.
+      el.addEventListener('touchstart', function () { el.classList.add('touched'); startDwell(el); }, { passive: true });
+      el.addEventListener('touchmove', function () { clearDwell(el); el.classList.remove('touched'); }, { passive: true });
+      el.addEventListener('touchend', function () { setTimeout(function () { el.classList.remove('touched'); }, 260); }, { passive: true });
+
+      el.addEventListener('click', function (e) {
+        if (!editing) return;
+        e.preventDefault();
+        openLib(parseInt(el.dataset.slot, 10));
+      });
+    });
+  }
+
+  /* ── edit + drawer ────────────────────────────────────────────────── */
+  var scrim = document.getElementById('scrim');
+  var sheetLib = document.getElementById('sheetLib');
+  var libEl = document.getElementById('lib');
+  var footNote = document.getElementById('footNote');
+
+  function setEditing(on) {
+    editing = on;
+    document.body.classList.toggle('editing', on);
+    document.getElementById('btnEdit').classList.toggle('on', on);
+    footNote.textContent = on ? 'tap a door to swap it' : 'tap ✎ to rearrange';
+    if (!on) { grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); }); }
+  }
+  document.getElementById('btnEdit').addEventListener('click', function () { setEditing(!editing); });
+
+  function openLib(slotIndex) {
+    pendingSlot = slotIndex;
+    document.getElementById('libSlotNo').textContent = ROMAN[slotIndex];
+    grid.querySelectorAll('.slot').forEach(function (s) {
+      s.classList.toggle('pending', parseInt(s.dataset.slot, 10) === slotIndex);
+    });
+    libEl.innerHTML = '';
+    M.LIBRARY.forEach(function (m) {
+      var at = slots.indexOf(m.id);
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'row' + (at >= 0 ? ' placed' : '');
+      row.style.setProperty('--ac', m.accent);
+      row.innerHTML =
+        '<span class="chip" style="background-image:url(\'' + m.art + '\')"></span>' +
+        '<span class="txt"><span class="n">' + m.name + '</span><span class="k">' + m.kicker + '</span></span>' +
+        '<span class="state">' + (at >= 0 ? 'slot ' + ROMAN[at] : 'available') + '</span>';
+      row.addEventListener('click', function () { assign(pendingSlot, m.id); });
+      libEl.appendChild(row);
+    });
+    openSheet(sheetLib);
+  }
+
+  /* Assign, trading places if the module already sits in another slot —
+     so the four are always four distinct doors, never a duplicate. */
+  function assign(slotIndex, moduleId) {
+    var at = slots.indexOf(moduleId);
+    if (at === slotIndex) { closeSheets(); return; }
+    if (at >= 0) { slots[at] = slots[slotIndex]; }
+    slots[slotIndex] = moduleId;
+    M.writeSlots(slots);
+    render();
+    closeSheets();
+  }
+
+  /* ── sheets ───────────────────────────────────────────────────────── */
+  var sheetAuth = document.getElementById('sheetAuth');
+  var sheetTheme = document.getElementById('sheetTheme');
+  function openSheet(el) {
+    closeSheets(true);
+    scrim.classList.add('on'); el.classList.add('on');
+    var f = el.querySelector('input, button');
+    if (f && !('ontouchstart' in window)) setTimeout(function () { f.focus(); }, 380);
+  }
+  function closeSheets(keepScrim) {
+    [sheetLib, sheetAuth, sheetTheme].forEach(function (s) { s.classList.remove('on'); });
+    if (!keepScrim) {
+      scrim.classList.remove('on');
+      grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); });
+    }
+  }
+  scrim.addEventListener('click', function () { closeSheets(); });
+  document.getElementById('libClose').addEventListener('click', function () { closeSheets(); });
+  document.getElementById('authClose').addEventListener('click', function () { closeSheets(); });
+  document.getElementById('thClose').addEventListener('click', function () { closeSheets(); });
+  document.getElementById('btnTheme').addEventListener('click', function () { openSheet(sheetTheme); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeSheets(); if (editing) setEditing(false); }
+  });
+
+  /* ── sign-in (optional, never gates entry) ────────────────────────────
+     Uses endpoints that already exist. Nothing under backend/ is modified:
+       POST /api/auth/login                       — email + password
+       GET  /api/wallet/nonce → POST /api/wallet/session — Solana signature
+     Identity is stored the way the rest of the app already reads it
+     (shd_userid / shd_token), so shd-tier.js picks it up unchanged. */
+  var authBtn = document.getElementById('btnAuth');
+  var authLbl = document.getElementById('authLbl');
+  var authMsg = document.getElementById('authMsg');
+  var authOut = document.getElementById('authOut');
+
+  function currentUser() {
+    try {
+      var u = localStorage.getItem('shd_userid');
+      if (u && u.indexOf('guest') !== 0 && u !== 'local') return u;
+    } catch (e) {}
+    return null;
+  }
+  function shortId(u) { return u.length > 16 ? u.slice(0, 6) + '…' + u.slice(-4) : u; }
+  function paintAuth() {
+    var u = currentUser();
+    authBtn.classList.toggle('out', !u);
+    authLbl.textContent = u ? shortId(u) : 'sign in';
+    authOut.style.display = u ? '' : 'none';
+  }
+  function saveIdentity(userId, token) {
+    try {
+      if (userId) localStorage.setItem('shd_userid', userId);
+      if (token) localStorage.setItem('shd_token', token);
+    } catch (e) {}
+    paintAuth();
+  }
+  authBtn.addEventListener('click', function () { authMsg.textContent = ''; authMsg.className = 'msg'; openSheet(sheetAuth); });
+  authOut.addEventListener('click', function () {
+    try { localStorage.removeItem('shd_userid'); localStorage.removeItem('shd_token'); } catch (e) {}
+    paintAuth(); authMsg.textContent = 'Signed out.'; authMsg.className = 'msg good';
+  });
+
+  document.getElementById('authForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('authEmail').value.trim();
+    var pass = document.getElementById('authPass').value;
+    if (!email || !pass) { authMsg.textContent = 'Email and password, please.'; authMsg.className = 'msg bad'; return; }
+    var go = document.getElementById('authGo');
+    go.disabled = true; authMsg.textContent = 'Checking…'; authMsg.className = 'msg';
+    fetch('/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.j && res.j.error ? res.j.error : 'Sign-in failed.');
+        var j = res.j || {};
+        saveIdentity((j.user && (j.user.id || j.user.userId)) || j.userId || email, j.token || j.accessToken);
+        authMsg.textContent = 'Signed in.'; authMsg.className = 'msg good';
+        setTimeout(closeSheets, 700);
+      })
+      .catch(function (err) { authMsg.textContent = err.message || 'Sign-in failed.'; authMsg.className = 'msg bad'; })
+      .then(function () { go.disabled = false; });
+  });
+
+  /* Solana: nonce → wallet signs it → session. Phantom (or any injected
+     provider exposing signMessage) only; no libraries, no network spend. */
+  document.getElementById('authWallet').addEventListener('click', function () {
+    var provider = window.solana || (window.phantom && window.phantom.solana);
+    if (!provider || !provider.connect) {
+      authMsg.textContent = 'No Solana wallet found in this browser.';
+      authMsg.className = 'msg bad';
+      return;
+    }
+    authMsg.textContent = 'Waiting for your wallet…'; authMsg.className = 'msg';
+    var address;
+    provider.connect()
+      .then(function (res) {
+        address = String((res && res.publicKey ? res.publicKey : provider.publicKey));
+        return fetch('/api/wallet/nonce?wallet=' + encodeURIComponent(address)).then(function (r) { return r.json(); });
+      })
+      .then(function (n) {
+        var message = n.message || n.nonce;
+        if (!message) throw new Error('Could not get a challenge from the server.');
+        var signed = provider.signMessage(new TextEncoder().encode(message), 'utf8');
+        return signed.then(function (s) { return { message: message, sig: s.signature || s }; });
+      })
+      .then(function (p) {
+        // base58 is what the verifier expects; encode the raw signature bytes.
+        return fetch('/api/wallet/session', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallet_address: address, message: p.message, signature: b58(p.sig) })
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error((res.j && res.j.error) || 'Wallet sign-in failed.');
+        saveIdentity(address, res.j.token);
+        authMsg.textContent = 'Wallet connected.'; authMsg.className = 'msg good';
+        setTimeout(closeSheets, 700);
+      })
+      .catch(function (err) { authMsg.textContent = err.message || 'Wallet sign-in failed.'; authMsg.className = 'msg bad'; });
+  });
+
+  var B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  function b58(bytes) {
+    var d = [], i, j, c;
+    for (i = 0; i < bytes.length; i++) {
+      c = bytes[i];
+      for (j = 0; j < d.length; j++) { c += d[j] << 8; d[j] = c % 58; c = (c / 58) | 0; }
+      while (c > 0) { d.push(c % 58); c = (c / 58) | 0; }
+    }
+    var out = '';
+    for (i = 0; i < bytes.length && bytes[i] === 0; i++) out += '1';
+    for (i = d.length - 1; i >= 0; i--) out += B58[d[i]];
+    return out;
+  }
+
+  paintAuth();
+  render();
+})();
+</script>
+
+<script type="module">
+/* ══════════════════════════════════════════════════════════════════════
+   THE LIVING SOLIDS — one renderer, one canvas, scissored per tile.
+
+   Each slot gets a slowly-turning sacred-geometry solid drawn in the UPPER
+   region of its own rect, so it never collides with the text at the bottom
+   (the canvas is transparent, so type reads straight through it).
+
+   Strictly optional: any failure here leaves the page fully functional.
+   ══════════════════════════════════════════════════════════════════════ */
+import * as THREE from '/vendor/three/three.module.js';
+
+const canvas = document.getElementById('gl');
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+} catch (e) { console.warn('[enter] WebGL unavailable — tiles render without solids.', e); }
+
+if (renderer) {
+  renderer.setClearAlpha(0);
+  renderer.setScissorTest(true);
+
+  /* ── the solids ───────────────────────────────────────────────────────
+     Neon wireframe over a near-black shell: the shell hides the back edges
+     so the form reads as solid geometry rather than a wire tangle. */
+  function neon(geo, color, opacity = 1) {
+    const g = new THREE.Group();
+    const shell = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color: 0x06080b, transparent: true, opacity: 0.86,
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+    }));
+    const wire = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo, 12),
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+    );
+    g.add(shell, wire);
+    return g;
+  }
+  function dust(color, count = 90, spread = 3.4) {
+    const p = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) p[i] = (Math.random() - 0.5) * spread;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 0.022, transparent: true, opacity: 0.5 }));
+  }
+
+  const BUILD = {
+    icosa: c => { const g = new THREE.Group();
+      g.add(neon(new THREE.IcosahedronGeometry(1, 0), c));
+      g.add(neon(new THREE.IcosahedronGeometry(0.52, 0), c, 0.45));
+      g.add(dust(c, 120, 4)); return g; },
+    dodeca: c => { const g = new THREE.Group();
+      g.add(neon(new THREE.DodecahedronGeometry(1, 0), c));
+      const rp = [];
+      for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2; rp.push(new THREE.Vector3(Math.cos(a) * 1.45, Math.sin(a) * 1.45, 0)); }
+      const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(rp),
+        new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.32 }));
+      ring.rotation.x = Math.PI / 2.6; g.add(ring); return g; },
+    lattice: c => { const g = new THREE.Group();
+      for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) {
+        const b = neon(new THREE.BoxGeometry(0.46, 0.46, 0.46), c, 0.8);
+        b.position.set(x * 0.62, y * 0.62, (x * y) * 0.28);
+        g.add(b);
+      } return g; },
+    drum: c => { const g = new THREE.Group();
+      // a miniature of Simple Mode's own wheel — the tile shows you the thing
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        const s = neon(new THREE.BoxGeometry(1.5, 0.34, 0.05), c, i === 0 ? 1 : 0.42);
+        s.position.set(0, Math.sin(a) * 1.05, Math.cos(a) * 1.05);
+        s.rotation.x = -a; g.add(s);
+      }
+      g.userData.axis = 'x';   // a drum spins on its own axis, not on Y
+      return g; },
+    graph: c => { const g = new THREE.Group();
+      const nodes = [];
+      for (let i = 0; i < 16; i++) {
+        const v = new THREE.Vector3().setFromSphericalCoords(1.15,
+          Math.acos(1 - 2 * (i + 0.5) / 16), Math.PI * (1 + Math.sqrt(5)) * i);
+        nodes.push(v);
+        const n = new THREE.Mesh(new THREE.SphereGeometry(0.062, 8, 8), new THREE.MeshBasicMaterial({ color: c }));
+        n.position.copy(v); g.add(n);
+      }
+      const pts = [];
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++)
+        if (nodes[i].distanceTo(nodes[j]) < 1.1) pts.push(nodes[i], nodes[j]);
+      g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.34 })));
+      return g; },
+    isogrid: c => { const g = new THREE.Group();
+      const grid = new THREE.GridHelper(2.6, 10, c, c);
+      grid.material.transparent = true; grid.material.opacity = 0.4;
+      g.add(grid);
+      const t = neon(new THREE.BoxGeometry(0.44, 0.44, 0.44), c);
+      t.position.y = 0.24; g.add(t);
+      g.rotation.x = 0.34; return g; },
+    terrain: c => { const g = new THREE.Group();
+      const geo = new THREE.PlaneGeometry(2.8, 2.8, 18, 18);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++)
+        pos.setZ(i, Math.sin(pos.getX(i) * 1.7) * Math.cos(pos.getY(i) * 1.7) * 0.34);
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: c, wireframe: true, transparent: true, opacity: 0.52 }));
+      m.rotation.x = -Math.PI / 2.35; g.add(m); return g; },
+    octa: c => { const g = new THREE.Group();
+      g.add(neon(new THREE.OctahedronGeometry(1, 0), c));
+      const o2 = neon(new THREE.OctahedronGeometry(0.62, 0), c, 0.5);
+      o2.rotation.set(0.7, 0.7, 0); g.add(o2); return g; },
+    chart: c => { const g = new THREE.Group();
+      const h = [0.4, 0.75, 0.5, 1.05, 0.8, 1.35, 1.1];
+      h.forEach((v, i) => {
+        const b = neon(new THREE.BoxGeometry(0.2, v, 0.2), c, 0.55 + i * 0.06);
+        b.position.set((i - 3) * 0.31, v / 2 - 0.6, 0); g.add(b);
+      }); return g; }
+  };
+
+  /* One scene per slot, all sharing the renderer via scissor. */
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  camera.position.z = 4.1;
+  let cells = [];
+
+  function build() {
+    cells.forEach(c => c.scene.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
+    }));
+    cells = [];
+    document.querySelectorAll('.slot').forEach(el => {
+      const m = window.SHDModules.byId(el.dataset.module);
+      if (!m) return;
+      const make = BUILD[m.geo] || BUILD.icosa;
+      const scene = new THREE.Scene();
+      const obj = make(new THREE.Color(m.accent));
+      scene.add(obj);
+      cells.push({ el, scene, obj, seed: Math.random() * 6.28 });
+    });
+  }
+  window.addEventListener('shd:slots', build);
+  build();
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let paused = document.hidden;
+  document.addEventListener('visibilitychange', () => { paused = document.hidden; });
+
+  const clock = new THREE.Clock();
+  function frame() {
+    requestAnimationFrame(frame);
+    if (paused || !cells.length) return;
+    const t = clock.getElapsedTime();
+    const H = window.innerHeight;
+
+    for (const c of cells) {
+      const r = c.el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > H || r.width < 2) continue;
+
+      // upper 62% of the tile — the text lives in the lower third
+      const h = r.height * 0.62;
+      const x = r.left, y = H - r.top - h;
+      if (h < 2) continue;
+
+      renderer.setViewport(x, y, r.width, h);
+      renderer.setScissor(x, y, r.width, h);
+      camera.aspect = r.width / h;
+      camera.updateProjectionMatrix();
+
+      if (!reduced) {
+        if (c.obj.userData.axis === 'x') {
+          // the drum turns on its own axis with a fixed three-quarter tilt,
+          // so it always reads as one wheel rather than scattered plates
+          c.obj.rotation.set(t * 0.22 + c.seed, 0.42, 0.08);
+        } else {
+          c.obj.rotation.y = t * 0.19 + c.seed;
+          c.obj.rotation.x = Math.sin(t * 0.32 + c.seed) * 0.16;
+        }
+        c.obj.position.y = Math.sin(t * 0.55 + c.seed) * 0.05;
+      } else {
+        c.obj.rotation.set(c.obj.userData.axis === 'x' ? 0.5 : 0.2, c.obj.userData.axis === 'x' ? 0.42 : 0.6 + c.seed, 0);
+      }
+      renderer.render(c.scene, camera);
+    }
+  }
+  frame();
+}
+</script>
+</body>
+</html>
