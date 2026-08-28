@@ -1,0 +1,302 @@
+/* ══════════════════════════════════════════════════════════════════════
+   SHADDAI — MODULE REGISTRY  (shd-modules.js)
+
+   The single source of truth for the new front door. Two screens read it:
+
+     /enter.html   — the 4-tile selector (4 slots, swappable from LIBRARY)
+     /simple.html  — Simple Mode (the swivel wheel + its sub-menus)
+
+   Nothing here touches the backend. Every `href` points at a page that
+   already exists in /public (verified 2026-08-27); every `art` path points
+   at an image already on disk. Both are plain strings on purpose — when
+   bespoke generated plates arrive, swap the `art` value and nothing else
+   changes.
+
+   ── FUTURE TODO · VOICE MODE ────────────────────────────────────────────
+   Voice mode (ask the RAG brain a question out loud, hear it answer) is
+   EXPLICITLY OUT OF SCOPE for this pass and is NOT implemented anywhere.
+   When it is built, it becomes one more entry in LIBRARY below plus one
+   more category in WHEEL — no structural change required. Do not wire a
+   microphone, a speech API, or an audio endpoint until that is scoped.
+   ────────────────────────────────────────────────────────────────────────
+   ══════════════════════════════════════════════════════════════════════ */
+(function (root) {
+  'use strict';
+
+  /* ── palette ──────────────────────────────────────────────────────────
+     Locked theme: obsidian ground, emerald / gold / cyan / violet accents.
+     Mirrors the tokens in home.html + journey.html — do not invent new hues. */
+  var C = {
+    emerald: '#00ff9c',
+    gold:    '#e8c45c',
+    cyan:    '#5fe0ff',
+    violet:  '#b07cff',
+    rose:    '#ff6f6f',
+    amber:   '#ff8a5c'
+  };
+
+  /* ── the modules ──────────────────────────────────────────────────────
+     `geo` names a procedural sacred-geometry solid drawn live in the tile
+     (see enter.html → TILE_GEOMETRY). `blurb` is the dwell-reveal copy. */
+
+  var MODULES = [
+    {
+      id: 'descent',
+      name: 'DESCENT',
+      kicker: 'The cinematic entry',
+      blurb: 'A scroll through the scales of reality — quantum lattice, molecule, water, grass, tree, earth, cosmos — arriving at the Crown. The full dramatic opening.',
+      href: '/journey.html',
+      art: '/assets/journey/cosmos-hd.jpg',
+      accent: C.cyan,
+      geo: 'icosa'
+    },
+    {
+      id: 'entry',
+      name: 'ENTRY',
+      kicker: 'The whole story',
+      blurb: 'The full explainer. What SHADDAI is, how it works, the seven agents of the council, the worlds, the arcade, the RAG brain. Walks you all the way through.',
+      href: '/home.html',
+      art: '/assets/landing/tab-council.png',
+      accent: C.gold,
+      geo: 'dodeca'
+    },
+    {
+      id: 'dashboard',
+      name: 'DASHBOARD',
+      kicker: 'Straight in',
+      blurb: 'Skip the fanfare. The Command Hub, sign-in, and every tool exactly where you left them. For people who already know what they came for.',
+      href: '/dashboard',
+      art: '/assets/nav/dashboard.jpg',
+      accent: C.emerald,
+      geo: 'lattice'
+    },
+    {
+      id: 'simple',
+      name: 'SIMPLE',
+      kicker: 'One thumb, everything',
+      blurb: 'A single object you spin with your thumb. Every part of SHADDAI on one wheel — agents, games, signals, forge, worlds. Swivel, sit on a choice to read it, tap to enter.',
+      href: '/simple.html',
+      art: '/assets/landing/tab-create.png',
+      accent: C.violet,
+      geo: 'drum'
+    },
+
+    /* ── library: not in a slot by default, swappable into any of the 4 ── */
+    {
+      id: 'rag',
+      name: 'RAG BRAIN',
+      kicker: 'The council’s memory',
+      blurb: 'The knowledge graph behind every agent. Ask it anything and every answer is cited back to the exact passage it came from. No invention.',
+      href: '/brain.html',
+      art: '/assets/nav/aura.jpg',
+      accent: C.emerald,
+      geo: 'graph'
+    },
+    {
+      id: 'world2d',
+      name: '2D WORLD',
+      kicker: 'Walk the city',
+      blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
+      href: '/SHADDAI-WORLD.html',
+      art: '/assets/landing/tab-worlds.png',
+      accent: C.gold,
+      geo: 'isogrid'
+    },
+    {
+      id: 'world3d',
+      name: '3D WORLD',
+      kicker: 'The full realm',
+      blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
+      href: '/world3d',
+      art: '/assets/nav/worlds.jpg',
+      accent: C.cyan,
+      geo: 'terrain'
+    },
+    {
+      id: 'arcade',
+      name: 'ARCADE',
+      kicker: 'Play',
+      blurb: 'Every game in the empire in one hall — the climb, the courts, the arenas, the tactics board.',
+      href: '/arcade.html',
+      art: '/assets/landing/tab-play.png',
+      accent: C.amber,
+      geo: 'octa'
+    },
+    {
+      id: 'signals',
+      name: 'SIGNALS',
+      kicker: 'ZEROX calls',
+      blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
+      href: '/pro-signals.html',
+      art: '/assets/landing/tab-signals.png',
+      accent: C.rose,
+      geo: 'chart'
+    }
+  ];
+
+  /* The four that occupy the slots on a first visit. A visitor's own
+     arrangement overrides this and lives in localStorage (shd_enter_slots). */
+  var DEFAULT_SLOTS = ['descent', 'entry', 'dashboard', 'simple'];
+
+  /* ── Simple Mode wheel ────────────────────────────────────────────────
+     Top level spins vertically. A category with `items` swivels down into
+     its own wheel of sub-items using the identical motion — the pattern is
+     recursive, so any category can gain a sub-wheel by adding `items`. */
+
+  var WHEEL = [
+    {
+      id: 'agents',
+      name: 'AGENTS',
+      accent: C.emerald,
+      art: '/assets/nav/agents.jpg',
+      blurb: 'The seven-agent council. Each one owns a domain, carries its own mastery library, and answers grounded in it.',
+      items: [
+        { id: 'shaddai', name: 'SHADDAI', accent: C.gold,    art: '/assets/agents/SHADDAI-portrait.png', href: '/agents.html#shaddai', blurb: 'Supreme orchestrator. Strategy, prioritization, and the final call before anything ships.' },
+        { id: 'nexus',   name: 'NEXUS',   accent: C.cyan,    art: '/assets/agents/NEXUS-portrait.png',   href: '/agents.html#nexus',   blurb: 'Technical architect. Backend, APIs, database design, and anything that has to scale.' },
+        { id: 'zerox',   name: 'ZEROX',   accent: C.rose,    art: '/assets/agents/ZEROX-portrait.png',   href: '/agents.html#zerox',   blurb: 'Wealth engine. Pricing, unit economics, billing, and market calls scored by hit rate.' },
+        { id: 'oracle',  name: 'ORACLE',  accent: C.violet,  art: '/assets/agents/ORACLE-portrait.png',  href: '/agents.html#oracle',  blurb: 'Research and intelligence. Gathers context, spots gaps, and questions the assumption first.' },
+        { id: 'turtle',  name: 'TURTLE',  accent: C.emerald, art: '/assets/agents/TURTLE-portrait.png',  href: '/agents.html#turtle',  blurb: 'Design and creative. Interfaces, motion, and whether a thing actually feels good to use.' },
+        { id: 'quill',   name: 'QUILL',   accent: C.gold,    art: '/assets/agents/QUILL-portrait.png',   href: '/agents.html#quill',   blurb: 'Writing and communication. Copy, documentation, guides, and every word a user reads.' },
+        { id: 'pikadon', name: 'PIKADON', accent: C.amber,   art: '/assets/agents/PIKADON-portrait.png', href: '/agents.html#pikadon', blurb: 'Security and compliance. Reviews everything for holes and assumes the worst case.' }
+      ]
+    },
+    {
+      id: 'games',
+      name: 'GAMES',
+      accent: C.amber,
+      art: '/assets/landing/tab-play.png',
+      blurb: 'The arcade. Climb, courts, arenas, and tactics — every game in the empire.',
+      items: [
+        { id: 'climb',   name: 'THE CLIMB',  accent: C.emerald, art: '/assets/landing/tab-play.png', href: '/games/dreamers-climb/', blurb: 'Dreamers Climb — the ascent run. Eight radio stations, one very long way up.' },
+        { id: 'courts',  name: 'COURTS',     accent: C.gold,    art: '/assets/nav/social.jpg',       href: '/games/basketball-jam.html', blurb: 'The sports hall — basketball jam, soccer, football, and the shooting range.' },
+        { id: 'arena',   name: 'ARENA',      accent: C.rose,    art: '/assets/nav/office.jpg',       href: '/games/battle-arena.html', blurb: 'Battle arena and sigil storm. Direct combat, agents on the field.' },
+        { id: 'tactics', name: 'TACTICS',    accent: C.cyan,    art: '/assets/nav/automation.jpg',   href: '/games/tactics.html', blurb: 'The tactics board. Slower, harder, and the one the council actually respects.' }
+      ]
+    },
+    {
+      id: 'signals',
+      name: 'SIGNALS',
+      accent: C.rose,
+      art: '/assets/landing/tab-signals.png',
+      blurb: 'ZEROX market intelligence — live calls, charts, and wallet forensics.',
+      items: [
+        { id: 'live',    name: 'LIVE CALLS', accent: C.rose,  art: '/assets/landing/tab-signals.png', href: '/zerox-live-signals.html', blurb: 'The live signal feed, scored and timestamped as it happens.' },
+        { id: 'charts',  name: 'CHARTS',     accent: C.cyan,  art: '/assets/nav/markets.jpg',         href: '/zerox-chart.html', blurb: 'Market charts with the council’s read layered on top.' },
+        { id: 'pro',     name: 'PRO DESK',   accent: C.gold,  art: '/assets/nav/plans.jpg',           href: '/pro-signals.html', blurb: 'The full pro desk — deeper calls, hit-rate history, and the meta-signal view.', pro: true }
+      ]
+    },
+    {
+      id: 'create',
+      name: 'CREATE',
+      accent: C.violet,
+      art: '/assets/landing/tab-create.png',
+      blurb: 'The maker tools. Generate, build, and ship — words, images, sites, workflows.',
+      items: [
+        { id: 'studio',   name: 'STUDIO',    accent: C.violet, art: '/assets/nav/media.jpg',    href: '/create.html', blurb: 'The creative studio — text, image, and media generation with the council behind it.' },
+        { id: 'workflow', name: 'WORKFLOWS', accent: C.cyan,   href: '/dashboard#workflows', art: '/assets/nav/workflow.jpg', blurb: 'Chain agents into a repeatable job that runs without you.' },
+        { id: 'launch',   name: 'LAUNCH KIT', accent: C.gold,  art: '/assets/nav/plans.jpg',   href: '/launch-kit.html', blurb: 'Everything needed to put something live — copy, assets, and the checklist.' }
+      ]
+    },
+    {
+      id: 'forge',
+      name: 'FORGE',
+      accent: C.gold,
+      art: '/assets/nav/forge.jpg',
+      blurb: 'Build your own operatives and objects, then trade them.',
+      items: [
+        { id: 'forge2d',  name: 'THE FORGE',  accent: C.gold,    art: '/assets/nav/forge.jpg',   href: '/forge.html', blurb: 'Forge an agent — its role, its skills, its face, its voice.' },
+        { id: 'forge3d',  name: '3D SCULPT',  accent: C.cyan,    art: '/assets/nav/worlds.jpg',  href: '/forge-3d.html', blurb: 'The procedural 3D sculptor. Build objects out of primitives and save them as presets.' },
+        { id: 'gallery',  name: 'GALLERY',    accent: C.emerald, art: '/assets/nav/apis.jpg',    href: '/forge-gallery.html', blurb: 'Everything the community has forged, browsable and claimable.' }
+      ]
+    },
+    {
+      id: 'worlds',
+      name: 'WORLDS',
+      accent: C.cyan,
+      art: '/assets/landing/tab-worlds.png',
+      blurb: 'One world, more than one way to stand in it.',
+      items: [
+        { id: 'w2d',   name: '2D CITY',  accent: C.gold,    art: '/assets/landing/tab-worlds.png', href: '/SHADDAI-WORLD.html', blurb: 'The walkable pixel city where the agents live as characters.' },
+        { id: 'w3d',   name: '3D REALM', accent: C.cyan,    art: '/assets/nav/worlds.jpg',         href: '/world3d', blurb: 'The full dimensional build — terrain, districts, interiors, council halls.' },
+        { id: 'realm', name: 'REALMS',   accent: C.violet,  art: '/assets/nav/office.jpg',         href: '/region-select.html', blurb: 'Pick a region and drop into it.' }
+      ]
+    },
+    {
+      id: 'brain',
+      name: 'BRAIN',
+      accent: C.emerald,
+      art: '/assets/nav/aura.jpg',
+      blurb: 'The RAG brain — the council’s shared memory, and every answer cited to its source.',
+      items: [
+        { id: 'ask',    name: 'ASK',      accent: C.emerald, art: '/assets/nav/aura.jpg',  href: '/brain.html', blurb: 'Ask the brain. Every answer traced back to the passage it came from.' },
+        { id: 'codex',  name: 'CODEX',    accent: C.gold,    art: '/assets/nav/apis.jpg',  href: '/codex.html', blurb: 'The almanac — the written record of the empire.' },
+        { id: 'learn',  name: 'LEARN',    accent: C.cyan,    art: '/assets/nav/chat.jpg',  href: '/learn.html', blurb: 'Guided paths through what the council knows.' }
+      ]
+    },
+    {
+      id: 'tools',
+      name: 'TOOLS',
+      accent: C.violet,
+      art: '/assets/nav/apis.jpg',
+      blurb: 'Two hundred real, executable tools and the marketplace they live in.',
+      items: [
+        { id: 'market',  name: 'MARKETPLACE', accent: C.violet,  art: '/assets/nav/apis.jpg',       href: '/tools-marketplace.html', blurb: 'Every tool the agents can actually run, browsable and searchable.' },
+        { id: 'aura',    name: 'AURA',        accent: C.emerald, art: '/assets/nav/aura.jpg',       href: '/aura.html', blurb: 'The token-saving layer — deterministic answers before any model is called.' },
+        { id: 'api',     name: 'API',         accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Wire SHADDAI into your own stack.' }
+      ]
+    },
+    {
+      id: 'hub',
+      name: 'HUB',
+      accent: C.gold,
+      art: '/assets/nav/dashboard.jpg',
+      href: '/dashboard',
+      blurb: 'The Command Hub — the full dashboard, sign-in, and everything at once. Tap to go straight there.'
+    }
+  ];
+
+  /* ── lookups ──────────────────────────────────────────────────────────── */
+
+  function byId(id) {
+    for (var i = 0; i < MODULES.length; i++) if (MODULES[i].id === id) return MODULES[i];
+    return null;
+  }
+
+  /* Reads the visitor's slot arrangement, repairing anything stale — an id
+     that no longer exists, a wrong length, or a duplicate — by falling back
+     to the default for that position. Never throws, never returns a hole. */
+  function readSlots() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem('shd_enter_slots') || 'null'); } catch (e) { raw = null; }
+    var out = [], seen = {};
+    for (var i = 0; i < 4; i++) {
+      var id = Array.isArray(raw) ? raw[i] : null;
+      if (!id || !byId(id) || seen[id]) id = null;
+      if (!id) {
+        // first default that isn't already placed
+        for (var j = 0; j < DEFAULT_SLOTS.length; j++) {
+          if (!seen[DEFAULT_SLOTS[j]]) { id = DEFAULT_SLOTS[j]; break; }
+        }
+      }
+      if (!id) id = MODULES[i].id;
+      seen[id] = 1;
+      out.push(id);
+    }
+    return out;
+  }
+
+  function writeSlots(ids) {
+    try { localStorage.setItem('shd_enter_slots', JSON.stringify(ids.slice(0, 4))); } catch (e) {}
+  }
+
+  root.SHDModules = {
+    C: C,
+    MODULES: MODULES,
+    LIBRARY: MODULES,          // every module is swappable into any slot
+    DEFAULT_SLOTS: DEFAULT_SLOTS,
+    WHEEL: WHEEL,
+    byId: byId,
+    readSlots: readSlots,
+    writeSlots: writeSlots
+  };
+})(window);
