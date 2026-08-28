@@ -153,6 +153,35 @@
 
   var WHEEL = [
     {
+      id: 'do',
+      name: 'DO',
+      accent: C.emerald,
+      art: '/assets/nav/automation.jpg',
+      blurb: 'Ask the council something, or run a job, without leaving this wheel.',
+      items: [
+        // `action:'ask'` items run INLINE against the live RAG brain
+        // (GET /api/ask?q=…&agent=…) instead of navigating away.
+        { id: 'oracle-ask', name: 'ORACLE', accent: C.violet, art: '/assets/agents/ORACLE-portrait.png',
+          action: 'ask', agent: 'oracle', placeholder: 'What do you want understood?',
+          blurb: 'Research and spiritual insight, grounded in the council’s own library and cited to source.' },
+        { id: 'zerox-ask', name: 'SENTIMENT', accent: C.rose, art: '/assets/agents/ZEROX-portrait.png',
+          action: 'ask', agent: 'zerox', placeholder: 'Which coin, ticker or market?',
+          blurb: 'ZEROX reads the market — sentiment, structure and where the risk actually sits.' },
+        { id: 'pikadon-ask', name: 'CHECK IT', accent: C.amber, art: '/assets/agents/PIKADON-portrait.png',
+          action: 'ask', agent: 'pikadon', placeholder: 'A link, a contract, a name…',
+          blurb: 'PIKADON checks it — links, contracts, claims and the worst case you did not consider.' },
+        { id: 'quill-ask', name: 'WRITE IT', accent: C.gold, art: '/assets/agents/QUILL-portrait.png',
+          action: 'ask', agent: 'quill', placeholder: 'What should it say?',
+          blurb: 'QUILL writes it — copy, posts, docs, anything someone has to read.' },
+        { id: 'website', name: 'A WEBSITE', accent: C.cyan, art: '/assets/nav/apis.jpg',
+          href: '/quickstart.html', blurb: 'Describe a site and the council builds it. Real pages, live in minutes.' },
+        { id: 'thread', name: 'A THREAD', accent: C.emerald, art: '/assets/nav/social.jpg',
+          href: '/thread-pack.html', blurb: 'A full numbered thread plus hook variants, from one topic.' },
+        { id: 'coin', name: 'COIN KIT', accent: C.violet, art: '/assets/nav/markets.jpg',
+          href: '/coin-launch.html', blurb: 'Launch posts, meme concepts and a ready-to-post banner from one coin idea.' }
+      ]
+    },
+    {
       id: 'agents',
       name: 'AGENTS',
       accent: C.emerald,

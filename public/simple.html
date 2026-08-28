@@ -158,6 +158,50 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
 @media (prefers-reduced-motion: reduce){
   .bio, .enter, .tool, .seg button{ transition-duration:.001s !important; }
 }
+
+/* ── inline action sheet: ask the council without leaving the wheel ──── */
+.act-scrim{ position:fixed; inset:0; z-index:70; background:rgba(3,5,7,.74); opacity:0;
+  pointer-events:none; transition:opacity .3s var(--ease);
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.act-scrim.on{ opacity:1; pointer-events:auto; }
+.act{ position:fixed; z-index:71; left:50%; bottom:0; width:min(620px,100%);
+  transform:translate(-50%,102%); transition:transform .42s var(--ease);
+  background:var(--void2); border:1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  border-bottom:0; border-radius:8px 8px 0 0; padding:18px clamp(16px,4vw,24px);
+  padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  max-height:86dvh; display:flex; flex-direction:column; }
+.act.on{ transform:translate(-50%,0); }
+.act .ahead{ display:flex; align-items:center; gap:11px; }
+.act .aname{ font-family:var(--f-display); font-weight:900; font-size:19px; letter-spacing:.09em; color:var(--accent); }
+.act .arole{ font-family:var(--f-mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); }
+.act .ax{ margin-left:auto; font-family:var(--f-mono); font-size:11px; letter-spacing:.14em;
+  color:var(--ink-faint); min-height:44px; min-width:44px; }
+.act .ax:hover{ color:var(--ink); }
+.act .arow{ display:flex; gap:8px; margin-top:14px; }
+.act input{ flex:1; min-width:0; background:var(--panel); border:1px solid var(--edge); border-radius:3px;
+  color:var(--ink); font-family:var(--f-mono); font-size:16px; /* 16px: stops iOS zooming on focus */
+  padding:13px 14px; min-height:52px; outline:none; }
+.act input:focus{ border-color:var(--accent); }
+.act .ago{ min-height:52px; padding:0 20px; border-radius:3px; font-family:var(--f-mono); font-size:12px;
+  letter-spacing:.14em; text-transform:uppercase; font-weight:600;
+  background:var(--accent); color:var(--void); border:1px solid var(--accent); }
+html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act .ago{ color:#fff; }
+.act .ago[disabled]{ opacity:.45; }
+.act .aout{ margin-top:14px; overflow-y:auto; -webkit-overflow-scrolling:touch; font-size:14.5px;
+  line-height:1.62; color:var(--ink-soft); min-height:0; }
+.act .aout h3{ font-family:var(--f-display); font-size:15px; color:var(--ink); margin:14px 0 6px; letter-spacing:.05em; }
+.act .aout strong{ color:var(--ink); font-weight:600; }
+.act .aout code{ font-family:var(--f-mono); font-size:12.5px; color:var(--accent); }
+.act .aout p{ margin:0 0 10px; }
+.act .aout hr{ border:0; border-top:1px solid var(--edge); margin:14px 0; }
+.act .aout table{ width:100%; border-collapse:collapse; margin:10px 0 14px; font-size:13px; display:block; overflow-x:auto; }
+.act .aout th,.act .aout td{ border:1px solid var(--edge); padding:7px 9px; text-align:left; vertical-align:top; }
+.act .aout th{ color:var(--accent); font-family:var(--f-mono); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; font-weight:500; white-space:nowrap; }
+.act .astat{ font-family:var(--f-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-faint); margin-top:12px; min-height:14px; }
+.act .astat.bad{ color:var(--rose); }
+@media(max-width:440px){ .act .arow{ flex-direction:column; } .act .ago{ width:100%; } }
 </style>
 </head>
 <body>
@@ -198,6 +242,25 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
 
 <!-- a screen reader gets a real list, not a canvas -->
 <div class="sr"><h1>SHADDAI Simple Mode</h1><ul id="srList"></ul></div>
+
+
+<!-- inline action sheet -->
+<div class="act-scrim" id="actScrim"></div>
+<div class="act" id="act" role="dialog" aria-modal="true" aria-labelledby="actName">
+  <div class="ahead">
+    <div>
+      <div class="aname" id="actName">ORACLE</div>
+      <div class="arole" id="actRole">grounded in the council's library</div>
+    </div>
+    <button class="ax" id="actClose" type="button">✕ close</button>
+  </div>
+  <form class="arow" id="actForm">
+    <input id="actInput" type="text" autocomplete="off" placeholder="Ask…" />
+    <button class="ago" id="actGo" type="submit">Ask</button>
+  </form>
+  <div class="aout" id="actOut"></div>
+  <div class="astat" id="actStat"></div>
+</div>
 
 <div id="boot">summoning the wheel…</div>
 
@@ -297,6 +360,8 @@ const app = createSimple({
       bioEl.innerHTML = '<b>' + item.name + '</b>' + (item.blurb || '');
       bioEl.classList.add('show');
     },
+    action: openAction,
+
     dwellEnd: hideBio,
 
     escape() { window.location.href = '/enter.html'; }
@@ -304,6 +369,100 @@ const app = createSimple({
 });
 
 function hideBio() { bioEl.classList.remove('show'); }
+
+/* ── inline actions — ask the council from inside the wheel ────────────
+   Hits the live RAG brain (GET /api/ask?q=&agent=), which answers grounded
+   in the council's own indexed library rather than free-associating. */
+const actScrim = $('actScrim'), actEl = $('act'), actIn = $('actInput'),
+      actOut = $('actOut'), actStat = $('actStat'), actGo = $('actGo');
+let actItem = null;
+
+/* Model output is untrusted text: escape it, THEN apply a tiny subset of
+   markdown. Never inject the raw answer. */
+function esc(t) {
+  return String(t).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function mdLite(t) {
+  var esc_ = esc(t)
+    .replace(/^#{1,6}\s*(.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+  var lines = esc_.split('\n'), out = [], tbl = null;
+  function flush() {
+    if (!tbl) return;
+    // first row is the header; the |---|---| separator row is dropped
+    var rows = tbl.filter(function (r) { return !/^[\s|:-]+$/.test(r); });
+    var html = '<table><tbody>';
+    rows.forEach(function (r, n) {
+      var cells = r.replace(/^\||\|$/g, '').split('|');
+      html += '<tr>' + cells.map(function (c) {
+        return (n === 0 ? '<th>' : '<td>') + c.trim() + (n === 0 ? '</th>' : '</td>');
+      }).join('') + '</tr>';
+    });
+    out.push(html + '</tbody></table>');
+    tbl = null;
+  }
+  var para = [];
+  function flushPara() {
+    if (!para.length) return;
+    var b = para.join('\n');
+    out.push(b.indexOf('<h3>') === 0 ? b : '<p>' + b.replace(/\n/g, '<br>') + '</p>');
+    para = [];
+  }
+  lines.forEach(function (ln) {
+    if (/^\s*\|.*\|\s*$/.test(ln)) { flushPara(); (tbl = tbl || []).push(ln.trim()); return; }
+    flush();
+    if (/^\s*-{3,}\s*$/.test(ln)) { flushPara(); out.push('<hr>'); return; }
+    if (!ln.trim()) { flushPara(); return; }
+    para.push(ln);
+  });
+  flush(); flushPara();
+  return out.join('');
+}
+
+function openAction(item) {
+  actItem = item;
+  document.documentElement.style.setProperty('--accent', item.accent || '#00ff9c');
+  $('actName').textContent = item.name;
+  $('actRole').textContent = (item.agent || '').toUpperCase() + ' · grounded, cited to source';
+  actIn.placeholder = item.placeholder || 'Ask…';
+  actIn.value = ''; actOut.innerHTML = ''; actStat.textContent = ''; actStat.className = 'astat';
+  actScrim.classList.add('on'); actEl.classList.add('on');
+  if (matchMedia('(hover: hover)').matches) setTimeout(() => actIn.focus(), 380);
+}
+function closeAction() {
+  actScrim.classList.remove('on'); actEl.classList.remove('on'); actItem = null;
+}
+actScrim.addEventListener('click', closeAction);
+$('actClose').addEventListener('click', closeAction);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && actEl.classList.contains('on')) { e.stopPropagation(); closeAction(); }
+}, true);
+
+$('actForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = actIn.value.trim();
+  if (!q || !actItem) return;
+  actGo.disabled = true;
+  actStat.className = 'astat';
+  actStat.textContent = actItem.name + ' is thinking…';
+  actOut.innerHTML = '';
+  fetch('/api/ask?q=' + encodeURIComponent(q) + '&agent=' + encodeURIComponent(actItem.agent || ''))
+    .then(r => r.json().then(j => ({ ok: r.ok, j })))
+    .then(({ ok, j }) => {
+      if (!ok || !j || (!j.answer && !j.error)) throw new Error((j && j.error) || 'No answer came back.');
+      if (j.error) throw new Error(j.error);
+      actOut.innerHTML = mdLite(j.answer);
+      actStat.textContent = (j.agent || actItem.name) + (j.role ? ' · ' + j.role : '');
+    })
+    .catch(err => {
+      actStat.className = 'astat bad';
+      actStat.textContent = err.message || 'That did not come back.';
+    })
+    .then(() => { actGo.disabled = false; });
+});
+
 
 /* L = show this item's bio now, rather than waiting out the 5s dwell.
    The dwell stays for touch, where there is no keyboard; this is the

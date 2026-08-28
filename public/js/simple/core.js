@@ -98,6 +98,9 @@ export function createSimple(opts) {
       announce();
       return true;
     }
+    // an action runs INLINE — the whole point of Simple Mode is that you
+    // don't get thrown out of it to do something small
+    if (item.action) { on.action && on.action(item); return true; }
     if (item.href) { on.navigate ? on.navigate(item) : (window.location.href = item.href); return true; }
     return false;
   }
