@@ -7,10 +7,15 @@
      /simple.html  — Simple Mode (the swivel wheel + its sub-menus)
 
    Nothing here touches the backend. Every `href` points at a page that
-   already exists in /public (verified 2026-08-27); every `art` path points
-   at an image already on disk. Both are plain strings on purpose — when
-   bespoke generated plates arrive, swap the `art` value and nothing else
-   changes.
+   already exists in /public (verified 2026-08-27).
+
+   `art` plates live in /public/assets/enter/ and were generated with
+   FLUX.1-schnell via the Hugging Face router (nscale provider), 2026-08-28.
+   Prompts and the regeneration script are recorded in
+   docs/FRONT-DOOR-MASTER-PROMPT.md §8 — they are deliberately near-black
+   and low-clutter because each plate sits BEHIND a neon solid and heavy
+   lettering at 30-46% opacity. Every path is a plain string: to replace a
+   plate, drop in a new file and change nothing else.
 
    ── FUTURE TODO · VOICE MODE ────────────────────────────────────────────
    Voice mode (ask the RAG brain a question out loud, hear it answer) is
@@ -46,7 +51,7 @@
       kicker: 'The cinematic entry',
       blurb: 'A scroll through the scales of reality — quantum lattice, molecule, water, grass, tree, earth, cosmos — arriving at the Crown. The full dramatic opening.',
       href: '/journey.html',
-      art: '/assets/journey/cosmos-hd.jpg',
+      art: '/assets/enter/descent.jpg',
       accent: C.cyan,
       geo: 'icosa'
     },
@@ -56,7 +61,7 @@
       kicker: 'The whole story',
       blurb: 'The full explainer. What SHADDAI is, how it works, the seven agents of the council, the worlds, the arcade, the RAG brain. Walks you all the way through.',
       href: '/home.html',
-      art: '/assets/landing/tab-council.png',
+      art: '/assets/enter/entry.jpg',
       accent: C.gold,
       geo: 'dodeca'
     },
@@ -66,7 +71,7 @@
       kicker: 'Straight in',
       blurb: 'Skip the fanfare. The Command Hub, sign-in, and every tool exactly where you left them. For people who already know what they came for.',
       href: '/dashboard',
-      art: '/assets/nav/dashboard.jpg',
+      art: '/assets/enter/dashboard.jpg',
       accent: C.emerald,
       geo: 'lattice'
     },
@@ -76,7 +81,7 @@
       kicker: 'One thumb, everything',
       blurb: 'A single object you spin with your thumb. Every part of SHADDAI on one wheel — agents, games, signals, forge, worlds. Swivel, sit on a choice to read it, tap to enter.',
       href: '/simple.html',
-      art: '/assets/landing/tab-create.png',
+      art: '/assets/enter/simple.jpg',
       accent: C.violet,
       geo: 'drum'
     },
@@ -88,7 +93,7 @@
       kicker: 'The council’s memory',
       blurb: 'The knowledge graph behind every agent. Ask it anything and every answer is cited back to the exact passage it came from. No invention.',
       href: '/brain.html',
-      art: '/assets/nav/aura.jpg',
+      art: '/assets/enter/rag.jpg',
       accent: C.emerald,
       geo: 'graph'
     },
@@ -98,7 +103,7 @@
       kicker: 'Walk the city',
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
       href: '/SHADDAI-WORLD.html',
-      art: '/assets/landing/tab-worlds.png',
+      art: '/assets/enter/world2d.jpg',
       accent: C.gold,
       geo: 'isogrid'
     },
@@ -108,7 +113,7 @@
       kicker: 'The full realm',
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
       href: '/world3d',
-      art: '/assets/nav/worlds.jpg',
+      art: '/assets/enter/world3d.jpg',
       accent: C.cyan,
       geo: 'terrain'
     },
@@ -118,7 +123,7 @@
       kicker: 'Play',
       blurb: 'Every game in the empire in one hall — the climb, the courts, the arenas, the tactics board.',
       href: '/arcade.html',
-      art: '/assets/landing/tab-play.png',
+      art: '/assets/enter/arcade.jpg',
       accent: C.amber,
       geo: 'octa'
     },
@@ -128,7 +133,7 @@
       kicker: 'ZEROX calls',
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
       href: '/pro-signals.html',
-      art: '/assets/landing/tab-signals.png',
+      art: '/assets/enter/signals.jpg',
       accent: C.rose,
       geo: 'chart'
     }

@@ -114,9 +114,10 @@ category gains one by adding an `items` array in `public/js/shd-modules.js`.
 
 - **Frontend only.** No file under `backend/` is modified. No payment code, no
   agent logic. Existing endpoints are read, never changed.
-- **No spend, no keys.** Everything renders from `public/vendor/three/` and art
-  already on disk. Every image is a single swappable path — bespoke generated
-  plates drop in later with no code change.
+- **No paid services beyond what the owner authorised.** Everything renders
+  from `public/vendor/three/`. The tile plates were generated on the owner's
+  own Hugging Face account, at their explicit instruction, on 2026-08-28 (§8).
+  Every image is still a single swappable path.
 - **Mobile-first and verified as such.** Touch is the primary input and is tested
   as touch, not assumed from mouse drag. Targets ≥ 44px. One-handed reachable.
 - **Sign-in is optional and never gates entry.** A small corner chip:
@@ -207,3 +208,36 @@ a phone); the drum didn't wrap its angles (a forward arc, nothing below the
 selection); the orb's off-axis items ran past the screen edge; the mobile
 header overflowed 390px by 8px; drawer rows ran name and kicker together.
 All fixed and re-verified.
+
+---
+
+## 8. The tile plates
+
+`public/assets/enter/*.jpg` — nine bespoke plates, generated 2026-08-28 with
+**FLUX.1-schnell** through the Hugging Face router on the owner's account,
+at their explicit instruction. Regenerate with:
+
+```
+HFTOK=<token> python scripts/gen-front-door-plates.py public/assets/enter
+```
+
+**The provider gotcha, so nobody re-debugs it.** All six HF keys in the vault
+are valid, but HF's own `hf-inference` provider no longer serves these image
+models — it returns **410 Gone**, which reads exactly like a dead key and
+isn't. Route through a live partner provider instead; `nscale`, `fal-ai` and
+`wavespeed` all served FLUX.1-schnell at the time of writing, and `nscale` is
+used here because it's OpenAI-compatible and returns base64 directly. Check
+current providers with the `inferenceProviderMapping` expand on the model API.
+
+Separately, one key returned **403** rather than 410 — a fine-grained token
+missing the "Make calls to Inference Providers" permission. 403 is a scope
+problem, 410 is a provider problem. They are not the same failure.
+
+**Why the prompts look the way they do.** Each plate sits behind a neon solid
+and heavy Cinzel lettering at 30-46% opacity, so every prompt forces
+near-black, low clutter, light in the upper half, and nothing legible. Plates
+measured 4.6-33.7 mean luma. The first `world3d` pass came back as pale grey
+fog and was regenerated against a darker prompt — brightness here is a
+measurement, not a matter of taste, because anything brighter fights the type.
+
+Total weight: ~340 KB for all nine.
