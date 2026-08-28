@@ -68,6 +68,17 @@ function persona(agent) {
   return trimmed;
 }
 
+/* A CONTROLLED vocabulary. Letting the model invent tags produces a thousand
+   near-duplicates ("crypto", "cryptocurrency", "web3") and no browsable
+   taxonomy at all. These are the shelves the brain is organized on. */
+const TOPICS = [
+  'trading', 'markets', 'investing', 'money', 'business', 'sales', 'offers',
+  'marketing', 'psychology', 'mindset', 'discipline', 'health', 'spirituality',
+  'consciousness', 'people', 'leadership', 'negotiation', 'writing', 'design',
+  'art', 'music', 'engineering', 'backend', 'ai', 'agents', 'security',
+  'blockchain', 'crypto', 'productivity', 'learning', 'strategy', 'storytelling',
+];
+
 function clip(s, n) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, n); }
 
 /* Models wrap JSON in prose or fences no matter how firmly you ask. Pull the
@@ -148,13 +159,17 @@ async function synthesize({ agent, text, extractive }) {
     'yourself — your domain, your judgement, your voice.',
     '',
     'Return ONLY a JSON object, no prose and no code fences, shaped exactly:',
-    '{"title":string,"thesis":string,"chapterLabels":string[],' +
+    '{"title":string,"thesis":string,"topics":string[],"chapterLabels":string[],' +
       '"takeaways":string[],"frameworks":[{"name":string,"summary":string}]}',
     '',
     'Rules:',
     '- title: what this source is ACTUALLY about, 4-12 words. Never quote the',
     '  opening line, never use a video id, never start with "In this video".',
     '- thesis: 1-3 sentences. The single argument the source is making.',
+    '- topics: 2-5 lowercase tags from THIS list only, most relevant first:',
+    '  ' + TOPICS.join(', ') + '.',
+    '  These are how the brain is browsed and how other agents find this',
+    '  source, so choose the ones someone would actually look under.',
     '- chapterLabels: exactly ' + nCh + ' short labels, in order, covering the',
     '  document start to end. 2-6 words each. Descriptive, not "Part 1".',
     '- takeaways: 3-6 items. What someone should DO or BELIEVE differently.',
@@ -174,6 +189,9 @@ async function synthesize({ agent, text, extractive }) {
   const out = {
     title: clip(j.title, 110),
     thesis: clip(j.thesis, 460),
+    topics: Array.from(new Set(arr(j.topics)
+      .map((t) => String(t || '').toLowerCase().trim())
+      .filter((t) => TOPICS.includes(t)))).slice(0, 5),
     chapterLabels: arr(j.chapterLabels).map((s) => clip(s, 70)).filter(Boolean),
     takeaways: arr(j.takeaways).map((s) => clip(s, 260)).filter(Boolean),
     frameworks: arr(j.frameworks)
@@ -194,6 +212,7 @@ function apply(digest, syn) {
   const d = { ...digest };
   if (syn.title) d.title = syn.title;
   if (syn.thesis) d.thesis = syn.thesis;
+  if (syn.topics && syn.topics.length) d.topics = syn.topics;
   if (syn.takeaways.length) d.takeaways = syn.takeaways;
   if (syn.frameworks.length) d.frameworks = syn.frameworks;
   if (syn.chapterLabels.length && Array.isArray(d.chapters)) {
@@ -206,4 +225,4 @@ function apply(digest, syn) {
   return d;
 }
 
-module.exports = { hasKey, persona, synthesize, apply, extractJSON, setWaitReporter };
+module.exports = { hasKey, persona, synthesize, apply, extractJSON, setWaitReporter, TOPICS };

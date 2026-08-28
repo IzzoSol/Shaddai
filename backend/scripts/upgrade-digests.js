@@ -52,6 +52,7 @@ function render(d) {
   const L = [];
   L.push(`DIGEST · ${d.agent} · ${d.name} · runtime ≈${hms(d.durationSec)} · mode:${d.tsMode || 'estimate'}`);
   L.push(`TITLE: ${d.title || d.name}`);
+  if ((d.topics || []).length) L.push(`TOPICS: ${d.topics.join(' · ')}`);
   if (d.thesis) L.push(`THESIS: ${d.thesis}`);
   if (d.url) L.push(`SOURCE: ${d.url}`);
   (d.chapters || []).forEach((c, i) => {
@@ -106,7 +107,8 @@ function sourceText(docs, d) {
     let touched = false;
 
     for (const d of store.digests) {
-      if (!FORCE && /\+llm/.test(d.engine || '')) { skipped++; console.log(`  ⤳ ${d.name} (already organized)`); continue; }
+      const organized = /\+llm/.test(d.engine || '') && (d.topics || []).length;
+      if (!FORCE && organized) { skipped++; console.log(`  ⤳ ${d.name} (already organized)`); continue; }
       const text = sourceText(docs, d);
       if (!text) { noSrc++; console.log(`  ? ${d.name} — source transcript not found`); continue; }
 
