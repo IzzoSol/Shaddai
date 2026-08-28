@@ -2517,10 +2517,12 @@ app.get('/realms/*', (req, res) => res.sendFile(path.join(REALMS_DIST, 'index.ht
 // Self-heal the 7 council character images on boot (forge-art is gitignored → regenerate from HF env keys)
 try { require('./lib/char-gen').ensureCouncilChars(); } catch (e) { console.warn('[prod] council self-heal skipped:', e.message); }
 
-// Landing page = the cinematic home (home.html). The Codex almanac lives at /codex,
-// the full dashboard app at /dashboard.
+// Landing page = the 4-module selector (enter.html) — the front door. It offers
+// the cinematic descent, the full story (home.html), the dashboard, and Simple
+// Mode. home.html is NOT retired: it is module 2, still served at /home.html.
+// The Codex almanac lives at /codex, the full dashboard app at /dashboard.
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/home.html'));
+  res.sendFile(path.join(__dirname, '../public/enter.html'));
 });
 app.get('/codex', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/codex.html'));
