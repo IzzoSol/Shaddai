@@ -186,11 +186,14 @@
       name: 'SIGNALS',
       accent: C.rose,
       art: '/assets/landing/tab-signals.png',
-      blurb: 'ZEROX market intelligence — live calls, charts, and wallet forensics.',
+      blurb: 'The three trading terminals — Pro Signals, the gated TG desk, and TuFish.',
+      // The zerox-chart / zerox-live-signals pages were never real trading
+      // tools and are deliberately NOT linked here. The three terminals below
+      // are the actual ones.
       items: [
-        { id: 'live',    name: 'LIVE CALLS', accent: C.rose,  art: '/assets/landing/tab-signals.png', href: '/zerox-live-signals.html', blurb: 'The live signal feed, scored and timestamped as it happens.' },
-        { id: 'charts',  name: 'CHARTS',     accent: C.cyan,  art: '/assets/nav/markets.jpg',         href: '/zerox-chart.html', blurb: 'Market charts with the council’s read layered on top.' },
-        { id: 'pro',     name: 'PRO DESK',   accent: C.gold,  art: '/assets/nav/plans.jpg',           href: '/pro-signals.html', blurb: 'The full pro desk — deeper calls, hit-rate history, and the meta-signal view.', pro: true }
+        { id: 'pro',    name: 'PRO SIGNALS', accent: C.gold,   art: '/assets/landing/tab-signals.png', href: '/pro-signals.html', blurb: 'The Oracle Terminal — live calls, scoring and hit-rate history. PIN gated.', pro: true },
+        { id: 'tg',     name: 'SHADDAI TG',  accent: C.emerald, art: '/assets/nav/social.jpg',         href: '/m-signals.html',   blurb: 'The Team Terminal — the gated desk behind the Telegram feed. PIN gated.', pro: true },
+        { id: 'tufish', name: 'TUFISH',      accent: C.cyan,    art: '/assets/nav/markets.jpg',        href: '/tufish.html',      blurb: 'MiroFish swarm intelligence — yin and yang of research and AI.', pro: true }
       ]
     },
     {
