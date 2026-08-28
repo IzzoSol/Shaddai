@@ -114,6 +114,14 @@ Practically, this means:
   into and get the differentiated output too — the RAG brain + skills +
   tool access become licensable/usable infrastructure, not just a dashboard
   feature.
+- **Named ecosystem partners (owner, 2026-08-28), all complementary not competing:**
+  Paybox (agent wallet) + MoonPay (non-custodial trading) for the money/wallet
+  layer; Claude + Grok bot + other chat surfaces as front-ends into the SAME
+  agent/RAG/tool stack; the video clipper + Higgsfield + Hugging Face + Meshy
+  for generative media/3D, feeding Forge and the 3D marketplace; gamers and
+  content creators as the two core user archetypes the whole pipeline (§ above)
+  serves. The token (§Phase 5, SHADDAI/DREAM coin) is the long-run unifying
+  asset across all of it — still explicitly LATER, not blocking anything above.
 
 ### The pipeline (how everything connects)
 Sparks (§1.4, $1 fixed unit) is the metering/billing spine that every piece
