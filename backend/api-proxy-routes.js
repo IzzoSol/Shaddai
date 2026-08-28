@@ -2041,15 +2041,15 @@ router.post('/image/generate', require('./demo-limit').middleware, async (req, r
   // (server-side key pool + auto-rotation; honors a BYOK apiKey if the caller passed one).
   const hfPool = require('./lib/hf-keys');
   try {
+    // BYOK and the server pool both go through hf-keys, which routes to a LIVE
+    // inference provider. The old code called `hf-inference` directly for the
+    // BYOK path — that provider is retired and returns 410 Gone, so a caller
+    // supplying their own valid key got a hard failure while the pool path
+    // worked. generateSafe() puts a BYOK key first in the rotation.
     let img = null;
-    if (apiKey) {
-      const rr = await fetch('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
-        { method: 'POST', headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json', 'x-wait-for-model': 'true' }, body: JSON.stringify({ inputs: prompt }) });
-      const ct = rr.headers.get('content-type') || '';
-      if (!rr.ok || !ct.startsWith('image')) throw new Error('HF ' + rr.status);
-      img = Buffer.from(await rr.arrayBuffer());
-    } else if (hfPool.keys().length) {
-      img = await hfPool.generate(prompt);
+    if (apiKey || hfPool.keys().length) {
+      const out = await hfPool.generateSafe(prompt, { byok: apiKey || undefined });
+      img = out.buffer || null;
     }
     if (img) {
       const dataUri = `data:image/png;base64,${img.toString('base64')}`;

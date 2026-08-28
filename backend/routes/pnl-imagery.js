@@ -17,8 +17,10 @@ if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 
-const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
-const HF_API_URL = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+// Image generation goes through the shared HF key pool, which routes to a LIVE
+// inference provider and rotates across keys. The old direct `api-inference`
+// URL is a retired provider (410 Gone) and could never produce an image.
+const hfPool = require('../lib/hf-keys');
 
 /**
  * Build prompt for HF FLUX image generation
@@ -61,8 +63,8 @@ High quality, detailed, professional.
  * Generate PnL image via HuggingFace FLUX
  */
 async function generatePnLImage(data) {
-  if (!HF_API_KEY) {
-    console.warn('HUGGINGFACE_API_KEY not set, using mock image');
+  if (!hfPool.keys().length) {
+    console.warn('[PnL] no HF key configured (set HF_TOKENS or backend/data/runtime-keys.json) — skipping image');
     return null;
   }
 
@@ -78,26 +80,9 @@ async function generatePnLImage(data) {
 
     console.log(`🎨 Generating PnL image for ${data.symbol}...`);
 
-    const response = await fetch(HF_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HF_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          num_inference_steps: 4, // FLUX Schnell is fast
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HF API error: ${response.status}`);
-    }
-
-    // Get image buffer
-    const imageBuffer = await response.buffer();
+    const out = await hfPool.generateSafe(prompt, { width: 1024, height: 1024 });
+    if (!out.buffer) throw new Error('HF produced no image: ' + (out.hfError || 'all keys failed'));
+    const imageBuffer = out.buffer;
 
     // Save to cache
     fs.writeFileSync(cachePath, imageBuffer);

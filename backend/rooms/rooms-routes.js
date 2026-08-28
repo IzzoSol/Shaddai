@@ -23,8 +23,9 @@ const forge = require('../forge/forge-core');
 
 const router = express.Router();
 
-const HF_API = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
 const hf = require('../lib/hf-keys'); // HF key pool + auto-rotation (shared with forge)
+// NOTE: image generation goes through hf.generate() below. Do NOT reintroduce a
+// direct `hf-inference` URL here — that provider is retired and returns 410 Gone.
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const ROOMS_FILE = path.join(DATA_DIR, 'agent-rooms.json');
 const IMG_DIR = path.join(DATA_DIR, 'agent-rooms-images');
@@ -58,16 +59,6 @@ function saveRooms(obj) {
   fs.renameSync(tmp, ROOMS_FILE); // atomic on same volume
 }
 
-function hfToken() {
-  if (process.env.HF_TOKEN) return process.env.HF_TOKEN;
-  if (process.env.HUGGINGFACE_API_KEY) return process.env.HUGGINGFACE_API_KEY;
-  // dev fallback shared with the forge: backend/data/runtime-keys.json { "HF_TOKEN": "..." }
-  try {
-    const k = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'runtime-keys.json'), 'utf8'));
-    return k.HF_TOKEN || k.HUGGINGFACE_API_KEY || '';
-  } catch { return ''; }
-}
-
 // Build the exact FLUX prompt for a room scene (exported-shape kept simple for tests).
 function buildScenePrompt(theme) {
   const key = String(theme || '').toLowerCase().trim();
@@ -78,28 +69,6 @@ function buildScenePrompt(theme) {
     frag = clean ? `a ${clean}, richly detailed interior` : 'a sleek operative habitat, richly detailed interior';
   }
   return `${frag}, ${SCENE_STYLE}`;
-}
-
-async function fluxImage(prompt, token) {
-  const r = await fetch(HF_API, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'Content-Type': 'application/json',
-      'x-wait-for-model': 'true',
-    },
-    body: JSON.stringify({ inputs: prompt }),
-  });
-  const ct = r.headers.get('content-type') || '';
-  if (!r.ok || !ct.startsWith('image')) {
-    let detail = `HF ${r.status}`;
-    try { const t = await r.text(); detail += ' ' + t.slice(0, 200); } catch {}
-    // 402 = credits depleted — surface a real, specific error (no fake image).
-    const err = new Error(detail);
-    err.status = r.status;
-    throw err;
-  }
-  return Buffer.from(await r.arrayBuffer());
 }
 
 // Default operative look = the "ghost" archetype loadout (every slot valid).

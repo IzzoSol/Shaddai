@@ -5,14 +5,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const TOKENS = (() => {
-  try {
-    const j = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'backend', 'data', 'runtime-keys.json'), 'utf8'));
-    return j.HF_TOKENS || [j.HF_TOKEN];
-  } catch { return []; }
-})();
-
-const MODEL = 'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell';
 const OUT = path.join(__dirname, '..', 'public', 'assets', 'agents');
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -31,54 +23,22 @@ const AGENTS = [
 const only = process.argv.slice(2).map(s => s.toUpperCase());
 const jobs = only.length ? AGENTS.filter(a => only.includes(a.code)) : AGENTS;
 
-// Free, keyless Pollinations FLUX fallback (used when HF credits are depleted).
-async function genPollinations(prompt, tries = 0) {
-  const seed = Math.floor(Math.random() * 999999);
-  const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
-    `?width=768&height=1024&model=flux&nologo=true&seed=${seed}`;
-  const res = await fetch(url);
-  if (res.status === 200) {
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > 4000) return buf;              // guard against tiny error blobs
-  }
-  if (tries < 4) { await new Promise(r => setTimeout(r, 3000)); return genPollinations(prompt, tries + 1); }
-  throw new Error(`Pollinations HTTP ${res.status}`);
-}
+// Image generation is delegated to the shared HF key pool, which routes to a
+// LIVE inference provider, rotates across keys on depletion, and falls back to
+// keyless Pollinations if every key fails. The previous local copy of this
+// logic posted to `hf-inference`, a retired provider that returns 410 Gone —
+// so it silently fell through to Pollinations on EVERY run and no HF key was
+// ever actually used.
+const hfPool = require('../backend/lib/hf-keys');
 
-async function gen(prompt, tokenIdx = 0, tries = 0) {
-  if (!TOKENS.length) return genPollinations(prompt);   // no HF keys → straight to free fallback
-  const token = TOKENS[tokenIdx % TOKENS.length];
-  let res;
-  try {
-    res = await fetch(MODEL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: prompt, parameters: { width: 768, height: 1024 } }),
-    });
-  } catch (e) { return genPollinations(prompt); }
-  if (res.status === 200) return Buffer.from(await res.arrayBuffer());
-  if ((res.status === 402 || res.status === 403 || res.status === 429)) {
-    if (tokenIdx < TOKENS.length - 1) return gen(prompt, tokenIdx + 1, tries);
-    return genPollinations(prompt);                 // all HF keys exhausted → free fallback
-  }
-  if (res.status === 503 && tries < 4) {
-    await new Promise(r => setTimeout(r, 4000));
-    return gen(prompt, tokenIdx, tries + 1);
-  }
-  return genPollinations(prompt);                   // any other HF failure → free fallback
-}
-
-// Generate one agent, retrying until the saved PNG is a real image (>20KB).
-async function makeOne(a, attempt = 1) {
-  const full = a.prompt + STYLE;
-  const buf = await gen(full);
-  if (buf.length > 20 * 1024) return buf;
-  if (attempt < 5) {
-    process.stdout.write(`(retry ${attempt}, ${(buf.length / 1024).toFixed(0)}KB) `);
-    await new Promise(r => setTimeout(r, 2000));
-    return makeOne(a, attempt + 1);
-  }
-  return buf; // give back whatever we last got; caller reports the size
+async function gen(prompt) {
+  const out = await hfPool.generateSafe(prompt, { width: 768, height: 1024 });
+  if (out.buffer) return out.buffer;
+  const res = await fetch(out.fallbackUrl);           // keyless free fallback
+  if (!res.ok) throw new Error('Pollinations HTTP ' + res.status);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length < 4000) throw new Error('Pollinations returned a tiny blob');
+  return buf;
 }
 
 (async () => {

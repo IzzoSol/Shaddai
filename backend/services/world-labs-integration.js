@@ -10,6 +10,12 @@ const path = require('path');
 
 const WORLD_LABS_KEY = process.env.WORLDLABS_KEY || (() => { try { return JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'data', 'runtime-keys.json'), 'utf8')).WORLDLABS_KEY || ''; } catch { return ''; } })();
 const WORLD_LABS_API = 'https://api.worldlabs.ai/v1';
+// ⚠️ NON-FUNCTIONAL STUB (verified 2026-08-28). This module posts to
+// `api-inference.huggingface.co` (a retired provider, 410 Gone) with a
+// hardcoded placeholder token 'hf_YOUR_HF_TOKEN' — it has never been able to
+// return a real texture. Left as-is deliberately: wiring it up means routing
+// through backend/lib/hf-keys.js (live provider + key pool) rather than
+// pasting a token here. Do not treat its failures as a key/credit problem.
 const HUGGING_FACE_API = 'https://api-inference.huggingface.co/models';
 
 class WorldLabsIntegration {

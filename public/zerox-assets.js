@@ -4,7 +4,12 @@
  * Integrates with HF Stable Diffusion, FLUX for quality imagery
  */
 
-const HF_API_KEY = localStorage.getItem('hf_api_key') || 'your_hf_api_key_here';
+// Image generation goes through our own server (/api/image/generate), which
+// holds the HF key pool and routes to a LIVE inference provider. Previously
+// this file called `api-inference.huggingface.co` straight from the browser —
+// a retired provider that returns 410 Gone — using a key pasted into
+// localStorage. That could never produce an image, and put a raw token in the
+// browser. No key is needed client-side any more.
 const HF_MODEL = 'stabilityai/stable-diffusion-3-medium-diffusion'; // Professional, clean image generation
 
 // PnL Visual Prompts (designed for trading dashboard)
@@ -34,31 +39,19 @@ async function generatePnLVisual(pnl) {
   const prompt = PNL_PROMPTS[promptKey];
 
   try {
-    const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium-diffusion', {
+    const response = await fetch('/api/image/generate', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HF_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          height: 256,
-          width: 512,
-          guidance_scale: 7.5,
-          num_inference_steps: 30,
-        },
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, width: 512, height: 256 }),
     });
 
     if (!response.ok) {
-      console.error('HF API error:', response.status);
+      console.error('image generate failed:', response.status);
       return null;
     }
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    return url;
+    const j = await response.json();
+    return j.url || j.image_url || null;
   } catch (e) {
     console.error('PnL generation error:', e);
     return null;
@@ -109,25 +102,16 @@ async function createPnLCardWithAsset(trade) {
  */
 async function generateMarketHeatmap() {
   try {
-    const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium-diffusion', {
+    const response = await fetch('/api/image/generate', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HF_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: PNL_PROMPTS['market-heatmap'],
-        parameters: {
-          height: 384,
-          width: 512,
-        },
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: PNL_PROMPTS['market-heatmap'], width: 512, height: 384 }),
     });
 
     if (!response.ok) return null;
 
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+    const j = await response.json();
+    return j.url || j.image_url || null;
   } catch (e) {
     console.error('Heatmap generation error:', e);
     return null;

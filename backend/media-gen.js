@@ -58,6 +58,13 @@ function hfTokens() {
   return out;
 }
 
+// ⚠️ KNOWN DEAD (verified 2026-08-28). `hf-inference` is a retired provider and
+// returns 410 Gone, so this route cannot produce audio no matter how many keys
+// are configured — it is NOT a key problem, and adding keys will not fix it.
+// Unlike the image models, MusicGen is not currently served by any live HF
+// Inference Provider (nscale/fal-ai/wavespeed are text-to-image), so there is
+// no drop-in URL swap. Re-enabling this needs a different audio provider.
+// The route already degrades to a clean error, so it fails honestly.
 const MUSICGEN_URL = 'https://router.huggingface.co/hf-inference/models/facebook/musicgen-small';
 
 // ----------------------------------------------------------------------------

@@ -1666,22 +1666,19 @@ async function _generatePnLImage(symbol, entryPrice, currentPrice, mult, timesta
       .replace('${CURRENT_PRICE}', currentPrice.toFixed(6))
       .replace('${TIMESTAMP}', new Date(timestamp).toLocaleString());
 
-    // Try HuggingFace Flux (text-to-image) if API available
-    const hfKey = process.env.HUGGINGFACE_API_KEY;
-    if (hfKey) {
-      try {
-        const response = await fetch('https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev', {
-          headers: { Authorization: `Bearer ${hfKey}` },
-          method: 'POST',
-          body: JSON.stringify({ inputs: dynamicPrompt })
-        });
-        if (response.ok) {
-          const buffer = await response.buffer();
-          return `data:image/jpeg;base64,${buffer.toString('base64')}`;
-        }
-      } catch (e) {
-        console.warn('[PnL] HF image failed, falling back to SVG:', e.message);
+    // Try HuggingFace Flux (text-to-image) through the shared key pool.
+    // The previous code hit `api-inference.huggingface.co` directly — a retired
+    // provider that returns 410 Gone — and then called response.buffer(), which
+    // is node-fetch v2 API that native fetch does not have. Two reasons it could
+    // never have produced an image. The pool routes to a live provider instead.
+    try {
+      const hfPool = require('./lib/hf-keys');
+      if (hfPool.keys().length) {
+        const out = await hfPool.generateSafe(dynamicPrompt, { width: 1024, height: 1024 });
+        if (out.buffer) return `data:image/png;base64,${out.buffer.toString('base64')}`;
       }
+    } catch (e) {
+      console.warn('[PnL] HF image failed, falling back to SVG:', e.message);
     }
 
     // FALLBACK: Premium SVG card matching master prompt spec
