@@ -554,10 +554,20 @@ if (renderer) {
   /* ── the solids ───────────────────────────────────────────────────────
      Neon wireframe over a near-black shell: the shell hides the back edges
      so the form reads as solid geometry rather than a wire tangle. */
+  /* The shell hides the solid's back edges so it reads as geometry rather
+     than a wire tangle — which means it has to match the PAGE, not be a fixed
+     colour. Hardcoding obsidian turned every solid into a black blob on the
+     two light skins. */
+  const LIGHT_SKINS = new Set(['brutalist', 'serif']);
+  function shellColor() {
+    const skin = document.documentElement.getAttribute('data-theme-skin') || 'glitch';
+    return LIGHT_SKINS.has(skin) ? 0xf6f5f1 : 0x06080b;
+  }
+
   function neon(geo, color, opacity = 1) {
     const g = new THREE.Group();
     const shell = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: 0x06080b, transparent: true, opacity: 0.86,
+      color: shellColor(), transparent: true, opacity: 0.86,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
     }));
     const wire = new THREE.LineSegments(
@@ -667,6 +677,13 @@ if (renderer) {
     });
   }
   window.addEventListener('shd:slots', build);
+  /* a skin change flips the shell between obsidian and bone, so the solids
+     have to be rebuilt — the colour is baked into the material */
+  let lastSkin = document.documentElement.getAttribute('data-theme-skin');
+  new MutationObserver(() => {
+    const now = document.documentElement.getAttribute('data-theme-skin');
+    if (now !== lastSkin) { lastSkin = now; build(); }
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-skin'] });
   build();
 
   function resize() {
