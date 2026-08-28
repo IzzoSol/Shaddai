@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<title>SHADDAI · Simple Mode</title>
+<meta name="description" content="One thumb, everything. Spin the wheel to any part of SHADDAI — agents, games, signals, forge, worlds — and tap to enter." />
+<meta name="theme-color" content="#06080b" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   SIMPLE MODE — the shell. All the motion lives in js/simple/*.
+   Spec: docs/FRONT-DOOR-MASTER-PROMPT.md §3
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+  --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --edge:rgba(120,150,140,.14);
+  --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --violet:#b07cff; --rose:#ff6f6f;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#4f5d57;
+  --f-display:'Cinzel', serif; --f-serif:'Fraunces', Georgia, serif; --f-mono:'IBM Plex Mono', monospace;
+  --ease:cubic-bezier(.22,.7,.2,1);
+  --accent:#00ff9c;
+}
+html[data-theme-skin="terminal"]{ --void:#030a03; --void2:#041004; --panel:#061806; --ink:#00ff41; --ink-soft:rgba(0,255,65,.62); --edge:rgba(0,255,65,.22); }
+html[data-theme-skin="amber"]   { --void:#0a0600; --void2:#120c02; --panel:#160f03; --ink:#ffcf7a; --ink-soft:rgba(255,176,32,.65); --edge:rgba(255,176,32,.20); }
+html[data-theme-skin="void"]    { --void:#000; --void2:#050505; --panel:#0a0a0a; --ink:#f2f2f2; --ink-soft:#8f8f8f; --edge:rgba(255,255,255,.10); }
+html[data-theme-skin="brutalist"]{ --void:#f5f4f0; --void2:#eceae4; --panel:#fff; --ink:#0a0804; --ink-soft:#5a5248; --ink-faint:#8b8378; --edge:rgba(10,8,4,.18); }
+html[data-theme-skin="serif"]   { --void:#f8f6f0; --void2:#efece4; --panel:#fff; --ink:#1c1710; --ink-soft:#6b5f4e; --ink-faint:#9a8e7c; --edge:rgba(38,28,8,.12); }
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+html{ background:var(--void); -webkit-text-size-adjust:100%; }
+body{
+  background:var(--void); color:var(--ink); font-family:var(--f-serif);
+  -webkit-font-smoothing:antialiased; overflow:hidden; overscroll-behavior:none;
+}
+a{ color:inherit; text-decoration:none; }
+button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+
+.aura{ position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(58% 44% at 50% 44%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 68%),
+    radial-gradient(70% 50% at 50% 108%, rgba(232,196,92,.05), transparent 66%); }
+.grain{ position:fixed; inset:0; pointer-events:none; z-index:30; mix-blend-mode:overlay; opacity:.28;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.5'/></svg>"); }
+.vignette{ position:fixed; inset:0; pointer-events:none; z-index:29;
+  background:radial-gradient(120% 92% at 50% 46%, transparent 44%, rgba(0,0,0,.8) 100%); }
+html[data-theme-skin="brutalist"] .vignette, html[data-theme-skin="serif"] .vignette{
+  background:radial-gradient(120% 92% at 50% 46%, transparent 55%, rgba(0,0,0,.12) 100%); }
+
+/* the wheel itself owns the whole viewport — the gesture surface is the page */
+#stage{ position:fixed; inset:0; z-index:5; width:100%; height:100%; display:block; touch-action:none; }
+
+/* ── overlay chrome ─────────────────────────────────────────────────────
+   The overlay never eats the gesture: containers are pointer-events:none
+   and only the controls themselves take input. */
+.layer{ position:fixed; inset:0; z-index:20; pointer-events:none;
+  display:flex; flex-direction:column; justify-content:space-between; }
+.layer > *{ pointer-events:none; }
+.layer button, .layer a{ pointer-events:auto; }
+
+.top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+  padding:clamp(12px,2.2vw,20px) clamp(13px,3.4vw,30px);
+  padding-top:calc(clamp(12px,2.2vw,20px) + env(safe-area-inset-top)); }
+.trail{ min-width:0; }
+.trail .sh{ font-family:var(--f-display); font-weight:900; font-size:clamp(15px,2vw,19px);
+  letter-spacing:.18em; display:block; }
+.trail .crumb{ font-family:var(--f-mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-faint); margin-top:4px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:46vw; }
+.trail .crumb b{ color:var(--accent); font-weight:400; }
+
+.tools{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.tool{ font-family:var(--f-mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.55);
+  min-height:38px; min-width:38px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  transition:border-color .25s var(--ease), color .25s var(--ease); }
+html[data-theme-skin="brutalist"] .tool, html[data-theme-skin="serif"] .tool{ background:rgba(255,255,255,.62); }
+.tool:hover, .tool.on{ color:var(--ink); border-color:color-mix(in srgb, var(--accent) 46%, transparent); }
+.tool .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); }
+.tool.off .dot{ background:var(--ink-faint); box-shadow:none; }
+
+/* segmented skin switch: wheel / orb / list */
+.seg{ display:inline-flex; border:1px solid var(--edge); border-radius:2px; overflow:hidden;
+  background:rgba(14,20,27,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.seg button{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-faint); min-height:38px; padding:0 9px; transition:color .22s var(--ease), background .22s var(--ease); }
+.seg button.on{ color:var(--void); background:var(--accent); font-weight:600; }
+html[data-theme-skin="brutalist"] .seg button.on, html[data-theme-skin="serif"] .seg button.on{ color:#fff; }
+
+/* ── bottom: the reachable zone ─────────────────────────────────────────
+   Everything a thumb needs sits in the lower third: back on the left,
+   enter in the middle, the counter above. */
+.bottom{ display:flex; flex-direction:column; align-items:center; gap:10px;
+  padding:0 clamp(13px,3.4vw,30px) calc(clamp(16px,3vw,26px) + env(safe-area-inset-bottom)); }
+.count{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--ink-faint); }
+.count b{ color:var(--accent); font-weight:400; }
+.row{ display:flex; align-items:center; gap:10px; width:100%; max-width:520px; justify-content:center; }
+.back{ font-family:var(--f-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; min-height:56px; padding:0 15px;
+  display:none; align-items:center; background:rgba(14,20,27,.55);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.back.show{ display:inline-flex; }
+.back:hover{ color:var(--ink); border-color:var(--accent); }
+.enter{ flex:1; min-height:56px; border-radius:2px; font-family:var(--f-mono); font-size:12px;
+  letter-spacing:.2em; text-transform:uppercase; font-weight:600;
+  border:1px solid var(--accent); color:var(--void); background:var(--accent);
+  display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  box-shadow:0 8px 34px color-mix(in srgb, var(--accent) 24%, transparent);
+  transition:filter .2s var(--ease), box-shadow .3s var(--ease); }
+html[data-theme-skin="brutalist"] .enter, html[data-theme-skin="serif"] .enter{ color:#fff; }
+.enter:hover{ filter:brightness(1.08); }
+.enter:active{ transform:translateY(1px); }
+.hint{ font-family:var(--f-mono); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint); opacity:.75; }
+
+/* ── dwell bio ──────────────────────────────────────────────────────────── */
+.bio{ width:100%; max-width:520px; border:1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius:3px; background:rgba(10,14,19,.93); padding:14px 16px;
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  opacity:0; transform:translateY(10px); transition:opacity .45s var(--ease), transform .45s var(--ease);
+  font-size:13.5px; line-height:1.5; color:var(--ink-soft); }
+html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ background:rgba(255,255,255,.95); }
+.bio.show{ opacity:1; transform:none; }
+.bio b{ display:block; font-family:var(--f-mono); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--accent); font-weight:400; margin-bottom:6px; }
+
+/* ── loading / no-webgl ─────────────────────────────────────────────────── */
+#boot{ position:fixed; inset:0; z-index:50; display:grid; place-items:center; background:var(--void);
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--ink-faint);
+  transition:opacity .6s var(--ease); }
+#boot.gone{ opacity:0; pointer-events:none; }
+#fallback{ display:none; position:fixed; inset:0; z-index:55; overflow-y:auto; background:var(--void);
+  padding:clamp(20px,5vw,44px); }
+#fallback.show{ display:block; }
+#fallback h1{ font-family:var(--f-display); font-weight:900; letter-spacing:.12em; font-size:22px; }
+#fallback p{ color:var(--ink-faint); font-size:14px; margin-top:8px; }
+#fallback ul{ list-style:none; margin-top:22px; display:grid; gap:8px; }
+#fallback a{ display:block; border:1px solid var(--edge); border-radius:3px; padding:16px 18px;
+  font-family:var(--f-display); font-weight:700; letter-spacing:.1em; font-size:17px; }
+
+/* screen-reader mirror of the wheel — the whole navigator stays usable
+   with a screen reader even though the visible control is a 3D canvas */
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+@media(max-width:440px){
+  .top{ padding-left:12px; padding-right:12px; }
+  .trail .sh{ font-size:14px; letter-spacing:.13em; }
+  .trail .crumb{ font-size:9px; letter-spacing:.14em; max-width:38vw; }
+  .tools{ gap:5px; }
+  .tool{ min-width:34px; padding:0 8px; }
+  .seg button{ padding:0 7px; font-size:9px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .bio, .enter, .tool, .seg button{ transition-duration:.001s !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="aura" aria-hidden="true"></div>
+<canvas id="stage"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="layer">
+  <div class="top">
+    <div class="trail">
+      <a class="sh" href="/enter.html" title="Back to the four doors">SHADDAI</a>
+      <span class="crumb" id="crumb">Simple Mode</span>
+    </div>
+    <div class="tools">
+      <div class="seg" id="seg" role="group" aria-label="How the wheel looks">
+        <button type="button" data-skin="wheel" class="on">wheel</button>
+        <button type="button" data-skin="orb">orb</button>
+        <button type="button" data-skin="list">list</button>
+      </div>
+      <button class="tool" id="tDwell" type="button" title="Bios"><span class="dot"></span></button>
+      <button class="tool" id="tTheme" type="button" title="Theme">◈</button>
+      <button class="tool off" id="tAuth" type="button" title="Sign in"><span class="dot"></span><span id="authLbl">in</span></button>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="bio" id="bio" role="status" aria-live="polite"></div>
+    <div class="count" id="count"></div>
+    <div class="row">
+      <button class="back" id="back" type="button">‹ back</button>
+      <button class="enter" id="enter" type="button">enter</button>
+    </div>
+    <div class="hint" id="hint">swipe to spin · tap to enter</div>
+  </div>
+</div>
+
+<!-- a screen reader gets a real list, not a canvas -->
+<div class="sr"><h1>SHADDAI Simple Mode</h1><ul id="srList"></ul></div>
+
+<div id="boot">summoning the wheel…</div>
+
+<!-- If WebGL can't start, Simple Mode degrades to a plain list of links
+     rather than a blank screen. -->
+<div id="fallback">
+  <h1>SHADDAI</h1>
+  <p>This browser can't run the 3D wheel, so here's everything as plain links.</p>
+  <ul id="fallbackList"></ul>
+</div>
+
+<script src="/js/shd-modules.js"></script>
+<script src="/js/shd-chrome.js"></script>
+<script type="module">
+import { createSimple } from '/js/simple/core.js';
+
+const M = window.SHDModules;
+const C = window.SHDChrome.init();
+
+const $ = id => document.getElementById(id);
+const crumb = $('crumb'), countEl = $('count'), bioEl = $('bio');
+const backBtn = $('back'), enterBtn = $('enter'), hintEl = $('hint');
+const srList = $('srList');
+
+/* ── the plain-links fallback, also used if WebGL fails ────────────────── */
+function buildFallback() {
+  const ul = $('fallbackList');
+  const add = (label, href) => {
+    const li = document.createElement('li');
+    li.innerHTML = '<a href="' + href + '">' + label + '</a>';
+    ul.appendChild(li);
+  };
+  M.WHEEL.forEach(cat => {
+    if (cat.href) add(cat.name, cat.href);
+    (cat.items || []).forEach(it => add(cat.name + ' › ' + it.name, it.href));
+  });
+}
+function showFallback() {
+  buildFallback();
+  $('boot').classList.add('gone');
+  $('fallback').classList.add('show');
+}
+
+/* ── chrome wiring ────────────────────────────────────────────────────── */
+function paintAuth() {
+  const u = C.user();
+  $('tAuth').classList.toggle('off', !u);
+  $('authLbl').textContent = u ? C.shortId(u) : 'in';
+}
+C.onAuth(paintAuth); paintAuth();
+$('tAuth').addEventListener('click', () => C.openAuth());
+$('tTheme').addEventListener('click', () => C.openTheme());
+
+const app = createSimple({
+  canvas: $('stage'),
+  data: M.WHEEL,
+  on: {
+    fatal: showFallback,
+
+    ready() { $('boot').classList.add('gone'); },
+
+    /* selection drives the accent colour of the entire shell, so the screen
+       takes on the colour of whatever you're pointed at */
+    select(item, i, n) {
+      document.documentElement.style.setProperty('--accent', item.accent || '#00ff9c');
+      countEl.innerHTML = '<b>' + (i + 1) + '</b> / ' + n + ' · ' + item.name;
+      enterBtn.textContent = (item.items && item.items.length) ? 'open ' + item.name : 'enter ' + item.name;
+      hideBio();
+    },
+
+    level(state) {
+      crumb.innerHTML = state.trail.length
+        ? 'Simple Mode · <b>' + state.trail.join(' › ') + '</b>'
+        : 'Simple Mode';
+      backBtn.classList.toggle('show', state.depth > 1);
+      hintEl.textContent = state.depth > 1
+        ? 'swipe to spin · tap to enter · back to step out'
+        : 'swipe to spin · tap to enter';
+      srList.innerHTML = '';
+      state.items.forEach(it => {
+        const li = document.createElement('li');
+        if (it.items && it.items.length) {
+          const b = document.createElement('button');
+          b.textContent = 'Open ' + it.name;
+          b.addEventListener('click', () => { app && app.spin(0); });
+          li.appendChild(b);
+        } else {
+          li.innerHTML = '<a href="' + (it.href || '#') + '">' + it.name + '</a>';
+        }
+        srList.appendChild(li);
+      });
+    },
+
+    dwell(item) {
+      if (!item) return;
+      bioEl.innerHTML = '<b>' + item.name + '</b>' + (item.blurb || '');
+      bioEl.classList.add('show');
+    },
+    dwellEnd: hideBio,
+
+    escape() { window.location.href = '/enter.html'; }
+  }
+});
+
+function hideBio() { bioEl.classList.remove('show'); }
+
+if (!app) showFallback();
+
+/* ── controls ─────────────────────────────────────────────────────────── */
+enterBtn.addEventListener('click', () => app && app.enter());
+backBtn.addEventListener('click', () => app && app.back());
+
+$('seg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-skin]');
+  if (!b || !app) return;
+  app.setSkin(b.dataset.skin);
+  $('seg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+});
+
+function paintDwell() {
+  const on = C.dwell();
+  $('tDwell').classList.toggle('off', !on);
+  $('tDwell').title = on
+    ? 'Bios on — rest on an item for 5 seconds to read what it is'
+    : 'Bios off';
+  app && app.setDwellEnabled(on);
+}
+$('tDwell').addEventListener('click', () => { C.setDwell(!C.dwell()); paintDwell(); });
+C.onDwell(paintDwell);
+paintDwell();
+
+/* the sheets sit above the canvas, so the wheel must not keep spinning
+   under a dialog the user is reading */
+window.addEventListener('resize', () => app && app.refit());
+
+/* ── FUTURE TODO · VOICE MODE ────────────────────────────────────────────
+   Out of scope for this pass and deliberately not built. No microphone,
+   speech API, or audio endpoint is wired on this page. See
+   docs/FRONT-DOOR-MASTER-PROMPT.md §5.
+   ──────────────────────────────────────────────────────────────────────── */
+</script>
+</body>
+</html>
