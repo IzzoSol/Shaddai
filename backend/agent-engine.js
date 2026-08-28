@@ -22,6 +22,8 @@ let mcpClient = null;
 try { mcpClient = require('./mcp-client'); } catch (e) { console.warn('[ENGINE] MCP client unavailable:', e.message); }
 let payGuard = null;
 try { payGuard = require('./pay-guard'); } catch (e) { console.warn('[ENGINE] pay-guard unavailable:', e.message); }
+let payboxGuard = null;
+try { payboxGuard = require('./paybox-guard'); } catch (e) { console.warn('[ENGINE] paybox-guard unavailable:', e.message); }
 
 // Resolve a tool by name: static registry first, then any connected MCP tool.
 function resolveTool(name) {
@@ -2653,6 +2655,26 @@ const TOOLS = {
     }
   },
 
+  paybox_pay: {
+    name: 'paybox_pay',
+    description: 'Charge or check out via Paybox (crypto/card). GUARDED: per-call cap, daily budget, and human approval above a threshold, same safety model as pay_api_call. Spends real money — use only for actual checkout/charge flows (tier upgrades, workflow purchases, coin pre-orders), never speculatively.',
+    schema: {
+      path: 'string — Paybox API path to call, e.g. "checkout" or "charge"',
+      method: 'string — GET/POST (default POST)',
+      body: 'object — request body (amount, currency, description, customer, etc.)',
+      est_cost_usd: 'number — your best estimate of the charge amount in USD (for pre-checks)'
+    },
+    agents: ['SHADDAI','ZEROX','PIKADON'],
+    execute: async ({ path: p, method, body, est_cost_usd }) => {
+      if (!payboxGuard) return 'Paybox guard not available.';
+      const r = await payboxGuard.guardedCharge({ path: p, method, body, est_cost_usd });
+      if (r.pending) return `PAYMENT PENDING APPROVAL — ${r.reason} (approval_id: ${r.approval_id})`;
+      if (r.refused) return `PAYMENT REFUSED — ${r.reason}`;
+      if (!r.ok) return `Paybox error — ${r.reason}`;
+      return `Paybox result (cost $${r.cost_usd}, spent today $${r.spent_today}/${r.daily_budget}):\n${JSON.stringify(r.output).slice(0, 800)}`;
+    }
+  },
+
   remember_fact: {
     description: 'Save a fact or result to agent memory for future use (persists across sessions).',
     params: ['key', 'value', 'agent'],
@@ -2836,7 +2858,7 @@ const AGENTS = {
   SHADDAI: {
     name: 'SHADDAI', role: 'Supreme Commander', port: 8000,
     goal: 'Coordinate ALL agents. Delegate sub-tasks to specialists via delegate_to_agent. Deliver executive synthesis.',
-    tools: ['delegate_to_agent','fetch_price','get_fear_greed','get_global_market','search_web','wikipedia_search','get_wikipedia_summary','get_weather','calculate','count_tokens','write_file','save_to_inbox','save_memory','get_memory','run_js','post_discord','read_obsidian_skill','translate_text','hash_text','random_user','get_uuid','get_random_quote','get_history_today','compress_prompt','run_local_llm','remember_fact','recall_memory','format_as_table','summarize_text','mint_collectible','list_open_jobs','complete_job','set_agent_room_state','save_room_layout','get_agent_mood','create_skill_pack','list_skill_packs','install_skill_pack','run_workflow_chain','pay_api_call','geocode_address','get_forex_rate','get_crypto_backup'],
+    tools: ['delegate_to_agent','fetch_price','get_fear_greed','get_global_market','search_web','wikipedia_search','get_wikipedia_summary','get_weather','calculate','count_tokens','write_file','save_to_inbox','save_memory','get_memory','run_js','post_discord','read_obsidian_skill','translate_text','hash_text','random_user','get_uuid','get_random_quote','get_history_today','compress_prompt','run_local_llm','remember_fact','recall_memory','format_as_table','summarize_text','mint_collectible','list_open_jobs','complete_job','set_agent_room_state','save_room_layout','get_agent_mood','create_skill_pack','list_skill_packs','install_skill_pack','run_workflow_chain','pay_api_call','paybox_pay','geocode_address','get_forex_rate','get_crypto_backup'],
     keywords: ['plan','coordinate','overview','strategy','all agents','orchestrate','manage','what should','help me','summary','delegate','remember','recall','compress','room','mood','workflow','chain','skill pack']
   },
   NEXUS: {
@@ -2848,7 +2870,7 @@ const AGENTS = {
   ZEROX: {
     name: 'ZEROX', role: 'Wealth & Revenue Engine', port: 8001, preferredProvider: 'groq',
     goal: 'Analyze markets, track prices, spot opportunities. Deliver actionable financial intelligence.',
-    tools: ['fetch_price','get_fear_greed','get_trending','get_ohlcv','get_global_market','get_token_info','whale_scan','get_defi_tvl','get_sol_balance','get_eth_balance','get_exchange_rates','jupiter_quote','get_nft_floor','get_stock_quote','get_crypto_news','get_gas_price','calculate','analyze_sentiment','extract_keywords','save_to_inbox','save_memory','get_memory','read_obsidian_skill','dex_price','binance_price','binance_orderbook','get_eth_gas','get_top_gainers','get_stablecoin_data','get_protocol_revenue','get_fear_greed_history','calculate_position_size','get_sol_token_info','get_onchain_activity','get_funding_rates','get_dominance','format_as_table','mint_collectible','list_collectible','browse_listings','list_open_jobs','bid_on_job','complete_job','execute_trade','pay_api_call','get_forex_rate','get_crypto_backup'],
+    tools: ['fetch_price','get_fear_greed','get_trending','get_ohlcv','get_global_market','get_token_info','whale_scan','get_defi_tvl','get_sol_balance','get_eth_balance','get_exchange_rates','jupiter_quote','get_nft_floor','get_stock_quote','get_crypto_news','get_gas_price','calculate','analyze_sentiment','extract_keywords','save_to_inbox','save_memory','get_memory','read_obsidian_skill','dex_price','binance_price','binance_orderbook','get_eth_gas','get_top_gainers','get_stablecoin_data','get_protocol_revenue','get_fear_greed_history','calculate_position_size','get_sol_token_info','get_onchain_activity','get_funding_rates','get_dominance','format_as_table','mint_collectible','list_collectible','browse_listings','list_open_jobs','bid_on_job','complete_job','execute_trade','pay_api_call','paybox_pay','get_forex_rate','get_crypto_backup'],
     keywords: ['price','market','crypto','trading','whale','revenue','finance','coin','token','sol','btc','eth','defi','tvl','wallet','balance','exchange','rate','profit','invest','swap','jupiter','stock','nft','gas','news','dominance','funding','stablecoin','orderbook']
   },
   ORACLE: {
@@ -2872,7 +2894,7 @@ const AGENTS = {
   PIKADON: {
     name: 'PIKADON', role: 'Security & Compliance', port: 8008,
     goal: 'Audit code for vulnerabilities. Find security issues. Protect the system.',
-    tools: ['check_security','check_password_strength','read_file','list_files','search_web','wikipedia_search','get_ip_info','check_port','get_sol_balance','get_eth_balance','calculate','hash_text','base64_codec','encode_base64','decode_base64','regex_test','save_to_inbox','read_obsidian_skill','validate_json','analyze_code_complexity','diff_texts','post_webhook','create_github_issue','list_open_jobs','complete_job'],
+    tools: ['check_security','check_password_strength','read_file','list_files','search_web','wikipedia_search','get_ip_info','check_port','get_sol_balance','get_eth_balance','calculate','hash_text','base64_codec','encode_base64','decode_base64','regex_test','save_to_inbox','read_obsidian_skill','validate_json','analyze_code_complexity','diff_texts','post_webhook','create_github_issue','list_open_jobs','complete_job','paybox_pay'],
     keywords: ['security','audit','vulnerability','hack','exploit','owasp','scan','review','compliance','protect','safe','risk','threat','pentest','password','port','ip','domain','json','validate','complexity']
   }
 };
