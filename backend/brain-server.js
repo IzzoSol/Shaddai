@@ -179,6 +179,33 @@ function normScores(arr) {
   arr.forEach(h => { h.score = (h.score || 0) / m; });
   return arr;
 }
+
+/* ── digest metadata ──────────────────────────────────────────────────────
+   Search hits carry the DOCUMENT name ("DIGEST_hormozi_100m_offer"), which is
+   an id, not a title — showing it is exactly the "title plus two random
+   sentences" problem. The digest store holds the real synthesized title and
+   topics, so read them from there and attach them to the hit.
+   Cached with an mtime check so an upgrade run is picked up without a
+   restart. */
+const _digestCache = new Map();
+function digestMeta(agent) {
+  const ns = kb(agent);
+  const file = path.join(RAG_KB_DIR, ns, 'digests.json');
+  let mtime = 0;
+  try { mtime = fs.statSync(file).mtimeMs; } catch { return new Map(); }
+  const cached = _digestCache.get(ns);
+  if (cached && cached.mtime === mtime) return cached.map;
+  const map = new Map();
+  try {
+    const store = JSON.parse(fs.readFileSync(file, 'utf8'));
+    (store.digests || []).forEach((d) => {
+      if (d && d.name) map.set(d.name, { title: d.title || '', topics: d.topics || [], url: d.url || null });
+    });
+  } catch {}
+  _digestCache.set(ns, { mtime, map });
+  return map;
+}
+
 function searchChunks2(agent, q, k, opts) {
   const ns = kb(agent);
   let ragHits = [];
@@ -189,6 +216,7 @@ function searchChunks2(agent, q, k, opts) {
       score: h.score || 0,
       text: h.chunkText || '',
       system: '', topic: '', channel: '', words: 0,
+      topics: [],
       video_id: h.videoIdOf || h.docId || '',
       kind: /^DIGEST_|^MASTERY_/.test(h.docName || '') ? 'digest' : 'transcript',
       t0: h.t0, t1: h.t1,
@@ -197,6 +225,17 @@ function searchChunks2(agent, q, k, opts) {
     }));
     normScores(ragHits);
     ragHits.forEach(h => { h.score *= h.kind === 'digest' ? 1.35 : 1.05; });
+    // a hit carries the DOCUMENT name ("DIGEST_hormozi_100m_offer"), which is an
+    // id, not a title. Swap in the real synthesized title + topics.
+    const meta = digestMeta(agent);
+    ragHits.forEach((h) => {
+      const m = /^DIGEST_(.+)$/.exec(h.title || '');
+      const d = m && meta.get(m[1]);
+      if (!d) return;
+      if (d.title) h.title = d.title;
+      if (d.topics.length) h.topics = d.topics;
+      if (d.url && !h.deepLink) h.deepLink = d.url;
+    });
   } catch (_) {}
   let corpusHits = [];
   try {
