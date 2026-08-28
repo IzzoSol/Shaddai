@@ -16,6 +16,7 @@ const fs = require('fs');
 const path = require('path');
 let billing = null; try { billing = require('./billing-service'); } catch (_) {}
 let Stripe = null;  try { Stripe = require('stripe'); } catch (_) {}
+let economy = null; try { economy = require('./economy-service').getDefault(); } catch (_) {}
 
 // item id (from payment-config.json) -> what it grants.
 // Tiers map to billing-service tiers (free/pro/elite). Founder = lifetime Pro + bonus credits.
@@ -107,6 +108,23 @@ module.exports = async function stripeWebhook(req, res) {
           console.log(`[stripe-webhook] granted "${item}" to ${uid}` + (g.credits ? ` (+${g.credits} credits)` : ''));
         } else {
           console.warn('[stripe-webhook] unknown item "' + item + '" (amount ' + s.amount_total + ') — no grant');
+        }
+        // SPARKS: 1 Spark = $1, fixed — computed from the REAL amount Stripe
+        // charged (amount_total, in cents), not from the credit-pack table
+        // above (those numbers bake in marketing bonuses, not a clean $1
+        // rate). This is the actual "$1 = 1 Spark" top-up path into the
+        // real Sparks economy (economy-service.js) — separate from, and in
+        // addition to, the legacy credits/tier grant above. s.id (the
+        // Stripe session id) is the idempotency key, so a webhook retry for
+        // the same session can never double-grant.
+        if (economy && Number(s.amount_total) > 0) {
+          const sparksToGrant = Math.floor(Number(s.amount_total) / 100);
+          if (sparksToGrant > 0) {
+            try {
+              await economy.grant(uid, sparksToGrant, 'stripe_topup:' + item, 'stripe:' + s.id);
+              console.log(`[stripe-webhook] granted ${sparksToGrant} Sparks to ${uid} (stripe session ${s.id})`);
+            } catch (e) { console.warn('[stripe-webhook] Sparks grant failed:', e.message); }
+          }
         }
       } else {
         console.warn('[stripe-webhook] no uid on session ' + s.id + ' — cannot attribute (guest checkout?)');
