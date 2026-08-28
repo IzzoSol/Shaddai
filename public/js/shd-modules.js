@@ -172,7 +172,7 @@
       art: '/assets/landing/tab-play.png',
       blurb: 'The arcade. Climb, courts, arenas, and tactics — every game in the empire.',
       items: [
-        { id: 'climb',   name: 'THE CLIMB',  accent: C.emerald, art: '/assets/landing/tab-play.png', href: '/games/dreamers-climb/', blurb: 'Dreamers Climb — the ascent run. Eight radio stations, one very long way up.' },
+        { id: 'climb',   name: 'THE CLIMB',  accent: C.emerald, art: '/assets/landing/tab-play.png', href: '/games/dreamers-climb/index.html', blurb: 'Dreamers Climb — the ascent run. Eight radio stations, one very long way up.' },
         { id: 'courts',  name: 'COURTS',     accent: C.gold,    art: '/assets/nav/social.jpg',       href: '/games/basketball-jam.html', blurb: 'The sports hall — basketball jam, soccer, football, and the shooting range.' },
         { id: 'arena',   name: 'ARENA',      accent: C.rose,    art: '/assets/nav/office.jpg',       href: '/games/battle-arena.html', blurb: 'Battle arena and sigil storm. Direct combat, agents on the field.' },
         { id: 'tactics', name: 'TACTICS',    accent: C.cyan,    art: '/assets/nav/automation.jpg',   href: '/games/tactics.html', blurb: 'The tactics board. Slower, harder, and the one the council actually respects.' }

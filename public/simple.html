@@ -270,9 +270,10 @@ const app = createSimple({
         ? 'Simple Mode · <b>' + state.trail.join(' › ') + '</b>'
         : 'Simple Mode';
       backBtn.classList.toggle('show', state.depth > 1);
-      hintEl.textContent = state.depth > 1
+      const L = matchMedia('(hover: hover)').matches ? ' · press L for info' : '';
+      hintEl.textContent = (state.depth > 1
         ? 'swipe to spin · tap to enter · back to step out'
-        : 'swipe to spin · tap to enter';
+        : 'swipe to spin · tap to enter') + L;
       srList.innerHTML = '';
       state.items.forEach(it => {
         const li = document.createElement('li');
@@ -300,6 +301,23 @@ const app = createSimple({
 });
 
 function hideBio() { bioEl.classList.remove('show'); }
+
+/* L = show this item's bio now, rather than waiting out the 5s dwell.
+   The dwell stays for touch, where there is no keyboard; this is the
+   shortcut for anyone on a desktop who doesn't want to wait. */
+function toggleBio() {
+  if (bioEl.classList.contains('show')) { hideBio(); return; }
+  const it = app && app.selected();
+  if (!it) return;
+  bioEl.innerHTML = '<b>' + it.name + '</b>' + (it.blurb || '');
+  bioEl.classList.add('show');
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'l' && e.key !== 'L') return;
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  e.preventDefault();
+  toggleBio();
+});
 
 if (!app) showFallback();
 
