@@ -161,7 +161,10 @@ export function createSimple(opts) {
     down = true; dragged = false; settling = false; vel = 0;
     lastY = startY = e.clientY; lastX = startX = e.clientX; lastT = performance.now();
     clearDwell();
-    canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+    // capture keeps the drag alive if the finger leaves the canvas; it throws
+    // on a pointer the browser no longer considers active, and losing input
+    // entirely over that would be far worse than losing capture
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   }
   function onMove(e) {
     if (!down) return;
@@ -181,9 +184,7 @@ export function createSimple(opts) {
   function onUp(e) {
     if (!down) return;
     down = false;
-    canvas.releasePointerCapture && e && e.pointerId != null &&
-      canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId) &&
-      canvas.releasePointerCapture(e.pointerId);
+    try { if (e && e.pointerId != null && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId); } catch (err) {}
     if (!dragged) { activate(); return; }
     if (performance.now() - lastT > 90) vel = 0;   // finger stopped before lifting
     settling = true;

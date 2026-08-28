@@ -166,3 +166,44 @@ res.sendFile(path.join(__dirname, '../public/enter.html'));  // after
 ```
 
 Until then it lives at `/enter.html` and nothing existing changes behaviour.
+`home.html` is deliberately left untouched — it is MODULE 2, not a casualty.
+
+---
+
+## 7. What was verified, and how
+
+Headless Chrome against a static server, measured rather than eyeballed —
+several defects below were invisible in a screenshot and only showed up in
+numbers.
+
+**Both screens** — render with no console errors; no horizontal overflow
+(`scrollWidth` 375 at a 390 viewport); the header fits without the brand
+colliding with the controls; `prefers-reduced-motion` drops the motion and
+keeps every function; WebGL failure degrades to a working page rather than a
+blank one.
+
+**enter.html** — 4 slots render; the shared theme sheet opens with all six
+skins; the sign-in sheet injects and opens with its email field; edit mode
+opens the library drawer showing correct slot assignments; the bios
+preference persists and is shared with Simple Mode.
+
+**simple.html** — all three skins render inside the viewport; drilling into
+GAMES and back works; dwell bios fire; the outgoing level is disposed once
+the swivel completes (`children=1, out=no`).
+
+**Touch, tested as touch** (synthetic `PointerEvent`s with
+`pointerType:'touch'`, not mouse drag):
+
+| Check | Result |
+|---|---|
+| 200px touch-drag up | advances exactly 2 items (AGENTS → SIGNALS) |
+| Tap with a 1px wobble | still activates — drills into the sub-menu, back chip appears |
+| `touch-action` on the canvas | `none` — the page can't scroll under the gesture |
+| Touch targets | enter 277×56, back 56 tall (≥44 required) |
+
+**Bugs found by measuring:** camera fit ignored that the front plate sits
+nearer than the origin (everything ~15% oversized, lettering off the sides of
+a phone); the drum didn't wrap its angles (a forward arc, nothing below the
+selection); the orb's off-axis items ran past the screen edge; the mobile
+header overflowed 390px by 8px; drawer rows ran name and kicker together.
+All fixed and re-verified.
