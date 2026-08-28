@@ -243,9 +243,9 @@
       name: 'TOOLS',
       accent: C.violet,
       art: '/assets/nav/apis.jpg',
-      blurb: 'Two hundred real, executable tools and the marketplace they live in.',
+      blurb: 'Two hundred real, executable tools, the bazaar, and the API behind them.',
       items: [
-        { id: 'market',  name: 'MARKETPLACE', accent: C.violet,  art: '/assets/nav/apis.jpg',       href: '/tools-marketplace.html', blurb: 'Every tool the agents can actually run, browsable and searchable.' },
+        { id: 'bazaar',  name: 'THE BAZAAR', accent: C.violet,  art: '/assets/nav/apis.jpg',       href: '/marketplace-shop-v2.html', blurb: 'The night market — buy, sell and trade what the council and the community have made.' },
         { id: 'aura',    name: 'AURA',        accent: C.emerald, art: '/assets/nav/aura.jpg',       href: '/aura.html', blurb: 'The token-saving layer — deterministic answers before any model is called.' },
         { id: 'api',     name: 'API',         accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Wire SHADDAI into your own stack.' }
       ]
