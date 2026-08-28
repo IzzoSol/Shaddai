@@ -1,11 +1,11 @@
 {
   "agent": "ORACLE",
-  "generatedAt": "2026-08-22T14:54:31.603Z",
+  "generatedAt": "2026-08-28T19:53:03.747Z",
   "digests": [
     {
       "name": "bomar_kemetic_system",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 2032,
@@ -13,12 +13,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:29.504Z",
       "contentHash": "dd4d516cce37",
-      "title": "[Music] through the course of history uh there have been um intentional uh moves",
-      "thesis": "intelligence beforehand to set that in place okay all right consciousness is not composed of energy nor matter this is the part that is always that's challenging to the western western system",
+      "title": "Ancient Kemet Spirituality and the Divine Human",
+      "thesis": "The source asserts that ancient Kemet (Egyptian) spiritual teachings, which have been deliberately concealed, reveal that humanity is fundamentally divine. By understanding the Kemet system's three levels of being—sahu, ebb, and ba—and its emphasis on consciousness preceding matter, individuals can align with universal laws and attain true spiritual power.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Essentially · Had · Intelligence",
+          "label": "Suppressed Ancient Knowledge",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -51,7 +51,7 @@
         },
         {
           "idx": 2,
-          "label": "Correlating · Faculties · Energies",
+          "label": "Kemet Levels of Being",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -84,7 +84,7 @@
         },
         {
           "idx": 3,
-          "label": "Term · Universe · Zulu",
+          "label": "Path to Divine Power",
           "t0": 640,
           "t1": 812,
           "insights": [
@@ -118,24 +118,16 @@
       ],
       "frameworks": [
         {
-          "text": "or two things you're moving on reasoning or you're moving on just sensuality and impulse and nothing the dark principle or i want to say dar let's say blind principle okay all",
-          "t": 474,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "so the one god is worshipping knowledge all the various principles and the way that you know without guilt like the whole guilt thing that's split over like you're worshiping something outside",
-          "t": 643,
-          "located": true,
-          "tsEstimate": true
+          "name": "Three-Level Kemet Spiritual Framework",
+          "summary": "A model describing three hierarchical states of being—sahu (the formless, highest spirit), ebb (law, order, and truth), and ba (the manifest, physical self). It maps spiritual development onto planetary and bodily faculties, guiding practitioners toward the realization of their divine nature."
         }
       ],
       "takeaways": [
-        "or two things you're moving on reasoning or you're moving on just sensuality and impulse and nothing the dark principle or i want to say dar let's say blind principle okay all",
-        "intelligence beforehand to set that in place okay all right consciousness is not composed of energy nor matter this is the part that is always that's challenging to the western western system",
-        "so the most important part the most important part of the whole tree is amen which is like the root okay we hear people ending prayers i'm in i'm in okay",
-        "and speculating about hmm you know all these things weren't always here you know um there had to be a point where they started you know i mean there had to be",
-        "other you either live do things because you like it or you do things because you have a reason why purpose why you do those things you know i mean it's one"
+        "Recognize that modern religious narratives often omit the Kemet origins of spiritual concepts, prompting a deeper personal investigation.",
+        "Understand the three Kemet levels—sahu (highest spirit), ebb (law and order), ba (manifestation)—as a roadmap for personal development.",
+        "Accept that consciousness exists prior to energy and matter, and that aligning with this principle unlocks genuine spiritual power.",
+        "Practice living in accordance with divine law rather than impulsive animal instincts to experience the universe’s support in your actions.",
+        "Use the Kemet framework as a lens to reinterpret cultural symbols (e.g., feather of truth, planetary correspondences) as expressions of inner faculties."
       ],
       "quotes": [
         {
@@ -165,12 +157,20 @@
         "How does bomar kemetic system apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410469599_73orla"
+      "docId": "doc_1787410469599_73orla",
+      "topics": [
+        "spirituality",
+        "consciousness",
+        "psychology",
+        "mindset",
+        "people"
+      ],
+      "synthesizedAt": "2026-08-28T19:47:35.167Z"
     },
     {
       "name": "bomar_occult_hidden_knowledge",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 8295,
@@ -178,12 +178,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:29.778Z",
       "contentHash": "b156cbcbbc76",
-      "title": "this is Mage the podcast the podcast about all things made the Ascension related",
-      "thesis": "Mythic thread that there is this body of knowledge that believes that there are certain rules of the universe that through ritual and practice can be unlocked",
+      "title": "Understanding the Occult and Cult Mechanics in World of Darkness",
+      "thesis": "The occult in World of Darkness is a broad, flexible mechanic that varies across game lines and serves as a narrative tool for ritual knowledge, requiring careful, respectful integration of real‑world traditions. Proper use of occult traits can enrich storytelling, but it demands research and cultural sensitivity to avoid appropriation.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Darkness · Am · Magic",
+          "label": "Host intro and guest background",
           "t0": 0,
           "t1": 332,
           "insights": [
@@ -216,7 +216,7 @@
         },
         {
           "idx": 2,
-          "label": "Dots · Mystery · Understanding",
+          "label": "Defining occult and cult in WoD",
           "t0": 332,
           "t1": 664,
           "insights": [
@@ -249,7 +249,7 @@
         },
         {
           "idx": 3,
-          "label": "Sabbat · Vampires · He",
+          "label": "Occult versus magical practice",
           "t0": 664,
           "t1": 996,
           "insights": [
@@ -282,7 +282,7 @@
         },
         {
           "idx": 4,
-          "label": "Another · Group · Bonds",
+          "label": "Key groups linked to occult",
           "t0": 996,
           "t1": 1328,
           "insights": [
@@ -315,7 +315,7 @@
         },
         {
           "idx": 5,
-          "label": "Doing · Story · Introduce",
+          "label": "Cross‑line variations of occult traits",
           "t0": 1328,
           "t1": 1660,
           "insights": [
@@ -348,7 +348,7 @@
         },
         {
           "idx": 6,
-          "label": "Good · Right · End",
+          "label": "Cultural framing and non‑derogatory use",
           "t0": 1660,
           "t1": 1992,
           "insights": [
@@ -381,7 +381,7 @@
         },
         {
           "idx": 7,
-          "label": "Mystery · Even · Yoga",
+          "label": "Sabbat rituals as occult example",
           "t0": 1992,
           "t1": 2324,
           "insights": [
@@ -414,7 +414,7 @@
         },
         {
           "idx": 8,
-          "label": "Gnostic · Nefondi · Worm",
+          "label": "Adapting Sabbat rituals for Mage",
           "t0": 2324,
           "t1": 2656,
           "insights": [
@@ -447,7 +447,7 @@
         },
         {
           "idx": 9,
-          "label": "Orders · Characters · Hooks",
+          "label": "Respectful inclusion of real‑world traditions",
           "t0": 2656,
           "t1": 2988,
           "insights": [
@@ -480,7 +480,7 @@
         },
         {
           "idx": 10,
-          "label": "Um · Book · Me",
+          "label": "Resources and concluding thoughts",
           "t0": 2988,
           "t1": 3318,
           "insights": [
@@ -514,11 +514,11 @@
       ],
       "frameworks": [],
       "takeaways": [
-        "and that probably eight seconds on Wikipedia will give me 900 organizations I never even knew existed absolutely like that there's",
-        "year like 63 CE we are all still in Rome and I always wanted to see a gnostic reality TV show which was just someone saying it's actually 63 CE",
-        "Mainline religion where theoretically everything is available on first blush and the learning practice may be a bit more academic and less gated have I laid down a reasonable dichotomy there in",
-        "standing up dressed in funny costumes even though it's effectively the same thing I always considered LARPing to be a ritual where at the end of it your virginity returns",
-        "if we didn't drill down on that may I introduce my favorite piece of metaplot that was never actually confirmed go ahead when the book Ascension was being written I think it"
+        "Treat the occult trait as a flexible representation of ritual knowledge rather than a rigid definition.",
+        "Tailor occult and cult mechanics to each WoD line’s paradigm, recognizing differences between Mage, Vampire, etc.",
+        "Research real‑world occult practices and, when possible, consult practitioners to avoid cultural appropriation.",
+        "Use occult traits to design meaningful rituals that create bonds or exchange resources among characters.",
+        "Consult the Guide to the Sabbat for concrete ritual ideas and adapt them thoughtfully for Mage chronicle storytelling."
       ],
       "quotes": [
         {
@@ -578,12 +578,19 @@
         "How does bomar occult hidden knowledge apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410469839_auaios"
+      "docId": "doc_1787410469839_auaios",
+      "topics": [
+        "writing",
+        "design",
+        "people",
+        "psychology"
+      ],
+      "synthesizedAt": "2026-08-28T19:48:20.450Z"
     },
     {
       "name": "bomar_secret_book_of_john",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 7607,
@@ -591,12 +598,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:30.009Z",
       "contentHash": "c1e25bc8668c",
-      "title": "[Music] the secret book of john narrated by matthew schmitz the teaching of the",
-      "thesis": "for it is established itself it is eternal since it does not need anything for it is absolutely complete it has never lacked anything in order to be completed by it rather",
+      "title": "John’s Revelation of the One and the Cosmic Aeons",
+      "thesis": "The text presents a visionary revelation given to John that defines the ultimate, ineffable One and outlines a complex hierarchy of aeons, luminaries, and divine powers, explaining the fall of Sophia, the rise of Yaldabaoth, and the collaborative creation of humanity.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Since · Nothing · John",
+          "label": "John’s encounter with the Pharisee",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -629,7 +636,7 @@
         },
         {
           "idx": 2,
-          "label": "Barbalo · Consented · Glorified",
+          "label": "Desert vision of the One",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -662,7 +669,7 @@
         },
         {
           "idx": 3,
-          "label": "Self · Generated · Luminary",
+          "label": "Attributes of the ineffable One",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -695,7 +702,7 @@
         },
         {
           "idx": 4,
-          "label": "Face · God · Seven",
+          "label": "The first aeons and divine family",
           "t0": 960,
           "t1": 1280,
           "insights": [
@@ -728,7 +735,7 @@
         },
         {
           "idx": 5,
-          "label": "Soul · Image · Shoulder",
+          "label": "Four luminaries and their realms",
           "t0": 1280,
           "t1": 1600,
           "insights": [
@@ -761,7 +768,7 @@
         },
         {
           "idx": 6,
-          "label": "Body · Demon · Shoulder",
+          "label": "Sophia’s fall and Yaldabaoth’s birth",
           "t0": 1600,
           "t1": 1920,
           "insights": [
@@ -794,7 +801,7 @@
         },
         {
           "idx": 7,
-          "label": "Enlightened · Put · Death",
+          "label": "Yaldabaoth’s archons and powers",
           "t0": 1920,
           "t1": 2240,
           "insights": [
@@ -827,7 +834,7 @@
         },
         {
           "idx": 8,
-          "label": "Whom · People · Upon",
+          "label": "Creation of Adam by the authorities",
           "t0": 2240,
           "t1": 2560,
           "insights": [
@@ -860,7 +867,7 @@
         },
         {
           "idx": 9,
-          "label": "People · Fate · Until",
+          "label": "Anatomical description of the first human",
           "t0": 2560,
           "t1": 2880,
           "insights": [
@@ -893,7 +900,7 @@
         },
         {
           "idx": 10,
-          "label": "Savior · John · Person",
+          "label": "Cosmic order and humanity’s role",
           "t0": 2880,
           "t1": 3042,
           "insights": [
@@ -964,11 +971,11 @@
         }
       ],
       "takeaways": [
-        "shall make their minds sluggish that they may neither understand nor discern the creation of eve enlightened insight hid herself within adam the first ruler wanted to take her from adam's side",
-        "a mystery and at once the savior disappeared then john went to the other disciples and reported what the savior had told him jesus christ amen the secret book according to john",
-        "he displayed his angels the ignorance within him and he threw the humans out of paradise and cloaked them in thick darkness the first ruler saw the young woman standing next to",
-        "and appeared in human shape the entire realm of the first ruler quaked and the foundations of the abyss shook the bottom side of the waters above the material world was lit",
-        "because of the bondage of forgetfulness their sins have been hidden they have been bound with dimensions times and seasons and fate is master of all the first ruler regretted everything that"
+        "The ultimate reality is portrayed as an unnameable, limitless One that transcends conventional deity concepts, inviting a re‑evaluation of what is considered divine.",
+        "The cosmos is organized into a layered hierarchy of aeons and luminaries, suggesting that spiritual reality consists of multiple interrelated realms.",
+        "Human beings are depicted as the product of a coordinated effort among several divine powers, implying that humanity embodies a synthesis of multiple divine qualities.",
+        "Sophia’s unauthorized act and the resulting Yaldabaoth serve as a cautionary illustration of the consequences of acting without alignment to higher wisdom.",
+        "The detailed anatomy of Adam symbolically maps divine attributes onto the human body, encouraging contemplation of the integrated nature of body, mind, and spirit."
       ],
       "quotes": [
         {
@@ -1028,12 +1035,17 @@
         "How does bomar secret book of john apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410470081_x6sidk"
+      "docId": "doc_1787410470081_x6sidk",
+      "topics": [
+        "spirituality",
+        "consciousness"
+      ],
+      "synthesizedAt": "2026-08-28T19:49:06.542Z"
     },
     {
       "name": "dispenza_inner_mission",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 12093,
@@ -1041,12 +1053,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:30.224Z",
       "contentHash": "4dc1e4b78e95",
-      "title": "thank you thank you thank you thank you thank you so much thank you",
-      "thesis": "and if you do it enough times the body begins to believe that 24 hours a day seven days a week 365 days a year the body as the unconscious mind doesn't",
+      "title": "Breaking the Past: Consciousness, Conditioning, and Creating New Reality",
+      "thesis": "Our habitual thoughts and emotions are rooted in past memories, creating a predictable future through a conditioning loop. By becoming consciously aware of these patterns, shifting our energetic frequency, and choosing the unknown, we can break the loop and actively co‑create a new personal reality.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Past · Ve · Most",
+          "label": "Retreat introduction and purpose",
           "t0": 0,
           "t1": 484,
           "insights": [
@@ -1079,7 +1091,7 @@
         },
         {
           "idx": 2,
-          "label": "Thinking · Every · Morning",
+          "label": "The brain as a memory bank",
           "t0": 484,
           "t1": 968,
           "insights": [
@@ -1112,7 +1124,7 @@
         },
         {
           "idx": 3,
-          "label": "Level · Problems · Changing",
+          "label": "Living in the familiar past",
           "t0": 968,
           "t1": 1452,
           "insights": [
@@ -1145,7 +1157,7 @@
         },
         {
           "idx": 4,
-          "label": "Matter · Stress · Very",
+          "label": "The conditioning loop of thought and emotion",
           "t0": 1452,
           "t1": 1936,
           "insights": [
@@ -1178,7 +1190,7 @@
         },
         {
           "idx": 5,
-          "label": "Most · Off · Mind",
+          "label": "Crisis as a trigger for awareness",
           "t0": 1936,
           "t1": 2420,
           "insights": [
@@ -1211,7 +1223,7 @@
         },
         {
           "idx": 6,
-          "label": "Heart · Lack · Starts",
+          "label": "Choosing the unknown over the known",
           "t0": 2420,
           "t1": 2904,
           "insights": [
@@ -1244,7 +1256,7 @@
         },
         {
           "idx": 7,
-          "label": "Infinite · Realm · Quantum",
+          "label": "Quantum frequency and reality creation",
           "t0": 2904,
           "t1": 3388,
           "insights": [
@@ -1277,7 +1289,7 @@
         },
         {
           "idx": 8,
-          "label": "Take · Away · Another",
+          "label": "Stress, survival, and perceived separation",
           "t0": 3388,
           "t1": 3872,
           "insights": [
@@ -1310,7 +1322,7 @@
         },
         {
           "idx": 9,
-          "label": "Know · Want · Draw",
+          "label": "Raising consciousness to transcend programs",
           "t0": 3872,
           "t1": 4356,
           "insights": [
@@ -1343,7 +1355,7 @@
         },
         {
           "idx": 10,
-          "label": "Stay · Aware · Blackness",
+          "label": "Present‑moment action and willful change",
           "t0": 4356,
           "t1": 4837,
           "insights": [
@@ -1377,30 +1389,25 @@
       ],
       "frameworks": [
         {
-          "text": "still come on so then we found out in the research that we've done and we now know there's a formula that when a person takes all of their attention off their",
-          "t": 2141,
-          "located": true,
-          "tsEstimate": true
+          "name": "Conditioning Loop",
+          "summary": "A cyclical process where past‑linked thoughts trigger emotions, which reinforce the same thoughts, creating a self‑sustaining pattern that locks the individual in a familiar past."
         },
         {
-          "text": "people understand so come on so then our formula then is to create coherence in the brain and heart in order for you to do that you got to leave three-dimensional reality",
-          "t": 2857,
-          "located": true,
-          "tsEstimate": true
+          "name": "Quantum Energy Model",
+          "summary": "Posits that each thought carries a frequency; matching frequencies reproduce the same reality, so changing thought frequency changes energetic output and thus reality."
         },
         {
-          "text": "body to deal with unless you know how to apply a formula unless you know how to create order out of disorder are you with me still so",
-          "t": 1414,
-          "located": true,
-          "tsEstimate": true
+          "name": "Present‑Moment Awareness Framework",
+          "summary": "Encourages conscious observation of thoughts, emotions, and bodily sensations to detach from conditioned programs, enabling choice of new responses and higher‑level consciousness."
         }
       ],
       "takeaways": [
-        "surviving so people are always picking the worst reality in their mind and combining a thought with the emotion and they're conditioning their body into a genetic destiny how many people are",
-        "then most people replace it with a pretty uncomfortable feeling they get angry they get frustrated they get impatient they get disrespectful because now the body is craving the feeling",
-        "but i didn't react the entire time i just just kept remembering there's another box and every day i just went to that box and i drew my body to me",
-        "and they gotta pass through these layers that have become their identity and most people don't know how to make their way through so they do a little bit and",
-        "and the lack is driving more thoughts then most people spend their whole life living in lack how many people understand and in this realm of course because of duality"
+        "Identify when you are replaying past‑based thoughts each morning and consciously interrupt the loop before it dictates your emotions.",
+        "Redirect attention from external problems to the present moment, thereby lowering the emotional frequency that sustains conditioning.",
+        "Cultivate a will stronger than conditioned programs by practicing daily awareness meditation and deliberately choosing new thoughts, actions, and feelings.",
+        "When uncomfortable emotions arise, resist the habit of distraction; instead, observe the feeling without reacting to prevent reinforcement of the loop.",
+        "Manage stress hormones through breathwork or grounding techniques to keep focus broad, maintain energetic coherence, and avoid the survival‑mode separation.",
+        "Recognize that your personality is a product of repeated thought‑action‑feeling cycles; actively redesign these cycles to create a different personal reality."
       ],
       "quotes": [
         {
@@ -1460,12 +1467,20 @@
         "How does dispenza inner mission apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410470294_axzfvs"
+      "docId": "doc_1787410470294_axzfvs",
+      "topics": [
+        "consciousness",
+        "psychology",
+        "mindset",
+        "health",
+        "spirituality"
+      ],
+      "synthesizedAt": "2026-08-28T19:49:51.925Z"
     },
     {
       "name": "dispenza_seminar",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 13298,
@@ -1473,12 +1488,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:30.456Z",
       "contentHash": "407a854b8334",
-      "title": "good morning thank you thank you i think i'm in the right place my",
-      "thesis": "look just like you that most people in their life wait for that crisis or the trauma the disease or the diagnosis some kind of loss betrayal in their life before they",
+      "title": "Transforming Identity Through Neuroplasticity and Consciousness",
+      "thesis": "The speaker argues that creating a new personal reality requires consciously changing one’s personality by rewiring thoughts, emotions, and behaviors. By using neuroplastic principles, meditation, and future‑oriented mental rehearsal, individuals can fire new neural pathways, reshape their biology, and become the conscious observer of their own program.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Don · Mind · Experiences",
+          "label": "Retreating from constant stimulation",
           "t0": 0,
           "t1": 532,
           "insights": [
@@ -1511,7 +1526,7 @@
         },
         {
           "idx": 2,
-          "label": "Wait · Make · Conscious",
+          "label": "Learning forms synaptic connections",
           "t0": 532,
           "t1": 1064,
           "insights": [
@@ -1544,7 +1559,7 @@
         },
         {
           "idx": 3,
-          "label": "Living · Think · Feeling",
+          "label": "Aligning thoughts, emotions, and experience",
           "t0": 1064,
           "t1": 1596,
           "insights": [
@@ -1577,7 +1592,7 @@
         },
         {
           "idx": 4,
-          "label": "Stress · Hormones · Survival",
+          "label": "Neurochemical conditioning makes behaviors innate",
           "t0": 1596,
           "t1": 2128,
           "insights": [
@@ -1610,7 +1625,7 @@
         },
         {
           "idx": 5,
-          "label": "Thing · Agree · Think",
+          "label": "From knowledge to mastery integration",
           "t0": 2128,
           "t1": 2660,
           "insights": [
@@ -1643,7 +1658,7 @@
         },
         {
           "idx": 6,
-          "label": "World · Present · Tell",
+          "label": "Why waiting for crisis hinders growth",
           "t0": 2660,
           "t1": 3192,
           "insights": [
@@ -1676,7 +1691,7 @@
         },
         {
           "idx": 7,
-          "label": "Starts · Matter · Take",
+          "label": "Thoughts as energy influencing biology",
           "t0": 3192,
           "t1": 3724,
           "insights": [
@@ -1709,7 +1724,7 @@
         },
         {
           "idx": 8,
-          "label": "Heart · Imagine · Coherent",
+          "label": "Consciousness observing the program",
           "t0": 3724,
           "t1": 4256,
           "insights": [
@@ -1742,7 +1757,7 @@
         },
         {
           "idx": 9,
-          "label": "Back · Gamma · Awareness",
+          "label": "Future‑oriented mental rehearsal",
           "t0": 4256,
           "t1": 4788,
           "insights": [
@@ -1775,7 +1790,7 @@
         },
         {
           "idx": 10,
-          "label": "Her · Always · Eczema",
+          "label": "Living in the unknown versus the known",
           "t0": 4788,
           "t1": 5319,
           "insights": [
@@ -1809,11 +1824,11 @@
       ],
       "frameworks": [],
       "takeaways": [
-        "and the brain scientists are watching the screen and just saying she's having a massive seizure now they've never seen anything like this before here's the here's the the humor in the",
-        "going to fulfill some lack but it never does are you with me still and people then all of a sudden after 30 years they have their car they have their house",
-        "of the box so she tells the story of how the divine connected to her and said hey you know imagery and profound information i've always been with you welcome",
-        "look just like you that most people in their life wait for that crisis or the trauma the disease or the diagnosis some kind of loss betrayal in their life before they",
-        "and imagine we're capturing amplitudes of energy that have never been recorded in the history of neuroscience and we can say when that occurs she can't make her brain do that it's"
+        "Schedule regular breaks from external stimuli to create mental space for self‑observation and rewiring.",
+        "Identify habitual thoughts, consciously interrupt them, and replace them with empowering, future‑focused thoughts each day.",
+        "Practice daily meditation or mental rehearsal of desired emotions to fire new neural pathways and reshape your biology.",
+        "Shift your emotional focus to the future you want rather than waiting for external circumstances to trigger those feelings.",
+        "Recognize that your personality is a program; by observing it you become the consciousness that can rewrite it."
       ],
       "quotes": [
         {
@@ -1873,12 +1888,20 @@
         "How does dispenza seminar apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410470605_23dqq2"
+      "docId": "doc_1787410470605_23dqq2",
+      "topics": [
+        "psychology",
+        "mindset",
+        "consciousness",
+        "spirituality",
+        "health"
+      ],
+      "synthesizedAt": "2026-08-28T19:50:42.961Z"
     },
     {
       "name": "hicks_dyer_universe",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 26847,
@@ -1886,12 +1909,12 @@
       "tsMode": "markers",
       "generatedAt": "2026-08-22T14:54:30.872Z",
       "contentHash": "3f1bbc559bbd",
-      "title": "If you've had a hard day, you can't just say it different in the",
-      "thesis": "and she stood on her hands and put her hips on and, you know, rolled her eyes back, you know, that 10-year-old kind of look and said, \"Uh, you're telling me that I actually picked you to be my father and pick mom to be my\" I said, \"Exactly right.\" I said, \"And when you're making important decisions like that, you shou…",
+      "title": "Harnessing Thought Momentum for Alignment with Source Energy",
+      "thesis": "The source explains that the universe responds to the vibration of genuine feeling rather than spoken words, and that thought momentum builds rapidly, so aligning with a high‑frequency state during the brief post‑sleep or quiet‑night window enables effective co‑creation with source energy, while forced affirmations create resistance.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Thought · Thoughts · Attraction",
+          "label": "The universe hears feeling, not words",
           "t0": 180,
           "t1": 193,
           "insights": [
@@ -1924,7 +1947,7 @@
         },
         {
           "idx": 2,
-          "label": "Her · Am · Back",
+          "label": "Momentum of thought and the law of attraction",
           "t0": 193,
           "t1": 193,
           "insights": [
@@ -1957,7 +1980,7 @@
         },
         {
           "idx": 3,
-          "label": "Disc · Love · Resistance",
+          "label": "Sleep, unconsciousness, and the reset window",
           "t0": 193,
           "t1": 206,
           "insights": [
@@ -1990,7 +2013,7 @@
         },
         {
           "idx": 4,
-          "label": "Book · Five · Little",
+          "label": "Generalizing versus specifying negative thoughts",
           "t0": 206,
           "t1": 246,
           "insights": [
@@ -2023,7 +2046,7 @@
         },
         {
           "idx": 5,
-          "label": "Life · Go · Meaning",
+          "label": "Morning alignment and high‑frequency focus",
           "t0": 246,
           "t1": 286,
           "insights": [
@@ -2056,7 +2079,7 @@
         },
         {
           "idx": 6,
-          "label": "Feeling · Make · Where",
+          "label": "Night‑time creative resonance",
           "t0": 286,
           "t1": 326,
           "insights": [
@@ -2089,7 +2112,7 @@
         },
         {
           "idx": 7,
-          "label": "Years · Disc · Lot",
+          "label": "The 17‑second rule and belief formation",
           "t0": 326,
           "t1": 367,
           "insights": [
@@ -2122,7 +2145,7 @@
         },
         {
           "idx": 8,
-          "label": "Her · Esther · Him",
+          "label": "Effort, resistance, and the path of least resistance",
           "t0": 367,
           "t1": 407,
           "insights": [
@@ -2155,7 +2178,7 @@
         },
         {
           "idx": 9,
-          "label": "Fear · Were · Love",
+          "label": "Role of affirmations and authentic feeling",
           "t0": 407,
           "t1": 420,
           "insights": [
@@ -2188,7 +2211,7 @@
         },
         {
           "idx": 10,
-          "label": "Were · Talking · Where",
+          "label": "Practical steps to tune into source energy",
           "t0": 420,
           "t1": 420,
           "insights": [
@@ -2222,30 +2245,20 @@
       ],
       "frameworks": [
         {
-          "text": "You spend too much time in step one talking about what you don't want in your instead of articulating what you do want.",
-          "t": 420,
-          "located": true,
-          "tsEstimate": false
+          "name": "17‑Second Momentum Rule",
+          "summary": "A thought repeated for about 17 seconds gains momentum; after roughly four repetitions (≈68 seconds) the thought solidifies into a belief, making early interruption crucial."
         },
         {
-          "text": "So then step three is what we've been calling allowing.",
-          "t": 193,
-          "located": true,
-          "tsEstimate": false
-        },
-        {
-          "text": "We call that step one causes you to ask.",
-          "t": 193,
-          "located": true,
-          "tsEstimate": false
+          "name": "Path of Least Resistance Model",
+          "summary": "Co‑creation works best when you align with source energy by feeling ease and allowing thoughts to flow naturally, rather than forcing outcomes, which creates vibrational friction."
         }
       ],
       "takeaways": [
-        "That's what I was going to ask you because it's this this book what I've done is uh I've taken the 58 just turns out there's 58 chapters and and and each one of them is just a u a look at I'm going along this way and th…",
-        "and she stood on her hands and put her hips on and, you know, rolled her eyes back, you know, that 10-year-old kind of look and said, \"Uh, you're telling me that I actually picked you to be my father and pick mom to be…",
-        "Instead, as soon as you wake up, you remember the trouble that you had yesterday and you think about being at work and you think about the dilemma and you think about the discomfort and you think about the discord and a…",
-        "Um, and when she was 11, 10, nine, whatever years old, she used to always complain to me about uh my fathering, about my parenting, you know, giving me lots of advice about I do this wrong and I do that wrong.",
-        "uh which is what I tell people in in talks often is that uh when you are when you are in slumber um uh that um your your subconscious mind starts to get programmed you know and if you if the last five five minutes befor…"
+        "Before speaking, check that your words match the emotion you truly feel; the universe registers feeling, not phrasing.",
+        "Use the first few minutes after waking—or the quiet moments around 3 a.m.—to focus on a broad, positive intention before detailed thoughts take hold.",
+        "When a negative thought arises, broaden it rather than fixate on specifics to prevent rapid momentum buildup.",
+        "Limit affirmations to moments when you genuinely embody the stated quality; forced affirmations amplify resistance.",
+        "Interrupt unwanted thought loops before they reach roughly 68 seconds, as the 17‑second buildup quickly solidifies beliefs."
       ],
       "quotes": [
         {
@@ -2305,12 +2318,19 @@
         "How does hicks dyer universe apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410470951_e41wnz"
+      "docId": "doc_1787410470951_e41wnz",
+      "topics": [
+        "spirituality",
+        "consciousness",
+        "psychology",
+        "mindset"
+      ],
+      "synthesizedAt": "2026-08-28T19:51:35.734Z"
     },
     {
       "name": "hicks_effortless_manifestation",
       "agent": "ORACLE",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 2095,
@@ -2318,12 +2338,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:31.136Z",
       "contentHash": "511974cba310",
-      "title": "so there are a few things that it is our desire to help you",
-      "thesis": "because I think you should please me instead of you there's some screwy reasoning going on and every time it matters to you to please them instead of you oh it's such",
+      "title": "Understanding the Vortex of Creation and Vibrational Alignment",
+      "thesis": "The talk argues that aligning with the \"vortex of creation\"—a vibrational state of pure positive energy—allows effortless manifestation and well‑being, and that redefining selfishness as self‑alignment removes resistance that blocks this flow. It emphasizes that emotions serve as feedback on one’s proximity to the vortex, and that deliberate thought, speech, and action should only be taken when in that state.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Care · Action · She",
+          "label": "Introducing the Vortex Concept",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -2356,7 +2376,7 @@
         },
         {
           "idx": 2,
-          "label": "Wake · Gathering · Experience",
+          "label": "Selfishness as Vibrational Alignment",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -2389,7 +2409,7 @@
         },
         {
           "idx": 3,
-          "label": "Nine · Zero · Seven",
+          "label": "Practical Steps to Enter the Vortex",
           "t0": 640,
           "t1": 838,
           "insights": [
@@ -2423,15 +2443,16 @@
       ],
       "frameworks": [
         {
-          "text": "in your planet because you are so good at step one most of you have made such a career out of step one you sift through the data",
-          "t": 303,
-          "located": true,
-          "tsEstimate": true
+          "name": "Vortex Alignment Process",
+          "summary": "A three‑step method: (1) identify and acknowledge resistance, (2) soften or release that resistance to enter the vortex, and (3) engage in deliberate thinking, speaking, and acting from the vortex to manifest desired outcomes."
         }
       ],
       "takeaways": [
-        "this time-space reality has the wherewithal to give it to you now and the only reason there is a gap between you putting it in the vortex",
-        "because I think you should please me instead of you there's some screwy reasoning going on and every time it matters to you to please them instead of you oh it's such"
+        "Recognize resistance as the primary barrier to the vortex and consciously work to soften or release it.",
+        "Redefine selfishness as caring for your own vibrational alignment rather than seeking external approval.",
+        "Use your emotions as real‑time indicators of how close you are to the vortex and adjust your focus accordingly.",
+        "Only think, speak, and act when you feel you are in the vortex to ensure purposeful creation.",
+        "Adopt a present‑tense mindset that views desires as already gathered in the vortex, allowing the law of attraction to bring them into experience."
       ],
       "quotes": [
         {
@@ -2461,7 +2482,14 @@
         "How does hicks effortless manifestation apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410471195_8api3e"
+      "docId": "doc_1787410471195_8api3e",
+      "topics": [
+        "spirituality",
+        "consciousness",
+        "mindset",
+        "psychology"
+      ],
+      "synthesizedAt": "2026-08-28T19:52:02.933Z"
     },
     {
       "name": "hicks_oprah_law_of_attraction",

@@ -1,11 +1,11 @@
 {
   "agent": "ZEROX",
-  "generatedAt": "2026-08-22T14:54:36.175Z",
+  "generatedAt": "2026-08-28T19:47:07.724Z",
   "digests": [
     {
       "name": "buffett_advice_success",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 1520,
@@ -13,12 +13,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:45:03.065Z",
       "contentHash": "66b7221bc2b3",
-      "title": "Warren how would you define true success well I've said many times that that",
-      "thesis": "and business and they're learning all these complicated formulas all that if they just learned to communicate better and both in writing and person they increase their value at least 50%",
+      "title": "Redefining Success and Practical Paths to Business Growth",
+      "thesis": "True success is measured by the love and respect you receive from those who matter to you in later life, not by wealth alone. To achieve lasting business and personal fulfillment, invest heavily in yourself—especially communication skills—maintain your health, surround yourself with higher‑quality people, and focus on simple, long‑term, asset‑based investing rather than frequent trading.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Love · Make · Seen",
+          "label": "Defining Success & Core Advice",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -51,7 +51,7 @@
         },
         {
           "idx": 2,
-          "label": "Much · Cash · Carry",
+          "label": "Practical Investment & Life Tips",
           "t0": 320,
           "t1": 608,
           "insights": [
@@ -92,11 +92,11 @@
         }
       ],
       "takeaways": [
-        "and I didn't really see much reason all right last questions the lightning rounds there's a few do you ever drink water only under duress what is your favorite all-time song it's",
-        "but I I pay cash 98% of the time if I'm an arrest always pay cash it's just easier Warren Buffett thanks very much",
-        "and you hope they don't figure it out too fast great biggest mistakes people make when investing well they they try to",
-        "undoubtedly it's my way what about movie favorite movie well I like the Bridge on the River Kwai because of the lot there were a lot of lessons in that pleasant was",
-        "III I I am NOT venturesome in that area like how you lumped in onions with broccoli and Brussels sprouts never heard them I just don't have like onions I don't put"
+        "Prioritize building strong, loving relationships; view them as the ultimate metric of success.",
+        "Invest in communication skills (writing and speaking) to boost your market value by at least 50%.",
+        "Treat your body like a single, irreplaceable asset: maintain health, follow a consistent routine, and avoid neglect.",
+        "Choose partners and friends who are slightly better than you, especially a spouse, to elevate your trajectory.",
+        "Adopt a long‑term, asset‑focused investment strategy—buy diversified real estate across the U.S. and avoid frequent trading."
       ],
       "quotes": [
         {
@@ -120,12 +120,20 @@
         "How does buffett advice success apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787409904031_2b6mtd"
+      "docId": "doc_1787409904031_2b6mtd",
+      "synthesizedAt": "2026-08-28T19:43:00.597Z",
+      "topics": [
+        "business",
+        "investing",
+        "mindset",
+        "psychology",
+        "health"
+      ]
     },
     {
       "name": "buffett_buy_hold",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 3049,
@@ -133,12 +141,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:45:04.514Z",
       "contentHash": "730eba9ae972",
-      "title": "I'm not recommending that people buy stocks today or tomorrow or next week or",
-      "thesis": "in an index fund longterm is gone would you please provide your thoughts on this topic particularly in regards to an investment time span of 10 years",
+      "title": "Long-Term Investing, Index Funds, and Share Buybacks",
+      "thesis": "Investors should only buy stocks if they can hold them for many years and tolerate large drawdowns, because market timing is futile. Low‑cost index funds remain a solid core holding despite hype about active managers. Share repurchases are justified only when they are price‑sensitive, support growth needs, and benefit remaining shareholders.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Day · Hold · Investing",
+          "label": "Psychology of Holding Stocks",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -171,7 +179,7 @@
         },
         {
           "idx": 2,
-          "label": "Buybacks · Want · Spend",
+          "label": "Index Funds vs Active Management",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -204,7 +212,7 @@
         },
         {
           "idx": 3,
-          "label": "Time · Obviously · Back",
+          "label": "When Share Buybacks Make Sense",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -237,7 +245,7 @@
         },
         {
           "idx": 4,
-          "label": "Doesn · Huge · Energy",
+          "label": "Berkshire Hathaway’s Long‑Term Outlook",
           "t0": 960,
           "t1": 1219,
           "insights": [
@@ -271,18 +279,16 @@
       ],
       "frameworks": [
         {
-          "text": "but you make mistakes in a lot of business decision but over that should be the guiding principle and to my knowledge uh JP Morgan Jamie Diamond said it once",
-          "t": 599,
-          "located": true,
-          "tsEstimate": true
+          "name": "Buyback Evaluation Framework",
+          "summary": "A decision checklist that requires (1) sufficient retained earnings for future growth, (2) repurchase price below the company's intrinsic worth, and (3) price‑sensitivity and need‑sensitivity to ensure the buyback adds value to remaining shareholders."
         }
       ],
       "takeaways": [
-        "single investment can be uh in in terms of uh earning reasonable returns over time but I I would not want to bet my life on whether we beat the S&amp;P 500",
-        "and Berkshire should participate in a huge way we can do things in insurance nobody else can do uh that doesn't mean much at many times but occasionally it may be important",
-        "the virus it strikes uh some people with uh much greater ferocity than than than others and and fear is uh fear is something I really never felt financially but",
-        "and this is a point that's never mentioned they should be buying it back below what they think it's worth now they'll make mistakes in that",
-        "and psychologically to hold them the same way you would hold a farm and never look at a quote and never uh never pay it you don't need to pay attention to"
+        "Only purchase equities if you can comfortably endure 50% or greater declines and plan to hold for a decade or more.",
+        "Use low‑fee index funds as the backbone of a portfolio; active managers rarely outperform after fees.",
+        "Evaluate buyback proposals by asking whether the company retains enough cash for growth and whether the repurchase price is below intrinsic value.",
+        "Avoid making buying or selling decisions based on short‑term price movements or external opinions.",
+        "Recognize that large, diversified businesses like Berkshire can sustain modest underperformance versus the S&P 500 while still delivering long‑term value."
       ],
       "quotes": [
         {
@@ -318,12 +324,20 @@
         "How does buffett buy hold apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787409905394_41k2th"
+      "docId": "doc_1787409905394_41k2th",
+      "topics": [
+        "investing",
+        "psychology",
+        "business",
+        "strategy",
+        "mindset"
+      ],
+      "synthesizedAt": "2026-08-28T19:43:36.396Z"
     },
     {
       "name": "buffett_investing",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 888,
@@ -331,12 +345,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:31.751Z",
       "contentHash": "782ba4b6e0f3",
-      "title": "most important thing is to decide is to be able to define which ones",
-      "thesis": "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
+      "title": "Selective Investing: Focus on Few High-Confidence Bets",
+      "thesis": "You only need to be right on a handful of investments, so concentrate on companies you truly understand and wait for the right price before acting. Ignoring the rest reduces noise and maximizes the impact of each decision.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Ones · Because · 20",
+          "label": "Define Decision Scope",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -369,7 +383,7 @@
         },
         {
           "idx": 2,
-          "label": "127 · Years · History",
+          "label": "Apply Focused Investing",
           "t0": 320,
           "t1": 355,
           "insights": [
@@ -403,8 +417,11 @@
       ],
       "frameworks": [],
       "takeaways": [
-        "most important thing is to decide is to be able to define which ones you can come to an intelligent decision on and which ones are beyond your capacity to evaluate.",
-        "He said the most important thing in hitting is waiting for the right pitch."
+        "Limit your lifetime investment decisions to a small, manageable number and treat each as a high‑stakes opportunity.",
+        "Only analyze and form opinions on businesses you have deep knowledge of; ignore the rest.",
+        "Wait for the right price before committing, just as a batter waits for a pitch in his sweet zone.",
+        "Recognize that a few correct bets can generate outsized wealth; you don't need to be right on every stock.",
+        "Use a mental \"punch‑card\" metaphor to remind yourself that each investment is a precious, limited chance."
       ],
       "quotes": [
         {
@@ -428,12 +445,20 @@
         "How does buffett investing apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410472011_dlb8ic"
+      "docId": "doc_1787410472011_dlb8ic",
+      "synthesizedAt": "2026-08-28T19:44:03.773Z",
+      "topics": [
+        "investing",
+        "business",
+        "strategy",
+        "psychology",
+        "mindset"
+      ]
     },
     {
       "name": "hormozi_100m_offer",
       "agent": "ZEROX",
-      "engine": "extractive-v1+mastery",
+      "engine": "extractive-v1+mastery+llm",
       "videoId": null,
       "url": null,
       "words": 1400,
@@ -441,12 +466,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:32.507Z",
       "contentHash": "ad312fcfa2b9",
-      "title": "MASTERY CARD — \"$100M Offers: The Value Equation\" (Alex Hormozi)",
-      "thesis": "Value is engineered, not guessed. By systematically maximizing a value equation and",
+      "title": "The Value Equation Framework for Irresistible Offers",
+      "thesis": "Creating high‑priced, high‑conversion offers hinges on optimizing the value equation—dream outcome, perceived likelihood of achievement, time delay, and effort/sacrifice—and then neutralizing each friction point with guarantees, bonuses, scarcity, and urgency. By systematically de‑constraining these variables, businesses can dramatically increase price points and close rates without resorting to discounts.",
       "chapters": [
         {
           "idx": 1,
-          "label": "000 · Surgeon · Uh",
+          "label": "Value Equation Breakdown",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -479,7 +504,7 @@
         },
         {
           "idx": 2,
-          "label": "Kind · Price · Close",
+          "label": "Offer Optimization Tactics",
           "t0": 320,
           "t1": 560,
           "insights": [
@@ -513,31 +538,20 @@
       ],
       "frameworks": [
         {
-          "text": "Agent: ZEROX · Source: hormozi_100m_offer · Type: business/offer-construction",
-          "t": null,
-          "located": false,
-          "tsEstimate": true
+          "name": "Value Equation",
+          "summary": "A formula where Value = (Dream Outcome × Perceived Likelihood) ÷ (Time Delay × Effort & Sacrifice). Optimizing each numerator factor and minimizing each denominator factor raises perceived value."
         },
         {
-          "text": "So, the core if there was one framework in the book that it relates to, it's the value equation, which is that you have to understand how to create value so that you can charge as much as possible, right?",
-          "t": 12,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "And then we have the bottom side of the equation, which is time delay.",
-          "t": 176,
-          "located": true,
-          "tsEstimate": true
+          "name": "Four Types of Guarantees",
+          "summary": "Guarantee models—unconditional, conditional, zero, and performance—used to reverse risk, each suited to different buyer risk tolerances and allowing premium pricing."
         }
       ],
       "takeaways": [
-        "1. Itemize EVERY little step immediately before and after the purchase (e.g. weight loss also",
-        "means: shop differently, learn to meal-prep).",
-        "2. For each step ask: What increases their risk? What makes it take longer? What makes them",
-        "start doing things they hate? What makes them stop doing things they love?",
-        "3. Create a solution/bonus for each constraint → a \"bonus stack.\"",
-        "4. Result: a more valuable AND higher-converting offer → double or triple price, close at a"
+        "Define a compelling dream outcome that aligns with your target's core desire to ensure they even consider your category.",
+        "Boost perceived likelihood of achievement by adding credibility signals, expert experience, and appropriate guarantees.",
+        "Minimize time delay and effort/sacrifice by de‑constraining post‑purchase steps and bundling supportive bonuses.",
+        "Apply scarcity, urgency, and the four guarantee types (unconditional, conditional, zero, performance) to lower perceived risk without cutting price.",
+        "During sales calls, identify the specific constraint a prospect faces and plug in targeted bonuses to close the deal."
       ],
       "quotes": [
         {
@@ -573,12 +587,20 @@
         "How does hormozi 100m offer apply today?"
       ],
       "mergedFromMastery": true,
-      "docId": "doc_1787410472722_b9ptp1"
+      "docId": "doc_1787410472722_b9ptp1",
+      "topics": [
+        "business",
+        "marketing",
+        "sales",
+        "offers",
+        "psychology"
+      ],
+      "synthesizedAt": "2026-08-28T19:44:18.230Z"
     },
     {
       "name": "hormozi_ecommerce",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 3043,
@@ -586,12 +608,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:33.098Z",
       "contentHash": "f89e5887091a",
-      "title": "i am pissed not really but i recently uh was on a podcast a",
-      "thesis": "and i disagree and that is why i'm making this video to break down why the value equation and the things inside of the 100 million dollar offers book which pretty much",
+      "title": "Applying the 100M Offers Value Equation to E‑Commerce",
+      "thesis": "The video demonstrates that the value equation and offer‑enhancer principles from Alex Hormozi's 100M Offers book work just as well for physical‑product e‑commerce as they do for services. By deliberately engineering dream outcomes, perceived likelihood, time delay, effort, scarcity, urgency, guarantees, bonuses, and naming, merchants can raise perceived value, command higher prices, and boost conversion rates.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Lot · 30 · 100",
+          "label": "Value Equation Basics",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -624,7 +646,7 @@
         },
         {
           "idx": 2,
-          "label": "Jean · Cool · Say",
+          "label": "E‑Commerce Translation",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -657,7 +679,7 @@
         },
         {
           "idx": 3,
-          "label": "Only · Left · Urgency",
+          "label": "Amazon Case Study",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -690,7 +712,7 @@
         },
         {
           "idx": 4,
-          "label": "Next · Higher · Ll",
+          "label": "Implementing Offer Enhancers",
           "t0": 960,
           "t1": 1217,
           "insights": [
@@ -724,33 +746,21 @@
       ],
       "frameworks": [
         {
-          "text": "and i disagree and that is why i'm making this video to break down why the value equation and the things inside of the 100 million dollar offers book which pretty much",
-          "t": 36,
-          "located": true,
-          "tsEstimate": true
+          "name": "Value Equation",
+          "summary": "Value = (Dream Outcome × Perceived Likelihood) ÷ (Time Delay × Effort & Sacrifice). Optimizing each variable raises perceived value and willingness to pay."
         },
         {
-          "text": "apply the 100 offer framework to make your stuff more buyable so that people increase in higher amounts at higher percentages and they do so willing to pay higher prices",
-          "t": 1055,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "right that is how you can apply the 100 offers framework including the value equation and the other things that i talk about enhancing value from the book to a physical product",
-          "t": 1171,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "look at the other ratchets that i said these are inside of the book are enhancers of value they do even more to increase the value equation in your favor",
-          "t": 695,
-          "located": true,
-          "tsEstimate": true
+          "name": "100M Offers Offer Enhancers",
+          "summary": "A set of tactical levers—scarcity, urgency, guarantees, bonuses, and naming—that amplify the core value equation and make offers more compelling."
         }
       ],
       "takeaways": [
-        "subscribe button and hit the little notification bell the reason for that is because i don't actually have a cadence when i make these videos",
-        "and they find out that there is no scarcity so as far as they're concerned they can buy this whenever so they can come back next week if they feel like it"
+        "Define a clear dream outcome for each buyer avatar and communicate it directly in your product copy.",
+        "Increase perceived likelihood with social proof, tutorials, and unboxing videos that show the result in action.",
+        "Compress time delay by offering faster shipping, instant access, or rapid fulfillment to make the offer feel immediate.",
+        "Minimize effort and sacrifice using one‑click checkout, saved payment info, and frictionless purchase flows.",
+        "Add scarcity (stock limits) and urgency (flash deals) to create pressure and boost conversion.",
+        "Layer guarantees—money‑back and try‑before‑you‑buy—to lower risk and reinforce confidence."
       ],
       "quotes": [
         {
@@ -786,12 +796,20 @@
         "How does hormozi ecommerce apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410473304_wb3cw5"
+      "docId": "doc_1787410473304_wb3cw5",
+      "topics": [
+        "marketing",
+        "business",
+        "sales",
+        "psychology",
+        "strategy"
+      ],
+      "synthesizedAt": "2026-08-28T19:44:55.593Z"
     },
     {
       "name": "hormozi_sell_stupid",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 4507,
@@ -799,12 +817,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:33.751Z",
       "contentHash": "14431341afaf",
-      "title": "I recently read a book titled 100 million dollar offers how to make offers",
-      "thesis": "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
+      "title": "How to Build $100M Irresistible Offers",
+      "thesis": "The book argues that entrepreneurs can generate massive revenue by creating differentiated products, targeting a market with high pain and purchasing power, pricing premium based on value, and engineering an offer that eliminates objections. By following a systematic framework, sellers shift prospects from price‑focused to value‑focused decisions.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Book · Month · Avoid",
+          "label": "Differentiated Product Design",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -837,7 +855,7 @@
         },
         {
           "idx": 2,
-          "label": "Power · Find · Subscribers",
+          "label": "Targeting the Right Market",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -870,7 +888,7 @@
         },
         {
           "idx": 3,
-          "label": "Pay · Thousand · Start",
+          "label": "Premium Pricing Principles",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -903,7 +921,7 @@
         },
         {
           "idx": 4,
-          "label": "Effort · Psychological · Dream",
+          "label": "Four Value Drivers",
           "t0": 960,
           "t1": 1280,
           "insights": [
@@ -936,7 +954,7 @@
         },
         {
           "idx": 5,
-          "label": "Step · Problems · Healthy",
+          "label": "Building the Offer Stack",
           "t0": 1280,
           "t1": 1600,
           "insights": [
@@ -969,7 +987,7 @@
         },
         {
           "idx": 6,
-          "label": "Grocery · Small · Video",
+          "label": "Final Offer Execution",
           "t0": 1600,
           "t1": 1802,
           "insights": [
@@ -1003,18 +1021,20 @@
       ],
       "frameworks": [
         {
-          "text": "now it's time to finally create your offer step one identify dream outcome imagine your customer Avatar asking for your help as they State their dream outcome what are they asking you",
-          "t": 1279,
-          "located": true,
-          "tsEstimate": true
+          "name": "Four Drivers of Value",
+          "summary": "A value‑creation model that increases price justification by boosting dream outcome and perceived likelihood while reducing time delay and effort/sacrifice."
+        },
+        {
+          "name": "Offer Stack Process",
+          "summary": "A step‑by‑step method: identify dream outcome, list problems, generate solution statements, design delivery vehicles, then trim and stack high‑value, low‑cost elements."
         }
       ],
       "takeaways": [
-        "but the person who buys that product thinks the value they're getting is worth the price whether it is quality Beauty durability status or any other personal reason it doesn't matter there's",
-        "but think about it how much time and effort can you save if you go through liposuction instead of buying a gym membership humans will always search for the quickest easiest Solutions",
-        "because nothing compares to your product so to summarize part one never compete on price and avoid being commoditized focus on creating a differentiated product in the remaining parts of this video",
-        "than 20 so it's a growing Market let's say you have found a market that has all four components we talked about what do you do next this is the important point",
-        "do it or don't think it's reasonable you might have some completely crazy and impractical Solutions there keep them for a while step number five trim and stack now finally we'll"
+        "Design a product that cannot be compared on price by ensuring it is truly differentiated.",
+        "Select a market that shows strong pain, purchasing power, easy targeting, and growth, then narrow down to a specific niche.",
+        "Charge premium prices by amplifying perceived value through clear dream outcomes, certainty, speed, and low effort.",
+        "Apply the Four Drivers framework—dream outcome, likelihood of achievement, time delay, and effort—to maximize offer value.",
+        "Construct offers by identifying the dream outcome, listing obstacles, turning them into solution statements, choosing delivery vehicles, and trimming to high‑value, low‑cost components."
       ],
       "quotes": [
         {
@@ -1062,12 +1082,20 @@
         "How does hormozi sell stupid apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410474012_n5el0w"
+      "docId": "doc_1787410474012_n5el0w",
+      "topics": [
+        "business",
+        "marketing",
+        "offers",
+        "psychology",
+        "sales"
+      ],
+      "synthesizedAt": "2026-08-28T19:45:37.163Z"
     },
     {
       "name": "kiyosaki_rich_dad_full",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 56405,
@@ -1075,12 +1103,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:34.521Z",
       "contentHash": "de488eb52b47",
-      "title": "rich dad poor dad what the rich teach their kids about money that the",
-      "thesis": "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
+      "title": "Rich Dad Poor Dad: Money Lessons Parents Teach Their Kids",
+      "thesis": "The book argues that financial success stems from the money mindset and education taught at home, not formal schooling. Rich parents instill habits—like making money work for you, questioning \"can't afford,\" and viewing assets versus liabilities—that the poor and middle class typically lack. Choosing the rich‑dad perspective creates lasting wealth.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Both · School · Business",
+          "label": "Two fathers, two mindsets",
           "t0": 0,
           "t1": 1200,
           "insights": [
@@ -1113,7 +1141,7 @@
         },
         {
           "idx": 2,
-          "label": "Re · Him · Down",
+          "label": "Why schools ignore money",
           "t0": 1200,
           "t1": 2400,
           "insights": [
@@ -1146,7 +1174,7 @@
         },
         {
           "idx": 3,
-          "label": "Working · Ll · Cents",
+          "label": "The power of financial programming",
           "t0": 2400,
           "t1": 3600,
           "insights": [
@@ -1179,7 +1207,7 @@
         },
         {
           "idx": 4,
-          "label": "Fear · Emotions · Desire",
+          "label": "Language: \"can't afford\" vs \"how can afford\"",
           "t0": 3600,
           "t1": 4800,
           "insights": [
@@ -1212,7 +1240,7 @@
         },
         {
           "idx": 5,
-          "label": "Comic · Book · Books",
+          "label": "Taxes: redistribution vs productivity",
           "t0": 4800,
           "t1": 6000,
           "insights": [
@@ -1245,7 +1273,7 @@
         },
         {
           "idx": 6,
-          "label": "Simple · Fear · Tax",
+          "label": "Education: degree vs entrepreneurship",
           "t0": 6000,
           "t1": 7200,
           "insights": [
@@ -1278,7 +1306,7 @@
         },
         {
           "idx": 7,
-          "label": "Assets · Business · Column",
+          "label": "Kids at the dinner table: talk money",
           "t0": 7200,
           "t1": 8400,
           "insights": [
@@ -1311,7 +1339,7 @@
         },
         {
           "idx": 8,
-          "label": "Government · Taxes · Middle",
+          "label": "Risk: safety vs management",
           "t0": 8400,
           "t1": 9600,
           "insights": [
@@ -1344,7 +1372,7 @@
         },
         {
           "idx": 9,
-          "label": "Corporation · Own · Tax",
+          "label": "Home: asset or liability",
           "t0": 9600,
           "t1": 10800,
           "insights": [
@@ -1377,7 +1405,7 @@
         },
         {
           "idx": 10,
-          "label": "Her · She · Game",
+          "label": "Bill payment habits",
           "t0": 10800,
           "t1": 12000,
           "insights": [
@@ -1410,7 +1438,7 @@
         },
         {
           "idx": 11,
-          "label": "Market · Estate · Five",
+          "label": "Entitlement vs self‑reliance",
           "t0": 12000,
           "t1": 13200,
           "insights": [
@@ -1443,7 +1471,7 @@
         },
         {
           "idx": 12,
-          "label": "She · Her · Educated",
+          "label": "Saving versus investing",
           "t0": 13200,
           "t1": 14400,
           "insights": [
@@ -1476,7 +1504,7 @@
         },
         {
           "idx": 13,
-          "label": "Skills · Fear · Union",
+          "label": "Resume writing vs business planning",
           "t0": 14400,
           "t1": 15600,
           "insights": [
@@ -1509,7 +1537,7 @@
         },
         {
           "idx": 14,
-          "label": "Losing · Failure · Never",
+          "label": "Thoughts shape financial destiny",
           "t0": 15600,
           "t1": 16800,
           "insights": [
@@ -1542,7 +1570,7 @@
         },
         {
           "idx": 15,
-          "label": "Little · Afford · Us",
+          "label": "Choosing the rich‑dad voice",
           "t0": 16800,
           "t1": 18000,
           "insights": [
@@ -1575,7 +1603,7 @@
         },
         {
           "idx": 16,
-          "label": "Friends · Learned · Formula",
+          "label": "Six core lessons overview",
           "t0": 18000,
           "t1": 19200,
           "insights": [
@@ -1608,7 +1636,7 @@
         },
         {
           "idx": 17,
-          "label": "Yourself · Broker · Many",
+          "label": "Lesson 1: Money works for you",
           "t0": 19200,
           "t1": 20400,
           "insights": [
@@ -1641,7 +1669,7 @@
         },
         {
           "idx": 18,
-          "label": "Heroes · Always · Look",
+          "label": "Childhood toothpaste venture story",
           "t0": 20400,
           "t1": 21600,
           "insights": [
@@ -1674,7 +1702,7 @@
         },
         {
           "idx": 19,
-          "label": "Income · Cash · Flow",
+          "label": "Call to action for parents",
           "t0": 21600,
           "t1": 22562,
           "insights": [
@@ -1708,48 +1736,16 @@
       ],
       "frameworks": [
         {
-          "text": "and community colleges have classes on financial planning and buying traditional investments they are good places to start but i always search for faster formula that is why on a fairly regular",
-          "t": 19036,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "because of this is a powerful military presence in the world the jewel symbolizes the power of money there is some degree of truth to the saying remember the golden rule he",
-          "t": 6836,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "and unique subjects i call them formulas i buy how-to books on formulas i know nothing about for example in the bookstore i found the book the 16 solution by joel moskowitz",
-          "t": 20988,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "buy real estate foreclosures i learned a formula the next trick was to have the discipline to actually put into action what i had learned that is where most people stop for",
-          "t": 18977,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "or you're not making enough it's simply a case of changing the formula via which you make money years ago when i was 26 i took a weekend class called how to",
-          "t": 18964,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "always push you around anyway if you do not like financial pressure then find a formula that works for you a good one is to cut expenses put your money in the",
-          "t": 19563,
-          "located": true,
-          "tsEstimate": true
+          "name": "Six Rich Dad Lessons",
+          "summary": "A concise set of principles—money works for you, think like an investor, manage risk, treat home as a liability, prioritize cash flow, and develop financial education—that guide parents in raising financially empowered children."
         }
       ],
       "takeaways": [
-        "and never pay themselves you know the story of the 98 pound weakling who gets sand kicked in his face i nodded i see that ad for weight lifting",
-        "japanese admiral says to his cheering subordinates i am afraid we have awakened a sleeping giant remember pearl harbor became a rallying cry it turned one of america's greatest losses into the",
-        "who at the age of 24 are earning millions but are sleeping under a bridge 10 years later i remember a story of a young basketball player who a year ago had",
-        "an inspiring story worthy of study nonetheless it's still a tragic military defeat they got their butts kicked so how did texans handle failure they still shout remember the alamo mike",
-        "the stock plays i personally invested in were extremely high risk for most people and absolutely not recommended i have been playing that game since 1979"
+        "Teach children to ask \"how can I afford it?\" instead of saying \"I can't afford it\" to activate problem‑solving.",
+        "Encourage discussions about money and business at the dinner table to normalize financial literacy.",
+        "View your home as a potential liability; prioritize cash‑flow‑positive assets over equity‑only holdings.",
+        "Shift from working for money to making money work for you through investments and entrepreneurship.",
+        "Replace entitlement mindsets with self‑reliance by modeling budgeting, saving, and creating income streams."
       ],
       "quotes": [
         {
@@ -1809,12 +1805,20 @@
         "How does kiyosaki rich dad full apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410474782_6nk5uw"
+      "docId": "doc_1787410474782_6nk5uw",
+      "topics": [
+        "money",
+        "business",
+        "psychology",
+        "mindset",
+        "learning"
+      ],
+      "synthesizedAt": "2026-08-28T19:46:25.638Z"
     },
     {
       "name": "napoleon_hill_think_grow_rich",
       "agent": "ZEROX",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 95688,
@@ -1822,12 +1826,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:35.535Z",
       "contentHash": "e74790ce1d84",
-      "title": "The Secret of success in every chapter of this book mention is made of",
-      "thesis": "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
+      "title": "The Carnegie Secret Behind Think and Grow Rich",
+      "thesis": "Think and Grow Rich reveals a universal success principle—referred to as the Carnegie secret—that anyone who recognizes and applies can generate wealth and achievement across any field. The book argues that this principle, not formal education, is the true driver of personal and financial success.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Secret · President · Carnegie",
+          "label": "Carnegie introduces secret",
           "t0": 0,
           "t1": 1200,
           "insights": [
@@ -1860,7 +1864,7 @@
         },
         {
           "idx": 2,
-          "label": "Edison · Rich · Barnes",
+          "label": "Hill's early career",
           "t0": 1200,
           "t1": 2400,
           "insights": [
@@ -1893,7 +1897,7 @@
         },
         {
           "idx": 3,
-          "label": "Principles · Child · Uncle",
+          "label": "Carnegie's challenge",
           "t0": 2400,
           "t1": 3600,
           "insights": [
@@ -1926,7 +1930,7 @@
         },
         {
           "idx": 4,
-          "label": "Edison · Yourself · Riches",
+          "label": "Decision speed importance",
           "t0": 3600,
           "t1": 4800,
           "insights": [
@@ -1959,7 +1963,7 @@
         },
         {
           "idx": 5,
-          "label": "Hear · World · Hearing",
+          "label": "Hill's dedication",
           "t0": 4800,
           "t1": 6000,
           "insights": [
@@ -1992,7 +1996,7 @@
         },
         {
           "idx": 6,
-          "label": "Belief · Conscious · Physical",
+          "label": "Editor's 1908 context",
           "t0": 6000,
           "t1": 7200,
           "insights": [
@@ -2025,7 +2029,7 @@
         },
         {
           "idx": 7,
-          "label": "Schwab · Steel · Story",
+          "label": "Interview with Carnegie",
           "t0": 7200,
           "t1": 8400,
           "insights": [
@@ -2058,7 +2062,7 @@
         },
         {
           "idx": 8,
-          "label": "Schwab · Steel · Carnegie",
+          "label": "Philosophy of success",
           "t0": 8400,
           "t1": 9600,
           "insights": [
@@ -2091,7 +2095,7 @@
         },
         {
           "idx": 9,
-          "label": "Suggestion · Autos · Intend",
+          "label": "20‑year research promise",
           "t0": 9600,
           "t1": 10800,
           "insights": [
@@ -2124,7 +2128,7 @@
         },
         {
           "idx": 10,
-          "label": "Specialized · Education · Ford",
+          "label": "Secret’s public school vision",
           "t0": 10800,
           "t1": 12000,
           "insights": [
@@ -2157,7 +2161,7 @@
         },
         {
           "idx": 11,
-          "label": "Her · She · Job",
+          "label": "Faith chapter example",
           "t0": 12000,
           "t1": 13200,
           "insights": [
@@ -2190,7 +2194,7 @@
         },
         {
           "idx": 12,
-          "label": "Synthesized · Creative · Ideas",
+          "label": "Schwab’s $600M success",
           "t0": 13200,
           "t1": 14400,
           "insights": [
@@ -2223,7 +2227,7 @@
         },
         {
           "idx": 13,
-          "label": "Kettle · Old · Years",
+          "label": "Inflation adjustment note",
           "t0": 14400,
           "t1": 15600,
           "insights": [
@@ -2256,7 +2260,7 @@
         },
         {
           "idx": 14,
-          "label": "Store · Stores · Million",
+          "label": "Secret’s spread to many",
           "t0": 15600,
           "t1": 16800,
           "insights": [
@@ -2289,7 +2293,7 @@
         },
         {
           "idx": 15,
-          "label": "Plans · Leader · Leaders",
+          "label": "Clergyman’s $75K story",
           "t0": 16800,
           "t1": 18000,
           "insights": [
@@ -2322,7 +2326,7 @@
         },
         {
           "idx": 16,
-          "label": "Comment · Position · Job",
+          "label": "Nash’s turnaround",
           "t0": 18000,
           "t1": 19200,
           "insights": [
@@ -2355,7 +2359,7 @@
         },
         {
           "idx": 17,
-          "label": "Services · Service · Failure",
+          "label": "Weir’s law career",
           "t0": 19200,
           "t1": 20400,
           "insights": [
@@ -2388,7 +2392,7 @@
         },
         {
           "idx": 18,
-          "label": "Freedom · Services · Analysis",
+          "label": "University extension case",
           "t0": 20400,
           "t1": 21600,
           "insights": [
@@ -2421,7 +2425,7 @@
         },
         {
           "idx": 19,
-          "label": "Decision · Riches · Men",
+          "label": "Secret’s hidden naming",
           "t0": 21600,
           "t1": 22800,
           "insights": [
@@ -2454,7 +2458,7 @@
         },
         {
           "idx": 20,
-          "label": "Adams · Decision · Persistence",
+          "label": "Readiness requirement",
           "t0": 22800,
           "t1": 24000,
           "insights": [
@@ -2487,7 +2491,7 @@
         },
         {
           "idx": 21,
-          "label": "Me · Turning · Point",
+          "label": "Presidential wartime use",
           "t0": 24000,
           "t1": 25200,
           "insights": [
@@ -2520,7 +2524,7 @@
         },
         {
           "idx": 22,
-          "label": "Persistence · Lucky · Criticism",
+          "label": "Wilson’s fundraising factor",
           "t0": 25200,
           "t1": 26400,
           "insights": [
@@ -2553,7 +2557,7 @@
         },
         {
           "idx": 23,
-          "label": "Mastermind · Muhammad · Group",
+          "label": "Roosevelt’s soldier training",
           "t0": 26400,
           "t1": 27600,
           "insights": [
@@ -2586,7 +2590,7 @@
         },
         {
           "idx": 24,
-          "label": "Mastermind · Stone · Napoleon",
+          "label": "Secret’s two‑part nature",
           "t0": 27600,
           "t1": 28800,
           "insights": [
@@ -2619,7 +2623,7 @@
         },
         {
           "idx": 25,
-          "label": "Creative · Faculty · Charisma",
+          "label": "Education irrelevance",
           "t0": 28800,
           "t1": 30000,
           "insights": [
@@ -2652,7 +2656,7 @@
         },
         {
           "idx": 26,
-          "label": "Love · Intelligence · Infinite",
+          "label": "Edison’s early use",
           "t0": 30000,
           "t1": 31200,
           "insights": [
@@ -2685,7 +2689,7 @@
         },
         {
           "idx": 27,
-          "label": "Emotions · Thoughts · Emotion",
+          "label": "Barnes’ partnership",
           "t0": 31200,
           "t1": 32400,
           "insights": [
@@ -2718,7 +2722,7 @@
         },
         {
           "idx": 28,
-          "label": "Brain · Sense · Sixth",
+          "label": "Ford’s rise",
           "t0": 32400,
           "t1": 33600,
           "insights": [
@@ -2751,7 +2755,7 @@
         },
         {
           "idx": 29,
-          "label": "Sense · Character · Me",
+          "label": "Wrigley’s gum empire",
           "t0": 33600,
           "t1": 34800,
           "insights": [
@@ -2784,7 +2788,7 @@
         },
         {
           "idx": 30,
-          "label": "Self · Lack · Poverty",
+          "label": "Wan‑maker’s department store",
           "t0": 34800,
           "t1": 36000,
           "insights": [
@@ -2817,7 +2821,7 @@
         },
         {
           "idx": 31,
-          "label": "Death · Habit · Love",
+          "label": "Hill’s railway builder",
           "t0": 36000,
           "t1": 37200,
           "insights": [
@@ -2850,7 +2854,7 @@
         },
         {
           "idx": 32,
-          "label": "Why · Aliis · Yourself",
+          "label": "Parker’s pen company",
           "t0": 37200,
           "t1": 38275,
           "insights": [
@@ -2884,48 +2888,16 @@
       ],
       "frameworks": [
         {
-          "text": "sacrifice and is never the result of selfishness chapter 15 The Sixth Sense the door to the Temple of wisdom the 13th step toward riches the 13th principle is known as The",
-          "t": 33333,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "of 1920 he simply left by April of 1921 he had raised the money for a new publication Napoleon Hills Magazine the foundation of which was again the golden rule",
-          "t": 25124,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "and authors have developed systems based on the same principles Dr Maxwell maltz a noted plastic surgeon found that often it was as important for his patients to change their inner perception",
-          "t": 10381,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "and handed it over to the doctor the roll contained exactly $500 the clerk's entire savings the doctor handed over a small slip of paper on which was written a secret formula",
-          "t": 14640,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "Pleasant conditions you must adopt and follow the qqs formula qqs means that quality plus quantity plus the proper Spirit of cooperation equals perfect salesmanship of service remember the qqs formula",
-          "t": 19682,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "see yourself rendering the service or delivering the merchandise you intend to give in return for this money this is important editors comments the basic principle underlying Autos suggestion is closely related",
-          "t": 10084,
-          "located": true,
-          "tsEstimate": true
+          "name": "Carnegie Secret",
+          "summary": "A two‑part principle of personal achievement that, when recognized and applied, drives wealth and success across any field, emphasizing mental readiness, decisive action, and consistent application."
         }
       ],
       "takeaways": [
-        "rich indeed Sylvester Stallone Bruce Willis Oprah Winfrey Bill Clinton Steven Jobs Donald Trump and a host of other equally well-known Achievers all had to fail in order to learn the lessons",
-        "Orville became the first Americans to fly heavier than air aircraft and pioneered the aviation industry William Jennings briyan newspaper publisher Presidential nominee Secretary of State under President William McKinley",
-        "their Creations William Blake learned the secret to a copper engraving process from a dream British prime minister Winston Churchill firmly believed a premonition saved him from being killed by a bomb",
-        "he had met while working at the White House and by early January of 1919 Hills Golden Rule magazine was on the news stands the first issue was 48 pages in the",
-        "and giving pads of postage to receptionists secretaries and anyone else who would listen whereas 3m's conventional marketing Machinery had failed giving Post-its to the people who would actually use them did"
+        "Recognize that a single, universal principle—the Carnegie secret—underlies the success of the world’s most prosperous individuals and can be identified when you are mentally prepared.",
+        "Make decisions swiftly once you have all the facts; hesitation signals a lack of the decisive mindset needed to execute the secret effectively.",
+        "Study the patterns of proven achievers rather than copying surface tactics, extracting the underlying principle that drives their results.",
+        "Apply the secret consistently across business, personal, and leadership contexts; its effectiveness is not limited to any specific industry.",
+        "Prioritize mindset and readiness over formal education, understanding that the secret relies on internal conviction rather than external credentials."
       ],
       "quotes": [
         {
@@ -2985,7 +2957,15 @@
         "How does napoleon hill think grow rich apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410475745_r3lix1"
+      "docId": "doc_1787410475745_r3lix1",
+      "topics": [
+        "business",
+        "money",
+        "psychology",
+        "mindset",
+        "strategy"
+      ],
+      "synthesizedAt": "2026-08-28T19:47:07.724Z"
     }
   ]
 }

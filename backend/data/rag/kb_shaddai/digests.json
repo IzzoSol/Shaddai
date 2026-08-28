@@ -1,11 +1,11 @@
 {
   "agent": "SHADDAI",
-  "generatedAt": "2026-08-22T14:54:29.325Z",
+  "generatedAt": "2026-08-28T19:42:29.878Z",
   "digests": [
     {
       "name": "buffett_advice_success",
       "agent": "SHADDAI",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 1520,
@@ -13,12 +13,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:27.294Z",
       "contentHash": "66b7221bc2b3",
-      "title": "Warren how would you define true success well I've said many times that that",
-      "thesis": "and business and they're learning all these complicated formulas all that if they just learned to communicate better and both in writing and person they increase their value at least 50%",
+      "title": "Warren Buffett on Success, Personal Growth, and Investing",
+      "thesis": "Warren defines true success as being loved by the people who matter to you in old age, and argues that the most valuable investments are in yourself—communication, health, and relationships—while advocating simple, long‑term, buy‑and‑hold investing and the importance of surrounding yourself with better people.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Love · Make · Seen",
+          "label": "Defining Success & Life Advice",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -51,7 +51,7 @@
         },
         {
           "idx": 2,
-          "label": "Much · Cash · Carry",
+          "label": "Simple Long-Term Investing",
           "t0": 320,
           "t1": 608,
           "insights": [
@@ -85,18 +85,20 @@
       ],
       "frameworks": [
         {
-          "text": "and business and they're learning all these complicated formulas all that if they just learned to communicate better and both in writing and person they increase their value at least 50%",
-          "t": 71,
-          "located": true,
-          "tsEstimate": true
+          "name": "Buy-and-Hold Investing",
+          "summary": "Acquire real assets such as farms or apartment buildings and hold them for the long term, avoiding frequent trading and minimizing transaction costs."
+        },
+        {
+          "name": "Owner's Manual Health Approach",
+          "summary": "Treat your body as a single, irreplaceable asset; read its ‘owner’s manual,’ maintain it consistently, and avoid neglecting health until old age."
         }
       ],
       "takeaways": [
-        "and I didn't really see much reason all right last questions the lightning rounds there's a few do you ever drink water only under duress what is your favorite all-time song it's",
-        "but I I pay cash 98% of the time if I'm an arrest always pay cash it's just easier Warren Buffett thanks very much",
-        "and you hope they don't figure it out too fast great biggest mistakes people make when investing well they they try to",
-        "undoubtedly it's my way what about movie favorite movie well I like the Bridge on the River Kwai because of the lot there were a lot of lessons in that pleasant was",
-        "III I I am NOT venturesome in that area like how you lumped in onions with broccoli and Brussels sprouts never heard them I just don't have like onions I don't put"
+        "Prioritize relationships; aim to be loved by family and friends as the true measure of success.",
+        "Invest continuously in communication skills and personal development, as they increase your market value.",
+        "Treat your body like a valuable asset: read its “owner’s manual,” maintain it, and avoid neglect.",
+        "Choose friends, mentors, and especially a spouse who are slightly better than you to lift your trajectory.",
+        "Follow a buy‑and‑hold investment approach—purchase real assets (e.g., farms, apartments) and hold them long term rather than frequent trading."
       ],
       "quotes": [
         {
@@ -120,12 +122,20 @@
         "How does buffett advice success apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410467415_unuo27"
+      "docId": "doc_1787410467415_unuo27",
+      "synthesizedAt": "2026-08-28T19:38:55.645Z",
+      "topics": [
+        "investing",
+        "business",
+        "mindset",
+        "psychology",
+        "leadership"
+      ]
     },
     {
       "name": "dispenza_seminar",
       "agent": "SHADDAI",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 13298,
@@ -133,12 +143,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:27.701Z",
       "contentHash": "407a854b8334",
-      "title": "good morning thank you thank you i think i'm in the right place my",
-      "thesis": "look just like you that most people in their life wait for that crisis or the trauma the disease or the diagnosis some kind of loss betrayal in their life before they",
+      "title": "Rewiring Your Brain to Create a New Personal Reality",
+      "thesis": "Your personal reality is a product of habitual neural patterns, thoughts, and emotions. By consciously observing and reshaping these patterns—using neuroplasticity, future‑focused emotional rehearsal, and meditation—you can rewrite your biology, change your personality, and manifest a new life. The process requires deliberate awareness of unconscious habits and intentional conditioning of the mind‑body system.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Don · Mind · Experiences",
+          "label": "One‑Day Workshop Introduction",
           "t0": 0,
           "t1": 532,
           "insights": [
@@ -171,7 +181,7 @@
         },
         {
           "idx": 2,
-          "label": "Wait · Make · Conscious",
+          "label": "Detaching Identity from External Cues",
           "t0": 532,
           "t1": 1064,
           "insights": [
@@ -204,7 +214,7 @@
         },
         {
           "idx": 3,
-          "label": "Living · Think · Feeling",
+          "label": "Learning Creates New Neural Links",
           "t0": 1064,
           "t1": 1596,
           "insights": [
@@ -237,7 +247,7 @@
         },
         {
           "idx": 4,
-          "label": "Stress · Hormones · Survival",
+          "label": "From Knowledge to Embodied Experience",
           "t0": 1596,
           "t1": 2128,
           "insights": [
@@ -270,7 +280,7 @@
         },
         {
           "idx": 5,
-          "label": "Thing · Agree · Think",
+          "label": "Conditioning Mind‑Body Alignment",
           "t0": 2128,
           "t1": 2660,
           "insights": [
@@ -303,7 +313,7 @@
         },
         {
           "idx": 6,
-          "label": "World · Present · Tell",
+          "label": "Observing Unconscious Thought Loops",
           "t0": 2660,
           "t1": 3192,
           "insights": [
@@ -336,7 +346,7 @@
         },
         {
           "idx": 7,
-          "label": "Starts · Matter · Take",
+          "label": "Future‑Focused Emotional Rehearsal",
           "t0": 3192,
           "t1": 3724,
           "insights": [
@@ -369,7 +379,7 @@
         },
         {
           "idx": 8,
-          "label": "Heart · Imagine · Coherent",
+          "label": "Meditation as Consciousness Observation",
           "t0": 3724,
           "t1": 4256,
           "insights": [
@@ -402,7 +412,7 @@
         },
         {
           "idx": 9,
-          "label": "Back · Gamma · Awareness",
+          "label": "Biological Effects of Repeated Patterns",
           "t0": 4256,
           "t1": 4788,
           "insights": [
@@ -435,7 +445,7 @@
         },
         {
           "idx": 10,
-          "label": "Her · Always · Eczema",
+          "label": "Action Plan for Personality Redesign",
           "t0": 4788,
           "t1": 5319,
           "insights": [
@@ -467,13 +477,26 @@
           }
         }
       ],
-      "frameworks": [],
+      "frameworks": [
+        {
+          "name": "Neuro‑Plasticity Conditioning Loop",
+          "summary": "A cycle of intentional thought → emotional feeling → neural firing → repeated reinforcement that gradually rewires brain structure and gene expression."
+        },
+        {
+          "name": "Consciousness‑Observer Model",
+          "summary": "Treat the mind as a separate observer that watches thoughts and emotions, allowing you to interrupt automatic programming and choose new responses."
+        },
+        {
+          "name": "Future‑Emotion Priming Framework",
+          "summary": "Pre‑experience desired future emotions through vivid mental rehearsal, signaling the body’s chemistry and genetics to align with the envisioned outcome."
+        }
+      ],
       "takeaways": [
-        "and the brain scientists are watching the screen and just saying she's having a massive seizure now they've never seen anything like this before here's the here's the the humor in the",
-        "going to fulfill some lack but it never does are you with me still and people then all of a sudden after 30 years they have their car they have their house",
-        "of the box so she tells the story of how the divine connected to her and said hey you know imagery and profound information i've always been with you welcome",
-        "look just like you that most people in their life wait for that crisis or the trauma the disease or the diagnosis some kind of loss betrayal in their life before they",
-        "and imagine we're capturing amplitudes of energy that have never been recorded in the history of neuroscience and we can say when that occurs she can't make her brain do that it's"
+        "Identify and write down your most repetitive thoughts and notice the emotions they generate; this awareness is the first step to breaking the cycle.",
+        "Replace past‑driven emotional scripts with future‑oriented feelings (e.g., abundance, love) and rehearse them daily to fire‑wire new neural pathways.",
+        "Use short, focused meditation sessions to observe thoughts without judgment, turning the mind into a conscious observer rather than an automatic program.",
+        "Align your language and behavior with the person you want to become; consistently speak, act, and feel as if that future self already exists.",
+        "Commit to a daily micro‑practice—visualization, affirmation, or physical embodiment of the desired state—for at least 30 days to solidify the new circuitry."
       ],
       "quotes": [
         {
@@ -533,12 +556,13 @@
         "How does dispenza seminar apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410467796_zslwos"
+      "docId": "doc_1787410467796_zslwos",
+      "synthesizedAt": "2026-08-28T19:31:11.446Z"
     },
     {
       "name": "hormozi_all_in_nothing",
       "agent": "SHADDAI",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 3766,
@@ -546,12 +570,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:28.043Z",
       "contentHash": "9c560bd2407f",
-      "title": "Do you know how hard I worked to get here? Instead of spending time",
-      "thesis": "All of these things are digging holes in your life that ultimately you look back and you realize there's such a chasm between you and your spouse that you and your kids barely know each other even though you live under the same roof that you've got this dad bod with a pot belly and pointy titties and pear-shaped.",
+      "title": "Discipline Over Comfort: Mastering Purpose and Emotional Maturity",
+      "thesis": "True success stems from consistent, disciplined action anchored in purpose and emotional maturity, not from waiting for perfect conditions. Excuses and escapist habits erode life, while embracing hardship deliberately builds resilience and drives long‑term achievement.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Holes · Emotionally · Never",
+          "label": "The Myth of Perfect Conditions",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -584,7 +608,7 @@
         },
         {
           "idx": 2,
-          "label": "Suffering · Keep · Understand",
+          "label": "Purpose, Routine, and Emotional Maturity",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -617,7 +641,7 @@
         },
         {
           "idx": 3,
-          "label": "10 · Effort · Amount",
+          "label": "Choosing Discipline Over Excuses",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -650,7 +674,7 @@
         },
         {
           "idx": 4,
-          "label": "Feel · Never · Place",
+          "label": "Hardship as a Forging Process",
           "t0": 960,
           "t1": 1280,
           "insights": [
@@ -683,7 +707,7 @@
         },
         {
           "idx": 5,
-          "label": "Losing · Feelings · Better",
+          "label": "All‑In Commitment and Long‑Term Vision",
           "t0": 1280,
           "t1": 1506,
           "insights": [
@@ -717,18 +741,20 @@
       ],
       "frameworks": [
         {
-          "text": "And as you become wiser, you become able to formulate better and better plans.",
-          "t": 281,
-          "located": true,
-          "tsEstimate": true
+          "name": "Chosen Suffering",
+          "summary": "Deliberately take on difficult tasks and discomfort to build resilience, so that inevitable unchosen hardships become manageable."
+        },
+        {
+          "name": "Effort Arbitrage",
+          "summary": "Allocate high effort to a single priority rather than spreading thin across many, maximizing progress and avoiding regression."
         }
       ],
       "takeaways": [
-        "You can doubt the process, question your talent, be uncertain that you're making progress, disparage your accomplishments, permanently feel like you're not working hard enough, no matter how hard you work, never give yo…",
-        "That's important because it lets you know this is the bad feeling that comes when it goes wrong and you improve and then it makes the good feelings of victory all the better.",
-        "But then you'd have to remember exactly what the reason was that you decided not to go out to begin with is because you listen to this podcast and you consume this content.",
-        "And no one people who are hearing this [&nbsp;__&nbsp;] they they will never really understand and grasp when you face these things and so many things how they keep you up and haunt you at night.",
-        "That's why I'm always big on you have to keep what you want to be in the front of your mind because you're going to always lose it within the suffering."
+        "Stop waiting for ideal circumstances; begin the work now and treat the act of starting as the perfect condition.",
+        "Create a daily routine tied to a clear purpose and use disciplined repetition to develop emotional maturity.",
+        "Identify and eliminate escapist habits (binge‑watching, substance use, mindless scrolling) that create \"holes\" in your life, replacing them with purposeful actions.",
+        "View every setback as a forging event that strengthens you; each failure is a necessary step toward mastery.",
+        "Write down your ultimate goal, break it into concrete daily actions, and commit to doing the best possible thing today, regardless of perfection."
       ],
       "quotes": [
         {
@@ -770,12 +796,19 @@
         "How does hormozi all in nothing apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410468127_xm5qhe"
+      "docId": "doc_1787410468127_xm5qhe",
+      "synthesizedAt": "2026-08-28T19:39:56.370Z",
+      "topics": [
+        "mindset",
+        "discipline",
+        "psychology",
+        "productivity"
+      ]
     },
     {
       "name": "hormozi_life_advice_27min",
       "agent": "SHADDAI",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 5636,
@@ -783,12 +816,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:28.278Z",
       "contentHash": "b6db8e8cbd93",
-      "title": "It is so easy to beat people today. They are so soft. They have",
-      "thesis": "People always are looking for the shortcut but you have to accept a very simple truth which is that the shortcut never actually takes you to the place that you're trying to go and it's because it's rarely one big thing.",
+      "title": "Why Hard Work Beats Shortcuts Every Time",
+      "thesis": "True success comes from embracing sustained hardship and consistent effort rather than chasing shortcuts. Pain is a signal of growth, and the person you become through the grind is the real asset, not the external outcome.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Shortcut · Oh · Different",
+          "label": "The Softness of Modern Culture",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -821,7 +854,7 @@
         },
         {
           "idx": 2,
-          "label": "Fact · Even · Painful",
+          "label": "Hard Work as Identity",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -854,7 +887,7 @@
         },
         {
           "idx": 3,
-          "label": "Really · Being · Plan",
+          "label": "The Myth of Shortcuts",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -887,7 +920,7 @@
         },
         {
           "idx": 4,
-          "label": "Yourself · Behavior · Same",
+          "label": "Flavors of Hardship",
           "t0": 960,
           "t1": 1280,
           "insights": [
@@ -920,7 +953,7 @@
         },
         {
           "idx": 5,
-          "label": "Story · Tell · 13",
+          "label": "Pain as a Growth Signal",
           "t0": 1280,
           "t1": 1600,
           "insights": [
@@ -953,7 +986,7 @@
         },
         {
           "idx": 6,
-          "label": "Information · Need · Gets",
+          "label": "Consistency Over Novelty",
           "t0": 1600,
           "t1": 1920,
           "insights": [
@@ -986,7 +1019,7 @@
         },
         {
           "idx": 7,
-          "label": "Why · Today · Bad",
+          "label": "Building Assets Through Struggle",
           "t0": 1920,
           "t1": 2240,
           "insights": [
@@ -1019,7 +1052,7 @@
         },
         {
           "idx": 8,
-          "label": "Discussion",
+          "label": "Reframing Success and Freedom",
           "t0": 2240,
           "t1": 2254,
           "insights": [],
@@ -1028,18 +1061,20 @@
       ],
       "frameworks": [
         {
-          "text": "We all know the happiness formula, which is um when this happens, I'll be happy, right?",
-          "t": 596,
-          "located": true,
-          "tsEstimate": true
+          "name": "Hardship Flavor Framework",
+          "summary": "Classifies difficulty into sacrifice, effort, risk, and uncertainty to help recognize and tackle each type specifically."
+        },
+        {
+          "name": "Skinner’s Dehydration Analogy",
+          "summary": "Uses environmental conditioning (salted water, heat) to illustrate how to engineer motivations that guarantee desired behavior."
         }
       ],
       "takeaways": [
-        "Like I remember when I was sleeping on the floor at my gym cuz I didn't have enough enough money for two rents and I was like I will tell this story and when I lost everything for the first time I like I have the screen…",
-        "So in real time whenever I finished a long day's work, I was becoming more like the type of person who could work for 5 years without reward.",
-        "And so the positive frame that I've always used is sure you can have the external ones of like I like thinking about my first videos had like 13 views.",
-        "And so a lot of times and it might be because I have more insecurity than everyone that I think like man I want to do this thing and then I hear all these other voices of reasons why I shouldn't do it or why somebody el…",
-        "People always are looking for the shortcut but you have to accept a very simple truth which is that the shortcut never actually takes you to the place that you're trying to go and it's because it's rarely one big thing."
+        "Reject the lure of quick fixes; focus on daily, repeatable actions that build long‑term capability.",
+        "Treat pain and discomfort as feedback that you are alive and progressing, not as obstacles to avoid.",
+        "Identify the specific \"flavor\" of hardship you face (sacrifice, effort, risk, uncertainty) and address it directly.",
+        "Cultivate absolute consistency—do the boring, necessary work every day—even when novelty tempts you away.",
+        "Shift your narrative to see yourself as the hero of a longer story, using each struggle as a future advantage."
       ],
       "quotes": [
         {
@@ -1093,12 +1128,20 @@
         "How does hormozi life advice 27min apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410468375_5p5k4h"
+      "docId": "doc_1787410468375_5p5k4h",
+      "synthesizedAt": "2026-08-28T19:40:51.678Z",
+      "topics": [
+        "mindset",
+        "discipline",
+        "psychology",
+        "productivity",
+        "business"
+      ]
     },
     {
       "name": "hormozi_motivation_2025",
       "agent": "SHADDAI",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 4033,
@@ -1106,12 +1149,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:28.605Z",
       "contentHash": "1207b7442053",
-      "title": "[Music] When no one's watching, I work harder than when they're watching. And thinking",
-      "thesis": "I talk about the rule of 100 on steroids, which is something that I learned from a guy who owned 13 or 14 really successful gyms.",
+      "title": "Hard Work, Pain, and the Infinite Game of Success",
+      "thesis": "The speaker argues that pain is an inevitable signal of life and that true success comes from relentless, leveraged hard work performed even when no one is watching. Consistent, high‑volume effort paired with skill development creates a self‑reinforcing cycle that ultimately defines mastery and an infinite‑game mindset.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Same · Were · Success",
+          "label": "The unseen scorecard",
           "t0": 0,
           "t1": 320,
           "insights": [
@@ -1144,7 +1187,7 @@
         },
         {
           "idx": 2,
-          "label": "Working · 100 · Hit",
+          "label": "Pain as a reality signal",
           "t0": 320,
           "t1": 640,
           "insights": [
@@ -1177,7 +1220,7 @@
         },
         {
           "idx": 3,
-          "label": "Feel · Even · Big",
+          "label": "Debunking the overnight myth",
           "t0": 640,
           "t1": 960,
           "insights": [
@@ -1210,7 +1253,7 @@
         },
         {
           "idx": 4,
-          "label": "Else · Fit · Done",
+          "label": "Volume times leverage model",
           "t0": 960,
           "t1": 1280,
           "insights": [
@@ -1243,7 +1286,7 @@
         },
         {
           "idx": 5,
-          "label": "Lonely · Velocity · Game",
+          "label": "The lonely, critical phase",
           "t0": 1280,
           "t1": 1600,
           "insights": [
@@ -1276,7 +1319,7 @@
         },
         {
           "idx": 6,
-          "label": "Go · Say · Must",
+          "label": "Playing the infinite game",
           "t0": 1600,
           "t1": 1613,
           "insights": [
@@ -1293,13 +1336,22 @@
           }
         }
       ],
-      "frameworks": [],
+      "frameworks": [
+        {
+          "name": "Open to Goal",
+          "summary": "Team members work until they hit a predefined target, regardless of time, encouraging relentless effort until the goal is achieved."
+        },
+        {
+          "name": "Volume × Leverage Output Model",
+          "summary": "Output is calculated as the number of repetitions (volume) multiplied by the skill or effectiveness of each action (leverage), emphasizing both quantity and quality."
+        }
+      ],
       "takeaways": [
-        "I talk about the rule of 100 on steroids, which is something that I learned from a guy who owned 13 or 14 really successful gyms.",
-        "And most people don't get the fast enough feedback loop to know that they're on the right path when they are taking these first steps in the right direction because they have this really big goal, but they forget that w…",
-        "And I remember being so jarred by the experience and I was like, \"You guys rooted for me.\" And I was like, \"And now I I did what you said you were rooting for me to do.\" And that was when I realized that people want you…",
-        "And so rather than lament them and hate the fact that you're going through it, remembering that these will be arrows that you put in the quiver that you're going to be using to slay the future bigger dragons.",
-        "And most people expect that is hard work because that's the hardest they've worked, not the amount of hard work that is required in order to get the level of outcome that they say they want or that they expect."
+        "Measure your work by the effort you put in, not by external applause; keep a personal scorecard that pushes you when no one is watching.",
+        "View pain as a natural indicator of activity, not a problem to avoid, and let it fuel continued action.",
+        "Focus on high‑volume, high‑skill repetitions (e.g., the Rule of 100) to build leverage and accelerate mastery.",
+        "Accept the lonely, uncomfortable chapter as a necessary part of growth and use criticism as proof you are moving beyond others' expectations.",
+        "Shift your goal from a specific outcome to the continuous process of emptying the tank—becoming the hardest‑working version of yourself."
       ],
       "quotes": [
         {
@@ -1347,12 +1399,20 @@
         "How does hormozi motivation 2025 apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410468719_lts2gv"
+      "docId": "doc_1787410468719_lts2gv",
+      "synthesizedAt": "2026-08-28T19:41:43.927Z",
+      "topics": [
+        "business",
+        "mindset",
+        "discipline",
+        "psychology",
+        "leadership"
+      ]
     },
     {
       "name": "marcus_aurelius_meditations_full",
       "agent": "SHADDAI",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm+llm",
       "videoId": null,
       "url": null,
       "words": 62596,
@@ -1360,12 +1420,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:29.036Z",
       "contentHash": "c27074cf32ea",
-      "title": "meditations by Marcus Aurelius read by Mark Cassidy introduction Marcus Aurelius antoninu…",
-      "thesis": "Thompson 1747 four R Graves 1792 five H mccormac 1844 six George long 1862 7 GH renle 1898 and 8 J Jackson 1906 renan's marel in his history of the origins of",
+      "title": "Marcus Aurelius: Life, Stoic Practice, and Moral Legacy",
+      "thesis": "The Meditations reveal Marcus Aurelius as a ruler who applied stoic principles to personal conduct and governance, emphasizing inner virtue over external circumstance, and contrasting his pragmatic stoicism with contemporary Christian moral teachings.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Marcus · Had · Stoic",
+          "label": "Birth and Noble Lineage",
           "t0": 0,
           "t1": 1200,
           "insights": [
@@ -1398,7 +1458,7 @@
         },
         {
           "idx": 2,
-          "label": "Christian · Says · Nothing",
+          "label": "Early Orphanhood and Adoption",
           "t0": 1200,
           "t1": 2400,
           "insights": [
@@ -1431,7 +1491,7 @@
         },
         {
           "idx": 3,
-          "label": "Had · Never · Without",
+          "label": "Grandfather's Influence",
           "t0": 2400,
           "t1": 3600,
           "insights": [
@@ -1464,7 +1524,7 @@
         },
         {
           "idx": 4,
-          "label": "Part · Gods · Themselves",
+          "label": "Stoic Education Begins",
           "t0": 3600,
           "t1": 4800,
           "insights": [
@@ -1497,7 +1557,7 @@
         },
         {
           "idx": 5,
-          "label": "Nothing · Never · Shalt",
+          "label": "Equestrian Rank at Six",
           "t0": 4800,
           "t1": 6000,
           "insights": [
@@ -1530,7 +1590,7 @@
         },
         {
           "idx": 6,
-          "label": "Reason · After · Common",
+          "label": "Early Religious Roles",
           "t0": 6000,
           "t1": 7200,
           "insights": [
@@ -1563,7 +1623,7 @@
         },
         {
           "idx": 7,
-          "label": "After · Her · Let",
+          "label": "Marriage and Family",
           "t0": 7200,
           "t1": 8400,
           "insights": [
@@ -1596,7 +1656,7 @@
         },
         {
           "idx": 8,
-          "label": "Themselves · Say · Therefore",
+          "label": "Rise to Consulship",
           "t0": 8400,
           "t1": 9600,
           "insights": [
@@ -1629,7 +1689,7 @@
         },
         {
           "idx": 9,
-          "label": "Hast · Neither · Reasonable",
+          "label": "Eastern Wars and Parthian Revolt",
           "t0": 9600,
           "t1": 10800,
           "insights": [
@@ -1662,7 +1722,7 @@
         },
         {
           "idx": 10,
-          "label": "Me · Gods · Whole",
+          "label": "Northern Frontier Tribes",
           "t0": 10800,
           "t1": 12000,
           "insights": [
@@ -1695,7 +1755,7 @@
         },
         {
           "idx": 11,
-          "label": "Reason · Dost · Common",
+          "label": "Famine, Pestilence, and Imperial Finance",
           "t0": 12000,
           "t1": 13200,
           "insights": [
@@ -1728,7 +1788,7 @@
         },
         {
           "idx": 12,
-          "label": "True · Etc · Neither",
+          "label": "The Thundering Legion Legend",
           "t0": 13200,
           "t1": 14400,
           "insights": [
@@ -1761,7 +1821,7 @@
         },
         {
           "idx": 13,
-          "label": "Proper · End · Nothing",
+          "label": "Cassius' Usurpation Attempt",
           "t0": 14400,
           "t1": 15600,
           "insights": [
@@ -1794,7 +1854,7 @@
         },
         {
           "idx": 14,
-          "label": "Let · Herself · She",
+          "label": "Triumph and German Campaigns",
           "t0": 15600,
           "t1": 16800,
           "insights": [
@@ -1827,7 +1887,7 @@
         },
         {
           "idx": 15,
-          "label": "Common · She · Creatures",
+          "label": "Final Years and Death",
           "t0": 16800,
           "t1": 18000,
           "insights": [
@@ -1860,7 +1920,7 @@
         },
         {
           "idx": 16,
-          "label": "Very · Mayest · Reason",
+          "label": "Commodus' Succession and Decline",
           "t0": 18000,
           "t1": 19200,
           "insights": [
@@ -1893,7 +1953,7 @@
         },
         {
           "idx": 17,
-          "label": "Shalt · Able · Part",
+          "label": "Stoic Philosophy Overview",
           "t0": 19200,
           "t1": 20400,
           "insights": [
@@ -1926,7 +1986,7 @@
         },
         {
           "idx": 18,
-          "label": "Therefore · After · Thine",
+          "label": "Stoic Physics: Materialism & Pantheism",
           "t0": 20400,
           "t1": 21600,
           "insights": [
@@ -1959,7 +2019,7 @@
         },
         {
           "idx": 19,
-          "label": "She · Themselves · Another",
+          "label": "Stoic Logic: Truth Criterion",
           "t0": 21600,
           "t1": 22800,
           "insights": [
@@ -1992,7 +2052,7 @@
         },
         {
           "idx": 20,
-          "label": "Shalt · Always · Part",
+          "label": "Stoic Ethics: Virtue as Sole Good",
           "t0": 22800,
           "t1": 24000,
           "insights": [
@@ -2025,7 +2085,7 @@
         },
         {
           "idx": 21,
-          "label": "Common · Hast · Reason",
+          "label": "Comparative Reflections with Christian Thought",
           "t0": 24000,
           "t1": 25038,
           "insights": [
@@ -2059,24 +2119,20 @@
       ],
       "frameworks": [
         {
-          "text": "but imminent in the material Universe was a spiritual Force which acted through them manifesting itself under many forms as fire ether Spirit Soul reason the ruling principle the universe",
-          "t": 870,
-          "located": true,
-          "tsEstimate": true
+          "name": "Stoic Tripartite System",
+          "summary": "Divides philosophy into physics (nature of the universe), logic (methods of truth), and ethics (application of knowledge to virtuous living)."
         },
         {
-          "text": "and all things come from one beginning either all severally and particularly deliberated and resolved upon by the general ruler and governor of all or all by necessary consequence",
-          "t": 11501,
-          "located": true,
-          "tsEstimate": true
+          "name": "Dichotomy of Control",
+          "summary": "Distinguishes between things within our power (desires, judgments) and those outside it (health, wealth), directing effort toward internal mastery."
         }
       ],
       "takeaways": [
-        "and sound reason 28 my heart smiled within me they will accuse even virtue herself with heinous and appr Probus words 29 as they that long after figs in winter when they",
-        "of unctuousness or a vulgarity for the best of men St Augustine is not always clear of offense and John bunan himself exaggerates venial padillos into heena sins",
-        "and of worldly men which otherwise truth and reason doth prescribe 29 Augustus his court his wife his daughter his nephews his sons-in-law his sister Agrippa his Kinsmen his domestics his friends",
-        "and single-minded rusticus did not work in vain if he showed his pupil that his life needed amending appolloni taught him Simplicity reasonableness gratitude a love of true Liber Liberty",
-        "so I carry myself towards it 13 if Thou shalt intend that which is present following the rule of right and reason carefully solidly meekly and shall not intermix any other businesses"
+        "Conduct a daily self‑examination of thoughts and actions to align with your inner virtues.",
+        "Focus your will on what you can control—desires, opinions, and actions—and accept external events with equanimity.",
+        "Treat external circumstances (wealth, health, reputation) as indifferent, using them as opportunities to practice virtue.",
+        "Lead by duty and humility, prioritizing the common good over personal glory or ambition.",
+        "When faced with injustice or suffering, respond with constructive goodness rather than retaliation, echoing both stoic and Christian ideals."
       ],
       "quotes": [
         {
@@ -2136,7 +2192,15 @@
         "How does marcus aurelius meditations full apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410469143_k9l8w2"
+      "docId": "doc_1787410469143_k9l8w2",
+      "synthesizedAt": "2026-08-28T19:42:29.877Z",
+      "topics": [
+        "mindset",
+        "psychology",
+        "leadership",
+        "people",
+        "discipline"
+      ]
     }
   ]
 }

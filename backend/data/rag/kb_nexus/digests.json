@@ -1,6 +1,6 @@
 {
   "agent": "NEXUS",
-  "generatedAt": "2026-08-22T14:54:37.759Z",
+  "generatedAt": "2026-08-28T19:58:12.626Z",
   "digests": [
     {
       "name": "ai_agents_full_course",
@@ -746,7 +746,7 @@
     {
       "name": "langgraph_complete_course",
       "agent": "NEXUS",
-      "engine": "extractive-v1",
+      "engine": "extractive-v1+llm",
       "videoId": null,
       "url": null,
       "words": 31548,
@@ -754,12 +754,12 @@
       "tsMode": "estimate",
       "generatedAt": "2026-08-22T14:54:37.185Z",
       "contentHash": "284ce0f300d0",
-      "title": "Welcome to this video course on Langraph, the powerful Python library for building advanc…",
-      "thesis": "because I thought that one we haven't really even seen uh how to actually code in Langraph and combining all of these LLMs APIs and tools and all of that stuff which comes with it combining them together would be quite messy and it could be quite confusing at times especially the fact that we have never coded in Langr…",
+      "title": "Building Conversational Workflows with Langraph",
+      "thesis": "The course introduces Langraph’s core concepts—type annotations, state, nodes, edges, tools, and runnables—and walks you through building a simple hello‑world graph, giving you the foundation to create robust, scalable conversational AI applications. By mastering these building blocks you can confidently design more complex agent workflows.",
       "chapters": [
         {
           "idx": 1,
-          "label": "Type · Data · Quite",
+          "label": "Course introduction and goals",
           "t0": 0,
           "t1": 1200,
           "insights": [
@@ -792,7 +792,7 @@
         },
         {
           "idx": 2,
-          "label": "Quite · Very · Langraph",
+          "label": "Type annotations overview",
           "t0": 1200,
           "t1": 2400,
           "insights": [
@@ -825,7 +825,7 @@
         },
         {
           "idx": 3,
-          "label": "Result · Final · Values",
+          "label": "Typed dictionaries for safety",
           "t0": 2400,
           "t1": 3600,
           "insights": [
@@ -858,7 +858,7 @@
         },
         {
           "idx": 4,
-          "label": "Operation · Router · Number",
+          "label": "Union, optional, and any types",
           "t0": 3600,
           "t1": 4800,
           "insights": [
@@ -891,7 +891,7 @@
         },
         {
           "idx": 5,
-          "label": "Random · Go · Number",
+          "label": "Lambda functions for concise logic",
           "t0": 4800,
           "t1": 6000,
           "insights": [
@@ -924,7 +924,7 @@
         },
         {
           "idx": 6,
-          "label": "Lang · Human · Langraph",
+          "label": "Core graph elements: state, node, edge",
           "t0": 6000,
           "t1": 7200,
           "insights": [
@@ -957,7 +957,7 @@
         },
         {
           "idx": 7,
-          "label": "Human · Conversation · Messages",
+          "label": "Graph structure and conditional edges",
           "t0": 7200,
           "t1": 8400,
           "insights": [
@@ -990,7 +990,7 @@
         },
         {
           "idx": 8,
-          "label": "Model · Tools · Messages",
+          "label": "Tools and tool nodes explained",
           "t0": 8400,
           "t1": 9600,
           "insights": [
@@ -1023,7 +1023,7 @@
         },
         {
           "idx": 9,
-          "label": "Save · Global · Update",
+          "label": "State graph and runnable components",
           "t0": 9600,
           "t1": 10800,
           "insights": [
@@ -1056,7 +1056,7 @@
         },
         {
           "idx": 10,
-          "label": "Make · Tools · Model",
+          "label": "Message types in Langraph",
           "t0": 10800,
           "t1": 12000,
           "insights": [
@@ -1089,7 +1089,7 @@
         },
         {
           "idx": 11,
-          "label": "Llm · Okay · Return",
+          "label": "Hello world graph coding example",
           "t0": 12000,
           "t1": 12619,
           "insights": [
@@ -1123,48 +1123,20 @@
       ],
       "frameworks": [
         {
-          "text": "Remember here I said state graph is a framework that helps us design and manage the flow of tasks as a graph.",
-          "t": 1780,
-          "located": true,
-          "tsEstimate": true
+          "name": "State Graph",
+          "summary": "A blueprint‑like component that manages nodes, edges, and the shared state, ensuring unified workflow execution."
         },
         {
-          "text": "So what will happen here is as soon as I've written state messages, let's say I have written hi or whatever uh we will pass this to the LLM through the invoke method.",
-          "t": 6522,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "So think of the state graph as a framework that helps you design and manage the flow of the tasks in your application.",
-          "t": 1481,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "So like always we use state graph to start the framework.",
-          "t": 3282,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "So we again like normal standard procedure we use state graph to create the graph framework.",
-          "t": 4124,
-          "located": true,
-          "tsEstimate": true
-        },
-        {
-          "text": "So to run you use the inbuilt method invoke.",
-          "t": 2092,
-          "located": true,
-          "tsEstimate": true
+          "name": "Runnable",
+          "summary": "A modular, executable unit that can be combined like Lego bricks to build complex AI workflow pipelines."
         }
       ],
       "takeaways": [
-        "because I thought that one we haven't really even seen uh how to actually code in Langraph and combining all of these LLMs APIs and tools and all of that stuff which comes with it combining them together would be quite…",
-        "So it's it's so robust even if we don't need to use a tool it will still give us an answer and the reason it was able to do that is once all the tool calling is done it passes it to the agent the agent checks again oh I…",
-        "Now this global variable yes it's a bit odd defining global variables and there's a reason which I've done it and this will become more apparent as I go through the code but just as a heads up the reason I've defined a…",
-        "uh using langraph we can really make the agents quite robust and that's the thing which I wanted to show you it doesn't always have to pick a tool its own like LLM like the agent itself cuz remember the agent node has a…",
-        "So yes you one important thing which you've learned is obviously how to use the add edge method but another concept which you have solidified here is you can uh change these at these keys of your state at in at any poin…"
+        "Use TypedDicts to enforce data structures and reduce runtime errors in Langraph projects.",
+        "Treat the state as a shared memory board that all nodes read from and write to, enabling coherent workflow data flow.",
+        "Model each operation as a node and connect them with edges (or conditional edges) to define execution order.",
+        "Leverage tool nodes to wrap external utilities like API calls, keeping the graph modular and testable.",
+        "Start with the simple hello‑world graph to grasp syntax and data flow before building full AI agents."
       ],
       "quotes": [
         {
@@ -1224,7 +1196,15 @@
         "How does langgraph complete course apply today?"
       ],
       "mergedFromMastery": false,
-      "docId": "doc_1787410477234_6zcjnj"
+      "docId": "doc_1787410477234_6zcjnj",
+      "topics": [
+        "ai",
+        "agents",
+        "backend",
+        "engineering",
+        "design"
+      ],
+      "synthesizedAt": "2026-08-28T19:55:09.367Z"
     },
     {
       "name": "system_design_complete",
