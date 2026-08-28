@@ -67,6 +67,12 @@ const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY || '';
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
 const OPENAI_KEY     = process.env.OPENAI_API_KEY || '';
 const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+// Pro/Elite tier routing (§3 MODEL ACCESS STRATEGY, MASTER-PLAN.md): the SAME
+// keys above, but a stronger default model, used only when the caller is on a
+// paid tier. Free tier never sees these — it stays on the cheap/fast defaults.
+const ANTHROPIC_PREMIUM_MODEL  = process.env.ANTHROPIC_PREMIUM_MODEL  || 'claude-sonnet-4-5';
+const OPENAI_PREMIUM_MODEL     = process.env.OPENAI_PREMIUM_MODEL     || 'gpt-4o';
+const OPENROUTER_PREMIUM_MODEL = process.env.OPENROUTER_PREMIUM_MODEL || 'anthropic/claude-3.5-sonnet';
 const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
@@ -3254,7 +3260,7 @@ Use tools for real data, then give a concise final answer.` };
     const sys = allMsgs.find(m => m.role === 'system');
     const userMsgs = allMsgs.filter(m => m.role !== 'system').map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content || '' }));
     if (!userMsgs.length) userMsgs.push({ role: 'user', content: 'Hello' });
-    const model = (options.provider === 'anthropic' && options.model) || ANTHROPIC_MODEL;
+    const model = (options.provider === 'anthropic' && options.model) || (_isPaidTier ? ANTHROPIC_PREMIUM_MODEL : ANTHROPIC_MODEL);
     const r = await axios.post('https://api.anthropic.com/v1/messages',
       { model, max_tokens: 1500, temperature: 0.6, ...(sys ? { system: sys.content } : {}), messages: userMsgs },
       { headers: { 'x-api-key': _bAnthropic, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 35000 });
@@ -3277,20 +3283,39 @@ Use tools for real data, then give a concise final answer.` };
     llmTracer.trace({ provider: 'gemini', model, agentName, inputTokens: 0, outputTokens: Math.ceil(c.length / 4), durationMs: Date.now() - t0, success: true });
     return c;
   }
+  // Pro/Elite model tier (§3 MODEL ACCESS STRATEGY): "high-end models without
+  // adding your own key" — a paid-tier userId gets premium model defaults on
+  // OUR keys, and the provider order tries the strongest providers first.
+  // Fails open to 'free' on any lookup error so a billing hiccup never breaks
+  // chat — it just means that one call didn't get premium routing.
+  let _userTier = 'free';
+  if (options.user && options.user !== 'guest' && options.user !== 'local') {
+    try {
+      const billing = require('./billing-service');
+      const customer = billing.getCustomer(options.user);
+      if (customer && customer.tier && customer.tier !== 'free') _userTier = customer.tier;
+    } catch (_) { /* billing-service unavailable — stay on free routing */ }
+  }
+  const _isPaidTier = _userTier !== 'free';
+
   const PROVIDERS = {
     ollama: pOllama,
     gemini: pGemini,
     groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', _bGroq, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
-    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter, [(options.provider === 'openrouter' && options.model) || OPENROUTER_MODEL, 'meta-llama/llama-3.1-8b-instruct:free']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter, [(options.provider === 'openrouter' && options.model) || (_isPaidTier ? OPENROUTER_PREMIUM_MODEL : OPENROUTER_MODEL), 'meta-llama/llama-3.1-8b-instruct:free']),
     anthropic: pAnthropic,
-    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || OPENAI_MODEL]),
+    openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || (_isPaidTier ? OPENAI_PREMIUM_MODEL : OPENAI_MODEL)]),
   };
   // Per-step override (options.provider) wins, else the agent's preferredProvider.
   const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
   // Fast cloud first (groq), Ollama LAST as free local fallback — keeps agent loops snappy.
   // free/fast first (groq, openrouter) → paid+reliable (anthropic, openai) catch
   // free-tier rate limits → ollama local last. So a chain never dies on a 429.
-  const order = [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
+  // Paid tier: try the strongest providers FIRST (anthropic, openai premium,
+  // openrouter premium), falling back to the free chain if those fail/rate-limit.
+  const order = _isPaidTier
+    ? [...new Set([pref, 'anthropic', 'openai', 'openrouter', 'groq', 'gemini', 'ollama'].filter(Boolean))]
+    : [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
   const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL };
   // ── AURA forCall — token savings + cache on EVERY LLM call ──────────────────
   // forCall() applies all savings levers (cache hit, prompt compression, tool-injection
