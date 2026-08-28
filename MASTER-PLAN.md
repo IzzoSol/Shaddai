@@ -207,14 +207,16 @@ plan (chasing token/NFT excitement before the metering spine actually works).
 
 ### Phase 2 — Payments: Sparks ledger + Paybox + x402
 - [x] Paybox added: MCP (`.mcp.json`) + guarded agent tool (`paybox_pay`, `backend/paybox-guard.js`) — off by default, needs `PAYBOX_API_KEY` + `enabled:true`. Endpoint shape NOT yet verified against real Paybox docs (`e741b7a`).
-- [ ] **Sparks ledger** (new, owner-locked 2026-08-27): 1 Spark = $1 USD fixed. Build as its own ledger (mirror `billing-service.js`'s credit ledger pattern) that MoonPay, Paybox, and eventually SOL/ETH direct-pay all credit INTO. Every priced thing in the product (workflow runs, premium model routing, pay-per-insight) debits Sparks, never a raw currency amount.
-- [ ] Wire Paybox checkout to: workflow purchases, tier upgrades, Sparks top-ups (NOT coin pre-orders yet — coin is Phase 5, don't conflate)
-- [ ] Real Paybox endpoint verification — owner needs to supply their API docs/dashboard so `paybox-guard.js`'s generic `callPaybox()` gets the exact real request/response shape
-- [ ] Premium model routing as a paid Sparks-metered feature (§3: "best models thru us") — extend `agent-engine.js`'s existing provider chain so higher Sparks spend / higher tier can route to stronger models, not just cheapest-first
-- [ ] x402 micropayment layer for pay-per-insight (ZEROX signals, hit-rate billing) — settles into the same Sparks ledger
-- [ ] Forge trading fee hook (stub now, activate when Forge marketplace is live)
+- [x] **CORRECTION (2026-08-28):** the Sparks ledger already existed and is genuinely well-built — `backend/economy-service.js` + `backend/economy-routes.js` (`/api/economy/*`). Postgres-or-atomic-file store, idempotent `grant`/`spend`, integer-only amounts, catalog + inventory, deliberately closed-loop (no cash-out — keeps SHADDAI out of money-transmitter territory). The earlier plan entry here calling for a new ledger was wrong — don't rebuild it.
+- [x] **The real gap, found and fixed:** `stripe-webhook.js` (already live, signature-verified, idempotent) only ever granted the OLD SEPARATE `billing-service.js` "credits" system (LLM usage metering) — a real Stripe payment never touched the Sparks economy at all. Fixed (`7fa9d76`): `checkout.session.completed` now also grants Sparks computed from the actual amount Stripe charged (`session.amount_total`), at the owner-locked 1 Spark = $1 rate, idempotent on the Stripe session id. Verified: grant + retry-of-same-key → `replayed:true`, balance unchanged.
+- [ ] Wire Paybox checkout the same way once its endpoint shape is confirmed: on successful charge, `economyService.grant(userId, sparksFromRealAmountPaid, 'paybox_topup:...', chargeId)`
+- [ ] SOL/ETH/USDC direct-pay → convert to USD at payment time, then grant Sparks 1:1 the same way (never let Sparks float with crypto price)
+- [ ] Consider whether tier subscription purchases (not just credit packs) should also grant a Sparks bonus — currently only the raw `amount_total` converts; deliberate decision needed, not yet made
+- [ ] Premium model routing as a paid Sparks-metered feature (§3: "best models thru us") — extend `agent-engine.js`'s existing provider chain so higher Sparks spend / higher tier can route to stronger models, not just cheapest-first. Debit via `economyService.spend()`.
+- [ ] x402 micropayment layer for pay-per-insight (ZEROX signals, hit-rate billing) — settles into the same Sparks economy via `spend()`/`grant()`
+- [ ] Forge trading fee hook (stub now, activate when Forge marketplace is live) — use the catalog system already in `economy-routes.js` (`sparks_price` / `usd_price_cents` dual pricing already supported)
 
-**Model:** Sonnet for ledger + integration/webhooks, Opus for x402 economic design (fee structure, hit-rate formula) and model-routing tier design.
+**Model:** Sonnet for remaining integration/webhooks, Opus for x402 economic design (fee structure, hit-rate formula) and model-routing tier design.
 
 ### Phase 3 — Agent activation for real use
 - [ ] Confirm each agent's `backend/data/agents/*.md` spec matches what's actually invokable via MCP (audit found specs exist — verify dashboard/Forge/2D world actually call live agent skills, not cached responses — audit flagged this as unclear, gap #9)
@@ -267,10 +269,11 @@ plan (chasing token/NFT excitement before the metering spine actually works).
 
 ## 7. NEXT IMMEDIATE ACTION
 
-Phase 1's core (RAG grounding) is done and verified. Phase 2 is now active:
+Phase 1's core (RAG grounding) is done and verified. Phase 2 is now active — and further along than expected, since the Sparks ledger already existed:
 
-1. **Build the Sparks ledger** ($1 = 1 Spark, fixed) — this is the metering spine everything else in §3's pipeline plugs into. Nothing in Stage 100→1,000 of the roadmap works without it.
-2. **Owner: supply real Paybox API docs** so `paybox-guard.js` can be corrected from its generic placeholder to the real endpoint shape.
-3. Then: wire Paybox checkout to Sparks top-ups + workflow purchases.
+1. **Done:** Stripe payments now actually credit Sparks (1 Spark = $1, computed from the real amount charged) — the ledger itself (`economy-service.js`) was already solid, it just wasn't connected to the one live payment rail.
+2. **Owner: supply real Paybox API docs** so `paybox-guard.js` can be corrected from its generic placeholder to the real endpoint shape, then wire Paybox's successful-charge event the same way Stripe's now is.
+3. **Owner: decide** whether tier subscription purchases should also grant a Sparks bonus (not yet decided — only raw credit-pack/one-off amounts convert right now).
+4. Then: premium model routing as a Sparks-metered feature, x402 for pay-per-insight, Forge trading fees via the catalog system that already exists.
 
 **Do not start Phase 3+ (coin, NFTs, Meshy) until Sparks + Paybox are proven with real paying users** — per §3's ordering discipline, chasing token/NFT work before the metering spine works is the single biggest risk to this plan.
