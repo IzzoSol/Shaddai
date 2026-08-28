@@ -425,7 +425,7 @@ function openAction(item) {
   actItem = item;
   document.documentElement.style.setProperty('--accent', item.accent || '#00ff9c');
   $('actName').textContent = item.name;
-  $('actRole').textContent = (item.agent || '').toUpperCase() + ' · grounded, cited to source';
+  $('actRole').textContent = (item.agent || '').toUpperCase() + ' · live tools + knowledge';
   actIn.placeholder = item.placeholder || 'Ask…';
   actIn.value = ''; actOut.innerHTML = ''; actStat.textContent = ''; actStat.className = 'astat';
   actScrim.classList.add('on'); actEl.classList.add('on');
@@ -448,13 +448,18 @@ $('actForm').addEventListener('submit', e => {
   actStat.className = 'astat';
   actStat.textContent = actItem.name + ' is thinking…';
   actOut.innerHTML = '';
-  fetch('/api/ask?q=' + encodeURIComponent(q) + '&agent=' + encodeURIComponent(actItem.agent || ''))
+  fetch('/api/agentic/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ agent: actItem.agent || '', task: q })
+  })
     .then(r => r.json().then(j => ({ ok: r.ok, j })))
     .then(({ ok, j }) => {
-      if (!ok || !j || (!j.answer && !j.error)) throw new Error((j && j.error) || 'No answer came back.');
+      if (!ok || !j || (!j.response && !j.error)) throw new Error((j && j.error) || 'No answer came back.');
       if (j.error) throw new Error(j.error);
-      actOut.innerHTML = mdLite(j.answer);
-      actStat.textContent = (j.agent || actItem.name) + (j.role ? ' · ' + j.role : '');
+      actOut.innerHTML = mdLite(j.response);
+      const used = Array.isArray(j.toolsUsed) && j.toolsUsed.length ? ' · used ' + j.toolsUsed.join(', ') : '';
+      actStat.textContent = (j.agent || actItem.name) + used;
     })
     .catch(err => {
       actStat.className = 'astat bad';

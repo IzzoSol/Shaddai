@@ -19,7 +19,7 @@ let _kb = null;
 function kb() { if (!_kb) { try { _kb = require('./knowledge'); } catch (_) { _kb = { contextFor: () => '', learn: () => {} }; } } return _kb; }
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = process.env.GROQ_TOOL_MODEL || 'llama-3.3-70b-versatile';
+const MODEL = process.env.GROQ_TOOL_MODEL || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const MAX_STEPS = 5;
 const MAX_TOOLS_SHOWN = 10; // narrow choice surface — fewer schemas = fewer tokens = fewer rate-limits + sharper picks
 
