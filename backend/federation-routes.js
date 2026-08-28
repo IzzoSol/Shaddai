@@ -1,15 +1,29 @@
 // federation-routes.js — exposes SHADDAI's 7 agents to the outside world (MEGA_BUILD_SPEC §3 + §5).
 //   GET  /.well-known/agent.json  — A2A Agent Card (discover SHADDAI's skills)
-//   GET  /.well-known/mcp.json    — MCP manifest (Claude Desktop / Cursor can hire agents)
-//   POST /api/a2a                 — A2A task submission (skill → agent), x402-gated
-//   POST /mcp/tools/call          — MCP tool execution
+//   GET  /.well-known/mcp.json    — MCP manifest (Claude Desktop / Cursor / a Grok bot can hire agents)
+//   POST /api/a2a                 — A2A task submission (skill → agent), key-gated + x402-gated
+//   POST /mcp/tools/call          — MCP tool execution, key-gated
 // Mount with: app.use(require('./federation-routes'))
+//
+// SECURITY (2026-08-28): this router is reachable by ANY external caller — a Grok bot, another
+// A2A/MCP client, anyone with the URL. Two things are non-negotiable here:
+//   1. Dispatch goes through lib/agent-tool-run.js's runAgentWithTools(), the SAME denylisted,
+//      step-capped path Simple Mode uses (backend/lib/agent-tool-run.js DENY set) — NOT the raw
+//      agent-engine createTask/runAgentLoop, which hands an agent its full tool list unrestricted
+//      (writes, trades, posting, spend). Never wire this router back to the raw loop.
+//   2. Execution endpoints require a key from mcp-external-keys.json. No keys configured = the
+//      endpoint is disabled (501), matching this repo's disabled-by-default guard pattern
+//      (pay-guard.js, paybox-guard.js) rather than silently allowing the world in.
+// When Paybox/MoonPay wallet-action tools get wired into TOOLS, they inherit this same DENY set
+// by default (agent-tool-run.js's DENY is the single source of truth) — do NOT special-case them
+// into this router without an explicit, separately-reviewed allowlist + human-approval gate.
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const json = express.json();
-let ae = null; try { ae = require('./agent-engine'); } catch (e) { console.warn('[federation] agent-engine unavailable:', e.message); }
+let toolRun = null; try { toolRun = require('./lib/agent-tool-run'); } catch (e) { console.warn('[federation] agent-tool-run unavailable:', e.message); }
 
 const BASE = () => process.env.RENDER_EXTERNAL_URL || 'http://localhost:8099';
 
@@ -24,7 +38,30 @@ const AGENTS = [
 ];
 const SKILL_AGENT = Object.fromEntries(AGENTS.map(a => [a.skill, a.id]));
 
-// ── A2A Agent Card (discovery) ──
+// ── External key store (gitignored — see backend/data/mcp-external-keys.json) ──
+// [{ key, label, createdAt, rateLimitPerHour? }]. Empty/missing = execution disabled (501).
+const KEYS_FILE = path.join(__dirname, 'data', 'mcp-external-keys.json');
+function loadKeys() {
+  try { const d = JSON.parse(fs.readFileSync(KEYS_FILE, 'utf8')); return Array.isArray(d.keys) ? d.keys : []; }
+  catch (e) { return []; }
+}
+function requireExternalKey(req, res, next) {
+  const keys = loadKeys();
+  if (!keys.length) return res.status(501).json({ error: 'External agent access not configured — no keys issued yet. See backend/data/mcp-external-keys.json.' });
+  const presented = String(req.headers['x-mcp-key'] || (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || '').trim();
+  const match = keys.find(k => k.key === presented);
+  if (!presented || !match) return res.status(401).json({ error: 'Missing or invalid key — pass it as "Authorization: Bearer <key>" or "X-MCP-Key: <key>".' });
+  req.mcpKeyLabel = match.label || 'unlabeled';
+  next();
+}
+const dispatchLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 30,
+  keyGenerator: (req) => req.mcpKeyLabel || req.ip,
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Rate limit exceeded for this key — try again later.' },
+});
+
+// ── A2A Agent Card (discovery — public, no key required, standard for A2A discovery) ──
 router.get('/.well-known/agent.json', (req, res) => {
   res.json({
     name: 'SHADDAI Agent Council',
@@ -34,15 +71,19 @@ router.get('/.well-known/agent.json', (req, res) => {
     defaultInputModes: ['text/plain', 'application/json'],
     defaultOutputModes: ['text/plain', 'application/json'],
     skills: AGENTS.map(a => ({ id: a.skill, name: a.name, tags: a.tags, description: a.description })),
-    security_schemes: { x402: { type: 'http', scheme: 'x402', description: 'Pay-per-task with x402 micropayments (USDC on Base or Solana).' } },
+    security_schemes: {
+      x402: { type: 'http', scheme: 'x402', description: 'Pay-per-task with x402 micropayments (USDC on Base or Solana).' },
+      apiKey: { type: 'apiKey', in: 'header', name: 'X-MCP-Key', description: 'Request a key from the SHADDAI owner — required to actually submit a task.' },
+    },
   });
 });
 
-// ── MCP manifest (Claude Desktop / Cursor) ──
+// ── MCP manifest (Claude Desktop / Cursor / any MCP-HTTP client — public, no key required) ──
 router.get('/.well-known/mcp.json', (req, res) => {
   res.json({
     mcp_version: '2025-11-05',
     server: { name: 'SHADDAI Agent Council', version: '1.0.0', url: BASE() },
+    authentication: { type: 'apiKey', in: 'header', name: 'X-MCP-Key', description: 'Required on POST /mcp/tools/call — request a key from the SHADDAI owner.' },
     tools: AGENTS.map(a => ({
       name: `shaddai_${a.id.toLowerCase()}`,
       description: a.description,
@@ -76,16 +117,21 @@ router.get('/api/grid/visitors', (req, res) => {
   res.json({ count: present.length, visitors: present });
 });
 
-function startTask(agentId, task) {
-  if (!ae || !ae.createTask) return { error: 'agent engine unavailable' };
+// Safe dispatch: same denylisted, step-capped tool loop Simple Mode uses. Awaited — returns the
+// final answer directly, so callers don't need a task-polling round trip.
+async function runSafeTask(agentId, task) {
+  if (!toolRun || !toolRun.runAgentWithTools) return { error: 'agent tool-runner unavailable' };
   if (!task) return { error: 'task is required' };
-  const t = ae.createTask(String(task), agentId, {});
-  ae.runAgentLoop(t.id).catch(e => console.error('[federation task]', agentId, e.message));
-  return { taskId: t.id, agent: agentId, status: 'running', poll: `/api/agent/task/${t.id}` };
+  try {
+    const out = await toolRun.runAgentWithTools(agentId, task, {});
+    return { status: 'completed', agent: agentId, ...out };
+  } catch (e) {
+    return { error: String((e && e.message) || e) };
+  }
 }
 
-// ── A2A task submission ──
-router.post('/api/a2a', json, (req, res) => {
+// ── A2A task submission (key-gated + rate-limited) ──
+router.post('/api/a2a', requireExternalKey, dispatchLimiter, json, async (req, res) => {
   const { skill, message, task } = req.body || {};
   const agent = SKILL_AGENT[skill] || 'SHADDAI';
   const text = (message && message.parts && message.parts[0] && message.parts[0].text)
@@ -94,16 +140,16 @@ router.post('/api/a2a', json, (req, res) => {
   if (process.env.X402_ENABLED === 'true' && skill !== 'research' && !req.headers['x-payment']) {
     return res.status(402).json({ error: 'Payment required', x402: { amount: '0.01', currency: 'USDC', network: 'base', address: process.env.TREASURY_WALLET || '' } });
   }
-  const r = startTask(agent, text);
-  return res.status(r.error ? 400 : 202).json({ status: r.error ? 'error' : 'accepted', ...r });
+  const r = await runSafeTask(agent, text);
+  return res.status(r.error ? 400 : 200).json(r);
 });
 
-// ── MCP tool execution ──
-router.post('/mcp/tools/call', json, (req, res) => {
+// ── MCP tool execution (key-gated + rate-limited) ──
+router.post('/mcp/tools/call', requireExternalKey, dispatchLimiter, json, async (req, res) => {
   const { name, arguments: args } = req.body || {};
   const agentId = String(name || '').replace('shaddai_', '').toUpperCase();
   recordVisitor(req, 'mcp', agentId);
-  const r = startTask(agentId, (args && args.task) || '');
+  const r = await runSafeTask(agentId, (args && args.task) || '');
   res.json({ content: [{ type: 'text', text: JSON.stringify(r) }], isError: !!r.error });
 });
 
