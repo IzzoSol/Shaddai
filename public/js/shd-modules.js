@@ -46,11 +46,14 @@
 
   var MODULES = [
     {
+      // id stays 'descent' on purpose: it is the key saved in a visitor's slot
+      // arrangement (shd_enter_slots). Renaming it would silently reset their
+      // layout. Only the presentation and target changed.
       id: 'descent',
-      name: 'DESCENT',
+      name: 'ASCEND',
       kicker: 'The cinematic entry',
-      blurb: 'A scroll through the scales of reality — quantum lattice, molecule, water, grass, tree, earth, cosmos — arriving at the Crown. The full dramatic opening.',
-      href: '/journey.html',
+      blurb: 'The ascent — from the quantum lattice at Malkuth up through the scales of matter to the stars. Full screen, so it actually gets seen.',
+      href: '/lab-molecules.html',
       art: '/assets/enter/descent.jpg',
       accent: C.cyan,
       geo: 'icosa'

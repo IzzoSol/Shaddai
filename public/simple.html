@@ -149,8 +149,11 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
   .trail .sh{ font-size:14px; letter-spacing:.13em; }
   .trail .crumb{ font-size:9px; letter-spacing:.14em; max-width:38vw; }
   .tools{ gap:5px; }
-  .tool{ min-width:34px; padding:0 8px; }
-  .seg button{ padding:0 7px; font-size:9px; }
+  /* 44px is the floor for a thumb. The earlier rule shrank these to 34x38 to
+     make the header fit, which is the wrong trade — the width is bought back
+     from the skin switch's padding instead, which has three targets to spare. */
+  .tool{ min-width:44px; min-height:44px; padding:0 8px; }
+  .seg button{ padding:0 5px; font-size:9px; min-height:44px; }
 }
 @media (prefers-reduced-motion: reduce){
   .bio, .enter, .tool, .seg button{ transition-duration:.001s !important; }
