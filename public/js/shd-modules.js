@@ -193,7 +193,7 @@
       items: [
         { id: 'pro',    name: 'PRO SIGNALS', accent: C.gold,   art: '/assets/landing/tab-signals.png', href: '/pro-signals.html', blurb: 'The Oracle Terminal — live calls, scoring and hit-rate history. PIN gated.', pro: true },
         { id: 'tg',     name: 'SHADDAI TG',  accent: C.emerald, art: '/assets/nav/social.jpg',         href: '/m-signals.html',   blurb: 'The Team Terminal — the gated desk behind the Telegram feed. PIN gated.', pro: true },
-        { id: 'tufish', name: 'TUFISH',      accent: C.cyan,    art: '/assets/nav/markets.jpg',        href: '/tufish.html',      blurb: 'MiroFish swarm intelligence — yin and yang of research and AI.', pro: true }
+        { id: 'tufish', name: 'TUFISH',      accent: C.cyan,    art: '/assets/nav/markets.jpg',        href: '/mirofish-terminal.html', blurb: 'MiroFish swarm intelligence — the research terminal behind the calls.', pro: true }
       ]
     },
     {
