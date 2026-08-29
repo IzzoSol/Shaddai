@@ -401,7 +401,19 @@ const cache = new CacheLayer();
 const requestTracker = new RequestTracker();
 
 // Middleware
-app.use(compression());
+// Compression BUFFERS Server-Sent Events — a streaming route would deliver every
+// event in one lump at the end, which is exactly the hang we are fixing. Skip
+// compression whenever the response is (or declares itself) an event stream.
+app.use(compression({
+  filter: (req, res) => {
+    const ct = String(res.getHeader('Content-Type') || '');
+    if (ct.includes('text/event-stream')) return false;
+    if (String(res.getHeader('X-Accel-Buffering') || '') === 'no') return false;
+    if (String(res.getHeader('Cache-Control') || '').includes('no-transform')) return false;
+    if (String(req.headers.accept || '').includes('text/event-stream')) return false;
+    return compression.filter(req, res);
+  }
+}));
 // Stripe webhook MUST see the raw body for signature verification — register it
 // BEFORE express.json() so the JSON parser doesn't consume the body first.
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), require('./stripe-webhook'));
