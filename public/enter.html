@@ -173,14 +173,20 @@ body.full .slot .name{ font-size:clamp(22px,2.6vw,32px); }
   opacity:.30; filter:saturate(.55) contrast(1.06);
   transform:scale(1.04); transition:opacity .55s var(--ease), transform .8s var(--ease);
 }
+/* The wash is mixed FROM --shell, so it follows the theme automatically:
+   dark shell gives a dark scrim, light shell a light one. It used to be
+   hardcoded dark with an override naming brutalist and serif — which meant
+   every new light theme got dark tiles under light chrome, and the names
+   went unreadable. Deriving it removes that whole class of bug. */
 .slot .wash{
   position:absolute; inset:0; z-index:1; transition:opacity .5s var(--ease);
   background:
-    linear-gradient(180deg, rgba(6,8,11,.42) 0%, rgba(6,8,11,.74) 52%, rgba(6,8,11,.95) 100%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--shell) 42%, transparent) 0%,
+      color-mix(in srgb, var(--shell) 76%, transparent) 52%,
+      color-mix(in srgb, var(--shell) 95%, transparent) 100%),
     radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 66%);
 }
-html[data-theme-skin="brutalist"] .slot .wash, html[data-theme-skin="serif"] .slot .wash{
-  background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.86) 60%, rgba(255,255,255,.96) 100%); }
 /* the accent hairline that traces the frame */
 .slot .frame{
   position:absolute; inset:0; z-index:3; pointer-events:none; border:1px solid transparent;
@@ -201,10 +207,11 @@ html[data-theme-skin="brutalist"] .slot .wash, html[data-theme-skin="serif"] .sl
   font-family:var(--f-display); font-weight:900; letter-spacing:.05em; line-height:.95;
   font-size:clamp(28px,3.4vw,44px); color:var(--ink);
   text-transform:uppercase;
-  text-shadow:0 2px 30px rgba(0,0,0,.6);
+  /* halo in the GROUND colour: a dark glow behind dark text on a light tile
+     just muddies it */
+  text-shadow:0 2px 26px color-mix(in srgb, var(--shell) 70%, transparent);
 }
 @media(max-width:760px){ .slot .name{ font-size:clamp(32px,10vw,46px); } }
-html[data-theme-skin="brutalist"] .slot .name, html[data-theme-skin="serif"] .slot .name{ text-shadow:none; }
 /* The CTA was a whisper of muted text. It is now an actual accent button that
    arrives on approach, with a sheen that sweeps once across it — the sweep is
    a single translate on a skewed gradient, which is cheap enough to run on a
@@ -339,8 +346,8 @@ footer b{ color:var(--ink-soft); font-weight:400; }
     <span class="sub">Choose your threshold</span>
   </div>
   <div class="controls">
-    <button class="ctl" id="btnDwell" type="button" title="Sit on a tile for 5 seconds to read what it is">
-      <span class="dot"></span><span>bios</span>
+    <button class="ctl" id="btnDwell" type="button" title="Rest on a door to read what it is">
+      <span class="dot"></span><span>info</span>
     </button>
     <button class="ctl" id="btnTheme" type="button" title="Change theme">◈ <span class="lbl-long">theme</span></button>
     <button class="ctl" id="btnAll" type="button" title="Show every module">◳ <span class="lbl-long">all</span></button>
@@ -395,11 +402,29 @@ footer b{ color:var(--ink-soft); font-weight:400; }
     btnDwell.classList.toggle('on', on);
     btnDwell.classList.toggle('out', !on);
     btnDwell.title = on
-      ? 'Bios on — sit on a tile for 5 seconds to read what it is'
-      : 'Bios off — tiles stay quiet';
+      ? 'Info on — rest on a door for 5 seconds and it tells you what it is'
+      : 'Info off — doors stay quiet';
     if (!on) document.querySelectorAll('.slot').forEach(clearDwell);
   }
-  btnDwell.addEventListener('click', function () { C.setDwell(!C.dwell()); });
+  /* A setting whose effect is delayed by five seconds reads as broken: you
+     press it and nothing happens. Toggling now DEMONSTRATES itself — every
+     door shows its description for a moment, so you can see what the switch
+     controls before deciding to leave it on. */
+  var demoT = null;
+  btnDwell.addEventListener('click', function () {
+    var on = !C.dwell();
+    C.setDwell(on);
+    clearTimeout(demoT);
+    var tiles = grid.querySelectorAll('.slot');
+    if (on) {
+      tiles.forEach(function (t) { clearDwell(t); t.classList.add('bio-open'); });
+      demoT = setTimeout(function () {
+        tiles.forEach(function (t) { t.classList.remove('bio-open'); });
+      }, 2200);
+    } else {
+      tiles.forEach(clearDwell);
+    }
+  });
   C.onDwell(paintDwell);
   paintDwell();
 
@@ -611,10 +636,13 @@ if (renderer) {
      than a wire tangle — which means it has to match the PAGE, not be a fixed
      colour. Hardcoding obsidian turned every solid into a black blob on the
      two light skins. */
-  const LIGHT_SKINS = new Set(['brutalist', 'serif']);
+  /* Read the shell colour from the theme instead of keeping a hardcoded list
+     of which skins are light. A new light theme used to silently turn every
+     solid into a black blob until someone remembered to edit this file. */
   function shellColor() {
-    const skin = document.documentElement.getAttribute('data-theme-skin') || 'glitch';
-    return LIGHT_SKINS.has(skin) ? 0xf6f5f1 : 0x06080b;
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--shell').trim();
+    if (v) { const n = parseInt(v.replace('#', ''), 16); if (!isNaN(n)) return n; }
+    return 0x06080b;
   }
 
   function neon(geo, color, opacity = 1) {

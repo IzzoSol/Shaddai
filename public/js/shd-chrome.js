@@ -36,7 +36,10 @@
     { id: 'terminal', name: 'Terminal', dot: '#00ff41' },
     { id: 'amber', name: 'Amber', dot: '#ffb000' },
     { id: 'brutalist', name: 'Brutalist', dot: '#f5c000' },
-    { id: 'serif', name: 'Serif', dot: '#3a6b4a' }
+    { id: 'serif', name: 'Serif', dot: '#3a6b4a' },
+    { id: 'frost', name: 'Frost', dot: '#5b7cff' },     // cool light
+    { id: 'linen', name: 'Linen', dot: '#1f7a52' },     // warm light
+    { id: 'bone', name: 'Bone', dot: '#c8a227' }        // high-contrast light
   ];
 
   var skinSubs = [], authSubs = [], dwellSubs = [];
@@ -48,16 +51,39 @@
      duplication. Each sets its own ground (--void) as well as its accents —
      a theme that only swaps accents on the same black reads as a filter, not
      a theme. */
+  /* --shell is the colour anything drawing ON the page should paint with:
+     near-black on dark skins, near-white on light ones. It exists because the
+     3D solids bake their shell colour into a material — without a token to
+     read, every new light theme silently turns them into black blobs. Set it
+     once per skin and the canvas follows automatically. */
   var PAIR_SKINS = [
+    ':root{--shell:#06080b}',
+
+    /* three LIGHT skins, and none of them are the cream-plus-terracotta
+       default — Frost is cold, Linen is green, Bone is near-white with gold. */
+    'html[data-theme-skin="frost"]{--shell:#f4f6fb;--void:#eef1f7;--void2:#e4e9f2;--panel:#fbfcfe;',
+    '--edge:rgba(40,55,90,.16);--ink:#141a26;--ink-soft:#4a5568;--ink-faint:#8a94a6;',
+    '--g1:rgba(91,124,255,.16);--g2:rgba(120,200,255,.12);--g3:rgba(160,140,255,.08)}',
+
+    'html[data-theme-skin="linen"]{--shell:#f7f5ee;--void:#f2efe4;--void2:#e8e4d6;--panel:#fbfaf5;',
+    '--edge:rgba(30,60,45,.16);--ink:#15201a;--ink-soft:#4b5b51;--ink-faint:#8b978f;',
+    '--g1:rgba(31,122,82,.15);--g2:rgba(200,170,80,.12);--g3:rgba(60,110,90,.07)}',
+
+    'html[data-theme-skin="bone"]{--shell:#fcfbf8;--void:#faf9f6;--void2:#efece5;--panel:#ffffff;',
+    '--edge:rgba(20,18,12,.18);--ink:#0d0c08;--ink-soft:#4a463c;--ink-faint:#8d887c;',
+    '--g1:rgba(200,162,39,.18);--g2:rgba(20,18,12,.06);--g3:rgba(160,130,40,.09)}',
+
+    /* richer mixes on the dark pairs — three stops that actually travel across
+       the hue wheel rather than two tints of one colour */
     'html[data-theme-skin="ember"]{--void:#0b0705;--void2:#120b07;--panel:#18100a;',
     '--edge:rgba(255,122,47,.18);--ink:#f6ece4;--ink-soft:#c2a08c;--ink-faint:#7a5a46;',
-    '--g1:rgba(255,122,47,.14);--g2:rgba(176,124,255,.10);--g3:rgba(255,60,120,.05)}',
+    '--g1:rgba(255,122,47,.17);--g2:rgba(176,124,255,.13);--g3:rgba(255,45,110,.09)}',
     'html[data-theme-skin="royal"]{--void:#07060d;--void2:#0c0a16;--panel:#120f1f;',
     '--edge:rgba(176,124,255,.18);--ink:#efeaf8;--ink-soft:#a89bc4;--ink-faint:#5f5480;',
-    '--g1:rgba(176,124,255,.14);--g2:rgba(232,196,92,.09);--g3:rgba(95,224,255,.05)}',
+    '--g1:rgba(176,124,255,.17);--g2:rgba(232,196,92,.12);--g3:rgba(80,140,255,.09)}',
     'html[data-theme-skin="tide"]{--void:#04090c;--void2:#071016;--panel:#0a171f;',
     '--edge:rgba(95,224,255,.18);--ink:#e6f4f6;--ink-soft:#8fb3bd;--ink-faint:#4a6b75;',
-    '--g1:rgba(95,224,255,.13);--g2:rgba(0,255,156,.10);--g3:rgba(120,160,255,.05)}'
+    '--g1:rgba(95,224,255,.16);--g2:rgba(0,255,156,.13);--g3:rgba(120,120,255,.09)}'
   ].join('');
 
   var CSS = [
