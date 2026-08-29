@@ -75,62 +75,22 @@ const STRIPE_PRICES = {
  * rateLimit: max API requests per minute.
  * features: set of named feature gates checked by pay-guard / middleware.
  */
-const TIER_CONFIG = {
-  free: {
-    name: 'Free',
-    price: 0,
-    currency: 'usd',
-    interval: 'month',
-    monthlyCredits: 500,
-    modelTiers: ['cheap'],
-    maxAgents: 7,
-    rateLimit: 30,
-    features: {
-      scheduling: false,
-      batching: false,
-      byok: false,          // bring-your-own-key for LLM
-      advancedWorkflows: false,
-      prioritySupport: false
-    },
-    description: 'Get started — 500 credits/month, basic models'
-  },
-  pro: {
-    name: 'Pro',
-    price: 29,
-    currency: 'usd',
-    interval: 'month',
-    monthlyCredits: 5000,
-    modelTiers: ['cheap', 'standard'],
-    maxAgents: 7,
-    rateLimit: 200,
-    features: {
-      scheduling: true,
-      batching: false,
-      byok: false,
-      advancedWorkflows: true,
-      prioritySupport: false
-    },
-    description: 'For serious builders — 5 000 credits/month'
-  },
-  elite: {
-    name: 'Elite',
-    price: 99,
-    currency: 'usd',
-    interval: 'month',
-    monthlyCredits: 50000,
-    modelTiers: ['cheap', 'standard', 'premium'],
-    maxAgents: 7,
-    rateLimit: 1000,
-    features: {
-      scheduling: true,
-      batching: true,
-      byok: true,
-      advancedWorkflows: true,
-      prioritySupport: true
-    },
-    description: 'Unlimited power — 50 000 credits/month, all models'
-  }
-};
+/* Prices and entitlements come from lib/tiers.js — the single source of truth.
+   This file used to declare its own (free / pro $29 / elite $99) while
+   stripe-routes.js declared different ones and pricing.html hardcoded a third
+   set, so "what does Pro cost" had three answers. Falls back to the previous
+   values only if that module cannot load, so billing never dies over pricing. */
+let TIER_CONFIG;
+try {
+  TIER_CONFIG = require('./lib/tiers').tierConfig();
+} catch (e) {
+  console.error('[billing] lib/tiers unavailable, using emergency defaults:', e && e.message);
+  TIER_CONFIG = {
+    free:  { name:'Free',  price:0,   currency:'usd', interval:'month', monthlyCredits:500,   modelTiers:['cheap'], maxAgents:7, rateLimit:30,  features:{scheduling:false,batching:false,byok:true,advancedWorkflows:false,prioritySupport:false}, description:'Get started' },
+    pro:   { name:'Pro',   price:49,  currency:'usd', interval:'month', monthlyCredits:5000,  modelTiers:['cheap','standard'], maxAgents:7, rateLimit:200, features:{scheduling:true,batching:false,byok:true,advancedWorkflows:true,prioritySupport:false}, description:'Pro' },
+    elite: { name:'Max',   price:199, currency:'usd', interval:'month', monthlyCredits:25000, modelTiers:['cheap','standard','premium'], maxAgents:99, rateLimit:600, features:{scheduling:true,batching:true,byok:true,advancedWorkflows:true,prioritySupport:true}, description:'Max' },
+  };
+}
 
 // ── IN-MEMORY STORES ─────────────────────────────────────────────────────────
 // These are the canonical runtime stores.  Persistence is handled below.

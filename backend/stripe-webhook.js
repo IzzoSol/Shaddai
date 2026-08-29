@@ -22,16 +22,18 @@ let founders = null; try { founders = require('./lib/founders'); } catch (_) {}
 // item id (from payment-config.json) -> what it grants.
 // Tiers map to billing-service tiers (free/pro/elite). Founder = lifetime Pro + bonus credits.
 // Credit packs add credits (billing-service credit scale). Tune here.
-const GRANTS = {
-  founder:     { tier: 'pro',   credits: 26000, note: 'founder (lifetime) — 26000 credits ≈ $200 at pack rate, honors pricing promise' },
-  builder:     { tier: 'pro' },
-  pro:         { tier: 'pro' },
-  alpha:       { tier: 'elite' },
-  credits_10:  { credits: 1000 },
-  credits_25:  { credits: 2750 },
-  credits_50:  { credits: 6000 },
-  credits_100: { credits: 13000 },
-};
+/* What each purchased item grants — derived from lib/tiers.js so a price or
+   entitlement change happens in exactly one place. The founder bonus credits
+   are kept here because they are a promotional decision, not a tier property. */
+let GRANTS;
+try {
+  GRANTS = require('./lib/tiers').grants();
+  GRANTS.founder = Object.assign({}, GRANTS.founder, { credits: 26000 });
+} catch (e) {
+  console.error('[stripe-webhook] lib/tiers unavailable:', e && e.message);
+  GRANTS = { founder:{tier:'pro',founder:true,credits:26000}, builder:{tier:'pro'}, pro:{tier:'pro'}, alpha:{tier:'elite'},
+             credits_10:{credits:1000}, credits_25:{credits:2500}, credits_50:{credits:5000}, credits_100:{credits:10000} };
+}
 
 // Idempotency — Stripe retries webhooks; never grant twice for the same session.
 const PROCESSED_FILE = path.join(__dirname, 'data', 'stripe-processed.json');

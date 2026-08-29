@@ -25,20 +25,14 @@ let billingService = null;
 try { billingService = require('./billing-service'); } catch (_) {}
 
 // Tier catalog the UI shows (kept here so plans work even before billing-service tiers are aligned).
-const TIERS = [
-  { id: 'builder', name: 'Builder', price: 19,  interval: 'month', blurb: 'For makers shipping their first agents',
-    features: ['Forge custom agents', 'Run real agent tasks', '8 skill slots / agent', 'Markets + News + AURA', 'Pixel Office'] },
-  { id: 'pro',     name: 'Pro',     price: 49,  interval: 'month', blurb: 'For operators running a real workflow', highlight: true,
-    features: ['Everything in Builder', 'Workflow chains (multi-agent)', 'Premium brains (Groq/Claude)', '20 skill slots', 'Media/Clips tools', 'Priority compute'] },
-  { id: 'alpha',   name: 'Alpha',   price: 199, interval: 'month', blurb: 'For teams + power sellers',
-    features: ['Everything in Pro', 'Unlimited agents', 'Marketplace seller tools', 'API access', 'White-glove onboarding'] },
-];
-const CREDIT_PACKS = [
-  { id: 'credits_10',  label: '$10 credits',  usd: 10 },
-  { id: 'credits_25',  label: '$25 credits',  usd: 25 },
-  { id: 'credits_50',  label: '$50 credits',  usd: 50 },
-  { id: 'credits_100', label: '$100 credits', usd: 100 },
-];
+/* Canonical plans + packs — see lib/tiers.js. Do not redeclare prices here. */
+const _tiers = require('./lib/tiers');
+const TIERS = _tiers.TIERS.filter((t) => t.price > 0).map((t) => ({
+  id: t.id, name: t.name, price: t.price, interval: t.interval,
+  blurb: t.blurb, highlight: !!t.highlight, features: t.unlocks,
+}));
+const CREDIT_PACKS = _tiers.CREDIT_PACKS.map((c) => ({ id: c.id, label: c.label, usd: c.usd }));
+
 
 function paymentMode() {
   const cfg = loadConfig();
@@ -62,6 +56,35 @@ router.get('/config', (req, res) => {
       ? "This option isn't available yet — please check back soon."
       : 'Payments live (' + mode + ').',
   });
+});
+
+// GET /api/stripe/tier-check — does the code agree with the Stripe links?
+// Stripe is authoritative: if a Payment Link charges something other than the
+// price declared in lib/tiers.js, this reports it rather than guessing. Run
+// after any price change in the Stripe dashboard.
+router.get('/tier-check', async (req, res) => {
+  try {
+    const t = require('./lib/tiers');
+    const { cfg } = paymentMode();
+    let fetchAmount = null;
+    if (billingService && billingService.getStripe && billingService.getStripe()) {
+      const stripe = billingService.getStripe();
+      // Resolve a Payment Link's amount via its line items when a key exists.
+      fetchAmount = async (url) => {
+        const id = String(url).split('/').pop().split('?')[0];
+        const links = await stripe.paymentLinks.list({ limit: 100 });
+        const hit = links.data.find((l) => String(l.url || '').includes(id));
+        if (!hit) return null;
+        const items = await stripe.paymentLinks.listLineItems(hit.id, { limit: 1 });
+        return items.data[0] && items.data[0].amount_total;
+      };
+    }
+    const rows = await t.checkAgainst(cfg.links || {}, fetchAmount);
+    const bad = rows.filter((r) => /MISMATCH/.test(r.status));
+    res.json({ ok: bad.length === 0, verified: !!fetchAmount, rows, mismatches: bad.length });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // GET /api/stripe/plans — subscription tiers + credit packs (with per-item link availability)
