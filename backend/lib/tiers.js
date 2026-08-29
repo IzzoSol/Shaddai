@@ -29,10 +29,17 @@
    included at every tier and protected by a rate limit, which is abuse control
    rather than a price.
 
-   SPARKS ARE ONLY FOR THINGS THAT COST REAL MONEY TO MAKE — images, video,
+   SPARKS ARE ONLY FOR THINGS WE ACTUALLY PRODUCE AND PAY FOR — images, video,
    voice, 3D models, and finished deliverables from the council. That is the
    whole rule, and it is why a single $1 unit works: nothing priced in Sparks
    is ever worth less than a dollar.
+
+   NO ALLOWANCE, NO FREE SPARKS. A monthly Spark grant would be issuing credit
+   against work we have not been paid for and may not be able to deliver —
+   every unspent Spark is a liability, and a member who spends theirs on the
+   most expensive thing in the catalogue costs us more than they paid. Sparks
+   are bought when wanted and spent on real output, never handed out as a
+   subscription sweetener.
 
    backend/data/credit-costs.json remains the tuning surface for what an action
    costs internally; its `tiers` block is a read-only mirror.
@@ -51,7 +58,7 @@ const TIERS = [
   {
     id: 'free', tier: 'free', name: 'Free', price: 0, interval: 'month',
     blurb: 'The workstation, with your own keys.',
-    monthlySparks: 0, monthlyCredits: 500, rateLimit: 30, maxAgents: 7, modelTiers: ['cheap'],
+    monthlyCredits: 500, rateLimit: 30, maxAgents: 7, modelTiers: ['cheap'],
     features: { scheduling: false, batching: false, byok: true, advancedWorkflows: false, prioritySupport: false, mcp: false },
     unlocks: [
       'All seven agents, grounded in the RAG brain — talking is never metered',
@@ -64,10 +71,9 @@ const TIERS = [
   {
     id: 'pro', tier: 'pro', name: 'Pro', price: 49, interval: 'month', highlight: true,
     blurb: 'For someone running a real workflow.',
-    monthlySparks: 20, monthlyCredits: 5000, rateLimit: 200, maxAgents: 7, modelTiers: ['cheap', 'standard'],
+    monthlyCredits: 5000, rateLimit: 200, maxAgents: 7, modelTiers: ['cheap', 'standard'],
     features: { scheduling: true, batching: false, byok: true, advancedWorkflows: true, prioritySupport: false, mcp: false },
     unlocks: [
-      '20 Sparks a month, included',
       'Pro Signals — the live feed, hot list and tracked wallets',
       'ZEROX sentiment and the market terminal',
       'Unlimited forged agents, each RAG-grounded',
@@ -83,11 +89,10 @@ const TIERS = [
   {
     id: 'alpha', tier: 'elite', name: 'Max', price: 199, interval: 'month',
     blurb: 'For power sellers and teams.',
-    monthlySparks: 120, monthlyCredits: 50000, rateLimit: 600, maxAgents: 99, modelTiers: ['cheap', 'standard', 'premium'],
+    monthlyCredits: 50000, rateLimit: 600, maxAgents: 99, modelTiers: ['cheap', 'standard', 'premium'],
     features: { scheduling: true, batching: true, byok: true, advancedWorkflows: true, prioritySupport: true, mcp: true },
     unlocks: [
       'Everything in Pro',
-      '120 Sparks a month, included',
       'Full MCP — your Claude or Grok drives the council, the brain and the tools',
       'A one-to-one build session — we make your agent with you',
       'Your agent highlighted across the world and the bazaar',

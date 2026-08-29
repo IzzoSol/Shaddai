@@ -109,43 +109,41 @@ function decrypt(password, record) {
 // Provider catalog
 // ---------------------------------------------------------------------------
 
+/* CONNECTORS — something a member plugs their own account into.
+   `unlocks` is the important field: it says in the member's words what lights
+   up when they connect it, because "add your ElevenLabs key" means nothing
+   while "your agents can speak" means something.
+   `cost: you` means their key, their bill, their rates, and we take nothing.
+   That one field is the whole pricing model, stated per row. */
 const CATALOG = [
-  // LLM
-  { provider: 'openai',       label: 'OpenAI',          category: 'LLM',      envVar: 'OPENAI_API_KEY',       signupUrl: 'https://platform.openai.com/api-keys',          free: false },
-  { provider: 'anthropic',    label: 'Anthropic',       category: 'LLM',      envVar: 'ANTHROPIC_API_KEY',    signupUrl: 'https://console.anthropic.com/settings/keys',   free: false },
-  { provider: 'groq',         label: 'Groq',            category: 'LLM',      envVar: 'GROQ_API_KEY',         signupUrl: 'https://console.groq.com/keys',                 free: true  },
-  { provider: 'gemini',       label: 'Google Gemini',   category: 'LLM',      envVar: 'GEMINI_API_KEY',       signupUrl: 'https://aistudio.google.com/app/apikey',        free: true  },
-  { provider: 'openrouter',   label: 'OpenRouter',      category: 'LLM',      envVar: 'OPENROUTER_API_KEY',   signupUrl: 'https://openrouter.ai/keys',                    free: true  },
-  { provider: 'ollama',       label: 'Ollama (local / self-host)', category: 'LLM', envVar: 'OLLAMA_BASE_URL', signupUrl: 'https://ollama.com/download',              free: true  },
+  { provider:'openai', label:'OpenAI', category:'Language', envVar:'OPENAI_API_KEY', signupUrl:'https://platform.openai.com/api-keys', free:false, cost:'you', unlocks:'Your agents think on GPT models instead of ours.' },
+  { provider:'anthropic', label:'Anthropic', category:'Language', envVar:'ANTHROPIC_API_KEY', signupUrl:'https://console.anthropic.com/settings/keys', free:false, cost:'you', unlocks:'Claude drives your agents, and long documents stop being a problem.' },
+  { provider:'xai', label:'xAI / Grok', category:'Language', envVar:'XAI_API_KEY', signupUrl:'https://console.x.ai', free:false, cost:'you', unlocks:'Grok answers as your agent, with live X context behind it.' },
+  { provider:'groq', label:'Groq', category:'Language', envVar:'GROQ_API_KEY', signupUrl:'https://console.groq.com/keys', free:true, cost:'you', unlocks:'The fastest replies available. The free tier is generous.' },
+  { provider:'gemini', label:'Google Gemini', category:'Language', envVar:'GEMINI_API_KEY', signupUrl:'https://aistudio.google.com/app/apikey', free:true, cost:'you', unlocks:'Gemini models, and a free tier that covers most people.' },
+  { provider:'openrouter', label:'OpenRouter', category:'Language', envVar:'OPENROUTER_API_KEY', signupUrl:'https://openrouter.ai/keys', free:true, cost:'you', unlocks:'One key for every major model, with automatic fallback.' },
+  { provider:'ollama', label:'Ollama', category:'Language', envVar:'OLLAMA_BASE_URL', signupUrl:'https://ollama.com/download', free:true, cost:'you', unlocks:'Runs on your own machine. Nothing leaves it, nothing costs anything.' },
 
-  // Image / Music / Voice
-  { provider: 'suno',         label: 'Suno',            category: 'Music',    envVar: 'SUNO_API_KEY',         signupUrl: 'https://suno.com',                              free: false },
-  { provider: 'elevenlabs',   label: 'ElevenLabs',      category: 'Voice',    envVar: 'ELEVENLABS_API_KEY',   signupUrl: 'https://elevenlabs.io/app/settings/api-keys',   free: true  },
-  { provider: 'acedatacloud', label: 'AceDataCloud',    category: 'Image',    envVar: 'ACEDATACLOUD_API_KEY', signupUrl: 'https://platform.acedata.cloud',                free: false },
+  { provider:'fal', label:'Fal', category:'Making', envVar:'FAL_KEY', signupUrl:'https://fal.ai/dashboard/keys', free:false, cost:'you', unlocks:'Images, video, audio and 3D — the widest single connector here.' },
+  { provider:'elevenlabs', label:'ElevenLabs', category:'Making', envVar:'ELEVENLABS_API_KEY', signupUrl:'https://elevenlabs.io/app/settings/api-keys', free:true, cost:'you', unlocks:'Your agents speak, in a voice you choose or clone.' },
+  { provider:'meshy', label:'Meshy', category:'Making', envVar:'MESHY_API_KEY', signupUrl:'https://www.meshy.ai/api', free:true, cost:'you', unlocks:'Text to 3D models, ready to drop into the 3D world.' },
+  { provider:'higgsfield', label:'Higgsfield', category:'Making', envVar:'HIGGSFIELD_API_KEY', signupUrl:'https://higgsfield.ai', free:false, cost:'you', unlocks:'Cinematic video clips from a prompt or a still.' },
+  { provider:'replicate', label:'Replicate', category:'Making', envVar:'REPLICATE_API_TOKEN', signupUrl:'https://replicate.com/account/api-tokens', free:false, cost:'you', unlocks:'Fifty thousand community models, for the thing nothing else does.' },
+  { provider:'suno', label:'Suno', category:'Making', envVar:'SUNO_API_KEY', signupUrl:'https://suno.com', free:false, cost:'you', unlocks:'Original music and songs from a description.' },
 
-  // Crypto
-  { provider: 'helius',       label: 'Helius',          category: 'Crypto',   envVar: 'HELIUS_API_KEY',       signupUrl: 'https://dashboard.helius.dev',                  free: true  },
-  { provider: 'birdeye',      label: 'Birdeye',         category: 'Crypto',   envVar: 'BIRDEYE_API_KEY',      signupUrl: 'https://docs.birdeye.so',                       free: true  },
-  { provider: 'coingecko',    label: 'CoinGecko',       category: 'Crypto',   envVar: 'COINGECKO_API_KEY',    signupUrl: 'https://www.coingecko.com/en/api/pricing',      free: true  },
+  { provider:'helius', label:'Helius', category:'Markets', envVar:'HELIUS_API_KEY', signupUrl:'https://dashboard.helius.dev', free:true, cost:'you', unlocks:'ZEROX reads Solana directly — wallets, holders, fresh mints.' },
+  { provider:'birdeye', label:'Birdeye', category:'Markets', envVar:'BIRDEYE_API_KEY', signupUrl:'https://docs.birdeye.so', free:true, cost:'you', unlocks:'Deeper token data and liquidity than the free feeds carry.' },
+  { provider:'coingecko', label:'CoinGecko', category:'Markets', envVar:'COINGECKO_API_KEY', signupUrl:'https://www.coingecko.com/en/api/pricing', free:true, cost:'you', unlocks:'Prices and charts without the public rate limit.' },
 
-  // News
-  { provider: 'newsapi',      label: 'NewsAPI',         category: 'News',     envVar: 'NEWSAPI_KEY',          signupUrl: 'https://newsapi.org/register',                  free: true  },
-  { provider: 'serpapi',      label: 'SerpApi',         category: 'News',     envVar: 'SERPAPI_KEY',          signupUrl: 'https://serpapi.com/manage-api-key',            free: true  },
+  { provider:'telegram', label:'Telegram', category:'Reach', envVar:'TELEGRAM_BOT_TOKEN', signupUrl:'https://core.telegram.org/bots#botfather', free:true, cost:'you', unlocks:'Your agent messages you, or runs a channel of its own.' },
+  { provider:'discord', label:'Discord', category:'Reach', envVar:'DISCORD_BOT_TOKEN', signupUrl:'https://discord.com/developers/applications', free:true, cost:'you', unlocks:'Your agent lives in your server and answers there.' },
+  { provider:'twitter', label:'X', category:'Reach', envVar:'TWITTER_BEARER_TOKEN', signupUrl:'https://developer.x.com/en/portal/dashboard', free:true, cost:'you', unlocks:'Post, read and reply as you — QUILL writes, you approve.' },
+  { provider:'newsapi', label:'NewsAPI', category:'Reach', envVar:'NEWSAPI_KEY', signupUrl:'https://newsapi.org/register', free:true, cost:'you', unlocks:'Headlines your agents can actually read and cite.' },
+  { provider:'serpapi', label:'SerpApi', category:'Reach', envVar:'SERPAPI_KEY', signupUrl:'https://serpapi.com/manage-api-key', free:true, cost:'you', unlocks:'Live web search, so answers reach past the library.' },
 
-  // Social
-  { provider: 'telegram',     label: 'Telegram Bot',    category: 'Social',   envVar: 'TELEGRAM_BOT_TOKEN',   signupUrl: 'https://core.telegram.org/bots#botfather',      free: true  },
-  { provider: 'discord',      label: 'Discord Bot',     category: 'Social',   envVar: 'DISCORD_BOT_TOKEN',    signupUrl: 'https://discord.com/developers/applications',   free: true  },
-  { provider: 'twitter',      label: 'X / Twitter',     category: 'Social',   envVar: 'TWITTER_BEARER_TOKEN', signupUrl: 'https://developer.x.com/en/portal/dashboard',   free: true  },
-
-  // Payments
-  { provider: 'stripe',       label: 'Stripe',          category: 'Payments', envVar: 'STRIPE_SECRET_KEY',    signupUrl: 'https://dashboard.stripe.com/apikeys',          free: true  },
-
-  // Security
-  { provider: 'virustotal',   label: 'VirusTotal',      category: 'Security', envVar: 'VIRUSTOTAL_API_KEY',   signupUrl: 'https://www.virustotal.com/gui/my-apikey',      free: true  },
-
-  // Storage
-  { provider: 'pinata',       label: 'Pinata / IPFS',   category: 'Storage',  envVar: 'PINATA_JWT',           signupUrl: 'https://app.pinata.cloud/developers/api-keys',  free: true  },
+  { provider:'stripe', label:'Stripe', category:'Money', envVar:'STRIPE_SECRET_KEY', signupUrl:'https://dashboard.stripe.com/apikeys', free:true, cost:'you', unlocks:'Take payments for your own work, into your own account.' },
 ];
+
 
 function catalog() {
   // Return a deep copy so callers can't mutate the source catalog.

@@ -115,21 +115,6 @@ module.exports = async function stripeWebhook(req, res) {
              on land — none of which a 'pro' tier can express. The register
              assigns the seat number those promises are made of, and is
              idempotent on the session id so a Stripe retry cannot burn two. */
-          /* The tier's monthly Spark allowance. Without this, "20 Sparks a
-             month" on the pricing page is simply untrue — the old code reset
-             internal billing credits on renewal and never granted Sparks at
-             all. Keyed on the session so a webhook retry cannot double-grant. */
-          if (g.tier) {
-            try {
-              const plan = require('./lib/tiers').byTier(g.tier);
-              const allowance = plan && plan.monthlySparks;
-              if (economy && allowance > 0) {
-                await economy.grant(uid, allowance, `allowance:${g.tier}`, `allow_${s.id}`);
-                console.log(`[stripe-webhook] granted ${allowance} Sparks allowance (${g.tier}) to ${uid}`);
-              }
-            } catch (e) { console.warn('[stripe-webhook] allowance grant failed:', e.message); }
-          }
-
           if (item === 'founder' && founders) {
             try {
               const seat = founders.claim(uid, {
@@ -208,20 +193,6 @@ module.exports = async function stripeWebhook(req, res) {
           // resolving the uid via the stripeCustomerId we just linked above.
           try {
             if (typeof billing.handleWebhook === 'function') await billing.handleWebhook(event);
-
-            /* Renew the Spark allowance too. billing.handleWebhook only resets
-               the internal credit counter; Sparks are a separate ledger and
-               were never topped up, so a subscriber's second month silently
-               arrived with nothing. Keyed on the Stripe event id. */
-            try {
-              const cust = billing.getCustomer(uid);
-              const plan = require('./lib/tiers').byTier((cust && cust.tier) || 'free');
-              const allowance = plan && plan.monthlySparks;
-              if (economy && allowance > 0) {
-                await economy.grant(uid, allowance, `allowance:${plan.tier}:renewal`, `allow_${event.id}`);
-                console.log(`[stripe-webhook] renewed ${allowance} Sparks allowance for ${uid}`);
-              }
-            } catch (e) { console.warn('[stripe-webhook] allowance renewal failed:', e.message); }
 
             console.log(`[stripe-webhook] invoice paid — ${uid} renewed`);
           } catch (e) { console.warn('[stripe-webhook] credit reset failed:', e.message); }
