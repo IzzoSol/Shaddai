@@ -3329,9 +3329,18 @@ const runWorkflowStreaming = async (req, res) => {
   // Pre-run validation — council agents are always valid; forged operative codenames
   // are validated against operatives.json so custom agents work in chains.
   const COUNCIL_AGENTS = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON']);
+  /* operatives.json is an OBJECT — { nextTokenId, operatives: [...] } — not an
+     array. This read assumed an array and called .map on the object, throwing
+     "TypeError: _allOps.map is not a function" OUTSIDE the try above, so it
+     surfaced as an unhandled rejection and killed the request before a single
+     step ran. Every workflow run failed this way, which is why runs appeared
+     to hang for minutes rather than returning. Normalise both shapes. */
   let _allOps = [];
-  try { _allOps = loadJSON(path.join(DATA_DIR, 'operatives.json'), []); } catch(_) {}
-  const OPERATIVE_CODENAMES = new Set(_allOps.map(o => String(o.codename||'').toUpperCase()).filter(Boolean));
+  try {
+    const raw = loadJSON(path.join(DATA_DIR, 'operatives.json'), []);
+    _allOps = Array.isArray(raw) ? raw : (Array.isArray(raw && raw.operatives) ? raw.operatives : []);
+  } catch (_) { _allOps = []; }
+  const OPERATIVE_CODENAMES = new Set(_allOps.map(o => String((o && o.codename) || '').toUpperCase()).filter(Boolean));
   const VALID_AGENTS_SET = new Set([...COUNCIL_AGENTS, ...OPERATIVE_CODENAMES]);
   const validationErrors = [];
   (workflowDef.steps || []).forEach((s, idx) => {
