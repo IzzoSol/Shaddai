@@ -4435,19 +4435,43 @@ router.get('/admin/analytics', (req, res) => {
  * -1 means unlimited (enterprise).
  */
 function getTierLimits(tier) {
+  /* Aliases first. billing-service stores the top entitlement as `elite`, but
+     this table was keyed `enterprise` — so getTierLimits('elite') found no
+     match and fell through to TIER_LIMITS.free. A Max subscriber paying $199
+     was silently capped at 3 jobs, 5 skills and 2 workflows. */
+  const key = TIER_ALIASES[String(tier || '').toLowerCase()] || String(tier || '').toLowerCase();
   const TIER_LIMITS = {
     free:       { maxJobs: 3,   maxBids: 10,  maxSkills: 5,   maxWorkflows: 2  },
     pro:        { maxJobs: 50,  maxBids: 500, maxSkills: 100, maxWorkflows: 25 },
     enterprise: { maxJobs: -1,  maxBids: -1,  maxSkills: -1,  maxWorkflows: -1 }
   };
-  return TIER_LIMITS[tier] || TIER_LIMITS.free;
+  return TIER_LIMITS[key] || TIER_LIMITS.free;
 }
 
-const TIER_PRICING = {
-  free:       { price: 0,   label: 'Free',       description: 'Get started with the basics',                    currency: 'USD', interval: 'month' },
-  pro:        { price: 29,  label: 'Pro',         description: 'For serious freelancers and small teams',        currency: 'USD', interval: 'month' },
-  enterprise: { price: 199, label: 'Enterprise',  description: 'Unlimited access for power users and agencies', currency: 'USD', interval: 'month' }
-};
+/* Every name the top tier has been called, mapped to the key used here.
+   `elite` is what billing-service persists; `alpha` is the frozen Stripe item
+   id; `max` is what the customer sees. All three must resolve. */
+const TIER_ALIASES = { elite: 'enterprise', alpha: 'enterprise', max: 'enterprise', enterprise: 'enterprise', builder: 'pro' };
+
+/* Prices come from lib/tiers.js, which is canonical. This file previously
+   declared its own (pro $29 / enterprise $199) — the sixth competing
+   definition in the codebase. Only the LIMITS live here now. */
+let TIER_PRICING;
+try {
+  const canonical = require('./lib/tiers').tierConfig();
+  TIER_PRICING = {
+    free:       { price: canonical.free.price,  label: canonical.free.name,  description: canonical.free.description,  currency: 'USD', interval: 'month' },
+    pro:        { price: canonical.pro.price,   label: canonical.pro.name,   description: canonical.pro.description,   currency: 'USD', interval: 'month' },
+    enterprise: { price: canonical.elite.price, label: canonical.elite.name, description: canonical.elite.description, currency: 'USD', interval: 'month' },
+  };
+} catch (e) {
+  console.error('[billing/tiers] lib/tiers unavailable:', e && e.message);
+  TIER_PRICING = {
+    free:       { price: 0,   label: 'Free', description: 'Get started',        currency: 'USD', interval: 'month' },
+    pro:        { price: 49,  label: 'Pro',  description: 'A real workflow',    currency: 'USD', interval: 'month' },
+    enterprise: { price: 199, label: 'Max',  description: 'Power sellers',      currency: 'USD', interval: 'month' },
+  };
+}
 
 // GET /billing/tiers — return all tier definitions with limits + pricing
 router.get('/billing/tiers', (req, res) => {
@@ -4511,7 +4535,7 @@ router.post('/billing/upgrade', requireAdmin, (req, res) => {
   if (!token)   return res.status(400).json({ error: 'token is required' });
   if (!newTier) return res.status(400).json({ error: 'newTier is required' });
 
-  const validTiers = ['free', 'pro', 'enterprise'];
+  const validTiers = ['free', 'pro', 'enterprise', 'elite', 'alpha', 'max'];  // aliases, see TIER_ALIASES
   if (!validTiers.includes(newTier)) {
     return res.status(400).json({ error: `Invalid tier. Must be one of: ${validTiers.join(', ')}` });
   }
