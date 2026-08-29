@@ -667,16 +667,23 @@ async function selfTest(full) {
   process.exit(fail ? 1 : 0);
 }
 
-const arg = process.argv[2];
-if (arg === '--help' || arg === '-h') { console.log(usage()); process.exit(0); }
-if (arg === '--version' || arg === '-v') { console.log(VERSION); process.exit(0); }
-if (arg === '--self-test' || arg === '--self-test-full') {
-  const full = arg === '--self-test-full';
-  console.log(`SHADDAI RAG MCP self-test (${full ? 'full' : 'fast'})…`);
-  selfTest(full);
-} else if (arg !== undefined) {
-  console.error(usage());
-  process.exit(1);
-} else {
-  startServer();
+// Reusable by other in-process callers (e.g. federation-routes.js's remote/HTTP
+// MCP door) WITHOUT spawning the stdio server or touching process.stdin — the
+// CLI dispatch below only runs when this file is executed directly.
+module.exports = { runTool, listResources, readResource };
+
+if (require.main === module) {
+  const arg = process.argv[2];
+  if (arg === '--help' || arg === '-h') { console.log(usage()); process.exit(0); }
+  if (arg === '--version' || arg === '-v') { console.log(VERSION); process.exit(0); }
+  if (arg === '--self-test' || arg === '--self-test-full') {
+    const full = arg === '--self-test-full';
+    console.log(`SHADDAI RAG MCP self-test (${full ? 'full' : 'fast'})…`);
+    selfTest(full);
+  } else if (arg !== undefined) {
+    console.error(usage());
+    process.exit(1);
+  } else {
+    startServer();
+  }
 }

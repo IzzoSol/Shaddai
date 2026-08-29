@@ -24,6 +24,14 @@ const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const json = express.json();
 let toolRun = null; try { toolRun = require('./lib/agent-tool-run'); } catch (e) { console.warn('[federation] agent-tool-run unavailable:', e.message); }
+// 2026-08-29: the pricing page sells "point Claude, Grok or a local model straight at
+// the council's knowledge... on your own key" — a REMOTE MCP connection. mcp-server-rag.js
+// only ran over stdio (local process spawn), which no paying remote customer can reach.
+// Reuse its already transport-agnostic runTool() here so the RAG tools (rag_search,
+// rag_ask, get_route, list_digests, list_agents, list_rag_docs) work over this same
+// key-gated HTTP door, not just for the owner's own local Claude Desktop config.
+let ragMcp = null; try { ragMcp = require('./mcp-server-rag'); } catch (e) { console.warn('[federation] mcp-server-rag unavailable:', e.message); }
+const RAG_TOOLS = new Set(['list_agents', 'list_rag_docs', 'rag_search', 'rag_ask', 'get_route', 'list_digests']);
 
 const BASE = () => process.env.RENDER_EXTERNAL_URL || 'http://localhost:8099';
 
@@ -84,11 +92,25 @@ router.get('/.well-known/mcp.json', (req, res) => {
     mcp_version: '2025-11-05',
     server: { name: 'SHADDAI Agent Council', version: '1.0.0', url: BASE() },
     authentication: { type: 'apiKey', in: 'header', name: 'X-MCP-Key', description: 'Required on POST /mcp/tools/call — request a key from the SHADDAI owner.' },
-    tools: AGENTS.map(a => ({
-      name: `shaddai_${a.id.toLowerCase()}`,
-      description: a.description,
-      inputSchema: { type: 'object', properties: { task: { type: 'string', description: 'The task to assign to this agent' } }, required: ['task'] },
-    })),
+    tools: [
+      ...AGENTS.map(a => ({
+        name: `shaddai_${a.id.toLowerCase()}`,
+        description: a.description,
+        inputSchema: { type: 'object', properties: { task: { type: 'string', description: 'The task to assign to this agent' } }, required: ['task'] },
+      })),
+      { name: 'rag_search', description: "Raw TF-IDF chunk hits (score + source doc) from an agent's knowledge base.",
+        inputSchema: { type: 'object', properties: { query: { type: 'string' }, agent: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
+      { name: 'rag_ask', description: 'A grounded answer synthesized from the knowledge base, cited to source.',
+        inputSchema: { type: 'object', properties: { question: { type: 'string' }, agent: { type: 'string' } }, required: ['question'] } },
+      { name: 'get_route', description: "Match a query against an agent's known playbooks/routes.",
+        inputSchema: { type: 'object', properties: { query: { type: 'string' }, agent: { type: 'string' } }, required: ['query'] } },
+      { name: 'list_digests', description: "List an agent's digested knowledge chapters/insights.",
+        inputSchema: { type: 'object', properties: { agent: { type: 'string' } }, required: [] } },
+      { name: 'list_agents', description: 'The 7 agents, their role, KB doc count, tool count.',
+        inputSchema: { type: 'object', properties: {}, required: [] } },
+      { name: 'list_rag_docs', description: "Documents inside an agent's knowledge base.",
+        inputSchema: { type: 'object', properties: { agent: { type: 'string' } }, required: [] } },
+    ],
   });
 });
 
@@ -147,6 +169,20 @@ router.post('/api/a2a', requireExternalKey, dispatchLimiter, json, async (req, r
 // ── MCP tool execution (key-gated + rate-limited) ──
 router.post('/mcp/tools/call', requireExternalKey, dispatchLimiter, json, async (req, res) => {
   const { name, arguments: args } = req.body || {};
+
+  // RAG brain tools (rag_search/rag_ask/get_route/list_digests/list_agents/list_rag_docs) —
+  // read-only, safe to expose directly via the same runTool() the local stdio server uses.
+  if (RAG_TOOLS.has(name)) {
+    recordVisitor(req, 'mcp', 'rag:' + name);
+    if (!ragMcp || !ragMcp.runTool) return res.status(501).json({ content: [{ type: 'text', text: 'RAG tools unavailable' }], isError: true });
+    try {
+      const result = await ragMcp.runTool(name, args || {});
+      return res.json({ content: [{ type: 'text', text: JSON.stringify(result) }], isError: false });
+    } catch (e) {
+      return res.json({ content: [{ type: 'text', text: String((e && e.message) || e) }], isError: true });
+    }
+  }
+
   const agentId = String(name || '').replace('shaddai_', '').toUpperCase();
   recordVisitor(req, 'mcp', agentId);
   const r = await runSafeTask(agentId, (args && args.task) || '');
