@@ -1,27 +1,36 @@
 /**
- * SHADDAI Paybox Guard — let agents charge/checkout via Paybox, SAFELY.
+ * SHADDAI Paybox Guard — let agents spend/trade via Paybox, SAFELY.
  *
- * Mirrors pay-guard.js's safety model exactly (same 5 layers), but calls
- * Paybox's REST API directly with PAYBOX_API_KEY instead of shelling out to
- * the pay.sh CLI:
+ * CORRECTED 2026-08-29 (real tool list confirmed): Paybox is NOT a REST checkout
+ * API — it's a non-custodial agent wallet reached over MCP (JSON-RPC over HTTP
+ * at {base_url}/mcp), authenticated with a persistent `pbx_live_*` Bearer key
+ * (issued from the Paybox app's Clients screen — same authority as a full OAuth
+ * grant on whatever wallets that key's connector has been granted).
  *
- *   1. Disabled by default. Nothing charges until paybox-config.json { enabled:true }.
- *   2. Per-call cap   — refuse any single charge quoted above per_call_cap_usd.
- *   3. Daily budget   — refuse if today's spend + this charge exceeds daily_budget_usd.
- *   4. Approval gate  — charges above approval_threshold_usd are NOT executed; they
+ * Every money-moving Paybox tool (request_swap, request_transfer, request_payment,
+ * pay_x402) is itself async: it returns a request_id + a pending_* status, and the
+ * ACTUAL signing happens on Paybox's own side. SHADDAI's gate below is a layer
+ * BEFORE that — it decides whether to even fire the request at all. This matters
+ * a lot here because the connected wallets currently have approval_mode:
+ * "autonomous" (confirmed via list_credentials 2026-08-29) — Paybox will NOT stop
+ * an autonomous-wallet transaction with its own passkey prompt, so this guard is
+ * the only human checkpoint that exists for those wallets.
+ *
+ * Same 5-layer model as pay-guard.js / the original (wrong-shaped) paybox-guard.js:
+ *   1. Disabled by default. Nothing spends until paybox-config.json { enabled:true }.
+ *   2. Per-call cap   — refuse any single call quoted above per_call_cap_usd.
+ *   3. Daily budget   — refuse if today's spend + this call exceeds daily_budget_usd.
+ *   4. Approval gate  — calls above approval_threshold_usd are NOT executed; they
  *                       create a pending approval the human must release.
- *   5. Ledger         — every charge recorded in paybox-ledger.json (rolling, audited).
+ *   5. Ledger         — every call recorded in paybox-ledger.json (rolling, audited).
  *
- * NOTHING here charges money unless ALL of: enabled=true, PAYBOX_API_KEY present,
+ * Read-only Paybox tools (list_credentials, get_portfolio, list_requests, get_request,
+ * verify_solana_balance, resolve_username, discover_plugins, discover_services,
+ * get_buy_link) move no money and are NOT gated — they work even while enabled:false,
+ * same as checking a bank balance doesn't need a spending limit.
+ *
+ * NOTHING here spends unless ALL of: enabled=true, a pbx_live_* key present,
  * cost <= caps, and (if over threshold) an explicit approval.
- *
- * NOTE ON ENDPOINT SHAPE: Paybox's exact REST contract (path, request/response
- * fields) hasn't been verified against live docs/credentials yet — this guard
- * calls a generic {baseUrl}/{path} with a JSON body and expects a JSON response
- * with amount_usd (or amountUsd) and a checkout/status field. Confirm against
- * real Paybox API docs and adjust `callPaybox()` before this goes live with
- * real money. Until then it fails closed if PAYBOX_API_KEY is unset — nothing
- * silently does the wrong thing against a real account.
  */
 
 const fs = require('fs');
@@ -33,12 +42,23 @@ const PENDING_PATH = path.join(__dirname, 'data', 'paybox-pending.json');
 
 const DEFAULT_CONFIG = {
   enabled: false,                 // master switch — OFF until you opt in
-  per_call_cap_usd: 5.00,         // refuse any single charge quoted above this
+  per_call_cap_usd: 5.00,         // refuse any single call quoted above this
   daily_budget_usd: 25.00,        // refuse once today's spend would exceed this
-  approval_threshold_usd: 1.00,   // charges above this need human approval first
+  approval_threshold_usd: 1.00,   // calls above this need human approval first
   require_approval: true,         // gate on by default
   base_url: 'https://api.paybox.sh',
 };
+
+// Tools that move no money — always allowed, never gated, never logged to the spend ledger.
+const READ_ONLY_TOOLS = new Set([
+  'list_credentials', 'get_portfolio', 'list_requests', 'get_request',
+  'verify_solana_balance', 'resolve_username', 'discover_plugins',
+  'discover_services', 'get_buy_link', 'get_contract',
+]);
+// Tools that move (or can move) real money — must go through the full 5-layer gate.
+const GATED_TOOLS = new Set([
+  'request_swap', 'request_transfer', 'request_payment', 'pay_x402', 'use_plugin', 'use_service',
+]);
 
 function readJson(p, fallback) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return fallback; }
@@ -92,40 +112,74 @@ function setPendingStatus(id, status) {
   return p;
 }
 
-// Calls Paybox's REST API. See NOTE ON ENDPOINT SHAPE above — verify against
-// real docs before relying on this in production.
-async function callPaybox(pathSegment, method, body) {
-  const apiKey = process.env.PAYBOX_API_KEY;
-  if (!apiKey) return { ok: false, output: 'PAYBOX_API_KEY not set in backend/.env — no charge made.' };
+let _rpcId = 0;
+/**
+ * Calls one Paybox MCP tool over JSON-RPC/HTTP. `agentKey` picks which env var
+ * holds the Bearer token — different agents can get their own dedicated
+ * pbx_live_* key (so spend is attributable per-agent, per the owner's ask),
+ * falling back to a shared PAYBOX_API_KEY if that agent has none of its own.
+ */
+async function callPaybox(toolName, args, agentKey) {
+  const envVar = agentKey ? `PAYBOX_API_KEY_${String(agentKey).toUpperCase()}` : 'PAYBOX_API_KEY';
+  const apiKey = process.env[envVar] || process.env.PAYBOX_API_KEY;
+  if (!apiKey) return { ok: false, output: `${envVar} (or PAYBOX_API_KEY) not set in backend/.env — no Paybox call made.` };
   const cfg = getConfig();
-  const url = cfg.base_url.replace(/\/+$/, '') + '/' + String(pathSegment || '').replace(/^\/+/, '');
+  const url = cfg.base_url.replace(/\/+$/, '') + '/mcp';
   try {
     const res = await fetch(url, {
-      method: method || 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: body ? JSON.stringify(body) : undefined,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/event-stream', // MCP Streamable HTTP requires both
+        'Authorization': 'Bearer ' + apiKey,
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: ++_rpcId, method: 'tools/call', params: { name: toolName, arguments: args || {} } }),
     });
     const text = await res.text();
-    let json = null;
-    try { json = JSON.parse(text); } catch { /* non-JSON response */ }
     if (!res.ok) return { ok: false, output: `Paybox HTTP ${res.status}: ${text.slice(0, 500)}` };
-    return { ok: true, output: json || text, cost_usd: json && (json.amount_usd ?? json.amountUsd) };
+    let rpc = null;
+    try { rpc = JSON.parse(text); } catch { return { ok: false, output: `Paybox returned non-JSON: ${text.slice(0, 300)}` }; }
+    if (rpc.error) return { ok: false, output: `Paybox RPC error: ${rpc.error.message || JSON.stringify(rpc.error)}` };
+    const content = rpc.result && rpc.result.content && rpc.result.content[0];
+    const raw = content && content.text;
+    let parsed = raw;
+    try { parsed = JSON.parse(raw); } catch { /* some tools return plain text */ }
+    if (rpc.result && rpc.result.isError) return { ok: false, output: parsed };
+    return { ok: true, output: parsed };
   } catch (e) {
     return { ok: false, output: `Paybox request failed: ${(e && e.message) || e}` };
   }
 }
 
+/** Read-only tools — no gate, no ledger entry, works even while enabled:false. */
+async function payboxRead(toolName, args, agentKey) {
+  if (!READ_ONLY_TOOLS.has(toolName)) {
+    return { ok: false, refused: true, reason: `"${toolName}" is not a read-only tool — use guardedPayboxCall for money-moving tools.` };
+  }
+  return callPaybox(toolName, args, agentKey);
+}
+
 /**
- * guardedCharge({ path, method, body, est_cost_usd, userId, approval_id })
- * Same shape/semantics as pay-guard.js's guardedCall, for consistency.
+ * guardedPayboxCall({ tool, args, est_cost_usd, agentKey, userId, approval_id })
+ * The gated path for money-moving tools. Same 5-layer semantics as
+ * pay-guard.js's guardedCall / the original guardedCharge, generalized from
+ * "path/body" to Paybox's real "tool/args" shape.
+ *
+ * Returns the RAW Paybox response on success — for request_swap/request_transfer/
+ * request_payment/pay_x402 that means a request_id + a pending_* status, NOT a
+ * finished transaction. Poll it with checkPayboxRequest(request_id). Never call
+ * this function again for the same intent if a request_id already exists — that
+ * can double-spend, per Paybox's own tool guidance.
  */
-async function guardedCharge(a = {}) {
+async function guardedPayboxCall(a = {}) {
   const cfg = getConfig();
-  const segment = a.path;
-  if (!segment) return { ok: false, refused: true, reason: '"path" required (e.g. "checkout", "charge")' };
+  const tool = a.tool;
+  if (!tool) return { ok: false, refused: true, reason: '"tool" required (e.g. "request_transfer")' };
+  if (READ_ONLY_TOOLS.has(tool)) return payboxRead(tool, a.args, a.agentKey);
+  if (!GATED_TOOLS.has(tool)) return { ok: false, refused: true, reason: `Unknown Paybox tool "${tool}" — not in the read-only or gated list. Refusing rather than guessing.` };
 
   if (!cfg.enabled) {
-    return { ok: false, refused: true, reason: 'Paybox is disabled. Set enabled:true in backend/data/paybox-config.json to allow agent charges.' };
+    return { ok: false, refused: true, reason: 'Paybox is disabled. Set enabled:true in backend/data/paybox-config.json to allow agent spending.' };
   }
 
   const est = Number(a.est_cost_usd || 0);
@@ -141,7 +195,7 @@ async function guardedCharge(a = {}) {
 
   if (cfg.require_approval && est > cfg.approval_threshold_usd) {
     if (!a.approval_id) {
-      const p = addPending({ path: segment, method: a.method || 'POST', body: a.body || null, est_cost_usd: est });
+      const p = addPending({ tool, args: a.args || null, est_cost_usd: est, agentKey: a.agentKey || null });
       return { ok: false, pending: true, approval_id: p.id, reason: `Needs human approval (est $${est} > threshold $${cfg.approval_threshold_usd}). Approve via /api/paybox/approve.` };
     }
     const pending = getPending().find(x => x.id === a.approval_id);
@@ -150,18 +204,21 @@ async function guardedCharge(a = {}) {
     }
   }
 
-  const res = await callPaybox(segment, a.method, a.body);
-  if (!res.ok) return { ok: false, reason: `Paybox call failed (no charge recorded): ${res.output}` };
+  const res = await callPaybox(tool, a.args, a.agentKey);
+  if (!res.ok) return { ok: false, reason: `Paybox call failed (nothing recorded as spent): ${res.output}` };
 
-  const cost = res.cost_usd || est;
-  if (cost > cfg.per_call_cap_usd || (today + cost) > cfg.daily_budget_usd) {
-    recordSpend({ path: segment, cost_usd: cost, flagged: 'exceeded_after_charge' });
-    return { ok: true, warning: `Charged $${cost} which exceeded a limit — recorded and flagged. Tighten caps.`, output: res.output, cost_usd: cost };
-  }
+  // The estimate IS the recorded spend here — Paybox's own request is async
+  // (pending_signature/pending_approval/pending_settlement), so there is no
+  // final on-chain cost to reconcile against yet. checkPayboxRequest() can be
+  // used later to confirm the request actually reached "success".
+  const dayTotal = recordSpend({ tool, cost_usd: est, agentKey: a.agentKey || null, request_id: res.output && res.output.request_id });
+  _debitBillingCreditsLocal(a.userId, est);
+  return { ok: true, output: res.output, cost_usd: est, spent_today: dayTotal, daily_budget: cfg.daily_budget_usd };
+}
 
-  const dayTotal = recordSpend({ path: segment, cost_usd: cost, method: a.method || 'POST' });
-  _debitBillingCreditsLocal(a.userId, cost);
-  return { ok: true, output: res.output, cost_usd: cost, spent_today: dayTotal, daily_budget: cfg.daily_budget_usd };
+/** Poll a Paybox request to its terminal state. Never re-fire the original call. */
+async function checkPayboxRequest(requestId, agentKey) {
+  return callPaybox('get_request', { request_id: requestId }, agentKey);
 }
 
 function _debitBillingCreditsLocal(userId, costUsd) {
@@ -180,5 +237,6 @@ module.exports = {
   getConfig, setConfig,
   getLedger, spentToday,
   getPending, addPending, setPendingStatus,
-  guardedCharge,
+  payboxRead, guardedPayboxCall, checkPayboxRequest,
+  READ_ONLY_TOOLS, GATED_TOOLS,
 };

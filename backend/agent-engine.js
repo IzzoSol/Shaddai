@@ -2663,21 +2663,23 @@ const TOOLS = {
 
   paybox_pay: {
     name: 'paybox_pay',
-    description: 'Charge or check out via Paybox (crypto/card). GUARDED: per-call cap, daily budget, and human approval above a threshold, same safety model as pay_api_call. Spends real money — use only for actual checkout/charge flows (tier upgrades, workflow purchases, coin pre-orders), never speculatively.',
+    description: 'Trade, transfer, or pay via Paybox — the agent\'s real non-custodial wallet (Solana + EVM). GUARDED: per-call cap, daily budget, and human approval above a threshold — that gate is the ONLY safety check for this wallet, since it is set to autonomous approval (Paybox itself will not additionally prompt). Money-moving tools: request_swap, request_transfer, request_payment, pay_x402, use_service. Read-only, ungated: list_credentials, get_portfolio, list_requests, get_request, verify_solana_balance, resolve_username, discover_plugins, discover_services, get_buy_link. Always pass a real est_cost_usd for money-moving tools — it IS what gets checked against the caps and recorded to the ledger, not an afterthought. Never call a money-moving tool twice for the same intent — Paybox\'s own tools warn this can double-spend; poll with tool:"get_request" instead.',
     schema: {
-      path: 'string — Paybox API path to call, e.g. "checkout" or "charge"',
-      method: 'string — GET/POST (default POST)',
-      body: 'object — request body (amount, currency, description, customer, etc.)',
-      est_cost_usd: 'number — your best estimate of the charge amount in USD (for pre-checks)'
+      tool: 'string — the exact Paybox tool name, e.g. "get_portfolio", "request_transfer", "request_swap"',
+      args: 'object — arguments matching that Paybox tool\'s real schema (e.g. credential_id, chain, to, amount)',
+      est_cost_usd: 'number — REQUIRED for money-moving tools: your best real estimate of USD value moved, checked against caps/budget',
+      agentKey: 'string — optional, which agent\'s dedicated Paybox key to use (e.g. "ZEROX"); omit to use the shared key'
     },
     agents: ['SHADDAI','ZEROX','PIKADON'],
-    execute: async ({ path: p, method, body, est_cost_usd }) => {
+    execute: async ({ tool, args, est_cost_usd, agentKey }) => {
       if (!payboxGuard) return 'Paybox guard not available.';
-      const r = await payboxGuard.guardedCharge({ path: p, method, body, est_cost_usd });
-      if (r.pending) return `PAYMENT PENDING APPROVAL — ${r.reason} (approval_id: ${r.approval_id})`;
-      if (r.refused) return `PAYMENT REFUSED — ${r.reason}`;
-      if (!r.ok) return `Paybox error — ${r.reason}`;
-      return `Paybox result (cost $${r.cost_usd}, spent today $${r.spent_today}/${r.daily_budget}):\n${JSON.stringify(r.output).slice(0, 800)}`;
+      if (!tool) return 'PAYBOX ERROR — "tool" is required (e.g. "get_portfolio", "request_transfer").';
+      const r = await payboxGuard.guardedPayboxCall({ tool, args, est_cost_usd, agentKey });
+      if (r.pending) return `PAYBOX PENDING APPROVAL — ${r.reason} (approval_id: ${r.approval_id})`;
+      if (r.refused) return `PAYBOX REFUSED — ${r.reason}`;
+      if (!r.ok) return `Paybox error — ${r.reason || JSON.stringify(r.output).slice(0, 300)}`;
+      const spendNote = (r.cost_usd != null) ? ` (cost $${r.cost_usd}, spent today $${r.spent_today}/${r.daily_budget})` : '';
+      return `Paybox result${spendNote}:\n${JSON.stringify(r.output).slice(0, 800)}`;
     }
   },
 
