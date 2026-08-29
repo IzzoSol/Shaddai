@@ -215,12 +215,23 @@
       name: 'GAMES',
       accent: C.amber,
       art: '/assets/landing/tab-play.png',
-      blurb: 'The arcade. Climb, courts, arenas, and tactics — every game in the empire.',
+      blurb: 'The arcade. Every real game in the empire — nothing here that isn’t actually playable.',
+      // 2026-08-29: arena/tactics/courts pointed at battle-arena.html/tactics.html/
+      // basketball-jam.html — real files, but never part of the curated arcade
+      // roster (arcade.html's own game grid never lists them). Replaced with
+      // arcade.html's actual FEATURED array (its unlocked, playable games) —
+      // xto-adventure and shaddai-realms are excluded on purpose, they're in
+      // arcade.html's BETA_GAMES (password-gated, "SHADDAIGAMES"), not featured.
+      // NEON HOOPS has a known rendering bug and none of these are mobile-tuned
+      // yet — both queued as follow-up, not fixed here.
       items: [
-        { id: 'climb',   name: 'THE CLIMB',  accent: C.emerald, art: '/assets/landing/tab-play.png', href: '/games/dreamers-climb/index.html', blurb: 'Dreamers Climb — the ascent run. Eight radio stations, one very long way up.' },
-        { id: 'courts',  name: 'COURTS',     accent: C.gold,    art: '/assets/nav/social.jpg',       href: '/games/basketball-jam.html', blurb: 'The sports hall — basketball jam, soccer, football, and the shooting range.' },
-        { id: 'arena',   name: 'ARENA',      accent: C.rose,    art: '/assets/nav/office.jpg',       href: '/games/battle-arena.html', blurb: 'Battle arena and sigil storm. Direct combat, agents on the field.' },
-        { id: 'tactics', name: 'TACTICS',    accent: C.cyan,    art: '/assets/nav/automation.jpg',   href: '/games/tactics.html', blurb: 'The tactics board. Slower, harder, and the one the council actually respects.' }
+        { id: 'climb',     name: 'THE CLIMB',   accent: C.emerald, art: '/assets/landing/tab-play.png', href: '/games/dreamers-climb/index.html', blurb: 'Dreamers Climb — the ascent run. Eight radio stations, one very long way up.' },
+        { id: 'hoops',     name: 'NEON HOOPS',  accent: C.amber,   art: '/assets/nav/office.jpg',        href: '/games/basketball.html', blurb: 'Fast-break 2.5D arcade basketball.' },
+        { id: 'football',  name: 'GRIDIRON',    accent: C.rose,    art: '/assets/nav/social.jpg',        href: '/games/football.html', blurb: 'Agent sport, 5v5. Dominate the gridiron.' },
+        { id: 'soccer',    name: 'SOCCER',      accent: C.cyan,    art: '/assets/nav/worlds.jpg',        href: '/games/shaddai-soccer.html', blurb: 'Agent sport, 5v5. Own the pitch.' },
+        { id: 'dodgeball', name: 'DODGEBALL',   accent: C.violet,  art: '/assets/nav/automation.jpg',    href: '/games/dodgeball.html', blurb: 'Reflex, team. Dodge or get wrecked.' },
+        { id: 'starfall',  name: 'STARFALL',    accent: C.gold,    art: '/assets/nav/markets.jpg',       href: '/games/shaddai-shooting.html', blurb: 'Wave-defense shooter. Survive the void.' },
+        { id: 'royale',    name: 'SHADDAI ROYALE', accent: C.emerald, art: '/assets/nav/plans.jpg',      href: '/games/royale/index.html', blurb: 'Casino, high-stakes 21. Beat the house.' }
       ]
     },
     {
@@ -236,18 +247,6 @@
         { id: 'pro',    name: 'PRO SIGNALS', accent: C.gold,   art: '/assets/landing/tab-signals.png', href: '/pro-signals.html', blurb: 'The Oracle Terminal — live calls, scoring and hit-rate history. PIN gated.', pro: true },
         { id: 'tg',     name: 'SHADDAI TG',  accent: C.emerald, art: '/assets/nav/social.jpg',         href: '/m-signals.html',   blurb: 'The Team Terminal — the gated desk behind the Telegram feed. PIN gated.', pro: true },
         { id: 'tufish', name: 'TUFISH',      accent: C.cyan,    art: '/assets/nav/markets.jpg',        href: '/mirofish-terminal.html', blurb: 'MiroFish swarm intelligence — the research terminal behind the calls.', pro: true }
-      ]
-    },
-    {
-      id: 'create',
-      name: 'CREATE',
-      accent: C.violet,
-      art: '/assets/landing/tab-create.png',
-      blurb: 'The maker tools. Generate, build, and ship — words, images, sites, workflows.',
-      items: [
-        { id: 'studio',   name: 'STUDIO',    accent: C.violet, art: '/assets/nav/media.jpg',    href: '/create.html', blurb: 'The creative studio — text, image, and media generation with the council behind it.' },
-        { id: 'workflow', name: 'WORKFLOWS', accent: C.cyan,   href: '/dashboard#workflows', art: '/assets/nav/workflow.jpg', blurb: 'Chain agents into a repeatable job that runs without you.' },
-        { id: 'launch',   name: 'LAUNCH KIT', accent: C.gold,  art: '/assets/nav/plans.jpg',   href: '/launch-kit.html', blurb: 'Everything needed to put something live — copy, assets, and the checklist.' }
       ]
     },
     {
@@ -291,7 +290,9 @@
         { id: 'council', name: 'THE COUNCIL', accent: C.violet, art: '/assets/agents/SHADDAI-portrait.png', href: '/brain-head.html',
           blurb: 'Council Mind — all seven agents reasoning on the same question at once.' },
         { id: 'codex',   name: 'CODEX',     accent: C.gold,    art: '/assets/nav/apis.jpg',  href: '/codex.html', blurb: 'The almanac — the written record of the empire.' },
-        { id: 'learn',   name: 'LEARN',     accent: C.rose,    art: '/assets/nav/chat.jpg',  href: '/learn.html', blurb: 'Guided paths through what the council knows.' }
+        { id: 'learn',   name: 'LEARN',     accent: C.rose,    art: '/assets/nav/chat.jpg',  href: '/learn.html', blurb: 'Guided paths through what the council knows.' },
+        // moved here from the removed CREATE category (2026-08-29) — works well, just needed a home.
+        { id: 'launch',  name: 'LAUNCH KIT', accent: C.gold,   art: '/assets/nav/plans.jpg', href: '/launch-kit.html', blurb: 'Everything needed to put something live — copy, assets, and the checklist.' }
       ]
     },
     {
@@ -304,6 +305,23 @@
         { id: 'bazaar',  name: 'THE BAZAAR', accent: C.violet,  art: '/assets/nav/apis.jpg',       href: '/marketplace-shop-v2.html', blurb: 'The night market — buy, sell and trade what the council and the community have made.' },
         { id: 'aura',    name: 'AURA',        accent: C.emerald, art: '/assets/nav/aura.jpg',       href: '/aura.html', blurb: 'The token-saving layer — deterministic answers before any model is called.' },
         { id: 'api',     name: 'API',         accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Wire SHADDAI into your own stack.' }
+      ]
+    },
+    {
+      id: 'others',
+      name: 'OTHERS',
+      accent: C.cyan,
+      art: '/assets/nav/automation.jpg',
+      blurb: 'Bring your own agent. Connect a Grok bot or another external agent to the council over MCP.',
+      // 2026-08-29: points at the real API-key page (mints a key, documents auth)
+      // since that's the only real, working page today. The federation/MCP
+      // endpoint itself (/mcp/tools/call, key-gated) is live as of 6526fe3 —
+      // still needs its OWN dedicated connect page (show the manifest, issue an
+      // MCP key specifically, not the general API key) before this is really
+      // "the Grok bot / Paybox button." Paybox itself is still not connected
+      // (blocked on completing its OAuth) so it has nothing to link to yet.
+      items: [
+        { id: 'api-connect', name: 'CONNECT A BOT', accent: C.cyan, art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Mint an API key and wire an external agent (Grok bot, etc.) into the council.' }
       ]
     },
     {
