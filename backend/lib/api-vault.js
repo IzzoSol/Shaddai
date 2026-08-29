@@ -226,57 +226,132 @@ function buildRouter() {
   } catch (_e) {
     return null; // express not available in this context
   }
+
+  /* auth-guard.softAuth verifies a bearer token and sets req.userId. Loaded
+     defensively — if it is unavailable every caller is 'local', which is safe
+     for a single-user local install and still never trusts the request body. */
+  let softAuth = (req, _res, next) => { req.userId = req.userId || 'local'; next(); };
+  try { softAuth = require('../auth-guard').softAuth || softAuth; } catch (_e) {}
+
   const router = express.Router();
   router.use(express.json());
+  router.use(softAuth);
+
+  /* ── WHO THE CALLER IS ───────────────────────────────────────────────────
+     Every route below takes the vault owner from the VERIFIED SESSION, never
+     from `user` in the body or query.
+
+     Before this, `user` was attacker-supplied on every route. That made
+     DELETE /key a one-line way for an unauthenticated stranger to wipe any
+     user's stored third-party keys — no password, no token, just their id.
+     It also let anyone enumerate another account's providers via /mine, and
+     gave /key/reveal an unlimited online guessing oracle against a vault
+     password.
+
+     Asking people to hand us their ElevenLabs and OpenAI keys is only
+     defensible if this file is boring and correct. */
+  const owner = (req) => String((req && req.userId) || 'local');
+
+  /* ── BRUTE-FORCE BRAKE ───────────────────────────────────────────────────
+     The vault password is the ONLY thing standing between a stolen session and
+     a user's real API keys, and scrypt is fast enough to guess online without
+     this. Per owner+provider, in memory: a failed unlock costs an increasing
+     delay, and a run of failures locks that pair briefly.
+
+     In-memory is deliberate — this is a speed bump against remote guessing,
+     not durable state, and a restart clearing it is acceptable. */
+  const attempts = new Map();
+  const MAX_FAILS = 5;
+  const LOCK_MS = 60 * 1000;
+
+  function throttle(key) {
+    const rec = attempts.get(key);
+    if (!rec) return null;
+    if (rec.fails >= MAX_FAILS && Date.now() - rec.last < LOCK_MS) {
+      return Math.ceil((LOCK_MS - (Date.now() - rec.last)) / 1000);
+    }
+    return null;
+  }
+  function noteFail(key) {
+    const rec = attempts.get(key) || { fails: 0, last: 0 };
+    rec.fails += 1; rec.last = Date.now();
+    attempts.set(key, rec);
+  }
+  function noteOk(key) { attempts.delete(key); }
 
   // GET /catalog — public provider catalog (no secrets)
   router.get('/catalog', (req, res) => {
     res.json({ ok: true, providers: catalog() });
   });
 
-  // GET /mine?user= — providers this user has stored (names only)
+  // GET /mine — providers THIS caller has stored (names only, never values)
   router.get('/mine', (req, res) => {
-    const user = req.query.user;
-    if (!user) return res.status(400).json({ ok: false, error: 'user required' });
-    res.json({ ok: true, providers: listProviders(user) });
+    res.json({ ok: true, providers: listProviders(owner(req)) });
   });
 
-  // POST /key {user,password,provider,key} — store a key
+  // POST /key {password, provider, key} — store a key for the caller
   router.post('/key', (req, res) => {
-    const { user, password, provider, key } = req.body || {};
-    if (!user || !password || !provider || !key) {
-      return res.status(400).json({ ok: false, error: 'user, password, provider, key required' });
+    const { password, provider, key } = req.body || {};
+    if (!password || !provider || !key) {
+      return res.status(400).json({ ok: false, error: 'password, provider, key required' });
     }
     try {
-      setKey(user, password, provider, key);
+      setKey(owner(req), password, provider, key);
       res.json({ ok: true });
     } catch (e) {
       res.status(400).json({ ok: false, error: e.message });
     }
   });
 
-  // POST /key/reveal {user,password,provider} — decrypt and return the key
+  // POST /key/reveal {password, provider} — decrypt and return the caller's key
   router.post('/key/reveal', (req, res) => {
-    const { user, password, provider } = req.body || {};
-    if (!user || !password || !provider) {
-      return res.status(400).json({ ok: false, error: 'user, password, provider required' });
+    const { password, provider } = req.body || {};
+    if (!password || !provider) {
+      return res.status(400).json({ ok: false, error: 'password, provider required' });
     }
-    const key = getKey(user, password, provider);
+    const uid = owner(req);
+    const gate = `${uid}:${provider}`;
+
+    const wait = throttle(gate);
+    if (wait) {
+      return res.status(429).json({ ok: false, error: `too many attempts — try again in ${wait}s` });
+    }
+
+    const key = getKey(uid, password, provider);
     if (key === null) {
+      noteFail(gate);
+      // Same response whether the key is absent or the password is wrong:
+      // distinguishing them tells an attacker which accounts hold what.
       return res.status(401).json({ ok: false, error: 'wrong password / not found' });
     }
+    noteOk(gate);
     res.json({ ok: true, key });
   });
 
-  // DELETE /key {user,provider} — remove a stored key
+  // DELETE /key {password, provider} — remove one of the caller's keys.
+  // The password is REQUIRED even though decryption is not needed: deletion is
+  // destructive and irreversible, and a hijacked session alone should not be
+  // enough to destroy the keys a user pasted in.
   router.delete('/key', (req, res) => {
-    const user = (req.body && req.body.user) || req.query.user;
-    const provider = (req.body && req.body.provider) || req.query.provider;
-    if (!user || !provider) {
-      return res.status(400).json({ ok: false, error: 'user, provider required' });
+    const body = req.body || {};
+    const provider = body.provider || req.query.provider;
+    const password = body.password;
+    if (!provider || !password) {
+      return res.status(400).json({ ok: false, error: 'provider and password required' });
     }
-    const result = removeKey(user, provider);
-    res.json(result);
+    const uid = owner(req);
+    const gate = `${uid}:${provider}`;
+
+    const wait = throttle(gate);
+    if (wait) return res.status(429).json({ ok: false, error: `too many attempts — try again in ${wait}s` });
+
+    // Proves the caller knows the vault password before anything is destroyed.
+    if (getKey(uid, password, provider) === null) {
+      noteFail(gate);
+      return res.status(401).json({ ok: false, error: 'wrong password / not found' });
+    }
+    noteOk(gate);
+    res.json(removeKey(uid, provider));
   });
 
   return router;
