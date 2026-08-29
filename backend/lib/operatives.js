@@ -41,6 +41,24 @@ function computeStats(rarity, tools = []) {
 
 function create(rec = {}) {
   const db = load();
+
+  // Upsert by owner+codename: forge.html (and any forge-routes.js internal call)
+  // makes TWO creation calls per forge — POST /api/forge (portrait + a bare
+  // record) then POST /api/operatives (the real tools/brain) — with no shared
+  // id between them. Without this, every single forge produced two records:
+  // a real one and an empty-tooled ghost duplicate in every gallery/room list.
+  // Match the same owner:codename key the self-heal sync in
+  // operatives-routes.js already uses, so a second call updates in place.
+  const ownerKey = String(rec.owner || 'anon');
+  const codenameKey = String(rec.codename || '').toUpperCase();
+  if (codenameKey) {
+    const existingId = Object.keys(db.operatives).find((k) => {
+      const o = db.operatives[k];
+      return o && String(o.owner || '') === ownerKey && String(o.codename || '').toUpperCase() === codenameKey;
+    });
+    if (existingId) return update(existingId, rec);
+  }
+
   const tokenId = db.nextTokenId++;
   const id = rec.id || `op_${rec.buildHash || 'x'}_${Date.now()}`;
   const now = Date.now();

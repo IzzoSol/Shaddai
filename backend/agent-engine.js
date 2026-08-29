@@ -2998,10 +2998,36 @@ const WORKFLOW_TEMPLATES = {
 // AGENT ROUTER — keyword scoring
 // ═══════════════════════════════════════════════════════════════════
 
+// A forged operative (backend/data/operatives.json, created via the Forge) is not
+// one of the 7 council AGENTS, but MUST be runnable the same way once created — a
+// user forges an agent expecting to actually use it. Synthesize an AGENTS-shaped
+// object from the operative's own persona/tools so callLLM/routeTask/runAgentLoop
+// need no other changes. Returns null (not a council agent, not a forged one) if
+// nothing matches, so callers keep their own SHADDAI/best-match fallback.
+function resolveAgent(name) {
+  if (!name) return null;
+  const up = String(name).toUpperCase();
+  if (AGENTS[up]) return AGENTS[up];
+  try {
+    const op = require('./lib/operatives').all().find(o => String(o.codename || '').toUpperCase() === up);
+    if (!op) return null;
+    const persona = (op.brain && op.brain.persona) ||
+      `You are ${op.codename}, a SHADDAI ${op.archetype || 'operative'} forged by its owner.`;
+    return {
+      name: op.codename,
+      role: (op.archetype ? op.archetype[0].toUpperCase() + op.archetype.slice(1) : 'Forged') + ' Operative',
+      goal: persona,
+      tools: Array.isArray(op.tools) ? op.tools : [],
+      keywords: [],
+      forged: true,
+    };
+  } catch (_) { return null; }
+}
+
 function routeTask(goal, preferredAgent) {
   if (preferredAgent) {
-    const up = preferredAgent.toUpperCase();
-    if (AGENTS[up]) return AGENTS[up];
+    const resolved = resolveAgent(preferredAgent);
+    if (resolved) return resolved;
   }
   const text = goal.toLowerCase();
   let best = null, bestScore = -1;
@@ -3035,7 +3061,7 @@ function trimMessages(msgs, maxChars = 8000) {
 const BASE_TOOLS = ['search_web','run_js','save_memory','search_skills','read_obsidian_skill','run_skill'];
 
 async function callLLM(messages, agentName, options = {}) {
-  const agent = AGENTS[agentName] || AGENTS.SHADDAI;
+  const agent = resolveAgent(agentName) || AGENTS.SHADDAI;
   const t0 = Date.now();
   const user = options.user || 'guest';
 
@@ -3976,4 +4002,4 @@ try {
   console.log(`[tool-cache] wrapped ${wrapped} tools with TTL result cache`);
 } catch (e) { console.warn('[tool-cache] not loaded:', e.message); }
 
-module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner };
+module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, resolveAgent, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner };
