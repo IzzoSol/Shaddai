@@ -62,6 +62,24 @@ export function buildCompartments(THREE, source, renderer, tetherParent, tetherC
 
     group.add(clone);
 
+    // Slab cuts expose interiors, but the head is a hollow shell (just an outer
+    // skin, like virtually every GLB head model) — clipping it alone reveals
+    // NOTHING behind the cut, which read as "empty compartments" when opened.
+    // Seal each cut with a flat cap sized to the head's own footprint so an
+    // opened shell always looks like a solid slice, never a hollow shard.
+    const capW = (box.max.x - box.min.x) * 1.15;
+    const capD = (box.max.z - box.min.z) * 1.15;
+    const capGeo = new THREE.PlaneGeometry(Math.max(0.05, capW), Math.max(0.05, capD));
+    capGeo.rotateX(-Math.PI / 2);
+    const capMat = new THREE.MeshBasicMaterial({
+      color: tetherColor, transparent: true, opacity: 0.55, side: THREE.DoubleSide,
+    });
+    const capLo = new THREE.Mesh(capGeo, capMat.clone());
+    capLo.position.y = lo;
+    const capHi = new THREE.Mesh(capGeo, capMat.clone());
+    capHi.position.y = hi;
+    group.add(capLo, capHi);
+
     // Visible tether: each shell stays wired back to the head it came from.
     let tether = null;
     if (tetherParent) {
