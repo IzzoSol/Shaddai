@@ -131,6 +131,16 @@
       geo: 'octa'
     },
     {
+      id: 'manual',
+      name: 'MANUAL',
+      kicker: 'How all of it works',
+      blurb: 'The booklet — Sparks, the council, the forge, every game and its controls, and the flywheel. Read it like a cartridge manual.',
+      href: '/manual.html',
+      art: '/assets/nav/apis.jpg',
+      accent: C.gold,
+      geo: 'dodeca'
+    },
+    {
       id: 'signals',
       name: 'SIGNALS',
       kicker: 'ZEROX calls',
@@ -269,6 +279,8 @@
       blurb: 'The RAG brain — the council’s shared memory, and every answer cited to its source.',
       items: [
         // both brain surfaces, not just one: the library view and the cockpit
+        { id: 'manual',  name: 'THE MANUAL', accent: C.gold, art: '/assets/nav/apis.jpg', href: '/manual.html',
+          blurb: 'How everything works, in plain language — Sparks, the council, the forge, the games and their controls.' },
         { id: 'ask',     name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/aura.jpg', href: '/brain.html',
           blurb: 'The knowledge base itself — search, digested chapters, and every answer cited to the passage it came from.' },
         { id: 'cockpit', name: 'COCKPIT',   accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/rag-cockpit.html',
