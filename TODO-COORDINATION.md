@@ -109,5 +109,18 @@ Owner gave both terminals a priority-ordered master prompt: Forge → AURA → M
 ### ⚠️ Found, not fixed — flagging for whoever has bandwidth
 - A live `runWorkflow` call on `openai/gpt-oss-120b` (Groq) returned a real answer prefixed with **thousands of invisible zero-width-space characters** where a price value should've been — looks like a repetition-loop quirk on that specific model, not our code (the garbage came from the actual LLM response, confirmed via the `[LLM] provider=groq model=...` log line, not a cache replay). No repetition/output-sanity guard exists anywhere in the agent loop. Could hit real users. Not chased further — separate scope from Forge.
 
-### Next (per the owner's priority order)
-2. AURA — prove the token-savings hit rate is real (or report that it isn't), write a plain-node test, wire it into any agent path that bypasses it.
+### Priority 2 (AURA) — done
+- Ledger is real, not hardcoded: `backend/data/aura-stats.json` — 15 hits/26 misses/32,302 tokens saved from actual usage, `costSavedUsd` computed live, not a fixed number.
+- Added `backend/lib/aura-savings.test.cjs` — proves the actual claim (ask twice, second is free) against the real integration point (`modelChat`), not a mock. Manual-run only (real tiny provider cost), not in `gate-node.js`.
+- Found and fixed a real gap: `lib/agent-tool-run.js` — the function behind Simple Mode's action wheel AND the federation/MCP door — called Groq directly, completely bypassing AURA. Wired the same free-path-first pattern every other agent-chat path already uses. Verified live: first call real provider, identical second call `aura-cache`/$0.
+- Found, not fixed: AURA's fuzzy match is bag-of-words cosine similarity — scores two *different* templated prompts as near-identical when only one token differs ("reply with exactly this string: X" vs "...: Y"), reproduced it serving X's answer for a Y request. Fine for paraphrase questions, wrong for exact-echo/templated ones. Needs real tuning work, not a quick patch.
+
+### Priority 3 (MCP) — done
+- Local stdio server (`mcp-server-rag.js --self-test-full`): 23/23 (1 retry needed — matches this repo's own documented flaky-rate-limit note).
+- Found a real gap matching what's actually sold: pricing page promises "point Claude, Grok or a local model straight at the council's knowledge... on your own key" — a REMOTE connection — but the RAG tools only ever ran over stdio (local process spawn), unreachable by an actual paying customer. Exported `mcp-server-rag.js`'s `runTool()` (guarded behind `require.main === module` so requiring it doesn't spawn the stdio server) and wired it into the already-key-gated `/mcp/tools/call` from `6526fe3`. Manifest now lists all 13 tools (7 agents + 6 RAG tools). Verified live: unauthenticated still 401s, with a real key `rag_search` returns real grounded hits over the actual remote door a customer would use.
+
+### Priority 4 (skill-recipe conversion) — not started
+3,022 "baked" (LLM-guesses-the-tool) skills vs. 141 real deterministic recipes in `backend/skill-index.js`. Convert the highest-traffic ones. Next up.
+
+### Still blocked
+- **Paybox** — checked again, still only `authenticate`/`complete_authentication` visible. Owner needs to complete the OAuth callback (browser flow) and give me the resulting URL — a signing key was sent earlier instead, which isn't the same thing and doesn't unblock this.
