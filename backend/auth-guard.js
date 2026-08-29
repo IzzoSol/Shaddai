@@ -77,19 +77,75 @@ function rateLimit({ windowMs = 60000, max = 60 } = {}) {
   };
 }
 
-// Soft auth: identify the caller; only reject when REQUIRE_AUTH is explicitly on.
-// TODO(launch): verify a Firebase ID token here instead of trusting the header.
-function softAuth(req, res, next) {
-  // SECURITY: never trust the x-user-id header in production (spoofable). Only
-  // honour it in non-prod so local tooling keeps working.
-  const isProd = process.env.NODE_ENV === 'production';
-  const headerUid = isProd ? '' : (req.headers['x-user-id'] || '');
-  const uid = headerUid || (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || '';
-  req.userId = uid || 'local';
-  if (process.env.REQUIRE_AUTH === 'true' && !uid) {
-    return res.status(401).json({ ok: false, error: 'authentication required' });
+/* Soft auth: identify the caller; only reject when REQUIRE_AUTH is explicitly on.
+ *
+ * SECURITY — fixed 2026-08-28. This previously did:
+ *     const uid = headerUid || authHeader.replace(/^Bearer\s+/i, '') || '';
+ * i.e. it used the RAW bearer string AS the user id, with no verification.
+ * Knowing someone's user id was therefore enough to fully become them:
+ *     curl -H 'Authorization: Bearer <victim-id>' /api/jobs/scheduled
+ * returned the victim's private data, byte-for-byte identical to their own
+ * view. No password, no real token. softAuth guards router.use() across the
+ * whole of api-proxy-routes.js plus /api/agents/:name/history,
+ * /api/executions/history, /api/agents/task and skill invocation — so this
+ * was read AND act-as impersonation over most of the API.
+ *
+ * A bearer is now only an identity if it VERIFIES: either a Firebase ID token
+ * (when Firebase is configured) or a JWT signed with our own JWT_SECRET, which
+ * is what /api/auth/login actually issues. An unverifiable token is treated as
+ * anonymous — never as the identity it claims.
+ *
+ * x-user-id is still honoured in non-prod only, so local tooling keeps working.
+ */
+async function _identityFromBearer(bearer) {
+  if (!bearer) return '';
+  // 1. Firebase ID token, when Firebase is configured
+  try {
+    const fb = _getAdminAuth();
+    if (fb) {
+      const decoded = await fb.verifyIdToken(bearer);
+      if (decoded && decoded.uid) return String(decoded.uid);
+    }
+  } catch (e) { /* not a valid Firebase token — fall through */ }
+  // 2. our own signed session JWT (what /api/auth/login returns)
+  try {
+    const { verifyToken } = require('./auth-service');
+    const decoded = await verifyToken(bearer);
+    const uid = decoded && (decoded.uid || decoded.userId || decoded.id);
+    if (uid) return String(uid);
+  } catch (e) { /* invalid or expired — anonymous */ }
+  return '';
+}
+
+async function softAuth(req, res, next) {
+  try {
+    // never trust x-user-id in production (spoofable); non-prod only
+    const isProd = process.env.NODE_ENV === 'production';
+    const headerUid = isProd ? '' : String(req.headers['x-user-id'] || '').trim();
+
+    const authHeader = req.headers.authorization || '';
+    const bearer = /^Bearer\s+/i.test(authHeader)
+      ? authHeader.replace(/^Bearer\s+/i, '').trim()
+      : '';
+
+    const uid = headerUid || await _identityFromBearer(bearer);
+
+    req.userId = uid || 'local';
+    req.isAuthenticated = !!uid;
+
+    if (process.env.REQUIRE_AUTH === 'true' && !uid) {
+      return res.status(401).json({ ok: false, error: 'authentication required' });
+    }
+    next();
+  } catch (e) {
+    // auth must never 500 the request; fail closed to anonymous
+    req.userId = 'local';
+    req.isAuthenticated = false;
+    if (process.env.REQUIRE_AUTH === 'true') {
+      return res.status(401).json({ ok: false, error: 'authentication required' });
+    }
+    next();
   }
-  next();
 }
 
 /**
