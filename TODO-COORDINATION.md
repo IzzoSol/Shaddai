@@ -161,4 +161,6 @@ OAuth finally completed (flaky connector, took ~4 attempts). Real tool surface c
 
 **Also fixed while I had the vault/forge code open:** `agent-tool-run.js`'s `groqKeyPool()` never read the persisted BYOK vault (`byok-keys.json`) — only the council-agent path did. Forged agents can now draw on a saved vault key too. Covers the "agent forge draws on vault keys" item above (backend half — no front-end page exists yet to paste keys into, still open).
 
-**Not mine — flagging for whoever owns pre-landing/Simple Mode:** owner asked for a Paybox button + a FOMO referral link button (`https://fomo.family/r/zerox007`) on the pre-landing/Simple page. That's `public/enter.html`/`public/simple.html` territory, explicitly off-limits to me per the priority-order split. Unclaimed.
+**Not mine — flagging for whoever owns pre-landing/Simple Mode:** owner asked for a Paybox button, a FOMO referral link button (`https://fomo.family/r/zerox007`), and a small "tip ZEROX" button — all top-corner, small, on the pre-landing/enter.html page. Full prompt handed to terminal B directly. That's `public/enter.html`/`public/simple.html` territory, explicitly off-limits to me per the priority-order split.
+
+**Tip-ZEROX backend done:** `GET /api/paybox/tip-link?agent=ZEROX&amount_usd=N` — real, verified live, returns a real MoonPay checkout URL that lands funds in ZEROX's wallet. Read-only Paybox tool underneath (`get_buy_link`), no spend-gate needed since it's money coming IN. Terminal B: wire the tip button to this endpoint, open `checkout_url` in a new tab/window.
