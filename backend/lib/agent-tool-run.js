@@ -59,12 +59,31 @@ function toOpenAITool(t) {
   };
 }
 
-// Build the Groq key pool: BYOK first, then env (GROQ_API_KEY, GROQ_KEYS csv, GROQ_API_KEY_2..8),
-// then runtime-keys.json. Rotating across keys multiplies the free-tier rate limit.
+// Read the SAME persisted key vault agent-engine.js's callLLM() reads (backend/data/
+// byok-keys.json, written by POST /api/byok/set) — highest-permission tier first.
+// 2026-08-29: forged agents (this file) never read this at all before — only the
+// council-agent path did — so a forged agent could never actually draw on a saved
+// vault key, despite forge.html's own UI showing BYOK status/set controls.
+function getVaultKey(provider) {
+  try {
+    const fs = require('fs'), path = require('path');
+    const store = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'byok-keys.json'), 'utf8'));
+    for (const tier of ['alpha', 'pro', 'builder']) {
+      const entry = store[`${tier}:${provider}`];
+      if (entry && typeof entry.key === 'string' && entry.key.length > 8) return entry.key;
+    }
+  } catch (_) { /* file absent or parse error */ }
+  return '';
+}
+
+// Build the Groq key pool: an explicitly-passed key first, then the persisted vault,
+// then env (GROQ_API_KEY, GROQ_KEYS csv, GROQ_API_KEY_2..8), then runtime-keys.json.
+// Rotating across keys multiplies the free-tier rate limit.
 function groqKeyPool(byok) {
   const out = [];
   const add = k => { k = String(k || '').trim(); if (k && !out.includes(k)) out.push(k); };
   add(byok);
+  add(getVaultKey('groq'));
   add(process.env.GROQ_API_KEY);
   if (process.env.GROQ_KEYS) String(process.env.GROQ_KEYS).split(',').forEach(add);
   for (let i = 2; i <= 8; i++) add(process.env['GROQ_API_KEY_' + i]);
