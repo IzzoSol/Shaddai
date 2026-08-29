@@ -19,11 +19,23 @@
    Run `checkAgainst()` (exposed at GET /api/stripe/plans?verify=1) after any
    change in the Stripe dashboard.
 
-   WHAT THIS FILE DOES NOT OWN: the credit cost of an individual action. That
-   lives in backend/data/credit-costs.json, which is the tuning surface for
-   "an image costs 15 credits". This file owns the PRICE of a plan and the
-   ALLOWANCE it grants; that file owns what an action spends. The `tiers` block
-   inside credit-costs.json is a read-only mirror of the allowances here.
+   ── ONE CURRENCY: SPARKS ────────────────────────────────────────────────────
+   There is no second user-facing unit. "Credits" are an internal billing
+   implementation detail at a fixed 1 Spark = 100 credits, and no surface shown
+   to a person may mention them.
+
+   TALKING IS NOT METERED. A grounded agent answer costs us about $0.0016, so
+   metering it buys nothing and costs the user their peace of mind. Text is
+   included at every tier and protected by a rate limit, which is abuse control
+   rather than a price.
+
+   SPARKS ARE ONLY FOR THINGS THAT COST REAL MONEY TO MAKE — images, video,
+   voice, 3D models, and finished deliverables from the council. That is the
+   whole rule, and it is why a single $1 unit works: nothing priced in Sparks
+   is ever worth less than a dollar.
+
+   backend/data/credit-costs.json remains the tuning surface for what an action
+   costs internally; its `tiers` block is a read-only mirror.
 
    ITEM IDS ARE FROZEN. `builder`, `pro`, `alpha`, `founder` and `credits_*`
    are the keys in payment-config.json and in the webhook's grant table. They
@@ -39,10 +51,10 @@ const TIERS = [
   {
     id: 'free', tier: 'free', name: 'Free', price: 0, interval: 'month',
     blurb: 'The workstation, with your own keys.',
-    monthlyCredits: 500, rateLimit: 30, maxAgents: 7, modelTiers: ['cheap'],
+    monthlySparks: 0, monthlyCredits: 500, rateLimit: 30, maxAgents: 7, modelTiers: ['cheap'],
     features: { scheduling: false, batching: false, byok: true, advancedWorkflows: false, prioritySupport: false, mcp: false },
     unlocks: [
-      'All seven agents, grounded in the RAG brain',
+      'All seven agents, grounded in the RAG brain — talking is never metered',
       'Simple Mode and the dashboard',
       'Forge one agent',
       'Bring your own API keys — the vault is free',
@@ -52,9 +64,10 @@ const TIERS = [
   {
     id: 'pro', tier: 'pro', name: 'Pro', price: 49, interval: 'month', highlight: true,
     blurb: 'For someone running a real workflow.',
-    monthlyCredits: 5000, rateLimit: 200, maxAgents: 7, modelTiers: ['cheap', 'standard'],
+    monthlySparks: 20, monthlyCredits: 5000, rateLimit: 200, maxAgents: 7, modelTiers: ['cheap', 'standard'],
     features: { scheduling: true, batching: false, byok: true, advancedWorkflows: true, prioritySupport: false, mcp: false },
     unlocks: [
+      '20 Sparks a month, included',
       'Pro Signals — the live feed, hot list and tracked wallets',
       'ZEROX sentiment and the market terminal',
       'Unlimited forged agents, each RAG-grounded',
@@ -70,12 +83,16 @@ const TIERS = [
   {
     id: 'alpha', tier: 'elite', name: 'Max', price: 199, interval: 'month',
     blurb: 'For power sellers and teams.',
-    monthlyCredits: 50000, rateLimit: 600, maxAgents: 99, modelTiers: ['cheap', 'standard', 'premium'],
+    monthlySparks: 120, monthlyCredits: 50000, rateLimit: 600, maxAgents: 99, modelTiers: ['cheap', 'standard', 'premium'],
     features: { scheduling: true, batching: true, byok: true, advancedWorkflows: true, prioritySupport: true, mcp: true },
     unlocks: [
       'Everything in Pro',
-      'SHADDAI MCP — your own Claude or Grok uses the council and the brain',
-      'Premium models and priority compute',
+      '120 Sparks a month, included',
+      'Full MCP — your Claude or Grok drives the council, the brain and the tools',
+      'A one-to-one build session — we make your agent with you',
+      'Your agent highlighted across the world and the bazaar',
+      'Project spotlight — your work featured on the front door',
+      'Premium models, priority compute, unlimited jobs and workflows',
       'Brain lessons and the full library',
       'Host paid rooms, portals and private meet-ups',
     ],
@@ -90,17 +107,22 @@ const FOUNDER = {
   price: 100, interval: 'once', seats: 20,
   blurb: 'Twenty seats. Once, then never sold again.',
   unlocks: [
-    'Pro for as long as SHADDAI runs — no renewal, no price rise',
-    'A founder mark on your agent, never minted again',
+    'Pro access for the first year, no renewal and no price rise',
+    'A founder mark on your agent — only twenty are ever made',
     'First claim on land when plots open',
     'First access to the siege and to new realms',
-    'Entered for giveaways and Agent of the Month',
+    'Entered for every giveaway and for Agent of the Month',
     'A direct line to what gets built next',
   ],
-  // Said plainly because the difference is legal, not cosmetic.
-  notPromised: [
-    'No revenue share, no residuals, no yield. You are buying access and standing.',
-  ],
+  /* DELIBERATELY UNSAID: anything about revenue share, residuals or yield.
+     Not a denial — a silence. The owner has not decided whether such a thing
+     will ever exist, and a perk list is exactly the wrong place to speculate:
+     promise it and it becomes an obligation, deny it and it forecloses an
+     option. Say nothing, sell access and standing, decide later.
+
+     "Permanently" and "for as long as SHADDAI runs" were also removed. Nobody
+     can honour a forever promise on a product this young, and the first twenty
+     members are precisely the people who would remember it. */
 };
 
 const CREDIT_PACKS = [
