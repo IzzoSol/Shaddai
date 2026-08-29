@@ -51,6 +51,14 @@
           ['THE WORLD', 'That cut funds plots, cosmetics and the arcade.'],
         ] },
         { k: 'warn', v: 'Sparks are store credit at a fixed value. They are not an investment, they do not float, and they are not a token.' },
+        { k: 'big', v: 'WHAT IT COSTS' },
+        { k: 'grid', v: [
+          ['FREE', 'Simple Mode, the seven agents, a few grounded brain answers a day. No card.'],
+          ['PRO · $30', 'Pro Signals, the brain without a daily cap, ZEROX sentiment, workflows, AURA.'],
+          ['MAX · $200', 'Everything in Pro, plus brain lessons, the full library, MCP access, priority.'],
+          ['SPARKS', 'Top up a wallet and spend it on anything. No subscription.'],
+        ] },
+        { k: 'note', v: 'You never need a subscription to use SHADDAI. Sparks alone work — pay for what you use, nothing more.' },
       ],
     },
 
@@ -168,14 +176,15 @@
       title: 'Founders',
       lede: 'First 25, next 25, last 50.',
       blocks: [
-        { k: 'p', v: 'One hundred founding members, in three brackets. The earlier the bracket, the better the standing.' },
-        { k: 'warn', v: 'THIS PAGE IS INCOMPLETE ON PURPOSE. What a founder pays and receives has not been decided, and inventing money terms would be worse than leaving it blank.' },
-        { k: 'steps', v: [
-          ['Decide the price', 'What does each of the three brackets pay?'],
-          ['Decide the reward', 'Lifetime access? A Spark grant? A plot? A cosmetic never minted again?'],
-          ['Decide the cap', 'Is 100 permanent? Scarcity you later break costs you the people who trusted it first.'],
+        { k: 'big', v: '$100 · 20 SEATS' },
+        { k: 'p', v: 'One payment, once. Twenty seats, then the door closes and it is never sold again.' },
+        { k: 'grid', v: [
+          ['PRO, PERMANENTLY', 'The $30 plan, for as long as SHADDAI runs. No renewal, no price rise.'],
+          ['A FOUNDER MARK', 'On your agent and beside your name. Twenty exist, never minted again.'],
+          ['FIRST CLAIM ON LAND', 'When plots open in the 2D world, founders choose before anyone else.'],
+          ['A DIRECT LINE', 'You say what to fix and it gets fixed. Worth more than any perk here.'],
         ] },
-        { k: 'note', v: 'The safe shape: founders buy access and standing — lifetime Pro, a founder cosmetic, first claim on plots, a permanent name on the wall. All utility, no yield.' },
+        { k: 'warn', v: 'It is not an investment and it pays you nothing. You are buying access and standing, not a share of revenue. Anyone selling you the second thing owes you a prospectus.' },
       ],
     },
   ];

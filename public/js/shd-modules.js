@@ -131,6 +131,16 @@
       geo: 'octa'
     },
     {
+      id: 'agentforge',
+      name: 'FORGE',
+      kicker: 'Build your own agent',
+      blurb: 'Name it, choose what it can really do, give it a personality or none at all, and open its wallet. Four questions and it is hireable.',
+      href: '/agent-forge.html',
+      art: '/assets/nav/forge.jpg',
+      accent: C.violet,
+      geo: 'icosa'
+    },
+    {
       id: 'manual',
       name: 'MANUAL',
       kicker: 'How all of it works',
@@ -157,7 +167,11 @@
   /* Six doors, not four. The brain earned a permanent slot — it is the thing
      that makes the council different from a chat box, so hiding it behind the
      library was wrong. Arcade rounds the grid to 3x2. */
-  var DEFAULT_SLOTS = ['descent', 'entry', 'dashboard', 'simple', 'rag', 'arcade'];
+  /* MANUAL sits on the front door on purpose: the most common first question
+     is "what is this and how does it work", and the answer should not be two
+     taps deep. ARCADE moves to the library — games matter, but not before
+     someone understands the product, and most are not playable on a phone. */
+  var DEFAULT_SLOTS = ['descent', 'entry', 'dashboard', 'simple', 'rag', 'manual'];
 
   /* ── Simple Mode wheel ────────────────────────────────────────────────
      Top level spins vertically. A category with `items` swivels down into
@@ -256,7 +270,7 @@
       art: '/assets/nav/forge.jpg',
       blurb: 'Build your own operatives, sprites and objects, then trade them.',
       items: [
-        { id: 'agent',    name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',   href: '/forge.html', blurb: 'Forge an agent — personality, skills, tools, the identity that makes it an agent.' },
+        { id: 'agent',    name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',   href: '/agent-forge.html', blurb: 'Forge an agent end to end — a name, abilities that really run, a personality or none, and its own budgeted wallet.' },
         { id: 'pixel',    name: '2D PIXEL',   accent: C.emerald, art: '/assets/landing/tab-worlds.png', href: '/pixel-forge.html', blurb: 'Pixel-realm assets — sprites and objects for the 2D world.' },
         { id: 'forge3d',  name: '3D WORLD',   accent: C.cyan,    art: '/assets/nav/worlds.jpg',  href: '/forge-3d.html', blurb: 'The procedural 3D sculptor. Build objects that live in the 3D world.' },
         // 2026-08-29: owner wants a REAL marketplace here (create/list/buy/sell,
@@ -340,7 +354,11 @@
      to the default for that position. Never throws, never returns a hole. */
   function readSlots() {
     var raw = null;
-    try { raw = JSON.parse(localStorage.getItem('shd_enter_slots') || 'null'); } catch (e) { raw = null; }
+    /* Versioned key. A visitor who arranged their doors before MANUAL became
+       a default has 'arcade' pinned in storage and would never see the change,
+       so bumping the key retires the old arrangement once. Bump again only
+       when a default change genuinely must reach people who already chose. */
+    try { raw = JSON.parse(localStorage.getItem('shd_enter_slots_v2') || 'null'); } catch (e) { raw = null; }
     var out = [], seen = {};
     for (var i = 0; i < DEFAULT_SLOTS.length; i++) {
       var id = Array.isArray(raw) ? raw[i] : null;
@@ -359,7 +377,7 @@
   }
 
   function writeSlots(ids) {
-    try { localStorage.setItem('shd_enter_slots', JSON.stringify(ids.slice(0, DEFAULT_SLOTS.length))); } catch (e) {}
+    try { localStorage.setItem('shd_enter_slots_v2', JSON.stringify(ids.slice(0, DEFAULT_SLOTS.length))); } catch (e) {}
   }
 
   root.SHDModules = {

@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SHADDAI · Forge an Agent</title>
+<meta name="description" content="Build an agent top to bottom — name it, choose what it does, give it a personality or none, and open its wallet." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;900&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet" />
+<style>
+/* ══ FORGE AN AGENT ═══════════════════════════════════════════════════════
+   One page, one column, four questions. Building an agent used to mean
+   touching four separate stores by hand; this asks only what a person can
+   actually be expected to know — what to call it, what it should do, how it
+   should talk, and what it may spend — and the server assembles the rest.
+
+   Every ability listed here is fetched from /api/agent-forge/kits, which
+   resolves against the live skill catalogue. Nothing on this page advertises
+   a capability the agent will not really have.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --shell:#06080b;
+  --void:#06080b; --void2:#0b0f14; --card:#0e141a;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#5c6b64;
+  --edge:rgba(120,150,140,.18);
+  --emerald:#00ff9c; --gold:#e8c45c; --violet:#b07cff; --rose:#ff6f6f;
+  --accent:var(--emerald);
+  --f-display:'Cinzel', serif; --f-serif:'Fraunces', Georgia, serif;
+  --f-mono:'IBM Plex Mono', ui-monospace, monospace;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background:var(--void); color:var(--ink);
+  font-family:var(--f-serif); font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* ── header ─────────────────────────────────────────────────────────────── */
+header{
+  display:flex; align-items:center; gap:12px; justify-content:space-between;
+  padding:14px 5vw; border-bottom:1px solid var(--edge);
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb, var(--shell) 88%, transparent);
+  backdrop-filter:blur(10px);
+}
+.brand{ display:flex; align-items:baseline; gap:9px; min-width:0; }
+.brand b{ font-family:var(--f-display); font-weight:900; font-size:clamp(16px,2.2vw,21px);
+  letter-spacing:.1em; color:var(--ink); }
+.brand span{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
+header a.back{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-soft); text-decoration:none; border:1px solid var(--edge);
+  padding:0 14px; min-height:40px; display:inline-flex; align-items:center; border-radius:2px;
+  white-space:nowrap;
+}
+header a.back:hover{ color:var(--ink); border-color:var(--accent); }
+/* The wordmark loses its tagline before the button loses its touch target. */
+@media(max-width:430px){ .brand span{ display:none; } }
+
+/* ── layout ─────────────────────────────────────────────────────────────── */
+main{ max-width:900px; margin:0 auto; padding:clamp(26px,5vw,54px) 5vw 120px; }
+.lede h1{
+  font-family:var(--f-display); font-weight:900; line-height:.98;
+  font-size:clamp(34px,7vw,64px); margin:0 0 12px; letter-spacing:.01em;
+}
+.lede p{ color:var(--ink-soft); max-width:56ch; margin:0; font-size:clamp(15px,1.8vw,18px); }
+
+.step{ margin-top:clamp(30px,4.6vw,54px); }
+.step > .n{
+  font-family:var(--f-mono); font-size:9.5px; letter-spacing:.26em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:7px;
+}
+.step > h2{
+  font-family:var(--f-display); font-weight:900; letter-spacing:.02em;
+  font-size:clamp(21px,3.2vw,30px); margin:0 0 4px;
+}
+.step > .hint{ color:var(--ink-soft); font-size:14.5px; margin:0 0 18px; max-width:60ch; }
+
+/* ── fields ─────────────────────────────────────────────────────────────── */
+.row{ display:flex; gap:10px; flex-wrap:wrap; }
+label.f{ display:block; flex:1 1 220px; min-width:0; }
+label.f > i{
+  font-style:normal; display:block; font-family:var(--f-mono); font-size:9.5px;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:6px;
+}
+input[type=text], textarea, select{
+  width:100%; background:var(--void2); border:1px solid var(--edge); border-radius:2px;
+  color:var(--ink); font-family:var(--f-mono); font-size:16px; /* 16px stops iOS zooming on focus */
+  padding:13px 14px; min-height:50px; outline:none; transition:border-color .18s;
+}
+textarea{ font-size:14px; line-height:1.6; resize:vertical; min-height:150px; }
+input:focus, textarea:focus, select:focus{ border-color:var(--accent); }
+input.bad{ border-color:var(--rose); }
+.emoji-in{ flex:0 0 84px; }
+.emoji-in input{ text-align:center; font-size:22px; }
+.err{ color:var(--rose); font-family:var(--f-mono); font-size:11px; margin-top:8px; min-height:14px; }
+
+/* colour swatches — a native colour input is a different control on every
+   platform, and only six choices matter here */
+.swatches{ display:flex; gap:8px; flex-wrap:wrap; }
+.sw{ width:44px; height:44px; border-radius:2px; border:1px solid var(--edge);
+  cursor:pointer; padding:0; position:relative; }
+.sw[aria-pressed=true]{ box-shadow:0 0 0 2px var(--void), 0 0 0 3px currentColor; }
+
+/* ── choice cards (kits + traits) ───────────────────────────────────────── */
+.cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(238px,1fr)); gap:10px; }
+.card{
+  text-align:left; background:var(--card); border:1px solid var(--edge); border-radius:3px;
+  padding:15px 16px; cursor:pointer; color:inherit; font:inherit;
+  transition:border-color .18s, background .18s; position:relative; min-height:44px;
+}
+.card:hover{ border-color:var(--ink-faint); }
+.card[aria-pressed=true]{ border-color:var(--accent); background:color-mix(in srgb,var(--accent) 8%,var(--card)); }
+.card b{ display:block; font-family:var(--f-display); font-weight:900; font-size:15.5px;
+  letter-spacing:.03em; margin-bottom:4px; }
+.card i{ font-style:normal; display:block; color:var(--ink-soft); font-size:13px; line-height:1.5; }
+.card .tag{
+  display:inline-block; margin-top:9px; font-family:var(--f-mono); font-size:8.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--gold);
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent); padding:3px 7px; border-radius:2px;
+}
+.card .cnt{ display:block; margin-top:8px; font-family:var(--f-mono); font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); }
+
+/* ── segmented control ──────────────────────────────────────────────────── */
+.seg{ display:flex; gap:0; border:1px solid var(--edge); border-radius:2px; overflow:hidden; flex-wrap:wrap; }
+.seg button{
+  flex:1 1 130px; min-height:50px; background:none; border:0; color:var(--ink-soft);
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  cursor:pointer; padding:0 12px; border-right:1px solid var(--edge); transition:.18s;
+}
+.seg button:last-child{ border-right:0; }
+.seg button[aria-pressed=true]{ background:var(--accent); color:var(--void); font-weight:600; }
+
+/* ── wallet panel ───────────────────────────────────────────────────────── */
+#walletStep{ display:none; }
+#walletStep.on{ display:block; }
+.wnote{
+  border:1px solid color-mix(in srgb,var(--gold) 34%,transparent); border-left:2px solid var(--gold);
+  background:color-mix(in srgb,var(--gold) 5%,transparent);
+  padding:14px 16px; font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px;
+}
+.wnote b{ color:var(--ink); }
+
+/* ── preview ────────────────────────────────────────────────────────────── */
+#preview{
+  margin-top:clamp(30px,4.6vw,54px); border:1px solid var(--edge); border-top:2px solid var(--accent);
+  background:linear-gradient(170deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent);
+  padding:clamp(18px,2.8vw,28px); border-radius:3px;
+}
+#preview .ph{ display:flex; align-items:center; gap:13px; }
+#preview .av{
+  width:54px; height:54px; flex:none; border:1px solid var(--edge); border-radius:2px;
+  display:grid; place-items:center; font-size:26px; background:var(--void2);
+}
+#preview .pn{ font-family:var(--f-display); font-weight:900; font-size:clamp(20px,3vw,27px);
+  line-height:1.05; color:var(--accent); word-break:break-word; }
+#preview .pr{ font-family:var(--f-mono); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-faint); margin-top:3px; }
+#preview dl{ margin:18px 0 0; display:grid; grid-template-columns:110px 1fr; gap:9px 14px; }
+#preview dt{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-faint); padding-top:3px; }
+#preview dd{ margin:0; font-size:14px; color:var(--ink-soft); line-height:1.55; }
+#preview dd b{ color:var(--ink); font-weight:400; }
+@media(max-width:520px){ #preview dl{ grid-template-columns:1fr; gap:2px 0; }
+  #preview dd{ margin-bottom:11px; } }
+
+/* ── forge bar ──────────────────────────────────────────────────────────── */
+.bar{
+  position:sticky; bottom:0; margin-top:26px; padding:14px 0 calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, var(--shell) 62%, transparent);
+}
+#go{
+  width:100%; min-height:60px; border:0; border-radius:2px; cursor:pointer;
+  background:var(--accent); color:var(--void);
+  font-family:var(--f-mono); font-size:12.5px; letter-spacing:.2em; text-transform:uppercase; font-weight:600;
+}
+#go[disabled]{ opacity:.4; cursor:default; }
+
+/* ── result ─────────────────────────────────────────────────────────────── */
+#done{ display:none; }
+#done.on{ display:block; }
+#done .ok{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--emerald); }
+#done h2{ font-family:var(--f-display); font-weight:900; font-size:clamp(28px,5vw,46px);
+  margin:9px 0 10px; line-height:1; }
+#done .acts{ display:flex; gap:10px; flex-wrap:wrap; margin-top:22px; }
+#done .acts a, #done .acts button{
+  min-height:52px; display:inline-flex; align-items:center; padding:0 22px; border-radius:2px;
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  text-decoration:none; cursor:pointer; border:1px solid var(--edge); background:none; color:var(--ink-soft);
+}
+#done .acts .pri{ background:var(--accent); color:var(--void); border-color:var(--accent); font-weight:600; }
+
+/* ── my agents ──────────────────────────────────────────────────────────── */
+#mine{ margin-top:clamp(34px,5vw,60px); border-top:1px solid var(--edge); padding-top:26px; }
+#mine h3{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--ink-faint); margin:0 0 14px; }
+.mrow{ display:flex; align-items:center; gap:13px; border:1px solid var(--edge);
+  border-left:2px solid var(--mc,var(--emerald)); padding:12px 14px; margin-bottom:8px; border-radius:2px; }
+.mrow .me{ font-size:20px; flex:none; }
+.mrow .mb{ flex:1; min-width:0; }
+.mrow .mn{ font-family:var(--f-display); font-weight:900; font-size:15.5px; letter-spacing:.03em; }
+.mrow .ms{ font-family:var(--f-mono); font-size:10px; color:var(--ink-faint); letter-spacing:.1em;
+  margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mrow .md{ background:none; border:1px solid var(--edge); color:var(--ink-faint); cursor:pointer;
+  min-height:40px; min-width:40px; border-radius:2px; font-family:var(--f-mono); font-size:11px; flex:none; }
+.mrow .md:hover{ color:var(--rose); border-color:var(--rose); }
+
+.muted{ color:var(--ink-faint); font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; }
+
+@media(prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>SHADDAI</b><span>Agent Forge</span></div>
+  <a class="back" href="/enter.html">&larr; Doors</a>
+</header>
+
+<main>
+  <div id="build">
+    <div class="lede">
+      <h1>Forge an agent.</h1>
+      <p>Four questions. It gets a name, a set of things it can really do, a personality if you want one, and a wallet if it needs to spend. Then it is hireable.</p>
+    </div>
+
+    <!-- 1 ── identity -->
+    <section class="step">
+      <span class="n">One</span>
+      <h2>Who is it?</h2>
+      <p class="hint">The name becomes its wallet key, so it has to be unique to you.</p>
+      <div class="row">
+        <label class="f emoji-in"><i>Face</i><input type="text" id="fEmoji" value="🤖" maxlength="4" aria-label="Emoji" /></label>
+        <label class="f"><i>Name</i><input type="text" id="fName" placeholder="ATLAS" maxlength="32" autocomplete="off" /></label>
+        <label class="f"><i>Job title</i><input type="text" id="fRole" placeholder="Coin analyst" maxlength="64" autocomplete="off" /></label>
+      </div>
+      <div class="err" id="eName"></div>
+      <label class="f" style="margin-top:12px"><i>One line about it (optional)</i>
+        <input type="text" id="fDesc" placeholder="Watches small caps and says what is worth touching." maxlength="200" autocomplete="off" /></label>
+      <div style="margin-top:14px"><div class="muted" style="margin-bottom:8px">COLOUR</div>
+        <div class="swatches" id="swatches"></div></div>
+    </section>
+
+    <!-- 2 ── abilities -->
+    <section class="step">
+      <span class="n">Two</span>
+      <h2>What can it do?</h2>
+      <p class="hint">Pick as many as you like. Every one of these is wired to code that actually runs — nothing here is a placeholder.</p>
+      <div class="cards" id="kits"><div class="muted">Loading abilities&hellip;</div></div>
+    </section>
+
+    <!-- 3 ── personality -->
+    <section class="step">
+      <span class="n">Three</span>
+      <h2>How does it talk?</h2>
+      <p class="hint">Some people want a character. Some want a tool that answers and gets out of the way. Both are fine.</p>
+      <div class="seg" id="pmode">
+        <button type="button" data-m="authored" aria-pressed="true">Give it a character</button>
+        <button type="button" data-m="none" aria-pressed="false">No personality</button>
+        <button type="button" data-m="custom" aria-pressed="false">Write it myself</button>
+      </div>
+      <div id="traitWrap" style="margin-top:16px">
+        <div class="cards" id="traits"></div>
+      </div>
+      <div id="customWrap" style="display:none; margin-top:16px">
+        <label class="f"><i>Its persona, in your words — used verbatim</i>
+          <textarea id="fPersona" placeholder="You are ATLAS. You read charts for people who have been burned before..."></textarea></label>
+      </div>
+    </section>
+
+    <!-- 4 ── wallet (only when an ability needs to spend) -->
+    <section class="step" id="walletStep">
+      <span class="n">Four</span>
+      <h2>What may it spend?</h2>
+      <div class="wnote">
+        One of the abilities you picked handles money, so this agent gets a wallet.
+        <b>It opens empty</b> — you fund it yourself, and it can never spend more than the caps below.
+        Anything over the approval line stops and asks you first.
+      </div>
+      <div class="row">
+        <label class="f"><i>Per day (SOL)</i><input type="text" id="wDaily" value="0.05" inputmode="decimal" /></label>
+        <label class="f"><i>Per transaction (SOL)</i><input type="text" id="wTx" value="0.01" inputmode="decimal" /></label>
+        <label class="f"><i>Ask me above (SOL)</i><input type="text" id="wAsk" value="0.005" inputmode="decimal" /></label>
+      </div>
+    </section>
+
+    <!-- preview -->
+    <div id="preview">
+      <div class="ph">
+        <div class="av" id="pAv">🤖</div>
+        <div><div class="pn" id="pName">Unnamed</div><div class="pr" id="pRole">Custom agent</div></div>
+      </div>
+      <dl>
+        <dt>Can do</dt><dd id="pKits">Nothing yet — pick an ability.</dd>
+        <dt>Voice</dt><dd id="pVoice">A character, once you pick some traits.</dd>
+        <dt>Wallet</dt><dd id="pWallet">None. It does not spend money.</dd>
+      </dl>
+    </div>
+
+    <div class="bar"><button id="go" disabled>Forge this agent</button></div>
+    <div class="err" id="eGo"></div>
+
+    <section id="mine">
+      <h3>Agents you have forged</h3>
+      <div id="mineList"><div class="muted">Loading&hellip;</div></div>
+    </section>
+  </div>
+
+  <!-- result -->
+  <div id="done">
+    <div class="ok">Forged</div>
+    <h2 id="dName"></h2>
+    <div id="dBody"></div>
+    <div class="acts">
+      <a class="pri" id="dHire" href="/index.html#agents">Put it to work</a>
+      <button type="button" id="dAgain">Forge another</button>
+      <a href="/enter.html">Back to the doors</a>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ══ FORGE AN AGENT — client ═══════════════════════════════════════════════
+   Holds one `spec` object, re-renders the preview from it after any change,
+   and posts it once. The abilities and traits are FETCHED rather than
+   hardcoded, so this page cannot drift out of sync with what the server can
+   really grant — if a skill disappears, the card for it stops being offered.
+   ═════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var spec = {
+    emoji: '🤖', name: '', role: '', description: '', color: '#00ff9c',
+    personaMode: 'authored', traits: [], persona: '', kits: [],
+  };
+  var KITS = [], TRAITS = [];
+
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ── colour ────────────────────────────────────────────────────────────── */
+  var COLORS = ['#00ff9c', '#e8c45c', '#5fe0ff', '#b07cff', '#ff6f6f', '#ff8a5c'];
+  (function () {
+    var wrap = $('swatches');
+    COLORS.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'sw'; b.style.background = c; b.style.color = c;
+      b.setAttribute('aria-label', 'Colour ' + c);
+      b.setAttribute('aria-pressed', String(c === spec.color));
+      b.addEventListener('click', function () {
+        spec.color = c;
+        document.documentElement.style.setProperty('--accent', c);
+        [].forEach.call(wrap.children, function (x) {
+          x.setAttribute('aria-pressed', String(x.style.background === b.style.background));
+        });
+        render();
+      });
+      wrap.appendChild(b);
+    });
+  })();
+
+  /* ── abilities ─────────────────────────────────────────────────────────── */
+  fetch('/api/agent-forge/kits').then(function (r) { return r.json(); }).then(function (d) {
+    KITS = (d.kits || []).filter(function (k) { return k.available; });
+    var wrap = $('kits');
+    if (!KITS.length) { wrap.innerHTML = '<div class="muted">No abilities available right now.</div>'; return; }
+    wrap.innerHTML = '';
+    KITS.forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'card'; b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = '<b>' + esc(k.label) + '</b><i>' + esc(k.blurb) + '</i>' +
+        (k.needsWallet ? '<span class="tag">needs a wallet</span>' : '') +
+        '<span class="cnt">' + k.skills.length + ' real skill' + (k.skills.length === 1 ? '' : 's') + '</span>';
+      b.addEventListener('click', function () {
+        var i = spec.kits.indexOf(k.id);
+        if (i === -1) spec.kits.push(k.id); else spec.kits.splice(i, 1);
+        b.setAttribute('aria-pressed', String(i === -1));
+        render();
+      });
+      wrap.appendChild(b);
+    });
+  }).catch(function () {
+    $('kits').innerHTML = '<div class="muted">Could not reach the forge. Is the server running?</div>';
+  });
+
+  /* ── traits ────────────────────────────────────────────────────────────── */
+  fetch('/api/agent-forge/traits').then(function (r) { return r.json(); }).then(function (d) {
+    TRAITS = d.traits || [];
+    var wrap = $('traits');
+    wrap.innerHTML = '';
+    TRAITS.forEach(function (t) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'card'; b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = '<b>' + esc(t.id) + '</b><i>' + esc(t.effect) + '</i>';
+      b.addEventListener('click', function () {
+        var i = spec.traits.indexOf(t.id);
+        if (i === -1) spec.traits.push(t.id); else spec.traits.splice(i, 1);
+        b.setAttribute('aria-pressed', String(i === -1));
+        render();
+      });
+      wrap.appendChild(b);
+    });
+  }).catch(function () {});
+
+  /* ── persona mode ──────────────────────────────────────────────────────── */
+  [].forEach.call($('pmode').children, function (b) {
+    b.addEventListener('click', function () {
+      spec.personaMode = b.dataset.m;
+      [].forEach.call($('pmode').children, function (x) {
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+      $('traitWrap').style.display = spec.personaMode === 'authored' ? '' : 'none';
+      $('customWrap').style.display = spec.personaMode === 'custom' ? '' : 'none';
+      render();
+    });
+  });
+
+  /* ── text fields ───────────────────────────────────────────────────────── */
+  [['fEmoji', 'emoji'], ['fName', 'name'], ['fRole', 'role'], ['fDesc', 'description'], ['fPersona', 'persona']]
+    .forEach(function (p) {
+      var el = $(p[0]);
+      el.addEventListener('input', function () { spec[p[1]] = el.value; render(); });
+    });
+
+  /* ── preview + gating ──────────────────────────────────────────────────── */
+  function needsWallet() {
+    return spec.kits.some(function (id) {
+      var k = KITS.find(function (x) { return x.id === id; });
+      return k && k.needsWallet;
+    });
+  }
+  function kitLabels() {
+    return spec.kits.map(function (id) {
+      var k = KITS.find(function (x) { return x.id === id; });
+      return k ? k.label : id;
+    });
+  }
+  function skillCount() {
+    var seen = {};
+    spec.kits.forEach(function (id) {
+      var k = KITS.find(function (x) { return x.id === id; });
+      if (k) k.skills.forEach(function (s) { seen[s] = 1; });
+    });
+    return Object.keys(seen).length;
+  }
+
+  function render() {
+    $('pAv').textContent = spec.emoji || '🤖';
+    $('pName').textContent = spec.name.trim() || 'Unnamed';
+    $('pRole').textContent = spec.role.trim() || 'Custom agent';
+
+    var labels = kitLabels();
+    $('pKits').innerHTML = labels.length
+      ? '<b>' + esc(labels.join(', ')) + '</b> &mdash; ' + skillCount() + ' skills'
+      : 'Nothing yet — pick an ability.';
+
+    if (spec.personaMode === 'none') {
+      $('pVoice').textContent = 'None. It answers plainly and does not perform.';
+    } else if (spec.personaMode === 'custom') {
+      $('pVoice').textContent = spec.persona.trim()
+        ? 'Your own words, used exactly as written.'
+        : 'Write its persona above.';
+    } else {
+      $('pVoice').innerHTML = spec.traits.length
+        ? '<b>' + esc(spec.traits.join(', ')) + '</b>'
+        : 'A character, once you pick some traits.';
+    }
+
+    var w = needsWallet();
+    $('walletStep').classList.toggle('on', w);
+    $('pWallet').innerHTML = w
+      ? 'Opens empty, capped at <b>' + esc($('wDaily').value) + ' SOL</b> a day.'
+      : 'None. It does not spend money.';
+
+    // Enabled only when the agent would actually be able to do something.
+    // A named agent with no abilities is the empty shell this page exists to avoid.
+    var ready = !!spec.name.trim() && spec.kits.length > 0
+      && (spec.personaMode !== 'custom' || !!spec.persona.trim());
+    $('go').disabled = !ready;
+  }
+  ['wDaily', 'wTx', 'wAsk'].forEach(function (id) { $(id).addEventListener('input', render); });
+  render();
+
+  /* ── forge ─────────────────────────────────────────────────────────────── */
+  $('go').addEventListener('click', function () {
+    var btn = $('go');
+    btn.disabled = true; btn.textContent = 'Forging…';
+    $('eGo').textContent = '';
+
+    var body = {
+      emoji: spec.emoji, name: spec.name.trim(), role: spec.role.trim(),
+      description: spec.description.trim(), color: spec.color,
+      personaMode: spec.personaMode, traits: spec.traits,
+      persona: spec.persona, kits: spec.kits,
+    };
+    if (needsWallet()) {
+      body.wallet = {
+        budget_daily: parseFloat($('wDaily').value),
+        budget_per_tx: parseFloat($('wTx').value),
+        requires_approval_above: parseFloat($('wAsk').value),
+      };
+    }
+
+    fetch('/api/agent-forge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.d.ok) {
+          // The server's own reason, not a generic failure — "a wallet already
+          // exists for that name" is actionable; "something went wrong" is not.
+          var msg = (res.d.details && res.d.details.join('; ')) || res.d.error || 'could not forge';
+          $('eGo').textContent = msg;
+          btn.disabled = false; btn.textContent = 'Forge this agent';
+          return;
+        }
+        var a = res.d.agent, n = res.d.next || {};
+        $('build').style.display = 'none';
+        $('done').classList.add('on');
+        $('dName').textContent = (a.emoji || '') + ' ' + a.name;
+        $('dName').style.color = a.color;
+        $('dBody').innerHTML =
+          '<p>' + esc(a.role || 'Custom agent') + ' — it can do <b>' + a.skills.length +
+          ' things</b>, and it is hireable now.</p>' +
+          '<p class="muted" style="margin-top:10px">Persona written to ' + esc(a.personaFile || '—') +
+          ' — edit that file to change how it talks.</p>' +
+          (a.walletKey ? '<p class="muted">Wallet <b>' + esc(a.walletKey) + '</b>. ' + esc(n.note || '') + '</p>' : '');
+        $('dHire').href = '/index.html#agents';
+        window.scrollTo(0, 0);
+        loadMine();
+      })
+      .catch(function () {
+        $('eGo').textContent = 'Could not reach the forge — try again.';
+        btn.disabled = false; btn.textContent = 'Forge this agent';
+      });
+  });
+
+  $('dAgain').addEventListener('click', function () {
+    location.reload(); // a clean spec beats trying to reset nine controls correctly
+  });
+
+  /* ── my agents ─────────────────────────────────────────────────────────── */
+  function loadMine() {
+    fetch('/api/agent-forge/mine').then(function (r) { return r.json(); }).then(function (d) {
+      var list = $('mineList'), agents = d.agents || [];
+      if (!agents.length) { list.innerHTML = '<div class="muted">None yet.</div>'; return; }
+      list.innerHTML = '';
+      agents.forEach(function (a) {
+        var row = document.createElement('div');
+        row.className = 'mrow'; row.style.setProperty('--mc', a.color || '#00ff9c');
+        row.innerHTML =
+          '<span class="me">' + esc(a.emoji || '🤖') + '</span>' +
+          '<span class="mb"><span class="mn">' + esc(a.name) + '</span>' +
+          '<span class="ms">' + a.skills.length + ' skills' +
+          (a.walletKey ? ' · wallet ' + esc(a.walletKey) : '') + '</span></span>';
+        var del = document.createElement('button');
+        del.className = 'md'; del.type = 'button'; del.textContent = '✕';
+        del.setAttribute('aria-label', 'Delete ' + a.name);
+        // No confirm() — a modal dialog is a blunt instrument and the row is
+        // small. One tap deletes; the agent is cheap to make again.
+        del.addEventListener('click', function () {
+          del.disabled = true;
+          fetch('/api/agent-forge/' + encodeURIComponent(a.id), { method: 'DELETE' })
+            .then(loadMine).catch(function () { del.disabled = false; });
+        });
+        row.appendChild(del);
+        list.appendChild(row);
+      });
+    }).catch(function () { $('mineList').innerHTML = '<div class="muted">Could not load.</div>'; });
+  }
+  loadMine();
+})();
+</script>
+</body>
+</html>

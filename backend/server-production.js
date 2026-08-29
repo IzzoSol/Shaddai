@@ -1617,6 +1617,9 @@ try {
 app.use('/api/brains', require('./brains').router);
 // Operative Forge — build-your-own-agent LOOK → real FLUX NFT portrait (HF token stays server-side)
 app.use('/api/forge', require('./forge/forge-routes'));
+// Agent Forge — build-your-own-agent BRAIN: persona .md, real runnable skills,
+// and a budgeted wallet, written to every store in one transaction.
+app.use('/api/agent-forge', require('./lib/agent-forge-routes'));
 // Collectables — 100 NFT cards + REAL unlock-by-dashboard-action tracking (mint = later phase)
 app.use('/api/collectables', require('./collectables/collectables-routes'));
 // Rooms — personal operative habitat: HF scene-gen + wearables (reuses forge-core slots)
@@ -1713,8 +1716,23 @@ app.get('/api/agents', (req, res) => {
     id: key,
     name: agent.name,
     role: agent.role,
-    status: 'online'
+    status: 'online',
+    isCustom: false
   }));
+
+  /* Forged agents belong in this list. Without them, an agent someone built in
+     the Agent Forge exists in every store, answers correctly when addressed by
+     id, and is still invisible everywhere the dashboard offers a choice — which
+     reads to its owner as "it didn't work". Appended rather than merged so the
+     council keeps its order, and non-fatal so a bad custom_agents.json can
+     never take down the list of the seven. */
+  try {
+    const custom = require('./lib/agent-registry').listAgents().filter(a => a.isCustom);
+    for (const a of custom) {
+      agents.push({ id: a.id, name: a.name, role: a.role, emoji: a.emoji,
+                    accent: a.accent, status: 'online', isCustom: true });
+    }
+  } catch (e) { console.warn('[agents] custom agents unavailable:', e && e.message); }
 
   res.json({ agents, total: agents.length });
 });
@@ -1732,6 +1750,24 @@ function _scopeExecs(list, uid) {
 app.get('/api/agents/:name', softAuth, (req, res) => {
   const agent = AGENTS[req.params.name.toUpperCase()];
   if (!agent) {
+    /* Not a council member — it may be a forged agent, whose ids are lowercase
+       and dotless (agent_<ts>_<rand>) so they can never collide with the seven.
+       Its stats live under its own name in the same execution database. */
+    try {
+      const reg = require('./lib/agent-registry');
+      const custom = reg.loadCustomAgents().find(a => a && String(a.id) === String(req.params.name));
+      if (custom) {
+        const resolved = reg.resolveAgent(custom.id);
+        return res.json({
+          id: custom.id, name: custom.name, role: custom.role, emoji: custom.emoji,
+          accent: resolved.accent, isCustom: true, status: 'online',
+          skills: custom.skills || [], kits: custom.kits || [],
+          walletKey: custom.walletKey || null,
+          statistics: database.getStatistics(custom.name),
+          history: _scopeExecs(database.getExecutionsForAgent(custom.name, 20), req.userId)
+        });
+      }
+    } catch (e) { console.warn('[agents] custom lookup failed:', e && e.message); }
     return res.status(404).json({ error: 'Agent not found' });
   }
 
