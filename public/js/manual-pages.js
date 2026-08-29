@@ -87,12 +87,14 @@
       lede: 'Give an agent a job, a set of skills, and a face.',
       blocks: [
         { k: 'steps', v: [
-          ['Choose the work', 'What should it be good at? That decides its skills.'],
-          ['Give it a face', 'Pixel forge for the 2D city, 3D sculptor for the realm.'],
-          ['Put it to work', 'It can take jobs. When it completes one, you are paid.'],
+          ['Name it', 'A face, a colour, a job title. The name becomes its wallet key.'],
+          ['Choose what it does', 'Ten ability kits. Each one is wired to code that really runs.'],
+          ['Give it a voice — or none', 'Pick traits, write the persona yourself, or have no character at all.'],
+          ['Open its wallet', 'Only if an ability handles money. It starts empty, with caps you set.'],
         ] },
         { k: 'p', v: 'A forged agent is yours. It carries your skills, your look, and its earnings come to you.' },
-        { k: 'warn', v: 'NOT FINISHED: the Forge "Build" UI still says coming soon. The 3D sculptor and the gallery work today; full agent forging does not.' },
+        { k: 'note', v: 'Agent forging works today at /agent-forge.html — four questions and the agent is hireable, with a persona file you can edit afterwards and a wallet if it needs one. The 3D sculptor and the gallery work too.' },
+        { k: 'warn', v: 'NOT FINISHED: the older /forge.html "Build" screen still says coming soon. Use the Agent Forge instead — it is the one that finishes.' },
       ],
     },
 
