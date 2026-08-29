@@ -298,6 +298,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 /* ── FILTER BAR ───────────────────────────────────── */
 #fw{flex-shrink:0;border-bottom:2px solid var(--border2);}
 #fr1{padding:8px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:linear-gradient(90deg,var(--bg1),var(--bg0));}
+.fsrc{display:contents;}
 .fb{
   padding:7px 16px;border:2px solid var(--border2);background:rgba(255,255,255,.03);
   color:var(--text2);font-family:'Syncopate',sans-serif;
@@ -651,12 +652,17 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   /* The source filters are not inside .sbar, so target them by STRUCTURE:
      whatever element holds them becomes a single scrolling row. :has() means
      this keeps working if the markup is refactored later. */
-  *:has(> .fb){
-    display:flex; flex-wrap:nowrap; overflow-x:auto; gap:6px;
-    -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:6px;
+  /* The six source chips live in .fsrc inside #fr1. #fr1 is flex-wrap:wrap and
+     wins on ID specificity, so it can't be un-wrapped from the outside — .fsrc
+     is display:contents on desktop (layout identical) and becomes its own
+     single nowrap scrolling row here. */
+  .fsrc{
+    display:flex !important; flex-wrap:nowrap; overflow-x:auto; gap:6px;
+    width:100%; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    padding-bottom:6px; scroll-snap-type:x proximity;
   }
-  *:has(> .fb)::-webkit-scrollbar{ display:none; }
-  *:has(> .fb) > *{ flex:0 0 auto; }
+  .fsrc::-webkit-scrollbar{ display:none; }
+  .fsrc > *{ flex:0 0 auto; scroll-snap-align:start; }
 
   /* the per-call actions: a scrolling row, not a stacked block */
   .sacts, .mwacts, .pgl-acts{
@@ -717,12 +723,14 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
     <div class="ltp on" id="tab-sig">
       <div id="fw">
         <div id="fr1">
+          <div class="fsrc">
           <button class="fb on" data-s="all" title="Every call from every source">ALL <span class="fbc"></span></button>
           <button class="fb" data-s="pre_bond" title="Pump.fun tokens still on the bonding curve — earliest possible entry, highest risk">PRE-BOND <span class="fbc"></span></button>
           <button class="fb" data-s="bonded" title="Pump.fun tokens that just graduated (bonded) onto Raydium">BONDED <span class="fbc"></span></button>
           <button class="fb" data-s="trending" title="Top 25 on DexScreener right now — card shows its live rank">TREND <span class="fbc"></span></button>
           <button class="fb" data-s="new_pools" title="Brand-new liquidity pools (GeckoTerminal)">POOLS <span class="fbc"></span></button>
           <button class="fb" data-s="boosted" title="Tokens that just paid for a DexScreener boost">BOOST <span class="fbc"></span></button>
+          </div>
           <input class="fq" id="fq" placeholder="SEARCH SYMBOL / MINT…" oninput="onFil('q',this.value)">
           <div style="flex:1"></div>
           <span class="fcnt" id="fcnt"></span>
