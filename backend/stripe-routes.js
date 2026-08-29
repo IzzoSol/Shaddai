@@ -75,6 +75,19 @@ router.get('/plans', (req, res) => {
   });
 });
 
+// GET /api/stripe/founders — public scarcity counter for pricing.html.
+// Carries no personal data: a count, not a list of who paid.
+router.get('/founders', (req, res) => {
+  try {
+    const f = require('./lib/founders');
+    res.json(Object.assign({ ok: true }, f.status()));
+  } catch (e) {
+    // Never let a missing register break the pricing page — it just won't
+    // show a countdown.
+    res.json({ ok: false, seats: 20, claimed: null, remaining: null, soldOut: false });
+  }
+});
+
 // POST /api/stripe/create-checkout — body { item, userId?, successUrl?, cancelUrl? }
 //   item = a tier id ('builder'|'pro'|'alpha') or credit pack id ('credits_25'...).
 //   Returns { url } to redirect the buyer to (hosted link or Stripe session), or { enabled:false }.

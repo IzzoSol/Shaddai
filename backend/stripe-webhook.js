@@ -17,6 +17,7 @@ const path = require('path');
 let billing = null; try { billing = require('./billing-service'); } catch (_) {}
 let Stripe = null;  try { Stripe = require('stripe'); } catch (_) {}
 let economy = null; try { economy = require('./economy-service').getDefault(); } catch (_) {}
+let founders = null; try { founders = require('./lib/founders'); } catch (_) {}
 
 // item id (from payment-config.json) -> what it grants.
 // Tiers map to billing-service tiers (free/pro/elite). Founder = lifetime Pro + bonus credits.
@@ -106,6 +107,24 @@ module.exports = async function stripeWebhook(req, res) {
           if (g.tier)    { try { await billing.updateSubscription(uid, g.tier); } catch (e) { console.warn('[stripe-webhook] tier grant failed:', e.message); } }
           if (g.credits) { try { billing.credit(uid, g.credits, 'stripe:' + item); } catch (e) { console.warn('[stripe-webhook] credit grant failed:', e.message); } }
           console.log(`[stripe-webhook] granted "${item}" to ${uid}` + (g.credits ? ` (+${g.credits} credits)` : ''));
+
+          /* A founding seat is more than a tier. pricing.html promises a mark
+             that is never minted again, a name in the build, and first claim
+             on land — none of which a 'pro' tier can express. The register
+             assigns the seat number those promises are made of, and is
+             idempotent on the session id so a Stripe retry cannot burn two. */
+          if (item === 'founder' && founders) {
+            try {
+              const seat = founders.claim(uid, {
+                sessionId: s.id,
+                email: (s.customer_details && s.customer_details.email) || null,
+                amountTotal: s.amount_total,
+              });
+              console.log(`[stripe-webhook] founder seat ${seat.seat}` +
+                (seat.overflow ? ' (BEYOND CAP — decide: honour or refund)' : '') +
+                (seat.alreadyRecorded ? ' (already held)' : ''));
+            } catch (e) { console.warn('[stripe-webhook] founder register failed:', e.message); }
+          }
         } else {
           console.warn('[stripe-webhook] unknown item "' + item + '" (amount ' + s.amount_total + ') — no grant');
         }
