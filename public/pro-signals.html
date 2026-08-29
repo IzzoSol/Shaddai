@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SHADDAI // ORACLE TERMINAL</title>
+<title>SHADDAI // ZEROX TERMINAL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 /* ════════════════════════════════════════════════
-   ORACLE TERMINAL — 4 PREMIUM THEMES
+   ZEROX TERMINAL — 4 PREMIUM THEMES
    phosphor / neon-noir / blood-market / ice
    ════════════════════════════════════════════════ */
 :root {
@@ -630,7 +630,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   <div class="gate-hex">⬡</div>
   <div class="gate-logo">SHADDAI</div>
   <div class="gate-rule"></div>
-  <div class="gate-sub">ORACLE TERMINAL — PRO SIGNALS · ENTER ACCESS CODE</div>
+  <div class="gate-sub">ZEROX TERMINAL — PRO SIGNALS · ENTER ACCESS CODE</div>
   <input class="gate-pin" id="gatePin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="••••" autocomplete="off" aria-label="Access code" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')unlock()">
   <button class="gate-btn" id="gateBtn" onclick="unlock()">UNLOCK</button>
   <div class="gate-err" id="gateErr"></div>
@@ -641,7 +641,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 <div id="topbar" style="display:none">
   <div class="tb-logo">⬡ SHADDAI</div>
   <div class="tb-sep">//</div>
-  <div class="tb-title">ORACLE TERMINAL</div>
+  <div class="tb-title">ZEROX TERMINAL</div>
   <div class="tb-pill tb-pro">PRO</div>
   <div class="tb-pill tb-live">● LIVE</div>
   <div class="tb-sp"></div>
@@ -697,7 +697,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
         <button class="vmb" onclick="setView('heatmap',this)" title="Dense color grid — scan many calls at once">🔲 HEATMAP</button>
         <button class="vmb" onclick="setView('ranked',this)" title="Ranked by peak multiplier">🏆 RANKED</button>
       </div>
-      <div id="slist"><div class="empty">CONNECTING TO ORACLE FEED…</div></div>
+      <div id="slist"><div class="empty">CONNECTING TO ZEROX FEED…</div></div>
     </div>
 
     <!-- alerts moved to modal (topbar 🔔 pill) -->
@@ -1870,28 +1870,28 @@ function openSent(mint){
     '<div class="sent-mood" style="color:'+moodC+'">'+mood+'</div>'+
     lines.map(l=>'<div class="sent-line">'+l+'</div>').join('')+
     '<div style="display:flex;gap:6px;margin-top:10px">'+
-      '<button class="sa g" onclick="askOracle(\''+encodeURIComponent(sym)+'\',this)" style="flex:1">ASK ORACLE BRAIN</button>'+
+      '<button class="sa g" onclick="askOracle(\''+encodeURIComponent(sym)+'\',this)" style="flex:1">ASK ZEROX BRAIN</button>'+
       '<button class="sa" onclick="window.open(\'https://dexscreener.com/solana/'+(c.mint||'')+'\',\'_blank\')">DEX</button>'+
     '</div>'+
     '<div id="sent-ai"></div>';
   document.getElementById('sentdl').classList.add('on');
 }
-function srcLabel(s){const m={bonded:'ZEROX bonded engine',trending:'ORACLE trend radar',new_pools:'NEXUS pool watch',boosted:'ZEROX boosted',trending_pools:'ORACLE pool radar'};return m[s]||s||'unknown';}
+function srcLabel(s){const m={bonded:'ZEROX bonded engine',trending:'ZEROX trend radar',new_pools:'NEXUS pool watch',boosted:'ZEROX boosted',trending_pools:'ZEROX pool radar'};return m[s]||s||'unknown';}
 function closeSent(){document.getElementById('sentdl').classList.remove('on');}
 async function askOracle(sym,btn){
   const box=document.getElementById('sent-ai');
   sym=decodeURIComponent(sym);
   if(btn){btn.disabled=true;btn.textContent='ANALYZING…';}
-  if(box) box.innerHTML='<div style="color:var(--muted);font-size:9px">consulting ORACLE brain…</div>';
+  if(box) box.innerHTML='<div style="color:var(--muted);font-size:9px">consulting ZEROX brain…</div>';
   try{
-    const r=await fetch(BASE+'/api/ask?agent=ORACLE&q='+encodeURIComponent(sym+' — Solana memecoin trade signal. Read the coin: what is it, and give a quick sentiment / risk take.'),{signal:AbortSignal.timeout(20000)});
+    const r=await fetch(BASE+'/api/ask?agent=ZEROX&q='+encodeURIComponent(sym+' — Solana memecoin trade signal. Read the coin: what is it, and give a quick sentiment / risk take.'),{signal:AbortSignal.timeout(20000)});
     const j=await r.json();
     const ans=(j.answer||'').trim();
-    if(box) box.innerHTML='<div class="sent-ai-h">🧠 ORACLE BRAIN</div>'+(ans?esc(ans).slice(0,700):'<div style="color:var(--muted)">no grounded knowledge on this ticker</div>');
+    if(box) box.innerHTML='<div class="sent-ai-h">🧠 ZEROX BRAIN</div>'+(ans?esc(ans).slice(0,700):'<div style="color:var(--muted)">no grounded knowledge on this ticker</div>');
   }catch(e){
     if(box) box.innerHTML='<div style="color:var(--A)">oracle unreachable — check server</div>';
   }
-  if(btn){btn.disabled=false;btn.textContent='ASK ORACLE BRAIN';}
+  if(btn){btn.disabled=false;btn.textContent='ASK ZEROX BRAIN';}
 }
 function tickAlerts(){
   if(!_alerts.length||!_calls.length) return;

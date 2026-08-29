@@ -248,7 +248,12 @@
       var b = document.createElement('button');
       b.type = 'button'; b.dataset.skin = s.id; b.style.setProperty('--d', s.dot);
       b.innerHTML = '<i></i>' + s.name;
-      b.addEventListener('click', function () { setSkin(s.id); });
+      b.addEventListener('click', function () {
+        setSkin(s.id);
+        // close after the selection registers — leaving the sheet open kept a
+        // blurred scrim over the page, which reads as the site freezing
+        setTimeout(closeSheets, 320);
+      });
       box.appendChild(b);
     });
 

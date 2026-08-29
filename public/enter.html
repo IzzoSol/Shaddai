@@ -411,20 +411,25 @@ footer b{ color:var(--ink-soft); font-weight:400; }
      press it and nothing happens. Toggling now DEMONSTRATES itself — every
      door shows its description for a moment, so you can see what the switch
      controls before deciding to leave it on. */
-  var demoT = null;
+  var demoT = null, demoLock = false;
   btnDwell.addEventListener('click', function () {
+    /* Rapid clicks used to overlap: each press queued its own timer, so an
+       earlier one could close the demo while a later press had just opened
+       it, leaving tiles half-open. One timer, one lock. */
+    if (demoLock) return;
+    demoLock = true;
+    setTimeout(function () { demoLock = false; }, 260);
+
     var on = !C.dwell();
     C.setDwell(on);
     clearTimeout(demoT);
     var tiles = grid.querySelectorAll('.slot');
-    if (on) {
-      tiles.forEach(function (t) { clearDwell(t); t.classList.add('bio-open'); });
-      demoT = setTimeout(function () {
-        tiles.forEach(function (t) { t.classList.remove('bio-open'); });
-      }, 2200);
-    } else {
-      tiles.forEach(clearDwell);
-    }
+    tiles.forEach(clearDwell);                 // always start from a clean slate
+    if (!on) return;
+    tiles.forEach(function (t) { t.classList.add('bio-open'); });
+    demoT = setTimeout(function () {
+      grid.querySelectorAll('.slot').forEach(function (t) { t.classList.remove('bio-open'); });
+    }, 2200);
   });
   C.onDwell(paintDwell);
   paintDwell();
