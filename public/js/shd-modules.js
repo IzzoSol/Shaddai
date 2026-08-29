@@ -60,9 +60,9 @@
     },
     {
       id: 'entry',
-      name: 'ENTRY',
-      kicker: 'The whole story',
-      blurb: 'The full explainer. What SHADDAI is, how it works, the seven agents of the council, the worlds, the arcade, the RAG brain. Walks you all the way through.',
+      name: 'MAIN',
+      kicker: 'The main site',
+      blurb: 'The main site. What SHADDAI is, how it works, the seven agents, the worlds, the arcade and the brain — the whole story, in order.',
       href: '/home.html',
       art: '/assets/enter/entry.jpg',
       accent: C.gold,
@@ -154,7 +154,10 @@
 
   /* The four that occupy the slots on a first visit. A visitor's own
      arrangement overrides this and lives in localStorage (shd_enter_slots). */
-  var DEFAULT_SLOTS = ['descent', 'entry', 'dashboard', 'simple'];
+  /* Six doors, not four. The brain earned a permanent slot — it is the thing
+     that makes the council different from a chat box, so hiding it behind the
+     library was wrong. Arcade rounds the grid to 3x2. */
+  var DEFAULT_SLOTS = ['descent', 'entry', 'dashboard', 'simple', 'rag', 'arcade'];
 
   /* ── Simple Mode wheel ────────────────────────────────────────────────
      Top level spins vertically. A category with `items` swivels down into
@@ -327,7 +330,7 @@
     var raw = null;
     try { raw = JSON.parse(localStorage.getItem('shd_enter_slots') || 'null'); } catch (e) { raw = null; }
     var out = [], seen = {};
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < DEFAULT_SLOTS.length; i++) {
       var id = Array.isArray(raw) ? raw[i] : null;
       if (!id || !byId(id) || seen[id]) id = null;
       if (!id) {
@@ -344,7 +347,7 @@
   }
 
   function writeSlots(ids) {
-    try { localStorage.setItem('shd_enter_slots', JSON.stringify(ids.slice(0, 4))); } catch (e) {}
+    try { localStorage.setItem('shd_enter_slots', JSON.stringify(ids.slice(0, DEFAULT_SLOTS.length))); } catch (e) {}
   }
 
   root.SHDModules = {
