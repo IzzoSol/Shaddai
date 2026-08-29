@@ -150,3 +150,15 @@ Owner pasted a "what this needs next" checklist (source unclear — possibly ter
 - MCP Max-tier gate + a web-search tool
 - Fal (media) / OpenRouter (text) routing for keyless members
 - Then continuing Priority 4 (skill-recipe conversion), already queued
+
+---
+
+## Paybox — real integration shipped (2026-08-29 night)
+
+OAuth finally completed (flaky connector, took ~4 attempts). Real tool surface confirmed, `paybox-guard.js` fully rebuilt around it (same 5-layer safety scaffold, only the transport was wrong before). Verified live from the backend itself — `get_portfolio` via a real `pbx_live_*` key returned real wallet data. Full detail in `MASTER-PLAN.md` §1/§Phase 2 and the `paybox-guard.js` commit message. `enabled` stays `false`.
+
+**Real, important finding:** the connected wallets are `approval_mode: autonomous` — Paybox itself won't additionally prompt for them, so `paybox-guard.js`'s gate is the only human checkpoint that exists. Worth both terminals knowing before anyone builds anything that calls `paybox_pay`.
+
+**Also fixed while I had the vault/forge code open:** `agent-tool-run.js`'s `groqKeyPool()` never read the persisted BYOK vault (`byok-keys.json`) — only the council-agent path did. Forged agents can now draw on a saved vault key too. Covers the "agent forge draws on vault keys" item above (backend half — no front-end page exists yet to paste keys into, still open).
+
+**Not mine — flagging for whoever owns pre-landing/Simple Mode:** owner asked for a Paybox button + a FOMO referral link button (`https://fomo.family/r/zerox007`) on the pre-landing/Simple page. That's `public/enter.html`/`public/simple.html` territory, explicitly off-limits to me per the priority-order split. Unclaimed.
