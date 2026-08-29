@@ -1620,6 +1620,10 @@ app.use('/api/forge', require('./forge/forge-routes'));
 // Agent Forge — build-your-own-agent BRAIN: persona .md, real runnable skills,
 // and a budgeted wallet, written to every store in one transaction.
 app.use('/api/agent-forge', require('./lib/agent-forge-routes'));
+// Agent Services — what the council sells, priced in whole Sparks. Charges
+// before the work runs (a failing job must not be a free inference loop) and
+// refunds automatically if it fails.
+app.use('/api/services', require('./lib/agent-services-routes'));
 // Collectables — 100 NFT cards + REAL unlock-by-dashboard-action tracking (mint = later phase)
 app.use('/api/collectables', require('./collectables/collectables-routes'));
 // Rooms — personal operative habitat: HF scene-gen + wearables (reuses forge-core slots)

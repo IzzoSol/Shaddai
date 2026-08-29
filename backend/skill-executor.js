@@ -23,18 +23,48 @@ const COIN_ALIASES = {
   atom: 'cosmos', near: 'near', ftm: 'fantom', op: 'optimism', arb: 'arbitrum'
 };
 
-/** Extract a CoinGecko-compatible coin ID from free-text. Returns 'bitcoin' if nothing found. */
+/* Extract a CoinGecko-compatible coin id from free text.
+
+   Returns null when nothing is recognised — and callers MUST respect that.
+   The old behaviour defaulted an unrecognised token to 'bitcoin', so asking
+   "is BONK worth touching" returned a confident, correct-looking BITCOIN
+   report. That is worse than an error in every way: the buyer paid, the
+   output looked right, and nothing anywhere said it was about a different
+   asset. A paid answer about the wrong coin is the fastest way to lose
+   someone's trust permanently.
+
+   Recognition beyond the alias table: an explicit $TICKER, or an all-caps
+   ticker in a prompt that is clearly about a coin. These get returned in a
+   `{ unresolved: true }` shape so the caller can look them up or refuse,
+   rather than being silently swallowed. */
+const COIN_STOPWORDS = new Set([
+  'A','I','AN','THE','IS','IT','TO','OF','ON','IN','AT','MY','OK','NO','US','AM','PM',
+  'AI','API','USD','EUR','GBP','CEO','NFT','DEX','CEX','LP','TVL','ATH','FOMO','DYOR',
+]);
+
 function extractSymbol(prompt) {
-  const txt = prompt.toLowerCase();
-  // Check aliases first (BTC, ETH, etc.)
+  const txt = String(prompt || '').toLowerCase();
+
   for (const [ticker, id] of Object.entries(COIN_ALIASES)) {
+    // \\b in a template literal is a BACKSPACE character, not a word boundary.
+    // It must be double-escaped here or every alias silently stops matching.
     if (new RegExp(`\\b${ticker}\\b`).test(txt)) return id;
   }
-  // Check full coin names
   const knownNames = ['bitcoin', 'ethereum', 'solana', 'dogecoin', 'cardano', 'polkadot', 'chainlink', 'avalanche', 'polygon', 'cosmos'];
   for (const name of knownNames) {
     if (txt.includes(name)) return name;
   }
+  return null;
+}
+
+/* What the prompt seems to be asking about, when extractSymbol found nothing.
+   Lets a caller say "I don't cover BONK" instead of answering about Bitcoin. */
+function extractUnknownTicker(prompt) {
+  const raw = String(prompt || '');
+  const dollar = raw.match(/\$([A-Za-z][A-Za-z0-9]{1,9})\b/);
+  if (dollar) return dollar[1].toUpperCase();
+  const caps = raw.match(/\b[A-Z][A-Z0-9]{1,9}\b/g) || [];
+  for (const c of caps) if (!COIN_STOPWORDS.has(c)) return c;
   return null;
 }
 
@@ -198,7 +228,16 @@ const SKILL_TOOL_MAP = {
   'zerox/crypto-trading': {
     tools: ['fetch_price', 'get_fear_greed', 'get_ohlcv'],
     argMap(prompt) {
-      const sym = extractSymbol(prompt) || 'bitcoin';
+      // No silent substitution — see extractSymbol. An unrecognised token is
+      // reported as unsupported so the service layer refunds instead of
+      // delivering a confident report about a completely different asset.
+      const sym = extractSymbol(prompt);
+      if (!sym) {
+        const guess = extractUnknownTicker(prompt);
+        return guess
+          ? `Not supported yet: ${guess}. This skill covers major assets (BTC, ETH, SOL and similar) via CoinGecko. It cannot price ${guess}, and will not guess.`
+          : 'No coin named. Say which asset you mean — for example "check SOL" or "is ETH worth holding".';
+      }
       return [
         { tool: 'fetch_price',    args: { symbol: sym } },
         { tool: 'get_fear_greed', args: {} },
@@ -206,7 +245,16 @@ const SKILL_TOOL_MAP = {
       ];
     },
     compose(results, prompt) {
-      const sym = extractSymbol(prompt) || 'bitcoin';
+      // No silent substitution — see extractSymbol. An unrecognised token is
+      // reported as unsupported so the service layer refunds instead of
+      // delivering a confident report about a completely different asset.
+      const sym = extractSymbol(prompt);
+      if (!sym) {
+        const guess = extractUnknownTicker(prompt);
+        return guess
+          ? `Not supported yet: ${guess}. This skill covers major assets (BTC, ETH, SOL and similar) via CoinGecko. It cannot price ${guess}, and will not guess.`
+          : 'No coin named. Say which asset you mean — for example "check SOL" or "is ETH worth holding".';
+      }
       return composeMarketReport(results, prompt, sym);
     }
   },
@@ -230,7 +278,7 @@ const SKILL_TOOL_MAP = {
   'zerox/on-chain-intel': {
     tools: ['whale_scan', 'get_defi_tvl'],
     argMap(prompt) {
-      const sym = extractSymbol(prompt) || 'solana';
+      const sym = extractSymbol(prompt) || 'solana';   // Solana-specific skill: SOL is the correct default here
       return [
         { tool: 'whale_scan',   args: { query: sym } },
         { tool: 'get_defi_tvl', args: { limit: 10 } }
@@ -245,7 +293,16 @@ const SKILL_TOOL_MAP = {
   'zerox/risk-management': {
     tools: ['fetch_price', 'get_ohlcv', 'get_fear_greed'],
     argMap(prompt) {
-      const sym = extractSymbol(prompt) || 'bitcoin';
+      // No silent substitution — see extractSymbol. An unrecognised token is
+      // reported as unsupported so the service layer refunds instead of
+      // delivering a confident report about a completely different asset.
+      const sym = extractSymbol(prompt);
+      if (!sym) {
+        const guess = extractUnknownTicker(prompt);
+        return guess
+          ? `Not supported yet: ${guess}. This skill covers major assets (BTC, ETH, SOL and similar) via CoinGecko. It cannot price ${guess}, and will not guess.`
+          : 'No coin named. Say which asset you mean — for example "check SOL" or "is ETH worth holding".';
+      }
       return [
         { tool: 'fetch_price',    args: { symbol: sym } },
         { tool: 'get_ohlcv',      args: { symbol: sym, days: 14 } },
@@ -253,7 +310,16 @@ const SKILL_TOOL_MAP = {
       ];
     },
     compose(results, prompt) {
-      const sym = extractSymbol(prompt) || 'bitcoin';
+      // No silent substitution — see extractSymbol. An unrecognised token is
+      // reported as unsupported so the service layer refunds instead of
+      // delivering a confident report about a completely different asset.
+      const sym = extractSymbol(prompt);
+      if (!sym) {
+        const guess = extractUnknownTicker(prompt);
+        return guess
+          ? `Not supported yet: ${guess}. This skill covers major assets (BTC, ETH, SOL and similar) via CoinGecko. It cannot price ${guess}, and will not guess.`
+          : 'No coin named. Say which asset you mean — for example "check SOL" or "is ETH worth holding".';
+      }
       const report = composeMarketReport(results, prompt, sym);
       return report + '\n\nRisk Reminder: size positions at 1-2% of capital; set stop-loss before entry.';
     }
@@ -325,7 +391,16 @@ const SKILL_TOOL_MAP = {
   'zerox/scaling-models': {
     tools: ['get_token_info', 'get_ohlcv', 'get_global_market'],
     argMap(prompt) {
-      const sym = extractSymbol(prompt) || 'bitcoin';
+      // No silent substitution — see extractSymbol. An unrecognised token is
+      // reported as unsupported so the service layer refunds instead of
+      // delivering a confident report about a completely different asset.
+      const sym = extractSymbol(prompt);
+      if (!sym) {
+        const guess = extractUnknownTicker(prompt);
+        return guess
+          ? `Not supported yet: ${guess}. This skill covers major assets (BTC, ETH, SOL and similar) via CoinGecko. It cannot price ${guess}, and will not guess.`
+          : 'No coin named. Say which asset you mean — for example "check SOL" or "is ETH worth holding".';
+      }
       return [
         { tool: 'get_token_info',    args: { symbol: sym } },
         { tool: 'get_ohlcv',         args: { symbol: sym, days: 30 } },
@@ -1502,7 +1577,16 @@ output.push('Total: ' + deps.length + ' dependencies');
     tools: ['calculate_position_size', 'fetch_price'],
     argMap(prompt) {
       const nums = (prompt.match(/[\d.]+/g) || []).map(Number);
-      const sym = extractSymbol(prompt) || 'bitcoin';
+      // No silent substitution — see extractSymbol. An unrecognised token is
+      // reported as unsupported so the service layer refunds instead of
+      // delivering a confident report about a completely different asset.
+      const sym = extractSymbol(prompt);
+      if (!sym) {
+        const guess = extractUnknownTicker(prompt);
+        return guess
+          ? `Not supported yet: ${guess}. This skill covers major assets (BTC, ETH, SOL and similar) via CoinGecko. It cannot price ${guess}, and will not guess.`
+          : 'No coin named. Say which asset you mean — for example "check SOL" or "is ETH worth holding".';
+      }
       return [
         { tool: 'calculate_position_size', args: {
             account_size: nums[0] || 1000,
