@@ -123,4 +123,30 @@ Owner gave both terminals a priority-ordered master prompt: Forge → AURA → M
 3,022 "baked" (LLM-guesses-the-tool) skills vs. 141 real deterministic recipes in `backend/skill-index.js`. Convert the highest-traffic ones. Next up.
 
 ### Still blocked
-- **Paybox** — checked again, still only `authenticate`/`complete_authentication` visible. Owner needs to complete the OAuth callback (browser flow) and give me the resulting URL — a signing key was sent earlier instead, which isn't the same thing and doesn't unblock this.
+- **Paybox** — owner is actively trying to complete OAuth (2026-08-29 evening). Three attempts so far all failed at `complete_authentication` with "no OAuth flow is in progress" even on a fast, correctly-matched code+state — looks like a real bug in the OAuth connector's flow-tracking, not user error. May need a fresh session or upstream fix. Not a SHADDAI-repo issue — nothing to fix in this codebase for this specific failure.
+
+---
+
+## Status pasted from elsewhere — 2026-08-29 evening, cross-checking against what's actually done
+
+Owner pasted a "what this needs next" checklist (source unclear — possibly terminal B or a separate audit). Reconciling against real state:
+
+| Item | Checklist said | Actual state |
+|---|---|---|
+| Key vault security | Fixed today: unauthenticated key deletion by name, unauthenticated provider listing, unlimited password guesses — all closed, verified against live server. Tracked secrets file now gitignored + untracked. | Not mine — didn't touch vault code this session. Noting for awareness; good disclosure practice. |
+| AURA hit rate | "Never measured — measure before claiming it" | **Stale.** Already measured + proven this session (see Priority 2 above) — real ledger, real integration test, real bypass fixed. Don't redo. |
+| Tier prices | Backend: Builder $19 / Pro $49 / Alpha $199. Page sells $30 / $200. | Real conflict, needs the owner's decision — not something either terminal should guess at. |
+| Stripe founder seats | Live in prod; needs confirming the founder link is priced at $100 | Unclaimed — quick verification task. |
+| Key vault front-end | Built & hardened; needs a page to paste keys into | Unclaimed — likely terminal B territory (new UI page) unless they say otherwise. |
+| Agent forge + vault | Live end-to-end; needs a forged agent able to draw on vault keys | **My lane** (forge/backend) — candidate next task alongside Priority 4. |
+| MCP | Built and live both directions; needs a Max-tier gate, a setup page, and web search | Partially mine already (`6526fe3`, this session's RAG-over-MCP fix). The Max-tier gate is backend (mine); "setup page" is UI (terminal B territory, matches the "still needs its own dedicated connect page" note I already left in the `6526fe3` commit); web search as an MCP tool is backend (mine). |
+| Sparks ledger | Built; "enter the price card above" | Unclear ask — flagging rather than guessing. |
+| Fal + OpenRouter | Decided (media via Fal, text via OpenRouter for keyless members), not implemented | Backend routing — my lane, unclaimed. |
+| Paybox mount | Written, not mounted — verify REST contract | **Explicitly assigned to Terminal B** per the pasted note — not mine, don't duplicate. |
+| Plots & land | Not built — world exists, economy doesn't | Matches the already-parked plot/token economy backlog item above. Still parked (securities exposure), not a green light to build the pledge/escrow mechanism. |
+
+### Claiming next (backend lane, unclaimed items above)
+- Agent forge drawing on vault keys (BYOK → forged agent's actual LLM calls)
+- MCP Max-tier gate + a web-search tool
+- Fal (media) / OpenRouter (text) routing for keyless members
+- Then continuing Priority 4 (skill-recipe conversion), already queued
