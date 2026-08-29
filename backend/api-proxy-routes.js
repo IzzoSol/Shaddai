@@ -3297,8 +3297,13 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outpu
   }
 }
 
-router.post('/workflows/run', async (req, res) => {
-  const { workflowId, input, steps: customSteps } = req.body;
+// Shared handler for POST /api/workflows/run and POST /api/workflows/run/stream.
+// Both emit text/event-stream so a caller sees each step land as it happens
+// instead of waiting minutes for the whole chain. /run/stream is the explicit,
+// documented streaming path; /run keeps its existing behaviour for callers that
+// already point at it.
+const runWorkflowStreaming = async (req, res) => {
+  const { workflowId, input, steps: customSteps } = req.body || {};
   const runInput = typeof input === 'string' ? input : '';
 
   // Resolve workflow definition
@@ -3347,14 +3352,33 @@ router.post('/workflows/run', async (req, res) => {
   let failedCount = 0;
 
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  // 'no-transform' + X-Accel-Buffering tell the compression middleware and any
+  // proxy (nginx/Render) not to buffer this response. Without them every event
+  // below arrives in one lump at the end, which reads to a user as a hang.
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.setHeader('Connection', 'keep-alive');
+  if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
-  const send = (data) => { try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch (_) {} };
+  const send = (data) => {
+    try {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+      if (typeof res.flush === 'function') res.flush();
+    } catch (_) {}
+  };
+  // Heartbeat comment every 15s so proxies and clients see life during a long
+  // single step (one model call can run for minutes).
+  const heartbeat = setInterval(() => {
+    try { res.write(': keep-alive\n\n'); if (typeof res.flush === 'function') res.flush(); } catch (_) {}
+  }, 15000);
+  if (typeof heartbeat.unref === 'function') heartbeat.unref();
+  let clientGone = false;
+  req.on('close', () => { clientGone = true; clearInterval(heartbeat); });
 
   send({ type: 'start', runId, workflow: workflowDef.name, steps: workflowDef.steps.length });
 
   for (let i = 0; i < workflowDef.steps.length; i++) {
+    if (clientGone) break;
     const step = workflowDef.steps[i];
     send({ type: 'step_start', step: i + 1, total: workflowDef.steps.length, agent: step.agent, ragGrounded: step.ragGrounded });
     try {
@@ -3398,8 +3422,15 @@ router.post('/workflows/run', async (req, res) => {
   saveJSON(path.join(DATA_DIR, 'workflow_runs.json'), history.slice(0, 100));
 
   send({ type: 'complete', runId, status: overallStatus, finalOutput: prevOutput, steps: results });
+  send({ type: 'done', runId, status: overallStatus, steps: results.length });
+  clearInterval(heartbeat);
   res.end();
-});
+};
+
+router.post('/workflows/run', runWorkflowStreaming);
+// Explicit streaming alias - same events, unambiguous name for clients that want
+// incremental progress rather than one terminal payload.
+router.post('/workflows/run/stream', runWorkflowStreaming);
 
 router.get('/workflows', (req, res) => {
   const saved = loadWorkflows();
