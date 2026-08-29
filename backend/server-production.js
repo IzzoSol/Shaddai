@@ -1644,6 +1644,9 @@ app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe 
 app.use('/api/work', require('./work-sessions'));                     // agent work loop: real work -> Sparks payout + while-away summary + live feed
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
+// Paybox — customer-facing wallet endpoints (tip links etc). Separate from
+// federation-routes.js, which is for external bots/agents, not SHADDAI's own site.
+app.use('/api/paybox', require('./paybox-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
 app.use('/api/billing', require('./billing-routes').router);
 // User profiles — "who you are" account data, persisted free via Firestore (survives redeploys)

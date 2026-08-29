@@ -4,5 +4,8 @@
   "daily_budget_usd": 25.00,
   "approval_threshold_usd": 1.00,
   "require_approval": true,
-  "base_url": "https://api.paybox.sh"
+  "base_url": "https://api.paybox.sh",
+  "tip_credentials": {
+    "ZEROX": "697a2d8a-142f-4aac-a17c-88637ec358c8"
+  }
 }
