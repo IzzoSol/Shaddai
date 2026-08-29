@@ -966,6 +966,24 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 </div>
 
 <!-- ═══════════ SCALE I · THE COUNCIL · SEVEN SPECIALISTS ═══════════ -->
+
+<!-- ═══════════ THE MAP — contents for the page itself ═══════════ -->
+<section id="themap" aria-label="Contents">
+  <div class="mh">The Map</div>
+  <h2>What&rsquo;s Here</h2>
+  <p class="msub">Eight parts, in order. Each one is a thing that already works &mdash; where it doesn&rsquo;t, it says so.</p>
+  <nav class="rows">
+    <a class="row" href="#council" style="--rc:#00ff9c"><span class="num">I</span><span><span class="ttl">The Council</span><span class="desc">Seven agents. Each owns a subject and answers from its own library.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#system" style="--rc:#5fe0ff"><span class="num">II</span><span><span class="ttl">How It Works</span><span class="desc">Ask for something. It routes to whoever owns the work, and comes back cited.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#views" style="--rc:#e8c45c"><span class="num">III</span><span><span class="ttl">Explore</span><span class="desc">One world, more than one way to stand in it.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#pixelworld" style="--rc:#b07cff"><span class="num">III·b</span><span><span class="ttl">Pixel World</span><span class="desc">The walkable city, where agents live as characters you can approach.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#arcade" style="--rc:#ff8a5c"><span class="num">IV</span><span><span class="ttl">The Arcade</span><span class="desc">Ten games. Short sessions, head to head.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#aura" style="--rc:#00ff9c"><span class="num">V</span><span><span class="ttl">AURA</span><span class="desc">The layer that answers without paying for a model call when it can.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#ragbrain" style="--rc:#5fe0ff"><span class="num">V·b</span><span><span class="ttl">The RAG Brain</span><span class="desc">401,767 passages, organised and cited back to source.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#mcp" style="--rc:#ff6f6f"><span class="num">VI</span><span><span class="ttl">MCP & RAG</span><span class="desc">Connect your own tools, or drop your agent into the world.</span></span><span class="go">↓</span></a>
+  </nav>
+</section>
+
 <section class="blk hud" id="council" data-scale="I · The Council">
   <div class="wrap reveal">
     <div class="shead">
@@ -1173,7 +1191,46 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     #ragbrain .rb-gate a{display:inline-block;margin-top:14px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#04120a;background:#e8c45c;border-radius:12px;padding:13px 30px;text-decoration:none}
     #ragbrain .rb-spin i{display:block;width:56px;height:2px;background:linear-gradient(90deg,transparent,#00ff9c,transparent);animation:rbpulse 1.3s ease-in-out infinite}
     @keyframes rbpulse{0%,100%{opacity:.3;transform:scaleX(.55)}50%{opacity:1;transform:scaleX(1)}}
-  </style>
+  
+/* ══ THE MAP — the landing's own contents page ═══════════════════════════
+   The page has eight sections and had no way to see them: the tab bar links
+   to other PAGES, so the content itself was an unmarked scroll. This is the
+   index — big, bold, and it states what each section is before you commit to
+   scrolling to it. The roman numerals are not decoration; they are the
+   ordering the sections already carry in data-scale. */
+#themap{ position:relative; z-index:3; padding:clamp(46px,7vw,90px) 5vw clamp(30px,5vw,60px); }
+#themap .mh{ font-family:var(--f-mono); font-size:10px; letter-spacing:.34em; text-transform:uppercase;
+  color:var(--gold); opacity:.8; }
+#themap h2{ font-family:var(--f-display); font-weight:900; letter-spacing:.02em; line-height:1;
+  font-size:clamp(32px,6vw,64px); margin:10px 0 6px; }
+#themap .msub{ font-family:var(--f-serif); font-style:italic; color:var(--ink-soft);
+  font-size:clamp(14px,1.7vw,17px); max-width:60ch; }
+#themap .rows{ margin-top:clamp(24px,3.6vw,44px); border-top:1px solid var(--edge); }
+#themap a.row{
+  display:grid; grid-template-columns:74px 1fr auto; gap:clamp(12px,2vw,26px); align-items:center;
+  padding:clamp(15px,2.1vw,24px) 6px; border-bottom:1px solid var(--edge);
+  text-decoration:none; color:inherit; position:relative; overflow:hidden;
+  transition:padding-left .35s var(--ease), background .35s var(--ease);
+}
+#themap a.row::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:2px;
+  background:var(--rc); transform:scaleY(0); transform-origin:bottom;
+  transition:transform .35s var(--ease); }
+#themap a.row:hover, #themap a.row:focus-visible{ padding-left:20px; background:rgba(255,255,255,.022); outline:none; }
+#themap a.row:hover::before, #themap a.row:focus-visible::before{ transform:scaleY(1); }
+#themap .num{ font-family:var(--f-mono); font-size:12px; letter-spacing:.16em; color:var(--rc); }
+#themap .ttl{ display:block; font-family:var(--f-display); font-weight:900; letter-spacing:.03em; line-height:1.05;
+  font-size:clamp(24px,3.9vw,44px); }
+#themap .desc{ display:block; font-size:14px; color:var(--ink-soft); margin-top:5px; line-height:1.5; max-width:52ch; }
+#themap .go{ font-family:var(--f-mono); font-size:11px; letter-spacing:.2em; color:var(--ink-faint);
+  transition:color .3s var(--ease), transform .3s var(--ease); }
+#themap a.row:hover .go, #themap a.row:focus-visible .go{ color:var(--rc); transform:translateX(5px); }
+@media(max-width:700px){
+  #themap a.row{ grid-template-columns:52px 1fr; gap:12px; padding:16px 4px; }
+  #themap .go{ display:none; }
+  #themap .desc{ font-size:13px; }
+}
+@media (prefers-reduced-motion: reduce){ #themap a.row, #themap a.row::before, #themap .go{ transition:none; } }
+</style>
   <div class="wrap reveal">
     <div class="rb-hero">
       <div class="rb-kick">◇ The RAG Brain · grounded · cited · live</div>
