@@ -1027,6 +1027,19 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
         <p>Finished work — content, code, analysis — delivered where you need it. AURA keeps the cost low along the way.</p></div>
     </div>
   </div>
+
+      <!-- live demonstration of the routing described above -->
+      <div id="tryit">
+        <div class="tk">Try it</div>
+        <h3>Ask for something. See who takes it.</h3>
+        <p class="ts">This is the real router, not a mock-up. Type what you want done and the council decides which agent owns it &mdash; the same way it decides when you actually use SHADDAI.</p>
+        <div class="trow">
+          <input id="tqi" type="text" autocomplete="off" placeholder="make me a 3D model and a voice over" aria-label="What do you want done?" />
+          <button class="tgo" id="tqg" type="button">Route it</button>
+        </div>
+        <div class="egs" id="tqe"></div>
+        <div class="tout" id="tqo"></div>
+      </div>
 </section>
 
 <div class="seam alt" aria-hidden="true"></div>
@@ -1230,6 +1243,54 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   #themap .desc{ font-size:13px; }
 }
 @media (prefers-reduced-motion: reduce){ #themap a.row, #themap a.row::before, #themap .go{ transition:none; } }
+
+/* ══ TRY IT — the live router ═════════════════════════════════════════════
+   The four steps above DESCRIBE the flow. This one DEMONSTRATES it: type a
+   request and watch the council actually decide who takes it, against the
+   real /api/route endpoint. An explanation you can poke is worth more than
+   another paragraph, and it proves the routing is real rather than a claim. */
+#tryit{ margin-top:clamp(26px,3.6vw,44px); border:1px solid var(--edge);
+  border-radius:3px; background:rgba(255,255,255,.02); padding:clamp(18px,2.6vw,30px); }
+#tryit .tk{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.28em;
+  text-transform:uppercase; color:var(--emerald); }
+#tryit h3{ font-family:var(--f-display); font-weight:900; letter-spacing:.03em;
+  font-size:clamp(20px,2.8vw,30px); margin:8px 0 4px; }
+#tryit .ts{ color:var(--ink-soft); font-size:14.5px; max-width:62ch; line-height:1.6; }
+#tryit .trow{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+#tryit input{ flex:1 1 260px; min-width:0; background:var(--void2); border:1px solid var(--edge);
+  border-radius:2px; color:var(--ink); font-family:var(--f-mono); font-size:16px;
+  padding:13px 14px; min-height:50px; outline:none; }
+#tryit input:focus{ border-color:var(--emerald); }
+#tryit .tgo{ min-height:50px; padding:0 22px; border:1px solid var(--emerald);
+  background:var(--emerald); color:var(--void); font-family:var(--f-mono); font-size:11.5px;
+  letter-spacing:.16em; text-transform:uppercase; font-weight:600; border-radius:2px; cursor:pointer; }
+#tryit .tgo[disabled]{ opacity:.45; cursor:default; }
+#tryit .egs{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+#tryit .eg{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px;
+  padding:9px 12px; min-height:40px; background:none; cursor:pointer;
+  transition:border-color .2s, color .2s; }
+#tryit .eg:hover{ color:var(--ink); border-color:var(--emerald); }
+#tryit .tout{ margin-top:18px; min-height:0; }
+#tryit .tline{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; }
+#tryit .hits{ display:flex; flex-direction:column; gap:8px; }
+#tryit .hit{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+  border:1px solid var(--edge); border-left:2px solid var(--hc); border-radius:2px;
+  padding:12px 14px; background:rgba(255,255,255,.015); }
+#tryit .hit .who{ font-family:var(--f-display); font-weight:900; font-size:15px;
+  letter-spacing:.09em; color:var(--hc); }
+#tryit .hit .role{ font-size:13px; color:var(--ink-soft); }
+#tryit .hit .pick{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--void); background:var(--hc); padding:4px 8px; border-radius:2px; }
+#tryit .hit.sub .pick{ background:none; color:var(--ink-faint); border:1px solid var(--edge); }
+#tryit .why{ font-family:var(--f-mono); font-size:10px; letter-spacing:.1em;
+  color:var(--ink-faint); margin-top:10px; }
+#tryit .why b{ color:var(--emerald); font-weight:400; }
+@media(max-width:560px){
+  #tryit .hit{ grid-template-columns:1fr auto; }
+  #tryit .hit .role{ grid-column:1 / -1; }
+}
 </style>
   <div class="wrap reveal">
     <div class="rb-hero">
@@ -2109,6 +2170,69 @@ function tick(el,to,suf){ if(!el) return; suf=suf||''; var t0=performance.now();
   }
   vb.addEventListener('click', function(){ set(!document.body.classList.contains('immersive')); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && document.body.classList.contains('immersive')) set(false); });
+})();
+</script>
+
+<script>
+/* TRY IT — hits the real /api/route so the "how it works" section proves
+   itself instead of asserting. Fails quietly: if the endpoint is unreachable
+   the section still reads as an explanation. */
+(function () {
+  var inp = document.getElementById('tqi'), go = document.getElementById('tqg'),
+      out = document.getElementById('tqo'), egs = document.getElementById('tqe');
+  if (!inp) return;
+
+  var EG = [
+    'make me a 3D model and a voice over',
+    'trade the best coin on pumpfun',
+    'is this contract safe or a rug',
+    'write me a launch thread',
+    'why do people buy things they do not need'
+  ];
+  EG.forEach(function (q) {
+    var b = document.createElement('button');
+    b.className = 'eg'; b.type = 'button'; b.textContent = q;
+    b.addEventListener('click', function () { inp.value = q; run(); });
+    egs.appendChild(b);
+  });
+
+  function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  var HUE = { SHADDAI: '#e8c45c', ZEROX: '#ff6f6f', ORACLE: '#b07cff', NEXUS: '#5fe0ff',
+              TURTLE: '#00ff9c', QUILL: '#e8c45c', PIKADON: '#ff8a5c' };
+
+  function run() {
+    var q = (inp.value || inp.placeholder).trim();
+    if (!q) return;
+    go.disabled = true;
+    out.innerHTML = '<div class="tline">routing&hellip;</div>';
+    fetch('/api/route?q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var hits = (d.ranked || []).map(function (h, i) {
+          var c = HUE[h.agent] || '#00ff9c';
+          return '<div class="hit' + (i ? ' sub' : '') + '" style="--hc:' + c + '">' +
+                   '<span class="who">' + esc(h.agent) + '</span>' +
+                   '<span class="role">' + esc(h.theme || '') + '</span>' +
+                   '<span class="pick">' + (i ? 'can support' : 'takes it') + '</span>' +
+                 '</div>';
+        }).join('');
+        var topics = (d.matchedTopics || []).map(esc).join(', ');
+        out.innerHTML =
+          '<div class="tline">the council decided</div><div class="hits">' + hits + '</div>' +
+          (topics ? '<div class="why">matched on <b>' + topics + '</b></div>' : '');
+      })
+      .catch(function () {
+        out.innerHTML = '<div class="tline">router unreachable &mdash; try again in a moment</div>';
+      })
+      .then(function () { go.disabled = false; });
+  }
+
+  go.addEventListener('click', run);
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); run(); } });
 })();
 </script>
 </body>
