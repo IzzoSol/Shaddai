@@ -19,6 +19,12 @@
    Run `checkAgainst()` (exposed at GET /api/stripe/plans?verify=1) after any
    change in the Stripe dashboard.
 
+   WHAT THIS FILE DOES NOT OWN: the credit cost of an individual action. That
+   lives in backend/data/credit-costs.json, which is the tuning surface for
+   "an image costs 15 credits". This file owns the PRICE of a plan and the
+   ALLOWANCE it grants; that file owns what an action spends. The `tiers` block
+   inside credit-costs.json is a read-only mirror of the allowances here.
+
    ITEM IDS ARE FROZEN. `builder`, `pro`, `alpha`, `founder` and `credits_*`
    are the keys in payment-config.json and in the webhook's grant table. They
    are what a live Payment Link's client_reference_id encodes. Renaming one
@@ -55,20 +61,22 @@ const TIERS = [
       'Multi-agent workflow chains',
       'Video clipper and the Telegram signal bot',
       'Build 3D assets for the world',
-      'Sell your agent’s work to other members',
+      // NOT LISTED: selling your agent's work to other members. economy-service
+      // has intentionally no transfer/payout/withdraw — Sparks are closed-loop
+      // and one-directional — so there is currently NO way to pay an agent's
+      // owner. Advertising it would be selling something that cannot happen.
     ],
   },
   {
     id: 'alpha', tier: 'elite', name: 'Max', price: 199, interval: 'month',
     blurb: 'For power sellers and teams.',
-    monthlyCredits: 25000, rateLimit: 600, maxAgents: 99, modelTiers: ['cheap', 'standard', 'premium'],
+    monthlyCredits: 50000, rateLimit: 600, maxAgents: 99, modelTiers: ['cheap', 'standard', 'premium'],
     features: { scheduling: true, batching: true, byok: true, advancedWorkflows: true, prioritySupport: true, mcp: true },
     unlocks: [
       'Everything in Pro',
       'SHADDAI MCP — your own Claude or Grok uses the council and the brain',
       'Premium models and priority compute',
       'Brain lessons and the full library',
-      'Marketplace seller tools',
       'Host paid rooms, portals and private meet-ups',
     ],
   },
@@ -125,7 +133,13 @@ function grants() {
   for (const t of TIERS) if (t.tier !== 'free') g[t.id] = { tier: t.tier };
   g.builder = { tier: 'pro' };            // retired plan; existing links still honour Pro
   g.founder = { tier: FOUNDER.tier, founder: true };
-  for (const c of CREDIT_PACKS) g[c.id] = { credits: c.sparks * 100, sparks: c.sparks };
+  /* The billing-credit bonus per pack lives in credit-costs.json, which owns
+     credit numbers. Sparks are separate and always 1 per $1. */
+  let bonus = {};
+  try { bonus = (require('../data/credit-costs.json').topups) || {}; } catch (_) {}
+  for (const c of CREDIT_PACKS) {
+    g[c.id] = { credits: (bonus[c.id] && bonus[c.id].credits) || c.usd * 100, sparks: c.sparks };
+  }
   return g;
 }
 

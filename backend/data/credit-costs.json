@@ -1,30 +1,78 @@
 {
-  "_README": "SHADDAI credit economics — the SINGLE SOURCE OF TRUTH for what actions cost users and what plans grant. Credits are the billing-service unit (~$0.001 each internally, treated as abstract units). Outcome/hybrid model: cheap fast chat on Groq/local = 1 credit; premium/cloud strong chat + heavy generation cost more. BYOK (user brought their own API key) = 0 credits, never debited, never blocked. Tune the numbers here; billing-service.js debitForAction() and the dashboard both read this file. Action ids must match what brains.js / route handlers pass.",
-
+  "_README": "SHADDAI credit economics. THIS FILE OWNS ACTION COSTS ONLY \u2014 what each action debits. TIER PRICES AND MONTHLY ALLOWANCES LIVE IN backend/lib/tiers.js, which is canonical; the 'tiers' block below is a read-only mirror kept in sync for credit-meter's fallback path and must not be edited here. Credits are the billing-service unit. BYOK (user supplied their own API key) = 0 credits, never debited, never blocked. Tune action numbers here; credit-meter.js debitForAction() and the dashboard read this file.",
   "actions": {
-    "fast_chat":        { "credits": 1,   "label": "Agent chat — fast model (Groq / local Ollama)" },
-    "strong_chat":      { "credits": 10,  "label": "Agent chat — strong/cloud model (Claude / GPT / 70B / OpenRouter / Ollama Cloud)" },
-    "image_generate":   { "credits": 15,  "label": "Generate an image (FLUX)" },
-    "workflow_run":     { "credits": 25,  "label": "Multi-agent workflow run" },
-    "website_build":    { "credits": 200, "label": "Generate a website (workflow)" },
-    "clip_generate":    { "credits": 80,  "label": "Generate a short video clip" },
-    "video_commercial": { "credits": 400, "label": "Generate a commercial / long video" },
-    "voice_tts":        { "credits": 10,  "label": "Voice / TTS generation" }
+    "fast_chat": {
+      "credits": 1,
+      "label": "Agent chat \u2014 fast model (Groq / local Ollama)"
+    },
+    "strong_chat": {
+      "credits": 10,
+      "label": "Agent chat \u2014 strong/cloud model (Claude / GPT / 70B / OpenRouter / Ollama Cloud)"
+    },
+    "image_generate": {
+      "credits": 15,
+      "label": "Generate an image (FLUX)"
+    },
+    "workflow_run": {
+      "credits": 25,
+      "label": "Multi-agent workflow run"
+    },
+    "website_build": {
+      "credits": 200,
+      "label": "Generate a website (workflow)"
+    },
+    "clip_generate": {
+      "credits": 80,
+      "label": "Generate a short video clip"
+    },
+    "video_commercial": {
+      "credits": 400,
+      "label": "Generate a commercial / long video"
+    },
+    "voice_tts": {
+      "credits": 10,
+      "label": "Voice / TTS generation"
+    }
   },
-
   "defaultActionCredits": 1,
-
   "tiers": {
-    "free":  { "monthlyCredits": 500,   "label": "Free" },
-    "pro":   { "monthlyCredits": 5000,  "label": "Pro" },
-    "elite": { "monthlyCredits": 50000, "label": "Elite" },
-    "alpha": { "monthlyCredits": 50000, "label": "Alpha" }
+    "free": {
+      "monthlyCredits": 500,
+      "label": "Free",
+      "_mirror_of": "lib/tiers.js"
+    },
+    "pro": {
+      "monthlyCredits": 5000,
+      "label": "Pro",
+      "_mirror_of": "lib/tiers.js"
+    },
+    "elite": {
+      "monthlyCredits": 50000,
+      "label": "Max",
+      "_mirror_of": "lib/tiers.js"
+    }
   },
-
   "topups": {
-    "credits_10":  { "usd": 10,  "credits": 1000 },
-    "credits_25":  { "usd": 25,  "credits": 2750 },
-    "credits_50":  { "usd": 50,  "credits": 6000 },
-    "credits_100": { "usd": 100, "credits": 13000 }
+    "_note": "Sparks are granted by stripe-webhook at 1 Spark per $1 of amount_total. These credit figures are the SEPARATE billing-credit bonus for the same pack.",
+    "credits_10": {
+      "usd": 10,
+      "credits": 1000,
+      "sparks": 10
+    },
+    "credits_25": {
+      "usd": 25,
+      "credits": 2750,
+      "sparks": 25
+    },
+    "credits_50": {
+      "usd": 50,
+      "credits": 6000,
+      "sparks": 50
+    },
+    "credits_100": {
+      "usd": 100,
+      "credits": 13000,
+      "sparks": 100
+    }
   }
 }
