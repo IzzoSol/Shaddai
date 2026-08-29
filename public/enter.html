@@ -376,6 +376,7 @@ footer b{ color:var(--ink-soft); font-weight:400; }
 </div>
 
 <script src="/js/shd-modules.js"></script>
+<script src="/js/enter-intro.js"></script>
 <script src="/js/shd-chrome.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
@@ -603,6 +604,10 @@ footer b{ color:var(--ink-soft); font-weight:400; }
 
   paintAuth();
   setShowAll(showAll);   // renders once, in the mode the visitor left it in
+
+  /* the intro runs after the doors exist, so it can hand off into them.
+     It self-limits to once per session and skips under reduced motion. */
+  try { window.SHDIntro && window.SHDIntro.play(); } catch (e) {}
 })();
 </script>
 
