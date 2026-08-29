@@ -3351,16 +3351,28 @@ const runWorkflowStreaming = async (req, res) => {
   let prevOutput = '';
   let failedCount = 0;
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  // 'no-transform' + X-Accel-Buffering tell the compression middleware and any
-  // proxy (nginx/Render) not to buffer this response. Without them every event
-  // below arrives in one lump at the end, which reads to a user as a hang.
-  res.setHeader('Cache-Control', 'no-cache, no-transform');
-  res.setHeader('X-Accel-Buffering', 'no');
-  res.setHeader('Connection', 'keep-alive');
-  if (typeof res.flushHeaders === 'function') res.flushHeaders();
+  /* Two callers, two contracts. /workflows/run must keep returning ONE JSON
+     payload — the dashboard (public/index.html) calls it and parses JSON, so
+     streaming it silently breaks that feature. /workflows/run/stream, or any
+     caller that asks for text/event-stream, gets incremental events. */
+  const wantsStream = /\/stream$/.test(req.path || '')
+    || String(req.headers.accept || '').includes('text/event-stream');
+
+  const events = [];
+
+  if (wantsStream) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    // 'no-transform' + X-Accel-Buffering tell the compression middleware and any
+    // proxy (nginx/Render) not to buffer this response. Without them every event
+    // below arrives in one lump at the end, which reads to a user as a hang.
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('Connection', 'keep-alive');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+  }
 
   const send = (data) => {
+    if (!wantsStream) { events.push(data); return; }   // buffered for the JSON reply
     try {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
       if (typeof res.flush === 'function') res.flush();
@@ -3369,6 +3381,7 @@ const runWorkflowStreaming = async (req, res) => {
   // Heartbeat comment every 15s so proxies and clients see life during a long
   // single step (one model call can run for minutes).
   const heartbeat = setInterval(() => {
+    if (!wantsStream) return;
     try { res.write(': keep-alive\n\n'); if (typeof res.flush === 'function') res.flush(); } catch (_) {}
   }, 15000);
   if (typeof heartbeat.unref === 'function') heartbeat.unref();
@@ -3424,10 +3437,24 @@ const runWorkflowStreaming = async (req, res) => {
   send({ type: 'complete', runId, status: overallStatus, finalOutput: prevOutput, steps: results });
   send({ type: 'done', runId, status: overallStatus, steps: results.length });
   clearInterval(heartbeat);
+
+  if (!wantsStream) {
+    // the original JSON contract the dashboard depends on
+    return res.json({
+      success: overallStatus !== 'failed',
+      runId,
+      workflow: workflowDef.name,
+      status: overallStatus,
+      steps: results,
+      finalOutput: prevOutput,
+      events,               // the same progress events, for anyone who wants them
+    });
+  }
   res.end();
 };
 
-router.post('/workflows/run', runWorkflowStreaming);
+// One handler, two contracts — it branches on the path / Accept header.
+router.post('/workflows/run', runWorkflowStreaming);          // -> JSON (unchanged)
 // Explicit streaming alias - same events, unambiguous name for clients that want
 // incremental progress rather than one terminal payload.
 router.post('/workflows/run/stream', runWorkflowStreaming);
