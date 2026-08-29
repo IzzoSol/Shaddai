@@ -119,14 +119,26 @@ Rules when touching money code:
 
 ## 7. What is real vs. what is not
 
-Be accurate about this. Overstating it is the fastest way to lose a founding member.
+Be accurate about this. Overstating it is the fastest way to lose a founding member —
+and **check the tree before declaring something missing**. This repo is large enough that
+"not built" has been asserted about things that were already working (MCP, twice).
 
 **Works today:** the 7 agents · RAG brain with citations · agent routing · Agent Forge (end to end) · workflows · Pro Signals · the 3D sculptor and gallery · the arcade · both worlds · AURA · 554 tools · Stripe checkout.
 
 **Does not work yet:**
 - **Paybox** — `backend/paybox-guard.js` exists with a full 5-layer safety model, but is **not mounted**, disabled by default, and its REST contract is **unverified against live docs**. Do not treat it as working.
-- **MCP server** — intended, not built.
+- ~~MCP server~~ — **CORRECTION: this IS built.** `backend/mcp-server-rag.js` is a
+  working stdio MCP server (v2.2.0) exposing `list_agents`, `list_rag_docs`,
+  `rag_search`, `rag_ask`, `run_agent` plus `kb://<agent>` resources.
+  `backend/mcp-client.js` is a dependency-free JSON-RPC client that connects
+  SHADDAI *to* external MCP servers (stdio + streamable-HTTP), lazily. Live
+  status at `GET /api/mcp/status`. What is missing is only **tier gating**
+  (MCP is a Max-tier feature) and packaging/docs — not the protocol work.
 - **Grok bot ingress** — not built.
+- **x402 / Bankr** — `bankr/` holds a working x402 agent-monetization flow
+  (`x402-shaddai-agent.js`, `x402-shaddai-alpha.js`, `app-shaddai-monetize`)
+  and `backend/lib/x402*.js` + `x402-*-routes.js` are in the tree. Treat this
+  as the proven micropayment path, not a greenfield.
 - **Land, plots, the monthly siege** — regions and characters exist; the economy on top of them does not.
 - **AURA hit rate** — never measured. Treat token savings as a design goal, not a proven number.
 - **Touch controls** for most arcade games — keyboard/mouse only.
