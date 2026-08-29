@@ -160,10 +160,14 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
 }
 
 /* ── inline action sheet: ask the council without leaving the wheel ──── */
+/* same rule as the other scrims: blur only while open, or the composited
+   layer persists over the wheel's canvas and the page reads as frozen. */
 .act-scrim{ position:fixed; inset:0; z-index:70; background:rgba(3,5,7,.74); opacity:0;
-  pointer-events:none; transition:opacity .3s var(--ease);
-  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
-.act-scrim.on{ opacity:1; pointer-events:auto; }
+  pointer-events:none; visibility:hidden;
+  transition:opacity .3s var(--ease), visibility 0s linear .3s; }
+.act-scrim.on{ opacity:1; pointer-events:auto; visibility:visible;
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+  transition:opacity .3s var(--ease), visibility 0s linear 0s; }
 .act{ position:fixed; z-index:71; left:50%; bottom:0; width:min(620px,100%);
   transform:translate(-50%,102%); transition:transform .42s var(--ease);
   background:var(--void2); border:1px solid color-mix(in srgb, var(--accent) 34%, transparent);

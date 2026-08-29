@@ -187,9 +187,26 @@ html[data-theme-skin="brutalist"] .slot .wash, html[data-theme-skin="serif"] .sl
 }
 @media(max-width:760px){ .slot .name{ font-size:clamp(32px,10vw,46px); } }
 html[data-theme-skin="brutalist"] .slot .name, html[data-theme-skin="serif"] .slot .name{ text-shadow:none; }
-.slot .go{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
-  color:var(--ink-faint); margin-top:6px; display:flex; align-items:center; gap:7px;
-  opacity:0; transform:translateY(4px); transition:opacity .4s var(--ease), transform .4s var(--ease); }
+/* The CTA was a whisper of muted text. It is now an actual accent button that
+   arrives on approach, with a sheen that sweeps once across it — the sweep is
+   a single translate on a skewed gradient, which is cheap enough to run on a
+   phone and reads as light catching an edge rather than as an animation. */
+.slot .go{ position:relative; overflow:hidden; align-self:flex-start;
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--void); background:var(--accent); font-weight:600;
+  margin-top:11px; padding:9px 15px; border-radius:2px;
+  display:inline-flex; align-items:center; gap:8px;
+  box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 26%, transparent);
+  opacity:0; transform:translateY(6px);
+  transition:opacity .4s var(--ease), transform .4s var(--ease); }
+html[data-theme-skin="brutalist"] .slot .go, html[data-theme-skin="serif"] .slot .go{ color:#fff; }
+.slot .go::after{ content:''; position:absolute; top:0; bottom:0; width:38%; left:-45%;
+  background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+  transform:skewX(-18deg); }
+.slot:hover .go::after, .slot:focus-visible .go::after, .slot.touched .go::after{
+  animation:sheen 1.1s var(--ease) .12s 1; }
+@keyframes sheen{ to{ left:120%; } }
+@media (prefers-reduced-motion: reduce){ .slot .go::after{ display:none; } }
 
 /* awake state — pointer hover, keyboard focus, or touch-press all share it */
 .slot:hover, .slot:focus-visible, .slot.touched{ transform:translateY(-3px); border-color:color-mix(in srgb, var(--accent) 52%, transparent); }
@@ -229,9 +246,16 @@ body.editing .slot.pending{ border-color:var(--accent); box-shadow:0 0 0 1px var
 body.editing .slot .go{ display:none; }
 
 /* ── drawer ─────────────────────────────────────────────────────────── */
-.scrim{ position:fixed; inset:0; z-index:60; background:rgba(3,5,7,.72); opacity:0; pointer-events:none;
-  transition:opacity .35s var(--ease); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
-.scrim.on{ opacity:1; pointer-events:auto; }
+/* backdrop-filter must be applied ONLY while open. Left on permanently it is a
+   composited blur layer that never goes away — over the WebGL canvas that reads
+   as the whole page freezing blurry after the sheet closes. visibility:hidden
+   takes it out of compositing entirely rather than trusting opacity:0. */
+.scrim{ position:fixed; inset:0; z-index:60; background:rgba(3,5,7,.72); opacity:0;
+  pointer-events:none; visibility:hidden;
+  transition:opacity .35s var(--ease), visibility 0s linear .35s; }
+.scrim.on{ opacity:1; pointer-events:auto; visibility:visible;
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+  transition:opacity .35s var(--ease), visibility 0s linear 0s; }
 .sheet{
   position:fixed; z-index:61; left:50%; bottom:0; width:min(560px,100%);
   transform:translate(-50%,102%); transition:transform .45s var(--ease);

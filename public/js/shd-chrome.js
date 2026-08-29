@@ -22,8 +22,16 @@
   'use strict';
   if (root.SHDChrome) return;
 
+  /* Obsidian stays first and stays the default — emerald/gold/neon is the
+     house identity. The three PAIRS below are complements (opposite sides of
+     the wheel), which is why they read as designed rather than as two colours
+     that happen to be on screen: warm against cool, each carrying its own
+     ground so the page is never just a recoloured dark. */
   var SKINS = [
     { id: 'glitch', name: 'Obsidian', dot: '#00ff9c' },
+    { id: 'ember', name: 'Ember', dot: '#ff7a2f' },      // orange × violet
+    { id: 'royal', name: 'Royal', dot: '#b07cff' },      // violet × gold
+    { id: 'tide', name: 'Tide', dot: '#5fe0ff' },        // cyan × emerald
     { id: 'void', name: 'Void', dot: '#e8e8e8' },
     { id: 'terminal', name: 'Terminal', dot: '#00ff41' },
     { id: 'amber', name: 'Amber', dot: '#ffb000' },
@@ -35,10 +43,33 @@
   function fire(list, v) { list.forEach(function (f) { try { f(v); } catch (e) {} }); }
 
   /* ── styles ───────────────────────────────────────────────────────────── */
+  /* The pair skins live HERE rather than per-page: injected at runtime into
+     <head>, so any screen using the shared chrome picks them up with no
+     duplication. Each sets its own ground (--void) as well as its accents —
+     a theme that only swaps accents on the same black reads as a filter, not
+     a theme. */
+  var PAIR_SKINS = [
+    'html[data-theme-skin="ember"]{--void:#0b0705;--void2:#120b07;--panel:#18100a;',
+    '--edge:rgba(255,122,47,.18);--ink:#f6ece4;--ink-soft:#c2a08c;--ink-faint:#7a5a46;',
+    '--g1:rgba(255,122,47,.14);--g2:rgba(176,124,255,.10);--g3:rgba(255,60,120,.05)}',
+    'html[data-theme-skin="royal"]{--void:#07060d;--void2:#0c0a16;--panel:#120f1f;',
+    '--edge:rgba(176,124,255,.18);--ink:#efeaf8;--ink-soft:#a89bc4;--ink-faint:#5f5480;',
+    '--g1:rgba(176,124,255,.14);--g2:rgba(232,196,92,.09);--g3:rgba(95,224,255,.05)}',
+    'html[data-theme-skin="tide"]{--void:#04090c;--void2:#071016;--panel:#0a171f;',
+    '--edge:rgba(95,224,255,.18);--ink:#e6f4f6;--ink-soft:#8fb3bd;--ink-faint:#4a6b75;',
+    '--g1:rgba(95,224,255,.13);--g2:rgba(0,255,156,.10);--g3:rgba(120,160,255,.05)}'
+  ].join('');
+
   var CSS = [
-    '.shdc-scrim{position:fixed;inset:0;z-index:60;background:rgba(3,5,7,.72);opacity:0;pointer-events:none;',
-    'transition:opacity .35s cubic-bezier(.22,.7,.2,1);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}',
-    '.shdc-scrim.on{opacity:1;pointer-events:auto}',
+    /* blur ONLY while open — a permanent backdrop-filter layer never stops
+       compositing, which over a WebGL canvas looks like the page has frozen
+       blurry once the sheet closes. visibility removes it outright. */
+    '.shdc-scrim{position:fixed;inset:0;z-index:60;background:rgba(3,5,7,.72);opacity:0;',
+    'pointer-events:none;visibility:hidden;',
+    'transition:opacity .35s cubic-bezier(.22,.7,.2,1),visibility 0s linear .35s}',
+    '.shdc-scrim.on{opacity:1;pointer-events:auto;visibility:visible;',
+    '-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);',
+    'transition:opacity .35s cubic-bezier(.22,.7,.2,1),visibility 0s linear 0s}',
     '.shdc-sheet{position:fixed;z-index:61;left:50%;bottom:0;width:min(560px,100%);',
     'transform:translate(-50%,102%);transition:transform .45s cubic-bezier(.22,.7,.2,1);',
     'background:var(--void2,#0a0e13);border:1px solid var(--edge,rgba(120,150,140,.14));border-bottom:0;',
@@ -78,7 +109,7 @@
   function injectOnce() {
     if (document.getElementById('shdc-css')) return;
     var st = document.createElement('style');
-    st.id = 'shdc-css'; st.textContent = CSS;
+    st.id = 'shdc-css'; st.textContent = PAIR_SKINS + CSS;
     document.head.appendChild(st);
   }
 
