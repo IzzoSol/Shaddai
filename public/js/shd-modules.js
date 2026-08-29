@@ -254,11 +254,17 @@
       name: 'FORGE',
       accent: C.gold,
       art: '/assets/nav/forge.jpg',
-      blurb: 'Build your own operatives and objects, then trade them.',
+      blurb: 'Build your own operatives, sprites and objects, then trade them.',
       items: [
-        { id: 'forge2d',  name: 'THE FORGE',  accent: C.gold,    art: '/assets/nav/forge.jpg',   href: '/forge.html', blurb: 'Forge an agent — its role, its skills, its face, its voice.' },
-        { id: 'forge3d',  name: '3D SCULPT',  accent: C.cyan,    art: '/assets/nav/worlds.jpg',  href: '/forge-3d.html', blurb: 'The procedural 3D sculptor. Build objects out of primitives and save them as presets.' },
-        { id: 'gallery',  name: 'GALLERY',    accent: C.emerald, art: '/assets/nav/apis.jpg',    href: '/forge-gallery.html', blurb: 'Everything the community has forged, browsable and claimable.' }
+        { id: 'agent',    name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',   href: '/forge.html', blurb: 'Forge an agent — personality, skills, tools, the identity that makes it an agent.' },
+        { id: 'pixel',    name: '2D PIXEL',   accent: C.emerald, art: '/assets/landing/tab-worlds.png', href: '/pixel-forge.html', blurb: 'Pixel-realm assets — sprites and objects for the 2D world.' },
+        { id: 'forge3d',  name: '3D WORLD',   accent: C.cyan,    art: '/assets/nav/worlds.jpg',  href: '/forge-3d.html', blurb: 'The procedural 3D sculptor. Build objects that live in the 3D world.' },
+        // 2026-08-29: owner wants a REAL marketplace here (create/list/buy/sell,
+        // owner-curated + monthly featured) — forge-gallery.html today is still
+        // the static placeholder, not that. Wired so the menu isn't a dead end;
+        // rebuilding the page into a real marketplace is tracked in
+        // TODO-COORDINATION.md, not done here.
+        { id: 'market3d', name: '3D MARKETPLACE', accent: C.violet, art: '/assets/nav/apis.jpg', href: '/forge-gallery.html', blurb: 'Browse what the community has forged. (Marketplace rebuild in progress — buy/sell/curate isn’t real yet.)' }
       ]
     },
     {
@@ -304,24 +310,12 @@
       items: [
         { id: 'bazaar',  name: 'THE BAZAAR', accent: C.violet,  art: '/assets/nav/apis.jpg',       href: '/marketplace-shop-v2.html', blurb: 'The night market — buy, sell and trade what the council and the community have made.' },
         { id: 'aura',    name: 'AURA',        accent: C.emerald, art: '/assets/nav/aura.jpg',       href: '/aura.html', blurb: 'The token-saving layer — deterministic answers before any model is called.' },
-        { id: 'api',     name: 'API',         accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Wire SHADDAI into your own stack.' }
-      ]
-    },
-    {
-      id: 'others',
-      name: 'OTHERS',
-      accent: C.cyan,
-      art: '/assets/nav/automation.jpg',
-      blurb: 'Bring your own agent. Connect a Grok bot or another external agent to the council over MCP.',
-      // 2026-08-29: points at the real API-key page (mints a key, documents auth)
-      // since that's the only real, working page today. The federation/MCP
-      // endpoint itself (/mcp/tools/call, key-gated) is live as of 6526fe3 —
-      // still needs its OWN dedicated connect page (show the manifest, issue an
-      // MCP key specifically, not the general API key) before this is really
-      // "the Grok bot / Paybox button." Paybox itself is still not connected
-      // (blocked on completing its OAuth) so it has nothing to link to yet.
-      items: [
-        { id: 'api-connect', name: 'CONNECT A BOT', accent: C.cyan, art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Mint an API key and wire an external agent (Grok bot, etc.) into the council.' }
+        // 2026-08-29: "connect a bot" lives here rather than a separate OTHERS
+        // bucket — things should go where they belong, not a catch-all. Points
+        // at the real API-key page for now; the federation/MCP endpoint itself
+        // (/mcp/tools/call, key-gated, live as of 6526fe3) still wants its own
+        // dedicated connect page (show the manifest, issue an MCP-specific key).
+        { id: 'api',     name: 'API',         accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Wire SHADDAI into your own stack — or bring your own agent (Grok bot, etc.) in over MCP.' }
       ]
     },
     {

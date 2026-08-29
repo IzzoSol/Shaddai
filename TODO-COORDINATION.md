@@ -63,3 +63,32 @@ Both are in `public/index.html` (3.7MB — targeted grep/sed only).
 
 ### Note on subagents
 9 of 11 dispatched subagents failed (600s stall watchdog or session limit). Only narrow, single-fix tasks completed. Recommend doing work directly.
+
+---
+
+## Terminal A update — 2026-08-29 (agent/backend + Simple Mode nav focus)
+
+Same subagent experience here — 2/2 dispatched failed (API error, stall). Doing everything directly now too.
+
+### Shipped since the last entry
+- `<pending commit>` **head-explode.js**: opened head "compartments" (rag-cockpit.html) showed nothing behind the cut — head model is a hollow shell, clipping alone exposes no geometry. Added flat caps at each cut boundary so an opened compartment reads as a solid slice, not a void.
+- `<pending commit>` **shd-modules.js** (the single source of truth behind BOTH `enter.html`'s tiles and `simple.html`'s wheel — owner didn't realize this already exists as one clean file): GAMES sub-wheel pointed at battle-arena.html/tactics.html/basketball-jam.html — real files, but never in arcade.html's actual FEATURED (unlocked) roster. Replaced with the real roster (climb, hoops, gridiron, soccer, dodgeball, starfall, royale). xto-adventure + shaddai-realms confirmed excluded on purpose — arcade.html password-gates them (BETA_GAMES, "SHADDAIGAMES"). Dropped CREATE tab per owner; LAUNCH KIT (still liked) relocated into BRAIN/docs instead of deleted.
+- In progress, not yet committed: removing the OTHERS category (owner wants things routed contextually, not a catch-all bucket) and restructuring FORGE into agent-creation (`forge.html`) / 2D pixel-realm assets (`pixel-forge.html`, confirmed real) / 3D world sculpting (`forge-3d.html`) / 3D marketplace (owner explicitly wants this REAL — buy/sell/curate/featured, not `forge-gallery.html` relabeled — logging as a real backlog item below, not faking it).
+
+### ⚠️ Worth knowing
+- Confirms your `JWT_SECRET` finding matters a lot given the federation work: `6526fe3` added key-gated external agent access (`/api/a2a`, `/mcp/tools/call`) — separate auth mechanism (static keys in `backend/data/mcp-external-keys.json`, gitignored), not JWT-dependent, so it's unaffected by that gap, but flagging in case anything else assumes session tokens survive a restart.
+- Owner sent a live Solana wallet secret key and a Paybox signing key mid-session (not OAuth-related) — both saved to the Obsidian vault (`07 Credentials/SHADDAI-API-KEYS-MASTER.md`), neither wired into any code path. Mentioning so nobody's surprised finding them there.
+
+### Backlog captured, not built (owner described these this session — real specs, real scope, not started)
+1. **Real 3D marketplace** — people create/list 3D assets + sprites, buy/sell, owner curates some for the 3D world + "featured this month." Replaces `forge-gallery.html`, which is a static placeholder today, not a marketplace.
+2. **Help/discovery flow** — a "help me" button + category picker; user types what they need, filters to the right section/agent. First 3 uses free, then sign-in/pay gate.
+3. **Bring-your-own-bot workflows** — external agents (Grok bot etc.) using the same tool/workflow catalog a signed-in user gets. Federation endpoint (`6526fe3`) is the plumbing; no UI/onboarding for it yet.
+4. **Paybox-driven agent purchasing** ("agent asks, buys with Paybox," tip via wallet, groceries/party items) — explicitly blocked until Paybox OAuth completes; owner's own framing puts "buy" inside SIGNALS (sentiment+buy) and Bazaar, not a separate bucket.
+
+### Claiming next
+- Finishing the FORGE/OTHERS restructure above (`shd-modules.js` only)
+- `rag-cockpit.html` "shards" panel + other side buttons (item 3 in the original Open list) — head-compartment part is done, shards part isn't
+- Retrying skill-recipe conversion (item 2) and the dashboard/Forge/2D-world audit (item 1) once the above is committed
+
+### Not touching (yours)
+- `public/index.html`, dashboard themes/chrome, games touch controls, docs consolidation — all still terminal B's per your claim above.
