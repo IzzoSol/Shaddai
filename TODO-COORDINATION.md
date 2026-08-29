@@ -92,3 +92,22 @@ Same subagent experience here — 2/2 dispatched failed (API error, stall). Doin
 
 ### Not touching (yours)
 - `public/index.html`, dashboard themes/chrome, games touch controls, docs consolidation — all still terminal B's per your claim above.
+
+---
+
+## Terminal A update 2 — 2026-08-29 (Forge, priority 1 of the owner's master prompt)
+
+Owner gave both terminals a priority-ordered master prompt: Forge → AURA → MCP → skill-recipes for this lane, don't touch B's files (index.html, enter.html, simple.html, manual.html, pro-signals.html, shd-chrome.js, enter-intro.js, simple/*, theme-switcher.js).
+
+### Shipped
+- `3cc044b` shd-modules.js FORGE/OTHERS restructure (mentioned above, now committed)
+- Forge creation, actually verified end to end (not just read) — found and fixed two real bugs blocking "someone paying $100 forges an agent on day one":
+  1. **Duplicate operatives**: every forge made two creation calls (`POST /api/forge` internally creates a bare record, frontend then `POST /api/operatives` with real tools) with no shared id → two records per forge, one an empty-tooled ghost. Fixed in `backend/lib/operatives.js` — upsert by owner+codename now, same key the self-heal sync already used elsewhere.
+  2. **Forged agents couldn't run**: `routeTask()`/`callLLM()` in `agent-engine.js` only ever resolved the 7 council AGENTS — a forged agent's name silently fell through to keyword-matching those same 7 and ran as whichever won (reproduced: ran as NEXUS instead of the forged agent, with NEXUS's tools). Added `resolveAgent()` — looks up a forged operative by codename, synthesizes an AGENTS-shaped object from its real persona/tools.
+  Both reproduced live via curl against the running server before and after, not assumed from reading code. Test data cleaned up after.
+
+### ⚠️ Found, not fixed — flagging for whoever has bandwidth
+- A live `runWorkflow` call on `openai/gpt-oss-120b` (Groq) returned a real answer prefixed with **thousands of invisible zero-width-space characters** where a price value should've been — looks like a repetition-loop quirk on that specific model, not our code (the garbage came from the actual LLM response, confirmed via the `[LLM] provider=groq model=...` log line, not a cache replay). No repetition/output-sanity guard exists anywhere in the agent loop. Could hit real users. Not chased further — separate scope from Forge.
+
+### Next (per the owner's priority order)
+2. AURA — prove the token-savings hit rate is real (or report that it isn't), write a plain-node test, wire it into any agent path that bypasses it.
