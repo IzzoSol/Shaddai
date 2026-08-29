@@ -101,10 +101,30 @@ async function groq(messages, tools, keys) {
   throw lastErr || new Error('all Groq keys exhausted');
 }
 
+// AURA lazy-load (matches the try/catch-optional pattern used everywhere else
+// AURA is wired in — agent-engine.js's modelChat, api-proxy-routes.js's
+// /api/model/chat — so a missing/broken aura.js degrades to "always call Groq"
+// rather than breaking this endpoint).
+let _aura = null;
+function aura() { if (!_aura) { try { _aura = require('./aura'); } catch (_) { _aura = { route: () => ({ hit: false }), recordAnswer: () => {} }; } } return _aura; }
+
 async function runAgentWithTools(agentName, task, opts = {}) {
   const { TOOLS, AGENTS } = eng();
   const A = String(agentName || 'ORACLE').toUpperCase();
   const agent = AGENTS[A] || {};
+
+  // AURA free-path FIRST — before even requiring a Groq key, so a cache hit
+  // costs $0 and works even with no keys configured. This endpoint (Simple
+  // Mode's action wheel, the federation/MCP door) previously called Groq
+  // directly on every request, completely bypassing the token-saver every
+  // other agent-chat path already goes through.
+  try {
+    const hit = aura().route(String(task), { scope: A });
+    if (hit && hit.hit && hit.answer) {
+      return { response: hit.answer, toolsUsed: [], steps: 0, model: 'aura-cache', cached: true, tokensSaved: hit.savedTokensEst || 0 };
+    }
+  } catch (_) {}
+
   const keys = groqKeyPool(opts.apiKey);
   if (!keys.length) throw new Error('No Groq key configured');
 
@@ -139,6 +159,7 @@ async function runAgentWithTools(agentName, task, opts = {}) {
     const calls = msg.tool_calls || [];
     if (!calls.length) {
       try { kb().learn(A, task, msg.content || ''); } catch (_) {}
+      try { if (msg.content) aura().recordAnswer(String(task), msg.content, { scope: A }); } catch (_) {}
       return { response: msg.content || '', toolsUsed, steps: step + 1, model: MODEL };
     }
     for (const c of calls) {
@@ -163,6 +184,7 @@ async function runAgentWithTools(agentName, task, opts = {}) {
     const finalMsg = await groq(
       messages.concat([{ role: 'user', content: 'Give your final concise answer now, based on the tool results above.' }]),
       null, keys);
+    try { if (finalMsg && finalMsg.content) aura().recordAnswer(String(task), finalMsg.content, { scope: A }); } catch (_) {}
     return { response: (finalMsg && finalMsg.content) || '', toolsUsed, steps: MAX_STEPS, model: MODEL, capped: true };
   } catch (_) {
     return { response: '(reached step limit)', toolsUsed, steps: MAX_STEPS, capped: true };
