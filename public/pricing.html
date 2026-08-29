@@ -300,6 +300,21 @@
 #founders .side p{ font-size:13.5px; line-height:1.62; color:#93a49b; margin:0 0 12px; }
 #founders .side p:last-child{ margin-bottom:0; }
 #founders .side em{ color:#e9efe9; font-style:normal; }
+
+#unlock .ucta{ display:block; text-align:center; margin-top:20px; min-height:52px; line-height:52px;
+  font-family:var(--f-mono,monospace); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
+  font-weight:700; text-decoration:none; border-radius:2px; }
+#unlock .ucta.max{ background:#e8c45c; color:#0a0804; }
+#unlock .ucta.max:hover{ filter:brightness(1.08); }
+#unlock .sparks{ display:flex; gap:20px; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; margin-top:clamp(14px,2vw,20px); border:1px solid rgba(0,255,156,.22);
+  background:rgba(0,255,156,.04); padding:clamp(16px,2.2vw,22px); }
+#unlock .sparks b{ display:block; font-family:var(--f-display,'Cinzel',serif); font-weight:900;
+  font-size:19px; letter-spacing:.06em; color:#00ff9c; }
+#unlock .sparks span{ display:block; margin-top:5px; font-size:13.5px; line-height:1.55;
+  color:#93a49b; max-width:56ch; }
+#unlock .ucta.spark{ background:#00ff9c; color:#06080b; margin-top:0; flex:0 0 auto; padding:0 26px; }
+#unlock .ucta.spark:hover{ filter:brightness(1.08); }
 </style>
 </head>
 <body>
@@ -499,7 +514,7 @@
 
     <div class="col" style="--tc:#e8c45c">
       <div class="cn">MAX</div>
-      <div class="cp">Everything in Pro, plus</div>
+      <div class="cp">$200 &middot; everything in Pro, plus</div>
       <ul>
         <li><b>Brain lessons</b><span>The library organised into chapters and takeaways, not just searchable.</span></li>
         <li><b>The full book library</b><span>Every ingested source, browsable by subject.</span></li>
@@ -509,7 +524,16 @@
         <li class="soon"><b>Bazaar chat</b><span>Members&rsquo; room in the market. Not built yet.</span></li>
         <li class="soon"><b>World incentives &amp; siege standing</b><span>2D/3D perks and siege participation. Not built yet.</span></li>
       </ul>
+      <a class="ucta max" href="https://buy.stripe.com/4gM28tgn605t2rDf9AfUQ02" target="_blank" rel="noopener">Get Max</a>
     </div>
+  </div>
+
+  <div class="sparks">
+    <div>
+      <b>Just want Sparks?</b>
+      <span>Top up a wallet and spend it on whatever you like &mdash; agent work, a game entry, a cosmetic. 1 Spark = $1, fixed. No subscription.</span>
+    </div>
+    <a class="ucta spark" href="https://buy.stripe.com/bJeeVf8UEf0n8Q1bXofUQ03" target="_blank" rel="noopener">Add Sparks</a>
   </div>
 
   <p class="note"><b>On coin launches:</b> Pro and Max include ZEROX&rsquo;s <em>analysis</em> &mdash; the reasoning, the score, the hit-rate record. They do not include earlier entry than anyone else. Everyone sees a call at the same moment. Selling paying members a head start would make later buyers their exit liquidity, and that is not a business worth building on.</p>
