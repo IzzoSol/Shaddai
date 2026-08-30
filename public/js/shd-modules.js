@@ -275,15 +275,12 @@
       id: 'signals', name: 'SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg',
       blurb: 'Live calls — list, bubbles, heatmap and ranked.',
       items: [
-        /* The full terminal is the PRIMARY entry and stays that way. /signals.html
-           was built as a mobile companion — four fast views for reading the feed
-           on a phone — and was wrongly swapped in over the top of this one. It
-           belongs BESIDE the terminal, not instead of it. Merging the two is the
-           next job; until then both are reachable and each says what it is. */
-        { id: 'pro',    name: 'PRO TERMINAL', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/pro-signals.html',
-          blurb: 'The full terminal — every filter, every column, built for a desktop.' },
-        { id: 'mobile', name: 'QUICK VIEW',   accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/signals.html',
-          blurb: 'The same feed on a phone — list, bubbles, heatmap, ranked.' },
+        /* ONE entry, not two. Both pages still exist — the terminal routes
+           phones to /signals.html and the phone view offers the terminal on a
+           wide screen — so a single button lands everyone in the right place
+           and the menu does not ask the user to know which is which. */
+        { id: 'pro', name: 'PRO SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/pro-signals.html',
+          blurb: 'Live calls. The full terminal on a desktop, four fast views on a phone.' },
         { id: 'tg',     name: 'SHADDAI TG',  accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/m-signals.html', blurb: 'Calls delivered to Telegram.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
       ],

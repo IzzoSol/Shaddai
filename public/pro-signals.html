@@ -1,6 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* ONE ENTRY, RIGHT VIEW PER DEVICE.
+
+   This terminal is 2,800 lines of desktop-first layout with three media
+   queries — it was never built for a phone, and making it responsive properly
+   is a real job rather than a patch. /signals.html already IS that job: the
+   same feed, built thumb-first, with list, bubbles, heatmap and ranked.
+
+   So rather than one compromised page, this is one DOOR: arrive here on a
+   narrow screen and you are handed the view that works. `?full=1` overrides it
+   for anyone who genuinely wants the terminal on a phone, and the choice is
+   remembered so the redirect never fights someone who has already decided.
+
+   replace() rather than href so the back button returns to where they came
+   from instead of bouncing between the two pages. */
+(function () {
+  try {
+    var forced = /[?&]full=1/.test(location.search);
+    if (forced) { try { sessionStorage.setItem('shd_sig_full', '1'); } catch (e) {} return; }
+    if (sessionStorage.getItem('shd_sig_full') === '1') return;
+    if (window.innerWidth < 820) location.replace('/signals.html');
+  } catch (e) {}
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SHADDAI // ZEROX TERMINAL</title>

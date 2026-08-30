@@ -172,12 +172,25 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   letter-spacing:.1em; text-transform:uppercase; text-decoration:none; border-radius:3px; cursor:pointer; }
 #sheet .acts .pri{ background:var(--emerald); color:#04120c; border-color:var(--emerald); }
 #sheet .note{ margin-top:14px; font-size:11px; color:var(--ink-faint); line-height:1.65; }
+
+/* On a desktop the phone view is not the right tool — offer the terminal
+   rather than silently being the lesser of the two. Hidden below 820px, where
+   this view IS the right tool. */
+#toTerm{ display:none; }
+@media(min-width:820px){
+  #toTerm{ display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:0 14px;
+    border:1px solid var(--gold); color:var(--gold); background:none; border-radius:3px;
+    font-family:var(--f-mono); font-size:11px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; text-decoration:none; margin-right:8px; }
+  #toTerm:hover{ background:var(--gold); color:#140f02; }
+}
 </style>
 </head>
 <body>
 
 <header>
   <div class="brand"><b>SIGNALS</b><span class="pill"><span class="d"></span><span id="liveN">—</span></span></div>
+  <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
 </header>
 
