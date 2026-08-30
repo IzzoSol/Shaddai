@@ -35,14 +35,19 @@ const RAG_TOOLS = new Set(['list_agents', 'list_rag_docs', 'rag_search', 'rag_as
 
 const BASE = () => process.env.RENDER_EXTERNAL_URL || 'http://localhost:8099';
 
+// 2026-08-30: `example` is a REAL, runnable task string for POST /mcp/tools/call or
+// /api/a2a — grounded in each agent's actual tool list (agent-engine.js AGENTS.*.tools),
+// not aspirational copy. If you want an example for a capability that isn't listed here
+// (link-safety checking, X/Twitter account verification, etc.), it's because the
+// underlying tool doesn't exist yet — don't add an example that would lie about it.
 const AGENTS = [
-  { id:'SHADDAI', skill:'orchestration',  name:'Multi-Agent Orchestration', tags:['orchestration','workflow','delegate'],        description:'Master orchestrator — delegates sub-tasks, runs multi-agent chains, executive synthesis.' },
-  { id:'ORACLE',  skill:'research',        name:'Research & Intelligence',   tags:['research','web','arxiv','news','wikipedia'],   description:'Deep research: web, arxiv, news, wikipedia, hacker news, semantic scholar.' },
-  { id:'ZEROX',   skill:'defi_analysis',   name:'DeFi & Market Analysis',    tags:['crypto','defi','prices','whales','solana'],    description:'Live crypto prices, DefiLlama TVL/yields, DEX data, whale tracking, Solana tokens.' },
-  { id:'NEXUS',   skill:'code',            name:'Code & Architecture',       tags:['code','github','npm','regex','diagrams'],      description:'Code analysis, github/npm intel, bundle size, CVE lookup, diagrams.' },
-  { id:'QUILL',   skill:'writing',         name:'Writing & Content',         tags:['writing','social','translate','rss'],          description:'Summarize, translate, tweet threads, readability, RSS, copywriting.' },
-  { id:'TURTLE',  skill:'creative',        name:'Image & Creative',          tags:['image','art','svg','design','palette'],        description:'Image generation, SVG charts, color palettes, font pairing.' },
-  { id:'PIKADON', skill:'security',        name:'Security Audit',            tags:['security','cve','ports','breach'],             description:'Security audits, CVE lookup, port/IP checks, code-vuln scanning.' },
+  { id:'SHADDAI', skill:'orchestration',  name:'Multi-Agent Orchestration', tags:['orchestration','workflow','delegate'],        description:'Master orchestrator — delegates sub-tasks, runs multi-agent chains, executive synthesis.', example:'Coordinate NEXUS and PIKADON to review this pull request for both code quality and security issues, then summarize.' },
+  { id:'ORACLE',  skill:'research',        name:'Research & Intelligence',   tags:['research','web','arxiv','news','wikipedia'],   description:'Deep research: web, arxiv, news, wikipedia, hacker news, semantic scholar.', example:'Research the current state of MCP (Model Context Protocol) adoption and summarize the top 3 developments this month.' },
+  { id:'ZEROX',   skill:'defi_analysis',   name:'DeFi & Market Analysis',    tags:['crypto','defi','prices','whales','solana','paybox'], description:'Live crypto prices, DefiLlama TVL/yields, DEX data, whale tracking, Solana tokens, and real Paybox trades/quotes (guarded — real spend needs human approval above a small threshold).', example:'Check BTC and SOL sentiment, then use paybox_pay to quote a $5 swap into whichever looks stronger.' },
+  { id:'NEXUS',   skill:'code',            name:'Code & Architecture',       tags:['code','github','npm','regex','diagrams'],      description:'Code analysis, github/npm intel, bundle size, CVE lookup, diagrams, architecture/scaling questions.', example:'Look up the npm package "express-rate-limit", check its bundle size and recent CVEs, and tell me if it is safe to add.' },
+  { id:'QUILL',   skill:'writing',         name:'Writing & Content',         tags:['writing','social','translate','rss'],          description:'Summarize, translate, tweet threads, readability, RSS, copywriting.', example:'Turn this changelog into a 5-tweet thread announcing the release, casual tone.' },
+  { id:'TURTLE',  skill:'creative',        name:'Image & Creative',          tags:['image','art','svg','design','palette'],        description:'Image generation, SVG charts, color palettes, font pairing.', example:'Generate a color palette and a matching SVG icon for a crypto trading app called Nova.' },
+  { id:'PIKADON', skill:'security',        name:'Security Audit',            tags:['security','cve','ports','breach'],             description:'Code security audits (SQL injection, XSS, hardcoded secrets, eval, path traversal), password strength, IP/port checks. NOT yet wired: link/URL-safety checking or social-account verification — ask for those and it will say so rather than guess.', example:'Run a security audit on this function and list every finding by severity.' },
 ];
 const SKILL_AGENT = Object.fromEntries(AGENTS.map(a => [a.skill, a.id]));
 
@@ -96,7 +101,7 @@ router.get('/.well-known/mcp.json', (req, res) => {
       ...AGENTS.map(a => ({
         name: `shaddai_${a.id.toLowerCase()}`,
         description: a.description,
-        inputSchema: { type: 'object', properties: { task: { type: 'string', description: 'The task to assign to this agent' } }, required: ['task'] },
+        inputSchema: { type: 'object', properties: { task: { type: 'string', description: 'The task to assign to this agent', examples: [a.example] } }, required: ['task'] },
       })),
       { name: 'rag_search', description: "Raw TF-IDF chunk hits (score + source doc) from an agent's knowledge base.",
         inputSchema: { type: 'object', properties: { query: { type: 'string' }, agent: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
