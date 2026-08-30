@@ -164,3 +164,15 @@ OAuth finally completed (flaky connector, took ~4 attempts). Real tool surface c
 **Not mine — flagging for whoever owns pre-landing/Simple Mode:** owner asked for a Paybox button, a FOMO referral link button (`https://fomo.family/r/zerox007`), and a small "tip ZEROX" button — all top-corner, small, on the pre-landing/enter.html page. Full prompt handed to terminal B directly. That's `public/enter.html`/`public/simple.html` territory, explicitly off-limits to me per the priority-order split.
 
 **Tip-ZEROX backend done:** `GET /api/paybox/tip-link?agent=ZEROX&amount_usd=N` — real, verified live, returns a real MoonPay checkout URL that lands funds in ZEROX's wallet. Read-only Paybox tool underneath (`get_buy_link`), no spend-gate needed since it's money coming IN. Terminal B: wire the tip button to this endpoint, open `checkout_url` in a new tab/window.
+
+---
+
+## AgentMail shipped (2026-08-30) — a real email address for SHADDAI
+
+`shaddai@agentmail.to` is real and working. `GET /api/agentmail/messages` (list), `POST /api/agentmail/check` (draft RAG-grounded replies to new mail — does not send), `GET /api/agentmail/pending` (drafts awaiting review), `POST /api/agentmail/approve` (send/deny one, optional edited_text). Same draft-then-approve discipline as Paybox — nothing auto-sends to a real person. Verified live through the full chain. Key in `backend/.env` (gitignored) + Obsidian vault.
+
+If anyone wants this fully hands-off (real-time auto-reply instead of a manual/cron `/check` poll), AgentMail supports real webhooks — but that needs a public URL, useless against localhost. Revisit once deployed.
+
+## Open questions parked for the owner (not blocking, just undecided)
+- Fee/take-rate model for "SHADDAI as a payment middleman" — plumbing not built yet, no number invented.
+- Tier price conflict (3 different sources in the codebase) — still unresolved, still needed before any tier-gating work.
