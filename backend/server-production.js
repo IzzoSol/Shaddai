@@ -1647,6 +1647,8 @@ app.use('/api/aura', require('./aura-routes'));
 // Paybox — customer-facing wallet endpoints (tip links etc). Separate from
 // federation-routes.js, which is for external bots/agents, not SHADDAI's own site.
 app.use('/api/paybox', require('./paybox-routes'));
+// AgentMail — shaddai@agentmail.to. Draft-then-approve replies, never auto-sends.
+app.use('/api/agentmail', require('./agentmail-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
 app.use('/api/billing', require('./billing-routes').router);
 // User profiles — "who you are" account data, persisted free via Firestore (survives redeploys)
