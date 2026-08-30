@@ -75,4 +75,57 @@ router.post('/tip', json, async (req, res) => {
   res.status(status).json(body);
 });
 
+// ── Paybox order confirmation (2026-08-30) ──────────────────────────────────
+// A Paybox checkout (MoonPay) is not something SHADDAI gets notified about —
+// no webhook is wired, so nothing here can tell on its own that a payment
+// landed. This closes the loop honestly instead of pretending it's automatic:
+// every paybox-method service order gets recorded pending; an admin checks
+// the real balance (get_portfolio) and confirms, which credits Sparks and
+// unblocks re-ordering with method:"sparks". Manual review, not a guess.
+const ORDERS_PATH = path.join(__dirname, 'data', 'paybox-orders.json');
+function readOrders() { try { return JSON.parse(fs.readFileSync(ORDERS_PATH, 'utf8')); } catch { return []; } }
+function writeOrders(list) { fs.mkdirSync(path.dirname(ORDERS_PATH), { recursive: true }); fs.writeFileSync(ORDERS_PATH, JSON.stringify(list, null, 2)); }
+function recordOrder(entry) {
+  const list = readOrders();
+  const order = { id: 'pbo_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), status: 'pending', createdAt: new Date().toISOString(), ...entry };
+  list.push(order);
+  writeOrders(list);
+  return order;
+}
+
+let requireAdmin = (req, res, next) => next();
+try { requireAdmin = require('./auth-guard').requireAdmin || requireAdmin; } catch (_) {}
+
+// GET /api/paybox/orders?status=pending — admin: what's waiting on confirmation
+router.get('/orders', requireAdmin, (req, res) => {
+  const status = req.query.status;
+  const list = readOrders().filter(o => !status || o.status === status);
+  res.json({ ok: true, orders: list });
+});
+
+// POST /api/paybox/confirm-order { orderId } — admin: I checked get_portfolio myself
+// and the payment is really there. Credits Sparks (idempotent on orderId), marks
+// confirmed. Does NOT re-check the balance itself — that's real Paybox↔order-amount
+// reconciliation, a bigger feature; this is the honest v1: human-verified, not guessed.
+router.post('/confirm-order', requireAdmin, json, async (req, res) => {
+  const { orderId } = req.body || {};
+  if (!orderId) return res.status(400).json({ ok: false, error: 'orderId required' });
+  const list = readOrders();
+  const order = list.find(o => o.id === orderId);
+  if (!order) return res.status(404).json({ ok: false, error: 'order not found' });
+  if (order.status !== 'pending') return res.status(400).json({ ok: false, error: `already ${order.status}` });
+
+  try {
+    const economy = require('./economy-service').getDefault();
+    await economy.grant(order.userId, order.sparks, 'paybox_topup', `paybox_${orderId}`);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: `Sparks credit failed: ${(e && e.message) || e}` });
+  }
+  order.status = 'confirmed';
+  order.confirmedAt = new Date().toISOString();
+  writeOrders(list);
+  res.json({ ok: true, order });
+});
+
 module.exports = router;
+module.exports.recordOrder = recordOrder;

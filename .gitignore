@@ -9,6 +9,7 @@ backend/data/mcp-external-keys.json
 backend/data/pay-config.json
 backend/data/pay-ledger.json
 backend/data/pay-pending.json
+backend/data/paybox-orders.json
 backend/data/turtle-music-profiles.json
 backend/data/turtle-music-profiles.json.tmp
 

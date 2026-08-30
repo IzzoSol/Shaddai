@@ -112,11 +112,17 @@ router.post('/:id/order', async (req, res) => {
     if (!credentialId) return res.status(501).json({ ok: false, error: 'No Paybox receiving wallet configured' });
     const r = await paybox.payboxRead('get_buy_link', { credential_id: credentialId, amount_usd: svc.sparks }, 'ZEROX');
     if (!r.ok) return res.status(502).json({ ok: false, error: r.output });
+    // Record it so an admin can confirm once the payment is actually visible
+    // (GET /api/paybox/orders, POST /api/paybox/confirm-order) — see
+    // paybox-routes.js for why this is manual-confirm, not automatic.
+    let order = null;
+    try { order = require('../paybox-routes').recordOrder({ userId: req.userId, serviceId: svc.id, sparks: svc.sparks, checkout_url: r.output && r.output.url }); } catch (_) {}
     return res.json({
       ok: true, pending: true,
+      orderId: order && order.id,
       service: svc.id, amount_usd: svc.sparks,
       checkout_url: r.output && r.output.url,
-      note: 'Complete this checkout, then your Sparks balance updates and you can order with method:"sparks". This does not run the work yet — Paybox has no way for SHADDAI to confirm your payment within this request.',
+      note: 'Complete this checkout. Once confirmed (the owner verifies the payment landed), your Sparks balance updates and you can order with method:"sparks". This does not run the work yet — Paybox has no way for SHADDAI to confirm your payment within this request.',
     });
   }
 
