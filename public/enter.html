@@ -254,25 +254,31 @@ html[data-theme-skin="bone"] .slot{
 .slot:hover .trace, .slot:focus-visible .trace, .slot.touched .trace{ opacity:.85; }
 @media (prefers-reduced-motion: reduce){ .slot .trace::before{ animation:none; } }
 @media(max-width:760px){ .slot{ min-height:clamp(168px,23vh,210px); } }
-/* the art plate — dimmed hard and pushed toward the module's own colour */
+/* the art plate — the HF (Flux) backdrop now shows through with real brightness.
+   Kept just under full so the lettering stays readable, but no longer buried:
+   more light, more life, the 3D solid floats in front of it. */
 .slot .art{
   position:absolute; inset:0; z-index:0; background-size:cover; background-position:center;
-  opacity:.30; filter:saturate(.55) contrast(1.06);
-  transform:scale(1.04); transition:opacity .55s var(--ease), transform .8s var(--ease);
+  opacity:.58; filter:saturate(1.1) contrast(1.12) brightness(1.22);
+  transform:scale(1.05); transition:opacity .55s var(--ease), transform .8s var(--ease);
 }
 /* The wash is mixed FROM --shell, so it follows the theme automatically:
    dark shell gives a dark scrim, light shell a light one. It used to be
    hardcoded dark with an override naming brutalist and serif — which meant
    every new light theme got dark tiles under light chrome, and the names
-   went unreadable. Deriving it removes that whole class of bug. */
+   went unreadable. Deriving it removes that whole class of bug.
+
+   It has been lightened so the image reads instead of being buried: the
+   gradient now holds the BOTTOM third for the lettering and lets the top two
+   thirds of the HF plate glow through. */
 .slot .wash{
   position:absolute; inset:0; z-index:1; transition:opacity .5s var(--ease);
   background:
     linear-gradient(180deg,
-      color-mix(in srgb, var(--shell) 42%, transparent) 0%,
-      color-mix(in srgb, var(--shell) 76%, transparent) 52%,
-      color-mix(in srgb, var(--shell) 95%, transparent) 100%),
-    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 66%);
+      color-mix(in srgb, var(--shell) 12%, transparent) 0%,
+      color-mix(in srgb, var(--shell) 40%, transparent) 58%,
+      color-mix(in srgb, var(--shell) 86%, transparent) 100%),
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 66%);
 }
 /* the accent hairline that traces the frame */
 .slot .frame{
@@ -331,7 +337,8 @@ html[data-theme-skin="brutalist"] .slot .go, html[data-theme-skin="serif"] .slot
 @media (prefers-reduced-motion: reduce){
   .slot:hover, .slot:focus-visible, .slot.touched{ transform:none; }
 }
-.slot:hover .art, .slot:focus-visible .art, .slot.touched .art{ opacity:.46; transform:scale(1.0); }
+.slot:hover .art, .slot:focus-visible .art, .slot.touched .art{ opacity:.78; transform:scale(1.0);
+  filter:saturate(1.2) contrast(1.16) brightness(1.32); }
 .slot:hover .frame, .slot:focus-visible .frame, .slot.touched .frame{
   border-color:color-mix(in srgb, var(--accent) 34%, transparent);
   box-shadow:inset 0 0 44px color-mix(in srgb, var(--accent) 12%, transparent), 0 14px 46px rgba(0,0,0,.5); }
@@ -892,14 +899,26 @@ if (renderer) {
   function neon(geo, color, opacity = 1) {
     const g = new THREE.Group();
     const shell = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: shellColor(), transparent: true, opacity: 0.86,
+      color: shellColor(), transparent: true, opacity: 0.78,
       polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
     }));
+    /* Two passes of the wire: the inner one at full strength, then a fatter,
+       same-colour one with ADDITIVE blending behind it. Additive throws real
+       light into the scene, so the solid reads as a glowing neon object rather
+       than a thin sketch on top of the (now brighter) art plate. */
     const wire = new THREE.LineSegments(
       new THREE.EdgesGeometry(geo, 12),
       new THREE.LineBasicMaterial({ color, transparent: true, opacity })
     );
-    g.add(shell, wire);
+    const glow = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo, 12),
+      new THREE.LineBasicMaterial({
+        color, transparent: true, opacity: (opacity || 1) * 0.45,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      })
+    );
+    glow.scale.setScalar(1.025);
+    g.add(shell, wire, glow);
     return g;
   }
   function dust(color, count = 90, spread = 3.4) {
@@ -1055,7 +1074,8 @@ if (renderer) {
           c.obj.rotation.y = t * 0.19 + c.seed;
           c.obj.rotation.x = Math.sin(t * 0.32 + c.seed) * 0.16;
         }
-        c.obj.position.y = Math.sin(t * 0.55 + c.seed) * 0.05;
+        c.obj.position.y = Math.sin(t * 0.55 + c.seed) * 0.09;
+        c.obj.scale.setScalar(1 + Math.sin(t * 0.4 + c.seed) * 0.02);
       } else {
         c.obj.rotation.set(c.obj.userData.axis === 'x' ? 0.5 : 0.2, c.obj.userData.axis === 'x' ? 0.42 : 0.6 + c.seed, 0);
       }
