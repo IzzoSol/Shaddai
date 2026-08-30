@@ -181,7 +181,7 @@
       name: 'SIGNALS',
       kicker: 'ZEROX calls',
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
-      href: '/pro-signals.html',
+      href: '/signals.html',
       art: '/assets/enter/signals.jpg',
       accent: C.rose,
       geo: 'chart'

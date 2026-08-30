@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SHADDAI · Pro Signals</title>
+<meta name="description" content="Live calls — list, bubbles, heatmap and ranked. Pre-bond, post-bond and boosted, filtered by the last hour." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ══ PRO SIGNALS ══════════════════════════════════════════════════════════
+   One dataset, four ways to read it. Built thumb-first, because this screen
+   is used standing up with one hand while something is moving.
+
+   THE FOUR VIEWS ARE NOT DECORATION — each answers a different question:
+     LIST     what just happened, newest first
+     BUBBLES  what is big right now (area = size, colour = performance)
+     HEATMAP  the whole field at a glance, worst to best
+     RANKED   what is winning, in order
+
+   ACTIVE ONLY. `closed` calls are excluded everywhere. A dead call in a live
+   feed is worse than an empty feed, because someone will act on it.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --shell:#06080b; --void:#06080b; --void2:#0a0e13; --card:#0e141a;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#5c6b64;
+  --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.32);
+  --emerald:#00ff9c; --gold:#e8c45c;
+  /* Performance ramp. NOT the brand palette — semantic colour is a separate
+     system from accent colour, and a loss must never read as "on brand". */
+  --up3:#00ff9c; --up2:#4ade80; --up1:#a3e635;
+  --flat:#7d8d86; --dn1:#fbbf24; --dn2:#fb7185; --dn3:#ef4444;
+  --f-display:'Cinzel',serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; overflow-x:hidden; }
+body{ background:var(--void); color:var(--ink); font-family:var(--f-mono);
+  font-size:14px; -webkit-font-smoothing:antialiased; padding-bottom:env(safe-area-inset-bottom); }
+@media(prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+
+header{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 4vw; border-bottom:1px solid var(--edge); position:sticky; top:0; z-index:30;
+  background:color-mix(in srgb,var(--shell) 92%,transparent); backdrop-filter:blur(10px); }
+.brand{ display:flex; align-items:baseline; gap:8px; min-width:0; }
+.brand b{ font-family:var(--f-display); font-weight:900; font-size:17px; letter-spacing:.1em; }
+.brand span{ font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint); }
+@media(max-width:420px){ .brand span{ display:none; } }
+.live{ display:flex; align-items:center; gap:6px; font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-faint); }
+.live .d{ width:6px; height:6px; border-radius:50%; background:var(--emerald);
+  box-shadow:0 0 8px var(--emerald); animation:pulse 2.4s ease-in-out infinite; }
+@keyframes pulse{ 50%{ opacity:.35; } }
+header a.back{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft);
+  text-decoration:none; border:1px solid var(--edge); padding:0 12px; min-height:38px;
+  display:inline-flex; align-items:center; border-radius:2px; }
+
+/* ── controls: two scrollable rails, always reachable by thumb ──────────── */
+.rails{ position:sticky; top:57px; z-index:29; background:var(--shell);
+  border-bottom:1px solid var(--edge); }
+.rail{ display:flex; gap:6px; overflow-x:auto; padding:9px 4vw;
+  scrollbar-width:none; -ms-overflow-style:none; }
+.rail::-webkit-scrollbar{ display:none; }
+.rail + .rail{ padding-top:0; }
+.chip{ flex:0 0 auto; min-height:40px; padding:0 14px; display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--edge); border-radius:2px; background:var(--card); color:var(--ink-soft);
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; white-space:nowrap; transition:color .18s, border-color .18s, background .18s; }
+.chip[aria-pressed=true]{ background:var(--emerald); color:var(--void); border-color:var(--emerald); font-weight:600; }
+.chip .ct{ font-size:9.5px; opacity:.65; }
+.rail.modes .chip[aria-pressed=true]{ background:var(--gold); border-color:var(--gold); }
+
+/* ── shared ────────────────────────────────────────────────────────────── */
+main{ padding:12px 4vw 40px; }
+.count{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
+  margin-bottom:11px; display:flex; justify-content:space-between; gap:10px; }
+.empty{ padding:44px 0; text-align:center; color:var(--ink-faint); font-size:12px; letter-spacing:.1em; }
+.view{ display:none; } .view.on{ display:block; }
+
+/* ── LIST ──────────────────────────────────────────────────────────────── */
+.row{ display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:center;
+  border:1px solid var(--edge); border-left:3px solid var(--pc,var(--flat));
+  background:var(--card); padding:12px 13px; margin-bottom:7px; }
+.row .sym{ font-size:15px; color:var(--ink); font-weight:600; letter-spacing:.04em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.row .meta{ grid-column:1; font-size:10px; color:var(--ink-faint); letter-spacing:.06em;
+  display:flex; gap:9px; flex-wrap:wrap; }
+.row .mult{ grid-row:1/span 2; font-size:19px; font-weight:600; color:var(--pc,var(--flat));
+  font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tag{ border:1px solid var(--edge2); padding:1px 6px; border-radius:2px; font-size:8.5px;
+  letter-spacing:.12em; text-transform:uppercase; }
+.tag.bond{ color:var(--emerald); border-color:rgba(0,255,156,.4); }
+.tag.pre{ color:var(--gold); border-color:rgba(232,196,92,.4); }
+.tag.boost{ color:#c4b5fd; border-color:rgba(196,181,253,.4); }
+
+/* ── BUBBLES ───────────────────────────────────────────────────────────── */
+#bubbles{ position:relative; width:100%; height:min(74vh,620px); }
+#bubbles canvas{ width:100%; height:100%; display:block; touch-action:pan-y; }
+
+/* ── HEATMAP ───────────────────────────────────────────────────────────── */
+.heat{ display:grid; grid-template-columns:repeat(auto-fill,minmax(74px,1fr)); gap:4px; }
+.cell{ aspect-ratio:1; border:0; padding:5px 4px; display:flex; flex-direction:column;
+  justify-content:space-between; align-items:flex-start; cursor:pointer; overflow:hidden;
+  font-family:var(--f-mono); color:#04120c; }
+.cell .s{ font-size:10.5px; font-weight:600; letter-spacing:.02em; line-height:1.1;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+.cell .m{ font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; }
+.cell.dark{ color:#f4fbf7; }
+
+/* ── RANKED ────────────────────────────────────────────────────────────── */
+.rank{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+  border-bottom:1px solid var(--edge); padding:13px 4px; cursor:pointer; }
+.rank .n{ font-family:var(--f-display); font-weight:900; font-size:17px; color:var(--ink-faint);
+  min-width:2.2ch; font-variant-numeric:tabular-nums; }
+.rank:nth-child(1) .n{ color:var(--gold); }
+.rank:nth-child(2) .n{ color:#cbd5e1; }
+.rank:nth-child(3) .n{ color:#d19a66; }
+.rank .b .s{ font-size:14.5px; color:var(--ink); font-weight:600; }
+.rank .b .u{ font-size:10px; color:var(--ink-faint); margin-top:2px; }
+.rank .v{ font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--pc,var(--flat)); }
+
+/* ── detail sheet ──────────────────────────────────────────────────────── */
+#sheet{ position:fixed; inset:0; z-index:60; display:none; }
+#sheet.on{ display:block; }
+#sheet .scrim{ position:absolute; inset:0; background:rgba(0,0,0,.7); }
+#sheet .panel{ position:absolute; left:0; right:0; bottom:0; background:var(--card);
+  border-top:2px solid var(--pc,var(--emerald)); padding:20px 5vw calc(24px + env(safe-area-inset-bottom));
+  max-height:82vh; overflow-y:auto; }
+#sheet h3{ font-family:var(--f-display); font-weight:900; font-size:23px; margin:0; letter-spacing:.04em; }
+#sheet .sub{ font-size:10.5px; color:var(--ink-faint); letter-spacing:.1em; margin-top:5px; }
+#sheet dl{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin:20px 0 0; }
+#sheet dt{ font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); }
+#sheet dd{ margin:2px 0 0; font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums; }
+#sheet .acts{ display:flex; gap:8px; margin-top:22px; flex-wrap:wrap; }
+#sheet .acts a, #sheet .acts button{ flex:1 1 130px; min-height:50px; display:inline-flex;
+  align-items:center; justify-content:center; border:1px solid var(--edge2); background:none;
+  color:var(--ink-soft); font-family:var(--f-mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; text-decoration:none; border-radius:2px; cursor:pointer; }
+#sheet .acts .pri{ background:var(--emerald); color:var(--void); border-color:var(--emerald); font-weight:600; }
+#sheet .note{ margin-top:14px; font-size:10.5px; color:var(--ink-faint); line-height:1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>SIGNALS</b><span>Pro</span></div>
+  <div class="live"><span class="d"></span><span id="liveN">—</span></div>
+  <a class="back" href="/index.html">&larr;</a>
+</header>
+
+<div class="rails">
+  <div class="rail modes" id="modes" role="tablist" aria-label="View mode">
+    <button class="chip" data-m="list"  aria-pressed="true">📋 List</button>
+    <button class="chip" data-m="bub"   aria-pressed="false">🫧 Bubbles</button>
+    <button class="chip" data-m="heat"  aria-pressed="false">🔲 Heatmap</button>
+    <button class="chip" data-m="rank"  aria-pressed="false">🏆 Ranked</button>
+  </div>
+  <div class="rail" id="cats" aria-label="Category"></div>
+  <div class="rail" id="times" aria-label="Time window">
+    <button class="chip" data-t="1"  aria-pressed="false">Last hour</button>
+    <button class="chip" data-t="6"  aria-pressed="false">6h</button>
+    <button class="chip" data-t="24" aria-pressed="true">24h</button>
+    <button class="chip" data-t="0"  aria-pressed="false">All</button>
+  </div>
+</div>
+
+<main>
+  <div class="count"><span id="cN">Loading…</span><span id="cU"></span></div>
+  <div class="view on" id="v-list"></div>
+  <div class="view" id="v-bub"><div id="bubbles"><canvas id="bcv"></canvas></div></div>
+  <div class="view" id="v-heat"><div class="heat" id="heatGrid"></div></div>
+  <div class="view" id="v-rank"></div>
+</main>
+
+<div id="sheet" role="dialog" aria-modal="true" aria-label="Coin detail">
+  <div class="scrim" data-close></div>
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+/* ══ PRO SIGNALS — client ══════════════════════════════════════════════════
+   One fetch, one filtered array, four renderers. The renderers know nothing
+   about filtering and the filter knows nothing about drawing — same split that
+   made Simple Mode's three geometries maintainable.
+   ═════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var ALL = [], VIEW = [], mode = 'list', cat = 'all', hours = 24;
+
+  /* Real `source` values from /api/pro-signals/feed mapped onto the words a
+     trader actually uses. new_pools has not bonded yet; bonded has. */
+  var CATS = [
+    { id: 'all',     label: 'All',        srcs: null },
+    { id: 'pre',     label: 'Pre-bond',   srcs: ['new_pools'] },
+    { id: 'post',    label: 'Post-bond',  srcs: ['bonded'] },
+    { id: 'boost',   label: 'Boosted',    srcs: ['boosted'] },
+    { id: 'trend',   label: 'Trending',   srcs: ['trending', 'trending_pools'] },
+  ];
+
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function mult(c) { var m = Number(c.curMult); return isFinite(m) && m > 0 ? m : 0; }
+  function ago(ts) {
+    var m = (Date.now() - (ts || 0)) / 60000;
+    if (m < 1) return 'now';
+    if (m < 60) return Math.round(m) + 'm';
+    if (m < 1440) return Math.round(m / 60) + 'h';
+    return Math.round(m / 1440) + 'd';
+  }
+  function money(n) {
+    n = Number(n) || 0;
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+    return '$' + n.toFixed(0);
+  }
+  /* Performance ramp. 1x is flat — the break-even point is where the colour
+     turns, not an arbitrary midpoint of the range. */
+  function ramp(m) {
+    if (!m) return 'var(--flat)';
+    if (m >= 5)   return 'var(--up3)';
+    if (m >= 2)   return 'var(--up2)';
+    if (m >= 1.15) return 'var(--up1)';
+    if (m >= 0.85) return 'var(--flat)';
+    if (m >= 0.5)  return 'var(--dn1)';
+    if (m >= 0.25) return 'var(--dn2)';
+    return 'var(--dn3)';
+  }
+  function rampHex(m) {
+    if (!m) return '#7d8d86';
+    if (m >= 5) return '#00ff9c'; if (m >= 2) return '#4ade80';
+    if (m >= 1.15) return '#a3e635'; if (m >= 0.85) return '#7d8d86';
+    if (m >= 0.5) return '#fbbf24'; if (m >= 0.25) return '#fb7185';
+    return '#ef4444';
+  }
+  function catOf(c) {
+    var s = c.source;
+    if (s === 'new_pools') return { c: 'pre', l: 'pre-bond' };
+    if (s === 'bonded') return { c: 'bond', l: 'bonded' };
+    if (s === 'boosted') return { c: 'boost', l: 'boosted' };
+    return { c: '', l: s || '' };
+  }
+
+  /* ── filter ────────────────────────────────────────────────────────────── */
+  function applyFilters() {
+    var def = CATS.find(function (c) { return c.id === cat; });
+    var cut = hours ? Date.now() - hours * 3600000 : 0;
+    VIEW = ALL.filter(function (c) {
+      if (c.closed) return false;                 // active only, always
+      if (def && def.srcs && def.srcs.indexOf(c.source) === -1) return false;
+      if (cut && (c.ts || 0) < cut) return false;
+      return true;
+    });
+    render();
+  }
+
+  /* ── renderers ─────────────────────────────────────────────────────────── */
+  function renderList() {
+    var by = VIEW.slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    $('v-list').innerHTML = by.length ? by.map(function (c) {
+      var m = mult(c), k = catOf(c);
+      return '<div class="row" style="--pc:' + ramp(m) + '" data-mint="' + esc(c.mint) + '">' +
+        '<div class="sym">' + esc(c.symbol || c.name || '?') + '</div>' +
+        '<div class="mult">' + (m ? m.toFixed(2) + 'x' : '—') + '</div>' +
+        '<div class="meta"><span>' + ago(c.ts) + '</span>' +
+          '<span>' + money(c.curFdv || c.entryFdv) + '</span>' +
+          (k.l ? '<span class="tag ' + k.c + '">' + esc(k.l) + '</span>' : '') +
+          (c.riskTier ? '<span class="tag">' + esc(c.riskTier) + '</span>' : '') +
+        '</div></div>';
+    }).join('') : '<div class="empty">Nothing active in this window.</div>';
+  }
+
+  function renderRank() {
+    var by = VIEW.slice().sort(function (a, b) { return mult(b) - mult(a); }).slice(0, 60);
+    $('v-rank').innerHTML = by.length ? by.map(function (c, i) {
+      var m = mult(c), k = catOf(c);
+      return '<div class="rank" style="--pc:' + ramp(m) + '" data-mint="' + esc(c.mint) + '">' +
+        '<span class="n">' + (i + 1) + '</span>' +
+        '<span class="b"><span class="s">' + esc(c.symbol || c.name || '?') + '</span>' +
+          '<span class="u">' + ago(c.ts) + ' · ' + money(c.curFdv || c.entryFdv) +
+          (k.l ? ' · ' + esc(k.l) : '') + '</span></span>' +
+        '<span class="v">' + (m ? m.toFixed(2) + 'x' : '—') + '</span></div>';
+    }).join('') : '<div class="empty">Nothing active in this window.</div>';
+  }
+
+  function renderHeat() {
+    var by = VIEW.slice().sort(function (a, b) { return mult(b) - mult(a); });
+    $('heatGrid').innerHTML = by.length ? by.map(function (c) {
+      var m = mult(c), bg = rampHex(m);
+      // Light backgrounds need dark text and vice versa — computed, not guessed.
+      var dark = (m < 0.5 && m > 0) || m === 0;
+      return '<button class="cell' + (dark ? ' dark' : '') + '" style="background:' + bg + '" ' +
+        'data-mint="' + esc(c.mint) + '" title="' + esc(c.symbol || '') + '">' +
+        '<span class="s">' + esc((c.symbol || c.name || '?').slice(0, 7)) + '</span>' +
+        '<span class="m">' + (m ? (m >= 10 ? Math.round(m) : m.toFixed(1)) + 'x' : '—') + '</span>' +
+        '</button>';
+    }).join('') : '<div class="empty">Nothing active in this window.</div>';
+  }
+
+  /* Bubbles. Area encodes market size, colour encodes performance, so a big
+     red circle reads instantly as "a lot of money going the wrong way".
+     Canvas rather than DOM because 300 animated nodes as elements janks. */
+  var bub = { nodes: [], raf: 0 };
+  function renderBub() {
+    var cv = $('bcv'), wrap = $('bubbles');
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = wrap.offsetWidth, H = wrap.offsetHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    var ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var by = VIEW.slice().sort(function (a, b) { return mult(b) - mult(a); }).slice(0, 70);
+    var fdvs = by.map(function (c) { return Number(c.curFdv || c.entryFdv) || 1; });
+    var mx = Math.max.apply(null, fdvs.concat([1]));
+    var area = W * H;
+    // radius from area share, clamped so one whale cannot eat the screen
+    bub.nodes = by.map(function (c, i) {
+      var f = (Number(c.curFdv || c.entryFdv) || 1) / mx;
+      var r = Math.max(15, Math.min(Math.sqrt(area * f * 0.045 / Math.PI), Math.min(W, H) * 0.19));
+      return { c: c, r: r, x: Math.random() * (W - 2 * r) + r, y: Math.random() * (H - 2 * r) + r,
+               vx: 0, vy: 0, m: mult(c) };
+    });
+
+    cancelAnimationFrame(bub.raf);
+    var steps = 0;
+    (function relax() {
+      // simple separation — cheap, converges fast, no physics library
+      for (var i = 0; i < bub.nodes.length; i++) {
+        var a = bub.nodes[i];
+        for (var j = i + 1; j < bub.nodes.length; j++) {
+          var b = bub.nodes[j], dx = b.x - a.x, dy = b.y - a.y;
+          var d = Math.sqrt(dx * dx + dy * dy) || 0.01, need = a.r + b.r + 2;
+          if (d < need) {
+            var p = (need - d) / d * 0.5;
+            a.x -= dx * p; a.y -= dy * p; b.x += dx * p; b.y += dy * p;
+          }
+        }
+        a.x = Math.max(a.r, Math.min(W - a.r, a.x));
+        a.y = Math.max(a.r, Math.min(H - a.r, a.y));
+      }
+      ctx.clearRect(0, 0, W, H);
+      bub.nodes.forEach(function (n) {
+        var col = rampHex(n.m);
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = col + '2e'; ctx.fill();
+        ctx.lineWidth = 1.4; ctx.strokeStyle = col; ctx.stroke();
+        if (n.r > 21) {
+          ctx.fillStyle = '#e9efe9'; ctx.textAlign = 'center';
+          ctx.font = '600 ' + Math.min(13, n.r * 0.42) + 'px IBM Plex Mono, monospace';
+          ctx.fillText((n.c.symbol || '?').slice(0, 6), n.x, n.y - 1);
+          ctx.fillStyle = col;
+          ctx.font = '600 ' + Math.min(12, n.r * 0.36) + 'px IBM Plex Mono, monospace';
+          ctx.fillText(n.m ? n.m.toFixed(1) + 'x' : '—', n.x, n.y + Math.min(14, n.r * 0.46));
+        }
+      });
+      if (++steps < 90) bub.raf = requestAnimationFrame(relax);
+    })();
+  }
+  $('bcv').addEventListener('click', function (e) {
+    var r = this.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    for (var i = bub.nodes.length - 1; i >= 0; i--) {
+      var n = bub.nodes[i];
+      if ((x - n.x) * (x - n.x) + (y - n.y) * (y - n.y) <= n.r * n.r) { openSheet(n.c.mint); return; }
+    }
+  });
+
+  function render() {
+    $('cN').textContent = VIEW.length + ' active';
+    $('cU').textContent = hours ? 'last ' + hours + 'h' : 'all time';
+    $('liveN').textContent = VIEW.length;
+    ['list', 'bub', 'heat', 'rank'].forEach(function (m) {
+      $('v-' + m).classList.toggle('on', m === mode);
+    });
+    if (mode === 'list') renderList();
+    else if (mode === 'rank') renderRank();
+    else if (mode === 'heat') renderHeat();
+    else renderBub();
+  }
+
+  /* ── detail sheet ──────────────────────────────────────────────────────── */
+  function openSheet(mint) {
+    var c = ALL.find(function (x) { return x.mint === mint; });
+    if (!c) return;
+    var m = mult(c), k = catOf(c);
+    $('panel').style.setProperty('--pc', ramp(m));
+    $('panel').innerHTML =
+      '<h3>' + esc(c.symbol || c.name || '?') + '</h3>' +
+      '<div class="sub">' + esc(c.name || '') + ' · ' + ago(c.ts) + ' ago' + (k.l ? ' · ' + esc(k.l) : '') + '</div>' +
+      '<dl>' +
+        '<div><dt>Now</dt><dd style="color:' + rampHex(m) + '">' + (m ? m.toFixed(2) + 'x' : '—') + '</dd></div>' +
+        '<div><dt>Peak</dt><dd>' + (Number(c.peakMult) ? Number(c.peakMult).toFixed(2) + 'x' : '—') + '</dd></div>' +
+        '<div><dt>Market cap</dt><dd>' + money(c.curFdv || c.entryFdv) + '</dd></div>' +
+        '<div><dt>Called at</dt><dd>' + money(c.entryFdv) + '</dd></div>' +
+        '<div><dt>Risk</dt><dd>' + esc(c.riskTier || '—') + '</dd></div>' +
+        '<div><dt>Score</dt><dd>' + (c.score != null ? esc(String(c.score)) : '—') + '</dd></div>' +
+      '</dl>' +
+      '<div class="acts">' +
+        '<a class="pri" href="https://dexscreener.com/solana/' + encodeURIComponent(c.mint) + '" target="_blank" rel="noopener">Open chart</a>' +
+        '<button type="button" id="cpy">Copy address</button>' +
+        '<button type="button" data-close>Close</button>' +
+      '</div>' +
+      '<p class="note">Not advice. This is what the scanner saw, with the numbers behind it — the decision is yours.</p>';
+    $('sheet').classList.add('on');
+    var cpy = $('cpy');
+    if (cpy) cpy.addEventListener('click', function () {
+      var done = function () { cpy.textContent = 'Copied'; setTimeout(function () { cpy.textContent = 'Copy address'; }, 1800); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(c.mint).then(done, fb);
+      else fb();
+      function fb() {
+        var t = document.createElement('textarea'); t.value = c.mint;
+        t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(t);
+      }
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-close]')) { $('sheet').classList.remove('on'); return; }
+    var hit = e.target.closest('[data-mint]');
+    if (hit && !e.target.closest('#sheet')) openSheet(hit.dataset.mint);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') $('sheet').classList.remove('on'); });
+
+  /* ── chips ─────────────────────────────────────────────────────────────── */
+  function wireRail(el, attr, set) {
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('.chip'); if (!b) return;
+      [].forEach.call(el.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      set(b.dataset[attr]);
+    });
+  }
+  wireRail($('modes'), 'm', function (v) { mode = v; render(); });
+  wireRail($('times'), 't', function (v) { hours = Number(v); applyFilters(); });
+
+  function buildCats() {
+    $('cats').innerHTML = CATS.map(function (c) {
+      var n = c.srcs ? ALL.filter(function (x) { return !x.closed && c.srcs.indexOf(x.source) !== -1; }).length
+                     : ALL.filter(function (x) { return !x.closed; }).length;
+      return '<button class="chip" data-c="' + c.id + '" aria-pressed="' + (c.id === cat) + '">' +
+        c.label + ' <span class="ct">' + n + '</span></button>';
+    }).join('');
+  }
+  wireRail($('cats'), 'c', function (v) { cat = v; applyFilters(); });
+
+  var rz; window.addEventListener('resize', function () {
+    clearTimeout(rz); rz = setTimeout(function () { if (mode === 'bub') renderBub(); }, 220);
+  });
+
+  function load() {
+    fetch('/api/pro-signals/feed')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        ALL = (d.calls || []).filter(function (c) { return c && c.mint && c.source !== 'test' && c.source !== 'seed'; });
+        buildCats();
+        applyFilters();
+      })
+      .catch(function () {
+        $('cN').textContent = 'Could not reach the signal feed.';
+        $('v-list').innerHTML = '<div class="empty">Feed unavailable. Try again shortly.</div>';
+      });
+  }
+  load();
+  setInterval(load, 60000);   // the feed moves; so should the page
+})();
+</script>
+</body>
+</html>
