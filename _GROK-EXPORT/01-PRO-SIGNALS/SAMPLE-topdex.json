@@ -1,0 +1,145 @@
+{
+  "_note": "Real /api/pro-signals/top-dex output. Note image + socials.",
+  "pairs": [
+    {
+      "rank": 1,
+      "mint": "AfGdjAp9djSaqJxzYo3t6jy8tJA3o2aDPHoZ57Egpump",
+      "symbol": "Greyson",
+      "name": "Greyson, Florida\u00e2\u20ac\u2122s viral Onewheel-riding pit bull, conquerin",
+      "boost": 500,
+      "image": "CNy0mG2rZI710xyN",
+      "socials": {
+        "any": true,
+        "twitter": true,
+        "telegram": false,
+        "discord": false,
+        "website": true,
+        "links": [
+          {
+            "type": "website",
+            "url": "https://greyson.dog"
+          },
+          {
+            "type": "twitter",
+            "url": "https://x.com/GreysonOnewheel"
+          }
+        ],
+        "site": "https://greyson.dog"
+      },
+      "priceUsd": 0.0001007,
+      "liq": 28601.8,
+      "vol24": 3414201.64,
+      "vol1h": 59022.2,
+      "chg24": -54.09,
+      "chg1h": -24.05,
+      "pairUrl": "https://dexscreener.com/solana/caka2ratbnyimjxatpetksj3567mslatbxifws6g2rej",
+      "dex": "pumpswap"
+    },
+    {
+      "rank": 2,
+      "mint": "6E8fPgsBvwjGRHcoeLUW8iugy736SKo54VvYLbYMpump",
+      "symbol": "CGX",
+      "name": "The all-in-one hub, fully Decentralized Perpetual Exchange (",
+      "boost": 500,
+      "image": "P32UtoeeKWmIb9N8",
+      "socials": {
+        "any": true,
+        "twitter": false,
+        "telegram": true,
+        "discord": false,
+        "website": true,
+        "links": [
+          {
+            "type": "website",
+            "url": "https://www.cryptogdex.io/"
+          },
+          {
+            "type": "telegram",
+            "url": "https://t.me/cryptogdex"
+          }
+        ],
+        "site": "https://www.cryptogdex.io/"
+      },
+      "priceUsd": 0.0006807,
+      "liq": 70435.9,
+      "vol24": 48476.01,
+      "vol1h": 1542.48,
+      "chg24": 86.73,
+      "chg1h": 3.88,
+      "pairUrl": "https://dexscreener.com/solana/7n9drbwkk4lxgw8kvhx8vzw8fagupjjh6ebhyndxj9xb",
+      "dex": "pumpswap"
+    },
+    {
+      "rank": 3,
+      "mint": "F7TGmpDqNFKxhHGCMcHDzoyxwkNtuX2d4aTZuEwwpump",
+      "symbol": "pepescobar",
+      "name": "Pepe Parker's least favourite person. The Lily Pad Cartel ha",
+      "boost": 500,
+      "image": "U6l_DTh3eKZMztcm",
+      "socials": {
+        "any": true,
+        "twitter": true,
+        "telegram": false,
+        "discord": false,
+        "website": true,
+        "links": [
+          {
+            "type": "website",
+            "url": "https://pepeescobar.com"
+          },
+          {
+            "type": "twitter",
+            "url": "https://x.com/rtc2028"
+          }
+        ],
+        "site": "https://pepeescobar.com"
+      },
+      "priceUsd": 4.06e-05,
+      "liq": 22247.31,
+      "vol24": 10510.46,
+      "vol1h": 64.86,
+      "chg24": 50.61,
+      "chg1h": 0.22,
+      "pairUrl": "https://dexscreener.com/solana/egebrx3y79a3uuda2u4ubndf81qffyflxlypnjfpvbzf",
+      "dex": "pumpswap"
+    },
+    {
+      "rank": 4,
+      "mint": "BoaPfCRY99XA4KcvZzpJNGupwUitNp5jVGhSoaBZpump",
+      "symbol": "stacyfone",
+      "name": "",
+      "boost": 100,
+      "image": "qCnXbOPs7WoORloC",
+      "socials": {
+        "any": true,
+        "twitter": true,
+        "telegram": true,
+        "discord": false,
+        "website": true,
+        "links": [
+          {
+            "type": "website",
+            "url": "https://stacyonfone.site"
+          },
+          {
+            "type": "telegram",
+            "url": "https://t.me/stacyfone"
+          },
+          {
+            "type": "twitter",
+            "url": "https://x.com/stacyfone"
+          }
+        ],
+        "site": "https://stacyonfone.site"
+      },
+      "priceUsd": 2.212e-06,
+      "liq": 2443.26,
+      "vol24": 1739639.46,
+      "vol1h": 37.3,
+      "chg24": -96.89,
+      "chg1h": -4.53,
+      "pairUrl": "https://dexscreener.com/solana/gf9gqhqjyesczknfbnreummbjbhuwabursgdn17ohmxb",
+      "dex": "pumpswap"
+    }
+  ]
+}
