@@ -152,8 +152,20 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   const toolSource = Array.isArray(opts.tools) && opts.tools.length ? opts.tools
                    : Array.isArray(agent.tools) && agent.tools.length ? agent.tools
                    : BASE;
-  const toolNames = toolSource.filter(n => TOOLS[n] && !DENY.has(n)).slice(0, MAX_TOOLS_SHOWN);
-  const oaTools = toolNames.map(n => toOpenAITool(TOOLS[n]));
+  const candidates = toolSource.filter(n => TOOLS[n] && !DENY.has(n)).map(n => TOOLS[n]);
+  // 2026-08-30: this used to be a blind .slice(0, MAX_TOOLS_SHOWN) — whatever 10 tools
+  // happened to be FIRST in the agent's array, regardless of the actual task. ZEROX's
+  // tools array lists paybox_pay near the end, so it was NEVER shown here no matter
+  // what was asked — reproduced live (ZEROX correctly picked a token, then said
+  // "paybox_pay isn't available"). Reuse the same relevance-ranked selector
+  // agent-engine.js's callLLM already uses, so a task that needs a specific tool
+  // actually gets it shown, not just whichever tools happened to be listed first.
+  let selected;
+  try {
+    selected = require('./tool-selector').selectTools(String(task || ''), candidates, { max: MAX_TOOLS_SHOWN, min: Math.min(6, candidates.length), agent: A });
+  } catch (_) { selected = candidates.slice(0, MAX_TOOLS_SHOWN); }
+  const toolNames = selected.map(t => t.name);
+  const oaTools = selected.map(toOpenAITool);
 
   // Persona: use opts.persona (from operative.brain.persona) when set,
   // otherwise fall back to generic identity.
