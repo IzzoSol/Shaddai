@@ -156,6 +156,33 @@
     },
 
     {
+      id: 'connect', tab: 'CONNECT', accent: C.cyan,
+      title: 'Bring Your Own',
+      lede: 'Plug in the accounts you already pay for. Use your own assistant. Nothing here wants to replace what you have.',
+      blocks: [
+        { k: 'p', v: 'Two doors, and they go opposite ways. You can bring your own accounts IN so the agents work on your rates. Or you can reach IN from the outside, so the assistant you already use gains the seven agents and the whole library.' },
+        { k: 'big', v: 'YOUR KEYS' },
+        { k: 'p', v: 'Paste a key once and it is encrypted with a password only you know. We never store the password, so we genuinely cannot read your keys — that is arithmetic, not a policy. Your agents then use your account: your quota, your bill, your rates, and we take nothing on anything you make.' },
+        { k: 'grid', v: [
+          ['LANGUAGE', 'OpenAI, Anthropic, Grok, Groq, Gemini, OpenRouter, or Ollama on your own machine.'],
+          ['MAKING', 'Fal, ElevenLabs, Meshy for 3D, Higgsfield, Replicate, Suno.'],
+          ['MARKETS', 'Helius, Birdeye, CoinGecko — ZEROX reads the chain directly.'],
+          ['REACH', 'Telegram, Discord, X, news, and live web search.'],
+        ] },
+        { k: 'note', v: 'The full list, with what each one switches on, is at /connectors.html — twenty-two of them.' },
+        { k: 'big', v: 'YOUR ASSISTANT' },
+        { k: 'p', v: 'SHADDAI speaks MCP, the standard assistants use to reach outside tools. Point Claude Desktop, Claude Code or Cursor at it and your assistant gains the council, the agent libraries and the tool catalogue — from inside the app you already use. It keeps its memory of you; it just gets more hands.' },
+        { k: 'steps', v: [
+          ['Open the setup page', '/mcp.html shows your exact config, already filled in.'],
+          ['Copy the block', 'One button. Paste it into the config file.'],
+          ['Restart the assistant', 'The SHADDAI tools appear in its tool list.'],
+        ] },
+        { k: 'p', v: 'It works the other way too: point SHADDAI at your MCP servers and our agents can use your tools.' },
+        { k: 'warn', v: 'MCP is part of Max. The connectors and the key vault are free on every plan — bringing your own accounts is never gated, because charging you to spend your own money would be absurd.' },
+      ],
+    },
+
+    {
       id: 'flywheel', tab: 'FLYWHEEL', accent: C.gold,
       title: 'Why It Compounds',
       lede: 'The people earning are the people playing.',

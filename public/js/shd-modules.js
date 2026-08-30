@@ -157,6 +157,16 @@
       geo: 'icosa'
     },
     {
+      id: 'connect',
+      name: 'CONNECT',
+      kicker: 'Your keys · your assistant',
+      blurb: 'Plug in the accounts you already pay for, and point your own Claude or Grok at the council. Twenty-two connectors, and we take nothing on what you make.',
+      href: '/connectors.html',
+      art: '/assets/nav/apis.jpg',
+      accent: C.emerald,
+      geo: 'cube'
+    },
+    {
       id: 'manual',
       name: 'MANUAL',
       kicker: 'How all of it works',
@@ -317,6 +327,10 @@
       blurb: 'The RAG brain — the council’s shared memory, and every answer cited to its source.',
       items: [
         // both brain surfaces, not just one: the library view and the cockpit
+        { id: 'connect', name: 'CONNECT',   accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/connectors.html',
+          blurb: 'Bring your own keys, and let your own assistant use the council.' },
+        { id: 'mcp',     name: 'MCP SETUP', accent: C.gold,    art: '/assets/nav/apis.jpg', href: '/mcp.html',
+          blurb: 'Point Claude Desktop, Claude Code or Cursor at SHADDAI. Your config, already filled in.' },
         { id: 'manual',  name: 'THE MANUAL', accent: C.gold, art: '/assets/nav/apis.jpg', href: '/manual.html',
           blurb: 'How everything works, in plain language — Sparks, the council, the forge, the games and their controls.' },
         { id: 'ask',     name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/aura.jpg', href: '/brain.html',
