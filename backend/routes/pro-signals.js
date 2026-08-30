@@ -191,29 +191,32 @@ router.post('/prefs', (req, res) => {
 });
 
 // GET /api/pro-signals/top-dex — top 25 DEX tokens
+/* GET /top-dex?limit=25 — the busiest Solana pairs right now, WITH logos and
+   socials. The previous implementation called /latest/dex/pairs/solana?limit=25,
+   which is not a DexScreener endpoint — it returned an HTML error page, so the
+   route answered "Unexpected token '<'". See lib/token-enrich.js. */
 router.get('/top-dex', async (req, res) => {
   try {
-    const response = await fetch('https://api.dexscreener.com/latest/dex/pairs/solana?limit=25');
-    const data = await response.json();
-
-    const pairs = (data.pairs || []).map(p => ({
-      mint: p.baseToken?.address || '',
-      symbol: p.baseToken?.symbol || '',
-      name: p.baseToken?.name || '',
-      price: parseFloat(p.priceUsd || 0),
-      liquidity: p.liquidity?.usd || 0,
-      volume24h: p.volume?.h24 || 0,
-      priceChange24h: p.priceChange?.h24 || 0,
-      fdv: p.fdv || 0,
-    }));
-
-    res.json({
-      source: 'dexscreener',
-      count: pairs.length,
-      pairs,
-    });
+    const enrich = require('../lib/token-enrich');
+    const pairs = await enrich.topDex(req.query.limit);
+    res.json({ source: 'dexscreener', count: pairs.length, pairs });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+/* POST /enrich { mints: [...] } — logos, socials and live pair data.
+   POST because a 300-mint list does not belong in a query string. Enrichment
+   is decoration: a failure returns nulls, never an error, so the signals
+   still render when DexScreener is down. */
+router.post('/enrich', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const enrich = require('../lib/token-enrich');
+    const mints = (req.body && req.body.mints) || [];
+    if (!Array.isArray(mints)) return res.status(400).json({ ok: false, error: 'mints must be an array' });
+    res.json({ ok: true, tokens: await enrich.enrich(mints, req.body.cap) });
+  } catch (err) {
+    res.json({ ok: false, tokens: {} });
   }
 });
 
