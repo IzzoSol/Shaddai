@@ -176,3 +176,10 @@ If anyone wants this fully hands-off (real-time auto-reply instead of a manual/c
 ## Open questions parked for the owner (not blocking, just undecided)
 - Fee/take-rate model for "SHADDAI as a payment middleman" — plumbing not built yet, no number invented.
 - Tier price conflict (3 different sources in the codebase) — still unresolved, still needed before any tier-gating work.
+- `public/wallet.html` — live on production (shaddai-g81x.onrender.com) but doesn't exist anywhere in this repo's git history. Owner checking the Render dashboard's connected repo/branch.
+
+## MCP tool-visibility fix — confirmed live (2026-08-30)
+Re-tested after Groq's rate limit eased: asked ZEROX (via the real remote `/mcp/tools/call` door) to list its tools — `paybox_pay` is now in the list. Confirms the `selectTools()` fix in `agent-tool-run.js` actually works, not just "should work."
+
+## ⚠️ git push is broken for me right now
+`gh auth status` shows the stored GitHub token is invalid/expired ("keyring" token, account IzzoIzzoIzzo). This needs the owner to run `gh auth login -h github.com` themselves (interactive/browser) — not something either terminal can fix by editing files. Until then, my commits land locally but don't reach origin. Check `git log` vs `git log origin/main` if something seems to be missing.
