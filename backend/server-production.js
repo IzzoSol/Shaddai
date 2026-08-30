@@ -1625,6 +1625,7 @@ app.use('/api/signal-discovery', require('./routes/signal-discovery').router); /
 app.use('/api/wallet-network', require('./routes/wallet-network')); // Tracked wallet network visualization + holdings
 app.use('/api/intel', require('./routes/wallet-intel')); // Wallet Intelligence — per-wallet holdings/PnL/hold-time bubbles + heatmap (Pro-Signals)
 app.use('/api/pnl-imagery', require('./routes/pnl-imagery')); // HF FLUX PnL image generator (market cap, multiplier, thesis)
+app.use('/api/prove-edge', require('./routes/prove-edge')); // Prove Edge — backtest call history + paper portfolio/equity curve
 app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals) — audited 2026-07-19
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
@@ -1647,6 +1648,58 @@ try {
   if (_keys.applyStoredKeysToEnv) _keys.applyStoredKeysToEnv();   // apply saved user keys to process.env on boot
   if (_keys.router) app.use('/api/keys', _keys.router);
 } catch (e) { console.error('[keys-routes] mount failed:', e.message); }
+// PIKADON GATE (v1) — PIKADON is the guard rail agent. This is the SURGICAL,
+// additive security layer for the live money rails. It deliberately does NOT
+// bolt the heavy security stack on globally (CSRF/strict-body/sanitize would
+// break the free acquisition funnel); it adds exactly three non-breaking things
+// where money moves: AUDIT (every mutation logged, secrets redacted), a stricter
+// LIMITER, and a FREE-FUNNEL + X402-ON-PREMIUM GATE. X402 only emits 402 when
+// X402_ENABLED==='true'; otherwise everything stays free. See lib/pikadon-gate.js.
+try {
+  const gate = require('./lib/pikadon-gate');
+  // Audit + tighten the off-chain x402 pay rail (charge/grant/pause).
+  app.use('/api/x402', gate.auditRouter(), gate.moneyLimiter({ max: 40 }));
+  // Premium agent execution gate is injected into the /api/agentic/run handler
+  // chain below (single route, no duplicate app.post).
+  global.__pikadonPremiumGate = gate.premiumGate('chat.premium', { agent: 'AGENTIC' });
+  console.log('[prod] PIKADON gate mounted (audit + limiter + x402 premium gate)');
+} catch (e) { console.warn('[prod] pikadon-gate failed:', e.message); }
+// PIKADON (A2): mount the MISSING Paybox webhook. payment-providers.js references
+// /api/billing/webhook/paybox + X-Paybox-Signature HMAC, but no route ever mounted
+// it — so real Paybox payments had to be confirmed by hand. This verifies the
+// HMAC-SHA256 signature first (fail-closed: rejected unless the secret matches),
+// then on a completed status auto-confirms the matching pending order (grants
+// Sparks), the same idempotent path the admin /confirm-order uses.
+app.post('/api/billing/webhook/paybox', express.json({ limit: '64kb' }), async (req, res) => {
+  try {
+    const sig = req.headers['x-paybox-signature'] || '';
+    const secret = process.env.PAYBOX_WEBHOOK_SECRET || process.env.PAYBOX_SECRET || '';
+    if (!secret) { res.status(503).json({ ok: false, error: 'paybox webhook not configured' }); return; }
+    const crypto = require('crypto');
+    const expect = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body)).digest('hex');
+    const ok = sig && crypto.timingSafeEqual(Buffer.from(expect), Buffer.from(String(sig)));
+    if (!ok) { res.status(401).json({ ok: false, error: 'bad signature' }); return; }
+    const body = req.body || {};
+    if (body.status === 'completed') {
+      try {
+        const payboxRoutes = require('./paybox-routes');
+        // Reuse the same confirmation logic against the orders store.
+        const orderId = body.order_id || body.orderId || body.reference;
+        if (orderId) {
+          const result = await (payboxRoutes.confirmOrder ? payboxRoutes.confirmOrder(orderId) : null);
+          res.json({ ok: true, reconciled: orderId, result: result || 'ok' });
+          return;
+        }
+      } catch (e) { console.error('[paybox webhook] reconcile failed:', e.message); }
+      res.json({ ok: true, event: 'completed', reconciled: false });
+      return;
+    }
+    res.json({ ok: true, event: body.status || 'ignored' });
+  } catch (e) {
+    console.error('[paybox webhook] error:', e.message);
+    res.status(400).json({ ok: false, error: 'bad request' });
+  }
+});
 // Brains & personas — per-agent model routing (Ollama/Groq/Claude) + custom agents
 app.use('/api/brains', require('./brains').router);
 // Operative Forge — build-your-own-agent LOOK → real FLUX NFT portrait (HF token stays server-side)
@@ -1708,6 +1761,11 @@ app.use('/api/aura', require('./aura-routes'));
 // Paybox — customer-facing wallet endpoints (tip links etc). Separate from
 // federation-routes.js, which is for external bots/agents, not SHADDAI's own site.
 app.use('/api/paybox', require('./paybox-routes'));
+// Agent Policy — the SURVIVAL product: create_agent / set_spend_policy /
+// revoke / get_ledger. Named agents hold money under owner-set caps, spend only
+// inside them, keep a public ledger, and run on the USER'S OWN key (Shaddai does
+// not host inference). See routes/agent-policy.js.
+app.use('/api/policy', require('./routes/agent-policy'));
 // AgentMail — shaddai@agentmail.to. Draft-then-approve replies, never auto-sends.
 app.use('/api/agentmail', require('./agentmail-routes'));
 // Billing — real tiers/credits/usage metering (Stripe lazy-loaded; crypto via /api/moonpay)
@@ -1733,7 +1791,7 @@ try { app.use('/api/achievements', require('./achievements').router); console.lo
 catch (e) { console.warn('[prod] achievements failed:', e.message); }
 // Server-side LLM proxy — browser calls this so provider keys never ship to the client
 app.use('/api/llm', require('./llm-proxy-routes'));
-app.post('/api/agentic/run', express.json(), require('./lib/agent-tool-run').handler);  // function-calling agent runner — agents actually EXECUTE tools
+app.post('/api/agentic/run', global.__pikadonPremiumGate || ((req, res, next) => next()), express.json(), require('./lib/agent-tool-run').handler);  // function-calling agent runner — agents actually EXECUTE tools (PIKADON premium gate: free unless X402_ENABLED)
 app.post('/api/orchestrate', express.json(), require('./lib/orchestrate').handler);      // SHADDAI orchestrator — decompose a task & route to the right specialists
 // Mastery card RAG search — used by the MCP server, dashboards, and external clients.
 // Merges the small mastery KB (rag-index) with the FULL 401K-chunk brain corpus

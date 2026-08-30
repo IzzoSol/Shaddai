@@ -295,6 +295,19 @@ function buildRouter() {
     }
     try {
       setKey(owner(req), password, provider, key);
+      // PIKADON (A4): a stored vault key is dead weight unless it reaches the
+      // running process. Mirror /api/keys — resolve the catalog envVar and push
+      // the key into process.env so real integrations (news, Grok, HF, markets)
+      // light up. The value is never logged; only the var name is touched.
+      try {
+        const row = (catalog() || []).find(c => c.provider === provider);
+        if (row && row.envVar && key) {
+          process.env[row.envVar] = key;
+          if (typeof logAuditEvent === 'function') {
+            logAuditEvent('VAULT_KEY_LINKED', { provider, envVar: row.envVar, owner: owner(req) });
+          }
+        }
+      } catch (e2) { /* never fail a save over env wiring */ }
       res.json({ ok: true });
     } catch (e) {
       res.status(400).json({ ok: false, error: e.message });

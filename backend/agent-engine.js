@@ -75,6 +75,9 @@ const OPENAI_PREMIUM_MODEL     = process.env.OPENAI_PREMIUM_MODEL     || 'gpt-4o
 const OPENROUTER_PREMIUM_MODEL = process.env.OPENROUTER_PREMIUM_MODEL || 'anthropic/claude-3.5-sonnet';
 const GEMINI_KEY     = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+const XAI_KEY        = process.env.XAI_API_KEY || '';
+const XAI_MODEL      = process.env.XAI_MODEL || 'grok-beta';
+const XAI_PREMIUM_MODEL = process.env.XAI_PREMIUM_MODEL || 'grok-3';
 
 // BYOK helper — reads backend/data/byok-keys.json and returns the stored key for a
 // given provider (any tier, highest-permission first). Returns '' when nothing stored.
@@ -3281,6 +3284,7 @@ Use tools for real data, then give a concise final answer.` };
   const _bOpenAI    = getBYOKKey('openai')     || OPENAI_KEY;
   const _bAnthropic = getBYOKKey('claude')     || ANTHROPIC_KEY;
   const _bGemini    = getBYOKKey('gemini')     || GEMINI_KEY;
+  const _bXAI       = getBYOKKey('xai')        || XAI_KEY;
 
   // Anthropic (paid, reliable — different API shape: system separate, x-api-key).
   async function pAnthropic() {
@@ -3311,6 +3315,11 @@ Use tools for real data, then give a concise final answer.` };
     llmTracer.trace({ provider: 'gemini', model, agentName, inputTokens: 0, outputTokens: Math.ceil(c.length / 4), durationMs: Date.now() - t0, success: true });
     return c;
   }
+  // xAI / Grok (OpenAI-compatible shape — Bearer auth, paid tier alongside anthropic/openai).
+  async function pXAI() {
+    return pOpenAICompatible('xai', 'https://api.x.ai/v1/chat/completions', _bXAI,
+      [(options.provider === 'xai' && options.model) || (_isPaidTier ? XAI_PREMIUM_MODEL : XAI_MODEL)]);
+  }
   // Pro/Elite model tier (§3 MODEL ACCESS STRATEGY): "high-end models without
   // adding your own key" — a paid-tier userId gets premium model defaults on
   // OUR keys, and the provider order tries the strongest providers first.
@@ -3333,6 +3342,7 @@ Use tools for real data, then give a concise final answer.` };
     openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter, [(options.provider === 'openrouter' && options.model) || (_isPaidTier ? OPENROUTER_PREMIUM_MODEL : OPENROUTER_MODEL), 'meta-llama/llama-3.1-8b-instruct:free']),
     anthropic: pAnthropic,
     openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || (_isPaidTier ? OPENAI_PREMIUM_MODEL : OPENAI_MODEL)]),
+    xai: pXAI,
   };
   // Per-step override (options.provider) wins, else the agent's preferredProvider.
   const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
@@ -3342,9 +3352,9 @@ Use tools for real data, then give a concise final answer.` };
   // Paid tier: try the strongest providers FIRST (anthropic, openai premium,
   // openrouter premium), falling back to the free chain if those fail/rate-limit.
   const order = _isPaidTier
-    ? [...new Set([pref, 'anthropic', 'openai', 'openrouter', 'groq', 'gemini', 'ollama'].filter(Boolean))]
-    : [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'ollama'].filter(Boolean))];
-  const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL };
+    ? [...new Set([pref, 'anthropic', 'openai', 'openrouter', 'xai', 'groq', 'gemini', 'ollama'].filter(Boolean))]
+    : [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'xai', 'ollama'].filter(Boolean))];
+  const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL, xai: XAI_MODEL };
   // ── AURA forCall — token savings + cache on EVERY LLM call ──────────────────
   // forCall() applies all savings levers (cache hit, prompt compression, tool-injection
   // savings, history compaction) and records the totals in stats every single call.

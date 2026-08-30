@@ -31,6 +31,7 @@ const ENV_PREFIX = {
   anthropic:  'ANTHROPIC_API_KEY',
   gemini:     'GEMINI_API_KEY',
   together:   'TOGETHER_API_KEY',
+  xai:        'XAI_API_KEY',
   ollamacloud:'OLLAMA_API_KEY'   // Ollama Cloud / Turbo (hosted; keyed). Local Ollama stays keyless.
 };
 
