@@ -225,173 +225,122 @@
      its own wheel of sub-items using the identical motion — the pattern is
      recursive, so any category can gain a sub-wheel by adding `items`. */
 
+  /* THE WHEEL — ten buttons, each one a place.
+
+     REMOVED and why:
+       DO          every item led to the dashboard. A menu entry that is four
+                   doors into the same room is not a category.
+       HUB         zero items. A dead button.
+       2D CITY     does not exist. It is the bazaar, and the bazaar is not
+                   finished. Linking to it promised a place with no way in.
+       THE COUNCIL that IS the RAG brain, which already has its own button.
+       COCKPIT     a second door into the brain. One door is the point.
+       LAUNCH KIT  internal. Never belonged on a customer menu.
+
+     PRO SIGNALS pointed at /pro-signals.html, which is the OLD page. The rebuilt
+     four-mode mobile one is /signals.html. A stale link to a superseded page is
+     worse than a dead one, because it looks like it worked.
+
+     The rule applied throughout: one idea per button, nothing that leads
+     somewhere already reachable, and nothing pointing at a page that does not
+     do what its name claims. */
   var WHEEL = [
     {
-      id: 'do',
-      name: 'DO',
-      accent: C.emerald,
-      art: '/assets/nav/automation.jpg',
-      blurb: 'Put the council to work. Pick a job and it runs end to end.',
-      /* WAS: 'ORACLE', 'CHECK IT', 'WRITE IT' — three ways to ask a question,
-         which is what the BRAIN tab is for. A tab called DO should DO things.
-         These are whole outcomes a person would actually want, each one a real
-         multi-agent workflow rather than a single prompt.
-
-         `requiresAuth` greys the tile and asks for a quick sign-in instead of
-         failing after the tap. A job that produces a file and charges Sparks
-         genuinely cannot run for an anonymous visitor — but finding that out
-         AFTER committing to it is the worst version of the same rule. */
+      id: 'agents', name: 'AGENTS', accent: C.gold, art: '/assets/nav/agents.jpg',
+      blurb: 'The seven. Each has skills, a wallet and an MCP door — hire them here.',
       items: [
-        { id: 'wf-content', name: 'CONTENT PACK', accent: C.emerald, art: '/assets/nav/automation.jpg',
-          href: '/index.html#workflow', requiresAuth: true,
-          blurb: 'Ten posts in one voice. QUILL writes, TURTLE makes the art, you approve.' },
-        { id: 'wf-coin', name: 'CHECK A COIN', accent: C.gold, art: '/assets/nav/markets.jpg',
-          href: '/signals.html', requiresAuth: false,
-          blurb: 'ZEROX reads the chain and PIKADON checks the contract. Free to look.' },
-        { id: 'wf-research', name: 'RESEARCH BRIEF', accent: C.emerald, art: '/assets/nav/apis.jpg',
-          href: '/index.html#workflow', requiresAuth: true,
-          blurb: 'A hard question answered properly, with every source cited.' },
-        { id: 'wf-build', name: 'BUILD SOMETHING', accent: C.gold, art: '/assets/nav/forge.jpg',
-          href: '/agent-forge.html', requiresAuth: true,
-          blurb: 'Forge an agent that does this for you on its own, from now on.' },
+        { id: 'shaddai', name: 'SHADDAI', accent: C.gold,    art: '/assets/agents/SHADDAI-portrait.png', href: '/agents.html#shaddai', blurb: 'Orchestration and the final call.' },
+        { id: 'zerox',   name: 'ZEROX',   accent: C.gold,    art: '/assets/agents/ZEROX-portrait.png',   href: '/agents.html#zerox',   blurb: 'Markets, pricing, unit economics.' },
+        { id: 'oracle',  name: 'ORACLE',  accent: C.emerald, art: '/assets/agents/ORACLE-portrait.png',  href: '/agents.html#oracle',  blurb: 'Research, people, patterns.' },
+        { id: 'nexus',   name: 'NEXUS',   accent: C.emerald, art: '/assets/agents/NEXUS-portrait.png',   href: '/agents.html#nexus',   blurb: 'Backends, APIs, systems that hold.' },
+        { id: 'turtle',  name: 'TURTLE',  accent: C.emerald, art: '/assets/agents/TURTLE-portrait.png',  href: '/agents.html#turtle',  blurb: 'Image, motion, sound, game assets.' },
+        { id: 'quill',   name: 'QUILL',   accent: C.gold,    art: '/assets/agents/QUILL-portrait.png',   href: '/agents.html#quill',   blurb: 'Every word a person reads.' },
+        { id: 'pikadon', name: 'PIKADON', accent: C.emerald, art: '/assets/agents/PIKADON-portrait.png', href: '/agents.html#pikadon', blurb: 'Audits, contracts, what could go wrong.' },
       ],
     },
     {
-      id: 'agents',
-      name: 'AGENTS',
-      accent: C.emerald,
-      art: '/assets/nav/agents.jpg',
-      blurb: 'The seven-agent council. Each one owns a domain, carries its own mastery library, and answers grounded in it.',
+      id: 'paybox', name: 'PAYBOX', accent: C.gold, art: '/assets/nav/apis.jpg',
+      blurb: 'Pay an agent to do the work — Sparks when signed in, a wallet when not.',
       items: [
-        { id: 'shaddai', name: 'SHADDAI', accent: C.gold,    art: '/assets/agents/SHADDAI-portrait.png', href: '/agents.html#shaddai', blurb: 'Supreme orchestrator. Strategy, prioritization, and the final call before anything ships.' },
-        { id: 'nexus',   name: 'NEXUS',   accent: C.cyan,    art: '/assets/agents/NEXUS-portrait.png',   href: '/agents.html#nexus',   blurb: 'Technical architect. Backend, APIs, database design, and anything that has to scale.' },
-        { id: 'zerox',   name: 'ZEROX',   accent: C.rose,    art: '/assets/agents/ZEROX-portrait.png',   href: '/agents.html#zerox',   blurb: 'Wealth engine. Pricing, unit economics, billing, and market calls scored by hit rate.' },
-        { id: 'oracle',  name: 'ORACLE',  accent: C.violet,  art: '/assets/agents/ORACLE-portrait.png',  href: '/agents.html#oracle',  blurb: 'Research and intelligence. Gathers context, spots gaps, and questions the assumption first.' },
-        { id: 'turtle',  name: 'TURTLE',  accent: C.emerald, art: '/assets/agents/TURTLE-portrait.png',  href: '/agents.html#turtle',  blurb: 'Design and creative. Interfaces, motion, and whether a thing actually feels good to use.' },
-        { id: 'quill',   name: 'QUILL',   accent: C.gold,    art: '/assets/agents/QUILL-portrait.png',   href: '/agents.html#quill',   blurb: 'Writing and communication. Copy, documentation, guides, and every word a user reads.' },
-        { id: 'pikadon', name: 'PIKADON', accent: C.amber,   art: '/assets/agents/PIKADON-portrait.png', href: '/agents.html#pikadon', blurb: 'Security and compliance. Reviews everything for holes and assumes the worst case.' }
-      ]
+        { id: 'pb-hire',    name: 'HIRE AN AGENT', accent: C.gold,    art: '/assets/nav/agents.jpg', href: '/index.html#agents', blurb: 'Pick the job and pay. Refunded automatically if it fails.' },
+        { id: 'pb-wallets', name: 'ZEROX WALLETS', accent: C.emerald, art: '/assets/nav/apis.jpg',   href: '/enter.html',        blurb: 'The Solana and Robinhood receiving addresses.' },
+        { id: 'pb-sparks',  name: 'GET SPARKS',    accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/pricing.html',      blurb: '1 Spark = $1, fixed. Spend it on work.' },
+      ],
     },
     {
-      id: 'games',
-      name: 'GAMES',
-      accent: C.amber,
-      art: '/assets/landing/tab-play.png',
-      blurb: 'The arcade. Every real game in the empire — nothing here that isn’t actually playable.',
-      // 2026-08-29: arena/tactics/courts pointed at battle-arena.html/tactics.html/
-      // basketball-jam.html — real files, but never part of the curated arcade
-      // roster (arcade.html's own game grid never lists them). Replaced with
-      // arcade.html's actual FEATURED array (its unlocked, playable games) —
-      // xto-adventure and shaddai-realms are excluded on purpose, they're in
-      // arcade.html's BETA_GAMES (password-gated, "SHADDAIGAMES"), not featured.
-      // NEON HOOPS has a known rendering bug and none of these are mobile-tuned
-      // yet — both queued as follow-up, not fixed here.
+      id: 'signals', name: 'SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg',
+      blurb: 'Live calls — list, bubbles, heatmap and ranked.',
       items: [
-        { id: 'climb',     name: 'THE CLIMB',   accent: C.emerald, art: '/assets/landing/tab-play.png', href: '/games/dreamers-climb/index.html', blurb: 'Dreamers Climb — the ascent run. Eight radio stations, one very long way up.' },
-        { id: 'hoops',     name: 'NEON HOOPS',  accent: C.amber,   art: '/assets/nav/office.jpg',        href: '/games/basketball.html', blurb: 'Fast-break 2.5D arcade basketball.' },
-        { id: 'football',  name: 'GRIDIRON',    accent: C.rose,    art: '/assets/nav/social.jpg',        href: '/games/football.html', blurb: 'Agent sport, 5v5. Dominate the gridiron.' },
-        { id: 'soccer',    name: 'SOCCER',      accent: C.cyan,    art: '/assets/nav/worlds.jpg',        href: '/games/shaddai-soccer.html', blurb: 'Agent sport, 5v5. Own the pitch.' },
-        { id: 'dodgeball', name: 'DODGEBALL',   accent: C.violet,  art: '/assets/nav/automation.jpg',    href: '/games/dodgeball.html', blurb: 'Reflex, team. Dodge or get wrecked.' },
-        { id: 'starfall',  name: 'STARFALL',    accent: C.gold,    art: '/assets/nav/markets.jpg',       href: '/games/shaddai-shooting.html', blurb: 'Wave-defense shooter. Survive the void.' },
-        { id: 'royale',    name: 'SHADDAI ROYALE', accent: C.emerald, art: '/assets/nav/plans.jpg',      href: '/games/royale/index.html', blurb: 'Casino, high-stakes 21. Beat the house.' }
-      ]
+        { id: 'pro',    name: 'PRO SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html',
+          blurb: 'Four ways to read the feed. Pre-bond, post-bond, boosted, top 25.' },
+        { id: 'tg',     name: 'SHADDAI TG',  accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/m-signals.html', blurb: 'Calls delivered to Telegram.' },
+        { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
+      ],
     },
     {
-      id: 'signals',
-      name: 'SIGNALS',
-      accent: C.rose,
-      art: '/assets/landing/tab-signals.png',
-      blurb: 'The three trading terminals — Pro Signals, the gated TG desk, and TuFish.',
-      // The zerox-chart / zerox-live-signals pages were never real trading
-      // tools and are deliberately NOT linked here. The three terminals below
-      // are the actual ones.
+      id: 'dashboard', name: 'DASHBOARD', accent: C.emerald, art: '/assets/nav/dashboard.jpg',
+      blurb: 'The workstation. Everything the council can do, in one place.',
       items: [
-        { id: 'pro',    name: 'PRO SIGNALS', accent: C.gold,   art: '/assets/landing/tab-signals.png', href: '/pro-signals.html', blurb: 'The Oracle Terminal — live calls, scoring and hit-rate history. PIN gated.', pro: true },
-        { id: 'tg',     name: 'SHADDAI TG',  accent: C.emerald, art: '/assets/nav/social.jpg',         href: '/m-signals.html',   blurb: 'The Team Terminal — the gated desk behind the Telegram feed. PIN gated.', pro: true },
-        { id: 'tufish', name: 'TUFISH',      accent: C.cyan,    art: '/assets/nav/markets.jpg',        href: '/mirofish-terminal.html', blurb: 'MiroFish swarm intelligence — the research terminal behind the calls.', pro: true }
-      ]
+        { id: 'dash-open', name: 'OPEN', accent: C.emerald, art: '/assets/nav/dashboard.jpg', href: '/index.html', blurb: 'The full dashboard.' },
+      ],
     },
     {
-      id: 'forge',
-      name: 'FORGE',
-      accent: C.gold,
-      art: '/assets/nav/forge.jpg',
-      blurb: 'Build your own operatives, sprites and objects, then trade them.',
+      id: 'forge', name: 'FORGE', accent: C.gold, art: '/assets/nav/forge.jpg',
+      blurb: 'Build an agent, or the things it works with.',
       items: [
-        { id: 'agent',    name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',   href: '/agent-forge.html', blurb: 'Forge an agent end to end — a name, abilities that really run, a personality or none, and its own budgeted wallet.' },
-        { id: 'pixel',    name: '2D PIXEL',   accent: C.emerald, art: '/assets/landing/tab-worlds.png', href: '/pixel-forge.html', blurb: 'Pixel-realm assets — sprites and objects for the 2D world.' },
-        { id: 'forge3d',  name: '3D WORLD',   accent: C.cyan,    art: '/assets/nav/worlds.jpg',  href: '/forge-3d.html', blurb: 'The procedural 3D sculptor. Build objects that live in the 3D world.' },
-        // 2026-08-29: owner wants a REAL marketplace here (create/list/buy/sell,
-        // owner-curated + monthly featured) — forge-gallery.html today is still
-        // the static placeholder, not that. Wired so the menu isn't a dead end;
-        // rebuilding the page into a real marketplace is tracked in
-        // TODO-COORDINATION.md, not done here.
-        { id: 'market3d', name: '3D MARKETPLACE', accent: C.violet, art: '/assets/nav/apis.jpg', href: '/forge-gallery.html', blurb: 'Browse what the community has forged. (Marketplace rebuild in progress — buy/sell/curate isn’t real yet.)' }
-      ]
+        { id: 'agent',   name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',  href: '/agent-forge.html',
+          blurb: 'Four questions and it is hireable — abilities, a personality or none, a wallet.' },
+        { id: 'pixel',   name: '2D PIXEL',       accent: C.emerald, art: '/assets/nav/forge.jpg',  href: '/pixel-forge.html', blurb: 'Sprites and objects.' },
+        { id: 'forge3d', name: '3D SCULPTOR',    accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-3d.html',    blurb: 'Objects for the 3D realm.' },
+      ],
     },
     {
-      id: 'worlds',
-      name: 'WORLDS',
-      accent: C.cyan,
-      art: '/assets/landing/tab-worlds.png',
-      blurb: 'One world, more than one way to stand in it.',
+      id: 'market', name: 'MARKETPLACE', accent: C.gold, art: '/assets/nav/apis.jpg',
+      blurb: 'Buy and sell what the community has made.',
       items: [
-        { id: 'w2d',   name: '2D CITY',  accent: C.gold,    art: '/assets/landing/tab-worlds.png', href: '/SHADDAI-WORLD.html', blurb: 'The walkable pixel city where the agents live as characters.' },
-        { id: 'w3d',   name: '3D REALM', accent: C.cyan,    art: '/assets/nav/worlds.jpg',         href: '/world3d', blurb: 'The full dimensional build — terrain, districts, interiors, council halls.' },
-        { id: 'realm', name: 'REALMS',   accent: C.violet,  art: '/assets/nav/office.jpg',         href: '/region-select.html', blurb: 'Pick a region and drop into it.' }
-      ]
+        { id: 'bazaar',   name: 'THE BAZAAR',     accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/marketplace-shop-v2.html', blurb: 'The store. Sign in to buy.' },
+        { id: 'market3d', name: '3D MARKETPLACE', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-gallery.html',       blurb: 'Browse what has been forged.' },
+      ],
     },
     {
-      id: 'brain',
-      name: 'BRAIN',
-      accent: C.emerald,
-      art: '/assets/nav/aura.jpg',
-      blurb: 'The RAG brain — the council’s shared memory, and every answer cited to its source.',
+      id: 'worlds', name: 'WORLDS', accent: C.emerald, art: '/assets/nav/worlds.jpg',
+      blurb: 'Where the agents live.',
       items: [
-        // both brain surfaces, not just one: the library view and the cockpit
-        { id: 'connect', name: 'CONNECT',   accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/connectors.html',
-          blurb: 'Bring your own keys, and let your own assistant use the council.' },
-        { id: 'mcp',     name: 'MCP SETUP', accent: C.gold,    art: '/assets/nav/apis.jpg', href: '/mcp.html',
-          blurb: 'Point Claude Desktop, Claude Code or Cursor at SHADDAI. Your config, already filled in.' },
-        { id: 'manual',  name: 'THE MANUAL', accent: C.gold, art: '/assets/nav/apis.jpg', href: '/manual.html',
-          blurb: 'How everything works, in plain language — Sparks, the council, the forge, the games and their controls.' },
-        { id: 'ask',     name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/aura.jpg', href: '/brain.html',
-          blurb: 'The knowledge base itself — search, digested chapters, and every answer cited to the passage it came from.' },
-        { id: 'cockpit', name: 'COCKPIT',   accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/rag-cockpit.html',
-          blurb: 'The neural cockpit — the brain as a live 3D instrument you fly through rather than a list you scroll.' },
-        { id: 'council', name: 'THE COUNCIL', accent: C.violet, art: '/assets/agents/SHADDAI-portrait.png', href: '/brain-head.html',
-          blurb: 'Council Mind — all seven agents reasoning on the same question at once.' },
-        { id: 'codex',   name: 'CODEX',     accent: C.gold,    art: '/assets/nav/apis.jpg',  href: '/codex.html', blurb: 'The almanac — the written record of the empire.' },
-        { id: 'learn',   name: 'LEARN',     accent: C.rose,    art: '/assets/nav/chat.jpg',  href: '/learn.html', blurb: 'Guided paths through what the council knows.' },
-        // moved here from the removed CREATE category (2026-08-29) — works well, just needed a home.
-        { id: 'launch',  name: 'LAUNCH KIT', accent: C.gold,   art: '/assets/nav/plans.jpg', href: '/launch-kit.html', blurb: 'Everything needed to put something live — copy, assets, and the checklist.' }
-      ]
+        { id: 'realms',  name: '2D REALM', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/region-select.html', blurb: 'Pick a region and walk in.' },
+        { id: 'realm3d', name: '3D REALM', accent: C.dim,     art: '/assets/nav/worlds.jpg', href: '/world3d',            blurb: 'The dimensional build. Still going up.' },
+      ],
     },
     {
-      id: 'tools',
-      name: 'TOOLS',
-      accent: C.violet,
-      art: '/assets/nav/apis.jpg',
-      blurb: 'Two hundred real, executable tools, the bazaar, and the API behind them.',
+      id: 'brain', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
+      blurb: 'Ask the library. Every answer cited to its source.',
       items: [
-        { id: 'bazaar',  name: 'THE BAZAAR', accent: C.violet,  art: '/assets/nav/apis.jpg',       href: '/marketplace-shop-v2.html', blurb: 'The night market — buy, sell and trade what the council and the community have made.' },
-        { id: 'aura',    name: 'AURA',        accent: C.emerald, art: '/assets/nav/aura.jpg',       href: '/aura.html', blurb: 'The token-saving layer — deterministic answers before any model is called.' },
-        // 2026-08-29: "connect a bot" lives here rather than a separate OTHERS
-        // bucket — things should go where they belong, not a catch-all. Points
-        // at the real API-key page for now; the federation/MCP endpoint itself
-        // (/mcp/tools/call, key-gated, live as of 6526fe3) still wants its own
-        // dedicated connect page (show the manifest, issue an MCP-specific key).
-        { id: 'api',     name: 'API',         accent: C.cyan,    art: '/assets/nav/automation.jpg', href: '/api.html', blurb: 'Wire SHADDAI into your own stack — or bring your own agent (Grok bot, etc.) in over MCP.' }
-      ]
+        { id: 'brain-open', name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/brain.html',
+          blurb: 'Ask a question, get an answer with its sources.' },
+      ],
     },
     {
-      id: 'hub',
-      name: 'HUB',
-      accent: C.gold,
-      art: '/assets/nav/dashboard.jpg',
-      href: '/dashboard',
-      blurb: 'The Command Hub — the full dashboard, sign-in, and everything at once. Tap to go straight there.'
-    }
+      id: 'manual', name: 'MANUAL', accent: C.gold, art: '/assets/nav/apis.jpg',
+      blurb: 'How all of it works, and how to plug your own things in.',
+      items: [
+        { id: 'booklet', name: 'DIGITAL BOOKLET', accent: C.gold,    art: '/assets/nav/apis.jpg', href: '/manual.html',
+          blurb: 'The N64-style manual. Sparks, the council, the forge, the flywheel.' },
+        { id: 'mcp',     name: 'MCP SETUP',       accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp.html',
+          blurb: 'Point your own Claude or Grok at the council.' },
+        { id: 'connect', name: 'CONNECTORS',      accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/connectors.html',
+          blurb: 'Bring your own keys. We take nothing on what you make.' },
+        { id: 'learn',   name: 'LEARN',           accent: C.gold,    art: '/assets/nav/apis.jpg', href: '/learn.html', blurb: 'Guides and lessons.' },
+        { id: 'codex',   name: 'CODEX',           accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/codex.html', blurb: 'The reference.' },
+      ],
+    },
+    {
+      id: 'tools', name: 'TOOLS', accent: C.emerald, art: '/assets/nav/automation.jpg',
+      blurb: 'The machinery underneath.',
+      items: [
+        { id: 'aura', name: 'AURA', accent: C.emerald, art: '/assets/nav/automation.jpg', href: '/aura.html',
+          blurb: 'Answers without paying for a model call, wherever it can.' },
+        { id: 'api',  name: 'API',  accent: C.gold,    art: '/assets/nav/apis.jpg',       href: '/api.html', blurb: 'Build against SHADDAI directly.' },
+      ],
+    },
   ];
 
   /* ── lookups ──────────────────────────────────────────────────────────── */
