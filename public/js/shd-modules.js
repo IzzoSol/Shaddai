@@ -262,17 +262,28 @@
       id: 'paybox', name: 'PAYBOX', accent: C.gold, art: '/assets/nav/apis.jpg',
       blurb: 'Pay an agent to do the work — Sparks when signed in, a wallet when not.',
       items: [
-        { id: 'pb-hire',    name: 'HIRE AN AGENT', accent: C.gold,    art: '/assets/nav/agents.jpg', href: '/index.html#agents', blurb: 'Pick the job and pay. Refunded automatically if it fails.' },
-        { id: 'pb-wallets', name: 'ZEROX WALLETS', accent: C.emerald, art: '/assets/nav/apis.jpg',   href: '/enter.html',        blurb: 'The Solana and Robinhood receiving addresses.' },
-        { id: 'pb-sparks',  name: 'GET SPARKS',    accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/pricing.html',      blurb: '1 Spark = $1, fixed. Spend it on work.' },
+        /* Only ONE item, deliberately. The other two pointed at the dashboard and
+           back at the front door — a category whose entries lead somewhere the
+           menu already reaches is the same mistake the DO tab made. Paybox
+           earns more entries when it can actually settle a payment; until then
+           one honest door beats three that go nowhere new. */
+        { id: 'pb-sparks', name: 'GET SPARKS', accent: C.gold, art: '/assets/nav/apis.jpg', href: '/pricing.html',
+          blurb: '1 Spark = $1, fixed. Fund an agent and it works for you.' },
       ],
     },
     {
       id: 'signals', name: 'SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg',
       blurb: 'Live calls — list, bubbles, heatmap and ranked.',
       items: [
-        { id: 'pro',    name: 'PRO SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html',
-          blurb: 'Four ways to read the feed. Pre-bond, post-bond, boosted, top 25.' },
+        /* The full terminal is the PRIMARY entry and stays that way. /signals.html
+           was built as a mobile companion — four fast views for reading the feed
+           on a phone — and was wrongly swapped in over the top of this one. It
+           belongs BESIDE the terminal, not instead of it. Merging the two is the
+           next job; until then both are reachable and each says what it is. */
+        { id: 'pro',    name: 'PRO TERMINAL', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/pro-signals.html',
+          blurb: 'The full terminal — every filter, every column, built for a desktop.' },
+        { id: 'mobile', name: 'QUICK VIEW',   accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/signals.html',
+          blurb: 'The same feed on a phone — list, bubbles, heatmap, ranked.' },
         { id: 'tg',     name: 'SHADDAI TG',  accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/m-signals.html', blurb: 'Calls delivered to Telegram.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
       ],
@@ -314,8 +325,10 @@
       id: 'brain', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
       blurb: 'Ask the library. Every answer cited to its source.',
       items: [
-        { id: 'brain-open', name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/brain.html',
-          blurb: 'Ask a question, get an answer with its sources.' },
+        { id: 'brain-classic', name: 'CLASSIC', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
+          blurb: 'The plain view — ask, read the answer, follow the citations.' },
+        { id: 'brain-3d',      name: '3D BRAIN', accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
+          blurb: 'The same library, rendered — see which regions an answer came from.' },
       ],
     },
     {
