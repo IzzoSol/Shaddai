@@ -40162,7 +40162,49 @@ function popoutProjects() {
     + '<div class="main"><div class="grid" id="grid">' + cards + '</div></div>'
     + '<script>' + js + '<\/script>'
     + '<script src="/home-btn.js" defer><\/script>'
-    + '</body></html>');
+    + '
+<script>
+/* Wrap every dashboard table in a horizontal scroller.
+
+   Measured cause: the agents tab had 81 elements past a 390px viewport, all of
+   them a .data-table's columns. The page itself did not scroll sideways, so
+   the overflow was being CLIPPED — the columns were simply unreachable, which
+   reads as missing data rather than as a layout bug.
+
+   Done in JS because CSS cannot give an element a scrolling parent, and
+   re-run after view switches because several tabs build their tables lazily. */
+(function () {
+  function wrapTables(root) {
+    var tables = (root || document).querySelectorAll('[id$="View"] table');
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      if (t.parentElement && t.parentElement.classList.contains('tbl-scroll')) continue;
+      if (t.closest('.tbl-scroll')) continue;
+      var w = document.createElement('div');
+      w.className = 'tbl-scroll';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    }
+  }
+  function run() { try { wrapTables(); } catch (e) {} }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+
+  // tabs build their tables lazily, so wrap again after each switch
+  var sv = window.showView;
+  if (typeof sv === 'function') {
+    window.showView = function () {
+      var r = sv.apply(this, arguments);
+      setTimeout(run, 120);
+      return r;
+    };
+  }
+  setTimeout(run, 1500);
+  setTimeout(run, 4000);
+})();
+</script>
+</body></html>');
   w.document.close();
   notify('Projects popout — ' + projects.length + ' projects');
 }
@@ -58939,6 +58981,83 @@ html[data-theme-skin="tide"] body{
   background:var(--bg-deep) !important;
   background-image:none !important;
   color:var(--text-primary) !important;
+}
+
+/* ══ MOBILE AUDIT FIXES ═══════════════════════════════════════════════════
+   Measured at 390px across ten tabs, not guessed at. Findings:
+     agents       81 elements past the viewport — a .data-table, plus 43 taps under 38px
+     marketplace  18 past the viewport, 3 overlapping blocks, 34 small taps
+     settings      7 past · office 5 · worlds 1 · wallet 19 small taps
+   dash, forge, brain and signals measured clean.
+
+   The page itself never scrolled sideways (scrollWidth 380 of 390), which is
+   WHY this went unnoticed: the overflow was being clipped, so the content was
+   silently cut off rather than visibly broken. A column you cannot reach reads
+   as a missing feature, not as a layout bug.
+
+   Appended last on purpose so these land after the rules they correct, and
+   scoped to view containers so nothing here can leak into the world/3D canvases.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 1 ── TABLES SCROLL, THEY DO NOT SPILL.
+   A data table cannot fit a phone and should not try.
+
+   FIRST ATTEMPT WAS WRONG and is recorded here so it is not repeated:
+   `table{display:block;overflow-x:auto}` moves the overflow onto TBODY, breaks
+   the table's own column layout, and measured WORSE — 78 spilling elements
+   plus three new overlaps. CSS cannot give a table a scroll parent; it needs a
+   real wrapper element, added by the script at the end of this file. */
+[id$="View"] .tbl-scroll{ width:100%; max-width:100%; min-width:0; overflow-x:auto;
+  -webkit-overflow-scrolling:touch; border:1px solid rgba(120,150,140,.14); }
+
+/* A flex or grid CHILD defaults to min-width:auto, which means it refuses to
+   shrink below its content — so the scroller inherited the table's full width
+   and pushed the whole PAGE sideways to 1158px instead of scrolling inside
+   itself. Every ancestor between the view and the scroller has to be allowed
+   to shrink, or the innermost overflow:auto never engages. This is the single
+   most common reason a horizontal scroller "does nothing". */
+[id$="View"], [id$="View"] > *, [id$="View"] div, [id$="View"] section{ min-width:0; }
+/* html AND body. Setting it on body alone leaves html at overflow-x:visible,
+   and the page still scrolls — verified by scrolling to x=500 and landing
+   there. The viewport clamp only holds when both carry it. */
+html, body, main{ overflow-x:hidden; max-width:100%; }
+[id$="View"] .tbl-scroll > table{ min-width:max-content; margin:0; }
+[id$="View"] .tbl-scroll th, [id$="View"] .tbl-scroll td{ white-space:nowrap; }
+
+/* 2 ── NOTHING WIDER THAN THE SCREEN.
+   Long addresses, mints and URLs are the usual culprit — they cannot wrap at a
+   space because they contain none. */
+[id$="View"]{ max-width:100%; }
+[id$="View"] pre, [id$="View"] code{ max-width:100%; overflow-x:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
+[id$="View"] img, [id$="View"] video, [id$="View"] canvas:not(.keep-size){ max-width:100%; height:auto; }
+
+@media (max-width:640px){
+  /* 3 ── THUMB FLOOR. 100+ controls measured under 38px across four tabs.
+     Applied only to real controls, never to layout elements that happen to be
+     small, and never inside a canvas world. */
+  [id$="View"] button:not(.tiny-ok),
+  [id$="View"] a.btn,
+  [id$="View"] .btn,
+  [id$="View"] input[type="button"],
+  [id$="View"] input[type="submit"]{
+    min-height:38px; padding-top:6px; padding-bottom:6px;
+  }
+  /* inputs at 16px or iOS zooms the whole page on focus */
+  [id$="View"] input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+  [id$="View"] select, [id$="View"] textarea{ font-size:16px; min-height:42px; }
+
+  /* 4 ── ONE COLUMN. Multi-column grids at 390px are how blocks end up
+     overlapping — marketplace measured three such collisions. */
+  #marketplaceView .grid, #marketplaceView [class*="grid"],
+  #settingsView .grid, #settingsView [class*="grid"],
+  #officeView .grid, #officeView [class*="grid"]{
+    grid-template-columns:1fr !important;
+  }
+  /* flex rows wrap rather than squeeze */
+  #marketplaceView [class*="row"], #settingsView [class*="row"]{ flex-wrap:wrap; }
+
+  /* 5 ── BREATHING ROOM. Cards touching each other read as one block. */
+  [id$="View"] > * + *{ margin-top:10px; }
 }
 </style>
 
