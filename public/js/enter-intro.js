@@ -8,8 +8,12 @@
 
    Seven circles because there are seven agents; the figure is the one
    already in the product's language (home.html's chakra spine, the sacred
-   geometry running through the descent). Each circle carries its agent's
-   accent, so the palette is derived rather than decorative.
+   geometry running through the descent).
+
+   MONOCHROME, deliberately. Each circle used to carry its own agent's accent —
+   seven saturated hues blooming at once, which read as a rainbow rather than
+   as a rite. The figure is now drawn entirely in emerald, with gold arriving
+   only at the moment the seed completes. One hue holding, one hue landing.
 
    RULES IT OBEYS, because an intro that ignores these becomes the thing
    people hate about a site:
@@ -82,7 +86,7 @@
     root.addEventListener('resize', size);
 
     /* the seven agents' accents, in council order */
-    var HUES = ['#e8c45c', '#5fe0ff', '#ff6f6f', '#b07cff', '#00ff9c', '#e8c45c', '#ff8a5c'];
+    var HUES = ['#e8c45c', '#00ff9c', '#e8c45c', '#00ff9c', '#00ff9c', '#e8c45c', '#e8c45c'];
 
     var t0 = performance.now();
     var done = false;

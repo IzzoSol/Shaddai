@@ -18,10 +18,14 @@
    Spec: docs/FRONT-DOOR-MASTER-PROMPT.md
    ══════════════════════════════════════════════════════════════════════ */
 :root{
-  /* Each skin carries a three-stop aurora (--g1/--g2/--g3) painted behind the
-     grid, not just flat tokens — that is what makes a theme read as designed
-     rather than as a recoloured background. */
-  --g1:rgba(0,255,156,.075); --g2:rgba(95,224,255,.065); --g3:rgba(232,196,92,.05);
+  /* The aurora behind the grid (--g1/--g2/--g3).
+
+     This carried emerald + CYAN + gold — three hues drifting under six
+     differently-coloured doors, which is how the page ended up reading as a
+     colour wheel. It is now ONE hue holding the field (emerald, two depths)
+     with gold as a single deep ember low in the frame. Two colours, one of
+     them barely present. That is what makes it read as a brand. */
+  --g1:rgba(0,255,156,.085); --g2:rgba(0,255,156,.035); --g3:rgba(232,196,92,.045);
   --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --edge:rgba(120,150,140,.14);
   --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --violet:#b07cff; --rose:#ff6f6f;
   --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#4f5d57;
@@ -70,7 +74,46 @@ html[data-theme-skin="brutalist"] .vignette, html[data-theme-skin="serif"] .vign
     radial-gradient(64% 46% at 50% 96%, var(--g3), transparent 66%);
   animation:drift 34s ease-in-out infinite alternate; }
 @keyframes drift{ to{ transform:translate3d(2.5%,-2%,0) scale(1.06); } }
-@media (prefers-reduced-motion: reduce){ .aura{ animation:none; } }
+
+/* ══ DEPTH LAYERS ═════════════════════════════════════════════════════════
+   Three cheap passes that do most of the work a rendered background would,
+   without a generated asset to load, fail, or go stale:
+
+   .grain    a static noise tile at very low opacity. This is the single
+             biggest upgrade — flat CSS gradients band visibly on dark
+             screens, and grain hides banding the way film does.
+   .scanlab  one slow vertical light sweep. Motion that reads as atmosphere
+             rather than as a loading state, because it never repeats quickly.
+   .grid3d   a faint perspective floor grid, anchoring the doors in space.
+
+   All are pointer-events:none, all sit below the interface, and all stop
+   entirely under prefers-reduced-motion. */
+.grain{ position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.5;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.42'/></svg>");
+  background-size:140px 140px; mix-blend-mode:overlay; }
+html[data-theme-skin="brutalist"] .grain, html[data-theme-skin="serif"] .grain{ opacity:.28; }
+
+.grid3d{ position:fixed; left:-25%; right:-25%; bottom:-8%; height:52vh;
+  pointer-events:none; z-index:0; opacity:.16;
+  background-image:
+    linear-gradient(to right, var(--accent) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--accent) 1px, transparent 1px);
+  background-size:78px 78px;
+  transform:perspective(340px) rotateX(66deg);
+  transform-origin:50% 100%;
+  -webkit-mask-image:linear-gradient(to top, #000 0%, transparent 78%);
+  mask-image:linear-gradient(to top, #000 0%, transparent 78%); }
+
+.scanlab{ position:fixed; inset:0; pointer-events:none; z-index:2; opacity:.05;
+  background:linear-gradient(105deg, transparent 42%, var(--accent) 50%, transparent 58%);
+  background-size:280% 100%;
+  animation:sweep 19s linear infinite; }
+@keyframes sweep{ from{ background-position:140% 0; } to{ background-position:-40% 0; } }
+
+@media (prefers-reduced-motion: reduce){
+  .aura, .scanlab{ animation:none; }
+  .scanlab{ display:none; }
+}
 
 /* the shared WebGL layer. Transparent, above the tile art, below nothing —
    tile text reads straight through it, and each tile's solid is scissored
@@ -148,12 +191,56 @@ body.full .slot .name{ font-size:clamp(22px,2.6vw,32px); }
   position:relative; display:block; width:100%; text-align:left; overflow:hidden;
   /* square. a radius on a monolith makes it a card, and these are not cards */
   border:1px solid color-mix(in srgb, var(--accent) 30%, var(--edge)); border-radius:0;
-  background:var(--panel);
+  /* A GRADIENT GROUND, not a flat fill. The old flat --panel made every door
+     look like the same rectangle in a different colour — which is exactly the
+     problem, now that the colours are gone. Depth has to come from light. */
+  background:
+    linear-gradient(158deg,
+      color-mix(in srgb, var(--accent) 7%, var(--panel)) 0%,
+      var(--panel) 44%,
+      color-mix(in srgb, #000 22%, var(--panel)) 100%);
   min-height:clamp(200px,26vh,280px); isolation:isolate;
   transform-style:preserve-3d;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03), 0 10px 30px rgba(0,0,0,.4);
+  /* inner top highlight + inner bottom shade = a bevel, the cheapest way to
+     make a flat rectangle read as a solid object under a light source */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 -1px 0 rgba(0,0,0,.55),
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 14px 38px rgba(0,0,0,.5);
   transition:border-color .4s var(--ease), transform .5s var(--ease), box-shadow .5s var(--ease);
   -webkit-tap-highlight-color:transparent;
+}
+/* A specular sheen that travels on hover. One highlight crossing the face
+   sells "polished surface" far better than a brightness change does. */
+.slot::after{
+  content:''; position:absolute; inset:0; z-index:4; pointer-events:none;
+  background:linear-gradient(112deg, transparent 34%,
+    color-mix(in srgb, var(--accent) 13%, transparent) 47%, transparent 60%);
+  transform:translateX(-130%);
+  transition:transform 1.05s var(--ease);
+}
+.slot:hover::after, .slot:focus-visible::after{ transform:translateX(130%); }
+.slot:hover{
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 40%, transparent),
+    inset 0 -1px 0 rgba(0,0,0,.55),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 20px 52px rgba(0,0,0,.62),
+    0 0 34px -8px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+@media (prefers-reduced-motion: reduce){
+  .slot::after{ display:none; }
+}
+/* Light skins: the bevel must invert or it reads as a smudge on white. */
+html[data-theme-skin="brutalist"] .slot, html[data-theme-skin="serif"] .slot,
+html[data-theme-skin="frost"] .slot, html[data-theme-skin="linen"] .slot,
+html[data-theme-skin="bone"] .slot{
+  background:linear-gradient(158deg, #fff 0%, var(--panel) 62%, color-mix(in srgb,#000 6%,var(--panel)) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    inset 0 -1px 0 rgba(0,0,0,.09),
+    0 10px 26px rgba(0,0,0,.13);
 }
 /* the neon trace — a conic sweep clipped to the border box, so the edge itself
    lights up and travels rather than a glow sitting outside the tile */
@@ -364,6 +451,9 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 <body>
 
 <div class="aura" aria-hidden="true"></div>
+<div class="grid3d" aria-hidden="true"></div>
+<div class="scanlab" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <div class="vignette" aria-hidden="true"></div>

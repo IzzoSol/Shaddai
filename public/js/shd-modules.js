@@ -31,13 +31,29 @@
   /* ── palette ──────────────────────────────────────────────────────────
      Locked theme: obsidian ground, emerald / gold / cyan / violet accents.
      Mirrors the tokens in home.html + journey.html — do not invent new hues. */
+  /* TWO HUES, ON PURPOSE.
+
+     This was six — emerald, gold, cyan, violet, rose, amber — one per door.
+     Six saturated hues sitting in a grid does not read as a palette, it reads
+     as a colour wheel, and the front door is the first thing anyone sees.
+
+     The brand is obsidian, emerald and gold. Everything else was noise, so the
+     doors now differentiate by GEOMETRY, WEIGHT and TYPOGRAPHY rather than by
+     hue — which is the harder and better way to do it. Restraint reads as
+     considered; a rainbow reads as undecided.
+
+     cyan/violet/rose/amber remain as aliases so nothing that references them
+     breaks, but they all resolve into the two-hue system. Do not reintroduce a
+     third accent without a reason that survives being said out loud. */
   var C = {
-    emerald: '#00ff9c',
-    gold:    '#e8c45c',
-    cyan:    '#5fe0ff',
-    violet:  '#b07cff',
-    rose:    '#ff6f6f',
-    amber:   '#ff8a5c'
+    emerald: '#00ff9c',   // the brand. default for anything active or primary
+    gold:    '#e8c45c',   // value, money, premium, the council itself
+    dim:     '#4a7a68',   // a desaturated emerald for secondary doors
+    // aliases — collapsed deliberately, see above
+    cyan:    '#00ff9c',
+    violet:  '#e8c45c',
+    rose:    '#e8c45c',
+    amber:   '#e8c45c'
   };
 
   /* ── the modules ──────────────────────────────────────────────────────
