@@ -197,7 +197,16 @@
      is "what is this and how does it work", and the answer should not be two
      taps deep. ARCADE moves to the library — games matter, but not before
      someone understands the product, and most are not playable on a phone. */
-  var DEFAULT_SLOTS = ['descent', 'entry', 'dashboard', 'simple', 'rag', 'manual'];
+  /* FOUR DOORS, and Simple Mode is not one of them.
+
+     Six tiles asked a first-time visitor to make a six-way choice before they
+     knew what any of it was. These four are the whole product in one row —
+     the cinematic way in, the workstation, the front page, and the library.
+
+     Simple Mode moves OUT of the grid and becomes the glowing button above it,
+     because it is not a peer of these: it is a different way to reach all of
+     them. A thing that contains the others should not sit beside them. */
+  var DEFAULT_SLOTS = ['descent', 'dashboard', 'entry', 'rag'];
 
   /* ── Simple Mode wheel ────────────────────────────────────────────────
      Top level spins vertically. A category with `items` swivels down into
@@ -210,29 +219,30 @@
       name: 'DO',
       accent: C.emerald,
       art: '/assets/nav/automation.jpg',
-      blurb: 'Ask the council something, or run a job, without leaving this wheel.',
+      blurb: 'Put the council to work. Pick a job and it runs end to end.',
+      /* WAS: 'ORACLE', 'CHECK IT', 'WRITE IT' — three ways to ask a question,
+         which is what the BRAIN tab is for. A tab called DO should DO things.
+         These are whole outcomes a person would actually want, each one a real
+         multi-agent workflow rather than a single prompt.
+
+         `requiresAuth` greys the tile and asks for a quick sign-in instead of
+         failing after the tap. A job that produces a file and charges Sparks
+         genuinely cannot run for an anonymous visitor — but finding that out
+         AFTER committing to it is the worst version of the same rule. */
       items: [
-        // `action:'ask'` items run INLINE against the live RAG brain
-        // (GET /api/ask?q=…&agent=…) instead of navigating away.
-        { id: 'oracle-ask', name: 'ORACLE', accent: C.violet, art: '/assets/agents/ORACLE-portrait.png',
-          action: 'ask', agent: 'oracle', placeholder: 'What do you want understood?',
-          blurb: 'Research and spiritual insight, grounded in the council’s own library and cited to source.' },
-        { id: 'zerox-ask', name: 'SENTIMENT', accent: C.rose, art: '/assets/agents/ZEROX-portrait.png',
-          action: 'ask', agent: 'zerox', placeholder: 'Which coin, ticker or market?',
-          blurb: 'ZEROX reads the market — sentiment, structure and where the risk actually sits.' },
-        { id: 'pikadon-ask', name: 'CHECK IT', accent: C.amber, art: '/assets/agents/PIKADON-portrait.png',
-          action: 'ask', agent: 'pikadon', placeholder: 'A link, a contract, a name…',
-          blurb: 'PIKADON checks it — links, contracts, claims and the worst case you did not consider.' },
-        { id: 'quill-ask', name: 'WRITE IT', accent: C.gold, art: '/assets/agents/QUILL-portrait.png',
-          action: 'ask', agent: 'quill', placeholder: 'What should it say?',
-          blurb: 'QUILL writes it — copy, posts, docs, anything someone has to read.' },
-        { id: 'website', name: 'A WEBSITE', accent: C.cyan, art: '/assets/nav/apis.jpg',
-          href: '/quickstart.html', blurb: 'Describe a site and the council builds it. Real pages, live in minutes.' },
-        { id: 'thread', name: 'A THREAD', accent: C.emerald, art: '/assets/nav/social.jpg',
-          href: '/thread-pack.html', blurb: 'A full numbered thread plus hook variants, from one topic.' },
-        { id: 'coin', name: 'COIN KIT', accent: C.violet, art: '/assets/nav/markets.jpg',
-          href: '/coin-launch.html', blurb: 'Launch posts, meme concepts and a ready-to-post banner from one coin idea.' }
-      ]
+        { id: 'wf-content', name: 'CONTENT PACK', accent: C.emerald, art: '/assets/nav/automation.jpg',
+          href: '/index.html#workflow', requiresAuth: true,
+          blurb: 'Ten posts in one voice. QUILL writes, TURTLE makes the art, you approve.' },
+        { id: 'wf-coin', name: 'CHECK A COIN', accent: C.gold, art: '/assets/nav/markets.jpg',
+          href: '/signals.html', requiresAuth: false,
+          blurb: 'ZEROX reads the chain and PIKADON checks the contract. Free to look.' },
+        { id: 'wf-research', name: 'RESEARCH BRIEF', accent: C.emerald, art: '/assets/nav/apis.jpg',
+          href: '/index.html#workflow', requiresAuth: true,
+          blurb: 'A hard question answered properly, with every source cited.' },
+        { id: 'wf-build', name: 'BUILD SOMETHING', accent: C.gold, art: '/assets/nav/forge.jpg',
+          href: '/agent-forge.html', requiresAuth: true,
+          blurb: 'Forge an agent that does this for you on its own, from now on.' },
+      ],
     },
     {
       id: 'agents',

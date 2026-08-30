@@ -231,7 +231,11 @@
         '<button class="shdc-btn" id="shdc-go" type="submit">Enter</button>' +
       '</form>' +
       '<div class="shdc-or">or</div>' +
-      '<button class="shdc-btn ghost" id="shdc-wallet" type="button">◎ Connect Solana wallet</button>' +
+      /* Solana connect removed from the FRONT DOOR. Asking a first-time
+         visitor to connect a crypto wallet before they know what the product
+         is loses people who would otherwise have signed up with an email —
+         and nothing on this page needs an on-chain identity. The wallet flow
+         still exists in the dashboard, where a wallet actually does something. */
       '<div class="shdc-msg" id="shdc-msg"></div>' +
       '<button class="shdc-btn ghost" id="shdc-out" type="button" style="display:none">Sign out</button>';
 
@@ -286,7 +290,13 @@
         .then(function () { go.disabled = false; });
     });
 
-    authSheet.querySelector('#shdc-wallet').addEventListener('click', function () {
+    /* The Solana button was removed from the front door (see above), so this
+       binds to nothing. Guarded rather than deleted, because the wallet flow
+       below is still correct and is wanted in the dashboard — an unguarded
+       querySelector on a removed element threw here and killed the whole
+       chrome init, which silently emptied the door grid. */
+    var _w = authSheet.querySelector('#shdc-wallet');
+    if (_w) _w.addEventListener('click', function () {
       var p = root.solana || (root.phantom && root.phantom.solana);
       if (!p || !p.connect) { say('No Solana wallet found in this browser.', 'bad'); return; }
       say('Waiting for your wallet…');
