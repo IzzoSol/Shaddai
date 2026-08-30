@@ -1,718 +1,274 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pricing — SHADDAI · Own the Council for $49/mo</title>
-<meta name="description" content="Seven AI agents that do real work on your own free API key — every run returns a receipt. Pro is $49/month, cancel anytime. Start free or claim a lifetime Founder spot." />
-<meta property="og:type" content="website" />
-<meta property="og:title" content="SHADDAI — your AI team for $49/mo" />
-<meta property="og:description" content="7 agents · 3,000 skills · 300 tools · a receipt every run. Do real work on your own key. Cancel anytime." />
-<meta property="og:image" content="/growth-assets/dashboard.png" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="SHADDAI — your AI team for $49/mo" />
-<meta name="twitter:description" content="7 agents · 3,000 skills · 300 tools · a receipt every run. Cancel anytime." />
-<meta name="twitter:image" content="/growth-assets/dashboard.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SHADDAI · Pricing</title>
+<meta name="description" content="Free, Pro at $49, Max at $199, and twenty founding seats at $100 once. Bring your own keys and we take nothing on what you make." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&display=swap" rel="stylesheet" />
 <style>
-  :root{
-    --void:#06060d; --void2:#0a0817; --panel:#0e0b1c; --panel2:#120e24;
-    --gold:#c4a24e; --gold2:#e8c45c; --em:#00ff9c; --em2:#00e5a0;
-    --violet:#7c56c8; --indigo:#4a3580;
-    --ink:#f0e7cf; --ink2:#a99f86; --dim:#6b6350;
-    --line:rgba(196,162,78,.16); --lineEm:rgba(0,255,156,.22);
-    --radius:16px;
-  }
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; background:var(--void); color:var(--ink); }
-  body{
-    font-family:'Fraunces',Georgia,serif; -webkit-font-smoothing:antialiased;
-    min-height:100vh; overflow-x:hidden; line-height:1.55;
-    background-image:
-      radial-gradient(1000px 640px at 82% -6%, rgba(124,86,200,.16), transparent 60%),
-      radial-gradient(900px 640px at -8% 8%, rgba(0,255,156,.06), transparent 55%),
-      linear-gradient(180deg,#07060f 0%,#05040b 100%);
-    background-attachment:fixed;
-  }
-  /* faint sacred-geometry grid, masked to a soft halo */
-  body::before{
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.45;
-    background-image:
-      linear-gradient(rgba(196,162,78,.04) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(196,162,78,.04) 1px,transparent 1px);
-    background-size:52px 52px;
-    -webkit-mask-image:radial-gradient(circle at 50% 24%,#000 0%,transparent 74%);
-            mask-image:radial-gradient(circle at 50% 24%,#000 0%,transparent 74%);
-  }
-  /* grain */
-  body::after{
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.045;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  ::selection{ background:var(--gold); color:#100b02; }
-  a{ color:inherit; text-decoration:none; }
+/* ══ PRICING ══════════════════════════════════════════════════════════════
+   Rewritten to stop selling and start explaining. The previous version led
+   with "Own the Council" and "Everything, unlocked" — language that promises
+   a feeling instead of naming a price, which is exactly what makes a page feel
+   salesy and untrustworthy to the sort of person who reads carefully.
 
-  /* ── top bar ── */
-  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
-    padding:15px 26px; border-bottom:1px solid var(--line);
-    backdrop-filter:blur(9px); background:rgba(6,6,13,.72); }
-  .brand{ display:flex; align-items:center; gap:11px; font-family:'Cinzel',serif; font-weight:900;
-    letter-spacing:.3em; font-size:15px; color:var(--ink); }
-  .brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--em);
-    box-shadow:0 0 10px var(--em),0 0 22px rgba(0,255,156,.55); animation:pulse 2.8s infinite; }
-  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.4} }
-  .nav{ display:flex; gap:22px; font-family:'IBM Plex Mono',monospace; font-size:11px;
-    letter-spacing:.16em; text-transform:uppercase; }
-  .nav a{ color:var(--ink2); position:relative; padding:4px 0; transition:color .2s; }
-  .nav a:hover{ color:var(--gold2); }
-  .nav a::after{ content:''; position:absolute; left:0; bottom:-2px; height:1px; width:0; background:var(--gold); transition:width .25s; }
-  .nav a:hover::after{ width:100%; }
+   This one states the number first, says what it buys in plain words, and is
+   honest about what is not finished. The four checkout buttons keep their
+   data-checkout ids so the Stripe wiring is untouched.
 
-  .wrap{ position:relative; z-index:2; max-width:1080px; margin:0 auto; padding:0 22px 100px; }
+   NO DEMO SECTION. Deliberately removed at the owner's instruction.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --shell:#06080b; --void:#06080b; --void2:#0a0e13; --card:#0e141a;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#5c6b64;
+  --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.32);
+  --emerald:#00ff9c; --gold:#e8c45c; --violet:#b07cff;
+  --f-display:'Cinzel',serif; --f-body:'Fraunces',Georgia,serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; padding:0; overflow-x:hidden; max-width:100%; }
+body{ background:var(--void); color:var(--ink); font-family:var(--f-body);
+  font-weight:300; font-size:17px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom); }
+@media(prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+h1,h2,h3{ font-family:var(--f-display); font-weight:900; margin:0; line-height:1.05; text-wrap:balance; }
+p{ margin:0; }
+strong{ color:var(--ink); font-weight:600; }
 
-  /* ── reveal ── */
-  .rise{ opacity:0; transform:translateY(22px); animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
-  @keyframes rise{ to{ opacity:1; transform:none; } }
+header{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 5vw; border-bottom:1px solid var(--edge); position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb,var(--shell) 92%,transparent); backdrop-filter:blur(10px); }
+.brand{ display:flex; align-items:baseline; gap:9px; min-width:0; }
+.brand b{ font-family:var(--f-display); font-weight:900; font-size:clamp(16px,2.2vw,21px); letter-spacing:.1em; }
+.brand span{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
+@media(max-width:430px){ .brand span{ display:none; } }
+header a.back{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-soft); text-decoration:none; border:1px solid var(--edge); padding:0 14px;
+  min-height:42px; display:inline-flex; align-items:center; border-radius:2px; white-space:nowrap; }
+header a.back:hover{ color:var(--ink); border-color:var(--emerald); }
 
-  /* ── masthead ── */
-  .masthead{ text-align:center; padding:64px 0 26px; }
-  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.42em; text-transform:uppercase;
-    color:var(--gold2); opacity:.9; }
-  .masthead h1{ font-family:'Cinzel',serif; font-weight:900; letter-spacing:.06em;
-    font-size:clamp(40px,8vw,82px); line-height:1.02; margin:16px 0 14px;
-    background:linear-gradient(135deg,#e8c45c 0%,#f4ecd6 42%,#c4a24e 72%,#e8c45c 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 0 34px rgba(196,162,78,.32)); }
-  .masthead .sub{ max-width:660px; margin:0 auto; font-size:clamp(16px,2.1vw,20px); color:var(--ink2);
-    font-style:italic; }
-  .masthead .sub b{ color:var(--ink); font-style:normal; font-weight:600; }
-  .trust{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
-  .chip{ display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:100px;
-    border:1px solid var(--line); background:rgba(196,162,78,.05);
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); }
-  .chip::before{ content:'◈'; color:var(--em); font-size:11px; }
+main{ max-width:1000px; margin:0 auto; padding:clamp(30px,5vw,60px) 5vw 80px; }
+.kicker{ font-family:var(--f-mono); font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--emerald); }
+.lede h1{ font-size:clamp(34px,7vw,58px); margin:14px 0 14px; }
+.lede p{ color:var(--ink-soft); max-width:56ch; font-size:clamp(16px,2vw,19px); }
+.lede p b{ color:var(--ink); font-weight:600; }
 
-  /* ── HERO — the $49 plan ── */
-  .hero{ position:relative; margin:34px auto 0; max-width:760px;
-    border-radius:calc(var(--radius) + 6px); padding:2px;
-    background:linear-gradient(135deg,var(--gold),rgba(0,255,156,.35) 42%,var(--violet) 78%,var(--gold2));
-    box-shadow:0 0 60px rgba(0,255,156,.10),0 0 120px rgba(124,86,200,.14); }
-  .hero .inner{ position:relative; border-radius:var(--radius); overflow:hidden;
-    background:radial-gradient(130% 150% at 50% -18%,rgba(0,255,156,.10),transparent 52%),linear-gradient(165deg,#0f0c1f,#0a0814);
-    padding:40px 38px 34px; }
-  .hero .kicker{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--em2); }
-  .hero h2{ font-family:'Cinzel',serif; font-weight:900; font-size:clamp(28px,4.6vw,42px);
-    letter-spacing:.02em; margin:8px 0 4px; color:#fff; }
-  .hero .lead{ color:var(--ink2); font-size:16px; max-width:520px; margin:0; }
-  .priceRow{ display:flex; align-items:flex-end; gap:12px; margin:24px 0 2px; flex-wrap:wrap; }
-  .priceRow .amt{ font-family:'Cinzel',serif; font-weight:900; font-size:68px; line-height:.9; color:var(--gold2);
-    text-shadow:0 0 26px rgba(232,196,92,.32); }
-  .priceRow .unit{ font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:.08em; color:var(--ink2);
-    text-transform:uppercase; padding-bottom:8px; }
-  .priceRow .save{ margin-left:auto; padding-bottom:8px; font-family:'IBM Plex Mono',monospace; font-size:11px;
-    letter-spacing:.1em; color:var(--em2); text-transform:uppercase; }
-  .perks{ list-style:none; padding:22px 0 0; margin:20px 0 26px; border-top:1px solid var(--line);
-    display:grid; grid-template-columns:1fr 1fr; gap:11px 24px; }
-  .perks li{ position:relative; padding-left:26px; font-size:15.5px; color:var(--ink); line-height:1.4; }
-  .perks li::before{ content:'◈'; position:absolute; left:0; top:1px; color:var(--em); font-size:13px; }
-  .perks li b{ color:var(--gold2); font-weight:600; }
+/* ── the promise, said once ─────────────────────────────────────────────── */
+.promise{ margin-top:26px; border:1px solid rgba(0,255,156,.3); border-left:3px solid var(--emerald);
+  background:rgba(0,255,156,.05); padding:18px 20px; }
+.promise b{ display:block; font-family:var(--f-mono); font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--emerald); margin-bottom:8px; }
+.promise p{ color:var(--ink-soft); font-size:15.5px; max-width:66ch; }
 
-  .btn{ cursor:pointer; border:none; border-radius:12px; padding:16px 28px; font-family:'Cinzel',serif;
-    font-weight:700; font-size:15px; letter-spacing:.08em; transition:transform .15s,box-shadow .2s,filter .2s; white-space:nowrap; }
-  .btn.primary{ width:100%; background:linear-gradient(100deg,var(--gold2),var(--gold)); color:#100b02;
-    box-shadow:0 10px 30px rgba(196,162,78,.3); text-transform:uppercase; }
-  .btn.primary:hover{ transform:translateY(-2px); filter:brightness(1.05); box-shadow:0 14px 40px rgba(196,162,78,.44); }
-  .btn:active{ transform:translateY(0); }
-  .micro{ text-align:center; margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:11px;
-    letter-spacing:.08em; color:var(--dim); }
-  .micro b{ color:var(--ink2); font-weight:500; }
+/* ── tiers ──────────────────────────────────────────────────────────────── */
+.tiers{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:12px; margin-top:clamp(28px,4vw,44px); }
+.tier{ border:1px solid var(--edge); border-top:3px solid var(--tc,var(--edge2));
+  background:var(--card); padding:24px 22px; display:flex; flex-direction:column; min-width:0; }
+.tier .tn{ font-family:var(--f-mono); font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--tc,var(--ink-faint)); }
+.tier .tp{ font-family:var(--f-display); font-weight:900; font-size:clamp(34px,5vw,46px);
+  margin:10px 0 2px; line-height:1; }
+.tier .tp small{ font-family:var(--f-mono); font-size:12px; font-weight:400; color:var(--ink-faint); letter-spacing:.08em; }
+.tier .tb{ color:var(--ink-soft); font-size:14.5px; margin-top:8px; min-height:44px; }
+.tier ul{ list-style:none; padding:0; margin:18px 0 0; display:grid; gap:10px; }
+.tier li{ display:grid; grid-template-columns:13px 1fr; gap:10px; font-size:14.5px;
+  color:var(--ink-soft); line-height:1.5; }
+.tier li::before{ content:'—'; color:var(--tc,var(--emerald)); }
+.tier .cta{ margin-top:auto; padding-top:20px; }
+.tier .cta a, .tier .cta span{ display:flex; align-items:center; justify-content:center;
+  min-height:54px; border-radius:2px; font-family:var(--f-mono); font-size:12px;
+  letter-spacing:.16em; text-transform:uppercase; font-weight:600; text-decoration:none;
+  background:var(--tc,var(--emerald)); color:#04120c; border:1px solid var(--tc,var(--emerald)); }
+.tier .cta span{ background:none; color:var(--ink-faint); border-color:var(--edge); font-weight:400; }
+.tier .cta a:hover{ filter:brightness(1.08); }
 
-  /* ── secondary ladder (Free / Founder) ── */
-  .ladder{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
-  .card{ position:relative; background:linear-gradient(170deg,var(--panel),var(--void2)); border:1px solid var(--line);
-    border-radius:var(--radius); padding:26px 24px; display:flex; flex-direction:column;
-    transition:transform .22s,border-color .22s,box-shadow .22s; }
-  .card:hover{ transform:translateY(-5px); border-color:rgba(196,162,78,.4); box-shadow:0 18px 44px rgba(0,0,0,.5); }
-  .card.gold{ border-color:rgba(232,196,92,.34); }
-  .card .tag{ position:absolute; top:-11px; left:22px; background:linear-gradient(90deg,var(--gold2),var(--gold));
-    color:#100b02; font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:600; letter-spacing:.16em;
-    text-transform:uppercase; padding:4px 11px; border-radius:100px; }
-  .card h4{ font-family:'Cinzel',serif; font-weight:700; font-size:19px; letter-spacing:.05em; margin:2px 0 4px; color:#fff; }
-  .card .blurb{ color:var(--ink2); font-size:14px; min-height:38px; font-style:italic; }
-  .card .amt{ font-family:'Cinzel',serif; font-weight:900; font-size:38px; line-height:1; margin:12px 0 0; color:#fff; }
-  .card .amt span{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink2); font-weight:400; letter-spacing:.06em; }
-  .card.gold .amt{ color:var(--gold2); }
-  .card ul{ list-style:none; padding:16px 0 0; margin:16px 0 22px; flex:1; border-top:1px solid var(--line); }
-  .card li{ position:relative; padding:6px 0 6px 22px; font-size:14.5px; line-height:1.4; color:var(--ink); }
-  .card li::before{ content:'▸'; position:absolute; left:2px; color:var(--em); }
-  .btn.ghost{ width:100%; background:transparent; border:1px solid var(--line); color:var(--ink);
-    box-shadow:none; text-transform:uppercase; font-size:13px; }
-  .btn.ghost:hover{ border-color:var(--em); color:var(--em); background:rgba(0,255,156,.05); transform:none; }
-  .card.gold .btn.ghost:hover{ border-color:var(--gold2); color:var(--gold2); background:rgba(232,196,92,.06); }
-  .scar{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--gold); margin-top:10px; text-align:center; }
+/* ── founders ───────────────────────────────────────────────────────────── */
+.founders{ margin-top:clamp(34px,5vw,56px); border:1px solid rgba(176,124,255,.34);
+  border-top:3px solid var(--violet); background:linear-gradient(170deg,rgba(176,124,255,.07),transparent);
+  padding:clamp(24px,3.6vw,36px); }
+.founders h2{ font-size:clamp(26px,4.4vw,40px); margin:10px 0 6px; }
+.founders .sub{ color:var(--ink-soft); max-width:60ch; }
+.founders .seats{ font-family:var(--f-mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--violet); margin-top:10px; min-height:16px; }
+.founders .grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(16px,2.6vw,30px); margin-top:24px; align-items:start; }
+@media(max-width:760px){ .founders .grid{ grid-template-columns:1fr; } }
+.founders ul{ list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+.founders li{ display:grid; grid-template-columns:14px 1fr; gap:11px; font-size:15px; color:var(--ink-soft); line-height:1.55; }
+.founders li::before{ content:'◈'; color:var(--violet); font-size:11px; line-height:1.7; }
+.founders li b{ color:var(--ink); font-weight:600; display:block; }
+.founders .cta{ display:flex; align-items:center; justify-content:center; min-height:60px;
+  background:var(--violet); color:#0a0710; border:1px solid var(--violet); border-radius:2px;
+  font-family:var(--f-mono); font-size:12.5px; letter-spacing:.18em; text-transform:uppercase;
+  font-weight:700; text-decoration:none; margin-top:22px; }
+.founders .cta.off{ background:none; color:var(--violet); border-style:dashed; cursor:default; }
+.side{ border:1px solid var(--edge); padding:20px; }
+.side h4{ font-family:var(--f-mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--emerald); margin:0 0 9px; }
+.side h4 + h4{ margin-top:18px; }
+.side p{ font-size:14px; color:var(--ink-soft); line-height:1.6; }
 
-  /* ── section headers ── */
-  .sect{ margin-top:74px; }
-  .shead{ display:flex; align-items:baseline; gap:14px; margin-bottom:8px; }
-  .shead .n{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--em2); letter-spacing:.2em; }
-  .shead h3{ font-family:'Cinzel',serif; font-weight:700; font-size:clamp(21px,3vw,29px); letter-spacing:.04em; margin:0; color:var(--ink); }
-  .shead .flag{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em;
-    text-transform:uppercase; color:var(--dim); border:1px solid var(--line); border-radius:100px; padding:5px 12px; }
-  .ssub{ color:var(--ink2); font-size:15px; margin:0 0 24px; font-style:italic; }
+/* ── sparks ─────────────────────────────────────────────────────────────── */
+.sparks{ margin-top:clamp(28px,4vw,44px); border:1px solid var(--edge);
+  border-left:3px solid var(--gold); background:var(--card); padding:24px 22px;
+  display:grid; grid-template-columns:1fr auto; gap:18px; align-items:center; }
+@media(max-width:640px){ .sparks{ grid-template-columns:1fr; } }
+.sparks h3{ font-size:23px; color:var(--gold); }
+.sparks p{ color:var(--ink-soft); font-size:15px; margin-top:8px; max-width:58ch; }
+.sparks a{ display:flex; align-items:center; justify-content:center; min-height:54px; padding:0 26px;
+  background:var(--gold); color:#140f02; border-radius:2px; text-decoration:none;
+  font-family:var(--f-mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; }
 
-  /* ── capabilities grid ── */
-  .capgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
-  .cap{ border:1px solid var(--line); border-radius:14px; padding:20px; background:rgba(14,11,28,.55);
-    transition:transform .18s,border-color .18s; }
-  .cap:hover{ transform:translateY(-4px); border-color:rgba(0,255,156,.3); }
-  .cap .ic{ font-size:20px; color:var(--gold2); }
-  .cap b{ display:block; font-family:'Cinzel',serif; font-weight:700; font-size:15px; letter-spacing:.02em; margin:8px 0 5px; color:#fff; }
-  .cap span{ color:var(--ink2); font-size:14px; }
-
-  /* ── FAQ ── */
-  .faq{ display:grid; grid-template-columns:1fr 1fr; gap:14px 26px; }
-  .qa b{ display:block; font-family:'Cinzel',serif; font-size:15px; color:var(--gold2); margin-bottom:5px; letter-spacing:.02em; }
-  .qa p{ margin:0; color:var(--ink2); font-size:14.5px; }
-
-  /* ── footer ── */
-  .foot{ margin-top:84px; padding-top:24px; border-top:1px solid var(--line);
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:14px;
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); }
-  .foot a:hover{ color:var(--em); }
-
-  /* ── tier matrix (gray-out comparison) ── */
-  .matrixwrap{ overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 18px 44px rgba(0,0,0,.35); }
-  .matrix{ width:100%; border-collapse:collapse; min-width:600px; background:rgba(10,8,23,.6); }
-  .matrix th,.matrix td{ padding:13px 16px; text-align:left; font-size:13.5px; border-bottom:1px solid rgba(196,162,78,.08); }
-  .matrix thead th{ font-family:'Cinzel',serif; font-weight:700; font-size:14px; letter-spacing:.04em; color:#fff; }
-  .matrix thead th.plan{ text-align:center; }
-  .matrix td.plan{ text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.04em; }
-  .matrix tr.headrow th{ background:linear-gradient(180deg,rgba(124,86,200,.10),transparent); }
-  .matrix .gated{ color:var(--dim); }
-  .matrix .live{ color:var(--em2); }
-  .matrix .feature{ color:var(--ink); }
-  .matrix .feature b{ color:var(--gold2); font-weight:600; }
-  .matrix tfoot td{ border-bottom:none; padding:16px; }
-  .matrix .pill{ display:inline-block; margin-top:5px; padding:3px 10px; border-radius:100px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; border:1px solid var(--line); color:var(--ink2); }
-  .matrix .pill.pro{ border-color:rgba(232,196,92,.4); color:var(--gold2); background:rgba(232,196,92,.07); }
-  .matrix .free-cta,.matrix .pro-cta{ cursor:pointer; border:none; border-radius:10px; padding:10px 16px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:11px; letter-spacing:.08em; text-transform:uppercase; transition:filter .15s,transform .15s; }
-  .matrix .free-cta{ background:rgba(0,255,156,.08); color:var(--em2); border:1px solid rgba(0,255,156,.25); }
-  .matrix .free-cta:hover{ filter:brightness(1.15); transform:translateY(-1px); }
-  .matrix .pro-cta{ background:linear-gradient(100deg,var(--gold2),var(--gold)); color:#100b02; }
-  .matrix .pro-cta:hover{ filter:brightness(1.08); transform:translateY(-1px); }
-  .matrix .pro-cta.on{ background:rgba(232,196,92,.1); color:var(--gold2); border:1px solid rgba(232,196,92,.35); cursor:default; }
-  .matrix .free-cta.on{ background:rgba(0,255,156,.07); color:var(--em2); border:1px solid rgba(0,255,156,.22); cursor:default; }
-  .guestBanner{ display:none; margin:18px auto 0; max-width:760px; text-align:center; padding:11px 18px; border-radius:12px; border:1px solid rgba(0,255,156,.2); background:rgba(0,255,156,.05); font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.08em; color:var(--em2); }
-  .guestBanner.on{ display:block; }
-  .mcpCall{ margin-top:18px; padding:14px 16px; border:1px dashed rgba(0,255,156,.35); border-radius:12px; background:rgba(0,255,156,.05); font-size:14px; color:var(--ink); }
-  .mcpCall b{ color:var(--em2); font-weight:600; }
-  .mcpCall .k{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--em2); text-transform:uppercase; display:block; margin-bottom:5px; }
-
-  @media(max-width:820px){
-    .ladder{ grid-template-columns:1fr; }
-    .faq{ grid-template-columns:1fr; }
-    .perks{ grid-template-columns:1fr; }
-  }
-  @media(max-width:520px){
-    .nav .hideMob{ display:none; }
-    .hero .inner{ padding:32px 22px 28px; }
-    .priceRow .amt{ font-size:56px; }
-    .priceRow .save{ margin-left:0; width:100%; }
-    .masthead{ padding:44px 0 20px; }
-  }
-
-/* ══ WHAT PRO AND MAX UNLOCK ═════════════════════════════════════════════
-   The matrix above compares. This states. A founder deciding whether to pay
-   reads a list of what they get, not a grid they have to cross-reference. */
-#unlock{ padding:clamp(46px,7vw,88px) 5vw; }
-#unlock .uh{ font-family:var(--f-mono,monospace); font-size:10px; letter-spacing:.32em;
-  text-transform:uppercase; color:#e8c45c; opacity:.85; }
-#unlock h2{ font-family:var(--f-display,'Cinzel',serif); font-weight:900; line-height:1;
-  font-size:clamp(30px,5.4vw,56px); margin:10px 0 8px; }
-#unlock .usub{ font-style:italic; color:#93a49b; max-width:58ch; font-size:clamp(14px,1.6vw,17px); }
-#unlock .cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-  gap:clamp(12px,2vw,20px); margin-top:clamp(24px,3.4vw,42px); }
-#unlock .col{ border:1px solid rgba(120,150,140,.18); border-top:2px solid var(--tc);
-  border-radius:3px; background:rgba(255,255,255,.018); padding:clamp(18px,2.4vw,26px); }
-#unlock .cn{ font-family:var(--f-display,'Cinzel',serif); font-weight:900; letter-spacing:.09em;
-  font-size:22px; color:var(--tc); }
-#unlock .cp{ font-family:var(--f-mono,monospace); font-size:11px; letter-spacing:.18em;
-  text-transform:uppercase; color:#4f5d57; margin-top:4px; }
-#unlock ul{ list-style:none; margin:18px 0 0; padding:0; display:flex; flex-direction:column; gap:11px; }
-#unlock li{ display:grid; grid-template-columns:16px 1fr; gap:11px; align-items:start;
-  font-size:14.5px; line-height:1.55; color:#c8d4cd; }
-#unlock li::before{ content:'◈'; color:var(--tc); font-size:11px; line-height:1.6; }
-/* both must sit in column 2: ::before owns column 1, so a span left to flow
-   lands in the 16px column and breaks one word per line */
-#unlock li b{ grid-column:2; color:#e9efe9; font-weight:600; }
-#unlock li span{ grid-column:2; display:block; color:#7d8d86; font-size:13px; margin-top:2px; }
-#unlock .soon{ opacity:.62; }
-#unlock .soon::before{ content:'○'; }
-#unlock .note{ margin-top:24px; border-left:2px solid #5fe0ff; background:rgba(95,224,255,.05);
-  padding:13px 15px; font-size:13.5px; line-height:1.6; color:#a9bcc4; max-width:74ch; }
-@media(max-width:560px){ #unlock li{ font-size:14px; } }
-
-/* ══ FOUNDING MEMBERS ═════════════════════════════════════════════════════
-   One-time $100, 20 seats. Everything it grants is ACCESS, STANDING or a
-   COSMETIC — never a share of revenue. That line is deliberate: an asset sold
-   for money that pays its holder from the platform's earnings is an
-   investment contract whatever it is called, and this product does not need
-   one to work. */
-#founders{ padding:clamp(46px,7vw,88px) 5vw; border-top:1px solid rgba(120,150,140,.16); }
-#founders .fk{ font-family:var(--f-mono,monospace); font-size:10px; letter-spacing:.32em;
-  text-transform:uppercase; color:#b07cff; }
-#founders h2{ font-family:var(--f-display,'Cinzel',serif); font-weight:900; line-height:1;
-  font-size:clamp(30px,5.4vw,56px); margin:10px 0 8px; }
-#founders .fsub{ font-style:italic; color:#93a49b; max-width:60ch; font-size:clamp(14px,1.6vw,17px); }
-#founders .fwrap{ display:grid; grid-template-columns:1.15fr .85fr; gap:clamp(14px,2.2vw,24px);
-  margin-top:clamp(24px,3.4vw,40px); align-items:start; }
-@media(max-width:820px){ #founders .fwrap{ grid-template-columns:1fr; } }
-#founders .fcard{ border:1px solid rgba(176,124,255,.34); border-top:2px solid #b07cff;
-  background:linear-gradient(170deg,rgba(176,124,255,.07),rgba(255,255,255,.012));
-  padding:clamp(20px,2.6vw,30px); }
-#founders .price{ display:flex; align-items:baseline; gap:10px; }
-#founders .price b{ font-family:var(--f-display,'Cinzel',serif); font-weight:900;
-  font-size:clamp(38px,6vw,64px); color:#b07cff; line-height:1; }
-#founders .price span{ font-family:var(--f-mono,monospace); font-size:11px; letter-spacing:.16em;
-  text-transform:uppercase; color:#4f5d57; }
-#founders ul{ list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:12px; }
-#founders li{ display:grid; grid-template-columns:16px 1fr; gap:11px; align-items:start;
-  font-size:14.5px; line-height:1.55; color:#c8d4cd; }
-#founders li::before{ content:'◈'; color:#b07cff; font-size:11px; line-height:1.6; grid-column:1; }
-#founders li b{ grid-column:2; color:#e9efe9; font-weight:600; }
-#founders li i{ grid-column:2; display:block; font-style:normal; color:#7d8d86; font-size:13px; margin-top:2px; }
-#founders .seats{ margin-top:22px; border:1px solid rgba(120,150,140,.2); padding:14px 16px; }
-#founders .seats b{ font-family:var(--f-mono,monospace); font-size:11px; letter-spacing:.16em;
-  text-transform:uppercase; color:#b07cff; display:block; }
-#founders .seats span{ display:block; margin-top:6px; font-size:13.5px; color:#93a49b; line-height:1.55; }
-#founders .cta{ display:block; text-align:center; margin-top:22px; min-height:58px; line-height:58px;
-  background:#b07cff; color:#0a0710; font-family:var(--f-mono,monospace); font-size:12.5px;
-  letter-spacing:.2em; text-transform:uppercase; font-weight:700; text-decoration:none; }
-#founders .cta:hover{ filter:brightness(1.08); }
-#founders .cta.off{ background:none; border:1px dashed rgba(176,124,255,.5); color:#b07cff;
-  cursor:default; letter-spacing:.14em; font-size:11px; }
-#founders .side{ border:1px solid rgba(120,150,140,.18); padding:clamp(18px,2.4vw,26px); }
-#founders .side h4{ font-family:var(--f-mono,monospace); font-size:10px; letter-spacing:.2em;
-  text-transform:uppercase; color:#00ff9c; margin:0 0 10px; }
-#founders .side p{ font-size:13.5px; line-height:1.62; color:#93a49b; margin:0 0 12px; }
-#founders .side p:last-child{ margin-bottom:0; }
-#founders .side em{ color:#e9efe9; font-style:normal; }
-
-#unlock .ucta{ display:block; text-align:center; margin-top:20px; min-height:52px; line-height:52px;
-  font-family:var(--f-mono,monospace); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
-  font-weight:700; text-decoration:none; border-radius:2px; }
-#unlock .ucta.max{ background:#e8c45c; color:#0a0804; }
-#unlock .ucta.max:hover{ filter:brightness(1.08); }
-#unlock .sparks{ display:flex; gap:20px; align-items:center; justify-content:space-between;
-  flex-wrap:wrap; margin-top:clamp(14px,2vw,20px); border:1px solid rgba(0,255,156,.22);
-  background:rgba(0,255,156,.04); padding:clamp(16px,2.2vw,22px); }
-#unlock .sparks b{ display:block; font-family:var(--f-display,'Cinzel',serif); font-weight:900;
-  font-size:19px; letter-spacing:.06em; color:#00ff9c; }
-#unlock .sparks span{ display:block; margin-top:5px; font-size:13.5px; line-height:1.55;
-  color:#93a49b; max-width:56ch; }
-#unlock .ucta.spark{ background:#00ff9c; color:#06080b; margin-top:0; flex:0 0 auto; padding:0 26px; }
-#unlock .ucta.spark:hover{ filter:brightness(1.08); }
+/* ── honest status ──────────────────────────────────────────────────────── */
+.status{ margin-top:clamp(30px,4.5vw,50px); border-top:1px solid var(--edge); padding-top:26px; }
+.status h3{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--ink-faint); font-weight:500; }
+.status .two{ display:grid; grid-template-columns:1fr 1fr; gap:14px 26px; margin-top:14px; }
+@media(max-width:640px){ .status .two{ grid-template-columns:1fr; } }
+.status p{ font-size:14.5px; color:var(--ink-soft); line-height:1.6; }
+.status p b{ color:var(--ink); font-weight:600; }
+footer{ margin-top:40px; font-family:var(--f-mono); font-size:11px; color:var(--ink-faint); line-height:1.9; }
+footer a{ color:var(--ink-soft); display:inline-flex; align-items:center;
+  min-height:42px; padding:0 4px; }  /* thumb floor, even in the footer */
 </style>
 </head>
 <body>
-  <div class="top">
-    <a class="brand" href="/home.html"><span class="dot"></span>SHADDAI</a>
-    <nav class="nav">
-      <a href="/dashboard">Dashboard</a>
-      
-      <a href="/home.html" class="hideMob">The World</a>
-      <a href="/whitepaper.html" class="hideMob">Thesis</a>
-    </nav>
+
+<header>
+  <div class="brand"><b>SHADDAI</b><span>Pricing</span></div>
+  <a class="back" href="/enter.html">&larr; Back</a>
+</header>
+
+<main>
+  <div class="lede">
+    <div class="kicker">What it costs</div>
+    <h1>Four prices.<br>No surprises.</h1>
+    <p>Talking to the agents is never metered. You pay for the workstation — and only for things we actually produce for you. <b>Bring your own API keys and we take nothing on top.</b></p>
   </div>
 
-<div class="wrap">
-
-  <!-- ── masthead ── -->
-  <div class="masthead">
-    <div class="eyebrow rise">Seven Agents · One Council · Your Key</div>
-    <h1 class="rise" style="animation-delay:.05s">Own the Council</h1>
-    <p class="sub rise" style="animation-delay:.1s">
-      Stop juggling ten AI tabs. Seven specialist agents — research, writing, markets, code, security —
-      do the <b>actual work</b> on your own free key, and hand you a <b>signed receipt</b> every time.
-      <b>$49/mo.</b> Cancel anytime.
-    </p>
-    <div class="trust rise" style="animation-delay:.15s">
-      <span class="chip">3,000+ skills</span>
-      <span class="chip">300+ real tools</span>
-      <span class="chip">Runs on your free key</span>
-      <span class="chip">A receipt every run</span>
-      <span class="chip">Cancel anytime</span>
-    </div>
+  <div class="promise">
+    <b>Sparks, in one line</b>
+    <p>One Spark is one dollar, fixed, permanently. Sparks buy things that cost real money to make — images, video, voice, 3D models, finished work from the council. They are store credit: not an investment, not a token, and they do not fluctuate. You never need a subscription to use them.</p>
   </div>
 
-  <!-- ── HERO: PRO $49/mo ── -->
-  <div class="hero rise" style="animation-delay:.2s">
-    <div class="inner">
-      <div class="kicker">Pro · the whole Council, working for you</div>
-      <h2>Everything, unlocked</h2>
-      <p class="lead">One plan. The full council, the Forge, the workflows, the <b>SHADDAI MCP</b>, the world —
-        running at near-zero inference cost on your own free API key.</p>
-
-      <div class="priceRow">
-        <span class="amt">$49</span>
-        <span class="unit">/ month</span>
-        <span class="save">less than $1 a day</span>
-      </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink2);margin:6px 0 0;letter-spacing:.03em">↳ Replaces $2,000+/mo of freelancers and a stack of AI subscriptions.</div>
-
-      <ul class="perks">
-        <li><b>All seven agents</b> — Oracle, Zerox, Nexus, Turtle, Quill, Pikadon, Shaddai</li>
-        <li><b>3,000+ skills · 300+ tools</b> — markets, research, code, design</li>
-        <li><b>SHADDAI MCP</b> — the Council inside Claude, Cursor &amp; any MCP client</li>
-        <li><b>Multi-agent workflow chains</b> — agent feeds agent</li>
-        <li><b>Premium brains</b> — Groq, Claude &amp; Gemini pro routing</li>
-        <li><b>Text + image generation</b> — write, analyze &amp; create visuals</li>
-        <li><b>Forge your own agents</b> — 2D pixel + 3D bodies</li>
-        <li><b>Live signals</b> — Telegram bot + news API included</li>
-        <li><b>A receipt for every run</b> — proof, not screenshots</li>
-        <li><b>Your 3D world + Founders office</b></li>
-        <li><b>AURA token-saver</b> — near-zero cost on your key</li>
+  <!-- ── TIERS ─────────────────────────────────────────────────────────── -->
+  <div class="tiers">
+    <div class="tier">
+      <div class="tn">Free</div>
+      <div class="tp">$0</div>
+      <p class="tb">The workstation, using your own keys.</p>
+      <ul>
+        <li>All seven agents, grounded in the library</li>
+        <li>Simple Mode and the dashboard</li>
+        <li>Forge one agent</li>
+        <li>The key vault — connect your own accounts</li>
+        <li>News and the free sentiment read</li>
       </ul>
+      <div class="cta"><span>No card needed</span></div>
+    </div>
 
-      <div class="mcpCall"><span class="k">✦ Included · Pro</span><b>SHADDAI MCP</b> — expose all seven agents as a Model Context
-        Protocol server: drive Oracle, Zerox, Nexus, Turtle, Quill, Pikadon &amp; Shaddai straight from Claude, Cursor, or any MCP
-        client — their 300+ tools and signed receipts included, running on the key you already own.</div>
+    <div class="tier" style="--tc:#00ff9c">
+      <div class="tn">Pro</div>
+      <div class="tp">$49 <small>/month</small></div>
+      <p class="tb">For someone running a real workflow.</p>
+      <ul>
+        <li>Pro Signals — live feed, hot list, tracked wallets</li>
+        <li>ZEROX sentiment and the market terminal</li>
+        <li>Unlimited forged agents, each grounded</li>
+        <li>Multi-agent workflow chains</li>
+        <li>Video clipper and the Telegram bot</li>
+        <li>Build 3D assets for the world</li>
+      </ul>
+      <div class="cta"><a href="/pricing.html" data-checkout="pro">Get Pro</a></div>
+    </div>
 
-      <button class="btn primary" id="proCta" onclick="goCheckout('pro')">Start Pro — $49/mo →</button>
-      <div class="micro"><b>Cancel anytime · no contract · keep everything you make</b></div>
-      <div style="text-align:center;margin-top:12px"><a href="/prove.html" style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;color:var(--em2);border-bottom:1px solid rgba(0,255,156,.4);padding-bottom:1px">▶ Run a 30-second demo first — free, capped</a></div>
+    <div class="tier" style="--tc:#e8c45c">
+      <div class="tn">Max</div>
+      <div class="tp">$199 <small>/month</small></div>
+      <p class="tb">For power sellers and teams.</p>
+      <ul>
+        <li>Everything in Pro</li>
+        <li>SHADDAI MCP — your own Claude or Grok uses the council</li>
+        <li>A one-to-one build session</li>
+        <li>Your agent highlighted across the world and bazaar</li>
+        <li>Premium models, priority compute</li>
+        <li>Unlimited jobs and workflows</li>
+      </ul>
+      <div class="cta"><a href="/pricing.html" data-checkout="alpha">Get Max</a></div>
     </div>
   </div>
 
-  <!-- ── PROOF: one live run, right at the decision ── -->
-  <section class="sect" style="margin-top:34px">
-    <div class="shead">
-      <span class="n">◆</span>
-      <h3>Try one live run before you pay</h3>
-      <span class="flag">Free demo · capped</span>
-    </div>
-    <p class="ssub">Pick a job, watch one of the seven do the actual work, and read the signed receipt it hands back.
-      The demo pool is capped to keep it honest — sign in to claim your free runs and keep the results.</p>
-    <div style="position:relative;border:1px solid var(--lineEm);border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5);background:#06060d">
-      <iframe src="/prove.html?embed=1" title="Run a real SHADDAI agent — live demo" style="width:100%;height:clamp(440px,60vh,620px);border:0;display:block" loading="lazy"></iframe>
+  <!-- ── FOUNDERS ──────────────────────────────────────────────────────── -->
+  <section class="founders">
+    <div class="kicker" style="color:#b07cff">Founding members</div>
+    <h2>Twenty seats, once</h2>
+    <p class="sub">One payment. Twenty seats. Then the door closes and it is not sold again.</p>
+    <div class="seats" id="seats"></div>
+
+    <div class="grid">
+      <div>
+        <ul>
+          <li><b>Pro for the first year</b>No renewal, no price rise.</li>
+          <li><b>A founder mark</b>Only twenty are ever made.</li>
+          <li><b>First claim on land</b>When plots open, founders choose first.</li>
+          <li><b>First access</b>To the siege and to new realms as they open.</li>
+          <li><b>Every giveaway</b>And entry for Agent of the Month.</li>
+          <li><b>A direct line</b>You say what to fix and it gets fixed. Worth more than any perk here.</li>
+        </ul>
+        <a class="cta" id="fcta" href="/pricing.html" data-checkout="founder">Claim a seat &mdash; $100</a>
+      </div>
+      <div class="side">
+        <h4>Why twenty</h4>
+        <p>Because twenty people can be listened to properly. The point of this round is not the money — it is a small group whose problems shape what gets built next.</p>
+        <h4>What this is not</h4>
+        <p>It is not an investment and it pays you nothing. You are buying access and standing, not a share of revenue.</p>
+      </div>
     </div>
   </section>
 
-  <!-- ── TIER MATRIX: what each level unlocks (gray-out) ── -->
-  <section class="sect">
-    <div class="shead">
-      <span class="n">◈</span>
-      <h3>Compare the three levels</h3>
-      <span class="flag">Guest → Free → Pro</span>
-    </div>
-    <p class="ssub">Try it as a guest, sign in for free to keep it forever, and go Pro when you want the premium unlocks.</p>
-    <div class="matrixwrap">
-      <table class="matrix">
-        <thead>
-          <tr class="headrow">
-            <th>What you get</th>
-            <th class="plan">Guest<br><span class="pill">teaser</span></th>
-            <th class="plan">Free<br><span class="pill">sign in</span></th>
-            <th class="plan">Pro<br><span class="pill pro">$49/mo</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="feature">Run the 7 agents — research, writing, markets, code, security</td>
-            <td class="plan gated">capped runs</td><td class="plan live">✓ unlimited</td><td class="plan live">✓ unlimited</td></tr>
-          <tr><td class="feature">Signed receipt on every run</td>
-            <td class="plan gated">demo only</td><td class="plan live">✓</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature">Keep your work — agents, office, world</td>
-            <td class="plan gated">🔒 device only</td><td class="plan live">✓ cross-device</td><td class="plan live">✓ cross-device</td></tr>
-          <tr><td class="feature">Forge your own agents (2D + 3D)</td>
-            <td class="plan gated">a few</td><td class="plan live">✓</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature">Workflow chains — agent feeds agent</td>
-            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature"><b>SHADDAI MCP</b> — the Council inside Claude, Cursor &amp; any MCP client</td>
-            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature">Premium brains (Groq / Claude / Gemini pro)</td>
-            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature">Text + image generation</td>
-            <td class="plan gated">capped</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature">Telegram bot + live signals</td>
-            <td class="plan gated">🔒</td><td class="plan gated">🔒</td><td class="plan live">✓</td></tr>
-          <tr><td class="feature">Priority compute + AURA token-saver</td>
-            <td class="plan gated">—</td><td class="plan gated">—</td><td class="plan live">✓</td></tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td></td>
-            <td class="plan"><button class="free-cta" onclick="location.href='/dashboard'">Start free →</button></td>
-            <td class="plan"><button class="free-cta" id="freeCta2" onclick="freeCta()">Sign in free →</button></td>
-            <td class="plan"><button class="pro-cta" id="proCta2" onclick="goCheckout('pro')">Go Pro — $49/mo</button></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-    <div class="guestBanner" id="guestBanner">You're exploring as a guest — your work won't be saved across devices.
-      <b style="color:#efe9ff">Sign in — it's free.</b></div>
-
-<!-- ═══════════ WHAT PRO AND MAX UNLOCK ═══════════ -->
-
-<!-- ═══════════ FOUNDING MEMBERS ═══════════ -->
-<section id="founders" aria-label="Founding members">
-  <div class="fk">Founding members</div>
-  <h2>The First Twenty</h2>
-  <p class="fsub">One&#8209;time, once. Twenty seats, then the door closes and it is never sold again.</p>
-  <div id="seatCount" class="fsub" style="margin-top:8px;font-family:var(--f-mono,monospace);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#b07cff;min-height:16px"></div>
-
-  <div class="fwrap">
-    <div class="fcard">
-      <div class="price"><b>$100</b><span>once &middot; not a subscription</span></div>
-      <ul>
-        <li><b>Pro, for as long as SHADDAI runs</b><i>The $49 plan below, permanently. No renewal, no price rise.</i></li>
-        <li><b>A founder mark that is never minted again</b><i>On your agent and beside your name. Twenty exist.</i></li>
-        <li><b>Your name in the build</b><i>Permanently listed as one of the first twenty.</i></li>
-        <li><b>First claim on land</b><i>When plots open in the 2D world, founders choose before anyone else.</i></li>
-        <li><b>Direct line while we build</b><i>You tell me what to fix and it gets fixed. That is worth more than any perk here.</i></li>
-      </ul>
-
-      <div class="seats">
-        <b>What this is not</b>
-        <span>It is not an investment, and it pays you nothing. You are buying access, standing and a say in what gets built &mdash; not a share of revenue. Anyone selling you the second thing owes you a prospectus.</span>
-      </div>
-
-      <a class="cta" id="foundersCta" href="/pricing.html" data-checkout="founder">Claim a founding seat &mdash; $100</a>
-    </div>
-
-    <div class="side">
-      <h4>Why twenty</h4>
-      <p>Because twenty people can be listened to properly. The point of this round is not the money &mdash; it is having a small group whose problems shape what gets built next.</p>
-      <h4 style="margin-top:18px">Why $100</h4>
-      <p>It is roughly three months of Pro, paid once, for permanent access. If SHADDAI runs a year you are ahead; if it runs five you are far ahead. That asymmetry is the offer.</p>
-      <h4 style="margin-top:18px">Honest status</h4>
-      <p>Working today: the seven agents, the RAG brain, workflows, the forge&#8217;s 3D sculptor, the arcade, both worlds, Pro Signals. <em>Not finished:</em> the Forge &ldquo;Build&rdquo; UI, land and plots, the siege, and touch controls for most games. You should know that before paying.</p>
-    </div>
-  </div>
-</section>
-
-<section id="unlock" aria-label="Pro and Max">
-  <div class="uh">Membership</div>
-  <h2>What Pro And Max Unlock</h2>
-  <p class="usub">Everything below is access to something SHADDAI does. Nothing here is a return on money &mdash; you are buying tools, not yield.</p>
-
-  <div class="cols">
-    <div class="col" style="--tc:#00ff9c">
-      <div class="cn">PRO</div>
-      <div class="cp">$49 / month</div>
-      <ul>
-        <li><b>Pro Signals terminal</b><span>ZEROX&rsquo;s Oracle Terminal &mdash; live calls, scoring and hit-rate history.</span></li>
-        <li><b>The RAG brain, unlimited</b><span>Grounded answers across the council&rsquo;s whole library, cited to source. No daily cap.</span></li>
-        <li><b>ZEROX sentiment</b><span>Ask any coin or market and get the council&rsquo;s read.</span></li>
-        <li><b>Workflow chains</b><span>Agent feeds agent. Build it once, run it forever.</span></li>
-        <li><b>AURA</b><span>The token-saver in front of every model call.</span></li>
-        <li><b>TG signal bot</b><span>The same calls, pushed to Telegram.</span></li>
-        <li class="soon"><b>Video clipper</b><span>Bundled tool. Not yet wired to tier access.</span></li>
-      </ul>
-    </div>
-
-    <div class="col" style="--tc:#e8c45c">
-      <div class="cn">MAX</div>
-      <div class="cp">$199 &middot; everything in Pro, plus</div>
-      <ul>
-        <li><b>Brain lessons</b><span>The library organised into chapters and takeaways, not just searchable.</span></li>
-        <li><b>The full book library</b><span>Every ingested source, browsable by subject.</span></li>
-        <li><b>MCP access to the brain</b><span>Point Claude, Grok or a local model straight at the council&rsquo;s knowledge.</span></li>
-        <li><b>Priority routing</b><span>Your jobs go first when the council is busy.</span></li>
-        <li><b>A larger Spark allowance</b><span>Monthly credit, at the fixed $1 rate.</span></li>
-        <li class="soon"><b>Bazaar chat</b><span>Members&rsquo; room in the market. Not built yet.</span></li>
-        <li class="soon"><b>World incentives &amp; siege standing</b><span>2D/3D perks and siege participation. Not built yet.</span></li>
-      </ul>
-      <a class="ucta max" href="/pricing.html" data-checkout="alpha">Get Max</a>
-    </div>
-  </div>
-
-  <div class="sparks">
+  <!-- ── SPARKS ────────────────────────────────────────────────────────── -->
+  <section class="sparks">
     <div>
-      <b>Just want Sparks?</b>
-      <span>Top up a wallet and spend it on whatever you like &mdash; agent work, a game entry, a cosmetic. 1 Spark = $1, fixed. No subscription.</span>
+      <h3>Sparks</h3>
+      <p>Top up a wallet and spend it on whatever you like — agent work, a game entry, a cosmetic. Make nothing and you pay nothing. There is no monthly allowance and no subscription required.</p>
     </div>
-    <a class="ucta spark" href="/pricing.html" data-checkout="credits_10">Add Sparks</a>
-  </div>
-
-  <p class="note"><b>On coin launches:</b> Pro and Max include ZEROX&rsquo;s <em>analysis</em> &mdash; the reasoning, the score, the hit-rate record. They do not include earlier entry than anyone else. Everyone sees a call at the same moment. Selling paying members a head start would make later buyers their exit liquidity, and that is not a business worth building on.</p>
-</section>
-
-
+    <a href="/pricing.html" data-checkout="credits_10">Add Sparks</a>
   </section>
 
-  <!-- ── SECONDARY LADDER: Free / Founder ── -->
-  <div class="ladder rise" style="animation-delay:.24s">
-    <div class="card">
-      <h4>Free</h4>
-      <div class="blurb">Kick the tires. Meet the seven and run your first tasks.</div>
-      <div class="amt">$0<span> forever</span></div>
-      <ul>
-        <li>Meet all seven agents</li>
-        <li>Unlimited core runs</li>
-        <li>Core tools + live data</li>
-        <li>Your dashboard &amp; office</li>
-      </ul>
-      <button class="btn ghost" id="freeCta" onclick="freeCta()">Start free →</button>
-    </div>
-
-    <div class="card gold">
-      <span class="tag">Founding 25 · limited</span>
-      <h4>Founder</h4>
-      <div class="blurb">For the first believers — 2 months free, the 3D Realm forever, and a seat at the token launch.</div>
-      <div class="amt">$100<span> one-time</span></div>
-      <ul>
-        <li><b>2 months of Pro — free</b> · then $49/mo, cancel anytime</li>
-        <li><b>The 3D Realm — yours forever</b></li>
-        <li><b>Early access to the token launch</b> — founders first</li>
-        <li>A custom-forged agent + private portal</li>
-        <li>Genesis badge + governance vote</li>
-      </ul>
-      <button class="btn ghost" onclick="goCheckout('founder')">Claim your Founder spot</button>
-      <div class="scar">Only 25 spots · founding cohort</div>
-    </div>
-  </div>
-
-  <!-- ── WHAT YOU GET (LIVE) ── -->
-  <section class="sect">
-    <div class="shead">
-      <span class="n">01</span>
-      <h3>What You Actually Get</h3>
-      <span class="flag">Live now · audited</span>
-    </div>
-    <p class="ssub">Real, working capabilities — not a roadmap.</p>
-    <div class="capgrid">
-      <div class="cap"><div class="ic">◈</div><b>Seven agents + Forge</b><span>Run the council, or forge your own custom agents with real art and 3D models.</span></div>
-      <div class="cap"><div class="ic">⚙</div><b>3,000+ skills · 300+ tools</b><span>Executable, audited tools + a 3,000-skill library — markets, research, writing, code, security, design.</span></div>
-      <div class="cap"><div class="ic">⛓</div><b>Workflow chains</b><span>Chain agent → agent, each output feeding the next through a real engine.</span></div>
-      <div class="cap"><div class="ic">◷</div><b>A receipt every run</b><span>Every task returns a signed record of what ran — proof of work, not a screenshot.</span></div>
-      <div class="cap"><div class="ic">◫</div><b>3D world &amp; office</b><span>Walk the grid where your agents live; claim and customize your Founders office.</span></div>
-      <div class="cap"><div class="ic">✦</div><b>AURA token-saver</b><span>Caches calls and runs on your own free key — real savings on every request.</span></div>
+  <!-- ── HONEST STATUS ─────────────────────────────────────────────────── -->
+  <section class="status">
+    <h3>Before you pay — what is and is not finished</h3>
+    <div class="two">
+      <p><b>Working today.</b> The seven agents and the RAG brain with citations. The Agent Forge, end to end. Workflows. Pro Signals. The 3D sculptor and gallery. Both worlds. MCP in both directions. The key vault.</p>
+      <p><b>Not finished.</b> Land and plots — the world exists, the economy on it does not. The monthly siege. Touch controls for most games. The bazaar. You should know that before paying, and it is why founders get first claim on land rather than land itself.</p>
     </div>
   </section>
 
-  <!-- ── PAY-AS-YOU-GO ── -->
-  <section class="sect">
-    <div class="shead">
-      <span class="n">02</span>
-      <h3>Prefer No Subscription?</h3>
-      <span class="flag">Credits</span>
-    </div>
-    <p class="ssub">Top up credits and run premium tasks — premium brains, image &amp; clip generation — pay only for what you use.</p>
-    <div class="capgrid">
-      <div class="cap" style="cursor:pointer;text-align:center" onclick="goCheckout('credits_10')"><b style="font-size:24px">$10</b><span>Starter top-up</span></div>
-      <div class="cap" style="cursor:pointer;text-align:center" onclick="goCheckout('credits_25')"><b style="font-size:24px">$25</b><span>Popular</span></div>
-      <div class="cap" style="cursor:pointer;text-align:center" onclick="goCheckout('credits_50')"><b style="font-size:24px">$50</b><span>Builder</span></div>
-      <div class="cap" style="cursor:pointer;text-align:center" onclick="goCheckout('credits_100')"><b style="font-size:24px">$100</b><span>Power</span></div>
-    </div>
-  </section>
+  <footer>
+    <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a> · <a href="/manual.html">Manual</a> · <a href="/connectors.html">Connectors</a><br>
+    Questions: <a href="mailto:cloudzncrownz@gmail.com">get in touch</a>
+  </footer>
+</main>
 
-  <!-- ── FAQ ── -->
-  <section class="sect">
-    <div class="shead">
-      <span class="n">03</span>
-      <h3>Straight Answers</h3>
-    </div>
-    <div class="faq">
-      <div class="qa"><b>What's "bring your own key"?</b><p>Plug in a free API key (Groq, Ollama and more). Your agents run on it, so inference is near-zero cost — you pay $49 for the platform, not per token.</p></div>
-      <div class="qa"><b>What's a "receipt"?</b><p>Every run returns a signed record — which agent ran, which tools fired, what came back. Proof of work you can trust and re-check.</p></div>
-      <div class="qa"><b>Can I cancel?</b><p>Anytime, in one click. No lock-in, no contract. Your forged agents and office stay with your account.</p></div>
-      <div class="qa"><b>What does Pro unlock?</b><p>Everything: all seven agents, the Forge, workflow chains, the SHADDAI MCP, premium brains, image generation, the 3D world and your office — one flat $49/mo.</p></div>
-      <div class="qa"><b>What is SHADDAI MCP?</b><p>Your paid plan turns the whole Council into a Model Context Protocol server. From Claude, Cursor or any MCP client you can call the agents, fire their 300+ tools, and read their receipts — on your own key.</p></div>
-      <div class="qa"><b>Is this just a ChatGPT wrapper?</b><p>No. Seven persona-tuned agents route across models, fire 300+ real tools and a 3,000-skill library, chain into multi-agent workflows, and log a receipt every run. Try it above — that's not a chat box.</p></div>
-      <div class="qa"><b>Do I need to be technical?</b><p>No. Pick a job, hit run, approve the result. If you can send an email, you can run the Council.</p></div>
-    </div>
-  </section>
-
-  <div class="foot">
-    <span>SHADDAI · The Council, Yours</span>
-    <span>$49/mo · Cancel anytime</span>
-    <span><a href="/dashboard">← Back to Dashboard</a></span>
-  </div>
-</div>
-
-<script>
-(function(){
-  // Redirect to the real Stripe checkout for a plan/pack. Backend appends the buyer reference.
-  window.goCheckout = function(item){
-    var uid = '';
-    try { uid = localStorage.getItem('shd_userid') || localStorage.getItem('shd_uid') || 'guest'; } catch(e){ uid = 'guest'; }
-    fetch('/api/stripe/create-checkout', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ item: item, userId: uid }) })
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (d && d.url) { window.location.href = d.url; }
-        else { alert('Checkout for "' + item + '" isn\'t live yet — check back soon.'); } })
-      .catch(function(){ alert('Could not start checkout — please try again.'); });
-  };
-
-  // Free-tier CTA: signed-in → straight to dashboard; guest → sign-in overlay.
-  window.freeCta = function(){
-    if (window.SHDTier && window.SHDTier.isSignedIn()) { location.href = '/dashboard'; return; }
-    try { if (window.shdSignIn) { shdSignIn(); return; } } catch(e){}
-    location.href = '/dashboard';
-  };
-
-  // Re-render every CTA from the real plan state (guest / free / pro).
-  function renderTier(){
-    var s = (window.SHDTier && window.SHDTier.state()) || { mode:'guest', signedIn:false, tier:'free' };
-    var pro = s.mode === 'pro';
-    var guest = s.mode === 'guest';
-    var b = document.getElementById('guestBanner');
-    if (b) b.classList.toggle('on', guest);
-
-    var pc = document.getElementById('proCta');
-    if (pc){
-      if (pro){ pc.textContent = "You're on Pro — open the dashboard →"; pc.onclick = function(){ location.href = '/dashboard'; }; }
-      else { pc.textContent = 'Start Pro — $49/mo →'; pc.onclick = function(){ goCheckout('pro'); }; }
-    }
-    var pc2 = document.getElementById('proCta2');
-    if (pc2){
-      if (pro){ pc2.textContent = "You're on Pro ✓"; pc2.classList.add('on'); pc2.onclick = function(){ location.href = '/dashboard'; }; }
-      else { pc2.textContent = 'Go Pro — $49/mo'; pc2.classList.remove('on'); pc2.onclick = function(){ goCheckout('pro'); }; }
-    }
-    var fc2 = document.getElementById('freeCta2');
-    if (fc2){
-      if (pro){ fc2.textContent = '—'; fc2.disabled = true; fc2.classList.add('on'); }
-      else if (guest){ fc2.textContent = 'Sign in free →'; fc2.disabled = false; fc2.classList.remove('on'); fc2.onclick = function(){ freeCta(); }; }
-      else { fc2.textContent = "You're on Free ✓"; fc2.classList.add('on'); fc2.onclick = function(){ location.href = '/dashboard'; }; }
-    }
-    var fc = document.getElementById('freeCta');
-    if (fc){
-      if (pro){ fc.textContent = '—'; fc.disabled = true; fc.classList.add('on'); }
-      else if (guest){ fc.textContent = "Sign in — it's free →"; fc.disabled = false; fc.classList.remove('on'); }
-      else { fc.textContent = "You're on Free ✓"; fc.classList.add('on'); fc.onclick = function(){ location.href = '/dashboard'; }; }
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', renderTier);
-  if (window.SHDTier){ window.SHDTier.refresh().then(renderTier); }
-  else { window.addEventListener('shdTierReady', renderTier); }
-})();
-</script>
-<script src="/shd-tier.js" defer></script>
-<script src="/home-btn.js" defer></script>
-  <script src="/js/shd-checkout.js"></script>
-
+<script src="/js/shd-checkout.js"></script>
 <script>
 /* Live seat counter. Real scarcity beats claimed scarcity — and if the count
-   cannot be fetched the line stays empty rather than inventing a number, since
+   cannot be fetched the line stays EMPTY rather than inventing a number, since
    a wrong count here is a broken promise about the thing being sold. */
 (function () {
-  var el = document.getElementById('seatCount');
+  var el = document.getElementById('seats');
   if (!el) return;
   fetch('/api/stripe/founders').then(function (r) { return r.json(); }).then(function (d) {
-    if (!d || d.remaining === null || d.remaining === undefined) return;
+    if (!d || d.remaining == null) return;
     if (d.soldOut) {
       el.textContent = 'All ' + d.seats + ' seats claimed';
-      var cta = document.getElementById('foundersCta');
-      if (cta) {
-        cta.classList.add('off');
-        cta.removeAttribute('data-checkout');
-        cta.textContent = 'Founding seats are gone';
-      }
+      var c = document.getElementById('fcta');
+      if (c) { c.classList.add('off'); c.removeAttribute('data-checkout'); c.textContent = 'Founding seats are gone'; }
     } else {
       el.textContent = d.remaining + ' of ' + d.seats + ' seats left';
     }
