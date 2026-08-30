@@ -904,6 +904,27 @@ async function buildScene(agent){
           mats.forEach((m)=>{
             if('metalness' in m) m.metalness = 0;
             if('roughness' in m && m.roughness < 0.4) m.roughness = 0.65;
+
+            /* THE FLAT PLANES CUTTING THROUGH EACH HEAD.
+               Meshy exports hair, brows and lashes as flat cards with an alpha
+               texture. When such a material is `transparent:true` it stops
+               writing depth, so the invisible rectangle around the artwork is
+               drawn OVER the face behind it — which is why every head showed
+               roughly four planes slicing through it.
+
+               The fix is alpha TESTING rather than alpha BLENDING: cut the
+               texture out per-pixel and keep depth writes on. Cards then
+               occlude correctly and the rectangle disappears. Applied only to
+               materials that actually carry alpha, so genuinely translucent
+               surfaces (glass, glow) keep blending. */
+            if (m.transparent && (m.alphaMap || (m.map && m.map.image))) {
+              m.transparent = false;
+              m.alphaTest = 0.5;
+              m.depthWrite = true;
+            }
+            // Cards are modelled one-sided; without this the back half vanishes
+            // at certain angles, which reads as another hole in the head.
+            if (typeof THREE !== 'undefined' && THREE.DoubleSide !== undefined) m.side = THREE.DoubleSide;
             m.needsUpdate = true;
           });
           o.frustumCulled = false;

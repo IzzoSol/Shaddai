@@ -570,8 +570,7 @@ body[data-lay="tile"] .slot .name{ font-size:clamp(26px,7vw,44px); }
 <div class="util">
   <a href="/connectors.html" title="Connect your own accounts">⚯ connectors</a>
   <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener" title="FOMO referral">🔥 fomo</a>
-  <button id="uPaybox" type="button" title="ZEROX FOMO wallets">◈ paybox</button>
-  <button class="tip" id="uTip" type="button" title="Send ZEROX a tip">✦ tip zerox</button>
+  <button id="uPaybox" type="button" title="ZEROX FOMO wallets — tip or pay an agent">◈ paybox wallets</button>
   <button id="uSnd" type="button" title="Sound is off by default">♪ sound</button>
   <div class="msg" id="uMsg"></div>
 </div>
@@ -1067,40 +1066,6 @@ if (renderer) {
 }
 </script>
 
-<script>
-/* Tip ZEROX. The settlement endpoint is being built in the other lane, so this
-   probes it and DEGRADES HONESTLY: if it is not there yet the button says so
-   rather than showing a fake balance or a fake confirmation. The moment the
-   real endpoint ships, this starts working with no change here. */
-(function () {
-  var btn = document.getElementById('uTip'), msg = document.getElementById('uMsg');
-  if (!btn) return;
-  function say(t) { msg.textContent = t; setTimeout(function () { if (msg.textContent === t) msg.textContent = ''; }, 5000); }
-
-  btn.addEventListener('click', function () {
-    btn.disabled = true;
-    var was = btn.textContent;
-    btn.textContent = '✦ …';
-    fetch('/api/paybox/tip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: 'ZEROX', source: 'enter' }),
-    })
-      .then(function (r) {
-        if (r.status === 404) { say('Tipping opens shortly — the wallet rail is still being wired.'); return null; }
-        return r.json();
-      })
-      .then(function (d) {
-        if (!d) return;
-        if (d.checkoutUrl || d.url) { location.href = d.checkoutUrl || d.url; return; }
-        if (d.ok) { say('Thank you — ZEROX got it.'); return; }
-        say(d.error || 'Could not send that tip.');
-      })
-      .catch(function () { say('Could not reach the wallet. Try again in a moment.'); })
-      .then(function () { btn.disabled = false; btn.textContent = was; });
-  });
-})();
-</script>
 
 <footer class="foot">
   <div class="soc">
