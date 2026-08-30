@@ -80,20 +80,31 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 .view{ display:none; } .view.on{ display:block; }
 
 /* ── avatar, shared ────────────────────────────────────────────────────── */
-.av{ flex:0 0 auto; width:46px; height:46px; border-radius:50%; background:var(--void2);
+.av{ flex:0 0 auto; width:60px; height:60px; border-radius:50%; background:var(--void2);
   border:1px solid var(--edge2); object-fit:cover; display:block; }
 .av.ph{ display:grid; place-items:center; font-size:15px; font-weight:700; color:var(--ink-faint); }
 
 /* ── LIST — big rows ───────────────────────────────────────────────────── */
-.row{ display:flex; align-items:center; gap:12px; border:1px solid var(--edge);
-  border-left:4px solid var(--pc,var(--flat)); background:var(--card);
-  padding:13px 14px; margin-bottom:8px; min-height:74px; cursor:pointer; }
+.row{ display:flex; align-items:center; gap:13px; border:1px solid var(--edge);
+  border-left:5px solid var(--pc,var(--flat)); background:var(--card);
+  padding:15px 15px; margin-bottom:9px; min-height:92px; cursor:pointer; }
+/* The contract address on the face of the row. It is the thing someone copies
+   to buy, so making them open a sheet to see it costs a tap at the exact
+   moment speed matters. Truncated head+tail — the middle of a mint carries no
+   recognition value, but the ends do. */
+.row .ca{ font-size:11px; color:var(--ink-faint); letter-spacing:.02em; margin-top:5px;
+  display:flex; align-items:center; gap:7px; }
+.row .ca b{ color:var(--ink-soft); font-weight:400; }
+.row .cabtn{ border:1px solid var(--edge2); background:none; color:var(--ink-faint);
+  font-family:var(--f-mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  padding:4px 8px; border-radius:2px; cursor:pointer; min-height:28px; }
+.row .cabtn:active{ color:var(--emerald); border-color:var(--emerald); }
 .row .mid{ flex:1 1 auto; min-width:0; }
-.row .sym{ font-size:19px; font-weight:700; letter-spacing:.03em; color:var(--ink);
+.row .sym{ font-size:23px; font-weight:700; letter-spacing:.03em; color:var(--ink);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .row .sub{ font-size:12px; color:var(--ink-faint); margin-top:4px; display:flex; gap:8px;
   align-items:center; flex-wrap:wrap; }
-.row .mult{ flex:0 0 auto; font-size:24px; font-weight:700; color:var(--pc,var(--flat));
+.row .mult{ flex:0 0 auto; font-size:30px; font-weight:700; color:var(--pc,var(--flat));
   font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
 .so{ display:inline-flex; gap:4px; align-items:center; }
 .so i{ font-style:normal; font-size:12px; opacity:.9; }
@@ -109,15 +120,15 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 #v-bub.on{ height:100%; }
 
 /* ── HEATMAP — bigger cells, logo behind ───────────────────────────────── */
-.heat{ display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:5px; }
+.heat{ display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:6px; }
 .cell{ position:relative; aspect-ratio:1; border:0; padding:7px; overflow:hidden; cursor:pointer;
   display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start;
   font-family:var(--f-mono); color:#04120c; }
-.cell img{ position:absolute; right:-6px; top:-6px; width:44px; height:44px; border-radius:50%;
+.cell img{ position:absolute; right:-4px; top:-4px; width:56px; height:56px; border-radius:50%;
   opacity:.26; object-fit:cover; }
-.cell .s{ position:relative; font-size:13px; font-weight:700; line-height:1.05; max-width:100%;
+.cell .s{ position:relative; font-size:15px; font-weight:700; line-height:1.05; max-width:100%;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.cell .m{ position:relative; font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
+.cell .m{ position:relative; font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
 .cell .so{ position:absolute; left:7px; bottom:7px; font-size:10px; opacity:.75; }
 .cell.dark{ color:#f4fbf7; }
 
@@ -130,10 +141,10 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 .rank:nth-child(2) .n{ color:#cbd5e1; }
 .rank:nth-child(3) .n{ color:#d19a66; }
 .rank .b{ flex:1 1 auto; min-width:0; }
-.rank .b .s{ font-size:17px; font-weight:700; color:var(--ink); overflow:hidden;
+.rank .b .s{ font-size:20px; font-weight:700; color:var(--ink); overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap; }
 .rank .b .u{ font-size:12px; color:var(--ink-faint); margin-top:3px; }
-.rank .v{ flex:0 0 auto; font-size:21px; font-weight:700; font-variant-numeric:tabular-nums;
+.rank .v{ flex:0 0 auto; font-size:26px; font-weight:700; font-variant-numeric:tabular-nums;
   color:var(--pc,var(--flat)); }
 
 /* ── sheet ─────────────────────────────────────────────────────────────── */
@@ -161,12 +172,25 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   letter-spacing:.1em; text-transform:uppercase; text-decoration:none; border-radius:3px; cursor:pointer; }
 #sheet .acts .pri{ background:var(--emerald); color:#04120c; border-color:var(--emerald); }
 #sheet .note{ margin-top:14px; font-size:11px; color:var(--ink-faint); line-height:1.65; }
+
+/* On a desktop the phone view is not the right tool — offer the terminal
+   rather than silently being the lesser of the two. Hidden below 820px, where
+   this view IS the right tool. */
+#toTerm{ display:none; }
+@media(min-width:820px){
+  #toTerm{ display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:0 14px;
+    border:1px solid var(--gold); color:var(--gold); background:none; border-radius:3px;
+    font-family:var(--f-mono); font-size:11px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; text-decoration:none; margin-right:8px; }
+  #toTerm:hover{ background:var(--gold); color:#140f02; }
+}
 </style>
 </head>
 <body>
 
 <header>
   <div class="brand"><b>SIGNALS</b><span class="pill"><span class="d"></span><span id="liveN">—</span></span></div>
+  <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
 </header>
 
@@ -227,6 +251,12 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  /* Head and tail of a mint. The middle carries no recognition value; the ends
+     are what someone checks against a chart or a wallet. */
+  function shortCA(m) {
+    m = String(m || '');
+    return m.length > 14 ? m.slice(0, 6) + '…' + m.slice(-5) : m;
+  }
   function mult(c) { var m = Number(c.curMult); return isFinite(m) && m > 0 ? m : 0; }
   function ago(ts) { var m = (Date.now() - (ts || 0)) / 60000;
     if (!ts) return ''; if (m < 1) return 'now'; if (m < 60) return Math.round(m) + 'm';
@@ -295,7 +325,9 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
         avatar(c) +
         '<div class="mid"><div class="sym">' + esc(c.symbol || c.name || '?') + '</div>' +
         '<div class="sub"><span>' + esc(sub) + '</span>' + socialBits(c) +
-          (k.l ? '<span class="tag ' + k.c + '">' + esc(k.l) + '</span>' : '') + '</div></div>' +
+          (k.l ? '<span class="tag ' + k.c + '">' + esc(k.l) + '</span>' : '') + '</div>' +
+        '<div class="ca"><b>' + esc(shortCA(c.mint)) + '</b>' +
+          '<button class="cabtn" data-ca="' + esc(c.mint) + '">copy</button></div></div>' +
         '<div class="mult">' + big + '</div></div>';
     }).join('') : emptyMsg();
   }
@@ -452,6 +484,19 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     });
   }
   document.addEventListener('click', function (e) {
+    // Copy-CA must not also open the detail sheet — the row underneath it is
+    // clickable, so this has to claim the event before it bubbles.
+    var ca = e.target.closest('[data-ca]');
+    if (ca) {
+      e.stopPropagation(); e.preventDefault();
+      var v = ca.getAttribute('data-ca'), was = ca.textContent;
+      var ok = function () { ca.textContent = 'copied'; setTimeout(function () { ca.textContent = was; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(ok, fb); else fb();
+      function fb() { var t = document.createElement('textarea'); t.value = v;
+        t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); ok(); } catch (err) {} document.body.removeChild(t); }
+      return;
+    }
     if (e.target.closest('[data-close]') || e.target.classList.contains('scrim')) { $('sheet').classList.remove('on'); return; }
     var hit = e.target.closest('[data-mint]');
     if (hit && !e.target.closest('#sheet')) openSheet(hit.dataset.mint);
