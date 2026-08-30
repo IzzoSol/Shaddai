@@ -1632,13 +1632,22 @@ app.use('/api/services', require('./lib/agent-services-routes'));
    placeholder somebody might send funds to. */
 app.get('/api/paybox/wallets', (req, res) => {
   try {
-    const p = pathx.join(__dirname, 'data', 'paybox-wallets.json');
+    /* `pathx` is declared inside another function further up this file, so it
+       is NOT in scope here — referencing it threw a ReferenceError that the
+       catch below swallowed into an empty list. The wallets were configured
+       correctly the whole time and the endpoint reported "none". Requiring
+       locally removes the dependency on where an outer alias happens to live. */
+    const pathMod = require('path');
+    const p = pathMod.join(__dirname, 'data', 'paybox-wallets.json');
     const cfg = JSON.parse(require('fs').readFileSync(p, 'utf8'));
     const wallets = (cfg.wallets || [])
       .filter((w) => w && w.address)
       .map((w) => ({ label: w.label || 'Wallet', address: w.address, chain: w.chain || null }));
     res.json({ ok: true, wallets });
   } catch (e) {
+    // Log it. A silently empty wallet list is indistinguishable from "not
+    // configured yet", which is exactly how the ReferenceError above hid.
+    console.warn('[paybox] wallets unavailable:', e && e.message);
     res.json({ ok: true, wallets: [] });
   }
 });

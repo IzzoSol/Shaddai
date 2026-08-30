@@ -27,6 +27,8 @@ router.use(softAuth);
 
 let economy = null;
 try { economy = require('../economy-service').getDefault(); } catch (_) {}
+let paybox = null;
+try { paybox = require('../paybox-guard'); } catch (_) {}
 
 /* The executor. Routes the order to the named council agent and runs the
    service's own skill against the buyer's input.
@@ -84,16 +86,45 @@ router.get('/:id', (req, res) => {
 
 router.post('/:id/order', async (req, res) => {
   const body = req.body || {};
-
-  // Only Sparks settle today. Naming the other method explicitly beats a
-  // confusing failure later, and tells the caller what to expect.
   const method = String(body.method || 'sparks').toLowerCase();
+
+  // Paybox branch (2026-08-30): Paybox's REST contract is now verified (see
+  // paybox-guard.js), but its real tool surface cannot do what Sparks does —
+  // every Paybox money-moving tool requires the PAYER to already be a
+  // connected, granted credential; there is no "charge this arbitrary
+  // stranger" primitive. So this is NOT the same synchronous charge-then-run-
+  // then-refund flow as Sparks. It generates a real checkout link (the same
+  // get_buy_link tool the tip button uses — no approval, touches no key,
+  // moves no money to generate) priced at this service's Sparks value ($1 =
+  // 1 Spark), and returns pending — the buyer pays, then must be topped up in
+  // Sparks (see /api/economy webhook path) or the order re-submitted with
+  // method:"sparks" once funded. It does NOT run the work synchronously,
+  // because SHADDAI cannot verify a MoonPay checkout completed within this
+  // request/response cycle. Faking synchronicity here would repeat the exact
+  // mistake the original paybox-guard.js made — guessing a shape Paybox
+  // doesn't actually have.
+  if (method === 'paybox') {
+    const svc = services.byId(String(req.params.id || ''));
+    if (!svc) return res.status(404).json({ ok: false, error: 'no such service' });
+    if (!paybox) return res.status(501).json({ ok: false, error: 'Paybox guard unavailable' });
+    const cfg = paybox.getConfig();
+    const credentialId = cfg.tip_credentials && cfg.tip_credentials.ZEROX;
+    if (!credentialId) return res.status(501).json({ ok: false, error: 'No Paybox receiving wallet configured' });
+    const r = await paybox.payboxRead('get_buy_link', { credential_id: credentialId, amount_usd: svc.sparks }, 'ZEROX');
+    if (!r.ok) return res.status(502).json({ ok: false, error: r.output });
+    return res.json({
+      ok: true, pending: true,
+      service: svc.id, amount_usd: svc.sparks,
+      checkout_url: r.output && r.output.url,
+      note: 'Complete this checkout, then your Sparks balance updates and you can order with method:"sparks". This does not run the work yet — Paybox has no way for SHADDAI to confirm your payment within this request.',
+    });
+  }
+
   if (method !== 'sparks') {
     return res.status(400).json({
       ok: false,
       error: `"${method}" is not accepted yet`,
-      accepted: ['sparks'],
-      note: 'Paybox settlement is not live — it is unmounted and its REST contract is unverified.',
+      accepted: ['sparks', 'paybox'],
     });
   }
 

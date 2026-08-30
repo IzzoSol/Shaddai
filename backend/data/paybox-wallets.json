@@ -1,4 +1,18 @@
 {
-  "_README": "ZEROX FOMO wallets shown by the Paybox button on enter.html. Addresses live HERE, not in HTML — rotating one is a config change rather than a redeploy, and a wrong address pasted into a page is the most expensive typo this product could ship. Leave the list empty and the UI says 'not configured' rather than showing a placeholder someone might send funds to.",
-  "wallets": []
+  "_README": "ZEROX FOMO receiving wallets, shown by the Paybox button on enter.html via GET /api/paybox/wallets. These are PUBLIC receiving addresses, not secrets — they are meant to be displayed. They live here rather than in HTML so rotating one is a config change and not a redeploy, and so a single wrong character is caught in review rather than shipped in a page. Read fresh on every request: edit this file and the change is live immediately.",
+  "_WARNING": "Verify any change against the wallet itself before committing. A wrong address here sends funds to nobody and there is no undo.",
+  "wallets": [
+    {
+      "label": "ZEROX · Solana",
+      "address": "43ZGQ9pMBYR774c7W8e9o4PyYk4xJh2Vz3AsJDhEKHmn",
+      "chain": "solana",
+      "note": "SOL and SPL tokens only"
+    },
+    {
+      "label": "ZEROX · Robinhood",
+      "address": "0x6A0Ce35f920163599fE2C00d63991d92DA7069FA",
+      "chain": "evm",
+      "note": "EVM address — confirm the network before sending"
+    }
+  ]
 }
