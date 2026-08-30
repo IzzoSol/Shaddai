@@ -79,6 +79,52 @@ const TOOLS = [
       required: ['query'],
     },
   },
+  {
+    name: 'shaddai_create_agent',
+    description: 'Create a named SHADDAI agent that can spend money ONLY up to the caps you set. SHADDAI does NOT host inference — the agent runs on the user\'s own API key. This is the permit layer: set daily_cap_usd and per_call_cap_usd, then the agent can pay/trade only inside those limits, and you can revoke it one-click at any time. Every action is written to a public ledger.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Human name for the agent, e.g. "Zerox-intern".' },
+        daily_cap_usd: { type: 'number', description: 'Max USD the agent may spend per day. Default 5.' },
+        per_call_cap_usd: { type: 'number', description: 'Max USD for a single call. Default 1. Hard ceiling 2500.' },
+        allowed_tools: { type: 'array', items: { type: 'string' }, description: 'Optional tool allow-list; blank = all tools.' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'shaddai_set_spend_policy',
+    description: 'Update an existing agent\'s spend policy (new daily/per-call caps or tool allow-list). Apply the new limit immediately — existing daily spend counts against the new cap.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'The agent id (agt_...).' },
+        daily_cap_usd: { type: 'number', description: 'New max daily spend in USD. Optional.' },
+        per_call_cap_usd: { type: 'number', description: 'New max spend per single call in USD. Optional.' },
+        allowed_tools: { type: 'array', items: { type: 'string' }, description: 'Optional new tool allow-list; leave unset to keep current.' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'shaddai_revoke_agent',
+    description: 'Revoke an agent immediately (one-click kill). The agent can no longer spend or run. Irreversible — recorded in the public ledger.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string', description: 'The agent id (agt_...) to revoke.' } },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'shaddai_get_agent_ledger',
+    description: 'Read the public ledger — every agent_create / refuse / spend / revoke with redacted amounts. Show this before and after moving money so the user can see exactly what an agent did.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string', description: 'Optional — narrow to a single agent id (agt_...). Omit for the full public ledger.' } },
+      required: [],
+    },
+  },
 ];
 
 // Per-agent specialist tools — one named tool per agent so the model auto-picks the right one.
@@ -101,6 +147,33 @@ async function callAPI(path, body) {
   if (API_KEY) headers['x-shaddai-key'] = API_KEY;
   const r = await fetch(API + path, { method: 'POST', headers, body: JSON.stringify(body) });
   return r.json().catch(() => ({ error: 'bad response from SHADDAI API (' + r.status + ')' }));
+}
+
+async function callAPIGet(path) {
+  const headers = {};
+  if (API_KEY) headers['x-shaddai-key'] = API_KEY;
+  const r = await fetch(API + path, { method: 'GET', headers });
+  return r.json().catch(() => ({ error: 'bad response from SHADDAI API (' + r.status + ')' }));
+}
+
+function fmtAgentLine(a) {
+  if (!a || typeof a === 'string') return String(a || '?');
+  return a.id +
+    (a.name ? ' "' + a.name + '"' : '') +
+    ' daily=$' + a.daily_cap_usd + ' call=$' + a.per_call_cap_usd +
+    ' spent_today=$' + (a.spent_today || 0) +
+    ' status=' + (a.revoked ? 'REVOKED' : 'active');
+}
+
+function fmtLedger(entries) {
+  if (!entries || !entries.length) return 'Ledger is empty — nothing has been spent or revoked yet.';
+  return entries.map((e) =>
+    '[' + (e.at || e.ts || '') + '] ' + (e.agent || '?') + ' ' + (e.kind || e.type || 'event') +
+    (e.amount_usd != null ? ' amount=$' + e.amount_usd : '') +
+    (e.status ? ' status=' + e.status : '') +
+    (e.tool ? ' tool=' + e.tool : '') +
+    (e.reason ? ' — ' + e.reason : '')
+  ).slice(0, 60).join('\n');
 }
 
 async function callTool(name, args) {
@@ -152,6 +225,44 @@ async function callTool(name, args) {
     if (d.error) return 'Error: ' + d.error;
     const tools = d.toolsUsed && d.toolsUsed.length ? '[tools used: ' + d.toolsUsed.join(', ') + ']\n\n' : '';
     return tools + (d.response || '');
+  }
+
+  if (name === 'shaddai_create_agent') {
+    const d = await callAPI('/api/policy/agent', {
+      name: args.name,
+      daily_cap_usd: args.daily_cap_usd,
+      per_call_cap_usd: args.per_call_cap_usd,
+      allowed_tools: args.allowed_tools,
+    });
+    if (!d.ok || !d.agent) return 'Error: ' + (d.error || JSON.stringify(d));
+    const a = d.agent;
+    return 'Created agent → ' + fmtAgentLine(a) +
+      '\n\nIt can pay/trade only inside these caps and runs on the user\'s OWN API key (Shaddai does not host inference). ' +
+      'Revoke anytime with shaddai_revoke_agent. Every move is in the public ledger (shaddai_get_agent_ledger).';
+  }
+
+  if (name === 'shaddai_set_spend_policy') {
+    const d = await callAPI('/api/policy/agent/' + args.id, {
+      daily_cap_usd: args.daily_cap_usd,
+      per_call_cap_usd: args.per_call_cap_usd,
+      allowed_tools: args.allowed_tools,
+    });
+    if (!d.ok || !d.agent) return 'Error: ' + (d.error || JSON.stringify(d));
+    return 'Updated policy → ' + fmtAgentLine(d.agent);
+  }
+
+  if (name === 'shaddai_revoke_agent') {
+    const d = await callAPI('/api/policy/agent/' + args.id + '/revoke', {});
+    if (!d.ok) return 'Error: ' + (d.error || JSON.stringify(d));
+    return 'REVOKED agent ' + d.agent + ' (revoked=' + d.revoked + '). It can no longer spend or run. Recorded in the public ledger.';
+  }
+
+  if (name === 'shaddai_get_agent_ledger') {
+    const recs = args.id
+      ? (await callAPIGet('/api/policy/agent/' + args.id + '/ledger')).records || []
+      : (await callAPIGet('/api/policy/ledger')).ledger || [];
+    const label = args.id ? ' for agent ' + args.id : ' (public)';
+    return 'Ledger' + label + ' (' + recs.length + ' entries):\n' + fmtLedger(recs);
   }
   return 'Unknown tool: ' + name;
 }
