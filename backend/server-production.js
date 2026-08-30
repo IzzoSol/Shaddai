@@ -1624,6 +1624,24 @@ app.use('/api/agent-forge', require('./lib/agent-forge-routes'));
 // before the work runs (a failing job must not be a free inference loop) and
 // refunds automatically if it fails.
 app.use('/api/services', require('./lib/agent-services-routes'));
+
+/* GET /api/paybox/wallets — the ZEROX FOMO wallets shown on the front door.
+   Read from data/paybox-wallets.json every call (not cached) so rotating an
+   address takes effect immediately. Returns an empty list rather than an error
+   when unset: the UI then says "not configured" instead of rendering a
+   placeholder somebody might send funds to. */
+app.get('/api/paybox/wallets', (req, res) => {
+  try {
+    const p = pathx.join(__dirname, 'data', 'paybox-wallets.json');
+    const cfg = JSON.parse(require('fs').readFileSync(p, 'utf8'));
+    const wallets = (cfg.wallets || [])
+      .filter((w) => w && w.address)
+      .map((w) => ({ label: w.label || 'Wallet', address: w.address, chain: w.chain || null }));
+    res.json({ ok: true, wallets });
+  } catch (e) {
+    res.json({ ok: true, wallets: [] });
+  }
+});
 // Collectables — 100 NFT cards + REAL unlock-by-dashboard-action tracking (mint = later phase)
 app.use('/api/collectables', require('./collectables/collectables-routes'));
 // Rooms — personal operative habitat: HF scene-gen + wearables (reuses forge-core slots)

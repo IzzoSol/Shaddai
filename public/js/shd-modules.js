@@ -124,7 +124,13 @@
       href: '/SHADDAI-WORLD.html',
       art: '/assets/enter/world2d.jpg',
       accent: C.gold,
-      geo: 'isogrid'
+      geo: 'isogrid',
+      /* Gated on purpose. The city renders and the agents are in it, but the
+         economy on top — plots, ownership, rent — is not built. Letting people
+         walk in now means they meet an empty world and decide that is what it
+         is. Better to be closed than disappointing. */
+      locked: true,
+      lockNote: 'Opening when plots go live' 
     },
     {
       id: 'world3d',
@@ -133,8 +139,14 @@
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
       href: '/world3d',
       art: '/assets/enter/world3d.jpg',
-      accent: C.cyan,
-      geo: 'terrain'
+      /* Greyed rather than accented. A dim tile beside bright ones reads as
+         "not yet" without a word of explanation — the way a locked level does
+         in a game, which is the right feeling for something being built. */
+      accent: C.dim,
+      dim: true,
+      geo: 'terrain',
+      locked: true,
+      lockNote: 'In build' 
     },
     {
       id: 'arcade',

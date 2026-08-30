@@ -1,0 +1,4 @@
+{
+  "_README": "ZEROX FOMO wallets shown by the Paybox button on enter.html. Addresses live HERE, not in HTML — rotating one is a config change rather than a redeploy, and a wrong address pasted into a page is the most expensive typo this product could ship. Leave the list empty and the UI says 'not configured' rather than showing a placeholder someone might send funds to.",
+  "wallets": []
+}
