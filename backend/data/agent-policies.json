@@ -1,0 +1,20 @@
+[
+  {
+    "id": "agt_97d36f580689",
+    "owner": "anon",
+    "name": "Zerox-intern",
+    "wallet_label": "default",
+    "daily_cap_usd": 5,
+    "per_call_cap_usd": 1,
+    "allowed_tools": [
+      "request_payment",
+      "request_transfer",
+      "request_swap",
+      "pay_x402"
+    ],
+    "revoked": false,
+    "created_at": "2026-08-30T22:24:11.243Z",
+    "last_spend_day": null,
+    "spent_today": 0
+  }
+]
