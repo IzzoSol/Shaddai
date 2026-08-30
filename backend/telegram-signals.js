@@ -65,9 +65,10 @@ function _validateCall(callData, cfg) {
     return { pass: false, reason: 'insufficient_data', data: {} };
   }
 
-  // FDV gates
-  if (callData.entryFdv < (cfg.minFdv || 0)) {
-    reasons.push(`FDV ${callData.entryFdv} below min ${cfg.minFdv}`);
+  // FDV gates — hard floor + hard cap (both un-bypassable)
+  const effMin = _effectiveMinFdv(cfg);
+  if (callData.entryFdv < effMin) {
+    reasons.push(`FDV ${callData.entryFdv} below min ${effMin}`);
   }
   if (callData.entryFdv > HARD_FDV_CAP_MAX) {
     reasons.push(`FDV ${callData.entryFdv} exceeds hard cap ${HARD_FDV_CAP_MAX}`);
@@ -354,10 +355,28 @@ function _hourLabel() {
   if (_isWeekend()) return '📅 WEEKEND';
   return null;
 }
-// Per-source FDV caps now handle quality control (bonded ≤$20K, new_pools $5-10K, trending ≤$150K).
-// A global minFdv floor is no longer needed — it was conflicting with those tighter per-source gates.
+// Per-source FDV caps handle quality control (bonded ≤$20K, new_pools $5-10K, trending ≤$150K).
+// ── HARD QUALITY FLOOR ─────────────────────────────────────────────────────
+// A global minFdv floor that CANNOT be lowered from the dashboard. The old config
+// let minFdv drop to $1K, so we were calling $2K-MC micro-caps that mostly died.
+// Tuned from the live 243-call corpus (2026-08-30):
+//   - win rate by entry FDV: <2K→high death · 2-15K→36-44% · 15-50K→31% · 50K+→17-18%
+// So we KEEP the winning low-FDV recovery band (2-15K) and CUT the under-performing
+// high-FDV band (50K+) via maxFdv. The floor only removes the $2K-level trash.
+//   weekday normal → $5K
+//   weekday peak → $3K      (strong momentum windows can catch fast micro-cap 2-5x)
+//   weekend → $5K
+const HARD_MIN_FDV = {
+  peak:   3000,   // strong momentum windows still catch micro-cap 2-5x
+  weekend:5000,
+  normal: 5000,   // weekday off-peak: kill $2K-level trash, keep the winning 5-15K band
+};
 function _effectiveMinFdv(cfg) {
-  return cfg.minFdv || 0;  // use config value ($1K); per-source caps do the heavy lifting
+  const hard = _isWeekend()
+    ? HARD_MIN_FDV.weekend
+    : (_isPeakHour() ? HARD_MIN_FDV.peak : HARD_MIN_FDV.normal);
+  const configured = Number(cfg.minFdv) || 0;
+  return Math.max(hard, configured);   // floor is never below the hard floor
 }
 
 // ── VOLUME ACCELERATION CHECK ─────────────────────────────────────────────────
@@ -727,6 +746,15 @@ async function _rugScore(mint) {
     return { checked: true, score, lp, topPct, top10Pct, holders, hasSnipers, hasBundlers, bundlePct, lockedHeldPct, insiders,
       conviction: conviction.score, convictionLabel: conviction.label, convictionSignals: conviction.signals,
       risks: risks,
+      // wallet-grade data: trimmed top holders (owner wallet + pct + uiAmount + insider).
+      // Feeds the Pro-Signals Wallet Intelligence panel + fixes the _holderConvictionScore
+      // call that was receiving [] (the rug report already had these).
+      topHolders: (j.topHolders || []).slice(0, 20).map(h => ({
+        owner: String(h.owner || h.address || '').slice(0, 64),
+        pct: Math.round((Number(h.pct) || 0) * 100) / 100,
+        uiAmount: Number(h.uiAmount) || 0,
+        insider: !!h.insider,
+      })),
       label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
   } catch (e) { return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
 }
@@ -1128,7 +1156,7 @@ async function _pollOnce() {
       ) > 0;
     }
     _seen.add(addr);
-    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rank: _rank || 0 }); } catch (e) {}
+    if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rank: _rank || 0, topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
       _logFeatures({ mint: addr, chain, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, source: 'trending', entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: Number(pair.liquidity && pair.liquidity.usd) || 0, sourceCount: 1 }); }
     if (_seen.size > _SEEN_CAP) { const first = _seen.values().next().value; _seen.delete(first); }
   }
@@ -2103,7 +2131,7 @@ async function _pollBoosts() {
         _trackSym(sym);
         core.markAlerted(mint);
         posted++;
-        try { pnl.recordCall({ source: 'boosted', chain: 'solana', mint, name, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, liq, vol1h, vol24 }); } catch (e) {}
+        try { pnl.recordCall({ source: 'boosted', chain: 'solana', mint, name, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, liq, vol1h, vol24, topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
       }
     }
     _boostWatchSeeded = true;

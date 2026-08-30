@@ -509,6 +509,22 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .rpane-scroll::-webkit-scrollbar{width:3px;}
 .rpane-scroll::-webkit-scrollbar-thumb{background:var(--P3);}
 
+/* WALLET INTELLIGENCE panel */
+.wi-bubbles{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:10px;min-height:120px;}
+.wi-bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:transform .15s;color:#050a05;cursor:pointer;font-family:'Share Tech Mono',monospace;line-height:1.2;box-shadow:0 2px 12px rgba(0,0,0,.35);}
+.wi-bubble:hover{transform:scale(1.12);z-index:2;}
+.wi-bubble .b-lbl{font-size:10px;font-weight:700;letter-spacing:.5px;text-shadow:0 1px 0 rgba(0,0,0,.25);}
+.wi-bubble .b-pnl{font-size:9px;font-weight:700;text-shadow:0 1px 0 rgba(0,0,0,.2);}
+.wi-bubble .b-coins{font-size:7px;opacity:.85;}
+.wi-hcell{display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:8px;padding:3px 2px;white-space:nowrap;}
+.wi-htop{font-family:'Syncopate',sans-serif;font-size:6px;letter-spacing:1px;color:var(--label);padding:6px 8px;text-align:left;background:var(--bg2);}
+.wi-htitle{font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:1px;color:var(--label);white-space:nowrap;padding:4px;}
+.wi-coin-tab{padding:5px 9px;border:1px solid var(--border);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);cursor:pointer;background:var(--bg2);}
+.wi-coin-tab.on{border-color:var(--P);color:var(--P);background:rgba(232,160,32,.08);}
+.wi-wcard{border:1px solid var(--border);border-radius:4px;background:var(--bg2);padding:8px 10px;margin-bottom:8px;}
+.wi-wcard.sm{border-color:rgba(244,200,66,.55);box-shadow:0 0 10px rgba(244,200,66,.12);}
+.wi-tag{font-family:'Syncopate',sans-serif;font-size:6px;letter-spacing:1px;padding:2px 5px;border-radius:2px;border:1px solid var(--border);color:var(--label);}
+
 /* data feed item styles */
 .di-sect{padding:5px 12px;font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:3px;color:var(--text2);background:linear-gradient(90deg,var(--bg2),var(--bg1));border-bottom:2px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;z-index:1;}
 .di{padding:8px 12px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;gap:9px;transition:background .1s;}
@@ -875,7 +891,9 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       <div class="rtab"     onclick="rTab('stocks',this)">📊 STOCKS</div>
       <div class="rtab"     onclick="rTab('news',this)">📰 NEWS</div>
       <div class="rtab"     onclick="rTab('poly',this)">🎯 POLY <span id="polycnt" style="font-size:5px;opacity:.6"></span></div>
-      <div class="rtab"     onclick="rTab('miro',this)">🐟 MIRO</div>
+      <div class="rtab" onclick="rTab('miro',this)">🐟 MIRO</div>
+      <div class="rtab" onclick="rTab('qual',this)">🛡 QUALITY</div>
+      <div class="rtab" onclick="rTab('wintel',this)">🦈 WALLETS</div>
     </div>
 
     <!-- INTEL tab -->
@@ -974,6 +992,86 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
             <button class="mwb" id="mwrun" onclick="runMiro()" style="display:none">SIMULATE →</button>
           </div>
           <div class="mwr" id="mwres"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUALITY tab → live call-quality gates + hit-rate shield -->
+    <div class="rpane" id="rpane-qual">
+      <div class="rpane-scroll">
+        <div style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--S);text-shadow:var(--gS)">🛡 CALL QUALITY</span>
+            <span style="flex:1"></span>
+            <span id="qual-bot" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--label)">—</span>
+          </div>
+
+          <!-- live risk gates -->
+          <div class="di-sect">ACTIVE FILTER GATES</div>
+          <div id="qual-gates" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:8px 10px;margin-bottom:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.9">
+            LOADING…
+          </div>
+
+          <!-- live quality stats -->
+          <div class="di-sect">LIVE QUALITY TRACKER</div>
+          <div id="qual-stats" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:10px;color:var(--text2);line-height:1.9">
+            LOADING…
+          </div>
+
+          <div style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--label);line-height:1.6">
+            Gates are enforced by the bot pre-posting. Tap <b>⟳</b> to refresh, or open the signal-quality window for the full breakdown.
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="pdbtn on" style="flex:1" onclick="loadQuality()">⟳ REFRESH</button>
+            <button class="pdbtn" style="flex:1" onclick="openAnalyticsWindow()">📈 FULL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLETS tab → who holds our called coins, PnL, hold-time, cross-referencing -->
+    <div class="rpane" id="rpane-wintel">
+      <div class="rpane-scroll">
+        <div style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--S);text-shadow:var(--gS)">🦈 WALLET INTELLIGENCE</span>
+            <span style="flex:1"></span>
+            <span id="wintel-bot" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--label)">—</span>
+          </div>
+
+          <!-- snapshot stats -->
+          <div class="gst" id="wintel-stats" style="margin-bottom:10px"></div>
+
+          <!-- controls -->
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="pdbtn on" id="wmuli" style="flex:1" onclick="wiMulti(this)">🔍 SMART MONEY</button>
+            <button class="pdbtn" id="wbackfill" style="flex:1" onclick="wiBackfill(this)">⬇ BACKFILL</button>
+            <button class="pdbtn" style="flex:1" onclick="loadWalletIntel()">⟳ REFRESH</button>
+          </div>
+
+          <!-- bubble chart -->
+          <div class="di-sect">WALLET BUBBLES <span style="font-size:5px;color:var(--label)">(SIZE = PNL, GREEN = WINNER)</span></div>
+          <div id="wi-bubbles" class="wi-bubbles"><div class="mload" style="padding:18px">LOADING…</div></div>
+
+          <!-- heatmap -->
+          <div class="di-sect" style="margin-top:12px">PNL HEATMAP <span style="font-size:5px;color:var(--label)">(WALLETS × COINS)</span></div>
+          <div id="wi-heat" style="overflow:auto;border:1px solid var(--border);border-radius:4px;background:var(--bg2)"><div class="mload" style="padding:18px">LOADING…</div></div>
+
+          <!-- coin tabs -->
+          <div class="di-sect" style="margin-top:12px">WALLETS HOLDING CALLED COINS</div>
+          <div id="wi-coins" style="margin-bottom:10px"><div class="mload" style="padding:12px">LOADING…</div></div>
+          <div id="wi-coin-detail" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);line-height:1.7"></div>
+
+          <!-- wallet cards -->
+          <div class="di-sect" style="margin-top:12px">ALL WALLETS</div>
+          <div id="wi-wallets"><div class="mload" style="padding:12px">LOADING…</div></div>
+
+          <div style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--label);line-height:1.6">
+            Wallets are the top holders of our called coins (from RugCheck, captured at call time).
+            <b>Smart Money</b> = wallets holding 2+ of our calls, or flagged insider. PnL is an estimate
+            from each coin's current/peak multiple × the wallet's holding %. Tap ⬇ BACKFILL once to pull
+            holder data for older calls that predate this feature.
+          </div>
         </div>
       </div>
     </div>
@@ -1162,9 +1260,9 @@ async function fetchCalls(){
     _calls=j.calls||[];
     dot(true);
     document.getElementById('tbcalls').innerHTML='calls <em>'+(j.total||_calls.length)+'</em>';
+    // backend now ships DexScreener logos server-side (no browser CORS) — cache them
+    _calls.forEach(c=>{ if(c.mint&&c.img) _img[c.mint]=c.img; });
     renderSigs();
-    const mints=_calls.slice(0,60).map(c=>c.mint).filter(m=>m&&!_img[m]);
-    if(mints.length) fetchImgs(mints);
     tickAlerts();
   }catch(e){dot(false);if(!_calls.length)demoData();}
 }
@@ -1378,7 +1476,7 @@ function card(c,i){
   const bw=Math.min(100,Math.round(Math.log10(Math.max(1,peak))*100));
   const src=c.source||'unknown';
   const col=SC[src]||'#888';
-  const img=c.mint&&_img[c.mint];
+  const img=(c.img||'')||(c.mint&&_img[c.mint]);
   const L=(c.symbol||'?').charAt(0).toUpperCase();
   const ih=img
     ?`<img class="simg" src="${img}" onerror="this.outerHTML='<div class=sav style=border-color:${col}44;color:${col};background:${col}0e>${L}</div>'">`
@@ -1405,12 +1503,11 @@ function card(c,i){
       ${c.milestones&&c.milestones.length?`<span>🎯 ${c.milestones.length} leg${c.milestones.length>1?'s':''}</span>`:''}
     </div>
     <div class="sacts">
-      <button class="sa" onclick="window.open('https://dexscreener.com/solana/${c.mint||''}','_blank')">DEXSCREENER</button>
-      <button class="sa" onclick="cca('${c.mint||''}')">COPY CA</button>
-      <button class="sa" onclick="openSent('${c.mint||''}')">🧠 READ</button>
-      <button class="sa g" onclick="armCard('${c.mint||''}','${encodeURIComponent(c.symbol||'')}')">+ ALERT</button>
-      <button class="sa v" onclick="swarmCall('${c.mint||''}')">🐟 SWARM</button>
-      <button class="sa p" onclick="makePnl('${c.mint||''}')">💰 PNL</button>
+      <button class="sa" onclick="window.open('https://dexscreener.com/solana/${c.mint||''}','_blank')" title="Open live chart + liquidity on DexScreener">📈 CHART</button>
+      <button class="sa" onclick="cca('${c.mint||''}')" title="Copy the contract address">📋 CA</button>
+      <button class="sa" onclick="openSent('${c.mint||''}')" title="AI read + swarm consensus on this call">🤖 ANALYZE</button>
+      <button class="sa g" onclick="armCard('${c.mint||''}','${encodeURIComponent(c.symbol||'')}')" title="Arm a desktop alert for this price target">🎯 ALERT</button>
+      <button class="sa p" onclick="makePnl('${c.mint||''}')" title="Generate a PNL image card for this call">💰 PNL</button>
     </div>
   </div>`;
 }
@@ -1949,8 +2046,9 @@ function openSent(mint){
   document.getElementById('sent-body').innerHTML=
     '<div class="sent-mood" style="color:'+moodC+'">'+mood+'</div>'+
     lines.map(l=>'<div class="sent-line">'+l+'</div>').join('')+
-    '<div style="display:flex;gap:6px;margin-top:10px">'+
-      '<button class="sa g" onclick="askOracle(\''+encodeURIComponent(sym)+'\',this)" style="flex:1">ASK ZEROX BRAIN</button>'+
+    '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'+
+      '<button class="sa g" onclick="askOracle(\''+encodeURIComponent(sym)+'\',this)" style="flex:1;min-width:120px">ASK ORACLE BRAIN</button>'+
+      '<button class="sa v" onclick="closeSent();swarmCall(\''+c.mint+'\')" style="min-width:110px">🐟 SWARM</button>'+
       '<button class="sa" onclick="window.open(\'https://dexscreener.com/solana/'+(c.mint||'')+'\',\'_blank\')">DEX</button>'+
     '</div>'+
     '<div id="sent-ai"></div>';
@@ -2013,9 +2111,221 @@ function rTab(name, el){
   if(name==='poly'&&!_polyLoaded) fetchPoly();
   if(name==='stocks'&&!_stocksLoaded) loadSidebarStocks();
   if(name==='news'&&!_newsLoaded) loadSidebarNews();
+  if(name==='qual'&&!_qualLoaded){ _qualLoaded=true; loadQuality(); }
+  if(name==='wintel'&&!_winLoaded){ _winLoaded=true; loadWalletIntel(); }
 }
 let _polyLoaded=false;
-let _stocksLoaded=false, _newsLoaded=false;
+let _stocksLoaded=false, _newsLoaded=false, _qualLoaded=false, _winLoaded=false;
+
+// ── QUALITY panel: live gate readout + hit-rate shield ──────────────────────
+async function loadQuality(){
+  let cfg={}, analysis={}, metrics={}, ok=false;
+  try{ const r=await fetch('/api/telegram/status',{signal:AbortSignal.timeout(12000)}); const j=await r.json(); if(j&&j.ok){cfg=j.config||{};ok=true;} 
+    const q=document.getElementById('qual-bot');
+    if(q) q.textContent=(j&&j.enabled)?'BOT ● LIVE':'BOT ○ RECORD-ONLY'; }catch(e){}
+  try{ const r=await fetch('/api/signals/analytics',{signal:AbortSignal.timeout(12000)}); const j=await r.json(); if(j&&j.ok){analysis=j.analysis||{};metrics=j.metrics||{};} }catch(e){}
+
+  // gates readout
+  const g=document.getElementById('qual-gates');
+  if(g){
+    const fx=(v)=>v? '$'+ (v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v) : 'off';
+    const row=(k,v,okc)=>`<div style="display:flex;align-items:center;gap:6px"><span style="flex:1;color:var(--label)">${k}</span><span style="color:${okc};font-weight:700">${v}</span></div>`;
+    const hardFlr = cfg.minFdv ? Math.max(Number(cfg.minFdv)||0, 5000) : 5000;
+    let h = row('Bot token', ok?'SET':'unset', ok?'var(--S)':'var(--A)');
+    h+= row('Hard FDV floor', fx(hardFlr), 'var(--S)');
+    h+= row('Max FDV',        fx(cfg.maxFdv), cfg.maxFdv?'var(--P)':'var(--muted)');
+    h+= row('Rug score ≥',    (cfg.rugMinScore!=null?cfg.rugMinScore:'60'), 'var(--P2)');
+    h+= row('Min holders',    (cfg.minHolders!=null?cfg.minHolders:'50'), 'var(--P)');
+    h+= row('Min liq',        fx(cfg.minLiq), 'var(--S)');
+    h+= row('Min liq % mcap', ((cfg.minLiqPct!=null?cfg.minLiqPct:3)+'%'), 'var(--C)');
+    h+= row('Snipers <',      (cfg.maxSnipersPct!=null?cfg.maxSnipersPct:'5')+'%', 'var(--C)');
+    h+= row('Bundlers <',     (cfg.maxBundlerPct!=null?cfg.maxBundlerPct:'3')+'%', 'var(--C)');
+    h+= row('Chains',         (cfg.chains||'solana'), 'var(--muted)');
+    g.innerHTML=h;
+  }
+
+  // quality stats
+  const s=document.getElementById('qual-stats');
+  if(s){
+    const win = metrics.recent2xRate!=null?metrics.recent2xRate:'—';
+    const win5= metrics.recent5xRate!=null?metrics.recent5xRate:'—';
+    const dead= analysis.deadCount!=null?analysis.deadCount:'—';
+    const wins= analysis.winCount!=null?analysis.winCount:'—';
+    const wr  = analysis.winRate!=null?analysis.winRate:'—';
+    const tot = metrics.recentCalls!=null?metrics.recentCalls:'—';
+    const wrC = (Number(win)||0)>=25?'var(--S)':(Number(win)||0)>=10?'var(--P)':'var(--A)';
+    s.innerHTML=
+      `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`+
+        `<div>2× rate: <b style="color:${wrC}">${win}%</b></div>`+
+        `<div>5× rate: <b style="color:var(--C)">${win5}%</b></div>`+
+        `<div>Wins: <b style="color:var(--S)">${wins}</b></div>`+
+        `<div>Dead: <b style="color:var(--A)">${dead}</b></div>`+
+        `<div>Win%: <b style="color:var(--P)">${wr}%</b></div>`+
+        `<div>Recent: <b>${tot}</b> calls</div>`+
+      `</div>`;
+  }
+}
+
+// ── WALLET INTELLIGENCE panel: who holds our called coins ───────────────────
+let _wi={data:null,multi:false,coin:null};
+const _wiS=(v)=>{ if(v==null||!isFinite(v))return '—'; const a=Math.abs(v); const s=v<0?'-':''; if(a>=1e6)return s+'$'+(a/1e6).toFixed(2)+'M'; if(a>=1e3)return s+'$'+(a/1e3).toFixed(1)+'K'; return s+'$'+a.toFixed(0); };
+const _wiT=(h)=>{ if(!h||h<=0)return '—'; if(h>=48)return Math.round(h/24)+'d'; if(h>=1)return Math.round(h)+'h'; return Math.round(h*60)+'m'; };
+const _wiColor=(p)=>{ if(p>=200)return '#17e65a'; if(p>=50)return '#38e07c'; if(p>0)return '#7ff0a8'; if(p===0)return '#8a8f98'; if(p>-50)return '#ff7a6b'; if(p>-200)return '#ff4d3a'; return '#e01e2e'; };
+
+async function loadWalletIntel(){
+  const host=document.getElementById('wintel-bot'); if(host)host.textContent='…LOADING';
+  try{
+    const url=BASE+'/api/intel/wallets'+( _wi.multi?'?multi=1':'');
+    const r=await fetch(url,{signal:AbortSignal.timeout(15000)});
+    const j=await r.json();
+    if(!j||!j.ok) throw new Error((j&&j.error)||'wallet fetch failed');
+    _wi.data=j;
+    if(host) host.textContent=j.counts.wallets+' wallets · '+j.counts.calls+' calls';
+    renderWiStats(j);
+    renderWiBubbles(j);
+    renderWiHeat(j);
+    renderWiCoins(j);
+    renderWiWallets(j);
+  }catch(e){
+    if(host) host.textContent='ERR';
+    document.getElementById('wi-bubbles').innerHTML='<div style="padding:16px;color:#ff3d5a;font-size:10px">ERROR: '+esc(e.message)+'</div>';
+  }
+}
+function renderWiStats(j){
+  const c=document.getElementById('wintel-stats'); if(!c)return;
+  c.innerHTML=
+    `<div class="gst-c"><div class="gst-v" style="color:var(--S)">${j.counts.wallets}</div><div class="gst-l">WALLETS</div></div>`+
+    `<div class="gst-c"><div class="gst-v" style="color:var(--P)">${j.counts.multiCoinWallets}</div><div class="gst-l">SMART MONEY</div></div>`+
+    `<div class="gst-c"><div class="gst-v" style="color:var(--C)">${j.counts.holderCalls}</div><div class="gst-l">TRACKED CALLS</div></div>`+
+    `<div class="gst-c"><div class="gst-v" style="color:var(--A)">${j.counts.calls-j.counts.holderCalls}</div><div class="gst-l">AWAIT BACKFILL</div></div>`;
+}
+function renderWiBubbles(j){
+  const box=document.getElementById('wi-bubbles'); if(!box)return;
+  const ws=j.wallets||[];
+  if(!ws.length){ box.innerHTML='<div style="color:var(--label);font-size:10px;padding:8px">No holder data yet — tap ⬇ BACKFILL to pull.</div>'; return; }
+  let html='';
+  for(const w of ws){
+    const p=w.unrealPnl||0;
+    const size=Math.max(38, Math.min(120, 38+Math.sqrt(Math.abs(p))/2));
+    const htmlFor=`
+      <div class="wi-bubble" style="width:${size}px;height:${size}px;background:${_wiColor(p)}" title="${w.owner}\n${w.coinCount} coin(s) · ${_wiS(w.unrealPnl)} PnL">
+        <span class="b-lbl">${esc(w.short)}</span>
+        <span class="b-pnl">${p>0?'+':''}${_wiS(w.unrealPnl)}</span>
+        <span class="b-coins">${w.smartMoney?'⚡':''}${w.coinCount}♦</span>
+      </div>`;
+    html+=htmlFor;
+  }
+  box.innerHTML=html;
+}
+function renderWiHeat(j){
+  const box=document.getElementById('wi-heat'); if(!box)return;
+  const ws=(j.wallets||[]).slice(0,18);   // top wallets on Y
+  const coins=(j.perCoin||[]).slice(0,12); // columns
+  const wc={}; ws.forEach(w=>{ const o=wc[w.owner]={}; w.coins.forEach(c=>o[c.mint]=c); });
+  if(!ws.length||!coins.length){ box.innerHTML='<div style="color:var(--label);font-size:10px;padding:8px">No data yet.</div>'; return; }
+  let h='<div style="display:grid;grid-template-columns:74px repeat('+coins.length+',minmax(54px,1fr));gap:1px;background:var(--border)">';
+  h+='<div class="wi-htitle" style="background:var(--bg2)">WALLET</div>';
+  for(const c of coins) h+='<div class="wi-htop">'+esc(c.symbol)+'</div>';
+  for(const w of ws){
+    const o=wc[w.owner]||{};
+    h+='<div class="wi-htitle" style="background:var(--bg2)">'+esc(w.short)+'</div>';
+    for(const c of coins){
+      const co=o[c.mint];
+      if(!co){ h+='<div class="wi-hcell" style="background:var(--bg2);color:#3a3d44">·</div>'; continue; }
+      const p=co.pnlUsd||0;
+      const bk=_wiColor(p); const dark=(p>0);
+      h+='<div class="wi-hcell" style="background:'+bk+';color:'+(dark?'#062a10':'#fff')+'" title="'+esc(c.symbol)+' '+_wiS(co.pnlUsd)+'">'+_wiS(co.pnlUsd)+'</div>';
+    }
+  }
+  h+='</div>';
+  box.innerHTML=h;
+}
+function renderWiCoins(j){
+  const box=document.getElementById('wi-coins'); if(!box)return;
+  const coins=(j.perCoin||[]).slice(0,24);
+  if(!coins.length){ box.innerHTML='<div style="color:var(--label);font-size:10px">No coins yet.</div>'; return; }
+  let h='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+  for(const c of coins) h+='<div class="wi-coin-tab'+( _wi.coin===c.mint?' on':'')+'" onclick="wiCoin(\''+c.mint+'\',this)">'+esc(c.symbol)+'</div>';
+  h+='</div><div style="margin-top:6px;color:var(--label);font-family:\'Share Tech Mono\',monospace;font-size:8px">'+coins.length+' coins · tap a coin to see who holds it</div>';
+  box.innerHTML=h;
+  if(_wi.coin){ const el=document.querySelector('.wi-coin-tab.on'); if(el) wiCoinDetail(_wi.coin); }
+}
+async function wiCoin(mint,el){
+  document.querySelectorAll('.wi-coin-tab').forEach(t=>t.classList.remove('on'));
+  if(el)el.classList.add('on');
+  _wi.coin=mint;
+  wiCoinDetail(mint);
+}
+function wiCoinDetail(mint){
+  const box=document.getElementById('wi-coin-detail'); if(!box||!_wi.data)return;
+  const coin=(_wi.data.perCoin||[]).find(c=>c.mint===mint);
+  const wsel=(_wi.data.wallets||[]).filter(w=>w.coinCount>=2);
+  if(!coin){ box.innerHTML='<div style="color:var(--label)">No detail.</div>'; return; }
+  // wallets in OUR watch that hold this coin
+  const holders=(coin.holders||[]).slice(0,20);
+  let h=`<div style="margin-bottom:6px"><b style="color:var(--P)">${esc(coin.symbol)}</b> <span style="color:var(--label)">${esc(coin.source)}</span> · entry ${_wiS(coin.entryFdv)} · ${(coin.peakMult||1).toFixed(2)}× peak · ${(coin.curMult||1).toFixed(2)}× now</div>`;
+  if(!holders.length){ h+='<div style="color:var(--label)">No holder data — tap ⬇ BACKFILL.</div>'; }
+  for(const hd of holders){
+    const isW=!!wsel.find(w=>w.owner===hd.owner);
+    h+=`<div style="display:flex;align-items:center;gap:6px;padding:2px 0">`+
+       `<span style="color:var(--label);font-size:8px">${isW?'⚡':''}</span>`+
+       `<span style="color:${isW?'var(--P)':'var(--text2)'}">${esc(hd.owner.slice(0,6)+'…'+hd.owner.slice(-4))}</span>`+
+       `<span style="flex:1"></span><span>${hd.pct.toFixed(1)}%</span>`+
+       `<span style="color:${hd.insider?'var(--A)':'var(--label)'}">${hd.insider?'INSIDER':''}</span>`+
+       ` <a href="https://solscan.io/account/${esc(hd.owner)}" target="_blank" style="color:var(--C);font-size:8px">▸</a>`+
+       `</div>`;
+  }
+  box.innerHTML=h;
+}
+function renderWiWallets(j){
+  const box=document.getElementById('wi-wallets'); if(!box)return;
+  const ws=j.wallets||[];
+  if(!ws.length){ box.innerHTML='<div style="color:var(--label);font-size:10px">No wallets yet.</div>'; return; }
+  let h='';
+  for(const w of ws){
+    const p=w.unrealPnl||0, pc=_wiColor(p);
+    const rows=w.coins.slice(0,4).map(c=>
+      `<div style="display:flex;gap:6px;align-items:center;font-size:9px;color:var(--text2)">`+
+        `<span style="color:var(--P);font-weight:700">${esc(c.symbol)}</span>`+
+        `<span style="color:var(--label)">${c.pct.toFixed(1)}%</span>`+
+        `<span style="flex:1"></span>`+
+        `<span style="color:var(--label)">${_wiT(c.ageH)}</span>`+
+        `<span style="color:${_wiColor(c.pnlUsd)};font-weight:700">${c.pnlUsd>0?'+':''}${_wiS(c.pnlUsd)}</span>`+
+      `</div>`).join('');
+    const extra=w.coins.length>4?`<div style="color:var(--label);font-size:8px;margin-top:3px">+${w.coins.length-4} more…</div>`:'';
+    h+=`<div class="wi-wcard${w.smartMoney?' sm':''}">`+
+       `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">`+
+         `<span style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--text2)">${esc(w.short)}</span>`+
+         (w.smartMoney?`<span class="wi-tag" style="border-color:rgba(244,200,66,.5);color:var(--P)">⚡ SMART</span>`:'')+
+         (w.insider?`<span class="wi-tag" style="border-color:var(--A);color:var(--A)">INSIDER</span>`:'')+
+         `<span style="flex:1"></span>`+
+         `<span style="color:var(--label);font-size:8px">${w.coinCount}♦ · ${_wiT(w.holderAgeH)}</span>`+
+         `<span style="color:${pc};font-weight:700;font-size:11px">${p>0?'+':''}${_wiS(p)}</span>`+
+       `</div>`+
+       rows+extra+
+       `<div style="margin-top:5px"><a href="https://solscan.io/account/${esc(w.owner)}" target="_blank" style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:var(--C)">OPEN ON SOLSCAN ▸</a></div>`+
+       `</div>`;
+  }
+  box.innerHTML=h;
+}
+function wiMulti(btn){
+  _wi.multi=!_wi.multi;
+  document.getElementById('wmuli').classList.toggle('on',! _wi.multi);
+  if(btn) btn.textContent=_wi.multi?'🔍 ALL WALLETS':'🔍 SMART MONEY';
+  loadWalletIntel();
+}
+async function wiBackfill(btn){
+  const b=btn||document.getElementById('wbackfill');
+  const orig=b?b.innerHTML:'';
+  if(b){b.disabled=true;b.innerHTML='⏳ BACKFILLING…';}
+  try{
+    const r=await fetch(BASE+'/api/intel/backfill?cap=15',{signal:AbortSignal.timeout(150000)});
+    const j=await r.json();
+    if(b) b.innerHTML='✓ '+((j&&j.filled)||0)+' FILLED';
+    loadWalletIntel();
+  }catch(e){ if(b)b.innerHTML='ERR'; }
+  finally{ if(b){b.disabled=false; setTimeout(()=>{b.innerHTML='⬇ BACKFILL';},2500);} }
+}
 
 function loadSidebarStocks(){
   _stocksLoaded=true;

@@ -36,6 +36,36 @@ async function _send(token, chatId, html, extra) {
   } catch (e) { /* fail-safe */ }
 }
 
+// ── interactive /signals menu ──────────────────────────────────────────────
+// Returns the "Signals Hub" card — live channel + one-tap slices of the feed.
+function _signalsCard(cfg) {
+  let statsLine = '';
+  try {
+    const s = _pnl.stats('all') || _pnl.stats('day') || '';
+    statsLine = s ? '\n' + s : '';
+  } catch (e) { /* stats optional */ }
+  return (
+    '📡 <b>SHADDAI Signals Hub</b>\n' +
+    '━━━━━━━━━━━━━━━\n\n' +
+    'Live <b>rug-filtered</b> DEX signals with real <b>PNL tracking</b> (Xs, hit-rate, milestone wins).\n\n' +
+    (cfg.channel ? `📢 Free signals channel: <b>${_esc(cfg.channel)}</b>\n\n` : '') +
+    'Tap a button below for the slice you want 👇\n' +
+    '<i>Live · not financial advice · always DYOR</i>'
+  );
+}
+function _signalsKeyboard() {
+  return {
+    inline_keyboard: [
+      [{ text: '🔥 Active calls now', callback_data: 'sig:active' },
+       { text: '🏆 Leaderboard',        callback_data: 'sig:lb' }],
+      [{ text: '📄 Last 25 calls',      callback_data: 'sig:last25' },
+       { text: '📊 Stats / hit-rate',   callback_data: 'sig:stats' }],
+      [{ text: '💠 Distribution',       callback_data: 'sig:dist' }],
+    ],
+  };
+}
+
+
 // ── help text ──────────────────────────────────────────────────────────────
 function _help() {
   return (
@@ -56,7 +86,7 @@ function _help() {
     '/watch <code>&lt;address&gt; [label] [type]</code> — track a wallet (ape alerts)\n' +
     '/unwatch <code>&lt;address&gt;</code> — stop tracking a wallet\n' +
     '/wallet <code>&lt;address&gt;</code> — wallet profile + links\n' +
-    '/signals — the free live signals channel\n' +
+    '/signals — interactive signals hub (tap buttons for live slices)\n' +
     '/agents — what SHADDAI is\n' +
     '/gm — gm ☀️\n\n' +
     '<i>Not financial advice. Always DYOR.</i>'
@@ -138,13 +168,29 @@ async function _ask(token, chatId, cfg, q, agent) {
 }
 
 // ── command router ─────────────────────────────────────────────────────────
-// inline-button taps — currently the 📸 PNL Card button on milestone posts
+// inline-button taps — 📸 PNL Card button + the interactive /signals menu
 async function _handleCallback(cfg, cq) {
   const t = cfg.token;
   const answer = (text) => fetch(TG(t, 'answerCallbackQuery'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: cq.id, text: text || '' }) }).catch(() => {});
   try {
     const data = String(cq.data || '');
     const chatId = cq.message && cq.message.chat && cq.message.chat.id;
+    // interactive /signals menu — tap a button to pull the live feed slice you want
+    if (data.startsWith('sig:') && chatId) {
+      const key = data.slice(4);
+      await answer('Loading…');
+      let html = null, kb = null;
+      if (key === 'active')      html = _pnl.activeCalls ? _pnl.activeCalls() : _pnl.lastCalls(25);
+      else if (key === 'lb')     html = _pnl.pnlCaption('week');
+      else if (key === 'last25') html = _pnl.lastCalls(25);
+      else if (key === 'stats')  html = _pnl.stats('day');
+      else if (key === 'dist')   html = _pnl.distribution();
+      else if (key === 'menu')   { html = _signalsCard(cfg); kb = _signalsKeyboard(); }
+      else return answer('Unknown option');
+      if (!html) return answer('No data yet — signals are warming up.');
+      const extra = kb ? { reply_markup: kb } : undefined;
+      return _send(t, chatId, html, extra);
+    }
     if (data.startsWith('pnl:') && chatId) {
       const key = data.slice(4);
       const cap = _pnl.pnlForToken(key) || 'No tracked call found for that token.';
@@ -316,7 +362,7 @@ async function _handle(cfg, update) {
       return _send(t, chatId, _wallets.walletCard(arg.trim()));
     }
 
-    case 'signals': return _send(t, chatId, cfg.channel ? `📡 Free live signals: ${_esc(cfg.channel)}` : 'Signals channel not configured yet.');
+    case 'signals': case 'hub': case 'feed': return _send(t, chatId, _signalsCard(cfg), { reply_markup: _signalsKeyboard() });
     case 'agents': return _send(t, chatId, '⬡ <b>SHADDAI</b> is an AI agent empire — forge agents, chain workflows, walk a 3D/2D world, trade in the Bazaar.\n🌐 https://shaddai-g81x.onrender.com');
     case 'about': case 'project': case 'info': { const news = require('./telegram-news'); const img = news._botImage(); const cap = news.projectPromo(); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
     case 'axiom': case 'trade': {
@@ -357,7 +403,7 @@ async function _registerCommands(token) {
     { command: 'music',   description: 'Free music track  e.g. /music synthwave hype' },
     { command: 'zerox',   description: 'ZEROX market analysis + sentiment' },
     { command: 'news',    description: 'Live market pulse' },
-    { command: 'signals', description: 'Free live signals channel link' },
+    { command: 'signals', description: 'Interactive signals hub — active calls, leaderboard, stats' },
     { command: 'agents',  description: 'What is SHADDAI' },
     { command: 'wallets', description: 'List tracked wallets (smart money)' },
     { command: 'watch',   description: 'Track a wallet — get ape alerts' },

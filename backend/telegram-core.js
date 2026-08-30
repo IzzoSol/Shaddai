@@ -93,8 +93,8 @@ const _defaults = {
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
   minLiq: 2000,           // min pair/pool liquidity USD (catch micro-caps early)
   minVol24h: 1000,        // min 24h volume USD (fresh coins start low)
-  minFdv: 0,              // min fully-diluted valuation USD (0 = off)
-  maxFdv: 100000,         // max mcap $100K — winners were ALL under $50K entry
+  minFdv: 5000,           // min fully-diluted valuation USD — hard floor in telegram-signals keeps this ≥$5K (weekday/peak/weekend); tuned from corpus: 2-15K band wins 36-44%, 50K+ only ~17%
+  maxFdv: 50000,          // max mcap $50K — corpus shows 50K+ entry has the worst win rate (~17%), so cut it
   maxPer: 5,              // max posts per poll per source (more coverage for micro-caps)
   rugFilter: true,        // Solana: score tokens via rugcheck (LP-locked, top holders, risks, holders)
   rugMinScore: 45,        // lower threshold to catch early — Solandier would've been caught here

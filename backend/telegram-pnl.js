@@ -172,6 +172,14 @@ function recordCall(c) {
       snipers: !!c.snipers,
       rugScore: Number(c.rugScore) || 0,
       rank: Number(c.rank) || 0,
+      // Wallet intelligence: trimmed top holders (owner wallet + pct) captured at call time.
+      // Consumed by the Pro-Signals Wallet Intelligence panel + tail-wallet cross-reference.
+      topHolders: (c.topHolders || []).slice(0, 20).map(h => ({
+        owner: String(h.owner || '').slice(0, 64),
+        pct: Math.round((Number(h.pct) || 0) * 100) / 100,
+        uiAmount: Number(h.uiAmount) || 0,
+        insider: !!h.insider,
+      })),
       // Calculated ratios
       liqRatio: fdv > 0 ? ((liq / fdv) * 100).toFixed(2) : 0,
       holderDensity: holders > 0 ? (fdv / holders).toFixed(0) : 0,

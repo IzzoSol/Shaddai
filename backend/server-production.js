@@ -1311,12 +1311,45 @@ catch (e) { console.warn('[prod] pnl-image failed:', e.message); }
 // Source = the live Telegram PNL tracker (backend/data/tg-calls.json). Same-origin,
 // no key (registration + access control lives on the page itself). 1s response cache
 // so the heavily-polled feed never re-reads the JSON file per hit.
-app.get('/api/signals/calls', (req, res) => {
+// ── DexScreener token-image enrichment (server-side → no browser CORS) ────
+// The pro-signals terminal used to fetch DexScreener images client-side, which
+// is CORS-blocked in browsers → every card fell back to a letter avatar. Here
+// the server resolves images once and caches them, so cards finally show logos.
+const _imgCache = new Map();   // mint -> imageUrl
+async function _dexTokenImages(mints) {
+  const out = {};
+  const need = mints.filter(m => m && !_imgCache.has(m));
+  if (need.length) {
+    try {
+      const r = await axios.get(
+        'https://api.dexscreener.com/latest/dex/tokens/' + need.slice(0, 30).join(','),
+        { timeout: 7000 }
+      );
+      const j = r.data || {};
+      (j.pairs || []).forEach(p => {
+        const a = p.baseToken && p.baseToken.address;
+        const img = p.info && p.info.imageUrl;
+        if (a && img) { _imgCache.set(a, img); }
+      });
+    } catch (e) { /* best-effort */ }
+  }
+  for (const m of mints) { const im = _imgCache.get(m); if (im) out[m] = im; }
+  return out;
+}
+
+app.get('/api/signals/calls', async (req, res) => {
   try {
     const pnl = require('./telegram-pnl');
     const limit = req.query.all === '1' ? 2000 : Math.min(200, parseInt(req.query.limit, 10) || 100);
     const rows = pnl.callsJson({ limit, since: req.query.since, chain: req.query.chain, source: req.query.source });
-    res.json({ ok: true, total: rows.length, calls: rows });
+    // enrich with logos (server-side, cached) — fire in parallel hard-cap at ~60
+    let imgMap = {};
+    try {
+      const mints = rows.slice(0, 60).map(r => r.mint);
+      imgMap = await _dexTokenImages(mints);
+    } catch (e) { imgMap = {}; }
+    const calls = rows.map(r => Object.assign({}, r, imgMap[r.mint] ? { img: imgMap[r.mint] } : {}));
+    res.json({ ok: true, total: rows.length, calls });
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
@@ -1590,6 +1623,7 @@ app.use('/api/signal-forensics', require('./routes/signal-forensics')); // Deep 
 app.use('/api/signal-meta-forensics', require('./routes/signal-meta-forensics')); // Meta themes, psychology, thesis, naming patterns
 app.use('/api/signal-discovery', require('./routes/signal-discovery').router); // Real-time early detection of new coin launches (<5m old)
 app.use('/api/wallet-network', require('./routes/wallet-network')); // Tracked wallet network visualization + holdings
+app.use('/api/intel', require('./routes/wallet-intel')); // Wallet Intelligence — per-wallet holdings/PnL/hold-time bubbles + heatmap (Pro-Signals)
 app.use('/api/pnl-imagery', require('./routes/pnl-imagery')); // HF FLUX PnL image generator (market cap, multiplier, thesis)
 app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals) — audited 2026-07-19
 app.use('/api/moonpay', require('./moonpay-agent'));
