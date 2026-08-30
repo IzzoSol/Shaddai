@@ -262,6 +262,14 @@ html[data-theme-skin="bone"] .slot{
   opacity:.58; filter:saturate(1.1) contrast(1.12) brightness(1.22);
   transform:scale(1.05); transition:opacity .55s var(--ease), transform .8s var(--ease);
 }
+/* Rotating door plate (<img>, not the avatar-style .art img): fills the tile
+   edge to edge as a background and inherits the .art wash/filter above. The
+   onerror handled in render() drops it back to the base plate if a numbered
+   variant has not been generated yet — so rotation can never show a blank. */
+.slot .art .artimg{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  border-radius:0; border:0; background:none;
+}
 /* The wash is mixed FROM --shell, so it follows the theme automatically:
    dark shell gives a dark scrim, light shell a light one. It used to be
    hardcoded dark with an override naming brutalist and serif — which meant
@@ -575,7 +583,6 @@ body[data-lay="tile"] .slot .name{ font-size:clamp(26px,7vw,44px); }
 
 <!-- secondary utilities — deliberately outside .controls, see .util in CSS -->
 <div class="util">
-  <a href="/connectors.html" title="Connect your own accounts">⚯ connectors</a>
   <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener" title="FOMO referral">🔥 fomo</a>
   <button id="uPaybox" type="button" title="ZEROX FOMO wallets — tip or pay an agent">◈ paybox wallets</button>
   <button id="uSnd" type="button" title="Sound is off by default">♪ sound</button>
@@ -696,7 +703,7 @@ body[data-lay="tile"] .slot .name{ font-size:clamp(26px,7vw,44px); }
       a.style.setProperty('--accent', m.accent);
       a.setAttribute('aria-label', m.name + ' — ' + m.kicker + '. ' + m.blurb);
       a.innerHTML =
-        '<div class="art" style="background-image:url(\'' + m.art + '\')"></div>' +
+        '<div class="art"><img class="artimg" src="' + M.artFor(m.id) + '" alt="" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src=\'' + m.art + '\';}"></div>' +
         '<div class="wash"></div>' +
         '<div class="frame"></div><div class="trace"></div><i class="corner tl"></i><i class="corner br"></i>' +
         '<div class="body">' +

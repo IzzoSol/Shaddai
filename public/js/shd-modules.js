@@ -71,6 +71,18 @@
       blurb: 'The ascent — from the quantum lattice at Malkuth up through the scales of matter to the stars. Full screen, so it actually gets seen.',
       href: '/lab-molecules.html',
       art: '/assets/enter/descent.jpg',
+      // Rotating door art pool: every visitor is handed a different plate, so
+      // the front door never reads twice. Drop in numbered files (descent-1.jpg,
+      // descent-2.jpg, …) to grow the pool — see docs/FRONT-DOOR-MASTER-PROMPT.md.
+      // artFor() picks one deterministically per session and falls back to `art`
+      // if a variant is missing.
+      artVary: [
+        '/assets/enter/descent.jpg',
+        '/assets/enter/descent-1.jpg',
+        '/assets/enter/descent-2.jpg',
+        '/assets/enter/descent-3.jpg',
+        '/assets/enter/descent-4.jpg'
+      ],
       accent: C.cyan,
       geo: 'icosa'
     },
@@ -81,6 +93,7 @@
       blurb: 'The main site. What SHADDAI is, how it works, the seven agents, the worlds, the arcade and the brain — the whole story, in order.',
       href: '/home.html',
       art: '/assets/enter/entry.jpg',
+      artVary: ['/assets/enter/entry.jpg','/assets/enter/entry-1.jpg','/assets/enter/entry-2.jpg','/assets/enter/entry-3.jpg','/assets/enter/entry-4.jpg'],
       accent: C.gold,
       geo: 'dodeca'
     },
@@ -91,6 +104,7 @@
       blurb: 'Skip the fanfare. The Command Hub, sign-in, and every tool exactly where you left them. For people who already know what they came for.',
       href: '/dashboard',
       art: '/assets/enter/dashboard.jpg',
+      artVary: ['/assets/enter/dashboard.jpg','/assets/enter/dashboard-1.jpg','/assets/enter/dashboard-2.jpg','/assets/enter/dashboard-3.jpg','/assets/enter/dashboard-4.jpg'],
       accent: C.emerald,
       geo: 'lattice'
     },
@@ -101,6 +115,7 @@
       blurb: 'A single object you spin with your thumb. Every part of SHADDAI on one wheel — agents, games, signals, forge, worlds. Swivel, sit on a choice to read it, tap to enter.',
       href: '/simple.html',
       art: '/assets/enter/simple.jpg',
+      artVary: ['/assets/enter/simple.jpg','/assets/enter/simple-1.jpg','/assets/enter/simple-2.jpg','/assets/enter/simple-3.jpg','/assets/enter/simple-4.jpg'],
       accent: C.violet,
       geo: 'drum'
     },
@@ -113,6 +128,7 @@
       blurb: 'The knowledge graph behind every agent. Ask it anything and every answer is cited back to the exact passage it came from. No invention.',
       href: '/brain.html',
       art: '/assets/enter/rag.jpg',
+      artVary: ['/assets/enter/rag.jpg','/assets/enter/rag-1.jpg','/assets/enter/rag-2.jpg','/assets/enter/rag-3.jpg','/assets/enter/rag-4.jpg'],
       accent: C.emerald,
       geo: 'graph'
     },
@@ -123,6 +139,7 @@
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
       href: '/SHADDAI-WORLD.html',
       art: '/assets/enter/world2d.jpg',
+      artVary: ['/assets/enter/world2d.jpg','/assets/enter/world2d-1.jpg','/assets/enter/world2d-2.jpg','/assets/enter/world2d-3.jpg','/assets/enter/world2d-4.jpg'],
       accent: C.gold,
       geo: 'isogrid',
       /* Gated on purpose. The city renders and the agents are in it, but the
@@ -139,6 +156,7 @@
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
       href: '/world3d',
       art: '/assets/enter/world3d.jpg',
+      artVary: ['/assets/enter/world3d.jpg','/assets/enter/world3d-1.jpg','/assets/enter/world3d-2.jpg','/assets/enter/world3d-3.jpg','/assets/enter/world3d-4.jpg'],
       /* Greyed rather than accented. A dim tile beside bright ones reads as
          "not yet" without a word of explanation — the way a locked level does
          in a game, which is the right feeling for something being built. */
@@ -155,6 +173,7 @@
       blurb: 'Every game in the empire in one hall — the climb, the courts, the arenas, the tactics board.',
       href: '/arcade.html',
       art: '/assets/enter/arcade.jpg',
+      artVary: ['/assets/enter/arcade.jpg','/assets/enter/arcade-1.jpg','/assets/enter/arcade-2.jpg','/assets/enter/arcade-3.jpg','/assets/enter/arcade-4.jpg'],
       accent: C.amber,
       geo: 'octa'
     },
@@ -195,6 +214,7 @@
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
       href: '/pro-signals.html',
       art: '/assets/enter/signals.jpg',
+      artVary: ['/assets/enter/signals.jpg','/assets/enter/signals-1.jpg','/assets/enter/signals-2.jpg','/assets/enter/signals-3.jpg','/assets/enter/signals-4.jpg'],
       accent: C.rose,
       geo: 'chart'
     }
@@ -391,6 +411,27 @@
     try { localStorage.setItem('shd_enter_slots_v2', JSON.stringify(ids.slice(0, DEFAULT_SLOTS.length))); } catch (e) {}
   }
 
+  /* Rotating front-door art. Every visit is handed a *different* plate from a
+     module's artVary pool, so the door never reads the same twice — but the
+     choice is frozen for the whole session so it never flickers mid-render.
+     The base image is always first in the pool, and enter.html falls back to
+     it if a numbered variant has not been generated yet. */
+  function artFor(id) {
+    var m = byId(id);
+    if (!m) return '/assets/enter/entry.jpg';
+    var pool = Array.isArray(m.artVary) && m.artVary.length ? m.artVary : [m.art];
+    if (pool.length === 1) return pool[0];
+    /* session-stable seed: locked after first read, random per new session */
+    var seed = 0;
+    try {
+      var s = sessionStorage.getItem('shd_enter_art_seed');
+      if (s === null) { seed = Math.floor(Math.random() * 100000); sessionStorage.setItem('shd_enter_art_seed', String(seed)); }
+      else seed = parseInt(s, 10) || 0;
+    } catch (e) { seed = Math.floor(Math.random() * 100000); }
+    var pick = pool[(seed + (m.seedOff || 0)) % pool.length];
+    return pick || pool[0];
+  }
+
   root.SHDModules = {
     C: C,
     MODULES: MODULES,
@@ -399,6 +440,7 @@
     WHEEL: WHEEL,
     byId: byId,
     readSlots: readSlots,
-    writeSlots: writeSlots
+    writeSlots: writeSlots,
+    artFor: artFor
   };
 })(window);

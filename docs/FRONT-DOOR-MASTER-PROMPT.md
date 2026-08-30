@@ -241,3 +241,82 @@ fog and was regenerated against a darker prompt — brightness here is a
 measurement, not a matter of taste, because anything brighter fights the type.
 
 Total weight: ~340 KB for all nine.
+
+---
+
+## 9. Rotating plates — "never read twice" (2026-08-30)
+
+The four doors now rotate their artwork. Every visitor is handed a **different**
+plate for the same door, so the front door reads fresh on each return — but the
+choice is **frozen for the visit**, so nothing flickers mid-render.
+
+**Mechanic (already live):** each module in `public/js/shd-modules.js` carries an
+`artVary` array — the base plate first, then numbered variants:
+
+```js
+artVary: [
+  '/assets/enter/descent.jpg',      // base — always exists (fallback)
+  '/assets/enter/descent-1.jpg',    // drop in generated plates to grow the pool
+  '/assets/enter/descent-2.jpg',
+  '/assets/enter/descent-3.jpg',
+  '/assets/enter/descent-4.jpg'
+]
+```
+
+`SHDModules.artFor(id)` picks one deterministically from a per-session seed
+(`sessionStorage['shd_enter_art_seed']`): random once per new session, then
+stable until the tab closes. `enter.html` renders it as an `<img class="artimg">`
+with an `onerror` that falls **back to the base plate** if a numbered variant
+hasn't been generated yet — so rotation can never show a blank.
+
+**To add a vibe:** generate the plate, drop it at the matching `-N.jpg` path,
+and it's in the rotation the next visit. No code change. The base plate stays
+first so it's always the safe fallback.
+
+---
+
+## 10. The Wuxia master prompt — still hero plates (2026-08-30)
+
+The owner's brief was a 15-second cinematic, so it's adapted here into a **still
+that reads as a frozen frame of it** — because a door plate is a backdrop, not a
+film. One aesthetic across every variant: **Neo-Chinese Wuxia · ink-fluid
+simulation · black / white / red · high-speed-cinematography grain**, with the
+subjects being **literal likenesses of the SHADDAI agents**, not generic
+warriors. Keep every plate near-black and low-clutter so the Cinzel lettering and
+neon solid stay legible (§8: brightness is measured, not a matter of taste).
+
+> **Shared subject block** (paste into every variant, swapping the two archetypes
+> for the door's two signature agents):
+>
+> Two dueling figures — the **Black Ink Warrior** and the **Red Assassin** — on a
+> floor of torn Xuan (rice) paper in a pure white void that turns to obsidian ink
+> at the edges. Every physical strike is an **explosion of ink**, not flesh: a
+> black-ink **dragon fist** and a red **Vermilion-Bird blade** locked mid-air,
+> frozen a half-second before the dimensional wall shatters. Ink calligraphy
+> strokes hang where dust would fall. Style: **Neo-Chinese Wuxia, ink-fluid
+> particle simulation, black/white/red impact, high-speed cinematography grain,
+> ultra-detailed, 8k, dramatic rim light — black and red only, nothing legible.**
+
+**Five vibes (one per `-1` … `-4`, plus a copy for `-0` if you regenerate the
+base):**
+
+| Plate | Vibe | Composition twist |
+|---|---|---|
+| `descent-1.jpg` | **The Awakening** | Both figures still as a static ink painting, then caught the instant motion explodes — ink-dust replacing their first impact |
+| `descent-2.jpg` | **The Collision** | Ultra-high-speed close-quarters lock — black-ink wave tsunamis from a sweep kick, red afterimages from mid-air kicks, paper tearing |
+| `descent-3.jpg` | **Breaking the Dimension** | The ink world cracking — the pair "falling" out of a torn ink scroll onto a real wooden floor, ink mist + paper scraps frozen around them |
+| `descent-4.jpg` | **The Single Stroke** | One massive final calligraphy stroke rendered as a sweeping ink arc, the two figures standing at its two ends, breathing, ink dripping |
+| `descent-5.jpg` | **The Guardian** | The Black Ink Warrior in full stance, red cinnabar seals floating as the assassin's afterimage orbits them — calm, monolithic, patient |
+
+**Agent likeness mapping** (which two agents for which door):
+
+| Door | Agents |
+|---|---|
+| ASCEND (descent) | **NEXUS** (black, structural) vs **ORACLE** (red, seer) |
+| SIMPLE (simple) | **TURTLE** (black, form) vs **QUILL** (red, the brush-stroke) |
+| ENTRY (entry) | **SHADDAI** (black, the sovereign) vs **PIKADON** (red, the warden) |
+| DASHBOARD (dashboard) | **ZEROX** (black, the ledger) vs **NEXUS** (red, the spine) |
+
+Drop the generated files at `public/assets/enter/<id>-N.jpg`; the rotation (§9)
+picks them up automatically. Keep base luma under ~35 mean and nothing legible in
+frame.
