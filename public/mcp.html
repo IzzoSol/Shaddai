@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SHADDAI · Connect your AI</title>
+<meta name="description" content="Point Claude, Claude Code or Cursor at SHADDAI. The seven agents and the whole library, inside the app you already use." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;900&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&display=swap" rel="stylesheet" />
+<style>
+/* ══ MCP ══════════════════════════════════════════════════════════════════
+   The page that turns "we support MCP" into a person's Claude gaining seven
+   specialists. It leads with what they GET, states the price honestly from
+   the live plans endpoint, and never claims a capability the server lacks:
+   every number, tool name and file path on this page is read from the
+   running server (/api/mcp/status and /.well-known/mcp.json), not typed in.
+
+   Deliberately NOT a fake paywall. The instructions are readable by anyone —
+   hiding them would protect nothing, since what actually gates access is
+   server-side (the bridge package download needs a passphrase, and the
+   hosted door needs an issued key). The banner tells the truth about that.
+   Design tokens, fonts and header structure follow public/connectors.html.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --shell:#06080b; --void:#06080b; --void2:#0a0e13; --card:#0e141a;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#5c6b64;
+  --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.32);
+  --emerald:#00ff9c; --gold:#e8c45c; --violet:#b07cff; --rose:#ff6f6f; --cyan:#5fe0ff;
+  --accent:var(--emerald);
+  --f-display:'Cinzel',serif; --f-body:'Fraunces',Georgia,serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; overflow-x:hidden; }
+body{ background:var(--void); color:var(--ink); font-family:var(--f-body);
+  font-weight:300; font-size:16.5px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom); }
+@media(prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+
+header{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 5vw; border-bottom:1px solid var(--edge); position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb,var(--shell) 90%,transparent); backdrop-filter:blur(10px); }
+.brand{ display:flex; align-items:baseline; gap:9px; min-width:0; }
+.brand b{ font-family:var(--f-display); font-weight:900; font-size:clamp(16px,2.2vw,21px); letter-spacing:.1em; }
+.brand span{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
+@media(max-width:430px){ .brand span{ display:none; } }
+header a.back{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-soft); text-decoration:none; border:1px solid var(--edge); padding:0 14px;
+  min-height:40px; display:inline-flex; align-items:center; border-radius:2px; white-space:nowrap; }
+header a.back:hover{ color:var(--ink); border-color:var(--accent); }
+
+main{ max-width:920px; margin:0 auto; padding:clamp(26px,5vw,52px) 5vw 90px; }
+.lede h1{ font-family:var(--f-display); font-weight:900; line-height:1;
+  font-size:clamp(32px,7vw,62px); margin:0 0 14px; }
+.lede p{ color:var(--ink-soft); max-width:56ch; font-size:clamp(15px,1.9vw,18px); margin:0; }
+.lede p b{ color:var(--ink); font-weight:600; }
+
+.promise{ margin-top:26px; border:1px solid rgba(0,255,156,.3); border-left:3px solid var(--emerald);
+  background:rgba(0,255,156,.05); padding:18px 20px; }
+.promise b{ display:block; font-family:var(--f-mono); font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--emerald); margin-bottom:8px; }
+.promise p{ color:var(--ink-soft); font-size:15px; max-width:64ch; margin:0 0 10px; }
+.promise p:last-child{ margin-bottom:0; }
+.promise p b{ display:inline; font-family:var(--f-body); font-size:inherit; letter-spacing:0;
+  text-transform:none; color:var(--ink); font-weight:600; }
+
+/* plan gate */
+.gate{ margin-top:22px; border:1px solid var(--edge); border-left:3px solid var(--gold);
+  background:var(--card); padding:18px 20px; }
+.gate .gt{ font-family:var(--f-mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:9px; }
+.gate p{ font-size:15px; color:var(--ink-soft); margin:0 0 14px; max-width:64ch; }
+.gate p b{ color:var(--ink); font-weight:600; }
+.gate.ok{ border-left-color:var(--emerald); }
+.gate.ok .gt{ color:var(--emerald); }
+.gate .cta{ display:inline-flex; align-items:center; min-height:44px; padding:0 20px;
+  border:1px solid var(--gold); background:var(--gold); color:var(--void); text-decoration:none;
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  font-weight:600; border-radius:2px; }
+.gate .cta.ghost{ background:none; color:var(--ink-soft); border-color:var(--edge2); }
+.gate .cta.ghost:hover{ color:var(--accent); border-color:var(--accent); }
+.gate .ctas{ display:flex; gap:9px; flex-wrap:wrap; }
+
+h2.cat{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--ink-faint); margin:clamp(30px,4.5vw,46px) 0 13px; font-weight:500; }
+
+/* live status */
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
+.stat{ border:1px solid var(--edge); background:var(--card); padding:14px 16px; min-width:0; }
+.stat .k{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:6px; }
+.stat .v{ font-family:var(--f-display); font-weight:900; font-size:clamp(20px,4.4vw,27px);
+  line-height:1.1; overflow-wrap:anywhere; }
+.stat .v.on{ color:var(--emerald); }
+.stat .v.off{ color:var(--rose); }
+.stat .s{ font-family:var(--f-mono); font-size:10.5px; color:var(--ink-faint); margin-top:5px;
+  overflow-wrap:anywhere; }
+
+.kbs{ margin-top:8px; border:1px solid var(--edge); background:var(--card); }
+.kbrow{ display:flex; justify-content:space-between; gap:12px; align-items:baseline;
+  padding:11px 16px; border-bottom:1px solid var(--edge); }
+.kbrow:last-child{ border-bottom:none; }
+.kbrow .a{ font-family:var(--f-mono); font-size:11.5px; letter-spacing:.14em; color:var(--ink); }
+.kbrow .n{ font-family:var(--f-mono); font-size:11px; color:var(--ink-faint); text-align:right;
+  white-space:nowrap; }
+
+/* steps */
+ol.steps{ list-style:none; counter-reset:s; margin:0; padding:0; }
+ol.steps>li{ counter-increment:s; border:1px solid var(--edge); border-left:2px solid var(--edge2);
+  background:var(--card); padding:16px 18px; margin-bottom:8px; }
+ol.steps>li:before{ content:"0" counter(s); font-family:var(--f-mono); font-size:10px;
+  letter-spacing:.2em; color:var(--gold); display:block; margin-bottom:7px; }
+ol.steps>li p{ margin:0; font-size:15.5px; color:var(--ink-soft); }
+ol.steps>li p b{ color:var(--ink); font-weight:600; }
+ol.steps>li p+p{ margin-top:9px; }
+code.i{ font-family:var(--f-mono); font-size:13px; color:var(--cyan); background:var(--void2);
+  border:1px solid var(--edge); padding:1px 6px; border-radius:2px; overflow-wrap:anywhere; }
+
+/* code block + copy */
+.codewrap{ border:1px solid var(--edge); background:var(--void2); margin-top:12px; }
+.codewrap .bar{ display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:8px 10px 8px 14px; border-bottom:1px solid var(--edge); flex-wrap:wrap; }
+.codewrap .fn{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.12em;
+  color:var(--ink-faint); overflow-wrap:anywhere; }
+button.copy{ min-height:40px; padding:0 16px; border:1px solid var(--edge2); background:none;
+  color:var(--ink-soft); font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em;
+  text-transform:uppercase; border-radius:2px; cursor:pointer; transition:.18s; white-space:nowrap; }
+button.copy:hover{ color:var(--accent); border-color:var(--accent); }
+button.copy.done{ color:var(--emerald); border-color:var(--emerald); }
+pre{ margin:0; padding:14px; overflow-x:auto; font-family:var(--f-mono); font-size:12.5px;
+  line-height:1.7; color:var(--ink); -webkit-overflow-scrolling:touch; }
+pre code{ white-space:pre-wrap; overflow-wrap:anywhere; }
+
+/* tools */
+.tool{ border:1px solid var(--edge); border-left:2px solid var(--edge2); background:var(--card);
+  padding:14px 16px; margin-bottom:6px; }
+.tool .tn{ font-family:var(--f-mono); font-size:12.5px; color:var(--emerald); letter-spacing:.04em;
+  overflow-wrap:anywhere; }
+.tool .td{ font-size:14.5px; color:var(--ink-soft); margin-top:5px; }
+.note{ color:var(--ink-faint); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.06em;
+  margin-top:12px; line-height:1.7; overflow-wrap:anywhere; }
+.note a{ color:var(--ink-soft); }
+.muted{ color:var(--ink-faint); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.08em; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><b>SHADDAI</b><span>Connect your AI</span></div>
+  <a class="back" href="/index.html">&larr; Dashboard</a>
+</header>
+
+<main>
+  <div class="lede">
+    <h1>Your Claude, with the council in it.</h1>
+    <p>Connect once and the assistant you already use — Claude Desktop, Claude Code, Cursor — can <b>ask the seven agents directly</b> and read the whole SHADDAI library, without you leaving the app or pasting anything.</p>
+  </div>
+
+  <div class="promise">
+    <b>What actually changes</b>
+    <p>Right now your Claude knows nothing about the council. After this, you can say <b>&ldquo;ask ZEROX what our pricing should be&rdquo;</b> and it will — grounded in the material we have indexed, citing the source it used.</p>
+    <p>It also gains search over every agent's knowledge base, their step-by-step playbooks, and the ability to hand a whole task to an agent and get the finished answer back. Same chat window. No copy-paste.</p>
+  </div>
+
+  <div class="gate" id="gate">
+    <div class="gt" id="gateT">Checking your plan&hellip;</div>
+    <p id="gateP">Reading the live plan list from the server.</p>
+    <div class="ctas" id="gateC"></div>
+  </div>
+
+  <h2 class="cat">Live status</h2>
+  <div class="stats" id="stats">
+    <div class="stat"><div class="k">Bridge</div><div class="v" id="sBridge">&hellip;</div><div class="s" id="sBridgeS">reading /api/mcp/status</div></div>
+  </div>
+  <div class="kbs" id="kbs"></div>
+  <p class="note" id="statusNote"></p>
+
+  <h2 class="cat">Set up Claude Desktop</h2>
+  <ol class="steps">
+    <li>
+      <p><b>Open the config file.</b> In Claude Desktop: Settings &rarr; Developer &rarr; Edit Config. That opens <code class="i">claude_desktop_config.json</code> &mdash; on Windows it lives in <code class="i">%APPDATA%\Claude\</code>, on macOS in <code class="i">~/Library/Application Support/Claude/</code>.</p>
+    </li>
+    <li>
+      <p><b>Paste this in.</b> If the file already has a <code class="i">mcpServers</code> block, add the <code class="i">shaddai</code> entry inside it rather than replacing the whole file.</p>
+      <div class="codewrap">
+        <div class="bar">
+          <span class="fn">claude_desktop_config.json</span>
+          <button class="copy" type="button" id="copyCfg">Copy</button>
+        </div>
+        <pre><code id="cfg">loading the real path from the server&hellip;</code></pre>
+      </div>
+      <p class="note" id="cfgNote"></p>
+    </li>
+    <li>
+      <p><b>Restart Claude Desktop</b> &mdash; fully quit it, not just close the window. The server is started by Claude itself, so it has to relaunch to pick it up.</p>
+    </li>
+    <li>
+      <p><b>Check it took.</b> Ask your Claude <code class="i">list the SHADDAI agents</code>. If it answers with the seven and their document counts, you are connected.</p>
+    </li>
+  </ol>
+
+  <h2 class="cat">Claude Code &amp; Cursor</h2>
+  <ol class="steps">
+    <li>
+      <p><b>Claude Code</b> &mdash; one command, run from anywhere:</p>
+      <div class="codewrap">
+        <div class="bar">
+          <span class="fn">terminal</span>
+          <button class="copy" type="button" id="copyCc">Copy</button>
+        </div>
+        <pre><code id="ccCmd">loading&hellip;</code></pre>
+      </div>
+      <p>Then <code class="i">/mcp</code> inside Claude Code lists the tools it picked up.</p>
+    </li>
+    <li>
+      <p><b>Cursor</b> &mdash; same JSON, different file: <code class="i">~/.cursor/mcp.json</code> for every project, or <code class="i">.cursor/mcp.json</code> inside one project. Paste the identical <code class="i">mcpServers</code> block, then reload Cursor.</p>
+    </li>
+  </ol>
+
+  <h2 class="cat">What your assistant gets</h2>
+  <div id="tools"><p class="muted">Reading the live tool manifest&hellip;</p></div>
+  <p class="note" id="toolsNote"></p>
+
+  <h2 class="cat">If it does not connect</h2>
+  <ol class="steps">
+    <li><p><b>Node has to be on the PATH.</b> Claude Desktop launches <code class="i">node</code> itself. Run <code class="i">node -v</code> in a terminal first; if that fails, install Node and restart.</p></li>
+    <li><p><b>Use the full path, no shortcuts.</b> On Windows the backslashes must be doubled in JSON, exactly as they appear in the block above. <code class="i">~</code> is not expanded.</p></li>
+    <li><p><b>Test the bridge on its own:</b> <code class="i">node mcp-server-rag.js --self-test</code> from the backend folder. It handshakes with itself and reports which tools answered.</p></li>
+  </ol>
+
+  <p class="note">MCP is an open protocol &mdash; nothing here locks you to one assistant. The same server works with any MCP client that can launch a local process.</p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function num(n) { return (typeof n === 'number' && isFinite(n)) ? n.toLocaleString('en-US') : '\u2014'; }
+
+  /* ── config block ─────────────────────────────────────────────────────────
+     Shape derived from backend/mcp-server-rag.js: it is a plain stdio server
+     started with `node <file>` and takes NO flags in server mode (any argv[2]
+     other than --help/--version/--self-test exits 1). So: command + args only.
+     The path is whatever the live server reports at bridge.file, never guessed. */
+  var FALLBACK_PATH = 'C:\\path\\to\\Shaddai\\backend\\mcp-server-rag.js';
+  var bridgePath = FALLBACK_PATH;
+
+  function configText(p) {
+    var jsonPath = JSON.stringify(p);   // escapes Windows backslashes correctly
+    return '{\n' +
+           '  "mcpServers": {\n' +
+           '    "shaddai": {\n' +
+           '      "command": "node",\n' +
+           '      "args": [' + jsonPath + ']\n' +
+           '    }\n' +
+           '  }\n' +
+           '}';
+  }
+  function ccText(p) {
+    return 'claude mcp add shaddai -- node ' + (/\s/.test(p) ? '"' + p + '"' : p);
+  }
+  function paintConfig() {
+    $('cfg').textContent = configText(bridgePath);
+    $('ccCmd').textContent = ccText(bridgePath);
+  }
+  paintConfig();
+
+  /* copy — clipboard API first, execCommand when it is blocked (http, iframe,
+     denied permission) so the button is never decorative. */
+  function copyFrom(srcId, btn) {
+    var text = $(srcId).textContent;
+    var done = function (ok) {
+      btn.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+      btn.className = 'copy' + (ok ? ' done' : '');
+      setTimeout(function () { btn.textContent = 'Copy'; btn.className = 'copy'; }, 2200);
+    };
+    var legacy = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0';
+      ta.style.opacity = '0'; ta.style.fontSize = '16px';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      done(ok);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, legacy);
+    } else { legacy(); }
+  }
+  $('copyCfg').addEventListener('click', function () { copyFrom('cfg', this); });
+  $('copyCc').addEventListener('click', function () { copyFrom('ccCmd', this); });
+
+  /* ── live status ───────────────────────────────────────────────────────── */
+  function statCard(k, v, cls, s) {
+    return '<div class="stat"><div class="k">' + esc(k) + '</div>' +
+           '<div class="v' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</div>' +
+           (s ? '<div class="s">' + esc(s) + '</div>' : '') + '</div>';
+  }
+
+  fetch('/api/mcp/status').then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function (d) {
+    var up = d && d.bridge && d.bridge.exists;
+    var t = (d && d.totals) || {};
+    var agents = (d && d.agents) || [];
+    var live = agents.filter(function (a) { return a && a.agent; });
+
+    $('stats').innerHTML =
+      statCard('Bridge', up ? 'Ready' : 'Missing', up ? 'on' : 'off',
+               up ? 'v' + esc((d.bridge && d.bridge.version) || '?') + ' \u00b7 stdio' : 'server file not found') +
+      statCard('Agents', String(live.length), '', 'each with its own library') +
+      statCard('Documents', num(t.kbDocs), '', 'indexed and searchable') +
+      statCard('Passages', num(t.kbChunks), '', (t.kbMB != null ? t.kbMB + ' MB of text' : ''));
+
+    $('kbs').innerHTML = live.map(function (a) {
+      return '<div class="kbrow"><span class="a">' + esc(a.agent) + '</span>' +
+             '<span class="n">' + num(a.docs) + ' docs \u00b7 ' + num(a.chunks) + ' passages</span></div>';
+    }).join('');
+
+    if (d && d.bridge && d.bridge.file) { bridgePath = d.bridge.file; paintConfig(); }
+    $('cfgNote').textContent = (d && d.bridge && d.bridge.file)
+      ? 'Path read live from this server: ' + d.bridge.file
+      : 'Replace the path with wherever mcp-server-rag.js sits on your machine.';
+
+    var srv = (d && d.mcpServers) || [];
+    var ready = srv.filter(function (s) { return s && !s.disabled; }).length;
+    $('statusNote').textContent = 'Read live from /api/mcp/status'
+      + (d && d.timestamp ? ' at ' + d.timestamp : '')
+      + (srv.length ? ' \u00b7 the workstation itself has ' + ready + ' outbound MCP server(s) wired in, which your assistant reaches through run_agent.' : '');
+  }).catch(function (e) {
+    $('stats').innerHTML = statCard('Bridge', 'Unknown', 'off', 'could not reach the server');
+    $('statusNote').textContent = 'Could not read /api/mcp/status (' + e.message + '). The numbers above are unavailable, not zero.';
+    $('cfgNote').textContent = 'Server unreachable — replace the path with wherever mcp-server-rag.js sits on your machine.';
+  });
+
+  /* ── tools, from the manifest the server actually publishes ─────────────── */
+  fetch('/.well-known/mcp.json').then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function (m) {
+    var tools = (m && m.tools) || [];
+    if (!tools.length) throw new Error('no tools listed');
+    $('tools').innerHTML = tools.map(function (t) {
+      return '<div class="tool"><div class="tn">' + esc(t.name) + '</div>' +
+             '<div class="td">' + esc(t.description || '') + '</div></div>';
+    }).join('');
+    $('toolsNote').textContent =
+      'Read live from /.well-known/mcp.json (manifest ' + (m.mcp_version || '?') + '). '
+      + 'The local bridge you configured above serves the same knowledge tools and adds run_agent — '
+      + 'hand it a goal and it routes, grounds and completes the task — plus kb://<agent> resources '
+      + 'your assistant can browse. The shaddai_<agent> names are how the hosted door runs one agent directly.';
+  }).catch(function (e) {
+    $('tools').innerHTML = '<p class="muted">Could not read the live tool manifest (' + esc(e.message) + '). '
+      + 'Run <code class="i">node mcp-server-rag.js --self-test</code> in backend/ to see the tools your copy exposes.</p>';
+    $('toolsNote').textContent = '';
+  });
+
+  /* ── the gate, stated honestly ──────────────────────────────────────────────
+     Prices come from /api/stripe/plans, which serializes backend/lib/tiers.js —
+     nothing about money is typed into this page. The plan that includes MCP is
+     found by asking the data, not by assuming an id. And the page does not
+     pretend to block anything: the real gate is server-side. */
+  function uid() {
+    try {
+      return localStorage.getItem('shd_userid') || localStorage.getItem('shd_uid')
+          || localStorage.getItem('shaddai_uid') || '';
+    } catch (e) { return ''; }
+  }
+
+  function setGate(cls, title, body, ctas) {
+    $('gate').className = 'gate' + (cls ? ' ' + cls : '');
+    $('gateT').textContent = title;
+    $('gateP').innerHTML = body;
+    $('gateC').innerHTML = ctas || '';
+  }
+
+  var u = uid();
+  Promise.all([
+    fetch('/api/stripe/plans').then(function (r) { return r.json(); }).catch(function () { return null; }),
+    fetch('/api/billing/status' + (u ? '?userId=' + encodeURIComponent(u) : ''))
+      .then(function (r) { return r.json(); }).catch(function () { return null; })
+  ]).then(function (res) {
+    var plans = (res[0] && res[0].tiers) || [];
+    // The MCP plan is whichever plan says so. Fall back to the dearest plan
+    // rather than guessing an id that might be renamed.
+    var mcpPlan = null;
+    for (var i = 0; i < plans.length; i++) {
+      var p = plans[i];
+      var f = p.features;
+      var says = (f && !Array.isArray(f) && f.mcp === true)
+        || (Array.isArray(f) && f.join(' ').toLowerCase().indexOf('mcp') >= 0);
+      if (says && (!mcpPlan || p.price > mcpPlan.price)) mcpPlan = p;
+    }
+    if (!mcpPlan && plans.length) {
+      mcpPlan = plans.slice().sort(function (a, b) { return (b.price || 0) - (a.price || 0); })[0];
+    }
+
+    var bill = res[1] || null;
+    var myTier = bill ? String(bill.tier || bill.plan || 'free') : null;
+    var onIt = !!(mcpPlan && myTier && (myTier === mcpPlan.id || myTier === 'elite' || myTier === 'alpha'));
+
+    var priceTxt = mcpPlan
+      ? '<b>' + esc(mcpPlan.name) + '</b> &mdash; $' + esc(mcpPlan.price) + '/' + esc(mcpPlan.interval || 'month')
+      : 'the top plan';
+
+    if (onIt) {
+      setGate('ok', 'Included in your plan',
+        'You are on ' + priceTxt + ', which includes MCP. Follow the steps below. '
+        + 'If a step asks for the bridge package or a hosted key, they are issued to your account &mdash; '
+        + 'ask us in the dashboard and we will send them.',
+        '<a class="cta ghost" href="/pricing.html">See what else is included</a>');
+    } else {
+      setGate('', 'MCP is part of ' + (mcpPlan ? esc(mcpPlan.name) : 'the top plan'),
+        'Connecting your own assistant to the council comes with ' + priceTxt + '. '
+        + 'The setup below is not secret and you are welcome to read it &mdash; but the bridge package and the '
+        + 'hosted key are issued with the plan, so it will not connect without one.'
+        + (myTier ? ' <span class="muted">(This account reads as: ' + esc(myTier) + '.)</span>' : ''),
+        '<a class="cta" href="/pricing.html">See the plan</a>');
+    }
+  }).catch(function () {
+    setGate('', 'MCP is a paid feature',
+      'Could not reach the plans endpoint, so this page will not quote you a price it cannot verify. '
+      + '<a href="/pricing.html">The pricing page</a> has the current figure.',
+      '<a class="cta ghost" href="/pricing.html">Open pricing</a>');
+  });
+})();
+</script>
+</body>
+</html>
