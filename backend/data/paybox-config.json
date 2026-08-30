@@ -1,7 +1,7 @@
 {
   "enabled": false,
-  "per_call_cap_usd": 5.00,
-  "daily_budget_usd": 25.00,
+  "per_call_cap_usd": 15.00,
+  "daily_budget_usd": 75.00,
   "approval_threshold_usd": 1.00,
   "require_approval": true,
   "base_url": "https://api.paybox.sh",
