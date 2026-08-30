@@ -58852,6 +58852,94 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
   }
   /* The tiny forge-art thumbnails are redundant over a full-bleed banner — hide them. */
   #mainNav button.nav-btn.nav-img img { display: none !important; }
+
+/* ══ SKINS THAT WERE MISSING ══════════════════════════════════════════════
+   Root cause of "brutalist renders dark and half-repainted": brutalist and
+   serif had NO rule here at all, and ember/royal/tide/frost/linen/bone were
+   never added. Selecting them left every token at its dark default, so the
+   page stayed dark — and theme-switcher.js's applyForce() then JS-painted a
+   fixed list of selectors inline with !important at 250ms and 800ms, which
+   catches some surfaces and misses everything rendered later. Half-painted.
+
+   Written with the DASHBOARD's own token names, not another system's, so the
+   existing CSS picks them up with no repaint needed. --shell matches the
+   front door's convention: near-black on dark skins, near-white on light, so
+   anything drawing on the page can ask the theme instead of hardcoding a
+   list of which skins are light.
+   ══════════════════════════════════════════════════════════════════════ */
+:root{ --shell:#06080b; }
+
+/* ── dark pairs ─────────────────────────────────────────────────────────── */
+html[data-theme-skin="ember"]{
+  --shell:#0b0705 !important; --bg-deep:#0b0705 !important; --bg-primary:#120b07 !important;
+  --bg-card:#18100a !important; --border:rgba(255,122,47,.20) !important;
+  --accent:#ff7a2f !important; --accent-glow:rgba(255,122,47,.35) !important;
+  --accent-dim:rgba(255,122,47,.55) !important; --secondary:#b07cff !important;
+  --text-primary:#f6ece4 !important; --text-secondary:#c2a08c !important; --text-muted:#7a5a46 !important;
+}
+html[data-theme-skin="royal"]{
+  --shell:#07060d !important; --bg-deep:#07060d !important; --bg-primary:#0c0a16 !important;
+  --bg-card:#120f1f !important; --border:rgba(176,124,255,.20) !important;
+  --accent:#b07cff !important; --accent-glow:rgba(176,124,255,.35) !important;
+  --accent-dim:rgba(176,124,255,.55) !important; --secondary:#e8c45c !important;
+  --text-primary:#efeaf8 !important; --text-secondary:#a89bc4 !important; --text-muted:#5f5480 !important;
+}
+html[data-theme-skin="tide"]{
+  --shell:#04090c !important; --bg-deep:#04090c !important; --bg-primary:#071016 !important;
+  --bg-card:#0a171f !important; --border:rgba(95,224,255,.20) !important;
+  --accent:#5fe0ff !important; --accent-glow:rgba(95,224,255,.35) !important;
+  --accent-dim:rgba(95,224,255,.55) !important; --secondary:#00ff9c !important;
+  --text-primary:#e6f4f6 !important; --text-secondary:#8fb3bd !important; --text-muted:#4a6b75 !important;
+}
+
+/* ── light skins — the ones that were rendering dark ────────────────────── */
+html[data-theme-skin="brutalist"]{
+  --shell:#f5f4f0 !important; --bg-deep:#f5f4f0 !important; --bg-primary:#eceae4 !important;
+  --bg-card:#ffffff !important; --border:rgba(10,8,4,.20) !important;
+  --accent:#c89000 !important; --accent-glow:rgba(200,144,0,.28) !important;
+  --accent-dim:rgba(200,144,0,.6) !important; --secondary:#0a0804 !important;
+  --text-primary:#0a0804 !important; --text-secondary:#5a5248 !important; --text-muted:#8b8378 !important;
+}
+html[data-theme-skin="serif"]{
+  --shell:#f8f6f0 !important; --bg-deep:#f8f6f0 !important; --bg-primary:#efece4 !important;
+  --bg-card:#ffffff !important; --border:rgba(38,28,8,.16) !important;
+  --accent:#2f6b4a !important; --accent-glow:rgba(47,107,74,.24) !important;
+  --accent-dim:rgba(47,107,74,.6) !important; --secondary:#8a6f2c !important;
+  --text-primary:#1c1710 !important; --text-secondary:#6b5f4e !important; --text-muted:#9a8e7c !important;
+}
+html[data-theme-skin="frost"]{
+  --shell:#f4f6fb !important; --bg-deep:#eef1f7 !important; --bg-primary:#e4e9f2 !important;
+  --bg-card:#fbfcfe !important; --border:rgba(40,55,90,.18) !important;
+  --accent:#3d5bd9 !important; --accent-glow:rgba(61,91,217,.26) !important;
+  --accent-dim:rgba(61,91,217,.6) !important; --secondary:#7a5bd9 !important;
+  --text-primary:#141a26 !important; --text-secondary:#4a5568 !important; --text-muted:#8a94a6 !important;
+}
+html[data-theme-skin="linen"]{
+  --shell:#f7f5ee !important; --bg-deep:#f2efe4 !important; --bg-primary:#e8e4d6 !important;
+  --bg-card:#fbfaf5 !important; --border:rgba(30,60,45,.18) !important;
+  --accent:#1f7a52 !important; --accent-glow:rgba(31,122,82,.26) !important;
+  --accent-dim:rgba(31,122,82,.6) !important; --secondary:#a8842a !important;
+  --text-primary:#15201a !important; --text-secondary:#4b5b51 !important; --text-muted:#8b978f !important;
+}
+html[data-theme-skin="bone"]{
+  --shell:#fcfbf8 !important; --bg-deep:#faf9f6 !important; --bg-primary:#efece5 !important;
+  --bg-card:#ffffff !important; --border:rgba(20,18,12,.20) !important;
+  --accent:#a8821f !important; --accent-glow:rgba(168,130,31,.26) !important;
+  --accent-dim:rgba(168,130,31,.6) !important; --secondary:#0d0c08 !important;
+  --text-primary:#0d0c08 !important; --text-secondary:#4a463c !important; --text-muted:#8d887c !important;
+}
+
+/* On a light skin the page ground must actually be light — the dashboard
+   paints body/#app from its own rules, so pin them to the token. */
+html[data-theme-skin="brutalist"] body, html[data-theme-skin="serif"] body,
+html[data-theme-skin="frost"] body, html[data-theme-skin="linen"] body,
+html[data-theme-skin="bone"] body,
+html[data-theme-skin="ember"] body, html[data-theme-skin="royal"] body,
+html[data-theme-skin="tide"] body{
+  background:var(--bg-deep) !important;
+  background-image:none !important;
+  color:var(--text-primary) !important;
+}
 </style>
 
 </body>

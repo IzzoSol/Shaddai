@@ -284,6 +284,7 @@ h1.title{font-family:'Orbitron',sans-serif;font-size:clamp(44px,11vw,120px);font
   </div>
 </div>
 
+<script src="../js/touch-controls.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -1714,6 +1715,34 @@ canvas.addEventListener('pointerdown', ev => {
 })();
 
 window.__XTO = { scene, renderer, entities, prog, THREE, models };
+
+// ────────────────────────────────────────────────────────────────
+// MOBILE TOUCH CONTROLS (touch devices only)
+// The stick writes the same keys{} entries the movement block reads, and the
+// buttons call the very same playerAttack/tryJump/tryInteract the keyboard
+// fires. Keyboard, mouse and the canvas pointerdown path are unchanged.
+// ────────────────────────────────────────────────────────────────
+function xtCanAct() { return running && player && !player.dead && !dlgActive && !forgeOpen; }
+try {
+  if (window.SHDTouch && SHDTouch.isTouchDevice()) {
+    window.__XT_TOUCH = SHDTouch.create({
+      keys: keys,
+      canvas: canvas,
+      keyNames: { up: 'w', down: 's', left: 'a', right: 'd' },
+      buttons: [
+        { label: 'ATK', wide: true, down: () => { if (xtCanAct()) playerAttack('light'); } },
+        { label: 'HVY', down: () => { if (xtCanAct()) playerAttack('heavy'); } },
+        { label: 'PRJ', down: () => { if (xtCanAct()) playerAttack('proj'); } },
+        { label: 'JUMP', down: () => { if (xtCanAct()) tryJump(player); } },
+        { label: 'USE', down: () => { if (xtCanAct()) tryInteract(); } },
+        { label: 'RUN',
+          down: () => { keys['shift'] = true; },
+          up:   () => { keys['shift'] = false; } }
+      ],
+      visible: () => running && !dlgActive && !forgeOpen
+    });
+  }
+} catch (e) { }
 </script>
 </body>
 </html>

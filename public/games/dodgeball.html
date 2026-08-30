@@ -86,6 +86,7 @@
   <span><b>ESC</b> exit</span>
 </div>
 
+<script src="../js/touch-controls.js"></script>
 <script>
 (function(){
 "use strict";
@@ -2531,6 +2532,30 @@ try{
         ballsInPlay:balls.length, teamA:teamA.length, teamB:teamB.length,
         courtW:COURT_W, courtH:COURT_H, pr:PR, watch:WATCH_ON }; }
     };
+  }
+}catch(e){}
+
+/* ============================ MOBILE TOUCH CONTROLS ============================
+   Touch devices only. The stick writes into the same keys{} map moveVec() reads
+   and the buttons call the same actionDown/actionUp/doJump/doDash/doCaptainSpecial
+   the keyboard fires, so nothing about the keyboard or menu-mouse path changes.
+   Hidden (and inert) outside PLAY so the SELECT/OVER menu taps still land. */
+try{
+  if(window.SHDTouch && SHDTouch.isTouchDevice()){
+    window.__DB_TOUCH = SHDTouch.create({
+      keys: keys,
+      canvas: canvas,
+      keyNames: {up:'w', down:'s', left:'a', right:'d'},
+      buttons: [
+        { label:'THROW', wide:true,
+          down:function(){ if(G.state!=='PLAY'||WATCH_ON||AP.on) return; actionDown(); },
+          up:function(){ if(AP.on) return; actionUp(); } },
+        { label:'JUMP', down:function(){ if(WATCH_ON||AP.on) return; doJump(); } },
+        { label:'DASH', down:function(){ if(WATCH_ON||AP.on) return; doDash(); } },
+        { label:'SPEC', down:function(){ if(WATCH_ON||AP.on) return; doCaptainSpecial(); } }
+      ],
+      visible: function(){ return G.state==='PLAY' && !WATCH_ON && !AP.on; }
+    });
   }
 }catch(e){}
 

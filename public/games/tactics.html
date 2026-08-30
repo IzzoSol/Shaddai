@@ -138,11 +138,25 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .battle-bar .right b{color:#f0e8d8}
 
 .battle-main{flex:1;display:grid;grid-template-columns:1fr 280px;position:relative;min-height:0}
-@media(max-width:760px){.battle-main{grid-template-columns:1fr}.battle-side{display:none}}
+@media(max-width:760px){
+  .battle-main{grid-template-columns:1fr}
+  /* Phones: the side panel used to be display:none, which left NO way to press
+     Move / Fight / Item / Wait. Dock it as a short scrollable strip instead. */
+  .battle-side{display:flex;position:absolute;left:0;right:0;bottom:0;
+    max-height:40%;border-left:none;border-top:2px solid #c8b898;z-index:6;
+    background:linear-gradient(180deg,rgba(240,232,216,.96),rgba(221,208,184,.96))}
+  .battle-side .turn-order{display:none}
+  .battle-side .unit-info{padding:8px 12px}
+  .actions-list{display:flex;flex-wrap:wrap;gap:6px;padding:8px;align-content:flex-start}
+  .actions-list h4{width:100%;margin:2px 0 0}
+  .act-btn{width:auto;min-width:104px;min-height:44px;margin-bottom:0}
+}
 
 /* Canvas viewport */
 .viewport{position:relative;background:#b8b0a0;overflow:hidden;cursor:crosshair}
-#grid{position:absolute;inset:0;width:100%;height:100%}
+/* touch-action on the play surfaces ONLY - the rest of the page still scrolls */
+#grid{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.world-canvas-wrap canvas{touch-action:manipulation}
 
 /* Floating message bar */
 .fmsg{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:8px 18px;
@@ -233,11 +247,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .toast.show{opacity:1;transform:translateX(0)}
 
 /* ── MOBILE CONTROLS (D-pad) ────────────────────────────────── */
-.dpad{position:absolute;left:14px;bottom:14px;width:130px;height:130px;z-index:5;touch-action:none;user-select:none;display:none}
+.dpad{position:absolute;left:10px;top:10px;width:144px;height:144px;z-index:7;touch-action:none;user-select:none;display:none}
 @media(hover:none) and (pointer:coarse){.dpad{display:block}}
-.dbtn{position:absolute;width:42px;height:42px;border:2px solid rgba(60,80,120,.4);
-  background:rgba(240,232,216,.7);color:#304880;font-size:17px;touch-action:none}
-.dbtn:active{background:rgba(200,152,48,.2)}
+.dbtn{position:absolute;width:46px;height:46px;border:2px solid rgba(60,80,120,.45);
+  background:rgba(240,232,216,.78);color:#304880;font-size:17px;touch-action:none;padding:0}
+.dbtn.ok{color:#30b848;border-color:rgba(48,184,72,.6);font-weight:700}
+.dbtn:active{background:rgba(200,152,48,.28)}
 
 /* ── NEW: FFTA-STYLE EQUIP SCREEN ──────────────────────────── */
 .equip-layout{display:grid;grid-template-columns:240px 1fr;gap:16px}
@@ -581,10 +596,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <canvas id="grid"></canvas>
       <div class="fmsg" id="fmsg">Tap a unit to begin</div>
       <div class="dpad" id="dpad">
-        <button class="dbtn" style="left:44px;top:0" data-key="w">▲</button>
-        <button class="dbtn" style="left:0;top:44px" data-key="a">◀</button>
-        <button class="dbtn" style="left:88px;top:44px" data-key="d">▶</button>
-        <button class="dbtn" style="left:44px;top:88px" data-key="s">▼</button>
+        <button class="dbtn" style="left:49px;top:0" data-key="w">▲</button>
+        <button class="dbtn" style="left:0;top:49px" data-key="a">◀</button>
+        <button class="dbtn ok" style="left:49px;top:49px" data-key="Enter">✓</button>
+        <button class="dbtn" style="left:98px;top:49px" data-key="d">▶</button>
+        <button class="dbtn" style="left:49px;top:98px" data-key="s">▼</button>
       </div>
     </div>
     <div class="battle-side">
@@ -665,6 +681,55 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <!-- ══════════════ GAME DATA + ENGINE ══════════════ -->
 <script src="tactics-engine.js"></script>
 <script src="tactics-main.js"></script>
+
+<!-- ══════════════ TOUCH CONTROLS ══════════════
+     Tactics is turn-based and already tap-driven: the battle canvas has a
+     touchstart handler that runs handlePlayerClick (tap a tile to select /
+     move / target) and every action is a real DOM button. So NO joystick here.
+     Two things were actually missing on a phone:
+       1. the .dpad markup existed but had zero JS behind it - it is wired here
+          by replaying the exact keyboard events tactics-main.js already listens
+          for, so the game logic path is identical to a physical keypress;
+       2. the action panel was display:none under 760px (fixed in CSS above).
+     Keyboard and mouse are untouched. -->
+<script>
+(function(){
+  var coarse = ('ontouchstart' in window) ||
+               (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+               (navigator.maxTouchPoints > 0);
+  if (!coarse) return;                    // desktop: leave the page exactly as it was
+  var pad = document.getElementById('dpad');
+  if (!pad) return;
+  pad.style.display = 'block';
+  // Each button owns its own touch id, so a second finger elsewhere is independent.
+  Array.prototype.forEach.call(pad.querySelectorAll('.dbtn'), function(btn){
+    var key = btn.getAttribute('data-key');
+    var held = null;
+    function fire(){
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: key, bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent('keyup',   { key: key, bubbles: true }));
+      window.__TACTICS_LAST_TOUCH_KEY = key;   // probe hook
+    }
+    btn.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      if (held !== null) return;
+      held = e.changedTouches[0].identifier;
+      fire();
+    }, { passive:false });
+    function end(e){
+      if (held === null) return;
+      for (var i=0;i<e.changedTouches.length;i++){
+        if (e.changedTouches[i].identifier === held){ e.preventDefault(); held = null; return; }
+      }
+    }
+    btn.addEventListener('touchend', end, { passive:false });
+    btn.addEventListener('touchcancel', end, { passive:false });
+    // click still works for mouse/AT users; touchstart already preventDefault'd
+    // the synthesised click, so there is no double fire.
+    btn.addEventListener('click', function(e){ e.preventDefault(); fire(); });
+  });
+})();
+</script>
 
 </body>
 </html>
