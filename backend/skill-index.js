@@ -88,6 +88,41 @@ const RECIPES = {
     steps: [ { tool: 'get_random_quote', params: { tag: '{{input.tag||""}}' } } ]
   },
 
+  'define-word': {
+    agent: 'ORACLE',
+    description: 'Real dictionary definition, part of speech, and example usage.',
+    params: ['word'],
+    steps: [ { tool: 'get_word_definition', params: { word: '{{input.word}}' } } ]
+  },
+
+  'make-qr-code': {
+    agent: 'TURTLE',
+    description: 'A real scannable QR code URL for any text or link, instantly.',
+    params: ['data'],
+    steps: [ { tool: 'get_qr_code', params: { data: '{{input.data}}' } } ]
+  },
+
+  'color-palette': {
+    agent: 'TURTLE',
+    description: 'A real harmonious 5-color palette generated from one seed hex color.',
+    params: ['hex'],
+    steps: [ { tool: 'get_color_palette', params: { hex: '{{input.hex||"FF6B35"}}', mode: '{{input.mode||"analogic"}}' } } ]
+  },
+
+  'shorten-a-url': {
+    agent: 'NEXUS',
+    description: 'A real shortened URL via TinyURL, instantly.',
+    params: ['url'],
+    steps: [ { tool: 'shorten_url', params: { url: '{{input.url}}' } } ]
+  },
+
+  'check-weather': {
+    agent: 'ORACLE',
+    description: 'Real current weather for any city.',
+    params: ['city'],
+    steps: [ { tool: 'get_weather', params: { city: '{{input.city}}' } } ]
+  },
+
   // ── ZEROX market skills ───────────────────────────────────────────
 
   'daily-market-snapshot': {
