@@ -512,6 +512,32 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
   border-radius:50%; object-fit:cover; background:var(--void2);
   border:1px solid color-mix(in srgb, var(--accent) 28%, transparent);
 }
+
+/* ══ LAYOUT VIEWS ═════════════════════════════════════════════════════════
+   Three ways to see the same four doors. Not decoration — they suit different
+   moments: GRID to browse, STACK to read what each one is before committing,
+   TILE when you already know and want the biggest possible target.
+
+   The choice persists, because someone who prefers one prefers it every time. */
+body[data-lay="stack"] .grid{ grid-template-columns:1fr !important; max-width:620px; }
+body[data-lay="stack"] .slot{ min-height:132px; }
+body[data-lay="stack"] .slot .bio{ opacity:1 !important; }
+
+body[data-lay="tile"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:760px; }
+body[data-lay="tile"] .slot{ min-height:clamp(150px,30vh,240px); }
+body[data-lay="tile"] .slot .kicker, body[data-lay="tile"] .slot .bio{ display:none; }
+body[data-lay="tile"] .slot .name{ font-size:clamp(26px,7vw,44px); }
+
+@media(max-width:560px){
+  body[data-lay="grid"] .grid{ grid-template-columns:1fr 1fr !important; }
+}
+.layswitch{ display:flex; gap:5px; justify-content:center; margin:0 auto clamp(10px,1.6vw,16px); }
+.layswitch button{
+  min-height:36px; padding:0 13px; border:1px solid var(--edge); background:rgba(14,20,27,.4);
+  color:var(--ink-faint); font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; border-radius:2px; cursor:pointer; transition:.2s;
+}
+.layswitch button[aria-pressed=true]{ color:var(--accent); border-color:var(--accent); }
 </style>
 </head>
 <body>
@@ -562,6 +588,11 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
         <span>◉ Simple Mode</span>
         <span class="sd">one wheel · everything · built for a thumb</span>
       </a>
+      <div class="layswitch" id="layswitch" role="group" aria-label="Layout">
+        <button type="button" data-l="grid"  aria-pressed="true">▦ Grid</button>
+        <button type="button" data-l="stack" aria-pressed="false">▤ Stack</button>
+        <button type="button" data-l="tile"  aria-pressed="false">◼ Tile</button>
+      </div>
   <div class="grid" id="grid"></div>
 </main>
 
@@ -1176,6 +1207,28 @@ if (renderer) {
       })
       .then(function () { btn.disabled = false; });
   });
+})();
+</script>
+
+<script>
+/* Layout switcher. Persisted, because a layout preference is a preference —
+   re-picking it every visit is the definition of an unremembered setting. */
+(function () {
+  var sw = document.getElementById('layswitch');
+  if (!sw) return;
+  var lay = 'grid';
+  try { lay = localStorage.getItem('shd_lay') || 'grid'; } catch (e) {}
+  function apply(v) {
+    lay = v;
+    document.body.setAttribute('data-lay', v);
+    try { localStorage.setItem('shd_lay', v); } catch (e) {}
+    [].forEach.call(sw.children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.l === v)); });
+    if (window.SHDSound && window.SHDSound.isOn()) window.SHDSound.click();
+  }
+  sw.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (b) apply(b.dataset.l);
+  });
+  apply(lay);
 })();
 </script>
 </body>

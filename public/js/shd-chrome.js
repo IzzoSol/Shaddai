@@ -39,7 +39,14 @@
     { id: 'serif', name: 'Serif', dot: '#3a6b4a' },
     { id: 'frost', name: 'Frost', dot: '#5b7cff' },     // cool light
     { id: 'linen', name: 'Linen', dot: '#1f7a52' },     // warm light
-    { id: 'bone', name: 'Bone', dot: '#c8a227' }        // high-contrast light
+    { id: 'bone', name: 'Bone', dot: '#c8a227' },       // high-contrast light
+    /* GRADIENT SKINS. The others are single-accent; these three carry a real
+       two-hue sweep across the page ground, which is why they are named for the
+       transition rather than for a colour. Grouped last so the picker reads as
+       "solids, then gradients" instead of an unsorted pile. */
+    { id: 'nebula', name: 'Nebula', dot: '#b07cff', grad: true },   // violet -> magenta
+    { id: 'sunset', name: 'Sunset', dot: '#ff7a2f', grad: true },   // orange -> rose
+    { id: 'aurora', name: 'Aurora', dot: '#00ff9c', grad: true }    // emerald -> violet
   ];
 
   var skinSubs = [], authSubs = [], dwellSubs = [];
@@ -58,6 +65,36 @@
      once per skin and the canvas follows automatically. */
   var PAIR_SKINS = [
     ':root{--shell:#06080b}',
+
+    /* ══ GRADIENT SKINS ═════════════════════════════════════════════════════
+       A real sweep on the page ground, not a tinted flat colour. Each keeps
+       ONE accent for interface elements — the gradient lives in the background
+       and the accent stays legible on top of every part of it, which is the
+       whole difficulty with gradient themes and the reason most look cheap. */
+    'html[data-theme-skin="nebula"]{--shell:#0a0614;--void:#0a0614;--void2:#120a22;' +
+      '--panel:#170d2b;--edge:rgba(176,124,255,.22);--accent:#c79cff;--emerald:#c79cff;' +
+      '--gold:#ff9ee6;--ink:#f2ecff;--ink-soft:#b4a3cf;--ink-faint:#6f6090;' +
+      '--g1:rgba(176,124,255,.13);--g2:rgba(255,110,220,.08);--g3:rgba(90,40,160,.10)}',
+    'html[data-theme-skin="nebula"] body{background:' +
+      'radial-gradient(120% 85% at 15% 0%,#2a1150 0%,transparent 55%),' +
+      'radial-gradient(110% 80% at 90% 100%,#4a1240 0%,transparent 58%),#0a0614}',
+
+    'html[data-theme-skin="sunset"]{--shell:#140806;--void:#140806;--void2:#1e0c08;' +
+      '--panel:#26100b;--edge:rgba(255,122,47,.24);--accent:#ff9a5c;--emerald:#ff9a5c;' +
+      '--gold:#ffd27a;--ink:#fff0e6;--ink-soft:#d4a992;--ink-faint:#8a6250;' +
+      '--g1:rgba(255,122,47,.14);--g2:rgba(255,90,120,.09);--g3:rgba(120,30,10,.12)}',
+    'html[data-theme-skin="sunset"] body{background:' +
+      'radial-gradient(120% 85% at 10% 0%,#5a1c0a 0%,transparent 55%),' +
+      'radial-gradient(115% 80% at 95% 100%,#5c1030 0%,transparent 58%),#140806}',
+
+    'html[data-theme-skin="aurora"]{--shell:#04100e;--void:#04100e;--void2:#071a16;' +
+      '--panel:#0a2220;--edge:rgba(0,255,156,.22);--accent:#5cffc4;--emerald:#5cffc4;' +
+      '--gold:#b07cff;--ink:#e8fff6;--ink-soft:#8fc4b2;--ink-faint:#4e7a6c;' +
+      '--g1:rgba(0,255,156,.12);--g2:rgba(120,90,255,.09);--g3:rgba(0,90,110,.11)}',
+    'html[data-theme-skin="aurora"] body{background:' +
+      'radial-gradient(120% 85% at 12% 0%,#0a4a3a 0%,transparent 55%),' +
+      'radial-gradient(115% 80% at 92% 100%,#231a5c 0%,transparent 58%),#04100e}',
+
 
     /* three LIGHT skins, and none of them are the cream-plus-terracotta
        default — Frost is cold, Linen is green, Bone is near-white with gold. */
