@@ -61,6 +61,33 @@ function getBakedSkill(id) {
 
 const RECIPES = {
 
+  // ── Simple, fast, cheap utility skills (2026-08-30) ─────────────────
+  // Real-tool-backed, no synthesize step — the tool's own output IS the
+  // answer, so no LLM call is spent making it "nicer." Zero cost, instant,
+  // exactly the class of thing worth exposing over MCP for other bots/agents
+  // to call cheaply and reliably.
+
+  'tell-a-joke': {
+    agent: 'TURTLE',
+    description: 'A real programming/tech joke, instantly, no LLM call.',
+    params: [],
+    steps: [ { tool: 'get_joke', params: { category: '{{input.category||"Programming"}}' } } ]
+  },
+
+  'quick-translate': {
+    agent: 'QUILL',
+    description: 'Translate text to another language, instantly, no LLM call.',
+    params: ['text', 'target'],
+    steps: [ { tool: 'translate_text', params: { text: '{{input.text}}', target: '{{input.target}}', source: '{{input.source||"en"}}' } } ]
+  },
+
+  'inspire-me': {
+    agent: 'QUILL',
+    description: 'A real random quote, instantly, no LLM call.',
+    params: [],
+    steps: [ { tool: 'get_random_quote', params: { tag: '{{input.tag||""}}' } } ]
+  },
+
   // ── ZEROX market skills ───────────────────────────────────────────
 
   'daily-market-snapshot': {
