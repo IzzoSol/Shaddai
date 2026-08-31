@@ -23,6 +23,7 @@ const fs      = require('fs');
 const path    = require('path');
 const winston = require('winston');
 const { v4: uuidv4 } = require('uuid');
+const atRest  = require('./lib/at-rest');
 
 // ── LOGGER ──────────────────────────────────────────────────────────────────
 const logger = winston.createLogger({
@@ -156,7 +157,17 @@ function loadPersistentData() {
     try {
       if (fs.existsSync(files[key])) {
         const data = JSON.parse(fs.readFileSync(files[key], 'utf8'));
-        Object.assign(store, data);
+        if (key === 'customerDatabase') {
+          // Decrypt PII fields back to plaintext for in-memory use (audit #3).
+          const SENSITIVE = ['email', 'stripeCustomerId'];
+          for (const [uid, rec] of Object.entries(data)) {
+            data[uid] = atRest.decryptFields(rec, SENSITIVE);
+            if (customerDatabase[uid]) Object.assign(customerDatabase[uid], data[uid]);
+            else customerDatabase[uid] = data[uid];
+          }
+        } else {
+          Object.assign(store, data);
+        }
         logger.info(`Loaded ${key}`);
       }
     } catch (err) {
@@ -177,7 +188,15 @@ let _saveTimer = null;
 function _writeAllSync() {
   _ensureDataDir();
   try {
-    fs.writeFileSync(path.join(DATA_DIR, 'customers.json'), JSON.stringify(customerDatabase, null, 2));
+    const SENSITIVE = ['email', 'stripeCustomerId'];
+    // Encryption-at-rest (audit #3): only the disk copy of customers.json is
+    // encrypted for the listed PII fields; in-memory access stays plaintext and
+    // the Firestore mirror keeps its plaintext (it has its own access control).
+    const diskCustomers = {};
+    for (const [uid, rec] of Object.entries(customerDatabase)) {
+      diskCustomers[uid] = atRest.encryptFields(rec, SENSITIVE);
+    }
+    fs.writeFileSync(path.join(DATA_DIR, 'customers.json'), JSON.stringify(diskCustomers, null, 2));
     fs.writeFileSync(path.join(DATA_DIR, 'ledger.json'),    JSON.stringify(ledger, null, 2));
     fs.writeFileSync(path.join(DATA_DIR, 'usage.json'),     JSON.stringify(usageDatabase, null, 2));
     _dirty = false;
