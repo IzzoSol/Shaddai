@@ -21,6 +21,9 @@ const axios = require('axios');
 // Shared response/error contract + secret-redaction helpers.
 const { redactUrl, redactObject } = require('./lib/respond');
 
+// Lightweight request-body validation (graceful if unavailable).
+let validate = null; try { validate = require('./lib/validate'); } catch (e) {}
+
 // Core systems
 const DatabaseReal = require('./database-real');
 const SkillOrchestrator = require('./skill-orchestrator');
@@ -2010,30 +2013,68 @@ app.get('/api/jobs', (req, res) => {
   });
 });
 
-app.post('/api/jobs', async (req, res) => {
+app.post('/api/jobs',
+  validate && validate.validateBody({
+    title: { type: 'string', required: true },
+    description: 'string',
+    reward: ['number', { min: 0 }],
+    deadline: 'string',
+    user: 'string',
+    targetAgents: 'array'
+  }) || ((req, res, next) => next()),
+  async (req, res) => {
   try {
-    const { title, description, targetAgents, reward, deadline } = req.body;
+    const b = req.valid || req.body;
+    const { title, description, targetAgents, reward, deadline } = b;
+    const creator = b.user || req.userId || 'guest';
 
     if (!title || !description) {
       return res.status(400).json({ error: 'Missing title or description' });
     }
 
+    const rewardUsd = Number(reward) || 0;
     const job = {
       id: `job_${Date.now()}`,
       title,
       description,
       targetAgents: targetAgents || [],
-      reward: reward || 0,
+      reward: rewardUsd,
+      creator,
       deadline,
       status: 'open',
+      paymentStatus: rewardUsd > 0 ? 'pending' : 'na',
+      escrowCredits: 0,
       createdAt: new Date().toISOString(),
       bids: []
     };
 
-    await database.saveJob(job);
-    logger.info('JOB', `Job created: ${job.id}`, { title });
+    // Payment gate: a paid job must have its reward held in escrow BEFORE it can
+    // ever be awarded/executed. No funds held → job stays open but can't run.
+    if (job.paymentStatus === 'pending') {
+      const settle = require('./lib/paybox-settle');
+      const escrowCredits = Math.ceil(rewardUsd * 1000); // 1 SHAD-Credit = $0.001
+      try {
+        const esc = await settle.holdEscrow({
+          buyer: creator,
+          jobId: job.id,
+          amountCredits: escrowCredits,
+          reason: 'job:' + job.id
+        });
+        job.escrowCredits = esc.held;
+        job.paymentStatus = 'held_in_escrow';
+      } catch (e) {
+        return res.status(e.status || 402).json({
+          error: e.message || 'insufficient credits to hold job escrow',
+          gated: true,
+          job: { id: job.id, paymentStatus: 'pending' }
+        });
+      }
+    }
 
-    broadcastUpdate('job_created', { jobId: job.id, title });
+    await database.saveJob(job);
+    logger.info('JOB', `Job created: ${job.id}`, { title, creator, paymentStatus: job.paymentStatus });
+
+    broadcastUpdate('job_created', { jobId: job.id, title, paymentStatus: job.paymentStatus });
 
     res.json(job);
   } catch (error) {
@@ -2071,9 +2112,16 @@ app.get('/api/jobs/:jobId/bids', (req, res) => {
   });
 });
 
-app.post('/api/jobs/:jobId/bids', async (req, res) => {
+app.post('/api/jobs/:jobId/bids',
+  validate && validate.validateBody({
+    agentName: { type: 'string', required: true },
+    amount: ['number', { required: true, min: 1 }],
+    deliveryDays: ['number', { min: 0 }]
+  }) || ((req, res, next) => next()),
+  async (req, res) => {
   try {
-    const { agentName, amount, deliveryDays } = req.body;
+    const b = req.valid || req.body;
+    const { agentName, amount, deliveryDays } = b;
 
     const job = database.getJob(req.params.jobId);
     if (!job) {
@@ -2110,9 +2158,15 @@ app.post('/api/jobs/:jobId/bids', async (req, res) => {
   }
 });
 
-app.post('/api/jobs/:jobId/award', async (req, res) => {
+app.post('/api/jobs/:jobId/award',
+  validate && validate.validateBody({
+    bidId: { type: 'string', required: true },
+    agentName: { type: 'string', required: true }
+  }) || ((req, res, next) => next()),
+  async (req, res) => {
   try {
-    const { bidId, agentName } = req.body;
+    const b = req.valid || req.body;
+    const { bidId, agentName } = b;
 
     const job = database.getJob(req.params.jobId);
     if (!job) {
@@ -2122,6 +2176,18 @@ app.post('/api/jobs/:jobId/award', async (req, res) => {
     const bid = job.bids?.find(b => b.id === bidId);
     if (!bid) {
       return res.status(404).json({ error: 'Bid not found' });
+    }
+
+    // Payment gate: a paid job can only be awarded once its reward is held in
+    // escrow. This guarantees the working agent will be paid and the buyer's
+    // funds are reserved — no unpaid job ever starts work.
+    if (job.paymentStatus === 'pending' && job.reward > 0) {
+      const settle = require('./lib/paybox-settle');
+      const hold = settle.escrowFor(job.id);
+      if (!hold || hold.status !== 'held') {
+        return res.status(402).json({ error: 'Job reward not held in escrow — award blocked', gated: true, paymentStatus: job.paymentStatus });
+      }
+      job.paymentStatus = 'held_in_escrow';
     }
 
     job.status = 'in_progress';
@@ -2594,7 +2660,32 @@ app.post('/api/jobs/:jobId/execute', async (req, res) => {
     const job = database.getJob(jobId);
     if (!job) return res.status(404).json({ error: 'Job not found' });
 
+    // Payment gate: a paid job must have its reward held in escrow before any
+    // agent is allowed to run it. No hold → no execution. Free jobs (reward 0)
+    // are unaffected.
+    if (job.reward > 0 && job.paymentStatus !== 'held_in_escrow') {
+      return res.status(402).json({ error: 'Job reward not in escrow — execution blocked', gated: true, paymentStatus: job.paymentStatus });
+    }
+
     const execution = await agentIntegration.executeJobWithAgents(jobId, job, agent);
+
+    // Release escrow to the working agent once the job actually runs. Idempotent
+    // (a release is a no-op if the hold is already released/refunded).
+    if (job.reward > 0 && execution) {
+      try {
+        const settle = require('./lib/paybox-settle');
+        const rel = await settle.releaseEscrow({ jobId, toAgent: agent || job.awardedTo || 'SHADDAI' });
+        if (rel.released) {
+          job.paymentStatus = 'released';
+          job.releasedAt = new Date().toISOString();
+          await database.saveJob(job);
+          logger.info('JOB', `Escrow released for job ${jobId} to ${rel.toAgent} ($${(rel.amount / 1000).toFixed(3)})`);
+        }
+      } catch (e) {
+        logger.warn('JOB', `Escrow release for ${jobId} deferred`, { error: e.message });
+      }
+    }
+
     res.json(execution);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2627,6 +2718,8 @@ app.post('/api/pikadon/audit', async (req, res) => {
 
 // ── Shaddai Worlds + Federation (MUST be before the catch-all) ──
 app.get('/world',           (req, res) => res.sendFile(path.join(__dirname, '../public/SHADDAI-WORLD-3D.html')));
+app.get('/shop',            (req, res) => res.sendFile(path.join(__dirname, '../public/shop.html')));
+app.get('/shop.html',       (req, res) => res.sendFile(path.join(__dirname, '../public/shop.html')));
 app.get('/world3d',         (req, res) => res.sendFile(path.join(__dirname, '../public/SHADDAI-WORLD-3D.html')));
 app.get('/world-complete',  (req, res) => res.sendFile(path.join(__dirname, '../public/SHADDAI-WORLD-COMPLETE.html')));
 // legacy world aliases — their HTML files were archived; redirect to the canonical world (no more 500s)
@@ -2665,6 +2758,8 @@ try { app.use(require('./gallery-routes')); console.log('[prod] creator gallery 
 catch (e) { console.warn('[prod] gallery failed:', e.message); }
 try { app.use(require('./skills-market-routes')); console.log('[prod] skills market mounted'); }
 catch (e) { console.warn('[prod] skills market failed:', e.message); }
+try { app.use(require('./shop-routes')); console.log('[prod] shop mounted'); }
+catch (e) { console.warn('[prod] shop failed:', e.message); }
 try { app.use(require('./ainl-routes')); console.log('[prod] AINL workflows mounted'); }
 catch (e) { console.warn('[prod] AINL failed:', e.message); }
 try { app.use(require('./neocortex-routes')); console.log('[prod] neocortex memory mounted'); }

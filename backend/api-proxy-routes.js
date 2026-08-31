@@ -7278,9 +7278,47 @@ router.get('/skills/find', (req, res) => {
 // POST /api/skills/run — execute ANY skill by ID
 // Body: { skillId: string, input?: object, agent?: string }
 // Returns: { taskId, status, result, tools_used, steps }
+// Entitlement: if the skill is a paid (priced) bazaar skill, the caller must
+// settle payment first — the buyer is debited and the selling agent's paybox is
+// credited. Free skills bypass this (unchanged). Internal workflow callers are
+// unaffected because only this public HTTP endpoint settles.
 router.post('/skills/run', async (req, res) => {
-  const { skillId, input = {}, agent, sync } = req.body;
+  const { skillId, input = {}, agent, sync, user } = req.body;
   if (!skillId) return res.status(400).json({ error: 'skillId required' });
+
+  // Entitlement gate: charged before any work runs, so unpaid skills never execute.
+  try {
+    const settle = require('./lib/paybox-settle');
+    const idx = agentEngine.skillIndex;
+    let skill = null;
+    if (idx) {
+      if (typeof idx.getRecipe === 'function' && idx.getRecipe(skillId)) {
+        skill = idx.getRecipe(skillId);
+      } else if (typeof idx.getBakedSkill === 'function') {
+        try { skill = (await idx.getBakedSkill(skillId)) || null; } catch (_) { skill = null; }
+      }
+    }
+    const rate = settle.resolveSkill(skill || { id: skillId, agent, name: skillId });
+    if (rate) {
+      const s = await settle.settle({
+        user: user || 'guest',
+        itemId: skillId,
+        sellerAgent: rate.sellerAgent,
+        amountCredits: rate.priceCredits,
+        reason: 'skill:' + skillId,
+        input,
+        meta: { via: 'skills/run' }
+      });
+      res.locals.__pbsettle = s;
+    }
+  } catch (e) {
+    if (e && (e.code === 'INSUFFICIENT_CREDITS' || e.status === 402)) {
+      return res.status(402).json({ error: 'INSUFFICIENT_CREDITS', x402: { gated: true } });
+    }
+    if (e && e.status) return res.status(e.status).json({ error: e.message, gated: true });
+    console.error('[skills/run] entitlement error', e);
+    return fail(res, 500, 'internal_error', e.message);
+  }
 
   // Async by default: skills (even tool-recipes with an LLM synthesis step) can take
   // minutes on a local model → return a taskId immediately and let the client poll
@@ -7288,7 +7326,7 @@ router.post('/skills/run', async (req, res) => {
   if (sync) {
     try {
       const result = await agentEngine.runSkill(skillId, input, agent);
-      return res.json(result);
+      return res.json({ ...result, receipt: (res.locals.__pbsettle && res.locals.__pbsettle.receipt) || null });
     } catch(e) {
       return fail(res, 500, 'internal_error', e.message);
     }
@@ -7307,7 +7345,7 @@ router.post('/skills/run', async (req, res) => {
     // Find the just-created task (runSkill adds it to taskQueue synchronously before any await)
     const tasks = agentEngine.getAllTasks().filter(t => t.skillId === skillId).sort((a,b) => new Date(b.startedAt) - new Date(a.startedAt));
     const tid = tasks[0]?.id || taskId;
-    return res.json({ taskId: tid, status: 'running', async: true, skillId });
+    return res.json({ taskId: tid, status: 'running', async: true, skillId, receipt: (res.locals.__pbsettle && res.locals.__pbsettle.receipt) || null });
   } catch(e) {
     return fail(res, 500, 'internal_error', e.message);
   }

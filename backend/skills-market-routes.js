@@ -15,6 +15,8 @@ const json = express.json();
 
 let ae = null;       try { ae = require('./agent-engine'); } catch (e) {}
 let checkout = null;  try { checkout = require('./lib/bazaar-checkout'); } catch (e) {}
+let settle = null;    try { settle = require('./lib/paybox-settle'); } catch (e) {}
+let validate = null;  try { validate = require('./lib/validate'); } catch (e) {}
 
 const AGENTS = ['SHADDAI', 'ZEROX', 'ORACLE', 'NEXUS', 'QUILL', 'TURTLE', 'PIKADON'];
 
@@ -92,36 +94,55 @@ router.get('/api/skills/market', (req, res) => {
 });
 
 // POST /api/skills/market/:id/run — buy (x402) then execute the skill
-router.post('/api/skills/market/:id/run', json, async (req, res) => {
+router.post('/api/skills/market/:id/run', json,
+  validate && validate.validateBody({ user: 'string', input: 'object' }) || ((req, res, next) => next()),
+  async (req, res) => {
   const id = req.params.id;
-  const user = (req.body && req.body.user) || 'guest';
+  const b = req.valid || req.body;
+  const user = b.user || 'guest';
 
   // Locate the skill in the catalog to read its price + seller.
   const item = buildCatalog(id).find(s => s.id === id);
   if (!item) return res.status(404).json({ ok: false, error: 'SKILL_NOT_FOUND' });
 
-  // 1) Settle payment through the x402 ledger.
+  // 1) Settle payment — the buyer is debited and the selling AGENT's paybox
+  //    ledger is credited (net after the 5% fee). This is the entitlements gate:
+  //    work never runs unless the buyer has paid. Uses the shared paybox-settle
+  //    rail so every purchase has a verifiable receipt/proof of task.
   let charge;
   try {
-    charge = await checkout.bazaarCheckout({
-      userId: user,
-      itemId: id,
-      amountCredits: item.price_credits,
-      payTo: item.seller_agent,
-      reason: 'skill:' + id
-    });
+    if (settle && typeof settle.settle === 'function') {
+      const s = await settle.settle({
+        user,
+        itemId: id,
+        sellerAgent: item.seller_agent,
+        amountCredits: item.price_credits,
+        reason: 'skill:' + id,
+        input: b.input || {},
+        meta: { via: 'skills-market' }
+      });
+      charge = { txId: s.txId, balance: s.buyerBalance, fee: s.fee, receipt: s.receipt };
+    } else {
+      charge = await checkout.bazaarCheckout({
+        userId: user,
+        itemId: id,
+        amountCredits: item.price_credits,
+        payTo: item.seller_agent,
+        reason: 'skill:' + id
+      });
+    }
   } catch (e) {
-    if (e.message === 'INSUFFICIENT_CREDITS') {
+    if (e.code === 'INSUFFICIENT_CREDITS' || e.message === 'INSUFFICIENT_CREDITS') {
       return res.status(402).json({ ok: false, error: 'INSUFFICIENT_CREDITS' });
     }
-    return res.status(502).json({ ok: false, error: 'CHECKOUT_FAILED', detail: e.message });
+    return res.status(e.status || 502).json({ ok: false, error: 'CHECKOUT_FAILED', detail: e.message });
   }
 
   // 2) Run the skill. Fall back to a stub if the engine can't execute it.
   let output;
   try {
     if (ae && typeof ae.runSkill === 'function') {
-      output = await ae.runSkill(id, (req.body && req.body.input) || {}, item.seller_agent);
+      output = await ae.runSkill(id, b.input || {}, item.seller_agent);
     } else {
       output = `[stub] ran skill ${id} via ${item.seller_agent}`;
     }
@@ -139,7 +160,25 @@ router.post('/api/skills/market/:id/run', json, async (req, res) => {
     });
   } catch (e) { /* non-fatal: the run already succeeded and was paid for */ }
 
-  res.json({ ok: true, txId: charge.txId, output, price: item.price_credits, split });
+  res.json({ ok: true, txId: charge.txId, output, price: item.price_credits, split, receipt: charge.receipt || null });
+});
+
+// GET /api/skills/receipts?user= — the caller's receipts / proofs of task
+router.get('/api/skills/receipts', (req, res) => {
+  const user = req.query.user;
+  if (settle && settle.listReceipts) {
+    return res.json({ ok: true, receipts: settle.listReceipts(user ? String(user) : null) });
+  }
+  return res.json({ ok: true, receipts: [] });
+});
+
+// GET /api/skills/market/:agent/paybox — one agent's in-app paybox balance
+router.get('/api/skills/market/:agent/paybox', (req, res) => {
+  const agent = String(req.params.agent || 'SHADDAI').toUpperCase();
+  if (settle && settle.sellerBalance) {
+    return res.json({ ok: true, agent, balance: settle.sellerBalance(agent), currency: 'SHAD-Credits' });
+  }
+  return res.json({ ok: true, agent, balance: 0, currency: 'SHAD-Credits' });
 });
 
 module.exports = router;
