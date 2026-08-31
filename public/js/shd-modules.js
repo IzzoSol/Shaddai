@@ -86,7 +86,8 @@
       kicker: 'The main site',
       blurb: 'The main site. What SHADDAI is, how it works, the seven agents, the worlds, the arcade and the brain — the whole story, in order.',
       href: '/home.html',
-      art: '/assets/enter/hf-main.jpg',
+      art: '/assets/enter/entry.jpg',
+      artVary: ['/assets/enter/entry.jpg','/assets/journey/hero-space.jpg','/assets/journey/cosmos.jpg'],
       accent: C.gold,
       geo: 'dodeca'
     },
@@ -148,8 +149,8 @@
       kicker: 'The full realm',
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
       href: '/world3d',
-      art: '/assets/enter/hf-world3d.jpg',
-      artVary: ['/assets/enter/world3d.jpg'],
+      art: '/assets/worldlabs/thumbnail.jpg',
+      artVary: ['/assets/worldlabs/thumbnail.jpg','/assets/enter/world3d.jpg','/assets/xto/road.jpg'],
       /* Greyed rather than accented. A dim tile beside bright ones reads as
          "not yet" without a word of explanation — the way a locked level does
          in a game, which is the right feeling for something being built. */
@@ -186,8 +187,8 @@
       kicker: 'Your keys · your assistant',
       blurb: 'Plug in the accounts you already pay for, and point your own Claude or Grok at the council. Twenty-two connectors, and we take nothing on what you make.',
       href: '/connectors.html',
-      art: '/assets/enter/hf-connect.jpg',
-      artVary: ['/assets/enter/hf-connect.jpg'],
+      art: '/assets/xto/facade-a.jpg',
+      artVary: ['/assets/xto/facade-a.jpg','/assets/shops/launchpad.jpg','/assets/shops/neuralforge.jpg'],
       accent: C.emerald,
       geo: 'cube'
     },
@@ -197,8 +198,8 @@
       kicker: 'How all of it works',
       blurb: 'The booklet — Sparks, the council, the forge, every game and its controls, and the flywheel. Read it like a cartridge manual.',
       href: '/manual.html',
-      art: '/assets/enter/hf-manual.jpg',
-      artVary: ['/assets/enter/hf-manual.jpg'],
+      art: '/assets/athenaeum/quill-manuscript.jpg',
+      artVary: ['/assets/athenaeum/quill-manuscript.jpg','/assets/athenaeum/oracle-chart-1.jpg'],
       accent: C.gold,
       geo: 'dodeca'
     },
