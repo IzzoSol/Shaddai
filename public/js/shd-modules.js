@@ -70,19 +70,13 @@
       kicker: 'The cinematic entry',
       blurb: 'The ascent — from the quantum lattice at Malkuth up through the scales of matter to the stars. Full screen, so it actually gets seen.',
       href: '/lab-molecules.html',
-      art: '/assets/enter/descent.jpg',
+      art: '/assets/enter/hf-ascent.jpg',
       // Rotating door art pool: every visitor is handed a different plate, so
       // the front door never reads twice. Drop in numbered files (descent-1.jpg,
       // descent-2.jpg, …) to grow the pool — see docs/FRONT-DOOR-MASTER-PROMPT.md.
       // artFor() picks one deterministically per session and falls back to `art`
       // if a variant is missing.
-      artVary: [
-        '/assets/enter/descent.jpg',
-        '/assets/enter/descent-1.jpg',
-        '/assets/enter/descent-2.jpg',
-        '/assets/enter/descent-3.jpg',
-        '/assets/enter/descent-4.jpg'
-      ],
+      artVary: ['/assets/enter/descent.jpg'],
       accent: C.cyan,
       geo: 'icosa'
     },
@@ -92,8 +86,7 @@
       kicker: 'The main site',
       blurb: 'The main site. What SHADDAI is, how it works, the seven agents, the worlds, the arcade and the brain — the whole story, in order.',
       href: '/home.html',
-      art: '/assets/enter/entry.jpg',
-      artVary: ['/assets/enter/entry.jpg','/assets/enter/entry-1.jpg','/assets/enter/entry-2.jpg','/assets/enter/entry-3.jpg','/assets/enter/entry-4.jpg'],
+      art: '/assets/enter/hf-main.jpg',
       accent: C.gold,
       geo: 'dodeca'
     },
@@ -155,8 +148,8 @@
       kicker: 'The full realm',
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
       href: '/world3d',
-      art: '/assets/enter/world3d.jpg',
-      artVary: ['/assets/enter/world3d.jpg','/assets/enter/world3d-1.jpg','/assets/enter/world3d-2.jpg','/assets/enter/world3d-3.jpg','/assets/enter/world3d-4.jpg'],
+      art: '/assets/enter/hf-world3d.jpg',
+      artVary: ['/assets/enter/world3d.jpg'],
       /* Greyed rather than accented. A dim tile beside bright ones reads as
          "not yet" without a word of explanation — the way a locked level does
          in a game, which is the right feeling for something being built. */
@@ -193,7 +186,8 @@
       kicker: 'Your keys · your assistant',
       blurb: 'Plug in the accounts you already pay for, and point your own Claude or Grok at the council. Twenty-two connectors, and we take nothing on what you make.',
       href: '/connectors.html',
-      art: '/assets/nav/apis.jpg',
+      art: '/assets/enter/hf-connect.jpg',
+      artVary: ['/assets/enter/hf-connect.jpg'],
       accent: C.emerald,
       geo: 'cube'
     },
@@ -203,7 +197,8 @@
       kicker: 'How all of it works',
       blurb: 'The booklet — Sparks, the council, the forge, every game and its controls, and the flywheel. Read it like a cartridge manual.',
       href: '/manual.html',
-      art: '/assets/nav/apis.jpg',
+      art: '/assets/enter/hf-manual.jpg',
+      artVary: ['/assets/enter/hf-manual.jpg'],
       accent: C.gold,
       geo: 'dodeca'
     },

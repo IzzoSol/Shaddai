@@ -259,8 +259,8 @@ html[data-theme-skin="bone"] .slot{
    more light, more life, the 3D solid floats in front of it. */
 .slot .art{
   position:absolute; inset:0; z-index:0; background-size:cover; background-position:center;
-  opacity:.58; filter:saturate(1.1) contrast(1.12) brightness(1.22);
-  transform:scale(1.05); transition:opacity .55s var(--ease), transform .8s var(--ease);
+  opacity:.7; filter:saturate(1.2) contrast(1.25) brightness(1.35);
+  transform:scale(1.1); transition:opacity .55s var(--ease), transform .8s var(--ease);
 }
 /* Rotating door plate (<img>, not the avatar-style .art img): fills the tile
    edge to edge as a background and inherits the .art wash/filter above. The
@@ -596,16 +596,21 @@ body[data-lay="tile"] .slot .name{ font-size:clamp(26px,7vw,44px); }
     <p>One empire. Pick the door — or rearrange them until they're yours.</p>
   </div>
 
-      <!-- Simple Mode: above the grid, not in it. See .simplebtn. -->
-      <a class="simplebtn" href="/simple.html">
-        <span>◉ Simple Mode</span>
-        <span class="sd">one wheel · everything · built for a thumb</span>
-      </a>
-      <div class="layswitch" id="layswitch" role="group" aria-label="Layout">
-        <button type="button" data-l="grid"  aria-pressed="true">▦ Grid</button>
-        <button type="button" data-l="stack" aria-pressed="false">▤ Stack</button>
-        <button type="button" data-l="tile"  aria-pressed="false">◼ Tile</button>
-      </div>
+<!-- Simple Mode: above the grid, not in it. See .simplebtn. -->
+<a class="simplebtn" href="/simple.html">
+  <span>◉ Simple Mode</span>
+  <span class="sd">one wheel · everything · built for a thumb</span>
+</a>
+<div class="layswitch" id="layswitch" role="group" aria-label="Layout">
+  <button type="button" data-l="list" aria-pressed="true">📋</button>
+  <button type="button" data-l="stack" aria-pressed="false">▤</button>
+  <button type="button" data-l="tile" aria-pressed="false">◼</button>
+  <button type="button" data-l="3d-grid" aria-pressed="false">🜑</button>
+  <button type="button" data-l="3d-stack" aria-pressed="false">🜍</button>
+  <button type="button" data-l="3d-tile" aria-pressed="false">🜌</button>
+  <button type="button" data-l="3d-card" aria-pressed="false">🜏</button>
+  <button type="button" data-l="3d-flow" aria-pressed="false">🜐</button>
+</div>
   <div class="grid" id="grid"></div>
 </main>
 
