@@ -522,6 +522,31 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 @media(max-width:520px){ .simplebtn .sd{ display:none; } }
 @media(prefers-reduced-motion:reduce){ .simplebtn{ animation:none; } }
 
+/* routing example strip under Simple Mode — a quiet three-part log line */
+.routex{
+  width:min(560px,90vw); margin:0 auto clamp(18px,3vw,28px);
+  display:flex; align-items:center; flex-wrap:wrap; gap:9px 12px;
+  padding:12px 16px; border-radius:3px;
+  border:1px solid var(--edge,rgba(120,150,140,.14));
+  background:var(--panel,#0e141b); font-family:var(--f-mono);
+}
+.routex-q,.routex-a{
+  font-size:9px; letter-spacing:.22em; text-transform:uppercase; font-weight:600;
+  border-radius:2px; padding:3px 8px; line-height:1;
+}
+.routex-q{ color:#06080b; background:var(--emerald,#00ff9c); }
+.routex-a{ color:var(--ink,#e9efe9); border:1px solid var(--edge,rgba(120,150,140,.28)); }
+.routex-dot{ width:5px; height:5px; border-radius:50%; background:var(--emerald,#00ff9c);
+  box-shadow:0 0 8px var(--emerald,#00ff9c); flex-shrink:0; }
+.routex-line{ margin:0; font-size:11px; letter-spacing:.04em; color:var(--ink-soft,#93a49b); }
+.routex-chips{ display:inline-flex; align-items:center; gap:6px; margin-left:auto; }
+.routex-chips .rc{
+  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft,#93a49b);
+  border:1px solid var(--edge,rgba(120,150,140,.22)); border-radius:2px; padding:3px 7px; line-height:1;
+}
+.routex-chips .rc.done{ color:var(--emerald,#00ff9c); border-color:color-mix(in srgb, var(--emerald,#00ff9c) 42%, transparent); }
+@media(max-width:520px){ .routex-chips{ margin-left:0; } }
+
 /* ══ FOOTER — the things a real site has ═════════════════════════════════ */
 .foot{ position:relative; z-index:10; margin-top:auto;
   padding:clamp(16px,2.4vw,24px) clamp(16px,4vw,42px) calc(16px + env(safe-area-inset-bottom));
@@ -753,6 +778,22 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
   <span>◉ Simple Mode</span>
   <span class="sd">one wheel · everything · built for a thumb</span>
 </a>
+
+<!-- routing example: the council actually works like this, in the MCP too.
+     A request lands, the router asks the seven, they vote, and the match
+     decides who picks it up. Kept as a quiet strip under Simple Mode. -->
+<div class="routex" aria-label="How routing works">
+  <span class="routex-q">try it</span>
+  <span class="routex-a">route it</span>
+  <span class="routex-dot" aria-hidden="true"></span>
+  <p class="routex-line">the council decided after 6 rounds</p>
+  <div class="routex-chips">
+    <span class="rc">writing</span>
+    <span class="rc">spirituality</span>
+    <span class="rc done">→ matched</span>
+  </div>
+</div>
+
 <div class="viewctl" id="viewCtrl">
   <button type="button" class="viewbtn" id="viewBtn" aria-haspopup="listbox" aria-expanded="false" title="Change how the doors are laid out">
     <span class="v-ico">◧</span><span id="viewLbl">grid</span><span class="v-caret">⌄</span>

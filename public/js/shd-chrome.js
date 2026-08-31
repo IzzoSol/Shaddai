@@ -166,7 +166,21 @@
     '.shdc-or{text-align:center;font-family:var(--f-mono,monospace);font-size:9.5px;letter-spacing:.24em;',
     'text-transform:uppercase;color:var(--ink-faint,#4f5d57);margin:16px 0 2px}',
     '.shdc-msg{font-family:var(--f-mono,monospace);font-size:11px;margin-top:12px;min-height:16px;color:var(--ink-faint,#4f5d57)}',
-    '.shdc-msg.bad{color:#ff6f6f}.shdc-msg.good{color:#00ff9c}'
+    '.shdc-msg.bad{color:#ff6f6f}.shdc-msg.good{color:#00ff9c}',
+    /* a user-picked ink overrides every skin's default text colour. Written as
+       an equal-specificity attribute rule placed AFTER the pair skins, so the
+       later declaration wins; setInk() also derives soft/faint tones. */
+    'html[data-ink]{--ink:var(--shd-ink);--ink-soft:var(--shd-ink-soft);--ink-faint:var(--shd-ink-faint)}',
+    '.shdc-ink{margin-top:16px;border-top:1px solid var(--edge,rgba(120,150,140,.12));padding-top:14px}',
+    '.shdc-ink h3{font-family:var(--f-mono,monospace);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint,#4f5d57);margin:0 0 9px}',
+    '.shdc-ink .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
+    '.shdc-ink button.sw{width:28px;height:28px;border-radius:50%;border:1px solid var(--edge,rgba(120,150,140,.3));cursor:pointer;padding:0;position:relative;background:var(--c,#fff)}',
+    '.shdc-ink button.sw.on::after{content:"";position:absolute;inset:-5px;border:1px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.4)}',
+    '.shdc-ink input[type=color]{width:34px;height:34px;padding:0;border:1px solid var(--edge,rgba(120,150,140,.3));border-radius:4px;background:none;cursor:pointer}',
+    '.shdc-ink .hex{width:100px;font-family:var(--f-mono,monospace);font-size:12px;background:var(--panel,#0e141b);border:1px solid var(--edge,rgba(120,150,140,.3));border-radius:2px;color:var(--ink,#e9efe9);padding:6px 8px;outline:none}',
+    '.shdc-ink .hex:focus{border-color:#00ff9c}',
+    '.shdc-ink .reset{margin-left:auto;font-family:var(--f-mono,monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft,#93a49b);background:none;border:0;cursor:pointer}',
+    '.shdc-ink .reset:hover{color:var(--ink,#e9efe9)}'
   ].join('');
 
   function injectOnce() {
@@ -186,6 +200,56 @@
     if (box) box.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.skin === id); });
     fire(skinSubs, id);
     return id;
+  }
+
+  /* ── ink (font colour) ─────────────────────────────────────────────────
+     Independent of the skin: the visitor can pick their own text colour on
+     top of any theme. Persisted under shd_theme_ink and applied via the
+     html[data-ink] override above, with soft/faint tones derived from it. */
+  var INK_PRESETS = ['#e9efe9', '#ffffff', '#00ff9c', '#ff9a5c', '#c79cff', '#5ce6ff'];
+  function hexToRgb(h) {
+    h = (h || '').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var n = parseInt(h, 16);
+    if (isNaN(n)) return null;
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+  function shade(hex, f) { /* f>0 lighten, f<0 darken toward black */
+    var c = hexToRgb(hex); if (!c) return hex;
+    return 'rgb(' + Math.round(c.r + (255 - c.r) * Math.max(0, f)) + ',' +
+      Math.round(c.g + (255 - c.g) * Math.max(0, f)) + ',' +
+      Math.round(c.b + (255 - c.b) * Math.max(0, f)) + ')';
+  }
+  function getInk() { try { return localStorage.getItem('shd_theme_ink'); } catch (e) { return null; } }
+  function applyInk(color) {
+    var el = document.documentElement;
+    if (!color || !hexToRgb(color)) { el.removeAttribute('data-ink'); el.style.removeProperty('--shd-ink'); return; }
+    color = color.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+    el.setAttribute('data-ink', '1');
+    el.style.setProperty('--shd-ink', '#' + color);
+    el.style.setProperty('--shd-ink-soft', shade(color, 0.38));
+    el.style.setProperty('--shd-ink-faint', shade(color, 0.62));
+  }
+  function setInk(color) {
+    if (!color) {
+      try { localStorage.removeItem('shd_theme_ink'); } catch (e) {}
+    } else {
+      var c = (color || '').replace('#', '').replace(/[^0-9a-fA-F]/g, '');
+      if (c.length !== 6) return getInk();
+      try { localStorage.setItem('shd_theme_ink', '#' + c.toLowerCase()); } catch (e) {}
+    }
+    applyInk(color);
+    var row = document.getElementById('shdc-ink-row');
+    if (row) paintInkRow(row);
+    return getInk();
+  }
+  function paintInkRow(row) {
+    var cur = applyInk ? getInk() : getInk();
+    var hexIn = row.querySelector('.hex');
+    if (hexIn) hexIn.value = cur || '';
+    row.querySelectorAll('button.sw').forEach(function (b) {
+      b.classList.toggle('on', !!cur && cur.toLowerCase() === b.dataset.v.toLowerCase());
+    });
   }
 
   /* ── dwell preference ─────────────────────────────────────────────────── */
@@ -252,7 +316,13 @@
       '<button class="shdc-x" type="button" data-close>✕ close</button>' +
       '<h2>Theme</h2>' +
       '<p class="hint">Shared with the rest of SHADDAI — your choice follows you into the dashboard.</p>' +
-      '<div class="shdc-skins" id="shdc-skins"></div>';
+      '<div class="shdc-skins" id="shdc-skins"></div>' +
+      '<div class="shdc-ink" id="shdc-ink">' +
+        '<h3>Font colour</h3>' +
+        '<div class="row" id="shdc-ink-row">' +
+          '<button type="button" class="reset" data-ink-reset title="Use each theme\u2019s default">reset</button>' +
+        '</div>' +
+      '</div>';
 
     authSheet = document.createElement('div');
     authSheet.className = 'shdc-sheet';
@@ -297,6 +367,29 @@
       });
       box.appendChild(b);
     });
+
+    /* ink row — swatches + a native colour picker + free-typed hex */
+    var inkRow = themeSheet.querySelector('#shdc-ink-row');
+    INK_PRESETS.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'sw'; b.dataset.v = c; b.style.setProperty('--c', c);
+      b.title = c; b.setAttribute('aria-label', 'Ink ' + c);
+      b.addEventListener('click', function () { setInk(c); });
+      inkRow.appendChild(b);
+    });
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color'; colorInput.value = '#e9efe9';
+    colorInput.setAttribute('aria-label', 'Pick font colour');
+    colorInput.addEventListener('input', function () { setInk(colorInput.value); });
+    inkRow.appendChild(colorInput);
+    var hexIn = document.createElement('input');
+    hexIn.className = 'hex'; hexIn.placeholder = '#e9efe9'; hexIn.maxLength = 7;
+    hexIn.setAttribute('aria-label', 'Hex font colour');
+    hexIn.addEventListener('change', function () { setInk(hexIn.value); colorInput.value = getInk() || '#e9efe9'; });
+    hexIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { setInk(hexIn.value); colorInput.value = getInk() || '#e9efe9'; } });
+    inkRow.appendChild(hexIn);
+    inkRow.querySelector('[data-ink-reset]').addEventListener('click', function () { setInk(null); colorInput.value = '#e9efe9'; });
+    paintInkRow(inkRow);
 
     var msg = authSheet.querySelector('#shdc-msg');
     var out = authSheet.querySelector('#shdc-out');
@@ -387,7 +480,7 @@
 
   root.SHDChrome = {
     SKINS: SKINS,
-    init: function () { build(); setSkin(getSkin()); return this; },
+    init: function () { build(); setSkin(getSkin()); if (getInk()) applyInk(getInk()); return this; },
     skin: getSkin,
     setSkin: setSkin,
     onSkin: function (fn) { skinSubs.push(fn); return this; },
