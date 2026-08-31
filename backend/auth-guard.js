@@ -12,7 +12,7 @@
 //                            development.
 // Flip REQUIRE_AUTH=true + set FIREBASE_SERVICE_ACCOUNT + ADMIN_TOKEN for production.
 // ============================================================================
-const _hits = new Map(); // ip -> { count, ts }
+const _hits = new Map(); // ip -> [epoch-ms timestamps] (sliding window)
 
 // ── Firebase lazy init ───────────────────────────────────────────────────────
 // _adminAuth is null until first call to _getAdminAuth().
@@ -67,12 +67,23 @@ function _getAdminAuth() {
 
 function rateLimit({ windowMs = 60000, max = 60 } = {}) {
   return (req, res, next) => {
-    const ip = (req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'local').toString();
+    const ip = (req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'local').toString().replace(/:/g, '_');
     const now = Date.now();
-    let e = _hits.get(ip);
-    if (!e || now - e.ts > windowMs) { e = { count: 0, ts: now }; }
-    e.count++; _hits.set(ip, e);
-    if (e.count > max) return res.status(429).json({ ok: false, error: 'rate limit exceeded — slow down' });
+    const cutoff = now - windowMs;
+    let times = _hits.get(ip);
+    if (!times) { times = []; _hits.set(ip, times); }
+    // Trim old hits outside the sliding window.
+    while (times.length && times[0] <= cutoff) times.shift();
+    // Check BEFORE recording so a concurrent burst can't push past the cap.
+    if (times.length >= max) return res.status(429).json({ ok: false, error: 'rate limit exceeded — slow down' });
+    times.push(now);
+    // Opportunistic cleanup to bound memory growth.
+    if (_hits.size > 2000) {
+      for (const [k, arr] of _hits) {
+        while (arr.length && arr[0] <= cutoff) arr.shift();
+        if (arr.length === 0) _hits.delete(k);
+      }
+    }
     next();
   };
 }

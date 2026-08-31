@@ -169,26 +169,34 @@ function setCache(key, data, ttlMs = 30000) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// IP-BASED RATE LIMITER — 30 requests per minute per IP
-// Protects LLM chat endpoints from abuse / runaway costs
+// IP-BASED RATE LIMITER — sliding-window, default 30 req/min per IP
+// Protects LLM chat endpoints from abuse / runaway costs.
+// Sliding window (not fixed buckets) so a burst straddling a minute
+// boundary can't slip ~2x the limit through (audit Issue #6).
 // ─────────────────────────────────────────────────────────────
-const _ipCallCounts = new Map();
+const _ipCallTimes = new Map(); // ip -> [epoch-ms timestamps]
 function checkRateLimit(ip, limit = 30, windowMs = 60000) {
   const now = Date.now();
-  // Normalize IPv6 colons so the separator '|' is unambiguous in cleanup
   const safeIp = (ip || 'unknown').replace(/:/g, '_');
-  const window = Math.floor(now / windowMs);
-  const key = `${safeIp}|${window}`;
-  const count = (_ipCallCounts.get(key) || 0) + 1;
-  _ipCallCounts.set(key, count);
-  // Cleanup old keys every 100 calls to prevent memory growth
-  if (count === 1 && _ipCallCounts.size > 500) {
-    const cutoff = window - 1;
-    for (const k of _ipCallCounts.keys()) {
-      if (parseInt(k.split('|')[1]) < cutoff) _ipCallCounts.delete(k);
+  let times = _ipCallTimes.get(safeIp);
+  if (!times) { times = []; _ipCallTimes.set(safeIp, times); }
+  // Drop timestamps outside the sliding window.
+  const cutoff = now - windowMs;
+  let i = 0;
+  while (i < times.length && times[i] <= cutoff) i++;
+  if (i > 0) times.splice(0, i);
+  // Enforce the limit BEFORE recording, so a burst can't read-count-then-write
+  // concurrently past the cap (the audit's core concern).
+  if (times.length >= limit) return false;
+  times.push(now);
+  // Opportunistic cleanup to bound memory growth once the map gets large.
+  if (_ipCallTimes.size > 2000) {
+    for (const [k, arr] of _ipCallTimes) {
+      while (arr.length && arr[0] <= cutoff) arr.shift();
+      if (arr.length === 0) _ipCallTimes.delete(k);
     }
   }
-  return count <= limit;
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────

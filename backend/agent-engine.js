@@ -25,6 +25,47 @@ try { payGuard = require('./pay-guard'); } catch (e) { console.warn('[ENGINE] pa
 let payboxGuard = null;
 try { payboxGuard = require('./paybox-guard'); } catch (e) { console.warn('[ENGINE] paybox-guard unavailable:', e.message); }
 
+// ── SECURITY HELPERS ─────────────────────────────────────────────
+// Strict http(s) URL validator: proper parse + protocol allow-list, rejects
+// file://, ftp://, javascript:, credentials-in-URL, and malformed input. Returns
+// { ok:false, error } or { ok:true, value: normalizedUrl }. Replaces weak
+// `startsWith('http')` checks that a malformed/alternate-scheme input could slip.
+const VALIDATE_URL_ERROR = 'Invalid URL — must be a well-formed http(s) URL (no credentials, no file/javascript schemes)';
+function validateHttpUrl(u) {
+  if (typeof u !== 'string') return { ok: false, error: VALIDATE_URL_ERROR };
+  let parsed;
+  try { parsed = new URL(u); } catch (e) { return { ok: false, error: VALIDATE_URL_ERROR }; }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return { ok: false, error: VALIDATE_URL_ERROR };
+  if (parsed.username || parsed.password) return { ok: false, error: 'URL must not contain embedded credentials' };
+  if (!parsed.hostname) return { ok: false, error: VALIDATE_URL_ERROR };
+  return { ok: true, value: parsed.toString() };
+}
+
+// Sanitize an error before it reaches a client: in production return a generic
+// message (full detail goes to the server log only). Mira waits for the full
+// stack/details in the log — the client never sees internal paths.
+function sanitizeError(err, isDev) {
+  const msg = (err && (err.message || String(err))) || 'An unexpected error occurred';
+  if (isDev) return msg;
+  if (process.env.NODE_ENV === 'production') return 'An internal error occurred. Please try again.';
+  return msg;
+}
+
+// Expand sensitive-key detection for log masking: catches apiKey, accessToken,
+// credential, jwt, bearer, refresh_token, client_secret — not just /key|token/.
+const SECRET_KEY_RE = /password|secret|apikey|api_key|access[_-]?token|refresh[_-]?token|credential|jwt|bearer|session[_-]?id|client[_-]?secret|private[_-]?key/i;
+function maskSensitive(o) {
+  if (Array.isArray(o)) return o.map(maskSensitive);
+  if (o && typeof o === 'object') {
+    const out = {};
+    for (const k of Object.keys(o)) {
+      out[k] = SECRET_KEY_RE.test(k) ? '***' : maskSensitive(o[k]);
+    }
+    return out;
+  }
+  return o;
+}
+
 // Resolve a tool by name: static registry first, then any connected MCP tool.
 function resolveTool(name) {
   if (TOOLS[name]) return TOOLS[name];
@@ -432,9 +473,12 @@ const TOOLS = {
     schema: { url: 'string — full https:// URL' },
     agents: ['ORACLE','QUILL','NEXUS','PIKADON'],
     async execute({ url }) {
-      if (!url?.startsWith('http')) return 'URL must start with https://';
-      try { await ssrfGuard.assertPublicUrl(url); } catch (e) { return 'Blocked (SSRF guard): ' + e.message; }
-      const r = await axios.get(url, {
+      // Hardened URL validation: proper parse + http(s) scheme only (no file://,
+      // ftp://, javascript:, or malformed input) — replaces the weak startsWith('http').
+      const parsed = validateHttpUrl(url);
+      if (!parsed.ok) return parsed.error;
+      try { await ssrfGuard.assertPublicUrl(parsed.value); } catch (e) { return 'Blocked (SSRF guard): ' + e.message; }
+      const r = await axios.get(parsed.value, {
         timeout: 12000,
         headers: { 'User-Agent': 'Mozilla/5.0 SHADDAI-Agent/2.0' },
         responseType: 'text',
@@ -444,7 +488,7 @@ const TOOLS = {
       const text = stripHtml(r.data).slice(0, 3000);
       return JSON.stringify({
         title: titleMatch ? titleMatch[1].trim() : 'No title',
-        url, contentLength: r.data.length,
+        url: parsed.value, contentLength: r.data.length,
         text
       });
     }
@@ -474,8 +518,10 @@ const TOOLS = {
     schema: { url: 'string — RSS feed URL', limit: 'number — items to return (default 8)' },
     agents: ['ORACLE','QUILL'],
     async execute({ url, limit = 8 }) {
-      try { await ssrfGuard.assertPublicUrl(url); } catch (e) { return 'Blocked (SSRF guard): ' + e.message; }
-      const r = await axios.get(url, { timeout: 10000, responseType: 'text', headers: { 'User-Agent': 'SHADDAI-Agent/2.0' } });
+      const parsed = validateHttpUrl(url);
+      if (!parsed.ok) return parsed.error;
+      try { await ssrfGuard.assertPublicUrl(parsed.value); } catch (e) { return 'Blocked (SSRF guard): ' + e.message; }
+      const r = await axios.get(parsed.value, { timeout: 10000, responseType: 'text', headers: { 'User-Agent': 'SHADDAI-Agent/2.0' } });
       const xml = r.data;
       // Extract items from RSS or Atom
       const itemRe = /<item[^>]*>([\s\S]*?)<\/item>|<entry[^>]*>([\s\S]*?)<\/entry>/gi;
@@ -585,6 +631,8 @@ const TOOLS = {
     async execute({ code }) {
       // Routed through the shared sandbox module (backend/lib/sandbox.js).
       // Preserves the { success, output[], error } JSON contract callers expect.
+      if (typeof code !== 'string') return JSON.stringify({ success: false, error: 'code must be a string' });
+      if (code.length > 20000) return JSON.stringify({ success: false, error: 'code exceeds 20,000 char limit' });
       const r = await runSandboxedJs(code, { timeoutMs: 3000 });
       return JSON.stringify(r);
     }
@@ -606,11 +654,14 @@ const TOOLS = {
           error: 'python exec disabled — set ALLOW_PYTHON_EXEC=true and use a sandboxed runner (Docker --network none)'
         });
       }
+      if (typeof code !== 'string') return JSON.stringify({ success: false, error: 'code must be a string', stdout: '' });
+      if (code.length > 50000) return JSON.stringify({ success: false, error: 'code exceeds 50,000 char limit', stdout: '' });
 
       return new Promise((resolve) => {
         const tmpFile = path.join(OUTPUT_DIR, `tmp_py_${Date.now()}.py`);
         try { fs.writeFileSync(tmpFile, code, 'utf8'); } catch (writeErr) {
-          return resolve(JSON.stringify({ success: false, error: `failed to write temp file: ${writeErr.message}`, stdout: '' }));
+          console.error('[run_python] temp write failed:', writeErr.message);
+          return resolve(JSON.stringify({ success: false, error: 'failed to write temp file (internal error)', stdout: '' }));
         }
         // Timeout set to 8 s. For true isolation wrap with:
         // docker run --rm --network none --memory 128m --cpus 0.5 python:3.11-slim python -c "<code>"
@@ -698,6 +749,8 @@ const TOOLS = {
     schema: { filename: 'string — desired filename with extension', content: 'string — file content' },
     agents: ['QUILL','NEXUS','TURTLE','SHADDAI'],
     async execute({ filename, content }) {
+      if (typeof content !== 'string') return JSON.stringify({ success: false, error: 'content must be a string' });
+      if (Buffer.byteLength(content) > 250000) return JSON.stringify({ success: false, error: 'content exceeds 250,000 byte limit' });
       const safe = path.basename(String(filename)).replace(/[^a-zA-Z0-9._-]/g,'_');
       const name = `${Date.now()}_${safe.includes('.')? safe : safe+'.txt'}`;
       const fp = path.join(OUTPUT_DIR, name);
@@ -3414,7 +3467,7 @@ async function extractAndRunTools(text, agentName, taskId = null, allowed = null
     const toolName = match[1];
     let params = {};
     try { params = JSON.parse(match[2]); } catch(e) {
-      console.warn('[ENGINE] Bad JSON params for', toolName, ':', match[2]);
+      console.warn('[ENGINE] Bad JSON params for', toolName, ':', JSON.stringify(maskSensitive(match[2])));
     }
     const tool = resolveTool(toolName);
     if (!tool) { results.push({ tool: toolName, result: `Unknown tool: ${toolName}.` }); continue; }
@@ -3447,7 +3500,7 @@ async function extractAndRunTools(text, agentName, taskId = null, allowed = null
       cacheAnalytics.set(toolName, params, result); // store for next call
       results.push({ tool: toolName, params, result });
       if (taskId) agentEventBus.toolDone(taskId, toolName, result, Date.now() - t0);
-      const safeParams = Object.fromEntries(Object.entries(params).map(([k,v]) => [k, /password|secret|key|token/i.test(k) ? '***' : v]));
+      const safeParams = maskSensitive(params);
       console.log(`[TOOL] ${agentName} → ${toolName}(${JSON.stringify(safeParams).slice(0,80)}) → OK (${Date.now()-t0}ms)`);
     } catch(e) {
       results.push({ tool: toolName, params, result: `Tool error: ${e.message}` });

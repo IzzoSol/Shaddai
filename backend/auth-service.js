@@ -285,7 +285,9 @@ const verifyToken = async (token) => {
       throw new Error('Token is required');
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      algorithms: ['HS256'] // Restrict algorithm (audit #7)
+    });
     return decoded;
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
