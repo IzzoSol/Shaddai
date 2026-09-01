@@ -438,6 +438,43 @@ body.editing .slot .go{ display:none; }
   letter-spacing:.14em; color:var(--ink-faint); min-height:40px; min-width:40px; }
 .sheet .close:hover{ color:var(--ink); }
 
+/* ── gated doors — one quiet chip that says what to do ───────────────── */
+.slot.gated:not(.open) .lock{
+  border:1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.slot.open .lock{ display:none; }
+.slot.gated .go{ color:var(--accent); }
+
+/* ── the gate — sleek, bold, one question ───────────────────────────── */
+.gsheet .glock{ font-family:var(--f-mono); font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); }
+.gsheet .gtitle{ font-family:var(--f-display); font-weight:700; font-size:clamp(20px,3.6vw,26px); letter-spacing:.12em; text-transform:uppercase; color:var(--ink); margin-top:8px; }
+.gsheet .grow{ display:flex; gap:8px; margin-top:18px; }
+.gsheet .grow input{
+  flex:1; min-width:0; min-height:54px;
+  background:var(--panel); border:1px solid var(--edge); border-radius:3px;
+  color:var(--ink); font-family:var(--f-mono); font-size:clamp(18px,3vw,22px);
+  letter-spacing:.6em; text-align:center; padding:0 10px; outline:none; text-transform:uppercase;
+}
+.gsheet .grow input:focus{ border-color:var(--accent); box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
+.gsheet .grow button{
+  min-height:54px; min-width:clamp(108px,20vw,140px); border-radius:3px;
+  border:1px solid var(--accent); background:var(--accent); color:var(--void);
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; font-weight:700; cursor:pointer;
+  transition:filter .2s var(--ease);
+}
+.gsheet .grow button:hover{ filter:brightness(1.1); }
+.gsheet .grow button[disabled]{ opacity:.45; cursor:default; }
+.gmsg{ font-family:var(--f-mono); font-size:11px; letter-spacing:.08em; min-height:16px; margin-top:12px; color:var(--ink-faint); }
+.gmsg.bad{ color:#ff6f6f; }
+.sheet.shake{ animation:gateShake .4s var(--ease); }
+@keyframes gateShake{
+  0%,100%{ transform:translate(-50%,-50%) scale(1) translateX(0); }
+  20%,60%{ transform:translate(calc(-50% - 10px),-50%); }
+  40%,80%{ transform:translate(calc(-50% + 10px),-50%); }
+}
+
 .lib{ display:flex; flex-direction:column; gap:7px; margin-top:16px; }
 .lib .row{
   display:flex; align-items:center; gap:13px; width:100%; text-align:left;
@@ -584,105 +621,125 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 }
 
 /* ══ LAYOUT VIEWS ═════════════════════════════════════════════════════════
-   Three ways to see the same four doors. Not decoration — they suit different
-   moments: GRID to browse, STACK to read what each one is before committing,
-   TILE when you already know and want the biggest possible target.
+   Four ways to see the doors, each a REAL 3D staging - not flats that just
+   re-seat the same tiles. Swivel swings the doors open, orb floats them on a
+   slow-turning shell, wheel rims them into a rolling band, and 3D tile stands
+   them up as extruded slabs. The choice persists.
 
-   The choice persists, because someone who prefers one prefers it every time. */
-/* LIST / GRID — the default browse view: even 2×2 blocks */
-body[data-lay="list"] .grid{ grid-template-columns:repeat(2,1fr) !important; }
-@media(max-width:560px){ body[data-lay="list"] .grid{ grid-template-columns:1fr !important; } }
+   The plain 2x2 grid (no data-lay) is the browse view used until a visitor
+   picks one, and stays the fallback for anything unknown. */
 
-body[data-lay="stack"] .grid{ grid-template-columns:1fr !important; max-width:620px; }
-body[data-lay="stack"] .slot{ min-height:132px; }
-body[data-lay="stack"] .slot .bio{ opacity:1 !important; }
-
-body[data-lay="tile"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:760px; }
-body[data-lay="tile"] .slot{ min-height:clamp(150px,30vh,240px); }
-body[data-lay="tile"] .slot .kicker, body[data-lay="tile"] .slot .bio{ display:none; }
-body[data-lay="tile"] .slot .name{ font-size:clamp(26px,7vw,40px); }
-
-@media(max-width:560px){
-  body[data-lay="grid"] .grid{ grid-template-columns:1fr 1fr !important; }
+/* a door being entered: the plate pops toward you before the page turns */
+@keyframes doorPop{
+  0%{ transform:scale(1); }
+  40%{ transform:scale(1.07) translateY(-10px); }
+  70%{ transform:scale(.99); }
+  100%{ transform:scale(1); }
 }
+.slot.activating{ animation:doorPop .42s var(--ease); }
+.slot.activating .artimg{ filter:brightness(1.35) saturate(1.25); }
 
-/* ══ VIEW LAYOUTS — seven ways to see the four doors, one button to pick.
-   The flats only re-seat the chrome; SWIVEL, ORB and WHEEL give the group a
-   gentle vantage point without ever losing a door, and only 3D CARD plays with
-   deep perspective. Restrained — a vantage, not a party trick. */
-
-/* 3D CARD — a tightened pack, each door slightly rotated on its corner axis */
-body[data-lay="3d-card"]{ perspective:1300px; }
-body[data-lay="3d-card"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:880px; gap:clamp(16px,2.6vw,28px); }
-body[data-lay="3d-card"] .slot{
-  min-height:clamp(150px,26vh,230px); transform:rotateZ(1.5deg) rotateY(-6deg);
-  box-shadow:0 20px 48px rgba(0,0,0,.55);
-}
-body[data-lay="3d-card"] .slot:nth-child(even){ transform:rotateZ(-1.5deg) rotateY(6deg); }
-body[data-lay="3d-card"] .slot .kicker, body[data-lay="3d-card"] .slot .bio{ display:none; }
-body[data-lay="3d-card"] .slot:hover, body[data-lay="3d-card"] .slot:focus-visible, body[data-lay="3d-card"] .slot.touched{
-  transform:rotateZ(0) rotateY(0) translateY(-6px);
-}
-@media(prefers-reduced-motion:reduce){ body[data-lay="3d-card"] .slot{ transform:none; } }
-@media(max-width:640px){ body[data-lay="3d-card"] .grid{ grid-template-columns:1fr !important; } }
-
-/* SWIVEL — a two-up browse where the doors stand open to the room and turn to
-   face you the moment you rest on them. */
-body[data-lay="swivel"]{ perspective:1200px; }
-body[data-lay="swivel"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:900px; gap:clamp(16px,2.6vw,30px); }
+/* SWIVEL - a two-up pack that stands ajar and swings flat to face you the
+   moment you rest on a door. Real hinge work, not a tilt. */
+body[data-lay="swivel"]{ perspective:1500px; }
+body[data-lay="swivel"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:900px; gap:clamp(14px,2.6vw,30px); }
 body[data-lay="swivel"] .slot{
-  transform-origin:center; transform:rotateY(0) rotateX(0);
-  box-shadow:0 16px 40px rgba(0,0,0,.45);
-  transition:transform .5s var(--ease), border-color .4s var(--ease), box-shadow .5s var(--ease);
+  transform:rotateY(26deg) rotateX(2deg);
+  box-shadow:0 18px 46px rgba(0,0,0,.5);
+  transition:transform .6s var(--ease), border-color .4s var(--ease), box-shadow .6s var(--ease);
 }
-body[data-lay="swivel"] .slot:nth-child(odd){ transform:rotateY(13deg) rotateX(2deg); }
-body[data-lay="swivel"] .slot:nth-child(even){ transform:rotateY(-13deg) rotateX(-2deg); }
+body[data-lay="swivel"] .slot:nth-child(even){ transform:rotateY(-26deg) rotateX(-2deg); }
 body[data-lay="swivel"] .slot:hover, body[data-lay="swivel"] .slot:focus-visible, body[data-lay="swivel"] .slot.touched{
-  transform:rotateY(0) rotateX(0) translateY(-6px) scale(1.01);
+  transform:rotateY(0) rotateX(0) translateZ(52px) scale(1.03);
+  box-shadow:0 30px 70px rgba(0,0,0,.6);
 }
 @media(prefers-reduced-motion:reduce){ body[data-lay="swivel"] .slot{ transform:none !important; } }
-@media(max-width:640px){ body[data-lay="swivel"] .grid{ grid-template-columns:1fr !important; } body[data-lay="swivel"] .slot{ transform:none !important; } }
+@media(max-width:640px){ body[data-lay="swivel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="swivel"] .slot{ transform:none !important; } }
 
-/* ORB — the doors sit as a handful around a point: the centre pair floats
-   nearest, the corners fall back and shrink, so the group reads as a sphere
-   of choices rather than a flat wall. */
-body[data-lay="orb"]{ perspective:1200px; }
-body[data-lay="orb"] .grid{ grid-template-columns:repeat(3,1fr) !important; max-width:980px; gap:clamp(14px,2vw,26px); }
+/* ORB - the four float on a slow-turning shell, lifted off their corners so
+   the whole group reads as a sphere of choices rather than a flat wall. */
+body[data-lay="orb"]{ perspective:1700px; }
+body[data-lay="orb"] .grid{
+  grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.2vw,26px);
+  transform-style:preserve-3d; animation:orbTumble 26s ease-in-out infinite alternate;
+}
 body[data-lay="orb"] .slot{
-  min-height:clamp(120px,19vh,170px);
-  transform:rotateY(var(--oy,0deg)) translateZ(var(--oz,0px)) scale(var(--os,1));
-  box-shadow:0 18px 44px rgba(0,0,0,.5);
+  min-height:clamp(120px,20vh,180px);
+  transform:rotateY(var(--oy,0deg)) translateZ(var(--oz,16px)) scale(var(--os,1));
+  box-shadow:0 20px 50px rgba(0,0,0,.55);
+  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="orb"] .slot:nth-child(1){ --oy:10deg; --oz:-36px; --os:.9; }
-body[data-lay="orb"] .slot:nth-child(2){ --oy:0deg;  --oz:30px;  --os:1.06; }
-body[data-lay="orb"] .slot:nth-child(3){ --oy:-10deg;--oz:-36px; --os:.9; }
-body[data-lay="orb"] .slot:nth-child(4){ --oy:-10deg;--oz:-36px; --os:.9; }
-body[data-lay="orb"] .slot:nth-child(5){ --oy:0deg;  --oz:30px;  --os:1.06; }
-body[data-lay="orb"] .slot:nth-child(6){ --oy:10deg; --oz:-36px; --os:.9; }
+body[data-lay="orb"] .slot:nth-child(1){ --oy:-15deg; --oz:38px; --os:.93; }
+body[data-lay="orb"] .slot:nth-child(2){ --oy:15deg;  --oz:52px; --os:1.06; }
+body[data-lay="orb"] .slot:nth-child(3){ --oy:-15deg; --oz:52px; --os:1.06; }
+body[data-lay="orb"] .slot:nth-child(4){ --oy:15deg;  --oz:38px; --os:.93; }
+body[data-lay="orb"] .slot:nth-child(n+5){ --oy:0deg; --oz:0px; --os:.97; }
 body[data-lay="orb"] .slot:hover, body[data-lay="orb"] .slot:focus-visible, body[data-lay="orb"] .slot.touched{
-  --oz:46px; --os:1.1; --oy:0deg;
+  --oy:0deg; --oz:70px; --os:1.14;
+  box-shadow:0 32px 76px rgba(0,0,0,.6);
 }
-@media(prefers-reduced-motion:reduce){ body[data-lay="orb"] .slot{ transform:none !important; } }
-@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:repeat(2,1fr) !important; } body[data-lay="orb"] .slot{ --oz:0px; --os:1; } }
+@keyframes orbTumble{
+  0%{ transform:rotateY(-16deg) rotateX(5deg); }
+  100%{ transform:rotateY(16deg) rotateX(-5deg); }
+}
+@media(prefers-reduced-motion:reduce){ body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } }
+@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:20px; --os:1; } }
 
-/* WHEEL — a single column that bends into the rim of a wheel, each door
-   canted on its own rib. Every door stays readable; the whole reads turned. */
-body[data-lay="wheel"]{ perspective:1400px; }
-body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:620px; }
+/* WHEEL - the doors rim a band that gently trundles on its axis; rest on one
+   and it rolls to face you and pops out of the rim. */
+body[data-lay="wheel"]{ perspective:1700px; }
+body[data-lay="wheel"] .grid{
+  grid-template-columns:repeat(2,1fr) !important; max-width:780px; gap:clamp(12px,2vw,24px);
+  transform-style:preserve-3d; animation:rimRoll 22s ease-in-out infinite alternate;
+}
 body[data-lay="wheel"] .slot{
-  min-height:clamp(112px,15vh,144px); transform:rotateY(0) rotateX(0);
-  box-shadow:0 16px 40px rgba(0,0,0,.5);
-  transition:transform .5s var(--ease), border-color .4s var(--ease), box-shadow .5s var(--ease);
+  min-height:clamp(108px,16vh,150px);
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(var(--rz,0px));
+  box-shadow:0 16px 42px rgba(0,0,0,.5);
+  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="wheel"] .slot:nth-child(1){ transform:rotateX(9deg)  translateY(-5px); }
-body[data-lay="wheel"] .slot:nth-child(2){ transform:rotateX(3deg); }
-body[data-lay="wheel"] .slot:nth-child(3){ transform:rotateX(-3deg); }
-body[data-lay="wheel"] .slot:nth-child(4){ transform:rotateX(-9deg) translateY(5px); }
-body[data-lay="wheel"] .slot:nth-child(n+5){ transform:rotateX(-12deg) translateY(6px); }
+body[data-lay="wheel"] .slot:nth-child(1){ --rx:9deg;  --ry:-9deg; --rz:28px; }
+body[data-lay="wheel"] .slot:nth-child(2){ --rx:5deg;  --ry:9deg;  --rz:42px; }
+body[data-lay="wheel"] .slot:nth-child(3){ --rx:-5deg; --ry:-9deg; --rz:42px; }
+body[data-lay="wheel"] .slot:nth-child(4){ --rx:-9deg; --ry:9deg;  --rz:28px; }
+body[data-lay="wheel"] .slot:nth-child(n+5){ --rx:0deg; --ry:0deg; --rz:0px; }
 body[data-lay="wheel"] .slot:hover, body[data-lay="wheel"] .slot:focus-visible, body[data-lay="wheel"] .slot.touched{
-  transform:rotateX(0) translateY(-6px);
+  --rx:0deg; --ry:0deg; --rz:62px; transform:translateY(-8px);
+  box-shadow:0 28px 64px rgba(0,0,0,.6);
 }
-@media(prefers-reduced-motion:reduce){ body[data-lay="wheel"] .slot{ transform:none !important; } }
+@keyframes rimRoll{
+  0%{ transform:rotateX(8deg) rotateZ(-3deg); }
+  100%{ transform:rotateX(-8deg) rotateZ(3deg); }
+}
+@media(prefers-reduced-motion:reduce){ body[data-lay="wheel"] .grid{ animation:none; } body[data-lay="wheel"] .slot{ transform:none !important; } }
+@media(max-width:640px){ body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
+
+/* 3D TILE - extruded slabs with a real side face, standing up off the page
+   and levitating on a slow float. The thick edge is drawn with a shadow so it
+   reads as depth even flat. */
+body[data-lay="tile3d"]{ perspective:1600px; }
+body[data-lay="tile3d"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.4vw,30px); }
+body[data-lay="tile3d"] .slot{
+  --thick:12px;
+  min-height:clamp(150px,26vh,230px);
+  transform:rotateX(6deg) translateZ(var(--thick));
+  box-shadow:var(--thick) var(--thick) 0 var(--void), 0 26px 60px rgba(0,0,0,.55);
+  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
+  animation:tileFloat 9s ease-in-out infinite alternate;
+}
+body[data-lay="tile3d"] .slot:nth-child(even){ animation-delay:-4.5s; }
+body[data-lay="tile3d"] .slot:hover, body[data-lay="tile3d"] .slot:focus-visible, body[data-lay="tile3d"] .slot.touched{
+  transform:rotateX(0) translateZ(calc(var(--thick) + 30px));
+  box-shadow:var(--thick) var(--thick) 0 var(--void), 0 34px 80px rgba(0,0,0,.65);
+}
+@keyframes tileFloat{
+  0%{ transform:rotateX(6deg) translateZ(var(--thick)) translateY(0); }
+  100%{ transform:rotateX(4deg) translateZ(var(--thick)) translateY(-10px); }
+}
+@media(prefers-reduced-motion:reduce){ body[data-lay="tile3d"] .slot{ animation:none; transform:none !important; } }
+@media(max-width:640px){ body[data-lay="tile3d"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
+
+
 /* ── VIEW SWITCHER — one button, a menu────────────────────────────────────
    A single compact control instead of a row of toggles. The menu floats below
    it; the current layout name and its glyph sit on the button face. */
@@ -798,13 +855,10 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
     <span class="v-ico">◧</span><span id="viewLbl">grid</span><span class="v-caret">⌄</span>
   </button>
   <div class="viewmenu" id="viewMenu" role="listbox" aria-label="Layout">
-    <button type="button" data-v="grid"     role="option" aria-selected="true"><i>▦</i>Grid</button>
-    <button type="button" data-v="stack"    role="option"><i>▤</i>Stack</button>
-    <button type="button" data-v="tile"     role="option"><i>◼</i>Tile</button>
-    <button type="button" data-v="swivel"   role="option"><i>⟳</i>Swivel</button>
-    <button type="button" data-v="orb"      role="option"><i>◎</i>Orb</button>
-    <button type="button" data-v="wheel"    role="option"><i>◉</i>Wheel</button>
-    <button type="button" data-v="3d-card"  role="option"><i>❖</i>3D Card</button>
+    <button type="button" data-v="swivel" role="option"><i>⟳</i>Swivel</button>
+    <button type="button" data-v="orb"    role="option"><i>◎</i>Orb</button>
+    <button type="button" data-v="wheel"  role="option"><i>◉</i>Wheel</button>
+    <button type="button" data-v="tile3d" role="option"><i>❖</i>3D Tile</button>
   </div>
 </div>
   <div class="grid" id="grid"></div>
@@ -819,6 +873,19 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
   <h2 id="libTitle">Swap this door</h2>
   <p class="hint">Choose what lives in slot <b id="libSlotNo">1</b>. If it's already in another slot, the two trade places.</p>
   <div class="lib" id="lib"></div>
+</div>
+
+<!-- the gate: a code-protected door asks its one question here -->
+<div class="sheet gsheet" id="sheetGate" role="dialog" aria-modal="true">
+  <button class="close" id="gateClose" type="button">✕ close</button>
+  <div class="glock">LOCKED DOOR</div>
+  <h2 class="gtitle" id="gateTitle">2D Realm</h2>
+  <p class="hint" id="gateHint">Enter the code to open this door.</p>
+  <form class="grow" id="gateForm" autocomplete="off">
+    <input id="gateIn" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="12" aria-label="Unlock code">
+    <button type="submit" id="gateGo">open</button>
+  </form>
+  <div class="gmsg" id="gateMsg"></div>
 </div>
 
 <script src="/js/shd-modules.js"></script>
@@ -921,6 +988,11 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
       a.href = m.href;
       a.dataset.slot = String(i);
       a.dataset.module = m.id;
+      if (m.gate) {
+        a.dataset.gate = m.gate;
+        a.classList.add('gated');
+        if (unlocked(m.id)) a.classList.add('open');
+      }
       a.style.setProperty('--accent', m.accent);
       a.setAttribute('aria-label', m.name + ' — ' + m.kicker + '. ' + m.blurb);
       a.innerHTML =
@@ -971,9 +1043,19 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
       el.addEventListener('touchend', function () { setTimeout(function () { el.classList.remove('touched'); }, 260); }, { passive: true });
 
       el.addEventListener('click', function (e) {
-        if (!editing) return;
+        if (editing) {
+          e.preventDefault();
+          openLib(parseInt(el.dataset.slot, 10));
+          return;
+        }
+        var g = el.dataset.gate;
+        if (g && !unlocked(el.dataset.module)) { e.preventDefault(); openGate(el.dataset.module); return; }
+        if (g || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        /* a plain click pops the plate toward you, then turns the page */
         e.preventDefault();
-        openLib(parseInt(el.dataset.slot, 10));
+        if (el.classList.contains('activating')) return;
+        el.classList.add('activating');
+        setTimeout(function () { window.location.href = el.getAttribute('href'); }, 420);
       });
     });
   }
@@ -1054,14 +1136,72 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
   }
   function closeSheets() {
     sheetLib.classList.remove('on');
+    if (sheetGate) sheetGate.classList.remove('on');
     scrim.classList.remove('on');
     grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); });
   }
   scrim.addEventListener('click', function () { closeSheets(); });
   document.getElementById('libClose').addEventListener('click', function () { closeSheets(); });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeSheets(); if (editing) setEditing(false); }
+    if (e.key === 'Escape') { closeSheets(); closeGate(); if (editing) setEditing(false); }
   });
+
+  /* ── gate: a code-protected door asks its one question ─────────────── */
+  var sheetGate = document.getElementById('sheetGate');
+  var gateForm = document.getElementById('gateForm');
+  var gateIn = document.getElementById('gateIn');
+  var gateGo = document.getElementById('gateGo');
+  var gateMsg = document.getElementById('gateMsg');
+  var gateTitle = document.getElementById('gateTitle');
+  var gateHint = document.getElementById('gateHint');
+  var gateM = null;
+
+  function unlocked(id) {
+    try { return localStorage.getItem('shd_open_' + id) === '1'; } catch (e) { return false; }
+  }
+  /* keep every rendered door's lock state honest without a full re-render */
+  function paintGates() {
+    grid.querySelectorAll('.slot').forEach(function (s) {
+      if (s.dataset.gate) s.classList.toggle('open', unlocked(s.dataset.module));
+    });
+  }
+  function openGate(moduleId) {
+    var m = M.byId(moduleId); if (!m) return;
+    gateM = m;
+    gateTitle.textContent = m.name;
+    gateHint.textContent = (m.lockNote || 'Enter the code to open this door.') + ' It stays open once you do.';
+    gateMsg.textContent = ''; gateMsg.className = 'gmsg';
+    gateIn.value = ''; gateIn.disabled = false; gateGo.disabled = false;
+    sheetGate.classList.remove('shake');
+    openSheet(sheetGate);
+    setTimeout(function () { gateIn.focus(); }, 60);
+  }
+  function closeGate() {
+    gateM = null;
+    sheetGate.classList.remove('shake');
+  }
+  gateForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!gateM) return;
+    if (String(gateIn.value.trim()).toUpperCase() === String(gateM.gate).trim().toUpperCase()) {
+      try { localStorage.setItem('shd_open_' + gateM.id, '1'); } catch (err) {}
+      var id = gateM.id, href = gateM.href;
+      gateM = null;
+      closeSheets();
+      paintGates();
+      var a = grid.querySelector('[data-module="' + id + '"]');
+      if (a) {
+        a.classList.add('open', 'activating');
+        setTimeout(function () { window.location.href = href; }, 460);
+      }
+    } else {
+      gateMsg.textContent = 'That\u2019s not the code.';
+      gateMsg.className = 'gmsg bad';
+      gateIn.value = ''; gateIn.select(); gateIn.focus();
+      sheetGate.classList.remove('shake'); void sheetGate.offsetWidth; sheetGate.classList.add('shake');
+    }
+  });
+  document.getElementById('gateClose').addEventListener('click', function () { closeSheets(); closeGate(); });
 
   /* ── sign-in ─────────────────────────────────────────────────────────
      Implemented once in shd-chrome.js and shared with Simple Mode. It uses
@@ -1424,23 +1564,24 @@ if (renderer) {
 </script>
 
 <script>
-/* View switcher — one button, a compact menu. Not eight buttons spread across
-   the row: the four flats plus swivel / orb / wheel / 3D card, chosen once and
-   remembered, because a layout preference is a preference. */
+/* View switcher — one button, a compact menu of the FOUR real stagings:
+   swivel / orb / wheel / 3D tile. Nothing selected = the plain grid browse
+   view. Chosen once and remembered (shd_lay), because a layout preference is
+   a preference. */
 (function () {
   var ctrl = document.getElementById('viewCtrl');
   if (!ctrl) return;
   var btn = document.getElementById('viewBtn');
   var menu = document.getElementById('viewMenu');
   var lbl = document.getElementById('viewLbl');
-  var LABELS = { grid:'grid', stack:'stack', tile:'tile', swivel:'swivel', orb:'orb', wheel:'wheel', '3d-card':'3d card' };
-  var lay = 'grid';
-  try { lay = localStorage.getItem('shd_lay') || 'grid'; } catch (e) {}
-  if (!LABELS[lay]) lay = 'grid';
+  var LABELS = { swivel:'swivel', orb:'orb', wheel:'wheel', tile3d:'3d tile' };
+  var lay = null;
+  try { var s = localStorage.getItem('shd_lay'); if (s && LABELS[s]) lay = s; } catch (e) {}
 
   function paint() {
-    lbl.textContent = LABELS[lay] || lay;
-    document.body.setAttribute('data-lay', lay);
+    lbl.textContent = lay ? (LABELS[lay] || lay) : 'grid';
+    if (lay) document.body.setAttribute('data-lay', lay);
+    else document.body.removeAttribute('data-lay');
     [].forEach.call(menu.children, function (b) { b.setAttribute('aria-selected', String(b.dataset.v === lay)); });
   }
   function apply(v) {

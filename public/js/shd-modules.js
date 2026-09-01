@@ -128,7 +128,7 @@
     },
     {
       id: 'world2d',
-      name: '2D WORLD',
+      name: '2D REALM',
       kicker: 'Walk the city',
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
       href: '/SHADDAI-WORLD.html',
@@ -136,29 +136,40 @@
       artVary: ['/assets/enter/world2d.jpg','/assets/enter/world2d-1.jpg','/assets/enter/world2d-2.jpg','/assets/enter/world2d-3.jpg','/assets/enter/world2d-4.jpg'],
       accent: C.gold,
       geo: 'isogrid',
-      /* Gated on purpose. The city renders and the agents are in it, but the
-         economy on top — plots, ownership, rent — is not built. Letting people
-         walk in now means they meet an empty world and decide that is what it
-         is. Better to be closed than disappointing. */
+      /* Gated with a code, not open-closed. The door exists and the world
+         behind it runs — the gate is the premium threshold someone crosses
+         deliberately. unlockCode keeps working if the code ever changes. */
       locked: true,
-      lockNote: 'Opening when plots go live' 
+      gate: '4444',
+      lockNote: 'Enter the code'
     },
     {
       id: 'world3d',
-      name: '3D WORLD',
+      name: '3D REALM',
       kicker: 'The full realm',
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
       href: '/world3d',
       art: '/assets/worldlabs/thumbnail.jpg',
       artVary: ['/assets/worldlabs/thumbnail.jpg','/assets/enter/world3d.jpg','/assets/xto/road.jpg'],
-      /* Greyed rather than accented. A dim tile beside bright ones reads as
-         "not yet" without a word of explanation — the way a locked level does
-         in a game, which is the right feeling for something being built. */
-      accent: C.dim,
-      dim: true,
+      accent: C.emerald,
       geo: 'terrain',
       locked: true,
-      lockNote: 'In build' 
+      gate: '4444',
+      lockNote: 'Enter the code'
+    },
+    {
+      id: 'market',
+      name: 'MARKETPLACE',
+      kicker: 'Buy and sell',
+      blurb: 'The bazaar — what the community has made. Sign in to buy, and browse what has been forged.',
+      href: '/marketplace-shop-v2.html',
+      art: '/assets/nav/apis.jpg',
+      artVary: ['/assets/nav/apis.jpg','/assets/shops/launchpad.jpg','/assets/shops/neuralforge.jpg'],
+      accent: C.gold,
+      geo: 'octa',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code'
     },
     {
       id: 'arcade',
