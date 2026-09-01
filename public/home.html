@@ -396,12 +396,12 @@ section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidde
 @media(max-width:1000px){ .roster{ grid-template-columns:repeat(4,1fr); } }
 @media(max-width:560px){ .roster{ grid-template-columns:repeat(2,1fr); } }
 .op{ background:rgba(10,14,19,.72); padding:22px 18px; position:relative; transition:background .35s, transform .3s; min-height:190px; display:flex; flex-direction:column; overflow:hidden; color:var(--emerald-dim); cursor:pointer; }
-.op .opbg{ position:absolute; inset:0; z-index:0; background-size:cover; background-position:50% 22%;
-  opacity:.16; filter:saturate(1.05) contrast(1.02); transition:opacity .4s, transform .5s var(--ease); transform:scale(1.02);
-  -webkit-mask:linear-gradient(180deg, rgba(0,0,0,.9) 0%, rgba(0,0,0,.35) 52%, transparent 92%);
-          mask:linear-gradient(180deg, rgba(0,0,0,.9) 0%, rgba(0,0,0,.35) 52%, transparent 92%); }
-.op:hover .opbg{ opacity:.42; transform:scale(1.06); }
-.op .scan{ opacity:.35; }
+.op .opbg{ position:absolute; inset:10px; z-index:0; background-size:cover; background-position:50% 34%;
+  opacity:.2; filter:saturate(1.05) contrast(1.02); transition:opacity .4s, transform .5s var(--ease); transform:scale(1.02);
+  -webkit-mask:linear-gradient(180deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.4) 55%, transparent 95%);
+          mask:linear-gradient(180deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.4) 55%, transparent 95%); }
+.op:hover .opbg{ opacity:.45; transform:scale(1.06); }
+.op .scan{ opacity:.35; border-radius:14px; }
 .op::after{ content:''; position:absolute; left:0; bottom:0; height:2px; width:100%; transform:scaleX(0); transform-origin:left;
   background:linear-gradient(90deg,var(--emerald),var(--gold)); transition:transform .4s var(--ease); z-index:3; }
 .op:hover{ background:var(--panel); transform:translateY(-3px); color:var(--emerald); }
