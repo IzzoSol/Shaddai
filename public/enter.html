@@ -421,17 +421,16 @@ body.editing .slot .go{ display:none; }
   pointer-events:none; visibility:hidden;
   transition:opacity .35s var(--ease), visibility 0s linear .35s; }
 .scrim.on{ opacity:1; pointer-events:auto; visibility:visible;
-  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
   transition:opacity .35s var(--ease), visibility 0s linear 0s; }
 .sheet{
-  position:fixed; z-index:61; left:50%; bottom:0; width:min(560px,100%);
-  transform:translate(-50%,102%); transition:transform .45s var(--ease);
-  background:var(--void2); border:1px solid var(--edge); border-bottom:0;
-  border-radius:6px 6px 0 0; padding:20px clamp(16px,4vw,26px);
-  padding-bottom:calc(22px + env(safe-area-inset-bottom));
+  position:fixed; z-index:61; left:50%; top:50%; width:min(560px,calc(100% - 32px));
+  transform:translate(-50%,-58%) scale(.965); transition:transform .4s var(--ease), opacity .3s var(--ease);
+  background:var(--void2); border:1px solid var(--edge); border-radius:6px;
+  padding:22px clamp(16px,4vw,26px) calc(22px + env(safe-area-inset-bottom));
   max-height:82dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  opacity:0; visibility:hidden; pointer-events:none; box-shadow:0 34px 90px rgba(0,0,0,.55);
 }
-.sheet.on{ transform:translate(-50%,0); }
+.sheet.on{ transform:translate(-50%,-50%) scale(1); opacity:1; visibility:visible; pointer-events:auto; }
 .sheet h2{ font-family:var(--f-display); font-weight:700; font-size:16px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink); }
 .sheet .hint{ font-size:13px; color:var(--ink-faint); margin-top:5px; font-style:italic; }

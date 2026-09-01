@@ -2367,6 +2367,19 @@ function revealOracleSky(pDome){
   window.addEventListener('scroll', readScroll, {passive:true});
   readScroll();
 
+  /* ---- IDLE AUTO-FLIGHT : so the descent never reads as frozen ---------
+     The scroll driver only moves when the visitor scrolls, so a freshly
+     opened page sits on one static frame. Once the page has been untouched
+     for a moment, glide through the whole journey on our own — and yield the
+     moment the visitor takes over with any scroll, drag, or wheel. */
+  let lastInput = 0, lapHold = 0;
+  function pokeInput(){ lastInput = performance.now(); lapHold = 0; }
+  window.addEventListener('scroll',   pokeInput, {passive:true});
+  window.addEventListener('touchstart', pokeInput, {passive:true});
+  window.addEventListener('touchend',   pokeInput, {passive:true});
+  window.addEventListener('mousedown',  pokeInput, {passive:true});
+  window.addEventListener('wheel',      pokeInput, {passive:true});
+
   // ---- HUD (2D quantum readout column + wordmark) -------------
   const hud = hudCanvas.getContext('2d');
   const elements = [
@@ -2463,6 +2476,24 @@ function revealOracleSky(pDome){
       else { bgIdle = 0; bgLastScrollY = sy; }
     }
     const t = (now - startT)/1000;
+
+    // ---- AUTO-FLIGHT (idle only, full-page mode) ------------------------
+    // After 2.6s of no input the scene starts gliding on its own: a slow
+    // continuous drift molecule -> water -> desert -> the crown of stars,
+    // with a gentle planetarium sway. Rest on the finale a beat, then lap the
+    // journey. Any scroll/drag/wheel cancels it instantly (pokeInput resets
+    // lastInput), so the visitor always wins.
+    if(!BG && !dragging && (now - lastInput) > 2600){
+      if(pTarget >= 1){
+        if(++lapHold > 300){ lapHold = 0; pTarget = 0; }   // ~5s on the crown, then loop
+      } else {
+        pTarget = Math.min(1, pTarget + 0.00038);
+        yawTarget   += Math.sin(t*0.35)*0.0052;
+        pitchTarget += Math.cos(t*0.23)*0.0014;
+        pitchTarget  = Math.max(-0.95, Math.min(1.35, pitchTarget));
+      }
+    }
+
     // clamped delta for the governor EMA (ignore tab-switch spikes)
     const dtMs = Math.min(100, Math.max(1, now - lastT));
     lastT = now;

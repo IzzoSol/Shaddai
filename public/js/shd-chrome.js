@@ -22,6 +22,30 @@
   'use strict';
   if (root.SHDChrome) return;
 
+  /* A reload starts a clean visitor: identity is scoped to the current tab
+     session, so refreshing the page signs you out. Navigation between doors
+     (which the browser reports as "navigate") keeps the session, so signing
+     in once still carries your work across SHADDAI. Legacy browsers report
+     the type via performance.navigation.type instead of the NavigationTiming
+     entry. */
+  (function freshSession() {
+    try {
+      var t = null;
+      if (performance.getEntriesByType) {
+        var nav = performance.getEntriesByType('navigation')[0];
+        t = nav && nav.type;
+      }
+      if (!t && performance.navigation) {
+        t = ({ 0: 'navigate', 1: 'reload', 2: 'back_forward', 255: 'reserved' })[performance.navigation.type];
+      }
+      if (t === 'reload') {
+        ['shd_userid', 'shd_token'].forEach(function (k) {
+          sessionStorage.removeItem(k); localStorage.removeItem(k);
+        });
+      }
+    } catch (e) {}
+  })();
+
   /* Obsidian stays first and stays the default — emerald/gold/neon is the
      house identity. The three PAIRS below are complements (opposite sides of
      the wheel), which is why they read as designed rather than as two colours
@@ -131,15 +155,25 @@
     'pointer-events:none;visibility:hidden;',
     'transition:opacity .35s cubic-bezier(.22,.7,.2,1),visibility 0s linear .35s}',
     '.shdc-scrim.on{opacity:1;pointer-events:auto;visibility:visible;',
-    '-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);',
     'transition:opacity .35s cubic-bezier(.22,.7,.2,1),visibility 0s linear 0s}',
-    '.shdc-sheet{position:fixed;z-index:61;left:50%;bottom:0;width:min(560px,100%);',
-    'transform:translate(-50%,102%);transition:transform .45s cubic-bezier(.22,.7,.2,1);',
-    'background:var(--void2,#0a0e13);border:1px solid var(--edge,rgba(120,150,140,.14));border-bottom:0;',
-    'border-radius:6px 6px 0 0;padding:20px clamp(16px,4vw,26px);padding-bottom:calc(22px + env(safe-area-inset-bottom));',
+    /* sheet = centered modal. Never a bottom drawer: a drawer lands off-screen
+       and needs scrolling, and its blur-heavy scrim over the WebGL canvas is
+       what read as the whole site freezing. Dropping the blur leaves a plain
+       dim scrim that costs nothing to composite. */
+    '.shdc-sheet{position:fixed;z-index:61;left:50%;top:50%;width:min(560px,calc(100vw - 32px));',
+    'transform:translate(-50%,-58%) scale(.965);transition:transform .4s cubic-bezier(.22,.7,.2,1),opacity .3s;',
+    'background:var(--void2,#0a0e13);border:1px solid var(--edge,rgba(120,150,140,.16));',
+    'border-radius:6px;padding:22px clamp(16px,4vw,26px) calc(22px + env(safe-area-inset-bottom));',
     'max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;color:var(--ink,#e9efe9);',
-    'font-family:var(--f-serif,Georgia,serif);line-height:1.5}',
-    '.shdc-sheet.on{transform:translate(-50%,0)}',
+    'font-family:var(--f-serif,Georgia,serif);line-height:1.5;opacity:0;visibility:hidden;pointer-events:none;',
+    'box-shadow:0 34px 90px rgba(0,0,0,.55)}',
+    '.shdc-sheet.on{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;pointer-events:auto}',
+    /* sign-in is a popover tucked under the top-right pill — not a sheet, and
+       never a grey full-screen scrim. Clicking anywhere else (or Esc) dismisses. */
+    '.shdc-auth{left:auto;right:clamp(14px,3.2vw,40px);top:calc(clamp(14px,2.6vw,24px) + 50px + env(safe-area-inset-top));',
+    'transform-origin:top right;width:min(352px,calc(100vw - 28px))}',
+    '.shdc-auth.on{transform:translate(0,0) scale(1)}',
+    '.shdc-auth:not(.on){transform:translate(0,8px) scale(.985)}',
     '.shdc-sheet h2{font-family:var(--f-display,serif);font-weight:700;font-size:16px;letter-spacing:.14em;text-transform:uppercase;margin:0}',
     '.shdc-sheet .hint{font-size:13px;color:var(--ink-faint,#4f5d57);margin:5px 0 0;font-style:italic}',
     '.shdc-x{position:absolute;top:14px;right:14px;font-family:var(--f-mono,monospace);font-size:11px;',
@@ -263,7 +297,7 @@
   /* ── identity ─────────────────────────────────────────────────────────── */
   function user() {
     try {
-      var u = localStorage.getItem('shd_userid');
+      var u = sessionStorage.getItem('shd_userid') || localStorage.getItem('shd_userid');
       if (u && u.indexOf('guest') !== 0 && u !== 'local') return u;
     } catch (e) {}
     return null;
@@ -271,13 +305,17 @@
   function shortId(u) { return u && u.length > 16 ? u.slice(0, 6) + '…' + u.slice(-4) : u; }
   function save(id, token) {
     try {
-      if (id) localStorage.setItem('shd_userid', id);
-      if (token) localStorage.setItem('shd_token', token);
+      if (id) { sessionStorage.setItem('shd_userid', id); localStorage.setItem('shd_userid', id); }
+      if (token) { sessionStorage.setItem('shd_token', token); localStorage.setItem('shd_token', token); }
     } catch (e) {}
     fire(authSubs, user());
   }
   function signOut() {
-    try { localStorage.removeItem('shd_userid'); localStorage.removeItem('shd_token'); } catch (e) {}
+    try {
+      ['shd_userid', 'shd_token'].forEach(function (k) {
+        sessionStorage.removeItem(k); localStorage.removeItem(k);
+      });
+    } catch (e) {}
     fire(authSubs, null);
   }
 
@@ -325,7 +363,7 @@
       '</div>';
 
     authSheet = document.createElement('div');
-    authSheet.className = 'shdc-sheet';
+    authSheet.className = 'shdc-sheet shdc-auth';
     authSheet.setAttribute('role', 'dialog');
     authSheet.setAttribute('aria-modal', 'true');
     authSheet.innerHTML =
@@ -462,13 +500,15 @@
     authSheet._paint = paintAuthSheet;
     authSheet._say = say;
 
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheets(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closePopListeners(); closeSheets(); }
+    });
   }
 
-  function openSheet(el) {
+  function openSheet(el, dim) {
     build();
     closeSheets(true);
-    scrim.classList.add('on');
+    if (dim !== false) scrim.classList.add('on');
     el.classList.add('on');
   }
   function closeSheets(keepScrim) {
@@ -478,6 +518,39 @@
     if (!keepScrim) scrim.classList.remove('on');
   }
 
+  /* sign-in popover: opens under the pill with no grey scrim, and dismisses
+     when you tap anywhere outside it. The rest of the page stays live. */
+  var popListeners = [];
+  function closePopListeners() {
+    while (popListeners.length) {
+      var h = popListeners.pop();
+      document.removeEventListener('click', h, true);
+      document.removeEventListener('touchstart', h, true);
+    }
+  }
+  function openAuthSheet() {
+    build();
+    authSheet._paint(); authSheet._say('');
+    if (authSheet.classList.contains('on')) { closeSheets(); return; }  // pill toggles
+    closeSheets(true);
+    scrim.classList.remove('on');
+    authSheet.classList.add('on');
+    setTimeout(function () {
+      var fn = function (e) {
+        if (authSheet.contains(e.target)) return;
+        closePopListeners();
+        closeSheets();
+      };
+      resetPopListeners(fn);
+    }, 0);
+  }
+  function resetPopListeners(fn) {
+    closePopListeners();
+    popListeners.push(fn);
+    document.addEventListener('click', fn, true);
+    document.addEventListener('touchstart', fn, true);
+  }
+
   root.SHDChrome = {
     SKINS: SKINS,
     init: function () { build(); setSkin(getSkin()); if (getInk()) applyInk(getInk()); return this; },
@@ -485,7 +558,7 @@
     setSkin: setSkin,
     onSkin: function (fn) { skinSubs.push(fn); return this; },
     openTheme: function () { build(); openSheet(themeSheet); },
-    openAuth: function () { build(); authSheet._paint(); authSheet._say(''); openSheet(authSheet); },
+    openAuth: function () { openAuthSheet(); },
     closeSheets: closeSheets,
     user: user,
     shortId: shortId,
