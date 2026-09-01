@@ -21,11 +21,13 @@ const C = {
 function dpr(canvas) {
   const d = Math.min(window.devicePixelRatio || 1, 2);
   const r = canvas.getBoundingClientRect();
-  canvas.width = Math.max(1, Math.round(r.width * d));
-  canvas.height = Math.max(1, Math.round(r.height * d));
+  let w = r.width, h = r.height;
+  if (!isFinite(w) || !isFinite(h) || w < 1 || h < 1) { w = 1; h = 1; }
+  canvas.width = Math.max(1, Math.round(w * d));
+  canvas.height = Math.max(1, Math.round(h * d));
   const ctx = canvas.getContext('2d');
   ctx.setTransform(d, 0, 0, d, 0, 0);
-  return { ctx, w: r.width, h: r.height };
+  return { ctx, w, h };
 }
 
 function glow(ctx, color, blur = 8) {
@@ -81,6 +83,7 @@ export function compositionRing(canvas, slices, label) {
   const { ctx, w, h } = dpr(canvas);
   ctx.clearRect(0, 0, w, h);
   const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 6;
+  if (R <= 0 || slices.length === 0) return;
 
   let a = -Math.PI / 2;
   slices.forEach((s) => {
@@ -107,6 +110,7 @@ export function gauge(canvas, value, color, caption) {
   const { ctx, w, h } = dpr(canvas);
   ctx.clearRect(0, 0, w, h);
   const cx = w / 2, cy = h / 2 + 4, R = Math.min(w, h) / 2 - 10;
+  if (R <= 0) return;
   const START = Math.PI * 0.75, SWEEP = Math.PI * 1.5;
 
   ctx.beginPath(); ctx.arc(cx, cy, R, START, START + SWEEP);

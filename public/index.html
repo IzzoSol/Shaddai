@@ -5102,7 +5102,10 @@ window.enter3DWorld=function(){
       <div class="card-head"><span class="card-title">Agent Status</span></div>
       <div id="agentRows"></div>
     </div>
-    <!-- Quick Actions removed -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">Quick Actions</span></div>
+      <div id="quickRows"></div>
+    </div>
     <!-- CITY EMPIRE LIVE WIDGET -->
     <div class="card" id="dashCityWidget" style="background:linear-gradient(135deg,rgba(0,229,160,0.05),rgba(232,196,92,0.04));border:1px solid rgba(0,229,160,0.25);cursor:pointer" onclick="window._officeEntrySub='city';showView('office')">
       <div class="card-head">
@@ -32890,7 +32893,7 @@ async function runTaskNow(taskId, row) {
 }
 
 // Initialize — wrapped so any render crash can't halt later script blocks (AGENT_REGISTRY, etc.)
-try { init(); } catch(e) { console.error('[SHADDAI] init() error:', e); }
+try { init(); } catch(e) { console.error('[SHADDAI] init() error:', e, (e && e.stack) ? '\n' + e.stack : ''); }
 initSculptCanvas();
 initSanctuary();
 // Init esoteric body bar on load
@@ -40160,51 +40163,9 @@ function popoutProjects() {
     + '<style>' + css + '</style></head><body>'
     + topbar + stats
     + '<div class="main"><div class="grid" id="grid">' + cards + '</div></div>'
-    + '<script>' + js + '<\/script>'
-    + '<script src="/home-btn.js" defer><\/script>'
-    + '
-<script>
-/* Wrap every dashboard table in a horizontal scroller.
-
-   Measured cause: the agents tab had 81 elements past a 390px viewport, all of
-   them a .data-table's columns. The page itself did not scroll sideways, so
-   the overflow was being CLIPPED — the columns were simply unreachable, which
-   reads as missing data rather than as a layout bug.
-
-   Done in JS because CSS cannot give an element a scrolling parent, and
-   re-run after view switches because several tabs build their tables lazily. */
-(function () {
-  function wrapTables(root) {
-    var tables = (root || document).querySelectorAll('[id$="View"] table');
-    for (var i = 0; i < tables.length; i++) {
-      var t = tables[i];
-      if (t.parentElement && t.parentElement.classList.contains('tbl-scroll')) continue;
-      if (t.closest('.tbl-scroll')) continue;
-      var w = document.createElement('div');
-      w.className = 'tbl-scroll';
-      t.parentNode.insertBefore(w, t);
-      w.appendChild(t);
-    }
-  }
-  function run() { try { wrapTables(); } catch (e) {} }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
-  else run();
-
-  // tabs build their tables lazily, so wrap again after each switch
-  var sv = window.showView;
-  if (typeof sv === 'function') {
-    window.showView = function () {
-      var r = sv.apply(this, arguments);
-      setTimeout(run, 120);
-      return r;
-    };
-  }
-  setTimeout(run, 1500);
-  setTimeout(run, 4000);
-})();
-</script>
-</body></html>');
+    + '<scr' + 'ipt>' + js + '<\/scr' + 'ipt>'
+    + '<scr' + 'ipt src="/home-btn.js" defer><\/scr' + 'ipt>'
+    + '</body></html>');
   w.document.close();
   notify('Projects popout — ' + projects.length + ' projects');
 }
@@ -40391,7 +40352,7 @@ function popoutTool(toolId) {
     + '<style>' + css + '</style></head><body>'
     + topbar
     + '<div class="layout">' + left + right + '</div>'
-    + '<script>' + innerJS + '<\/script>'
+    + '<scr' + 'ipt>' + innerJS + '<\/scr' + 'ipt>'
     + '</body></html>');
   w.document.close();
   notify(cfg.icon + ' ' + cfg.title + ' popout opened');
@@ -43971,6 +43932,47 @@ setTimeout(() => {
 
 console.log('✓ V72 missing handlers loaded — all onclick refs resolved');
 
+</script>
+
+<script>
+/* Wrap every dashboard table in a horizontal scroller.
+
+   The agents tab had 81 elements past a 390px viewport, all of them a
+   .data-table's columns. The page itself did not scroll sideways, so the
+   overflow was being CLIPPED — the columns were simply unreachable, which
+   reads as missing data rather than as a layout bug.
+
+   Done in JS because CSS cannot give an element a scrolling parent, and
+   re-run after view switches because several tabs build their tables lazily. */
+(function () {
+  function wrapTables(root) {
+    var tables = (root || document).querySelectorAll('[id$="View"] table');
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      if (t.parentElement && t.parentElement.classList.contains('tbl-scroll')) continue;
+      if (t.closest('.tbl-scroll')) continue;
+      var w = document.createElement('div');
+      w.className = 'tbl-scroll';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    }
+  }
+  function run() { try { wrapTables(); } catch (e) {} }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+
+  var sv = window.showView;
+  if (typeof sv === 'function') {
+    window.showView = function () {
+      var r = sv.apply(this, arguments);
+      setTimeout(run, 120);
+      return r;
+    };
+  }
+  setTimeout(run, 1500);
+  setTimeout(run, 4000);
+})();
 </script>
 
 <!-- ██████████████████████████████████████████████████
