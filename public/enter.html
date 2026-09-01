@@ -147,16 +147,37 @@ header{
 .ctl{
   font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
-  min-height:38px; padding:0 13px; display:inline-flex; align-items:center; gap:7px;
-  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
+  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
 }
-html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{ background:rgba(255,255,255,.6); }
+.ctl:hover{
+  border-color:var(--accent); color:var(--accent);
+}
+html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
+  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
+}
+.ctl:hover{
+  border-color:var(--accent); color:var(--accent);
+}
 .ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
 .ctl.on{ background:rgba(0,255,156,.09); }
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
-@media(max-width:520px){ .ctl{ padding:0 10px; font-size:10px; } .ctl .lbl-long{ display:none; } }
+@media(max-width:520px){ .ctl{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
+  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
+}
+.ctl:hover{
+  border-color:var(--accent); color:var(--accent);
+} .ctl .lbl-long{ display:none; } }
 .brand .sh b{ font-weight:900; }
 .brand .sh .sh-mini{ display:none; }
 /* sign-in lives alone in the top-right corner: one quiet pill outside the controls row */
@@ -183,7 +204,16 @@ html[data-theme-skin="brutalist"] .authpill, html[data-theme-skin="serif"] .auth
   .controls{ gap:6px; }
   /* 44px is the thumb floor â€” the room comes from the wordmark and the
      'bios' label instead of from the targets */
-  .ctl{ padding:0 10px; min-height:44px; min-width:44px; }
+  .ctl{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
+  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
+}
+.ctl:hover{
+  border-color:var(--accent); color:var(--accent);
+}
   #btnDwell span:not(.dot){ display:none; }
 }
 
@@ -1549,6 +1579,7 @@ if (renderer) {
 </script>
 </body>
 </html>
+
 
 
 
