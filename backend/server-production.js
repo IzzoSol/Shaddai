@@ -1766,6 +1766,7 @@ app.use('/api/aura', require('./aura-routes'));
 app.use('/api/paybox', require('./paybox-routes'));
 app.use('/api/mcp-sentiment', require('./mcp-routes')); // MCP sentiment + tool counts
 app.use('/api/lesson-plan', require('./lesson-plan')); // grok-style lesson plans for agents
+app.use('/api/zerox/scan', require('./zerox-scan')); // ZEROX live market data scan
 app.use('/api/market-3d', require('./market-3d.routes.js')); // SHADDAI 3D marketplace (models + purchases)
 // Agent Policy — the SURVIVAL product: create_agent / set_spend_policy /
 // revoke / get_ledger. Named agents hold money under owner-set caps, spend only
