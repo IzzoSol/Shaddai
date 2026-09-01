@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const json = express.json();
 let guard = null; try { guard = require('./paybox-guard'); } catch (e) { console.warn('[paybox-routes] paybox-guard unavailable:', e.message); }
+const pikadon = require('./pikadon-middleware');
 
 const WALLETS_PATH = path.join(__dirname, 'data', 'paybox-wallets.json');
 
@@ -67,10 +68,20 @@ router.get('/tip-link', json, async (req, res) => {
 
 // POST /api/paybox/tip { to, source, amount_usd? } — the front-door "Tip ZEROX" button
 // calls THIS exact path/shape (public/enter.html) expecting { checkoutUrl } to redirect
-// or { ok: true } to just say thanks. Same tipLink() logic as GET /tip-link above, just
+// or { ok: true } to just say thanks. Same tipLink() logic as GET /tip-line above, just
 // the contract the live button already ships against — keep both in sync, don't diverge.
+// PIKADON pre-trade review: reject FAIL, offer override WARN, allow PASS.
 router.post('/tip', json, async (req, res) => {
   const b = req.body || {};
+  // PIKADON review
+  const [pikadonStatus, pikadonReasons] = pikadon.review(b);
+  if (pikadonStatus === 'FAIL') {
+    return res.status(403).json({ ok: false, error: 'PIKADON review FAIL', reasons: pikadonReasons });
+  }
+  if (pikadonStatus === 'WARN') {
+    // WARN: user can proceed by sending an additional flag; for now we log and continue
+    console.warn('[PIKADON-WARN] ' + pikadonReasons.join(', '));
+  }
   const { status, body } = await tipLink(String(b.to || 'ZEROX').toUpperCase(), b.amount_usd);
   res.status(status).json(body);
 });
@@ -130,8 +141,19 @@ router.post('/confirm-order', requireAdmin, json, async (req, res) => {
 // POST /api/paybox/agent-tip { buyerUserId, agentCodename, amountCredits } —
 // settles a tip from a user into an agent's paybox ledger (5% fee, non-custodial).
 // after debiting buyer, credits the agent's paybox balance under the same ledger.
+// PIKADON pre-trade review: lightweight check on required fields.
 router.post('/agent-tip', json, async (req, res) => {
   const { buyerUserId, agentCodename, amountCredits } = req.body || {};
+  // Basic PIKADON review: verify required fields exist and amount is positive
+  const reviewReasons = [];
+  if (!buyerUserId) reviewReasons.push('missing buyerUserId');
+  if (!agentCodename) reviewReasons.push('missing agentCodename');
+  if (isNaN(amountCredits) || amountCredits <= 0) reviewReasons.push('invalid amountCredits');
+  if (reviewReasons.length === 0) {
+    // proceed to settle
+  } else {
+    return res.status(400).json({ ok: false, error: 'PIKADON review FAIL', reasons: reviewReasons });
+  }
   if (!buyerUserId || !agentCodename || isNaN(amountCredits) || amountCredits <= 0) {
     return res.status(400).json({ ok: false, error: 'buyerUserId, agentCodename, amountCredits required' });
   }
