@@ -1799,6 +1799,27 @@ app.get('/api/market/file', async (req, res) => {
   if (!fs.existsSync(glbPath)) return res.status(404).end();
   res.sendFile(glbPath);
 });
+// POST /api/forge/upload — save a GLB model file (open for now; gating can be added later)
+app.post('/api/forge/upload', express.raw({ type: 'application/octet-stream', limit: '100mb' }), async (req, res) => {
+  const buf = req.body;
+  if (!buf || !buf.length) return res.status(400).json({ ok: false, error: 'no data' });
+  const safeName = path.basename(Date.now().toString(36) + '.glb');
+  const dest = path.join(__dirname, '..', 'public', 'assets', 'forge-models', safeName);
+  try {
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, buf);
+    // Append to manifest.json
+    const manifestPath = path.join(__dirname, '..', 'public', 'assets', 'forge-models', 'manifest.json');
+    let manifest = { archetypes: {} };
+    try { if (fs.existsSync(manifestPath)) manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')); } catch (e) {}
+    const newId = safeName.replace('.glb', '').toLowerCase();
+    if (!manifest.archetypes[newId]) {
+      manifest.archetypes[newId] = { glb: '/assets/forge-models/' + safeName, thumb: '/assets/forge-models/' + safeName.replace('.glb', '.png') || '/assets/forge-models/placeholder.png', name: newId.replace(/^./, newId[0].toUpperCase()) };
+    }
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    res.json({ ok: true, id: newId });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
+});
 // AURA self-improvement: background auto-warm (no-op unless AURA_AUTOWARM=true)
 try { require('./aura-warmer').startAutoWarm(); } catch (_) {}
 // Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links

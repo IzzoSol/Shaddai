@@ -127,5 +127,27 @@ router.post('/confirm-order', requireAdmin, json, async (req, res) => {
   res.json({ ok: true, order });
 });
 
+// POST /api/paybox/agent-tip { buyerUserId, agentCodename, amountCredits } —
+// settles a tip from a user into an agent's paybox ledger (5% fee, non-custodial).
+// after debiting buyer, credits the agent's paybox balance under the same ledger.
+router.post('/agent-tip', json, async (req, res) => {
+  const { buyerUserId, agentCodename, amountCredits } = req.body || {};
+  if (!buyerUserId || !agentCodename || isNaN(amountCredits) || amountCredits <= 0) {
+    return res.status(400).json({ ok: false, error: 'buyerUserId, agentCodename, amountCredits required' });
+  }
+  try {
+    const result = await settle({
+      user: String(buyerUserId),
+      itemId: `agent:${String(agentCodename)}`,
+      sellerAgent: String(agentCodename).toUpperCase(),
+      amountCredits: Number(amountCredits),
+      reason: 'agent-tip',
+    });
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    return res.status(err.status || 500).json({ ok: false, error: err.code || err.message || 'agent-tip failed' });
+  }
+});
+
 module.exports = router;
 module.exports.recordOrder = recordOrder;
