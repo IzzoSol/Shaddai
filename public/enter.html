@@ -640,48 +640,23 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 
 /* SWIVEL - a two-up pack that stands ajar and swings flat to face you the
    moment you rest on a door. Real hinge work, not a tilt. */
-body[data-lay="swivel"]{ perspective:1500px; }
-body[data-lay="swivel"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:900px; gap:clamp(14px,2.6vw,30px); }
-body[data-lay="swivel"] .slot{
+body[data-lay='swivel']{
+  perspective:none;
+}
+body[data-lay='swivel'] .grid{
+  grid-template-columns:1fr !important; max-width:none; gap:0;
+  transform-style:flat;
+}
+body[data-lay='swivel'] .slot{
   transform:none;
-  box-shadow:0 18px 46px rgba(0,0,0,.5);
-  transition:transform .6s var(--ease), border-color .4s var(--ease), box-shadow .6s var(--ease);
+  box-shadow:none;
+  transition:none;
 }
-body[data-lay="swivel"] .slot:nth-child(even){ transform:none; }
-body[data-lay="swivel"] .slot:hover, body[data-lay="swivel"] .slot:focus-visible, body[data-lay="swivel"] .slot.touched{
-  transform:rotateY(0) rotateX(0) translateZ(52px) scale(1.03);
-  box-shadow:0 30px 70px rgba(0,0,0,.6);
-}
-@media(prefers-reduced-motion:reduce){ body[data-lay="swivel"] .slot{ transform:none !important; } }
-@media(max-width:640px){ body[data-lay="swivel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="swivel"] .slot{ transform:none !important; } }
-
-/* ORB - the four float on a slow-turning shell, lifted off their corners so
-   the whole group reads as a sphere of choices rather than a flat wall. */
-body[data-lay="orb"]{ perspective:none; }
-body[data-lay="orb"] .grid{
-  grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.2vw,26px);
-  transform-style:flat; animation:none;
-}
-body[data-lay="orb"] .slot{
-  min-height:clamp(120px,20vh,180px);
-  transform:translateZ(0) scale(1);
-  box-shadow:0 20px 50px rgba(0,0,0,.55);
-  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
-}
-body[data-lay="orb"] .slot:nth-child(1){ --oy:0deg; --oz:0px; --os:1; }
-body[data-lay="orb"] .slot:nth-child(2){ --oy:0deg; --oz:0px; --os:1; }
-body[data-lay="orb"] .slot:nth-child(3){ --oy:0deg; --oz:0px; --os:1; }
-body[data-lay="orb"] .slot:nth-child(4){ --oy:0deg; --oz:0px; --os:1; }
-body[data-lay="orb"] .slot:nth-child(n+5){ --oy:0deg; --oz:0px; --os:.97; }
-body[data-lay="orb"] .slot:hover, body[data-lay="orb"] .slot:focus-visible, body[data-lay="orb"] .slot.touched{
-  --oy:0deg; --oz:70px; --os:1.14;
-  box-shadow:0 32px 76px rgba(0,0,0,.6);
-}
-@keyframes orbTumble{
-  0%{ transform:rotateY(-16deg) rotateX(5deg); }
-  100%{ transform:rotateY(16deg) rotateX(-5deg); }
-}
-@media(prefers-reduced-motion:reduce){ body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } }
+body[data-lay='swivel'] .slot:nth-child(even){ transform:none; }
+body[data-lay='swivel'] .slot:hover, body[data-lay='swivel'] .slot:focus-visible, body[data-lay='swivel'] .slot.touched{
+  transform:none;
+  box-shadow:none;
+}body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } }
 @media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:20px; --os:1; } }
 
 /* WHEEL - the doors rim a band that gently trundles on its axis; rest on one
@@ -808,7 +783,12 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
     <button class="ctl" id="btnAll" type="button" title="Show every module">â—³ <span class="lbl-long">all</span></button>
     <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">âœŽ <span class="lbl-long">edit</span></button>
   </div>
-</header>
+</header><!-- Lesson of the Day -->
+<div class='lesson-card' id='lessonCard' style='display:none; margin-top:20px; padding:20px; background:var(--void2); border:1px solid var(--edge); border-radius:6px;'>
+  <h3 class='lesson-title' style='color:var(--accent); margin-top:0'>Lesson of the Day</h3>
+  <p class='lesson-body' id='lessonBody'></p>
+  <button class='lesson-close' style='background:var(--accent); color:#05070e; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-weight:600'>Close</button>
+</div>
 
 <!-- secondary utilities â€” deliberately outside .controls, see .util in CSS -->
 <div class="util">
@@ -819,7 +799,34 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 </div>
 
 
-<main>
+<main><script>
+  const lessons = [
+    { title: 'Solana Basics', body: 'A Solana transaction encodes instructions for programs running on chain. Each instruction has a program ID, accounts (signers, writable), and data. Transactions are confirmed by validators via Proof of History + Tower BFT.' },
+    { title: 'PayBox Ledger', body: 'Shaddai uses a non-custodial x402 credit ledger. Purchases debit the buyers balance and credit the sellers. Fees are 5%. Receipts are written to paybox-receipts.json and are verifiable. No real on-chain funds move; the ledger is closed-loop.' },
+    { title: 'PIKADON Review', body: 'PIKADON reviews a PayBox payload for: valid program IDs, malicious patterns (HTML tags, private-key-looking strings), recipient validity (base58 Solana address or token mint), and spend caps. Output is PASS / FAIL / WARN with reasons.' },
+  ];
+  let lessonIndex = 0;
+  function showLesson() {
+    const lesson = lessons[lessonIndex];
+    document.getElementById('lessonTitle').innerText = lesson.title;
+    document.getElementById('lessonBody').innerHTML = lesson.body;
+    document.getElementById('lessonCard').style.display = 'block';
+  }
+  function hideLesson() {
+    document.getElementById('lessonCard').style.display = 'none';
+  }
+  document.getElementById('lessonCard .lesson-close').onclick = hideLesson;
+  // Rotate lessons every 5 minutes
+  setInterval(() => {
+    lessonIndex = (lessonIndex + 1) % lessons.length;
+    showLesson();
+  }, 300000);
+  // Show on first load if not in localStorage
+  if (!localStorage.getItem('lessonShown')) {
+    showLesson();
+    localStorage.setItem('lessonShown', '1');
+  }
+</script>
   <div class="lede">
     <h1>Ways in</h1>
     <p>One empire. Pick the door â€” or rearrange them until they're yours.</p>
@@ -1542,3 +1549,14 @@ if (renderer) {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
