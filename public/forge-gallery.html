@@ -43,33 +43,138 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const ARCHES = [
-  { id:'vanguard',     name:'Vanguard',     role:'Guardian / Tank',   color:'#27e0ff', neu:true },
-  { id:'ghost',        name:'Ghost',        role:'Stealth / Recon',   color:'#9b8cff' },
-  { id:'artisan',      name:'Artisan',      role:'Creator / Design',  color:'#1fd6c4' },
-  { id:'oracle',       name:'Oracle',       role:'Seer / Research',   color:'#c084fc' },
-  { id:'street-deity', name:'Street Deity', role:'Hustler / Markets', color:'#ffcf4a' },
-  { id:'gaia-link',    name:'Gaia-Link',    role:'Nature / Bio',      color:'#3ddc84' },
-  { id:'psionic',      name:'Psionic',      role:'Mind / Logic',      color:'#ff5db1' },
-  { id:'harvester',    name:'Harvester',    role:'Reaper / Ops',      color:'#ff5a6e' },
-];
-const VER = 3; // bump to bust GLB cache after a rebuild
+const VER = 3;
 const presetImg = id => '/api/forge/art/arch-' + id + '.png';
 const grid = document.getElementById('grid');
 const loader = new GLTFLoader();
 let done = 0;
+let renderedCount = 0;
 
-ARCHES.forEach(a => {
-  const card = document.createElement('div'); card.className = 'card' + (a.neu ? ' newbuild' : '');
-  card.innerHTML = `<div class="view">
-      <canvas></canvas>
-      <div class="fb" style="background-image:url('${presetImg(a.id)}')"></div>
-      <div class="tag">loading…</div>${a.neu ? '<div class="new">NEW BUILD</div>' : ''}
+function isSignedIn() {
+  const us = localStorage.getItem('shd_userid');
+  const token = localStorage.getItem('shd_token');
+  return !!(us && token);
+}
+
+function renderModelCards(models) {
+  grid.innerHTML = '';
+  const signedIn = isSignedIn();
+  let cardsAdded = 0;
+  models.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'card' + (m.neu ? ' newbuild' : '');
+    card.dataset.id = m.id;
+    const priceDisplay = m.price === 0 ? 'FREE' : (m.price ? m.price.toLocaleString() + ' Sparks' : '—');
+    card.innerHTML = `<div class="view">
+        <canvas></canvas>
+        <div class="fb" style="background-image:url('${presetImg(m.id)}')"></div>
+        <div class="tag">loading…</div>${m.neu ? '<div class="new">NEW BUILD</div>' : ''}
+      </div>
+      <div class="meta">
+        <b style="color:${m.color}">${m.name}</b><span>${m.role}</span>
+        <div class="stat price-display">${priceDisplay}</div>
+        ${signedIn && m.price ? '<button class="buy-btn" data-id="' + m.id + '" data-price="' + m.price + '">Buy / Download</button>' : ''}
+        ${signedIn && m.price ? '<div class="download-area" style="display:none;margin-top:2px"></div>' : ''}
+      </div>`;
+    grid.appendChild(card);
+    setupViewer(card, m);
+    cardsAdded++;
+  });
+
+  if (signedIn) {
+    document.querySelectorAll('.buy-btn').forEach(b => b.addEventListener('click', handleBuyClick));
+  }
+  renderedCount = cardsAdded;
+}
+
+async function loadModels() {
+  try {
+    const res = await fetch('/api/market-3d/models');
+    const data = await res.json();
+    const models = (data.ok ? (data.archetypes || []) : []);
+    renderModelCards(models);
+  } catch (e) {
+    console.error('market models fetch failed:', e);
+    renderModelCards([]);
+  }
+}
+
+function openPurchaseModal(item, price) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999';
+  modal.innerHTML = `
+    <div style="background:#0a0e1a;border:1px solid #27e0ff;border-radius:12px;padding:20px;width:320px;text-align:center">
+      <h3 style="color:#dbeafe;margin-top:0">Buy 3D Model</h3>
+      <p style="color:#7f93b3;font-size:13px">${item.name} — ${price.toLocaleString()} Sparks</p>
+      <p style="color:#27e0ff;font-size:12px;margin:8px 0 12px">Markets are a wager; treat Sparks as cash. Only send what you can lose.</p>
+      <button id="confirm-purchase" style="background:#27e0ff;border:none;border-radius:6px;color:#05070e;padding:8px 16px;font-weight:600">Confirm</button>
+      <button id="cancel-purchase" style="background:#16233b;border:1px solid #16233b;border-radius:6px;color:#dbeafe;padding:8px 16px;margin-left:6px">Cancel</button>
     </div>
-    <div class="meta"><b style="color:${a.color}">${a.name}</b><span>${a.role}</span><div class="stat">—</div></div>`;
-  grid.appendChild(card);
-  setupViewer(card, a);
-});
+  `;
+  document.body.appendChild(modal);
+  window.currentPurchaseModal = { modal, item, price };
+
+  const confirm = modal.querySelector('#confirm-purchase');
+  const cancel = modal.querySelector('#cancel-purchase');
+  cancel.onclick = () => { modal.remove(); window.currentPurchaseModal = null; };
+  confirm.onclick = handlePurchaseConfirm;
+}
+
+async function handlePurchaseConfirm() {
+  const { modal, item, price } = window.currentPurchaseModal;
+  if (!item || price == null) return;
+  modal.querySelector('#confirm-purchase').textContent = 'Processing…';
+
+  try {
+    const res = await fetch('/api/market-3d/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ arch: item.id })
+    });
+    const data = await res.json();
+    modal.remove();
+    window.currentPurchaseModal = null;
+
+    if (!res.ok) {
+      alert('Purchase failed: ' + (data.error || data.message || 'unknown'));
+      return;
+    }
+
+    const txId = data.txId;
+    const charged = data.charged;
+    const receipt = data.receipt;
+    alert('Purchase confirmed!\n\nTx ID: ' + txId + '\nCharged: ' + charged + ' Sparks\n\nReceipt ID: ' + receipt);
+
+    const card = document.querySelector(`.card[data-id="${item.id}"]`);
+    if (card) {
+      card.innerHTML = card.innerHTML.replace(/<button class="buy-btn">.*?<\/button>/s, '')
+        .replace('price-display', 'purchase-text')
+        .replace(/<div class="stat price-display">.*?<\/div>/s, `<div class="stat purchase-text">Purchased (${charged} Sparks) — <a href="#" id="dl-${item.id}">Download</a></div>`);
+      card.querySelector('#dl-' + item.id).onclick = () => {
+        const dlHref = '/api/market/file?arch=' + encodeURIComponent(item.id) + '&tx=' + txId;
+        const link = document.createElement('a');
+        link.href = dlHref;
+        link.download = item.id + '.glb';
+        link.click();
+      };
+    }
+
+  } catch (e) {
+    modal.remove();
+    window.currentPurchaseModal = null;
+    alert('Purchase error: ' + e.message);
+  }
+}
+
+function handleBuyClick(e) {
+  const btn = e.target;
+  const card = btn.closest('.card');
+  const item = { id: card.dataset.id, name: card.querySelector('.meta b').textContent, role: card.querySelector('.meta span').textContent, color: card.querySelector('.meta b').style.color };
+  const price = Number(card.dataset.price || '0');
+  if (item && price !== null && price > 0) openPurchaseModal(item, price);
+}
+
+loadModels();
 
 function setupViewer(card, a){
   const view = card.querySelector('.view');
@@ -109,7 +214,7 @@ function setupViewer(card, a){
       if (g.animations && g.animations.length){ mixer = new THREE.AnimationMixer(m); mixer.clipAction(g.animations[0]).play(); }
       tag.textContent = g.animations.length ? '3D · ANIMATED' : '3D · STATIC';
       stat.textContent = `${Math.round(tris).toLocaleString()} tris · ${tex} tex · ${urls[i].includes('-walk')?'walk':'static'}`;
-      done++; document.getElementById('status').textContent = `${done}/${ARCHES.length} models loaded`;
+      done++; document.getElementById('status').textContent = `${done}/${renderedCount} models loaded`;
     }, undefined, () => attempt(i+1));
   };
   attempt(0);

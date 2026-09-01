@@ -1764,6 +1764,7 @@ app.use('/api/aura', require('./aura-routes'));
 // Paybox — customer-facing wallet endpoints (tip links etc). Separate from
 // federation-routes.js, which is for external bots/agents, not SHADDAI's own site.
 app.use('/api/paybox', require('./paybox-routes'));
+app.use('/api/market-3d', require('./market-3d.routes.js')); // SHADDAI 3D marketplace (models + purchases)
 // Agent Policy — the SURVIVAL product: create_agent / set_spend_policy /
 // revoke / get_ledger. Named agents hold money under owner-set caps, spend only
 // inside them, keep a public ledger, and run on the USER'S OWN key (Shaddai does
@@ -1780,6 +1781,24 @@ try { app.use('/api/battle', require('./battle-routes')); } catch (e) { console.
 try { app.use('/api/football', require('./sports/football/football-routes')); } catch (e) { console.warn('[startup] football-routes not mounted:', e.message); }
 // Cross-game SKILLPLAY: agent real-skills -> per-game abilities (scalable to forged agents)
 try { app.use('/api/skillplay', require('./skillplay-routes')); } catch (e) { console.warn('[startup] skillplay-routes not mounted:', e.message); }
+// SHADDAI 3D marketplace secure download: return GLB only after purchase proof (paybox-receipts.json)
+app.get('/api/market/file', async (req, res) => {
+  const arch = path.basename(req.query.arch || '');
+  const tx = req.query.tx;
+  if (!arch || !tx) return res.status(400).end();
+  // Find receipt in paybox-receipts.json
+  const receiptsPath = path.join(__dirname, 'data', 'paybox-receipts.json');
+  let receipts = [];
+  try {
+    receipts = JSON.parse(fs.readFileSync(receiptsPath, 'utf8')) || [];
+  } catch (e) { return res.status(404).end(); }
+  const buyer = req.session?.shd_userid || 'guest';
+  const purchased = receipts.some(r => r.user === buyer && r.txId === tx && r.itemId.startsWith('3d:') && r.itemId.endsWith(arch));
+  if (!purchased) return res.status(403).end();
+  const glbPath = path.join(__dirname, '..', 'public', 'assets', 'forge-models', arch + '.glb');
+  if (!fs.existsSync(glbPath)) return res.status(404).end();
+  res.sendFile(glbPath);
+});
 // AURA self-improvement: background auto-warm (no-op unless AURA_AUTOWARM=true)
 try { require('./aura-warmer').startAutoWarm(); } catch (_) {}
 // Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links
