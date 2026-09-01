@@ -98,7 +98,7 @@
       blurb: 'Skip the fanfare. The Command Hub, sign-in, and every tool exactly where you left them. For people who already know what they came for.',
       href: '/dashboard',
       art: '/assets/enter/dashboard.jpg',
-      artVary: ['/assets/enter/dashboard.jpg','/assets/enter/dashboard-1.jpg','/assets/enter/dashboard-2.jpg','/assets/enter/dashboard-3.jpg','/assets/enter/dashboard-4.jpg'],
+      artVary: ['/assets/enter/dashboard.jpg'],
       accent: C.emerald,
       geo: 'lattice'
     },
@@ -109,7 +109,7 @@
       blurb: 'A single object you spin with your thumb. Every part of SHADDAI on one wheel — agents, games, signals, forge, worlds. Swivel, sit on a choice to read it, tap to enter.',
       href: '/simple.html',
       art: '/assets/enter/simple.jpg',
-      artVary: ['/assets/enter/simple.jpg','/assets/enter/simple-1.jpg','/assets/enter/simple-2.jpg','/assets/enter/simple-3.jpg','/assets/enter/simple-4.jpg'],
+      artVary: ['/assets/enter/simple.jpg'],
       accent: C.violet,
       geo: 'drum'
     },
@@ -122,7 +122,7 @@
       blurb: 'The knowledge graph behind every agent. Ask it anything and every answer is cited back to the exact passage it came from. No invention.',
       href: '/brain.html',
       art: '/assets/enter/rag.jpg',
-      artVary: ['/assets/enter/rag.jpg','/assets/enter/rag-1.jpg','/assets/enter/rag-2.jpg','/assets/enter/rag-3.jpg','/assets/enter/rag-4.jpg'],
+      artVary: ['/assets/enter/rag.jpg'],
       accent: C.emerald,
       geo: 'graph'
     },
@@ -133,7 +133,7 @@
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
       href: '/SHADDAI-WORLD.html',
       art: '/assets/enter/world2d.jpg',
-      artVary: ['/assets/enter/world2d.jpg','/assets/enter/world2d-1.jpg','/assets/enter/world2d-2.jpg','/assets/enter/world2d-3.jpg','/assets/enter/world2d-4.jpg'],
+      artVary: ['/assets/enter/world2d.jpg'],
       accent: C.gold,
       geo: 'isogrid',
       /* Gated with a code, not open-closed. The door exists and the world
@@ -178,7 +178,7 @@
       blurb: 'Every game in the empire in one hall — the climb, the courts, the arenas, the tactics board.',
       href: '/arcade.html',
       art: '/assets/enter/arcade.jpg',
-      artVary: ['/assets/enter/arcade.jpg','/assets/enter/arcade-1.jpg','/assets/enter/arcade-2.jpg','/assets/enter/arcade-3.jpg','/assets/enter/arcade-4.jpg'],
+      artVary: ['/assets/enter/arcade.jpg'],
       accent: C.amber,
       geo: 'octa'
     },
@@ -221,7 +221,7 @@
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
       href: '/pro-signals.html',
       art: '/assets/enter/signals.jpg',
-      artVary: ['/assets/enter/signals.jpg','/assets/enter/signals-1.jpg','/assets/enter/signals-2.jpg','/assets/enter/signals-3.jpg','/assets/enter/signals-4.jpg'],
+      artVary: ['/assets/enter/signals.jpg'],
       accent: C.rose,
       geo: 'chart'
     }
@@ -333,16 +333,16 @@
       id: 'market', name: 'MARKETPLACE', accent: C.gold, art: '/assets/nav/apis.jpg',
       blurb: 'Buy and sell what the community has made.',
       items: [
-        { id: 'bazaar',   name: 'THE BAZAAR',     accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/marketplace-shop-v2.html', blurb: 'The store. Sign in to buy.' },
-        { id: 'market3d', name: '3D MARKETPLACE', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-gallery.html',       blurb: 'Browse what has been forged.' },
+        { id: 'bazaar',   name: 'THE BAZAAR',     accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/marketplace-shop-v2.html', blurb: 'The store. Sign in to buy.', locked: true, gate: '4444', lockNote: 'Enter the code' },
+        { id: 'market3d', name: '3D MARKETPLACE', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-gallery.html',       blurb: 'Browse what has been forged.', locked: true, gate: '4444', lockNote: 'Enter the code' },
       ],
     },
     {
       id: 'worlds', name: 'WORLDS', accent: C.emerald, art: '/assets/nav/worlds.jpg',
       blurb: 'Where the agents live.',
       items: [
-        { id: 'realms',  name: '2D REALM', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/region-select.html', blurb: 'Pick a region and walk in.' },
-        { id: 'realm3d', name: '3D REALM', accent: C.dim,     art: '/assets/nav/worlds.jpg', href: '/world3d',            blurb: 'The dimensional build. Still going up.' },
+        { id: 'realms',  name: '2D REALM', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/region-select.html', blurb: 'Pick a region and walk in.', locked: true, gate: '4444', lockNote: 'Enter the code' },
+        { id: 'realm3d', name: '3D REALM', accent: C.dim,     art: '/assets/nav/worlds.jpg', href: '/world3d',            blurb: 'The dimensional build. Still going up.', locked: true, gate: '4444', lockNote: 'Enter the code' },
       ],
     },
     {
