@@ -856,7 +856,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     <div class="pillar" data-pillar>
       <button aria-haspopup="true" aria-expanded="false">RAG Brain <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>The council's grounded memory</span><span class="cd">2,194 PASSAGES · 7 KBs</span></div>
+        <div class="phdr"><span>The council's grounded memory</span><span class="cd">2,326 PASSAGES · 7 KBs</span></div>
         <a href="#ragbrain" role="menuitem"><span class="gi">◉</span><span class="lk"><span class="t">Query the Brain</span><span class="s">ask · grounded &amp; cited · live demo</span></span><span class="badge live">live</span></a>
         <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council inside your Claude · one line</span></span><span class="badge live">live</span></a>
         <a href="/agents.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Knowledge Bases</span><span class="s">seven agents · seven mastery stores</span></span><span class="badge live">live</span></a>
@@ -1296,12 +1296,12 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
     <div class="rb-hero">
       <div class="rb-kick">◇ The RAG Brain · grounded · cited · live</div>
       <h1 class="rb-title">Ask the brain.<br><em>Read the receipts.</em></h1>
-      <p class="rb-sub">Every answer is pulled from the council's own mastery library — <b id="rbDocCount">2,194</b> searchable passages across seven minds, sourced from <b id="rbSrcCount">126</b> transcribed documents — cited to the exact excerpt. No invention. No hallucination. And every question asked <b>teaches the brain</b>.</p>
+      <p class="rb-sub">Every answer is pulled from the council's own mastery library — <b id="rbDocCount">2,326</b> searchable passages across seven minds, sourced from <b id="rbSrcCount">166</b> transcribed documents — cited to the exact excerpt. No invention. No hallucination. And every question asked <b>teaches the brain</b>.</p>
       <div class="rb-stats" id="rbStats" aria-hidden="false">
-        <div class="rb-stat"><div class="n" id="rbStatDocs">2,194</div><div class="l">indexed passages</div></div>
+        <div class="rb-stat"><div class="n" id="rbStatDocs">2,326</div><div class="l">indexed passages</div></div>
         <div class="rb-stat"><div class="n" id="rbStatKbs">7</div><div class="l">agent KBs</div></div>
-        <div class="rb-stat"><div class="n" id="rbStatMb">…</div><div class="l">MB mastery</div></div>
-        <div class="rb-stat"><div class="n" id="rbStatWords">~1.1M</div><div class="l">words indexed</div></div>
+        <div class="rb-stat"><div class="n" id="rbStatMb">5.8MB</div><div class="l">MB mastery</div></div>
+        <div class="rb-stat"><div class="n" id="rbStatWords">~1.2M</div><div class="l">words indexed</div></div>
       </div>
     </div>
 
@@ -1353,7 +1353,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
       </div>
       <div class="scaletag"><span class="coord">MCP</span> <b>bridge v<span id="mcpVer">…</span></b></div>
     </div>
-    <p class="lede">The seven agents and their mastery knowledge bases — <b>2,194 indexed passages across 7 knowledge bases</b>, sourced from 126 transcribed documents (~1.1M words) — exposed as a <em>Model Context Protocol</em> server. Plug them into Claude Desktop, Claude Code, or Cursor and get grounded answers pinpointed to the exact retrieved excerpt. <b>No API keys. No localhost. One line.</b></p>
+    <p class="lede">The seven agents and their mastery knowledge bases — <b>2,326 indexed passages across 7 knowledge bases</b>, sourced from 166 transcribed documents (~1.2M words) — exposed as a <em>Model Context Protocol</em> server. Plug them into Claude Desktop, Claude Code, or Cursor and get grounded answers pinpointed to the exact retrieved excerpt. <b>No API keys. No localhost. One line.</b></p>
 
     <div class="mcp-value">
       <div class="mv"><span class="mv-ic">◈</span><h4>Seven agents, on call</h4><p>SHADDAI, NEXUS, ZEROX, ORACLE, TURTLE, QUILL, PIKADON — each with its own mastery knowledge base. <code>run_agent — NEXUS, design a scalable system</code> returns the architect, armed with its store.</p></div>
@@ -1976,12 +1976,12 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     var words=chunks*500;
     var fmtW=function(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(0)+'K':String(n);};
     var setN=function(id,v,fallback){ var el=document.getElementById(id); if(el) el.textContent=(v!=null)?v:fallback; };
-    setN('rbDocCount', chunks?chunks.toLocaleString():null, '2,194');
-    setN('rbSrcCount', docs?docs.toLocaleString():null, '126');
-    setN('rbStatDocs', chunks?chunks.toLocaleString():null, '2,194');
+    setN('rbDocCount', chunks?chunks.toLocaleString():null, '2,326');
+    setN('rbSrcCount', docs?docs.toLocaleString():null, '166');
+    setN('rbStatDocs', chunks?chunks.toLocaleString():null, '2,326');
     setN('rbStatKbs', a.length||null, '7');
-    setN('rbStatMb', t.kbMB!=null?t.kbMB+'MB':null, '…');
-    setN('rbStatWords', words?'~'+fmtW(words):null, '~1.1M');
+    setN('rbStatMb', t.kbMB!=null?t.kbMB+'MB':null, '5.8MB');
+    setN('rbStatWords', words?'~'+fmtW(words):null, '~1.2M');
   }).catch(function(){});
   renderTrend(); syncLeft();
 })();
