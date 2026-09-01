@@ -817,7 +817,7 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 <!-- secondary utilities — deliberately outside .controls, see .util in CSS -->
 <div class="util">
   <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener" title="FOMO referral">🔥 fomo</a>
-  <button id="uPaybox" type="button" title="ZEROX FOMO wallets — tip or pay an agent">◈ paybox wallets</button>
+  <button id="uPaybox" type="button" title="Wallets — where funds land and what the agents do">wallets</button>
   <button id="uSnd" type="button" title="Sound is off by default">♪ sound</button>
   <div class="msg" id="uMsg"></div>
 </div>
@@ -890,7 +890,8 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 
 <script src="/js/shd-modules.js"></script>
 <script src="/js/enter-intro.js"></script>
-<script src="/js/shd-chrome.js"></script>
+<script src="/js/shd-chrome.js"></script> 
+<script src="/js/paybox-wallets.js"></script> 
 <script>
 /* Warm the door plates the moment this script parses — not when the intro
    finishes and not when render() gets around to it. The `<img>`s below come
@@ -1485,80 +1486,16 @@ if (renderer) {
 </script>
 
 <script>
-/* ══ PAYBOX — the ZEROX FOMO wallets ══════════════════════════════════════
-   Shows the two ZEROX wallets and nothing else. Addresses live in a config
-   fetched at runtime rather than typed into this page, so rotating one is a
-   config change, not a redeploy — and a wrong address pasted into HTML is the
-   single most expensive typo this product could ship.
-
-   If the config is absent the sheet says so plainly instead of rendering a
-   placeholder that somebody might send funds to. */
+/* ══ PAYBOX — WALLETS ═════════════════════════════════════════════════════════
+   The paybox/pay-an-agent sheet lives in /js/paybox-wallets.js (shared with
+   Simple Mode). This wiring just hands the front-door button to it. */
 (function () {
   var btn = document.getElementById('uPaybox');
   if (!btn) return;
-
-  function sheet(html) {
-    var w = document.createElement('div');
-    w.style.cssText = 'position:fixed;inset:0;z-index:9500;display:grid;place-items:end center';
-    w.innerHTML =
-      '<div style="position:absolute;inset:0;background:rgba(0,0,0,.75)" data-x></div>' +
-      '<div style="position:relative;width:min(560px,100%);background:var(--panel,#0e141b);' +
-      'border-top:2px solid var(--gold,#e8c45c);padding:22px 20px calc(24px + env(safe-area-inset-bottom));' +
-      'max-height:80vh;overflow-y:auto;font-family:var(--f-mono,monospace)">' + html + '</div>';
-    document.body.appendChild(w);
-    w.addEventListener('click', function (e) {
-      if (e.target.hasAttribute('data-x') || e.target.hasAttribute('data-close')) w.remove();
-      var c = e.target.closest('[data-copy]');
-      if (c) {
-        var v = c.getAttribute('data-copy'), was = c.textContent;
-        var ok = function () { c.textContent = 'Copied'; setTimeout(function () { c.textContent = was; }, 1600); };
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(ok, fb);
-        else fb();
-        function fb() { var t = document.createElement('textarea'); t.value = v;
-          t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
-          try { document.execCommand('copy'); ok(); } catch (err) {} document.body.removeChild(t); }
-      }
-    });
-    return w;
-  }
-
-  var HEAD = '<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#e8c45c">' +
-             'ZEROX · FOMO</div><div style="font-family:Cinzel,serif;font-weight:900;font-size:22px;' +
-             'color:#e9efe9;margin:8px 0 4px">Paybox wallets</div>';
-
+  btn.setAttribute('aria-haspopup', 'dialog');
   btn.addEventListener('click', function () {
-    btn.disabled = true;
-    fetch('/api/paybox/wallets')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var list = (d && d.wallets) || [];
-        var body = list.length
-          ? list.map(function (w) {
-              return '<div style="border:1px solid rgba(120,150,140,.2);padding:14px;margin-top:12px">' +
-                '<div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#00ff9c">' +
-                  (w.label || 'Wallet') + '</div>' +
-                '<div style="font-size:12px;color:#93a49b;margin-top:8px;word-break:break-all">' +
-                  (w.address || '') + '</div>' +
-                '<button data-copy="' + (w.address || '') + '" style="margin-top:11px;min-height:42px;' +
-                  'padding:0 16px;background:none;border:1px solid rgba(120,150,140,.34);color:#93a49b;' +
-                  'font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;' +
-                  'cursor:pointer;border-radius:2px">Copy address</button></div>';
-            }).join('')
-          : '<p style="color:#93a49b;font-size:14px;line-height:1.7;margin-top:14px">' +
-            'Not configured yet. Nothing is shown here until the real addresses are set, ' +
-            'because a placeholder someone might send funds to is worse than an empty sheet.</p>';
-        sheet(HEAD + body +
-          '<button data-close style="width:100%;margin-top:18px;min-height:50px;background:none;' +
-          'border:1px solid rgba(120,150,140,.34);color:#93a49b;font-family:inherit;font-size:11px;' +
-          'letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:2px">Close</button>');
-      })
-      .catch(function () {
-        sheet(HEAD + '<p style="color:#93a49b;font-size:14px;margin-top:14px">Could not reach the wallet service.</p>' +
-          '<button data-close style="width:100%;margin-top:18px;min-height:50px;background:none;' +
-          'border:1px solid rgba(120,150,140,.34);color:#93a49b;font-family:inherit;font-size:11px;' +
-          'letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:2px">Close</button>');
-      })
-      .then(function () { btn.disabled = false; });
+    if (typeof window.openPaybox === 'function') window.openPaybox();
+    else btn.title = 'Wallets panel unavailable yet';
   });
 })();
 </script>

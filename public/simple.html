@@ -261,6 +261,7 @@ html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act 
         <button type="button" data-skin="list">list</button>
       </div>
       <button class="tool" id="tDwell" type="button" title="Bios"><span class="dot"></span></button>
+      <button class="tool" id="tWallet" type="button" title="Wallets — where funds land and what the agents do">⌗</button>
       <button class="tool" id="tTheme" type="button" title="Theme">◈</button>
       <button class="tool off" id="tAuth" type="button" title="Sign in"><span class="dot"></span><span id="authLbl">in</span></button>
     </div>
@@ -310,7 +311,8 @@ html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act 
 </div>
 
 <script src="/js/shd-modules.js"></script>
-<script src="/js/shd-chrome.js"></script>
+<script src="/js/shd-chrome.js"></script> 
+<script src="/js/paybox-wallets.js"></script> 
 <script type="module">
 import { createSimple } from '/js/simple/core.js';
 
@@ -350,6 +352,7 @@ function paintAuth() {
 C.onAuth(paintAuth); paintAuth();
 $('tAuth').addEventListener('click', () => C.openAuth());
 $('tTheme').addEventListener('click', () => C.openTheme());
+$('tWallet').addEventListener('click', () => { if (typeof window.openPaybox === 'function') window.openPaybox(); });
 
 const app = createSimple({
   canvas: $('stage'),
