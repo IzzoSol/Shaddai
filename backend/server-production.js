@@ -1766,7 +1766,21 @@ app.use('/api/aura', require('./aura-routes'));
 app.use('/api/paybox', require('./paybox-routes'));
 app.use('/api/mcp-sentiment', require('./mcp-routes')); // MCP sentiment + tool counts
 app.use('/api/lesson-plan', require('./lesson-plan')); // grok-style lesson plans for agents
-app.use('/api/zerox/scan', require('./zerox-scan')); // ZEROX live market data scan
+// ZEROX live market data scan (GET /api/zerox/scan?symbol=<mint_or_symbol>). The
+// underlying module exports a bare helper function, so wire it as a real route
+// instead of an app.use mount (mounting the object crashed startup with
+// "Router.use() requires a middleware function").
+const { zerox_scan } = require('./zerox-scan');
+app.get('/api/zerox/scan', async (req, res) => {
+  try {
+    const q = String(req.query.symbol || req.query.mint || req.query.s || '').trim();
+    if (!q) return res.status(400).json({ ok: false, error: 'Missing symbol or mint query param' });
+    const out = await zerox_scan({ mint_or_symbol: q, vs: String(req.query.vs || 'SOL') });
+    res.json({ ok: true, ...out });
+  } catch (e) {
+    res.status(502).json({ ok: false, error: String(e.message || e) });
+  }
+});
 app.use('/api/market-3d', require('./market-3d.routes.js')); // SHADDAI 3D marketplace (models + purchases)
 // Agent Policy — the SURVIVAL product: create_agent / set_spend_policy /
 // revoke / get_ledger. Named agents hold money under owner-set caps, spend only
