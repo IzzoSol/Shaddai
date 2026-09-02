@@ -25,9 +25,38 @@ const readline = require('readline');
 const fs = require('fs');
 const path = require('path');
 
-const API = (process.env.SHADDAI_API_URL || 'https://shaddai-g81x.onrender.com').replace(/\/+$/, '');
+const VERSION = '1.1.0';
+
+// ── Security hardening (PIKADON review) ──────────────────────────────────────
+// 1) The API base must be HTTPS with a real hostname. This blocks SSRF / key
+//    exfiltration if SHADDAI_API_URL is ever tampered with — reject before the
+//    first request so the SHADDAI_API_KEY can never be shipped to a bad host.
+const _envApi = (process.env.SHADDAI_API_URL || 'https://shaddai-g81x.onrender.com').replace(/\/+$/, '');
+const _apiMatch = /^https:\/\/([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d{1,5})?$/.exec(_envApi);
+if (!_apiMatch) {
+  // no access to stdout yet at this point (readline set up below) — fail fast
+  throw new Error('SHADDAI_API_URL must be an https:// URL with a hostname (rejected by PIKADON guard): ' + _envApi);
+}
+const API = _envApi;
 const API_KEY = process.env.SHADDAI_API_KEY || ''; // optional — gate access to paying users
-const VERSION = '1.0.0';
+
+// 2) Least-privilege: money tools are OFF by default. They only register if the
+//    operator explicitly opts in with SHADDAI_ENABLE_MONEY=1. stdio MCP is a
+//    trusted channel, but create_agent / set_spend_policy / revoke move money —
+//    so they should not be exposed by default.
+const MONEY_ENABLED = String(process.env.SHADDAI_ENABLE_MONEY || '').toLowerCase() === '1' || String(process.env.SHADDAI_ENABLE_MONEY || '').toLowerCase() === 'true';
+
+// 4) Lightweight token bucket: cap tools/call throughput so a runaway client
+//    cannot drain paid `/api/ask` quota or hammer the API.
+const RATE_MAX_PER_SEC = Number(process.env.SHADDAI_RATE_PER_SEC) || 5;
+let _tokens = RATE_MAX_PER_SEC, _lastRefill = Date.now();
+function allowRequest() {
+  const now = Date.now();
+  _tokens = Math.min(RATE_MAX_PER_SEC, _tokens + ((now - _lastRefill) / 1000) * RATE_MAX_PER_SEC);
+  _lastRefill = now;
+  if (_tokens >= 1) { _tokens -= 1; return true; }
+  return false;
+}
 
 const AGENTS_INFO =
 `SHADDAI — orchestrator; decomposes goals and coordinates the team
@@ -218,6 +247,12 @@ function fmtLedger(entries) {
 async function callTool(name, args) {
   args = args || {};
 
+  // Least-privilege gate: money tools refuse unless the operator explicitly
+  // enabled them (SHADDAI_ENABLE_MONEY=1). Defensive default (PIKADON).
+  if (!MONEY_ENABLED && /^shaddai_(create_agent|set_spend_policy|revoke_agent|get_agent_ledger)$/.test(name)) {
+    throw new Error('Money tools are disabled by default (PIKADON). To enable, set SHADDAI_ENABLE_MONEY=1 in the server env.');
+  }
+
   if (name === 'shaddai_list_agents') return AGENTS_INFO;
 
   if (name === 'shaddai_orchestrate') {
@@ -400,6 +435,10 @@ rl.on('line', async (line) => {
     } else if (method === 'tools/list') {
       send({ jsonrpc: '2.0', id, result: { tools: TOOLS } });
     } else if (method === 'tools/call') {
+      if (!allowRequest()) {
+        if (id !== undefined) send({ jsonrpc: '2.0', id, error: { code: -32005, message: 'Rate limit exceeded: ' + RATE_MAX_PER_SEC + ' tool calls/sec. Retry shortly.' } });
+        return;
+      }
       const text = await callTool(params && params.name, (params && params.arguments) || {});
       send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: String(text).slice(0, 12000) }] } });
     } else if (method === 'ping') {
@@ -412,7 +451,7 @@ rl.on('line', async (line) => {
   }
 });
 
-process.stderr.write('shaddai-unified-mcp ready → ' + API + '\n');
+process.stderr.write('shaddai-unified-mcp v' + VERSION + ' ready → ' + API + ' | money=' + (MONEY_ENABLED ? 'ON' : 'OFF') + ' | rate=' + RATE_MAX_PER_SEC + '/s\n');
 
 // Allow importing as a module (for tests / federation door).
 module.exports = { callTool, TOOLS, AGENTS_INFO, API };

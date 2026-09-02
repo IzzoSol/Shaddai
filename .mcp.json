@@ -4,7 +4,9 @@
       "command": "node",
       "args": ["C:\\Users\\Brittany\\Shaddai\\shaddai-mcp\\mcp-unified.js"],
       "env": {
-        "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com"
+        "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com",
+        "SHADDAI_ENABLE_MONEY": "1",
+        "SHADDAI_RATE_PER_SEC": "5"
       }
     },
     "paybox": {
