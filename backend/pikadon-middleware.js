@@ -70,8 +70,10 @@ export function review(payload) {
   return ['FAIL', reasons];
 }
 
-// CLI helper (optional)
-if (require.main === module) {
+// CLI helper (optional). Guard for ESM loaders (Node >=22 detection) that may
+// evaluate this CommonJS file without `require` in scope; the server never
+// depends on this block, so bail silently if require isn't available.
+if (typeof require !== 'undefined' && require.main === module) {
   const testPayload = {
     action: 'swap',
     chain: 'solana',
