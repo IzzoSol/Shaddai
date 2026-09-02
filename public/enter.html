@@ -596,30 +596,6 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 @media(prefers-reduced-motion:reduce){ .simplebtn{ animation:none; } }
 
 /* routing example strip under Simple Mode â€” a quiet three-part log line */
-.routex{
-  width:min(560px,90vw); margin:0 auto clamp(18px,3vw,28px);
-  display:flex; align-items:center; flex-wrap:wrap; gap:9px 12px;
-  padding:12px 16px; border-radius:3px;
-  border:1px solid var(--edge,rgba(120,150,140,.14));
-  background:var(--panel,#0e141b); font-family:var(--f-mono);
-}
-.routex-q,.routex-a{
-  font-size:9px; letter-spacing:.22em; text-transform:uppercase; font-weight:600;
-  border-radius:2px; padding:3px 8px; line-height:1;
-}
-.routex-q{ color:#06080b; background:var(--emerald,#00ff9c); }
-.routex-a{ color:var(--ink,#e9efe9); border:1px solid var(--edge,rgba(120,150,140,.28)); }
-.routex-dot{ width:5px; height:5px; border-radius:50%; background:var(--emerald,#00ff9c);
-  box-shadow:0 0 8px var(--emerald,#00ff9c); flex-shrink:0; }
-.routex-line{ margin:0; font-size:11px; letter-spacing:.04em; color:var(--ink-soft,#93a49b); }
-.routex-chips{ display:inline-flex; align-items:center; gap:6px; margin-left:auto; }
-.routex-chips .rc{
-  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft,#93a49b);
-  border:1px solid var(--edge,rgba(120,150,140,.22)); border-radius:2px; padding:3px 7px; line-height:1;
-}
-.routex-chips .rc.done{ color:var(--emerald,#00ff9c); border-color:color-mix(in srgb, var(--emerald,#00ff9c) 42%, transparent); }
-@media(max-width:520px){ .routex-chips{ margin-left:0; } }
-
 /* â•â• FOOTER â€” the things a real site has â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .foot{ position:relative; z-index:10; margin-top:auto;
   padding:clamp(16px,2.4vw,24px) clamp(16px,4vw,42px) calc(16px + env(safe-area-inset-bottom));
@@ -694,11 +670,31 @@ body[data-lay='swivel'] .slot:nth-child(even){ transform:none; }
 body[data-lay='swivel'] .slot:hover, body[data-lay='swivel'] .slot:focus-visible, body[data-lay='swivel'] .slot.touched{
   transform:none;
   box-shadow:none;
-}body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } body[data-lay="orb"] .ctl{ z-index:100; position:relative; } body[data-lay="wheel"] .ctl{ z-index:100; position:relative; } }
-@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:20px; --os:1; } }
+}
+/* ORB - modules arc around a shallow sphere, front row straight-up, the
+   rim curled away so the whole thing reads as a planet you can rest on. */
+body[data-lay="orb"]{ perspective:1400px; }
+body[data-lay="orb"] .grid{
+  transform-style:preserve-3d;
+}
+body[data-lay="orb"] .slot{
+  transform:translateZ(var(--oz,14px)) scale(var(--os,1));
+  transition:transform .55s var(--ease), box-shadow .55s var(--ease);
+}
+body[data-lay="orb"] .slot:nth-child(1){ --oz:34px; --os:1.06; }
+body[data-lay="orb"] .slot:nth-child(2){ --oz:20px; --os:1.02; }
+body[data-lay="orb"] .slot:nth-child(3){ --oz:0px;  --os:.97; }
+body[data-lay="orb"] .slot:nth-child(4){ --oz:0px;  --os:.97; }
+body[data-lay="orb"] .slot:nth-child(5){ --oz:0px;  --os:.94; }
+body[data-lay="orb"] .slot:nth-child(n+6){ --oz:0px; --os:.9; }
+body[data-lay="orb"] .slot:hover, body[data-lay="orb"] .slot:focus-visible, body[data-lay="orb"] .slot.touched{
+  --oz:54px; --os:1.1; transform:translateY(-6px);
+  box-shadow:0 24px 46px rgba(0,0,0,.5);
+}
+@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:14px; --os:1; } }
 
-/* WHEEL - the doors rim a band that gently trundles on its axis; rest on one
-   and it rolls to face you and pops out of the rim. */
+/* WHEEL - the doors rim a carousel band that gently trundles on its axis;
+   they stay face-on and readable, lifting toward you on rest. */
 body[data-lay="wheel"]{ perspective:1700px; }
 body[data-lay="wheel"] .grid{
   grid-template-columns:repeat(2,1fr) !important; max-width:780px; gap:clamp(12px,2vw,24px);
@@ -706,17 +702,17 @@ body[data-lay="wheel"] .grid{
 }
 body[data-lay="wheel"] .slot{
   min-height:clamp(108px,16vh,150px);
-  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(var(--rz,0px));
+  transform:rotateX(var(--rx,5deg)) translateZ(var(--rz,16px));
   box-shadow:0 16px 42px rgba(0,0,0,.5);
   transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="wheel"] .slot:nth-child(1){ --rx:9deg;  --ry:-9deg; --rz:28px; }
-body[data-lay="wheel"] .slot:nth-child(2){ --rx:5deg;  --ry:9deg;  --rz:42px; }
-body[data-lay="wheel"] .slot:nth-child(3){ --rx:-5deg; --ry:-9deg; --rz:42px; }
-body[data-lay="wheel"] .slot:nth-child(4){ --rx:-9deg; --ry:9deg;  --rz:28px; }
-body[data-lay="wheel"] .slot:nth-child(n+5){ --rx:0deg; --ry:0deg; --rz:0px; }
+body[data-lay="wheel"] .slot:nth-child(1){ --rx:7deg; --rz:26px; }
+body[data-lay="wheel"] .slot:nth-child(2){ --rx:4deg; --rz:40px; }
+body[data-lay="wheel"] .slot:nth-child(3){ --rx:4deg; --rz:40px; }
+body[data-lay="wheel"] .slot:nth-child(4){ --rx:7deg; --rz:26px; }
+body[data-lay="wheel"] .slot:nth-child(n+5){ --rx:0deg; --rz:0px; }
 body[data-lay="wheel"] .slot:hover, body[data-lay="wheel"] .slot:focus-visible, body[data-lay="wheel"] .slot.touched{
-  --rx:0deg; --ry:0deg; --rz:62px; transform:translateY(-8px);
+  --rx:0deg; --rz:60px; transform:translateY(-8px);
   box-shadow:0 28px 64px rgba(0,0,0,.6);
 }
 @keyframes rimRoll{
@@ -796,7 +792,8 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 .viewmenu button[aria-selected=true]{ color:var(--accent); border-color:color-mix(in srgb, var(--accent) 35%, transparent);
   background:color-mix(in srgb, var(--accent) 9%, transparent); }
 .viewmenu button[aria-selected=true] i{ color:var(--accent); }
-.ver{ margin-left:2px; align-self:center; font-family:var(--f-mono); font-size:9px; letter-spacing:.12em; color:var(--emerald); opacity:.85; border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); border-radius:2px; padding:2px 6px; white-space:nowrap; }
+.ver{ margin-left:2px;
+#tryit{ margin-top:clamp(26px,3.6vw,44px); border:1px solid var(--edge); border-radius:3px; background:rgba(255,255,255,.02); padding:clamp(18px,2.6vw,30px); }#tryit .tk{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--emerald); }#tryit h3{ font-family:var(--f-display); font-weight:900; letter-spacing:.03em; font-size:clamp(20px,2.8vw,30px); margin:8px 0 4px; }#tryit .ts{ color:var(--ink-soft); font-size:14.5px; max-width:62ch; line-height:1.6; }#tryit .trow{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }#tryit input{ flex:1 1 260px; min-width:0; background:var(--void2); border:1px solid var(--edge); border-radius:2px; color:var(--ink); font-family:var(--f-mono); font-size:16px; padding:13px 14px; min-height:50px; outline:none; }#tryit input:focus{ border-color:var(--emerald); }#tryit .tgo{ min-height:50px; padding:0 22px; border:1px solid var(--emerald); background:var(--emerald); color:var(--void); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; border-radius:2px; cursor:pointer; }#tryit .tgo[disabled]{ opacity:.45; cursor:default; }#tryit .egs{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }#tryit .eg{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em; color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; padding:9px 12px; min-height:40px; background:none; cursor:pointer; transition:border-color .2s,color .2s; }#tryit .eg:hover{ color:var(--ink); border-color:var(--emerald); }#tryit .tout{ margin-top:18px; min-height:0; }#tryit .tline{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; }#tryit .hits{ display:flex; flex-direction:column; gap:8px; }#tryit .hit{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border:1px solid var(--edge); border-left:2px solid var(--hc); border-radius:2px; padding:12px 14px; background:rgba(255,255,255,.015); }#tryit .hit .who{ font-family:var(--f-display); font-weight:900; font-size:15px; letter-spacing:.09em; color:var(--hc); }#tryit .hit .role{ font-size:13px; color:var(--ink-soft); }#tryit .hit .pick{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--void); background:var(--hc); padding:4px 8px; border-radius:2px; }#tryit .hit.sub .pick{ background:none; color:var(--ink-faint); border:1px solid var(--edge); }#tryit .why{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-top:12px; } align-self:center; font-family:var(--f-mono); font-size:9px; letter-spacing:.12em; color:var(--emerald); opacity:.85; border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); border-radius:2px; padding:2px 6px; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -880,19 +877,17 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
   <span class="sd">one wheel Â· everything Â· built for a thumb</span>
 </a>
 
-<!-- routing example: the council actually works like this, in the MCP too.
-     A request lands, the router asks the seven, they vote, and the match
-     decides who picks it up. Kept as a quiet strip under Simple Mode. -->
-<div class="routex" aria-label="How routing works">
-  <span class="routex-q">try it</span>
-  <span class="routex-a">route it</span>
-  <span class="routex-dot" aria-hidden="true"></span>
-  <p class="routex-line">the council decided after 6 rounds</p>
-  <div class="routex-chips">
-    <span class="rc">writing</span>
-    <span class="rc">spirituality</span>
-    <span class="rc done">â†’ matched</span>
+<!-- live router: ask what you want done, the council decides who owns it -->
+<div id="tryit">
+  <div class="tk">Try it</div>
+  <h3>Ask for something. See who takes it.</h3>
+  <p class="ts">This is the real router, not a mock-up. Type what you want done and the council decides which agent owns it &mdash; the same way it decides when you actually use SHADDAI.</p>
+  <div class="trow">
+    <input id="tqi" type="text" autocomplete="off" placeholder="make me a 3D model and a voice over" aria-label="What do you want done?" />
+    <button class="tgo" id="tqg" type="button">Route it</button>
   </div>
+  <div class="egs" id="tqe"></div>
+  <div class="tout" id="tqo"></div>
 </div>
 
 <div class="viewctl" id="viewCtrl">
@@ -1587,6 +1582,62 @@ if (renderer) {
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
 
   paint();
+})();
+</script>
+<script>
+/* real router demo — ask, and the council decides */
+(function () {
+  var inp = document.getElementById('tqi'), go = document.getElementById('tqg'),
+      out = document.getElementById('tqo'), egs = document.getElementById('tqe');
+  if (!inp) return;
+  var EG = [
+    'make me a 3D model and a voice over',
+    'trade the best coin on pumpfun',
+    'is this contract safe or a rug',
+    'write me a launch thread',
+    'why do people buy things they do not need'
+  ];
+  EG.forEach(function (q) {
+    var b = document.createElement('button');
+    b.className = 'eg'; b.type = 'button'; b.textContent = q;
+    b.addEventListener('click', function () { inp.value = q; run(); });
+    egs.appendChild(b);
+  });
+  function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  var HUE = { SHADDAI: '#e8c45c', ZEROX: '#ff6f6f', ORACLE: '#b07cff', NEXUS: '#5fe0ff',
+              TURTLE: '#00ff9c', QUILL: '#e8c45c', PIKADON: '#ff8a5c' };
+  function run() {
+    var q = (inp.value || inp.placeholder).trim();
+    if (!q) return;
+    go.disabled = true;
+    out.innerHTML = '<div class="tline">routing&hellip;</div>';
+    fetch('/api/route?q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var hits = (d.ranked || []).map(function (h, i) {
+          var c = HUE[h.agent] || '#00ff9c';
+          return '<div class="hit' + (i ? ' sub' : '') + '" style="--hc:' + c + '">' +
+                   '<span class="who">' + esc(h.agent) + '</span>' +
+                   '<span class="role">' + esc(h.theme || '') + '</span>' +
+                   '<span class="pick">' + (i ? 'can support' : 'takes it') + '</span>' +
+                 '</div>';
+        }).join('');
+        var topics = (d.matchedTopics || []).map(esc).join(', ');
+        out.innerHTML =
+          '<div class="tline">the council decided</div><div class="hits">' + hits + '</div>' +
+          (topics ? '<div class="why">matched on <b>' + topics + '</b></div>' : '');
+      })
+      .catch(function () {
+        out.innerHTML = '<div class="tline">router unreachable &mdash; try again in a moment</div>';
+      })
+      .then(function () { go.disabled = false; });
+  }
+  go.addEventListener('click', run);
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); run(); } });
 })();
 </script>
 </body>
