@@ -143,7 +143,14 @@ header{
 .brand .sub{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; color:var(--ink-faint); text-transform:uppercase; white-space:nowrap; }
 @media(max-width:640px){ .brand .sub{ display:none; } }
 
-.controls{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.controls{
+  display:flex; align-items:center; gap:8px; flex-shrink:0;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 99999 !important;
+  padding: clamp(14px,2.4vw,24px) clamp(16px,4vw,42px);
+  padding-top:calc(clamp(14px,2.4vw,24px) + env(safe-area-inset-top));
+}
 .ctl{
   font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
@@ -825,6 +832,7 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 <!-- secondary utilities â€” deliberately outside .controls, see .util in CSS -->
 <div class="util">
   <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener" title="FOMO referral">ðŸ”¥ fomo</a>
+  <button id="uAscend" type="button" title="ASCEND — The cinematic entry">ðŸ’¼ ascend</button>
   <button id="uPaybox" type="button" title="Wallets â€” where funds land and what the agents do">wallets</button>
   <button id="uSnd" type="button" title="Sound is off by default">â™ª sound</button>
   <div class="msg" id="uMsg"></div>
