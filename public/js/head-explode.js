@@ -72,7 +72,8 @@ export function buildCompartments(THREE, source, renderer, tetherParent, tetherC
     const capGeo = new THREE.PlaneGeometry(Math.max(0.05, capW), Math.max(0.05, capD));
     capGeo.rotateX(-Math.PI / 2);
     const capMat = new THREE.MeshBasicMaterial({
-      color: tetherColor, transparent: true, opacity: 0.55, side: THREE.DoubleSide,
+      color: tetherColor, transparent: true, depthWrite: true,
+      opacity: 0.72, side: THREE.DoubleSide,
     });
     const capLo = new THREE.Mesh(capGeo, capMat.clone());
     capLo.position.y = lo;
