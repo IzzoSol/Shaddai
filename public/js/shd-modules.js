@@ -313,6 +313,18 @@
       ],
     },
     {
+      id: 'mcp', name: 'MCP', accent: C.emerald, art: '/assets/nav/apis.jpg',
+      blurb: 'Connect Claude, Cursor, Grok — seven agents, 24+ tools, real-time market data. Standard interface for the council.',
+      items: [
+        { id: 'status', name: 'STATUS', accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp.html',
+          blurb: 'Check MCP health: 3 servers, 24 tools, 7 agent KBs (2326 chunks/166 docs/5.8MB)' },
+        { id: 'tools', name: 'TOOLS', accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp-tools',
+          blurb: 'Browse 24 registered MCP tools across all agents' },
+        { id: 'sentiment', name: 'SENTIMENT', accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp-sentiment.html',
+          blurb: 'Fear & Greed index, per-category sentiment, live analysis' },
+      ],
+    },
+    {
       id: 'dashboard', name: 'DASHBOARD', accent: C.emerald, art: '/assets/nav/dashboard.jpg',
       blurb: 'The workstation. Everything the council can do, in one place.',
       items: [
