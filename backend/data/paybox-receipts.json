@@ -1,0 +1,50 @@
+[
+  {
+    "id": "r_mthtd5cy",
+    "txId": "pb_mthtd5cx",
+    "user": "buyer_smoke",
+    "seller": "PIKADON",
+    "itemId": "xss-check",
+    "amount": 40,
+    "fee": 2,
+    "net": 38,
+    "reason": "skill:xss-check",
+    "receiptAt": "2026-08-31T22:32:25.186Z",
+    "atUs": 1788215545186,
+    "meta": {
+      "via": "skills-market"
+    }
+  },
+  {
+    "id": "r_mthuvtc8",
+    "txId": "pb_mthuvtc7",
+    "user": "buyer_smoke",
+    "seller": "PIKADON",
+    "itemId": "xss-check",
+    "amount": 40,
+    "fee": 2,
+    "net": 38,
+    "reason": "skill:xss-check",
+    "receiptAt": "2026-08-31T23:14:55.688Z",
+    "atUs": 1788218095688,
+    "meta": {
+      "via": "skills-market"
+    }
+  },
+  {
+    "id": "r_mthve8jp",
+    "txId": "pb_mthve8jn",
+    "user": "buyer_smoke",
+    "seller": "PIKADON",
+    "itemId": "xss-check",
+    "amount": 40,
+    "fee": 2,
+    "net": 38,
+    "reason": "skill:xss-check",
+    "receiptAt": "2026-08-31T23:29:15.205Z",
+    "atUs": 1788218955205,
+    "meta": {
+      "via": "skills-market"
+    }
+  }
+]

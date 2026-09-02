@@ -656,60 +656,49 @@ body[data-lay="swivel"] .slot:hover, body[data-lay="swivel"] .slot:focus-visible
 @media(prefers-reduced-motion:reduce){ body[data-lay="swivel"] .slot{ transform:none !important; } }
 @media(max-width:640px){ body[data-lay="swivel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="swivel"] .slot{ transform:none !important; } }
 
-/* ORB - the four float on a slow-turning shell, lifted off their corners so
-   the whole group reads as a sphere of choices rather than a flat wall. */
-body[data-lay="orb"]{ perspective:1700px; }
+/* ORB - the four float on a level shell so the whole group reads as a ring of
+   choices rather than a leaning wall. Layout is flat (perspective:none +
+   transform-style:flat + no tumble) so edge tiles stay level and readable;
+   hover still lifts the tile toward you. */
+body[data-lay="orb"]{ perspective:none; }
 body[data-lay="orb"] .grid{
   grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.2vw,26px);
-  transform-style:preserve-3d; animation:orbTumble 26s ease-in-out infinite alternate;
+  transform-style:flat; animation:none;
 }
 body[data-lay="orb"] .slot{
   min-height:clamp(120px,20vh,180px);
-  transform:rotateY(var(--oy,0deg)) translateZ(var(--oz,16px)) scale(var(--os,1));
+  transform:none;
   box-shadow:0 20px 50px rgba(0,0,0,.55);
   transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="orb"] .slot:nth-child(1){ --oy:-15deg; --oz:38px; --os:.93; }
-body[data-lay="orb"] .slot:nth-child(2){ --oy:15deg;  --oz:52px; --os:1.06; }
-body[data-lay="orb"] .slot:nth-child(3){ --oy:-15deg; --oz:52px; --os:1.06; }
-body[data-lay="orb"] .slot:nth-child(4){ --oy:15deg;  --oz:38px; --os:.93; }
-body[data-lay="orb"] .slot:nth-child(n+5){ --oy:0deg; --oz:0px; --os:.97; }
+/* neutralize the per-slot 3D leans so nothing tilts off-level */
+body[data-lay="orb"] .slot:nth-child(n){ --oy:0deg; --oz:0px; --os:1; }
 body[data-lay="orb"] .slot:hover, body[data-lay="orb"] .slot:focus-visible, body[data-lay="orb"] .slot.touched{
-  --oy:0deg; --oz:70px; --os:1.14;
+  transform:translateZ(0) scale(1.04) translateY(-6px);
   box-shadow:0 32px 76px rgba(0,0,0,.6);
 }
-@keyframes orbTumble{
-  0%{ transform:rotateY(-16deg) rotateX(5deg); }
-  100%{ transform:rotateY(16deg) rotateX(-5deg); }
-}
 @media(prefers-reduced-motion:reduce){ body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } }
-@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:20px; --os:1; } }
+@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
 
-/* WHEEL - the doors rim a band that gently trundles on its axis; rest on one
-   and it rolls to face you and pops out of the rim. */
-body[data-lay="wheel"]{ perspective:1700px; }
+/* WHEEL - the doors rim a level band that sits flat so every tile reads
+   face-on and level (no sideways roll, no lean). Layout is flat
+   (perspective:none + transform-style:flat + no rotation); resting on a tile
+   still lifts it out at you. */
+body[data-lay="wheel"]{ perspective:none; }
 body[data-lay="wheel"] .grid{
   grid-template-columns:repeat(2,1fr) !important; max-width:780px; gap:clamp(12px,2vw,24px);
-  transform-style:preserve-3d; animation:rimRoll 22s ease-in-out infinite alternate;
+  transform-style:flat; animation:none;
 }
 body[data-lay="wheel"] .slot{
   min-height:clamp(108px,16vh,150px);
-  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(var(--rz,0px));
+  transform:none;
   box-shadow:0 16px 42px rgba(0,0,0,.5);
   transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="wheel"] .slot:nth-child(1){ --rx:9deg;  --ry:-9deg; --rz:28px; }
-body[data-lay="wheel"] .slot:nth-child(2){ --rx:5deg;  --ry:9deg;  --rz:42px; }
-body[data-lay="wheel"] .slot:nth-child(3){ --rx:-5deg; --ry:-9deg; --rz:42px; }
-body[data-lay="wheel"] .slot:nth-child(4){ --rx:-9deg; --ry:9deg;  --rz:28px; }
-body[data-lay="wheel"] .slot:nth-child(n+5){ --rx:0deg; --ry:0deg; --rz:0px; }
+body[data-lay="wheel"] .slot:nth-child(n){ --rx:0deg; --ry:0deg; --rz:0px; }
 body[data-lay="wheel"] .slot:hover, body[data-lay="wheel"] .slot:focus-visible, body[data-lay="wheel"] .slot.touched{
-  --rx:0deg; --ry:0deg; --rz:62px; transform:translateY(-8px);
+  transform:translateY(-8px) scale(1.04);
   box-shadow:0 28px 64px rgba(0,0,0,.6);
-}
-@keyframes rimRoll{
-  0%{ transform:rotateX(8deg) rotateZ(-3deg); }
-  100%{ transform:rotateX(-8deg) rotateZ(3deg); }
 }
 @media(prefers-reduced-motion:reduce){ body[data-lay="wheel"] .grid{ animation:none; } body[data-lay="wheel"] .slot{ transform:none !important; } }
 @media(max-width:640px){ body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
@@ -1369,7 +1358,7 @@ if (renderer) {
 
   /* One scene per slot, all sharing the renderer via scissor. */
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.z = 4.1;
+  camera.position.z = 5.4;
   let cells = [];
 
   function build() {

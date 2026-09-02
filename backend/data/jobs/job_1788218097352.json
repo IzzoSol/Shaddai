@@ -1,0 +1,14 @@
+{
+  "id": "job_1788218097352",
+  "title": "smoke job",
+  "description": "verify escrow",
+  "targetAgents": [],
+  "reward": 0.05,
+  "creator": "guest",
+  "status": "open",
+  "paymentStatus": "held_in_escrow",
+  "escrowCredits": 50,
+  "createdAt": "2026-08-31T23:14:57.352Z",
+  "bids": [],
+  "savedAt": "2026-08-31T23:14:57.368Z"
+}

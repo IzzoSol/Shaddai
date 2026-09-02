@@ -314,6 +314,15 @@ html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act 
 <script type="module">
 import { createSimple } from '/js/simple/core.js';
 
+/* Safety net: if the wheel hasn't become ready within 9s — Three.js stalls,
+   a module path breaks, or this browser can't start WebGL in time — drop to
+   the plain-links list instead of leaving the visitor stuck on "summoning
+   the wheel…". The app sets wdReady=true in its ready() hook; any fallback
+   already shown via on.fatal also marks it so we never double-fire. */
+let wdReady = false;
+let wdTimer = setTimeout(() => { if (!wdReady) showFallback(); }, 9000);
+const markReady = () => { wdReady = true; clearTimeout(wdTimer); };
+
 const M = window.SHDModules;
 const C = window.SHDChrome.init();
 
@@ -357,7 +366,7 @@ const app = createSimple({
   on: {
     fatal: showFallback,
 
-    ready() { $('boot').classList.add('gone'); },
+    ready() { markReady(); $('boot').classList.add('gone'); },
 
     /* selection drives the accent colour of the entire shell, so the screen
        takes on the colour of whatever you're pointed at */

@@ -1,0 +1,25 @@
+{
+  "holds": {
+    "job_1788218097352": {
+      "buyer": "guest",
+      "amount": 50,
+      "status": "held",
+      "reason": "job:job_1788218097352",
+      "heldAt": 1788218097366
+    },
+    "job_1788218921454": {
+      "buyer": "guest",
+      "amount": 50,
+      "status": "held",
+      "reason": "job:job_1788218921454",
+      "heldAt": 1788218921458
+    },
+    "job_1788218955938": {
+      "buyer": "guest",
+      "amount": 50,
+      "status": "held",
+      "reason": "job:job_1788218955938",
+      "heldAt": 1788218955948
+    }
+  }
+}

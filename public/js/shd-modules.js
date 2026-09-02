@@ -370,6 +370,18 @@
       ],
     },
     {
+      id: 'athenaeum', name: 'ATHENAEUM', accent: C.gold, art: '/assets/athenaeum/quill-manuscript.jpg',
+      blurb: 'The Halls of the Seven — the academy of knowledge, craft and council.',
+      items: [
+        { id: 'hall',      name: 'THE SIX HALLS',  accent: C.gold,    art: '/assets/athenaeum/quill-manuscript.jpg', href: '/athenaeum.html',
+          blurb: 'Oracle, Quill, Turtle, the Council, Nexus’ Forge and Turtle’s Music Hall.' },
+        { id: 'curriculum', name: 'LEARN',         accent: C.emerald, art: '/assets/athenaeum/quill-manuscript.jpg', href: '/learn.html',
+          blurb: 'Guides and lessons — the Academy curriculum.' },
+        { id: 'academy',   name: 'CODEX',          accent: C.emerald, art: '/assets/athenaeum/quill-manuscript.jpg', href: '/codex.html',
+          blurb: 'The reference — how the empire is built.' },
+      ],
+    },
+    {
       id: 'tools', name: 'TOOLS', accent: C.emerald, art: '/assets/nav/automation.jpg',
       blurb: 'The machinery underneath.',
       items: [

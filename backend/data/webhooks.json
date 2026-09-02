@@ -39,5 +39,18 @@
     "errorCount": 1,
     "lastFired": "2026-07-11T18:53:27.135Z",
     "lastError": "Request failed with status code 503"
+  },
+  {
+    "id": "wh_1787949456451",
+    "name": "alice-hook",
+    "url": "https://hooks.example.com/alice-endpoint",
+    "events": [
+      "*"
+    ],
+    "secret": "alice-webhook-secret-xyz",
+    "createdAt": "2026-08-28T20:37:36.451Z",
+    "fireCount": 0,
+    "errorCount": 3,
+    "lastError": "getaddrinfo ENOTFOUND hooks.example.com"
   }
 ]

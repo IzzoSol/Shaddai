@@ -1,0 +1,13 @@
+[
+  {
+    "runId": "wf_1788007057533",
+    "workflow": "Custom Workflow",
+    "input": "go",
+    "steps": 1,
+    "failedSteps": 0,
+    "status": "completed",
+    "completedAt": "2026-08-29T12:37:42.998Z",
+    "output": "READY",
+    "tools": []
+  }
+]
