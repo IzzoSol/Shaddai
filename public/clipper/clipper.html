@@ -1,0 +1,565 @@
+<!-- ══════════════════════════════════════════════════════════════════════
+     SHADDAI — VIDEO CLIPPER
+     Long videos → vertical shorts
+     Local mode only (ffmpeg + Whisper on localhost:8787)
+═══════════════════════════════════════════════════════════════════════ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADDAI — Video Clipper</title>
+    <style>
+        :root {
+            --emerald: #00ff9c;
+            --gold: #e8c45c;
+            --violet: #8b5cf6;
+            --rose: #f43f5e;
+            --amber: #f59e0b;
+            --bg: #0a0a0f;
+            --surface: #12121f;
+            --surface-lighter: #1a1a2e;
+            --border: #2a2a3e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg), var(--surface));
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .clipper-header {
+            background: var(--surface-lighter);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .clipper-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .clipper-title span {
+            font-size: 2rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #888;
+        }
+
+        .status-dot.active {
+            background: var(--emerald);
+            box-shadow: 0 0 10px var(--emerald);
+        }
+
+        .clipper-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .main-area {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 600px;
+        }
+
+        .upload-zone {
+            text-align: center;
+            padding: 3rem;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 100%;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--emerald);
+            background: rgba(0, 255, 156, 0.05);
+        }
+
+        .upload-zone input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            background: var(--emerald);
+            color: #000;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #00cca3;
+            transform: translateY(-1px);
+        }
+
+        .controls-area {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .control-group {
+            background: var(--surface-lighter);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .control-group h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--emerald);
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.8125rem;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+        }
+
+        .control-group input,
+        .control-group textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.625rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+        }
+
+        .control-group input:focus,
+        .control-group textarea:focus {
+            outline: none;
+            border-color: var(--emerald);
+        }
+
+        .control-group .help-text {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .model-selectors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .model-checkbox {
+            display: none;
+        }
+
+        .model-label {
+            display: inline-block;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8125rem;
+            transition: all 0.3s ease;
+        }
+
+        .model-checkbox:checked + .model-label {
+            background: var(--emerald);
+            border-color: var(--emerald);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--emerald), var(--gold));
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 255, 156, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--emerald), var(--gold));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .clipper-footer {
+            border-top: 1px solid var(--border);
+            padding: 1rem 2rem;
+            margin-top: auto;
+            font-size: 0.8125rem;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 768px) {
+            .clipper-container {
+                grid-template-columns: 1fr;
+            }
+
+            .main-area {
+                min-height: 400px;
+            }
+
+            .controls-area {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clipper-header">
+        <div class="clipper-title">
+            <span>✂️</span>
+            Video Clipper
+        </div>
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Local mode (localhost:8787)</span>
+        </div>
+    </div>
+
+    <div class="clipper-container">
+        <div class="main-area">
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept="video/*">
+                <div class="upload-icon">🎬</div>
+                <div class="upload-text">Drag & drop your video here</div>
+                <div class="upload-subtext">or click to browse (MP4, WebM, MOV)</div>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    Select Video
+                </button>
+            </div>
+        </div>
+
+        <div class="controls-area">
+            <div class="control-group">
+                <h3>Clip Settings</h3>
+                <label>Start Time (seconds)</label>
+                <input type="number" id="startTime" value="0" min="0">
+                <div class="help-text">Where the clip should begin</div>
+
+                <label style="margin-top: 1rem;">Duration (seconds)</label>
+                <input type="number" id="duration" value="60" min="5" max="300">
+                <div class="help-text">Length of each short (5-60s)</div>
+            </div>
+
+            <div class="control-group">
+                <h3>Video Settings</h3>
+                <label>Output Resolution</label>
+                <select id="resolution" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.625rem; color: #fff;">
+                    <option value="1080">1080p (1920x1080)</option>
+                    <option value="720">720p (1280x720)</option>
+                    <option value="480">480p (854x480)</option>
+                    <option value="360">360p (640x360)</option>
+                </select>
+
+                <label style="margin-top: 1rem;">Aspect Ratio</label>
+                <div class="model-selectors">
+                    <input type="checkbox" id="ratio16to9" class="model-checkbox" checked>
+                    <label for="ratio16to9" class="model-label">16:9</label>
+
+                    <input type="checkbox" id="ratio9to16" class="model-checkbox">
+                    <label for="ratio9to16" class="model-label">9:16 (TikTok/Reels)</label>
+
+                    <input type="checkbox" id="ratio1to1" class="model-checkbox">
+                    <label for="ratio1to1" class="model-label">1:1 (Square)</label>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>AI Processing</h3>
+                <label>Auto Highlights</label>
+                <input type="checkbox" id="autoHighlights" checked>
+                <div class="help-text">AI picks the best moments with high action/motion</div>
+
+                <label style="margin-top: 1rem;">Auto Subtitles</label>
+                <input type="checkbox" id="autoSubtitles" checked>
+                <div class="help-text">Generated ORACLE Whisper subtitles in 10+ languages</div>
+
+                <label style="margin-top: 1rem;">Vertical Shorts Mode</label>
+                <input type="checkbox" id="verticalMode" checked>
+                <div class="help-text">Automatically split long videos into 9:16 shorts</div>
+            </div>
+
+            <button class="generate-btn" id="generateBtn" onclick="generateClips()">
+                ✂️ Generate Clips
+            </button>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="clipper-footer">
+        <span>Powered by ffmpeg + Whisper (local)</span>
+        <span>v1.0</span>
+    </div>
+
+    <script>
+        // Check if local clipper backend is available
+        async function checkClipperConnection() {
+            try {
+                const response = await fetch('http://localhost:8787/clipper/health');
+                if (response.ok) {
+                    document.getElementById('statusDot').classList.add('active');
+                    document.getElementById('statusText').textContent = 'Local backend connected';
+                    return true;
+                }
+            } catch (e) {
+                console.log('Clipper backend not available');
+            }
+            document.getElementById('statusText').textContent = 'Local backend unavailable (localhost:8787)';
+            return false;
+        }
+
+        // Initialize
+        window.onload = function() {
+            checkClipperConnection();
+
+            // Upload zone handling
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadZone.addEventListener('click', () => fileInput.click());
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = '#00ff9c';
+                uploadZone.style.background = 'rgba(0, 255, 156, 0.1)';
+            });
+
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = '#2a2a3e';
+                uploadZone.style.background = 'transparent';
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = '#2a2a3e';
+                uploadZone.style.background = 'transparent';
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('video/')) {
+                    fileInput.files = files;
+                    handleFileUpload(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+        }
+
+        async function handleFileUpload(file) {
+            const uploadZone = document.getElementById('uploadZone');
+            uploadZone.innerHTML = `
+                <div class="upload-icon">📹</div>
+                <div class="upload-text">Processing: <strong>${file.name}</strong></div>
+                <div class="upload-subtext" id="uploadStatus">Ready to generate clips</div>
+            `;
+
+            // Send to local backend
+            const formData = new FormData();
+            formData.append('video', file);
+
+            try {
+                const response = await fetch('http://localhost:8787/clipper/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    document.getElementById('uploadStatus').textContent = 'Video uploaded successfully';
+                    document.getElementById('uploadStatus').style.color = '#00ff9c';
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (e) {
+                document.getElementById('uploadStatus').textContent = 'Upload failed — ensure backend is running on localhost:8787';
+                document.getElementById('uploadStatus').style.color = '#f43f5e';
+            }
+        }
+
+        async function generateClips() {
+            const generateBtn = document.getElementById('generateBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const uploadStatus = document.getElementById('uploadStatus');
+
+            const startTime = document.getElementById('startTime').value;
+            const duration = document.getElementById('duration').value;
+            const resolution = document.getElementById('resolution').value;
+            const aiHighlights = document.getElementById('autoHighlights').checked;
+
+            generateBtn.disabled = true;
+            progressBar.classList.add('active');
+
+            // Sample progress updat
+
+e
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 90) {
+                    progress = 90;
+                    clearInterval(progressInterval);
+                }
+                progressFill.style.width = progress + '%';
+            }, 500);
+
+            try {
+                const response = await fetch('http://localhost:8787/clipper/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        startTime: parseInt(startTime),
+                        duration: parseInt(duration),
+                        resolution: resolution + 'p',
+                        autoHighlights: aiHighlights
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    progress = 100;
+                    progressFill.style.width = '100%';
+                    clearInterval(progressInterval);
+
+                    uploadStatus.textContent = `Generated ${data.clips?.length || 0} clips. Check downloads.`;
+                    uploadStatus.style.color = '#00ff9c';
+
+                    alert('Clips generated successfully! Check your downloads folder.');
+                } else {
+                    throw new Error('Generation failed');
+                }
+            } catch (e) {
+                progress = 100;
+                progressFill.style.width = '100%';
+                clearInterval(progressInterval);
+
+                uploadStatus.textContent = 'Generation failed — ensure backend is running';
+                uploadStatus.style.color = '#f43f5e';
+
+                alert('The clipper engine is not available on localhost:8787. Make sure the clipper backend is running locally.');
+            } finally {
+                setTimeout(() => {
+                    progressBar.classList.remove('active');
+                    generateBtn.disabled = false;
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
