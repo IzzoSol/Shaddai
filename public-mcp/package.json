@@ -1,7 +1,7 @@
 {
-  "name": "shaddai-mcp",
+  "name": "shaddai-mcp-public",
   "version": "2.3.0",
-  "description": "SHADDAI 7-agent council + RAG knowledge bases as a Model Context Protocol server. Key-free: no API keys, no external LLM, no localhost. Wire it into Claude with one npx line and instantly get a knowledge-grounded 7-agent system.",
+  "description": "SHADDAI 7-agent council + RAG knowledge bases ... distributable snapshot. NOTE: this folder is a repo snapshot; the canonical published npm package is 'shaddai-mcp' built from backend/mcp-server-rag.js.",
   "license": "SEE LICENSE IN LICENSE",
   "main": "mcp-server-rag.js",
   "bin": {
