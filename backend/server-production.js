@@ -453,12 +453,19 @@ app.use(express.static(path.join(__dirname, '../public'), {
   index: false,   // don't auto-serve index.html for '/' — the '/' route serves the landing (home.html); '/dashboard' serves the app
   setHeaders: (res, filePath) => {
     // HTML + the service worker must never be cached, so new builds + the kill-switch
-    // always reach the browser (a cached sw.js would let a stale worker survive updates).
+    // always reach the browser (a stale sw.js would let a stale worker survive updates).
     if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
   }
 }));
+
+// ATHENAEUM lives at athenaeum.html; also exposed at the friendly /academy path
+// (and its trailing-slash form) so the academy is easy to link and remember.
+// Must sit AFTER the static router so it only catches the bare /academy route.
+app.get(['/academy', '/academy/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/athenaeum.html'));
+});
 
 // Quick Start generated sites — served with directory-index enabled so a generated
 // site is reachable at the pretty URL /sites/<slug>/ . The global static mount above

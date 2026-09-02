@@ -441,10 +441,10 @@ section.blk{ padding:clamp(80px,12vw,150px) 0; position:relative; overflow:hidde
 @media(max-width:520px){ .gates2{ grid-template-columns:1fr; } }
 .gate{ position:relative; overflow:hidden; border:1px solid var(--edge); background:rgba(10,14,19,.6); padding:20px 18px 18px; min-height:172px;
   display:flex; flex-direction:column; color:var(--ink-soft); text-decoration:none; transition:border-color .35s, transform .3s; }
-.gate .gatebg{ position:absolute; inset:0; z-index:0; background-size:cover; background-position:50% 40%; opacity:.34; transition:opacity .45s, transform .6s var(--ease); transform:scale(1.03);
-  -webkit-mask:linear-gradient(180deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.15) 100%);
-          mask:linear-gradient(180deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.15) 100%); }
-.gate::before{ content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(180deg, rgba(6,8,11,.35) 0%, rgba(6,8,11,.72) 100%); }
+.gate .gatebg{ position:absolute; inset:0; z-index:0; background-size:cover; background-position:50% 40%; opacity:.5; transition:opacity .45s, transform .6s var(--ease); transform:scale(1.03);
+  -webkit-mask:linear-gradient(180deg, rgba(0,0,0,.96) 0%, rgba(0,0,0,.58) 45%, rgba(0,0,0,.18) 100%);
+          mask:linear-gradient(180deg, rgba(0,0,0,.96) 0%, rgba(0,0,0,.58) 45%, rgba(0,0,0,.18) 100%); }
+.gate::before{ content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(180deg, rgba(6,8,11,.28) 0%, rgba(6,8,11,.6) 100%); }
 .gate:hover{ border-color:rgba(0,255,156,.4); transform:translateY(-4px); }
 .gate:hover .gatebg{ opacity:.6; transform:scale(1.08); }
 .gate:hover .bkt i{ opacity:1; width:15px; height:15px; }
@@ -1085,8 +1085,6 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
         <div class="gtop"><span class="gg">⚖</span><span class="gst">Live</span></div><h3>AURA</h3><p>The token-saver ledger</p><span class="garr">observe →</span></a>
       <a class="gate hud" href="/marketplace-shop-v2.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-shop.png)"></span><span class="bkt" style="color:var(--emerald)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">◈</span><span class="gst">Live</span></div><h3>Shop</h3><p>The bazaar &amp; economy</p><span class="garr">browse →</span></a>
-      <a class="gate hud" href="/codex.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-codex.png)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
-        <div class="gtop"><span class="gg">☽</span><span class="gst">Almanac</span></div><h3>Codex</h3><p>The reference &amp; directory</p><span class="garr">open →</span></a>
       <a class="gate hud" href="/mirofish-terminal.html"><span class="gatebg" style="background-image:linear-gradient(160deg,#06384a 0%,#06141f 55%,#0a2416 100%)"></span><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">🐟</span><span class="gst">Live</span></div><h3>MiroFish</h3><p>7-fish swarm · market sentiment</p><span class="garr">enter →</span></a>
     </div>
@@ -1286,7 +1284,9 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 #tryit .eg{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em;
   color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px;
   padding:9px 12px; min-height:40px; background:none; cursor:pointer;
+  flex:1 1 200px; display:flex; align-items:center; justify-content:center; text-align:center;
   transition:border-color .2s, color .2s; }
+#tryit .egs{ align-items:stretch; }
 #tryit .eg:hover{ color:var(--ink); border-color:var(--emerald); }
 #tryit .tout{ margin-top:18px; min-height:0; }
 #tryit .tline{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em;
