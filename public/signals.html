@@ -339,7 +339,7 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   function applyFilters() {
     /* ── Markets app: filter the server DEX feed (boosted / hot / top 25) ── */
     if (APP === 'mk') {
-      var mk = MK.feed.filter(function (x) { return x.kind === MK.cat || x.kind === 'top'; });
+      var mk = MK.feed.filter(function (x) { return MK.cat === 'top' ? (x.kind === 'boost' || x.kind === 'hot') : x.kind === MK.cat; });
       if (P.social) {
         mk = mk.filter(function (x) {
           var s = x.socials || {};
@@ -697,13 +697,15 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     fetch('/api/markets/dex-hot').then(function (r) { return r.json(); }).then(function (d) {
       var pairs = d.pairs || d.data || [];
       pairs.forEach(function (p) {
-        var links = p.links || [], tw = links.find(function (l) { return l.type === 'twitter'; });
+        if (!p.tokenAddress && !p.mint) return;
+        var links = p.links || [];
         out.push({
           __market: true, kind: 'hot', mint: p.tokenAddress || p.mint || '',
           symbol: p.symbol, name: p.description || p.symbol,
-          priceUsd: p.priceUsd || 0, volume24h: 0, chg24: 0,
-          image: p.icon || p.image || '', socials: { any: !!tw, twitter: !!tw, telegram: !!links.find(function (l) { return l.type === 'telegram'; }), site: p.url },
-          pairUrl: p.url || null
+          priceUsd: Number(p.priceUsd) || 0, volume24h: Number(p.volumeUsd24h) || 0, chg24: 0,
+          image: p.icon || p.header || p.openGraph || '',
+          socials: { any: !!(p.twitterUrl || links.find(function (l) { return l.type === 'twitter'; })), twitter: !!(p.twitterUrl || links.find(function (l) { return l.type === 'twitter'; })), telegram: !!links.find(function (l) { return l.type === 'telegram'; }), site: p.websiteUrl || p.url || null },
+          pairUrl: p.url || (p.tokenAddress ? 'https://dexscreener.com/solana/' + p.tokenAddress : null)
         });
       });
       ok();
