@@ -166,6 +166,7 @@ html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{
 }
 .ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
 .ctl.on{ background:rgba(0,255,156,.09); }
+.ctl{ animation:none !important; transition:none !important; }
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
 @media(max-width:520px){ .ctl{
@@ -686,7 +687,7 @@ body[data-lay='swivel'] .slot:nth-child(even){ transform:none; }
 body[data-lay='swivel'] .slot:hover, body[data-lay='swivel'] .slot:focus-visible, body[data-lay='swivel'] .slot.touched{
   transform:none;
   box-shadow:none;
-}body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } }
+}body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } body[data-lay="orb"] .ctl{ z-index:100; position:relative; } }
 @media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:20px; --os:1; } }
 
 /* WHEEL - the doors rim a band that gently trundles on its axis; rest on one
