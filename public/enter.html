@@ -166,7 +166,7 @@ html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{
 }
 .ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
 .ctl.on{ background:rgba(0,255,156,.09); }
-.ctl{ animation:none !important; transition:none !important; z-index:100; position:relative; }
+.ctl{ animation:none !important; transition:none !important; z-index: 9999 !important; position: relative; }
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
 @media(max-width:520px){ .ctl{
@@ -768,7 +768,7 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 .viewctl.open .viewbtn .v-caret{ transform:rotate(180deg); }
 .viewmenu{
   position:absolute; left:50%; top:100%; transform:translate(-50%,-4px) scale(.98);
-  z-index:70; min-width:172px; padding:5px; display:grid; gap:2px;
+  z-index: 9998; min-width:172px; padding:5px; display:grid; gap:2px;
   background:var(--void2); border:1px solid var(--edge); border-radius:4px;
   opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .18s var(--ease), transform .18s var(--ease), visibility 0s linear .18s;
