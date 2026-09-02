@@ -22,7 +22,7 @@ const lessons = [
     action: 'summarize the transaction flow in 3 bullets',
   },
   {
-    topic 'paybox-ledger',
+    topic: 'paybox-ledger',
     title: 'PayBox Internal Ledger',
     body:
       'Shaddai uses a non-custodial x402 credit ledger. Purchases debit the buyer ‘s balance ' +
