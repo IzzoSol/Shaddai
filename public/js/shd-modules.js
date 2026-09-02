@@ -127,6 +127,17 @@
       geo: 'graph'
     },
     {
+      id: 'athenaeum',
+      name: 'ATHENAEUM',
+      kicker: 'The Halls of the Seven',
+      blurb: 'The Academy — the halls, lessons and badges of the Seven. Sit in a hall, learn from Quill, and earn your rank from prospect to grandmaster, one lesson at a time.',
+      href: '/athenaeum.html',
+      art: '/assets/athenaeum/quill-manuscript.jpg',
+      artVary: ['/assets/athenaeum/quill-manuscript.jpg','/assets/athenaeum/oracle-chart-1.jpg'],
+      accent: C.gold,
+      geo: 'dodeca'
+    },
+    {
       id: 'world2d',
       name: '2D REALM',
       kicker: 'Walk the city',
@@ -332,6 +343,28 @@
       ],
     },
     {
+      id: 'rag', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
+      blurb: 'The council’s memory — ask it anything, every answer cited to the exact passage.',
+      items: [
+        { id: 'brain-3d',      name: '3D BRAIN',     accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
+          blurb: 'The library rendered — see which regions an answer came from.' },
+        { id: 'brain-classic', name: '2D CLASSIC',   accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
+          blurb: 'The plain view — ask, read the answer, follow the citations.' },
+      ],
+    },
+    {
+      id: 'academy', name: 'ATHENAEUM', accent: C.gold, art: '/assets/athenaeum/quill-manuscript.jpg',
+      blurb: 'The Academy — the halls, lessons and badges of the Seven.',
+      items: [
+        { id: 'athenaeum', name: 'THE ATHENAEUM', accent: C.gold,    art: '/assets/athenaeum/quill-manuscript.jpg', href: '/athenaeum.html',
+          blurb: 'The Halls of the Seven — enter a hall and begin your lessons.' },
+        { id: 'curriculum', name: 'CURRICULUM',    accent: C.emerald, art: '/assets/athenaeum/quill-manuscript.jpg', href: '/learn.html',
+          blurb: 'The structured path — every lesson, every module, in order.' },
+        { id: 'badges', name: 'BADGES',            accent: C.gold,    art: '/assets/nav/apis.jpg', href: '/learn.html',
+          blurb: 'Five ranks to earn: prospect → builder → mastermind → executive → grandmaster.' },
+      ],
+    },
+    {
       id: 'forge', name: 'FORGE', accent: C.gold, art: '/assets/nav/forge.jpg',
       blurb: 'Build an agent, or the things it works with.',
       items: [
@@ -361,10 +394,10 @@
       id: 'brain', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
       blurb: 'Ask the library. Every answer cited to its source.',
       items: [
-        { id: 'brain-classic', name: 'CLASSIC', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
+        { id: 'brain-classic', name: '2D CLASSIC', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
           blurb: 'The plain view — ask, read the answer, follow the citations.' },
         { id: 'brain-3d',      name: '3D BRAIN', accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
-          blurb: 'The same library, rendered — see which regions an answer came from.' },
+          blurb: 'The same library, 3D-rendered — see which regions an answer came from.' },
       ],
     },
     {
