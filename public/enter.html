@@ -166,7 +166,7 @@ html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{
 }
 .ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
 .ctl.on{ background:rgba(0,255,156,.09); }
-.ctl{ animation:none !important; transition:none !important; }
+.ctl{ animation:none !important; transition:none !important; z-index:100; position:relative; }
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
 @media(max-width:520px){ .ctl{
