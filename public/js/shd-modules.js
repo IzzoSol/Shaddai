@@ -127,6 +127,17 @@
       geo: 'graph'
     },
     {
+      id: 'athenaeum',
+      name: 'ATHENAEUM',
+      kicker: 'The Halls of the Seven',
+      blurb: 'The academy — Oracle’s Observatory, Quill’s Library, Turtle’s Museum, the Council, Nexus’ Forge and Turtle’s Music Hall. Learn, read, and study how the empire is built.',
+      href: '/athenaeum.html',
+      art: '/assets/athenaeum/quill-manuscript.jpg',
+      artVary: ['/assets/athenaeum/quill-manuscript.jpg','/assets/athenaeum/oracle-chart-1.jpg'],
+      accent: C.gold,
+      geo: 'dodeca'
+    },
+    {
       id: 'world2d',
       name: '2D REALM',
       kicker: 'Walk the city',
@@ -245,7 +256,7 @@
      Simple Mode moves OUT of the grid and becomes the glowing button above it,
      because it is not a peer of these: it is a different way to reach all of
      them. A thing that contains the others should not sit beside them. */
-  var DEFAULT_SLOTS = ['descent', 'dashboard', 'entry', 'rag'];
+  var DEFAULT_SLOTS = ['descent', 'dashboard', 'entry', 'rag', 'athenaeum'];
 
   /* ── Simple Mode wheel ────────────────────────────────────────────────
      Top level spins vertically. A category with `items` swivels down into

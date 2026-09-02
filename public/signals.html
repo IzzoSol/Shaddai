@@ -62,6 +62,16 @@ header{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-b
 header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:44px; height:44px;
   display:grid; place-items:center; }
 
+/* ── app: Signals ⇄ Markets switch ─────────────────────────────────────── */
+.apptabs{ display:flex; gap:4px; margin:0 4px; }
+.atab{ -webkit-appearance:none; appearance:none; border:1px solid var(--edge2); background:none;
+  color:var(--ink-soft); font-family:var(--f-mono); font-size:13px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; padding:9px 14px; border-radius:4px;
+  cursor:pointer; white-space:nowrap; transition:color .15s, background .15s, border-color .15s, box-shadow .15s; }
+.atab[aria-pressed=true]{ background:var(--emerald); border-color:var(--emerald); color:#04120c;
+  box-shadow:0 0 18px -6px rgba(0,255,156,.85); }
+.atab+.atab{ margin-left:4px; }
+
 /* ── filter rails ──────────────────────────────────────────────────────── */
 .rails{ flex:0 0 auto; background:var(--shell); border-bottom:1px solid var(--edge); }
 .rail{ display:flex; gap:6px; overflow-x:auto; padding:8px 12px;
@@ -213,6 +223,10 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 
 <header>
   <div class="brand"><b>SIGNALS</b><span class="pill"><span class="d"></span><span id="liveN">—</span></span></div>
+  <div class="apptabs" id="apptabs" role="tablist" aria-label="APP">
+    <button class="atab on" data-app="sig" aria-pressed="true" type="button">Signals</button>
+    <button class="atab" data-app="mk" aria-pressed="false" type="button">Markets</button>
+  </div>
   <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
 </header>
@@ -234,6 +248,11 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     <button class="chip" data-s="tw"  aria-pressed="false">𝕏 Twitter</button>
     <button class="chip" data-s="none" aria-pressed="false">⚠ No socials</button>
   </div>
+  <div class="rail" id="mkcats" aria-label="Market" style="display:none">
+    <button class="chip" data-k="boost" aria-pressed="false">⚡ Boosted</button>
+    <button class="chip" data-k="hot"   aria-pressed="false">🔥 Hot</button>
+    <button class="chip" data-k="top"   aria-pressed="true">🏆 Top 25 DEX</button>
+  </div>
 </div>
 
 <main>
@@ -253,6 +272,10 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var ALL = [], TOP = [], VIEW = [], INFO = {};
+  /* Markets app: a secondary DEX browser fed by the server market routes.
+     Same row/heatmap/sheet machinery as Signals, different data source. */
+  var MK = { feed: [], loaded: false, cat: 'top' };
+  var APP = 'sig';
 
   /* Saved parameters. Someone who only trades post-bond with socials should
      not re-pick that on every visit. Wrapped because storage throws in
@@ -297,7 +320,7 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     if (s === 'bonded') return { c: 'bond', l: 'bonded' };
     if (s === 'boosted') return { c: 'boost', l: 'boosted' };
     return { c: '', l: s || '' }; }
-  function info(c) { return c.__top ? c : (INFO[c.mint] || null); }
+  function info(c) { return (c.__top || c.__market) ? c : (INFO[c.mint] || null); }
   function avatar(c, cls) {
     var i = info(c), sym = (c.symbol || c.name || '?').slice(0, 2).toUpperCase();
     return i && i.image
@@ -306,14 +329,28 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
       : '<div class="av ph ' + (cls || '') + '">' + esc(sym) + '</div>';
   }
   function socialBits(c) {
-    var i = info(c); if (!i || !i.socials) return '';
-    var s = i.socials, out = [];
+    var i = info(c) || {}; var s = i.socials || (c.socials) || {}; if (!(s.any || s.twitter || s.telegram || s.website)) return '';
+    var out = [];
     if (s.twitter) out.push('𝕏'); if (s.telegram) out.push('✈'); if (s.website) out.push('🌐');
     return out.length ? '<span class="so"><i>' + out.join('</i><i>') + '</i></span>' : '';
   }
 
   /* ── filter ────────────────────────────────────────────────────────────── */
   function applyFilters() {
+    /* ── Markets app: filter the server DEX feed (boosted / hot / top 25) ── */
+    if (APP === 'mk') {
+      var mk = MK.feed.filter(function (x) { return x.kind === MK.cat || x.kind === 'top'; });
+      if (P.social) {
+        mk = mk.filter(function (x) {
+          var s = x.socials || {};
+          if (P.social === 'none') return !(s.any);
+          if (P.social === 'tw')   return !!s.twitter;
+          return !!s.any;
+        });
+      }
+      VIEW = mk; render(); return;
+    }
+
     var def = CATS.find(function (c) { return c.id === P.cat; });
     if (def && def.top) { VIEW = TOP.slice(); render(); return; }
 
@@ -339,11 +376,23 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     var by = VIEW.slice().sort(function (a, b) {
       return P.cat === 'top' ? (a.rank || 0) - (b.rank || 0) : (b.ts || 0) - (a.ts || 0); });
     $('v-list').innerHTML = by.length ? by.map(function (c) {
-      var m = mult(c), k = catOf(c), col = c.__top ? rampHex(1 + (c.chg24 || 0) / 100) : rampHex(m);
-      var big = c.__top ? ((c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24 || 0) + '%')
-                        : (m ? m.toFixed(2) + 'x' : '—');
-      var sub = c.__top ? (money(c.vol24) + ' vol · boost ' + c.boost)
-                        : (ago(c.ts) + ' · ' + money(c.curFdv || c.entryFdv));
+      var m = mult(c), k = catOf(c);
+      var col, big, sub;
+      if (c.__market) {
+        var chg = c.chg24 || 0;
+        col = rampHex(1 + chg / 100);
+        big = (chg >= 0 ? '+' : '') + Math.round(chg) + '%';
+        sub = (c.priceUsd ? '$' + Number(c.priceUsd).toFixed(6) : '—') + ' · ' +
+              (c.volume24h ? money(c.volume24h) : money(c.vol24 || 0)) + ' vol';
+      } else if (c.__top) {
+        col = rampHex(1 + (c.chg24 || 0) / 100);
+        big = ((c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24 || 0) + '%');
+        sub = money(c.vol24) + ' vol · boost ' + c.boost;
+      } else {
+        col = rampHex(m);
+        big = m ? m.toFixed(2) + 'x' : '—';
+        sub = ago(c.ts) + ' · ' + money(c.curFdv || c.entryFdv);
+      }
       return '<div class="row" style="--pc:' + col + '" data-mint="' + esc(c.mint) + '">' +
         avatar(c) +
         '<div class="mid"><div class="sym">' + esc(c.symbol || c.name || '?') + '</div>' +
@@ -358,25 +407,28 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   function renderRank() {
     var by = VIEW.slice().sort(function (a, b) {
       return c2(b) - c2(a); }).slice(0, 60);
-    function c2(x) { return x.__top ? (x.chg24 || 0) : mult(x); }
+    function c2(x) { return x.__top || x.__market ? (x.chg24 || 0) : mult(x); }
     $('v-rank').innerHTML = by.length ? by.map(function (c, i) {
-      var m = mult(c), col = c.__top ? rampHex(1 + (c.chg24 || 0) / 100) : rampHex(m);
-      var big = c.__top ? ((c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24 || 0) + '%')
-                        : (m ? m.toFixed(2) + 'x' : '—');
+      var m = mult(c), isDex = (c.__top || c.__market);
+      var col = isDex ? rampHex(1 + (c.chg24 || 0) / 100) : rampHex(m);
+      var big = isDex ? ((c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24 || 0) + '%')
+                      : (m ? m.toFixed(2) + 'x' : '—');
       return '<div class="rank" style="--pc:' + col + '" data-mint="' + esc(c.mint) + '">' +
         '<span class="n">' + (i + 1) + '</span>' + avatar(c) +
         '<span class="b"><span class="s">' + esc(c.symbol || c.name || '?') + '</span>' +
-        '<span class="u">' + (c.__top ? money(c.vol24) + ' vol' : ago(c.ts) + ' · ' + money(c.curFdv || c.entryFdv)) +
+        '<span class="u">' + (isDex ? money(c.vol24 || c.volume24h) + ' vol' : ago(c.ts) + ' · ' + money(c.curFdv || c.entryFdv)) +
         '</span></span><span class="v">' + big + '</span></div>';
     }).join('') : emptyMsg();
   }
 
   function renderHeat() {
     var by = VIEW.slice().sort(function (a, b) {
-      return (b.__top ? (b.chg24 || 0) : mult(b) * 100) - (a.__top ? (a.chg24 || 0) : mult(a) * 100); });
+      return h2(b) - h2(a); });
+    function h2(x) { return x.__top || x.__market ? (x.chg24 || 0) : mult(x) * 100; }
     $('heatGrid').innerHTML = by.length ? by.map(function (c) {
-      var m = mult(c), v = c.__top ? 1 + (c.chg24 || 0) / 100 : m, bg = rampHex(v);
-      var big = c.__top ? Math.round(c.chg24 || 0) + '%' : (m ? (m >= 10 ? Math.round(m) : m.toFixed(1)) + 'x' : '—');
+      var m = mult(c), isDex = (c.__top || c.__market);
+      var v = isDex ? 1 + (c.chg24 || 0) / 100 : m, bg = rampHex(v);
+      var big = isDex ? Math.round(c.chg24 || 0) + '%' : (m ? (m >= 10 ? Math.round(m) : m.toFixed(1)) + 'x' : '—');
       var i = info(c);
       // text colour computed against the fill, not assumed
       var dark = (v < .5 && v > 0) || v === 0;
@@ -451,7 +503,9 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   }
   function render() {
     $('cN').textContent = VIEW.length;
-    $('cW').textContent = P.cat === 'top' ? 'boosted now' : (P.hours ? 'in ' + P.hours + 'h' : 'all time');
+    $('cW').textContent = APP === 'mk'
+      ? (MK.cat === 'top' ? 'dex · top 25' : 'dex · ' + MK.cat)
+      : P.cat === 'top' ? 'boosted now' : (P.hours ? 'in ' + P.hours + 'h' : 'all time');
     $('cE').textContent = P.social === 'tw' ? 'with 𝕏' : P.social === 'any' ? 'with socials'
                         : P.social === 'none' ? 'no socials' : '';
     $('liveN').textContent = VIEW.length;
@@ -462,36 +516,45 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 
   /* ── sheet ─────────────────────────────────────────────────────────────── */
   function openSheet(mint) {
-    var c = VIEW.concat(ALL, TOP).find(function (x) { return x.mint === mint; });
+    var c = VIEW.concat(ALL, TOP, MK.feed).find(function (x) { return x.mint === mint; });
     if (!c) return;
-    var m = mult(c), i = info(c) || {}, s = i.socials || {};
-    var col = c.__top ? rampHex(1 + (c.chg24 || 0) / 100) : rampHex(m);
+    var m = mult(c), i = info(c) || {}, s = (i.socials || c.socials || {});
+    var isDex = (c.__top || c.__market);
+    var col = isDex ? rampHex(1 + (c.chg24 || 0) / 100) : rampHex(m);
     var links = (s.links || []).map(function (l) {
       return '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.type || 'link') + '</a>'; }).join('');
     if (s.site) links += '<a href="' + esc(s.site) + '" target="_blank" rel="noopener">website</a>';
 
-    $('panel').style.setProperty('--pc', col);
-    $('panel').innerHTML =
-      '<div class="top">' + avatar(c) + '<div><h3>' + esc(c.symbol || c.name || '?') + '</h3>' +
-      '<div class="sub">' + esc((c.name || '').slice(0, 52)) + (c.ts ? ' · ' + ago(c.ts) + ' ago' : '') + '</div></div></div>' +
-      '<dl>' +
-      (c.__top
-        ? '<div><dt>24h</dt><dd style="color:' + col + '">' + (c.chg24 >= 0 ? '+' : '') + (c.chg24 || 0).toFixed(1) + '%</dd></div>' +
+    var body;
+    if (c.__market) {
+      body = '<div><dt>Price</dt><dd style="color:' + col + '">$' + (Number(c.priceUsd) || 0).toFixed(6) + '</dd></div>' +
+        '<div><dt>24h</dt><dd style="color:' + col + '">' + (c.chg24 >= 0 ? '+' : '') + (c.chg24 || 0).toFixed(1) + '%</dd></div>' +
+        '<div><dt>Volume 24h</dt><dd>' + money(c.volume24h || c.vol24) + '</dd></div>' +
+        '<div><dt>Boost</dt><dd>' + (c.boost || 0) + '</dd></div>' +
+        '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? 'yes' : 'none') + '</dd></div>';
+    } else if (c.__top) {
+      body = '<div><dt>24h</dt><dd style="color:' + col + '">' + (c.chg24 >= 0 ? '+' : '') + (c.chg24 || 0).toFixed(1) + '%</dd></div>' +
           '<div><dt>1h</dt><dd>' + (c.chg1h >= 0 ? '+' : '') + (c.chg1h || 0).toFixed(1) + '%</dd></div>' +
           '<div><dt>Volume 24h</dt><dd>' + money(c.vol24) + '</dd></div>' +
           '<div><dt>Liquidity</dt><dd>' + money(c.liq) + '</dd></div>' +
           '<div><dt>Boost</dt><dd>' + (c.boost || 0) + '</dd></div>' +
-          '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? 'yes' : 'none') + '</dd></div>'
-        : '<div><dt>Now</dt><dd style="color:' + col + '">' + (m ? m.toFixed(2) + 'x' : '—') + '</dd></div>' +
+          '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? 'yes' : 'none') + '</dd></div>';
+    } else {
+      body = '<div><dt>Now</dt><dd style="color:' + col + '">' + (m ? m.toFixed(2) + 'x' : '—') + '</dd></div>' +
           '<div><dt>Peak</dt><dd>' + (Number(c.peakMult) ? Number(c.peakMult).toFixed(2) + 'x' : '—') + '</dd></div>' +
           '<div><dt>Market cap</dt><dd>' + money(c.curFdv || c.entryFdv) + '</dd></div>' +
           '<div><dt>Called at</dt><dd>' + money(c.entryFdv) + '</dd></div>' +
           '<div><dt>Risk</dt><dd style="font-size:14px">' + esc(c.riskTier || '—') + '</dd></div>' +
-          '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? (s.twitter ? '𝕏 yes' : 'yes') : 'none') + '</dd></div>') +
-      '</dl>' +
+          '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? (s.twitter ? '𝕏 yes' : 'yes') : 'none') + '</dd></div>';
+    }
+    $('panel').style.setProperty('--pc', col);
+    $('panel').innerHTML =
+      '<div class="top">' + avatar(c) + '<div><h3>' + esc(c.symbol || c.name || '?') + '</h3>' +
+      '<div class="sub">' + esc((c.name || '').slice(0, 52)) + (c.ts ? ' · ' + ago(c.ts) + ' ago' : '') + '</div></div></div>' +
+      '<dl>' + body + '</dl>' +
       (links ? '<div class="links">' + links + '</div>' : '') +
       '<div class="acts">' +
-        '<a class="pri" href="' + esc(i.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '" target="_blank" rel="noopener">Chart</a>' +
+        '<a class="pri" href="' + esc(i.pairUrl || c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '" target="_blank" rel="noopener">Chart</a>' +
         '<button type="button" id="cpy">Copy CA</button>' +
         '<button type="button" data-close>Close</button></div>' +
       '<p class="note">Not advice. This is what the scanner saw, with the numbers behind it.' +
@@ -537,6 +600,24 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     [].forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
     P.cat = b.dataset.c; save();
     if (P.cat === 'top' && !TOP.length) loadTop(); else applyFilters();
+  });
+  var mkcats = $('mkcats');
+  if (mkcats) mkcats.addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    [].forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    MK.cat = b.dataset.k; applyFilters();
+  });
+  var apptabs = $('apptabs');
+  if (apptabs) apptabs.addEventListener('click', function (e) {
+    var b = e.target.closest('.atab'); if (!b) return;
+    [].forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    APP = b.dataset.app;
+    $('cats').style.display = APP === 'mk' ? 'none' : '';
+    $('filters').style.display = APP === 'mk' ? 'none' : '';
+    if (mkcats) mkcats.style.display = APP === 'mk' ? '' : 'none';
+    $('toTerm').style.display = APP === 'mk' ? 'none' : '';
+    if (APP === 'mk' && !MK.loaded) loadMarkets();
+    else { restoreChips(); applyFilters(); }
   });
   $('filters').addEventListener('click', function (e) {
     var b = e.target.closest('.chip'); if (!b) return;
@@ -593,6 +674,41 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
         buildCats(); applyFilters();
       }).catch(function () { applyFilters(); });
   }
+  /* ── Markets app: pull DEX pairs from the deployed server market routes ── */
+  function loadMarkets() {
+    MK.loaded = true;
+    var out = [], done = 0;
+    function ok() { if (++done === 2) { MK.feed = out; applyFilters(); } }
+    /* Boosted + top tokens: symbol/name/mint/price/volume */
+    fetch('/api/markets/boosted-and-top').then(function (r) { return r.json(); }).then(function (d) {
+      (d.assets || []).forEach(function (a, i) {
+        if (!a.mint && !a.address) return;
+        out.push({
+          __market: true, kind: 'boost', rank: i + 1,
+          mint: a.mint || a.address, symbol: a.symbol, name: a.name || a.symbol,
+          priceUsd: a.priceUsd, volume24h: a.volume24h,
+          chg24: a.priceChange24h || 0, image: a.image || a.icon || '',
+          socials: a.socials || null, pairUrl: a.url || null
+        });
+      });
+      ok();
+    }).catch(ok);
+    /* DexScreener token profiles: rich images + links (hot / building) */
+    fetch('/api/markets/dex-hot').then(function (r) { return r.json(); }).then(function (d) {
+      var pairs = d.pairs || d.data || [];
+      pairs.forEach(function (p) {
+        var links = p.links || [], tw = links.find(function (l) { return l.type === 'twitter'; });
+        out.push({
+          __market: true, kind: 'hot', mint: p.tokenAddress || p.mint || '',
+          symbol: p.symbol, name: p.description || p.symbol,
+          priceUsd: p.priceUsd || 0, volume24h: 0, chg24: 0,
+          image: p.icon || p.image || '', socials: { any: !!tw, twitter: !!tw, telegram: !!links.find(function (l) { return l.type === 'telegram'; }), site: p.url },
+          pairUrl: p.url || null
+        });
+      });
+      ok();
+    }).catch(ok);
+  }
   function load() {
     fetch('/api/pro-signals/feed').then(function (r) { return r.json(); })
       .then(function (d) {
@@ -605,6 +721,7 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   }
   load();
   setInterval(load, 60000);
+  loadMarkets();
 })();
 </script>
 </body>
