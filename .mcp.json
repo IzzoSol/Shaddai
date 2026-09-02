@@ -2,16 +2,9 @@
   "mcpServers": {
     "shaddai": {
       "command": "node",
-      "args": ["C:\\Users\\Brittany\\Shaddai\\shaddai-mcp\\mcp-server.js"],
+      "args": ["C:\\Users\\Brittany\\Shaddai\\shaddai-mcp\\mcp-unified.js"],
       "env": {
         "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com"
-      }
-    },
-    "shaddai-rag": {
-      "command": "node",
-      "args": ["C:\\Users\\Brittany\\Shaddai\\backend\\mcp-server-rag.js"],
-      "env": {
-        "RAG_KB_DIR": "C:\\Users\\Brittany\\Shaddai\\backend\\data\\rag"
       }
     },
     "paybox": {

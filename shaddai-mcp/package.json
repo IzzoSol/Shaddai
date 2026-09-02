@@ -1,11 +1,11 @@
 {
   "name": "shaddai-mcp",
   "version": "0.3.0",
-  "description": "SHADDAI — plug a 7-agent AI team + 556 real tools into Claude Desktop, Cursor, or Claude Code via the Model Context Protocol.",
-  "bin": { "shaddai-mcp": "mcp-server.js" },
+  "description": "SHADDAI — one MCP server for the whole SHADDAI world: 7-agent team, RAG brain, TURTLE art, and money ledger — into Claude Desktop, Cursor, Claude Code, or Copilot via the Model Context Protocol.",
+  "bin": { "shaddai-mcp": "mcp-unified.js" },
   "type": "commonjs",
   "engines": { "node": ">=18" },
-  "keywords": ["mcp", "model-context-protocol", "ai-agents", "claude", "cursor", "shaddai"],
+  "keywords": ["mcp", "model-context-protocol", "ai-agents", "claude", "cursor", "shaddai", "rag"],
   "license": "MIT",
-  "files": ["mcp-server.js", "README.md"]
+  "files": ["mcp-server.js", "mcp-unified.js", "README.md"]
 }
