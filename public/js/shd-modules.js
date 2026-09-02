@@ -98,7 +98,7 @@
       blurb: 'Skip the fanfare. The Command Hub, sign-in, and every tool exactly where you left them. For people who already know what they came for.',
       href: '/dashboard',
       art: '/assets/enter/dashboard.jpg',
-      artVary: ['/assets/enter/dashboard.jpg'],
+      artVary: ['/assets/enter/dashboard.jpg','/assets/enter/dashboard-1.jpg','/assets/enter/dashboard-2.jpg','/assets/enter/dashboard-3.jpg','/assets/enter/dashboard-4.jpg'],
       accent: C.emerald,
       geo: 'lattice'
     },
@@ -109,7 +109,7 @@
       blurb: 'A single object you spin with your thumb. Every part of SHADDAI on one wheel — agents, games, signals, forge, worlds. Swivel, sit on a choice to read it, tap to enter.',
       href: '/simple.html',
       art: '/assets/enter/simple.jpg',
-      artVary: ['/assets/enter/simple.jpg'],
+      artVary: ['/assets/enter/simple.jpg','/assets/enter/simple-1.jpg','/assets/enter/simple-2.jpg','/assets/enter/simple-3.jpg','/assets/enter/simple-4.jpg'],
       accent: C.violet,
       geo: 'drum'
     },
@@ -122,20 +122,9 @@
       blurb: 'The knowledge graph behind every agent. Ask it anything and every answer is cited back to the exact passage it came from. No invention.',
       href: '/brain.html',
       art: '/assets/enter/rag.jpg',
-      artVary: ['/assets/enter/rag.jpg'],
+      artVary: ['/assets/enter/rag.jpg','/assets/enter/rag-1.jpg','/assets/enter/rag-2.jpg','/assets/enter/rag-3.jpg','/assets/enter/rag-4.jpg'],
       accent: C.emerald,
       geo: 'graph'
-    },
-    {
-      id: 'athenaeum',
-      name: 'ATHENAEUM',
-      kicker: 'The Halls of the Seven',
-      blurb: 'The Academy — the halls, lessons and badges of the Seven. Sit in a hall, learn from Quill, and earn your rank from prospect to grandmaster, one lesson at a time.',
-      href: '/athenaeum.html',
-      art: '/assets/athenaeum/quill-manuscript.jpg',
-      artVary: ['/assets/athenaeum/quill-manuscript.jpg','/assets/athenaeum/oracle-chart-1.jpg'],
-      accent: C.gold,
-      geo: 'dodeca'
     },
     {
       id: 'world2d',
@@ -144,7 +133,7 @@
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
       href: '/SHADDAI-WORLD.html',
       art: '/assets/enter/world2d.jpg',
-      artVary: ['/assets/enter/world2d.jpg'],
+      artVary: ['/assets/enter/world2d.jpg','/assets/enter/world2d-1.jpg','/assets/enter/world2d-2.jpg','/assets/enter/world2d-3.jpg','/assets/enter/world2d-4.jpg'],
       accent: C.gold,
       geo: 'isogrid',
       /* Gated with a code, not open-closed. The door exists and the world
@@ -189,7 +178,7 @@
       blurb: 'Every game in the empire in one hall — the climb, the courts, the arenas, the tactics board.',
       href: '/arcade.html',
       art: '/assets/enter/arcade.jpg',
-      artVary: ['/assets/enter/arcade.jpg'],
+      artVary: ['/assets/enter/arcade.jpg','/assets/enter/arcade-1.jpg','/assets/enter/arcade-2.jpg','/assets/enter/arcade-3.jpg','/assets/enter/arcade-4.jpg'],
       accent: C.amber,
       geo: 'octa'
     },
@@ -232,7 +221,7 @@
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
       href: '/pro-signals.html',
       art: '/assets/enter/signals.jpg',
-      artVary: ['/assets/enter/signals.jpg'],
+      artVary: ['/assets/enter/signals.jpg','/assets/enter/signals-1.jpg','/assets/enter/signals-2.jpg','/assets/enter/signals-3.jpg','/assets/enter/signals-4.jpg'],
       accent: C.rose,
       geo: 'chart'
     }
@@ -324,18 +313,6 @@
       ],
     },
     {
-      id: 'mcp', name: 'MCP', accent: C.emerald, art: '/assets/nav/apis.jpg',
-      blurb: 'Connect Claude, Cursor, Grok — seven agents, 24+ tools, real-time market data. Standard interface for the council.',
-      items: [
-        { id: 'status', name: 'STATUS', accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp.html',
-          blurb: 'Check MCP health: 3 servers, 24 tools, 7 agent KBs (2326 chunks/166 docs/5.8MB)' },
-        { id: 'tools', name: 'TOOLS', accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp-tools',
-          blurb: 'Browse 24 registered MCP tools across all agents' },
-        { id: 'sentiment', name: 'SENTIMENT', accent: C.emerald, art: '/assets/nav/apis.jpg', href: '/mcp-sentiment.html',
-          blurb: 'Fear & Greed index, per-category sentiment, live analysis' },
-      ],
-    },
-    {
       id: 'dashboard', name: 'DASHBOARD', accent: C.emerald, art: '/assets/nav/dashboard.jpg',
       blurb: 'The workstation. Everything the council can do, in one place.',
       items: [
@@ -343,61 +320,39 @@
       ],
     },
     {
-      id: 'rag', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
-      blurb: 'The council’s memory — ask it anything, every answer cited to the exact passage.',
-      items: [
-        { id: 'brain-3d',      name: '3D BRAIN',     accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
-          blurb: 'The library rendered — see which regions an answer came from.' },
-        { id: 'brain-classic', name: '2D CLASSIC',   accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
-          blurb: 'The plain view — ask, read the answer, follow the citations.' },
-      ],
-    },
-    {
-      id: 'academy', name: 'ATHENAEUM', accent: C.gold, art: '/assets/athenaeum/quill-manuscript.jpg',
-      blurb: 'The Academy — the halls, lessons and badges of the Seven.',
-      items: [
-        { id: 'athenaeum', name: 'THE ATHENAEUM', accent: C.gold,    art: '/assets/athenaeum/quill-manuscript.jpg', href: '/athenaeum.html',
-          blurb: 'The Halls of the Seven — enter a hall and begin your lessons.' },
-        { id: 'curriculum', name: 'CURRICULUM',    accent: C.emerald, art: '/assets/athenaeum/quill-manuscript.jpg', href: '/learn.html',
-          blurb: 'The structured path — every lesson, every module, in order.' },
-        { id: 'badges', name: 'BADGES',            accent: C.gold,    art: '/assets/nav/apis.jpg', href: '/learn.html',
-          blurb: 'Five ranks to earn: prospect → builder → mastermind → executive → grandmaster.' },
-      ],
-    },
-    {
       id: 'forge', name: 'FORGE', accent: C.gold, art: '/assets/nav/forge.jpg',
       blurb: 'Build an agent, or the things it works with.',
       items: [
         { id: 'agent',   name: 'AGENT CREATION', accent: C.gold,    art: '/assets/nav/forge.jpg',  href: '/agent-forge.html',
-          blurb: 'Four questions and it is hireable — abilities, a personality or none, a wallet.', gate: '4444', lockNote: 'Enter the code' },
-        { id: 'pixel',   name: '2D PIXEL',       accent: C.emerald, art: '/assets/nav/forge.jpg',  href: '/pixel-forge.html', blurb: 'Sprites and objects.', gate: '4444', lockNote: 'Enter the code' },
-        { id: 'forge3d', name: '3D SCULPTOR',    accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-3d.html',    blurb: 'Objects for the 3D realm.', gate: '4444', lockNote: 'Enter the code' },
+          blurb: 'Four questions and it is hireable — abilities, a personality or none, a wallet.' },
+        { id: 'pixel',   name: '2D PIXEL',       accent: C.emerald, art: '/assets/nav/forge.jpg',  href: '/pixel-forge.html', blurb: 'Sprites and objects.' },
+        { id: 'forge3d', name: '3D SCULPTOR',    accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-3d.html',    blurb: 'Objects for the 3D realm.' },
       ],
     },
     {
       id: 'market', name: 'MARKETPLACE', accent: C.gold, art: '/assets/nav/apis.jpg',
       blurb: 'Buy and sell what the community has made.',
       items: [
-        { id: 'bazaar',   name: 'THE BAZAAR',     accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/marketplace-shop-v2.html', blurb: 'The store. Sign in to buy.', locked: true, gate: '4444', lockNote: 'Enter the code' },
-        { id: 'market3d', name: '3D MARKETPLACE', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-gallery.html',       blurb: 'Browse what has been forged.', locked: true, gate: '4444', lockNote: 'Enter the code' },
+        { id: 'bazaar',   name: 'THE BAZAAR',     accent: C.gold,    art: '/assets/nav/apis.jpg',   href: '/marketplace-shop-v2.html', blurb: 'The store. Sign in to buy.' },
+        { id: 'market3d', name: '3D MARKETPLACE', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/forge-gallery.html',       blurb: 'Browse what has been forged.' },
       ],
     },
     {
       id: 'worlds', name: 'WORLDS', accent: C.emerald, art: '/assets/nav/worlds.jpg',
       blurb: 'Where the agents live.',
       items: [
-        { id: 'realms',  name: '2D REALM', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/region-select.html', blurb: 'Pick a region and walk in.', locked: true, gate: '4444', lockNote: 'Enter the code' },
-        { id: 'realm3d', name: '3D REALM', accent: C.dim,     art: '/assets/nav/worlds.jpg', href: '/world3d',            blurb: 'The dimensional build. Still going up.', locked: true, gate: '4444', lockNote: 'Enter the code' },
+        { id: 'realms',  name: '2D REALM', accent: C.emerald, art: '/assets/nav/worlds.jpg', href: '/region-select.html', blurb: 'Pick a region and walk in.' },
+        { id: 'realm3d', name: '3D REALM', accent: C.dim,     art: '/assets/nav/worlds.jpg', href: '/world3d',            blurb: 'The dimensional build. Still going up.' },
       ],
     },
     {
       id: 'brain', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
       blurb: 'Ask the library. Every answer cited to its source.',
       items: [
-        { id: 'brain-classic', name: '2D CLASSIC', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
+        { id: 'brain-classic', name: 'CLASSIC', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag-cockpit.html',
           blurb: 'The plain view — ask, read the answer, follow the citations.' },
         { id: 'brain-3d',      name: '3D BRAIN', accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
-          blurb: 'The same library, 3D-rendered — see which regions an answer came from.' },
+          blurb: 'The same library, rendered — see which regions an answer came from.' },
       ],
     },
     {

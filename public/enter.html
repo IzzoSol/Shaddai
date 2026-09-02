@@ -1,26 +1,26 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>SHADDAI Â· Enter</title>
-<meta name="description" content="Four ways into the empire. Choose your threshold â€” the cinematic descent, the full story, the command hub, or one thumb and everything." />
+<title>SHADDAI · Enter</title>
+<meta name="description" content="Four ways into the empire. Choose your threshold — the cinematic descent, the full story, the command hub, or one thumb and everything." />
 <meta name="theme-color" content="#06080b" />
-<meta property="og:title" content="SHADDAI â€” Enter" />
+<meta property="og:title" content="SHADDAI — Enter" />
 <meta property="og:description" content="Four ways in. Choose your threshold." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SHADDAI Â· THE FRONT DOOR â€” tokens mirror home.html / journey.html.
+/* ══════════════════════════════════════════════════════════════════════
+   SHADDAI · THE FRONT DOOR — tokens mirror home.html / journey.html.
    Obsidian ground, emerald/gold/cyan/violet accents. Do not invent hues.
    Spec: docs/FRONT-DOOR-MASTER-PROMPT.md
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════════════════ */
 :root{
   /* The aurora behind the grid (--g1/--g2/--g3).
 
-     This carried emerald + CYAN + gold â€” three hues drifting under six
+     This carried emerald + CYAN + gold — three hues drifting under six
      differently-coloured doors, which is how the page ended up reading as a
      colour wheel. It is now ONE hue holding the field (emerald, two depths)
      with gold as a single deep ember low in the frame. Two colours, one of
@@ -57,7 +57,7 @@ body{
   overscroll-behavior-y:none;
 }
 /* stop iOS rubber-band from snapping the fixed atmosphere and showing the
-   page background â€” the decorative layers track the visual viewport, and
+   page background — the decorative layers track the visual viewport, and
    overscroll/URL-bar resize is exactly what paints those blank bands */
 .grain, .vignette, .aura, .scanlab, #gl{ will-change:opacity; }
 a{ color:inherit; text-decoration:none; }
@@ -65,7 +65,7 @@ button{ font:inherit; color:inherit; background:none; border:none; cursor:pointe
 ::selection{ background:var(--emerald); color:#022; }
 :focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
 
-/* â”€â”€ atmosphere â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── atmosphere ─────────────────────────────────────────────────────── */
 .grain{ position:fixed; inset:0; pointer-events:none; z-index:40; mix-blend-mode:overlay; opacity:.32;
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.5'/></svg>"); }
 .vignette{ position:fixed; inset:0; pointer-events:none; z-index:38;
@@ -80,12 +80,12 @@ html[data-theme-skin="brutalist"] .vignette, html[data-theme-skin="serif"] .vign
   animation:drift 34s ease-in-out infinite alternate; }
 @keyframes drift{ to{ transform:translate3d(2.5%,-2%,0) scale(1.06); } }
 
-/* â•â• DEPTH LAYERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══ DEPTH LAYERS ═════════════════════════════════════════════════════════
    Three cheap passes that do most of the work a rendered background would,
    without a generated asset to load, fail, or go stale:
 
    .grain    a static noise tile at very low opacity. This is the single
-             biggest upgrade â€” flat CSS gradients band visibly on dark
+             biggest upgrade — flat CSS gradients band visibly on dark
              screens, and grain hides banding the way film does.
    .scanlab  one slow vertical light sweep. Motion that reads as atmosphere
              rather than as a loading state, because it never repeats quickly.
@@ -120,15 +120,15 @@ html[data-theme-skin="brutalist"] .grain, html[data-theme-skin="serif"] .grain{ 
   .scanlab{ display:none; }
 }
 
-/* the shared WebGL layer. Transparent, above the tile art, below nothing â€”
+/* the shared WebGL layer. Transparent, above the tile art, below nothing —
    tile text reads straight through it, and each tile's solid is scissored
    into the upper region of its own rect so they never collide. */
-/* fixed, sized by `inset` alone â€” a fixed canvas set to `height:100%` is 100%
+/* fixed, sized by `inset` alone — a fixed canvas set to `height:100%` is 100%
    of the initial containing block, which stops tracking the visual viewport
    the moment the iOS URL bar collapses, painting a blank band at the bottom */
 #gl{ position:fixed; inset:0; z-index:15; pointer-events:none; }
 
-/* â”€â”€ header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── header ─────────────────────────────────────────────────────────── */
 header{
   position:relative; z-index:20; display:flex; align-items:center; justify-content:space-between;
   gap:12px; padding:clamp(14px,2.4vw,24px) clamp(16px,4vw,42px);
@@ -143,53 +143,24 @@ header{
 .brand .sub{ font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; color:var(--ink-faint); text-transform:uppercase; white-space:nowrap; }
 @media(max-width:640px){ .brand .sub{ display:none; } }
 
-.controls{
-  display:flex; align-items:center; gap:8px; flex-shrink:0;
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 99999 !important;
-  padding: clamp(14px,2.4vw,24px) clamp(16px,4vw,42px);
-  padding-top:calc(clamp(14px,2.4vw,24px) + env(safe-area-inset-top));
-}
+.controls{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .ctl{
   font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
-  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
-  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  min-height:38px; padding:0 13px; display:inline-flex; align-items:center; gap:7px;
   transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
-}
-.ctl:hover{
-  border-color:var(--accent); color:var(--accent);
-}
-html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{
-  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
-  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
 }
-.ctl:hover{
-  border-color:var(--accent); color:var(--accent);
-}
+html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{ background:rgba(255,255,255,.6); }
 .ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
 .ctl.on{ background:rgba(0,255,156,.09); }
-.ctl{ animation:none !important; transition:none !important; z-index: 9999 !important; position: relative; }
-.ctl .mcpico{ width:16px; height:16px; border-radius:3px; object-fit:cover; border:1px solid color-mix(in srgb, var(--emerald,%23%2300ff9c) 55%, transparent); box-shadow:0 0 8px rgba(0,255,156,.35); }
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
-@media(max-width:520px){ .ctl{
-  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
-  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
-  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
-}
-.ctl:hover{
-  border-color:var(--accent); color:var(--accent);
-} .ctl .lbl-long{ display:none; } }
+@media(max-width:520px){ .ctl{ padding:0 10px; font-size:10px; } .ctl .lbl-long{ display:none; } }
 .brand .sh b{ font-weight:900; }
 .brand .sh .sh-mini{ display:none; }
 /* sign-in lives alone in the top-right corner: one quiet pill outside the controls row */
+.authcorner{ position:fixed; top:calc(clamp(14px,2.6vw,24px) + env(safe-area-inset-top)); right:clamp(16px,4vw,42px); z-index:80; }
 .authpill{
   font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
@@ -211,22 +182,13 @@ html[data-theme-skin="brutalist"] .authpill, html[data-theme-skin="serif"] .auth
   .brand .sh .sh-full{ display:none; }
   .brand .sh .sh-mini{ display:inline; }
   .controls{ gap:6px; }
-  /* 44px is the thumb floor â€” the room comes from the wordmark and the
+  /* 44px is the thumb floor — the room comes from the wordmark and the
      'bios' label instead of from the targets */
-  .ctl{
-  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; background:rgba(14,20,27,.5);
-  min-height:34px; padding:0 12px; display:inline-flex; align-items:center; gap:7px; cursor:pointer;
-  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-  transition:border-color .25s var(--ease), color .25s var(--ease), background .25s var(--ease);
-}
-.ctl:hover{
-  border-color:var(--accent); color:var(--accent);
-}
+  .ctl{ padding:0 10px; min-height:44px; min-width:44px; }
   #btnDwell span:not(.dot){ display:none; }
 }
 
-/* â”€â”€ the grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── the grid ───────────────────────────────────────────────────────── */
 main{ position:relative; z-index:10; flex:1; display:flex; flex-direction:column; justify-content:center;
   padding:clamp(6px,1.6vw,18px) clamp(16px,4vw,42px) clamp(18px,3vw,32px); }
 .lede{ text-align:center; margin:0 auto clamp(16px,2.6vw,30px); max-width:600px; }
@@ -249,13 +211,13 @@ body.full .slot .name{ font-size:clamp(22px,2.6vw,32px); }
 @media(max-width:760px){ body.full .grid{ grid-template-columns:1fr; }
   body.full .slot{ min-height:clamp(140px,17vh,180px); } }
 
-/* â”€â”€ a slot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── a slot ─────────────────────────────────────────────────────────── */
 .slot{
   position:relative; display:block; width:100%; text-align:left; overflow:hidden;
   /* square. a radius on a monolith makes it a card, and these are not cards */
   border:1px solid color-mix(in srgb, var(--accent) 30%, var(--edge)); border-radius:0;
   /* A GRADIENT GROUND, not a flat fill. The old flat --panel made every door
-     look like the same rectangle in a different colour â€” which is exactly the
+     look like the same rectangle in a different colour — which is exactly the
      problem, now that the colours are gone. Depth has to come from light. */
   background:
     linear-gradient(158deg,
@@ -270,7 +232,7 @@ body.full .slot .name{ font-size:clamp(22px,2.6vw,32px); }
     inset 0 1px 0 color-mix(in srgb, var(--accent) 22%, transparent),
     inset 0 -1px 0 rgba(0,0,0,.55),
     inset 0 0 0 1px rgba(255,255,255,.025),
-    /* neon edge â€” a hairline of accent light riding the border, always on,
+    /* neon edge — a hairline of accent light riding the border, always on,
        so every door reads as charged rather than grey until you approach it */
     0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
     0 0 14px -4px color-mix(in srgb, var(--accent) 18%, transparent),
@@ -309,7 +271,7 @@ html[data-theme-skin="bone"] .slot{
     inset 0 -1px 0 rgba(0,0,0,.09),
     0 10px 26px rgba(0,0,0,.13);
 }
-/* the neon trace â€” a conic sweep clipped to the border box, so the edge itself
+/* the neon trace — a conic sweep clipped to the border box, so the edge itself
    lights up and travels rather than a glow sitting outside the tile */
 .slot .trace{ position:absolute; inset:0; z-index:5; pointer-events:none; opacity:0;
   transition:opacity .45s var(--ease); }
@@ -321,7 +283,7 @@ html[data-theme-skin="bone"] .slot{
 .slot:hover .trace, .slot:focus-visible .trace, .slot.touched .trace{ opacity:.85; }
 @media (prefers-reduced-motion: reduce){ .slot .trace::before{ animation:none; } }
 @media(max-width:760px){ .slot{ min-height:clamp(168px,23vh,210px); } }
-/* the art plate â€” the HF (Flux) backdrop now shows through with real brightness.
+/* the art plate — the HF (Flux) backdrop now shows through with real brightness.
    Kept just under full so the lettering stays readable, but no longer buried:
    more light, more life, the 3D solid floats in front of it. */
 .slot .art{
@@ -332,19 +294,19 @@ html[data-theme-skin="bone"] .slot{
 /* Rotating door plate (<img>, not the avatar-style .art img): fills the tile
    edge to edge as a background and inherits the .art wash/filter above. The
    onerror handled in render() drops it back to the base plate if a numbered
-   variant has not been generated yet â€” so rotation can never show a blank. */
+   variant has not been generated yet — so rotation can never show a blank. */
 .slot .art .artimg{
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   border-radius:0; border:0; background:none;
 }
 /* The wash is mixed FROM --shell, so it follows the theme automatically:
    dark shell gives a dark scrim, light shell a light one. It used to be
-   hardcoded dark with an override naming brutalist and serif â€” which meant
+   hardcoded dark with an override naming brutalist and serif — which meant
    every new light theme got dark tiles under light chrome, and the names
    went unreadable. Deriving it removes that whole class of bug.
 
    The gradient now holds the BOTTOM third for the lettering and lets the top
-   two thirds of the plate glow through â€” but with a sturdier scrim than before,
+   two thirds of the plate glow through — but with a sturdier scrim than before,
    so a light image can never wash the door name off its face. */
 .slot .wash{
   position:absolute; inset:0; z-index:1; transition:opacity .5s var(--ease);
@@ -381,7 +343,7 @@ html[data-theme-skin="bone"] .slot{
 }
 @media(max-width:760px){ .slot .name{ font-size:clamp(32px,10vw,46px); } }
 /* The CTA was a whisper of muted text. It is now an actual accent button that
-   arrives on approach, with a sheen that sweeps once across it â€” the sweep is
+   arrives on approach, with a sheen that sweeps once across it — the sweep is
    a single translate on a skewed gradient, which is cheap enough to run on a
    phone and reads as light catching an edge rather than as an animation. */
 .slot .go{ position:relative; overflow:hidden; align-self:flex-start;
@@ -401,7 +363,7 @@ html[data-theme-skin="brutalist"] .slot .go, html[data-theme-skin="serif"] .slot
 @keyframes sheen{ to{ left:120%; } }
 @media (prefers-reduced-motion: reduce){ .slot .go::after{ display:none; } }
 
-/* awake state â€” pointer hover, keyboard focus, or touch-press all share it */
+/* awake state — pointer hover, keyboard focus, or touch-press all share it */
 .slot:hover, .slot:focus-visible, .slot.touched{
   transform:translateY(-5px) rotateX(3deg) scale(1.012);
   border-color:var(--accent);
@@ -422,7 +384,7 @@ html[data-theme-skin="brutalist"] .slot .go, html[data-theme-skin="serif"] .slot
 .slot:hover .corner, .slot:focus-visible .corner, .slot.touched .corner{ opacity:.95; width:20px; height:20px; }
 .slot:hover .go, .slot:focus-visible .go, .slot.touched .go{ opacity:1; transform:none; }
 
-/* â”€â”€ dwell bio (5s) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── dwell bio (5s) ─────────────────────────────────────────────────── */
 .slot .bio{
   position:absolute; inset:auto 0 0 0; z-index:8; padding:clamp(15px,2vw,22px);
   background:linear-gradient(180deg, transparent, rgba(6,8,11,.94) 26%);
@@ -435,12 +397,12 @@ html[data-theme-skin="brutalist"] .slot .bio, html[data-theme-skin="serif"] .slo
 .slot.bio-open .bio{ transform:translateY(0); }
 .slot .bio b{ color:var(--accent); font-weight:400; font-family:var(--f-mono); font-size:9.5px;
   letter-spacing:.2em; text-transform:uppercase; display:block; margin-bottom:6px; }
-/* the dwell timer hairline, filling leftâ†’right over 5s */
+/* the dwell timer hairline, filling left→right over 5s */
 .slot .dwell{ position:absolute; left:0; bottom:0; z-index:9; height:1.5px; width:0; background:var(--accent);
   box-shadow:0 0 8px var(--accent); opacity:.75; }
 .slot.dwelling .dwell{ width:100%; transition:width 5s linear; }
 
-/* â”€â”€ edit mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── edit mode ──────────────────────────────────────────────────────── */
 body.editing .slot{ cursor:copy; }
 body.editing .slot::after{
   content:'swap'; position:absolute; z-index:7; inset:auto 12px 12px auto;
@@ -450,9 +412,9 @@ body.editing .slot::after{
 body.editing .slot.pending{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 0 46px color-mix(in srgb, var(--accent) 26%, transparent); }
 body.editing .slot .go{ display:none; }
 
-/* â”€â”€ drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── drawer ─────────────────────────────────────────────────────────── */
 /* backdrop-filter must be applied ONLY while open. Left on permanently it is a
-   composited blur layer that never goes away â€” over the WebGL canvas that reads
+   composited blur layer that never goes away — over the WebGL canvas that reads
    as the whole page freezing blurry after the sheet closes. visibility:hidden
    takes it out of compositing entirely rather than trusting opacity:0. */
 .scrim{ position:fixed; inset:0; z-index:60; background:rgba(3,5,7,.72); opacity:0;
@@ -462,7 +424,7 @@ body.editing .slot .go{ display:none; }
   transition:opacity .35s var(--ease), visibility 0s linear 0s; }
 .sheet{
   position:fixed; z-index:61; left:50%; top:50%; width:min(560px,calc(100% - 32px));
-  transform:translate(-50%,-50%) scale(.965); transition:transform .4s var(--ease), opacity .3s var(--ease);
+  transform:translate(-50%,-58%) scale(.965); transition:transform .4s var(--ease), opacity .3s var(--ease);
   background:var(--void2); border:1px solid var(--edge); border-radius:6px;
   padding:22px clamp(16px,4vw,26px) calc(22px + env(safe-area-inset-bottom));
   max-height:82dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -476,7 +438,7 @@ body.editing .slot .go{ display:none; }
   letter-spacing:.14em; color:var(--ink-faint); min-height:40px; min-width:40px; }
 .sheet .close:hover{ color:var(--ink); }
 
-/* â”€â”€ gated doors â€” one quiet chip that says what to do â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── gated doors — one quiet chip that says what to do ───────────────── */
 .slot.gated:not(.open) .lock{
   border:1px solid color-mix(in srgb, var(--accent) 55%, transparent);
   color:var(--accent);
@@ -485,7 +447,7 @@ body.editing .slot .go{ display:none; }
 .slot.open .lock{ display:none; }
 .slot.gated .go{ color:var(--accent); }
 
-/* â”€â”€ the gate â€” sleek, bold, one question â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── the gate — sleek, bold, one question ───────────────────────────── */
 .gsheet .glock{ font-family:var(--f-mono); font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); }
 .gsheet .gtitle{ font-family:var(--f-display); font-weight:700; font-size:clamp(20px,3.6vw,26px); letter-spacing:.12em; text-transform:uppercase; color:var(--ink); margin-top:8px; }
 .gsheet .grow{ display:flex; gap:8px; margin-top:18px; }
@@ -539,11 +501,11 @@ footer b{ color:var(--ink-soft); font-weight:400; }
   .slot.dwelling .dwell{ transition:width 5s linear !important; }
 }
 
-/* â•â• UTILITY STRIP â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Paybox Â· FOMO Â· Tip ZEROX live here rather than in .controls, which already
+/* ══ UTILITY STRIP ════════════════════════════════════════════════════════
+   Paybox · FOMO · Tip ZEROX live here rather than in .controls, which already
    carries five buttons and overflowed at 390px once before. A separate strip
    wraps on its own instead of competing with the primary controls for width,
-   and keeps these three visually secondary â€” which is what they are. */
+   and keeps these three visually secondary — which is what they are. */
 .util{
   position:relative; z-index:19; display:flex; justify-content:flex-end;
   gap:7px; flex-wrap:wrap;
@@ -567,7 +529,7 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 }
 @media(max-width:430px){ .util{ justify-content:center; margin-top:2px; } }
 
-/* â•â• SIMPLE MODE â€” the glowing way in â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══ SIMPLE MODE — the glowing way in ═════════════════════════════════════
    Lifted out of the door grid deliberately. Simple Mode is not a peer of the
    four doors; it is a different route to all of them, so it sits above them
    and is the only thing on the page that glows. One emphasis, one meaning. */
@@ -596,8 +558,32 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 @media(max-width:520px){ .simplebtn .sd{ display:none; } }
 @media(prefers-reduced-motion:reduce){ .simplebtn{ animation:none; } }
 
-/* routing example strip under Simple Mode â€” a quiet three-part log line */
-/* â•â• FOOTER â€” the things a real site has â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* routing example strip under Simple Mode — a quiet three-part log line */
+.routex{
+  width:min(560px,90vw); margin:0 auto clamp(18px,3vw,28px);
+  display:flex; align-items:center; flex-wrap:wrap; gap:9px 12px;
+  padding:12px 16px; border-radius:3px;
+  border:1px solid var(--edge,rgba(120,150,140,.14));
+  background:var(--panel,#0e141b); font-family:var(--f-mono);
+}
+.routex-q,.routex-a{
+  font-size:9px; letter-spacing:.22em; text-transform:uppercase; font-weight:600;
+  border-radius:2px; padding:3px 8px; line-height:1;
+}
+.routex-q{ color:#06080b; background:var(--emerald,#00ff9c); }
+.routex-a{ color:var(--ink,#e9efe9); border:1px solid var(--edge,rgba(120,150,140,.28)); }
+.routex-dot{ width:5px; height:5px; border-radius:50%; background:var(--emerald,#00ff9c);
+  box-shadow:0 0 8px var(--emerald,#00ff9c); flex-shrink:0; }
+.routex-line{ margin:0; font-size:11px; letter-spacing:.04em; color:var(--ink-soft,#93a49b); }
+.routex-chips{ display:inline-flex; align-items:center; gap:6px; margin-left:auto; }
+.routex-chips .rc{
+  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft,#93a49b);
+  border:1px solid var(--edge,rgba(120,150,140,.22)); border-radius:2px; padding:3px 7px; line-height:1;
+}
+.routex-chips .rc.done{ color:var(--emerald,#00ff9c); border-color:color-mix(in srgb, var(--emerald,#00ff9c) 42%, transparent); }
+@media(max-width:520px){ .routex-chips{ margin-left:0; } }
+
+/* ══ FOOTER — the things a real site has ═════════════════════════════════ */
 .foot{ position:relative; z-index:10; margin-top:auto;
   padding:clamp(16px,2.4vw,24px) clamp(16px,4vw,42px) calc(16px + env(safe-area-inset-bottom));
   border-top:1px solid var(--edge); display:flex; flex-wrap:wrap; gap:10px 18px;
@@ -610,8 +596,8 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 .foot .legal{ display:flex; gap:4px; flex-wrap:wrap; }
 .foot .cr{ font-family:var(--f-mono); font-size:9.5px; color:var(--ink-faint); letter-spacing:.1em; }
 
-/* â•â• LOCKED TILES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Dim, desaturated, and captioned with WHY â€” never just disabled. "Opening
+/* ══ LOCKED TILES ═════════════════════════════════════════════════════════
+   Dim, desaturated, and captioned with WHY — never just disabled. "Opening
    when plots go live" tells someone to come back; a greyed tile with no reason
    tells them the product is broken. */
 .slot.locked{ filter:saturate(.35) brightness(.72); cursor:default; }
@@ -625,8 +611,8 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
   display:flex; align-items:center; gap:7px;
 }
 
-/* â•â• PORTRAITS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   The agent heads showed a hard square edge â€” the PNG's own bounds sitting
+/* ══ PORTRAITS ════════════════════════════════════════════════════════════
+   The agent heads showed a hard square edge — the PNG's own bounds sitting
    inside a container that never masked them. Rounded and cover-fit so the
    artwork fills the circle instead of being letterboxed inside a box. */
 .slot .art img, .wheel-item img, img[src*="-portrait"], img[src*="/assets/agents/"]{
@@ -634,7 +620,7 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
   border:1px solid color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
-/* â•â• LAYOUT VIEWS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══ LAYOUT VIEWS ═════════════════════════════════════════════════════════
    Four ways to see the doors, each a REAL 3D staging - not flats that just
    re-seat the same tiles. Swivel swings the doors open, orb floats them on a
    slow-turning shell, wheel rims them into a rolling band, and 3D tile stands
@@ -655,66 +641,98 @@ html[data-theme-skin="serif"] .util a, html[data-theme-skin="serif"] .util butto
 
 /* SWIVEL - a two-up pack that stands ajar and swings flat to face you the
    moment you rest on a door. Real hinge work, not a tilt. */
-body[data-lay='swivel']{
-  perspective:none;
+body[data-lay="swivel"]{ perspective:1500px; }
+body[data-lay="swivel"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:900px; gap:clamp(14px,2.6vw,30px); }
+body[data-lay="swivel"] .slot{
+  transform:rotateY(26deg) rotateX(2deg);
+  box-shadow:0 18px 46px rgba(0,0,0,.5);
+  transition:transform .6s var(--ease), border-color .4s var(--ease), box-shadow .6s var(--ease);
 }
-body[data-lay='swivel'] .grid{
-  grid-template-columns:1fr !important; max-width:none; gap:0;
-  transform-style:flat;
+body[data-lay="swivel"] .slot:nth-child(even){ transform:rotateY(-26deg) rotateX(-2deg); }
+body[data-lay="swivel"] .slot:hover, body[data-lay="swivel"] .slot:focus-visible, body[data-lay="swivel"] .slot.touched{
+  transform:rotateY(0) rotateX(0) translateZ(52px) scale(1.03);
+  box-shadow:0 30px 70px rgba(0,0,0,.6);
 }
-body[data-lay='swivel'] .slot{
-  transform:none;
-  box-shadow:none;
-  transition:none;
-}
-body[data-lay='swivel'] .slot:nth-child(even){ transform:none; }
-body[data-lay='swivel'] .slot:hover, body[data-lay='swivel'] .slot:focus-visible, body[data-lay='swivel'] .slot.touched{
-  transform:none;
-  box-shadow:none;
-}
-/* ORB - a clean, level spread. Everything sits flat and upright; nothing leans.
-   The base .grid applies perspective:1400px, which foreshortens edge tiles so
-   they lean toward the vanishing point. Kill the perspective + 3D stacking for
-   orb so every tile renders face-on and level (same pattern swivel already uses). */
-body[data-lay="orb"]{
-  perspective:none;
-}
+@media(prefers-reduced-motion:reduce){ body[data-lay="swivel"] .slot{ transform:none !important; } }
+@media(max-width:640px){ body[data-lay="swivel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="swivel"] .slot{ transform:none !important; } }
+
+/* ORB - the four float on a slow-turning shell, lifted off their corners so
+   the whole group reads as a sphere of choices rather than a flat wall. */
+body[data-lay="orb"]{ perspective:1700px; }
 body[data-lay="orb"] .grid{
-  perspective:none;
-  transform-style:flat;
+  grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.2vw,26px);
+  transform-style:preserve-3d; animation:orbTumble 26s ease-in-out infinite alternate;
 }
 body[data-lay="orb"] .slot{
-  transform:none;
-  box-shadow:0 14px 34px rgba(0,0,0,.45);
+  min-height:clamp(120px,20vh,180px);
+  transform:rotateY(var(--oy,0deg)) translateZ(var(--oz,16px)) scale(var(--os,1));
+  box-shadow:0 20px 50px rgba(0,0,0,.55);
   transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
+body[data-lay="orb"] .slot:nth-child(1){ --oy:-15deg; --oz:38px; --os:.93; }
+body[data-lay="orb"] .slot:nth-child(2){ --oy:15deg;  --oz:52px; --os:1.06; }
+body[data-lay="orb"] .slot:nth-child(3){ --oy:-15deg; --oz:52px; --os:1.06; }
+body[data-lay="orb"] .slot:nth-child(4){ --oy:15deg;  --oz:38px; --os:.93; }
+body[data-lay="orb"] .slot:nth-child(n+5){ --oy:0deg; --oz:0px; --os:.97; }
 body[data-lay="orb"] .slot:hover, body[data-lay="orb"] .slot:focus-visible, body[data-lay="orb"] .slot.touched{
-  transform:translateY(-6px);
-  box-shadow:0 24px 46px rgba(0,0,0,.55);
+  --oy:0deg; --oz:70px; --os:1.14;
+  box-shadow:0 32px 76px rgba(0,0,0,.6);
 }
-@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
+@keyframes orbTumble{
+  0%{ transform:rotateY(-16deg) rotateX(5deg); }
+  100%{ transform:rotateY(16deg) rotateX(-5deg); }
+}
+@media(prefers-reduced-motion:reduce){ body[data-lay="orb"] .grid{ animation:none; } body[data-lay="orb"] .slot{ transform:none !important; } }
+@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:20px; --os:1; } }
 
-/* WHEEL - the doors as a level band. All face-on and upright; the rim never
-   leans. Resting on a door lifts it straight toward you. */
-body[data-lay="wheel"]{
-  perspective:none;
-}
+/* WHEEL - the doors rim a band that gently trundles on its axis; rest on one
+   and it rolls to face you and pops out of the rim. */
+body[data-lay="wheel"]{ perspective:1700px; }
 body[data-lay="wheel"] .grid{
   grid-template-columns:repeat(2,1fr) !important; max-width:780px; gap:clamp(12px,2vw,24px);
-  perspective:none;
-  transform-style:flat;
+  transform-style:preserve-3d; animation:rimRoll 22s ease-in-out infinite alternate;
 }
 body[data-lay="wheel"] .slot{
   min-height:clamp(108px,16vh,150px);
-  transform:none;
-  box-shadow:0 14px 34px rgba(0,0,0,.45);
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(var(--rz,0px));
+  box-shadow:0 16px 42px rgba(0,0,0,.5);
   transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
+body[data-lay="wheel"] .slot:nth-child(1){ --rx:9deg;  --ry:-9deg; --rz:28px; }
+body[data-lay="wheel"] .slot:nth-child(2){ --rx:5deg;  --ry:9deg;  --rz:42px; }
+body[data-lay="wheel"] .slot:nth-child(3){ --rx:-5deg; --ry:-9deg; --rz:42px; }
+body[data-lay="wheel"] .slot:nth-child(4){ --rx:-9deg; --ry:9deg;  --rz:28px; }
+body[data-lay="wheel"] .slot:nth-child(n+5){ --rx:0deg; --ry:0deg; --rz:0px; }
 body[data-lay="wheel"] .slot:hover, body[data-lay="wheel"] .slot:focus-visible, body[data-lay="wheel"] .slot.touched{
-  transform:translateY(-8px);
-  box-shadow:0 28px 60px rgba(0,0,0,.6);
+  --rx:0deg; --ry:0deg; --rz:62px; transform:translateY(-8px);
+  box-shadow:0 28px 64px rgba(0,0,0,.6);
 }
-@media(max-width:640px){ body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }@keyframes tileFloat{
+@keyframes rimRoll{
+  0%{ transform:rotateX(8deg) rotateZ(-3deg); }
+  100%{ transform:rotateX(-8deg) rotateZ(3deg); }
+}
+@media(prefers-reduced-motion:reduce){ body[data-lay="wheel"] .grid{ animation:none; } body[data-lay="wheel"] .slot{ transform:none !important; } }
+@media(max-width:640px){ body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
+
+/* 3D TILE - extruded slabs with a real side face, standing up off the page
+   and levitating on a slow float. The thick edge is drawn with a shadow so it
+   reads as depth even flat. */
+body[data-lay="tile3d"]{ perspective:1600px; }
+body[data-lay="tile3d"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.4vw,30px); }
+body[data-lay="tile3d"] .slot{
+  --thick:12px;
+  min-height:clamp(150px,26vh,230px);
+  transform:rotateX(6deg) translateZ(var(--thick));
+  box-shadow:var(--thick) var(--thick) 0 var(--void), 0 26px 60px rgba(0,0,0,.55);
+  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
+  animation:tileFloat 9s ease-in-out infinite alternate;
+}
+body[data-lay="tile3d"] .slot:nth-child(even){ animation-delay:-4.5s; }
+body[data-lay="tile3d"] .slot:hover, body[data-lay="tile3d"] .slot:focus-visible, body[data-lay="tile3d"] .slot.touched{
+  transform:rotateX(0) translateZ(calc(var(--thick) + 30px));
+  box-shadow:var(--thick) var(--thick) 0 var(--void), 0 34px 80px rgba(0,0,0,.65);
+}
+@keyframes tileFloat{
   0%{ transform:rotateX(6deg) translateZ(var(--thick)) translateY(0); }
   100%{ transform:rotateX(4deg) translateZ(var(--thick)) translateY(-10px); }
 }
@@ -722,10 +740,10 @@ body[data-lay="wheel"] .slot:hover, body[data-lay="wheel"] .slot:focus-visible, 
 @media(max-width:640px){ body[data-lay="tile3d"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
 
 
-/* â”€â”€ VIEW SWITCHER â€” one button, a menuâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ── VIEW SWITCHER — one button, a menu────────────────────────────────────
    A single compact control instead of a row of toggles. The menu floats below
    it; the current layout name and its glyph sit on the button face. */
-.viewctl{ position:relative; z-index:9998; isolation:isolate; display:inline-flex; margin:0 auto clamp(10px,1.6vw,16px); }
+.viewctl{ position:relative; display:inline-flex; margin:0 auto clamp(10px,1.6vw,16px); }
 .viewbtn{
   display:inline-flex; align-items:center; gap:7px;
   min-height:34px; min-width:96px; padding:0 10px; cursor:pointer;
@@ -744,8 +762,8 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
              0 0 14px -3px color-mix(in srgb, var(--accent) 60%, transparent); }
 .viewctl.open .viewbtn .v-caret{ transform:rotate(180deg); }
 .viewmenu{
-  position:absolute; left:50%; top:100%; transform:translate(-50%,-4px) scale(.98);
-  z-index: 9998; min-width:172px; padding:5px; display:grid; gap:2px;
+  position:absolute; left:50%; top:calc(100% + 6px); transform:translate(-50%,-4px) scale(.98);
+  z-index:70; min-width:172px; padding:5px; display:grid; gap:2px;
   background:var(--void2); border:1px solid var(--edge); border-radius:4px;
   opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .18s var(--ease), transform .18s var(--ease), visibility 0s linear .18s;
@@ -766,8 +784,6 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 .viewmenu button[aria-selected=true]{ color:var(--accent); border-color:color-mix(in srgb, var(--accent) 35%, transparent);
   background:color-mix(in srgb, var(--accent) 9%, transparent); }
 .viewmenu button[aria-selected=true] i{ color:var(--accent); }
-.ver{ margin-left:2px; align-self:center; font-family:var(--f-mono); font-size:9px; letter-spacing:.12em; color:var(--emerald); opacity:.85; border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); border-radius:2px; padding:2px 6px; white-space:nowrap;  }
-#tryit{ margin-top:clamp(26px,3.6vw,44px); border:1px solid var(--edge); border-radius:3px; background:rgba(255,255,255,.02); padding:clamp(18px,2.6vw,30px); }#tryit .tk{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--emerald); }#tryit h3{ font-family:var(--f-display); font-weight:900; letter-spacing:.03em; font-size:clamp(20px,2.8vw,30px); margin:8px 0 4px; }#tryit .ts{ color:var(--ink-soft); font-size:14.5px; max-width:62ch; line-height:1.6; }#tryit .trow{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }#tryit input{ flex:1 1 260px; min-width:0; background:var(--void2); border:1px solid var(--edge); border-radius:2px; color:var(--ink); font-family:var(--f-mono); font-size:16px; padding:13px 14px; min-height:50px; outline:none; }#tryit input:focus{ border-color:var(--emerald); }#tryit .tgo{ min-height:50px; padding:0 22px; border:1px solid var(--emerald); background:var(--emerald); color:var(--void); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; border-radius:2px; cursor:pointer; }#tryit .tgo[disabled]{ opacity:.45; cursor:default; }#tryit .egs{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }#tryit .eg{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em; color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; padding:9px 12px; min-height:40px; background:none; cursor:pointer; transition:border-color .2s,color .2s; }#tryit .eg:hover{ color:var(--ink); border-color:var(--emerald); }#tryit .tout{ margin-top:18px; min-height:0; }#tryit .tline{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; }#tryit .hits{ display:flex; flex-direction:column; gap:8px; }#tryit .hit{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border:1px solid var(--edge); border-left:2px solid var(--hc); border-radius:2px; padding:12px 14px; background:rgba(255,255,255,.015); }#tryit .hit .who{ font-family:var(--f-display); font-weight:900; font-size:15px; letter-spacing:.09em; color:var(--hc); }#tryit .hit .role{ font-size:13px; color:var(--ink-soft); }#tryit .hit .pick{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--void); background:var(--hc); padding:4px 8px; border-radius:2px; }#tryit .hit.sub .pick{ background:none; color:var(--ink-faint); border:1px solid var(--edge); }#tryit .why{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-top:12px; }
 </style>
 </head>
 <body>
@@ -785,106 +801,75 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
     <span class="sh"><b class="sh-full">SHADDAI</b><b class="sh-mini">SH</b></span>
     <span class="sub">Choose your threshold</span>
   </div>
-<div class="controls">
+  <div class="controls">
     <button class="ctl" id="btnDwell" type="button" title="Rest on a door to read what it is">
       <span class="dot"></span><span>info</span>
     </button>
-    <button class="ctl" id="btnTheme" type="button" title="Change theme">â—ˆ <span class="lbl-long">theme</span></button>
-    <button class="ctl" id="btnAll" type="button" title="Show every module">â—³ <span class="lbl-long">all</span></button>
-    <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">âœŽ <span class="lbl-long">edit</span></button>
-    <button class="ctl" id="btnMcp" type="button" title="MCP integration"><img class="mcpico" src="/assets/nav/apis.jpg" alt="MCP" />MCP</button>
-    <span class="ver" id="verStamp" title="Build stamp - if you do not see v58.90e here, your browser is showing an old cached copy">v58.90e</span>
+    <button class="ctl" id="btnTheme" type="button" title="Change theme">◈ <span class="lbl-long">theme</span></button>
+    <button class="ctl" id="btnAll" type="button" title="Show every module">◳ <span class="lbl-long">all</span></button>
+    <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">✎ <span class="lbl-long">edit</span></button>
   </div>
-</header><!-- Lesson of the Day -->
-<div class='lesson-card' id='lessonCard' style='display:none; margin-top:20px; padding:20px; background:var(--void2); border:1px solid var(--edge); border-radius:6px;'>
-  <h3 class='lesson-title' style='color:var(--accent); margin-top:0'>Lesson of the Day</h3>
-  <p class='lesson-body' id='lessonBody'></p>
-  <button class='lesson-close' style='background:var(--accent); color:#05070e; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-weight:600'>Close</button>
+</header><!-- sign-in lives alone in the corner: one quiet pill, out of the way -->
+<div class="authcorner">
+  <button class="authpill" id="btnAuth" type="button"><span class="dot"></span><span id="authLbl">sign in</span></button>
 </div>
 
-<!-- secondary utilities â€” deliberately outside .controls, see .util in CSS -->
+<!-- secondary utilities — deliberately outside .controls, see .util in CSS -->
 <div class="util">
-  <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener" title="FOMO referral">ðŸ”¥ fomo</a>
-  <button id="uAscend" type="button" title="ASCEND — The cinematic entry">ðŸ’¼ ascend</button>
-  <button id="uPaybox" type="button" title="Wallets â€” where funds land and what the agents do">wallets</button>
-  <button id="uSnd" type="button" title="Sound is off by default">â™ª sound</button>
+  <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener" title="FOMO referral">🔥 fomo</a>
+  <button id="uPaybox" type="button" title="ZEROX FOMO wallets — tip or pay an agent">◈ paybox wallets</button>
+  <button id="uSnd" type="button" title="Sound is off by default">♪ sound</button>
   <div class="msg" id="uMsg"></div>
 </div>
 
 
-<main><script>
-  const lessons = [
-    { title: 'Solana Basics', body: 'A Solana transaction encodes instructions for programs running on chain. Each instruction has a program ID, accounts (signers, writable), and data. Transactions are confirmed by validators via Proof of History + Tower BFT.' },
-    { title: 'PayBox Ledger', body: 'Shaddai uses a non-custodial x402 credit ledger. Purchases debit the buyers balance and credit the sellers. Fees are 5%. Receipts are written to paybox-receipts.json and are verifiable. No real on-chain funds move; the ledger is closed-loop.' },
-    { title: 'PIKADON Review', body: 'PIKADON reviews a PayBox payload for: valid program IDs, malicious patterns (HTML tags, private-key-looking strings), recipient validity (base58 Solana address or token mint), and spend caps. Output is PASS / FAIL / WARN with reasons.' },
-  ];
-  let lessonIndex = 0;
-function showLesson() {
-    const lesson = lessons[lessonIndex];
-    const title = document.querySelector('.lesson-title');
-    if (title) title.innerText = lesson.title;
-    document.getElementById('lessonBody').innerHTML = lesson.body;
-    document.getElementById('lessonCard').style.display = 'block';
-  }
-  function hideLesson() {
-    document.getElementById('lessonCard').style.display = 'none';
-  }
-  document.querySelector('.lesson-close').onclick = hideLesson;
-  // Rotate lessons every 5 minutes
-  setInterval(() => {
-    lessonIndex = (lessonIndex + 1) % lessons.length;
-    showLesson();
-  }, 300000);
-  // Show on first load if not in localStorage
-  if (!localStorage.getItem('lessonShown')) {
-    showLesson();
-    localStorage.setItem('lessonShown', '1');
-  }
-</script>
+<main>
   <div class="lede">
     <h1>Ways in</h1>
-    <p>One empire. Pick the door â€” or rearrange them until they're yours.</p>
+    <p>One empire. Pick the door — or rearrange them until they're yours.</p>
   </div>
 
 <!-- Simple Mode: above the grid, not in it. See .simplebtn. -->
 <a class="simplebtn" href="/simple.html">
-  <span>â—‰ Simple Mode</span>
-  <span class="sd">one wheel Â· everything Â· built for a thumb</span>
+  <span>◉ Simple Mode</span>
+  <span class="sd">one wheel · everything · built for a thumb</span>
 </a>
 
-<!-- live router: ask what you want done, the council decides who owns it -->
-<div id="tryit">
-  <div class="tk">Try it</div>
-  <h3>Ask for something. See who takes it.</h3>
-  <p class="ts">This is the real router, not a mock-up. Type what you want done and the council decides which agent owns it &mdash; the same way it decides when you actually use SHADDAI.</p>
-  <div class="trow">
-    <input id="tqi" type="text" autocomplete="off" placeholder="make me a 3D model and a voice over" aria-label="What do you want done?" />
-    <button class="tgo" id="tqg" type="button">Route it</button>
+<!-- routing example: the council actually works like this, in the MCP too.
+     A request lands, the router asks the seven, they vote, and the match
+     decides who picks it up. Kept as a quiet strip under Simple Mode. -->
+<div class="routex" aria-label="How routing works">
+  <span class="routex-q">try it</span>
+  <span class="routex-a">route it</span>
+  <span class="routex-dot" aria-hidden="true"></span>
+  <p class="routex-line">the council decided after 6 rounds</p>
+  <div class="routex-chips">
+    <span class="rc">writing</span>
+    <span class="rc">spirituality</span>
+    <span class="rc done">→ matched</span>
   </div>
-  <div class="egs" id="tqe"></div>
-  <div class="tout" id="tqo"></div>
 </div>
 
 <div class="viewctl" id="viewCtrl">
   <button type="button" class="viewbtn" id="viewBtn" aria-haspopup="listbox" aria-expanded="false" title="Change how the doors are laid out">
-    <span class="v-ico">â—§</span><span id="viewLbl">grid</span><span class="v-caret">âŒ„</span>
+    <span class="v-ico">◧</span><span id="viewLbl">grid</span><span class="v-caret">⌄</span>
   </button>
   <div class="viewmenu" id="viewMenu" role="listbox" aria-label="Layout">
-    <button type="button" data-v="swivel" role="option"><i>âŸ³</i>Swivel</button>
-    <button type="button" data-v="orb"    role="option"><i>â—Ž</i>Orb</button>
-    <button type="button" data-v="wheel"  role="option"><i>â—‰</i>Wheel</button>
-    <button type="button" data-v="tile3d" role="option"><i>â–</i>3D Tile</button>
+    <button type="button" data-v="swivel" role="option"><i>⟳</i>Swivel</button>
+    <button type="button" data-v="orb"    role="option"><i>◎</i>Orb</button>
+    <button type="button" data-v="wheel"  role="option"><i>◉</i>Wheel</button>
+    <button type="button" data-v="tile3d" role="option"><i>❖</i>3D Tile</button>
   </div>
 </div>
   <div class="grid" id="grid"></div>
 </main>
 
-<footer>Seven agents Â· one council Â· <b id="footNote">tap âœŽ to rearrange</b></footer>
+<footer>Seven agents · one council · <b id="footNote">tap ✎ to rearrange</b></footer>
 
-<!-- â”€â”€ drawer: swap a module into a slot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── drawer: swap a module into a slot ───────────────────────────── -->
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheetLib" role="dialog" aria-modal="true" aria-labelledby="libTitle">
-  <button class="close" id="libClose" type="button">âœ• close</button>
+  <button class="close" id="libClose" type="button">✕ close</button>
   <h2 id="libTitle">Swap this door</h2>
   <p class="hint">Choose what lives in slot <b id="libSlotNo">1</b>. If it's already in another slot, the two trade places.</p>
   <div class="lib" id="lib"></div>
@@ -892,7 +877,7 @@ function showLesson() {
 
 <!-- the gate: a code-protected door asks its one question here -->
 <div class="sheet gsheet" id="sheetGate" role="dialog" aria-modal="true">
-  <button class="close" id="gateClose" type="button">âœ• close</button>
+  <button class="close" id="gateClose" type="button">✕ close</button>
   <div class="glock">LOCKED DOOR</div>
   <h2 class="gtitle" id="gateTitle">2D Realm</h2>
   <p class="hint" id="gateHint">Enter the code to open this door.</p>
@@ -905,10 +890,9 @@ function showLesson() {
 
 <script src="/js/shd-modules.js"></script>
 <script src="/js/enter-intro.js"></script>
-<script src="/js/shd-chrome.js"></script> 
-<script src="/js/paybox-wallets.js"></script> 
+<script src="/js/shd-chrome.js"></script>
 <script>
-/* Warm the door plates the moment this script parses â€” not when the intro
+/* Warm the door plates the moment this script parses — not when the intro
    finishes and not when render() gets around to it. The `<img>`s below come
    from JS, so without this the browser never even asks the server for the art
    until the boot overlay is done. Warming the cache first means every door is
@@ -928,26 +912,23 @@ function showLesson() {
 })();
 </script>
 <script>
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   THE FRONT DOOR â€” slots, dwell-bios, swapping, sign-in, theme.
+/* ══════════════════════════════════════════════════════════════════════
+   THE FRONT DOOR — slots, dwell-bios, swapping, sign-in, theme.
    Plain script (no build step). The WebGL layer is a separate ES module
-   below and is entirely optional â€” if it fails or WebGL is unavailable,
+   below and is entirely optional — if it fails or WebGL is unavailable,
    every tile still renders and works from this script alone.
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
   var M = window.SHDModules;
-  // must cover DEFAULT_SLOTS.length â€” a short list printed 'undefined'
+  // must cover DEFAULT_SLOTS.length — a short list printed 'undefined'
   // on the fifth and sixth doors
   var ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
 
   var C = window.SHDChrome.init();
   document.getElementById('btnTheme').addEventListener('click', function () { C.openTheme(); });
-  /* MCP integration — the button leads to the unified MCP page (Task 4). */
-  var btnMcpEL = document.getElementById('btnMcp');
-  if (btnMcpEL) btnMcpEL.addEventListener('click', function () { location.assign('/mcp.html'); });
 
-  /* â”€â”€ dwell-bio preference (shared with Simple Mode) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── dwell-bio preference (shared with Simple Mode) ─────────────────── */
   var btnDwell = document.getElementById('btnDwell');
   function dwellOn() { return C.dwell(); }
   function paintDwell() {
@@ -955,12 +936,12 @@ function showLesson() {
     btnDwell.classList.toggle('on', on);
     btnDwell.classList.toggle('out', !on);
     btnDwell.title = on
-      ? 'Info on â€” rest on a door for 5 seconds and it tells you what it is'
-      : 'Info off â€” doors stay quiet';
+      ? 'Info on — rest on a door for 5 seconds and it tells you what it is'
+      : 'Info off — doors stay quiet';
     if (!on) document.querySelectorAll('.slot').forEach(clearDwell);
   }
   /* A setting whose effect is delayed by five seconds reads as broken: you
-     press it and nothing happens. Toggling now DEMONSTRATES itself â€” every
+     press it and nothing happens. Toggling now DEMONSTRATES itself — every
      door shows its description for a moment, so you can see what the switch
      controls before deciding to leave it on. */
   var demoT = null, demoLock = false;
@@ -986,13 +967,13 @@ function showLesson() {
   C.onDwell(paintDwell);
   paintDwell();
 
-  /* â”€â”€ slots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── slots ────────────────────────────────────────────────────────── */
   var grid = document.getElementById('grid');
   var slots = M.readSlots();
   var editing = false, pendingSlot = -1;
 
   /* Full mode shows every module in the library instead of the four slots.
-     Same tile, same dwell, same 3D â€” only the source list and the density
+     Same tile, same dwell, same 3D — only the source list and the density
      change, so there is no second code path to keep in sync. */
   var showAll = false;
   try { showAll = localStorage.getItem('shd_enter_full') === '1'; } catch (e) {}
@@ -1013,7 +994,7 @@ function showLesson() {
         if (unlocked(m.id)) a.classList.add('open');
       }
       a.style.setProperty('--accent', m.accent);
-      a.setAttribute('aria-label', m.name + ' â€” ' + m.kicker + '. ' + m.blurb);
+      a.setAttribute('aria-label', m.name + ' — ' + m.kicker + '. ' + m.blurb);
       a.innerHTML =
         '<div class="art"><img class="artimg" src="' + M.artFor(m.id) + '" alt="" decoding="async" fetchpriority="high" onerror="(function(i){if(!i.dataset.fb){i.dataset.fb=1;i.src=\'' + m.art + '\';return;}if(i.dataset.fb==\'1\'){i.dataset.fb=2;i.src=\'/assets/enter/entry.jpg\';return;}i.style.display=\'none\';})(this)"></div>' +
         '<div class="wash"></div>' +
@@ -1022,10 +1003,10 @@ function showLesson() {
           '<span class="idx">' + (showAll ? '' : (ROMAN[i] || '')) + '</span>' +
           /* A locked tile says WHY on its face. A greyed door with no reason
              reads as broken rather than as forthcoming. */
-          (m.locked ? '<span class="lock">ðŸ”’ ' + (m.lockNote || 'Not open yet') + '</span>' : '') +
+          (m.locked ? '<span class="lock">🔒 ' + (m.lockNote || 'Not open yet') + '</span>' : '') +
           '<span class="kicker">' + m.kicker + '</span>' +
           '<span class="name">' + m.name + '</span>' +
-          '<span class="go">enter â†’</span>' +
+          '<span class="go">enter →</span>' +
         '</div>' +
         '<div class="dwell"></div>' +
         '<div class="bio"><b>' + m.name + '</b>' + m.blurb + '</div>';
@@ -1036,7 +1017,7 @@ function showLesson() {
   }
 
   /* dwell: sitting on a tile for 5s opens its bio. One mechanic for thumb,
-     mouse, and keyboard â€” hover doesn't exist on a phone, and this rewards
+     mouse, and keyboard — hover doesn't exist on a phone, and this rewards
      hesitation instead of punishing it. */
   function startDwell(el) {
     if (!dwellOn() || editing || el.classList.contains('bio-open')) return;
@@ -1079,7 +1060,7 @@ function showLesson() {
     });
   }
 
-  /* â”€â”€ edit + drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── edit + drawer ────────────────────────────────────────────────── */
   var scrim = document.getElementById('scrim');
   var sheetLib = document.getElementById('sheetLib');
   var libEl = document.getElementById('lib');
@@ -1089,7 +1070,7 @@ function showLesson() {
     editing = on;
     document.body.classList.toggle('editing', on);
     document.getElementById('btnEdit').classList.toggle('on', on);
-    footNote.textContent = on ? 'tap a door to swap it' : 'tap âœŽ to rearrange';
+    footNote.textContent = on ? 'tap a door to swap it' : 'tap ✎ to rearrange';
     if (!on) { grid.querySelectorAll('.slot').forEach(function (s) { s.classList.remove('pending'); }); }
   }
   document.getElementById('btnEdit').addEventListener('click', function () {
@@ -1107,9 +1088,9 @@ function showLesson() {
     if (showAll && editing) setEditing(false);
     document.querySelector('.lede h1').textContent = showAll ? 'Everything' : 'Ways in';
     document.querySelector('.lede p').textContent = showAll
-      ? 'Every module in the empire. Tap â—³ again to go back to your four.'
-      : "One empire. Pick the door â€” or rearrange them until they're yours.";
-    footNote.textContent = showAll ? 'tap â—³ to return to your four' : 'tap âœŽ to rearrange';
+      ? 'Every module in the empire. Tap ◳ again to go back to your four.'
+      : "One empire. Pick the door — or rearrange them until they're yours.";
+    footNote.textContent = showAll ? 'tap ◳ to return to your four' : 'tap ✎ to rearrange';
     render();
   }
   btnAll.addEventListener('click', function () { setShowAll(!showAll); });
@@ -1137,7 +1118,7 @@ function showLesson() {
     openSheet(sheetLib);
   }
 
-  /* Assign, trading places if the module already sits in another slot â€”
+  /* Assign, trading places if the module already sits in another slot —
      so the four are always four distinct doors, never a duplicate. */
   function assign(slotIndex, moduleId) {
     var at = slots.indexOf(moduleId);
@@ -1149,7 +1130,7 @@ function showLesson() {
     closeSheets();
   }
 
-  /* â”€â”€ sheets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── sheets ───────────────────────────────────────────────────────── */
   function openSheet(el) {
     scrim.classList.add('on'); el.classList.add('on');
   }
@@ -1165,7 +1146,7 @@ function showLesson() {
     if (e.key === 'Escape') { closeSheets(); closeGate(); if (editing) setEditing(false); }
   });
 
-  /* â”€â”€ gate: a code-protected door asks its one question â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── gate: a code-protected door asks its one question ─────────────── */
   var sheetGate = document.getElementById('sheetGate');
   var gateForm = document.getElementById('gateForm');
   var gateIn = document.getElementById('gateIn');
@@ -1222,7 +1203,7 @@ function showLesson() {
   });
   document.getElementById('gateClose').addEventListener('click', function () { closeSheets(); closeGate(); });
 
-  /* â”€â”€ sign-in â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ── sign-in ─────────────────────────────────────────────────────────
      Implemented once in shd-chrome.js and shared with Simple Mode. It uses
      endpoints that already exist; no backend file is modified. */
   var authBtn = document.getElementById('btnAuth');
@@ -1245,15 +1226,15 @@ function showLesson() {
 </script>
 
 <script type="module">
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   THE LIVING SOLIDS â€” one renderer, one canvas, scissored per tile.
+/* ══════════════════════════════════════════════════════════════════════
+   THE LIVING SOLIDS — one renderer, one canvas, scissored per tile.
 
    Each slot gets a slowly-turning sacred-geometry solid drawn in the UPPER
    region of its own rect, so it never collides with the text at the bottom
    (the canvas is transparent, so type reads straight through it).
 
    Strictly optional: any failure here leaves the page fully functional.
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ══════════════════════════════════════════════════════════════════════ */
 import * as THREE from '/vendor/three/three.module.js';
 
 const canvas = document.getElementById('gl');
@@ -1261,17 +1242,17 @@ const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-} catch (e) { console.warn('[enter] WebGL unavailable â€” tiles render without solids.', e); }
+} catch (e) { console.warn('[enter] WebGL unavailable — tiles render without solids.', e); }
 
 if (renderer) {
   renderer.setClearAlpha(0);
   renderer.setScissorTest(true);
 
-  /* â”€â”€ the solids â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ── the solids ───────────────────────────────────────────────────────
      Neon wireframe over a near-black shell: the shell hides the back edges
      so the form reads as solid geometry rather than a wire tangle. */
   /* The shell hides the solid's back edges so it reads as geometry rather
-     than a wire tangle â€” which means it has to match the PAGE, not be a fixed
+     than a wire tangle — which means it has to match the PAGE, not be a fixed
      colour. Hardcoding obsidian turned every solid into a black blob on the
      two light skins. */
   /* Read the shell colour from the theme instead of keeping a hardcoded list
@@ -1335,7 +1316,7 @@ if (renderer) {
         g.add(b);
       } return g; },
     drum: c => { const g = new THREE.Group();
-      // a miniature of Simple Mode's own wheel â€” the tile shows you the thing
+      // a miniature of Simple Mode's own wheel — the tile shows you the thing
       for (let i = 0; i < 7; i++) {
         const a = (i / 7) * Math.PI * 2;
         const s = neon(new THREE.BoxGeometry(1.5, 0.34, 0.05), c, i === 0 ? 1 : 0.42);
@@ -1388,7 +1369,7 @@ if (renderer) {
 
   /* One scene per slot, all sharing the renderer via scissor. */
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.z = 5.4;
+  camera.position.z = 4.1;
   let cells = [];
 
   function build() {
@@ -1412,7 +1393,7 @@ if (renderer) {
   }
   window.addEventListener('shd:slots', build);
   /* a skin change flips the shell between obsidian and bone, so the solids
-     have to be rebuilt â€” the colour is baked into the material */
+     have to be rebuilt — the colour is baked into the material */
   let lastSkin = document.documentElement.getAttribute('data-theme-skin');
   new MutationObserver(() => {
     const now = document.documentElement.getAttribute('data-theme-skin');
@@ -1442,19 +1423,14 @@ if (renderer) {
       const r = c.el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > H || r.width < 2) continue;
 
-      // a compact shell hovering over the button's upper-centre, not a full
-      // tile-height wash. The text lives below in the lower third, so keep the
-      // 3D boss small and centred -- one tidy orb per button.
-      const bandH = Math.min(r.height * 0.5, 150);
-      const w = Math.min(r.width * 0.74, bandH * 1.5);
-      const h = Math.min(bandH, w * 0.9);
+      // upper 62% of the tile — the text lives in the lower third
+      const h = r.height * 0.62;
+      const x = r.left, y = H - r.top - h;
       if (h < 2) continue;
-      const x = r.left + (r.width - w) / 2;
-      const y = H - r.top - h - (r.height - h) * 0.26;
 
-      renderer.setViewport(x, y, w, h);
-      renderer.setScissor(x, y, w, h);
-      camera.aspect = w / h;
+      renderer.setViewport(x, y, r.width, h);
+      renderer.setScissor(x, y, r.width, h);
+      camera.aspect = r.width / h;
       camera.updateProjectionMatrix();
 
       if (!reduced) {
@@ -1481,7 +1457,7 @@ if (renderer) {
 
 <footer class="foot">
   <div class="soc">
-    <a href="https://x.com/shaddaiempire" target="_blank" rel="noopener">ð•</a>
+    <a href="https://x.com/shaddaiempire" target="_blank" rel="noopener">𝕏</a>
     <a href="https://t.me/ShaddaiCircle" target="_blank" rel="noopener">Telegram</a>
     <a href="https://fomo.family/r/zerox007" target="_blank" rel="noopener">FOMO</a>
     <a href="/manual.html">Manual</a>
@@ -1490,41 +1466,105 @@ if (renderer) {
   <div class="legal">
     <a href="/terms.html">Terms</a>
     <a href="/privacy.html">Privacy</a>
-    <span class="cr">Â© SHADDAI</span>
+    <span class="cr">© SHADDAI</span>
   </div>
 </footer>
   <script src="/js/shd-sound.js"></script>
 
 <script>
-/* Sound toggle. Off by default â€” see js/shd-sound.js for why that is not
+/* Sound toggle. Off by default — see js/shd-sound.js for why that is not
    negotiable. The label always states the CURRENT state, never the action,
    because "sound off" on a button is ambiguous about which it means. */
 (function () {
   var b = document.getElementById('uSnd');
   if (!b || !window.SHDSound) return;
-  function paint() { b.textContent = window.SHDSound.isOn() ? 'â™ª sound on' : 'â™ª sound off'; }
+  function paint() { b.textContent = window.SHDSound.isOn() ? '♪ sound on' : '♪ sound off'; }
   paint();
   b.addEventListener('click', function () { window.SHDSound.toggle(); paint(); });
 })();
 </script>
 
 <script>
-/* â•â• PAYBOX â€” WALLETS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   The paybox/pay-an-agent sheet lives in /js/paybox-wallets.js (shared with
-   Simple Mode). This wiring just hands the front-door button to it. */
+/* ══ PAYBOX — the ZEROX FOMO wallets ══════════════════════════════════════
+   Shows the two ZEROX wallets and nothing else. Addresses live in a config
+   fetched at runtime rather than typed into this page, so rotating one is a
+   config change, not a redeploy — and a wrong address pasted into HTML is the
+   single most expensive typo this product could ship.
+
+   If the config is absent the sheet says so plainly instead of rendering a
+   placeholder that somebody might send funds to. */
 (function () {
   var btn = document.getElementById('uPaybox');
   if (!btn) return;
-  btn.setAttribute('aria-haspopup', 'dialog');
+
+  function sheet(html) {
+    var w = document.createElement('div');
+    w.style.cssText = 'position:fixed;inset:0;z-index:9500;display:grid;place-items:end center';
+    w.innerHTML =
+      '<div style="position:absolute;inset:0;background:rgba(0,0,0,.75)" data-x></div>' +
+      '<div style="position:relative;width:min(560px,100%);background:var(--panel,#0e141b);' +
+      'border-top:2px solid var(--gold,#e8c45c);padding:22px 20px calc(24px + env(safe-area-inset-bottom));' +
+      'max-height:80vh;overflow-y:auto;font-family:var(--f-mono,monospace)">' + html + '</div>';
+    document.body.appendChild(w);
+    w.addEventListener('click', function (e) {
+      if (e.target.hasAttribute('data-x') || e.target.hasAttribute('data-close')) w.remove();
+      var c = e.target.closest('[data-copy]');
+      if (c) {
+        var v = c.getAttribute('data-copy'), was = c.textContent;
+        var ok = function () { c.textContent = 'Copied'; setTimeout(function () { c.textContent = was; }, 1600); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(ok, fb);
+        else fb();
+        function fb() { var t = document.createElement('textarea'); t.value = v;
+          t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select();
+          try { document.execCommand('copy'); ok(); } catch (err) {} document.body.removeChild(t); }
+      }
+    });
+    return w;
+  }
+
+  var HEAD = '<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#e8c45c">' +
+             'ZEROX · FOMO</div><div style="font-family:Cinzel,serif;font-weight:900;font-size:22px;' +
+             'color:#e9efe9;margin:8px 0 4px">Paybox wallets</div>';
+
   btn.addEventListener('click', function () {
-    if (typeof window.openPaybox === 'function') window.openPaybox();
-    else btn.title = 'Wallets panel unavailable yet';
+    btn.disabled = true;
+    fetch('/api/paybox/wallets')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var list = (d && d.wallets) || [];
+        var body = list.length
+          ? list.map(function (w) {
+              return '<div style="border:1px solid rgba(120,150,140,.2);padding:14px;margin-top:12px">' +
+                '<div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#00ff9c">' +
+                  (w.label || 'Wallet') + '</div>' +
+                '<div style="font-size:12px;color:#93a49b;margin-top:8px;word-break:break-all">' +
+                  (w.address || '') + '</div>' +
+                '<button data-copy="' + (w.address || '') + '" style="margin-top:11px;min-height:42px;' +
+                  'padding:0 16px;background:none;border:1px solid rgba(120,150,140,.34);color:#93a49b;' +
+                  'font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;' +
+                  'cursor:pointer;border-radius:2px">Copy address</button></div>';
+            }).join('')
+          : '<p style="color:#93a49b;font-size:14px;line-height:1.7;margin-top:14px">' +
+            'Not configured yet. Nothing is shown here until the real addresses are set, ' +
+            'because a placeholder someone might send funds to is worse than an empty sheet.</p>';
+        sheet(HEAD + body +
+          '<button data-close style="width:100%;margin-top:18px;min-height:50px;background:none;' +
+          'border:1px solid rgba(120,150,140,.34);color:#93a49b;font-family:inherit;font-size:11px;' +
+          'letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:2px">Close</button>');
+      })
+      .catch(function () {
+        sheet(HEAD + '<p style="color:#93a49b;font-size:14px;margin-top:14px">Could not reach the wallet service.</p>' +
+          '<button data-close style="width:100%;margin-top:18px;min-height:50px;background:none;' +
+          'border:1px solid rgba(120,150,140,.34);color:#93a49b;font-family:inherit;font-size:11px;' +
+          'letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:2px">Close</button>');
+      })
+      .then(function () { btn.disabled = false; });
   });
 })();
 </script>
 
 <script>
-/* View switcher â€” one button, a compact menu of the FOUR real stagings:
+/* View switcher — one button, a compact menu of the FOUR real stagings:
    swivel / orb / wheel / 3D tile. Nothing selected = the plain grid browse
    view. Chosen once and remembered (shd_lay), because a layout preference is
    a preference. */
@@ -1567,73 +1607,5 @@ if (renderer) {
   paint();
 })();
 </script>
-<script>
-/* real router demo — ask, and the council decides */
-(function () {
-  var inp = document.getElementById('tqi'), go = document.getElementById('tqg'),
-      out = document.getElementById('tqo'), egs = document.getElementById('tqe');
-  if (!inp) return;
-  var EG = [
-    'make me a 3D model and a voice over',
-    'trade the best coin on pumpfun',
-    'is this contract safe or a rug',
-    'write me a launch thread',
-    'why do people buy things they do not need'
-  ];
-  EG.forEach(function (q) {
-    var b = document.createElement('button');
-    b.className = 'eg'; b.type = 'button'; b.textContent = q;
-    b.addEventListener('click', function () { inp.value = q; run(); });
-    egs.appendChild(b);
-  });
-  function esc(t) {
-    return String(t).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-  var HUE = { SHADDAI: '#e8c45c', ZEROX: '#ff6f6f', ORACLE: '#b07cff', NEXUS: '#5fe0ff',
-              TURTLE: '#00ff9c', QUILL: '#e8c45c', PIKADON: '#ff8a5c' };
-  function run() {
-    var q = (inp.value || inp.placeholder).trim();
-    if (!q) return;
-    go.disabled = true;
-    out.innerHTML = '<div class="tline">routing&hellip;</div>';
-    fetch('/api/route?q=' + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        var hits = (d.ranked || []).map(function (h, i) {
-          var c = HUE[h.agent] || '#00ff9c';
-          return '<div class="hit' + (i ? ' sub' : '') + '" style="--hc:' + c + '">' +
-                   '<span class="who">' + esc(h.agent) + '</span>' +
-                   '<span class="role">' + esc(h.theme || '') + '</span>' +
-                   '<span class="pick">' + (i ? 'can support' : 'takes it') + '</span>' +
-                 '</div>';
-        }).join('');
-        var topics = (d.matchedTopics || []).map(esc).join(', ');
-        out.innerHTML =
-          '<div class="tline">the council decided</div><div class="hits">' + hits + '</div>' +
-          (topics ? '<div class="why">matched on <b>' + topics + '</b></div>' : '');
-      })
-      .catch(function () {
-        out.innerHTML = '<div class="tline">router unreachable &mdash; try again in a moment</div>';
-      })
-      .then(function () { go.disabled = false; });
-  }
-  go.addEventListener('click', run);
-  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); run(); } });
-})();
-</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-

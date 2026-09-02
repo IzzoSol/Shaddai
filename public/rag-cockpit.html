@@ -143,12 +143,7 @@ canvas.inst{width:100%; display:block; flex:1; min-height:0}
 }
 .knob-read{font-family:'VT323',monospace; font-size:1.4rem; color:var(--amber)}
 
-main{position:relative; border:1px solid var(--edge); overflow:hidden; min-height:0;
-  /* opaque backing under the WebGL viewport. The renderer is alpha:true and the
-     head shells are partially transparent, so without this the fixed fluorescent
-     .grid-bg (z-index:0 behind .cockpit) streaks straight through the 3D head.
-     A solid void keeps the head reading as a clean solid form against the grid. */
-  background:radial-gradient(80% 70% at 50% 42%, #07142b 0%, var(--void) 78%);}
+main{position:relative; border:1px solid var(--edge); overflow:hidden; min-height:0}
 #skullStage{position:absolute; inset:0}
 #laser{position:absolute; inset:0; pointer-events:none}
 .masks{
@@ -504,15 +499,6 @@ function loadMask(agentId){
       o.traverse(n=>{ if(n.isMesh&&n.material){ const m=[].concat(n.material);
         m.forEach(x=>{
           const untextured = !x.map;
-          // Meshy hair/brow/lash cards are flat alpha planes with transparent:true,
-          // which stops depth writing and lets their invisible rectangle show the
-          // viewport grid slicing THROUGH the head. Alpha-TEST instead of blend so
-          // cards occlude correctly and keep depth writes on (mirrors agents.html).
-          if(x.transparent && (x.alphaMap || (x.map && x.map.image))) {
-            x.transparent = false;
-            x.alphaTest = 0.5;
-            x.depthWrite = true;
-          }
           if(untextured && x.color){
             // Keep the agent's hue but land it dark — lerping toward white
             // washed the mesh out to a near-white clay bust.

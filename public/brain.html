@@ -398,13 +398,6 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
 @media(max-width:800px){#res-grid{grid-template-columns:1fr}#actfeed{display:none}}
 
-/* ── BRAIN TAB SEGMENTED CONTROL ── */
-.brain-seg{border:none;border-radius:5px;padding:8px 18px;font:700 11px 'JetBrains Mono',system-ui,sans-serif;letter-spacing:1.5px;cursor:pointer;background:transparent;color:rgba(34,240,255,.55);transition:all .18s ease;position:relative;min-width:110px;text-align:center}
-.brain-seg:hover{color:#22f0ff;background:rgba(34,240,255,.06)}
-.brain-seg:focus-visible{outline:2px solid #22f0ff;outline-offset:-2px}
-.brain-seg.active{background:#22f0ff;color:#01030a;text-shadow:none;box-shadow:0 0 16px rgba(34,240,255,.28),0 0 32px rgba(34,240,255,.1),inset 0 1px 0 rgba(255,255,255,.18)}
-.brain-seg.active:hover{background:#32f5ff;box-shadow:0 0 20px rgba(34,240,255,.36),0 0 40px rgba(34,240,255,.14),inset 0 1px 0 rgba(255,255,255,.22)}
-
 /* ── ROOMS WORLD ── */
 #rc{position:fixed;inset:0;z-index:5;opacity:0;pointer-events:none;transition:opacity .6s}
 #rc.on{opacity:1;pointer-events:all}
@@ -485,11 +478,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 </style>
 </head>
 <body>
-<div style="position:fixed;top:0;left:0;right:0;height:44px;z-index:99999;display:flex;align-items:center;padding:0 14px;background:#01030a;border-bottom:1px solid rgba(34,240,255,.18)">
-<div style="display:flex;background:rgba(34,240,255,.06);border:1px solid rgba(34,240,255,.22);border-radius:6px;overflow:hidden;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 0 18px rgba(34,240,255,.04),inset 0 1px 0 rgba(255,255,255,.04)">
-<button onclick="showTab(0)" id="tb0" class="brain-seg active">3D BRAIN</button>
-<button onclick="showTab(1)" id="tb1" class="brain-seg">CLASSIC BRAIN</button>
-</div>
+<div style="position:fixed;top:0;left:0;right:0;height:44px;z-index:99999;display:flex;gap:8px;align-items:center;padding:0 12px;background:#01030a;border-bottom:1px solid #22f0ff">
+<button onclick="showTab(0)" id="tb0" style="font:700 12px system-ui;padding:8px 16px;cursor:pointer;border:1px solid #22f0ff;background:#22f0ff;color:#01030a;border-radius:6px">3D BRAIN</button>
+<button onclick="showTab(1)" id="tb1" style="font:700 12px system-ui;padding:8px 16px;cursor:pointer;border:1px solid #22f0ff;background:transparent;color:#22f0ff;border-radius:6px">CLASSIC BRAIN</button>
 </div>
 <div id="pane0" style="position:fixed;inset:44px 0 0 0;z-index:9999"><iframe src="rag-cockpit.html" style="width:100%;height:100%;border:0;display:block"></iframe></div>
 <div id="pane1" style="display:none;position:fixed;inset:44px 0 0 0;z-index:9998;overflow:auto;background:#0a0a12">
@@ -2692,6 +2683,6 @@ window.addEventListener('message',e=>{if(e.data==='open-brain'){document.getElem
 init();
 </script>
 </div>
-<script>function showTab(i){document.getElementById("pane0").style.display=i?"none":"block";document.getElementById("pane1").style.display=i?"block":"none";document.getElementById("tb0").classList.toggle("active",i===0);document.getElementById("tb1").classList.toggle("active",i===1);}</script>
+<script>function showTab(i){document.getElementById("pane0").style.display=i?"none":"block";document.getElementById("pane1").style.display=i?"block":"none";document.getElementById("tb0").style.background=i?"transparent":"#22f0ff";document.getElementById("tb0").style.color=i?"#22f0ff":"#01030a";document.getElementById("tb1").style.background=i?"#22f0ff":"transparent";document.getElementById("tb1").style.color=i?"#01030a":"#22f0ff";}</script>
 </body>
 </html>

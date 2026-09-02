@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -185,7 +185,6 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
      make the header fit, which is the wrong trade — the width is bought back
      from the skin switch's padding instead, which has three targets to spare. */
   .tool{ min-width:44px; min-height:44px; padding:0 8px; }
-.tool img{ width:18px; height:18px; border-radius:3px; object-fit:cover; border:1px solid var(--edge); }
   .seg button{ padding:0 5px; font-size:9px; min-height:44px; }
 }
 @media (prefers-reduced-motion: reduce){
@@ -208,39 +207,6 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
   padding-bottom:calc(20px + env(safe-area-inset-bottom));
   max-height:86dvh; display:flex; flex-direction:column; }
 .act.on{ transform:translate(-50%,0); }
-/* gate overlay — mirrored from the landing door: a centered card */
-.gate-scrim{ position:fixed; inset:0; z-index:80; background:rgba(3,5,7,.78); opacity:0;
-  pointer-events:none; visibility:hidden;
-  transition:opacity .3s var(--ease), visibility 0s linear .3s; }
-.gate-scrim.on{ opacity:1; pointer-events:auto; visibility:visible;
-  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
-  transition:opacity .3s var(--ease), visibility 0s linear 0s; }
-.gate{ position:fixed; z-index:81; left:50%; top:50%; transform:translate(-50%,-46%) scale(.98);
-  width:min(400px,92vw); background:var(--void2); border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  border-radius:12px; padding:26px 24px 20px; opacity:0; pointer-events:none; visibility:hidden;
-  box-shadow:0 30px 90px rgba(0,0,0,.6);
-  transition:opacity .3s var(--ease), transform .3s var(--ease), visibility 0s linear .3s; }
-.gate.on{ opacity:1; pointer-events:auto; visibility:visible; transform:translate(-50%,-50%) scale(1);
-  transition:opacity .3s var(--ease), transform .3s var(--ease), visibility 0s linear 0s; }
-.gate .geyebrow{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); }
-.gate .gtitle{ font-family:var(--f-display); font-weight:900; font-size:22px; color:var(--ink); margin-top:6px; }
-.gate .ghint{ font-family:var(--f-mono); font-size:11px; color:var(--ink-soft); margin-top:8px; line-height:1.6; }
-.gate .grow{ display:flex; gap:8px; margin-top:18px; }
-.gate .grow input{ flex:1; min-width:0; background:var(--panel); border:1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-  color:var(--ink); font-family:var(--f-mono); font-size:22px; letter-spacing:.4em; text-align:center;
-  padding:10px 6px; border-radius:4px; outline:none; }
-.gate .grow input:focus{ border-color:var(--accent); box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
-.gate .grow button{ min-height:48px; padding:0 22px; border-radius:4px; font-family:var(--f-mono);
-  font-size:11px; letter-spacing:.16em; text-transform:uppercase; font-weight:700; color:#03110a;
-  background:var(--accent,#00ff9c); cursor:pointer; border:0; }
-.gate .grow button:hover{ filter:brightness(1.1); }
-.gate .grow button[disabled]{ opacity:.45; cursor:default; }
-.gate .gmsg{ min-height:16px; margin-top:12px; font-family:var(--f-mono); font-size:11px; letter-spacing:.02em; }
-.gate .gmsg.bad{ color:#ff6b6b; }
-.gate .gclose{ width:100%; margin-top:16px; min-height:42px; background:none; border:1px solid color-mix(in srgb, var(--ink-soft) 34%, transparent);
-  color:var(--ink-soft); font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; border-radius:4px; }
-.gate.shake{ animation:gateShake .4s var(--ease); }
-@keyframes gateShake{ 0%,100%{ transform:translate(-50%,-50%) scale(1); } 25%{ transform:translate(-53%,-50%) scale(1); } 50%{ transform:translate(-47%,-50%) scale(1); } 75%{ transform:translate(-52%,-50%) scale(1); } }
 .act .ahead{ display:flex; align-items:center; gap:11px; }
 .act .aname{ font-family:var(--f-display); font-weight:900; font-size:19px; letter-spacing:.09em; color:var(--accent); }
 .act .arole{ font-family:var(--f-mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); }
@@ -271,17 +237,6 @@ html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act 
 .act .astat{ font-family:var(--f-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--ink-faint); margin-top:12px; min-height:14px; }
 .act .astat.bad{ color:var(--rose); }
-/* the consolidate-to-3D-brain action: after the inline answer, one
-   prominent door that leads into the immersive RAG brain — the singular
-   destination for the council's question in Simple Mode. */
-.act .abrain{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:16px;
-  min-height:54px; border-radius:3px; font-family:var(--f-mono); font-size:12px; letter-spacing:.2em;
-  text-transform:uppercase; font-weight:600; color:var(--void); background:var(--accent); border:1px solid var(--accent);
-  cursor:pointer; box-shadow:0 8px 34px color-mix(in srgb, var(--accent) 24%, transparent);
-  transition:filter .2s var(--ease); }
-html[data-theme-skin="brutalist"] .act .abrain, html[data-theme-skin="serif"] .act .abrain{ color:#fff; }
-.act .abrain:hover{ filter:brightness(1.08); }
-.act .abrain small{ font-size:8px; letter-spacing:.12em; opacity:.6; text-transform:uppercase; }
 @media(max-width:440px){ .act .arow{ flex-direction:column; } .act .ago{ width:100%; } }
 </style>
 </head>
@@ -306,9 +261,7 @@ html[data-theme-skin="brutalist"] .act .abrain, html[data-theme-skin="serif"] .a
         <button type="button" data-skin="list">list</button>
       </div>
       <button class="tool" id="tDwell" type="button" title="Bios"><span class="dot"></span></button>
-      <button class="tool" id="tWallet" type="button" title="Wallets — where funds land and what the agents do">⌗</button>
       <button class="tool" id="tTheme" type="button" title="Theme">◈</button>
-<button class="tool" id="tMcp" type="button" onclick="location.href='/mcp.html'" title="MCP - connect Claude, Cursor, Grok"><img src="/assets/nav/apis.jpg" alt="MCP"/></button>
       <button class="tool off" id="tAuth" type="button" title="Sign in"><span class="dot"></span><span id="authLbl">in</span></button>
     </div>
   </div>
@@ -346,20 +299,6 @@ html[data-theme-skin="brutalist"] .act .abrain, html[data-theme-skin="serif"] .a
   <div class="astat" id="actStat"></div>
 </div>
 
-<!-- gate overlay — a code-protected door asks its one question (4444) -->
-<div class="gate-scrim" id="gateScrim"></div>
-<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
-  <div class="geyebrow" id="gateEyebrow">SHADDAI · locked</div>
-  <div class="gtitle" id="gateTitle">Enter the code</div>
-  <div class="ghint" id="gateHint">Enter the code to open this door. It stays open once you do.</div>
-  <form class="grow" id="gateForm" autocomplete="off">
-    <input id="gateIn" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="••••" />
-    <button type="submit" id="gateGo">open</button>
-  </form>
-  <div class="gmsg" id="gateMsg"></div>
-  <button class="gclose" id="gateClose" type="button">close</button>
-</div>
-
 <div id="boot">summoning the wheel…</div>
 
 <!-- If WebGL can't start, Simple Mode degrades to a plain list of links
@@ -371,8 +310,7 @@ html[data-theme-skin="brutalist"] .act .abrain, html[data-theme-skin="serif"] .a
 </div>
 
 <script src="/js/shd-modules.js"></script>
-<script src="/js/shd-chrome.js"></script> 
-<script src="/js/paybox-wallets.js"></script> 
+<script src="/js/shd-chrome.js"></script>
 <script type="module">
 import { createSimple } from '/js/simple/core.js';
 
@@ -412,7 +350,6 @@ function paintAuth() {
 C.onAuth(paintAuth); paintAuth();
 $('tAuth').addEventListener('click', () => C.openAuth());
 $('tTheme').addEventListener('click', () => C.openTheme());
-$('tWallet').addEventListener('click', () => { if (typeof window.openPaybox === 'function') window.openPaybox(); });
 
 const app = createSimple({
   canvas: $('stage'),
@@ -426,8 +363,7 @@ const app = createSimple({
        takes on the colour of whatever you're pointed at */
     select(item, i, n) {
       document.documentElement.style.setProperty('--accent', item.accent || '#00ff9c');
-      const gated = item.gate && !gateUnlocked(item.id);
-      countEl.innerHTML = '<b>' + (i + 1) + '</b> / ' + n + ' · ' + item.name + (gated ? ' · 🔒 code' : '');
+      countEl.innerHTML = '<b>' + (i + 1) + '</b> / ' + n + ' · ' + item.name;
       enterBtn.textContent = (item.items && item.items.length) ? 'open ' + item.name : 'enter ' + item.name;
       hideBio();
     },
@@ -465,65 +401,11 @@ const app = createSimple({
 
     dwellEnd: hideBio,
 
-    navigate: gateStep,
-
     escape() { window.location.href = '/enter.html'; }
   }
 });
 
 function hideBio() { bioEl.classList.remove('show'); }
-
-/* ── gate: locked realms ask for the code (4444) before they open ─────
-   Mirrors the landing door. The unlock is stored under the same key
-   (shd_open_<id>) so a door opened here is open on the front door too. */
-const gateScrim = $('gateScrim'), gateEl = $('gate'),
-      gateForm = $('gateForm'), gateIn = $('gateIn'), gateGo = $('gateGo'),
-      gateMsg = $('gateMsg'), gateTitle = $('gateTitle'), gateHint = $('gateHint');
-let gateItem = null;
-
-function gateUnlocked(id) {
-  try { return localStorage.getItem('shd_open_' + id) === '1'; } catch (e) { return false; }
-}
-function gateOpen() { gateScrim.classList.add('on'); gateEl.classList.add('on'); }
-function gateClose() { gateScrim.classList.remove('on'); gateEl.classList.remove('on'); gateEl.classList.remove('shake'); gateItem = null; }
-function gateStep(item) {
-  /* anything that is gated and not yet unlocked asks for the code;
-     everything else navigates straight through so the wheel is untouched */
-  if (item && item.gate && !gateUnlocked(item.id)) {
-    gateItem = item;
-    gateTitle.textContent = item.name;
-    gateHint.textContent = (item.lockNote || 'Enter the code to open this door.') + ' It stays open once you do.';
-    gateMsg.textContent = ''; gateMsg.className = 'gmsg';
-    gateIn.value = ''; gateIn.disabled = false; gateGo.disabled = false;
-    gateEl.classList.remove('shake');
-    gateOpen();
-    setTimeout(() => gateIn.focus(), 80);
-    return true;
-  }
-  if (item.href) { window.location.href = item.href; return true; }
-  return false;
-}
-gateScrim.addEventListener('click', gateClose);
-$('gateClose').addEventListener('click', gateClose);
-gateForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (!gateItem) return;
-  if (String(gateIn.value.trim()).toUpperCase() === String(gateItem.gate).trim().toUpperCase()) {
-    try { localStorage.setItem('shd_open_' + gateItem.id, '1'); } catch (err) {}
-    const href = gateItem.href;
-    gateClose();
-    if (href) setTimeout(() => { window.location.href = href; }, 120);
-  } else {
-    gateMsg.textContent = 'That\u2019s not the code.';
-    gateMsg.className = 'gmsg bad';
-    gateIn.value = ''; gateIn.select(); gateIn.focus();
-    gateEl.classList.remove('shake'); void gateEl.offsetWidth; gateEl.classList.add('shake');
-  }
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && gateEl.classList.contains('on')) { e.stopPropagation(); gateClose(); }
-}, true);
-
 
 /* ── inline actions — ask the council from inside the wheel ────────────
    Hits the live RAG brain (GET /api/ask?q=&agent=), which answers grounded
@@ -595,13 +477,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && actEl.classList.contains('on')) { e.stopPropagation(); closeAction(); }
 }, true);
 
-/* The council's question consolidates to ONE destination in Simple Mode:
-   the immersive RAG brain (the 3D BRAIN at /brain.html). */
-function openInBrain() {
-  const href = '/brain.html';
-  window.location.href = href;
-}
-
 $('actForm').addEventListener('submit', e => {
   e.preventDefault();
   const q = actIn.value.trim();
@@ -622,14 +497,6 @@ $('actForm').addEventListener('submit', e => {
       actOut.innerHTML = mdLite(j.response);
       const used = Array.isArray(j.toolsUsed) && j.toolsUsed.length ? ' · used ' + j.toolsUsed.join(', ') : '';
       actStat.textContent = (j.agent || actItem.name) + used;
-      /* keep the inline answer, then point the user at the ONE consolidated
-         destination: the 3D RAG brain. */
-      const brainBtn = document.createElement('button');
-      brainBtn.type = 'button';
-      brainBtn.className = 'abrain';
-      brainBtn.innerHTML = 'Open in 3D BRAIN <small>RAG · immersive</small>';
-      brainBtn.addEventListener('click', openInBrain);
-      actOut.appendChild(brainBtn);
     })
     .catch(err => {
       actStat.className = 'astat bad';
