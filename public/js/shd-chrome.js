@@ -515,7 +515,16 @@
     if (!built) return;
     themeSheet.classList.remove('on');
     authSheet.classList.remove('on');
-    if (!keepScrim) scrim.classList.remove('on');
+    if (!keepScrim && scrim) {
+      scrim.classList.remove('on');
+      /* Force the hidden state inline so the grey can never linger, even if a
+         transition is mid-flight or a stale .on class survived. The CSS only
+         shows the scrim while it also has .on; these inline values guarantee
+         it is invisible and click-through the instant a sheet closes. */
+      scrim.style.opacity = '0';
+      scrim.style.pointerEvents = 'none';
+      scrim.style.visibility = 'hidden';
+    }
   }
 
   /* sign-in popover: opens under the pill with no grey scrim, and dismisses
