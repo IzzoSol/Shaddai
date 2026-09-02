@@ -174,6 +174,7 @@ html[data-theme-skin="brutalist"] .ctl, html[data-theme-skin="serif"] .ctl{
 .ctl:hover, .ctl.on{ color:var(--ink); border-color:rgba(0,255,156,.42); }
 .ctl.on{ background:rgba(0,255,156,.09); }
 .ctl{ animation:none !important; transition:none !important; z-index: 9999 !important; position: relative; }
+.ctl .mcpico{ width:16px; height:16px; border-radius:3px; object-fit:cover; border:1px solid color-mix(in srgb, var(--emerald,%23%2300ff9c) 55%, transparent); box-shadow:0 0 8px rgba(0,255,156,.35); }
 .ctl .dot{ width:6px; height:6px; border-radius:50%; background:var(--emerald); box-shadow:0 0 8px var(--emerald); flex-shrink:0; }
 .ctl.out .dot{ background:var(--ink-faint); box-shadow:none; }
 @media(max-width:520px){ .ctl{
@@ -671,76 +672,47 @@ body[data-lay='swivel'] .slot:hover, body[data-lay='swivel'] .slot:focus-visible
   transform:none;
   box-shadow:none;
 }
-/* ORB - modules arc around a shallow sphere, front row straight-up, the
-   rim curled away so the whole thing reads as a planet you can rest on. */
-body[data-lay="orb"]{ perspective:1400px; }
+/* ORB - a clean, level spread. Everything sits flat and upright; nothing leans.
+   The base .grid applies perspective:1400px, which foreshortens edge tiles so
+   they lean toward the vanishing point. Kill the perspective + 3D stacking for
+   orb so every tile renders face-on and level (same pattern swivel already uses). */
+body[data-lay="orb"]{
+  perspective:none;
+}
 body[data-lay="orb"] .grid{
-  transform-style:preserve-3d;
+  transform-style:flat;
 }
 body[data-lay="orb"] .slot{
-  transform:translateZ(var(--oz,14px)) scale(var(--os,1));
-  transition:transform .55s var(--ease), box-shadow .55s var(--ease);
+  transform:none;
+  box-shadow:0 14px 34px rgba(0,0,0,.45);
+  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="orb"] .slot:nth-child(1){ --oz:34px; --os:1.06; }
-body[data-lay="orb"] .slot:nth-child(2){ --oz:20px; --os:1.02; }
-body[data-lay="orb"] .slot:nth-child(3){ --oz:0px;  --os:.97; }
-body[data-lay="orb"] .slot:nth-child(4){ --oz:0px;  --os:.97; }
-body[data-lay="orb"] .slot:nth-child(5){ --oz:0px;  --os:.94; }
-body[data-lay="orb"] .slot:nth-child(n+6){ --oz:0px; --os:.9; }
 body[data-lay="orb"] .slot:hover, body[data-lay="orb"] .slot:focus-visible, body[data-lay="orb"] .slot.touched{
-  --oz:54px; --os:1.1; transform:translateY(-6px);
-  box-shadow:0 24px 46px rgba(0,0,0,.5);
+  transform:translateY(-6px);
+  box-shadow:0 24px 46px rgba(0,0,0,.55);
 }
-@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } body[data-lay="orb"] .slot{ --oz:14px; --os:1; } }
+@media(max-width:720px){ body[data-lay="orb"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
 
-/* WHEEL - the doors rim a carousel band that gently trundles on its axis;
-   they stay face-on and readable, lifting toward you on rest. */
-body[data-lay="wheel"]{ perspective:1700px; }
+/* WHEEL - the doors as a level band. All face-on and upright; the rim never
+   leans. Resting on a door lifts it straight toward you. */
+body[data-lay="wheel"]{
+  perspective:none;
+}
 body[data-lay="wheel"] .grid{
   grid-template-columns:repeat(2,1fr) !important; max-width:780px; gap:clamp(12px,2vw,24px);
-  transform-style:preserve-3d; animation:rimRoll 22s ease-in-out infinite alternate;
+  transform-style:flat;
 }
 body[data-lay="wheel"] .slot{
   min-height:clamp(108px,16vh,150px);
-  transform:rotateX(var(--rx,5deg)) translateZ(var(--rz,16px));
-  box-shadow:0 16px 42px rgba(0,0,0,.5);
+  transform:none;
+  box-shadow:0 14px 34px rgba(0,0,0,.45);
   transition:transform .5s var(--ease), box-shadow .5s var(--ease);
 }
-body[data-lay="wheel"] .slot:nth-child(1){ --rx:7deg; --rz:26px; }
-body[data-lay="wheel"] .slot:nth-child(2){ --rx:4deg; --rz:40px; }
-body[data-lay="wheel"] .slot:nth-child(3){ --rx:4deg; --rz:40px; }
-body[data-lay="wheel"] .slot:nth-child(4){ --rx:7deg; --rz:26px; }
-body[data-lay="wheel"] .slot:nth-child(n+5){ --rx:0deg; --rz:0px; }
 body[data-lay="wheel"] .slot:hover, body[data-lay="wheel"] .slot:focus-visible, body[data-lay="wheel"] .slot.touched{
-  --rx:0deg; --rz:60px; transform:translateY(-8px);
-  box-shadow:0 28px 64px rgba(0,0,0,.6);
+  transform:translateY(-8px);
+  box-shadow:0 28px 60px rgba(0,0,0,.6);
 }
-@keyframes rimRoll{
-  0%{ transform:rotateX(8deg) rotateZ(-3deg); }
-  100%{ transform:rotateX(-8deg) rotateZ(3deg); }
-}
-@media(prefers-reduced-motion:reduce){ body[data-lay="wheel"] .grid{ animation:none; } body[data-lay="wheel"] .slot{ transform:none !important; } }
-@media(max-width:640px){ body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }
-
-/* 3D TILE - extruded slabs with a real side face, standing up off the page
-   and levitating on a slow float. The thick edge is drawn with a shadow so it
-   reads as depth even flat. */
-body[data-lay="tile3d"]{ perspective:1600px; }
-body[data-lay="tile3d"] .grid{ grid-template-columns:repeat(2,1fr) !important; max-width:820px; gap:clamp(14px,2.4vw,30px); }
-body[data-lay="tile3d"] .slot{
-  --thick:12px;
-  min-height:clamp(150px,26vh,230px);
-  transform:rotateX(6deg) translateZ(var(--thick));
-  box-shadow:var(--thick) var(--thick) 0 var(--void), 0 26px 60px rgba(0,0,0,.55);
-  transition:transform .5s var(--ease), box-shadow .5s var(--ease);
-  animation:tileFloat 9s ease-in-out infinite alternate;
-}
-body[data-lay="tile3d"] .slot:nth-child(even){ animation-delay:-4.5s; }
-body[data-lay="tile3d"] .slot:hover, body[data-lay="tile3d"] .slot:focus-visible, body[data-lay="tile3d"] .slot.touched{
-  transform:rotateX(0) translateZ(calc(var(--thick) + 30px));
-  box-shadow:var(--thick) var(--thick) 0 var(--void), 0 34px 80px rgba(0,0,0,.65);
-}
-@keyframes tileFloat{
+@media(max-width:640px){ body[data-lay="wheel"] .grid{ grid-template-columns:1fr !important; max-width:520px; } }@keyframes tileFloat{
   0%{ transform:rotateX(6deg) translateZ(var(--thick)) translateY(0); }
   100%{ transform:rotateX(4deg) translateZ(var(--thick)) translateY(-10px); }
 }
@@ -751,7 +723,7 @@ body[data-lay="tile3d"] .slot:hover, body[data-lay="tile3d"] .slot:focus-visible
 /* â”€â”€ VIEW SWITCHER â€” one button, a menuâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    A single compact control instead of a row of toggles. The menu floats below
    it; the current layout name and its glyph sit on the button face. */
-.viewctl{ position:relative; display:inline-flex; margin:0 auto clamp(10px,1.6vw,16px); }
+.viewctl{ position:relative; z-index:9998; isolation:isolate; display:inline-flex; margin:0 auto clamp(10px,1.6vw,16px); }
 .viewbtn{
   display:inline-flex; align-items:center; gap:7px;
   min-height:34px; min-width:96px; padding:0 10px; cursor:pointer;
@@ -792,8 +764,8 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 .viewmenu button[aria-selected=true]{ color:var(--accent); border-color:color-mix(in srgb, var(--accent) 35%, transparent);
   background:color-mix(in srgb, var(--accent) 9%, transparent); }
 .viewmenu button[aria-selected=true] i{ color:var(--accent); }
-.ver{ margin-left:2px;
-#tryit{ margin-top:clamp(26px,3.6vw,44px); border:1px solid var(--edge); border-radius:3px; background:rgba(255,255,255,.02); padding:clamp(18px,2.6vw,30px); }#tryit .tk{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--emerald); }#tryit h3{ font-family:var(--f-display); font-weight:900; letter-spacing:.03em; font-size:clamp(20px,2.8vw,30px); margin:8px 0 4px; }#tryit .ts{ color:var(--ink-soft); font-size:14.5px; max-width:62ch; line-height:1.6; }#tryit .trow{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }#tryit input{ flex:1 1 260px; min-width:0; background:var(--void2); border:1px solid var(--edge); border-radius:2px; color:var(--ink); font-family:var(--f-mono); font-size:16px; padding:13px 14px; min-height:50px; outline:none; }#tryit input:focus{ border-color:var(--emerald); }#tryit .tgo{ min-height:50px; padding:0 22px; border:1px solid var(--emerald); background:var(--emerald); color:var(--void); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; border-radius:2px; cursor:pointer; }#tryit .tgo[disabled]{ opacity:.45; cursor:default; }#tryit .egs{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }#tryit .eg{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em; color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; padding:9px 12px; min-height:40px; background:none; cursor:pointer; transition:border-color .2s,color .2s; }#tryit .eg:hover{ color:var(--ink); border-color:var(--emerald); }#tryit .tout{ margin-top:18px; min-height:0; }#tryit .tline{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; }#tryit .hits{ display:flex; flex-direction:column; gap:8px; }#tryit .hit{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border:1px solid var(--edge); border-left:2px solid var(--hc); border-radius:2px; padding:12px 14px; background:rgba(255,255,255,.015); }#tryit .hit .who{ font-family:var(--f-display); font-weight:900; font-size:15px; letter-spacing:.09em; color:var(--hc); }#tryit .hit .role{ font-size:13px; color:var(--ink-soft); }#tryit .hit .pick{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--void); background:var(--hc); padding:4px 8px; border-radius:2px; }#tryit .hit.sub .pick{ background:none; color:var(--ink-faint); border:1px solid var(--edge); }#tryit .why{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-top:12px; } align-self:center; font-family:var(--f-mono); font-size:9px; letter-spacing:.12em; color:var(--emerald); opacity:.85; border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); border-radius:2px; padding:2px 6px; white-space:nowrap; }
+.ver{ margin-left:2px; align-self:center; font-family:var(--f-mono); font-size:9px; letter-spacing:.12em; color:var(--emerald); opacity:.85; border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); border-radius:2px; padding:2px 6px; white-space:nowrap;  }
+#tryit{ margin-top:clamp(26px,3.6vw,44px); border:1px solid var(--edge); border-radius:3px; background:rgba(255,255,255,.02); padding:clamp(18px,2.6vw,30px); }#tryit .tk{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--emerald); }#tryit h3{ font-family:var(--f-display); font-weight:900; letter-spacing:.03em; font-size:clamp(20px,2.8vw,30px); margin:8px 0 4px; }#tryit .ts{ color:var(--ink-soft); font-size:14.5px; max-width:62ch; line-height:1.6; }#tryit .trow{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }#tryit input{ flex:1 1 260px; min-width:0; background:var(--void2); border:1px solid var(--edge); border-radius:2px; color:var(--ink); font-family:var(--f-mono); font-size:16px; padding:13px 14px; min-height:50px; outline:none; }#tryit input:focus{ border-color:var(--emerald); }#tryit .tgo{ min-height:50px; padding:0 22px; border:1px solid var(--emerald); background:var(--emerald); color:var(--void); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; border-radius:2px; cursor:pointer; }#tryit .tgo[disabled]{ opacity:.45; cursor:default; }#tryit .egs{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }#tryit .eg{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em; color:var(--ink-soft); border:1px solid var(--edge); border-radius:2px; padding:9px 12px; min-height:40px; background:none; cursor:pointer; transition:border-color .2s,color .2s; }#tryit .eg:hover{ color:var(--ink); border-color:var(--emerald); }#tryit .tout{ margin-top:18px; min-height:0; }#tryit .tline{ font-family:var(--f-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px; }#tryit .hits{ display:flex; flex-direction:column; gap:8px; }#tryit .hit{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; border:1px solid var(--edge); border-left:2px solid var(--hc); border-radius:2px; padding:12px 14px; background:rgba(255,255,255,.015); }#tryit .hit .who{ font-family:var(--f-display); font-weight:900; font-size:15px; letter-spacing:.09em; color:var(--hc); }#tryit .hit .role{ font-size:13px; color:var(--ink-soft); }#tryit .hit .pick{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--void); background:var(--hc); padding:4px 8px; border-radius:2px; }#tryit .hit.sub .pick{ background:none; color:var(--ink-faint); border:1px solid var(--edge); }#tryit .why{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-top:12px; }
 </style>
 </head>
 <body>
@@ -818,7 +790,7 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
     <button class="ctl" id="btnTheme" type="button" title="Change theme">â—ˆ <span class="lbl-long">theme</span></button>
     <button class="ctl" id="btnAll" type="button" title="Show every module">â—³ <span class="lbl-long">all</span></button>
     <button class="ctl" id="btnEdit" type="button" title="Rearrange your front door">âœŽ <span class="lbl-long">edit</span></button>
-    <button class="ctl" id="btnMcp" type="button" title="MCP integration">MCP<span class="dot"></span></button>
+    <button class="ctl" id="btnMcp" type="button" title="MCP integration"><img class="mcpico" src="/assets/nav/apis.jpg" alt="MCP" />MCP</button>
     <span class="ver" id="verStamp" title="Build stamp - if you do not see v58.90e here, your browser is showing an old cached copy">v58.90e</span>
   </div>
 </header><!-- Lesson of the Day -->
@@ -968,6 +940,9 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 
   var C = window.SHDChrome.init();
   document.getElementById('btnTheme').addEventListener('click', function () { C.openTheme(); });
+  /* MCP integration — the button leads to the unified MCP page (Task 4). */
+  var btnMcpEL = document.getElementById('btnMcp');
+  if (btnMcpEL) btnMcpEL.addEventListener('click', function () { location.assign('/mcp.html'); });
 
   /* â”€â”€ dwell-bio preference (shared with Simple Mode) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   var btnDwell = document.getElementById('btnDwell');

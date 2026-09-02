@@ -183,6 +183,26 @@ const TOOLS = [
       message: { type: 'string', description: 'The message / request to route.' },
     }, required: ['message'] },
   },
+  {
+    name: 'brain_overview',
+    description: 'High-level stats for the whole SHADDAI knowledge brain: per-agent source/chunk/word counts, top terms, and corpus totals. Use to gauge what knowledge each agent holds before diving in.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'brain_knowledge_map',
+    description: 'The organized subject index of the SHADDAI brain — which agent owns which topics, and how many organized sources sit under each. Optional agent narrows to one specialist.',
+    inputSchema: { type: 'object', properties: {
+      agent: { type: 'string', description: 'Optional — narrow to one agent (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Omit for the whole corpus.' },
+    }, required: [] },
+  },
+  {
+    name: 'brain_get_digest',
+    description: 'Fetch the FULL structured digest for one source (all chapters, insights and quotes), given the agent and the digest name from list_rag_docs.',
+    inputSchema: { type: 'object', properties: {
+      agent: { type: 'string', description: 'Agent whose digest to fetch (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON).' },
+      name: { type: 'string', description: 'The digest name/id shown by list_rag_docs (e.g. "DIGEST_hormozi_100m_offer").' },
+    }, required: ['name'] },
+  },
 ];
 
 // Per-agent specialist tools — one named tool per agent so the model auto-picks the right one.
@@ -201,11 +221,11 @@ SPECIALISTS.forEach(s => TOOLS.push({
 }));
 
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
-async function callAPI(path, body) {
+async function callAPI(path, body, method) {
   const headers = { 'Content-Type': 'application/json' };
   if (API_KEY) headers['x-shaddai-key'] = API_KEY;
   try {
-    const r = await fetch(API + path, { method: 'POST', headers, body: JSON.stringify(body || {}) });
+    const r = await fetch(API + path, { method: method || 'POST', headers, body: JSON.stringify(body || {}) });
     return r.json().catch(() => ({ error: 'bad response from SHADDAI API (' + r.status + ')' }));
   } catch (e) {
     return { error: 'request failed: ' + ((e && e.message) || e) };
@@ -364,6 +384,67 @@ async function callTool(name, args) {
     return out;
   }
 
+  if (name === 'brain_overview') {
+    const d = await callAPIGet('/api/overview');
+    if (d.error) return 'Error: ' + d.error;
+    const lines = (d.agents || []).map(a =>
+      '• ' + (a.id || '?') + ' — ' + (a.docs || 0) + ' sources, ' + (a.chunks || 0) + ' chunks, ' +
+      (a.words || 0) + ' words' + ((a.top_terms || []).length ? ' | top: ' + a.top_terms.slice(0, 6).join(', ') : '')
+    );
+    return 'SHADDAI brain (' + (d.built || '?') + '):\n' +
+      (d.videos != null ? 'Sources: ' + d.videos + ' · ' : '') +
+      (d.chunks != null ? 'Chunks: ' + d.chunks + ' · ' : '') +
+      (d.terms != null ? 'Terms: ' + d.terms + ' · ' : '') +
+      (d.words != null ? 'Words: ' + d.words : '') +
+      '\n\n' + lines.join('\n');
+  }
+
+  if (name === 'brain_knowledge_map') {
+    const qs = args.agent ? '?agent=' + encodeURIComponent(String(args.agent).trim()) : '';
+    const d = await callAPIGet('/api/knowledge-map' + qs);
+    if (d.error) return 'Error: ' + d.error;
+    if (qs && d.agent) {
+      const subj = (d.subjects || []).map(s =>
+        '• ' + s.topic + ' [' + s.rank + '] — ' + s.count + ' sources'
+      );
+      return d.agent + ' — ' + d.theme + ' (owns: ' + (d.primary || []).join(', ') + ')\n' +
+        (d.organized != null ? 'Organized sources: ' + d.organized + ' / ' + d.sources + '\n' : '') +
+        '\nSubjects:\n' + (subj.length ? subj.join('\n') : 'none yet');
+    }
+    const lines = (d.agents || []).map(a =>
+      '• ' + a.agent + ' — ' + a.theme + ' (' + a.sources + ' sources, ' + a.organized + ' organized)'
+    );
+    return 'SHADDAI knowledge map:\n' + lines.join('\n') +
+      '\n\nGLOBAL subjects:\n' + (d.subjects || []).slice(0, 25)
+        .map(s => '• ' + s.topic + ' — ' + s.total + ' sources across ' + s.agents.length + ' agents').join('\n');
+  }
+
+  if (name === 'brain_get_digest') {
+    const agent = String(args.agent || 'SHADDAI').toUpperCase();
+    const qs = 'agent=' + encodeURIComponent(agent) + '&name=' + encodeURIComponent(String(args.name));
+    const d = await callAPIGet('/api/digest?' + qs);
+    if (d.error) return 'Error: ' + d.error;
+    let out = 'Digest: ' + (d.title || d.name || args.name);
+    if (d.source) out += '\nSource: ' + d.source;
+    if (d.thesis) out += '\n\nThesis: ' + d.thesis;
+    if (Array.isArray(d.chapters) && d.chapters.length) {
+      out += '\n\nChapters:\n' + d.chapters.map((c, i) => {
+        let s = (i + 1) + '. ' + (c.label || c.title || c.name || ('Chapter ' + (i + 1)));
+        if (Array.isArray(c.insights) && c.insights.length) {
+          s += '\n   Insights: ' + c.insights.map(ins => (typeof ins === 'object' ? (ins.text || ins.insight || '') : ins)).join(' | ');
+        }
+        if (c.quote && (typeof c.quote === 'string' || c.quote.text)) {
+          s += '\n   Quote: "' + (typeof c.quote === 'string' ? c.quote : c.quote.text) + '"';
+        }
+        return s;
+      }).join('\n');
+    }
+    if (Array.isArray(d.quotes) && d.quotes.length) {
+      out += '\n\nQuotes:\n' + d.quotes.map(q => '• "' + (typeof q === 'object' ? (q.text || q.quote || '') : q) + '"').join('\n');
+    }
+    return out || 'Digest "' + args.name + '" returned no detail.';
+  }
+
   // Specialist / agent runs
   const spec = SPECIALISTS.find(s => name === 'shaddai_' + s.key);
   if (spec) {
@@ -393,7 +474,7 @@ async function callTool(name, args) {
       daily_cap_usd: args.daily_cap_usd,
       per_call_cap_usd: args.per_call_cap_usd,
       allowed_tools: args.allowed_tools,
-    });
+    }, 'PUT');
     if (!d.ok || !d.agent) return 'Error: ' + (d.error || JSON.stringify(d));
     return 'Updated policy → ' + fmtAgentLine(d.agent);
   }

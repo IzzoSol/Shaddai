@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -185,6 +185,7 @@ html[data-theme-skin="brutalist"] .bio, html[data-theme-skin="serif"] .bio{ back
      make the header fit, which is the wrong trade — the width is bought back
      from the skin switch's padding instead, which has three targets to spare. */
   .tool{ min-width:44px; min-height:44px; padding:0 8px; }
+.tool img{ width:18px; height:18px; border-radius:3px; object-fit:cover; border:1px solid var(--edge); }
   .seg button{ padding:0 5px; font-size:9px; min-height:44px; }
 }
 @media (prefers-reduced-motion: reduce){
@@ -270,6 +271,17 @@ html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act 
 .act .astat{ font-family:var(--f-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--ink-faint); margin-top:12px; min-height:14px; }
 .act .astat.bad{ color:var(--rose); }
+/* the consolidate-to-3D-brain action: after the inline answer, one
+   prominent door that leads into the immersive RAG brain — the singular
+   destination for the council's question in Simple Mode. */
+.act .abrain{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:16px;
+  min-height:54px; border-radius:3px; font-family:var(--f-mono); font-size:12px; letter-spacing:.2em;
+  text-transform:uppercase; font-weight:600; color:var(--void); background:var(--accent); border:1px solid var(--accent);
+  cursor:pointer; box-shadow:0 8px 34px color-mix(in srgb, var(--accent) 24%, transparent);
+  transition:filter .2s var(--ease); }
+html[data-theme-skin="brutalist"] .act .abrain, html[data-theme-skin="serif"] .act .abrain{ color:#fff; }
+.act .abrain:hover{ filter:brightness(1.08); }
+.act .abrain small{ font-size:8px; letter-spacing:.12em; opacity:.6; text-transform:uppercase; }
 @media(max-width:440px){ .act .arow{ flex-direction:column; } .act .ago{ width:100%; } }
 </style>
 </head>
@@ -296,6 +308,7 @@ html[data-theme-skin="brutalist"] .act .ago, html[data-theme-skin="serif"] .act 
       <button class="tool" id="tDwell" type="button" title="Bios"><span class="dot"></span></button>
       <button class="tool" id="tWallet" type="button" title="Wallets — where funds land and what the agents do">⌗</button>
       <button class="tool" id="tTheme" type="button" title="Theme">◈</button>
+<button class="tool" id="tMcp" type="button" onclick="location.href='/mcp.html'" title="MCP - connect Claude, Cursor, Grok"><img src="/assets/nav/apis.jpg" alt="MCP"/></button>
       <button class="tool off" id="tAuth" type="button" title="Sign in"><span class="dot"></span><span id="authLbl">in</span></button>
     </div>
   </div>
@@ -582,6 +595,13 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && actEl.classList.contains('on')) { e.stopPropagation(); closeAction(); }
 }, true);
 
+/* The council's question consolidates to ONE destination in Simple Mode:
+   the immersive RAG brain (the 3D BRAIN at /brain.html). */
+function openInBrain() {
+  const href = '/brain.html';
+  window.location.href = href;
+}
+
 $('actForm').addEventListener('submit', e => {
   e.preventDefault();
   const q = actIn.value.trim();
@@ -602,6 +622,14 @@ $('actForm').addEventListener('submit', e => {
       actOut.innerHTML = mdLite(j.response);
       const used = Array.isArray(j.toolsUsed) && j.toolsUsed.length ? ' · used ' + j.toolsUsed.join(', ') : '';
       actStat.textContent = (j.agent || actItem.name) + used;
+      /* keep the inline answer, then point the user at the ONE consolidated
+         destination: the 3D RAG brain. */
+      const brainBtn = document.createElement('button');
+      brainBtn.type = 'button';
+      brainBtn.className = 'abrain';
+      brainBtn.innerHTML = 'Open in 3D BRAIN <small>RAG · immersive</small>';
+      brainBtn.addEventListener('click', openInBrain);
+      actOut.appendChild(brainBtn);
     })
     .catch(err => {
       actStat.className = 'astat bad';
