@@ -399,9 +399,10 @@
       b.innerHTML = '<i></i>' + s.name;
       b.addEventListener('click', function () {
         setSkin(s.id);
-        // close after the selection registers — leaving the sheet open kept a
-        // blurred scrim over the page, which reads as the site freezing
-        setTimeout(closeSheets, 320);
+        // close as soon as the selection paints. The old 320ms delay left the
+        // blurred scrim over the page for a beat after backing out of theme,
+        // which read as the site freezing (and lingered if the user left).
+        closeSheets();
       });
       box.appendChild(b);
     });

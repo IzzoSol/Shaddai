@@ -680,6 +680,7 @@ body[data-lay="orb"]{
   perspective:none;
 }
 body[data-lay="orb"] .grid{
+  perspective:none;
   transform-style:flat;
 }
 body[data-lay="orb"] .slot{
@@ -700,6 +701,7 @@ body[data-lay="wheel"]{
 }
 body[data-lay="wheel"] .grid{
   grid-template-columns:repeat(2,1fr) !important; max-width:780px; gap:clamp(12px,2vw,24px);
+  perspective:none;
   transform-style:flat;
 }
 body[data-lay="wheel"] .slot{
@@ -817,16 +819,17 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
     { title: 'PIKADON Review', body: 'PIKADON reviews a PayBox payload for: valid program IDs, malicious patterns (HTML tags, private-key-looking strings), recipient validity (base58 Solana address or token mint), and spend caps. Output is PASS / FAIL / WARN with reasons.' },
   ];
   let lessonIndex = 0;
-  function showLesson() {
+function showLesson() {
     const lesson = lessons[lessonIndex];
-    document.getElementById('lessonTitle').innerText = lesson.title;
+    const title = document.querySelector('.lesson-title');
+    if (title) title.innerText = lesson.title;
     document.getElementById('lessonBody').innerHTML = lesson.body;
     document.getElementById('lessonCard').style.display = 'block';
   }
   function hideLesson() {
     document.getElementById('lessonCard').style.display = 'none';
   }
-  document.getElementById('lessonCard .lesson-close').onclick = hideLesson;
+  document.querySelector('.lesson-close').onclick = hideLesson;
   // Rotate lessons every 5 minutes
   setInterval(() => {
     lessonIndex = (lessonIndex + 1) % lessons.length;
@@ -1385,7 +1388,7 @@ if (renderer) {
 
   /* One scene per slot, all sharing the renderer via scissor. */
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.z = 4.1;
+  camera.position.z = 5.4;
   let cells = [];
 
   function build() {
@@ -1439,14 +1442,19 @@ if (renderer) {
       const r = c.el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > H || r.width < 2) continue;
 
-      // upper 62% of the tile â€” the text lives in the lower third
-      const h = r.height * 0.62;
-      const x = r.left, y = H - r.top - h;
+      // a compact shell hovering over the button's upper-centre, not a full
+      // tile-height wash. The text lives below in the lower third, so keep the
+      // 3D boss small and centred -- one tidy orb per button.
+      const bandH = Math.min(r.height * 0.5, 150);
+      const w = Math.min(r.width * 0.74, bandH * 1.5);
+      const h = Math.min(bandH, w * 0.9);
       if (h < 2) continue;
+      const x = r.left + (r.width - w) / 2;
+      const y = H - r.top - h - (r.height - h) * 0.26;
 
-      renderer.setViewport(x, y, r.width, h);
-      renderer.setScissor(x, y, r.width, h);
-      camera.aspect = r.width / h;
+      renderer.setViewport(x, y, w, h);
+      renderer.setScissor(x, y, w, h);
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
 
       if (!reduced) {
