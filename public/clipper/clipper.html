@@ -403,19 +403,27 @@
     </div>
 
     <script>
-        // Check if local clipper backend is available
+        // API Configuration - Auto-detects environment
+        const CLIPPER_API_URL = window.CLIPPER_API_URL || 
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? 'http://localhost:8787' 
+                : 'https://shaddai-clipper.onrender.com');
+
+        // Check if clipper backend is available
         async function checkClipperConnection() {
             try {
-                const response = await fetch('http://localhost:8787/clipper/health');
+                const response = await fetch(`${CLIPPER_API_URL}/clipper/health`);
                 if (response.ok) {
                     document.getElementById('statusDot').classList.add('active');
-                    document.getElementById('statusText').textContent = 'Local backend connected';
+                    document.getElementById('statusText').textContent = 
+                        CLIPPER_API_URL.includes('localhost') ? 'Local backend connected' : 'Cloud backend connected';
                     return true;
                 }
             } catch (e) {
                 console.log('Clipper backend not available');
             }
-            document.getElementById('statusText').textContent = 'Local backend unavailable (localhost:8787)';
+            document.getElementById('statusText').textContent = 
+                CLIPPER_API_URL.includes('localhost') ? 'Local backend unavailable (localhost:8787)' : 'Cloud backend unavailable';
             return false;
         }
 
@@ -473,7 +481,7 @@
             formData.append('video', file);
 
             try {
-                const response = await fetch('http://localhost:8787/clipper/upload', {
+                const response = await fetch(`${CLIPPER_API_URL}/clipper/upload`, {
                     method: 'POST',
                     body: formData
                 });
@@ -485,7 +493,7 @@
                     throw new Error('Upload failed');
                 }
             } catch (e) {
-                document.getElementById('uploadStatus').textContent = 'Upload failed — ensure backend is running on localhost:8787';
+                document.getElementById('uploadStatus').textContent = 'Upload failed — ensure backend is running';
                 document.getElementById('uploadStatus').style.color = '#f43f5e';
             }
         }

@@ -1,11 +1,13 @@
-# Render Blueprint for SHADDAI — single Node web service.
+# Render Blueprint for SHADDAI — Main service + Clipper backend
 # Render auto-detects this on deploy. The dashboard is served by the same
 # service (same-origin), so no CORS config is needed.
 #
 # After first deploy, set the secret env vars in the Render dashboard
 # (Environment tab): GROQ_API_KEY is the important one (free at
 # https://console.groq.com/keys). OpenRouter is an optional extra fallback.
+
 services:
+  # ─── Main SHADDAI Dashboard ──────────────────────────────────────────────
   - type: web
     name: shaddai
     runtime: node
@@ -53,3 +55,42 @@ services:
       # free tier from sleeping, so the signal pollers never pause.
       - key: RENDER_EXTERNAL_URL
         sync: false         # auto-set by Render — used by the built-in self-ping
+
+  # ─── SHADDAI Clipper Backend (FFmpeg + Whisper) ───────────────────────────
+  # Docker-based service for video processing with FFmpeg and OpenAI Whisper
+  - type: web
+    name: shaddai-clipper
+    runtime: docker
+    plan: starter        # Free tier has 512MB RAM - may need Starter (1GB) for Whisper
+    dockerfilePath: ./clipper-backend/Dockerfile
+    dockerContext: ./clipper-backend
+    healthCheckPath: /clipper/health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8787"
+      - key: NODE_ENV
+        value: production
+      # Note: Whisper model downloads on first run (~140MB for 'base' model)
+      # Consider pre-baking into Docker image for faster cold starts
+
+  # ─── Clipper Frontend (Static Site) ───────────────────────────────────────
+  # Serves the clipper HTML/JS from /clipper path
+  - type: static
+    name: shaddai-clipper-frontend
+    buildCommand: echo "No build needed - static files served directly"
+    staticPublishPath: ./public/clipper
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /clipper.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+    envVars:
+      - key: CLIPPER_API_URL
+        value: https://shaddai-clipper.onrender.com
