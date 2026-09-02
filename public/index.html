@@ -4125,17 +4125,26 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </style>
 <script>
 /* SHADDAI theme-skin loader — runs in <head> before paint (no flash).
-   Default skin = glitch. Persisted in localStorage('shaddai_skin'). */
+   Default skin = glitch. Persisted in localStorage('shd_theme_skin') — the
+   SAME key shd-chrome.js (enter/simple) and theme-switcher.js (dashboard)
+   use, so a choice made anywhere sticks across every page. Migrates any
+   legacy 'shaddai_skin' value once into the shared key. */
 (function(){
   try{
-    var skin = localStorage.getItem('shaddai_skin') || 'glitch';
+    var skin = localStorage.getItem('shd_theme_skin');
+    if(!skin){
+      var legacy = localStorage.getItem('shaddai_skin');
+      if(legacy) skin = legacy;
+    }
+    if(!skin) skin = 'glitch';
     if(['glitch','terminal','void','amber'].indexOf(skin) === -1) skin = 'glitch';
     document.documentElement.setAttribute('data-theme-skin', skin);
+    try{ localStorage.setItem('shd_theme_skin', skin); }catch(e){}
   }catch(e){ document.documentElement.setAttribute('data-theme-skin','glitch'); }
   window.setShaddaiSkin = function(id){
     if(['glitch','terminal','void','amber','dusk','solar','parchment'].indexOf(id) === -1) id = 'glitch';
     document.documentElement.setAttribute('data-theme-skin', id);
-    try{ localStorage.setItem('shaddai_skin', id); }catch(e){}
+    try{ localStorage.setItem('shd_theme_skin', id); localStorage.setItem('shaddai_skin', id); }catch(e){}
     try{
       document.querySelectorAll('.skin-opt').forEach(function(el){
         el.classList.toggle('active', el.getAttribute('data-skin') === id);
