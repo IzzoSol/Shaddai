@@ -404,10 +404,12 @@
 
     <script>
         // API Configuration - Auto-detects environment
+        // Non-local: talk to the same-origin gateway (/api/clipper) so the engine
+        // is reached through the deployed SHADDAI app (avoids CORS + one entry point).
         const CLIPPER_API_URL = window.CLIPPER_API_URL || 
             (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                 ? 'http://localhost:8787' 
-                : 'https://shaddai-clipper.onrender.com');
+                : '/api');
 
         // Check if clipper backend is available
         async function checkClipperConnection() {
@@ -526,7 +528,7 @@ e
             }, 500);
 
             try {
-                const response = await fetch('http://localhost:8787/clipper/generate', {
+                const response = await fetch(`${CLIPPER_API_URL}/clipper/generate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

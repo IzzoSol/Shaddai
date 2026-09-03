@@ -467,6 +467,34 @@ app.get(['/academy', '/academy/'], (req, res) => {
   res.sendFile(path.join(__dirname, '../public/athenaeum.html'));
 });
 
+// SHADDAI Clipper — same-origin gateway to the video-processing engine.
+// The clipper runs as a dedicated FFmpeg/Whisper service; this main app exposes
+// it at /api/clipper/* (fixing CORS for the clipper UI and keeping one entry
+// point). If the engine is down it reports the truth instead of a silent 500.
+const CLIPPER_ORIGIN = process.env.CLIPPER_ORIGIN || 'https://shaddai-clipper.onrender.com';
+app.get('/api/clipper/status', async (req, res) => {
+  try {
+    const up = await fetch(`${CLIPPER_ORIGIN}/clipper/health`, { signal: AbortSignal.timeout(6000) });
+    const body = up.ok ? await up.json() : null;
+    res.json({ ok: up.ok, status: up.ok ? 'online' : 'offline', service: 'shaddai-clipper', engine: body, upstream: CLIPPER_ORIGIN });
+  } catch (e) {
+    res.json({ ok: false, status: 'offline', error: e.message, upstream: CLIPPER_ORIGIN });
+  }
+});
+app.use('/api/clipper', async (req, res) => {
+  const target = `${CLIPPER_ORIGIN}/clipper${req.url}`;
+  try {
+    const up = await fetch(target, { method: req.method, headers: { ...req.headers, host: new URL(CLIPPER_ORIGIN).host }, body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body), signal: AbortSignal.timeout(25000) });
+    const buf = Buffer.from(await up.arrayBuffer());
+    res.status(up.status);
+    if (up.headers.get('content-type')) res.setHeader('Content-Type', up.headers.get('content-type'));
+    else if (buf.length) res.setHeader('Content-Type', 'application/json');
+    res.send(buf);
+  } catch (e) {
+    res.status(502).json({ ok: false, error: 'clipper engine unreachable', detail: e.message });
+  }
+});
+
 // Quick Start generated sites — served with directory-index enabled so a generated
 // site is reachable at the pretty URL /sites/<slug>/ . The global static mount above
 // sets index:false, so without this a directory request falls through to the SPA
