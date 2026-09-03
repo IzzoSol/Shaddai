@@ -57399,6 +57399,29 @@ try{
     }
     // AGENT goals → run the real loop with a rich prompt built from the sandwich.
     const goal=buildPrompt(p);
+    // 🔑 KEY READINESS — agents produce rich answers only when an LLM key is set.
+    // If none is present, offer a free-key quick-add inline (Groq/Gemini/OpenRouter)
+    // so "enter api → do the task" flows in one place. User may skip and continue.
+    const hasKey = await smHasLLMKey();
+    if(!hasKey && !window._smKeySkipped){
+      const saved = await new Promise(resolve=>{ window._smKeyResolve=resolve;
+        b.innerHTML=`<div class="run-card"><div class="big">🔑</div><div class="wiz-q">Add your API key to get real answers</div>`+
+          `<div class="wiz-sub">${who} works from live data and genuine reasoning — but only when an LLM key is set. Paste a <b style="color:#00ff88">free</b> one (Groq, Gemini or OpenRouter). It is saved on your server and never sent to the browser.</div>`+
+          `<div style="max-width:420px;margin:0 auto">`+
+            `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">Provider</span><select id="smKeyProv" class="input" style="width:100%"><option value="groq">Groq · 🆓 free</option><option value="gemini">Gemini · 🆓 free</option><option value="openrouter">OpenRouter · 🆓 free</option></select></label>`+
+            `<label style="display:block;text-align:left;margin-bottom:12px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">API key</span><input id="smKeyVal" class="input" style="width:100%" placeholder="paste your key here…"></label>`+
+            `<div id="smKeyStatus" style="font-size:10px;color:var(--text-muted);margin-bottom:8px;min-height:14px"></div>`+
+          `</div>`+
+          `<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">`+
+            `<button class="btn btn-accent" style="font-size:10px" onclick="smSaveKeyAndGo()">🔑 Save & continue</button>`+
+            `<button class="btn btn-ghost" style="font-size:10px" onclick="smSkipKey()">Skip for now</button>`+
+          `</div>`+
+          `<div style="font-size:9px;color:var(--text-muted);margin-top:10px">Don't have one? <a href="#apiKeysList" style="color:var(--accent,#00ff88)" onclick="smShowApiPanel()">Browse free providers to get a key</a>.</div>`+
+        `</div>`;
+      });
+      if(saved==='panel') return; // navigated to the API panel — do not run
+      // save('go') or skip('skip') both proceed to run
+    }
     b.innerHTML=`<div class="run-card"><div class="big">⚙️</div><div class="wiz-q">${who} is working…</div><div class="wiz-sub" id="smMsg">Connecting to ${who}…</div></div>`;
     try{ window.setAgentActivity && window.setAgentActivity(who,'working',goal.slice(0,50)); }catch(e){}
     try{
@@ -57435,6 +57458,28 @@ try{
     }catch(e){b.innerHTML=`<div class="run-card"><div class="big">⚠️</div><div class="wiz-q">Couldn't reach the engine</div><div class="wiz-sub">${safe(e.message)}</div><div style="margin-top:14px"><button class="big-go" style="font-size:13px;padding:11px 26px" onclick="smReset()">↺ Try again</button></div></div>`;
       try{ window.setAgentActivity && window.setAgentActivity(who,'idle'); }catch(_){}}
   };
+  // 🔑 Simple Mode API-key helpers — check readiness, quick-add a free key, skip, or jump to the panel.
+  async function smHasLLMKey(){
+    try{
+      const r=await fetch('/api/byok/status',{headers:{'x-user-id':'simple-ui'}});
+      if(!r.ok) return true; // can't verify → don't block, let the run try
+      const d=await r.json();
+      // Any LLM provider key (env or BYOK) disables the prompt.
+      return !!(d && (d.groq||d.gemini||d.openrouter||d.claude||d.openai||d.perplexity));
+    }catch(e){ return true; }
+  }
+  window.smSaveKeyAndGo=async function(){
+    const prov=($('smKeyProv')||{}).value||'groq';
+    const key=($('smKeyVal')||{}).value||'';
+    const st=$('smKeyStatus');
+    if(!key.trim()){ if(st)st.innerHTML='<span style="color:#ffb020">Paste your key first.</span>'; return; }
+    if(st)st.innerHTML='Saving…';
+    const r=await saveByokKey(prov,key.trim());
+    if(r && r.ok!==false){ window._smKeySkipped=false; const r2=window._smKeyResolve; window._smKeyResolve=null; if(r2)r2('go'); }
+    else if(st)st.innerHTML='<span style="color:#ff6060">'+String((r&&r.error)||'Could not save key')+'</span>';
+  };
+  window.smSkipKey=function(){ window._smKeySkipped=true; const r2=window._smKeyResolve; window._smKeyResolve=null; if(r2)r2('skip'); };
+  window.smShowApiPanel=function(){ const r2=window._smKeyResolve; window._smKeyResolve=null; if(r2)r2('panel'); if(typeof showView==='function')showView('apis'); };
   // Post the reviewed draft to a real social channel (only on click — review-before-post).
   window.smPost=async function(platform){
     var ta=document.getElementById('smPostText'); var st=document.getElementById('smPostStatus');
