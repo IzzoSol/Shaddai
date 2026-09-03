@@ -152,11 +152,11 @@ CACHE_DB_PATH = os.environ.get(
     'CACHE_DB_PATH',
     os.path.join(os.path.dirname(__file__), 'aura_cache.db')
 )
-CACHE_TTL_DEFAULT  = 86400   # 24 hours
-CACHE_TTL_MARKET   = int(os.environ.get('CACHE_TTL_MARKET', 300))
-CACHE_TTL_SEARCH   = int(os.environ.get('CACHE_TTL_SEARCH', 900))
-CACHE_TTL_AGENT    = int(os.environ.get('CACHE_TTL_AGENT', 3600))
-CACHE_SIMILARITY_THRESHOLD = 0.82
+CACHE_TTL_DEFAULT  = 86400 * 7    # 7 days for stable facts
+CACHE_TTL_MARKET   = int(os.environ.get('CACHE_TTL_MARKET', 3600 * 6))  # 6 hours
+CACHE_TTL_SEARCH   = int(os.environ.get('CACHE_TTL_SEARCH', 3600))       # 1 hour
+CACHE_TTL_AGENT    = int(os.environ.get('CACHE_TTL_AGENT', 86400 * 7))   # 7 days
+CACHE_SIMILARITY_THRESHOLD = 0.65  # Lowered for more fuzzy hits
 
 # ── Agent Routing Keywords ────────────────────────────────────────────────────
 AGENT_KEYWORDS = {

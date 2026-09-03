@@ -167,7 +167,7 @@ def find(key: str) -> Optional[Any]:
     except Exception as e:
         print(f'[AURA cache] find error: {e}')
     if result is not None:
-        _record_hit(tokens_saved=150)  # outside the DB context to avoid nested lock
+        _record_hit(tokens_saved=result.get('tokens_used', 150) if isinstance(result, dict) else 150)
     return result
 
 
@@ -262,8 +262,14 @@ def stats() -> Dict:
         return {}
 
 
-def _record_hit(tokens_saved: int = 150, cost_usd: float = 0.0003):
-    """Increment hit counter and savings estimate."""
+def _record_hit(tokens_saved: int = None, cost_usd: float = None):
+    """Increment hit counter and savings estimate.
+    If tokens_saved is None, estimates from response length (~4 chars/token).
+    If cost_usd is None, uses provider-specific estimate."""
+    if tokens_saved is None:
+        tokens_saved = 150  # fallback
+    if cost_usd is None:
+        cost_usd = tokens_saved * 0.000002  # ~$0.002/1k tokens estimate
     try:
         with _db() as conn:
             conn.execute("""
@@ -273,6 +279,21 @@ def _record_hit(tokens_saved: int = 150, cost_usd: float = 0.0003):
                     cost_saved_usd = cost_saved_usd + ?
                 WHERE id = 1
             """, (tokens_saved, cost_usd))
+    except Exception:
+        pass
+
+
+def record_llm_response(tokens_used: int, cost_usd: float, provider: str = 'llm'):
+    """Record actual LLM usage for accurate savings tracking."""
+    try:
+        with _db() as conn:
+            conn.execute("""
+                UPDATE stats SET
+                    total_requests = total_requests + 1,
+                    tokens_saved   = tokens_saved + ?,
+                    cost_saved_usd = cost_saved_usd + ?
+                WHERE id = 1
+            """, (tokens_used, cost_usd))
     except Exception:
         pass
 

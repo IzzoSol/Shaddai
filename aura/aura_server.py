@@ -149,17 +149,26 @@ def handle_task():
 
     if winner_result:
         was_cached = winner_result.get('_cached', False)
+        tokens_used = winner_result.get('tokens_used', 150)
+        cost_usd = winner_result.get('cost_usd', 0.0)
         # Save under plain task key so cache.find(task) hits next time
         if not was_cached:
-            cache.save(task, {'response': winner_result['response']}, ttl=CACHE_TTL_AGENT, source=winner_name)
+            cache.save(task, {
+                'response':    winner_result['response'],
+                'tokens_used': tokens_used,
+                'cost_usd':    cost_usd,
+                'agent':       winner_name,
+            }, ttl=CACHE_TTL_AGENT, source=winner_name)
+            cache.save_to_memory(task, winner_result['response'], agent=winner_name)
+            cache.record_llm_response(tokens_used, cost_usd, winner_name)
         return _ok({
             'response':     winner_result['response'],
             'method':       f'agent:{winner_name}',
             'cached':       was_cached,
             'agent':        winner_name,
             'latency_ms':   winner_result.get('latency_ms', 0),
-            'tokens_saved': 0,
-            'cost_usd':     0.0,
+            'tokens_saved': tokens_used if was_cached else 0,
+            'cost_usd':     cost_usd if was_cached else 0.0,
             'reason':       f'Routed to {winner_name.upper()} (parallel race winner)',
         })
 
@@ -170,8 +179,17 @@ def handle_task():
         messages = [{'role': 'user', 'content': task}]
         result = llm.chat(messages, prefer_free=prefer_free, system=system)
 
-        cache.save(task, {'response': result.response}, ttl=3600, source=result.provider)
+        # Store with token/cost info for accurate savings tracking
+        cache_value = {
+            'response':    result.response,
+            'tokens_used': result.tokens_used,
+            'cost_usd':    result.cost_usd,
+            'provider':    result.provider,
+            'latency_ms':  result.latency_ms,
+        }
+        cache.save(task, cache_value, ttl=CACHE_TTL_AGENT, source=result.provider)
         cache.save_to_memory(task, result.response, agent=agent_name)
+        cache.record_llm_response(result.tokens_used, result.cost_usd, result.provider)
 
         return _ok({
             'response':     result.response,
@@ -205,11 +223,12 @@ def handle_chat():
     # Check cache on the last user message
     cached = cache.find(task)
     if cached:
+        tokens_saved = cached.get('tokens_used', 150) if isinstance(cached, dict) else 150
         return _ok({
             'response': cached.get('response', str(cached)),
             'cached':   True,
             'provider': 'cache',
-            'tokens_saved': 150,
+            'tokens_saved': tokens_saved,
         })
 
     try:
@@ -218,8 +237,16 @@ def handle_chat():
             prefer_free=body.get('prefer_free', True),
             system=body.get('system', ''),
         )
-        cache.save(task, {'response': result.response}, source=result.provider)
+        cache_value = {
+            'response':    result.response,
+            'tokens_used': result.tokens_used,
+            'cost_usd':    result.cost_usd,
+            'provider':    result.provider,
+            'latency_ms':  result.latency_ms,
+        }
+        cache.save(task, cache_value, source=result.provider)
         cache.save_to_memory(task, result.response)
+        cache.record_llm_response(result.tokens_used, result.cost_usd, result.provider)
         return _ok(result.to_dict())
     except RuntimeError as e:
         return _err(str(e), 503)
@@ -399,7 +426,22 @@ def list_workflows():
         return _err(str(e))
 
 
+def _prewarm_on_startup():
+    """Pre-warm cache with common queries if empty."""
+    try:
+        stats = cache.stats()
+        if stats.get('cache_entries', 0) < 10:
+            print('[AURA] Cache sparse — pre-warming common queries...')
+            import prewarm_cache
+            prewarm_cache.prewarm()
+        else:
+            print(f"[AURA] Cache warm: {stats.get('cache_entries', 0)} entries, {stats.get('hit_rate_pct', 0)}% hit rate")
+    except Exception as e:
+        print(f'[AURA] Prewarm skipped: {e}')
+
+
 if __name__ == '__main__':
+    _prewarm_on_startup()
     print(f'[AURA] Starting on port {AURA_PORT}...')
     print(f'[AURA] Endpoints: /aura/task  /aura/chat  /aura/health  /aura/stats')
     app.run(host=AURA_HOST, port=AURA_PORT, debug=DEBUG, threaded=True)
