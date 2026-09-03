@@ -6965,6 +6965,7 @@ window.enter3DWorld=function(){
       <!-- City & Rooms (economy / plots / gallery) moved out of the Office — they live in the Worlds hub (4444-gated) -->
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">⚡ Skills</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">📚 Library</button>
+      <button class="nav-btn" id="officeTab10" onclick="switchOfficeTab('gallery')">🖼️ Gallery</button>
     </div>
     
     <!-- E3: Projects sub-panel — standalone #projectsView content relocated here at runtime by switchOfficeTab('projects') -->
@@ -29912,7 +29913,97 @@ function switchOfficeTab(tab) {
   if (tab === 'city')     { try { initCityTab(); } catch(e){} }
   if (tab === 'treasury') { try { initEconomyTab(); } catch(e){} }
   if (tab === 'rooms')    { try { rmRenderRooms(); } catch(e){} try { renderAgentRooms(); } catch(e){} }
+  if (tab === 'gallery')  { try { renderOfficeGallery(); } catch(e){} }
 }
+
+// ═══════════════════════════════════════════════════════
+// OFFICE GALLERY — 2D + 3D sub-galleries.
+// • Saves for signed-in users (persisted). Guests keep a session-only copy that
+//   clears on refresh — the banner says so, so "don't sign in, lose it" is honest.
+// • 3D gallery connects to the 3D Forge / marketplace (gated until unlocked).
+// ═══════════════════════════════════════════════════════
+function renderOfficeGallery(){
+  var room = document.getElementById('officeGallery');
+  if (!room) return;
+  var signed = !!(typeof signedIn === 'function' && signedIn());
+  window._ogMode = window._ogMode || '2d';
+  var mode = window._ogMode;
+  var all = ((typeof S !== 'undefined' && S && S.media) ? S.media : []) || [];
+  var items = [].concat(all || []);
+
+  // 2D = image/video; 3D = glb/threed markers (or any url ending .glb).
+  var is3d = function(it){
+    return !!it && (it.type === '3d' || it.type === 'glb' || it.threed || it.glbUrl ||
+      (typeof it.content === 'string' && /\.glb($|\?)/i.test(it.content)));
+  };
+  var twoD = items.filter(function(it){ return !is3d(it); });
+  var threeD = items.filter(is3d);
+
+  // Sign-in honesty banner (guest items are session-only).
+  var gateBanner = signed ? '' :
+    '<div style="background:rgba(255,176,32,0.08);border:1px solid rgba(255,176,32,0.3);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:10px;color:#ffd23f;line-height:1.6">'+
+      '<b>🖼️ Gallery saves for signed-in users.</b> You are browsing as a guest — your work stays on this device and clears on refresh. '+
+      '<a href="#" onclick="shdSignIn&&shdSignIn();return false" style="color:#ffd23f;font-weight:700">Sign in to keep everything.</a>'+
+    '</div>';
+
+  // Sub-tab picker
+  var subTabs =
+    '<div style="display:flex;gap:6px;margin:10px 0 14px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px">'+
+    '<button class="og-sub '+(mode==='2d'?'on':'')+'" onclick="window._ogMode=\'2d\';renderOfficeGallery()">🎨 2D Gallery</button>'+
+    '<button class="og-sub '+(mode==='3d'?'on':'')+'" onclick="window._ogMode=\'3d\';renderOfficeGallery()">🧊 3D Gallery</button>'+
+    '</div>'+
+    '<style>'+
+      '.og-sub{background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--text-muted);border-radius:20px;padding:6px 14px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit}'+
+      '.og-sub.on{background:linear-gradient(135deg,#00f0ff,#00ff88);color:#000;border-color:transparent}'+
+      '.og-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}'+
+      '.og-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:rgba(0,0,0,0.35);position:relative}'+
+      '.og-card img{width:100%;height:120px;object-fit:cover;display:block;cursor:pointer}'+
+      '.og-card .og-lab{font-size:9px;color:var(--text-muted);padding:6px 8px;line-height:1.4}'+
+      '.og-empty{grid-column:1/-1;text-align:center;padding:40px 10px;color:var(--text-muted);font-size:11px;border:1px dashed var(--border);border-radius:10px}'+
+    '</style>';
+
+  // ---- 2D body ----
+  var body;
+  if (mode === '2d'){
+    if (!twoD.length){
+      body = '<div class="og-empty">No saved images yet.<br><span style="font-size:9px">Generate art or media and hit <b>Save to Gallery</b> — it lands here.</span></div>';
+    } else {
+      body = '<div class="og-grid">' + twoD.map(function(it){
+        var url = String(it.content || '').replace(/[<>"']/g,'');
+        var lab = String(it.prompt || it.type || 'media').slice(0,60);
+        var isVid = it.type === 'video';
+        if (isVid){
+          return '<div class="og-card"><video src="'+url+'" preload="metadata" controls style="width:100%;height:120px;object-fit:cover;background:#000"></video><div class="og-lab">🎬 '+lab+'</div></div>';
+        }
+        return '<div class="og-card"><img src="'+url+'" alt="" onclick="window.open(\''+url+'\',\'_blank\')"/><div class="og-lab">'+lab+'</div></div>';
+      }).join('') + '</div>';
+    }
+  } else {
+    // ---- 3D body ----
+    var unlocked = !!(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('shd_3dg') === '1');
+    if (!unlocked){
+      body =
+        '<div class="og-empty">'+
+        '<div style="font-size:22px;margin-bottom:8px">🧊</div>'+
+        '<b>3D Gallery</b> — wire the 3D Forge &amp; marketplace to mint and store your GLB assets here.'+
+        '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
+          '<button class="btn btn-accent" style="font-size:10px" onclick="window.open(\'/forge-3d.html\',\'_blank\')">⬡ Open 3D Forge</button>'+
+          '<button class="btn btn-ghost" style="font-size:10px" onclick="sessionStorage.setItem(\'shd_3dg\',\'1\');renderOfficeGallery()">Unlock preview</button>'+
+        '</div>'+
+        '</div>';
+    } else if (!threeD.length){
+      body = '<div class="og-empty">No 3D assets yet. Generate a GLB in the 3D Forge — it will appear here.</div>';
+    } else {
+      body = '<div class="og-grid">' + threeD.map(function(it){
+        var url = String(it.content || it.glbUrl || '').replace(/[<>"']/g,'');
+        return '<div class="og-card"><div style="height:120px;display:grid;place-items:center;background:#0a0a14;font-size:26px">🧊</div><div class="og-lab">'+String(it.prompt||'3D asset').slice(0,60)+'</div></div>';
+      }).join('') + '</div>';
+    }
+  }
+
+  room.innerHTML = subTabs + gateBanner + body;
+}
+
 
 // ═══════════════════════════════════════════════════════
 // COMMAND HUB ENGINE — wires HUD strip + city-empire cards
