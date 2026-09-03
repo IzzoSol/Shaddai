@@ -131,6 +131,38 @@
   /* page-load reveal */
   .reveal{ opacity:0; transform:translateY(10px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
   @keyframes rise{ to{ opacity:1; transform:none; } }
+  /* ── Agent Academy / Grok Training modal ── */
+  .academyBtn{ font-family:var(--mono); font-size:10px; letter-spacing:.12em; padding:9px 12px; border:1px solid var(--bd);
+    background:#0d0a06; color:var(--rune); border-radius:2px; cursor:pointer; transition:.18s; }
+  .academyBtn:hover{ border-color:var(--rune); color:#d9fbff; box-shadow:0 0 14px rgba(84,214,223,.25); }
+  #academyModal{ position:fixed; inset:0; z-index:900; display:none; align-items:center; justify-content:center; padding:18px;
+    background:radial-gradient(700px 500px at 30% 20%, rgba(31,58,66,.6), rgba(5,4,3,.93) 60%), rgba(3,2,1,.85); backdrop-filter:blur(6px); }
+  #academyModal.show{ display:flex; }
+  .academy{ position:relative; width:min(1020px,100%); max-height:92vh; overflow:auto; background:#0d0b08; border:1px solid var(--bd);
+    box-shadow:0 0 60px rgba(84,214,223,.12); padding:22px; border-radius:4px; }
+  .academy .top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .academy h2{ font-family:var(--disp); font-weight:900; letter-spacing:.24em; font-size:18px; color:var(--rune); margin:0; }
+  .academy .sub{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--ash); margin:4px 0 16px; }
+  .academy .x{ font-family:var(--mono); font-size:14px; color:var(--ash); background:none; border:1px solid var(--bd); cursor:pointer;
+    width:30px; height:30px; border-radius:2px; transition:.18s; }
+  .academy .x:hover{ color:var(--gold); border-color:var(--gold); }
+  .academy .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(236px,1fr)); gap:12px; }
+  .academy .card{ border:1px solid var(--bd); background:linear-gradient(180deg,#13100b,#0d0b08); padding:14px; border-radius:3px; transition:.18s; position:relative; }
+  .academy .card:hover{ border-color:rgba(84,214,223,.55); transform:translateY(-2px); }
+  .academy .card .agt{ font-family:var(--mono); font-size:9px; letter-spacing:.2em; color:var(--rune); text-transform:uppercase; }
+  .academy .card .ttl{ font-family:var(--body); font-weight:700; font-size:13px; color:var(--gold2); margin:6px 0 6px; }
+  .academy .card .dsc{ font-family:var(--body); font-size:11px; line-height:1.45; color:var(--ash); min-height:48px; }
+  .academy .card .ftr{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+  .academy .card .price{ font-family:var(--mono); font-size:12px; color:var(--gold); }
+  .academy .card .lv{ font-family:var(--mono); font-size:9px; color:#6a7a80; border:1px solid #22333a; padding:2px 6px; border-radius:2px; }
+  .academy .card .buy{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; padding:7px 11px; border-radius:2px; cursor:pointer; transition:.18s;
+    border:1px solid var(--rune); color:#03141a; background:linear-gradient(90deg,#5fe0ff,#54d6df); font-weight:700; }
+  .academy .card .buy:hover{ filter:brightness(1.1); }
+  .academy .card .buy.own{ border-color:#13b17d; background:linear-gradient(90deg,#0b5340,#0d6b52); color:#d7ffe9; cursor:default; }
+  .academy .card .kick{ font-family:var(--mono); font-size:10px; color:#0d6b52; letter-spacing:.06em; }
+  .academy .res{ font-family:var(--mono); font-size:10px; color:var(--gold2); margin-top:14px; min-height:14px; letter-spacing:.04em; line-height:1.5; }
+  .academy .teach{ font-family:var(--body); font-size:12px; line-height:1.6; color:var(--parch); background:#0a100d; border:1px solid #13b17d;
+    margin-top:10px; padding:12px; border-radius:3px; display:none; white-space:pre-wrap; }
   @media(max-width:880px){ #app{ grid-template-columns:1fr; grid-template-rows:auto 44vh auto auto; } #panel{ border-left:0; border-top:1px solid var(--bd);} }
 </style>
 <script type="importmap">
@@ -209,10 +241,25 @@
     <div class="acts reveal" style="animation-delay:.5s">
       <button class="forge" id="forgeBtn">⬡ FORGE</button>
       <button class="awaken" id="awakenBtn">⚡ AWAKEN</button>
+      <button class="academyBtn" id="academyBtn">⬡ AGENT ACADEMY / GROK TRAINING</button>
     </div>
   </div>
 
   <div id="scroll"><span class="glyph">✦</span> Choose an archetype, name it, bind skills &amp; your key — then FORGE. AWAKEN to test it on a real task.</div>
+</div>
+
+<!-- Agent Academy / Grok Training modal -->
+<div id="academyModal" aria-hidden="true">
+  <div class="academy">
+    <div class="top">
+      <h2>⬡ AGENT ACADEMY</h2>
+      <button class="x" id="academyClose" aria-label="close">✕</button>
+    </div>
+    <div class="sub">pay an agent's Paybox to teach you (or a bot) through MCP — real receipt, in our own words. classes you've bought are yours forever.</div>
+    <div class="grid" id="academyGrid">loading classes…</div>
+    <div class="res" id="academyRes"></div>
+    <pre class="teach" id="academyLesson"></pre>
+  </div>
 </div>
 
 <script type="module">
@@ -408,6 +455,79 @@ function offerEditTools(op){
       else log('tool editor not loaded on this page — open it from the dashboard.','var(--ember)'); };
   }catch(e){}
 }
+</script>
+
+<script>
+// Agent Academy / Grok Training — pay an agent's Paybox to be taught via MCP.
+(function(){
+  const uid = (()=>{ try{ return (JSON.parse(localStorage.getItem('shaddai_user')||'{}').email)||'demo'; }catch{ return 'demo'; } })();
+  const m = document.getElementById('academyModal');
+  const grid = document.getElementById('academyGrid');
+  const res = document.getElementById('academyRes');
+  const lesson = document.getElementById('academyLesson');
+  let catalog = [];
+  function say(t,c){ if(res){ res.textContent=t; res.style.color=c||'var(--gold2)'; } }
+
+  const open = ()=>{ m.classList.add('show'); m.setAttribute('aria-hidden','false'); load(); };
+  const close = ()=>{ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); lesson.style.display='none'; };
+
+  document.getElementById('academyBtn').onclick = open;
+  document.getElementById('academyClose').onclick = close;
+  m.addEventListener('click', e=>{ if(e.target===m) close(); });
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+
+  function cardHTML(c){
+    const own = !!c.unlocked;
+    const buy = own
+      ? '<button class="buy own" disabled>✔ OWNED</button>'
+      : '<button class="buy" data-id="'+c.id+'">TRAIN — '+c.price+' ⬥</button>';
+    return '<div class="card" data-id="'+c.id+'">'
+      + '<div class="agt">'+c.agent+'</div><div class="ttl">'+c.title+'</div>'
+      + '<div class="dsc">'+c.desc+'</div>'
+      + '<div class="ftr"><span class="lv">L'+(c.level||1)+'</span>'
+      + (own ? '<span class="kick">UNLOCKED</span>' : '<span class="price">'+c.price+' ⬥</span>')
+      +'</div>'+buy+'</div>';
+  }
+
+  async function load(){
+    try{
+      const r = await fetch('/api/academy/classes?user='+encodeURIComponent(uid)); const d = await r.json();
+      catalog = d.classes||[];
+      grid.innerHTML = catalog.length ? catalog.map(cardHTML).join('') : '<div class="sub">no classes yet</div>';
+      grid.querySelectorAll('.buy:not(.own)').forEach(b=> b.addEventListener('click', ()=> pay(b.dataset.id)));
+      // double-click an OWNED card to teach
+      grid.querySelectorAll('.card').forEach(c=> c.addEventListener('dblclick', ()=> teach(c.dataset.id)));
+    }catch(e){ grid.innerHTML='<div class="sub">could not load classes.</div>'; say('⚠ '+e.message,'var(--ember)'); }
+  }
+
+  async function pay(id){
+    const c = catalog.find(x=>x.id===id); if(!c) return;
+    say('⟳ paying '+c.agent+' '+c.price+' ⬥ to teach "'+c.title+'"…');
+    try{
+      const r = await fetch('/api/academy/pay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:id,user:uid})});
+      const d = await r.json();
+      if(d.ok){
+        say('✓ "'+c.title+'" unlocked (receipt '+(d.receipt&&d.receipt.id||'—')+'). Double-click the card to take the class.');
+        load();
+      } else say('⚠ '+(d.error||'payment failed'),'var(--ember)');
+    }catch(e){ say('⚠ '+e.message,'var(--ember)'); }
+  }
+
+  async function teach(id){
+    const c = catalog.find(x=>x.id===id); if(!c) return;
+    if(!c.unlocked){ say('🔒 "'+c.title+'" is locked — Train it to unlock.','var(--ember)'); return; }
+    lesson.style.display='block'; lesson.textContent = c.agent+' teaching "'+c.title+'" — thinking…';
+    lesson.scrollIntoView({behavior:'smooth',block:'nearest'});
+    try{
+      const r = await fetch('/api/academy/teach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:id,user:uid})});
+      const d = await r.json();
+      if(d.ok && d.lesson){
+        const o = d.lesson.result || (d.lesson.steps&&d.lesson.steps[0]&&d.lesson.steps[0].result) || d.lesson.body;
+        lesson.textContent = (d.offline?'(agent offline — grounded lesson)':'\n')+'\n'+String(o||d.lesson).trim();
+      } else lesson.textContent = '⚠ '+(d.error||'teaching failed');
+    }catch(e){ lesson.textContent='⚠ '+e.message; }
+  }
+})();
 </script>
 
 <script src="/home-btn.js" defer></script>
