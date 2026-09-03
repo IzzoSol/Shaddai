@@ -45,41 +45,53 @@ function readReceipts() {
 const CLASSES = [
   { id: 'shaddai-vision',   agent: 'SHADDAI', level: 1, title: 'Vision & the North Star',
     desc: 'How SHADDAI picks the one metric that matters, cuts vanity numbers, and keeps the whole team pulling the same way.',
-    topics: ['north-star', 'vision', 'strategy'], price: 40 },
+    topics: ['north-star', 'vision', 'strategy'], price: 40,
+    tools: ['daily-market-snapshot', 'sentiment-tracker', 'wiki-deep-dive'] },
   { id: 'zerox-economics',  agent: 'ZEROX',   level: 1, title: 'Unit Economics & Pricing',
     desc: 'Think in MRR, LTV and margin. Price whatever you sell so the math works before the first customer shows up.',
-    topics: ['unit-economics', 'pricing', 'revenue'], price: 40 },
+    topics: ['unit-economics', 'pricing', 'revenue'], price: 40,
+    tools: ['daily-market-snapshot', 'token-price-check', 'fiat-converter', 'x-algo-playbook'] },
   { id: 'nexus-backend',    agent: 'NEXUS',   level: 1, title: 'Shipping Backends That Scale',
     desc: 'APIs, databases and integration points built as simple, testable services — not clever abstractions that bite later.',
-    topics: ['backend', 'api', 'database'], price: 40 },
+    topics: ['backend', 'api', 'database'], price: 40,
+    tools: ['shorten-a-url', 'make-qr-code', 'github-trending-scan'] },
   { id: 'oracle-research',  agent: 'ORACLE',  level: 1, title: 'Research & Reading Signals',
     desc: 'How ORACLE collects context, spots trends before they surface, and questions assumptions instead of trusting them.',
-    topics: ['research', 'trends', 'observability'], price: 40 },
+    topics: ['research', 'trends', 'observability'], price: 40,
+    tools: ['hn-tech-pulse', 'github-trending-scan', 'wiki-deep-dive', 'weather-report'] },
   { id: 'turtle-design',    agent: 'TURTLE',  level: 1, title: 'Design That Feels Good',
     desc: 'Interfaces, flows and micro-interactions that a user actually enjoys — color, hierarchy and delight done with intent.',
-    topics: ['design', 'ui', 'ux'], price: 40 },
+    topics: ['design', 'ui', 'ux'], price: 40,
+    tools: ['color-palette', 'make-qr-code', 'inspire-me'] },
   { id: 'quill-writing',    agent: 'QUILL',   level: 1, title: 'Clear Communication',
     desc: 'How QUILL writes copy, guides and error messages a human reads once and understands. Plain words, no fluff.',
-    topics: ['writing', 'docs', 'copy'], price: 40 },
+    topics: ['writing', 'docs', 'copy'], price: 40,
+    tools: ['define-word', 'quick-translate', 'shorten-a-url'] },
   { id: 'pikadon-security', agent: 'PIKADON', level: 1, title: 'Security In the Worst Case',
     desc: 'Assume the worst path every time. Audit logs, permissions, secret handling and hardening before you ever need it.',
-    topics: ['security', 'audit', 'secrets'], price: 40 },
+    topics: ['security', 'audit', 'secrets'], price: 40,
+    tools: ['sol-wallet-check', 'eth-wallet-check', 'whale-tracker'] },
 
   { id: 'solana-basics',    agent: 'NEXUS',   level: 2, title: 'Solana Transaction Flow',
     desc: 'From funding a wallet to signing and confirming on-chain. Build and think through a real Solana transaction end to end.',
-    topics: ['solana-basics', 'web3', 'transactions'], price: 90 },
+    topics: ['solana-basics', 'web3', 'transactions'], price: 90,
+    tools: ['sol-wallet-check', 'token-price-check', 'whale-tracker', 'defi-leaderboard'] },
   { id: 'paybox-ledger',    agent: 'ZEROX',   level: 2, title: 'The Paybox Ledger',
     desc: 'How non-custodial SHAD-Credits clear on the wallet, why receipts of truth matter, and the 5% fee path in plain terms.',
-    topics: ['paybox-ledger', 'x402', 'micropayments'], price: 90 },
+    topics: ['paybox-ledger', 'x402', 'micropayments'], price: 90,
+    tools: ['sol-wallet-check', 'eth-wallet-check', 'daily-market-snapshot', 'fiat-converter'] },
   { id: 'agent-build',      agent: 'NEXUS',   level: 2, title: 'Forge an Operative',
     desc: 'Name a purpose, bind real runnable tools, and bring an agent to life that actually finishes multi-step tasks.',
-    topics: ['agent', 'tooling', 'mcp'], price: 90 },
+    topics: ['agent', 'tooling', 'mcp'], price: 90,
+    tools: ['github-trending-scan', 'hn-tech-pulse', 'wiki-deep-dive', 'make-qr-code'] },
   { id: 'grok-training',    agent: 'SHADDAI', level: 2, title: 'Grok Training & the SWARM',
     desc: 'Teach a bot to reason the SHADDAI way: consensus, the seven lenses, exercise + quiz, badge progression for humans and bots.',
-    topics: ['training', 'swarm', 'consensus'], price: 120 },
+    topics: ['training', 'swarm', 'consensus'], price: 120,
+    tools: ['sentiment-tracker', 'daily-market-snapshot', 'github-trending-scan', 'wiki-deep-dive'] },
   { id: 'video-lessons',    agent: 'TURTLE',  level: 3, title: 'Video Learning & Timestamps',
     desc: 'Turn a lesson into a timestamped video rather than a wall of text — the path to richer, watchable academy classes and social clips.',
-    topics: ['video', 'timestamps', 'content'], price: 200 },
+    topics: ['video', 'timestamps', 'content'], price: 200,
+    tools: ['color-palette', 'inspire-me', 'quick-translate', 'shorten-a-url'] },
 ];
 
 function classById(id) {
@@ -181,20 +193,28 @@ router.post('/teach', json, async (req, res) => {
   ].join('\n');
 
   try {
-    const an = await (fetch || global.fetch)('/api/agent/run', {
+    const base = `${req.protocol}://${req.get('host')}`;
+    const an = await (fetch || global.fetch)(`${base}/api/agent/run`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent: cls.agent.toLowerCase(), prompt }),
       signal: AbortSignal.timeout ? AbortSignal.timeout(60000) : undefined,
     });
     const data = await an.json();
-    return res.json({ ok: true, classId, agent: cls.agent, lesson: data });
+    // The run engine reports success at the top level even when a step fails
+    // with no output — surface the real final output so the class is still taught.
+    const out = data && (data.finalOutput || (data.steps && data.steps[0] && data.steps[0].result));
+    if (out) {
+      return res.json({ ok: true, classId, agent: cls.agent, onAgent: true, lesson: String(out).trim() });
+    }
+    // Agent runtime reachable but produced no text — fall through to grounded copy.
   } catch (e) {
-    // Even without an agent runtime, return the grounded class so it is still taught.
-    return res.json({
-      ok: true, classId, agent: cls.agent, offline: true,
-      lesson: { title: cls.title, body: cls.desc, action: 'summarise in 3 bullets' },
-    });
+    console.warn('[academy::teach] agent run failed:', (e && e.message) || e);
   }
+  // Grounded fallback — the class is real regardless of agent runtime state.
+  return res.json({
+    ok: true, classId, agent: cls.agent, offline: true,
+    lesson: { title: cls.title, body: cls.desc, action: 'summarise in 3 bullets' },
+  });
 });
 
 module.exports = router;

@@ -152,6 +152,10 @@
   .academy .card .agt{ font-family:var(--mono); font-size:9px; letter-spacing:.2em; color:var(--rune); text-transform:uppercase; }
   .academy .card .ttl{ font-family:var(--body); font-weight:700; font-size:13px; color:var(--gold2); margin:6px 0 6px; }
   .academy .card .dsc{ font-family:var(--body); font-size:11px; line-height:1.45; color:var(--ash); min-height:48px; }
+  .academy .card .tools{ display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .academy .card .tools .t{ font-family:var(--mono); font-size:8px; letter-spacing:.05em; color:#9fe8d8;
+    border:1px solid rgba(19,177,125,.35); background:rgba(19,177,125,.08); padding:2px 6px; border-radius:2px; }
+  .academy .card .toolcap{ font-family:var(--mono); font-size:8px; letter-spacing:.1em; color:#4a575c; margin-top:8px; text-transform:uppercase; }
   .academy .card .ftr{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
   .academy .card .price{ font-family:var(--mono); font-size:12px; color:var(--gold); }
   .academy .card .lv{ font-family:var(--mono); font-size:9px; color:#6a7a80; border:1px solid #22333a; padding:2px 6px; border-radius:2px; }
@@ -485,6 +489,8 @@ function offerEditTools(op){
     return '<div class="card" data-id="'+c.id+'">'
       + '<div class="agt">'+c.agent+'</div><div class="ttl">'+c.title+'</div>'
       + '<div class="dsc">'+c.desc+'</div>'
+      + (c.tools&&c.tools.length ? '<div class="toolcap">tools we teach</div><div class="tools">'
+          + c.tools.map(t=>'<span class="t">'+t+'</span>').join('') + '</div>' : '')
       + '<div class="ftr"><span class="lv">L'+(c.level||1)+'</span>'
       + (own ? '<span class="kick">UNLOCKED</span>' : '<span class="price">'+c.price+' ⬥</span>')
       +'</div>'+buy+'</div>';
@@ -522,9 +528,13 @@ function offerEditTools(op){
     try{
       const r = await fetch('/api/academy/teach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({classId:id,user:uid})});
       const d = await r.json();
-      if(d.ok && d.lesson){
-        const o = d.lesson.result || (d.lesson.steps&&d.lesson.steps[0]&&d.lesson.steps[0].result) || d.lesson.body;
-        lesson.textContent = (d.offline?'(agent offline — grounded lesson)':'\n')+'\n'+String(o||d.lesson).trim();
+      if(d.ok){
+        const out = typeof d.lesson === 'string' ? d.lesson
+          : d.lesson && d.lesson.result
+          ? d.lesson.result
+          : d.lesson && d.lesson.body ? d.lesson.body
+          : JSON.stringify(d.lesson||'');
+        lesson.textContent = (d.offline?'(agent offline — grounded lesson)':'(taught on-agent)')+'\n\n'+String(out||'').trim();
       } else lesson.textContent = '⚠ '+(d.error||'teaching failed');
     }catch(e){ lesson.textContent='⚠ '+e.message; }
   }
