@@ -213,15 +213,141 @@ input.bad{ border-color:var(--rose); }
 
 .muted{ color:var(--ink-faint); font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; }
 
+/* ── sign-in gate ─────────────────────────────────────────────────────────── */
+#authGate{ position:fixed; inset:0; z-index:50; display:none; place-items:center;
+  background:var(--void); padding:6vw; }
+#authGate.on{ display:grid; }
+#authGate .panel{ max-width:440px; width:100%; border:1px solid var(--edge);
+  border-top:2px solid var(--accent); background:var(--card); padding:clamp(22px,4vw,32px); border-radius:3px; }
+#authGate h2{ font-family:var(--f-display); font-weight:900; font-size:22px; margin:0 0 6px; }
+#authGate p{ color:var(--ink-soft); font-size:13px; margin:0 0 18px; line-height:1.6; }
+#authGate .f{ display:block; margin-top:12px; }
+#authGate .f i{ display:block; font-style:normal; font-family:var(--f-mono); font-size:9px;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:5px; }
+#authGate input{ width:100%; background:var(--void2); border:1px solid var(--edge); color:var(--ink);
+  font-family:var(--f-mono); font-size:13px; padding:11px 12px; border-radius:2px; }
+#authGate .acts{ display:flex; gap:8px; margin-top:18px; }
+#authGate .acts button{ flex:1; min-height:46px; border-radius:2px; cursor:pointer; font-family:var(--f-mono);
+  letter-spacing:.12em; text-transform:uppercase; font-size:10px; }
+#authGate .pri{ background:var(--accent); color:var(--void); border:0; font-weight:600; }
+#authGate .ghost{ background:none; color:var(--ink-soft); border:1px solid var(--edge); }
+#authGate .err{ color:var(--rose); font-family:var(--f-mono); font-size:11px; margin-top:10px; min-height:14px; }
+#authGate .fine{ color:var(--ink-faint); font-size:11px; margin-top:14px; line-height:1.6; }
+#authStatus{ font-family:var(--f-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); cursor:pointer; white-space:nowrap; }
+#authStatus.signed{ color:var(--emerald); }
+
 @media(prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+/* ══ AUTH — same public Firebase project as the dashboard, so a user who signed
+   in there is already signed in here. The forge saves per-account: without a
+   real sign-in, /mine and POST fall back to the shared 'local' namespace, which
+   every guest scribbles into. So the wizard is gated until you sign in — the
+   whole point is "sign in to save your agent". ═════════════════════════════── */
+(function () {
+  'use strict';
+  var cfg = { apiKey:"AIzaSyB9QzPlI9AiAnisSO-jK-UUJ-ZwtmHlzjw", authDomain:"shaddai999.firebaseapp.com", projectId:"shaddai999", storageBucket:"shaddai999.firebasestorage.app", messagingSenderId:"706335788411", appId:"1:706335788411:web:6b64d985f6b0c1bf8441de" };
+  window.SHD_AUTH = window.SHD_AUTH || { user: null, token: null, ready: false };
+  try {
+    if (window.firebase && firebase.initializeApp && !window.__forgeAuth) {
+      window.__forgeAuth = true;
+      firebase.initializeApp(cfg);
+      firebase.auth().onAuthStateChanged(async function (u) {
+        window.SHD_AUTH.user = u || null;
+        window.SHD_AUTH.ready = true;
+        try { if (u) localStorage.setItem('shd_signed_in', '1'); else localStorage.setItem('shd_signed_in', '0'); } catch (e) {}
+        window.SHD_AUTH.token = u ? await u.getIdToken().catch(function(){ return null; }) : null;
+        paintAuth();
+        if (typeof window.__forgeOnAuth === 'function') window.__forgeOnAuth();
+      });
+    }
+  } catch (e) { window.SHD_AUTH.ready = true; }
+
+  function paintAuth() {
+    var s = document.getElementById('authStatus');
+    if (!s) return;
+    var u = window.SHD_AUTH.user;
+    if (u) {
+      s.textContent = (u.displayName || u.email || 'signed in') + ' · sign out';
+      s.classList.add('signed');
+    } else {
+      s.textContent = 'sign in to save';
+      s.classList.remove('signed');
+    }
+  }
+
+  window.shdSignedIn = function () { return !!(window.SHD_AUTH && window.SHD_AUTH.user); };
+  window.shdGetToken = function () { return (window.SHD_AUTH && window.SHD_AUTH.token) || null; };
+  window.shdAuthHeaders = function () {
+    var t = window.shdGetToken();
+    var h = { 'Content-Type': 'application/json' };
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  };
+
+  window.openForgeGate = function () {
+    var g = document.getElementById('authGate');
+    if (g) g.classList.add('on');
+  };
+  window.closeForgeGate = function () {
+    var g = document.getElementById('authGate');
+    if (g) g.classList.remove('on');
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var go = document.getElementById('authGo');
+    var err = document.getElementById('authErr');
+    var toggle = document.getElementById('authStatus');
+    if (toggle) toggle.addEventListener('click', function () {
+      if (window.shdSignedIn()) { firebase.auth().signOut().then(function(){ location.reload(); }); }
+      else window.openForgeGate();
+    });
+    if (go) go.addEventListener('click', async function () {
+      err.textContent = '';
+      var e = (document.getElementById('authEmail') || {}).value || '';
+      var p = (document.getElementById('authPass') || {}).value || '';
+      try {
+        await firebase.auth().signInWithEmailAndPassword(e.trim(), p);
+        window.closeForgeGate();
+      } catch (er) {
+        err.textContent = String(er.code || er.message || 'sign-in failed').replace('auth/', '').replace('FirebaseError:', '');
+      }
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') window.closeForgeGate();
+    });
+  });
+})();
+</script>
 </head>
 <body>
 
 <header>
   <div class="brand"><b>SHADDAI</b><span>Agent Forge</span></div>
-  <a class="back" href="/enter.html">&larr; Doors</a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button id="authStatus" type="button" style="background:none;border:0" title="Sign in to save your agents">…</button>
+    <a class="back" href="/index.html#forge">&larr; Dashboard</a>
+  </div>
 </header>
+
+<!-- sign-in gate -->
+<div id="authGate">
+  <div class="panel">
+    <h2>Sign in to forge.</h2>
+    <p>Forging writes real skills, a persona and (optionally) a wallet to <em>your</em> account. Without a sign-in it would save into a shared guest namespace that clears — that's not a file you want to lose.</p>
+    <label class="f"><i>Email</i><input type="email" id="authEmail" autocomplete="email" /></label>
+    <label class="f"><i>Password</i><input type="password" id="authPass" autocomplete="current-password" /></label>
+    <div class="err" id="authErr"></div>
+    <div class="acts">
+      <button class="pri" id="authGo" type="button">Sign in</button>
+      <button class="ghost" type="button" onclick="window.closeForgeGate()">Back</button>
+    </div>
+    <div class="fine">Signed in on the dashboard already? You're set — this page shares that sign-in. No account yet? Sign in on the dashboard first.</div>
+  </div>
+</div>
 
 <main>
   <div id="build">
@@ -493,6 +619,9 @@ input.bad{ border-color:var(--rose); }
 
   /* ── forge ─────────────────────────────────────────────────────────────── */
   $('go').addEventListener('click', function () {
+    // Sign-in is the point: an agent is only worth forging if it saves to YOUR
+    // account (name = wallet key, unique to you). Guests get parked at the gate.
+    if (!window.shdSignedIn()) { window.openForgeGate(); return; }
     var btn = $('go');
     btn.disabled = true; btn.textContent = 'Forging…';
     $('eGo').textContent = '';
@@ -513,7 +642,7 @@ input.bad{ border-color:var(--rose); }
 
     fetch('/api/agent-forge', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: window.shdAuthHeaders(),
       body: JSON.stringify(body),
     })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
@@ -553,8 +682,10 @@ input.bad{ border-color:var(--rose); }
 
   /* ── my agents ─────────────────────────────────────────────────────────── */
   function loadMine() {
-    fetch('/api/agent-forge/mine').then(function (r) { return r.json(); }).then(function (d) {
-      var list = $('mineList'), agents = d.agents || [];
+    var list = $('mineList');
+    if (!window.shdSignedIn()) { list.innerHTML = '<div class="muted">Sign in to see the agents you have forged.</div>'; return; }
+    fetch('/api/agent-forge/mine', { headers: window.shdAuthHeaders() }).then(function (r) { return r.json(); }).then(function (d) {
+      var agents = d.agents || [];
       if (!agents.length) { list.innerHTML = '<div class="muted">None yet.</div>'; return; }
       list.innerHTML = '';
       agents.forEach(function (a) {
@@ -572,7 +703,7 @@ input.bad{ border-color:var(--rose); }
         // small. One tap deletes; the agent is cheap to make again.
         del.addEventListener('click', function () {
           del.disabled = true;
-          fetch('/api/agent-forge/' + encodeURIComponent(a.id), { method: 'DELETE' })
+          fetch('/api/agent-forge/' + encodeURIComponent(a.id), { method: 'DELETE', headers: window.shdAuthHeaders() })
             .then(loadMine).catch(function () { del.disabled = false; });
         });
         row.appendChild(del);
@@ -581,6 +712,8 @@ input.bad{ border-color:var(--rose); }
     }).catch(function () { $('mineList').innerHTML = '<div class="muted">Could not load.</div>'; });
   }
   loadMine();
+  // Re-list my agents once auth settles (sign-in/out on this page or the dashboard).
+  window.__forgeOnAuth = function () { try { loadMine(); } catch (e) {} };
 })();
 </script>
 </body>

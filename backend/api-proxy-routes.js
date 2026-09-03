@@ -8111,12 +8111,12 @@ const BYOK_TIER_PERMS = {
   // Free providers (user pays $0 to the provider) are open to EVERYONE so beta
   // testers can bring their own free Groq/Gemini/OpenRouter key. Paid providers
   // (claude/openai/perplexity) still require Pro.
-  free:    ['groq', 'gemini', 'openrouter'],
-  builder: ['groq', 'gemini', 'openrouter'],
-  pro:     ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter'],
-  alpha:   ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter']
+  free:    ['groq', 'gemini', 'openrouter', 'xai'],
+  builder: ['groq', 'gemini', 'openrouter', 'xai'],
+  pro:     ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter', 'xai'],
+  alpha:   ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter', 'xai']
 };
-const VALID_PROVIDERS = ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter'];
+const VALID_PROVIDERS = ['groq', 'gemini', 'claude', 'openai', 'perplexity', 'openrouter', 'xai'];
 
 function maskKey(k) {
   if (!k || typeof k !== 'string' || k.length < 8) return '***';

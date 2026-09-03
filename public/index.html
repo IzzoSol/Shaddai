@@ -7762,6 +7762,7 @@ window.enter3DWorld=function(){
       <button class="forge-tab active" data-forge-tab="2d" onclick="switchForgeTab('2d')" style="flex:1;padding:10px 16px;background:rgba(0,255,136,0.15);color:#00ff88;border:none;border-bottom:2px solid #00ff88;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">2D Forge</button>
       <button class="forge-tab" data-forge-tab="3d" onclick="switchForgeTab('3d')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">3D Forge</button>
       <button class="forge-tab" data-forge-tab="market" onclick="switchForgeTab('market')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer">Marketplace</button>
+      <button class="forge-tab" data-forge-tab="agent" onclick="switchForgeTab('agent')" style="flex:1;padding:10px 16px;background:transparent;color:rgba(255,255,255,.5);border:none;border-bottom:2px solid transparent;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;font-weight:700;cursor:pointer" title="Forge an agent — name it, give it real skills, a voice, and a wallet. Sign in to save.">🤖 Forge an Agent</button>
     </div>
     <div id="forge2dPanel" class="forge-panel" style="display:block;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(0,255,136,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
@@ -7776,6 +7777,11 @@ window.enter3DWorld=function(){
     <div id="forgeMarketPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(232,196,92,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
         <iframe id="forgeFrameMarket" src="/pixel-forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Marketplace" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="forgeAgentPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
+      <div style="width:100%;height:100%;border:1px solid rgba(255,255,255,0.14);border-radius:0 0 8px 8px;overflow:hidden;background:#06080b;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+        <iframe id="forgeFrameAgent" src="/agent-forge.html" style="width:100%;height:100%;border:0;display:block" title="Forge an Agent" loading="lazy"></iframe>
       </div>
     </div>
     <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
@@ -13549,9 +13555,15 @@ window.enter3DWorld=function(){
           <select class="select" id="openrouterModelSelect" onchange="localStorage.setItem('shaddai_openrouter_model',this.value)">
             <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B (FREE)</option>
             <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (FREE)</option>
+            <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (FREE)</option>
             <option value="google/gemma-3-12b-it:free">Gemma 3 12B (FREE)</option>
+            <option value="google/gemma-2-27b-it:free">Gemma 2 27B (FREE)</option>
             <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3 (FREE)</option>
+            <option value="deepseek/deepseek-r1-distill-qwen-32b:free">DeepSeek R1 Distill 32B (FREE)</option>
+            <option value="qwen/qwen2.5-coder-32b-instruct:free">Qwen 2.5 Coder 32B (FREE)</option>
+            <option value="nvidia/llama-3.1-nemotron-70b-instruct:free">Nemotron 70B (FREE)</option>
             <option value="microsoft/phi-4-reasoning:free">Phi-4 Reasoning (FREE)</option>
+            <option value="microsoft/phi-3.5-mini-instruct:free">Phi-3.5 Mini (FREE)</option>
             <option value="openai/gpt-4o-mini">GPT-4o Mini (PAID)</option>
             <option value="anthropic/claude-haiku">Claude Haiku (PAID)</option>
             <option value="google/gemini-flash-1.5">Gemini Flash 1.5 (PAID)</option>
@@ -27305,6 +27317,8 @@ function showView(v) {
     // A3: if the swivel was relocated into the Agents tab, bring it home before rendering Forge.
     try { const sw=document.getElementById('agentDeployCard'); if (sw && _agentDeployHome && _agentDeployHome.parent && sw.parentNode!==_agentDeployHome.parent) { _agentDeployHome.parent.insertBefore(sw, _agentDeployHome.next); const m=document.getElementById('agentSwivelMount'); if(m) m.style.display='none'; _agentsViewMode='grid'; const gB=document.getElementById('agViewGridBtn'),sB=document.getElementById('agViewSwivelBtn'); if(gB)gB.classList.add('active'); if(sB)sB.classList.remove('active'); const g=document.getElementById('agent3DGrid'); if(g)g.style.display=''; } } catch(e) {}
     try { renderCarousel(); } catch(e) {} setTimeout(() => { try { renderCarousel(); } catch(e) {} }, 80);
+    // The Forge now leads with the Forge-an-Agent wizard (sign-in to save).
+    try { setTimeout(function(){ if (typeof switchForgeTab==='function') switchForgeTab('agent'); }, 0); } catch(e) {}
   }
   if (v === 'skills')     { setTimeout(() => { if (typeof loadSkillsLibrary === 'function') loadSkillsLibrary(); if (typeof renderSkillsModelsTab === 'function' && window._skActiveTab==='models') renderSkillsModelsTab(); }, 80); }
   if (v === 'apis')       { renderAPIs(); if (typeof renderApiCarousel === 'function') renderApiCarousel(); if (typeof renderApiKeysPanel === 'function') renderApiKeysPanel(); }

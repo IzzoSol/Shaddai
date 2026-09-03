@@ -46,5 +46,39 @@
     "meta": {
       "via": "skills-market"
     }
+  },
+  {
+    "id": "r_mtlurfua",
+    "txId": "pb_mtlurfu8",
+    "user": "localtest-abc",
+    "seller": "TURTLE",
+    "itemId": "academy:turtle-design",
+    "amount": 40,
+    "fee": 2,
+    "net": 38,
+    "reason": "academy:turtle-design",
+    "receiptAt": "2026-09-03T18:22:36.274Z",
+    "atUs": 1788459756275,
+    "meta": {
+      "class": "turtle-design"
+    }
+  },
+  {
+    "id": "r_mtlutivs",
+    "txId": "pb_mtlutivr",
+    "user": "ut1788459853092",
+    "seller": "TURTLE",
+    "itemId": "academy:turtle-design",
+    "amount": 40,
+    "fee": 2,
+    "net": 38,
+    "reason": "academy:turtle-design",
+    "receiptAt": "2026-09-03T18:24:13.528Z",
+    "atUs": 1788459853529,
+    "meta": {
+      "classId": "turtle-design",
+      "title": "Design That Feels Good",
+      "agent": "TURTLE"
+    }
   }
 ]
