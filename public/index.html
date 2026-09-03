@@ -4367,7 +4367,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
-  <button class="nav-btn" onclick="window.open('/forge-3d.html','_blank')" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Forge — generate & trade GLB agent models">⬡ 3D Forge</button>
+  <button class="nav-btn" onclick="window.open('/forge-3d.html','_blank')" data-guest-lock="3D Forge" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Forge — generate & trade GLB agent models">⬡ 3D Forge</button>
   <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="location.href='/pro-signals.html'" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="Pro Signal Terminal — live calls, P&L, Polymarket">📡 Signals</button>
   <button class="nav-btn" onclick="location.href='/mirofish-terminal.html'" style="color:#b07fff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="MiroFish Swarm Prediction Terminal">🐟 MiroFish</button>
@@ -6962,9 +6962,7 @@ window.enter3DWorld=function(){
   <div id="officeView" class="view">
     <div style="display:flex;gap:8px;padding:12px 0;flex-wrap:wrap;position:relative;z-index:10;margin-bottom:8px">
       <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">🏢 Command</button>
-      <button class="nav-btn" id="officeTabCity" onclick="switchOfficeTab('city')" style="color:#00e5a0;font-weight:700">🌆 City</button>
-      <button class="nav-btn" id="officeTabRooms" onclick="switchOfficeTab('rooms')" style="color:#e8c45c;font-weight:700">🚪 Rooms</button>
-      <!-- Gallery & Economy moved to Worlds hub (4444-gated) -->
+      <!-- City & Rooms (economy / plots / gallery) moved out of the Office — they live in the Worlds hub (4444-gated) -->
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">⚡ Skills</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">📚 Library</button>
     </div>
@@ -6987,14 +6985,6 @@ window.enter3DWorld=function(){
           <div class="hud-val" id="officeHudSignal">—%</div>
           <div class="hud-lab">SIGNAL LEVEL</div>
         </div>
-        <div class="hud-stat">
-          <div class="hud-val" id="officeHudRooms">0</div>
-          <div class="hud-lab">ACTIVE ROOMS</div>
-        </div>
-        <div class="hud-stat">
-          <div class="hud-val" id="officeHudPlots">0 / 30</div>
-          <div class="hud-lab">CITY PLOTS</div>
-        </div>
       </div>
 
       <!-- QUICK-NAV CARDS: Academy / Grok Training + Worlds (4444-gated) -->
@@ -7014,10 +7004,10 @@ window.enter3DWorld=function(){
           <div style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.04em">WORLDS</div>
           <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px">POD · City · Rooms · 3D</div>
         </div>
-        <div onclick="switchOfficeTab('rooms')" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(232,196,92,0.14)'" onmouseout="this.style.background='rgba(232,196,92,0.07)'">
+        <div onclick="showWorldsPinGate()" style="background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(232,196,92,0.14)'" onmouseout="this.style.background='rgba(232,196,92,0.07)'">
           <div style="font-size:18px;margin-bottom:4px">🚪</div>
           <div style="font-size:10px;font-weight:700;color:#e8c45c;letter-spacing:.04em">ROOMS</div>
-          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdRoomsSnap">Rent · Tenants · Yield</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px">In the Worlds hub · 4444</div>
         </div>
       </div>
 
@@ -7060,13 +7050,6 @@ window.enter3DWorld=function(){
           </div>
         </div>
 
-      </div>
-
-      <!-- E3 REMOVED: ROW 3 quick-action-strip (NEW JOB / AGENTS / SKILLS / FORGE·GALLERY / ROOMS / WORLD / BILLING / CSV / PIXEL OFFICE) — duplicated main nav; owner removed whole strip -->
-      <!-- Command Hub merge: ◈ Your Property — the hub's office manager now lives with the Command Center -->
-      <div class="shdterm-scope" style="margin-top:14px;border-top:1px solid rgba(168,85,247,.18);padding-top:6px">
-        <div class="rsec">◈ Your Property <span class="c">Founders' Row · office manager</span></div>
-        <div id="officeCommandProp"></div>
       </div>
     </div>
     
