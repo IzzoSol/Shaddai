@@ -55818,10 +55818,10 @@ window.publishContent=async function(text,platform){
 // ═══════════════════════════════════════════════════════════════════
 (function(){
   const TIER_PERMS = {
-    free:    [],
-    builder: ['groq','gemini'],
-    pro:     ['groq','gemini','claude','openai','perplexity','openrouter'],
-    alpha:   ['groq','gemini','claude','openai','perplexity','openrouter']
+    free:    ['openrouter','xai'],
+    builder: ['openrouter','groq','gemini','xai'],
+    pro:     ['groq','gemini','claude','openai','perplexity','openrouter','xai'],
+    alpha:   ['groq','gemini','claude','openai','perplexity','openrouter','xai']
   };
   // map known input IDs -> provider name
   const INPUT_PROVIDER_MAP = {
@@ -55830,11 +55830,12 @@ window.publishContent=async function(text,platform){
     'groqKeyInput': 'groq',
     'geminiKeyInput': 'gemini',
     'openaiKeyInput': 'openai',
-    'perplexityKeyInput': 'perplexity'
+    'perplexityKeyInput': 'perplexity',
+    'xaiKeyInput': 'xai'
   };
   function getTier(){ return (localStorage.getItem('shd_tier')||'free').toLowerCase(); }
   function tierRequiredFor(provider){
-    if (provider==='groq'||provider==='gemini') return 'Builder';
+    if (provider==='groq'||provider==='gemini'||provider==='openrouter'||provider==='xai') return 'Builder';
     return 'Pro';
   }
   function applyByokGating(){
@@ -57494,9 +57495,9 @@ try{
     if(!hasKey && !window._smKeySkipped){
       const saved = await new Promise(resolve=>{ window._smKeyResolve=resolve;
         b.innerHTML=`<div class="run-card"><div class="big">🔑</div><div class="wiz-q">Add your API key to get real answers</div>`+
-          `<div class="wiz-sub">${who} works from live data and genuine reasoning — but only when an LLM key is set. Paste a <b style="color:#00ff88">free</b> one (Groq, Gemini or OpenRouter). It is saved on your server and never sent to the browser.</div>`+
+          `<div class="wiz-sub">${who} works from live data and genuine reasoning — but only when an LLM key is set. A <b style="color:#00ff88">free</b> OpenRouter key unlocks a whole pool of free models it can cycle through 24/7 at $0. Groq and Gemini are free too, and Grok (x.ai) is welcome on any plan. Keys are saved on your server, never sent to the browser.</div>`+
           `<div style="max-width:420px;margin:0 auto">`+
-            `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">Provider</span><select id="smKeyProv" class="input" style="width:100%"><option value="groq">Groq · 🆓 free</option><option value="gemini">Gemini · 🆓 free</option><option value="openrouter">OpenRouter · 🆓 free</option></select></label>`+
+            `<label style="display:block;text-align:left;margin-bottom:10px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">Provider</span><select id="smKeyProv" class="input" style="width:100%"><option value="openrouter">OpenRouter · 🆓 free pool (recommended)</option><option value="groq">Groq · 🆓 free</option><option value="gemini">Gemini · 🆓 free</option><option value="xai">Grok (x.ai) · free plan</option></select></label>`+
             `<label style="display:block;text-align:left;margin-bottom:12px"><span style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:3px">API key</span><input id="smKeyVal" class="input" style="width:100%" placeholder="paste your key here…"></label>`+
             `<div id="smKeyStatus" style="font-size:10px;color:var(--text-muted);margin-bottom:8px;min-height:14px"></div>`+
           `</div>`+
@@ -57553,7 +57554,7 @@ try{
       if(!r.ok) return true; // can't verify → don't block, let the run try
       const d=await r.json();
       // Any LLM provider key (env or BYOK) disables the prompt.
-      return !!(d && (d.groq||d.gemini||d.openrouter||d.claude||d.openai||d.perplexity));
+      return !!(d && (d.groq||d.gemini||d.openrouter||d.claude||d.openai||d.perplexity||d.xai));
     }catch(e){ return true; }
   }
   window.smSaveKeyAndGo=async function(){

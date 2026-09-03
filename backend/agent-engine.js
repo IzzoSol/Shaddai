@@ -104,6 +104,23 @@ const OLLAMA_NUM_PREDICT = parseInt(process.env.OLLAMA_NUM_PREDICT || '512', 10)
 const OLLAMA_TIMEOUT_MS  = parseInt(process.env.OLLAMA_TIMEOUT_MS || '120000', 10);
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+// FREE OpenRouter models — a rotation pool. All are ':free' slugs (usable at $0 with any
+// OpenRouter key, even a zero-balance one). When a run calls the openrouter provider the
+// list is cycled: the first that returns a non-rate-limited answer wins, so users can run
+// agents 24/7 on free models without spending a cent. Order matters: strongest useful
+// defaults first, lighter ones later as fallback.
+const OPENROUTER_FREE_ROTATION = [
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'qwen/qwen2.5-coder-32b-instruct:free',
+  'google/gemma-2-27b-it:free',
+  'google/gemma-3-12b-it:free',
+  'nvidia/llama-3.1-nemotron-70b-instruct:free',
+  'microsoft/phi-4-reasoning:free',
+  'microsoft/phi-3.5-mini-instruct:free'
+];
 const ANTHROPIC_KEY  = process.env.ANTHROPIC_API_KEY || '';
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
 const OPENAI_KEY     = process.env.OPENAI_API_KEY || '';
@@ -3392,7 +3409,16 @@ Use tools for real data, then give a concise final answer.` };
     ollama: pOllama,
     gemini: pGemini,
     groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', _bGroq, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
-    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter, [(options.provider === 'openrouter' && options.model) || (_isPaidTier ? OPENROUTER_PREMIUM_MODEL : OPENROUTER_MODEL), 'meta-llama/llama-3.1-8b-instruct:free']),
+    openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter,
+      (function () {
+        // Rotation: an explicit per-run model wins the first slot, then we cycle the
+        // free pool so a single OpenRouter key runs on free models 24/7 at $0.
+        var pool = _isPaidTier
+          ? [OPENROUTER_PREMIUM_MODEL].concat(OPENROUTER_FREE_ROTATION)
+          : OPENROUTER_FREE_ROTATION.slice();
+        if (options.provider === 'openrouter' && options.model) pool.unshift(options.model);
+        return pool.filter(function (m, i, a) { return a.indexOf(m) === i; });
+      })()),
     anthropic: pAnthropic,
     openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || (_isPaidTier ? OPENAI_PREMIUM_MODEL : OPENAI_MODEL)]),
     xai: pXAI,
