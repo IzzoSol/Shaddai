@@ -6932,8 +6932,7 @@ window.enter3DWorld=function(){
     #officeView .nav-btn.active {
       box-shadow: 0 0 14px rgba(0,229,160,0.25), inset 0 0 12px rgba(0,229,160,0.08);
     }
-    #officeTab13.active { box-shadow: 0 0 18px rgba(0,229,160,0.35) !important; }
-    #officeTab10.active { box-shadow: 0 0 18px rgba(168,85,247,0.4) !important; }
+    
 
     /* â”€â”€ Command Hub city cards â”€â”€ */
     @keyframes cardGlowEm { 0%,100%{box-shadow:0 0 10px rgba(0,229,160,0.12)} 50%{box-shadow:0 0 22px rgba(0,229,160,0.28)} }
@@ -6969,8 +6968,6 @@ window.enter3DWorld=function(){
   <div id="officeView" class="view">
     <div style="display:flex;gap:8px;padding:12px 0;flex-wrap:wrap;position:relative;z-index:10;margin-bottom:8px">
       <button class="nav-btn active" id="officeTab1" onclick="switchOfficeTab('command')">ðŸ¢ Command</button>
-      <button class="nav-btn" id="officeTab10" onclick="switchOfficeTab('gallery')" style="color:#a855f7;font-weight:700">ðŸ–¼ Gallery</button>
-      <button class="nav-btn" id="officeTab13" onclick="switchOfficeTab('treasury')" style="color:#00e5a0;font-weight:700">â—† Economy</button>
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">âš¡ Skills</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">ðŸ“š Library</button>
     </div>
@@ -6995,18 +6992,8 @@ window.enter3DWorld=function(){
         </div>
       </div>
 
-      <!-- CITY EMPIRE QUICK-NAV CARDS -->
+      <!-- CITY EMPIRE QUICK-NAV CARDS (Economy + Gallery moved to the 4444-gated worlds section) -->
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0 4px">
-        <div onclick="switchOfficeTab('treasury')" style="background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.18);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='rgba(0,229,160,0.05)'">
-          <div style="font-size:18px;margin-bottom:4px">â—†</div>
-          <div style="font-size:10px;font-weight:700;color:#00e5a0;letter-spacing:.04em">ECONOMY</div>
-          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdEconSnap">6-Vault Â· Faucets Â· Sinks</div>
-        </div>
-        <div onclick="switchOfficeTab('gallery')" style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:10px 10px 8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(168,85,247,0.14)'" onmouseout="this.style.background='rgba(168,85,247,0.07)'">
-          <div style="font-size:18px;margin-bottom:4px">ðŸ–¼</div>
-          <div style="font-size:10px;font-weight:700;color:#a855f7;letter-spacing:.04em">GALLERY</div>
-          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px" id="cmdGallerySnap">Agents Â· Cosmetics Â· Art</div>
-        </div>
       </div>
 
       <!-- ROW 2: 2-COLUMN GRID (E3: TASK DISPATCH + REVENUE COMMAND removed) -->
@@ -27190,6 +27177,8 @@ function showView(v) {
   if (v === 'tools')     v = 'automation';
   if (v === 'tasks')     v = 'workflow';
   if (v === 'markets')   v = 'pipeline';
+  // Gated worlds: the worlds section is locked until the 4444 access code is entered.
+  if (v === 'worlds' && !window._shdWorldsUnlocked) { showWorldsPinGate(); return; }
   // In the 3D world, hide the dashboard chrome (top nav + side rail) so the SHADDAI/Shop/nav
   // buttons don't overlay the world. Any other view restores it.
   document.body.classList.toggle('in-world', v === 'grid');
@@ -27289,6 +27278,55 @@ function showView(v) {
   if (v === 'office')     { if (typeof initOfficeWorkBoard === 'function') initOfficeWorkBoard(); if (typeof switchOfficeTab === 'function') switchOfficeTab(window._officeEntrySub || 'command'); window._officeEntrySub = null; try { initCommandHub(); } catch(e){} }
   if (v === 'agents')     { if (typeof render3DAgentCards === 'function') render3DAgentCards(); if (typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); }
 }
+
+// â”€â”€ Worlds 4444 PIN Gate â”€â”€
+function showWorldsPinGate() {
+  if (window._shdWorldsUnlocked) { return; }
+  let ov = document.getElementById('shdWorldsGate');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'shdWorldsGate';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:50000;display:flex;align-items:center;justify-content:center;background:rgba(3,5,8,0.92);backdrop-filter:blur(3px)';
+    ov.innerHTML =
+      '<div style="background:linear-gradient(160deg,#0b1020,#070a14);border:1px solid rgba(124,58,237,0.45);border-radius:14px;padding:26px 30px;width:min(360px,92vw);text-align:center;box-shadow:0 24px 70px rgba(0,0,0,0.7)">' +
+      '<div style="font-size:30px;margin-bottom:6px">🌐</div>' +
+      '<div style="font-family:inherit;font-weight:900;letter-spacing:3px;font-size:13px;color:#a78bfa;margin-bottom:4px">EMPIRE WORLDS</div>' +
+      '<div style="font-size:9px;letter-spacing:2px;color:#3a4a5a;text-transform:uppercase;margin-bottom:16px">Protected area &middot; Enter access code</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:10px">' +
+      '<input id="shdWorldsPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off" style="width:132px;padding:12px 16px;background:rgba(0,0,0,0.6);border:1.5px solid rgba(124,58,237,0.4);color:#a78bfa;font-family:inherit;font-size:24px;text-align:center;letter-spacing:12px;outline:none;border-radius:6px" />' +
+      '<button id="shdWorldsUnlockBtn" style="padding:11px 34px;background:rgba(124,58,237,0.14);border:1.5px solid rgba(124,58,237,0.5);color:#a78bfa;font-family:inherit;font-size:11px;letter-spacing:3px;cursor:pointer;border-radius:6px">UNLOCK</button>' +
+      '<div id="shdWorldsGateErr" style="font-size:9px;color:#ff6b6b;font-family:inherit;letter-spacing:1px;min-height:14px"></div>' +
+      '<div style="font-size:8px;letter-spacing:2px;color:#3a4a5a;text-transform:uppercase;margin-top:4px">Code: 4444</div>' +
+      '</div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
+    const pin = document.getElementById('shdWorldsPin');
+    pin.addEventListener('input', function () { pin.value = pin.value.replace(/\D/g, ''); if (pin.value.length === 4) tryWorldsUnlock(); });
+    pin.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryWorldsUnlock(); });
+    pin.focus();
+    document.getElementById('shdWorldsUnlockBtn').addEventListener('click', tryWorldsUnlock);
+  }
+  ov.style.display = 'flex';
+  setTimeout(function () { try { document.getElementById('shdWorldsPin').focus(); } catch (e) {} }, 30);
+}
+function tryWorldsUnlock() {
+  const pin = document.getElementById('shdWorldsPin');
+  const err = document.getElementById('shdWorldsGateErr');
+  if (!pin) return;
+  if (pin.value === '4444') {
+    window._shdWorldsUnlocked = true;
+    try { sessionStorage.setItem('shd_worlds', '1'); } catch (e) {}
+    const ov = document.getElementById('shdWorldsGate'); if (ov) ov.remove();
+    showView('worlds');
+  } else {
+    if (err) err.textContent = 'INCORRECT CODE';
+    pin.value = '';
+  }
+}
+// Re-lock resets (guest session only) — worlds stay open for the session once unlocked.
+(function initWorldsGate() {
+  try { if (sessionStorage.getItem('shd_worlds') === '1') window._shdWorldsUnlocked = true; } catch (e) {}
+})();
 
 // â”€â”€ Drag-and-Drop Tab Reordering â”€â”€
 (function initDragTabs() {
@@ -29794,9 +29832,11 @@ function _e3RelocateIntoOffice(sourceViewId, panelId, initFn) {
 function switchOfficeTab(tab) {
   // Redirects for removed/merged tabs
   if (tab === 'workflows') { try { showView('workflow'); } catch(e){} return; }
-  if (tab === 'showcase') tab = 'gallery';    // showcase â†’ gallery
+  if (tab === 'showcase') { try { showView('worlds'); switchWorldsTab('economy'); } catch(e){} return; }
   if (tab === 'boardroom') tab = 'command';   // boardroom â†’ command
-  if (tab === 'bazaar') tab = 'treasury';     // bazaar â†’ economy (treasury)
+  if (tab === 'bazaar') { try { showView('worlds'); switchWorldsTab('economy'); } catch(e){} return; }
+  if (tab === 'gallery') { try { showView('worlds'); switchWorldsTab('worlds'); } catch(e){} return; }
+  if (tab === 'treasury') { try { showView('worlds'); switchWorldsTab('economy'); } catch(e){} return; }
   if (tab === 'safety') { try { showView('security'); } catch(e){} return; } // safety â†’ security nav
   if (tab === 'billing') tab = 'command';    // billing â†’ command (7-agent office)
   if (tab === 'pixel') tab = 'command';      // pixel office â†’ command (7-agent office)
