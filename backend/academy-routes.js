@@ -140,11 +140,11 @@ router.post('/pay', json, async (req, res) => {
   if (isUnlocked(user, classId)) {
     return res.json({ ok: true, already: true, unlocked: true, user, classId });
   }
-  if (!settle) {
+  if (!settle || typeof settle.settle !== 'function') {
     return res.status(503).json({ ok: false, error: 'paybox ledger unavailable' });
   }
   try {
-    const result = await settle({
+    const result = await settle.settle({
       user,
       itemId: `academy:${classId}`,
       sellerAgent: cls.agent,
