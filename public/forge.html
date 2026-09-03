@@ -475,6 +475,7 @@ function offerEditTools(op){
   document.getElementById('academyClose').onclick = close;
   m.addEventListener('click', e=>{ if(e.target===m) close(); });
   window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+  if (new URLSearchParams(location.search).get('academy') === '1') open();
 
   function cardHTML(c){
     const own = !!c.unlocked;
