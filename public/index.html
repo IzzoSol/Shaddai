@@ -44308,11 +44308,28 @@ if (typeof window._effInterval === 'undefined') {
 console.log('[AURA] Client module loaded — /api/aura · token saving active');
 </script>
 
-<!-- Heavy on-demand libs deferred so they don't block initial render (big load-lag fix) -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script defer src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
-<script defer src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
+<!-- Heavy on-demand libs: loaded during browser idle time (after first paint) so the
+     page becomes interactive fast instead of stalling on multi-MB CDN downloads. -->
+<script>
+(function(){
+  var LIBS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
+    'https://unpkg.com/tone@14.8.49/build/Tone.js',
+    'https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js'
+  ];
+  function inject(){
+    LIBS.forEach(function(src){
+      var s = document.createElement('script');
+      s.src = src; s.async = true;
+      document.head.appendChild(s);
+    });
+  }
+  if (window.requestIdleCallback) requestIdleCallback(function(){ inject(); }, { timeout: 3000 });
+  else if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(inject, 1500); });
+  else setTimeout(inject, 1500);
+})();
+</script>
 <script>
 // Make solanaWeb3 available globally — the CDN exposes it as solanaWeb3 or window.solanaWeb3
 if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {

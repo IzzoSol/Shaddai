@@ -65765,9 +65765,9 @@
       "entryFdv": 27474.33,
       "entryPrice": 0.00002747,
       "ts": 1787929240629,
-      "peakMult": 1.2550948467169172,
-      "curMult": 1.2550948467169172,
-      "curFdv": 34482.89,
+      "peakMult": 2.0172022393266733,
+      "curMult": 2.0172022393266733,
+      "curFdv": 55421.28,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -65792,7 +65792,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -67692,9 +67694,9 @@
       "entryFdv": 190656,
       "entryPrice": 0.000002055,
       "ts": 1787960426413,
-      "peakMult": 1.317477551191675,
-      "curMult": 1.317477551191675,
-      "curFdv": 251185,
+      "peakMult": 1.9518871685129238,
+      "curMult": 1.9518871685129238,
+      "curFdv": 372139,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -74817,9 +74819,9 @@
       "entryFdv": 78529,
       "entryPrice": 8.051e-7,
       "ts": 1788133744528,
-      "peakMult": 1.6727705688344434,
-      "curMult": 1.6727705688344434,
-      "curFdv": 131361,
+      "peakMult": 2.2210520954042456,
+      "curMult": 2.2210520954042456,
+      "curFdv": 174417,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -74844,7 +74846,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -74978,9 +74982,9 @@
       "entryFdv": 34635,
       "entryPrice": 4.098e-8,
       "ts": 1788134345174,
-      "peakMult": 68.08104518550599,
-      "curMult": 68.08104518550599,
-      "curFdv": 2357987,
+      "peakMult": 133.5618298450157,
+      "curMult": 133.5618298450157,
+      "curFdv": 11409920,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -77056,9 +77060,9 @@
       "entryFdv": 143067,
       "entryPrice": 0.000001383,
       "ts": 1788214499367,
-      "peakMult": 1.104433587060608,
-      "curMult": 1.104433587060608,
-      "curFdv": 158008,
+      "peakMult": 1.1502512808684042,
+      "curMult": 1.1502512808684042,
+      "curFdv": 164563,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -77814,9 +77818,9 @@
       "entryFdv": 5682.14,
       "entryPrice": 5.571e-7,
       "ts": 1788259269291,
-      "peakMult": 1,
-      "curMult": 1,
-      "curFdv": 5682.14,
+      "peakMult": 4.266174363884029,
+      "curMult": 4.266174363884029,
+      "curFdv": 24241,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -77841,7 +77845,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -79295,6 +79301,279 @@
         "lpPct": 0,
         "holders": 0,
         "fdvAtCall": 2900,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "HV3bNdQXCGERRdSZm8ockMAEUAgoQ3qT1V67ebnxpump",
+      "chain": "solana",
+      "name": "JEATER",
+      "symbol": "JEATER",
+      "source": "boosted",
+      "entryFdv": 86600,
+      "entryPrice": 8.506e-7,
+      "ts": 1788552107481,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 86600,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 86600,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "Dzp4FUEoCDiyxaBM3hyywUzxypBKrDk6e84Zd8Zmpump",
+      "chain": "solana",
+      "name": "breadpitt",
+      "symbol": "breadpitt",
+      "source": "boosted",
+      "entryFdv": 7453.78,
+      "entryPrice": 7.327e-8,
+      "ts": 1788552107587,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 7453.78,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 7453.78,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "DD3AC2Cmr5rXzJ6ErRHeryx3ASLVMhSBALiUqeKcpump",
+      "chain": "solana",
+      "name": "Leafy",
+      "symbol": "Leafy",
+      "source": "boosted",
+      "entryFdv": 212771,
+      "entryPrice": 0.000002202,
+      "ts": 1788552107700,
+      "peakMult": 1.0192413439801478,
+      "curMult": 1.0192413439801478,
+      "curFdv": 216865,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 212771,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "34eiVk6vfLctP8FKQQ5y5hvZLA6pQJioXci4dVuDpump",
+      "chain": "solana",
+      "name": "UNICORN.PLACE V2",
+      "symbol": "UNICORN",
+      "source": "boosted",
+      "entryFdv": 20601.53,
+      "entryPrice": 2.025e-7,
+      "ts": 1788552107887,
+      "peakMult": 1.0064956340621303,
+      "curMult": 1.0064956340621303,
+      "curFdv": 20735.35,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 20601.53,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "5Cbrtd7xGDYrqAgMCrib44Jsw6oZyyru6srAUMoxpump",
+      "chain": "solana",
+      "name": "catwifselfie",
+      "symbol": "SELFIE",
+      "source": "boosted",
+      "entryFdv": 87234,
+      "entryPrice": 8.848e-7,
+      "ts": 1788552108093,
+      "peakMult": 1.0414288006969759,
+      "curMult": 1.0414288006969759,
+      "curFdv": 90848,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 87234,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "54h9VZQ3kutx5WCqsuiU212gcoCAkdyeMVf4jbZ4cN9B",
+      "chain": "solana",
+      "name": "FNUP",
+      "symbol": "FNUP",
+      "source": "boosted",
+      "entryFdv": 5558.92,
+      "entryPrice": 5.47e-8,
+      "ts": 1788552108302,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 5558.92,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 5558.92,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "24yLaCZKZ68NDaek2Xsc9QUMQb2FYGBCrA7fxBdUpump",
+      "chain": "solana",
+      "name": "Make Solana Great Again",
+      "symbol": "MSGA",
+      "source": "boosted",
+      "entryFdv": 15119.52,
+      "entryPrice": 1.486e-7,
+      "ts": 1788552677467,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 15119.52,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 15119.52,
         "volAtCall": 0,
         "liqAtCall": 0,
         "devPct": 0,
