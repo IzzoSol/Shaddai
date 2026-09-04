@@ -824,33 +824,17 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
   <span class="sd">one wheel · everything · built for a thumb</span>
 </a>
 
-<!-- routing example: the council actually works like this, in the MCP too.
-     A request lands, the router asks the seven, they vote, and the match
-     decides who picks it up. Kept as a quiet strip under Simple Mode. -->
-<div class="routex" aria-label="How routing works">
-  <span class="routex-q">try it</span>
-  <span class="routex-a">route it</span>
-  <span class="routex-dot" aria-hidden="true"></span>
-  <p class="routex-line">the council decided after 6 rounds</p>
-  <div class="routex-chips">
-    <span class="rc">writing</span>
-    <span class="rc">spirituality</span>
-    <span class="rc done">→ matched</span>
+<!-- real router: a request lands, the council votes, the best match takes it. Live. -->
+<div class="router" id="router" aria-label="Try the router">
+  <div class="router-bar">
+    <input id="routerInput" type="text" autocomplete="off" placeholder="make me a 3D model and a voice over" />
+    <button id="routerGo" type="button">Route it</button>
   </div>
+  <div class="router-chips" id="routerChips"></div>
+  <div class="router-out" id="routerOut" hidden></div>
 </div>
 
-<div class="viewctl" id="viewCtrl">
-  <button type="button" class="viewbtn" id="viewBtn" aria-haspopup="listbox" aria-expanded="false" title="Change how the doors are laid out">
-    <span class="v-ico">◧</span><span id="viewLbl">grid</span><span class="v-caret">⌄</span>
-  </button>
-  <div class="viewmenu" id="viewMenu" role="listbox" aria-label="Layout">
-    <button type="button" data-v="swivel" role="option"><i>⟳</i>Swivel</button>
-    <button type="button" data-v="orb"    role="option"><i>◎</i>Orb</button>
-    <button type="button" data-v="wheel"  role="option"><i>◉</i>Wheel</button>
-    <button type="button" data-v="tile3d" role="option"><i>❖</i>3D Tile</button>
-  </div>
-</div>
-  <div class="grid" id="grid"></div>
+<div class="grid" id="grid"></div>
 </main>
 
 <footer>Seven agents · one council · <b id="footNote">tap ✎ to rearrange</b></footer>
@@ -1595,6 +1579,74 @@ if (renderer) {
 
   paint();
 })();
+
+/* ── REAL ROUTER ── live /api/route with example chips */
+(function(){
+  var inp = document.getElementById('routerInput');
+  if (!inp) return;
+  var go = document.getElementById('routerGo');
+  var chips = document.getElementById('routerChips');
+  var out = document.getElementById('routerOut');
+
+  var EG = [
+    'make me a 3D model and a voice over',
+    'trade the best coin on pumpfun',
+    'is this contract safe or a rug',
+    'write me a launch thread',
+    'why do people buy things they do not need'
+  ];
+  EG.forEach(function(q){
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = q;
+    b.addEventListener('click', function(){ inp.value = q; run(); });
+    chips.appendChild(b);
+  });
+
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function run(){
+    var q = (inp.value || inp.placeholder).trim();
+    if (!q) return;
+    go.disabled = true;
+    out.hidden = false;
+    out.innerHTML = '<div class="router-line">routing&hellip;</div>';
+    fetch('/api/route?q=' + encodeURIComponent(q))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var hits = (d.ranked || []).map(function(h, i){
+          return '<div class="router-hit' + (i ? '' : ' win') + '"><b>' + esc(h.agent) + '</b>' +
+                 (h.theme ? ' <span>' + esc(h.theme) + '</span>' : '') +
+                 (i === 0 ? ' · takes it' : ' · can support') + '</div>';
+        }).join('');
+        var topics = (d.matchedTopics || []).map(esc).join(', ');
+        out.innerHTML = '<div class="router-line">the council decided</div>' + hits +
+          (topics ? '<div class="router-why">matched on <b>' + topics + '</b></div>' : '');
+      })
+      .catch(function(){ out.innerHTML = '<div class="router-line">router unreachable &mdash; try again in a moment</div>'; })
+      .then(function(){ go.disabled = false; });
+  }
+  go.addEventListener('click', run);
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); run(); } });
+})();
 </script>
+
+<style>
+.router{ max-width:560px; margin:14px auto 0; padding:0 14px; }
+.router-bar{ display:flex; gap:8px; }
+.router-bar input{ flex:1; font-family:var(--f-mono,monospace); font-size:13px; color:var(--ink,#e9efe9); background:rgba(255,255,255,.04); border:1px solid var(--edge,rgba(120,150,140,.28)); border-radius:8px; padding:12px 14px; outline:none; }
+.router-bar input:focus{ border-color:var(--emerald,#00ff9c); box-shadow:0 0 0 1px var(--emerald,#00ff9c); }
+.router-bar button{ font-family:var(--f-hud,sans-serif); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:12px; color:#022; background:linear-gradient(120deg,var(--emerald,#00ff9c),var(--cyan,#5fe0ff)); border:0; border-radius:8px; padding:0 22px; cursor:pointer; }
+.router-bar button:disabled{ opacity:.55; cursor:progress; }
+.router-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.router-chips button{ font-family:var(--f-mono,monospace); font-size:11px; color:var(--ink-soft,#93a49b); background:rgba(255,255,255,.03); border:1px solid var(--edge,rgba(120,150,140,.28)); border-radius:16px; padding:6px 12px; cursor:pointer; }
+.router-chips button:hover{ color:var(--emerald,#00ff9c); border-color:var(--emerald,#00ff9c); }
+.router-out{ margin-top:12px; border-top:1px solid var(--edge,rgba(120,150,140,.28)); padding-top:10px; font-family:var(--f-mono,monospace); font-size:12px; }
+.router-line{ color:var(--ink-faint,#4f5d57); letter-spacing:.04em; margin-bottom:6px; }
+.router-hit{ padding:4px 0; color:var(--ink-soft,#93a49b); }
+.router-hit.win{ color:var(--emerald,#00ff9c); }
+.router-hit b{ color:var(--ink,#e9efe9); }
+.router-hit span{ color:var(--ink-faint,#4f5d57); }
+.router-why{ margin-top:6px; color:var(--ink-faint,#4f5d57); }
+.router-why b{ color:var(--cyan,#5fe0ff); }
+</style>
 </body>
 </html>

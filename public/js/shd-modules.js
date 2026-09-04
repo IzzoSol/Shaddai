@@ -70,7 +70,7 @@
       kicker: 'The cinematic entry',
       blurb: 'The ascent — from the quantum lattice at Malkuth up through the scales of matter to the stars. Full screen, so it actually gets seen.',
       href: '/lab-molecules.html',
-      art: '/assets/enter/hf-ascent.jpg',
+      art: '/assets/enter/descent.jpg',
       // Rotating door art pool: every visitor is handed a different plate, so
       // the front door never reads twice. Drop in numbered files (descent-1.jpg,
       // descent-2.jpg, …) to grow the pool — see docs/FRONT-DOOR-MASTER-PROMPT.md.
@@ -449,17 +449,10 @@
   function artFor(id) {
     var m = byId(id);
     if (!m) return '/assets/enter/entry.jpg';
-    var pool = Array.isArray(m.artVary) && m.artVary.length ? m.artVary : [m.art];
-    if (pool.length === 1) return pool[0];
-    /* session-stable seed: locked after first read, random per new session */
-    var seed = 0;
-    try {
-      var s = sessionStorage.getItem('shd_enter_art_seed');
-      if (s === null) { seed = Math.floor(Math.random() * 100000); sessionStorage.setItem('shd_enter_art_seed', String(seed)); }
-      else seed = parseInt(s, 10) || 0;
-    } catch (e) { seed = Math.floor(Math.random() * 100000); }
-    var pick = pool[(seed + (m.seedOff || 0)) % pool.length];
-    return pick || pool[0];
+    // Only the base `art` files are guaranteed to exist on disk; the numbered
+    // artVary variants (e.g. dashboard-1.jpg …) are not shipped, so picking from
+    // them produced broken <img>s. Always return the base `art`.
+    return m.art || '/assets/enter/entry.jpg';
   }
 
   root.SHDModules = {
