@@ -152,7 +152,15 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   const toolSource = Array.isArray(opts.tools) && opts.tools.length ? opts.tools
                    : Array.isArray(agent.tools) && agent.tools.length ? agent.tools
                    : BASE;
-  const candidates = toolSource.filter(n => TOOLS[n] && !DENY.has(n)).map(n => TOOLS[n]);
+// Merge the user's custom API services (from the BYOK vault) into the tool
+  // surface so they resolve + execute exactly like native tools. opts.includeCustomTools
+  // is on by default; pass false to restrict to built-ins only.
+  let customTools = {};
+  if (opts.includeCustomTools !== false) {
+    try { customTools = require('./api-vault').customToolRegistry() || {}; } catch (_e) { customTools = {}; }
+  }
+  const resolveTool = (n) => TOOLS[n] || customTools[n];
+  const candidates = toolSource.filter(n => resolveTool(n) && !DENY.has(n)).map(n => resolveTool(n));
   // 2026-08-30: this used to be a blind .slice(0, MAX_TOOLS_SHOWN) — whatever 10 tools
   // happened to be FIRST in the agent's array, regardless of the actual task. ZEROX's
   // tools array lists paybox_pay near the end, so it was NEVER shown here no matter
@@ -198,7 +206,7 @@ async function runAgentWithTools(agentName, task, opts = {}) {
       let args = {};
       try { args = JSON.parse((c.function && c.function.arguments) || '{}'); } catch (_) {}
       let result;
-      const t = TOOLS[name];
+      const t = TOOLS[name] || customTools[name];
       if (!t || DENY.has(name)) { result = { error: 'tool not available: ' + name }; }
       else {
         try { result = await t.execute(args); toolsUsed.push(name); }
@@ -230,7 +238,15 @@ async function handler(req, res) {
     const b = req.body || {};
     const task = b.task || b.message;
     if (!task) return res.status(400).json({ error: 'task (or message) required' });
-    const agentUp = String(b.agent || 'ORACLE').toUpperCase();
+    // Auto-route: when no explicit agent is given (or autoRoute=true), the council
+    // (agent-engine.routeTask) decides who owns the task, not a hard-coded default.
+    const wantsAutoRoute = b.autoRoute !== false && !b.agent;
+    let agentUp = String(b.agent || '').toUpperCase();
+    let routedByCouncil = false;
+    if (!agentUp) {
+      try { const r = eng().routeTask(task, null); if (r && r.name) { agentUp = String(r.name).toUpperCase(); routedByCouncil = true; } } catch (_e) {}
+    }
+    if (!agentUp) agentUp = 'ORACLE';
 
     // For forged operatives (not council), look up their tools + persona from operatives.json.
     let toolOverride = Array.isArray(b.tools) && b.tools.length ? b.tools : null;
@@ -257,7 +273,7 @@ async function handler(req, res) {
       tools: toolOverride || undefined,
       persona: personaOverride || undefined,
     });
-    res.json(Object.assign({ agent: agentUp, durationMs: Date.now() - t0 }, out));
+    res.json(Object.assign({ agent: agentUp, routedByCouncil: !!routedByCouncil, durationMs: Date.now() - t0 }, out));
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }

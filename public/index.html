@@ -2,7 +2,7 @@
 <html lang="en" data-theme-skin="glitch">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="theme-color" content="#00ff88">
 <!-- ── SEO / Bio ──────────────────────────────────────────────────────────── -->
 <meta name="description" content="SHADDAI is a sovereign AI agent empire — seven specialized agents and 200+ real, executable tools. Forge your own operatives, run autonomous workflows, explore a living 3D world, and power it all with your own free API key.">
@@ -4364,6 +4364,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
   <button class="nav-btn nav-img" onclick="showView('forge')" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+  <button class="nav-btn" onclick="window.open('/games/academy.html','_blank')" style="color:#b07aff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="SHADDAI Academy — lessons, badges, pay-lab">🎓 Academy</button>
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
@@ -5342,6 +5343,7 @@ window.enter3DWorld=function(){
         <span class="card-title" id="wfModeTitle">⚡ Simple Mode</span>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span id="wfModeNote" style="font-size:10px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
+          <button class="btn btn-ghost" onclick="window.open('/games/academy.html','_blank')" style="font-size:10px;color:#b07aff;border-color:rgba(150,80,255,0.3)" title="Learn the basics — lessons, badges, pay-lab">🎓 Academy</button>
           <div class="sm-modeToggle" role="tablist" aria-label="Simple or Pro mode">
             <span class="sm-modeGlide" id="wfModeGlide"></span>
             <button id="wfTabSimple" role="tab" onclick="wfMode('simple')" class="on">⚡ SIMPLE</button>
@@ -38908,6 +38910,7 @@ let scene3d, camera3d, renderer3d, controls3d, raycaster3d, mouse3d;
 let shapes3d = [];
 let wireframeMode = false;
 let autoRotateMode = false;
+let _scene3dDirty = true;
 
 function init3DScene() {
   window._3dInitialized = true;
@@ -38982,6 +38985,10 @@ function init3DScene() {
 
   function animate() {
     requestAnimationFrame(animate);
+    // PERF: skip rendering when the tab is hidden OR the scene is idle
+    // (no auto-rotate, no drag, no pan). Static geometry doesn't need 60fps.
+    if (document.hidden) return;
+    if (!autoRotateMode && !isDragging && !isPanning && !_scene3dDirty) return;
     if (autoRotateMode) {
       const t = Date.now() * 0.001;
       camera3d.position.x = 7 * Math.cos(t * 0.3);
@@ -38989,6 +38996,7 @@ function init3DScene() {
       camera3d.lookAt(0, 0, 0);
     }
     renderer3d.render(scene3d, camera3d);
+    _scene3dDirty = false;
   }
   animate();
 }
@@ -39022,12 +39030,14 @@ function add3DShape(type) {
   mesh.userData.type = type;
   scene3d.add(mesh);
   shapes3d.push(mesh);
+  _scene3dDirty = true;
   notify(type.charAt(0).toUpperCase() + type.slice(1) + ' added');
 }
 
 function toggleWireframe() {
   wireframeMode = !wireframeMode;
   shapes3d.forEach(s => { if (s.material) s.material.wireframe = wireframeMode; });
+  _scene3dDirty = true;
   const btn = document.getElementById('wireframeBtn');
   if (btn) { btn.classList.toggle('btn-accent', wireframeMode); btn.classList.toggle('btn-ghost', !wireframeMode); }
 }
@@ -45042,7 +45052,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     <!-- Beginner-friendly "Bigger/Simple" mode: zoom scales the whole panel (incl. inline styles),
          and simple mode hides the most advanced/jargon sections. Toggled by #sentSimpleBtn, persisted. -->
     <style>
-      #sentimentView.sent-simple { zoom: 1.28; }
+      #sentimentView.sent-simple { zoom: 1.0; }
       #sentimentView.sent-simple #whaleWatchList, #sentimentView.sent-simple .sent-adv { display:none !important; }
     </style>
     <script>

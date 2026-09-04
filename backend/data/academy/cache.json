@@ -1,0 +1,38 @@
+{
+  "c49b6be341c0fb320a1107668fe5314e9049c19c2850ca95670e3f679e58e08b": {
+    "response": {
+      "sandbox": true,
+      "host": "api.helius-rpc.com",
+      "path": "/",
+      "method": "POST",
+      "balance": 1.23,
+      "_note": "Sandbox response (PAY_SANDBOX=1). Identical JSON shape to real x402."
+    },
+    "costUsdc": 0.001,
+    "ts": 1788507439779
+  },
+  "18bfd8293f5c9525194d7ede22a5cbb02514206d0b8414f4fef12e3080df92bd": {
+    "response": {
+      "sandbox": true,
+      "host": "api.birdeye.so",
+      "path": "/price",
+      "method": "GET",
+      "ok": true,
+      "_note": "Sandbox response (PAY_SANDBOX=1). Identical JSON shape to real x402."
+    },
+    "costUsdc": 0.005,
+    "ts": 1788489690846
+  },
+  "6e7b9bf788e498aeb70ef9384c49ffea04261afad1d718986eb27ff61f5f8498": {
+    "response": {
+      "sandbox": true,
+      "host": "api.highcost.io",
+      "path": "/x",
+      "method": "GET",
+      "ok": true,
+      "_note": "Sandbox response (PAY_SANDBOX=1). Identical JSON shape to real x402."
+    },
+    "costUsdc": 0.1,
+    "ts": 1788489690853
+  }
+}

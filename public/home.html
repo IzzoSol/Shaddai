@@ -976,6 +976,153 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   </div>
 </section>
 
+<!-- ═══════════ TRY AN AGENT — live: pick an agent, give it a preset task ═══════════ -->
+<section class="blk hud" id="tryAgent" data-scale="Try an agent">
+  <div class="wrap reveal">
+    <div class="shead">
+      <div>
+        <div class="eyebrow">Live · Try an agent</div>
+        <h2 class="h2 neon">Pick an agent. Give it a job.</h2>
+      </div>
+      <div class="scaletag"><span class="coord">COUNCIL</span> <b>7 agents</b></div>
+    </div>
+    <p class="lede">Choose one of the seven, then tap a task — or type your own. It runs the real tool loop with that agent's own model, live.</p>
+
+    <div id="tryDemo">
+      <div class="try-label">Choose an agent</div>
+      <div id="tryAgents" class="try-agents"></div>
+
+      <div class="try-label">or jump straight in</div>
+      <div id="tryTasks" class="try-tasks"></div>
+
+      <div id="tryBar">
+        <input id="tryInput" type="text" placeholder="Ask the chosen agent anything…" autocomplete="off" spellcheck="false" />
+        <button id="tryGo">⚡ Run</button>
+      </div>
+
+      <div id="tryOut" hidden>
+        <div id="tryWho">—</div>
+        <div id="tryAns"></div>
+        <div id="tryTools"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+#tryAgent { position:relative; z-index:5; }
+#tryDemo { margin-top:28px; background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--edge); border-radius:14px; padding:22px; box-shadow:0 0 40px rgba(0,255,156,.05); }
+.try-label { font-family:var(--f-mono); font-size:9px; letter-spacing:.24em; text-transform:uppercase; color:var(--ink-faint); margin:2px 0 10px; }
+.try-agents { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+.try-agents .ag { font-family:var(--f-hud); font-size:12px; font-weight:600; letter-spacing:.06em; color:var(--ink-soft); background:rgba(255,255,255,.03); border:1px solid var(--edge); border-radius:20px; padding:9px 16px; cursor:pointer; transition:color .18s, border-color .18s, background .18s, transform .12s; }
+.try-agents .ag:hover { transform:translateY(-1px); }
+.try-agents .ag.on { color:#022; background:var(--ag-c,#00ff9c); border-color:transparent; }
+.try-tasks { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+.try-tasks .tk { font-family:var(--f-mono); font-size:11px; color:var(--ink-soft); background:rgba(255,255,255,.03); border:1px solid var(--edge); border-radius:20px; padding:7px 13px; cursor:pointer; transition:color .2s, border-color .2s, background .2s; }
+.try-tasks .tk:hover { color:var(--emerald); border-color:var(--emerald); background:rgba(0,255,156,.05); }
+#tryBar { display:flex; gap:10px; }
+#tryBar input { flex:1; font-family:var(--f-mono); font-size:14px; color:var(--ink); background:rgba(255,255,255,.03); border:1px solid var(--edge); border-radius:9px; padding:14px 16px; outline:none; transition:border-color .25s, box-shadow .25s; }
+#tryBar input:focus { border-color:var(--emerald); box-shadow:0 0 0 1px var(--emerald), 0 0 24px rgba(0,255,156,.12); }
+#tryGo { font-family:var(--f-hud); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:12px; color:#022; background:linear-gradient(120deg,var(--emerald),var(--cyan)); border:0; border-radius:9px; padding:0 26px; cursor:pointer; transition:filter .2s, transform .1s; }
+#tryGo:hover { filter:brightness(1.08); } #tryGo:active { transform:translateY(1px); } #tryGo:disabled { opacity:.5; cursor:progress; filter:none; }
+#tryOut { margin-top:20px; border-top:1px solid var(--edge); padding-top:18px; animation:rise .4s var(--ease); }
+#tryWho { font-family:var(--f-hud); font-size:14px; letter-spacing:.06em; color:var(--ac-c,#00ff9c); margin-bottom:12px; }
+#tryAns { font-family:var(--f-serif); font-size:16px; line-height:1.6; color:var(--ink); white-space:pre-wrap; }
+#tryTools { margin-top:14px; display:flex; flex-wrap:wrap; gap:6px; }
+#tryTools span { font-family:var(--f-mono); font-size:10px; color:var(--cyan); background:rgba(95,224,255,.06); border:1px solid rgba(95,224,255,.2); border-radius:5px; padding:4px 9px; }
+@media (max-width:640px){ #tryBar{flex-direction:column} #tryGo{padding:14px} }
+</style>
+
+<script>
+(function(){
+  var AGENTS = [
+    { name:'SHADDAI', c:'#00ff9c' },
+    { name:'ORACLE',  c:'#b06aff' },
+    { name:'ZEROX',   c:'#00c8ff' },
+    { name:'NEXUS',   c:'#00d4ff' },
+    { name:'TURTLE',  c:'#ff7b3d' },
+    { name:'QUILL',   c:'#e8c45c' },
+    { name:'PIKADON', c:'#ff6f6f' }
+  ];
+  var TASKS = [
+    { ic:'🖼', label:'Make a picture', build:function(t){ return 'Generate a picture of: '+(t||'a neon owl over a cyberpunk city'); }, isImg:true },
+    { ic:'🎵', label:'Make a song', build:function(t){ return 'Write a complete song about '+(t||'rising from nothing')+' — title, full lyrics, and a one-line production prompt.'; } },
+    { ic:'✍️', label:'Write a post', build:function(t){ return 'Write a punchy social post about '+(t||'SHADDAI')+' with hashtags.'; } },
+    { ic:'🔎', label:'Research a coin', build:function(t){ return 'Research '+(t||'SOL')+' — live price, news and sentiment, with a clear verdict. Not financial advice.'; } },
+    { ic:'📊', label:'Check the market', build:function(t){ return 'Check the market for '+(t||'BTC and ETH')+' — quick read with a trend summary. Not financial advice.'; } },
+    { ic:'🛡', label:'Is this safe?', build:function(t){ return 'Security check: '+(t||'')+' — a clear safe/caution/danger verdict with reasons.'; } }
+  ];
+
+  var sel = 'SHADDAI';
+  var runBtn = document.getElementById('tryGo');
+  var inp = document.getElementById('tryInput');
+
+  var aBox = document.getElementById('tryAgents');
+  AGENTS.forEach(function(a){
+    var b = document.createElement('button');
+    b.className = 'ag' + (a.name === sel ? ' on' : '');
+    b.textContent = a.name;
+    b.style.setProperty('--ag-c', a.c);
+    b.onclick = function(){ sel = a.name; aBox.querySelectorAll('.ag').forEach(function(x){ x.classList.toggle('on', x.textContent === a.name); }); };
+    aBox.appendChild(b);
+  });
+
+  var tBox = document.getElementById('tryTasks');
+  TASKS.forEach(function(t){
+    var b = document.createElement('button');
+    b.className = 'tk';
+    b.textContent = t.ic + ' ' + t.label;
+    b.onclick = function(){ runTask(t); };
+    tBox.appendChild(b);
+  });
+
+  function runTask(t){
+    var txt = prompt(t.ic + ' ' + t.label + ' — what details?', '');
+    if (txt === null) return;
+    doRun(t.build(txt), t.isImg);
+  }
+
+  function doRun(goal, isImg){
+    goal = (goal || '').trim();
+    if (!goal) return;
+    runBtn.disabled = true; runBtn.textContent = 'Working…';
+    var out = document.getElementById('tryOut'); out.hidden = false;
+    var who = document.getElementById('tryWho'); who.textContent = sel + ' is on it…';
+    var ans = document.getElementById('tryAns'); ans.textContent = '';
+    var tools = document.getElementById('tryTools'); tools.innerHTML = '';
+
+    if (isImg) {
+      fetch('/api/image/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ prompt: goal, model:'huggingface', width:768, height:768 }) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var url = d.url || d.image_url;
+          if (!url) { ans.textContent = d.error || 'no image returned'; runBtn.textContent='⚡ Run'; runBtn.disabled=false; return; }
+          who.textContent = sel + ' made this:';
+          ans.innerHTML = '<img src="'+url+'" alt="generated" style="max-width:100%;border-radius:10px;border:1px solid var(--edge)">';
+          runBtn.textContent='⚡ Run'; runBtn.disabled=false;
+        })
+        .catch(function(e){ ans.textContent = 'Image engine unreached — '+e.message; runBtn.textContent='⚡ Run'; runBtn.disabled=false; });
+      return;
+    }
+
+    fetch('/api/agent/run', { method:'POST', headers:{'Content-Type':'application/json','x-user-id':'landing-try'}, body:JSON.stringify({ workflow:[{ goal: goal, agent: sel }] }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        who.textContent = sel + ' · done';
+        var res = (d.steps && d.steps[0] && d.steps[0].result) || d.result || d.answer || d.error || 'No result returned.';
+        ans.textContent = String(res);
+        var used = (d.steps && d.steps[0] && d.steps[0].tools) || [];
+        if (used.length) used.forEach(function(t){ var sp=document.createElement('span'); sp.textContent=t; tools.appendChild(sp); });
+      })
+      .catch(function(e){ ans.textContent = 'Agent unreached — '+e.message; })
+      .finally(function(){ runBtn.disabled = false; runBtn.textContent = '⚡ Run'; });
+  }
+
+  runBtn.onclick = function(){ doRun(inp.value, false); };
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') doRun(inp.value, false); });
+})();
+</script>
+
 <!-- ══ RAG Brain — fullscreen overlay ══ -->
 <div id="ragBrain" role="dialog" aria-modal="true" aria-label="SHADDAI RAG Brain">
   <button id="ragBrainClose" onclick="closeRagBrain()">✕ close</button>
