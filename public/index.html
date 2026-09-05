@@ -42624,7 +42624,8 @@ function clearSignals() {
   notify('✓ Signal board cleared');
 }
 function openProSignals() {
-  window.open('/pro-signals.html', '_blank');
+  var mobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  window.open(mobile ? '/simple-signals.html' : '/signals.html', '_blank');
 }
 async function generateSignalNow() {
   const board = document.getElementById('signalBoardCC') || document.getElementById('signalBoard');
