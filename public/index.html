@@ -3860,6 +3860,12 @@ body.ly-sb-right #mainArea{margin-right:210px!important;width:auto!important}
 body.ly-sb #commandCenterView,body.ly-sb #agentStatusView,body.ly-sb #tradeSignalsView,body.ly-sb #jobBoardView,body.ly-sb #earningsView,body.ly-sb #my-agentsView,body.ly-sb #marketplaceView,body.ly-sb #sentimentView,body.ly-sb #content-studioView,body.ly-sb #documentsView,body.ly-sb #chainRunnerView,body.ly-sb #billingView{margin-left:210px!important;margin-right:0!important;width:calc(100% - 210px)!important;box-sizing:border-box!important}
 body.ly-sb-right #commandCenterView,body.ly-sb-right #agentStatusView,body.ly-sb-right #tradeSignalsView,body.ly-sb-right #jobBoardView,body.ly-sb-right #earningsView,body.ly-sb-right #my-agentsView,body.ly-sb-right #marketplaceView,body.ly-sb-right #sentimentView,body.ly-sb-right #content-studioView,body.ly-sb-right #documentsView,body.ly-sb-right #chainRunnerView,body.ly-sb-right #billingView{margin-right:210px!important;margin-left:0!important;width:calc(100% - 210px)!important;box-sizing:border-box!important}
 body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePanel{right:210px!important;left:0!important}
+/* ── bottom dock: complete the nav (border + height + push content up) ── */
+body.navpos-bottom #mainNav{top:auto!important;bottom:0!important;height:44px!important;border-top:1px solid rgba(0,229,160,0.14)!important;border-bottom:none!important}
+body.navpos-bottom #agentBar{top:38px!important}
+body.navpos-bottom #mainArea{margin-top:82px!important;padding-bottom:56px!important;width:100%!important;margin-left:0!important;margin-right:0!important}
+/* ── top dock is the default: ensure no side/bottom residue ── */
+body:not(.ly-sb):not(.ly-sb-right):not(.navpos-bottom) #mainNav{top:38px!important;bottom:auto!important}
 #navPosPicker button{background:transparent;border:none;color:var(--text-muted,#7a8595);cursor:pointer;font-size:13px;width:24px;height:24px;border-radius:5px;transition:.15s}
 #navPosPicker button:hover,#navPosPicker button.on{color:#00ff88;background:rgba(0,229,160,.12)}
 #tbNavMoverPop .np-arrow{background:transparent;border:1px solid rgba(0,229,160,.18);color:#00e5a0;cursor:pointer;font-size:13px;width:26px;height:26px;border-radius:6px;display:grid;place-items:center;transition:.15s;padding:0;line-height:1}

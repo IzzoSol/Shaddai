@@ -65767,9 +65767,9 @@
       "entryFdv": 27474.33,
       "entryPrice": 0.00002747,
       "ts": 1787929240629,
-      "peakMult": 2.53243664176706,
-      "curMult": 2.53243664176706,
-      "curFdv": 69577,
+      "peakMult": 2.579425958703997,
+      "curMult": 2.579425958703997,
+      "curFdv": 70868,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -74986,9 +74986,9 @@
       "entryFdv": 34635,
       "entryPrice": 4.098e-8,
       "ts": 1788134345174,
-      "peakMult": 272.6401765229199,
-      "curMult": 272.6401765229199,
-      "curFdv": 23291105,
+      "peakMult": 314.2234864447254,
+      "curMult": 314.2234864447254,
+      "curFdv": 26843484,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -78461,9 +78461,9 @@
       "entryFdv": 23270,
       "entryPrice": 4.74e-7,
       "ts": 1788273801514,
-      "peakMult": 1.8931939406870066,
-      "curMult": 1.8931939406870066,
-      "curFdv": 44367,
+      "peakMult": 2.1438873479837848,
+      "curMult": 2.1438873479837848,
+      "curFdv": 50242,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -78488,7 +78488,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -79751,9 +79753,9 @@
       "entryFdv": 7818.22,
       "entryPrice": 7.675e-8,
       "ts": 1788576402484,
-      "peakMult": 1,
-      "curMult": 1,
-      "curFdv": 7818.22,
+      "peakMult": 1.7620686038510043,
+      "curMult": 1.7620686038510043,
+      "curFdv": 13776.24,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -80141,9 +80143,9 @@
       "entryFdv": 218170,
       "entryPrice": 0.000002168,
       "ts": 1788578772381,
-      "peakMult": 1.1271210523903379,
-      "curMult": 1.1271210523903379,
-      "curFdv": 245904,
+      "peakMult": 1.2708346702113031,
+      "curMult": 1.2708346702113031,
+      "curFdv": 277258,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -80219,9 +80221,9 @@
       "entryFdv": 222408,
       "entryPrice": 0.000002181,
       "ts": 1788579372308,
-      "peakMult": 1.026037732455667,
-      "curMult": 1.026037732455667,
-      "curFdv": 228199,
+      "peakMult": 1.3375013488723426,
+      "curMult": 1.3375013488723426,
+      "curFdv": 297471,
       "features": {
         "sourceCount": 1,
         "sources": [
