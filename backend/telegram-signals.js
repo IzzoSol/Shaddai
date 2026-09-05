@@ -1398,7 +1398,7 @@ async function _pollBonded() {
     ) > 0;
     if (ok) {
       _trackSym(_bondSym); core.markAlerted(mint); posted++;
-      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers) }); } catch (e) {}
+      try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
       _logFeatures({ mint, chain: 'solana', name: c.name, symbol: c.symbol, source: 'bonded', entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: c.holders || (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), devPct: c.devPct || 0, venue: pair.dexId || 'pump', vol24h: Number(pair.volume && pair.volume.h24) || 0, liquidity: liq, sourceCount: 1 });
     }
   }
@@ -1861,7 +1861,7 @@ async function _pollGecko() {
             core.markAlerted(_dk);
             _seenPool.add(id);   // mark seen ONLY after successful post — rejected pools re-evaluate next cycle
             posted++;
-            try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0, liq, vol24: vol, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers) }); } catch (e) {}
+            try { pnl.recordCall({ source: kind, chain: net, mint: _taddr || _dk, name: a.name, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, holders: (rs && rs.holders) || 0, liq, vol24: vol, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
             const _venue = (p.relationships && p.relationships.dex && p.relationships.dex.data && p.relationships.dex.data.id) || '';
             _logFeatures({ mint: _taddr || _dk, chain: net, name: a.name, source: kind, entryFdv: fdv, entryPrice: Number(a.base_token_price_usd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: _venue, vol24h: vol, liquidity: liq, sourceCount: 1 });
           }
@@ -2014,7 +2014,7 @@ async function _pollHelius() {
       core.markAlerted(mint);
       _heliusSeen.add(mint);
       posted++;
-      try { pnl.recordCall({ source: 'helius', chain: 'solana', mint, name: sym, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd) || 0, holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: vol, liq }); } catch (e) {}
+      try { pnl.recordCall({ source: 'helius', chain: 'solana', mint, name: sym, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd) || 0, holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: vol, liq, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
       _logFeatures({ mint, chain: 'solana', name: sym, symbol: sym, source: 'helius', entryFdv: fdv, entryPrice: Number(pair.priceUsd) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, holders: (rs && rs.holders) || 0, locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '', vol24h: vol, liquidity: liq, sourceCount: 1 });
     }
     if (_heliusSeen.size > _SEEN_CAP) { const f = _heliusSeen.values().next().value; _heliusSeen.delete(f); }

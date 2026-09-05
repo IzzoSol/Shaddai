@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05070a">
+<title>ZEROX — Simple Signals</title>
+<style>
+:root{
+  --bg:#05070a; --bg2:#0b0f14; --panel:#10151c; --edge:#1b2430; --edge2:#243140;
+  --txt:#e8eaed; --soft:#9aa7b4; --faint:#5c6b7a;
+  --gold:#e8c45c; --emerald:#00e5a0; --red:#ff3d5a; --amber:#f5b04c; --cyan:#4cc9f0;
+  --ok:#0f2b23; --bad:#2b1218;
+  --f-mono:'Share Tech Mono','SFMono-Regular',Consolas,monospace;
+  --f-sans:'Segoe UI',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--f-sans);
+  overflow:hidden; overscroll-behavior:none;
+}
+button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::-webkit-scrollbar{width:0;height:0}
+
+/* ---------- top bar ---------- */
+#top{
+  position:fixed; top:0; left:0; right:0; height:52px; z-index:20;
+  display:flex; align-items:center; gap:10px; padding:8px 12px calc(8px + env(safe-area-inset-top));
+  background:linear-gradient(180deg,rgba(5,7,10,.96),rgba(5,7,10,.82));
+  border-bottom:1px solid var(--edge); backdrop-filter:blur(6px);
+}
+#brand{font-family:var(--f-mono);font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--gold);white-space:nowrap}
+#brand b{color:var(--emerald)}
+#live{margin-left:auto;font-family:var(--f-mono);font-size:9px;letter-spacing:.12em;color:var(--emerald);display:flex;align-items:center;gap:5px;white-space:nowrap}
+#live::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#updated{font-family:var(--f-mono);font-size:9px;color:var(--faint);white-space:nowrap}
+#btn-refresh{width:34px;height:34px;border:1px solid var(--edge2);border-radius:8px;font-size:15px;display:grid;place-items:center}
+#btn-refresh:active{background:var(--panel)}
+
+/* ---------- views ---------- */
+#views{position:fixed;top:52px;bottom:70px;left:0;right:0;overflow:hidden}
+.view{
+  position:absolute; inset:0; display:none; flex-direction:column;
+  padding:10px 12px 18px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+.view.on{display:flex}
+.view-h{display:flex;align-items:center;gap:8px;margin:2px 2px 10px}
+.view-h .ti{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--soft);text-transform:uppercase}
+.view-h .count{font-family:var(--f-mono);font-size:10px;color:var(--gold);margin-left:auto}
+
+/* ---------- heat bubbles ---------- */
+#heat-bubbles{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.bub{
+  flex:1 1 auto; min-width:84px; border-radius:12px; padding:12px 10px 10px;
+  border:1px solid var(--edge2); background:var(--panel);
+  display:flex; flex-direction:column; gap:4px; min-height:78px;
+  transition:transform .08s;
+}
+.bub:active{transform:scale(.96)}
+.bub .sy{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bub .mx{font-family:var(--f-mono);font-size:14px;font-weight:700}
+.bub .sc{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--faint)}
+.bub.up{border-left:3px solid var(--emerald)}
+.bub.dn{border-left:3px solid var(--red)}
+.bub.flat{border-left:3px solid var(--edge)}
+.legend{display:flex;gap:14px;font-family:var(--f-mono);font-size:9px;color:var(--faint);letter-spacing:.08em;margin:0 2px 12px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* ---------- filter chips ---------- */
+.chips{display:flex;gap:7px;margin:0 2px 10px;flex-wrap:wrap}
+.chip{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:9px 14px;border:1px solid var(--edge2);border-radius:20px;color:var(--soft);min-height:38px}
+.chip.on{color:#04120c;background:var(--emerald);border-color:var(--emerald)}
+.chip.risk{min-width:0}
+.risk-med.on{background:var(--amber);border-color:var(--amber);color:#1c1202}
+.risk-hi.on{background:var(--red);border-color:var(--red);color:#200309}
+
+/* ---------- call rows ---------- */
+.row{
+  display:flex; flex-direction:column; gap:6px; width:100%;
+  background:var(--panel); border:1px solid var(--edge); border-radius:12px;
+  padding:12px 13px; margin-bottom:9px; text-align:left; min-height:88px;
+}
+.row:active{background:var(--bg2)}
+.row .l1{display:flex;align-items:center;gap:8px}
+.row .tla{font-family:var(--f-mono);font-size:14px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
+.row .nm{font-size:12px;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.row .mx{font-family:var(--f-mono);font-size:14px;font-weight:700;white-space:nowrap}
+.mx-pos{color:var(--emerald)}.mx-neg{color:var(--red)}
+.row .l2{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10px;color:var(--faint)}
+.row .scor{color:var(--gold);font-weight:700}
+.row .ags{margin-left:auto}
+.risk-chip{font-size:9px;letter-spacing:.1em;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2);color:var(--soft);text-transform:uppercase}
+.risk-chip.r1{color:var(--emerald);border-color:rgba(0,229,160,.4)}
+.risk-chip.r2{color:var(--amber);border-color:rgba(245,176,76,.4)}
+.risk-chip.r3{color:var(--red);border-color:rgba(255,61,90,.45)}
+.tokstrip{display:flex;gap:5px;flex-wrap:wrap;font-family:var(--f-mono);font-size:8.5px;letter-spacing:.06em;color:var(--faint)}
+.tokstrip span{border:1px solid var(--edge2);border-radius:4px;padding:3px 6px;background:rgba(0,0,0,.25)}
+.tokstrip .warn{color:var(--amber);border-color:rgba(245,176,76,.4)}
+.tokstrip .danger{color:var(--red);border-color:rgba(255,61,90,.45)}
+.tokstrip .safe{color:var(--emerald);border-color:rgba(0,229,160,.35)}
+
+/* ---------- dex rows ---------- */
+.dexrow{
+  display:flex; align-items:center; gap:11px; width:100%;
+  background:var(--panel); border:1px solid var(--edge); border-radius:12px;
+  padding:11px 13px; margin-bottom:9px; text-align:left; min-height:72px;
+}
+.dexrow:active{background:var(--bg2)}
+.dimg{width:44px;height:44px;border-radius:10px;border:1px solid var(--edge2);display:grid;place-items:center;flex-shrink:0;overflow:hidden;background:#0c1117}
+.dimg img{width:100%;height:100%;object-fit:cover}
+.dimg .mono{font-family:var(--f-mono);font-size:15px;font-weight:700;color:var(--gold)}
+.dexrow .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dexrow .sy{font-family:var(--f-mono);font-size:13px;font-weight:700;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dexrow .nm{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dexrow .bo{font-family:var(--f-mono);font-size:8.5px;letter-spacing:.08em;color:var(--amber)}
+.dexrow .rt{text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.dexrow .pr{font-family:var(--f-mono);font-size:12px;font-weight:700}
+.dexrow .chg{font-family:var(--f-mono);font-size:11px;font-weight:700}
+.chg+.chg{color:var(--faint);font-weight:400;font-size:9px}
+
+/* ---------- wallet view ---------- */
+.paycard{background:linear-gradient(150deg,rgba(232,196,92,.09),rgba(0,229,160,.04));border:1px solid rgba(232,196,92,.3);border-radius:14px;padding:16px;margin-bottom:12px}
+.paycard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.paycard .ph span:first-child{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.paycard .ph .ch{font-family:var(--f-mono);font-size:9px;color:var(--emerald)}
+.wrow{display:flex;flex-direction:column;gap:7px;padding:12px 0;border-top:1px solid rgba(255,255,255,.06)}
+.wrow .wl{font-family:var(--f-mono);font-size:9px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase}
+.wrow .wa{font-family:var(--f-mono);font-size:11px;color:var(--txt);word-break:break-all;line-height:1.5;padding:9px 11px;background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:8px}
+.act{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.act button{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:13px 16px;border-radius:10px;min-height:50px;flex:1 1 auto}
+.act .cp{border:1px solid var(--edge2);color:var(--gold)}
+.act .cp.copied{color:var(--emerald);border-color:var(--emerald)}
+.act .hire{background:var(--gold);color:#140f02;border-color:var(--gold)}
+.hnote{font-size:11px;color:var(--faint);line-height:1.6;margin-top:4px}
+.hnote b{color:var(--soft);font-family:var(--f-mono);font-weight:400}
+
+/* ---------- bottom nav ---------- */
+#nav{
+  position:fixed; bottom:0; left:0; right:0; height:calc(62px + env(safe-area-inset-bottom));
+  padding:0 6px calc(6px + env(safe-area-inset-bottom));
+  display:flex; gap:6px; align-items:stretch;
+  background:linear-gradient(0deg,rgba(5,7,10,.98),rgba(5,7,10,.92));
+  border-top:1px solid var(--edge); z-index:30;
+}
+#nav .nt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:12px;color:var(--faint)}
+#nav .nt i{font-style:normal;font-size:17px}
+#nav .nt small{font-family:var(--f-mono);font-size:8px;letter-spacing:.12em}
+#nav .nt.on{color:var(--gold)}
+#nav .nt.on{box-shadow:inset 0 0 0 1px rgba(232,196,92,.3)}
+
+/* ---------- coin sheet ---------- */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:none;opacity:0;transition:opacity .18s}
+#scrim.on{display:block;opacity:1}
+#sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  background:var(--bg2); border-top:1px solid var(--edge2); border-radius:18px 18px 0 0;
+  transform:translateY(105%); transition:transform .24s cubic-bezier(.2,.8,.3,1);
+  max-height:82dvh; overflow-y:auto; padding:14px 16px calc(20px + env(safe-area-inset-bottom));
+}
+#sheet.on{transform:translateY(0)}
+#ghost{width:44px;height:4px;border-radius:2px;background:var(--edge2);margin:2px auto 12px}
+#sheet .s-symbol{font-family:var(--f-mono);font-size:22px;font-weight:700;letter-spacing:.06em}
+#sheet .s-name{font-size:12.5px;color:var(--soft);margin-top:2px}
+#sheet .s-mx{font-family:var(--f-mono);font-size:30px;font-weight:700;margin:10px 0 2px}
+#sheet .s-sub{font-family:var(--f-mono);font-size:10.5px;color:var(--faint);letter-spacing:.06em;line-height:1.7}
+#sheet .s-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.s-cell{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;font-family:var(--f-mono);font-size:10px}
+.s-cell dt{color:var(--faint);font-size:8.5px;letter-spacing:.1em;margin-bottom:4px;text-transform:uppercase}
+.s-cell dd{font-size:13px;font-weight:700}
+.s-toks{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.s-btn{width:100%;min-height:54px;border-radius:12px;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
+.s-btn.sb-gold{background:var(--gold);color:#140f02}
+.s-btn.sb-ghost{border:1px solid var(--edge2);color:var(--soft)}
+.s-btn:active{opacity:.85}
+
+.empty{color:var(--faint);font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:40px 0}
+.err{font-family:var(--f-mono);font-size:11px;color:var(--red);letter-spacing:.06em;text-align:center;padding:30px 10px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div id="brand">ZEROX<b>·SIGNALS</b></div>
+  <span id="live">LIVE</span>
+  <span id="updated"></span>
+  <button id="btn-refresh" title="Refresh">⟳</button>
+</header>
+
+<main id="views">
+
+  <section class="view on" id="v-heat">
+    <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span></div>
+    <div class="legend"><span><i style="background:var(--emerald)"></i>≥1×</span><span><i style="background:var(--red)"></i>&lt;1× new</span><span><i style="background:var(--amber)"></i>med risk</span></div>
+    <div id="heat-bubbles"></div>
+  </section>
+
+  <section class="view" id="v-calls">
+    <div class="view-h"><span class="ti">Recent Calls</span><span class="count" id="calls-count"></span></div>
+    <div class="chips" id="risk-chips">
+      <button class="chip on" data-r="all">All</button>
+      <button class="chip risk risk-lo" data-r="low">Low</button>
+      <button class="chip risk risk-med" data-r="medium">Med</button>
+      <button class="chip risk risk-hi" data-r="high">High</button>
+      <button class="chip" data-s="score">Top</button>
+      <button class="chip" data-s="ts">Fresh</button>
+      <button class="chip" data-s="hot">Hot</button>
+    </div>
+    <div id="calls-list"></div>
+  </section>
+
+  <section class="view" id="v-dex">
+    <div class="view-h"><span class="ti">Top 25 DEX</span><span class="count" id="dex-count"></span></div>
+    <div id="dex-list"></div>
+  </section>
+
+  <section class="view" id="v-wallet">
+    <div class="view-h"><span class="ti">Paybox / Hire ZEROX</span></div>
+    <div class="paycard">
+      <div class="ph"><span>ZEROX Paybox</span><span class="ch" id="pb-chain">USDC receiving</span></div>
+      <div id="pb-wallets"></div>
+      <button class="act-btn hire" id="btn-hire">HIRE ZEROX</button>
+      <div class="hnote">Send USDC to an address below to load credits, or call ZEROX's MCP tools and skills from <b>/signals.html</b>. See the full office at <b>/directory.html</b>.</div>
+    </div>
+    <div class="hnote" id="intel-note" style="padding:0 4px"></div>
+  </section>
+
+</main>
+
+<nav id="nav">
+  <button class="nt on" data-v="heat"><i>◉</i><small>HEAT</small></button>
+  <button class="nt" data-v="calls"><i>▤</i><small>CALLS</small></button>
+  <button class="nt" data-v="dex"><i>◈</i><small>DEX</small></button>
+  <button class="nt" data-v="wallet"><i>⛃</i><small>WALLET</small></button>
+</nav>
+
+<div id="scrim"></div>
+<div id="sheet">
+  <div style="position:sticky;top:-14px"><div id="ghost"></div></div>
+  <div id="sheet-body"></div>
+</div>
+
+<script>
+'use strict';
+var API = (location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '') + '';
+var el = function (id) { return document.getElementById(id); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); };
+var money = function (n) { n = Number(n); if (!isFinite(n)) return '—'; if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M'; if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K'; return '$' + n.toFixed(0); };
+var ago = function (ts) { if (!ts) return ''; var s = Math.max(0, Math.round((Date.now() - ts) / 1000)); if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm'; if (s < 86400) return Math.floor(s / 3600) + 'h'; return Math.floor(s / 86400) + 'd'; };
+var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' + encodeURIComponent(id) + '?width=128&height=128&quality=95&format=auto' : ''; };
+var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
+var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—'; };
+
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'heat' };
+var coinOpen = null;
+
+/* ---------------- data ---------------- */
+function httpsHeaders(r){return r;}
+async function fetchJSON(u) {
+  var r = await fetch(u, { headers: { 'Accept': 'application/json' } });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+async function refresh() {
+  el('updated').textContent = '';
+  try { await Promise.all([loadFeed(), loadDex(), loadWallets(), loadIntel()]); stamp(); renderAll(); }
+  catch (e) { el('updated').textContent = 'ERR'; console.error(e); }
+}
+async function loadFeed() {
+  var j = await fetchJSON(API + '/api/pro-signals/feed?limit=250');
+  state.feed = (j.calls || []).filter(function (c) { return c && c.mint; });
+  return state.feed.length;
+}
+async function loadDex() {
+  var j = await fetchJSON(API + '/api/pro-signals/top-dex?limit=25');
+  state.dex = (j.pairs || []).filter(function (p) { return p && p.mint; });
+  return state.dex.length;
+}
+async function loadWallets() {
+  try { var j = await fetchJSON(API + '/api/paybox/wallets'); state.wallets = j.wallets || []; }
+  catch (e) { state.wallets = []; }
+  return state.wallets.length;
+}
+async function loadIntel() {
+  try {
+    var j = await fetchJSON(API + '/api/intel/wallets');
+    var c = j.counts || {};
+    el('intel-note').innerHTML = 'Intel: ' + c.calls + ' calls tracked · ' + c.wallets + ' smart wallets · generated ' + ago(j.generatedAt);
+  } catch (e) { el('intel-note').textContent = ''; }
+}
+function stamp() {
+  var n = Date.now();
+  var t = new Date(n).toTimeString().slice(0, 5);
+  el('updated').textContent = t;
+}
+
+/* ---------------- heatmap ---------------- */
+function renderHeat() {
+  var list = state.feed.slice(0, 60);
+  var gap = 2; // column basis so bubbles tile responsively
+  var div = el('heat-bubbles');
+  div.textContent = '';
+  el('heat-count').textContent = list.length;
+  if (!list.length) { div.innerHTML = '<div class="empty">NO SIGNALS YET</div>'; return; }
+  var frag = document.createDocumentFragment();
+  list.forEach(function (c) {
+    var m = Number(c.curMult) || 0;
+    var size = Math.min(34, Math.max(12, 10 + Math.sqrt(c.score || 0) * 1.6));
+    var b = document.createElement('button');
+    b.className = 'bub ' + (m >= 1 ? 'up' : (m > 0 ? 'dn' : 'flat'));
+    b.style.minHeight = (64 + size) + 'px';
+    b.style.fontSize = (size) + 'px';
+    b.innerHTML = '<span class="sy">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + Math.max(12, size - 6) + 'px">' +
+      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sc">S ' + (c.score || 0) + '</span>';
+    b.onclick = function () { openCoin(c); };
+    frag.appendChild(b);
+  });
+  div.appendChild(frag);
+}
+
+/* ---------------- recent calls ---------------- */
+function filtered() {
+  var list = state.feed.slice();
+  if (state.risk !== 'all') list = list.filter(function (c) { return (c.riskTier || 'medium') === state.risk; });
+  list.sort(function (a, b) {
+    if (state.sort === 'ts') return (b.ts || 0) - (a.ts || 0);
+    if (state.sort === 'hot') return (Number(b.curMult) || 0) - (Number(a.curMult) || 0);
+    return (b.score || 0) - (a.score || 0);
+  });
+  return list.slice(0, 120);
+}
+function tokStrip(c) {
+  var out = [];
+  var add = function (t, cls, label) { out.push('<span class="' + cls + '">' + label + '</span>'); };
+  if (c.holders != null && c.holders > 0) add(c, 'safe', '👥 ' + c.holders);
+  if (c.insiders > 0) add(c, 'danger', '🔫 ' + c.insiders);
+  if (c.bundlers) add(c, 'warn', '📦 bundle');
+  if (c.snipers) add(c, 'warn', '🎯 snipers');
+  if (c.lpPct != null && c.lpPct < 50) add(c, 'warn', '🔓 LP ' + Math.round(c.lpPct) + '%');
+  if (c.rugScore != null) add(c, c.rugScore > 50 ? 'danger' : 'safe', '🛡 rug ' + c.rugScore);
+  if (c.top10Pct != null) add(c, 'safe', 'T10 ' + Math.round(c.top10Pct) + '%');
+  if (!out.length) add(c, 'safe', 'ⓘ clean');
+  return '<div class="tokstrip">' + out.join('') + '</div>';
+}
+function riskCls(t) { return t === 'low' ? 'r1' : (t === 'high' ? 'r3' : 'r2'); }
+function renderCalls() {
+  var list = filtered();
+  el('calls-count').textContent = list.length;
+  var div = el('calls-list');
+  div.textContent = '';
+  if (!list.length) { div.innerHTML = '<div class="empty">NO CALLS IN THIS BUCKET</div>'; return; }
+  var frag = document.createDocumentFragment();
+  list.forEach(function (c) {
+    var m = Number(c.curMult) || 0;
+    var r = document.createElement('button');
+    r.className = 'row';
+    r.innerHTML =
+      '<span class="l1"><span class="tla">' + esc(c.symbol || '?') + '</span>' +
+      '<span class="nm">' + esc(c.name || c.mint.slice(0, 6)) + '</span>' +
+      '<span class="mx ' + (m >= 1 ? 'mx-pos' : 'mx-neg') + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span></span>' +
+      '<span class="l2"><span class="risk-chip ' + riskCls(c.riskTier || 'medium') + '">' + esc(c.riskTier || 'med') + '</span>' +
+      '<span class="scor">S ' + (c.score || 0) + '</span>' +
+      '<span>$ ' + (Number(c.curFdv || c.entryFdv) ? (Number(c.curFdv || c.entryFdv) >= 1e6 ? (Number(c.curFdv || c.entryFdv) / 1e6).toFixed(1) + 'M' : Math.round(Number(c.curFdv || c.entryFdv)).toLocaleString()) : '—') + '</span>' +
+      '<span class="ags">' + ago(c.ts) + '</span></span>' +
+      tokStrip(c);
+    r.onclick = function () { openCoin(c); };
+    frag.appendChild(r);
+  });
+  div.appendChild(frag);
+}
+
+/* ---------------- top dex ---------------- */
+function renderDex() {
+  var list = state.dex;
+  el('dex-count').textContent = list.length;
+  var div = el('dex-list');
+  div.textContent = '';
+  if (!list.length) { div.innerHTML = '<div class="empty">NO DEX DATA YET</div>'; return; }
+  var frag = document.createDocumentFragment();
+  list.forEach(function (p) {
+    var m = Number(p.chg24); var up = m >= 0;
+    var r = document.createElement('button');
+    r.className = 'dexrow';
+    var icon = IMG(p.image);
+    r.innerHTML =
+      '<span class="dimg">' + (icon || p.socials && p.symbol ? '<img src="' + esc(icon) + '" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;mono&quot;>' + esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) + '</span>\'"">' : '<span class="mono">' + esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) + '</span>') + '</span>' +
+      '<span class="mid"><span class="sy">' + esc(p.symbol || '?') + ' <span class="bo">▲' + (p.boost || 0) + '</span></span>' +
+      '<span class="nm">' + esc(p.name || '') + '</span></span>' +
+      '<span class="rt"><span class="pr">' + dec(p.priceUsd) + '</span>' +
+      '<span class="chg ' + (up ? 'mx-pos' : 'mx-neg') + '">' + (up ? '+' : '') + m + '%</span>' +
+      '<span class="chg">vol ' + money(p.vol24) + '</span></span>';
+    r.onclick = function () { openDex(p); };
+    frag.appendChild(r);
+  });
+  div.appendChild(frag);
+}
+
+/* ---------------- paybox ---------------- */
+function renderWallet() {
+  var box = el('pb-wallets');
+  box.textContent = '';
+  if (!state.wallets.length) { box.innerHTML = '<div class="wrow"><div class="wl">No wallets loaded</div></div>'; return; }
+  state.wallets.forEach(function (w) {
+    var row = document.createElement('div');
+    row.className = 'wrow';
+    row.innerHTML = '<span class="wl">' + esc(w.label || w.chain) + '</span>' +
+      '<span class="wa" id="wa-' + esc(w.address) + '">' + esc(w.address) + '</span>';
+    var btn = document.createElement('button');
+    btn.textContent = 'COPY';
+    btn.className = 'cp';
+    btn.style.cssText = 'font-family:Share Tech Mono,monospace;font-size:10px;font-weight:700;letter-spacing:.1em;padding:11px 14px;border:1px solid var(--edge2);border-radius:8px;color:var(--gold);margin-top:7px';
+    btn.onclick = function () {
+      navigator.clipboard.writeText(w.address).then(function () {
+        btn.textContent = 'COPIED ✓'; btn.style.color = 'var(--emerald)';
+        setTimeout(function () { btn.textContent = 'COPY'; btn.style.color = 'var(--gold)'; }, 1600);
+      }).catch(function () { btn.textContent = 'MANUAL COPY'; });
+    };
+    row.appendChild(btn);
+    box.appendChild(row);
+  });
+  el('pb-chain').textContent = 'USDC receiving · ' + state.wallets.length + ' chain' + (state.wallets.length !== 1 ? 's' : '');
+}
+document.addEventListener('DOMContentLoaded', function () {
+  el('btn-hire').addEventListener('click', function () { location.href = '/directory.html'; });
+});
+
+/* ---------------- coin sheet ---------------- */
+function openCoin(c) {
+  coinOpen = c;
+  var m = Number(c.curMult) || 0;
+  var s = el('sheet-body');
+  s.innerHTML =
+    '<div class="s-symbol">' + esc(c.symbol || '?') + '</div>' +
+    '<div class="s-name">' + esc(c.name || '') + ' · called ' + ago(c.ts) + ' · source: ' + esc(c.source || '') + '</div>' +
+    '<div class="s-mx ' + (m >= 1 ? 'mx-pos' : 'mx-neg') + '">' + (m ? m.toFixed(2) + '×' : 'NEW CALL') + '</div>' +
+    '<div class="s-sub">entry $' + dec(c.entryFdv) + ' → now $' + money(c.curFdv || c.entryFdv) + ' · peak ' + (Number(c.peakMult) ? Number(c.peakMult).toFixed(2) + '×' : '—') + '</div>' +
+    '<div class="s-grid">' +
+      '<div class="s-cell"><dt>Score</dt><dd>' + (c.score || 0) + '</dd></div>' +
+      '<div class="s-cell"><dt>Risk</dt><dd>' + esc(c.riskTier || 'medium') + '</dd></div>' +
+      '<div class="s-cell"><dt>Holders</dt><dd>' + (c.holders || '—') + '</dd></div>' +
+      '<div class="s-cell"><dt>Top 10</dt><dd>' + (c.top10Pct != null ? Math.round(c.top10Pct) + '%' : '—') + '</dd></div>' +
+      '<div class="s-cell"><dt>LP</dt><dd>' + (c.lpPct != null ? Math.round(c.lpPct) + '%' : '—') + '</dd></div>' +
+      '<div class="s-cell"><dt>Rug score</dt><dd>' + (c.rugScore != null ? c.rugScore : '—') + '</dd></div>' +
+    '</div>' +
+    tokStrip(c) +
+    '<button class="s-btn sb-gold" onclick="location.href=\'https://dexscreener.com/search?q=' + esc(c.mint) + '\'">View on DexScreener ↗</button>' +
+    '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(c.mint) + '\', this)">Copy mint</button>' +
+    '<button class="s-btn sb-ghost" onclick="location.href=\'/signals.html\'">Hire ZEROX ↗</button>';
+  showSheet();
+}
+function openDex(p) {
+  coinOpen = p;
+  var m = Number(p.chg24); var up = m >= 0;
+  var s = el('sheet-body');
+  s.innerHTML =
+    '<div class="s-symbol">' + esc(p.symbol || '?') + '</div>' +
+    '<div class="s-name">' + esc(p.name || '') + ' · boost ▲' + (p.boost || 0) + '</div>' +
+    '<div class="s-mx ' + (up ? 'mx-pos' : 'mx-neg') + '">' + (up ? '+' : '') + m + '%</div>' +
+    '<div class="s-sub">price ' + dec(p.priceUsd) + ' · liq ' + money(p.liq) + ' · vol24 ' + money(p.vol24) + '</div>' +
+    '<div class="s-grid">' +
+      '<div class="s-cell"><dt>DEX</dt><dd>' + esc(p.dex || '—') + '</dd></div>' +
+      '<div class="s-cell"><dt>Rank</dt><dd>#' + (p.rank || '—') + '</dd></div>' +
+    '</div>' +
+    '<div class="s-toks">' + [p.socials && p.socials.twitter ? '<span class="tok-safe">𝕏 yes</span>' : '', p.socials && p.socials.telegram ? '<span class="tok-safe">TG yes</span>' : '', p.socials && p.socials.website ? '<span class="tok-safe">site yes</span>' : ''].join('') + '</div>' +
+    '<button class="s-btn sb-gold" onclick="location.href=\'' + esc(p.pairUrl || 'https://dexscreener.com/search?q=' + p.mint) + '\'">View on DexScreener ↗</button>' +
+    '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(p.mint) + '\', this)">Copy mint</button>';
+  showSheet();
+}
+function copyMint(v, b) {
+  navigator.clipboard.writeText(v).then(function () { if (b) b.textContent = 'COPIED ✓'; });
+}
+function showSheet() { el('scrim').classList.add('on'); el('sheet').classList.add('on'); }
+function closeSheet() { el('scrim').classList.remove('on'); el('sheet').classList.remove('on'); }
+el('scrim').addEventListener('click', closeSheet);
+
+/* ---------------- tabs + swipe ---------------- */
+var tabs = ['heat', 'calls', 'dex', 'wallet'];
+function setTab(t) {
+  state.tab = t;
+  try { localStorage.setItem('ss_tab', t); } catch (e) {}
+  tabs.forEach(function (v) {
+    el('v-' + v).classList.toggle('on', v === t);
+    document.querySelectorAll('#nav .nt').forEach(function (b) { b.classList.toggle('on', b.dataset.v === t); });
+  });
+}
+document.querySelectorAll('#nav .nt').forEach(function (b) {
+  b.addEventListener('click', function () { setTab(b.dataset.v); });
+});
+(function swipe() {
+  var x0 = null, t0 = null;
+  document.addEventListener('touchstart', function (e) {
+    var t = e.touches[0]; x0 = t.clientX; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (x0 == null) return;
+    var dx = e.touches[0].clientX - x0;
+    if (Math.abs(dx) > 90 && Date.now() - t0 < 700) {
+      var i = tabs.indexOf(state.tab);
+      var n = dx < 0 ? Math.min(tabs.length - 1, i + 1) : Math.max(0, i - 1);
+      if (n !== i) setTab(tabs[n]);
+      x0 = null;
+    }
+  }, { passive: true });
+})();
+
+/* ---------------- filters + init ---------------- */
+document.querySelectorAll('.chip[data-r]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.chip[data-r]').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    state.risk = b.dataset.r;
+    renderCalls();
+  });
+});
+document.querySelectorAll('.chip[data-s]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.chip[data-s]').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    state.sort = b.dataset.s;
+    renderCalls();
+  });
+});
+el('btn-refresh').addEventListener('click', refresh);
+function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet(); }
+
+try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}
+refresh();
+setInterval(refresh, 60000);
+</script>
+</body>
+</html>

@@ -313,11 +313,12 @@
       id: 'signals', name: 'SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg',
       blurb: 'Live calls — list, bubbles, heatmap and ranked.',
       items: [
-        /* ONE honest entry, two renders: the simple one-thumb view lives at
-           /signals.html (list/bubbles/heatmap/ranked, tokenomics + hire ZEROX),
-           and it offers the full desktop terminal on a wide screen. */
-        { id: 'pro', name: 'PRO SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html',
-          blurb: 'Live calls. The simple one-thumb view, or the full terminal on a desktop.' },
+        /* Two honest surfaces, same live feed:
+           SIMPLE (one-thumb, this entry) at /simple-signals.html and the full
+           desktop terminal at /signals.html (list/bubbles/heatmap/ranked,
+           tokenomics + hire ZEROX). */
+        { id: 'pro', name: 'SIMPLE SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html',
+          blurb: 'One-thumb signals — heatmap, calls, top 25 DEX, ZEROX paybox. Swipe it.' },
         { id: 'tg',     name: 'SHADDAI TG',  accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/m-signals.html', blurb: 'Calls delivered to Telegram.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
       ],

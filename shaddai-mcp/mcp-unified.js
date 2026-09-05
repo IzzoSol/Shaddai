@@ -752,6 +752,23 @@ const TOOLS = [
       params: { type: 'string', description: 'Optional JSON params body.' },
     }, required: ['agent_id', 'tool'] },
   },
+  // Web pillar — search + scrape (the missing RAG-brain → open-web leg)
+  {
+    name: 'web_search',
+    description: 'ORACLE/ZEROX — search the open web (Google News RSS then DuckDuckGo) and return ranked titles + snippets + URLs. No key needed. Use when the RAG brain does not already hold the answer, or for current/live data. Pair with rag_search: answer from the library first, fall out to the web here.',
+    inputSchema: { type: 'object', properties: {
+      query: { type: 'string', description: 'What to search for.' },
+      count: { type: 'number', description: 'Max results (default 6, max 12).' },
+    }, required: ['query'] },
+  },
+  {
+    name: 'web_scrape',
+    description: 'ORACLE/ZEROX — fetch a URL and strip it to readable plain text (scripts/styles/tags removed). Use to pull a live token page, docs, or a competitor page into reasoning. HTTPS only, size-capped.',
+    inputSchema: { type: 'object', properties: {
+      url: { type: 'string', description: 'Full https:// URL to scrape.' },
+      max_chars: { type: 'number', description: 'Optional max characters returned (default 4000).' },
+    }, required: ['url'] },
+  },
 ];
 
 // Per-agent specialist tools — one named tool per agent so the model auto-picks the right one.
@@ -1643,7 +1660,88 @@ async function callTool(name, args) {
     return '→ ' + args.agent_id + ' ' + args.tool + ' · HTTP ' + r.status + (r.ok ? '' : ' (failed)') + ' · ' + JSON.stringify(r.result).slice(0, 300) + (r.billing ? ' · billed ' + r.billing.amount_usdc.toFixed(2) + ' USDC (split recorded)' : '');
   }
 
+  // ── Web pillar — search + scrape for ORACLE/ZEROX research ───────────────
+  // web_search: server-side keyword search (Google News RSS → DuckDuckGo), no
+  //   key needed. Returns ranked {title, snippet, url}. This is the missing
+  //   "ask the RAG brain OR go get live data" leg — pair with rag_search to
+  //   answer from the library first, then fall out to the open web.
+  if (name === 'web_search') {
+    const q = String(args.query || '').trim();
+    if (!q) return 'Provide a query to search.';
+    return await webSearch(q, Number(args.count) || 6);
+  }
+
+  // web_scrape: fetch a URL and strip it to readable text (no markdown cruft).
+  //   Used to pull live token pages, docs, or a competitor's site into ZEROX's
+  //   reasoning. Enforces HTTPS + a sane size cap; returns plain text.
+  if (name === 'web_scrape') {
+    const u = String(args.url || '').trim();
+    if (!u) return 'Provide a url to scrape.';
+    return await webScrape(u, Number(args.max_chars) || 4000);
+  }
+
   return 'Unknown tool: ' + name;
+}
+
+// ── Web helpers (ZEROX / ORACLE) ────────────────────────────────────────────
+async function webSearch(query, count) {
+  const out = [];
+  try {
+    const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+    const r = await fetch(rss, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'SHADDAI-MCP/2.0' } });
+    if (r.ok) {
+      const xml = await r.text();
+      const re = /<item>([\s\S]*?)<\/item>/g; let m;
+      while ((m = re.exec(xml)) && out.length < count) {
+        const rawT = (m[1].match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1] || '';
+        const u = (m[1].match(/<link[^>]*\/?>(https?:[^<]+)<\/link>|<link>(https?:[^<]+)/) || [])[1] || '';
+        const rawD = (m[1].match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/) || [])[1] || '';
+        const dec = (s) => String(s).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+        const title = dec(rawT).replace(/<[^>]+>/g, '').trim().replace(/\s+-\s+[^-]+$/, '').trim();
+        if (!title) continue;
+        out.push({ title, snippet: dec(rawD).replace(/<[^>]+>/g, '').trim().slice(0, 200), url: String(u).trim(), source: 'news' });
+      }
+    }
+  } catch (_) {}
+  if (out.length < 3) {
+    try {
+      const r = await fetch('https://api.duckduckgo.com/?q=' + encodeURIComponent(query) + '&format=json&no_html=1&skip_disambig=1', { signal: AbortSignal.timeout(8000) });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.AbstractText) out.push({ title: d.Heading || query, snippet: d.AbstractText.slice(0, 400), url: d.AbstractURL, source: 'ddg' });
+      }
+    } catch (_) {}
+  }
+  if (!out.length) return 'No web results for "' + query + '".';
+  return out.slice(0, count).map((x, i) => '[' + (i + 1) + '] ' + x.title + '\n    ' + x.snippet + '\n    ' + x.url).join('\n\n');
+}
+
+async function webScrape(url, maxChars) {
+  let parsed;
+  try { parsed = new URL(url); } catch (_) { return 'Scrape refused: not a valid URL.'; }
+  if (parsed.protocol !== 'https:') return 'Refusing non-HTTPS URL (PIKADON). Only https:// is allowed.';
+  const h = parsed.hostname.toLowerCase();
+  if (/(^127\.)|(^10\.)|(^192\.168\.)|(^169\.254\.)|(^0\.)|(^172\.(1[6-9]|2\d|3[01])\.)|(^\[?::1\]?$)|^localhost$|.*\.local$|.*\.internal$/.test(h)) {
+    return 'Refusing private/loopback host "' + h + '" (PIKADON SSRF guard).';
+  }
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'SHADDAI-MCP/2.0 (+https://shaddai.ai)' } });
+    if (!r.ok) return 'Scrape failed: HTTP ' + r.status;
+    const ct = (r.headers.get('content-type') || '');
+    if (!/text\/html|text\/plain|application\/json|application\/xml/.test(ct)) return 'Scrape skipped: content-type "' + ct + '" is not text.';
+    const text = await r.text();
+    // strip script/style + tags → readable text
+    const clean = String(text)
+      .replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ').trim();
+    if (!clean) return 'Scrape returned no readable text.';
+    return clean.slice(0, maxChars);
+  } catch (e) {
+    return 'Scrape failed: ' + ((e && e.message) || e);
+  }
 }
 
 // ── Economy plumbing bootstrap ─────────────────────────────────────────────────
