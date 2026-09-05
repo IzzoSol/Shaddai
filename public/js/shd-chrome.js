@@ -369,18 +369,16 @@
     authSheet.innerHTML =
       '<button class="shdc-x" type="button" data-close>✕ close</button>' +
       '<h2>Sign in</h2>' +
-      '<p class="hint">Optional. Nothing is locked behind it — signing in just carries your work between the doors.</p>' +
+      '<p class="hint">Optional. Your account carries your work between the front door and the Command Hub — kept private per user.</p>' +
+      '<button class="shdc-btn" id="shdc-google" type="button">Continue with Google</button>' +
+      '<div class="shdc-or">or</div>' +
       '<form id="shdc-form" autocomplete="on">' +
         '<label class="shdc-f"><span>email</span><input id="shdc-email" type="email" name="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></label>' +
         '<label class="shdc-f"><span>password</span><input id="shdc-pass" type="password" name="password" autocomplete="current-password" placeholder="••••••••"></label>' +
         '<button class="shdc-btn" id="shdc-go" type="submit">Enter</button>' +
       '</form>' +
       '<div class="shdc-or">or</div>' +
-      /* Solana connect removed from the FRONT DOOR. Asking a first-time
-         visitor to connect a crypto wallet before they know what the product
-         is loses people who would otherwise have signed up with an email —
-         and nothing on this page needs an on-chain identity. The wallet flow
-         still exists in the dashboard, where a wallet actually does something. */
+      '<button class="shdc-btn ghost" id="shdc-guest" type="button">Continue as guest</button>' +
       '<div class="shdc-msg" id="shdc-msg"></div>' +
       '<button class="shdc-btn ghost" id="shdc-out" type="button" style="display:none">Sign out</button>';
 
@@ -441,21 +439,34 @@
       var pass = authSheet.querySelector('#shdc-pass').value;
       if (!email || !pass) { say('Email and password, please.', 'bad'); return; }
       var go = authSheet.querySelector('#shdc-go');
-      go.disabled = true; say('Checking…');
-      fetch('/api/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: pass })
-      })
-        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-        .then(function (res) {
-          if (!res.ok) throw new Error((res.j && res.j.error) || 'Sign-in failed.');
-          var j = res.j || {};
-          save((j.user && (j.user.id || j.user.userId)) || j.userId || email, j.token || j.accessToken);
-          paintAuthSheet(); say('Signed in.', 'good');
-          setTimeout(closeSheets, 700);
+      go.disabled = true; say('Signing in…');
+      var fbAuth = window.SHD_FIREBASE && window.SHD_FIREBASE.auth;
+      if (!fbAuth) { say('Sign-in is offline right now. Try again in a moment.', 'bad'); go.disabled = false; return; }
+      fbAuth.signInWithEmailAndPassword(email, pass)
+        .catch(function (err) {
+          if (err && err.code === 'auth/user-not-found') {
+            return fbAuth.createUserWithEmailAndPassword(email, pass);
+          }
+          throw err;
         })
-        .catch(function (err) { say(err.message || 'Sign-in failed.', 'bad'); })
+        .then(function () { paintAuthSheet(); say('Signed in.', 'good'); setTimeout(closeSheets, 700); })
+        .catch(function (err) { say((err && (err.message || err.code)) || 'Sign-in failed.', 'bad'); })
         .then(function () { go.disabled = false; });
+    });
+
+    var gw = authSheet.querySelector('#shdc-google');
+    if (gw) gw.addEventListener('click', function () {
+      var fbAuth = window.SHD_FIREBASE && window.SHD_FIREBASE.auth;
+      if (!fbAuth) { say('Sign-in is offline right now.', 'bad'); return; }
+      fbAuth.signInWithRedirect(new window.firebase.auth.GoogleAuthProvider()).catch(function (err) {
+        say((err && (err.message || err.code)) || 'Google sign-in failed.', 'bad');
+      });
+    });
+
+    var gst = authSheet.querySelector('#shdc-guest');
+    if (gst) gst.addEventListener('click', function () {
+      if (window.SHD_GUEST_IN) window.SHD_GUEST_IN();
+      closeSheets();
     });
 
     /* The Solana button was removed from the front door (see above), so this
@@ -582,6 +593,7 @@
     shortId: shortId,
     signOut: signOut,
     onAuth: function (fn) { authSubs.push(fn); return this; },
+    onAuthFire: function (u) { fire(authSubs, u ? (u.uid || u.email) : null); },
     dwell: getDwell,
     setDwell: setDwell,
     onDwell: function (fn) { dwellSubs.push(fn); return this; }

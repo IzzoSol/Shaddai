@@ -773,6 +773,61 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
   background:color-mix(in srgb, var(--accent) 9%, transparent); }
 .viewmenu button[aria-selected=true] i{ color:var(--accent); }
 </style>
+
+<!-- Firebase auth — same identity as the dashboard. A signed-in uid becomes
+     `shd_userid`, so your account carries between the front door and the
+     Command Hub with per-user isolation. Guests are isolated in sessionStorage. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+(function () {
+  var firebaseConfig = { apiKey: "AIzaSyB9QzPlI9AiAnisSO-jK-UUJ-ZwtmHlzjw", authDomain: "shaddai999.firebaseapp.com", projectId: "shaddai999", storageBucket: "shaddai999.firebasestorage.app", messagingSenderId: "706335788411", appId: "1:706335788411:web:6b64d985f6b0c1bf8441de", measurementId: "G-66EFRNVWQ5" };
+  window.SHD_FIREBASE = { app: null, auth: null, user: null, ready: false };
+  window.SHD_IS_GUEST = function () { try { return sessionStorage.getItem('shd_guest') === '1'; } catch (e) { return false; } };
+
+  /* Guest isolation: when in guest mode, non-auth localStorage writes are
+     redirected to sessionStorage so nothing persists and nothing can leak into
+     another user's browser data. Auth/session keys are never redirected. */
+  var AUTH = /^(shd_auth|shd_session|firebase|stripe|x402|shd_user|shd_mode|shd_signed_in|shd_email)/i;
+  (function () {
+    var _set = Storage.prototype.setItem, _get = Storage.prototype.getItem, _rem = Storage.prototype.removeItem;
+    Storage.prototype.setItem = function (k, v) { if (this === window.localStorage && window.SHD_IS_GUEST() && !AUTH.test(k)) { try { return _set.call(window.sessionStorage, k, v); } catch (e) {} } return _set.call(this, k, v); };
+    Storage.prototype.getItem = function (k) { if (this === window.localStorage && window.SHD_IS_GUEST() && !AUTH.test(k)) { var s = _get.call(window.sessionStorage, k); if (s !== null) return s; } return _get.call(this, k); };
+    Storage.prototype.removeItem = function (k) { if (this === window.localStorage && window.SHD_IS_GUEST() && !AUTH.test(k)) { try { _rem.call(window.sessionStorage, k); } catch (e) {} } return _rem.call(this, k); };
+  })();
+
+  try {
+    if (window.firebase && firebase.initializeApp) {
+      var app = firebase.initializeApp(firebaseConfig);
+      var auth = firebase.auth();
+      window.SHD_FIREBASE.app = app; window.SHD_FIREBASE.auth = auth;
+      auth.onAuthStateChanged(function (u) {
+        window.SHD_FIREBASE.user = u || null;
+        window.SHD_FIREBASE.ready = true;
+        try {
+          if (u) {
+            localStorage.setItem('shd_signed_in', '1');
+            if (u.email) localStorage.setItem('shd_email', u.email);
+            if (u.uid) localStorage.setItem('shd_userid', u.uid);
+          } else {
+            localStorage.setItem('shd_signed_in', '0');
+          }
+        } catch (e) {}
+        try { if (window.SHDChrome && window.SHDChrome.onAuthFire) window.SHDChrome.onAuthFire(u); } catch (e) {}
+      });
+      auth.getRedirectResult().catch(function () {});
+    }
+  } catch (e) {
+    window.SHD_FIREBASE.ready = true;
+  }
+
+  function guestIn() {
+    try { sessionStorage.setItem('shd_guest', '1'); localStorage.setItem('shd_signed_in', '0'); } catch (e) {}
+    try { if (window.SHDChrome && window.SHDChrome.onAuthFire) window.SHDChrome.onAuthFire(null); } catch (e) {}
+  }
+  window.SHD_GUEST_IN = guestIn;
+})();
+</script>
 </head>
 <body>
 
