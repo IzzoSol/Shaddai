@@ -205,6 +205,29 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   letter-spacing:.1em; text-transform:uppercase; text-decoration:none; border-radius:3px; cursor:pointer; }
 #sheet .acts .pri{ background:var(--emerald); color:#04120c; border-color:var(--emerald); }
 #sheet .note{ margin-top:14px; font-size:11px; color:var(--ink-faint); line-height:1.65; }
+/* tokenomics chips — the flags a buyer checks before spending */
+#sheet .tokenomics{ display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+#sheet .tok{ font-size:11px; font-weight:600; letter-spacing:.05em;
+  border:1px solid var(--edge2); border-radius:3px; padding:5px 9px;
+  color:var(--ink-soft); background:rgba(255,255,255,.02); }
+
+/* HIRE ZEROX — the commerce surface on every coin sheet */
+#sheet .zxhire{ margin-top:18px; border:1px solid rgba(232,196,92,.28);
+  border-radius:4px; padding:13px 14px; background:rgba(232,196,92,.04); }
+#sheet .zxhire-h{ display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
+#sheet .zxhire-h span:first-child{ font-size:12px; font-weight:700; letter-spacing:.12em;
+  color:var(--gold); text-transform:uppercase; }
+#sheet .zxhire-h .zxhire-s{ font-size:10.5px; color:var(--ink-soft); }
+#sheet .zxhire-acts{ display:flex; gap:7px; margin-top:11px; flex-wrap:wrap; }
+#sheet .zxhire-btn{ flex:1 1 auto; min-height:44px; display:inline-flex; align-items:center;
+  justify-content:center; border:1px solid rgba(232,196,92,.4); color:var(--gold);
+  font-family:var(--f-mono); font-size:12px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; text-decoration:none; border-radius:3px; cursor:pointer;
+  background:none; }
+#sheet .zxhire-btn.off{ opacity:.45; }
+#sheet .zxhire-btn:active{ background:var(--gold); color:#140f02; }
+#sheet .zxhire-q{ margin-top:11px; font-size:12.5px; line-height:1.55; color:var(--ink-soft);
+  min-height:0; }
 
 /* On a desktop the phone view is not the right tool — offer the terminal
    rather than silently being the lesser of the two. Hidden below 820px, where
@@ -540,14 +563,29 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
           '<div><dt>Boost</dt><dd>' + (c.boost || 0) + '</dd></div>' +
           '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? 'yes' : 'none') + '</dd></div>';
     } else {
+      /* Tokenomics — the numbers behind a call, one glance. Each of these is
+         captured at call time by the scanner (holder count, LP, top-10
+         concentration, insider/bundler/sniper flags, rug score). A buyer checks
+         exactly these before they spend, so they belong on the sheet, not buried
+         in a sub-menu. */
+      var flags = [];
+      if (c.insiders > 0) flags.push('🔫 insiders');
+      if (c.bundlers) flags.push('📦 bundle');
+      if (c.snipers) flags.push('🎯 snipers');
+      if (c.lpPct && c.lpPct < 50) flags.push('🔓 LP ' + Math.round(c.lpPct) + '%');
+      if (c.rugScore != null) flags.push('🛡 rug ' + c.rugScore);
+      var toks = flags.length ? '<div class="tokenomics">' +
+        flags.map(function (f) { return '<span class="tok">' + f + '</span>'; }).join('') + '</div>' : '';
       body = '<div><dt>Now</dt><dd style="color:' + col + '">' + (m ? m.toFixed(2) + 'x' : '—') + '</dd></div>' +
           '<div><dt>Peak</dt><dd>' + (Number(c.peakMult) ? Number(c.peakMult).toFixed(2) + 'x' : '—') + '</dd></div>' +
           '<div><dt>Market cap</dt><dd>' + money(c.curFdv || c.entryFdv) + '</dd></div>' +
-          '<div><dt>Called at</dt><dd>' + money(c.entryFdv) + '</dd></div>' +
+          '<div><dt>Holders</dt><dd>' + (c.holders ? c.holders : '—') + '</dd></div>' +
+          '<div><dt>Top 10 held</dt><dd>' + (c.top10Pct != null ? c.top10Pct + '%' : '—') + '</dd></div>' +
           '<div><dt>Risk</dt><dd style="font-size:14px">' + esc(c.riskTier || '—') + '</dd></div>' +
-          '<div><dt>Socials</dt><dd style="font-size:14px">' + (s.any ? (s.twitter ? '𝕏 yes' : 'yes') : 'none') + '</dd></div>';
+          toks;
     }
     $('panel').style.setProperty('--pc', col);
+    $('sheet').dataset.mint = c.mint;
     $('panel').innerHTML =
       '<div class="top">' + avatar(c) + '<div><h3>' + esc(c.symbol || c.name || '?') + '</h3>' +
       '<div class="sub">' + esc((c.name || '').slice(0, 52)) + (c.ts ? ' · ' + ago(c.ts) + ' ago' : '') + '</div></div></div>' +
@@ -557,6 +595,16 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
         '<a class="pri" href="' + esc(i.pairUrl || c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '" target="_blank" rel="noopener">Chart</a>' +
         '<button type="button" id="cpy">Copy CA</button>' +
         '<button type="button" data-close>Close</button></div>' +
+      '<div class="zxhire">' +
+        '<div class="zxhire-h"><span>🤝 HIRE ZEROX</span><span class="zxhire-s">' +
+          (ZX ? 'online · ' + ZX.short : 'connect the agent engine') + '</span></div>' +
+        '<div class="zxhire-acts">' +
+          '<a class="zxhire-btn' + (ZX ? '' : ' off') + '" id="zxScan" href="javascript:void(0)">Ask ZEROX</a>' +
+          '<a class="zxhire-btn" href="/agents.html#zerox" target="_blank">Hire</a>' +
+          '<a class="zxhire-btn" href="/pricing.html" target="_blank">Paybox</a>' +
+        '</div>' +
+        '<div class="zxhire-q" id="zxOut"></div>' +
+      '</div>' +
       '<p class="note">Not advice. This is what the scanner saw, with the numbers behind it.' +
       (s.any ? '' : ' <b style="color:#fbbf24">No socials found — treat with care.</b>') + '</p>';
     $('sheet').classList.add('on');
@@ -588,6 +636,34 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     if (hit && !e.target.closest('#sheet')) openSheet(hit.dataset.mint);
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') $('sheet').classList.remove('on'); });
+
+  /* ── HIRE ZEROX — ask the live agent engine from the coin sheet ──────────
+     Hits /api/agentic/run (the same MCP-backed engine Simple Mode uses) so the
+     ZEROX badge is a real call, not a sticker. Degrades to a clear note when
+     the engine is unreachable — never blocks the sheet. */
+  var ZX = { name: 'ZEROX', short: 'markets engine', online: true };
+  function zxAsk(sym) {
+    var out = $('zxOut'), btn = $('zxScan');
+    if (!out) return;
+    out.innerHTML = '';
+    out.textContent = 'ZEROX is reading ' + sym + '…';
+    fetch('/api/agentic/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent: 'ZEROX', task: sym + ' — read the call (live multiples, liquidity, holder/insider flags). Give a 2-line, decisive take: hold, take profit, or avoid, and why.' })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.response) { out.textContent = j.response.slice(0, 400); }
+      else if (j && j.error) { out.textContent = 'ZEROX: ' + j.error; }
+      else { out.textContent = 'ZEROX is offline — check the agent engine.'; }
+    }).catch(function () { out.textContent = 'ZEROX unreachable right now.'; });
+    if (btn) btn.textContent = '…';
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'zxScan') {
+      var mint = (e.target.closest('#sheet') && $('sheet').dataset.mint) || '';
+      var c = VIEW.concat(ALL, TOP, MK.feed).find(function (x) { return x.mint === mint; });
+      zxAsk(c ? (c.symbol || c.name || mint) : mint);
+    }
+  });
 
   /* ── chips ─────────────────────────────────────────────────────────────── */
   $('modes').addEventListener('click', function (e) {

@@ -985,7 +985,7 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
       a.style.setProperty('--accent', m.accent);
       a.setAttribute('aria-label', m.name + ' — ' + m.kicker + '. ' + m.blurb);
       a.innerHTML =
-        '<div class="art"><img class="artimg" src="' + M.artFor(m.id) + '" alt="" decoding="async" fetchpriority="high" onerror="(function(i){if(!i.dataset.fb){i.dataset.fb=1;i.src=\'' + m.art + '\';return;}if(i.dataset.fb==\'1\'){i.dataset.fb=2;i.src=\'/assets/enter/entry.jpg\';return;}i.style.display=\'none\';})(this)"></div>' +
+        '<div class="art"><img class="artimg" src="' + M.artFor(m.id) + '" alt="" decoding="async" fetchpriority="high" onerror="(function(i){if(!i.dataset.fb){i.dataset.fb=1;i.src=\'' + m.art + '\';return;}if(i.dataset.fb==\'1\'){i.dataset.fb=2;i.src=\'/assets/enter/entry.jpg\';return;}i.style.display=\'none\';if(!i.offsetParent){i.style.display=\"\";i.src=\'/assets/enter/entry.jpg\';}})(this)"></div>' +
         '<div class="wash"></div>' +
         '<div class="frame"></div><div class="trace"></div><i class="corner tl"></i><i class="corner br"></i>' +
         '<div class="body">' +
@@ -1044,7 +1044,8 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
         e.preventDefault();
         if (el.classList.contains('activating')) return;
         el.classList.add('activating');
-        setTimeout(function () { window.location.href = el.getAttribute('href'); }, 420);
+        var href = el.getAttribute('href');
+        setTimeout(function () { if (href) window.location.href = href; }, 420);
       });
     });
   }

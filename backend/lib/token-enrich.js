@@ -174,16 +174,53 @@ async function topDex(limit) {
     if (!res.ok) throw new Error('dexscreener ' + res.status);
 
     const raw = await res.json();
-    const rows = (Array.isArray(raw) ? raw : (raw.data || []))
-      .filter((x) => x && x.chainId === 'solana' && x.tokenAddress)
-      .slice(0, n);
-    if (!rows.length) return [];
+    // The boosts feed is sparse on Solana at any given instant (a handful of
+    // running campaigns), so "Top 25" would show 13 rows and read as broken.
+    // Treat the boost feed as the *head* of the list and backfill the rest from
+    // DexScreener's latest token profiles, which always carry an icon+links —
+    // that is the honest "biggest/most-promoted right now" without under-filling.
+    const boostRows = (Array.isArray(raw) ? raw : (raw.data || []))
+      .filter((x) => x && x.chainId === 'solana' && x.tokenAddress);
+
+    let profiles = [];
+    try {
+      const pc = new AbortController();
+      const pt = setTimeout(() => pc.abort(), 9000);
+      const pr = await fetch('https://api.dexscreener.com/token-profiles/latest/v1', { signal: pc.signal });
+      clearTimeout(pt);
+      if (pr.ok) {
+        const pj = await pr.json();
+        profiles = (Array.isArray(pj) ? pj : []).filter((p) => p && p.tokenAddress);
+      }
+    } catch (_) { /* profiles are an optional backfill */ }
+
+    // dedupe by mint, boosts first, then profiles
+    const seen = new Set();
+    const rows = [];
+    for (const r of boostRows) {
+      if (seen.has(r.tokenAddress)) continue;
+      seen.add(r.tokenAddress); rows.push({ __boost: true, ...r });
+    }
+    for (const p of profiles) {
+      if (rows.length >= n) break;
+      if (seen.has(p.tokenAddress)) continue;
+      seen.add(p.tokenAddress);
+      rows.push({
+        __boosts: false, chainId: 'solana', tokenAddress: p.tokenAddress,
+        description: p.description || '', icon: p.icon || '', links: p.links || [],
+        totalAmount: 0,
+      });
+    }
+    const trimmed = rows.slice(0, n);
+    if (!trimmed.length) return [];
 
     // live numbers for the same set, in one batched call
-    const live = await enrich(rows.map((r) => r.tokenAddress), n);
+    const live = await enrich(trimmed.map((r) => r.tokenAddress), n);
 
     return rows.map((r, i) => {
       const L = live[r.tokenAddress] || {};
+      // backfilled profiles carry `.icon`/`.links`; boost rows carry `icon`/`links`
+      const icon = r.icon || null;
       const links = Array.isArray(r.links) ? r.links : [];
       const typed = (t) => links.some((l) => String(l.type || l.label || '').toLowerCase() === t);
       const site = links.find((l) => !l.type && l.url) || null;
@@ -191,11 +228,12 @@ async function topDex(limit) {
       return {
         rank: i + 1,
         mint: r.tokenAddress,
-        symbol: (L.symbol) || '',
+        symbol: (L.symbol) || r.symbol || '',
         name: String(r.description || '').split(String.fromCharCode(10))[0].slice(0, 60),
         boost: Number(r.totalAmount) || 0,
-        // the boost feed's own icon wins — it is the artwork the team paid to show
-        image: r.icon || L.image || null,
+        // the feed's own icon wins — it is the artwork the team paid to show.
+        // Profiles fall back to DexScreener's icon, then the token endpoint's image.
+        image: icon || L.image || null,
         socials: {
           any: links.length > 0 || !!(L.socials && L.socials.any),
           twitter: typed('twitter') || !!(L.socials && L.socials.twitter),

@@ -3,6 +3,17 @@
     "aura": {
       "command": "npx",
       "args": ["-y", "-p", "shaddai-aura", "aura-mcp"]
+    },
+    "shaddai": {
+      "command": "node",
+      "args": ["C:\\Users\\Brittany\\Shaddai\\shaddai-mcp\\mcp-unified.js"],
+      "env": {
+        "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com",
+        "SHADDAI_ENABLE_MONEY": "1",
+        "SHADDAI_RATE_PER_SEC": "10",
+        "VIRTUALS_BASE_WALLET": "0xf4cf0a113f06b113cec2a8bf5a5f115d203dd966",
+        "VIRTUALS_SOL_WALLET": "8vSSZ42zi3oBw47F1CZi2GaWRMANfZhwxaFCVbjsTZHs"
+      }
     }
   }
 }

@@ -1,49 +1,60 @@
-// paybox-settle.js — settle SHADDAI marketplace purchases into the selling AGENT's
-// paybox. The pattern: the BUYER is debited (x402 ledger = in-app credits), and the
-// SELLING AGENT's paybox balance (same x402 ledger, keyed by agent name) is credited
-// with the net. This is the in-app representation of "they pay our agents' paybox" —
-// the real external wallet receive side is handled by the MoonPay checkout links on
-// /api/paybox; here we close the loop on SHADDAI's own ledgers so every purchase is
-// (a) paid for before work runs, and (b) has a verifiable receipt/proof of task.
-//
-//   await settle({ user, itemId, amountCredits, sellerAgent, reason, input }) →
-//     { ok, txId, charged, fee, net, sellerBalance, receipt }
-//   throw PayboxSettleError with .code and .status for the caller to map to HTTP.
-//
-// This module is non-custodial: it never moves real on-chain funds. It only moves
-// entries on SHADDAI's own credit ledger, consistent with the existing x402 system
-// and the closed-loop economy (no withdraw/cashout primitives exist by design).
-
 'use strict';
+// paybox-settle.js — settle SHADDAI marketplace purchases into the selling AGENT's
+// paybox, with a verifiable receipt/proof of task.
+//
+// This is a MERGE of two generations of this module:
+//   • v2 (receipts-only) added idempotent per (user,itemId) receipts.
+//   • v1 (ledger+escrow) provided the x402 credit ledger, 5% fee split, and the
+//     job escrow rail (hold/release/refund) that /api/jobs and server-production use.
+// Keeping BOTH means no caller breaks: settle() is idempotent AND still debits the
+// buyer / credits the seller on the shared x402 ledger, and every legacy export
+// (sellerBalance, listReceipts, resolveSkill, holdEscrow, releaseEscrow, refundEscrow,
+// escrowFor, priceFor, rarityFor, hashStr, PayboxSettleError, FEE_RATE) remains intact.
+//
+//   await settle({ user, itemId, sellerAgent, amountCredits, reason, input, meta }) →
+//     { ok, txId, charged, fee, net, buyerBalance, sellerBalance, receipt }
+//   throws PayboxSettleError with .code/.status for the caller to map to HTTP.
+//
+// Non-custodial: it never moves real on-chain funds, only the in-app SHAD-Credits
+// ledger (shared with x402-routes.js). No withdraw/cashout primitives exist by design.
 
-const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
-const LEDGER = path.join(__dirname, '..', 'data', 'x402-ledger.json');
-const RECEIPTS = path.join(__dirname, '..', 'data', 'paybox-receipts.json');
-const FEE_RATE = 0.05;
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const LEDGER = path.join(DATA_DIR, 'x402-ledger.json');
+const RECEIPTS = path.join(DATA_DIR, 'paybox-receipts.json');
+const ESCROW = path.join(DATA_DIR, 'x402-escrow.json');
+const START_CREDITS = 100;   // matches x402-routes.js — every new user starts with demo credits
+const FEE_RATE = 0.05;       // 5% marketplace fee
 
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
+/* ---------------- x402 credit ledger (shared with x402-routes.js) ---------------- */
 function readLedger() {
-  try { return JSON.parse(fs.readFileSync(LEDGER, 'utf8')); }
+  try { return JSON.parse(fs.readFileSync(LEDGER, 'utf8')) || { balances: {}, txns: [] }; }
   catch (e) { return { balances: {}, txns: [] }; }
 }
 function writeLedger(d) {
   try { fs.writeFileSync(LEDGER, JSON.stringify(d, null, 2)); } catch (e) {}
 }
-function bal(db, u) {
-  return (u in db.balances ? db.balances[u] : (db.balances[u] = 100));
-}
+function bal(db, u) { return (u in db.balances ? db.balances[u] : (db.balances[u] = START_CREDITS)); }
+function r2(n) { return Math.round(n * 100) / 100; }
 
+/* ---------------- receipts (array format, backward compatible) ---------------- */
 function readReceipts() {
-  try { return JSON.parse(fs.readFileSync(RECEIPTS, 'utf8')); }
-  catch (e) { return []; }
+  try {
+    const parsed = JSON.parse(fs.readFileSync(RECEIPTS, 'utf8'));
+    return Array.isArray(parsed) ? parsed : (parsed && parsed.receipts) || [];
+  } catch (e) { return []; }
 }
 function writeReceipts(list) {
-  fs.mkdirSync(path.dirname(RECEIPTS), { recursive: true });
-  try { fs.writeFileSync(RECEIPTS, JSON.stringify(list, null, 2)); } catch (e) {}
+  try { fs.writeFileSync(RECEIPTS, JSON.stringify(list.slice(-2000), null, 2)); } catch (e) {}
 }
-function r2(n) { return Math.round(n * 100) / 100; }
+function findReceipt(user, itemId) {
+  return readReceipts().find(r => r.user === user && r.itemId === itemId) || null;
+}
+function generateReceiptId() { return 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 class PayboxSettleError extends Error {
   constructor(code, status, message) {
@@ -53,11 +64,7 @@ class PayboxSettleError extends Error {
   }
 }
 
-/**
- * Debit the buyer, credit the selling agent's paybox ledger, and write a
- * verifiable receipt/proof-of-task. Throws PayboxSettleError on insufficient
- * funds (402) or invalid input (400). Returns the settled transaction.
- */
+/* ---------------- settle: idempotent buy (debit buyer, credit seller, receipt) ---------------- */
 async function settle({ user, itemId, sellerAgent, amountCredits, reason, input, meta }) {
   const buyer = String(user || 'guest');
   const seller = String(sellerAgent || 'SHADDAI').toUpperCase();
@@ -65,20 +72,32 @@ async function settle({ user, itemId, sellerAgent, amountCredits, reason, input,
   if (!itemId) throw new PayboxSettleError('ITEM_REQUIRED', 400, 'itemId is required');
   if (!(amt > 0)) throw new PayboxSettleError('BAD_AMOUNT', 400, 'amountCredits must be a positive number');
 
+  const existing = findReceipt(buyer, itemId);
+  if (existing) {
+    // Idempotent replay: return the original outcome without double-charging.
+    return {
+      ok: true,
+      txId: existing.txId || 'pb_replay',
+      charged: existing.amount != null ? existing.amount : existing.amountCredits,
+      fee: existing.fee || 0,
+      net: existing.net != null ? existing.net : (existing.amount || 0) - (existing.fee || 0),
+      buyerBalance: bal(readLedger(), buyer),
+      sellerBalance: sellerBalance(seller),
+      receipt: existing,
+      replayed: true,
+    };
+  }
+
   const db = readLedger();
   const buyerBalance = bal(db, buyer);
   if (buyerBalance < amt) {
-    throw new PayboxSettleError(
-      'INSUFFICIENT_CREDITS', 402,
-      `Insufficient SHAD-Credits: have ${buyerBalance}, need ${amt}`
-    );
+    throw new PayboxSettleError('INSUFFICIENT_CREDITS', 402, `Insufficient SHAD-Credits: have ${buyerBalance}, need ${amt}`);
   }
 
   const fee = r2(amt * FEE_RATE);
   const net = r2(amt - fee);
   db.balances[buyer] = r2(buyerBalance - amt);
   db.balances[seller] = r2(bal(db, seller) + net);
-
   const tx = {
     id: 'pb_' + Date.now().toString(36),
     user: buyer,
@@ -94,9 +113,11 @@ async function settle({ user, itemId, sellerAgent, amountCredits, reason, input,
   db.txns = db.txns.slice(0, 2000);
   writeLedger(db);
 
-  // Verifiable receipt / proof of task — the buyer's copy and the seller's proof.
+  const mergedMeta = Object.assign({}, meta || {});
+  if (input !== undefined) mergedMeta.input = input;
+
   const receipt = {
-    id: 'r_' + Date.now().toString(36),
+    id: generateReceiptId(),
     txId: tx.id,
     user: buyer,
     seller,
@@ -107,11 +128,11 @@ async function settle({ user, itemId, sellerAgent, amountCredits, reason, input,
     reason: tx.reason,
     receiptAt: new Date().toISOString(),
     atUs: Date.now(),
-    meta: meta || null,
+    meta: Object.keys(mergedMeta).length ? mergedMeta : null,
   };
   const receipts = readReceipts();
   receipts.push(receipt);
-  writeReceipts(receipts.slice(-2000));
+  writeReceipts(receipts);
 
   return {
     ok: true,
@@ -125,13 +146,10 @@ async function settle({ user, itemId, sellerAgent, amountCredits, reason, input,
   };
 }
 
-/**
- * Read the selling agent's current paybox (ledger) balance, plus a receipt by id.
- */
+/* ---------------- balance + receipts queries (legacy) ---------------- */
 function sellerBalance(sellerAgent) {
   const seller = String(sellerAgent || 'SHADDAI').toUpperCase();
-  const db = readLedger();
-  return db.balances[seller] != null ? db.balances[seller] : bal(db, seller);
+  return bal(readLedger(), seller);
 }
 function getReceipt(receiptId) {
   return readReceipts().find(r => r.id === receiptId) || null;
@@ -140,25 +158,15 @@ function listReceipts(user) {
   return readReceipts().filter(r => !user || r.user === user);
 }
 
-// ── Job escrow (holds the buyer's funds OUT of their spendable balance while a
-//    job is in progress; released to the working agent on completion, refunded on
-//    cancellation). Uses the same x402 ledger, keyed by balance + an escrow map, so
-//    escrowed funds are not double-spendable and the ledger stays the single truth.
-//    Conversion: 1 SHAD-Credit = $0.001, so a job priced in USD holds reward*1000.
-const ESCROW_FILE = path.join(__dirname, '..', 'data', 'x402-escrow.json');
+/* ---------------- job escrow rail (legacy) ---------------- */
 function readEscrow() {
-  try { return JSON.parse(fs.readFileSync(ESCROW_FILE, 'utf8')); }
+  try { return JSON.parse(fs.readFileSync(ESCROW, 'utf8')) || { holds: {} }; }
   catch (e) { return { holds: {} }; }
 }
 function writeEscrow(d) {
-  fs.mkdirSync(path.dirname(ESCROW_FILE), { recursive: true });
-  try { fs.writeFileSync(ESCROW_FILE, JSON.stringify(d, null, 2)); } catch (e) {}
+  try { fs.mkdirSync(path.dirname(ESCROW), { recursive: true }); fs.writeFileSync(ESCROW, JSON.stringify(d, null, 2)); } catch (e) {}
 }
 
-/**
- * Hold escrow for a job: move `amountCredits` from the buyer's spendable balance
- * into the job's reserved escrow. Throws PayboxSettleError(402) if insufficient.
- */
 async function holdEscrow({ buyer, jobId, amountCredits, reason }) {
   const user = String(buyer || 'guest');
   const amt = Number(amountCredits);
@@ -168,10 +176,7 @@ async function holdEscrow({ buyer, jobId, amountCredits, reason }) {
   const db = readLedger();
   const balance = bal(db, user);
   if (balance < amt) {
-    throw new PayboxSettleError(
-      'INSUFFICIENT_CREDITS', 402,
-      `Insufficient SHAD-Credits to hold escrow: have ${balance}, need ${amt}`
-    );
+    throw new PayboxSettleError('INSUFFICIENT_CREDITS', 402, `Insufficient SHAD-Credits to hold escrow: have ${balance}, need ${amt}`);
   }
   db.balances[user] = r2(balance - amt);
   writeLedger(db);
@@ -185,14 +190,9 @@ async function holdEscrow({ buyer, jobId, amountCredits, reason }) {
     heldAt: Date.now(),
   };
   writeEscrow(esc);
-
   return { ok: true, jobId, buyer: user, held: amt, remainingBalance: db.balances[user] };
 }
 
-/**
- * Release escrow to the working agent (job completed): move the hold into the
- * agent's spendable paybox balance. No-op + false if the job has no hold.
- */
 async function releaseEscrow({ jobId, toAgent }) {
   const esc = readEscrow();
   const hold = esc.holds[jobId];
@@ -208,11 +208,9 @@ async function releaseEscrow({ jobId, toAgent }) {
   hold.releasedAt = Date.now();
   esc.holds[jobId] = hold;
   writeEscrow(esc);
-
   return { ok: true, released: true, jobId, toAgent: agent, amount: hold.amount };
 }
 
-/** Refund escrow back to the buyer (job cancelled). No-op + false if no hold. */
 async function refundEscrow({ jobId }) {
   const esc = readEscrow();
   const hold = esc.holds[jobId];
@@ -226,22 +224,14 @@ async function refundEscrow({ jobId }) {
   hold.refundedAt = Date.now();
   esc.holds[jobId] = hold;
   writeEscrow(esc);
-
   return { ok: true, refunded: true, jobId, toBuyer: hold.buyer, amount: hold.amount };
 }
 
-/** Inspect a job's escrow hold (for gating award/execute). */
 function escrowFor(jobId) {
-  const esc = readEscrow();
-  return esc.holds[jobId] || null;
+  return readEscrow().holds[jobId] || null;
 }
 
-// ── deterministic market pricing (mirrors skills-market-routes.js) ─────────
-// Skills in the catalog are priced 5–40 credits by a stable hash of their id,
-// bucketed into common/rare/legendary rarity; a skill's seller is its owning
-// agent (upper-cased, defaulting to SHADDAI). Keeping this here (instead of
-// duplicating the hash) means the public run gate and the market checkout price
-// the same skill identically.
+/* ---------------- deterministic skill pricing (legacy, mirrors skills-market) ---------------- */
 function hashStr(s) {
   let h = 2166136261;
   s = String(s || '');
@@ -254,11 +244,6 @@ function hashStr(s) {
 function priceFor(id) { return 5 + (hashStr('price:' + id) % 36); }
 function rarityFor(price) { return price >= 30 ? 'legendary' : (price >= 18 ? 'rare' : 'common'); }
 
-/**
- * Resolve a skill's marketplace pricing + seller, OR null for any skill that
- * should be treated as free (i.e. not sold through the bazaar). Every priced
- * skill must be paid for before it runs, via settle().
- */
 function resolveSkill(skill) {
   if (!skill || !skill.id) return null;
   const price = priceFor(skill.id);
@@ -288,4 +273,5 @@ module.exports = {
   escrowFor,
   PayboxSettleError,
   FEE_RATE,
+  START_CREDITS,
 };

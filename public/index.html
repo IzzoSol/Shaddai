@@ -75,6 +75,10 @@
         try{ if(u){ localStorage.setItem('shd_signed_in','1'); if(u.email) localStorage.setItem('shd_email',u.email); if(u.displayName) localStorage.setItem('shd_displayName',u.displayName);
           // Unify identity: your account uid becomes shd_userid, so gallery/rooms/office follow your account across devices.
           try{ var _uid=u.uid, _old=localStorage.getItem('shd_userid'); if(_uid){ if(_old&&_old!==_uid){ try{ var _r=localStorage.getItem('shaddai.rooms.'+_old); if(_r&&!localStorage.getItem('shaddai.rooms.'+_uid)) localStorage.setItem('shaddai.rooms.'+_uid,_r); }catch(_e){} } localStorage.setItem('shd_userid',_uid); } }catch(_e){}
+          // Monthly spark stipend: $30/month = 300 sparks
+          try{ var _sparks = Number(localStorage.getItem('shd_sparks')||0||localStorage.getItem('shaddai.sparks')||0); localStorage.setItem('shd_sparks', _sparks + 300); }catch(_e){}
+          // Dispatch storage event so nav updates immediately
+          try{ window.dispatchEvent(new Event('storage')); }catch(_e){}
         } else { localStorage.setItem('shd_signed_in','0'); } }catch(e){}
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
         window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
@@ -4363,7 +4367,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- A4 REMOVED: 💳 Billing nav — now lives inside Office ▸ Billing sub-tab -->
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
-  <button class="nav-btn nav-img" onclick="showView('forge')" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+  <button class="nav-btn nav-img" onclick="showView('forge')" data-guest-lock="4444" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>

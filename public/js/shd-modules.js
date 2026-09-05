@@ -230,7 +230,7 @@
       name: 'SIGNALS',
       kicker: 'ZEROX calls',
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
-      href: '/pro-signals.html',
+      href: '/signals.html',
       art: '/assets/enter/signals.jpg',
       artVary: ['/assets/enter/signals.jpg','/assets/enter/signals-1.jpg','/assets/enter/signals-2.jpg','/assets/enter/signals-3.jpg','/assets/enter/signals-4.jpg'],
       accent: C.rose,
@@ -313,12 +313,11 @@
       id: 'signals', name: 'SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg',
       blurb: 'Live calls — list, bubbles, heatmap and ranked.',
       items: [
-        /* ONE entry, not two. Both pages still exist — the terminal routes
-           phones to /signals.html and the phone view offers the terminal on a
-           wide screen — so a single button lands everyone in the right place
-           and the menu does not ask the user to know which is which. */
-        { id: 'pro', name: 'PRO SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/pro-signals.html',
-          blurb: 'Live calls. The full terminal on a desktop, four fast views on a phone.' },
+        /* ONE honest entry, two renders: the simple one-thumb view lives at
+           /signals.html (list/bubbles/heatmap/ranked, tokenomics + hire ZEROX),
+           and it offers the full desktop terminal on a wide screen. */
+        { id: 'pro', name: 'PRO SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html',
+          blurb: 'Live calls. The simple one-thumb view, or the full terminal on a desktop.' },
         { id: 'tg',     name: 'SHADDAI TG',  accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/m-signals.html', blurb: 'Calls delivered to Telegram.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
       ],

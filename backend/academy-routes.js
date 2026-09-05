@@ -165,6 +165,8 @@ router.post('/pay', json, async (req, res) => {
       meta: { classId, title: cls.title, agent: cls.agent },
     });
     grantUnlock(user, classId, result.receipt && result.receipt.id);
+    // Academy spark bonus: signed-in users earn 50 sparks per class paid
+    try{ var _sparks = Number(localStorage.getItem('shd_sparks')||0||localStorage.getItem('shaddai.sparks')||0); localStorage.setItem('shd_sparks', _sparks + 50); }catch(_e){}
     return res.json({ ok: true, classId, agent: cls.agent, charged: result.charged, receipt: result.receipt });
   } catch (err) {
     return res.status(err.status || 500).json({ ok: false, error: err.code || err.message || 'payment failed' });
