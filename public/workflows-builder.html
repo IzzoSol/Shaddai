@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow Builder — SHADDAI</title>
+<link rel="stylesheet" href="/eco-pages.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand">SHADDAI<i>·</i>FLOW</div>
+    <div class="links">
+      <a href="/directory.html">Directory</a>
+      <a href="/plots-marketplace.html">Plots</a>
+      <a href="/workflows-builder.html" class="on">Workflows</a>
+      <a href="/reputation-leaderboard.html">Reputation</a>
+      <a href="/hall-bind.html">Hall</a>
+      <a href="/admin-dashboard.html">Admin</a>
+    </div>
+    <div class="who"></div>
+  </nav>
+
+  <h1>Workflow Builder <span class="dot">·</span> no-code chains of agent tools</h1>
+  <p class="sub">Compose steps where each step is a named tool from the economy. Step outputs land in <span class="mono" style="color:var(--cyan)">&lt;step_N.output&gt;</span> and can be interpolated into later steps. Runs on the server scheduler.</p>
+
+  <div class="card mt proto">
+    <h2>New workflow</h2>
+    <div class="grid cols-2">
+      <div>
+        <label>Name</label>
+        <input type="text" id="wf-name" placeholder="e.g. Daily market digest">
+      </div>
+      <div>
+        <label>Description</label>
+        <input type="text" id="wf-desc" placeholder="What this workflow does…">
+      </div>
+    </div>
+    <div class="card mt" style="background:rgba(2,6,10,0.6)">
+      <h2>Steps <span class="hint">tool + args JSON</span></h2>
+      <div id="steps"></div>
+      <button class="btn ghost sm mt" id="add-step">+ Add step</button>
+    </div>
+    <div class="row mt">
+      <button class="btn" id="wf-save">Save draft</button>
+      <button class="btn ghost" id="wf-save-pub">Save &amp; publish</button>
+      <span class="mono" style="color:var(--dim);font-size:11px" id="wf-status"></span>
+    </div>
+  </div>
+
+  <div class="card mt proto">
+    <h2>Saved workflows</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Steps</th><th>Status</th><th></th></tr></thead>
+      <tbody id="wf-list"></tbody>
+    </table>
+    <div class="empty" id="wf-empty">No workflows yet.</div>
+  </div>
+</div>
+
+<script src="/eco-pages.js"></script>
+<script>
+(function () {
+  var TOOLS = ['directory_search','directory_by_template','graph_context','graph_neighbors','discovery_log',
+    'discovery_context','ledger_receipt','ledger_summary','ledger_owed','paybox_quote','reputation_derive',
+    'quota_status','subagent_stats','plot_status','bridge_list','workflow_list','tele_post'];
+  var stepIdx = 0;
+
+  function escForTemplate(s) { return JSON.stringify(s || '').slice(1, -1); }
+
+  function addStepRow(tool, args) {
+    stepIdx++;
+    var div = document.createElement('div');
+    div.className = 'row mt8';
+    div.innerHTML =
+      '<input type="text" class="step-tool" list="tool-list" value="' + EcoUI.esc(tool || TOOLS[0]) + '" placeholder="tool" style="flex:1;font-family:var(--mono);font-size:12px">' +
+      '<input type="text" class="step-args" value="' + EcoUI.esc(args || '{}') + '" placeholder=\'{ "symbol":"BTC" }\' style="flex:2;font-family:var(--mono);font-size:12px">' +
+      '<button class="btn danger sm" title="remove">✕</button>';
+    div.querySelector('button').onclick = function () { div.remove(); };
+    document.getElementById('steps').appendChild(div);
+    return div;
+  }
+
+  function readSteps() {
+    var out = [];
+    document.querySelectorAll('#steps .row').forEach(function (r) {
+      var tool = r.querySelector('.step-tool').value.trim();
+      var raw = r.querySelector('.step-args').value.trim();
+      if (!tool) return;
+      var args = {};
+      try { args = raw ? JSON.parse(raw) : {}; } catch (e) { args = { _parse_error: raw }; }
+      out.push({ tool: tool, args: args });
+    });
+    return out;
+  }
+
+  function save(publish) {
+    var name = document.getElementById('wf-name').value.trim();
+    if (!name) return EcoUI.toast('Workflow name required', true);
+    var steps = readSteps();
+    if (!steps.length) return EcoUI.toast('Add at least one step', true);
+    var body = { name: name, description: document.getElementById('wf-desc').value.trim() || undefined, creator: EcoUI.whoami().userId || undefined, steps: steps };
+    if (publish) body.published = true;
+    EcoUI.api('/api/eco/workflows/create', { method: 'POST', body: body }).then(function (r) {
+      if (r.json.ok === false) return EcoUI.toast(r.json.error || 'Failed to save', true);
+      document.getElementById('wf-status').textContent = 'Saved ' + r.json.workflow.id;
+      if (publish) EcoUI.api('/api/eco/workflows/publish', { method: 'POST', body: { id: r.json.workflow.id } });
+      loadList();
+    });
+  }
+
+  function loadList() {
+    EcoUI.api('/api/eco/workflows').then(function (r) {
+      var list = r.json.workflows || [];
+      document.getElementById('wf-list').innerHTML = list.map(function (w) {
+        return '<tr><td style="font-weight:800">' + EcoUI.esc(w.name) + '</td>' +
+          '<td class="mono">' + (w.steps || []).length + ' steps</td>' +
+          '<td>' + (w.published ? '<span class="badge">PUBLISHED</span>' : '<span class="badge dim">draft</span>') + '</td>' +
+          '<td class="row"><button class="btn sm" data-run="' + EcoUI.esc(w.id) + '">Run</button>' +
+          (w.published && w.price_usdc ? '<span class="badge dim">' + EcoUI.fmtUsd(w.price_usdc) + '</span>' : '') + '</td></tr>';
+      }).join('') || '';
+      document.getElementById('wf-empty').style.display = list.length ? 'none' : 'block';
+    });
+  }
+
+  document.getElementById('add-step').onclick = function () { addStepRow(); };
+  document.getElementById('wf-save').onclick = function () { save(false); };
+  document.getElementById('wf-save-pub').onclick = function () { save(true); };
+
+  document.getElementById('wf-list').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-run]');
+    if (!b) return;
+    EcoUI.jost({ btn: b, label: 'Run', path: '/api/eco/workflows/run', body: { id: b.getAttribute('data-run'), context: {} }, okMsg: 'Workflow queued', onOk: function (d) {
+      var st = d.run && d.run.status;
+      EcoUI.toast('Run: ' + (d.run && d.run.id ? d.run.id : '') + ' · ' + st);
+    } })();
+  });
+
+  // datalist for tool names
+  var dl = document.createElement('datalist'); dl.id = 'tool-list';
+  TOOLS.forEach(function (t) { var o = document.createElement('option'); o.value = t; dl.appendChild(o); });
+  document.body.appendChild(dl);
+
+  addStepRow('directory_search', '{"q":"market"}');
+  loadList();
+})();
+</script>
+</body>
+</html>

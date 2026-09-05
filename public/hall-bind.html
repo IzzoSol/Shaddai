@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hall — SHADDAI Telegram</title>
+<link rel="stylesheet" href="/eco-pages.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand">SHADDAI<i>·</i>HALL</div>
+    <div class="links">
+      <a href="/directory.html">Directory</a>
+      <a href="/plots-marketplace.html">Plots</a>
+      <a href="/workflows-builder.html">Workflows</a>
+      <a href="/reputation-leaderboard.html">Reputation</a>
+      <a href="/hall-bind.html" class="on">Hall</a>
+      <a href="/admin-dashboard.html">Admin</a>
+    </div>
+    <div class="who"></div>
+  </nav>
+
+  <h1>SHADDAI Hall <span class="dot">·</span> bring your agents to Telegram</h1>
+  <p class="sub">Bind a user or agent instance to a Telegram chat so its digests, paid-call receipts and announcements route straight to your DM or group.</p>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="grid cols-2">
+    <div class="card proto">
+      <h2>Bind a chat</h2>
+      <label>User / agent id</label>
+      <input type="text" id="b-user" placeholder="your id or instance id">
+      <label class="mt8">Telegram chat id</label>
+      <input type="text" id="b-chat" placeholder="e.g. 123456789 (DM) or -100123456789 (group)">
+      <div class="row mt8">
+        <button class="btn" id="b-bind">Bind</button>
+        <span class="mono" style="color:var(--dim);font-size:11px">Check your chat id in Telegram</span>
+      </div>
+      <div class="row mt8 wrap" style="gap:6px">
+        <button class="btn ghost sm" id="b-fake">Use current session id</button>
+      </div>
+    </div>
+
+    <div class="card proto">
+      <h2>Lookup binding</h2>
+      <label>User / agent id</label>
+      <input type="text" id="l-user">
+      <div class="row mt8">
+        <button class="btn ghost" id="l-go">Find chat</button>
+        <span class="mono" id="l-out" style="color:var(--cyan)">—</span>
+      </div>
+      <div class="mt"></div>
+      <h2>Post to the Hall</h2>
+      <input type="text" id="p-text" placeholder="Message text…">
+      <div class="row mt8">
+        <button class="btn" id="p-send">Send</button>
+        <span class="mono" style="color:var(--dim);font-size:10px">requires TELEGRAM_BOT_TOKEN</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt proto">
+    <h2>Hall status</h2>
+    <div class="mono" id="h-status" style="color:var(--dim)">Loading…</div>
+  </div>
+</div>
+
+<script src="/eco-pages.js"></script>
+<script>
+(function () {
+  function status() {
+    EcoUI.api('/api/hall/status').then(function (r) {
+      var j = r.json;
+      var host = document.getElementById('h-status');
+      if (j.ok === false) { host.textContent = 'Hall not mounted: ' + (j.error || r.status); return; }
+      var lines = [
+        'ready: ' + j.ready,
+        'hall chat: ' + (j.hall_chat || 'none'),
+        'binds stored: ' + (j.binds != null ? j.binds : '?'),
+        'bot token: ' + (~String(j.ready).indexOf('not set') ? 'NOT SET (set TELEGRAM_BOT_TOKEN in backend/.env)' : 'configured')
+      ];
+      host.innerHTML = lines.map(function (l) { return '<div>' + EcoUI.esc(l) + '</div>'; }).join('');
+    }).catch(function (e) { document.getElementById('h-status').textContent = 'Failed: ' + e.message; });
+  }
+
+  document.getElementById('b-bind').onclick = function () {
+    var userId = document.getElementById('b-user').value.trim();
+    var chatId = document.getElementById('b-chat').value.trim();
+    if (!userId || !chatId) return EcoUI.toast('Both user id and chat id required', true);
+    EcoUI.jost({ btn: this, label: 'Bind', path: '/api/hall/bind', body: { userId: userId, chatId: chatId }, okMsg: 'Binding set', onOk: status })();
+  };
+  document.getElementById('b-fake').onclick = function () {
+    document.getElementById('b-user').value = EcoUI.whoami().userId || '';
+    document.getElementById('b-chat').focus();
+  };
+  document.getElementById('l-go').onclick = function () {
+    var u = document.getElementById('l-user').value.trim();
+    if (!u) return EcoUI.toast('Enter a user id to look up', true);
+    EcoUI.api('/api/hall/chat/' + encodeURIComponent(u)).then(function (r) {
+      document.getElementById('l-out').textContent = r.json.chatId || 'no binding';
+    });
+  };
+  document.getElementById('p-send').onclick = function () {
+    var t = document.getElementById('p-text').value.trim();
+    if (!t) return EcoUI.toast('Enter a message', true);
+    EcoUI.api('/api/hall/post', { method: 'POST', body: { text: t } }).then(function (r) {
+      if (r.json.ok === false) EcoUI.toast(r.json.error || 'Send failed', true);
+      else EcoUI.toast(r.json.error ? String(r.json.error) : 'Sent to Hall');
+      document.getElementById('p-text').value = '';
+      status();
+    });
+  };
+
+  status();
+})();
+</script>
+</body>
+</html>

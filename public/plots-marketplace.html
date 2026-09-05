@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plots Marketplace — SHADDAI</title>
+<link rel="stylesheet" href="/eco-pages.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand">SHADDAI<i>·</i>PLOTS</div>
+    <div class="links">
+      <a href="/directory.html">Directory</a>
+      <a href="/plots-marketplace.html" class="on">Plots</a>
+      <a href="/workflows-builder.html">Workflows</a>
+      <a href="/reputation-leaderboard.html">Reputation</a>
+      <a href="/hall-bind.html">Hall</a>
+      <a href="/admin-dashboard.html">Admin</a>
+    </div>
+    <div class="who"></div>
+  </nav>
+
+  <h1>Digital Plots <span class="dot">·</span> own a corner of SHADDAI</h1>
+  <p class="sub">Purchase a plot in the Bazaar, Oracle Tower, Nexus Hub or the Arena. Plots accrue rent to their owners — paper ownership today, NFT minting hooks later.</p>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="grid cols-4" id="districts"></div>
+
+  <div class="card mt proto">
+    <h2>Owned plots <span class="hint" id="owned-count"></span></h2>
+    <table>
+      <thead><tr><th>Plot</th><th>District</th><th>Owner</th><th>Rent (USDC)</th><th>Last rent</th><th></th></tr></thead>
+      <tbody id="owned-body"></tbody>
+    </table>
+    <div class="empty" id="owned-empty">No plots owned yet.</div>
+  </div>
+
+  <div class="card mt proto">
+    <h2>Available to buy</h2>
+    <table>
+      <thead><tr><th>Plot</th><th>District</th><th>Price (USDC)</th><th>Rent (USDC)</th><th></th></tr></thead>
+      <tbody id="avail-body"></tbody>
+    </table>
+    <div class="empty" id="avail-empty">No plots for sale.</div>
+  </div>
+</div>
+
+<script src="/eco-pages.js"></script>
+<script>
+(function () {
+  function load() {
+    EcoUI.api('/api/eco/plots/status').then(function (s) {
+      if (s.json.ok === false) { EcoUI.toast(s.json.error || 'Failed to load plots', true); return; }
+      var districts = s.json.districts || [];
+      var me = EcoUI.whoami().userId;
+      document.getElementById('districts').innerHTML = districts.map(function (d) {
+        return '<div class="card" style="border-top:2px solid var(--green)">' +
+          '<div class="stat"><b>' + EcoUI.fmtUsd(d.price_usdc) + '</b><span>' + EcoUI.esc(d.name) + '</span></div>' +
+          '<div class="mono mt" style="color:var(--dim)">' + EcoUI.esc(d.id) + '</div>' +
+          '<div class="mt" style="font-size:12px;color:var(--dim)">rent <span style="color:var(--cyan)">' + EcoUI.fmtUsd(d.rent_usdc) + '</span> /period</div>' +
+          '<button class="btn sm mt" data-claim="' + EcoUI.esc(d.id) + '">Claim a plot</button>' +
+        '</div>';
+      }).join('');
+
+      return EcoUI.api('/api/eco/plots');
+    }).then(function (r) {
+      if (!r) return;
+      var plots = (r.json.plots || []).slice();
+      var owned = plots.filter(function (p) { return p.owner; });
+      var avail = plots.filter(function (p) { return !p.owner; });
+      document.getElementById('owned-body').innerHTML = owned.map(function (p) {
+        return '<tr><td class="mono">' + EcoUI.esc(p.id) + '</td><td>' + EcoUI.esc(p.districtId) + '</td>' +
+          '<td class="mono">' + EcoUI.esc(p.owner || '—') + '</td>' +
+          '<td>' + EcoUI.fmtUsd(p.rent_usdc || 0) + '</td>' +
+          '<td class="mono">' + EcoUI.ago(p.lastRentAt || p.last_rent_at) + '</td>' +
+          '<td>' + (me && p.owner === me ? '<button class="btn danger sm" data-rent="' + EcoUI.esc(p.id) + '">Collect rent</button>' : '<span class="badge dim">tenant</span>') + '</td></tr>';
+      }).join('') || '<tr><td class="empty" colspan="6">None</td></tr>';
+      document.getElementById('owned-empty').style.display = owned.length ? 'none' : 'block';
+      document.getElementById('owned-count').textContent = '· ' + owned.length;
+
+      document.getElementById('avail-body').innerHTML = avail.length ? avail.map(function (p) {
+        return '<tr><td class="mono">' + EcoUI.esc(p.id) + '</td><td>' + EcoUI.esc(p.districtId) + '</td>' +
+          '<td>' + EcoUI.fmtUsd(p.price_usdc) + '</td><td>' + EcoUI.fmtUsd(p.rent_usdc) + '</td>' +
+          '<td><button class="btn sm" data-buy="' + EcoUI.esc(p.id) + '">Buy (' + EcoUI.fmtUsd(p.price_usdc) + ')</button></td></tr>';
+      }).join('') : '<tr><td class="empty" colspan="5">All plots claimed.</td></tr>';
+
+      document.getElementById('avail-empty').style.display = avail.length ? 'none' : 'block';
+    }).catch(function (e) { EcoUI.toast(e.message || 'Failed to load plots', true); });
+  }
+
+  document.addEventListener('click', function (e) {
+    var claim = e.target.closest('[data-claim]');
+    var buy = e.target.closest('[data-buy]');
+    var rent = e.target.closest('[data-rent]');
+    var me = EcoUI.whoami().userId;
+    if (claim) {
+      var districtId = claim.getAttribute('data-claim');
+      var name = (districtId + '-plot-' + Math.floor(100 + Math.random() * 900));
+      EcoUI.jost({ btn: claim, label: 'Claim a plot', path: '/api/eco/plots/create', body: { districtId: districtId, name: name }, okMsg: 'Plot created — now buy it', onOk: load })();
+    } else if (buy) {
+      EcoUI.jost({ btn: buy, label: 'Buy', path: '/api/eco/plots/buy', body: { plotId: buy.getAttribute('data-buy'), owner: me || undefined }, okMsg: 'Plot purchased', onOk: load })();
+    } else if (rent) {
+      EcoUI.jost({ btn: rent, label: 'Collect rent', path: '/api/eco/plots/accrue-rent', body: {}, okMsg: 'Rent accrued', onOk: load })();
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

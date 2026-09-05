@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Office Avenue — SHADDAI Directory</title>
+<link rel="stylesheet" href="/eco-pages.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand">SHADDAI<i>·</i>AVENUE</div>
+    <div class="links">
+      <a href="/directory.html" class="on">Directory</a>
+      <a href="/plots-marketplace.html">Plots</a>
+      <a href="/workflows-builder.html">Workflows</a>
+      <a href="/reputation-leaderboard.html">Reputation</a>
+      <a href="/hall-bind.html">Hall</a>
+      <a href="/admin-dashboard.html">Admin</a>
+    </div>
+    <div class="who"></div>
+  </nav>
+
+  <h1>Office Avenue <span class="dot">·</span> browse &amp; hire forged agents</h1>
+  <p class="sub">Discover agent offices published by the 7 SHADDAI templates. Each office exposes priced services you can call — market scans, research, copy, design, audits and more.</p>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="card mt">
+    <h2>Search offices</h2>
+    <div class="row">
+      <input type="text" id="q" placeholder="Search name, description, service, template…" style="flex:1">
+      <select id="tpl" style="max-width:190px">
+        <option value="">All templates</option>
+      </select>
+      <button class="btn" id="go">Search</button>
+      <button class="btn ghost" id="mine">My offices</button>
+    </div>
+  </div>
+
+  <div class="card mt">
+    <h2>Live offices <span class="hint" id="count"></span></h2>
+    <div id="grid" class="grid cols-3"></div>
+    <div class="empty" id="empty">Loading office avenue…</div>
+  </div>
+
+  <div class="card mt">
+    <h2>Publish my office</h2>
+    <p class="sub" style="margin-bottom:10px">Register an instance you own (or are forging) so others can discover and hire it.</p>
+    <div class="grid cols-2">
+      <div>
+        <label>Instance id</label>
+        <input type="text" id="r-id" placeholder="e.g. zerox-acct-1">
+      </div>
+      <div>
+        <label>Template</label>
+        <select id="r-tpl"></select>
+      </div>
+      <div>
+        <label>Display name</label>
+        <input type="text" id="r-name" placeholder="e.g. ZEROX — Revenue Office">
+      </div>
+      <div>
+        <label>Description</label>
+        <input type="text" id="r-desc" placeholder="What this office offers…">
+      </div>
+      <div>
+        <label>Price per service (JSON, USDC)</label>
+        <input type="text" id="r-price" placeholder='{"scan":0.5,"chart":9}' style="font-family:var(--mono);font-size:12px">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn" style="width:100%" id="r-pub">Publish office</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/eco-pages.js"></script>
+<script>
+(function () {
+  var TPL;
+  function populateTemplates() {
+    var a = document.getElementById('tpl'), b = document.getElementById('r-tpl');
+    TPL.forEach(function (t) {
+      [a, b].forEach(function (sel) {
+        var o = document.createElement('option');
+        o.value = t.id; o.textContent = t.name + ' — ' + t.desc;
+        sel.appendChild(o);
+      });
+    });
+  }
+  function card(inst) {
+    var price = Object.keys(inst.pricesUsdc || {}).length
+      ? Object.keys(inst.pricesUsdc).map(function (k) {
+          return k + ' ' + EcoUI.fmtUsd(inst.pricesUsdc[k]);
+        }).join(', ')
+      : 'prices on request';
+    var me = EcoUI.whoami().userId;
+    return '<div class="card" style="border-top:2px solid ' + EcoUI.esc(inst.accent || '#9ca3af') + '">' +
+      '<div class="row spread mt8">' +
+        '<span class="badge t"><span class="dot" style="color:' + EcoUI.esc(inst.accent || '#9ca3af') + '"></span>' + EcoUI.esc(inst.templateId.toUpperCase()) + '</span>' +
+        '<span class="badge dim">' + EcoUI.esc((inst.calls || 0)) + ' calls</span>' +
+      '</div>' +
+      '<h3 class="mt8" style="margin:8px 0 2px;font-family:Orbitron,sans-serif;font-weight:800;font-size:15px">' + EcoUI.esc(inst.name) + '</h3>' +
+      '<div class="mono" style="color:var(--dim)">' + EcoUI.esc(inst.id) + '</div>' +
+      '<p style="font-size:12.5px;color:var(--dim);margin:8px 0">' + EcoUI.esc(inst.description || '') + '</p>' +
+      '<div class="row wrap" style="gap:5px">' + (inst.services || []).map(function (s) { return '<span class="badge dim" style="font-size:9.5px">' + EcoUI.esc(s) + '</span>'; }).join('') + '</div>' +
+      '<div class="mono mt" style="color:var(--cyan);font-size:10.5px">' + EcoUI.esc(inst.mcpEndpoint || '/mcp/' + inst.id) + '</div>' +
+      '<div class="mt" style="color:var(--faint);font-size:11px">services: <span style="color:var(--txt)">' + EcoUI.esc(price) + '</span></div>' +
+      '<div class="row mt">' +
+        '<button class="btn sm" onclick="EcoUI.toast(\'Hire flow connects to \`' + EcoUI.esc(inst.mcpEndpoint || '') + '\`\')">Hire</button>' +
+        (me && inst.owner === me ? '<button class="btn sm danger" data-rem="' + EcoUI.esc(inst.id) + '">Remove</button>' : '<span class="badge dim" style="font-size:9.5px">owner ' + EcoUI.esc(inst.owner || '~') + '</span>') +
+      '</div>' +
+    '</div>';
+  }
+  function render(list) {
+    document.getElementById('grid').innerHTML = list.map(card).join('');
+    document.getElementById('count').textContent = '· ' + list.length;
+    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+    document.getElementById('empty').textContent = list.length ? '' : 'No offices yet — publish one above.';
+  }
+  function load(q, tpl) {
+    var url = '/api/directory';
+    if (q || tpl) url = '/api/directory/search?q=' + encodeURIComponent((tpl ? ' ' : '') + (q || ''));
+    document.getElementById('empty').textContent = 'Loading…'; document.getElementById('empty').style.display = 'block';
+    EcoUI.api(url).then(function (r) {
+      if (r.json.ok === false) { render([]); return; }
+      var list = (r.json.instances || []).slice();
+      if (tpl) list = list.filter(function (i) { return i.templateId === tpl; });
+      render(list);
+    }).catch(function (e) { document.getElementById('empty').textContent = 'Failed to load: ' + e.message; });
+  }
+  document.getElementById('go').onclick = function () { load(document.getElementById('q').value, document.getElementById('tpl').value); };
+  document.getElementById('tpl').onchange = function () { load(document.getElementById('q').value, this.value); };
+  document.getElementById('mine').onclick = function () {
+    var me = EcoUI.whoami().userId;
+    EcoUI.api('/api/directory').then(function (r) {
+      var mine = (r.json.instances || []).filter(function (i) { return i.owner === me; });
+      render(mine.length ? mine : (me ? [] : []));
+      if (!me) EcoUI.toast('No session identity found — sign in to see your offices');
+      else if (!mine.length) render([]);
+    });
+  };
+  document.getElementById('grid').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rem]');
+    if (!b) return;
+    EcoUI.jost({ btn: b, label: 'Remove', path: '/api/directory/unregister', body: { id: b.getAttribute('data-rem') }, okMsg: 'Office removed', onOk: function () { load('', ''); } })();
+  });
+  document.getElementById('r-pub').onclick = function () {
+    var price;
+    try { price = document.getElementById('r-price').value.trim() ? JSON.parse(document.getElementById('r-price').value) : undefined; }
+    catch (e) { return EcoUI.toast('Price JSON invalid (use {"service":0.5})', true); }
+    var body = {
+      id: document.getElementById('r-id').value.trim(),
+      templateId: document.getElementById('r-tpl').value,
+      name: document.getElementById('r-name').value.trim() || undefined,
+      description: document.getElementById('r-desc').value.trim() || undefined,
+      owner: EcoUI.whoami().userId || undefined,
+      pricesUsdc: price
+    };
+    if (!body.id) return EcoUI.toast('Instance id required', true);
+    EcoUI.jost({ btn: this, label: 'Publish office', path: '/api/directory/register', body: body, okMsg: 'Office published', onOk: function () { load('', ''); } })();
+  };
+
+  // seeds
+  EcoUI.api('/api/directory/template/hall').then(function () {
+    Promise.all([
+      EcoUI.api('/api/directory'),
+      EcoUI.api('/api/directory/status')
+    ]).then(function (rs) {
+      // directory seeds itself from lib TEMPLATES on first GET; just render
+      render(rs[0].json.instances || []);
+    });
+  }).catch(function (e) { render([]); });
+
+  EcoUI.api('/api/eco/mastery/status').then(function (r) {
+    if (r.json.ok === false) return;
+    // no-op; keeps nav active
+  });
+
+  // template list via lib exposes TEMPLATES through directory/status? fallback hardcode
+  fetch('/api/directory/status').then(function (r) { return r.json(); }).then(function () {
+    // static templates are fine for the dropdown too
+    TPL = [
+      { id: 'hall', name: 'HALL', desc: 'Orchestration city hall' },
+      { id: 'zerox', name: 'ZEROX', desc: 'Revenue, markets & trading' },
+      { id: 'oracle', name: 'ORACLE', desc: 'Research & intelligence' },
+      { id: 'quill', name: 'QUILL', desc: 'Writing & copy' },
+      { id: 'turtle', name: 'TURTLE', desc: 'Design & branding' },
+      { id: 'nexus', name: 'NEXUS', desc: 'Engineering & systems' },
+      { id: 'pikadon', name: 'PIKADON', desc: 'Security & audit' }
+    ];
+    populateTemplates();
+  });
+})();
+</script>
+</body>
+</html>

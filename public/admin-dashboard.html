@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard — SHADDAI Economy</title>
+<link rel="stylesheet" href="/eco-pages.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand">SHADDAI<i>·</i>ADMIN</div>
+    <div class="links">
+      <a href="/directory.html">Directory</a>
+      <a href="/plots-marketplace.html">Plots</a>
+      <a href="/workflows-builder.html">Workflows</a>
+      <a href="/reputation-leaderboard.html">Reputation</a>
+      <a href="/hall-bind.html">Hall</a>
+      <a href="/admin-dashboard.html" class="on">Admin</a>
+    </div>
+    <div class="who"></div>
+  </nav>
+
+  <h1>Economy Admin <span class="dot">·</span> ledger, scheduler, quota, health</h1>
+  <p class="sub">Read-only health + operational views of the agent economy. Payouts, scheduler jobs and quota state are shown here for monitoring.</p>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h2>Health <span class="hint" id="h-ts"></span></h2>
+      <div id="health-modules" class="row wrap"></div>
+      <div class="mt mono" id="health-line" style="color:var(--dim);font-size:11px">Loading…</div>
+    </div>
+    <div class="card">
+      <h2>Ledger</h2>
+      <div class="row wrap" id="ledger-stats"></div>
+      <table class="mt"><tbody id="ledger-owed"></tbody></table>
+    </div>
+    <div class="card">
+      <h2>Scheduler</h2>
+      <div id="sched-list"></div>
+    </div>
+  </div>
+
+  <div class="card mt">
+    <h2>Free-tier quota</h2>
+    <div class="row">
+      <input type="text" id="q-id" placeholder="user id" style="max-width:280px;flex:1">
+      <button class="btn ghost" id="q-lookup">Check</button>
+      <span class="mono" id="q-out" style="color:var(--cyan)">—</span>
+    </div>
+  </div>
+</div>
+
+<script src="/eco-pages.js"></script>
+<script>
+(function () {
+  function loadHealth() {
+    EcoUI.api('/api/eco/health').then(function (r) {
+      var d = r.json;
+      var line = document.getElementById('health-line');
+      if (d.ok === false) { line.textContent = 'Health failed: ' + (d.error || r.status); return; }
+      var mods = document.querySelectorAll('#health-modules'); mods.forEach(function (m) { m.remove(); });
+      var wrap = document.getElementById('health-modules');
+      var hWrap = document.createElement('div'); hWrap.className = 'row wrap'; hWrap.id = 'health-modules';
+      Object.keys(d.modules || {}).forEach(function (k) {
+        var s = d.modules[k];
+        var badge = document.createElement('span');
+        badge.className = 'badge' + (s.ok ? '' : ' dim');
+        badge.innerHTML = '<span class="dot" style="color:' + (s.ok ? 'var(--green)' : 'var(--red)') + '"></span>' + EcoUI.esc(k);
+        hWrap.appendChild(badge);
+      });
+      wrap.replaceWith(hWrap);
+      document.getElementById('h-ts').textContent = '· aggregate ' + (d.ok ? 'OK' : 'DEGRADED');
+      line.textContent = 'platform: ' + (d.platform || '?') + ' · modules: ' + (d.modules_total || 0);
+    }).catch(function (e) { document.getElementById('health-line').textContent = 'Failed: ' + e.message; });
+  }
+
+  function loadLedger() {
+    EcoUI.api('/api/eco/ledger/summary').then(function (r) {
+      var d = r.json;
+      var s = document.getElementById('ledger-stats');
+      if (d.ok === false) { s.innerHTML = '<div class="empty">Ledger not mounted</div>'; return; }
+      s.innerHTML = [
+        '<div class="stat"><b>' + EcoUI.fmtUsd(d.gross || 0) + '</b><span>gross</span></div>',
+        '<div class="stat"><b>' + EcoUI.fmtUsd(d.hall_cut || 0) + '</b><span>hall cut</span></div>',
+        '<div class="stat"><b>' + EcoUI.fmtUsd(d.owner_share || 0) + '</b><span>owner share</span></div>',
+        '<div class="stat"><b>' + EcoUI.fmtUsd(d.payouts || 0) + '</b><span>paid out</span></div>'
+      ].join('');
+      var owed = d.owed || d.per_instance || [];
+      var rows = Object.keys(owed).map(function (k) {
+        return '<tr><td class="mono">' + EcoUI.esc(k) + '</td><td>' + EcoUI.fmtUsd(owed[k]) + '</td></tr>';
+      }).join('');
+      document.getElementById('ledger-owed').innerHTML = rows ? rows : '<tr><td class="empty" colspan="2">No outstanding payouts</td></tr>';
+    }).catch(function () {});
+    EcoUI.api('/api/eco/ledger/owed').then(function (r) {
+      var d = r.json;
+      if (d.ok === false) return;
+      var owed = d.owed || {};
+      var rows = Object.keys(owed).map(function (k) {
+        return '<tr><td class="mono">' + EcoUI.esc(k) + '</td><td>' + EcoUI.fmtUsd(owed[k]) + '</td></tr>';
+      }).join('');
+      document.getElementById('ledger-owed').innerHTML = rows ? rows : '<tr><td class="empty" colspan="2">No outstanding payouts</td></tr>';
+    }).catch(function () {});
+  }
+
+  function loadScheduler() {
+    EcoUI.api('/api/scheduler/jobs').then(function (r) {
+      var d = r.json;
+      var el = document.getElementById('sched-list');
+      var jobs = d.jobs || [];
+      if (!jobs.length) { el.innerHTML = '<div class="empty">No jobs scheduled</div>'; return; }
+      el.innerHTML = jobs.map(function (j) {
+        return '<div class="row spread mt8" style="font-size:12px"><span class="mono">' + EcoUI.esc(j.type || j.id) + '</span>' +
+          (j.enabled === false ? '<span class="badge dim">paused</span>' : '<span class="badge">' + (j.every_ms ? (Math.round(j.every_ms / 3600000) + 'h') : 'once') + '</span>') + '</div>';
+      }).join('');
+    }).catch(function () { document.getElementById('sched-list').innerHTML = '<div class="empty">Scheduler not available</div>'; });
+  }
+
+  document.getElementById('q-lookup').onclick = function () {
+    var id = document.getElementById('q-id').value.trim();
+    if (!id) return EcoUI.toast('Enter a user id', true);
+    EcoUI.api('/api/eco/quota/status/' + encodeURIComponent(id)).then(function (r) {
+      var d = r.json;
+      if (d.ok === false) { document.getElementById('q-out').textContent = 'not found'; return; }
+      document.getElementById('q-out').textContent = (d.usage_today || 0) + ' used · ' + d.free_tier_daily_calls + ' free/day · ' + (d.has_free_calls ? 'remaining ' + (d.remaining) : 'USED UP');
+    });
+  };
+
+  loadHealth();
+  loadLedger();
+  loadScheduler();
+})();
+</script>
+</body>
+</html>
