@@ -508,7 +508,16 @@
   function openSheet(el, dim) {
     build();
     closeSheets(true);
-    if (dim !== false) scrim.classList.add('on');
+    if (dim !== false) {
+      /* Clear the inline pointer-events/opacity/visibility that closeSheets()
+         left behind on a prior close — otherwise the inline "none" overrides
+         the .on class's "auto" and the scrim stops receiving clicks, trapping
+         the user (Esc-only). */
+      scrim.style.opacity = '';
+      scrim.style.pointerEvents = '';
+      scrim.style.visibility = '';
+      scrim.classList.add('on');
+    }
     el.classList.add('on');
   }
   function closeSheets(keepScrim) {
