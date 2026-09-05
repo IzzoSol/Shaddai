@@ -65375,9 +65375,9 @@
       "entryFdv": 133924,
       "entryPrice": 0.000001506,
       "ts": 1787407744548,
-      "peakMult": 1.9745527313998985,
-      "curMult": 1.9745527313998985,
-      "curFdv": 264440,
+      "peakMult": 2.095733401033422,
+      "curMult": 2.095733401033422,
+      "curFdv": 280669,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -65402,7 +65402,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -65765,9 +65767,9 @@
       "entryFdv": 27474.33,
       "entryPrice": 0.00002747,
       "ts": 1787929240629,
-      "peakMult": 2.022068964011133,
-      "curMult": 2.022068964011133,
-      "curFdv": 55554.99,
+      "peakMult": 2.467976471127776,
+      "curMult": 2.467976471127776,
+      "curFdv": 67806,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -67694,9 +67696,9 @@
       "entryFdv": 190656,
       "entryPrice": 0.000002055,
       "ts": 1787960426413,
-      "peakMult": 1.9518871685129238,
-      "curMult": 1.9518871685129238,
-      "curFdv": 372139,
+      "peakMult": 2.0716001594494795,
+      "curMult": 2.0716001594494795,
+      "curFdv": 394963,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -67721,7 +67723,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -74982,9 +74986,9 @@
       "entryFdv": 34635,
       "entryPrice": 4.098e-8,
       "ts": 1788134345174,
-      "peakMult": 133.5618298450157,
-      "curMult": 133.5618298450157,
-      "curFdv": 11409920,
+      "peakMult": 272.6401765229199,
+      "curMult": 272.6401765229199,
+      "curFdv": 23291105,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -77818,9 +77822,9 @@
       "entryFdv": 5682.14,
       "entryPrice": 5.571e-7,
       "ts": 1788259269291,
-      "peakMult": 4.266174363884029,
-      "curMult": 4.266174363884029,
-      "curFdv": 24241,
+      "peakMult": 4.301724350332797,
+      "curMult": 4.301724350332797,
+      "curFdv": 24443,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -78457,9 +78461,9 @@
       "entryFdv": 23270,
       "entryPrice": 4.74e-7,
       "ts": 1788273801514,
-      "peakMult": 1.0641168886978942,
-      "curMult": 1.0641168886978942,
-      "curFdv": 24762,
+      "peakMult": 1.8902922978451036,
+      "curMult": 1.8902922978451036,
+      "curFdv": 44299,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -79396,9 +79400,9 @@
       "entryFdv": 212771,
       "entryPrice": 0.000002202,
       "ts": 1788552107700,
-      "peakMult": 1.0224090689050669,
-      "curMult": 1.0224090689050669,
-      "curFdv": 217539,
+      "peakMult": 1.0616343392661594,
+      "curMult": 1.0616343392661594,
+      "curFdv": 225885,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -79669,9 +79673,9 @@
       "entryFdv": 20832.31,
       "entryPrice": 2.048e-7,
       "ts": 1788554477439,
-      "peakMult": 1.0300787574685668,
-      "curMult": 1.0300787574685668,
-      "curFdv": 21458.92,
+      "peakMult": 1.1448197535462943,
+      "curMult": 1.1448197535462943,
+      "curFdv": 23849.24,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -79691,6 +79695,240 @@
         "lpPct": 0,
         "holders": 0,
         "fdvAtCall": 20832.31,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "9iJ3SgyhrPKZeXv5NhYgbzwK2Kig2dWcfgRu6WN1pump",
+      "chain": "solana",
+      "name": "apecat",
+      "symbol": "apecat",
+      "source": "boosted",
+      "entryFdv": 107196,
+      "entryPrice": 0.000001099,
+      "ts": 1788576402275,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 107196,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 107196,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "27JbcDFEgqrJLaqJg7QvZ58NQkZtE13mtyaz8M9ipump",
+      "chain": "solana",
+      "name": "Patriot",
+      "symbol": "PAT",
+      "source": "boosted",
+      "entryFdv": 7818.22,
+      "entryPrice": 7.675e-8,
+      "ts": 1788576402484,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 7818.22,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 7818.22,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "Ftco1ebhZd5Z53sHcnMkueCpwGd4zXWZbGv5vDfqHPy8",
+      "chain": "solana",
+      "name": "Anonymous Smoking Fish",
+      "symbol": "ZUSHI",
+      "source": "boosted",
+      "entryFdv": 14615,
+      "entryPrice": 1.419e-8,
+      "ts": 1788576402589,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 14615,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 14615,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "HTGTTmRRPFAnStoeDT9ybjaMBtQGnQqdFwdf9zHBpump",
+      "chain": "solana",
+      "name": "Hook",
+      "symbol": "Hook",
+      "source": "boosted",
+      "entryFdv": 8148.42,
+      "entryPrice": 8.003e-8,
+      "ts": 1788576402719,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 8148.42,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 8148.42,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "8H5yfL1GoDETLDaLYZzrgQuZs37eiKJjdfP21b6ypump",
+      "chain": "solana",
+      "name": "SAAR",
+      "symbol": "SAAR",
+      "source": "boosted",
+      "entryFdv": 64629,
+      "entryPrice": 6.588e-7,
+      "ts": 1788576402819,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 64629,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 64629,
+        "volAtCall": 0,
+        "liqAtCall": 0,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "A6PVnMVFm3tFCjz3FDwWDR7YcUEqfe5wRSkawaEFpump",
+      "chain": "solana",
+      "name": "Bonzi Scheme",
+      "symbol": "BONZI",
+      "source": "boosted",
+      "entryFdv": 6699,
+      "entryPrice": 7.156e-8,
+      "ts": 1788576402918,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 6699,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 6699,
         "volAtCall": 0,
         "liqAtCall": 0,
         "devPct": 0,
