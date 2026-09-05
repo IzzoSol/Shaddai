@@ -220,6 +220,19 @@ Districts: `bazaar`, `oracle_tower`, `nexus_hub`, `arena`.
 
 ---
 
+## Virtuals ACP — ZEROX identity & wallet status (read-only)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/virtuals/status` | ACP registration state + agent id/name/wallet (never echoes the key) |
+| GET | `/api/virtuals/agent/:id` | Public marketplace listing: name, token, offerings (no key needed) |
+| GET | `/api/virtuals/wallets` | Live Base ETH + Solana SOL balances of the ZEROX agent wallets |
+
+Backs the ZEROX · Virtuals ACP card on `simple-signals.html`. Mirrors the MCP
+`zerox_virtuals_me` / `zerox_virtuals_agent` / `zerox_wallet_status` tools.
+
+---
+
 ## Auth notes
 
 - **Identity**: send `Authorization: Bearer <token>` (Firebase ID token or the

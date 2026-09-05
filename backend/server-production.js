@@ -1763,6 +1763,15 @@ try {
   console.warn('[prod] Eco economy REST failed:', e.message);
 }
 
+// VIRTUALS ACP — read-only identity/marketplace/wallet surface for the terminals
+// (mirrors the MCP zerox_virtuals_* tools; GET-only, never exposes the API key).
+try {
+  app.use(require('./routes/virtuals-routes'));
+  console.log('[prod] Virtuals ACP REST mounted (/api/virtuals/*)');
+} catch (e) {
+  console.warn('[prod] Virtuals ACP REST failed:', e.message);
+}
+
 /* GET /api/paybox/wallets — the ZEROX FOMO wallets shown on the front door.
    Read from data/paybox-wallets.json every call (not cached) so rotating an
    address takes effect immediately. Returns an empty list rather than an error

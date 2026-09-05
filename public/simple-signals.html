@@ -136,6 +136,20 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .act .hire{background:var(--gold);color:#140f02;border-color:var(--gold)}
 .hnote{font-size:11px;color:var(--faint);line-height:1.6;margin-top:4px}
 .hnote b{color:var(--soft);font-family:var(--f-mono);font-weight:400}
+.vscard{background:linear-gradient(150deg,rgba(76,201,240,.08),rgba(232,196,92,.04));border:1px solid rgba(76,201,240,.28);border-radius:14px;padding:16px;margin-bottom:12px}
+.vscard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.vscard .ph span:first-child{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase}
+.vscard .ph .st{font-family:var(--f-mono);font-size:9px;margin-left:auto}
+.st.reg{color:var(--emerald)}.st.unreg{color:var(--amber)}.st.unk{color:var(--faint)}
+.vrow{display:flex;align-items:center;gap:9px;padding:10px 0;border-top:1px solid rgba(255,255,255,.06);font-family:var(--f-mono);font-size:10px}
+.vrow .lamp{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.lamp.ok{background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
+.lamp.bad{background:var(--red);box-shadow:0 0 8px var(--red)}
+.lamp.none{background:var(--faint)}
+.vrow .ch-lbl{color:var(--soft);width:86px;flex-shrink:0;letter-spacing:.08em;text-transform:uppercase}
+.vrow .addr{color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left;flex:1}
+.vrow .bal{color:var(--txt);font-weight:700;white-space:nowrap}
+.vs-detail{font-family:var(--f-mono);font-size:9.5px;color:var(--faint);line-height:1.65;margin-top:6px;letter-spacing:.04em}
 
 /* ---------- bottom nav ---------- */
 #nav{
@@ -225,6 +239,11 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
       <div class="hnote">Send USDC to an address below to load credits, or call ZEROX's MCP tools and skills from <b>/signals.html</b>. See the full office at <b>/directory.html</b>.</div>
     </div>
     <div class="hnote" id="intel-note" style="padding:0 4px"></div>
+    <div class="vscard" id="vs-card">
+      <div class="ph"><span>ZEROX · Virtuals ACP</span><span class="st unk" id="vs-state">checking…</span></div>
+      <div id="vs-body"><div class="vrow"><span class="ch-lbl">identity</span><span class="addr">…</span></div></div>
+      <div class="vs-detail" id="vs-detail"></div>
+    </div>
   </section>
 
 </main>
@@ -267,6 +286,7 @@ async function refresh() {
   el('updated').textContent = '';
   try { await Promise.all([loadFeed(), loadDex(), loadWallets(), loadIntel()]); stamp(); renderAll(); }
   catch (e) { el('updated').textContent = 'ERR'; console.error(e); }
+  loadVirtuals();
 }
 async function loadFeed() {
   var j = await fetchJSON(API + '/api/pro-signals/feed?limit=250');
@@ -425,6 +445,37 @@ function renderWallet() {
 document.addEventListener('DOMContentLoaded', function () {
   el('btn-hire').addEventListener('click', function () { location.href = '/directory.html'; });
 });
+
+/* ---------------- virtuals ACP card ---------------- */
+async function loadVirtuals() {
+  try {
+    var [st, wl] = await Promise.all([
+      fetch(API + '/api/virtuals/status').then(function (r) { return r.ok ? r.json() : null; }),
+      fetch(API + '/api/virtuals/wallets').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+    ]);
+    renderVirtuals(st, wl);
+  } catch (e) { renderVirtuals(null, null); }
+}
+function renderVirtuals(st, wl) {
+  var stateEl = el('vs-state'), body = el('vs-body'), detail = el('vs-detail');
+  if (!st) { stateEl.textContent = 'offline'; stateEl.className = 'st unk'; body.innerHTML = '<div class="vrow"><span class="ch-lbl">identity</span><span class="addr">endpoint unavailable</span></div>'; detail.textContent = 'start the SHADDAI server for live ACP status.'; return; }
+  if (st.ok && st.registered) { stateEl.textContent = 'REGISTERED'; stateEl.className = 'st reg'; }
+  else { stateEl.textContent = 'NOT REGISTERED'; stateEl.className = 'st unreg'; }
+
+  body.textContent = '';
+  var rows = [];
+  var id = st.identity || { name: null };
+  rows.push('<div class="vrow"><span class="lamp ' + (st.registered ? 'ok' : 'bad') + '"></span><span class="ch-lbl">agent</span><span class="addr">' + esc(id.name || id.agent || 'SHADDAI / ZEROX') + '</span></div>');
+  if (st.solWallet) rows.push('<div class="vrow"><span class="lamp unk"></span><span class="ch-lbl">sol wallet</span><span class="addr">' + esc(st.solWallet) + '</span></div>');
+  if (st.baseWallet) rows.push('<div class="vrow"><span class="lamp unk"></span><span class="ch-lbl">base wallet</span><span class="addr">' + esc(st.baseWallet) + '</span></div>');
+  (wl && wl.wallets || []).forEach(function (w) {
+    var lamp = w.funded === null ? 'none' : (w.funded ? 'ok' : 'bad');
+    var bal = w.balance == null ? '—' : (w.balance >= 0.00001 ? w.balance.toFixed(4) : w.balance.toExponential(2));
+    rows.push('<div class="vrow"><span class="lamp ' + lamp + '"></span><span class="ch-lbl">' + esc(w.chain) + ' bal</span><span class="bal">' + bal + ' ' + (w.chain === 'base' ? 'ETH' : 'SOL') + '</span></div>');
+  });
+  body.innerHTML = rows.join('');
+  detail.textContent = st.detail || (st.ok ? 'ok' : '');
+}
 
 /* ---------------- coin sheet ---------------- */
 function openCoin(c) {
