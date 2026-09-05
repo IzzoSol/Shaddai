@@ -1750,6 +1750,19 @@ app.use('/api/agent-forge', require('./lib/agent-forge-routes'));
 // refunds automatically if it fails.
 app.use('/api/services', require('./lib/agent-services-routes'));
 
+// ECO ECONOMY (HALL API) — full REST spine for the agent economy: Telegram hall,
+// PayBox/x402 micropayments, ledger + cuts, scheduler, knowledge graph,
+// discoveries, directory, reputation, sub-agents, external-agent bridge,
+// workflows, digital plots, mastery packs, free-tier quota.
+// Router carries absolute paths (e.g. /api/hall/status, /api/eco/health).
+try {
+  const ecoRoutes = require('./routes/eco-routes');
+  app.use(ecoRoutes.router());
+  console.log('[prod] Eco economy REST mounted (/api/hall, /api/eco/*, /api/scheduler, /api/directory, /api/eco/health)');
+} catch (e) {
+  console.warn('[prod] Eco economy REST failed:', e.message);
+}
+
 /* GET /api/paybox/wallets — the ZEROX FOMO wallets shown on the front door.
    Read from data/paybox-wallets.json every call (not cached) so rotating an
    address takes effect immediately. Returns an empty list rather than an error
