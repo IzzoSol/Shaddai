@@ -1168,7 +1168,12 @@ async function callTool(name, args) {
           },
         }),
       });
-      if (r.ok || r.status === 201) return 'Activity logged to Virtuals Terminal ✓';
+      if (r.ok || r.status === 201) {
+        // Mirror the activity to the Virtuals Telegram bot/channel (separate
+        // from the trading bot) so ZEROX's onchain activity is visible in TG too.
+        const vFeed = await ecoTelegram.vPost('*' + args.title.slice(0, 60) + '*\n' + String(args.body).slice(0, 900));
+        return 'Activity logged to Virtuals Terminal ✓' + (vFeed.error ? ' (TG mirror: ' + vFeed.error + ')' : ' (TG mirror sent)');
+      }
       return 'Log failed: HTTP ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 200);
     } catch (e) {
       return 'Error: ' + ((e && e.message) || e);

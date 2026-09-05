@@ -604,10 +604,12 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
           '<a class="zxhire-btn" href="/pricing.html" target="_blank">Paybox</a>' +
         '</div>' +
         '<div class="zxhire-q" id="zxOut"></div>' +
+        '<div class="zxhire-q" id="zxAcp" style="font-size:10.5px;margin-top:6px;color:var(--ink-faint);min-height:0"></div>' +
       '</div>' +
       '<p class="note">Not advice. This is what the scanner saw, with the numbers behind it.' +
       (s.any ? '' : ' <b style="color:#fbbf24">No socials found — treat with care.</b>') + '</p>';
     $('sheet').classList.add('on');
+    acpStatus();
     var cpy = $('cpy');
     if (cpy) cpy.addEventListener('click', function () {
       var ok = function () { cpy.textContent = 'Copied'; setTimeout(function () { cpy.textContent = 'Copy CA'; }, 1600); };
@@ -642,6 +644,18 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
      ZEROX badge is a real call, not a sticker. Degrades to a clear note when
      the engine is unreachable — never blocks the sheet. */
   var ZX = { name: 'ZEROX', short: 'markets engine', online: true };
+  /* ACP status line — the one glance before you hire: registered? funded? */
+  function acpStatus() {
+    var box = $('zxAcp'); if (!box) return;
+    box.textContent = 'ACP: checking…';
+    fetch('/api/virtuals/status').then(function (r) { return r.json(); }).then(function (j) {
+      var parts = ['ACP'];
+      parts.push(j && j.registered ? 'registered' : (j && j.detail && String(j.detail).indexOf('404') >= 0 ? 'not registered (404)' : 'offline'));
+      box.textContent = parts.join(' · ');
+      var color = j && j.registered ? 'var(--emerald)' : 'var(--amber)';
+      box.style.color = color;
+    }).catch(function () { box.textContent = 'ACP: unreachable'; });
+  }
   function zxAsk(sym) {
     var out = $('zxOut'), btn = $('zxScan');
     if (!out) return;
