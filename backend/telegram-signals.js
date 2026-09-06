@@ -412,6 +412,24 @@ function _buyPressure(pair) {
   return { ratio, label, bullish: ratio >= 0.55 };
 }
 
+// Raw buy/sell counts + derived supply for the signal card (paired with _buyPressure).
+function _buySellSupply(pair) {
+  const t = (pair && pair.txns) || {};
+  const h1B = Number(t.h1 && t.h1.buys) || 0;
+  const h1S = Number(t.h1 && t.h1.sells) || 0;
+  const m5B = Number(t.m5 && t.m5.buys) || 0;
+  const m5S = Number(t.m5 && t.m5.sells) || 0;
+  const buys = h1B + m5B;         // raw counts (h1 already contains most of m5; additive is fine for display)
+  const sells = h1S + m5S;
+  const totalTx = buys + sells;
+  const ratio = totalTx > 0 ? buys / totalTx : 0.5;
+  // Supply = FDV ÷ price (derived, no extra call). Guard against price=0/NaN.
+  const fdv = Number(pair && (pair.fdv || pair.marketCap)) || 0;
+  const price = Number(pair && pair.priceUsd) || 0;
+  const supply = (fdv > 0 && price > 0) ? fdv / price : 0;
+  return { buys, sells, ratio, supply };
+}
+
 // ── PUMP.FUN COIN DETAIL (free, no key) ───────────────────────────────────────
 // Extra fields vs the list API: twitter, website, reply_count, last_reply,
 // ath_market_cap, ath_market_cap_timestamp, is_banned, nsfw, created_timestamp.
@@ -1064,6 +1082,13 @@ async function _pollOnce() {
     } catch (e) { continue; }
     if (!pair) { _seen.add(addr); continue; }   // mark seen even if below threshold (don't recheck forever)
     if (cfg.bullishOnly && pair.priceChange && Number(pair.priceChange.h24) < -10) { _seen.add(addr); continue; }   // skip bearish (funnel)
+    // DUMP REJECTION — the #1 bad-call source. If on-chain txs show clear net
+    // selling (< 35% buys), the dump already started; calling it is a losing entry.
+    // This is what separated winners (called during accumulation) from losers in the corpus.
+    {
+      const _bps = _buySellSupply(pair);
+      if (_bps.buys + _bps.sells >= 5 && _bps.ratio < 0.35) { _logReject('dumping', pair.baseToken && pair.baseToken.symbol, Number(pair.fdv || pair.marketCap || 0), { buysPct: Math.round(_bps.ratio * 100) }, addr); _seen.add(addr); continue; }
+    }
     if (core.wasAlerted(addr)) { _seen.add(addr); continue; }   // GLOBAL de-dupe — already called on another feed
     if (_badMint(addr)) { _seen.add(addr); continue; }          // persisted rug/scam reject cache
     if (!_passesAgeGate(pair.pairCreatedAt)) { _logReject('too_fresh', _tSym2, _tFdv2, { age: Date.now() - pair.pairCreatedAt }); _seen.add(addr); continue; }
@@ -1125,8 +1150,9 @@ async function _pollOnce() {
     if (_sym && _isScamSym(_sym)) { _logReject('scam_sym', _sym, _tFdv2, {}, addr); _seen.add(addr); continue; }
     if (_tName && _isScamName(_tName)) { _logReject('scam_name', _sym, _tFdv2, { name: _tName }, addr); _seen.add(addr); continue; }
     if (!_symCooldownOk(_sym)) { _logReject('sym_cooldown', _sym, _tFdv2, {}); _seen.add(addr); continue; }
-    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, entryPrice: Number(pair.priceUsd || 0), websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
+    const _bs = _buySellSupply(pair);
+    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, entryPrice: Number(pair.priceUsd || 0), websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [], buySell: _bs, supply: _bs.supply };
     const _hourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
     const _profData = _profileMap.get(addr);
@@ -1138,22 +1164,28 @@ async function _pollOnce() {
     }
     const _boostData = _boostInfo(addr);
     const _brainTrend = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: _tFdv2 > 0 ? (Number(pair.liquidity && pair.liquidity.usd || 0) / _tFdv2 * 100) : 0, boosted: !!_boostData, volAccel: !!_accel, fdv: _tFdv2, source: 'trending' });
-    const _msg = card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
+    const _msg = '🔔 <b>SIGNAL</b>\n' + card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
     // Image priority: profile icon > boost icon > pair.info.imageUrl > random bot banner
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     const _btns = core.buildButtons(addr, chain, pair.url);
-    // CA first — bare address so trading bots (Phanes etc.) catch it immediately
     const _tSym = pair.baseToken && pair.baseToken.symbol;
     let ok;
     if (cfg.recordOnly) {
       // Record-only: no Telegram token — log the call without broadcasting.
       ok = true;
     } else {
-      await core.broadcast(`<b>$${_esc(_tSym || '')}</b> — ◎ SOL\n<code>${_esc(addr)}</code>`);
-      ok = (_imgUrl
-        ? (await core.broadcastPhoto(_imgUrl, _msg, _btns))
-        : (await core.broadcast(_msg, { buttons: _btns }))
-      ) > 0;
+      // ONE obvious signal, always the full card as TEXT (guaranteed to land),
+      // with the image/buttons attached when available. Never a cryptic bare CA
+      // line + a separate photo caption — if the photo fails, the full details
+      // still arrive as a plain message instead of vanishing into a silent miss.
+      if (_imgUrl) {
+        ok = await core.broadcastPhoto(_imgUrl, _msg, _btns);
+        if (!ok) ok = await core.broadcast(_msg, { buttons: _btns });   // fallback: plain text
+      } else {
+        ok = await core.broadcast(_msg, { buttons: _btns });
+      }
+      ok = ok > 0;
+      if (!ok) console.warn('[tg-signals] signal broadcast failed for', _tSym || addr);
     }
     _seen.add(addr);
     if (ok) { _trackSym(_sym); core.markAlerted(addr); posted++; try { pnl.recordCall({ source: 'trending', chain, mint: addr, name: pair.baseToken && pair.baseToken.name, symbol: pair.baseToken && pair.baseToken.symbol, entryFdv: Number(pair.fdv || pair.marketCap || 0), entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), rank: _rank || 0, topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
@@ -1367,7 +1399,9 @@ async function _pollBonded() {
       socialLinks: [...(pair.info && pair.info.socials || []), ..._pumpSocials],
       pumpReplies: pumpDet && pumpDet.reply_count > 0 ? pumpDet.reply_count : 0,
       pumpAth: pumpDet && pumpDet.ath_market_cap ? pumpDet.ath_market_cap : 0,
+      buySell: _buySellSupply(pair),
     };
+    _bondExtra.supply = _bondExtra.buySell.supply;
     const _bondAccel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _bondHourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     // Confidence tier: based on corpus win rates. Shows subscribers how to size their position.
@@ -1389,13 +1423,14 @@ async function _pollBonded() {
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
     const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
-    // Send CA-only message first so trading bots (Phanes etc.) that scan for a bare
-    // Solana address can parse and auto-buy before the full card arrives.
-    await core.broadcast(`<b>$${_esc(_bondSym || c.name)}</b> — BONDED ◎ SOL\n<code>${_esc(mint)}</code>`);
-    const ok = (_bondImg
-      ? (await core.broadcastPhoto(_bondImg, _bondMsg, _bondBtns))
-      : (await core.broadcast(_bondMsg, { buttons: _bondBtns }))
-    ) > 0;
+    const _bondMsgFull = '🎓 <b>SIGNAL — BONDED</b>\n' + _bondMsg;
+    // One obvious signal: the full card as text (guaranteed), image attached when
+    // available, plain-text fallback if the photo fails. No cryptic bare CA line.
+    let ok = (_bondImg
+      ? await core.broadcastPhoto(_bondImg, _bondMsgFull, _bondBtns)
+      : await core.broadcast(_bondMsgFull, { buttons: _bondBtns })) > 0;
+    if (!ok) ok = (await core.broadcast(_bondMsgFull, { buttons: _bondBtns })) > 0;
+    ok = ok > 0;
     if (ok) {
       _trackSym(_bondSym); core.markAlerted(mint); posted++;
       try { pnl.recordCall({ source: 'bonded', chain: 'solana', mint, name: c.name, symbol: c.symbol, entryFdv: usdMc, entryPrice: Number(pair.priceUsd) || 0, holders: c.holders || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, liq: Number(pair.liquidity && pair.liquidity.usd) || 0, rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: (c.snipers > 0) || !!(rs && rs.hasSnipers), topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
@@ -1560,6 +1595,19 @@ function _detailBlock(rs, social, extra) {
   if (e.liq) parts.push(`<b>Liq:</b> $${(e.liq/1000).toFixed(0)}K`);
   if (rs && rs.holders) parts.push(`<b>Holders:</b> ${rs.holders.toLocaleString()}`);
   if (e.vol24) parts.push(`<b>Vol 24h:</b> $${(e.vol24/1000).toFixed(0)}K`);
+  // SUPPLY — derived from FDV ÷ price (no extra API call). Shows the full minted supply
+  // so subscribers see dilution potential: a huge supply with tiny FDV = micro-cap dump risk.
+  if (e.supply != null && Number(e.supply) > 0) {
+    const s = Number(e.supply);
+    parts.push(`<b>Supply:</b> ${s >= 1e9 ? (s/1e9).toFixed(2)+'B' : s >= 1e6 ? (s/1e6).toFixed(2)+'M' : s >= 1e3 ? (s/1e3).toFixed(1)+'K' : s.toFixed(0)}`);
+  }
+  // BUY/SELL PRESSURE — live tx counts (h1 + weighted m5). Net buying = accumulation,
+  // net selling = dump underway. This is the single most predictive "dip or rip" signal.
+  if (e.buySell != null) {
+    const bs = e.buySell;
+    const icon = bs.ratio >= 0.65 ? '🟢' : bs.ratio >= 0.55 ? '🟡' : bs.ratio <= 0.35 ? '🔴' : '⚪';
+    parts.push(`${icon} <b>Buys ${bs.buys}</b>  ·  <b>Sells ${bs.sells}</b>  (${Math.round(bs.ratio*100)}% buys)`);
+  }
 
   // ── ENTRY / EXIT / STOP LOSS BLOCK ────────────────────────────────────
   // Calculate TP targets from entry price at call time
