@@ -177,4 +177,42 @@ router.get('/verify', async (req, res) => {
   }
 });
 
+// POST /api/stripe/subscribe — body { account?, priceId } → subscription Checkout Session URL.
+// Mirrors create-checkout but forces subscription mode for a tier priceId. Returns { url }.
+router.post('/subscribe', express.json(), async (req, res) => {
+  try {
+    const priceId = String((req.body && (req.body.priceId || req.body.item || req.body.tier)) || '').trim();
+    if (!priceId) return res.status(400).json({ ok: false, error: 'priceId required' });
+    const userId = (req.body && req.body.userId) || 'guest';
+    // Reuse the exact session-building logic from create-checkout (links OR stripe).
+    const item = priceId;
+    const { mode, cfg } = paymentMode();
+    const links = cfg.links || {};
+    if (links[item]) {
+      const ref = encodeURIComponent(userId + '-' + item);
+      const sep = links[item].indexOf('?') >= 0 ? '&' : '?';
+      return res.json({ ok: true, url: links[item] + sep + 'client_reference_id=' + ref, mode: 'links' });
+    }
+    if (mode === 'stripe' && billingService && billingService.getStripe && billingService.getStripe()) {
+      const stripe = billingService.getStripe();
+      const price = (billingService.STRIPE_PRICES || {})[item];
+      if (stripe && price) {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [{ price, quantity: 1 }],
+          mode: 'subscription',
+          success_url: (req.body.successUrl) || `${req.protocol}://${req.get('host')}/?billing=success`,
+          cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/?billing=cancel`,
+          client_reference_id: userId,
+          metadata: { item, userId },
+        });
+        return res.json({ ok: true, url: session.url, mode: 'stripe' });
+      }
+    }
+    return res.json({ ok: true, enabled: false, url: null, message: "This plan isn't configured yet." });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 module.exports = router;

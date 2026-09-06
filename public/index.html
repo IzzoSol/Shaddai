@@ -2,7 +2,7 @@
 <html lang="en" data-theme-skin="glitch">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="theme-color" content="#00ff88">
 <!-- ── SEO / Bio ──────────────────────────────────────────────────────────── -->
 <meta name="description" content="SHADDAI is a sovereign AI agent empire — seven specialized agents and 200+ real, executable tools. Forge your own operatives, run autonomous workflows, explore a living 3D world, and power it all with your own free API key.">
@@ -3864,6 +3864,12 @@ body.ly-sb-right #mainArea{margin-right:210px!important;width:auto!important}
 body.ly-sb #commandCenterView,body.ly-sb #agentStatusView,body.ly-sb #tradeSignalsView,body.ly-sb #jobBoardView,body.ly-sb #earningsView,body.ly-sb #my-agentsView,body.ly-sb #marketplaceView,body.ly-sb #sentimentView,body.ly-sb #content-studioView,body.ly-sb #documentsView,body.ly-sb #chainRunnerView,body.ly-sb #billingView{margin-left:210px!important;margin-right:0!important;width:calc(100% - 210px)!important;box-sizing:border-box!important}
 body.ly-sb-right #commandCenterView,body.ly-sb-right #agentStatusView,body.ly-sb-right #tradeSignalsView,body.ly-sb-right #jobBoardView,body.ly-sb-right #earningsView,body.ly-sb-right #my-agentsView,body.ly-sb-right #marketplaceView,body.ly-sb-right #sentimentView,body.ly-sb-right #content-studioView,body.ly-sb-right #documentsView,body.ly-sb-right #chainRunnerView,body.ly-sb-right #billingView{margin-right:210px!important;margin-left:0!important;width:calc(100% - 210px)!important;box-sizing:border-box!important}
 body.ly-sb-right #topBar,body.ly-sb-right #agentBar,body.ly-sb-right #resourcePanel{right:210px!important;left:0!important}
+/* ── bottom dock: complete the nav (border + height + push content up) ── */
+body.navpos-bottom #mainNav{top:auto!important;bottom:0!important;height:44px!important;border-top:1px solid rgba(0,229,160,0.14)!important;border-bottom:none!important}
+body.navpos-bottom #agentBar{top:38px!important}
+body.navpos-bottom #mainArea{margin-top:82px!important;padding-bottom:56px!important;width:100%!important;margin-left:0!important;margin-right:0!important}
+/* ── top dock is the default: ensure no side/bottom residue ── */
+body:not(.ly-sb):not(.ly-sb-right):not(.navpos-bottom) #mainNav{top:38px!important;bottom:auto!important}
 #navPosPicker button{background:transparent;border:none;color:var(--text-muted,#7a8595);cursor:pointer;font-size:13px;width:24px;height:24px;border-radius:5px;transition:.15s}
 #navPosPicker button:hover,#navPosPicker button.on{color:#00ff88;background:rgba(0,229,160,.12)}
 #tbNavMoverPop .np-arrow{background:transparent;border:1px solid rgba(0,229,160,.18);color:#00e5a0;cursor:pointer;font-size:13px;width:26px;height:26px;border-radius:6px;display:grid;place-items:center;transition:.15s;padding:0;line-height:1}
@@ -4367,7 +4373,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- A4 REMOVED: 💳 Billing nav — now lives inside Office ▸ Billing sub-tab -->
   <button class="nav-btn" onclick="showView('documents')" style="color:#b06aff;font-weight:700">📄 Documents</button>
   <!-- Sign in (nav) removed — unwired -->
-  <button class="nav-btn nav-img" onclick="showView('forge')" data-guest-lock="4444" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+<button class="nav-btn nav-img" onclick="showView('forge')" data-guest-lock="4444" style="color:#f0b429;font-weight:700;--nav-img:url(/assets/nav/forge.jpg)" title="The Arcane Foundry — forge a real agent"><img src="/api/forge/art/arch-vanguard.png" alt="" onerror="this.outerHTML='⬡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(240,180,41,0.45)"> The Forge</button>
+  <button class="nav-btn" onclick="window.open('/games/academy.html','_blank')" style="color:#b07aff;font-weight:700;border-color:rgba(150,80,255,0.3)" title="SHADDAI Academy — lessons, badges, pay-lab">🎓 Academy</button>
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
@@ -5346,6 +5353,7 @@ window.enter3DWorld=function(){
         <span class="card-title" id="wfModeTitle">⚡ Simple Mode</span>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span id="wfModeNote" style="font-size:10px;color:var(--text-muted)">Anyone can use it — tap what you want, pick who, GO.</span>
+          <button class="btn btn-ghost" onclick="window.open('/games/academy.html','_blank')" style="font-size:10px;color:#b07aff;border-color:rgba(150,80,255,0.3)" title="Learn the basics — lessons, badges, pay-lab">🎓 Academy</button>
           <div class="sm-modeToggle" role="tablist" aria-label="Simple or Pro mode">
             <span class="sm-modeGlide" id="wfModeGlide"></span>
             <button id="wfTabSimple" role="tab" onclick="wfMode('simple')" class="on">⚡ SIMPLE</button>
@@ -38912,6 +38920,7 @@ let scene3d, camera3d, renderer3d, controls3d, raycaster3d, mouse3d;
 let shapes3d = [];
 let wireframeMode = false;
 let autoRotateMode = false;
+let _scene3dDirty = true;
 
 function init3DScene() {
   window._3dInitialized = true;
@@ -38986,6 +38995,10 @@ function init3DScene() {
 
   function animate() {
     requestAnimationFrame(animate);
+    // PERF: skip rendering when the tab is hidden OR the scene is idle
+    // (no auto-rotate, no drag, no pan). Static geometry doesn't need 60fps.
+    if (document.hidden) return;
+    if (!autoRotateMode && !isDragging && !isPanning && !_scene3dDirty) return;
     if (autoRotateMode) {
       const t = Date.now() * 0.001;
       camera3d.position.x = 7 * Math.cos(t * 0.3);
@@ -38993,6 +39006,7 @@ function init3DScene() {
       camera3d.lookAt(0, 0, 0);
     }
     renderer3d.render(scene3d, camera3d);
+    _scene3dDirty = false;
   }
   animate();
 }
@@ -39026,12 +39040,14 @@ function add3DShape(type) {
   mesh.userData.type = type;
   scene3d.add(mesh);
   shapes3d.push(mesh);
+  _scene3dDirty = true;
   notify(type.charAt(0).toUpperCase() + type.slice(1) + ' added');
 }
 
 function toggleWireframe() {
   wireframeMode = !wireframeMode;
   shapes3d.forEach(s => { if (s.material) s.material.wireframe = wireframeMode; });
+  _scene3dDirty = true;
   const btn = document.getElementById('wireframeBtn');
   if (btn) { btn.classList.toggle('btn-accent', wireframeMode); btn.classList.toggle('btn-ghost', !wireframeMode); }
 }
@@ -44303,11 +44319,28 @@ if (typeof window._effInterval === 'undefined') {
 console.log('[AURA] Client module loaded — /api/aura · token saving active');
 </script>
 
-<!-- Heavy on-demand libs deferred so they don't block initial render (big load-lag fix) -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script defer src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
-<script defer src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
+<!-- Heavy on-demand libs: loaded during browser idle time (after first paint) so the
+     page becomes interactive fast instead of stalling on multi-MB CDN downloads. -->
+<script>
+(function(){
+  var LIBS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
+    'https://unpkg.com/tone@14.8.49/build/Tone.js',
+    'https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js'
+  ];
+  function inject(){
+    LIBS.forEach(function(src){
+      var s = document.createElement('script');
+      s.src = src; s.async = true;
+      document.head.appendChild(s);
+    });
+  }
+  if (window.requestIdleCallback) requestIdleCallback(function(){ inject(); }, { timeout: 3000 });
+  else if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(inject, 1500); });
+  else setTimeout(inject, 1500);
+})();
+</script>
 <script>
 // Make solanaWeb3 available globally — the CDN exposes it as solanaWeb3 or window.solanaWeb3
 if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
@@ -45047,7 +45080,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     <!-- Beginner-friendly "Bigger/Simple" mode: zoom scales the whole panel (incl. inline styles),
          and simple mode hides the most advanced/jargon sections. Toggled by #sentSimpleBtn, persisted. -->
     <style>
-      #sentimentView.sent-simple { zoom: 1.28; }
+      #sentimentView.sent-simple { zoom: 1.0; }
       #sentimentView.sent-simple #whaleWatchList, #sentimentView.sent-simple .sent-adv { display:none !important; }
     </style>
     <script>

@@ -382,7 +382,6 @@ router.post('/claude', async (req, res) => {
 async function callGemini(prompt, key) {
   const apiKey = key || GEMINI_KEY;
   if (!apiKey) throw new Error('No Gemini API key configured');
-
   // Try models in order: lite first (fewer rate limits), then flash, then pro
   const models = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
   let lastError;
@@ -403,6 +402,20 @@ async function callGemini(prompt, key) {
     }
   }
   throw lastError;
+}
+
+// Grok / xAI — chat completions (OpenAI-compatible). Used by the unified /llm/chat
+// router so an imported Grok bot can actually reach xAI, with AURA cache in front.
+async function callGrok(messages, opts) {
+  opts = opts || {};
+  const apiKey = opts.key || process.env.GROK_API_KEY;
+  if (!apiKey) throw new Error('No GROK_API_KEY configured');
+  const model = opts.model || 'grok-fast';
+  const r = await axios.post('https://api.x.ai/v1/chat/completions', {
+    model, messages, max_tokens: opts.maxTokens || 1200
+  }, { headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' }, timeout: 30000 });
+  const text = (r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || '';
+  return { response: text, provider: 'grok', model, latencyMs: Date.now() };
 }
 
 router.post('/gemini', async (req, res) => {
@@ -4740,6 +4753,13 @@ router.post('/llm/chat', async (req, res) => {
     return { response: r.data.content?.[0]?.text || '', provider: 'claude', model: useModel, latencyMs: Date.now() - t0 };
   }
 
+  async function tryGrok(key) {
+    const t0 = Date.now();
+    const r = await callGrok(messages, { key: key || apiKey, model: model || 'grok-fast' });
+    r.latencyMs = Date.now() - t0;
+    return r;
+  }
+
   try {
     let result;
 
@@ -4751,13 +4771,16 @@ router.post('/llm/chat', async (req, res) => {
       result = await tryGroq();
     } else if (provider === 'claude') {
       result = await tryClaude();
+    } else if (provider === 'grok') {
+      result = await tryGrok();
     } else {
-      // 'auto' — prefer FAST cloud (Groq) when keyed, then Gemini/Claude, then local Ollama.
+      // 'auto' — prefer FAST cloud (Groq) when keyed, then Gemini/Claude/Grok, then local Ollama.
       // (Ollama is the free local fallback only — it is ~20s on llama3.2:1b, so never first.)
       const attempts = [];
       if (process.env.GROQ_API_KEY)      attempts.push(['groq',   tryGroq]);
       if (process.env.GEMINI_API_KEY)    attempts.push(['gemini', tryGemini]);
       if (process.env.ANTHROPIC_API_KEY) attempts.push(['claude', tryClaude]);
+      if (process.env.GROK_API_KEY)      attempts.push(['grok',   tryGrok]);
       attempts.push(['ollama', tryOllama]); // free local fallback, last
       let lastErr;
       for (let i = 0; i < attempts.length; i++) {
@@ -4777,7 +4800,12 @@ router.post('/llm/chat', async (req, res) => {
     try { if (result && result.response) require('./lib/aura').recordAnswer(message, result.response); } catch (_) {}
     res.json({ ...result, fallbackUsed: result.fallbackUsed || false });
   } catch (e) {
-    fail(res, 500, 'internal_error', e.message, { provider });
+    const msg = String(e.message || e);
+    if (/no .*key/i.test(msg)) {
+      const keyEnv = /grok/i.test(msg) ? 'GROK_API_KEY' : (/claude/i.test(msg) ? 'ANTHROPIC_API_KEY' : (/gemini/i.test(msg) ? 'GEMINI_API_KEY' : (/groq/i.test(msg) ? 'GROQ_API_KEY' : 'provider key')));
+      return res.status(400).json({ error: 'Missing ' + keyEnv + '. Add it to backend/.env (or Settings) to use this provider.', provider, suggestApiKey: true });
+    }
+    fail(res, 500, 'internal_error', msg, { provider });
   }
 });
 

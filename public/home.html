@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){var t='';try{t=localStorage.getItem('shaddai-theme')||'';}catch(e){}document.documentElement.setAttribute('data-theme',t==='codex'?'codex':'neon');})();</script>
+<script>document.documentElement.setAttribute('data-theme','neon');</script>
 <script>
 /* Self-heal: a leftover CACHE-FIRST service worker from a past dashboard visit keeps
    serving stale content into the background iframe (the "Enter the Council login showing
@@ -873,10 +873,6 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 
   </nav>
   <div class="corner" id="cornerCluster">
-    <button id="viewBtn" type="button" aria-pressed="false" title="Strip the page to the interactive 3D Descent">◱ View</button>
-    <button class="themeToggle" id="themeToggle" type="button" aria-pressed="false" title="Terminal (dark) ⟷ Codex (parchment)">
-      <span class="tt-opt tt-neon"><b>☾</b><span>Terminal</span></span><span class="tt-opt tt-codex"><b>✎</b><span>Codex</span></span>
-    </button>
     <a class="cc-link cc-startfree" id="cornerStart" href="/blueprint.html" title="Why SHADDAI — the honest competitive breakdown">Why</a>
     <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Hub">Command Hub</a>
     <button class="cc-ascend" id="cornerAscend" type="button" data-descent title="Open the full-screen Ascent player">▶ Ascend</button>
@@ -889,11 +885,6 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   <button class="mclose" id="mClose">✕ close</button>
   <a href="/prove.html" style="display:block;margin:6px 0 8px;padding:13px;text-align:center;border:1px solid rgba(0,255,156,.4);color:#00ff9c;font-weight:600;border-radius:11px;letter-spacing:.08em;font-family:'Cinzel',serif">▶ Watch it work — free</a>
   <a href="/pricing.html" style="display:block;margin:0 0 16px;padding:14px;text-align:center;background:#e8c45c;color:#241a03;font-weight:700;border-radius:11px;letter-spacing:.1em;font-family:'Cinzel',serif">Join · $30/mo →</a>
-  <div class="mtheme">
-    <button id="viewBtnM" type="button" aria-pressed="false">◱ 3D View</button>
-    <button class="themeToggle" id="themeToggleM" type="button" aria-pressed="false"
-      style="flex:1;margin-left:0;border-radius:2px;background:rgba(6,8,11,.6)"><span class="tt-opt tt-neon"><b>☾</b><span>Terminal</span></span><span class="tt-opt tt-codex"><b>✎</b><span>Codex</span></span></button>
-  </div>
   <div class="mgroup"><div class="mh">Enter</div>
     <a href="/dashboard"><span class="gi">◈</span>Command Deck<span class="badge">live</span></a>
     <a href="/SHADDAI-WORLD-3D.html"><span class="gi">✦</span>3D World<span class="badge">live</span></a>

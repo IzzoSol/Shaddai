@@ -1,0 +1,135 @@
+'use strict';
+// ============================================================================
+// grok-connect.js - Import a Grok-powered bot as a FULL dashboard agent.
+// POST /api/grok/connect  { name, apiKey?, tools?: string[] }
+//   1. Registers the bot in the Arena bot store (so it can battle).
+//   2. Registers it in the server agent engine (engine.AGENTS) with a REAL tool
+//      loadout + a Grok brain -> it can CHAT and USE TOOLS like the 7 agents.
+//   3. Stores a persona so the dashboard chat can route to it via /llm/chat.
+// PIKADON: we NEVER persist an api key to disk/logs; only a hasKey flag.
+// ============================================================================
+const express = require('express');
+const router = express.Router();
+const botStore = require('./arena/bot-store');
+const templates = require('./arena/bot-templates');
+
+const connected = []; // in-memory roster of imported Grok bots (name -> ref)
+
+// Real dashboard tool loadout an imported Grok bot can use (must exist in TOOLS).
+const DEFAULT_TOOLS = ['search_web', 'fetch_price', 'wikipedia_search'];
+
+function registerEngineAgent(bot, persona) {
+  try {
+    const eng = require('./agent-engine');
+    if (eng && eng.AGENTS) {
+      const realTools = (Array.isArray(bot.toolsList) ? bot.toolsList : DEFAULT_TOOLS)
+        .filter(t => typeof t === 'string' && eng.TOOLS && eng.TOOLS[t]);
+      eng.AGENTS[bot.id] = {
+        name: bot.id, role: 'Imported Grok Bot', goal: persona || 'Help the user with tools.',
+        tools: realTools,
+        preferredProvider: 'grok',
+        custom: true,
+        grokBot: true
+      };
+      // Expose to the brains persona layer too, so agentLLM/route can find it.
+      try {
+        const brains = require('./brains');
+        if (brains && brains.BRAINS && !brains.BRAINS['grok-bot']) {
+          brains.BRAINS['grok-bot'] = { name: 'Grok Bot', provider: 'grok-logic', desc: 'Imported Grok-powered bot' };
+        }
+      } catch (_) {}
+      return { tools: realTools };
+    }
+  } catch (e) { console.warn('[grok-connect] engine register skipped:', e.message); }
+  return { tools: [] };
+}
+
+// Build + register an imported Grok bot from a name/persona/tools definition.
+// Never persists an api key; only a hasKey flag. Returns the registered bot.
+function buildAndRegisterBot({ name, persona, tools, ownerId, apiKey }) {
+  if (!name) throw new Error('name required');
+  const id = 'grok_' + String(name).toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now().toString(36);
+  const bot = {
+    id,
+    ownerId: ownerId || 'anon',
+    name: String(name).slice(0, 40),
+    model: 'grok',
+    persona: String(persona || 'Imported Grok-powered agent').slice(0, 500),
+    toolsList: Array.isArray(tools) ? tools : DEFAULT_TOOLS,
+    systemPrompt: '',
+    hasKey: !!(apiKey || process.env.GROK_API_KEY)
+  };
+  botStore.registerBot(bot);
+  const eng = registerEngineAgent(bot, bot.persona);
+  connected.push({ id: bot.id, name: bot.name, hasKey: bot.hasKey, tools: eng.tools });
+  return { bot, tools: eng.tools };
+}
+
+router.get('/status', (req, res) => {
+  res.json({ connected: connected.length, bots: connected });
+});
+
+// List importable bot templates.
+router.get('/templates', (req, res) => {
+  res.json({ templates: templates.listTemplates() });
+});
+
+// Import a bot from a template (optionally overriding the name).
+router.post('/templates/:id/import', (req, res) => {
+  try {
+    const tpl = templates.getTemplate(req.params.id);
+    if (!tpl) return res.status(404).json({ error: 'template not found' });
+    const { name } = req.body || {};
+    const { bot, tools } = buildAndRegisterBot({
+      name: name || tpl.name,
+      persona: tpl.persona,
+      tools: tpl.tools,
+      ownerId: (req.body && req.body.ownerId) || 'anon',
+      apiKey: (req.body && req.body.apiKey) || ''
+    });
+    res.json({
+      success: true,
+      template: tpl.id,
+      bot: { id: bot.id, name: bot.name, model: bot.model, hasKey: bot.hasKey, tools },
+      chat: 'POST /llm/chat with { agent:"' + bot.id + '", provider:"grok" }'
+    });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+router.post('/connect', (req, res) => {
+  try {
+    const { name, persona, apiKey, tools } = req.body || {};
+    const { bot, tools: engTools } = buildAndRegisterBot({
+      name, persona, tools, ownerId: req.body.ownerId, apiKey
+    });
+    res.json({
+      success: true,
+      bot: { id: bot.id, name: bot.name, model: 'grok', hasKey: bot.hasKey, tools: engTools },
+      chat: 'POST /llm/chat with { agent:"' + bot.id + '", provider:"grok" }'
+    });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Chat with an imported Grok bot directly (AURA-first, tools available via engine).
+router.post('/chat', async (req, res) => {
+  const { id, message, provider = 'grok' } = req.body || {};
+  const bot = botStore.getBot(id);
+  if (!bot) return res.status(404).json({ error: 'bot not found' });
+  try {
+    const r = await fetch('http://localhost:' + (process.env.PORT || 3000) + '/llm/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, agent: id, provider, systemPrompt: bot.persona })
+    });
+    const j = await r.json();
+    res.json(j);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+module.exports = router;

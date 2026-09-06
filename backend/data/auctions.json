@@ -1,0 +1,23 @@
+[
+  {
+    "slot": 0,
+    "startPrice": 100,
+    "endsAt": 1788525584172,
+    "highBid": 500,
+    "highBidder": "probe-user"
+  },
+  {
+    "slot": 1,
+    "startPrice": 120,
+    "endsAt": 1788534584173,
+    "highBid": 0,
+    "highBidder": null
+  },
+  {
+    "slot": 2,
+    "startPrice": 90,
+    "endsAt": 1788588584173,
+    "highBid": 0,
+    "highBidder": null
+  }
+]

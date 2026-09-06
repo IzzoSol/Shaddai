@@ -1,0 +1,30 @@
+{
+  "tester-001": [
+    {
+      "id": "channel-opener",
+      "name": "Channel Opener",
+      "desc": "Proof you can open a Solana payment channel."
+    }
+  ],
+  "test-dash-1": [
+    {
+      "id": "channel-opener",
+      "name": "Channel Opener",
+      "desc": "Proof you can open a Solana payment channel."
+    }
+  ],
+  "lesson_1788507438059": [
+    {
+      "id": "channel-opener",
+      "name": "Channel Opener",
+      "desc": "Proof you can open a Solana payment channel."
+    }
+  ],
+  "lesson_1788507439774": [
+    {
+      "id": "channel-opener",
+      "name": "Channel Opener",
+      "desc": "Proof you can open a Solana payment channel."
+    }
+  ]
+}

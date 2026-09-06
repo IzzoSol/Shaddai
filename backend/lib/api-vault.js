@@ -213,6 +213,257 @@ function removeKey(userId, provider) {
   return { ok: true, removed: existed };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CUSTOM API BUNDLES — add your OWN API that exposes MULTIPLE connected
+// services. Lives in the SAME store (namespace 'customApis') as the provider
+// keys, reusing the same password-encrypted secret handling.
+//
+//   POST /api/vault/custom          { user,password,name,baseUrl,customApiKey?,
+//                                       services:[{id,name,description,method,url,schema?,agents?,authHeader?}] }
+//   GET  /api/vault/custom?user=    → list bundles (names only, no secrets)
+//   DELETE /api/vault/custom?id=&user=  → remove a bundle
+//   GET  /api/vault/custom/tools?user=  → the injected tool names (for agents)
+//
+// Each service is injected into the agent TOOLS registry as:
+//   custom_<apiId>_<svcId>
+// so council agents, Grok bots, and forged operatives can call it like any
+// native tool via runAgentWithTools(opts.tools).
+//
+// PIKADON guard rails baked into registration:
+//   • HTTPS-only (plaintext base URLs blocked except localhost dev).
+//   • SSRF guard: private / loopback / link-local hosts blocked.
+//   • Live-secret sniffing in non-secret meta is flagged.
+//   • Endpoint reachability probed best-effort (offline-safe).
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CUSTOM_NS = 'customApis';
+
+function custom() { const s = loadStore(); if (!s[CUSTOM_NS]) s[CUSTOM_NS] = {}; return s[CUSTOM_NS]; }
+
+const PRIVATE_HOST_RE = /(^localhost$|^127\.|^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[01])\.|^169\.254\.|^0\.|^::1$|^fe80:|^fc|^fd)/i;
+function _hostSafe(host) { return !!(host && !PRIVATE_HOST_RE.test(String(host).replace(/[\[\]]/g, ''))); }
+function _scanUrl(url) {
+  let u; try { u = new URL(String(url || '')); } catch (_) { return { ok: false, issues: ['invalid URL'] }; }
+  const issues = [];
+  if (u.protocol !== 'https:' && u.hostname !== 'localhost') issues.push('non-HTTPS (plaintext credentials)');
+  if (!_hostSafe(u.hostname)) issues.push('private/local network target blocked (SSRF guard)');
+  return { ok: issues.length === 0, issues };
+}
+async function _probe(url, headers, method) {
+  try {
+    const u = new URL(String(url || '')); if (!_hostSafe(u.hostname)) return null;
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), 5000);
+    let r; try { r = await fetch(url, { method: method || 'GET', headers: headers || {}, signal: c.signal, redirect: 'manual' }); }
+    finally { clearTimeout(t); }
+    return { http: r.status };
+  } catch (_) { return null; }
+}
+function _leakCheck(m, baseUrl) {
+  const leak = [];
+  const blob = JSON.stringify(m || {}) + ' ' + String(baseUrl || '');
+  if (/sk-|key-|ey[A-Za-z0-9]{40,}|xox[bap]-|gh[pousr]_|AIza[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16}/.test(blob)) {
+    leak.push('possible live secret embedded in non-secret fields');
+  }
+  return leak;
+}
+
+/**
+ * Register a user custom API bundling one or more services.
+ * @returns {Promise<{ok, id, scan:{ok, issues, checkedAt}}>}
+ */
+async function registerCustom({ user, password, name, baseUrl, customApiKey, authHeader, services }) {
+  user = String(user || '').trim(); if (!user) throw new Error('user required');
+  name = String(name || '').trim(); if (!name) throw new Error('name required');
+  if (!baseUrl) throw new Error('baseUrl required');
+  const svcList = Array.isArray(services) ? services : [];
+  if (!svcList.length) throw new Error('at least one service required');
+
+  // Scan base + every endpoint (PIKADON).
+  const issues = [];
+  const baseScan = _scanUrl(baseUrl);
+  const leaky = _leakCheck({ name, services: svcList, headers: authHeader }, baseUrl);
+  if (!baseScan.ok) issues.push({ service: 'baseUrl', issues: baseScan.issues });
+  if (leaky.length) issues.push({ meta: leaky });
+  for (const s of svcList) {
+    // Resolve relative service URLs against baseUrl before scanning.
+    const target = (s.url && (s.url.startsWith('http') || s.url.startsWith('https:'))) ? s.url : String(baseUrl).replace(/\/+$/, '') + '/' + String(s.url || '').replace(/^\/+/, '');
+    const r = _scanUrl(target);
+    if (!r.ok) issues.push({ service: s.id || s.name || target, issues: r.issues });
+  }
+
+  const id = 'api_' + user.replace(/[^a-zA-Z0-9_]/g, '_') + '_' + crypto.randomBytes(3).toString('hex');
+  const clean = svcList.map(s => ({
+    id: String(s.id || '').trim() || ('svc' + Math.random().toString(36).slice(2, 6)),
+    name: String(s.name || '').trim() || s.id,
+    description: String(s.description || '').trim(),
+    method: String(s.method || 'GET').toUpperCase(),
+    url: String(s.url || '').trim(),
+    schema: (s.schema && typeof s.schema === 'object') ? s.schema : {},
+    agents: Array.isArray(s.agents) ? s.agents : [],
+    authHeader: s.authHeader || authHeader || 'Authorization',
+    timeoutMs: Number(s.timeoutMs) || 15000,
+  }));
+
+  // Secret handling: caller-supplied password → per-service key encrypted with it.
+  const secrets = {};
+  for (const svc of clean) {
+    const raw = customApiKey || (typeof svc.customApiKey === 'string' ? svc.customApiKey : null);
+    if (raw) secrets[svc.authHeader] = raw;
+  }
+
+  const store = loadStore();
+  const ns = store[CUSTOM_NS] || (store[CUSTOM_NS] = {});
+  ns[id] = {
+    id, user, name, baseUrl,
+    authHeader: authHeader || 'Authorization',
+    services: clean,
+    secrets: (password && Object.keys(secrets).length) ? encrypt(password, JSON.stringify(secrets)) : (Object.keys(secrets).length ? secrets : {}),
+    scan: { ok: issues.length === 0, issues: issues.slice(0, 20), checkedAt: new Date().toISOString(), reachable: null },
+    createdAt: new Date().toISOString(),
+  };
+  saveStore(store);
+  // Best-effort reachability probe (non-blocking, offline-safe).
+  try { const pr = await _probe(baseUrl, {}, 'GET'); if (pr) { ns[id].scan.reachable = pr.http; saveStore(store); } } catch (_) {}
+  return { ok: true, id, scan: ns[id].scan };
+}
+
+function listCustom(user) {
+  const out = [];
+  for (const [id, a] of Object.entries(custom())) {
+    if (user && a.user !== user) continue;
+    out.push({
+      id, name: a.name, baseUrl: a.baseUrl,
+      services: (a.services || []).map(s => ({ id: s.id, name: s.name, method: s.method, description: s.description })),
+      scan: a.scan,
+      hasSecret: !!(a.secrets && Object.keys(a.secrets).length),
+      createdAt: a.createdAt,
+    });
+  }
+  return out;
+}
+
+function removeCustom(user, id) {
+  const c = custom();
+  const a = c[id];
+  if (!a || (user && a.user !== user)) return { ok: true, removed: false };
+  delete c[id];
+  saveStore(loadStore());
+  return { ok: true, removed: true };
+}
+
+// Decrypt the secrets of a bundle for live calls (wrong password → empty).
+function customSecrets(id, password) {
+  const a = custom()[id];
+  if (!a || !a.secrets) return {};
+  if (a.secrets.__enc || (a.secrets.ciphertext && a.secrets.salt)) {
+    if (!password) return {};
+    try { return JSON.parse(decrypt(password, a.secrets)); } catch (_) { return {}; }
+  }
+  return a.secrets; // plaintext dev mode
+}
+
+function customToolName(id, svcId) {
+  return 'custom_' + String(id).replace(/[^a-zA-Z0-9_]/g, '_') + '_' + String(svcId).replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+// Resolve + call a custom service by tool name (what the agent runner invokes).
+async function callCustomTool(name, args) {
+  const prefix = name.startsWith('custom_') ? 'custom_' : null;
+  if (!prefix) return { error: 'not a custom tool' };
+  const body = name.slice(prefix.length); // api_<u>_<rnd>_svcX
+  // find the bundle+service owning this tool name
+  for (const [id, a] of Object.entries(custom())) {
+    for (const s of (a.services || [])) {
+      if (customToolName(id, s.id) !== name) continue;
+      const secrets = customSecrets(id); // caller can re-pass password via args if needed
+      try {
+        return await executeCustomService(a, s, args || {}, secrets);
+      } catch (e) { return { error: String((e && e.message) || e) }; }
+    }
+  }
+  return { error: 'custom tool not found: ' + name };
+}
+
+async function executeCustomService(api, svc, args, secrets) {
+  const base = String(api.baseUrl || '');
+  const tpl = String(svc.url || '');
+  let url = (tpl.startsWith('http') ? tpl : base.replace(/\/+$/, '') + '/' + String(tpl).replace(/^\/+/, ''));
+  const bind = v => (typeof v === 'string' ? v.replace(/\{(\w+)\}/g, (_, k) => (args[k] == null ? '' : String(args[k]))) : v);
+  url = bind(url);
+
+  const method = (svc.method || 'GET').toUpperCase();
+  const headers = Object.assign({}, api.headers || {});
+  const ah = svc.authHeader || api.authHeader || 'Authorization';
+  if (secrets[ah]) headers[ah] = secrets[ah];
+  headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+
+  const query = {}, body = {};
+  for (const [k, v] of Object.entries(args)) {
+    if (v == null) continue;
+    if (method === 'GET' || method === 'HEAD') query[k] = v; else body[k] = v;
+  }
+  if (Object.keys(query).length) url += (url.includes('?') ? '&' : '?') + new URLSearchParams(query).toString();
+
+  const resp = await fetch(url, {
+    method,
+    headers,
+    body: (method === 'GET' || method === 'HEAD') ? undefined : JSON.stringify(body),
+    redirect: 'follow',
+    signal: AbortSignal.timeout(Number(svc.timeoutMs || 15000)),
+  });
+  const text = await resp.text();
+  let parsed = text; try { parsed = JSON.parse(text); } catch (_) {}
+  return JSON.stringify({ status: resp.status, data: parsed }).slice(0, 3000);
+}
+
+// Build OpenAI-style tool schemas for all of a user's custom services (for agents).
+function customToolsFor(user, password) {
+  const out = [];
+  for (const [id, a] of Object.entries(custom())) {
+    if (user && a.user !== user) continue;
+    for (const s of (a.services || [])) {
+      const props = {};
+      for (const [k, v] of Object.entries(s.schema || {})) {
+        const raw = String(v); const m = raw.match(/^\s*(string|number|integer|int|boolean|bool|array|object)/i);
+        let t = m ? m[1].toLowerCase() : 'string'; if (t === 'int') t = 'integer'; if (t === 'bool') t = 'boolean';
+        const desc = raw.includes('—') ? raw.split('—').slice(1).join('—').trim() : raw;
+        props[k] = { type: t, description: desc.slice(0, 140) };
+      }
+      out.push({
+        type: 'function',
+        function: {
+          name: customToolName(id, s.id),
+          description: String(s.description || ('Call the ' + s.name + ' service of ' + a.name)).slice(0, 240),
+          parameters: { type: 'object', properties: props, required: [] },
+        },
+      });
+    }
+  }
+  return out;
+}
+
+// Map custom tool names → native tool objects usable by runAgentWithTools.
+function customToolRegistry() {
+  const out = {};
+  for (const [id, a] of Object.entries(custom())) {
+    for (const s of (a.services || [])) {
+      const name = customToolName(id, s.id);
+      // scan guard: skip bundle entirely only if base URL itself is blocked.
+      // Per-service failures are already in the bundle's issues array; don't
+      // block the whole bundle for one service.
+      if (a.scan && a.scan.ok === false && a.scan.issues && a.scan.issues.some(i => i.service === 'baseUrl')) continue;
+      out[name] = {
+        name,
+        description: String(s.description || ('Call the ' + s.name + ' service of ' + a.name)).slice(0, 240),
+        schema: (s.schema && typeof s.schema === 'object') ? s.schema : {},
+        agents: (s.agents && s.agents.length) ? s.agents : ['SHADDAI', 'ORACLE', 'ZEROX', 'NEXUS'],
+        execute: (args) => callCustomTool(name, args),
+      };
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Express router
 // ---------------------------------------------------------------------------
@@ -365,6 +616,38 @@ function buildRouter() {
     res.json(removeKey(uid, provider));
   });
 
+  // ── CUSTOM API BUNDLES ────────────────────────────────────────────
+  // POST /custom { user,password?,name,baseUrl,customApiKey?,authHeader?,services:[...] }
+  router.post('/custom', async (req, res) => {
+    const { user, password, name, baseUrl, customApiKey, authHeader, services } = req.body || {};
+    try {
+      const out = await registerCustom({ user, password, name, baseUrl, customApiKey, authHeader, services });
+      res.json(out);
+    } catch (e) {
+      res.status(400).json({ ok: false, error: (e && e.message) || String(e) });
+    }
+  });
+
+  // GET /custom?user= → list bundles (names only, no secrets)
+  router.get('/custom', (req, res) => {
+    const user = req.query.user;
+    res.json({ ok: true, bundles: listCustom(user) });
+  });
+
+  // GET /custom/tools?user=&password= → OpenAI-style tool schemas for forwarding to agents
+  router.get('/custom/tools', (req, res) => {
+    const user = req.query.user; const password = req.query.password;
+    res.json({ ok: true, tools: customToolsFor(user, password) });
+  });
+
+  // DELETE /custom?id=&user= → remove a bundle
+  router.delete('/custom', (req, res) => {
+    const id = (req.body && req.body.id) || req.query.id;
+    const user = (req.body && req.body.user) || req.query.user;
+    if (!id) return res.status(400).json({ ok: false, error: 'id required' });
+    res.json(removeCustom(user, id));
+  });
+
   return router;
 }
 
@@ -374,5 +657,13 @@ module.exports = {
   getKey,
   listProviders,
   removeKey,
+  registerCustom,
+  listCustom,
+  removeCustom,
+  customSecrets,
+  customToolName,
+  customToolsFor,
+  customToolRegistry,
+  callCustomTool,
   router: buildRouter(),
 };

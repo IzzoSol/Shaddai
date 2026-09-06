@@ -1,222 +1,114 @@
-// academy-routes.js — the Agent Academy / Grok Training catalog.
-//
-// People (and bots) pay a lesson to an agent's Paybox ledger and the agent then
-// teaches the topic through MCP (via /api/agent/run + lesson-plan). This makes
-// teaching real revenue for the Seven: each class is a small, in-our-own-words
-// lesson attributable only to SHADDAI — no outside citations.
-//
-// Endpoints:
-//   GET  /api/academy/classes            -> catalog + per-user unlock + receipts
-//   POST /api/academy/pay                -> pay a class to the agent's paybox (settle)
-//   POST /api/academy/teach              -> run the teaching MCP call for an unlocked class
-//   GET  /api/academy/receipts           -> a user's receipts of truth (proof of purchase)
-//
-// Paybox settle: { user, itemId, sellerAgent, amountCredits, reason, meta }.
-// Unlock state is stored under data/academy-unlocks.json (per user, idempotent).
-
-const fs = require('fs');
-const path = require('path');
+'use strict';
+// ─────────────────────────────────────────────────────────────────────────────
+// SHADDAI Agent Academy — HTTP routes (constitution §6).
+//   GET  /api/academy/catalog            discovery ($0)
+//   POST /api/academy/quote              dry-run ($0)
+//   POST /api/academy/open_tab           payment channel (sandbox or real)
+//   POST /api/academy/spend              metered call (AURA cache + PIKADON gate)
+//   POST /api/academy/close_tab          settle + refund
+//   POST /api/academy/lesson01           full Channel Opener lab + badge
+//   POST /x402/academy/pay-lab           MERCHANT: sell lesson @ $0.10
+//        unpaid -> 402 with requirements; paid/mock -> 200 + {sessionId, wsUrl}
+// ─────────────────────────────────────────────────────────────────────────────
 const express = require('express');
 const router = express.Router();
+const engine = require('./lib/academy-engine');
 
-let settle = null;
-try { settle = require('./lib/paybox-settle'); } catch (e) { console.warn('[academy] paybox-settle unavailable:', e.message); }
-
-const DATA_DIR = path.join(__dirname, 'data');
-const UNLOCKS_PATH = path.join(DATA_DIR, 'academy-unlocks.json');
-
-function readUnlocks() {
-  try { return JSON.parse(fs.readFileSync(UNLOCKS_PATH, 'utf8')); }
-  catch (e) { return {}; }
-}
-function writeUnlocks(db) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(UNLOCKS_PATH, JSON.stringify(db, null, 2));
-}
-function readReceipts() {
-  try { return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'paybox-receipts.json'), 'utf8')); }
-  catch (e) { return []; }
-}
-
-// ── The Class Catalog (in our own words) ─────────────────────────────────────
-// Each class: which agent teaches, the topic, what you learn, and its price in
-// SHAD-Credits. These are the "classes" shown in the Forge Academy and taught via
-// MCP. Topics map to lesson-plan topic keys when one exists (solana-basics, x402).
-const CLASSES = [
-  { id: 'shaddai-vision',   agent: 'SHADDAI', level: 1, title: 'Vision & the North Star',
-    desc: 'How SHADDAI picks the one metric that matters, cuts vanity numbers, and keeps the whole team pulling the same way.',
-    topics: ['north-star', 'vision', 'strategy'], price: 40,
-    tools: ['daily-market-snapshot', 'sentiment-tracker', 'wiki-deep-dive'] },
-  { id: 'zerox-economics',  agent: 'ZEROX',   level: 1, title: 'Unit Economics & Pricing',
-    desc: 'Think in MRR, LTV and margin. Price whatever you sell so the math works before the first customer shows up.',
-    topics: ['unit-economics', 'pricing', 'revenue'], price: 40,
-    tools: ['daily-market-snapshot', 'token-price-check', 'fiat-converter', 'x-algo-playbook'] },
-  { id: 'nexus-backend',    agent: 'NEXUS',   level: 1, title: 'Shipping Backends That Scale',
-    desc: 'APIs, databases and integration points built as simple, testable services — not clever abstractions that bite later.',
-    topics: ['backend', 'api', 'database'], price: 40,
-    tools: ['shorten-a-url', 'make-qr-code', 'github-trending-scan'] },
-  { id: 'oracle-research',  agent: 'ORACLE',  level: 1, title: 'Research & Reading Signals',
-    desc: 'How ORACLE collects context, spots trends before they surface, and questions assumptions instead of trusting them.',
-    topics: ['research', 'trends', 'observability'], price: 40,
-    tools: ['hn-tech-pulse', 'github-trending-scan', 'wiki-deep-dive', 'weather-report'] },
-  { id: 'turtle-design',    agent: 'TURTLE',  level: 1, title: 'Design That Feels Good',
-    desc: 'Interfaces, flows and micro-interactions that a user actually enjoys — color, hierarchy and delight done with intent.',
-    topics: ['design', 'ui', 'ux'], price: 40,
-    tools: ['color-palette', 'make-qr-code', 'inspire-me'] },
-  { id: 'quill-writing',    agent: 'QUILL',   level: 1, title: 'Clear Communication',
-    desc: 'How QUILL writes copy, guides and error messages a human reads once and understands. Plain words, no fluff.',
-    topics: ['writing', 'docs', 'copy'], price: 40,
-    tools: ['define-word', 'quick-translate', 'shorten-a-url'] },
-  { id: 'pikadon-security', agent: 'PIKADON', level: 1, title: 'Security In the Worst Case',
-    desc: 'Assume the worst path every time. Audit logs, permissions, secret handling and hardening before you ever need it.',
-    topics: ['security', 'audit', 'secrets'], price: 40,
-    tools: ['sol-wallet-check', 'eth-wallet-check', 'whale-tracker'] },
-
-  { id: 'solana-basics',    agent: 'NEXUS',   level: 2, title: 'Solana Transaction Flow',
-    desc: 'From funding a wallet to signing and confirming on-chain. Build and think through a real Solana transaction end to end.',
-    topics: ['solana-basics', 'web3', 'transactions'], price: 90,
-    tools: ['sol-wallet-check', 'token-price-check', 'whale-tracker', 'defi-leaderboard'] },
-  { id: 'paybox-ledger',    agent: 'ZEROX',   level: 2, title: 'The Paybox Ledger',
-    desc: 'How non-custodial SHAD-Credits clear on the wallet, why receipts of truth matter, and the 5% fee path in plain terms.',
-    topics: ['paybox-ledger', 'x402', 'micropayments'], price: 90,
-    tools: ['sol-wallet-check', 'eth-wallet-check', 'daily-market-snapshot', 'fiat-converter'] },
-  { id: 'agent-build',      agent: 'NEXUS',   level: 2, title: 'Forge an Operative',
-    desc: 'Name a purpose, bind real runnable tools, and bring an agent to life that actually finishes multi-step tasks.',
-    topics: ['agent', 'tooling', 'mcp'], price: 90,
-    tools: ['github-trending-scan', 'hn-tech-pulse', 'wiki-deep-dive', 'make-qr-code'] },
-  { id: 'grok-training',    agent: 'SHADDAI', level: 2, title: 'Grok Training & the SWARM',
-    desc: 'Teach a bot to reason the SHADDAI way: consensus, the seven lenses, exercise + quiz, badge progression for humans and bots.',
-    topics: ['training', 'swarm', 'consensus'], price: 120,
-    tools: ['sentiment-tracker', 'daily-market-snapshot', 'github-trending-scan', 'wiki-deep-dive'] },
-  { id: 'video-lessons',    agent: 'TURTLE',  level: 3, title: 'Video Learning & Timestamps',
-    desc: 'Turn a lesson into a timestamped video rather than a wall of text — the path to richer, watchable academy classes and social clips.',
-    topics: ['video', 'timestamps', 'content'], price: 200,
-    tools: ['color-palette', 'inspire-me', 'quick-translate', 'shorten-a-url'] },
-];
-
-function classById(id) {
-  return CLASSES.find(c => c.id === id) || null;
-}
-
-// Unlock helpers (idempotent per user+class).
-function isUnlocked(user, classId) {
-  const db = readUnlocks();
-  const row = (db[user] || {})[classId];
-  return !!(row && row.unlockedAt);
-}
-function grantUnlock(user, classId, receiptId) {
-  const db = readUnlocks();
-  db[user] = db[user] || {};
-  db[user][classId] = { unlockedAt: new Date().toISOString(), receiptId: receiptId || null };
-  writeUnlocks(db);
-}
-function listUnlocked(user) {
-  const db = readUnlocks()[user] || {};
-  return Object.keys(db).filter(k => db[k].unlockedAt);
-}
-
-function getUser(req) {
-  // Prefer a signed-in id; fall back to a stable anonymous id derived from IP.
-  const u = (req.user && req.user.id) || (req.query.user) || (req.body && req.body.user) || null;
-  return u || ('anon:' + String(req.ip || 'guest').replace(/[^a-z0-9]/gi, ''));
-}
-
-const json = express.json({ limit: '1mb' });
-
-// GET /api/academy/classes  (optionally ?user= to include unlock + receipts)
-router.get('/classes', (req, res) => {
-  const user = getUser(req);
-  const unlocked = listUnlocked(user);
-  const receiptsMap = {};
-  readReceipts().filter(r => r.user === user && String(r.reason || '').startsWith('academy:')).forEach(r => { receiptsMap[r.itemId] = r; });
-  const classes = CLASSES.map(c => ({
-    ...c,
-    unlocked: unlocked.includes(c.id),
-  }));
-  res.json({ ok: true, user, classes, unlocked });
+// discovery — always $0, no payment required
+router.get('/academy/catalog', (req, res) => {
+  try { res.json(engine.academyCatalog({ query: req.query.q, provider: req.query.provider, sessionId: req.query.sessionId })); }
+  catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
-// GET /api/academy/receipts  — receipts of truth for a user (proof of learning bought)
-router.get('/receipts', (req, res) => {
-  const user = getUser(req);
-  const list = readReceipts().filter(r => r.user === user);
-  res.json({ ok: true, user, receipts: list });
+// quote — dry run, $0
+router.post('/academy/quote', (req, res) => {
+  try { res.json(engine.academyQuote(req.body || {})); }
+  catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
-// POST /api/academy/pay { classId } — pay the lesson to the agent's Paybox.
-router.post('/pay', json, async (req, res) => {
-  const user = getUser(req);
-  const { classId } = req.body || {};
-  const cls = classById(classId);
-  if (!cls) return res.status(404).json({ ok: false, error: 'unknown class' });
-  if (isUnlocked(user, classId)) {
-    return res.json({ ok: true, already: true, unlocked: true, user, classId });
-  }
-  if (!settle || typeof settle.settle !== 'function') {
-    return res.status(503).json({ ok: false, error: 'paybox ledger unavailable' });
-  }
+// open a tab (payment channel)
+router.post('/academy/open_tab', (req, res) => {
+  try { res.json(engine.academyOpenTab(req.body || {})); }
+  catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
+});
+
+// spend against a tab (AURA cache + PIKADON gate)
+router.post('/academy/spend', (req, res) => {
   try {
-    const result = await settle.settle({
-      user,
-      itemId: `academy:${classId}`,
-      sellerAgent: cls.agent,
-      amountCredits: cls.price,
-      reason: `academy:${classId}`,
-      meta: { classId, title: cls.title, agent: cls.agent },
-    });
-    grantUnlock(user, classId, result.receipt && result.receipt.id);
-    // Academy spark bonus: signed-in users earn 50 sparks per class paid
-    try{ var _sparks = Number(localStorage.getItem('shd_sparks')||0||localStorage.getItem('shaddai.sparks')||0); localStorage.setItem('shd_sparks', _sparks + 50); }catch(_e){}
-    return res.json({ ok: true, classId, agent: cls.agent, charged: result.charged, receipt: result.receipt });
-  } catch (err) {
-    return res.status(err.status || 500).json({ ok: false, error: err.code || err.message || 'payment failed' });
-  }
+    const r = engine.academySpend(req.body || {});
+    if (!r.success && r.humanApprovalRequired) return res.status(402).json({ error: 'humanApprovalRequired', details: r });
+    if (r.error) return res.status(400).json({ error: r.error });
+    res.json(r);
+  } catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
-// POST /api/academy/teach { classId, user, question? } — teach an unlocked class via MCP.
-// Uses the lesson-plan knowledge so the bot teaches OUR own-words lesson, then runs
-// the agent to deliver it with an exercise + quiz (the grok-style loop).
-router.post('/teach', json, async (req, res) => {
-  const user = getUser(req);
-  const { classId } = req.body || {};
-  const cls = classById(classId);
-  if (!cls) return res.status(404).json({ ok: false, error: 'unknown class' });
-  if (!isUnlocked(user, classId)) {
-    return res.status(403).json({ ok: false, error: 'this class is locked — pay via /api/academy/pay first' });
-  }
-  const prompt = [
-    `You are ${cls.agent}, teaching SHADDAI Academy class "${cls.title}".`,
-    'Teach strictly in your own words. No citations, no sourced attributions —',
-    'this is SHADDAI proprietary curriculum. Ground every point in this lesson:',
-    cls.desc,
-    `Structure: 1) the idea in plain language, 2) a worked  example, 3) one exercise`,
-    'for the student to complete, 4) a short quiz. Keep it crisp and practical.',
-    `Student question: ${(req.body && req.body.question) || 'none yet'}`,
-  ].join('\n');
+// close tab + refund
+router.post('/academy/close_tab', (req, res) => {
+  try { res.json(engine.academyCloseTab(req.body || {})); }
+  catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
+});
 
+// full lesson 01 run
+router.post('/academy/lesson01', async (req, res) => {
   try {
-    const base = `${req.protocol}://${req.get('host')}`;
-    const an = await (fetch || global.fetch)(`${base}/api/agent/run`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent: cls.agent.toLowerCase(), prompt }),
-      signal: AbortSignal.timeout ? AbortSignal.timeout(60000) : undefined,
+    const sessionId = (req.body && req.body.sessionId) || 'lesson_' + Date.now();
+    const result = await engine.runLesson01(sessionId);
+    engine.logReceipt('[lesson01] session=' + sessionId + ' rail=' + (engine.PAY_SANDBOX ? 'sandbox' : 'x402') + ' badge=channel-opener sandbox=' + engine.PAY_SANDBOX);
+    res.json({ ok: true, sessionId, ...result });
+  } catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
+});
+
+// ── MERCHANT: sell the pay-lab lesson (constitution §6) ──────────────────────
+// Mounted at /x402/academy/pay-lab separately (see exports + server-production).
+// Unpaid -> 402 with x402 requirements. Paid/mock -> 200 + {sessionId, wsUrl, badge}
+const LESSON_PRICE = engine.ACADEMY_LESSON_PRICE_USDC; // 0.10 USDC Solana
+const paylabRouter = express.Router();
+paylabRouter.post('/pay-lab', (req, res) => {
+  const sessionId = (req.body && req.body.sessionId) || 'lesson_' + Date.now();
+  const paid = !!(req.body && (req.body.mockPaid || req.body.paid === true)) ||
+               !!(req.headers['x-payment']) ||          // real x402 payment header
+               !!(req.headers['x-paybox']);              // PayBox structured intent proof
+  const wsUrl = 'ws://' + (req.headers.host || 'localhost:3000') + '/ws/academy?sessionId=' + encodeURIComponent(sessionId);
+
+  if (!paid) {
+    // 402 + payment requirements (standard x402 shape)
+    res.set('Accept-Payments', 'x402+json');
+    return res.status(402).json({
+      reason: 'paymentRequired',
+      sessionId,
+      price: { amount: String(Math.round(LESSON_PRICE * 1e6)), asset: 'USDC', network: 'solana:mainnet' },
+      requirements: {
+        'solana:mainnet': {
+          scheme: 'exact',
+          asset: 'USDC',
+          price: String(LESSON_PRICE),
+          address: 'SHADDAI_MERCHANT' // no key on the wire — PayBox/x402 facilitator resolves
+        }
+      },
+      _instructions: 'POST { mockPaid:true } to test in sandbox, or settle via PayBox/x402 then replay.',
     });
-    const data = await an.json();
-    // The run engine reports success at the top level even when a step fails
-    // with no output — surface the real final output so the class is still taught.
-    const out = data && (data.finalOutput || (data.steps && data.steps[0] && data.steps[0].result));
-    if (out) {
-      return res.json({ ok: true, classId, agent: cls.agent, onAgent: true, lesson: String(out).trim() });
-    }
-    // Agent runtime reachable but produced no text — fall through to grounded copy.
-  } catch (e) {
-    console.warn('[academy::teach] agent run failed:', (e && e.message) || e);
   }
-  // Grounded fallback — the class is real regardless of agent runtime state.
-  return res.json({
-    ok: true, classId, agent: cls.agent, offline: true,
-    lesson: { title: cls.title, body: cls.desc, action: 'summarise in 3 bullets' },
+
+  // unlocked: run lesson + badge, return sessionId + wsUrl
+  engine.academyCatalog({ query: 'solana rpc', sessionId });
+  engine.academyQuote({ provider: 'helius', endpoint: 'https://api.helius-rpc.com/', method: 'POST', body: '{}', sessionId });
+  const tab = engine.academyOpenTab({ provider: 'helius', max_usdc: 0.50, ttl_hours: 24, sessionId });
+  engine.academySpend({ tabId: tab.tabId, endpoint: 'https://api.helius-rpc.com/', method: 'POST', body: { jsonrpc: '2.0', method: 'getBalance', params: ['YourWallet'] }, sessionId });
+  const closed = engine.academyCloseTab({ tabId: tab.tabId, sessionId });
+  const badge = engine.grantBadge(sessionId, 'channel-opener');
+  engine.logReceipt('[pay-lab] session=' + sessionId + ' sold rail=paybox/mock price=' + LESSON_PRICE + ' badge=channel-opener');
+
+  res.json({
+    ok: true,
+    sessionId,
+    wsUrl,
+    lesson: 'academy-pay-lab',
+    pricePaid: LESSON_PRICE,
+    badge,
+    receipt: closed.receipt,
+    memo: '402 is not a trade. Channels are loops. PayBox is the vault.',
   });
 });
 
 module.exports = router;
+module.exports.paylabRouter = paylabRouter;

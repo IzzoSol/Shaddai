@@ -115,6 +115,46 @@ class Logger {
   constructor() {
     this.logDir = path.join(__dirname, 'logs');
     this._ensureLogDir();
+    // Async batched write queue: avoids blocking the event loop with
+    // fs.appendFileSync on the per-request hot path. Preserves ordering,
+    // keeps daily rotation, and drains on process exit.
+    this._q = [];
+    this._flushing = false;
+    this._onExit = () => this._flushSync();
+    process.on('exit', this._onExit);
+    process.on('SIGINT', this._onExit);
+    process.on('SIGTERM', this._onExit);
+  }
+
+  _enqueue(line) {
+    this._q.push(line);
+    if (this._flushing) return;
+    this._flushing = true;
+    // Drain one record per tick so a burst of logs never starves the loop,
+    // while still batching cheaply. Use setImmediate to stay non-blocking.
+    const drain = () => {
+      const chunk = this._q.splice(0, 200);
+      if (chunk.length) {
+        const date = new Date().toISOString().split('T')[0];
+        const logFile = path.join(this.logDir, `${date}.log`);
+        fs.appendFile(logFile, chunk.join('\n') + '\n', (err) => {
+          if (err) { try { console.error('[logger] write failed:', err.message); } catch (_) {} }
+        });
+      }
+      if (this._q.length) setImmediate(drain);
+      else this._flushing = false;
+    };
+    setImmediate(drain);
+  }
+
+  // Synchronous best-effort flush for shutdown paths only (rare, small).
+  _flushSync() {
+    this._flushing = false;
+    if (!this._q.length) return;
+    const chunk = this._q.splice(0, this._q.length);
+    const date = new Date().toISOString().split('T')[0];
+    const logFile = path.join(this.logDir, `${date}.log`);
+    try { fs.appendFileSync(logFile, chunk.join('\n') + '\n'); } catch (_) {}
   }
 
   _ensureLogDir() {
@@ -149,10 +189,8 @@ class Logger {
 
     console.log(`[${level}] [${component}] ${message}`, safeData);
 
-    // Write to file (daily rotation)
-    const date = new Date().toISOString().split('T')[0];
-    const logFile = path.join(this.logDir, `${date}.log`);
-    fs.appendFileSync(logFile, JSON.stringify(logEntry) + '\n');
+    // Async batched write to file (daily rotation, non-blocking)
+    this._enqueue(JSON.stringify(logEntry));
   }
 
   info(component, message, data) {
@@ -1868,6 +1906,9 @@ app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai
 app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
 app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
 app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish / MiroFish — free-API market data proxy (Polymarket + CoinGecko)
+app.use('/api/arena', require('./arena/routes'));                     // SHADDAI Arena Tier 0: agent-vs-agent (RPS/hi-lo/trivia) + replays
+app.use('/api/grok', require('./grok-connect'));                      // Import a Grok bot as a dashboard agent (selectable in Arena)
+app.use('/api', require('./dashboard-patches'));                      // P0 patch: auction/pricing/city-boost/news-analyze (dashboard wired calls)
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
@@ -2951,7 +2992,7 @@ try { app.use('/api/thread-pack', require('./thread-pack-routes')); console.log(
 catch (e) { console.warn('[prod] thread-pack failed:', e.message); }
 try { app.use(require('./quickstart-routes')); console.log('[prod] quickstart wizard mounted'); }
 catch (e) { console.warn('[prod] quickstart failed:', e.message); }
-app.use('/games', express.static(path.join(__dirname, '..', 'games')));
+app.use('/games', express.static(path.join(__dirname, '..', 'public', 'games')));
 
 // ── Shaddai Realms — 2.5D isometric RPG (Vite/Phaser SPA), served static (MUST be before the catch-all) ──
 const REALMS_DIST = path.join(__dirname, '../public/realms');
@@ -3071,6 +3112,12 @@ const PORT = process.env.PORT || 3000;
 
 // Only listen when run directly (not when imported by Vercel serverless)
 if (!process.env.VERCEL_ENV) {
+  // SHADDAI Agent Academy — socket layer (/ws/academy + /sse/academy with replay)
+  try { require('./academy-socket').init(app, wss, require('./lib/academy-engine')); }
+  catch (e) { console.warn('[academy] socket init skipped:', e && e.message); }
+  // SHADDAI Arena — socket layer (/ws/arena/:matchId with 50-event replay)
+  try { require('./arena/socket').init(wss, require('./arena/matchmaker')); }
+  catch (e) { console.warn('[arena] socket init skipped:', e && e.message); }
   server.listen(PORT, () => {
     logger.info('SERVER', `SHADDAI Production Server v62 started on port ${PORT}`);
 

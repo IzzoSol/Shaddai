@@ -1,0 +1,67 @@
+{
+  "anon": [
+    {
+      "tabId": "tab_16c2c8fa3b6e",
+      "provider": "helius",
+      "callsMade": 1,
+      "totalSpent": 0.001,
+      "refunded": 0.499,
+      "rail": "sandbox-channel",
+      "sig": "sandbox",
+      "openedAt": "2026-09-04T02:41:30.830Z",
+      "closedAt": "2026-09-04T02:41:30.848Z"
+    }
+  ],
+  "tester-001": [
+    {
+      "tabId": "tab_e363ba616473",
+      "provider": "helius",
+      "callsMade": 1,
+      "totalSpent": 0.001,
+      "refunded": 0.499,
+      "rail": "sandbox-channel",
+      "sig": "sandbox",
+      "openedAt": "2026-09-04T02:41:30.854Z",
+      "closedAt": "2026-09-04T02:41:30.858Z"
+    }
+  ],
+  "test-dash-1": [
+    {
+      "tabId": "tab_34a54b2d8c58",
+      "provider": "helius",
+      "callsMade": 1,
+      "totalSpent": 0.001,
+      "refunded": 0.499,
+      "rail": "sandbox-channel",
+      "sig": "sandbox",
+      "openedAt": "2026-09-04T04:23:02.520Z",
+      "closedAt": "2026-09-04T04:23:02.552Z"
+    }
+  ],
+  "lesson_1788507438059": [
+    {
+      "tabId": "tab_99bc5bc7cc95",
+      "provider": "helius",
+      "callsMade": 1,
+      "totalSpent": 0.001,
+      "refunded": 0.499,
+      "rail": "sandbox-channel",
+      "sig": "sandbox",
+      "openedAt": "2026-09-04T07:37:18.087Z",
+      "closedAt": "2026-09-04T07:37:18.310Z"
+    }
+  ],
+  "lesson_1788507439774": [
+    {
+      "tabId": "tab_46da34c45454",
+      "provider": "helius",
+      "callsMade": 1,
+      "totalSpent": 0.001,
+      "refunded": 0.499,
+      "rail": "sandbox-channel",
+      "sig": "sandbox",
+      "openedAt": "2026-09-04T07:37:19.775Z",
+      "closedAt": "2026-09-04T07:37:19.779Z"
+    }
+  ]
+}

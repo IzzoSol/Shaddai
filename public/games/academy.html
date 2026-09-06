@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADDAI Agent Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a12; --surface:#0c1120; --border:#1a2438; --text:#e6edf7;
+    --muted:#7a8ba3; --accent:#00e5a0; --accent2:#22d3ee; --warn:#e8c45c;
+    --err:#ff7a5a; --gold:#e8c45c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+  body::after{content:'';position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px;position:relative}
+  header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:20px}
+  .brand{font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;letter-spacing:1px}
+  .brand span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase}
+  .rail{display:inline-block;padding:4px 10px;border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:11px;letter-spacing:1px;background:rgba(0,229,160,.06)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+  .card h3{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:1px;margin-bottom:4px;color:var(--accent)}
+  .card p{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#04130d;font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .btn.ghost{background:transparent;color:var(--accent2);border:1px solid var(--accent2)}
+  .btn.gold{background:var(--gold);color:#1a1502}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .out{background:#05070d;border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:14px;font-size:13px;white-space:pre-wrap;word-break:break-word;font-family:monospace;color:var(--text)}
+  .out.ok{border-color:var(--accent)}
+  .out.err{border-color:var(--err)}
+  .out.warn{border-color:var(--warn)}
+  .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+  .tag.green{background:rgba(0,229,160,.15);color:var(--accent)}
+  .tag.gold{background:rgba(232,196,92,.15);color:var(--gold)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  input,select{background:#05070d;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-family:'Rajdhani',sans-serif;font-size:13px;width:100%}
+  label{display:block;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:10px 0 4px}
+  .status{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--muted)}
+  .pill b{color:var(--accent)}
+  .foot{color:var(--muted);font-size:11px;text-align:center;margin-top:40px;line-height:1.6}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+  .tab{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer}
+  .tab.active{color:var(--accent);border-color:var(--accent);background:rgba(0,229,160,.06)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">SHADDAI <span>ACADEMY</span></div>
+      <div class="sub">402 Payment Channels · Skills · Badges</div>
+    </div>
+    <span class="rail" id="rail">SANDBOX</span>
+  </header>
+
+  <div class="status">
+    <span class="pill">Catalog <b id="stCatalog">–</b></span>
+    <span class="pill">Badge <b id="stBadge">channel-opener</b></span>
+    <span class="pill">Lesson price <b id="stPrice">$0.10</b></span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">Lesson 01</div>
+    <div class="tab" data-tab="lab">Pay-LAB</div>
+    <div class="tab" data-tab="channel">Channel</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section id="tab-overview">
+    <div class="cards">
+      <div class="card">
+        <h3>Channel Opener <span class="tag gold">BADGE</span></h3>
+        <p>Run the full agent-payment lesson: discover, quote, open a channel, spend, and settle — all through the x402 protocol rails. Earns the <b>channel-opener</b> badge.</p>
+        <button class="btn" id="btnLesson">▶ Run Lesson 01</button>
+        <div class="out" id="out-lesson" style="display:none"></div>
+      </div>
+      <div class="card">
+        <h3>Discovery <span class="tag green">FREE</span></h3>
+        <p>Browse the Academy catalog. Zero cost to discover the available skills and payment rails.</p>
+        <button class="btn ghost" id="btnCatalog">Fetch Catalog</button>
+        <div class="out" id="out-catalog" style="display:none"></div>
+      </div>
+      <div class="card">
+        <h3>Dry-Run Quote <span class="tag green">FREE</span></h3>
+        <p>Ask for a quote for any provider/endpoint/method before you spend a single unit.</p>
+        <label>Endpoint (example: https://api.helius-rpc.com/)</label>
+        <input id="qEndpoint" value="https://api.helius-rpc.com/" />
+        <label>Method</label>
+        <input id="qMethod" value="POST" />
+        <button class="btn gold" id="btnQuote">Get Quote</button>
+        <div class="out" id="out-quote" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LAB -->
+  <section id="tab-lab" style="display:none">
+    <div class="cards">
+      <div class="card">
+        <h3>Merchant Pay-LAB <span class="tag gold">X402</span></h3>
+        <p>This is the merchant endpoint that <b>sells</b> a lesson. Unpaid requests get an HTTP <b>402 Payment Required</b>. In sandbox, mark <b>mockPaid</b> to simulate settlement and unlock the lesson + badge.</p>
+        <div class="row">
+          <button class="btn" id="btnLabUnpaid">Request (unpaid → 402)</button>
+          <button class="btn gold" id="btnLabPaid">Request (mockPaid)</button>
+        </div>
+        <div class="out" id="out-lab" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHANNEL -->
+  <section id="tab-channel" style="display:none">
+    <div class="cards">
+      <div class="card">
+        <h3>Open Metered Channel</h3>
+        <p>Open a payment channel, spend against it (AURA-cached calls cost nothing on repeat), then close and refund the balance.</p>
+        <label>Provider</label>
+        <select id="chProvider"><option>helius</option><option>alchemy</option><option>quicknode</option><option>mock</option></select>
+        <label>Max budget (USDC)</label>
+        <input id="chMax" value="0.50" />
+        <label>Endpoint</label>
+        <input id="chEndpoint" value="https://api.helius-rpc.com/" />
+        <div class="row">
+          <button class="btn" id="btnOpen">Open Tab</button>
+          <button class="btn ghost" id="btnSpend" disabled>Spend</button>
+          <button class="btn gold" id="btnClose" disabled>Close + Refund</button>
+        </div>
+        <div class="out" id="out-channel" style="display:none"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">402 is not a trade. Channels are loops. PayBox is the vault.<br>The Academy teaches agents to pay for compute honestly — no keys, no hacks, no stalling.</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const rail = 'sandbox';
+$('rail').textContent = rail.toUpperCase();
+
+function show(el, d, kind){
+  const o = $(el);
+  o.style.display='block';
+  o.textContent = (typeof d==='string') ? d : JSON.stringify(d, null, 2);
+  o.className = 'out ' + (kind||'');
+  return o;
+}
+async function jpost(url, body, headers){
+  const r = await fetch(url, { method:'POST', headers:Object.assign({'Content-Type':'application/json'}, headers||{}), body: body ? JSON.stringify(body) : undefined });
+  const txt = await r.text();
+  let d; try { d = JSON.parse(txt); } catch(e){ d = txt; }
+  return { status: r.status, d, r };
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.style.display='none');
+    $('tab-'+t.dataset.tab).style.display='block';
+  });
+});
+
+// Catalog
+$('btnCatalog').onclick = async ()=>{
+  const r = await fetch('/api/academy/catalog');
+  const d = await r.json();
+  $('stCatalog').textContent = (d && d.items) ? d.items.length : '–';
+  show('out-catalog', d, 'ok');
+};
+
+// Quote
+$('btnQuote').onclick = async ()=>{
+  const d = await jpost('/api/academy/quote', { provider:$('qProvider')?.value||'helius', endpoint:$('qEndpoint').value, method:$('qMethod').value });
+  show('out-quote', d.status===200 ? d.d : d, d.status<=299?'ok':'err');
+};
+
+// Lesson 01
+$('btnLesson').onclick = async ()=>{
+  $('btnLesson').disabled = true; $('btnLesson').textContent = 'Running…';
+  const d = await jpost('/api/academy/lesson01', {});
+  $('btnLesson').disabled = false; $('btnLesson').textContent = '▶ Run Lesson 01';
+  show('out-lesson', d.status<=299 ? d.d : d, d.status<=299?'ok':'err');
+};
+
+// Pay-Lab
+$('btnLabUnpaid').onclick = async ()=>{
+  const d = await jpost('/x402/academy/pay-lab', {}, { 'Accept':'x402+json' });
+  show('out-lab', { httpStatus:d.status, ...d.d }, d.status===402?'warn':'ok');
+};
+$('btnLabPaid').onclick = async ()=>{
+  const d = await jpost('/x402/academy/pay-lab', { mockPaid:true });
+  show('out-lab', { httpStatus:d.status, ...d.d }, d.status<=299?'ok':'err');
+};
+
+// Channel
+let tabId = null;
+$('btnOpen').onclick = async ()=>{
+  const d = await jpost('/api/academy/open_tab', { provider:$('chProvider').value, max_usdc:Number($('chMax').value)||0, endpoint:$('chEndpoint').value });
+  tabId = d.d && d.d.tabId;
+  $('btnSpend').disabled = !tabId; $('btnClose').disabled = !tabId;
+  show('out-channel', d.status<=299 ? d.d : d, d.status<=299?'ok':'err');
+};
+$('btnSpend').onclick = async ()=>{
+  if(!tabId) return;
+  const d = await jpost('/api/academy/spend', { tabId, endpoint:$('chEndpoint').value, method:'POST', body:{ jsonrpc:'2.0', method:'getBalance', params:['YourWallet'] } });
+  show('out-channel', d.status<=299 ? d.d : d, d.status<=299?'ok':'err');
+};
+$('btnClose').onclick = async ()=>{
+  if(!tabId) return;
+  const d = await jpost('/api/academy/close_tab', { tabId });
+  tabId=null; $('btnSpend').disabled=true; $('btnClose').disabled=true;
+  show('out-channel', d.status<=299 ? d.d : d, d.status<=299?'ok':'err');
+};
+
+// Boot: refresh catalog count
+fetch('/api/academy/catalog').then(r=>r.json()).then(d=>{ $('stCatalog').textContent = (d && d.items && d.items.length) ? d.items.length : '–'; }).catch(()=>{});
+</script>
+</body>
+</html>
