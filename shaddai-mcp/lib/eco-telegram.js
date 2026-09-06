@@ -67,4 +67,34 @@ async function post(text, chatId) {
   return postTo(TOKEN, id, text);
 }
 
-module.exports = { ready, vReady, bind, chatFor, post, vPost, postTo, HALL, TOKEN, VTOKEN, VCHAT };
+const AGENT_EMOJI = {
+  SHADDAI: '👑', NEXUS: '⚙️', ZEROX: '💰', ORACLE: '🔮',
+  TURTLE: '🎨', QUILL: '✍️', PIKADON: '🛡️',
+};
+
+// One @ShaddaiHall, tagged results. Post an agent's tool result to the Hall, and
+// (when a bound DM chat is provided) echo a copy to that user. Degrades cleanly
+// when no token/chat is configured — returns the post result (or {error}) instead
+// of throwing, like every other fn here.
+async function postAgentResult(agentName, toolName, result, { sender = null, dmChatId = null } = {}) {
+  const err = ready();
+  if (err) return { error: err };
+
+  const name = String(agentName || '').toUpperCase();
+  const emoji = AGENT_EMOJI[name] || '🤖';
+  const heading = `${emoji} *${name}* — ${toolName}`;
+
+  const formatted = typeof result === 'object'
+    ? '```json\n' + JSON.stringify(result, null, 2).slice(0, 3500) + '\n```'
+    : '_' + String(result) + '_';
+
+  const hallMessage = `${heading}\n\n${formatted}${sender ? `\n\n_via tip: ${String(sender).slice(0, 8)}…_` : ''}`;
+  const hallResult = await post(hallMessage, HALL);
+
+  let dmResult = null;
+  if (dmChatId) dmResult = await postTo(TOKEN, dmChatId, `${heading}\n\n${formatted}`);
+
+  return { hall: hallResult, dm: dmResult };
+}
+
+module.exports = { ready, vReady, bind, chatFor, post, vPost, postTo, postAgentResult, HALL, TOKEN, VTOKEN, VCHAT, AGENT_EMOJI };

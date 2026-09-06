@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SHADDAI · RAG Brain</title>
+<meta name="description" content="The SHADDAI RAG brain — ask the council, read what each agent really knows, see the tools, models and wallets." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --void:#06080b; --void2:#0a0e13; --panel:#0e141b; --card:#0e141a;
+  --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#5c6b64;
+  --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.34);
+  --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff; --rose:#ff6f6f; --violet:#b07cff;
+  --f-display:'Cinzel',serif; --f-mono:'IBM Plex Mono',monospace;
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ min-height:100%; }
+body{ background:var(--void); color:var(--ink); font-family:var(--f-mono);
+  -webkit-font-smoothing:antialiased; line-height:1.5; }
+a{ color:inherit; text-decoration:none; }
+button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+
+/* header */
+header{ position:sticky; top:0; z-index:30; background:rgba(6,8,11,.92);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--edge); }
+.head{ max-width:960px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:14px; }
+.head .brand{ font-family:var(--f-display); font-weight:900; font-size:22px; letter-spacing:.1em;
+  text-shadow:0 0 16px rgba(0,255,156,.5); }
+.head .brand b{ color:var(--emerald); }
+.head .sub{ font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); }
+.head .x{ margin-left:auto; font-size:22px; color:var(--ink-soft); width:44px; height:44px;
+  display:grid; place-items:center; }
+
+main{ max-width:960px; margin:0 auto; padding:20px 20px 80px; }
+
+/* ask bar */
+.askbar{ display:flex; gap:10px; margin:8px 0 6px; }
+.askbar input{ flex:1; min-width:0; background:var(--panel); border:1px solid var(--edge);
+  color:var(--ink); font-family:var(--f-mono); font-size:16px; padding:16px 18px; min-height:60px;
+  border-radius:6px; outline:none; }
+.askbar input:focus{ border-color:var(--emerald); }
+.askbar button{ flex:0 0 auto; padding:0 26px; border-radius:6px; font-weight:600; letter-spacing:.08em;
+  font-size:13px; border:1px solid var(--emerald); background:var(--emerald); color:#04120c; }
+.askbar button:disabled{ opacity:.5; }
+.answer{ margin:14px 0 4px; padding:18px 20px; background:var(--card); border:1px solid var(--edge);
+  border-left:4px solid var(--emerald); border-radius:6px; display:none; }
+.answer.on{ display:block; }
+.answer .who{ font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+.answer .body{ font-size:15px; line-height:1.65; color:var(--ink); white-space:pre-wrap; }
+.answer .srcs{ margin-top:14px; border-top:1px solid var(--edge); padding-top:12px; display:grid; gap:8px; }
+.answer .src{ font-size:11.5px; color:var(--ink-soft); }
+.answer .src b{ color:var(--cyan); font-weight:600; }
+.answer .src .sc{ color:var(--ink-faint); font-size:9.5px; margin-left:6px; }
+.answer .status{ font-size:10px; color:var(--ink-faint); margin-top:10px; letter-spacing:.1em; }
+
+/* sections */
+.sec{ margin-top:34px; }
+.sec-h{ display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
+.sec-h h2{ font-family:var(--f-display); font-weight:900; font-size:19px; letter-spacing:.06em; }
+.sec-h .cnt{ font-size:10px; color:var(--ink-faint); letter-spacing:.1em; }
+
+/* agents */
+.agents{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.agent{ background:var(--card); border:1px solid var(--edge); border-radius:8px; overflow:hidden;
+  cursor:pointer; transition:border-color .2s, transform .2s; text-align:left; }
+.agent:hover{ border-color:color-mix(in srgb,var(--ac,var(--emerald)) 55%,transparent); transform:translateY(-2px); }
+.agent .img{ height:150px; background-size:cover; background-position:50% 30%; background-color:#0a0e13; }
+.agent .body{ padding:13px 14px 15px; }
+.agent .name{ font-family:var(--f-display); font-weight:900; font-size:15px; letter-spacing:.08em;
+  display:flex; align-items:center; gap:8px; }
+.agent .name .dot{ width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+.agent .role{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px; }
+.agent .model{ font-size:9.5px; color:var(--ink-faint); margin-top:6px; letter-spacing:.04em; }
+.agent .stats{ display:flex; gap:12px; margin-top:8px; font-size:10px; color:var(--ink-soft); }
+
+/* knowledge detail (selected agent) */
+.agent-detail{ margin-top:14px; padding:18px 20px; background:var(--card); border:1px solid var(--edge);
+  border-left:4px solid var(--ac,var(--emerald)); border-radius:6px; display:none; }
+.agent-detail.on{ display:block; }
+.agent-detail h3{ font-family:var(--f-display); font-size:16px; margin-bottom:4px; }
+.agent-detail .owns{ font-size:13px; color:var(--ink-soft); margin-bottom:12px; }
+.agent-detail .subjects{ display:flex; flex-wrap:wrap; gap:6px; }
+.sbj{ font-size:11px; letter-spacing:.05em; border:1px solid var(--edge2); border-radius:4px;
+  padding:6px 10px; color:var(--ink-soft); }
+.sbj b{ color:var(--gold); font-weight:600; margin-left:5px; }
+.sbj.primary{ border-color:rgba(0,255,156,.4); color:var(--emerald); }
+
+/* tools */
+.tools{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+.tool{ background:var(--card); border:1px solid var(--edge); border-radius:6px; padding:13px 15px; }
+.tool .tn{ font-weight:700; font-size:13px; color:var(--cyan); }
+.tool .td{ font-size:11.5px; color:var(--ink-soft); margin-top:5px; line-height:1.5; }
+
+/* wallets */
+.wallets{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; }
+.wallet{ background:var(--card); border:1px solid var(--edge); border-radius:8px; padding:16px 18px; }
+.wallet .wl{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+.wallet .wa{ font-size:11.5px; color:var(--ink-soft); margin:8px 0; word-break:break-all; font-family:var(--f-mono); }
+.wallet .cp{ font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--emerald);
+  border:1px solid var(--edge2); border-radius:4px; padding:8px 14px; }
+.wallet .note{ font-size:10px; color:var(--ink-faint); margin-top:8px; }
+
+.empty{ color:var(--ink-faint); font-size:12px; padding:20px 0; text-align:center; }
+.foot{ margin-top:40px; text-align:center; font-size:10px; color:var(--ink-faint); letter-spacing:.1em; }
+#toTerm{ display:none; }
+@media(min-width:820px){
+  #toTerm{ display:inline-flex; align-items:center; gap:7px; margin-left:auto;
+    border:1px solid var(--gold); color:var(--gold); border-radius:4px; padding:8px 14px;
+    font-size:11px; letter-spacing:.1em; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head">
+    <div class="brand">RAG <b>BRAIN</b></div>
+    <div class="sub" id="liveTag">loading…</div>
+    <a class="x" href="/index.html" aria-label="Close">&times;</a>
+    <a id="toTerm" href="/brain.html">3D view</a>
+  </div>
+</header>
+
+<main>
+  <!-- ask -->
+  <div class="askbar">
+    <input id="q" placeholder="Ask the council…" aria-label="Ask the council" />
+    <button id="askBtn" type="button">Ask</button>
+  </div>
+  <div class="answer" id="answer">
+    <div class="who" id="ansWho"></div>
+    <div class="body" id="ansBody"></div>
+    <div class="srcs" id="ansSrcs"></div>
+    <div class="status" id="ansStatus"></div>
+  </div>
+
+  <!-- agents -->
+  <section class="sec">
+    <div class="sec-h"><h2>The Council</h2><span class="cnt" id="agentCnt"></span></div>
+    <div class="agents" id="agents"></div>
+    <div class="agent-detail" id="agentDetail"></div>
+  </section>
+
+  <!-- tools -->
+  <section class="sec">
+    <div class="sec-h"><h2>Tools</h2><span class="cnt" id="toolCnt"></span></div>
+    <div class="tools" id="tools"></div>
+  </section>
+
+  <!-- wallets -->
+  <section class="sec">
+    <div class="sec-h"><h2>Wallets</h2><span class="cnt">paybox + ZEROX Virtuals</span></div>
+    <div class="wallets" id="wallets"></div>
+  </section>
+
+  <div class="foot">SHADDAI · RAG brain · grounded &amp; cited to source</div>
+</main>
+
+<script>
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+
+/* Canonical agent metadata — the ONE correct source of role + colour + portrait.
+   SUPPORTS the correct assets/agents/*-portrait.png likeness (not the broken
+   assets/council/ set). Model is the agent's specialism, not a hidden label. */
+var AGENTS = [
+  {id:'SHADDAI', name:'SHADDAI', role:'Supreme Orchestrator', col:'#c9a6ff', model:'strategy · prioritisation · final call'},
+  {id:'NEXUS',   name:'NEXUS',   role:'Technical Architect',  col:'#5bc8d4', model:'backend · APIs · data · agents'},
+  {id:'ZEROX',   name:'ZEROX',   role:'Revenue Engine',       col:'#b87fdf', model:'markets · pricing · money · crypto'},
+  {id:'ORACLE',  name:'ORACLE',  role:'Research & Intelligence', col:'#f0d080', model:'research · psychology · patterns'},
+  {id:'TURTLE',  name:'TURTLE',  role:'UI/UX & Creative',     col:'#4dd4a0', model:'design · art · motion · sound'},
+  {id:'QUILL',   name:'QUILL',   role:'Writing & Communication', col:'#e87f7f', model:'copy · docs · narrative'},
+  {id:'PIKADON', name:'PIKADON', role:'Security & Compliance', col:'#f0a060', model:'audit · risk · that could go wrong'},
+];
+
+var portrait = function(id){
+  return '/assets/agents/' + id + '-portrait.png';
+};
+
+/* ── ask: route to the right agent first, then get a grounded cited answer ── */
+var autodetect = true;   // always route; the accurate path (fixes Oracle→Zerox)
+async function ask(){
+  var q = $('q').value.trim(); if(!q) return;
+  var ans = $('answer'); var btn = $('askBtn');
+  btn.disabled = true; btn.textContent = '…';
+  ans.classList.add('on');
+  $('ansWho').textContent = 'routing…';
+  $('ansBody').textContent = ''; $('ansSrcs').innerHTML=''; $('ansStatus').textContent='';
+  try{
+    // 1) route — which agent owns this request
+    var agent = 'SHADDAI', why = '';
+    if(autodetect){
+      var r = await (await fetch('/api/route?q='+encodeURIComponent(q))).json();
+      if(r && r.ranked && r.ranked.length){ agent = r.ranked[0].agent; why = '· routed to ' + agent + (r.ranked[0].fallback ? ' (default)' : ' (' + r.ranked[0].theme + ')'); }
+    }
+    // 2) ask that agent, grounded in its own corpus
+    var d = await (await fetch('/api/ask?agent='+encodeURIComponent(agent)+'&q='+encodeURIComponent(q))).json();
+    if(d && d.answer){
+      $('ansWho').textContent = d.agent + ' · ' + (d.role||'') + why;
+      $('ansBody').textContent = d.answer;
+      if(d.sources && d.sources.length){
+        $('ansSrcs').innerHTML = d.sources.map(function(s,i){
+          return '<div class="src"><b>['+(i+1)+']</b> '+esc(s.title||'source')+'<span class="sc">score '+((s.score||0).toFixed(3))+(s.timeLabel?' · '+esc(s.timeLabel):'')+'</span></div>';
+        }).join('');
+      }
+      $('ansStatus').textContent = (d.llm_powered ? 'grounded (LLM) · ' : '') + d.sources.length + ' sources · ' + (d.ms||0) + 'ms';
+    } else {
+      $('ansWho').textContent = agent;
+      $('ansBody').textContent = 'No grounded answer came back for that. Try a clearer question.';
+    }
+  }catch(e){
+    $('ansWho').textContent = 'offline';
+    $('ansBody').textContent = 'The brain is unreachable right now — '+e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Ask';
+}
+$('askBtn').addEventListener('click', ask);
+$('q').addEventListener('keydown', function(e){ if(e.key==='Enter') ask(); });
+
+/* ── agents ── */
+var DATA = { overview:null, kmap:null, tools:null };
+function renderAgents(){
+  var ov = DATA.overview;
+  var wrap = $('agents'); wrap.innerHTML = '';
+  AGENTS.forEach(function(A){
+    var o = ov && ov.agents ? (ov.agents.find(function(x){return x.id===A.id;})||{}) : {};
+    var el = document.createElement('button');
+    el.className = 'agent';
+    el.style.setProperty('--ac', A.col);
+    el.innerHTML =
+      '<div class="img" style="background-image:url(\''+portrait(A.id)+'\')"></div>' +
+      '<div class="body">'+
+        '<div class="name"><span class="dot" style="background:'+A.col+';box-shadow:0 0 8px '+A.col+'"></span>'+A.name+'</div>'+
+        '<div class="role">'+A.role+'</div>'+
+        '<div class="model">'+A.model+'</div>'+
+        '<div class="stats"><span>'+ (o.docs||0) +' sources</span><span>'+ (o.chunks||0) +' chunks</span></div>'+
+      '</div>';
+    el.addEventListener('click', function(){ showAgent(A, o); });
+    wrap.appendChild(el);
+  });
+  if(ov){ $('agentCnt').textContent = ov.videos + ' docs · ' + ov.chunks + ' chunks · ' + ov.words + ' words'; $('liveTag').textContent = 'live · ' + ov.videos + ' sources'; }
+}
+function showAgent(A, o){
+  var d = $('agentDetail');
+  var subj = [];
+  if(DATA.kmap && DATA.kmap.agents){
+    var idx = DATA.kmap.agents.find(function(x){return x.agent===A.id;});
+    if(idx && idx.subjects) subj = idx.subjects;
+  }
+  d.style.setProperty('--ac', A.col);
+  d.innerHTML =
+    '<h3>'+A.name+'</h3>'+
+    '<div class="owns">'+A.role+' — '+A.model+'</div>'+
+    (subj.length ? '<div class="subjects">'+subj.slice(0,24).map(function(s){
+      return '<span class="sbj '+(s.rank+(s.rank==='primary'?' primary':''))+'">'+esc(s.topic)+'<b>'+s.count+'</b></span>';
+    }).join('')+'</div>' : '<div class="empty">No organised subjects yet for '+A.name+'.</div>');
+  d.classList.add('on');
+}
+
+/* ── tools ── */
+function renderTools(){
+  var t = DATA.tools;
+  var wrap = $('tools'); wrap.innerHTML = '';
+  var list = (t && t.tools) ? t.tools : [];
+  if(!list.length){ wrap.innerHTML = '<div class="empty">No tool ledger loaded.</div>'; return; }
+  list.slice(0,40).forEach(function(tl){
+    var el = document.createElement('div'); el.className='tool';
+    el.innerHTML = '<div class="tn">'+esc(tl.name||tl.tool||'?')+'</div><div class="td">'+esc((tl.what||tl.description||tl.desc||'').slice(0,160))+'</div>';
+    wrap.appendChild(el);
+  });
+  $('toolCnt').textContent = list.length + ' tools';
+}
+
+/* ── wallets ── */
+function renderWallets(){
+  var wrap = $('wallets'); wrap.innerHTML = '';
+  var wl = [
+    {label:'ZEROX · Solana', note:'SOL + SPL tips for advice / wallet checks'},
+    {label:'ZEROX · Robinhood', note:'EVM address — confirm network before sending'},
+  ];
+  fetch('/api/paybox/wallets').then(function(r){return r.json();}).then(function(j){
+    var wals = (j && j.wallets) || [];
+    wrap.innerHTML = '';
+    wals.forEach(function(w){
+      var el = document.createElement('div'); el.className='wallet';
+      el.innerHTML = '<div class="wl">'+esc(w.label||w.chain)+'</div><div class="wa">'+esc(w.address)+'</div>'+
+        '<button class="cp">Copy</button><div class="note">'+esc(w.note||'')+'</div>';
+      el.querySelector('.cp').addEventListener('click', function(){
+        navigator.clipboard.writeText(w.address).then(function(){ el.querySelector('.cp').textContent='Copied ✓'; });
+      });
+      wrap.appendChild(el);
+    });
+    // ZEROX Virtuals wallets (public, read-only) alongside
+    fetch('/api/virtuals/wallets').then(function(r){return r.json();}).then(function(v){
+      (v.wallets||[]).forEach(function(w){
+        var el = document.createElement('div'); el.className='wallet';
+        el.innerHTML = '<div class="wl">'+esc(w.label||w.chain)+'</div><div class="wa">'+esc(w.address)+'</div>'+
+          '<button class="cp">Copy</button><div class="note">'+esc(w.funded ? 'funded' : 'needs gas')+'</div>';
+        el.querySelector('.cp').addEventListener('click', function(){
+          navigator.clipboard.writeText(w.address).then(function(){ el.querySelector('.cp').textContent='Copied ✓'; });
+        });
+        wrap.appendChild(el);
+      });
+    }).catch(function(){});
+  }).catch(function(){ wrap.innerHTML = '<div class="empty">Wallets unavailable.</div>'; });
+}
+
+/* ── init ── */
+async function init(){
+  try {
+    DATA.overview = await (await fetch('/api/overview')).json();
+    renderAgents();
+  }catch(e){ $('liveTag').textContent='offline'; }
+  try { DATA.kmap = await (await fetch('/api/knowledge-map')).json(); }catch(e){}
+  try { DATA.tools = await (await fetch('/api/tools')).json(); renderTools(); }catch(e){}
+  renderWallets();
+}
+init();
+</script>
+</body>
+</html>

@@ -722,6 +722,11 @@ function handleWebSocketMessage(clientId, data, ws) {
 // x402 payment discovery (HTTP 402 micropayments — primary rail; free unless X402_ENABLED)
 app.get('/.well-known/x402.json', (req, res) => res.json(require('./lib/x402').discovery()));
 
+// MCP discovery — lets ACP clients (Virtuals, other agents) find ZEROX's tool
+// surface + wallets without a manual manifest. READ-ONLY: identity + public
+// wallet addresses only, never the VIRTUALS_API_KEY or any secret.
+app.get('/.well-known/mcp.json', (req, res) => res.json(require('./lib/virtuals-discovery').manifest()));
+
 // ===== CITY ROUTES — Phase A =====
 app.get('/api/city/plots', (req, res) => {
   const plots = Array.from({length: 30}, (_, i) => ({
@@ -1771,6 +1776,61 @@ try {
 } catch (e) {
   console.warn('[prod] Virtuals ACP REST failed:', e.message);
 }
+
+// LLM ROUTER — multi-provider status + a direct chat probe (Groq→fallback).
+try {
+  const llmRouter = require('./lib/llm-router');
+  const gen = express.Router();
+  gen.get('/api/router/status', (req, res) => res.json({ ok: true, providers: llmRouter.status() }));
+  gen.post('/api/router/chat', express.json(), async (req, res) => {
+    try {
+      const b = req.body || {};
+      const out = await llmRouter.chat(b.messages || [], { temperature: b.temperature, max_tokens: b.max_tokens, json: b.json });
+      res.json({ ok: true, ...out });
+    } catch (e) { res.status(502).json({ ok: false, error: String((e && e.message) || e) }); }
+  });
+  app.use(gen);
+  console.log('[prod] LLM router mounted (/api/router/*)');
+} catch (e) { console.warn('[prod] LLM router failed:', e.message); }
+
+// TOOL REGISTRY — catalog snapshot / diff / listing.
+try {
+  const reg = require('./lib/tool-registry');
+  const gen = express.Router();
+  gen.get('/api/tools', (req, res) => res.json({ ok: true, ...reg.current() }));
+  gen.post('/api/tools/snapshot', express.json(), (req, res) => res.json(reg.snapshot((req.body || {}).by)));
+  gen.get('/api/tools/snapshots', (req, res) => res.json({ ok: true, snapshots: reg.list() }));
+  gen.get('/api/tools/diff', (req, res) => res.json(reg.diff(req.query.a, req.query.b)));
+  app.use(gen);
+  console.log('[prod] Tool registry mounted (/api/tools*)');
+} catch (e) { console.warn('[prod] Tool registry failed:', e.message); }
+
+// REPUTATION ENGINE — per-agent record/rank/leaderboard.
+try {
+  const rep = require('./lib/reputation-engine');
+  const gen = express.Router();
+  gen.post('/api/reputation/record', express.json(), (req, res) => { const b = req.body || {}; res.json({ ok: true, agent: rep.record(b) }); });
+  gen.get('/api/reputation/rank', (req, res) => res.json({ ok: true, agents: rep.rank() }));
+  gen.get('/api/reputation/leader', (req, res) => res.json({ ok: true, leader: rep.leader() }));
+  gen.get('/api/reputation/:agent', (req, res) => res.json({ ok: true, agent: rep.get(req.params.agent) }));
+  app.use(gen);
+  console.log('[prod] Reputation engine mounted (/api/reputation/*)');
+} catch (e) { console.warn('[prod] Reputation engine failed:', e.message); }
+
+// HELIUS LISTENER — on-chain watchers + webhook (adds read-only event dispatch).
+try {
+  const helius = require('./lib/helius-listener');
+  const gen = express.Router();
+  gen.get('/api/helius/watchers', (req, res) => res.json({ ok: true, watchers: helius.list() }));
+  gen.post('/api/helius/watch', express.json(), (req, res) => { const b = req.body || {}; res.json(helius.watch(b.wallet, b)); });
+  gen.post('/api/helius/unwatch', express.json(), (req, res) => { const b = req.body || {}; res.json(helius.unwatch(b.wallet)); });
+  gen.post('/api/helius/webhook', express.json(), async (req, res) => {
+    res.sendStatus(200);
+    setImmediate(() => helius.handle(req.body).catch(() => {}));
+  });
+  app.use(gen);
+  console.log('[prod] Helius listener mounted (/api/helius/watch,webhook)');
+} catch (e) { console.warn('[prod] Helius listener failed:', e.message); }
 
 /* GET /api/paybox/wallets — the ZEROX FOMO wallets shown on the front door.
    Read from data/paybox-wallets.json every call (not cached) so rotating an
@@ -2917,6 +2977,11 @@ app.get('/dashboard', (req, res) => {
 // RAG brain — the 7-agent knowledge system UI (knowledge bases + live cloud search).
 app.get('/brain', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/brain.html'));
+});
+// Flat RAG brain — the mobile-friendly read view (no 3D): agents, tools, wallets,
+// accurate routed + grounded ask. Same backend, single shared connection.
+app.get('/rag', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/rag.html'));
 });
 
 // API 404 GUARD — any unmatched /api/* path returns JSON, never the SPA HTML.

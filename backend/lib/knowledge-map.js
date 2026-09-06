@@ -95,7 +95,7 @@ const TRIGGERS = {
   crypto:       ['coin', 'token', 'memecoin', 'solana', 'airdrop', 'mint'],
   blockchain:   ['blockchain', 'onchain', 'on chain', 'smart contract', 'contract address'],
   sales:        ['sell', 'sales', 'pitch', 'objection', 'funnel'],
-  offers:       ['offer', 'pricing', 'package', 'bundle', 'upsell'],
+  offers:       ['offer', 'pricing', 'price', 'package', 'bundle', 'upsell', 'how much', 'cost'],
   marketing:    ['marketing', 'campaign', 'audience', 'growth', 'viral'],
   design:       ['design', '3d model', '3d asset', 'cover', 'logo', 'mockup',
                  'thumbnail', 'banner', 'layout', 'icon', 'render', 'texture'],
@@ -105,8 +105,8 @@ const TRIGGERS = {
                  'documentation', 'newsletter', 'email'],
   storytelling: ['story', 'narrative', 'hook'],
   negotiation:  ['negotiate', 'deal terms', 'counteroffer'],
-  security:     ['safe', 'scam', 'rug', 'rugpull', 'audit', 'vulnerab', 'exploit', 'phishing',
-                 'background check', 'verify', 'legit', 'secure'],
+security:     ['safe', 'scam', 'rug', 'rugpull', 'audit', 'vulnerab', 'exploit', 'phishing',
+               'background check', 'verify', 'legit', 'secure', 'security', 'risk', 'hack', 'threat'],
   engineering:  ['build', 'code', 'refactor', 'deploy', 'architecture', 'system design'],
   backend:      ['backend', 'api', 'database', 'server', 'endpoint', 'schema'],
   ai:           ['llm', 'prompt', 'embedding', 'inference'],
@@ -247,7 +247,15 @@ function route(text, { limit = 3 } = {}) {
   }
 
   for (const [topic, words] of Object.entries(TRIGGERS)) {
-    if (!words.some((w) => q.includes(w))) continue;
+    // Word-boundary match so "smart" / "price action" cleanly match while a
+    // substring inside another word cannot (e.g. "art" inside "smart" must NOT
+    // route to TURTLE). A trigger clears if ANY of its words matches bounded.
+    let hit = false;
+    for (const w of words) {
+      if (w.includes(' ')) { if (q.includes(' ' + w + ' ')) { hit = true; break; } }
+      else if (new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(q)) { hit = true; break; }
+    }
+    if (!hit) continue;
     matched.add(topic);
     for (const [A, weight] of (TOPIC_OWNERS.get(topic) || [])) {
       scores.set(A, scores.get(A) + weight);
