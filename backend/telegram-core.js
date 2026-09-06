@@ -91,7 +91,7 @@ const _defaults = {
   autoPrune: false,       // keep honest hit-rate (owner) — don't silently drop losers
   // filter parameters — DEFAULT: sniper_seed preset (best win rate, 50% on seed calls)
   chains: 'solana',       // comma list: solana,base,eth,bsc,…
-  minLiq: 2000,           // min pair/pool liquidity USD (catch micro-caps early)
+  minLiq: 10000,          // min pair/pool liquidity USD — $10K floor protects from rugs
   minVol24h: 1000,        // min 24h volume USD (fresh coins start low)
   minFdv: 5000,           // min fully-diluted valuation USD — hard floor in telegram-signals keeps this ≥$5K (weekday/peak/weekend); tuned from corpus: 2-15K band wins 36-44%, 50K+ only ~17%
   maxFdv: 50000,          // max mcap $50K — corpus shows 50K+ entry has the worst win rate (~17%), so cut it
@@ -135,7 +135,7 @@ const PRESETS = {
   sniper_seed: {
     label: '🏆 Sniper Seed',
     desc: 'Ultra-low FDV, locked LP, whale conviction — the Solandier formula',
-    maxFdv: 100000, minLiq: 2000, minVol24h: 1000, minHolders: 5,
+    maxFdv: 100000, minLiq: 10000, minVol24h: 1000, minHolders: 5,
     minLiqPct: 2, rugMinScore: 45, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: false, requireTwitter: false, requireSocial: false,
@@ -144,7 +144,7 @@ const PRESETS = {
   anti_sniper: {
     label: '🎯 Anti-Sniper',
     desc: 'Locked LP + snipers/bundlers <10% + whale conviction',
-    maxFdv: 200000, minLiq: 2000, minVol24h: 1000, minHolders: 10,
+    maxFdv: 200000, minLiq: 10000, minVol24h: 1000, minHolders: 10,
     minLiqPct: 2, rugMinScore: 50, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: false, requireTwitter: false, requireSocial: false,
@@ -153,7 +153,7 @@ const PRESETS = {
   social_micro: {
     label: '💎 Social Micro',
     desc: 'Locked LP + website & X + whale top10 = real team with conviction',
-    maxFdv: 300000, minLiq: 3000, minVol24h: 2000, minHolders: 10,
+    maxFdv: 300000, minLiq: 10000, minVol24h: 2000, minHolders: 10,
     minLiqPct: 2, rugMinScore: 50, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 5,
     requireWebsite: true, requireTwitter: true, requireSocial: false,
@@ -162,7 +162,7 @@ const PRESETS = {
   full_stack: {
     label: '🔥 Full Stack',
     desc: 'Locked + social stack + whale conviction = premium quality',
-    maxFdv: 500000, minLiq: 5000, minVol24h: 3000, minHolders: 15,
+    maxFdv: 500000, minLiq: 10000, minVol24h: 3000, minHolders: 15,
     minLiqPct: 3, rugMinScore: 55, bullishOnly: false, bonded: false,
     newpools: true, trending: false, maxPer: 4,
     requireWebsite: true, requireTwitter: true, requireSocial: true,
