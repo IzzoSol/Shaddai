@@ -59,13 +59,13 @@ function referral(uid, botUsername) {
 function claim(uid, code) {
   if (!com) return 'community engine unavailable';
   const r = com.claim(uid, code);
-  return r.ok ? '🎁 Referral accepted — +50 ⚡ to you; your host now has ' + r.inviterReferrers + ' invite(s) and ' + r.referrerGems + ' ⚡.' : '⚠️ ' + _esc(r.error || 'could not claim');
+  return r.ok ? '🎁 Referral accepted — +50 ⚡ to you; your host now has ' + r.inviterReferrers + ' invite(s) and ' + r.referrerSparks + ' ⚡.' : '⚠️ ' + _esc(r.error || 'could not claim');
 }
 function convict(uid, symbol, amount) {
   if (!com) return 'community engine unavailable';
   const r = com.convict(uid, symbol, Number(amount) || 0);
   return r.ok
-    ? '🔥 CONVICTION: ' + _esc(r.symbol) + ' +' + r.amount + ' ⚡ · pool ' + r.poolGems + ' · ' + r.votes + ' voters · your wallet ' + r.sparks
+    ? '🔥 CONVICTION: ' + _esc(r.symbol) + ' +' + r.amount + ' ⚡ · pool ' + r.poolSparks + ' · ' + r.votes + ' voters · your wallet ' + r.sparks
     : '⚠️ ' + _esc(r.error || 'can\u2019t vote');
 }
 function hot(n) {

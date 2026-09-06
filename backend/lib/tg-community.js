@@ -1,6 +1,6 @@
 // tg-community.js — SHADDAI Hall community engine.
 //   • Games (native Telegram dice/dart/ball/bowl/slot/football + CPU arcade) with a
-//     FREE paper currency (gems). No real money, no withdraws, sums are cosmetic.
+//     FREE paper currency (sparks). No real money, no withdraws, sums are cosmetic.
 //   • Referral codes + leaderboards. Every /start ref_X claim is recorded once.
 //   • Audited: outcomes are server-side only, writes are atomic (temp+rename),
 //     all input sanitized, no trust in client numbers.
@@ -12,10 +12,10 @@ const crypto = require('crypto');
 const DATA_DIR = process.env.TG_DATA_DIR || path.join(__dirname, '..', 'data');
 const FILE = path.join(DATA_DIR, 'tg-community.json');
 
-const START_GEMS = 200;
+const START_SPARKS = 200;
 const DAILY_BONUS = 25;
-const REF_INVITER_GEMS = 100;
-const REF_REFEREE_GEMS = 50;
+const REF_INVITER_SPARKS = 100;
+const REF_REFEREE_SPARKS = 50;
 const REF_BONUS_ASKS = 2;         // extra free daily brain-answers per referee
 const MAX_BET = 5000;             // hard cap so a typo can never nuke the store
 const MIN_BET = 1;
@@ -25,13 +25,21 @@ const CODE_RE = /^ref_[a-z0-9]{3,14}$/i;
 const KEY_RE = /^[a-z0-9_:-]{1,64}$/i;
 
 let _store = _read();
-// in-memory anti-abuse (resets on restart; enforcing on paper gems, not money)
+// in-memory anti-abuse (resets on restart; enforcing on paper sparks, not money)
 const _settleTimes = new Map();   // uid -> [ts, ...last N]
 
 function _today() { return new Date().toISOString().slice(0, 10); }
 
 function _read() {
-  try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); }
+  try {
+    const s = JSON.parse(fs.readFileSync(FILE, 'utf8'));
+    // migrate legacy `gems` field → `sparks` (currency renamed to Sparks everywhere)
+    if (s && s.users) for (const k of Object.keys(s.users)) {
+      const u = s.users[k];
+      if (u && u.gems != null && u.sparks == null) { u.sparks = u.gems; delete u.gems; }
+    }
+    return s;
+  }
   catch (e) { return { users: {} }; }
 }
 function _write() {
@@ -50,7 +58,7 @@ function _uid(u) {
 function _user(uid) {
   uid = _uid(uid); if (!uid) return null;
   let u = _store.users[uid];
-  if (!u) { u = _store.users[uid] = { gems: START_GEMS, score: 0, streak: 0, best: 0, plays: 0, wins: 0, lastDay: '', bonused: 0, code: '', referredBy: '', referees: [], asksBonus: 0, audit: [] }; _write(); }
+  if (!u) { u = _store.users[uid] = { sparks: START_SPARKS, score: 0, streak: 0, best: 0, plays: 0, wins: 0, lastDay: '', bonused: 0, code: '', referredBy: '', referees: [], asksBonus: 0, audit: [] }; _write(); }
   return u;
 }
 // Read-only lookup — NEVER creates a record (safe on GET/read paths).
@@ -65,15 +73,15 @@ function _audit(u, act, delta) {
 }
 
 // ── sparks ───────────────────────────────────────────────────────────────────
-function gems(uid) { const u = _user(uid); return u ? { gems: u.gems, score: u.score, streak: u.streak, best: u.best, plays: u.plays, wins: u.wins, code: u.code, referredBy: u.referredBy, referees: (u.referees || []).length, asksBonus: u.asksBonus } : null; }
+function sparks(uid) { const u = _user(uid); return u ? { sparks: u.sparks, score: u.score, streak: u.streak, best: u.best, plays: u.plays, wins: u.wins, code: u.code, referredBy: u.referredBy, referees: (u.referees || []).length, asksBonus: u.asksBonus } : null; }
 
 function dailyBonus(uid) {
   const u = _user(uid); if (!u) return { ok: false };
   const day = new Date().toISOString().slice(0, 10);
   if (u.lastDay === day) return { ok: false, message: 'already claimed today' };
-  u.lastDay = day; u.gems = (u.gems || 0) + DAILY_BONUS; u.bonused = (u.bonused || 0) + 1;
+  u.lastDay = day; u.sparks = (u.sparks || 0) + DAILY_BONUS; u.bonused = (u.bonused || 0) + 1;
   _audit(u, 'daily', +DAILY_BONUS); _write();
-  return { ok: true, bonus: DAILY_BONUS, gems: u.gems };
+  return { ok: true, bonus: DAILY_BONUS, sparks: u.sparks };
 }
 
 // Win/lose application with full validation + audit. Returns settled result.
@@ -81,7 +89,7 @@ function settleBet(uid, stake, outcome) {
   const u = _user(uid); if (!u) return { ok: false, error: 'unknown user' };
   stake = Math.floor(Number(stake));
   if (!stake || stake < MIN_BET || stake > MAX_BET) return { ok: false, error: 'bet must be ' + MIN_BET + '–' + MAX_BET + ' sparks' };
-  if (u.gems < stake) return { ok: false, error: 'not enough sparks — you have ' + u.gems };
+  if (u.sparks < stake) return { ok: false, error: 'not enough sparks — you have ' + u.sparks };
   // anti-grind: in-memory cooldown + per-minute cap
   const now = Date.now();
   const hist = (_settleTimes.get(uid) || []).filter(ts => now - ts < 60000);
@@ -94,7 +102,7 @@ function settleBet(uid, stake, outcome) {
   const win = !!outcome.win;
   const payout = win ? Math.max(1, Math.floor(stake * outcome.mult)) : 0;
   const delta = win ? payout - stake : -stake;
-  u.gems += delta;
+  u.sparks += delta;
   u.plays = (u.plays || 0) + 1;
   u.betCount = (u.betCount || 0) + 1;
   u.score += win ? payout : 0;
@@ -103,7 +111,7 @@ function settleBet(uid, stake, outcome) {
   if (u.score > u.best) u.best = u.score;
   _audit(u, outcome.game, delta);
   _write();
-  return { ok: true, win, payout, delta, gems: u.gems, streak: u.streak, score: u.score, best: u.best, game: outcome.game, roll: outcome.roll, detail: outcome.detail, plays: u.plays, wins: u.wins };
+  return { ok: true, win, payout, delta, sparks: u.sparks, streak: u.streak, score: u.score, best: u.best, game: outcome.game, roll: outcome.roll, detail: outcome.detail, plays: u.plays, wins: u.wins };
 }
 
 // ── native Telegram dice outcomes (server trusts only OUR sendDice response) ──
@@ -165,29 +173,29 @@ function claim(uid, rawCode) {
   for (const k of Object.keys(_store.users)) { if (_store.users[k].code === code) { inviter = _store.users[k]; inviterUid = k; break; } }
   if (!inviter || inviterUid === uid) return { ok: false, error: 'no such referral code' };
   me.referredBy = inviterUid;
-  me.gems += REF_REFEREE_GEMS;
+  me.sparks += REF_REFEREE_SPARKS;
   inviter.referees = inviter.referees || [];
   if (!inviter.referees.includes(uid)) { inviter.referees.push(uid); }
-  inviter.gems += REF_INVITER_GEMS;
+  inviter.sparks += REF_INVITER_SPARKS;
   inviter.asksBonus = (inviter.asksBonus || 0) + REF_BONUS_ASKS;
-  _audit(me, 'referral-in', +REF_REFEREE_GEMS);
-  _audit(inviter, 'referral-out', +REF_INVITER_GEMS);
+  _audit(me, 'referral-in', +REF_REFEREE_SPARKS);
+  _audit(inviter, 'referral-out', +REF_INVITER_SPARKS);
   _write();
-  return { ok: true, inviterReferrers: inviter.referees.length, referrerGems: inviter.gems };
+  return { ok: true, inviterReferrers: inviter.referees.length, referrerSparks: inviter.sparks };
 }
 function referredBy(uid) { const u = _peek(uid); return u ? u.referredBy : ''; }
 function bonusAsks(uid) { const u = _peek(uid); return u ? (u.asksBonus || 0) : 0; }
 function invites(uid) { const u = _peek(uid); return u ? (u.referees || []).length : 0; }
 function topReferrers(n) {
   return Object.entries(_store.users)
-    .map(([uid, u]) => ({ uid, invites: (u.referees || []).length, gems: u.gems, code: u.code || '', asksBonus: u.asksBonus || 0 }))
+    .map(([uid, u]) => ({ uid, invites: (u.referees || []).length, sparks: u.sparks, code: u.code || '', asksBonus: u.asksBonus || 0 }))
     .filter(r => r.invites > 0)
-    .sort((a, b) => b.invites - a.invites || b.gems - a.gems)
+    .sort((a, b) => b.invites - a.invites || b.sparks - a.sparks)
     .slice(0, Math.max(1, Math.min(20, Number(n) || 10)));
 }
 function topPlayers(n) {
   return Object.entries(_store.users)
-    .map(([uid, u]) => ({ uid, score: u.score || 0, wins: u.wins || 0, plays: u.plays || 0, best: u.best || 0, gems: u.gems }))
+    .map(([uid, u]) => ({ uid, score: u.score || 0, wins: u.wins || 0, plays: u.plays || 0, best: u.best || 0, sparks: u.sparks }))
     .filter(p => p.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, Math.max(1, Math.min(20, Number(n) || 10)));
@@ -198,37 +206,37 @@ function topPlayers(n) {
 function quest(uid) {
   const u = _user(uid); if (!u) return { ok: false, error: 'unknown user' };
   const day = _today();
-  if (u.questDay === day) return { ok: false, already: true, message: 'quests refill tomorrow', gems: u.gems };
+  if (u.questDay === day) return { ok: false, already: true, message: 'quests refill tomorrow', sparks: u.sparks };
   if (u.day !== day) { u.day = day; u.betCount = 0; u.winCount = 0; }
   const parts = [];
   if ((u.betCount || 0) >= 1) parts.push({ q: 'roll', bonus: 10, done: true, label: 'Place any bet' });
   if ((u.winCount || 0) >= 1) parts.push({ q: 'win', bonus: 20, done: true, label: 'Win any game' });
   if ((u.referees || []).length >= 1) parts.push({ q: 'invite', bonus: 25, done: true, label: 'Invite a friend' });
-  if (!parts.length) return { ok: false, message: 'nothing complete yet — roll, win, or invite, then /quest to cash in', gems: u.gems };
+  if (!parts.length) return { ok: false, message: 'nothing complete yet — roll, win, or invite, then /quest to cash in', sparks: u.sparks };
   let bonus = 0; parts.forEach(p => { bonus += p.bonus; });
-  u.gems = (u.gems || 0) + bonus;
+  u.sparks = (u.sparks || 0) + bonus;
   u.questDay = day;
   _audit(u, 'quest', +bonus); _write();
-  return { ok: true, bonus, parts, gems: u.gems, message: 'quests complete!' };
+  return { ok: true, bonus, parts, sparks: u.sparks, message: 'quests complete!' };
 }
 // Non-game gem gift (e.g. music bot /community cross-awards). Small, capped.
 function award(uid, amount, note) {
   const u = _user(uid); if (!u) return { ok: false };
   amount = Math.floor(Number(amount));
   if (!amount || amount < 1 || amount > 100) return { ok: false, error: 'award out of range 1–100' };
-  u.gems = (u.gems || 0) + amount;
+  u.sparks = (u.sparks || 0) + amount;
   _audit(u, 'award:' + (String(note || 'gift').replace(/[^a-z0-9_-]/gi, '').slice(0, 24)), +amount);
   _write();
-  return { ok: true, gems: u.gems, amount };
+  return { ok: true, sparks: u.sparks, amount };
 }
 function stats() {
-  let plays = 0, wins = 0, gems = 0, referrers = 0, topScore = 0;
+  let plays = 0, wins = 0, sparks = 0, referrers = 0, topScore = 0;
   for (const u of Object.values(_store.users)) {
-    plays += u.plays || 0; wins += u.wins || 0; gems += u.gems || 0;
+    plays += u.plays || 0; wins += u.wins || 0; sparks += u.sparks || 0;
     if ((u.referees || []).length) referrers++;
     if ((u.score || 0) > topScore) topScore = u.score || 0;
   }
-  return { users: Object.keys(_store.users).length, plays, wins, referrers, topScore, gems };
+  return { users: Object.keys(_store.users).length, plays, wins, referrers, topScore, sparks };
 }
 
 // ── signals conviction economy ──────────────────────────────────────────────
@@ -242,21 +250,21 @@ function convict(uid, symbol, amount) {
   if (!SYM_RE.test(symbol)) return { ok: false, error: 'SYMBOL must be letters/numbers/$ (max 14)' };
   amount = Math.floor(Number(amount));
   if (!amount || amount < 1 || amount > CONVICT_MAX) return { ok: false, error: 'amount must be 1–' + CONVICT_MAX + ' sparks' };
-  if (u.gems < amount) return { ok: false, error: 'not enough sparks — you have ' + u.gems };
+  if (u.sparks < amount) return { ok: false, error: 'not enough sparks — you have ' + u.sparks };
   const now = Date.now();
   const hist = (_settleTimes.get(uid) || []).filter(ts => now - ts < 60000); // shared anti-grind window
   if (now - (hist[hist.length - 1] || 0) < 4000) return { ok: false, cool: true, error: '🐢 one conviction vote every few seconds' };
   hist.push(now); _settleTimes.set(uid, hist);
-  u.gems -= amount;
+  u.sparks -= amount;
   _store.top = _store.top || {};
-  const t = _store.top[symbol] = _store.top[symbol] || { gems: 0, votes: 0, last: now };
-  t.gems += amount; t.votes += 1; t.last = now;
+  const t = _store.top[symbol] = _store.top[symbol] || { sparks: 0, votes: 0, last: now };
+  t.sparks += amount; t.votes += 1; t.last = now;
   _audit(u, 'convict:' + symbol, -amount); _write();
-  return { ok: true, symbol, amount, gems: u.gems, votes: t.votes, poolGems: t.gems };
+  return { ok: true, symbol, amount, sparks: u.sparks, votes: t.votes, poolSparks: t.sparks };
 }
 function hot(n) {
-  return Object.entries(_store.top || {}).map(([sym, t]) => ({ symbol: sym, gems: t.gems, votes: t.votes, last: t.last }))
-    .sort((a, b) => b.gems - a.gems || b.votes - a.votes)
+  return Object.entries(_store.top || {}).map(([sym, t]) => ({ symbol: sym, sparks: t.sparks, votes: t.votes, last: t.last }))
+    .sort((a, b) => b.sparks - a.sparks || b.votes - a.votes)
     .slice(0, Math.max(1, Math.min(20, Number(n) || 10)));
 }
 
@@ -285,7 +293,7 @@ function arena(uid, a, b, bet) {
   if (a === b) return { ok: false, error: 'a vs a? pick two different agents' };
   bet = Math.floor(Number(bet));
   if (!bet || bet < ARENA_MIN_BET || bet > ARENA_MAX_BET) return { ok: false, error: 'bet must be ' + ARENA_MIN_BET + '–' + ARENA_MAX_BET + ' sparks' };
-  if (u.gems < bet) return { ok: false, error: 'not enough sparks — you have ' + u.gems };
+  if (u.sparks < bet) return { ok: false, error: 'not enough sparks — you have ' + u.sparks };
   const bucket = Math.floor(Date.now() / 60000);
   const seed = bucket + ':' + uid + ':' + a + '-' + b;
   const A = ARENA_BOTS[a], B = ARENA_BOTS[b];
@@ -299,24 +307,24 @@ function arena(uid, a, b, bet) {
     rounds.push({ r: i + 1, [a]: pa, [b]: pb, j: pa >= pb ? a : b });
   }
   const winA = sa !== sb ? sa > sb : A.luck >= B.luck;
-  u.gems -= bet;
+  u.sparks -= bet;
   const payout = winA ? bet * 2 : 0;
-  if (winA) u.gems += payout;
+  if (winA) u.sparks += payout;
   const bout = { ts: Date.now(), uid, a, b, bet, winA, winner: winA ? a : b, scoreA: sa, scoreB: sb, seed };
   _store.arena = _store.arena || { bouts: [] };
   _store.arena.bouts.unshift(bout);
   _store.arena.bouts = _store.arena.bouts.slice(0, 30);
   _audit(u, 'arena:' + a + '-v-' + b, winA ? +bet : -bet);
   _write();
-  return { ok: true, a, b, scoreA: sa, scoreB: sb, winner: winA ? a : b, won: winA, bet, payout, gems: u.gems, rounds };
+  return { ok: true, a, b, scoreA: sa, scoreB: sb, winner: winA ? a : b, won: winA, bet, payout, sparks: u.sparks, rounds };
 }
 function arenaHistory(n) {
   return ((_store.arena || {}).bouts || []).slice(0, Math.max(1, Math.min(20, Number(n) || 10)));
 }
 
 module.exports = {
-  gems, dailyBonus, settleBet, nativeSpec, nativeResult, arcadeResult,
+  sparks, dailyBonus, settleBet, nativeSpec, nativeResult, arcadeResult,
   codeFor, linkFor, claim, referredBy, bonusAsks, invites, topReferrers, topPlayers,
   quest, award, stats, convict, hot, arena, arenaHistory,
-  START_GEMS, DAILY_BONUS, REF_BONUS_ASKS, ARENA_BOTS, ARENA_ROUNDS,
+  START_SPARKS, DAILY_BONUS, REF_INVITER_SPARKS, REF_REFEREE_SPARKS, REF_BONUS_ASKS, ARENA_BOTS, ARENA_ROUNDS,
 };

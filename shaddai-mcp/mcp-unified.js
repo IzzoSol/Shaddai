@@ -757,12 +757,12 @@ const TOOLS = [
   // ── Community pillar — the Hall gem economy (same wallet as @ShaddaiHall) ──
   {
     name: 'hall_gem_profile',
-    description: 'HALL — a uid\u2019s gem wallet: gems, score, streak, plays, wins, referral code, invites, bonus brain-asks. Same store the Telegram bots use.',
+    description: 'HALL — a uid\u2019s spark wallet: sparks, score, streak, plays, wins, referral code, invites, bonus brain-asks. Same store the Telegram bots use.',
     inputSchema: { type: 'object', properties: { uid: { type: 'string', description: 'User / chat id (Telegram chat id or any stable id).' } }, required: ['uid'] },
   },
   {
     name: 'hall_daily_bonus',
-    description: 'HALL — claim the +25 daily gem refill for a uid (once per day).',
+    description: 'HALL — claim the +25 daily spark refill for a uid (once per day).',
     inputSchema: { type: 'object', properties: { uid: { type: 'string', description: 'User / chat id.' } }, required: ['uid'] },
   },
   {
@@ -772,7 +772,7 @@ const TOOLS = [
   },
   {
     name: 'hall_referral',
-    description: 'HALL — issue a uid\u2019s t.me deep-link referral (inviter +100 gems + 2 free brain-asks per friend; friend +50).',
+    description: 'HALL — issue a uid\u2019s t.me deep-link referral (inviter +100 sparks + 2 free brain-asks per friend; friend +50).',
     inputSchema: { type: 'object', properties: {
       uid: { type: 'string', description: 'User / chat id.' },
       bot_username: { type: 'string', description: 'Optional bot username for the deep link (default ShaddaiHall).' },
@@ -785,16 +785,16 @@ const TOOLS = [
   },
   {
     name: 'hall_conviction',
-    description: 'HALL — stake gems on a signal call (skin-in-the-game heat map). Gems burn into the pool; cosmetics only.',
+    description: 'HALL — stake sparks on a signal call (skin-in-the-game heat map). Sparks burn into the pool; cosmetics only.',
     inputSchema: { type: 'object', properties: {
       uid: { type: 'string', description: 'User / chat id.' },
       symbol: { type: 'string', description: 'Ticker, e.g. SOL.' },
-      amount: { type: 'number', description: 'Gems to stake (1\u20132000, default 10).' },
+      amount: { type: 'number', description: 'Sparks to stake (1\u20132000, default 10).' },
     }, required: ['uid', 'symbol'] },
   },
   {
     name: 'hall_hot',
-    description: 'HALL — the most-backed calls in the conviction room, ranked by gems staked.',
+    description: 'HALL — the most-backed calls in the conviction room, ranked by sparks staked.',
     inputSchema: { type: 'object', properties: { n: { type: 'number', description: 'Optional count (default 10, max 20).' } }, required: [] },
   },
   {
@@ -804,26 +804,26 @@ const TOOLS = [
   },
   {
     name: 'hall_community_stats',
-    description: 'HALL — community totals: souls, plays, wins, referrers, top score, gems in wallets.',
+    description: 'HALL — community totals: souls, plays, wins, referrers, top score, sparks in wallets.',
     inputSchema: { type: 'object', properties: {}, required: [] },
   },
   {
     name: 'hall_arcade',
-    description: 'HALL — play a headless CPU arcade battle for a uid (basketball/football/dodgeball/sigil-storm) at a gem stake; win doubles up.',
+    description: 'HALL — play a headless CPU arcade battle for a uid (basketball/football/dodgeball/sigil-storm) at a spark stake; win doubles up.',
     inputSchema: { type: 'object', properties: {
       uid: { type: 'string', description: 'User / chat id.' },
       game: { type: 'string', description: 'Optional game (default basketball).' },
-      bet: { type: 'number', description: 'Optional gems (1\u20135000, default 10).' },
+      bet: { type: 'number', description: 'Optional sparks (1\u20135000, default 10).' },
     }, required: ['uid'] },
   },
   {
     name: 'hall_arena',
-    description: 'HALL — two of the Seven fight a scripted best-of-7 tilt; the uid gambles paper gems on the first agent named (win = 2\u00d7 the bet).',
+    description: 'HALL — two of the Seven fight a scripted best-of-7 tilt; the uid gambles paper sparks on the first agent named (win = 2\u00d7 the bet).',
     inputSchema: { type: 'object', properties: {
       uid: { type: 'string', description: 'User / chat id.' },
       a: { type: 'string', description: 'First agent (your pick), e.g. ORACLE.' },
       b: { type: 'string', description: 'Second agent, e.g. ZEROX.' },
-      bet: { type: 'number', description: 'Gems at stake (5\u2013200, default 10).' },
+      bet: { type: 'number', description: 'Sparks at stake (5\u2013200, default 10).' },
     }, required: ['uid', 'a', 'b'] },
   },
   {

@@ -16,6 +16,10 @@ const RUGCHECK = (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report/su
 const _core = require('./telegram-core');
 const _pnl = require('./telegram-pnl');
 const _wallets = require('./telegram-wallets');
+const _hf = require('./lib/hf-keys');
+const _fsImg = require('fs');
+const _osImg = require('os');
+const _pathImg = require('path');
 
 const _cfg = () => ({
   token: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -98,7 +102,7 @@ function _help() {
     '/arcade <code>&lt;game&gt; [bet]</code> — CPU battles (double-up)\n' +
     '/sparks — balance · /sparks top — league · /bonus — daily refill\n' +
     '/quest — daily quest bank (+10/+20/+25)\n' +
-    '/conviction <code>&lt;SYM&gt; [gems]</code> — stake sparks on a call · /hot — most-backed\n' +
+    '/conviction <code>&lt;SYM&gt; [sparks]</code> — stake sparks on a call · /hot — most-backed\n' +
     '/leaderboard — podium · /referral — invite friends\n' +
     '/family — every SHADDAI bot in one card · /temple — the Axiom\n\n' +
     '🏆 Also: /master — the full Temple index · /arena ORACLE vs ZEROX 10 · /grok &lt;q&gt; · /game\n\n' +
@@ -314,7 +318,7 @@ async function _music(t, chatId, arg) {
     const ok = await _core.sendAudio(chatId, wav, 'turtle-' + meta.genre + '.wav', cap, meta.genreName + ' — Turtle Music Bot');
     if (!ok) return _send(t, chatId, '⚠️ Could not send the track. Try again in a moment.');
     let got = null; try { got = _com.award(String(chatId), 5, 'music'); } catch (e) {}
-    if (got && got.ok) return _send(t, chatId, '🎵 Track sent! <b>+5 ⚡</b> sparks (now ' + got.gems + ') — the music economy loves you. /quest to cash in your day.');
+    if (got && got.ok) return _send(t, chatId, '🎵 Track sent! <b>+5 ⚡</b> sparks (now ' + got.sparks + ') — the music economy loves you. /quest to cash in your day.');
   } catch (e) {
     return _send(t, chatId, '⚠️ Music engine hiccup — try <code>/music lofi</code>');
   }
@@ -457,6 +461,25 @@ async function _turtleDesign(t, chatId, cfg, prompt) {
   } catch (e) { return _send(t, chatId, '⚠️ TURTLE is busy — try again shortly.'); }
 }
 
+// Direct FLUX image — real HuggingFace keys (rotating pool) with keyless fallback.
+async function _imageCmd(t, chatId, cfg, prompt) {
+  if (!prompt) return _send(t, chatId, 'Usage: /image &lt;what to create&gt;  e.g. <code>/image a shaddai temple floating over storm clouds</code>');
+  await _send(t, chatId, '⬡ generating with FLUX…');
+  try {
+    const out = await _hf.generateSafe(prompt, { width: 1024, height: 1024 });
+    const cap = '⬡ <b>SHADDAI · FLUX</b> · ' + _esc(prompt.slice(0, 60)) + '\n<i>/image to make another</i>';
+    if (out.buffer) {
+      const tmp = _pathImg.join(_osImg.tmpdir(), 'shaddai-img-' + Date.now() + '.png');
+      _fsImg.writeFileSync(tmp, out.buffer);
+      const ok = await _core.sendPhoto(chatId, tmp, cap);
+      try { _fsImg.unlinkSync(tmp); } catch {}
+      if (ok) return;
+    }
+    if (out.fallbackUrl) { const ok2 = await _core.sendPhoto(chatId, out.fallbackUrl, cap); if (ok2) return; }
+    return _send(t, chatId, '⚠️ Image engine hiccup — try <code>/image a temple at dawn</code>');
+  } catch (e) { return _send(t, chatId, '⚠️ FLUX is warming up — try again in a few seconds.'); }
+}
+
 // PIKADON URL check — local heuristics first, deep scan via the premium agent.
 const _suspTld = /\.(zip|top|xyz|click|link|gq|tk|ml|cf|ga|work|icu|stream|download|kim|racing|party|review|faith|loan|date|science|rest|cyou|trade|accountant|mom|lol|quest)$/i;
 const _phishWords = /(login|verify|update|wallet|airdrop|claim|reward|free|bonus|password|secure|confirm|recover|signin|2fa|support|prize)/i;
@@ -557,7 +580,7 @@ function _masterCard() {
     '🎮 /games — dice, darts, hoops, slots, footy (Telegram-verified)\n' +
     '⚔️ /arena <i>ORACLE vs ZEROX 10</i> — agents fight, you bet\n' +
     '🕹 /game — Telegram HTML5 game (' + _esc(gname) + ')\n' +
-    '🎁 /referral — +' + _com.REF_INVITER_GEMS + ' gems & +' + _com.REF_BONUS_ASKS + ' free asks/friend\n' +
+    '🎁 /referral — +' + _com.REF_INVITER_SPARKS + ' sparks & +' + _com.REF_BONUS_ASKS + ' free asks/friend\n' +
     '💰 /bonus — daily refill · 🎯 /quest — daily quests · 🏆 /leaderboard\n\n';
   out += '▾ <b>Builders</b>\n' +
     '🤝 <b>Virtuals</b> — hire ZEROX onchain: <a href="' + _esc(vref) + '">app.virtuals.io/acp/agents</a>\n' +
@@ -622,7 +645,7 @@ async function _arenaCmd(t, chatId, arg) {
   for (const rd of r.rounds) out += 'R' + rd.r + ' · ' + a + ' <b>' + rd[a] + '</b> — ' + b + ' <b>' + rd[b] + '</b>  ' + (rd.j === a ? A.tag : B.tag) + '\n';
   out += '\n<b>Final</b> — ' + a + ' <b>' + r.scoreA + '</b> · ' + b + ' <b>' + r.scoreB + '</b>\n';
   out += '🏆 <b>' + r.winner + ' wins!</b> ' + (r.won ? '✅ You bet on the winner!' : '❌ Your pick lost.') + '\n';
-  out += (r.won ? '💰 +' + (r.payout - r.bet) + ' ⚡' : '💸 -' + r.bet + ' ⚡') + ' → wallet ' + r.gems + ' ⚡\n\n<i>Re-run /arena ' + a + ' vs ' + b + ' ' + r.bet + ' — different match every minute.</i>';
+  out += (r.won ? '💰 +' + (r.payout - r.bet) + ' ⚡' : '💸 -' + r.bet + ' ⚡') + ' → wallet ' + r.sparks + ' ⚡\n\n<i>Re-run /arena ' + a + ' vs ' + b + ' ' + r.bet + ' — different match every minute.</i>';
   return _send(t, chatId, out, _arenaKeyboard(a + ':' + b));
 }
 async function _grokCmd(t, chatId, arg) {
@@ -650,7 +673,7 @@ async function _grokCmd(t, chatId, arg) {
   }
 }
 function _gemsLine(g) {
-  return '⚡ <b>Sparks:</b> ' + g.gems + '  ·  🏆 <b>Score:</b> ' + g.score + '  ·  🔥 <b>Streak:</b> ' + g.streak + (g.referrals ? '  ·  🎁 <b>Invites:</b> ' + g.referrals : '');
+  return '⚡ <b>Sparks:</b> ' + g.sparks + '  ·  🏆 <b>Score:</b> ' + g.score + '  ·  🔥 <b>Streak:</b> ' + g.streak + (g.referrals ? '  ·  🎁 <b>Invites:</b> ' + g.referrals : '');
 }
 function _gamesHub() {
   let out = '🎮 <b>SHADDAI ARCADE</b>\n━━━━━━━━━━━━━━━\n\n' +
@@ -663,7 +686,7 @@ function _gamesHub() {
     '<b>Economy:</b>\n' +
     '<code>/sparks</code> — balance + score  ·  <code>/sparks top</code> — league\n' +
     '<code>/bonus</code> — +' + _com.DAILY_BONUS + ' free sparks a day\n' +
-    '<code>/referral</code> — your invite link (+' + _com.REF_INVITER_GEMS + ' gems +' + _com.REF_BONUS_ASKS + ' free brain-asks per friend)\n\n' +
+    '<code>/referral</code> — your invite link (+' + _com.REF_INVITER_SPARKS + ' sparks +' + _com.REF_BONUS_ASKS + ' free brain-asks per friend)\n\n' +
     '<i>Paper sparks only — bragging rights, not money.</i>';
   return out;
 }
@@ -684,13 +707,13 @@ function _familyCard() {
 async function _questCmd(t, chatId, cfg) {
   const r = _com.quest(String(chatId));
   if (!r.ok) {
-    if (r.already) return _send(t, chatId, '✅ Quest bank is empty — come back tomorrow.\nCurrent: ' + r.gems + ' ⚡\n\n<i>Daily quests: /referral · roll with /dice · win anything</i>');
-    if (r.message) return _send(t, chatId, '🎯 <b>DAILY QUESTS</b>\n━━━━━━━━━━━━━━━\n\nRoll the dice, win a game, or invite a friend — then run /quest to cash in.\n\n<b>Rewards:</b>\n🎲 place any bet  → <b>+10</b>\n🏆 win any game   → <b>+20</b>\n🎁 invite a friend → <b>+25</b>\n\nCurrent: ' + r.gems + ' ⚡. Go play!');
+    if (r.already) return _send(t, chatId, '✅ Quest bank is empty — come back tomorrow.\nCurrent: ' + r.sparks + ' ⚡\n\n<i>Daily quests: /referral · roll with /dice · win anything</i>');
+    if (r.message) return _send(t, chatId, '🎯 <b>DAILY QUESTS</b>\n━━━━━━━━━━━━━━━\n\nRoll the dice, win a game, or invite a friend — then run /quest to cash in.\n\n<b>Rewards:</b>\n🎲 place any bet  → <b>+10</b>\n🏆 win any game   → <b>+20</b>\n🎁 invite a friend → <b>+25</b>\n\nCurrent: ' + r.sparks + ' ⚡. Go play!');
     return _send(t, chatId, '⚠️ quests unavailable');
   }
   let out = '🎯 <b>QUESTS COMPLETE!</b> +<b>' + r.bonus + '</b> ⚡\n━━━━━━━━━━━━━━━\n';
   r.parts.forEach(p => { out += '\n✅ <b>' + _esc(p.label) + '</b> → +' + p.bonus; });
-  return _send(t, chatId, out + '\n\nNow: ' + r.gems + ' ⚡ · tomorrow comes a fresh bank');
+  return _send(t, chatId, out + '\n\nNow: ' + r.sparks + ' ⚡ · tomorrow comes a fresh bank');
 }
 async function _digestCmd(t, chatId, cfg) {
   let out = '📋 <b>HALL DAILY DIGEST</b>\n' + _todayNice() + '\n━━━━━━━━━━━━━━━\n\n';
@@ -709,17 +732,17 @@ async function _convictionCmd(t, chatId, cfg, arg) {
   const parts = String(arg || '').split(/\s+/).filter(Boolean);
   let sym = '', amt = '';
   for (const w of parts) { if (/^[A-Z0-9$]+$/i.test(w)) { if (!sym) sym = w; else if (/^\d+$/.test(w) && !amt) amt = w; } else if (/^\d+$/.test(w) && !amt) amt = w; }
-  if (!sym) return _send(t, chatId, '⚡ <b>CONVICTION</b>\nStake sparks on a call in the signals feed.\n\n<code>/conviction SOL 50</code> — burn 50 ⚡ into SOL\u2019s pool\n<code>/hot</code> — the most-backed calls right now\n\n<i>Gems burn into the pool. Purely a social heat-map — no payback, paper only.</i>');
+  if (!sym) return _send(t, chatId, '⚡ <b>CONVICTION</b>\nStake sparks on a call in the signals feed.\n\n<code>/conviction SOL 50</code> — burn 50 ⚡ into SOL\u2019s pool\n<code>/hot</code> — the most-backed calls right now\n\n<i>Sparks burn into the pool. Purely a social heat-map — no payback, paper only.</i>');
   const r = _com.convict(String(chatId), sym, parseInt(amt, 10) || 10);
   if (!r.ok) return _send(t, chatId, '⚠️ ' + _esc(r.error || 'can\u2019t vote right now'));
   return _send(t, chatId, '🔥 <b>CONVICTION:</b> <b>' + _esc(r.symbol) + '</b> +' + r.amount + ' ⚡\n' +
-    'Pool now: <b>' + r.poolGems + '</b> ⚡ · ' + r.votes + ' voters · your wallet: ' + r.gems + ' ⚡\n\n<i>/hot to see the leaders</i>');
+    'Pool now: <b>' + r.poolSparks + '</b> ⚡ · ' + r.votes + ' voters · your wallet: ' + r.sparks + ' ⚡\n\n<i>/hot to see the leaders</i>');
 }
 async function _hotCmd(t, chatId, cfg) {
   const rows = _com.hot(10);
   if (!rows.length) return _send(t, chatId, 'No conviction pools yet — back a signal with <code>/conviction SOL 50</code>');
   let out = '🔥 <b>HOT CALLS</b> — most conviction in the room\n━━━━━━━━━━━━━━━\n';
-  rows.forEach((r, i) => { out += '\n' + (i + 1) + '. <b>' + _esc(r.symbol) + '</b> — ' + r.gems.toLocaleString() + ' ⚡ · ' + r.votes + (r.votes === 1 ? ' voter' : ' voters'); });
+  rows.forEach((r, i) => { out += '\n' + (i + 1) + '. <b>' + _esc(r.symbol) + '</b> — ' + r.sparks.toLocaleString() + ' ⚡ · ' + r.votes + (r.votes === 1 ? ' voter' : ' voters'); });
   return _send(t, chatId, out + '\n\n<i>Back one: /conviction ' + _esc((rows[0] || {}).symbol || 'SOL') + ' 50</i>');
 }
 async function _leaderboardCmd(t, chatId, cfg, arg, update) {
@@ -735,7 +758,7 @@ async function _leaderboardCmd(t, chatId, cfg, arg, update) {
   const ht = _com.hot(5);
   out += '\n🔥 <b>Hottest calls</b>\n';
   if (!ht.length) out += '  none yet — /conviction!\n';
-  ht.forEach((r, i) => { out += ' · <b>' + _esc(r.symbol) + '</b> ' + r.gems.toLocaleString() + ' ⚡\n'; });
+  ht.forEach((r, i) => { out += ' · <b>' + _esc(r.symbol) + '</b> ' + r.sparks.toLocaleString() + ' ⚡\n'; });
   const m = _com.stats();
   out += '\n<code>' + m.users + ' souls · ' + m.plays + ' plays · ' + m.wins + ' wins</code>';
   const adminId = process.env.SHADDAI_ADMIN_ID || '';
@@ -779,27 +802,27 @@ async function _arcadeGame(t, chatId, cfg, game, arg) {
 async function _referralCmd(t, chatId, cfg, rawCode) {
   if (rawCode) {
     const res = _com.claim(String(chatId), rawCode);
-    if (res.ok) return _send(t, chatId, '🎁 <b>Referral accepted!</b>\nYour host already earned a seat.\n+<b>' + _com.REF_REFEREE_GEMS + '</b> ⚡ to you · host now has <b>' + res.inviterReferrers + '</b> invite(s)\n\nEnjoy the Hall:\n/menu · /games · /council "should we launch?"');
+    if (res.ok) return _send(t, chatId, '🎁 <b>Referral accepted!</b>\nYour host already earned a seat.\n+<b>' + _com.REF_REFEREE_SPARKS + '</b> ⚡ to you · host now has <b>' + res.inviterReferrers + '</b> invite(s)\n\nEnjoy the Hall:\n/menu · /games · /council "should we launch?"');
     return _send(t, chatId, '⚠️ ' + _esc(res.error || 'could not claim that code'));
   }
-  const g = _com.gems(String(chatId));
+  const g = _com.sparks(String(chatId));
   if (!g) return _send(t, chatId, '⚠️ can\u2019t reach your profile right now');
   const uname = await _botUsername();
   const link = _com.linkFor(String(chatId), uname);
   return _send(t, chatId,
     '🎁 <b>YOUR REFERRAL KEY</b>\n━━━━━━━━━━━━━━━\n\n' +
-    'Share this link — every friend who joins via it earns you <b>+' + _com.REF_INVITER_GEMS + ' ⚡</b> and <b>+' + _com.REF_BONUS_ASKS + ' free deep brain-answers/day</b>\n\n' +
+    'Share this link — every friend who joins via it earns you <b>+' + _com.REF_INVITER_SPARKS + ' ⚡</b> and <b>+' + _com.REF_BONUS_ASKS + ' free deep brain-answers/day</b>\n\n' +
     '🔗 <a href="' + link + '">' + link + '</a>\n\n' +
     '🧾 <b>Your code:</b> <code>' + _esc(g.code || '-') + '</code>\n' +
     '👥 <b>Invites:</b> ' + g.referrals + '\n\n' +
-    '<i>They start with ' + _com.START_GEMS + ' gems — and thank you first thing.</i>');
+    '<i>They start with ' + _com.START_SPARKS + ' sparks — and thank you first thing.</i>');
 }
 async function _refsCmd(t, chatId, cfg, arg) {
   const n = (parseInt(arg, 10) || 10);
   const rows = _com.topReferrers(n);
   if (!rows.length) return _send(t, chatId, 'No invites yet — be the first with <code>/referral</code>');
   let out = '🏆 <b>TOP REFERRERS</b>\n━━━━━━━━━━━━━━━\n';
-  rows.forEach((r, i) => { out += '\n' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.') + ' <b>' + _esc(r.uid.slice(0, 10)) + '</b> — ' + r.invites + ' invite' + (r.invites === 1 ? '' : 's') + ' · ' + r.gems + ' ⚡'; });
+  rows.forEach((r, i) => { out += '\n' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.') + ' <b>' + _esc(r.uid.slice(0, 10)) + '</b> — ' + r.invites + ' invite' + (r.invites === 1 ? '' : 's') + ' · ' + r.sparks + ' ⚡'; });
   return _send(t, chatId, out + '\n\n<i>Invite: /referral</i>');
 }
 async function _gemsCmd(t, chatId, cfg, arg) {
@@ -810,13 +833,13 @@ async function _gemsCmd(t, chatId, cfg, arg) {
     rows.forEach((r, i) => { out += '\n' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.') + ' <b>' + _esc(r.uid.slice(0, 10)) + '</b> — ' + r.score.toLocaleString() + ' pts · ' + r.wins + 'W'; });
     return _send(t, chatId, out + '\n\n<i>Play: /games</i>');
   }
-  const g = _com.gems(String(chatId));
+  const g = _com.sparks(String(chatId));
   return _send(t, chatId, g ? _gemsLine(g) + '\n\n<i>Earn: /bonus · /referral · Win: /games</i>' : '⚠️ profile unavailable');
 }
 async function _bonusCmd(t, chatId, cfg) {
   const r = _com.dailyBonus(String(chatId));
   return _send(t, chatId, r.ok
-    ? '💰 <b>+' + r.bonus + ' sparks!</b> Daily refill claimed.\nNow: ' + r.gems + ' ⚡ — /games to spend them.'
+    ? '💰 <b>+' + r.bonus + ' sparks!</b> Daily refill claimed.\nNow: ' + r.sparks + ' ⚡ — /games to spend them.'
     : '🔁 You already claimed today\u2019s +' + _com.DAILY_BONUS + ' ⚡. Come back tomorrow — or /referral for a big bonus now.');
 }
 
@@ -861,6 +884,7 @@ async function _handle(cfg, update) {
     }
     case 'council': case 'synthesize': case 'board': return _council(t, chatId, cfg, arg);
     case 'design': case 'turtleimg': case 'art': return _turtleDesign(t, chatId, cfg, arg);
+    case 'image': case 'dream': case 'generate': case 'pic': return _imageCmd(t, chatId, cfg, arg);
     case 'check': case 'url': case 'verify': case 'scan': return _checkUrl(t, chatId, cfg, arg);
     case 'virtuals': case 'acp': case 'marketplace': return _send(t, chatId, _virtualsCard());
     case 'pay': case 'upgrade': case 'pro': case 'pricing': return _send(t, chatId, _payCard());
@@ -1065,6 +1089,7 @@ async function _registerCommands(token) {
     { command: 'astro',   description: 'ORACLE horoscope + moon guidance' },
     { command: 'council', description: 'All seven agents weigh in on a question' },
     { command: 'design',  description: 'TURTLE generates art from a prompt' },
+    { command: 'image',   description: 'FLUX image — real models, direct  e.g. /image a temple at dawn' },
     { command: 'check',   description: 'PIKADON URL safety check  e.g. /check https://…' },
     { command: 'virtuals', description: 'Hire ZEROX onchain via Virtuals' },
     { command: 'pay',     description: 'Free vs paid tiers — unlock the full Hall' },
@@ -1082,15 +1107,15 @@ async function _registerCommands(token) {
     { command: 'leaderboard', description: 'Community podium - scorers, referrers, hot calls' },
     { command: 'conviction', description: 'Stake sparks on a signal call  e.g. /conviction SOL 50' },
     { command: 'hot',    description: 'The most-backed calls in the room' },
-    { command: 'bonus',   description: 'Daily +25 free gems refill' },
+    { command: 'bonus',   description: 'Daily +25 free sparks refill' },
     { command: 'referral', description: 'Invite friends — earn sparks + free brain-asks' },
     { command: 'refs',    description: 'Top referrers leaderboard' },
     { command: 'family',  description: 'Every SHADDAI bot on one card' },
     { command: 'master',  description: 'Everything — agents, games, MCP, links' },
-    { command: 'arena',   description: 'Agent-vs-agent duels, bet gems' },
+    { command: 'arena',   description: 'Agent-vs-agent duels, bet sparks' },
     { command: 'grok',    description: 'Ask Grok right here' },
     { command: 'game',    description: 'Telegram-native games hub' },
-    { command: 'music',   description: 'Free procedural track — earns +5 gems' },
+    { command: 'music',   description: 'Free procedural track — earns +5 sparks' },
   ];
   // Register for all scopes so "/" menu works in private chats, groups, and channels
   const scopes = [
