@@ -11,14 +11,13 @@
 //   • Hard step cap — can't loop forever.
 // ─────────────────────────────────────────────────────────────────────────────
 'use strict';
-const axios = require('axios');
+const llmRouter = require('./llm-router'); // multi-provider router — Groq primary, OpenAI/DeepSeek/OpenRouter function-calling fallback
 
 let _engine = null;
 function eng() { if (!_engine) _engine = require('../agent-engine'); return _engine; }
 let _kb = null;
 function kb() { if (!_kb) { try { _kb = require('./knowledge'); } catch (_) { _kb = { contextFor: () => '', learn: () => {} }; } } return _kb; }
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = process.env.GROQ_TOOL_MODEL || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const MAX_STEPS = 5;
 const MAX_TOOLS_SHOWN = 10; // narrow choice surface — fewer schemas = fewer tokens = fewer rate-limits + sharper picks
@@ -96,28 +95,19 @@ function groqKeyPool(byok) {
   return out;
 }
 
-// Call Groq, rotating keys + backing off on 429/401/403/5xx.
-async function groq(messages, tools, keys) {
-  const body = { model: MODEL, messages, temperature: 0.4, max_tokens: 1500 };
-  if (tools && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
-  let lastErr;
-  for (let i = 0; i < keys.length; i++) {
-    try {
-      const r = await axios.post(GROQ_URL, body, {
-        headers: { Authorization: 'Bearer ' + keys[i], 'Content-Type': 'application/json' }, timeout: 45000,
-      });
-      return r.data.choices && r.data.choices[0] && r.data.choices[0].message;
-    } catch (e) {
-      lastErr = e;
-      const st = e.response && e.response.status;
-      if (st === 429 || st === 401 || st === 403 || st === 500 || st === 503) {
-        await new Promise(r => setTimeout(r, 450 + i * 350)); // backoff, then rotate to the next key
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw lastErr || new Error('all Groq keys exhausted');
+// Call the LLM through the multi-provider router (function-calling shape). The
+// SAME rotated Groq key pool feeds the primary provider; if every Groq key is
+// exhausted/rate-limited the router falls through to the other configured
+// tool-capable providers (openai → deepseek → openrouter) instead of failing
+// the whole run. Returns the resolved { message, provider, model }.
+async function modelCall(messages, tools, keys) {
+  return llmRouter.chatTools(messages, tools || [], {
+    groqKeys: keys,
+    model: MODEL,
+    temperature: 0.4,
+    max_tokens: 1500,
+    timeoutMs: 45000,
+  });
 }
 
 // AURA lazy-load (matches the try/catch-optional pattern used everywhere else
@@ -127,10 +117,20 @@ async function groq(messages, tools, keys) {
 let _aura = null;
 function aura() { if (!_aura) { try { _aura = require('./aura'); } catch (_) { _aura = { route: () => ({ hit: false }), recordAnswer: () => {} }; } } return _aura; }
 
+// Reputation accumulator — feeds lib/reputation-engine so per-agent accuracy /
+// latency compound from real runs (directory + leaderboard rank by evidence).
+// Optional: a missing/broken dimmer degrades to "no-op" rather than erroring.
+let _rep = null;
+function rep() { if (!_rep) { try { _rep = require('./reputation-engine'); } catch (_) { _rep = { record: () => {} }; } } return _rep; }
+
 async function runAgentWithTools(agentName, task, opts = {}) {
   const { TOOLS, AGENTS } = eng();
   const A = String(agentName || 'ORACLE').toUpperCase();
   const agent = AGENTS[A] || {};
+  const repStart = Date.now();
+  const tally = (outcome, tool) => {
+    try { rep().record({ agent: A, outcome, latencyMs: Date.now() - repStart, tool: String(tool || 'none').slice(0, 80), task: String(task || '').slice(0, 120) }); } catch (_) {}
+  };
 
   // AURA free-path FIRST — before even requiring a Groq key, so a cache hit
   // costs $0 and works even with no keys configured. This endpoint (Simple
@@ -140,12 +140,14 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   try {
     const hit = aura().route(String(task), { scope: A });
     if (hit && hit.hit && hit.answer) {
+      tally(null, 'aura-cache');
       return { response: hit.answer, toolsUsed: [], steps: 0, model: 'aura-cache', cached: true, tokensSaved: hit.savedTokensEst || 0 };
     }
   } catch (_) {}
 
   const keys = groqKeyPool(opts.apiKey);
-  if (!keys.length) throw new Error('No Groq key configured');
+  const anyCloud = keys.length || llmRouter.getProviders().some(p => p.id !== 'anthropic');
+  if (!anyCloud) throw new Error('No LLM key configured (Groq primary, OpenAI/DeepSeek/OpenRouter fallback)');
 
   // opts.tools overrides agent's built-in tool list (used for forged operatives
   // whose tool loadout lives in operatives.json, not the AGENTS map).
@@ -191,15 +193,19 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   ];
 
   const toolsUsed = [];
+  let lastModel = MODEL, lastProvider = 'groq';
   for (let step = 0; step < MAX_STEPS; step++) {
-    const msg = await groq(messages, oaTools, keys);
+    const mres = await modelCall(messages, oaTools, keys);
+    const msg = mres.message;
+    lastModel = mres.model; lastProvider = mres.provider;
     if (!msg) break;
     messages.push(msg);
     const calls = msg.tool_calls || [];
     if (!calls.length) {
       try { kb().learn(A, task, msg.content || ''); } catch (_) {}
       try { if (msg.content) aura().recordAnswer(String(task), msg.content, { scope: A }); } catch (_) {}
-      return { response: msg.content || '', toolsUsed, steps: step + 1, model: MODEL };
+      tally(true, toolsUsed.join(','));
+      return { response: msg.content || '', toolsUsed, steps: step + 1, model: lastModel, provider: lastProvider };
     }
     for (const c of calls) {
       const name = c.function && c.function.name;
@@ -220,12 +226,16 @@ async function runAgentWithTools(agentName, task, opts = {}) {
   }
   // Step cap reached → force a final answer from the gathered tool results.
   try {
-    const finalMsg = await groq(
+    const fRes = await modelCall(
       messages.concat([{ role: 'user', content: 'Give your final concise answer now, based on the tool results above.' }]),
       null, keys);
+    const finalMsg = fRes.message;
+    lastModel = fRes.model; lastProvider = fRes.provider;
     try { if (finalMsg && finalMsg.content) aura().recordAnswer(String(task), finalMsg.content, { scope: A }); } catch (_) {}
-    return { response: (finalMsg && finalMsg.content) || '', toolsUsed, steps: MAX_STEPS, model: MODEL, capped: true };
+    tally(!!(finalMsg && finalMsg.content), toolsUsed.join(','));
+    return { response: (finalMsg && finalMsg.content) || '', toolsUsed, steps: MAX_STEPS, model: lastModel, provider: lastProvider, capped: true };
   } catch (_) {
+    tally(false, toolsUsed.join(','));
     return { response: '(reached step limit)', toolsUsed, steps: MAX_STEPS, capped: true };
   }
 }
@@ -234,6 +244,7 @@ const COUNCIL = new Set(['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PI
 
 // Express handler — POST /api/agentic/run  { agent, task | message, apiKey?, tools? }
 async function handler(req, res) {
+  const hStart = Date.now();
   try {
     const b = req.body || {};
     const task = b.task || b.message;
@@ -275,6 +286,7 @@ async function handler(req, res) {
     });
     res.json(Object.assign({ agent: agentUp, routedByCouncil: !!routedByCouncil, durationMs: Date.now() - t0 }, out));
   } catch (e) {
+    try { rep().record({ agent: agentUp, outcome: false, latencyMs: Date.now() - hStart, tool: 'run-error', task: String(task || '').slice(0, 120) }); } catch (_) {}
     res.status(500).json({ error: String((e && e.message) || e) });
   }
 }

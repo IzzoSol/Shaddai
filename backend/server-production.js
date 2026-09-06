@@ -1868,6 +1868,28 @@ try {
   });
   app.use(gen);
   console.log('[prod] Helius listener mounted (/api/helius/watch,webhook)');
+
+  // Boot-time watchers — turn on-chain events for the agent wallets into agent
+  // work WITHOUT needing a manual POST /api/helius/watch after every deploy.
+  // Env-driven: VIRTUALS_SOL_WALLET (ZEROX's Solana agent wallet) is the main
+  // one; HELIUS_WATCH_WALLETS is an optional CSV of extra addresses to watch.
+  try {
+    if (process.env.HELIUS_API_KEY || process.env.HELIUS_RPC_URL) {
+      const bootWallets = [
+        process.env.VIRTUALS_SOL_WALLET,
+        process.env.ZEROX_SOL_WALLET,
+        process.env.HELIUS_WATCH_WALLETS || '',
+      ].join(',').split(',').map(s => String(s || '').trim()).filter(Boolean);
+      const started = [];
+      for (const w of [...new Set(bootWallets)]) {
+        const r = helius.watch(w, { agent: 'ZEROX' });
+        if (r.ok && !r.already) started.push(w);
+      }
+      console.log('[prod] Helius boot watchers: ' + (started.length ? 'started ' + started.join(', ') : 'none to start (VIRTUALS_SOL_WALLET/HELIUS_WATCH_WALLETS unset)'));
+    } else {
+      console.log('[prod] Helius listener idle — no HELIUS_API_KEY/HELIUS_RPC_URL (boot watchers skipped)');
+    }
+  } catch (e) { console.warn('[prod] Helius boot watchers failed:', e.message); }
 } catch (e) { console.warn('[prod] Helius listener failed:', e.message); }
 
 /* GET /api/paybox/wallets — the ZEROX FOMO wallets shown on the front door.

@@ -92,6 +92,7 @@ function isProUser(userId) {
 function checkFreeQuota(req, res) {
   const isProd = process.env.NODE_ENV === 'production';
   const uid = (isProd ? '' : (req.headers['x-user-id'] || '')) ||
+    (req.headers['x-telegram-user-id'] || '') ||
     (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || 'anon';
   if (isProUser(uid)) return true;
   const day = new Date().toISOString().slice(0, 10);
@@ -236,7 +237,7 @@ function searchChunks2(agent, q, k, opts) {
       if (d.topics.length) h.topics = d.topics;
       if (d.url && !h.deepLink) h.deepLink = d.url;
     });
-  } catch (_) {}
+  } catch (e) { console.error('[brain] rag-store search failed:', e && e.message); }
   let corpusHits = [];
   try {
     corpusHits = (brainIndex.searchChunks(ns, q, k, opts) || []).map(h => ({
@@ -245,7 +246,7 @@ function searchChunks2(agent, q, k, opts) {
       timeLabel: null, tsEstimate: false, deepLink: null,
     }));
     normScores(corpusHits);
-  } catch (_) {}
+  } catch (e) { console.error('[brain] corpus search failed:', e && e.message); }
   const seen = new Set();
   const merged = [];
   for (const h of [

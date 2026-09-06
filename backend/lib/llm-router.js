@@ -83,10 +83,20 @@ function getProviders() {
 // Handles {role,content} and {role, parts:[{text}]] (gemini-ish) gracefully.
 function normalizeMessages(messages) {
   return (Array.isArray(messages) ? messages : []).map(m => {
-    const content = typeof m.content === 'string'
-      ? m.content
-      : (Array.isArray(m.parts) ? m.parts.map(p => p.text).join('\n') : String(m.content || ''));
-    return { role: m.role || 'user', content };
+    const hasCalls = Array.isArray(m.tool_calls) && m.tool_calls.length;
+    const out = { role: m.role || 'user' };
+    if (typeof m.content === 'string') out.content = m.content;
+    else if (Array.isArray(m.parts)) out.content = m.parts.map(p => p.text).join('\n');
+    else if (m.content == null && hasCalls) out.content = null;
+    else out.content = String(m.content || '');
+    // Function-calling state must survive normalization — Groq/OpenAI/OpenRouter
+    // require the assistant tool_calls + matching tool tool_call_id/name to be
+    // re-sent verbatim on every loop step (stripping them breaks step ≥ 2 with
+    // "'messages.3': property 'tool_call_id' is missing").
+    if (hasCalls) out.tool_calls = m.tool_calls;
+    if (m.tool_call_id) out.tool_call_id = m.tool_call_id;
+    if (m.name) out.name = m.name;
+    return out;
   });
 }
 
@@ -147,6 +157,73 @@ async function anthropicChat(provider, messages, opts) {
   return text || (j.content ? JSON.stringify(j.content) : '');
 }
 
+// OPENAI-COMPATIBLE FUNCTION-CALLING CHAT — used by the agentic tool loop
+// (backend/lib/agent-tool-run.js). Returns the RAW message object ({ role,
+// content, tool_calls }) so the caller can execute the suggested calls and loop.
+// skips anthropic (different wire format for tools); degrades to a plain text
+// call when tools is empty. The caller may hand the groq provider a rotation
+// pool (BYOK → vault → env → runtime keys) via opts.groqKeys.
+async function chatTools(messages, tools, opts = {}) {
+  const normalized = normalizeMessages(messages);
+  if (!normalized.length) throw new Error('llm-router: no messages provided');
+
+  const providers = getProviders().filter(p => p.id !== 'anthropic');
+  if (!providers.length) {
+    throw new Error('llm-router: no tool-capable LLM key configured (groq/openai/deepseek/openrouter)');
+  }
+
+  function keysFor(p) {
+    if (p.id === 'groq' && Array.isArray(opts.groqKeys) && opts.groqKeys.length) return opts.groqKeys;
+    const k = (process.env[p.env] || '').trim();
+    return k ? [k] : [];
+  }
+
+  let lastErr = null;
+  for (const p of providers) {
+    if (isCooling(p.id)) continue;
+    const pool = keysFor(p);
+    if (!pool.length) continue;
+    for (let i = 0; i < pool.length; i++) {
+      try {
+        const body = {
+          model: (p.id === 'groq' && opts.model) || p.model,
+          messages: normalized,
+          temperature: opts.temperature ?? 0.4,
+          max_tokens: opts.max_tokens ?? 1500,
+        };
+        if (tools && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
+        if (opts.json) body.response_format = { type: 'json_object' };
+        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pool[i] };
+        if (p.id === 'openrouter') { headers['HTTP-Referer'] = 'https://shaddai-g81x.onrender.com'; headers['X-Title'] = 'SHADDAI'; }
+        const r = await fetch(p.url, {
+          method: 'POST', headers, body: JSON.stringify(body),
+          signal: AbortSignal.timeout(opts.timeoutMs || 45000),
+        });
+        if (!r.ok) {
+          const t = await r.text().catch(() => '');
+          throw new Error(`[${p.id}] HTTP ${r.status}: ${t.slice(0, 200)}`);
+        }
+        const j = await r.json();
+        const msg = j.choices && j.choices[0] && j.choices[0].message;
+        if (!msg) throw new Error(`[${p.id}] empty response`);
+        markSuccess(p.id);
+        return { message: msg, provider: p.id, model: (p.id === 'groq' && opts.model) || p.model };
+      } catch (e) {
+        lastErr = e;
+        const m = /^\[(\w+)\] HTTP (\d+)/.exec(String(e.message || ''));
+        const status = m ? parseInt(m[2], 10) : (e.response && e.response.status) || 0;
+        if (status === 429 || status === 401 || status === 403 || status === 500 || status === 503) {
+          if (i < pool.length - 1) await new Promise(r => setTimeout(r, 450 + i * 350));
+          continue; // rotate to the next key
+        }
+        break; // non-retryable → next provider
+      }
+    }
+    markFail(p.id);
+  }
+  throw lastErr || new Error('llm-router: all tool-capable providers failed');
+}
+
 /**
  * Route a chat request to the first healthy, keyed provider.
  * @param {Array} messages  [{role, content}]
@@ -193,4 +270,4 @@ function status() {
   });
 }
 
-module.exports = { chat, status, getProviders };
+module.exports = { chat, chatTools, status, getProviders };

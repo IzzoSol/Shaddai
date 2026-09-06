@@ -69,26 +69,29 @@ function _signalsKeyboard() {
 // ── help text ──────────────────────────────────────────────────────────────
 function _help() {
   return (
-    '⬡ <b>SHADDAI BOT</b> — commands:\n\n' +
-    '/price <code>&lt;symbol|address&gt;</code> — live DEX price, liquidity & volume\n' +
-    '/rug <code>&lt;mint&gt;</code> — rug-check a Solana token\n' +
-    '/ask <code>&lt;question&gt;</code> — ask a SHADDAI agent anything\n' +
-    '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis + sentiment\n' +
+    '⬡ <b>THE SHADDAI HALL</b> — commands:\n\n' +
+    '🏛 <b>Agents (grounded brain, free daily)</b>\n' +
+    '/oracle · /turtle · /nexus · /quill · /pikadon — section experts\n' +
+    '/shaddai <code>&lt;q&gt;</code> — the orchestrator\n' +
+    '/astro <code>&lt;sign&gt;</code> — ORACLE horoscope + moon\n' +
+    '/council <code>&lt;q&gt;</code> — all seven weigh in\n\n' +
+    '🛡 <b>Security</b>\n' +
+    '/check <code>&lt;url&gt;</code> — PIKADON vets a link before you click\n\n' +
+    '🎨 <b>Turtle creates</b>\n' +
+    '/design <code>&lt;prompt&gt;</code> — generate art\n' +
+    '/music <code>[genre]</code> — procedural track\n\n' +
+    '💎 <b>Markets</b>\n' +
+    '/price <code>&lt;symbol|address&gt;</code> — live DEX price\n' +
+    '/rug <code>&lt;mint&gt;</code> — rug-check a token\n' +
+    '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis\n' +
     '/news — live market pulse\n' +
-    '/lb — leaderboard (top calls ranked by Xs)\n' +
-    '/last25 /last50 /last75 /last100 — last N calls with live PNLs\n' +
-    '/pnl <code>&lt;ticker&gt;</code> — PNL card for a specific token\n' +
-    '/held — conviction holds: calls still green, ranked by ATH hold\n' +
-    '/stats <code>[week|month]</code> — hit-rate + best calls scorecard\n' +
-    '/dist — performance distribution (1-2x / 2-5x / 5-10x / 10x+)\n' +
-    '/preset — view/switch filter presets (locked liq + whale conviction)\n' +
-    '/wallets — list tracked wallets (smart money / alpha wallets)\n' +
-    '/watch <code>&lt;address&gt; [label] [type]</code> — track a wallet (ape alerts)\n' +
-    '/unwatch <code>&lt;address&gt;</code> — stop tracking a wallet\n' +
-    '/wallet <code>&lt;address&gt;</code> — wallet profile + links\n' +
-    '/signals — interactive signals hub (tap buttons for live slices)\n' +
-    '/agents — what SHADDAI is\n' +
-    '/gm — gm ☀️\n\n' +
+    '/lb /last25 /pnl /held /stats /dist — PNL + leaderboard\n' +
+    '/preset — switch signal filters · /signals — hub\n' +
+    '/wallets /watch /unwatch /wallet — smart-money tracking\n\n' +
+    '🤝 <b>Monetization</b>\n' +
+    '/virtuals — hire ZEROX onchain\n' +
+    '/pay — free vs paid tiers\n' +
+    '/menu — the 7 sections, one board\n\n' +
     '<i>Not financial advice. Always DYOR.</i>'
   );
 }
@@ -98,17 +101,18 @@ function _start(cfg) {
   const x = process.env.SHADDAI_X || 'https://x.com/IzzoSol';
   const lounge = process.env.SHADDAI_LOUNGE || 'https://t.me/EMERALDLOUNGE';
   return (
-    '⬡ <b>Welcome to SHADDAI</b> — Sovereign AI Agents\n' +
+    '⬡ <b>Welcome to the SHADDAI Hall</b> — Sovereign AI Agents\n' +
     '━━━━━━━━━━━━━━━\n' +
-    'Forge AI agents that <b>live, work &amp; earn</b> — intelligence you <b>own</b>, on open rails (Solana · x402).\n\n' +
-    'Live <b>rug-filtered crypto signals</b> with real <b>PNL tracking</b> (Xs, hit-rate, milestone wins).\n\n' +
-    '🤖 The council: SHADDAI · ZEROX · ORACLE · NEXUS · TURTLE · QUILL · PIKADON\n\n' +
-    `📡 Free signals: ${_esc(cfg.channel || '@ShaddaiLabs')}\n` +
+    'One front door, <b>seven specialists</b>:\n' +
+    'ORACLE · TURTLE · ZEROX · NEXUS · QUILL · PIKADON · SHADDAI\n\n' +
+    '🤖 Brain-answers are <b>free daily</b>; tool runs, art and deep scans unlock via <code>/pay</code> or <a href="' + (process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents') + '">Virtuals</a>.\n\n' +
+    '📡 Live <b>rug-filtered crypto signals</b> with real <b>PNL tracking</b>.\n\n' +
+    `🐢 Free procedural music: ${_esc(cfg.channel || '@ShaddaiLabs')}\n` +
     `🌿 Lounge: ${_esc(lounge)}\n` +
     `⭐ GitHub: ${_esc(gh)}\n` +
     `𝕏 ${_esc(x)}\n` +
     `🌐 ${_esc(web)}\n\n` +
-    '<b>Try:</b> /lb · /pnl SOLANDIER · /price SOL · /rug &lt;mint&gt;\n' +
+    '<b>Try:</b> /menu · /oracle &lt;question&gt; · /design cat logo · /check &lt;url&gt; · /lb\n' +
     'Type /help for the full command list.'
   );
 }
@@ -205,6 +209,24 @@ async function _handleCallback(cfg, cq) {
       if (img) { const ok = await _core.sendPhoto(chatId, img, cap, btns); if (ok) return; }
       return _send(t, chatId, cap);
     }
+if (data.startsWith('hall:') && chatId) {
+      const key = data.slice(5);
+      await answer('');
+      if (key === 'pay') return _send(t, chatId, _payCard());
+      if (key === 'virtuals') return _send(t, chatId, _virtualsCard());
+      if (key === 'council') return _send(t, chatId, '🏛 <b>The Council</b> — all seven weigh in at once:\n<code>/council how should the Hall price its oracle?</code>');
+      const A = HALL_AGENTS[key.toUpperCase()] ? key.toUpperCase() : null;
+      if (A) {
+        let cut = '⬡ <b>' + A + '</b> · ' + HALL_AGENTS[A][1] + '\n\nAsk anything:\n<code>/' + A.toLowerCase() + ' &lt;question&gt;</code>\n';
+        if (A === 'PIKADON') cut += 'Or vet a link: <code>/check &lt;url&gt;</code>\n';
+        if (A === 'TURTLE') cut += 'Or make art/music:\n<code>/design &lt;prompt&gt;</code>  <code>/music lofi</code>\n';
+        if (A === 'ORACLE') cut += 'Or your stars: <code>/astro &lt;zodiac sign&gt;</code>\n';
+        if (A === 'SHADDAI') cut += 'Strategy, decisions, final calls — <code>/shaddai &lt;question&gt;</code>\n';
+        cut += '\n<i>Free daily taste · <code>/pay</code> for unlimited + tools.</i>';
+        return _send(t, chatId, cut);
+      }
+      return answer('Hall menu');
+    }
     return answer();
   } catch (e) { return answer(); }
 }
@@ -233,6 +255,162 @@ async function _music(t, chatId, arg) {
   }
 }
 
+// ── The Hall — every agent, one front door ────────────────────────────────
+const HALL_AGENTS = {
+  ORACLE: ['Research & Intelligence', 'astrology · research · trends · grounded answers'],
+  TURTLE: ['UI/UX & Creative', 'design direction · art · procedural music'],
+  ZEROX: ['Wealth & Revenue', 'signals · prices · deals · onchain paper trades'],
+  NEXUS: ['Technical Architect', 'code · APIs · scale · engineering plans'],
+  QUILL: ['Writing & Communication', 'copy · docs · clear sharp words'],
+  PIKADON: ['Security & Compliance', 'URL checks · audits · hardening'],
+  SHADDAI: ['Supreme Orchestrator', 'strategy · decisions · final calls'],
+};
+const _HALL_HEADER = '⬡ <b>THE HALL — every agent, one front door</b>\n━━━━━━━━━━━━━━━\n';
+function _hallMenuCard() {
+  let out = _HALL_HEADER;
+  Object.entries(HALL_AGENTS).forEach(([a, d]) => {
+    out += '\n▸ <b>' + a + '</b> — ' + d[1] + '\n  <code>/' + a.toLowerCase() + ' &lt;question&gt;</code>';
+  });
+  out += '\n\n➤ <code>/council &lt;q&gt;</code> all seven · <code>/design &lt;p&gt;</code> art · <code>/music</code> tunes';
+  out += '\n➤ <code>/check &lt;url&gt;</code> PIKADON · <code>/signals</code> live · <code>/pay</code> upgrade';
+  out += '\n\n<i>Free daily taste · 3 deep brain answers/day · full Hall via /pay or Virtuals.</i>';
+  return out;
+}
+function _hallMenuKeyboard() {
+  return { inline_keyboard: [
+    [{ text: '🌙 Oracle', callback_data: 'hall:oracle' }, { text: '🐢 Turtle', callback_data: 'hall:turtle' }, { text: '💎 Zerox', callback_data: 'hall:zerox' }],
+    [{ text: '🛡 Pikadon', callback_data: 'hall:pikadon' }, { text: '🏛 Council', callback_data: 'hall:council' }, { text: '🤝 Virtuals', callback_data: 'hall:virtuals' }],
+    [{ text: '💠 Pay / Upgrade', callback_data: 'hall:pay' }],
+  ]};
+}
+function _virtualsCard() {
+  const ref = process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents';
+  return '🤝 <b>Hire ZEROX on Virtuals</b>\n━━━━━━━━━━━━━━━\n\nZEROX also lives on the <b>Virtuals agent marketplace</b> — jobs and paid work with <b>onchain escrow</b>.\n\n🔗 <a href="' + ref + '">app.virtuals.io/acp/agents</a>\n\nOr stay inside this Hall: /signals · /price &lt;asset&gt; · /pnl\n\n<i>Hire the Virtuals agent → fees settle onchain · zero blanks.</i>';
+}
+function _payCard() {
+  const ref = process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents';
+  return '💠 <b>SHADDAI Hall — free + paid</b>\n━━━━━━━━━━━━━━━\n\n<b>Free every day:</b>\n• /signals · /price · /rug · /news — live markets\n• /music — procedural tracks by TURTLE\n• /menu — browse the 7 sections\n• <b>3</b> deep agent answers (ORACLE, TURTLE, NEXUS…)\n\n<b>Paid onchain:</b>\n• Unlimited agent runs with real tools (/check, /design, /zerox)\n• Hire ZEROX on <a href="' + ref + '">Virtuals</a> — escrow-protected jobs\n• USDC via x402 pay-per-call rails\n\n<i>The free taste is real. The paid Hall is deep.</i>';
+}
+
+// Grounded brain answers (RAG) — the free taste. 402 = quota used → nudge.
+async function _brain(t, chatId, cfg, agent, q, k) {
+  if (!q) return _send(t, chatId, 'Usage: /' + String(agent).toLowerCase() + ' &lt;your question&gt;');
+  await _send(t, chatId, '🧠 <b>' + agent + '</b> is thinking…');
+  try {
+    const url = 'http://127.0.0.1:' + cfg.port + '/api/ask?q=' + encodeURIComponent(q) + '&agent=' + encodeURIComponent(agent) + '&k=' + (k || 4);
+    const r = await fetch(url, { headers: { 'X-Telegram-User-Id': String(chatId) }, signal: AbortSignal.timeout(60000) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 402) return _send(t, chatId, '🔒 <b>' + agent + '</b> free answers used up for today.\n\n<code>/pay</code> unlocks the full Hall · or hire on <a href="' + (process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents') + '">Virtuals</a>.');
+    const ans = String(j.answer || j.content || '').trim();
+    if (!ans) return _send(t, chatId, '⚠️ <b>' + agent + '</b> drew a blank — try again shortly.');
+    let out = '<b>' + agent + '</b> · ' + ((HALL_AGENTS[agent] || [])[0] || 'hall section') + '\n━━━━━━━━━━━━━━━\n\n' + _esc(ans).slice(0, 3200);
+    const src = (j.sources || []).slice(0, 2).map(s => (s && s.title) || '').filter(Boolean);
+    if (src.length) out += '\n\n<i>Sources:</i> ' + src.map(_esc).join(' · ');
+    out += '\n<i>' + (j.llm_powered ? 'llm-grounded' : 'knowledge base') + ' · /pay for unlimited</i>';
+    return _send(t, chatId, out);
+  } catch (e) { return _send(t, chatId, '⚠️ <b>' + agent + '</b> is busy — try again shortly.'); }
+}
+
+// The Council — all seven weigh in via the synthesizer.
+async function _council(t, chatId, cfg, q) {
+  if (!q) return _send(t, chatId, 'Usage: /council &lt;question&gt; — all seven weigh in');
+  await _send(t, chatId, '🏛 The Council convenes…');
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/synthesize?q=' + encodeURIComponent(q), { headers: { 'X-Telegram-User-Id': String(chatId) }, signal: AbortSignal.timeout(90000) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 402) return _send(t, chatId, '🔒 Council free votes used up — <code>/pay</code> to convene again.');
+    const ags = (j && j.agents) || [];
+    if (!ags.length) return _send(t, chatId, '⚠️ The Council is silent — try again shortly.');
+    let out = '🏛 <b>The Council on:</b> ' + _esc(q.slice(0, 70)) + '\n━━━━━━━━━━━━━━━';
+    ags.forEach(a => { if (a && a.answer) out += '\n\n<b>' + _esc(String(a.agent || '?').slice(0, 12)) + '</b> · ' + _esc(String(a.answer).slice(0, 420)); });
+    if (ags.some(a => a && a.llm_powered)) out += '\n\n<i>llm-grounded · /pay for full depth</i>';
+    return _send(t, chatId, out.slice(0, 3900));
+  } catch (e) { return _send(t, chatId, '⚠️ Council is busy — try again shortly.'); }
+}
+
+// Paid agent runs with real tools (premium-gated server-side).
+async function _agentic(t, chatId, cfg, agent, task) {
+  await _send(t, chatId, '⚙️ <b>' + agent + '</b> running tools…');
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/agentic/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-User-Id': String(chatId) },
+      body: JSON.stringify({ agent: agent, task: task, autoRoute: false }),
+      signal: AbortSignal.timeout(90000),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 402) return _send(t, chatId, '🔒 <b>' + agent + '</b> runs are paid — <code>/pay</code> to fire tools from Telegram.');
+    const out = String(j.response || j.content || j.reply || j.result || '').trim();
+    if (!out) return _send(t, chatId, '⚠️ <b>' + agent + '</b> returned nothing — try again.');
+    const tools = (j.toolsUsed || []).slice(0, 4).join(', ');
+    return _send(t, chatId, '<b>' + agent + '</b>' + (tools ? ' · tools: ' + _esc(tools) : '') + '\n━━━━━━━━━━━━━━━\n\n' + _esc(out).slice(0, 3000) + '\n\n<i>paid run · ' + _esc(String(j.model || j.provider || 'engine')).slice(0, 50) + '</i>');
+  } catch (e) { return _send(t, chatId, '⚠️ <b>' + agent + '</b> engine is busy — try again shortly.'); }
+}
+
+// TURTLE designs — agent image tool first, keyless Pollinations fallback (never dead-ends).
+async function _turtleDesign(t, chatId, cfg, prompt) {
+  if (!prompt) return _send(t, chatId, 'Usage: /design &lt;what to create&gt;  e.g. <code>/design a neon cyberpunk phoenix logo</code>');
+  await _send(t, chatId, '🐢 TURTLE is designing…');
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/agentic/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-User-Id': String(chatId) },
+      body: JSON.stringify({ agent: 'TURTLE', task: 'Generate a high-quality image: ' + prompt + '. If you produce the image, reply with just its URL.', autoRoute: false }),
+      signal: AbortSignal.timeout(90000),
+    });
+    const j = await r.json().catch(() => ({}));
+    const resp = String(j.response || j.content || j.reply || '').trim();
+    const img = (resp.match(/https?:\/\/\S+\.(?:png|jpg|jpeg|webp)(?:\?\S*)?/i) || [])[0] || null;
+    if (img) { const ok = await _core.sendPhoto(chatId, img || '', '🐢 <b>TURTLE design</b> · ' + _esc(prompt.slice(0, 60)) + '\n/design to make another'); if (ok) return; }
+    const fb = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt + ' — high quality, detailed') + '?width=1024&height=1024&nologo=true';
+    const ok2 = await _core.sendPhoto(chatId, fb, '🐢 <b>TURTLE design</b> · ' + _esc(prompt.slice(0, 60)) + '\n<i>instant render · /design to make another</i>');
+    if (ok2) return;
+    return _send(t, chatId, resp ? _esc(resp).slice(0, 900) : '⚠️ Image engine hiccup — try <code>/design cat logo</code>');
+  } catch (e) { return _send(t, chatId, '⚠️ TURTLE is busy — try again shortly.'); }
+}
+
+// PIKADON URL check — local heuristics first, deep scan via the premium agent.
+const _suspTld = /\.(zip|top|xyz|click|link|gq|tk|ml|cf|ga|work|icu|stream|download|kim|racing|party|review|faith|loan|date|science|rest|cyou|trade|accountant|mom|lol|quest)$/i;
+const _phishWords = /(login|verify|update|wallet|airdrop|claim|reward|free|bonus|password|secure|confirm|recover|signin|2fa|support|prize)/i;
+const _brandWords = /(pay|secure|login|verify|wallet|airdrop|shaddai|solana|phantom|binance|coinbase|metamask|token|claim|uniswap|backpack)/i;
+function _urlHeuristics(raw) {
+  const flags = [];
+  let u = null;
+  try { u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw); } catch (_) { return [raw + ' → <b>not a valid URL</b>']; }
+  if (u.protocol !== 'https:') flags.push('non-HTTPS — plaintext traffic');
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(u.hostname)) flags.push('bare IP host');
+  if (u.hostname.startsWith('xn--')) flags.push('punycode (confusable) host');
+  const sld = (u.hostname.split('.')[0] || '').toLowerCase();
+  if (_brandWords.test(sld)) flags.push('looks like a <b>brand imposter</b>');
+  if (_suspTld.test(u.hostname)) flags.push('cheap/abuse-friendly TLD');
+  if (_phishWords.test(u.pathname)) flags.push('phishing words in path');
+  if (u.username || u.password) flags.push('credentials embedded in URL');
+  if (u.pathname.includes('//')) flags.push('unusual path slashes');
+  return flags;
+}
+async function _checkUrl(t, chatId, cfg, raw) {
+  if (!raw) return _send(t, chatId, 'Usage: /check &lt;url&gt; — PIKADON vets it before you click.\nExample: <code>/check https://example.com</code>');
+  const url = String(raw).trim().replace(/^<|>$/g, '');
+  const flags = _urlHeuristics(url);
+  await _send(t, chatId, '🛡 PIKADON is examining <b>' + _esc(url.slice(0, 80)) + '</b>…');
+  let verdict = '';
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/agentic/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-User-Id': String(chatId) },
+      body: JSON.stringify({ agent: 'PIKADON', task: 'Security-audit this URL: ' + url + '. Fetch it if safe to do so. Report a clear RISK LEVEL (safe / caution / dangerous) and the red flags a user should know before clicking. Max 6 lines.', autoRoute: false }),
+      signal: AbortSignal.timeout(90000),
+    });
+    const j = await r.json().catch(() => ({}));
+    verdict = String(j.response || j.content || j.reply || j.result || '').trim().slice(0, 1200);
+    if (r.status === 402) verdict = '(deep scan is a paid run — <code>/pay</code> to enable)';
+  } catch (_) { verdict = '(deep scan unavailable)'; }
+  let out = '🛡 <b>PIKADON URL Check</b>\n━━━━━━━━━━━━━━━\n\n<b>' + _esc(url.slice(0, 90)) + '</b>\n\n';
+  out += flags.length ? '⚠️ <b>Flags:</b>\n' + flags.map(f => '• ' + f).join('\n') : '✅ <b>Heuristics clean</b> (local only)';
+  out += '\n\n<b>Deep scan:</b> ' + verdict;
+  return _send(t, chatId, out.slice(0, 3900));
+}
+
 async function _handle(cfg, update) {
   if (update.callback_query) return _handleCallback(cfg, update.callback_query);
   const msg = update.message || update.channel_post; if (!msg) return;
@@ -253,6 +431,24 @@ async function _handle(cfg, update) {
 
     // /music [genre] [mood] [bars] — free procedural track by Turtle Music Bot (ShaddaiLabs)
     case 'music': case 'song': case 'beat': case 'track': return _music(t, chatId, arg);
+
+    // ── The Hall — per-agent sections (grounded brain, free taste) ──
+    case 'oracle': return _brain(t, chatId, cfg, 'ORACLE', arg || 'Give me a sharp research briefing on the trend of the day.', 4);
+    case 'turtle': return _brain(t, chatId, cfg, 'TURTLE', arg || 'Give me a design direction for a striking brand visual.', 4);
+    case 'nexus': return _brain(t, chatId, cfg, 'NEXUS', arg || 'Give me a crisp engineering plan for building something like this.', 4);
+    case 'quill': return _brain(t, chatId, cfg, 'QUILL', arg || 'Write something clear and sharp.', 4);
+    case 'pikadon': return _brain(t, chatId, cfg, 'PIKADON', arg || 'Give me a security checklist for a public-facing web app.', 4);
+    case 'astro': case 'horoscope': case 'stars': {
+      const sign = (arg || '').split(/\s+/).slice(0, 2).join(' ') || 'today';
+      return _brain(t, chatId, cfg, 'ORACLE', 'Give my ' + sign + ' horoscope plus moon-phase guidance, grounded and honest, in 4 lines.', 4);
+    }
+    case 'council': case 'synthesize': case 'board': return _council(t, chatId, cfg, arg);
+    case 'design': case 'turtleimg': case 'art': return _turtleDesign(t, chatId, cfg, arg);
+    case 'check': case 'url': case 'verify': case 'scan': return _checkUrl(t, chatId, cfg, arg);
+    case 'virtuals': case 'acp': case 'marketplace': return _send(t, chatId, _virtualsCard());
+    case 'pay': case 'upgrade': case 'pro': case 'pricing': return _send(t, chatId, _payCard());
+    case 'menu': case 'halls': case 'zones': return _send(t, chatId, _hallMenuCard(), { reply_markup: _hallMenuKeyboard() });
+
     case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
 
     // /lb — leaderboard (text only, no image, no HF)
@@ -411,6 +607,18 @@ async function _registerCommands(token) {
     { command: 'wallet',  description: 'Wallet profile + links' },
     { command: 'axiom',   description: 'Axiom trading edge + referral' },
     { command: 'gm',      description: 'gm ☀️' },
+    { command: 'menu',    description: 'The 7 Hall sections, one board' },
+    { command: 'oracle',  description: 'ORACLE — research, astrology, trends' },
+    { command: 'turtle',  description: 'TURTLE — design direction, art, music' },
+    { command: 'nexus',   description: 'NEXUS — code, APIs, scale' },
+    { command: 'quill',   description: 'QUILL — writing, copy, docs' },
+    { command: 'pikadon', description: 'PIKADON — security, audits' },
+    { command: 'astro',   description: 'ORACLE horoscope + moon guidance' },
+    { command: 'council', description: 'All seven agents weigh in on a question' },
+    { command: 'design',  description: 'TURTLE generates art from a prompt' },
+    { command: 'check',   description: 'PIKADON URL safety check  e.g. /check https://…' },
+    { command: 'virtuals', description: 'Hire ZEROX onchain via Virtuals' },
+    { command: 'pay',     description: 'Free vs paid tiers — unlock the full Hall' },
   ];
   // Register for all scopes so "/" menu works in private chats, groups, and channels
   const scopes = [

@@ -3422,6 +3422,16 @@ Use tools for real data, then give a concise final answer.` };
     anthropic: pAnthropic,
     openai: () => pOpenAICompatible('openai', 'https://api.openai.com/v1/chat/completions', _bOpenAI, [(options.provider === 'openai' && options.model) || (_isPaidTier ? OPENAI_PREMIUM_MODEL : OPENAI_MODEL)]),
     xai: pXAI,
+    // Multi-provider router safety net — the LAST cloud attempt before local
+    // Ollama. Adds deepseek + per-provider health cooldown + groq key rotation
+    // on top of the chain above, while leaving the BYOK-first ordering intact.
+    router: async () => {
+      const out = await require('./lib/llm-router').chat(allMsgs, { temperature: 0.6, max_tokens: 1500, timeoutMs: 30000 });
+      llmTracer.trace({ provider: 'router:' + out.provider, model: out.model, agentName,
+        inputTokens: 0, outputTokens: Math.ceil((out.text || '').length / 4),
+        durationMs: Date.now() - t0, success: true });
+      return out.text;
+    },
   };
   // Per-step override (options.provider) wins, else the agent's preferredProvider.
   const pref = options.provider || (AGENTS[agentName] && AGENTS[agentName].preferredProvider) || null;
@@ -3431,8 +3441,8 @@ Use tools for real data, then give a concise final answer.` };
   // Paid tier: try the strongest providers FIRST (anthropic, openai premium,
   // openrouter premium), falling back to the free chain if those fail/rate-limit.
   const order = _isPaidTier
-    ? [...new Set([pref, 'anthropic', 'openai', 'openrouter', 'xai', 'groq', 'gemini', 'ollama'].filter(Boolean))]
-    : [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'xai', 'ollama'].filter(Boolean))];
+    ? [...new Set([pref, 'anthropic', 'openai', 'openrouter', 'xai', 'groq', 'gemini', 'router', 'ollama'].filter(Boolean))]
+    : [...new Set([pref, 'groq', 'gemini', 'openrouter', 'anthropic', 'openai', 'xai', 'router', 'ollama'].filter(Boolean))];
   const MODEL_OF = { ollama: OLLAMA_MODEL, gemini: GEMINI_MODEL, groq: GROQ_MODEL, openrouter: OPENROUTER_MODEL, anthropic: ANTHROPIC_MODEL, openai: OPENAI_MODEL, xai: XAI_MODEL };
   // ── AURA forCall — token savings + cache on EVERY LLM call ──────────────────
   // forCall() applies all savings levers (cache hit, prompt compression, tool-injection

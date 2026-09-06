@@ -9,10 +9,9 @@
 //     execute=true  → runs each step through the specialist + returns combined results
 // ─────────────────────────────────────────────────────────────────────────────
 'use strict';
-const axios = require('axios');
+const llmRouter = require('./llm-router');
 const { runAgentWithTools } = require('./agent-tool-run');
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = process.env.GROQ_TOOL_MODEL || 'llama-3.3-70b-versatile';
 
 const ROSTER =
@@ -36,12 +35,15 @@ Respond ONLY with JSON:
 {"plan":[{"agent":"QUILL","task":"the concrete sub-task","why":"one short reason"}],"deliverable":"one line describing the final combined output"}` },
     { role: 'user', content: String(task) },
   ];
-  const r = await axios.post(GROQ_URL, {
-    model: MODEL, messages, temperature: 0.3, max_tokens: 900,
-    response_format: { type: 'json_object' },
-  }, { headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, timeout: 40000 });
+  const r = await llmRouter.chatTools(messages, [], {
+    groqKeys: key ? [key] : [],
+    model: MODEL,
+    temperature: 0.3,
+    max_tokens: 900,
+    json: true,
+  });
   let parsed = {};
-  try { parsed = JSON.parse(r.data.choices[0].message.content || '{}'); } catch (_) {}
+  try { parsed = JSON.parse(r.message && r.message.content || '{}'); } catch (_) {}
   const plan = (Array.isArray(parsed.plan) ? parsed.plan : [])
     .map(s => ({ agent: VALID.has(String(s.agent).toUpperCase()) ? String(s.agent).toUpperCase() : 'SHADDAI', task: String(s.task || ''), why: String(s.why || '') }))
     .filter(s => s.task).slice(0, 6);
@@ -50,7 +52,8 @@ Respond ONLY with JSON:
 
 async function orchestrate(task, opts = {}) {
   const key = opts.apiKey || process.env.GROQ_API_KEY;
-  if (!key) throw new Error('No Groq key configured');
+  const anyCloud = !!key || llmRouter.getProviders().some(p => p.id !== 'anthropic');
+  if (!anyCloud) throw new Error('No LLM key configured (Groq primary, OpenAI/DeepSeek/OpenRouter fallback)');
   const planned = await planTask(task, key);
   const agents = [...new Set(planned.plan.map(s => s.agent))];
 
@@ -64,6 +67,7 @@ async function orchestrate(task, opts = {}) {
       const out = await runAgentWithTools(s.agent, s.task, { apiKey: key });
       results.push({ agent: s.agent, task: s.task, response: out.response, toolsUsed: out.toolsUsed || [] });
     } catch (e) {
+      try { require('./reputation-engine').record({ agent: s.agent, outcome: false, latencyMs: 0, tool: 'orchestrate-step', task: String(s.task || '').slice(0, 120) }); } catch (_) {}
       results.push({ agent: s.agent, task: s.task, error: String((e && e.message) || e) });
     }
   }

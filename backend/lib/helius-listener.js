@@ -70,7 +70,7 @@ async function processTx(tx, agent) {
 
 /** Start polling a wallet for new transactions. */
 function watch(wallet, opts = {}) {
-  if (!HELIUS_API_KEY && !process.env.HELIUS_RPC_URL) return { ok: false, error: 'set HELIUS_API_KEY or HELIUS_RPC_URL' };
+  if (!process.env.HELIUS_API_KEY && !process.env.HELIUS_RPC_URL) return { ok: false, error: 'set HELIUS_API_KEY or HELIUS_RPC_URL' };
   if (watchers.has(wallet)) return { ok: true, already: true, wallet };
   const rpc = opts.rpc || HELIUS_RPC();
   const agent = String(opts.agent || 'ZEROX').toUpperCase();

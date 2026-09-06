@@ -206,6 +206,7 @@ function rebuildVectors(docs) {
   const allChunkTokens = [];
 
   for (const doc of docs) {
+    if (!Array.isArray(doc.chunks)) continue;
     for (const chunk of doc.chunks) {
       const tokens = tokenize(chunk.text);
       allChunkTokens.push(tokens);
@@ -223,6 +224,7 @@ function rebuildVectors(docs) {
   // Assign normalized TF-IDF vectors back to chunks (stored as plain objects)
   let i = 0;
   for (const doc of docs) {
+    if (!Array.isArray(doc.chunks)) continue;
     for (const chunk of doc.chunks) {
       const tf = termFrequency(allChunkTokens[i++]);
       const vec = {};
@@ -384,6 +386,27 @@ function searchUser(user, query, topK = 3) {
   const idf = _loadIdf(user);
   const qVec = vectorizeQuery(query, idf);
   if (!qVec) return [];
+
+  // Self-heal legacy docs (have text but no chunks — old uploads were stored
+  // pre-chunking). Build their chunks + TF-IDF vectors in-memory using this
+  // store's idf so they stay searchable WITHOUT rewriting stat files on read.
+  for (const doc of docs) {
+    if (Array.isArray(doc.chunks) || !doc.text) continue;
+    const built = buildChunks(doc.id, doc.text, doc);
+    doc.chunks = built.chunks.map((c, i) => ({ ...c, id: doc.id + '_c' + i }));
+    for (const c of doc.chunks) {
+      const tf = termFrequency(tokenize(c.text || ''));
+      const vec = {};
+      let mag = 0;
+      for (const [term, tfw] of tf) {
+        const w = tfw * (idf[term] || 0);
+        if (w > 0) { vec[term] = w; mag += w * w; }
+      }
+      mag = Math.sqrt(mag);
+      if (mag > 0) for (const t of Object.keys(vec)) vec[t] /= mag;
+      c.tfIdfVector = vec;
+    }
+  }
 
   const scored = [];
   for (const doc of docs) {

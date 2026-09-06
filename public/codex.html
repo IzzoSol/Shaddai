@@ -286,11 +286,57 @@
     #joinEmail{ padding:15px 16px; }
     .colophon{ gap:8px; font-size:9px; }
   }
+
+  /* ── ACCESS GATE ─────────────────────────────────────────── */
+  #gate{
+    position:fixed;inset:0;z-index:10000;
+    background:radial-gradient(ellipse 90% 70% at 50% 38%, rgba(156,124,38,.12) 0%, var(--paper) 72%);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+    backdrop-filter:blur(3px);
+  }
+  html[data-theme="neon"] #gate{ background:radial-gradient(ellipse 90% 70% at 50% 38%, rgba(232,196,92,.09) 0%, var(--paper) 72%); }
+  .gate-hex{
+    width:70px;height:70px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    background:var(--paper2);border:1px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 16px rgba(156,124,38,.3);
+  }
+  .gate-logo{ font-family:'Cinzel',serif;font-weight:900;font-size:clamp(20px,4vw,30px);color:var(--gold);letter-spacing:.3em;text-shadow:0 0 16px rgba(156,124,38,.4); }
+  .gate-rule{ width:220px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+  .gate-sub{ font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink2);letter-spacing:.28em;text-transform:uppercase;text-align:center;line-height:1.9; }
+  .gate-btn{
+    padding:12px 44px;background:transparent;border:1px solid var(--gold);color:var(--gold);
+    font-family:'Cinzel',serif;font-weight:700;font-size:11px;letter-spacing:.3em;text-transform:uppercase;cursor:pointer;
+    position:relative;overflow:hidden;transition:color .25s;
+  }
+  .gate-btn::before{ content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .25s;z-index:-1; }
+  .gate-btn:hover{ color:var(--paper); }.gate-btn:hover::before{ transform:scaleX(1); }
+  .gate-pin{
+    width:170px;padding:12px 14px;background:var(--paper2);border:1px solid var(--gold);color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;font-size:22px;letter-spacing:14px;text-align:center;outline:none;border-radius:2px;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .gate-pin::placeholder{ color:rgba(156,124,38,.35);letter-spacing:14px; }
+  .gate-pin:focus{ border-color:var(--gold2);box-shadow:0 0 12px rgba(156,124,38,.3); }
+  .gate-err{ font-size:9px;color:#b34d3a;letter-spacing:2px;min-height:12px;font-family:'IBM Plex Mono',monospace;text-shadow:0 0 8px rgba(179,77,58,.35);text-align:center; }
+  .gate-link{ font-size:10px;color:var(--ink2);letter-spacing:2px;text-decoration:none;border-bottom:1px solid var(--gold);padding-bottom:2px; }
+  .gate-link:hover{ color:var(--gold); }
+  .gate-shake{ animation:gateshake .4s; }
+  @keyframes gateshake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
 </style>
 </head>
 <body>
   <div id="enterVeil" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 45%, #1a1206, #050301 70%);opacity:0;pointer-events:none;transition:opacity .55s ease;display:flex;align-items:center;justify-content:center">
     <div style="font-family:'Cinzel',serif;font-weight:900;letter-spacing:.3em;color:#c4a24e;font-size:clamp(20px,5vw,44px);text-transform:uppercase;text-shadow:0 0 30px rgba(196,162,78,.6);opacity:0;transform:scale(.9);transition:opacity .5s ease .1s, transform .8s ease" id="veilWord">⚡ SHADDAI</div>
+  </div>
+  <div id="gate">
+    <div class="gate-hex">⬡</div>
+    <div class="gate-logo">SHADDAI</div>
+    <div class="gate-rule"></div>
+    <div class="gate-sub">THE CELESTIAL ALMANAC · ENTER THE CODEX</div>
+    <input class="gate-pin" id="gatePin" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="••••" autocomplete="off" aria-label="Access code" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="gate-btn" id="gateBtn" onclick="unlock()">UNLOCK</button>
+    <div class="gate-err" id="gateErr"></div>
+    <a class="gate-link" href="/home.html">← return home</a>
   </div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
   <div id="cursorGlow" aria-hidden="true"></div>
@@ -624,6 +670,36 @@
   }
 
   loadLedger(); setInterval(loadLedger, 4000);
+
+  /* ── ACCESS GATE — require the 4444 PIN every fresh tab/session ── */
+  const CODEX_PIN='4444';
+  function ok(){
+    try{ return sessionStorage.getItem('shd_codex')==='1'; }catch(e){ return false; }
+  }
+  function unlock(){
+    const inp=document.getElementById('gatePin');
+    const p=(inp?inp.value||'':'').trim();
+    const err=document.getElementById('gateErr');
+    if(p===CODEX_PIN){
+      try{ sessionStorage.setItem('shd_codex','1'); }catch(e){}
+      try{ sessionStorage.setItem('mf_auth','1'); }catch(e){}
+      if(err) err.textContent='';
+      const g=document.getElementById('gate');
+      if(g) g.style.display='none';
+    }else{
+      const g=document.getElementById('gate');
+      if(g){ g.classList.remove('gate-shake'); void g.offsetWidth; g.classList.add('gate-shake'); }
+      if(err) err.textContent='ACCESS DENIED — TRY 4444';
+      if(inp){ inp.value=''; inp.focus(); }
+    }
+  }
+  if(!ok()){
+    const gi=document.getElementById('gatePin');
+    if(gi) setTimeout(function(){ gi.focus(); },300);
+  }else{
+    const g=document.getElementById('gate');
+    if(g) g.style.display='none';
+  }
 </script>
 <script>
 /* ═══ Theme switcher + premium mouse/3D effects (shared with forge-about.html) ═══ */
