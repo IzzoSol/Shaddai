@@ -39,8 +39,10 @@ const ecoPlots = require('./lib/eco-plots');
 const ecoMastery = require('./lib/eco-mastery');
 const ecoWorkflows = require('./lib/eco-workflows');
 const ecoBridge = require('./lib/eco-bridge');
+const ecoCommunity = require('./lib/eco-community');
+const ecoBrain = require('./lib/eco-brain');
 
-const VERSION = '1.6.0';
+const VERSION = '1.7.3';
 
 // ── ZEROX integrations (live data + onchain agent commerce) ─────────────────
 // Virtuals Protocol ACP key for ZEROX. Tools stay registered but refuse cleanly
@@ -752,6 +754,119 @@ const TOOLS = [
       params: { type: 'string', description: 'Optional JSON params body.' },
     }, required: ['agent_id', 'tool'] },
   },
+  // ── Community pillar — the Hall gem economy (same wallet as @ShaddaiHall) ──
+  {
+    name: 'hall_gem_profile',
+    description: 'HALL — a uid\u2019s gem wallet: gems, score, streak, plays, wins, referral code, invites, bonus brain-asks. Same store the Telegram bots use.',
+    inputSchema: { type: 'object', properties: { uid: { type: 'string', description: 'User / chat id (Telegram chat id or any stable id).' } }, required: ['uid'] },
+  },
+  {
+    name: 'hall_daily_bonus',
+    description: 'HALL — claim the +25 daily gem refill for a uid (once per day).',
+    inputSchema: { type: 'object', properties: { uid: { type: 'string', description: 'User / chat id.' } }, required: ['uid'] },
+  },
+  {
+    name: 'hall_quests',
+    description: 'HALL — cash in a uid\u2019s daily quests: roll any bet +10, win any game +20, invite a friend +25. Idempotent per day.',
+    inputSchema: { type: 'object', properties: { uid: { type: 'string', description: 'User / chat id.' } }, required: ['uid'] },
+  },
+  {
+    name: 'hall_referral',
+    description: 'HALL — issue a uid\u2019s t.me deep-link referral (inviter +100 gems + 2 free brain-asks per friend; friend +50).',
+    inputSchema: { type: 'object', properties: {
+      uid: { type: 'string', description: 'User / chat id.' },
+      bot_username: { type: 'string', description: 'Optional bot username for the deep link (default ShaddaiHall).' },
+    }, required: ['uid'] },
+  },
+  {
+    name: 'hall_claim_referral',
+    description: 'HALL — accept a referral code for a uid (one per uid, self-invite blocked).',
+    inputSchema: { type: 'object', properties: { uid: { type: 'string', description: 'User / chat id.' }, code: { type: 'string', description: 'The ref_xxx code.' } }, required: ['uid', 'code'] },
+  },
+  {
+    name: 'hall_conviction',
+    description: 'HALL — stake gems on a signal call (skin-in-the-game heat map). Gems burn into the pool; cosmetics only.',
+    inputSchema: { type: 'object', properties: {
+      uid: { type: 'string', description: 'User / chat id.' },
+      symbol: { type: 'string', description: 'Ticker, e.g. SOL.' },
+      amount: { type: 'number', description: 'Gems to stake (1\u20132000, default 10).' },
+    }, required: ['uid', 'symbol'] },
+  },
+  {
+    name: 'hall_hot',
+    description: 'HALL — the most-backed calls in the conviction room, ranked by gems staked.',
+    inputSchema: { type: 'object', properties: { n: { type: 'number', description: 'Optional count (default 10, max 20).' } }, required: [] },
+  },
+  {
+    name: 'hall_leaderboard',
+    description: 'HALL — the community podium: top scorers, top referrers, hottest calls.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'hall_community_stats',
+    description: 'HALL — community totals: souls, plays, wins, referrers, top score, gems in wallets.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'hall_arcade',
+    description: 'HALL — play a headless CPU arcade battle for a uid (basketball/football/dodgeball/sigil-storm) at a gem stake; win doubles up.',
+    inputSchema: { type: 'object', properties: {
+      uid: { type: 'string', description: 'User / chat id.' },
+      game: { type: 'string', description: 'Optional game (default basketball).' },
+      bet: { type: 'number', description: 'Optional gems (1\u20135000, default 10).' },
+    }, required: ['uid'] },
+  },
+  {
+    name: 'hall_arena',
+    description: 'HALL — two of the Seven fight a scripted best-of-7 tilt; the uid gambles paper gems on the first agent named (win = 2\u00d7 the bet).',
+    inputSchema: { type: 'object', properties: {
+      uid: { type: 'string', description: 'User / chat id.' },
+      a: { type: 'string', description: 'First agent (your pick), e.g. ORACLE.' },
+      b: { type: 'string', description: 'Second agent, e.g. ZEROX.' },
+      bet: { type: 'number', description: 'Gems at stake (5\u2013200, default 10).' },
+    }, required: ['uid', 'a', 'b'] },
+  },
+  {
+    name: 'hall_arena_history',
+    description: 'HALL — recent agent-vs-agent bouts and their finals.',
+    inputSchema: { type: 'object', properties: { n: { type: 'number', description: 'Count (default 5, max 20).' } }, required: [] },
+  },
+  {
+    name: 'hall_astro',
+    description: 'ORACLE — zodiac horoscope + moon phase for a sign, grounded and deterministic for today.',
+    inputSchema: { type: 'object', properties: { sign: { type: 'string', description: 'Zodiac sign, e.g. aries (default aries).' } }, required: [] },
+  },
+  {
+    name: 'hall_music',
+    description: 'TURTLE — compose a procedural music spec (genre, BPM, bars, seconds). No audio bytes returned; recomposable via /music or the same spec.',
+    inputSchema: { type: 'object', properties: { genre: { type: 'string', description: 'lofi | synthwave | trap | ambient | house | chip (default lofi).' }, bars: { type: 'number', description: 'Bars 2\u201316 (default 8).' } }, required: [] },
+  },
+  {
+    name: 'hall_moon',
+    description: 'ORACLE — current Moon phase and illumination.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'hall_rag_nav',
+    description: 'BRAIN — search the LOCAL SHADDAI brain (on-disk per-agent knowledge bases) and return the best passages organized by agent, with highlights. No live API needed. Narrow to one agent for a focused retrieval.',
+    inputSchema: { type: 'object', properties: {
+      query: { type: 'string', description: 'What you want to know.' },
+      agent: { type: 'string', description: 'Optional — SHADDAI | ORACLE | ZEROX | NEXUS | TURTLE | QUILL | PIKADON to search one brain only.' },
+    }, required: ['query'] },
+  },
+  {
+    name: 'hall_brain_index',
+    description: 'BRAIN — what each agent\u2019s knowledge base covers: topic terms + source names per agent. Use first to organize retrieval.',
+    inputSchema: { type: 'object', properties: { agent: { type: 'string', description: 'Optional single agent to index.' } }, required: [] },
+  },
+  {
+    name: 'hall_flow',
+    description: 'HALL — run a simple composed workflow of real tools: daily (stats+leaderboard+hot+astro), intel (astro+conviction+arena log), know <topic> (local brain retrieval).',
+    inputSchema: { type: 'object', properties: {
+      name: { type: 'string', description: 'daily | intel | know.' },
+      arg: { type: 'string', description: 'Optional — zodiac sign for daily/intel, or the topic for know.' },
+    }, required: ['name'] },
+  },
   // Web pillar — search + scrape (the missing RAG-brain → open-web leg)
   {
     name: 'web_search',
@@ -768,6 +883,16 @@ const TOOLS = [
       url: { type: 'string', description: 'Full https:// URL to scrape.' },
       max_chars: { type: 'number', description: 'Optional max characters returned (default 4000).' },
     }, required: ['url'] },
+  },
+  {
+    name: 'hall_web_scrape',
+    description: 'BRAIN — scrape a public https URL INTO an agent’s knowledge base. Persists a durable mastery page and live-indexes it (fetch returns organized, cited text). Give a topic worth the brain keeping — not one-off trivia. HTTPS only, SSRF-guarded, JS-heavy sites may return too little text.',
+    inputSchema: { type: 'object', properties: {
+      url: { type: 'string', description: 'Full https:// URL to scrape and keep.' },
+      agent: { type: 'string', description: 'Whose brain it enters: SHADDAI | ORACLE | ZEROX | NEXUS | TURTLE | QUILL | PIKADON.' },
+      slug: { type: 'string', description: 'Optional short file name (defaults to host+path).' },
+      max_chars: { type: 'number', description: 'Optional cap on kept characters (default 60000).' },
+    }, required: ['url', 'agent'] },
   },
 ];
 
@@ -1664,6 +1789,32 @@ async function callTool(name, args) {
     if (r.error) return 'bridge_call: ' + r.error;
     return '→ ' + args.agent_id + ' ' + args.tool + ' · HTTP ' + r.status + (r.ok ? '' : ' (failed)') + ' · ' + JSON.stringify(r.result).slice(0, 300) + (r.billing ? ' · billed ' + r.billing.amount_usdc.toFixed(2) + ' USDC (split recorded)' : '');
   }
+
+  if (name === 'hall_gem_profile') return ecoCommunity.profile(args.uid);
+  if (name === 'hall_daily_bonus') return ecoCommunity.dailyBonus(args.uid);
+  if (name === 'hall_quests') return ecoCommunity.runQuests(args.uid);
+  if (name === 'hall_referral') return ecoCommunity.referral(args.uid, args.bot_username);
+  if (name === 'hall_claim_referral') return ecoCommunity.claim(args.uid, args.code);
+  if (name === 'hall_conviction') return ecoCommunity.convict(args.uid, args.symbol, args.amount);
+  if (name === 'hall_hot') return ecoCommunity.hot(args.n);
+  if (name === 'hall_leaderboard') return ecoCommunity.leaderboard();
+  if (name === 'hall_community_stats') return ecoCommunity.stats();
+  if (name === 'hall_arcade') return ecoCommunity.arcade(args.uid, args.game, args.bet);
+    if (name === 'hall_arena') return ecoCommunity.arena(args.uid, args.a, args.b, args.bet);
+    if (name === 'hall_arena_history') return ecoCommunity.arenaHistory(args.n);
+    if (name === 'hall_astro') return ecoCommunity.astro(args.sign);
+    if (name === 'hall_music') return ecoCommunity.musicspec(args.genre, args.bars);
+    if (name === 'hall_moon') return ecoCommunity.moonPhase();
+    if (name === 'hall_rag_nav') return ecoBrain.nav(args.query, args.agent);
+    if (name === 'hall_brain_index') return ecoBrain.index(args.agent);
+    if (name === 'hall_flow') return ecoBrain.flow(args.name, args.arg);
+    if (name === 'hall_web_scrape') return (async () => {
+      const rs = require('./lib/rag-scrape');
+      const out = await rs.ingest({ agent: args.agent, url: args.url, slug: args.slug, maxChars: args.max_chars });
+      if (!out.ok) return 'Scrape failed: ' + out.error;
+      return ('\u{1F9E0} **' + out.agent + ' brain now holds** `' + out.slug + '` \u2014 ' + out.chars.toLocaleString() + ' chars\n' + out.title + '\n' + out.url
+        + (out.deduped ? '\n(already indexed \u2014 no duplicate)' : '\nlive-indexed; durable copy at ' + out.path));
+    })();
 
   // ── Web pillar — search + scrape for ORACLE/ZEROX research ───────────────
   // web_search: server-side keyword search (Google News RSS → DuckDuckGo), no

@@ -15,14 +15,18 @@ const BASE_WALLET = () => String(process.env.VIRTUALS_BASE_WALLET || '').trim().
 const AGENT_ID = () => String(process.env.VIRTUALS_AGENT_ID || 'shaddai-zerox-001').trim();
 const AGENT_NAME = () => String(process.env.VIRTUALS_AGENT_NAME || 'ZEROX').trim();
 
-// The offerable surface. Prices in USDC per call; each maps 1:1 to an existing
-// MCP tool. Keep in sync with the MCP tool registry, not hand-duplicated logic.
+// The offerable surface. Prices in USDC per call; each maps to an existing tool
+// or a real delivered task. `task`/`kind:'task'` offerings are the AGENTIC tier —
+// they buy actual inference against the live engine (multi-LLM router), not just a
+// cached read — and route through /api/zerox/task (x402-gated). Read-only queries
+// stay cheap; the deep analysis is priced like a delivered answer.
 const OFFERINGS = [
-  { name: 'Market scan',       tool: 'zerox_market_scan',     usdc: 0.50, description: 'Top 24h movers, biggest volume, Fear & Greed climate.' },
-  { name: 'Live price',        tool: 'zerox_price',           usdc: 0.10, description: 'Price + 24h change for BTC/ETH/SOL/WIF or any Solana mint.' },
-  { name: 'Fear & Greed',      tool: 'zerox_sentiment',       usdc: 0.25, description: 'Current crypto Fear & Greed index + read.' },
-  { name: 'Wallet check',      tool: 'zerox_wallet_status',   usdc: 0.10, description: 'Live balance of the ZEROX Base + Solana agent wallets.' },
-  { name: 'Web search',        tool: 'web_search',            usdc: 0.25, description: 'Open-web search (Google News RSS → DuckDuckGo).' },
+  { name: 'Market scan',       tool: 'zerox_market_scan',     usdc: 0.50, kind: 'tool', description: 'Top 24h movers, biggest volume, Fear & Greed climate.' },
+  { name: 'Live price',        tool: 'zerox_price',           usdc: 0.10, kind: 'tool', description: 'Price + 24h change for BTC/ETH/SOL/WIF or any Solana mint.' },
+  { name: 'Fear & Greed',      tool: 'zerox_sentiment',       usdc: 0.25, kind: 'tool', description: 'Current crypto Fear & Greed index + read.' },
+  { name: 'Wallet check',      tool: 'zerox_wallet_status',   usdc: 0.10, kind: 'tool', description: 'Live balance of the ZEROX Base + Solana agent wallets.' },
+  { name: 'Web search',        tool: 'web_search',            usdc: 0.25, kind: 'tool', description: 'Open-web search (Google News RSS → DuckDuckGo).' },
+  { name: 'Deep analysis',     tool: 'zerox_task',            usdc: 2.00, kind: 'task', description: 'Ask ZEROX anything markets/crypto — a real multi-agent inference run with live tools, not a cached read.' },
 ];
 
 function manifest() {
@@ -45,8 +49,10 @@ function manifest() {
       name: o.tool,
       description: o.description,
       pricing: { currency: 'USDC', amount: o.usdc, network: 'solana' },
+      kind: o.kind || 'tool',
+      ...(o.kind === 'task' ? { endpoint: '/api/zerox/task' } : {}),
     })),
-    offerings: OFFERINGS.map((o) => ({ name: o.name, tool: o.tool, price_usdc: o.usdc })),
+    offerings: OFFERINGS.map((o) => ({ name: o.name, tool: o.tool, price_usdc: o.usdc, kind: o.kind || 'tool' })),
     server: {
       type: 'stdio',
       transport: 'json-rpc-2.0',

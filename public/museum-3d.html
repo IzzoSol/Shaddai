@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>The Axiom Rotunda — 3D Museum · SHADDAI TEMPLE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --obsidian:#06080b; --obsidian2:#0a0e13;
+  --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff;
+  --ink:#dfe7ea; --ink2:#8b9aa1;
+  --hair:rgba(232,196,92,.30);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--obsidian);color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;-webkit-font-smoothing:antialiased}
+body{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -8%, rgba(0,255,156,.06), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 108%, rgba(95,224,255,.05), transparent 60%),
+    var(--obsidian);
+}
+::selection{background:var(--emerald);color:#04120c}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+#c3d{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+/* ── fallback when CDN or WebGL fails ── */
+#fallback{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  padding:24px;text-align:center;background:
+    radial-gradient(ellipse 120% 80% at 50% 30%,#170a2e 0%,var(--obsidian) 62%)}
+#fallback.on{display:flex}
+#fallback h1{font-family:'Cinzel Decorative',serif;font-weight:900;font-size:clamp(26px,7vw,54px);
+  letter-spacing:.12em;color:var(--gold);text-shadow:0 0 26px rgba(232,196,92,.35)}
+#fallback p{font-style:italic;color:var(--ink2);margin-top:14px;max-width:520px}
+#fallback a{display:inline-block;margin-top:26px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--emerald);
+  border:1px solid rgba(0,255,156,.4);padding:11px 22px}
+
+/* ── header bar ── */
+#bar{position:fixed;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;gap:10px;padding:11px 16px;flex-wrap:wrap;
+  background:linear-gradient(rgba(6,8,11,.88),rgba(6,8,11,.55) 70%,transparent);
+  pointer-events:none}
+#bar .mark{font-family:'Cinzel Decorative',serif;font-weight:900;letter-spacing:.18em;
+  font-size:13px;color:var(--gold);text-shadow:0 0 16px rgba(232,196,92,.4);pointer-events:auto;white-space:nowrap}
+#chips{display:flex;gap:7px;flex-wrap:wrap;flex:1;pointer-events:auto}
+.chip{font-family:'Chakra Petch',sans-serif;font-size:10px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink2);background:rgba(10,14,19,.72);
+  border:1px solid var(--hair);padding:6px 11px;transition:color .18s,border-color .18s,background .18s}
+.chip:hover,.chip.on{color:var(--gold);border-color:rgba(232,196,92,.75);background:rgba(14,18,24,.95)}
+.chip .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.tool{display:flex;align-items:center;gap:8px;pointer-events:auto}
+#enter{font-family:'Chakra Petch',sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--emerald);border:1px solid rgba(0,255,156,.4);
+  padding:7px 13px;transition:color .18s,border-color .18s,background .18s;white-space:nowrap}
+#enter:hover{color:#7dffc8;border-color:rgba(0,255,156,.85);background:rgba(6,26,18,.6)}
+
+/* ── caption card ── */
+#caption{position:fixed;left:16px;bottom:38px;z-index:40;max-width:min(340px,76vw);
+  pointer-events:auto;display:none;
+  background:rgba(10,14,19,.62);border:1px solid var(--hair);border-left:3px solid var(--gold);
+  padding:14px 16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#caption .name{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:18px;
+  letter-spacing:.1em;color:var(--gold);text-shadow:0 0 14px rgba(232,196,92,.3)}
+#caption .lore{font-family:'Fraunces',serif;font-style:italic;font-size:12.5px;
+  color:var(--ink2);margin-top:6px;line-height:1.55}
+#caption .links{display:flex;gap:16px;margin-top:11px;flex-wrap:wrap}
+#caption .links a{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--cyan);border-bottom:1px solid rgba(95,224,255,.35);
+  padding-bottom:2px;transition:color .18s,border-color .18s}
+#caption .links a:hover{color:#a7ecff;border-color:rgba(95,224,255,.9)}
+#caption .visit{color:var(--emerald)!important;border-color:rgba(0,255,156,.4)!important}
+#caption .visit:hover{color:#7dffc8!important}
+
+/* ── hint + footer ── */
+#hint{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:30;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--ink2);opacity:.55;pointer-events:none;white-space:nowrap}
+#foot{position:fixed;right:14px;bottom:10px;z-index:30;pointer-events:none;text-align:right;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--ink2);opacity:.6;line-height:1.6}
+#foot b{color:var(--gold);font-weight:600}
+</style>
+</head>
+<body>
+<canvas id="c3d"></canvas>
+
+<div id="fallback">
+  <div>
+    <h1>THE AXIOM ROTUNDA</h1>
+    <p>The 3D wing could not be summoned — the rendering engine did not reach the temple. The six artefacts rest beyond the veil.</p>
+    <a href="/museum.html">Return to the Museum</a>
+    <a href="/athenaeum.html" style="border-color:rgba(232,196,92,.4);color:var(--gold)">The Athenaeum</a>
+  </div>
+</div>
+
+<div id="bar">
+  <span class="mark">◈ THE AXIOM ROTUNDA</span>
+  <div id="chips"></div>
+  <div class="tool">
+    <button id="enter">🎮 Enter</button>
+  </div>
+</div>
+
+<div id="caption">
+  <div class="name" id="cap-name"></div>
+  <div class="lore" id="cap-lore"></div>
+  <div class="links">
+    <a href="/athenaeum.html">Athenaeum</a>
+    <a href="/museum.html">Museum</a>
+    <a href="/arcade.html">Arcade</a>
+    <a href="/forge-gallery.html">Forge</a>
+    <a class="visit" href="/home.html">Visit</a>
+  </div>
+</div>
+
+<div id="hint">drag to orbit · scroll to zoom · tap a sigil to visit</div>
+<div id="foot"><b>The Axiom</b><br/>SHADDAI TEMPLE · sovereign AI guild</div>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  var canvas = document.getElementById('c3d');
+  var chipsEl = document.getElementById('chips');
+  var caption = document.getElementById('caption');
+  var capName = document.getElementById('cap-name');
+  var capLore = document.getElementById('cap-lore');
+  var enter = document.getElementById('enter');
+  var hint = document.getElementById('hint');
+
+  var ARTEFACTS = [
+    { name:'Sigil of Seals',   lore:'The first mark — a covenant burned into the temple stone, binding the guild\u2019s oaths.', color:0x00ff9c, ring:0x5fe0ff },
+    { name:'Crown of Candor',  lore:'Seven-pointed rule that never lies to its people; the seat where agents swear honesty.',   color:0xe8c45c, ring:0xe8c45c },
+    { name:'Orb of Axioms',    lore:'A still sphere containing the one rule: all else is vanity until the work is done.',      color:0x5fe0ff, ring:0x00ff9c },
+    { name:'Rune of Passage',  lore:'A knot that turns for every door opened in the athenaeum — and remembers who asked.',   color:0xc07cff, ring:0x5fe0ff },
+    { name:'Mask of Voices',   lore:'Many faces, one guild — worn by the messenger who speaks for every agent at once.',      color:0xffcf4a, ring:0xff9d5c },
+    { name:'Beacon of Dawn',   lore:'The last light that stays lit when all others sleep, so no seeker is ever left in dark.', color:0xff7ab8, ring:0xe8c45c }
+  ];
+
+  var ok = (typeof THREE !== 'undefined');
+  if (ok){
+    try {
+      var probe = document.createElement('canvas');
+      var gl = probe.getContext('webgl') || probe.getContext('experimental-webgl');
+      ok = !!gl;
+    } catch(e){ ok = false; }
+  }
+  if (!ok){
+    document.getElementById('fallback').classList.add('on');
+    return;
+  }
+
+  var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true });
+  renderer.setPixelRatio(Math.min(1.75, window.devicePixelRatio || 1));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x06080b, 18, 46);
+
+  var camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.set(0, 6.5, 19);
+
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = 1.35;
+  controls.minDistance = 6;
+  controls.maxDistance = 22;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.4;
+  controls.target.set(0, 3.2, 0);
+
+  // ── lighting ──
+  scene.add(new THREE.AmbientLight(0x1a2030, 0.9));
+  var gold = new THREE.PointLight(0xe8c45c, 1.5, 40); gold.position.set(6, 8, 6); scene.add(gold);
+  var cyan = new THREE.PointLight(0x5fe0ff, 1.4, 40); cyan.position.set(-7, 7, -5); scene.add(cyan);
+  var candle = new THREE.PointLight(0xffb46b, 1.1, 18); candle.position.set(0, 2.4, 0); scene.add(candle);
+
+  // ── rotunda floor ──
+  var floorGeo = new THREE.CircleGeometry(21, 64);
+  var floorMat = new THREE.MeshStandardMaterial({ color:0x070a0f, roughness:0.9, metalness:0.2 });
+  var floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI/2; floor.position.y = -0.05; scene.add(floor);
+
+  var ringGeo = new THREE.RingGeometry(3.4, 3.62, 64);
+  var ringMat = new THREE.MeshBasicMaterial({ color:0xe8c45c, transparent:true, opacity:0.5, side:THREE.DoubleSide });
+  var ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI/2; ring.position.y = 0.01; scene.add(ring);
+
+  var ring2 = new THREE.Mesh(new THREE.RingGeometry(15, 15.35, 80), ringMat);
+  ring2.material = ringMat.clone(); ring2.material.opacity = 0.22;
+  ring2.rotation.x = -Math.PI/2; ring2.position.y = 0.005; scene.add(ring2);
+
+  // ── pediment pillars hint (6 slim columns) ──
+  var pillarGeo = new THREE.CylinderGeometry(0.18, 0.22, 7.2, 10);
+  for (var i=0;i<6;i++){
+    var a = i/6*Math.PI*2 + Math.PI/6;
+    var px = Math.cos(a)*11, pz = Math.sin(a)*11;
+    var col = new THREE.Mesh(pillarGeo, new THREE.MeshStandardMaterial({ color:0x0c111a, roughness:0.6, metalness:0.3 }));
+    col.position.set(px, 3.6, pz); scene.add(col);
+    var cap = new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.3,10),
+      new THREE.MeshStandardMaterial({ color:0xe8c45c, emissive:0xe8c45c, emissiveIntensity:0.35, roughness:0.4 }));
+    cap.position.set(px, 7.5, pz); scene.add(cap);
+  }
+
+  // ── pedestals + tokens ──
+  var R = 8.5, baseY = 0;
+  var groups = [];
+  var pedestalGeo = new THREE.CylinderGeometry(1.05, 1.35, 1.7, 22);
+  var plinthGeo = new THREE.CylinderGeometry(1.55, 1.7, 0.4, 22);
+
+  function makePedestal(color){
+    var g = new THREE.Group();
+    var matt = new THREE.MeshStandardMaterial({ color:0x0c111a, roughness:0.5, metalness:0.4 });
+    var pl = new THREE.Mesh(plinthGeo, matt); pl.position.y = baseY+0.2; g.add(pl);
+    var ped = new THREE.Mesh(pedestalGeo, matt); ped.position.y = baseY+1.3; g.add(ped);
+    var band = new THREE.Mesh(new THREE.CylinderGeometry(1.06,1.06,0.14,22),
+      new THREE.MeshStandardMaterial({ color:color, emissive:color, emissiveIntensity:0.85, roughness:0.35 }));
+    band.position.y = baseY+1.75; g.add(band);
+    var top = new THREE.Mesh(new THREE.CylinderGeometry(0.95,1.05,0.22,22),
+      new THREE.MeshStandardMaterial({ color:color, emissive:color, emissiveIntensity:0.5, roughness:0.4 }));
+    top.position.y = baseY+2.1; g.add(top);
+    return g;
+  }
+
+  function makeToken(a){
+    var g = new THREE.Group();
+    var mat = function(c){ return new THREE.MeshStandardMaterial({ color:c, emissive:c, emissiveIntensity:0.85, roughness:0.3, metalness:0.2 }); };
+    var mesh;
+    switch(a.name){
+      case 'Sigil of Seals': // diamond
+        mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.7), mat(a.color));
+        mesh.rotation.y = Math.PI/4; g.add(mesh);
+        break;
+      case 'Crown of Candor': // torus-knot crown
+        mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(0.55, 0.2, 64, 14), mat(a.color));
+        g.add(mesh);
+        break;
+      case 'Orb of Axioms': // sphere + ring
+        var orb = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), mat(a.color));
+        g.add(orb);
+        var orbRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.06, 12, 48),
+          new THREE.MeshStandardMaterial({ color:a.ring, emissive:a.ring, emissiveIntensity:0.9 }));
+        orbRing.rotation.x = Math.PI/2.6; g.add(orbRing);
+        break;
+      case 'Rune of Passage': // icosahedron
+        mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.72, 0), mat(a.color));
+        g.add(mesh);
+        break;
+      case 'Mask of Voices': // octahedron mask
+        mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.8), mat(a.color));
+        g.add(mesh);
+        break;
+      default: // Beacon — cylinder stack
+        var c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.42,0.85,16), mat(a.color));
+        c1.position.y = 0.3; g.add(c1);
+        var c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.22,0.65,16), mat(a.ring));
+        c2.position.y = 1.1; g.add(c2);
+        var spike = new THREE.Mesh(new THREE.ConeGeometry(0.16,0.7,16), mat(0xffffff));
+        spike.position.y = 1.8; spike.material.emissive = new THREE.Color(0xfff3c4); g.add(spike);
+        break;
+    }
+    return g;
+  }
+
+  ARTEFACTS.forEach(function(a, i){
+    var ang = i/ARTEFACTS.length*Math.PI*2;
+    var group = new THREE.Group();
+    var ped = makePedestal(a.color);
+    ped.position.set(Math.cos(ang)*R, 0, Math.sin(ang)*R);
+    var tok = makeToken(a);
+    tok.position.y = baseY + 3.2;
+    group.add(ped); group.add(tok);
+    group.userData = { ang:ang, token:tok, name:a.name };
+    scene.add(group);
+    groups.push(group);
+
+    var chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.innerHTML = '<span class="dot" style="background:'+ ('#'+a.color.toString(16).padStart(6,'0')) +'"></span>'+a.name;
+    chip.addEventListener('click', function(){ flyTo(i); });
+    chipsEl.appendChild(chip);
+  });
+
+  // ── camera fly ──
+  var flyT = null;
+  function flyTo(i){
+    // stop auto-rotate while flying
+    var r = controls.autoRotate;
+    controls.autoRotate = false;
+    var g = groups[i];
+    var target = new THREE.Vector3(Math.cos(g.userData.ang)*R*0.62, 3.2, Math.sin(g.userData.ang)*R*0.62);
+    var fromPos = camera.position.clone();
+    var fromTgt = controls.target.clone();
+    var dist = 9;
+    var toPos = new THREE.Vector3(Math.cos(g.userData.ang)*R*0.6, 3.4, Math.sin(g.userData.ang)*R*0.6);
+    toPos.normalize().multiplyScalar(dist).add(target.clone().setY(target.y-0.2));
+    var dur = 1400, start = null;
+    if (flyT){ cancelAnimationFrame(flyT); }
+    function step(ts){
+      if (!start) start = ts;
+      var p = Math.min(1, (ts-start)/dur);
+      var e = p<0.5 ? 4*p*p*p : 1-Math.pow(-2*p+2,3)/2; // easeInOutCubic
+      camera.position.lerpVectors(fromPos, toPos, e);
+      controls.target.lerpVectors(fromTgt, target, e);
+      if (p<1){ flyT = requestAnimationFrame(step); }
+      else { controls.autoRotate = r; }
+    }
+    flyT = requestAnimationFrame(step);
+    showCaption(i);
+    setActive(i);
+  }
+
+  // ── caption ──
+  function showCaption(i){
+    var a = ARTEFACTS[i];
+    capName.textContent = a.name;
+    capLore.textContent = a.lore;
+    caption.style.display = 'block';
+  }
+  function hideCaption(){ caption.style.display = 'none'; }
+  function setActive(i){
+    Array.prototype.forEach.call(chipsEl.children, function(c, ci){ c.classList.toggle('on', ci===i); });
+  }
+
+  // ── clamp near ped (touch/pointer safe) to nearest pedestal on click ──
+  var raycaster = new THREE.Raycaster();
+  var pointer = new THREE.Vector2(1,1); // off-screen initially
+  canvas.addEventListener('pointerup', function(ev){
+    if (ev.pointerType && ev.pointerType !== 'mouse' && ev.pointerType !== 'touch') return;
+    // only react to taps (no drag) — track via down pos
+    if (downPos && Math.hypot(ev.clientX-downPos.x, ev.clientY-downPos.y) < 8){
+      var rect = canvas.getBoundingClientRect();
+      var x = ((ev.clientX-rect.left)/rect.width)*2-1;
+      var y = -((ev.clientY-rect.top)/rect.height)*2+1;
+      raycaster.setFromCamera(new THREE.Vector2(x,y), camera);
+      var ids = groups.map(function(g){ return g.children[1]; }); // tokens
+      var hit = raycaster.intersectObjects(ids, true);
+      if (hit.length){
+        var obj = hit[0].object;
+        var idx = groups.findIndex(function(g){ return g.children[1]===obj || g.children[1].getObjectById && g.children[1].getObjectById(obj.id) || obj===g.children[1]; });
+        if (idx>=0) flyTo(idx);
+      }
+    }
+    downPos = null;
+  });
+  var downPos = null;
+  canvas.addEventListener('pointerdown', function(ev){ downPos = { x:ev.clientX, y:ev.clientY }; });
+
+  // ── enter mode: auto-pan + zoom ──
+  var entered = false;
+  enter.addEventListener('click', function(){
+    entered = !entered;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = entered ? 0.8 : 0.4;
+    var t = controls.target.clone().set(0,3.2,0);
+    var tp = new THREE.Vector3(0, 4.4, 11);
+    if (entered) controls.minDistance = Math.min(controls.minDistance, 5.5);
+    animateToCam(tp, t);
+    enter.textContent = entered ? '⏸ Pause' : '🎮 Enter';
+  });
+
+  function animateToCam(pos, tgt){
+    var fromPos = camera.position.clone(), fromT = controls.target.clone();
+    var dur = 1200, start = null;
+    function step(ts){
+      if (!start) start = ts;
+      var p = Math.min(1,(ts-start)/dur);
+      var e = p<0.5 ? 4*p*p*p : 1-Math.pow(-2*p+2,3)/2;
+      camera.position.lerpVectors(fromPos, pos, e);
+      controls.target.lerpVectors(fromT, tgt, e);
+      if (p<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ── resize ──
+  function onResize(){
+    var w = window.innerWidth, h = window.innerHeight;
+    camera.aspect = w/h; camera.updateProjectionMatrix();
+    renderer.setSize(w,h);
+  }
+  window.addEventListener('resize', onResize);
+
+  // ── animate loop ──
+  var clock = new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    var t = clock.getElapsedTime();
+    groups.forEach(function(g, i){
+      var tok = g.userData.token;
+      tok.position.y = baseY + 3.2 + Math.sin(t*0.9 + i*1.2)*0.18; // bob
+      tok.rotation.y += 0.004 + i*0.0004;
+      tok.rotation.x += 0.0012;
+    });
+    candle.intensity = 1.1 + Math.sin(t*9)*0.16 + Math.sin(t*23)*0.08; // flicker
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // subtle first-show hint caption
+  setTimeout(function(){ showCaption(0); setActive(0); }, 400);
+  animate();
+})();
+</script>
+</body>
+</html>

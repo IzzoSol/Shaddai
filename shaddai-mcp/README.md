@@ -96,6 +96,16 @@ Restart your client. SHADDAI's tools now appear.
 | `workflow_list` | HALL — list workflows (draft/published), steps, price. |
 | `bridge_register` | HALL — register an external agent (Grok/Fable/Claude) behind an https URL. |
 | `bridge_call` | HALL — call an external agent's tool; split platform 15% / external 50% / coordination 35%. |
+| `hall_gem_profile` | HALL — a uid's gem wallet: gems, score, streak, plays, wins, referral code, invites, bonus asks. Same store as @ShaddaiHall. |
+| `hall_daily_bonus` | HALL — claim the +25 daily gem refill for a uid (once per day). |
+| `hall_quests` | HALL — cash in daily quests: roll +10, win +20, invite +25. Idempotent per day. |
+| `hall_referral` | HALL — issue a uid's t.me referral deep link (inviter +100 gems + 2 free brain-asks; friend +50). |
+| `hall_claim_referral` | HALL — accept a referral code for a uid (one per uid, self-invite blocked). |
+| `hall_conviction` | HALL — stake gems on a signal call (skin-in-the-game heat map; cosmetics only). |
+| `hall_hot` | HALL — most-backed calls in the conviction room, ranked by gems. |
+| `hall_leaderboard` | HALL — community podium: top scorers, top referrers, hottest calls. |
+| `hall_community_stats` | HALL — community totals: souls, plays, wins, referrers, top score, gems. |
+| `hall_arcade` | HALL — headless CPU arcade battle for a uid at a gem stake (win doubles up). |
 
 ## x402 micropayments (Phase 3)
 
@@ -182,6 +192,20 @@ The seven offices are forgeable instances users publish on **Office Avenue** and
 - **Reputation** — `eco-reputation.js`: Novice→Master tiers and perks derived from activity, corrected-lead accuracy, and citations — no manual ratings.
 
 Flow that ties it together: forge an office → register prices → get paid (ledger split) → log discoveries (rep) → spawn sub-agents to multiply calls → other offices hire yours.
+
+## SHADDAI Hall — community economy (v1.7.1)
+
+The `hall_*` tools pilot the **same gem wallet store the Telegram family uses** (`backend/lib/tg-community`) — gems, daily bonus, quests, referral, arcade, arena, and signals conviction are one economy across every bot **and** every MCP client. A gem earned in `@ShaddaiTempleBot` under a chat id shows up here under that same uid, and vice versa.
+
+- **Wallet/quests** — `hall_gem_profile`, `hall_daily_bonus`, `hall_quests`
+- **Growth** — `hall_referral` (deep link), `hall_claim_referral` (code acceptance, inviter/referee rewards)
+- **Signals heat-map** — `hall_conviction` (burn gems into a ticker's pool), `hall_hot` (ranked pools)
+- **Scoreboard** — `hall_leaderboard`, `hall_community_stats`
+- **Games** — `hall_arcade` (headless CPU battle, win doubles-up), `hall_arena` (two of the Seven duel, bet on the winner), `hall_arena_history`
+- **Oracle** — `hall_astro` (zodiac + moon phase), `hall_moon`
+- **Turtle** — `hall_music` (procedural track spec, recomposable via `/music` in chat)
+
+Paper currency only — no real money, no withdraws. Every write is server-side and audited.
 
 ## Security (PIKADON)
 

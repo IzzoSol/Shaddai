@@ -40,11 +40,11 @@ function generate(opts) {
   const mk = pickMood(opts.mood) || 'chill';
   const mood = MOODS[mk];
   const bpm = Math.max(50, Math.min(180, opts.bpm || g.bpm));
-  const bars = Math.max(4, Math.min(16, opts.bars || 8));
+  const bars = Math.max(2, Math.min(16, opts.bars || 8));
   const sc = SCALES[g.scale];
 
   const spb = 60/bpm, stepDur = spb/4;
-  const totalSec = bars*spb*4 + 0.6;
+  const totalSec = Math.min(bars*spb*4 + 0.6, Math.max(4, opts.durationSeconds || 34));
   const N = Math.ceil(totalSec*SR);
   const buf = new Float32Array(N);
 
@@ -103,6 +103,13 @@ function generate(opts) {
   return { wav, meta:{ genre:gk, genreName:g.name, mood:mk, bpm, bars, seconds:+totalSec.toFixed(1) } };
 }
 
+function secondsFor(genre, bars) {
+  const g = GENRES[pickGenre(genre) || 'lofi'];
+  const bpm = Math.max(50, Math.min(180, g.bpm));
+  const b = Math.max(2, Math.min(16, bars || 8));
+  return Math.min(b*4*(60/bpm) + 0.6, 34).toFixed(1);
+}
+
 // Float32 (mono) → 16-bit PCM mono WAV Buffer
 function encodeWAV(samples, gain){
   const n = samples.length, dataLen = n*2, buf = Buffer.alloc(44+dataLen);
@@ -115,4 +122,4 @@ function encodeWAV(samples, gain){
   return buf;
 }
 
-module.exports = { generate, GENRES, MOODS, pickGenre, pickMood };
+module.exports = { generate, GENRES, MOODS, pickGenre, pickMood, secondsFor };

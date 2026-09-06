@@ -69,7 +69,7 @@ function _signalsKeyboard() {
 // ── help text ──────────────────────────────────────────────────────────────
 function _help() {
   return (
-    '⬡ <b>THE SHADDAI HALL</b> — commands:\n\n' +
+    '⬡ <b>THE SHADDAI TEMPLE</b> — commands:\n\n' +
     '🏛 <b>Agents (grounded brain, free daily)</b>\n' +
     '/oracle · /turtle · /nexus · /quill · /pikadon — section experts\n' +
     '/shaddai <code>&lt;q&gt;</code> — the orchestrator\n' +
@@ -80,7 +80,7 @@ function _help() {
     '🎨 <b>Turtle creates</b>\n' +
     '/design <code>&lt;prompt&gt;</code> — generate art\n' +
     '/music <code>[genre]</code> — procedural track\n\n' +
-    '💎 <b>Markets</b>\n' +
+    '⚡ <b>Markets</b>\n' +
     '/price <code>&lt;symbol|address&gt;</code> — live DEX price\n' +
     '/rug <code>&lt;mint&gt;</code> — rug-check a token\n' +
     '/zerox <code>&lt;asset&gt;</code> — ZEROX market analysis\n' +
@@ -92,6 +92,16 @@ function _help() {
     '/virtuals — hire ZEROX onchain\n' +
     '/pay — free vs paid tiers\n' +
     '/menu — the 7 sections, one board\n\n' +
+    '🎮 <b>Community</b>\n' +
+    '/games — arcade hub · /digest — daily roundup\n' +
+    '/dice /dart /ball /bowl /slot /footy — native games, sparks at stake\n' +
+    '/arcade <code>&lt;game&gt; [bet]</code> — CPU battles (double-up)\n' +
+    '/sparks — balance · /sparks top — league · /bonus — daily refill\n' +
+    '/quest — daily quest bank (+10/+20/+25)\n' +
+    '/conviction <code>&lt;SYM&gt; [gems]</code> — stake sparks on a call · /hot — most-backed\n' +
+    '/leaderboard — podium · /referral — invite friends\n' +
+    '/family — every SHADDAI bot in one card · /temple — the Axiom\n\n' +
+    '🏆 Also: /master — the full Temple index · /arena ORACLE vs ZEROX 10 · /grok &lt;q&gt; · /game\n\n' +
     '<i>Not financial advice. Always DYOR.</i>'
   );
 }
@@ -100,11 +110,13 @@ function _start(cfg) {
   const gh = process.env.SHADDAI_GITHUB || 'https://github.com/IzzoSol';
   const x = process.env.SHADDAI_X || 'https://x.com/IzzoSol';
   const lounge = process.env.SHADDAI_LOUNGE || 'https://t.me/EMERALDLOUNGE';
+  const axiom = process.env.SHADDAI_AXIOM || 'We build sovereign intelligence — every agent free, every thought audited, every soul entitled to the truth.';
   return (
-    '⬡ <b>Welcome to the SHADDAI Hall</b> — Sovereign AI Agents\n' +
+    '🛕 <b>WELCOME TO THE SHADDAI TEMPLE</b> — Sovereign AI Agents\n' +
     '━━━━━━━━━━━━━━━\n' +
     'One front door, <b>seven specialists</b>:\n' +
     'ORACLE · TURTLE · ZEROX · NEXUS · QUILL · PIKADON · SHADDAI\n\n' +
+    '⬡ <b>The Axiom:</b> ' + _esc(axiom) + '\n\n' +
     '🤖 Brain-answers are <b>free daily</b>; tool runs, art and deep scans unlock via <code>/pay</code> or <a href="' + (process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents') + '">Virtuals</a>.\n\n' +
     '📡 Live <b>rug-filtered crypto signals</b> with real <b>PNL tracking</b>.\n\n' +
     `🐢 Free procedural music: ${_esc(cfg.channel || '@ShaddaiLabs')}\n` +
@@ -112,7 +124,7 @@ function _start(cfg) {
     `⭐ GitHub: ${_esc(gh)}\n` +
     `𝕏 ${_esc(x)}\n` +
     `🌐 ${_esc(web)}\n\n` +
-    '<b>Try:</b> /menu · /oracle &lt;question&gt; · /design cat logo · /check &lt;url&gt; · /lb\n' +
+    '<b>Try:</b> /menu · /oracle &lt;question&gt; · /design cat logo · /check &lt;url&gt; · /dice 10 · /referral · /master\n' +
     'Type /help for the full command list.'
   );
 }
@@ -209,7 +221,8 @@ async function _handleCallback(cfg, cq) {
       if (img) { const ok = await _core.sendPhoto(chatId, img, cap, btns); if (ok) return; }
       return _send(t, chatId, cap);
     }
-if (data.startsWith('hall:') && chatId) {
+    if (data === 'hall:quit') { await answer('👋'); return; }
+    if (data.startsWith('hall:') && chatId) {
       const key = data.slice(5);
       await answer('');
       if (key === 'pay') return _send(t, chatId, _payCard());
@@ -225,7 +238,57 @@ if (data.startsWith('hall:') && chatId) {
         cut += '\n<i>Free daily taste · <code>/pay</code> for unlimited + tools.</i>';
         return _send(t, chatId, cut);
       }
-      return answer('Hall menu');
+return answer('Hall menu');
+    }
+    // ── Temple master index (re-post the /master card) ──
+    if (data === 'master' || data.startsWith('master:')) {
+      return _send(t, chatId, _masterCard(), { reply_markup: _masterKeyboard() });
+    }
+    // ── Astro hub — pick a sign, ORACLE reads the horoscope + moon ──
+    if (data.startsWith('astro:') && chatId) {
+      const sign = String(data.slice(6)).trim();
+      if (!sign || sign === 'pick') return _send(t, chatId, '🌙 <b>pick your sign…</b>\n\n<i>ORACLE reads your horoscope + moon phase — grounded, honest.</i>', { reply_markup: _astroKeyboard() });
+      const cap = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
+      await answer('');
+      return _brain(t, chatId, cfg, 'ORACLE', 'Give my ' + cap + ' horoscope plus moon-phase guidance, grounded and honest, in 4 lines.', 4);
+    }
+    // ── News, rebooted ──
+    if (data.startsWith('news:reboot') && chatId) {
+      await answer('');
+      let html = null;
+      try { html = await require('./telegram-news').marketPulse(); } catch (e) {}
+      return _send(t, chatId, html || '⚠️ Market data unavailable.');
+    }
+    // ── Music — compose a procedural track straight from the button ──
+    if (data.startsWith('music:') && chatId) {
+      await answer('🪷 composing…');
+      return _music(t, chatId, data.slice(6));
+    }
+    // ── Game — native TG games, or the HTML5 game via sendGame ──
+    if (data.startsWith('game:') && chatId) {
+      const native = data.match(/^game:native:(dice|dart|ball|bowl|slot|footy)$/);
+      if (native) { await answer(''); return _nativeGame(t, chatId, cfg, native[1], '10'); }
+      const shortName = process.env.SHADDAI_GAME || 'sigilstorm';
+      await answer('');
+      try {
+        const sent = await _core.sendGame(chatId, shortName);
+        if (!sent) return _send(t, chatId, '⚠️ <b>' + _esc(shortName) + '</b> is not registered in BotFather yet (or can\u2019t play in this chat). Try <code>/dice 10</code> for a native roll.');
+        return;
+      } catch (e) { return _send(t, chatId, '⚠️ Game send failed — is <b>' + _esc(shortName) + '</b> registered in BotFather? Try <code>/dice 10</code>.'); }
+    }
+    // ── Arena — rematch / swap buttons from the match card ──
+    if ((data.startsWith('arena:again:') || data.startsWith('arena:swap:')) && chatId) {
+      const p = data.split(':');
+      let a = String(p[2] || ''), b = String(p[3] || '');
+      await answer('');
+      if (!a || !b) return _send(t, chatId, '⚔️ Arena rematch needs two agents — try <code>/arena ORACLE vs ZEROX 10</code>');
+      if (data.startsWith('arena:swap:')) { const tmp = a; a = b; b = tmp; }
+      try {
+        await _arenaCmd(t, chatId, a + ' vs ' + b + ' 10');
+        return _send(t, chatId, '<i>↻ ' + (data.startsWith('arena:swap:') ? 'sides swapped — ' : 'same matchup — ') + a + ' vs ' + b + ' · fresh match every minute</i>');
+      } catch (e) {
+        return _send(t, chatId, '⚠️ Arena hiccup — try <code>/arena ' + a + ' vs ' + b + ' 10</code>');
+      }
     }
     return answer();
   } catch (e) { return answer(); }
@@ -250,6 +313,8 @@ async function _music(t, chatId, arg) {
       '<i>Free procedural track · ShaddaiLabs</i>\nTry: <code>/music synthwave hype</code>';
     const ok = await _core.sendAudio(chatId, wav, 'turtle-' + meta.genre + '.wav', cap, meta.genreName + ' — Turtle Music Bot');
     if (!ok) return _send(t, chatId, '⚠️ Could not send the track. Try again in a moment.');
+    let got = null; try { got = _com.award(String(chatId), 5, 'music'); } catch (e) {}
+    if (got && got.ok) return _send(t, chatId, '🎵 Track sent! <b>+5 ⚡</b> sparks (now ' + got.gems + ') — the music economy loves you. /quest to cash in your day.');
   } catch (e) {
     return _send(t, chatId, '⚠️ Music engine hiccup — try <code>/music lofi</code>');
   }
@@ -278,7 +343,7 @@ function _hallMenuCard() {
 }
 function _hallMenuKeyboard() {
   return { inline_keyboard: [
-    [{ text: '🌙 Oracle', callback_data: 'hall:oracle' }, { text: '🐢 Turtle', callback_data: 'hall:turtle' }, { text: '💎 Zerox', callback_data: 'hall:zerox' }],
+    [{ text: '🌙 Oracle', callback_data: 'hall:oracle' }, { text: '🐢 Turtle', callback_data: 'hall:turtle' }, { text: '⚡ Zerox', callback_data: 'hall:zerox' }],
     [{ text: '🛡 Pikadon', callback_data: 'hall:pikadon' }, { text: '🏛 Council', callback_data: 'hall:council' }, { text: '🤝 Virtuals', callback_data: 'hall:virtuals' }],
     [{ text: '💠 Pay / Upgrade', callback_data: 'hall:pay' }],
   ]};
@@ -289,7 +354,7 @@ function _virtualsCard() {
 }
 function _payCard() {
   const ref = process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents';
-  return '💠 <b>SHADDAI Hall — free + paid</b>\n━━━━━━━━━━━━━━━\n\n<b>Free every day:</b>\n• /signals · /price · /rug · /news — live markets\n• /music — procedural tracks by TURTLE\n• /menu — browse the 7 sections\n• <b>3</b> deep agent answers (ORACLE, TURTLE, NEXUS…)\n\n<b>Paid onchain:</b>\n• Unlimited agent runs with real tools (/check, /design, /zerox)\n• Hire ZEROX on <a href="' + ref + '">Virtuals</a> — escrow-protected jobs\n• USDC via x402 pay-per-call rails\n\n<i>The free taste is real. The paid Hall is deep.</i>';
+  return '💠 <b>SHADDAI TEMPLE — free + paid</b>\n━━━━━━━━━━━━━━━\n\n<b>Free every day:</b>\n• /signals · /price · /rug · /news — live markets\n• /music — procedural tracks by TURTLE\n• /menu — browse the 7 sections\n• <b>3</b> deep agent answers (ORACLE, TURTLE, NEXUS…)\n\n<b>Paid onchain:</b>\n• Unlimited agent runs with real tools (/check, /design, /zerox)\n• Hire ZEROX on <a href="' + ref + '">Virtuals</a> — escrow-protected jobs\n• USDC via x402 pay-per-call rails\n\n<i>The free taste is real. The paid Temple is deep.</i>';
 }
 
 // Grounded brain answers (RAG) — the free taste. 402 = quota used → nudge.
@@ -345,6 +410,29 @@ async function _agentic(t, chatId, cfg, agent, task) {
     const tools = (j.toolsUsed || []).slice(0, 4).join(', ');
     return _send(t, chatId, '<b>' + agent + '</b>' + (tools ? ' · tools: ' + _esc(tools) : '') + '\n━━━━━━━━━━━━━━━\n\n' + _esc(out).slice(0, 3000) + '\n\n<i>paid run · ' + _esc(String(j.model || j.provider || 'engine')).slice(0, 50) + '</i>');
   } catch (e) { return _send(t, chatId, '⚠️ <b>' + agent + '</b> engine is busy — try again shortly.'); }
+}
+
+// ZEROX deep task — the PAID agentic inference loop (/api/zerox/task). The
+// "hire ZEROX's brain" path: a real multi-agent LLM run over live tools, not the
+// free cached /ask. Mirrors /agentic but against the settled task rail.
+async function _zeroxTask(t, chatId, cfg, q) {
+  if (!q) return _send(t, chatId, 'Usage: /zerox &lt;your question&gt; — fires ZEROX\u2019s full agentic brain (live tools). <code>/analysis</code> is the free read.');
+  await _send(t, chatId, '💰 <b>ZEROX</b> is thinking with live tools…');
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/zerox/task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-User-Id': String(chatId) },
+      body: JSON.stringify({ agent: 'ZEROX', task: q }),
+      signal: AbortSignal.timeout(90000),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 402) return _send(t, chatId, '🔒 <b>ZEROX</b> deep runs are paid (<code>/pay</code> to unlock). For the free read try <code>/analysis</code>.');
+    const out = String(j.response || j.content || '').trim();
+    if (!out) return _send(t, chatId, '⚠️ <b>ZEROX</b> returned nothing — try again.');
+    const tools = (j.toolsUsed || []).slice(0, 4).join(', ');
+    const price = (j.priceUsd != null ? ' · $' + j.priceUsd : '');
+    return _send(t, chatId, '💰 <b>ZEROX · deep run</b>' + (tools ? ' · tools: ' + _esc(tools) : '') + '\n━━━━━━━━━━━━━━━\n\n' + _esc(out).slice(0, 3000) + '\n\n<i>paid' + _esc(price) + ' · ' + _esc(String(j.model || j.provider || 'engine')).slice(0, 50) + '</i>');
+  } catch (e) { return _send(t, chatId, '⚠️ <b>ZEROX</b> engine is busy — try again shortly.'); }
 }
 
 // TURTLE designs — agent image tool first, keyless Pollinations fallback (never dead-ends).
@@ -411,6 +499,327 @@ async function _checkUrl(t, chatId, cfg, raw) {
   return _send(t, chatId, out.slice(0, 3900));
 }
 
+// ── Community engine — games, gems, referral, family ───────────────────────
+const _com = require('./lib/tg-community');
+let _botUser = '';   // bot username cached from getMe (for referral deep links)
+async function _botUsername() {
+  if (_botUser) return _botUser;
+  const fromEnv = process.env.SHADDAI_BOT_USERNAME || '';
+  if (fromEnv) { _botUser = String(fromEnv).replace(/^@/, ''); return _botUser; }
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${_cfg().token}/getMe`, { signal: AbortSignal.timeout(10000) });
+    const j = await r.json();
+    if (j && j.ok && j.result && j.result.username) _botUser = String(j.result.username);
+  } catch (e) {}
+  return _botUser;
+}
+function _templeAxiom() {
+  return process.env.SHADDAI_AXIOM || 'Seven sovereign agents, one Temple: ORACLE researches, ZEROX monetizes, NEXUS builds, TURTLE creates, QUILL writes, PIKADON guards, SHADDAI decides. Free truth every day, deeper work onchain — and the signals don\u2019t lie.';
+}
+function _doors() {
+  const L = (name, url) => '· <a href="' + _esc(url) + '">' + name + '</a>';
+  return '⭐ GitHub: ' + L('IzzoSol', process.env.SHADDAI_GITHUB || 'https://github.com/IzzoSol') + '\n' +
+    '𝕏 Shaddai: ' + L('@shaddaiai', process.env.SHADDAI_X_BRAND || 'https://x.com/shaddaiai') + '\n' +
+    '𝕏 ZEROX: ' + L('@zerox007', process.env.SHADDAI_X_ZEROX || 'https://x.com/zerox007') + '\n' +
+    '𝕏 IzzoSol: ' + L('@IzzoSol', process.env.SHADDAI_X || 'https://x.com/IzzoSol') + '\n' +
+    '🌐 Web: ' + L('shaddai-g81x.onrender.com', process.env.SHADDAI_WEBSITE || 'https://shaddai-g81x.onrender.com') + '\n' +
+    '🌿 Lounge: ' + L('EMERALDLOUNGE', process.env.SHADDAI_LOUNGE || 'https://t.me/EMERALDLOUNGE');
+}
+function _templeCard() {
+  return '🛕 <b>THE SHADDAI TEMPLE</b>\n━━━━━━━━━━━━━━━\n\n' +
+    '<b>The Axiom</b>\n' + _esc(_templeAxiom()) + '\n\n' +
+    '<b>The Seven</b>\n' +
+    'ORACLE · TURTLE · ZEROX · NEXUS · QUILL · PIKADON · SHADDAI\n\n' +
+    '<b>Doors</b>\n' + _doors() + '\n\n' +
+    '📖 Full index of everything → <code>/master</code>\n' +
+    '🎮 /games · 🎁 /referral · 🏆 /leaderboard · 🧠 /council "should we launch?"';
+}
+// ── THE MASTER INDEX — every feature in one card ────────────────────────────
+function _masterCard() {
+  const vref = process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents';
+  const gname = process.env.SHADDAI_GAME || 'sigilstorm';
+  let out = '🛕 <b>SHADDAI TEMPLE — MASTER INDEX</b>\n' + _todayNice() + '\n━━━━━━━━━━━━━━━\n\n';
+  out += '⬡ <b>The Axiom</b>\n' + _esc(_templeAxiom()) + '\n\n';
+  out += '▾ <b>The Seven agents</b>\n' +
+    '🦉 /oracle — research · trends · <b>astrology</b> (/astro)\n' +
+    '🐢 /turtle — design · art (/design) · <b>music</b> (/music <i>lofi</i>)\n' +
+    '💸 /zerox — signals · prices · paper trades · <b>market scan</b>\n' +
+    '⚙️ /nexus — engineering · APIs · scale\n' +
+    '✒️ /quill — copy · docs\n' +
+    '🛡 /pikadon — URL checks (/check) · audits\n' +
+    '⬡ /shaddai — strategy · final calls\n' +
+    '🏛 /council — all seven weigh in · 🧠 /grok — Grok on the Temple\n\n';
+  out += '▾ <b>Live intelligence</b>\n' +
+    '📡 /signals — rug-filtered feed · 💹 /lb — PNL leaderboard\n' +
+    '📰 /news — market pulse · 🗞 /headlines — oracle news wires\n' +
+    '🌙 /astro — your horoscope + moon · 🔥 /hot — conviction heat-map\n\n';
+  out += '▾ <b>Play & earn (paper sparks)</b>\n' +
+    '🎮 /games — dice, darts, hoops, slots, footy (Telegram-verified)\n' +
+    '⚔️ /arena <i>ORACLE vs ZEROX 10</i> — agents fight, you bet\n' +
+    '🕹 /game — Telegram HTML5 game (' + _esc(gname) + ')\n' +
+    '🎁 /referral — +' + _com.REF_INVITER_GEMS + ' gems & +' + _com.REF_BONUS_ASKS + ' free asks/friend\n' +
+    '💰 /bonus — daily refill · 🎯 /quest — daily quests · 🏆 /leaderboard\n\n';
+  out += '▾ <b>Builders</b>\n' +
+    '🤝 <b>Virtuals</b> — hire ZEROX onchain: <a href="' + _esc(vref) + '">app.virtuals.io/acp/agents</a>\n' +
+    '🔌 <b>MCP</b> — 30+ agent tools as one MCP server (see README): <code>npx shaddai-unified-mcp</code>\n' +
+    '🛰 /family — every SHADDAI bot in one card\n\n';
+  out += '▾ <b>Doors</b>\n' + _doors() + '\n\n' +
+    '<i>Free daily · deeper onchain · the Temple answers.</i>';
+  return out;
+}
+function _masterKeyboard() {
+  return { inline_keyboard: [
+    [{ text: '🦉 Oracle', callback_data: 'hall:oracle' }, { text: '🐢 Turtle', callback_data: 'hall:turtle' }, { text: '💸 Zerox', callback_data: 'hall:zerox' }],
+    [{ text: '⚙️ Nexus', callback_data: 'hall:nexus' }, { text: '✒️ Quill', callback_data: 'hall:quill' }, { text: '🛡 Pikadon', callback_data: 'hall:pikadon' }],
+    [{ text: '🌙 Astro', callback_data: 'astro:pick' }, { text: '📰 News', callback_data: 'news:reboot' }, { text: '🐢 Music', callback_data: 'music:lofi' }],
+    [{ text: '⚔️ Arena', callback_data: 'arena:pick' }, { text: '💠 Pay', callback_data: 'hall:pay' }, { text: '🤝 Virtuals', callback_data: 'hall:virtuals' }],
+  ]};
+}
+const _SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+function _astroKeyboard() {
+  const rows = [];
+  for (let i = 0; i < _SIGNS.length; i += 3) rows.push([]);
+  _SIGNS.forEach((s, i) => { rows[Math.floor(i / 3)].push({ text: '🌙 ' + s, callback_data: 'astro:' + s.toLowerCase() }); });
+  return { inline_keyboard: rows };
+}
+function _arenaKeyboard(seed) {
+  const [a, b] = String(seed || 'SHADDAI:ZEROX').split(':');
+  return { inline_keyboard: [[
+    { text: '⚔️ Re-run ' + a + ' vs ' + b, callback_data: 'arena:again:' + a + ':' + b },
+    { text: '🔄 Swap', callback_data: 'arena:swap:' + a + ':' + b },
+  ]]};
+}
+function _musicPromptKeyboard() {
+  return { inline_keyboard: [
+    [{ text: '🐢 lofi', callback_data: 'music:lofi' }, { text: '🐢 synthwave', callback_data: 'music:synthwave' }, { text: '🐢 ambient', callback_data: 'music:ambient' }],
+  ]};
+}
+function _gameKeyboard() {
+  const g = process.env.SHADDAI_GAME || 'sigilstorm';
+  return { inline_keyboard: [
+    [{ text: '🕹 Play ' + g, callback_data: 'game:' + g }],
+    [{ text: '🎲 Native dart', callback_data: 'game:native:dart' }],
+  ]};
+}
+function _gameCmd(t, chatId, arg) {
+  const g = String(arg || '').split(/\s+/)[0].toLowerCase() || (process.env.SHADDAI_GAME || 'sigilstorm');
+  return _send(t, chatId,
+    '🕹 <b>SHADDAI TELEGRAM GAMES</b>\n━━━━━━━━━━━━━━━\n\n' +
+    'Native TG games (server-verified, cannot be rigged):\n<code>/dice 10</code> <code>/dart 10</code> <code>/ball 10</code> <code>/bowl 10</code> <code>/slot 10</code> <code>/footy 10</code>\n\n' +
+    'HTML5 game (BotFather → /newgame → short name <b>' + _esc(g) + '</b>):\n/🕹 Play triggers it right here.\n\n' +
+    '⚔️ Agent-vs-agent: <code>/arena ORACLE vs ZEROX 10</code>\n' +
+    '🏀 Arcade battles: <code>/arcade basketball 10</code>\n\n' +
+    '<b>Sparks:</b> /sparks · daily /bonus · earn via /quest /referral /music', _gameKeyboard());
+}
+async function _arenaCmd(t, chatId, arg) {
+  const m = String(arg || '').match(/^([a-z]+)\s+(?:vs|v\.?|vs\.)\s+([a-z]+)(?:\s+(\d+))?$/i);
+  if (!m) return _send(t, chatId, '⚔️ <b>AGENT ARENA</b>\nWatch two of the Seven fight a best-of-7 tilt — and bet on it.\n\n<code>/arena ORACLE vs ZEROX 10</code>\n\nPick any two: ORACLE · TURTLE · ZEROX · NEXUS · QUILL · PIKADON · SHADDAI\n\n<i>You bet on the first agent named. Win = 2× your sparks. 5–200 ⚡.</i>');
+  const a = m[1].toUpperCase(), b = m[2].toUpperCase(), bet = parseInt(m[3], 10) || 10;
+  const r = _com.arena(String(chatId), a, b, bet);
+  if (!r.ok) return _send(t, chatId, '⚠️ ' + _esc(r.error || 'arena unavailable'));
+  const A = _com.ARENA_BOTS[a], B = _com.ARENA_BOTS[b];
+  let out = '⚔️ <b>' + a + ' vs ' + b + '</b>\n' + A.tag + ' <i>' + _esc(A.lore) + '</i>\n' + B.tag + ' <i>' + _esc(B.lore) + '</i>\n━━━━━━━━━━━━━━━\n\n';
+  for (const rd of r.rounds) out += 'R' + rd.r + ' · ' + a + ' <b>' + rd[a] + '</b> — ' + b + ' <b>' + rd[b] + '</b>  ' + (rd.j === a ? A.tag : B.tag) + '\n';
+  out += '\n<b>Final</b> — ' + a + ' <b>' + r.scoreA + '</b> · ' + b + ' <b>' + r.scoreB + '</b>\n';
+  out += '🏆 <b>' + r.winner + ' wins!</b> ' + (r.won ? '✅ You bet on the winner!' : '❌ Your pick lost.') + '\n';
+  out += (r.won ? '💰 +' + (r.payout - r.bet) + ' ⚡' : '💸 -' + r.bet + ' ⚡') + ' → wallet ' + r.gems + ' ⚡\n\n<i>Re-run /arena ' + a + ' vs ' + b + ' ' + r.bet + ' — different match every minute.</i>';
+  return _send(t, chatId, out, _arenaKeyboard(a + ':' + b));
+}
+async function _grokCmd(t, chatId, arg) {
+  const q = String(arg || '').trim();
+  if (!q) return _send(t, chatId, '🧠 <b>GROK ON THE TEMPLE</b>\nAsk Grok without leaving Telegram.\n\n<code>/grok your question here</code>\n\nRuns on your xAI key (env <code>XAI_API_KEY</code>) or AceDataCloud (<code>ACEDATACLOUD_API_TOKEN</code>, model <code>grok-3</code>).\n<i>Free alternative: /oracle &lt;question&gt;</i>');
+  const xaiKey = process.env.XAI_API_KEY || '';
+  const acedKey = process.env.ACEDATACLOUD_API_TOKEN || '';
+  if (!xaiKey && !acedKey) return _send(t, chatId, '⚠️ No Grok key configured. Set <code>XAI_API_KEY</code> or <code>ACEDATACLOUD_API_TOKEN</code>, then /grok works. Free meanwhile: /oracle ' + _esc(q.slice(0, 40)));
+  const base = xaiKey ? 'https://api.x.ai/v1' : 'https://api.acedata.cloud/v1';
+  const key = xaiKey || acedKey;
+  const model = xaiKey ? (process.env.XAI_MODEL || 'grok-3-fast') : (process.env.ACEDATA_GROK_MODEL || 'grok-3');
+  await _send(t, chatId, '🧠 Grok is thinking…');
+  try {
+    const r = await fetch(base + '/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({ model, messages: [{ role: 'system', content: 'You are Grok on the SHADDAI Temple. Sharp, honest, concise — max ~300 words. Never invent numbers.' }, { role: 'user', content: q }], max_tokens: 420 }),
+      signal: AbortSignal.timeout(45000),
+    });
+    const j = await r.json().catch(() => ({}));
+    const text = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+    if (!text) return _send(t, chatId, '⚠️ Grok said nothing useful (' + (r.status || 'network') + '). Try again.');
+    return _send(t, chatId, '🧠 <b>GROK</b>\n' + _esc(text.slice(0, 3000)) + '\n\n<i>/grok on · built into the Temple</i>');
+  } catch (e) {
+    return _send(t, chatId, '⚠️ Grok request failed — net or key issue. /oracle still free.');
+  }
+}
+function _gemsLine(g) {
+  return '⚡ <b>Sparks:</b> ' + g.gems + '  ·  🏆 <b>Score:</b> ' + g.score + '  ·  🔥 <b>Streak:</b> ' + g.streak + (g.referrals ? '  ·  🎁 <b>Invites:</b> ' + g.referrals : '');
+}
+function _gamesHub() {
+  let out = '🎮 <b>SHADDAI ARCADE</b>\n━━━━━━━━━━━━━━━\n\n' +
+    '<b>Native rolls</b> (Telegram-verified, cannot be rigged):\n' +
+    '<code>/dice 10</code> — 🎲 6 = 3× · 4-5 = 1.9×\n' +
+    '<code>/dart 10</code> <code>/ball 10</code> <code>/bowl 10</code> <code>/footy 10</code> — same tier\n' +
+    '<code>/slot 10</code> — 🎰 64 = 8× jackpot · 43 = 3× · 22 = 1.5×\n\n' +
+    '<b>Arcade battles</b> (CPU, agent-flavored):\n' +
+    '<code>/arcade basketball 10</code> — win doubles up\n\n' +
+    '<b>Economy:</b>\n' +
+    '<code>/sparks</code> — balance + score  ·  <code>/sparks top</code> — league\n' +
+    '<code>/bonus</code> — +' + _com.DAILY_BONUS + ' free sparks a day\n' +
+    '<code>/referral</code> — your invite link (+' + _com.REF_INVITER_GEMS + ' gems +' + _com.REF_BONUS_ASKS + ' free brain-asks per friend)\n\n' +
+    '<i>Paper sparks only — bragging rights, not money.</i>';
+  return out;
+}
+function _familyCard() {
+  const venv = process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents';
+  let out = '🛰 <b>THE SHADDAI FAMILY</b>\n━━━━━━━━━━━━━━━\n\n' +
+    '🤖 <b>@ShaddaiTempleBot</b> — this bot. All 7 agents, signals, PNL, brain, games.\n' +
+    '🐢 <b>Turtle Music Bot</b> — free procedural tracks (<code>/music</code> right here).\n' +
+    '📡 <b>Signals channel</b> — rug-filtered alpha feed: <code>/signals</code>.\n' +
+    '💸 <b>ZEROX on Virtuals</b> — hire the agent onchain: <a href="' + venv + '">app.virtuals.io/acp/agents</a>\n\n' +
+    '<b>Play across the family:</b>\n' +
+    '• /music — TURTLE composes\n' +
+    '• /arcade /dice /slot — games with sparks\n' +
+    '• /referral — invite friends, earn sparks + free brain-asks\n\n' +
+    '<i>One Hall. Every agent. Every bot in the family.</i>';
+  return out;
+}
+async function _questCmd(t, chatId, cfg) {
+  const r = _com.quest(String(chatId));
+  if (!r.ok) {
+    if (r.already) return _send(t, chatId, '✅ Quest bank is empty — come back tomorrow.\nCurrent: ' + r.gems + ' ⚡\n\n<i>Daily quests: /referral · roll with /dice · win anything</i>');
+    if (r.message) return _send(t, chatId, '🎯 <b>DAILY QUESTS</b>\n━━━━━━━━━━━━━━━\n\nRoll the dice, win a game, or invite a friend — then run /quest to cash in.\n\n<b>Rewards:</b>\n🎲 place any bet  → <b>+10</b>\n🏆 win any game   → <b>+20</b>\n🎁 invite a friend → <b>+25</b>\n\nCurrent: ' + r.gems + ' ⚡. Go play!');
+    return _send(t, chatId, '⚠️ quests unavailable');
+  }
+  let out = '🎯 <b>QUESTS COMPLETE!</b> +<b>' + r.bonus + '</b> ⚡\n━━━━━━━━━━━━━━━\n';
+  r.parts.forEach(p => { out += '\n✅ <b>' + _esc(p.label) + '</b> → +' + p.bonus; });
+  return _send(t, chatId, out + '\n\nNow: ' + r.gems + ' ⚡ · tomorrow comes a fresh bank');
+}
+async function _digestCmd(t, chatId, cfg) {
+  let out = '📋 <b>HALL DAILY DIGEST</b>\n' + _todayNice() + '\n━━━━━━━━━━━━━━━\n\n';
+  const s = _com.stats();
+  out += '👥 <b>Community:</b> ' + s.users + ' souls · ' + s.plays + ' plays · ' + s.wins + ' wins\n' +
+    '⚡ sparks in circulation · top scorer ' + s.topScore + ' pts\n\n';
+  const top = _com.topPlayers(3);
+  if (top.length) { out += '🏆 <b>Top scorers:</b>\n'; top.forEach((r, i) => { out += (i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉') + ' <b>' + _esc(r.uid.slice(0, 10)) + '</b> — ' + r.score.toLocaleString() + ' pts\n'; }); out += '\n'; }
+  out += _signalsCard(cfg); // market pulse — top movers, sources, right here
+  return _send(t, chatId, out.slice(0, 4000));
+}
+function _todayNice() {
+  return new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+}
+async function _convictionCmd(t, chatId, cfg, arg) {
+  const parts = String(arg || '').split(/\s+/).filter(Boolean);
+  let sym = '', amt = '';
+  for (const w of parts) { if (/^[A-Z0-9$]+$/i.test(w)) { if (!sym) sym = w; else if (/^\d+$/.test(w) && !amt) amt = w; } else if (/^\d+$/.test(w) && !amt) amt = w; }
+  if (!sym) return _send(t, chatId, '⚡ <b>CONVICTION</b>\nStake sparks on a call in the signals feed.\n\n<code>/conviction SOL 50</code> — burn 50 ⚡ into SOL\u2019s pool\n<code>/hot</code> — the most-backed calls right now\n\n<i>Gems burn into the pool. Purely a social heat-map — no payback, paper only.</i>');
+  const r = _com.convict(String(chatId), sym, parseInt(amt, 10) || 10);
+  if (!r.ok) return _send(t, chatId, '⚠️ ' + _esc(r.error || 'can\u2019t vote right now'));
+  return _send(t, chatId, '🔥 <b>CONVICTION:</b> <b>' + _esc(r.symbol) + '</b> +' + r.amount + ' ⚡\n' +
+    'Pool now: <b>' + r.poolGems + '</b> ⚡ · ' + r.votes + ' voters · your wallet: ' + r.gems + ' ⚡\n\n<i>/hot to see the leaders</i>');
+}
+async function _hotCmd(t, chatId, cfg) {
+  const rows = _com.hot(10);
+  if (!rows.length) return _send(t, chatId, 'No conviction pools yet — back a signal with <code>/conviction SOL 50</code>');
+  let out = '🔥 <b>HOT CALLS</b> — most conviction in the room\n━━━━━━━━━━━━━━━\n';
+  rows.forEach((r, i) => { out += '\n' + (i + 1) + '. <b>' + _esc(r.symbol) + '</b> — ' + r.gems.toLocaleString() + ' ⚡ · ' + r.votes + (r.votes === 1 ? ' voter' : ' voters'); });
+  return _send(t, chatId, out + '\n\n<i>Back one: /conviction ' + _esc((rows[0] || {}).symbol || 'SOL') + ' 50</i>');
+}
+async function _leaderboardCmd(t, chatId, cfg, arg, update) {
+  let out = '🏆 <b>SHADDAI LEADERBOARD</b>\n' + _todayNice() + '\n━━━━━━━━━━━━━━━\n\n';
+  const sc = _com.topPlayers(5);
+  out += '⚡ <b>Top scorers</b>\n';
+  if (!sc.length) out += '  no plays yet — /games!\n';
+  sc.forEach((r, i) => { out += ' ' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : charPodium(i)) + ' ' + _esc(r.uid.slice(0, 10)) + ' — ' + r.score.toLocaleString() + ' pts\n'; });
+  const rf = _com.topReferrers(5);
+  out += '\n🎁 <b>Top referrers</b>\n';
+  if (!rf.length) out += '  no invites yet — /referral!\n';
+  rf.forEach((r, i) => { out += ' ' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : charPodium(i)) + ' ' + _esc(r.uid.slice(0, 10)) + ' — ' + r.invites + (r.invites === 1 ? ' invite' : ' invites') + '\n'; });
+  const ht = _com.hot(5);
+  out += '\n🔥 <b>Hottest calls</b>\n';
+  if (!ht.length) out += '  none yet — /conviction!\n';
+  ht.forEach((r, i) => { out += ' · <b>' + _esc(r.symbol) + '</b> ' + r.gems.toLocaleString() + ' ⚡\n'; });
+  const m = _com.stats();
+  out += '\n<code>' + m.users + ' souls · ' + m.plays + ' plays · ' + m.wins + ' wins</code>';
+  const adminId = process.env.SHADDAI_ADMIN_ID || '';
+  const poster = (update && update.message && update.message.from && update.message.from.id != null) ? String(update.message.from.id) : String(chatId);
+  const wantBroadcast = /broadcast|channel|pin/i.test(String(arg || ''));
+  if (wantBroadcast && adminId && poster === adminId) {
+    await _send(t, chatId, '📢 Broadcasting to the channel + every chat in the family…');
+    try { await _core.broadcast('🏆 <b>PUBLIC LEADERBOARD</b>\n' + out); } catch (e) {}
+    return _send(t, chatId, '✅ Sent.');
+  }
+  if (wantBroadcast) return _send(t, chatId, '🔒 Broadcast requires the configured admin id.');
+  return _send(t, chatId, out + '\n\n<i>Admin can /leaderboard broadcast · /digest for the full roundup</i>');
+}
+function charPodium(i) { return (i) + '.'; }
+async function _nativeGame(t, chatId, cfg, game, arg) {
+  const spec = _com.nativeSpec(game);
+  if (!spec) return _send(t, chatId, 'Unknown game <b>' + _esc(game) + '</b> — try /dice /dart /ball /bowl /slot /footy');
+  const bet = parseInt((arg || '').replace(/\D/g, ''), 10) || 10;
+  await _send(t, chatId, spec.emoji + ' <b>' + spec.label + '</b> rolling for ' + bet + ' ⚡…');
+  const value = await _core.sendDice(chatId, spec.emoji);
+  if (value == null) return _send(t, chatId, '⚠️ Telegram dice is offline — try again shortly.');
+  const r = _com.nativeResult(game, value);
+  const s = _com.settleBet(String(chatId), bet, r);
+  if (!s.ok) return _send(t, chatId, '⚠️ ' + _esc(s.error || 'can\u2019t play right now'));
+  return _send(t, chatId,
+    spec.emoji + ' <b>' + spec.label + '</b> → <b>' + r.roll + '</b>\n' +
+    (r.win ? '🟢 <b>WIN</b> +' + s.payout + ' ⚡ · ' + _esc(r.detail) : '🔴 <b>LOSS</b> −' + bet + ' ⚡ · ' + _esc(r.detail)) + '\n\n' +
+    _gemsLine(s) + '\n\n<i>/games for all games</i>');
+}
+async function _arcadeGame(t, chatId, cfg, game, arg) {
+  const bet = parseInt(String(arg || '').replace(/\D/g, ''), 10) || 10;
+  await _send(t, chatId, '🎮 Arcade vs CPU for ' + bet + ' ⚡…');
+  const r = _com.arcadeResult(game || '', 'SHADDAI');
+  const s = _com.settleBet(String(chatId), bet, r);
+  if (!s.ok) return _send(t, chatId, '⚠️ ' + _esc(s.error || 'can\u2019t play right now'));
+  return _send(t, chatId,
+    (r.win ? '🟢 <b>WIN!</b> ' : '🔴 <b>LOSS</b> ') + _esc(r.detail) + '\n' +
+    (r.win ? '<b>+</b>' + s.payout + ' ⚡' : '−' + bet + ' ⚡') + '\n\n' +
+    _gemsLine(s) + '\n\n<i>/games for all games</i>');
+}
+async function _referralCmd(t, chatId, cfg, rawCode) {
+  if (rawCode) {
+    const res = _com.claim(String(chatId), rawCode);
+    if (res.ok) return _send(t, chatId, '🎁 <b>Referral accepted!</b>\nYour host already earned a seat.\n+<b>' + _com.REF_REFEREE_GEMS + '</b> ⚡ to you · host now has <b>' + res.inviterReferrers + '</b> invite(s)\n\nEnjoy the Hall:\n/menu · /games · /council "should we launch?"');
+    return _send(t, chatId, '⚠️ ' + _esc(res.error || 'could not claim that code'));
+  }
+  const g = _com.gems(String(chatId));
+  if (!g) return _send(t, chatId, '⚠️ can\u2019t reach your profile right now');
+  const uname = await _botUsername();
+  const link = _com.linkFor(String(chatId), uname);
+  return _send(t, chatId,
+    '🎁 <b>YOUR REFERRAL KEY</b>\n━━━━━━━━━━━━━━━\n\n' +
+    'Share this link — every friend who joins via it earns you <b>+' + _com.REF_INVITER_GEMS + ' ⚡</b> and <b>+' + _com.REF_BONUS_ASKS + ' free deep brain-answers/day</b>\n\n' +
+    '🔗 <a href="' + link + '">' + link + '</a>\n\n' +
+    '🧾 <b>Your code:</b> <code>' + _esc(g.code || '-') + '</code>\n' +
+    '👥 <b>Invites:</b> ' + g.referrals + '\n\n' +
+    '<i>They start with ' + _com.START_GEMS + ' gems — and thank you first thing.</i>');
+}
+async function _refsCmd(t, chatId, cfg, arg) {
+  const n = (parseInt(arg, 10) || 10);
+  const rows = _com.topReferrers(n);
+  if (!rows.length) return _send(t, chatId, 'No invites yet — be the first with <code>/referral</code>');
+  let out = '🏆 <b>TOP REFERRERS</b>\n━━━━━━━━━━━━━━━\n';
+  rows.forEach((r, i) => { out += '\n' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.') + ' <b>' + _esc(r.uid.slice(0, 10)) + '</b> — ' + r.invites + ' invite' + (r.invites === 1 ? '' : 's') + ' · ' + r.gems + ' ⚡'; });
+  return _send(t, chatId, out + '\n\n<i>Invite: /referral</i>');
+}
+async function _gemsCmd(t, chatId, cfg, arg) {
+  if (/top|league|leader/i.test(arg || '')) {
+    const rows = _com.topPlayers(10);
+    if (!rows.length) return _send(t, chatId, 'No scores yet — start with <code>/games</code>');
+    let out = '🏆 <b>TOP SCORERS</b>\n━━━━━━━━━━━━━━━\n';
+    rows.forEach((r, i) => { out += '\n' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.') + ' <b>' + _esc(r.uid.slice(0, 10)) + '</b> — ' + r.score.toLocaleString() + ' pts · ' + r.wins + 'W'; });
+    return _send(t, chatId, out + '\n\n<i>Play: /games</i>');
+  }
+  const g = _com.gems(String(chatId));
+  return _send(t, chatId, g ? _gemsLine(g) + '\n\n<i>Earn: /bonus · /referral · Win: /games</i>' : '⚠️ profile unavailable');
+}
+async function _bonusCmd(t, chatId, cfg) {
+  const r = _com.dailyBonus(String(chatId));
+  return _send(t, chatId, r.ok
+    ? '💰 <b>+' + r.bonus + ' sparks!</b> Daily refill claimed.\nNow: ' + r.gems + ' ⚡ — /games to spend them.'
+    : '🔁 You already claimed today\u2019s +' + _com.DAILY_BONUS + ' ⚡. Come back tomorrow — or /referral for a big bonus now.');
+}
+
 async function _handle(cfg, update) {
   if (update.callback_query) return _handleCallback(cfg, update.callback_query);
   const msg = update.message || update.channel_post; if (!msg) return;
@@ -421,12 +830,19 @@ async function _handle(cfg, update) {
   if (!m) return;
   const cmd = m[1].toLowerCase(); const arg = (m[2] || '').trim(); const t = cfg.token;
   switch (cmd) {
-    case 'start': { const img = require('./telegram-news')._botImage(); const cap = _start(cfg); if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; } return _send(t, chatId, cap); }
+    case 'start': {
+      const img = require('./telegram-news')._botImage();
+      const cap = _start(cfg);
+      if (arg && arg.toLowerCase().startsWith('ref_')) { const res = await _referralCmd(t, chatId, cfg, arg.split(/\s+/)[0]); if (!(res && res.ok)) { /* claim failed — still welcome */ } else { return res; } }
+      if (img) { const ok = await _core.sendPhoto(chatId, img, cap); if (ok) return; }
+      return _send(t, chatId, cap);
+    }
     case 'help': return _send(t, chatId, _help());
     case 'price': case 'p': return _price(t, chatId, arg);
     case 'rug': case 'rugcheck': return _rug(t, chatId, arg);
     case 'ask': case 'shaddai': return _ask(t, chatId, cfg, arg);
-    case 'zerox': case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
+    case 'zerox': return arg ? _zeroxTask(t, chatId, cfg, arg) : _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for the overall market. 5 lines max.', 'ZEROX');
+    case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
     case 'news': case 'pulse': { const html = await require('./telegram-news').marketPulse(); return _send(t, chatId, html || '⚠️ Market data unavailable.'); }
 
     // /music [genre] [mood] [bars] — free procedural track by Turtle Music Bot (ShaddaiLabs)
@@ -439,6 +855,7 @@ async function _handle(cfg, update) {
     case 'quill': return _brain(t, chatId, cfg, 'QUILL', arg || 'Write something clear and sharp.', 4);
     case 'pikadon': return _brain(t, chatId, cfg, 'PIKADON', arg || 'Give me a security checklist for a public-facing web app.', 4);
     case 'astro': case 'horoscope': case 'stars': {
+      if (!arg) return _send(t, chatId, '🌙 <b>pick your sign…</b>\n\n<i>Tap a sign — ORACLE reads your horoscope + moon phase, grounded and honest.</i>', { reply_markup: _astroKeyboard() });
       const sign = (arg || '').split(/\s+/).slice(0, 2).join(' ') || 'today';
       return _brain(t, chatId, cfg, 'ORACLE', 'Give my ' + sign + ' horoscope plus moon-phase guidance, grounded and honest, in 4 lines.', 4);
     }
@@ -448,6 +865,37 @@ async function _handle(cfg, update) {
     case 'virtuals': case 'acp': case 'marketplace': return _send(t, chatId, _virtualsCard());
     case 'pay': case 'upgrade': case 'pro': case 'pricing': return _send(t, chatId, _payCard());
     case 'menu': case 'halls': case 'zones': return _send(t, chatId, _hallMenuCard(), { reply_markup: _hallMenuKeyboard() });
+    case 'temple': case 'about': case 'axiom': case 'creed': case 'doctrine': return _send(t, chatId, _templeCard());
+    case 'master': case 'hub': case 'index': case 'everything': return _send(t, chatId, _masterCard(), { reply_markup: _masterKeyboard() });
+    case 'arena': case 'fight': case 'duel': case 'battle2': return _arenaCmd(t, chatId, arg);
+    case 'grok': case 'xai': case 'grokai': return _grokCmd(t, chatId, arg);
+    case 'game': case 'tggame': case 'playx': return _gameCmd(t, chatId, arg);
+
+    // ── Community — family, games, gems, referral ──
+    case 'family': case 'family2': return _send(t, chatId, _familyCard());
+    case 'games': case 'arcade2': case 'gamex': return _send(t, chatId, _gamesHub());
+    case 'sparks': case 'spark': case 'gems': return _gemsCmd(t, chatId, cfg, arg);
+    case 'bonus': case 'refill': case 'daily': return _bonusCmd(t, chatId, cfg);
+    case 'referral': case 'invite': case 'key': return _referralCmd(t, chatId, cfg, arg.split(' ')[0].match(/^ref_/i) ? arg : '');
+    case 'refs': case 'invites': return _refsCmd(t, chatId, cfg, arg);
+    case 'dice': case 'flip': case 'roll': return _nativeGame(t, chatId, cfg, 'dice', arg);
+    case 'dart': case 'arrows': return _nativeGame(t, chatId, cfg, 'dart', arg);
+    case 'ball': case 'hoops': return _nativeGame(t, chatId, cfg, 'ball', arg);
+    case 'bowl': case 'bowling': return _nativeGame(t, chatId, cfg, 'bowl', arg);
+    case 'slot': case 'reels': case 'jackpot': return _nativeGame(t, chatId, cfg, 'slot', arg);
+    case 'footy': case 'soccer': case 'football2': return _nativeGame(t, chatId, cfg, 'footy', arg);
+    case 'arcade': case 'arcadex': case 'battle': {
+      const parts = String(arg || '').split(/\s+/).filter(Boolean);
+      const gnames = { basketball: 1, football: 1, dodgeball: 1, bball: 'basketball', soccer: 'football', dodge: 'dodgeball', 'sigil-storm': 1 };
+      let game = '', rest = arg;
+      for (const w of parts) { if (gnames[w.toLowerCase()]) { game = gnames[w.toLowerCase()] === 1 ? w.toLowerCase() : gnames[w.toLowerCase()]; rest = parts.filter(x => x !== w).join(' '); break; } }
+      return _arcadeGame(t, chatId, cfg, game, rest);
+    }
+    case 'quest': case 'dailyquest': case 'quests': return _questCmd(t, chatId, cfg);
+    case 'digest': case 'roundup': case 'digest2': return _digestCmd(t, chatId, cfg);
+    case 'conviction': case 'stake': case 'back': case 'convict': case 'convicted': return _convictionCmd(t, chatId, cfg, arg);
+    case 'hot': case 'heat': case 'hotcalls': case 'heatmap': return _hotCmd(t, chatId, cfg);
+    case 'leaderboard': case 'tops': case 'scoreboard': case 'podium': return _leaderboardCmd(t, chatId, cfg, arg, update);
 
     case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
 
@@ -582,6 +1030,7 @@ async function _getUpdates(token, offset) {
 async function _registerCommands(token) {
   const commands = [
     { command: 'start',   description: 'Welcome + links' },
+    { command: 'temple',  description: 'The Axiom + doors — GitHub, X, website, lounge' },
     { command: 'help',    description: 'All commands list' },
     { command: 'active',  description: 'Live calls right now — not rugged, sorted by gain' },
     { command: 'lb',      description: 'Leaderboard — top calls ranked by Xs' },
@@ -619,6 +1068,29 @@ async function _registerCommands(token) {
     { command: 'check',   description: 'PIKADON URL safety check  e.g. /check https://…' },
     { command: 'virtuals', description: 'Hire ZEROX onchain via Virtuals' },
     { command: 'pay',     description: 'Free vs paid tiers — unlock the full Hall' },
+    { command: 'games',   description: 'Arcade hub — dice, slots, CPU battles, sparks' },
+    { command: 'dice',    description: '🎲 native roll  e.g. /dice 10 (sparks)' },
+    { command: 'dart',    description: '🎯 native darts, sparks at stake' },
+    { command: 'ball',    description: '🏀 native hoops, sparks at stake' },
+    { command: 'bowl',    description: '🎳 native bowling, sparks at stake' },
+    { command: 'slot',    description: '🎰 native slots — 64 = 8× jackpot' },
+    { command: 'footy',   description: '⚽ native football, sparks at stake' },
+    { command: 'arcade',  description: 'CPU battles  e.g. /arcade basketball 20' },
+    { command: 'quest',   description: 'Daily quest bank — +10 roll, +20 win, +25 invite' },
+    { command: 'digest',  description: 'Hall daily roundup — community + market pulse' },
+    { command: 'sparks',  description: 'Your spark balance + score · /sparks top = league' },
+    { command: 'leaderboard', description: 'Community podium - scorers, referrers, hot calls' },
+    { command: 'conviction', description: 'Stake sparks on a signal call  e.g. /conviction SOL 50' },
+    { command: 'hot',    description: 'The most-backed calls in the room' },
+    { command: 'bonus',   description: 'Daily +25 free gems refill' },
+    { command: 'referral', description: 'Invite friends — earn sparks + free brain-asks' },
+    { command: 'refs',    description: 'Top referrers leaderboard' },
+    { command: 'family',  description: 'Every SHADDAI bot on one card' },
+    { command: 'master',  description: 'Everything — agents, games, MCP, links' },
+    { command: 'arena',   description: 'Agent-vs-agent duels, bet gems' },
+    { command: 'grok',    description: 'Ask Grok right here' },
+    { command: 'game',    description: 'Telegram-native games hub' },
+    { command: 'music',   description: 'Free procedural track — earns +5 gems' },
   ];
   // Register for all scopes so "/" menu works in private chats, groups, and channels
   const scopes = [

@@ -39,13 +39,16 @@ async function sendAudio(chatId, bytes, filename, caption, title, buttons) {
     const fd = new FormData();
     fd.append('chat_id', String(chatId));
     if (caption) { fd.append('caption', caption.slice(0, 1024)); fd.append('parse_mode', 'HTML'); }
-    if (title) fd.append('title', String(title).slice(0, 64));
+    fd.append('title', String(title || 'Turtle Music').slice(0, 64));
+    fd.append('performer', 'Turtle Music Bot · ShaddaiLabs');
+    fd.append('supports_streaming', 'true');
     if (buttons) fd.append('reply_markup', JSON.stringify(buttons));
     const mime = /\.mp3$/i.test(filename) ? 'audio/mpeg' : /\.(m4a|aac|mp4)$/i.test(filename) ? 'audio/mp4' : 'audio/wav';
     fd.append('audio', new Blob([bytes], { type: mime }), filename);
     const r = await fetch(API('sendAudio'), { method: 'POST', body: fd });
+    if (r.status === 413) { const err = new Error('audio too large'); err.tooLarge = true; throw err; }
     return r.ok;
-  } catch (e) { return false; }
+  } catch (e) { if (e && e.tooLarge) throw e; return false; }
 }
 async function sendMascot(chatId, caption, buttons) {
   try {
@@ -61,7 +64,7 @@ async function sendMascot(chatId, caption, buttons) {
   } catch (e) { return send(chatId, caption, buttons); }
 }
 async function answerCb(id, text) {
-  try { await fetch(API('answerCallbackQuery'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: id, text: text || '' }) }); } catch (e) {}
+  try { await fetch(API('answerCallbackQuery'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: String(id || ''), text: text || '' }) }); } catch (e) {}
 }
 
 // ── copy ─────────────────────────────────────────────────────────────────────
@@ -97,7 +100,8 @@ function helpText() {
     '<b>/lyrics</b> artist - title\n   Song lyrics. e.g. <code>/lyrics daft punk - get lucky</code>\n' +
     '<b>/genres</b> — styles &amp; moods · <b>/help</b> — this list\n\n' +
     'Sources (all free): 🎧 Audius (full tracks) · 🎵 Deezer/iTunes (previews, charts &amp; albums) · 🎯 Last.fm (similarity &amp; artist info) · 📝 lyrics.ovh\n' +
-    '🎵 Genres: ' + GENRE_KEYS.join(', ') + '\n🎨 Moods: ' + MOOD_KEYS.join(', ');
+    '🎵 Genres: ' + GENRE_KEYS.join(', ') + '\n🎨 Moods: ' + MOOD_KEYS.join(', ') +
+    '\n\n⬡ <b>Part of the SHADDAI Hall</b> — signals, AI agents, games &amp; more: <code>@ShaddaiTempleBot</code>';
 }
 function genreButtons() {
   const row = (arr) => arr.map((g) => ({ text: mg.GENRES[g].name, callback_data: 'g:' + g }));
@@ -105,18 +109,33 @@ function genreButtons() {
 }
 
 // ── music generation ─────────────────────────────────────────────────────────
-async function doMusic(chatId, arg) {
+async function doMusic(chatId, arg, opts) {
   let genre = null, mood = null, bars = 8;
   String(arg || '').toLowerCase().split(/\s+/).filter(Boolean).forEach((w) => {
     const gk = mg.pickGenre(w), mk = mg.pickMood(w);
     if (!genre && gk) genre = gk; else if (!mood && mk) mood = mk; else if (/^\d+$/.test(w)) bars = Math.max(4, Math.min(16, parseInt(w, 10)));
   });
+  if (opts && opts.bars) bars = Math.max(2, Math.min(6, opts.bars));
   await chatAction(chatId, 'record_voice');
   try {
     const { wav, meta } = mg.generate({ genre, mood, bars });
     const cap = '🐢 <b>Turtle Music Bot</b> · ' + meta.genreName + ' · ' + meta.bpm + ' BPM · ' + meta.seconds + 's\n<i>Original · ShaddaiLabs</i>';
-    const ok = await sendAudio(chatId, wav, 'turtle-' + meta.genre + '.wav', cap, meta.genreName + ' — Turtle', genreButtons());
+    let ok = false;
+    try {
+      ok = await sendAudio(chatId, wav, 'turtle-' + meta.genre + '.wav', cap, meta.genreName + ' — Turtle', genreButtons());
+    } catch (e2) {
+      if (e2 && e2.tooLarge) { await send(chatId, '🌊 file too big on this connection — try <code>/bars 4</code>'); return; }
+      throw e2;
+    }
     if (!ok) await send(chatId, '⚠️ Could not send the track — try again.');
+    // Cross-bot: same Hall gem wallet. Never fatal — the music itself must not break.
+    try {
+      const com = require('./lib/tg-community');
+      if (String(chatId) === String(Number(chatId)) && Number(chatId) < 0 === false) {
+        const got = com.award(String(chatId), 5, 'music');
+        if (got && got.ok) await send(chatId, '🎵 +<b>5 ⚡</b> sparks. Same wallet as the Temple — play them at <code>@ShaddaiTempleBot</code>.');
+      }
+    } catch (e) {}
   } catch (e) { await send(chatId, '⚠️ Music engine hiccup — try <code>/music lofi</code>'); }
 }
 
@@ -591,6 +610,13 @@ async function handle(update) {
     case 'help': return send(chatId, helpText());
     case 'music': case 'song': case 'beat': case 'track': case 'make':
       return arg ? doMusic(chatId, arg) : send(chatId, '🎼 Pick a style:', genreButtons());
+    case 'bars': {
+      const raw = (arg || '').trim(), n = parseInt(raw, 10);
+      if (!/^\d+$/.test(raw) || n < 2 || n > 6) return send(chatId, 'Usage: <code>/bars &lt;2-6&gt;</code> — compose a shorter original for slow connections. e.g. <code>/bars 4</code>');
+      return doMusic(chatId, 'lofi ' + n, { bars: n });
+    }
+    case 'short':
+      return doMusic(chatId, String(arg || 'lofi'), { bars: 4 });
     case 'genres': case 'styles':
       return send(chatId, '🎵 <b>Genres</b>: ' + GENRE_KEYS.map((g) => mg.GENRES[g].name).join(', ') +
         '\n🎨 <b>Moods</b>: ' + MOOD_KEYS.join(', ') + '\n\nUse: <code>/music &lt;genre&gt; &lt;mood&gt; [bars]</code>');
@@ -664,7 +690,10 @@ async function loop() {
   while (running) {
     try {
       const ups = await getUpdates(offset); fails = 0;
-      for (const u of ups) { offset = u.update_id + 1; handle(u).catch(() => {}); }
+      for (const u of ups) {
+        offset = u.update_id + 1;
+        try { await handle(u); } catch (e) { console.error('[turtle-music-bot] update error:', e); }
+      }
     } catch (e) { fails++; await sleep(Math.min(30000, 2000 * fails)); }
   }
 }

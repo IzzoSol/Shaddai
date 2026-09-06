@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>Turtle Studio — SHADDAI TEMPLE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --obsidian:#06080b; --obsidian2:#0a0e13;
+  --gold:#e8c45c; --cyan:#5fe0ff; --emerald:#00ff9c;
+  --ink:#dfe7ea; --ink2:#8b9aa1;
+  --hair:rgba(232,196,92,.30);
+  --surf:rgba(14,18,24,.72); --surf2:rgba(10,14,19,.85);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--obsidian);color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;-webkit-font-smoothing:antialiased}
+body{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -8%, rgba(0,255,156,.06), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 108%, rgba(95,224,255,.06), transparent 60%),
+    var(--obsidian);
+  min-height:100vh;
+}
+::selection{background:var(--emerald);color:#04120c}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:720px;margin:0 auto;padding:16px calc(16px + env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px 14px}
+.hdr .med{display:flex;align-items:center;gap:9px}
+.glyph{font-size:22px;filter:drop-shadow(0 0 8px rgba(232,196,92,.5))}
+.hdr h1{font-family:'Cinzel Decorative',serif;font-size:14px;font-weight:700;letter-spacing:.16em;color:var(--gold);text-transform:uppercase}
+.hdr .sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;color:var(--ink2);text-transform:uppercase}
+
+/* mode tabs */
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{flex:1;font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:600;letter-spacing:.08em;
+  padding:14px 10px;color:var(--ink2);background:var(--surf);border:1px solid var(--hair);
+  border-radius:12px;cursor:pointer;text-align:center;transition:all .18s}
+.tab.on{color:var(--obsidian);background:linear-gradient(135deg,var(--gold),#f6d98a);border-color:var(--gold);
+  box-shadow:0 0 22px rgba(232,196,92,.35)}
+.tab .em{display:block;font-size:18px;margin-bottom:2px}
+
+.panel{display:none}
+.panel.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============ VISUALIZER ============ */
+.glass{background:var(--surf);border:1px solid var(--hair);border-radius:18px;overflow:hidden;
+  box-shadow:0 18px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04)}
+.vis-stage{position:relative}
+canvas#viz{width:100%;height:42vh;display:block;background:#04060a}
+.readout{position:absolute;left:12px;bottom:8px;font-family:'IBM Plex Mono',monospace;
+  font-size:9px;letter-spacing:.14em;color:var(--ink2);text-shadow:0 1px 4px #000;text-transform:uppercase}
+.readout b{color:var(--cyan)}
+.genres{display:flex;gap:8px;padding:12px;flex-wrap:wrap;border-top:1px solid rgba(232,196,92,.16)}
+.pill{flex:1;min-width:84px;font-family:'Chakra Petch',sans-serif;font-size:12px;font-weight:600;
+  letter-spacing:.05em;padding:12px 6px;border-radius:999px;text-align:center;cursor:pointer;
+  color:var(--ink2);background:var(--surf2);border:1px solid var(--hair);transition:all .16s}
+.pill.on{color:var(--obsidian);border-color:transparent;box-shadow:0 0 18px rgba(95,224,255,.45);
+  background:linear-gradient(135deg,var(--cyan),#9beaff)}
+.controls{display:flex;gap:8px;padding:0 12px 12px;align-items:center}
+.btn{font-family:'Chakra Petch',sans-serif;font-size:14px;font-weight:600;letter-spacing:.05em;
+  padding:14px 18px;border-radius:12px;cursor:pointer;color:var(--ink);background:var(--surf2);
+  border:1px solid var(--hair);transition:all .16s;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{color:var(--obsidian);background:linear-gradient(135deg,var(--emerald),#6dffc0);border-color:transparent;
+  box-shadow:0 0 24px rgba(0,255,156,.3)}
+.btn.ghost{color:var(--cyan);border-color:rgba(95,224,255,.4)}
+.btn:active{transform:scale(.96)}
+.vol{flex:1;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+input[type=range]{appearance:none;-webkit-appearance:none;width:100%;height:28px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--cyan))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;
+  background:#fff;border:2px solid var(--cyan);box-shadow:0 0 10px rgba(95,224,255,.7)}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--cyan))}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--cyan)}
+
+.hint{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink2);letter-spacing:.1em;
+  padding:2px 2px 0;text-align:center;text-transform:uppercase}
+
+/* ============ DREAM CARD ============ */
+.dream-box{padding:16px}
+textarea{width:100%;min-height:96px;resize:vertical;background:var(--surf2);color:var(--ink);
+  border:1px solid var(--hair);border-radius:12px;padding:12px;font-family:'Fraunces',serif;font-size:15px;line-height:1.5}
+textarea::placeholder{color:var(--ink2)}
+textarea:focus{outline:none;border-color:var(--gold)}
+.seed-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.seed-row label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--ink2);text-transform:uppercase}
+.seed-row input{flex:1;background:var(--surf2);color:var(--cyan);border:1px solid var(--hair);border-radius:10px;
+  padding:12px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.seed-row input:focus{outline:none;border-color:var(--cyan)}
+.forge{margin-top:12px;width:100%}
+.svg-card{margin-top:16px;position:relative}
+.svg-card svg{width:100%;height:auto;display:block;border-radius:16px;background:#070a10}
+.svg-cap{margin-top:8px;font-family:'Fraunces',serif;font-style:italic;font-size:14px;color:var(--gold);
+  text-align:center;letter-spacing:.02em}
+.svg-actions{display:flex;gap:8px;margin-top:12px}
+
+/* footer */
+.foot{margin-top:30px;text-align:center;padding-top:18px;border-top:1px solid rgba(232,196,92,.14)}
+.foot .tag{font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--ink2)}
+.foot .tag b{color:var(--gold);font-style:normal}
+.foot .links{display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.foot .links a{font-family:'Chakra Petch',sans-serif;font-size:11px;letter-spacing:.14em;
+  color:var(--ink2);text-transform:uppercase;padding:8px 6px;transition:color .16s}
+.foot .links a:hover{color:var(--cyan)}
+@media(min-width:600px){
+  .hdr h1{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hdr">
+    <div class="med">
+      <span class="glyph">🐢</span>
+      <div>
+        <h1>Turtle Studio</h1>
+        <div class="sub">SHADDAI TEMPLE · BUILD YOUR DREAMS</div>
+      </div>
+    </div>
+    <span class="glyph">🏛️</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-panel="viz"><span class="em">🎧</span>Sound Forge</button>
+    <button class="tab" data-panel="dream"><span class="em">🌙</span>Dreams</button>
+  </nav>
+
+  <!-- ============ MODE 1 : VISUALIZER ============ -->
+  <section id="panel-viz" class="panel on">
+    <div class="glass vis-stage">
+      <canvas id="viz"></canvas>
+      <div class="readout" id="readout">tempo 92 · 92 bpm · seed 1</div>
+    </div>
+    <div class="glass" style="margin-top:12px">
+      <div class="genres" id="genres"></div>
+      <div class="controls">
+        <button class="btn primary" id="play">▶ Play</button>
+        <button class="btn ghost" id="reroll">🎲 Random seed</button>
+        <div class="vol">🔈<input type="range" id="vol" min="0" max="1" step="0.01" value="0.8">🔊</div>
+      </div>
+      <div class="hint">tap play — pure web audio groove · no files · phone friendly 🔊</div>
+    </div>
+  </section>
+
+  <!-- ============ MODE 2 : DREAM CARD ============ -->
+  <section id="panel-dream" class="panel">
+    <div class="glass dream-box">
+      <textarea id="dream-txt" placeholder="Describe a dream or wish… e.g. A tidal library where the sea reads poetry to the moon."></textarea>
+      <div class="seed-row">
+        <label>Seed</label>
+        <input id="dream-seed" type="text" value="" placeholder="auto from phrase">
+      </div>
+      <button class="btn primary forge" id="forge">✨ Forge Dream Card</button>
+    </div>
+    <div class="glass" style="margin-top:12px;padding:12px">
+      <div class="svg-card" id="svg-card"><div class="hint" style="padding:40px 10px">type a dream and forge — your wish becomes a sky 🌌</div></div>
+      <div class="svg-cap" id="svg-cap"></div>
+      <div class="svg-actions" id="svg-actions" style="display:none">
+        <button class="btn ghost" id="reseed" style="flex:1">🔁 Reseed</button>
+        <button class="btn ghost" id="save" style="flex:1">💾 Save PNG</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="tag">Turtle Studio · SHADDAI TEMPLE · build your dreams with the guild</div>
+    <div class="links">
+      <a href="/athenaeum">Athenaeum</a>
+      <a href="/museum-3d">Museum 3D</a>
+      <a href="/design (Telegram)">Design</a>
+      <a href="/#">Home</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+/* ---------- seedable prng (mulberry32) ---------- */
+function rng(seed){let t=seed>>>0;return function(){t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;}}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function seedFromString(s){return hashStr((s||"a dream").trim().toLowerCase());}
+function pick(r,arr){return arr[Math.floor(r()*arr.length)];}
+
+/* ---------- state ---------- */
+let cfg={playing:false,genre:'LOFI',melSeed:Math.floor(Math.random()*1e6),vol:0.8};
+const GENRES={
+  LOFI:   {tempo:88,  kickWave:'sine',    leadWave:'sawtooth', bassWave:'triangle', grad:['#0b1020','#1a1f3f','#2a1f3f'], glow:'#e8c45c', tint:'#c7a04a'},
+  SYNTHWAVE:{tempo:118,kickWave:'sine',   leadWave:'square',   bassWave:'square',   grad:['#160825','#3c0a54','#ff2a6d'], glow:'#ff2a6d', tint:'#2de2e6'},
+  TRAP:   {tempo:124, kickWave:'sine',    leadWave:'sawtooth', bassWave:'sawtooth', grad:['#05070a','#0e1a16','#1f6f47'], glow:'#00ff9c', tint:'#8effd0'},
+  SPACE:  {tempo:76,  kickWave:'sine',    leadWave:'triangle', bassWave:'sine',     grad:['#03040a','#0a0f2e','#3b1a66'], glow:'#5fe0ff', tint:'#b39dff'}
+};
+
+/* ============ PART 1 : VISUALIZER ============ */
+const PENTA=[0,2,3,5,7,10]; // minor pentatonic offsets (semis)
+function initVisualizer(){
+  const canvas=document.getElementById('viz');
+  const ctx=canvas.getContext('2d');
+  let W,H,dpr=Math.min(window.devicePixelRatio||1,2);
+  function resize(){W=canvas.clientWidth||canvas.parentElement.clientWidth;H=canvas.clientHeight||canvas.parentElement.clientHeight;
+    canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  window.addEventListener('resize',resize);resize();
+
+  let phase=0,particles=[];
+  let farr=new Uint8Array(512);
+
+  function draw(){
+    requestAnimationFrame(draw);
+    phase+=0.012;
+    const g=GENRES[cfg.genre];
+    // gradient bg
+    const gr=ctx.createLinearGradient(0,0,0,H);
+    g.grad.forEach((c,i)=>gr.addColorStop(i/(g.grad.length-1),c));
+    ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
+    // glow sweep
+    const sw=ctx.createRadialGradient(W/2,H*0.42,10,W/2,H*0.42,W*0.9);
+    sw.addColorStop(0,g.glow+'33');sw.addColorStop(1,'transparent');ctx.fillStyle=sw;ctx.fillRect(0,0,W,H);
+
+    let low=0,overall=0,arr=farr;
+    if(analyserNode){
+      if(farr.length!==analyserNode.frequencyBinCount)farr=new Uint8Array(analyserNode.frequencyBinCount);
+      arr=farr;
+      analyserNode.getByteFrequencyData(arr);
+      for(let i=0;i<arr.length;i++){overall+=arr[i]/255;}
+      overall/=Math.max(1,arr.length);
+      for(let i=1;i<8;i++){low+=arr[i]/255;}
+      low/=7;
+    }
+
+    // orb
+    const ox=W/2,oy=H*0.42,base=Math.min(W,H)*0.09;
+    const pulse=base*(1+low*1.6+Math.sin(phase*6)*0.03);
+    const og=ctx.createRadialGradient(ox,oy,1,ox,oy,pulse*2.2);
+    og.addColorStop(0,g.glow+'ee');og.addColorStop(0.5,g.glow+'55');og.addColorStop(1,'transparent');
+    ctx.fillStyle=og;ctx.beginPath();ctx.arc(ox,oy,pulse*2.2,0,6.283);ctx.fill();
+    ctx.fillStyle='#fff';ctx.shadowColor=g.glow;ctx.shadowBlur=26;
+    ctx.beginPath();ctx.arc(ox,oy,pulse,0,6.283);ctx.fill();ctx.shadowBlur=0;
+
+    // particles trail
+    if(Math.random()<(0.3+overall)){
+      particles.push({x:ox+(Math.random()-0.5)*pulse*2,y:oy+(Math.random()-0.5)*pulse*2,
+        vx:(Math.random()-0.5)*0.8,vy:-0.4-Math.random()*0.8,life:1,g:g.glow});
+    }
+    for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.vy*=.99;p.life-=.012;
+      if(p.life<=0||p.y<0){particles.splice(i,1);continue;}
+      ctx.globalAlpha=p.life;ctx.fillStyle=p.g;ctx.beginPath();ctx.arc(p.x,p.y,2*p.life,0,6.283);ctx.fill();
+      ctx.globalAlpha=1;}
+
+    // mirrored bars
+    const N=56,bw=W/N;
+    for(let i=0;i<N;i++){
+      const f=Math.floor(Math.pow(i/N,1.5)*arr.length);
+      const v=arr.length?arr[Math.min(f,arr.length-1)]/255:0.05*(Math.random()*.5);
+      const h=Math.max(0,v)*H*0.34;
+      const x=i*bw;
+      const grad=ctx.createLinearGradient(0,oy-h,0,oy+h);
+      grad.addColorStop(0,g.glow);grad.addColorStop(.5,g.tint);grad.addColorStop(1,g.tint+'33');
+      ctx.fillStyle=grad;
+      ctx.fillRect(x+1,oy-h,bw-2,h);
+      ctx.fillRect(x+1,oy,bw-2,h);
+    }
+    // mid line
+    ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(0,oy-0.5,W,1);
+    ctx.fillStyle=g.glow;ctx.fillRect(0,oy-1,W,2);
+  }
+  draw();
+  return {ctx,W,H};
+}
+/* audio refs (lazy) */
+let AC=null,master=null,analyserNode=null,grooveNodes=[];
+function playTone(ctx,dest,freq,start,dur,type,vol,glideTo){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,start);
+  if(glideTo)o.frequency.exponentialRampToValueAtTime(Math.max(20,glideTo),start+dur*0.8);
+  g.gain.setValueAtTime(0.0001,start);
+  g.gain.exponentialRampToValueAtTime(vol,start+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
+  o.connect(g);g.connect(dest);
+  o.start(start);o.stop(start+dur+0.02);
+  grooveNodes.push(o,g);
+}
+function playHat(ctx,dest,start,vol){
+  const b=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.05),ctx.sampleRate);
+  const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+  const n=ctx.createBufferSource();n.buffer=b;
+  const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=6000;
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,start);
+  g.gain.exponentialRampToValueAtTime(vol,start+0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001,start+0.05);
+  n.connect(hp);hp.connect(g);g.connect(dest);
+  n.start(start);n.stop(start+0.06);
+  grooveNodes.push(n,g);
+}
+function buildGroove(){
+  const g=GENRES[cfg.genre],bpm=g.tempo,spb=60/bpm;
+  const r=rng(cfg.melSeed);
+  const root=110;
+  // master + analyser
+  if(!AC||AC.state==='closed'){AC=new (window.AudioContext||window.webkitAudioContext)();}
+  if(AC.state==='suspended')AC.resume();
+  master=AC.createGain();master.gain.value=cfg.vol;
+  analyserNode=AC.createAnalyser();analyserNode.fftSize=1024;
+  master.connect(analyserNode);analyserNode.connect(AC.destination);
+  grooveNodes=[];
+
+  const t0=AC.currentTime+0.05;
+  const bars=4,steps=16;
+  // melody (seeded)
+  const mel=[];for(let i=0;i<steps;i++)mel.push(r()<0.62?PENTA[Math.floor(r()*PENTA.length)]:null);
+  // bass progression (root octave steps)
+  const bassN=[];for(let i=0;i<steps;i++)bassN.push(PENTA[Math.floor(r()*4)]);
+  // schedule 4 bars
+  for(let bar=0;bar<bars;bar++){
+    for(let s=0;s<steps;s++){
+      const t=t0+(bar*steps+s)*spb*0.5;
+      // kick every 4 steps
+      if(s%4===0)playTone(AC,master,bpm>100?110:120,t,0.15,g.kickWave,0.9,45);
+      // hats on 8ths, accent offbeats
+      playHat(AC,master,t,s%2===0?0.06:0.13);
+      // bass half-step pulses
+      playTone(AC,master,root*2*Math.pow(2,bassN[s%bassN.length]/12),t,spb*0.46,g.bassWave,0.22);
+      // lead arpeggio
+      const step=mel[s];
+      if(step!==null&&s%2===0){
+        const f=root*4*Math.pow(2,step/12);
+        playTone(AC,master,f,t,spb*0.4,g.leadWave,0.12);
+      }
+    }
+  }
+}
+function stopGroove(){
+  try{
+    const victim=AC;
+    if(master&&victim)master.gain.setTargetAtTime(0,victim.currentTime,0.02);
+    setTimeout(()=>{try{victim&&victim.state!=='closed'&&victim.close();}catch(e){}if(AC===victim){AC=null;}master=null;analyserNode=null;},260);
+    if(AC===victim)AC=null;master=null;analyserNode=null;
+  }catch(e){AC=null;master=null;analyserNode=null;}
+}
+function initMedia(){
+  const play=document.getElementById('play');
+  const reroll=document.getElementById('reroll');
+  const vol=document.getElementById('vol');
+  const genres=document.getElementById('genres');
+  const read=document.getElementById('readout');
+  // genre pills
+  Object.keys(GENRES).forEach(name=>{
+    const b=document.createElement('button');b.className='pill'+(name===cfg.genre?' on':'');b.textContent=name;
+    b.addEventListener('click',()=>{
+      cfg.genre=name;
+      document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));b.classList.add('on');
+      if(cfg.playing){stopGroove();setTimeout(()=>{buildGroove();},100);}
+    });
+    genres.appendChild(b);
+  });
+  function updateReadout(){
+    read.innerHTML='tempo '+(GENRES[cfg.genre].tempo)+' · <b>'+GENRES[cfg.genre].tempo+' bpm</b> · melody seed <b>'+cfg.melSeed+'</b>';
+  }
+  updateReadout();
+  play.addEventListener('click',()=>{
+    if(!cfg.playing){ cfg.playing=true;play.textContent='⏸ Stop';buildGroove(); }
+    else{ cfg.playing=false;play.textContent='▶ Play';stopGroove(); }
+  });
+  reroll.addEventListener('click',()=>{cfg.melSeed=Math.floor(Math.random()*1e6);updateReadout();if(cfg.playing){stopGroove();setTimeout(()=>buildGroove(),100);}});
+  vol.addEventListener('input',()=>{cfg.vol=+vol.value;if(master)master.gain.value=cfg.vol;});
+}
+
+/* ============ PART 2 : DREAM CARD ============ */
+let curSeed=0,curPhrase='';
+function buildDreamScape(seed,phrase){
+  const r=rng(seed);
+  const W=520,H=620;
+  // sky hues
+  const hue1=200+Math.floor(r()*60),hue2=(hue1+120+Math.floor(r()*120))%360;
+  const sky1=`hsl(${hue1} 70% ${16+r()*12}%)`,sky2=`hsl(${hue2} 65% ${30+r()*14}%)`;
+  // moon phase from bits
+  const phaseBits=(seed>>>16)&7,ph=phaseBits/8;
+  const mx=110+r()*(W-220),my=110+r()*90,mr=34+r()*18;
+  // hills
+  const hills=[];
+  for(let k=0;k<3;k++){
+    let d='';const n=6,y0=H*(0.52+k*0.09),amp=30+k*14-r()*10;
+    for(let i=0;i<=n;i++){const x=i/n*W;const yy=y0-Math.sin(i/n*Math.PI)*amp-(r()*12);d+=(i?'L':'M')+x.toFixed(1)+' '+yy.toFixed(1);}
+    hills.push({d,fill:`hsl(${hue1} ${40}% ${10+k*7-r()*4}%)`});
+  }
+  // stars
+  let stars='';
+  for(let i=0;i<70;i++){
+    const x=r()*W,y=r()*H*0.7,rad=0.5+r()*1.6;
+    stars+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(2)}" fill="#fff" opacity="${(0.3+r()*0.7).toFixed(2)}"/>`;
+  }
+  // water mirror
+  const wy=H*0.86;
+  // constellation from phrase letter hashes
+  const letters=phrase.replace(/[^a-z0-9]/gi,'').slice(0,7);
+  const constStars=[];
+  const consX=W/2-40,consY=H*0.46;
+  for(let i=0;i<letters.length;i++){
+    const h=hashStr(letters[i]);
+    constStars.push([consX+(((h>>>0)%9)-4)*17+((h>>>8)%5)*8,consY+(((h>>>16)%11)-5)*13+((h>>>24)%7)*7]);
+  }
+  if(!constStars.length)constStars.push([consX,consY]);
+  let constLines='';
+  for(let i=1;i<constStars.length;i++){constLines+=`<line x1="${constStars[i-1][0].toFixed(1)}" y1="${constStars[i-1][1].toFixed(1)}" x2="${constStars[i][0].toFixed(1)}" y2="${constStars[i][1].toFixed(1)}" stroke="#fff" stroke-opacity="0.4" stroke-width="1"/>`;}
+  let constDots='';
+  constStars.forEach(p=>{constDots+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="#fff" opacity="0.9"/>`;});
+
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(phrase)}">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${sky1}"/><stop offset="1" stop-color="${sky2}"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${sky2}" stop-opacity="0.9"/><stop offset="1" stop-color="#02030a"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.9"/><stop offset="0.6" stop-color="#fff" stop-opacity="0.25"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#sky)"/>
+  <g>${stars}</g>
+  <!-- moon -->
+  <circle cx="${mx}" cy="${my}" r="${mr*2.4}" fill="url(#moonGlow)"/>
+  <circle cx="${mx}" cy="${my}" r="${mr}" fill="#f4f1dd"/>
+  <path d="M ${mx} ${my-mr} A ${mr} ${mr} 0 1 0 ${mx+0.01} ${my-mr}" fill="${sky2}" opacity="${ph}"/>
+  <!-- hills -->
+  ${hills.map(h=>`<path d="${h.d} L ${W} ${H} L 0 ${H} Z" fill="${h.fill}"/>`).join('')}
+  <!-- constellation -->
+  <g>${constLines}${constDots}</g>
+  <!-- water mirror -->
+  <rect y="${wy}" width="${W}" height="${H-wy}" fill="url(#water)"/>
+  <line x1="${mx-mr*2}" y1="${wy}" x2="${mx+mr*2}" y2="${wy}" stroke="#fff" stroke-opacity="0.25" stroke-width="1"/>
+  </svg>`;
+  return svg;
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderDream(){
+  const card=document.getElementById('svg-card');
+  const cap=document.getElementById('svg-cap');
+  const actions=document.getElementById('svg-actions');
+  const phrase=document.getElementById('dream-txt').value.trim()||'A dream yet unspoken';
+  const seedInput=document.getElementById('dream-seed');
+  let seed;
+  if(seedInput.value.trim()){seed=seedFromString(seedInput.value.trim());}
+  else{seed=seedFromString(phrase);}
+  curSeed=seed;curPhrase=phrase;
+  if(!seedInput.dataset.hand){seedInput.value=seed;}
+  card.innerHTML=buildDreamScape(seed,phrase);
+  cap.textContent='“'+phrase+'”';
+  actions.style.display='flex';
+}
+function savePng(){
+  const svg=document.querySelector('#svg-card svg');
+  if(!svg)return;
+  const xml=new XMLSerializer().serializeToString(svg);
+  const blob=new Blob([xml],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas');c.width=520;c.height=620;
+    const cx=c.getContext('2d');cx.fillStyle='#000';cx.fillRect(0,0,c.width,c.height);
+    cx.drawImage(img,0,0);
+    URL.revokeObjectURL(url);
+    const a=document.createElement('a');
+    a.download='turtle-dream-'+curSeed+'.png';
+    a.href=c.toDataURL('image/png');
+    document.body.appendChild(a);a.click();a.remove();
+  };
+  img.onerror=()=>{alert('PNG blocked on this browser — long-press / download the SVG to save.');};
+  img.src=url;
+}
+function initDream(){
+  document.getElementById('forge').addEventListener('click',renderDream);
+  document.getElementById('reseed').addEventListener('click',()=>{document.getElementById('dream-seed').value='';renderDream();});
+  document.getElementById('save').addEventListener('click',savePng);
+  const seed=document.getElementById('dream-seed');
+  seed.addEventListener('input',()=>{seed.dataset.hand='1';});
+  // sample dream on load
+  document.getElementById('dream-txt').value='A tidal library where the sea reads poetry to the moon.';
+  renderDream();
+}
+
+/* ---------- mode tabs ---------- */
+function initTabs(){
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      document.getElementById('panel-'+t.dataset.panel).classList.add('on');
+    });
+  });
+}
+
+/* ---------- boot ---------- */
+window.addEventListener('DOMContentLoaded',()=>{
+  initVisualizer();
+  initMedia();
+  initDream();
+  initTabs();
+});
+</script>
+</body>
+</html>

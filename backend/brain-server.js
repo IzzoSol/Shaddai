@@ -95,14 +95,18 @@ function checkFreeQuota(req, res) {
     (req.headers['x-telegram-user-id'] || '') ||
     (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || 'anon';
   if (isProUser(uid)) return true;
+  // Telegram referral bonus: each successful invite adds bonus daily free asks.
+  // Optional dependency — a broken store degrades to the base quota, never breaks asks.
+  let limit = FREE_ASK_LIMIT;
+  try { limit += (require('./lib/tg-community').bonusAsks(uid) || 0); } catch (_) {}
   const day = new Date().toISOString().slice(0, 10);
   const key = uid + ':' + day;
   const count = _freeAskUsage.get(key) || 0;
-  if (count >= FREE_ASK_LIMIT) {
+  if (count >= limit) {
     res.status(402).json({
       error: 'free query limit reached',
-      limit: FREE_ASK_LIMIT,
-      message: `Free tier gets ${FREE_ASK_LIMIT} grounded queries/day. Upgrade to Pro for unlimited.`,
+      limit,
+      message: `Free tier gets ${limit} grounded queries/day. Upgrade to Pro for unlimited.`,
       upgrade: '/pricing.html',
     });
     return false;

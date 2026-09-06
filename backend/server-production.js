@@ -1815,6 +1815,15 @@ try {
   console.warn('[prod] Virtuals ACP REST failed:', e.message);
 }
 
+// ZEROX PAID TASK — "pay ZEROX → run a real agentic task → route it to inference".
+// Premium-gated (free unless X402_ENABLED) so it mirrors the /api/agentic/run policy.
+try {
+  app.use(require('./routes/zerox-paid'));
+  console.log('[prod] ZEROX paid-task REST mounted (/api/zerox/*)');
+} catch (e) {
+  console.warn('[prod] ZEROX paid-task REST failed:', e.message);
+}
+
 // LLM ROUTER — multi-provider status + a direct chat probe (Groq→fallback).
 try {
   const llmRouter = require('./lib/llm-router');
@@ -2069,6 +2078,15 @@ app.post('/api/mastery/search', express.json(), async (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: String((e && e.message) || e) });
   }
+});
+
+// ── Web scrape → RAG brain ingest (POST /api/rag/scrape) ──────────────────────
+// Scrapes a public https URL into the requested agent's knowledge base, writes a
+// durable mastery .md, and live-indexes it (the boot rebuild dedupes by name).
+// Body: { url, agent (e.g. ORACLE|zerox|nexus), slug?, maxChars? }
+app.post('/api/rag/scrape', express.json(), (req, res) => {
+  const rscrape = require('./lib/rag-scrape');
+  rscrape.handler(req, res);
 });
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
 app.use('/api/gridiron', require('./routes/gridiron-routes'));
