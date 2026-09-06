@@ -50,7 +50,9 @@ if (calls.length) {
     'id' in c && 'symbol' in c && 'mint' in c && 'currentMult' in c && 'peakMult' in c && 'ts' in c);
   ok('call shape has NO html/markup fields', !('milestones' in c) && !('closed' in c));
 }
-ok('callsJson respects limit clamp (≤100)', pnl.callsJson({ limit: 9999 }).length <= 100);
+// lib clamp is 2000 (internal stats aggregation needs the full corpus); the
+// PUBLIC /api/v1 surface caps at 100 — asserted via HTTP below.
+ok('callsJson respects lib clamp (≤2000)', pnl.callsJson({ limit: 9999 }).length <= 2000);
 ok('callsJson since=now returns nothing newer', pnl.callsJson({ since: Date.now() + 1 }).length === 0);
 const lb = pnl.leaderboardJson({ limit: 10 });
 ok('leaderboardJson sorted by peakMult desc', lb.length < 2 || lb[0].peakMult >= lb[lb.length - 1].peakMult);
@@ -80,6 +82,8 @@ const server = app.listen(0, async () => {
     // authed reads → 200 with envelope
     r = await J('/api/v1/calls?limit=3', auth);
     ok('GET /calls with key → 200 {ok,data[]}', r.status === 200 && r.body.ok && Array.isArray(r.body.data));
+    r = await J('/api/v1/calls?limit=9999', auth);
+    ok('GET /calls caps public rows at ≤100', r.status === 200 && Array.isArray(r.body.data) && r.body.data.length <= 100);
     r = await J('/api/v1/stats', auth);
     ok('GET /stats with key → 200 {ok,data}', r.status === 200 && r.body.ok && r.body.data && 'totalCalls' in r.body.data);
     r = await J('/api/v1/leaderboard?limit=5', auth);

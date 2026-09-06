@@ -108,11 +108,16 @@ router.post('/keys/:id/revoke', express.json({ limit: '2kb' }), (req, res) => {
 
 // ── read endpoints ──────────────────────────────────────────────────────────
 const signals = requireScope('signals');
+// Public result caps — 100 rows max over the wire regardless of the caller's
+// requested `limit` (the internal dashboard path in server-production.js may still
+// pull up to 2000 via callsJson directly; this boundary is the defensive public cap).
+const _pubLimit = (v) => Math.min(100, Math.max(1, parseInt(v, 10) || 50));
+
 router.get('/calls', requireKey, signals, (req, res) =>
-  res.json({ ok: true, data: pnl.callsJson({ limit: req.query.limit, since: req.query.since, chain: req.query.chain, source: req.query.source }) }));
+  res.json({ ok: true, data: pnl.callsJson({ limit: _pubLimit(req.query.limit), since: req.query.since, chain: req.query.chain, source: req.query.source }) }));
 
 router.get('/leaderboard', requireKey, signals, (req, res) =>
-  res.json({ ok: true, data: pnl.leaderboardJson({ limit: req.query.limit, period: req.query.period }) }));
+  res.json({ ok: true, data: pnl.leaderboardJson({ limit: _pubLimit(req.query.limit), period: req.query.period }) }));
 
 router.get('/stats', requireKey, signals, (req, res) =>
   res.json({ ok: true, data: pnl.statsJson() }));
