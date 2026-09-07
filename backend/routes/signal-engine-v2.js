@@ -301,8 +301,14 @@ Volume 24h: $${(coin.volume24h / 1000 || 0).toFixed(0)}K
     }).catch(() => {});
 
     // 2. Store call in database with REAL multipliers
-    const calls = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'tg-calls.json'), 'utf8') || '[]');
-    calls.unshift({
+    // tg-calls.json is OWNED by telegram-pnl.js as { calls: [...] } — never write a
+    // bare array here (a bare-array write corrupts the shape every pnl reader expects
+    // and is the cause of the "calls.slice is not a function" flood).
+    const callsPath = path.join(DATA_DIR, 'tg-calls.json');
+    let store = { calls: [] };
+    try { store = JSON.parse(fs.readFileSync(callsPath, 'utf8') || '{"calls":[]}'); } catch (_) {}
+    if (!store || !Array.isArray(store.calls)) store = { calls: [] };
+    store.calls.unshift({
       symbol: coin.symbol,
       score: evaluation.score,
       timing: evaluation.timing,
@@ -324,8 +330,9 @@ Volume 24h: $${(coin.volume24h / 1000 || 0).toFixed(0)}K
       exitTargets: levelData ? levelData.tpTargets : null,
       stopLoss: levelData ? levelData.stopLoss : null,
     });
+    store.calls = store.calls.slice(0, 5000);
 
-    fs.writeFileSync(path.join(DATA_DIR, 'tg-calls.json'), JSON.stringify(calls.slice(0, 200)));
+    try { fs.writeFileSync(callsPath, JSON.stringify(store)); } catch (_) {}
 
     return {
       called: true,
@@ -390,11 +397,12 @@ router.get('/categories', (req, res) => {
  */
 router.get('/recent-calls', (req, res) => {
   try {
-    const calls = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'tg-calls.json'), 'utf8') || '[]');
+    const store = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'tg-calls.json'), 'utf8') || '{"calls":[]}');
+    const calls = (store && Array.isArray(store.calls)) ? store.calls : [];
     res.json({
       totalCalls: calls.length,
       recent: calls.slice(0, 20),
-      avgScore: (calls.reduce((s, c) => s + c.score, 0) / calls.length || 0).toFixed(1),
+      avgScore: (calls.length ? (calls.reduce((s, c) => s + (c.score || 0), 0) / calls.length) : 0).toFixed(1),
     });
   } catch {
     res.json({ totalCalls: 0, recent: [], avgScore: 0 });
@@ -455,7 +463,10 @@ router.get('/category-coins', async (req, res) => {
 async function updatePeakMultipliers() {
   try {
     const callsPath = path.join(DATA_DIR, 'tg-calls.json');
-    const calls = JSON.parse(fs.readFileSync(callsPath, 'utf8') || '[]');
+    const store = JSON.parse(fs.readFileSync(callsPath, 'utf8') || '{"calls":[]}');
+    // Guard the object shape (telegram-pnl owns {calls:[]}); never treat as a bare array.
+    if (!store || !Array.isArray(store.calls)) return;
+    const calls = store.calls;
 
     // Only update recent calls (last 50)
     const recentCalls = calls.slice(0, 50);
@@ -489,10 +500,11 @@ async function updatePeakMultipliers() {
     }
 
     if (updated) {
-      fs.writeFileSync(callsPath, JSON.stringify(calls));
+      fs.writeFileSync(callsPath, JSON.stringify(store));
     }
   } catch (e) {
-    console.warn('Peak multiplier update error:', e.message);
+    // Now genuinely unexpected — but never spam the log for a shape mismatch.
+    if (!/slice is not a function/.test(String(e && e.message))) console.warn('Peak multiplier update error:', e && e.message);
   }
 }
 

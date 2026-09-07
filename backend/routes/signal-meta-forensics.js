@@ -141,7 +141,8 @@ function analyzePsychology(coins) {
  */
 function buildThesisDatabase() {
   try {
-    const calls = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'tg-calls.json'), 'utf8') || '[]');
+    const raw = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'tg-calls.json'), 'utf8') || '{"calls":[]}');
+    const calls = (raw && Array.isArray(raw.calls)) ? raw.calls : (Array.isArray(raw) ? raw : []);
 
     // Categorize by outcome
     const winners = calls.filter(c => c.peakMult && c.peakMult >= 3);

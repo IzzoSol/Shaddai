@@ -21,12 +21,14 @@ let recentCoins = {};
  */
 async function fetchBoostedCoins() {
   try {
+    // Correct DexScreener endpoint (the old /latest/boosts path 404s → HTML → "Unexpected token '<'").
     const res = await fetch(
-      'https://api.dexscreener.com/latest/boosts?chainId=solana&limit=100',
-      { timeout: 5000 }
+      'https://api.dexscreener.com/token-boosts/latest/v1',
+      { signal: AbortSignal.timeout(8000) }
     );
-    const data = await res.json();
-    return data.boosts || [];
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
+    return Array.isArray(data) ? data : [];
   } catch (e) {
     console.warn('Boosted coins fetch error:', e.message);
     return [];
@@ -41,9 +43,10 @@ async function fetchNewCoins() {
   try {
     const res = await fetch(
       'https://api.dexscreener.com/latest/dex/search?q=age:0-2h&chainId=solana&sort=volume&limit=50',
-      { timeout: 5000 }
+      { signal: AbortSignal.timeout(8000) }
     );
-    const data = await res.json();
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
     return data.pairs || [];
   } catch (e) {
     console.warn('New coins fetch error:', e.message);
