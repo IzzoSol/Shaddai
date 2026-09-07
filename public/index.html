@@ -4348,7 +4348,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <nav id="mainNav">
   <button class="nav-btn" onclick="location.href='/quickstart.html'" style="color:#00e5ff;font-weight:700" title="Quick Start — answer a few questions, get what you need">⚡ Quick Start</button>
   <button class="nav-btn active nav-img" onclick="showView('dash')" style="--nav-img:url(/assets/nav/dashboard.jpg)">🎛️ Dashboard</button>
-  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
+  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/assets/agents/SHADDAI-portrait.png" alt="SHADDAI" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px" onerror="this.outerHTML='🧠'"> Agents</button>
   <button class="nav-btn nav-img" onclick="showView('workflow')" style="--nav-img:url(/assets/nav/workflow.jpg)"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
   <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
   <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
@@ -4365,7 +4365,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">🎚️ Settings</button>
-  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
+  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/assets/agents/PIKADON-portrait.png" alt="PIKADON" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px" onerror="this.outerHTML='🛡️'"> Security</button>
   <!-- Rooms moved into the 🌐 Worlds chooser — out of the main work-flow -->
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
@@ -20690,7 +20690,7 @@ function render3DAgentCards() {
 
   container.innerHTML = S.agents.map(a => {
     const m = DOSSIER_META[a.name] || { color:'#00ff88', rgb:'0,229,160', rank:'AGENT', code:'AGT', clearance:2 };
-    const imgUrl = _agentImageCache[a.name] || ('/api/forge/art/agent-' + a.name.toLowerCase() + '.png');
+    const imgUrl = _agentImageCache[a.name] || '/assets/agents/' + a.name + '-portrait.png';
     const isPrimary = a.name === S.primaryAgent;
     const brainLevel = _currentBrainLevel || 2;
     const connectedCount = (_agentAPIConnections?.[a.name.toLowerCase()] || []).length;
@@ -45582,11 +45582,40 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       <div class="tab-header-actions" style="display:flex;gap:8px;align-items:center">
         <input id="tbSearch" placeholder="Search tools by name or description…" style="font-size:11px;padding:5px 10px;min-width:240px;background:var(--bg-card,#0a0e17);border:1px solid var(--border);color:var(--text);border-radius:6px" autocomplete="off">
         <button class="btn btn-ghost" id="tbReload" style="font-size:9px;padding:4px 10px">↺ Reload</button>
+        <button class="btn btn-ghost" id="btnMedia" style="font-size:9px;padding:4px 10px;color:var(--accent);border-color:var(--accent)">⬡ Capture</button>
       </div>
     </div>
     <div id="tbChips" style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0"></div>
     <div id="tbGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding-bottom:40px"></div>
   </div>
+
+  <script>
+  /* ═══ MEDIA ENGINE POPOUT — SHADDAI's own media downloader (/api/media) ═══
+     Self-contained overlay with an iframe to /media.html. Delegated listener
+     (no inline onclick — script-src-attr is 'none' in this dashboard CSP). */
+  (function(){
+    var ov = document.createElement('div');
+    ov.id = 'mediaPop';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(2,5,10,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center';
+    var frame = document.createElement('iframe');
+    frame.src = '/media.html';
+    frame.style.cssText = 'width:min(880px,94vw);height:min(760px,92vh);border:1px solid rgba(0,229,160,.4);border-radius:14px;background:#03060b;box-shadow:0 0 60px rgba(0,229,160,.15)';
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '✕ close';
+    close.style.cssText = 'position:fixed;top:20px;right:22px;z-index:100000;background:transparent;border:1px solid rgba(0,229,160,.4);color:#00e5a0;font-family:inherit;font-size:10px;letter-spacing:1px;padding:7px 14px;border-radius:999px;cursor:pointer';
+    ov.appendChild(close); ov.appendChild(frame);
+    document.body.appendChild(ov);
+    function openM(){ ov.style.display = 'flex'; }
+    function closeM(){ ov.style.display = 'none'; }
+    close.addEventListener('click', closeM);
+    ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeM(); });
+    var btn = document.getElementById('btnMedia');
+    if (btn) btn.addEventListener('click', openM);
+    window.openMediaPopout = openM;
+  })();
+  </script>
 
   <script>
   /* ═══ TOOL BROWSER — real UI over /api/agent/tools + /api/tools/run ═══
