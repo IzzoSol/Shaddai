@@ -894,6 +894,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
       <div class="rtab" onclick="rTab('miro',this)">🐟 MIRO</div>
       <div class="rtab" onclick="rTab('qual',this)">🛡 QUALITY</div>
       <div class="rtab" onclick="rTab('wintel',this)">🦈 WALLETS</div>
+      <div class="rtab" onclick="rTab('history',this)">📜 HISTORY</div>
     </div>
 
     <!-- INTEL tab -->
@@ -1072,6 +1073,25 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
             from each coin's current/peak multiple × the wallet's holding %. Tap ⬇ BACKFILL once to pull
             holder data for older calls that predate this feature.
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY tab -->
+    <div class="rpane" id="rpane-history">
+      <div class="rpane-scroll">
+        <div style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;color:var(--P);text-shadow:var(--gP)">📜 PNL HISTORY</span>
+            <span style="flex:1"></span>
+            <span id="hist-count" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--label)">—</span>
+          </div>
+          <input id="hist-search" placeholder="SEARCH TICKER…" oninput="renderHistoryFilter()" style="width:100%;box-sizing:border-box;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 10px;font-family:'Share Tech Mono',monospace;font-size:11px;border-radius:4px;margin-bottom:10px;letter-spacing:1px"/>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <button class="pdbtn" id="hist-sort" onclick="toggleHistSort()">SORT: PEAK ↓</button>
+            <button class="pdbtn" onclick="loadHistory()">⟳ RELOAD</button>
+          </div>
+          <div id="hist-list" style="display:flex;flex-direction:column;gap:6px"><div class="mload" style="padding:14px">LOADING EVERY CALL…</div></div>
         </div>
       </div>
     </div>
@@ -1531,7 +1551,7 @@ function cca(m){if(!m)return;navigator.clipboard.writeText(m).then(()=>toast('CA
 let _pnl={c:null,art:null,dataUrl:null};
 
 async function makePnl(mint){
-  const c=_calls.find(x=>x.mint===mint)||{}; if(!c) return;
+  const c=_calls.find(x=>x.mint===mint)||(_histCalls&&_histCalls.find(x=>x.mint===mint))||{}; if(!c) return;
   _pnl={c,art:null,dataUrl:null};
   const m=document.getElementById('pnlmodal');
   if(m) m.classList.add('on');
@@ -2113,9 +2133,54 @@ function rTab(name, el){
   if(name==='news'&&!_newsLoaded) loadSidebarNews();
   if(name==='qual'&&!_qualLoaded){ _qualLoaded=true; loadQuality(); }
   if(name==='wintel'&&!_winLoaded){ _winLoaded=true; loadWalletIntel(); }
+  if(name==='history'&&!_histLoaded){ loadHistory(); }
 }
 let _polyLoaded=false;
-let _stocksLoaded=false, _newsLoaded=false, _qualLoaded=false, _winLoaded=false;
+let _stocksLoaded=false, _newsLoaded=false, _qualLoaded=false, _winLoaded=false, _histLoaded=false;
+
+// ── PNL HISTORY: every call ever made, searchable, tap to open its card ──────
+let _histCalls=[], _histSort='peak';
+async function loadHistory(){
+  _histLoaded=true;
+  const el=document.getElementById('hist-list');
+  if(el) el.innerHTML='<div class="mload" style="padding:14px">LOADING EVERY CALL…</div>';
+  try{
+    const r=await fetch(BASE+'/api/signals/calls?limit=2000&all=1',{signal:AbortSignal.timeout(20000)});
+    const j=await r.json();
+    _histCalls=(j.calls||[]).slice();
+    if(document.getElementById('hist-count')) document.getElementById('hist-count').textContent=_histCalls.length+' CALLS';
+    renderHistory();
+  }catch(e){
+    if(el) el.innerHTML='<div class="empty">ERROR: '+esc(e.message)+'</div>';
+  }
+}
+function toggleHistSort(){
+  _histSort = _histSort==='peak' ? 'recent' : 'peak';
+  const b=document.getElementById('hist-sort');
+  if(b) b.textContent = _histSort==='peak' ? 'SORT: PEAK ↓' : 'SORT: RECENT ↓';
+  renderHistory();
+}
+function renderHistoryFilter(){ renderHistory(); }
+function renderHistory(){
+  const el=document.getElementById('hist-list');
+  if(!el) return;
+  const q=(document.getElementById('hist-search')&&document.getElementById('hist-search').value||'').toUpperCase().trim();
+  let rows=_histCalls.slice();
+  if(q) rows=rows.filter(c=>(String(c.symbol||'')+' '+(c.name||'')).toUpperCase().includes(q));
+  rows.sort((a,b)=> _histSort==='peak' ? (b.peakMult||0)-(a.peakMult||0) : (b.ts||0)-(a.ts||0));
+  if(!rows.length){ el.innerHTML='<div class="empty">NO CALLS MATCH</div>'; return; }
+  el.innerHTML=rows.map(c=>{
+    const sym=String(c.symbol||'TOKEN').toUpperCase();
+    const mult=Number(c.peakMult||1);
+    const color=mult>=10?'var(--S)':mult>=5?'#7cf7c4':mult>=2?'var(--P)':mult>=1?'var(--text2)':'var(--A)';
+    const entryUsd=c.entryFdv?(c.entryFdv>=1e9?'$'+(c.entryFdv/1e9).toFixed(2)+'B':c.entryFdv>=1e6?'$'+(c.entryFdv/1e6).toFixed(2)+'M':c.entryFdv>=1e3?'$'+(c.entryFdv/1e3).toFixed(1)+'K':'$'+Math.round(c.entryFdv)):'N/A';
+    return '<div onclick="makePnl(\''+esc(c.mint||'')+'\')" style="cursor:pointer;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-family:\'Share Tech Mono\',monospace">'+
+      '<span style="font-weight:700;font-size:12px;color:var(--text);min-width:66px">'+esc(sym)+'</span>'+
+      '<span style="font-size:9px;color:var(--label);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name||'')+' · '+entryUsd+' @ call</span>'+
+      '<span style="font-size:11px;font-weight:700;color:'+color+'">'+mult.toFixed(1)+'×</span>'+
+    '</div>';
+  }).join('');
+}
 
 // ── QUALITY panel: live gate readout + hit-rate shield ──────────────────────
 async function loadQuality(){

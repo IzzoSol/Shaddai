@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
    telegram-bot.js — the interactive SHADDAI Telegram bot (long-polling).
-   Commands: /start /help /price /rug /ask /lb /pnl /stats /dist /signals /gm
+   Commands: /start /help /price /rug /ask /learn /boxes /lb /pnl /stats /dist /signals /gm
    Reuses the FREE DexScreener + rugcheck.xyz APIs and the app's own
    LLM (/api/model/chat) for /ask.
 
@@ -20,6 +20,7 @@ const _hf = require('./lib/hf-keys');
 const _fsImg = require('fs');
 const _osImg = require('os');
 const _pathImg = require('path');
+const _card = require('./lib/call-card');
 
 const _cfg = () => ({
   token: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -480,6 +481,34 @@ async function _imageCmd(t, chatId, cfg, prompt) {
   } catch (e) { return _send(t, chatId, '⚠️ FLUX is warming up — try again in a few seconds.'); }
 }
 
+// /card — SHADDAI Labs call proof card. Optional [prompt] → FLUX premium background
+// behind the (always-crisp) text layer. No prompt → free SVG gradient theme.
+async function _cardCmd(t, chatId, cfg, arg) {
+  const parts = String(arg || '').split(/\s+/).filter(Boolean);
+  const ticker = (parts[0] || '').toUpperCase();
+  if (!ticker) return _send(t, chatId, 'Usage: /card <code>&lt;ticker&gt;</code> [prompt]  e.g. <code>/card SOLANDIER</code> or <code>/card SOLANDIER neon flames</code>');
+  const call = _pnl._findCall ? _pnl._findCall(ticker) : null;
+  if (!call) return _send(t, chatId, 'No tracked call found for <b>' + _esc(ticker) + '</b>. Try /lb for tracked calls.');
+  const prompt = parts.slice(1).join(' ');
+  await _send(t, chatId, prompt ? '⬡ rendering a premium FLUX card…' : '⬡ rendering your call card…');
+  try {
+    let bg = null;
+    if (prompt) {
+      const out = await _hf.generateSafe(prompt + ', dark SHADDAI signal card background, no text, no letters, no watermark', { width: 1024, height: 1280 });
+      bg = out.buffer || null;
+      if (!bg && out.fallbackUrl) { try { const r = await fetch(out.fallbackUrl); if (r.ok) bg = Buffer.from(await r.arrayBuffer()); } catch (e) {} }
+    }
+    const buf = await _card.render(call, { background: bg });
+    const tmp = _pathImg.join(_osImg.tmpdir(), 'shaddai-card-' + Date.now() + '.png');
+    _fsImg.writeFileSync(tmp, buf);
+    const cap = '⬡ <b>SHADDAI LABS</b> · ' + _esc(ticker) + '\n<i>' + (prompt ? 'premium FLUX card' : 'call card') + ' · /card ' + _esc(ticker) + '</i>';
+    const ok = await _core.sendPhoto(chatId, tmp, cap);
+    try { _fsImg.unlinkSync(tmp); } catch {}
+    if (ok) return;
+    return _send(t, chatId, '⚠️ Could not send the card — try again.');
+  } catch (e) { return _send(t, chatId, '⚠️ Card render failed — try <code>/card ' + _esc(ticker) + '</code>.'); }
+}
+
 // PIKADON URL check — local heuristics first, deep scan via the premium agent.
 const _suspTld = /\.(zip|top|xyz|click|link|gq|tk|ml|cf|ga|work|icu|stream|download|kim|racing|party|review|faith|loan|date|science|rest|cyou|trade|accountant|mom|lol|quest)$/i;
 const _phishWords = /(login|verify|update|wallet|airdrop|claim|reward|free|bonus|password|secure|confirm|recover|signin|2fa|support|prize)/i;
@@ -864,6 +893,8 @@ async function _handle(cfg, update) {
     case 'price': case 'p': return _price(t, chatId, arg);
     case 'rug': case 'rugcheck': return _rug(t, chatId, arg);
     case 'ask': case 'shaddai': return _ask(t, chatId, cfg, arg);
+    case 'learn': case 'teach': case 'ingest': return _auraLearn(t, chatId, cfg, arg);
+    case 'boxes': case 'knowledge': return _auraBoxes(t, chatId, cfg, arg);
     case 'zerox': return arg ? _zeroxTask(t, chatId, cfg, arg) : _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for the overall market. 5 lines max.', 'ZEROX');
     case 'analysis': return _ask(t, chatId, cfg, 'Give a concise crypto market analysis + sentiment right now for: ' + (arg || 'the overall market') + '. 5 lines max.', 'ZEROX');
     case 'news': case 'pulse': { const html = await require('./telegram-news').marketPulse(); return _send(t, chatId, html || '⚠️ Market data unavailable.'); }
@@ -949,6 +980,8 @@ async function _handle(cfg, update) {
       if (saved) { const ok = await _core.sendPhoto(chatId, saved, cap); if (ok) return; }
       return _send(t, chatId, cap);
     }
+
+    case 'card': case 'proofcard': case 'callcard': return _cardCmd(t, chatId, cfg, arg);
 
     case 'dist': case 'distribution': case 'performance': return _send(t, chatId, _pnl.distribution());
 
@@ -1062,13 +1095,16 @@ async function _registerCommands(token) {
     { command: 'last50',  description: 'Last 50 calls with live PNLs' },
     { command: 'last100', description: 'Last 100 calls with live PNLs' },
     { command: 'pnl',     description: 'PNL card for a token  e.g. /pnl PORK' },
+    { command: 'card',    description: 'Shareable call card  e.g. /card PORK [prompt for premium art]' },
     { command: 'held',    description: 'Conviction holds — calls still green' },
     { command: 'stats',   description: 'Hit-rate + best calls scorecard' },
     { command: 'dist',    description: 'Performance distribution breakdown' },
     { command: 'price',   description: 'Live DEX price  e.g. /price BONK' },
     { command: 'rug',     description: 'Rug-check a Solana mint' },
     { command: 'preset',  description: 'View/switch signal filter presets' },
-    { command: 'ask',     description: 'Ask a SHADDAI agent anything' },
+    { command: 'ask',     description: 'Ask a SHADDAI agent anything (answers from your boxes first)' },
+    { command: 'learn',   description: 'Teach an agent from a URL  e.g. /learn https://… [box]' },
+    { command: 'boxes',   description: 'Your AURA knowledge boxes' },
     { command: 'music',   description: 'Free music track  e.g. /music synthwave hype' },
     { command: 'zerox',   description: 'ZEROX market analysis + sentiment' },
     { command: 'news',    description: 'Live market pulse' },
