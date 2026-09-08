@@ -4348,7 +4348,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <nav id="mainNav">
   <button class="nav-btn" onclick="location.href='/quickstart.html'" style="color:#00e5ff;font-weight:700" title="Quick Start — answer a few questions, get what you need">⚡ Quick Start</button>
   <button class="nav-btn active nav-img" onclick="showView('dash')" style="--nav-img:url(/assets/nav/dashboard.jpg)">🎛️ Dashboard</button>
-  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/assets/agents/SHADDAI-portrait.png" alt="SHADDAI" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px" onerror="this.outerHTML='🧠'"> Agents</button>
+  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
   <button class="nav-btn nav-img" onclick="showView('workflow')" style="--nav-img:url(/assets/nav/workflow.jpg)"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
   <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
   <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
@@ -4365,7 +4365,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">🎚️ Settings</button>
-  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/assets/agents/PIKADON-portrait.png" alt="PIKADON" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px" onerror="this.outerHTML='🛡️'"> Security</button>
+  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
   <!-- Rooms moved into the 🌐 Worlds chooser — out of the main work-flow -->
   <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
@@ -9293,6 +9293,7 @@ window.enter3DWorld=function(){
         </div>
         <textarea id="chatCustomInst" class="input" placeholder="e.g. Always respond in bullet points. Focus on actionable steps. Treat me as an expert developer." style="width:100%;min-height:60px;font-size:9px;padding:6px 8px;margin:0;resize:vertical;font-family:'Share Tech Mono',monospace;line-height:1.5;box-sizing:border-box"></textarea>
       </div>
+      <div class="chat-demos" id="chatFullDemos" style="padding:8px 12px 6px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px"></div>
       <div class="chat-input-row">
         <button class="btn btn-ghost" id="voiceBtnFull" onclick="startVoiceFull()" style="padding:10px 14px">REC</button>
         <button class="btn btn-ghost" id="ttsBtn" onclick="toggleTTS()" style="padding:10px 14px">TTS</button>
@@ -14523,6 +14524,7 @@ window.enter3DWorld=function(){
     <div id="panelChat" class="panel-view active">
       <div class="panel-chat">
         <div class="panel-chat-msgs" id="panelChatMsgs"></div>
+        <div class="panel-chat-demos" id="panelChatDemos" style="padding:8px 10px 6px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px"></div>
         <div class="panel-input-row">
           <button class="btn btn-ghost" onclick="startVoice()" style="padding:8px 12px">REC</button>
           <input type="text" class="panel-input" id="panelChatIn" placeholder="Message agent..." onkeypress="if(event.key==='Enter')sendPanelMsg()">
@@ -20690,7 +20692,7 @@ function render3DAgentCards() {
 
   container.innerHTML = S.agents.map(a => {
     const m = DOSSIER_META[a.name] || { color:'#00ff88', rgb:'0,229,160', rank:'AGENT', code:'AGT', clearance:2 };
-    const imgUrl = _agentImageCache[a.name] || '/assets/agents/' + a.name + '-portrait.png';
+    const imgUrl = _agentImageCache[a.name] || ('/api/forge/art/agent-' + a.name.toLowerCase() + '.png');
     const isPrimary = a.name === S.primaryAgent;
     const brainLevel = _currentBrainLevel || 2;
     const connectedCount = (_agentAPIConnections?.[a.name.toLowerCase()] || []).length;
@@ -27406,6 +27408,7 @@ function showPanel(p) {
   document.querySelectorAll('.panel-view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('panel' + p.charAt(0).toUpperCase() + p.slice(1));
   if (target) target.classList.add('active');
+  if (p === 'chat' && typeof populateChatDemos === 'function') { try { populateChatDemos(); } catch(_) {} }
   document.getElementById('showPanel').style.display = 'none';
 }
 
@@ -27491,6 +27494,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadWeeklyStats();
   // Load agent recommendations
   renderAgentRecs();
+  // Populate the routable chat demo prompts (panel + full chat)
+  try { if (typeof populateChatDemos === 'function') populateChatDemos(); } catch(_) {}
 });
 
 // Weekly Stats System
@@ -27564,6 +27569,142 @@ function chatWithAgent(name) {
   pickAgent(name);
   showPanel('chat');
   document.getElementById('panelChatIn').focus();
+}
+
+// ═══════════ CHAT DEMO PROMPTS — routable example tiles ═══════════
+// Some demos hit a REAL agent API directly (live data, no sign-in needed) and
+// post the result straight into the chat. Others route a plain-language prompt
+// to the specialist agent, which answers via its model + tools. If a live call
+// fails, the tile gracefully falls back to routing the prompt to the agent.
+const CHAT_DEMOS = [
+  { label: '💹 Market scan — live now', agent: 'ZEROX',
+    prompt: 'Scan the market right now: pull live prices for the majors, flag the top mover of the last 24h, and tell me in one line whether it looks like a buy or a wait.',
+    run: demoZeroxScanRun },
+  { label: '🔏 Is this contract safe?', agent: 'PIKADON',
+    prompt: 'Run a security audit on this contract — check for honeypot logic, mint/burn abuse, and rug-pull signals before I touch it. (paste the address)' },
+  { label: '🛠 Architect an MVP backend', agent: 'NEXUS',
+    prompt: 'Sketch the architecture for a subscription SaaS MVP: recommended stack, database schema, auth + billing endpoints, and the build-vs-buy calls.' },
+  { label: '🎨 Brand direction for my idea', agent: 'TURTLE',
+    prompt: 'Give me a cohesive brand direction: name vibe, color palette with hex codes, type pairing, and a hero visual concept for my product.' },
+  { label: '✍️ Sharpen my writing', agent: 'QUILL',
+    prompt: 'Take this draft: "we are making an app that helps people track things and it is very useful." Rewrite it to be terse, benefit-first and confident — then give me 3 rules for sharper copy and one weak writing habit to kill.' },
+  { label: '🌙 Moon cycle — live now', agent: 'ORACLE',
+    prompt: 'Tell me today’s moon phase, illumination, and what the energy of the day means.',
+    run: demoMoonRun },
+];
+
+// ── ZEROX: live market scan via /api/zerox/scan ─────────────────────
+async function demoZeroxScanRun(agent) {
+  const res = await fetch(PROXY + '/api/zerox/scan?symbol=BTC&vs=SOL', { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error('scan ' + res.status);
+  const d = await res.json();
+  const p = (d.price !== undefined && d.price !== null) ? Number(d.price) : NaN;
+  const pct = (v) => { const n = Number(v); if (isNaN(n)) return '—'; return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; };
+  const ch = d.change || {};
+  const line = !isNaN(p)
+    ? `**BTC → SOL** \`${p}\`` +
+      (ch.m5 != null ? ` · 5m ${pct(ch.m5)}` : '') +
+      (ch.h1 != null ? ` · 1h ${pct(ch.h1)}` : '') +
+      (ch.d1 != null ? ` · 24h ${pct(ch.d1)}` : '')
+    : 'Market feed returned no price for BTC right now.';
+  const entry = d.suggested_entry ? `\nSuggested entry: \`${d.suggested_entry}\`` : '';
+  const risks = d.risks && d.risks.length ? `\n\n⚠️ Risks: ${d.risks.slice(0, 3).join(' · ')}` : '';
+  return `${line}${entry}${risks}\n\n_Live from the ZEROX market engine._`;
+}
+
+// ── ORACLE: live moon phase via /api/oracle/moon (local engine fallback) ──
+async function demoMoonRun(agent) {
+  let d = null;
+  try { d = await agentFetch('ORACLE', '/moon'); } catch (_) { d = null; }
+  const emojis = { 'New Moon':'🌑', 'Waxing Crescent':'🌒', 'First Quarter':'🌓', 'Waxing Gibbous':'🌔', 'Full Moon':'🌕', 'Waning Gibbous':'🌖', 'Last Quarter':'🌗', 'Waning Crescent':'🌘' };
+  if (d && d.phase_name) {
+    const e = emojis[d.phase_name] || '🌙';
+    const parts = [`${e} **${d.phase_name}** — ${d.illumination_pct}% illuminated`];
+    if (d.moon_sign) parts.push(`Moon in ${d.moon_sign}`);
+    if (d.guidance) parts.push(`\n${d.guidance}`);
+    if (d.next_full_moon) parts.push(`\nNext full moon: ${d.next_full_moon}`);
+    parts.push('\n_Live from ORACLE._');
+    return parts.join('\n');
+  }
+  // Offline-safe deterministic engine (always works, no API needed).
+  const m = getMoonPhase();
+  const sign = (typeof getMoonSign === 'function') ? getMoonSign() : '';
+  return `${m.emoji} **${m.name}** — ${m.illum}% illuminated\nDay ${m.phase.toFixed(1)} of the lunar cycle · Moon in ${sign}\n\n_${m.guidance}_\n\n_ORACLE feed offline — served from the local moon engine._`;
+}
+
+function populateChatDemos() {
+  const containers = ['panelChatDemos', 'chatFullDemos'];
+  containers.forEach(id => {
+    const c = document.getElementById(id);
+    if (!c) return;
+    c.innerHTML = CHAT_DEMOS.map(d =>
+      `<button class="demo-chip" data-agent="${d.agent}" title="${escH(d.prompt)}" style="font-size:9.5px;padding:5px 10px;border-radius:14px;cursor:pointer;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.18);color:var(--text-secondary);font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(0,229,160,0.14)';this.style.color='var(--accent)';this.style.borderColor='rgba(0,229,160,0.4)'" onmouseout="this.style.background='rgba(0,229,160,0.07)';this.style.color='var(--text-secondary)';this.style.borderColor='rgba(0,229,160,0.18)'">${d.label}</button>`
+    ).join('');
+    c.querySelectorAll('.demo-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const d = CHAT_DEMOS.find(x => x.agent === btn.dataset.agent) || CHAT_DEMOS[0];
+        runChatDemo(d);
+      });
+    });
+  });
+}
+// Route a demo: pick the agent, open chat, and run it. Live demos post the real
+// API result; if that fails (or there is no live handler) the prompt is routed
+// to the agent like a normal message.
+function runChatDemo(d) {
+  pickAgent(d.agent);
+  showPanel('chat');
+  if (typeof maybeDemoSignIn === 'function') maybeDemoSignIn(d.agent);
+
+  const key = S.agent === 'ALL' ? '_all' : S.agent;
+  if (!S.msgs[key]) S.msgs[key] = [];
+
+  // ── LIVE single-shot: post the API result right into the chat ──
+  if (d.run && typeof d.run === 'function') {
+    const userMsg = { id: Date.now(), text: d.prompt || d.label, sender: 'user', type: 'user', time: new Date().toISOString() };
+    S.msgs[key].push(userMsg);
+    renderMsgs();
+    showTyping();
+    d.run(d.agent)
+      .then(out => {
+        hideTyping();
+        if (typeof out === 'string' && out) {
+          S.msgs[key].push({ id: Date.now(), text: out, sender: d.agent, type: 'agent', time: new Date().toISOString() });
+          renderMsgs(); save();
+          log(`Demo → ${d.agent} (live API)`, 'ok', d.agent);
+        }
+      })
+      .catch(() => {
+        // API miss — fall back to routing the prompt like a normal message.
+        hideTyping();
+        S.msgs[key].pop();
+        renderMsgs();
+        const inp = document.getElementById('chatInFull') || document.getElementById('panelChatIn');
+        if (inp) { inp.value = d.prompt; inp.focus(); }
+        if (typeof sendMsgFull === 'function' && document.getElementById('chatInFull')) sendMsgFull();
+        else if (typeof sendPanelMsg === 'function') sendPanelMsg();
+      });
+    return;
+  }
+
+  // ── PROMPT route: prefill + send normally (agent answers via its model) ──
+  const inp = document.getElementById('chatInFull') || document.getElementById('panelChatIn');
+  if (inp) { inp.value = d.prompt; inp.focus(); }
+  if (!document.getElementById('chatMsgsFull')) populateChatDemos();
+  if (typeof sendMsgFull === 'function' && document.getElementById('chatInFull')) sendMsgFull();
+  else if (typeof sendPanelMsg === 'function') sendPanelMsg();
+}
+// Show a light "sign in to unlock full runs" nudge when a guest taps a demo.
+function maybeDemoSignIn(agent) {
+  try {
+    const signed = window.__shaddai_signedIn || (window.SHD_AUTH && SHD_AUTH.user) || (window.localStorage && localStorage.getItem('shd_signed_in') === '1');
+    if (signed) return;                                       // already authenticated
+    const addedMsg = document.createElement('div');
+    addedMsg.className = 'chat-msg system';
+    addedMsg.innerHTML = `<div class="chat-content" style="font-style:italic;color:var(--text-muted);font-size:9.5px">➤ Demo routed to <b style="color:var(--accent)">${escH(agent)}</b>. Live demos run instantly — sign in (or continue as guest) to unlock the full agent loop with tools.</div>`;
+    document.getElementById('panelChatMsgs').appendChild(addedMsg);
+    document.getElementById('panelChatMsgs').scrollTop = document.getElementById('panelChatMsgs').scrollHeight;
+  } catch (_) {}
 }
 
 // ⚡ Quick Actions in the chat experience (REQ-8.2) — pop-up of the 6 Simple-Mode tasks that

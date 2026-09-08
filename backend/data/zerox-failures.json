@@ -1,14 +1,14 @@
 {
   "reasons": {
     "low_rug_score": {
-      "count": 671,
-      "avgCurMult": 1.14,
+      "count": 1103,
+      "avgCurMult": 1.15,
       "sources": {
         "new_pools": 332,
         "bonded": 286,
         "trending": 23,
         "trending_pools": 4,
-        "boosted": 26
+        "boosted": 458
       }
     },
     "bundler_dump": {
@@ -29,10 +29,10 @@
       }
     },
     "no_holders": {
-      "count": 91,
+      "count": 92,
       "avgCurMult": 1,
       "sources": {
-        "new_pools": 82,
+        "new_pools": 83,
         "trending": 3,
         "trending_pools": 6
       }
@@ -63,5 +63,5 @@
   },
   "bySource": {},
   "byFdv": {},
-  "lastUpdated": 1787409542275
+  "lastUpdated": 1788902322836
 }

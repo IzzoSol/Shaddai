@@ -1,0 +1,61 @@
+{
+  "users": {
+    "test-agent-fight": {
+      "gems": 200,
+      "score": 0,
+      "streak": 0,
+      "best": 0,
+      "plays": 0,
+      "wins": 0,
+      "lastDay": "",
+      "bonused": 0,
+      "code": "",
+      "referredBy": "",
+      "referees": [],
+      "asksBonus": 0,
+      "audit": [
+        {
+          "at": 1788697206128,
+          "act": "arena:ORACLE-v-ZEROX",
+          "delta": -10
+        },
+        {
+          "at": 1788697232617,
+          "act": "arena:NEXUS-v-PIKADON",
+          "delta": 10
+        }
+      ]
+    },
+    "7438006447": {
+      "gems": 200,
+      "score": 0,
+      "streak": 0,
+      "best": 0,
+      "plays": 0,
+      "wins": 0,
+      "lastDay": "",
+      "bonused": 0,
+      "code": "ref_7438006447",
+      "referredBy": "",
+      "referees": [],
+      "asksBonus": 0,
+      "audit": []
+    }
+  },
+  "arena": {
+    "bouts": [
+      {
+        "ts": 1788697232617,
+        "uid": "test-agent-fight",
+        "a": "NEXUS",
+        "b": "PIKADON",
+        "bet": 10,
+        "winA": true,
+        "winner": "NEXUS",
+        "scoreA": 377,
+        "scoreB": 301,
+        "seed": "29811620:test-agent-fight:NEXUS-PIKADON"
+      }
+    ]
+  }
+}

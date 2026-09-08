@@ -1,10 +1,4 @@
 {
-  "-1004433718662": {
-    "id": -1004433718662,
-    "type": "channel",
-    "title": "Shaddai AI",
-    "at": 1784084116426
-  },
   "-1003014427803": {
     "id": -1003014427803,
     "type": "supergroup",
@@ -16,5 +10,17 @@
     "type": "supergroup",
     "title": "ShaddaiAI",
     "at": 1786816200131
+  },
+  "7438006447": {
+    "id": 7438006447,
+    "type": "private",
+    "title": "WithLoveWeWinAgain",
+    "at": 1788697930016
+  },
+  "7371253795": {
+    "id": 7371253795,
+    "type": "private",
+    "title": "CountryyG",
+    "at": 1788703328051
   }
 }

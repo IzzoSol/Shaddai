@@ -1,0 +1,4 @@
+{"t":"2026-09-07T22:02:05.709Z","kind":"fetch","user":"test","ip":"::ffff:127.0.0.1","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw","result":"ok:tunnel","filename":"Me at the zoo - jawed (240p, h264).mp4"}
+{"t":"2026-09-07T22:02:05.746Z","kind":"fetch","user":"","ip":"::ffff:127.0.0.1","url":"http://127.0.0.1/should-block","result":"blocked:private host blocked"}
+{"t":"2026-09-07T22:02:31.543Z","kind":"fetch","user":"test","ip":"::ffff:127.0.0.1","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw","result":"ok:tunnel","filename":"Me at the zoo - jawed (240p, h264).mp4"}
+{"t":"2026-09-07T22:48:06.624Z","kind":"fetch","user":"","ip":"::ffff:127.0.0.1","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw","result":"ok:tunnel","filename":"Me at the zoo - jawed (240p, h264).mp4"}

@@ -300,14 +300,14 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 'use strict';
 var API = (location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '') + '';
 var el = function (id) { return document.getElementById(id); };
-var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c]); }); };
 var money = function (n) { n = Number(n); if (!isFinite(n)) return '—'; if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M'; if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K'; return '$' + n.toFixed(0); };
 var ago = function (ts) { if (!ts) return ''; var s = Math.max(0, Math.round((Date.now() - ts) / 1000)); if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm'; if (s < 86400) return Math.floor(s / 3600) + 'h'; return Math.floor(s / 86400) + 'd'; };
-var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' + encodeURIComponent(id) + '?width=128&height=128&quality=95&format=auto' : ''; };
+var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' + encodeURIComponent(id) + '?width=128&height=128&quality=95&format=auto' : '' };
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
-var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—'; };
+var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'heat', raceFilter: 'live' };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls' };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */

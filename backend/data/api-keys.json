@@ -1,3 +1,476 @@
 {
-  "keys": []
+  "keys": [
+    {
+      "id": "22815f5363d4",
+      "hash": "789069d3937fe410b19cf6258f62be4ae5a11a7e1f1021de2ac708b73d21d937",
+      "prefix": "sk_live_6a3701…",
+      "label": "test-label",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671176690,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "9d2a2e539ac4",
+      "hash": "270ae10d580edcabed83d62bb46d84a267ac49388b2bf371cdc150375caeacab",
+      "prefix": "sk_live_25f936…",
+      "label": "to-revoke",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671176699,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "90e803491028",
+      "hash": "907c959c9efd0127b25785630d4081ef522bd7401d428a40b0c76e03822db039",
+      "prefix": "sk_live_8aa752…",
+      "label": "badlabel[31m",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671176700,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "760438d38806",
+      "hash": "d44aa6726f8cd3e0dbdd2407fe2828f3c7a2f4be112cb7d21194950abf28fe2d",
+      "prefix": "sk_live_bb3905…",
+      "label": "bucket",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671176700,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "ca235fcca8b0",
+      "hash": "f5fff51cdd3d7388edad945283c27b04dab68f7b38a9e42730fe6729543557e1",
+      "prefix": "sk_live_15e3e8…",
+      "label": "http-test",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671177112,
+      "lastUsedAt": 1788671178176,
+      "count": 8,
+      "disabled": false
+    },
+    {
+      "id": "75e4589db103",
+      "hash": "045fa279c50cf9f9633b8533d0c66402676598268d079c5339b7d87ead78a756",
+      "prefix": "sk_live_c0f1ba…",
+      "label": "revoke-http",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671177157,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "9c871da514c4",
+      "hash": "386d6679038d823fb0b62470aef966fe801c10254b3d40e1e42144175821de35",
+      "prefix": "sk_live_d9c0b2…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "signals"
+      ],
+      "createdAt": 1788671178308,
+      "lastUsedAt": 1788671178321,
+      "count": 2,
+      "disabled": false
+    },
+    {
+      "id": "f4b25e483ba7",
+      "hash": "fd70bdb29004f5555957a9b8d92e8efe1e5a5b614fea758b0467949316550acc",
+      "prefix": "sk_live_d3ef00…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "news"
+      ],
+      "createdAt": 1788671178329,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "e488321dc5b1",
+      "hash": "63d48661b462924fe771c7273ab82877d96c1fc3cef3cac70b0d8df6e9da102c",
+      "prefix": "sk_live_518fb3…",
+      "label": "test-label",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671307271,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "e0779db7b2af",
+      "hash": "3d560fed0a2032cb26779c939b808814824f74de3794997e7c8e58b7556984c1",
+      "prefix": "sk_live_f9198f…",
+      "label": "to-revoke",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671307463,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "47bb36eca092",
+      "hash": "2be7f25b72693fd7dc5e94db0021506c230e2cea9fcdc4347cc2aceccb47b7fb",
+      "prefix": "sk_live_e3f675…",
+      "label": "badlabel[31m",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671307464,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "acceb5a528b2",
+      "hash": "3fd51f2189ec52c6038779c719b199fc55dcd11b41049f790b524b8c5ca25bb0",
+      "prefix": "sk_live_153e8b…",
+      "label": "bucket",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671307464,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "d45c03aa31e6",
+      "hash": "626cdbb06ccb5c67918b232f62c2accb3a1733f569e300196c1234768e419518",
+      "prefix": "sk_live_3f1f89…",
+      "label": "http-test",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671307862,
+      "lastUsedAt": 1788671308721,
+      "count": 8,
+      "disabled": false
+    },
+    {
+      "id": "c14e3f4b9d64",
+      "hash": "b3c0d5cdde0f5e0fd0fd96cfbe4ff57ba33e2e44fb6a1ad5cfc965794ed4d19f",
+      "prefix": "sk_live_ff4f2a…",
+      "label": "revoke-http",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671307954,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "5874cef23bca",
+      "hash": "34bb355fd0999c4d83466b2751ef71e0afeb0bd933ecf7d5cad896d42e441253",
+      "prefix": "sk_live_27995c…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "signals"
+      ],
+      "createdAt": 1788671308799,
+      "lastUsedAt": 1788671308804,
+      "count": 2,
+      "disabled": false
+    },
+    {
+      "id": "e3c8418e0801",
+      "hash": "a4c4f49b4fd4f0b587e910989da4ca9c76ac5651e15d63fab914fc37e1328e29",
+      "prefix": "sk_live_2d819a…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "news"
+      ],
+      "createdAt": 1788671308807,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "c3625027c4a0",
+      "hash": "7fa56e806acf954321f7607bb03d7d95f228cb4bb72fe15fc015eda5a8625d5f",
+      "prefix": "sk_live_f30401…",
+      "label": "test-label",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671500409,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "851cb12443db",
+      "hash": "b4d668a1d163cc1d95cfe94435daf00c38d101c326b376f2db2a877c0b7d53c4",
+      "prefix": "sk_live_779ee0…",
+      "label": "to-revoke",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671500413,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "976a6031fd96",
+      "hash": "00004635cccf9df4c9df4d1ed148f5a0fd9f6af7f4ada99209eacd0efb8afa2d",
+      "prefix": "sk_live_3c473a…",
+      "label": "badlabel[31m",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671500414,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "d00d2fb2e13f",
+      "hash": "08c367bb37fb673453b62bebdacb348d26c211c0d4810a8cb227956bf5f3e0da",
+      "prefix": "sk_live_89e93b…",
+      "label": "bucket",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671500414,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "1512565968fb",
+      "hash": "0405b7c4f9986e71159ee6c4b713269c35a43b40a3840c5257aecad9d27b7de5",
+      "prefix": "sk_live_97f6bf…",
+      "label": "http-test",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671500631,
+      "lastUsedAt": 1788671501714,
+      "count": 9,
+      "disabled": false
+    },
+    {
+      "id": "dc8d9641b285",
+      "hash": "fcf180af362095b2c87fbdc32500b94e57b7438b0fc9101a748b7fc3a8a59ea8",
+      "prefix": "sk_live_d9702d…",
+      "label": "revoke-http",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788671500668,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "8cfe3e04b9b2",
+      "hash": "f13c81b86d0125f425f96c216f261c0e391c49f29f31ba7a82f8fe1277e8bf59",
+      "prefix": "sk_live_a58e2c…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "signals"
+      ],
+      "createdAt": 1788671501835,
+      "lastUsedAt": 1788671501847,
+      "count": 2,
+      "disabled": false
+    },
+    {
+      "id": "a619024bed9a",
+      "hash": "83a597526be639831a6d3259f5818461f851de45f0707c4e00180476cd294cbf",
+      "prefix": "sk_live_69d7c4…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "news"
+      ],
+      "createdAt": 1788671501858,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "a1033d15825b",
+      "hash": "cb684a2d4724a4a0a0525d7498042abdab91c7f01dbe7ce3f618c16307d8abe6",
+      "prefix": "sk_live_ca2426…",
+      "label": "test-label",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788720650913,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "a6924de12ded",
+      "hash": "1250e65e46920ceb80720b4e794a4084ff7f61381206a8b1251fecece96dff3b",
+      "prefix": "sk_live_97d93d…",
+      "label": "to-revoke",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788720650929,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "1a156ec2609d",
+      "hash": "a7c287f1c796edd2f2f4db803d2637840d7eb621352b88625e015aed951202f4",
+      "prefix": "sk_live_dabce3…",
+      "label": "badlabel[31m",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788720650930,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "43654575a1d6",
+      "hash": "c86b594fa02ab70af99dfbf6b6ec101cc25a84613578b5088575d2f00f892f8b",
+      "prefix": "sk_live_3ebd88…",
+      "label": "bucket",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788720650931,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    },
+    {
+      "id": "0686a99e54bf",
+      "hash": "12a59a7c7a68518082177a4e3399ffe35913db4f6c4baec999bb41801b061554",
+      "prefix": "sk_live_074034…",
+      "label": "http-test",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788720655275,
+      "lastUsedAt": 1788720656610,
+      "count": 9,
+      "disabled": false
+    },
+    {
+      "id": "b5b36a371114",
+      "hash": "c0af725bed2c7380365bd3a5dd57da82390243895c7bfb29c6d1d1859769c012",
+      "prefix": "sk_live_73119d…",
+      "label": "revoke-http",
+      "tier": "free",
+      "scopes": [
+        "signals",
+        "news"
+      ],
+      "createdAt": 1788720655341,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": true
+    },
+    {
+      "id": "7569a4a77da4",
+      "hash": "3ee6872e8f138afce45990f36f482a67c9e7f744fa69f364f30440ef6930d884",
+      "prefix": "sk_live_cbf591…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "signals"
+      ],
+      "createdAt": 1788720656714,
+      "lastUsedAt": 1788720656720,
+      "count": 2,
+      "disabled": false
+    },
+    {
+      "id": "bc2868a7e602",
+      "hash": "4f09e2c7c652f64bf3a0ca30ff6c7ae01af73535262faa0846007ca2786f005b",
+      "prefix": "sk_live_d41619…",
+      "label": "",
+      "tier": "free",
+      "scopes": [
+        "news"
+      ],
+      "createdAt": 1788720656723,
+      "lastUsedAt": 0,
+      "count": 0,
+      "disabled": false
+    }
+  ]
 }

@@ -1,0 +1,66 @@
+{
+  "agents": {
+    "ZEROX": {
+      "id": "ZEROX",
+      "calls": 1,
+      "successes": 1,
+      "failures": 0,
+      "neutral": 0,
+      "totalLatency": 421,
+      "avgLatency": 421,
+      "accuracy": 0.75,
+      "successRate": 1,
+      "lastAt": "2026-09-06T01:28:23.971Z"
+    },
+    "NEXUS": {
+      "id": "NEXUS",
+      "calls": 1,
+      "successes": 1,
+      "failures": 0,
+      "neutral": 0,
+      "totalLatency": 1296,
+      "avgLatency": 1296,
+      "accuracy": 0.75,
+      "successRate": 1,
+      "lastAt": "2026-09-06T04:22:41.964Z"
+    },
+    "PIKADON": {
+      "id": "PIKADON",
+      "calls": 1,
+      "successes": 1,
+      "failures": 0,
+      "neutral": 0,
+      "totalLatency": 1871,
+      "avgLatency": 1871,
+      "accuracy": 0.75,
+      "successRate": 1,
+      "lastAt": "2026-09-06T04:23:44.850Z"
+    }
+  },
+  "events": [
+    {
+      "agent": "ZEROX",
+      "tool": "zerox_price",
+      "task": "",
+      "outcome": true,
+      "latencyMs": 421,
+      "at": "2026-09-06T01:28:23.971Z"
+    },
+    {
+      "agent": "NEXUS",
+      "tool": "none",
+      "task": "Explain what SHADDAI is in 2 lines.",
+      "outcome": true,
+      "latencyMs": 1296,
+      "at": "2026-09-06T04:22:41.964Z"
+    },
+    {
+      "agent": "PIKADON",
+      "tool": "http_headers",
+      "task": "Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.",
+      "outcome": true,
+      "latencyMs": 1871,
+      "at": "2026-09-06T04:23:44.850Z"
+    }
+  ]
+}

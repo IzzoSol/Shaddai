@@ -320,3 +320,9 @@
 {"ts":"2026-08-13T19:33:03.020Z","qHash":"6308c4b5b004e47b","query":"Write an engaging social post (2-3 sentences + 2 hashtags) about this headline. Output ONLY the post: \"Delio CEO sentenc","method":"miss","hit":false,"latencyMs":667}
 {"ts":"2026-08-13T20:27:43.168Z","qHash":"f076c808ff0ace17","query":"Question: How does the SHADDAI economy-service Sparks ledger work — what are the credit/debit/balance operations, is it ","method":"compute","hit":true,"latencyMs":19}
 {"ts":"2026-08-13T20:33:13.677Z","qHash":"a26199a5f86b7aab","query":"Write an engaging social post (2-3 sentences + 2 hashtags) about this headline. Output ONLY the post: \"Google and OpenAI","method":"miss","hit":false,"latencyMs":394}
+{"ts":"2026-09-06T04:20:05.878Z","qHash":"f405d51fb3d20393","query":"Review this URL for safety: https://google.com - report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":54}
+{"ts":"2026-09-06T04:20:29.820Z","qHash":"70904d24a77fd8bf","query":"Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":65}
+{"ts":"2026-09-06T04:21:47.487Z","qHash":"70904d24a77fd8bf","query":"Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":33}
+{"ts":"2026-09-06T04:22:40.712Z","qHash":"7fd4a60d36138c9b","query":"Explain what SHADDAI is in 2 lines.","method":"miss","hit":false,"latencyMs":45}
+{"ts":"2026-09-06T04:22:42.208Z","qHash":"70904d24a77fd8bf","query":"Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":18}
+{"ts":"2026-09-06T04:23:43.005Z","qHash":"70904d24a77fd8bf","query":"Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":33}
