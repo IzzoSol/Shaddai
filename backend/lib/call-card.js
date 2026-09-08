@@ -159,62 +159,146 @@ function _supply(n){ const v=Number(n); if(!isFinite(v)||!v) return 'N/A'; if(v>
 function _ageLong(ms){ const v=Number(ms); if(!isFinite(v)||v==null) return 'N/A'; const h=v/3600000; if(h<1) return Math.round(h*60)+'m'; if(h<48) return Math.round(h)+'h'; return Math.round(h/24)+'d'; }
 function _chg(v){ const n=Number(v); if(!isFinite(v)||v==null) return null; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
 
-// Two-column stat cell for the dense signal card.
-function _cell(x, y, label, value, color){
-  return `<text x="${x}" y="${y}" font-family="${MONO}"><tspan font-size="20" fill="#6f86a0" letter-spacing="3">${esc(label)}</tspan><tspan x="${x}" dy="44" font-size="38" font-weight="700" fill="${color}">${esc(value)}</tspan></text>`;
+// Compact stat cell — fits more info per 1080×1350 card (100px rows).
+function _c(x, y, label, value, color){
+  return `<text x="${x}" y="${y}" font-family="${MONO}"><tspan font-size="19" fill="#6f86a0" letter-spacing="3">${esc(label)}</tspan><tspan x="${x}" dy="40" font-size="36" font-weight="700" fill="${color}">${esc(value)}</tspan></text>`;
+}
+// Trade-plan chip (ENTRY / TP1 / TP2 / TP3 / STOP).
+function _chip(x, y, w, h, label, value, color){
+  return `<g>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="#090d1a" fill-opacity=".78" stroke="#1c2340" stroke-width="1.5"/>
+    <text x="${x + w/2}" y="${y + 30}" text-anchor="middle" font-family="${MONO}" font-size="16" fill="#6f86a0" letter-spacing="2">${esc(label)}</text>
+    <text x="${x + w/2}" y="${y + 58}" text-anchor="middle" font-family="${MONO}" font-size="27" font-weight="700" fill="${color}">${esc(value)}</text>
+  </g>`;
+}
+// Compact price for trade-plan chips (keeps "0.0000123" form, no overflow).
+function _chipPrice(n){
+  const v = Number(n);
+  if (!isFinite(v) || !v) return 'N/A';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
+  if (v >= 1) return '$' + v.toFixed(2);
+  if (v >= 0.01) return '$' + v.toFixed(4);
+  if (v >= 1e-5) return '$' + v.toFixed(6);
+  return '$' + v.toExponential(1).replace('e-', 'e');
+}
+// Multi-segment security strip line: 4 fixed columns, per-segment color.
+function _secLine(x0, y, parts){
+  return parts.map((p, i) =>
+    `<text x="${x0 + i * 240}" y="${y}" font-family="${MONO}" font-size="21" font-weight="700" fill="${p[1]}">${esc(p[0])}</text>`
+  ).join('\n  ');
 }
 
-function svgSignal(call, theme) {
+function svgSignal(call, theme, scrims) {
   const t = theme || themeFor(Math.round(Number(call.mc)||0) >= 150000 ? 10 : 1);
   const sym = String(call.symbol || call.name || 'TOKEN').toUpperCase();
   const name = call.name && call.name !== call.symbol ? esc(call.name).slice(0, 34) : '';
   const mc = Number(call.mc) || 0;
   const price = Number(call.priceUsd) || 0;
   const vol24 = Number(call.volume24h) || 0;
+  const vol1 = Number(call.volume1h) || 0;
   const liq = Number(call.liq) || 0;
   const supply = _supply(call.supply);
   const chg1h = _chg(call.chg1h);
   const chg24h = _chg(call.chg24h);
+  const chg5m = _chg(call.chg5m);
   const age = _ageLong(call.ageMs);
   const top10 = Number(call.top10Pct);
+  const top1 = Number(call.topPct);
+  const lp = Number(call.lpPct);
   const holders = Number(call.holders) || 0;
   const fresh = Number(call.freshWallets);
   const bundlers = !!call.bundlers;
   const snipers = !!call.snipers;
+  const bundlePct = Number(call.bundlePct);
+  const bs = call.buySell || null;
+  const buyRatio = (bs && isFinite(Number(bs.ratio))) ? Number(bs.ratio) : null;
   const dexPaid = !!call.dexPaid;
   const rug = Number(call.rugScore);
   const socialsTag = _socialsTag(call.socials);
   const chain = String(call.chain || 'SOLANA').toUpperCase();
   const venue = call.dexId ? ' · '+esc(String(call.dexId).replace(/-/g,' ').toUpperCase()) : '';
+  const rank = Number(call.rank) || 0;
+  const boostAmt = Number(call.boostAmount) || 0;
   const chg1hColor = !chg1h ? '#ffffff' : (chg1h.startsWith('-') ? '#ff5c7a' : '#00ff88');
+  const chg24hColor = !chg24h ? '#8a93a8' : (chg24h.startsWith('-') ? '#ff5c7a' : '#00ff88');
+  const chg5mColor = !chg5m ? '#8a93a8' : (chg5m.startsWith('-') ? '#ff5c7a' : '#00ff88');
+  const top10Color = (top10 > 50) ? '#ff5c7a' : (top10 > 30 ? '#f7c95c' : '#7cf7c4');
+  const top1Color  = (top1  > 30) ? '#ff5c7a' : (top1  > 10 ? '#f7c95c' : '#7cf7c4');
+  const lpColor    = (lp >= 80) ? '#00ff88' : (lp > 0 ? '#f7c95c' : '#ff5c7a');
+  const buyColor   = buyRatio == null ? '#ffffff' : (buyRatio >= 0.6 ? '#00ff88' : (buyRatio >= 0.5 ? '#ffffff' : '#ff5c7a'));
   const img = call.imageUrl ? `<image href="${esc(call.imageUrl)}" x="${W-210}" y="222" width="150" height="150" preserveAspectRatio="xMidYMid slice" clip-path="url(#tickclip)"/>` : '';
 
   const L = 60, R = W/2 + 20;      // left & right column x
   const cells = [];
   let y = 470;
-  cells.push(_cell(L, y, 'PRICE', _price(price), '#ffffff'));
-  cells.push(_cell(R, y, 'MARKET CAP', usd(mc), '#f7c95c')); y += 108;
-  cells.push(_cell(L, y, 'VOLUME 24H', usd(vol24), '#ffffff'));
-  cells.push(_cell(R, y, 'LIQUIDITY', usd(liq), '#7cf7c4')); y += 108;
-  cells.push(_cell(L, y, 'SUPPLY', supply, '#ffffff'));
-  cells.push(_cell(R, y, '1H', chg1h||'N/A', chg1hColor)); y += 108;
-  cells.push(_cell(L, y, 'AGE', age, '#ffffff'));
-  cells.push(_cell(R, y, '24H', chg24h||'N/A', '#8a93a8')); y += 108;
-  // security strip
-  const secLine = `TOP10 ${isFinite(top10)?top10.toFixed(1)+'%':'N/A'} · ${holders.toLocaleString()} HOLDERS · ${isFinite(fresh)?fresh+' FRESH':'0 FRESH'}${bundlers?' · 📦 BUNDLER':''}${snipers?' · 🔫 SNIPER':''}`;
-  cells.push(`<text x="${L}" y="${y+6}" font-family="${MONO}" font-size="24" font-weight="700" fill="${(top10>50)?'#ff5c7a':'#7cf7c4'}">${esc(secLine)}</text>`); y += 60;
-  cells.push(_cell(L, y, 'DEX PAID', dexPaid?'YES':'NO', dexPaid?'#f7c95c':'#7cf7c4'));
-  cells.push(_cell(R, y, 'RUG SCORE', isFinite(rug)?rug.toFixed(0)+'/100':'N/A', (rug>=80?'#00ff88':rug>=50?'#f7c95c':'#ff5c7a'))); y += 108;
+  cells.push(_c(L, y, 'PRICE', _price(price), '#ffffff'));
+  cells.push(_c(R, y, 'MARKET CAP', usd(mc), '#f7c95c')); y += 100;
+  cells.push(_c(L, y, 'VOLUME 24H', usd(vol24), '#ffffff'));
+  cells.push(_c(R, y, 'VOLUME 1H', usd(vol1), '#ffffff')); y += 100;
+  cells.push(_c(L, y, 'LIQUIDITY', usd(liq), '#7cf7c4'));
+  cells.push(_c(R, y, 'SUPPLY', supply, '#ffffff')); y += 100;
+  cells.push(_c(L, y, 'AGE', age, '#ffffff'));
+  cells.push(_c(R, y, '1H', chg1h||'N/A', chg1hColor)); y += 100;
+  cells.push(_c(L, y, '24H', chg24h||'N/A', chg24hColor));
+  cells.push(_c(R, y, '5M', chg5m||'N/A', chg5mColor)); y += 100;
+  cells.push(_c(L, y, 'TOP1 HOLDER', isFinite(top1) ? top1.toFixed(1)+'%' : 'N/A', top1Color));
+  cells.push(_c(R, y, 'BUYS', buyRatio != null ? Math.round(buyRatio*100)+'%' : 'N/A', buyColor)); y += 100;
+  cells.push(_c(L, y, 'DEX PAID', dexPaid?'YES':'NO', dexPaid?'#f7c95c':'#7cf7c4'));
+  cells.push(_c(R, y, 'RUG SCORE', isFinite(rug) ? rug.toFixed(0)+'/100' : 'N/A', (rug>=80?'#00ff88':rug>=50?'#f7c95c':'#ff5c7a')));
+
+  // concentrated-ownership + buy pressure strip
+  const sec1 = _secLine(L, 1054, [
+    ['TOP10 ' + (isFinite(top10) ? top10.toFixed(1)+'%' : 'N/A'), top10Color],
+    ['TOP1 ' + (isFinite(top1) ? top1.toFixed(1)+'%' : 'N/A'), top1Color],
+    ['LP ' + (isFinite(lp) ? (lp >= 99 ? '100%' : lp.toFixed(0)+'%') : 'N/A'), lpColor],
+    [(holders ? holders.toLocaleString() : 'N/A') + ' HOLDERS', '#ffffff'],
+  ]);
+  const sec2 = _secLine(L, 1092, [
+    ['BUYS ' + (buyRatio != null ? Math.round(buyRatio*100)+'%' : 'N/A'), buyColor],
+    [(fresh ? fresh+' FRESH' : '0 FRESH'), '#9aa6c4'],
+    [bundlers ? ('📦 ' + (bundlePct > 0 ? bundlePct.toFixed(0)+'%' : 'yes')) : '✓ BUNDLERS CLEAN', bundlers ? '#ff5c7a' : '#00ff88'],
+    [snipers ? ('🔫 ' + (fresh ? fresh : '?')) : '✓ SNIPERS CLEAN', snipers ? '#ff5c7a' : '#00ff88'],
+  ]);
+
+  // entry / take-profit / stop-loss plan
+  let trade = '';
+  if (price > 0) {
+    const plan = [
+      ['ENTRY', _chipPrice(price), '#ffffff'],
+      ['TP1 · 50%', _chipPrice(price * 1.5), '#00ff88'],
+      ['TP2 · 200%', _chipPrice(price * 3), '#00ff88'],
+      ['TP3 · 500%', _chipPrice(price * 5), '#00ff88'],
+      ['STOP · -15%', _chipPrice(price * 0.85), '#ff5c7a'],
+    ];
+    const cxs = [60, 255, 450, 645, 840];
+    trade = `<text x="60" y="1132" font-family="${MONO}" font-size="17" fill="#6f86a0" letter-spacing="3">TRADE PLAN</text>\n  ` +
+      plan.map((p, i) => _chip(cxs[i], 1146, 180, 74, p[0], p[1], p[2])).join('\n  ');
+  }
+
+  // ranking / paid-boost badge line
+  const badge = [
+    (rank >= 1 && rank <= 25) ? `<text x="60" y="420" font-family="${MONO}" font-size="22" font-weight="700" fill="#f7c95c">★ #${rank} TRENDING</text>` : '',
+    (boostAmt > 0) ? `<text x="${W-60}" y="420" text-anchor="end" font-family="${MONO}" font-size="22" font-weight="700" fill="#b46bff">📣 BOOSTED</text>` : '',
+  ].filter(Boolean).join('\n  ');
+
+  const scrimDefs = scrims ? `<linearGradient id="scrT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070e" stop-opacity=".96"/><stop offset="1" stop-color="#05070e" stop-opacity="0"/></linearGradient>
+    <linearGradient id="scrB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070e" stop-opacity="0"/><stop offset="1" stop-color="#05070e" stop-opacity=".96"/></linearGradient>` : '';
+  const scrimsBody = scrims ? `<rect x="0" y="0" width="${W}" height="560" fill="url(#scrT)"/>
+  <rect x="0" y="700" width="${W}" height="${H-700}" fill="url(#scrB)"/>` : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.top}"/><stop offset="0.5" stop-color="${t.mid}"/><stop offset="1" stop-color="${t.bot}"/></linearGradient>
     <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${t.accent}"/><stop offset="1" stop-color="${t.accent2}"/></linearGradient>
     <clipPath id="tickclip"><circle cx="${W-135}" cy="297" r="75"/></clipPath>
+    ${scrimDefs}
   </defs>
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
   <rect x="0" y="0" width="${W}" height="10" fill="url(#brand)"/>
   <rect x="40" y="40" width="${W-80}" height="${H-80}" fill="none" stroke="#1c2340" stroke-width="2" rx="18"/>
+  ${scrimsBody}
 
   <!-- header plate -->
   <rect x="0" y="0" width="${W}" height="190" fill="rgba(5,8,18,.72)"/>
@@ -226,28 +310,35 @@ function svgSignal(call, theme) {
   <text x="60" y="330" font-family="${SANS}" font-size="108" font-weight="800" fill="#ffffff">$${esc(sym)}</text>
   ${name ? `<text x="60" y="378" font-family="${SANS}" font-size="28" fill="#8a93a8">${name}</text>` : ''}
   ${img}
+  ${badge}
 
   ${cells.join('\n  ')}
+  ${sec1}
+  ${sec2}
+  ${trade}
 
-  <line x1="60" y1="${H-190}" x2="${W-60}" y2="${H-190}" stroke="#1c2340" stroke-width="2"/>
-  <text x="60" y="${H-145}" font-family="${MONO}" font-size="21" fill="#8a93a8" letter-spacing="2">@ShaddaiLabs ${socialsTag ? ' · ' + socialsTag : ''}</text>
-  <text x="${W-60}" y="${H-145}" font-family="${MONO}" font-size="21" fill="#8a93a8" text-anchor="end">@shaddaiai</text>
-  <text x="60" y="${H-108}" font-family="${MONO}" font-size="15" fill="#5c6680">Built by IzzoSol</text>
-  <text x="${W-60}" y="${H-108}" font-family="${MONO}" font-size="15" fill="#5c6680" text-anchor="end">DM for pro signals</text>
+  <line x1="60" y1="1240" x2="${W-60}" y2="1240" stroke="#1c2340" stroke-width="2"/>
+  <text x="60" y="1283" font-family="${MONO}" font-size="21" fill="#8a93a8" letter-spacing="2">@ShaddaiLabs ${socialsTag ? ' · ' + socialsTag : ''}</text>
+  <text x="${W-60}" y="1283" font-family="${MONO}" font-size="21" fill="#8a93a8" text-anchor="end">@shaddaiai</text>
+  <text x="60" y="1316" font-family="${MONO}" font-size="15" fill="#5c6680">Built by IzzoSol</text>
+  <text x="${W-60}" y="1316" font-family="${MONO}" font-size="15" fill="#5c6680" text-anchor="end">DM for pro signals</text>
 </svg>`;
 }
 
 // Render the full signal card. opts.background = optional FLUX buffer.
+// The HF background now actually shows: lighter global scrim (0.60) plus
+// top/bottom gradient scrims only where the text lives — the middle band stays live.
 async function renderSignalCard(call, opts = {}) {
   const theme = themeFor(Number(call && call.top10Pct) >= 50 ? 1 : (Number(call && call.mc)||0) >= 50000 ? 5 : 2);
   if (opts.background && opts.background.length) {
     try {
-      const overlay = await sharp({ create: { width: W, height: H, channels: 4, background: { r: 6, g: 8, b: 16, alpha: 0.87 } } }).png().toBuffer();
+      const overlay = await sharp({ create: { width: W, height: H, channels: 4, background: { r: 6, g: 8, b: 16, alpha: 0.60 } } }).png().toBuffer();
       const base = await sharp(opts.background).resize(W, H, { fit: 'cover' }).composite([{ input: overlay }]).png().toBuffer();
-      return sharp(base).composite([{ input: Buffer.from(svgSignal(call || {}, theme).replace(/<rect width="1080" height="1350" fill="url\(#bg\)"\/>/, '')) }]).png().toBuffer();
+      const textLayer = Buffer.from(svgSignal(call || {}, theme, true).replace(/<rect width="1080" height="1350" fill="url\(#bg\)"\/>/, ''));
+      return sharp(base).composite([{ input: textLayer }]).png().toBuffer();
     } catch (e) { /* fall through to basic */ }
   }
-  return sharp(Buffer.from(svgSignal(call || {}, theme))).png().toBuffer();
+  return sharp(Buffer.from(svgSignal(call || {}, theme, false))).png().toBuffer();
 }
 
 module.exports = { render, renderToFile, svgOf, themeFor, THEMES, usd, xs, pct, _ago, renderSignalCard, svgSignal };

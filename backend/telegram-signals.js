@@ -1022,9 +1022,14 @@ async function _signalCardImage(chain, pair, rs, social, _extra) {
       freshWallets: rs && rs.insiders,
       bundlers: !!(rs && rs.hasBundlers),
       snipers: !!(rs && rs.hasSnipers),
-      lockedHeldPct: rs && rs.lockedHeldPct,
+      bundlePct: rs && rs.bundlePct,
+      lpPct: rs && rs.lp,
       rugScore: rs && rs.score,
       dexPaid: !!(pair && pair.info && pair.info.isBought),
+      buySell: (_extra && _extra.buySell) || null,
+      chg5m: pair.priceChange && pair.priceChange.h5 != null ? Number(pair.priceChange.h5) : null,
+      rank: (_extra && _extra.rank) || 0,
+      boostAmount: (_boostInfo(b.address || '') || {}).amount || 0,
       socials: social && social.has,
       dexId: pair.dexId,
       chain,
@@ -1195,7 +1200,7 @@ async function _pollOnce() {
     if (!_symCooldownOk(_sym)) { _logReject('sym_cooldown', _sym, _tFdv2, {}); _seen.add(addr); continue; }
     const _accel = _isAccelerating(pair) ? '\n⚡ <b>MOMENTUM</b> — h1 vol accelerating above daily avg' : '';
     const _bs = _buySellSupply(pair);
-    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, entryPrice: Number(pair.priceUsd || 0), websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [], buySell: _bs, supply: _bs.supply };
+    const _extra = { liq: Number(pair.liquidity && pair.liquidity.usd || 0), fdv: Number(pair.fdv || pair.marketCap || 0), mint: addr, url: pair.url || '', createdAt: pair.pairCreatedAt || 0, vol24: Number(pair.volume && pair.volume.h24) || 0, vol1h: Number(pair.volume && pair.volume.h1) || 0, entryPrice: Number(pair.priceUsd || 0), websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [], buySell: _bs, supply: _bs.supply, rank: _rank || 0 };
     const _hourTag = _hourLabel() ? '\n' + _hourLabel() : '';
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
     const _profData = _profileMap.get(addr);
