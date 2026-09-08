@@ -366,12 +366,20 @@ function svgPnl(call, theme, scrims) {
   const perfColor = (currMult >= 10) ? '#00ff88' : (currMult >= 5) ? '#7cf7c4' : (currMult >= 2) ? '#f7c95c' : (currMult >= 1) ? '#ffffff' : '#ff5c7a';
   const holders = Number((call && call.holders) || 0);
   const top10 = Number((call && call.top10Pct));
-  const lp = Number((call && call.lpPct));
   const rug = Number((call && call.rugScore));
+  const hasRug = isFinite(rug) && rug > 0;   // 0 = unchecked (equity/non-sol chains) — never flag red for lack of data
+  const vol24 = Number((call && call.vol24) || 0);
   const insiders = Number((call && call.insiders) || 0);
   const bundlers = !!(call && call.bundlers);
   const snipers = !!(call && call.snipers);
-  const milestones = Array.isArray(call && call.milestones) ? call.milestones : [];
+  // Milestones = union of the ones actually broadcast/recorded AND every ladder step
+  // the token actually reached (so the card never "stops" early — e.g. shows 10x the
+  // moment the token hit 10x even if a broadcast hasn't fired yet).
+  const milestones = (Array.isArray(call && call.milestones) ? call.milestones : []).map(Number).filter(m => m > 0);
+  const _msDerived = [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].filter(m => Math.max(currMult, peakMult) >= m);
+  const _msAll = Array.from(new Set([...milestones, ..._msDerived])).sort((a, b) => a - b);
+  const _msShow = _msAll.slice(0, 6);
+  const msTxt = _msShow.length ? _msShow.map(m => m + 'x').join('  →  ') + (_msAll.length > 6 ? '  → …' : '') : '';
   const chain = String((call && call.chain) || 'SOLANA').toUpperCase();
   const venue = (call && call.dexId) ? ' · ' + esc(String(call.dexId).replace(/-/g, ' ').toUpperCase()) : '';
   const img = (call && call.imageUrl) ? `<image href="${esc(call.imageUrl)}" x="${W-210}" y="212" width="150" height="150" preserveAspectRatio="xMidYMid slice" clip-path="url(#tickclip)"/>` : '';
@@ -389,8 +397,8 @@ function svgPnl(call, theme, scrims) {
   cells.push(_c(R, y, 'ATH MC', usd(athFdv), '#ffffff')); y += 96;
   cells.push(_c(L, y, 'HOLDERS', holders ? holders.toLocaleString() : 'N/A', '#ffffff'));
   cells.push(_c(R, y, 'TOP10', isFinite(top10) ? top10.toFixed(1)+'%' : 'N/A', (top10 > 50 ? '#ff5c7a' : (top10 > 30 ? '#f7c95c' : '#7cf7c4')))); y += 96;
-  cells.push(_c(L, y, 'LP LOCK', isFinite(lp) ? (lp >= 99 ? '100%' : lp.toFixed(0)+'%') : 'N/A', (lp >= 80 ? '#00ff88' : (lp > 0 ? '#f7c95c' : '#ff5c7a'))));
-  cells.push(_c(R, y, 'RUG SCORE', isFinite(rug) ? rug.toFixed(0)+'/100' : 'N/A', (rug >= 80 ? '#00ff88' : rug >= 50 ? '#f7c95c' : '#ff5c7a')));
+  cells.push(_c(L, y, 'VOLUME 24H', vol24 ? usd(vol24) : 'N/A', '#ffffff'));
+  cells.push(_c(R, y, 'RUG SAFETY', hasRug ? rug.toFixed(0)+'/100' : '—', hasRug ? (rug >= 80 ? '#00ff88' : rug >= 50 ? '#f7c95c' : '#ff5c7a') : '#5c6680'));
 
   // ownership/attack-line strip + milestones hit
   const strip = _secLine(L, 1136, [
@@ -399,7 +407,6 @@ function svgPnl(call, theme, scrims) {
     ['SNIPERS ' + (snipers ? 'YES' : 'CLEAN'), snipers ? '#ff5c7a' : '#00ff88'],
     ['RANK ' + (Number((call && call.rank) || 0) || '—'), '#9aa6c4'],
   ]);
-  const msTxt = milestones.length ? milestones.map(m => m + 'x').join('  →  ') : '';
 
   const scrimDefs = scrims ? `<linearGradient id="scrT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070e" stop-opacity=".96"/><stop offset="1" stop-color="#05070e" stop-opacity="0"/></linearGradient>
     <linearGradient id="scrB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070e" stop-opacity="0"/><stop offset="1" stop-color="#05070e" stop-opacity=".96"/></linearGradient>` : '';

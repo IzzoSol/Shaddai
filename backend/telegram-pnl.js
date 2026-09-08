@@ -47,6 +47,7 @@ function _pnlImageForCall(call) {
 }
 const DS_TOKENS = (addrs) => `https://api.dexscreener.com/latest/dex/tokens/${addrs}`;
 const MILESTONES = [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];   // every milestone level
+const MS_BROADCAST_GAP = 45 * 60 * 1000;   // space milestone postings: ≤1 update per token per 45 min
 const MAX_AGE_MS = 30 * 24 * 3600 * 1000;   // stop tracking after 30 days
 const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function _usd(n) { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(0); }
@@ -264,17 +265,23 @@ async function trackTick() {
       }
       // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
       // Never skip straight to 5x just because the token moved fast between ticks.
-      if (HAS_BOT && hasRealLiq) {
+      if (hasRealLiq) {
         for (const m of MILESTONES) {
           if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
         }
         if (hit) {
-          call.milestones.push(hit);   // record only the one being fired; next tick fires the next
+          call.milestones.push(hit);   // always record the level (keeps the PNL card accurate)
           changed = true;
-          const img = milestoneImage(hit) || _pnlImage();
-          const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
-          if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
-          else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+          // SPACED UPDATES: a runner that pumps 2x→5x→10x→25x fast used to flood the
+          // channel with back-to-back milestone posts. Record every level, but broadcast
+          // at most one update per token every 45 minutes.
+          if (HAS_BOT && Date.now() - (call.lastMsPosted || call.ts) >= MS_BROADCAST_GAP) {
+            call.lastMsPosted = Date.now();
+            const img = milestoneImage(hit) || _pnlImage();
+            const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
+            if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
+            else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+          }
         }
       }
 
