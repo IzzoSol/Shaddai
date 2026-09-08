@@ -538,13 +538,15 @@ app.use('/api/clipper', async (req, res) => {
 // sets index:false, so without this a directory request falls through to the SPA
 // catch-all and returns the dashboard instead of the generated page.
 app.use('/sites', express.static(path.join(__dirname, '../public/sites'), {
-  index: 'index.html',
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    index: 'index.html',
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
     }
-  }
-}));
+  }));
+// SHADDAI clipper frontend — statically served app (vendored from our clipper repo).
+app.use('/clipper', express.static(path.join(__dirname, '../public/clipper'), { index: 'index.html' }));
 
 // Request tracking middleware
 app.use((req, res, next) => {
@@ -1692,6 +1694,29 @@ app.use('/api', apiProxyRoutes);
 // /gallery win those exact paths (the ONLY page calling them is brain.html).
 try { app.use('/api', require('./brain-server')); console.log('[prod] RAG brain mounted (/api overview|search|summary|council|ask|synthesize|crosstalk|books|gallery|rooms)'); }
 catch (e) { console.warn('[startup] RAG brain not mounted:', e.message); }
+// AURA BRAIN — boxed knowledge (COMPARTMENT architecture). Ingest public URLs
+// (Jina → Firecrawl → bundled scraper) into labeled boxes; per-box TF-IDF search.
+// Exposes /api/aura-brain (/ . boxes ingest search). PIKADON-guarded, metered.
+app.use('/api/aura-brain', require('./aura-brain-routes'));
+console.log('[prod] AURA BRAIN mounted (/api/aura-brain ingest|boxes|search) — Libretto stays NEXUS-only (docs/STATUS.md VISION)');
+// SHADDAI media engine — our own media download engine (rebranded + vendored
+// AGPL-3.0 code, see backend/media-engine/README note). Loopback-only sidecar
+// on :9000; /api/media railed gateway (status|fetch|dl) with SSRF guard,
+// tunnel-origin lock, per-IP caps and an audit trail.
+app.use('/api/media', require('./media-routes'));
+console.log('[prod] SHADDAI media gateway mounted (/api/media status|fetch|dl)');
+const mediaEngine = require('./media-engine-runner');
+mediaEngine.ensure();
+// SHADDAI capture rail — one gateway for media + web scrape + the video clipper.
+// /api/capture status|run|audit — media delegates to /api/media, scrape is the
+// bundled SSRF-guarded scraper, clip forwards to the clipper origin.
+app.use('/api/capture', require('./capture-routes'));
+console.log('[prod] SHADDAI capture rail mounted (/api/capture status|run|audit — media+scrape+clip)');
+// SHADDAI clipper — our own FFmpeg/Whisper clip backend (backend/clipper-engine),
+// proxied at /api/clipper -> CLIPPER_ORIGIN (default http://127.0.0.1:8787).
+const clipperEngine = require('./clipper-engine-runner');
+clipperEngine.ensure();
+console.log('[prod] SHADDAI clipper engine ensured (:8787 sidecar — FFmpeg clips, optional Whisper subs)');
 // MoonPay Agents (ZEROX non-custodial trading coordination + PIKADON kill-switch)
 app.use('/api/telegram', require('./telegram-routes'));   // dashboard control for the TG bot/signals
 app.use('/api/social', require('./routes/social-routes'));      // Social media posting (Telegram, Discord)

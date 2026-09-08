@@ -20,6 +20,8 @@
 const core = require('./telegram-core');   // shared broadcast (channel + every chat the bot is in)
 const pnl = require('./telegram-pnl');     // call performance tracker (entry → Xs)
 const wallets = require('./telegram-wallets');  // tracked wallet cross-reference + ape alerts
+const callCard = require('./lib/call-card');    // SHADDAI Labs branded signal card (SVG→PNG)
+const brandBg = require('./lib/brand-bg');      // 6-hour rotating FLUX background
 const path = require('path');
 const fs = require('fs');
 
@@ -990,6 +992,45 @@ function _signalCard(chain, pair, socialLabel) {
 
 const _profileMap = new Map();   // tokenAddress → {icon, description, links, cto, hasDescription}
 const DS_PROFILES = 'https://api.dexscreener.com/token-profiles/latest/v1';
+
+// Build the SHADDAI Labs branded signal card PNG (crisp text over the 6h FLUX bg).
+// Uses only data already in scope at broadcast time — pair (price/mc/vol/liq/supply/age),
+// rs (rugScore: top10%, holders, insiders=fresh wallets, bundlers, score), social.
+async function _signalCardImage(chain, pair, rs, social, _extra) {
+  try {
+    const b = pair.baseToken || {};
+    const fdv = Number(pair.fdv || pair.marketCap) || 0;
+    const priceUsd = Number(pair.priceUsd) || 0;
+    const enriched = {
+      symbol: b.symbol || 'TOKEN',
+      name: b.name || '',
+      imageUrl: (pair.info && pair.info.imageUrl) || null,
+      priceUsd,
+      mc: fdv,
+      volume24h: Number(pair.volume && pair.volume.h24) || 0,
+      volume1h: Number(pair.volume && pair.volume.h1) || 0,
+      liq: Number(pair.liquidity && pair.liquidity.usd) || 0,
+      supply: (_extra && _extra.supply) || null,
+      chg1h: pair.priceChange && pair.priceChange.h1 != null ? Number(pair.priceChange.h1) : null,
+      chg24h: pair.priceChange && pair.priceChange.h24 != null ? Number(pair.priceChange.h24) : null,
+      ageMs: pair.pairCreatedAt ? (Date.now() - pair.pairCreatedAt) : null,
+      top10Pct: rs && rs.top10Pct,
+      topPct: rs && rs.topPct,
+      holders: rs && rs.holders,
+      freshWallets: rs && rs.insiders,
+      bundlers: !!(rs && rs.hasBundlers),
+      snipers: !!(rs && rs.hasSnipers),
+      lockedHeldPct: rs && rs.lockedHeldPct,
+      rugScore: rs && rs.score,
+      dexPaid: !!(pair && pair.info && pair.info.isBought),
+      socials: social && social.has,
+      dexId: pair.dexId,
+      chain,
+    };
+    const bg = brandBg.current();
+    return await callCard.renderSignalCard(enriched, { background: bg });
+  } catch (e) { return null; }
+}
 async function _refreshProfiles() {
   try {
     const r = await fetch(DS_PROFILES);
@@ -1165,22 +1206,26 @@ async function _pollOnce() {
     const _boostData = _boostInfo(addr);
     const _brainTrend = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: _tFdv2 > 0 ? (Number(pair.liquidity && pair.liquidity.usd || 0) / _tFdv2 * 100) : 0, boosted: !!_boostData, volAccel: !!_accel, fdv: _tFdv2, source: 'trending' });
     const _msg = '🔔 <b>SIGNAL</b>\n' + card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
-    // Image priority: profile icon > boost icon > pair.info.imageUrl > random bot banner
+    // Image priority: SHADDAI LABS branded card (FLUX bg + crisp text) > profile icon > pair image
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
+    let _cardBuf = null;
+    let _cardPath = '';
+    try { _cardBuf = await _signalCardImage(chain, pair, rs, social, _extra); } catch (e) {}
+    if (_cardBuf) { try { _cardPath = path.join(require('os').tmpdir(), 'shd-sig-' + Date.now() + '.png'); fs.writeFileSync(_cardPath, _cardBuf); } catch (e) { _cardPath = ''; } }
     const _btns = core.buildButtons(addr, chain, pair.url);
     const _tSym = pair.baseToken && pair.baseToken.symbol;
     let ok;
     if (cfg.recordOnly) {
-      // Record-only: no Telegram token — log the call without broadcasting.
       ok = true;
     } else {
-      // ONE obvious signal, always the full card as TEXT (guaranteed to land),
-      // with the image/buttons attached when available. Never a cryptic bare CA
-      // line + a separate photo caption — if the photo fails, the full details
-      // still arrive as a plain message instead of vanishing into a silent miss.
-      if (_imgUrl) {
+      if (_cardPath) {
+        ok = await core.broadcastPhoto(_cardPath, _msg, _btns);
+        try { fs.unlinkSync(_cardPath); } catch (e) {}
+        if (!ok) ok = await core.broadcastPhoto(_imgUrl, _msg, _btns);
+        if (!ok) ok = await core.broadcast(_msg, { buttons: _btns });
+      } else if (_imgUrl) {
         ok = await core.broadcastPhoto(_imgUrl, _msg, _btns);
-        if (!ok) ok = await core.broadcast(_msg, { buttons: _btns });   // fallback: plain text
+        if (!ok) ok = await core.broadcast(_msg, { buttons: _btns });
       } else {
         ok = await core.broadcast(_msg, { buttons: _btns });
       }
@@ -2188,6 +2233,8 @@ async function _pollBoosts() {
 
 let _timer = null, _bondTimer = null, _geckoTimer = null, _pipelineTimer = null, _boostTimer = null;
 function startTelegramSignals() {
+  // 6-hour rotating FLUX brand background (feeds the SHADDAI Labs signal card)
+  try { brandBg.start(); } catch (e) {}
   const cfg = _cfg();
   if (!cfg.token && !cfg.recordOnly) {
     console.log('[tg-signals] disabled — set TELEGRAM_BOT_TOKEN to enable the DEX signals feed (broadcasts to the channel + every chat the bot is in).');

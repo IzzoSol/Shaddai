@@ -1,0 +1,5371 @@
+{
+  "snapshots": [
+    {
+      "version": "vmtp4uq2g",
+      "at": "2026-09-06T01:28:24.184Z",
+      "by": "probe",
+      "count": 557,
+      "fingerprint": "2424594473",
+      "catalog": {
+        "fetch_price": {
+          "name": "fetch_price",
+          "description": "Live crypto price from CoinGecko. Returns USD price, 24h change %, market cap, volume.",
+          "agents": [
+            "SHADDAI",
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "get_fear_greed": {
+          "name": "get_fear_greed",
+          "description": "Crypto Fear & Greed Index (0=Extreme Fear, 100=Extreme Greed). Also returns 7-day history.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "get_trending": {
+          "name": "get_trending",
+          "description": "Top 7 trending crypto coins on CoinGecko right now.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "get_ohlcv": {
+          "name": "get_ohlcv",
+          "description": "Price history (OHLCV candles) for a coin over last N days from CoinGecko.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "get_global_market": {
+          "name": "get_global_market",
+          "description": "Global crypto market overview: total market cap, BTC dominance, 24h volume, active coins.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "get_token_info": {
+          "name": "get_token_info",
+          "description": "Detailed coin data from CoinGecko: description, categories, links, ATH, supply.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "whale_scan": {
+          "name": "whale_scan",
+          "description": "DexScreener whale data: top pairs, liquidity, 24h volume for any token.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "get_defi_tvl": {
+          "name": "get_defi_tvl",
+          "description": "DeFi Total Value Locked data from DeFiLlama. Top protocols by TVL.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "get_sol_balance": {
+          "name": "get_sol_balance",
+          "description": "Get SOL balance of any Solana wallet address. Uses mainnet-beta public RPC.",
+          "agents": [
+            "ZEROX",
+            "PIKADON",
+            "SHADDAI"
+          ]
+        },
+        "get_eth_balance": {
+          "name": "get_eth_balance",
+          "description": "Get ETH balance of any Ethereum wallet. Uses Cloudflare public RPC (no key needed).",
+          "agents": [
+            "ZEROX",
+            "PIKADON"
+          ]
+        },
+        "get_exchange_rates": {
+          "name": "get_exchange_rates",
+          "description": "Live fiat currency exchange rates (USD base). Free, no key required.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "search_web": {
+          "name": "search_web",
+          "description": "Web search — tries Google News RSS (great for recent news) then DuckDuckGo Instant Answer. Returns titles, snippets, URLs.",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL",
+            "NEXUS",
+            "ZEROX"
+          ]
+        },
+        "wikipedia_search": {
+          "name": "wikipedia_search",
+          "description": "Search Wikipedia. Reliable for facts, people, concepts, technology. Returns article summary.",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "SHADDAI",
+            "NEXUS"
+          ]
+        },
+        "fetch_url": {
+          "name": "fetch_url",
+          "description": "Fetch full text from any URL. Strips HTML, returns clean readable text (first 3000 chars).",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "NEXUS",
+            "PIKADON"
+          ]
+        },
+        "get_hackernews": {
+          "name": "get_hackernews",
+          "description": "Top Hacker News stories right now. Returns titles, URLs, scores, comment counts.",
+          "agents": [
+            "ORACLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "get_rss_feed": {
+          "name": "get_rss_feed",
+          "description": "Fetch and parse any RSS/Atom feed URL. Returns latest items with title, link, summary.",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "get_github_trending": {
+          "name": "get_github_trending",
+          "description": "Recently trending GitHub repos (sorted by stars, pushed in last 7 days). Uses public GitHub API.",
+          "agents": [
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "get_github_repo": {
+          "name": "get_github_repo",
+          "description": "GitHub repository details: stars, forks, issues, language, recent activity. No auth needed.",
+          "agents": [
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "search_npm": {
+          "name": "search_npm",
+          "description": "Search npm registry for packages. Returns name, version, description, weekly downloads.",
+          "agents": [
+            "NEXUS"
+          ]
+        },
+        "get_weather": {
+          "name": "get_weather",
+          "description": "Current weather for any city. Returns temp, conditions, humidity, wind.",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "run_js": {
+          "name": "run_js",
+          "description": "Execute JavaScript in a sandboxed Node.js vm. Returns console output and result value.",
+          "agents": [
+            "NEXUS",
+            "SHADDAI"
+          ]
+        },
+        "run_python": {
+          "name": "run_python",
+          "description": "Execute Python code via system Python. Returns stdout. Requires ALLOW_PYTHON_EXEC=true env var; disabled by default for security.",
+          "agents": [
+            "NEXUS",
+            "SHADDAI"
+          ]
+        },
+        "calculate": {
+          "name": "calculate",
+          "description": "Safely evaluate math expressions. Supports +,-,*,/,**,sqrt,log,sin,cos,PI,E,floor,ceil.",
+          "agents": [
+            "NEXUS",
+            "ZEROX",
+            "SHADDAI",
+            "ORACLE"
+          ]
+        },
+        "check_security": {
+          "name": "check_security",
+          "description": "PIKADON security audit: SQL injection, XSS, hardcoded secrets, eval, path traversal, CORS, CSRF, insecure deps.",
+          "agents": [
+            "PIKADON"
+          ]
+        },
+        "write_file": {
+          "name": "write_file",
+          "description": "Write content to a file in generated-output/. Safe filename auto-generated. Returns path.",
+          "agents": [
+            "QUILL",
+            "NEXUS",
+            "TURTLE",
+            "SHADDAI"
+          ]
+        },
+        "read_file": {
+          "name": "read_file",
+          "description": "Read a file from generated-output/ by filename. Returns content up to 5000 chars.",
+          "agents": [
+            "QUILL",
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "list_files": {
+          "name": "list_files",
+          "description": "List all files in generated-output/ with size and modification time.",
+          "agents": [
+            "NEXUS",
+            "QUILL",
+            "PIKADON",
+            "SHADDAI"
+          ]
+        },
+        "save_to_inbox": {
+          "name": "save_to_inbox",
+          "description": "Save agent output to SHADDAI inbox. User sees it in dashboard inbox tab.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "save_memory": {
+          "name": "save_memory",
+          "description": "Persist a key-value pair to agent memory. Survives across tasks. Use to remember important facts.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "mint_collectible": {
+          "name": "mint_collectible",
+          "description": "Mint a new collectible NFT-style receipt. Persists to backend/data/collectibles.json with HMAC signature.",
+          "agents": [
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "list_collectible": {
+          "name": "list_collectible",
+          "description": "List a collectible on the marketplace at a credit price.",
+          "agents": [
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "browse_listings": {
+          "name": "browse_listings",
+          "description": "Browse all currently-listed collectibles on the marketplace.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "list_open_jobs": {
+          "name": "list_open_jobs",
+          "description": "List all open jobs from the marketplace (backend/data/marketplace.json).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "bid_on_job": {
+          "name": "bid_on_job",
+          "description": "Place a bid on an open marketplace job. Appends to job.bids array.",
+          "agents": [
+            "ZEROX",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "complete_job": {
+          "name": "complete_job",
+          "description": "Mark a marketplace job as completed, store deliverable, and credit the agent earnings.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "execute_trade": {
+          "name": "execute_trade",
+          "description": "Execute a collectibles trade: buyer pays priceCredits, ownership transfers, platform takes 10% fee.",
+          "agents": [
+            "SHADDAI",
+            "ZEROX"
+          ]
+        },
+        "get_memory": {
+          "name": "get_memory",
+          "description": "Retrieve a previously saved memory by key. Returns the stored value.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "post_discord": {
+          "name": "post_discord",
+          "description": "Post to Discord via webhook. Requires DISCORD_WEBHOOK_URL in .env.",
+          "agents": [
+            "QUILL",
+            "SHADDAI"
+          ]
+        },
+        "generate_image": {
+          "name": "generate_image",
+          "description": "Generate a real AI image using HuggingFace FLUX.1-schnell (server-side key pool, no client key needed). Returns a served URL to the rendered PNG.",
+          "agents": [
+            "TURTLE"
+          ]
+        },
+        "schedule_task": {
+          "name": "schedule_task",
+          "description": "Schedule a task or reminder for a future time. Persists it for the background job runner. Accepts ISO datetime or relative (\"in 2 hours\", \"in 3 days\").",
+          "agents": [
+            "SHADDAI",
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "list_scheduled_tasks": {
+          "name": "list_scheduled_tasks",
+          "description": "List scheduled tasks / reminders.",
+          "agents": [
+            "SHADDAI",
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "analyze_sentiment": {
+          "name": "analyze_sentiment",
+          "description": "Analyze sentiment of any text. Returns score (-1 to +1), label, and key terms.",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "format_data": {
+          "name": "format_data",
+          "description": "Format raw data as markdown table, JSON, CSV, or bullet list. Clean output for reports.",
+          "agents": [
+            "QUILL",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "delegate_to_agent": {
+          "name": "delegate_to_agent",
+          "description": "Delegate a sub-task to another agent. SHADDAI uses this to coordinate. Returns sub-task result.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS"
+          ]
+        },
+        "screenshot_url": {
+          "name": "screenshot_url",
+          "description": "Capture a screenshot of any webpage. Returns image URL. Uses thum.io (free, no key).",
+          "agents": [
+            "TURTLE",
+            "ORACLE",
+            "NEXUS"
+          ]
+        },
+        "hash_text": {
+          "name": "hash_text",
+          "description": "Compute cryptographic hashes (md5, sha1, sha256, sha512) of input text.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "base64_codec": {
+          "name": "base64_codec",
+          "description": "Base64 encode or decode a string. Useful for JWTs, data URIs, basic auth.",
+          "agents": [
+            "NEXUS",
+            "PIKADON"
+          ]
+        },
+        "regex_test": {
+          "name": "regex_test",
+          "description": "Test a regex pattern against text. Returns matches, groups, and count.",
+          "agents": [
+            "NEXUS",
+            "PIKADON",
+            "QUILL"
+          ]
+        },
+        "extract_keywords": {
+          "name": "extract_keywords",
+          "description": "Extract top keywords from text by frequency. Strips common stop words.",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "ZEROX"
+          ]
+        },
+        "markdown_to_html": {
+          "name": "markdown_to_html",
+          "description": "Convert markdown to HTML. Supports headings, bold, italic, lists, links, code blocks.",
+          "agents": [
+            "QUILL",
+            "TURTLE",
+            "NEXUS"
+          ]
+        },
+        "translate_text": {
+          "name": "translate_text",
+          "description": "Translate text to another language. Uses MyMemory (free, no key, 5k chars/day).",
+          "agents": [
+            "QUILL",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "count_tokens": {
+          "name": "count_tokens",
+          "description": "Count words, characters, and estimate LLM tokens (~4 chars per token) for any text.",
+          "agents": [
+            "NEXUS",
+            "QUILL",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "read_obsidian_skill": {
+          "name": "read_obsidian_skill",
+          "description": "Read the full SKILL.md content from Obsidian vault by skill name. Returns step-by-step methodology.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "run_skill": {
+          "name": "run_skill",
+          "description": "Execute one of the 3,437 SHADDAI skills by name or intent. For RECIPE skills, runs all tool steps deterministically and returns combined results. For MD/baked skills, returns the methodology so you can apply it. Prefer your own agent's skil",
+          "agents": [
+            "SHADDAI",
+            "ZEROX",
+            "ORACLE",
+            "NEXUS",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "get_reddit_posts": {
+          "name": "get_reddit_posts",
+          "description": "Fetch top posts from any subreddit — real community discussion",
+          "agents": []
+        },
+        "get_arxiv_papers": {
+          "name": "get_arxiv_papers",
+          "description": "Search arXiv for research papers by topic",
+          "agents": []
+        },
+        "get_gas_price": {
+          "name": "get_gas_price",
+          "description": "Current Ethereum gas prices (slow/standard/fast in Gwei)",
+          "agents": []
+        },
+        "get_nft_floor": {
+          "name": "get_nft_floor",
+          "description": "MagicEden Solana NFT collection floor price and stats",
+          "agents": []
+        },
+        "get_crypto_news": {
+          "name": "get_crypto_news",
+          "description": "Latest cryptocurrency headlines. Keyless by default — pulls live public crypto RSS feeds (CoinDesk, CoinTelegraph, Decrypt) returning title/url/source/publishedAt. If NEWSAPI_API_KEY is set, NewsAPI crypto headlines are merged in as an enha",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "get_stock_quote": {
+          "name": "get_stock_quote",
+          "description": "Real-time stock price from Yahoo Finance — works for any ticker (AAPL, TSLA, NVDA, etc.)",
+          "agents": []
+        },
+        "get_country_info": {
+          "name": "get_country_info",
+          "description": "Country facts: population, capital, currency, languages, flag",
+          "agents": []
+        },
+        "get_ip_info": {
+          "name": "get_ip_info",
+          "description": "Geolocate an IP address — country, city, ISP, coordinates",
+          "agents": []
+        },
+        "get_word_definition": {
+          "name": "get_word_definition",
+          "description": "Dictionary definition, pronunciation, and example usage for any English word",
+          "agents": []
+        },
+        "get_random_quote": {
+          "name": "get_random_quote",
+          "description": "Get an inspiring or interesting random quote",
+          "agents": []
+        },
+        "get_joke": {
+          "name": "get_joke",
+          "description": "Get a programming or tech joke",
+          "agents": []
+        },
+        "get_history_today": {
+          "name": "get_history_today",
+          "description": "Historical events that happened on today's date throughout history",
+          "agents": []
+        },
+        "get_moon_phase": {
+          "name": "get_moon_phase",
+          "description": "Current moon phase and next full/new moon dates",
+          "agents": []
+        },
+        "get_timezone": {
+          "name": "get_timezone",
+          "description": "Current time and date in any timezone worldwide",
+          "agents": []
+        },
+        "get_color_palette": {
+          "name": "get_color_palette",
+          "description": "Generate a harmonious color palette from a seed color",
+          "agents": []
+        },
+        "get_qr_code": {
+          "name": "get_qr_code",
+          "description": "Generate a QR code image URL for any text or URL",
+          "agents": []
+        },
+        "shorten_url": {
+          "name": "shorten_url",
+          "description": "Shorten any long URL using TinyURL",
+          "agents": []
+        },
+        "check_port": {
+          "name": "check_port",
+          "description": "Check if a TCP port is open on a host",
+          "agents": []
+        },
+        "get_public_apis": {
+          "name": "get_public_apis",
+          "description": "Search a directory of free public APIs by topic",
+          "agents": []
+        },
+        "encode_base64": {
+          "name": "encode_base64",
+          "description": "Encode any text to Base64",
+          "agents": []
+        },
+        "decode_base64": {
+          "name": "decode_base64",
+          "description": "Decode Base64 string back to plain text",
+          "agents": []
+        },
+        "get_uuid": {
+          "name": "get_uuid",
+          "description": "Generate unique IDs, tokens, or random strings",
+          "agents": []
+        },
+        "check_password_strength": {
+          "name": "check_password_strength",
+          "description": "Analyze password strength — length, entropy, suggestions",
+          "agents": []
+        },
+        "grammar_check": {
+          "name": "grammar_check",
+          "description": "Check text for grammar and spelling errors using LanguageTool (free)",
+          "agents": []
+        },
+        "get_wikipedia_summary": {
+          "name": "get_wikipedia_summary",
+          "description": "Get a clean Wikipedia summary paragraph for any topic",
+          "agents": []
+        },
+        "jupiter_quote": {
+          "name": "jupiter_quote",
+          "description": "Real swap quote (best route + output amount + price impact) from Jupiter aggregator. Keyless.",
+          "agents": [
+            "ZEROX",
+            "NEXUS"
+          ]
+        },
+        "random_user": {
+          "name": "random_user",
+          "description": "Generate fake user data for testing (name, email, address). Uses randomuser.me.",
+          "agents": [
+            "NEXUS",
+            "TURTLE",
+            "QUILL"
+          ]
+        },
+        "dex_price": {
+          "name": "dex_price",
+          "description": "Get real-time DEX price for any token via DexScreener. No API key needed.",
+          "agents": []
+        },
+        "binance_price": {
+          "name": "binance_price",
+          "description": "Get live spot price from Binance. Fastest price data available, no auth needed.",
+          "agents": []
+        },
+        "binance_orderbook": {
+          "name": "binance_orderbook",
+          "description": "Get Binance order book depth to see buy/sell pressure.",
+          "agents": []
+        },
+        "get_eth_gas": {
+          "name": "get_eth_gas",
+          "description": "Get current Ethereum gas price in Gwei (keyless public RPC).",
+          "agents": []
+        },
+        "get_top_gainers": {
+          "name": "get_top_gainers",
+          "description": "Get top gaining and losing cryptocurrencies in the last 24 hours.",
+          "agents": []
+        },
+        "get_stablecoin_data": {
+          "name": "get_stablecoin_data",
+          "description": "Get stablecoin market cap and peg data from DeFiLlama.",
+          "agents": []
+        },
+        "get_protocol_revenue": {
+          "name": "get_protocol_revenue",
+          "description": "Get DeFi protocol revenue data from DeFiLlama.",
+          "agents": []
+        },
+        "get_fear_greed_history": {
+          "name": "get_fear_greed_history",
+          "description": "Get historical Fear & Greed index data (last 7 days).",
+          "agents": []
+        },
+        "calculate_position_size": {
+          "name": "calculate_position_size",
+          "description": "Calculate safe position size based on account size and risk percentage.",
+          "agents": []
+        },
+        "get_sol_token_info": {
+          "name": "get_sol_token_info",
+          "description": "Get Solana token info from DexScreener by contract address or symbol.",
+          "agents": []
+        },
+        "get_onchain_activity": {
+          "name": "get_onchain_activity",
+          "description": "Get recent on-chain activity metrics for Solana.",
+          "agents": []
+        },
+        "get_funding_rates": {
+          "name": "get_funding_rates",
+          "description": "Get crypto perpetual futures funding rates from Binance.",
+          "agents": []
+        },
+        "get_dominance": {
+          "name": "get_dominance",
+          "description": "Get Bitcoin and Ethereum market dominance percentages.",
+          "agents": []
+        },
+        "fetch_url_clean": {
+          "name": "fetch_url_clean",
+          "description": "Fetch a URL and extract clean readable text (strips HTML tags and scripts).",
+          "agents": []
+        },
+        "get_news_headlines": {
+          "name": "get_news_headlines",
+          "description": "Get latest news headlines from multiple sources via RSS.",
+          "agents": []
+        },
+        "get_product_hunt": {
+          "name": "get_product_hunt",
+          "description": "Get top products from Product Hunt today.",
+          "agents": []
+        },
+        "get_github_issues": {
+          "name": "get_github_issues",
+          "description": "Get open issues from any public GitHub repository.",
+          "agents": []
+        },
+        "search_web_ddg": {
+          "name": "search_web_ddg",
+          "description": "Search the web using DuckDuckGo instant answers API. No API key needed.",
+          "agents": []
+        },
+        "get_stackoverflow": {
+          "name": "get_stackoverflow",
+          "description": "Get top Stack Overflow questions for any programming topic.",
+          "agents": []
+        },
+        "get_medium_articles": {
+          "name": "get_medium_articles",
+          "description": "Get latest Medium articles on any topic via RSS.",
+          "agents": []
+        },
+        "get_hacker_news_comments": {
+          "name": "get_hacker_news_comments",
+          "description": "Get top comments from a Hacker News story.",
+          "agents": []
+        },
+        "analyze_code_complexity": {
+          "name": "analyze_code_complexity",
+          "description": "Analyze code complexity: count lines, functions, nested depth, and flag issues.",
+          "agents": []
+        },
+        "generate_uuid": {
+          "name": "generate_uuid",
+          "description": "Generate a UUID v4 (or multiple UUIDs).",
+          "agents": []
+        },
+        "validate_json": {
+          "name": "validate_json",
+          "description": "Validate JSON string and return structure info or errors.",
+          "agents": []
+        },
+        "convert_units": {
+          "name": "convert_units",
+          "description": "Convert between units: temperature (C/F/K), length (m/ft/mi/km), weight (kg/lb), data (B/KB/MB/GB).",
+          "agents": []
+        },
+        "get_package_info": {
+          "name": "get_package_info",
+          "description": "Get npm package information: version, description, downloads, dependencies.",
+          "agents": []
+        },
+        "search_github_repos": {
+          "name": "search_github_repos",
+          "description": "Search GitHub for repositories matching a query.",
+          "agents": []
+        },
+        "diff_texts": {
+          "name": "diff_texts",
+          "description": "Compare two texts and show what changed (added/removed lines).",
+          "agents": []
+        },
+        "run_local_llm": {
+          "name": "run_local_llm",
+          "description": "Send a prompt directly to local Ollama LLM. Free, private, no API key needed.",
+          "agents": []
+        },
+        "generate_image_free": {
+          "name": "generate_image_free",
+          "description": "Generate a real AI image using the server-side HuggingFace FLUX.1-schnell key pool. Returns a served URL to the rendered PNG (no client key required).",
+          "agents": []
+        },
+        "summarize_text": {
+          "name": "summarize_text",
+          "description": "Summarize long text into key points (TL;DR + bullets).",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "extract_entities": {
+          "name": "extract_entities",
+          "description": "Extract named entities (people, orgs, locations, dates, amounts) from text.",
+          "agents": []
+        },
+        "generate_mermaid": {
+          "name": "generate_mermaid",
+          "description": "Generate a Mermaid diagram definition for flowcharts, sequences, or mind maps.",
+          "agents": []
+        },
+        "detect_language": {
+          "name": "detect_language",
+          "description": "Detect the programming language of a code snippet.",
+          "agents": []
+        },
+        "compress_prompt": {
+          "name": "compress_prompt",
+          "description": "Compress a long prompt to use fewer tokens while preserving meaning.",
+          "agents": []
+        },
+        "generate_code_template": {
+          "name": "generate_code_template",
+          "description": "Generate a code boilerplate template for common patterns.",
+          "agents": []
+        },
+        "weather_live": {
+          "name": "weather_live",
+          "description": "Get live weather for any city using Open-Meteo. Free, no API key needed.",
+          "agents": []
+        },
+        "set_agent_room_state": {
+          "name": "set_agent_room_state",
+          "description": "Update an agent room state (sleeping/idle/working/completed). Persists to backend/data/agent-rooms.json.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "save_room_layout": {
+          "name": "save_room_layout",
+          "description": "Save an agent room layout (placed collectible IDs). Max 5 items per room.",
+          "agents": [
+            "SHADDAI",
+            "TURTLE",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "get_agent_mood": {
+          "name": "get_agent_mood",
+          "description": "Read an agent room state and mood from persistent storage.",
+          "agents": [
+            "SHADDAI",
+            "ORACLE",
+            "NEXUS",
+            "ZEROX",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "create_skill_pack": {
+          "name": "create_skill_pack",
+          "description": "Create a new skill pack with custom system prompt for an agent. Saves to backend/data/skill-packs.json.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "list_skill_packs": {
+          "name": "list_skill_packs",
+          "description": "List all available skill packs in the marketplace. Optionally filter by target agent.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "install_skill_pack": {
+          "name": "install_skill_pack",
+          "description": "Purchase and install a skill pack — applies its system prompt override to the target agent. Tracks installations.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "run_workflow_chain": {
+          "name": "run_workflow_chain",
+          "description": "Run a multi-step workflow chain. Each step is {agent, goal}. Output of step N is fed as context to step N+1.",
+          "agents": [
+            "SHADDAI"
+          ]
+        },
+        "geocode_address": {
+          "name": "geocode_address",
+          "description": "Geocode any place/address to coordinates via OpenStreetMap Nominatim (free, no key).",
+          "agents": [
+            "ORACLE",
+            "NEXUS",
+            "SHADDAI"
+          ]
+        },
+        "get_forex_rate": {
+          "name": "get_forex_rate",
+          "description": "Live fiat currency exchange rates from Frankfurter (ECB data, free, no key, very reliable).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "get_crypto_backup": {
+          "name": "get_crypto_backup",
+          "description": "Crypto price from CoinPaprika (free, no key) — resilient backup when CoinGecko rate-limits.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "pay_api_call": {
+          "name": "pay_api_call",
+          "description": "Pay-per-use API call via pay.sh (Solana). GUARDED: per-call cap, daily budget, and human approval above a threshold. Spends real money — use only when a free tool cannot do the job.",
+          "agents": [
+            "SHADDAI",
+            "ZEROX",
+            "ORACLE",
+            "NEXUS"
+          ]
+        },
+        "paybox_pay": {
+          "name": "paybox_pay",
+          "description": "Trade, transfer, or pay via Paybox — the agent's real non-custodial wallet (Solana + EVM). GUARDED: per-call cap, daily budget, and human approval above a threshold — that gate is the ONLY safety check for this wallet, since it is set to au",
+          "agents": [
+            "SHADDAI",
+            "ZEROX",
+            "PIKADON"
+          ]
+        },
+        "remember_fact": {
+          "name": "remember_fact",
+          "description": "Save a fact or result to agent memory for future use (persists across sessions).",
+          "agents": []
+        },
+        "recall_memory": {
+          "name": "recall_memory",
+          "description": "Retrieve a previously saved fact from agent memory.",
+          "agents": []
+        },
+        "post_webhook": {
+          "name": "post_webhook",
+          "description": "Send data to any HTTP webhook URL via POST.",
+          "agents": []
+        },
+        "send_telegram": {
+          "name": "send_telegram",
+          "description": "Send a message to a Telegram chat/channel via the Bot API (POST /bot<token>/sendMessage). Requires TELEGRAM_BOT_TOKEN; chat_id comes from the arg or TELEGRAM_CHAT_ID. Supports HTML/Markdown parse modes.",
+          "agents": [
+            "QUILL",
+            "SHADDAI",
+            "PIKADON"
+          ]
+        },
+        "create_github_issue": {
+          "name": "create_github_issue",
+          "description": "Create a GitHub issue in any repository. Requires GITHUB_TOKEN env var.",
+          "agents": []
+        },
+        "get_trending_topics": {
+          "name": "get_trending_topics",
+          "description": "Trending crypto coins/topics right now. Keyless — uses the CoinGecko /search/trending endpoint. Returns a ranked list of trending coins with name, symbol, market cap rank, and CoinGecko link.",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "format_as_table": {
+          "name": "format_as_table",
+          "description": "Format JSON array data as a readable ASCII table.",
+          "agents": []
+        },
+        "semantic_scholar_search": {
+          "name": "semantic_scholar_search",
+          "description": "Search academic papers via Semantic Scholar (free, no key).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "NEXUS"
+          ]
+        },
+        "wayback_snapshot": {
+          "name": "wayback_snapshot",
+          "description": "Get the archived (Wayback Machine) version of any URL.",
+          "agents": [
+            "ORACLE",
+            "PIKADON",
+            "SHADDAI"
+          ]
+        },
+        "open_library_search": {
+          "name": "open_library_search",
+          "description": "Search books via Open Library (free).",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "hn_algolia_search": {
+          "name": "hn_algolia_search",
+          "description": "Search Hacker News stories via Algolia (free).",
+          "agents": [
+            "ORACLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "defillama_tvl": {
+          "name": "defillama_tvl",
+          "description": "Total value locked for a DeFi protocol via DefiLlama (free).",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "defillama_yields": {
+          "name": "defillama_yields",
+          "description": "Top DeFi yield pools by APY (DeFiLlama).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "coingecko_trending": {
+          "name": "coingecko_trending",
+          "description": "Trending coins on CoinGecko (no key).",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "jupiter_token_price": {
+          "name": "jupiter_token_price",
+          "description": "Solana token price via Jupiter Price API (free).",
+          "agents": [
+            "ZEROX"
+          ]
+        },
+        "npm_package_info": {
+          "name": "npm_package_info",
+          "description": "npm package latest version + weekly downloads.",
+          "agents": [
+            "NEXUS",
+            "SHADDAI"
+          ]
+        },
+        "bundlephobia_size": {
+          "name": "bundlephobia_size",
+          "description": "Bundle size (min+gzip) of an npm package.",
+          "agents": [
+            "NEXUS"
+          ]
+        },
+        "cve_lookup": {
+          "name": "cve_lookup",
+          "description": "Look up CVE security vulnerabilities by package/keyword or CVE id (Red Hat security data, free, no key).",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "svg_chart": {
+          "name": "svg_chart",
+          "description": "Generate an SVG bar chart from data arrays (pure JS, no API).",
+          "agents": [
+            "TURTLE",
+            "ZEROX",
+            "NEXUS"
+          ]
+        },
+        "color_palette": {
+          "name": "color_palette",
+          "description": "Generate a harmonious 5-color palette from a base hex or seed word.",
+          "agents": [
+            "TURTLE",
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "font_pairing": {
+          "name": "font_pairing",
+          "description": "Suggest Google Font pairings (display + body) for a style (curated, no API).",
+          "agents": [
+            "TURTLE",
+            "QUILL"
+          ]
+        },
+        "readability_score": {
+          "name": "readability_score",
+          "description": "Flesch reading-ease score + grade estimate for text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "tweet_thread": {
+          "name": "tweet_thread",
+          "description": "Split long text into a numbered tweet thread (<=240 chars each, pure JS).",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "rss_fetch": {
+          "name": "rss_fetch",
+          "description": "Fetch + parse any RSS feed (via rss2json, free).",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "get_iss_location": {
+          "name": "get_iss_location",
+          "description": "Live position (lat/long/altitude/velocity) of the International Space Station (Where the ISS at, free, no key).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "get_space_launches": {
+          "name": "get_space_launches",
+          "description": "Upcoming rocket launches worldwide (The Space Devs Launch Library 2, free, no key).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "get_public_holidays": {
+          "name": "get_public_holidays",
+          "description": "Public holidays for a country + year (Nager.Date, free, no key).",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "get_trivia_questions": {
+          "name": "get_trivia_questions",
+          "description": "Random trivia questions with answers (Open Trivia DB, free, no key).",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "gutenberg_search": {
+          "name": "gutenberg_search",
+          "description": "Search 70,000+ free public-domain books (Project Gutenberg via Gutendex, free, no key).",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "get_horoscope": {
+          "name": "get_horoscope",
+          "description": "Daily horoscope for a zodiac sign (Horoscope App API, free, no key).",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "get_btc_fees": {
+          "name": "get_btc_fees",
+          "description": "Recommended Bitcoin network fees in sat/vB by confirmation speed (mempool.space, free, no key).",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "convert_currency": {
+          "name": "convert_currency",
+          "description": "Convert an amount between two fiat currencies at live rates (open.er-api.com, free, no key).",
+          "agents": [
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "github_user_info": {
+          "name": "github_user_info",
+          "description": "Public GitHub user profile: repos, followers, bio (api.github.com, free, no key).",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "http_headers": {
+          "name": "http_headers",
+          "description": "Fetch a URL and return its HTTP response headers + status.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "json_to_csv": {
+          "name": "json_to_csv",
+          "description": "Convert a JSON array of objects to CSV.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "csv_to_json": {
+          "name": "csv_to_json",
+          "description": "Convert CSV (with header row) to JSON array.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "word_synonyms": {
+          "name": "word_synonyms",
+          "description": "Find synonyms (and related words) for a word (Datamuse, free, no key).",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "slugify": {
+          "name": "slugify",
+          "description": "Make a URL slug from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "random_fact": {
+          "name": "random_fact",
+          "description": "A random interesting fact (uselessfacts, free, no key).",
+          "agents": [
+            "QUILL",
+            "TURTLE",
+            "ORACLE"
+          ]
+        },
+        "dns_lookup": {
+          "name": "dns_lookup",
+          "description": "Resolve DNS records for a domain (A, AAAA, MX, NS, TXT).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "rdap_domain": {
+          "name": "rdap_domain",
+          "description": "WHOIS/RDAP registration data for a domain: registrar, status, key dates (rdap.org, free, no key).",
+          "agents": [
+            "PIKADON",
+            "ORACLE"
+          ]
+        },
+        "generate_password": {
+          "name": "generate_password",
+          "description": "Generate a cryptographically-strong random password (Node crypto, no API).",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "color_contrast_check": {
+          "name": "color_contrast_check",
+          "description": "Compute the WCAG contrast ratio between two hex colors and whether it passes AA/AAA (pure JS, no API).",
+          "agents": [
+            "TURTLE",
+            "PIKADON"
+          ]
+        },
+        "scrape_site": {
+          "name": "scrape_site",
+          "description": "Fetch a URL and return clean stripped text (HTML tags removed). Optional CSS selector substring to focus on a section. Uses AbortSignal for hard timeout.",
+          "agents": [
+            "ORACLE",
+            "NEXUS",
+            "PIKADON"
+          ]
+        },
+        "extract_pdf": {
+          "name": "extract_pdf",
+          "description": "Download a PDF from a URL and extract its text using pdf-parse. Returns text and page count.",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "csv_query": {
+          "name": "csv_query",
+          "description": "Load CSV text (or fetch from URL) and run a simple filter+aggregate. Supports filter (field=value or field>number), select (comma-separated column names), sum (column to sum), and limit.",
+          "agents": [
+            "ZEROX",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "check_pwned": {
+          "name": "check_pwned",
+          "description": "Check if an email address appears in known data breaches using the HaveIBeenPwned k-anonymity range API. Completely keyless — uses SHA1 prefix matching so the full email is never sent.",
+          "agents": [
+            "PIKADON"
+          ]
+        },
+        "validate_jwt": {
+          "name": "validate_jwt",
+          "description": "Decode and structurally validate a JWT token — checks format, expiry, issuer, algorithm. Does NOT verify signature (no secret needed). Returns decoded header+payload and validation status.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "pubmed_search": {
+          "name": "pubmed_search",
+          "description": "Search PubMed (NCBI) for biomedical/medical research papers. Returns titles, authors, abstracts, PMIDs and PubMed links. Completely free, no API key required.",
+          "agents": [
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "extract_links": {
+          "name": "extract_links",
+          "description": "Fetch a URL and extract all hyperlinks (href values). Optionally filter to only external links or links matching a pattern.",
+          "agents": [
+            "ORACLE",
+            "NEXUS",
+            "PIKADON"
+          ]
+        },
+        "summarize_url": {
+          "name": "summarize_url",
+          "description": "Fetch a URL and return a structured summary: title, meta description, word count, first 600 chars of body text, and all extracted links count.",
+          "agents": [
+            "ORACLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "send_webhook": {
+          "name": "send_webhook",
+          "description": "POST any JSON payload to any webhook URL. No external API key required. Supports custom headers.",
+          "agents": [
+            "NEXUS",
+            "SHADDAI"
+          ]
+        },
+        "validate_json_schema": {
+          "name": "validate_json_schema",
+          "description": "Validate a JSON data object against a JSON Schema (draft-07 compatible). No external dep — uses built-in structural checks: required fields, types, enum, min/max, pattern, minLength/maxLength.",
+          "agents": [
+            "NEXUS",
+            "PIKADON"
+          ]
+        },
+        "scan_dependencies": {
+          "name": "scan_dependencies",
+          "description": "Scan a package.json content string for known CVEs using the OSV.dev API (free, no key). Returns vulnerability count and details per package.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "xml_to_json": {
+          "name": "xml_to_json",
+          "description": "Fetch an XML/RSS/Atom URL and parse it into structured JSON using a lightweight built-in regex parser.",
+          "agents": [
+            "ORACLE",
+            "NEXUS"
+          ]
+        },
+        "wolfram_query": {
+          "name": "wolfram_query",
+          "description": "Computational knowledge from Wolfram Alpha (math, unit conversions, science facts, etc.).",
+          "agents": [
+            "ORACLE",
+            "ZEROX"
+          ]
+        },
+        "send_email": {
+          "name": "send_email",
+          "description": "Send a transactional email via SendGrid or Resend. Requires SENDGRID_API_KEY or RESEND_API_KEY.",
+          "agents": [
+            "QUILL",
+            "SHADDAI"
+          ]
+        },
+        "send_slack": {
+          "name": "send_slack",
+          "description": "Post a message to a Slack channel via Incoming Webhook. Requires SLACK_WEBHOOK_URL.",
+          "agents": [
+            "QUILL",
+            "SHADDAI"
+          ]
+        },
+        "send_sms": {
+          "name": "send_sms",
+          "description": "Send an SMS via Twilio. Requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM.",
+          "agents": [
+            "SHADDAI",
+            "PIKADON"
+          ]
+        },
+        "create_stripe_checkout": {
+          "name": "create_stripe_checkout",
+          "description": "Generate a Stripe Checkout session URL for a payment. Requires STRIPE_SECRET_KEY.",
+          "agents": [
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "text_to_speech": {
+          "name": "text_to_speech",
+          "description": "Convert text to an audio file URL. Requires ELEVENLABS_API_KEY.",
+          "agents": [
+            "TURTLE",
+            "QUILL"
+          ]
+        },
+        "transcribe_audio": {
+          "name": "transcribe_audio",
+          "description": "Transcribe an audio file URL to text via Whisper. Requires OPENAI_API_KEY.",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "ocr_image": {
+          "name": "ocr_image",
+          "description": "Extract text from an image URL via OCR.space. Requires OCR_SPACE_API_KEY.",
+          "agents": [
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "make_music": {
+          "name": "make_music",
+          "description": "Generate a real AI music clip and return a playable audio URL. Uses AceDataCloud Suno API (ACEDATACLOUD_API_TOKEN) if set, otherwise the official Suno API (SUNO_API_KEY). Async providers are polled up to ~60s.",
+          "agents": [
+            "TURTLE"
+          ]
+        },
+        "moonpay_quote": {
+          "name": "moonpay_quote",
+          "description": "Get a MoonPay crypto buy quote. Requires MOONPAY_API_KEY.",
+          "agents": [
+            "ZEROX"
+          ]
+        },
+        "price_compare": {
+          "name": "price_compare",
+          "description": "Compare product prices across retailers via SerpAPI. Requires SERP_API_KEY.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "open_github_issue": {
+          "name": "open_github_issue",
+          "description": "Create a GitHub issue via the GitHub API. Requires GITHUB_TOKEN.",
+          "agents": [
+            "NEXUS",
+            "PIKADON"
+          ]
+        },
+        "open_github_pr": {
+          "name": "open_github_pr",
+          "description": "Open a GitHub pull request. Requires GITHUB_TOKEN.",
+          "agents": [
+            "NEXUS"
+          ]
+        },
+        "deploy_to_vercel": {
+          "name": "deploy_to_vercel",
+          "description": "Trigger a Vercel deployment via API. Requires VERCEL_TOKEN.",
+          "agents": [
+            "NEXUS"
+          ]
+        },
+        "create_calendar_event": {
+          "name": "create_calendar_event",
+          "description": "Create a Google Calendar event via OAuth. Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS"
+          ]
+        },
+        "create_notion_page": {
+          "name": "create_notion_page",
+          "description": "Create a Notion page in a database. Requires NOTION_API_KEY.",
+          "agents": [
+            "QUILL",
+            "NEXUS"
+          ]
+        },
+        "append_google_sheet": {
+          "name": "append_google_sheet",
+          "description": "Append rows to a Google Sheet. Requires GOOGLE_SERVICE_ACCOUNT_JSON.",
+          "agents": [
+            "ZEROX",
+            "NEXUS"
+          ]
+        },
+        "create_google_doc": {
+          "name": "create_google_doc",
+          "description": "Create a new Google Doc with content. Requires GOOGLE_SERVICE_ACCOUNT_JSON.",
+          "agents": [
+            "QUILL",
+            "SHADDAI"
+          ]
+        },
+        "create_airtable_record": {
+          "name": "create_airtable_record",
+          "description": "Add a record to an Airtable base. Requires AIRTABLE_API_KEY.",
+          "agents": [
+            "NEXUS",
+            "ZEROX"
+          ]
+        },
+        "search_notion": {
+          "name": "search_notion",
+          "description": "Search across a Notion workspace. Requires NOTION_API_KEY.",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "scan_url_virustotal": {
+          "name": "scan_url_virustotal",
+          "description": "Check URL reputation via VirusTotal. Requires VIRUSTOTAL_API_KEY.",
+          "agents": [
+            "PIKADON"
+          ]
+        },
+        "get_linkedin_profile": {
+          "name": "get_linkedin_profile",
+          "description": "Fetch LinkedIn public profile data via Proxycurl. Requires PROXYCURL_API_KEY.",
+          "agents": [
+            "ORACLE"
+          ]
+        },
+        "create_hubspot_contact": {
+          "name": "create_hubspot_contact",
+          "description": "Create or update a HubSpot CRM contact. Requires HUBSPOT_API_KEY.",
+          "agents": [
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "search_x": {
+          "name": "search_x",
+          "description": "Search recent (last ~7 days) tweets on X/Twitter via API v2 (GET /2/tweets/search/recent). App-only bearer token works for read. Returns top matching tweets with text, author and metrics.",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "PIKADON"
+          ]
+        },
+        "get_x_profile": {
+          "name": "get_x_profile",
+          "description": "Fetch an X/Twitter user profile by @username via API v2 (GET /2/users/by/username/:name). App-only bearer token works. Returns name, bio, follower/following counts and verified status.",
+          "agents": [
+            "ORACLE",
+            "ZEROX"
+          ]
+        },
+        "post_to_x": {
+          "name": "post_to_x",
+          "description": "Post a tweet to X/Twitter (POST /2/tweets). Posting requires OAuth1.0a USER context: X_API_KEY + X_API_SECRET + X_ACCESS_TOKEN + X_ACCESS_SECRET. Without the user tokens it returns a clean needsAuth error and never fakes a post.",
+          "agents": [
+            "QUILL",
+            "TURTLE",
+            "SHADDAI"
+          ]
+        },
+        "post_to_telegram": {
+          "name": "post_to_telegram",
+          "description": "Send a message to a Telegram chat/channel via the Bot API (POST /bot<token>/sendMessage). Requires TELEGRAM_BOT_TOKEN; chat_id comes from the arg or TELEGRAM_CHAT_ID. Supports HTML/Markdown parse modes.",
+          "agents": [
+            "QUILL",
+            "SHADDAI",
+            "PIKADON"
+          ]
+        },
+        "get_market_news": {
+          "name": "get_market_news",
+          "description": "Crypto market news filtered to a specific coin or topic (e.g. \"ethereum\", \"regulation\", \"ETF\"). Searches the keyless public crypto RSS feeds client-side and returns matching headlines with title/url/source/publishedAt.",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "SHADDAI"
+          ]
+        },
+        "defi_tvl": {
+          "name": "defi_tvl",
+          "description": "Total Value Locked (TVL) for a DeFi protocol via DeFiLlama (keyless). Returns current total TVL in USD plus a per-chain breakdown. Pass the protocol slug, e.g. \"aave\", \"uniswap\", \"lido\", \"makerdao\".",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "defi_yields": {
+          "name": "defi_yields",
+          "description": "Top DeFi yield/farming pools by APY via DeFiLlama Yields (keyless). Optionally filter by chain (e.g. \"Ethereum\", \"Arbitrum\") and/or project (e.g. \"aave-v3\", \"lido\"). Returns symbol, chain, project, apy, and tvlUsd for the top pools.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "defi_token_price": {
+          "name": "defi_token_price",
+          "description": "Live token price, liquidity, and 24h change via DexScreener (keyless). Accepts a token contract address (any chain) or a symbol/name to search. Returns the most-liquid trading pair: price in USD, 24h price change %, liquidity, volume, chain",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "defi_chains_tvl": {
+          "name": "defi_chains_tvl",
+          "description": "TVL ranked by blockchain across all of DeFi via DeFiLlama (keyless, https://api.llama.fi/v2/chains). Returns the top chains by total value locked in USD.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "sol_account_balance": {
+          "name": "sol_account_balance",
+          "description": "Live SOL balance for a wallet/account address (Solana mainnet RPC).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "sol_supply": {
+          "name": "sol_supply",
+          "description": "Circulating + total SOL supply from the network.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "sol_token_supply": {
+          "name": "sol_token_supply",
+          "description": "Total supply + decimals for an SPL token mint.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "sol_token_holders": {
+          "name": "sol_token_holders",
+          "description": "Top 20 largest holders (accounts) of an SPL token mint — concentration check.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "sol_tx_history": {
+          "name": "sol_tx_history",
+          "description": "Recent transaction signatures for a Solana address (most recent first).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "sol_epoch": {
+          "name": "sol_epoch",
+          "description": "Current Solana epoch info — epoch #, slot progress, absolute slot.",
+          "agents": [
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "sol_network_tps": {
+          "name": "sol_network_tps",
+          "description": "Live Solana throughput (transactions per second) from recent performance samples.",
+          "agents": [
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "jupiter_price": {
+          "name": "jupiter_price",
+          "description": "Live token price(s) in USD from Jupiter (keyless). Accepts mint(s) or symbol(s).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "magiceden_floor": {
+          "name": "magiceden_floor",
+          "description": "Magic Eden NFT collection stats — floor price, listed count, 24h volume. Keyless.",
+          "agents": [
+            "ORACLE",
+            "TURTLE",
+            "ZEROX"
+          ]
+        },
+        "rugcheck_token": {
+          "name": "rugcheck_token",
+          "description": "RugCheck safety report for an SPL token — risk score + flags. Keyless.",
+          "agents": [
+            "PIKADON",
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "dexscreener_token": {
+          "name": "dexscreener_token",
+          "description": "DexScreener pairs for a token address — price, liquidity, 24h volume, FDV. Keyless, multi-chain.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "dexscreener_search": {
+          "name": "dexscreener_search",
+          "description": "Search DexScreener for token pairs by name/symbol across chains. Keyless.",
+          "agents": [
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "sol_inflation": {
+          "name": "sol_inflation",
+          "description": "Current Solana inflation rate (total, validator, foundation).",
+          "agents": [
+            "ORACLE",
+            "ZEROX"
+          ]
+        },
+        "sol_validators": {
+          "name": "sol_validators",
+          "description": "Count of current + delinquent Solana validators (network health).",
+          "agents": [
+            "NEXUS",
+            "PIKADON",
+            "ORACLE"
+          ]
+        },
+        "sol_token_meta": {
+          "name": "sol_token_meta",
+          "description": "Token metadata (symbol, name, decimals, logo) from the Jupiter strict token list. Keyless.",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "TURTLE"
+          ]
+        },
+        "write_thread": {
+          "name": "write_thread",
+          "description": "Write a punchy X/Twitter thread (5–8 posts) on a topic. Real, ready to post.",
+          "agents": [
+            "QUILL",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "write_blog_post": {
+          "name": "write_blog_post",
+          "description": "Write a complete, structured blog post (title, intro, H2 sections, conclusion).",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "blog_outline": {
+          "name": "blog_outline",
+          "description": "Generate a detailed blog post outline (title + H2/H3 bullet structure).",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "seo_keywords": {
+          "name": "seo_keywords",
+          "description": "Generate a prioritized SEO keyword list (primary, secondary, long-tail) for a topic.",
+          "agents": [
+            "ORACLE",
+            "QUILL",
+            "ZEROX"
+          ]
+        },
+        "meta_description": {
+          "name": "meta_description",
+          "description": "Write an SEO meta description (≤155 chars) for a page/topic.",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "generate_hooks": {
+          "name": "generate_hooks",
+          "description": "Generate 10 scroll-stopping hooks/opening lines for content on a topic.",
+          "agents": [
+            "QUILL",
+            "TURTLE",
+            "ZEROX"
+          ]
+        },
+        "ad_copy": {
+          "name": "ad_copy",
+          "description": "Write ad copy variants (headline + body + CTA) for a product/offer.",
+          "agents": [
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "cold_email": {
+          "name": "cold_email",
+          "description": "Write a short, personalized cold outreach email (subject + body).",
+          "agents": [
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "rewrite_tone": {
+          "name": "rewrite_tone",
+          "description": "Rewrite a piece of text in a specified tone (e.g. professional, casual, hype, luxury).",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "product_description": {
+          "name": "product_description",
+          "description": "Write a compelling e-commerce product description (benefits-led).",
+          "agents": [
+            "ZEROX",
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "landing_headline": {
+          "name": "landing_headline",
+          "description": "Generate 8 landing-page hero headline + subhead pairs for an offer.",
+          "agents": [
+            "ZEROX",
+            "TURTLE",
+            "QUILL"
+          ]
+        },
+        "cta_variants": {
+          "name": "cta_variants",
+          "description": "Generate 12 call-to-action button/line variants for an offer.",
+          "agents": [
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "hashtag_suggest": {
+          "name": "hashtag_suggest",
+          "description": "Suggest relevant hashtags (mix of broad + niche) for a post topic.",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "content_calendar": {
+          "name": "content_calendar",
+          "description": "Build a 7-day content calendar (platform + hook + format) for a theme.",
+          "agents": [
+            "ORACLE",
+            "QUILL"
+          ]
+        },
+        "tweet_variations": {
+          "name": "tweet_variations",
+          "description": "Rewrite a tweet into 6 distinct high-engagement variations.",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "youtube_title": {
+          "name": "youtube_title",
+          "description": "Generate 10 high-CTR YouTube titles for a video topic.",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "video_script": {
+          "name": "video_script",
+          "description": "Write a short-form video script (hook, beats, CTA) for a topic.",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "press_release": {
+          "name": "press_release",
+          "description": "Draft a professional press release for an announcement.",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "faq_generate": {
+          "name": "faq_generate",
+          "description": "Generate a FAQ (8 Q&A pairs) for a product/topic.",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "email_subject_lines": {
+          "name": "email_subject_lines",
+          "description": "Generate 12 high-open-rate email subject lines for a campaign.",
+          "agents": [
+            "ZEROX",
+            "QUILL"
+          ]
+        },
+        "slogan_generate": {
+          "name": "slogan_generate",
+          "description": "Generate 10 brand slogans/taglines for a product or brand.",
+          "agents": [
+            "TURTLE",
+            "QUILL",
+            "ZEROX"
+          ]
+        },
+        "elevator_pitch": {
+          "name": "elevator_pitch",
+          "description": "Write a tight 30-second elevator pitch for a product/idea.",
+          "agents": [
+            "ZEROX",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "brand_name_ideas": {
+          "name": "brand_name_ideas",
+          "description": "Brainstorm 15 brand/product name ideas with a one-line rationale each.",
+          "agents": [
+            "TURTLE",
+            "ZEROX",
+            "ORACLE"
+          ]
+        },
+        "linkedin_post": {
+          "name": "linkedin_post",
+          "description": "Write a professional LinkedIn post (hook, story/insight, takeaway) on a topic.",
+          "agents": [
+            "QUILL",
+            "ZEROX"
+          ]
+        },
+        "reddit_post": {
+          "name": "reddit_post",
+          "description": "Write an authentic, non-salesy Reddit post (title + body) for a subreddit-style audience.",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "newsletter_intro": {
+          "name": "newsletter_intro",
+          "description": "Write an engaging newsletter intro paragraph for an issue theme.",
+          "agents": [
+            "QUILL",
+            "ORACLE"
+          ]
+        },
+        "value_prop": {
+          "name": "value_prop",
+          "description": "Write a sharp value proposition + 3 supporting benefit bullets for an offer.",
+          "agents": [
+            "ZEROX",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "name_the_tone": {
+          "name": "name_the_tone",
+          "description": "Analyze a text and describe its tone/voice, then suggest how to strengthen it.",
+          "agents": [
+            "QUILL",
+            "TURTLE"
+          ]
+        },
+        "ssl_check": {
+          "name": "ssl_check",
+          "description": "Inspect a site’s TLS certificate — issuer, validity dates, days until expiry.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "rdap_whois": {
+          "name": "rdap_whois",
+          "description": "Domain registration info via RDAP (modern whois) — registrar, dates, status. Keyless.",
+          "agents": [
+            "PIKADON",
+            "ORACLE"
+          ]
+        },
+        "security_headers": {
+          "name": "security_headers",
+          "description": "Grade a site’s security headers (HSTS, CSP, X-Frame-Options, etc.) A–F.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "password_strength": {
+          "name": "password_strength",
+          "description": "Estimate password strength (entropy bits + rating + suggestions). Computed locally, never sent anywhere.",
+          "agents": [
+            "PIKADON"
+          ]
+        },
+        "password_pwned": {
+          "name": "password_pwned",
+          "description": "Check if a password appears in known breaches via HaveIBeenPwned k-anonymity (only a hash prefix leaves your machine). Keyless.",
+          "agents": [
+            "PIKADON"
+          ]
+        },
+        "email_dns_check": {
+          "name": "email_dns_check",
+          "description": "Check a domain’s email security posture — MX, SPF, DMARC records.",
+          "agents": [
+            "PIKADON",
+            "ORACLE"
+          ]
+        },
+        "ip_info": {
+          "name": "ip_info",
+          "description": "Geolocation + network/ISP info for an IP address. Keyless.",
+          "agents": [
+            "PIKADON",
+            "ORACLE",
+            "NEXUS"
+          ]
+        },
+        "jwt_decode": {
+          "name": "jwt_decode",
+          "description": "Decode a JWT (header + payload) WITHOUT verifying — inspect claims, exp, alg. Local only.",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "tcp_port_check": {
+          "name": "tcp_port_check",
+          "description": "Check whether a single TCP port is OPEN on a host you control (defensive availability check).",
+          "agents": [
+            "PIKADON",
+            "NEXUS"
+          ]
+        },
+        "url_safety": {
+          "name": "url_safety",
+          "description": "Heuristic phishing/safety check on a URL (suspicious patterns, punycode, IP host, TLD, redirects).",
+          "agents": [
+            "PIKADON",
+            "ORACLE"
+          ]
+        },
+        "breach_list": {
+          "name": "breach_list",
+          "description": "Look up a known data breach by name from HaveIBeenPwned’s public breach database. Keyless.",
+          "agents": [
+            "PIKADON",
+            "ORACLE"
+          ]
+        },
+        "contrast_check": {
+          "name": "contrast_check",
+          "description": "WCAG contrast ratio between two colors + AA/AAA pass for normal & large text.",
+          "agents": [
+            "TURTLE",
+            "PIKADON"
+          ]
+        },
+        "tailwind_scale": {
+          "name": "tailwind_scale",
+          "description": "Generate a Tailwind-style 50→900 shade scale from a base hex.",
+          "agents": [
+            "TURTLE",
+            "NEXUS"
+          ]
+        },
+        "gradient_css": {
+          "name": "gradient_css",
+          "description": "Produce ready-to-paste CSS for a linear gradient between colors.",
+          "agents": [
+            "TURTLE",
+            "NEXUS"
+          ]
+        },
+        "favicon_svg": {
+          "name": "favicon_svg",
+          "description": "Generate an SVG favicon/logo mark from initials on a colored rounded square (returns SVG + data URI).",
+          "agents": [
+            "TURTLE"
+          ]
+        },
+        "shadow_css": {
+          "name": "shadow_css",
+          "description": "Generate a layered, natural box-shadow CSS at a given elevation.",
+          "agents": [
+            "TURTLE",
+            "NEXUS"
+          ]
+        },
+        "glassmorphism_css": {
+          "name": "glassmorphism_css",
+          "description": "Generate glassmorphism (frosted glass) CSS for a card.",
+          "agents": [
+            "TURTLE"
+          ]
+        },
+        "color_info": {
+          "name": "color_info",
+          "description": "Break down a color — hex, rgb, hsl, luminance, and best readable text color on it.",
+          "agents": [
+            "TURTLE"
+          ]
+        },
+        "logo_brief": {
+          "name": "logo_brief",
+          "description": "Write a professional logo design brief for a brand.",
+          "agents": [
+            "TURTLE",
+            "ZEROX"
+          ]
+        },
+        "ui_copy": {
+          "name": "ui_copy",
+          "description": "Write UI microcopy (button, empty-state, error, tooltip) for a feature.",
+          "agents": [
+            "TURTLE",
+            "QUILL"
+          ]
+        },
+        "image_prompt": {
+          "name": "image_prompt",
+          "description": "Turn a rough idea into a rich text-to-image (FLUX/SD) prompt with style, lighting, composition.",
+          "agents": [
+            "TURTLE",
+            "ORACLE"
+          ]
+        },
+        "moodboard": {
+          "name": "moodboard",
+          "description": "Describe a moodboard (aesthetic keywords, colors, textures, references) for a brand/vibe.",
+          "agents": [
+            "TURTLE"
+          ]
+        },
+        "design_critique": {
+          "name": "design_critique",
+          "description": "Give a sharp design critique + concrete fixes for a described UI/layout.",
+          "agents": [
+            "TURTLE",
+            "PIKADON"
+          ]
+        },
+        "base64_encode": {
+          "name": "base64_encode",
+          "description": "Encode text to Base64.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "base64_decode": {
+          "name": "base64_decode",
+          "description": "Decode Base64 to text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "url_encode": {
+          "name": "url_encode",
+          "description": "Percent-encode text for URLs.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "url_decode": {
+          "name": "url_decode",
+          "description": "Decode a percent-encoded URL string.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "html_encode": {
+          "name": "html_encode",
+          "description": "Escape HTML special characters.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "html_decode": {
+          "name": "html_decode",
+          "description": "Unescape HTML entities.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "hex_encode": {
+          "name": "hex_encode",
+          "description": "Encode text to hexadecimal.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "hex_decode": {
+          "name": "hex_decode",
+          "description": "Decode hexadecimal to text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "rot13": {
+          "name": "rot13",
+          "description": "Apply the ROT13 cipher.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "morse_encode": {
+          "name": "morse_encode",
+          "description": "Encode text to Morse code.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "morse_decode": {
+          "name": "morse_decode",
+          "description": "Decode Morse code to text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "binary_encode": {
+          "name": "binary_encode",
+          "description": "Encode text to binary (8-bit).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "binary_decode": {
+          "name": "binary_decode",
+          "description": "Decode 8-bit binary to text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "to_uppercase": {
+          "name": "to_uppercase",
+          "description": "UPPERCASE text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "to_lowercase": {
+          "name": "to_lowercase",
+          "description": "lowercase text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "title_case": {
+          "name": "title_case",
+          "description": "Convert text to Title Case.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "camel_case": {
+          "name": "camel_case",
+          "description": "Convert to camelCase.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "snake_case": {
+          "name": "snake_case",
+          "description": "Convert to snake_case.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "kebab_case": {
+          "name": "kebab_case",
+          "description": "Convert to kebab-case.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "reverse_text": {
+          "name": "reverse_text",
+          "description": "Reverse a string.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "count_words": {
+          "name": "count_words",
+          "description": "Count words, characters, lines, sentences.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "remove_duplicates": {
+          "name": "remove_duplicates",
+          "description": "Remove duplicate lines from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sort_lines": {
+          "name": "sort_lines",
+          "description": "Sort lines alphabetically.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "uuid_v4": {
+          "name": "uuid_v4",
+          "description": "Generate a random UUID v4.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "random_password": {
+          "name": "random_password",
+          "description": "Generate a strong random password.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "random_string": {
+          "name": "random_string",
+          "description": "Generate a random alphanumeric string.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "random_number": {
+          "name": "random_number",
+          "description": "Random integer in a range.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "dice_roll": {
+          "name": "dice_roll",
+          "description": "Roll dice, e.g. 2d6.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "lorem_ipsum": {
+          "name": "lorem_ipsum",
+          "description": "Generate lorem ipsum placeholder text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "json_format": {
+          "name": "json_format",
+          "description": "Pretty-print / validate JSON.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "json_minify": {
+          "name": "json_minify",
+          "description": "Minify JSON.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "json_keys": {
+          "name": "json_keys",
+          "description": "List the top-level keys of a JSON object.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "temperature_convert": {
+          "name": "temperature_convert",
+          "description": "Convert temperature between C/F/K.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "length_convert": {
+          "name": "length_convert",
+          "description": "Convert length (m, km, mi, ft, in, cm).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "weight_convert": {
+          "name": "weight_convert",
+          "description": "Convert weight (kg, g, lb, oz, ton).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "percentage": {
+          "name": "percentage",
+          "description": "Compute X% of Y, or what % X is of Y.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "tip_calculator": {
+          "name": "tip_calculator",
+          "description": "Calculate tip + total for a bill.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "is_prime": {
+          "name": "is_prime",
+          "description": "Check if a number is prime.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "factorial": {
+          "name": "factorial",
+          "description": "Compute n! (factorial).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "fibonacci": {
+          "name": "fibonacci",
+          "description": "First N Fibonacci numbers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "gcd_lcm": {
+          "name": "gcd_lcm",
+          "description": "Greatest common divisor + least common multiple of two integers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "roman_numeral": {
+          "name": "roman_numeral",
+          "description": "Convert an integer (1–3999) to a Roman numeral.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "number_to_words": {
+          "name": "number_to_words",
+          "description": "Spell out a number in English words.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "timestamp_now": {
+          "name": "timestamp_now",
+          "description": "Current time — ISO, Unix seconds, and ms.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "unix_to_date": {
+          "name": "unix_to_date",
+          "description": "Convert a Unix timestamp (seconds) to a readable date.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "days_between": {
+          "name": "days_between",
+          "description": "Days between two dates (YYYY-MM-DD).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "forex_rate": {
+          "name": "forex_rate",
+          "description": "Live exchange rate between two currencies (Frankfurter/ECB).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "forex_convert": {
+          "name": "forex_convert",
+          "description": "Convert an amount between currencies at the live rate.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "forex_historical": {
+          "name": "forex_historical",
+          "description": "Historical FX rate on a given date.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "currency_list": {
+          "name": "currency_list",
+          "description": "List all supported currency codes + names.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "stock_quote": {
+          "name": "stock_quote",
+          "description": "Live stock quote (price, change, day range) via Yahoo Finance.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "stock_history": {
+          "name": "stock_history",
+          "description": "Recent daily closes for a stock (last ~1mo) via Yahoo Finance.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "crypto_global": {
+          "name": "crypto_global",
+          "description": "Global crypto market — total mcap, 24h volume, BTC dominance.",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "crypto_categories": {
+          "name": "crypto_categories",
+          "description": "Top crypto categories by market cap (CoinGecko).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "crypto_price_history": {
+          "name": "crypto_price_history",
+          "description": "Daily price history for a coin over N days (CoinGecko).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "crypto_exchanges": {
+          "name": "crypto_exchanges",
+          "description": "Top crypto exchanges by trust score / volume (CoinGecko).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "defillama_protocols": {
+          "name": "defillama_protocols",
+          "description": "Top DeFi protocols by TVL (DeFiLlama).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "defillama_chains": {
+          "name": "defillama_chains",
+          "description": "Total DeFi TVL per blockchain (DeFiLlama).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "defillama_stablecoins": {
+          "name": "defillama_stablecoins",
+          "description": "Top stablecoins by circulating market cap (DeFiLlama).",
+          "agents": [
+            "ZEROX",
+            "ORACLE",
+            "SHADDAI"
+          ]
+        },
+        "book_search": {
+          "name": "book_search",
+          "description": "Search books by title/author/subject (OpenLibrary).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "define_word": {
+          "name": "define_word",
+          "description": "Dictionary definition, phonetics, examples (DictionaryAPI).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "related_words": {
+          "name": "related_words",
+          "description": "Find words related in meaning to a word (Datamuse).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "rhymes": {
+          "name": "rhymes",
+          "description": "Find words that rhyme with a word (Datamuse).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "random_quote": {
+          "name": "random_quote",
+          "description": "A random inspirational quote.",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "number_fact": {
+          "name": "number_fact",
+          "description": "An interesting fact about a number (NumbersAPI).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "random_advice": {
+          "name": "random_advice",
+          "description": "A random piece of advice (AdviceSlip).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "public_holidays": {
+          "name": "public_holidays",
+          "description": "Public holidays for a country + year (Nager.Date).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "recent_earthquakes": {
+          "name": "recent_earthquakes",
+          "description": "Significant earthquakes in the last day (USGS).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "iss_location": {
+          "name": "iss_location",
+          "description": "Current location of the International Space Station.",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "predict_gender": {
+          "name": "predict_gender",
+          "description": "Predict likely gender from a first name (Genderize).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "predict_age": {
+          "name": "predict_age",
+          "description": "Predict likely age from a first name (Agify).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "predict_nationality": {
+          "name": "predict_nationality",
+          "description": "Predict likely nationality from a first name (Nationalize).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "tv_show_search": {
+          "name": "tv_show_search",
+          "description": "Search TV shows — genre, rating, summary (TVMaze).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "food_product": {
+          "name": "food_product",
+          "description": "Look up a food product by barcode — nutrition, ingredients (OpenFoodFacts).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "universities": {
+          "name": "universities",
+          "description": "List universities in a country (Hipolabs).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "weather_forecast": {
+          "name": "weather_forecast",
+          "description": "Current weather + 3-day forecast for coordinates (Open-Meteo, keyless).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "on_this_day": {
+          "name": "on_this_day",
+          "description": "Notable historical events on today’s date (Wikipedia).",
+          "agents": [
+            "ORACLE",
+            "SHADDAI",
+            "QUILL"
+          ]
+        },
+        "list_stats": {
+          "name": "list_stats",
+          "description": "Full statistics (mean, median, mode, min, max, stddev, sum) for a list of numbers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sum_list": {
+          "name": "sum_list",
+          "description": "Sum a list of numbers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "average_list": {
+          "name": "average_list",
+          "description": "Average (mean) of a list of numbers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "min_max": {
+          "name": "min_max",
+          "description": "Min, max, and range of a list of numbers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "percentile": {
+          "name": "percentile",
+          "description": "Compute the Nth percentile of a list.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "median": {
+          "name": "median",
+          "description": "Median of a list of numbers.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "normalize_list": {
+          "name": "normalize_list",
+          "description": "Scale a list of numbers to the 0–1 range (min-max normalization).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "correlation": {
+          "name": "correlation",
+          "description": "Pearson correlation between two equal-length number lists.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "moving_average": {
+          "name": "moving_average",
+          "description": "Simple moving average over a window.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "list_unique": {
+          "name": "list_unique",
+          "description": "Deduplicate a list (comma/newline separated).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "list_frequency": {
+          "name": "list_frequency",
+          "description": "Count how often each item appears in a list.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "top_n": {
+          "name": "top_n",
+          "description": "Top N most frequent items in a list.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "list_diff": {
+          "name": "list_diff",
+          "description": "Items in list A that are not in list B.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "list_intersect": {
+          "name": "list_intersect",
+          "description": "Items present in BOTH lists.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "chunk_list": {
+          "name": "chunk_list",
+          "description": "Split a list into chunks of size N.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "range_generate": {
+          "name": "range_generate",
+          "description": "Generate a numeric range [start..end] step.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "word_frequency": {
+          "name": "word_frequency",
+          "description": "Most frequent words in text (stopwords removed).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "keyword_extract": {
+          "name": "keyword_extract",
+          "description": "Extract top keywords/phrases from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sentiment_score": {
+          "name": "sentiment_score",
+          "description": "Lexicon-based sentiment (positive/negative/neutral) of text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "count_matches": {
+          "name": "count_matches",
+          "description": "Count regex matches in text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "json_path": {
+          "name": "json_path",
+          "description": "Get a nested value from JSON by dot path (e.g. a.b.0.c).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "json_flatten": {
+          "name": "json_flatten",
+          "description": "Flatten a nested JSON object to dot-key/value pairs.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "group_count": {
+          "name": "group_count",
+          "description": "Group a JSON array of objects by a key and count each group.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "csv_column": {
+          "name": "csv_column",
+          "description": "Extract one column from CSV (with header).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "csv_stats": {
+          "name": "csv_stats",
+          "description": "Numeric stats for one CSV column.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "hex_to_rgb": {
+          "name": "hex_to_rgb",
+          "description": "Convert a hex color to rgb().",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "rgb_to_hex": {
+          "name": "rgb_to_hex",
+          "description": "Convert rgb values to hex.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "hex_to_hsl": {
+          "name": "hex_to_hsl",
+          "description": "Convert a hex color to hsl().",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "lighten_color": {
+          "name": "lighten_color",
+          "description": "Lighten a hex color by N%.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "darken_color": {
+          "name": "darken_color",
+          "description": "Darken a hex color by N%.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "complementary_color": {
+          "name": "complementary_color",
+          "description": "Get the complementary (opposite) color.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "analogous_colors": {
+          "name": "analogous_colors",
+          "description": "Get 2 analogous colors (±30°).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "triadic_colors": {
+          "name": "triadic_colors",
+          "description": "Get the triadic color scheme (120° apart).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "blend_colors": {
+          "name": "blend_colors",
+          "description": "Blend two hex colors at a ratio.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "random_color": {
+          "name": "random_color",
+          "description": "Generate a random hex color.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "duotone_palette": {
+          "name": "duotone_palette",
+          "description": "Generate a duotone (shadow + highlight) pair from a hue.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "text_shadow_css": {
+          "name": "text_shadow_css",
+          "description": "Generate a neon/glow text-shadow CSS.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "neon_glow_css": {
+          "name": "neon_glow_css",
+          "description": "Generate a neon box-glow CSS for a color.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "border_radius_css": {
+          "name": "border_radius_css",
+          "description": "Generate an organic blob border-radius.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "transition_css": {
+          "name": "transition_css",
+          "description": "Generate a smooth CSS transition shorthand.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "flexbox_css": {
+          "name": "flexbox_css",
+          "description": "Generate flexbox CSS for a layout intent (center, row, spread).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "grid_css": {
+          "name": "grid_css",
+          "description": "Generate a responsive CSS grid.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "keyframes_css": {
+          "name": "keyframes_css",
+          "description": "Generate a CSS @keyframes animation (pulse, float, spin, fade).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "clamp_css": {
+          "name": "clamp_css",
+          "description": "Generate a fluid-typography clamp() value.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "svg_circle": {
+          "name": "svg_circle",
+          "description": "Generate an SVG circle with a fill.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "svg_wave": {
+          "name": "svg_wave",
+          "description": "Generate a decorative SVG wave divider.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "svg_star": {
+          "name": "svg_star",
+          "description": "Generate an SVG star.",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "type_scale": {
+          "name": "type_scale",
+          "description": "Generate a modular typographic scale (base × ratio).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "golden_ratio": {
+          "name": "golden_ratio",
+          "description": "Split a length by the golden ratio (1.618).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "aspect_ratio": {
+          "name": "aspect_ratio",
+          "description": "Compute height for a width at an aspect ratio (e.g. 16:9).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "px_to_rem": {
+          "name": "px_to_rem",
+          "description": "Convert px to rem (16px base).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "rem_to_px": {
+          "name": "rem_to_px",
+          "description": "Convert rem to px (16px base).",
+          "agents": [
+            "TURTLE",
+            "NEXUS",
+            "QUILL"
+          ]
+        },
+        "shannon_entropy": {
+          "name": "shannon_entropy",
+          "description": "Compute Shannon entropy (bits/char) of a string — randomness measure.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "base32_encode": {
+          "name": "base32_encode",
+          "description": "Encode text to Base32 (RFC 4648).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "generate_token": {
+          "name": "generate_token",
+          "description": "Generate a cryptographically-secure random token (hex).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "hmac_sign": {
+          "name": "hmac_sign",
+          "description": "Compute an HMAC-SHA256 signature of a message with a secret.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "luhn_check": {
+          "name": "luhn_check",
+          "description": "Validate a number (e.g. credit card) with the Luhn checksum.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "card_type": {
+          "name": "card_type",
+          "description": "Detect a credit-card brand from its number prefix.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "validate_ipv4": {
+          "name": "validate_ipv4",
+          "description": "Validate an IPv4 address + classify (private/public/loopback).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "cidr_info": {
+          "name": "cidr_info",
+          "description": "Subnet math for a CIDR block — network, broadcast, host count.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "validate_email": {
+          "name": "validate_email",
+          "description": "Validate an email address format + extract domain.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "redact_pii": {
+          "name": "redact_pii",
+          "description": "Redact emails, phone numbers, credit cards, and SSNs from text.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "detect_secrets": {
+          "name": "detect_secrets",
+          "description": "Scan text for likely secrets/API keys (AWS, Google, GitHub, JWT, private keys).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "password_policy": {
+          "name": "password_policy",
+          "description": "Check a password against a policy (length, upper, lower, digit, symbol).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "parse_csp": {
+          "name": "parse_csp",
+          "description": "Parse a Content-Security-Policy header into directives.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "parse_cookie_flags": {
+          "name": "parse_cookie_flags",
+          "description": "Analyze a Set-Cookie string for Secure/HttpOnly/SameSite.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "parse_spf": {
+          "name": "parse_spf",
+          "description": "Parse an SPF record — mechanisms and policy.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "defang_url": {
+          "name": "defang_url",
+          "description": "Defang a URL/IP for safe sharing (hxxp, [.]).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "refang_url": {
+          "name": "refang_url",
+          "description": "Re-fang a defanged URL back to normal.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "totp_code": {
+          "name": "totp_code",
+          "description": "Generate a time-based OTP (TOTP, RFC 6238) from a hex secret.",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "gravatar_url": {
+          "name": "gravatar_url",
+          "description": "Build the Gravatar image URL for an email (MD5 hash).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "constant_time_equal": {
+          "name": "constant_time_equal",
+          "description": "Constant-time compare two strings (timing-safe).",
+          "agents": [
+            "PIKADON",
+            "NEXUS",
+            "ORACLE"
+          ]
+        },
+        "regex_extract": {
+          "name": "regex_extract",
+          "description": "Extract all matches (and capture groups) of a regex from text.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "regex_replace": {
+          "name": "regex_replace",
+          "description": "Replace regex matches in text.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "jwt_sign": {
+          "name": "jwt_sign",
+          "description": "Sign a JSON payload into a JWT (HS256) with a secret.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "jwt_verify": {
+          "name": "jwt_verify",
+          "description": "Verify a JWT (HS256) signature with a secret.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "semver_compare": {
+          "name": "semver_compare",
+          "description": "Compare two semantic versions (-1, 0, 1).",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "semver_bump": {
+          "name": "semver_bump",
+          "description": "Bump a semantic version (major/minor/patch).",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "query_parse": {
+          "name": "query_parse",
+          "description": "Parse a URL query string into JSON.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "query_build": {
+          "name": "query_build",
+          "description": "Build a URL query string from JSON.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "url_parse": {
+          "name": "url_parse",
+          "description": "Parse a URL into its parts.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "http_status": {
+          "name": "http_status",
+          "description": "Explain an HTTP status code.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "description": "Get the MIME type for a file extension.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "base_convert": {
+          "name": "base_convert",
+          "description": "Convert a number between bases (2–36).",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "bytes_human": {
+          "name": "bytes_human",
+          "description": "Convert a byte count to a human-readable size.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "duration_human": {
+          "name": "duration_human",
+          "description": "Convert seconds to a human-readable duration.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "cron_describe": {
+          "name": "cron_describe",
+          "description": "Describe a 5-field cron expression in plain English.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "escape_regex": {
+          "name": "escape_regex",
+          "description": "Escape a string for safe use inside a regex.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "env_to_json": {
+          "name": "env_to_json",
+          "description": "Parse a .env file into JSON.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "json_to_env": {
+          "name": "json_to_env",
+          "description": "Convert a flat JSON object to .env lines.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "markdown_table": {
+          "name": "markdown_table",
+          "description": "Convert CSV to a Markdown table.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "wrap_text": {
+          "name": "wrap_text",
+          "description": "Word-wrap text to a max line width.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "estimate_tokens": {
+          "name": "estimate_tokens",
+          "description": "Estimate LLM token count for text (~4 chars/token).",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "curl_build": {
+          "name": "curl_build",
+          "description": "Build a curl command from method, URL, and JSON body.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "uuid_validate": {
+          "name": "uuid_validate",
+          "description": "Validate a UUID and report its version.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "unicode_escape": {
+          "name": "unicode_escape",
+          "description": "Escape non-ASCII characters to \\uXXXX.",
+          "agents": [
+            "NEXUS",
+            "ORACLE",
+            "PIKADON"
+          ]
+        },
+        "compound_interest": {
+          "name": "compound_interest",
+          "description": "Compound interest final value.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "loan_payment": {
+          "name": "loan_payment",
+          "description": "Monthly payment for a loan (amortized).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "roi": {
+          "name": "roi",
+          "description": "Return on investment %.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "profit_margin": {
+          "name": "profit_margin",
+          "description": "Gross profit margin %.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "markup": {
+          "name": "markup",
+          "description": "Selling price from cost + markup %.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "discount": {
+          "name": "discount",
+          "description": "Price after a discount %.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sales_tax": {
+          "name": "sales_tax",
+          "description": "Add sales tax to a price.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "break_even": {
+          "name": "break_even",
+          "description": "Break-even units = fixed / (price - variable).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "ltv_cac": {
+          "name": "ltv_cac",
+          "description": "LTV:CAC ratio for unit economics.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "mrr_arr": {
+          "name": "mrr_arr",
+          "description": "MRR → ARR and per-customer averages.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "percentage_change": {
+          "name": "percentage_change",
+          "description": "Percent change from old to new value.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "runway": {
+          "name": "runway",
+          "description": "Cash runway in months.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "power": {
+          "name": "power",
+          "description": "Raise base to an exponent.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sqrt": {
+          "name": "sqrt",
+          "description": "Square root of a number.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "nth_root": {
+          "name": "nth_root",
+          "description": "Nth root of a number.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "log": {
+          "name": "log",
+          "description": "Logarithm of a number (any base).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "permutations": {
+          "name": "permutations",
+          "description": "nPr — permutations of n taken r.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "combinations": {
+          "name": "combinations",
+          "description": "nCr — combinations of n taken r.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "quadratic": {
+          "name": "quadratic",
+          "description": "Solve ax²+bx+c=0.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "hypotenuse": {
+          "name": "hypotenuse",
+          "description": "Hypotenuse from two sides (Pythagoras).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "circle_area": {
+          "name": "circle_area",
+          "description": "Area + circumference of a circle.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "weighted_average": {
+          "name": "weighted_average",
+          "description": "Weighted average of values with weights.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "area_convert": {
+          "name": "area_convert",
+          "description": "Convert area (m2, km2, ft2, acre, hectare).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "volume_convert": {
+          "name": "volume_convert",
+          "description": "Convert volume (l, ml, gal, cup, floz, m3).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "speed_convert": {
+          "name": "speed_convert",
+          "description": "Convert speed (kmh, mph, ms, knot).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "data_convert": {
+          "name": "data_convert",
+          "description": "Convert data sizes (B, KB, MB, GB, TB).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "time_convert": {
+          "name": "time_convert",
+          "description": "Convert time (s, min, hr, day, week).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "angle_convert": {
+          "name": "angle_convert",
+          "description": "Convert between degrees and radians.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "bmi": {
+          "name": "bmi",
+          "description": "Body Mass Index from weight (kg) and height (cm).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "age_calculator": {
+          "name": "age_calculator",
+          "description": "Age (years/months/days) from a birthdate.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "description": "Ordinal form of a number (1 → 1st).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "gpa": {
+          "name": "gpa",
+          "description": "GPA from a list of letter grades.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "random_pick": {
+          "name": "random_pick",
+          "description": "Randomly pick one item from a list.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "shuffle_list": {
+          "name": "shuffle_list",
+          "description": "Randomly shuffle a list.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "extract_emails": {
+          "name": "extract_emails",
+          "description": "Extract all email addresses from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "extract_urls": {
+          "name": "extract_urls",
+          "description": "Extract all URLs from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "extract_numbers": {
+          "name": "extract_numbers",
+          "description": "Extract all numbers from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "extract_hashtags": {
+          "name": "extract_hashtags",
+          "description": "Extract #hashtags from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "extract_mentions": {
+          "name": "extract_mentions",
+          "description": "Extract @mentions from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "extract_domain": {
+          "name": "extract_domain",
+          "description": "Extract the domain from a URL or email.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "truncate_text": {
+          "name": "truncate_text",
+          "description": "Truncate text to N chars with an ellipsis.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "pad_string": {
+          "name": "pad_string",
+          "description": "Pad a string to a length.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "repeat_text": {
+          "name": "repeat_text",
+          "description": "Repeat text N times.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "count_occurrences": {
+          "name": "count_occurrences",
+          "description": "Count occurrences of a substring in text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "remove_punctuation": {
+          "name": "remove_punctuation",
+          "description": "Strip punctuation from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "initials": {
+          "name": "initials",
+          "description": "Get the initials of a name.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "reverse_words": {
+          "name": "reverse_words",
+          "description": "Reverse the order of words in text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "longest_word": {
+          "name": "longest_word",
+          "description": "Find the longest word in text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "mask_string": {
+          "name": "mask_string",
+          "description": "Mask all but the last N chars of a string.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "char_frequency": {
+          "name": "char_frequency",
+          "description": "Count frequency of each character in text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "count_vowels": {
+          "name": "count_vowels",
+          "description": "Count vowels and consonants in text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "palindrome_check": {
+          "name": "palindrome_check",
+          "description": "Check if text is a palindrome.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "anagram_check": {
+          "name": "anagram_check",
+          "description": "Check if two strings are anagrams.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "levenshtein": {
+          "name": "levenshtein",
+          "description": "Edit distance between two strings.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "string_similarity": {
+          "name": "string_similarity",
+          "description": "Similarity % between two strings (0–100).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "caesar_cipher": {
+          "name": "caesar_cipher",
+          "description": "Shift letters by N (Caesar cipher).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "atbash_cipher": {
+          "name": "atbash_cipher",
+          "description": "Encode/decode with the Atbash cipher.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "leetspeak": {
+          "name": "leetspeak",
+          "description": "Convert text to leetspeak.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "nato_phonetic": {
+          "name": "nato_phonetic",
+          "description": "Spell text in the NATO phonetic alphabet.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "format_phone": {
+          "name": "format_phone",
+          "description": "Format a 10-digit US phone number.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "is_leap_year": {
+          "name": "is_leap_year",
+          "description": "Check whether a year is a leap year.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "day_of_week": {
+          "name": "day_of_week",
+          "description": "Day of week for a date (YYYY-MM-DD).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "add_days": {
+          "name": "add_days",
+          "description": "Add N days to a date.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "week_number": {
+          "name": "week_number",
+          "description": "ISO week number for a date.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "quarter": {
+          "name": "quarter",
+          "description": "Fiscal quarter for a date.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "zodiac_sign": {
+          "name": "zodiac_sign",
+          "description": "Western zodiac sign for a birthdate.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "business_days": {
+          "name": "business_days",
+          "description": "Count business days (Mon–Fri) between two dates.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "time_until": {
+          "name": "time_until",
+          "description": "Time remaining until a future date.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "rectangle_area": {
+          "name": "rectangle_area",
+          "description": "Area + perimeter of a rectangle.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "triangle_area": {
+          "name": "triangle_area",
+          "description": "Area of a triangle (base × height ÷ 2).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "trapezoid_area": {
+          "name": "trapezoid_area",
+          "description": "Area of a trapezoid.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sphere_volume": {
+          "name": "sphere_volume",
+          "description": "Volume + surface area of a sphere.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "cylinder_volume": {
+          "name": "cylinder_volume",
+          "description": "Volume of a cylinder.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "cone_volume": {
+          "name": "cone_volume",
+          "description": "Volume of a cone.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "distance_2d": {
+          "name": "distance_2d",
+          "description": "Distance between two 2D points.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "midpoint": {
+          "name": "midpoint",
+          "description": "Midpoint between two 2D points.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "slope": {
+          "name": "slope",
+          "description": "Slope of the line through two points.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "simple_interest": {
+          "name": "simple_interest",
+          "description": "Simple interest earned.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "future_value": {
+          "name": "future_value",
+          "description": "Future value of a present sum.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "present_value": {
+          "name": "present_value",
+          "description": "Present value of a future sum.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "rule_of_72": {
+          "name": "rule_of_72",
+          "description": "Years to double an investment at a rate (Rule of 72).",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "savings_goal": {
+          "name": "savings_goal",
+          "description": "Monthly savings needed to reach a goal.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "decimal_to_binary": {
+          "name": "decimal_to_binary",
+          "description": "Convert a decimal number to binary.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "binary_to_decimal": {
+          "name": "binary_to_decimal",
+          "description": "Convert a binary string to decimal.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "decimal_to_hex": {
+          "name": "decimal_to_hex",
+          "description": "Convert a decimal number to hexadecimal.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "hex_to_decimal": {
+          "name": "hex_to_decimal",
+          "description": "Convert a hexadecimal string to decimal.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "swap_case": {
+          "name": "swap_case",
+          "description": "Swap the case of every letter.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "sentence_case": {
+          "name": "sentence_case",
+          "description": "Capitalize the first letter of each sentence.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "remove_vowels": {
+          "name": "remove_vowels",
+          "description": "Remove all vowels from text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "count_syllables": {
+          "name": "count_syllables",
+          "description": "Estimate the syllable count of a word/text.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "snake_to_camel": {
+          "name": "snake_to_camel",
+          "description": "Convert snake_case to camelCase.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "camel_to_snake": {
+          "name": "camel_to_snake",
+          "description": "Convert camelCase to snake_case.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "acronym": {
+          "name": "acronym",
+          "description": "Build an acronym from a phrase.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "is_weekend": {
+          "name": "is_weekend",
+          "description": "Check if a date falls on a weekend.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "add_hours": {
+          "name": "add_hours",
+          "description": "Add N hours to an ISO datetime.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "clamp_number": {
+          "name": "clamp_number",
+          "description": "Clamp a number to a [min,max] range.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "coin_flip": {
+          "name": "coin_flip",
+          "description": "Flip a fair coin.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "magic_8ball": {
+          "name": "magic_8ball",
+          "description": "Ask the Magic 8-Ball a yes/no question.",
+          "agents": [
+            "SHADDAI",
+            "NEXUS",
+            "ZEROX",
+            "ORACLE",
+            "TURTLE",
+            "QUILL",
+            "PIKADON"
+          ]
+        },
+        "mint_nft": {
+          "name": "mint_nft",
+          "description": "Mint a SHADDAI collectible as a REAL Solana NFT using Metaplex Core. Devnet by default (simulate-safe); mainnet-beta only when SOLANA_NETWORK=mainnet-beta is explicitly set. Signer comes only from SOLANA_MINT_SECRET (base58 or JSON byte arr",
+          "agents": [
+            "NEXUS",
+            "ZEROX",
+            "TURTLE",
+            "SHADDAI"
+          ]
+        },
+        "search_twitter": {
+          "name": "search_twitter",
+          "description": "Search recent (last ~7 days) tweets on X/Twitter via API v2 (GET /2/tweets/search/recent). App-only bearer token works for read. Returns top matching tweets with text, author and metrics.",
+          "agents": [
+            "ORACLE",
+            "ZEROX",
+            "PIKADON"
+          ]
+        },
+        "post_twitter": {
+          "name": "post_twitter",
+          "description": "Post a tweet to X/Twitter (POST /2/tweets). Posting requires OAuth1.0a USER context: X_API_KEY + X_API_SECRET + X_ACCESS_TOKEN + X_ACCESS_SECRET. Without the user tokens it returns a clean needsAuth error and never fakes a post.",
+          "agents": [
+            "QUILL",
+            "TURTLE",
+            "SHADDAI"
+          ]
+        }
+      }
+    }
+  ],
+  "active": "vmtp4uq2g"
+}

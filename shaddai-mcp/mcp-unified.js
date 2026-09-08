@@ -360,6 +360,55 @@ const TOOLS = [
       name: { type: 'string', description: 'The digest name/id shown by list_rag_docs (e.g. "DIGEST_hormozi_100m_offer").' },
     }, required: ['name'] },
   },
+  {
+    name: 'aura_ingest',
+    description: 'Teach an agent: fetch a PUBLIC https URL (Jina → Firecrawl → bundled scraper), chunk it (~500 tokens) and store it in a labeled AURA box. box like "oracle/demo" (private to you) or "hall/docs" (shared, everyone reads free). Metered: free ingests per day, then a paid rail. PIKADON blocks internal/private/admin URLs.',
+    inputSchema: { type: 'object', properties: {
+      url: { type: 'string', description: 'Public https:// URL to ingest (docs page, article, whitepaper...).' },
+      box: { type: 'string', description: 'Box id: "office" | "office/slug" | "office/owner/slug". Default "hall/default".' },
+      title: { type: 'string', description: 'Optional friendly title for the box.' },
+    }, required: ['url'] },
+  },
+  {
+    name: 'aura_search',
+    description: 'Search the AURA boxes the caller can read (own private boxes + every hall/ box) and return ranked snippet hits with source URLs. Complements rag_search (the big TF-IDF brain) with YOUR personal/boxed knowledge.',
+    inputSchema: { type: 'object', properties: {
+      query: { type: 'string', description: 'What to search for.' },
+      box: { type: 'string', description: 'Optional — restrict to a box (prefix), e.g. "oracle/demo".' },
+      topK: { type: 'number', description: 'Max snippets (default 3, max 8).' },
+    }, required: ['query'] },
+  },
+  {
+    name: 'aura_boxes',
+    description: 'List the AURA boxes visible to the caller: box id, office, owner, slug, visibility, title, source URL, chunk count. Use before searching to know what boxed knowledge exists.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  // SHADDAI media engine — our own media download engine (loopback sidecar)
+  {
+    name: 'shaddai_media_status',
+    description: 'SHADDAI media engine — check the downloader: engine version, host and the 20+ supported services (YouTube, TikTok, Twitter/X, Instagram, Reddit, Vimeo, Bluesky, SoundCloud, Twitch clips...). Run this first to confirm the engine is online before fetching.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'shaddai_media_fetch',
+    description: 'SHADDAI media engine — download a PUBLIC video/audio from a supported service. Returns the file name, status and a working download/save link (open in a browser to save). downloadMode: auto | audio (audio-only) | mute (no audio). PIKADON blocks internal/private URLs.',
+    inputSchema: { type: 'object', properties: {
+      url: { type: 'string', description: 'Public URL of the media to capture (YouTube, TikTok, Twitter/X, Instagram, Vimeo, Reddit, Bluesky, SoundCloud...).' },
+      downloadMode: { type: 'string', description: 'auto (default) | audio (audio only) | mute (video without audio).' },
+    }, required: ['url'] },
+  },
+  {
+    name: 'shaddai_capture',
+    description: 'SHADDAI capture — ONE tool for all three: media download, web scraping, and the video clipper. mode: media = download a public video/audio (returns a working download link); scrape = turn a public https URL into clean markdown + title + links (SSRF-guarded, max_chars 300..200000, default 200000); clip = forward to the video clipper (clipper_path like /cp, plus optional payload object). Run /api/capture status first if unsure which sub-system is up.',
+    inputSchema: { type: 'object', properties: {
+      mode: { type: 'string', description: 'media | scrape | clip — what to do with the URL.' },
+      url: { type: 'string', description: 'Public https URL to capture, scrape, or clip.' },
+      downloadMode: { type: 'string', description: 'media mode: auto (default) | audio | mute.' },
+      max_chars: { type: 'number', description: 'scrape mode: how many characters of the page to keep (default 200000).' },
+      clipper_path: { type: 'string', description: 'clip mode: endpoint path on the clipper, e.g. /cp.' },
+      payload: { type: 'object', description: 'clip mode: JSON payload forwarded to the clipper.' },
+    }, required: ['mode', 'url'] },
+  },
   // ZEROX pillar — Virtuals Protocol agent commerce (ACP)
   {
     name: 'zerox_virtuals_me',
@@ -915,6 +964,7 @@ SPECIALISTS.forEach(s => TOOLS.push({
 async function callAPI(path, body, method) {
   const headers = { 'Content-Type': 'application/json' };
   if (API_KEY) headers['x-shaddai-key'] = API_KEY;
+  if (process.env.SHADDAI_MCP_UID) headers['x-user-id'] = process.env.SHADDAI_MCP_UID;
   try {
     const r = await fetch(API + path, { method: method || 'POST', headers, body: JSON.stringify(body || {}) });
     return r.json().catch(() => ({ error: 'bad response from SHADDAI API (' + r.status + ')' }));
@@ -926,6 +976,7 @@ async function callAPI(path, body, method) {
 async function callAPIGet(path) {
   const headers = {};
   if (API_KEY) headers['x-shaddai-key'] = API_KEY;
+  if (process.env.SHADDAI_MCP_UID) headers['x-user-id'] = process.env.SHADDAI_MCP_UID;
   try {
     const r = await fetch(API + path, { method: 'GET', headers });
     return r.json().catch(() => ({ error: 'bad response from SHADDAI API (' + r.status + ')' }));
@@ -1134,6 +1185,96 @@ async function callTool(name, args) {
       out += '\n\nQuotes:\n' + d.quotes.map(q => '• "' + (typeof q === 'object' ? (q.text || q.quote || '') : q) + '"').join('\n');
     }
     return out || 'Digest "' + args.name + '" returned no detail.';
+  }
+
+  // AURA BRAIN — boxed knowledge (COMPARTMENT architecture, Mettered ingest)
+  if (name === 'aura_ingest') {
+    const d = await callAPI('/api/aura-brain/ingest', { url: args.url, box: args.box, title: args.title });
+    if (d.ok) {
+      return 'Ingested → box ' + d.box + ' [' + d.visibility + ']\n• title: ' + (d.title || '') +
+        '\n• source: ' + d.sourceUrl + '\n• chunks: ' + d.chunks +
+        '\n• quota left today: ' + d.quota.left + '/' + d.quota.cap +
+        '\n\nAsk about it with aura_search (or Telegram /ask).';
+    }
+    if (d.code === 'QUOTA') return 'Free ingest quota used up today (PIKADON meter). Flip to paid (x402 Solana USDC rail) or wait for the daily reset:\n' + (d.upgrade || '');
+    return 'Error: ' + (d.error || JSON.stringify(d));
+  }
+
+  if (name === 'aura_search') {
+    const qs = 'q=' + encodeURIComponent(args.query) +
+      (args.box ? '&box=' + encodeURIComponent(args.box) : '') +
+      '&k=' + (Number(args.topK) || 3);
+    const d = await callAPIGet('/api/aura-brain/search?' + qs);
+    if (d.error) return 'Error: ' + d.error;
+    const results = d.results || [];
+    if (!results.length) return 'No AURA box hits for "' + args.query + '". Try rag_search for the big brain, or ingest a source first (aura_ingest).';
+    let out = results.map((r, i) =>
+      '[' + (i + 1) + '] box=' + r.box + ' [score: ' + r.score + ']\n' +
+      (r.title ? r.title + '\n' : '') +
+      r.snippet + (r.sourceUrl ? '\n(S) ' + r.sourceUrl : '')
+    ).join('\n\n');
+    out += '\n\n' + (d.quota ? 'ingest quota: ' + d.quota.used + '/' + d.quota.cap + ' used today' : '');
+    return out;
+  }
+
+  if (name === 'aura_boxes') {
+    const d = await callAPIGet('/api/aura-brain/boxes');
+    if (d.error) return 'Error: ' + d.error;
+    const boxes = d.boxes || [];
+    if (!boxes.length) return 'No AURA boxes yet. Teach an agent from a URL with aura_ingest.';
+    return 'AURA boxes (' + boxes.length + '):\n' + boxes.map((b) =>
+      '• ' + b.boxId + ' [' + b.visibility + '] — ' + (b.title || 'untitled') +
+      ' (' + b.chunkCount + ' chunks)' + (b.sourceUrl ? '\n  → ' + b.sourceUrl : '')
+    ).join('\n');
+  }
+
+  // SHADDAI media engine
+  if (name === 'shaddai_media_status') {
+    const d = await callAPIGet('/api/media/status');
+    if (d.error) return 'Error: ' + d.error;
+    if (!d.engineUp) return 'SHADDAI media engine is offline. Start it (backend/media-engine) and try again.';
+    const e = d.engine && d.engine.engine;
+    return 'SHADDAI media engine ONLINE\n' +
+      '  engine: ' + (e ? e.version + ' @ ' + e.url : '?') + '\n' +
+      '  services (' + (d.services || []).length + '): ' + (d.services || []).join(', ');
+  }
+
+  if (name === 'shaddai_media_fetch') {
+    const d = await callAPI('/api/media/fetch', { url: args.url, downloadMode: args.downloadMode || 'auto' });
+    if (!d.ok) return 'Error: ' + (d.error || JSON.stringify(d));
+    let out = 'Captured: ' + (d.filename || d.status || 'media') + '\n' +
+      '  status: ' + d.status + '\n';
+    if (d.size) out += '  size: ' + d.size + '\n';
+    out += '\nDownload: ' + d.url + '\n(open the download link in a browser to save the file)';
+    return out;
+  }
+
+  // SHADDAI capture — combined media + web scrape + clipper
+  if (name === 'shaddai_capture') {
+    const mode = String(args.mode || '').trim().toLowerCase();
+    const url = String(args.url || '').trim();
+    if (!url) return 'Provide a url to capture.';
+    const d = await callAPI('/api/capture/run', {
+      mode, url,
+      downloadMode: args.downloadMode || 'auto',
+      max_chars: Number(args.max_chars) || undefined,
+      clipper_path: args.clipper_path || undefined,
+      payload: args.payload || undefined
+    });
+    if (!d.ok) return 'Capture ' + mode + ' failed: ' + (d.error || JSON.stringify(d));
+    if (mode === 'media') {
+      let out = 'Captured (media): ' + (d.filename || d.status || '') + '\n';
+      if (d.size) out += '  size: ' + d.size + ' B\n';
+      return out + '  Download: ' + d.url;
+    }
+    if (mode === 'clip') {
+      return 'Clipper replied (HTTP ' + d.status + '):\n' + String(d.engine || '').slice(0, 2000);
+    }
+    let out = 'Scraped: ' + (d.title || d.url) + '\n';
+    if (d.description) out += '  ' + d.description + '\n';
+    out += '  chars: ' + d.chars + ' · links: ' + (d.links || []).length + '\n';
+    out += '\n' + String(d.markdown || d.text || '').slice(0, 4000);
+    return out;
   }
 
   // Specialist / agent runs

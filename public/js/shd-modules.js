@@ -398,6 +398,8 @@
       items: [
         { id: 'aura', name: 'AURA', accent: C.emerald, art: '/assets/nav/automation.jpg', href: '/aura.html',
           blurb: 'Answers without paying for a model call, wherever it can.' },
+        { id: 'media', name: 'MEDIA', accent: C.gold, art: '/assets/nav/automation.jpg', href: '/media.html',
+          blurb: 'Download media from YouTube, TikTok, X, Instagram and more — SHADDAI\u2019s own engine.' },
         { id: 'api',  name: 'API',  accent: C.gold,    art: '/assets/nav/apis.jpg',       href: '/api.html', blurb: 'Build against SHADDAI directly.' },
       ],
     },

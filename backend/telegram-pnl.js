@@ -245,14 +245,18 @@ async function trackTick() {
     if (cur) {
       call.curFdv = cur;
       call.curMult = cur / call.entryFdv;
-      if (call.curMult > call.peakMult) {
+      // Phantom-guard: a zero/thin-liq token can print an absurd fdv from a single
+      // tiny trade → a fake "250x". Never record a peak (or fire a win) unless the
+      // call had real liquidity (liq >= $10K) at entry. Prevents false ATH / hit-rate.
+      const hasRealLiq = (Number(call.liq) || 0) >= 10000;
+      if (call.curMult > call.peakMult && hasRealLiq) {
         call.peakMult = call.curMult; changed = true;
         // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
         try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
       }
       // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
       // Never skip straight to 5x just because the token moved fast between ticks.
-      if (HAS_BOT) {
+      if (HAS_BOT && hasRealLiq) {
         for (const m of MILESTONES) {
           if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
         }
@@ -283,7 +287,7 @@ function stats(period) {
   _now = Date.now();
   const span = period === 'week' ? 7 : period === 'month' ? 30 : 1;
   const since = _now - span * 24 * 3600 * 1000;
-  const rows = _state.calls.filter(c => c.ts >= since && c.source !== 'seed');
+  const rows = _state.calls.filter(c => c.ts >= since && c.source !== 'seed' && (Number(c.liq) || 0) >= 10000);
   const total = rows.length;
   const hits2 = rows.filter(c => c.peakMult >= 2).length;
   const hits5 = rows.filter(c => c.peakMult >= 5).length;
@@ -511,7 +515,10 @@ async function discoverTick() {
         }
       } catch (e) {}
       if (fdv <= 2000 || fdv > 250000) continue;                        // only small/mid new launches
-      if (liq > 0 && liq < 2000) continue;                             // need real liquidity (skip proxy/zero-liq)
+      // HARD liquidity floor — $10K min, aligned with tg-config minLiq. Reject zero-liq
+      // (pre-graduation bonding-curve) and thin pools outright; these are the false 2K
+      // calls / fake-ATH entries that were polluting the feed and the hit rate.
+      if (liq < 10000) continue;
       recordCall({ mint, chain: 'solana', symbol: sym, name: nm, source: 'boosted', entryFdv: fdv, entryPrice: price, liq, holders: 0 });
       added++;
     }

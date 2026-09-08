@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI · Capture</title>
+<style>
+:root{--bg:#03060b;--panel:#0a1120;--panel2:#0d1626;--border:rgba(0,229,160,.16);--holo:rgba(0,229,160,.55);--cyan:#00e5a0;--gold:#ffd76a;--text:#dfe9ec;--muted:#6b7f8d;--danger:#ff5470;--violet:#b48bff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,rgba(0,229,160,.10),transparent 60%),var(--bg);color:var(--text);font-family:'Share Tech Mono',Consolas,monospace;min-height:100vh;padding:22px}
+.wrap{max-width:880px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.logo{font-size:20px;letter-spacing:2px}
+.logo b{color:var(--cyan)}
+.crumbs{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.pills{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:9px;padding:4px 10px;border:1px solid var(--border);border-radius:999px;display:flex;align-items:center;gap:6px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:#feaa5f;box-shadow:0 0 8px #feaa5f}
+.dot.up{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.dot.down{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tab{flex:1;background:transparent;border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center;font-family:inherit;font-size:11px;letter-spacing:1px;color:var(--muted);cursor:pointer;text-transform:uppercase}
+.tab.active{background:linear-gradient(135deg,rgba(0,229,160,.16),rgba(180,139,255,.10));color:var(--cyan);border-color:var(--holo)}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.panel h2{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.field{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text],textarea{flex:1 1 100%;width:100%;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:12px;padding:11px 12px;outline:none;resize:vertical}
+input[type=text]{flex:1;min-width:230px}
+input:focus,textarea:focus{border-color:var(--holo);box-shadow:0 0 0 3px rgba(0,229,160,.08)}
+select{background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:12px;padding:11px;outline:none}
+button{font-family:inherit;cursor:pointer;border-radius:8px}
+.cap{background:linear-gradient(135deg,#00e5a0,#00b37e);color:#022117;border:0;font-weight:700;letter-spacing:1px;font-size:12px;padding:11px 18px}
+.cap:disabled{opacity:.4;cursor:not-allowed}
+.cap:not(:disabled):hover{filter:brightness(1.12)}
+.ghost{background:transparent;border:1px solid var(--border);color:var(--cyan);font-size:11px;padding:8px 14px}
+.ghost:hover{background:rgba(0,229,160,.06)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:9px;padding:4px 9px;border:1px solid rgba(255,255,255,.10);border-radius:999px;color:var(--muted)}
+.card{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cname{font-size:13px;color:var(--cyan);word-break:break-all}
+.cmeta{font-size:10px;color:var(--muted);margin-top:4px}
+.right{margin-left:auto;display:flex;gap:8px}
+.save{background:linear-gradient(135deg,#ffd76a,#ffb347);color:#211500;border:0;font-weight:700;font-size:12px;padding:10px 16px}
+.copy{background:transparent;border:1px solid var(--border);color:var(--text);font-size:11px;padding:10px 14px}
+pre{font-family:inherit;font-size:10px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;background:rgba(0,0,0,.28);border:1px dashed rgba(255,255,255,.08);border-radius:8px;padding:12px;margin-top:10px}
+.err{color:var(--danger);font-size:11px;margin-top:10px}
+.soft{color:var(--muted);font-size:9px;line-height:1.6}
+ul.audit{list-style:none}
+ul.audit li{font-size:9px;color:var(--muted);border-top:1px dashed rgba(255,255,255,.06);padding:6px 0;word-break:break-all}
+span.ok{color:var(--cyan)} span.bad{color:var(--danger)} span.warn{color:var(--gold)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><b>⬡ SHADDAI</b> CAPTURE</div>
+    <div class="crumbs">media · scrape · clip — one rail</div>
+    <div class="pills">
+      <span class="pill"><span class="dot" id="dEngine"></span>engine</span>
+      <span class="pill"><span class="dot" id="dClipper"></span>clipper</span>
+      <span class="pill"><span class="dot" id="dScraper"></span>scraper</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-t="media">⭳ Download</button>
+    <button class="tab" data-t="scrape">⇄ Web Scrape</button>
+    <button class="tab" data-t="clip">✂ Clip</button>
+  </div>
+
+  <div class="panel" id="p-media">
+    <h2>Download media</h2>
+    <div class="field">
+      <input id="u-media" type="text" placeholder="YouTube, TikTok, X/Twitter, Instagram, Vimeo, Reddit, Bluesky…">
+      <select id="m-media">
+        <option value="auto">auto</option>
+        <option value="audio">audio only</option>
+        <option value="mute">mute</option>
+      </select>
+      <button class="cap" id="b-media">⭳ Capture</button>
+    </div>
+    <div class="err hidden" id="e-media"></div>
+    <div class="card hidden" id="r-media">
+      <div>
+        <div class="cname" id="n-media">…</div>
+        <div class="cmeta" id="q-media">…</div>
+      </div>
+      <div class="right">
+        <button class="copy" id="c-media">copy link</button>
+        <button class="save" id="s-media">⭳ Save file</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="p-scrape">
+    <h2>Scrape a page → markdown</h2>
+    <div class="field">
+      <input id="u-scrape" type="text" placeholder="https://… any public page (SSRF-guarded, https only)">
+      <select id="m-scrape">
+        <option value="4000">~4k chars</option>
+        <option value="20000">~20k chars</option>
+        <option value="60000" selected>~60k chars</option>
+        <option value="200000">~200k chars</option>
+      </select>
+      <button class="cap" id="b-scrape">⇄ Scrape</button>
+    </div>
+    <div class="err hidden" id="e-scrape"></div>
+    <div class="card hidden" id="r-scrape">
+      <div>
+        <div class="cname" id="n-scrape">…</div>
+        <div class="cmeta" id="q-scrape">…</div>
+      </div>
+      <div class="right">
+        <button class="copy" id="c-scrape">copy markdown</button>
+        <button class="save" id="s-scrape">⭳ Save .md</button>
+      </div>
+      <pre id="t-scrape"></pre>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="p-clip">
+    <h2>Video clipper</h2>
+    <div class="field">
+      <input id="u-clip" type="text" placeholder="source video url">
+      <input id="p-clip" type="text" placeholder="/cp — clipper endpoint (optional)">
+    </div>
+    <textarea id="b-clip" rows="3" placeholder='optional JSON payload, e.g. {"in":0,"out":12}'></textarea>
+    <div style="margin-top:8px"><button class="cap" id="g-clip">✂ Clip</button></div>
+    <div class="err hidden" id="e-clip"></div>
+    <pre id="t-clip" class="hidden"></pre>
+  </div>
+
+  <div class="panel">
+    <h2>Services (media engine)</h2>
+    <div class="chips" id="chips"><span class="chip">loading…</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>Recent captures</h2>
+    <ul class="audit" id="audit"><li>none yet</li></ul>
+  </div>
+
+  <p class="soft">PIKADON rules: capture/scrape URLs must be public https (private hosts blocked), downloads stream only through this gateway and are capped, clip forwards only to the whitelisted clipper origin, and every call is budgeted + logged. The combined rail is <b>/api/capture</b> — media + web scrape + clipper — used by the dashboard, Simple Mode and the MCP <b>shaddai_capture</b> tool. The old media-only gateway stays at <b>/api/media</b>.</p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const state = { tab: 'media', last: {} };
+const fmt = bytes => bytes == null ? '' : ' ' + (bytes > 1048576 ? (bytes/1048576).toFixed(1) + ' MB' : Math.round(bytes/1024) + ' KB');
+
+function pill(id, ok) {
+  const d = $(id);
+  d.classList.remove('up', 'down');
+  if (ok === undefined) return;
+  d.classList.add(ok ? 'up' : 'down');
+}
+function errBox(id, msg) {
+  $(id).textContent = msg;
+  $(id).classList.remove('hidden');
+}
+function setTab(t) {
+  state.tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  ['media', 'scrape', 'clip'].forEach(k => $('p-' + k).classList.toggle('hidden', k !== t));
+}
+
+async function api() {
+  try {
+    const d = await (await fetch('/api/capture/status')).json();
+    pill('dEngine', d.media && d.media.up);
+    pill('dClipper', d.clipper && d.clipper.up);
+    pill('dScraper', d.scraper && d.scraper.ready);
+    const chips = $('chips');
+    if (d.media && d.media.up) {
+      chips.innerHTML = (d.media.services && d.media.services.length
+        ? d.media.services.map(s => '<span class="chip">' + s + '</span>').join('')
+        : '<span class="chip">—</span>');
+      $('b-media').disabled = false;
+    } else {
+      chips.innerHTML = '<span class="chip bad">engine offline — start backend/media-engine</span>';
+      $('b-media').disabled = true;
+    }
+    const a = d.media && d.media.audit && d.media.audit.recent;
+    $('audit').innerHTML = a && a.length
+      ? a.slice().reverse().map(x => '<li>' + cls(x.result) + ' · ' + (x.filename || x.url || '') + ' · ' + (x.t || '').slice(11, 19) + '</li>').join('')
+      : '<li>none yet</li>';
+  } catch (e) {
+    pill('dEngine', false); pill('dClipper', false); pill('dScraper', false);
+    $('chips').innerHTML = '<span class="chip bad">gateway unreachable</span>';
+  }
+}
+function cls(r) {
+  r = (r || '');
+  if (/^ok/.test(r) || r === 'ok') return '<span class="ok">✓</span>';
+  if (/blocked|bad|capped/.test(r)) return '<span class="bad">✕</span>';
+  return '<span class="warn">…</span>';
+}
+
+async function run() {
+  const tab = state.tab;
+  const url = $('u-' + tab).value.trim();
+  const eb = 'e-' + tab;
+  $(eb).classList.add('hidden');
+  if (!url) { errBox(eb, 'Paste a link first.'); return; }
+  const btn = tab === 'clip' ? $('g-clip') : $('b-' + tab);
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = tab === 'media' ? 'capturing…' : tab === 'scrape' ? 'scraping…' : 'clipping…';
+  const body = { mode: tab, url };
+  if (tab === 'media') body.downloadMode = $('m-media').value;
+  if (tab === 'scrape') body.max_chars = Number($('m-scrape').value);
+  if (tab === 'clip') {
+    body.clipper_path = $('p-clip').value.trim() || '/';
+    const payload = $('b-clip').value.trim();
+    if (payload) { try { body.payload = JSON.parse(payload); } catch (e) { errBox(eb, 'Payload is not valid JSON.'); btn.disabled = false; btn.textContent = old; return; } }
+  }
+  try {
+    const d = await (await fetch('/api/capture/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    })).json();
+    if (!d.ok) { errBox(eb, 'Capture ' + tab + ': ' + (d.error || 'failed')); return; }
+    if (tab === 'media') {
+      state.last.url = d.url; state.last.filename = d.filename || '';
+      $('n-media').textContent = d.filename || d.status || 'media';
+      $('q-media').textContent = 'status ' + d.status + (d.size ? fmt(d.size) : '');
+      $('r-media').classList.remove('hidden');
+    } else if (tab === 'scrape') {
+      state.last.md = d.markdown || '';
+      $('n-scrape').textContent = d.title || d.url;
+      $('q-scrape').textContent = (d.chars ? d.chars + ' chars · ' : '') + (d.links || []).length + ' links' + (d.bytes ? ' · ' + fmt(d.bytes) : '');
+      $('t-scrape').textContent = d.text || '(no readable text)';
+      $('r-scrape').classList.remove('hidden');
+    } else {
+      $('t-clip').textContent = 'HTTP ' + d.status + ' · ' + (d.engine || '(empty body)');
+      $('t-clip').classList.remove('hidden');
+    }
+    api();
+  } catch (e) {
+    errBox(eb, 'Gateway error: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = old;
+}
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+$('b-media').addEventListener('click', run);
+$('b-scrape').addEventListener('click', run);
+$('g-clip').addEventListener('click', run);
+$('u-media').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+$('u-scrape').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+$('s-media').addEventListener('click', () => { if (state.last.url) window.location = state.last.url; });
+$('c-media').addEventListener('click', () => {
+  if (!state.last.url) return;
+  navigator.clipboard.writeText(new URL(state.last.url, location.origin).href)
+    .then(() => { $('c-media').textContent = 'copied ✓'; setTimeout(() => $('c-media').textContent = 'copy link', 1400); }).catch(() => {});
+});
+$('c-scrape').addEventListener('click', () => {
+  if (!state.last.md) return;
+  navigator.clipboard.writeText(state.last.md)
+    .then(() => { $('c-scrape').textContent = 'copied ✓'; setTimeout(() => $('c-scrape').textContent = 'copy markdown', 1400); }).catch(() => {});
+});
+$('s-scrape').addEventListener('click', () => {
+  if (!state.last.md) return;
+  const blob = new Blob([state.last.md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = ($('n-scrape').textContent || 'scrape').replace(/[^a-z0-9-_]+/gi, '_').slice(0, 60) + '.md';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+
+setTab('media');
+api();
+</script>
+</body>
+</html>

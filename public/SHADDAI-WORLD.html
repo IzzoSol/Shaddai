@@ -97,7 +97,16 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:#eaf2ff;font-
 @keyframes flick{0%,18%,22%,100%{opacity:1}20%{opacity:.55}}
 /* custom cursor */
 #cur{position:fixed;z-index:90;width:22px;height:22px;margin:-11px 0 0 -11px;pointer-events:none;
-  border:1.5px solid var(--gold);border-radius:50%;box-shadow:0 0 12px rgba(255,207,74,.6);transition:transform .08s}
+border:1.5px solid var(--gold);border-radius:50%;box-shadow:0 0 12px rgba(255,207,74,.6);transition:transform .08s}
+
+/* ── mobile touch controls (virtual joystick) ── */
+#joy{position:fixed;z-index:95;left:22px;bottom:22px;width:120px;height:120px;border:1px solid rgba(255,207,74,.28);border-radius:50%;
+background:rgba(8,10,20,.35);backdrop-filter:blur(4px);display:none;touch-action:none}
+#joy .knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;
+background:radial-gradient(circle at 35% 30%,rgba(255,207,74,.9),rgba(255,167,40,.55));box-shadow:0 0 18px rgba(255,207,74,.5);pointer-events:none;
+transform:translate(0,0)}
+#zoomhint{position:fixed;z-index:94;right:16px;top:50%;transform:translateY(-50%);font-size:8px;letter-spacing:2px;color:var(--cyan);opacity:.5;display:none;text-align:right}
+@media (pointer:coarse){ #joy{display:block} #zoomhint{display:block} #hint{display:none} }
 #cur::after{content:'';position:absolute;inset:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan)}
 @media (max-width:640px){.brand h1{font-size:18px;letter-spacing:4px}#mini{width:104px;height:104px}}
 </style>
@@ -133,6 +142,9 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:#eaf2ff;font-
   <div class="bar"><i></i></div>
 </div>
 <div id="cur"></div>
+
+<div id="joy"><div class="knob"></div></div>
+<div id="zoomhint">PINCH TO ZOOM · DRAG TO LOOK</div>
 
 <script>
 (function(){

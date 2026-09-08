@@ -134,4 +134,120 @@ async function renderToFile(call, destPath, opts = {}) {
   return destPath;
 }
 
-module.exports = { render, renderToFile, svgOf, themeFor, THEMES, usd, xs, pct, _ago };
+// ── SHADDAI LABS full signal card (broadcast-time rich data) ─────────────────
+// Enriched call shape:
+//   { symbol, name, imageUrl, mc (entry FDV), top10Pct, holders,
+//     dexPaid (bool), socials:{website,twitter,telegram,discord,instagram},
+//     rugScore, source, chain }
+// Always renders crisp SVG text over an optional FLUX background. Footer carries
+//   @ShaddaiLabs · @shaddaiai · "Built by IzzoSol" · "DM for pro signals".
+function _shortAddr(a){ const s=String(a||''); return s.length>10 ? s.slice(0,4)+'…'+s.slice(-4) : s; }
+function _socialsTag(socials){
+  if(!socials) return '';
+  const t=[];
+  if(socials.website) t.push('🌐');
+  if(socials.twitter) t.push('𝕏');
+  if(socials.telegram) t.push('✈');
+  if(socials.discord) t.push('💬');
+  if(socials.instagram) t.push('📸');
+  return t.join(' ');
+}
+const MONO = 'DejaVu Sans Mono, Courier New, monospace';
+const SANS = 'DejaVu Sans, Arial, sans-serif';
+function _price(n){ const v=Number(n); if(!isFinite(v)||v===0) return 'N/A'; if(v>=1) return '$'+v.toFixed(4); return '$'+v.toFixed(8); }
+function _supply(n){ const v=Number(n); if(!isFinite(v)||!v) return 'N/A'; if(v>=1e9) return (v/1e9).toFixed(2)+'B'; if(v>=1e6) return (v/1e6).toFixed(2)+'M'; if(v>=1e3) return (v/1e3).toFixed(1)+'K'; return String(Math.round(v)); }
+function _ageLong(ms){ const v=Number(ms); if(!isFinite(v)||v==null) return 'N/A'; const h=v/3600000; if(h<1) return Math.round(h*60)+'m'; if(h<48) return Math.round(h)+'h'; return Math.round(h/24)+'d'; }
+function _chg(v){ const n=Number(v); if(!isFinite(v)||v==null) return null; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
+
+// Two-column stat cell for the dense signal card.
+function _cell(x, y, label, value, color){
+  return `<text x="${x}" y="${y}" font-family="${MONO}"><tspan font-size="20" fill="#6f86a0" letter-spacing="3">${esc(label)}</tspan><tspan x="${x}" dy="44" font-size="38" font-weight="700" fill="${color}">${esc(value)}</tspan></text>`;
+}
+
+function svgSignal(call, theme) {
+  const t = theme || themeFor(Math.round(Number(call.mc)||0) >= 150000 ? 10 : 1);
+  const sym = String(call.symbol || call.name || 'TOKEN').toUpperCase();
+  const name = call.name && call.name !== call.symbol ? esc(call.name).slice(0, 34) : '';
+  const mc = Number(call.mc) || 0;
+  const price = Number(call.priceUsd) || 0;
+  const vol24 = Number(call.volume24h) || 0;
+  const liq = Number(call.liq) || 0;
+  const supply = _supply(call.supply);
+  const chg1h = _chg(call.chg1h);
+  const chg24h = _chg(call.chg24h);
+  const age = _ageLong(call.ageMs);
+  const top10 = Number(call.top10Pct);
+  const holders = Number(call.holders) || 0;
+  const fresh = Number(call.freshWallets);
+  const bundlers = !!call.bundlers;
+  const snipers = !!call.snipers;
+  const dexPaid = !!call.dexPaid;
+  const rug = Number(call.rugScore);
+  const socialsTag = _socialsTag(call.socials);
+  const chain = String(call.chain || 'SOLANA').toUpperCase();
+  const venue = call.dexId ? ' · '+esc(String(call.dexId).replace(/-/g,' ').toUpperCase()) : '';
+  const chg1hColor = !chg1h ? '#ffffff' : (chg1h.startsWith('-') ? '#ff5c7a' : '#00ff88');
+  const img = call.imageUrl ? `<image href="${esc(call.imageUrl)}" x="${W-210}" y="222" width="150" height="150" preserveAspectRatio="xMidYMid slice" clip-path="url(#tickclip)"/>` : '';
+
+  const L = 60, R = W/2 + 20;      // left & right column x
+  const cells = [];
+  let y = 470;
+  cells.push(_cell(L, y, 'PRICE', _price(price), '#ffffff'));
+  cells.push(_cell(R, y, 'MARKET CAP', usd(mc), '#f7c95c')); y += 108;
+  cells.push(_cell(L, y, 'VOLUME 24H', usd(vol24), '#ffffff'));
+  cells.push(_cell(R, y, 'LIQUIDITY', usd(liq), '#7cf7c4')); y += 108;
+  cells.push(_cell(L, y, 'SUPPLY', supply, '#ffffff'));
+  cells.push(_cell(R, y, '1H', chg1h||'N/A', chg1hColor)); y += 108;
+  cells.push(_cell(L, y, 'AGE', age, '#ffffff'));
+  cells.push(_cell(R, y, '24H', chg24h||'N/A', '#8a93a8')); y += 108;
+  // security strip
+  const secLine = `TOP10 ${isFinite(top10)?top10.toFixed(1)+'%':'N/A'} · ${holders.toLocaleString()} HOLDERS · ${isFinite(fresh)?fresh+' FRESH':'0 FRESH'}${bundlers?' · 📦 BUNDLER':''}${snipers?' · 🔫 SNIPER':''}`;
+  cells.push(`<text x="${L}" y="${y+6}" font-family="${MONO}" font-size="24" font-weight="700" fill="${(top10>50)?'#ff5c7a':'#7cf7c4'}">${esc(secLine)}</text>`); y += 60;
+  cells.push(_cell(L, y, 'DEX PAID', dexPaid?'YES':'NO', dexPaid?'#f7c95c':'#7cf7c4'));
+  cells.push(_cell(R, y, 'RUG SCORE', isFinite(rug)?rug.toFixed(0)+'/100':'N/A', (rug>=80?'#00ff88':rug>=50?'#f7c95c':'#ff5c7a'))); y += 108;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.top}"/><stop offset="0.5" stop-color="${t.mid}"/><stop offset="1" stop-color="${t.bot}"/></linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${t.accent}"/><stop offset="1" stop-color="${t.accent2}"/></linearGradient>
+    <clipPath id="tickclip"><circle cx="${W-135}" cy="297" r="75"/></clipPath>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  <rect x="0" y="0" width="${W}" height="10" fill="url(#brand)"/>
+  <rect x="40" y="40" width="${W-80}" height="${H-80}" fill="none" stroke="#1c2340" stroke-width="2" rx="18"/>
+
+  <!-- header plate -->
+  <rect x="0" y="0" width="${W}" height="190" fill="rgba(5,8,18,.72)"/>
+  <line x1="0" y1="190" x2="${W}" y2="190" stroke="${t.accent}" stroke-width="1.5" opacity=".45"/>
+
+  <text x="60" y="112" font-family="${SANS}" font-size="40" font-weight="800" fill="url(#brand)" letter-spacing="10">SHADDAI LABS</text>
+  <text x="60" y="158" font-family="${MONO}" font-size="17" fill="#7d86a0" letter-spacing="6">${chain}${venue}</text>
+
+  <text x="60" y="330" font-family="${SANS}" font-size="108" font-weight="800" fill="#ffffff">$${esc(sym)}</text>
+  ${name ? `<text x="60" y="378" font-family="${SANS}" font-size="28" fill="#8a93a8">${name}</text>` : ''}
+  ${img}
+
+  ${cells.join('\n  ')}
+
+  <line x1="60" y1="${H-190}" x2="${W-60}" y2="${H-190}" stroke="#1c2340" stroke-width="2"/>
+  <text x="60" y="${H-145}" font-family="${MONO}" font-size="21" fill="#8a93a8" letter-spacing="2">@ShaddaiLabs ${socialsTag ? ' · ' + socialsTag : ''}</text>
+  <text x="${W-60}" y="${H-145}" font-family="${MONO}" font-size="21" fill="#8a93a8" text-anchor="end">@shaddaiai</text>
+  <text x="60" y="${H-108}" font-family="${MONO}" font-size="15" fill="#5c6680">Built by IzzoSol</text>
+  <text x="${W-60}" y="${H-108}" font-family="${MONO}" font-size="15" fill="#5c6680" text-anchor="end">DM for pro signals</text>
+</svg>`;
+}
+
+// Render the full signal card. opts.background = optional FLUX buffer.
+async function renderSignalCard(call, opts = {}) {
+  const theme = themeFor(Number(call && call.top10Pct) >= 50 ? 1 : (Number(call && call.mc)||0) >= 50000 ? 5 : 2);
+  if (opts.background && opts.background.length) {
+    try {
+      const overlay = await sharp({ create: { width: W, height: H, channels: 4, background: { r: 6, g: 8, b: 16, alpha: 0.87 } } }).png().toBuffer();
+      const base = await sharp(opts.background).resize(W, H, { fit: 'cover' }).composite([{ input: overlay }]).png().toBuffer();
+      return sharp(base).composite([{ input: Buffer.from(svgSignal(call || {}, theme).replace(/<rect width="1080" height="1350" fill="url\(#bg\)"\/>/, '')) }]).png().toBuffer();
+    } catch (e) { /* fall through to basic */ }
+  }
+  return sharp(Buffer.from(svgSignal(call || {}, theme))).png().toBuffer();
+}
+
+module.exports = { render, renderToFile, svgOf, themeFor, THEMES, usd, xs, pct, _ago, renderSignalCard, svgSignal };

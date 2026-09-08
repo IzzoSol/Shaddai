@@ -34,12 +34,14 @@ export function initBrainHead(container, opts = {}) {
   const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 200);
   camera.position.set(0, 0.2, 6.4);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setClearColor(0x000000, 0);
+  renderer.autoClear = true;
   container.appendChild(renderer.domElement);
 
   const root = new THREE.Group();
   scene.add(root);
+  
   // Meshy heads come in dark against an obsidian ground — light them properly:
   // ambient for base readability, a key from camera-side, and two coloured rims
   // so the silhouette separates from the shell behind it.
@@ -102,6 +104,7 @@ export function initBrainHead(container, opts = {}) {
   // around the face, but the face itself holds still and meets your eye. When
   // it span with everything else you could never actually look into it.
   const headSlot = new THREE.Group();
+  headSlot.position.set(0, 0, 0);
   scene.add(headSlot);
   const loader = new GLTFLoader();
   const texLoader = new THREE.TextureLoader();
@@ -133,19 +136,26 @@ export function initBrainHead(container, opts = {}) {
             if (m.emissive) m.emissive.setHex(0x0a0f16);
             if (m.metalness !== undefined) m.metalness = Math.min(m.metalness, 0.55);
             if (m.roughness !== undefined) m.roughness = Math.max(m.roughness, 0.42);
+            // Disable any grid/floor artifacts
+            m.depthTest = true;
+            m.depthWrite = true;
+            m.transparent = m.transparent || false;
           });
         });
+        // Ensure the head is at the right position
+        gltf.scene.position.set(0, 0, 0);
         headSlot.add(gltf.scene);
       },
       undefined,
-      () => {
+      (err) => {
         // No Meshy head yet — portrait billboard keeps the view whole.
         texLoader.load(`assets/council/${agentId}.png`, (tex) => {
           if (tex.colorSpace !== undefined) tex.colorSpace = THREE.SRGBColorSpace;
           const plane = new THREE.Mesh(
             new THREE.PlaneGeometry(2.2, 2.2),
-            new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.96 }),
+            new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.96, depthTest: true, depthWrite: true }),
           );
+          plane.rotation.y = 0;
           headSlot.add(plane);
         }, undefined, () => {});
       },
@@ -156,7 +166,7 @@ export function initBrainHead(container, opts = {}) {
   const ring = new THREE.Group();
   root.add(ring);
   let genreNodes = [];
-  const nodeGeo = new THREE.SphereGeometry(0.075, 12, 12);
+  const nodeGeo = new THREE.SphereGeometry(0.08, 16, 16);
 
   function setGenres(topics) {
     while (ring.children.length) ring.remove(ring.children[0]);
@@ -164,10 +174,17 @@ export function initBrainHead(container, opts = {}) {
     const list = (topics || []).slice(0, 12);
     list.forEach(([name, count], i) => {
       const a = (i / Math.max(1, list.length)) * Math.PI * 2;
-      const mesh = new THREE.Mesh(nodeGeo, new THREE.MeshBasicMaterial({ color: accent.clone() }));
-      // Wider than the shell and dropped below eye-line: at the old radius the
-      // front node sat between camera and face, blocking it.
-      mesh.position.set(Math.cos(a) * 3.7, -1.15 + Math.sin(a * 2) * 0.22, Math.sin(a) * 3.7);
+      const mesh = new THREE.Mesh(nodeGeo, new THREE.MeshBasicMaterial({ 
+        color: accent.clone(),
+        transparent: true,
+        opacity: 0.9,
+        depthTest: true,
+        depthWrite: true
+      }));
+      // Position around the head at eye level, not below
+      const radius = 3.5;
+      const yPos = 0.1 + Math.sin(a * 2) * 0.15;
+      mesh.position.set(Math.cos(a) * radius, yPos, Math.sin(a) * radius);
       mesh.userData = { topic: name, count, baseScale: 1 + Math.min(1.1, (count || 0) / 900) };
       mesh.scale.setScalar(mesh.userData.baseScale);
       ring.add(mesh);
@@ -177,8 +194,14 @@ export function initBrainHead(container, opts = {}) {
 
   // ── voxel burst (retrieved chunks) ─────────────────────────────────────────
   const VOXEL_MAX = TIER_BUDGET.ULTRA.voxels;
-  const voxGeo = new THREE.BoxGeometry(0.07, 0.07, 0.07);
-  const voxMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true });
+  const voxGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
+  const voxMat = new THREE.MeshBasicMaterial({ 
+    vertexColors: true, 
+    transparent: true,
+    opacity: 0.9,
+    depthTest: true,
+    depthWrite: true
+  });
   const voxels = new THREE.InstancedMesh(voxGeo, voxMat, VOXEL_MAX);
   voxels.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(VOXEL_MAX * 3), 3);
   voxels.count = 0;
@@ -195,7 +218,7 @@ export function initBrainHead(container, opts = {}) {
     voxState.length = 0;
     for (let i = 0; i < count; i++) {
       const dir = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
-      voxState.push({ p: dir.clone().multiplyScalar(0.6), v: dir.multiplyScalar(0.9 + Math.random() * 1.5), life: 0 });
+      voxState.push({ p: dir.clone().multiplyScalar(0.8), v: dir.multiplyScalar(1.2 + Math.random() * 2), life: 0 });
       _c.set(PALETTE[i % PALETTE.length]);
       voxels.instanceColor.setXYZ(i, _c.r, _c.g, _c.b);
     }
