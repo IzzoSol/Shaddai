@@ -403,14 +403,33 @@
     </div>
 
     <script>
-// API Configuration - talks to the same-origin gateway (/api/clipper)
-        // so the engine is reached through the SHADDAI build (one entry point).
-        const CLIPPER_API_URL = window.CLIPPER_API_URL || '/api';
+// API Configuration - auto-discovers the backend:
+        //  1. explicit window.CLIPPER_API_URL override
+        //  2. same-origin /api (served inside the SHADDAI build via the /api/clipper rail)
+        //  3. local engine on localhost:8787
+        //  4. the Render-hosted backend
+        const BACKEND = 'https://shaddai-clipper.onrender.com';
+        let CLIPPER_API_URL = null;
+
+        async function resolveBase() {
+            const cands = [window.CLIPPER_API_URL, '/api'];
+            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') cands.push('http://localhost:8787');
+            cands.push(BACKEND);
+            for (const b of cands) {
+                if (!b) continue;
+                try {
+                    const r = await fetch(String(b).replace(/\/+$/, '') + '/clipper/health', { signal: AbortSignal.timeout(4000) });
+                    if (r.ok) return b;
+                } catch (e) {}
+            }
+            return '/api';
+        }
 
         // Check if clipper backend is available
         async function checkClipperConnection() {
+            if (!CLIPPER_API_URL) CLIPPER_API_URL = await resolveBase();
             try {
-                const response = await fetch(`${CLIPPER_API_URL}/clipper/health`);
+                const response = await fetch(`${String(CLIPPER_API_URL).replace(/\/+$/, '')}/clipper/health`);
                 if (response.ok) {
                     document.getElementById('statusDot').classList.add('active');
                     document.getElementById('statusText').textContent = 

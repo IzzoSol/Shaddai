@@ -521,8 +521,27 @@ app.get('/api/clipper/status', async (req, res) => {
 });
 app.use('/api/clipper', async (req, res) => {
   const target = `${CLIPPER_ORIGIN}/clipper${req.url}`;
+  const ctype = String(req.headers['content-type'] || '');
+  const isMultipart = ctype.includes('multipart/form-data');
   try {
-    const up = await fetch(target, { method: req.method, headers: { ...req.headers, host: new URL(CLIPPER_ORIGIN).host }, body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body), signal: AbortSignal.timeout(25000) });
+    const headers = { ...req.headers, host: new URL(CLIPPER_ORIGIN).host };
+    delete headers['content-length'];
+    delete headers['content-type'];
+    let body;
+    if (isMultipart) {
+      headers['content-type'] = ctype;
+      body = req;
+    } else if (!['GET', 'HEAD'].includes(req.method)) {
+      headers['content-type'] = 'application/json';
+      body = JSON.stringify(req.body);
+    }
+    const up = await fetch(target, {
+      method: req.method,
+      headers,
+      body,
+      duplex: isMultipart ? 'half' : undefined,
+      signal: AbortSignal.timeout(isMultipart ? 90000 : 25000)
+    });
     const buf = Buffer.from(await up.arrayBuffer());
     res.status(up.status);
     if (up.headers.get('content-type')) res.setHeader('Content-Type', up.headers.get('content-type'));

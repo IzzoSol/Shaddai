@@ -160,3 +160,65 @@ When the above is green, the following can be started:
 - 3D office with agent task-drop
 - Custom agent forge UI
 - 3,500-skill catalogue (properly counted and displayed)
+
+---
+
+## H. AURA BRAIN — boxed knowledge (INGEST → COMPARTMENT → SERVE)
+
+| Requirement | Status | How to verify | Repo/path |
+|---|---|---|---|
+| Compartments = labeled AURA **boxes**, not one giant vector store (`hall/<owner>/<slug>` shared, `<office>/<owner>/<slug>` private) | **DONE** | `POST /api/aura-brain/ingest {url, box}` → boxId tuple; `GET /api/aura-brain/boxes` respects visibility (hall readable by everyone, private only by owner) | `backend/aura-brain.js`, `backend/aura-brain-routes.js`, mounted `backend/server-production.js` (after `brain-server`) |
+| INGEST layer: Jina Reader → Firecrawl → bundled SSRF-guarded scraper, ~500-token chunks | **DONE** | `aura-brain.js selfTest()` PASSes: ingest `https://example.com` → `oracle/demo`, search returns snippet, private scope enforced | `backend/lib/web-scrape.js` (SSRF guard reused), `backend/aura-brain.js` `chunkText` |
+| SERVE layer: `aura_ingest`, `aura_search`, `aura_boxes` MCP tools | **DONE** | MCP `TOOLS` array + `callTool` handlers; list via `rag_search`-style if-chain | `shaddai-mcp/mcp-unified.js` |
+| Telegram `/learn <url> [box]` + `/boxes`, and `/ask` answers from the caller's boxes first (grounded snippets) | **DONE** | `telegram-bot.js` `_auraLearn`/`_auraBoxes`/`_auraSearch`; `/ask` prepends box knowledge before `/api/model/chat` | `backend/telegram-bot.js` |
+| PIKADON guard: https-only, private/literal-IP/localhost/.local DNS blocked, `/api|admin|internal` paths blocked, per-box chunk cap | **DONE** | Self-test asserts `http://127.0.0.1` request → 403 `BLOCKED` | `backend/aura-brain.js` `pikadonCheckUrl` |
+| Metered ingest: free N ingests/user/day (`AURA_FREE_INGESTS`, default 5), then 402 paid rail (x402 Solana USDC) | **DONE** | Self-test with `AURA_FREE_INGESTS=0` → `QUOTA`; route responds HTTP 402 + upgrade link | `backend/aura-brain.js` quota functions |
+| Libretto (Playwright recorder for hard pages) — **VISION / NEXUS-only, in NO tree path from MCP or Telegram** | **VISION** | Libretto NEVER spawned from MCP/TG; record only via NEXUS CLI scripts, `LIBRETTO_TELEMETRY_DISABLED=1`, no user cookies stored | `docs/STATUS.md` (this entry) |
+| Acceptance: ingest public docs URL into box `oracle/demo` → `aura_search` returns 3 snippets → TG `/ask` uses those snippets | **DONE** | See **Self-test / acceptance** below | e2e via `aura-brain.js selfTest()` |
+
+**Self-test / acceptance** (run after any box-engine change):
+
+```powershell
+node -e "require('./backend/aura-brain.js').selfTest().then(r => { console.log((r.lines||[]).join('\n')); process.exit(r.ok?0:1) })"
+```
+Expect 6/6 PASS: ingest → search → private scope → hall share → PIKADON block → quota 402.
+
+**Anti-scope fence (PIKADON)**: no Chromium from MCP or Telegram, no scraping behind logins, no one-global-vector-store, no `src/*.ts` LangChain spine — the box architecture above is the whole design.
+## I. SHADDAI MEDIA ENGINE � our own media download engine (vendored AGPL-3.0, rebranded)
+
+| Requirement | Status | How to verify | Repo/path |
+|---|---|---|---|
+| Engine source folded into the build, NOT a separate upstream service | **DONE** | Full code in-tree at `backend/media-engine/` (api + web + packages + docs, AGPL-3.0 LICENSE kept, attribution note below); upstream git history stripped | `backend/media-engine/` |
+| Rebranded as ours: `@shaddai/media-engine`, entry `src/engine.js`, banner "SHADDAI media engine", serverInfo key `engine`, UA `shaddai-media/�` | **DONE** | Boot banner + `GET /` returns `{engine:{version�}}` | `backend/media-engine/api/package.json`, `api/src/core/api.js`, `api/src/config.js` |
+| Runs on Node 24+ (isolated-vm prebuilt ABI addon � no local C++ toolchain needed) | **DONE** | Boot under node24; `GET /` lists 21 services (youtube, tiktok, twitter, instagram, vimeo, reddit, bluesky, soundcloud�) | `backend/media-engine/api` |
+| Hardened config: loopback-only bind, API key file, per-key UA + IP lock, JWT tunnel signing, rate limits | **DONE** | `cobalt`Config in `api/.env` + `api/keys.json` (gitignored); engine logs "api keys loaded successfully!" | `backend/media-engine/api/.env`, `keys.json` |
+| Railed gateway `/api/media` on the main server (status \| fetch \| dl) | **DONE** | POST `/api/media/fetch {url}` ? `{ok, status, filename, url:/api/media/dl?...}`; streaming `dl` returns `Content-Disposition: attachment` | `backend/media-routes.js`, mounted `backend/server-production.js` |
+| PIKADON guardrails: SSRF (public http(s) only, DNS-resolved non-private), tunnel-origin lock (dl only to engine�s own `/tunnel`), per-IP budget, size cap, audit JSONL | **DONE** | `http://127.0.0.1/�` fetch ? 403 `private host blocked`; `dl?url=https://evil�` ? 403 `tunnel url required` | `backend/media-routes.js`; trail `backend/data/media-audit.jsonl` |
+| MCP tools `shaddai_media_status` + `shaddai_media_fetch` | **DONE** | `callTool` returns engine health / capture + download link | `shaddai-mcp/mcp-unified.js` |
+| UI: `/media.html` popout page (capture UI, service chips, download, audit) wired into the dashboard Tools tab (? Media Engine button ? overlay) and Simple Mode TOOLS wheel (MEDIA item) | **DONE** | Open `/media.html`; dashboard `<div id="toolbrowserView">` Tools ? "? Media Engine"; Simple Mode ? TOOLS ? MEDIA | `public/media.html`, `public/index.html` (`#btnMedia`), `public/js/shd-modules.js` (WHEEL) |
+| Acceptance: fetch a live YouTube URL through the rail and stream the file | **DONE** | `POST /api/media/fetch {url:"youtube�"}` ? `ok` tunnel; `dl` streams `.mp4` (~740 KB downloaded in smoke test) via `Content-Disposition` | engine + rail e2e (see smoke notes) |
+
+**Run it** (engine = sidecar, already running during this session):
+
+```powershell
+# engine (Node 24 needed for isolated-vm; prebuilt abi137 addon ships in the package)
+# on this machine a portable node24 lives under: C:\Users\Brittany\AppData\Local\npm-cache\_npx\460b723c8ad28bd7\node_modules\node\bin\node.exe
+node src/engine            # cwd backend/media-engine/api   (or MEDIA_ENGINE_NODE + ensure() auto-spawn on :3000 boot)
+# main server
+node backend/server-production.js   # mounts /api/media; media-engine-runner.ensure() checks/spawns :9000
+```
+
+**Attribution**: the engine core is vendored from imputnet/cobalt v11.7.1 (AGPL-3.0, LICENSE kept at `backend/media-engine/LICENSE`). It is rebranded, config-hardened, and railed behind SHADDAI�s own `/api/media` gateway + MCP tools; the rail, runner, UI and docs are SHADDAI-original. Any reuse of `backend/media-engine/**` must keep the AGPL-3.0 license file and this attribution.
+
+### I.1 Combined CAPTURE rail - media + web scrape + clipper (`/api/capture`)
+
+| Requirement | Status | How to verify | Repo/path |
+|---|---|---|---|
+| Combined health `GET /api/capture/status` (engine + clipper + scraper in one call) | **DONE** | `GET /api/capture/status` -> `{media:{up,engine,services,audit}, clipper:{up,upstream}, scraper:{ready}}` | `backend/capture-routes.js`, mounted `backend/server-production.js` |
+| `POST /api/capture/run {mode:"scrape", url, max_chars}` - SSRF-guarded page-to-markdown | **DONE** | `example.com` -> `ok, title, chars, links, markdown`; `http://127.0.0.1/...` -> `only https URLs are allowed` | `backend/capture-routes.js` + `backend/lib/web-scrape.js` |
+| `POST /api/capture/run {mode:"media", url, downloadMode}` - delegates to `/api/media` | **DONE** | YouTube -> `{mode:"media", status:"tunnel", filename:"...mp4", url:"/api/media/dl?url=..."}` | `backend/capture-routes.js` |
+| `POST /api/capture/run {mode:"clip", url, clipper_path, payload}` - forwards ONLY to CLIPPER_ORIGIN, path safe-checked | **DONE** | `clipper_path:"/health"` -> upstream HTTP status returned verbatim | `backend/capture-routes.js`; origin = `process.env.CLIPPER_ORIGIN` (default `https://shaddai-clipper.onrender.com`) |
+| MCP tool `shaddai_capture` (mode media / scrape / clip) | **DONE** | `callTool {name:"shaddai_capture", args:{mode:"scrape", url}}` -> markdown + title + links | `shaddai-mcp/mcp-unified.js` |
+| UI `/media.html` rebuilt as 3-tab CAPTURE page (Download / Web Scrape / Clip) with combined health pills | **DONE** | Open `/media.html` in the build (dashboard popout + Simple Mode MEDIA item both point here) | `public/media.html` |
+
+> **Clipper note**: the default `CLIPPER_ORIGIN` (shaddai-clipper.onrender.com) is reachable but currently 404s every upstream route, so Clip mode reports that honestly (HTTP 404 from the upstream). Point `CLIPPER_ORIGIN` in `backend/.env` at a live clipper (one that serves `/clipper/*`) and Clip lights up with zero code changes.
