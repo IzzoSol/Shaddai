@@ -263,6 +263,11 @@ async function trackTick() {
         // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
         try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
       }
+      // Trail snapshotting — store FDV history for sparklines (Race to 1B tab)
+      if (!call.trail) call.trail = [];
+      call.trail.push({ t: _now, fdv: call.curFdv, mult: call.curMult });
+      // cap at 200 points (~17h at 5min intervals) to keep JSON size reasonable
+      if (call.trail.length > 200) call.trail = call.trail.slice(-200);
       // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
       // Never skip straight to 5x just because the token moved fast between ticks.
       if (hasRealLiq) {

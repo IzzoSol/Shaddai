@@ -102,6 +102,31 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .tokstrip .danger{color:var(--red);border-color:rgba(255,61,90,.45)}
 .tokstrip .safe{color:var(--emerald);border-color:rgba(0,229,160,.35)}
 
+/* ---------- sparkline ---------- */
+.spark{height:28px;width:100%;margin-top:4px;background:rgba(0,0,0,.2);border:1px solid var(--edge2);border-radius:6px;overflow:hidden}
+.spark canvas{width:100%;height:100%;display:block}
+
+/* ---------- race track ---------- */
+.race-lane{
+  background:var(--panel); border:1px solid var(--edge); border-radius:12px;
+  padding:12px; margin-bottom:10px; position:relative;
+}
+.race-lane .head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.race-lane .sy{font-family:var(--f-mono);font-size:16px;font-weight:700;letter-spacing:.04em}
+.race-lane .nm{font-size:11px;color:var(--soft);flex:1}
+.race-lane .mx{font-family:var(--f-mono);font-size:14px;font-weight:700;white-space:nowrap}
+.race-lane .track{
+  height:14px; background:rgba(0,0,0,.3); border-radius:7px; overflow:hidden; position:relative;
+  border:1px solid var(--edge2);
+}
+.race-lane .track .bar{
+  height:100%; border-radius:6px; transition:width .4s ease; min-width:2px;
+}
+.race-lane .track .markers{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none}
+.race-lane .track .markers span{position:absolute;top:-18px;font-size:7px;color:var(--faint);transform:translateX(-50%)}
+.race-lane .stats{display:flex;gap:12px;margin-top:8px;font-family:var(--f-mono);font-size:9px;color:var(--faint)}
+.race-lane .stats .saf{font-weight:700}
+
 /* ---------- dex rows ---------- */
 .dexrow{
   display:flex; align-items:center; gap:11px; width:100%;
@@ -181,14 +206,14 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 #sheet .s-mx{font-family:var(--f-mono);font-size:30px;font-weight:700;margin:10px 0 2px}
 #sheet .s-sub{font-family:var(--f-mono);font-size:10.5px;color:var(--faint);letter-spacing:.06em;line-height:1.7}
 #sheet .s-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.s-cell{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;font-family:var(--f-mono);font-size:10px}
-.s-cell dt{color:var(--faint);font-size:8.5px;letter-spacing:.1em;margin-bottom:4px;text-transform:uppercase}
-.s-cell dd{font-size:13px;font-weight:700}
-.s-toks{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.s-btn{width:100%;min-height:54px;border-radius:12px;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
-.s-btn.sb-gold{background:var(--gold);color:#140f02}
-.s-btn.sb-ghost{border:1px solid var(--edge2);color:var(--soft)}
-.s-btn:active{opacity:.85}
+#sheet .s-cell{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;font-family:var(--f-mono);font-size:10px}
+#sheet .s-cell dt{color:var(--faint);font-size:8.5px;letter-spacing:.1em;margin-bottom:4px;text-transform:uppercase}
+#sheet .s-cell dd{font-size:13px;font-weight:700}
+#sheet .s-toks{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+#sheet .s-btn{width:100%;min-height:54px;border-radius:12px;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
+#sheet .s-btn.sb-gold{background:var(--gold);color:#140f02}
+#sheet .s-btn.sb-ghost{border:1px solid var(--edge2);color:var(--soft)}
+#sheet .s-btn:active{opacity:.85}
 
 .empty{color:var(--faint);font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:40px 0}
 .err{font-family:var(--f-mono);font-size:11px;color:var(--red);letter-spacing:.06em;text-align:center;padding:30px 10px;line-height:1.7}
@@ -212,7 +237,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   </section>
 
   <section class="view" id="v-calls">
-    <div class="view-h"><span class="ti">Recent Calls</span><span class="count" id="calls-count"></span></div>
+    <div class="view-h"><span class="ti">Pro Calls</span><span class="count" id="calls-count"></span></div>
     <div class="chips" id="risk-chips">
       <button class="chip on" data-r="all">All</button>
       <button class="chip risk risk-lo" data-r="low">Low</button>
@@ -223,6 +248,15 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
       <button class="chip" data-s="hot">Hot</button>
     </div>
     <div id="calls-list"></div>
+  </section>
+
+  <section class="view" id="v-race">
+    <div class="view-h"><span class="ti">Race to 1B</span><span class="count" id="race-count"></span></div>
+    <div class="chips" style="margin-bottom:8px">
+      <button class="chip on" data-race="live">Live</button>
+      <button class="chip" data-race="done">Finished</button>
+    </div>
+    <div id="race-list"></div>
   </section>
 
   <section class="view" id="v-dex">
@@ -251,6 +285,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 <nav id="nav">
   <button class="nt on" data-v="heat"><i>◉</i><small>HEAT</small></button>
   <button class="nt" data-v="calls"><i>▤</i><small>CALLS</small></button>
+  <button class="nt" data-v="race"><i>▶</i><small>RACE</small></button>
   <button class="nt" data-v="dex"><i>◈</i><small>DEX</small></button>
   <button class="nt" data-v="wallet"><i>⛃</i><small>WALLET</small></button>
 </nav>
@@ -272,8 +307,48 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—'; };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'heat' };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'heat', raceFilter: 'live' };
 var coinOpen = null;
+
+/* ---------------- sparkline helper ---------------- */
+function drawSpark(canvas, points, color) {
+  if (!points || points.length < 2) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.offsetWidth;
+  var h = canvas.height = canvas.offsetHeight;
+  ctx.clearRect(0, 0, w, h);
+  // normalize values
+  var vals = points.map(function(p) { return p.fdv || p.mult || 0; });
+  var min = Math.min.apply(null, vals);
+  var max = Math.max.apply(null, vals);
+  var range = max - min || 1;
+  var stepX = w / (points.length - 1);
+  // gradient fill
+  var grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, color + '40');
+  grad.addColorStop(1, color + '00');
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  points.forEach(function(p, i) {
+    var x = i * stepX;
+    var y = h - ((p.fdv || p.mult || 0) - min) / range * h;
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  // line
+  ctx.beginPath();
+  points.forEach(function(p, i) {
+    var x = i * stepX;
+    var y = h - ((p.fdv || p.mult || 0) - min) / range * h;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
 
 /* ---------------- data ---------------- */
 function httpsHeaders(r){return r;}
@@ -316,10 +391,21 @@ function stamp() {
   el('updated').textContent = t;
 }
 
+/* ---------------- safety color ---------------- */
+function safetyColor(score) {
+  if (score >= 75) return 'var(--emerald)';
+  if (score >= 55) return 'var(--amber)';
+  return 'var(--red)';
+}
+function safetyLabel(score) {
+  if (score >= 75) return 'SAFE';
+  if (score >= 55) return 'CAUTION';
+  return 'RISK';
+}
+
 /* ---------------- heatmap ---------------- */
 function renderHeat() {
   var list = state.feed.slice(0, 60);
-  var gap = 2; // column basis so bubbles tile responsively
   var div = el('heat-bubbles');
   div.textContent = '';
   el('heat-count').textContent = list.length;
@@ -332,8 +418,9 @@ function renderHeat() {
     b.className = 'bub ' + (m >= 1 ? 'up' : (m > 0 ? 'dn' : 'flat'));
     b.style.minHeight = (64 + size) + 'px';
     b.style.fontSize = (size) + 'px';
-    b.innerHTML = '<span class="sy">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + Math.max(12, size - 6) + 'px">' +
-      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sc">S ' + (c.score || 0) + '</span>';
+    var safe = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : (m > 0 ? 'var(--red)' : 'var(--edge)'));
+    b.innerHTML = '<span class="sy">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + Math.max(12, size - 6) + 'px;color:' + safe + '">' +
+      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sc">S ' + (c.score || 0) + ' · SF ' + (c.safetyScore || '?') + '</span>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
@@ -353,15 +440,16 @@ function filtered() {
 }
 function tokStrip(c) {
   var out = [];
-  var add = function (t, cls, label) { out.push('<span class="' + cls + '">' + label + '</span>'); };
-  if (c.holders != null && c.holders > 0) add(c, 'safe', '👥 ' + c.holders);
-  if (c.insiders > 0) add(c, 'danger', '🔫 ' + c.insiders);
-  if (c.bundlers) add(c, 'warn', '📦 bundle');
-  if (c.snipers) add(c, 'warn', '🎯 snipers');
-  if (c.lpPct != null && c.lpPct < 50) add(c, 'warn', '🔓 LP ' + Math.round(c.lpPct) + '%');
-  if (c.rugScore != null) add(c, c.rugScore > 50 ? 'danger' : 'safe', '🛡 rug ' + c.rugScore);
-  if (c.top10Pct != null) add(c, 'safe', 'T10 ' + Math.round(c.top10Pct) + '%');
-  if (!out.length) add(c, 'safe', 'ⓘ clean');
+  var add = function (cls, label) { out.push('<span class="' + cls + '">' + label + '</span>'); };
+  if (c.holders != null && c.holders > 0) add('safe', '👥 ' + c.holders);
+  if (c.insiders > 0) add('danger', '🔫 ' + c.insiders);
+  if (c.bundlers) add('warn', '📦 bundle');
+  if (c.snipers) add('warn', '🎯 snipers');
+  if (c.lpPct != null && c.lpPct < 50) add('warn', '🔓 LP ' + Math.round(c.lpPct) + '%');
+  if (c.rugScore != null) add(c.rugScore > 50 ? 'danger' : 'safe', '🛡 ' + c.rugScore);
+  if (c.top10Pct != null) add('safe', 'T10 ' + Math.round(c.top10Pct) + '%');
+  if (c.safetyScore != null) add(safetyScore >= 75 ? 'safe' : safetyScore >= 55 ? 'warn' : 'danger', 'SF ' + c.safetyScore);
+  if (!out.length) add('safe', 'ⓘ clean');
   return '<div class="tokstrip">' + out.join('') + '</div>';
 }
 function riskCls(t) { return t === 'low' ? 'r1' : (t === 'high' ? 'r3' : 'r2'); }
@@ -370,23 +458,106 @@ function renderCalls() {
   el('calls-count').textContent = list.length;
   var div = el('calls-list');
   div.textContent = '';
-  if (!list.length) { div.innerHTML = '<div class="empty">NO CALLS IN THIS BUCKET</div>'; return; }
+  if (!list.length) { div.innerHTML = '<div class="empty">NO PRO CALLS</div>'; return; }
   var frag = document.createDocumentFragment();
   list.forEach(function (c) {
     var m = Number(c.curMult) || 0;
     var r = document.createElement('button');
     r.className = 'row';
+    var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : (m > 0 ? 'var(--red)' : 'var(--edge)'));
     r.innerHTML =
       '<span class="l1"><span class="tla">' + esc(c.symbol || '?') + '</span>' +
       '<span class="nm">' + esc(c.name || c.mint.slice(0, 6)) + '</span>' +
-      '<span class="mx ' + (m >= 1 ? 'mx-pos' : 'mx-neg') + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span></span>' +
+      '<span class="mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span></span>' +
       '<span class="l2"><span class="risk-chip ' + riskCls(c.riskTier || 'medium') + '">' + esc(c.riskTier || 'med') + '</span>' +
       '<span class="scor">S ' + (c.score || 0) + '</span>' +
+      '<span class="scor" style="color:' + safeColor + '">SF ' + (c.safetyScore || '?') + '</span>' +
       '<span>$ ' + (Number(c.curFdv || c.entryFdv) ? (Number(c.curFdv || c.entryFdv) >= 1e6 ? (Number(c.curFdv || c.entryFdv) / 1e6).toFixed(1) + 'M' : Math.round(Number(c.curFdv || c.entryFdv)).toLocaleString()) : '—') + '</span>' +
       '<span class="ags">' + ago(c.ts) + '</span></span>' +
+      (c.trail ? '<div class="spark"><canvas></canvas></div>' : '') +
       tokStrip(c);
+    // draw sparkline after DOM insertion
+    if (c.trail) {
+      setTimeout(function() {
+        var canvas = r.querySelector('.spark canvas');
+        if (canvas) drawSpark(canvas, c.trail, safeColor);
+      }, 0);
+    }
     r.onclick = function () { openCoin(c); };
     frag.appendChild(r);
+  });
+  div.appendChild(frag);
+}
+
+/* ---------------- race to 1B ---------------- */
+function raceList() {
+  var list = state.feed.slice();
+  var raceMode = state.raceFilter;
+  var BILLION = 1e9;
+  list = list.filter(function(c) {
+    var curFdv = Number(c.curFdv || c.entryFdv) || 0;
+    var peakFdv = curFdv * (Number(c.peakMult) || 1);
+    if (raceMode === 'done') return peakFdv >= BILLION || (Number(c.peakMult) || 0) >= 1000;
+    return curFdv > 0 && curFdv < BILLION; // live runners
+  });
+  // sort by progress toward 1B (closer first), then by safety
+  list.sort(function(a, b) {
+    var pa = Math.min((Number(a.curFdv || a.entryFdv) || 0) / BILLION, 1);
+    var pb = Math.min((Number(b.curFdv || b.entryFdv) || 0) / BILLION, 1);
+    if (Math.abs(pb - pa) > 0.01) return pb - pa;
+    return (b.safetyScore || 0) - (a.safetyScore || 0);
+  });
+  return list;
+}
+function renderRace() {
+  var list = raceList();
+  el('race-count').textContent = list.length;
+  var div = el('race-list');
+  div.textContent = '';
+  if (!list.length) { div.innerHTML = '<div class="empty">NO ' + (state.raceFilter === 'done' ? 'FINISHED' : 'LIVE') + ' RACERS</div>'; return; }
+  var frag = document.createDocumentFragment();
+  var BILLION = 1e9;
+  list.forEach(function (c) {
+    var curFdv = Number(c.curFdv || c.entryFdv) || 0;
+    var peakFdv = curFdv * (Number(c.peakMult) || 1);
+    var m = Number(c.curMult) || 0;
+    var pctTo1B = Math.min((curFdv / BILLION) * 100, 100);
+    var peakPct = Math.min((peakFdv / BILLION) * 100, 100);
+    var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : 'var(--red)');
+    var lane = document.createElement('div');
+    lane.className = 'race-lane';
+    lane.innerHTML =
+      '<div class="head">' +
+        '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
+        '<span class="nm">' + esc(c.name || '') + '</span>' +
+        '<span class="mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span>' +
+      '</div>' +
+      '<div class="track">' +
+        '<div class="markers">' +
+          '<span style="left:0%">0</span>' +
+          '<span style="left:10%">$100M</span>' +
+          '<span style="left:50%">$500M</span>' +
+          '<span style="left:100%">$1B</span>' +
+        '</div>' +
+        '<div class="bar" style="width:' + pctTo1B.toFixed(2) + '%;background:' + safeColor + '"></div>' +
+        (peakPct > pctTo1B ? '<div class="bar" style="width:' + peakPct.toFixed(2) + '%;background:' + safeColor + ';opacity:.25;position:absolute;top:0;left:0;height:100%;z-index:-1"></div>' : '') +
+      '</div>' +
+      '<div class="stats">' +
+        '<span>Now: ' + money(curFdv) + '</span>' +
+        '<span>Peak: ' + money(peakFdv) + '</span>' +
+        '<span class="saf" style="color:' + safeColor + '">Safety: ' + (c.safetyScore || '?') + ' ' + (c.safetyScore != null ? safetyLabel(c.safetyScore) : '') + '</span>' +
+        '<span>Age: ' + ago(c.ts) + '</span>' +
+      '</div>' +
+      (c.trail ? '<div class="spark" style="margin-top:8px"><canvas></canvas></div>' : '');
+    // draw sparkline after DOM insertion
+    if (c.trail) {
+      setTimeout(function() {
+        var canvas = lane.querySelector('.spark canvas');
+        if (canvas) drawSpark(canvas, c.trail, safeColor);
+      }, 0);
+    }
+    lane.onclick = function () { openCoin(c); };
+    frag.appendChild(lane);
   });
   div.appendChild(frag);
 }
@@ -481,21 +652,26 @@ function renderVirtuals(st, wl) {
 function openCoin(c) {
   coinOpen = c;
   var m = Number(c.curMult) || 0;
+  var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : 'var(--red)');
   var s = el('sheet-body');
   s.innerHTML =
     '<div class="s-symbol">' + esc(c.symbol || '?') + '</div>' +
     '<div class="s-name">' + esc(c.name || '') + ' · called ' + ago(c.ts) + ' · source: ' + esc(c.source || '') + '</div>' +
-    '<div class="s-mx ' + (m >= 1 ? 'mx-pos' : 'mx-neg') + '">' + (m ? m.toFixed(2) + '×' : 'NEW CALL') + '</div>' +
+    '<div class="s-mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW CALL') + '</div>' +
     '<div class="s-sub">entry $' + dec(c.entryFdv) + ' → now $' + money(c.curFdv || c.entryFdv) + ' · peak ' + (Number(c.peakMult) ? Number(c.peakMult).toFixed(2) + '×' : '—') + '</div>' +
     '<div class="s-grid">' +
       '<div class="s-cell"><dt>Score</dt><dd>' + (c.score || 0) + '</dd></div>' +
       '<div class="s-cell"><dt>Risk</dt><dd>' + esc(c.riskTier || 'medium') + '</dd></div>' +
+      '<div class="s-cell"><dt>Safety</dt><dd style="color:' + safeColor + '">' + (c.safetyScore || '—') + ' ' + (c.safetyScore != null ? safetyLabel(c.safetyScore) : '') + '</dd></div>' +
       '<div class="s-cell"><dt>Holders</dt><dd>' + (c.holders || '—') + '</dd></div>' +
       '<div class="s-cell"><dt>Top 10</dt><dd>' + (c.top10Pct != null ? Math.round(c.top10Pct) + '%' : '—') + '</dd></div>' +
       '<div class="s-cell"><dt>LP</dt><dd>' + (c.lpPct != null ? Math.round(c.lpPct) + '%' : '—') + '</dd></div>' +
       '<div class="s-cell"><dt>Rug score</dt><dd>' + (c.rugScore != null ? c.rugScore : '—') + '</dd></div>' +
     '</div>' +
     tokStrip(c) +
+    '<div class="s-toks" style="margin-top:10px">' +
+      '<span class="tok-safe">Trail: ' + (c.trail ? c.trail.length + ' pts' : 'none') + '</span>' +
+    '</div>' +
     '<button class="s-btn sb-gold" onclick="location.href=\'https://dexscreener.com/search?q=' + esc(c.mint) + '\'">View on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(c.mint) + '\', this)">Copy mint</button>' +
     '<button class="s-btn sb-ghost" onclick="location.href=\'/signals.html\'">Hire ZEROX ↗</button>';
@@ -527,7 +703,7 @@ function closeSheet() { el('scrim').classList.remove('on'); el('sheet').classLis
 el('scrim').addEventListener('click', closeSheet);
 
 /* ---------------- tabs + swipe ---------------- */
-var tabs = ['heat', 'calls', 'dex', 'wallet'];
+var tabs = ['heat', 'calls', 'race', 'dex', 'wallet'];
 function setTab(t) {
   state.tab = t;
   try { localStorage.setItem('ss_tab', t); } catch (e) {}
@@ -535,6 +711,7 @@ function setTab(t) {
     el('v-' + v).classList.toggle('on', v === t);
     document.querySelectorAll('#nav .nt').forEach(function (b) { b.classList.toggle('on', b.dataset.v === t); });
   });
+  if (t === 'race') renderRace();
 }
 document.querySelectorAll('#nav .nt').forEach(function (b) {
   b.addEventListener('click', function () { setTab(b.dataset.v); });
@@ -556,6 +733,16 @@ document.querySelectorAll('#nav .nt').forEach(function (b) {
   }, { passive: true });
 })();
 
+/* ---------------- race filter chips ---------------- */
+document.querySelectorAll('.chip[data-race]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.chip[data-race]').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    state.raceFilter = b.dataset.race;
+    renderRace();
+  });
+});
+
 /* ---------------- filters + init ---------------- */
 document.querySelectorAll('.chip[data-r]').forEach(function (b) {
   b.addEventListener('click', function () {
@@ -574,7 +761,7 @@ document.querySelectorAll('.chip[data-s]').forEach(function (b) {
   });
 });
 el('btn-refresh').addEventListener('click', refresh);
-function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet(); }
+function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet(); if (state.tab === 'race') renderRace(); }
 
 try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}
 refresh();

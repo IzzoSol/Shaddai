@@ -131,6 +131,75 @@ function scoreCall(call) {
   return Math.round(score);
 }
 
+// Composite safety score (0-100, higher = safer) — ZEROX heuristics:
+// buys vs sells pressure, holder quality, supply control, LP lock, socials
+function safetyScore(call) {
+  let s = 50; // base neutral
+  // Holder quality
+  const holders = Number(call.holders) || 0;
+  if (holders >= 500) s += 15;
+  else if (holders >= 200) s += 10;
+  else if (holders >= 50) s += 5;
+  else if (holders > 0) s -= 5;
+  // Top 10 concentration (lower = safer)
+  const top10 = Number(call.top10Pct) || 0;
+  if (top10 <= 30) s += 10;
+  else if (top10 <= 50) s += 5;
+  else if (top10 >= 70) s -= 15;
+  // Insiders / bundlers / snipers (red flags)
+  if (call.insiders > 0) s -= Math.min(call.insiders * 3, 15);
+  if (call.bundlers) s -= 10;
+  if (call.snipers) s -= 10;
+  // LP lock
+  const lp = Number(call.lpPct) || 0;
+  if (lp >= 99) s += 10;
+  else if (lp >= 80) s += 5;
+  else if (lp > 0) s -= 5;
+  else s -= 10;
+  // RugCheck score (internal safety score, higher = safer)
+  const rug = Number(call.rugScore) || 0;
+  if (rug >= 80) s += 10;
+  else if (rug >= 60) s += 5;
+  else if (rug > 0 && rug < 40) s -= 10;
+  // Liquidity depth
+  const liq = Number(call.liq) || Number(call.liquidity) || 0;
+  if (liq >= 100000) s += 5;
+  else if (liq >= 25000) s += 2;
+  else if (liq > 0 && liq < 10000) s -= 5;
+  // Source credibility
+  const src = call.source || '';
+  if (src.includes('trending')) s += 3;
+  else if (src.includes('bond') || src.includes('seed')) s -= 2;
+  // Clamp 0-100
+  return Math.max(0, Math.min(100, Math.round(s)));
+}
+
+// Filter dead/rugged calls — keep only pro signals with life
+function filterDead(calls) {
+  const now = Date.now();
+  return calls.filter(c => {
+    // Skip seed/test calls
+    if (c.source === 'seed') return false;
+    // Must have a mint and entry
+    if (!c.mint || !c.entryFdv) return false;
+    const curMult = Number(c.curMult) || 1;
+    const curFdv = Number(c.curFdv) || c.entryFdv;
+    const ageMs = now - (c.ts || now);
+    const hourMs = 3600000;
+    // Dead: FDV ≤ $4k for >1h (pruneRugs criteria)
+    if (curFdv <= 4000 && ageMs > hourMs) return false;
+    // Dead: no live price (pair gone) and old >6h with curMult < 0.8 (pruneDead criteria)
+    const hasLivePrice = curFdv > 0 && curFdv !== c.entryFdv;
+    if (!hasLivePrice && ageMs > 6 * hourMs && curMult < 0.8) return false;
+    // Dead: closed flag
+    if (c.closed) return false;
+    // Keep pro-origin signals (trending, bonded, helios, gecko)
+    const proSources = ['trending', 'bonded', 'helios', 'gecko', 'prebond'];
+    const isPro = proSources.some(s => src.includes(s));
+    return true; // for now keep all non-seed; can tighten to isPro
+  });
+}
+
 // ─── API ENDPOINTS ───────────────────────────────────────────
 
 // GET /api/pro-signals/feed — filtered signals
@@ -148,6 +217,9 @@ router.get('/feed', (req, res) => {
     // Load and filter calls
     let calls = loadCalls();
 
+    // Filter dead/rugged calls first
+    calls = filterDead(calls);
+
     // Apply strictness filter
     calls = filterByStrictness(calls, prefs.strictness);
 
@@ -160,6 +232,7 @@ router.get('/feed', (req, res) => {
     calls = calls.map(c => ({
       ...c,
       score: scoreCall(c),
+      safetyScore: safetyScore(c),
       riskTier: getRiskTier(c),
       isQuickXs: isQuickXs(c),
     })).sort((a, b) => b.score - a.score);
