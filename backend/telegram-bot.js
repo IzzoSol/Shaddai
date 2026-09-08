@@ -21,12 +21,23 @@ const _fsImg = require('fs');
 const _osImg = require('os');
 const _pathImg = require('path');
 const _card = require('./lib/call-card');
+const _brandBg = require('./lib/brand-bg');
 
 const _cfg = () => ({
   token: process.env.TELEGRAM_BOT_TOKEN || '',
   channel: process.env.TELEGRAM_CHANNEL || '',
   port: process.env.PORT || 3000,
 });
+
+// Friendly channel name for display — numeric channel IDs (supergroups/channels)
+// show as the human-readable @username instead of "-100xxxxxxxxxx".
+const _chanLabel = (c) => {
+  const ch = String(c || '').trim();
+  if (!ch) return '';
+  if (ch === '-1004433718662') return '@ShaddaiLabs';
+  if (/^-100\d+$/.test(ch)) return process.env.TELEGRAM_CHANNEL_LABEL || '@ShaddaiLabs';
+  return ch;
+};
 
 const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function _fmtUsd(n) { const v = Number(n) || 0; if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B'; if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M'; if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K'; return '$' + v.toFixed(2); }
@@ -53,7 +64,7 @@ function _signalsCard(cfg) {
     '📡 <b>SHADDAI Signals Hub</b>\n' +
     '━━━━━━━━━━━━━━━\n\n' +
     'Live <b>rug-filtered</b> DEX signals with real <b>PNL tracking</b> (Xs, hit-rate, milestone wins).\n\n' +
-    (cfg.channel ? `📢 Free signals channel: <b>${_esc(cfg.channel)}</b>\n\n` : '') +
+    (cfg.channel ? `📢 Free signals channel: <b>${_esc(_chanLabel(cfg.channel))}</b>\n\n` : '') +
     'Tap a button below for the slice you want 👇\n' +
     '<i>Live · not financial advice · always DYOR</i>'
   );
@@ -124,7 +135,7 @@ function _start(cfg) {
     '⬡ <b>The Axiom:</b> ' + _esc(axiom) + '\n\n' +
     '🤖 Brain-answers are <b>free daily</b>; tool runs, art and deep scans unlock via <code>/pay</code> or <a href="' + (process.env.VIRTUALS_AGENT_URL || 'https://app.virtuals.io/acp/agents') + '">Virtuals</a>.\n\n' +
     '📡 Live <b>rug-filtered crypto signals</b> with real <b>PNL tracking</b>.\n\n' +
-    `🐢 Free procedural music: ${_esc(cfg.channel || '@ShaddaiLabs')}\n` +
+    `🐢 Free procedural music: ${_esc(_chanLabel(cfg.channel) || '@ShaddaiLabs')}\n` +
     `🌿 Lounge: ${_esc(lounge)}\n` +
     `⭐ GitHub: ${_esc(gh)}\n` +
     `𝕏 ${_esc(x)}\n` +
@@ -218,12 +229,31 @@ async function _handleCallback(cfg, cq) {
       const call = _pnl._findCall ? _pnl._findCall(key) : null;
       const btns = _core.buildButtons(key, (call && call.chain) || 'solana', null);
       await answer('📸 Generating PNL card…');
-      // AI-generated PNL image first (HF keys + Pollinations fallback)
-      let img = null;
-      try { if (_pnl.pnlImages) img = await _pnl.pnlImages.generatePnlImage(call || { symbol: key, peakMult: 1, curMult: 1 }); } catch (e) {}
-      // Fall back to milestone image, then random static pnl image
+      // PNL template card first — branded token info (called when, Xs) over the
+      // rotating HF background, crisp text. Only falls back to the AI image.
+      let img = null, genTmp = '';
+      if (call) {
+        try {
+          let bg = _brandBg.current();
+          if (!bg) { const g = await _brandBg.generate(); bg = (g && g.buffer) || null; }
+          const buf = await _card.renderPnlCard(call, { background: bg || undefined });
+          if (buf && buf.length) {
+            genTmp = _pathImg.join(_osImg.tmpdir(), 'shd-pnl-' + Date.now() + '.png');
+            _fsImg.writeFileSync(genTmp, buf);
+            img = genTmp;
+          }
+        } catch (e) { img = null; }
+      }
+      // Fall back to AI PNL tier image, then milestone image / random static pnl image
+      if (!img) {
+        try { if (_pnl.pnlImages) img = await _pnl.pnlImages.generatePnlImage(call || { symbol: key, peakMult: 1, curMult: 1 }); } catch (e) {}
+      }
       if (!img) img = call ? (_pnl.milestoneImage(call.curMult || call.peakMult) || _pnl.pnlImage()) : _pnl.pnlImage();
-      if (img) { const ok = await _core.sendPhoto(chatId, img, cap, btns); if (ok) return; }
+      if (img) {
+        const ok = await _core.sendPhoto(chatId, img, cap, btns);
+        if (genTmp) { try { _fsImg.unlinkSync(genTmp); } catch (e) {} }
+        if (ok) return;
+      }
       return _send(t, chatId, cap);
     }
     if (data === 'hall:quit') { await answer('👋'); return; }
@@ -967,13 +997,28 @@ async function _handle(cfg, update) {
     case 'active': case 'live': case 'open': case 'now':
       return _send(t, chatId, _pnl.activeCalls ? _pnl.activeCalls() : _pnl.lastCalls(25));
 
-    // /pnl <ticker> — PNL card for one token (milestone image if at that level, text always)
+    // /pnl <ticker> — PNL card for one token (template card first, AI image, milestone, text always)
     case 'pnl': {
       if (!arg) return _send(t, chatId, 'Usage: /pnl <code>&lt;ticker&gt;</code>  e.g. <code>/pnl SOLANDIER</code>');
       const cap = _pnl.pnlForToken(arg);
       if (!cap) return _send(t, chatId, 'No tracked call found for <b>' + _esc(arg) + '</b>. Try /lb for the leaderboard.');
-      // try milestone image first, then saved image, then random pnl image
       const call = _pnl._findCall ? _pnl._findCall(arg) : null;
+      // PNL template card over the HF background (crisp text: called when, Xs)
+      if (call) {
+        try {
+          let bg = _brandBg.current();
+          if (!bg) { const g = await _brandBg.generate(); bg = (g && g.buffer) || null; }
+          const buf = await _card.renderPnlCard(call, { background: bg || undefined });
+          if (buf && buf.length) {
+            const pnlTmp = _pathImg.join(_osImg.tmpdir(), 'shd-pnl-' + Date.now() + '.png');
+            _fsImg.writeFileSync(pnlTmp, buf);
+            const ok = await _core.sendPhoto(chatId, pnlTmp, cap);
+            try { _fsImg.unlinkSync(pnlTmp); } catch (e) {}
+            if (ok) return;
+          }
+        } catch (e) {}
+      }
+      // try milestone image first, then saved image, then random pnl image
       const msImg = call ? _pnl.milestoneImage(call.curMult || call.peakMult) : null;
       if (msImg) { const ok = await _core.sendPhoto(chatId, msImg, cap); if (ok) return; }
       const saved = _pnl.savedPnlImage(arg);

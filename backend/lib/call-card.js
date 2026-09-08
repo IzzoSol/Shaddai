@@ -341,4 +341,123 @@ async function renderSignalCard(call, opts = {}) {
   return sharp(Buffer.from(svgSignal(call || {}, theme, false))).png().toBuffer();
 }
 
-module.exports = { render, renderToFile, svgOf, themeFor, THEMES, usd, xs, pct, _ago, renderSignalCard, svgSignal };
+// ── PNL template card ────────────────────────────────────────────────────────
+// "PNL IMAGES" the way they should work: a branded template that says when the
+// call happened, how many Xs it went, and the token info — NOT a random art
+// picture. Crisp sharp-rendered text over the rotating HF background.
+function _when(ts) {
+  const d = new Date(Number(ts) || NaN);
+  if (isNaN(d.getTime())) return 'N/A';
+  const s = d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(', ', ' ');
+  return s.replace(/:00$/, '');
+}
+
+function svgPnl(call, theme, scrims) {
+  const t = theme || themeFor(Math.max(1, Math.round(Number((call && call.peakMult) || 1))));
+  const sym = String((call && (call.symbol || call.name)) || 'TOKEN').toUpperCase();
+  const name = call && call.name && call.name !== call.symbol ? esc(String(call.name)).slice(0, 34) : '';
+  const entryFdv = Number((call && (call.entryFdv || call.entryMcap)) || 0);
+  const curFdv = Number((call && call.curFdv) || 0) || entryFdv;
+  const currMult = Number((call && call.curMult) || 1);
+  const peakMult = Math.max(currMult, Number((call && call.peakMult) || 1));
+  const entryPrice = Number((call && call.entryPrice) || 0);
+  const athFdv = entryFdv * peakMult;
+  const chg = (curFdv > 0 && entryFdv > 0) ? ((curFdv - entryFdv) / entryFdv * 100) : null;
+  const perfColor = (currMult >= 10) ? '#00ff88' : (currMult >= 5) ? '#7cf7c4' : (currMult >= 2) ? '#f7c95c' : (currMult >= 1) ? '#ffffff' : '#ff5c7a';
+  const holders = Number((call && call.holders) || 0);
+  const top10 = Number((call && call.top10Pct));
+  const lp = Number((call && call.lpPct));
+  const rug = Number((call && call.rugScore));
+  const insiders = Number((call && call.insiders) || 0);
+  const bundlers = !!(call && call.bundlers);
+  const snipers = !!(call && call.snipers);
+  const milestones = Array.isArray(call && call.milestones) ? call.milestones : [];
+  const chain = String((call && call.chain) || 'SOLANA').toUpperCase();
+  const venue = (call && call.dexId) ? ' · ' + esc(String(call.dexId).replace(/-/g, ' ').toUpperCase()) : '';
+  const img = (call && call.imageUrl) ? `<image href="${esc(call.imageUrl)}" x="${W-210}" y="212" width="150" height="150" preserveAspectRatio="xMidYMid slice" clip-path="url(#tickclip)"/>` : '';
+
+  const L = 60, R = W/2 + 20;
+  const cells = [];
+  let y = 576;
+  cells.push(_c(L, y, 'CALLED', _when(call && call.ts), '#ffffff'));
+  cells.push(_c(R, y, 'CALLED AGO', _ago(call && call.ts), '#7cf7c4')); y += 96;
+  cells.push(_c(L, y, 'ENTRY MC', usd(entryFdv), '#f7c95c'));
+  cells.push(_c(R, y, 'ENTRY PRICE', _price(entryPrice), '#ffffff')); y += 96;
+  cells.push(_c(L, y, 'CURRENT MC', usd(curFdv), '#ffffff'));
+  cells.push(_c(R, y, 'NOW', xs(currMult), perfColor)); y += 96;
+  cells.push(_c(L, y, 'PEAK', xs(peakMult), t.accent));
+  cells.push(_c(R, y, 'ATH MC', usd(athFdv), '#ffffff')); y += 96;
+  cells.push(_c(L, y, 'HOLDERS', holders ? holders.toLocaleString() : 'N/A', '#ffffff'));
+  cells.push(_c(R, y, 'TOP10', isFinite(top10) ? top10.toFixed(1)+'%' : 'N/A', (top10 > 50 ? '#ff5c7a' : (top10 > 30 ? '#f7c95c' : '#7cf7c4')))); y += 96;
+  cells.push(_c(L, y, 'LP LOCK', isFinite(lp) ? (lp >= 99 ? '100%' : lp.toFixed(0)+'%') : 'N/A', (lp >= 80 ? '#00ff88' : (lp > 0 ? '#f7c95c' : '#ff5c7a'))));
+  cells.push(_c(R, y, 'RUG SCORE', isFinite(rug) ? rug.toFixed(0)+'/100' : 'N/A', (rug >= 80 ? '#00ff88' : rug >= 50 ? '#f7c95c' : '#ff5c7a')));
+
+  // ownership/attack-line strip + milestones hit
+  const strip = _secLine(L, 1136, [
+    ['INSIDERS ' + (insiders || '0'), insiders > 0 ? '#f7c95c' : '#7cf7c4'],
+    ['BUNDLERS ' + (bundlers ? 'YES' : 'CLEAN'), bundlers ? '#ff5c7a' : '#00ff88'],
+    ['SNIPERS ' + (snipers ? 'YES' : 'CLEAN'), snipers ? '#ff5c7a' : '#00ff88'],
+    ['RANK ' + (Number((call && call.rank) || 0) || '—'), '#9aa6c4'],
+  ]);
+  const msTxt = milestones.length ? milestones.map(m => m + 'x').join('  →  ') : '';
+
+  const scrimDefs = scrims ? `<linearGradient id="scrT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070e" stop-opacity=".96"/><stop offset="1" stop-color="#05070e" stop-opacity="0"/></linearGradient>
+    <linearGradient id="scrB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070e" stop-opacity="0"/><stop offset="1" stop-color="#05070e" stop-opacity=".96"/></linearGradient>` : '';
+  const scrimsBody = scrims ? `<rect x="0" y="0" width="${W}" height="560" fill="url(#scrT)"/>
+  <rect x="0" y="680" width="${W}" height="${H-680}" fill="url(#scrB)"/>` : '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.top}"/><stop offset="0.5" stop-color="${t.mid}"/><stop offset="1" stop-color="${t.bot}"/></linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${t.accent}"/><stop offset="1" stop-color="${t.accent2}"/></linearGradient>
+    <clipPath id="tickclip"><circle cx="${W-135}" cy="287" r="75"/></clipPath>
+    ${scrimDefs}
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  <rect x="0" y="0" width="${W}" height="10" fill="url(#brand)"/>
+  <rect x="40" y="40" width="${W-80}" height="${H-80}" fill="none" stroke="#1c2340" stroke-width="2" rx="18"/>
+  ${scrimsBody}
+
+  <rect x="0" y="0" width="${W}" height="190" fill="rgba(5,8,18,.72)"/>
+  <line x1="0" y1="190" x2="${W}" y2="190" stroke="${t.accent}" stroke-width="1.5" opacity=".45"/>
+
+  <text x="60" y="112" font-family="${SANS}" font-size="40" font-weight="800" fill="url(#brand)" letter-spacing="10">SHADDAI LABS</text>
+  <text x="60" y="158" font-family="${MONO}" font-size="17" fill="#7d86a0" letter-spacing="6">PNL · ${chain}${venue}</text>
+
+  <text x="60" y="318" font-family="${SANS}" font-size="96" font-weight="800" fill="#ffffff">$${esc(sym)}</text>
+  ${name ? `<text x="60" y="372" font-family="${SANS}" font-size="28" fill="#8a93a8">${name}</text>` : ''}
+  ${img}
+
+  <rect x="60" y="428" width="${W-120}" height="96" rx="16" fill="rgba(5,8,18,.6)" stroke="${t.accent}" stroke-width="1.5" stroke-opacity=".5"/>
+  <text x="88" y="472" font-family="${MONO}" font-size="20" fill="#6f86a0" letter-spacing="4">${currMult >= 1 ? 'NOW' : 'DOWN'}</text>
+  <text x="88" y="506" font-family="${SANS}" font-size="54" font-weight="900" fill="${perfColor}">${xs(currMult)}${chg != null ? '   ' + (chg >= 0 ? '+' : '') + chg.toFixed(0) + '%' : ''}</text>
+  <text x="${W-88}" y="472" text-anchor="end" font-family="${MONO}" font-size="20" fill="#6f86a0" letter-spacing="4">PEAK</text>
+  <text x="${W-88}" y="506" text-anchor="end" font-family="${SANS}" font-size="54" font-weight="900" fill="${t.accent}">${xs(peakMult)}</text>
+
+  ${cells.join('\n  ')}
+  ${strip}
+  ${msTxt ? `<text x="60" y="1174" font-family="${MONO}" font-size="22" font-weight="700" fill="#f7c95c">MILESTONES HIT · ${esc(msTxt)}</text>` : ''}
+
+  <line x1="60" y1="1215" x2="${W-60}" y2="1215" stroke="#1c2340" stroke-width="2"/>
+  <text x="60" y="1257" font-family="${MONO}" font-size="21" fill="#8a93a8" letter-spacing="2">@ShaddaiLabs</text>
+  <text x="${W-60}" y="1257" font-family="${MONO}" font-size="21" fill="#8a93a8" text-anchor="end">@shaddaiai</text>
+  <text x="60" y="1290" font-family="${MONO}" font-size="15" fill="#5c6680">Built by IzzoSol</text>
+  <text x="${W-60}" y="1290" font-family="${MONO}" font-size="15" fill="#5c6680" text-anchor="end">${msTxt ? 'pro signals · live feed' : 'DM for pro signals'}</text>
+</svg>`;
+}
+
+// Render the PNL template card. opts.background = HF/FLUX buffer (brand-bg).
+async function renderPnlCard(call, opts = {}) {
+  const theme = themeFor(Math.max(1, Math.round(Number((call && (call.peakMult || call.curMult)) || 1))));
+  if (opts.background && opts.background.length) {
+    try {
+      const overlay = await sharp({ create: { width: W, height: H, channels: 4, background: { r: 6, g: 8, b: 16, alpha: 0.60 } } }).png().toBuffer();
+      const base = await sharp(opts.background).resize(W, H, { fit: 'cover' }).composite([{ input: overlay }]).png().toBuffer();
+      const textLayer = Buffer.from(svgPnl(call || {}, theme, true).replace(/<rect width="1080" height="1350" fill="url\(#bg\)"\/>/, ''));
+      return sharp(base).composite([{ input: textLayer }]).png().toBuffer();
+    } catch (e) { /* fall through to basic */ }
+  }
+  return sharp(Buffer.from(svgPnl(call || {}, theme, false))).png().toBuffer();
+}
+
+module.exports = { render, renderToFile, svgOf, themeFor, THEMES, usd, xs, pct, _ago, renderSignalCard, svgSignal, renderPnlCard, svgPnl };
