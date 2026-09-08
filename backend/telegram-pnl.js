@@ -140,6 +140,11 @@ function _calcViabilityScore(c) {
 }
 
 // Log a fresh call (dedupe: one active entry per mint).
+// HARD FLOOR: no call below $10K liquidity OR below $5K FDV is ever tracked —
+// regardless of which poller posted it. This is the single choke point that
+// kills the "2K calls" (pre-bond liq=0 records, boosted thin-liq records, etc.).
+const HARD_MIN_LIQ = 10000;
+const HARD_MIN_FDV = 5000;
 function recordCall(c) {
   try {
     _now = Date.now();
@@ -147,6 +152,9 @@ function recordCall(c) {
     const entry = Number(c && (c.entryFdv || c.entryMcap)) || 0;
     if (!mint || entry <= 0) return;                       // need a mint + a starting mcap to compute Xs
     if (_state.calls.some(x => x.mint === mint && !x.closed)) return;   // already tracking
+    const _liq = Number(c && c.liq) || 0;
+    if (_liq < HARD_MIN_LIQ) return;                       // hard floor — sub-$10K liq calls never tracked
+    if (entry < HARD_MIN_FDV) return;                      // hard floor — sub-$5K FDV calls never tracked
 
     // Calculate risk and viability scores
     const riskScore = _calcRiskScore(c);
@@ -278,6 +286,9 @@ async function trackTick() {
   if (changed) _write(_state);
   // Rug prune: calls whose LIVE fdv ≤ $4k for >1h disappear (only when we have a live price)
   try { pruneRugs(4000, 1, prices); } catch (e) {}
+  // Dead-call prune: tokens with NO live price at all (pair gone / zero volume) that are
+  // old enough and never ran are dropped — kills the wall of red 0x calls on the leaderboard.
+  try { pruneDead(6 * 3600 * 1000, 0.8, prices); } catch (e) {}
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
   try { if (core.getConfig().autoPrune !== false) pruneLosers(1.5, 6); } catch (e) {}
 }
@@ -550,6 +561,31 @@ function pruneLosers(minPeak, minAgeHours) {
   return removed;
 }
 
+// Dead-call prune — tokens we could not re-price at all (no live pair → no volume/delisted)
+// that are old enough and never ran are removed from the public feed. This is what keeps the
+// leaderboard from turning into a wall of red 0x ghosts. Seeds + any winner are always kept.
+function pruneDead(minAgeMs, minPeak, prices) {
+  _now = Date.now();
+  const ageMs = Number(minAgeMs) || 6 * 3600 * 1000;
+  const mpMin = Number(minPeak) || 0.8;
+  const before = _state.calls.length;
+  _state.calls = _state.calls.filter(c => {
+    if (c.source === 'seed') return true;                                   // seeds always kept
+    if ((c.peakMult || 0) >= mpMin) return true;                            // ran at least ~0.8x → has data value
+    if ((_now - c.ts) < ageMs) return true;                                 // too young — give it time
+    const live = (prices && prices[c.mint] != null) ? prices[c.mint] : null;
+    if (live != null) return true;                                          // still priced → not dead, leave to rug-prune
+    const lastKnown = (typeof c.curFdv === 'number' && c.curFdv > 0) ? c.curFdv : 0;
+    // No live price AND last known value collapsed below the hard FDV floor → dead.
+    if (lastKnown > 0 && lastKnown < HARD_MIN_FDV) return false;
+    if (lastKnown === 0) return false;                                      // never priced, never a winner → drop
+    return true;
+  });
+  const removed = before - _state.calls.length;
+  if (removed > 0) _write(_state);
+  return removed;
+}
+
 // Rug prune — remove calls whose LIVE fdv dropped to a rug floor (eg $4k) for more than
 // a minimum age. Only pruned when we actually have a live price confirming the rug; calls
 // we could not re-price are kept (no evidence they rugged). Keeps seeds + young calls.
@@ -698,6 +734,22 @@ function _shape(c) {
     currentMult: Number((c.curMult || 1).toFixed ? +Number(c.curMult || 1).toFixed(4) : c.curMult) || 1,
     peakMult: +Number(c.peakMult || 1).toFixed(4),
     ts: c.ts || 0,
+    // Health / quality metrics (used by the Pro-Signals LAUNCHES pane + Ask ZEROX tool)
+    name: c.name || '',
+    holders: Number(c.holders) || 0,
+    liq: Number(c.liq) || 0,
+    vol24: Number(c.vol24) || 0,
+    vol1h: Number(c.vol1h) || 0,
+    riskScore: Number(c.riskScore) || 0,
+    viabilityScore: Number(c.viabilityScore) || 0,
+    rugScore: Number(c.rugScore) || 0,
+    lpPct: Number(c.lpPct) || 0,
+    top10Pct: Number(c.top10Pct) || 0,
+    insiders: Number(c.insiders) || 0,
+    bundlers: !!c.bundlers,
+    snipers: !!c.snipers,
+    milestones: Array.isArray(c.milestones) ? c.milestones : [],
+    closed: !!c.closed,
   };
 }
 function _clampLimit(v) { const n = parseInt(v, 10); return Math.min(2000, Math.max(1, isFinite(n) ? n : 50)); }

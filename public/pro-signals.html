@@ -377,6 +377,21 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 /* ── RANKED VIEW ───────────────────────────────────── */
 .rankwrap{display:flex;flex-direction:column;padding:8px 12px;}
+.splitwrap{display:grid;grid-template-columns:1.1fr .9fr;gap:0;min-height:100%;}
+.split-pane{min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+.split-pane + .split-pane{border-left:2px solid var(--border2);}
+.split-head{padding:9px 12px;background:var(--bg1);border-bottom:1px solid var(--border);font-family:'Syncopate',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;color:var(--P);text-shadow:var(--gP);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.split-head .sh-sub{font-size:7px;color:var(--muted);letter-spacing:1px;font-weight:400;}
+.split-body{flex:1;overflow-y:auto;padding:8px 10px;}
+.launch-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border:1px solid var(--border);border-radius:4px;margin-bottom:6px;background:var(--bg2);cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.launch-row:hover{border-color:var(--S);box-shadow:0 0 10px rgba(0,255,156,.15);}
+.launch-rank{width:22px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--label);flex-shrink:0;text-align:center;}
+.launch-sym{min-width:0;font-weight:700;font-size:11px;flex-shrink:0;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.launch-bar{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;min-width:28px;}
+.launch-bar-f{height:100%;border-radius:3px;transition:width .4s;}
+.launch-mult{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0;width:44px;text-align:right;}
+.launch-meta{display:flex;gap:6px;flex-wrap:wrap;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--label);}
+.launch-meta b{color:var(--text);font-weight:600;}
 .rankrow{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;}
 .rankrow:hover{background:var(--cgrd);}
 .ranknum{width:28px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--label);flex-shrink:0;}
@@ -648,6 +663,22 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .sent-ai{margin-top:8px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);font-size:11px;line-height:1.8;color:var(--text2);font-family:'Share Tech Mono',monospace;}
 .sent-ai-h{font-family:'Syncopate',sans-serif;font-size:8px;letter-spacing:3px;color:#b07fff;margin-bottom:5px;}
 
+/* ASK ZEROX modal */
+.zx-sect{margin-bottom:11px;}
+.zx-h{font-family:'Syncopate',sans-serif;font-size:8px;font-weight:700;letter-spacing:3px;color:#00ff9c;text-shadow:0 0 8px rgba(0,255,156,.3);margin-bottom:6px;}
+.zx-p{font-size:11px;line-height:1.75;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-left:2px solid #00ff9c;padding:9px 11px;font-family:'Share Tech Mono',monospace;}
+.zx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:7px;}
+.zx-cell{background:var(--bg2);border:1px solid var(--border);padding:6px 8px;border-radius:3px;}
+.zx-k{font-size:7px;letter-spacing:2px;color:var(--muted);font-family:'Syncopate',sans-serif;margin-bottom:3px;}
+.zx-v{font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:700;}
+.zx-meta{font-size:9px;color:var(--muted);font-family:'Share Tech Mono',monospace;margin-bottom:4px;line-height:1.7;}
+.zx-meta b{color:var(--text);font-weight:600;}
+.zx-zone{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);padding:6px 10px;margin-bottom:5px;border-radius:3px;flex-wrap:wrap;}
+.zx-zone-l{font-family:'Syncopate',sans-serif;font-size:8px;font-weight:700;letter-spacing:1px;color:#00ff9c;min-width:70px;}
+.zx-zone-f{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);min-width:80px;}
+.zx-zone-n{font-size:9px;color:var(--muted);flex:1;min-width:120px;line-height:1.5;}
+@media(max-width:600px){.zx-grid{grid-template-columns:repeat(2,1fr);}}
+
 @media(max-width:860px){#app{grid-template-columns:1fr;}#rc{display:none;}}
 
 /* ── MOBILE (≤640px) ─────────────────────────────────
@@ -792,6 +823,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
         <button class="vmb" onclick="setView('bubbles',this)" title="Bubble size = entry FDV, color = performance">🫧 BUBBLES</button>
         <button class="vmb" onclick="setView('heatmap',this)" title="Dense color grid — scan many calls at once">🔲 HEATMAP</button>
         <button class="vmb" onclick="setView('ranked',this)" title="Ranked by peak multiplier">🏆 RANKED</button>
+        <button class="vmb" onclick="setView('split',this)" title="Side-by-side: top calls (left) + just-launched & rising (right), lighter green = healthier">⇄ SPLIT</button>
       </div>
       <div id="slist"><div class="empty">CONNECTING TO ZEROX FEED…</div></div>
     </div>
@@ -1132,6 +1164,17 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   </div>
 </div>
 
+<!-- ASK ZEROX MODAL -->
+<div class="almo" id="zxmodal" onclick="if(event.target===this)closeZx()">
+  <div class="almo-bx" style="width:min(820px,94vw);max-height:88vh;display:flex;flex-direction:column;">
+    <div class="almo-h" style="background:linear-gradient(90deg,#03120b,#05080c);border-bottom:1px solid rgba(0,255,156,.25);">
+      <span class="almo-hd" id="zx-title" style="color:#00ff9c;text-shadow:0 0 12px rgba(0,255,156,.4)">🎓 ASK ZEROX</span>
+      <button class="almo-x" onclick="closeZx()">✕</button>
+    </div>
+    <div class="almo-bd"><div id="zx-body" style="padding:14px 16px;overflow-y:auto"></div></div>
+  </div>
+</div>
+
 <!-- PNL MODAL -->
 <div class="almo" id="pnlmodal" onclick="if(event.target===this)closePnl()">
   <div class="almo-bx" style="width:min(960px,94vw);max-width:96vw;background:#05080c;border:1px solid rgba(240,192,96,.35);">
@@ -1233,10 +1276,10 @@ function initOsc(){
 function init(){
   tickClk();initOsc();reqNotif();
   const savedView=localStorage.getItem('ot_view');
-  if(savedView&&savedView!=='list'){
+  if(savedView&&['split','bubbles','heatmap','ranked'].includes(savedView)){
     _viewMode=savedView;
     document.querySelectorAll('.vmb').forEach(b=>b.classList.remove('on'));
-    const idx=['list','bubbles','heatmap','ranked'].indexOf(savedView);
+    const idx=['list','split','bubbles','heatmap','ranked'].indexOf(savedView);
     const btn=document.querySelectorAll('.vmb')[idx];
     if(btn) btn.classList.add('on');
   }
@@ -1428,6 +1471,7 @@ function renderSigs(){
   if(_viewMode==='bubbles') renderBubbles(el,rows);
   else if(_viewMode==='heatmap') renderHeatmap(el,rows);
   else if(_viewMode==='ranked') renderRanked(el,rows);
+  else if(_viewMode==='split') renderSplit(el,rows);
   else el.innerHTML=rows.slice(0,1500).map((c,i)=>card(c,i)).join('');
 }
 
@@ -1488,6 +1532,77 @@ function renderRanked(el,rows){
   }).join('')+'</div>';
 }
 
+// ── SIDE-BY-SIDE SPLIT VIEW ───────────────────────────────────────────
+// Left pane: top calls by peak (the "pro signals" leaders). Right pane:
+// just-launched coins ("launch rank") — newer = higher, and lighter green
+// = more socials / better metrics (liq, holders, vol, viability). Every row
+// opens the Ask ZEROX modal.
+function _healthScore(c){
+  let s=0;
+  s+=Math.min(25,(Number(c.viabilityScore)||0)/100*25);          // ZEROX viability
+  s+=Math.min(20,Math.max(0,(Number(c.liq)||0)/100000*20));       // $100K liq = full marks
+  s+=Math.min(15,Math.max(0,(Number(c.holders)||0)/5000*15));     // 5K holders = full marks
+  s+=Math.min(15,Math.max(0,(Number(c.vol24)||0)/200000*15));     // $200K 24h vol = full marks
+  if((c.lpPct||0)>=90)s+=10; else if((c.lpPct||0)>=70)s+=5;
+  if(!c.bundlers)s+=5;
+  if((c.riskScore||0)<40)s+=5; else if((c.riskScore||0)>70)s+=0;
+  if(c.socials&&(c.socials.twitter||c.socials.website||c.socials.telegram))s+=5;
+  return Math.max(0,Math.min(100,Math.round(s)));
+}
+function _healthColor(h){
+  if(h>=85) return '#b8ffd8';   // very light — best socials+metrics
+  if(h>=70) return '#7cf0b0';
+  if(h>=55) return '#00ff9c';
+  if(h>=40) return '#3ecf83';
+  if(h>=25) return '#2a8f5e';
+  return '#0e5e3c';
+}
+function renderSplit(el,rows){
+  // LEFT — the winners/leaders (top calls by peak), capped for pace
+  const top=[...rows].filter(c=>(c.peakMult||0)>=1||!c.closed).sort((a,b)=>(b.peakMult||0)-(a.peakMult||0)).slice(0,45);
+  const topInner=top.length?'<div class="rankwrap">'+top.map((c,i)=>{
+    const peak=c.peakMult||1;
+    const col=_perfColor(peak);
+    const w=Math.max(4,Math.round((peak/Math.max(1,top[0].peakMult||1))*100));
+    return '<div class="rankrow" onclick="askZerox(\''+esc(c.mint||'')+'\')">'+
+      '<span class="ranknum">#'+(i+1)+'</span>'+
+      '<span class="ranksym" style="color:'+col+'">'+esc(c.symbol||'?')+'</span>'+
+      '<div class="rankbar"><div class="rankbar-f" style="width:'+w+'%;background:'+col+'"></div></div>'+
+      '<span class="rankmult" style="color:'+col+'">'+peak.toFixed(1)+'×</span>'+
+    '</div>';}).join('')+'</div>':'<div class="empty">NO CALLS YET — BOT STARTING'+(top.length||rows.length?'':'' )+'</div>';
+  // RIGHT — just-launched coins, ranked by freshness then health (lighter green = healthier)
+  const fresh=rows.filter(c=>!c.closed&&(Date.now()-(c.ts||0))<604800000);   // <7d old
+  const launches=[...fresh].sort((a,b)=>{
+    const ha=_healthScore(a),hb=_healthScore(b);
+    return hb-ha;}).slice(0,60);
+  function rowHTML(c,i){
+    const h=_healthScore(c);
+    const col=_healthColor(h);
+    const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+    const multLab=peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%');
+    const soc=c.socials&&(c.socials.twitter?'𝕏 ':c.socials.website?'🌐 ':c.socials.telegram?'✈ ':''):'';
+    return '<div class="launch-row" onclick="askZerox(\''+esc(c.mint||'')+'\')" title="'+esc(c.symbol||'?')+' — health '+h+'/100">'+
+      '<span class="launch-rank">'+((i+1))+')</span>'+
+      '<span class="launch-sym" style="color:'+col+'">'+esc(c.symbol||'?')+'</span>'+
+      '<div class="launch-bar"><div class="launch-bar-f" style="width:'+h+'%;background:'+col+'"></div></div>'+
+      '<span class="launch-mult" style="color:'+col+'">'+multLab+'</span>'+
+      '<div class="launch-meta">'+
+        (soc?'<span>'+soc+'</span>':'')+
+        '<span><b>'+h+'</b> H</span>'+
+        '<span>'+usd(c.entryFdv)+' → '+usd((c.entryFdv||0)*cur)+'</span>'+
+        '<span>'+ago(c.ts)+'</span>'+
+      '</div>'+
+      (c.mint?'<button class="sa" style="position:absolute;top:4px;right:4px;font-size:8px;padding:2px 6px" onclick="event.stopPropagation();askZerox(\''+esc(c.mint||'')+'\')">💰 ZEROX</button>':'')+
+    '</div>';
+  }
+  const rightInner=launches.length?'<div>'+launches.map(rowHTML).join('')+'</div>':'<div class="empty">NO FRESH LAUNCHES — WAITING FOR NEW CALLS</div>';
+  el.innerHTML=
+    '<div class="splitwrap">'+
+      '<div class="split-pane"><div class="split-head">🏆 TOP CALLS <span class="sh-sub">pro signals · by peak ×</span></div><div class="split-body">'+topInner+'</div></div>'+
+      '<div class="split-pane"><div class="split-head">🚀 LAUNCH RANK <span class="sh-sub">fresh + rising · lighter green = healthier</span></div><div class="split-body">'+rightInner+'</div></div>'+
+    '</div>';
+}
+
 function card(c,i){
   const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
   const cls=peak>=5?'moon':peak>=2?'win':'';
@@ -1526,6 +1641,7 @@ function card(c,i){
       <button class="sa" onclick="window.open('https://dexscreener.com/solana/${c.mint||''}','_blank')" title="Open live chart + liquidity on DexScreener">📈 CHART</button>
       <button class="sa" onclick="cca('${c.mint||''}')" title="Copy the contract address">📋 CA</button>
       <button class="sa" onclick="openSent('${c.mint||''}')" title="AI read + swarm consensus on this call">🤖 ANALYZE</button>
+      <button class="sa" onclick="askZerox('${c.mint||''}')" title="Ask ZEROX for a thesis, direct sentiment + entry/exit plan on this coin">🎓 ASK ZEROX</button>
       <button class="sa g" onclick="armCard('${c.mint||''}','${encodeURIComponent(c.symbol||'')}')" title="Arm a desktop alert for this price target">🎯 ALERT</button>
       <button class="sa p" onclick="makePnl('${c.mint||''}')" title="Generate a PNL image card for this call">💰 PNL</button>
     </div>
@@ -2091,6 +2207,72 @@ async function askOracle(sym,btn){
   }
   if(btn){btn.disabled=false;btn.textContent='ASK ZEROX BRAIN';}
 }
+/* ══════════════════════════════════════════════════════════════════════
+   ASK ZEROX — direct coin read with thesis, sentiment + entry/exit plan.
+   Free right now; gated behind txn-verify + pro access code later.
+   ══════════════════════════════════════════════════════════════════════ */
+async function askZerox(mint){
+  const mod=document.getElementById('zxmodal'),body=document.getElementById('zx-body'),tt=document.getElementById('zx-title');
+  if(!mod) return;
+  let c=_calls.find(x=>x.mint===mint);
+  if(!c&&_histCalls) c=_histCalls.find(x=>x.mint===mint);
+  const sym=((c&&c.symbol)||mint||'?').toUpperCase();
+  if(tt) tt.textContent='🎓 '+sym+' — ADVISING…';
+  if(body) body.innerHTML='<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--muted);padding:30px;text-align:center;letter-spacing:2px">ZEROX EXAMINING THE TAPE…</div>';
+  mod.classList.add('on');
+  try{
+    const r=await fetch(BASE+'/api/pro-signals/zerox/thesis?mint='+encodeURIComponent(mint),{signal:AbortSignal.timeout(20000)});
+    const j=await r.json();
+    if(!j||!j.ok){body.innerHTML='<div style="color:var(--A);font-family:\'Share Tech Mono\',monospace;font-size:11px;padding:20px">ZEROX COULD NOT READ THIS ONE — '+(j&&j.error?esc(String(j.error)):'no feed record for this mint')+'</div>';if(tt)tt.textContent='🎓 '+sym;return;}
+    zxRender(body,j,sym);
+  }catch(e){
+    if(body) body.innerHTML='<div style="color:var(--A);font-family:\'Share Tech Mono\',monospace;font-size:11px;padding:20px">ZEROX UNREACHABLE — CHECK SERVER</div>';
+  }
+}
+function zxRender(body,j,sym){
+  const v=j.sentiment||{},col=v.color||'#00ff9c';
+  const rf=j.riskProfile||{},mk=j.market||{},ent=j.entry||{},ext=j.exit||{};
+  const zones=(ent.zones||[]).map(z=>'<div class="zx-zone"><span class="zx-zone-l">'+esc(z.label)+'</span><span class="zx-zone-f">'+usd(z.hi)+' → '+usd(z.lo)+'</span><span class="zx-zone-n">'+esc(z.note)+'</span></div>').join('');
+  const targets=(ext.targets||[]).map(t=>'<div class="zx-zone"><span class="zx-zone-l">🎯 '+esc(t.label)+'</span><span class="zx-zone-f">'+t.zone+'</span><span class="zx-zone-n">'+esc(t.take)+'</span></div>').join('');
+  const soc=(mk.socials&&(mk.socials.twitter?'𝕏 ':'')+(mk.socials.telegram?'✈ ':'')+(mk.socials.website?'🌐 ':'')+(mk.socials.discord?'🎧 ':''))||(mk.socials&&mk.socials.links?mk.socials.links.map(l=>esc(String(l.type)||'link')).join(', '):'')||'—';
+  const liveNums='<div class="zx-grid">'+
+    zxCell('CURRENT', (mk.curMult||0).toFixed(2)+'×', col)+
+    zxCell('PEAK', (mk.peakMult||0).toFixed(1)+'×', '#f4c842')+
+    zxCell('ENTRY FDV', usd(mk.entryFdv||0), 'var(--label)')+
+    zxCell('NOW FDV', usd(mk.nowFdv||0), (mk.nowFdv||0)>=(mk.entryFdv||0)?'var(--S)':'var(--A)')+
+    (typeof mk.chg24==='number'?zxCell('24H', (mk.chg24>0?'+':'')+mk.chg24+'%', mk.chg24>=0?'var(--S)':'var(--A)'):'')+
+    zxCell('LIQ', usd(rf.liq||0), 'var(--label)')+
+    zxCell('VOL 24H', usd(rf.vol24||0), 'var(--label)')+
+    (rf.holders?zxCell('HOLDERS', (rf.holders/1000).toFixed(1)+'K', 'var(--label)'):'')+
+  '</div>';
+  const riskLine=[];if(rf.riskScore!==null)riskLine.push('risk '+rf.riskScore+'/100');if(rf.viabilityScore!==null)riskLine.push('viability '+rf.viabilityScore+'/100');if(rf.rugScore!==null)riskLine.push('rug '+rf.rugScore+'/100');if(rf.lpPct!==null)riskLine.push('LP '+rf.lpPct+'%');if(rf.top10Pct!==null)riskLine.push('top10 '+rf.top10Pct+'%');if(rf.bundlers)riskLine.push('⚠bundled');if(rf.insiders)riskLine.push('⚠insiders');if(rf.snipers)riskLine.push('⚠snipers');if(rf.milestones)riskLine.push(rf.milestones+'🎯');
+  if(tt) tt.textContent='🎓 '+sym+' — '+v.tag+' ('+j.score+'/100)';
+  body.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+      '<div style="font-size:26px">'+v.emoji+'</div>'+
+      '<div><div style="font-family:\'Share Tech Mono\',monospace;font-size:15px;font-weight:700;color:'+col+';text-shadow:0 0 14px '+col+'88">'+v.tag+' · '+j.score+'/100</div>'+
+      '<div style="font-size:9px;color:var(--muted)">ZEROX direct read of this call</div></div>'+
+      '<div style="margin-left:auto;text-align:right;font-size:8px;color:var(--muted);line-height:1.5">'+esc(srcLabel(j.fromFeed!==false?j.source:'n/a'))+'<br>'+ago(j.ts)+'</div>'+
+    '</div>'+
+    '<div class="zx-sect"><div class="zx-h">THESIS</div><div class="zx-p">'+esc(j.thesis||'')+'</div></div>'+
+    '<div class="zx-sect"><div class="zx-h">MARKET PULSE</div>'+liveNums+
+      '<div class="zx-meta">socials: <b>'+soc+'</b></div>'+
+      (mk.pairUrl?'<div class="zx-meta"><a href="'+esc(mk.pairUrl)+'" target="_blank" style="color:var(--C)">open on DexScreener ↗</a></div>':'')+
+    '</div>'+
+    '<div class="zx-sect"><div class="zx-h">ENTRY PLAN</div><div class="zx-meta">caught: <b>'+esc(ent.got||'scanner')+'</b> · don\'t chase past <b>'+ent.trimHint+'</b> tranches</div>'+zones+'</div>'+
+    '<div class="zx-sect"><div class="zx-h">EXIT PLAN</div>'+targets+
+      '<div class="zx-meta">stop: <b style="color:var(--A)">'+(ext.stop?Math.round((1-ext.stop)*100)+'% below current':'n/a')+'</b> — '+esc(ext.stopNote||'')+'</div>'+
+    '</div>'+
+    '<div class="zx-bottom" style="border-top:1px solid var(--border);margin-top:12px;padding-top:10px;color:'+col+';font-family:\'Share Tech Mono\',monospace;font-size:11px;letter-spacing:.5px">'+esc(j.bottomLine||'')+'</div>'+
+    '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">'+
+      '<button class="sa g" onclick="window.open(\'https://dexscreener.com/solana/'+esc((j.mint||''))+'\',\'_blank\')" style="flex:1;min-width:100px">📈 DEX</button>'+
+      '<button class="sa p" onclick="window.open(\'https://solscan.io/token/'+esc((j.mint||''))+'\',\'_blank\')" style="flex:1;min-width:100px">🔎 SOLSCAN</button>'+
+      '<button class="sa" onclick="ccazorx(\''+esc((j.mint||''))+'\')" style="min-width:90px">📋 CA</button>'+
+    '</div>';
+}
+function zxCell(k,v,c){return '<div class="zx-cell"><div class="zx-k">'+k+'</div><div class="zx-v" style="color:'+c+'">'+v+'</div></div>';}
+function ccazorx(m){if(m&&navigator.clipboard) navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
+function closeZx(){const m=document.getElementById('zxmodal');if(m)m.classList.remove('on');}
 function tickAlerts(){
   if(!_alerts.length||!_calls.length) return;
   let ch=false;

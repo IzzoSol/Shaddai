@@ -482,9 +482,11 @@ function _cfg() {
     // stays live — but skip Telegram broadcasts. Force off with TG_RECORD_ONLY=0.
     recordOnly: !!((process.env.TG_RECORD_ONLY || '1') !== '0' && !process.env.TELEGRAM_BOT_TOKEN),
     chains: String(cc.chains || 'solana').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
-    minLiq: Number(cc.minLiq) || 0,
+    // HARD FLOORS: $10K min liquidity + $5K min FDV — enforced for every poller feed.
+    // Config can only raise these, never lower them below the hard floor.
+    minLiq: Math.max(10000, Number(cc.minLiq) || 0),
     minVol24h: Number(cc.minVol24h) || 0,
-    minFdv: Number(cc.minFdv) || 0,
+    minFdv: Math.max(5000, Number(cc.minFdv) || 0),
     maxFdv: Number(cc.maxFdv) || 0,
     maxPer: Math.max(1, parseInt(cc.maxPer, 10) || 3),
     signals: cc.signals !== false,

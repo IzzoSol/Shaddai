@@ -366,4 +366,90 @@ router.get('/history', (req, res) => {
   }
 });
 
+// ─── ASK ZEROX ─────────────────────────────────────────────────────────
+// GET /api/pro-signals/zerox/thesis?mint=... — direct coin read: thesis,
+// sentiment, entry/exit plan. FREE right now; later gated behind the verify
+// (Solscan txn proof) + access-code flow below.
+router.get('/zerox/thesis', async (req, res) => {
+  try {
+    const mint = String(req.query.mint || '').trim();
+    if (!mint) return res.status(400).json({ error: 'missing mint' });
+
+    const zerox = require('../lib/zerox-thesis');
+    const call = loadCalls().find(c => c.mint === mint) || null;
+
+    let live = {};
+    try {
+      const enrichMod = require('../lib/token-enrich');
+      const got = await enrichMod.enrich([mint]);
+      live = (got && got[mint]) || {};
+    } catch (e) { /* live data is a bonus, not a requirement */ }
+
+    const thesis = zerox.build(call, live);
+    return res.json({ ok: true, fromFeed: !!call, ...thesis });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/pro-signals/zerox/verify — user posts a Solscan txn (or pastes
+// the scan URL / signature) as proof of a real buy before pro access is
+// granted. Stored to data/zerox-approvals.json for review. Free for now —
+// this records the intent so the pay gate can be flipped on later.
+router.post('/zerox/verify', express.json({ limit: '16kb' }), (req, res) => {
+  try {
+    const { solscanUrl, txn } = (req.body || {});
+    const proof = String(solscanUrl || txn || '').trim();
+    if (!proof) return res.status(400).json({ ok: false, error: 'missing solscanUrl or txn' });
+
+    const looksLikeTxn = /^[A-Za-z0-9]{64,88}$/.test(proof);
+    const looksLikeSolscan = /solscan\.io\/tx\//i.test(proof);
+    if (!looksLikeTxn && !looksLikeSolscan) {
+      return res.status(400).json({ ok: false, error: 'that is not a Solscan transaction link or signature' });
+    }
+
+    const file = path.join(DATA_DIR, 'zerox-approvals.json');
+    let all = { approvals: [] };
+    try { all = JSON.parse(fs.readFileSync(file, 'utf8')) || all; } catch (e) {}
+    all.approvals.unshift({
+      proof,
+      kind: looksLikeSolscan ? 'solscan' : 'txn',
+      status: 'pending',
+      submittedAt: Date.now(),
+    });
+    fs.writeFileSync(file, JSON.stringify(all, null, 2));
+
+    return res.json({
+      ok: true,
+      status: 'reviewed',
+      note: 'Proof recorded. Pro access is currently FREE — this unlocks the pay gate later.',
+      approval: all.approvals[0],
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST /api/pro-signals/zerox/access — enter a pro access code. Accepted
+// codes live in env ZEROX_ACCESS_CODES (comma-separated) or a codes file.
+router.post('/zerox/access', express.json({ limit: '16kb' }), (req, res) => {
+  try {
+    const code = String((req.body || {}).code || '').trim().toUpperCase();
+    if (!code) return res.status(400).json({ ok: false, error: 'missing code' });
+
+    // Source of truth: env (preferred) or backend/data/zerox-codes.json
+    let valid = new Set(String(process.env.ZEROX_ACCESS_CODES || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
+    try {
+      const codes = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'zerox-codes.json'), 'utf8')) || {};
+      for (const c of (codes.codes || [])) valid.add(String(c).trim().toUpperCase());
+    } catch (e) { /* env-only is fine */ }
+
+    if (!valid.has(code)) return res.status(403).json({ ok: false, error: 'invalid code' });
+
+    return res.json({ ok: true, granted: true, tier: 'pro', note: 'ZEROX theta unlocked for pro members.' });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 module.exports = router;
