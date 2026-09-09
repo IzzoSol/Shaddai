@@ -654,6 +654,9 @@ var API = (location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '') + '';
 var el = function (id) { return document.getElementById(id); };
 function setText(id, txt) { var n = el(id); if (n) n.textContent = txt; }
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); };
+/* http(s)-only allowlist for third-party URLs (pairUrl, social links) — blocks
+   javascript:/data: URI injection from attacker-set token/social metadata. */
+var safeHref = function (u) { u = String(u == null ? '' : u).trim(); return /^https?:\/\//i.test(u) ? u : ''; };
 var money = function (n) { n = Number(n); if (!isFinite(n)) return '—'; if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M'; if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K'; return '$' + n.toFixed(0); };
 var ago = function (ts) { if (!ts) return ''; var s = Math.max(0, Math.round((Date.now() - ts) / 1000)); if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm'; if (s < 86400) return Math.floor(s / 3600) + 'h'; return Math.floor(s / 86400) + 'd'; };
 var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' + encodeURIComponent(id) + '?width=128&height=128&quality=95&format=auto' : '' };
@@ -1051,8 +1054,8 @@ document.addEventListener('DOMContentLoaded', function () {
     shaddai: 'https://t.me/ShaddaiTempleBot',
     zerox: 'https://t.me/ShaddaiLabs'
   };
-  el('btn-tg-shaddai').addEventListener('click', function () { window.open(TG.shaddai, '_blank'); });
-  el('btn-tg-zerox').addEventListener('click', function () { window.open(TG.zerox, '_blank'); });
+  el('btn-tg-shaddai').addEventListener('click', function () { window.open(TG.shaddai, '_blank', 'noopener'); });
+  el('btn-tg-zerox').addEventListener('click', function () { window.open(TG.zerox, '_blank', 'noopener'); });
 
   el('btn-ask').addEventListener('click', askZerox);
   var inputs = ['ask-mint', 'ask-q', 'ask-proof'];
@@ -1076,7 +1079,7 @@ function enrichCoin(c) {
 }
 function socialChips(e) {
   if (!e || !e.socials) return '';
-  var links = (e.socials.links || []).slice(0, 4);
+  var links = (e.socials.links || []).map(function (l) { return { type: l.type, url: safeHref(l.url) }; }).filter(function (l) { return l.url; }).slice(0, 4);
   if (!links.length) return '';
   return '<div class="s-toks">' + links.map(function (l) {
     return '<a class="tok-safe soc-link" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(String(l.type || 'link')) + ' ↗</a>';
@@ -1087,7 +1090,10 @@ function openCoin(c) {
   showSheet();
   var s = el('sheet-body');
   s.innerHTML = '<div class="err">loading coin…</div>';
-  enrichCoin(c).then(function (e) { s.innerHTML = coinSheet(c, e); });
+  enrichCoin(c).then(function (e) {
+    s.innerHTML = coinSheet(c, e);
+    wireSheetActions(c.mint, e && e.pairUrl);
+  });
 }
 function coinSheet(c, e) {
   var m = Number(c.curMult) || 0;
@@ -1117,7 +1123,6 @@ function coinSheet(c, e) {
     var warn = String(g[1]).indexOf('⚠') >= 0;
     return '<div class="s-cell' + (warn ? '" style="border-color:rgba(255,61,90,.45)' : '') + '"><dt>' + g[0] + '</dt><dd' + (warn ? ' style="color:var(--amber)"' : '') + '>' + esc(g[1]) + '</dd></div>';
   };
-  var link = (e && e.pairUrl) ? e.pairUrl : 'https://dexscreener.com/solana/' + c.mint;
   return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
       (e && e.image ? '<span class="dimg" style="width:52px;height:52px">' + img + '</span>' : '') +
       '<div><div class="s-symbol">' + esc(c.symbol || '?') + '</div>' +
@@ -1129,9 +1134,24 @@ function coinSheet(c, e) {
     (c.milestones && c.milestones.length ? '<div class="s-toks">' + c.milestones.map(function (x) { return '<span class="tok-safe">' + x + 'x hit</span>'; }).join('') + '</div>' : '') +
     (c.closed ? '<div class="s-toks"><span class="warn" style="color:var(--amber);font-size:10px">pool closed</span></div>' : '') +
     socialChips(e) +
-    '<button class="s-btn sb-gold" onclick="window.open(\'' + esc(link) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
-    '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(c.mint) + '\', this)">Copy mint</button>' +
-    '<button class="s-btn sb-ghost" onclick="closeSheet();el(\'ask-mint\').value=\'' + esc(c.mint) + '\';setTab(\'wallet\')">Ask ZEROX $1</button>';
+    '<button class="s-btn sb-gold" id="sheet-open-dex">Open on DexScreener ↗</button>' +
+    '<button class="s-btn sb-ghost" id="sheet-copy-mint">Copy mint</button>' +
+    '<button class="s-btn sb-ghost" id="sheet-ask-zerox">Ask ZEROX $1</button>';
+}
+/* Wires the three sheet action buttons via addEventListener instead of inline
+   onclick="..." strings — inline handlers built from HTML-escaped dynamic data
+   are not safe: the browser HTML-decodes the attribute before compiling it as
+   JS, so an escaped quote becomes a real quote again and can break out of the
+   string literal. Attaching listeners with the raw value in a closure removes
+   that HTML round-trip entirely. */
+function wireSheetActions(mint, dexLink) {
+  var link = safeHref(dexLink) || ('https://dexscreener.com/solana/' + mint);
+  var openBtn = el('sheet-open-dex');
+  if (openBtn) openBtn.addEventListener('click', function () { window.open(link, '_blank', 'noopener'); });
+  var copyBtn = el('sheet-copy-mint');
+  if (copyBtn) copyBtn.addEventListener('click', function () { copyMint(mint, copyBtn); });
+  var askBtn = el('sheet-ask-zerox');
+  if (askBtn) askBtn.addEventListener('click', function () { closeSheet(); el('ask-mint').value = mint; setTab('wallet'); });
 }
 function openDex(p) {
   coinOpen = p;
@@ -1162,9 +1182,10 @@ function openDex(p) {
       '<div class="s-cell"><dt>Boost</dt><dd>' + (paid ? 'PAID ▲' + p.boost : 'organic') + '</dd></div>' +
     '</div>' +
     '<div class="s-toks">' + solinks.join('') + '</div>' +
-    '<button class="s-btn sb-gold" onclick="window.open(\'' + esc((p.pairUrl || ('https://dexscreener.com/solana/' + p.mint))) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
-    '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(p.mint) + '\', this)">Copy mint</button>';
+    '<button class="s-btn sb-gold" id="sheet-open-dex">Open on DexScreener ↗</button>' +
+    '<button class="s-btn sb-ghost" id="sheet-copy-mint">Copy mint</button>';
   showSheet();
+  wireSheetActions(p.mint, p.pairUrl);
 }
 function copyMint(v, b) {
   navigator.clipboard.writeText(v).then(function () {
