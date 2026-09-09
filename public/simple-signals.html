@@ -298,7 +298,7 @@ body{background:
   content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
   background:
     linear-gradient(180deg, rgba(5,7,12,.30), rgba(5,7,12,.96)),
-    url('/assets/bot/brand-bg/latest.jpg') center 28%/cover no-repeat,
+    url('/assets/bot/ui/header.jpg') center 30%/cover no-repeat,
     linear-gradient(120deg,#071322,#0b0a18 70%);
   opacity:.9;
 }
@@ -306,7 +306,8 @@ html[data-theme="light"] #top::before{filter:invert(.92) hue-rotate(180deg) satu
 #brand{font-size:14px;letter-spacing:.16em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
 #brand b{background:inherit;-webkit-background-clip:text;background-clip:text;color:transparent}
 #clock{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;color:var(--soft);white-space:nowrap}
-#live{color:var(--emerald);text-shadow:0 0 10px rgba(16,229,164,.7)}
+#live{color:var(--emerald);text-shadow:0 0 10px rgba(16,229,164,.7);animation:livepulse 2s ease-in-out infinite}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.55}}
 #live::before{box-shadow:0 0 10px var(--emerald)}
 #updated{font-family:var(--f-mono);font-size:9px;color:var(--faint)}
 #btn-refresh,#btn-theme{
