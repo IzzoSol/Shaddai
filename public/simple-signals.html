@@ -108,6 +108,8 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .tokstrip .warn{color:var(--amber);border-color:rgba(245,176,76,.4)}
 .tokstrip .danger{color:var(--red);border-color:rgba(255,61,90,.45)}
 .tokstrip .safe{color:var(--emerald);border-color:rgba(0,229,160,.35)}
+.soc-link{display:inline-block;text-decoration:none;font-family:var(--f-mono);font-size:8.5px;letter-spacing:.06em;color:var(--emerald);border:1px solid rgba(0,229,160,.35);border-radius:4px;padding:3px 6px;background:rgba(0,0,0,.25)}
+.dexrow .paid{color:#b46bff;border:1px solid rgba(180,107,255,.45);border-radius:4px;padding:1px 5px;font-size:8px;letter-spacing:.08em}
 
 /* ---------- sparkline ---------- */
 .spark{height:28px;width:100%;margin-top:4px;background:rgba(0,0,0,.2);border:1px solid var(--edge2);border-radius:6px;overflow:hidden}
@@ -122,16 +124,16 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .race-lane .sy{font-family:var(--f-mono);font-size:16px;font-weight:700;letter-spacing:.04em}
 .race-lane .nm{font-size:11px;color:var(--soft);flex:1}
 .race-lane .mx{font-family:var(--f-mono);font-size:14px;font-weight:700;white-space:nowrap}
-.race-lane .track{
-  height:14px; background:rgba(0,0,0,.3); border-radius:7px; overflow:hidden; position:relative;
+.race-lane .vtrack{
+  height:150px; background:rgba(0,0,0,.25); border-radius:10px; overflow:hidden; position:relative;
   border:1px solid var(--edge2);
 }
-.race-lane .track .bar{
-  height:100%; border-radius:6px; transition:width .4s ease; min-width:2px;
-}
-.race-lane .track .markers{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none}
-.race-lane .track .markers span{position:absolute;top:-18px;font-size:7px;color:var(--faint);transform:translateX(-50%)}
-.race-lane .stats{display:flex;gap:12px;margin-top:8px;font-family:var(--f-mono);font-size:9px;color:var(--faint)}
+.race-lane .vtrack .vline{position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.07);pointer-events:none}
+.race-lane .vtrack .vline span{position:absolute;right:6px;top:-10px;font-size:7px;color:var(--faint);font-family:var(--f-mono)}
+.race-lane .vtrack .bar{position:absolute;left:8px;right:38px;bottom:0;border-radius:6px 6px 2px 2px;transition:height .5s ease;min-height:2px}
+.race-lane .vtrack .peak{position:absolute;left:2px;width:12px;height:12px;border-radius:50% 50% 0 50%;transform:translateY(50%);transition:bottom .5s ease;box-shadow:0 0 8px rgba(0,0,0,.6)}
+.race-lane .vtrack .peak::after{content:'peak';position:absolute;left:14px;top:0;font-size:7px;font-family:var(--f-mono);color:var(--faint);white-space:nowrap}
+.race-lane .stats{display:flex;gap:12px;margin-top:8px;font-family:var(--f-mono);font-size:9px;color:var(--faint);flex-wrap:wrap}
 .race-lane .stats .saf{font-weight:700}
 
 /* ---------- dex rows ---------- */
@@ -336,10 +338,17 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 
   <section class="view" id="v-pnl">
     <div class="view-h"><span class="ti">PNL Gallery</span><span class="count" id="pnl-count"></span></div>
-    <div class="chips" style="margin-bottom:8px">
+    <div class="chips" style="margin-bottom:6px">
       <button class="chip on" data-pnl="all">All</button>
       <button class="chip" data-pnl="milestone">Milestones</button>
       <button class="chip" data-pnl="pnl">Vault</button>
+    </div>
+    <div class="chips" style="margin-bottom:8px">
+      <button class="chip on" data-px="0">All x</button>
+      <button class="chip" data-px="100">100x+</button>
+      <button class="chip" data-px="10">10x+</button>
+      <button class="chip" data-px="2">2x+</button>
+      <button class="chip" data-px="live">Live</button>
     </div>
     <div id="pnl-list"></div>
   </section>
@@ -427,6 +436,11 @@ async function refresh() {
   try { await Promise.all([loadFeed(), loadDex(), loadWallets()]); stamp(); renderAll(); }
   catch (e) { el('updated').textContent = 'ERR'; console.error(e); }
 }
+/* Fast self-refresh while user is on DEX */
+setInterval(function () {
+  if (state.tab !== 'dex') return;
+  loadDex().then(function () { renderDex(); stamp(); }).catch(function () {});
+}, 30000);
 async function loadFeed() {
   var j = await fetchJSON(API + '/api/pro-signals/feed?limit=250');
   state.feed = (j.calls || []).filter(function (c) { return c && c.mint; });
@@ -473,6 +487,13 @@ function safetyLabel(score) {
 }
 
 /* ---------------- heatmap ---------------- */
+function bubSize(c) {
+  var fdv = Number(c.curFdv || c.entryFdv) || 0;
+  var s = 84 + Math.sqrt(fdv / 1000) * 4;
+  var m = Number(c.curMult) || 0;
+  s += m * 3.2;
+  return Math.min(230, Math.max(84, Math.round(s)));
+}
 function renderHeat() {
   var list = liveOnly(state.feed).slice(0, 60);
   var div = el('heat-bubbles');
@@ -482,14 +503,16 @@ function renderHeat() {
   var frag = document.createDocumentFragment();
   list.forEach(function (c) {
     var m = Number(c.curMult) || 0;
-    var size = Math.min(34, Math.max(12, 10 + Math.sqrt(c.score || 0) * 1.6));
+    var size = bubSize(c);
     var b = document.createElement('button');
     b.className = 'bub ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
-    b.style.minHeight = (64 + size) + 'px';
-    b.style.fontSize = (size) + 'px';
+    b.style.flex = '0 1 ' + size + 'px';
+    b.style.minHeight = (60 + Math.round(size / 5)) + 'px';
+    var font = Math.max(11, Math.min(17, Math.round(size / 11)));
+    var mxFont = Math.max(12, Math.min(20, Math.round(size / 8)));
     var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
-    b.innerHTML = '<span class="sy">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + Math.max(12, size - 6) + 'px;color:' + main + '">' +
-      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · S ' + (c.score || 0) + '</span>';
+    b.innerHTML = '<span class="sy" style="font-size:' + font + 'px">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + mxFont + 'px;color:' + main + '">' +
+      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
@@ -590,21 +613,20 @@ function renderRace() {
     var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : 'var(--red)');
     var lane = document.createElement('div');
     lane.className = 'race-lane';
+    var finished = peakFdv >= BILLION || state.raceFilter === 'done';
     lane.innerHTML =
       '<div class="head">' +
+        (finished ? '<span class="mx" style="color:var(--gold);font-size:11px">🏁</span>' : '') +
         '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
         '<span class="nm">' + esc(c.name || '') + '</span>' +
         '<span class="mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span>' +
       '</div>' +
-      '<div class="track">' +
-        '<div class="markers">' +
-          '<span style="left:0%">0</span>' +
-          '<span style="left:10%">$100M</span>' +
-          '<span style="left:50%">$500M</span>' +
-          '<span style="left:100%">$1B</span>' +
-        '</div>' +
-        '<div class="bar" style="width:' + pctTo1B.toFixed(2) + '%;background:' + safeColor + '"></div>' +
-        (peakPct > pctTo1B ? '<div class="bar" style="width:' + peakPct.toFixed(2) + '%;background:' + safeColor + ';opacity:.25;position:absolute;top:0;left:0;height:100%;z-index:-1"></div>' : '') +
+      '<div class="vtrack">' +
+        '<div class="vline" style="bottom:100%"><span>$1B</span></div>' +
+        '<div class="vline" style="bottom:50%"><span>$500M</span></div>' +
+        '<div class="vline" style="bottom:10%"><span>$100M</span></div>' +
+        '<div class="peak" style="bottom:' + peakPct.toFixed(2) + '%;background:' + safeColor + '" title="peak ' + money(peakFdv) + '"></div>' +
+        '<div class="bar" style="height:' + pctTo1B.toFixed(2) + '%;background:linear-gradient(0deg, ' + safeColor + 'cc, ' + safeColor + ')"></div>' +
       '</div>' +
       '<div class="stats">' +
         '<span>Now: ' + money(curFdv) + '</span>' +
@@ -628,13 +650,14 @@ function renderDex() {
   var frag = document.createDocumentFragment();
   list.forEach(function (p) {
     var m = Number(p.chg24); var up = m >= 0;
+    var paid = Number(p.boost) > 0;
     var r = document.createElement('button');
     r.className = 'dexrow';
     var icon = IMG(p.image);
     r.innerHTML =
       '<span class="dimg">' + (icon || p.socials && p.symbol ? '<img src="' + esc(icon) + '" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;mono&quot;>' + esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) + '</span>\'"">' : '<span class="mono">' + esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) + '</span>') + '</span>' +
-      '<span class="mid"><span class="sy">' + esc(p.symbol || '?') + ' <span class="bo">▲' + (p.boost || 0) + '</span></span>' +
-      '<span class="nm">' + esc(p.name || '') + '</span></span>' +
+      '<span class="mid"><span class="sy">' + esc(p.symbol || '?') + (paid ? ' <span class="paid">▲' + (p.boost || 0) + ' PAID</span>' : ' <span class="bo">▲' + (p.boost || 0) + '</span>') + '</span>' +
+      '<span class="nm">' + esc(p.name || '') + (paid ? ' · <b>boosted</b>' : '') + '</span></span>' +
       '<span class="rt"><span class="pr">' + dec(p.priceUsd) + '</span>' +
       '<span class="chg ' + (up ? 'mx-pos' : 'mx-neg') + '">' + (up ? '+' : '') + m + '%</span>' +
       '<span class="chg">vol ' + money(p.vol24) + '</span></span>';
@@ -685,49 +708,107 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /* ---------------- coin sheet ---------------- */
+function sellSell(c) { }
+
+function enrichCoin(c) {
+  return fetch(API + '/api/pro-signals/enrich', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mints: [c.mint], cap: 1 })
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.ok || !j.tokens) return null;
+    return j.tokens[c.mint] || null;
+  }).catch(function () { return null; });
+}
+function socialChips(e) {
+  if (!e || !e.socials) return '';
+  var links = (e.socials.links || []).slice(0, 4);
+  if (!links.length) return '';
+  return '<div class="s-toks">' + links.map(function (l) {
+    return '<a class="tok-safe soc-link" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(String(l.type || 'link')) + ' ↗</a>';
+  }).join('') + '</div>';
+}
 function openCoin(c) {
   coinOpen = c;
+  showSheet();
+  var s = el('sheet-body');
+  s.innerHTML = '<div class="err">loading coin…</div>';
+  enrichCoin(c).then(function (e) { s.innerHTML = coinSheet(c, e); });
+}
+function coinSheet(c, e) {
   var m = Number(c.curMult) || 0;
   var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : 'var(--red)');
-  var s = el('sheet-body');
-  s.innerHTML =
-    '<div class="s-symbol">' + esc(c.symbol || '?') + '</div>' +
-    '<div class="s-name">' + esc(c.name || '') + ' · called ' + ago(c.ts) + ' · source: ' + esc(c.source || '') + '</div>' +
+  var img = (e && e.image) ? '<img src="' + esc(e.image) + '" onerror="this.outerHTML=\'\'" alt="" style="width:100%;height:100%;object-fit:cover">' : '';
+  var grid = [
+    ['Score', c.score || 0],
+    ['Risk', c.riskTier || 'medium'],
+    ['Safety', (c.safetyScore != null ? c.safetyScore + ' ' + safetyLabel(c.safetyScore) : '—')],
+    ['Holders', c.holders || '—'],
+    ['Top 10', c.top10Pct != null ? Math.round(c.top10Pct) + '%' : '—'],
+    ['LP lock', c.lpPct != null ? Math.round(c.lpPct) + '%' : '—'],
+    ['Rug score', c.rugScore != null ? c.rugScore + '/100' : '—'],
+    ['Insiders', c.insiders ? c.insiders : 'clean'],
+    ['Bundlers', c.bundlers ? 'YES ⚠' : 'clean'],
+    ['Snipers', c.snipers ? 'YES ⚠' : 'clean'],
+    ['Supply', c.supply != null ? c.supply : '—'],
+    ['Fresh wallets', c.freshWallets != null ? c.freshWallets : '—']
+  ];
+  if (e) {
+    if (e.liq) grid.push(['Liquidity', money(e.liq)]);
+    if (e.vol24) grid.push(['Vol 24h', money(e.vol24)]);
+    if (e.priceUsd) grid.push(['Price', '$' + dec(e.priceUsd)]);
+    if (e.dex) grid.push(['DEX', e.dex]);
+  }
+  var cell = function (g) {
+    var warn = String(g[1]).indexOf('⚠') >= 0;
+    return '<div class="s-cell' + (warn ? '" style="border-color:rgba(255,61,90,.45)' : '') + '"><dt>' + g[0] + '</dt><dd' + (warn ? ' style="color:var(--amber)"' : '') + '>' + esc(g[1]) + '</dd></div>';
+  };
+  var link = (e && e.pairUrl) ? e.pairUrl : 'https://dexscreener.com/solana/' + c.mint;
+  return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
+      (e && e.image ? '<span class="dimg" style="width:52px;height:52px">' + img + '</span>' : '') +
+      '<div><div class="s-symbol">' + esc(c.symbol || '?') + '</div>' +
+      '<div class="s-name">' + esc(c.name || '') + ' · called ' + ago(c.ts) + ' · ' + esc(c.source || '') + '</div></div>' +
+    '</div>' +
     '<div class="s-mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW CALL') + '</div>' +
     '<div class="s-sub">entry $' + dec(c.entryFdv) + ' → now $' + money(c.curFdv || c.entryFdv) + ' · peak ' + (Number(c.peakMult) ? Number(c.peakMult).toFixed(2) + '×' : '—') + '</div>' +
-    '<div class="s-grid">' +
-      '<div class="s-cell"><dt>Score</dt><dd>' + (c.score || 0) + '</dd></div>' +
-      '<div class="s-cell"><dt>Risk</dt><dd>' + esc(c.riskTier || 'medium') + '</dd></div>' +
-      '<div class="s-cell"><dt>Safety</dt><dd style="color:' + safeColor + '">' + (c.safetyScore || '—') + ' ' + (c.safetyScore != null ? safetyLabel(c.safetyScore) : '') + '</dd></div>' +
-      '<div class="s-cell"><dt>Holders</dt><dd>' + (c.holders || '—') + '</dd></div>' +
-      '<div class="s-cell"><dt>Top 10</dt><dd>' + (c.top10Pct != null ? Math.round(c.top10Pct) + '%' : '—') + '</dd></div>' +
-      '<div class="s-cell"><dt>LP</dt><dd>' + (c.lpPct != null ? Math.round(c.lpPct) + '%' : '—') + '</dd></div>' +
-      '<div class="s-cell"><dt>Rug score</dt><dd>' + (c.rugScore != null ? c.rugScore : '—') + '</dd></div>' +
-    '</div>' +
-    tokStrip(c) +
-    '<div class="s-toks" style="margin-top:10px">' +
-      '<span class="tok-safe">' + (c.chainId === 'solana' ? 'Solana' : 'Solana') + ' · ' + (c.holders ? c.holders + ' holders' : 'holders n/a') + '</span>' +
-    '</div>' +
-    '<button class="s-btn sb-gold" onclick="window.open(\'https://dexscreener.com/solana/' + esc(c.mint) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
+    '<div class="s-grid">' + grid.map(cell).join('') + '</div>' +
+    (c.milestones && c.milestones.length ? '<div class="s-toks">' + c.milestones.map(function (x) { return '<span class="tok-safe">' + x + 'x hit</span>'; }).join('') + '</div>' : '') +
+    (c.closed ? '<div class="s-toks"><span class="warn" style="color:var(--amber);font-size:10px">pool closed</span></div>' : '') +
+    socialChips(e) +
+    '<button class="s-btn sb-gold" onclick="window.open(\'' + esc(link) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(c.mint) + '\', this)">Copy mint</button>' +
     '<button class="s-btn sb-ghost" onclick="closeSheet();el(\'ask-mint\').value=\'' + esc(c.mint) + '\';setTab(\'wallet\')">Ask ZEROX $1</button>';
-  showSheet();
 }
 function openDex(p) {
   coinOpen = p;
   var m = Number(p.chg24); var up = m >= 0;
+  var paid = Number(p.boost) > 0;
+  var icon = IMG(p.image);
   var s = el('sheet-body');
+  var socials = p.socials || {};
+  var solinks = [];
+  if (socials.twitter) solinks.push('<span class="tok-safe">𝕏 yes</span>');
+  if (socials.telegram) solinks.push('<span class="tok-safe">✈ yes</span>');
+  if (socials.discord) solinks.push('<span class="tok-safe">💬 yes</span>');
+  if (socials.website) solinks.push('<span class="tok-safe">site yes</span>');
+  if (!solinks.length) solinks.push('<span class="tok-safe">no socials</span>');
   s.innerHTML =
-    '<div class="s-symbol">' + esc(p.symbol || '?') + '</div>' +
-    '<div class="s-name">' + esc(p.name || '') + ' · boost ▲' + (p.boost || 0) + '</div>' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
+      (icon ? '<span class="dimg" style="width:52px;height:52px"><img src="' + esc(icon) + '" onerror="this.outerHTML=\'<span class=&quot;mono&quot;>?</span>\'" alt=""></span>' : '') +
+      '<div><div class="s-symbol">' + esc(p.symbol || '?') + '</div>' +
+      '<div class="s-name">' + esc(p.name || '') + '</div></div>' +
+    '</div>' +
+    (paid ? '<div class="s-grid" style="grid-template-columns:1fr"><div class="s-cell" style="border-color:rgba(180,107,255,.5)"><dt>DexScreener Boost</dt><dd style="color:#b46bff">▲ ' + (p.boost || 0) + ' — PAID PROMOTION</dd></div></div>' : '') +
     '<div class="s-mx ' + (up ? 'mx-pos' : 'mx-neg') + '">' + (up ? '+' : '') + m + '%</div>' +
     '<div class="s-sub">price ' + dec(p.priceUsd) + ' · liq ' + money(p.liq) + ' · vol24 ' + money(p.vol24) + '</div>' +
     '<div class="s-grid">' +
       '<div class="s-cell"><dt>DEX</dt><dd>' + esc(p.dex || '—') + '</dd></div>' +
       '<div class="s-cell"><dt>Rank</dt><dd>#' + (p.rank || '—') + '</dd></div>' +
+      '<div class="s-cell"><dt>1h</dt><dd class="' + (Number(p.chg1h) >= 0 ? 'mx-pos' : 'mx-neg') + '">' + (Number(p.chg1h) >= 0 ? '+' : '') + (p.chg1h || 0) + '%</dd></div>' +
+      '<div class="s-cell"><dt>Boost</dt><dd>' + (paid ? 'PAID ▲' + p.boost : 'organic') + '</dd></div>' +
     '</div>' +
-    '<div class="s-toks">' + [p.socials && p.socials.twitter ? '<span class="tok-safe">𝕏 yes</span>' : '', p.socials && p.socials.telegram ? '<span class="tok-safe">TG yes</span>' : '', p.socials && p.socials.website ? '<span class="tok-safe">site yes</span>' : ''].join('') + '</div>' +
-    '<button class="s-btn sb-gold" onclick="window.open(\'https://dexscreener.com/solana/' + esc(p.mint) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
+    '<div class="s-toks">' + solinks.join('') + '</div>' +
+    '<button class="s-btn sb-gold" onclick="window.open(\'' + esc((p.pairUrl || ('https://dexscreener.com/solana/' + p.mint))) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(p.mint) + '\', this)">Copy mint</button>';
   showSheet();
 }
@@ -782,23 +863,46 @@ function askZerox() {
 
 /* ---------------- PNL gallery ---------------- */
 var PNL_IMAGES = [];
-(function initPnlImages() {
-  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/vault/vault-' + (i < 10 ? '0' + i : i) + '.png', label: 'Vault ' + i + ' · Great Call', group: 'pnl' });
+function fmtX(v) {
+  v = Number(v) || 0;
+  if (v >= 100) return Math.round(v) + 'x';
+  if (v >= 10) return v.toFixed(1) + 'x';
+  return v.toFixed(2) + 'x';
+}
+function initPnlImages() {
+  PNL_IMAGES.length = 0;
   [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(function (m) {
-    PNL_IMAGES.push({ src: '/assets/bot/milestones/milestone-' + m + 'x.png', label: 'Milestone ' + m + 'x', group: 'milestone' });
+    PNL_IMAGES.push({ src: '/assets/bot/milestones/milestone-' + m + 'x.png', label: 'Milestone ' + m + 'x', group: 'milestone', peak: m, cur: 0, live: false });
   });
-})();
+  return fetch(API + '/assets/bot/vault/manifest.json', { headers: { 'Accept': 'application/json' } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (mf) {
+      if (!mf || !mf.items) return;
+      mf.items.forEach(function (it) {
+        PNL_IMAGES.push({ src: '/assets/bot/vault/' + it.file, label: it.symbol + ' · ' + fmtX(it.peak), group: 'pnl', peak: it.peak, cur: it.cur, live: (it.cur || 0) >= 1 });
+      });
+    })
+    .catch(function () { /* keep milestones only */ });
+}
 var pnlFilter = 'all';
+var pnlMult = 0;
 function renderPNL() {
-  var list = pnlFilter === 'all' ? PNL_IMAGES : PNL_IMAGES.filter(function (im) { return im.group === pnlFilter; });
+  var list = PNL_IMAGES.filter(function (im) {
+    if (pnlFilter !== 'all' && im.group !== pnlFilter) return false;
+    if (pnlMult === 'live') return im.live;
+    if (pnlMult > 0 && (im.peak || 0) < pnlMult) return false;
+    return true;
+  }).sort(function (a, b) { return (b.peak || 0) - (a.peak || 0); });
   el('pnl-count').textContent = list.length;
   var div = el('pnl-list');
   div.textContent = '';
-  if (!list.length) { div.innerHTML = '<div class="empty">NO PNL IMAGES</div>'; return; }
+  if (!list.length) { div.innerHTML = '<div class="empty">NO PNL IMAGES FOR THIS FILTER</div>'; return; }
   var frag = document.createDocumentFragment();
   list.forEach(function (im) {
     var t = document.createElement('button');
     t.className = 'pnl-tile';
+    t.style.opacity = im.live ? '1' : '0.55';
+    t.style.filter = im.live ? 'none' : 'saturate(.85)';
     var img = document.createElement('img');
     img.src = im.src;
     img.loading = 'lazy';
@@ -866,6 +970,14 @@ document.querySelectorAll('.chip[data-pnl]').forEach(function (b) {
     renderPNL();
   });
 });
+document.querySelectorAll('.chip[data-px]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.chip[data-px]').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    pnlMult = b.dataset.px === 'live' ? 'live' : Number(b.dataset.px) || 0;
+    renderPNL();
+  });
+});
 document.querySelectorAll('.chip[data-r]').forEach(function (b) {
   b.addEventListener('click', function () {
     document.querySelectorAll('.chip[data-r]').forEach(function (x) { x.classList.remove('on'); });
@@ -887,6 +999,7 @@ function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet();
 
 try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}
 refresh();
+initPnlImages().then(renderPNL);
 setInterval(refresh, 60000);
 </script>
 </body>
