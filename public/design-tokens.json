@@ -1,0 +1,106 @@
+{
+  "$schema": "ZEROX·SIGNALS design tokens — extracted from public/simple-signals.html",
+  "name": "neon-obsidian",
+  "version": "1.1.0",
+  "color": {
+    "dark": {
+      "bg": "#05070c",
+      "bg2": "#0b1018",
+      "panel": "#0d1320",
+      "edge": "#1d2737",
+      "edge2": "#29354b",
+      "text": "#e9eef7",
+      "soft": "#a4b0c6",
+      "faint": "#7c8aa3",
+      "gold": "#e8c45c",
+      "emerald": "#10e5a4",
+      "red": "#ff3d5a",
+      "amber": "#f5b04c",
+      "cyan": "#38e0ff",
+      "magenta": "#e879f9",
+      "ok": "#0f2b23",
+      "bad": "#2b1218",
+      "gradient": "linear-gradient(92deg, #38e0ff 0%, #10e5a4 55%, #e879f9 115%)"
+    },
+    "light": {
+      "bg": "#eef1f8",
+      "bg2": "#e3e8f2",
+      "panel": "#ffffff",
+      "edge": "#dbe3f0",
+      "edge2": "#c6d2e6",
+      "text": "#0c1322",
+      "soft": "#46546e",
+      "faint": "#66718c",
+      "gold": "#9a7510",
+      "emerald": "#00a877",
+      "red": "#e0244a",
+      "amber": "#c07b16",
+      "cyan": "#0a7ea4",
+      "magenta": "#b13bc9",
+      "ok": "#e2f6ee",
+      "bad": "#fde9ee"
+    },
+    "usage": {
+      "gradient": "Reserved for signature moments only: the active bottom-nav tab and the primary CTA (Ask ZEROX). Do not apply to every active filter chip — that flattens its impact.",
+      "emerald_vs_red_vs_amber": "Up = emerald (teal-shifted, not pure green), down/danger = red (magenta-shifted), caution = amber (orange). Chosen for deuteranopia/protanopia separation; always pair with a redundant cue (▲/▼ or explicit label), never color alone."
+    }
+  },
+  "elevation": {
+    "description": "Three-tier shadow system. Dense repeated list items (calls, dex cards, heat bubbles, PNL tiles) default to the cheap flat tier so attention isn't spread evenly across dozens of identical cards — only live/up-trending items and one-off feature cards (paycard, askcard, tgcard) earn the glow tier.",
+    "flat": {
+      "dark": "0 6px 18px -12px rgba(0,0,0,.75)",
+      "light": "0 6px 16px -12px rgba(15,23,42,.35)"
+    },
+    "up": {
+      "dark": "0 6px 18px -12px rgba(0,0,0,.75), 0 0 16px -9px rgba(16,229,164,.35)",
+      "light": "0 6px 16px -12px rgba(15,23,42,.35), 0 0 14px -9px rgba(0,168,119,.3)"
+    },
+    "down": {
+      "dark": "0 6px 18px -12px rgba(0,0,0,.75), 0 0 16px -9px rgba(255,61,90,.28)",
+      "light": "0 6px 16px -12px rgba(15,23,42,.35), 0 0 14px -9px rgba(224,36,74,.25)"
+    },
+    "feature_glow": {
+      "dark": "0 0 0 1px rgba(56,224,255,.06), 0 12px 34px -14px rgba(0,0,0,.9), 0 0 24px -8px rgba(56,224,255,.18)",
+      "light": "0 0 0 1px rgba(10,126,164,.08), 0 12px 30px -18px rgba(15,23,42,.5)"
+    },
+    "focus_ring": "0 0 0 2px var(--bg), 0 0 0 4px var(--cyan)"
+  },
+  "typography": {
+    "families": {
+      "mono": "'JetBrains Mono','Cascadia Code','Share Tech Mono',Consolas,monospace",
+      "sans": "'Segoe UI',system-ui,-apple-system,'Inter',sans-serif"
+    },
+    "roles": {
+      "mono": "All data — prices, multipliers, tickers, timestamps, labels. Carries the terminal/trading-desk identity.",
+      "sans": "Prose only — coin names, descriptions, notes."
+    },
+    "scale_px": {
+      "micro_label": 8.5,
+      "small_label": 9,
+      "meta": 10,
+      "body": 11,
+      "emphasis": 12,
+      "row_title": 15,
+      "row_stat": 16,
+      "sheet_symbol": 22,
+      "sheet_stat": 30
+    }
+  },
+  "radius": {
+    "base": 14,
+    "pill": 999,
+    "sheet_top": "22px 22px 0 0"
+  },
+  "spacing_px": [4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20],
+  "breakpoint_px": {
+    "mobile": 0,
+    "tablet": 481,
+    "desktop": 1025,
+    "note": "simple-signals.html is a mobile-first single-column fluid layout by design (CSS Grid auto-fill, no fixed breakpoints needed at this size). These values are the convention to reuse if/when it grows a tablet/desktop layout, matching the split already planned between Simple Signals (mobile) and the ZEROX Terminal (desktop, signals.html/pro-signals.html)."
+  },
+  "motion": {
+    "tab_switch": "one fade + 6px rise, 220ms cubic-bezier(.2,.8,.3,1), respects prefers-reduced-motion",
+    "press_feedback": "scale(.94–.985) on :active across all tappable cards/chips/buttons",
+    "hover_lift": "translateY(-1px to -2px), gated behind @media (hover:hover) and (pointer:fine) so it never sticks on touch"
+  }
+}
