@@ -1149,20 +1149,22 @@ function renderPNL() {
     img.loading = 'lazy';
     img.alt = im.label;
     img.addEventListener('error', function () { t.style.display = 'none'; });
-    var cap = document.createElement('span');
-    cap.className = 'pnl-cap';
-    cap.textContent = im.label;
-    var share = document.createElement('span');
-    share.className = 'pnl-share';
-    share.textContent = '𝕏';
-    share.title = 'Share this call on X';
-    share.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var txt = '$' + (im.symbol || '?') + ' — peak ' + fmtX(im.peak) + (im.cur >= 1 ? ' · now ' + fmtX(im.cur) : '') + ' via @ShaddaiLabs\n';
-      var u = encodeURIComponent(txt);
-      var base = (/^https?:/i.test(im.src) ? '' : window.location.origin) + im.src;
-      window.open('https://twitter.com/intent/tweet?text=' + u + '&url=' + encodeURIComponent(base), '_blank', 'noopener');
-    });
+                  var cap = document.createElement('span');
+                  cap.className = 'pnl-cap';
+                  cap.textContent = im.label;
+                  var share = document.createElement('span');
+                  share.className = 'pnl-share';
+                  share.textContent = '𝕏';
+                  share.title = 'Share this call on X';
+                  share.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var sym = im.symbol || '?';
+                    var peak = fmtX(im.peak);
+                    var cur = im.cur >= 1 ? fmtX(im.cur) : '';
+                    var txt = `${sym} — peak ${peak} ${cur ? `· now ${cur}` : ''} via @ShaddaiLabs\n#ShaddaiSignals`;
+                    var pageUrl = '/simple-signals.html';
+                    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(txt) + '&url=' + encodeURIComponent(pageUrl), '_blank', 'noopener');
+                  });
     t.appendChild(img);
     t.appendChild(cap);
     t.appendChild(share);
