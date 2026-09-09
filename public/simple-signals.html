@@ -173,6 +173,8 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .wrow{display:flex;flex-direction:column;gap:7px;padding:12px 0;border-top:1px solid rgba(255,255,255,.06)}
 .wrow .wl{font-family:var(--f-mono);font-size:9px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase}
 .wrow .wa{font-family:var(--f-mono);font-size:11px;color:var(--txt);word-break:break-all;line-height:1.5;padding:9px 11px;background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:8px}
+.wrow .wb{font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--gold);border:1px solid var(--edge2);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:1px;text-transform:none}
+.wrow .wn{font-size:10px;color:var(--faint);line-height:1.5}
 .act{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
 .act button{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:13px 16px;border-radius:10px;min-height:50px;flex:1 1 auto}
 .act .cp{border:1px solid var(--edge2);color:var(--gold)}
@@ -452,6 +454,7 @@ html[data-theme="light"] .toast{background:rgba(255,255,255,.96);color:#8a6d1a}
 <header id="top">
   <div id="brand">ZEROX<b>·SIGNALS</b></div>
   <span id="clock" title="Local time"></span>
+  <span id="updated"></span>
   <span id="live">LIVE</span>
   <button id="btn-refresh" title="Refresh">⟳</button>
   <button id="btn-theme" title="Toggle theme">◐</button>
@@ -566,6 +569,7 @@ html[data-theme="light"] .toast{background:rgba(255,255,255,.96);color:#8a6d1a}
 'use strict';
 var API = (location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '') + '';
 var el = function (id) { return document.getElementById(id); };
+function setText(id, txt) { var n = el(id); if (n) n.textContent = txt; }
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); };
 var money = function (n) { n = Number(n); if (!isFinite(n)) return '—'; if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M'; if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K'; return '$' + n.toFixed(0); };
 var ago = function (ts) { if (!ts) return ''; var s = Math.max(0, Math.round((Date.now() - ts) / 1000)); if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm'; if (s < 86400) return Math.floor(s / 3600) + 'h'; return Math.floor(s / 86400) + 'd'; };
@@ -624,12 +628,12 @@ async function fetchJSON(u) {
   return r.json();
 }
 async function refresh() {
-  el('updated').textContent = '';
+  setText('updated', '');
   var r = await Promise.allSettled([loadFeed(), loadDex(), loadWallets()]);
   var ok = r.filter(function (x) { return x.status === 'fulfilled'; }).length;
   renderAll();
   stamp();
-  el('updated').textContent = ok < 3 ? 'partial · ' + Date.now().toString().slice(-5) : '';
+  setText('updated', ok < 3 ? 'partial · ' + Date.now().toString().slice(-5) : '');
 }
 /* Fast self-refresh while user is on DEX */
 setInterval(function () {
@@ -660,6 +664,8 @@ async function loadFeed() {
     (state.feed || []).forEach(function (c) { prev[c.mint] = 1; });
     fresh.forEach(function (c) { if (!prev[c.mint]) newCallToast(c); });
   }
+  var live = fresh.filter(function (c) { return (Number(c.curMult) || 0) >= 1; }).length;
+  console.log('[SHADDAI] feed loaded:', fresh.length, 'calls,', live, 'live (≥1×)');
   state.feed = fresh;
   return state.feed.length;
 }
@@ -698,7 +704,7 @@ async function loadWallets() {
 function stamp() {
   var n = Date.now();
   var t = new Date(n).toTimeString().slice(0, 5);
-  el('updated').textContent = t;
+  setText('updated', t);
 }
 
 /* ---------------- safety color ---------------- */
@@ -911,12 +917,16 @@ function renderDex() {
 function renderWallet() {
   var box = el('pb-wallets');
   box.textContent = '';
-  if (!state.wallets.length) { box.innerHTML = '<div class="wrow"><div class="wl">No wallets loaded</div></div>'; return; }
+  if (!state.wallets.length) { box.innerHTML = '<div class="wrow"><div class="wl">No wallets loaded</div></div>'; setText('pb-chain', 'USDC receiving'); return; }
   state.wallets.forEach(function (w) {
+    var chain = String(w.chain || '').toLowerCase();
+    var chainTxt = chain === 'evm' ? 'EVM' : (chain === 'solana' ? 'SOLANA' : (chain || 'WALLET'));
+    var label = w.label || w.name || chainTxt;
     var row = document.createElement('div');
     row.className = 'wrow';
-    row.innerHTML = '<span class="wl">' + esc(w.label || w.chain) + '</span>' +
-      '<span class="wa" id="wa-' + esc(w.address) + '">' + esc(w.address) + '</span>';
+    row.innerHTML = '<span class="wl">' + esc(label) + ' <b class="wb">' + esc(chainTxt) + '</b></span>' +
+      '<span class="wa">' + esc(w.address) + '</span>' +
+      (w.note ? '<span class="wn">' + esc(w.note) + '</span>' : '');
     var btn = document.createElement('button');
     btn.textContent = 'COPY';
     btn.className = 'cp';
@@ -930,7 +940,7 @@ function renderWallet() {
     row.appendChild(btn);
     box.appendChild(row);
   });
-  el('pb-chain').textContent = 'USDC receiving · ' + state.wallets.length + ' chain' + (state.wallets.length !== 1 ? 's' : '');
+  setText('pb-chain', 'USDC receiving · ' + state.wallets.length + ' chain' + (state.wallets.length !== 1 ? 's' : ''));
 }
 document.addEventListener('DOMContentLoaded', function () {
   var TG = {
