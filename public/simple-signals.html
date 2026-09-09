@@ -146,6 +146,16 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .dexrow .chg{font-family:var(--f-mono);font-size:11px;font-weight:700}
 .chg+.chg{color:var(--faint);font-weight:400;font-size:9px}
 
+/* ---------- pnl gallery ---------- */
+#pnl-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pnl-tile{
+  display:flex; flex-direction:column; gap:6px; padding:8px; text-align:left;
+  background:var(--panel); border:1px solid var(--edge); border-radius:12px; overflow:hidden; min-width:0;
+}
+.pnl-tile:active{background:var(--bg2)}
+.pnl-tile img{width:100%;height:auto;border-radius:8px;display:block;object-fit:cover;border:1px solid var(--edge2)}
+.pnl-tile .pnl-cap{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--soft);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* ---------- wallet view ---------- */
 .paycard{background:linear-gradient(150deg,rgba(232,196,92,.09),rgba(0,229,160,.04));border:1px solid rgba(232,196,92,.3);border-radius:14px;padding:16px;margin-bottom:12px}
 .paycard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
@@ -280,6 +290,16 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
     </div>
   </section>
 
+  <section class="view" id="v-pnl">
+    <div class="view-h"><span class="ti">PNL Gallery</span><span class="count" id="pnl-count"></span></div>
+    <div class="chips" style="margin-bottom:8px">
+      <button class="chip on" data-pnl="all">All</button>
+      <button class="chip" data-pnl="milestone">Milestones</button>
+      <button class="chip" data-pnl="pnl">Weekly PNL</button>
+    </div>
+    <div id="pnl-list"></div>
+  </section>
+
 </main>
 
 <nav id="nav">
@@ -288,6 +308,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   <button class="nt" data-v="race"><i>▶</i><small>RACE</small></button>
   <button class="nt" data-v="dex"><i>◈</i><small>DEX</small></button>
   <button class="nt" data-v="wallet"><i>⛃</i><small>WALLET</small></button>
+  <button class="nt" data-v="pnl"><i>▣</i><small>PNL</small></button>
 </nav>
 
 <div id="scrim"></div>
@@ -300,7 +321,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 'use strict';
 var API = (location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '') + '';
 var el = function (id) { return document.getElementById(id); };
-var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c]); }); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); };
 var money = function (n) { n = Number(n); if (!isFinite(n)) return '—'; if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M'; if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K'; return '$' + n.toFixed(0); };
 var ago = function (ts) { if (!ts) return ''; var s = Math.max(0, Math.round((Date.now() - ts) / 1000)); if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm'; if (s < 86400) return Math.floor(s / 3600) + 'h'; return Math.floor(s / 86400) + 'd'; };
 var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' + encodeURIComponent(id) + '?width=128&height=128&quality=95&format=auto' : '' };
@@ -448,7 +469,7 @@ function tokStrip(c) {
   if (c.lpPct != null && c.lpPct < 50) add('warn', '🔓 LP ' + Math.round(c.lpPct) + '%');
   if (c.rugScore != null) add(c.rugScore > 50 ? 'danger' : 'safe', '🛡 ' + c.rugScore);
   if (c.top10Pct != null) add('safe', 'T10 ' + Math.round(c.top10Pct) + '%');
-  if (c.safetyScore != null) add(safetyScore >= 75 ? 'safe' : safetyScore >= 55 ? 'warn' : 'danger', 'SF ' + c.safetyScore);
+  if (c.safetyScore != null) add(c.safetyScore >= 75 ? 'safe' : c.safetyScore >= 55 ? 'warn' : 'danger', 'SF ' + c.safetyScore);
   if (!out.length) add('safe', 'ⓘ clean');
   return '<div class="tokstrip">' + out.join('') + '</div>';
 }
@@ -702,8 +723,44 @@ function showSheet() { el('scrim').classList.add('on'); el('sheet').classList.ad
 function closeSheet() { el('scrim').classList.remove('on'); el('sheet').classList.remove('on'); }
 el('scrim').addEventListener('click', closeSheet);
 
+/* ---------------- PNL gallery ---------------- */
+var PNL_IMAGES = [];
+(function initPnlImages() {
+  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/pnl-' + i + '.png', label: 'Weekly PnL #' + i, group: 'pnl' });
+  [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(function (m) {
+    PNL_IMAGES.push({ src: '/assets/bot/milestones/milestone-' + m + 'x.png', label: 'Milestone ' + m + 'x', group: 'milestone' });
+  });
+})();
+var pnlFilter = 'all';
+function renderPNL() {
+  var list = pnlFilter === 'all' ? PNL_IMAGES : PNL_IMAGES.filter(function (im) { return im.group === pnlFilter; });
+  el('pnl-count').textContent = list.length;
+  var div = el('pnl-list');
+  div.textContent = '';
+  if (!list.length) { div.innerHTML = '<div class="empty">NO PNL IMAGES</div>'; return; }
+  var frag = document.createDocumentFragment();
+  list.forEach(function (im) {
+    var t = document.createElement('button');
+    t.className = 'pnl-tile';
+    var img = document.createElement('img');
+    img.src = im.src;
+    img.loading = 'lazy';
+    img.alt = im.label;
+    img.addEventListener('error', function () { t.style.display = 'none'; });
+    var cap = document.createElement('span');
+    cap.className = 'pnl-cap';
+    cap.textContent = im.label;
+    t.appendChild(img);
+    t.appendChild(cap);
+    t.setAttribute('title', 'Open ' + im.label);
+    t.onclick = function () { window.open(im.src, '_blank'); };
+    frag.appendChild(t);
+  });
+  div.appendChild(frag);
+}
+
 /* ---------------- tabs + swipe ---------------- */
-var tabs = ['heat', 'calls', 'race', 'dex', 'wallet'];
+var tabs = ['heat', 'calls', 'race', 'dex', 'wallet', 'pnl'];
 function setTab(t) {
   state.tab = t;
   try { localStorage.setItem('ss_tab', t); } catch (e) {}
@@ -744,6 +801,14 @@ document.querySelectorAll('.chip[data-race]').forEach(function (b) {
 });
 
 /* ---------------- filters + init ---------------- */
+document.querySelectorAll('.chip[data-pnl]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.chip[data-pnl]').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    pnlFilter = b.dataset.pnl;
+    renderPNL();
+  });
+});
 document.querySelectorAll('.chip[data-r]').forEach(function (b) {
   b.addEventListener('click', function () {
     document.querySelectorAll('.chip[data-r]').forEach(function (x) { x.classList.remove('on'); });
@@ -761,7 +826,7 @@ document.querySelectorAll('.chip[data-s]').forEach(function (b) {
   });
 });
 el('btn-refresh').addEventListener('click', refresh);
-function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet(); if (state.tab === 'race') renderRace(); }
+function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet(); renderPNL(); if (state.tab === 'race') renderRace(); }
 
 try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}
 refresh();
