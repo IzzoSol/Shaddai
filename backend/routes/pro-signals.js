@@ -577,18 +577,30 @@ router.post('/zerox/access', express.json({ limit: '16kb' }), (req, res) => {
 // $1 gate flips on when paybox webhooks verify real payments (see servex/paybox).
 router.post('/zerox/pay-ask', express.json({ limit: '16kb' }), async (req, res) => {
   try {
-    const { question, mint, symbol, solscanUrl, txn } = (req.body || {});
+    const { question, mint, symbol, solscanUrl, txn, address } = (req.body || {});
     const q = String(question || '').trim();
     const proof = String(solscanUrl || txn || '').trim();
+    const payer = String(address || '').trim();
 
     if (!q) return res.status(400).json({ ok: false, error: 'missing question' });
     if (!mint && !symbol) return res.status(400).json({ ok: false, error: 'missing mint or symbol' });
-    if (!proof) return res.status(400).json({ ok: false, error: 'paste the Solscan txn link of your $1 payment as proof' });
 
-    const looksLikeTxn = /^[A-Za-z0-9]{64,88}$/.test(proof);
-    const looksLikeSolscan = /solscan\.io\/tx\//i.test(proof);
-    if (!looksLikeTxn && !looksLikeSolscan) {
-      return res.status(400).json({ ok: false, error: 'that is not a Solscan transaction link or signature' });
+    // Preferred payment: Ask-ZEROX credits keyed to a wallet address (1 question = 1 credit).
+    let paidWith = null;
+    if (payer) {
+      try {
+        const credits = require('../lib/zerox-credits');
+        paidWith = credits.spend(payer, 1) ? 'credit' : null;
+      } catch (e) { paidWith = null; }
+    }
+    // Fallback: a real USDC txn to the ZEROX wallet (proof recorded for reconciliation).
+    if (!paidWith) {
+      if (!proof) return res.status(400).json({ ok: false, error: 'no credits on that wallet — paste the Solscan txn link of your $1 payment as proof' });
+      const looksLikeTxn = /^[A-Za-z0-9]{64,88}$/.test(proof);
+      const looksLikeSolscan = /solscan\.io\/tx\//i.test(proof);
+      if (!looksLikeTxn && !looksLikeSolscan) {
+        return res.status(400).json({ ok: false, error: 'that is not a Solscan transaction link or signature' });
+      }
     }
 
     // Resolve the coin: mint match first, then symbol match
@@ -603,14 +615,15 @@ router.post('/zerox/pay-ask', express.json({ limit: '16kb' }), async (req, res) 
     let all = { approvals: [] };
     try { all = JSON.parse(fs.readFileSync(file, 'utf8')) || all; } catch (e) {}
     all.approvals.unshift({
-      kind: 'pay-ask',
+      kind: paidWith ? 'pay-ask-credit' : 'pay-ask',
       question: q,
       mint: mint || (call && call.mint) || null,
       symbol: symbol || (call && call.symbol) || null,
       proof,
-      proofKind: looksLikeSolscan ? 'solscan' : 'txn',
+      payer: payer || null,
+      proofKind: paidWith ? 'credit' : (looksLikeSolscan ? 'solscan' : 'txn'),
       status: 'accepted',
-      fee: '1 USDC',
+      fee: paidWith ? '1 credit' : '1 USDC',
       submittedAt: Date.now(),
     });
     fs.writeFileSync(file, JSON.stringify(all, null, 2));
@@ -632,7 +645,7 @@ router.post('/zerox/pay-ask', express.json({ limit: '16kb' }), async (req, res) 
     return res.json({
       ok: true,
       status: 'accepted',
-      fee: '1 USDC (paybox webhook confirms real charge later)',
+      fee: paidWith ? '1 credit · deducted from wallet ' + payer : '1 USDC (paybox webhook confirms real charge later)',
       asked: q,
       ...read,
     });

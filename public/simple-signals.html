@@ -436,8 +436,15 @@ html[data-theme="light"] #nav{background:rgba(255,255,255,.92)}
 html[data-theme="light"] .s-cell{background:#fff}
 
 /* ---------- PNL tile ---------- */
-.pnl-tile{border:1px solid var(--edge2);border-radius:12px;overflow:hidden;box-shadow:var(--glow);padding:0}
+.pnl-tile{border:1px solid var(--edge2);border-radius:12px;overflow:hidden;box-shadow:var(--glow);padding:0;position:relative}
 .pnl-cap{background:linear-gradient(0deg, rgba(5,7,12,.9), transparent);font-family:var(--f-mono);font-size:9px;letter-spacing:.05em;color:var(--soft);padding:6px;text-align:center}
+.pnl-share{position:absolute;top:6px;right:6px;z-index:2;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(5,7,12,.72);border:1px solid var(--edge2);color:var(--gold);font-size:15px;cursor:pointer}
+.pnl-share:active{transform:scale(.92)}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;top:54px;left:50%;transform:translate(-50%,-18px);z-index:60;max-width:86vw;padding:11px 16px;border-radius:12px;border:1px solid var(--gold);background:rgba(6,10,16,.94);color:var(--gold);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;box-shadow:0 12px 34px -10px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+html[data-theme="light"] .toast{background:rgba(255,255,255,.96);color:#8a6d1a}
 </style>
 </head>
 <body>
@@ -514,7 +521,7 @@ html[data-theme="light"] .s-cell{background:#fff}
     <div class="tgcard" id="tg-card">
       <div class="ph"><span>Signal Alerts</span><span class="ch">live feeds</span></div>
       <div class="act" style="margin-top:4px">
-        <button class="tg-btn" id="btn-tg-shaddai">SHADDAI HALL ↗</button>
+        <button class="tg-btn" id="btn-tg-shaddai">SHADDAI TEMPLE ↗</button>
         <button class="tg-btn" id="btn-tg-zerox">ZEROX SIGNALS ↗</button>
       </div>
       <div class="hnote">Join the channels for live call alerts, milestones and weekly PnL drops.</div>
@@ -525,7 +532,7 @@ html[data-theme="light"] .s-cell{background:#fff}
     <div class="view-h"><span class="ti">PNL Gallery</span><span class="count" id="pnl-count"></span></div>
     <div class="chips" style="margin-bottom:6px">
       <button class="chip on" data-pnl="all">All</button>
-      <button class="chip" data-pnl="milestone">Milestones</button>
+      <button class="chip" data-pnl="milestone">10x+</button>
       <button class="chip" data-pnl="pnl">Vault</button>
     </div>
     <div class="chips" style="margin-bottom:8px">
@@ -566,7 +573,7 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all' };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all', firstFeed: true };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */
@@ -618,18 +625,53 @@ async function fetchJSON(u) {
 }
 async function refresh() {
   el('updated').textContent = '';
-  try { await Promise.all([loadFeed(), loadDex(), loadWallets()]); stamp(); renderAll(); }
-  catch (e) { el('updated').textContent = 'ERR'; console.error(e); }
+  var r = await Promise.allSettled([loadFeed(), loadDex(), loadWallets()]);
+  var ok = r.filter(function (x) { return x.status === 'fulfilled'; }).length;
+  renderAll();
+  stamp();
+  el('updated').textContent = ok < 3 ? 'partial · ' + Date.now().toString().slice(-5) : '';
 }
 /* Fast self-refresh while user is on DEX */
 setInterval(function () {
   if (state.tab !== 'dex') return;
   loadDex().then(function () { renderDex(); stamp(); }).catch(function () {});
 }, 30000);
+var seenNew = {}; var NEW_TOAST_GAP = 3600000;
+function newCallToast(c) {
+  var mint = c.mint;
+  var now = Date.now();
+  if (seenNew[mint] && (now - seenNew[mint]) < NEW_TOAST_GAP) return;
+  if (isDeadCoin(c)) return;
+  if ((Number(c.curMult) || 0) < 1) return;
+  var age = (c.ts && (now - (Number(c.ts) || now)) < 60000) || !c.ts;
+  seenNew[mint] = seenNew[mint] || now;
+  if (!age) return;
+  seenNew[mint] = now;
+  toast('NEW CALL · $' + esc(c.symbol || '?') + ' · ' + fmtX(c.curMult), function () { openCoin(c); });
+}
 async function loadFeed() {
-  var j = await fetchJSON(API + '/api/pro-signals/feed?limit=250');
-  state.feed = (j.calls || []).filter(function (c) { return c && c.mint; });
+  var j = await fetchJSON(API + '/api/pro-signals/feed?limit=250&_=' + Date.now());
+  var fresh = (j.calls || []).filter(function (c) { return c && c.mint; });
+  if (state.firstFeed) {
+    state.firstFeed = false;
+    (state.feed || []).concat(fresh).forEach(function (c) { if (c && c.mint) seenNew[c.mint] = Date.now(); });
+  } else {
+    var prev = {};
+    (state.feed || []).forEach(function (c) { prev[c.mint] = 1; });
+    fresh.forEach(function (c) { if (!prev[c.mint]) newCallToast(c); });
+  }
+  state.feed = fresh;
   return state.feed.length;
+}
+function toast(msg, onClick) {
+  try {
+    var t = document.createElement('div');
+    t.className = 'toast on';
+    t.innerHTML = msg;
+    if (onClick) { t.style.cursor = 'pointer'; t.addEventListener('click', onClick); }
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.remove('on'); setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400); }, 6000);
+  } catch (e) {}
 }
 /* UI-side cleanup: hide visibly dead coins that slip through the backend net */
 function isDeadCoin(c) {
@@ -644,7 +686,7 @@ function isDeadCoin(c) {
 function deadClass(c) { return isDeadCoin(c) ? 'dead' : ''; }
 function liveOnly(list) { return list.filter(function (c) { return !isDeadCoin(c); }); }
 async function loadDex() {
-  var j = await fetchJSON(API + '/api/pro-signals/top-dex?limit=25');
+  var j = await fetchJSON(API + '/api/pro-signals/top-dex?limit=25&_=' + Date.now());
   state.dex = (j.pairs || []).filter(function (p) { return p && p.mint; });
   return state.dex.length;
 }
@@ -892,8 +934,8 @@ function renderWallet() {
 }
 document.addEventListener('DOMContentLoaded', function () {
   var TG = {
-    shaddai: 'https://t.me/ShaddaiCircle',
-    zerox: 'https://t.me/ShaddaiSignalsBot'
+    shaddai: 'https://t.me/ShaddaiTempleBot',
+    zerox: 'https://t.me/ShaddaiLabs'
   };
   el('btn-tg-shaddai').addEventListener('click', function () { window.open(TG.shaddai, '_blank'); });
   el('btn-tg-zerox').addEventListener('click', function () { window.open(TG.zerox, '_blank'); });
@@ -1021,14 +1063,17 @@ el('scrim').addEventListener('click', closeSheet);
 function askZerox() {
   var btn = el('btn-ask');
   var ans = el('ask-ans');
+  var proof = el('ask-proof').value.trim();
+  var isAddr = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(proof);
   var body = {
     mint: el('ask-mint').value.trim(),
     symbol: el('ask-mint').value.trim(),
     question: el('ask-q').value.trim(),
-    solscanUrl: el('ask-proof').value.trim()
+    solscanUrl: isAddr ? '' : proof,
+    address: isAddr ? proof : ''
   };
   if (!body.question) { ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">Enter a question first.</div>'; return; }
-  if (!body.solscanUrl) { ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">Paste your Solscan txn link (the $1 payment) — without it the question stays locked.</div>'; return; }
+  if (!body.solscanUrl && !body.address) { ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">Paste your Solscan txn link (the $1 payment) or your wallet address (spends Ask-credits).</div>'; return; }
   btn.disabled = true; btn.textContent = '…';
   fetch(API + '/api/pro-signals/zerox/pay-ask', {
     method: 'POST',
@@ -1069,23 +1114,21 @@ function fmtX(v) {
 }
 function initPnlImages() {
   PNL_IMAGES.length = 0;
-  [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(function (m) {
-    PNL_IMAGES.push({ src: '/assets/bot/milestones/milestone-' + m + 'x.png', label: 'Milestone ' + m + 'x', group: 'milestone', peak: m, cur: 0, live: false });
-  });
   return fetch(API + '/assets/bot/vault/manifest.json', { headers: { 'Accept': 'application/json' } })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (mf) {
       if (!mf || !mf.items) return;
       mf.items.forEach(function (it) {
-        PNL_IMAGES.push({ src: '/assets/bot/vault/' + it.file, label: it.symbol + ' · ' + fmtX(it.peak), group: 'pnl', peak: it.peak, cur: it.cur, live: (it.cur || 0) >= 1 });
+        PNL_IMAGES.push({ src: '/assets/bot/vault/' + it.file, label: it.symbol + ' · ' + fmtX(it.peak), group: 'pnl', symbol: it.symbol, peak: it.peak, cur: it.cur, live: (it.cur || 0) >= 1 });
       });
     })
-    .catch(function () { /* keep milestones only */ });
+    .catch(function () { /* keep what loaded */ });
 }
 var pnlFilter = 'all';
 var pnlMult = 0;
 function renderPNL() {
   var list = PNL_IMAGES.filter(function (im) {
+    if (pnlFilter === 'milestone') { if ((im.peak || 0) < 10) return false; return true; }
     if (pnlFilter !== 'all' && im.group !== pnlFilter) return false;
     if (pnlMult === 'live') return im.live;
     if (pnlMult > 0 && (im.peak || 0) < pnlMult) return false;
@@ -1109,8 +1152,20 @@ function renderPNL() {
     var cap = document.createElement('span');
     cap.className = 'pnl-cap';
     cap.textContent = im.label;
+    var share = document.createElement('span');
+    share.className = 'pnl-share';
+    share.textContent = '𝕏';
+    share.title = 'Share this call on X';
+    share.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var txt = '$' + (im.symbol || '?') + ' — peak ' + fmtX(im.peak) + (im.cur >= 1 ? ' · now ' + fmtX(im.cur) : '') + ' via @ShaddaiLabs\n';
+      var u = encodeURIComponent(txt);
+      var base = (/^https?:/i.test(im.src) ? '' : window.location.origin) + im.src;
+      window.open('https://twitter.com/intent/tweet?text=' + u + '&url=' + encodeURIComponent(base), '_blank', 'noopener');
+    });
     t.appendChild(img);
     t.appendChild(cap);
+    t.appendChild(share);
     t.setAttribute('title', 'Open ' + im.label);
     t.onclick = function () { window.open(im.src, '_blank'); };
     frag.appendChild(t);

@@ -120,22 +120,76 @@ router.get('/orders', requireAdmin, (req, res) => {
 // reconciliation, a bigger feature; this is the honest v1: human-verified, not guessed.
 router.post('/confirm-order', requireAdmin, json, async (req, res) => {
   const { orderId } = req.body || {};
-  if (!orderId) return res.status(400).json({ ok: false, error: 'orderId required' });
+  try {
+    const order = await confirmOrder(orderId);
+    return res.json({ ok: true, order });
+  } catch (err) {
+    const status = (err && (err.code === 'NOT_FOUND' ? 404 : err.code === 'DONE' ? 400 : 500)) || 500;
+    return res.status(status).json({ ok: false, error: (err && err.message) || 'confirm failed' });
+  }
+});
+// Shared idempotent confirmation (also used by the REAL Paybox webhook in
+// server-production). Marks the order confirmed, grants Sparks, and — when the
+// order recorded a payer `address` + `usdc` — credits that wallet 1:1 with
+// Ask-ZEROX credits (ZEROX Revenue rule: every confirmed dollar top-up funds the
+// pool that pays ZEROX's AI bill; 1 USDC = 1 credit, spent 1-for-1 per question).
+async function confirmOrder(orderId) {
+  if (!orderId) { const e = new Error('orderId required'); e.code = 'BAD_REQ'; throw e; }
   const list = readOrders();
   const order = list.find(o => o.id === orderId);
-  if (!order) return res.status(404).json({ ok: false, error: 'order not found' });
-  if (order.status !== 'pending') return res.status(400).json({ ok: false, error: `already ${order.status}` });
+  if (!order) { const e = new Error('order not found'); e.code = 'NOT_FOUND'; throw e; }
+  if (order.status !== 'pending') { const e = new Error(`already ${order.status}`); e.code = 'DONE'; throw e; }
 
   try {
     const economy = require('./economy-service').getDefault();
     await economy.grant(order.userId, order.sparks, 'paybox_topup', `paybox_${orderId}`);
   } catch (e) {
-    return res.status(500).json({ ok: false, error: `Sparks credit failed: ${(e && e.message) || e}` });
+    throw new Error(`Sparks credit failed: ${(e && e.message) || e}`);
   }
+  // Ask-ZEROX credits — proportional to USDC actually paid; idempotent on orderId.
+  let credits = null;
+  const payer = order.address || order.from;
+  const usdc = Number(order.usdc != null ? order.usdc : (order.amountUsdc || order.amount || order.sparks));
+  if (payer && usdc > 0) {
+    try {
+      const c = require('./lib/zerox-credits');
+      credits = c.grant(payer, usdc, `paybox_${orderId}`, 'paybox-topup');
+    } catch (e) { console.warn('[paybox] credit grant skipped:', e.message); }
+  }
+
   order.status = 'confirmed';
   order.confirmedAt = new Date().toISOString();
+  order.credits = credits || null;
   writeOrders(list);
-  res.json({ ok: true, order });
+  return order;
+}
+
+// GET /api/paybox/credit/balance?address= — how many Ask-ZEROX credits a wallet holds.
+router.get('/credit/balance', json, (req, res) => {
+  try {
+    const addr = String(req.query.address || '').trim();
+    if (!addr) return res.status(400).json({ ok: false, error: 'address required' });
+    const c = require('./lib/zerox-credits');
+    return res.json({ ok: true, address: addr, balance: c.balance(addr), unit: 'ask-credit', spend: '1 credit per question' });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+// POST /api/paybox/credit/topup { address, usdc, ref } — admin-verified claim:
+// after checking the payment reached the ZEROX wallet (same honest flow as
+// /confirm-order — human-verified, not guessed), grants proportional credits.
+router.post('/credit/topup', requireAdmin, json, async (req, res) => {
+  const { address, usdc, ref } = req.body || {};
+  if (!address) return res.status(400).json({ ok: false, error: 'address required' });
+  if (!(Number(usdc) > 0)) return res.status(400).json({ ok: false, error: 'usdc amount required' });
+  if (!ref) return res.status(400).json({ ok: false, error: 'ref required (idempotency key)' });
+  try {
+    const c = require('./lib/zerox-credits');
+    const r = c.grant(address, usdc, String(ref), 'paybox-topup-claim');
+    return res.json({ ok: true, ...r });
+  } catch (err) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
 });
 
 // POST /api/paybox/agent-tip { buyerUserId, agentCodename, amountCredits } —
@@ -173,3 +227,4 @@ router.post('/agent-tip', json, async (req, res) => {
 
 module.exports = router;
 module.exports.recordOrder = recordOrder;
+module.exports.confirmOrder = confirmOrder;

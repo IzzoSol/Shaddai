@@ -38,12 +38,51 @@ function milestoneImage(mult) {
   const f = path.join(MILESTONES_DIR, 'milestone-' + best + 'x.png');
   return fs.existsSync(f) ? f : null;
 }
-// get PNL image for /pnl command: use milestone image if at milestone, else random pnl image
+// get PNL image for /pnl command: prefer the accurate vault card, else milestone image, else random pnl image
 function _pnlImageForCall(call) {
+  const v = _vaultImageFor(call);
+  if (v) return v;
   const m = Math.floor(Number(call.curMult || call.peakMult || 0));
   const msImg = milestoneImage(m);
   if (msImg) return msImg;
   return _pnlImage();
+}
+// ── ACCURATE MULTIPLE DISPLAY ──────────────────────────────────────────────
+// The old shows (e.g. "13857.5x") came from raw entry/cap math on sub-$1000 entry
+// FDVs plus no ceiling. Canonical PG rule: display multiple = min(raw, 5000),
+// and when the recorded entry FDV was under $1000 scale the multiple by entry/1000
+// so a $500-entry "13857x" shows as the same number the vault / leaderboard uses.
+const MULT_CAP = 5000;
+const ENTRY_FLOOR = 1000;
+function _entryAdj(call) {
+  const e = Number(call && call.entryFdv) || 0;
+  return (e > 0 && e < ENTRY_FLOOR) ? e / ENTRY_FLOOR : 1;
+}
+function _capM(call, mult) {
+  let m = Number(mult) || 0;
+  if (mult != null) m = m * _entryAdj(call);
+  if (!(m >= 0) || !isFinite(m)) return 0;
+  return Math.min(m, MULT_CAP);
+}
+function _dispPeak(call) { return Number(_capM(call, call && call.peakMult)).toFixed(1).replace(/\.0$/, ''); }
+function _dispCur(call) { return Number(_capM(call, call && call.curMult)).toFixed(1).replace(/\.0$/, ''); }
+// Vault card image lookup (built from the same corrected corpus the gallery uses):
+// returns the PNG path in public/assets/bot/vault for a call, else null.
+let _vaultIdx = null;
+function _vaultImageFor(call) {
+  try {
+    const sym = String(call && (call.symbol || call.name) || '').trim().toUpperCase();
+    if (!sym) return null;
+    if (!_vaultIdx) {
+      const mf = JSON.parse(fs.readFileSync(path.join(BOT_DIR, 'vault', 'manifest.json'), 'utf8'));
+      _vaultIdx = {};
+      for (const it of (mf.items || [])) if (it && it.file) _vaultIdx[String(it.symbol).trim().toUpperCase()] = it;
+    }
+    const it = _vaultIdx[sym];
+    if (!it || !it.file) return null;
+    const f = path.join(BOT_DIR, 'vault', it.file);
+    return fs.existsSync(f) ? f : null;
+  } catch (e) { return null; }
 }
 const DS_TOKENS = (addrs) => `https://api.dexscreener.com/latest/dex/tokens/${addrs}`;
 const MILESTONES = [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];   // every milestone level
@@ -230,13 +269,16 @@ function _milestoneCard(call, x) {
     ? '\n\n📈 <b>CONFIRMED RUNNER</b> — hit 2nd milestone. Historically these continue higher.' : '';
   const laterMilestones = call.milestones && call.milestones.length > 1
     ? `\n🎯 Hit milestones: ${call.milestones.map(m => m + 'x').join(' → ')}` : '';
+  const peakD = _dispPeak(call);
+  const nowD = _dispCur(call);
+  const peakNote = (Number(_capM(call, call && call.peakMult)) >= MULT_CAP) ? ' (capped)' : '';
   return (
     `🎯 <b>${x}x WIN</b> 🚀\n` +
     `<b>$${_esc(call.symbol || call.name || 'TOKEN')}</b> is up <b>${x}x</b> since our CALL (${_ago(call.ts)} ago)\n\n` +
     `━━ 📊 PNL ━━\n` +
     `Entry: <b>${_usd(call.entryFdv)}</b>\n` +
-    `Now:   <b>${_usd(call.curFdv)}</b>\n` +
-    `Peak:  <b>${x}x</b>` + laterMilestones + confirmedRunner +
+    `Now:   <b>${_usd(call.curFdv)}</b>  <b>(${nowD}x)</b>\n` +
+    `Peak:  <b>${peakD}x${peakNote}</b>` + laterMilestones + confirmedRunner +
     `\n\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
   );
 }
@@ -282,7 +324,7 @@ async function trackTick() {
           // at most one update per token every 45 minutes.
           if (HAS_BOT && Date.now() - (call.lastMsPosted || call.ts) >= MS_BROADCAST_GAP) {
             call.lastMsPosted = Date.now();
-            const img = milestoneImage(hit) || _pnlImage();
+            const img = _vaultImageFor(call) || milestoneImage(hit) || _pnlImage();
             const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
             if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
             else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
@@ -316,11 +358,11 @@ function stats(period) {
   const hits5 = rows.filter(c => c.peakMult >= 5).length;
   const hits10 = rows.filter(c => c.peakMult >= 10).length;
   const hitRate = total ? Math.round((hits2 / total) * 100) : 0;
-  const avgPeak = total ? (rows.reduce((s, c) => s + (c.peakMult || 0), 0) / total).toFixed(1) : '0';
+  const avgPeak = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total).toFixed(1) : '0';
   const best = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
   const bestTxt = best.length
-    ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n')
+    ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${_dispPeak(c)}x</b>`).join('\n')
     : '• (no calls in range yet)';
   // Per-source breakdown
   const sources = ['bonded', 'new_pools', 'trending', 'boosted'];
@@ -354,7 +396,7 @@ function pnlCaption(period) {
   const hitRate = rows.length ? Math.round((hits / rows.length) * 100) : 0;
   const ch = core.channel() || '@ShaddaiLabs';
   const bestTxt = best.length
-    ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${c.peakMult.toFixed(1)}x</b>`).join('\n')
+    ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${_dispPeak(c)}x</b>`).join('\n')
     : '• (calls are being tracked — check back soon)';
   return (
     `📊 <b>SHADDAI PNL</b> · ${_esc(ch)}\n\n` +
@@ -376,7 +418,7 @@ function pnlForToken(q) {
   return (
     `📊 <b>PNL — $${_esc(c.symbol || c.name || '?')}</b>\n\n` +
     `Entry: <b>${_usd(c.entryFdv)}</b>\nNow: <b>${_usd(c.curFdv || c.entryFdv)}</b>\n` +
-    `Peak: <b>${c.peakMult.toFixed(1)}x</b>  ·  Current: <b>${(c.curMult || 1).toFixed(1)}x</b>\n` +
+    `Peak: <b>${_dispPeak(c)}x</b>  ·  Current: <b>${_dispCur(c)}x</b>\n` +
     `Called: ${_ago(c.ts)} ago\n` +
     (realMint ? `📋 CA: <code>${_esc(c.mint)}</code>\n` : '') +
     `\n📡 ${_esc(ch)}  ·  <i>Not financial advice.</i>`
@@ -392,14 +434,14 @@ function distribution() {
   const b12 = inB(1, 2), b25 = inB(2, 5), b510 = inB(5, 10), b10 = inB(10, 0);
   const hits = b25 + b510 + b10;
   const hitRate = total ? Math.round((hits / total) * 100) : 0;
-  const avg = total ? (rows.reduce((s, c) => s + c.peakMult, 0) / total) : 0;
+  const avg = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total) : 0;
   const top = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => b.peakMult - a.peakMult).slice(0, 250);
   const ch = core.channel() || '@ShaddaiLabs';
   // Show as many top performers as fit — Telegram hard-caps a message at 4096 chars, so build the
   // list up to a safe budget (leaves room for the header/footer) then note how many more there are.
   let topTxt = '', shown = 0;
   for (const c of top) {
-    const line = `• <b>$${_esc(c.symbol || c.name)}</b> — <b>${c.peakMult.toFixed(1)}x</b>\n`;
+    const line = `• <b>$${_esc(c.symbol || c.name)}</b> — <b>${_dispPeak(c)}x</b>\n`;
     if (topTxt.length + line.length > 3600) break;
     topTxt += line; shown++;
   }
@@ -447,7 +489,7 @@ function survivors(period) {
     const bar = ret >= 70 ? '🟢' : ret >= 40 ? '🟡' : '🟠';
     const hold = s.c.holders ? ` · 👥 ${s.c.holders}` : '';
     const ca = s.c.mint && !String(s.c.mint).startsWith('seed-') ? `\n   <code>${_esc(s.c.mint)}</code>` : '';
-    return `${bar} <b>$${sym}</b> — now <b>${s.cur.toFixed(1)}x</b> · ATH ${s.peak.toFixed(1)}x · held <b>${ret}%</b>${hold} · ${_ago(s.c.ts)}${ca}`;
+    return `${bar} <b>$${sym}</b> — now <b>${_dispCur(s.c)}x</b> · ATH ${_dispPeak(s.c)}x · held <b>${ret}%</b>${hold} · ${_ago(s.c.ts)}${ca}`;
   }).join('\n');
   return (
     `💎 <b>SHADDAI CONVICTION HOLDS — ${label}</b>\n` +
@@ -636,8 +678,8 @@ async function savePnlSnapshot(q) {
   const cap = (
     `📊 <b>PNL SNAPSHOT — $${_esc(symbol)}</b>\n\n` +
     `Entry: <b>${_usd(c.entryFdv)}</b>\n` +
-    `ATH: <b>${mult.toFixed(1)}x</b>  →  <b>${_usd(c.entryFdv * mult)}</b>\n` +
-    `Current: <b>${(c.curMult || 1).toFixed(1)}x</b>\n` +
+    `ATH: <b>${_dispPeak(c)}x</b>  →  <b>${_usd(c.entryFdv * mult)}</b>\n` +
+    `Current: <b>${_dispCur(c)}x</b>\n` +
     (c.mint && !String(c.mint).startsWith('seed-') ? `📋 CA: <code>${_esc(c.mint)}</code>\n` : '') +
     `\n📡 ${_esc(ch)}  ·  <i>Saved PNL snapshot.</i>`
   );
@@ -683,7 +725,7 @@ function lastCalls(n) {
     const emoji = peak >= 10 ? '🚀' : peak >= 5 ? '🔥' : peak >= 2 ? '🟢' : cur < 0.5 ? '💀' : '🟡';
     const entryFdv = c.entryFdv ? ` ·in $${c.entryFdv >= 1000 ? (c.entryFdv/1000).toFixed(0)+'K' : c.entryFdv}` : '';
     const age = c.ts ? ` · ${_ago(c.ts)}` : '';
-    const line = `${emoji} <b>$${sym}</b> — now <b>${cur.toFixed(1)}x</b> · ATH <b>${peak.toFixed(1)}x</b>${entryFdv}${age}\n`;
+    const line = `${emoji} <b>$${sym}</b> — now <b>${_dispCur(c)}x</b> · ATH <b>${_dispPeak(c)}x</b>${entryFdv}${age}\n`;
     if (body.length + line.length > 3600) break;
     body += line; shown++;
   }
@@ -717,7 +759,7 @@ function activeCalls() {
     const pctStr = pct >= 0 ? `+${pct}%` : `${pct}%`;
     const entryFdv = c.entryFdv ? ` ·in $${c.entryFdv >= 1000 ? (c.entryFdv/1000).toFixed(0)+'K' : c.entryFdv}` : '';
     const ca = c.mint && !String(c.mint).startsWith('seed-') ? `\n   <code>${_esc(c.mint)}</code>` : '';
-    const line = `${emoji} <b>$${sym}</b>  <b>${pctStr}</b> (${cur.toFixed(2)}x) · ATH ${peak.toFixed(1)}x${entryFdv} · ${_ago(c.ts)}${ca}\n`;
+    const line = `${emoji} <b>$${sym}</b>  <b>${pctStr}</b> (${(_dispCur(c) * 1).toFixed(2)}x) · ATH ${_dispPeak(c)}x${entryFdv} · ${_ago(c.ts)}${ca}\n`;
     if (body.length + line.length > 3600) break;
     body += line; shown++;
   }

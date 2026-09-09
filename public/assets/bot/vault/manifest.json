@@ -1,859 +1,2590 @@
 {
- "count": 122,
+ "count": 287,
+ "generated": "2026-09-09T08:30:14.320Z",
+ "rule": "real engine multiples (current/entry), capped at 5000x; entryFdv>=1000; readable symbols; dedup by mint then symbol+name; live = cur>=1.1",
  "items": [
   {
    "file": "vault-001.png",
    "symbol": "ZCAT",
    "name": "Anonymous Cat",
-   "peak": 500,
-   "cur": 455.04
+   "peak": 5000,
+   "cur": 1331.38,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-002.png",
    "symbol": "MUCHWOW",
    "name": "MuchWow",
-   "peak": 500,
-   "cur": 6.13
+   "peak": 5000,
+   "cur": 7.83,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-003.png",
    "symbol": "BABYTROLL",
    "name": "Baby Troll",
-   "peak": 500,
-   "cur": 500
+   "peak": 4547.65,
+   "cur": 4051.23,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-004.png",
    "symbol": "APEC",
    "name": "Ape & Closed AI",
-   "peak": 11.34,
-   "cur": 1.24
+   "peak": 86.11,
+   "cur": 1.18,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-005.png",
-   "symbol": "TOKEN",
-   "name": "Token",
-   "peak": 15.93,
-   "cur": 15.93
+   "symbol": "GREEN",
+   "name": "GREEN COIN",
+   "peak": 76.23,
+   "cur": 76.23,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-006.png",
-   "symbol": "Popsem",
-   "name": "Pop Ansem",
-   "peak": 21.28,
-   "cur": 21.28
+   "symbol": "ANMOND",
+   "name": "The Black Koh-i-Noor",
+   "peak": 48.75,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-007.png",
-   "symbol": "ZBULL",
-   "name": "Anonymous Bull",
-   "peak": 14.74,
-   "cur": 2.37
+   "symbol": "TOKEN",
+   "name": "Token",
+   "peak": 48.71,
+   "cur": 15.32,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-008.png",
-   "symbol": "PUMPCAT",
-   "name": "Pump Cat",
-   "peak": 2.07,
-   "cur": 2.07
+   "symbol": "ASSDAQ",
+   "name": "ASSDAQ",
+   "peak": 40.89,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-009.png",
-   "symbol": "OTC",
-   "name": "Own this Cat",
-   "peak": 1.45,
-   "cur": 1.02
+   "symbol": "RESET",
+   "name": "password reset",
+   "peak": 37.53,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-010.png",
-   "symbol": "Rentosertib",
-   "name": "The Immortal Pill",
-   "peak": 8.49,
-   "cur": 8.49
+   "symbol": "Derp",
+   "name": "Derp",
+   "peak": 36.49,
+   "cur": 36.49,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-011.png",
-   "symbol": "GRIMACE",
-   "name": "grimacecoin",
-   "peak": 6.75,
-   "cur": 1.49
+   "symbol": "DEBT",
+   "name": "Debt / SOL",
+   "peak": 36.49,
+   "cur": 8.87,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-012.png",
-   "symbol": "UKFLMS",
-   "name": "UK FINANCIAL MOONSHOT TOKEN",
-   "peak": 1.17,
-   "cur": 1.17
+   "symbol": "JIMOTHY",
+   "name": "JIMOTHYCASH",
+   "peak": 31.62,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-013.png",
-   "symbol": "MIM",
-   "name": "Memes Into Money",
-   "peak": 5.52,
-   "cur": 2.33
+   "symbol": "MrSue",
+   "name": "The Wheelchair Fish",
+   "peak": 29.22,
+   "cur": 0.35,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-014.png",
-   "symbol": "PATE",
-   "name": "Pepe Cate Coin",
-   "peak": 4.96,
-   "cur": 1.44
+   "symbol": "APESZN",
+   "name": "Ape Season",
+   "peak": 21.87,
+   "cur": 21.87,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-015.png",
-   "symbol": "DIG",
-   "name": "DIG",
-   "peak": 2.48,
-   "cur": 2.48
+   "symbol": "Pippinkawa",
+   "name": "Pippinkawa",
+   "peak": 21.63,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-016.png",
-   "symbol": "C7",
-   "name": "CYRE",
-   "peak": 4.51,
-   "cur": 4.19
+   "symbol": "SOLSTONK",
+   "name": "SOLSTONK",
+   "peak": 21.63,
+   "cur": 21.63,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-017.png",
-   "symbol": "HUMAN",
-   "name": "I Am Human",
-   "peak": 4.23,
-   "cur": 3.88
+   "symbol": "Popsem",
+   "name": "Pop Ansem",
+   "peak": 21.28,
+   "cur": 21.28,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-018.png",
-   "symbol": "APEWIF",
-   "name": "apewifdress",
-   "peak": 2.18,
-   "cur": 2.18
+   "symbol": "dogonfone",
+   "name": "dogonfone",
+   "peak": 21.28,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-019.png",
-   "symbol": "GTA",
-   "name": "GTAlpha",
-   "peak": 3.75,
-   "cur": 2.07
+   "symbol": "SOLDOG",
+   "name": "Soldog",
+   "peak": 21.12,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-020.png",
-   "symbol": "ZAYKO",
-   "name": "DOG ZAYKO",
-   "peak": 3.57,
-   "cur": 2.72
+   "symbol": "CATFLIX",
+   "name": "Catflix",
+   "peak": 21.01,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-021.png",
-   "symbol": "KRABBY",
-   "name": "KRABBY",
-   "peak": 3.06,
-   "cur": 2.89
+   "symbol": "Raccbit",
+   "name": "Raccbit",
+   "peak": 20.99,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-022.png",
-   "symbol": "PORK",
-   "name": "Porkcoin",
-   "peak": 2.93,
-   "cur": 1.26
+   "symbol": "apebull",
+   "name": "apeonbull",
+   "peak": 20.85,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-023.png",
-   "symbol": "LGBWeed",
-   "name": "LGBWeed",
-   "peak": 1.57,
-   "cur": 1.55
+   "symbol": "RACOIN",
+   "name": "Raccoon Coin",
+   "peak": 20.81,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-024.png",
-   "symbol": "DINKY",
-   "name": "Dinky",
-   "peak": 2.85,
-   "cur": 2.83
+   "symbol": "babyfone",
+   "name": "babyapeonfone",
+   "peak": 20.75,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-025.png",
-   "symbol": "KRYVEX",
-   "name": "KRYVEX",
-   "peak": 2.79,
-   "cur": 1.64
+   "symbol": "CASHAPE",
+   "name": "Cash Ape",
+   "peak": 20.41,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-026.png",
-   "symbol": "PXLA",
-   "name": "Pixelated Aliens",
-   "peak": 2.78,
-   "cur": 1.85
+   "symbol": "NIVI",
+   "name": "Nvidia Mascot",
+   "peak": 20.31,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-027.png",
-   "symbol": "LEPTEP",
-   "name": "Henter Boden's Leptep",
-   "peak": 8.26,
-   "cur": 8.26
+   "symbol": "ZEHYPERPUMP",
+   "name": "ZEHYPERPUMP",
+   "peak": 20.24,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-028.png",
-   "symbol": "$JASON",
-   "name": "The Protagonist",
-   "peak": 2.69,
-   "cur": 1.35
+   "symbol": "motion",
+   "name": "motion",
+   "peak": 20.18,
+   "cur": 20.18,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-029.png",
-   "symbol": "Lucia",
-   "name": "Lucia",
-   "peak": 2.51,
-   "cur": 1.62
+   "symbol": "ApeHouse",
+   "name": "ApeHouse",
+   "peak": 20.14,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-030.png",
-   "symbol": "BULLBALLS",
-   "name": "Bullballs Coin",
-   "peak": 2.29,
-   "cur": 1.29
+   "symbol": "GLOOB",
+   "name": "GLOOB",
+   "peak": 20.02,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-031.png",
-   "symbol": "Mobi",
-   "name": "Mobi The Gorilla",
-   "peak": 1.34,
-   "cur": 1.24
+   "symbol": "Apemothy",
+   "name": "Apemothy",
+   "peak": 19.8,
+   "cur": 19.8,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-032.png",
-   "symbol": "Magatard",
-   "name": "Magatard",
-   "peak": 2.24,
-   "cur": 1.94
+   "symbol": "shrubwifhat",
+   "name": "shrubwifhat",
+   "peak": 19.59,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-033.png",
-   "symbol": "CINEMA",
-   "name": "CINEMA",
-   "peak": 2.22,
-   "cur": 1.01
+   "symbol": "ACTR",
+   "name": "Act R : The Raccoon Prophecy",
+   "peak": 19.54,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-034.png",
-   "symbol": "$CRUSTY",
-   "name": "Crusty microwave",
-   "peak": 2.22,
-   "cur": 1.32
+   "symbol": "Blackmothy",
+   "name": "Black The Raccoon",
+   "peak": 19.53,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-035.png",
-   "symbol": "INCOGINU",
-   "name": "INCOGINU",
-   "peak": 1.2,
-   "cur": 1.15
+   "symbol": "SOL600",
+   "name": "SOL600",
+   "peak": 19.51,
+   "cur": 19.51,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-036.png",
-   "symbol": "EXCEPTION",
-   "name": "Ansem, The Exception",
-   "peak": 2.13,
-   "cur": 1.04
+   "symbol": "stonkape",
+   "name": "stonkape",
+   "peak": 19.48,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-037.png",
-   "symbol": "LIGER",
-   "name": "Liger",
-   "peak": 1.27,
-   "cur": 1.14
+   "symbol": "RACCHUA",
+   "name": "The Raccoon Jotchua",
+   "peak": 19.39,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-038.png",
-   "symbol": "Udin",
-   "name": "Udin din din dun",
-   "peak": 2.11,
-   "cur": 1.31
+   "symbol": "Pigtasio",
+   "name": "Pigtasio",
+   "peak": 19.38,
+   "cur": 19.38,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-039.png",
-   "symbol": "WADDLESLIV",
-   "name": "WADDLES LIVE",
-   "peak": 1.57,
-   "cur": 1.4
+   "symbol": "RACSEM",
+   "name": "The Black Raccoon",
+   "peak": 19.34,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-040.png",
-   "symbol": "True",
-   "name": "Old Anonymous ",
-   "peak": 2.03,
-   "cur": 1.14
+   "symbol": "NERU",
+   "name": "TONNERU",
+   "peak": 19.3,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-041.png",
-   "symbol": "Imagine",
-   "name": "Imagine Game Studio",
-   "peak": 2,
-   "cur": 1.4
+   "symbol": "MPGA",
+   "name": "Make Pump Great Again",
+   "peak": 18.73,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-042.png",
-   "symbol": "BADBITCH",
-   "name": "BADBITCH",
-   "peak": 1.99,
-   "cur": 1.02
+   "symbol": "RACCEM",
+   "name": "The Raccoon Table",
+   "peak": 18.47,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-043.png",
-   "symbol": "KILLER",
-   "name": "Robinhood Killer",
-   "peak": 6.85,
-   "cur": 6.85
+   "symbol": "Meow",
+   "name": "Meow",
+   "peak": 18.43,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-044.png",
-   "symbol": "FRAN",
-   "name": "Jelly Jelly Raspberry",
-   "peak": 1.79,
-   "cur": 1.02
+   "symbol": "Retail",
+   "name": "Retail",
+   "peak": 18.35,
+   "cur": 18.35,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-045.png",
-   "symbol": "King",
-   "name": "Christ is King",
-   "peak": 1.78,
-   "cur": 1.77
+   "symbol": "SUB",
+   "name": "Streamer Bounties",
+   "peak": 18.31,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-046.png",
-   "symbol": "MEMELESS",
-   "name": "memes are useless",
-   "peak": 1.68,
-   "cur": 1.68
+   "symbol": "Bullfrog",
+   "name": "Bullfrog",
+   "peak": 18.04,
+   "cur": 18.04,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-047.png",
-   "symbol": "NVIDOG",
-   "name": "NVIDOG",
-   "peak": 1.45,
-   "cur": 1.35
+   "symbol": "PERPSCAPE",
+   "name": "perpscape",
+   "peak": 17.98,
+   "cur": 17.98,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-048.png",
-   "symbol": "MEMEFI",
-   "name": "MEMEFISEASON",
-   "peak": 1.72,
-   "cur": 1.1
+   "symbol": "084BEAR",
+   "name": "084BEAR",
+   "peak": 17.97,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-049.png",
-   "symbol": "FATPARROT",
-   "name": "Fat Parrot",
-   "peak": 2,
-   "cur": 2
+   "symbol": "TaoTao",
+   "name": "",
+   "peak": 17.64,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-050.png",
-   "symbol": "TRAGEDY",
-   "name": "Micro Tragedy",
-   "peak": 1.09,
-   "cur": 1
+   "symbol": "Uptember",
+   "name": "Uptember",
+   "peak": 17.34,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-051.png",
-   "symbol": "FUZED",
-   "name": "FUZED",
-   "peak": 1.54,
-   "cur": 1.04
+   "symbol": "kitten",
+   "name": "cheekskitten",
+   "peak": 17.33,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-052.png",
-   "symbol": "WILDCAT",
-   "name": "WildCatCoin",
-   "peak": 1.52,
-   "cur": 1.45
+   "symbol": "HOG",
+   "name": "HAND OF GOD",
+   "peak": 16.73,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-053.png",
-   "symbol": "KING",
-   "name": "KING TATE",
-   "peak": 1.48,
-   "cur": 1.2
+   "symbol": "UNICORN",
+   "name": "Unicorn",
+   "peak": 16.55,
+   "cur": 16.55,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-054.png",
-   "symbol": "poukŸ",
-   "name": "Poukÿ Racoon",
-   "peak": 1.47,
-   "cur": 1.22
+   "symbol": "SURVIVE",
+   "name": "survive",
+   "peak": 16.29,
+   "cur": 16.29,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-055.png",
-   "symbol": "ARC",
-   "name": "RelayedArc",
-   "peak": 1.45,
-   "cur": 1.04
+   "symbol": "OMO",
+   "name": "Last White Giraffe",
+   "peak": 14.9,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-056.png",
-   "symbol": "Pinata",
-   "name": "Piñata",
-   "peak": 1.41,
-   "cur": 1.37
+   "symbol": "ZBULL",
+   "name": "Anonymous Bull",
+   "peak": 14.74,
+   "cur": 2.35,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-057.png",
-   "symbol": "CACKLE",
-   "name": "PEPE Goblin",
-   "peak": 1.38,
-   "cur": 1.18
+   "symbol": "bull",
+   "name": "bullcoin",
+   "peak": 14.16,
+   "cur": 0.35,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-058.png",
-   "symbol": "CHOP",
-   "name": "GTA Chop",
-   "peak": 1.35,
-   "cur": 1.19
+   "symbol": "WIWIWI",
+   "name": "wiwiwi / SOL",
+   "peak": 14.15,
+   "cur": 0.79,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-059.png",
-   "symbol": "DOXA",
-   "name": "DinoDoxa",
-   "peak": 1.33,
-   "cur": 1.33
+   "symbol": "LEGEND",
+   "name": "The Legend Tate",
+   "peak": 13.07,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-060.png",
-   "symbol": "26",
-   "name": "26",
-   "peak": 1.3,
-   "cur": 1.21
+   "symbol": "USOH",
+   "name": "USOH",
+   "peak": 12.28,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-061.png",
-   "symbol": "TONTON",
-   "name": "TONTON WALLAT ",
-   "peak": 1.26,
-   "cur": 1.2
+   "symbol": "AWIF",
+   "name": "Ape Wif",
+   "peak": 11.75,
+   "cur": 11.75,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-062.png",
-   "symbol": "KIF",
-   "name": "KittyWifHat",
-   "peak": 1.26,
-   "cur": 1.26
+   "symbol": "popdog",
+   "name": "popdog",
+   "peak": 11.54,
+   "cur": 0.11,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-063.png",
-   "symbol": "KIMI",
-   "name": "Kimi",
-   "peak": 1.25,
-   "cur": 1.06
+   "symbol": "SPEEDUN",
+   "name": "speedun / SOL",
+   "peak": 10.7,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-064.png",
-   "symbol": "ECLIPSE",
-   "name": "Eclipse",
-   "peak": 1.23,
-   "cur": 1.18
+   "symbol": "MOUSE",
+   "name": "Mouse / SOL",
+   "peak": 10.59,
+   "cur": 4.09,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-065.png",
-   "symbol": "MND",
-   "name": "Mndset AI",
-   "peak": 1.21,
-   "cur": 1.15
+   "symbol": "STACY",
+   "name": "Stacy",
+   "peak": 10.38,
+   "cur": 0.12,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-066.png",
-   "symbol": "NAVA",
-   "name": "Nava ecosystem",
-   "peak": 1.21,
-   "cur": 1.06
+   "symbol": "ARGOS",
+   "name": "ARGOS / SOL",
+   "peak": 10.22,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-067.png",
-   "symbol": "LLD",
-   "name": "Lucky Legend",
-   "peak": 1.19,
-   "cur": 1.18
+   "symbol": "PUMPCAT",
+   "name": "Pump Cat",
+   "peak": 9.79,
+   "cur": 2.07,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-068.png",
-   "symbol": "Leafy",
-   "name": "Leafy",
-   "peak": 1.03,
-   "cur": 1.03
+   "symbol": "WASHED",
+   "name": "WASHED",
+   "peak": 9.77,
+   "cur": 0.08,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-069.png",
-   "symbol": "PBUG",
-   "name": "Pill Bug",
-   "peak": 1.13,
-   "cur": 1.05
+   "symbol": "Signal",
+   "name": "The Shrek Signal",
+   "peak": 9.19,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-070.png",
-   "symbol": "pepescobar",
-   "name": "PEPE Escobar",
-   "peak": 1.12,
-   "cur": 1.12
+   "symbol": "FartcoinV2",
+   "name": "FartcoinV2",
+   "peak": 9.12,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-071.png",
-   "symbol": "TNOS",
-   "name": "Transnational Oil Supply",
-   "peak": 2.79,
-   "cur": 2.76
+   "symbol": "USOH",
+   "name": "United States Oil Holdings",
+   "peak": 9.07,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-072.png",
-   "symbol": "Proud",
-   "name": "Proud American ",
-   "peak": 1.07,
-   "cur": 1
+   "symbol": "Wolf",
+   "name": "Wolf Coin",
+   "peak": 8.76,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-073.png",
-   "symbol": "MOMS",
-   "name": "Your Moms",
-   "peak": 1.06,
-   "cur": 1.06
+   "symbol": "RACSTEIN",
+   "name": "Epstein The Raccoon",
+   "peak": 8.74,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-074.png",
-   "symbol": "chihuahua",
-   "name": "chihuahua",
-   "peak": 1.04,
-   "cur": 1
+   "symbol": "OTC",
+   "name": "Own this Cat",
+   "peak": 8.7,
+   "cur": 5.38,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-075.png",
-   "symbol": "KITTY",
-   "name": "Hello Kitty",
-   "peak": 1.03,
-   "cur": 1.02
+   "symbol": "ANTI",
+   "name": "The Black Bugatti",
+   "peak": 8.63,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-076.png",
-   "symbol": "FARMCATS",
-   "name": "Farm Cats",
-   "peak": 1.03,
-   "cur": 1.02
+   "symbol": "Poipoi",
+   "name": "Poipoi",
+   "peak": 8.53,
+   "cur": 0.25,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-077.png",
-   "symbol": "BOINKO",
-   "name": "Boinko Coin",
-   "peak": 1.03,
-   "cur": 1.03
+   "symbol": "Rentosertib",
+   "name": "The Immortal Pill",
+   "peak": 8.49,
+   "cur": 8.49,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-078.png",
-   "symbol": "VMC",
-   "name": "VICE MONEY CLUB",
-   "peak": 1.03,
-   "cur": 1.02
+   "symbol": "LEPTEP",
+   "name": "Henter Boden's Leptep",
+   "peak": 8.4,
+   "cur": 8.4,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-079.png",
-   "symbol": "$LIZARDMAX",
-   "name": "Lizardmaxxing",
-   "peak": 2.07,
-   "cur": 2.07
+   "symbol": "AuraBattles",
+   "name": "Aura Farm Battles",
+   "peak": 8.38,
+   "cur": 0.47,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-080.png",
-   "symbol": "Mai",
-   "name": "Mai",
-   "peak": 1,
-   "cur": 1
+   "symbol": "KILLER",
+   "name": "Robinhood Killer",
+   "peak": 8.35,
+   "cur": 8.35,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-081.png",
-   "symbol": "人生K线",
-   "name": "人生K线",
-   "peak": 1,
-   "cur": 1
+   "symbol": "Cheetah",
+   "name": "Cheetah",
+   "peak": 8.18,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-082.png",
-   "symbol": "关你屁事",
-   "name": "关你屁事",
-   "peak": 1,
-   "cur": 1
+   "symbol": "MSFT",
+   "name": "Meme Solana Feline Token",
+   "peak": 8.14,
+   "cur": 8.14,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-083.png",
-   "symbol": "关我屁事",
-   "name": "关我屁事",
-   "peak": 1,
-   "cur": 1
+   "symbol": "SSS",
+   "name": "Short Spine Syndrome",
+   "peak": 8.02,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-084.png",
-   "symbol": "马上成功",
-   "name": "郑成功骑马",
-   "peak": 1,
-   "cur": 1
+   "symbol": "CORN",
+   "name": "corn / SOL",
+   "peak": 7.26,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-085.png",
-   "symbol": "BNB",
-   "name": "幣安人生",
-   "peak": 1,
-   "cur": 1
+   "symbol": "Cupsey",
+   "name": "The Greatest Trencher",
+   "peak": 7.15,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-086.png",
-   "symbol": "SAA",
-   "name": "STOP ANIMAL ABUSE",
-   "peak": 1,
-   "cur": 1
+   "symbol": "GRIMACE",
+   "name": "grimacecoin",
+   "peak": 6.75,
+   "cur": 1.47,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-087.png",
-   "symbol": "CZ比个Four",
-   "name": "CZ比个Four",
-   "peak": 1,
-   "cur": 1
+   "symbol": "UKFLMS",
+   "name": "UK FINANCIAL MOONSHOT TOKEN",
+   "peak": 6.71,
+   "cur": 6.71,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-088.png",
-   "symbol": "K3",
-   "name": "Kimi K3",
-   "peak": 1,
-   "cur": 1
+   "symbol": "ALBATROSS",
+   "name": "Albatross Protocol",
+   "peak": 6.69,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-089.png",
-   "symbol": "加密人生",
-   "name": "加密人生",
-   "peak": 1,
-   "cur": 1
+   "symbol": "NUKE",
+   "name": "Just Nuke it",
+   "peak": 6.59,
+   "cur": 0.89,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-090.png",
-   "symbol": "Binance Yo",
-   "name": "何必东奔西走 币安全部都有",
-   "peak": 1,
-   "cur": 1
+   "symbol": "DREAMDOG",
+   "name": "DREAMDOG",
+   "peak": 6.58,
+   "cur": 0.11,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-091.png",
-   "symbol": "Freedom of",
-   "name": "Freedom of Money",
-   "peak": 1,
-   "cur": 1
+   "symbol": "PONZI",
+   "name": "Mr. Madoff",
+   "peak": 6.51,
+   "cur": 0.26,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-092.png",
-   "symbol": "Everyday P",
-   "name": "哈萨克斯坦启示",
-   "peak": 1,
-   "cur": 1
+   "symbol": "YARL",
+   "name": "Yarl",
+   "peak": 6.47,
+   "cur": 0.25,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-093.png",
-   "symbol": "WOVEN",
-   "name": "Woven Stocks",
-   "peak": 1,
-   "cur": 1
+   "symbol": "USUR",
+   "name": "United States Uranium Reserve",
+   "peak": 6.38,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-094.png",
-   "symbol": "出海",
-   "name": "出海",
-   "peak": 1,
-   "cur": 1
+   "symbol": "DOW",
+   "name": "Department of Wealth",
+   "peak": 6.38,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-095.png",
-   "symbol": "MQE",
-   "name": "Meta Quant Economy",
-   "peak": 1,
-   "cur": 1
+   "symbol": "PFI6900",
+   "name": "PumpFun Index Fund 6900",
+   "peak": 6.37,
+   "cur": 0.47,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-096.png",
-   "symbol": "BNB",
-   "name": "土包子",
-   "peak": 1,
-   "cur": 1
+   "symbol": "MANNY",
+   "name": "Manny Heffley",
+   "peak": 6.34,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-097.png",
-   "symbol": "Binance in",
-   "name": "Binance intern",
-   "peak": 1,
-   "cur": 1
+   "symbol": "HAPPYCAT",
+   "name": "Happy Cat",
+   "peak": 5.99,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-098.png",
-   "symbol": "BAI",
-   "name": "binance An Intern",
-   "peak": 1,
-   "cur": 1
+   "symbol": "USTONK",
+   "name": "Uber Stonk",
+   "peak": 5.69,
+   "cur": 5.69,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-099.png",
-   "symbol": "LuLu",
-   "name": "LuLu",
-   "peak": 1,
-   "cur": 1
+   "symbol": "HOUSE",
+   "name": "HOUSE / SOL",
+   "peak": 5.69,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-100.png",
-   "symbol": "富裕前期",
-   "name": "Pre-rich",
-   "peak": 1,
-   "cur": 1
+   "symbol": "puter",
+   "name": "catonputer",
+   "peak": 5.57,
+   "cur": 5.57,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-101.png",
-   "symbol": "BNB",
-   "name": "Cashdog",
-   "peak": 1,
-   "cur": 1
+   "symbol": "ELONCOIN",
+   "name": "ELON MUSK COIN",
+   "peak": 5.54,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-102.png",
-   "symbol": "BNB",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "MIM",
+   "name": "Memes Into Money",
+   "peak": 5.52,
+   "cur": 2.33,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-103.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "PUMPACIA",
+   "name": "Pumpacia",
+   "peak": 5.42,
+   "cur": 5.42,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-104.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "Hakes",
+   "name": "byhakes",
+   "peak": 5.26,
+   "cur": 0.42,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-105.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "KLEF",
+   "name": "Klef",
+   "peak": 5.2,
+   "cur": 5.2,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-106.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "PATE",
+   "name": "Pepe Cate Coin",
+   "peak": 4.96,
+   "cur": 1.48,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-107.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "STONKLESS",
+   "name": "Useless Stonk",
+   "peak": 4.91,
+   "cur": 4.91,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-108.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "EVILSHIB",
+   "name": "EvilShib",
+   "peak": 4.84,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-109.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "DOLLY",
+   "name": "Dolly / SOL",
+   "peak": 4.8,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-110.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "MANNY",
+   "name": "MANNY / SOL",
+   "peak": 4.77,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-111.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "COAP",
+   "name": "COAP / SOL",
+   "peak": 4.72,
+   "cur": 4.72,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-112.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "Peigengoo",
+   "name": "Cantina's Talking Pigeon",
+   "peak": 4.67,
+   "cur": 0.88,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-113.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "Debt",
+   "name": "Debt",
+   "peak": 4.6,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-114.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "GOOSE",
+   "name": "IMPATIENT GOOSE",
+   "peak": 4.59,
+   "cur": 0.16,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-115.png",
-   "symbol": "MODA",
-   "name": "MODA",
-   "peak": 1,
-   "cur": 1
+   "symbol": "DIG",
+   "name": "DIG",
+   "peak": 4.55,
+   "cur": 2.48,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-116.png",
-   "symbol": "天天向上",
-   "name": "天天向上",
-   "peak": 1,
-   "cur": 1
+   "symbol": "OTC",
+   "name": "Official Trump Coin",
+   "peak": 4.53,
+   "cur": 4.53,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-117.png",
-   "symbol": "Pro",
-   "name": "Pro",
-   "peak": 1,
-   "cur": 1
+   "symbol": "C7",
+   "name": "CYRE",
+   "peak": 4.51,
+   "cur": 4.19,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-118.png",
-   "symbol": "皮夹克",
-   "name": "只是一件皮夹克",
-   "peak": 1,
-   "cur": 1
+   "symbol": "popape",
+   "name": "popape",
+   "peak": 4.44,
+   "cur": 0.03,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-119.png",
-   "symbol": "RAT",
-   "name": "Ratcoin ",
-   "peak": 2.14,
-   "cur": 2.14
+   "symbol": "THONG",
+   "name": "thong / SOL",
+   "peak": 4.38,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-120.png",
-   "symbol": "UBIC",
-   "name": "Ubicent",
-   "peak": 1,
-   "cur": 1
+   "symbol": "HUMAN",
+   "name": "I Am Human",
+   "peak": 4.35,
+   "cur": 4.07,
+   "live": true,
+   "status": "live"
   },
   {
    "file": "vault-121.png",
-   "symbol": "GHRD",
-   "name": "GIGAHARD",
-   "peak": 1,
-   "cur": 1
+   "symbol": "RACCOOS",
+   "name": "RACCOOS",
+   "peak": 4.29,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
   },
   {
    "file": "vault-122.png",
-   "symbol": "KITTY",
-   "name": "ROARING KITTY",
-   "peak": 1,
-   "cur": 1
+   "symbol": "PRIETA",
+   "name": "The Immortal Pup",
+   "peak": 4.28,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-123.png",
+   "symbol": "size",
+   "name": "apewifsize",
+   "peak": 4.24,
+   "cur": 4.24,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-124.png",
+   "symbol": "baby",
+   "name": "I hate the baby from Ice Age",
+   "peak": 4.22,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-125.png",
+   "symbol": "GRACE",
+   "name": "Grace / SOL",
+   "peak": 4.21,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-126.png",
+   "symbol": "LAPTOP",
+   "name": "Hunter Biden's Laptop",
+   "peak": 4.13,
+   "cur": 4.13,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-127.png",
+   "symbol": "SOIL",
+   "name": "SOIL",
+   "peak": 4.12,
+   "cur": 0.77,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-128.png",
+   "symbol": "ruvv",
+   "name": "ruvv",
+   "peak": 4.08,
+   "cur": 0.44,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-129.png",
+   "symbol": "TRUMPSTACY",
+   "name": "TRUMPSTACY",
+   "peak": 4.07,
+   "cur": 4.07,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-130.png",
+   "symbol": "APEWIF",
+   "name": "apewifdress",
+   "peak": 4.03,
+   "cur": 2.18,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-131.png",
+   "symbol": "BULLE",
+   "name": "Bullecoin",
+   "peak": 4.03,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-132.png",
+   "symbol": "FREEDOM",
+   "name": "FREEDOM",
+   "peak": 3.99,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-133.png",
+   "symbol": "GTA",
+   "name": "GTAlpha",
+   "peak": 3.75,
+   "cur": 2.04,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-134.png",
+   "symbol": "(3,3)",
+   "name": "(3,3)",
+   "peak": 3.74,
+   "cur": 3.74,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-135.png",
+   "symbol": "ROPE",
+   "name": "Rat Pope",
+   "peak": 3.71,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-136.png",
+   "symbol": "GT",
+   "name": "Grok Trencher",
+   "peak": 3.64,
+   "cur": 3.64,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-137.png",
+   "symbol": "bcat",
+   "name": "banana cat",
+   "peak": 3.61,
+   "cur": 0.51,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-138.png",
+   "symbol": "Ape-1",
+   "name": "Ape-1",
+   "peak": 3.58,
+   "cur": 3.58,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-139.png",
+   "symbol": "ZAYKO",
+   "name": "DOG ZAYKO",
+   "peak": 3.57,
+   "cur": 2.72,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-140.png",
+   "symbol": "ZACH",
+   "name": "Zach / SOL",
+   "peak": 3.57,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-141.png",
+   "symbol": "PEDOPHILES",
+   "name": "Pedophiles / SOL",
+   "peak": 3.54,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-142.png",
+   "symbol": "613",
+   "name": "613 / SOL",
+   "peak": 3.53,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-143.png",
+   "symbol": "BLACKMOTHY",
+   "name": "Blackmothy / SOL",
+   "peak": 3.51,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-144.png",
+   "symbol": "USOS",
+   "name": "USOS",
+   "peak": 3.49,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-145.png",
+   "symbol": "GDWR",
+   "name": "Global Digital Water Reserve",
+   "peak": 3.48,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-146.png",
+   "symbol": "RACJAK",
+   "name": "Racjak / SOL",
+   "peak": 3.46,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-147.png",
+   "symbol": "DECK",
+   "name": "Chain Deck",
+   "peak": 3.45,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-148.png",
+   "symbol": "CHILDREN",
+   "name": "CHILDREN / SOL",
+   "peak": 3.39,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-149.png",
+   "symbol": "NINJIMOTHY",
+   "name": "Ninja Jimothy",
+   "peak": 3.39,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-150.png",
+   "symbol": "AlphaQuant",
+   "name": "Alpha Quant Kid",
+   "peak": 3.36,
+   "cur": 3.36,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-151.png",
+   "symbol": "HOME",
+   "name": "Homecoin",
+   "peak": 3.35,
+   "cur": 0.05,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-152.png",
+   "symbol": "JUAN",
+   "name": "juan",
+   "peak": 3.31,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-153.png",
+   "symbol": "KUTTA",
+   "name": "Kuttacoin",
+   "peak": 3.31,
+   "cur": 3.31,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-154.png",
+   "symbol": "tilly",
+   "name": "tilly",
+   "peak": 3.24,
+   "cur": 0.24,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-155.png",
+   "symbol": "VORF",
+   "name": "VORF / SOL",
+   "peak": 3.2,
+   "cur": 2.94,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-156.png",
+   "symbol": "RAT",
+   "name": "Rat In The Rain",
+   "peak": 3.19,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-157.png",
+   "symbol": "APEGUN",
+   "name": "APE WITH GUN",
+   "peak": 3.17,
+   "cur": 0.06,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-158.png",
+   "symbol": "NA",
+   "name": "NA",
+   "peak": 3.16,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-159.png",
+   "symbol": "SharkCAT",
+   "name": "Shark Cat",
+   "peak": 3.15,
+   "cur": 0.23,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-160.png",
+   "symbol": "MemeSeason",
+   "name": "Meme Season",
+   "peak": 3.14,
+   "cur": 0.5,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-161.png",
+   "symbol": "BABYZCAT",
+   "name": "Baby Anonymous Cat",
+   "peak": 3.13,
+   "cur": 0.2,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-162.png",
+   "symbol": "PHG",
+   "name": "PumpHouseGame",
+   "peak": 3.12,
+   "cur": 0.8,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-163.png",
+   "symbol": "Likweli",
+   "name": "Likweli",
+   "peak": 3.12,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-164.png",
+   "symbol": "ANSEMOTHY",
+   "name": "Ansemothy",
+   "peak": 3.11,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-165.png",
+   "symbol": "Lckd",
+   "name": "Lckd",
+   "peak": 3.1,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-166.png",
+   "symbol": "BTCX",
+   "name": "btcx 2018",
+   "peak": 3.09,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-167.png",
+   "symbol": "AORP",
+   "name": "American Oil Relief Program",
+   "peak": 3.09,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-168.png",
+   "symbol": "CHILLHOME",
+   "name": "CHILLHOME / SOL",
+   "peak": 3.07,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-169.png",
+   "symbol": "KRABBY",
+   "name": "KRABBY",
+   "peak": 3.06,
+   "cur": 2.95,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-170.png",
+   "symbol": "DCAT",
+   "name": "Degenerate Cat",
+   "peak": 3.05,
+   "cur": 0.63,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-171.png",
+   "symbol": "$TROW",
+   "name": "TROW",
+   "peak": 3.04,
+   "cur": 3.04,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-172.png",
+   "symbol": "POKEMON",
+   "name": "Pokemon Cards",
+   "peak": 3.03,
+   "cur": 0.16,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-173.png",
+   "symbol": "GTA",
+   "name": "GTA",
+   "peak": 3.02,
+   "cur": 0.33,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-174.png",
+   "symbol": "BTCX",
+   "name": "BTCX / SOL",
+   "peak": 3.01,
+   "cur": 3.01,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-175.png",
+   "symbol": "USWR",
+   "name": "USWR",
+   "peak": 2.97,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-176.png",
+   "symbol": "Jummi",
+   "name": "Raccoon Jummi",
+   "peak": 2.95,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-177.png",
+   "symbol": "dogi",
+   "name": "Evildogi",
+   "peak": 2.94,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-178.png",
+   "symbol": "LGBWeed",
+   "name": "LGBWeed",
+   "peak": 2.94,
+   "cur": 2.94,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-179.png",
+   "symbol": "PORK",
+   "name": "Porkcoin",
+   "peak": 2.93,
+   "cur": 1.26,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-180.png",
+   "symbol": "ZEROCASH",
+   "name": "Zerocash",
+   "peak": 2.92,
+   "cur": 0.09,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-181.png",
+   "symbol": "slorpiflop",
+   "name": "slorpiflops",
+   "peak": 2.9,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-182.png",
+   "symbol": "DINKY",
+   "name": "Dinky",
+   "peak": 2.87,
+   "cur": 2.87,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-183.png",
+   "symbol": "USDRC",
+   "name": "unstable robinhood coin",
+   "peak": 2.85,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-184.png",
+   "symbol": "BENNY",
+   "name": "Benny / SOL",
+   "peak": 2.84,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-185.png",
+   "symbol": "WOULDRACC",
+   "name": "WouldRacc / SOL",
+   "peak": 2.83,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-186.png",
+   "symbol": "pandacoin",
+   "name": "Pandacoin",
+   "peak": 2.83,
+   "cur": 0.84,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-187.png",
+   "symbol": "NTFS",
+   "name": "National Trust Fund System",
+   "peak": 2.81,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-188.png",
+   "symbol": "KRYVEX",
+   "name": "KRYVEX",
+   "peak": 2.79,
+   "cur": 1.6,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-189.png",
+   "symbol": "PXLA",
+   "name": "Pixelated Aliens",
+   "peak": 2.78,
+   "cur": 1.85,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-190.png",
+   "symbol": "RACOONI",
+   "name": "RACOONI",
+   "peak": 2.75,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-191.png",
+   "symbol": "TRUMPLET",
+   "name": "Trump Trump Trump Sahur",
+   "peak": 2.74,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-192.png",
+   "symbol": "NIGGARUTO",
+   "name": "Niggaruto / SOL",
+   "peak": 2.73,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-193.png",
+   "symbol": "KURO",
+   "name": "Kuro",
+   "peak": 2.73,
+   "cur": 0.12,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-194.png",
+   "symbol": "SPIWISP",
+   "name": "SPIWISP / SOL",
+   "peak": 2.71,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-195.png",
+   "symbol": "$JASON",
+   "name": "The Protagonist",
+   "peak": 2.69,
+   "cur": 1.35,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-196.png",
+   "symbol": "SOLL",
+   "name": "JACKET",
+   "peak": 2.67,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-197.png",
+   "symbol": "CALLCAT",
+   "name": "CallCat",
+   "peak": 2.66,
+   "cur": 0.39,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-198.png",
+   "symbol": "TESLASS",
+   "name": "TESLASS",
+   "peak": 2.66,
+   "cur": 2.66,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-199.png",
+   "symbol": "FROGE",
+   "name": "Frogecoin",
+   "peak": 2.65,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-200.png",
+   "symbol": "USWR",
+   "name": "United States Water Reserve",
+   "peak": 2.65,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-201.png",
+   "symbol": "PHANCOON",
+   "name": "Phancoon / SOL",
+   "peak": 2.65,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-202.png",
+   "symbol": "HOOD",
+   "name": "Robinhood",
+   "peak": 2.65,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-203.png",
+   "symbol": "AAIF",
+   "name": "American AI Fund",
+   "peak": 2.62,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-204.png",
+   "symbol": "kek",
+   "name": "kek",
+   "peak": 2.61,
+   "cur": 0.24,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-205.png",
+   "symbol": "IF",
+   "name": "IF / SOL",
+   "peak": 2.59,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-206.png",
+   "symbol": "FRONTS",
+   "name": "THE FRONT",
+   "peak": 2.59,
+   "cur": 2.59,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-207.png",
+   "symbol": "FOMOBULL",
+   "name": "The Fomo Bull",
+   "peak": 2.58,
+   "cur": 0.06,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-208.png",
+   "symbol": "USOP",
+   "name": "United States Oil Protocol",
+   "peak": 2.54,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-209.png",
+   "symbol": "ANSEM",
+   "name": "ANSEM",
+   "peak": 2.52,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-210.png",
+   "symbol": "Lucia",
+   "name": "Lucia",
+   "peak": 2.51,
+   "cur": 1.26,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-211.png",
+   "symbol": "CORVIN",
+   "name": "CORVIN",
+   "peak": 2.51,
+   "cur": 1.19,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-212.png",
+   "symbol": "RATHER",
+   "name": "Rather / SOL",
+   "peak": 2.51,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-213.png",
+   "symbol": "CATIFY",
+   "name": "CATIFY",
+   "peak": 2.48,
+   "cur": 2.48,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-214.png",
+   "symbol": "NTFS",
+   "name": "NTFS / SOL",
+   "peak": 2.48,
+   "cur": 2.48,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-215.png",
+   "symbol": "$20LATER",
+   "name": "20 years later",
+   "peak": 2.45,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-216.png",
+   "symbol": "lifemaxx",
+   "name": "lifemaxxing",
+   "peak": 2.44,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-217.png",
+   "symbol": "DOWBONES",
+   "name": "Dow Bones",
+   "peak": 2.42,
+   "cur": 2.42,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-218.png",
+   "symbol": "POORGOAT",
+   "name": "The Poor Goat",
+   "peak": 2.39,
+   "cur": 0.68,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-219.png",
+   "symbol": "OFFICIAL",
+   "name": "OFFICIAL / SOL",
+   "peak": 2.39,
+   "cur": 0.07,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-220.png",
+   "symbol": "nothing",
+   "name": "nothing",
+   "peak": 2.39,
+   "cur": 0.03,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-221.png",
+   "symbol": "AISA",
+   "name": "Aisa / SOL",
+   "peak": 2.39,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-222.png",
+   "symbol": "Stickbug",
+   "name": "The HODLing Stickbug",
+   "peak": 2.37,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-223.png",
+   "symbol": "ANSEMCOIN",
+   "name": "ANSEM COIN",
+   "peak": 2.37,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-224.png",
+   "symbol": "DEBANK",
+   "name": "Debank Hood",
+   "peak": 2.37,
+   "cur": 2.37,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-225.png",
+   "symbol": "soljak",
+   "name": "soljak",
+   "peak": 2.35,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-226.png",
+   "symbol": "USOS",
+   "name": "United States Oil Supply",
+   "peak": 2.34,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-227.png",
+   "symbol": "SX",
+   "name": "SX / SOL",
+   "peak": 2.33,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-228.png",
+   "symbol": "ENROLLED",
+   "name": "Influencer University",
+   "peak": 2.33,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-229.png",
+   "symbol": "GOAP",
+   "name": "Global Oil Asset Plan",
+   "peak": 2.32,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-230.png",
+   "symbol": "JIMOSUMMER",
+   "name": "Jimothy Summer",
+   "peak": 2.32,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-231.png",
+   "symbol": "LUCIANO",
+   "name": "LUCIANO / SOL",
+   "peak": 2.32,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-232.png",
+   "symbol": "DC",
+   "name": "Digital Commodity",
+   "peak": 2.31,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-233.png",
+   "symbol": "WIF",
+   "name": "bullwifhat",
+   "peak": 2.3,
+   "cur": 0.41,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-234.png",
+   "symbol": "MAURICE",
+   "name": "Maurice / SOL",
+   "peak": 2.3,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-235.png",
+   "symbol": "KimiClaude",
+   "name": "Kimi Claude 3",
+   "peak": 2.29,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-236.png",
+   "symbol": "BULLBALLS",
+   "name": "Bullballs Coin",
+   "peak": 2.29,
+   "cur": 1.27,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-237.png",
+   "symbol": "Mobi",
+   "name": "Mobi The Gorilla",
+   "peak": 2.29,
+   "cur": 1.33,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-238.png",
+   "symbol": "INTC",
+   "name": "Intel Cat",
+   "peak": 2.28,
+   "cur": 2.28,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-239.png",
+   "symbol": "DIP",
+   "name": "DIP / SOL",
+   "peak": 2.28,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-240.png",
+   "symbol": "CASHELON",
+   "name": "Cash Elon",
+   "peak": 2.25,
+   "cur": 0.03,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-241.png",
+   "symbol": "Magatard",
+   "name": "Magatard",
+   "peak": 2.24,
+   "cur": 1.7,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-242.png",
+   "symbol": "STKR",
+   "name": "stkr / SOL",
+   "peak": 2.24,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-243.png",
+   "symbol": "Slap",
+   "name": "Slapcat",
+   "peak": 2.24,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-244.png",
+   "symbol": "fuggler",
+   "name": "fuggler",
+   "peak": 2.24,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-245.png",
+   "symbol": "CINEMA",
+   "name": "CINEMA",
+   "peak": 2.22,
+   "cur": 1.01,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-246.png",
+   "symbol": "$CRUSTY",
+   "name": "Crusty microwave",
+   "peak": 2.22,
+   "cur": 1.31,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-247.png",
+   "symbol": "butthole",
+   "name": "butthole",
+   "peak": 2.21,
+   "cur": 2.21,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-248.png",
+   "symbol": "SFM",
+   "name": "SAFEMOON",
+   "peak": 2.21,
+   "cur": 0.04,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-249.png",
+   "symbol": "PCAT",
+   "name": "PUMP CAT",
+   "peak": 2.21,
+   "cur": 0.16,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-250.png",
+   "symbol": "TATE",
+   "name": "Rapist Coin",
+   "peak": 2.2,
+   "cur": 0.13,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-251.png",
+   "symbol": "WOJANSA",
+   "name": "WOJANSA / SOL",
+   "peak": 2.2,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-252.png",
+   "symbol": "BizCat",
+   "name": "Business Cat",
+   "peak": 2.18,
+   "cur": 2.18,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-253.png",
+   "symbol": "looongguy",
+   "name": "just a looong guy",
+   "peak": 2.18,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-254.png",
+   "symbol": "RONNIE",
+   "name": "Ronnie / SOL",
+   "peak": 2.17,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-255.png",
+   "symbol": "FNG",
+   "name": "fear no god",
+   "peak": 2.16,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-256.png",
+   "symbol": "INCOGINU",
+   "name": "INCOGINU",
+   "peak": 2.16,
+   "cur": 1.41,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-257.png",
+   "symbol": "new arrow",
+   "name": "We need a new arrow",
+   "peak": 2.16,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-258.png",
+   "symbol": "KIM",
+   "name": "NO ONE CARES",
+   "peak": 2.15,
+   "cur": 0.05,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-259.png",
+   "symbol": "USELESSPEPE",
+   "name": "Useless Pepe",
+   "peak": 2.14,
+   "cur": 2.14,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-260.png",
+   "symbol": "EXCEPTION",
+   "name": "Ansem, The Exception",
+   "peak": 2.13,
+   "cur": 1.04,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-261.png",
+   "symbol": "JOB",
+   "name": "JOB / SOL",
+   "peak": 2.13,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-262.png",
+   "symbol": "LIGER",
+   "name": "Liger",
+   "peak": 2.12,
+   "cur": 1.42,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-263.png",
+   "symbol": "WUFF",
+   "name": "HYPUP",
+   "peak": 2.12,
+   "cur": 0.57,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-264.png",
+   "symbol": "Udin",
+   "name": "Udin din din dun",
+   "peak": 2.11,
+   "cur": 1.31,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-265.png",
+   "symbol": "BOSS",
+   "name": "BENT BOSS",
+   "peak": 2.1,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-266.png",
+   "symbol": "RAT",
+   "name": "Ratcoin",
+   "peak": 2.1,
+   "cur": 2.1,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-267.png",
+   "symbol": "LOPA",
+   "name": "Lovely Panda",
+   "peak": 2.1,
+   "cur": 2.1,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-268.png",
+   "symbol": "SLOP",
+   "name": "Slop / SOL",
+   "peak": 2.09,
+   "cur": 0.11,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-269.png",
+   "symbol": "NTFS",
+   "name": "NTFS",
+   "peak": 2.09,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-270.png",
+   "symbol": "$ghosti",
+   "name": "ghosti",
+   "peak": 2.09,
+   "cur": 0.28,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-271.png",
+   "symbol": "HIMOTHY",
+   "name": "HIMOTHY",
+   "peak": 2.08,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-272.png",
+   "symbol": "beaver",
+   "name": "beavercoin",
+   "peak": 2.08,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-273.png",
+   "symbol": "MYCEL",
+   "name": "Mycel",
+   "peak": 2.07,
+   "cur": 0.78,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-274.png",
+   "symbol": "stonkcat",
+   "name": "just a stonk cat",
+   "peak": 2.07,
+   "cur": 2.07,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-275.png",
+   "symbol": "ANDREA",
+   "name": "Andrea / SOL",
+   "peak": 2.07,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-276.png",
+   "symbol": "$LIZARDMAX",
+   "name": "Lizardmaxxing",
+   "peak": 2.06,
+   "cur": 2.06,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-277.png",
+   "symbol": "WADDLESLIV",
+   "name": "WADDLES LIVE",
+   "peak": 2.05,
+   "cur": 1.84,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-278.png",
+   "symbol": "UsainBolt",
+   "name": "Usain Bolt",
+   "peak": 2.05,
+   "cur": 0.66,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-279.png",
+   "symbol": "TERRA",
+   "name": "Terraformation",
+   "peak": 2.05,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-280.png",
+   "symbol": "RAMCOIN",
+   "name": "DDR VI",
+   "peak": 2.04,
+   "cur": 2.04,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-281.png",
+   "symbol": "True",
+   "name": "Old Anonymous",
+   "peak": 2.03,
+   "cur": 1.14,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-282.png",
+   "symbol": "shhh",
+   "name": "shhh",
+   "peak": 2.02,
+   "cur": 0.56,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-283.png",
+   "symbol": "WAGTMI",
+   "name": "We Are Going To Make It",
+   "peak": 2.02,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-284.png",
+   "symbol": "Biscuit",
+   "name": "Biscuit",
+   "peak": 2.01,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-285.png",
+   "symbol": "Susu",
+   "name": "The Nietzschean Cat",
+   "peak": 2.01,
+   "cur": 1,
+   "live": false,
+   "status": "historical"
+  },
+  {
+   "file": "vault-286.png",
+   "symbol": "LULU",
+   "name": "",
+   "peak": 2,
+   "cur": 2,
+   "live": true,
+   "status": "live"
+  },
+  {
+   "file": "vault-287.png",
+   "symbol": "Chussy",
+   "name": "Chillhouse Pussy",
+   "peak": 2,
+   "cur": 0.11,
+   "live": false,
+   "status": "historical"
   }
  ]
 }
