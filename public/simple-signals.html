@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#05070a">
-<title>ZEROX — Simple Signals</title>
+<title>ZEROX·SIGNALS</title>
 <style>
 :root{
   --bg:#05070a; --bg2:#0b0f14; --panel:#10151c; --edge:#1b2430; --edge2:#243140;
@@ -264,14 +264,189 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .empty{color:var(--faint);font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:40px 0}
 .err{font-family:var(--f-mono);font-size:11px;color:var(--red);letter-spacing:.06em;text-align:center;padding:30px 10px;line-height:1.7}
 </style>
+
+<style>
+/* ═══ ZEROX·SIGNALS — NEON OBSIDIAN DESIGN SYSTEM ═══ */
+:root{
+  --bg:#05070c; --bg2:#0b1018; --panel:#0d1320; --edge:#1d2737; --edge2:#29354b;
+  --txt:#e9eef7; --soft:#a4b0c6; --faint:#5c6b82;
+  --gold:#e8c45c; --emerald:#10e5a4; --red:#ff3d5a; --amber:#f5b04c; --cyan:#38e0ff; --magenta:#e879f9;
+  --ok:#0f2b23; --bad:#2b1218;
+  --grad:linear-gradient(92deg,#38e0ff 0%,#10e5a4 55%,#e879f9 115%);
+  --f-mono:'JetBrains Mono','Cascadia Code','Share Tech Mono',Consolas,monospace;
+  --f-sans:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;
+  --rad:14px;
+  --glow:0 0 0 1px rgba(56,224,255,.06),0 12px 34px -14px rgba(0,0,0,.9),0 0 24px -8px rgba(56,224,255,.18);
+}
+html[data-theme="light"]{
+  --bg:#eef1f8; --bg2:#e3e8f2; --panel:#ffffff; --edge:#dbe3f0; --edge2:#c6d2e6;
+  --txt:#0c1322; --soft:#46546e; --faint:#7a869c;
+  --gold:#9a7510; --emerald:#00a877; --red:#e0244a; --amber:#c07b16; --cyan:#0a7ea4; --magenta:#b13bc9;
+  --ok:#e2f6ee; --bad:#fde9ee;
+  --glow:0 0 0 1px rgba(10,126,164,.08),0 12px 30px -18px rgba(15,23,42,.5);
+}
+body{background:
+  radial-gradient(1200px 500px at 85% -10%, rgba(56,224,255,.05), transparent 60%),
+  radial-gradient(900px 420px at -10% 30%, rgba(232,121,249,.04), transparent 55%),
+  var(--bg);}
+#top{
+  background:
+    linear-gradient(180deg, rgba(5,7,12,.2) 0%, rgba(5,7,12,.94) 90%);
+  border-bottom:1px solid var(--edge2); height:54px;
+}
+#top::before{
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(5,7,12,.30), rgba(5,7,12,.96)),
+    url('/assets/bot/brand-bg/latest.jpg') center 28%/cover no-repeat,
+    linear-gradient(120deg,#071322,#0b0a18 70%);
+  opacity:.9;
+}
+html[data-theme="light"] #top::before{filter:invert(.92) hue-rotate(180deg) saturate(.7);opacity:.5}
+#brand{font-size:14px;letter-spacing:.16em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+#brand b{background:inherit;-webkit-background-clip:text;background-clip:text;color:transparent}
+#clock{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;color:var(--soft);white-space:nowrap}
+#live{color:var(--emerald);text-shadow:0 0 10px rgba(16,229,164,.7)}
+#live::before{box-shadow:0 0 10px var(--emerald)}
+#updated{font-family:var(--f-mono);font-size:9px;color:var(--faint)}
+#btn-refresh,#btn-theme{
+  width:32px;height:32px;border-radius:10px;border:1px solid var(--edge2);
+  background:rgba(13,19,32,.7);color:var(--cyan);font-size:15px;
+  display:grid;place-items:center;transition:transform .15s ease, box-shadow .2s;
+}
+#btn-refresh:active,#btn-theme:active{transform:rotate(180deg)}
+#btn-theme{color:var(--gold);font-size:14px}
+#btn-theme:hover,#btn-refresh:hover{box-shadow:0 0 14px -4px currentColor}
+
+/* ---------- section frames ---------- */
+.view{padding:10px 11px 18px}
+.view-h .ti{font-size:11px;color:var(--txt);background:linear-gradient(90deg,rgba(255,255,255,.05),transparent);border-left:3px solid var(--cyan);padding-left:8px;border-radius:2px}
+.view-h .count{background:rgba(232,196,92,.08);border:1px solid rgba(232,196,92,.3);border-radius:8px;padding:2px 8px;font-weight:700}
+
+/* ---------- chips ---------- */
+.chip{
+  border:1px solid var(--edge2); background:rgba(13,19,32,.6); color:var(--soft);
+  font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  padding:7px 12px; border-radius:999px; transition:all .18s;
+}
+html[data-theme="light"] .chip{background:#fff}
+.chip:active{transform:scale(.94)}
+.chip.on{color:#03120c;background:var(--grad);border-color:transparent;box-shadow:0 6px 18px -8px rgba(16,229,164,.6);font-weight:800}
+.chip.risk-lo.on{color:#03120c;background:linear-gradient(92deg,#10e5a4,#59f0c0)}
+.chip.risk-med.on{color:#180e00;background:linear-gradient(92deg,#f5b04c,#f7cd7e)}
+.chip.risk-hi.on{color:#fff;background:linear-gradient(92deg,#ff3d5a,#ff7891)}
+
+/* ---------- the bubble map ---------- */
+#heat-bubbles{gap:9px}
+.bub{
+  background:linear-gradient(160deg, rgba(56,224,255,.07), rgba(13,19,32,.9) 55%);
+  border:1px solid var(--edge2); border-radius:var(--rad); box-shadow:var(--glow);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
+  padding:10px 6px; transition:transform .15s;
+}
+.bub.up{border-color:rgba(16,229,164,.55)}
+.bub.flat{border-color:var(--edge2)}
+.bub.dead{opacity:.4;filter:saturate(.4)}
+.bub:active{transform:scale(.95)}
+
+/* ---------- calls rows ---------- */
+.row{
+  background:linear-gradient(160deg, rgba(56,224,255,.04), var(--panel) 60%);
+  border:1px solid var(--edge); border-radius:var(--rad); box-shadow:var(--glow);
+  padding:11px 12px; margin-bottom:9px; transition:transform .15s;
+}
+.row:active{transform:scale(.985)}
+.row .tla{font-size:15px;letter-spacing:.06em}
+.saf-badge{border-radius:6px}
+.risk-chip{border-radius:6px}
+
+/* ---------- PULSE view ---------- */
+.marquee{
+  overflow:hidden; white-space:nowrap; position:relative;
+  border:1px solid var(--edge2); border-radius:12px; background:rgba(5,7,12,.6);
+  margin-bottom:10px; padding:8px 0;
+}
+.marquee .tape{display:inline-block;padding-left:100%;animation:marq 28s linear infinite;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em}
+@keyframes marq{to{transform:translateX(-100%)}}
+.marquee .tq{margin-right:26px}
+.marquee .tq.up{color:var(--emerald)}.marquee .tq.dn{color:var(--amber)}
+.pulse-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:10px}
+.pcard{
+  background:linear-gradient(160deg, rgba(232,196,92,.08), var(--panel) 70%);
+  border:1px solid var(--edge2); border-radius:var(--rad); padding:12px;
+  box-shadow:var(--glow); display:flex;flex-direction:column;gap:4px;
+}
+.pcard .pk{font-family:var(--f-mono);font-size:9px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.pcard .pv{font-family:var(--f-mono);font-size:22px;font-weight:800;color:var(--gold);line-height:1.05;word-break:break-word}
+.pcard .ps{font-size:11px;color:var(--soft)}
+.pulse-panel{background:linear-gradient(160deg, rgba(56,224,255,.04), var(--panel) 70%);border:1px solid var(--edge);border-radius:var(--rad);padding:12px;margin-bottom:10px}
+.pulse-panel .ph{margin-bottom:8px}
+.pulse-panel .ph span:first-child{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.14em}
+.pulse-panel .ph .ch{font-family:var(--f-mono);font-size:9px;color:var(--cyan);margin-left:auto}
+
+/* ---------- DEX card grid ---------- */
+#dex-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+.dexcard{
+  background:linear-gradient(160deg, rgba(10,140,255,.06), var(--panel) 60%);
+  border:1px solid var(--edge2); border-radius:var(--rad); box-shadow:var(--glow);
+  padding:11px; display:flex; flex-direction:column; align-items:center; gap:6px;
+  transition:transform .15s; text-align:center; min-height:168px;
+}
+.dexcard:active{transform:scale(.95)}
+.dexcard .dc-img{width:58px;height:58px;border-radius:16px;border:1px solid var(--edge2);overflow:hidden;display:grid;place-items:center;background:rgba(5,7,12,.5);position:relative}
+.dexcard .dc-img img{width:100%;height:100%;object-fit:cover}
+.dexcard .dc-img .mono{font-family:var(--f-mono);font-size:22px;font-weight:800;color:var(--gold)}
+.dexcard .dc-img .paid-flag{position:absolute;top:-6px;right:-6px;background:linear-gradient(90deg,#b46bff,#e879f9);color:#fff;font-family:var(--f-mono);font-size:7.5px;font-weight:700;letter-spacing:.06em;padding:2px 5px;border-radius:6px;box-shadow:0 2px 8px rgba(180,107,255,.5)}
+.dexcard .dc-sy{font-family:var(--f-mono);font-size:14px;font-weight:800;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dexcard .dc-nm{font-size:10px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dexcard .dc-pr{font-family:var(--f-mono);font-size:12px;color:var(--txt)}
+.dexcard .dc-chg{font-family:var(--f-mono);font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
+.dexcard .dc-vol{font-family:var(--f-mono);font-size:9px;color:var(--faint)}
+.dexcard .up .dc-chg{background:rgba(16,229,164,.12);color:var(--emerald)}
+.dexcard .dn .dc-chg{background:rgba(255,61,90,.12);color:var(--red)}
+
+/* ---------- paybox / ask / tg ---------- */
+.paycard,.askcard,.tgcard{border-radius:var(--rad);box-shadow:var(--glow)}
+.ain{border-radius:12px;background:rgba(5,7,12,.4)}
+html[data-theme="light"] .ain{background:#fff;border-color:var(--edge)}
+.act-btn.ask{background:var(--grad);color:#03120c;border-radius:14px;box-shadow:0 10px 26px -10px rgba(16,229,164,.55)}
+.tg-btn{border-radius:12px}
+.ask-ans{margin-top:10px}
+
+/* ---------- bottom dock ---------- */
+#nav{
+  left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom));
+  border-radius:22px; border:1px solid var(--edge2);
+  background:rgba(9,13,22,.88); backdrop-filter:blur(14px);
+  box-shadow:0 14px 40px -12px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.04);
+  padding:6px 4px;
+}
+html[data-theme="light"] #nav{background:rgba(255,255,255,.92)}
+#nav .nt{border-radius:16px;color:var(--faint);gap:2px}
+#nav .nt i{font-size:16px;filter:grayscale(.2)}
+#nav .nt small{font-size:8.5px;letter-spacing:.12em;font-weight:700}
+#nav .nt.on{color:#03120c;background:var(--grad);box-shadow:0 8px 22px -8px rgba(56,224,255,.55)}
+#nav .nt:not(.on):active{transform:scale(.94)}
+
+/* ---------- bottom sheet polish ---------- */
+#sheet{border-radius:22px 22px 0 0;border-top:1px solid var(--edge2);background:var(--bg2)}
+.s-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))!important;gap:7px}
+.s-cell{border-radius:10px;background:rgba(13,19,32,.5)}
+html[data-theme="light"] .s-cell{background:#fff}
+
+/* ---------- PNL tile ---------- */
+.pnl-tile{border:1px solid var(--edge2);border-radius:12px;overflow:hidden;box-shadow:var(--glow);padding:0}
+.pnl-cap{background:linear-gradient(0deg, rgba(5,7,12,.9), transparent);font-family:var(--f-mono);font-size:9px;letter-spacing:.05em;color:var(--soft);padding:6px;text-align:center}
+</style>
 </head>
 <body>
 
 <header id="top">
   <div id="brand">ZEROX<b>·SIGNALS</b></div>
+  <span id="clock" title="Local time"></span>
   <span id="live">LIVE</span>
-  <span id="updated"></span>
   <button id="btn-refresh" title="Refresh">⟳</button>
+  <button id="btn-theme" title="Toggle theme">◐</button>
 </header>
 
 <main id="views">
@@ -279,11 +454,19 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   <section class="view on" id="v-heat">
     <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span></div>
     <div class="legend"><span><i style="background:var(--emerald)"></i>≥1×</span><span><i style="background:var(--amber)"></i>&lt;1×</span><span><i style="background:var(--edge)"></i>flat</span></div>
+    <div class="chips" style="margin-bottom:8px">
+      <button class="chip on" data-hf="all">All</button>
+      <button class="chip" data-hf="live">Live</button>
+      <button class="chip" data-hf="100">100x+</button>
+      <button class="chip" data-hf="10">10x+</button>
+      <button class="chip" data-hf="1">1x+</button>
+      <button class="chip" data-hf="dead">Done</button>
+    </div>
     <div id="heat-bubbles"></div>
   </section>
 
   <section class="view" id="v-calls">
-    <div class="view-h"><span class="ti">Pro Calls</span><span class="count" id="calls-count"></span></div>
+    <div class="view-h"><span class="ti">ZeroX Calls</span><span class="count" id="calls-count"></span></div>
     <div class="chips" id="risk-chips">
       <button class="chip on" data-r="all">All</button>
       <button class="chip risk risk-lo" data-r="low">Low</button>
@@ -297,12 +480,13 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   </section>
 
   <section class="view" id="v-race">
-    <div class="view-h"><span class="ti">Race to 1B</span><span class="count" id="race-count"></span></div>
-    <div class="chips" style="margin-bottom:8px">
-      <button class="chip on" data-race="live">Live</button>
-      <button class="chip" data-race="done">Finished</button>
+    <div class="view-h"><span class="ti">Pulse</span><span class="count" id="race-count"></span></div>
+    <div class="marquee" id="pulse-tape"></div>
+    <div class="pulse-grid" id="pulse-grid"></div>
+    <div class="pulse-panel">
+      <div class="ph"><span>Biggest Movers</span><span class="ch">live DEX · top 8</span></div>
+      <div id="pulse-movers"></div>
     </div>
-    <div id="race-list"></div>
   </section>
 
   <section class="view" id="v-dex">
@@ -358,7 +542,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 <nav id="nav">
   <button class="nt on" data-v="heat"><i>◉</i><small>HEAT</small></button>
   <button class="nt" data-v="calls"><i>▤</i><small>CALLS</small></button>
-  <button class="nt" data-v="race"><i>▶</i><small>RACE</small></button>
+  <button class="nt" data-v="race"><i>⬡</i><small>PULSE</small></button>
   <button class="nt" data-v="dex"><i>◈</i><small>DEX</small></button>
   <button class="nt" data-v="wallet"><i>⛃</i><small>WALLET</small></button>
   <button class="nt" data-v="pnl"><i>▣</i><small>PNL</small></button>
@@ -381,7 +565,7 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls' };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all' };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */
@@ -495,7 +679,15 @@ function bubSize(c) {
   return Math.min(230, Math.max(84, Math.round(s)));
 }
 function renderHeat() {
-  var list = liveOnly(state.feed).slice(0, 60);
+  var all = state.feed.slice();
+  var list;
+  if (state.heat === 'dead') list = all.filter(isDeadCoin);
+  else list = liveOnly(all);
+  var mGate = state.heat;
+  if (mGate !== 'all' && mGate !== 'live' && mGate !== 'dead') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= Number(mGate); });
+  if (mGate === 'live') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= 1; });
+  list.sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); });
+  list = list.slice(0, 60);
   var div = el('heat-bubbles');
   div.textContent = '';
   el('heat-count').textContent = list.length;
@@ -521,14 +713,16 @@ function renderHeat() {
 
 /* ---------------- recent calls ---------------- */
 function filtered() {
-  var list = liveOnly(state.feed).slice();
+  var list = state.feed.slice();
   if (state.risk !== 'all') list = list.filter(function (c) { return (c.riskTier || 'medium') === state.risk; });
   list.sort(function (a, b) {
     if (state.sort === 'ts') return (b.ts || 0) - (a.ts || 0);
     if (state.sort === 'hot') return (Number(b.curMult) || 0) - (Number(a.curMult) || 0);
+    if (state.sort === 'fresh') return (b.ts || 0) - (a.ts || 0);
     return (b.score || 0) - (a.score || 0);
   });
-  return list.slice(0, 120);
+  if (state.sort !== 'ts' && state.sort !== 'fresh') return list.slice(0, 120);
+  return list.slice(0, 80);
 }
 function tokStrip(c) {
   var out = [];
@@ -576,70 +770,69 @@ function renderCalls() {
   div.appendChild(frag);
 }
 
-/* ---------------- race to 1B ---------------- */
-function raceList() {
-  var list = liveOnly(state.feed).slice();
-  var raceMode = state.raceFilter;
-  var BILLION = 1e9;
-  list = list.filter(function(c) {
-    var curFdv = Number(c.curFdv || c.entryFdv) || 0;
-    var peakFdv = curFdv * (Number(c.peakMult) || 1);
-    if (raceMode === 'done') return peakFdv >= BILLION || (Number(c.peakMult) || 0) >= 1000;
-    return curFdv > 0 && curFdv < BILLION; // live runners
-  });
-  // sort by progress toward 1B (closer first), then by safety
-  list.sort(function(a, b) {
-    var pa = Math.min((Number(a.curFdv || a.entryFdv) || 0) / BILLION, 1);
-    var pb = Math.min((Number(b.curFdv || b.entryFdv) || 0) / BILLION, 1);
-    if (Math.abs(pb - pa) > 0.01) return pb - pa;
-    return (b.safetyScore || 0) - (a.safetyScore || 0);
-  });
-  return list;
+/* ---------------- PULSE dashboard ---------------- */
+function pulseList() {
+  return liveOnly(state.feed).slice();
 }
-function renderRace() {
-  var list = raceList();
-  el('race-count').textContent = list.length;
-  var div = el('race-list');
-  div.textContent = '';
-  if (!list.length) { div.innerHTML = '<div class="empty">NO ' + (state.raceFilter === 'done' ? 'FINISHED' : 'LIVE') + ' RACERS</div>'; return; }
-  var frag = document.createDocumentFragment();
-  var BILLION = 1e9;
-  list.forEach(function (c) {
-    var curFdv = Number(c.curFdv || c.entryFdv) || 0;
-    var peakFdv = curFdv * (Number(c.peakMult) || 1);
+function renderPulse() {
+  var live = pulseList();
+  el('race-count').textContent = live.length;
+  /* ticker tape */
+  var tape = el('pulse-tape');
+  tape.innerHTML = '';
+  var tapeEl = document.createElement('div');
+  tapeEl.className = 'tape';
+  var pieces = live.map(function (c) {
     var m = Number(c.curMult) || 0;
-    var pctTo1B = Math.min((curFdv / BILLION) * 100, 100);
-    var peakPct = Math.min((peakFdv / BILLION) * 100, 100);
-    var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : 'var(--red)');
-    var lane = document.createElement('div');
-    lane.className = 'race-lane';
-    var finished = peakFdv >= BILLION || state.raceFilter === 'done';
-    lane.innerHTML =
-      '<div class="head">' +
-        (finished ? '<span class="mx" style="color:var(--gold);font-size:11px">🏁</span>' : '') +
-        '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
-        '<span class="nm">' + esc(c.name || '') + '</span>' +
-        '<span class="mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span>' +
-      '</div>' +
-      '<div class="vtrack">' +
-        '<div class="vline" style="bottom:100%"><span>$1B</span></div>' +
-        '<div class="vline" style="bottom:50%"><span>$500M</span></div>' +
-        '<div class="vline" style="bottom:10%"><span>$100M</span></div>' +
-        '<div class="peak" style="bottom:' + peakPct.toFixed(2) + '%;background:' + safeColor + '" title="peak ' + money(peakFdv) + '"></div>' +
-        '<div class="bar" style="height:' + pctTo1B.toFixed(2) + '%;background:linear-gradient(0deg, ' + safeColor + 'cc, ' + safeColor + ')"></div>' +
-      '</div>' +
-      '<div class="stats">' +
-        '<span>Now: ' + money(curFdv) + '</span>' +
-        '<span>Peak: ' + money(peakFdv) + '</span>' +
-        '<span class="saf" style="color:' + safeColor + '">Safety: ' + (c.safetyScore || '?') + ' ' + (c.safetyScore != null ? safetyLabel(c.safetyScore) : '') + '</span>' +
-        '<span>Age: ' + ago(c.ts) + '</span>' +
-      '</div>';
-    lane.onclick = function () { openCoin(c); };
-    frag.appendChild(lane);
+    return '<span class="tq ' + (m >= 1 ? 'up' : 'dn') + '">' + esc(c.symbol || '?') + ' ' + (m ? (m >= 100 ? Math.round(m) + '×' : m.toFixed(1) + '×') : '0.0×') + '</span>';
+  }).join('');
+  tapeEl.innerHTML = pieces + pieces;
+  tape.appendChild(tapeEl);
+  if (!tapeEl.innerHTML) tape.innerHTML = '<div class="empty">waiting for signals…</div>';
+  /* stat cards */
+  var grid = el('pulse-grid');
+  grid.textContent = '';
+  var topGain = live.slice().sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); })[0];
+  var topFdv = live.slice().sort(function (a, b) { return (Number(b.curFdv || b.entryFdv) || 0) - (Number(a.curFdv || a.entryFdv) || 0); })[0];
+  var fresh = live.slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); })[0];
+  var green = live.filter(function (c) { return (Number(c.curMult) || 0) >= 1; }).length;
+  var cards = [];
+  if (topGain) cards.push(['top gainer', (Number(topGain.curMult) || 0) >= 100 ? Math.round(topGain.curMult) + '×' : (Number(topGain.curMult) || 0).toFixed(2) + '×', topGain.symbol + ' · live now', topGain.curMult >= 1 ? 'var(--emerald)' : 'var(--amber)']);
+  else cards.push(['top gainer', '—', 'no signals yet', 'var(--faint)']);
+  if (topFdv) cards.push(['biggest cap', money(topFdv.curFdv || topFdv.entryFdv), topFdv.symbol + ' · ' + (topFdv.curFdv || topFdv.entryFdv)]);
+  else cards.push(['biggest cap', '—', '—', 'var(--faint)']);
+  if (fresh) cards.push(['newest call', ago(fresh.ts), fresh.symbol + ' · ' + (fresh.name || ''), 'var(--cyan)']);
+  else cards.push(['newest call', '—', '—', 'var(--faint)']);
+  cards.push(['green rate', green + '/' + live.length + ' live', 'signals above call price', green / Math.max(1, live.length) >= 0.5 ? 'var(--emerald)' : 'var(--amber)']);
+  cards.forEach(function (cd) {
+    var p = document.createElement('div');
+    p.className = 'pcard';
+    p.innerHTML = '<span class="pk">' + cd[0] + '</span><span class="pv" style="color:' + (cd[3] || 'var(--gold)') + '">' + esc(cd[1]) + '</span><span class="ps">' + esc(cd[2]) + '</span>';
+    fragAppend(grid, p);
   });
-  div.appendChild(frag);
+  /* biggest movers from DEX */
+  var movers = state.dex.slice().sort(function (a, b) { return (Number(b.chg24) || 0) - (Number(a.chg24) || 0); }).slice(0, 8);
+  var mv = el('pulse-movers');
+  mv.textContent = '';
+  if (!movers.length) { mv.innerHTML = '<div class="empty">no dex data yet</div>'; return; }
+  var mf = document.createDocumentFragment();
+  movers.forEach(function (p) {
+    var up = Number(p.chg24) >= 0;
+    var r = document.createElement('button');
+    r.className = 'row';
+    r.style.marginBottom = '7px';
+    var icon = IMG(p.image);
+    r.innerHTML =
+      '<span class="l1"><span class="dimg" style="width:34px;height:34px;border-radius:10px">' + (icon ? '<img src="' + esc(icon) + '" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;mono&quot;>?</span>\'">' : '<span class="mono">' + esc(String((p.symbol || '?')[0])) + '</span>') + '</span>' +
+      '<span class="nm" style="font-family:var(--f-mono);font-weight:700;color:var(--txt)">' + esc(p.symbol || '?') + '</span>' +
+      '<span class="mx ' + (up ? 'mx-pos' : 'mx-neg') + '">' + (up ? '+' : '') + (p.chg24 || 0) + '%</span></span>' +
+      '<span class="l2"><span class="fdv">' + dec(p.priceUsd) + '</span><span class="ags">vol ' + money(p.vol24) + (Number(p.boost) > 0 ? ' · <span style="color:#b46bff">▲PAID</span>' : '') + '</span></span>';
+    r.onclick = function () { openDex(p); };
+    mf.appendChild(r);
+  });
+  mv.appendChild(mf);
 }
-
+function fragAppend(div, node) { div.appendChild(node); }
 /* ---------------- top dex ---------------- */
 function renderDex() {
   var list = state.dex;
@@ -652,15 +845,19 @@ function renderDex() {
     var m = Number(p.chg24); var up = m >= 0;
     var paid = Number(p.boost) > 0;
     var r = document.createElement('button');
-    r.className = 'dexrow';
+    r.className = 'dexcard ' + (up ? 'up' : 'dn');
     var icon = IMG(p.image);
+    var monTxt = esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) || '?';
     r.innerHTML =
-      '<span class="dimg">' + (icon || p.socials && p.symbol ? '<img src="' + esc(icon) + '" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;mono&quot;>' + esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) + '</span>\'"">' : '<span class="mono">' + esc(String((p.symbol || '?')[0]).replace(/[\"'<>]/g, '')) + '</span>') + '</span>' +
-      '<span class="mid"><span class="sy">' + esc(p.symbol || '?') + (paid ? ' <span class="paid">▲' + (p.boost || 0) + ' PAID</span>' : ' <span class="bo">▲' + (p.boost || 0) + '</span>') + '</span>' +
-      '<span class="nm">' + esc(p.name || '') + (paid ? ' · <b>boosted</b>' : '') + '</span></span>' +
-      '<span class="rt"><span class="pr">' + dec(p.priceUsd) + '</span>' +
-      '<span class="chg ' + (up ? 'mx-pos' : 'mx-neg') + '">' + (up ? '+' : '') + m + '%</span>' +
-      '<span class="chg">vol ' + money(p.vol24) + '</span></span>';
+      '<span class="dc-img">' +
+        (icon ? '<img src="' + esc(icon) + '" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;mono&quot;>' + monTxt + '</span>\'" alt="">' : '<span class="mono">' + monTxt + '</span>') +
+        (paid ? '<span class="paid-flag">▲PAID</span>' : '') +
+      '</span>' +
+      '<span class="dc-sy">' + esc(p.symbol || '?') + '</span>' +
+      '<span class="dc-nm">' + esc(p.name || '') + '</span>' +
+      '<span class="dc-pr">' + dec(p.priceUsd) + '</span>' +
+      '<span class="dc-chg">' + (up ? '+' : '') + m + '%</span>' +
+      '<span class="dc-vol">vol ' + money(p.vol24) + '</span>';
     r.onclick = function () { openDex(p); };
     frag.appendChild(r);
   });
@@ -929,7 +1126,7 @@ function setTab(t) {
     el('v-' + v).classList.toggle('on', v === t);
     document.querySelectorAll('#nav .nt').forEach(function (b) { b.classList.toggle('on', b.dataset.v === t); });
   });
-  if (t === 'race') renderRace();
+  if (t === 'race') renderPulse();
 }
 document.querySelectorAll('#nav .nt').forEach(function (b) {
   b.addEventListener('click', function () { setTab(b.dataset.v); });
@@ -951,13 +1148,13 @@ document.querySelectorAll('#nav .nt').forEach(function (b) {
   }, { passive: true });
 })();
 
-/* ---------------- race filter chips ---------------- */
-document.querySelectorAll('.chip[data-race]').forEach(function (b) {
+/* ---------------- heat filter chips ---------------- */
+document.querySelectorAll('.chip[data-hf]').forEach(function (b) {
   b.addEventListener('click', function () {
-    document.querySelectorAll('.chip[data-race]').forEach(function (x) { x.classList.remove('on'); });
+    document.querySelectorAll('.chip[data-hf]').forEach(function (x) { x.classList.remove('on'); });
     b.classList.add('on');
-    state.raceFilter = b.dataset.race;
-    renderRace();
+    state.heat = b.dataset.hf;
+    renderHeat();
   });
 });
 
@@ -995,7 +1192,26 @@ document.querySelectorAll('.chip[data-s]').forEach(function (b) {
   });
 });
 el('btn-refresh').addEventListener('click', refresh);
-function renderAll() { renderHeat(); renderCalls(); renderDex(); renderWallet(); renderPNL(); if (state.tab === 'race') renderRace(); }
+el('btn-theme').addEventListener('click', function () {
+  var root = document.documentElement;
+  var cur = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  root.setAttribute('data-theme', cur);
+  try { localStorage.setItem('zerox_theme', cur); } catch (e) {}
+});
+try {
+  var th = localStorage.getItem('zerox_theme');
+  if (th === 'light') document.documentElement.setAttribute('data-theme', 'light');
+} catch (e) {}
+function tickClock() {
+  var c = el('clock');
+  if (!c) return;
+  var d = new Date();
+  var p = function (n) { return String(n).padStart(2, '0'); };
+  c.textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+tickClock();
+setInterval(tickClock, 1000);
+function renderAll() { renderHeat(); renderCalls(); renderPulse(); renderDex(); renderWallet(); renderPNL(); }
 
 try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}
 refresh();

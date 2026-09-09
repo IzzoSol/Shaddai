@@ -5,36 +5,36 @@
    "file": "vault-001.png",
    "symbol": "ZCAT",
    "name": "Anonymous Cat",
-   "peak": 6429223.84,
-   "cur": 1344.79
+   "peak": 500,
+   "cur": 455.04
   },
   {
    "file": "vault-002.png",
    "symbol": "MUCHWOW",
    "name": "MuchWow",
-   "peak": 13857.53,
-   "cur": 6.93
+   "peak": 500,
+   "cur": 6.13
   },
   {
    "file": "vault-003.png",
    "symbol": "BABYTROLL",
    "name": "Baby Troll",
-   "peak": 4547.65,
-   "cur": 4051.23
+   "peak": 500,
+   "cur": 500
   },
   {
    "file": "vault-004.png",
    "symbol": "APEC",
    "name": "Ape & Closed AI",
-   "peak": 86.11,
+   "peak": 11.34,
    "cur": 1.24
   },
   {
    "file": "vault-005.png",
    "symbol": "TOKEN",
    "name": "Token",
-   "peak": 48.71,
-   "cur": 16.79
+   "peak": 15.93,
+   "cur": 15.93
   },
   {
    "file": "vault-006.png",
@@ -48,21 +48,21 @@
    "symbol": "ZBULL",
    "name": "Anonymous Bull",
    "peak": 14.74,
-   "cur": 2.63
+   "cur": 2.37
   },
   {
    "file": "vault-008.png",
    "symbol": "PUMPCAT",
    "name": "Pump Cat",
-   "peak": 9.79,
+   "peak": 2.07,
    "cur": 2.07
   },
   {
    "file": "vault-009.png",
    "symbol": "OTC",
    "name": "Own this Cat",
-   "peak": 8.7,
-   "cur": 6.94
+   "peak": 1.45,
+   "cur": 1.02
   },
   {
    "file": "vault-010.png",
@@ -76,14 +76,14 @@
    "symbol": "GRIMACE",
    "name": "grimacecoin",
    "peak": 6.75,
-   "cur": 1.46
+   "cur": 1.49
   },
   {
    "file": "vault-012.png",
    "symbol": "UKFLMS",
    "name": "UK FINANCIAL MOONSHOT TOKEN",
-   "peak": 6.24,
-   "cur": 6.75
+   "peak": 1.17,
+   "cur": 1.17
   },
   {
    "file": "vault-013.png",
@@ -97,14 +97,14 @@
    "symbol": "PATE",
    "name": "Pepe Cate Coin",
    "peak": 4.96,
-   "cur": 1.45
+   "cur": 1.44
   },
   {
    "file": "vault-015.png",
    "symbol": "DIG",
    "name": "DIG",
-   "peak": 4.55,
-   "cur": 2.36
+   "peak": 2.48,
+   "cur": 2.48
   },
   {
    "file": "vault-016.png",
@@ -118,13 +118,13 @@
    "symbol": "HUMAN",
    "name": "I Am Human",
    "peak": 4.23,
-   "cur": 3.82
+   "cur": 3.88
   },
   {
    "file": "vault-018.png",
    "symbol": "APEWIF",
    "name": "apewifdress",
-   "peak": 4.03,
+   "peak": 2.18,
    "cur": 2.18
   },
   {
@@ -132,7 +132,7 @@
    "symbol": "GTA",
    "name": "GTAlpha",
    "peak": 3.75,
-   "cur": 2.05
+   "cur": 2.07
   },
   {
    "file": "vault-020.png",
@@ -146,7 +146,7 @@
    "symbol": "KRABBY",
    "name": "KRABBY",
    "peak": 3.06,
-   "cur": 2.92
+   "cur": 2.89
   },
   {
    "file": "vault-022.png",
@@ -159,22 +159,22 @@
    "file": "vault-023.png",
    "symbol": "LGBWeed",
    "name": "LGBWeed",
-   "peak": 2.93,
-   "cur": 2.91
+   "peak": 1.57,
+   "cur": 1.55
   },
   {
    "file": "vault-024.png",
    "symbol": "DINKY",
    "name": "Dinky",
    "peak": 2.85,
-   "cur": 2.85
+   "cur": 2.83
   },
   {
    "file": "vault-025.png",
    "symbol": "KRYVEX",
    "name": "KRYVEX",
    "peak": 2.79,
-   "cur": 1.65
+   "cur": 1.64
   },
   {
    "file": "vault-026.png",
@@ -187,8 +187,8 @@
    "file": "vault-027.png",
    "symbol": "LEPTEP",
    "name": "Henter Boden's Leptep",
-   "peak": 2.76,
-   "cur": 7.28
+   "peak": 8.26,
+   "cur": 8.26
   },
   {
    "file": "vault-028.png",
@@ -202,49 +202,49 @@
    "symbol": "Lucia",
    "name": "Lucia",
    "peak": 2.51,
-   "cur": 1.41
+   "cur": 1.62
   },
   {
    "file": "vault-030.png",
-   "symbol": "CORVIN",
-   "name": "CORVIN",
-   "peak": 2.51,
-   "cur": 1.69
-  },
-  {
-   "file": "vault-031.png",
    "symbol": "BULLBALLS",
    "name": "Bullballs Coin",
    "peak": 2.29,
-   "cur": 1.28
+   "cur": 1.29
+  },
+  {
+   "file": "vault-031.png",
+   "symbol": "Mobi",
+   "name": "Mobi The Gorilla",
+   "peak": 1.34,
+   "cur": 1.24
   },
   {
    "file": "vault-032.png",
-   "symbol": "Mobi",
-   "name": "Mobi The Gorilla",
-   "peak": 2.29,
-   "cur": 1.09
-  },
-  {
-   "file": "vault-033.png",
    "symbol": "Magatard",
    "name": "Magatard",
    "peak": 2.24,
-   "cur": 1.34
+   "cur": 1.94
   },
   {
-   "file": "vault-034.png",
+   "file": "vault-033.png",
    "symbol": "CINEMA",
    "name": "CINEMA",
    "peak": 2.22,
    "cur": 1.01
   },
   {
-   "file": "vault-035.png",
+   "file": "vault-034.png",
    "symbol": "$CRUSTY",
    "name": "Crusty microwave",
    "peak": 2.22,
    "cur": 1.32
+  },
+  {
+   "file": "vault-035.png",
+   "symbol": "INCOGINU",
+   "name": "INCOGINU",
+   "peak": 1.2,
+   "cur": 1.15
   },
   {
    "file": "vault-036.png",
@@ -257,22 +257,22 @@
    "file": "vault-037.png",
    "symbol": "LIGER",
    "name": "Liger",
-   "peak": 2.12,
-   "cur": 1.17
+   "peak": 1.27,
+   "cur": 1.14
   },
   {
    "file": "vault-038.png",
    "symbol": "Udin",
    "name": "Udin din din dun",
    "peak": 2.11,
-   "cur": 1.32
+   "cur": 1.31
   },
   {
    "file": "vault-039.png",
    "symbol": "WADDLESLIV",
    "name": "WADDLES LIVE",
-   "peak": 2.05,
-   "cur": 1.84
+   "peak": 1.57,
+   "cur": 1.4
   },
   {
    "file": "vault-040.png",
@@ -286,7 +286,7 @@
    "symbol": "Imagine",
    "name": "Imagine Game Studio",
    "peak": 2,
-   "cur": 1.23
+   "cur": 1.4
   },
   {
    "file": "vault-042.png",
@@ -299,71 +299,71 @@
    "file": "vault-043.png",
    "symbol": "KILLER",
    "name": "Robinhood Killer",
-   "peak": 1.86,
-   "cur": 6.91
+   "peak": 6.85,
+   "cur": 6.85
   },
   {
    "file": "vault-044.png",
-   "symbol": "King",
-   "name": "Christ is King",
-   "peak": 1.78,
-   "cur": 1.78
+   "symbol": "FRAN",
+   "name": "Jelly Jelly Raspberry",
+   "peak": 1.79,
+   "cur": 1.02
   },
   {
    "file": "vault-045.png",
-   "symbol": "NVIDOG",
-   "name": "NVIDOG",
-   "peak": 1.74,
-   "cur": 1.63
+   "symbol": "King",
+   "name": "Christ is King",
+   "peak": 1.78,
+   "cur": 1.77
   },
   {
    "file": "vault-046.png",
+   "symbol": "MEMELESS",
+   "name": "memes are useless",
+   "peak": 1.68,
+   "cur": 1.68
+  },
+  {
+   "file": "vault-047.png",
+   "symbol": "NVIDOG",
+   "name": "NVIDOG",
+   "peak": 1.45,
+   "cur": 1.35
+  },
+  {
+   "file": "vault-048.png",
    "symbol": "MEMEFI",
    "name": "MEMEFISEASON",
    "peak": 1.72,
    "cur": 1.1
   },
   {
-   "file": "vault-047.png",
+   "file": "vault-049.png",
    "symbol": "FATPARROT",
    "name": "Fat Parrot",
-   "peak": 1.66,
-   "cur": 1.78
-  },
-  {
-   "file": "vault-048.png",
-   "symbol": "VOXIE",
-   "name": "VOXIE",
-   "peak": 1.63,
-   "cur": 1.01
-  },
-  {
-   "file": "vault-049.png",
-   "symbol": "TRAGEDY",
-   "name": "Micro Tragedy",
-   "peak": 1.6,
-   "cur": 1
+   "peak": 2,
+   "cur": 2
   },
   {
    "file": "vault-050.png",
-   "symbol": "FUZED",
-   "name": "FUZED",
-   "peak": 1.54,
-   "cur": 1.1
+   "symbol": "TRAGEDY",
+   "name": "Micro Tragedy",
+   "peak": 1.09,
+   "cur": 1
   },
   {
    "file": "vault-051.png",
+   "symbol": "FUZED",
+   "name": "FUZED",
+   "peak": 1.54,
+   "cur": 1.04
+  },
+  {
+   "file": "vault-052.png",
    "symbol": "WILDCAT",
    "name": "WildCatCoin",
    "peak": 1.52,
    "cur": 1.45
-  },
-  {
-   "file": "vault-052.png",
-   "symbol": "CRACKTOP",
-   "name": "Cracktop",
-   "peak": 1.49,
-   "cur": 1.02
   },
   {
    "file": "vault-053.png",
@@ -384,14 +384,14 @@
    "symbol": "ARC",
    "name": "RelayedArc",
    "peak": 1.45,
-   "cur": 1.01
+   "cur": 1.04
   },
   {
    "file": "vault-056.png",
    "symbol": "Pinata",
    "name": "Piñata",
    "peak": 1.41,
-   "cur": 1.36
+   "cur": 1.37
   },
   {
    "file": "vault-057.png",
@@ -405,7 +405,7 @@
    "symbol": "CHOP",
    "name": "GTA Chop",
    "peak": 1.35,
-   "cur": 1.2
+   "cur": 1.19
   },
   {
    "file": "vault-059.png",
@@ -416,66 +416,66 @@
   },
   {
    "file": "vault-060.png",
-   "symbol": "Anonymouse",
-   "name": "Anonymouse",
-   "peak": 1.31,
-   "cur": 1.02
-  },
-  {
-   "file": "vault-061.png",
    "symbol": "26",
    "name": "26",
    "peak": 1.3,
    "cur": 1.21
   },
   {
-   "file": "vault-062.png",
+   "file": "vault-061.png",
    "symbol": "TONTON",
    "name": "TONTON WALLAT ",
    "peak": 1.26,
    "cur": 1.2
   },
   {
-   "file": "vault-063.png",
+   "file": "vault-062.png",
    "symbol": "KIF",
    "name": "KittyWifHat",
    "peak": 1.26,
    "cur": 1.26
   },
   {
-   "file": "vault-064.png",
+   "file": "vault-063.png",
    "symbol": "KIMI",
    "name": "Kimi",
    "peak": 1.25,
    "cur": 1.06
   },
   {
-   "file": "vault-065.png",
+   "file": "vault-064.png",
    "symbol": "ECLIPSE",
    "name": "Eclipse",
    "peak": 1.23,
    "cur": 1.18
   },
   {
-   "file": "vault-066.png",
+   "file": "vault-065.png",
    "symbol": "MND",
    "name": "Mndset AI",
    "peak": 1.21,
-   "cur": 1.14
+   "cur": 1.15
   },
   {
-   "file": "vault-067.png",
+   "file": "vault-066.png",
    "symbol": "NAVA",
    "name": "Nava ecosystem",
    "peak": 1.21,
    "cur": 1.06
   },
   {
-   "file": "vault-068.png",
+   "file": "vault-067.png",
    "symbol": "LLD",
    "name": "Lucky Legend",
    "peak": 1.19,
    "cur": 1.18
+  },
+  {
+   "file": "vault-068.png",
+   "symbol": "Leafy",
+   "name": "Leafy",
+   "peak": 1.03,
+   "cur": 1.03
   },
   {
    "file": "vault-069.png",
@@ -489,14 +489,14 @@
    "symbol": "pepescobar",
    "name": "PEPE Escobar",
    "peak": 1.12,
-   "cur": 1.11
+   "cur": 1.12
   },
   {
    "file": "vault-071.png",
    "symbol": "TNOS",
    "name": "Transnational Oil Supply",
-   "peak": 1.07,
-   "cur": 1.06
+   "peak": 2.79,
+   "cur": 2.76
   },
   {
    "file": "vault-072.png",
@@ -514,45 +514,45 @@
   },
   {
    "file": "vault-074.png",
+   "symbol": "chihuahua",
+   "name": "chihuahua",
+   "peak": 1.04,
+   "cur": 1
+  },
+  {
+   "file": "vault-075.png",
    "symbol": "KITTY",
    "name": "Hello Kitty",
    "peak": 1.03,
    "cur": 1.02
   },
   {
-   "file": "vault-075.png",
+   "file": "vault-076.png",
    "symbol": "FARMCATS",
    "name": "Farm Cats",
    "peak": 1.03,
    "cur": 1.02
   },
   {
-   "file": "vault-076.png",
+   "file": "vault-077.png",
    "symbol": "BOINKO",
    "name": "Boinko Coin",
    "peak": 1.03,
    "cur": 1.03
   },
   {
-   "file": "vault-077.png",
+   "file": "vault-078.png",
    "symbol": "VMC",
    "name": "VICE MONEY CLUB",
    "peak": 1.03,
    "cur": 1.02
   },
   {
-   "file": "vault-078.png",
-   "symbol": "chihuahua",
-   "name": "chihuahua",
-   "peak": 1.03,
-   "cur": 1.03
-  },
-  {
    "file": "vault-079.png",
    "symbol": "$LIZARDMAX",
    "name": "Lizardmaxxing",
-   "peak": 1.01,
-   "cur": 2.1
+   "peak": 2.07,
+   "cur": 2.07
   },
   {
    "file": "vault-080.png",
@@ -831,8 +831,8 @@
    "file": "vault-119.png",
    "symbol": "RAT",
    "name": "Ratcoin ",
-   "peak": 1,
-   "cur": 2.1
+   "peak": 2.14,
+   "cur": 2.14
   },
   {
    "file": "vault-120.png",
