@@ -154,7 +154,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .chg+.chg{color:var(--faint);font-weight:400;font-size:9px}
 
 /* ---------- pnl gallery ---------- */
-#pnl-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#pnl-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
 .pnl-tile{
   display:flex; flex-direction:column; gap:6px; padding:8px; text-align:left;
   background:var(--panel); border:1px solid var(--edge); border-radius:12px; overflow:hidden; min-width:0;
@@ -338,7 +338,6 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
     <div class="view-h"><span class="ti">PNL Gallery</span><span class="count" id="pnl-count"></span></div>
     <div class="chips" style="margin-bottom:8px">
       <button class="chip on" data-pnl="all">All</button>
-      <button class="chip" data-pnl="calls">Call Tracks</button>
       <button class="chip" data-pnl="milestone">Milestones</button>
       <button class="chip" data-pnl="pnl">Vault</button>
     </div>
@@ -784,8 +783,7 @@ function askZerox() {
 /* ---------------- PNL gallery ---------------- */
 var PNL_IMAGES = [];
 (function initPnlImages() {
-  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/img-' + i + '.png', label: 'Call Track #' + i, group: 'calls' });
-  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/vault/vault-' + (i < 10 ? '0' + i : i) + '.png', label: 'Vault #' + i, group: 'pnl' });
+  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/vault/vault-' + (i < 10 ? '0' + i : i) + '.png', label: 'Vault ' + i + ' · Great Call', group: 'pnl' });
   [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(function (m) {
     PNL_IMAGES.push({ src: '/assets/bot/milestones/milestone-' + m + 'x.png', label: 'Milestone ' + m + 'x', group: 'milestone' });
   });
