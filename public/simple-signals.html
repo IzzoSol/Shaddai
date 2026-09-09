@@ -63,8 +63,11 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .bub .mx{font-family:var(--f-mono);font-size:14px;font-weight:700}
 .bub .sc{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--faint)}
 .bub.up{border-left:3px solid var(--emerald)}
-.bub.dn{border-left:3px solid var(--red)}
+.bub.dn{border-left:3px solid var(--amber)}
 .bub.flat{border-left:3px solid var(--edge)}
+.bub.dead{opacity:.35;filter:saturate(.3)}
+.bub .sub-rt{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--faint)}
+.bub .up2{color:var(--emerald)}.bub .dn2{color:var(--amber)}
 .legend{display:flex;gap:14px;font-family:var(--f-mono);font-size:9px;color:var(--faint);letter-spacing:.08em;margin:0 2px 12px}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 
@@ -84,6 +87,10 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   padding:12px 13px; margin-bottom:9px; text-align:left; min-height:88px;
 }
 .row:active{background:var(--bg2)}
+.row.dead{opacity:.38;filter:saturate(.25)}
+.row .fdv{color:var(--faint)}
+.row .saf-badge{font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border:1px solid;border-radius:4px}
+.row .mx{min-width:46px;text-align:right}
 .row .l1{display:flex;align-items:center;gap:8px}
 .row .tla{font-family:var(--f-mono);font-size:14px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
 .row .nm{font-size:12px;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
@@ -171,6 +178,33 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .act .hire{background:var(--gold);color:#140f02;border-color:var(--gold)}
 .hnote{font-size:11px;color:var(--faint);line-height:1.6;margin-top:4px}
 .hnote b{color:var(--soft);font-family:var(--f-mono);font-weight:400}
+.askcard{background:linear-gradient(150deg,rgba(0,229,160,.08),rgba(76,201,240,.05));border:1px solid rgba(0,229,160,.28);border-radius:14px;padding:16px;margin-bottom:12px}
+.askcard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.askcard .ph span:first-child{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--emerald);text-transform:uppercase}
+.askcard .ph .ch{font-family:var(--f-mono);font-size:9px;color:var(--emerald);margin-left:auto}
+.ain{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--edge2);border-radius:10px;color:var(--txt);font-family:var(--f-mono);font-size:11px;padding:13px 14px;margin-bottom:8px;outline:none;min-height:46px}
+.ain:focus{border-color:var(--emerald)}
+.act-btn{border:0;text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:var(--f-mono);cursor:pointer}
+.act-btn.ask{width:100%;min-height:54px;border-radius:12px;font-size:12px;background:var(--emerald);color:#04120c;margin-top:2px}
+.act-btn.ask:active{opacity:.85}
+.ask-ans{display:none;margin-top:12px;padding:12px 14px;border:1px solid var(--edge2);border-radius:12px;background:rgba(0,0,0,.25)}
+.ask-ans.on{display:block}
+.ask-ans .a-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.ask-ans .a-sym{font-family:var(--f-mono);font-size:15px;font-weight:700}
+.ask-ans .a-tag{font-family:var(--f-mono);font-size:9.5px;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:5px;background:rgba(0,0,0,.3)}
+.ask-ans .a-th{font-size:12px;color:var(--soft);line-height:1.65;margin-bottom:10px}
+.ask-ans .a-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ask-ans .a-cell{background:var(--panel);border:1px solid var(--edge);border-radius:9px;padding:8px 10px;font-family:var(--f-mono);font-size:10px}
+.ask-ans .a-cell dt{color:var(--faint);font-size:8px;letter-spacing:.1em;margin-bottom:3px;text-transform:uppercase}
+.ask-ans .a-cell dd{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ask-ans .a-lin{font-family:var(--f-mono);font-size:8.5px;color:var(--faint);margin-top:10px;line-height:1.5;word-break:break-all}
+.ask-ans .err{color:var(--red);font-size:11px;margin-top:8px}
+.tgcard{background:linear-gradient(150deg,rgba(76,201,240,.08),rgba(232,196,92,.05));border:1px solid rgba(76,201,240,.28);border-radius:14px;padding:16px;margin-bottom:12px}
+.tgcard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.tgcard .ph span:first-child{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase}
+.tgcard .ph .ch{font-family:var(--f-mono);font-size:9px;color:var(--cyan);margin-left:auto}
+.tg-btn{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:13px 16px;border-radius:10px;min-height:50px;flex:1 1 auto;border:1px solid var(--edge2);color:var(--cyan)}
+.tg-btn:active{background:var(--panel)}
 .vscard{background:linear-gradient(150deg,rgba(76,201,240,.08),rgba(232,196,92,.04));border:1px solid rgba(76,201,240,.28);border-radius:14px;padding:16px;margin-bottom:12px}
 .vscard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
 .vscard .ph span:first-child{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase}
@@ -242,7 +276,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 
   <section class="view on" id="v-heat">
     <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span></div>
-    <div class="legend"><span><i style="background:var(--emerald)"></i>≥1×</span><span><i style="background:var(--red)"></i>&lt;1× new</span><span><i style="background:var(--amber)"></i>med risk</span></div>
+    <div class="legend"><span><i style="background:var(--emerald)"></i>≥1×</span><span><i style="background:var(--amber)"></i>&lt;1×</span><span><i style="background:var(--edge)"></i>flat</span></div>
     <div id="heat-bubbles"></div>
   </section>
 
@@ -275,18 +309,28 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   </section>
 
   <section class="view" id="v-wallet">
-    <div class="view-h"><span class="ti">Paybox / Hire ZEROX</span></div>
+    <div class="view-h"><span class="ti">Paybox / Ask ZEROX</span></div>
     <div class="paycard">
       <div class="ph"><span>ZEROX Paybox</span><span class="ch" id="pb-chain">USDC receiving</span></div>
       <div id="pb-wallets"></div>
-      <button class="act-btn hire" id="btn-hire">HIRE ZEROX</button>
-      <div class="hnote">Send USDC to an address below to load credits, or call ZEROX's MCP tools and skills from <b>/signals.html</b>. See the full office at <b>/directory.html</b>.</div>
+      <div class="hnote">Send <b>1 USDC</b> to an address below, then paste your Solscan txn in the Ask box to get ZEROX's full read on any coin.</div>
     </div>
-    <div class="hnote" id="intel-note" style="padding:0 4px"></div>
-    <div class="vscard" id="vs-card">
-      <div class="ph"><span>ZEROX · Virtuals ACP</span><span class="st unk" id="vs-state">checking…</span></div>
-      <div id="vs-body"><div class="vrow"><span class="ch-lbl">identity</span><span class="addr">…</span></div></div>
-      <div class="vs-detail" id="vs-detail"></div>
+    <div class="askcard" id="ask-card">
+      <div class="ph"><span>Ask ZEROX · $1</span><span class="ch">1 USDC / question</span></div>
+      <input class="ain" id="ask-mint" placeholder="Coin mint or symbol (e.g. pump.fun mint / ZCAT)" spellcheck="false">
+      <input class="ain" id="ask-q" placeholder="Your question about this coin…" spellcheck="false">
+      <input class="ain" id="ask-proof" placeholder="Solscan txn link of your $1 payment…" spellcheck="false">
+      <button class="act-btn ask" id="btn-ask">ASK ZEROX</button>
+      <div class="hnote">Send 1 USDC to the address above, paste the txn link, and ZEROX answers with sentiment, entry/exit plan and risk profile.</div>
+      <div class="ask-ans" id="ask-ans"></div>
+    </div>
+    <div class="tgcard" id="tg-card">
+      <div class="ph"><span>Signal Alerts</span><span class="ch">live feeds</span></div>
+      <div class="act" style="margin-top:4px">
+        <button class="tg-btn" id="btn-tg-shaddai">SHADDAI HALL ↗</button>
+        <button class="tg-btn" id="btn-tg-zerox">ZEROX SIGNALS ↗</button>
+      </div>
+      <div class="hnote">Join the channels for live call alerts, milestones and weekly PnL drops.</div>
     </div>
   </section>
 
@@ -294,8 +338,9 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
     <div class="view-h"><span class="ti">PNL Gallery</span><span class="count" id="pnl-count"></span></div>
     <div class="chips" style="margin-bottom:8px">
       <button class="chip on" data-pnl="all">All</button>
+      <button class="chip" data-pnl="calls">Call Tracks</button>
       <button class="chip" data-pnl="milestone">Milestones</button>
-      <button class="chip" data-pnl="pnl">Weekly PNL</button>
+      <button class="chip" data-pnl="pnl">Vault</button>
     </div>
     <div id="pnl-list"></div>
   </section>
@@ -380,15 +425,26 @@ async function fetchJSON(u) {
 }
 async function refresh() {
   el('updated').textContent = '';
-  try { await Promise.all([loadFeed(), loadDex(), loadWallets(), loadIntel()]); stamp(); renderAll(); }
+  try { await Promise.all([loadFeed(), loadDex(), loadWallets()]); stamp(); renderAll(); }
   catch (e) { el('updated').textContent = 'ERR'; console.error(e); }
-  loadVirtuals();
 }
 async function loadFeed() {
   var j = await fetchJSON(API + '/api/pro-signals/feed?limit=250');
   state.feed = (j.calls || []).filter(function (c) { return c && c.mint; });
   return state.feed.length;
 }
+/* UI-side cleanup: hide visibly dead coins that slip through the backend net */
+function isDeadCoin(c) {
+  var m = Number(c.curMult) || 0;
+  if (c.source === 'seed' || c.source === 'test') return true;
+  if (!c.mint) return true;
+  if (m > 0 && m < 0.35 && c.ts && (Date.now() - c.ts) > 2 * 3600000) return true;
+  var fdv = Number(c.curFdv || c.entryFdv) || 0;
+  if (fdv > 0 && fdv <= 5000 && c.ts && (Date.now() - c.ts) > 3600000) return true;
+  return false;
+}
+function deadClass(c) { return isDeadCoin(c) ? 'dead' : ''; }
+function liveOnly(list) { return list.filter(function (c) { return !isDeadCoin(c); }); }
 async function loadDex() {
   var j = await fetchJSON(API + '/api/pro-signals/top-dex?limit=25');
   state.dex = (j.pairs || []).filter(function (p) { return p && p.mint; });
@@ -399,13 +455,6 @@ async function loadWallets() {
   catch (e) { state.wallets = []; }
   return state.wallets.length;
 }
-async function loadIntel() {
-  try {
-    var j = await fetchJSON(API + '/api/intel/wallets');
-    var c = j.counts || {};
-    el('intel-note').innerHTML = 'Intel: ' + c.calls + ' calls tracked · ' + c.wallets + ' smart wallets · generated ' + ago(j.generatedAt);
-  } catch (e) { el('intel-note').textContent = ''; }
-}
 function stamp() {
   var n = Date.now();
   var t = new Date(n).toTimeString().slice(0, 5);
@@ -414,19 +463,19 @@ function stamp() {
 
 /* ---------------- safety color ---------------- */
 function safetyColor(score) {
-  if (score >= 75) return 'var(--emerald)';
+  if (score >= 70) return 'var(--emerald)';
   if (score >= 55) return 'var(--amber)';
   return 'var(--red)';
 }
 function safetyLabel(score) {
-  if (score >= 75) return 'SAFE';
-  if (score >= 55) return 'CAUTION';
+  if (score >= 70) return 'SAFE';
+  if (score >= 55) return 'WATCH';
   return 'RISK';
 }
 
 /* ---------------- heatmap ---------------- */
 function renderHeat() {
-  var list = state.feed.slice(0, 60);
+  var list = liveOnly(state.feed).slice(0, 60);
   var div = el('heat-bubbles');
   div.textContent = '';
   el('heat-count').textContent = list.length;
@@ -436,12 +485,12 @@ function renderHeat() {
     var m = Number(c.curMult) || 0;
     var size = Math.min(34, Math.max(12, 10 + Math.sqrt(c.score || 0) * 1.6));
     var b = document.createElement('button');
-    b.className = 'bub ' + (m >= 1 ? 'up' : (m > 0 ? 'dn' : 'flat'));
+    b.className = 'bub ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
     b.style.minHeight = (64 + size) + 'px';
     b.style.fontSize = (size) + 'px';
-    var safe = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : (m > 0 ? 'var(--red)' : 'var(--edge)'));
-    b.innerHTML = '<span class="sy">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + Math.max(12, size - 6) + 'px;color:' + safe + '">' +
-      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sc">S ' + (c.score || 0) + ' · SF ' + (c.safetyScore || '?') + '</span>';
+    var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
+    b.innerHTML = '<span class="sy">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + Math.max(12, size - 6) + 'px;color:' + main + '">' +
+      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · S ' + (c.score || 0) + '</span>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
@@ -450,7 +499,7 @@ function renderHeat() {
 
 /* ---------------- recent calls ---------------- */
 function filtered() {
-  var list = state.feed.slice();
+  var list = liveOnly(state.feed).slice();
   if (state.risk !== 'all') list = list.filter(function (c) { return (c.riskTier || 'medium') === state.risk; });
   list.sort(function (a, b) {
     if (state.sort === 'ts') return (b.ts || 0) - (a.ts || 0);
@@ -484,26 +533,21 @@ function renderCalls() {
   list.forEach(function (c) {
     var m = Number(c.curMult) || 0;
     var r = document.createElement('button');
-    r.className = 'row';
+    r.className = 'row' + (isDeadCoin(c) ? ' dead' : '');
     var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : (m > 0 ? 'var(--red)' : 'var(--edge)'));
+    var fdv = Number(c.curFdv || c.entryFdv) || 0;
+    var fdvTxt = fdv >= 1e6 ? (fdv / 1e6).toFixed(1) + 'M' : (fdv >= 1000 ? Math.round(fdv / 1000) + 'K' : Math.round(fdv).toLocaleString());
     r.innerHTML =
       '<span class="l1"><span class="tla">' + esc(c.symbol || '?') + '</span>' +
       '<span class="nm">' + esc(c.name || c.mint.slice(0, 6)) + '</span>' +
-      '<span class="mx" style="color:' + safeColor + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span></span>' +
-      '<span class="l2"><span class="risk-chip ' + riskCls(c.riskTier || 'medium') + '">' + esc(c.riskTier || 'med') + '</span>' +
+      '<span class="mx" style="color:' + (m >= 1 ? 'var(--emerald)' : 'var(--amber)') + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span></span>' +
+      '<span class="l2">' +
+      '<span class="risk-chip ' + riskCls(c.riskTier || 'medium') + '">' + esc(c.riskTier || 'med') + '</span>' +
       '<span class="scor">S ' + (c.score || 0) + '</span>' +
-      '<span class="scor" style="color:' + safeColor + '">SF ' + (c.safetyScore || '?') + '</span>' +
-      '<span>$ ' + (Number(c.curFdv || c.entryFdv) ? (Number(c.curFdv || c.entryFdv) >= 1e6 ? (Number(c.curFdv || c.entryFdv) / 1e6).toFixed(1) + 'M' : Math.round(Number(c.curFdv || c.entryFdv)).toLocaleString()) : '—') + '</span>' +
+      '<span class="saf-badge" style="color:' + safeColor + ';border-color:' + safeColor + '88">SF ' + (c.safetyScore || '?') + '</span>' +
+      '<span class="fdv">$' + fdvTxt + '</span>' +
       '<span class="ags">' + ago(c.ts) + '</span></span>' +
-      (c.trail ? '<div class="spark"><canvas></canvas></div>' : '') +
       tokStrip(c);
-    // draw sparkline after DOM insertion
-    if (c.trail) {
-      setTimeout(function() {
-        var canvas = r.querySelector('.spark canvas');
-        if (canvas) drawSpark(canvas, c.trail, safeColor);
-      }, 0);
-    }
     r.onclick = function () { openCoin(c); };
     frag.appendChild(r);
   });
@@ -512,7 +556,7 @@ function renderCalls() {
 
 /* ---------------- race to 1B ---------------- */
 function raceList() {
-  var list = state.feed.slice();
+  var list = liveOnly(state.feed).slice();
   var raceMode = state.raceFilter;
   var BILLION = 1e9;
   list = list.filter(function(c) {
@@ -568,15 +612,7 @@ function renderRace() {
         '<span>Peak: ' + money(peakFdv) + '</span>' +
         '<span class="saf" style="color:' + safeColor + '">Safety: ' + (c.safetyScore || '?') + ' ' + (c.safetyScore != null ? safetyLabel(c.safetyScore) : '') + '</span>' +
         '<span>Age: ' + ago(c.ts) + '</span>' +
-      '</div>' +
-      (c.trail ? '<div class="spark" style="margin-top:8px"><canvas></canvas></div>' : '');
-    // draw sparkline after DOM insertion
-    if (c.trail) {
-      setTimeout(function() {
-        var canvas = lane.querySelector('.spark canvas');
-        if (canvas) drawSpark(canvas, c.trail, safeColor);
-      }, 0);
-    }
+      '</div>';
     lane.onclick = function () { openCoin(c); };
     frag.appendChild(lane);
   });
@@ -635,39 +671,19 @@ function renderWallet() {
   el('pb-chain').textContent = 'USDC receiving · ' + state.wallets.length + ' chain' + (state.wallets.length !== 1 ? 's' : '');
 }
 document.addEventListener('DOMContentLoaded', function () {
-  el('btn-hire').addEventListener('click', function () { location.href = '/directory.html'; });
-});
+  var TG = {
+    shaddai: 'https://t.me/ShaddaiCircle',
+    zerox: 'https://t.me/ShaddaiSignalsBot'
+  };
+  el('btn-tg-shaddai').addEventListener('click', function () { window.open(TG.shaddai, '_blank'); });
+  el('btn-tg-zerox').addEventListener('click', function () { window.open(TG.zerox, '_blank'); });
 
-/* ---------------- virtuals ACP card ---------------- */
-async function loadVirtuals() {
-  try {
-    var [st, wl] = await Promise.all([
-      fetch(API + '/api/virtuals/status').then(function (r) { return r.ok ? r.json() : null; }),
-      fetch(API + '/api/virtuals/wallets').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
-    ]);
-    renderVirtuals(st, wl);
-  } catch (e) { renderVirtuals(null, null); }
-}
-function renderVirtuals(st, wl) {
-  var stateEl = el('vs-state'), body = el('vs-body'), detail = el('vs-detail');
-  if (!st) { stateEl.textContent = 'offline'; stateEl.className = 'st unk'; body.innerHTML = '<div class="vrow"><span class="ch-lbl">identity</span><span class="addr">endpoint unavailable</span></div>'; detail.textContent = 'start the SHADDAI server for live ACP status.'; return; }
-  if (st.ok && st.registered) { stateEl.textContent = 'REGISTERED'; stateEl.className = 'st reg'; }
-  else { stateEl.textContent = 'NOT REGISTERED'; stateEl.className = 'st unreg'; }
-
-  body.textContent = '';
-  var rows = [];
-  var id = st.identity || { name: null };
-  rows.push('<div class="vrow"><span class="lamp ' + (st.registered ? 'ok' : 'bad') + '"></span><span class="ch-lbl">agent</span><span class="addr">' + esc(id.name || id.agent || 'SHADDAI / ZEROX') + '</span></div>');
-  if (st.solWallet) rows.push('<div class="vrow"><span class="lamp unk"></span><span class="ch-lbl">sol wallet</span><span class="addr">' + esc(st.solWallet) + '</span></div>');
-  if (st.baseWallet) rows.push('<div class="vrow"><span class="lamp unk"></span><span class="ch-lbl">base wallet</span><span class="addr">' + esc(st.baseWallet) + '</span></div>');
-  (wl && wl.wallets || []).forEach(function (w) {
-    var lamp = w.funded === null ? 'none' : (w.funded ? 'ok' : 'bad');
-    var bal = w.balance == null ? '—' : (w.balance >= 0.00001 ? w.balance.toFixed(4) : w.balance.toExponential(2));
-    rows.push('<div class="vrow"><span class="lamp ' + lamp + '"></span><span class="ch-lbl">' + esc(w.chain) + ' bal</span><span class="bal">' + bal + ' ' + (w.chain === 'base' ? 'ETH' : 'SOL') + '</span></div>');
+  el('btn-ask').addEventListener('click', askZerox);
+  var inputs = ['ask-mint', 'ask-q', 'ask-proof'];
+  inputs.forEach(function (id) {
+    el(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') askZerox(); });
   });
-  body.innerHTML = rows.join('');
-  detail.textContent = st.detail || (st.ok ? 'ok' : '');
-}
+});
 
 /* ---------------- coin sheet ---------------- */
 function openCoin(c) {
@@ -691,11 +707,11 @@ function openCoin(c) {
     '</div>' +
     tokStrip(c) +
     '<div class="s-toks" style="margin-top:10px">' +
-      '<span class="tok-safe">Trail: ' + (c.trail ? c.trail.length + ' pts' : 'none') + '</span>' +
+      '<span class="tok-safe">' + (c.chainId === 'solana' ? 'Solana' : 'Solana') + ' · ' + (c.holders ? c.holders + ' holders' : 'holders n/a') + '</span>' +
     '</div>' +
-    '<button class="s-btn sb-gold" onclick="location.href=\'https://dexscreener.com/search?q=' + esc(c.mint) + '\'">View on DexScreener ↗</button>' +
+    '<button class="s-btn sb-gold" onclick="window.open(\'https://dexscreener.com/solana/' + esc(c.mint) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(c.mint) + '\', this)">Copy mint</button>' +
-    '<button class="s-btn sb-ghost" onclick="location.href=\'/signals.html\'">Hire ZEROX ↗</button>';
+    '<button class="s-btn sb-ghost" onclick="closeSheet();el(\'ask-mint\').value=\'' + esc(c.mint) + '\';setTab(\'wallet\')">Ask ZEROX $1</button>';
   showSheet();
 }
 function openDex(p) {
@@ -712,7 +728,7 @@ function openDex(p) {
       '<div class="s-cell"><dt>Rank</dt><dd>#' + (p.rank || '—') + '</dd></div>' +
     '</div>' +
     '<div class="s-toks">' + [p.socials && p.socials.twitter ? '<span class="tok-safe">𝕏 yes</span>' : '', p.socials && p.socials.telegram ? '<span class="tok-safe">TG yes</span>' : '', p.socials && p.socials.website ? '<span class="tok-safe">site yes</span>' : ''].join('') + '</div>' +
-    '<button class="s-btn sb-gold" onclick="location.href=\'' + esc(p.pairUrl || 'https://dexscreener.com/search?q=' + p.mint) + '\'">View on DexScreener ↗</button>' +
+    '<button class="s-btn sb-gold" onclick="window.open(\'https://dexscreener.com/solana/' + esc(p.mint) + '\',\'_blank\')">Open on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" onclick="copyMint(\'' + esc(p.mint) + '\', this)">Copy mint</button>';
   showSheet();
 }
@@ -723,10 +739,53 @@ function showSheet() { el('scrim').classList.add('on'); el('sheet').classList.ad
 function closeSheet() { el('scrim').classList.remove('on'); el('sheet').classList.remove('on'); }
 el('scrim').addEventListener('click', closeSheet);
 
+/* ---------------- Ask ZEROX (pay-to-ask) ---------------- */
+function askZerox() {
+  var btn = el('btn-ask');
+  var ans = el('ask-ans');
+  var body = {
+    mint: el('ask-mint').value.trim(),
+    symbol: el('ask-mint').value.trim(),
+    question: el('ask-q').value.trim(),
+    solscanUrl: el('ask-proof').value.trim()
+  };
+  if (!body.question) { ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">Enter a question first.</div>'; return; }
+  if (!body.solscanUrl) { ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">Paste your Solscan txn link (the $1 payment) — without it the question stays locked.</div>'; return; }
+  btn.disabled = true; btn.textContent = '…';
+  fetch(API + '/api/pro-signals/zerox/pay-ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    btn.disabled = false; btn.textContent = 'ASK ZEROX';
+    if (!j.ok) { ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">' + esc(j.error || 'request failed') + '</div>'; return; }
+    ans.className = 'ask-ans on';
+    var s = j.sentiment || {};
+    var tag = s.tag || '—';
+    var tagColor = s.color || 'var(--soft)';
+    var cells = [
+      ['Sentiment', tag],
+      ['Score', j.score != null ? j.score : '—'],
+      ['Now', j.market && j.market.nowFdv ? money(j.market.nowFdv) : '—'],
+      ['Mult', j.market && j.market.curMult ? j.market.curMult + '×' : '—']
+    ];
+    ans.innerHTML =
+      '<div class="a-head"><span class="a-sym">' + esc(j.symbol || '?') + '</span>' +
+      '<span class="a-tag" style="color:' + esc(tagColor) + ';border:1px solid ' + esc(tagColor) + '88">' + esc(tag) + '</span></div>' +
+      '<div class="a-th">' + esc(j.thesis || '') + '</div>' +
+      '<div class="a-grid">' + cells.map(function (c) { return '<div class="a-cell"><dt>' + c[0] + '</dt><dd>' + esc(c[1]) + '</dd></div>'; }).join('') + '</div>' +
+      '<div class="a-lin">' + esc(j.asked ? '• Q: ' + j.asked + ' · ' : '') + 'fee ' + esc(j.fee || '1 USDC') + ' · accepted ✓</div>';
+  }).catch(function (e) {
+    btn.disabled = false; btn.textContent = 'ASK ZEROX';
+    ans.className = 'ask-ans on'; ans.innerHTML = '<div class="err">' + esc(e.message || 'network error') + '</div>';
+  });
+}
+
 /* ---------------- PNL gallery ---------------- */
 var PNL_IMAGES = [];
 (function initPnlImages() {
-  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/pnl-' + i + '.png', label: 'Weekly PnL #' + i, group: 'pnl' });
+  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/img-' + i + '.png', label: 'Call Track #' + i, group: 'calls' });
+  for (var i = 1; i <= 10; i++) PNL_IMAGES.push({ src: '/assets/bot/vault/vault-' + (i < 10 ? '0' + i : i) + '.png', label: 'Vault #' + i, group: 'pnl' });
   [2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].forEach(function (m) {
     PNL_IMAGES.push({ src: '/assets/bot/milestones/milestone-' + m + 'x.png', label: 'Milestone ' + m + 'x', group: 'milestone' });
   });

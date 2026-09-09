@@ -79,15 +79,20 @@ function filterByStrictness(calls, strictness) {
 // Score calls for "bid recommendations" (top opportunities)
 function scoreCall(call) {
   let score = 0;
+  const curMult = Number(call.curMult) || 0;
 
   // Current multiplier (higher is better, capped at 10x for scoring)
-  if (call.curMult) {
-    score += Math.min(call.curMult, 10) * 5;
+  if (curMult > 0) {
+    score += Math.min(curMult, 10) * 5;
+    // Live conviction worth extra; crushed coins get NO "potential" fantasy.
+    if (curMult >= 1) score += 8;
+    else if (curMult >= 0.5) score += 0;
+    else score -= 25; // below 0.5x = dying, sink it in the sort
   }
 
-  // Peak potential (unrealized gains - biggest weight)
-  if (call.peakMult && call.curMult) {
-    const potential = call.peakMult / call.curMult;
+  // Peak potential (unrealized gains) - only counts when coin is alive
+  if (call.peakMult && curMult >= 0.5) {
+    const potential = call.peakMult / curMult;
     score += Math.min(potential, 10) * 15; // Heavy weight on upside
   }
 
@@ -129,49 +134,82 @@ function scoreCall(call) {
     score += 8;
   }
 
-  return Math.round(score);
+  // Safety matters for ranking: a 70+ safety call beats a rug-flagged one
+  const safe = safetyScore(call);
+  if (safe >= 70) score += 10;
+  else if (safe >= 55) score += 4;
+  else if (safe < 40) score -= 10;
+
+  return Math.max(0, Math.round(score));
 }
 
 // Composite safety score (0-100, higher = safer) â€” ZEROX heuristics:
 // buys vs sells pressure, holder quality, supply control, LP lock, socials
 function safetyScore(call) {
-  let s = 50; // base neutral
-  // Holder quality
-  const holders = Number(call.holders) || 0;
-  if (holders >= 500) s += 15;
-  else if (holders >= 200) s += 10;
-  else if (holders >= 50) s += 5;
-  else if (holders > 0) s -= 5;
+  let s = 55; // neutral base
+  // Holder quality (only when known)
+  const holders = Number(call.holders);
+  if (holders > 0) {
+    if (holders >= 500) s += 12;
+    else if (holders >= 200) s += 8;
+    else if (holders >= 50) s += 3;
+    else s -= 6;
+  }
   // Top 10 concentration (lower = safer)
-  const top10 = Number(call.top10Pct) || 0;
-  if (top10 <= 30) s += 10;
-  else if (top10 <= 50) s += 5;
-  else if (top10 >= 70) s -= 15;
+  const top10 = Number(call.top10Pct);
+  if (top10 > 0) {
+    if (top10 <= 30) s += 8;
+    else if (top10 <= 50) s += 3;
+    else if (top10 >= 70) s -= 12;
+  }
   // Insiders / bundlers / snipers (red flags)
-  if (call.insiders > 0) s -= Math.min(call.insiders * 3, 15);
-  if (call.bundlers) s -= 10;
-  if (call.snipers) s -= 10;
-  // LP lock
-  const lp = Number(call.lpPct) || 0;
-  if (lp >= 99) s += 10;
-  else if (lp >= 80) s += 5;
-  else if (lp > 0) s -= 5;
-  else s -= 10;
+  if (call.insiders > 0) s -= Math.min(call.insiders * 2, 12);
+  if (call.bundlers) s -= 8;
+  if (call.snipers) s -= 8;
+  // LP lock (only when known)
+  const lp = Number(call.lpPct);
+  if (lp > 0) {
+    if (lp >= 99) s += 10;
+    else if (lp >= 80) s += 5;
+    else if (lp < 50) s -= 8;
+  }
   // RugCheck score (internal safety score, higher = safer)
-  const rug = Number(call.rugScore) || 0;
-  if (rug >= 80) s += 10;
-  else if (rug >= 60) s += 5;
-  else if (rug > 0 && rug < 40) s -= 10;
-  // Liquidity depth
-  const liq = Number(call.liq) || Number(call.liquidity) || 0;
-  if (liq >= 100000) s += 5;
-  else if (liq >= 25000) s += 2;
-  else if (liq > 0 && liq < 10000) s -= 5;
+  const rug = Number(call.rugScore);
+  if (rug > 0) {
+    if (rug >= 80) s += 12;
+    else if (rug >= 60) s += 6;
+    else if (rug >= 40) s += 1;
+    else s -= 10;
+  }
+  // Liquidity depth (only when known)
+  const liq = Number(call.liq) || Number(call.liquidity);
+  if (liq > 0) {
+    if (liq >= 200000) s += 8;
+    else if (liq >= 50000) s += 5;
+    else if (liq >= 10000) s += 2;
+    else s -= 8;
+  }
+  // Established market cap = survivorship credit
+  const fdv = Number(call.curFdv) || Number(call.entryFdv);
+  if (fdv > 0) {
+    if (fdv >= 1000000) s += 8;
+    else if (fdv >= 250000) s += 5;
+    else if (fdv >= 50000) s += 3;
+    else if (fdv < 8000) s -= 4;
+  }
+  // Live momentum = market conviction: a coin holding 1x+ has real bids.
+  const m = Number(call.curMult);
+  if (m > 0) {
+    if (m >= 5) s += 12;
+    else if (m >= 2) s += 8;
+    else if (m >= 1) s += 4;
+    else if (m < 0.5) s -= 8;
+  }
   // Source credibility
   const src = call.source || '';
-  if (src.includes('trending')) s += 3;
-  else if (src.includes('bond') || src.includes('seed')) s -= 2;
-// Clamp 0-100 // FORCEREDEPLOY
+  if (src.includes('trending') || src.includes('gecko')) s += 6;
+  else if (src.includes('boosted')) s += 2;
+  else if (src.includes('new_pools')) s -= 2;
   return Math.max(0, Math.min(100, Math.round(s)));
 }
 // Deploy marker: pro-signals fix verified 2026-09-08
@@ -179,26 +217,31 @@ function safetyScore(call) {
 // Filter dead/rugged calls â€” keep only pro signals with life
 function filterDead(calls) {
   const now = Date.now();
+  const H = 3600000;
+  const DAY = 24 * H;
   return calls.filter(c => {
     // Skip seed/test calls
-    if (c.source === 'seed') return false;
+    if (c.source === 'seed' || c.source === 'test') return false;
     // Must have a mint and entry
     if (!c.mint || !c.entryFdv) return false;
     const curMult = Number(c.curMult) || 1;
-    const curFdv = Number(c.curFdv) || c.entryFdv;
+    const curFdv = Number(c.curFdv) || 0;
     const ageMs = now - (c.ts || now);
-    const hourMs = 3600000;
-    // Dead: FDV â‰¤ $4k for >1h (pruneRugs criteria)
-    if (curFdv <= 4000 && ageMs > hourMs) return false;
-    // Dead: no live price (pair gone) and old >6h with curMult < 0.8 (pruneDead criteria)
-    const hasLivePrice = curFdv > 0 && curFdv !== c.entryFdv;
-    if (!hasLivePrice && ageMs > 6 * hourMs && curMult < 0.8) return false;
+    // Brand new (first 30m): always keep, even if price data is mid-flight
+    if (ageMs < 30 * 60000) return true;
+    // Dead: FDV â‰¤ $5k for >1h (priced out / rugged to dust)
+    if (curFdv > 0 && curFdv <= 5000 && ageMs > H) return false;
+    // Dead: crushed below 0.35x for >2h (no bids, no recovery window)
+    if (curMult < 0.35 && ageMs > 2 * H) return false;
+    // Dead: no live price (pair gone) and old >6h with curMult < 0.8
+    if (!(curFdv > 0) && ageMs > 6 * H && curMult < 0.8) return false;
+    // Dead: never went anywhere - new pools that flopped after 24h
+    if (c.source === 'new_pools' && ageMs > DAY && curMult < 1.2) return false;
     // Dead: closed flag
     if (c.closed) return false;
-    // Keep pro-origin signals (trending, bonded, helios, gecko)
-    const proSources = ['trending', 'bonded', 'helios', 'gecko', 'prebond'];
-    const isPro = proSources.includes(c.source);
-    return true; // for now keep all non-seed; can tighten to isPro
+    // Stale noise older than 14 days with no traction
+    if (ageMs > 14 * DAY && curMult < 1) return false;
+    return true;
   });
 }
 
@@ -522,6 +565,77 @@ router.post('/zerox/access', express.json({ limit: '16kb' }), (req, res) => {
     if (!valid.has(code)) return res.status(403).json({ ok: false, error: 'invalid code' });
 
     return res.json({ ok: true, granted: true, tier: 'pro', note: 'ZEROX theta unlocked for pro members.' });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST /api/pro-signals/zerox/pay-ask â€" $1 pay-to-ask flow. User sends $1
+// USDC to the ZEROX paybox wallet, pastes the Solscan txn as proof, asks a
+// question about a coin (mint or symbol). We record the intent for reconciliation
+// and answer instantly with the deterministic thesis read. FREE for now; the
+// $1 gate flips on when paybox webhooks verify real payments (see servex/paybox).
+router.post('/zerox/pay-ask', express.json({ limit: '16kb' }), async (req, res) => {
+  try {
+    const { question, mint, symbol, solscanUrl, txn } = (req.body || {});
+    const q = String(question || '').trim();
+    const proof = String(solscanUrl || txn || '').trim();
+
+    if (!q) return res.status(400).json({ ok: false, error: 'missing question' });
+    if (!mint && !symbol) return res.status(400).json({ ok: false, error: 'missing mint or symbol' });
+    if (!proof) return res.status(400).json({ ok: false, error: 'paste the Solscan txn link of your $1 payment as proof' });
+
+    const looksLikeTxn = /^[A-Za-z0-9]{64,88}$/.test(proof);
+    const looksLikeSolscan = /solscan\.io\/tx\//i.test(proof);
+    if (!looksLikeTxn && !looksLikeSolscan) {
+      return res.status(400).json({ ok: false, error: 'that is not a Solscan transaction link or signature' });
+    }
+
+    // Resolve the coin: mint match first, then symbol match
+    const calls = loadCalls();
+    let call = calls.find(c => c.mint === mint) || null;
+    if (!call && symbol) {
+      call = calls.find(c => String(c.symbol || '').toLowerCase() === String(symbol).toLowerCase()) || null;
+    }
+
+    // Record intent for review + reconciliation
+    const file = path.join(DATA_DIR, 'zerox-approvals.json');
+    let all = { approvals: [] };
+    try { all = JSON.parse(fs.readFileSync(file, 'utf8')) || all; } catch (e) {}
+    all.approvals.unshift({
+      kind: 'pay-ask',
+      question: q,
+      mint: mint || (call && call.mint) || null,
+      symbol: symbol || (call && call.symbol) || null,
+      proof,
+      proofKind: looksLikeSolscan ? 'solscan' : 'txn',
+      status: 'accepted',
+      fee: '1 USDC',
+      submittedAt: Date.now(),
+    });
+    fs.writeFileSync(file, JSON.stringify(all, null, 2));
+
+    // Build the answer
+    let live = {};
+    try {
+      const enrichMod = require('../lib/token-enrich');
+      const mintKey = (call && call.mint) || mint;
+      if (mintKey) {
+        const got = await enrichMod.enrich([mintKey]);
+        live = (got && got[mintKey]) || {};
+      }
+    } catch (e) { /* live data is a bonus */ }
+
+    const zerox = require('../lib/zerox-thesis');
+    const read = zerox.build(call, live);
+
+    return res.json({
+      ok: true,
+      status: 'accepted',
+      fee: '1 USDC (paybox webhook confirms real charge later)',
+      asked: q,
+      ...read,
+    });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
   }
