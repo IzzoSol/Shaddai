@@ -230,7 +230,7 @@
       name: 'SIGNALS',
       kicker: 'ZEROX calls',
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
-      href: '/signals.html',
+      href: '/simple-signals.html',
       art: '/assets/enter/signals.jpg',
       artVary: ['/assets/enter/signals.jpg','/assets/enter/signals-1.jpg','/assets/enter/signals-2.jpg','/assets/enter/signals-3.jpg','/assets/enter/signals-4.jpg'],
       accent: C.rose,
