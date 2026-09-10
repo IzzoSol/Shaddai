@@ -1,7 +1,7 @@
 {
   "$schema": "ZEROX·SIGNALS design tokens — extracted from public/simple-signals.html",
   "name": "neon-obsidian",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "color": {
     "dark": {
       "bg": "#05070c",
@@ -102,5 +102,26 @@
     "tab_switch": "one fade + 6px rise, 220ms cubic-bezier(.2,.8,.3,1), respects prefers-reduced-motion",
     "press_feedback": "scale(.94–.985) on :active across all tappable cards/chips/buttons",
     "hover_lift": "translateY(-1px to -2px), gated behind @media (hover:hover) and (pointer:fine) so it never sticks on touch"
+  },
+  "heat_grid": {
+    "description": "Heat tab bubbles are a rank-tiered CSS Grid, not per-item inline pixel sizing. Rank = position in the current filtered/sorted list (hottest multiplier first). 4 fixed tiers by rank percentile within that list — this keeps the layout gap-free and predictable at any list length, and keeps the size language meaningful (size = how hot, not an arbitrary pixel value).",
+    "container": {
+      "grid_template_columns": "repeat(auto-fill, minmax(76px, 1fr))",
+      "grid_auto_rows_px": 76,
+      "grid_auto_flow": "dense",
+      "gap_px": 8
+    },
+    "tiers": {
+      "xl": { "rank_percentile_below": 0.06, "grid_span": "3x3", "has_avatar": true, "avatar_px": 46, "sy_px": 17, "mx_px": 25 },
+      "l":  { "rank_percentile_below": 0.22, "grid_span": "2x2", "has_avatar": true, "avatar_px": 34, "sy_px": 14, "mx_px": 19 },
+      "m":  { "rank_percentile_below": 0.50, "grid_span": "2x1", "has_avatar": true, "avatar_px": 22, "sy_px": 12, "mx_px": 14 },
+      "s":  { "rank_percentile_below": 1.0,  "grid_span": "1x1", "has_avatar": false, "sy_px": 10, "mx_px": 12, "sub_rt": "hidden — too small to stay legible" }
+    },
+    "live_distribution_example": "60 bubbles from the production feed on 2026-09-09 split 4 xl / 9 l / 17 m / 30 s.",
+    "avatars": {
+      "source": "POST /api/pro-signals/enrich with a batch of mints (confirmed the endpoint accepts many mints per call, not just one) — one request covers every m/l/xl bubble on screen, never per-bubble.",
+      "cache": "in-memory heatImgCache keyed by mint, persists for the page session so repeat renders/60s refreshes don't re-request already-known coins. A mint that resolves to no image is cached as null so it isn't retried every render either.",
+      "fallback": "symbol-initial monogram (.bub-ava-fb) while loading or when no image exists; 's' tier skips the avatar entirely to stay legible at 76px."
+    }
   }
 }

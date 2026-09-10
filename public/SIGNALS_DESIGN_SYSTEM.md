@@ -31,6 +31,17 @@ Don't introduce a third family. Don't use mono for prose or sans for data.
 ## Motion
 One rule: spend it in one place. Per-tab-switch, the incoming view gets a single 220ms fade + rise (`viewIn` keyframe) — nothing else animates on tab change. Hover lift and press-scale exist on every tappable element for consistency, but hover is gated behind `@media (hover:hover) and (pointer:fine)` so it never sticks on a touch device. All motion respects `prefers-reduced-motion`.
 
+## Heat tab: rank-tiered bento grid
+`#heat-bubbles` is a CSS Grid (`grid-auto-flow: dense`), not the flex-wrap-with-inline-pixel-widths it used to be. Every bubble gets a tier — `xl`/`l`/`m`/`s` — from its **rank** in the current filtered/sorted list (hottest multiplier first, by percentile: top 6% → xl, next 16% → l, next 28% → m, rest → s). See `heat_grid` in `design-tokens.json` for the exact spans and thresholds. Rank-based tiering keeps the grid gap-free at any list length and keeps bubble size meaningful (bigger = hotter *right now*, not an arbitrary FDV number).
+
+`m`/`l`/`xl` tiles carry a coin avatar; `s` tiles don't (76px is too small for an avatar to read). Avatars come from **one** batched `POST /api/pro-signals/enrich` call covering every visible `m+` bubble — never fetch images per-bubble, the endpoint already accepts a batch. Results are cached in `heatImgCache` (by mint) for the page session, including a `null` cache entry for "no image exists" so a coin without art isn't re-requested every 60s refresh. Falls back to a symbol-initial monogram (`.bub-ava-fb`) while loading or with no image.
+
+## Security: never build an inline `onclick="..."` string from dynamic data
+This bit us once already (fixed 2026‑09‑09). HTML-escaping (`esc()`) a value and splicing it into `onclick="fn('...')"` is **not safe** — the browser HTML-decodes the attribute value before compiling it as JS, so an escaped quote becomes a real quote again and can break out of the string literal. Token/pair metadata on a permissionless DEX is attacker-settable, so this is a real stored-XSS surface, not a theoretical one.
+- Any button whose click needs data from the current render scope (a mint, a URL, a symbol) gets a stable `id` and is wired with `addEventListener` afterward (see `wireSheetActions()`, `wireRowAction()`) — the value stays a JS variable in a closure, never round-trips through HTML.
+- Any third-party URL (`pairUrl`, a social link) goes through `safeHref()` before it reaches `href` or `window.open()` — this blocks a `javascript:`/`data:` URI planted in token/social metadata, which `esc()` does not address (that's a quoting fix, not a scheme fix).
+- Every `window.open()` that isn't same-origin gets `'noopener'` as the third argument.
+
 ## Accessibility baseline
 - Bottom nav uses proper `role="tablist"` / `role="tab"` / `role="tabpanel"` wiring with `aria-selected`, kept in sync in `setTab()`.
 - Every filter chip is a real `<button>` with `aria-pressed`, kept in sync by the shared `wireChipGroup()` helper — don't hand-roll a new chip group without it.
