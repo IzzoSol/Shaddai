@@ -56,6 +56,26 @@
     drone:      { name: 'Rogue Drone', hp: 16, speed: 3.0, dmg: 4,  r: 1.0, color: '#39424f', size: 0.85, tough: 0.8, shape: 'drone',  eye: '#00e0ff', glow: '#00e0ff' }
   };
 
+  // dark realm enemy roster — shadow-themed, escalating across 5 forest zones
+  var DARK_TYPES = {
+    shade:         { name: 'Shade',         hp: 24,  speed: 2.3, dmg: 7,  r: 0.9, color: '#241a38', size: 1.0,  tough: 1.0, shape: 'beast',    eye: '#cc44ff' },
+    bonehound:     { name: 'Bonehound',     hp: 34,  speed: 2.8, dmg: 9,  r: 0.9, color: '#2a2230', size: 1.05, tough: 1.3, shape: 'beast',    eye: '#ff4444' },
+    wraith:        { name: 'Wraith',        hp: 40,  speed: 2.6, dmg: 11, r: 1.0, color: '#3a1a4a', size: 1.1,  tough: 1.6, shape: 'humanoid', eye: '#aa00ff', glow: '#8800cc' },
+    cultist:       { name: 'Cultist',       hp: 46,  speed: 2.0, dmg: 13, r: 1.0, color: '#1a0f24', size: 1.1,  tough: 1.7, shape: 'humanoid', eye: '#ff0044' },
+    shadow_wraith: { name: 'Shadow Wraith', hp: 60,  speed: 2.4, dmg: 14, r: 1.0, color: '#160a20', size: 1.2,  tough: 2.0, shape: 'humanoid', eye: '#dd00ff', glow: '#aa00ff' },
+    gate_guardian: { name: 'Gate Guardian', hp: 160, speed: 1.4, dmg: 28, r: 1.2, color: '#241030', size: 1.6,  tough: 3.5, shape: 'golem',    eye: '#ff2266', glow: '#cc0044', boss: true }
+  };
+  for (var _dk in DARK_TYPES) { TYPES[_dk] = DARK_TYPES[_dk]; }
+
+  // zone 1-5 enemy pools — variety and average toughness increase per zone
+  var DARK_ZONE_POOL = [
+    ['shade'],
+    ['shade', 'bonehound'],
+    ['shade', 'bonehound', 'wraith'],
+    ['wraith', 'bonehound', 'cultist'],
+    ['wraith', 'cultist', 'shadow_wraith']
+  ];
+
   // which types populate each region, and base spawn budget
   var REGIONS = {
     meadow:    { day: ['boar'],                          night: ['wolf', 'boar', 'direwolf'],        base: 5 },
@@ -115,6 +135,32 @@
         if (dist(col, row, cx, cy) < minFromCenter) continue;
         var kind = pool[irnd(0, pool.length - 1)];
         out.push(makeEnemy(kind, col + 0.5, row + 0.5));
+        placed = true;
+      }
+    }
+    return out;
+  }
+
+  // ---- spawnDarkZone ---------------------------------------------------------
+  function spawnDarkZone(zoneNum, walkable, GW, GH) {
+    GW = GW || 52; GH = GH || 52;
+    var zone = clamp(zoneNum || 1, 1, 5);
+    var pool = DARK_ZONE_POOL[zone - 1];
+    var wf = (typeof walkable === 'function') ? walkable : function () { return true; };
+    var budget = clamp(4 + zone, 4, 9);
+    var out = [];
+
+    for (var i = 0; i < budget; i++) {
+      var placed = false;
+      for (var tryn = 0; tryn < 24 && !placed; tryn++) {
+        var col = irnd(4, GW - 4);
+        var row = irnd(4, GH - 4);
+        if (!wf(col, row)) continue;
+        var kind = pool[irnd(0, pool.length - 1)];
+        var e = makeEnemy(kind, col + 0.5, row + 0.5);
+        // scale toughness up slightly with zone so later zones stay a threat
+        e.hp = e.maxhp = Math.round(e.hp * (1 + (zone - 1) * 0.12));
+        out.push(e);
         placed = true;
       }
     }
@@ -450,6 +496,7 @@
   window.Combat = {
     TYPES: TYPES,
     spawnFor: spawnFor,
+    spawnDarkZone: spawnDarkZone,
     update: update,
     draw: draw,
     playerAttack: playerAttack
