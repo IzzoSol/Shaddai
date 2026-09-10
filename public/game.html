@@ -1053,6 +1053,15 @@ function update(dt){
     if(hurtFlash>0) hurtFlash-=dt; if(atkSwing>0) atkSwing-=dt;
     if(window.Combat && enemies.length && !spectate){ const dmg=Combat.update(enemies, player, dt, walkable);
       if(dmg>0){ playerHP-=dmg; hurtFlash=0.35; try{ addFloat(player.col,player.row,'-'+Math.round(dmg),'#ff5a5a'); }catch(_){} player.__shake=Math.max(player.__shake||0,0.5); updateHP(); if(playerHP<=0) respawnPlayer(); } }
+    { const sb=document.getElementById('siegeBtn');
+      if(window.DarkRealm && region && region.id==='darkforest'){
+        if(sb) sb.classList.remove('hide');
+        window.enemies=enemies; window.playerHP=playerHP; window.playerMaxHP=playerMaxHP;
+        updateDarkRealm(dt*1000, player, enemies);
+        enemies=window.enemies; playerHP=window.playerHP;
+        updateHP();
+      } else if(sb) sb.classList.add('hide');
+    }
     let nw=false; for(let dr=-2;dr<=2&&!nw;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0, t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK){nw=true;} }
     const fb=document.getElementById('fishBar'); if(fb) fb.classList.toggle('hide', !nw||spectate);
     // gather: near a tree → chop wood, near rocks → mine ore
@@ -1194,6 +1203,7 @@ function renderWorld(time){
   if(dk>0.02){ ctx.fillStyle='rgba(14,20,52,'+(dk*0.62).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
     if(dk>0.45){ ctx.fillStyle='rgba(150,170,255,'+((dk-0.45)*0.14).toFixed(3)+')'; ctx.fillRect(0,0,W,H); } }
   drawBirds(time); drawAmbient(dk); drawVignette();
+  if(window.DarkRealm) renderDarkRealm(ctx,cam,TW,TH);
   if(fadeV>0){ ctx.fillStyle='rgba(0,0,0,'+fadeV.toFixed(3)+')'; ctx.fillRect(0,0,W,H); }
 }
 function renderInterior(time){
