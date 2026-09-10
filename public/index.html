@@ -4177,6 +4177,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <!-- SHADDAI icon set (window.SHADDAI_ICONS / window.shaddaiIcon) — loaded before nav renders -->
 <script src="/assets/shaddai-icons.js"></script>
 <script src="/pixel-office.js?v=19" defer></script>
+<script src="/pixel-people.js"></script>
 <script src="/rooms-manager.js?v=1" defer></script>
 <script src="/command-terminal.js?v=12" defer></script>
  <script src="/theme-switcher.js?v=12" defer></script>
@@ -5049,10 +5050,11 @@ window.enter3DWorld=function(){
           <span class="dl-lbl">SKILLS</span>
         </button>
 
-        <button class="dl-tile" onclick="location.href='game.html'">
+        <button class="dl-tile" id="worldEntryTile" onclick="location.href='game.html'">
           <span class="dl-bg" style="background:radial-gradient(ellipse at 40% 32%, rgba(0,220,195,0.3) 0%, rgba(0,85,90,0.15) 45%, #01080a 88%)"></span>
           <span class="dl-overlay"></span>
-          <span class="dl-icon" style="color:#00dcc3;text-shadow:0 0 22px #00dcc3,0 0 55px rgba(0,220,195,0.38)">⊕</span>
+          <canvas id="worldEntryCv" width="160" height="160" style="position:absolute;top:44%;left:50%;transform:translate(-50%,-58%);width:74px;height:74px;z-index:3;pointer-events:none;image-rendering:pixelated"></canvas>
+          <span id="worldEntryLine" style="position:absolute;left:6px;right:6px;top:8px;z-index:4;font-family:'Share Tech Mono',monospace;font-size:7.5px;letter-spacing:.5px;color:#5fe0ff;text-shadow:0 1px 4px #000;text-align:center;pointer-events:none"></span>
           <span class="dl-badge new">2D</span>
           <span class="dl-lbl">WORLD</span>
         </button>
@@ -5087,6 +5089,33 @@ window.enter3DWorld=function(){
           t.classList.remove('dl-burst'); void t.offsetWidth; t.classList.add('dl-burst');
           setTimeout(function(){ t.classList.remove('dl-burst'); }, 500);
         }, true);
+      })();
+    </script>
+    <script>
+      /* WORLD tile: NEXUS + your own forged agent as the entry scene into game.html. */
+      (function(){
+        var cv=document.getElementById('worldEntryCv'); if(!cv) return;
+        var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+        var LINES=["The city's waiting.","Siege reports coming in from the Dark Realm.","Your agent's ready when you are.","The Forge never sleeps.","Council's online — 7/7."];
+        var lineEl=document.getElementById('worldEntryLine');
+        var NEXUS_RIG={robot:true,skin:'#8a9199',cap:'#e8c45c',shirt:'#6b7280',pants:'#3a3f47',led:'#e8c45c',emblem:'#e8c45c'};
+        function playerRig(){ try{ var p=JSON.parse(localStorage.getItem('shaddai.player')||'null'); if(p&&p.rig) return p.rig; }catch(e){} return null; }
+        function cycleLine(){ if(!lineEl) return; if(!playerRig()){ lineEl.textContent='Forge your agent first →'; return; } lineEl.textContent=LINES[(Math.random()*LINES.length)|0]; }
+        cycleLine(); setInterval(cycleLine, 6000);
+        function frame(t){
+          if(!window.PixelPeople){ requestAnimationFrame(frame); return; }
+          var PP=window.PixelPeople;
+          ctx.clearRect(0,0,cv.width,cv.height);
+          var rig=playerRig();
+          if(rig){
+            PP.draw(ctx, NEXUS_RIG, cv.width*0.34, cv.height*0.82, 1.5, t);
+            PP.draw(ctx, rig, cv.width*0.66, cv.height*0.82, 1.5, t);
+          } else {
+            PP.draw(ctx, NEXUS_RIG, cv.width*0.5, cv.height*0.82, 1.9, t);
+          }
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
       })();
     </script>
     <div class="card">
