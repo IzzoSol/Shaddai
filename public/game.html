@@ -225,6 +225,7 @@ function openTacticsFromPub(){
 <script src="world-regions/suburb.js" onerror="0"></script>
 <script src="world-regions/darkforest.js" onerror="0"></script>
 <script src="combat.js" onerror="0"></script>
+<script src="dark-realm.js" onerror="0"></script>
 <script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
 <script>
@@ -235,7 +236,7 @@ const c = document.getElementById('c'), ctx = c.getContext('2d');
 let DC = ctx; // active draw context (swapped to an offscreen while baking building sprites)
 const ccv = document.getElementById('ccv'), cctx = ccv.getContext('2d');
 let DPR = Math.min(devicePixelRatio||1, 2), W=0, H=0;
-function fit(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;
+function fit(){ DPR=Math.min(devicePixelRatio||1,2); window.DPR=DPR; W=innerWidth; H=innerHeight; c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;
   const wr=document.getElementById('createCanvasWrap'); ccv.width=wr.clientWidth*DPR; ccv.height=wr.clientHeight*DPR; cctx.setTransform(DPR,0,0,DPR,0,0); cctx.imageSmoothingEnabled=false; }
 addEventListener('resize', fit);
 
@@ -456,6 +457,7 @@ function ensureCivic(rid){ if(rid==='suburb'||rid==='agentcity') return; const n
 function genWorld(rid){
   if(rid==='suburb' && region && region.id && region.id!=='suburb') window.SUBURB_FROM=region.id;  // theme suburb by where you arrived from
   region=REGIONS.find(r=>r.id===rid);
+  window.regionSel=rid;
   tiles=[]; props=[]; npcs=[];
   for(let r=0;r<GH;r++){ tiles[r]=[]; for(let col=0;col<GW;col++) tiles[r][col]=(region.city?PATH:GRASS); }
   // distinct per-region generator (loaded from world-regions/*.js) takes priority
@@ -1251,6 +1253,7 @@ function loop(time){ const dt=Math.min((time-last)/1000||0,0.05); last=time;
   requestAnimationFrame(loop);
 }
 fit(); setPreset(0);
+if(window.DarkRealm) DarkRealm.init();
 // ---- hand-off from Pixel Forge + Region Selector ----
 (function boot(){ try{
   // ?embed=office / ?office → COMMAND VIEW: this is the dashboard "Office" — the same
