@@ -193,3 +193,6 @@ backend/data/user_apis.json
 
 # local backups — snapshots, not source of truth
 _BACKUP-*/
+
+# superpowers SDD scratch workspace (ledgers, briefs, review packages)
+.superpowers/
