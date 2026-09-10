@@ -25,13 +25,23 @@ There are three "world" surfaces in the repo. Only one is the 2D realm this spec
 
 Two gaps in `game.html` are the actual work:
 
-1. **Siege is a ghost system.** `public/world-siege.js` (632 lines, `window.SiegeSystem`) is a
-   complete siege war-game — building capture zones, garrison NPCs, catapults/rams, a 3-minute
-   HQ-hold-to-win condition, a 28-day cycle — but it is loaded by zero HTML files. The `darkforest`
-   region's "⚠ Siege the Shadow Keep · Dragon awaits" flavor text currently only triggers ordinary
-   `combat.js` enemy spawns (`game.html:385`), not this system. `index.html`'s City Empire widget
+1. **Siege is a ghost system — and there are two candidate modules, not one.** Deeper reading
+   (done while writing the implementation plan) found `public/world-siege.js` (632 lines,
+   `window.SiegeSystem`) is a **generic** building-capture war-game that could apply to any region
+   with generic buildings — it is not Dark-Realm-specific. The actual purpose-built system is
+   `public/dark-realm.js` (1086 lines, `window.DarkRealm`) — "Dark Forest / Castle Siege / Dragon
+   Boss," phases `forest → moat → gate → chains → final → victory/defeat`, campfire respawns, a
+   2-hour scheduled cycle, and a full self-contained UI panel with attack buttons already built.
+   Its terrain generator `world-regions/darkforest.js` (**already loaded** in `game.html`) lays out
+   campfire clearings and a castle gate at exact coordinates matched by code comments to
+   `DarkRealm.S.campfires` — proof the two were built together. `dark-realm.js` also already calls
+   `window.Combat.spawnDarkZone(...)`, a function that doesn't exist yet in `combat.js` — the one
+   real gap preventing forest-phase enemies from spawning. **This plan wires up `dark-realm.js`**,
+   not `world-siege.js`, which stays orphaned (out of scope, may be revisited for a future
+   "world domination" feature that spans multiple regions). `index.html`'s City Empire widget
    already has a `⚔️ Siege` stat box (`index.html:5131`, `id="dashSiege"`) that has never had data
-   to show.
+   to show — `dark-realm.js` already persists its state to `localStorage['shaddai.darkRealm']`,
+   which this stat box can read directly.
 2. **Entry is a generic icon tile**, not a character. The `WORLD` launcher tile (`index.html:5052`)
    is a glyph (⊕) with no relationship to the player's own agent or the council.
 
@@ -53,20 +63,35 @@ Two gaps in `game.html` are the actual work:
 
 ## 4. Design
 
-### 4.1 Siege wiring (`game.html` + `world-siege.js`)
+### 4.1 Siege wiring (`game.html` + `dark-realm.js` + `combat.js`)
 
-- Load `world-siege.js` as a script in `game.html`, alongside the existing `combat.js`.
-- On entering the `darkforest` region, initialize `SiegeSystem` against that region's buildings,
-  **replacing** the current bare `Combat.spawnFor` call at `game.html:385` for that region — the
-  Shadow Keep becomes an actual capturable HQ with garrisons, not just a monster spawn point.
-  `combat.js` itself stays wired for every other region; only Dark Realm's enemy source changes.
-- Add the minimal HUD `SiegeSystem` needs: a capture-zone progress ring near the player when
-  standing in a zone, an HQ hold-timer bar, and a compact event log (wave incoming / building
-  captured / HQ falling) reusing the existing toast/panel patterns already in `game.html`.
-- Persist/report live siege state (active or not, time-to-next-cycle, current HQ owner) so
-  `index.html`'s `#dashSiege` stat box can read it — reuse the existing `localStorage`
-  (`shaddai.econ`-style) pattern `game.html` already uses for economy state, rather than inventing
-  a new sync mechanism.
+- Load `dark-realm.js` as a script in `game.html`, alongside the existing `combat.js` and
+  `world-regions/darkforest.js` (already loaded).
+- Call `DarkRealm.init()` once at bootstrap (it loads persisted state and seeds campfire
+  positions; it does **not** need per-region re-init — `update()`/`render()` self-guard on
+  `window.regionSel === 'darkforest'`).
+- Keep three `let`-scoped game.html globals mirrored onto `window` each frame while in Dark Realm
+  (`dark-realm.js` is a separate `<script>` file — plain top-level `let`/`const` bindings in
+  `game.html`'s inline script are **not** visible to it; only `function`-declared globals like
+  `toast`/`updateHP`/`walkable` are, since function declarations auto-attach to `window`):
+  `enemies`, `playerHP`, `playerMaxHP`, plus a one-time `window.DPR` sync in `fit()` (DarkRealm's
+  screen-space overlay math divides by `window.DPR`; game.html's `DPR` is also `let`-scoped).
+- Add `combat.js`'s missing piece: a `spawnDarkZone(zoneNum, walkable, GW, GH)` function plus a
+  small roster of dark-themed enemy `TYPES` (shade/wraith/bonehound/cultist/shadow_wraith,
+  gate_guardian) so forest-phase waves and the dragon's low-HP wraith summon actually spawn and
+  render distinctly instead of silently no-op'ing (today `DarkRealm._spawnWave` guards on
+  `window.Combat.spawnDarkZone` existing, which it doesn't) or falling back to a wolf sprite.
+- Add the `#siegeBtn`/`#siegeTxt` HUD button `dark-realm.js` already expects (it updates that
+  element's text/color itself via `_updateHud()`) — clicking it opens `DarkRealm.openPanel()`,
+  which is a complete, already-built UI (phase progress, attack-gate/break-chain/strike-dragon
+  buttons, contribution stats, siege log, reward history). No new panel UI needs to be authored.
+- Read `localStorage['shaddai.darkRealm']` (already written by `dark-realm.js`'s `_savePersist()`)
+  from `index.html` to populate the dashboard's `#dashSiege` stat — no new persistence needed.
+- **Explicitly deferred, not built in this pass:** the campfire supply-cache mechanic
+  (`DarkRealm.searchCampfireCache`) needs a proximity "press E" trigger in `game.html` and has its
+  own pre-existing wallet-sync bug (it writes `window.money`, which is a different variable from
+  `game.html`'s real `money`) — it's a bonus side-reward, not required for the core
+  forest→moat→gate→chains→dragon loop to be playable, so it's left for a follow-up pass.
 
 ### 4.2 Forge-character landing entry (`index.html`)
 
@@ -93,8 +118,10 @@ module, not the full game engine, so this stays cheap to render on the dashboard
 
 ## 5. Testing / Verification
 
-- Manual playtest: enter Dark Realm, confirm capture zones/garrisons/catapults spawn and the HQ
-  hold-timer actually resolves a win/loss.
+- `node --check` on every edited `.js` file (`combat.js`) for syntax correctness.
+- Manual playtest: enter Dark Realm, confirm forest-zone enemies spawn and render with distinct
+  dark-themed sprites (not wolves), the `#siegeBtn` HUD shows phase status, and
+  `DarkRealm.openPanel()` opens with working attack-gate/break-chain/strike-dragon buttons.
 - Confirm `#dashSiege` on the dashboard updates to reflect real state (not "—") after a siege
   starts.
 - Confirm the new dashboard entry tile renders correctly with (a) a forged character present and
