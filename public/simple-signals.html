@@ -50,24 +50,57 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .view-h .ti{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--soft);text-transform:uppercase}
 .view-h .count{font-family:var(--f-mono);font-size:10px;color:var(--gold);margin-left:auto}
 
-/* ---------- heat bubbles ---------- */
-#heat-bubbles{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+/* ---------- heat bubbles: rank-tiered bento grid ----------
+   Four fixed tile sizes (xl/l/m/s), placed by CSS Grid instead of ad-hoc
+   per-item pixel widths — the hottest coins in the current filter read as
+   the big tiles, everything else steps down cleanly with no ragged edges. */
+#heat-bubbles{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr));
+  grid-auto-rows:76px; grid-auto-flow:dense; gap:8px;
+}
 .bub{
-  flex:1 1 auto; min-width:84px; border-radius:12px; padding:12px 10px 10px;
-  border:1px solid var(--edge2); background:var(--panel);
-  display:flex; flex-direction:column; gap:4px; min-height:78px;
-  transition:transform .08s;
+  border-radius:12px; padding:8px 6px; border:1px solid var(--edge2); background:var(--panel);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  text-align:center; overflow:hidden; transition:transform .08s;
 }
 .bub:active{transform:scale(.96)}
-.bub .sy{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bub .mx{font-family:var(--f-mono);font-size:14px;font-weight:700}
-.bub .sc{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--faint)}
-.bub.up{border-left:3px solid var(--emerald)}
-.bub.dn{border-left:3px solid var(--amber)}
-.bub.flat{border-left:3px solid var(--edge)}
-.bub.dead{opacity:.35;filter:saturate(.3)}
-.bub .sub-rt{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--faint)}
+.bub .sy{font-family:var(--f-mono);font-weight:700;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.bub .mx{font-family:var(--f-mono);font-weight:800;line-height:1.1}
+.bub .sub-rt{font-family:var(--f-mono);letter-spacing:.07em;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .bub .up2{color:var(--emerald)}.bub .dn2{color:var(--amber)}
+.bub.dead{opacity:.35;filter:saturate(.3)}
+
+.bub-ava{border-radius:50%;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--edge2)}
+.bub-ava img{width:100%;height:100%;object-fit:cover;display:block}
+.bub-ava-fb{font-family:var(--f-mono);font-weight:700;color:var(--gold)}
+html[data-theme="light"] .bub-ava{background:#eef1f8}
+
+.bub-s{grid-column:span 1;grid-row:span 1}
+.bub-s .sy{font-size:10px}
+.bub-s .mx{font-size:12px}
+.bub-s .sub-rt{display:none}
+
+.bub-m{grid-column:span 2;grid-row:span 1}
+.bub-m .sy{font-size:12px}
+.bub-m .mx{font-size:14px}
+.bub-m .sub-rt{font-size:8px}
+.bub-m .bub-ava{width:22px;height:22px;margin-bottom:1px}
+.bub-m .bub-ava-fb{font-size:10px}
+
+.bub-l{grid-column:span 2;grid-row:span 2}
+.bub-l .sy{font-size:14px}
+.bub-l .mx{font-size:19px}
+.bub-l .sub-rt{font-size:9px}
+.bub-l .bub-ava{width:34px;height:34px;margin-bottom:3px}
+.bub-l .bub-ava-fb{font-size:14px}
+
+.bub-xl{grid-column:span 3;grid-row:span 3}
+.bub-xl .sy{font-size:17px}
+.bub-xl .mx{font-size:25px}
+.bub-xl .sub-rt{font-size:10px}
+.bub-xl .bub-ava{width:46px;height:46px;margin-bottom:4px}
+.bub-xl .bub-ava-fb{font-size:18px}
+
 .legend{display:flex;gap:14px;font-family:var(--f-mono);font-size:9px;color:var(--faint);letter-spacing:.08em;margin:0 2px 12px}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 
@@ -347,13 +380,11 @@ html[data-theme="light"] .chip{background:#fff}
 .chip.risk-med.on{color:#180e00;background:linear-gradient(92deg,#f5b04c,#f7cd7e)}
 .chip.risk-hi.on{color:#fff;background:linear-gradient(92deg,#ff3d5a,#ff7891)}
 
-/* ---------- the bubble map ---------- */
-#heat-bubbles{gap:9px}
+/* ---------- the bubble map (theme polish over the base grid) ---------- */
 .bub{
   background:linear-gradient(160deg, rgba(56,224,255,.07), rgba(13,19,32,.9) 55%);
-  border:1px solid var(--edge2); border-radius:var(--rad); box-shadow:var(--card-shadow);
-  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
-  padding:10px 6px; transition:transform .15s,box-shadow .2s;
+  border-radius:var(--rad); box-shadow:var(--card-shadow);
+  transition:transform .15s,box-shadow .2s;
 }
 .bub.up{border-color:rgba(16,229,164,.55);box-shadow:var(--card-shadow-up)}
 .bub.flat{border-color:var(--edge2)}
@@ -806,12 +837,47 @@ function safetyLabel(score) {
 }
 
 /* ---------------- heatmap ---------------- */
-function bubSize(c) {
-  var fdv = Number(c.curFdv || c.entryFdv) || 0;
-  var s = 84 + Math.sqrt(fdv / 1000) * 4;
-  var m = Number(c.curMult) || 0;
-  s += m * 3.2;
-  return Math.min(230, Math.max(84, Math.round(s)));
+/* Rank-based size tier: the hottest handful of coins in the current filtered
+   view read as the big XL tiles, the rest step down in three clean sizes —
+   a fixed grid (see #heat-bubbles) instead of ad-hoc per-bubble pixel widths,
+   so the layout stays aligned and predictable at any list length. */
+function bubTier(rank, n) {
+  var pct = n > 1 ? rank / (n - 1) : 0;
+  if (pct < 0.06) return 'xl';
+  if (pct < 0.22) return 'l';
+  if (pct < 0.5) return 'm';
+  return 's';
+}
+var heatImgCache = {};
+function enrichBatch(mints) {
+  if (!mints.length) return Promise.resolve({});
+  return fetch(API + '/api/pro-signals/enrich', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mints: mints, cap: mints.length })
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    return (j && j.ok && j.tokens) ? j.tokens : {};
+  }).catch(function () { return {}; });
+}
+function fillBubbleAvatars(mints) {
+  var need = mints.filter(function (m) { return heatImgCache[m] === undefined; });
+  if (!need.length) return;
+  need.forEach(function (m) { heatImgCache[m] = null; }); /* claim now so a fast re-render doesn't re-request */
+  enrichBatch(need).then(function (tokens) {
+    Object.keys(tokens).forEach(function (mint) {
+      var img = tokens[mint] && tokens[mint].image;
+      heatImgCache[mint] = img || null;
+      if (!img) return;
+      var slot = el('heat-bubbles').querySelector('.bub[data-mint="' + mint + '"] .bub-ava');
+      if (!slot) return;
+      var im = document.createElement('img');
+      im.loading = 'lazy'; im.alt = '';
+      im.addEventListener('error', function () { im.remove(); });
+      im.src = img;
+      slot.textContent = '';
+      slot.appendChild(im);
+    });
+  });
 }
 function renderHeat() {
   var all = state.feed.slice();
@@ -828,22 +894,29 @@ function renderHeat() {
   el('heat-count').textContent = list.length;
   if (!list.length) { div.innerHTML = '<div class="empty">NO SIGNALS YET</div>'; return; }
   var frag = document.createDocumentFragment();
-  list.forEach(function (c) {
+  var avatarMints = [];
+  list.forEach(function (c, i) {
     var m = Number(c.curMult) || 0;
-    var size = bubSize(c);
-    var b = document.createElement('button');
-    b.className = 'bub ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
-    b.style.flex = '0 1 ' + size + 'px';
-    b.style.minHeight = (60 + Math.round(size / 5)) + 'px';
-    var font = Math.max(11, Math.min(17, Math.round(size / 11)));
-    var mxFont = Math.max(12, Math.min(20, Math.round(size / 8)));
+    var tier = bubTier(i, list.length);
     var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
-    b.innerHTML = '<span class="sy" style="font-size:' + font + 'px">' + esc(c.symbol || '?') + '</span><span class="mx" style="font-size:' + mxFont + 'px;color:' + main + '">' +
-      (m ? m.toFixed(2) + '×' : 'new') + '</span><span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>';
+    var b = document.createElement('button');
+    b.className = 'bub bub-' + tier + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
+    b.dataset.mint = c.mint;
+    b.setAttribute('aria-label', (c.symbol || 'coin') + ' ' + (m ? m.toFixed(2) + '×' : 'new call') + ', safety ' + (c.safetyScore != null ? c.safetyScore : 'unknown'));
+    var avatar = '';
+    if (tier !== 's') {
+      avatarMints.push(c.mint);
+      avatar = '<span class="bub-ava"><span class="bub-ava-fb">' + esc(String(c.symbol || '?')[0]).toUpperCase() + '</span></span>';
+    }
+    b.innerHTML = avatar +
+      '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
+      '<span class="mx" style="color:' + main + '">' + (m ? m.toFixed(2) + '×' : 'new') + '</span>' +
+      '<span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
   div.appendChild(frag);
+  fillBubbleAvatars(avatarMints);
 }
 
 /* ---------------- recent calls ---------------- */
