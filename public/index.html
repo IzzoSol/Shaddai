@@ -5169,33 +5169,24 @@ window.enter3DWorld=function(){
     </div>
     <script>
     (function(){
-      function _nextSiegeSunday() {
-        var now = new Date();
-        var y = now.getFullYear(), m = now.getMonth();
-        // Last Sunday of the current month
-        var lastDay = new Date(y, m+1, 0);
-        var lastSun = new Date(lastDay);
-        lastSun.setDate(lastDay.getDate() - lastDay.getDay());
-        // If last Sunday already passed (or is today), use last Sunday of next month
-        if (lastSun <= now) {
-          var nextMonth = new Date(y, m+2, 0);
-          lastSun = new Date(nextMonth);
-          lastSun.setDate(nextMonth.getDate() - nextMonth.getDay());
-        }
-        lastSun.setHours(18, 0, 0, 0); // 6 PM siege start
-        return lastSun;
-      }
       function _siegeCountdown() {
         var el = document.getElementById('dashSiege');
         if (!el) return;
-        var siege = _nextSiegeSunday();
-        var diff = siege - new Date();
-        if (diff <= 0) { el.textContent = 'NOW'; el.style.color='#ff3333'; return; }
-        var days = Math.floor(diff / 86400000);
-        var hrs = Math.floor((diff % 86400000) / 3600000);
-        if (days > 0) { el.textContent = days+'d '+(hrs>0?hrs+'h':''); }
-        else { var mins=Math.floor((diff%3600000)/60000); el.textContent=hrs+'h '+mins+'m'; }
-        var urgent = days < 3;
+        var dr = null;
+        try { dr = JSON.parse(localStorage.getItem('shaddai.darkRealm') || 'null'); } catch (_) {}
+        if (!dr) { el.textContent = 'Unexplored'; el.style.color = '#ff8a8a'; el.style.animation = 'none'; return; }
+        if (dr.active) {
+          var phaseLabel = { forest: 'FOREST', moat: 'MOAT', gate: 'GATES', chains: 'CHAINS', final: 'DRAGON', victory: 'WON', defeat: 'LOST' };
+          el.textContent = '☠ ' + (phaseLabel[dr.phase] || (dr.phase || 'ACTIVE').toUpperCase());
+          el.style.color = '#ff3333';
+          el.style.animation = 'pulse 1.5s infinite';
+          return;
+        }
+        var diff = (dr.nextScheduled || 0) - Date.now();
+        if (diff <= 0) { el.textContent = 'NOW'; el.style.color = '#ff3333'; el.style.animation = 'pulse 1.5s infinite'; return; }
+        var hrs = Math.floor(diff / 3600000), mins = Math.floor((diff % 3600000) / 60000);
+        el.textContent = hrs + 'h ' + mins + 'm';
+        var urgent = diff < 900000; // under 15 minutes
         el.style.color = urgent ? '#ff3333' : '#ff8a8a';
         el.style.animation = urgent ? 'pulse 1.5s infinite' : 'none';
       }
