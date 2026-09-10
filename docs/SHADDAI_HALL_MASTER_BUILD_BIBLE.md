@@ -26,7 +26,7 @@ Grok/Claude/Fable are brains we plug in. We are not a better chatbot.
 | PayBox | build it | `paybox-routes.js` + `paybox-guard.js` exist | **DONE** (same — wire, don't build) |
 | Resale marketplace / Bazaar | build it | `backend/bazaar-routes.js` already has `GET /api/bazaar/list`, `POST /list-item`, `POST /buy`, `POST /order-external`, `POST /purchase`, `GET /purchase/:reference` — plus a dashboard tile (index.html "BAZAAR", currently pointed at `/forge-3d.html`) | **PARTIAL** — endpoints exist, but not yet the "hall 15% / instance owner 85%" split logic, and the dashboard tile currently means something narrower (3D agent models) than "resale tools" |
 | 7 dashboard "office rooms," one per agent, each with that desk's tools | build it | Today there is ONE unified "Office" view (`showView('office')`) with sub-tabs (`city`/`treasury`/`rooms`) — the City Empire land-economy system from an earlier build, not per-agent rooms | **VISION** — genuinely new UI/routing work |
-| One master sprite (`Assets/Sprites/master.png`) + palette recolor | exists | No such file anywhere in the repo. The only sprite atlas found belongs to an unrelated game (`public/games/dreamers-climb/sprites/hf/char_atlas.png`). `game.html`'s existing character system (`pixel-people.js`) already does something similar in spirit — one parametric code-drawn rig with palette-driven cosmetics, zero art files — but it's canvas-drawn, not a PNG atlas | **VISION**, though `pixel-people.js`'s existing code-drawn-rig approach may be the better foundation than a new PNG atlas — see Recommendation below |
+| One master sprite/rig + palette recolor | assumed PNG atlas | **DECIDED 2026-09-10**: extending `pixel-people.js` (existing code-drawn rig) instead of a new PNG master-sheet — see Recommendation below for the test evidence that ruled out the fal-generated-atlas route | **VISION** (the extension work itself), approach **DECIDED** |
 | `turtle_image` / `turtle_recolor` / `turtle_office_portrait` fal-backed tools + meter + 402 paywall | build it | Zero references anywhere in the repo. `fal-assets/generate.mjs` exists (a fal.ai image-gen script used previously for Dreamers Climb art) — that's the closest existing foundation, but no metering, no tool wrapper, no 402 integration yet | **VISION** |
 | ZEROX rules (scan/paper-sim only, never autonomous buy, never Kelly on live size) | needs enforcing | `zerox-scan.js` exists; paper-trading MCP tools (`zerox_paper_open/close/portfolio/weekly`) are available in this session's toolset, confirming a paper-sim layer exists at some level | **PARTIAL** — the rule needs to be verified as actually enforced in `zerox-scan.js`/`agent-engine.js`, not just assumed |
 | PIKADON caps/allowlist before any PayBox intent | needs building | `pikadon-middleware.js` is live middleware; `admin-routes.js`, `api-proxy-routes.js`, `auth-guard.js`, `billing-routes.js`, `federation-routes.js` all reference allowlist/spend-policy concepts; `shaddai_set_spend_policy` exists as an agent tool | **PARTIAL** — infrastructure exists, needs to be confirmed as the actual gate in front of the new PayBox intent flow this bible wants, not assumed |
@@ -81,14 +81,19 @@ not new art files):
 
 Each preset: `{ id, displayName, office, palette, tint, bio }`
 
-**Recommendation (open decision, needs owner sign-off before building):** `game.html` already
-has `pixel-people.js` — a code-drawn parametric rig with palette-driven cosmetics and zero art
-files, currently producing the 100 `PRESETS` used as playable characters. Extending that same
-system (add office/job/tint fields to its preset shape) is very likely less work and zero fal
-spend versus authoring a new PNG master-sheet-plus-recolor pipeline from scratch, and it means
-the Forge, the dashboard office rooms, and the 2D world all draw the exact same character with no
-duplicate asset pipeline. This should be confirmed with the owner before committing to a fal
-master-sheet approach — it may not be needed at all.
+**DECIDED (2026-09-10, tested):** extend `pixel-people.js` — a code-drawn parametric rig with
+palette-driven cosmetics and zero art files, currently producing the 100 `PRESETS` used as
+playable characters. Add office/job/tint fields to its preset shape. This was tested against the
+fal master-sheet alternative first: two `fal-ai/flux/dev` generations were attempted (bright
+palette override + explicit isometric-camera/chroma-key prompting) and both converged on the same
+failure — a front-facing smooth "cute mascot portrait," not an isometric transparent game sprite,
+regardless of prompt wording. `flux/dev` is not the right tool for isometric pixel-art sprite
+sheets without much more specialized tooling (a pixel-art-tuned model, ControlNet references, or
+hand art) than a same-day prompt-engineering pass can reach. `pixel-people.js` is canvas-drawn, so
+it's isometric and transparent by construction, matches the existing game exactly, and costs zero
+fal spend. The "optional paid fal portrait still" idea (one shot per instance, spent from TURTLE
+fuel) stays on the table separately — a front-facing portrait is exactly the shape `flux/dev`
+already produces well, so it's a good fit for that narrower use, just not for the master sheet.
 
 ## PIXEL CREATOR / FORGE revamp — VISION
 
