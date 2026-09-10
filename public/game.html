@@ -351,7 +351,7 @@ function goRegion(){ if(!isSignedIn()){ checkSignGate(); return; }
 c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); buildRegionGrid(); } } });
 function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
-  genWorld(regionSel); updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
+  genWorld(regionSel); if(!window.__drInit){ window.__drInit=true; if(window.DarkRealm) DarkRealm.init(); } updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
   try{ if(typeof grantStarter==='function') grantStarter(); if(typeof renderHotbar==='function') renderHotbar(); }catch(_){}
   const r=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWho').textContent='🙂 '+player.name; document.getElementById('hudWhere').textContent='📍 '+r.name; mpHello(); showSplash(regionSel);
   const sh=document.getElementById('specHud');
@@ -1059,6 +1059,7 @@ function update(dt){
     { const sb=document.getElementById('siegeBtn');
       if(window.DarkRealm && region && region.id==='darkforest'){
         if(sb) sb.classList.remove('hide');
+        if(window.enemies && window.enemies!==enemies) enemies=window.enemies;
         window.enemies=enemies; window.playerHP=playerHP; window.playerMaxHP=playerMaxHP;
         updateDarkRealm(dt*1000, player, enemies);
         enemies=window.enemies; playerHP=window.playerHP;
@@ -1266,7 +1267,6 @@ function loop(time){ const dt=Math.min((time-last)/1000||0,0.05); last=time;
   requestAnimationFrame(loop);
 }
 fit(); setPreset(0);
-if(window.DarkRealm) DarkRealm.init();
 // ---- hand-off from Pixel Forge + Region Selector ----
 (function boot(){ try{
   // ?embed=office / ?office → COMMAND VIEW: this is the dashboard "Office" — the same
@@ -1447,7 +1447,7 @@ function doAttack(){ if(state!=='world'||spectate||!window.Combat) return; atkSw
   }
   if(hits.length){ player.__shake=Math.max(player.__shake||0, hits.some(h=>h.crit)?0.7:0.4); }
   enemies=enemies.filter(e=>!e.dead);
-  if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; try{ addFloat(k.col,k.row,'💥','#fff'); }catch(_){} if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
+  if(killed.length){ let m=0,x=0,hd=0; for(const k of killed){ const L=k.loot||{money:8,xp:5}; m+=L.money||0; x+=L.xp||0; try{ addFloat(k.col,k.row,'💥','#fff'); }catch(_){} try{ if(window.DarkRealm && region && region.id==='darkforest') DarkRealm.onEnemyKill(k); }catch(_){} if(/wolf|boar|coyote|deer|beast|direwolf/.test(k.kind||'')&&Math.random()<0.6){ inv.hide=(inv.hide||0)+1; hd++; } } money+=m; quest.kills+=killed.length; quest.earn+=m; addXP(x); saveEcon(); toast('⚔️ Defeated '+killed.length+'!'+(hd?' 🟫'+hd+' hide':'')+' +💵'+m+' · +'+x+' XP'); } }
 let _sigDropCooldown=0;
 function signalDrop(){
   if(_sigDropCooldown>0||playerSignal>0) return;

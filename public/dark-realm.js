@@ -120,6 +120,7 @@ window.DarkRealm = (function () {
     _loadPersist();
     _loadMoat();
     if (S.nextScheduled === 0) S.nextScheduled = Date.now() + CFG.SCHEDULED_INTERVAL;
+    _savePersist();
     _resetState();
     // Campfire positions match darkforest.js zone clearings exactly
     S.campfires = [
@@ -268,10 +269,12 @@ window.DarkRealm = (function () {
         addLog('💧 THE CASTLE MOAT BLOCKS YOUR PATH!', '#2266ff');
         addLog('Moat is ' + Math.round(S.moatLevel) + '% full — visit the Sun Shrine in SHADDAI City.', '#4488ff');
         if (typeof toast === 'function') toast('💧 Moat blocks the castle — ' + Math.round(S.moatLevel) + '% full!');
+        _savePersist();
       } else {
         S.phase = 'gate';
         addLog('⚔ THE CASTLE GATES ARE BEFORE YOU — attack!', '#ff0000');
         if (typeof toast === 'function') toast('⚔ Castle Gate breached range! Attack the gates!');
+        _savePersist();
       }
     }
   }
@@ -283,6 +286,7 @@ window.DarkRealm = (function () {
       S.phase = 'gate';
       addLog('☀ THE MOAT HAS DRIED — storm the gates!', '#ff0000');
       if (typeof toast === 'function') toast('☀ MOAT DRIED — CHARGE THE GATES!');
+      _savePersist();
     }
   }
 
@@ -300,6 +304,7 @@ window.DarkRealm = (function () {
       addLog('💥 THE GATES SHATTER — the dragon stirs within!', '#ff0000');
       addLog('◈ Break the chains before it breaks free!', '#cc44ff');
       if (typeof toast === 'function') toast('💥 Gates broken — the Dragon AWAKENS!');
+      _savePersist();
     }
   }
 
@@ -339,10 +344,12 @@ window.DarkRealm = (function () {
       S.phase = 'final';
       addLog('⚠ ALL CHAINS BROKEN — Dragon rages!', '#ff0000');
       if (typeof toast === 'function') toast('⚠ Dragon UNCHAINED — final battle!');
+      _savePersist();
     }
     if (S.dragonHP <= S.dragonMaxHP * 0.4 && S.phase === 'chains') {
       S.phase = 'final';
       addLog('◈ Dragon weakened — press the attack!', '#ff7700');
+      _savePersist();
     }
   }
 
