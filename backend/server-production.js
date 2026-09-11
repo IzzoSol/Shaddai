@@ -509,7 +509,7 @@ app.get(['/academy', '/academy/'], (req, res) => {
 // The clipper runs as a dedicated FFmpeg/Whisper service; this main app exposes
 // it at /api/clipper/* (fixing CORS for the clipper UI and keeping one entry
 // point). If the engine is down it reports the truth instead of a silent 500.
-const CLIPPER_ORIGIN = process.env.CLIPPER_ORIGIN || 'https://shaddai-clipper.onrender.com';
+const CLIPPER_ORIGIN = process.env.CLIPPER_ORIGIN || 'http://127.0.0.1:8787';
 app.get('/api/clipper/status', async (req, res) => {
   try {
     const up = await fetch(`${CLIPPER_ORIGIN}/clipper/health`, { signal: AbortSignal.timeout(6000) });
@@ -564,9 +564,6 @@ app.use('/sites', express.static(path.join(__dirname, '../public/sites'), {
       }
     }
   }));
-// SHADDAI clipper frontend — statically served app (vendored from our clipper repo).
-app.use('/clipper', express.static(path.join(__dirname, '../public/clipper'), { index: 'index.html' }));
-
 // Request tracking middleware
 app.use((req, res, next) => {
   const requestId = crypto.randomBytes(8).toString('hex');
@@ -634,8 +631,8 @@ app.use(helmet({
         "https://securetoken.googleapis.com",
         "https://identitytoolkit.googleapis.com",
         "https://shaddai999.firebaseapp.com",
-        // SHADDAI Clipper engine (local + Render)
-        "http://localhost:8787", "http://127.0.0.1:8787", "https://shaddai-clipper.onrender.com",
+        // SHADDAI Clipper engine (local only — backend/clipper-engine, no hosted deploy)
+        "http://localhost:8787", "http://127.0.0.1:8787",
         // Fontshare CSS
         "https://api.fontshare.com"
       ],
@@ -645,7 +642,7 @@ app.use(helmet({
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://api.fontshare.com", "https://cdn.fontshare.com"],
       frameSrc: ["'self'", "https://calendly.com", "https://calendar.google.com", "https://s.tradingview.com",
         "https://shaddai999.firebaseapp.com", "https://accounts.google.com",
-        "http://localhost:8787", "https://shaddai-clipper.onrender.com"],
+        "http://localhost:8787"],
       mediaSrc: ["'self'", "blob:", "data:"],
       workerSrc: ["'self'", "blob:"],
       objectSrc: ["'none'"]

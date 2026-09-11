@@ -60,41 +60,10 @@ services:
       - key: RENDER_EXTERNAL_URL
         sync: false         # auto-set by Render — used by the built-in self-ping
 
-  # ─── SHADDAI Clipper Backend (FFmpeg + Whisper) ───────────────────────────
-  # Docker-based service for video processing with FFmpeg and OpenAI Whisper
-  - type: web
-    name: shaddai-clipper
-    runtime: docker
-    plan: starter        # Free tier has 512MB RAM - may need Starter (1GB) for Whisper
-    dockerfilePath: ./clipper-backend/Dockerfile
-    dockerContext: ./clipper-backend
-    healthCheckPath: /clipper/health
-    autoDeploy: true
-    envVars:
-      - key: PORT
-        value: "8787"
-      - key: NODE_ENV
-        value: production
-      # Note: Whisper model downloads on first run (~140MB for 'base' model)
-      # Consider pre-baking into Docker image for faster cold starts
-
-  # ─── Clipper Frontend (Static Site) ───────────────────────────────────────
-  # Serves the clipper HTML/JS from /clipper path
-  - type: static
-    name: shaddai-clipper-frontend
-    buildCommand: echo "No build needed - static files served directly"
-    staticPublishPath: ./public/clipper
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /clipper.html
-    headers:
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: X-Frame-Options
-        value: SAMEORIGIN
-    envVars:
-      - key: CLIPPER_API_URL
-        value: https://shaddai-clipper.onrender.com
+  # NOTE: the old standalone "shaddai-clipper" (Docker/FFmpeg/Whisper) + its
+  # static "shaddai-clipper-frontend" were removed 2026-09-11 -- superseded by
+  # backend/clipper-engine, which runs as a local-only sidecar (spawned by
+  # backend/clipper-engine-runner.js, embedded in the dashboard's Media Studio
+  # overlay) rather than a separate deployed service. If either service is
+  # still showing in the Render dashboard, delete it there too -- removing it
+  # from this Blueprint does not tear down an already-live service.

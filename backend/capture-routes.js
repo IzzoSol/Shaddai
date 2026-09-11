@@ -3,7 +3,7 @@ const router = express.Router();
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORIGIN = 'http://127.0.0.1:' + PORT;
-const CLIPPER_ORIGIN = process.env.CLIPPER_ORIGIN || 'https://shaddai-clipper.onrender.com';
+const CLIPPER_ORIGIN = process.env.CLIPPER_ORIGIN || 'http://127.0.0.1:8787';
 const MAX_SCRAPE = 200000;
 
 function clientIp(req) {
