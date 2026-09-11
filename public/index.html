@@ -5119,6 +5119,105 @@ window.enter3DWorld=function(){
         requestAnimationFrame(frame);
       })();
     </script>
+    <script>
+      /* The Hall — 7 office rooms, each a themed front door to /api/agents/route. */
+      (function(){
+        var OFFICES=[
+          {id:'shaddai', label:'SHADDAI', role:'Orchestrator', accent:'#c9a6ff', rig:{suit:'#241f44',cap:'#c9a6ff',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199',office:'shaddai'}},
+          {id:'oracle',  label:'ORACLE',  role:'Research',      accent:'#8b7bf0', rig:{hoodie:'#3a2f5a',hoodUp:true,emblem:'#8b7bf0',skin:'#e7b58a',office:'oracle'}},
+          {id:'quill',   label:'QUILL',   role:'Writing',       accent:'#5fe0ff', rig:{suit:'#173a4a',cap:'#5fe0ff',tie:'#5fe0ff',glasses:true,skin:'#f0c199',office:'quill'}},
+          {id:'turtle',  label:'TURTLE',  role:'Design',        accent:'#00ff9c', rig:{hoodie:'#1f5a44',cap:'#00ff9c',emblem:'#00ff9c',skin:'#caa06f',office:'turtle'}},
+          {id:'nexus',   label:'NEXUS',   role:'Architect',     accent:'#e8c45c', rig:{robot:true,skin:'#8a9199',cap:'#e8c45c',shirt:'#6b7280',pants:'#3a3f47',led:'#e8c45c',emblem:'#e8c45c',office:'nexus'}},
+          {id:'zerox',   label:'ZEROX',   role:'Revenue',       accent:'#ff9a3c', rig:{suit:'#3a2a1a',cap:'#ff9a3c',tie:'#ff9a3c',emblem:'#ff9a3c',skin:'#caa06f',office:'zerox'}},
+          {id:'pikadon', label:'PIKADON', role:'Security',      accent:'#ff5a4d', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a',office:'pikadon'}},
+        ];
+        function hallPlayerRig(){ try{ var p=JSON.parse(localStorage.getItem('shaddai.player')||'null'); if(p&&p.rig) return p.rig; }catch(e){} return null; }
+        function renderHallRooms(){
+          var grid=document.getElementById('hallRoomGrid'); if(!grid) return;
+          grid.innerHTML='';
+          OFFICES.forEach(function(o){
+            var card=document.createElement('div');
+            card.style.cssText='background:#0a0e16;border:1px solid '+o.accent+'33;border-radius:12px;padding:12px;cursor:pointer;text-align:center;transition:border-color .2s';
+            card.onmouseover=function(){ card.style.borderColor=o.accent+'88'; };
+            card.onmouseout=function(){ card.style.borderColor=o.accent+'33'; };
+            var cv=document.createElement('canvas'); cv.width=120; cv.height=120;
+            cv.style.cssText='width:64px;height:64px;image-rendering:pixelated;display:block;margin:0 auto 6px';
+            card.appendChild(cv);
+            var lbl=document.createElement('div'); lbl.textContent=o.label;
+            lbl.style.cssText='font-family:\'Share Tech Mono\',monospace;font-size:11px;font-weight:700;color:'+o.accent;
+            card.appendChild(lbl);
+            var role=document.createElement('div'); role.textContent=o.role;
+            role.style.cssText='font-size:9px;color:rgba(255,255,255,.4);margin-top:2px';
+            card.appendChild(role);
+            card.onclick=function(){ openHallRoom(o.id); };
+            grid.appendChild(card);
+            (function animate(){
+              if(!window.PixelPeople || !cv.isConnected) { requestAnimationFrame(animate); return; }
+              var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+              function frame(t){
+                if(!cv.isConnected) return;
+                ctx.clearRect(0,0,cv.width,cv.height);
+                window.PixelPeople.draw(ctx, o.rig, cv.width/2, cv.height*0.82, 1.6, t);
+                requestAnimationFrame(frame);
+              }
+              requestAnimationFrame(frame);
+            })();
+          });
+        }
+        window.openHallRoom=function(officeId){
+          var o=OFFICES.filter(function(x){return x.id===officeId;})[0]; if(!o) return;
+          document.getElementById('hallRoomGrid').style.display='none';
+          var panel=document.getElementById('hallRoomPanel'); panel.style.display='block';
+          var body=document.getElementById('hallRoomBody');
+          var playerRig=hallPlayerRig();
+          var showPlayer = playerRig && playerRig.office===o.id;
+          body.innerHTML=
+            '<div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:14px">'+
+              '<canvas id="hallPanelCv" width="140" height="140" style="width:70px;height:70px;image-rendering:pixelated"></canvas>'+
+              (showPlayer?'<canvas id="hallPanelPlayerCv" width="140" height="140" style="width:70px;height:70px;image-rendering:pixelated"></canvas>':'')+
+              '<div><div style="font-family:\'Share Tech Mono\',monospace;font-size:15px;font-weight:700;color:'+o.accent+'">'+o.label+'</div>'+
+              '<div style="font-size:11px;color:rgba(255,255,255,.5)">'+o.role+'</div></div>'+
+            '</div>'+
+            '<div id="hallChatLog" style="min-height:120px;max-height:260px;overflow-y:auto;background:#05070c;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;line-height:1.5"></div>'+
+            '<div style="display:flex;gap:8px">'+
+              '<input id="hallChatInput" placeholder="Talk to '+o.label+'…" style="flex:1;background:#0a0e16;border:1px solid rgba(255,255,255,.15);color:#eee;padding:9px 12px;border-radius:8px;font-size:12px" onkeydown="if(event.key===\'Enter\')sendHallMessage(\''+o.id+'\')">'+
+              '<button onclick="sendHallMessage(\''+o.id+'\')" style="background:'+o.accent+';color:#06080b;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">Send</button>'+
+            '</div>';
+          var pcv=document.getElementById('hallPanelCv'), pctx=pcv.getContext('2d'); pctx.imageSmoothingEnabled=false;
+          var playerCv=showPlayer?document.getElementById('hallPanelPlayerCv'):null, pctx2=playerCv?playerCv.getContext('2d'):null;
+          if(pctx2) pctx2.imageSmoothingEnabled=false;
+          (function frame(t){
+            if(!pcv.isConnected) return;
+            pctx.clearRect(0,0,pcv.width,pcv.height);
+            window.PixelPeople.draw(pctx, o.rig, pcv.width/2, pcv.height*0.82, 1.9, t);
+            if(pctx2){ pctx2.clearRect(0,0,playerCv.width,playerCv.height); window.PixelPeople.draw(pctx2, playerRig, playerCv.width/2, playerCv.height*0.82, 1.9, t); }
+            requestAnimationFrame(frame);
+          })(0);
+        };
+        window.sendHallMessage=async function(officeId){
+          var o=OFFICES.filter(function(x){return x.id===officeId;})[0]; if(!o) return;
+          var input=document.getElementById('hallChatInput'); var txt=(input.value||'').trim(); if(!txt) return;
+          input.value=''; input.disabled=true;
+          var log=document.getElementById('hallChatLog');
+          log.insertAdjacentHTML('beforeend','<div style="margin-bottom:8px"><b style="color:#5fe0ff">You:</b> '+txt.replace(/</g,'&lt;')+'</div>');
+          log.insertAdjacentHTML('beforeend','<div id="hallThinking" style="color:rgba(255,255,255,.4)">'+o.label+' is thinking…</div>');
+          log.scrollTop=log.scrollHeight;
+          try{
+            var res=await fetch('/api/agents/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,agentName:o.label,history:[]}),signal:AbortSignal.timeout(30000)});
+            var data=await res.json();
+            var reply=(res.ok && !data.error) ? (data.response||'(no response)') : ('Error: '+(data.error||res.status));
+            var think=document.getElementById('hallThinking'); if(think) think.remove();
+            log.insertAdjacentHTML('beforeend','<div style="margin-bottom:8px"><b style="color:'+o.accent+'">'+o.label+':</b> '+String(reply).replace(/</g,'&lt;')+'</div>');
+          }catch(e){
+            var think2=document.getElementById('hallThinking'); if(think2) think2.remove();
+            log.insertAdjacentHTML('beforeend','<div style="color:#ff5a5a">Connection error — try again.</div>');
+          }
+          log.scrollTop=log.scrollHeight;
+          input.disabled=false; input.focus();
+        };
+        renderHallRooms();
+      })();
+    </script>
     <div class="card">
       <div class="card-head">
         <span class="card-title">System Health</span>
