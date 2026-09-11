@@ -5684,6 +5684,88 @@ async function callGroqRoute(systemPrompt, message, history = []) {
   return _out;
 }
 
+// ═════════════════════════════════════════════════════════════════
+// /agents/route TOOL-CALLING — single optional round-trip, same
+// synchronous request/response contract every existing caller (the
+// Hall, popout chat, etc.) already expects. Deliberately NOT the full
+// multi-step agent-engine.js runAgentLoop -- that's task-queue/async
+// and would break every current caller's plain `await fetch(...)`.
+//
+// Scope is intentionally narrow: read-only, fast, no-side-effect tools
+// only (a live price or search lookup, never a file write, trade, spend,
+// or code execution) -- this endpoint answers one chat turn in one HTTP
+// round trip, it is not the place for anything that needs review or can
+// fail expensively. Ollama's fallback path (when Groq is unavailable)
+// intentionally stays tool-less for this same reason -- adding function-
+// calling there is out of scope for this pass.
+// ═════════════════════════════════════════════════════════════════
+const SAFE_FAST_TOOLS = new Set([
+  'fetch_price', 'get_fear_greed', 'get_trending', 'get_global_market', 'get_ohlcv',
+  'search_web', 'wikipedia_search', 'get_wikipedia_summary', 'get_hackernews', 'get_rss_feed',
+  'get_weather', 'calculate', 'get_color_palette', 'get_qr_code', 'get_word_definition',
+]);
+
+// TOOLS entries describe params as {argName: "type — description"} rather than real JSON
+// Schema. Parse the leading type word so Groq's function-calling gets a valid schema.
+function _toolArgSchema(schema) {
+  const properties = {}, required = [];
+  Object.entries(schema || {}).forEach(([key, desc]) => {
+    const m = /^(\w+)\s*(?:—|-)\s*(.*)$/.exec(String(desc || ''));
+    const type = m && ['string', 'number', 'boolean'].includes(m[1].toLowerCase()) ? m[1].toLowerCase() : 'string';
+    properties[key] = { type, description: (m ? m[2] : String(desc || '')).trim() };
+    required.push(key);
+  });
+  return { type: 'object', properties, required };
+}
+
+function _groqToolDefs(toolNames) {
+  return toolNames.map(name => {
+    const t = agentEngine.TOOLS[name];
+    return t && {
+      type: 'function',
+      function: { name: t.name, description: t.description, parameters: _toolArgSchema(t.schema) }
+    };
+  }).filter(Boolean);
+}
+
+// Tool-eligible turns skip the AURA response cache (a cached price/search result
+// would silently go stale) and are NOT wrapped by callGroqRoute for that reason.
+// Returns { response, toolUsed } — toolUsed is null when the model answered directly.
+async function callGroqWithTools(systemPrompt, message, history, toolNames) {
+  if (!GROQ_API_KEY_ROUTE) throw new Error('no-groq-key');
+  const tools = _groqToolDefs(toolNames);
+  const msgs = [
+    { role: 'system', content: systemPrompt },
+    ...history.slice(-4),
+    { role: 'user', content: message }
+  ];
+  const first = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+    model: GROQ_MODEL_ROUTE, messages: msgs, max_tokens: 1500, temperature: 0.7,
+    tools, tool_choice: 'auto'
+  }, { headers: { Authorization: `Bearer ${GROQ_API_KEY_ROUTE}` }, timeout: 30000 });
+
+  const choice = first.data.choices[0]?.message || {};
+  const call = (choice.tool_calls || [])[0];
+  if (!call) return { response: choice.content || '', toolUsed: null };
+
+  const toolDef = agentEngine.TOOLS[call.function.name];
+  if (!toolDef) return { response: choice.content || '', toolUsed: null };
+  let toolResult;
+  try {
+    const args = JSON.parse(call.function.arguments || '{}');
+    toolResult = await toolDef.execute(args);
+  } catch (e) {
+    toolResult = `Tool error: ${e.message}`;
+  }
+
+  const second = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+    model: GROQ_MODEL_ROUTE, max_tokens: 1500, temperature: 0.7,
+    messages: [...msgs, choice, { role: 'tool', tool_call_id: call.id, content: String(toolResult).slice(0, 4000) }]
+  }, { headers: { Authorization: `Bearer ${GROQ_API_KEY_ROUTE}` }, timeout: 30000 });
+
+  return { response: second.data.choices[0]?.message?.content || '', toolUsed: call.function.name };
+}
+
 function detectIntent(message) {
   const lower = message.toLowerCase();
   let best = 'default', bestScore = 0;
@@ -5715,10 +5797,24 @@ router.post('/agents/route', async (req, res) => {
     }
   } catch (_) {}
 
-  let response = '', usedModel = '';
+  let response = '', usedModel = '', toolUsed = null;
+
+  // Tool-eligible agents get one optional round-trip through a fast/safe tool
+  // (a live price or search lookup) before falling back to the plain path below.
+  const agentToolAllowlist = (agentEngine.AGENTS[String(agentName).toUpperCase()] || {}).tools || [];
+  const eligibleTools = agentToolAllowlist.filter(t => SAFE_FAST_TOOLS.has(t));
+
+  if (eligibleTools.length) {
+    try {
+      const r = await callGroqWithTools(systemPrompt, message, history, eligibleTools);
+      response = r.response;
+      toolUsed = r.toolUsed;
+      usedModel = 'groq:' + GROQ_MODEL_ROUTE + (toolUsed ? '+' + toolUsed : '');
+    } catch { /* fall through to the plain (cached) path below */ }
+  }
 
   // Try Groq first (fast ~2-3s, free tier, 70B model — no refusals for creative content)
-  try {
+  if (!response) try {
     response = await callGroqRoute(systemPrompt, message, history);
     usedModel = 'groq:' + GROQ_MODEL_ROUTE;
   } catch {
@@ -5745,7 +5841,7 @@ router.post('/agents/route', async (req, res) => {
     }
   }
 
-  res.json({ response, responseType: intent, intent, agentName, model: usedModel, grounded: ragSources.length > 0, sources: ragSources });
+  res.json({ response, responseType: intent, intent, agentName, model: usedModel, grounded: ragSources.length > 0, sources: ragSources, toolUsed });
 });
 
 // GET/POST /api/agents/layout — save and restore agent grid positions
