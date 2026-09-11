@@ -50,7 +50,7 @@ async function meterAction(userId, actionId, byok) {
 const BRAINS = {
   'ollama-local':   { provider: 'ollama',     model: process.env.OLLAMA_MODEL     || 'llama3.2:1b',                              tier: 'free',     label: 'Ollama · local (free)' },
   'openrouter-free':{ provider: 'openrouter', model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',   tier: 'free',     label: 'OpenRouter · free' },
-  'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'llama-3.3-70b-versatile',                 tier: 'standard', label: 'Groq · Llama 70B (fast)' },
+  'groq-70b':       { provider: 'groq',       model: process.env.GROQ_MODEL       || 'llama-3.1-8b-instant',                    tier: 'standard', label: 'Groq · Llama 70B (fast)' },
   'ollama-cloud':   { provider: 'ollamacloud',model: process.env.OLLAMA_CLOUD_MODEL|| 'gpt-oss:120b',                            tier: 'standard', label: 'Ollama Cloud · gpt-oss 120B' },
   'claude-haiku':   { provider: 'anthropic',  model: process.env.ANTHROPIC_MODEL  || 'claude-haiku-4-5-20251001',               tier: 'standard', label: 'Claude · Haiku 4.5' },
   'claude-premium': { provider: 'anthropic',  model: process.env.ANTHROPIC_PREMIUM_MODEL || 'claude-haiku-4-5-20251001',        tier: 'premium',  label: 'Claude · premium' }

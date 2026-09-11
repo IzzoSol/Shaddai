@@ -95,7 +95,7 @@ function setInboxOwner(u) { _inboxOwner = (u && String(u).trim()) || null; }
 
 const GROQ_KEY     = process.env.GROQ_API_KEY || process.env.GROQ_KEY || '';
 const OLLAMA_URL   = process.env.OLLAMA_API_URL || 'http://localhost:11434';
-const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 const OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
 // Local-model tuning (env-overridable). Defaults raised so the tool-laden system prompt fits the
 // context window (the old num_ctx:4096 overflowed → Ollama hung the full timeout → agent runs failed).
