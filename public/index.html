@@ -4354,6 +4354,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
   <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
   <button class="nav-btn nav-img" onclick="showView('office')" data-guest-lock="Office" style="color:#ffd700;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏢 Office</button>
+  <button class="nav-btn nav-img" onclick="showView('hall')" data-guest-lock="Hall" style="color:#cc44ff;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏛️ The Hall</button>
   <button class="nav-btn nav-img" onclick="showView('chat')" style="--nav-img:url(/assets/nav/chat.jpg)"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
   <!-- E3 REMOVED: 📖 Lib & Notes nav — now lives inside Office ▸ Library sub-tab -->
   <!-- E3 REMOVED: 🗂️ Projects nav — now lives inside Office ▸ Projects sub-tab -->
@@ -7785,8 +7786,21 @@ window.enter3DWorld=function(){
 
   </div>
 
+  <!-- The Hall — 7 office rooms -->
+  <div id="hallView" class="view">
+    <div style="text-align:center;padding:18px 0 8px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;color:#cc44ff;text-transform:uppercase">The Hall</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px">Seven desks. Seven agents. Walk in and talk to one.</div>
+    </div>
+    <div id="hallRoomGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:8px 16px 20px;max-width:960px;margin:0 auto"></div>
+    <div id="hallRoomPanel" style="display:none;max-width:640px;margin:0 auto;padding:0 16px 30px">
+      <button onclick="document.getElementById('hallRoomPanel').style.display='none';document.getElementById('hallRoomGrid').style.display='grid';" style="background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;margin-bottom:12px">← Back to the Hall</button>
+      <div id="hallRoomBody"></div>
+    </div>
+  </div>
+
   <!-- Chat -->
-  
+
   <!-- Skills View with 3D Agent Model Revolver -->
 <!-- ═══════════ THE FORGE — consolidated: 2D · 3D · Marketplace ═══════════ -->
   <div id="forgeView" class="view">
