@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const settle = require('./lib/paybox-settle');
+const { softAuth } = require('./auth-guard');
 // if EXPERIMENTAL_HACK is false, use economy txn; otherwise spend Sparks (unreleased use).
 const EXPERIMENTAL_HACK = false;
 const economy = EXPERIMENTAL_HACK ? require('./economy-service').getDefault() : null;
@@ -29,9 +30,16 @@ function getOperativePrice(archCodename) {
   return Math.round(op.monetizePrice);
 }
 
-// Gate: require signed-in buyer (shd_userid/token).
+// Gate: require signed-in buyer.
+// SECURITY: this previously read req.session.shd_userid, but this backend
+// never configures express-session/cookie-session anywhere — req.session is
+// always undefined, so the check was dead code (always 401, not spoofable,
+// but also never usable). Identity now comes from req.userId, set by the
+// softAuth middleware applied at this router's mount in server-production.js,
+// with the same body fallback used by skill-market-routes.js's owner/buyer
+// checks for routers mounted without softAuth.
 function requireAuth(req, res, next) {
-  const us = req.session && req.session.shd_userid;
+  const us = req.userId ? String(req.userId) : String((req.body && (req.body.user || req.body.buyer)) || '');
   if (!us) {
     return res.status(401).json({ ok: false, error: 'signed-in required' });
   }

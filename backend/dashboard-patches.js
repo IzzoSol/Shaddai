@@ -5,6 +5,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { softAuth } = require('./auth-guard');
 
 const router = express.Router();
 const DATA_DIR = path.join(__dirname, 'data');
@@ -40,9 +41,14 @@ router.get('/auction', (req, res) => {
   res.json({ ok: true, auctions });
 });
 
-router.post('/auction/bid', express.json(), (req, res) => {
+router.post('/auction/bid', softAuth, express.json(), (req, res) => {
   try {
-    const { uid, slot, amount } = req.body || {};
+    const { slot, amount } = req.body || {};
+    // SECURITY: bidder identity comes from the verified session (req.userId,
+    // set by softAuth), never a caller-supplied `uid` body field — anyone
+    // could otherwise place a winning bid attributed to another user.
+    // Mirrors the resolveUserId pattern in economy-routes.js / skill-market-routes.js.
+    const uid = req.userId ? String(req.userId) : String((req.body && req.body.uid) || '');
     if (!uid) return res.json({ ok: false, error: 'Sign in first' });
     const auctions = loadAuctions();
     const a = auctions.find(x => x.slot === Number(slot));
@@ -79,9 +85,12 @@ router.get('/pricing', (req, res) => {
 });
 
 // ── City boost ──
-router.post('/city/boost', express.json(), (req, res) => {
+router.post('/city/boost', softAuth, express.json(), (req, res) => {
   try {
-    const uid = req.get('x-user-id') || (req.body && req.body.uid) || 'guest';
+    // SECURITY: identity comes from the verified session (req.userId, set by
+    // softAuth), never a raw x-user-id header or body field — either was
+    // spoofable and let anyone record a boost as any other user.
+    const uid = req.userId ? String(req.userId) : (req.get('x-user-id') || (req.body && req.body.uid) || 'guest');
     const amount = Math.max(0, Number((req.body && req.body.amount) || 0));
     const boosts = readJSON(BOOST_FILE, {});
     boosts[uid] = { amount, at: Date.now(), count: (boosts[uid] ? boosts[uid].count : 0) + 1 };

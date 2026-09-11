@@ -1,6 +1,5 @@
 // backend/aura-brain-routes.js — HTTP layer for the AURA BRAIN (boxed knowledge).
-// Mounted at /api/aura-brain by server-production.js.
-// Identity comes from the x-user-id header (same convention as aura-routes).
+// Mounted at /api/aura-brain by server-production.js (with softAuth).
 //   GET  /api/aura-brain                  → status (boxes, quota, adapters)
 //   GET  /api/aura-brain/boxes            → boxes visible to the caller
 //   POST /api/aura-brain/ingest           → {url, box?, title?}  (402 = quota, 403 = PIKADON)
@@ -9,9 +8,17 @@
 const express = require('express');
 const brain = require('./aura-brain');
 
+// SECURITY — fixed 2026-09-11 (PIKADON audit). This previously read the caller
+// straight off the spoofable x-user-id / x-telegram-user-id headers, with no
+// verification. Since box read access (canRead) and the daily ingest quota
+// are both keyed on this id, anyone could claim any uid to read a stranger's
+// private boxes, or burn a stranger's daily ingest quota, just by setting a
+// header. Identity now comes from req.userId, set by softAuth (auth-guard.js)
+// from a verified Firebase/JWT bearer — or, off-production only, softAuth's
+// own x-user-id dev fallback. Raw request headers are never read here.
 function caller(req) {
-  const uid = String(req.get('x-user-id') || req.get('x-telegram-user-id') || req.query.userId || '');
-  return (uid.trim() || 'anon');
+  const uid = typeof req.userId === 'string' ? req.userId : '';
+  return (uid && uid !== 'local') ? uid : 'anon';
 }
 
 const router = express.Router();

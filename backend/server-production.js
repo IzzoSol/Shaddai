@@ -1716,7 +1716,10 @@ catch (e) { console.warn('[startup] RAG brain not mounted:', e.message); }
 // AURA BRAIN — boxed knowledge (COMPARTMENT architecture). Ingest public URLs
 // (Jina → Firecrawl → bundled scraper) into labeled boxes; per-box TF-IDF search.
 // Exposes /api/aura-brain (/ . boxes ingest search). PIKADON-guarded, metered.
-app.use('/api/aura-brain', require('./aura-brain-routes'));
+// softAuth so caller() uses the verified session uid, not a caller-supplied
+// x-user-id header — otherwise anyone could read another user's private boxes
+// or burn their daily ingest quota just by naming their uid.
+app.use('/api/aura-brain', softAuth, require('./aura-brain-routes'));
 console.log('[prod] AURA BRAIN mounted (/api/aura-brain ingest|boxes|search) — Libretto stays NEXUS-only (docs/STATUS.md VISION)');
 // SHADDAI media engine — our own media download engine (rebranded + vendored
 // AGPL-3.0 code, see backend/media-engine/README note). Loopback-only sidecar
@@ -2015,7 +2018,7 @@ app.get('/api/zerox/scan', async (req, res) => {
     res.status(502).json({ ok: false, error: String(e.message || e) });
   }
 });
-app.use('/api/market-3d', require('./market-3d.routes.js')); // SHADDAI 3D marketplace (models + purchases)
+app.use('/api/market-3d', softAuth, require('./market-3d.routes.js')); // SHADDAI 3D marketplace (models + purchases); softAuth so buyer identity comes from the verified session, not a caller-supplied field
 // Agent Policy — the SURVIVAL product: create_agent / set_spend_policy /
 // revoke / get_ledger. Named agents hold money under owner-set caps, spend only
 // inside them, keep a public ledger, and run on the USER'S OWN key (Shaddai does
