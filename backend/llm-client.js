@@ -30,7 +30,7 @@ const pool = require('./key-pool');
 // ─── Default models per provider ─────────────────────────────────────────────
 const DEFAULTS = {
   ollama:      { model: process.env.OLLAMA_MODEL      || 'llama3.2:1b' },
-  groq:        { model: process.env.GROQ_MODEL        || 'llama-3.3-70b-versatile' },
+  groq:        { model: process.env.GROQ_MODEL        || 'llama-3.1-8b-instant' },
   openrouter:  { model: process.env.OPENROUTER_MODEL  || 'meta-llama/llama-3.1-8b-instruct:free' },
   anthropic:   { model: process.env.ANTHROPIC_MODEL   || 'claude-haiku-4-5-20251001' },
   openai:      { model: process.env.OPENAI_MODEL      || 'gpt-4o-mini' }

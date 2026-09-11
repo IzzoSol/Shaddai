@@ -450,7 +450,7 @@ router.post('/groq', async (req, res) => {
     if (!key) return res.status(400).json({ error: 'No Groq API key. Add GROQ_API_KEY to .env or paste key in Settings.' });
 
     const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-      model: model || 'llama-3.3-70b-versatile',
+      model: model || 'llama-3.1-8b-instant',
       messages: messages || [],
       max_tokens: max_tokens || 1024
     }, {
@@ -3303,7 +3303,7 @@ async function runWorkflowStep(agentName, taskTemplate, input, prevOutput, outpu
   if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: task }],
         max_tokens: 1500, temperature: 0.7
       }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 45000 });
@@ -3608,7 +3608,7 @@ Perform a complete technical analysis. Use this exact format:
   if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: analysisPrompt }],
         max_tokens: 1000, temperature: 0.5
       }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 30000 });
@@ -3754,7 +3754,7 @@ Analyze this data and answer the user's question with specific insights. Referen
   if (process.env.GROQ_API_KEY) {
     try {
       const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: analysisPrompt }],
         max_tokens: 1000
       }, { headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` }, timeout: 30000 });
@@ -3941,7 +3941,7 @@ router.post('/workflow/:id/run', async (req, res) => {
         // Groq fallback if Ollama failed and key is available
         if (!ollamaOk && process.env.GROQ_API_KEY) {
           const gr = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-            model: 'llama-3.3-70b-versatile',
+            model: 'llama-3.1-8b-instant',
             messages: [
               { role: 'system', content: `You are ${agentName}, an expert AI agent. Complete the task concisely.` },
               { role: 'user', content: task }
@@ -4742,9 +4742,9 @@ router.post('/llm/chat', async (req, res) => {
     const useKey = key || apiKey || process.env.GROQ_API_KEY;
     if (!useKey) throw new Error('No Groq API key');
     const r = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-      model: model || 'llama-3.3-70b-versatile', messages, max_tokens: 2048
+      model: model || 'llama-3.1-8b-instant', messages, max_tokens: 2048
     }, { headers: { Authorization: `Bearer ${useKey}`, 'Content-Type': 'application/json' }, timeout: 30000 });
-    return { response: r.data.choices?.[0]?.message?.content || '', provider: 'groq', model: model || 'llama-3.3-70b-versatile', latencyMs: Date.now() - t0 };
+    return { response: r.data.choices?.[0]?.message?.content || '', provider: 'groq', model: model || 'llama-3.1-8b-instant', latencyMs: Date.now() - t0 };
   }
 
   async function tryClaude(key) {
@@ -5659,7 +5659,7 @@ Be direct, structured, and specific. No filler. Format clearly with headers and 
 };
 
 const GROQ_API_KEY_ROUTE = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL_ROUTE = 'llama-3.3-70b-versatile';
+const GROQ_MODEL_ROUTE = 'llama-3.1-8b-instant';
 
 async function callGroqRoute(systemPrompt, message, history = []) {
   // ── AURA forCall — token savings + cache on every call ───────────

@@ -15,7 +15,7 @@ const OLLAMA_URL  = process.env.OLLAMA_API_URL || 'http://localhost:11434';
 const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || '';
 const CLAUDE_MODEL   = process.env.AGENT_CLAUDE_MODEL || 'claude-haiku-4-5-20251001';
 const GROQ_API_KEY   = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL     = 'llama-3.3-70b-versatile'; // free, fast, 70B
+const GROQ_MODEL     = 'llama-3.1-8b-instant'; // free, fast, 70B
 
 // ── Call Groq (Llama 3.3 70B — fast & free) ─────────────────
 async function callGroq(systemPrompt, userMessage) {

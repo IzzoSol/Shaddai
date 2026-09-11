@@ -155,7 +155,7 @@ function buildPing(provider, apiKey) {
       return {
         url: 'https://api.groq.com/openai/v1/chat/completions',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: { model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', messages: PING_MESSAGES, max_tokens: 1 }
+        body: { model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant', messages: PING_MESSAGES, max_tokens: 1 }
       };
     case 'openrouter':
       return {
