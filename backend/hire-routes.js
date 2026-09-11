@@ -7,10 +7,19 @@
 const express = require('express');
 const router = express.Router();
 const json = express.json();
+const { softAuth } = require('./auth-guard');
 let ae = null; try { ae = require('./agent-engine'); } catch (e) {}
 let neo = null; try { neo = require('./lib/neocortex'); } catch (e) {}
+// SECURITY/CORRECTNESS (2026-09-11): this used to settle via an internal HTTP
+// self-call to POST /api/x402/charge (and /grant for refunds). That call
+// never forwarded the caller's session, so x402-routes.js's own softAuth saw
+// every such request as anonymous and silently charged the shared 'local'
+// account regardless of which user's body.user was sent -- meanwhile
+// body.user was ALSO trusted with no verification of its own, so nothing
+// here ever reliably charged (or protected) the right account. Both fixed by
+// calling the ledger directly, in-process, with the caller's real identity.
+let x402 = null; try { x402 = require('./x402-routes'); } catch (e) {}
 
-const BASE = () => process.env.RENDER_EXTERNAL_URL || ('http://localhost:' + (process.env.PORT || 8099));
 const RATES = {
   SHADDAI: { base: 10, perToken: 0.002 }, ORACLE: { base: 8, perToken: 0.003 },
   NEXUS: { base: 6, perToken: 0.001 }, ZEROX: { base: 12, perToken: 0.002 },
@@ -19,23 +28,29 @@ const RATES = {
 };
 const settled = new Map();   // taskId -> true  (refund happens once)
 
-const post = (path, body) => fetch(BASE() + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }));
-
 router.get('/api/hire/rates', (req, res) => res.json({ ok: true, currency: 'SHAD-Credits', rates: RATES }));
 
-router.post('/api/hire/:agent', json, async (req, res) => {
+router.post('/api/hire/:agent', softAuth, json, async (req, res) => {
   const agent = String(req.params.agent || '').toUpperCase();
   const rate = RATES[agent];
   if (!rate) return res.status(400).json({ ok: false, error: 'unknown agent (one of: ' + Object.keys(RATES).join(', ') + ')' });
-  const { user = 'guest', task } = req.body || {};
+  // Identity comes from the verified session (req.userId, set by softAuth) —
+  // never a caller-supplied body field, matching every other charge in this
+  // codebase. Falls back to body.user only when genuinely anonymous.
+  const user = req.userId ? String(req.userId) : String((req.body && req.body.user) || 'guest');
+  const { task } = req.body || {};
   if (!task) return res.status(400).json({ ok: false, error: 'task required' });
+  if (!x402 || !x402.chargeCredits) return res.status(503).json({ ok: false, error: 'ledger unavailable' });
   // 1) charge the deposit (base fee) up front
-  const pay = await post('/api/x402/charge', { user, amount: rate.base, reason: 'hire ' + agent, payee: agent });
-  if (pay.status === 402) return res.status(402).json({ ok: false, error: 'INSUFFICIENT_CREDITS', x402: pay.data.x402 });
-  if (!pay.data.ok) return res.status(502).json({ ok: false, error: 'deposit charge failed' });
-  // 2) start the task on the agent engine
+  const pay = await x402.chargeCredits({ user, amount: rate.base, reason: 'hire ' + agent, payee: agent });
+  if (pay.status === 402) return res.status(402).json({ ok: false, error: 'INSUFFICIENT_CREDITS', x402: pay.body.x402 });
+  if (!pay.body.ok) return res.status(502).json({ ok: false, error: 'deposit charge failed' });
+  // 2) start the task on the agent engine. Stash the paying user on the task's
+  // own options so the poll endpoint below can refund the RIGHT account later —
+  // it used to trust req.query.user at poll time (spoofable, and never even
+  // the same request as the original hire) instead of remembering who paid.
   if (!ae || !ae.createTask) return res.status(503).json({ ok: false, error: 'agent engine unavailable' });
-  const t = ae.createTask(String(task), agent, {});
+  const t = ae.createTask(String(task), agent, { hireUser: user });
   ae.runAgentLoop(t.id).catch(() => {});
   // Neocortex: hiring this agent grows your bond + logs the request to its memory of you
   try { if (neo) { neo.incrementBond(agent, user, 'task_complete'); neo.addMemory(agent, user, { role: 'user', content: String(task).slice(0, 200), tags: ['hire'] }); } } catch (e) {}
@@ -56,7 +71,12 @@ router.get('/api/hire/task/:id', async (req, res) => {
     finalCost = Math.round((rate.base + tokensUsed * rate.perToken) * 100) / 100;
     if (finalCost < rate.base) { // shouldn't happen (base is floor), but honor the refund contract
       refunded = Math.round((rate.base - finalCost) * 100) / 100;
-      if (t.user || true) { try { await post('/api/x402/grant', { user: req.query.user || 'guest', amount: refunded }); } catch (e) {} }
+      // Refund the user who actually PAID (stashed on the task at hire time),
+      // never req.query.user -- that was spoofable and, worse, was read from
+      // the POLL request, not the original hire, so it was rarely even the
+      // right person to begin with.
+      const hireUser = (t.options && t.options.hireUser) || 'guest';
+      if (x402 && x402.grantCredits) { try { x402.grantCredits({ user: hireUser, amount: refunded, reason: 'hire refund: ' + agent }); } catch (e) {} }
     }
     settled.set(t.id, true);
   }

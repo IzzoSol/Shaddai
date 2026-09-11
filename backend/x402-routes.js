@@ -35,21 +35,26 @@ router.get('/api/x402/txns', (req, res) => {
   res.json({ ok: true, user, txns });
 });
 
-router.post('/api/x402/charge', softAuth, json, async (req, res) => {
-  // Anti-drain: a signed-in caller can ONLY charge their OWN account — never name a
-  // victim in the body. body.user is a fallback for the unauthenticated demo world.
-  const user = req.userId ? String(req.userId) : String((req.body && req.body.user) || 'guest');
-  const { amount, reason, payee, nonce } = req.body || {};
+// chargeCredits / grantCredits (2026-09-11): the actual ledger logic, factored
+// out of the route handlers so an IN-PROCESS caller (e.g. hire-routes.js) can
+// settle a charge directly instead of making an internal HTTP self-call to
+// this same server. That self-call pattern silently lost the caller's real
+// identity (no Authorization header is forwarded on a server-to-server
+// fetch), so softAuth always saw an anonymous request and every such charge
+// landed on the shared 'local' account regardless of who was actually
+// paying -- correct now only because the caller passes an already-resolved,
+// trusted `user` string straight into these functions, no HTTP hop involved.
+async function chargeCredits({ user, amount, reason, payee, nonce }) {
   const amt = Number(amount);
-  if (!(amt > 0)) return res.status(400).json({ error: 'amount must be a positive number' });
+  if (!(amt > 0)) return { status: 400, body: { error: 'amount must be a positive number' } };
   // ── Phase 0 #2 hardening ──
-  if (X.isPaused()) return res.status(503).json({ error: 'x402 payments temporarily paused', gated: true });
-  if (nonce) { const rp = X.checkReplay('charge:' + user + ':' + nonce); if (!rp.ok) return res.status(409).json({ error: 'replay detected' }); }
+  if (X.isPaused()) return { status: 503, body: { error: 'x402 payments temporarily paused', gated: true } };
+  if (nonce) { const rp = X.checkReplay('charge:' + user + ':' + nonce); if (!rp.ok) return { status: 409, body: { error: 'replay detected' } }; }
   const bud = X.checkDailyBudget(user, amt);
-  if (!bud.ok) return res.status(402).json({ error: 'daily spend limit reached', x402: { limit: bud.limit, spent: bud.spent, remaining: bud.remaining, currency: 'SHAD-Credits' }, gated: true });
+  if (!bud.ok) return { status: 402, body: { error: 'daily spend limit reached', x402: { limit: bud.limit, spent: bud.spent, remaining: bud.remaining, currency: 'SHAD-Credits' }, gated: true } };
   const db = read(); const balance = bal(db, user);
   if (balance < amt) {
-    return res.status(402).json({ error: 'Insufficient SHAD-Credits.', x402: { required: amt, balance, currency: 'SHAD-Credits', topup: '/api/x402/grant' }, gated: true });
+    return { status: 402, body: { error: 'Insufficient SHAD-Credits.', x402: { required: amt, balance, currency: 'SHAD-Credits', topup: '/api/x402/grant' }, gated: true } };
   }
   const fee = Math.round(amt * FEE_RATE * 100) / 100;
   const net = Math.round((amt - fee) * 100) / 100;
@@ -59,8 +64,6 @@ router.post('/api/x402/charge', softAuth, json, async (req, res) => {
   const tx = { id: Date.now().toString(36), user, payee: payee || null, amount: amt, fee, net, reason: reason || 'agent call', at: Date.now() };
   db.txns.unshift(tx); db.txns = db.txns.slice(0, 1000); write(db);
   X.recordSpend(user, amt);   // count against the daily budget
-  // Phase 0 #3: a successful paid call builds the caller's DID reputation.
-  try { if (req.did) require('./services/reputation-service').recordAttestation(req.did, 'x402_success', 'success', { endpoint: '/api/x402/charge', amount: amt, counterpartyDid: payee || null }); } catch (e) {}
   // Phase 2: ADDITIVELY settle into the canonical Sparks economy. Off by default
   // (X402_SPARKS_BRIDGE). A failure here is logged and non-fatal — the legacy
   // SHAD-Credits charge above already succeeded and must still be reported.
@@ -83,7 +86,28 @@ router.post('/api/x402/charge', softAuth, json, async (req, res) => {
       sparksInsufficient = b != null && b < amt;
     } catch (e) { /* non-fatal — never break the charge */ }
   }
-  res.json({ ok: true, charged: amt, fee, net, balance: db.balances[user], tx, settledInSparks, sparkBalance, sparksInsufficient });
+  return { status: 200, body: { ok: true, charged: amt, fee, net, balance: db.balances[user], tx, settledInSparks, sparkBalance, sparksInsufficient } };
+}
+
+function grantCredits({ user, amount, reason }) {
+  const amt = Number(amount);
+  if (!(amt > 0)) return { status: 400, body: { error: 'amount must be a positive number' } };
+  const db = read(); db.balances[user] = Math.round((bal(db, user) + amt) * 100) / 100;
+  db.txns.unshift({ id: Date.now().toString(36), user, amount: amt, reason: reason || 'top-up', at: Date.now() }); write(db);
+  return { status: 200, body: { ok: true, user, balance: db.balances[user], granted: amt } };
+}
+
+router.post('/api/x402/charge', softAuth, json, async (req, res) => {
+  // Anti-drain: a signed-in caller can ONLY charge their OWN account — never name a
+  // victim in the body. body.user is a fallback for the unauthenticated demo world.
+  const user = req.userId ? String(req.userId) : String((req.body && req.body.user) || 'guest');
+  const { amount, reason, payee, nonce } = req.body || {};
+  const result = await chargeCredits({ user, amount, reason, payee, nonce });
+  if (result.status === 200) {
+    // Phase 0 #3: a successful paid call builds the caller's DID reputation.
+    try { if (req.did) require('./services/reputation-service').recordAttestation(req.did, 'x402_success', 'success', { endpoint: '/api/x402/charge', amount: Number(amount), counterpartyDid: payee || null }); } catch (e) {}
+  }
+  res.status(result.status).json(result.body);
 });
 
 // Phase 0 #2: admin kill-switch for x402 (pause/resume all charges).
@@ -94,11 +118,16 @@ router.post('/api/x402/pause', requireAdmin, json, (req, res) => {
 
 router.post('/api/x402/grant', requireAdmin, json, (req, res) => {
   const { user = 'guest', amount } = req.body || {};
-  const amt = Number(amount);
-  if (!(amt > 0)) return res.status(400).json({ error: 'amount must be a positive number' });
-  const db = read(); db.balances[user] = Math.round((bal(db, user) + amt) * 100) / 100;
-  db.txns.unshift({ id: Date.now().toString(36), user, amount: amt, reason: 'top-up', at: Date.now() }); write(db);
-  res.json({ ok: true, user, balance: db.balances[user], granted: amt });
+  const result = grantCredits({ user, amount });
+  res.status(result.status).json(result.body);
 });
+
+// Exposed as properties on the router (not a separate module.exports shape)
+// so `require('./x402-routes')` keeps working exactly as before when mounted
+// as Express middleware, while also letting an in-process caller like
+// hire-routes.js settle a charge directly -- see the comment above
+// chargeCredits for why that matters.
+router.chargeCredits = chargeCredits;
+router.grantCredits = grantCredits;
 
 module.exports = router;
