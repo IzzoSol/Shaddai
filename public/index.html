@@ -4354,7 +4354,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
   <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
   <button class="nav-btn nav-img" onclick="showView('office')" data-guest-lock="Office" style="color:#ffd700;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏢 Office</button>
-  <button class="nav-btn nav-img" onclick="showView('hall')" data-guest-lock="Hall" style="color:#cc44ff;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏛️ The Hall</button>
+  <button class="nav-btn nav-img" onclick="showView('hall');try{renderHallRooms()}catch(e){}" data-guest-lock="Hall" style="color:#cc44ff;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏛️ The Hall</button>
   <button class="nav-btn nav-img" onclick="showView('chat')" style="--nav-img:url(/assets/nav/chat.jpg)"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
   <!-- E3 REMOVED: 📖 Lib & Notes nav — now lives inside Office ▸ Library sub-tab -->
   <!-- E3 REMOVED: 🗂️ Projects nav — now lives inside Office ▸ Projects sub-tab -->
@@ -5131,10 +5131,10 @@ window.enter3DWorld=function(){
           {id:'zerox',   label:'ZEROX',   role:'Revenue',       accent:'#ff9a3c', rig:{suit:'#3a2a1a',cap:'#ff9a3c',tie:'#ff9a3c',emblem:'#ff9a3c',skin:'#caa06f',office:'zerox'}},
           {id:'pikadon', label:'PIKADON', role:'Security',      accent:'#ff5a4d', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a',office:'pikadon'}},
         ];
+        var hallHistory={};
         function hallPlayerRig(){ try{ var p=JSON.parse(localStorage.getItem('shaddai.player')||'null'); if(p&&p.rig) return p.rig; }catch(e){} return null; }
         function renderHallRooms(){
-          var grid=document.getElementById('hallRoomGrid'); if(!grid) return;
-          grid.innerHTML='';
+          var grid=document.getElementById('hallRoomGrid'); if(!grid || grid.children.length) return;
           OFFICES.forEach(function(o){
             var card=document.createElement('div');
             card.style.cssText='background:#0a0e16;border:1px solid '+o.accent+'33;border-radius:12px;padding:12px;cursor:pointer;text-align:center;transition:border-color .2s';
@@ -5156,8 +5156,10 @@ window.enter3DWorld=function(){
               var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
               function frame(t){
                 if(!cv.isConnected) return;
-                ctx.clearRect(0,0,cv.width,cv.height);
-                window.PixelPeople.draw(ctx, o.rig, cv.width/2, cv.height*0.82, 1.6, t);
+                if(cv.offsetParent){
+                  ctx.clearRect(0,0,cv.width,cv.height);
+                  window.PixelPeople.draw(ctx, o.rig, cv.width/2, cv.height*0.82, 1.6, t);
+                }
                 requestAnimationFrame(frame);
               }
               requestAnimationFrame(frame);
@@ -5171,6 +5173,7 @@ window.enter3DWorld=function(){
           var body=document.getElementById('hallRoomBody');
           var playerRig=hallPlayerRig();
           var showPlayer = playerRig && playerRig.office===o.id;
+          hallHistory[o.id]=[];
           body.innerHTML=
             '<div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:14px">'+
               '<canvas id="hallPanelCv" width="140" height="140" style="width:70px;height:70px;image-rendering:pixelated"></canvas>'+
@@ -5178,6 +5181,7 @@ window.enter3DWorld=function(){
               '<div><div style="font-family:\'Share Tech Mono\',monospace;font-size:15px;font-weight:700;color:'+o.accent+'">'+o.label+'</div>'+
               '<div style="font-size:11px;color:rgba(255,255,255,.5)">'+o.role+'</div></div>'+
             '</div>'+
+            (playerRig && !playerRig.office ? '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:10px">Pick an office in the <a href="pixel-forge.html" style="color:#5fe0ff">Forge</a> to stand in this room.</div>' : '')+
             '<div id="hallChatLog" style="min-height:120px;max-height:260px;overflow-y:auto;background:#05070c;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;line-height:1.5"></div>'+
             '<div style="display:flex;gap:8px">'+
               '<input id="hallChatInput" placeholder="Talk to '+o.label+'…" style="flex:1;background:#0a0e16;border:1px solid rgba(255,255,255,.15);color:#eee;padding:9px 12px;border-radius:8px;font-size:12px" onkeydown="if(event.key===\'Enter\')sendHallMessage(\''+o.id+'\')">'+
@@ -5188,9 +5192,11 @@ window.enter3DWorld=function(){
           if(pctx2) pctx2.imageSmoothingEnabled=false;
           (function frame(t){
             if(!pcv.isConnected) return;
-            pctx.clearRect(0,0,pcv.width,pcv.height);
-            window.PixelPeople.draw(pctx, o.rig, pcv.width/2, pcv.height*0.82, 1.9, t);
-            if(pctx2){ pctx2.clearRect(0,0,playerCv.width,playerCv.height); window.PixelPeople.draw(pctx2, playerRig, playerCv.width/2, playerCv.height*0.82, 1.9, t); }
+            if(pcv.offsetParent){
+              pctx.clearRect(0,0,pcv.width,pcv.height);
+              window.PixelPeople.draw(pctx, o.rig, pcv.width/2, pcv.height*0.82, 1.9, t);
+              if(pctx2){ pctx2.clearRect(0,0,playerCv.width,playerCv.height); window.PixelPeople.draw(pctx2, playerRig, playerCv.width/2, playerCv.height*0.82, 1.9, t); }
+            }
             requestAnimationFrame(frame);
           })(0);
         };
@@ -5202,12 +5208,14 @@ window.enter3DWorld=function(){
           log.insertAdjacentHTML('beforeend','<div style="margin-bottom:8px"><b style="color:#5fe0ff">You:</b> '+txt.replace(/</g,'&lt;')+'</div>');
           log.insertAdjacentHTML('beforeend','<div id="hallThinking" style="color:rgba(255,255,255,.4)">'+o.label+' is thinking…</div>');
           log.scrollTop=log.scrollHeight;
+          var hist=(hallHistory[officeId]||[]).slice(-8);
           try{
-            var res=await fetch('/api/agents/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,agentName:o.label,history:[]}),signal:AbortSignal.timeout(30000)});
+            var res=await fetch('/api/agents/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,agentName:o.label,history:hist}),signal:AbortSignal.timeout(30000)});
             var data=await res.json();
             var reply=(res.ok && !data.error) ? (data.response||'(no response)') : ('Error: '+(data.error||res.status));
             var think=document.getElementById('hallThinking'); if(think) think.remove();
             log.insertAdjacentHTML('beforeend','<div style="margin-bottom:8px"><b style="color:'+o.accent+'">'+o.label+':</b> '+String(reply).replace(/</g,'&lt;')+'</div>');
+            hallHistory[officeId]=(hallHistory[officeId]||[]).concat([{role:'user',content:txt},{role:'assistant',content:String(reply)}]).slice(-16);
           }catch(e){
             var think2=document.getElementById('hallThinking'); if(think2) think2.remove();
             log.insertAdjacentHTML('beforeend','<div style="color:#ff5a5a">Connection error — try again.</div>');
@@ -5215,7 +5223,7 @@ window.enter3DWorld=function(){
           log.scrollTop=log.scrollHeight;
           input.disabled=false; input.focus();
         };
-        renderHallRooms();
+        window.renderHallRooms=renderHallRooms;
       })();
     </script>
     <div class="card">

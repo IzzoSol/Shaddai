@@ -166,7 +166,7 @@ window.PixelPeople = (function () {
     { office:'pikadon', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'} },
   ];
   OFFICE_LEADS.forEach(function(o, i){
-    const rig = Object.assign({}, o.rig, { office:o.office, __phase:(100+i)*0.37 });
+    const rig = Object.assign({}, o.rig, { name:'Council', office:o.office, __phase:(100+i)*0.37 });
     PRESETS.push({ name:'Council', rig });
   });
   function randomRig(){ SEED=(Date.now?0:0, (SEED*16807+1)&0x7fffffff); const i=(Math.abs(SEED)%PRESETS.length);
