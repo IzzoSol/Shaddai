@@ -27217,7 +27217,7 @@ async function addSchedule() {
 
   // Persist to backend gateway so it fires even when browser is closed
   try {
-    const r = await fetch('/api/workflow/create', {
+    const r = await fetch('/api/workflow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: task.substring(0, 60), cronExpr: intervalToCron(interval), steps: [{ agent, prompt: task }] }),
@@ -27225,7 +27225,7 @@ async function addSchedule() {
     });
     if (r.ok) {
       const d = await r.json();
-      sched.backendId = d.id; // store backend ID for later deletion
+      sched.backendId = (d.workflow && d.workflow.id) || d.id; // store backend ID for later deletion
       save();
       log('Schedule synced to gateway: ' + d.id, 'ok', 'SYSTEM');
     }
@@ -29177,10 +29177,10 @@ function addScheduleTemplate(template) {
   S.schedules.push(sched);
   save(); renderSchedules(); notify(`Schedule "${template}" added`);
   // Sync to backend gateway
-  fetch('/api/workflow/create', {
+  fetch('/api/workflow', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: t.task.substring(0, 60), cronExpr: intervalToCron(t.interval), steps: [{ agent: t.agent, prompt: t.task }] })
-  }).then(r => r.ok ? r.json() : null).then(d => { if (d?.id) { sched.backendId = d.id; save(); } }).catch(() => {});
+  }).then(r => r.ok ? r.json() : null).then(d => { const id = d?.workflow?.id || d?.id; if (id) { sched.backendId = id; save(); } }).catch(() => {});
 }
 
 function runAllSchedules() {
