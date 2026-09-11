@@ -32,7 +32,7 @@ function _safeFile(name) {
 }
 
 // Returns { ok, error? } or { ok:true, agent, slug, docId, chars, title, url, path }
-async function ingest({ agent, url, slug, maxChars }) {
+async function ingest({ agent, url, slug: slugInput, maxChars }) {
   const a = _agentDir(agent);
   if (!a) return { ok: false, error: 'agent must be one of: ' + AGENTS.join(', ') };
   if (!/^https:\/\//i.test(String(url || ''))) return { ok: false, error: 'url must start with https://' };
@@ -40,7 +40,13 @@ async function ingest({ agent, url, slug, maxChars }) {
   try { r = await scraper.scrape({ url, maxChars: maxChars || 60000 }); }
   catch (e) { return { ok: false, error: 'scrape failed: ' + (e && e.message || e) }; }
   if (!r.text || r.text.length < MIN_CHARS) return { ok: false, error: 'page yielded too little readable text (' + (r.text || '').length + ' chars) — it may be a JS-heavy site; pick a static page or a scraper engine.' };
-  const slug = _safeFile(slug || _slugFromUrl(url));
+  // BUGFIX (2026-09-11): was `const slug = _safeFile(slug || ...)` -- redeclaring
+  // the destructured `slug` param as a const in the same scope, a hard
+  // SyntaxError ("Identifier 'slug' has already been declared") that made this
+  // whole file unloadable. Currently dead code (nothing requires rag-scrape.js
+  // yet), so it never surfaced -- but any future require() would have crashed
+  // the whole process at load time. Renamed the param to slugInput instead.
+  const slug = _safeFile(slugInput || _slugFromUrl(url));
   const md = scraper.toMarkdown(r);
   // durable source
   const dir = path.join(MASTERY_ROOT, a);

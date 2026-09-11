@@ -79,21 +79,24 @@ router.get('/models', async (req, res) => {
 router.post('/purchase', requireAuth, async (req, res) => {
   const us = req.user;
   const arch = String(req.body.arch || req.body.model);
-  const amount = Number(req.body.amount);
-  const tipArchiveId = req.body.tipArchiveId;
 
   if (!arch) {
     return res.status(400).json({ ok: false, error: 'arch required' });
   }
-  if (isNaN(amount) || amount <= 0) {
-    return res.status(400).json({ ok: false, error: 'amount must be positive' });
-  }
 
   const bn = path.basename(arch);
-  // If buyer specified a tipArchiveId, they must have bought or tipped that.
-  // For now, support paying with the marketplace amount directly.
-  // If they had tipped before, we should credit that tip toward purchases.
-  // We can linearly credit 1 tip = $value, but for MVP just support direct purchase.
+  // SECURITY/CORRECTNESS (2026-09-11): this used to charge `Number(req.body.amount)`
+  // -- a value the BUYER supplied -- with no check against the model's real listed
+  // price (the same price GET /models computes and shows the buyer). That let any
+  // caller buy any model for any amount down to $0.01. `tipArchiveId` was captured
+  // but never used anywhere in this handler -- there's no tip-credit path here to
+  // justify a different charge, per the comment above (removed) noting it as an
+  // unimplemented future idea, not a currently-active pricing mode. The price is
+  // now always looked up server-side, the one place with the authority to set it.
+  const amount = getOperativePrice(arch);
+  if (amount == null) {
+    return res.status(400).json({ ok: false, error: 'no listed price for this model' });
+  }
 
   try {
     // Call paybox-settle: debits buyer's x402 ledger, credits seller's paybox ledger.
