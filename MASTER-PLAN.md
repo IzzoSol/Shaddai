@@ -230,12 +230,12 @@ plan (chasing token/NFT excitement before the metering spine actually works).
 
 ### Phase 3 — Agent activation for real use
 - [ ] Confirm each agent's `backend/data/agents/*.md` spec matches what's actually invokable via MCP (audit found specs exist — verify dashboard/Forge/2D world actually call live agent skills, not cached responses — audit flagged this as unclear, gap #9)
-- [ ] Wire Grok bot as an alternate chat front-end to the same agent dispatch layer
+- [x] **Done (verified 2026-09-11), just never checked off.** `backend/grok-connect.js` imports a Grok bot as a real dashboard agent wired into the SAME dispatch layer as the 7 agents: it uses `agent-engine.js`'s real `TOOLS` registry (not a separate mock tool set) and routes chat through the existing `POST /llm/chat` with `provider:"grok"`.
 - [ ] Dashboard "Agents" surface: people can ask agents to generate a website, content, research, lesson plan, market/coin sentiment (ZEROX)
 - [ ] Fix Dreamers Climb spec drift (update doc to match 8-radio, no-VS reality, or decide whether to build VS mode)
 
 ### Phase 4 — Forge + Meshy + 3D marketplace
-- [ ] Ship Forge "Build" UI (currently "coming soon")
+- [x] **Likely done, needs a human glance to confirm fully.** `public/forge.html` is a real 546-line built page (no "coming soon" placeholder text found anywhere in it) — this line was written when it wasn't. Not re-verified with an actual browser render this session.
 - [ ] Meshy API integration for real generative 3D (image→3D), gated behind funding as originally planned — do not build until budget confirmed
 - [ ] 3D marketplace buy/sell wired to Paybox + trading fee hook from Phase 2
 
@@ -279,12 +279,10 @@ plan (chasing token/NFT excitement before the metering spine actually works).
 
 ## 7. NEXT IMMEDIATE ACTION
 
-Phase 1's core (RAG grounding) is done and verified. Phase 2 is now active — and further along than expected, since the Sparks ledger already existed:
+**Update (2026-09-11):** Phase 2 is now substantially complete — Sparks ledger, Stripe→Sparks, tier-gated model routing, and the x402→Sparks bridge are all built and tested. Both of Phase 2's open pricing decisions turned out to already be answered by `tiers.js`'s own rules, not new decisions to make. The one real Phase 2 item left is on-chain (SOL/ETH/USDC) payment verification — deliberately not built, since crediting Sparks off an unverified "on-chain intent" would be a real money-printing hole.
 
-1. **Done:** Stripe payments now actually credit Sparks (1 Spark = $1, computed from the real amount charged) — the ledger itself (`economy-service.js`) was already solid, it just wasn't connected to the one live payment rail.
-2. **Building now: tier-gated model routing** — Pro/Elite users get access to stronger models (via OpenRouter, already wired) without adding their own API key, Free tier stays on the cheap/fast chain. This is the concrete "high-end models thru us" feature.
-3. **After session restart with Paybox MCP connected**, list its tools and rebuild `paybox-guard.js` around what it actually offers (agent wallet operations, not checkout).
-4. **Owner: decide** whether tier subscription purchases should also grant a Sparks bonus (not yet decided — only raw credit-pack/one-off amounts convert right now).
-5. Then: x402 for pay-per-insight, Forge trading fees via the catalog system that already exists.
+1. ~~Done: Stripe→Sparks~~, ~~tier-gated model routing~~, ~~x402→Sparks bridge~~ — all shipped.
+2. Remaining Phase 2 work: real on-chain RPC verification (SOL/ETH/USDC → confirmed tx → Sparks), then Forge trading fees via the existing catalog system once Forge's marketplace side is live.
+3. This session also found and fixed ~26 unrelated identity-spoofing security bugs across the backend (separate from this plan — see git log `2026-09-11` for detail) while doing this pass.
 
-**Do not start Phase 3+ (coin, NFTs, Meshy) until Sparks + Paybox are proven with real paying users** — per §3's ordering discipline, chasing token/NFT work before the metering spine works is the single biggest risk to this plan.
+**Still true, still the biggest risk if ignored: do not start Phase 5+ (coin, NFTs) until Sparks + Paybox are proven with real paying users** — per §3's ordering discipline. Phase 3/4 activity (Grok wiring, Forge UI) turned out to already be further along than this doc reflected, but that's not the same as Sparks/Paybox being proven with real revenue — that proof still hasn't happened and isn't something a code audit can determine.
