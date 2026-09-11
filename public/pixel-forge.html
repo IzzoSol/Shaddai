@@ -171,6 +171,7 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="cust" id="cust">
+  <div class="crow"><div class="clabel">Office</div><div class="styrow" id="sty-office"></div></div>
   <div class="crow"><div class="clabel">Skin</div><div class="sw" id="sw-skin"></div></div>
   <div class="crow"><div class="clabel">Hair</div><div class="sw" id="sw-hair"></div></div>
   <div class="crow"><div class="clabel">Outfit</div><div class="styrow" id="sty-top"></div></div>
@@ -210,6 +211,15 @@ const CAP=['#e8c33a','#e8433a','#2f6fe8','#1a1a1a','#00a3a3','#2aa050','#d94f8f'
 const LED=['#5fe0ff','#ff5a4d','#00ff9c','#f2c84a','#c9a6ff'];
 const TOPTYPES=['shirt','hoodie','suit','jacket','dress'];
 const SHOETYPES=['sneaker','boot','dress','heel'];
+const OFFICES=[
+  {id:'shaddai', label:'SHADDAI', accent:'#c9a6ff'},
+  {id:'oracle',  label:'ORACLE',  accent:'#8b7bf0'},
+  {id:'quill',   label:'QUILL',   accent:'#5fe0ff'},
+  {id:'turtle',  label:'TURTLE',  accent:'#00ff9c'},
+  {id:'nexus',   label:'NEXUS',   accent:'#e8c45c'},
+  {id:'zerox',   label:'ZEROX',   accent:'#ff9a3c'},
+  {id:'pikadon', label:'PIKADON', accent:'#ff5a4d'},
+];
 
 // ---- working rig ----
 let rig=JSON.parse(JSON.stringify(PP.PRESETS[1].rig)); rig.anim='idle';
@@ -217,7 +227,7 @@ function topField(){ for(const f of ['suit','hoodie','jacket','dress']) if(rig[f
 function topColor(){ return rig[topField()]; }
 
 // ---- tabs (by archetype name) ----
-const ARCHES=['All','Suit','Casual','Hoodie','Athlete','Punk','Elder','Dress','Worker','Robot'];
+const ARCHES=['All','Council','Suit','Casual','Hoodie','Athlete','Punk','Elder','Dress','Worker','Robot'];
 let curTab='All';
 const tabsEl=document.getElementById('tabs');
 ARCHES.forEach(a=>{ const d=document.createElement('div'); d.className='tab'+(a==='All'?' on':'');
@@ -257,7 +267,26 @@ function refreshSel(hostId,getter){ const v=getter();
     if(ch.classList.contains('none')) ch.classList.toggle('on', v==null||v===undefined);
     else ch.classList.toggle('on', ch.dataset.col===v); }); }
 
+function buildOfficeRow(){
+  const host=document.getElementById('sty-office'); host.innerHTML='';
+  OFFICES.forEach(o=>{
+    const b=document.createElement('div'); b.className='sty'; b.textContent=o.label; b.dataset.office=o.id;
+    b.style.cssText='border-color:'+o.accent+'55;color:'+o.accent+'aa';
+    b.onclick=()=>{ rig.office=(rig.office===o.id?undefined:o.id); if(rig.office===undefined) delete rig.office; syncUI(); };
+    host.appendChild(b);
+  });
+  refreshOfficeRow();
+}
+function refreshOfficeRow(){
+  const host=document.getElementById('sty-office'); if(!host) return;
+  [...host.children].forEach(b=>{
+    const on = b.dataset.office===rig.office;
+    b.classList.toggle('on', on);
+    b.style.background = on ? (OFFICES.find(o=>o.id===b.dataset.office).accent+'22') : 'transparent';
+  });
+}
 function buildCust(){
+  buildOfficeRow();
   swatches('sw-skin',SKIN,()=>rig.skin,v=>rig.skin=v,false);
   swatches('sw-hair',HAIR,()=>rig.hair,v=>rig.hair=v,false);
   swatches('sw-top',TOPC,()=>topColor(),v=>{ rig[topField()]=v; },false);
@@ -289,6 +318,7 @@ function toggle(f){
   rig[f]=!rig[f]; if(!rig[f]) delete rig[f];
 }
 function syncUI(){
+  refreshOfficeRow();
   refreshSel('sw-skin',()=>rig.skin); refreshSel('sw-hair',()=>rig.hair);
   refreshSel('sw-top',()=>topColor()); refreshSel('sw-pants',()=>rig.pants);
   refreshSel('sw-shoe',()=>rig.shoe); refreshSel('sw-cap',()=>rig.cap);
