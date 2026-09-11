@@ -12,6 +12,11 @@
  * rig fields: skin, hair, cap, shirt|hoodie|suit|jacket|dress, pants, shoe,
  *   shoeStyle(sneaker|boot|dress|heel), glasses, short, hoodUp, mohawk, robot,
  *   led, emblem, logo, tie, watch, anim('idle'|'walk'), __phase
+ * optional metadata (ignored by draw(), carried through JSON clone/save so it survives
+ * everywhere a rig is persisted — gallery, shaddai.player, /api/operatives):
+ *   office('shaddai'|'zerox'|'oracle'|'nexus'|'turtle'|'quill'|'pikadon'|undefined),
+ *   jobTint('coder'|'designer'|'writer'|'researcher'|'trader'|'coach'|'builder'|undefined),
+ *   classTint('warrior'|'mage'|'rogue'|'cleric'|'ranger'|'bard'|undefined)
  * ==========================================================================*/
 window.PixelPeople = (function () {
   'use strict';
