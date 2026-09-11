@@ -43,16 +43,36 @@ const lessons = [
 
 function findLesson(topic) {
   if (!topic) return null;
-  const key = topic.toLowerCase().replace(/[-s]/g, '-');
+  // BUGFIX (2026-09-11): the old normalization was `.replace(/[-s]/g, '-')` --
+  // a character class matching '-' OR 's' anywhere in the string, which
+  // mangled every real topic key (e.g. "solana-basics" -> "-olana--a-ic-")
+  // so findLesson() could never match anything, ever. Stored topic keys are
+  // already lowercase-with-hyphens, so a straight lowercase+trim is what's
+  // actually needed.
+  const key = topic.toLowerCase().trim();
   return lessons.find(l => l.topic === key) || null;
 }
 
-module.exports = function lessonPlanRouter(app) {
-  app.get('/api/lesson-plan', async (req, res) => {
-    const { agent: agentCodename, topic } = req.query;
-    if (!topic) return res.json({ ok: true, lesson: null });
-    const lesson = findLesson(topic);
-    if (!lesson) return res.json({ ok: true, lesson: null });
-    res.json({ ok: true, lesson });
-  });
-};
+// BUGFIX (2026-09-11): this used to export `function lessonPlanRouter(app) {
+// app.get('/api/lesson-plan', ...) }`, expecting to be CALLED with the real
+// Express app. But server-production.js mounts it the same way as every other
+// route file here -- `app.use('/api/lesson-plan', require('./lesson-plan'))`
+// -- which invokes the export as middleware `(req, res, next)`, not `(app)`.
+// So the `app` parameter was actually `req`, and `app.get('/api/lesson-plan',
+// handler)` called `req.get(headerName)` (a real Express method that reads a
+// request header) with two args -- the second silently ignored, no response
+// ever sent and next() never called, so every GET /api/lesson-plan request
+// just hung until timeout. Fixed by exporting a real Router, matching the
+// convention used by every other route file in this codebase.
+const express = require('express');
+const router = express.Router();
+
+router.get('/', async (req, res) => {
+  const { agent: agentCodename, topic } = req.query;
+  if (!topic) return res.json({ ok: true, lesson: null });
+  const lesson = findLesson(topic);
+  if (!lesson) return res.json({ ok: true, lesson: null });
+  res.json({ ok: true, lesson });
+});
+
+module.exports = router;
