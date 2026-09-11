@@ -15,6 +15,19 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
+const { softAuth } = require('../auth-guard');
+
+// Trust the server-verified identity (req.userId, set by softAuth) over any
+// client-supplied value. Matches the resolveUserId(req, provided) shape used
+// by economy-routes.js / work-sessions.js / skill-market-routes.js. Without
+// this, `body.user` alone decided who received a real, perk-bearing
+// collectible — letting anyone mint one for any named user.
+function resolveUserId(req, provided) {
+  if (req.user && typeof req.user.id === 'string' && req.user.id) return req.user.id;
+  if (typeof req.userId === 'string' && req.userId) return req.userId;
+  if (typeof provided === 'string' && provided) return provided;
+  return null;
+}
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const COLLECTIBLES_FILE = path.join(DATA_DIR, 'collectibles.json');
@@ -142,10 +155,10 @@ const router = express.Router();
 router.use(express.json());
 
 // POST /earn { user, taskId, name?, value? } -> award (idempotent per taskId)
-router.post('/earn', (req, res) => {
+router.post('/earn', softAuth, (req, res) => {
   try {
     const body = req.body || {};
-    const user = body.user;
+    const user = resolveUserId(req, body.user);
     if (!user) return res.status(400).json({ ok: false, error: 'user required' });
     const collectible = awardForTask(user, {
       taskId: body.taskId,

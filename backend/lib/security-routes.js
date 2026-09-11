@@ -22,6 +22,7 @@ const path    = require('path');
 const crypto  = require('crypto');
 
 const { scan } = require('./pikadon-scan');
+const { requireAdmin } = require('../auth-guard');
 
 const router   = express.Router();
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -159,7 +160,10 @@ router.post('/report', (req, res) => {
 //
 // Returns items newest-first.
 
-router.get('/queue', (req, res) => {
+// PIKADON: the moderation review queue is admin-only — it can expose reported
+// content/reporter identity and (via /resolve) let a caller allow/block items.
+// requireAdmin fails CLOSED in production if ADMIN_TOKEN is unset.
+router.get('/queue', requireAdmin, (req, res) => {
   let items;
   try {
     items = readQueue();
@@ -194,7 +198,7 @@ router.get('/queue', (req, res) => {
 // Body: { action: 'allow'|'block', by?: string }
 // Marks the queued item as resolved.
 
-router.post('/queue/:id/resolve', (req, res) => {
+router.post('/queue/:id/resolve', requireAdmin, (req, res) => {
   const { id } = req.params;
   const { action, by } = req.body || {};
 

@@ -25,6 +25,12 @@ const router = express.Router();
 
 const PROVIDERS = require('./video-providers');
 const { isConfigured } = PROVIDERS;
+// PIKADON: /generate triggers a real paid provider call billed on the server's
+// own env key (despite the "BYOK" label) — the generic global /api limiter
+// (150/min) is far too loose for that; give it its own tight per-route budget,
+// same pattern as forge/forge-routes.js and quickstart-routes.js.
+const { rateLimit } = require('./auth-guard');
+const generateLimit = rateLimit({ windowMs: 60000, max: 10 });
 
 // ─── in-memory job store ──────────────────────────────────────────────────────
 const jobs = new Map(); // jobId -> job record
@@ -115,7 +121,7 @@ router.get('/providers', (req, res) => {
 });
 
 // ─── POST /generate ───────────────────────────────────────────────────────────
-router.post('/generate', async (req, res) => {
+router.post('/generate', generateLimit, async (req, res) => {
   const body = req.body || {};
   const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
   const provider = typeof body.provider === 'string' ? body.provider.trim().toLowerCase() : '';

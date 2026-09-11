@@ -148,19 +148,23 @@ function forget(userId, agentName) {
 let router;
 try {
   const express = require('express');
+  const { softAuth } = require('../auth-guard');
   router = express.Router();
+  // SECURITY: identity must come from the authenticated session, never a
+  // plain query/body field — otherwise anyone could read or pollute another
+  // user's per-agent memory just by passing a different ?user=/body.user id.
+  router.use(softAuth);
 
-  // GET /:agent?user=<id>&q=<query> -> { facts: [...] }
+  // GET /:agent?q=<query> -> { facts: [...] }
   router.get('/:agent', (req, res) => {
-    const user = req.query.user;
     const q = req.query.q || req.query.query || '';
-    res.json({ facts: recall(user, req.params.agent, q) });
+    res.json({ facts: recall(req.userId, req.params.agent, q) });
   });
 
-  // POST /:agent  body { user, fact } -> { ok: true }
+  // POST /:agent  body { fact } -> { ok: true }
   router.post('/:agent', (req, res) => {
     const body = req.body || {};
-    const ok = remember(body.user, req.params.agent, body.fact);
+    const ok = remember(req.userId, req.params.agent, body.fact);
     res.json({ ok: !!ok });
   });
 } catch (_) {

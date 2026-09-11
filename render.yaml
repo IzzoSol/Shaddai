@@ -40,6 +40,8 @@ services:
         sync: false         # subscriptions (lazy-loaded; unset = billing in free/credit mode)
       - key: SUNO_API_KEY
         sync: false         # real music generation (unset = lyrics-only)
+      - key: FAL_KEY
+        sync: false         # fal.ai FLUX image engine for "Make a picture" (unset = falls back to HuggingFace/Pollinations)
       # ── Live signals feed (24/7 pollers: DexScreener / pump.fun / Gecko / Helius) ──
       # Set in the Render dashboard (Environment tab). The pollers are a no-op
       # until TELEGRAM_BOT_TOKEN is set. Helius adds the fresh-mint scan source.

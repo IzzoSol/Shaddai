@@ -20,8 +20,21 @@ const path = require('path');
 
 // forge-core is required READ-ONLY — rooms reuse its SLOTS/ASSETS for "change clothes".
 const forge = require('../forge/forge-core');
+const { softAuth } = require('../auth-guard');
 
 const router = express.Router();
+
+// Trust the server-verified identity (req.userId, set by softAuth) over any
+// client-supplied value. Matches the resolveUserId(req, provided) shape used
+// by economy-routes.js / work-sessions.js / skill-market-routes.js. Without
+// this, `body.owner` alone decided whose room build got overwritten or whose
+// name burned the shared image-gen budget on a scene render.
+function resolveUserId(req, provided) {
+  if (req.user && typeof req.user.id === 'string' && req.user.id) return req.user.id;
+  if (typeof req.userId === 'string' && req.userId) return req.userId;
+  if (typeof provided === 'string' && provided) return provided;
+  return null;
+}
 
 const hf = require('../lib/hf-keys'); // HF key pool + auto-rotation (shared with forge)
 // NOTE: image generation goes through hf.generate() below. Do NOT reintroduce a
@@ -138,9 +151,11 @@ router.get('/:owner', (req, res) => {
 });
 
 // POST /api/rooms/wearable  { owner, slot, value }  → change clothes / look slot.
-router.post('/wearable', express.json({ limit: '64kb' }), (req, res) => {
+router.post('/wearable', softAuth, express.json({ limit: '64kb' }), (req, res) => {
   try {
-    const { owner = 'anon', slot, value } = req.body || {};
+    const body = req.body || {};
+    const owner = resolveUserId(req, body.owner) || 'anon';
+    const { slot, value } = body;
     if (!forge.SLOTS.includes(slot)) {
       return res.status(400).json({ ok: false, error: `invalid slot: ${slot}` });
     }
@@ -164,9 +179,9 @@ router.post('/wearable', express.json({ limit: '64kb' }), (req, res) => {
 });
 
 // POST /api/rooms/scene  { owner, theme }  → generate + persist a FLUX scene.
-router.post('/scene', express.json({ limit: '64kb' }), async (req, res) => {
+router.post('/scene', softAuth, express.json({ limit: '64kb' }), async (req, res) => {
   try {
-    const owner = String((req.body && req.body.owner) || 'anon');
+    const owner = resolveUserId(req, req.body && req.body.owner) || 'anon';
     const theme = (req.body && req.body.theme) || 'neon-loft';
     const prompt = buildScenePrompt(theme);
 

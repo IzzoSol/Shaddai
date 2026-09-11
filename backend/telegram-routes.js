@@ -14,7 +14,9 @@ const pnl = require('./telegram-pnl');
 function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function _adminOk(req) {
   const need = process.env.ADMIN_TOKEN || '';
-  if (!need) return true;   // unset → open (dev), same policy as other admin routes
+  // Fail CLOSED in production when ADMIN_TOKEN is unset — same policy as the
+  // sibling helper in public-api-routes.js. Open only in dev so local tooling works.
+  if (!need) return process.env.NODE_ENV !== 'production';
   const got = req.headers['x-admin-token'] || (req.body && req.body.adminToken) || '';
   return got && got === need;
 }

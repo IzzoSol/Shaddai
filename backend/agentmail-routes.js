@@ -9,6 +9,7 @@ const path = require('path');
 const express = require('express');
 const router = express.Router();
 const json = express.json();
+const { requireAdmin } = require('./auth-guard');
 let mail = null; try { mail = require('./agentmail-guard'); } catch (e) { console.warn('[agentmail-routes] agentmail-guard unavailable:', e.message); }
 
 const STATE_PATH = path.join(__dirname, 'data', 'agentmail-state.json');   // { lastCheckedAt }
@@ -65,19 +66,24 @@ async function checkForNewMail() {
   return { ok: true, checked: messages.length, drafted: drafted.length, drafts: drafted };
 }
 
+// PIKADON: this whole router is the human-approval gate for a real mailbox
+// (shaddai@agentmail.to) — /approve can send real email to a real person, and
+// /pending, /messages expose inbox contents. All four routes are admin-only.
+// requireAdmin fails CLOSED in production if ADMIN_TOKEN is unset.
+
 // POST /api/agentmail/check — scan inbox, draft replies (does NOT send anything)
-router.post('/check', json, async (req, res) => {
+router.post('/check', requireAdmin, json, async (req, res) => {
   const r = await checkForNewMail();
   res.json(r);
 });
 
 // GET /api/agentmail/pending — drafted replies awaiting human approval
-router.get('/pending', (req, res) => {
+router.get('/pending', requireAdmin, (req, res) => {
   res.json({ ok: true, pending: getDrafts().filter(d => d.status === 'pending') });
 });
 
 // POST /api/agentmail/approve { id, decision, edited_text? } — send (or deny) a drafted reply
-router.post('/approve', json, async (req, res) => {
+router.post('/approve', requireAdmin, json, async (req, res) => {
   const { id, decision, edited_text } = req.body || {};
   if (!id) return res.status(400).json({ ok: false, error: 'id required' });
   const list = getDrafts();
@@ -96,7 +102,7 @@ router.post('/approve', json, async (req, res) => {
 });
 
 // GET /api/agentmail/messages — raw inbox listing (admin/dashboard view)
-router.get('/messages', async (req, res) => {
+router.get('/messages', requireAdmin, async (req, res) => {
   if (!mail) return res.status(501).json({ ok: false, error: 'agentmail-guard unavailable' });
   const r = await mail.listMessages();
   res.json(r);

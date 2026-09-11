@@ -122,7 +122,15 @@ async function runOwnKey(prompt, { provider, model, key }) {
 
 // ── AUTH-adjacent helpers (reused from auth-guard; never hard-require) ─────────
 let requireAdmin = (req, res, next) => next();
-try { const ag = require('../auth-guard'); if (ag.requireAdmin) requireAdmin = ag.requireAdmin; } catch (_) {}
+let softAuth = (req, res, next) => next();
+try { const ag = require('../auth-guard'); if (ag.requireAdmin) requireAdmin = ag.requireAdmin; if (ag.softAuth) softAuth = ag.softAuth; } catch (_) {}
+
+// PIKADON: identify the caller BEFORE any route runs so ownerOf() below reflects
+// a verified req.userId (from softAuth) instead of falling through to the
+// spoofable body.userId/query.userId — without this, anyone could impersonate
+// any owner to list/edit/revoke/read another user's agent. Same pattern as
+// brains.js (`router.use(rateLimit(...), softAuth)`).
+router.use(softAuth);
 
 // ── ENDPOINTS ──────────────────────────────────────────────────────────────────
 // POST /api/policy/agent  { name, userId?, wallet_label?, daily_cap_usd?, per_call_cap_usd?, allowed_tools?[] }
@@ -218,6 +226,7 @@ router.post('/agent/:id/execute', json, async (req, res) => {
   const list = readPolicies();
   const p = findPolicy(list, req.params.id);
   if (!p) return res.status(404).json({ ok: false, error: 'agent not found' });
+  if (p.owner !== ownerOf(req)) return res.status(403).json({ ok: false, error: 'not your agent' });
   if (p.revoked) return res.status(403).json({ ok: false, error: 'agent revoked — spending disabled' });
 
   const b = req.body || {};

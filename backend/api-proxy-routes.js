@@ -1985,7 +1985,14 @@ router.post('/image/generate', require('./demo-limit').middleware, async (req, r
   if (!prompt || !String(prompt).trim()) {
     return res.status(400).json({ error: 'prompt required' });
   }
-  if (await enforceCredits(req, res, 'image_generate')) return; // charge before generating
+  // Engine-tiered pricing: HuggingFace's shared pool costs us nothing, so it's
+  // free; fal.ai draws down real prepaid balance, so it's a premium action;
+  // everything else (NanoBanana / DALL-E) keeps the original flat rate.
+  const isFalEngine = typeof model === 'string' && /^fal/i.test(model);
+  const isFreeEngine = !isFalEngine && (typeof model === 'string') &&
+    (model === 'flux' || /huggingface|together|flux-free|schnell/i.test(model));
+  const imageActionId = isFalEngine ? 'image_generate_fal' : (isFreeEngine ? 'image_generate_free' : 'image_generate');
+  if (await enforceCredits(req, res, imageActionId)) return; // charge before generating
 
   // Opt-in premium path: NanoBanana / AceDataCloud (requires a key). Only used
   // when the caller explicitly asks for a nano-banana model AND a key is available.
@@ -8232,8 +8239,12 @@ function _readCollectibles() {
 // POST /api/collectibles/mint — mint a new NFT-style collectible
 router.post('/collectibles/mint', async (req, res) => {
   try {
-    const { name, rarity, owner } = req.body || {};
-    if (!name || !rarity || !owner) return res.status(400).json({ ok: false, error: 'name, rarity, owner required' });
+    const { name, rarity } = req.body || {};
+    if (!name || !rarity) return res.status(400).json({ ok: false, error: 'name, rarity required' });
+    // SECURITY: identity from the authenticated session, never a client-supplied
+    // field — otherwise anyone could mint a collectible attributed to any name.
+    const owner = (req.userId && req.userId !== 'local') ? req.userId
+      : (String(req.headers['x-user-id'] || (req.body && req.body.owner) || '').trim() || 'anon');
     const tool = agentEngine.TOOLS.mint_collectible;
     if (!tool) return fail(res, 500, 'internal_error', 'mint_collectible tool not available', { ok: false });
     const result = await tool.execute({ name, rarity, owner });
@@ -8283,10 +8294,14 @@ router.get('/collectibles/listings', (req, res) => {
 // POST /api/collectibles/trade — execute a trade (transfer ownership for credits)
 router.post('/collectibles/trade', async (req, res) => {
   try {
-    const { collectible_id, buyer, buyer_credits } = req.body || {};
-    if (collectible_id == null || !buyer || buyer_credits == null) {
-      return res.status(400).json({ ok: false, error: 'collectible_id, buyer, buyer_credits required' });
+    const { collectible_id, buyer_credits } = req.body || {};
+    if (collectible_id == null || buyer_credits == null) {
+      return res.status(400).json({ ok: false, error: 'collectible_id, buyer_credits required' });
     }
+    // SECURITY: identity from the authenticated session, never a client-supplied
+    // field — otherwise anyone could transfer a listed collectible to any name for free.
+    const buyer = (req.userId && req.userId !== 'local') ? req.userId
+      : (String(req.headers['x-user-id'] || (req.body && req.body.buyer) || '').trim() || 'anon');
     const agentEngine = require('./agent-engine');
     const tool = agentEngine.TOOLS && agentEngine.TOOLS.execute_trade;
     if (!tool) return fail(res, 500, 'internal_error', 'execute_trade tool not loaded', { ok: false });

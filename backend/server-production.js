@@ -1754,7 +1754,7 @@ app.use('/api/prove-edge', require('./routes/prove-edge')); // Prove Edge — ba
 app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer API (free keys + JSON signals) — audited 2026-07-19
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
-app.use('/api/market', require('./skill-market-routes')); // skill + agent marketplace (create/list/buy)
+app.use('/api/market', softAuth, require('./skill-market-routes')); // skill + agent marketplace (create/list/buy); softAuth so owner/buyer identity + delete-ownership checks use the verified session, not caller-supplied body fields
 app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-customer agent memory (learn/grow)
 // NOTE: the full AURA HTTP surface is mounted below via ./aura-routes (line ~712).
 // The bare lib/aura.router only exposes /stats + /route and — because it is mounted
@@ -1987,11 +1987,11 @@ app.use('/api', require('./dashboard-patches'));                      // P0 patc
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
-app.use('/api/economy', require('./economy-routes')());               // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED
+app.use('/api/economy', softAuth, require('./economy-routes')());     // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED; softAuth sets req.userId so resolveUserId() stops trusting caller-supplied body/query userId once authenticated
 // Seed the shop catalog once (idempotent; only if empty) so /api/economy/catalog has items.
 try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
-app.use('/api/work', require('./work-sessions'));                     // agent work loop: real work -> Sparks payout + while-away summary + live feed
+app.use('/api/work', softAuth, require('./work-sessions'));           // agent work loop: real work -> Sparks payout + while-away summary + live feed; softAuth so userId comes from the verified session, not a caller-supplied body field
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
 // Paybox — customer-facing wallet endpoints (tip links etc). Separate from
@@ -2777,6 +2777,22 @@ app.post('/api/auth/logout', (req, res) => {
   logger.info('AUTH', 'Logout successful');
   res.json({ success: true });
 });
+
+// POST /api/auth/guest — mint a signed, non-forgeable identity for an anonymous
+// browser (see auth-service.js issueGuestToken for the full rationale). Rate
+// limited so a caller can't farm unlimited fresh identities on demand.
+try {
+  const { rateLimit } = require('./auth-guard');
+  app.post('/api/auth/guest', rateLimit({ windowMs: 60000, max: 5 }), (req, res) => {
+    try {
+      const result = authService.issueGuestToken();
+      res.json({ success: true, ...result });
+    } catch (error) {
+      logger.error('AUTH', 'Guest token issue error', { error: error.message });
+      res.status(500).json({ error: 'could not issue guest token' });
+    }
+  });
+} catch (e) { console.warn('[auth] /api/auth/guest not mounted:', e.message); }
 
 // ============================================
 // BILLING

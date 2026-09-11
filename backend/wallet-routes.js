@@ -131,8 +131,12 @@ router.get('/api/wallet/me', verifyWalletSession, (req, res) => {
 });
 
 // POST /api/wallet/debit — settle via the chosen chain (default off-chain).
-router.post('/api/wallet/debit', json, async (req, res) => {
-  const { chain = 'offchain', user, amount, reason, payee } = req.body || {};
+//   SECURITY: requires a verified wallet session (Bearer token from POST
+//   /api/wallet/session). `user` is taken from the verified session, NEVER
+//   from the request body — otherwise anyone could debit/settle as anyone.
+router.post('/api/wallet/debit', verifyWalletSession, json, async (req, res) => {
+  const { chain = 'offchain', amount, reason, payee } = req.body || {};
+  const user = req.wallet;
   try {
     const receipt = await debit({ chain, user, amount, reason, payee });
     res.json({ ok: true, receipt });

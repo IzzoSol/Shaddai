@@ -5,6 +5,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const store = require('./operatives');
+const { softAuth } = require('../auth-guard');
 const router = express.Router();
 
 // ── SELF-HEAL: forged operatives created via POST /api/forge are recorded in forge-state.json.
@@ -36,11 +37,15 @@ function syncFromForgeState() {
 }
 
 // POST /api/operatives  → create a forged operative (called after /api/forge succeeds)
-router.post('/', express.json({ limit: '256kb' }), (req, res) => {
+router.post('/', softAuth, express.json({ limit: '256kb' }), (req, res) => {
   try {
     const b = req.body || {};
     if (!b.codename) return res.status(400).json({ ok: false, error: 'codename required' });
-    const op = store.create(b);
+    // SECURITY: owner is always the server-verified caller (req.userId from softAuth),
+    // never a client-supplied value. store.create() upserts in place when owner+codename
+    // match an existing record, so trusting b.owner here would let a POST silently
+    // rewrite someone else's operative (bypassing any ownership check added to PATCH).
+    const op = store.create({ ...b, owner: req.userId || 'local' });
 
     // Forge → Character: full-body FLUX portrait (fire-and-forget)
     try { require('./char-gen').generateCharForOperative(op).catch(() => {}); } catch (e) {}
@@ -94,10 +99,16 @@ router.get('/:id', (req, res) => {
 // DELETE /api/operatives/:id  → remove a forged operative (from World + Forge at once,
 // since both read this store). Gated: the operative's owner, a world admin, or the admin token.
 let adminGate = null; try { adminGate = require('../admin-routes').canManage; } catch (e) {}
-router.delete('/:id', (req, res) => {
+// SECURITY: ownership/admin identity comes ONLY from req.userId (set by softAuth from a
+// verified session — Firebase token, our own signed JWT, or 'local' when anonymous/dev).
+// The old check used req.query.user || req.headers['x-user'], both fully attacker-
+// controlled, and GET /api/operatives publicly returns every operative's owner field —
+// so an attacker could always supply the exact value needed to pass. Never fall back to
+// a client-supplied identity for this check.
+router.delete('/:id', softAuth, (req, res) => {
   const op = store.get(req.params.id);
   if (!op) return res.status(404).json({ ok: false, error: 'not found' });
-  const user = String(req.query.user || req.headers['x-user'] || '');
+  const user = req.userId || '';
   const isOwner = user !== '' && (user === op.owner || user === op.creator);
   const isAdmin = adminGate ? adminGate(req.query.world || 'shaddai', user, req.headers['x-admin-token']) : false;
   if (!isOwner && !isAdmin) return res.status(403).json({ ok: false, error: 'only the agent owner or a world admin can remove this agent' });
@@ -115,10 +126,22 @@ router.delete('/:id', (req, res) => {
 });
 
 // PATCH /api/operatives/:id  → update look/room/inventory/economy
-router.patch('/:id', express.json({ limit: '256kb' }), (req, res) => {
-  const op = store.update(req.params.id, req.body || {});
+// SECURITY: previously had ZERO ownership check — anyone could rewrite any operative's
+// rarity/tools/brain/economy stats, or even its owner field. Gated the same way as
+// DELETE (owner/creator via req.userId, or a world admin). A non-admin patch may not
+// reassign `owner` — only an admin can transfer ownership.
+router.patch('/:id', softAuth, express.json({ limit: '256kb' }), (req, res) => {
+  const op = store.get(req.params.id);
   if (!op) return res.status(404).json({ ok: false, error: 'not found' });
-  res.json({ ok: true, operative: op });
+  const user = req.userId || '';
+  const isOwner = user !== '' && (user === op.owner || user === op.creator);
+  const isAdmin = adminGate ? adminGate(req.query.world || 'shaddai', user, req.headers['x-admin-token']) : false;
+  if (!isOwner && !isAdmin) return res.status(403).json({ ok: false, error: 'only the agent owner or a world admin can modify this agent' });
+  const patch = { ...(req.body || {}) };
+  if (!isAdmin) delete patch.owner;
+  const updated = store.update(req.params.id, patch);
+  if (!updated) return res.status(404).json({ ok: false, error: 'not found' });
+  res.json({ ok: true, operative: updated });
 });
 
 module.exports = router;

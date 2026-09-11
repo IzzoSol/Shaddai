@@ -11,25 +11,27 @@ function mockRes() {
 describe('softAuth', () => {
   afterEach(() => { delete process.env.REQUIRE_AUTH; });
 
-  test('passes through in dev (REQUIRE_AUTH unset), sets userId', () => {
+  // softAuth is async (it may verify a Firebase/JWT bearer token) — callers must
+  // await it, same as the real Express middleware chain does.
+  test('passes through in dev (REQUIRE_AUTH unset), sets userId', async () => {
     const req = { headers: {} }; const res = mockRes(); let called = false;
-    softAuth(req, res, () => { called = true; });
+    await softAuth(req, res, () => { called = true; });
     expect(called).toBe(true);
     expect(req.userId).toBeDefined();
   });
 
-  test('rejects with 401 when REQUIRE_AUTH=true and no uid', () => {
+  test('rejects with 401 when REQUIRE_AUTH=true and no uid', async () => {
     process.env.REQUIRE_AUTH = 'true';
     const req = { headers: {} }; const res = mockRes(); let called = false;
-    softAuth(req, res, () => { called = true; });
+    await softAuth(req, res, () => { called = true; });
     expect(called).toBe(false);
     expect(res.code).toBe(401);
   });
 
-  test('accepts x-user-id header when REQUIRE_AUTH=true', () => {
+  test('accepts x-user-id header when REQUIRE_AUTH=true', async () => {
     process.env.REQUIRE_AUTH = 'true';
     const req = { headers: { 'x-user-id': 'u123' } }; const res = mockRes(); let called = false;
-    softAuth(req, res, () => { called = true; });
+    await softAuth(req, res, () => { called = true; });
     expect(called).toBe(true);
     expect(req.userId).toBe('u123');
   });

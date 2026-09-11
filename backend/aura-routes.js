@@ -5,8 +5,17 @@
 // Backed by lib/aura.js (exact+fuzzy cache + safe local compute, zero deps).
 const express = require('express');
 const aura = require('./lib/aura');
+const { softAuth } = require('./auth-guard');
 const router = express.Router();
 router.use(express.json({ limit: '512kb' }));
+// PIKADON: /chat and /record used to scope AURA's cache entries by the raw,
+// spoofable x-user-id header (auth-guard's own softAuth comments call that
+// header untrustworthy in production) — letting any caller plant a poisoned
+// cached answer under a victim's scope, or read back a victim's cached
+// answers, just by sending their id. softAuth verifies the caller (Firebase/
+// JWT bearer) and only falls back to the header off-prod; req.userId is the
+// only trustworthy scope to key the cache by.
+router.use(softAuth);
 
 // Pull the last user message text out of an OpenAI-style messages array.
 function lastUserPrompt(messages) {
@@ -24,7 +33,7 @@ router.post('/chat', (req, res) => {
   try {
     const prompt = lastUserPrompt(req.body && req.body.messages);
     if (!prompt) return res.json({ ok: true, cached: false });
-    const r = aura.route(prompt, { scope: req.headers['x-user-id'] || '' });
+    const r = aura.route(prompt, { scope: req.userId || '' });
     if (r.hit) {
       return res.json({ ok: true, cached: true, response: r.answer, method: r.method,
         tokens_saved: r.savedTokensEst, similarity: r.similarity });
@@ -37,7 +46,7 @@ router.post('/chat', (req, res) => {
 router.post('/record', (req, res) => {
   try {
     const { prompt, answer } = req.body || {};
-    const ok = aura.recordAnswer(prompt, answer, { scope: req.headers['x-user-id'] || '' });
+    const ok = aura.recordAnswer(prompt, answer, { scope: req.userId || '' });
     res.json({ ok });
   } catch (e) { res.json({ ok: false, error: String(e && e.message || e) }); }
 });

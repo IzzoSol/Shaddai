@@ -72,7 +72,11 @@ function genPurchaseId() {
 // POST /list — create a listing
 // ---------------------------------------------------------------------------
 router.post('/list', (req, res) => {
-  const { type, name, description, price, owner, payload } = req.body || {};
+  const { type, name, description, price, payload } = req.body || {};
+  // SECURITY: owner comes from the verified session (req.userId, set by
+  // softAuth at the mount) — never from the request body — otherwise anyone
+  // could publish a listing under someone else's name.
+  const owner = req.userId ? String(req.userId) : String((req.body && req.body.owner) || '');
 
   if (type !== 'skill' && type !== 'agent') {
     return res.status(400).json({ error: "type must be 'skill' or 'agent'" });
@@ -152,7 +156,10 @@ router.get('/listings/:id', (req, res) => {
 // soft TODO — do NOT hard-require x402 here so credit-based buys keep working.
 // ---------------------------------------------------------------------------
 router.post('/listings/:id/buy', (req, res) => {
-  const { buyer } = req.body || {};
+  // SECURITY: buyer comes from the verified session, never the request body
+  // — otherwise anyone could record a "purchase" (and receive the install
+  // payload) attributed to another user's account.
+  const buyer = req.userId ? String(req.userId) : String((req.body && req.body.buyer) || '');
   if (!buyer) return res.status(400).json({ error: 'buyer is required' });
 
   const listings = loadJSON(LISTINGS_FILE, []);
@@ -201,7 +208,11 @@ router.get('/mine', (req, res) => {
 // DELETE /listings/:id — only the owner may delete (basic guard)
 // ---------------------------------------------------------------------------
 router.delete('/listings/:id', (req, res) => {
-  const { owner } = req.body || {};
+  // SECURITY: the caller's identity comes from the verified session — never
+  // from the request body. listing.owner is PUBLIC (visible via GET
+  // /listings), so comparing it against a body-supplied `owner` enforced
+  // nothing: anyone could read a listing's owner and echo it back to delete it.
+  const owner = req.userId ? String(req.userId) : String((req.body && req.body.owner) || '');
   const listings = loadJSON(LISTINGS_FILE, []);
   const listing = listings.find(l => l.id === req.params.id);
   if (!listing) return res.status(404).json({ error: 'listing not found' });

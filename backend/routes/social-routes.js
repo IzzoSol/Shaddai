@@ -6,13 +6,18 @@
 const express = require('express');
 const router = express.Router();
 const https = require('https');
+const { requireAdmin } = require('../auth-guard');
 
 /**
  * POST /api/social/post
  * Body: { platform: 'telegram'|'discord', content: string }
  * Returns: { status: 'sent'|'error', message?: string }
+ *
+ * PIKADON: this posts arbitrary content to the REAL Telegram channel / Discord
+ * webhook — admin-gated. requireAdmin fails CLOSED in production if ADMIN_TOKEN
+ * is unset.
  */
-router.post('/post', async (req, res) => {
+router.post('/post', requireAdmin, async (req, res) => {
   try {
     const { platform, content } = req.body;
 

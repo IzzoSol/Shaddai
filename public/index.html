@@ -21230,6 +21230,34 @@ window.opOwner = function () {
   if (!window.__shdEphemeralGuest) window.__shdEphemeralGuest = 'guest-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
   return window.__shdEphemeralGuest;
 };
+// PIKADON: x-user-id (below) is never trusted by the server in production —
+// only a signed bearer token is, because a raw header is trivially spoofable.
+// That meant every anonymous caller collapsed into one shared 'local' identity
+// in production even though opOwner() gives each guest a distinct client-side
+// id — guests could see/overwrite each other's data on any route that scopes
+// by the verified session. Fix: lazily fetch a real, server-signed guest
+// identity (POST /api/auth/guest) and cache it, so anonymous callers carry a
+// bearer token softAuth already knows how to verify. Never overrides a real
+// signed-in session's Authorization header. Fire-and-forget: the very first
+// request of a session may go out before the token arrives; every request
+// after does not.
+(function () {
+  try { window.__shdGuestJWT = localStorage.getItem('shd_guest_jwt') || null; } catch (e) { window.__shdGuestJWT = null; }
+  function shdSignedIn() { try { return !!(window.SHD_AUTH && window.SHD_AUTH.token); } catch (e) { return false; } }
+  function shdEnsureGuestToken() {
+    if (window.__shdGuestJWT || window.__shdGuestJWTPending || shdSignedIn()) return;
+    window.__shdGuestJWTPending = true;
+    fetch('/api/auth/guest', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.token) { window.__shdGuestJWT = d.token; try { localStorage.setItem('shd_guest_jwt', d.token); } catch (e) {} }
+      })
+      .catch(function () {})
+      .then(function () { window.__shdGuestJWTPending = false; });
+  }
+  shdEnsureGuestToken();
+  window.__shdEnsureGuestToken = shdEnsureGuestToken;
+})();
 // SECURITY: tag every same-origin /api call with the caller's stable id so the
 // server scopes reads/writes per user. This is what stops one person's chat /
 // task receipts from ever surfacing for another guest or account.
@@ -21243,6 +21271,13 @@ window.opOwner = function () {
         init = init || {};
         var h = new Headers(init.headers || (typeof input !== 'string' && input && input.headers) || {});
         if (!h.has('x-user-id')) { try { h.set('x-user-id', window.opOwner ? window.opOwner() : 'anon'); } catch (e) {} }
+        if (!h.has('Authorization')) {
+          try {
+            var signedIn = !!(window.SHD_AUTH && window.SHD_AUTH.token);
+            if (!signedIn && window.__shdGuestJWT) h.set('Authorization', 'Bearer ' + window.__shdGuestJWT);
+            else if (!signedIn && window.__shdEnsureGuestToken) window.__shdEnsureGuestToken();
+          } catch (e) {}
+        }
         init.headers = h;
       }
     } catch (e) {}
@@ -57746,7 +57781,7 @@ try{
         {k:'style',label:'Style',type:'sel',opts:['Photorealistic','Cinematic','Digital Art','Anime','3D Render','Watercolor','Pixel Art','Neon Futuristic']},
         {k:'ratio',label:'Shape',type:'sel',opts:['1:1 Square','16:9 Landscape','9:16 Portrait']}
       ],
-      engine:{label:'Image engine (API)',opts:[['huggingface','⚡ Flux · Free (HuggingFace key)'],['fal','🚀 fal.ai FLUX · key'],['nano-banana','🍌 Nano Banana · key'],['dall-e-3','🎨 DALL·E 3 · key']]}},
+      engine:{label:'Image engine (API)',opts:[['huggingface','⚡ Flux · Free'],['fal','🚀 fal.ai FLUX · 25⚡ premium'],['nano-banana','🍌 Nano Banana · 15⚡'],['dall-e-3','🎨 DALL·E 3 · 15⚡']]}},
     {ic:'🎵',ti:'Make a song',ds:'Lyrics + audio prompt',ag:'TURTLE',kind:'agent',
       fields:[
         {k:'topic',label:'What is the song about?',type:'text',ph:'rising from nothing, building an empire'},

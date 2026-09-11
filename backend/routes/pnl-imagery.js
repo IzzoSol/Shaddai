@@ -9,6 +9,21 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
+// ── AUTH-adjacent helpers (reused from auth-guard; never hard-require) ─────────
+// PIKADON: /generate triggers a REAL paid HF render on a cache miss, and its cache
+// key (`${symbol}_${multiplier}`) is trivially bypassed by varying multiplier by
+// 0.1 — so it needs its own tight rate limit on top of the generic global one.
+// /clear-cache wipes every cached render for every user with zero auth today —
+// that's a free cost-amplification DoS (next call to /generate for any symbol
+// becomes a fresh paid render) — so it must be admin-only.
+let rateLimit = () => (req, _res, next) => next();
+let requireAdmin = (req, res, next) => next();
+try {
+  const ag = require('../auth-guard');
+  if (ag.rateLimit) rateLimit = ag.rateLimit;
+  if (ag.requireAdmin) requireAdmin = ag.requireAdmin;
+} catch (_) {}
+
 const DATA_DIR = path.join(__dirname, '../data');
 const CACHE_DIR = path.join(DATA_DIR, 'pnl-images');
 
@@ -103,7 +118,7 @@ async function generatePnLImage(data) {
  * POST /api/pnl-imagery/generate
  * Generate PnL image from signal data
  */
-router.post('/generate', async (req, res) => {
+router.post('/generate', rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
   try {
     const data = req.body;
     if (!data.symbol) {
@@ -220,7 +235,7 @@ router.get('/cache-status', (req, res) => {
  * DELETE /api/pnl-imagery/clear-cache
  * Clear all cached images
  */
-router.delete('/clear-cache', (req, res) => {
+router.delete('/clear-cache', requireAdmin, (req, res) => {
   try {
     const files = fs.readdirSync(CACHE_DIR);
     files.forEach(f => {

@@ -33,7 +33,9 @@ router.post('/credit', requireAdmin, (req, res) => {
 
 // POST /debit → body { account, amount, ref }
 // 402 { error, needed, balance } if insufficient, else { ok, balance }
-router.post('/debit', (req, res) => {
+// Gated the same as its sibling /credit — otherwise anyone could spend down
+// (or drive negative-balance error paths against) any account by name.
+router.post('/debit', requireAdmin, (req, res) => {
   const body = req.body || {};
   const account = body.account;
   const amount = Number(body.amount);

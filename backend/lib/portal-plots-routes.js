@@ -21,6 +21,7 @@
 const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
+const { requireAdmin } = require('../auth-guard');
 
 const router   = express.Router();
 const DATA_DIR  = path.join(__dirname, '..', 'data');
@@ -216,8 +217,11 @@ router.post('/:id/buy', express.json({ limit: '8kb' }), function (req, res) {
 
 // POST /api/portal-plots/:id/release
 // No body required.
-// Resets plot to 'available'. Intended for admin use or testing.
-router.post('/:id/release', express.json({ limit: '2kb' }), function (req, res) {
+// Resets plot to 'available'. Admin use or testing only — gated by
+// requireAdmin (matches the same ADMIN_TOKEN + x-shaddai-admin pattern used
+// for other dangerous ops), otherwise anyone could wipe another user's
+// rented/bought plot.
+router.post('/:id/release', requireAdmin, express.json({ limit: '2kb' }), function (req, res) {
   try {
     const id    = String(req.params.id || '').slice(0, 64);
     const store = load();

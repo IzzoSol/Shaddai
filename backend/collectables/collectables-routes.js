@@ -35,6 +35,19 @@ const crypto = require('crypto');
 const express = require('express');
 
 const data = require('./collectables-data');
+const { softAuth } = require('../auth-guard');
+
+// Trust the server-verified identity (req.userId, set by softAuth) over any
+// client-supplied value. Matches the resolveUserId(req, provided) shape used
+// by economy-routes.js / work-sessions.js / skill-market-routes.js. Without
+// this, `body.owner` alone decided whose unlock progress (including one-shot
+// prestige grants) got credited.
+function resolveUserId(req, provided) {
+  if (req.user && typeof req.user.id === 'string' && req.user.id) return req.user.id;
+  if (typeof req.userId === 'string' && req.userId) return req.userId;
+  if (typeof provided === 'string' && provided) return provided;
+  return null;
+}
 
 const UNLOCKS_FILE = path.join(__dirname, '..', 'data', 'collectable-unlocks.json');
 
@@ -248,10 +261,11 @@ router.get('/summary', (req, res) => {
 // Increments owner's counter for `action` by n (default 1), persists, and
 // returns any cards newly unlocked by this event. Idempotent re: already-
 // unlocked cards (they are never returned twice as "newlyUnlocked").
-router.post('/unlock', (req, res) => {
+router.post('/unlock', softAuth, (req, res) => {
   try {
     const body = req.body || {};
-    const owner = (body.owner || '').toString();
+    const providedOwner = body.owner != null ? String(body.owner) : '';
+    const owner = resolveUserId(req, providedOwner) || '';
     const action = (body.action || '').toString();
     let n = Number(body.n);
     if (!Number.isFinite(n) || n < 1) n = 1;

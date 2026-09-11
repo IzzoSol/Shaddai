@@ -8,6 +8,11 @@ const fs = require('fs');
 const path = require('path');
 const core = require('./forge-core');
 const hf = require('../lib/hf-keys'); // HF key pool + auto-rotation
+// PIKADON: these three routes trigger real paid provider calls (HF FLUX, Meshy)
+// billed on the server's own key — the generic global /api limiter (150/min) is
+// far too loose for that; give them their own tight per-route budget.
+const { rateLimit } = require('../auth-guard');
+const forgeLimit = rateLimit({ windowMs: 60000, max: 10 });
 // Unified operative store (single source of truth read by Rooms/Agents/Office/World).
 // Loaded defensively so a require failure can never crash the forge route.
 let opStore = null; try { opStore = require('../lib/operatives'); } catch (e) { console.warn('[forge] operatives store unavailable:', e && e.message); }
@@ -33,7 +38,7 @@ function saveState(s){
 // (HF calls now go through ../lib/hf-keys → server-side keys + auto-rotation)
 
 // POST /api/forge  { build, owner?, name? }
-router.post('/', express.json({ limit: '256kb' }), async (req, res) => {
+router.post('/', forgeLimit, express.json({ limit: '256kb' }), async (req, res) => {
   try {
     let { build, archetype, owner = 'anon', name = '' } = req.body || {};
     // convenience: caller may pass just {archetype} → loadout the full 9-slot look server-side
@@ -200,7 +205,7 @@ router.get('/image/:file', (req, res) => {
 // ── POST /api/forge/pixel-art → a matching HF FLUX portrait for a Pixel-Forge agent ──
 // Free for all users. Builds a prompt from the chosen color + body skin so the rendered
 // portrait MATCHES the pixel agent's look, then returns the image URL + data URI.
-router.post('/pixel-art', express.json({ limit: '64kb' }), async (req, res) => {
+router.post('/pixel-art', forgeLimit, express.json({ limit: '64kb' }), async (req, res) => {
   try {
     const { color = '#00e5a0', skin = 'operative', name = '' } = req.body || {};
     const clean = (s, n) => String(s == null ? '' : s).replace(/[^a-z0-9 _#-]/gi, '').slice(0, n);
@@ -223,7 +228,7 @@ router.post('/pixel-art', express.json({ limit: '64kb' }), async (req, res) => {
 // POST creates the Meshy task (returns taskId); GET polls it (~1-3 min) and, on success,
 // downloads the GLB into public/assets/forge-models/ and returns its URL.
 const _meshyKey = () => process.env.MESHY_KEY || '';
-router.post('/3d', express.json({ limit: '64kb' }), async (req, res) => {
+router.post('/3d', forgeLimit, express.json({ limit: '64kb' }), async (req, res) => {
   try {
     const { name = '', color = '', skin = 'operative', tier = '', prompt: userPrompt = '' } = req.body || {};
     if (!_meshyKey()) return res.status(503).json({ ok: false, error: 'MESHY_NOT_CONFIGURED', note: 'Set MESHY_KEY on the server to enable 3D body forging (paid Meshy API).' });

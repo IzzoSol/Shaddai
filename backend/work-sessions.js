@@ -267,7 +267,13 @@ async function runRealWork(agent, task) {
 router.post('/assign', async (req, res) => {
   try {
     const body = req.body || {};
-    const userId = typeof body.userId === 'string' ? body.userId.trim() : '';
+    // SECURITY: identity comes from the verified session (req.userId, set by
+    // softAuth at the mount in server-production.js) — NEVER from the request
+    // body. Sparks payouts here are server-authoritative; trusting a
+    // caller-supplied userId would let anyone mint payouts to any account.
+    const userId = typeof req.userId === 'string' && req.userId
+      ? req.userId.trim()
+      : (typeof body.userId === 'string' ? body.userId.trim() : '');
     const agent = normAgent(body.agent);
     const task = typeof body.task === 'string' ? body.task.trim() : '';
 
@@ -355,7 +361,11 @@ router.post('/assign', async (req, res) => {
 // ---------------------------------------------------------------------------
 router.get('/summary', (req, res) => {
   try {
-    const userId = typeof req.query.userId === 'string' ? req.query.userId.trim() : '';
+    // SECURITY: identity comes from the verified session, not the query string
+    // — otherwise anyone could read another user's private activity summary.
+    const userId = typeof req.userId === 'string' && req.userId
+      ? req.userId.trim()
+      : (typeof req.query.userId === 'string' ? req.query.userId.trim() : '');
     if (!ID_RE.test(userId)) {
       return res.status(400).json({ ok: false, error: 'invalid userId (expected [\\w-]{1,64})' });
     }
@@ -417,7 +427,10 @@ router.get('/feed', (req, res) => {
 // ---------------------------------------------------------------------------
 router.get('/active', (req, res) => {
   try {
-    const userId = typeof req.query.userId === 'string' ? req.query.userId.trim() : '';
+    // SECURITY: identity comes from the verified session, not the query string.
+    const userId = typeof req.userId === 'string' && req.userId
+      ? req.userId.trim()
+      : (typeof req.query.userId === 'string' ? req.query.userId.trim() : '');
     if (!ID_RE.test(userId)) {
       return res.status(400).json({ ok: false, error: 'invalid userId (expected [\\w-]{1,64})' });
     }

@@ -650,6 +650,36 @@ const generateRefreshToken = (uid) => {
   return crypto.randomBytes(32).toString('hex');
 };
 
+/**
+ * PIKADON (2026-09-11): Issue a signed, non-forgeable identity for an
+ * anonymous/guest browser session. Several routes (agent-memory, rooms,
+ * collectables, operatives) scope reads/writes by caller identity via
+ * softAuth's req.userId, which — correctly, to prevent spoofing — never
+ * trusts a raw x-user-id header in production. Before this, that meant every
+ * anonymous caller collapsed into one shared 'local' identity in production
+ * (guests could see/overwrite each other's data), because there was no way
+ * for an anonymous browser to hold a REAL, verifiable identity.
+ *
+ * This mints a real one: a JWT signed with the same JWT_SECRET login tokens
+ * use, carrying a random `guest:<uuid>` subject. softAuth's existing bearer
+ * path (verifyToken, already wired) verifies it exactly like a login token —
+ * no changes to softAuth itself were needed. A guest cannot forge another
+ * guest's or a real user's id (they'd need the server's JWT_SECRET to sign
+ * one), and two different guests can never collide.
+ *
+ * Long-lived (30d) since there is no login/refresh flow for guests; softAuth
+ * already degrades an expired/invalid bearer to anonymous ('local') rather
+ * than erroring, so an expired guest token just quietly loses its distinct
+ * identity until the client requests a fresh one.
+ *
+ * @returns {{ token: string, uid: string, expiresIn: string }}
+ */
+const issueGuestToken = () => {
+  const uid = `guest:${uuidv4()}`;
+  const token = jwt.sign({ uid, type: 'guest' }, JWT_SECRET, { expiresIn: '30d' });
+  return { token, uid, expiresIn: '30d' };
+};
+
 // ── EXPORTS ──────────────────────────────────────────────────
 
 module.exports = {
@@ -662,6 +692,7 @@ module.exports = {
   logout,
   verifyToken,
   refreshAccessToken,
+  issueGuestToken,
 
   // API Keys
   generateAPIKey,
