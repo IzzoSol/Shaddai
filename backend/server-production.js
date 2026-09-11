@@ -3042,7 +3042,10 @@ app.get('/world-complete',  (req, res) => res.sendFile(path.join(__dirname, '../
 ['/world-master', '/world-api', '/world-new', '/world-build'].forEach(p => app.get(p, (req, res) => res.redirect('/world')));
 try { app.use(require('./federation-routes')); console.log('[prod] federation (A2A + MCP + portals) mounted'); }
 catch (e) { console.warn('[prod] federation failed:', e.message); }
-try { app.use(require('./district-routes')); console.log('[prod] districts mounted'); }
+// softAuth so the Esoteric Archive / Wing's premium gates check the verified
+// session's real billing tier, never a caller-supplied body/query field --
+// see the SECURITY comment on realTier() inside the file.
+try { app.use(softAuth, require('./district-routes')); console.log('[prod] districts mounted'); }
 catch (e) { console.warn('[prod] districts failed:', e.message); }
 try { app.use(require('./portal-admin-routes')); console.log('[prod] portal-admin mounted'); }
 catch (e) { console.warn('[prod] portal-admin failed:', e.message); }
@@ -3072,7 +3075,9 @@ try { app.use(require('./results-routes')); console.log('[prod] results inbox mo
 catch (e) { console.warn('[prod] results-routes failed:', e.message); }
 try { app.use(require('./gallery-routes')); console.log('[prod] creator gallery mounted'); }
 catch (e) { console.warn('[prod] gallery failed:', e.message); }
-try { app.use(require('./skills-market-routes')); console.log('[prod] skills market mounted'); }
+// softAuth so /run and /receipts use the verified session (req.userId), never a
+// caller-supplied body/query field -- see the SECURITY comments inside the file.
+try { app.use(softAuth, require('./skills-market-routes')); console.log('[prod] skills market mounted'); }
 catch (e) { console.warn('[prod] skills market failed:', e.message); }
 try { app.use(require('./shop-routes')); console.log('[prod] shop mounted'); }
 catch (e) { console.warn('[prod] shop failed:', e.message); }

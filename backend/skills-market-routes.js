@@ -99,7 +99,12 @@ router.post('/api/skills/market/:id/run', json,
   async (req, res) => {
   const id = req.params.id;
   const b = req.valid || req.body;
-  const user = b.user || 'guest';
+  // SECURITY (2026-09-11): identity comes from the verified session (req.userId,
+  // set by softAuth at this router's mount) — never a caller-supplied body field.
+  // settle.settle() below debits this user's real balance in-process; trusting
+  // body.user let anyone drain any named victim's SHAD-Credits by naming them
+  // here and buying a cheap (5-40 credit) skill repeatedly.
+  const user = req.userId ? String(req.userId) : String(b.user || 'guest');
 
   // Locate the skill in the catalog to read its price + seller.
   const item = buildCatalog(id).find(s => s.id === id);
@@ -163,11 +168,15 @@ router.post('/api/skills/market/:id/run', json,
   res.json({ ok: true, txId: charge.txId, output, price: item.price_credits, split, receipt: charge.receipt || null });
 });
 
-// GET /api/skills/receipts?user= — the caller's receipts / proofs of task
+// GET /api/skills/receipts — the caller's OWN receipts / proofs of task.
+// SECURITY (2026-09-11): previously took ?user= from the query (or, with no
+// query at all, passed null and returned EVERY user's receipts) -- anyone
+// could read any named user's purchase history, or everyone's with no
+// parameters at all. Now always scoped to the verified session.
 router.get('/api/skills/receipts', (req, res) => {
-  const user = req.query.user;
+  const user = req.userId ? String(req.userId) : String(req.query.user || '');
   if (settle && settle.listReceipts) {
-    return res.json({ ok: true, receipts: settle.listReceipts(user ? String(user) : null) });
+    return res.json({ ok: true, receipts: user ? settle.listReceipts(user) : [] });
   }
   return res.json({ ok: true, receipts: [] });
 });

@@ -12,6 +12,23 @@ const json = express.json();
 let ae = null;    try { ae = require('./agent-engine'); } catch (e) {}
 let cache = null; try { cache = require('./cache-analytics'); } catch (e) {}
 let auraLib = null; try { auraLib = require('./lib/aura'); } catch (e) {}
+let billing = null; try { billing = require('./billing-service'); } catch (e) {}
+
+// SECURITY (2026-09-11): every "premium-gated" check below used to trust a
+// caller-supplied body/query `tier` field directly -- anyone could pass
+// tier:"pro" (or ?tier=pro) and read the Esoteric Archive / esoteric library
+// wing for free, no subscription required. Looks up the REAL tier from the
+// verified session (req.userId, set by softAuth at this router's mount)
+// against billing-service.js, the same source agent-engine.js's premium
+// model routing already trusts. Fails closed to 'free' on any lookup error
+// or missing session, matching that existing pattern.
+function realTier(req) {
+  try {
+    if (!billing || !req.userId) return '';
+    const customer = billing.getCustomer(req.userId);
+    return (customer && customer.tier) ? String(customer.tier).toLowerCase() : '';
+  } catch (e) { return ''; }
+}
 
 // ── NEXUS — The Navigator (help desk + AURA token tracker) ──
 const KB = [
@@ -89,8 +106,8 @@ router.get('/api/library/search', (req, res) => {
 // ── ORACLE — The Esoteric Archive (premium-gated) ──
 const PREMIUM = ['builder', 'pro', 'alpha'];
 router.post('/api/oracle/esoteric', json, (req, res) => {
-  const { query, tier } = req.body || {};
-  if (!PREMIUM.includes(String(tier || '').toLowerCase())) return res.status(402).json({ error: 'The Esoteric Archive is premium-gated. Upgrade to Builder / Pro / Alpha to enter.', gated: true });
+  const { query } = req.body || {};
+  if (!PREMIUM.includes(realTier(req))) return res.status(402).json({ error: 'The Esoteric Archive is premium-gated. Upgrade to Builder / Pro / Alpha to enter.', gated: true });
   if (!query) return res.status(400).json({ error: 'query required' });
   let result = null;
   try {
@@ -107,13 +124,15 @@ router.post('/api/oracle/esoteric', json, (req, res) => {
 const readBooks = () => { const d = readLib(); if (!Array.isArray(d.books)) d.books = []; if (!Array.isArray(d.loans)) d.loans = []; if (!d.notes) d.notes = []; return d; };
 const LOAN_MS = 14 * 24 * 60 * 60 * 1000; // 14-day loan
 const isEso = (s) => String(s || 'general').toLowerCase() === 'esoteric';
-const hasOracleAccess = (tier) => PREMIUM.includes(String(tier || '').toLowerCase());
+// Takes req (not a raw tier string) so it always checks the verified session's
+// real tier via realTier() -- see the SECURITY comment above realTier's definition.
+const hasOracleAccess = (req) => PREMIUM.includes(realTier(req));
 const pubBook = (b) => ({ id: b.id, title: b.title, author: b.author, section: b.section || 'general', cover: b.cover || null, addedBy: b.addedBy, at: b.at, borrowed: !!b.borrowedBy, borrowedBy: b.borrowedBy || null, dueAt: b.dueAt || null });
 
 // list books in a section — esoteric wing gated by ORACLE
 router.get('/api/library/books', (req, res) => {
   const section = isEso(req.query.section) ? 'esoteric' : 'general';
-  if (section === 'esoteric' && !hasOracleAccess(req.query.tier)) {
+  if (section === 'esoteric' && !hasOracleAccess(req)) {
     return res.status(402).json({ error: 'The Esoteric Wing is sealed by ORACLE. Enter with Builder / Pro / Alpha.', gated: true, section: 'esoteric' });
   }
   const db = readBooks();
@@ -123,10 +142,10 @@ router.get('/api/library/books', (req, res) => {
 
 // add a book to the stacks (esoteric requires ORACLE access)
 router.post('/api/library/books', json, (req, res) => {
-  const { title, author, section, cover, body, url, addedBy, tier } = req.body || {};
+  const { title, author, section, cover, body, url, addedBy } = req.body || {};
   if (!title) return res.status(400).json({ error: 'title required' });
   const sec = isEso(section) ? 'esoteric' : 'general';
-  if (sec === 'esoteric' && !hasOracleAccess(tier)) {
+  if (sec === 'esoteric' && !hasOracleAccess(req)) {
     return res.status(402).json({ error: 'Only ORACLE-bonded scholars (Builder / Pro / Alpha) may shelve esoteric works.', gated: true });
   }
   const db = readBooks();
@@ -139,7 +158,7 @@ router.post('/api/library/books', json, (req, res) => {
 router.get('/api/library/book/:id', (req, res) => {
   const db = readBooks(); const book = db.books.find(b => b.id === req.params.id);
   if (!book) return res.status(404).json({ error: 'book not found' });
-  if (isEso(book.section) && !hasOracleAccess(req.query.tier)) {
+  if (isEso(book.section) && !hasOracleAccess(req)) {
     return res.status(402).json({ error: 'This esoteric work is sealed by ORACLE.', gated: true });
   }
   res.json({ ok: true, book: { ...pubBook(book), body: book.body || '', url: book.url || null } });
