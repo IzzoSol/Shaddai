@@ -149,6 +149,21 @@ window.PixelPeople = (function () {
     rig.__phase = i*0.37;
     PRESETS.push({ name: rig.name || 'Citizen', rig });
   }
+  // ── 7 office-lead presets — rig fields copied verbatim from game.html's AGENTS array so the
+  // Forge, the Hall, and the 2D world all render the exact same character per agent. ──
+  const OFFICE_LEADS = [
+    { office:'shaddai', rig:{suit:'#241f44',cap:'#c9a6ff',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199'} },
+    { office:'oracle',  rig:{hoodie:'#3a2f5a',hoodUp:true,emblem:'#8b7bf0',skin:'#e7b58a'} },
+    { office:'quill',   rig:{suit:'#173a4a',cap:'#5fe0ff',tie:'#5fe0ff',glasses:true,skin:'#f0c199'} },
+    { office:'turtle',  rig:{hoodie:'#1f5a44',cap:'#00ff9c',emblem:'#00ff9c',skin:'#caa06f'} },
+    { office:'nexus',   rig:{robot:true,skin:'#8a9199',cap:'#e8c45c',shirt:'#6b7280',pants:'#3a3f47',led:'#e8c45c',emblem:'#e8c45c'} },
+    { office:'zerox',   rig:{suit:'#3a2a1a',cap:'#ff9a3c',tie:'#ff9a3c',emblem:'#ff9a3c',skin:'#caa06f'} },
+    { office:'pikadon', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'} },
+  ];
+  OFFICE_LEADS.forEach(function(o, i){
+    const rig = Object.assign({}, o.rig, { office:o.office, __phase:(100+i)*0.37 });
+    PRESETS.push({ name:'Council', rig });
+  });
   function randomRig(){ SEED=(Date.now?0:0, (SEED*16807+1)&0x7fffffff); const i=(Math.abs(SEED)%PRESETS.length);
     // fresh randoms each call
     const r = rnd()<0.12 ? robotPreset() : ARCH[(rnd()*ARCH.length)|0](pick(SKIN));
