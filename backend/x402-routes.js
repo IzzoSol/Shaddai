@@ -12,6 +12,7 @@ const router = express.Router();
 const json = express.json();
 const { requireAdmin, softAuth } = require('./auth-guard');
 const X = require('./x402-security');   // Phase 0 #2: kill-switch / replay / budgets / PII-safe log
+let sparksBridge = null; try { sparksBridge = require('./lib/economy-x402-bridge'); } catch (e) { /* bridge unavailable — additive only */ }
 
 const LEDGER = path.join(__dirname, 'data', 'x402-ledger.json');
 const START_CREDITS = 100;        // every new wallet starts with demo credits
@@ -34,7 +35,7 @@ router.get('/api/x402/txns', (req, res) => {
   res.json({ ok: true, user, txns });
 });
 
-router.post('/api/x402/charge', softAuth, json, (req, res) => {
+router.post('/api/x402/charge', softAuth, json, async (req, res) => {
   // Anti-drain: a signed-in caller can ONLY charge their OWN account — never name a
   // victim in the body. body.user is a fallback for the unauthenticated demo world.
   const user = req.userId ? String(req.userId) : String((req.body && req.body.user) || 'guest');
@@ -60,7 +61,29 @@ router.post('/api/x402/charge', softAuth, json, (req, res) => {
   X.recordSpend(user, amt);   // count against the daily budget
   // Phase 0 #3: a successful paid call builds the caller's DID reputation.
   try { if (req.did) require('./services/reputation-service').recordAttestation(req.did, 'x402_success', 'success', { endpoint: '/api/x402/charge', amount: amt, counterpartyDid: payee || null }); } catch (e) {}
-  res.json({ ok: true, charged: amt, fee, net, balance: db.balances[user], tx });
+  // Phase 2: ADDITIVELY settle into the canonical Sparks economy. Off by default
+  // (X402_SPARKS_BRIDGE). A failure here is logged and non-fatal — the legacy
+  // SHAD-Credits charge above already succeeded and must still be reported.
+  let settledInSparks = false;
+  if (sparksBridge) {
+    try {
+      const bridgeResult = await sparksBridge.settleCharge({ user, payee, amount: amt, reason: reason || 'agent call', nonce });
+      settledInSparks = !!(bridgeResult && bridgeResult.settledInSparks);
+    } catch (e) { /* additive — ignore */ }
+  }
+  // Phase 2 premium routing: report Sparks balance & insufficiency non-fatally.
+  // This is purely informational — the SHAD-Credits charge above already succeeded.
+  let sparkBalance = null;
+  let sparksInsufficient = false;
+  if (sparksBridge && sparksBridge.enabled()) {
+    try {
+      const eco = require('./economy-service');
+      const b = await eco.getDefault().getBalance(user);
+      sparkBalance = b != null ? b : null;
+      sparksInsufficient = b != null && b < amt;
+    } catch (e) { /* non-fatal — never break the charge */ }
+  }
+  res.json({ ok: true, charged: amt, fee, net, balance: db.balances[user], tx, settledInSparks, sparkBalance, sparksInsufficient });
 });
 
 // Phase 0 #2: admin kill-switch for x402 (pause/resume all charges).

@@ -34,7 +34,8 @@ const SCRIPTS = [
   'lib/tool-cache.test.cjs',
   'lib/tool-selector.test.cjs',
   'economy-service.test.js',
-  'portal-admin-routes.test.js'
+  'portal-admin-routes.test.js',
+  'lib/economy-x402-bridge.test.js'
 ];
 
 let passed = 0, failed = 0;
