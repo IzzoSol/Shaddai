@@ -54,6 +54,14 @@ class JsonStore {
       throw e;
     }
     if (!raw || raw.trim() === '') return this._empty();
+    // BUGFIX (2026-09-12): a UTF-8 BOM (﻿) as the file's first character
+    // makes JSON.parse throw ("Unexpected token") even though the rest of the
+    // content is valid JSON -- fs.readFileSync(path,'utf8') does not strip it.
+    // Found via data/referrals.json shipping with a BOM (likely written by a
+    // Windows editor), which meant EVERY read through this store -- including
+    // the very first referral-code lookup -- failed with a 500. Stripping a
+    // leading BOM is always safe: it's never valid inside real JSON.
+    if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
     const parsed = JSON.parse(raw);
     // Defensive: ensure every top-level key from the template exists.
     return Object.assign(this._empty(), parsed);

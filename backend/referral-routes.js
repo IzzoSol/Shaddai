@@ -80,6 +80,43 @@ router.post('/api/referral/event', requireAdmin, json, async (req, res) => {
   }
 });
 
+// ── new-user signup attribution (public, but narrowly scoped) ────────────
+// SECURITY (2026-09-12): /event above is deliberately admin-only because it
+// can settle ANY event type, including real-money ones (hire, x402_purchase,
+// marketplace_sale...) with revenue splits -- it must never be reachable
+// from a browser. This route exists because the actual frontend flow (fire
+// this right after a new Firebase signup) has no trusted server-side hook to
+// call /event from instead, and the referral flywheel needs SOME way to
+// credit a signup bonus. It stays safe by being much narrower than /event:
+//   - eventType is hardcoded to 'signup' -- the caller can never request a
+//     money-settlement event type, no matter what they send.
+//   - referredUserId comes ONLY from the verified session (req.userId, set
+//     by softAuth) -- never from the request body. A caller can only ever
+//     attribute a signup bonus to THEMSELVES, never name another user.
+//   - recordEvent()'s own dedup key already includes referredUserId, so the
+//     same account can only trigger this once, ever, regardless of how many
+//     times it's called (verified in reward-engine.js / referral-service.js).
+//   - The 'signup' reward itself is small and fixed (25 Sparks, money:false
+//     in reward-engine.js's REWARD_RULES) -- no revenue split, no variable
+//     amount a caller could influence.
+router.post('/api/referral/signup', softAuth, json, async (req, res) => {
+  try {
+    const referredUserId = req.userId && req.userId !== 'local' ? String(req.userId) : null;
+    if (!referredUserId) return fail(res, 401, 'auth_required', 'a verified session is required to attribute a signup');
+    const { code } = req.body || {};
+    const { replayed, attribution } = await referral.recordEvent({
+      code, eventType: 'signup', referredUserId, sourcePlatform: 'web-signup',
+    });
+    let receipt = null;
+    if (!replayed) {
+      receipt = await engine.settle(attribution, { economy, reputation, statusPerks, treasury });
+    }
+    return ok(res, { ok: true, replayed, attribution, receipt });
+  } catch (e) {
+    return fail(res, errStatus(e), 'referral_signup_error', e.message);
+  }
+});
+
 // ── per-agent stats (public) ─────────────────────────────────────────────
 router.get('/api/referral/stats/:agentId', async (req, res) => {
   return ok(res, { ok: true, stats: await referral.statsForAgent(req.params.agentId) });
