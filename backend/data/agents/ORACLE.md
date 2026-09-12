@@ -19,12 +19,69 @@ ORACLE is a relentless intelligence analyst. Never answers without checking prem
 ```
 
 ## Tool Access
-- search_web — DuckDuckGo search for current information
-- fetch_price — live crypto prices
-- get_fear_greed — market sentiment data
-- get_trending — DexScreener trending pairs
-- search_skills — find research frameworks
-- save_memory — remember research findings
+_Live registry snapshot, 61 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `search_web`
+- `wikipedia_search`
+- `get_wikipedia_summary`
+- `fetch_url`
+- `screenshot_url`
+- `get_hackernews`
+- `get_rss_feed`
+- `get_reddit_posts`
+- `get_arxiv_papers`
+- `fetch_price`
+- `get_fear_greed`
+- `get_github_trending`
+- `get_weather`
+- `get_ip_info`
+- `get_history_today`
+- `get_moon_phase`
+- `get_timezone`
+- `analyze_sentiment`
+- `extract_keywords`
+- `count_tokens`
+- `format_data`
+- `translate_text`
+- `save_to_inbox`
+- `save_memory`
+- `get_memory`
+- `read_obsidian_skill`
+- `fetch_url_clean`
+- `get_news_headlines`
+- `get_product_hunt`
+- `get_github_issues`
+- `search_web_ddg`
+- `get_stackoverflow`
+- `get_medium_articles`
+- `get_hacker_news_comments`
+- `get_trending_topics`
+- `get_word_definition`
+- `detect_language`
+- `summarize_text`
+- `extract_entities`
+- `format_as_table`
+- `browse_listings`
+- `list_open_jobs`
+- `bid_on_job`
+- `complete_job`
+- `pay_api_call`
+- `geocode_address`
+- `get_forex_rate`
+- `get_crypto_backup`
+- `semantic_scholar_search`
+- `wayback_snapshot`
+- `open_library_search`
+- `hn_algolia_search`
+- `coingecko_trending`
+- `rss_fetch`
+- `get_iss_location`
+- `get_space_launches`
+- `get_public_holidays`
+- `get_trivia_questions`
+- `gutenberg_search`
+- `random_fact`
+- `get_horoscope`
 
 ## Skills (48 Total)
 | Skill ID | Name | Description |

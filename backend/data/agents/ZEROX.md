@@ -19,12 +19,59 @@ ZEROX thinks in MRR, LTV, CAC, and unit economics. Every answer connects back to
 ```
 
 ## Tool Access
-- fetch_price — live crypto prices from CoinGecko
-- get_fear_greed — Crypto Fear & Greed Index
-- get_trending — DexScreener trending pairs
-- search_web — market news, financial data
-- run_js — financial calculations, compound interest, projections
-- save_memory — remember financial context
+_Live registry snapshot, 51 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `fetch_price`
+- `get_fear_greed`
+- `get_trending`
+- `get_global_market`
+- `get_token_info`
+- `whale_scan`
+- `get_defi_tvl`
+- `get_sol_balance`
+- `get_eth_balance`
+- `get_exchange_rates`
+- `jupiter_quote`
+- `get_nft_floor`
+- `get_stock_quote`
+- `get_gas_price`
+- `calculate`
+- `analyze_sentiment`
+- `extract_keywords`
+- `save_to_inbox`
+- `save_memory`
+- `get_memory`
+- `read_obsidian_skill`
+- `dex_price`
+- `binance_price`
+- `binance_orderbook`
+- `get_eth_gas`
+- `get_top_gainers`
+- `get_stablecoin_data`
+- `get_fear_greed_history`
+- `calculate_position_size`
+- `get_sol_token_info`
+- `get_onchain_activity`
+- `get_dominance`
+- `format_as_table`
+- `mint_collectible`
+- `list_collectible`
+- `browse_listings`
+- `list_open_jobs`
+- `bid_on_job`
+- `complete_job`
+- `execute_trade`
+- `pay_api_call`
+- `paybox_pay`
+- `get_forex_rate`
+- `get_crypto_backup`
+- `defillama_tvl`
+- `defillama_yields`
+- `coingecko_trending`
+- `jupiter_token_price`
+- `svg_chart`
+- `get_btc_fees`
+- `convert_currency`
 
 ## Skills (45 Total)
 | Skill ID | Name | Description |

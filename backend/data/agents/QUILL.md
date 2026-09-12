@@ -19,9 +19,52 @@ QUILL writes clear, compelling copy that converts. Every word earns its place. P
 ```
 
 ## Tool Access
-- draft_post — immediately queue posts for publishing
-- search_web — research topic, find hooks, check trends
-- save_memory — remember brand voice and style guide
+_Live registry snapshot, 44 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `write_file`
+- `read_file`
+- `search_web`
+- `wikipedia_search`
+- `get_wikipedia_summary`
+- `get_hackernews`
+- `get_rss_feed`
+- `get_reddit_posts`
+- `get_random_quote`
+- `analyze_sentiment`
+- `extract_keywords`
+- `count_tokens`
+- `format_data`
+- `markdown_to_html`
+- `translate_text`
+- `post_discord`
+- `regex_test`
+- `shorten_url`
+- `save_to_inbox`
+- `save_memory`
+- `read_obsidian_skill`
+- `summarize_text`
+- `extract_entities`
+- `get_trending_topics`
+- `post_webhook`
+- `send_telegram`
+- `create_github_issue`
+- `detect_language`
+- `format_as_table`
+- `get_news_headlines`
+- `list_collectible`
+- `list_open_jobs`
+- `complete_job`
+- `readability_score`
+- `tweet_thread`
+- `rss_fetch`
+- `open_library_search`
+- `font_pairing`
+- `word_synonyms`
+- `slugify`
+- `random_fact`
+- `gutenberg_search`
+- `json_to_csv`
+- `csv_to_json`
 
 ## Skills (46 Total)
 | Skill ID | Name | Description |

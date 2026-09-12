@@ -19,10 +19,63 @@ NEXUS writes production-grade code that scales. Favors simple, testable solution
 ```
 
 ## Tool Access
-- run_js — execute and test code snippets
-- search_skills — find relevant coding patterns
-- save_memory — remember architecture decisions
-- search_web — look up documentation, best practices
+_Live registry snapshot, 55 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `delegate_to_agent`
+- `run_js`
+- `run_python`
+- `write_file`
+- `read_file`
+- `list_files`
+- `search_web`
+- `wikipedia_search`
+- `get_github_repo`
+- `get_github_trending`
+- `search_npm`
+- `check_security`
+- `calculate`
+- `count_tokens`
+- `hash_text`
+- `base64_codec`
+- `encode_base64`
+- `decode_base64`
+- `regex_test`
+- `markdown_to_html`
+- `random_user`
+- `save_to_inbox`
+- `save_memory`
+- `get_memory`
+- `read_obsidian_skill`
+- `check_port`
+- `get_public_apis`
+- `get_uuid`
+- `get_arxiv_papers`
+- `analyze_code_complexity`
+- `validate_json`
+- `convert_units`
+- `get_package_info`
+- `search_github_repos`
+- `diff_texts`
+- `generate_uuid`
+- `generate_code_template`
+- `format_as_table`
+- `generate_mermaid`
+- `run_local_llm`
+- `list_open_jobs`
+- `bid_on_job`
+- `complete_job`
+- `pay_api_call`
+- `geocode_address`
+- `npm_package_info`
+- `bundlephobia_size`
+- `cve_lookup`
+- `semantic_scholar_search`
+- `svg_chart`
+- `github_user_info`
+- `http_headers`
+- `json_to_csv`
+- `csv_to_json`
+- `generate_password`
 
 ## Skills (47 Total)
 | Skill ID | Name | Description |

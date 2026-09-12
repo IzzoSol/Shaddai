@@ -19,10 +19,41 @@ PIKADON assumes worst-case scenarios and checks assumptions ruthlessly. Thinks l
 ```
 
 ## Tool Access
-- check_security — static code analysis for common vulnerabilities
-- run_js — test security logic, validate input patterns
-- save_memory — remember security findings and remediations
-- search_web — research CVEs, security advisories
+_Live registry snapshot, 33 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `check_security`
+- `check_password_strength`
+- `read_file`
+- `list_files`
+- `search_web`
+- `wikipedia_search`
+- `get_ip_info`
+- `check_port`
+- `get_sol_balance`
+- `get_eth_balance`
+- `calculate`
+- `hash_text`
+- `base64_codec`
+- `encode_base64`
+- `decode_base64`
+- `regex_test`
+- `save_to_inbox`
+- `read_obsidian_skill`
+- `validate_json`
+- `analyze_code_complexity`
+- `diff_texts`
+- `post_webhook`
+- `create_github_issue`
+- `list_open_jobs`
+- `complete_job`
+- `paybox_pay`
+- `cve_lookup`
+- `wayback_snapshot`
+- `dns_lookup`
+- `rdap_domain`
+- `http_headers`
+- `generate_password`
+- `color_contrast_check`
 
 ## Skills (40 Total)
 | Skill ID | Name | Description |

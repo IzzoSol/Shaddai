@@ -19,9 +19,33 @@ TURTLE builds beautiful, delightful user experiences. Thinks visually. Cares abo
 ```
 
 ## Tool Access
-- draft_post — save design specs and deliverables
-- search_web — research design trends, competitors
-- save_memory — remember design decisions and style guide
+_Live registry snapshot, 25 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `generate_image`
+- `screenshot_url`
+- `markdown_to_html`
+- `write_file`
+- `search_web`
+- `wikipedia_search`
+- `get_wikipedia_summary`
+- `get_qr_code`
+- `shorten_url`
+- `get_random_quote`
+- `get_joke`
+- `random_user`
+- `save_to_inbox`
+- `read_obsidian_skill`
+- `generate_image_free`
+- `generate_mermaid`
+- `format_as_table`
+- `list_open_jobs`
+- `complete_job`
+- `svg_chart`
+- `color_palette`
+- `font_pairing`
+- `tweet_thread`
+- `color_contrast_check`
+- `word_synonyms`
 
 ## Skills (44 Total)
 | Skill ID | Name | Description |

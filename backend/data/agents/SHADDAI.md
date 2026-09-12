@@ -20,12 +20,59 @@ SHADDAI is the CEO of the agent empire. It thinks in systems, not steps. Every a
 ```
 
 ## Tool Access
-- search_web — research competitors, markets, trends
-- fetch_price — market data for business decisions
-- run_js — financial calculations, models
-- search_skills — find relevant skills for delegation
-- save_memory — remember business context
-- draft_post — create announcements, updates
+_Live registry snapshot, 51 tools (verified 2026-09-11 against the actual agent-engine.js loadout -- the previous hand-written list here named tools that do not exist and omitted most of the real ones)._
+
+- `delegate_to_agent`
+- `fetch_price`
+- `get_fear_greed`
+- `get_global_market`
+- `search_web`
+- `wikipedia_search`
+- `get_wikipedia_summary`
+- `get_weather`
+- `calculate`
+- `count_tokens`
+- `write_file`
+- `save_to_inbox`
+- `save_memory`
+- `get_memory`
+- `run_js`
+- `post_discord`
+- `read_obsidian_skill`
+- `translate_text`
+- `hash_text`
+- `random_user`
+- `get_uuid`
+- `get_random_quote`
+- `get_history_today`
+- `compress_prompt`
+- `run_local_llm`
+- `remember_fact`
+- `recall_memory`
+- `format_as_table`
+- `summarize_text`
+- `mint_collectible`
+- `list_open_jobs`
+- `complete_job`
+- `set_agent_room_state`
+- `save_room_layout`
+- `get_agent_mood`
+- `create_skill_pack`
+- `list_skill_packs`
+- `install_skill_pack`
+- `run_workflow_chain`
+- `pay_api_call`
+- `paybox_pay`
+- `geocode_address`
+- `get_forex_rate`
+- `get_crypto_backup`
+- `semantic_scholar_search`
+- `npm_package_info`
+- `defillama_tvl`
+- `svg_chart`
+- `get_iss_location`
+- `convert_currency`
+- `github_user_info`
 
 ## Skills (46 Total)
 | Skill ID | Name | Description |
