@@ -25667,16 +25667,21 @@ function sendToChat(name) {
   sendPanelMsg();
 }
 
-// ── RAG Brain Search — hits /api/mastery/search (live chunk count from 7 agent KBs) ──
+// ── RAG Brain Search — hits /api/mcp/status (live chunk count from 7 agent KBs) ──
+// BUGFIX (2026-09-12): backend's totals object uses kbChunks/kbDocs (see
+// server-production.js's /api/mcp/status handler) -- this read plain
+// chunks/docs, which don't exist on the response, so the condition was
+// always false and the banner never populated. Fetch "succeeded" and did
+// nothing, silently.
 async function loadRagBrainStats() {
   try {
     const r = await fetch('/api/mcp/status', { signal: AbortSignal.timeout(8000) });
     const d = await r.json();
     const t = (d && d.totals) || {};
     const el = document.getElementById('ragChunkCount');
-    if (el && (t.chunks || t.chunks === 0)) el.textContent = Number(t.chunks).toLocaleString();
+    if (el && (t.kbChunks || t.kbChunks === 0)) el.textContent = Number(t.kbChunks).toLocaleString();
     const lb = document.getElementById('libBannerDocs');
-    if (lb && (t.docs || t.docs === 0)) lb.textContent = Number(t.docs).toLocaleString();
+    if (lb && (t.kbDocs || t.kbDocs === 0)) lb.textContent = Number(t.kbDocs).toLocaleString();
   } catch (_) {}
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadRagBrainStats); else loadRagBrainStats();
@@ -28217,7 +28222,15 @@ async function openFile(path) {
   const ec = extColors[ext] || '#888';
   showModal('📄 ' + escH(fname), `<div style="text-align:center;padding:24px;color:var(--text-muted)"><div style="font-size:24px;margin-bottom:8px">⏳</div>Loading file content…</div>`, [{ label: 'Close', class: 'btn-ghost', action: closeModal }]);
   try {
-    const r = await fetch('/api/read-file?path=' + encodeURIComponent(path), { signal: AbortSignal.timeout(10000) });
+    // BUGFIX (2026-09-12): the only backend route for this is POST /api/read-file
+    // reading req.body.path -- this was a GET with the path in the query string,
+    // which 404s (Express's default HTML error page), breaking r.json() below.
+    const r = await fetch('/api/read-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path }),
+      signal: AbortSignal.timeout(10000),
+    });
     const d = await r.json();
     if (!d.content && !d.data) throw new Error(d.error || 'Empty response');
     const rawContent = d.content || d.data || '';
