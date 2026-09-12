@@ -7288,31 +7288,6 @@ router.get('/agent/test', async (req, res) => {
   }
 });
 
-// GET /api/agent/workflows — list available workflow templates
-router.get('/agent/workflows', (req, res) => {
-  const templates = Object.entries(agentEngine.WORKFLOW_TEMPLATES).map(([id, t]) => ({
-    id, name: t.name, description: t.description, stepCount: t.steps.length,
-    agents: [...new Set(t.steps.map(s => s.agent))]
-  }));
-  res.json({ workflows: templates, total: templates.length });
-});
-
-// POST /api/agent/workflow/:id/run — kick off a named workflow template
-// Body: { input?: string } — substituted into {{INPUT}} placeholders
-router.post('/agent/workflow/:id/run', async (req, res) => {
-  const wf = agentEngine.WORKFLOW_TEMPLATES[req.params.id];
-  if (!wf) return res.status(404).json({ error: 'Unknown workflow', available: Object.keys(agentEngine.WORKFLOW_TEMPLATES) });
-  const { input = '' } = req.body;
-  // Substitute {{INPUT}} in each step
-  const steps = wf.steps.map(s => ({ agent: s.agent, goal: s.goal.replace(/\{\{INPUT\}\}/g, input) }));
-  try {
-    const result = await agentEngine.runWorkflow(steps);
-    res.json({ success: true, workflow: req.params.id, name: wf.name, ...result });
-  } catch(e) {
-    fail(res, 500, 'internal_error', e.message);
-  }
-});
-
 // POST /api/agent/autonomous — SHADDAI plans + delegates to specialists, no human guidance
 // Body: { goal: string }
 router.post('/agent/autonomous', async (req, res) => {

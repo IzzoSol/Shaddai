@@ -3001,75 +3001,6 @@ const AGENTS = {
 })();
 
 // ═══════════════════════════════════════════════════════════════════
-// WORKFLOW TEMPLATES — Battle-tested multi-agent flows
-// Pattern: CrewAI Crew with sequential tasks, MetaGPT team workflows
-// ═══════════════════════════════════════════════════════════════════
-
-const WORKFLOW_TEMPLATES = {
-  'market-brief': {
-    name: 'Daily Market Brief',
-    description: 'ZEROX gets prices → ORACLE finds news → QUILL writes brief',
-    steps: [
-      { agent: 'ZEROX', goal: 'Get current BTC, ETH, SOL prices, the Fear & Greed Index, and top 5 trending coins.' },
-      { agent: 'ORACLE', goal: 'Find the top 3 crypto news headlines from today. Use search_web with query "crypto news today" and get_hackernews.' },
-      { agent: 'QUILL', goal: 'Write a 3-paragraph daily crypto market brief using the data above. Include prices, sentiment, and news. Save to file as market-brief.md.' }
-    ]
-  },
-  'security-audit': {
-    name: 'Full Security Audit',
-    description: 'PIKADON audits code → NEXUS proposes fixes → QUILL documents',
-    steps: [
-      { agent: 'PIKADON', goal: 'Use list_files to find recent code files in generated-output. Read each one with read_file. Run check_security on every file. Produce a vulnerability report with severity scores.' },
-      { agent: 'NEXUS', goal: 'For each vulnerability found above, propose a specific code fix. Be concrete with before/after code.' },
-      { agent: 'QUILL', goal: 'Write a clean security audit report combining the findings and fixes above. Format as markdown with severity badges. Save as security-audit-report.md.' }
-    ]
-  },
-  'research-report': {
-    name: 'Deep Research Report',
-    description: 'ORACLE researches → ORACLE analyzes → QUILL writes report',
-    steps: [
-      { agent: 'ORACLE', goal: '{{INPUT}} — use search_web, wikipedia_search, and get_rss_feed to gather facts from 3+ sources.' },
-      { agent: 'ORACLE', goal: 'Analyze the research above. Use extract_keywords to find themes. Use analyze_sentiment to gauge tone. Identify 3 key insights.' },
-      { agent: 'QUILL', goal: 'Write a 5-paragraph research report using the data above. Structure: intro, 3 key insights, conclusion. Use markdown headings. Save as research-report.md.' }
-    ]
-  },
-  'agent-council': {
-    name: 'Agent Council Decision',
-    description: 'All 7 agents weigh in on a decision',
-    steps: [
-      { agent: 'ZEROX', goal: '{{INPUT}} — analyze from a financial/business perspective. Use fetch_price if relevant.' },
-      { agent: 'ORACLE', goal: 'Research the topic above. Find precedents and data. Use search_web and wikipedia_search.' },
-      { agent: 'NEXUS', goal: 'Analyze technical feasibility of the topic above. Consider architecture and implementation.' },
-      { agent: 'PIKADON', goal: 'Identify security risks for the topic above.' },
-      { agent: 'TURTLE', goal: 'Think about user experience and design implications of the topic above.' },
-      { agent: 'QUILL', goal: 'Consider how to communicate this decision to users.' },
-      { agent: 'SHADDAI', goal: 'Synthesize all the perspectives above into a final executive decision with clear reasoning.' }
-    ]
-  },
-  'content-blast': {
-    name: 'Content Blast Campaign',
-    description: 'ORACLE finds trending → QUILL writes 3 platforms → SHADDAI reviews',
-    steps: [
-      { agent: 'ORACLE', goal: 'Find the top 3 trending topics in {{INPUT}}. Use search_web and get_rss_feed.' },
-      { agent: 'QUILL', goal: 'Write 3 separate posts based on the trending topics above: (1) a Twitter thread (5 tweets), (2) a LinkedIn post (200 words), (3) an Instagram caption. Save each to a file.' },
-      { agent: 'SHADDAI', goal: 'Review the 3 posts above. Rate each on engagement potential 1-10. Pick the best one and explain why.' }
-    ]
-  },
-  'token-deep-dive': {
-    name: 'Token Deep Dive',
-    description: 'ZEROX fetches everything about a token, ORACLE researches community sentiment',
-    steps: [
-      { agent: 'ZEROX', goal: 'Deep analysis of token {{INPUT}}. Get: price, 7-day OHLCV, token info, whale activity (whale_scan), DEX liquidity. Compute volatility.' },
-      { agent: 'ORACLE', goal: 'Research the project {{INPUT}}. Use wikipedia_search and search_web. Find recent news and sentiment.' },
-      { agent: 'ZEROX', goal: 'Synthesize the financial and research data into a verdict: BUY / HOLD / AVOID with 3 reasons. Save full analysis to file.' }
-    ]
-  }
-};
-
-// Alias for ORACLE — get_news_search not defined as its own tool, use search_web
-// (oracle can call search_web with news-focused query)
-
-// ═══════════════════════════════════════════════════════════════════
 // AGENT ROUTER — keyword scoring
 // ═══════════════════════════════════════════════════════════════════
 
@@ -4103,4 +4034,4 @@ try {
   console.log(`[tool-cache] wrapped ${wrapped} tools with TTL result cache`);
 } catch (e) { console.warn('[tool-cache] not loaded:', e.message); }
 
-module.exports = { TOOLS, AGENTS, WORKFLOW_TEMPLATES, routeTask, resolveAgent, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner };
+module.exports = { TOOLS, AGENTS, routeTask, resolveAgent, createTask, runAgentLoop, runWorkflow, tryRecipeFastPath, runAutonomousCommander, runSkill, getTask, getAllTasks, selfTest, skillIndex, callLLM, modelChat, setInboxOwner };

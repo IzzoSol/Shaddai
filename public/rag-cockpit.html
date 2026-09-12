@@ -648,6 +648,8 @@ async function openCompartment(slotName, id){
           const last = (t.steps||[]).slice(-1)[0];
           if(last) btn.textContent = (last.tool||'…').slice(0,7);
         }, arg);
+      } else if(it.kind === 'template'){
+        out = await D.runBuiltinWorkflow(it.ref, arg);
       } else if(it.kind){
         out = await D.runWorkflow(it.ref, arg);
       } else {

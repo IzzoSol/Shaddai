@@ -11,7 +11,7 @@
 //   /api/agent/tools     live tool registry (name, description, category, agents)
 //   /api/skills/catalog  3,022 skills (id, name, description, agent, category)
 //   /api/ainl/list       .ainl workflow files (real, runnable)
-//   /api/agent/workflows built-in workflow templates
+//   /api/workflows       built-in + saved workflow templates (run via /api/workflows/run)
 //   /api/ask?q&agent     grounded answer + sources (real TF-IDF retrieval)
 //   /api/tools/run       execute one tool
 //   /api/ainl/run        execute one workflow
@@ -160,7 +160,7 @@ export async function loadSkills(agent) {
 
 /** COLUMN — the loops: runnable scripts and workflows. */
 export async function loadScripts() {
-  const [ainl, wf] = await Promise.all([get('/api/ainl/list'), get('/api/agent/workflows')]);
+  const [ainl, wf] = await Promise.all([get('/api/ainl/list'), get('/api/workflows')]);
   const items = [];
   if (ainl.ok) {
     const list = ainl.data?.workflows || ainl.data?.list || (Array.isArray(ainl.data) ? ainl.data : []);
@@ -281,6 +281,10 @@ export async function runSkill(skillId, agent, onTick, input) {
 export async function runTool(tool, args = {}) { return post('/api/tools/run', { tool, args }); }
 export async function runWorkflow(ref, input) {
   return post('/api/ainl/run', { workflow: ref, inputs: input ? { input, topic: input, query: input } : {} });
+}
+/** Built-in/saved workflow templates from /api/workflows — different runner than .ainl files. */
+export async function runBuiltinWorkflow(workflowId, input) {
+  return post('/api/workflows/run', { workflowId, input });
 }
 
 export const SLOT_LOADERS = {
