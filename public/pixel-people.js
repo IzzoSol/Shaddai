@@ -146,9 +146,10 @@ window.PixelPeople = (function () {
       boxL(col,row,0.4*VS,0.3*VS,15,top,10+L,isVoxel?{left:shade(top,-0.25),right:shade(top,-0.4),edge:true}:E);}
     const T=(o)=>cy-(10+o+L);
     if(rig.hoodie && !rig.hoodUp){
-      boxL(col,row-0.13,0.44,0.2,11,shade(rig.hoodie,-0.05),27+L,E);
-      boxL(col,row-0.06,0.34,0.12,5,shade(rig.hoodie,-0.2),28+L,E);
-      ctx.fillStyle=shade(rig.hoodie,-0.26);ctx.fillRect(Math.round(cx)-6,T(16),12,3);ctx.fillStyle=shade(rig.hoodie,-0.12);ctx.fillRect(Math.round(cx)-5,T(17),10,1);
+      // Hood-down drawstrings only — the previous version also drew a collar box
+      // behind the torso (row-0.13/row-0.06) that read as a stray floating tab at
+      // this scale, not a folded hood. The hoodie's top color already shows on the
+      // torso via the shared `top` box below; that alone reads correctly as a hoodie.
       ctx.fillStyle='#eef1f4';ctx.fillRect(Math.round(cx)-3,T(12),1,6);ctx.fillRect(Math.round(cx)+2,T(12),1,6);
     }
     if(rig.suit){ ctx.fillStyle=shade(rig.suit,-0.22);
