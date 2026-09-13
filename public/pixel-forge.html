@@ -197,6 +197,7 @@
   <div class="crow"><div class="clabel">Pet</div><div class="acc-row" id="acc-pet"></div></div>
   <div class="crow"><div class="clabel">Wings</div><div class="acc-row" id="acc-wings"></div></div>
   <div class="crow"><div class="clabel">Cape</div><div class="acc-row" id="acc-cape"></div></div>
+  <div class="crow"><div class="clabel">Mask</div><div class="acc-row" id="acc-mask"></div></div>
   <div class="crow"><div class="clabel">Skin</div><div class="sw" id="sw-skin"></div></div>
   <div class="crow"><div class="clabel">Hair</div><div class="sw" id="sw-hair"></div></div>
   <div class="crow"><div class="clabel">Outfit</div><div class="styrow" id="sty-top"></div></div>
@@ -380,7 +381,7 @@ function refreshKitRow(){
 
 // ---- cosmetics store: catalog + per-slot accessory browser ----
 let _cosmeticsCatalog=[], _ownedCosmetics=[], _currentOperativeId=null;
-const ACC_SLOTS=['hat','weapon','pet','wings','cape'];
+const ACC_SLOTS=['hat','weapon','pet','wings','cape','mask'];
 function loadCosmeticsCatalog(){
   return fetch('/api/cosmetics/catalog').then(r=>r.json()).then(d=>{ _cosmeticsCatalog=d.accessories||[]; buildAccRows(); })
     .catch(()=>{ _cosmeticsCatalog=[]; });

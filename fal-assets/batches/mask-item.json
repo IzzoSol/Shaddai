@@ -1,0 +1,10 @@
+[
+  {
+    "id": "mask_visor",
+    "type": "text2img",
+    "register": "pixel",
+    "body": "a single sleek angular sci-fi visor mask accessory item, floating alone in empty space, no head, no face, no character, no person wearing it, isolated game item icon only, dark matte obsidian black base with gold trim and cyan lens glow, flat plain white background",
+    "size": "square",
+    "out": "fal-assets/spike/item3-mask_visor.png"
+  }
+]

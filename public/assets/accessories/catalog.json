@@ -1,7 +1,13 @@
 [
   { "id": "hat_crown", "slot": "hat", "kit": "any", "scale": 0.38, "anchorOffset": { "x": 0, "y": -6 }, "imageFile": "hat_crown.png", "rarity": "epic", "sparksPrice": 150 },
+  { "id": "hat_horns", "slot": "hat", "kit": "any", "scale": 0.42, "anchorOffset": { "x": 0, "y": -6 }, "imageFile": "hat_horns.png", "rarity": "rare", "sparksPrice": 110 },
   { "id": "weapon_staff", "slot": "weapon", "kit": "any", "scale": 1.0, "anchorOffset": { "x": 12, "y": 10 }, "imageFile": "weapon_staff.png", "rarity": "rare", "sparksPrice": 90 },
+  { "id": "weapon_axe", "slot": "weapon", "kit": "any", "scale": 1.0, "anchorOffset": { "x": 12, "y": 10 }, "imageFile": "weapon_axe.png", "rarity": "rare", "sparksPrice": 90 },
   { "id": "pet_drone", "slot": "pet", "kit": "any", "scale": 0.45, "anchorOffset": { "x": -22, "y": 20 }, "imageFile": "pet_drone.png", "rarity": "rare", "sparksPrice": 90 },
+  { "id": "pet_wisp", "slot": "pet", "kit": "any", "scale": 0.4, "anchorOffset": { "x": -22, "y": 20 }, "imageFile": "pet_wisp.png", "rarity": "common", "sparksPrice": 60 },
   { "id": "wings_dark", "slot": "wings", "kit": "any", "scale": 0.75, "anchorOffset": { "x": 0, "y": 8 }, "imageFile": "wings_dark.png", "rarity": "epic", "sparksPrice": 160 },
-  { "id": "cape_royal", "slot": "cape", "kit": "any", "scale": 0.65, "anchorOffset": { "x": 0, "y": 16 }, "imageFile": "cape_royal.png", "rarity": "common", "sparksPrice": 40 }
+  { "id": "wings_feather", "slot": "wings", "kit": "any", "scale": 0.75, "anchorOffset": { "x": 0, "y": 8 }, "imageFile": "wings_feather.png", "rarity": "epic", "sparksPrice": 160 },
+  { "id": "cape_royal", "slot": "cape", "kit": "any", "scale": 0.65, "anchorOffset": { "x": 0, "y": 16 }, "imageFile": "cape_royal.png", "rarity": "common", "sparksPrice": 40 },
+  { "id": "cape_tattered", "slot": "cape", "kit": "any", "scale": 0.65, "anchorOffset": { "x": 0, "y": 16 }, "imageFile": "cape_tattered.png", "rarity": "common", "sparksPrice": 40 },
+  { "id": "mask_visor", "slot": "mask", "kit": "any", "scale": 0.4, "anchorOffset": { "x": 0, "y": -10 }, "imageFile": "mask_visor.png", "rarity": "common", "sparksPrice": 40 }
 ]
