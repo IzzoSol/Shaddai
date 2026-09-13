@@ -52,6 +52,39 @@ AURA is an organ (boxes + search), not an 8th face.
 
 ---
 
+## LOCKED AGENT VISUAL IDENTITY (decided 2026-09-12 — this is now the canonical palette)
+
+An external AI tool produced a comprehensive "locked" 6-agent color system + dashboard rebuild
+spec (owner pasted it in full). Reconciled against what's *actually shipped* today
+(`pixel-forge.html`'s `OFFICES` array, `pixel-people.js`'s `OFFICE_LEADS` rigs — the real source of
+truth used across the Forge, The Hall office rooms, and the 2D world right now) before adopting
+anything, rather than treating the pasted doc as automatically authoritative. Three of its six
+agents already matched shipped colors; the other three required an actual decision:
+
+| Agent | Locked color | Status vs. what was shipped before this decision |
+|---|---|---|
+| **SHADDAI** | Sovereign gold `#e8c45c` (the existing site-wide Art Bible gold — NOT the pasted doc's slightly different `#F5C84B`, to avoid two near-identical golds in the codebase) | **CHANGED** — was purple/lavender `#c9a6ff` (now a secondary/highlight accent for SHADDAI, not discarded) |
+| **NEXUS** | Steel gray `#87909C` + dark chrome `#1A1D24` | **CHANGED** — was gold `#e8c45c` (freed up for SHADDAI above) |
+| **ZEROX** | Electric blue `#00C8FF` | **CHANGED** — was orange `#ff9a3c`. Confirmed cheap before deciding: only 11 occurrences across 7 files (`pixel-forge.html`, `pixel-people.js`, `index.html`, `game.html`, `agents.html`, `world-buildings.js`, `games/basketball-jam.html`) actually use this as the agent-identity color. ZEROX's own dedicated pages (`zerox-dashboard.html`, `zerox-markets.html`, etc.) already use a separate, unrelated orange-red (`#ff6b35`) plus cyan/emerald as their own page chrome — those are independent branding and are NOT part of this decision, don't touch them for this. |
+| **PIKADON** | Crimson red `#ff5a4d` | Unchanged — already matched the pasted doc's intent |
+| **ORACLE** | Arcane purple `#8b7bf0` | Unchanged — already matched |
+| **TURTLE** | Bio-neon green `#00ff9c` | Unchanged — already matched |
+| **QUILL** | Cyan `#5fe0ff` | **The pasted "locked" 6-color doc omitted QUILL entirely** — a real gap (QUILL is a real 7th agent per `CLAUDE.md` and `pixel-people.js`'s own `OFFICE_LEADS`), not a minor detail. Added here using its already-established color. |
+
+**What this decision does NOT include (yet):** the pasted doc's much larger proposal — a full
+Command Center rebuild, visible SHADDAI task-routing UI, a canonical `AGENTS` data model refactor
+across every surface, a NEXUS system-health panel, PIKADON security-status panel, agent dossier
+modals, etc. That structural vision is good direction but is its own large effort — scope it as a
+separate brainstorm/spec when it's actually being built, don't treat it as decided just because the
+palette question got resolved.
+
+**Not yet implemented in code** — this section locks the *decision*, not the rollout. The 11
+existing ZEROX-orange occurrences, the SHADDAI purple→gold swap, and the NEXUS gold→steel-gray
+swap still need to actually happen across `pixel-forge.html`, `pixel-people.js`, `index.html`,
+`game.html`, `agents.html`, `world-buildings.js`, and `games/basketball-jam.html`.
+
+---
+
 ## DASHBOARD — 7 office rooms (VISION, the real build target)
 
 Each office room = a dashboard tab/room with that desk's tools:
