@@ -125,6 +125,13 @@
   .acc-tile img{width:36px;height:36px;object-fit:contain;display:block;margin:0 auto 3px}
   .acc-tile .price{color:var(--gold);letter-spacing:.5px}
   .acc-tile .owned{color:var(--emerald)}
+  .char-row{display:flex;flex-wrap:wrap;gap:8px}
+  .char-tile{width:66px;font-family:"IBM Plex Mono",monospace;font-size:9px;text-align:center;cursor:pointer;
+    border:1px solid rgba(122,135,148,.28);border-radius:9px;padding:5px 4px 6px;transition:.18s;color:var(--muted);
+    background:rgba(10,14,20,.4);text-transform:uppercase;letter-spacing:.5px}
+  .char-tile:hover{border-color:var(--cyan)}
+  .char-tile.on{border-color:var(--gold);box-shadow:0 0 12px rgba(232,196,92,.3)}
+  .char-tile img{width:56px;height:56px;object-fit:contain;display:block;margin:0 auto 4px}
 
   /* bottom: filmstrip + confirm */
   .film{position:fixed;left:0;right:0;bottom:66px;height:84px;z-index:14;display:flex;align-items:center;
@@ -182,6 +189,7 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="cust" id="cust">
+  <div class="crow"><div class="clabel">Character</div><div class="char-row" id="char-row"></div></div>
   <div class="crow"><div class="clabel">Kit</div><div class="styrow" id="sty-kit"></div></div>
   <div class="crow"><div class="clabel">Office</div><div class="styrow" id="sty-office"></div></div>
   <div class="crow"><div class="clabel">Hat</div><div class="acc-row" id="acc-hat"></div></div>
@@ -244,6 +252,13 @@ const KITS=[
   {id:'comic',     label:'Comic',     available:false},
   {id:'chibi',     label:'Chibi',     available:false},
   {id:'archivist', label:'Archivist', available:false},
+];
+const CHARACTERS=[
+  {id:'warrior',  label:'Warrior',  file:'warrior.png'},
+  {id:'explorer', label:'Explorer', file:'explorer.png'},
+  {id:'mystic',   label:'Mystic',   file:'mystic.png'},
+  {id:'engineer', label:'Engineer', file:'engineer.png'},
+  {id:'scout',    label:'Scout',    file:'scout.png'},
 ];
 
 // ---- working rig ----
@@ -311,6 +326,27 @@ function refreshOfficeRow(){
   });
 }
 
+function buildCharRow(){
+  const host=document.getElementById('char-row'); if(!host) return; host.innerHTML='';
+  const none=document.createElement('div'); none.className='char-tile'; none.textContent='Classic rig'; none.dataset.char='';
+  none.onclick=()=>{ delete rig.spriteToken; syncUI(); };
+  host.appendChild(none);
+  CHARACTERS.forEach(c=>{
+    const t=document.createElement('div'); t.className='char-tile'; t.dataset.char=c.id; t.textContent=c.label;
+    const img=document.createElement('img'); img.src='/assets/kits/characters/'+c.file; img.alt=c.label;
+    t.insertBefore(img, t.firstChild);
+    t.onclick=()=>{ rig.spriteToken=c.file; syncUI(); };
+    host.appendChild(t);
+  });
+  refreshCharRow();
+}
+function refreshCharRow(){
+  const host=document.getElementById('char-row'); if(!host) return;
+  [...host.children].forEach(t=>{
+    const on = t.dataset.char==='' ? !rig.spriteToken : (rig.spriteToken===CHARACTERS.find(c=>c.id===t.dataset.char).file);
+    t.classList.toggle('on', on);
+  });
+}
 function buildKitRow(){
   const host=document.getElementById('sty-kit'); if(!host) return; host.innerHTML='';
   KITS.forEach(k=>{
@@ -382,6 +418,7 @@ function onAccTileClick(item, slot){
     }).catch(()=>alert('Purchase failed — network error'));
 }
 function buildCust(){
+  buildCharRow();
   buildKitRow();
   buildOfficeRow();
   loadCosmeticsCatalog();
@@ -416,6 +453,7 @@ function toggle(f){
   rig[f]=!rig[f]; if(!rig[f]) delete rig[f];
 }
 function syncUI(){
+  refreshCharRow();
   refreshKitRow();
   refreshOfficeRow();
   refreshAccRows();

@@ -19,6 +19,13 @@
  *   accessories({hat,weapon,pet,wings,mask,cape}, each a catalog id or undefined) —
  *     image overlays drawn after the procedural rig, anchored to the same
  *     animated coordinates as everything else (see loadCatalog()/getImg() below)
+ *   spriteToken(filename in public/assets/kits/characters/, e.g. 'warrior.png', or undefined) —
+ *     REPLACES the entire procedural body with a real generated character image (a flat
+ *     front-facing token placed at the isometric position, gently bobbing — not a true
+ *     multi-angle isometric sprite; fal/HF can't hold that camera reliably, proven across
+ *     multiple tests this session). When set, every other cosmetic field except
+ *     `accessories` is ignored for drawing purposes (still fine to keep them in the rig —
+ *     switching back to no spriteToken uses them again, nothing is destroyed).
  * optional metadata (ignored by draw(), carried through JSON clone/save so it survives
  * everywhere a rig is persisted — gallery, shaddai.player, /api/operatives):
  *   office('shaddai'|'zerox'|'oracle'|'nexus'|'turtle'|'quill'|'pikadon'|undefined),
@@ -40,11 +47,11 @@ window.PixelPeople = (function () {
       .catch(() => { _catalog = {}; return _catalog; });
     return _catalogPromise;
   }
-  function getImg(file) {
-    if (_imgCache[file]) return _imgCache[file];
+  function getImg(relPath) {
+    if (_imgCache[relPath]) return _imgCache[relPath];
     const img = new Image();
-    img.src = '/assets/accessories/' + file;
-    _imgCache[file] = img;
+    img.src = '/assets/' + relPath;
+    _imgCache[relPath] = img;
     return img;
   }
   loadCatalog(); // fire on module load — accessories before the fetch resolves simply don't draw yet
@@ -86,6 +93,25 @@ window.PixelPeople = (function () {
     else boxL(c,r,0.1*S,0.1*S,13,sleeve,11+L,aE);
     if(o.watch){ctx.fillStyle=o.watch;const[wx,wy]=iso(c,r);ctx.fillRect(Math.round(wx)-3,Math.round(wy)-(11+L),6,2);ctx.fillStyle=shade(o.watch,0.4);ctx.fillRect(Math.round(wx)-1,Math.round(wy)-(11+L),2,2);}
   }
+  function drawAccessories(rig,ax,ay,L){
+    if(!rig.accessories||!_catalog) return;
+    for(const slot in rig.accessories){
+      const id=rig.accessories[slot]; if(!id) continue;
+      const item=_catalog[id]; if(!item) continue;
+      const img=getImg('accessories/'+item.imageFile);
+      if(!img.complete||!img.naturalWidth) continue; // not loaded yet — next frame draws it
+      const ox=(item.anchorOffset&&item.anchorOffset.x)||0, oy=(item.anchorOffset&&item.anchorOffset.y)||0;
+      // ax/ay + (25+L) is the same animated head-anchor every cap/hair/eye draw uses —
+      // accessories ride the SAME walk-bob offset as the rest of the rig, never a static offset.
+      // Source art is generated at 512-1024px; BASE_PX is a rough "fits next to a ~40px-tall
+      // rig" starting scale — item.scale (catalog field, default 1) tunes individual items
+      // (a crown reads small, a cape/wings read big) without touching this code.
+      const BASE_PX = 42, itemScale = (item.scale!=null?item.scale:1);
+      const ar = img.naturalWidth / img.naturalHeight;
+      const ih = BASE_PX * itemScale, iw = ih * ar;
+      ctx.drawImage(img, Math.round(ax+ox-iw/2), Math.round(ay-(25+L)+oy-ih/2), iw, ih);
+    }
+  }
 
   function guy(rig,t,phase){
     const col=0,row=0, tt=t/1000+(phase||0), walk=rig.anim==='walk';
@@ -100,6 +126,20 @@ window.PixelPeople = (function () {
     const VE = isVoxel ? { edge:true } : E; // flatter, harder-edged shading for voxel (see box() opts below)
     const [cx,cy]=iso(0,0);
     ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(cx,cy+3,14,6,0,0,7);ctx.fill();
+    if(rig.spriteToken){
+      // Full character replaced by a real generated image (fal/HF art can't hold an isometric
+      // camera reliably — proven across multiple tests — so this is a flat front-facing token
+      // placed at the isometric position, not a true multi-angle isometric sprite). No limb
+      // articulation; a gentle bob (reusing the same L walk/idle offset every other rig uses)
+      // is the only "alive" motion. Skips every procedural box draw below — the image IS the character.
+      const img=getImg('kits/characters/'+rig.spriteToken);
+      if(img.complete&&img.naturalWidth){
+        const targetH=46, ar=img.naturalWidth/img.naturalHeight, h=targetH, w=targetH*ar;
+        ctx.drawImage(img, Math.round(cx-w/2), Math.round(cy-h-L*0.6), w, h);
+      }
+      drawAccessories(rig,cx,cy,L);
+      return;
+    }
     armPart(col+0.18+str,row-0.18+str,sleeve,skin,L,{short:rig.short,watch:rig.watch,scale:VS});
     if(rig.dress){shoePart(col-0.02,row+0.02,'heel',shoe,L);shoePart(col+0.02,row-0.02,'heel',shoe,L);boxL(col,row,0.5,0.4,13,rig.dress,3+L,E);boxL(col,row,0.36,0.26,12,rig.dress,16+L,E);}
     else{for(const g of [[-0.08,0.08,1],[0.08,-0.08,-1]]){const c=col+g[0]+str*g[2],r=row+g[1]+str*g[2];shoePart(c,r,rig.shoeStyle,shoe,L);boxL(c,r,0.13*VS,0.13*VS,6,pants,4+L,VE);}
@@ -139,25 +179,7 @@ window.PixelPeople = (function () {
       ctx.fillStyle=shade(skin,-0.34);ctx.fillRect(fx-2,ey+7,4,1);
       if(rig.glasses){ctx.strokeStyle='#0e1116';ctx.lineWidth=1.4;ctx.strokeRect(fx-6,ey-1,5,5);ctx.strokeRect(fx+2,ey-1,5,5);ctx.beginPath();ctx.moveTo(fx-1,ey+1);ctx.lineTo(fx+2,ey+1);ctx.stroke();}
     }
-    if(rig.accessories && _catalog){
-      const[ax,ay]=iso(0,0);
-      for(const slot in rig.accessories){
-        const id=rig.accessories[slot]; if(!id) continue;
-        const item=_catalog[id]; if(!item) continue;
-        const img=getImg(item.imageFile);
-        if(!img.complete||!img.naturalWidth) continue; // not loaded yet — next frame draws it
-        const ox=(item.anchorOffset&&item.anchorOffset.x)||0, oy=(item.anchorOffset&&item.anchorOffset.y)||0;
-        // ax/ay + (25+L) is the same animated head-anchor every cap/hair/eye draw above uses —
-        // accessories ride the SAME walk-bob offset as the rest of the rig, never a static offset.
-        // Source art is generated at 512-1024px; BASE_PX is a rough "fits next to a ~40px-tall
-        // rig" starting scale — item.scale (catalog field, default 1) tunes individual items
-        // (a crown reads small, a cape/wings read big) without touching this code.
-        const BASE_PX = 42, itemScale = (item.scale!=null?item.scale:1);
-        const ar = img.naturalWidth / img.naturalHeight;
-        const ih = BASE_PX * itemScale, iw = ih * ar;
-        ctx.drawImage(img, Math.round(ax+ox-iw/2), Math.round(ay-(25+L)+oy-ih/2), iw, ih);
-      }
-    }
+    drawAccessories(rig,cx,cy,L);
   }
 
   function draw(_ctx, rig, sx, sy, scale, t) {
