@@ -177,7 +177,12 @@
       /* floating open button */
       ".shop-fab{position:fixed;right:18px;bottom:18px;z-index:9998;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-family:'Orbitron','Rajdhani',sans-serif;font-weight:800;letter-spacing:1.4px;font-size:12px;color:#02150c;padding:12px 18px;border-radius:26px;background:linear-gradient(135deg,#00ff88,#00E5FF);border:none;box-shadow:0 10px 34px rgba(0,229,136,.45);transition:transform .14s ease,box-shadow .2s}",
       ".shop-fab:hover{transform:translateY(-2px);box-shadow:0 14px 42px rgba(0,229,160,.6)}",
-      "@media(max-width:640px){.shop-fab{right:12px;bottom:12px;font-size:11px;padding:11px 15px}}"
+      "@media(max-width:640px){.shop-fab{right:12px;bottom:12px;font-size:11px;padding:11px 15px}}",
+      /* when the dashboard's bottom nav bar is docked, the fab sat inside its 44px band and
+         clipped the last tab labels (reported: "SECURITY" cut off) — lift it clear instead. */
+      "body.navpos-bottom .shop-fab{bottom:56px}",
+      ".shop-fab.shop-fab-min{padding:0;width:44px;height:44px;border-radius:50%;font-size:0;letter-spacing:0}",
+      ".shop-fab.shop-fab-min::before{content:'⬡';font-size:17px}"
     ].join('');
     (document.head || document.documentElement).appendChild(s);
   }
@@ -554,7 +559,17 @@
     if (document.getElementById('shopFab')) return;
     var fab = el('button', 'shop-fab'); fab.id = 'shopFab';
     fab.appendChild(document.createTextNode('⬡ SHOP'));
-    fab.addEventListener('click', open);
+    fab.title = 'Click: open shop · Double-click: minimize';
+    try { if (localStorage.getItem('shd_shopfab_min') === '1') fab.classList.add('shop-fab-min'); } catch (_) {}
+    fab.addEventListener('click', function (e) {
+      if (fab.classList.contains('shop-fab-min')) { fab.classList.remove('shop-fab-min'); try { localStorage.setItem('shd_shopfab_min', '0'); } catch (_) {} return; }
+      open();
+    });
+    fab.addEventListener('dblclick', function (e) {
+      e.stopPropagation();
+      fab.classList.add('shop-fab-min');
+      try { localStorage.setItem('shd_shopfab_min', '1'); } catch (_) {}
+    });
     document.body.appendChild(fab);
   }
 
