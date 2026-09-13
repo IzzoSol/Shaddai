@@ -174,9 +174,11 @@ window.PixelPeople = (function () {
     const fx=Math.round(cx), ey=Math.round(cy-(25+L)-8);
     if(rig.robot){ctx.fillStyle=rig.led||'#5fe0ff';ctx.fillRect(fx-6,ey,4,4);ctx.fillRect(fx+3,ey,4,4);}
     else{
+      ctx.fillStyle=shade(skin,-0.42);ctx.fillRect(fx-5,ey-2,3,1);ctx.fillRect(fx+3,ey-2,3,1); // eyebrows — same subtle-life treatment on every classic preset
       ctx.fillStyle=rig.eye||'#241a12';ctx.fillRect(fx-5,ey,3,4);ctx.fillRect(fx+3,ey,3,4);
+      ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(fx-5,ey,1,1);ctx.fillRect(fx+3,ey,1,1); // tiny catchlight — reads as "alive" at a glance
       const ns=rig.nose||1; ctx.fillStyle=shade(skin,-0.18);ctx.fillRect(fx,ey+5,ns,ns);   // tiny standalone nose square (rig.nose sets size)
-      ctx.fillStyle=shade(skin,-0.34);ctx.fillRect(fx-2,ey+7,4,1);
+      ctx.fillStyle=shade(skin,-0.34);ctx.fillRect(fx-2,ey+7,4,1);ctx.fillRect(fx-3,ey+6,1,1);ctx.fillRect(fx+2,ey+6,1,1); // mouth corners turn the flat line into a slight smile
       if(rig.glasses){ctx.strokeStyle='#0e1116';ctx.lineWidth=1.4;ctx.strokeRect(fx-6,ey-1,5,5);ctx.strokeRect(fx+2,ey-1,5,5);ctx.beginPath();ctx.moveTo(fx-1,ey+1);ctx.lineTo(fx+2,ey+1);ctx.stroke();}
     }
     drawAccessories(rig,cx,cy,L);
