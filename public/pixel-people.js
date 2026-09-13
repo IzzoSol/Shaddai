@@ -12,9 +12,6 @@
  * rig fields: skin, hair, cap, shirt|hoodie|suit|jacket|dress, pants, shoe,
  *   shoeStyle(sneaker|boot|dress|heel), glasses, short, hoodUp, mohawk, robot,
  *   led, emblem, logo, tie, watch, anim('idle'|'walk'), __phase
- *   accessories({hat,weapon,pet,wings,mask,cape}, each a catalog id or undefined) —
- *     image overlays drawn after the procedural rig, anchored to the same
- *     animated coordinates as everything else (see loadCatalog()/getImg() below)
  * optional metadata (ignored by draw(), carried through JSON clone/save so it survives
  * everywhere a rig is persisted — gallery, shaddai.player, /api/operatives):
  *   office('shaddai'|'zerox'|'oracle'|'nexus'|'turtle'|'quill'|'pikadon'|undefined),
@@ -25,25 +22,6 @@ window.PixelPeople = (function () {
   'use strict';
   const TW = 84, TH = 42;
   let ctx = null, OX = 0, OY = 0;
-
-  // ── accessory catalog + image cache ──────────────────────────────────────
-  let _catalog = null, _catalogPromise = null;
-  const _imgCache = {};
-  function loadCatalog() {
-    if (_catalogPromise) return _catalogPromise;
-    _catalogPromise = fetch('/assets/accessories/catalog.json').then(r => r.json())
-      .then(list => { _catalog = {}; list.forEach(it => { _catalog[it.id] = it; }); return _catalog; })
-      .catch(() => { _catalog = {}; return _catalog; });
-    return _catalogPromise;
-  }
-  function getImg(relPath) {
-    if (_imgCache[relPath]) return _imgCache[relPath];
-    const img = new Image();
-    img.src = '/assets/' + relPath;
-    _imgCache[relPath] = img;
-    return img;
-  }
-  loadCatalog(); // fire on module load — accessories before the fetch resolves simply don't draw yet
 
   function shade(hex, amt) {
     const n = parseInt(hex.slice(1), 16); let r = (n>>16)&255, g = (n>>8)&255, b = n&255;
@@ -81,26 +59,6 @@ window.PixelPeople = (function () {
     else boxL(c,r,0.1,0.1,13,sleeve,11+L,E);
     if(o.watch){ctx.fillStyle=o.watch;const[wx,wy]=iso(c,r);ctx.fillRect(Math.round(wx)-3,Math.round(wy)-(11+L),6,2);ctx.fillStyle=shade(o.watch,0.4);ctx.fillRect(Math.round(wx)-1,Math.round(wy)-(11+L),2,2);}
   }
-  function drawAccessories(rig,ax,ay,L){
-    if(!rig.accessories||!_catalog) return;
-    for(const slot in rig.accessories){
-      const id=rig.accessories[slot]; if(!id) continue;
-      const item=_catalog[id]; if(!item) continue;
-      const img=getImg('accessories/'+item.imageFile);
-      if(!img.complete||!img.naturalWidth) continue; // not loaded yet — next frame draws it
-      const ox=(item.anchorOffset&&item.anchorOffset.x)||0, oy=(item.anchorOffset&&item.anchorOffset.y)||0;
-      // ax/ay + (25+L) is the same animated head-anchor every cap/hair/eye draw uses —
-      // accessories ride the SAME walk-bob offset as the rest of the rig, never a static offset.
-      // Source art is generated at 512-1024px; BASE_PX is a rough "fits next to a ~40px-tall
-      // rig" starting scale — item.scale (catalog field, default 1) tunes individual items
-      // (a crown reads small, a cape/wings read big) without touching this code.
-      const BASE_PX = 42, itemScale = (item.scale!=null?item.scale:1);
-      const ar = img.naturalWidth / img.naturalHeight;
-      const ih = BASE_PX * itemScale, iw = ih * ar;
-      ctx.drawImage(img, Math.round(ax+ox-iw/2), Math.round(ay-(25+L)+oy-ih/2), iw, ih);
-    }
-  }
-
   function guy(rig,t,phase){
     const col=0,row=0, tt=t/1000+(phase||0), walk=rig.anim==='walk';
     const L = walk ? Math.abs(Math.cos(tt*7))*1.6 : Math.sin(tt*1.7)*0.4;
@@ -152,7 +110,6 @@ window.PixelPeople = (function () {
       ctx.fillStyle=shade(skin,-0.34);ctx.fillRect(fx-2,ey+7,4,1);ctx.fillRect(fx-3,ey+6,1,1);ctx.fillRect(fx+2,ey+6,1,1); // mouth corners turn the flat line into a slight smile
       if(rig.glasses){ctx.strokeStyle='#0e1116';ctx.lineWidth=1.4;ctx.strokeRect(fx-6,ey-1,5,5);ctx.strokeRect(fx+2,ey-1,5,5);ctx.beginPath();ctx.moveTo(fx-1,ey+1);ctx.lineTo(fx+2,ey+1);ctx.stroke();}
     }
-    drawAccessories(rig,cx,cy,L);
   }
 
   function draw(_ctx, rig, sx, sy, scale, t) {

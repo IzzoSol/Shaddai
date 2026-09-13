@@ -113,23 +113,13 @@
   .tg:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(95,224,255,.06)}
   .tg.on{background:var(--emerald);color:#04120b;border-color:var(--emerald);font-weight:600;
     box-shadow:0 0 14px rgba(0,255,156,.4)}
-  .tg:active,.sty:active,.acc-tile:active,.chip:active{transform:translateY(1px)}
+  .tg:active,.sty:active,.chip:active{transform:translateY(1px)}
   .styrow{display:flex;flex-wrap:wrap;gap:5px}
   .sty{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:1px;padding:5px 9px;border-radius:7px;
     border:1px solid rgba(122,135,148,.28);color:var(--muted);cursor:pointer;transition:.18s;text-transform:uppercase}
   .sty:hover{border-color:var(--cyan);color:var(--cyan)}
   .sty.on{border-color:var(--gold);color:var(--gold);background:rgba(232,196,92,.08);
     box-shadow:0 0 10px rgba(232,196,92,.25)}
-  .acc-row{display:flex;flex-wrap:wrap;gap:6px}
-  .acc-tile{width:52px;font-family:"IBM Plex Mono",monospace;font-size:8.5px;text-align:center;cursor:pointer;
-    border:1px solid rgba(122,135,148,.28);border-radius:8px;padding:4px 3px 5px;transition:.18s;color:var(--muted);
-    background:rgba(10,14,20,.4)}
-  .acc-tile:hover{border-color:var(--cyan)}
-  .acc-tile.on{border-color:var(--gold);box-shadow:0 0 10px rgba(232,196,92,.25)}
-  .acc-tile.locked{opacity:.7}
-  .acc-tile img{width:36px;height:36px;object-fit:contain;display:block;margin:0 auto 3px}
-  .acc-tile .price{color:var(--gold);letter-spacing:.5px}
-  .acc-tile .owned{color:var(--emerald)}
 
   /* bottom: filmstrip + confirm */
   .film{position:fixed;left:0;right:0;bottom:66px;height:84px;z-index:14;display:flex;align-items:center;
@@ -200,14 +190,6 @@
     <div class="styrow" id="sty-shoe" style="margin-top:6px"></div></div>
   <div class="crow"><div class="clabel">Cap</div><div class="sw" id="sw-cap"></div></div>
   <div class="crow"><div class="clabel">Extras</div><div class="toggles" id="toggles"></div></div>
-
-  <div class="csection">Accessories</div>
-  <div class="crow"><div class="clabel">Hat</div><div class="acc-row" id="acc-hat"></div></div>
-  <div class="crow"><div class="clabel">Weapon</div><div class="acc-row" id="acc-weapon"></div></div>
-  <div class="crow"><div class="clabel">Pet</div><div class="acc-row" id="acc-pet"></div></div>
-  <div class="crow"><div class="clabel">Wings</div><div class="acc-row" id="acc-wings"></div></div>
-  <div class="crow"><div class="clabel">Cape</div><div class="acc-row" id="acc-cape"></div></div>
-  <div class="crow"><div class="clabel">Mask</div><div class="acc-row" id="acc-mask"></div></div>
 </div>
 
 <div class="film" id="film"></div>
@@ -312,63 +294,8 @@ function refreshOfficeRow(){
   });
 }
 
-// ---- cosmetics store: catalog + per-slot accessory browser ----
-let _cosmeticsCatalog=[], _ownedCosmetics=[], _currentOperativeId=null;
-const ACC_SLOTS=['hat','weapon','pet','wings','cape','mask'];
-function loadCosmeticsCatalog(){
-  return fetch('/api/cosmetics/catalog').then(r=>r.json()).then(d=>{ _cosmeticsCatalog=d.accessories||[]; buildAccRows(); })
-    .catch(()=>{ _cosmeticsCatalog=[]; });
-}
-function buildAccRows(){
-  ACC_SLOTS.forEach(slot=>{
-    const host=document.getElementById('acc-'+slot); if(!host) return; host.innerHTML='';
-    const items=_cosmeticsCatalog.filter(a=>a.slot===slot);
-    const none=document.createElement('div'); none.className='acc-tile'; none.textContent='None';
-    none.onclick=()=>{ rig.accessories=rig.accessories||{}; rig.accessories[slot]=null; syncUI(); };
-    host.appendChild(none);
-    items.forEach(item=>{
-      const t=document.createElement('div'); t.className='acc-tile'; t.dataset.id=item.id; t.dataset.slot=slot;
-      const img=document.createElement('img'); img.src='/assets/accessories/'+item.imageFile; img.alt=item.id;
-      t.appendChild(img);
-      const priceLine=document.createElement('div');
-      t.appendChild(priceLine);
-      t.onclick=()=>onAccTileClick(item, slot);
-      host.appendChild(t);
-    });
-  });
-  refreshAccRows();
-}
-function refreshAccRows(){
-  ACC_SLOTS.forEach(slot=>{
-    const host=document.getElementById('acc-'+slot); if(!host) return;
-    [...host.children].forEach(t=>{
-      const id=t.dataset.id;
-      if(!id){ t.classList.toggle('on', !(rig.accessories&&rig.accessories[slot])); return; }
-      const item=_cosmeticsCatalog.find(a=>a.id===id); if(!item) return;
-      const owned=_ownedCosmetics.includes(id);
-      t.classList.toggle('on', rig.accessories&&rig.accessories[slot]===id);
-      t.classList.toggle('locked', !owned);
-      const priceLine=t.querySelector('div');
-      if(priceLine) priceLine.innerHTML = owned ? '<span class="owned">✓ owned</span>' : '<span class="price">'+item.sparksPrice+'⚡</span>';
-    });
-  });
-}
-function onAccTileClick(item, slot){
-  const owned=_ownedCosmetics.includes(item.id);
-  if(owned){ rig.accessories=rig.accessories||{}; rig.accessories[slot]=item.id; syncUI(); return; }
-  if(!_currentOperativeId){ alert('Save to Gallery first, then you can buy accessories.'); return; }
-  fetch('/api/cosmetics/purchase',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({operativeId:_currentOperativeId, accessoryId:item.id})})
-    .then(r=>r.json()).then(d=>{
-      if(!d.success){ alert(d.error||'Purchase failed'); return; }
-      _ownedCosmetics=(d.operative&&d.operative.inventory&&d.operative.inventory.cosmetics)||_ownedCosmetics.concat([item.id]);
-      rig.accessories=rig.accessories||{}; rig.accessories[slot]=item.id;
-      syncUI();
-    }).catch(()=>alert('Purchase failed — network error'));
-}
 function buildCust(){
   buildOfficeRow();
-  loadCosmeticsCatalog();
   swatches('sw-skin',SKIN,()=>rig.skin,v=>rig.skin=v,false);
   swatches('sw-hair',HAIR,()=>rig.hair,v=>rig.hair=v,false);
   swatches('sw-top',TOPC,()=>topColor(),v=>{ rig[topField()]=v; },false);
@@ -401,7 +328,6 @@ function toggle(f){
 }
 function syncUI(){
   refreshOfficeRow();
-  refreshAccRows();
   refreshSel('sw-skin',()=>rig.skin); refreshSel('sw-hair',()=>rig.hair);
   refreshSel('sw-top',()=>topColor()); refreshSel('sw-pants',()=>rig.pants);
   refreshSel('sw-shoe',()=>rig.shoe); refreshSel('sw-cap',()=>rig.cap);
@@ -494,14 +420,7 @@ function pfForge(){
     fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ codename:name, owner:owner, archetype:'pixel', rarity:'common', look:{archetype:'pixel', rig:out.rig}, source:'pixel-forge' })})
       .then(function(r){ return r.json(); })
-      .then(function(d){
-        var op=d&&d.operative;
-        if(op && op.id){
-          _currentOperativeId=op.id;
-          _ownedCosmetics=(op.inventory&&op.inventory.cosmetics)||[];
-          refreshAccRows();
-        }
-      }).catch(function(){});
+      .catch(function(){});
   }catch(e){}
   return out;
 }
