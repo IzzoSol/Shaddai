@@ -1762,7 +1762,8 @@ app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-custo
 // block `toolCache`). That left the monitor's "LIVE API-PULL CACHE" panel permanently
 // blank. Mount aura-routes as the single source of truth for /api/aura instead.
 app.use('/api/news', require('./news-routes'));
-app.use('/api/video', require('./video-routes')); // BYOK video gen (Pika/Runway/HeyGen/Kling)
+app.use('/api/video', require('./video-routes')); // BYOK video gen (Pika/Runway/HeyGen/Kling/Fal)
+app.use('/api/lens', require('./lens-routes')()); // LENS: Sparks-gated Fal clip generation for the Hall (Shaddai-Arcade issue #5); lens-routes exports a factory, must be CALLED
 app.use('/api/x402/ledger', require('./x402-ledger-routes')); // prepaid balance ledger (pre-fund → spend down)
 app.use('/api/collectibles/rewards', require('./lib/collectible-rewards').router);              // AURA token-saver (cache/compute-first) stats+route
 app.use('/api/security', require('./lib/security-scan').router); // PIKADON real scans (url/code/skill)

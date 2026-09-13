@@ -15,7 +15,7 @@
  * { status:'error', error } shape (network/API failures) — they NEVER crash the
  * process.
  *
- * Supported providers: pika, runway, heygen, kling.
+ * Supported providers: pika, runway, heygen, kling, fal.
  */
 
 const axios = require('axios');
@@ -333,9 +333,100 @@ const kling = {
   },
 };
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * FAL  —  https://fal.ai   (async queue, multi-model host)
+ * Reuses the exact FAL_QUEUE/`Authorization: Key` pattern already live in
+ * backend/forge-mesh-routes.js (image/GLB generation) -- same account, same
+ * key, don't start cold. Unlike the other four adapters (one fixed model per
+ * provider), fal hosts many interchangeable video models, so the model id is
+ * encoded into the returned jobId as `${model}::${request_id}` rather than
+ * adding a second stateful job map here -- keeps this adapter as stateless
+ * as its siblings; video-routes.js's own job store is still the only place
+ * job state lives.
+ *
+ * Model id defaults to FAL_VIDEO_MODEL (or the hard-coded fallback below) --
+ * NOT verified against a live fal.ai account this session (no key available
+ * to test with); confirm the model id and its exact input/output field names
+ * against fal's current model catalog before relying on this for real
+ * traffic. Shape (submit -> {request_id}; poll -> {status, output}) matches
+ * forge-mesh-routes.js's already-working trellis/meshy calls, which IS
+ * verified against a live account, so the request/response envelope is
+ * trustworthy even if the specific video model id needs a final check.
+ *
+ * SECURITY: per docs/HALL-PHASE1-SPEC.md's own note, a FAL_KEY value was
+ * pasted in plaintext during an earlier planning session for this build --
+ * that key must be rotated in the fal.ai dashboard regardless of how (or
+ * whether) it's reused here. This code only ever reads process.env.FAL_KEY;
+ * it does not carry any key value.
+ * ──────────────────────────────────────────────────────────────────────────── */
+const fal = {
+  name: 'fal',
+  envKey: 'FAL_KEY',
+  costPerSecond: 0.08, // estimate -- ZEROX still owes a real Sparks-vs-Fal-COGS pass per HALL-PHASE1-SPEC.md
+  queueUrl: 'https://queue.fal.run',
+  defaultModel: 'fal-ai/kling-video/v1.6/standard/text-to-video',
+
+  async generate(prompt, opts = {}) {
+    const key = requireKey(this.envKey);
+    const duration = Number(opts.duration) || 5;
+    const model = opts.model || process.env.FAL_VIDEO_MODEL || this.defaultModel;
+    try {
+      const { data } = await axios.post(
+        `${this.queueUrl}/${model}`,
+        { prompt, duration: String(duration), aspect_ratio: opts.aspectRatio || '16:9' },
+        { headers: { Authorization: `Key ${key}`, 'Content-Type': 'application/json' }, timeout: TIMEOUT_MS }
+      );
+      const requestId = data && data.request_id;
+      if (!requestId) {
+        return { jobId: null, status: 'error', eta: 0, costUsd: 0, error: 'fal queue returned no request_id' };
+      }
+      return {
+        jobId: `${model}::${requestId}`,
+        status: 'queued',
+        eta: duration * 15,
+        costUsd: estimateCost(this.costPerSecond, duration),
+      };
+    } catch (err) {
+      return { jobId: null, status: 'error', eta: 0, costUsd: 0, error: describeError(err) };
+    }
+  },
+
+  async getStatus(jobId) {
+    const key = requireKey(this.envKey);
+    const sep = String(jobId || '').lastIndexOf('::');
+    if (sep < 0) {
+      return { status: 'error', progress: 0, videoUrl: null, error: 'malformed fal jobId (expected "<model>::<request_id>")' };
+    }
+    const model = String(jobId).slice(0, sep);
+    const requestId = String(jobId).slice(sep + 2);
+    try {
+      const { data } = await axios.get(
+        `${this.queueUrl}/${model}/requests/${encodeURIComponent(requestId)}`,
+        { headers: { Authorization: `Key ${key}` }, timeout: TIMEOUT_MS }
+      );
+      const raw = ((data && data.status) || '').toUpperCase();
+      const status =
+        raw === 'COMPLETED' ? 'completed'
+          : raw === 'FAILED' || raw === 'ERROR' ? 'error'
+            : raw === 'IN_QUEUE' ? 'queued'
+              : 'processing';
+      const out = (data && data.output) || data || {};
+      const videoUrl = (out.video && out.video.url) || out.video_url || out.url || null;
+      return {
+        status,
+        progress: status === 'completed' ? 100 : 0,
+        videoUrl,
+        error: (data && data.error) || null,
+      };
+    } catch (err) {
+      return { status: 'error', progress: 0, videoUrl: null, error: describeError(err) };
+    }
+  },
+};
+
 // The provider adapters, keyed by name. This object stays clean (adapters only)
 // so callers can safely iterate it to enumerate available providers.
-const PROVIDERS = { pika, runway, heygen, kling };
+const PROVIDERS = { pika, runway, heygen, kling, fal };
 
 /** True if the provider's env key is present (boolean only — never the value). */
 function isConfigured(name) {
@@ -353,6 +444,7 @@ module.exports = {
   runway,
   heygen,
   kling,
+  fal,
   PROVIDERS,
   isConfigured,
   estimateCost,

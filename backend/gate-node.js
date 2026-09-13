@@ -35,7 +35,8 @@ const SCRIPTS = [
   'lib/tool-selector.test.cjs',
   'economy-service.test.js',
   'portal-admin-routes.test.js',
-  'lib/economy-x402-bridge.test.js'
+  'lib/economy-x402-bridge.test.js',
+  'lib/lens-rewriter.test.js'
 ];
 
 let passed = 0, failed = 0;
