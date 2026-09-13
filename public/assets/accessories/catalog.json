@@ -1,0 +1,7 @@
+[
+  { "id": "hat_crown", "slot": "hat", "kit": "any", "anchorOffset": { "x": 0, "y": -40 }, "imageFile": "hat_crown.png", "rarity": "epic", "sparksPrice": 150 },
+  { "id": "weapon_staff", "slot": "weapon", "kit": "any", "anchorOffset": { "x": 14, "y": -14 }, "imageFile": "weapon_staff.png", "rarity": "rare", "sparksPrice": 90 },
+  { "id": "pet_drone", "slot": "pet", "kit": "any", "anchorOffset": { "x": -24, "y": -6 }, "imageFile": "pet_drone.png", "rarity": "rare", "sparksPrice": 90 },
+  { "id": "wings_dark", "slot": "wings", "kit": "any", "anchorOffset": { "x": 0, "y": -20 }, "imageFile": "wings_dark.png", "rarity": "epic", "sparksPrice": 160 },
+  { "id": "cape_royal", "slot": "cape", "kit": "any", "anchorOffset": { "x": 0, "y": -6 }, "imageFile": "cape_royal.png", "rarity": "common", "sparksPrice": 40 }
+]

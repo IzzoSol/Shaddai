@@ -1,0 +1,12 @@
+[
+  {
+    "id": "voxel-portrait-refine",
+    "type": "img2img",
+    "register": "pixel",
+    "input": "public/assets/kits/voxel-portrait-draft2.png",
+    "strength": 0.35,
+    "body": "same exact character, pose, silhouette, and camera angle as the input image, dark matte obsidian black armor unchanged. ADD a bright metallic gold (#e8c45c) trim stripe along every panel edge, joint, and seam that is not already there. Keep the emerald green (#00ff9c) and cyan (#5fe0ff) glow details exactly as they are. Add fine surface detail and clean edges.",
+    "size": "square_hd",
+    "out": "public/assets/kits/voxel-portrait-refined.png"
+  }
+]

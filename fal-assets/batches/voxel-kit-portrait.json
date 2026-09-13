@@ -1,0 +1,10 @@
+[
+  {
+    "id": "voxel-portrait-draft",
+    "type": "text2img",
+    "register": "pixel",
+    "body": "video game character reference sprite, voxel blocky 3D-rendered humanoid character (Minecraft or Crossy Road style), human-shaped AI agent holding a slim glowing data-tablet. Main body armor and helmet are solid matte obsidian black (#06080b), true black not olive or dark green. A bright metallic GOLD (#e8c45c) trim stripe runs along every panel edge, joint line, and seam of the armor — gold trim is clearly visible and prominent, like a knight's gold-trimmed black armor. Visor screen and chest emblem glow bright emerald green (#00ff9c). Small cyan (#5fe0ff) highlight lights on the shoulders. three-quarter elevated camera angle, full body visible, standing ready stance, flat white background, game asset",
+    "size": "square_hd",
+    "out": "public/assets/kits/voxel-portrait-draft3.png"
+  }
+]
