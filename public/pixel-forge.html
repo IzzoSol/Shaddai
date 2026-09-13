@@ -92,6 +92,9 @@
     color:var(--cyan);opacity:.82;margin-bottom:9px;display:flex;align-items:center;gap:8px}
   .clabel::after{content:"";flex:1;height:1px;
     background:linear-gradient(90deg,rgba(95,224,255,.22),transparent)}
+  .csection{font-family:"Cinzel",serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--gold);margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid rgba(232,196,92,.25)}
+  .csection:first-child{margin-top:0}
   .sw{display:flex;flex-wrap:wrap;gap:7px}
   .chip{width:23px;height:23px;border-radius:7px;cursor:pointer;border:2px solid rgba(255,255,255,.12);
     transition:transform .15s,box-shadow .15s,border-color .15s;position:relative}
@@ -182,13 +185,10 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="cust" id="cust">
+  <div class="csection">Identity</div>
   <div class="crow"><div class="clabel">Office</div><div class="styrow" id="sty-office"></div></div>
-  <div class="crow"><div class="clabel">Hat</div><div class="acc-row" id="acc-hat"></div></div>
-  <div class="crow"><div class="clabel">Weapon</div><div class="acc-row" id="acc-weapon"></div></div>
-  <div class="crow"><div class="clabel">Pet</div><div class="acc-row" id="acc-pet"></div></div>
-  <div class="crow"><div class="clabel">Wings</div><div class="acc-row" id="acc-wings"></div></div>
-  <div class="crow"><div class="clabel">Cape</div><div class="acc-row" id="acc-cape"></div></div>
-  <div class="crow"><div class="clabel">Mask</div><div class="acc-row" id="acc-mask"></div></div>
+
+  <div class="csection">Appearance</div>
   <div class="crow"><div class="clabel">Skin</div><div class="sw" id="sw-skin"></div></div>
   <div class="crow"><div class="clabel">Hair</div><div class="sw" id="sw-hair"></div></div>
   <div class="crow"><div class="clabel">Outfit</div><div class="styrow" id="sty-top"></div></div>
@@ -198,6 +198,14 @@
     <div class="styrow" id="sty-shoe" style="margin-top:6px"></div></div>
   <div class="crow"><div class="clabel">Cap</div><div class="sw" id="sw-cap"></div></div>
   <div class="crow"><div class="clabel">Extras</div><div class="toggles" id="toggles"></div></div>
+
+  <div class="csection">Accessories</div>
+  <div class="crow"><div class="clabel">Hat</div><div class="acc-row" id="acc-hat"></div></div>
+  <div class="crow"><div class="clabel">Weapon</div><div class="acc-row" id="acc-weapon"></div></div>
+  <div class="crow"><div class="clabel">Pet</div><div class="acc-row" id="acc-pet"></div></div>
+  <div class="crow"><div class="clabel">Wings</div><div class="acc-row" id="acc-wings"></div></div>
+  <div class="crow"><div class="clabel">Cape</div><div class="acc-row" id="acc-cape"></div></div>
+  <div class="crow"><div class="clabel">Mask</div><div class="acc-row" id="acc-mask"></div></div>
 </div>
 
 <div class="film" id="film"></div>
