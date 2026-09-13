@@ -12,6 +12,13 @@
  * rig fields: skin, hair, cap, shirt|hoodie|suit|jacket|dress, pants, shoe,
  *   shoeStyle(sneaker|boot|dress|heel), glasses, short, hoodUp, mohawk, robot,
  *   led, emblem, logo, tie, watch, anim('idle'|'walk'), __phase
+ *   kit('classic'|'voxel', default 'classic') — proportions/shading template,
+ *     orthogonal to every other field (skin/hair/shirt/etc still apply the same
+ *     way under any kit). 'voxel' = blockier silhouette + flatter shading; see
+ *     docs/superpowers/specs/2026-09-12-forge-character-kits-and-cosmetics-store-design.md
+ *   accessories({hat,weapon,pet,wings,mask,cape}, each a catalog id or undefined) —
+ *     image overlays drawn after the procedural rig, anchored to the same
+ *     animated coordinates as everything else (see loadCatalog()/getImg() below)
  * optional metadata (ignored by draw(), carried through JSON clone/save so it survives
  * everywhere a rig is persisted — gallery, shaddai.player, /api/operatives):
  *   office('shaddai'|'zerox'|'oracle'|'nexus'|'turtle'|'quill'|'pikadon'|undefined),
@@ -54,9 +61,10 @@ window.PixelPeople = (function () {
     else{ boxL(c,r+0.05,0.17,0.2,1.6,'#eef1f4',0+L); boxL(c,r+0.02,0.16,0.18,4,color,1.6+L,E); }
   }
   function armPart(c,r,sleeve,skinC,L,o){ o=o||{};
-    boxL(c,r,0.1,0.1,3,skinC,8+L,E);
-    if(o.short){boxL(c,r,0.1,0.1,7,skinC,11+L,E);boxL(c,r,0.11,0.11,7,sleeve,18+L,E);}
-    else boxL(c,r,0.1,0.1,13,sleeve,11+L,E);
+    const S=o.scale||1, aE=(S!==1)?{edge:true}:E;
+    boxL(c,r,0.1*S,0.1*S,3,skinC,8+L,aE);
+    if(o.short){boxL(c,r,0.1*S,0.1*S,7,skinC,11+L,aE);boxL(c,r,0.11*S,0.11*S,7,sleeve,18+L,aE);}
+    else boxL(c,r,0.1*S,0.1*S,13,sleeve,11+L,aE);
     if(o.watch){ctx.fillStyle=o.watch;const[wx,wy]=iso(c,r);ctx.fillRect(Math.round(wx)-3,Math.round(wy)-(11+L),6,2);ctx.fillStyle=shade(o.watch,0.4);ctx.fillRect(Math.round(wx)-1,Math.round(wy)-(11+L),2,2);}
   }
 
@@ -67,12 +75,16 @@ window.PixelPeople = (function () {
     const skin=rig.skin||'#f0c199', shirt=rig.shirt||'#e0662e', pants=rig.pants||'#37414f';
     const shoe=rig.shoe||'#2a2a2a', hair=rig.hair||'#3a2a1a', cap=rig.cap;
     const top=rig.suit||rig.hoodie||rig.jacket||shirt, sleeve=top;
+    const isVoxel = rig.kit === 'voxel';
+    const VS = isVoxel ? 1.45 : 1;  // voxel torso/limb width multiplier — blockier silhouette
+    const HS = isVoxel ? 1.6 : 1;   // voxel head is proportionally bigger/cubic (Minecraft-style read)
+    const VE = isVoxel ? { edge:true } : E; // flatter, harder-edged shading for voxel (see box() opts below)
     const [cx,cy]=iso(0,0);
     ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(cx,cy+3,14,6,0,0,7);ctx.fill();
-    armPart(col+0.18+str,row-0.18+str,sleeve,skin,L,{short:rig.short,watch:rig.watch});
+    armPart(col+0.18+str,row-0.18+str,sleeve,skin,L,{short:rig.short,watch:rig.watch,scale:VS});
     if(rig.dress){shoePart(col-0.02,row+0.02,'heel',shoe,L);shoePart(col+0.02,row-0.02,'heel',shoe,L);boxL(col,row,0.5,0.4,13,rig.dress,3+L,E);boxL(col,row,0.36,0.26,12,rig.dress,16+L,E);}
-    else{for(const g of [[-0.08,0.08,1],[0.08,-0.08,-1]]){const c=col+g[0]+str*g[2],r=row+g[1]+str*g[2];shoePart(c,r,rig.shoeStyle,shoe,L);boxL(c,r,0.13,0.13,6,pants,4+L,E);}
-      boxL(col,row,0.4,0.3,15,top,10+L,E);}
+    else{for(const g of [[-0.08,0.08,1],[0.08,-0.08,-1]]){const c=col+g[0]+str*g[2],r=row+g[1]+str*g[2];shoePart(c,r,rig.shoeStyle,shoe,L);boxL(c,r,0.13*VS,0.13*VS,6,pants,4+L,VE);}
+      boxL(col,row,0.4*VS,0.3*VS,15,top,10+L,isVoxel?{left:shade(top,-0.25),right:shade(top,-0.4),edge:true}:E);}
     const T=(o)=>cy-(10+o+L);
     if(rig.hoodie && !rig.hoodUp){
       boxL(col,row-0.13,0.44,0.2,11,shade(rig.hoodie,-0.05),27+L,E);
@@ -87,9 +99,9 @@ window.PixelPeople = (function () {
     else if(!rig.suit){ctx.fillStyle=shade(top,0.16);ctx.fillRect(Math.round(cx)-4,T(14),8,2);}
     if(rig.logo){ctx.strokeStyle=rig.logo;ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(cx-4,T(7));ctx.lineTo(cx-1,T(9));ctx.lineTo(cx+5,T(13));ctx.stroke();}
     if(rig.emblem){ctx.fillStyle=rig.emblem;ctx.fillRect(Math.round(cx)-3,T(8),6,6);}
-    armPart(col-0.18-str,row+0.18-str,sleeve,skin,L,{short:rig.short,watch:rig.watch2});
+    armPart(col-0.18-str,row+0.18-str,sleeve,skin,L,{short:rig.short,watch:rig.watch2,scale:VS});
     // HEAD — dead simple
-    boxL(col,row,0.46,0.37,15,skin,25+L,E);
+    boxL(col,row,0.46*HS,0.37*HS,15,skin,25+L,isVoxel?{left:shade(skin,-0.3),right:shade(skin,-0.5),edge:true}:E);
     if(rig.robot){boxL(col,row,0.48,0.4,5,rig.cap||'#9aa4ad',39+L,E);boxL(col,row,0.04,0.04,6,'#9aa4ad',44+L,E);ctx.fillStyle=rig.led||'#ff5a4d';const[ax,ay]=iso(0,0);ctx.beginPath();ctx.arc(ax,ay-(50+L),2.5,0,7);ctx.fill();}
     else if(rig.hoodUp){const hc=rig.hoodie||'#555';
       boxL(col,row-0.03,0.62,0.52,20,hc,25+L,E);                                    // hood shell
@@ -97,9 +109,9 @@ window.PixelPeople = (function () {
       ctx.fillStyle=skin; ctx.fillRect(oxr-7,oyr-(38+L),14,15);                     // flat face — BOTH sides open evenly
       ctx.fillStyle=shade(hc,-0.32);                                                // hood rim line framing the face on BOTH sides + top
       ctx.fillRect(oxr-9,oyr-(39+L),2,16); ctx.fillRect(oxr+7,oyr-(39+L),2,16); ctx.fillRect(oxr-9,oyr-(40+L),18,2);}
-    else if(cap){boxL(col,row,0.5,0.42,8,cap,38+L,E);}
+    else if(cap){boxL(col,row,0.5*HS,0.42*HS,8,cap,38+L,VE);}
     else if(rig.mohawk){boxL(col,row,0.12,0.34,11,hair,39+L,E);}
-    else{boxL(col,row,0.48,0.4,9,hair,38+L,E);}
+    else{boxL(col,row,0.48*HS,0.4*HS,9,hair,38+L,VE);}
     const fx=Math.round(cx), ey=Math.round(cy-(25+L)-8);
     if(rig.robot){ctx.fillStyle=rig.led||'#5fe0ff';ctx.fillRect(fx-6,ey,4,4);ctx.fillRect(fx+3,ey,4,4);}
     else{
