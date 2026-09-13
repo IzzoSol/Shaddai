@@ -2000,7 +2000,9 @@ app.use('/api/aura', require('./aura-routes'));
 app.use('/api/paybox', require('./paybox-routes'));
 app.use('/api/mcp-sentiment', require('./mcp-routes')); // MCP sentiment + tool counts
 app.use('/api/lesson-plan', require('./lesson-plan')); // grok-style lesson plans for agents
-app.use('/api/academy', require('./academy-routes')); // Agent Academy / Grok Training — pay agents to teach via MCP
+const _academyRoutes = require('./academy-routes'); // Agent Academy / Grok Training — pay agents to teach via MCP
+app.use('/api/academy', _academyRoutes);
+app.use('/x402/academy', _academyRoutes.paylabRouter); // merchant: sell the pay-lab lesson via x402
 // ZEROX live market data scan (GET /api/zerox/scan?symbol=<mint_or_symbol>). The
 // underlying module exports a bare helper function, so wire it as a real route
 // instead of an app.use mount (mounting the object crashed startup with

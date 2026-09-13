@@ -15,25 +15,25 @@ const router = express.Router();
 const engine = require('./lib/academy-engine');
 
 // discovery — always $0, no payment required
-router.get('/academy/catalog', (req, res) => {
+router.get('/catalog', (req, res) => {
   try { res.json(engine.academyCatalog({ query: req.query.q, provider: req.query.provider, sessionId: req.query.sessionId })); }
   catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
 // quote — dry run, $0
-router.post('/academy/quote', (req, res) => {
+router.post('/quote', (req, res) => {
   try { res.json(engine.academyQuote(req.body || {})); }
   catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
 // open a tab (payment channel)
-router.post('/academy/open_tab', (req, res) => {
+router.post('/open_tab', (req, res) => {
   try { res.json(engine.academyOpenTab(req.body || {})); }
   catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
 // spend against a tab (AURA cache + PIKADON gate)
-router.post('/academy/spend', (req, res) => {
+router.post('/spend', (req, res) => {
   try {
     const r = engine.academySpend(req.body || {});
     if (!r.success && r.humanApprovalRequired) return res.status(402).json({ error: 'humanApprovalRequired', details: r });
@@ -43,13 +43,13 @@ router.post('/academy/spend', (req, res) => {
 });
 
 // close tab + refund
-router.post('/academy/close_tab', (req, res) => {
+router.post('/close_tab', (req, res) => {
   try { res.json(engine.academyCloseTab(req.body || {})); }
   catch (e) { res.status(500).json({ error: String(e && e.message || e) }); }
 });
 
 // full lesson 01 run
-router.post('/academy/lesson01', async (req, res) => {
+router.post('/lesson01', async (req, res) => {
   try {
     const sessionId = (req.body && req.body.sessionId) || 'lesson_' + Date.now();
     const result = await engine.runLesson01(sessionId);
