@@ -30,6 +30,25 @@ window.PixelPeople = (function () {
   const TW = 84, TH = 42;
   let ctx = null, OX = 0, OY = 0;
 
+  // ── accessory catalog + image cache ──────────────────────────────────────
+  let _catalog = null, _catalogPromise = null;
+  const _imgCache = {};
+  function loadCatalog() {
+    if (_catalogPromise) return _catalogPromise;
+    _catalogPromise = fetch('/assets/accessories/catalog.json').then(r => r.json())
+      .then(list => { _catalog = {}; list.forEach(it => { _catalog[it.id] = it; }); return _catalog; })
+      .catch(() => { _catalog = {}; return _catalog; });
+    return _catalogPromise;
+  }
+  function getImg(file) {
+    if (_imgCache[file]) return _imgCache[file];
+    const img = new Image();
+    img.src = '/assets/accessories/' + file;
+    _imgCache[file] = img;
+    return img;
+  }
+  loadCatalog(); // fire on module load — accessories before the fetch resolves simply don't draw yet
+
   function shade(hex, amt) {
     const n = parseInt(hex.slice(1), 16); let r = (n>>16)&255, g = (n>>8)&255, b = n&255;
     const f = amt<0?0:255, t = Math.abs(amt);
@@ -119,6 +138,25 @@ window.PixelPeople = (function () {
       const ns=rig.nose||1; ctx.fillStyle=shade(skin,-0.18);ctx.fillRect(fx,ey+5,ns,ns);   // tiny standalone nose square (rig.nose sets size)
       ctx.fillStyle=shade(skin,-0.34);ctx.fillRect(fx-2,ey+7,4,1);
       if(rig.glasses){ctx.strokeStyle='#0e1116';ctx.lineWidth=1.4;ctx.strokeRect(fx-6,ey-1,5,5);ctx.strokeRect(fx+2,ey-1,5,5);ctx.beginPath();ctx.moveTo(fx-1,ey+1);ctx.lineTo(fx+2,ey+1);ctx.stroke();}
+    }
+    if(rig.accessories && _catalog){
+      const[ax,ay]=iso(0,0);
+      for(const slot in rig.accessories){
+        const id=rig.accessories[slot]; if(!id) continue;
+        const item=_catalog[id]; if(!item) continue;
+        const img=getImg(item.imageFile);
+        if(!img.complete||!img.naturalWidth) continue; // not loaded yet — next frame draws it
+        const ox=(item.anchorOffset&&item.anchorOffset.x)||0, oy=(item.anchorOffset&&item.anchorOffset.y)||0;
+        // ax/ay + (25+L) is the same animated head-anchor every cap/hair/eye draw above uses —
+        // accessories ride the SAME walk-bob offset as the rest of the rig, never a static offset.
+        // Source art is generated at 512-1024px; BASE_PX is a rough "fits next to a ~40px-tall
+        // rig" starting scale — item.scale (catalog field, default 1) tunes individual items
+        // (a crown reads small, a cape/wings read big) without touching this code.
+        const BASE_PX = 42, itemScale = (item.scale!=null?item.scale:1);
+        const ar = img.naturalWidth / img.naturalHeight;
+        const ih = BASE_PX * itemScale, iw = ih * ar;
+        ctx.drawImage(img, Math.round(ax+ox-iw/2), Math.round(ay-(25+L)+oy-ih/2), iw, ih);
+      }
     }
   }
 
