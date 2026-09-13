@@ -319,7 +319,6 @@
            tokenomics + hire ZEROX). */
         { id: 'pro', name: 'SIMPLE SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html',
           blurb: 'One-thumb signals — heatmap, calls, top 25 DEX, ZEROX paybox. Swipe it.' },
-        { id: 'tg',     name: 'SHADDAI TG',  accent: C.gold,    art: '/assets/nav/markets.jpg', href: '/m-signals.html', blurb: 'Calls delivered to Telegram.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
       ],
     },
