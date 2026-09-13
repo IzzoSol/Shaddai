@@ -80,6 +80,7 @@
   .tab:hover{color:var(--cyan);background:rgba(95,224,255,.05);border-left-color:rgba(95,224,255,.3)}
   .tab.on{color:var(--gold);background:linear-gradient(90deg,rgba(232,196,92,.14),rgba(232,196,92,.02));
     border-left-color:var(--gold);text-shadow:0 0 12px rgba(232,196,92,.4)}
+  .tab:active{transform:translateX(1px)}
 
   /* right customize panel */
   .cust{position:fixed;right:0;top:64px;bottom:150px;width:290px;z-index:12;padding:18px 18px 22px;
@@ -112,6 +113,7 @@
   .tg:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(95,224,255,.06)}
   .tg.on{background:var(--emerald);color:#04120b;border-color:var(--emerald);font-weight:600;
     box-shadow:0 0 14px rgba(0,255,156,.4)}
+  .tg:active,.sty:active,.acc-tile:active,.chip:active{transform:translateY(1px)}
   .styrow{display:flex;flex-wrap:wrap;gap:5px}
   .sty{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:1px;padding:5px 9px;border-radius:7px;
     border:1px solid rgba(122,135,148,.28);color:var(--muted);cursor:pointer;transition:.18s;text-transform:uppercase}
