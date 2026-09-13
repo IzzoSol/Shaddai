@@ -19,7 +19,14 @@
  * never just eats the user's Sparks.
  *
  * Body: { userId, matchId, pack, eventType, seatId, idempotencyKey }
- * Header: x-admin-token: <ADMIN_TOKEN>
+ * Header: x-admin-token: <ADMIN_TOKEN or ARCADE_SERVICE_TOKEN>
+ *
+ * Shaddai-Arcade issue #3 (PIKADON cross-service auth review): accepts a
+ * second, narrower ARCADE_SERVICE_TOKEN credential alongside the master
+ * ADMIN_TOKEN, for the same reason economy-routes.js does -- see the
+ * comment there. Provision Royale with ARCADE_SERVICE_TOKEN, not
+ * ADMIN_TOKEN, so a compromise of that separate, public-repo deploy can
+ * only reach the Sparks ledger + Lens, not the rest of the admin surface.
  */
 
 const express = require('express');
@@ -30,8 +37,17 @@ const {
 } = require('./economy-service');
 const { buildLensContract } = require('./lib/lens-rewriter');
 const videoProviders = require('./video-providers');
+const { rateLimit, timingSafeTokenMatch } = require('./auth-guard');
 
 const LENS_COST_SPARKS = 15; // docs/HALL-PHASE1-SPEC.md: spend(seat.sparks_ref, 15, 'lens:bj_clip', idemKey)
+
+function adminTokenMatches(provided) {
+  return timingSafeTokenMatch(provided, process.env.ADMIN_TOKEN)
+    || timingSafeTokenMatch(provided, process.env.ARCADE_SERVICE_TOKEN);
+}
+// A Fal call is a real paid provider hit, same reasoning as video-routes.js's
+// own generateLimit (10/min) for the exact same class of route.
+const clipLimit = rateLimit({ windowMs: 60000, max: 10 });
 
 function sendError(res, err) {
   if (err instanceof InsufficientFundsError) {
@@ -49,14 +65,13 @@ function createRouter(serviceOverride) {
   const router = express.Router();
   const svc = serviceOverride || getDefault();
 
-  router.post('/clip', async (req, res) => {
+  router.post('/clip', clipLimit, async (req, res) => {
     try {
-      const adminToken = process.env.ADMIN_TOKEN;
-      if (!adminToken) {
+      if (!process.env.ADMIN_TOKEN && !process.env.ARCADE_SERVICE_TOKEN) {
         return res.status(503).json({ ok: false, error: 'Lens disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
       }
       const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
-      if (provided !== adminToken) {
+      if (!adminTokenMatches(provided)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
       }
 
@@ -122,13 +137,12 @@ function createRouter(serviceOverride) {
   // --- GET /clip/:jobId ----------------------------------------------------
   // Thin passthrough to the fal adapter's getStatus() so a caller doesn't
   // need to know which provider served a given jobId.
-  router.get('/clip/:jobId', async (req, res) => {
+  router.get('/clip/:jobId', clipLimit, async (req, res) => {
     try {
-      const adminToken = process.env.ADMIN_TOKEN;
-      if (!adminToken) {
+      if (!process.env.ADMIN_TOKEN && !process.env.ARCADE_SERVICE_TOKEN) {
         return res.status(503).json({ ok: false, error: 'Lens disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
       }
-      if (req.get('x-admin-token') !== adminToken) {
+      if (!adminTokenMatches(req.get('x-admin-token'))) {
         return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
       }
       const fal = videoProviders.fal;

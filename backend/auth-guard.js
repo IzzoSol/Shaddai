@@ -12,7 +12,21 @@
 //                            development.
 // Flip REQUIRE_AUTH=true + set FIREBASE_SERVICE_ACCOUNT + ADMIN_TOKEN for production.
 // ============================================================================
+const crypto = require('crypto');
 const _hits = new Map(); // ip -> [epoch-ms timestamps] (sliding window)
+
+// Constant-time token compare — avoids leaking how many leading characters of
+// a secret matched via response-time side channel. Added during the Hall
+// cross-service auth review (Shaddai-Arcade issue #3) alongside
+// economy-routes.js/lens-routes.js's admin-token checks; safe to reuse
+// anywhere a caller-supplied header is compared against a server secret.
+function timingSafeTokenMatch(provided, expected) {
+  if (typeof provided !== 'string' || typeof expected !== 'string' || !expected) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false; // lengths differ -> definitely no match, no need to compare
+  return crypto.timingSafeEqual(a, b);
+}
 
 // ── Firebase lazy init ───────────────────────────────────────────────────────
 // _adminAuth is null until first call to _getAdminAuth().
@@ -294,4 +308,4 @@ async function isAdminUser(req) {
   return false;
 }
 
-module.exports = { rateLimit, softAuth, verifyFirebaseToken, requireAdmin, requireAdminUser, isAdminUser, adminEmails };
+module.exports = { rateLimit, softAuth, verifyFirebaseToken, requireAdmin, requireAdminUser, isAdminUser, adminEmails, timingSafeTokenMatch };

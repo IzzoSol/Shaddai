@@ -21,6 +21,26 @@ const {
   InsufficientFundsError,
   ValidationError
 } = require('./economy-service');
+const { rateLimit, timingSafeTokenMatch } = require('./auth-guard');
+
+// Shaddai-Arcade issue #3 (PIKADON cross-service auth review): /grant and
+// /spend used to accept ONLY the master ADMIN_TOKEN -- the same secret that
+// gates admin-routes.js, portal-admin-routes.js, telegram-routes.js, and
+// public-api-routes.js across the whole backend. Handing that single
+// master token to Royale/Shaddai-Arcade (a SEPARATE, PUBLIC-repo deploy) so
+// it could call the Sparks ledger meant a compromise of that public deploy
+// would also hand over Telegram bot control, portal admin, and the public
+// API's admin surface -- far more blast radius than "can move Sparks."
+// ARCADE_SERVICE_TOKEN is a second, narrower credential accepted here (and
+// in lens-routes.js) ONLY -- provision Royale with THIS token, not
+// ADMIN_TOKEN, so a leak there can't reach anything outside the ledger.
+// ADMIN_TOKEN still works too (existing internal tooling may already use
+// it against these two routes) -- this is additive, not a breaking change.
+function adminTokenMatches(provided) {
+  return timingSafeTokenMatch(provided, process.env.ADMIN_TOKEN)
+    || timingSafeTokenMatch(provided, process.env.ARCADE_SERVICE_TOKEN);
+}
+const moneyMoveLimit = rateLimit({ windowMs: 60000, max: 30 });
 
 function resolveUserId(req, provided) {
   if (req.user && typeof req.user.id === 'string' && req.user.id) return req.user.id;
@@ -190,14 +210,13 @@ function createRouter(serviceOverride) {
   // Guarded by ADMIN_TOKEN. Used to seed Sparks for testing the loop.
   // Body: { userId, amount, reason?, idempotencyKey }
   // Header: x-admin-token: <ADMIN_TOKEN>
-  router.post('/grant', async (req, res) => {
+  router.post('/grant', moneyMoveLimit, async (req, res) => {
     try {
-      const adminToken = process.env.ADMIN_TOKEN;
-      if (!adminToken) {
+      if (!process.env.ADMIN_TOKEN && !process.env.ARCADE_SERVICE_TOKEN) {
         return res.status(503).json({ ok: false, error: 'Admin grant disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
       }
       const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
-      if (provided !== adminToken) {
+      if (!adminTokenMatches(provided)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
       }
       const body = req.body || {};
@@ -227,14 +246,13 @@ function createRouter(serviceOverride) {
   // that review will be reviewing, not a substitute for it.
   // Body: { userId, amount, reason?, idempotencyKey }
   // Header: x-admin-token: <ADMIN_TOKEN>
-  router.post('/spend', async (req, res) => {
+  router.post('/spend', moneyMoveLimit, async (req, res) => {
     try {
-      const adminToken = process.env.ADMIN_TOKEN;
-      if (!adminToken) {
+      if (!process.env.ADMIN_TOKEN && !process.env.ARCADE_SERVICE_TOKEN) {
         return res.status(503).json({ ok: false, error: 'Admin spend disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
       }
       const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
-      if (provided !== adminToken) {
+      if (!adminTokenMatches(provided)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
       }
       const body = req.body || {};
