@@ -310,14 +310,18 @@ async function trackTick() {
       call.trail.push({ t: _now, fdv: call.curFdv, mult: call.curMult });
       // cap at 200 points (~17h at 5min intervals) to keep JSON size reasonable
       if (call.trail.length > 200) call.trail = call.trail.slice(-200);
-      // fire the LOWEST uncrossed milestone first — progressive alerts (2x, then 5x, then 10x…)
-      // Never skip straight to 5x just because the token moved fast between ticks.
+      // Fire the HIGHEST newly-crossed milestone. A token that jumps 1x -> 1000x+
+      // between two 8-min ticks used to get stuck announcing "2x WIN" forever (the
+      // lowest uncrossed level got broadcast, then every level above it was silently
+      // consumed by later ticks without ever posting — see ZCAT: peak 6,429,223x,
+      // milestones already showed [2,5,...,50] crossed but the ONLY broadcast ever
+      // sent said "2x"). Recording every crossed level still keeps the PNL card's
+      // milestone trail accurate; only the headline now reflects reality.
       if (hasRealLiq) {
-        for (const m of MILESTONES) {
-          if (call.peakMult >= m && !call.milestones.includes(m)) { hit = m; break; }   // lowest first, stop
-        }
-        if (hit) {
-          call.milestones.push(hit);   // always record the level (keeps the PNL card accurate)
+        const _newlyCrossed = MILESTONES.filter(m => call.peakMult >= m && !call.milestones.includes(m));
+        if (_newlyCrossed.length) {
+          call.milestones.push(..._newlyCrossed);
+          hit = _newlyCrossed[_newlyCrossed.length - 1];   // broadcast the highest, not the lowest
           changed = true;
           // SPACED UPDATES: a runner that pumps 2x→5x→10x→25x fast used to flood the
           // channel with back-to-back milestone posts. Record every level, but broadcast

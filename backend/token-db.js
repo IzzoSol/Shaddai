@@ -85,6 +85,49 @@ let _calls = _read(CALLS_FILE, { calls: [], features: [] });
 
 function recordOutcome(c) {
   const now = Date.now();
+  // De-dupe by mint (like pnl.recordCall's own tg-calls.json store already does).
+  // Without this, a single real call that gets recorded twice (once via
+  // pnl.recordCall()'s internal bridge, once via a pipeline's own _logFeatures()
+  // call) created TWO separate rows for the same mint. updateOutcome() below
+  // finds outcomes by `.find()` (first match only), so all future peakMult/curMult
+  // updates landed on whichever row was pushed FIRST — permanently freezing the
+  // SECOND row at peakMult:1 forever, regardless of what the token actually did.
+  // Since the two write paths often carry different feature completeness, this
+  // silently orphaned the more complete feature vector as a fake "loss" in every
+  // ZEROX learning query. Merge into the existing open row instead of pushing new.
+  const existing = _calls.calls.find(x => x.mint === c.mint && !x.closed);
+  const features = {
+    sourceCount: c.sourceCount || 1,
+    sources: c.sources || [c.source],
+    socialScore: c.socialScore || 0,
+    hasWebsite: c.hasWebsite || false,
+    hasTwitter: c.hasTwitter || false,
+    hasTelegram: c.hasTelegram || false,
+    hasDiscord: c.hasDiscord || false,
+    locked: c.locked || false,
+    top10Pct: c.top10Pct || 0,
+    insiders: c.insiders || 0,
+    bundlers: c.bundlers || false,
+    snipers: c.snipers || false,
+    rugScore: c.rugScore || 0,
+    lpPct: c.lpPct || 0,
+    holders: c.holders || 0,
+    fdvAtCall: c.entryFdv || 0,
+    volAtCall: c.vol24h || 0,
+    liqAtCall: c.liquidity || c.liq || 0,   // pnl.recordCall's bridge passes `liq`; _logFeatures passes `liquidity` — accept either
+    devPct: c.devPct || 0,
+    venue: c.venue || '',
+  };
+  if (existing) {
+    // Merge in whichever fields this write actually has data for — a later,
+    // richer write (e.g. _logFeatures after a bare pnl.recordCall bridge) fills
+    // in gaps rather than creating a second, never-updated row.
+    for (const [k, v] of Object.entries(features)) {
+      if (v !== 0 && v !== false && v !== '' && !(Array.isArray(v) && !v.length)) existing.features[k] = v;
+    }
+    _write(CALLS_FILE, _calls);
+    return;
+  }
   _calls.calls.push({
     mint: c.mint, chain: c.chain || 'solana',
     name: c.name || '', symbol: c.symbol || '',
@@ -93,28 +136,7 @@ function recordOutcome(c) {
     ts: now,
     peakMult: 1, curMult: 1, curFdv: c.entryFdv || 0,
     // feature vector (what we knew at call time)
-    features: {
-      sourceCount: c.sourceCount || 1,
-      sources: c.sources || [c.source],
-      socialScore: c.socialScore || 0,
-      hasWebsite: c.hasWebsite || false,
-      hasTwitter: c.hasTwitter || false,
-      hasTelegram: c.hasTelegram || false,
-      hasDiscord: c.hasDiscord || false,
-      locked: c.locked || false,
-      top10Pct: c.top10Pct || 0,
-      insiders: c.insiders || 0,
-      bundlers: c.bundlers || false,
-      snipers: c.snipers || false,
-      rugScore: c.rugScore || 0,
-      lpPct: c.lpPct || 0,
-      holders: c.holders || 0,
-      fdvAtCall: c.entryFdv || 0,
-      volAtCall: c.vol24h || 0,
-      liqAtCall: c.liquidity || 0,
-      devPct: c.devPct || 0,
-      venue: c.venue || '',
-    },
+    features,
     // outcome
     milestones: [],
     closed: false,
@@ -158,31 +180,32 @@ function analyzeOutcomes() {
   if (winners.length + losers.length < 3) return _learning;   // need data (lowered from 5)
 
   const patterns = {};
-  const _analyze = (feat, val, isWin) => {
+  const _analyze = (feat, val, isWin, mult) => {
     const key = feat + ':' + val;
     if (!patterns[key]) patterns[key] = { wins: 0, losses: 0, totalMult: 0, peakMults: [] };
-    if (isWin) { patterns[key].wins++; patterns[key].totalMult += 1; }
+    if (isWin) { patterns[key].wins++; patterns[key].totalMult += (Number(mult) || 1); }
     else patterns[key].losses++;
   };
 
   // ── SINGLE FEATURE ANALYSIS ────────────────────────────────────────────
   for (const w of winners) {
     if (!w.features) continue;
-    _analyze('source', w.source, true);
-    _analyze('sourceCount', Math.min(w.features.sourceCount || 1, 3), true);
-    _analyze('socialScore', Math.min(w.features.socialScore || 0, 6), true);
-    _analyze('hasWebsite', w.features.hasWebsite || false, true);
-    _analyze('hasTwitter', w.features.hasTwitter || false, true);
-    _analyze('locked', w.features.locked || false, true);
-    _analyze('top10Bucket', (w.features.top10Pct || 0) < 18 ? 'clean' : (w.features.top10Pct || 0) < 30 ? 'moderate' : 'heavy', true);
-    _analyze('fdvBucket', (w.features.fdvAtCall || 0) < 50000 ? 'micro' : (w.features.fdvAtCall || 0) < 200000 ? 'small' : 'mid', true);
-    _analyze('rugBucket', (w.features.rugScore || 0) >= 70 ? 'safe' : (w.features.rugScore || 0) >= 45 ? 'ok' : 'risky', true);
-    _analyze('bundlers', w.features.bundlers || false, true);
-    _analyze('snipers', w.features.snipers || false, true);
-    _analyze('venue', w.features.venue || 'unknown', true);
-    _analyze('lpBucket', (w.features.lpPct || 0) >= 99 ? 'full' : (w.features.lpPct || 0) >= 80 ? 'high' : (w.features.lpPct || 0) > 0 ? 'low' : 'none', true);
-    _analyze('holderBucket', (w.features.holders || 0) >= 100 ? 'many' : (w.features.holders || 0) >= 20 ? 'some' : 'few', true);
-    _analyze('liqBucket', (w.features.liqAtCall || 0) >= 10000 ? 'deep' : (w.features.liqAtCall || 0) >= 3000 ? 'ok' : 'thin', true);
+    const m = w.peakMult;   // real multiplier — was hardcoded to 1, making avgMult always 1
+    _analyze('source', w.source, true, m);
+    _analyze('sourceCount', Math.min(w.features.sourceCount || 1, 3), true, m);
+    _analyze('socialScore', Math.min(w.features.socialScore || 0, 6), true, m);
+    _analyze('hasWebsite', w.features.hasWebsite || false, true, m);
+    _analyze('hasTwitter', w.features.hasTwitter || false, true, m);
+    _analyze('locked', w.features.locked || false, true, m);
+    _analyze('top10Bucket', (w.features.top10Pct || 0) < 18 ? 'clean' : (w.features.top10Pct || 0) < 30 ? 'moderate' : 'heavy', true, m);
+    _analyze('fdvBucket', (w.features.fdvAtCall || 0) < 50000 ? 'micro' : (w.features.fdvAtCall || 0) < 200000 ? 'small' : 'mid', true, m);
+    _analyze('rugBucket', (w.features.rugScore || 0) >= 70 ? 'safe' : (w.features.rugScore || 0) >= 45 ? 'ok' : 'risky', true, m);
+    _analyze('bundlers', w.features.bundlers || false, true, m);
+    _analyze('snipers', w.features.snipers || false, true, m);
+    _analyze('venue', w.features.venue || 'unknown', true, m);
+    _analyze('lpBucket', (w.features.lpPct || 0) >= 99 ? 'full' : (w.features.lpPct || 0) >= 80 ? 'high' : (w.features.lpPct || 0) > 0 ? 'low' : 'none', true, m);
+    _analyze('holderBucket', (w.features.holders || 0) >= 100 ? 'many' : (w.features.holders || 0) >= 20 ? 'some' : 'few', true, m);
+    _analyze('liqBucket', (w.features.liqAtCall || 0) >= 10000 ? 'deep' : (w.features.liqAtCall || 0) >= 3000 ? 'ok' : 'thin', true, m);
   }
   for (const l of losers) {
     if (!l.features) continue;

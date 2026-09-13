@@ -248,7 +248,7 @@ function _isScamName(name) { return !!(name && _SCAM_NAME_RE.test(String(name)))
 // Symbol cooldown — persisted to disk so Render deploys don't reset it.
 // Prevents MODA/USOH/AORP relaunches from spamming every restart.
 const _SYM_CD_FILE = path.join(__dirname, 'data', 'tg-sym-cooldown.json');
-const _SYM_CD_TTL = 4 * 60 * 60 * 1000;  // 4h cooldown per symbol (was 2h in-memory)
+const _SYM_CD_TTL = 24 * 60 * 60 * 1000;  // 24h cooldown per symbol (was 4h — generic meme tickers like KIRBY/PEPE clones relaunch under a new mint every few hours and kept re-qualifying as "new")
 function _loadSymCooldown() {
   try { const raw = JSON.parse(fs.readFileSync(_SYM_CD_FILE, 'utf8')); const now = Date.now(); const m = new Map(); for (const [k,v] of Object.entries(raw)) { if (now - v < _SYM_CD_TTL) m.set(k, v); } return m; } catch (e) { return new Map(); }
 }
@@ -1212,7 +1212,7 @@ async function _pollOnce() {
     }
     const _boostData = _boostInfo(addr);
     const _brainTrend = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: _tFdv2 > 0 ? (Number(pair.liquidity && pair.liquidity.usd || 0) / _tFdv2 * 100) : 0, boosted: !!_boostData, volAccel: !!_accel, fdv: _tFdv2, source: 'trending' });
-    const _msg = '🔔 <b>SIGNAL</b>\n' + card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
+    const _msg = '🆕 <b>NEW SIGNAL</b>\n' + card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
     // Image priority: SHADDAI LABS branded card (FLUX bg + crisp text) > profile icon > pair image
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     let _cardBuf = null;
@@ -1475,7 +1475,7 @@ async function _pollBonded() {
     const _bondBoost = _boostInfo(mint);
     const _bondImg = (_bondProf && _bondProf.icon) || (_bondBoost && _bondBoost.icon) || (pair.info && pair.info.imageUrl) || c.imageUri || _randomBotImg();
     const _bondBtns = core.buildButtons(mint, 'solana', pair.url);
-    const _bondMsgFull = '🎓 <b>SIGNAL — BONDED</b>\n' + _bondMsg;
+    const _bondMsgFull = '🆕 <b>NEW SIGNAL — BONDED</b>\n' + _bondMsg;
     // One obvious signal: the full card as text (guaranteed), image attached when
     // available, plain-text fallback if the photo fails. No cryptic bare CA line.
     let ok = (_bondImg
@@ -1507,7 +1507,7 @@ function _preBondCard(c) {
   const replies = c.reply_count || 0;
   const mint = c.mint || '';
   return (
-    `⚡ <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — PRE-BOND\n` +
+    `🆕 <b>NEW SIGNAL</b> ⚡ <b>$${sym || name}</b>${sym && name && name !== sym ? '  ' + name : ''} — PRE-BOND\n` +
     `Still in bonding curve · approaching graduation\n` +
     `━━━━━━━━━━━━━\n` +
     (mc ? `💰 MC <b>${mc}</b>  <i>(graduation ~$69K)</i>\n` : '') +
@@ -1582,7 +1582,7 @@ async function _pollPreBonded() {
       const _preBondBrain = await _brainInsight({ fdv: Number(c.usd_market_cap) || 0, source: 'pre_bonding' });
       const _preBondMsg = card + (_preBondBrain || '');
       // CA first so trading bots can parse the address immediately
-      await core.broadcast(`<b>$${_esc(sym || c.name)}</b> — PRE-BOND ◎ SOL\n<code>${_esc(mint)}</code>`);
+      await core.broadcast(`🆕 <b>NEW SIGNAL</b> — $${_esc(sym || c.name)} — PRE-BOND ◎ SOL\n<code>${_esc(mint)}</code>`);
       const imgUrl = c.image_uri || _randomBotImg();
       const btns = core.buildButtons(mint, 'solana', 'https://pump.fun/' + mint);
       const ok = (imgUrl
@@ -1612,7 +1612,7 @@ function _poolCard(net, kind, a, addr) {
   const vol1h = _fmtUsd(a.volume_usd && a.volume_usd.h1);
   const fdv = a.fdv_usd ? _fmtUsd(a.fdv_usd) : '';
   const url = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
-  const tag = kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT';
+  const tag = kind === 'new_pools' ? '🆕 NEW SIGNAL' : '🔥 NEW SIGNAL — HOT';
   const chg = _chgStr(a.price_change_percentage && (a.price_change_percentage.h24 || a.price_change_percentage.h1));
   const age = a.pool_created_at ? _ageStr(Date.now() - new Date(a.pool_created_at).getTime()) : '';
   const volLiqRatio = (Number(a.volume_usd && a.volume_usd.h24) || 0) / Math.max(Number(a.reserve_in_usd) || 1, 1);
@@ -1953,7 +1953,7 @@ async function _pollGecko() {
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
           // CA-first so trading bots (Phanes etc.) can auto-buy before the full card lands
-          if (!cfg.recordOnly && _taddr) await core.broadcast(`<b>${_esc(a.name || kind)}</b> — ${kind === 'new_pools' ? '🆕 NEW' : '🔥 HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
+          if (!cfg.recordOnly && _taddr) await core.broadcast(`🆕 <b>NEW SIGNAL</b> — ${_esc(a.name || kind)} — ${kind === 'new_pools' ? 'NEW' : 'HOT'} ◎ SOL\n<code>${_esc(_taddr)}</code>`).catch(() => {});
           const _geckoBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: !!_isRevival, fdv, source: kind });
           const _detail = _detailBlock(rs, social, { liq, fdv, mint: _taddr || _dk, url: _u, entryPrice: Number(a.base_token_price_usd || 0), createdAt: a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0, vol24: Number(a.volume_usd && a.volume_usd.h24) || 0, vol1h: Number(a.volume_usd && a.volume_usd.h1) || 0 }) + (_geckoBrain || '');
           const ok = cfg.recordOnly ? true : (await core.broadcast(card + _detail, { buttons: core.buildButtons(_taddr || _dk, net, _u) })) > 0;
@@ -2106,7 +2106,7 @@ async function _pollHelius() {
     };
     const chartUrl = pair.url || ('https://dexscreener.com/solana/' + mint);
     // CA-first so trading bots can auto-buy before the full card lands.
-    await core.broadcast(`🧪 <b>${_esc(sym)}</b> — ${_esc(name)} ◎ SOL\n<code>${_esc(mint)}</code>`).catch(() => {});
+    await core.broadcast(`🆕 <b>NEW SIGNAL</b> — ${_esc(sym)} — ${_esc(name)} ◎ SOL\n<code>${_esc(mint)}</code>`).catch(() => {});
     const helBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, volAccel: chg >= 15, fdv, source: 'helius' });
     const card = '🔭 <b>ON-CHAIN VERIFIED</b> — Helius getAsset scan\n' + _poolCard('solana', 'helius', a, mint);
     const ok = (await core.broadcast(card + _detailBlock(rs, social, { liq, fdv, mint, url: chartUrl, entryPrice: Number(pair.priceUsd || 0), createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0, vol24: vol, vol1h: Number(pair.volume && pair.volume.h1) || 0 }) + (helBrain || ''), { buttons: core.buildButtons(mint, 'solana', chartUrl) })) > 0;
@@ -2212,7 +2212,7 @@ async function _pollBoosts() {
       const _boostAmt = Number(t.totalAmount || t.amount || 0);
       const _extra = { liq, fdv, mint, url: pair.url || '', entryPrice: Number(pair.priceUsd || 0), createdAt: pair.pairCreatedAt || 0, vol24, vol1h, websites: (pair.info && pair.info.websites) || [], socialLinks: (pair.info && pair.info.socials) || [] };
       const card =
-        `🚀 <b>$${_esc(sym)}</b>${name && name !== sym ? ` — ${_esc(name)}` : ''}\n` +
+        `🆕 <b>NEW SIGNAL</b> 🚀 <b>$${_esc(sym)}</b>${name && name !== sym ? ` — ${_esc(name)}` : ''}\n` +
         `DEX Boosted · ${_esc(String(chg1h.toFixed(0)))}% last hour\n` +
         `━━━━━━━━━━━━━\n` +
         `💰 MC  <b>${_fmtUsd(fdv)}</b>   💧 Liq  <b>${_fmtUsd(liq)}</b>\n` +
@@ -2222,7 +2222,7 @@ async function _pollBoosts() {
       const _boostBrain = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: fdv > 0 ? (liq / fdv * 100) : 0, boosted: true, volAccel: chg1h >= 10, fdv, source: 'boosted' });
       const msg = card + _detailBlock(rs, social, _extra) + _gpLabel + (_boostBrain || '');
       const imgUrl = (t.icon) || (_profData && _profData.icon) || (pair.info && pair.info.imageUrl) || '';
-      await core.broadcast(`<b>$${_esc(sym)}</b> — BOOSTED ◎ SOL\n<code>${_esc(mint)}</code>`);
+      await core.broadcast(`🆕 <b>NEW SIGNAL</b> — $${_esc(sym)} — BOOSTED ◎ SOL\n<code>${_esc(mint)}</code>`);
       const ok = (imgUrl
         ? await core.broadcastPhoto(imgUrl, msg, core.buildButtons(mint, 'solana', pair.url || ''))
         : await core.broadcast(msg, { buttons: core.buildButtons(mint, 'solana', pair.url || '') })
@@ -2231,7 +2231,7 @@ async function _pollBoosts() {
         _trackSym(sym);
         core.markAlerted(mint);
         posted++;
-        try { pnl.recordCall({ source: 'boosted', chain: 'solana', mint, name, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, liq, vol1h, vol24, topHolders: (rs && rs.topHolders) || [] }); } catch (e) {}
+        try { pnl.recordCall({ source: 'boosted', chain: 'solana', mint, name, symbol: sym, entryFdv: fdv, entryPrice: Number(pair.priceUsd || 0), holders: (rs && rs.holders) || 0, liq, vol1h, vol24, topHolders: (rs && rs.topHolders) || [], rugScore: (rs && rs.score) || 0, lpPct: (rs && rs.lp) || 0, top10Pct: (rs && rs.top10Pct) || 0, insiders: (rs && rs.insiders) || 0, bundlers: !!(rs && rs.hasBundlers), snipers: !!(rs && rs.hasSnipers), locked: !!(rs && rs.lp >= 80), venue: pair.dexId || '' }); } catch (e) {}
       }
     }
     _boostWatchSeeded = true;
