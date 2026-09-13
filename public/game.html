@@ -1733,10 +1733,23 @@ function doClaim(presetId){
   var name=(raw||'').trim().slice(0,40)||'My Command Office';
   var uid=localStorage.getItem('shd_userid')||'';
   var pre=OFFICE_PRESETS.find(function(p){return p.id===presetId;})||{accent:'#00e5a0'};
-  fetch('/api/office/claim',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':uid},body:JSON.stringify({preset:presetId,name:name})})
+  var clickedLot=_claimLot;
+  // Send the specific lot the player clicked (__lot, mirrors office-service's slot
+  // index) — the backend honors it if still open, otherwise auto-assigns a
+  // different one. Previously this wasn't sent at all: the server always
+  // auto-assigned the next sequential slot regardless of which lot you clicked,
+  // while the client just marked whatever you clicked as claimed — so your office
+  // could silently render on a different lot than the one you picked.
+  fetch('/api/office/claim',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':uid},body:JSON.stringify({preset:presetId,name:name,slot:clickedLot&&clickedLot.__lot})})
     .then(function(r){return r.json();}).then(function(d){ closeRooms();
-      if(d&&d.ok&&d.office){ var lot=_claimLot; if(lot){ lot.__unclaimed=false; lot.__source=true; lot.name='★ '+name.toUpperCase().slice(0,16); lot.accent=pre.accent; lot.roof=pre.accent; lot.glass='#8affe0'; lot.wall='#0e2a22'; }
-        toast('🏛️ Lot claimed — '+name+' is yours! Walk in to decorate & brand it.'); }
+      if(d&&d.ok&&d.office){
+        var gotSlot=d.office.slot;
+        var lot=(window.__officeLots||[]).find(function(x){return x.__lot===gotSlot;}) || clickedLot;
+        if(lot){ lot.__unclaimed=false; lot.__source=true; lot.name='★ '+name.toUpperCase().slice(0,16); lot.accent=pre.accent; lot.roof=pre.accent; lot.glass='#8affe0'; lot.wall='#0e2a22'; }
+        toast(gotSlot===(clickedLot&&clickedLot.__lot)
+          ? '🏛️ Lot claimed — '+name+' is yours! Walk in to decorate & brand it.'
+          : '🏛️ That exact lot filled up first — claimed the nearest open one instead. '+name+' is yours!');
+      }
       else { toast('Could not claim: '+((d&&d.error)||'try again')); }
     }).catch(function(){ toast('Claim failed — check your connection.'); });
 }

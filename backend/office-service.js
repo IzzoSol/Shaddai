@@ -66,6 +66,12 @@ function getOffice(userId) {
 }
 
 // Idempotent — exactly one office per user. Sign-in is enforced by the route.
+// opts.slot (optional): the specific Founders' Row lot the player clicked in the
+// world (game.html's FLOT(i) index). Honored only if it's a real, currently-open
+// slot — otherwise falls back to auto-assigning the next sequential one. Without
+// this, a player clicking lot #7 could silently be assigned an unrelated slot,
+// while the client (which just marks whatever it clicked as claimed) never finds
+// out — the office would then render on a different lot after the next refresh.
 function claimOffice(userId, opts = {}) {
   if (!userId) return null;
   const db = read();
@@ -73,7 +79,12 @@ function claimOffice(userId, opts = {}) {
     if (opts.name) { db.offices[userId].name = String(opts.name).slice(0, 48); db.offices[userId].updatedAt = new Date().toISOString(); write(db); }
     return db.offices[userId];
   }
-  const slot = db.slots || 0;
+  let slot = db.slots || 0, autoAssigned = true;
+  const requested = parseInt(opts.slot, 10);
+  if (Number.isInteger(requested) && requested >= 0 && requested < TOTAL_LOTS) {
+    const takenByOther = Object.values(db.offices).some(x => x.slot === requested);
+    if (!takenByOther) { slot = requested; autoAssigned = false; }
+  }
   const c = slotCoords(slot);
   const office = {
     officeId: 'office_' + userId,
@@ -89,7 +100,7 @@ function claimOffice(userId, opts = {}) {
     updatedAt: new Date().toISOString(),
   };
   db.offices[userId] = office;
-  db.slots = slot + 1;
+  if (autoAssigned) db.slots = slot + 1;
   write(db);
   return office;
 }

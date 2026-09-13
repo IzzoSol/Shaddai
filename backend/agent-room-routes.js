@@ -77,7 +77,9 @@ router.get('/api/office/:userId', (req, res) => {
 // Claim your one office — SIGN-IN REQUIRED (signed-in is enough for now; verify later).
 router.post('/api/office/claim', softAuth, json, (req, res) => {
   if (!req.userId) return res.status(401).json({ error: 'sign in to claim your office', needSignIn: true });
-  const o = office.claimOffice(req.userId, { name: (req.body && req.body.name), verified: true });
+  // slot: the specific Founders' Row lot clicked in the world (game.html's FLOT(i)
+  // index) — honored if open, otherwise office-service falls back to auto-assign.
+  const o = office.claimOffice(req.userId, { name: (req.body && req.body.name), slot: (req.body && req.body.slot), verified: true });
   res.json({ ok: true, office: o, claimed: true });
 });
 
