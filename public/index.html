@@ -233,7 +233,7 @@
   </div></div>
 </div>
 <div id="shdGuestBadge" onclick="shdGate.show()" title="You're a guest — click to sign in and save your work">● GUEST · not saved</div>
-<div id="shdGuestNudge"><span>◈ You're in guest mode — <b style="color:#ffcf4a">sign in</b> to unlock Office, AURA, Gallery &amp; Treasury and save your work.</span><button onclick="shdGate.show()">Sign in →</button><button class="nx" onclick="document.getElementById('shdGuestNudge').classList.remove('on')">Not now</button></div>
+<div id="shdGuestNudge"><span id="shdGuestNudgeTxt">◈ You're in guest mode — <b style="color:#ffcf4a">sign in</b> to unlock Office, AURA, Gallery &amp; Treasury and save your work.</span><button onclick="shdGate.show()">Sign in →</button><button class="nx" onclick="document.getElementById('shdGuestNudge').classList.remove('on')">Not now</button></div>
 <script>
 (function(){
   function gate(){ return document.getElementById('shdAuthGate'); }
@@ -352,12 +352,27 @@
     var locked = !isDev() && guest;
     var nudge=document.getElementById('shdGuestNudge');
     if (nudge) nudge.classList.toggle('on', locked && !gateShownOnce && !signedIn());
+    var nudgeTxt=document.getElementById('shdGuestNudgeTxt');
+    if (nudgeTxt && locked){
+      var left=Math.max(0, GUEST_FREE_ACTIONS-guestActionsUsed());
+      nudgeTxt.innerHTML = left>0
+        ? ('◈ Guest mode — <b style="color:#ffcf4a">'+left+' free action'+(left===1?'':'s')+' left</b> on Office, AURA, Gallery &amp; Treasury before you\'ll need to sign in.')
+        : '◈ Free guest actions used up — <b style="color:#ffcf4a">sign in</b> to keep going and save your work.';
+    }
     document.querySelectorAll('[data-guest-lock]').forEach(function(el){
       if (locked){
         el.classList.add('shd-guest-locked');
         if (!el.getAttribute('data-guest-lock-wired')){
           el.setAttribute('data-guest-lock-wired','1');
           el.addEventListener('click',function(ev){
+            // Guests get 2 free actions on ANY account-scoped feature (not 2 per
+            // feature) before the hard gate — a taste of the product, then convert.
+            var used=guestActionsUsed();
+            if (used < GUEST_FREE_ACTIONS){
+              bumpGuestActions();
+              apply();
+              return; // let the click through normally — no preventDefault
+            }
             ev.preventDefault(); ev.stopPropagation();
             showGate(this.getAttribute('data-guest-lock')||'this feature');
           }, true);
@@ -367,6 +382,9 @@
       }
     });
   }
+  var GUEST_FREE_ACTIONS=2, GUEST_ACTIONS_KEY='shd_guest_actions_used';
+  function guestActionsUsed(){ try{ return parseInt(sessionStorage.getItem(GUEST_ACTIONS_KEY),10)||0; }catch(e){ return 0; } }
+  function bumpGuestActions(){ try{ sessionStorage.setItem(GUEST_ACTIONS_KEY, String(guestActionsUsed()+1)); }catch(e){} }
   window.shdRenderGuestGate=apply;
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(apply,1100); });
   else setTimeout(apply,1100);
