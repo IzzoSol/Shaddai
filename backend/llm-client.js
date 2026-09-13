@@ -30,7 +30,12 @@ const pool = require('./key-pool');
 // ─── Default models per provider ─────────────────────────────────────────────
 const DEFAULTS = {
   ollama:      { model: process.env.OLLAMA_MODEL      || 'llama3.2:1b' },
-  groq:        { model: process.env.GROQ_MODEL        || 'llama-3.1-8b-instant' },
+  // llama-3.1-8b-instant was decommissioned by Groq (confirmed via their live
+  // /v1/models list, 2026-09-13 — every request 404'd with model_not_found,
+  // which silently degraded every RAG-brain answer to a raw-document fallback).
+  // groq/compound-mini is direct-answer (no hidden reasoning field to unwrap,
+  // unlike openai/gpt-oss-20b) and verified working against the real API.
+  groq:        { model: process.env.GROQ_MODEL        || 'groq/compound-mini' },
   openrouter:  { model: process.env.OPENROUTER_MODEL  || 'meta-llama/llama-3.1-8b-instruct:free' },
   anthropic:   { model: process.env.ANTHROPIC_MODEL   || 'claude-haiku-4-5-20251001' },
   openai:      { model: process.env.OPENAI_MODEL      || 'gpt-4o-mini' }
