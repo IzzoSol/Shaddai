@@ -71,6 +71,42 @@
       P(c, s, 5, 3, 6, 9, '#3a2f1a'); P(c, s, 6, 4, 4, 7, '#ffcf5a');     // frame + glow
       P(c, s, 7, 5, 2, 4, '#fff2b0');                                     // flame core
       P(c, s, 5, 12, 6, 1, '#8a6a2a');
+    },
+    sofa: function (c, s) {                                    // cozy 2-seat sofa
+      P(c, s, 2, 8, 12, 5, '#3a6ea5'); P(c, s, 2, 8, 12, 1, '#6fa0d8');    // seat cushion + highlight
+      P(c, s, 2, 4, 12, 4, '#2c527c'); P(c, s, 2, 4, 12, 1, '#3a6ea5');    // backrest
+      P(c, s, 1, 6, 2, 7, '#2c527c'); P(c, s, 13, 6, 2, 7, '#2c527c');     // armrests
+      P(c, s, 3, 13, 2, 2, '#4a3018'); P(c, s, 11, 13, 2, 2, '#4a3018');   // legs
+    },
+    tv: function (c, s) {                                      // flatscreen on a stand
+      P(c, s, 2, 2, 12, 8, '#15151c'); P(c, s, 3, 3, 10, 6, '#5fe0ff');    // frame + glowing screen
+      P(c, s, 3, 3, 10, 1, '#aef0ff');                                     // screen glare
+      P(c, s, 7, 10, 2, 2, '#3a3a42'); P(c, s, 5, 12, 6, 1, '#2a2a30');    // stand + base
+    },
+    bed: function (c, s) {                                     // cozy bed
+      P(c, s, 1, 9, 14, 5, '#8a5a3a'); P(c, s, 1, 9, 14, 1, '#a06a44');    // frame + edge
+      P(c, s, 2, 6, 12, 4, '#e8e0d0'); P(c, s, 2, 6, 12, 1, '#fffaf0');    // mattress + highlight
+      P(c, s, 2, 4, 4, 3, '#f0a83a'); P(c, s, 2, 4, 4, 1, '#ffcf6a');      // pillow
+      P(c, s, 1, 13, 2, 2, '#4a3018'); P(c, s, 13, 13, 2, 2, '#4a3018');   // legs
+    },
+    hplant: function (c, s) {                                  // potted plant
+      P(c, s, 6, 10, 4, 4, '#a05a2a'); P(c, s, 6, 10, 4, 1, '#c07a3a');    // pot
+      P(c, s, 7, 2, 2, 9, '#2a7a3a');                                      // stem
+      P(c, s, 4, 2, 3, 4, '#3a9a4a'); P(c, s, 9, 3, 3, 4, '#3a9a4a'); P(c, s, 6, 0, 4, 3, '#4aba5a'); // leaves
+    },
+    hlamp: function (c, s) {                                   // floor lamp
+      P(c, s, 5, 2, 6, 5, '#e8c45c'); P(c, s, 5, 2, 6, 1, '#ffe38a');      // shade + glow rim
+      P(c, s, 7, 7, 2, 7, '#5a5a62');                                      // pole
+      P(c, s, 4, 14, 8, 1, '#3a3a42');                                     // base
+    },
+    rug: function (c, s) {                                     // patterned floor rug
+      P(c, s, 1, 5, 14, 6, '#7a2030'); P(c, s, 1, 5, 14, 1, '#9a3a48');    // rug body + top edge
+      P(c, s, 3, 7, 10, 2, '#e8c45c');                                     // gold stripe
+      P(c, s, 1, 5, 14, 1, '#e8c45c'); P(c, s, 1, 10, 14, 1, '#e8c45c');   // border trim
+    },
+    art: function (c, s) {                                     // framed painting
+      P(c, s, 3, 2, 10, 12, '#6a4a2a');                                    // frame
+      P(c, s, 4, 3, 8, 10, '#2f6fe8'); P(c, s, 5, 8, 3, 4, '#3a9a4a'); P(c, s, 9, 4, 2, 3, '#e8c45c'); // canvas scene
     }
   };
   // shared aliases for tool ids the game uses

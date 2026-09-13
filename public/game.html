@@ -1491,7 +1491,7 @@ function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(money<it.
 function openStore(){ if(state==='jobs')return; state='store'; const el=document.getElementById('store');
   let h='<h1>🛒 <b>General Store</b></h1><div class="sub" style="margin-bottom:12px">💵 <b style="color:#e8c45c">'+money+'</b> · weapons · tools · home goods</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
   for(const it of STORE){ const owned=inv[it.id]||0, can=money>=it.price;
-    h+='<div class="rcard" style="min-height:104px;background:linear-gradient(150deg,#1a2233,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+it.ico+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+it.cat+(owned?' · own '+owned:'')+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="buy(\''+it.id+'\')">💵 '+it.price+'</button></div>'; }
+    h+='<div class="rcard" style="min-height:104px;background:linear-gradient(150deg,#1a2233,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+itemIcon(it.id,30,it.ico)+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+it.cat+(owned?' · own '+owned:'')+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="buy(\''+it.id+'\')">💵 '+it.price+'</button></div>'; }
   h+='</div><div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openInv()">🎒 Inventory</button><button onclick="closePanel()">Close</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); document.getElementById('inv').classList.add('hide'); }
 // Inventory is unified into the RPG Backpack (I key / Bag button). openInv now opens it.
@@ -1505,7 +1505,7 @@ function bagCount(id){ return (inv[id]||0)+(FISH.find(x=>x.id===id)?(fish[id]||0
 function openStorage(){ storageOpen=true; const el=document.getElementById('storage'); if(!el)return;
   const bag=[...Object.keys(inv).filter(k=>inv[k]>0), ...Object.keys(fish).filter(k=>fish[k]>0)];
   const st=Object.keys(stash).filter(k=>stash[k]>0);
-  const cell=(id,cnt,btn,fn)=>{ const m=itemMeta(id); return '<div class="rcard" style="min-height:74px;background:#141a26;cursor:pointer;color:#eaf3fb" onclick="'+fn+'(\''+id+'\')"><div style="font-size:22px">'+m.ico+'</div><div class="rnm" style="font-size:12px">'+m.name+'</div><small>×'+cnt+' '+btn+'</small></div>'; };
+  const cell=(id,cnt,btn,fn)=>{ const m=itemMeta(id); return '<div class="rcard" style="min-height:74px;background:#141a26;cursor:pointer;color:#eaf3fb" onclick="'+fn+'(\''+id+'\')"><div style="font-size:22px">'+itemIcon(id,26,m.ico)+'</div><div class="rnm" style="font-size:12px">'+m.name+'</div><small>×'+cnt+' '+btn+'</small></div>'; };
   let h='<h1>📦 <b>Home Storage</b></h1><div class="sub" style="margin-bottom:10px">Click an item to move it. Stored items are safe here.</div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
   h+='<div><div class="sub" style="margin-bottom:6px">🎒 Your Bag →</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(94px,1fr))">'+(bag.length?bag.map(k=>cell(k,(inv[k]||fish[k]),'▸ store','toStash')).join(''):'<small style="opacity:.6">bag empty</small>')+'</div></div>';
