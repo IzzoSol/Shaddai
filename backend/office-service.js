@@ -25,6 +25,20 @@ const PRESETS = [
 ];
 const VISIBILITIES = ['private', 'public-showroom', 'hireable-studio'];
 
+// Every office used the same flat 'office' interior regardless of which exterior
+// preset the owner picked at claim time — the room a visitor actually WALKS INTO
+// looked identical no matter whose lot it was. game.html's ROOM_THEMES (10 wall/
+// floor/tint palettes) already existed but only ever applied via a *viewer's own*
+// localStorage setting, never persisted per-office or shown to anyone else. Give
+// every preset a sensibly-matched default theme so interiors vary out of the box;
+// updateOffice() below lets the owner override it, and it's THAT value (not the
+// visitor's own device setting) that now travels with the office everywhere.
+const PRESET_THEME = {
+  'command-loft': 'emerald', 'obsidian-hq': 'violet', 'neon-studio': 'cyber',
+  'gold-atrium': 'gold', 'terminal-bay': 'ocean', 'crimson-forge': 'ember',
+};
+const THEME_IDS = ['obsidian','emerald','violet','sunset','cyber','ivory','gold','rose','ocean','ember'];
+
 function read() { try { return JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch (e) { return { offices: {}, slots: 0 }; } }
 function write(d) { try { fs.writeFileSync(STORE, JSON.stringify(d, null, 2)); } catch (e) {} }
 
@@ -95,6 +109,7 @@ function claimOffice(userId, opts = {}) {
     cityCoords: c,
     visibility: opts.visibility || 'private',   // private | public-showroom | hireable-studio
     preset: opts.preset || 'command-loft',       // one of PRESETS[].id
+    theme: THEME_IDS.includes(opts.theme) ? opts.theme : (PRESET_THEME[opts.preset] || 'obsidian'),
     verified: !!opts.verified,                   // signed-in now; email/wallet verify later
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -114,6 +129,7 @@ function updateOffice(userId, patch = {}) {
   if (patch.name != null) o.name = String(patch.name).slice(0, 48);
   if (patch.preset != null && PRESETS.some(p => p.id === patch.preset)) o.preset = patch.preset;
   if (patch.visibility != null && VISIBILITIES.includes(patch.visibility)) o.visibility = patch.visibility;
+  if (patch.theme != null && THEME_IDS.includes(patch.theme)) o.theme = patch.theme;
   o.updatedAt = new Date().toISOString();
   write(db);
   return o;
@@ -169,6 +185,7 @@ function cityOffices() {
   return Object.values(db.offices).map(o => ({
     officeId: o.officeId, ownerUserId: o.ownerUserId, name: o.name,
     slot: o.slot, cityCoords: o.cityCoords, visibility: o.visibility, preset: o.preset || 'command-loft',
+    theme: o.theme || PRESET_THEME[o.preset || 'command-loft'] || 'obsidian',
   }));
 }
 

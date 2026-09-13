@@ -505,10 +505,17 @@ function genWorld(rid){
         props.push(p); lots.push(p);
       }
       window.__officeLots=lots;
-      // paint the claimed offices (gold) from the live registry
+      // Paint each claimed office using ITS OWN owner's chosen preset — previously
+      // every claimed lot on the city map rendered with the same hardcoded gold
+      // roof/purple glass regardless of what the owner actually picked at claim
+      // time, so every office in the world looked identical from the outside.
+      // p.__theme carries the owner's room theme through to enterInterior() so
+      // the INSIDE varies too, not just the exterior paint.
       fetch('/api/city/offices').then(r=>r.json()).then(d=>{ const list=(d&&d.offices)||[]; list.forEach(o=>{
         const p=lots.find(x=>x.__lot===o.slot); if(!p) return;
-        p.__unclaimed=false; p.name=(o.name||'Office').toUpperCase().slice(0,18); p.wall='#1b2440'; p.roof='#e8c45c'; p.glass='#c9a6ff'; p.accent='#e8c45c';
+        const pre=OFFICE_PRESETS.find(x=>x.id===o.preset)||OFFICE_PRESETS[0];
+        p.__unclaimed=false; p.name=(o.name||'Office').toUpperCase().slice(0,18);
+        p.accent=pre.accent; p.roof=pre.accent; p.glass='#8affe0'; p.wall='#0e2a22'; p.__theme=o.theme; p.__owner=o.ownerUserId;
       }); }).catch(()=>{});
       // highlight + warp to MY office (emerald "Source"), when embedded with a uid
       if(window.OFFICE_EMBED && window.OFFICE_UID){
@@ -993,7 +1000,13 @@ function refreshIntActions(){ const ia=document.getElementById('intActions'); if
   else if(interiorType==='hub') b='<button onclick="openMarket()">🤝 Grand Bazaar</button><button onclick="openHubRooms()">🏛️ Pro Rooms</button>';
   if(b){ ia.innerHTML=b; ia.classList.remove('hide'); } else ia.classList.add('hide'); }
 function enterInterior(b){ roomTheme=null; state='interior'; inInterior=b; interiorType=interiorKindFor(b);
-  if(interiorType==='office'){ try{ var _ot=localStorage.getItem('shaddai.officeTheme'); if(_ot) roomTheme=themeById(_ot); }catch(e){} }
+  if(interiorType==='office'){
+    // b.__theme is the OWNER's real saved theme (from /api/city/offices) — every
+    // office used to render identically because this only ever read the
+    // *visitor's own* localStorage setting, regardless of whose lot it was.
+    if(b.__theme){ roomTheme=themeById(b.__theme); }
+    else{ try{ var _ot=localStorage.getItem('shaddai.officeTheme'); if(_ot) roomTheme=themeById(_ot); }catch(e){} }
+  }
   buildInterior(interiorType);
   player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
   const pr=document.getElementById('prompt'); pr.classList.remove('hide');
@@ -1640,7 +1653,19 @@ function themeById(id){ return ROOM_THEMES.find(t=>t.id===id)||ROOM_THEMES[0]; }
 function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; const raw=prompt('Rename room:', r.name||''); if(raw===null)return; r.name=(raw||'').trim().slice(0,24)||r.name; saveRooms(rooms); const rp=document.getElementById('roomsPanel'); if(rp&&!rp.classList.contains('hide'))openRooms(); if(inInterior&&inInterior.__customRoom&&inInterior.roomId===id){ inInterior.name=r.name; const pr=document.getElementById('prompt'); if(pr)pr.textContent='🏠 '+r.name+' — WASD to walk · Decorate it · reach the door to leave'; } }
 function setRoomTheme(themeId){ roomTheme=themeById(themeId);
   if(inInterior&&inInterior.__customRoom){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===inInterior.roomId); if(r){ r.theme=themeId; saveRooms(rooms); } }
-  else if(interiorType==='office'){ try{ localStorage.setItem('shaddai.officeTheme',themeId); }catch(e){} }
+  else if(interiorType==='office'){
+    try{ localStorage.setItem('shaddai.officeTheme',themeId); }catch(e){}
+    // Persist to the office record itself (not just this device) — but only when
+    // this is genuinely MY office. Previously the theme lived only in this
+    // browser's localStorage, so nobody else who walked in ever saw it; without
+    // this ownership check, decorating while visiting someone else's lot would
+    // just silently repaint *my* office elsewhere instead (harmless but
+    // confusing — PATCH /api/office always targets the caller's own record).
+    const uid=localStorage.getItem('shd_userid')||'';
+    const isMine=!inInterior||!inInterior.__owner||inInterior.__owner===uid;
+    if(isMine) fetch('/api/office',{method:'PATCH',headers:{'Content-Type':'application/json','x-user-id':uid},body:JSON.stringify({theme:themeId})}).catch(function(){});
+    if(inInterior) inInterior.__theme=themeId;
+  }
   try{toast('🖌️ '+roomTheme.name);}catch(_){} }
 function openRoomTheme(){ const el=document.getElementById('roomsPanel'); if(!el)return;
   var isRoom=inInterior&&inInterior.__customRoom, isOffice=(interiorType==='office'); if(!isRoom&&!isOffice)return;
