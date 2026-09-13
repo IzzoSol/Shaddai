@@ -211,6 +211,44 @@ function createRouter(serviceOverride) {
     }
   });
 
+  // --- POST /spend  (ADMIN/SERVER-TO-SERVER only) -------------------------
+  // Shaddai-Arcade issue #1: Sparks was only reachable via in-process
+  // require() inside this backend. A separate deploy (Royale/Arcade) needs
+  // it over HTTP for buy-ins/payouts/rake -- grant() and getBalance() (via
+  // GET /balance) already existed here; spend() was the one missing leg of
+  // the spend/grant/getBalance trio the Hall spec asks for.
+  //
+  // Same gate as /grant, deliberately: fails closed (503) if ADMIN_TOKEN is
+  // unset, in every environment, not just production -- this is a
+  // server-to-server credential (see docs/HALL-PHASE1-SPEC.md's own note:
+  // "the admin key must never reach a browser"); PIKADON review (Arcade
+  // issue #3) covers the actual cross-service key custody before this ships
+  // for real traffic -- this route itself is the safe, tested primitive
+  // that review will be reviewing, not a substitute for it.
+  // Body: { userId, amount, reason?, idempotencyKey }
+  // Header: x-admin-token: <ADMIN_TOKEN>
+  router.post('/spend', async (req, res) => {
+    try {
+      const adminToken = process.env.ADMIN_TOKEN;
+      if (!adminToken) {
+        return res.status(503).json({ ok: false, error: 'Admin spend disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
+      }
+      const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
+      if (provided !== adminToken) {
+        return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
+      }
+      const body = req.body || {};
+      const { userId, amount, idempotencyKey } = body;
+      const reason = body.reason || 'admin_spend';
+      // Service-layer validation gives clean 400s for bad input;
+      // InsufficientFundsError -> sendError() maps this to a clean 402.
+      const result = await svc.spend(userId, amount, reason, idempotencyKey);
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  });
+
   return router;
 }
 
