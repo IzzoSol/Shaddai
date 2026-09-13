@@ -516,7 +516,7 @@ function frame(t){
   px.save(); px.fillStyle='rgba(0,0,0,0.4)'; px.beginPath();
   px.ellipse(stageCx,feetY+6,radius*0.42,radius*0.42*0.28,0,0,6.28); px.fill(); px.restore();
   // character
-  const scale=Math.min(9, H/70);
+  const scale=Math.min(3.5, H/150);
   PP.draw(px, rig, stageCx, feetY, scale, t);
   requestAnimationFrame(frame);
 }
