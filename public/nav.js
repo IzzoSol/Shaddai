@@ -46,18 +46,13 @@
   '.bar{ position:fixed; top:0; left:0; right:0; z-index:80; display:flex; align-items:center; justify-content:space-between;',
   '  padding:14px var(--gutter); font-family:var(--f-hud); font-size:11px; font-weight:500; letter-spacing:.26em; text-transform:uppercase; color:var(--ink-soft);',
   '  background:linear-gradient(180deg, rgba(6,8,11,.92), rgba(6,8,11,.55) 60%, rgba(6,8,11,0)); }',
-  '.bar .mark, .bar nav.mega .pillar, .bar .menuBtn, .bar .corner{ opacity:0; animation:barIn .7s var(--ease) forwards; }',
-  '.bar .mark{ animation-delay:.05s; }',
-  '.bar nav.mega .pillar:nth-child(1){ animation-delay:.16s; }',
-  '.bar nav.mega .pillar:nth-child(2){ animation-delay:.20s; }',
-  '.bar nav.mega .pillar:nth-child(3){ animation-delay:.24s; }',
-  '.bar nav.mega .pillar:nth-child(4){ animation-delay:.28s; }',
-  '.bar nav.mega .pillar:nth-child(5){ animation-delay:.32s; }',
-  '.bar nav.mega .pillar:nth-child(6){ animation-delay:.36s; }',
-  '.bar nav.mega .pillar:nth-child(7){ animation-delay:.40s; }',
-  '.bar nav.mega .pillar:nth-child(8){ animation-delay:.44s; }',
-  '.bar .menuBtn{ animation-delay:.2s; } .bar .corner{ animation-delay:.5s; }',
-  '@keyframes barIn{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }',
+  /* This nav is reused as a plain utility header on 7 app-ish pages (Bazaar, Agents,
+     Create, Play, AURA, etc.) — the home.html hero has its own separate inline nav
+     with its own cinematic entrance. A staggered per-pillar fade-in (was up to 1.1s
+     end to end) read as the whole bar "glitching in" piece by piece on every visit
+     to these utility pages, especially on a slow load. One quick, uniform fade instead. */
+  '.bar .mark, .bar nav.mega .pillar, .bar .menuBtn, .bar .corner{ opacity:0; animation:barIn .25s var(--ease) forwards; }',
+  '@keyframes barIn{ from{ opacity:0; } to{ opacity:1; } }',
   '.bar .mark{ color:var(--ink); letter-spacing:.30em; font-weight:700; font-family:var(--f-display); }',
   '.bar .mark b{ color:var(--emerald); font-weight:700; }',
   /* MEGA-NAV */
