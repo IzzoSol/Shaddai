@@ -74,7 +74,7 @@ function create(rec = {}) {
     brain: rec.brain || { tier: 'free', brainId: 'ollama-local', persona: '' },
     tools: rec.tools || [],
     room: rec.room || { theme: 'neon-loft', scene: null, wearablesLook: rec.look || null },
-    inventory: rec.inventory || { files: [], collectables: [] },
+    inventory: rec.inventory || { files: [], collectables: [], cosmetics: [] },
     economy: rec.economy || { auraEarned: 0, creditsSpent: 0, jobsDone: 0, earnings: 0 },
     stats: computeStats(rec.rarity || 'common', rec.tools || []),
     createdAt: now, updatedAt: now,
