@@ -125,13 +125,6 @@
   .acc-tile img{width:36px;height:36px;object-fit:contain;display:block;margin:0 auto 3px}
   .acc-tile .price{color:var(--gold);letter-spacing:.5px}
   .acc-tile .owned{color:var(--emerald)}
-  .char-row{display:flex;flex-wrap:wrap;gap:8px}
-  .char-tile{width:66px;font-family:"IBM Plex Mono",monospace;font-size:9px;text-align:center;cursor:pointer;
-    border:1px solid rgba(122,135,148,.28);border-radius:9px;padding:5px 4px 6px;transition:.18s;color:var(--muted);
-    background:rgba(10,14,20,.4);text-transform:uppercase;letter-spacing:.5px}
-  .char-tile:hover{border-color:var(--cyan)}
-  .char-tile.on{border-color:var(--gold);box-shadow:0 0 12px rgba(232,196,92,.3)}
-  .char-tile img{width:56px;height:56px;object-fit:contain;display:block;margin:0 auto 4px}
 
   /* bottom: filmstrip + confirm */
   .film{position:fixed;left:0;right:0;bottom:66px;height:84px;z-index:14;display:flex;align-items:center;
@@ -189,8 +182,6 @@
 <div class="tabs" id="tabs"></div>
 
 <div class="cust" id="cust">
-  <div class="crow"><div class="clabel">Character</div><div class="char-row" id="char-row"></div></div>
-  <div class="crow"><div class="clabel">Kit</div><div class="styrow" id="sty-kit"></div></div>
   <div class="crow"><div class="clabel">Office</div><div class="styrow" id="sty-office"></div></div>
   <div class="crow"><div class="clabel">Hat</div><div class="acc-row" id="acc-hat"></div></div>
   <div class="crow"><div class="clabel">Weapon</div><div class="acc-row" id="acc-weapon"></div></div>
@@ -246,31 +237,6 @@ const OFFICES=[
   {id:'zerox',   label:'ZEROX',   accent:'#00c8ff'},
   {id:'pikadon', label:'PIKADON', accent:'#ff5a4d'},
 ];
-const KITS=[
-  {id:'classic',   label:'Classic',   available:true},
-  {id:'voxel',     label:'Voxel',     available:true},
-  {id:'sentinel',  label:'Sentinel',  available:false},
-  {id:'comic',     label:'Comic',     available:false},
-  {id:'chibi',     label:'Chibi',     available:false},
-  {id:'archivist', label:'Archivist', available:false},
-];
-const CHARACTERS=[
-  // The 7 real SHADDAI agents, in their locked identity colors (docs/SHADDAI_HALL_MASTER_BUILD_BIBLE.md)
-  {id:'agent-shaddai', label:'Shaddai',  file:'agent-shaddai.png', accent:'#e8c45c'},
-  {id:'agent-oracle',  label:'Oracle',   file:'agent-oracle.png',  accent:'#8b7bf0'},
-  {id:'agent-quill',   label:'Quill',    file:'agent-quill.png',   accent:'#5fe0ff'},
-  {id:'agent-turtle',  label:'Turtle',   file:'agent-turtle.png',  accent:'#00ff9c'},
-  {id:'agent-nexus',   label:'Nexus',    file:'agent-nexus.png',   accent:'#87909c'},
-  {id:'agent-zerox',   label:'Zerox',    file:'agent-zerox.png',   accent:'#00c8ff'},
-  {id:'agent-pikadon', label:'Pikadon',  file:'agent-pikadon.png', accent:'#ff5a4d'},
-  // Fantasy archetypes, for a player-created traveler rather than an agent
-  {id:'warrior',  label:'Warrior',  file:'warrior.png'},
-  {id:'explorer', label:'Explorer', file:'explorer.png'},
-  {id:'mystic',   label:'Mystic',   file:'mystic.png'},
-  {id:'engineer', label:'Engineer', file:'engineer.png'},
-  {id:'scout',    label:'Scout',    file:'scout.png'},
-];
-
 // ---- working rig ----
 let rig=JSON.parse(JSON.stringify(PP.PRESETS[1].rig)); rig.anim='idle';
 function topField(){ for(const f of ['suit','hoodie','jacket','dress']) if(rig[f]) return f; return 'shirt'; }
@@ -336,49 +302,6 @@ function refreshOfficeRow(){
   });
 }
 
-function buildCharRow(){
-  const host=document.getElementById('char-row'); if(!host) return; host.innerHTML='';
-  const none=document.createElement('div'); none.className='char-tile'; none.textContent='Classic rig'; none.dataset.char='';
-  none.onclick=()=>{ delete rig.spriteToken; syncUI(); };
-  host.appendChild(none);
-  CHARACTERS.forEach(c=>{
-    const t=document.createElement('div'); t.className='char-tile'; t.dataset.char=c.id; t.textContent=c.label;
-    if(c.accent) t.style.borderColor=c.accent+'88';
-    const img=document.createElement('img'); img.src='/assets/kits/characters/'+c.file; img.alt=c.label;
-    t.insertBefore(img, t.firstChild);
-    t.onclick=()=>{ rig.spriteToken=c.file; syncUI(); };
-    host.appendChild(t);
-  });
-  refreshCharRow();
-}
-function refreshCharRow(){
-  const host=document.getElementById('char-row'); if(!host) return;
-  [...host.children].forEach(t=>{
-    const c=CHARACTERS.find(x=>x.id===t.dataset.char);
-    const on = t.dataset.char==='' ? !rig.spriteToken : (rig.spriteToken===c.file);
-    t.classList.toggle('on', on);
-    // an inline accent border (set once in buildCharRow) beats the .on class's CSS border-color by
-    // specificity, so the gold "selected" ring would never show on agent tiles — use a box-shadow
-    // instead, which layers on top regardless of the inline border color.
-    t.style.boxShadow = on ? '0 0 0 2px '+(c&&c.accent?c.accent:'#e8c45c')+', 0 0 12px rgba(232,196,92,.3)' : '';
-  });
-}
-function buildKitRow(){
-  const host=document.getElementById('sty-kit'); if(!host) return; host.innerHTML='';
-  KITS.forEach(k=>{
-    const b=document.createElement('div'); b.className='sty'; b.dataset.kit=k.id;
-    b.textContent=k.available?k.label:(k.label+' (soon)');
-    if(!k.available){ b.style.opacity='.45'; b.style.cursor='default'; }
-    else b.onclick=()=>{ rig.kit=(rig.kit===k.id?undefined:k.id); if(rig.kit===undefined) delete rig.kit; syncUI(); };
-    host.appendChild(b);
-  });
-  refreshKitRow();
-}
-function refreshKitRow(){
-  const host=document.getElementById('sty-kit'); if(!host) return;
-  [...host.children].forEach(b=>b.classList.toggle('on', b.dataset.kit===(rig.kit||'classic')));
-}
-
 // ---- cosmetics store: catalog + per-slot accessory browser ----
 let _cosmeticsCatalog=[], _ownedCosmetics=[], _currentOperativeId=null;
 const ACC_SLOTS=['hat','weapon','pet','wings','cape','mask'];
@@ -434,8 +357,6 @@ function onAccTileClick(item, slot){
     }).catch(()=>alert('Purchase failed — network error'));
 }
 function buildCust(){
-  buildCharRow();
-  buildKitRow();
   buildOfficeRow();
   loadCosmeticsCatalog();
   swatches('sw-skin',SKIN,()=>rig.skin,v=>rig.skin=v,false);
@@ -469,8 +390,6 @@ function toggle(f){
   rig[f]=!rig[f]; if(!rig[f]) delete rig[f];
 }
 function syncUI(){
-  refreshCharRow();
-  refreshKitRow();
   refreshOfficeRow();
   refreshAccRows();
   refreshSel('sw-skin',()=>rig.skin); refreshSel('sw-hair',()=>rig.hair);
