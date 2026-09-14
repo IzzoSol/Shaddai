@@ -400,6 +400,24 @@
         { id: 'media', name: 'MEDIA', accent: C.gold, art: '/assets/nav/automation.jpg', href: '/media.html',
           blurb: 'Download media from YouTube, TikTok, X, Instagram and more — SHADDAI\u2019s own engine.' },
         { id: 'api',  name: 'API',  accent: C.gold,    art: '/assets/nav/apis.jpg',       href: '/api.html', blurb: 'Build against SHADDAI directly.' },
+        /* The 6 Simple-Mode quick actions (dashboard's Workflow tab, "What do you
+           want done?" step 1) previously only lived buried inside the dashboard --
+           surfaced here too, deep-linking straight to each card's detail step
+           (index.html's own smgoal handler, added alongside this) instead of
+           dumping the visitor on the dashboard to go find it themselves. Order
+           mirrors SM_GOALS in index.html exactly -- smgoal is that array's index. */
+        { id: 'quick-picture', name: 'MAKE A PICTURE', accent: C.gold, art: '/assets/nav/workflow.jpg',
+          href: '/index.html?view=workflow&smgoal=0', blurb: 'Real AI image -- TURTLE, HF/fal engines.' },
+        { id: 'quick-song', name: 'MAKE A SONG', accent: C.gold, art: '/assets/nav/workflow.jpg',
+          href: '/index.html?view=workflow&smgoal=1', blurb: 'Lyrics + audio prompt -- TURTLE.' },
+        { id: 'quick-post', name: 'WRITE A POST', accent: C.emerald, art: '/assets/nav/workflow.jpg',
+          href: '/index.html?view=workflow&smgoal=2', blurb: 'Tweet, blog or caption -- QUILL.' },
+        { id: 'quick-coin', name: 'RESEARCH A COIN', accent: C.emerald, art: '/assets/nav/workflow.jpg',
+          href: '/index.html?view=workflow&smgoal=3', blurb: 'Price, news & sentiment -- ORACLE.' },
+        { id: 'quick-market', name: 'CHECK THE MARKET', accent: C.emerald, art: '/assets/nav/workflow.jpg',
+          href: '/index.html?view=workflow&smgoal=4', blurb: 'Live prices & trends -- ZEROX.' },
+        { id: 'quick-safe', name: 'IS THIS SAFE?', accent: C.gold, art: '/assets/nav/workflow.jpg',
+          href: '/index.html?view=workflow&smgoal=5', blurb: 'Security check -- PIKADON.' },
       ],
     },
   ];

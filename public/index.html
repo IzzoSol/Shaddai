@@ -58009,6 +58009,33 @@ try{
   // ↻ Re-pull image engines so a newly-added API key shows up without a page reload.
   window.smRefreshEngines=function(){ try{ if(sw.step===2){ captureDetails(); render(); } if(typeof notify==='function') notify('Engines refreshed'); }catch(e){} };
   try{ if($('wizBody')) window.smReset(); }catch(e){}
+  // Deep-link support: ?view=workflow&smgoal=<index into SM_GOALS> jumps straight
+  // to that card's detail step, skipping the picker — lets the Simple-mode swivel
+  // wheel (public/js/shd-modules.js's 'tools' category) link directly to one of
+  // these 6 actions instead of just landing on the dashboard and making the
+  // visitor find it themselves.
+  try{
+    var _qp=new URLSearchParams(location.search);
+    if(_qp.get('view')==='workflow' && typeof showView==='function') showView('workflow');
+    var _g=parseInt(_qp.get('smgoal'),10);
+    if(Number.isInteger(_g) && SM_GOALS[_g]){
+      sw.goal=_g; sw.step=2; render();
+      // This page's own boot sequence keeps reflowing height for several seconds
+      // after load (a long-running intro animation), so a single fixed-delay
+      // scroll lands short once things settle — retry against the card's actual
+      // position instead of guessing one timeout value, stop once it stops moving.
+      var _tries=0, _lastTop=null;
+      var _scrollIv=setInterval(function(){
+        var c=$('simpleModeCard'); _tries++;
+        if(c){
+          var top=c.getBoundingClientRect().top;
+          if(Math.abs(top)>40) c.scrollIntoView({behavior:'smooth',block:'start'});
+          if(top===_lastTop || _tries>20){ clearInterval(_scrollIv); }
+          _lastTop=top;
+        } else if(_tries>20){ clearInterval(_scrollIv); }
+      }, 500);
+    }
+  }catch(e){}
 })();
 
 // ── PRO chain builder (merged from the Orchestrator) — multi-agent, multi-API chains ──
