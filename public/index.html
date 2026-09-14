@@ -5571,7 +5571,7 @@ window.enter3DWorld=function(){
       #smWizard .pill{display:inline-block;font-size:9px;padding:3px 9px;border:1px solid var(--border);border-radius:20px;color:var(--text-muted)}
       @media(max-width:860px){#smWizard .opts{grid-template-columns:1fr}.sm-modeToggle button{min-width:70px;padding:7px 14px}}
     </style>
-    <div class="card">
+    <div class="card" id="taskManagementCard">
       <div class="card-head">
         <span class="card-title">Task Management</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -7131,12 +7131,20 @@ window.enter3DWorld=function(){
       <button class="nav-btn" id="officeTab8" onclick="switchOfficeTab('skills')">⚡ Skills</button>
       <button class="nav-btn" id="officeTab3" onclick="switchOfficeTab('library')">📚 Library</button>
       <button class="nav-btn" id="officeTab10" onclick="switchOfficeTab('gallery')">🖼️ Gallery</button>
+      <!-- Owner: task management belongs in Office, not the Workflow tab. -->
+      <button class="nav-btn" id="officeTabTasks" onclick="switchOfficeTab('tasks')">✅ Tasks</button>
     </div>
-    
+
     <!-- E3: Projects sub-panel — standalone #projectsView content relocated here at runtime by switchOfficeTab('projects') -->
     <div id="officeProjects" class="office-room" style="display:none"></div>
     <!-- E3: Skills sub-panel — standalone #skillsView content relocated here at runtime by switchOfficeTab('skills') -->
     <div id="officeSkills" class="office-room" style="display:none"></div>
+    <!-- The Task Management card (#taskManagementCard, still physically defined inside
+         #workflowView) is moved here ONCE by switchOfficeTab('tasks') -- a plain DOM
+         appendChild, not the multi-child _e3RelocateIntoOffice helper, since only that
+         one card should move, not the rest of the Workflow view (Simple Mode wizard,
+         Workflow Gallery, etc. all stay where they are). -->
+    <div id="officeTasks" class="office-room" style="display:none"></div>
 
     <!-- Command Center — SHADDAI Agent Work Board (TURTLE design spec) -->
     <div id="officeCommand" class="office-room" style="flex-direction:column;padding:12px;align-items:stretch">
@@ -30233,14 +30241,14 @@ function switchOfficeTab(tab) {
   if (tab === 'pixel') tab = 'city';          // pixel office → city hub
   if (tab === 'projects') tab = 'command';    // projects → command
 
-  const allRooms = ['Command','Skills','Library','Gallery','Showcase','Bazaar','Treasury','City','Rooms','Projects','Billing','Pixel','Boardroom','Safety'];
+  const allRooms = ['Command','Skills','Library','Gallery','Showcase','Bazaar','Treasury','City','Rooms','Projects','Billing','Pixel','Boardroom','Safety','Tasks'];
   allRooms.forEach(r => {
     const el = document.getElementById('office' + r);
     if (el) el.style.display = r.toLowerCase() === tab ? 'flex' : 'none';
   });
   // Clear all tab active states
   document.querySelectorAll('#officeView .nav-btn').forEach(b => b.classList.remove('active'));
-  const tabMap = { command: 'officeTab1', city: 'officeTabCity', rooms: 'officeTabRooms', gallery: 'officeTab10', treasury: 'officeTab13', skills: 'officeTab8', library: 'officeTab3' };
+  const tabMap = { command: 'officeTab1', city: 'officeTabCity', rooms: 'officeTabRooms', gallery: 'officeTab10', treasury: 'officeTab13', skills: 'officeTab8', library: 'officeTab3', tasks: 'officeTabTasks' };
   const activeBtn = document.getElementById(tabMap[tab]);
   if (activeBtn) activeBtn.classList.add('active');
   // City tab: sync signal display from game state if available
@@ -30275,6 +30283,14 @@ function switchOfficeTab(tab) {
   if (tab === 'billing') {
     // A4: migrate the standalone #billingView content into #officeBilling once, then (re)render it.
     _e3RelocateIntoOffice('billingView', 'officeBilling', typeof renderBillingView === 'function' ? renderBillingView : null);
+  }
+  if (tab === 'tasks') {
+    // Move just #taskManagementCard (not the rest of #workflowView, which keeps its
+    // Simple Mode wizard / Workflow Gallery content) into #officeTasks, once.
+    const panel = document.getElementById('officeTasks');
+    const card = document.getElementById('taskManagementCard');
+    if (panel && card && card.parentElement !== panel) panel.appendChild(card);
+    try { if (typeof renderTasks === 'function') renderTasks(); } catch(e){}
   }
   if (tab === 'pixel') {
     // Wave C: mount the Pixel Office MMO into its stage (timed so the panel has laid out after display:flex)
