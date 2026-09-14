@@ -3070,6 +3070,11 @@ try { app.use(require('./games-routes')); console.log('[prod] games leaderboard 
 catch (e) { console.warn('[prod] games failed:', e.message); }
 try { app.use('/api/arcade', require('./arcade-routes')); console.log('[prod] agent arcade mounted'); }
 catch (e) { console.warn('[prod] arcade failed:', e.message); }
+// The Hall (Shaddai-Arcade/Royale merge, 2026-09-14): blackjack + watch-
+// and-bet packs on the arcade games above, seat/mailbox/Sparks/Lens all
+// in-process now -- see backend/hall/routes.js's header for what changed.
+try { app.use(require('./hall/routes')()); console.log('[prod] hall platform mounted'); }
+catch (e) { console.warn('[prod] hall failed:', e.message); }
 try { app.use('/api/realms', require('./realms-routes')); console.log('[prod] shaddai realms mounted'); }
 catch (e) { console.warn('[prod] realms failed:', e.message); }
 try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }
