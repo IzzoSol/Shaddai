@@ -188,12 +188,23 @@
   ART.plant = ART.hplant;
   ART.lamp = ART.hlamp;
 
-  // Real fal-generated icons (/public/assets/furniture/<id>.png) — preferred over
-  // the code-drawn canvas art below wherever an id has one. Generated 2026-09-14,
-  // isometric style, transparent background (backend/scripts/remove-white-bg.cjs).
-  var REAL_ART = { sofa:1, tv:1, bed:1, table:1, shelf:1, plant:1, rug:1, lamp:1,
-    chest:1, screen:1, couch:1, desk:1, hearth:1, barrel:1, vault:1, crate:1,
-    counter:1, monitor:1, stool:1, pillar:1, banner:1, crystal:1 };
+  // Real fal-generated icons — preferred over the code-drawn canvas art below
+  // wherever an id has one. Generated 2026-09-14, isometric style, transparent
+  // background (backend/scripts/remove-white-bg.cjs). Maps id -> asset path
+  // since furniture and weapon/tool items live in separate folders.
+  var REAL_ART = {
+    sofa:'/assets/furniture/sofa.png', tv:'/assets/furniture/tv.png', bed:'/assets/furniture/bed.png',
+    table:'/assets/furniture/table.png', shelf:'/assets/furniture/shelf.png', plant:'/assets/furniture/plant.png',
+    rug:'/assets/furniture/rug.png', lamp:'/assets/furniture/lamp.png', chest:'/assets/furniture/chest.png',
+    screen:'/assets/furniture/screen.png', couch:'/assets/furniture/couch.png', desk:'/assets/furniture/desk.png',
+    hearth:'/assets/furniture/hearth.png', barrel:'/assets/furniture/barrel.png', vault:'/assets/furniture/vault.png',
+    crate:'/assets/furniture/crate.png', counter:'/assets/furniture/counter.png', monitor:'/assets/furniture/monitor.png',
+    stool:'/assets/furniture/stool.png', pillar:'/assets/furniture/pillar.png', banner:'/assets/furniture/banner.png',
+    crystal:'/assets/furniture/crystal.png',
+    sword:'/assets/items/sword.png', axe:'/assets/items/axe.png', bow:'/assets/items/bow.png',
+    shield:'/assets/items/shield.png', staff:'/assets/items/staff.png', pick:'/assets/items/pick.png',
+    rod:'/assets/items/rod.png', potion:'/assets/items/potion.png', lantern:'/assets/items/lantern.png'
+  };
 
   function render(id, px) {
     var drawer = ART[id]; if (!drawer) return '';
@@ -208,10 +219,10 @@
 
   window.WeaponArt = {
     has: function (id) { return !!REAL_ART[id] || !!ART[id]; },
-    dataURL: function (id, px) { return REAL_ART[id] ? ('/assets/furniture/' + id + '.png') : render(id, px || 34); },
+    dataURL: function (id, px) { return REAL_ART[id] || render(id, px || 34); },
     iconHTML: function (id, px, fallbackEmoji) {
       px = px || 30;
-      if (REAL_ART[id]) return '<img class="wico" src="/assets/furniture/' + id + '.png" alt="" style="width:' + px + 'px;height:' + px + 'px;object-fit:contain;vertical-align:middle" draggable="false">';
+      if (REAL_ART[id]) return '<img class="wico" src="' + REAL_ART[id] + '" alt="" style="width:' + px + 'px;height:' + px + 'px;object-fit:contain;vertical-align:middle" draggable="false">';
       var url = render(id, px * 2);   // 2× for crispness, CSS scales down
       if (url) return '<img class="wico" src="' + url + '" alt="" style="width:' + px + 'px;height:' + px + 'px;image-rendering:pixelated;vertical-align:middle" draggable="false">';
       return '<span>' + (fallbackEmoji || '📦') + '</span>';

@@ -182,6 +182,7 @@
          clipped the last tab labels (reported: "SECURITY" cut off) — lift it clear instead. */
       "body.navpos-bottom .shop-fab{bottom:56px}",
       ".shop-fab.shop-fab-min{padding:0;width:44px;height:44px;border-radius:50%;font-size:0;letter-spacing:0}",
+      ".shop-fab.shop-fab-min img{display:none}",
       ".shop-fab.shop-fab-min::before{content:'⬡';font-size:17px}"
     ].join('');
     (document.head || document.documentElement).appendChild(s);
@@ -558,7 +559,11 @@
   function installFab() {
     if (document.getElementById('shopFab')) return;
     var fab = el('button', 'shop-fab'); fab.id = 'shopFab';
-    fab.appendChild(document.createTextNode('⬡ SHOP'));
+    var fabIcon = el('img'); fabIcon.src = '/assets/buttons/shop.png'; fabIcon.alt = '';
+    fabIcon.style.cssText = 'width:16px;height:16px;object-fit:contain;vertical-align:-3px;margin-right:4px';
+    fabIcon.draggable = false;
+    fab.appendChild(fabIcon);
+    fab.appendChild(document.createTextNode('SHOP'));
     fab.title = 'Click: open shop · Double-click: minimize';
     try { if (localStorage.getItem('shd_shopfab_min') === '1') fab.classList.add('shop-fab-min'); } catch (_) {}
     fab.addEventListener('click', function (e) {

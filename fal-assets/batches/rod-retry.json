@@ -1,0 +1,5 @@
+[
+  { "id": "rod", "type": "text2img", "register": "pixel", "size": "square",
+    "body": "a single long thin fishing pole with a curved tip, a fishing line, and a small hook dangling at the end, angling equipment, NOT a sword or blade, floating alone, flat 2D vector game icon, solid flat colors only, simple bold geometric shapes, thick clean dark outline, no gradients, no gloss, no realistic shading, no 3D rendering, flat brown wooden pole bending at the tip with a thin line and a small gold hook, flat plain white background",
+    "out": "fal-assets/spike/item-rod-v2.png" }
+]

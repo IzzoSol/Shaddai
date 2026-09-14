@@ -1,0 +1,8 @@
+[
+  { "id": "btn-shaddai", "type": "text2img", "register": "pixel", "size": "square",
+    "body": "a single small circular badge icon featuring a stylized diamond/rhombus glyph, floating alone, flat 2D vector app icon, solid flat colors only, simple bold geometric shapes, thick clean dark outline, no gradients, no gloss, no realistic shading, no 3D rendering, obsidian black circle background with a flat glowing emerald green diamond glyph centered, flat plain white background",
+    "out": "fal-assets/spike/btn-shaddai.png" },
+  { "id": "btn-shop", "type": "text2img", "register": "pixel", "size": "square",
+    "body": "a single small circular badge icon featuring a stylized shopping/market hexagon glyph, floating alone, flat 2D vector app icon, solid flat colors only, simple bold geometric shapes, thick clean dark outline, no gradients, no gloss, no realistic shading, no 3D rendering, obsidian black circle background with a flat glowing cyan hexagon glyph centered, flat plain white background",
+    "out": "fal-assets/spike/btn-shop.png" }
+]

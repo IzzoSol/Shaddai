@@ -2209,6 +2209,7 @@ body:has(#bottomPanel.docked-side) #popChatBtn { right: 400px; }
 body:has(#bottomPanel.docked-side.side-minimized) #popChatBtn { right: 62px; }
 /* Minimized state (double-click) — collapses the launcher to a small ◈ dot you can tuck anywhere */
 #popChatBtn.shd-min { padding:0!important; width:48px!important; height:48px!important; border-radius:50%!important; font-size:0!important; letter-spacing:0!important; }
+#popChatBtn.shd-min img { display:none; }
 #popChatBtn.shd-min::before { content:'◈'; font-size:18px; }
 #popChatBtn.shd-dragging { animation:none!important; transition:none!important; cursor:grabbing!important; }
 
@@ -14730,7 +14731,7 @@ window.enter3DWorld=function(){
 </div>
 
 <button id="showPanel" onclick="togglePanel()">Show Panel</button>
-<button id="popChatBtn" onclick="openPopout()" title="Click: open · Drag: move · Double-click: minimize">◈ SHADDAI</button>
+<button id="popChatBtn" onclick="openPopout()" title="Click: open · Drag: move · Double-click: minimize"><img src="/assets/buttons/shaddai.png" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:-3px;margin-right:4px" draggable="false">SHADDAI</button>
 <script>
 (function(){
   var btn=document.getElementById('popChatBtn'); if(!btn) return;
