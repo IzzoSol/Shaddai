@@ -1267,6 +1267,7 @@ function renderInterior(time){
     ctx.restore();ctx.strokeStyle='rgba(95,224,255,0.5)';ctx.lineWidth=1;ctx.strokeRect(cx-w/2,cy-h/2,w,h); }
   function drawFurn(it){ const cx=it.col+it.w/2, cy=it.row+it.d/2, t=it.type; const [sx,sy]=is(cx,cy);
     if(t==='rug'){ ctx.fillStyle=it.color;ctx.beginPath();ctx.moveTo(sx,sy-it.d*TH/2*S);ctx.lineTo(sx+it.w*TW/2*S,sy);ctx.lineTo(sx,sy+it.d*TH/2*S);ctx.lineTo(sx-it.w*TW/2*S,sy);ctx.closePath();ctx.fill();ctx.strokeStyle=shade(it.color,0.2);ctx.lineWidth=1;ctx.stroke(); return; }
+    const fim=furnImg(t); if(fim){ drawFurnPic(it,fim,sx,sy); return; }
     ibox(cx,cy,it.w,it.d,it.h,it.color);
     if(t==='tv') scr(sx,sy-it.h-6,28,17,190);
     else if(t==='monitor') scr(sx,sy-it.h-4,14,10,150);
@@ -1277,6 +1278,20 @@ function renderInterior(time){
     else if(t==='shelf'){ for(let i=0;i<4;i++){ ctx.fillStyle=['#e05a3a','#5ab04a','#e0a83a','#c03060','#5fe0ff','#f0d048'][(it.col*3+it.row+i|0)%6]; ctx.fillRect(Math.round(sx)-9,Math.round(sy)-it.h+3+i*4,14,3); } }
     else if(t==='vault'){ ctx.strokeStyle='#c9a24a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy-it.h*0.5,8,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(sx,sy-it.h*0.5-8);ctx.lineTo(sx,sy-it.h*0.5+8);ctx.moveTo(sx-8,sy-it.h*0.5);ctx.lineTo(sx+8,sy-it.h*0.5);ctx.stroke();ctx.fillStyle='#c9a24a';ctx.beginPath();ctx.arc(sx,sy-it.h*0.5,2,0,7);ctx.fill(); }
     else if(t==='barrel'){ ctx.strokeStyle=shade(it.color,-0.35);ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.65,it.w*TW/2.6*S,3,0,0,7);ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.35,it.w*TW/2.4*S,3,0,0,7);ctx.stroke(); } }
+  const FURN_IMG={};
+  const FURN_H={banner:150,barrel:95,bed:100,chest:90,couch:105,counter:125,crate:90,crystal:125,desk:105,hearth:130,lamp:135,monitor:135,pillar:150,plant:130,screen:135,shelf:150,sofa:105,stool:85,table:100,tv:140,vault:130};
+  const FURN_CROP={banner:[100,104,319,331],barrel:[59,81,387,360],bed:[64,97,422,330],chest:[42,81,424,371],couch:[76,77,353,382],counter:[89,72,325,399],crate:[94,101,394,340],crystal:[57,127,378,310],desk:[90,88,345,348],hearth:[42,43,424,427],lamp:[194,49,122,402],monitor:[85,76,348,372],pillar:[122,34,266,445],plant:[121,82,294,372],screen:[91,102,322,333],shelf:[127,62,354,399],sofa:[68,104,370,337],stool:[110,72,263,365],table:[106,123,298,302],tv:[136,78,335,368],vault:[66,55,423,414]};
+  'banner barrel bed chest couch counter crate crystal desk hearth lamp monitor pillar plant screen shelf sofa stool table tv vault'.split(' ').forEach(function(t){ var im=new Image(); im.src='/assets/furniture/'+t+'.png'; FURN_IMG[t]=im; });
+  function furnImg(t){ const im=FURN_IMG[t]; return (im&&im.complete&&im.naturalWidth>0)?im:null; }
+  function drawFurnPic(it,im,sx,sy){ const c=FURN_CROP[it.type]||[0,0,im.naturalWidth,im.naturalHeight];
+    const maxW=Math.max(it.w*TW*S*0.96,30*S), maxH=(FURN_H[it.type]||105)*S;
+    const sc=Math.min(maxW/c[2],maxH/c[3]); const dw=c[2]*sc, dh=c[3]*sc;
+    ctx.save(); ctx.globalAlpha=0.24; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(sx,sy-1.5*S,dw*0.44,Math.max(3.5*S,dw*0.12),0,0,7); ctx.fill();
+    ctx.restore();
+    ctx.save(); ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(im,c[0],c[1],c[2],c[3],sx-dw/2,sy-dh,dw,dh);
+    ctx.restore(); }
   // back walls (L-shape behind the room)
   const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',pub:'#2a1e14',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
   // Real fal-generated wall/floor textures (2026-09-14) for the 10 ROOM_THEMES --
