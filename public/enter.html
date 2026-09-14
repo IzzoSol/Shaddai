@@ -832,6 +832,13 @@ html[data-theme-skin="brutalist"] .viewbtn, html[data-theme-skin="serif"] .viewb
 </head>
 <body>
 
+<!-- Casino entry link (blackjack + arcade-bet game room). Deliberately a
+     plain, self-contained fixed element rather than wired into the slot
+     system above -- adding it as a real slot module means touching the
+     9-module library/config this file's slot system reads from, which is
+     out of scope for a quick low-risk landing-page link. -->
+<a href="/casino.html" style="position:fixed;top:14px;right:14px;z-index:9999;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f0c84a;background:#0c1f3a;border:1px solid #7a6030;border-radius:999px;padding:8px 16px;text-decoration:none;">🎰 Casino</a>
+
 <div class="aura" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
