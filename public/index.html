@@ -14721,7 +14721,18 @@ window.enter3DWorld=function(){
   // Restore saved position + minimized state.
   try{
     var pos=JSON.parse(localStorage.getItem('shd_popbtn_pos')||'null');
-    if(pos&&typeof pos.left==='number'){ btn.style.left=pos.left+'px'; btn.style.top=pos.top+'px'; btn.style.right='auto'; btn.style.bottom='auto'; }
+    // A stray/accidental drag (even a few px) persists forever with no bounds
+    // check — reproduced this landing the button at left:4,top:380, stuck square
+    // in the middle of the left sidebar's item list ("in the middle of the
+    // tabs") with no obvious way to recover it. Discard any saved position that
+    // would overlap the sidebar's width (~230px, whether it's currently open or
+    // not — it can open later) or the top bars (~100px), or that no longer fits
+    // the current window at all; fall back to the CSS default bottom-right.
+    var safe = pos && typeof pos.left==='number' && typeof pos.top==='number'
+      && pos.left>230 && pos.top>100
+      && pos.left<innerWidth-40 && pos.top<innerHeight-40;
+    if(safe){ btn.style.left=pos.left+'px'; btn.style.top=pos.top+'px'; btn.style.right='auto'; btn.style.bottom='auto'; }
+    else if(pos){ try{ localStorage.removeItem('shd_popbtn_pos'); }catch(e){} }
     if(localStorage.getItem('shd_popbtn_min')==='1') btn.classList.add('shd-min');
   }catch(e){}
   var drag=null, sx=0, sy=0, moved=false;
