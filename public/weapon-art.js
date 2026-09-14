@@ -188,6 +188,13 @@
   ART.plant = ART.hplant;
   ART.lamp = ART.hlamp;
 
+  // Real fal-generated icons (/public/assets/furniture/<id>.png) — preferred over
+  // the code-drawn canvas art below wherever an id has one. Generated 2026-09-14,
+  // isometric style, transparent background (backend/scripts/remove-white-bg.cjs).
+  var REAL_ART = { sofa:1, tv:1, bed:1, table:1, shelf:1, plant:1, rug:1, lamp:1,
+    chest:1, screen:1, couch:1, desk:1, hearth:1, barrel:1, vault:1, crate:1,
+    counter:1, monitor:1, stool:1, pillar:1, banner:1, crystal:1 };
+
   function render(id, px) {
     var drawer = ART[id]; if (!drawer) return '';
     var key = id + '@' + px;
@@ -200,10 +207,11 @@
   }
 
   window.WeaponArt = {
-    has: function (id) { return !!ART[id]; },
-    dataURL: function (id, px) { return render(id, px || 34); },
+    has: function (id) { return !!REAL_ART[id] || !!ART[id]; },
+    dataURL: function (id, px) { return REAL_ART[id] ? ('/assets/furniture/' + id + '.png') : render(id, px || 34); },
     iconHTML: function (id, px, fallbackEmoji) {
       px = px || 30;
+      if (REAL_ART[id]) return '<img class="wico" src="/assets/furniture/' + id + '.png" alt="" style="width:' + px + 'px;height:' + px + 'px;object-fit:contain;vertical-align:middle" draggable="false">';
       var url = render(id, px * 2);   // 2× for crispness, CSS scales down
       if (url) return '<img class="wico" src="' + url + '" alt="" style="width:' + px + 'px;height:' + px + 'px;image-rendering:pixelated;vertical-align:middle" draggable="false">';
       return '<span>' + (fallbackEmoji || '📦') + '</span>';
