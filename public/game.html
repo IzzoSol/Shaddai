@@ -1235,6 +1235,20 @@ function renderWorld(time){
   if(window.DarkRealm) renderDarkRealm(ctx,cam,TW,TH);
   if(fadeV>0){ ctx.fillStyle='rgba(0,0,0,'+fadeV.toFixed(3)+')'; ctx.fillRect(0,0,W,H); }
 }
+// Real fal-generated wall/floor textures for room themes (public/assets/textures/
+// wall-<id>.png, floor-<id>.png) -- cached Image + Pattern per id, returns null
+// until the image has actually finished loading so callers can fall back to a
+// flat color for that one frame (the very next frame picks up the pattern once
+// it's ready; no flash of missing content, just a color frame or two on first use).
+const _texImgCache={}, _texPatCache={};
+function texturePattern(id){
+  if(_texPatCache[id]) return _texPatCache[id];
+  let img=_texImgCache[id];
+  if(!img){ img=new Image(); img.src='/assets/textures/'+id+'.png'; _texImgCache[id]=img; }
+  if(!img.complete || !img.naturalWidth) return null;
+  const pat=ctx.createPattern(img,'repeat');
+  _texPatCache[id]=pat; return pat;
+}
 function renderInterior(time){
   ctx.clearRect(0,0,W,H);
   const tint=(roomTheme&&roomTheme.tint)||{home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',pub:'#1a1810',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
@@ -1265,13 +1279,18 @@ function renderInterior(time){
     else if(t==='barrel'){ ctx.strokeStyle=shade(it.color,-0.35);ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.65,it.w*TW/2.6*S,3,0,0,7);ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy-it.h*0.35,it.w*TW/2.4*S,3,0,0,7);ctx.stroke(); } }
   // back walls (L-shape behind the room)
   const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',pub:'#2a1e14',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
-  const wall=(a,b,cl)=>{ ctx.fillStyle=cl; ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(b[0],b[1]-wallH);ctx.lineTo(a[0],a[1]-wallH);ctx.closePath();ctx.fill(); };
+  // Real fal-generated wall/floor textures (2026-09-14) for the 10 ROOM_THEMES --
+  // falls back to the flat color above whenever there's no theme or the image
+  // hasn't finished loading yet (next frame picks it up once it has).
+  const wallPat=roomTheme&&roomTheme.id?texturePattern('wall-'+roomTheme.id):null;
+  const floorPat=roomTheme&&roomTheme.id?texturePattern('floor-'+roomTheme.id):null;
+  const wall=(a,b,cl)=>{ ctx.fillStyle=wallPat||cl; ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(b[0],b[1]-wallH);ctx.lineTo(a[0],a[1]-wallH);ctx.closePath();ctx.fill(); };
   wall(is(-0.5,-0.5), is(IW-0.5,-0.5), shade(wc,-0.04));
   wall(is(-0.5,IH-0.5), is(-0.5,-0.5), shade(wc,-0.2));
   // floor
   const fl=(roomTheme&&roomTheme.floor)||{home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],pub:['#5a3a28','#4e3222'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4']}[interiorType]||['#c2c6cc','#b4b8be'];
   for(const [col,r] of intRoom.order){ const [sx,sy]=is(col,r);
-    ctx.fillStyle=(col+r)&1?fl[0]:fl[1]; ctx.beginPath();ctx.moveTo(sx,sy-TH/2*S);ctx.lineTo(sx+TW/2*S,sy);ctx.lineTo(sx,sy+TH/2*S);ctx.lineTo(sx-TW/2*S,sy);ctx.closePath();ctx.fill();
+    ctx.fillStyle=floorPat||((col+r)&1?fl[0]:fl[1]); ctx.beginPath();ctx.moveTo(sx,sy-TH/2*S);ctx.lineTo(sx+TW/2*S,sy);ctx.lineTo(sx,sy+TH/2*S);ctx.lineTo(sx-TW/2*S,sy);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.stroke(); }
   // door glow + label
   { const [dx,dy]=is(intRoom.door.col,intRoom.door.row); ctx.save();ctx.globalCompositeOperation='lighter';

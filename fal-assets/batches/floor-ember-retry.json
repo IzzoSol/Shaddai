@@ -1,0 +1,5 @@
+[
+  { "id": "floor-ember", "type": "text2img", "register": "pixel", "size": "square",
+    "body": "a seamless tileable floor texture pattern, dark scorched stone forge flooring, flat game texture, no gradients, no gloss highlights, no perspective, orthographic top-down flat texture swatch, evenly lit, dark brown #4a3630 tone, repeating pattern, no vignette, no text",
+    "out": "fal-assets/spike/floor-ember.png" }
+]
