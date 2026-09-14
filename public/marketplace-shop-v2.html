@@ -185,8 +185,13 @@ body::after{content:"";position:fixed;inset:0;z-index:80;pointer-events:none;opa
 .conf-sum{font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--dim);background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:6px 0 14px}
 .conf-sum .k{color:var(--muted)}.conf-sum b{color:var(--jade)}.conf-sum .net{color:var(--amber)}
 </style>
-<!-- Solana web3.js at the boundary (IIFE global: window.solanaWeb3). Devnet-first. -->
-<script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
+<!-- Solana web3.js at the boundary (IIFE global: window.solanaWeb3). Devnet-first.
+     defer: this ~1MB+ third-party script was render-blocking the entire page (measured
+     domContentLoaded ~4s, load ~8.7s) even though nothing needs it until the user
+     clicks Connect Wallet -- the wallet-connect code already null-checks
+     window.solanaWeb3 and shows "wallet library loading" if it races ahead, so
+     deferring it is safe. -->
+<script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js" defer></script>
 <script src="/sw-heal.js"></script>
 </head>
 <body>
