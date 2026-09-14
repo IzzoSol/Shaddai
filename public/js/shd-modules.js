@@ -142,7 +142,7 @@
       name: '2D REALM',
       kicker: 'Walk the city',
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
-      href: '/SHADDAI-WORLD.html',
+      href: '/region-select.html',
       art: '/assets/enter/world2d.jpg',
       artVary: ['/assets/enter/world2d.jpg','/assets/enter/world2d-1.jpg','/assets/enter/world2d-2.jpg','/assets/enter/world2d-3.jpg','/assets/enter/world2d-4.jpg'],
       accent: C.gold,
