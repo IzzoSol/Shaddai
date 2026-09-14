@@ -73,11 +73,11 @@ async function run() {
   try {
     // 1. Human seat.
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'human', display_name: 'Owner' });
-      let table = await post('/api/hall/tables', { seatId: seat.id, wager: 0 });
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'Owner' });
+      let table = await post('/api/casino/tables', { seatId: seat.id, wager: 0 });
       let guard = 0;
       while (table.settlement.score === null && guard++ < 10) {
-        table = await post(`/api/hall/tables/${table.matchId}/move`, { move: 'stand' });
+        table = await post(`/api/casino/tables/${table.matchId}/move`, { move: 'stand' });
       }
       assert.notStrictEqual(table.settlement.score, null);
       console.log(`PASS: human seat played a full hand end-to-end (score=${table.settlement.score})`);
@@ -85,10 +85,10 @@ async function run() {
 
     // 2. Grok/webhook seat.
     {
-      const { seat } = await post('/api/hall/seats', {
+      const { seat } = await post('/api/casino/seats', {
         kind: 'grok', display_name: 'GrokBot', endpoint: `http://127.0.0.1:${grokPort}/mailbox`,
       });
-      const table = await post('/api/hall/tables', { seatId: seat.id, wager: 0 });
+      const table = await post('/api/casino/tables', { seatId: seat.id, wager: 0 });
       assert.notStrictEqual(table.settlement.score, null);
       console.log(`PASS: grok seat played a full hand end-to-end (score=${table.settlement.score})`);
     }
@@ -96,8 +96,8 @@ async function run() {
     // 3. Shaddai seat -- exercises mailbox.js's dispatchToShaddai over the
     //    real HTTP contract (stubbed here for isolation).
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'shaddai', display_name: 'NEXUS-seat' });
-      const table = await post('/api/hall/tables', { seatId: seat.id, wager: 0 });
+      const { seat } = await post('/api/casino/seats', { kind: 'shaddai', display_name: 'NEXUS-seat' });
+      const table = await post('/api/casino/tables', { seatId: seat.id, wager: 0 });
       assert.notStrictEqual(table.settlement.score, null);
       console.log(`PASS: shaddai seat played a full hand end-to-end (score=${table.settlement.score})`);
     }

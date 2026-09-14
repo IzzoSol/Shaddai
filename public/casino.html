@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>The Hall — Shaddai</title>
+<title>The Casino — Shaddai</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -27,7 +27,7 @@
     --glow-gold:  0 0 40px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.15);
   }
   .font-title { font-family: 'Cinzel', serif; }
-  /* hall.html — merged from Shaddai-Arcade/Royale into the main Shaddai
+  /* casino.html (originally hall.html) — merged from Shaddai-Arcade/Royale into the main Shaddai
      repo 2026-09-14 (owner decision: one build, not a separate site). The
      neon-casino palette below is copied verbatim from Royale's styles.css
      (:root block) since that stylesheet doesn't exist in this repo -- kept
@@ -37,7 +37,7 @@
      (2026-09-13 follow-up): "walking into the Hall, not a list of games."
      One room (horizontal swipe strip, not a card grid/hamburger), sticky
      HUD, sticky bottom rail, bottom sheets for buy-in/add-bot, real
-     spectate via GET /api/hall/tables, inline muted Lens video.
+     spectate via GET /api/casino/tables, inline muted Lens video.
 
      HONEST GAPS -- read before extending this file:
      - The 20s "timeout bar" on a human seat's turn is COSMETIC ONLY. The
@@ -48,7 +48,7 @@
        vote tracking exists in hall/routes.js). This file deliberately does
        NOT fabricate vote numbers on the rail buttons -- crowd mode isn't
        real yet, only solo-vs-house is.
-     - "Spectate" means: poll the real GET /api/hall/tables list and show
+     - "Spectate" means: poll the real GET /api/casino/tables list and show
        another live match's spectator-safe summary (playerTotal/
        dealerUpcard/contenders/pick -- never the deck or a pre-reveal
        dealer hole card, never a pre-settlement bet winner). It is NOT a
@@ -222,7 +222,7 @@
 <div class="hall-backdrop"></div>
 
 <div class="hud">
-  <div class="hud-brand">The Hall</div>
+  <div class="hud-brand">The Casino</div>
   <div class="hud-right">
     <span class="hud-pill" id="sparks-pill">Sparks —</span>
     <button class="hud-btn" id="btn-line" title="Line (coach chat)">💬</button>
@@ -350,7 +350,7 @@
   }
   async function ensureSeat() {
     if (seatId) return seatId;
-    const { seat } = await api('POST', '/api/hall/seats', { kind: 'human', display_name: 'You' });
+    const { seat } = await api('POST', '/api/casino/seats', { kind: 'human', display_name: 'You' });
     seatId = seat.id;
     localStorage.setItem('hall_seat_id', seatId);
     return seatId;
@@ -397,7 +397,7 @@
   }
   async function refreshRoom() {
     try {
-      const { tables } = await api('GET', '/api/hall/tables');
+      const { tables } = await api('GET', '/api/casino/tables');
       renderRoom(tables);
     } catch (e) { /* room listing is best-effort; a transient failure just skips this refresh */ }
   }
@@ -416,7 +416,7 @@
     if (!pendingTable) return;
     try {
       await ensureSeat();
-      const res = await api('POST', '/api/hall/tables', { seatId, wager: DEFAULT_WAGER, pack: pendingTable.pack });
+      const res = await api('POST', '/api/casino/tables', { seatId, wager: DEFAULT_WAGER, pack: pendingTable.pack });
       if (res.settlement && res.settlement.sparksError) { toast(COPY.buyinInsufficient(DEFAULT_WAGER)); return; }
       toast(COPY.buyinToast(DEFAULT_WAGER));
       matchId = res.matchId;
@@ -498,7 +498,7 @@
   }
   async function submitMove(moveId) {
     try {
-      const res = await api('POST', `/api/hall/tables/${matchId}/move`, { move: moveId });
+      const res = await api('POST', `/api/casino/tables/${matchId}/move`, { move: moveId });
       renderMatch(res.state, res.legal, res.settlement);
     } catch (e) { toast(COPY.illegalHuman); }
   }
@@ -507,7 +507,7 @@
   async function requestLens() {
     toast(COPY.lensRolling, 6000);
     try {
-      const clip = await api('POST', `/api/hall/tables/${matchId}/lens`);
+      const clip = await api('POST', `/api/casino/tables/${matchId}/lens`);
       pollLens(clip.jobId);
     } catch (e) {
       if (e.status === 402) toast(COPY.lensInsufficient);
@@ -523,7 +523,7 @@
       tries++;
       if (tries > 40) { clearInterval(lensPollTimer); return; } // ~2min ceiling, stop polling silently
       try {
-        const s = await api('GET', `/api/hall/tables/${matchId}/lens/${jobId}`);
+        const s = await api('GET', `/api/casino/tables/${matchId}/lens/${jobId}`);
         if (s.status === 'error') { clearInterval(lensPollTimer); toast(COPY.lensFail); return; }
         if (s.videoUrl) {
           clearInterval(lensPollTimer);
@@ -555,7 +555,7 @@
   }
   async function pollSpectate() {
     try {
-      const { tables } = await api('GET', '/api/hall/tables');
+      const { tables } = await api('GET', '/api/casino/tables');
       const row = tables.find((t) => t.matchId === spectateId);
       if (!row) { toast(COPY.tableGone); leaveTable(); return; }
       document.getElementById('turn-line').textContent = `Watching ${row.seatName || row.seatKind || 'a seat'}`;
@@ -594,11 +594,11 @@
     if (kind !== 'shaddai' && !endpoint) { toast('That bot kind needs an endpoint URL.'); return; }
     closeSheets();
     try {
-      const { seat } = await api('POST', '/api/hall/seats', { kind, display_name, endpoint: endpoint || undefined });
+      const { seat } = await api('POST', '/api/casino/seats', { kind, display_name, endpoint: endpoint || undefined });
       // Seat it immediately so it shows up in the room as an occupied chair,
       // demonstrating the "bot/agent in other chair" state via the real
       // seat/mailbox pipeline, same as any human seat.
-      await api('POST', '/api/hall/tables', { seatId: seat.id, wager: 0, pack: 'blackjack' });
+      await api('POST', '/api/casino/tables', { seatId: seat.id, wager: 0, pack: 'blackjack' });
       toast(`${display_name} is seated at Blackjack.`);
       refreshRoom();
     } catch (e) { toast(e.message || 'Could not seat that bot.'); }

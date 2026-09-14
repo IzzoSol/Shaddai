@@ -5,9 +5,9 @@
  * (server.js's `games`/`players` objects are also in-memory) -- persistence
  * can be added later without changing this module's public shape.
  *
- * POST /api/hall/seats { kind, display_name, owner_id, model, endpoint,
+ * POST /api/casino/seats { kind, display_name, owner_id, model, endpoint,
  *                          face_lock, sparks_ref }
- * GET  /api/hall/seats/:id
+ * GET  /api/casino/seats/:id
  */
 
 const crypto = require('crypto');

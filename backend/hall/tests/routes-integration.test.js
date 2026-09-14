@@ -57,9 +57,9 @@ async function run() {
     // 1. Seat + buy-in with real Sparks (granted via the injected economy
     //    instance directly -- exactly how a real signup bonus would work).
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'human', display_name: 'Tester', sparks_ref: 'u:tester' });
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'Tester', sparks_ref: 'u:tester' });
       await economySvc.grant('u:tester', 100, 'test_bonus', 'k1');
-      const table = await post('/api/hall/tables', { seatId: seat.id, wager: 25, pack: 'blackjack' });
+      const table = await post('/api/casino/tables', { seatId: seat.id, wager: 25, pack: 'blackjack' });
       assert.strictEqual(table.ok, true);
       const balAfterBuyin = await economySvc.getBalance('u:tester');
       assert.strictEqual(balAfterBuyin, 75);
@@ -68,9 +68,9 @@ async function run() {
 
     // 2. Insufficient funds on buy-in -> clean 402, not a 500 or a crash.
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'human', display_name: 'Broke', sparks_ref: 'u:broke' });
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'Broke', sparks_ref: 'u:broke' });
       try {
-        await post('/api/hall/tables', { seatId: seat.id, wager: 999999, pack: 'blackjack' });
+        await post('/api/casino/tables', { seatId: seat.id, wager: 999999, pack: 'blackjack' });
         assert.fail('expected a 402');
       } catch (e) {
         assert.strictEqual(e.response.status, 402);
@@ -81,11 +81,11 @@ async function run() {
     // 3. A full arcade-bet hand (basketball_bet) resolves to a real win/lose
     //    and settles Sparks correctly either way.
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'human', display_name: 'Bettor', sparks_ref: 'u:bettor' });
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'Bettor', sparks_ref: 'u:bettor' });
       await economySvc.grant('u:bettor', 100, 'test_bonus', 'k2');
-      const table = await post('/api/hall/tables', { seatId: seat.id, wager: 25, pack: 'basketball_bet' });
+      const table = await post('/api/casino/tables', { seatId: seat.id, wager: 25, pack: 'basketball_bet' });
       assert.strictEqual(table.legal.length, 2);
-      const settled = await post(`/api/hall/tables/${table.matchId}/move`, { move: table.legal[0].id });
+      const settled = await post(`/api/casino/tables/${table.matchId}/move`, { move: table.legal[0].id });
       assert.ok(settled.settlement.score === 'win' || settled.settlement.score === 'lose');
       const bal = await economySvc.getBalance('u:bettor');
       if (settled.settlement.score === 'win') assert.ok(bal > 75); // pot minus rake, more than the post-buy-in balance
@@ -96,15 +96,15 @@ async function run() {
     // 4. Room listing never leaks a bet pack's simSummary/result before
     //    settlement, and shows it after.
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'human', display_name: 'Watcher', sparks_ref: 'u:watcher' });
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'Watcher', sparks_ref: 'u:watcher' });
       await economySvc.grant('u:watcher', 100, 'test_bonus', 'k3');
-      const table = await post('/api/hall/tables', { seatId: seat.id, wager: 0, pack: 'football_bet' });
-      const pre = await get('/api/hall/tables');
+      const table = await post('/api/casino/tables', { seatId: seat.id, wager: 0, pack: 'football_bet' });
+      const pre = await get('/api/casino/tables');
       const row = pre.tables.find((t) => t.matchId === table.matchId);
       assert.ok(row);
       assert.strictEqual(row.result, undefined, 'result must not leak before the pick settles');
-      await post(`/api/hall/tables/${table.matchId}/move`, { move: table.legal[0].id });
-      const post_ = await get('/api/hall/tables');
+      await post(`/api/casino/tables/${table.matchId}/move`, { move: table.legal[0].id });
+      const post_ = await get('/api/casino/tables');
       const row2 = post_.tables.find((t) => t.matchId === table.matchId);
       assert.ok(row2.result === 'win' || row2.result === 'lose');
       console.log('PASS: room listing hides result pre-settlement and shows it after, for a real bet pack');
@@ -113,9 +113,9 @@ async function run() {
     // 5. Lens: request + status poll, via the injected stub (no real Fal
     //    call) -- proves the route wiring, not the video provider itself.
     {
-      const { seat } = await post('/api/hall/seats', { kind: 'human', display_name: 'LensUser', sparks_ref: 'u:lens' });
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'LensUser', sparks_ref: 'u:lens' });
       await economySvc.grant('u:lens', 100, 'test_bonus', 'k4');
-      const created = await post('/api/hall/tables', { seatId: seat.id, wager: 0, pack: 'blackjack' });
+      const created = await post('/api/casino/tables', { seatId: seat.id, wager: 0, pack: 'blackjack' });
       const matchId = created.matchId;
       let table = created;
       // Hit every turn (not stand) -- reliably busts within a few cards, so
@@ -124,13 +124,13 @@ async function run() {
       // filmable win/blackjack rather than a push.
       let guard = 0;
       while (table.settlement.score === null && guard++ < 10) {
-        table = await post(`/api/hall/tables/${matchId}/move`, { move: 'hit' });
+        table = await post(`/api/casino/tables/${matchId}/move`, { move: 'hit' });
       }
       if (table.settlement.events && table.settlement.events.length) {
-        const clip = await post(`/api/hall/tables/${matchId}/lens`);
+        const clip = await post(`/api/casino/tables/${matchId}/lens`);
         assert.strictEqual(clip.jobId, 'job_stub_1');
         assert.strictEqual(lens.calls.length, 1);
-        const status = await get(`/api/hall/tables/${matchId}/lens/${clip.jobId}`);
+        const status = await get(`/api/casino/tables/${matchId}/lens/${clip.jobId}`);
         assert.strictEqual(status.videoUrl, 'https://example.test/job_stub_1.mp4');
         console.log('PASS: Lens request + status poll round-trips through the real route to the injected adapter');
       } else {

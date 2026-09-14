@@ -3073,8 +3073,12 @@ catch (e) { console.warn('[prod] arcade failed:', e.message); }
 // The Hall (Shaddai-Arcade/Royale merge, 2026-09-14): blackjack + watch-
 // and-bet packs on the arcade games above, seat/mailbox/Sparks/Lens all
 // in-process now -- see backend/hall/routes.js's header for what changed.
-try { app.use(require('./hall/routes')()); console.log('[prod] hall platform mounted'); }
-catch (e) { console.warn('[prod] hall failed:', e.message); }
+// Named "casino" (not "hall") deliberately: this repo already has an
+// unrelated, pre-existing "Hall" (the Telegram community hub above,
+// /api/hall/*) -- this is the blackjack/agent-bet game room from the old
+// Shaddai-Arcade repo, served at /api/casino/* and public/casino.html.
+try { app.use(require('./hall/routes')()); console.log('[prod] casino (blackjack/arcade-bet) platform mounted'); }
+catch (e) { console.warn('[prod] casino platform failed:', e.message); }
 try { app.use('/api/realms', require('./realms-routes')); console.log('[prod] shaddai realms mounted'); }
 catch (e) { console.warn('[prod] realms failed:', e.message); }
 try { app.use(require('./bazaar-routes')); console.log('[prod] bazaar marketplace mounted'); }

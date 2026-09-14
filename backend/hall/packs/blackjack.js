@@ -185,7 +185,7 @@ function resolve(state) {
 
 /**
  * summary(state) -> a spectator-safe public view (Shaddai-Arcade #6 mobile
- * follow-up, GET /api/hall/tables room listing). Deliberately narrower than
+ * follow-up, GET /api/casino/tables room listing). Deliberately narrower than
  * `state` itself: never exposes the deck, and never exposes the dealer's
  * hole card before it's actually revealed (dealer-turn/settled), matching
  * real blackjack table etiquette even though `state` itself already holds

@@ -33,14 +33,14 @@
  * ./packs/blackjack.js extended from a single `state.player` to a
  * `state.players[seatId]` map -- a real next increment, not done here.
  *
- *   POST /api/hall/seats                  -- register a seat
- *   GET  /api/hall/seats/:id              -- fetch a seat
- *   POST /api/hall/tables                 -- start a match { seatId, wager, pack? }
- *   GET  /api/hall/tables                 -- public room listing (spectator-safe)
- *   POST /api/hall/tables/:id/move        -- human move { move }
- *   GET  /api/hall/tables/:id             -- current state + legal buttons (own match only)
- *   POST /api/hall/tables/:id/lens        -- Lens button: Sparks-gated Fal clip (issue #5)
- *   GET  /api/hall/tables/:id/lens/:jobId -- clip status poll (for inline video)
+ *   POST /api/casino/seats                  -- register a seat
+ *   GET  /api/casino/seats/:id              -- fetch a seat
+ *   POST /api/casino/tables                 -- start a match { seatId, wager, pack? }
+ *   GET  /api/casino/tables                 -- public room listing (spectator-safe)
+ *   POST /api/casino/tables/:id/move        -- human move { move }
+ *   GET  /api/casino/tables/:id             -- current state + legal buttons (own match only)
+ *   POST /api/casino/tables/:id/lens        -- Lens button: Sparks-gated Fal clip (issue #5)
+ *   GET  /api/casino/tables/:id/lens/:jobId -- clip status poll (for inline video)
  */
 
 const express = require('express');
@@ -74,7 +74,7 @@ function createHallRouter(deps) {
   const router = express.Router();
   const matches = new Map(); // matchId -> { pack, seatId, state, sparksApplied }
 
-router.post('/api/hall/seats', json, (req, res) => {
+router.post('/api/casino/seats', json, (req, res) => {
   try {
     const seat = seatsStore.createSeat(req.body || {});
     res.json({ ok: true, seat });
@@ -83,7 +83,7 @@ router.post('/api/hall/seats', json, (req, res) => {
   }
 });
 
-router.get('/api/hall/seats/:id', (req, res) => {
+router.get('/api/casino/seats/:id', (req, res) => {
   const seat = seatsStore.getSeat(req.params.id);
   if (!seat) return res.status(404).json({ ok: false, error: 'seat not found' });
   res.json({ ok: true, seat });
@@ -128,7 +128,7 @@ async function settleIfDone(match) {
   if (events && events.length) match.lastEvents = events; // Lens button reads this -- see /lens below
   if (score === null || match.sparksApplied) return { score, events }; // not over yet, or already paid
   match.sparksApplied = true;
-  match.settledAt = Date.now(); // room listing keeps a finished match visible briefly -- see GET /api/hall/tables
+  match.settledAt = Date.now(); // room listing keeps a finished match visible briefly -- see GET /api/casino/tables
 
   const seat = seatsStore.getSeat(match.seatId);
   const sparksRef = seat && seat.sparks_ref;
@@ -156,7 +156,7 @@ async function settleIfDone(match) {
   return { score, events };
 }
 
-router.post('/api/hall/tables', json, async (req, res) => {
+router.post('/api/casino/tables', json, async (req, res) => {
   try {
     const { seatId, wager, pack: packKey } = req.body || {};
     const seat = seatsStore.getSeat(seatId);
@@ -197,7 +197,7 @@ router.post('/api/hall/tables', json, async (req, res) => {
 });
 
 /**
- * GET /api/hall/tables -- public room listing (Shaddai-Arcade #6 mobile
+ * GET /api/casino/tables -- public room listing (Shaddai-Arcade #6 mobile
  * follow-up). Lets the /hall room show REAL occupied/empty tables (which
  * pack currently has a live, unsettled match, and who/what is seated) to
  * ANY caller -- there is no per-viewer auth model in this repo yet, so this
@@ -207,7 +207,7 @@ router.post('/api/hall/tables', json, async (req, res) => {
  * grace window (below) so a room visitor can see a chair's result -- e.g. a
  * bot that just finished a hand -- then drops off. Honest limitation, not a
  * live-multiplayer feature: a non-human seat's whole hand resolves
- * synchronously inside the POST /api/hall/tables call that creates it
+ * synchronously inside the POST /api/casino/tables call that creates it
  * (./mailbox.js's dispatchTurn round-trip runs inline, not in the
  * background), so no other visitor can ever observe a bot actually
  * mid-decision -- only before (not yet listed) or after (this grace
@@ -216,7 +216,7 @@ router.post('/api/hall/tables', json, async (req, res) => {
  * session -- a real next increment, not built here.
  */
 const SETTLED_GRACE_MS = 20000;
-router.get('/api/hall/tables', (req, res) => {
+router.get('/api/casino/tables', (req, res) => {
   const tables = [];
   for (const match of matches.values()) {
     if (match.state.phase === 'settled' && match.sparksApplied) {
@@ -237,14 +237,14 @@ router.get('/api/hall/tables', (req, res) => {
   res.json({ ok: true, tables });
 });
 
-router.get('/api/hall/tables/:id', (req, res) => {
+router.get('/api/casino/tables/:id', (req, res) => {
   const match = matches.get(req.params.id);
   if (!match) return res.status(404).json({ ok: false, error: 'match not found' });
   const pack = PACKS[match.pack];
   res.json({ ok: true, matchId: match.id, state: match.state, legal: pack.getButtons(match.state) });
 });
 
-router.post('/api/hall/tables/:id/move', json, async (req, res) => {
+router.post('/api/casino/tables/:id/move', json, async (req, res) => {
   try {
     const match = matches.get(req.params.id);
     if (!match) return res.status(404).json({ ok: false, error: 'match not found' });
@@ -267,7 +267,7 @@ router.post('/api/hall/tables/:id/move', json, async (req, res) => {
 });
 
 /**
- * POST /api/hall/tables/:id/lens -- the spec's "Lens button on bust/win"
+ * POST /api/casino/tables/:id/lens -- the spec's "Lens button on bust/win"
  * (acceptance item 6, docs/HALL-PHASE1-SPEC.md). User/frontend-triggered,
  * NOT automatic: a clip costs real Sparks, so it only fires when someone
  * actually asks for one, and only for a hand that just produced a filmable
@@ -276,7 +276,7 @@ router.post('/api/hall/tables/:id/move', json, async (req, res) => {
  * same spend instead of charging twice (matches the spec's own testing
  * note: "no double-spend on retry").
  */
-router.post('/api/hall/tables/:id/lens', json, async (req, res) => {
+router.post('/api/casino/tables/:id/lens', json, async (req, res) => {
   try {
     const match = matches.get(req.params.id);
     if (!match) return res.status(404).json({ ok: false, error: 'match not found' });
@@ -304,11 +304,11 @@ router.post('/api/hall/tables/:id/lens', json, async (req, res) => {
 });
 
 /**
- * GET /api/hall/tables/:id/lens/:jobId -- clip status poll (Shaddai-Arcade
+ * GET /api/casino/tables/:id/lens/:jobId -- clip status poll (Shaddai-Arcade
  * #6 mobile follow-up: inline Lens video needs to know when the async Fal
  * job is done and what its videoUrl is).
  */
-router.get('/api/hall/tables/:id/lens/:jobId', async (req, res) => {
+router.get('/api/casino/tables/:id/lens/:jobId', async (req, res) => {
   try {
     const status = await lens.getClipStatus(req.params.jobId);
     return res.json({ ok: true, ...status });
