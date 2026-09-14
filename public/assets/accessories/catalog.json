@@ -1,0 +1,11 @@
+[
+  { "id": "hat_crown",   "slot": "hat",    "kit": "any", "anchorOffset": { "x": 0,   "y": -15 }, "imageFile": "hat_crown.png",   "rarity": "common", "sparksPrice": 40, "imgScale": 0.25 },
+  { "id": "hat_horns",   "slot": "hat",    "kit": "any", "anchorOffset": { "x": 0,   "y": -15 }, "imageFile": "hat_horns.png",   "rarity": "common", "sparksPrice": 40, "imgScale": 0.25 },
+  { "id": "mask_visor",  "slot": "mask",   "kit": "any", "anchorOffset": { "x": 0,   "y": -10 }, "imageFile": "mask_visor.png",  "rarity": "common", "sparksPrice": 60, "imgScale": 0.2 },
+  { "id": "pet_drone",   "slot": "pet",    "kit": "any", "anchorOffset": { "x": -26, "y": 4 },   "imageFile": "pet_drone.png",   "rarity": "rare",   "sparksPrice": 90, "imgScale": 0.22 },
+  { "id": "pet_wisp",    "slot": "pet",    "kit": "any", "anchorOffset": { "x": -28, "y": 3 },   "imageFile": "pet_wisp.png",    "rarity": "rare",   "sparksPrice": 90, "imgScale": 0.24 },
+  { "id": "weapon_axe",  "slot": "weapon", "kit": "any", "anchorOffset": { "x": 17,  "y": 7 },   "imageFile": "weapon_axe.png",  "rarity": "common", "sparksPrice": 50, "imgScale": 0.25 },
+  { "id": "weapon_staff","slot": "weapon", "kit": "any", "anchorOffset": { "x": 17,  "y": 7 },   "imageFile": "weapon_staff.png","rarity": "common", "sparksPrice": 50, "imgScale": 0.25 },
+  { "id": "wings_dark",  "slot": "wings",  "kit": "any", "anchorOffset": { "x": 0,   "y": -7 },  "imageFile": "wings_dark.png",  "rarity": "epic",   "sparksPrice": 160, "imgScale": 0.4 },
+  { "id": "wings_feather","slot": "wings", "kit": "any", "anchorOffset": { "x": 0,  "y": -8 },  "imageFile": "wings_feather.png","rarity": "epic",  "sparksPrice": 160, "imgScale": 0.38 }
+]

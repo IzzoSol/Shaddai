@@ -1755,6 +1755,7 @@ app.use('/api/v1', require('./public-api-routes'));       // PUBLIC developer AP
 app.use('/api/moonpay', require('./moonpay-agent'));
 app.use('/api/x402/agent', require('./x402-agent-routes')); // agents take payments (x402 hire)
 app.use('/api/market', softAuth, require('./skill-market-routes')); // skill + agent marketplace (create/list/buy); softAuth so owner/buyer identity + delete-ownership checks use the verified session, not caller-supplied body fields
+app.use('/api/cosmetics', softAuth, require('./cosmetics-routes')); // Forge character-kit cosmetics store: catalog + buy/equip (Sparks, owner-scoped); softAuth so operative ownership uses the verified session
 app.use('/api/agent-memory', require('./lib/agent-memory').router); // per-customer agent memory (learn/grow)
 // NOTE: the full AURA HTTP surface is mounted below via ./aura-routes (line ~712).
 // The bare lib/aura.router only exposes /stats + /route and — because it is mounted
