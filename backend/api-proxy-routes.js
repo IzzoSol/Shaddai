@@ -2074,16 +2074,42 @@ router.post('/image/generate', require('./demo-limit').middleware, async (req, r
     // BYOK path — that provider is retired and returns 410 Gone, so a caller
     // supplying their own valid key got a hard failure while the pool path
     // worked. generateSafe() puts a BYOK key first in the rotation.
-    let img = null;
+    let img = null, hfFallbackUrl = null;
     if (apiKey || hfPool.keys().length) {
       const out = await hfPool.generateSafe(prompt, { byok: apiKey || undefined });
       img = out.buffer || null;
+      hfFallbackUrl = out.fallbackUrl || null; // generateSafe already degrades to
+      // Pollinations internally when every pooled key is exhausted/erroring —
+      // previously this was silently discarded here, so a 402'd HF pool fell
+      // through to spending real fal.ai balance below for an image Pollinations
+      // could serve for free (and had already generated a URL for).
     }
     if (img) {
       const dataUri = `data:image/png;base64,${img.toString('base64')}`;
       return res.json({ success: true, status: 'completed', url: dataUri, image_url: dataUri, source: 'HuggingFace FLUX.1-schnell', prompt, model: 'flux-schnell' });
     }
-  } catch (e) { /* fall through to the free fallback */ }
+    if (hfFallbackUrl) {
+      return res.json({ success: true, status: 'completed', url: hfFallbackUrl, image_url: hfFallbackUrl, source: 'Pollinations (via HF pool fallback)', prompt, model: 'flux-schnell' });
+    }
+  } catch (e) { /* fall through to fal, then the free fallback */ }
+
+  // fal.ai automatic fallback — HF (above) is tried first since it's free/pooled
+  // across 6 keys; only spend real fal balance when HF actually failed (all keys
+  // exhausted/rate-limited/erroring), not as the default path. Previously fal.ai
+  // was wired ONLY as an opt-in named engine (model starting with "fal") that the
+  // default image-gen flow never requested, so it never actually got used as a
+  // fallback despite FAL_KEY being configured.
+  const falFallbackKey = apiKey || process.env.FAL_KEY || process.env.FAL_API_KEY || '';
+  if (falFallbackKey) {
+    try {
+      const wI = parseInt(width, 10) || 1024, hI = parseInt(height, 10) || 1024;
+      const image_size = wI > hI ? 'landscape_16_9' : (wI === hI ? 'square_hd' : 'portrait_16_9');
+      const r = await axios.post('https://fal.run/fal-ai/flux/schnell', { prompt, image_size, num_images: 1 },
+        { headers: { Authorization: `Key ${falFallbackKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+      const imageUrl = r.data && r.data.images && r.data.images[0] && r.data.images[0].url;
+      if (imageUrl) return res.json({ success: true, status: 'completed', url: imageUrl, image_url: imageUrl, source: 'fal.ai FLUX (fallback)', prompt, model: 'fal-flux' });
+    } catch (e) { /* fall through to the free fallback */ }
+  }
 
   // FREE FALLBACK — Pollinations FLUX (no API key, no credits). Always available,
   // so the image generator works even when every keyed engine is missing/depleted.
