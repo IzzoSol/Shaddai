@@ -107,10 +107,86 @@
     art: function (c, s) {                                     // framed painting
       P(c, s, 3, 2, 10, 12, '#6a4a2a');                                    // frame
       P(c, s, 4, 3, 8, 10, '#2f6fe8'); P(c, s, 5, 8, 3, 4, '#3a9a4a'); P(c, s, 9, 4, 2, 3, '#e8c45c'); // canvas scene
-    }
+    },
+    table: function (c, s) {                                   // wood side table
+      P(c, s, 2, 6, 12, 2, '#8a6a4a'); P(c, s, 2, 6, 12, 1, '#a07a54');     // top + highlight
+      P(c, s, 3, 8, 1, 6, '#6a4e34'); P(c, s, 12, 8, 1, 6, '#6a4e34');      // legs
+    },
+    shelf: function (c, s) {                                   // bookshelf with books
+      P(c, s, 2, 1, 1, 14, '#6a7a8a'); P(c, s, 13, 1, 1, 14, '#6a7a8a');    // side posts
+      P(c, s, 2, 5, 12, 1, '#586878'); P(c, s, 2, 10, 12, 1, '#586878');    // shelves
+      P(c, s, 3, 2, 2, 3, '#e0344a'); P(c, s, 5, 2, 2, 3, '#e8c45c'); P(c, s, 7, 2, 2, 3, '#00e5a0'); // books row 1
+      P(c, s, 3, 6, 2, 4, '#5fe0ff'); P(c, s, 5, 6, 2, 4, '#e0344a');       // books row 2
+    },
+    chest: function (c, s) {                                   // storage chest
+      P(c, s, 2, 6, 12, 8, '#7a5636'); P(c, s, 2, 6, 12, 1, '#8a6440');     // body + lid highlight
+      P(c, s, 2, 3, 12, 3, '#8a6440'); P(c, s, 2, 3, 12, 1, '#a07a4e');     // curved lid
+      P(c, s, 6, 7, 4, 2, '#e8c45c');                                       // clasp
+    },
+    screen: function (c, s) {                                   // room divider / partition screen
+      P(c, s, 2, 1, 4, 14, '#1a2438'); P(c, s, 6, 1, 4, 14, '#223050'); P(c, s, 10, 1, 4, 14, '#1a2438'); // 3 folding panels
+      P(c, s, 3, 3, 2, 3, '#5fe0ff'); P(c, s, 7, 7, 2, 3, '#e8c45c'); P(c, s, 11, 4, 2, 3, '#5fe0ff'); // panel motifs
+    },
+    couch: function (c, s) {                                   // 2-seat couch (blue variant of sofa)
+      P(c, s, 2, 8, 12, 5, '#3a5a8a'); P(c, s, 2, 8, 12, 1, '#5a7aac');     // seat + highlight
+      P(c, s, 2, 4, 12, 4, '#2c4a72'); P(c, s, 1, 6, 2, 7, '#2c4a72'); P(c, s, 13, 6, 2, 7, '#2c4a72'); // back + arms
+    },
+    desk: function (c, s) {                                   // office desk with drawers
+      P(c, s, 1, 4, 14, 2, '#6a6a72'); P(c, s, 1, 4, 14, 1, '#84848c');     // desktop + highlight
+      P(c, s, 2, 6, 4, 8, '#54545c'); P(c, s, 3, 8, 2, 1, '#e8c45c'); P(c, s, 3, 11, 2, 1, '#e8c45c'); // drawer unit + handles
+      P(c, s, 12, 6, 2, 8, '#54545c');                                     // far leg panel
+    },
+    hearth: function (c, s) {                                   // fireplace
+      P(c, s, 2, 2, 12, 13, '#3a2622'); P(c, s, 4, 4, 8, 11, '#1a1210');    // stone surround + firebox
+      P(c, s, 6, 8, 2, 4, '#ff8a3a'); P(c, s, 8, 7, 2, 5, '#ffcf5a'); P(c, s, 6, 8, 1, 1, '#fff2b0'); // flames
+    },
+    barrel: function (c, s) {                                   // wooden barrel
+      P(c, s, 3, 2, 10, 12, '#7a5636'); P(c, s, 3, 6, 10, 1, '#4a3018'); P(c, s, 3, 10, 10, 1, '#4a3018'); // body + bands
+      P(c, s, 4, 2, 8, 1, '#8a6440');                                       // top highlight
+    },
+    vault: function (c, s) {                                   // security vault door
+      P(c, s, 2, 1, 12, 14, '#3a3f4a'); P(c, s, 3, 2, 10, 12, '#2a2f38');    // door + inset panel
+      P(c, s, 8, 8, 2, 2, '#e8c45c');                                       // dial/lock
+      P(c, s, 8, 4, 1, 3, '#e8c45c'); P(c, s, 8, 9, 1, 3, '#e8c45c'); P(c, s, 4, 8, 3, 1, '#e8c45c'); P(c, s, 9, 8, 3, 1, '#e8c45c'); // bolt marks
+    },
+    crate: function (c, s) {                                   // wooden crate
+      P(c, s, 2, 3, 12, 11, '#8a6a4a'); P(c, s, 2, 3, 12, 1, '#a07a54');    // body + top
+      P(c, s, 2, 3, 1, 11, '#6a4e34'); P(c, s, 13, 3, 1, 11, '#6a4e34');    // corner posts
+      P(c, s, 2, 8, 12, 1, '#6a4e34');                                     // mid brace
+    },
+    counter: function (c, s) {                                   // bar counter
+      P(c, s, 1, 5, 14, 2, '#8a6a4a'); P(c, s, 1, 5, 14, 1, '#a07a54');     // countertop + highlight
+      P(c, s, 2, 7, 12, 7, '#5a4230');                                     // base
+      P(c, s, 4, 2, 1, 4, '#5fe0ff'); P(c, s, 10, 2, 1, 4, '#5fe0ff');      // glasses on top
+    },
+    monitor: function (c, s) {                                   // desktop monitor
+      P(c, s, 3, 2, 10, 7, '#15151c'); P(c, s, 4, 3, 8, 5, '#5fe0ff');       // frame + glowing screen
+      P(c, s, 7, 9, 2, 2, '#3a3a42'); P(c, s, 5, 11, 6, 1, '#2a2a30');      // stand + base
+    },
+    stool: function (c, s) {                                   // simple bar stool
+      P(c, s, 5, 3, 6, 2, '#6a4a2a');                                       // seat
+      P(c, s, 6, 5, 1, 9, '#4a3018'); P(c, s, 9, 5, 1, 9, '#4a3018');       // legs
+    },
+    pillar: function (c, s) {                                   // stone column
+      P(c, s, 5, 0, 6, 2, '#d9c9a0'); P(c, s, 6, 2, 4, 12, '#c9b98a');       // capital + shaft
+      P(c, s, 5, 14, 6, 2, '#d9c9a0');                                      // base
+    },
+    banner: function (c, s) {                                   // hanging cloth banner
+      P(c, s, 5, 0, 6, 1, '#4a3018');                                       // rod
+      P(c, s, 5, 1, 6, 11, '#00b877'); P(c, s, 5, 1, 6, 1, '#00e5a0');      // cloth + top highlight
+      P(c, s, 5, 12, 2, 3, '#00b877'); P(c, s, 9, 12, 2, 3, '#00b877');     // split fringe tails
+    },
+    crystal: function (c, s) {                                   // glowing crystal shard
+      P(c, s, 6, 1, 4, 3, '#8affe6'); P(c, s, 5, 4, 6, 5, '#5fe0ff'); P(c, s, 6, 9, 4, 4, '#3ab8d8'); // faceted body
+      P(c, s, 7, 2, 1, 1, '#ffffff');                                       // glint
+    },
   };
   // shared aliases for tool ids the game uses
   ART.hide = null; // (materials keep emoji)
+  // DECOR (game.html) names two furniture pieces differently than the earlier
+  // office-furniture batch that coined hplant/hlamp -- same drawing, real id.
+  ART.plant = ART.hplant;
+  ART.lamp = ART.hlamp;
 
   function render(id, px) {
     var drawer = ART[id]; if (!drawer) return '';

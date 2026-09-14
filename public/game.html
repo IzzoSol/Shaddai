@@ -958,7 +958,10 @@ function loadDecor(hid){ return loadDecorFor(hid); }
 function saveDecorNow(){ const key=decorKey(); if(!key) return; const items=intRoom.furniture.filter(f=>f._decor).map(f=>({col:f.col,row:f.row,w:f.w,d:f.d,h:f.h,color:f.color,type:f.type}));
   try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); d[key]=items; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){} }
 function openDecorate(){ if(!canDecorate()){ toast('You can only decorate your own home or office'); return; } decorMode=true; decorPick=DECOR[0];
-  const bar=document.getElementById('decorBar'); bar.innerHTML=DECOR.map((d,i)=>'<button class="dpick" data-i="'+i+'" style="font-size:20px;padding:5px 7px;border:1px solid '+(i===0?'#e8c45c':'#2a3346')+';border-radius:8px;background:#182031;cursor:pointer">'+d.ico+'</button>').join('')+'<button class="primary" style="margin-left:6px;padding:7px 12px" onclick="doneDecorate()">✓ Done</button>';
+  // Real pixel icons (WeaponArt, $0 code-drawn — same system already used for
+  // hotbar/backpack items) instead of the raw emoji this picker used before;
+  // falls back to the emoji only for any id WeaponArt doesn't cover.
+  const bar=document.getElementById('decorBar'); bar.innerHTML=DECOR.map((d,i)=>'<button class="dpick" data-i="'+i+'" style="padding:5px 7px;border:1px solid '+(i===0?'#e8c45c':'#2a3346')+';border-radius:8px;background:#182031;cursor:pointer;line-height:0">'+(window.WeaponArt&&WeaponArt.has(d.t)?WeaponArt.iconHTML(d.t,20,d.ico):'<span style="font-size:20px">'+d.ico+'</span>')+'</button>').join('')+'<button class="primary" style="margin-left:6px;padding:7px 12px" onclick="doneDecorate()">✓ Done</button>';
   bar.querySelectorAll('.dpick').forEach(btn=>btn.onclick=()=>{ decorPick=DECOR[+btn.dataset.i]; bar.querySelectorAll('.dpick').forEach(x=>x.style.borderColor='#2a3346'); btn.style.borderColor='#e8c45c'; });
   bar.classList.remove('hide'); toast('Place: pick an item → click floor · Move: click an item to grab it · Remove: right-click it'); }
 function doneDecorate(){ decorMode=false; document.getElementById('decorBar').classList.add('hide'); saveDecorNow(); toast('✓ '+(interiorType==='office'?'Office':'Home')+' saved'); }
