@@ -95,7 +95,23 @@ function setInboxOwner(u) { _inboxOwner = (u && String(u).trim()) || null; }
 
 const GROQ_KEY     = process.env.GROQ_API_KEY || process.env.GROQ_KEY || '';
 const OLLAMA_URL   = process.env.OLLAMA_API_URL || 'http://localhost:11434';
-const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+// llama-3.1-8b-instant was decommissioned by Groq (confirmed against their live
+// /v1/models list — every request 404's with model_not_found). This is a SEPARATE
+// hardcoded default from backend/llm-client.js's (same dead model, independent
+// codepath) — this one backs the actual agent-task engine (Simple Mode's 6 quick
+// actions, Forge-created agents, every /api/agent/run call), so it was silently
+// failing the primary provider and falling through to OpenRouter/Ollama (or
+// erroring outright) for effectively all real agent work, not just the RAG brain.
+// NOT groq/compound-mini or any openai/gpt-oss-* model, despite those being fine
+// in llm-client.js's simpler case: this file's whole tool-calling convention is
+// TEXT-based ([TOOL:name:schema] blocks baked into the system prompt, never a
+// real API `tools` array) — Groq's compound/gpt-oss family auto-detects
+// tool-call-shaped output and rejects it with "Tool choice is none, but model
+// called a tool" even though no tools were ever declared to the API. Confirmed
+// against Groq's live API: qwen/qwen3.6-27b and allam-2-7b don't have this false
+// positive; allam-2-7b returns clean direct content (qwen wraps output in
+// <think> tags this codebase doesn't strip), so it's the safer drop-in default.
+const GROQ_MODEL   = process.env.GROQ_MODEL || 'allam-2-7b';
 const OLLAMA_MODEL = process.env.DEFAULT_OLLAMA_MODEL || 'llama3.2:1b';
 // Local-model tuning (env-overridable). Defaults raised so the tool-laden system prompt fits the
 // context window (the old num_ctx:4096 overflowed → Ollama hung the full timeout → agent runs failed).
@@ -3339,7 +3355,7 @@ Use tools for real data, then give a concise final answer.` };
   const PROVIDERS = {
     ollama: pOllama,
     gemini: pGemini,
-    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', _bGroq, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'llama-3.1-8b-instant']),
+    groq: () => pOpenAICompatible('groq', 'https://api.groq.com/openai/v1/chat/completions', _bGroq, [(options.provider === 'groq' && options.model) || GROQ_MODEL, 'allam-2-7b']),
     openrouter: () => pOpenAICompatible('openrouter', 'https://openrouter.ai/api/v1/chat/completions', _bRouter,
       (function () {
         // Rotation: an explicit per-run model wins the first slot, then we cycle the
