@@ -307,7 +307,7 @@ const REGIONS=[
   {id:'desert',    name:'Dust Canyon',  color:'#d3a35a', img:'/hero/desert.png',         grass:'#c9a86a', water:'#3f9fd0', sand:'#e2c079', tree:'cactus', transit:'air',  density:0.04, desc:'Mesas & warm sand', emoji:'🌵'},
   {id:'volcano',   name:'Emberfields',  color:'#b04a3a', img:'/hero/volcano.png',        grass:'#5a4a3a', water:'#c85a2a', sand:'#6b4a3a', tree:'lava',   transit:'air',  density:0.05, desc:'Obsidian & lava', emoji:'🌋'},
   {id:'suburb',    name:'The Suburbs',  color:'#7ab07a', img:'/hero/suburb.png',         grass:'#5aa85a', water:'#2f7fd0', sand:'#e0cf9a', tree:'oak',    transit:'rail', density:0.05, desc:'Residential · 20 homes to visit', emoji:'🏘️'},
-  {id:'darkforest',name:'Dark Realm',   color:'#1a0a2e', img:null,                          grass:'#1a1a1a', water:'#100020', sand:'#2a1a2a', tree:'pine',   transit:'rail', density:0.85, desc:'⚠ Siege the Shadow Keep · Dragon awaits', emoji:'🐉', dark:true},
+  {id:'darkforest',name:'Dark Realm',   color:'#1a0a2e', img:'/hero/darkforest.png', grass:'#1a1a1a', water:'#100020', sand:'#2a1a2a', tree:'pine',   transit:'rail', density:0.85, desc:'⚠ Siege the Shadow Keep · Dragon awaits', emoji:'🐉', dark:true},
 ];
 let regionSel='agentcity';
 function updateRegionName(){ const r=REGIONS.find(x=>x.id===regionSel)||REGIONS[0]; const a=document.getElementById('regionSelName'); if(a)a.textContent=r.emoji+' '+r.name; const b=document.getElementById('enterRegionName'); if(b)b.textContent=r.name; }
