@@ -201,6 +201,7 @@
     crate:'/assets/furniture/crate.png', counter:'/assets/furniture/counter.png', monitor:'/assets/furniture/monitor.png',
     stool:'/assets/furniture/stool.png', pillar:'/assets/furniture/pillar.png', banner:'/assets/furniture/banner.png',
     crystal:'/assets/furniture/crystal.png',
+    art:'/assets/furniture/art.png',
     sword:'/assets/items/sword.png', axe:'/assets/items/axe.png', bow:'/assets/items/bow.png',
     shield:'/assets/items/shield.png', staff:'/assets/items/staff.png', pick:'/assets/items/pick.png',
     rod:'/assets/items/rod.png', potion:'/assets/items/potion.png', lantern:'/assets/items/lantern.png',
@@ -210,7 +211,10 @@
     trinket:'/assets/items/goods/trinket.png',
     minnow:'/assets/items/fish/minnow.png', bass:'/assets/items/fish/bass.png',
     salmon:'/assets/items/fish/salmon.png', tuna:'/assets/items/fish/tuna.png',
-    levi:'/assets/items/fish/levi.png'
+    levi:'/assets/items/fish/levi.png',
+    // store/game.html sells the house plant & floor lamp as hplant/hlamp —
+    // alias to the furniture sprites so the shop shows the real fal art.
+    hplant:'/assets/furniture/plant.png', hlamp:'/assets/furniture/lamp.png'
   };
 
   function render(id, px) {
