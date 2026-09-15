@@ -1643,7 +1643,7 @@ function renderMarket(){ const el=document.getElementById('market'); if(!el)retu
   if(!o){ h+='<div class="rcard" style="background:#141c26;color:#eaf3fb;cursor:default;min-height:70px;justify-content:center">The square is quiet… bring goods to sell — fish 🐟, wood 🪵, hides 🟫, water 💧.</div>'; }
   else { const m=itemMeta(o.id), premium=o.offer>o.fair;
     h+='<div class="rcard" style="background:#161f2c;color:#eaf3fb;cursor:default;align-items:stretch;min-height:132px"><div style="display:flex;align-items:center;gap:9px;font-size:13px;opacity:.85"><img src="/assets/traders/'+o.name.toLowerCase()+'.png" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;border:1px solid rgba(95,224,255,.35)" onerror="this.style.display=\'none\'"><b>'+o.name+'</b> steps up to your stall…</div>';
-    h+='<div style="font-size:17px;margin:10px 0">“I\'ll take <b>'+o.qty+' × '+m.ico+' '+m.name+'</b> for <b style="color:#4fe07a">💵'+o.offer+'</b>”</div>';
+    h+='<div style="font-size:17px;margin:10px 0">“I\'ll take <b>'+o.qty+' × '+itemIcon(o.id,22,m.ico)+' '+m.name+'</b> for <b style="color:#4fe07a">💵'+o.offer+'</b>”</div>';
     h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px"><button class="primary" onclick="acceptOffer()">✓ Accept 💵'+o.offer+'</button>'+(marketCountered?'':'<button onclick="counterOffer()">⤴ Haggle (ask +20%)</button>')+'<button onclick="declineOffer()">✗ No deal</button></div>';
     h+='<div style="font-size:11px;opacity:.6;margin-top:9px">Fair ~💵'+o.fair+(premium?' · <span style="color:#4fe07a">they\'re paying over!</span>':'')+' · you hold '+haveGood(o.id)+' '+m.name+'</div></div>'; }
   h+='<div class="row" style="margin-top:12px;justify-content:space-between"><span style="font-size:12px;opacity:.6">Trader '+Math.min(marketIdx+1,Math.max(1,marketQueue.length))+' / '+Math.max(1,marketQueue.length)+'</span><button onclick="closeMarket()">Leave market</button></div>';
@@ -1847,7 +1847,7 @@ function castFish(){
     fish[f.id]=(fish[f.id]||0)+1;
     if(size.m>1) fishBonus+=Math.round(f.val*(size.m-1));               // bigger fish → higher price
     const xp=Math.round((f.big?12:5)*size.m); quest.fish++; addXP(xp); saveEcon();
-    toast('🎣 Caught '+size.l+f.name+' '+(f.ico||'🐟')+' · ~💵'+Math.round(f.val*size.m)+' · +'+xp+' XP');
+    toast('🎣 Caught '+size.l+' '+itemIcon(f.id,24,f.ico)+' '+f.name+' · ~💵'+Math.round(f.val*size.m)+' · +'+xp+' XP');
   }, wait);
 }
 function sellFish(){ let n=0,g=0; for(const f of FISH){ const c=fish[f.id]||0; if(c){ n+=c; g+=c*f.val; fish[f.id]=0; } } g+=fishBonus; if(!n&&!fishBonus){ toast('No fish to sell'); return; } fishBonus=0; money+=g; quest.earn+=g; addXP(Math.ceil(g*0.4)); saveEcon(); toast('💰 Sold '+n+' fish for 💵'+g+' — haggle bigger catches at the 🤝 market'); if(state==='inv') openInv(); }

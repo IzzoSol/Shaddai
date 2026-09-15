@@ -203,7 +203,14 @@
     crystal:'/assets/furniture/crystal.png',
     sword:'/assets/items/sword.png', axe:'/assets/items/axe.png', bow:'/assets/items/bow.png',
     shield:'/assets/items/shield.png', staff:'/assets/items/staff.png', pick:'/assets/items/pick.png',
-    rod:'/assets/items/rod.png', potion:'/assets/items/potion.png', lantern:'/assets/items/lantern.png'
+    rod:'/assets/items/rod.png', potion:'/assets/items/potion.png', lantern:'/assets/items/lantern.png',
+    // trade goods + catchables (world economy) — neon-punk isometric icons
+    wood:'/assets/items/goods/wood.png', hide:'/assets/items/goods/hide.png',
+    water:'/assets/items/goods/water.png', ore:'/assets/items/goods/ore.png',
+    trinket:'/assets/items/goods/trinket.png',
+    minnow:'/assets/items/fish/minnow.png', bass:'/assets/items/fish/bass.png',
+    salmon:'/assets/items/fish/salmon.png', tuna:'/assets/items/fish/tuna.png',
+    levi:'/assets/items/fish/levi.png'
   };
 
   function render(id, px) {
