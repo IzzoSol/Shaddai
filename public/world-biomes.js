@@ -94,7 +94,7 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
   // every rock prop (desert spikes + the scattered boulder field). RepeatWrapping
   // so it tiles over larger boulders. SRGB colour space, anisotropic. On failure
   // the texture stays null and the props keep their flat base colour.
-  const _rockTex = track(new THREE.TextureLoader().load('/assets/textures/rock.png'));
+  const _rockTex = track(new THREE.TextureLoader().load('/assets/textures/rock.jpg'));
   _rockTex.wrapS = _rockTex.wrapT = THREE.RepeatWrapping;
   _rockTex.repeat.set(1.6, 1.6);
   _rockTex.anisotropy = 8;

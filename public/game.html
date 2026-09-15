@@ -1226,7 +1226,9 @@ const _texImgCache={}, _texPatCache={};
 function texturePattern(id){
   if(_texPatCache[id]) return _texPatCache[id];
   let img=_texImgCache[id];
-  if(!img){ img=new Image(); img.src='/assets/textures/'+id+'.png'; _texImgCache[id]=img; }
+  if(!img){ img=new Image(); img.src='/assets/textures/'+id+'.jpg'; _texImgCache[id]=img;
+    img.onerror=function(){ if(img.__png)return; img.__png=true; img.src='/assets/textures/'+id+'.png'; };
+  }
   if(!img.complete || !img.naturalWidth) return null;
   const pat=ctx.createPattern(img,'repeat');
   _texPatCache[id]=pat; return pat;
