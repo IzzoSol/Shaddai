@@ -56,6 +56,54 @@ export function initRideables({ THREE, scene, GLTFLoader, playerPos, keys, getGr
   let _trailTimer = 0;
   const TRAIL_INTERVAL = 0.055; // seconds between trail samples
 
+  // ─── Shared mount path — used by GLB success AND procedural fallback ─────
+  function mount(key, m) {
+    const v = VEHICLES[key];
+    const box = new THREE.Box3().setFromObject(m);
+    const sz  = box.getSize(new THREE.Vector3());
+    m.scale.multiplyScalar(v.size / Math.max(sz.x, sz.y, sz.z, 0.001));
+    const box2 = new THREE.Box3().setFromObject(m);
+    v.yOff = -box2.min.y;
+    m.position.set(v.park.x, gy(v.park.x, v.park.z) + v.yOff, v.park.z);
+
+    const glow = new THREE.PointLight(v.glowColor, 0.6, v.size * 4.5);
+    glow.position.set(0, v.size * 0.15, -v.size * 0.35);
+    m.add(glow);
+    v.glowLight = glow;
+
+    scene.add(m);
+    v.model = m;
+  }
+
+  // ─── Procedural neon fallback models (GLB absent/failed) ─────────────────
+  const hullMat  = new THREE.MeshStandardMaterial({ color: 0x0a1a33, roughness: 0.4, metalness: 0.7 });
+  const trimMat  = new THREE.MeshStandardMaterial({ color: 0x27e0ff, roughness: 0.25, metalness: 0.5, emissive: 0x27e0ff, emissiveIntensity: 0.55 });
+  const lampMat  = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, emissive: 0xffffff, emissiveIntensity: 1.1 });
+  const darkMat  = new THREE.MeshStandardMaterial({ color: 0x05070d, roughness: 0.9 });
+
+  function buildFallback(key) {
+    const g = new THREE.Group();
+    if (key === 'rover') {
+      const body   = new THREE.Mesh(new THREE.BoxGeometry(3.1, 1.5, 5.2), hullMat);  body.position.set(0, 1.3, 0);
+      const cab    = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.1, 2.3), trimMat);   cab.position.set(0, 2.35, -0.3);
+      const win    = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 0.15), lampMat);  win.position.set(0, 2.5, 1.05);
+      const tL     = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.5, 5.6), darkMat);   tL.position.set(-2.0, 0.75, 0);
+      const tR     = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.5, 5.6), darkMat);   tR.position.set( 2.0, 0.75, 0);
+      const lightL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 0.15), lampMat); lightL.position.set(-0.85, 1.35, 2.65);
+      const lightR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 0.15), lampMat); lightR.position.set( 0.85, 1.35, 2.65);
+      g.add(body, cab, win, tL, tR, lightL, lightR);
+    } else {
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 6.4), hullMat); hull.position.set(0, 1.1, 0);
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(1.0, 2.0, 4), trimMat);   nose.rotation.y = Math.PI / 4; nose.rotation.x = -Math.PI / 2; nose.position.set(0, 1.1, -4.1);
+      const wingL = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 1.4), trimMat); wingL.position.set(-3.0, 0.9, 1.2);
+      const wingR = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 1.4), trimMat); wingR.position.set( 3.0, 0.9, 1.2);
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 1.8), lampMat); canopy.position.set(0, 1.85, 0.2);
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.3, 1.6), trimMat); fin.position.set(0, 1.8, 3.0);
+      g.add(hull, nose, wingL, wingR, canopy, fin);
+    }
+    return g;
+  }
+
   // ─── Load GLB models and attach engine-glow PointLights ──────────────────
   const loader = new GLTFLoader();
   for (const key of Object.keys(VEHICLES)) {
@@ -70,24 +118,11 @@ export function initRideables({ THREE, scene, GLTFLoader, playerPos, keys, getGr
           o.material.emissiveIntensity = Math.max(o.material.emissiveIntensity || 0, 0.12);
         }
       });
-      // Normalise scale
-      const box = new THREE.Box3().setFromObject(m);
-      const sz  = box.getSize(new THREE.Vector3());
-      m.scale.multiplyScalar(v.size / Math.max(sz.x, sz.y, sz.z, 0.001));
-      // Foot-align after scale
-      const box2 = new THREE.Box3().setFromObject(m);
-      v.yOff = -box2.min.y;
-      m.position.set(v.park.x, gy(v.park.x, v.park.z) + v.yOff, v.park.z);
-
-      // Engine-glow point light mounted rear-underside of the craft
-      const glow = new THREE.PointLight(v.glowColor, 0.6, v.size * 4.5);
-      glow.position.set(0, v.size * 0.15, -v.size * 0.35);
-      m.add(glow);
-      v.glowLight = glow;
-
-      scene.add(m);
-      v.model = m;
-    }, undefined, (e) => console.warn('[rideables] failed to load', key, e.message));
+      mount(key, m);
+    }, undefined, (e) => {
+      console.warn('[rideables] GLB failed, using procedural fallback:', key, e.message);
+      mount(key, buildFallback(key));
+    });
   }
 
   // ─── HUD hint element ─────────────────────────────────────────────────────
