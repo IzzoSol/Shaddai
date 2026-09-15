@@ -1,25 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SHADDAI · World</title>
-<script>
-(function(){
-  var CLR='shd_gamedata_clear_v3';
-  try{ if(localStorage.getItem(CLR)) return; }catch(e){ return; }
-  var keys=['shaddai.decor','shaddai.home','shaddai.city','shaddai.econ',
-            'shaddai.level','shaddai.ftue','shaddai.officeTheme','shaddai.mode',
-            'shaddai.region','shaddai.player','shaddai.gallery'];
-  keys.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
-  try{
-    var rk=[]; for(var i=0;i<localStorage.length;i++){
-      var k2=localStorage.key(i);
-      if(k2&&(k2.indexOf('shaddai.rooms.')===0||k2.indexOf('shd_city')===0||k2.indexOf('shd_office')===0))
-        rk.push(k2);
-    }
-    rk.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-  }catch(e){}
-  try{localStorage.setItem(CLR,'1');}catch(e){}
-})();
-</script>
+<script src="/state-scope.js?v=1"></script>
 <script src="/world-gate.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -1389,17 +1371,22 @@ function mpMove(){ if(MP&&MP.readyState===1){ const now=performance.now(); if(no
 function updateCount(){ const el=document.getElementById('mpstatus'); if(!el)return; let n=1; for(const k in remote){ if(remote[k].region===(region?region.id:regionSel)) n++; } el.textContent='🟢 '+n+' here · '+(Object.keys(remote).length+1)+' online'; if(chatPinned){ try{ renderChatHdr(); }catch(_){} } }
 // ── Chat window: open with C, close with ✕/Esc, shows who's online in this region ──
 let chatPinned=false;
+// per-account chat history (namespaced by state-scope.js). Survives reloads.
+let chatHist=[]; try{ chatHist=JSON.parse(localStorage.getItem('shaddai.chatlog')||'[]')||[]; }catch(_){ chatHist=[]; }
+function chatHistSave(){ try{ localStorage.setItem('shaddai.chatlog',JSON.stringify(chatHist.slice(-60))); }catch(_){} }
+function chatHistRender(log){ for(const m of chatHist){ const d=document.createElement('div'); d.innerHTML='<b style="color:'+(m.m?'#00ff9c':'#5fe0ff')+'">'+esc(m.n)+':</b> '+esc(m.t); log.appendChild(d); } log.scrollTop=log.scrollHeight; }
 function chatOnlineNames(){ const rid=region?region.id:regionSel; const names=[(player&&player.name)||'You']; for(const k in remote){ if(remote[k].region===rid) names.push(remote[k].name||'traveler'); } return names; }
 function renderChatHdr(){ let h=document.getElementById('chathdr');
   if(!h){ h=document.createElement('div'); h.id='chathdr'; h.className='panel'; h.style.cssText='left:16px;bottom:306px;width:min(340px,44vw);padding:6px 10px;font-size:11.5px;z-index:7;display:flex;align-items:center;gap:8px'; document.body.appendChild(h); }
   const n=chatOnlineNames();
   h.innerHTML='<b style="color:#00ff9c;white-space:nowrap">💬 '+n.length+' here:</b><span style="color:#9ab;opacity:.85;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+n.map(esc).join(', ')+'</span><span style="cursor:pointer;color:#eaf3fb;font-size:15px;padding:0 2px" onclick="closeChat()">✕</span>';
   h.classList.remove('hide'); }
-function openChat(){ const ci=document.getElementById('chatinput'), log=document.getElementById('chatlog'); if(!ci)return; chatPinned=true; if(log)log.classList.remove('hide'); ci.classList.remove('hide'); renderChatHdr(); ci.focus(); }
+function openChat(){ const ci=document.getElementById('chatinput'), log=document.getElementById('chatlog'); if(!ci)return; chatPinned=true; if(log)log.classList.remove('hide'); ci.classList.remove('hide'); renderChatHdr(); if(log&&!log.children.length&&chatHist.length){ chatHistRender(log); } ci.focus(); }
 function closeChat(){ const ci=document.getElementById('chatinput'), log=document.getElementById('chatlog'), h=document.getElementById('chathdr'); chatPinned=false; if(ci){ci.classList.add('hide');ci.blur();} if(log)log.classList.add('hide'); if(h)h.classList.add('hide'); }
 function chatAdd(name,text,me){ const log=document.getElementById('chatlog'); if(!log)return; log.classList.remove('hide');
   const d=document.createElement('div'); d.innerHTML='<b style="color:'+(me?'#00ff9c':'#5fe0ff')+'">'+esc(name)+':</b> '+esc(text); log.appendChild(d);
   while(log.children.length>40) log.removeChild(log.firstChild); log.scrollTop=log.scrollHeight;
+  chatHist.push({n:String(name||''),t:String(text||''),m:!!me}); if(chatHist.length>60) chatHist=chatHist.slice(-60); chatHistSave();
   clearTimeout(log._t); log._t=setTimeout(()=>{ if(!chatPinned && document.activeElement!==document.getElementById('chatinput')) log.classList.add('hide'); },9000); }
 // ---------- ECONOMY (in-game credits, saved locally) ----------
 const STORE=[
@@ -1459,7 +1446,7 @@ let money=120, credits=0; const inv={}, fish={}; let jobCooldown=0, fishCooldown
 let bank=0, coin=0, coinPrice=100; const stash={};   // bank savings · SHADDAI Coin market · home storage chest
 let storageOpen=false, bankOpen=false, forgeOpen=false, questsOpen=false;
 let equippedWeapon=null; const weaponUp={};   // active weapon + forge upgrade levels (id→0..3)
-const quest={fish:0,kills:0,earn:0}, questDone={};   // bounty-board progress
+const quest={fish:0,kills:0,earn:0,sell:0}, questDone={};   // bounty-board progress
 let marketOpen=false, marketPrevState='world', marketQueue=[], marketIdx=0, marketCountered=false;   // town-square barter
 let hubOpen=false, agentLiveOpen=false;   // SHADDAI HQ pro-rooms panel + live agent view
 const API_BASES=['','http://localhost:3000'];   // same-origin (deployed) → local backend fallback
@@ -1618,16 +1605,23 @@ const QUESTS=[ {id:'fish',stat:'fish',ico:'🎣',name:'Master Angler',desc:'Catc
   {id:'earn',stat:'earn',ico:'💰',name:'Enterprising',desc:'Earn 200 Gold',goal:200,rw:{m:120,x:40}},
   {id:'fish2',stat:'fish',ico:'🐟',name:'Deep Sea Master',desc:'Catch 20 fish',goal:20,rw:{m:200,x:110}},
   {id:'kills2',stat:'kills',ico:'🗡️',name:'Beast Slayer',desc:'Defeat 25 foes',goal:25,rw:{m:280,x:160}},
-  {id:'earn2',stat:'earn',ico:'🏦',name:'Tycoon',desc:'Earn 1000 Gold total',goal:1000,rw:{m:400,x:220}} ];
+  {id:'earn2',stat:'earn',ico:'🏦',name:'Tycoon',desc:'Earn 1000 Gold total',goal:1000,rw:{m:400,x:220}},
+  {id:'fish3',stat:'fish',ico:'🎏',name:'Apex Angler',desc:'Catch 40 fish',goal:40,rw:{m:380,x:240}},
+  {id:'kills3',stat:'kills',ico:'💀',name:'Foe Reaper',desc:'Defeat 60 foes',goal:60,rw:{m:520,x:300}},
+  {id:'earn3',stat:'earn',ico:'👑',name:'Market Mogul',desc:'Earn 5000 Gold total',goal:5000,rw:{m:900,x:420}},
+  {id:'sell',stat:'sell',ico:'🤝',name:'Dealer',desc:'Sell 5 goods at market',goal:5,rw:{m:80,x:40}},
+  {id:'sell2',stat:'sell',ico:'🛒',name:'Merchant Prince',desc:'Sell 30 goods at market',goal:30,rw:{m:300,x:150}},
+  {id:'level',stat:'_level',ico:'⭐',name:'Rising Star',desc:'Reach Level 4',goal:4,rw:{m:150,x:80}} ];
+function questProg(q){ if(q.stat==='_level') return levelFor(credits); return quest[q.stat||q.id]||0; }
 function openQuests(){ questsOpen=true; const el=document.getElementById('quests'); if(!el)return;
-  let h='<h1>📜 <b>Bounty Board</b></h1><div class="sub" style="margin-bottom:12px">Complete bounties for 💵 + XP.</div>';
-  for(const q of QUESTS){ const prog=Math.min(quest[q.stat||q.id]||0,q.goal), done=questDone[q.id], met=prog>=q.goal;
+  let h='<h1>📜 <b>Bounty Board</b></h1><div class="sub" style="margin-bottom:12px">Complete bounties for 💵 + XP. Bounties never expire.</div>';
+  for(const q of QUESTS){ const prog=questProg(q), done=questDone[q.id], met=prog>=q.goal;
     h+='<div class="rcard" style="background:#141c26;cursor:default;color:#eaf3fb;margin-bottom:10px;align-items:stretch"><div class="row" style="justify-content:space-between;align-items:center"><div><b style="font-size:14px">'+q.ico+' '+q.name+'</b><div style="font-size:11px;opacity:.7">'+q.desc+' · reward 💵'+q.rw.m+' + '+q.rw.x+' XP</div></div>'+
       (done?'<span style="color:#4fe07a;font-size:12px">✓ Claimed</span>':(met?'<button class="primary" style="padding:6px 12px" onclick="claimQuest(\''+q.id+'\')">Claim</button>':'<span style="font-size:12px;opacity:.7">'+prog+'/'+q.goal+'</span>'))+'</div>'+
-      '<div style="height:6px;background:rgba(255,255,255,.12);border-radius:4px;margin-top:8px;overflow:hidden"><div style="width:'+Math.round(prog/q.goal*100)+'%;height:100%;background:'+(done?'#4fe07a':met?'#f2c14e':'#5fe0ff')+'"></div></div></div>'; }
+      '<div style="height:6px;background:rgba(255,255,255,.12);border-radius:4px;margin-top:8px;overflow:hidden"><div style="width:'+Math.min(100,Math.round(prog/q.goal*100))+'%;height:100%;background:'+(done?'#4fe07a':met?'#f2c14e':'#5fe0ff')+'"></div></div></div>'; }
   h+='<div class="row" style="margin-top:6px;justify-content:flex-end"><button onclick="closeQuests()">Done</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); }
-function claimQuest(id){ const q=QUESTS.find(x=>x.id===id); if(!q||questDone[id]||(quest[q.stat||q.id]||0)<q.goal)return; questDone[id]=1; money+=q.rw.m; addXP(q.rw.x); saveEcon(); toast('🏆 Bounty complete! +💵'+q.rw.m+' · +'+q.rw.x+' XP'); openQuests(); }
+function claimQuest(id){ const q=QUESTS.find(x=>x.id===id); if(!q||questDone[id]||questProg(q)<q.goal)return; questDone[id]=1; money+=q.rw.m; addXP(q.rw.x); saveEcon(); toast('🏆 Bounty complete! +💵'+q.rw.m+' · +'+q.rw.x+' XP'); openQuests(); }
 function closeQuests(){ questsOpen=false; const el=document.getElementById('quests'); if(el)el.classList.add('hide'); saveEcon(); }
 // ---- TOWN SQUARE SWAP MARKET (bartering NPCs + regional arbitrage) ----
 function goodBase(id){ const g=GOODS.find(x=>x.id===id); if(g)return g.base; const f=FISH.find(x=>x.id===id); if(f)return f.val; return 5; }
@@ -1655,7 +1649,7 @@ function renderMarket(){ const el=document.getElementById('market'); if(!el)retu
   h+='<div class="row" style="margin-top:12px;justify-content:space-between"><span style="font-size:12px;opacity:.6">Trader '+Math.min(marketIdx+1,Math.max(1,marketQueue.length))+' / '+Math.max(1,marketQueue.length)+'</span><button onclick="closeMarket()">Leave market</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); }
 function nextTrader(){ marketCountered=false; marketIdx++; if(marketIdx>=marketQueue.length && tradableOwned().length){ marketQueue=genOffers(region?region.id:'meadow'); marketIdx=0; } renderMarket(); }
-function acceptOffer(){ const o=marketQueue[marketIdx]; if(!o)return; if(haveGood(o.id)<o.qty){ toast('You don\'t have that anymore'); nextTrader(); return; } removeGood(o.id,o.qty); money+=o.offer; quest.earn+=o.offer; saveEcon(); toast('🤝 Sold '+o.qty+' '+itemMeta(o.id).name+' → 💵'+o.offer); nextTrader(); }
+function acceptOffer(){ const o=marketQueue[marketIdx]; if(!o)return; if(haveGood(o.id)<o.qty){ toast('You don\'t have that anymore'); nextTrader(); return; } removeGood(o.id,o.qty); money+=o.offer; quest.earn+=o.offer; quest.sell+=o.qty; saveEcon(); toast('🤝 Sold '+o.qty+' '+itemMeta(o.id).name+' → 💵'+o.offer); nextTrader(); }
 function counterOffer(){ const o=marketQueue[marketIdx]; if(!o||marketCountered)return; marketCountered=true; const ask=Math.round(o.offer*1.2), ratio=ask/o.fair;
   const accept = ratio<=1.02 || (ratio<=1.18 && Math.random()<0.6) || (ratio<=1.4 && Math.random()<0.22);
   if(accept){ o.offer=ask; toast('🧑 “…alright, you drive a hard bargain. Deal.”'); renderMarket(); }

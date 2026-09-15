@@ -15,6 +15,18 @@
   var TW = 84, TH = 42;
 
   // ---- tiny helpers --------------------------------------------------------
+  // fal-generated pixel-art sprites, lazily loaded per enemy kind (shapes are
+  // the fallback when a sprite is absent or still loading).
+  var _sprCache = {};
+  function spriteImg(kind) {
+    if (!_sprCache[kind]) {
+      var im = new Image();
+      im.src = '/assets/world/enemy-' + encodeURIComponent(kind) + '.png';
+      _sprCache[kind] = im;
+    }
+    return _sprCache[kind];
+  }
+
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function irnd(a, b) { return Math.floor(rnd(a, b + 1)); }
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
@@ -272,15 +284,26 @@
 
     var top = sy - 8 * s - bob; // reference for the body top
 
-    // shape variants ---------------------------------------------------------
-    switch (t.shape) {
-      case 'beast': drawBeast(ctx, sx, sy, s, body, t, flash, bob); break;
-      case 'bird':  drawBird(ctx, sx, sy, s, body, t, bob); break;
-      case 'crab':  drawCrab(ctx, sx, sy, s, body, t); break;
-      case 'golem': drawGolem(ctx, sx, sy, s, body, t, flash); break;
-      case 'drone': drawDrone(ctx, sx, sy, s, body, t, time); break;
-      case 'humanoid': drawHumanoid(ctx, sx, sy, s, body, t); break;
-      default: drawBeast(ctx, sx, sy, s, body, t, flash, bob);
+    // fal sprite (12:10 sprite-cam box) when loaded; voxel shapes otherwise ----
+    var spr = spriteImg(e.kind);
+    if (spr.complete && spr.naturalWidth > 0) {
+      var bw = 22 * s, bh = 34 * s, full = bw / spr.naturalWidth;
+      ctx.save();
+      if (flash) { ctx.globalAlpha = 0.85; if (ctx.filter !== undefined) ctx.filter = 'brightness(2.4) saturate(0)'; }
+      ctx.drawImage(spr, sx - bw / 2, sy - bh - bob + 4 * s, spr.naturalWidth * full, spr.naturalHeight * full);
+      ctx.filter = 'none';
+      ctx.restore();
+    } else {
+      // shape variants ---------------------------------------------------------
+      switch (t.shape) {
+        case 'beast': drawBeast(ctx, sx, sy, s, body, t, flash, bob); break;
+        case 'bird':  drawBird(ctx, sx, sy, s, body, t, bob); break;
+        case 'crab':  drawCrab(ctx, sx, sy, s, body, t); break;
+        case 'golem': drawGolem(ctx, sx, sy, s, body, t, flash); break;
+        case 'drone': drawDrone(ctx, sx, sy, s, body, t, time); break;
+        case 'humanoid': drawHumanoid(ctx, sx, sy, s, body, t); break;
+        default: drawBeast(ctx, sx, sy, s, body, t, flash, bob);
+      }
     }
 
     // HP bar (only when damaged) --------------------------------------------

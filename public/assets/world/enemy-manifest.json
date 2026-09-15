@@ -1,0 +1,87 @@
+{
+  "boar": {
+    "id": "boar",
+    "src": "/assets/world/enemy-boar.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a wild tusked boar, shaggy brown hide, angry red eyes, 512x512"
+  },
+  "wolf": {
+    "id": "wolf",
+    "src": "/assets/world/enemy-wolf.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a lean grey wolf, sharp fangs, amber eyes, curled tail, 512x512"
+  },
+  "direwolf": {
+    "id": "direwolf",
+    "src": "/assets/world/enemy-direwolf.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a HUGE dark dire wolf, black fur, glowing red eyes, menacing, 512x512"
+  },
+  "gull": {
+    "id": "gull",
+    "src": "/assets/world/enemy-gull.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a white seagull with grey wings and a bright orange beak, 512x512"
+  },
+  "crab": {
+    "id": "crab",
+    "src": "/assets/world/enemy-crab.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a red sand crab with big claws and stalk eyes, 512x512"
+  },
+  "scorpion": {
+    "id": "scorpion",
+    "src": "/assets/world/enemy-scorpion.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a golden desert scorpion with a raised curling stinger, 512x512"
+  },
+  "coyote": {
+    "id": "coyote",
+    "src": "/assets/world/enemy-coyote.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a sandy desert coyote, alert ears, golden eyes, lean body, 512x512"
+  },
+  "lavahound": {
+    "id": "lavahound",
+    "src": "/assets/world/enemy-lavahound.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a molten lava hound, cracked obsidian hide glowing orange through cracks, 512x512"
+  },
+  "magmagolem": {
+    "id": "magmagolem",
+    "src": "/assets/world/enemy-magmagolem.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a massive magma golem made of burning rock, lava veins, glowing fists, 512x512"
+  },
+  "mugger": {
+    "id": "mugger",
+    "src": "/assets/world/enemy-mugger.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a street mugger in a dark hoodie and scarf, sneering, holding a bat, 512x512"
+  },
+  "drone": {
+    "id": "drone",
+    "src": "/assets/world/enemy-drone.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a rogue hovering combat drone, metallic black with a cyan scanning eye, 512x512"
+  },
+  "shade": {
+    "id": "shade",
+    "src": "/assets/world/enemy-shade.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a shadow wisp beast with no face, wisps of purple smoke, purple eye, 512x512"
+  },
+  "bonehound": {
+    "id": "bonehound",
+    "src": "/assets/world/enemy-bonehound.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a skeletal hound with exposed bones, feral grin, red eyes, 512x512"
+  },
+  "wraith": {
+    "id": "wraith",
+    "src": "/assets/world/enemy-wraith.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a hooded purple wraith floating, tattered cloak, glowing violet glare, 512x512"
+  },
+  "cultist": {
+    "id": "cultist",
+    "src": "/assets/world/enemy-cultist.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a masked crimson cultist robed in dark fabric, holding a ritual blade, 512x512"
+  },
+  "shadow_wraith": {
+    "id": "shadow_wraith",
+    "src": "/assets/world/enemy-shadow_wraith.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. a towering shadow wraith, pure darkness with electric magenta eyes, 512x512"
+  },
+  "gate_guardian": {
+    "id": "gate_guardian",
+    "src": "/assets/world/enemy-gate_guardian.png",
+    "prompt": "8-bit pixel-art game monster sprite, voxel render, front view, full body centered, flat dark-green solid background, crisp blocky pixels, subtle 2-light iso shading, thick dark outline, single subject, no text, no watermark, no border. an enormous ancient stone gate guardian golem, crimson runes glowing, boss, 512x512"
+  }
+}
