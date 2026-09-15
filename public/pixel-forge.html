@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHADDAI · The Pixel Forge</title>
+<script src="/state-scope.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
@@ -407,6 +408,36 @@ function hydrateFromOperative(op){
   }catch(_){}
   buildAccs();
 }
+// Restore the player's LAST pixel operative on load — re-forging must never reset
+// your saved character (kit, colors, name) or your equipped accessories.
+function loadSavedOperative(){
+  var owner=localStorage.getItem('shd_userid');
+  if(!owner || owner.indexOf('guest')===0) return;
+  fetch('/api/operatives?owner='+encodeURIComponent(owner),{cache:'no-store'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var ops=(d&&d.operatives)||[]; if(!ops.length) return;
+      var mine=ops.filter(function(o){ return o && (o.source==='pixel-forge' || (o.look&&o.look.archetype==='pixel')); });
+      var pool=mine.length?mine:ops;
+      pool.sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
+      var op=pool[0]; if(!op) return;
+      if(op.id) myOperativeId=op.id;
+      if(op.look && op.look.rig){ try{ var r2=JSON.parse(JSON.stringify(op.look.rig)); if(r2&&typeof r2==='object') rig=Object.assign({},rig,r2); }catch(_){} }
+      if(op.codename){ var ni=document.getElementById('nameIn'); if(ni&&(ni.value||'')==='') ni.value=op.codename; }
+      hydrateFromOperative(op);
+      try{ buildKits(); syncUI(); }catch(_){}
+    })
+    .catch(function(){});
+}
+// Persist the current look (kit, colors, accessories) to the operative whenever the
+// player changes something — an equipped accessory survives the next visit.
+function persistLook(){
+  if(!myOperativeId) return;
+  try{
+    fetch('/api/operatives/'+myOperativeId,{method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ look:{archetype:'pixel', rig:JSON.parse(JSON.stringify(rig)) } })}).catch(function(){});
+  }catch(_){}
+}
 function buildKits(){
   const host=document.getElementById('kitrow'); host.innerHTML='';
   const kits=[{id:'classic',label:'Classic',img:null},
@@ -415,7 +446,7 @@ function buildKits(){
     const b=document.createElement('div'); b.className='kitchip'; b.dataset.kit=k.id;
     if(k.img){ const im=document.createElement('img'); im.src=k.img; im.alt=''; b.appendChild(im); }
     const sp=document.createElement('span'); sp.textContent=k.label; b.appendChild(sp);
-    b.onclick=()=>{ rig.kit=k.id; [...host.children].forEach(x=>x.classList.toggle('on',x.dataset.kit===k.id)); };
+    b.onclick=()=>{ rig.kit=k.id; [...host.children].forEach(x=>x.classList.toggle('on',x.dataset.kit===k.id)); persistLook(); };
     host.appendChild(b); if(k.id===currentKit()) b.classList.add('on');
   });
 }
@@ -434,6 +465,7 @@ function toggleEquip(id){
   if(rig.accessories[a.slot]===id) delete rig.accessories[a.slot];
   else rig.accessories[a.slot]=id;
   buildAccs();
+  persistLook();
 }
 async function buyAcc(id){
   if(!pfRequireSignIn()) return;
@@ -449,6 +481,7 @@ async function buyAcc(id){
       if(typeof d.sparks==='number') document.getElementById('sparksBal').textContent=d.sparks.toLocaleString()+' ⚡';
       if(!itemEquipped(id) && rig.accessories) rig.accessories[a.slot]=id;
       buildAccs();
+      persistLook();
     } else {
       const msg=(d.error||'purchase failed') + (typeof d.sparks==='number' ? ' — you have '+d.sparks.toLocaleString()+' ⚡' : '');
       alert(msg);
@@ -538,12 +571,11 @@ function showPlayerCode(code){
     ov.querySelector('#pcGo').onclick=function(){ ov.remove(); resolve(); };
   });
 }
-// Sign-in = your identity (no Player Codes, no free-use gate). localhost bypass for dev. Guests also allowed.
+// Sign-in = your identity (no Player Codes, no free-use gate, no guests). localhost bypass for dev.
 function pfRequireSignIn(){
   var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
   var signed=false; try{ signed=(localStorage.getItem('shd_signed_in')==='1'); }catch(e){}
-  var guest=false; try{ guest=(sessionStorage.getItem('shd_guest')==='1'); }catch(e){}
-  if(!local && !signed && !guest){ location.href='index.html'; return false; }
+  if(!local && !signed){ location.href='index.html'; return false; }
   return true;
 }
 // Forge the current agent → save as your player + into your Gallery. Returns the agent.
@@ -581,7 +613,7 @@ document.getElementById('enter').addEventListener('click',()=>{
   setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
 });
 
-buildCust(); buildFilm(); markCell(1); loadCosmetics(); requestAnimationFrame(frame);
+buildCust(); buildFilm(); markCell(1); loadCosmetics(); loadSavedOperative(); requestAnimationFrame(frame);
 </script>
 
 <script src="/free-use-tracker.js?v=1" defer></script>

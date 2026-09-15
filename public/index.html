@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="theme-color" content="#00ff88">
+<script src="/state-scope.js?v=1"></script>
 <!-- ── SEO / Bio ──────────────────────────────────────────────────────────── -->
 <meta name="description" content="SHADDAI is a sovereign AI agent empire — seven specialized agents and 200+ real, executable tools. Forge your own operatives, run autonomous workflows, explore a living 3D world, and power it all with your own free API key.">
 <meta name="keywords" content="SHADDAI, AI agents, AI agent marketplace, autonomous agents, agent forge, BYOK, Llama 70B, Groq, AI workflows, 3D agent world, sovereign AI">
@@ -345,6 +346,14 @@
       } else { location.href='/dashboard'; }
     }catch(e){ location.href='/dashboard'; }
   }
+  // 2D World entry: sign in first, then the Pixel Forge (forge selector). No guests, no skipping.
+  window.enter2DWorld=function(){
+    var menu=document.getElementById('worldsMenu'); if (menu) menu.style.display='none';
+    var local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+    var ok=false; try{ ok=local || localStorage.getItem('shd_signed_in')==='1'; }catch(e){ ok=local; }
+    if (ok){ location.href='/pixel-forge.html'; }
+    else { showGate('the 2D World'); }
+  };
   function apply(){
     var guest=isGuest();
     // A visitor with no session and no guest flag is still gate-blocked, so
@@ -4420,7 +4429,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <div style="font-size:8px;letter-spacing:2px;color:#7c3aed;text-transform:uppercase;padding:6px 12px 8px;font-weight:800">🌐 Empire Worlds</div>
   <!-- ENTER -->
   <div style="font-size:8px;letter-spacing:1.5px;color:#3a4a5a;text-transform:uppercase;padding:4px 12px 2px">Enter</div>
-  <button class="worlds-item" onclick="location.href='game.html';document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:inherit;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">▦</span><span style="flex:1;text-align:left">2D World <span style="color:#3a4a5a;font-weight:400;font-size:10px">· walk the city</span></span></button>
+  <button class="worlds-item" onclick="enter2DWorld()" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:inherit;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">▦</span><span style="flex:1;text-align:left">2D World <span style="color:#3a4a5a;font-weight:400;font-size:10px">· forge or sign in · walk the city</span></span></button>
   <button class="worlds-item" onclick="enter3DWorld();document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#a78bfa;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(124,58,237,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">◈</span><span style="flex:1;text-align:left">3D World <span style="color:#6a4aaa;font-weight:400;font-size:10px">· Pro</span></span></button>
   <button class="worlds-item" onclick="showView('worlds');switchWorldsTab('city');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:inherit;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(0,229,160,0.12)'" onmouseout="this.style.background='none'"><span style="font-size:16px">🌆</span><span style="flex:1;text-align:left">City <span style="color:#3a4a5a;font-weight:400;font-size:10px">· plots & portals</span></span></button>
   <button class="worlds-item" onclick="showView('worlds');switchWorldsTab('rooms');document.getElementById('worldsMenu').style.display='none'" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:none;color:#e8c45c;font-family:inherit;font-size:12px;cursor:pointer;border-radius:8px;font-weight:600" onmouseover="this.style.background='rgba(232,196,92,0.1)'" onmouseout="this.style.background='none'"><span style="font-size:16px">🚪</span><span style="flex:1;text-align:left">My Rooms <span style="color:#7a6a3a;font-weight:400;font-size:10px">· tenants &amp; rent</span></span></button>
