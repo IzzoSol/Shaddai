@@ -463,15 +463,24 @@
   /* Rotating front-door art. Every visit is handed a *different* plate from a
      module's artVary pool, so the door never reads the same twice — but the
      choice is frozen for the whole session so it never flickers mid-render.
-     The base image is always first in the pool, and enter.html falls back to
-     it if a numbered variant has not been generated yet. */
+     The base image is always first in the pool, seal the pick in
+     sessionStorage, and the onerror path in enter.html falls back to the
+     module's base `art` if any numbered variant fails to load. */
   function artFor(id) {
     var m = byId(id);
     if (!m) return '/assets/enter/entry.jpg';
-    // Only the base `art` files are guaranteed to exist on disk; the numbered
-    // artVary variants (e.g. dashboard-1.jpg …) are not shipped, so picking from
-    // them produced broken <img>s. Always return the base `art`.
-    return m.art || '/assets/enter/entry.jpg';
+    var pool = m.artVary && m.artVary.length ? m.artVary : [m.art];
+    if (pool.length < 2) return pool[0] || m.art || '/assets/enter/entry.jpg';
+    try {
+      var k = 'shd_art_' + id;
+      var c = sessionStorage.getItem(k);
+      if (c && pool.indexOf(c) >= 0) return c;
+      var pick = pool[Math.floor(Math.random() * pool.length)] || m.art;
+      sessionStorage.setItem(k, pick);
+      return pick;
+    } catch (e) {
+      return m.art || '/assets/enter/entry.jpg';
+    }
   }
 
   root.SHDModules = {
