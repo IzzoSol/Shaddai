@@ -1642,7 +1642,7 @@ function renderMarket(){ const el=document.getElementById('market'); if(!el)retu
   const o=marketQueue[marketIdx];
   if(!o){ h+='<div class="rcard" style="background:#141c26;color:#eaf3fb;cursor:default;min-height:70px;justify-content:center">The square is quiet… bring goods to sell — fish 🐟, wood 🪵, hides 🟫, water 💧.</div>'; }
   else { const m=itemMeta(o.id), premium=o.offer>o.fair;
-    h+='<div class="rcard" style="background:#161f2c;color:#eaf3fb;cursor:default;align-items:stretch;min-height:132px"><div style="font-size:13px;opacity:.85">🧑 <b>'+o.name+'</b> steps up to your stall…</div>';
+    h+='<div class="rcard" style="background:#161f2c;color:#eaf3fb;cursor:default;align-items:stretch;min-height:132px"><div style="display:flex;align-items:center;gap:9px;font-size:13px;opacity:.85"><img src="/assets/traders/'+o.name.toLowerCase()+'.png" alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;border:1px solid rgba(95,224,255,.35)" onerror="this.style.display=\'none\'"><b>'+o.name+'</b> steps up to your stall…</div>';
     h+='<div style="font-size:17px;margin:10px 0">“I\'ll take <b>'+o.qty+' × '+m.ico+' '+m.name+'</b> for <b style="color:#4fe07a">💵'+o.offer+'</b>”</div>';
     h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px"><button class="primary" onclick="acceptOffer()">✓ Accept 💵'+o.offer+'</button>'+(marketCountered?'':'<button onclick="counterOffer()">⤴ Haggle (ask +20%)</button>')+'<button onclick="declineOffer()">✗ No deal</button></div>';
     h+='<div style="font-size:11px;opacity:.6;margin-top:9px">Fair ~💵'+o.fair+(premium?' · <span style="color:#4fe07a">they\'re paying over!</span>':'')+' · you hold '+haveGood(o.id)+' '+m.name+'</div></div>'; }
