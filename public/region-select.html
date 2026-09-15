@@ -245,9 +245,13 @@
 
   /* ---- travel transition (replaces bare flash) ---- */
   .flash{position:fixed;inset:0;z-index:50;display:grid;place-items:center;
-    background:#06060f;
+    background:#06060f;overflow:hidden;
     opacity:0;pointer-events:none;transition:opacity .35s ease-in}
   .flash.on{opacity:1;pointer-events:auto}
+  .flash-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    filter:brightness(.42) saturate(1.15);z-index:0}
+  .flash-vid.hide{display:none}
+  .flash .travel-in{position:relative;z-index:1}
   .travel-in{text-align:center;opacity:0;transform:translateY(12px);
     transition:.45s ease .1s}
   .flash.on .travel-in{opacity:1;transform:none}
@@ -351,6 +355,7 @@
 </div>
 
 <div class="flash" id="flash">
+  <video class="flash-vid hide" id="flashVid" muted loop playsinline autoplay preload="auto"></video>
   <div class="travel-in">
     <div class="tr-sig">◈</div>
     <div class="tr-name" id="trName">Green Meadow</div>
@@ -481,6 +486,12 @@ function enter(){
   if(ts) ts.textContent='Realm of '+r.seph.replace(/·.*$/,'').trim();
   if(sig) sig.style.setProperty('--ac',r.accent);
   if(tn) tn.style.setProperty('--ac',r.accent);
+  // Portal boot video (muted, looping); silently degrade to the glow card if it 404s/never loads.
+  const fv=document.getElementById('flashVid');
+  if(fv){ fv.onloadeddata=()=>{ fv.classList.remove('hide'); fv.play().catch(()=>{}); };
+         fv.onerror=()=>{ fv.classList.add('hide'); };
+         fv.src='/assets/vfx/gate-travel.mp4'+(location.hostname==='localhost'?'?v='+Math.floor(performance.now()):'?v=7');
+         fv.load(); }
   fl.classList.add('on');
   setTimeout(()=>{
     // hand off to the game world with the chosen region (original contract)
