@@ -222,14 +222,14 @@ window.Interiors = (function () {
     const theme = THEMES[type] || THEMES.office;
     const S = shade;
 
-    // --- center the room --------------------------------------------------
-    // room spans cols/rows; its pixel bbox: width = (COLS+ROWS)*TW/2, and we
-    // want the whole thing centered with a little headroom for walls.
-    OX = 0; OY = 0;
-    // compute geometric center of floor at (COLS/2, ROWS/2)
-    const [midX, midY] = iso(COLS / 2, ROWS / 2);
-    OX = W / 2 - midX;
-    OY = H / 2 - midY - WALL_H * 0.30;   // lift room up so it reads centered with walls above
+  // --- center the room --------------------------------------------------
+  // room spans cols/rows; its pixel bbox: width = (COLS+ROWS)*TW/2, and we
+  // want the whole thing centered with a little headroom for walls.
+  OX = 0; OY = 0;
+  // compute geometric center of floor at (COLS/2, ROWS/2)
+  const [midX, midY] = iso(COLS / 2, ROWS / 2);
+  OX = W / 2 - midX;
+  OY = H / 2 - midY - WALL_H * 0.40;   // lift room up so it reads centered with walls above
 
     // --- floor + walls ----------------------------------------------------
     // soft ambient background so nothing floats on pure black
@@ -283,7 +283,7 @@ window.Interiors = (function () {
     // BED (back-left corner)
     add(1.4, 1.4, () => {
       box(ctx, 1.6, 1.6, 1.5, 2.1, 10, '#9a6238', E);            // warm wood frame
-      box(ctx, 1.6, 1.7, 1.35, 1.7, 9, '#f4efe4', { edge: true, topC: '#fdfaf2' }); // mattress
+        box(ctx, 1.6, 1.7, 1.35, 1.7, 8, '#f4efe4', { edge: true, topC: '#fdfaf2' }); // mattress
       box(ctx, 1.6, 2.05, 1.35, 0.9, 10, '#d97a8a', { edge: true, topC: '#e89aa6' }); // duvet
       box(ctx, 1.05, 1.0, 0.55, 0.4, 7, '#ffffff', E);          // pillow
     });
@@ -498,7 +498,7 @@ window.Interiors = (function () {
     add(4.4, 4.4, () => {
       pedestal(ctx, 4.5, 4.5, '#22303f');
       // throne back
-      box(ctx, 4.5, 4.0, 0.7, 0.3, 30, '#2a3a4c', E);
+      box(ctx, 4.5, 4.0, 0.7, 0.3, 24, '#2a3a4c', E);
       box(ctx, 4.5, 4.0, 0.55, 0.2, 26, '#1c2a38', { edge: true, topC: '#324458' });
       // glowing terminal / monitor on a stalk
       box(ctx, 4.5, 4.9, 0.2, 0.2, 14, '#1a2430', E);
