@@ -1,0 +1,23 @@
+{
+  "id": "danger_zone",
+  "type": "pvp_hotspot",
+  "name": "Wasteland",
+  "description": "High‑risk PvP area with boss raids",
+  "theme": "ruins",
+  "seed": 707,
+  "dimensions": { "cols": 14, "rows": 10 },
+  "props": [
+    { "type": "ruin",       "x": 1, "y": 1, "rot": 0 },
+    { "type": "spike_trap", "x": 5, "y": 6, "rot": 0 },
+    { "type": "supply_crate","x": 8, "y": 2, "rot": 0 },
+    { "type": "danger_sign","x": 12,"y": 9, "rot": 90 },
+    { "type": "combat_arena","x": 4, "y": 4, "rot": 0 }
+  ],
+  "onUse": "combatXpBoost",
+  "textures": {
+    "floor": "/textures/floor-ruins.png",
+    "wall":  "/textures/wall-stone.png",
+    "ceiling": "/textures/ceiling-dust.png",
+    "asset_url": "https://huggingface.co/datasets/maritime/ruins_01?dataset=desert_ruins"
+  }
+}

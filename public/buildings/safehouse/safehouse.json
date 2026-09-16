@@ -1,0 +1,23 @@
+{
+  "id": "safehouse",
+  "type": "residence",
+  "name": "Safe House",
+  "description": "Personal storage, rest area, and low‑risk hub",
+  "theme": "cozy",
+  "seed": 606,
+  "dimensions": { "cols": 10, "rows": 8 },
+  "props": [
+    { "type": "bed",        "x": 2, "y": 2, "rot": 0 },
+    { "type": "chest",      "x": 4, "y": 2, "rot": 0 },
+    { "type": "lamp",       "x": 3, "y": 4, "rot": 90 },
+    { "type": "workbench",  "x": 5, "y": 5, "rot": 0 },
+    { "type": "deco_vase",  "x": 6, "y": 3, "rot": 0 }
+  ],
+  "onUse": "housingXpGain",
+  "textures": {
+    "floor": "/textures/floor-wood.png",
+    "wall":  "/textures/wall-plaster.png",
+    "ceiling": "/textures/ceiling-beige.png",
+    "asset_url": "https://fal.ai/generate/texture/wood_floor_01?model=fal-struct-2d-v1"
+  }
+}

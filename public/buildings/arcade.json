@@ -1,0 +1,21 @@
+{
+  "id": "arcade",
+  "type": "game_hall",
+  "name": "Arcade Hall",
+  "description": "Competitive mini‑games (racing, rhythm, puzzles)",
+  "theme": "neon",
+  "seed": 202,
+  "dimensions": { "cols": 15, "rows": 10 },
+  "props": [
+    { "type": "arcade_machine", "x": 3, "y": 3, "rot": 0 },
+    { "type": "leaderboard",   "x": 8, "y": 2, "rot": 0 },
+    { "type": "neon_sign",      "x": 10, "y": 7, "rot": 180 }
+  ],
+  "onUse": "reactionXpGain(1)",
+  "textures": {
+    "floor":   "/textures/floor-neon.png",
+    "wall":    "/textures/gradient.png",
+    "ceiling": "/textures/plasma.png",
+    "asset_url": "https://fal.ai/generate/texture/neon_arcade_01?model=fal-neon-v1"
+  }
+}

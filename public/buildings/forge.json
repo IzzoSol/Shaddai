@@ -1,0 +1,23 @@
+{
+  "id": "forge",
+  "type": "workshop",
+  "name": "Forge",
+  "description": "Craft tools, weapons, and upgrades",
+  "theme": "industrial",
+  "seed": 101,
+  "dimensions": { "cols": 12, "rows": 9 },
+  "props": [
+    { "type": "workbench",   "x": 2,  "y": 2,  "rot": 0 },
+    { "type": "anvil",       "x": 4,  "y": 2,  "rot": 0 },
+    { "type": "tool_rack",   "x": 6,  "y": 2,  "rot": 0 },
+    { "type": "forge_fire",  "x": 3,  "y": 5,  "rot": 90 },
+    { "type": "forge_lever", "x": 5,  "y": 5,  "rot": 0 }
+  ],
+  "onUse": "craftingXpGain(2)",
+  "textures": {
+    "floor":   "/textures/floor-masonry.jpg",
+    "wall":    "/textures/brick.png",
+    "ceiling": "/textures/iron.png",
+    "asset_url": "https://fal.ai/generate/texture/weathered_brick_01?model=fal-struct-3d-v2"
+  }
+}
