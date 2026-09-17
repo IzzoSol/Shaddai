@@ -3,6 +3,8 @@ const characterRoutes = require('./characterServer');
 const marketRoutes = require('./marketServer');
 const questRoutes = require('./questServer');
 const plotRoutes = require('./plotServer');
+const bonusRoutes = require('./bonusServer');
+const dailyRoutes = require('./dailyServer');
 const schedulerRoutes = require('./jobs/scheduler');
 
 const app = express();
@@ -13,6 +15,7 @@ app.use('/character', characterRoutes);
 app.use('/market', marketRoutes);
 app.use('/quest', questRoutes);
 app.use('/plot', plotRoutes);
+app.use('/bonus', bonusRoutes);
 
 // Scheduler exposes a /health view of registered jobs
 app.use('/scheduler', schedulerRoutes);

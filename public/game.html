@@ -222,6 +222,10 @@ function openTacticsFromPub(){
 <script src="dark-realm.js" onerror="0"></script>
 <script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
+<script src="auth.js" onerror="0"></script>
+<script src="config/buildings.js" onerror="0"></script>
+<script src="js/skills.js" onerror="0"></script>
+<script src="js/market.js" onerror="0"></script>
 <script>
 'use strict';
 const PP = window.PixelPeople;
@@ -938,7 +942,7 @@ function canDecorate(){ return !!decorKey(); }
 function loadDecorFor(key){ try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); return (d[key]||[]).map(x=>{ const f=fitem(x.col,x.row,x.w,x.d,x.h,x.color,x.type); f._decor=true; return f; }); }catch(e){ return []; } }
 function loadDecor(hid){ return loadDecorFor(hid); }
 function saveDecorNow(){ const key=decorKey(); if(!key) return; const items=intRoom.furniture.filter(f=>f._decor).map(f=>({col:f.col,row:f.row,w:f.w,d:f.d,h:f.h,color:f.color,type:f.type}));
-  try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); d[key]=items; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){} }
+  try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); d[key]=items; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){} scheduleCloudPush(); }
 function openDecorate(){ if(!canDecorate()){ toast('You can only decorate your own home or office'); return; } decorMode=true; decorPick=DECOR[0];
   // Real pixel icons (WeaponArt, $0 code-drawn — same system already used for
   // hotbar/backpack items) instead of the raw emoji this picker used before;
@@ -1075,6 +1079,7 @@ function update(dt){
     }
     let nw=false; for(let dr=-2;dr<=2&&!nw;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0, t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK){nw=true;} }
     const fb=document.getElementById('fishBar'); if(fb) fb.classList.toggle('hide', !nw||spectate);
+    if(!nw&&fishingActive){ clearTimeout(fishTimer); fishTimer=null; fishingActive=false; fishCooldown=0; }
     // gather: near a tree → chop wood, near rocks → mine ore
     let gt=null,gp=null; for(const p of props){ const t=p.type; const near=Math.abs(p.col-player.col)<1.9&&Math.abs(p.row-player.row)<1.9;
       if(near&&(t==='tree'||t==='pine'||t==='palm'||t==='cactus')){ gt='wood'; gp=p; break; } if(near&&(t==='rock'||t==='lavarock')){ gt='ore'; gp=p; } }
@@ -1418,7 +1423,7 @@ function accrue(plot){ const now=Date.now(), elapsed=(now-plot.lastAccrual)/1000
 function cityTick(){ CITY_PLOTS.forEach(p=>{ if(p.owner) accrue(p); }); saveCity(); }
 setInterval(cityTick,5000);
 function saveCity(){ try{ localStorage.setItem('shaddai.city',JSON.stringify(
-  CITY_PLOTS.map(p=>({id:p.id,slot:p.slot,owner:p.owner,deed:p.deed,claimable:p.claimable,lastAccrual:p.lastAccrual,boostLock:p.boostLock,name:p.name,rooms:p.rooms,amenities:p.amenities})))); }catch(_){} }
+  CITY_PLOTS.map(p=>({id:p.id,slot:p.slot,owner:p.owner,deed:p.deed,claimable:p.claimable,lastAccrual:p.lastAccrual,boostLock:p.boostLock,name:p.name,rooms:p.rooms,amenities:p.amenities})))); }catch(_){} scheduleCloudPush(); }
 function loadCity(){ try{ const saved=JSON.parse(localStorage.getItem('shaddai.city')||'[]');
   saved.forEach(s=>{ const p=CITY_PLOTS.find(x=>x.id===s.id); if(!p)return;
     p.owner=s.owner||null; p.deed=s.deed||null; p.claimable=typeof s.claimable==='number'?s.claimable:0;
@@ -1462,7 +1467,7 @@ const MARKET_DEMAND={ meadow:{wood:1.0,hide:1.1,fish:0.9,trinket:1.1,water:0.7,o
 const FISH=[ {id:'minnow',name:'Minnow',ico:'🐟',val:6,w:5},{id:'bass',name:'Bass',ico:'🐟',val:12,w:4},{id:'salmon',name:'Salmon',ico:'🐠',val:22,w:2.5},{id:'tuna',name:'Big Tuna',ico:'🐡',val:48,w:1,big:true},{id:'levi',name:'Leviathan',ico:'🐋',val:130,w:0.3,big:true} ];
 function levelFor(c){ return 1+Math.floor(Math.sqrt(c/45)); }
 function loadEcon(){ try{ const e=JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); if(typeof e.money==='number')money=e.money; if(typeof e.credits==='number')credits=e.credits; if(e.inv)Object.assign(inv,e.inv); if(e.fish)Object.assign(fish,e.fish); if(typeof e.bank==='number')bank=e.bank; if(typeof e.coin==='number')coin=e.coin; if(typeof e.coinPrice==='number')coinPrice=e.coinPrice; if(e.stash)Object.assign(stash,e.stash); if(e.weaponUp)Object.assign(weaponUp,e.weaponUp); if(typeof e.equippedWeapon==='string')equippedWeapon=e.equippedWeapon; if(e.quest)Object.assign(quest,e.quest); if(e.questDone)Object.assign(questDone,e.questDone); }catch(_){} }
-function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({money,credits,inv,fish,bank,coin,coinPrice,stash,weaponUp,equippedWeapon,quest,questDone})); localStorage.setItem('shaddai.level',String(levelFor(credits))); }catch(_){} updateWallet(); try{ if(typeof renderHotbar==='function') renderHotbar(); }catch(_){} }
+function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({money,credits,inv,fish,bank,coin,coinPrice,stash,weaponUp,equippedWeapon,quest,questDone})); localStorage.setItem('shaddai.level',String(levelFor(credits))); }catch(_){} updateWallet(); scheduleCloudPush(); try{ if(typeof renderHotbar==='function') renderHotbar(); }catch(_){} }
 function updateWallet(){ const el=document.getElementById('wallet'); if(!el)return;
   const L=levelFor(credits), cur=45*(L-1)*(L-1), next=45*L*L, into=credits-cur, span=next-cur, pct=Math.max(0,Math.min(100,into/span*100));
   el.innerHTML='💵 '+money+' &nbsp;·&nbsp; <span style="color:#5fe0ff">Lv '+L+'</span> <span style="opacity:.55">'+into+' / '+span+' XP</span>'+
@@ -1714,7 +1719,26 @@ function openRoomTheme(){ const el=document.getElementById('roomsPanel'); if(!el
   el.innerHTML=h; el.classList.remove('hide'); }
 function roomsKey(){ return 'shaddai.rooms.'+(localStorage.getItem('shd_userid')||'guest'); }
 function loadRooms(){ try{ const a=JSON.parse(localStorage.getItem(roomsKey())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-function saveRooms(a){ try{ localStorage.setItem(roomsKey(), JSON.stringify(a)); }catch(e){} }
+function saveRooms(a){ try{ localStorage.setItem(roomsKey(), JSON.stringify(a)); }catch(e){} scheduleCloudPush(); }
+// ── CLOUD SAVE SYNC (cross-device) ──────────────────────────────────────────
+// The account's save follows it anywhere: every save hook schedules a debounced
+// PUT /api/world/saves, and boot pulls GET /api/world/saves and reloads if the
+// cloud copy differs. Guests + local dev stay device-scoped — a guest save is
+// NEVER pushed up, so it can't clobber an account's cloud save.
+function cloudUid(){ try{ const u=String(localStorage.getItem('shd_userid')||'').trim(); return (u&&u.indexOf('guest')!==0&&u!=='local')?u:''; }catch(e){ return ''; } }
+function cloudKeys(){ return ['shaddai.econ','shaddai.city','shaddai.decor','shaddai.level', roomsKey()]; }
+function cloudGather(){ const o={}; try{ for(const k of cloudKeys()){ const v=localStorage.getItem(k); if(v!==null) o[k]=v; } }catch(e){} return o; }
+let cloudPushT=null;
+function scheduleCloudPush(){ if(!cloudUid()) return; if(cloudPushT) return; cloudPushT=setTimeout(doCloudPush,2500); }
+async function doCloudPush(){ cloudPushT=null; const uid=cloudUid(); if(!uid) return; const save=cloudGather(); if(!Object.keys(save).length) return;
+  try{ await fetch('/api/world/saves',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({save})}); }catch(e){} }
+async function pullCloudSave(){ const uid=cloudUid(); if(!uid) return;
+  try{ const r=await fetch('/api/world/saves'); if(!r.ok) return; const d=await r.json();
+    const save=(d&&d.save)||{}; if(!Object.keys(save).length) return;
+    let changed=false;
+    for(const k of Object.keys(save)){ if(cloudKeys().indexOf(k)<0) continue; try{ const pre=localStorage.getItem(k); if(save[k]===pre) continue; localStorage.setItem(k,save[k]); changed=true; }catch(e){} }
+    if(changed) try{ location.reload(); }catch(e){}
+  }catch(e){} }
 function openRooms(){ if(!isSignedIn()){ checkSignGate(); return; } const el=document.getElementById('roomsPanel'); if(!el)return; el.innerHTML=roomsHtml(); el.classList.remove('hide'); }
 function closeRooms(){ const el=document.getElementById('roomsPanel'); if(el)el.classList.add('hide'); }
 function roomsHtml(){
@@ -1840,6 +1864,7 @@ function castFish(){
   if(fishingActive){ toast('🎣 Line\'s already out — wait for a bite…'); return; }
   if(fishCooldown>0){ toast('Reel in first… ('+Math.ceil(fishCooldown)+'s)'); return; }
   if(!isNearWater()){ toast('🎣 Stand by the water to cast'); return; }
+  if(!(act==='rod'||inv.rod)){ toast('Equip a 🎣 Fishing Rod (Store) to fish here'); return; }
   fishingActive=true; toast('🎣 Cast! Line out — waiting for a bite…');
   const wait=15000+Math.random()*15000;                 // random 15–30s hit
   fishTimer=setTimeout(()=>{ fishingActive=false; fishCooldown=2;
@@ -2104,6 +2129,8 @@ async function claimOfficeGame(){
 loadEcon();
 loadCity();
 connectMP();
+if(cloudUid()) pullCloudSave();
+window.addEventListener('beforeunload', function(){ if(cloudPushT){ clearTimeout(cloudPushT); doCloudPush(); } });
 requestAnimationFrame(loop);
 </script>
 <script src="home-btn.js" defer onerror="this.remove()"></script>
