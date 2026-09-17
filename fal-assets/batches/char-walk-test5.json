@@ -1,0 +1,10 @@
+[
+  { "id": "pass-lr", "type": "img2img", "register": "cinematic",
+    "input": "fal-assets/spike/char-warrior.png", "strength": 0.5,
+    "body": "the same stylized 3D chibi knight character, identical armor colors, helmet, sword and shield design, mid-walk passing pose with legs crossing directly under the body, weight centered, knees slightly bent, the long cape swept to the side so both legs and boots stay fully visible, full body clearly shown head to feet, plain white background, no text",
+    "out": "fal-assets/spike/char-warrior-pass1.png" },
+  { "id": "pass-rl", "type": "img2img", "register": "cinematic",
+    "input": "fal-assets/spike/char-warrior.png", "strength": 0.5,
+    "body": "the same stylized 3D chibi knight character, identical armor colors, helmet, sword and shield design, mid-walk passing pose with legs crossing directly under the body from the opposite stride, weight centered, knees slightly bent, the long cape swept to the side so both legs and boots stay fully visible, full body clearly shown head to feet, plain white background, no text",
+    "out": "fal-assets/spike/char-warrior-pass2.png" }
+]
