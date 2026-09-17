@@ -20,6 +20,8 @@ delete process.env.DATABASE_URL; // force the dev file store, not Postgres
 
 const { EconomyService, DevFileStore, InsufficientFundsError } = require('../../economy-service');
 const createHallRouter = require('../routes');
+const { createEarnStore } = require('../earn-store');
+const { createArcadeArt } = require('../arcade-art');
 
 function listen(server) {
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
@@ -31,7 +33,9 @@ function makeStubLens() {
     calls,
     async requestClip(userId, event, idempotencyKey) {
       calls.push({ userId, event, idempotencyKey });
-      return { jobId: 'job_stub_1', status: 'processing', eta: 20, sparksCharged: 15, balance: 0, replayed: false };
+      // Mirrors fal's real submit: the adapter returns the queue status URL as
+      // jobId. The route must translate that into an opaque path-safe key.
+      return { jobId: 'https://queue.fal.run/fal-ai/kling-video/requests/deadbeef/status', status: 'processing', eta: 20, sparksCharged: 15, balance: 0, replayed: false };
     },
     async getClipStatus(jobId) {
       return { status: 'completed', progress: 100, videoUrl: `https://example.test/${jobId}.mp4` };
@@ -43,15 +47,21 @@ async function run() {
   const tmp = path.join(os.tmpdir(), `hall-test-economy-${process.pid}-${Math.random().toString(36).slice(2)}.json`);
   const economySvc = new EconomyService({ store: new DevFileStore(tmp) });
   const lens = makeStubLens();
+  const earnFile = path.join(os.tmpdir(), `hall-test-earn-${process.pid}-${Math.random().toString(36).slice(2)}.json`);
+  const earn = createEarnStore(earnFile);
+  const artDir = path.join(os.tmpdir(), `hall-test-art-${process.pid}-${Math.random().toString(36).slice(2)}`);
+  const TINY_PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const arcadeArt = createArcadeArt({ cacheDir: artDir, provider: { async generateSafe() { return { buffer: TINY_PNG, provider: 'stub' }; } } });
 
   const app = express();
-  app.use(createHallRouter({ economySvc, lens }));
+  app.use(createHallRouter({ economySvc, lens, earn, arcadeArt }));
   const server = http.createServer(app);
+  let server2 = null;
   const port = await listen(server);
   const base = `http://127.0.0.1:${port}`;
   const axios = require('axios');
   async function post(p, body) { return (await axios.post(`${base}${p}`, body)).data; }
-  async function get(p) { return (await axios.get(`${base}${p}`)).data; }
+  async function get(p, cfg) { return (await axios.get(`${base}${p}`, cfg || {})).data; }
 
   try {
     // 1. Seat + buy-in with real Sparks (granted via the injected economy
@@ -128,21 +138,89 @@ async function run() {
       }
       if (table.settlement.events && table.settlement.events.length) {
         const clip = await post(`/api/casino/tables/${matchId}/lens`);
-        assert.strictEqual(clip.jobId, 'job_stub_1');
+        assert.match(clip.jobId, /^lens_[0-9a-f]{12}$/, 'status URL must be stashed behind an opaque path-safe jobId');
         assert.strictEqual(lens.calls.length, 1);
         const status = await get(`/api/casino/tables/${matchId}/lens/${clip.jobId}`);
-        assert.strictEqual(status.videoUrl, 'https://example.test/job_stub_1.mp4');
+        assert.ok(status.videoUrl.includes('queue.fal.run/fal-ai/kling-video/requests/deadbeef/status.mp4'), 'poll must resolve the opaque key back to the real status URL');
         console.log('PASS: Lens request + status poll round-trips through the real route to the injected adapter');
       } else {
         console.log('SKIP: this hand had no filmable event (push) -- Lens path not exercised this run');
       }
     }
 
+    // 6. Earn: GET /api/casino/earn/daily claims once per identity, replays
+    //    without re-minting, and the profile reports it. Uses the off-production
+    //    x-user-id identity path (softAuth), same as profile.
+    {
+      const hdr = { headers: { 'x-user-id': 'u:earner' } };
+      const c1 = await get('/api/casino/earn/daily', hdr);
+      assert.strictEqual(c1.ok, true); assert.strictEqual(c1.claimed, true);
+      assert.strictEqual(c1.amount, 25); assert.strictEqual(c1.balance, 25);
+      const c2 = await get('/api/casino/earn/daily', hdr);
+      assert.strictEqual(c2.claimed, false); assert.strictEqual(c2.replayed, true);
+      assert.strictEqual(c2.balance, 25);
+      const profile = await get('/api/casino/profile', hdr);
+      assert.strictEqual(profile.earn.dailyClaimedToday, true);
+      assert.ok(profile.earn.nextDailyMs > 0, 'profile must expose the next-claim countdown');
+      try { await get('/api/casino/earn/daily'); assert.fail('expected a 401 without identity'); } catch (e) { assert.strictEqual(e.response.status, 401); }
+      console.log('PASS: earn daily route claims once per identity, replays safe, profile + 401 guard correct');
+    }
+
+    // 7. Menu art: unknown pack 404, known pack serves the injected stub PNG
+    //    (JSON meta + raw=1 bytes). No HF key, no real network.
+    {
+      try { await get('/api/casino/art?pack=nope'); assert.fail('expected a 404'); } catch (e) { assert.strictEqual(e.response.status, 404); }
+      const meta = await get('/api/casino/art?pack=hall&w=96&h=96');
+      assert.strictEqual(meta.ok, true);
+      assert.ok(meta.url.includes('/api/casino/art?pack=hall'), 'meta carries a self-URL for <img src>');
+      assert.strictEqual(meta.width, 96);
+      const raw = await axios.get(`${base}${meta.url}`, { responseType: 'arraybuffer' });
+      assert.strictEqual(raw.headers['content-type'], 'image/png');
+      assert.ok(Buffer.isBuffer(raw.data) && raw.data.length > 0, 'raw=1 streams PNG bytes');
+      console.log('PASS: menu art route gates unknown packs (404) and serves meta + raw PNG');
+    }
+
+    // 8. Injected economies stay coherent with the REAL lens adapter: when a
+    //    custom economySvc is injected, the router binds the lens to it
+    //    (createLens). Driving the no-FAL_KEY 503 DISABLED path proves the
+    //    spend + refund both hit the INJECTED store (net-zero), never the
+    //    default economy.
+    {
+      const defaultLens = require('../lens-adapter');
+      const app2 = express();
+      app2.use(createHallRouter({ economySvc, earn, arcadeArt, lens: defaultLens.createLens({ economy: economySvc }) }));
+      server2 = http.createServer(app2);
+      const port2 = await listen(server2);
+      const base2 = `http://127.0.0.1:${port2}`;
+      const post2 = (p, b) => axios.post(`${base2}${p}`, b).then((x) => x.data);
+      const get2 = (p) => axios.get(`${base2}${p}`).then((x) => x.data);
+      const { seat } = await post2('/api/casino/seats', { kind: 'human', display_name: 'Coherent', sparks_ref: 'u:coherent' });
+      await economySvc.grant('u:coherent', 100, 'test_bonus', 'k8');
+      const created8 = await post2('/api/casino/tables', { seatId: seat.id, wager: 0, pack: 'blackjack' });
+      let t8 = created8, g8 = 0;
+      while (t8.settlement && t8.settlement.score === null && g8++ < 10) {
+        t8 = await post2(`/api/casino/tables/${created8.matchId}/move`, { move: 'hit' });
+      }
+      const balPre = await economySvc.getBalance('u:coherent');
+      if (t8.settlement.events && t8.settlement.events.length) {
+        try { await post2(`/api/casino/tables/${created8.matchId}/lens`); assert.fail('expected 503 DISABLED without FAL_KEY'); }
+        catch (e) { assert.strictEqual(e.response.status, 503); assert.strictEqual(e.response.data.code, 'DISABLED'); }
+        const balPost = await economySvc.getBalance('u:coherent');
+        assert.ok(Math.abs(balPost - balPre) <= 5, `lens spend+refund must net ~0 on the INJECTED store (pre=${balPre} post=${balPost})`);
+        console.log('PASS: bound lens spends+refunds on the injected economy (503 DISABLED, net-zero)');
+      } else {
+        console.log('SKIP: no filmable event on this hand -- coherence check not exercised this run');
+      }
+    }
+
     console.log('\nAll routes-integration checks passed');
   } finally {
     server.close();
+    if (server2) server2.close();
     try { fs.unlinkSync(tmp); } catch (_) {}
     try { fs.unlinkSync(tmp + '.tmp'); } catch (_) {}
+    try { fs.unlinkSync(earnFile); } catch (_) {}
+    try { fs.rmSync(artDir, { recursive: true, force: true }); } catch (_) {}
   }
 }
 

@@ -15,54 +15,55 @@ const videoProviders = require('../video-providers');
 
 const LENS_COST_SPARKS = 15;
 
-/**
- * requestClip(userId, {matchId,pack,eventType,seatId}, idempotencyKey)
- *   -> { jobId, status, eta, costUsd, sparksCharged, balance, replayed, contract }
- * Throws InsufficientFundsError (caller maps to 402, same as economy-routes.js
- * does), ValidationError for an unfilmable event (400), or an Error with
- * .status=503/502 for Lens/Fal being unavailable -- mirrors lens-routes.js's
- * own error shape exactly so hall/routes.js's catch blocks need no changes.
- */
-async function requestClip(userId, event, idempotencyKey) {
-  let contract;
-  try {
-    contract = buildLensContract({
-      matchId: event.matchId, pack: event.pack, eventType: event.eventType, seatId: event.seatId,
-    });
-  } catch (e) {
-    e.status = 400; e.code = 'UNFILMABLE_EVENT';
-    throw e;
-  }
+// Spending/refunding happens against whichever economy the adapter is bound to.
+// Production uses the module default (createHallRouter() with no deps, just
+// like server-production.js mounts it). Tests/futures that inject a custom
+// economySvc MUST also bind the lens to it via createLens() -- otherwise
+// settlements land on the injected store while the lens spend would hit the
+// default one (balance 0 → confusing 402). The router does this automatically.
+function makeRequestClip(eco) {
+  return async function requestClip(userId, event, idempotencyKey) {
+    let contract;
+    try {
+      contract = buildLensContract({
+        matchId: event.matchId, pack: event.pack, eventType: event.eventType, seatId: event.seatId,
+        agent: event.agent, game: event.game,
+      });
+    } catch (e) {
+      e.status = 400; e.code = 'UNFILMABLE_EVENT';
+      throw e;
+    }
 
-  const spendKey = `lens:${idempotencyKey}:spend`;
-  const spendResult = await economy.spend(userId, LENS_COST_SPARKS, 'lens:bj_clip', spendKey);
+    const spendKey = `lens:${idempotencyKey}:spend`;
+    const spendResult = await eco.spend(userId, LENS_COST_SPARKS, 'lens:bj_clip', spendKey);
 
-  const fal = videoProviders.fal;
-  if (!fal || !videoProviders.isConfigured('fal')) {
-    await economy.grant(userId, LENS_COST_SPARKS, 'lens:bj_clip_refund', `${spendKey}:refund`);
-    const err = new Error('FAL_KEY not configured');
-    err.status = 503; err.code = 'DISABLED';
-    throw err;
-  }
+    const fal = videoProviders.fal;
+    if (!fal || !videoProviders.isConfigured('fal')) {
+      await eco.grant(userId, LENS_COST_SPARKS, 'lens:bj_clip_refund', `${spendKey}:refund`);
+      const err = new Error('FAL_KEY not configured');
+      err.status = 503; err.code = 'DISABLED';
+      throw err;
+    }
 
-  let gen;
-  try {
-    gen = await fal.generate(contract.prompt, { duration: contract.DURATION });
-  } catch (e) {
-    gen = { status: 'error', error: (e && e.message) || 'fal generation failed' };
-  }
+    let gen;
+    try {
+      gen = await fal.generate(contract.prompt, { duration: contract.DURATION });
+    } catch (e) {
+      gen = { status: 'error', error: (e && e.message) || 'fal generation failed' };
+    }
 
-  if (!gen || gen.status === 'error' || !gen.jobId) {
-    await economy.grant(userId, LENS_COST_SPARKS, 'lens:bj_clip_refund', `${spendKey}:refund`);
-    const err = new Error((gen && gen.error) || 'fal did not return a job id');
-    err.status = 502; err.code = 'PROVIDER_ERROR'; err.sparksRefunded = true;
-    throw err;
-  }
+    if (!gen || gen.status === 'error' || !gen.jobId) {
+      await eco.grant(userId, LENS_COST_SPARKS, 'lens:bj_clip_refund', `${spendKey}:refund`);
+      const err = new Error((gen && gen.error) || 'fal did not return a job id');
+      err.status = 502; err.code = 'PROVIDER_ERROR'; err.sparksRefunded = true;
+      throw err;
+    }
 
-  return {
-    jobId: gen.jobId, status: gen.status, eta: gen.eta, costUsd: gen.costUsd,
-    sparksCharged: LENS_COST_SPARKS, balance: spendResult.balance, replayed: !!spendResult.replayed,
-    contract: { EVENT: contract.EVENT, CAST_LOCK: contract.CAST_LOCK, DURATION: contract.DURATION },
+    return {
+      jobId: gen.jobId, status: gen.status, eta: gen.eta, costUsd: gen.costUsd,
+      sparksCharged: LENS_COST_SPARKS, balance: spendResult.balance, replayed: !!spendResult.replayed,
+      contract: { EVENT: contract.EVENT, CAST_LOCK: contract.CAST_LOCK, DURATION: contract.DURATION },
+    };
   };
 }
 
@@ -77,4 +78,9 @@ async function getClipStatus(jobId) {
   return fal.getStatus(jobId);
 }
 
-module.exports = { requestClip, getClipStatus, LENS_COST_SPARKS };
+module.exports = {
+  requestClip: makeRequestClip(economy),
+  getClipStatus,
+  createLens: (opts = {}) => ({ requestClip: makeRequestClip(opts.economy || economy), getClipStatus }),
+  LENS_COST_SPARKS,
+};

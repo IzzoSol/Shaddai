@@ -50,6 +50,14 @@ const seatsStore = require('./seats');
 const mailbox = require('./mailbox');
 const { InsufficientFundsError, getDefault: getDefaultEconomy } = require('../economy-service');
 const defaultLens = require('./lens-adapter');
+const { createEarnStore } = require('./earn-store');
+const { createArcadeArt } = require('./arcade-art');
+
+// softAuth with the repo's standard dev fallback (see realms-routes.js): a
+// real session → verified req.userId; off-production, the x-user-id header
+// (or 'local' when absent) so the whole arcade works on localhost.
+let softAuthMiddleware = (req, _res, next) => { req.userId = req.headers['x-user-id'] || 'local'; next(); };
+try { const ag = require('../auth-guard'); if (ag.softAuth) softAuthMiddleware = ag.softAuth; } catch (_) {}
 
 // Shaddai-Arcade issue #10: pack registry, no longer hardcoded to blackjack.
 // hall/packs/index.js documents each pack's key -> module.
@@ -70,9 +78,19 @@ function newMatchId() {
  */
 function createHallRouter(deps) {
   const economy = (deps && deps.economySvc) || getDefaultEconomy();
-  const lens = (deps && deps.lens) || defaultLens;
+  // When a custom economy is injected but no lens is, bind the REAL lens to
+  // it (createLens) so Lens spends/refunds land on the same store that
+  // settlements use -- otherwise the lens would hit the default economy
+  // (balance 0 → a confusing 402). See lens-adapter.js's createLens note.
+  const lens = deps && deps.lens
+    ? deps.lens
+    : (deps && deps.economySvc ? defaultLens.createLens({ economy }) : defaultLens);
+  const earn = (deps && deps.earn) || createEarnStore();
+  const art = (deps && deps.arcadeArt) || createArcadeArt();
   const router = express.Router();
   const matches = new Map(); // matchId -> { pack, seatId, state, sparksApplied }
+  const lensJobs = new Map(); // opaque jobId -> fal status_url (kept server-side: a raw
+                              // https:// URL can't ride the :jobId path segment below)
 
 router.post('/api/casino/seats', json, (req, res) => {
   try {
@@ -153,7 +171,22 @@ async function settleIfDone(match) {
   } catch (e) {
     return { score, events, sparksError: e.message };
   }
-  return { score, events };
+
+  // Earn loop: win/bj grants a win-of-the-day + streak bonus on top of the
+  // pot. Best-effort and idempotent per uid+match (`hall:win:<uid>:<matchId>`)
+  // so a ledger hiccup can never hold up a settlement that already paid out,
+  // and a replayed settle can never double-mint.
+  let earnBonus = null;
+  if (score === 'win' || score === 'blackjack') {
+    try {
+      const r = earn.recordWin(sparksRef, match.id);
+      if (r.bonus > 0 && !r.replayed) {
+        const g = await economy.grant(sparksRef, r.bonus, 'hall:win_streak', `hall:win:${sparksRef}:${match.id}`);
+        earnBonus = { bonus: r.bonus, streak: r.streak, balance: g.balance };
+      }
+    } catch (_) { /* earn gap is never player-blocking */ }
+  }
+  return { score, events, ...(earnBonus ? { earn: earnBonus } : {}) };
 }
 
 router.post('/api/casino/tables', json, async (req, res) => {
@@ -284,15 +317,32 @@ router.post('/api/casino/tables/:id/lens', json, async (req, res) => {
       return res.status(409).json({ ok: false, error: 'no filmable event on this table yet' });
     }
     const seat = seatsStore.getSeat(match.seatId);
-    if (!seat || !seat.sparks_ref) {
-      return res.status(400).json({ ok: false, error: 'seat has no sparks_ref' });
+    if (!seat) {
+      return res.status(400).json({ ok: false, error: 'seat not found' });
+    }
+    // A human seat without an explicit wallet still gets a Lens attempt against
+    // its own derived ref -- economy.spend returns 0-balance → 402 with the
+    // plain "need 15 Sparks" message, instead of a confusing 400 dead-end.
+    const sparksRef = seat.sparks_ref || (seat.kind === 'human' ? `u:seat:${seat.id}` : null);
+    if (!sparksRef) {
+      return res.status(400).json({ ok: false, error: 'seat has no sparks wallet' });
     }
     const eventType = match.lastEvents[match.lastEvents.length - 1]; // most recent filmable event
     const idempotencyKey = `${match.id}:lens`;
     try {
-      const clip = await lens.requestClip(seat.sparks_ref, {
+      const clip = await lens.requestClip(sparksRef, {
         matchId: match.id, pack: match.pack, eventType, seatId: seat.id,
+        // Arcade-bet reveals are scored for a specific council agent on a
+        // specific game -- hand those through so the cutscene can star the
+        // player's pick (see lens-rewriter's AGENT_FACES / GAME_RESULTS).
+        agent: match.state.pick || undefined,
+        game: match.state.game || undefined,
       }, idempotencyKey);
+      const statusUrl = clip.jobId;
+      if (typeof statusUrl === 'string' && /^https?:\/\//.test(statusUrl)) {
+        clip.jobId = 'lens_' + require('crypto').randomBytes(6).toString('hex');
+        lensJobs.set(clip.jobId, statusUrl);
+      }
       return res.json({ ok: true, ...clip });
     } catch (e) {
       const status = e instanceof InsufficientFundsError ? 402 : (e.status || 502);
@@ -310,10 +360,96 @@ router.post('/api/casino/tables/:id/lens', json, async (req, res) => {
  */
 router.get('/api/casino/tables/:id/lens/:jobId', async (req, res) => {
   try {
-    const status = await lens.getClipStatus(req.params.jobId);
+    const job = lensJobs.get(req.params.jobId);
+    const statusUrl = job || req.params.jobId; // opaque key → stored URL; bare URL works too
+    const status = await lens.getClipStatus(statusUrl);
     return res.json({ ok: true, ...status });
   } catch (e) {
     return res.status(e.status || 502).json({ ok: false, error: e.message, code: e.code });
+  }
+});
+
+  /**
+ * GET /api/casino/profile — the player's Sparks wallet: balance plus a one-time
+ * starter faucet so a brand-new account can sit at a table and cut a Lens clip
+ * immediately. The starter is idempotent on its own key (arcade:starter:<uid>),
+ * so repeated calls replay it — a player who spends down to 0 is NOT re-seeded.
+ * Identity comes from softAuth; the anonymous 'local' dev default is rejected so
+ * nobody can mint an unowned starter.
+ */
+const STARTER_SPARKS = 75;
+router.get('/api/casino/profile', softAuthMiddleware, async (req, res) => {
+  if (!req.userId || req.userId === 'local') {
+    return res.status(401).json({ ok: false, error: 'sign in to use your Sparks wallet', needSignIn: true });
+  }
+  try {
+    const g = await economy.grant(req.userId, STARTER_SPARKS, 'arcade:starter', `arcade:starter:${req.userId}`);
+    const balance = await economy.getBalance(req.userId);
+    res.json({
+      ok: true, wallet: req.userId, balance,
+      starter: { amount: STARTER_SPARKS, given: !g.replayed },
+      earn: earn.get(req.userId),
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/casino/earn/daily — claim today's daily Sparks faucet (25).
+ * Fail-safe order: the economy grant (idempotent on `hall:daily:<uid>:<day>`)
+ * lands FIRST, then the ledger marks the day. If a request dies between the
+ * two, the retry replays the grant (same key) instead of double-paying or
+ * locking the player out — the grant key, not the ledger, is the real gate.
+ */
+router.get('/api/casino/earn/daily', softAuthMiddleware, async (req, res) => {
+  if (!req.userId || req.userId === 'local') {
+    return res.status(401).json({ ok: false, error: 'sign in to claim daily Sparks', needSignIn: true });
+  }
+  try {
+    const uid = req.userId;
+    const today = earn.dayKey();
+    const g = await economy.grant(uid, earn.DAILY_SPARKS, 'hall:daily', `hall:daily:${uid}:${today}`);
+    earn.claimDaily(uid); // mark the day after the money is safely in
+    res.json({ ok: true, claimed: !g.replayed, replayed: !!g.replayed, day: today, amount: earn.DAILY_SPARKS, balance: g.balance });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * GET /api/casino/art?pack&w&h&raw — HF-powered menu art (owner directive:
+ * fal for characters/cut scenes, HF key for menus). Deterministic locked
+ * prompts, an on-disk PNG cache, and a keyless Pollinations fallback so a
+ * banner always renders. raw=1 streams the PNG bytes (for <img src>); otherwise
+ * JSON with a self-URL. See arcade-art.js for the security notes.
+ */
+router.get('/api/casino/art', async (req, res) => {
+  try {
+    const pack = String(req.query.pack || 'hall');
+    if (!(pack in art.ART_PROMPTS)) {
+      return res.status(404).json({ ok: false, error: `unknown art pack '${pack}' (valid: ${Object.keys(art.ART_PROMPTS).join(', ')})` });
+    }
+    const out = await art.get(pack, { width: req.query.w, height: req.query.h });
+    if (out.notFound) return res.status(404).json({ ok: false, error: 'unknown art pack' });
+    if (out.error) return res.status(502).json({ ok: false, error: out.error });
+    if (out.buffer) {
+      if (String(req.query.raw) === '1') {
+        res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+        return res.type('image/png').send(out.buffer);
+      }
+      return res.json({
+        ok: true,
+        url: `/api/casino/art?pack=${encodeURIComponent(pack)}&w=${out.width}&h=${out.height}&raw=1`,
+        width: out.width, height: out.height, provider: out.provider,
+      });
+    }
+    if (out.url) {
+      return res.json({ ok: true, url: out.url, width: out.width, height: out.height, provider: out.provider });
+    }
+    return res.status(502).json({ ok: false, error: 'no image produced' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 

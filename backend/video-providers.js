@@ -380,10 +380,17 @@ const fal = {
       if (!requestId) {
         return { jobId: null, status: 'error', eta: 0, costUsd: 0, error: 'fal queue returned no request_id' };
       }
+      // fal normalizes multi-version model ids (e.g. kling-video/v1.6/) to the
+      // canonical queue app (fal-ai/kling-video) and settings requests live under
+      // THAT id. The submit response carries the exact poll URLs, so we persist
+      // status_url as the opaque jobId instead of re-deriving a path that
+      // queue.fal.run answers with 405 (ALLOW: POST) on every GET.
+      const responseUrl = data.response_url || `${this.queueUrl}/${model}/requests/${requestId}`;
+      const statusUrl = data.status_url || `${responseUrl}/status`;
       return {
-        jobId: `${model}::${requestId}`,
+        jobId: statusUrl,
         status: 'queued',
-        eta: duration * 15,
+        eta: Number(data.eta) || duration * 15,
         costUsd: estimateCost(this.costPerSecond, duration),
       };
     } catch (err) {
@@ -393,25 +400,41 @@ const fal = {
 
   async getStatus(jobId) {
     const key = requireKey(this.envKey);
-    const sep = String(jobId || '').lastIndexOf('::');
-    if (sep < 0) {
-      return { status: 'error', progress: 0, videoUrl: null, error: 'malformed fal jobId (expected "<model>::<request_id>")' };
+    const rawId = String(jobId || '');
+    let statusUrl;
+    if (/^https?:\/\//i.test(rawId)) {
+      statusUrl = rawId; // jobId IS the status_url fal handed back on submit
+    } else {
+      // Legacy "<model>::<request_id>" ids (pre-2026-09-16). Best-effort rebuild
+      // against the FULL model path; fal gates those GETs with 405 unless the
+      // app id is canonical, so real polling relies on the URL form above.
+      const sep = rawId.lastIndexOf('::');
+      if (sep < 0) {
+        return { status: 'error', progress: 0, videoUrl: null, error: 'malformed fal jobId (expected a status_url)' };
+      }
+      const model = rawId.slice(0, sep);
+      const requestId = rawId.slice(sep + 2);
+      statusUrl = `${this.queueUrl}/${model}/requests/${encodeURIComponent(requestId)}/status`;
     }
-    const model = String(jobId).slice(0, sep);
-    const requestId = String(jobId).slice(sep + 2);
+    const responseUrl = statusUrl.replace(/\/status$/, '');
     try {
-      const { data } = await axios.get(
-        `${this.queueUrl}/${model}/requests/${encodeURIComponent(requestId)}`,
-        { headers: { Authorization: `Key ${key}` }, timeout: TIMEOUT_MS }
-      );
+      const { data } = await axios.get(statusUrl, { headers: { Authorization: `Key ${key}` }, timeout: TIMEOUT_MS });
       const raw = ((data && data.status) || '').toUpperCase();
       const status =
         raw === 'COMPLETED' ? 'completed'
           : raw === 'FAILED' || raw === 'ERROR' ? 'error'
             : raw === 'IN_QUEUE' ? 'queued'
-              : 'processing';
-      const out = (data && data.output) || data || {};
-      const videoUrl = (out.video && out.video.url) || out.video_url || out.url || null;
+              : raw === 'IN_PROGRESS' ? 'processing'
+                : 'processing';
+      let videoUrl = null;
+      if (status === 'completed') {
+        // Status carries no output; fetch the response_url endpoint once done.
+        try {
+          const r = await axios.get(responseUrl, { headers: { Authorization: `Key ${key}` }, timeout: TIMEOUT_MS });
+          const out = (r.data && r.data.output) || r.data || {};
+          videoUrl = (out.video && out.video.url) || out.video_url || out.url || null;
+        } catch (e2) { videoUrl = null; }
+      }
       return {
         status,
         progress: status === 'completed' ? 100 : 0,
@@ -419,6 +442,11 @@ const fal = {
         error: (data && data.error) || null,
       };
     } catch (err) {
+      // 404/409 while a job is mid-flight on fal's side = still queued, not broken.
+      const code = err && err.response && err.response.status;
+      if (code === 404 || code === 409) {
+        return { status: 'queued', progress: 0, videoUrl: null, error: null };
+      }
       return { status: 'error', progress: 0, videoUrl: null, error: describeError(err) };
     }
   },
