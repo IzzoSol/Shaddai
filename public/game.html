@@ -2113,8 +2113,15 @@ async function claimOfficeGame(){
   // Hide the D-pad whenever a panel/modal is open (decor/wardrobe/chat etc.)
   // so it doesn't float over the buttons.
   function syncDpadVisibility(){
-    const open = document.querySelector('.modal.show, .panel:not(.hide), #intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide)');
-    pad.style.display = open ? 'none' : 'block';
+    // BUG (found 2026-09-17): this used to also match '.modal.show' (a class
+    // that doesn't exist anywhere in this file -- always false, harmless) and
+    // '.panel:not(.hide)' -- but the always-visible nav buttons (Dashboard/
+    // Store/Swap/Work/Bag/Rooms/Tactics) use class="panel" purely for shared
+    // styling and never get a 'hide' class, so that selector matched on every
+    // single frame during normal gameplay and permanently hid the D-pad. Now
+    // only real overlay/modal ids are checked.
+    const open = document.querySelector('#intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide), #store:not(.hide), #inv:not(.hide), #jobs:not(.hide), #region:not(.hide), #create:not(.hide), #galleryPick:not(.hide)');
+    pad.style.display = (open || (state!=='world' && state!=='interior')) ? 'none' : 'block';
   }
   // Cheap mutation observer — re-eval when any panel toggles.
   try{
