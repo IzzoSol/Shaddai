@@ -16,6 +16,7 @@ app.use('/market', marketRoutes);
 app.use('/quest', questRoutes);
 app.use('/plot', plotRoutes);
 app.use('/bonus', bonusRoutes);
+app.use('/daily', dailyRoutes);
 
 // Scheduler exposes a /health view of registered jobs
 app.use('/scheduler', schedulerRoutes);
