@@ -1,0 +1,143 @@
+<title>Warrior Walk Test</title>
+<style>
+  :root{
+    --bg:#f4f5f3; --panel:#ffffff; --ink:#12181a; --sub:#5b6a68; --line:#dde3e0;
+    --accent:#0a8a5c; --accent-glow:#00ff9c; --gold:#b8860b; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624;
+      --accent:#00ff9c; --accent-glow:#00ff9c; --gold:#e8c45c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624;
+    --accent:#00ff9c; --accent-glow:#00ff9c; --gold:#e8c45c;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;padding-inline:20px;padding-block:32px 48px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 6px;}
+  h1{font-size:clamp(24px,4vw,34px);margin:0 0 6px;text-wrap:balance;font-weight:700;}
+  .sub{color:var(--sub);font-size:14px;margin:0 0 28px;max-width:60ch;line-height:1.5;}
+  .stage{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    display:flex;flex-direction:column;align-items:center;gap:18px;padding:28px 20px 24px;
+  }
+  .screen{
+    width:min(360px,86vw);aspect-ratio:1/1;position:relative;border-radius:12px;overflow:hidden;
+    background:radial-gradient(circle at 50% 68%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%);
+  }
+  .screen img{
+    position:absolute;left:50%;bottom:6%;width:82%;
+    image-rendering:auto;filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));
+    opacity:0;
+  }
+  .screen img.show{opacity:1;}
+  .screen img.bob-up{transform:translate(-50%,-6%);}
+  .screen img.bob-down{transform:translate(-50%,0%);}
+  .ground{position:absolute;left:8%;right:8%;bottom:7%;height:8px;border-radius:50%;background:color-mix(in srgb, var(--ink) 10%, transparent);filter:blur(2px);}
+  .controls{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:12px;color:var(--sub);}
+  .controls button{
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink);background:transparent;
+    border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;
+  }
+  .controls button:hover{border-color:var(--accent);color:var(--accent);}
+  .controls button[aria-pressed="true"]{background:var(--accent);color:#04140d;border-color:var(--accent);}
+  input[type=range]{accent-color:var(--accent);width:120px;}
+  .frames{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px;
+  }
+  .frame{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;
+  }
+  .frame img{width:100%;display:block;border-radius:8px;background:color-mix(in srgb, var(--accent) 6%, transparent);}
+  .frame .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin-top:8px;}
+  .verdict{
+    margin-top:28px;padding:16px 18px;border-radius:12px;border:1px solid var(--line);
+    background:color-mix(in srgb, var(--accent) 6%, var(--panel));font-size:13px;line-height:1.6;color:var(--ink);
+  }
+  .verdict b{color:var(--accent);}
+  code{font-family:var(--mono);background:color-mix(in srgb, var(--ink) 8%, transparent);padding:1px 5px;border-radius:4px;font-size:12px;}
+  @media (prefers-reduced-motion: reduce){ .screen img{transition:none;} }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">SHADDAI · character spike</p>
+  <h1>Does the walk read?</h1>
+  <p class="sub">One reference image (char-warrior.png), run through fal's image-to-image at three strengths, testing whether a real animated character sprite can survive without the identity drift that killed this three times before.</p>
+
+  <div class="stage">
+    <div class="screen" id="screen">
+      <div class="ground"></div>
+      <img src="idle.png" class="f" data-f="idle" alt="idle pose">
+      <img src="walk-a.png" class="f show bob-up" data-f="a" alt="left leg forward">
+      <img src="walk-b.png" class="f bob-down" data-f="b" alt="right leg forward">
+    </div>
+    <div class="controls">
+      <button id="playBtn" aria-pressed="true">⏸ pause</button>
+      <button id="standBtn" aria-pressed="false">stand still</button>
+      <label>speed <input id="speed" type="range" min="90" max="400" value="160" step="10"></label>
+      <span id="fpsLabel">160ms/frame</span>
+    </div>
+  </div>
+
+  <div class="frames">
+    <div class="frame"><img src="idle.png" alt="idle"><div class="lbl">idle · original reference</div></div>
+    <div class="frame"><img src="walk-a.png" alt="walk left"><div class="lbl">strength 0.55 · left forward</div></div>
+    <div class="frame"><img src="walk-b.png" alt="walk right"><div class="lbl">strength 0.55 · right forward</div></div>
+  </div>
+
+  <div class="verdict">
+    <b>Verdict:</b> identity holds — same helmet, sword, shield and color scheme across both walk frames — and there's a real, visible stance change once the prompt explicitly swept the cape clear of the legs. <code>strength: 0.55</code> plus an explicit no-leg-obstruction instruction is the production recipe going forward. Real motion is 2 frames alternating with a bob offset, no new generation needed — the first version looked frozen because the loop stopped on the idle pose every third frame, which kills any walk cycle. A finished version would add 1-2 in-between frames for smoothness, generated only if this reads as "walking" already.
+  </div>
+</div>
+
+<script>
+(function(){
+  // A real walk cycle only alternates between the two stride poses -- the
+  // first version of this preview also cycled back through 'idle' every
+  // third frame, which froze the character mid-step and read as not
+  // walking at all. Idle is now a separate "stand still" state, never
+  // part of the walking loop.
+  var WALK = ['a','b'];
+  var imgs = {};
+  document.querySelectorAll('.f').forEach(function(img){ imgs[img.dataset.f] = img; });
+  var i = 0, playing = true, standing = false, timer = null;
+  var playBtn = document.getElementById('playBtn');
+  var standBtn = document.getElementById('standBtn');
+  var speedEl = document.getElementById('speed');
+  var fpsLabel = document.getElementById('fpsLabel');
+
+  function showFrame(key){
+    ['idle','a','b'].forEach(function(f){ imgs[f].classList.remove('show'); });
+    imgs[key].classList.add('show');
+  }
+  function tick(){
+    i = (i + 1) % WALK.length;
+    showFrame(WALK[i]);
+  }
+  function start(){ stop(); timer = setInterval(tick, +speedEl.value); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+
+  playBtn.addEventListener('click', function(){
+    playing = !playing;
+    playBtn.textContent = playing ? '⏸ pause' : '▶ play';
+    playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    if(playing && !standing) start(); else stop();
+  });
+  standBtn.addEventListener('click', function(){
+    standing = !standing;
+    standBtn.textContent = standing ? 'walk again' : 'stand still';
+    standBtn.setAttribute('aria-pressed', standing ? 'true' : 'false');
+    if(standing){ stop(); showFrame('idle'); }
+    else if(playing){ start(); }
+  });
+  speedEl.addEventListener('input', function(){
+    fpsLabel.textContent = speedEl.value + 'ms/frame';
+    if(playing && !standing) start();
+  });
+
+  start();
+})();
+</script>
