@@ -298,8 +298,8 @@ window.Interiors = (function () {
     // SOFA (right side, facing in)
     add(5.6, 5.2, () => {
       box(ctx, 6.2, 5.2, 0.9, 2.0, 8, '#3f7a8a', E);            // seat base
-      box(ctx, 6.7, 5.2, 0.4, 2.0, 16, '#4a8a9a', E);          // backrest
-      box(ctx, 6.2, 4.1, 0.5, 0.4, 13, '#4a8a9a', E);         // arm
+        box(ctx, 6.7, 5.2, 0.4, 1.5, 12, '#4a8a9a', E);          // backrest
+        box(ctx, 6.2, 4.1, 0.5, 0.4, 10, '#4a8a9a', E);         // arm
       box(ctx, 6.2, 6.3, 0.5, 0.4, 13, '#4a8a9a', E);         // arm
       box(ctx, 6.05, 4.8, 0.6, 0.6, 3, '#e8b04a', E);        // cushion
       box(ctx, 6.05, 5.7, 0.6, 0.6, 3, '#d47a63', E);       // cushion
@@ -423,7 +423,7 @@ window.Interiors = (function () {
     // office chairs
     add(4.2, 5.6, () => {
       box(ctx, 4.4, 5.8, 0.5, 0.5, 8, '#3a4048', E);
-      box(ctx, 4.4, 6.0, 0.5, 0.14, 16, '#4a5058', E);
+        box(ctx, 4.4, 6.0, 0.5, 0.14, 12, '#4a5058', E);
       box(ctx, 4.4, 5.8, 0.14, 0.14, 8, '#2a2f36', { edge: false });
     });
     // waiting bench (front-left)

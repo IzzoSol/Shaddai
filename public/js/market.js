@@ -208,7 +208,7 @@
       item_name: itemName,
       price_usdc: price
     });
-    shaddi_ledger_receipt(
+    shaddai_ledger_receipt(
       receipt.backend_id,
       receipt.caller,
       'market_listing',

@@ -49,34 +49,44 @@ function xpFor(treeId, tierId) {
 
 /** Add XP to a tree, unlock tier, and increment Total Level (TL) */
 async function addSkillXP(treeId, xpEarned) {
-  const tl = parseInt(localStorage.getItem('totalLevel') || '0');
   const tree = SKILL_TREES[treeId];
   if (!tree) return;
 
-  let accumulated = xpEarned;
-  tree.tiers.forEach(tier => {
-    if (accruited >= tier.xp) {
-      // Unlock tier effects
-      const effect = tier.effect;
-      // Apply TL gain immediately
-      tl += effect.tlGain;
-      // Store stat boost (simple example: save to localStorage)
-      const boosts = JSON.parse(localStorage.getItem('skillBoosts') || '{}');
-      boosts[treeId] = boosts[treeId] || {};
-      Object.assign(boosts[treeId], effect.statBoost);
-      localStorage.setItem('skillBoosts', JSON.stringify(boosts));
-      // Persist new TL
-      localStorage.setItem('totalLevel', tl.toString());
+  // Persist XP per tree (never re-rewarded on replay)
+  const treeXP = JSON.parse(localStorage.getItem('treeXP') || '{}');
+  treeXP[treeId] = (treeXP[treeId] || 0) + xpEarned;
+  localStorage.setItem('treeXP', JSON.stringify(treeXP));
 
-      // Notify UI / tutorial that a new skill tier unlocked
-     (window as any).dispatchEvent(new CustomEvent('skillUnlocked', {
-        detail: {tree, tier}
-      }));
+  // Derive unlocked tier from total XP (thresholds are cumulative)
+  let unlockedTier = tree.tiers[0];
+  for (const tier of tree.tiers) {
+    if (treeXP[treeId] >= tier.xp) unlockedTier = tier;
+  }
+
+  // Only reward TL/stat boosts when tier actually changed
+  const prevTierId = parseInt(localStorage.getItem(`skillTier_${treeId}`) || '1');
+  if (unlockedTier.id > prevTierId) {
+    let tl = parseInt(localStorage.getItem('totalLevel') || '0');
+    // Apply TL gain (delta between old and new tier)
+    for (let t = prevTierId + 1; t <= unlockedTier.id; t++) {
+      const tier = tree.tiers.find(x => x.id === t);
+      if (tier) tl += tier.effect.tlGain;
     }
-  });
+    localStorage.setItem('totalLevel', tl.toString());
+    localStorage.setItem(`skillTier_${treeId}`, unlockedTier.id.toString());
 
-  // Save updated TL
-  localStorage.setItem('totalLevel', tl.toString());
+    // Merge stat boosts
+    const boosts = JSON.parse(localStorage.getItem('skillBoosts') || '{}');
+    boosts[treeId] = boosts[treeId] || {};
+    Object.assign(boosts[treeId], unlockedTier.effect.statBoost);
+    localStorage.setItem('skillBoosts', JSON.stringify(boosts));
+
+    // Notify UI / tutorial that a new skill tier unlocked
+    window.dispatchEvent(new CustomEvent('skillUnlocked', {
+      detail: { tree, tier: unlockedTier }
+    }));
+  }
+  return unlockedTier.id;
 }
 
 /* -----------------------------------------------------------

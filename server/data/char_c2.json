@@ -1,0 +1,14 @@
+{
+  "currency": {
+    "sparks": 30
+  },
+  "totalXP": 150,
+  "questLog": [
+    {
+      "questId": "q1",
+      "completedAt": "2026-09-17T09:08:39.391Z",
+      "rewardXP": 150,
+      "rewardSparks": 30
+    }
+  ]
+}

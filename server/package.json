@@ -1,0 +1,13 @@
+{
+  "name": "shaddai-mmo-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Express backend for the SHADDAI 2D MMO",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
