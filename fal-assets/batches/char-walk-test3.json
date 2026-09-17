@@ -1,0 +1,6 @@
+[
+  { "id": "walk-a3", "type": "img2img", "register": "cinematic",
+    "input": "fal-assets/spike/char-warrior.png", "strength": 0.55,
+    "body": "the same stylized 3D chibi knight character, identical armor colors, helmet, sword and shield design, now mid-stride walking forward with the left leg stepping far forward and right leg back, the long cape whipping backward and to the side so both legs and boots are fully visible and unobstructed, full body clearly shown head to feet, plain white background, no text",
+    "out": "fal-assets/spike/char-warrior-walk-a3.png" }
+]

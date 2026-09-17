@@ -1,0 +1,10 @@
+[
+  { "id": "walk-a2", "type": "img2img", "register": "cinematic",
+    "input": "fal-assets/spike/char-warrior.png", "strength": 0.65,
+    "body": "the same stylized 3D chibi knight character, same armor colors and sword and shield design, but now clearly mid-stride walking with the left leg stepping far forward and right leg extended back, dynamic running/walking action pose, full body, plain white background, no text",
+    "out": "fal-assets/spike/char-warrior-walk-a2.png" },
+  { "id": "walk-b2", "type": "img2img", "register": "cinematic",
+    "input": "fal-assets/spike/char-warrior.png", "strength": 0.65,
+    "body": "the same stylized 3D chibi knight character, same armor colors and sword and shield design, but now clearly mid-stride walking with the right leg stepping far forward and left leg extended back, dynamic running/walking action pose, full body, plain white background, no text",
+    "out": "fal-assets/spike/char-warrior-walk-b2.png" }
+]
