@@ -672,6 +672,24 @@ app.use(cors({
   credentials: false
 }));
 
+// SECURITY (found + fixed 2026-09-17): AuthService.initializeFirebase() was
+// never called anywhere in this file, only in the separate, unused
+// server-production-hardened.js. That meant auth-service.js's module-level
+// `db`/`auth` stayed undefined forever, so real email/password login
+// (authService.login -> db.collection('users')...) would throw the moment
+// anyone tried it -- on top of the wrong-method-name bug fixed above at the
+// /api/auth/login route. Non-fatal here (unlike the hardened file's
+// process.exit(1)): this server runs plenty of features that don't need
+// Firebase (guest mode, the game world, agents), so a missing/misconfigured
+// Firebase credential should degrade real-account login, not take the whole
+// server down.
+try {
+  AuthService.initializeFirebase();
+  console.log('[auth] Firebase initialized');
+} catch (e) {
+  console.warn('[auth] Firebase NOT initialized (' + e.message + ') -- email/password login will fail until FIREBASE_PROJECT_ID/FIREBASE_PRIVATE_KEY/FIREBASE_CLIENT_EMAIL are set; guest mode and other features are unaffected.');
+}
+
 // Services
 const database = new DatabaseReal();
 const skillExecutor = new SkillExecutorReal();
@@ -2765,10 +2783,34 @@ app.get('/api/generated-files/:name', (req, res) => {
 // AUTHENTICATION
 // ============================================
 
-app.post('/api/auth/login', async (req, res) => {
+// SECURITY (found 2026-09-17): this is the ACTUAL live login endpoint --
+// backend/auth-routes.js defines a properly rate-limited /login (5/min per
+// email-or-IP, via express-rate-limit) but that whole router is never
+// require()'d/mounted anywhere in this file, so it was dead code. This route
+// had no login-specific limiter at all -- only the generic /api 150-req/min
+// limiter applied, which is far too permissive for password brute-forcing.
+// Reusing the same express-rate-limit package (already installed, already
+// used by the dead router) rather than pulling in the whole parallel router,
+// to keep this a minimal, low-risk fix on the route that's actually live.
+const loginRateLimit = require('express-rate-limit')({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req.body && req.body.email) || req.ip,
+  message: { error: 'Too many login attempts. Please try again in a minute.' }
+});
+
+app.post('/api/auth/login', loginRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
-    const result = await authService.authenticate(email, password);
+    // CRITICAL BUG (found + fixed 2026-09-17): this called authService.authenticate,
+    // a method that has never existed on this module (it exports `login`, not
+    // `authenticate`) -- every single login attempt through this endpoint threw
+    // "authService.authenticate is not a function" and was caught by the catch
+    // block below, returning a 401 to every real user trying to sign in with
+    // email/password. Guest mode was the only way anyone could actually get in.
+    const result = await authService.login(email, password);
     logger.info('AUTH', `Login successful for ${email}`);
     res.json(result);
   } catch (error) {
