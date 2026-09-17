@@ -10,6 +10,16 @@ const schedulerRoutes = require('./jobs/scheduler');
 
 const app = express();
 app.use(express.json());
+// Dev-only CORS: game.html is served by the main backend on a different
+// port/origin than this standalone MMO server, so the browser needs this
+// to allow the fetch() calls in public/js/mmo-client.js.
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 // Mount route groups
 app.use('/character', characterRoutes);
