@@ -196,3 +196,7 @@ _BACKUP-*/
 
 # superpowers SDD scratch workspace (ledgers, briefs, review packages)
 .superpowers/
+
+server/data/
+server/node_modules/
+
