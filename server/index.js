@@ -2,6 +2,7 @@ const express = require('express');
 const characterRoutes = require('./characterServer');
 const marketRoutes = require('./marketServer');
 const questRoutes = require('./questServer');
+const plotRoutes = require('./plotServer');
 const schedulerRoutes = require('./jobs/scheduler');
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(express.json());
 app.use('/character', characterRoutes);
 app.use('/market', marketRoutes);
 app.use('/quest', questRoutes);
+app.use('/plot', plotRoutes);
 
 // Scheduler exposes a /health view of registered jobs
 app.use('/scheduler', schedulerRoutes);
