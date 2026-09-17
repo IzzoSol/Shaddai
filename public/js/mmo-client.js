@@ -96,9 +96,11 @@
     plotCollect: (plotId) => POST('/plot/collect', { characterId: charId, plotId }),
     // ---- hired agents (labor board) ----
     agentRoster: () => GET('/agent/roster?characterId=' + charId),
+    agentForgeRoster: () => GET('/agent/forge-roster'),
     agentHire: (role) => POST('/agent/hire', { characterId: charId, role }),
-    agentShift: (role) => POST('/agent/shift/' + role, { characterId: charId }),
-    agentCollect: (role) => POST('/agent/collect/' + role, { characterId: charId }),
+    agentStation: (forgedAgentId) => POST('/agent/hire', { characterId: charId, forgedAgentId }),
+    agentShift: (key) => POST('/agent/shift/' + key, { characterId: charId }),
+    agentCollect: (key) => POST('/agent/collect/' + key, { characterId: charId }),
     // ---- player market ----
     marketListings: () => GET('/market/listings'),
     marketList: (itemName, price, duration) => POST('/market/listing', { ownerId: charId, itemName, price, duration }),
@@ -373,37 +375,58 @@
     }
 
     async function renderAgents() {
-      const r = await MMO.agentRoster();
+      const [r, forge] = await Promise.all([MMO.agentRoster(), MMO.agentForgeRoster()]);
       body.innerHTML = '';
       const roster = r.roster || {};
+      const mkBtn = (label) => { const b = el('button', {}, label); b.style.cssText = 'margin-right:6px;margin-top:4px;padding:5px 10px;border:none;border-radius:6px;cursor:pointer;background:#00e5a0;color:#04121a;font-weight:700'; return b; };
+
+      function renderWorkingRow(row, key, owned) {
+        const working = Date.now() < owned.shiftEndAt;
+        if (working) {
+          const mins = Math.max(0, Math.round((owned.shiftEndAt - Date.now()) / 60000));
+          row.appendChild(el('div', { style: 'font-size:11px;opacity:.7' }, `Lv ${owned.level} · Working — ${mins}m left`));
+        } else if (owned.shiftEndAt > 0) {
+          row.appendChild(el('div', { style: 'font-size:11px;opacity:.7;margin-bottom:2px' }, `Lv ${owned.level}`));
+          const b = mkBtn('Collect');
+          b.onclick = async () => { try { const c = await MMO.agentCollect(key); alertInline(new Error('Gained: ' + JSON.stringify(c.gained) + ' — now Lv ' + c.newLevel)); renderAgents(); } catch (e) { alertInline(e); } };
+          row.appendChild(b);
+        } else {
+          row.appendChild(el('div', { style: 'font-size:11px;opacity:.7;margin-bottom:2px' }, `Lv ${owned.level}`));
+          const b = mkBtn('Start shift');
+          b.onclick = async () => { try { await MMO.agentShift(key); renderAgents(); } catch (e) { alertInline(e); } };
+          row.appendChild(b);
+        }
+      }
+
+      // base recruit roles
       const ROLES = Object.keys(r.roles || { gatherer: 1, merchant: 1, scout: 1, crafter: 1 });
       ROLES.forEach(role => {
         const owned = roster[role];
         const def = (r.roles || {})[role] || {};
         const row = el('div', {}, `<div style="font-weight:600">${def.name || role} <span style="opacity:.6;font-weight:400">(${def.cost}⚡)</span></div>`);
         row.style.cssText = 'padding:8px;margin-bottom:6px;background:#121a22;border-radius:6px';
-        const mkBtn = (label) => { const b = el('button', {}, label); b.style.cssText = 'margin-right:6px;margin-top:4px;padding:5px 10px;border:none;border-radius:6px;cursor:pointer;background:#00e5a0;color:#04121a;font-weight:700'; return b; };
         if (!owned) {
           const b = mkBtn('Hire');
           b.onclick = async () => { try { await MMO.agentHire(role); renderAgents(); } catch (e) { alertInline(e); } };
           row.appendChild(b);
-        } else {
-          const working = Date.now() < owned.shiftEndAt;
-          if (working) {
-            const mins = Math.max(0, Math.round((owned.shiftEndAt - Date.now()) / 60000));
-            row.appendChild(el('div', { style: 'font-size:11px;opacity:.7' }, `Working — ${mins}m left`));
-          } else if (owned.shiftEndAt > 0) {
-            const b = mkBtn('Collect');
-            b.onclick = async () => { try { const c = await MMO.agentCollect(role); alertInline(new Error('Gained: ' + JSON.stringify(c.gained))); renderAgents(); } catch (e) { alertInline(e); } };
-            row.appendChild(b);
-          } else {
-            const b = mkBtn('Start shift');
-            b.onclick = async () => { try { await MMO.agentShift(role); renderAgents(); } catch (e) { alertInline(e); } };
-            row.appendChild(b);
-          }
-        }
+        } else renderWorkingRow(row, role, owned);
         body.appendChild(row);
       });
+
+      // real dashboard-forged agents you can station in the 2D realm
+      body.appendChild(el('div', { style: 'font-weight:600;margin:10px 0 4px;opacity:.8' }, 'Your Forged Agents'));
+      (forge.agents || []).forEach(fa => {
+        const owned = roster[fa.id];
+        const row = el('div', {}, `<div style="font-weight:600">${fa.emoji || '🤖'} ${fa.name} <span style="opacity:.6;font-weight:400">(${fa.role})</span></div>`);
+        row.style.cssText = 'padding:8px;margin-bottom:6px;background:#121a22;border-radius:6px';
+        if (!owned) {
+          const b = mkBtn('Station in world (free)');
+          b.onclick = async () => { try { await MMO.agentStation(fa.id); renderAgents(); } catch (e) { alertInline(e); } };
+          row.appendChild(b);
+        } else renderWorkingRow(row, fa.id, owned);
+        body.appendChild(row);
+      });
+      if (!(forge.agents || []).length) body.appendChild(el('div', { style: 'font-size:11px;opacity:.6' }, 'No agents forged yet — create one on the dashboard\'s Forge tab.'));
     }
 
     async function renderGrave() {
