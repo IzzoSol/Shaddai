@@ -6,6 +6,7 @@ const plotRoutes = require('./plotServer');
 const bonusRoutes = require('./bonusServer');
 const dailyRoutes = require('./dailyServer');
 const agentRoutes = require('./agentServer');
+const skillsRoutes = require('./skillsServer');
 const schedulerRoutes = require('./jobs/scheduler');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/plot', plotRoutes);
 app.use('/bonus', bonusRoutes);
 app.use('/daily', dailyRoutes);
 app.use('/agent', agentRoutes);
+app.use('/skills', skillsRoutes);
 
 // Scheduler exposes a /health view of registered jobs
 app.use('/scheduler', schedulerRoutes);

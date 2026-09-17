@@ -69,6 +69,20 @@ function sendBridge(event) {
   }
 }
 
+/* ---------- /state ----------
+   Read-only fetch of a character's current record. Needed by every UI
+   surface (Sparks balance, inventory, HP) -- there was previously no
+   way to read a character back at all, only mutate one. */
+router.get('/state', (req, res) => {
+  try {
+    const { characterId } = req.query;
+    if (!characterId) return res.status(400).json({ success: false, error: 'Missing characterId' });
+    const db = loadDB();
+    if (!db[characterId]) return res.status(404).json({ success: false, error: 'Character not found' });
+    res.json({ success: true, character: db[characterId] });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
+});
+
 /* ---------- /spawn ---------- */
 router.post('/spawn', (req, res) => {
   try {

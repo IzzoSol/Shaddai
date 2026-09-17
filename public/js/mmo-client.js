@@ -33,6 +33,28 @@
 
   let charId = localStorage.getItem(CHAR_KEY);
 
+  function showDeathOverlay(result) {
+    const drops = Object.entries(result.dropped || {}).map(([k, v]) => `${k} ×${v}`).join(', ') || 'nothing';
+    const ov = document.createElement('div');
+    ov.style.cssText = `
+      position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+      background:radial-gradient(circle at center, rgba(120,0,0,.55), rgba(10,0,0,.9));
+      color:#fff; font:14px/1.5 system-ui,sans-serif; text-align:center;
+    `;
+    ov.innerHTML = `
+      <div style="background:#1a0505;border:1px solid #5a1010;border-radius:12px;padding:24px 28px;max-width:320px">
+        <div style="font-size:22px;font-weight:800;letter-spacing:1px;color:#ff5a5a;margin-bottom:10px">YOU DIED</div>
+        ${result.dangerous
+          ? `<div>Dropped: <b>${drops}</b></div><div style="margin-top:4px">Sparks lost: <b>${result.sparksLost || 0}</b></div>
+             ${result.graveId ? `<div style="margin-top:10px;font-size:12px;opacity:.8">A grave holds your items for ${Math.round((result.graveExpiresInMs||0)/60000)} minutes — open the MMO panel's Grave tab to reclaim them.</div>` : ''}`
+          : `<div style="opacity:.8">Safe death — nothing lost.</div>`}
+        <button id="mmoRespawnBtn" style="margin-top:16px;padding:8px 18px;border:none;border-radius:8px;background:#00e5a0;color:#04121a;font-weight:700;cursor:pointer">Respawn</button>
+      </div>
+    `;
+    document.body.appendChild(ov);
+    ov.querySelector('#mmoRespawnBtn').onclick = () => ov.remove();
+  }
+
   async function ensureCharacter() {
     if (charId) return charId;
     const r = await POST('/character/spawn');
@@ -46,9 +68,10 @@
     getCharacterId: () => charId,
     ensureCharacter,
     // ---- character ----
+    state: () => GET('/character/state?characterId=' + charId),
     move: (dx, dy) => POST('/character/move', { characterId: charId, dx, dy }),
     shop: (itemId) => POST('/character/shop', { characterId: charId, itemId }),
-    die: (dangerous) => POST('/character/die', { characterId: charId, dangerous: !!dangerous }),
+    die: async (dangerous) => { const r = await POST('/character/die', { characterId: charId, dangerous: !!dangerous }); showDeathOverlay(r); return r; },
     graveList: () => GET('/character/grave/list?characterId=' + charId),
     graveRetrieve: (graveId) => POST('/character/grave/retrieve', { characterId: charId, graveId }),
     // ---- quests ----
@@ -80,7 +103,10 @@
     marketListings: () => GET('/market/listings'),
     marketList: (itemName, price, duration) => POST('/market/listing', { ownerId: charId, itemName, price, duration }),
     marketBid: (listingId, amount) => POST('/market/bid', { listingId, bidderId: charId, amount }),
-    marketComplete: (listingId, sellerId) => POST('/market/complete', { listingId, buyerId: charId, sellerId })
+    marketComplete: (listingId, sellerId) => POST('/market/complete', { listingId, buyerId: charId, sellerId }),
+    // ---- skills / Total Level ----
+    skillsState: () => GET('/skills/state?characterId=' + charId),
+    skillsTrain: (skill) => POST('/skills/train', { characterId: charId, skill })
   };
   window.MMO = MMO;
 
@@ -92,7 +118,7 @@
     return e;
   }
 
-  const TABS = ['Quests', 'Daily', 'Bonus', 'Plot', 'Agents', 'Grave'];
+  const TABS = ['Skills', 'Quests', 'Daily', 'Bonus', 'Plot', 'Agents', 'Market', 'Grave'];
   const CANDIDATE_PLOT_IDS = ['plot-1', 'plot-2', 'plot-3', 'plot-4', 'plot-5', 'plot-6'];
   let activeTab = 'Quests';
 
@@ -110,8 +136,11 @@
     closeBtn.onclick = () => { panel.style.display = 'none'; };
     head.appendChild(closeBtn);
 
+    const hud = el('div', { id: 'mmoHud' });
+    hud.style.cssText = 'padding:6px 10px;font-size:11px;opacity:.85;border-bottom:1px solid #2a3542;background:#0e151c';
+
     const tabsBar = el('div');
-    tabsBar.style.cssText = 'display:flex;border-bottom:1px solid #2a3542';
+    tabsBar.style.cssText = 'display:flex;border-bottom:1px solid #2a3542;flex-wrap:wrap';
     TABS.forEach(t => {
       const b = el('div', {}, t);
       b.style.cssText = 'flex:1;text-align:center;padding:6px 0;cursor:pointer;font-size:11px;opacity:.7';
@@ -124,6 +153,7 @@
     body.style.cssText = 'padding:10px;overflow-y:auto;flex:1';
 
     panel.appendChild(head);
+    panel.appendChild(hud);
     panel.appendChild(tabsBar);
     panel.appendChild(body);
     document.body.appendChild(panel);
@@ -147,8 +177,17 @@
         document.getElementById('mmoBody').textContent = e.message;
         return;
       }
+      refreshHud();
       renderTab();
     };
+
+    async function refreshHud() {
+      try {
+        const [{ character }, { totalLevel }] = await Promise.all([MMO.state(), MMO.skillsState()]);
+        const inv = Object.entries(character.inventory || {}).map(([k, v]) => `${k}×${v}`).join(', ') || 'empty';
+        hud.innerHTML = `⚡ ${character.currency?.sparks ?? 0} Sparks · TL ${totalLevel} · HP ${character.stats?.hp ?? '-'} · ${inv}`;
+      } catch (e) { hud.textContent = e.message; }
+    }
     // re-show the launcher pill when the panel closes
     const obs = new MutationObserver(() => { if (panel.style.display === 'none') toggle.style.display = 'block'; });
     obs.observe(panel, { attributes: true, attributeFilter: ['style'] });
@@ -165,15 +204,64 @@
       highlightTabs();
       body.innerHTML = 'Loading…';
       try {
-        if (activeTab === 'Quests') await renderQuests();
+        if (activeTab === 'Skills') await renderSkills();
+        else if (activeTab === 'Quests') await renderQuests();
         else if (activeTab === 'Daily') await renderDaily();
         else if (activeTab === 'Bonus') await renderBonus();
         else if (activeTab === 'Plot') await renderPlot();
         else if (activeTab === 'Agents') await renderAgents();
+        else if (activeTab === 'Market') await renderMarket();
         else if (activeTab === 'Grave') await renderGrave();
+        refreshHud();
       } catch (e) {
         body.textContent = 'Error: ' + e.message;
       }
+    }
+
+    async function renderSkills() {
+      const r = await MMO.skillsState();
+      body.innerHTML = `<div style="font-weight:600;margin-bottom:8px">Total Level: ${r.totalLevel} ${r.totalLevel >= 10 ? '(soft token gate active on trades)' : r.totalLevel >= 5 ? '(market unlocked)' : '(reach TL 5 for the market)'}</div>`;
+      Object.entries(r.skills).forEach(([name, s]) => {
+        const row = el('div', {}, `<div style="font-weight:600">${name} — Lv ${s.level}</div>
+          <div style="font-size:11px;opacity:.7">${s.xp} xp</div>`);
+        row.style.cssText = 'padding:8px;margin-bottom:6px;background:#121a22;border-radius:6px';
+        const btn = el('button', {}, 'Train (+25xp)');
+        btn.style.cssText = 'padding:5px 10px;border:none;border-radius:6px;cursor:pointer;background:#00e5a0;color:#04121a;font-weight:700';
+        btn.onclick = async () => { try { await MMO.skillsTrain(name); renderSkills(); } catch (e) { alertInline(e); } };
+        row.appendChild(btn);
+        body.appendChild(row);
+      });
+    }
+
+    async function renderMarket() {
+      const r = await MMO.marketListings();
+      body.innerHTML = '';
+      const sellRow = el('div', {}, `<div style="font-weight:600;margin-bottom:4px">List an item</div>`);
+      sellRow.style.cssText = 'padding:8px;margin-bottom:8px;background:#121a22;border-radius:6px';
+      const itemIn = el('input', { placeholder: 'item (e.g. ore)', style: 'width:36%;padding:4px;margin-right:4px;background:#0b0f14;color:#dfe8ee;border:1px solid #2a3542;border-radius:4px' });
+      const priceIn = el('input', { placeholder: 'price', type: 'number', style: 'width:28%;padding:4px;margin-right:4px;background:#0b0f14;color:#dfe8ee;border:1px solid #2a3542;border-radius:4px' });
+      const listBtn = el('button', {}, 'List');
+      listBtn.style.cssText = 'padding:5px 10px;border:none;border-radius:6px;cursor:pointer;background:#00e5a0;color:#04121a;font-weight:700';
+      listBtn.onclick = async () => {
+        try { await MMO.marketList(itemIn.value.trim(), parseInt(priceIn.value, 10)); renderMarket(); }
+        catch (e) { alertInline(e); }
+      };
+      sellRow.appendChild(itemIn); sellRow.appendChild(priceIn); sellRow.appendChild(listBtn);
+      body.appendChild(sellRow);
+
+      (r.listings || []).filter(l => l.active).forEach(l => {
+        const mine = l.ownerId === charId;
+        const row = el('div', {}, `<div style="font-weight:600">${l.itemName} — ${l.price}⚡</div>
+          <div style="font-size:11px;opacity:.7">Seller: ${l.ownerId}${mine ? ' (you)' : ''}</div>`);
+        row.style.cssText = 'padding:8px;margin-bottom:6px;background:#121a22;border-radius:6px';
+        if (!mine) {
+          const btn = el('button', {}, 'Buy now');
+          btn.style.cssText = 'padding:5px 10px;border:none;border-radius:6px;cursor:pointer;background:#00e5a0;color:#04121a;font-weight:700';
+          btn.onclick = async () => { try { await MMO.marketComplete(l.id, l.ownerId); renderMarket(); } catch (e) { alertInline(e); } };
+          row.appendChild(btn);
+        }
+        body.appendChild(row);
+      });
     }
 
     async function renderQuests() {
@@ -321,6 +409,12 @@
     async function renderGrave() {
       const r = await MMO.graveList();
       body.innerHTML = '';
+      const testRow = el('div', {}, `<div style="font-size:11px;opacity:.6;margin-bottom:6px">No combat system exists yet to trigger this for real — test the death/grave flow directly:</div>`);
+      const dieBtn = el('button', {}, '☠ Simulate wilderness death');
+      dieBtn.style.cssText = 'padding:6px 12px;border:none;border-radius:6px;cursor:pointer;background:#b33;color:#fff;font-weight:700;margin-bottom:10px';
+      dieBtn.onclick = async () => { try { await MMO.die(true); renderGrave(); } catch (e) { alertInline(e); } };
+      testRow.appendChild(dieBtn);
+      body.appendChild(testRow);
       (r.graves || []).forEach(g => {
         const mins = Math.max(0, Math.round((g.expiresAt - Date.now()) / 60000));
         const row = el('div', {}, `<div style="font-weight:600">Grave at (${g.location.x},${g.location.y})</div>
