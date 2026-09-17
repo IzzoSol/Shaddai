@@ -9,13 +9,18 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const CHAR_DB_PATH = path.join(DATA_DIR, 'characters.json');
+const GRAVE_DB_PATH = path.join(DATA_DIR, 'graves.json');
+const GRAVE_GRACE_MS = 10 * 60 * 1000; // 10 minutes to reclaim a gravestone
 
 // Ensure store exists
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(CHAR_DB_PATH)) fs.writeFileSync(CHAR_DB_PATH, '{}', 'utf8');
+if (!fs.existsSync(GRAVE_DB_PATH)) fs.writeFileSync(GRAVE_DB_PATH, '{}', 'utf8');
 
 function loadDB() { return JSON.parse(fs.readFileSync(CHAR_DB_PATH, 'utf8')); }
 function saveDB(db) { fs.writeFileSync(CHAR_DB_PATH, JSON.stringify(db, null, 2), 'utf8'); }
+function loadGraves() { return JSON.parse(fs.readFileSync(GRAVE_DB_PATH, 'utf8')); }
+function saveGraves(g) { fs.writeFileSync(GRAVE_DB_PATH, JSON.stringify(g, null, 2), 'utf8'); }
 
 function genId(db) { const ids = Object.keys(db).map(i => parseInt(i.slice(1))); const m = ids.length ? Math.max(...ids) : 0; return `c${m + 1}`; }
 
@@ -169,11 +174,70 @@ router.post('/die', (req, res) => {
     const { characterId, dangerous = false } = req.body;
     const db = loadDB();
     if (!db[characterId]) return res.status(404).json({ success: false, error: 'Character not found' });
+    const deathLocation = { ...db[characterId].location };
     const char = handleDeath(db[characterId], !!dangerous);
     saveDB(db);
     const loss = char.lastDeath || {};
-    sendBridge({ type: 'character_died', payload: { characterId, dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0 } });
-    res.json({ success: true, message: 'Character dead', dangerous: !!dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, newPos: char.location });
+
+    // Dangerous deaths that actually dropped something leave a reclaimable grave
+    let graveId = null;
+    if (dangerous && Object.keys(loss.dropped || {}).length) {
+      const graves = loadGraves();
+      graveId = `g${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      graves[graveId] = {
+        id: graveId,
+        characterId,
+        location: deathLocation,
+        items: loss.dropped,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + GRAVE_GRACE_MS,
+        claimed: false
+      };
+      saveGraves(graves);
+    }
+
+    sendBridge({ type: 'character_died', payload: { characterId, dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, graveId } });
+    res.json({ success: true, message: 'Character dead', dangerous: !!dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, newPos: char.location, graveId, graveExpiresInMs: graveId ? GRAVE_GRACE_MS : null });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* ---------- /grave/list ----------
+   Returns this character's own unclaimed, unexpired graves. */
+router.get('/grave/list', (req, res) => {
+  try {
+    const { characterId } = req.query;
+    const graves = loadGraves();
+    const now = Date.now();
+    const mine = Object.values(graves).filter(
+      g => g.characterId === characterId && !g.claimed && g.expiresAt > now
+    );
+    res.json({ success: true, graves: mine });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* ---------- /grave/retrieve ----------
+   Free reclaim for the owner within the grace window; expired or
+   already-claimed graves cannot be retrieved (loot is gone for good —
+   the point of the death cost). */
+router.post('/grave/retrieve', (req, res) => {
+  try {
+    const { characterId, graveId } = req.body;
+    const graves = loadGraves();
+    const grave = graves[graveId];
+    if (!grave) return res.status(404).json({ success: false, error: 'Grave not found' });
+    if (grave.characterId !== characterId) return res.status(403).json({ success: false, error: 'Not your grave' });
+    if (grave.claimed) return res.status(400).json({ success: false, error: 'Already claimed' });
+    if (grave.expiresAt <= Date.now()) return res.status(400).json({ success: false, error: 'Grave expired' });
+
+    const db = loadDB();
+    if (!db[characterId]) return res.status(404).json({ success: false, error: 'Character not found' });
+    const char = db[characterId];
+    for (const [itemId, amount] of Object.entries(grave.items)) addItemToChar(char, itemId, amount);
+    grave.claimed = true;
+    saveDB(db);
+    saveGraves(graves);
+    sendBridge({ type: 'grave_retrieved', payload: { characterId, graveId, items: grave.items } });
+    res.json({ success: true, character: char, retrieved: grave.items });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
 });
 

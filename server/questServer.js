@@ -52,6 +52,32 @@ function ensureInitialQuests() {
 ensureInitialQuests();
 
 /* --------------------------------------------------------------
+   GET /quest/list – the full quest catalog (definitions only)
+   -------------------------------------------------------------- */
+router.get('/list', (req, res) => {
+  try {
+    res.json({ success: true, quests: loadQuests() });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* --------------------------------------------------------------
+   GET /quest/active?characterId=... – this character's accepted
+   quests, each with live progress merged in.
+   -------------------------------------------------------------- */
+router.get('/active', (req, res) => {
+  try {
+    const { characterId } = req.query;
+    if (!characterId) return res.status(400).json({ success: false, error: 'Missing characterId' });
+    const store = loadChar(characterId);
+    const quests = loadQuests();
+    const active = quests
+      .filter(q => store[`quest_${q.id}`] === 'accepted')
+      .map(q => ({ ...q, progress: parseInt(store[`progress_${q.id}`] || '0') || 0 }));
+    res.json({ success: true, quests: active });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* --------------------------------------------------------------
    POST /quest/accepted – player accepts a quest
    payload: { questId, characterId }
    -------------------------------------------------------------- */
