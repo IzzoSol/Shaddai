@@ -1,0 +1,155 @@
+#!/usr/bin/env node
+/* SHADDAI · character-pipeline.mjs
+ *
+ * The validated, reusable recipe for turning ONE reference image into a
+ * real, rigged, walking (and running) 3D character. Every step of this was
+ * proven live on the "warrior" character (2026-09-17) -- see
+ * fal-assets/spike/3d-preview.html for the working result.
+ *
+ * STEPS (all through fal, same account/billing as everything else here):
+ *   1. image-to-3D  : fal-ai/hunyuan3d/v2  { input_image_url, textured_mesh:true }
+ *      -> a textured GLB mesh
+ *   2. auto-rig     : fal-ai/meshy/rigging { model_url: <mesh from step 1> }
+ *      -> a rigged GLB/FBX + baked walking_glb/running_glb animations, FREE
+ *         as part of the same call (no extra generation needed for basic
+ *         locomotion)
+ *
+ * THE ONE HARD REQUIREMENT: the reference image MUST be a clean, unobstructed
+ * pose -- arms and legs clearly separated from the torso, no weapon/shield
+ * held across the body, no cape covering the legs. A dynamic combat pose
+ * WILL fail step 2's pose estimation ("Pose estimation failed... must be a
+ * humanoid character with clearly defined limbs"). This was confirmed live:
+ * the original "combat pose" warrior image failed rigging outright; a
+ * text2img neutral standing pose (arms down at sides, no held weapon)
+ * succeeded on the first try.
+ *
+ * USAGE:
+ *   node fal-assets/character-pipeline.mjs <name> <path-to-clean-pose-image.png>
+ *
+ * Always confirms cost before spending -- this hits real paid endpoints
+ * (roughly $0.50-0.60 total per character: ~$0.375 for textured mesh,
+ * rigging's own price on top). No --go flag needed since there's no cheap
+ * dry-run for 3D/rigging APIs (unlike generate.mjs's 2D image batches) --
+ * this script always spends when run. Only run it once you're sure the
+ * source image is clean.
+ */
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { resolve, dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, '..');
+
+function falKey() {
+  const env = readFileSync(join(ROOT, '.env'), 'utf8');
+  const m = env.match(/^FAL_KEY\s*=\s*(.+)$/m);
+  if (!m) throw new Error('FAL_KEY not found in .env');
+  return m[1].trim().replace(/^["']|["']$/g, '');
+}
+
+function dataUri(path) {
+  const buf = readFileSync(resolve(ROOT, path));
+  return 'data:image/png;base64,' + buf.toString('base64');
+}
+
+async function submit(model, input, key) {
+  const res = await fetch(`https://queue.fal.run/${model}`, {
+    method: 'POST',
+    headers: { Authorization: `Key ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(input)
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(`submit ${model} failed: ${JSON.stringify(json)}`);
+  return json; // { request_id, status_url, response_url, ... }
+}
+
+async function pollUntilDone(statusUrl, responseUrl, key, label, maxWaitMs = 240000) {
+  const start = Date.now();
+  while (Date.now() - start < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, 4000));
+    const st = await fetch(statusUrl, { headers: { Authorization: `Key ${key}` } });
+    const stJson = await st.json();
+    if (stJson.status === 'COMPLETED') {
+      const rr = await fetch(responseUrl, { headers: { Authorization: `Key ${key}` } });
+      return rr.json();
+    }
+    if (stJson.status === 'FAILED' || stJson.status === 'ERROR') {
+      throw new Error(`${label} failed: ${JSON.stringify(stJson)}`);
+    }
+    console.log(`  ... ${label}: ${stJson.status}`);
+  }
+  throw new Error(`${label} timed out after ${maxWaitMs}ms`);
+}
+
+async function download(url, outPath) {
+  const abs = resolve(ROOT, outPath);
+  mkdirSync(dirname(abs), { recursive: true });
+  const res = await fetch(url);
+  const buf = Buffer.from(await res.arrayBuffer());
+  writeFileSync(abs, buf);
+  return { abs, bytes: buf.length };
+}
+
+async function main() {
+  const [, , name, imagePath] = process.argv;
+  if (!name || !imagePath) {
+    console.error('usage: node fal-assets/character-pipeline.mjs <name> <path-to-clean-pose-image.png>');
+    console.error('the image MUST be a clean, unobstructed pose -- see the header comment in this file.');
+    process.exit(1);
+  }
+  if (!existsSync(resolve(ROOT, imagePath))) {
+    console.error(`image not found: ${imagePath}`);
+    process.exit(1);
+  }
+
+  const key = falKey();
+  const outDir = `fal-assets/characters/${name}`;
+
+  console.log(`▶ character pipeline for "${name}" -- this spends real money (~$0.50-0.60 total).`);
+
+  console.log('1/2: image-to-3D (fal-ai/hunyuan3d/v2, textured_mesh:true)...');
+  const meshSubmit = await submit('fal-ai/hunyuan3d/v2', {
+    input_image_url: dataUri(imagePath),
+    textured_mesh: true
+  }, key);
+  const meshResult = await pollUntilDone(meshSubmit.status_url, meshSubmit.response_url, key, 'mesh generation');
+  const meshUrl = meshResult.model_mesh.url;
+  const meshFile = await download(meshUrl, `${outDir}/${name}-mesh.glb`);
+  console.log(`   mesh saved: ${meshFile.abs} (${(meshFile.bytes / 1e6).toFixed(2)} MB)`);
+
+  console.log('2/2: auto-rig + basic animations (fal-ai/meshy/rigging)...');
+  const rigSubmit = await submit('fal-ai/meshy/rigging', { model_url: meshUrl }, key);
+  const rigResult = await pollUntilDone(rigSubmit.status_url, rigSubmit.response_url, key, 'rigging', 200000);
+
+  if (rigResult.detail) {
+    // Meshy's pose-estimation-failure shape: { detail: [{ msg: "..." }] }
+    console.error('❌ RIGGING FAILED -- almost always means the source image pose wasn\'t clean enough:');
+    console.error('   ' + JSON.stringify(rigResult.detail));
+    console.error('   Fix: regenerate the reference image with arms/legs clearly separated,');
+    console.error('   nothing (weapon/shield/cape) overlapping the torso or limbs, then retry.');
+    process.exit(1);
+  }
+
+  const saves = [
+    ['rigged_character_glb', `${name}-rigged.glb`],
+    ['rigged_character_fbx', `${name}-rigged.fbx`],
+  ];
+  for (const [key2, file] of saves) {
+    if (rigResult[key2]?.url) {
+      const f = await download(rigResult[key2].url, `${outDir}/${file}`);
+      console.log(`   saved: ${f.abs} (${(f.bytes / 1e6).toFixed(2)} MB)`);
+    }
+  }
+  const anims = rigResult.basic_animations || {};
+  for (const [animKey, animVal] of Object.entries(anims)) {
+    if (animVal?.url) {
+      const ext = animKey.endsWith('_fbx') ? 'fbx' : 'glb';
+      const f = await download(animVal.url, `${outDir}/${name}-${animKey.replace(/_(glb|fbx)$/, '')}.${ext}`);
+      console.log(`   saved: ${f.abs} (${(f.bytes / 1e6).toFixed(2)} MB)`);
+    }
+  }
+
+  console.log(`\n✔ Done. Character "${name}" is rigged with baked walk/run animations in ${outDir}/`);
+}
+
+main().catch((e) => { console.error('PIPELINE FAILED:', e.message); process.exit(1); });

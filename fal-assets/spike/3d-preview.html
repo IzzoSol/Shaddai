@@ -1,4 +1,4 @@
-<title>Warrior 3D Test</title>
+<title>Warrior Walking (Rigged)</title>
 <style>
   :root{
     --bg:#f4f5f3; --panel:#ffffff; --ink:#12181a; --sub:#5b6a68; --line:#dde3e0; --accent:#0a8a5c;
@@ -30,8 +30,8 @@
 
 <div class="wrap">
   <p class="eyebrow">SHADDAI · 3D character spike</p>
-  <h1>The same warrior, as a real mesh</h1>
-  <p class="sub">Our fal-generated reference image, run through Hunyuan3D (image-to-3D) into an actual GLB mesh. Drag to rotate, scroll to zoom. If this holds up as a real 3D object, walking becomes a code problem (rotate joints) instead of an AI-consistency problem.</p>
+  <h1>The warrior, actually walking</h1>
+  <p class="sub">Full pipeline: reference image → Hunyuan3D (image-to-3D, textured) → Meshy auto-rig, which returned a real skeleton plus a baked walking animation. This is genuine skeletal motion, not alternating static frames. Drag to rotate, scroll to zoom.</p>
 
   <div class="stage">
     <div id="loading">loading mesh…</div>
@@ -39,7 +39,7 @@
   </div>
 
   <div class="verdict">
-    <b>What this tests:</b> whether a single reference image can become usable 3D geometry, sidestepping the frame-to-frame identity drift that limited the 2D sprite approach. <b>What this doesn't solve yet:</b> this mesh has no skeleton — it's a static shape, not a rigged, animatable character. Walking, combat, any pose change all need a rigging step next (e.g. auto-rig via Mixamo), which is a separate, unsolved piece.
+    <b>Full recipe, validated end to end:</b> (1) a clean-pose reference image (auto-rigging needs arms/legs unobstructed — a combat pose with a shield covering the body failed pose estimation), (2) <code>fal-ai/hunyuan3d/v2</code> with <code>textured_mesh:true</code> for a textured mesh, (3) <code>fal-ai/meshy/rigging</code> on that mesh, which returns a real skeleton plus baked walk/run animations for free as part of the same call. This is the reusable template for every future character.
   </div>
 </div>
 
@@ -106,6 +106,9 @@
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
 
+  let mixer = null;
+  const clock = new THREE.Clock();
+
   function onLoaded(gltf) {
     const model = gltf.scene;
     const box = new THREE.Box3().setFromObject(model);
@@ -117,11 +120,18 @@
     model.position.y += (size.y * scale) / 2;
     scene.add(model);
     controls.target.set(0, (size.y * scale) / 2, 0);
+
+    if (gltf.animations && gltf.animations.length) {
+      mixer = new THREE.AnimationMixer(model);
+      const action = mixer.clipAction(gltf.animations[0]);
+      action.play();
+    }
+
     loadingEl.hidden = true;
     hintEl.hidden = false;
   }
 
-  fetch('warrior-mesh-b64.txt')
+  fetch('warrior-walking-b64.txt')
     .then((r) => r.text())
     .then((b64) => loader.parse(base64ToArrayBuffer(b64), '', onLoaded, (err) => {
       loadingEl.textContent = 'failed to parse mesh: ' + err.message;
@@ -131,6 +141,7 @@
   (function animate(){
     requestAnimationFrame(animate);
     controls.update();
+    if (mixer) mixer.update(clock.getDelta());
     renderer.render(scene, camera);
   })();
 </script>

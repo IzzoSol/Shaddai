@@ -1,0 +1,5 @@
+[
+  { "id": "warrior-tpose2", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a stylized chibi 3D-render fantasy knight character, standing in a strict neutral T-pose facing the camera dead-on: both arms held straight out horizontally to the sides at shoulder height, palms open, legs straight and shoulder-width apart, no weapon or shield in hand, nothing overlapping the torso or limbs. Matte black obsidian armor plating with gold trim edges, a tall angular black helmet with a gold vertical crest stripe down the center and glowing green triangular eye-slits, a small round gold shoulder pauldron on each shoulder with a teal gem in the center, a short black cape hanging straight down the back (not covering the legs), teal/dark-cyan underarmor visible at joints, thick black boots with gold ankle trim. Toy-like proportions, big head small body, smooth 3D render style, single even studio lighting from the front, plain flat white background, full body visible head to feet, no text, no logos",
+    "out": "fal-assets/spike/char-warrior-tpose2.png" }
+]

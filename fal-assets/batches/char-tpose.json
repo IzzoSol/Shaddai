@@ -1,0 +1,6 @@
+[
+  { "id": "warrior-tpose", "type": "img2img", "register": "cinematic",
+    "input": "fal-assets/spike/char-warrior.png", "strength": 0.6,
+    "body": "the same stylized 3D chibi knight character, identical armor colors, helmet and design, but now standing perfectly upright facing the camera in a neutral T-pose for 3D rigging: both arms held straight out to the sides at shoulder height, legs shoulder-width apart, sword held flat against the right forearm (not covering the torso), shield strapped flat to the back (not covering the torso or arms), no overlapping limbs, full body clearly visible head to feet, plain white background, no text",
+    "out": "fal-assets/spike/char-warrior-tpose.png" }
+]

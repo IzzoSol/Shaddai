@@ -1,0 +1,1 @@
+{"detail":[{"loc":["body","model_url"],"msg":"Could not rig the provided model: Pose estimation failed, please provide a valid model URL. The model must be a humanoid character with clearly defined limbs in GLB format.","type":"value_error"}]}
