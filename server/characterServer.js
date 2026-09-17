@@ -31,12 +31,31 @@ function removeItemFromChar(char, itemId, amount = 1) {
   else char.inventory[itemId] = nxt;
   return char;
 }
-function handleDeath(char) {
-  console.log(`[Death] ${char.id} dropped items:`, Object.entries(char.inventory)
-    .filter(([k]) => !k.startsWith('equip_'))
-    .map(([k, c]) => `${k}:${c}`).join(', '));
+function handleDeath(char, dangerous = false) {
+  const dropped = {};
+  const lossPct = dangerous ? 0.5 : 0.0;
+  // Items: keep equipment, drop a fraction of loose inventory
+  for (const [k, c] of Object.entries(char.inventory || {})) {
+    if (k.startsWith('equip_')) continue;
+    const lose = Math.ceil(c * lossPct);
+    if (lose > 0) {
+      dropped[k] = lose;
+      char.inventory[k] = c - lose;
+      if (char.inventory[k] <= 0) delete char.inventory[k];
+    }
+  }
+  // Sparks as a currency sink (dangerous zone only)
+  let sparksLost = 0;
+  if (dangerous && char.currency?.sparks) {
+    sparksLost = Math.floor(char.currency.sparks * 0.1);
+    char.currency.sparks -= sparksLost;
+  }
   char.stats.hp = char.stats.maxHp;
   char.stats.energy = char.stats.maxEnergy;
+  // Respawn at the central safe hub
+  char.location = { x: 50, y: 50 };
+  char.lastDeath = { at: Date.now(), dropped, sparksLost };
+  console.log(`[Death] ${char.id} ${dangerous ? '(wilderness)' : '(safe)'} dropped=${JSON.stringify(dropped)} sparksLost=${sparksLost}`);
   return char;
 }
 function sendBridge(event) {
@@ -147,13 +166,14 @@ router.post('/shop', (req, res) => {
 /* ---------- /die ---------- */
 router.post('/die', (req, res) => {
   try {
-    const { characterId } = req.body;
+    const { characterId, dangerous = false } = req.body;
     const db = loadDB();
     if (!db[characterId]) return res.status(404).json({ success: false, error: 'Character not found' });
-    const char = handleDeath(db[characterId]);
+    const char = handleDeath(db[characterId], !!dangerous);
     saveDB(db);
-    sendBridge({ type: 'character_died', payload: { characterId } });
-    res.json({ success: true, message: 'Character dead and inventory dropped' });
+    const loss = char.lastDeath || {};
+    sendBridge({ type: 'character_died', payload: { characterId, dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0 } });
+    res.json({ success: true, message: 'Character dead', dangerous: !!dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, newPos: char.location });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
 });
 
