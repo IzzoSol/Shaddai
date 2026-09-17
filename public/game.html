@@ -1276,11 +1276,17 @@ function renderInterior(time){
   function drawFurnPic(it,im,sx,sy){ const c=FURN_CROP[it.type]||[0,0,im.naturalWidth,im.naturalHeight];
     const maxW=Math.max(it.w*TW*S*0.96,30*S), maxH=(FURN_H[it.type]||105)*S;
     const sc=Math.min(maxW/c[2],maxH/c[3]); const dw=c[2]*sc, dh=c[3]*sc;
-    ctx.save(); ctx.globalAlpha=0.24; ctx.fillStyle='#000';
-    ctx.beginPath(); ctx.ellipse(sx,sy-1.5*S,dw*0.44,Math.max(3.5*S,dw*0.12),0,0,7); ctx.fill();
+    // A tight pixel-crop alone isn't enough to read as "resting on the floor" --
+    // fal's isometric camera angle doesn't perfectly match this game's own tile
+    // projection, so with only a faint shadow these looked like they floated.
+    // A stronger, wider contact shadow (and drawing the sprite a touch lower,
+    // overlapping the tile it's sitting on) fixes the perceived grounding
+    // without needing per-item pixel tuning.
+    ctx.save(); ctx.globalAlpha=0.42; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(sx,sy+1.5*S,dw*0.5,Math.max(4.5*S,dw*0.16),0,0,7); ctx.fill();
     ctx.restore();
     ctx.save(); ctx.imageSmoothingEnabled=true;
-    ctx.drawImage(im,c[0],c[1],c[2],c[3],sx-dw/2,sy-dh,dw,dh);
+    ctx.drawImage(im,c[0],c[1],c[2],c[3],sx-dw/2,sy-dh+3*S,dw,dh);
     ctx.restore(); }
   // back walls (L-shape behind the room)
   const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',pub:'#2a1e14',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';

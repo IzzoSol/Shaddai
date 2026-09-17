@@ -127,8 +127,13 @@
 
   function buildPanel() {
     const panel = el('div', { id: 'mmoPanel' });
+    // Bottom-right: the top-right corner is already crowded (dashboard/back
+    // buttons at top:10-16, the mobile action-toggle at top:90, its cluster
+    // below that), and this panel is player-opened, not a passive HUD, so it
+    // doesn't need to live up there. Hotbar is bottom-center, D-pad is
+    // bottom-left -- bottom-right on this page is genuinely free.
     panel.style.cssText = `
-      position:fixed; top:70px; right:12px; width:320px; max-height:70vh;
+      position:fixed; bottom:80px; right:12px; width:min(320px,92vw); max-height:60vh;
       background:#0b0f14; border:1px solid #2a3542; border-radius:10px;
       color:#dfe8ee; font:12px/1.4 system-ui,sans-serif; z-index:9500;
       display:none; flex-direction:column; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.5);
@@ -164,7 +169,7 @@
     const toggle = el('div', {}, '⚔ MMO');
     toggle.id = 'mmoToggle';
     toggle.style.cssText = `
-      position:fixed; top:70px; right:12px; z-index:9499;
+      position:fixed; bottom:80px; right:12px; z-index:9499;
       background:#00e5a0; color:#04121a; font:700 12px system-ui,sans-serif;
       padding:8px 12px; border-radius:8px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.4);
     `;
