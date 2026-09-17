@@ -63,6 +63,26 @@ function handleDeath(char, dangerous = false) {
   console.log(`[Death] ${char.id} ${dangerous ? '(wilderness)' : '(safe)'} dropped=${JSON.stringify(dropped)} sparksLost=${sparksLost}`);
   return char;
 }
+/* Shared by /die and /venture: a dangerous death that dropped items
+   leaves a reclaimable grave. Returns the graveId, or null if nothing
+   was dropped. */
+function maybeCreateGrave(characterId, deathLocation, dropped) {
+  if (!Object.keys(dropped || {}).length) return null;
+  const graves = loadGraves();
+  const graveId = `g${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  graves[graveId] = {
+    id: graveId,
+    characterId,
+    location: deathLocation,
+    items: dropped,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + GRAVE_GRACE_MS,
+    claimed: false
+  };
+  saveGraves(graves);
+  return graveId;
+}
+
 function sendBridge(event) {
   if (global.shaddai_bridge && global.shaddai_bridge.post) {
     global.shaddai_bridge.post(event);
@@ -192,26 +212,48 @@ router.post('/die', (req, res) => {
     const char = handleDeath(db[characterId], !!dangerous);
     saveDB(db);
     const loss = char.lastDeath || {};
-
-    // Dangerous deaths that actually dropped something leave a reclaimable grave
-    let graveId = null;
-    if (dangerous && Object.keys(loss.dropped || {}).length) {
-      const graves = loadGraves();
-      graveId = `g${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      graves[graveId] = {
-        id: graveId,
-        characterId,
-        location: deathLocation,
-        items: loss.dropped,
-        createdAt: Date.now(),
-        expiresAt: Date.now() + GRAVE_GRACE_MS,
-        claimed: false
-      };
-      saveGraves(graves);
-    }
+    const graveId = dangerous ? maybeCreateGrave(characterId, deathLocation, loss.dropped) : null;
 
     sendBridge({ type: 'character_died', payload: { characterId, dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, graveId } });
     res.json({ success: true, message: 'Character dead', dangerous: !!dangerous, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, newPos: char.location, graveId, graveExpiresInMs: graveId ? GRAVE_GRACE_MS : null });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
+});
+
+/* ---------- /venture ----------
+   Real risk/reward activity in the wilderness: costs energy, has a
+   chance of triggering a real dangerous death (drop + grave, same as
+   /die), otherwise grants a random resource. Gives the death system a
+   genuine in-world trigger instead of only the test button. */
+const VENTURE_ENERGY_COST = 15;
+const VENTURE_DEATH_CHANCE = 0.3;
+const VENTURE_LOOT_TABLE = ['ore', 'wood', 'fiber'];
+
+router.post('/venture', (req, res) => {
+  try {
+    const { characterId } = req.body;
+    const db = loadDB();
+    if (!db[characterId]) return res.status(404).json({ success: false, error: 'Character not found' });
+    const char = db[characterId];
+    char.stats = char.stats || { energy: 100, maxEnergy: 100 };
+    if (char.stats.energy < VENTURE_ENERGY_COST) return res.status(400).json({ success: false, error: 'Not enough energy to venture' });
+    char.stats.energy -= VENTURE_ENERGY_COST;
+
+    if (Math.random() < VENTURE_DEATH_CHANCE) {
+      const deathLocation = { ...char.location };
+      handleDeath(char, true);
+      saveDB(db);
+      const loss = char.lastDeath || {};
+      const graveId = maybeCreateGrave(characterId, deathLocation, loss.dropped);
+      sendBridge({ type: 'character_died', payload: { characterId, dangerous: true, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, graveId } });
+      return res.json({ success: true, outcome: 'died', dangerous: true, dropped: loss.dropped || {}, sparksLost: loss.sparksLost || 0, newPos: char.location, graveId, graveExpiresInMs: graveId ? GRAVE_GRACE_MS : null });
+    }
+
+    const item = VENTURE_LOOT_TABLE[Math.floor(Math.random() * VENTURE_LOOT_TABLE.length)];
+    const amount = 1 + Math.floor(Math.random() * 3);
+    addItemToChar(char, item, amount);
+    saveDB(db);
+    sendBridge({ type: 'venture_success', payload: { characterId, item, amount } });
+    res.json({ success: true, outcome: 'loot', gained: { [item]: amount }, energy: char.stats.energy });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
 });
 

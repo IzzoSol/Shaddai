@@ -72,6 +72,7 @@
     move: (dx, dy) => POST('/character/move', { characterId: charId, dx, dy }),
     shop: (itemId) => POST('/character/shop', { characterId: charId, itemId }),
     die: async (dangerous) => { const r = await POST('/character/die', { characterId: charId, dangerous: !!dangerous }); showDeathOverlay(r); return r; },
+    venture: async () => { const r = await POST('/character/venture', { characterId: charId }); if (r.outcome === 'died') showDeathOverlay(r); return r; },
     graveList: () => GET('/character/grave/list?characterId=' + charId),
     graveRetrieve: (graveId) => POST('/character/grave/retrieve', { characterId: charId, graveId }),
     // ---- quests ----
@@ -120,9 +121,9 @@
     return e;
   }
 
-  const TABS = ['Skills', 'Quests', 'Daily', 'Bonus', 'Plot', 'Agents', 'Market', 'Grave'];
+  const TABS = ['Wilds', 'Skills', 'Quests', 'Daily', 'Bonus', 'Plot', 'Agents', 'Market', 'Grave'];
   const CANDIDATE_PLOT_IDS = ['plot-1', 'plot-2', 'plot-3', 'plot-4', 'plot-5', 'plot-6'];
-  let activeTab = 'Quests';
+  let activeTab = 'Wilds';
 
   function buildPanel() {
     const panel = el('div', { id: 'mmoPanel' });
@@ -206,7 +207,8 @@
       highlightTabs();
       body.innerHTML = 'Loading…';
       try {
-        if (activeTab === 'Skills') await renderSkills();
+        if (activeTab === 'Wilds') await renderWilds();
+        else if (activeTab === 'Skills') await renderSkills();
         else if (activeTab === 'Quests') await renderQuests();
         else if (activeTab === 'Daily') await renderDaily();
         else if (activeTab === 'Bonus') await renderBonus();
@@ -218,6 +220,22 @@
       } catch (e) {
         body.textContent = 'Error: ' + e.message;
       }
+    }
+
+    async function renderWilds() {
+      const { character } = await MMO.state();
+      body.innerHTML = `<div style="font-weight:600;margin-bottom:6px">The Wilderness</div>
+        <div style="font-size:11px;opacity:.7;margin-bottom:10px">Costs 15 energy (you have ${character.stats?.energy ?? 0}). ~30% chance of a dangerous death — dropped items land in a reclaimable grave, Sparks loss is permanent. Otherwise you find loot.</div>`;
+      const btn = el('button', {}, '⚔ Venture into the Wilds');
+      btn.style.cssText = 'padding:8px 16px;border:none;border-radius:8px;cursor:pointer;background:#b33;color:#fff;font-weight:700';
+      btn.onclick = async () => {
+        try {
+          const r = await MMO.venture();
+          if (r.outcome === 'loot') alertInline(new Error('Found: ' + JSON.stringify(r.gained)));
+          renderWilds();
+        } catch (e) { alertInline(e); }
+      };
+      body.appendChild(btn);
     }
 
     async function renderSkills() {
@@ -459,6 +477,32 @@
       setTimeout(() => n.remove(), 2500);
     }
   }
+
+  /* ---------------- day/night cycle ----------------
+     Purely visual, no server round-trip: a full-screen tint synced to
+     real UTC hour (the same "world clock" every player shares). Darkest
+     at midnight UTC, fully clear at noon UTC. pointer-events:none so it
+     never blocks clicks on the game underneath. */
+  function installDayNight() {
+    const overlay = document.createElement('div');
+    overlay.id = 'mmoDayNight';
+    overlay.style.cssText = `
+      position:fixed; inset:0; z-index:3; pointer-events:none;
+      transition:background-color 3s linear, opacity 3s linear;
+    `;
+    document.body.appendChild(overlay);
+    function tick() {
+      const hour = new Date().getUTCHours() + new Date().getUTCMinutes() / 60;
+      // 0 at noon (brightest), 1 at midnight (darkest) — smooth cosine curve
+      const darkness = (1 - Math.cos((hour / 24) * Math.PI * 2)) / 2;
+      overlay.style.backgroundColor = '#0a1030';
+      overlay.style.opacity = (darkness * 0.55).toFixed(2);
+    }
+    tick();
+    setInterval(tick, 60 * 1000);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installDayNight);
+  else installDayNight();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildPanel);
   else buildPanel();

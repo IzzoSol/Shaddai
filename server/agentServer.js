@@ -122,9 +122,12 @@ router.post('/shift/:key', (req, res) => {
     const chars = loadFile(CHARS_FILE);
     const char = chars[characterId];
     if (!char) return res.status(404).json({ success: false, error: 'Character not found' });
-    char.energy = char.energy || 100;
-    if (char.energy < agent.energy) return res.status(400).json({ success: false, error: 'Not enough energy' });
-    char.energy -= agent.energy;
+    // Same energy pool the character sheet and /venture use (char.stats.energy) --
+    // this used to read/write a separate, never-initialized char.energy field
+    // that had no connection to the character's actual stats.
+    char.stats = char.stats || { energy: 100, maxEnergy: 100 };
+    if (char.stats.energy < agent.energy) return res.status(400).json({ success: false, error: 'Not enough energy' });
+    char.stats.energy -= agent.energy;
     saveFile(CHARS_FILE, chars);
 
     agent.shiftEndAt = Date.now() + agent.durationMs;
