@@ -50,7 +50,7 @@ function dataUri(path) {
 
 // ── build a fal request from a manifest job ───────────────────────────────
 function buildRequest(job) {
-  const spine = job.register === 'pixel' ? SPINE_PIXEL : SPINE_CINEMATIC;
+  const spine = job.register === 'raw' ? '' : job.register === 'pixel' ? SPINE_PIXEL : SPINE_CINEMATIC;
   const prompt = `${spine}${job.body} Negative: ${NEG}.`;
   const input = { prompt, num_images: 1 };
   if (job.size) input.image_size = job.size;              // e.g. "square_hd", "landscape_16_9"
