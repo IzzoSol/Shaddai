@@ -1,0 +1,5 @@
+[
+  { "id": "vehicle-beach-hoverboard-ref", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a coastal-tech hoverboard, sleek elongated board shape hovering with a visible glowing repulsor strip along the underside, full clean 3/4 reference view, small twin stabilizer fins at the rear like a surfboard. Sea-glass teal #4ec9d0 deck as the dominant color, sun-bleached sand #f4c8a0 rail trim along the edges, cyan #5fe0ff glowing repulsor-strip underneath, a small brushed-brass foot-strap pair molded into the deck (empty, no rider). TURTLE'S NOTE: this should read as a lifeguard/patrol tool crossed with a surfboard -- functional curvature like a real board's rocker and rail shape, not a flat slab. Cinematic occult-almanac quality render, bright coastal daylight, plain flat sky-grey background so the silhouette reads clearly, full board visible nose to tail, no text, no logos, no rider, no watermark",
+    "out": "fal-assets/spike/vehicle-beach-hoverboard-ref.png" }
+]

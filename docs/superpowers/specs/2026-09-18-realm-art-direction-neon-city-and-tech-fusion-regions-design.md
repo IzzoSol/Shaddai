@@ -276,6 +276,36 @@ This is not aesthetic preference, it's a design constraint every future batch mu
   `fal-assets/characters/` for the 3D side? If one exists and the other doesn't, build the missing
   half to match — don't start a third, disconnected version.
 
+## 6. Status: mounts + vehicles shipped (2026-09-18, same day)
+
+All 6 non-darkforest realms now have a static 3D mesh mount AND a static 3D mesh vehicle,
+following this spec's palette/silhouette rules directly (`fal-assets/characters/mount-<realm>*/`,
+`fal-assets/characters/vehicle-<realm>*/`):
+
+| Realm | Mount | Vehicle |
+|---|---|---|
+| Meadow (farm-tech) | Ox (plow-hauler) | Mecha-tractor |
+| Beach (coastal-tech) | Hawk (patrol scout) | Hoverboard |
+| Forest (forest-tech) | Ape (moss-reclaimed) | Canopy zipline pod |
+| Desert (dune-tech) | Camel (dune-hauler) | Hover-buggy |
+| Suburb (retro-future) | Dog (neighborhood-watch) | Hover-scooter + delivery-drone |
+| Volcano (forge-industrial) | Rhino-hauler (obsidian/magma) | Ore-hauler truck |
+| City (neon-streetwear) | — (not designed, hub doesn't need one) | Hover-car |
+
+**Real constraint discovered mid-session:** fal's Meshy rigging endpoint is confirmed
+humanoid-only by direct test (not just docs) — every quadruped/vehicle mesh above is STATIC,
+no walk/drive animation. Owner's explicit call: don't warp designs into bipeds to force
+rig-compatibility, ship full-detail static meshes instead and solve animation separately later
+(candidate: procedural idle bob / wheel-spin in three.js needs no skeleton; real walk-cycles need
+either a different rigging service or hand-rigging, neither investigated yet).
+
+**Neon-streetwear technique note:** `register: "cinematic"` and `register: "pixel"` both have the
+OLD obsidian/emerald/gold palette baked into their base prompt text (`SPINE_CINEMATIC`/
+`SPINE_PIXEL` in `generate.mjs`) and will fight any other palette. Use `register: "raw"` (added by
+the other session for the icon pipeline) plus explicit "2D anime illustration, NOT a photograph,
+flat cel-shading, thick black outlines" framing in the prompt body — confirmed working on the
+city hover-car after one correction pass (first attempt with `raw` alone still drifted photoreal).
+
 ## 5. Open questions for owner review before any generation batch
 
 1. Confirm the realm↔theme mapping in §4 matches intent (especially desert/volcano forge pairing

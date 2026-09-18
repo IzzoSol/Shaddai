@@ -1,0 +1,5 @@
+[
+  { "id": "mount-farm-ox-ref", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a heavy quadruped mecha-ox mount, full side-profile view, standing on all four legs facing left, legs clearly separated and fully visible (front legs and back legs distinct, not overlapping), a plow/cart-hitch harness mounted on its back (empty, no rider), a broad armored head with real ox horns rendered as brushed-steel curved plates, thick tusked-heavy shoulders. Matte warm wheat-gold #e8c45c plating over a barn-red #a13c2e undercarriage, a single glowing emerald #00ff9c gauge-ring on the flank (like a grain-level gauge, functional not decorative), riveted brass joint fittings, dust and straw caught in the leg joints suggesting real farm labor. Function-over-spectacle design -- this is a working plow animal first, a machine second. Cinematic occult-almanac sci-fi rendering quality, dramatic side lighting, plain flat grey-white background, full body visible nose to tail, no text, no logos, no rider, no watermark",
+    "out": "fal-assets/spike/mount-farm-ox-ref.png" }
+]

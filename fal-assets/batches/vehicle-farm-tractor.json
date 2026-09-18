@@ -1,0 +1,5 @@
+[
+  { "id": "vehicle-farm-tractor-ref", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a mecha-tractor farm vehicle, full clean side-profile reference view facing left, four sturdy wheeled legs (not tank treads -- real wheel-hub shapes with a mechanical walking-beam suspension) so it can both roll and step over furrows, a single open-cab driver seat up front with a simple control lever (no driver), a rear-mounted plow attachment integrated into the chassis. Matte warm wheat-gold #e8c45c body panels as the dominant color, deep barn-red #a13c2e chassis and wheel housings, a single glowing emerald #00ff9c gauge-ring on the engine housing. TURTLE'S NOTE: every panel line hand-riveted, exhaust-stack with real soot staining, mud and straw caked around the wheel wells -- this is farm equipment that's clearly been used, not a showroom piece. Cinematic occult-almanac quality render, warm late-afternoon field lighting, plain flat neutral background so the silhouette reads clearly, full vehicle visible front to back, no text, no logos, no driver, no watermark",
+    "out": "fal-assets/spike/vehicle-farm-tractor-ref.png" }
+]

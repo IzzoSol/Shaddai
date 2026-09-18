@@ -1,0 +1,5 @@
+[
+  { "id": "vehicle-desert-buggy-ref", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a dune-tech hover-buggy, open-frame single-seat fast transit vehicle, full clean 3/4 reference view, hovering with a visible glowing repulsor plate underneath (no wheels), a simple open driver seat with a wind-guard (no driver), a raised front intake scoop. Sun-baked adobe clay #c9764f frame, sun-brass #e8c45c trim matching the Grand Forge's own metalwork, deep shadow-violet #3a2a4a in the recessed frame joints and undercarriage shadow. TURTLE'S NOTE: this is the FAST counterpart to the dune-hauler mount -- light, open, wind-scoured frame, sand-worn brass fittings, built for a single rider crossing dunes quickly, not hauling cargo. Cinematic occult-almanac quality render, harsh desert midday sun with hard-edged shadow, plain flat sand-grey background so the silhouette reads clearly, full vehicle visible front to back, no text, no logos, no driver, no watermark",
+    "out": "fal-assets/spike/vehicle-desert-buggy-ref.png" }
+]

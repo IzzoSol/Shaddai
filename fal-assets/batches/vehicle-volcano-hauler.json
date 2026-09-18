@@ -1,0 +1,5 @@
+[
+  { "id": "vehicle-volcano-hauler-ref", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a heavy volcanic ore-hauler transport vehicle, wide low industrial chassis on six thick reinforced wheels, full clean 3/4 reference view, an open cargo bed at the rear built for raw ore (empty, no cargo), a small reinforced driver cab up front with a heat-shielded windshield (no driver). Obsidian-black #06080b structural plating, glowing magma-orange #ff6a2e seams running along every major panel joint like exposed lava cooling into rock, structural iron #3a3530 wheel housings and undercarriage. TURTLE'S NOTE: the heaviest, least graceful vehicle on purpose -- thick tank-like proportions, scorch marks and heat-warping visible on the lower panels, built to survive heat and rockslides not to look elegant. Cinematic occult-almanac quality render, dramatic magma-glow uplighting mixed with dark volcanic ambient light, plain flat dark-grey background so the silhouette reads clearly, full vehicle visible front to back, no text, no logos, no driver, no watermark",
+    "out": "fal-assets/spike/vehicle-volcano-hauler-ref.png" }
+]
