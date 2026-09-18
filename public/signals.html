@@ -359,7 +359,15 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 .pill .d{animation:pulse 1.8s ease-in-out infinite;}
 .cell .zo{position:absolute;z-index:2;right:6px;bottom:6px;font-size:10px;font-weight:700;letter-spacing:.4px;
 color:#fff;background:rgba(2,6,3,.72);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 6px;
-cursor:pointer;text-shadow:0 1px 2px #000;}</style>
+cursor:pointer;text-shadow:0 1px 2px #000;}.row{position:relative;overflow:hidden;background-size:cover;background-position:85% 50%;}
+.row::before{content:&quot;&quot;;position:absolute;inset:0;z-index:0;pointer-events:none;
+background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6,14,8,.4));}
+.row>*{position:relative;z-index:1;}
+.row:hover{box-shadow:0 0 0 1px rgba(255,215,130,.4);}
+.cell{transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;}
+.cell:hover{transform:scale(1.03);border-color:rgba(255,215,130,.6);box-shadow:0 0 18px rgba(255,215,130,.25);z-index:2;}
+.cell img{opacity:.72;filter:saturate(1.18) contrast(1.05);}
+#liveN{animation:pulse 1.8s ease-in-out infinite;}</style>
 <script src="/sw-heal.js"></script>
 </head>
 <body>
@@ -784,7 +792,8 @@ cursor:pointer;text-shadow:0 1px 2px #000;}</style>
         big = m ? m.toFixed(2) + 'x' : '—';
         sub = ago(c.ts) + ' · ' + money(c.curFdv || c.entryFdv);
       }
-      return '<div class="row" style="--pc:' + col + '" data-mint="' + esc(c.mint) + '">' +
+      var im = (info(c) && info(c).image) || c.image || '';
+      return '<div class="row" style="--pc:' + col + (im ? ';background-image:url(&quot;' + esc(im) + '&quot;)' : '') + '" data-mint="' + esc(c.mint) + '">' +
         avatar(c) +
         '<div class="mid"><div class="sym">' + esc(c.symbol || c.name || '?') + '</div>' +
         '<div class="sub"><span>' + esc(sub) + '</span>' + socialBits(c) +
@@ -896,7 +905,7 @@ cursor:pointer;text-shadow:0 1px 2px #000;}</style>
     $('cN').textContent = VIEW.length;
     $('cW').textContent = APP === 'mk'
       ? (MK.cat === 'top' ? 'dex · top 25' : 'dex · ' + MK.cat)
-      : P.cat === 'top' ? 'boosted now' : (P.hours ? 'in ' + P.hours + 'h' : 'all time');
+      : P.cat === 'top' ? 'live dex' : (P.hours ? 'in ' + P.hours + 'h' : 'all time');
     $('cE').textContent = P.social === 'tw' ? 'with 𝕏' : P.social === 'any' ? 'with socials'
                         : P.social === 'none' ? 'no socials' : '';
     $('liveN').textContent = VIEW.length;
@@ -1204,7 +1213,7 @@ cursor:pointer;text-shadow:0 1px 2px #000;}</style>
         if (P.cat === 'top') loadTop();
       })
       .catch(function () { $('cN').textContent = '—';
-        $('v-list').innerHTML = '<div class="empty">Feed unavailable.<br>Try again shortly.</div>'; });
+        $('v-list').innerHTML = '<div class="empty">No live calls yet &mdash; pulling fresh DEX data now.<br>Hold tight, this auto-refreshes.</div>'; });
   }
   load();
   setInterval(load, 60000);
