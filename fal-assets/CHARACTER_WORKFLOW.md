@@ -92,14 +92,16 @@ flat shading, not soft gradients):
    just be retried (same image, no changes) before concluding the
    reference art needs fixing. The timeout was raised to 480000ms in
    `character-pipeline.mjs` after repeated false failures.
-7. **Thin bladed objects (swords, blades, arrows) reconstruct badly from a
-   flat side-profile reference.** Hunyuan3D can't infer real thickness from
-   a straight-on profile shot of something like a sword — it comes out as a
-   near-invisible sliver even though the render clearly showed a proper
-   blade. Generate weapon/blade references at a slight 3/4 angle instead,
-   showing the flat face turned enough to give the reconstruction real
-   volume cues. Bulkier props (staff, wrench, grapple-hook) don't have this
-   problem — it's specifically thin-profile objects.
+7. **Thin bladed objects (swords, blades, arrows) reconstruct badly —
+   possibly un-fixably — through Hunyuan3D's single-image pipeline.** A
+   flat profile reference produces a near-invisible sliver; a 3/4-angle
+   reference (more volume cues) still produced a genuinely crumpled,
+   collapsed mesh on retry, not just a framing/visibility problem. Don't
+   keep spending on regeneration attempts for thin blades specifically —
+   build them as simple primitive geometry instead (box blade + cylinder
+   grip, a few lines of three.js) and attach via bone-parenting like any
+   other prop. Bulkier props (staff, wrench, grapple-hook) reconstruct
+   fine — it's specifically thin flat-blade shapes that fail.
 8. **Bone-attached props need a scale/offset compensation for the bone's
    own inherited world scale**, which can be tiny (e.g. ~0.0177) purely
    from the skeleton's bind-pose hierarchy, unrelated to the character's
@@ -123,7 +125,13 @@ flat shading, not soft gradients):
    can silently fail to stage anything, including the parts that did match
    -- always verify with `git show --stat HEAD | grep -c '\.glb'` after
    committing binaries, don't trust the "create mode" list alone.
-11. **A background job reporting `[exited with code 0]` doesn't mean the
+11. **A weapon positioned at a bone's exact origin can end up embedded
+   inside solid hand/glove geometry and be invisible**, even with correct
+   scale — these closed-fist meshes aren't hollow, so a grip point placed
+   exactly at the bone renders inside opaque material. Use the offset
+   sliders (or a real per-weapon grip-point offset) to nudge it clear of
+   the fist; this is normal per-weapon tuning, not a bug to chase.
+12. **A background job reporting `[exited with code 0]` doesn't mean the
    pipeline actually succeeded.** A transient `fetch failed` mid-poll can
    kill the script after `PIPELINE FAILED: ...` prints, but the outer
    background-task wrapper still reports exit 0. Always check the actual

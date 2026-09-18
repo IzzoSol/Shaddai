@@ -35,7 +35,7 @@
     <div class="col">
       <label>Weapon</label>
       <select id="weaponSel">
-        <option value="item-warrior-sword">Sword</option>
+        <option value="procedural-sword">Sword (procedural)</option>
         <option value="item-mage-staff">Staff</option>
         <option value="item-scout-bow">Bow</option>
       </select>
@@ -136,34 +136,70 @@
       // drift (see CHARACTER_WORKFLOW.md) that walks the character out of
       // frame within a couple seconds. Static bind pose only.
 
-      loader.load(`../characters/${weaponId}/${weaponId}-mesh.glb`, (wgltf) => {
-        weaponMesh = wgltf.scene;
-        // normalize the raw weapon mesh to a 1-unit bounding size so the
-        // scale slider means the same thing regardless of source mesh size
-        const wbox = new THREE.Box3().setFromObject(weaponMesh);
-        const wsize = wbox.getSize(new THREE.Vector3());
-        const wcenter = wbox.getCenter(new THREE.Vector3());
-        const norm = 1 / Math.max(wsize.x, wsize.y, wsize.z);
-        weaponMesh.scale.setScalar(norm);
-        weaponMesh.position.sub(wcenter.multiplyScalar(norm));
-
+      function finishWeapon() {
         weaponWrapper = new THREE.Group();
         weaponWrapper.add(weaponMesh);
         if (rightHand) rightHand.add(weaponWrapper);
         else charModel.add(weaponWrapper);
         applyParams();
         loadingEl.hidden = true;
-        window.__debug = () => {
-          const wp = new THREE.Vector3(); weaponWrapper.getWorldPosition(wp);
-          const ws = new THREE.Vector3(); weaponWrapper.getWorldScale(ws);
-          const hp = new THREE.Vector3(); (rightHand || charModel).getWorldPosition(hp);
-          const hs = new THREE.Vector3(); (rightHand || charModel).getWorldScale(hs);
-          const wb = new THREE.Box3().setFromObject(weaponMesh);
-          let meshCount = 0, matInfo = [];
-          weaponMesh.traverse((o) => { if (o.isMesh) { meshCount++; matInfo.push({ visible: o.visible, hasGeom: !!o.geometry, vertCount: o.geometry ? o.geometry.attributes.position.count : 0 }); } });
-          return { rightHandFound: !!rightHand, weaponWorldPos: wp.toArray(), weaponWorldScale: ws.toArray(), handWorldPos: hp.toArray(), handWorldScale: hs.toArray(), weaponBoxMin: wb.min.toArray(), weaponBoxMax: wb.max.toArray(), meshCount, matInfo, cameraPos: camera.position.toArray() };
-        };
-      }, undefined, (err) => { loadingEl.textContent = 'weapon load failed: ' + err.message; });
+      }
+
+      if (weaponId === 'procedural-sword') {
+        // thin bladed weapons reconstruct badly from single-image 3D (see
+        // CHARACTER_WORKFLOW.md) -- build the blade as simple primitive
+        // geometry instead of fighting the AI reconstruction further.
+        weaponMesh = new THREE.Group();
+        const blade = new THREE.Mesh(
+          new THREE.BoxGeometry(0.05, 0.7, 0.012),
+          new THREE.MeshStandardMaterial({ color: 0x06080b, emissive: 0x00ff9c, emissiveIntensity: 0.3, metalness: 0.6, roughness: 0.3 })
+        );
+        blade.position.y = 0.45;
+        const guard = new THREE.Mesh(
+          new THREE.BoxGeometry(0.22, 0.03, 0.03),
+          new THREE.MeshStandardMaterial({ color: 0xe8c45c, metalness: 0.8, roughness: 0.25 })
+        );
+        guard.position.y = 0.08;
+        const grip = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.02, 0.02, 0.16, 8),
+          new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7 })
+        );
+        grip.position.y = -0.02;
+        const pommel = new THREE.Mesh(
+          new THREE.SphereGeometry(0.03, 10, 10),
+          new THREE.MeshStandardMaterial({ color: 0x00ff9c, emissive: 0x00ff9c, emissiveIntensity: 0.6 })
+        );
+        pommel.position.y = -0.11;
+        weaponMesh.add(blade, guard, grip, pommel);
+        // normalize to a 1-unit bounding size, same convention as the
+        // AI-mesh path, so the scale slider means the same thing either way
+        const pbox = new THREE.Box3().setFromObject(weaponMesh);
+        const psize = pbox.getSize(new THREE.Vector3());
+        const pcenter = pbox.getCenter(new THREE.Vector3());
+        const pnorm = 1 / Math.max(psize.x, psize.y, psize.z);
+        weaponMesh.scale.setScalar(pnorm);
+        weaponMesh.position.sub(pcenter.multiplyScalar(pnorm));
+        finishWeapon();
+      } else {
+        loader.load(`../characters/${weaponId}/${weaponId}-mesh.glb`, (wgltf) => {
+          weaponMesh = wgltf.scene;
+          weaponMesh.traverse((o) => { if (o.isMesh && o.material) { o.material.side = THREE.DoubleSide; o.material.needsUpdate = true; } });
+          const wbox = new THREE.Box3().setFromObject(weaponMesh);
+          const wsize = wbox.getSize(new THREE.Vector3());
+          const wcenter = wbox.getCenter(new THREE.Vector3());
+          const norm = 1 / Math.max(wsize.x, wsize.y, wsize.z);
+          weaponMesh.scale.setScalar(norm);
+          weaponMesh.position.sub(wcenter.multiplyScalar(norm));
+          finishWeapon();
+        }, undefined, (err) => { loadingEl.textContent = 'weapon load failed: ' + err.message; });
+      }
+
+      window.__debug = () => {
+        if (!weaponWrapper) return 'not loaded yet';
+        const wp = new THREE.Vector3(); weaponWrapper.getWorldPosition(wp);
+        const ws = new THREE.Vector3(); weaponWrapper.getWorldScale(ws);
+        return { rightHandFound: !!rightHand, weaponWorldPos: wp.toArray(), weaponWorldScale: ws.toArray() };
+      };
     }, undefined, (err) => { loadingEl.textContent = 'character load failed: ' + err.message; });
   }
 
