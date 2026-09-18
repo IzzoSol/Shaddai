@@ -1,0 +1,201 @@
+<title>SHADDAI Roster (Rigged)</title>
+<style>
+  :root{
+    --bg:#f4f5f3; --panel:#ffffff; --ink:#12181a; --sub:#5b6a68; --line:#dde3e0; --accent:#0a8a5c;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624; --accent:#00ff9c; }
+  }
+  :root[data-theme="dark"]{ --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624; --accent:#00ff9c; }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;padding-inline:20px;padding-block:32px 48px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 6px;}
+  h1{font-size:clamp(24px,4vw,34px);margin:0 0 6px;text-wrap:balance;font-weight:700;}
+  .sub{color:var(--sub);font-size:14px;margin:0 0 20px;max-width:62ch;line-height:1.5;}
+  .picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .picker button{
+    font-family:'Space Grotesk',system-ui,sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;transition:all .15s;
+  }
+  .picker button:hover{border-color:var(--accent);}
+  .picker button.active{background:var(--accent);color:#06120d;border-color:var(--accent);}
+  .clipPicker{display:flex;gap:6px;margin-bottom:20px;}
+  .clipPicker button{
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:6px 12px;border-radius:8px;
+    border:1px solid var(--line);background:transparent;color:var(--sub);cursor:pointer;
+  }
+  .clipPicker button.active{border-color:var(--accent);color:var(--accent);}
+  .stage{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    aspect-ratio:1/1;max-width:560px;margin:0 auto;position:relative;
+  }
+  #hint{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:11px;color:var(--sub);pointer-events:none;}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--sub);}
+  .bio{margin-top:20px;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb, var(--accent) 6%, var(--panel));font-size:13px;line-height:1.6;color:var(--ink);}
+  .bio b{color:var(--accent);}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">SHADDAI · Roster</p>
+  <h1 id="charName">The Warrior</h1>
+  <p class="sub">All 5 rigged, walking, and ready. Drag to rotate, scroll to zoom. Same pipeline, same identity, distinct role per character.</p>
+
+  <div class="picker" id="picker"></div>
+  <div class="clipPicker" id="clipPicker"></div>
+
+  <div class="stage">
+    <div id="loading">loading mesh…</div>
+    <div id="hint" hidden>drag to rotate · scroll to zoom</div>
+  </div>
+
+  <div class="bio" id="bio"></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  const ROSTER = [
+    { id: 'warrior', name: 'The Warrior', role: 'Melee tank', bio: "The order's shield-line. Doesn't chase a fight — just stands where the fight has to go through." },
+    { id: 'mage', name: 'The Mage', role: 'Ranged caster', bio: "Keeps the order's older knowledge alive. The hood isn't modesty; it's discipline." },
+    { id: 'explorer', name: 'The Explorer', role: 'Scout / traversal', bio: "First through every door the order hasn't mapped yet." },
+    { id: 'engineer', name: 'The Engineer', role: 'Support / heavy melee', bio: "Keeps the order's machinery — and the order itself — running." },
+    { id: 'scout', name: 'The Scout', role: 'Ranged / archer', bio: "Says less than anyone in the order and needs to." },
+    { id: 'shaddai', name: 'SHADDAI', role: 'Supreme Orchestrator', bio: "Coordinates every other agent and makes the final call. The crown and wings aren't decoration." },
+    { id: 'nexus', name: 'NEXUS', role: 'Technical Architect', bio: "Backend and infrastructure, built like it looks — heavy, load-bearing, no wasted motion." },
+    { id: 'zerox', name: 'ZEROX', role: 'Wealth & Revenue Engine', bio: "Billing, pricing, unit economics. Always closing." },
+    { id: 'oracle', name: 'ORACLE', role: 'Research & Intelligence', bio: "Gathers context before anyone else acts on it. Curious to a fault." },
+    { id: 'turtle', name: 'TURTLE', role: 'UI/UX & Creative', bio: "Designs the experience everyone else just uses. Cares about feel over flash." },
+    { id: 'quill', name: 'QUILL', role: 'Writing & Communication', bio: "Writes the words the rest of the council gets credit for." },
+    { id: 'pikadon', name: 'PIKADON', role: 'Security & Compliance', bio: "Guard rails, audit trails, worst-case assumptions. The shield is always up." },
+  ];
+  const CLIPS = [
+    { id: 'walking', label: 'Walk' },
+    { id: 'running', label: 'Run' },
+    { id: 'action', label: 'Attack' },
+  ];
+
+  const stage = document.querySelector('.stage');
+  const loadingEl = document.getElementById('loading');
+  const hintEl = document.getElementById('hint');
+  const charNameEl = document.getElementById('charName');
+  const bioEl = document.getElementById('bio');
+  const pickerEl = document.getElementById('picker');
+  const clipPickerEl = document.getElementById('clipPicker');
+
+  const scene = new THREE.Scene();
+  scene.background = null;
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+  camera.position.set(0, 1.2, 3.2);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stage.appendChild(renderer.domElement);
+  renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(2, 4, 3);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x5fe0ff, 0.6);
+  rim.position.set(-3, 1, -2);
+  scene.add(rim);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0.9, 0);
+  controls.enableDamping = true;
+  controls.minDistance = 1;
+  controls.maxDistance = 8;
+
+  function resize(){
+    const r = stage.getBoundingClientRect();
+    renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+
+  let mixer = null, currentModel = null;
+  const clock = new THREE.Clock();
+  let activeChar = 'warrior', activeClip = 'walking';
+
+  function loadCurrent() {
+    loadingEl.hidden = false;
+    loadingEl.textContent = 'loading mesh…';
+    hintEl.hidden = true;
+    if (currentModel) { scene.remove(currentModel); currentModel = null; mixer = null; }
+
+    const path = `../characters/${activeChar}/${activeChar}-${activeClip}.glb`;
+    loader.load(path, (gltf) => {
+      const model = gltf.scene;
+      currentModel = model;
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const scale = 1.6 / Math.max(size.x, size.y, size.z);
+      model.scale.setScalar(scale);
+      model.position.sub(center.multiplyScalar(scale));
+      model.position.y += (size.y * scale) / 2;
+      scene.add(model);
+      controls.target.set(0, (size.y * scale) / 2, 0);
+
+      if (gltf.animations && gltf.animations.length) {
+        mixer = new THREE.AnimationMixer(model);
+        mixer.clipAction(gltf.animations[0]).play();
+      }
+      loadingEl.hidden = true;
+      hintEl.hidden = false;
+    }, undefined, (err) => {
+      loadingEl.textContent = 'failed to load: ' + err.message;
+    });
+  }
+
+  function render() {
+    pickerEl.innerHTML = '';
+    ROSTER.forEach((c) => {
+      const btn = document.createElement('button');
+      btn.textContent = c.name.replace('The ', '');
+      btn.className = c.id === activeChar ? 'active' : '';
+      btn.onclick = () => { activeChar = c.id; syncUI(); loadCurrent(); };
+      pickerEl.appendChild(btn);
+    });
+    clipPickerEl.innerHTML = '';
+    CLIPS.forEach((c) => {
+      const btn = document.createElement('button');
+      btn.textContent = c.label;
+      btn.className = c.id === activeClip ? 'active' : '';
+      btn.onclick = () => { activeClip = c.id; syncUI(); loadCurrent(); };
+      clipPickerEl.appendChild(btn);
+    });
+    const c = ROSTER.find((r) => r.id === activeChar);
+    charNameEl.textContent = c.name;
+    bioEl.innerHTML = `<b>${c.role}.</b> ${c.bio}`;
+  }
+  function syncUI() { render(); }
+
+  render();
+  loadCurrent();
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    if (mixer) mixer.update(clock.getDelta());
+    renderer.render(scene, camera);
+  })();
+</script>

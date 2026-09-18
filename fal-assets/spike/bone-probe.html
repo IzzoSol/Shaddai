@@ -1,0 +1,18 @@
+<title>bone probe</title>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  window.__probe = (path) => new Promise((resolve, reject) => {
+    loader.load(path, (gltf) => {
+      const bones = [];
+      gltf.scene.traverse((o) => { if (o.isBone) bones.push(o.name); });
+      resolve(bones);
+    }, undefined, (err) => reject(err.message || String(err)));
+  });
+</script>

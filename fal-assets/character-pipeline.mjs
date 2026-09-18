@@ -91,9 +91,11 @@ async function download(url, outPath) {
 }
 
 async function main() {
-  const [, , name, imagePath] = process.argv;
+  const [, , name, imagePath, actionIdsArg] = process.argv;
   if (!name || !imagePath) {
-    console.error('usage: node fal-assets/character-pipeline.mjs <name> <path-to-clean-pose-image.png>');
+    console.error('usage: node fal-assets/character-pipeline.mjs <name> <path-to-clean-pose-image.png> [action_ids]');
+    console.error('  action_ids: optional comma-separated Meshy animation-library ids, e.g. "89,97,178"');
+    console.error('  see https://docs.meshy.ai/en/api/animation-library for the full 500+ preset list.');
     console.error('the image MUST be a clean, unobstructed pose -- see the header comment in this file.');
     process.exit(1);
   }
@@ -101,11 +103,13 @@ async function main() {
     console.error(`image not found: ${imagePath}`);
     process.exit(1);
   }
+  const actionIds = actionIdsArg ? actionIdsArg.split(',').map((s) => parseInt(s.trim(), 10)) : null;
 
   const key = falKey();
   const outDir = `fal-assets/characters/${name}`;
 
   console.log(`▶ character pipeline for "${name}" -- this spends real money (~$0.50-0.60 total).`);
+  if (actionIds) console.log(`   extra animation presets requested: ${actionIds.join(', ')}`);
 
   console.log('1/2: image-to-3D (fal-ai/hunyuan3d/v2, textured_mesh:true)...');
   const meshSubmit = await submit('fal-ai/hunyuan3d/v2', {
@@ -118,7 +122,13 @@ async function main() {
   console.log(`   mesh saved: ${meshFile.abs} (${(meshFile.bytes / 1e6).toFixed(2)} MB)`);
 
   console.log('2/2: auto-rig + basic animations (fal-ai/meshy/rigging)...');
-  const rigSubmit = await submit('fal-ai/meshy/rigging', { model_url: meshUrl }, key);
+  const rigInput = { model_url: meshUrl };
+  if (actionIds) {
+    rigInput.enable_animation = true;
+    if (actionIds.length > 1) rigInput.action_ids = actionIds;
+    else rigInput.animation_action_id = actionIds[0];
+  }
+  const rigSubmit = await submit('fal-ai/meshy/rigging', rigInput, key);
   const rigResult = await pollUntilDone(rigSubmit.status_url, rigSubmit.response_url, key, 'rigging', 200000);
 
   if (rigResult.detail) {
@@ -133,6 +143,8 @@ async function main() {
   const saves = [
     ['rigged_character_glb', `${name}-rigged.glb`],
     ['rigged_character_fbx', `${name}-rigged.fbx`],
+    ['animation_glb', `${name}-action.glb`],
+    ['animation_fbx', `${name}-action.fbx`],
   ];
   for (const [key2, file] of saves) {
     if (rigResult[key2]?.url) {

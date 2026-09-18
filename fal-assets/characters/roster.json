@@ -1,0 +1,110 @@
+{
+  "collection": "SHADDAI Roster · The Lantern Order + The Seven Agents",
+  "spine": "Cinematic occult-almanac sci-fi, ancient sacred wisdom fused with future technology. Obsidian-black, luminous emerald, illuminated-manuscript gold.",
+  "note": "12 characters total: 5 Lantern Order roster (shared chibi scale, uniform emerald-glow identity) + 7 SHADDAI council agents (each keeps their own established proportions/accent color per agent, NOT forced into chibi uniformity -- NEXUS is a full-size mech, ZEROX/ORACLE/QUILL are slender human proportions, SHADDAI/TURTLE/PIKADON are chibi). 3D rig + matching 2D sprite sheet per character in fal-assets/characters/<name>/.",
+  "characters": [
+    {
+      "id": "warrior",
+      "name": "The Warrior",
+      "role": "Melee tank",
+      "silhouette": "Broad, caped, closed stance",
+      "combat_animation": "Left_Slash (melee attack)",
+      "bio": "The order's shield-line. Armor scarred by close work, cape cut short so it never catches underfoot. Doesn't chase a fight — just stands where the fight has to go through."
+    },
+    {
+      "id": "mage",
+      "name": "The Mage",
+      "role": "Ranged caster",
+      "silhouette": "Tall, thin, hooded robe",
+      "combat_animation": "Charged_Spell_Cast",
+      "bio": "Keeps the order's older knowledge alive — the kind written before anyone thought to fear it. The hood isn't modesty; it's what's left of the discipline needed to hold the glow steady."
+    },
+    {
+      "id": "explorer",
+      "name": "The Explorer",
+      "role": "Scout / traversal",
+      "silhouette": "Compact, tech-visored, backpack rig",
+      "combat_animation": "Combat_Stance",
+      "bio": "First through every door the order hasn't mapped yet. The grapple line has more hours on it than the sword ever will — most of this job is getting somewhere, not fighting once you're there."
+    },
+    {
+      "id": "engineer",
+      "name": "The Engineer",
+      "role": "Support / heavy melee",
+      "silhouette": "Stocky, broad-shouldered, hardhat visor",
+      "combat_animation": "Left_Slash (wrench swing)",
+      "bio": "Keeps the order's machinery — and the order itself — running. The wrench is a tool first, a weapon only when someone forces the point."
+    },
+    {
+      "id": "scout",
+      "name": "The Scout",
+      "role": "Ranged / archer",
+      "silhouette": "Slim, hooded, quiver",
+      "combat_animation": "Archery_Shot",
+      "bio": "Says less than anyone in the order and needs to. By the time you've noticed the scout, the shot's already been lined up for longer than you'd like."
+    },
+    {
+      "id": "shaddai",
+      "name": "SHADDAI",
+      "role": "Supreme Orchestrator",
+      "silhouette": "Chibi, crowned, winged, gold-trimmed black armor",
+      "combat_animation": "Left_Slash",
+      "accent_color": "gold",
+      "bio": "Coordinates every other agent and makes the final call. The crown and wings aren't decoration — nobody else in the council outranks this seat."
+    },
+    {
+      "id": "nexus",
+      "name": "NEXUS",
+      "role": "Technical Architect",
+      "silhouette": "Full-size heavy mech, NOT chibi",
+      "combat_animation": "Left_Slash (wrench swing)",
+      "accent_color": "yellow-green",
+      "bio": "Backend and infrastructure, built like it looks — heavy, load-bearing, no wasted motion."
+    },
+    {
+      "id": "zerox",
+      "name": "ZEROX",
+      "role": "Wealth & Revenue Engine",
+      "silhouette": "Slim adult proportions, blocky head, business suit + cape",
+      "combat_animation": "Combat_Stance",
+      "accent_color": "blue/cyan",
+      "bio": "Billing, pricing, unit economics. Always closing."
+    },
+    {
+      "id": "oracle",
+      "name": "ORACLE",
+      "role": "Research & Intelligence",
+      "silhouette": "Slender young-adult mystic, hooded robe",
+      "combat_animation": "Charged_Spell_Cast",
+      "accent_color": "violet",
+      "bio": "Gathers context before anyone else acts on it. Curious to a fault."
+    },
+    {
+      "id": "turtle",
+      "name": "TURTLE",
+      "role": "UI/UX & Creative",
+      "silhouette": "Chibi tech-ranger, goggles, vines",
+      "combat_animation": "Combat_Stance",
+      "accent_color": "emerald-green",
+      "bio": "Designs the experience everyone else just uses. Cares about feel over flash."
+    },
+    {
+      "id": "quill",
+      "name": "QUILL",
+      "role": "Writing & Communication",
+      "silhouette": "Slender young scribe, scroll on back",
+      "combat_animation": "Combat_Stance",
+      "accent_color": "teal/cyan",
+      "bio": "Writes the words the rest of the council gets credit for."
+    },
+    {
+      "id": "pikadon",
+      "name": "PIKADON",
+      "role": "Security & Compliance",
+      "silhouette": "Stocky chibi guardian, horned helm, shield on back",
+      "combat_animation": "Combat_Stance",
+      "accent_color": "red",
+      "bio": "Guard rails, audit trails, worst-case assumptions. The shield is always up."
+    }
+  ]
+}

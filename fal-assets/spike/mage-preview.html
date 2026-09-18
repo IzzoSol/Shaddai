@@ -1,0 +1,136 @@
+<title>Mage Walking (Rigged)</title>
+<style>
+  :root{
+    --bg:#f4f5f3; --panel:#ffffff; --ink:#12181a; --sub:#5b6a68; --line:#dde3e0; --accent:#0a8a5c;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624; --accent:#00ff9c; }
+  }
+  :root[data-theme="dark"]{ --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624; --accent:#00ff9c; }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;padding-inline:20px;padding-block:32px 48px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 6px;}
+  h1{font-size:clamp(24px,4vw,34px);margin:0 0 6px;text-wrap:balance;font-weight:700;}
+  .sub{color:var(--sub);font-size:14px;margin:0 0 24px;max-width:62ch;line-height:1.5;}
+  .stage{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    aspect-ratio:1/1;max-width:520px;margin:0 auto;position:relative;
+  }
+  #hint{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:11px;color:var(--sub);pointer-events:none;}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--sub);}
+  .verdict{
+    margin-top:24px;padding:16px 18px;border-radius:12px;border:1px solid var(--line);
+    background:color-mix(in srgb, var(--accent) 6%, var(--panel));font-size:13px;line-height:1.6;color:var(--ink);
+  }
+  .verdict b{color:var(--accent);}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">SHADDAI · 3D character spike</p>
+  <h1>The mage, walking</h1>
+  <p class="sub">Second roster character, same pipeline as the warrior: text2img chibi T-pose (arms out, nothing overlapping the robe) → Hunyuan3D textured mesh → Meshy auto-rig with baked walk animation. Succeeded on the first try. Drag to rotate, scroll to zoom.</p>
+
+  <div class="stage">
+    <div id="loading">loading mesh…</div>
+    <div id="hint" hidden>drag to rotate · scroll to zoom</div>
+  </div>
+
+  <div class="verdict">
+    <b>Roster consistency check:</b> same black/gold palette and glowing green visor-slit motif as the warrior, but taller/thinner build with a robe instead of a cape and a chest gem instead of a shoulder gem — reads as the same universe, different combat role, at a glance.
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  const stage = document.querySelector('.stage');
+  const loadingEl = document.getElementById('loading');
+  const hintEl = document.getElementById('hint');
+
+  const scene = new THREE.Scene();
+  scene.background = null;
+
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+  camera.position.set(0, 1.2, 3.2);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stage.appendChild(renderer.domElement);
+  renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(2, 4, 3);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x5fe0ff, 0.6);
+  rim.position.set(-3, 1, -2);
+  scene.add(rim);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0.9, 0);
+  controls.enableDamping = true;
+  controls.minDistance = 1;
+  controls.maxDistance = 8;
+
+  function resize(){
+    const r = stage.getBoundingClientRect();
+    renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+
+  let mixer = null;
+  const clock = new THREE.Clock();
+
+  function onLoaded(gltf) {
+    const model = gltf.scene;
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const scale = 1.6 / Math.max(size.x, size.y, size.z);
+    model.scale.setScalar(scale);
+    model.position.sub(center.multiplyScalar(scale));
+    model.position.y += (size.y * scale) / 2;
+    scene.add(model);
+    controls.target.set(0, (size.y * scale) / 2, 0);
+
+    if (gltf.animations && gltf.animations.length) {
+      mixer = new THREE.AnimationMixer(model);
+      const action = mixer.clipAction(gltf.animations[0]);
+      action.play();
+    }
+
+    loadingEl.hidden = true;
+    hintEl.hidden = false;
+  }
+
+  loader.load('../characters/mage/mage-walking.glb', onLoaded, undefined, (err) => {
+    loadingEl.textContent = 'failed to load mesh: ' + err.message;
+  });
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    if (mixer) mixer.update(clock.getDelta());
+    renderer.render(scene, camera);
+  })();
+</script>

@@ -1,0 +1,431 @@
+<title>SHADDAI City Center (3D Realm)</title>
+<style>
+  html,body{margin:0;overflow:hidden;background:#06080b;font-family:'Space Grotesk',system-ui,sans-serif;}
+  #stage{position:fixed;inset:0;}
+  #hud{position:fixed;left:16px;top:16px;color:#e7f3ee;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;
+       background:rgba(6,8,11,.6);border:1px solid #1c2624;border-radius:10px;padding:10px 14px;line-height:1.6;pointer-events:none;}
+  #hud b{color:#00ff9c;}
+  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#7fa79b;font-family:'JetBrains Mono',monospace;font-size:13px;}
+  #fade{position:fixed;inset:0;background:#06080b;opacity:0;pointer-events:none;transition:opacity .45s ease;z-index:50;}
+  #fade.show{opacity:1;}
+  /* mobile touch joystick */
+  #joy{position:fixed;left:24px;bottom:24px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(0,255,156,.35);
+       background:rgba(14,21,19,.5);display:none;touch-action:none;}
+  #joyStick{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(0,255,156,.5);}
+  @media (pointer:coarse){ #joy{display:block;} }
+  .gateLabel{
+    position:fixed;transform:translate(-50%,-100%);pointer-events:none;font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#e8c45c;background:rgba(6,8,11,.65);
+    border:1px solid rgba(232,196,92,.4);border-radius:8px;padding:5px 10px;white-space:nowrap;
+  }
+  .gateLabel small{display:block;color:#7fa79b;font-size:9px;text-transform:none;letter-spacing:0;margin-top:2px;}
+</style>
+<div id="stage"></div>
+<div id="loading">loading city center…</div>
+<div id="gateLabels"></div>
+<div id="fade"></div>
+<div id="hud">
+  <b id="realmLabel">SHADDAI CITY CENTER</b><br>
+  WASD / arrows to walk · drag to look · scroll to zoom · Tab to swap character<br>
+  <span id="charLabel">warrior</span>
+</div>
+<div id="joy"><div id="joyStick"></div></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+  // ---- palette (locked SHADDAI spine: obsidian / emerald / gold / cyan) ----
+  const OBSIDIAN = 0x06080b, EMERALD = 0x00ff9c, GOLD = 0xe8c45c, CYAN = 0x5fe0ff;
+
+  const stage = document.getElementById('stage');
+  const loadingEl = document.getElementById('loading');
+  const charLabel = document.getElementById('charLabel');
+  const realmLabel = document.getElementById('realmLabel');
+  const fadeEl = document.getElementById('fade');
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(OBSIDIAN);
+  scene.fog = new THREE.Fog(OBSIDIAN, 8, 26);
+
+  const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.05, 100);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  stage.appendChild(renderer.domElement);
+
+  // ---- lighting ----
+  scene.add(new THREE.AmbientLight(0x1a2420, 0.8));
+  const moon = new THREE.DirectionalLight(CYAN, 0.5);
+  moon.position.set(-6, 10, -4);
+  scene.add(moon);
+
+  const plazaGroup = new THREE.Group();
+  const districtGroup = new THREE.Group();
+  districtGroup.visible = false;
+  scene.add(plazaGroup, districtGroup);
+
+  const braziers = [];
+  function addBrazier(parent, x, z, color) {
+    const light = new THREE.PointLight(color, 3.5, 9, 2);
+    light.position.set(x, 1.6, z);
+    parent.add(light);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 1.6, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 }));
+    pole.position.set(x, 0.8, z);
+    parent.add(pole);
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), new THREE.MeshBasicMaterial({ color }));
+    flame.position.set(x, 1.65, z);
+    parent.add(flame);
+    braziers.push(flame);
+  }
+
+  // ==== PLAZA (city center) ====================================
+  const PLAZA_R = 14;
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(PLAZA_R, 64),
+    new THREE.MeshStandardMaterial({ color: 0x0c1210, roughness: 0.85, metalness: 0.1 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  plazaGroup.add(ground);
+
+  for (let r = 3; r <= 12; r += 3) {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(r - 0.04, r, 64),
+      new THREE.MeshBasicMaterial({ color: EMERALD, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.01;
+    plazaGroup.add(ring);
+  }
+  for (let i = 0; i < 7; i++) {
+    const angle = (i / 7) * Math.PI * 2;
+    const spoke = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.08, PLAZA_R - 1),
+      new THREE.MeshBasicMaterial({ color: GOLD, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+    );
+    spoke.rotation.x = -Math.PI / 2;
+    spoke.position.set(Math.sin(angle) * (PLAZA_R - 1) / 2, 0.015, Math.cos(angle) * (PLAZA_R - 1) / 2);
+    spoke.rotation.z = -angle;
+    plazaGroup.add(spoke);
+    addBrazier(plazaGroup, Math.sin(angle) * (PLAZA_R - 2), Math.cos(angle) * (PLAZA_R - 2), GOLD);
+  }
+
+  const dais = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.2, 2.5, 0.4, 7),
+    new THREE.MeshStandardMaterial({ color: 0x111815, roughness: 0.5, metalness: 0.4 })
+  );
+  dais.position.y = 0.2;
+  dais.castShadow = dais.receiveShadow = true;
+  plazaGroup.add(dais);
+  const daisRim = new THREE.Mesh(
+    new THREE.TorusGeometry(2.3, 0.05, 8, 7),
+    new THREE.MeshStandardMaterial({ color: GOLD, emissive: GOLD, emissiveIntensity: 0.4, roughness: 0.3, metalness: 0.8 })
+  );
+  daisRim.rotation.x = Math.PI / 2;
+  daisRim.position.y = 0.42;
+  plazaGroup.add(daisRim);
+
+  const wallGeo = new THREE.TorusGeometry(PLAZA_R + 0.3, 0.5, 8, 48, Math.PI * 2);
+  const wall = new THREE.Mesh(wallGeo, new THREE.MeshStandardMaterial({ color: 0x0a0f0d, roughness: 0.9 }));
+  wall.rotation.x = Math.PI / 2;
+  wall.position.y = 0.5;
+  plazaGroup.add(wall);
+
+  // ---- gates: NOT invented fantasy zone names -- these are the dashboard's
+  // actual current tabs (public/index.html: forgeView, hallView,
+  // tradeSignalsView, officeView). Walking into one triggers enterRealm().
+  const GATES = [
+    { id: 'forge', name: 'The Forge', sub: 'characters · cosmetics', angle: 0, color: GOLD },
+    { id: 'hall', name: 'The Hall', sub: 'casino · arcade', angle: Math.PI / 2, color: EMERALD },
+    { id: 'markets', name: 'The Markets', sub: 'signals · trading floor', angle: Math.PI, color: CYAN },
+    { id: 'office', name: 'The Office', sub: '2D realm', angle: -Math.PI / 2, color: GOLD },
+  ];
+  const gateLabelsEl = document.getElementById('gateLabels');
+  const gateMeta = GATES.map((g) => {
+    const x = Math.sin(g.angle) * (PLAZA_R + 0.2);
+    const z = Math.cos(g.angle) * (PLAZA_R + 0.2);
+    const postGeo = new THREE.CylinderGeometry(0.18, 0.22, 3.2, 8);
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x111815, roughness: 0.4, metalness: 0.6, emissive: g.color, emissiveIntensity: 0.15 });
+    [-1, 1].forEach((side) => {
+      const post = new THREE.Mesh(postGeo, postMat);
+      const perpX = Math.cos(g.angle) * 1.1 * side, perpZ = -Math.sin(g.angle) * 1.1 * side;
+      post.position.set(x + perpX, 1.6, z + perpZ);
+      plazaGroup.add(post);
+    });
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 0.3), new THREE.MeshStandardMaterial({ color: g.color, emissive: g.color, emissiveIntensity: 0.5, metalness: 0.7, roughness: 0.3 }));
+    lintel.position.set(x, 3.2, z);
+    lintel.rotation.y = g.angle;
+    plazaGroup.add(lintel);
+
+    const div = document.createElement('div');
+    div.className = 'gateLabel';
+    div.innerHTML = `${g.name}<small>${g.sub}</small>`;
+    gateLabelsEl.appendChild(div);
+    return { ...g, div, x, z, labelPos: new THREE.Vector3(x, 3.7, z) };
+  });
+
+  // ==== DISTRICT (placeholder realm behind a gate) ================
+  // Real per-realm content (unique buildings, layouts) is future work --
+  // this proves the actual hard part (transit + cutscene fade + return
+  // trip) with a lightweight placeholder space per gate.
+  const RETURN_POS = new THREE.Vector3(0, 0, 6);
+  let districtReturnDiv = null;
+  function buildDistrict(gate) {
+    districtGroup.clear();
+    const R = 10;
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(R, 48),
+      new THREE.MeshStandardMaterial({ color: 0x0a0d0c, roughness: 0.8 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    districtGroup.add(floor);
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(R - 0.1, R, 48),
+      new THREE.MeshBasicMaterial({ color: gate.color, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.01;
+    districtGroup.add(ring);
+    const monument = new THREE.Mesh(
+      new THREE.OctahedronGeometry(1.4, 0),
+      new THREE.MeshStandardMaterial({ color: gate.color, emissive: gate.color, emissiveIntensity: 0.6, metalness: 0.6, roughness: 0.2 })
+    );
+    monument.position.set(0, 1.6, -3);
+    districtGroup.add(monument);
+    addBrazier(districtGroup, -3, -1, gate.color);
+    addBrazier(districtGroup, 3, -1, gate.color);
+
+    // return gate back to the plaza
+    const postGeo = new THREE.CylinderGeometry(0.18, 0.22, 3.2, 8);
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x111815, emissive: GOLD, emissiveIntensity: 0.2 });
+    [-1, 1].forEach((s) => {
+      const p = new THREE.Mesh(postGeo, postMat);
+      p.position.set(RETURN_POS.x + 1.1 * s, 1.6, RETURN_POS.z);
+      districtGroup.add(p);
+    });
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 0.3), new THREE.MeshStandardMaterial({ color: GOLD, emissive: GOLD, emissiveIntensity: 0.5 }));
+    lintel.position.set(RETURN_POS.x, 3.2, RETURN_POS.z);
+    districtGroup.add(lintel);
+
+    if (!districtReturnDiv) {
+      districtReturnDiv = document.createElement('div');
+      districtReturnDiv.className = 'gateLabel';
+      gateLabelsEl.appendChild(districtReturnDiv);
+    }
+    districtReturnDiv.innerHTML = 'Return to City Center<small>city center</small>';
+  }
+
+  let currentRealm = 'plaza'; // 'plaza' | gate.id
+  let transitioning = false;
+  function fadeSwap(doSwap) {
+    if (transitioning) return;
+    transitioning = true;
+    fadeEl.classList.add('show');
+    setTimeout(() => {
+      doSwap();
+      fadeEl.classList.remove('show');
+      setTimeout(() => { transitioning = false; }, 460);
+    }, 460);
+  }
+  function enterRealm(gate) {
+    fadeSwap(() => {
+      buildDistrict(gate);
+      plazaGroup.visible = false;
+      districtGroup.visible = true;
+      currentRealm = gate.id;
+      realmLabel.textContent = gate.name.toUpperCase() + ' (placeholder realm)';
+      scene.fog.color.set(gate.color);
+      scene.background.set(0x05080a);
+      player.position.set(0, 0, -6);
+      player.rotation.y = Math.PI;
+    });
+  }
+  function returnToPlaza() {
+    fadeSwap(() => {
+      districtGroup.visible = false;
+      plazaGroup.visible = true;
+      currentRealm = 'plaza';
+      realmLabel.textContent = 'SHADDAI CITY CENTER';
+      scene.fog.color.set(OBSIDIAN);
+      scene.background.set(OBSIDIAN);
+      const gate = gateMeta.find((g) => g.id === lastGateId);
+      if (gate) { player.position.set(gate.x * 0.85, 0, gate.z * 0.85); }
+    });
+  }
+  let lastGateId = null;
+
+  // ==== character (WASD-controlled, reuses the roster's walking rig) ====
+  const ROSTER = ['warrior', 'mage', 'explorer', 'engineer', 'scout', 'shaddai', 'nexus', 'zerox', 'oracle', 'turtle', 'quill', 'pikadon'];
+  let charIndex = 0;
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+
+  let player = null, mixer = null, walkAction = null;
+  const clock = new THREE.Clock();
+  const keys = {};
+
+  function loadPlayer(name) {
+    charLabel.textContent = name;
+    loadingEl.style.display = 'flex';
+    const path = `../characters/${name}/${name}-walking.glb`;
+    loader.load(path, (gltf) => {
+      const prevPos = player ? player.position.clone() : new THREE.Vector3(0, 0, 5);
+      if (player) scene.remove(player);
+      player = gltf.scene;
+      const box = new THREE.Box3().setFromObject(player);
+      const size = box.getSize(new THREE.Vector3());
+      const scale = 1.7 / Math.max(size.x, size.y, size.z);
+      player.scale.setScalar(scale);
+      player.traverse((o) => { if (o.isMesh) { o.castShadow = true; } });
+      scene.add(player);
+      player.position.copy(prevPos);
+
+      if (gltf.animations && gltf.animations.length) {
+        mixer = new THREE.AnimationMixer(player);
+        walkAction = mixer.clipAction(gltf.animations[0]);
+        walkAction.play();
+        walkAction.paused = true;
+      }
+      loadingEl.style.display = 'none';
+    }, undefined, () => { loadingEl.textContent = `${name} not ready yet…`; });
+  }
+  loadPlayer(ROSTER[charIndex]);
+
+  addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key === 'Tab') { e.preventDefault(); charIndex = (charIndex + 1) % ROSTER.length; loadPlayer(ROSTER[charIndex]); }
+  });
+  addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+  const joy = document.getElementById('joy'), joyStick = document.getElementById('joyStick');
+  let joyVec = { x: 0, y: 0 }, joyActive = false, joyOrigin = { x: 0, y: 0 };
+  joy.addEventListener('touchstart', (e) => { joyActive = true; const r = joy.getBoundingClientRect(); joyOrigin = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, { passive: true });
+  joy.addEventListener('touchmove', (e) => {
+    if (!joyActive) return;
+    const t = e.touches[0];
+    let dx = t.clientX - joyOrigin.x, dy = t.clientY - joyOrigin.y;
+    const max = 40, len = Math.hypot(dx, dy);
+    if (len > max) { dx = dx / len * max; dy = dy / len * max; }
+    joyStick.style.transform = `translate(${dx}px, ${dy}px)`;
+    joyVec = { x: dx / max, y: dy / max };
+  }, { passive: true });
+  joy.addEventListener('touchend', () => { joyActive = false; joyVec = { x: 0, y: 0 }; joyStick.style.transform = ''; }, { passive: true });
+
+  let camYaw = 0, camPitch = 0.45, camDist = 6;
+  let dragging = false, lastX = 0, lastY = 0;
+  renderer.domElement.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+  addEventListener('pointerup', () => dragging = false);
+  addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    camYaw -= (e.clientX - lastX) * 0.006;
+    camPitch = Math.max(0.15, Math.min(1.2, camPitch - (e.clientY - lastY) * 0.006));
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  renderer.domElement.addEventListener('wheel', (e) => { camDist = Math.max(2.5, Math.min(14, camDist + e.deltaY * 0.01)); }, { passive: true });
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  const MOVE_SPEED = 2.6;
+  (function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    braziers.forEach((f, i) => { f.position.y = 1.65 + Math.sin(performance.now() / 300 + i) * 0.03; });
+
+    if (player && !transitioning) {
+      let mx = 0, mz = 0;
+      if (keys['w'] || keys['arrowup']) mz -= 1;
+      if (keys['s'] || keys['arrowdown']) mz += 1;
+      if (keys['a'] || keys['arrowleft']) mx -= 1;
+      if (keys['d'] || keys['arrowright']) mx += 1;
+      mx += joyVec.x; mz += joyVec.y;
+      const len = Math.hypot(mx, mz);
+      let moving = false;
+      if (len > 0.05) {
+        moving = true;
+        mx /= len; mz /= len;
+        const cos = Math.cos(camYaw), sin = Math.sin(camYaw);
+        const wx = mx * cos - mz * sin, wz = mx * sin + mz * cos;
+        player.position.x += wx * MOVE_SPEED * dt;
+        player.position.z += wz * MOVE_SPEED * dt;
+        const targetAngle = Math.atan2(wx, wz);
+        let diff = targetAngle - player.rotation.y;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        player.rotation.y += diff * Math.min(1, dt * 10);
+      }
+      if (mixer) {
+        if (moving) { walkAction.paused = false; mixer.update(dt); }
+        else walkAction.paused = true;
+      }
+
+      if (currentRealm === 'plaza') {
+        const r = Math.hypot(player.position.x, player.position.z);
+        if (r > PLAZA_R - 0.6) {
+          const k = (PLAZA_R - 0.6) / r;
+          player.position.x *= k; player.position.z *= k;
+        }
+        for (const g of gateMeta) {
+          if (Math.hypot(player.position.x - g.x, player.position.z - g.z) < 1.6) {
+            lastGateId = g.id;
+            enterRealm(g);
+            break;
+          }
+        }
+      } else {
+        const r = Math.hypot(player.position.x, player.position.z);
+        if (r > 9.4) { const k = 9.4 / r; player.position.x *= k; player.position.z *= k; }
+        if (player.position.distanceTo(RETURN_POS) < 1.6) returnToPlaza();
+      }
+
+      const camX = player.position.x + Math.sin(camYaw) * camDist * Math.cos(camPitch);
+      const camZ = player.position.z + Math.cos(camYaw) * camDist * Math.cos(camPitch);
+      const camY = player.position.y + 1.2 + camDist * Math.sin(camPitch);
+      camera.position.set(camX, camY, camZ);
+      camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
+    }
+
+    const tmp = new THREE.Vector3();
+    if (currentRealm === 'plaza') {
+      gateMeta.forEach(({ div, labelPos }) => {
+        tmp.copy(labelPos).project(camera);
+        if (tmp.z > 1) { div.style.display = 'none'; return; }
+        div.style.display = 'block';
+        div.style.left = ((tmp.x * 0.5 + 0.5) * innerWidth) + 'px';
+        div.style.top = ((-tmp.y * 0.5 + 0.5) * innerHeight) + 'px';
+      });
+      if (districtReturnDiv) districtReturnDiv.style.display = 'none';
+    } else {
+      gateMeta.forEach(({ div }) => div.style.display = 'none');
+      if (districtReturnDiv) {
+        tmp.set(RETURN_POS.x, 3.7, RETURN_POS.z).project(camera);
+        if (tmp.z > 1) { districtReturnDiv.style.display = 'none'; }
+        else {
+          districtReturnDiv.style.display = 'block';
+          districtReturnDiv.style.left = ((tmp.x * 0.5 + 0.5) * innerWidth) + 'px';
+          districtReturnDiv.style.top = ((-tmp.y * 0.5 + 0.5) * innerHeight) + 'px';
+        }
+      }
+    }
+
+    renderer.render(scene, camera);
+  })();
+
+  // dev/test hook -- not part of the game, just lets automated checks
+  // drive the scene without simulating real key-holds.
+  window.__debug = { get player() { return player; }, enterRealm, returnToPlaza, gateMeta, get currentRealm() { return currentRealm; } };
+</script>
