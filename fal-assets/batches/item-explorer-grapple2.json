@@ -1,0 +1,5 @@
+[
+  { "id": "item-explorer-grapple-ref2", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a single grappling hook tool, a compact metal claw with three curved hook prongs splayed outward like a boat anchor, isolated object, full clean view, a coiled length of rope trailing from a ring at its base, no hand or character holding it. Matte dark obsidian-black metal prongs with gold banding at the base ring, a thin glowing emerald-green tension-indicator light set into the base. Cinematic occult-almanac quality render, single even studio lighting, plain flat white background so the silhouette reads clearly, full grapple hook and coiled rope visible, no text, no logos, no hand, no watermark, not a weapon, not a blade, not an axe",
+    "out": "fal-assets/spike/item-explorer-grapple-ref2.png" }
+]
