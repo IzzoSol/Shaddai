@@ -1,0 +1,5 @@
+[
+  { "id": "city-beach-edge-ref", "type": "text2img", "register": "raw", "size": "square_hd",
+    "body": "2D anime illustration, NOT a photograph -- flat cel-shaded digital artwork, thick bold black outlines, flat 2-3 tone hard-shadow shading. A dramatic aerial establishing shot of a futuristic neon-streetwear city built along the edge of tall dark cliffs, the city's towers and neon signage clustered right up to the cliff edge in hot magenta #ff2e88 and lime #c6ff3d glowing signage, with a winding road/staircase carved into the cliff face leading down to a bright sea-glass teal #4ec9d0 and sun-bleached sand #f4c8a0 beach town far below at the waterline, small coastal buildings and a pier visible on the beach, ocean stretching to the horizon. TURTLE'S NOTE: this is the physical transition point between the City hub and the Beach realm -- the cliff IS the boundary, not an abstract gate, so the beach town below should read as a real continuation of the world, not a separate diorama. Bright daylight, clean flat colors, no text, no logos, no watermark, no people",
+    "out": "fal-assets/spike/city-beach-edge-ref.png" }
+]

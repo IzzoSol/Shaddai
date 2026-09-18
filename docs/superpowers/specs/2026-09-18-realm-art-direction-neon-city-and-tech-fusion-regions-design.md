@@ -276,6 +276,57 @@ This is not aesthetic preference, it's a design constraint every future batch mu
   `fal-assets/characters/` for the 3D side? If one exists and the other doesn't, build the missing
   half to match — don't start a third, disconnected version.
 
+## 6.4 Gate hubs need real walk-in interiors, not just an exterior gate
+
+Owner-supplied reference: a Mars Hyperloop terminal — multi-level glass-domed
+transit hub, lounges with real furniture and plants, arrivals/departures
+board, people actually using the space, a sleek train docked at the
+platform. Explicit direction: "hubs and different things as well for
+transit not just a basic building but a building people can walk in,
+upgrade and get potions and health packs and all they need."
+
+**What this means concretely:** each realm gate (Forge/Hall/Markets/Office,
+plus the mount/vehicle transit points implied by §6) should have a real
+interior a player walks into and does something in — not a doorway that
+teleports. Minimum functional content per hub, translating the reference's
+"lounge + shop + transit platform" structure into SHADDAI's own vocabulary:
+- A vendor/shop function (the reference's cafe/lounge seating → a
+  potion/health-pack/upgrade counter, matching whichever realm it's in —
+  a farm-tech hub sells grown potions from a stall, a City hub sells them
+  from a sleek kiosk, same function different dressing).
+- An upgrade/crafting station (ties directly to the Forge district's
+  already-built furnace+anvils content in `city-center.html` — that's
+  the PROOF this pattern works, just needs to exist in every hub, not
+  only Forge).
+- A transit element if the hub is also a mount/vehicle departure point
+  (a docked vehicle/mount, a platform, a departures board) — this is
+  where the mecha-tractors/hover-cars/hoverboards from §6 actually load
+  in and out of a realm, not just standing around as static props.
+
+This is currently UNBUILT — `city-center.html`'s districts (owned by a
+concurrent session as of 2026-09-18) have the Forge furnace/anvil pattern
+as the one working example; Hall/Markets/Office are still the generic
+placeholder platform from earlier in this spec's §4. Read that file fresh
+before extending it, same caution as [[shaddai-5-character-roster-20260917]]
+memory already flags.
+
+## 6.5 City↔Beach are physically connected, not a teleport gate
+
+Owner-supplied reference (a real cliff-edge megacity photo) plus explicit
+direction: the City hub sits atop tall cliffs, with a winding road/staircase
+down the cliff face leading directly to the Beach realm's coastal town at
+the waterline. This is the model for realm transitions generally where it
+makes geographic sense — **prefer a physical, visible connection over an
+abstract gate** when two realms could plausibly be adjacent (City-on-cliffs
+above Beach-at-sea-level is the clearest case; Desert-to-Volcano, both
+already tied together narratively via the Grand Forge/ore supply chain in
+§4.5/§4.7, is the next most natural candidate for the same treatment).
+Concept art: `fal-assets/spike/city-beach-edge-ref.png` (neon-streetwear
+towers + magenta signage on the cliff top, cel-shaded, the beach realm's
+teal/sand palette visible below — confirms both realms' palettes read
+correctly in the same frame together, a real test of §4.10's 2D/3D and
+cross-realm consistency requirement).
+
 ## 6. Status: mounts + vehicles shipped (2026-09-18, same day)
 
 All 6 non-darkforest realms now have a static 3D mesh mount AND a static 3D mesh vehicle,
