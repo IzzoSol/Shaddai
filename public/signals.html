@@ -355,7 +355,11 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     text-transform:uppercase; text-decoration:none; margin-right:8px; }
   #toTerm:hover{ background:var(--gold); color:#140f02; }
 }
-</style>
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.7);}50%{opacity:.55;box-shadow:0 0 0 6px rgba(52,211,153,0);}}
+.pill .d{animation:pulse 1.8s ease-in-out infinite;}
+.cell .zo{position:absolute;z-index:2;right:6px;bottom:6px;font-size:10px;font-weight:700;letter-spacing:.4px;
+color:#fff;background:rgba(2,6,3,.72);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 6px;
+cursor:pointer;text-shadow:0 1px 2px #000;}</style>
 <script src="/sw-heal.js"></script>
 </head>
 <body>
@@ -823,7 +827,7 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
         (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy">' : '') +
         '<span class="s">' + esc((c.symbol || c.name || '?').slice(0, 8)) + '</span>' +
         '<span class="m">' + big + '</span>' +
-        (i && i.socials && i.socials.twitter ? '<span class="so">𝕏</span>' : '') + '</button>';
+        (i && i.socials && i.socials.twitter ? '<span class="so">𝕏</span>' : '') + '<span class="zo" data-dex="' + esc(c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '">DEX \u2197</span></button>';
     }).join('') : emptyMsg();
   }
 
@@ -1207,6 +1211,68 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   loadMarkets();
   loadMarketWeather();
   loadTicker();
+
+  /* ── Thesis Engine: hover a call for the reasoning, click for the DEX link ── */
+  function thesis(c) {
+    var side = (c.signal === 'buy' || c.big === 'buy') ? 'BUY' : (c.signal === 'sell' ? 'SELL' : (c.__top || c.__market) ? 'LIVE' : 'WATCH');
+    var tryPct = c.edge != null ? Math.round(c.edge * 100) : null;
+    var pts = [];
+    if (c.riskScore != null) pts.push('risk ' + c.riskScore + (c.riskScore <= 35 ? ' low' : c.riskScore <= 60 ? ' mod' : ' high'));
+    if (c.liq) pts.push('liq $' + Math.round(c.liq).toLocaleString());
+    if (c.vol24) pts.push('vol ' + money(c.vol24 || 0));
+    if (c.holders != null) pts.push((c.holders || 0) + ' hold');
+    if (c.entryFdv) pts.push('FDV $' + Math.round(c.entryFdv).toLocaleString());
+    if (c.liqRatio) pts.push('LQ ' + c.liqRatio);
+    if (c.boost) pts.push('boost ' + c.boost);
+    if (c.chg24 != null) pts.push('24h ' + (c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24) + '%');
+    if (c.viabilityScore != null) pts.push('live ' + c.viabilityScore);
+    if (c.rugScore != null) pts.push('rug ' + c.rugScore);
+    var why = (tryPct != null ? 'edge ' + (tryPct >= 0 ? '+' : '') + tryPct + '%' : 'signal scored') + ' · ' + (pts.length ? pts.join(' · ') : 'monitoring live data');
+    var d = c.pairUrl || (c.mint && c.mint.indexOf('Sol') === -1 ? 'https://dexscreener.com/solana/' + c.mint : null);
+    return '<b>' + side + ' · ' + esc(c.symbol || c.name || '?') + '</b><br>' + esc(why) +
+      (d ? '<br><a href="' + esc(d) + '" target="_blank" rel="noopener" style="color:#6ee7a8">DexScreener ↗</a>' : '');
+  }
+  var thf = document.createElement('div');
+  thf.id = 'thf';
+  thf.innerHTML = '&nbsp;';
+  thf.style.cssText = 'position:fixed;z-index:99;display:none;max-width:300px;padding:8px 10px;border:1px solid rgba(255,255,255,.18);background:rgba(4,10,6,.96);color:#e9f5ec;font:12px/1.5 var(--f-mono);border-radius:8px;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,.55);';
+  document.body.appendChild(thf);
+  function thShow(c, e) {
+    thf.innerHTML = thesis(c);
+    var w = 312, h = thf.offsetHeight || 96;
+    thf.style.left = Math.min(Math.max(6, e.clientX + 14), innerWidth - w) + 'px';
+    thf.style.top = Math.min(Math.max(6, e.clientY + 18), innerHeight - h) + 'px';
+    thf.style.display = 'block';
+  }
+  function thHide() { thf.style.display = 'none'; }
+  function thCell(e) {
+    var t = e.target;
+    while (t && t !== document && !(t.getAttribute && t.hasAttribute('data-mint'))) t = t.parentNode;
+    if (!t || !t.getAttribute) return null;
+    var mint = t.getAttribute('data-mint');
+    if (!mint) return null;
+    var all = MK.feed.concat(TOP, ALL);
+    for (var i = 0; i < all.length; i++) if (all[i].mint === mint) return all[i];
+    return null;
+  }
+  document.addEventListener('mouseover', function (e) {
+    var c = thCell(e);
+    if (c) thShow(c, e); else thHide();
+  });
+  document.addEventListener('mouseout', function () { thHide(); });
+
+  document.addEventListener('click', function (e) {
+    var d = e.target;
+    while (d && d !== document && !(d.getAttribute && d.hasAttribute('data-dex'))) d = d.parentNode;
+    if (d && d.getAttribute) {
+      var u = d.getAttribute('data-dex');
+      if (u && /^https?:\/\//i.test(u)) { e.preventDefault(); e.stopPropagation(); window.open(u, '_blank'); return; }
+    }
+    var c = thCell(e);
+    if (c) thShow(c, e);
+  });
+
+
 })();
 </script>
 </body>
