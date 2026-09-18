@@ -92,7 +92,28 @@ flat shading, not soft gradients):
    just be retried (same image, no changes) before concluding the
    reference art needs fixing. The timeout was raised to 480000ms in
    `character-pipeline.mjs` after repeated false failures.
-7. **`*.glb`/`*.fbx` are gitignored repo-wide.** A normal `git add` on
+7. **Thin bladed objects (swords, blades, arrows) reconstruct badly from a
+   flat side-profile reference.** Hunyuan3D can't infer real thickness from
+   a straight-on profile shot of something like a sword — it comes out as a
+   near-invisible sliver even though the render clearly showed a proper
+   blade. Generate weapon/blade references at a slight 3/4 angle instead,
+   showing the flat face turned enough to give the reconstruction real
+   volume cues. Bulkier props (staff, wrench, grapple-hook) don't have this
+   problem — it's specifically thin-profile objects.
+8. **Bone-attached props need a scale/offset compensation for the bone's
+   own inherited world scale**, which can be tiny (e.g. ~0.0177) purely
+   from the skeleton's bind-pose hierarchy, unrelated to the character's
+   own visible size. Divide desired scale/offset by the target bone's
+   `getWorldScale()` before applying, or a prop parented directly to
+   `RightHand` etc. will render at an invisible fraction of the intended
+   size. See `fal-assets/spike/equip-viewer.html`.
+9. **The un-animated bind pose on these rigs is the original T-pose
+   reference art's pose** (arms out), not a relaxed standing pose — a
+   viewer that doesn't play an animation clip will show the character in
+   full scarecrow T-pose, arms included, which can put a bone like
+   RightHand far outside a normally-framed camera. Frame accordingly, or
+   scrub the animation to a mid-cycle time instead of showing frame 0.
+10. **`*.glb`/`*.fbx` are gitignored repo-wide.** A normal `git add` on
    `fal-assets/characters/` silently commits only the reference PNGs and
    sprite PNGs, not the actual paid 3D assets. Use
    `git add -f fal-assets/characters/**/*.glb fal-assets/characters/**/*.fbx`
@@ -102,7 +123,7 @@ flat shading, not soft gradients):
    can silently fail to stage anything, including the parts that did match
    -- always verify with `git show --stat HEAD | grep -c '\.glb'` after
    committing binaries, don't trust the "create mode" list alone.
-8. **A background job reporting `[exited with code 0]` doesn't mean the
+11. **A background job reporting `[exited with code 0]` doesn't mean the
    pipeline actually succeeded.** A transient `fetch failed` mid-poll can
    kill the script after `PIPELINE FAILED: ...` prints, but the outer
    background-task wrapper still reports exit 0. Always check the actual

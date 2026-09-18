@@ -1,0 +1,180 @@
+<title>SHADDAI Equip Viewer</title>
+<style>
+  :root{ --bg:#f4f5f3; --panel:#ffffff; --ink:#12181a; --sub:#5b6a68; --line:#dde3e0; --accent:#0a8a5c; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624; --accent:#00ff9c; } }
+  :root[data-theme="dark"]{ --bg:#070a0a; --panel:#0e1513; --ink:#e7f3ee; --sub:#7fa79b; --line:#1c2624; --accent:#00ff9c; }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;padding-inline:20px;padding-block:32px 48px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 6px;}
+  h1{font-size:clamp(24px,4vw,34px);margin:0 0 6px;font-weight:700;}
+  .sub{color:var(--sub);font-size:14px;margin:0 0 20px;max-width:62ch;line-height:1.5;}
+  .row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;}
+  .col label{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--sub);margin-bottom:6px;}
+  select{font-family:'Space Grotesk',sans-serif;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;aspect-ratio:1/1;max-width:560px;margin:0 auto;position:relative;}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--sub);}
+  .controls{margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sub);display:flex;gap:16px;flex-wrap:wrap;}
+  .controls label{display:flex;align-items:center;gap:6px;}
+  input[type=range]{width:120px;}
+</style>
+<div class="wrap">
+  <p class="eyebrow">SHADDAI · Equip Test</p>
+  <h1>Weapon Attachment</h1>
+  <p class="sub">Parents the weapon mesh to the character's RightHand bone. Adjust offset/rotation/scale live to dial in the grip.</p>
+
+  <div class="row">
+    <div class="col">
+      <label>Character</label>
+      <select id="charSel">
+        <option value="warrior">Warrior</option>
+        <option value="mage">Mage</option>
+        <option value="scout">Scout</option>
+      </select>
+    </div>
+    <div class="col">
+      <label>Weapon</label>
+      <select id="weaponSel">
+        <option value="item-warrior-sword">Sword</option>
+        <option value="item-mage-staff">Staff</option>
+        <option value="item-scout-bow">Bow</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stage"><div id="loading">loading…</div></div>
+
+  <div class="controls">
+    <label>Scale <input type="range" id="scaleR" min="0.05" max="1" step="0.01" value="0.3"></label>
+    <label>Rot X <input type="range" id="rotX" min="-3.14" max="3.14" step="0.01" value="0"></label>
+    <label>Rot Y <input type="range" id="rotY" min="-3.14" max="3.14" step="0.01" value="0"></label>
+    <label>Rot Z <input type="range" id="rotZ" min="-3.14" max="3.14" step="0.01" value="0"></label>
+    <label>Off X <input type="range" id="offX" min="-0.3" max="0.3" step="0.005" value="0"></label>
+    <label>Off Y <input type="range" id="offY" min="-0.3" max="0.3" step="0.005" value="0"></label>
+    <label>Off Z <input type="range" id="offZ" min="-0.3" max="0.3" step="0.005" value="0"></label>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  const stage = document.querySelector('.stage');
+  const loadingEl = document.getElementById('loading');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 100);
+  camera.position.set(1.0, 1.4, 4.2);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stage.appendChild(renderer.domElement);
+  renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(2, 4, 3); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x5fe0ff, 0.6); rim.position.set(-3, 1, -2); scene.add(rim);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 1.0, 0); controls.enableDamping = true;
+  function resize(){ const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height); camera.aspect = r.width/r.height; camera.updateProjectionMatrix(); }
+  addEventListener('resize', resize); resize();
+
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  let charModel = null, weaponMesh = null, weaponWrapper = null, rightHand = null, mixer = null;
+  const clock = new THREE.Clock();
+
+  function params() {
+    return {
+      scale: +document.getElementById('scaleR').value,
+      rot: [+document.getElementById('rotX').value, +document.getElementById('rotY').value, +document.getElementById('rotZ').value],
+      off: [+document.getElementById('offX').value, +document.getElementById('offY').value, +document.getElementById('offZ').value],
+    };
+  }
+  function applyParams() {
+    if (!weaponWrapper) return;
+    const p = params();
+    // the RightHand bone carries its own (often tiny) inherited scale from
+    // the skeleton's bind-pose hierarchy -- compensate so the scale/offset
+    // sliders mean roughly-world-space units regardless of that.
+    let compensate = 1;
+    if (rightHand) {
+      const hs = new THREE.Vector3();
+      rightHand.getWorldScale(hs);
+      compensate = 1 / hs.x;
+    }
+    weaponWrapper.scale.setScalar(p.scale * compensate);
+    weaponWrapper.rotation.set(...p.rot);
+    weaponWrapper.position.set(p.off[0] * compensate, p.off[1] * compensate, p.off[2] * compensate);
+  }
+  ['scaleR','rotX','rotY','rotZ','offX','offY','offZ'].forEach((id) => document.getElementById(id).addEventListener('input', applyParams));
+
+  function loadAll() {
+    loadingEl.hidden = false; loadingEl.textContent = 'loading…';
+    if (charModel) { scene.remove(charModel); charModel = null; rightHand = null; mixer = null; }
+    weaponMesh = null; weaponWrapper = null;
+
+    const charId = document.getElementById('charSel').value;
+    const weaponId = document.getElementById('weaponSel').value;
+
+    loader.load(`../characters/${charId}/${charId}-walking.glb`, (gltf) => {
+      charModel = gltf.scene;
+      const box = new THREE.Box3().setFromObject(charModel);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const scale = 1.7 / Math.max(size.x, size.y, size.z);
+      charModel.scale.setScalar(scale);
+      charModel.position.sub(center.multiplyScalar(scale));
+      charModel.position.y += (size.y * scale) / 2;
+      scene.add(charModel);
+      charModel.traverse((o) => { if (o.isBone && o.name === 'RightHand') rightHand = o; });
+      // deliberately NOT animating here -- this viewer is for fitting the
+      // weapon to the hand, and the baked walk clips have real root-motion
+      // drift (see CHARACTER_WORKFLOW.md) that walks the character out of
+      // frame within a couple seconds. Static bind pose only.
+
+      loader.load(`../characters/${weaponId}/${weaponId}-mesh.glb`, (wgltf) => {
+        weaponMesh = wgltf.scene;
+        // normalize the raw weapon mesh to a 1-unit bounding size so the
+        // scale slider means the same thing regardless of source mesh size
+        const wbox = new THREE.Box3().setFromObject(weaponMesh);
+        const wsize = wbox.getSize(new THREE.Vector3());
+        const wcenter = wbox.getCenter(new THREE.Vector3());
+        const norm = 1 / Math.max(wsize.x, wsize.y, wsize.z);
+        weaponMesh.scale.setScalar(norm);
+        weaponMesh.position.sub(wcenter.multiplyScalar(norm));
+
+        weaponWrapper = new THREE.Group();
+        weaponWrapper.add(weaponMesh);
+        if (rightHand) rightHand.add(weaponWrapper);
+        else charModel.add(weaponWrapper);
+        applyParams();
+        loadingEl.hidden = true;
+        window.__debug = () => {
+          const wp = new THREE.Vector3(); weaponWrapper.getWorldPosition(wp);
+          const ws = new THREE.Vector3(); weaponWrapper.getWorldScale(ws);
+          const hp = new THREE.Vector3(); (rightHand || charModel).getWorldPosition(hp);
+          const hs = new THREE.Vector3(); (rightHand || charModel).getWorldScale(hs);
+          const wb = new THREE.Box3().setFromObject(weaponMesh);
+          let meshCount = 0, matInfo = [];
+          weaponMesh.traverse((o) => { if (o.isMesh) { meshCount++; matInfo.push({ visible: o.visible, hasGeom: !!o.geometry, vertCount: o.geometry ? o.geometry.attributes.position.count : 0 }); } });
+          return { rightHandFound: !!rightHand, weaponWorldPos: wp.toArray(), weaponWorldScale: ws.toArray(), handWorldPos: hp.toArray(), handWorldScale: hs.toArray(), weaponBoxMin: wb.min.toArray(), weaponBoxMax: wb.max.toArray(), meshCount, matInfo, cameraPos: camera.position.toArray() };
+        };
+      }, undefined, (err) => { loadingEl.textContent = 'weapon load failed: ' + err.message; });
+    }, undefined, (err) => { loadingEl.textContent = 'character load failed: ' + err.message; });
+  }
+
+  document.getElementById('charSel').addEventListener('change', loadAll);
+  document.getElementById('weaponSel').addEventListener('change', loadAll);
+  loadAll();
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    if (mixer) mixer.update(clock.getDelta());
+    renderer.render(scene, camera);
+  })();
+</script>

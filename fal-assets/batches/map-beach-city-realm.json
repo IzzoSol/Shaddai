@@ -1,0 +1,8 @@
+[
+  { "id": "map-beach-realm-topdown", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a top-down isometric map layout of a coastal-tech beach town, bird's-eye view, a lighthouse on a rocky point, a pier extending into the water, a fish market, a cannery with a loading crane, a row of cottages and an inn along a sandy shoreline road, an air-pad landing platform. Sea-glass teal #4ec9d0 building roofs, sun-bleached sand #f4c8a0 walls, cyan #5fe0ff glowing accent lights on the air-pad and lighthouse beam. TURTLE'S NOTE: a real walkable coastal settlement, sand meeting water at a believable shoreline, boats docked at the pier. Cinematic occult-almanac quality render, bright coastal daylight, clean isometric game-map framing, no text, no logos, no watermark, no people",
+    "out": "fal-assets/spike/map-beach-realm-topdown.png" },
+  { "id": "map-city-realm-topdown", "type": "text2img", "register": "raw", "size": "square_hd",
+    "body": "2D anime illustration, NOT a photograph -- flat cel-shaded digital artwork, thick bold black outlines. A top-down isometric map layout of a neon-streetwear downtown city block, bird's-eye view, a bank, a city hall, a mall, an office tower, a central plaza with a fountain, a central transit station, streets with visible road markings. Matte dark asphalt-grey streets, hot magenta #ff2e88 and lime #c6ff3d neon signage on building fronts, cyan #3de5ff glowing street-level accent lighting. TURTLE'S NOTE: a real walkable city block, believable street grid, buildings scaled realistically against each other. Bright flat cel-shaded lighting, clean isometric game-map framing, no text, no logos, no watermark, no people",
+    "out": "fal-assets/spike/map-city-realm-topdown.png" }
+]

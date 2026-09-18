@@ -1,0 +1,5 @@
+[
+  { "id": "map-farm-realm-topdown", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a top-down isometric map layout of a farm-tech village, bird's-eye view, a cluster of buildings including a large barn, a farmhouse, a bakery, a grocer, a chapel, and cottages arranged around a central dirt road, surrounded by tilled crop fields in neat rows and a fenced ox pen. Matte wheat-gold #e8c45c building roofs with barn-red #a13c2e wood siding, a single glowing emerald-green #00ff9c gauge-light visible on the barn's silo (a small tech intervention, not a full takeover), dirt roads, green crop rows, a wooden fence. TURTLE'S NOTE: this is a real settlement layout, not a diorama -- roads should connect logically, buildings should have believable spacing for a walkable village, matching the tone of a lived-in farm town with SHADDAI's tech quietly integrated. Cinematic occult-almanac quality render, warm late-afternoon lighting, clean isometric game-map framing, no text, no logos, no watermark, no people",
+    "out": "fal-assets/spike/map-farm-realm-topdown.png" }
+]

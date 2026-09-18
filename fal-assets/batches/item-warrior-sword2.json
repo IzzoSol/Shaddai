@@ -1,0 +1,5 @@
+[
+  { "id": "item-warrior-sword-ref2", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a single fantasy longsword prop, isolated, a slight 3/4 angle view turned enough to clearly show the blade's flat face AND its edge thickness at the same time (not a flat straight-on profile), blade pointing up, no hand or character holding it. Matte dark obsidian-black blade with visible real thickness and a thin glowing emerald-green fuller groove running its length, a gold crossguard and gold-wrapped grip, a small emerald pommel gem. TURTLE'S NOTE: the order's standard-issue blade -- functional, no filigree. Cinematic occult-almanac quality render, single even studio lighting, plain flat white background so the silhouette and thickness both read clearly, full sword visible tip to pommel, no text, no logos, no hand, no watermark",
+    "out": "fal-assets/spike/item-warrior-sword-ref2.png" }
+]
