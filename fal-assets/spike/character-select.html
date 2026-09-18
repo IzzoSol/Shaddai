@@ -1,0 +1,109 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Choose Your Character</title>
+<style>
+  :root{
+    --obsidian:#06080b; --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff;
+    --panel:#0d1218; --line:#1c2a2a; --ink:#e8f3ee; --sub:#7fa79b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--obsidian);color:var(--ink);font-family:'Chakra Petch',system-ui,sans-serif;}
+  body{display:flex;flex-direction:column;align-items:center;padding:32px 16px 48px;overflow-x:hidden;}
+  h1{font-size:clamp(20px,4vw,30px);letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px;color:var(--gold);text-align:center;}
+  .sub{color:var(--sub);font-size:13px;margin:0 0 32px;text-align:center;max-width:52ch;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;max-width:960px;width:100%;}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;text-align:center;transition:border-color .2s,transform .15s;
+    position:relative;overflow:hidden;
+  }
+  .card:hover, .card.sel{border-color:var(--emerald);transform:translateY(-3px);}
+  .card:hover::before, .card.sel::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(0,255,156,.10),transparent 70%);pointer-events:none;}
+  .portrait{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .portrait img{max-width:80%;max-height:80%;image-rendering:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));}
+  .name{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:14px;color:var(--ink);}
+  .role{font-size:11px;color:var(--cyan);margin-top:2px;letter-spacing:.03em;}
+  .bio{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.5;min-height:66px;}
+  .enterBar{margin-top:32px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  #enterBtn{
+    font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:12px 32px;border-radius:10px;border:1px solid var(--emerald);background:rgba(0,255,156,.08);
+    color:var(--emerald);cursor:pointer;transition:background .2s;
+  }
+  #enterBtn:disabled{opacity:.35;cursor:not-allowed;}
+  #enterBtn:not(:disabled):hover{background:rgba(0,255,156,.18);}
+  #pickHint{font-size:11px;color:var(--sub);}
+</style>
+</head><body>
+
+<h1>Choose Your Character</h1>
+<p class="sub">The Lantern Order. Each fights differently — pick who you want to be in SHADDAI City.</p>
+
+<div class="grid" id="grid"></div>
+
+<div class="enterBar">
+  <div id="pickHint">Tap a character to select</div>
+  <button id="enterBtn" disabled>Enter the City</button>
+</div>
+
+<script>
+const ROSTER = [
+  { id: 'warrior', name: 'The Warrior', role: 'Melee tank', bio: "The order's shield-line. Armor scarred by close work, cape cut short so it never catches underfoot. Doesn't chase a fight — just stands where the fight has to go through." },
+  { id: 'mage', name: 'The Mage', role: 'Ranged caster', bio: "Keeps the order's older knowledge alive — the kind written before anyone thought to fear it. The hood isn't modesty; it's what's left of the discipline needed to hold the glow steady." },
+  { id: 'explorer', name: 'The Explorer', role: 'Scout / traversal', bio: "First through every door the order hasn't mapped yet. The grapple line has more hours on it than the sword ever will." },
+  { id: 'engineer', name: 'The Engineer', role: 'Support / heavy melee', bio: "Keeps the order's machinery — and the order itself — running. The wrench is a tool first, a weapon only when someone forces the point." },
+  { id: 'scout', name: 'The Scout', role: 'Ranged / archer', bio: "Says less than anyone in the order and needs to. By the time you've noticed the scout, the shot's already been lined up for longer than you'd like." }
+];
+
+const STORAGE_KEY = 'shaddai_selected_character';
+const FRAME_COUNT = 8;
+const FRAME_MS = 140;
+
+let picked = null;
+try { picked = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+
+const grid = document.getElementById('grid');
+const enterBtn = document.getElementById('enterBtn');
+const pickHint = document.getElementById('pickHint');
+
+ROSTER.forEach((c) => {
+  const card = document.createElement('div');
+  card.className = 'card' + (c.id === picked ? ' sel' : '');
+  card.dataset.id = c.id;
+  card.innerHTML = `
+    <div class="portrait"><img id="img-${c.id}" src="../characters/${c.id}/sprites/${c.id}-walking-00.png" alt="${c.name}"></div>
+    <div class="name">${c.name}</div>
+    <div class="role">${c.role}</div>
+    <div class="bio">${c.bio}</div>
+  `;
+  card.addEventListener('click', () => selectCharacter(c.id));
+  grid.appendChild(card);
+
+  // gentle idle animation using the already-captured walking sprite frames --
+  // free, no new art, just makes the selection screen feel alive
+  let frame = 0;
+  const img = card.querySelector('img');
+  setInterval(() => {
+    frame = (frame + 1) % FRAME_COUNT;
+    img.src = `../characters/${c.id}/sprites/${c.id}-walking-0${frame}.png`;
+  }, FRAME_MS + Math.random() * 40); // slight desync per card so they don't all step in lockstep
+});
+
+function selectCharacter(id) {
+  picked = id;
+  try { localStorage.setItem(STORAGE_KEY, id); } catch (e) {}
+  document.querySelectorAll('.card').forEach((el) => el.classList.toggle('sel', el.dataset.id === id));
+  enterBtn.disabled = false;
+  const c = ROSTER.find((r) => r.id === id);
+  pickHint.textContent = `Playing as ${c.name}`;
+}
+
+if (picked) selectCharacter(picked);
+
+enterBtn.addEventListener('click', () => {
+  if (!picked) return;
+  location.href = 'city-center.html';
+});
+</script>
+</body></html>

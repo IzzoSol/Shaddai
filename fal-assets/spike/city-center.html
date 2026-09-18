@@ -268,7 +268,15 @@
 
   // ==== character (WASD-controlled, reuses the roster's walking rig) ====
   const ROSTER = ['warrior', 'mage', 'explorer', 'engineer', 'scout', 'shaddai', 'nexus', 'zerox', 'oracle', 'turtle', 'quill', 'pikadon'];
+  // Honor the pick made on character-select.html; Tab still free-cycles the
+  // full roster (agents included) as a debug/preview tool, it just no longer
+  // overrides a real player's choice on load.
   let charIndex = 0;
+  try {
+    const picked = localStorage.getItem('shaddai_selected_character');
+    const i = ROSTER.indexOf(picked);
+    if (i >= 0) charIndex = i;
+  } catch (e) {}
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
 
