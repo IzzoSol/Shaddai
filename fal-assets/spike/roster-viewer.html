@@ -32,7 +32,7 @@
     aspect-ratio:1/1;max-width:560px;margin:0 auto;position:relative;
   }
   #hint{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:11px;color:var(--sub);pointer-events:none;}
-  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--sub);}
+  #loading:not([hidden]){position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--sub);}
   .bio{margin-top:20px;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb, var(--accent) 6%, var(--panel));font-size:13px;line-height:1.6;color:var(--ink);}
   .bio b{color:var(--accent);}
 </style>

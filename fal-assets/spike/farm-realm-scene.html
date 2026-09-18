@@ -1,0 +1,249 @@
+<title>SHADDAI Farm Realm</title>
+<style>
+  html,body{margin:0;overflow:hidden;background:#8fae7a;font-family:'Space Grotesk',system-ui,sans-serif;}
+  #stage{position:fixed;inset:0;}
+  #hud{position:fixed;left:16px;top:16px;color:#1a2410;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;
+       background:rgba(244,245,240,.75);border:1px solid #cfd8bd;border-radius:10px;padding:10px 14px;line-height:1.6;pointer-events:none;}
+  #hud b{color:#a13c2e;}
+  #loading:not([hidden]){position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#4a5c38;font-family:'JetBrains Mono',monospace;font-size:13px;background:#8fae7a;}
+  #joy{position:fixed;left:24px;bottom:24px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(161,60,46,.35);
+       background:rgba(244,245,240,.5);display:none;touch-action:none;}
+  #joyStick{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(161,60,46,.5);}
+  @media (pointer:coarse){ #joy{display:block;} }
+</style>
+<div id="stage"></div>
+<div id="loading">loading the farm realm…</div>
+<div id="hud">
+  <b>THE FARM REALM</b><br>
+  Meadow · farm-tech<br>
+  WASD to walk · drag to look · scroll to zoom
+</div>
+<div id="joy"><div id="joyStick"></div></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+  const GOLD = 0xe8c45c, BARNRED = 0xa13c2e, EMERALD = 0x00ff9c, GREEN = 0x7a9c6a;
+
+  const stage = document.getElementById('stage');
+  const loadingEl = document.getElementById('loading');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xcfe0e8);
+  scene.fog = new THREE.Fog(0xcfe0e8, 20, 60);
+
+  const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.05, 200);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  stage.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xfff4d6, 0.9));
+  const sun = new THREE.DirectionalLight(0xffe8b0, 1.6);
+  sun.position.set(10, 18, 6);
+  sun.castShadow = true;
+  scene.add(sun);
+
+  // ---- ground: rolling field with tilled crop rows ----
+  const FIELD_R = 40;
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(FIELD_R, 48),
+    new THREE.MeshStandardMaterial({ color: GREEN, roughness: 0.9 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // tilled crop rows -- simple alternating strips
+  for (let i = -6; i <= 6; i++) {
+    const row = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 0.06, 14),
+      new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0x4a6e3a : 0x5c8248, roughness: 1 })
+    );
+    row.position.set(-18 + i * 2, 0.03, -14);
+    row.receiveShadow = true;
+    scene.add(row);
+  }
+
+  // ---- the barn (simple primitive building matching the map concept) ----
+  function buildBarn(x, z) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(6, 4, 5),
+      new THREE.MeshStandardMaterial({ color: BARNRED, roughness: 0.8 })
+    );
+    body.position.y = 2;
+    body.castShadow = body.receiveShadow = true;
+    g.add(body);
+    const roof = new THREE.Mesh(
+      new THREE.ConeGeometry(4.6, 2.4, 4),
+      new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.7 })
+    );
+    roof.rotation.y = Math.PI / 4;
+    roof.position.y = 5.2;
+    roof.castShadow = true;
+    g.add(roof);
+    // silo alongside
+    const silo = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.1, 1.1, 6, 16),
+      new THREE.MeshStandardMaterial({ color: GOLD, metalness: 0.3, roughness: 0.5 })
+    );
+    silo.position.set(4.2, 3, 0);
+    silo.castShadow = true;
+    g.add(silo);
+    const siloTop = new THREE.Mesh(new THREE.ConeGeometry(1.2, 1, 16), new THREE.MeshStandardMaterial({ color: 0x8a6a2a }));
+    siloTop.position.set(4.2, 6.5, 0);
+    g.add(siloTop);
+    const gauge = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.4, 16), new THREE.MeshBasicMaterial({ color: EMERALD, side: THREE.DoubleSide }));
+    gauge.position.set(4.2, 4, 1.11);
+    g.add(gauge);
+    const gaugeLight = new THREE.PointLight(EMERALD, 2, 6);
+    gaugeLight.position.set(4.2, 4, 1.5);
+    g.add(gaugeLight);
+    g.position.set(x, 0, z);
+    scene.add(g);
+  }
+  buildBarn(0, -6);
+
+  // fence ring around the field
+  const fenceMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2a, roughness: 0.9 });
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.1, 6), fenceMat);
+    post.position.set(Math.sin(a) * (FIELD_R - 1), 0.55, Math.cos(a) * (FIELD_R - 1));
+    scene.add(post);
+  }
+
+  // ---- load the ox mount (basic tier) and tractor as set-dressing ----
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+
+  function placeMesh(path, x, z, scale, rotY) {
+    loader.load(path, (gltf) => {
+      const m = gltf.scene;
+      const box = new THREE.Box3().setFromObject(m);
+      const size = box.getSize(new THREE.Vector3());
+      const s = scale / Math.max(size.x, size.y, size.z);
+      m.scale.setScalar(s);
+      const box2 = new THREE.Box3().setFromObject(m);
+      m.position.x -= (box2.min.x + box2.max.x) / 2;
+      m.position.z -= (box2.min.z + box2.max.z) / 2;
+      m.position.y -= box2.min.y;
+      m.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+      m.position.x += x; m.position.z += z;
+      m.rotation.y = rotY || 0;
+      scene.add(m);
+    }, undefined, (err) => console.error('failed to load', path, err.message));
+  }
+  placeMesh('../characters/mount-farm-ox2/mount-farm-ox2-mesh.glb', -9, 4, 2.2, Math.PI * 0.15);
+  placeMesh('../characters/vehicle-farm-tractor/vehicle-farm-tractor-mesh.glb', 9, 6, 2.0, -Math.PI * 0.3);
+  placeMesh('../characters/mount-farm-ox-premium/mount-farm-ox-premium-mesh.glb', 14, -10, 2.8, Math.PI * 0.6);
+
+  // ---- player character (warrior, walking) ----
+  let player = null, mixer = null, walkAction = null;
+  const clock = new THREE.Clock();
+  const keys = {};
+  loader.load('../characters/warrior/warrior-walking.glb', (gltf) => {
+    player = gltf.scene;
+    const box = new THREE.Box3().setFromObject(player);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = 1.7 / Math.max(size.x, size.y, size.z);
+    player.scale.setScalar(scale);
+    player.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    scene.add(player);
+    player.position.set(0, 0, 8);
+    if (gltf.animations && gltf.animations.length) {
+      mixer = new THREE.AnimationMixer(player);
+      walkAction = mixer.clipAction(gltf.animations[0]);
+      walkAction.play();
+      walkAction.paused = true;
+    }
+    loadingEl.hidden = true;
+  }, undefined, (err) => { loadingEl.textContent = 'failed to load player: ' + err.message; });
+
+  addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+  addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+  const joy = document.getElementById('joy'), joyStick = document.getElementById('joyStick');
+  let joyVec = { x: 0, y: 0 }, joyActive = false, joyOrigin = { x: 0, y: 0 };
+  joy.addEventListener('touchstart', (e) => { joyActive = true; const r = joy.getBoundingClientRect(); joyOrigin = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, { passive: true });
+  joy.addEventListener('touchmove', (e) => {
+    if (!joyActive) return;
+    const t = e.touches[0];
+    let dx = t.clientX - joyOrigin.x, dy = t.clientY - joyOrigin.y;
+    const max = 40, len = Math.hypot(dx, dy);
+    if (len > max) { dx = dx / len * max; dy = dy / len * max; }
+    joyStick.style.transform = `translate(${dx}px, ${dy}px)`;
+    joyVec = { x: dx / max, y: dy / max };
+  }, { passive: true });
+  joy.addEventListener('touchend', () => { joyActive = false; joyVec = { x: 0, y: 0 }; joyStick.style.transform = ''; }, { passive: true });
+
+  let camYaw = 0.3, camPitch = 0.5, camDist = 9;
+  let dragging = false, lastX = 0, lastY = 0;
+  renderer.domElement.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+  addEventListener('pointerup', () => dragging = false);
+  addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    camYaw -= (e.clientX - lastX) * 0.006;
+    camPitch = Math.max(0.15, Math.min(1.2, camPitch - (e.clientY - lastY) * 0.006));
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  renderer.domElement.addEventListener('wheel', (e) => { camDist = Math.max(3, Math.min(20, camDist + e.deltaY * 0.01)); }, { passive: true });
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  const MOVE_SPEED = 3;
+  (function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+
+    if (player) {
+      let mx = 0, mz = 0;
+      if (keys['w'] || keys['arrowup']) mz -= 1;
+      if (keys['s'] || keys['arrowdown']) mz += 1;
+      if (keys['a'] || keys['arrowleft']) mx -= 1;
+      if (keys['d'] || keys['arrowright']) mx += 1;
+      mx += joyVec.x; mz += joyVec.y;
+      const len = Math.hypot(mx, mz);
+      let moving = false;
+      if (len > 0.05) {
+        moving = true;
+        mx /= len; mz /= len;
+        const cos = Math.cos(camYaw), sin = Math.sin(camYaw);
+        const wx = mx * cos - mz * sin, wz = mx * sin + mz * cos;
+        player.position.x += wx * MOVE_SPEED * dt;
+        player.position.z += wz * MOVE_SPEED * dt;
+        const targetAngle = Math.atan2(wx, wz);
+        let diff = targetAngle - player.rotation.y;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        player.rotation.y += diff * Math.min(1, dt * 10);
+      }
+      if (mixer) { if (moving) { walkAction.paused = false; mixer.update(dt); } else walkAction.paused = true; }
+
+      const r = Math.hypot(player.position.x, player.position.z);
+      if (r > FIELD_R - 1.5) { const k = (FIELD_R - 1.5) / r; player.position.x *= k; player.position.z *= k; }
+
+      const camX = player.position.x + Math.sin(camYaw) * camDist * Math.cos(camPitch);
+      const camZ = player.position.z + Math.cos(camYaw) * camDist * Math.cos(camPitch);
+      const camY = player.position.y + 1.4 + camDist * Math.sin(camPitch);
+      camera.position.set(camX, camY, camZ);
+      camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
+    }
+    renderer.render(scene, camera);
+  })();
+</script>
