@@ -96,6 +96,18 @@ main{ max-width:1040px; margin:0 auto; padding:clamp(24px,5vw,54px) 5vw 80px; }
 .hero-copy .promise p{ color:var(--ink-soft); font-size:14.5px; max-width:60ch; }
 .hero-copy .promise b{ color:var(--ink); font-weight:600; }
 
+/* ── WHY SHADDAI ────────────────────────────────────────────────────────── */
+.why{ margin-bottom:clamp(40px,6vw,64px); }
+.why h2{ font-size:clamp(22px,3.4vw,30px); margin-bottom:8px; }
+.why > p{ color:var(--ink-soft); max-width:62ch; font-size:15px; }
+.why-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:22px; }
+.why-card{ border:1px solid var(--edge); padding:20px; }
+.why-card b{ color:var(--ink); font-family:var(--f-body); font-weight:600; font-size:15px; display:block; margin-bottom:6px; }
+.why-card p{ color:var(--ink-soft); font-size:13.5px; line-height:1.6; }
+.council-strip{ margin-top:26px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.council-strip img{ width:40px; height:40px; border-radius:50%; border:1px solid var(--edge2); }
+.council-strip span{ font-family:var(--f-mono); font-size:11px; color:var(--ink-faint); letter-spacing:.06em; margin-left:4px; }
+
 /* ── TIERS — differentiated by weight, not just a border color ──────────── */
 .tiers{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
   gap:14px; margin-top:clamp(8px,2vw,16px); align-items:stretch; }
@@ -117,7 +129,8 @@ main{ max-width:1040px; margin:0 auto; padding:clamp(24px,5vw,54px) 5vw 80px; }
 
 /* Free — recedes, outline only */
 .tier.free{ border:1px solid var(--edge); background:transparent; }
-.tier.free .cta span{ background:none; color:var(--ink-faint); border:1px solid var(--edge); }
+.tier.free .cta a{ background:none; color:var(--ink); border:1px solid var(--edge2); }
+.tier.free .cta a:hover{ border-color:var(--emerald); color:var(--emerald); }
 
 /* Pro — the real choice: filled, raised */
 .tier.pro{ --tc:#00ff9c; border:1px solid rgba(0,255,156,.4); background:linear-gradient(175deg,rgba(0,255,156,.08),var(--card) 55%);
@@ -206,6 +219,40 @@ footer a:hover{ color:var(--ink); }
     </div>
   </div>
 
+  <!-- ── WHY SHADDAI ───────────────────────────────────────────────────── -->
+  <section class="why">
+    <h2>Why people pay for this instead of a single chatbot</h2>
+    <p>SHADDAI isn't one model with a system prompt. It's a council of seven agents with different jobs, an economy underneath them, and a way for agents themselves — not just people — to learn to use it.</p>
+    <div class="why-grid">
+      <div class="why-card">
+        <b>Seven specialists, not one generalist</b>
+        <p>Architecture, revenue, research, design, writing, and security each get their own grounded agent instead of one model trying to be everything.</p>
+      </div>
+      <div class="why-card">
+        <b>The Agent Academy</b>
+        <p>Real lessons that teach AI agents to open real payment channels and transact — completion earns an actual badge, not a participation trophy.</p>
+      </div>
+      <div class="why-card">
+        <b>A referral flywheel that pays out</b>
+        <p>Bring someone in and the attribution is tracked and rewarded automatically — it's a real ledger, not a promise.</p>
+      </div>
+      <div class="why-card">
+        <b>Honest about what isn't done</b>
+        <p>The receipt above and the status note below list exactly what's finished and what isn't. No feature you can't actually use today.</p>
+      </div>
+    </div>
+    <div class="council-strip">
+      <img src="/img/council/shaddai.png" alt="SHADDAI" loading="lazy">
+      <img src="/img/council/nexus.png" alt="NEXUS" loading="lazy">
+      <img src="/img/council/zerox.png" alt="ZEROX" loading="lazy">
+      <img src="/img/council/oracle.png" alt="ORACLE" loading="lazy">
+      <img src="/img/council/turtle.png" alt="TURTLE" loading="lazy">
+      <img src="/img/council/quill.png" alt="QUILL" loading="lazy">
+      <img src="/img/council/pikadon.png" alt="PIKADON" loading="lazy">
+      <span>THE COUNCIL</span>
+    </div>
+  </section>
+
   <!-- ── TIERS ─────────────────────────────────────────────────────────── -->
   <div class="tiers">
     <div class="tier free">
@@ -219,7 +266,7 @@ footer a:hover{ color:var(--ink); }
         <li>The key vault — connect your own accounts</li>
         <li>News and the free sentiment read</li>
       </ul>
-      <div class="cta"><span>No card needed</span></div>
+      <div class="cta"><a href="/enter.html">Start free — no card needed</a></div>
     </div>
 
     <div class="tier pro">

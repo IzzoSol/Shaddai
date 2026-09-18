@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SHADDAI · Welcome</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --shell:#06080b; --card:#0e141a; --ink:#e9efe9; --ink-soft:#93a49b; --ink-faint:#5c6b64;
+  --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.32);
+  --emerald:#00ff9c; --gold:#e8c45c; --violet:#b07cff;
+  --f-display:'Cinzel',serif; --f-body:'Fraunces',Georgia,serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{ background:var(--shell); color:var(--ink); font-family:var(--f-body); font-weight:300;
+  font-size:17px; line-height:1.6; min-height:100vh; padding-bottom:env(safe-area-inset-bottom); }
+h1,h2{ font-family:var(--f-display); font-weight:900; margin:0; line-height:1.1; }
+p{ margin:0; }
+main{ max-width:640px; margin:0 auto; padding:clamp(28px,6vw,64px) 5vw 80px; }
+
+.status-line{ font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:18px; }
+.status-line.ok{ color:var(--emerald); }
+.status-line.bad{ color:#ff6b6b; }
+
+.hero h1{ font-size:clamp(30px,5vw,44px); margin-bottom:14px; }
+.hero p{ color:var(--ink-soft); font-size:16px; max-width:54ch; }
+
+.step{ margin-top:32px; border:1px solid var(--edge); background:var(--card); padding:24px; }
+.step .n{ font-family:var(--f-mono); font-size:11px; color:var(--emerald); letter-spacing:.1em; }
+.step h2{ font-size:19px; margin:8px 0 8px; }
+.step p{ color:var(--ink-soft); font-size:14.5px; }
+.step .go{ display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 22px;
+  margin-top:16px; background:var(--emerald); color:#04120c; border-radius:2px; text-decoration:none;
+  font-family:var(--f-body); font-size:14px; font-weight:600; }
+.step .go.secondary{ background:none; border:1px solid var(--edge2); color:var(--ink); }
+.step .go.violet{ background:var(--violet); color:#0a0710; }
+
+.founder-note{ margin-top:32px; border-left:2px solid var(--violet); padding-left:16px; }
+.founder-note p{ color:var(--ink-soft); font-size:14px; }
+.founder-note b{ color:var(--ink); }
+
+footer{ margin-top:48px; font-family:var(--f-mono); font-size:11px; color:var(--ink-faint); }
+footer a{ color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<main>
+  <div id="statusLine" class="status-line">Confirming your payment…</div>
+  <div class="hero">
+    <h1 id="heroTitle">Welcome to SHADDAI.</h1>
+    <p id="heroSub">Give us a second to confirm the payment, then let's get the council working for you.</p>
+  </div>
+
+  <div class="step">
+    <div class="n">STEP 1</div>
+    <h2>Bring your own keys (optional, but free chat needs it)</h2>
+    <p>Talking to the seven agents is never metered — connect a free Groq/Gemini/OpenRouter key in the vault and it's unlimited from day one.</p>
+    <a class="go" href="/index.html?view=apis">Open the key vault</a>
+  </div>
+
+  <div class="step">
+    <div class="n">STEP 2</div>
+    <h2>Forge your first agent</h2>
+    <p>Every plan includes the Forge. Give an agent a job and it's grounded and ready in under a minute.</p>
+    <a class="go" href="/index.html?view=forge">Go to the Forge</a>
+  </div>
+
+  <div class="step">
+    <div class="n">STEP 3</div>
+    <h2>See what you unlocked</h2>
+    <p id="tierUnlocks">Your plan's features are live on your dashboard now — Pro Signals, workflow chains, and everything else in your tier.</p>
+    <a class="go secondary" href="/pricing.html">Review your plan</a>
+  </div>
+
+  <div class="step">
+    <div class="n">STEP 4</div>
+    <h2>Join the circle</h2>
+    <p>Signals, build updates, and a direct line to what ships next.</p>
+    <a class="go violet" href="https://t.me/ShaddaiCircle" target="_blank" rel="noopener">Join on Telegram</a>
+  </div>
+
+  <div class="founder-note" id="founderNote" hidden>
+    <p><b>You're one of twenty.</b> Your founder mark is being recorded now — it'll show on your profile shortly. First claim on land when plots open, and a direct line on what gets built next.</p>
+  </div>
+
+  <footer>
+    Something not working? <a href="mailto:cloudzncrownz@gmail.com">get in touch</a> — session ref shown below helps us find it fast.<br>
+    <span id="sessionRef"></span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var sessionId = params.get('session_id');
+  var item = params.get('item') || params.get('tier');
+  var statusEl = document.getElementById('statusLine');
+  var subEl = document.getElementById('heroSub');
+  var refEl = document.getElementById('sessionRef');
+
+  function setStatus(cls, text) { statusEl.className = 'status-line ' + cls; statusEl.textContent = text; }
+
+  if (item === 'founder') document.getElementById('founderNote').hidden = false;
+  if (sessionId) refEl.textContent = 'ref: ' + sessionId.slice(0, 24) + '…';
+
+  if (!sessionId) {
+    // Hosted Payment Link redirects that haven't been updated with
+    // {CHECKOUT_SESSION_ID} yet land here with no ref to verify — still
+    // show the welcome flow, just without a confirmed-payment badge.
+    setStatus('', 'Welcome — payment confirmation unavailable for this link');
+    return;
+  }
+
+  fetch('/api/stripe/verify?session_id=' + encodeURIComponent(sessionId))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.paid === true) {
+        setStatus('ok', 'Payment confirmed' + (d.item ? ' — ' + d.item : ''));
+        if (d.item === 'founder') document.getElementById('founderNote').hidden = false;
+      } else if (d && d.paid === false) {
+        setStatus('bad', 'Payment not completed — nothing was charged');
+        subEl.textContent = "Looks like checkout didn't finish. No charge was made.";
+      } else {
+        setStatus('', "Confirming — this can take a moment");
+      }
+    })
+    .catch(function () { setStatus('', 'Could not confirm automatically — your dashboard will show the real status'); });
+})();
+</script>
+</body>
+</html>

@@ -141,8 +141,8 @@ router.post('/create-checkout', express.json(), async (req, res) => {
           payment_method_types: ['card'],
           line_items: [{ price: priceId, quantity: 1 }],
           mode: isCredit ? 'payment' : 'subscription',
-          success_url: (req.body.successUrl) || `${req.protocol}://${req.get('host')}/?billing=success`,
-          cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/?billing=cancel`,
+          success_url: (req.body.successUrl) || `${req.protocol}://${req.get('host')}/onboarding.html?item=${encodeURIComponent(item)}&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/pricing.html?billing=cancel`,
           client_reference_id: (req.body && req.body.userId) || 'guest',
           metadata: { item, userId: (req.body && req.body.userId) || 'guest' },
         });
@@ -201,8 +201,8 @@ router.post('/subscribe', express.json(), async (req, res) => {
           payment_method_types: ['card'],
           line_items: [{ price, quantity: 1 }],
           mode: 'subscription',
-          success_url: (req.body.successUrl) || `${req.protocol}://${req.get('host')}/?billing=success`,
-          cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/?billing=cancel`,
+          success_url: (req.body.successUrl) || `${req.protocol}://${req.get('host')}/onboarding.html?item=${encodeURIComponent(item)}&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url:  (req.body.cancelUrl)  || `${req.protocol}://${req.get('host')}/pricing.html?billing=cancel`,
           client_reference_id: userId,
           metadata: { item, userId },
         });
