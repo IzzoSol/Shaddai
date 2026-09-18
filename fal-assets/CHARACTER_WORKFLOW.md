@@ -96,7 +96,19 @@ flat shading, not soft gradients):
    `fal-assets/characters/` silently commits only the reference PNGs and
    sprite PNGs, not the actual paid 3D assets. Use
    `git add -f fal-assets/characters/**/*.glb fal-assets/characters/**/*.fbx`
-   explicitly if these need to be committed.
+   explicitly if these need to be committed. Also: with a wildcard glob like
+   that, if ANY part of the glob matches zero files (e.g. no vehicle has an
+   `.fbx` since mesh-only vehicles skip rigging), the WHOLE `git add` call
+   can silently fail to stage anything, including the parts that did match
+   -- always verify with `git show --stat HEAD | grep -c '\.glb'` after
+   committing binaries, don't trust the "create mode" list alone.
+8. **A background job reporting `[exited with code 0]` doesn't mean the
+   pipeline actually succeeded.** A transient `fetch failed` mid-poll can
+   kill the script after `PIPELINE FAILED: ...` prints, but the outer
+   background-task wrapper still reports exit 0. Always check the actual
+   log content for `PIPELINE FAILED` / `RIGGING FAILED`, and verify the
+   output files' mtimes actually changed, before trusting a "completed"
+   notification when re-running an existing character.
 
 ## Cost
 ~$0.50-0.65 per character for the 3D step (mesh+rig+animation combined,

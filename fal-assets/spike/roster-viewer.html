@@ -42,6 +42,7 @@
   <h1 id="charName">The Warrior</h1>
   <p class="sub">All 5 rigged, walking, and ready. Drag to rotate, scroll to zoom. Same pipeline, same identity, distinct role per character.</p>
 
+  <div class="clipPicker" id="stylePicker"></div>
   <div class="picker" id="picker"></div>
   <div class="clipPicker" id="clipPicker"></div>
 
@@ -80,18 +81,10 @@
     { id: 'turtle', name: 'TURTLE', role: 'UI/UX & Creative', bio: "Designs the experience everyone else just uses. Cares about feel over flash." },
     { id: 'quill', name: 'QUILL', role: 'Writing & Communication', bio: "Writes the words the rest of the council gets credit for." },
     { id: 'pikadon', name: 'PIKADON', role: 'Security & Compliance', bio: "Guard rails, audit trails, worst-case assumptions. The shield is always up." },
-    { id: 'warrior-voxel', name: 'The Warrior (Voxel)', role: 'Melee tank · voxel style', bio: "Same order, blockier build — the Forge's voxel identity applied to the roster." },
-    { id: 'mage-voxel', name: 'The Mage (Voxel)', role: 'Ranged caster · voxel style', bio: "Voxel-block restyle of the Mage." },
-    { id: 'explorer-voxel', name: 'The Explorer (Voxel)', role: 'Scout / traversal · voxel style', bio: "Voxel-block restyle of the Explorer." },
-    { id: 'engineer-voxel', name: 'The Engineer (Voxel)', role: 'Support / heavy melee · voxel style', bio: "Voxel-block restyle of the Engineer — took 4 reference passes to land on-brand." },
-    { id: 'scout-voxel', name: 'The Scout (Voxel)', role: 'Ranged / archer · voxel style', bio: "Voxel-block restyle of the Scout." },
-    { id: 'shaddai-voxel', name: 'SHADDAI (Voxel)', role: 'Supreme Orchestrator · voxel style', bio: "Voxel-block restyle of SHADDAI." },
-    { id: 'nexus-voxel', name: 'NEXUS (Voxel)', role: 'Technical Architect · voxel style', bio: "Voxel-block restyle of NEXUS — pose looked risky, rigged fine anyway." },
-    { id: 'zerox-voxel', name: 'ZEROX (Voxel)', role: 'Wealth & Revenue Engine · voxel style', bio: "Voxel-block restyle of ZEROX." },
-    { id: 'oracle-voxel', name: 'ORACLE (Voxel)', role: 'Research & Intelligence · voxel style', bio: "Voxel-block restyle of ORACLE — 3 reference passes, this one traded style for pose-safety." },
-    { id: 'turtle-voxel', name: 'TURTLE (Voxel)', role: 'UI/UX & Creative · voxel style', bio: "Voxel-block restyle of TURTLE." },
-    { id: 'quill-voxel', name: 'QUILL (Voxel)', role: 'Writing & Communication · voxel style', bio: "Voxel-block restyle of QUILL." },
-    { id: 'pikadon-voxel', name: 'PIKADON (Voxel)', role: 'Security & Compliance · voxel style', bio: "Voxel-block restyle of PIKADON." },
+  ];
+  const STYLES = [
+    { id: 'classic', label: 'Classic', suffix: '' },
+    { id: 'voxel', label: 'Voxel', suffix: '-voxel' },
   ];
   const CLIPS = [
     { id: 'walking', label: 'Walk' },
@@ -106,6 +99,7 @@
   const bioEl = document.getElementById('bio');
   const pickerEl = document.getElementById('picker');
   const clipPickerEl = document.getElementById('clipPicker');
+  const stylePickerEl = document.getElementById('stylePicker');
 
   const scene = new THREE.Scene();
   scene.background = null;
@@ -145,7 +139,7 @@
 
   let mixer = null, currentModel = null;
   const clock = new THREE.Clock();
-  let activeChar = 'warrior', activeClip = 'walking';
+  let activeChar = 'warrior', activeClip = 'walking', activeStyle = 'classic';
 
   function loadCurrent() {
     loadingEl.hidden = false;
@@ -153,7 +147,9 @@
     hintEl.hidden = true;
     if (currentModel) { scene.remove(currentModel); currentModel = null; mixer = null; }
 
-    const path = `../characters/${activeChar}/${activeChar}-${activeClip}.glb`;
+    const suffix = STYLES.find((s) => s.id === activeStyle).suffix;
+    const fullId = `${activeChar}${suffix}`;
+    const path = `../characters/${fullId}/${fullId}-${activeClip}.glb`;
     loader.load(path, (gltf) => {
       const model = gltf.scene;
       currentModel = model;
@@ -174,11 +170,19 @@
       loadingEl.hidden = true;
       hintEl.hidden = false;
     }, undefined, (err) => {
-      loadingEl.textContent = 'failed to load: ' + err.message;
+      loadingEl.textContent = `failed to load ${fullId}: ` + err.message;
     });
   }
 
   function render() {
+    stylePickerEl.innerHTML = '';
+    STYLES.forEach((s) => {
+      const btn = document.createElement('button');
+      btn.textContent = s.label;
+      btn.className = s.id === activeStyle ? 'active' : '';
+      btn.onclick = () => { activeStyle = s.id; syncUI(); loadCurrent(); };
+      stylePickerEl.appendChild(btn);
+    });
     pickerEl.innerHTML = '';
     ROSTER.forEach((c) => {
       const btn = document.createElement('button');
