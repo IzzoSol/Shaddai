@@ -43,6 +43,31 @@ Node http server pointed at the fal-assets directory root).
 - Output: `fal-assets/characters/<name>/sprites/` — individual frame PNGs +
   one horizontal strip PNG per clip (walking/running/action).
 
+## Voxel-block style variant (validated 2026-09-18, all 12 characters)
+Same pipeline, different reference-art recipe for a chibi voxel-block/toy
+look (matches `fal-assets/spike/style-voxel-blocky.png`, and the code-drawn
+"voxel" kit in `public/pixel-people.js`: blockier proportions, hard-edged
+flat shading, not soft gradients):
+- Use `register: "pixel"` in `generate.mjs`, NOT `"cinematic"` — the
+  cinematic spine's own strong style language ("museum-grade, volumetric
+  god-rays...") overpowers any voxel/blocky wording every time and just
+  produces a normal smooth cinematic render instead.
+- Prompt language that actually works: "a chibi VOXEL-BLOCK toy figure...
+  every part a flat rectangular block with hard 90-degree edges... bold
+  thick black outline stroke around every edge and seam... flat
+  hard-contrast shading (NOT soft gradients)." Say "toy figure" / "toy
+  render" explicitly — it pulls the model away from painterly/cinematic
+  defaults more reliably than "voxel" alone.
+- Still needs the same strict T-pose forcing as the base recipe. The
+  `pixel` register's own tendencies (isometric game-sprite training data)
+  make it drift toward action/idle poses more than `cinematic` does —
+  expect to need 2-3 pose-correction passes per character, same as before.
+- Robed/hooded characters (mage, oracle) are the highest pose-failure risk
+  in this style specifically: long sleeves read ambiguously to the pose
+  estimator. Fix: explicitly prompt "SHORT sleeves that end well above the
+  wrist, leaving the entire forearm/hand visible as its own separate block
+  shape" if a hooded/robed voxel character fails rigging.
+
 ## Gotchas already paid for — don't rediscover these
 1. **Rigging needs a truly clean T-pose.** Arms down, hidden in a cloak, or
    holding anything = high risk of "Pose estimation failed" or a broken skin.
@@ -58,6 +83,20 @@ Node http server pointed at the fal-assets directory root).
    this entirely and is what `capture-sprites.mjs` does.
 5. `puppeteer` in this repo needed `npm install --no-save puppeteer-core@25.3.0`
    to actually launch (was present in package tree but broken/missing).
+6. **A rigging-step timeout is NOT the same as a pose rejection.** The
+   default poll timeout (200s) can be too short when fal's Meshy rigging
+   queue is under load — this looks identical to a stuck job but the call
+   eventually would have succeeded. Only trust an actual
+   `{"msg":"...Pose estimation failed..."}` JSON error as a real pose
+   problem; a plain `PIPELINE FAILED: rigging timed out after Xms` should
+   just be retried (same image, no changes) before concluding the
+   reference art needs fixing. The timeout was raised to 480000ms in
+   `character-pipeline.mjs` after repeated false failures.
+7. **`*.glb`/`*.fbx` are gitignored repo-wide.** A normal `git add` on
+   `fal-assets/characters/` silently commits only the reference PNGs and
+   sprite PNGs, not the actual paid 3D assets. Use
+   `git add -f fal-assets/characters/**/*.glb fal-assets/characters/**/*.fbx`
+   explicitly if these need to be committed.
 
 ## Cost
 ~$0.50-0.65 per character for the 3D step (mesh+rig+animation combined,

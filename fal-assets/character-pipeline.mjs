@@ -129,7 +129,7 @@ async function main() {
     else rigInput.animation_action_id = actionIds[0];
   }
   const rigSubmit = await submit('fal-ai/meshy/rigging', rigInput, key);
-  const rigResult = await pollUntilDone(rigSubmit.status_url, rigSubmit.response_url, key, 'rigging', 200000);
+  const rigResult = await pollUntilDone(rigSubmit.status_url, rigSubmit.response_url, key, 'rigging', 480000);
 
   if (rigResult.detail) {
     // Meshy's pose-estimation-failure shape: { detail: [{ msg: "..." }] }
