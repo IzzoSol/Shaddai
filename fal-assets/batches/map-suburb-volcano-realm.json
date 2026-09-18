@@ -1,0 +1,8 @@
+[
+  { "id": "map-suburb-realm-topdown", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a top-down isometric map layout of a retro-future suburban neighborhood, bird's-eye view, a cul-de-sac street with a central gateway landmark, neat rows of houses with manicured lawns and picket fences, small delivery-drone perches on a few mailboxes, a hover-mower parked on one lawn. Picket-fence white #e8e4da walls, muted lawn-green #7a9c6a lawns, a single warm porch-light-orange #ffb85c glow per house. TURTLE'S NOTE: the least dramatic realm on purpose -- gently mundane, ordinary suburban geometry, the tech is quiet and background, not a spectacle. Bright soft daylight, clean isometric game-map framing, no text, no logos, no watermark, no people",
+    "out": "fal-assets/spike/map-suburb-realm-topdown.png" },
+  { "id": "map-volcano-realm-topdown", "type": "text2img", "register": "cinematic", "size": "square_hd",
+    "body": "a top-down isometric map layout of a volcanic industrial forge complex, bird's-eye view, a heavy smelting facility with multiple chimney stacks venting magma-orange glow, ore-cart rail tracks connecting storage silos, structural iron scaffolding, molten rivers of lava visible in cracks in the black rock terrain around the facility. Obsidian-black #06080b structural rock and buildings, glowing magma-orange #ff6a2e lava and vents, structural iron #3a3530 scaffolding. TURTLE'S NOTE: the heaviest, most industrial realm, function over comfort, magma is the only light source. Dramatic uplighting from the lava, clean isometric game-map framing, no text, no logos, no watermark, no people",
+    "out": "fal-assets/spike/map-volcano-realm-topdown.png" }
+]
