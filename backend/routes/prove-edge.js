@@ -47,6 +47,31 @@ function writeJSON(file, obj) {
   }
 }
 
+/* ZEROX paybox wallets (receiving addresses, public by design — same source
+   the Paybox button uses). Read fresh every time so rotating an address in
+   paybox-wallets.json is live on the next call, no redeploy. */
+const PAYBOX_FILE = path.join(DATA_DIR, 'paybox-wallets.json');
+
+function loadPayboxWallets() {
+  try {
+    const raw = readJSON(PAYBOX_FILE, null);
+    if (raw && Array.isArray(raw.wallets)) {
+      return raw.wallets.map((w) => ({ label: w.label || '', address: w.address || '', chain: w.chain || '', note: w.note || '' }));
+    }
+  } catch (e) {}
+  return [];
+}
+
+/* The agent execution wallets — where a LIVE wire would settle (Base ACP +
+   Solana agent wallet). Kept on the model so the demo shows exactly which
+   addresses a funded run would trade from, while settlement stays paper. */
+function agentWallets() {
+  return {
+    base: process.env.VIRTUALS_BASE_WALLET || '',
+    solana: process.env.VIRTUALS_SOL_WALLET || '',
+  };
+}
+
 function resolveUserId(req, fallback) {
   return (req.user && req.user.id) || req.body.userId || req.query.userId || fallback || 'anon';
 }
@@ -72,6 +97,8 @@ function newPortfolio(userId, startingBalance, perTradeStake) {
     startingBalance,
     balance: startingBalance,
     perTradeStake,
+    paybox: loadPayboxWallets(),
+    execution: agentWallets(),
     createdAt: now,
     updatedAt: now,
     openTrades: [],
@@ -88,6 +115,8 @@ function portfolioSummary(p) {
     startingBalance: p.startingBalance,
     balance: p.balance,
     perTradeStake: p.perTradeStake,
+    paybox: (p.paybox && p.paybox.length ? p.paybox : loadPayboxWallets()),
+    execution: p.execution || agentWallets(),
     pnl,
     returnsPct: round(p.startingBalance ? (pnl / p.startingBalance) * 100 : 0, 4),
     openTrades: p.openTrades,
@@ -270,6 +299,8 @@ router.get('/portfolio', (req, res) => {
         openTrades: [],
         closedTrades: [],
         equity: [],
+        paybox: loadPayboxWallets(),
+        execution: agentWallets(),
         message: 'No paper portfolio yet. POST /api/prove-edge/portfolio with { userId, startingBalance } to create one.',
       });
     }

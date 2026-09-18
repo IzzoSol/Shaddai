@@ -319,7 +319,8 @@
            tokenomics + hire ZEROX). */
         { id: 'pro', name: 'SIMPLE SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html',
           blurb: 'One-thumb signals — heatmap, calls, top 25 DEX, ZEROX paybox. Swipe it.' },
-        { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/mirofish-terminal.html', blurb: 'The sentiment terminal.' },
+        { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/tufish.html', blurb: 'Sentiment swimmer — scan coins & topics, the fish glows green/red (fal.ai visuals).' },
+        { id: 'swarm', name: 'SWARM',       accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html#swarm', blurb: 'MiroFish — the 7-agent swarm terminal, inside the Master Terminal (PIN 4444).' },
       ],
     },
     {

@@ -10,6 +10,12 @@
    ══════════════════════════════════════════════════════════════════════════ */
 'use strict';
 
+// Standalone bootstrap: load .env when run directly (`node telegram-bot.js`).
+// No-op when the server already loaded dotenv, so server behavior is unchanged.
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  try { require('dotenv').config({ path: require('path').join(__dirname, '.env') }); } catch (e) {}
+}
+
 const TG = (token, method) => `https://api.telegram.org/bot${token}/${method}`;
 const DS_SEARCH = (q) => `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`;
 const RUGCHECK = (mint) => `https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`;
@@ -1240,3 +1246,7 @@ function startTelegramBot() {
 function stopTelegramBot() { _running = false; }
 
 module.exports = { startTelegramBot, stopTelegramBot };
+
+// Standalone entrypoint: `node telegram-bot.js` starts long-polling.
+// The server path calls startTelegramBot() itself, so this guard is a no-op there.
+if (require.main === module) { startTelegramBot(); }

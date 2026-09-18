@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-<title>SHADDAI · Signals</title>
+<title>SHADDAI · Master Terminal</title>
 <meta name="description" content="Live calls — list, bubbles, heatmap, ranked. Pump.fun pre-bond and post-bond, boosted, and the top 25 on DEX." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -97,6 +97,116 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
  .bar b{ color:var(--ink); font-size:13px; }
  .empty{ padding:32px 14px; text-align:center; color:var(--ink-faint); font-size:12px; line-height:1.5; }
  .view{ display:none; } .view.on{ display:block; }
+
+/* ── SWARM — MiroFish terminal embedded full-bleed ────────────────────── */
+#v-swarm{ display:none; flex-direction:column; height:100%; }
+#v-swarm.on{ display:flex; }
+.swarm-ch{ display:flex; align-items:center; gap:8px; flex:0 0 auto; font-size:10.5px;
+  letter-spacing:.1em; color:var(--ink-soft); padding:2px 2px 8px; }
+.swarm-ch b{ font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--gold);
+  text-shadow:0 0 10px rgba(232,196,92,.45); white-space:nowrap; }
+.swarm-ch .sc-note{ color:var(--ink-faint); white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis; font-size:10px; }
+.swarm-ch .sc-full{ margin-left:auto; flex:0 0 auto; text-decoration:none; color:var(--ink-soft);
+  border:1px solid var(--edge2); padding:4px 12px; border-radius:2px; font-size:10px;
+  font-weight:600; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
+.swarm-ch .sc-full:active{ color:var(--gold); border-color:var(--gold); }
+#v-swarm iframe{ flex:1 1 auto; min-height:0; width:100%; border:0; display:block;
+  background:#010b10; }
+
+/* ── MARKET STRIP + NEWS TICKER — one 34px band under the header ──────────
+   Left are the live market dots (BTC/ETH/SOL); right is the key-free news
+   feed scrolling forever. Pauses on hold. The strip is global — it stays
+   across all three apps (Signals / Markets / Swarm). */
+#mktstrip{ flex:0 0 auto; display:flex; align-items:stretch; gap:10px;
+  background:#04070a; border-bottom:1px solid var(--edge); padding:4px 10px; min-height:34px; }
+#mktChips{ display:flex; gap:6px; align-items:center; flex:0 0 auto; }
+#mktChips .mkt{ display:inline-flex; align-items:center; gap:6px; font-size:12px;
+  font-weight:700; letter-spacing:.03em; padding:5px 11px; border:1px solid var(--edge2);
+  border-radius:15px; color:var(--ink-soft); background:rgba(255,255,255,.02);
+  white-space:nowrap; font-variant-numeric:tabular-nums; }
+#mktChips .mkt b{ color:var(--ink); }
+#mktChips .mkt .up{ color:var(--emerald); text-shadow:0 0 8px rgba(0,255,156,.5); }
+#mktChips .mkt .dn{ color:#fb7185; text-shadow:0 0 8px rgba(251,113,133,.4); }
+#ticker{ flex:1 1 auto; min-width:0; overflow:hidden; display:flex; align-items:center;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent); }
+#ttrack{ display:inline-flex; align-items:center; white-space:nowrap; will-change:transform;
+  animation:tick 60s linear infinite; }
+#ticker:hover #ttrack{ animation-play-state:paused; }
+@keyframes tick{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+.tt{ font-size:12.5px; color:var(--ink-soft); letter-spacing:.02em; padding:0 20px;
+  border-right:1px solid var(--edge2); display:inline-flex; align-items:center; gap:7px; }
+.tt a{ color:inherit; text-decoration:none; }
+.tt a:active{ color:var(--gold); }
+.tt .ts{ color:#d4af37; font-weight:700; text-transform:uppercase; letter-spacing:.09em; font-size:10px; }
+
+/* ── NEWS CONTEXT — the headline strip inside a coin sheet ──────────── */
+#cnw{ margin-top:14px; border-top:1px solid var(--edge); padding-top:12px; }
+#cnw .cnl{ display:flex; align-items:center; gap:7px; font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--gold); margin-bottom:7px; }
+#cnw .cnl::before{ content:''; width:5px; height:5px; background:var(--gold);
+  box-shadow:0 0 8px var(--gold); border-radius:50%; }
+#cnw .cnv{ display:block; font-size:12.5px; line-height:1.55; color:var(--ink-soft); }
+#cnw .cnv a{ display:block; color:var(--ink-soft); text-decoration:none; padding:3px 0;
+  border-left:2px solid var(--edge2); padding-left:9px; margin-bottom:2px; }
+#cnw .cnv a em{ font-style:normal; color:var(--ink-faint); font-size:10.5px; }
+#cnw .cnv a:active{ color:var(--gold); border-color:var(--gold); }
+
+/* Button feel — the bare chips get a thumb, a radius and a press state so a
+   tap reads as a tap, not a link. */
+.chip{ min-height:36px; border-radius:3px; }
+.chip:active, .atab:active{ transform:scale(.96); }
+.atab{ padding:10px 16px; }
+
+/* ── DEMO TRADING — one-thumb paper desk with a live equity chart ─────────
+   Every fill is a paper fill at the CURRENT price (fetched at press time); the
+   equity line only moves on what actually happened — no optimised multi-call
+   fantasy. Reuses the auto-trader portfolio (zerox-demo) that is wired to
+   ZEROX's paybox receiving wallets. */
+#v-demo{ display:none; flex-direction:column; gap:10px; height:100%; }
+#v-demo.on{ display:flex; }
+.d-head{ display:flex; align-items:center; gap:10px; }
+.d-bal{ display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+.d-bal span{ font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); }
+.d-bal b{ font-family:var(--f-display); font-size:29px; font-weight:900; color:var(--ink);
+  text-shadow:0 0 14px rgba(0,255,156,.3); font-variant-numeric:tabular-nums; }
+.d-bal i{ font-style:normal; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+.d-bal .pos{ color:var(--emerald); text-shadow:0 0 10px rgba(0,255,156,.4); }
+.d-bal .neg{ color:#fb7185; text-shadow:0 0 10px rgba(251,113,133,.4); }
+.d-bal .settle{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; letter-spacing:.05em; }
+.d-acts{ margin-left:auto; display:flex; gap:7px; }
+.dbtn{ min-height:38px; padding:0 14px; border:1px solid var(--edge2); background:none;
+  color:var(--ink-soft); font-family:var(--f-mono); font-size:10.5px; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; border-radius:3px; cursor:pointer;
+  transition:transform .12s, color .15s, border-color .15s; }
+.dbtn:active{ transform:scale(.96); }
+.dbtn.pri{ background:var(--emerald); color:#04120c; border-color:var(--emerald);
+  box-shadow:0 0 16px -6px rgba(0,255,156,.85); }
+#dChart{ height:210px; border:1px solid var(--edge2); border-radius:4px; padding:6px;
+  background:#05080b; overflow:hidden; }
+.d-row{ display:flex; gap:8px; align-items:center; }
+.d-row input{ flex:1 1 auto; min-width:0; min-height:44px; background:var(--void2);
+  border:1px solid var(--edge2); color:var(--ink); font-family:var(--f-mono); font-size:19px;
+  font-weight:700; letter-spacing:.08em; padding:0 12px; border-radius:3px; text-transform:uppercase; }
+.d-row input:focus{ border-color:var(--emerald); box-shadow:0 0 12px -4px rgba(0,255,156,.5); }
+.d-row .sz{ flex:0 0 auto; font-size:11px; color:var(--ink-faint); white-space:nowrap;
+  border:1px solid var(--edge2); border-radius:3px; padding:8px 10px; font-family:var(--f-mono); }
+.d-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
+.d-pane{ border:1px solid var(--edge2); border-radius:4px;
+  background:linear-gradient(180deg,var(--card),#0a0e11); padding:10px 12px; }
+.d-pane h4{ margin:0 0 8px; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); }
+.dt{ display:flex; align-items:center; gap:9px; padding:9px 2px; border-bottom:1px solid var(--edge);
+  font-size:12.5px; }
+.dt:last-child{ border-bottom:0; }
+.dt .sm{ font-weight:700; color:var(--ink); min-width:6ch; }
+.dt .en{ color:var(--ink-faint); font-size:11px; white-space:nowrap; }
+.dt .pl{ margin-left:auto; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.dt .pl.pos{ color:var(--emerald); } .dt .pl.neg{ color:#fb7185; }
+.dt .cx{ border:1px solid var(--edge2); background:none; color:var(--ink-soft); font-family:var(--f-mono);
+  font-size:9.5px; letter-spacing:.1em; padding:5px 9px; border-radius:2px; cursor:pointer; min-height:28px; }
+.dt .cx:active{ color:var(--gold); border-color:var(--gold); }
+.d-empty{ font-size:11.5px; color:var(--ink-faint); padding:14px 2px; text-align:center; }
 
 /* ── avatar, shared ────────────────────────────────────────────────────── */
 .av{ flex:0 0 auto; width:60px; height:60px; border-radius:50%; background:var(--void2);
@@ -246,14 +356,21 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
 <body>
 
 <header>
-  <div class="brand"><b>SIGNALS</b><span class="pill"><span class="d"></span><span id="liveN">—</span></span></div>
+  <div class="brand"><b>TERMINAL</b><span class="pill"><span class="d"></span><span id="liveN">—</span></span></div>
   <div class="apptabs" id="apptabs" role="tablist" aria-label="APP">
     <button class="atab on" data-app="sig" aria-pressed="true" type="button">Signals</button>
     <button class="atab" data-app="mk" aria-pressed="false" type="button">Markets</button>
+    <button class="atab" data-app="swarm" aria-pressed="false" type="button">🐟 Swarm</button>
+    <button class="atab" data-app="demo" aria-pressed="false" type="button">🧪 Demo</button>
   </div>
   <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
 </header>
+
+<div class="mktstrip" id="mktstrip">
+  <div id="mktChips"><span class="mkt">↻ markets</span></div>
+  <div id="ticker" aria-live="polite"><div id="ttrack"></div></div>
+</div>
 
 <div class="rails">
   <div class="rail modes" id="modes" role="tablist" aria-label="View">
@@ -285,6 +402,37 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   <div class="view" id="v-bub"><div id="bubbles"><canvas id="bcv"></canvas></div></div>
   <div class="view" id="v-heat"><div class="heat" id="heatGrid"></div></div>
   <div class="view" id="v-rank"></div>
+  <div class="view" id="v-swarm">
+    <div class="swarm-ch"><b>🐟 MIROFISH SWARM</b>
+      <span class="sc-note">7-agent consensus · PIN 4444</span>
+      <a class="sc-full" href="/mirofish-terminal.html" target="_blank" rel="noopener">⛶ Full</a>
+    </div>
+    <iframe id="swarmIframe" title="MiroFish Swarm Terminal" src=""></iframe>
+  </div>
+  <div class="view" id="v-demo">
+    <div class="d-head">
+      <div class="d-bal">
+        <span>Paper equity</span>
+        <b id="demoEquity">-</b>
+        <i id="demoPnl"></i>
+        <span class="d-settle" id="demoSettle"></span>
+      </div>
+      <div class="d-acts">
+        <button class="dbtn" id="demoReset" type="button">Reset</button>
+        <button class="dbtn pri" id="demoSeed" type="button">+ Seed $1K</button>
+      </div>
+    </div>
+    <div id="dChart"></div>
+    <div class="d-row">
+      <input id="demoSym" value="SOL" maxlength="12" spellcheck="false" autocomplete="off" placeholder="SYMBOL">
+      <span class="sz">2% stake</span>
+      <button class="dbtn pri" id="demoOpen" type="button">Buy</button>
+    </div>
+    <div class="d-grid">
+      <div class="d-pane"><h4>Open positions</h4><div id="dOpen" class="d-empty">-</div></div>
+      <div class="d-pane"><h4>Closed trades</h4><div id="dClosed" class="d-empty">-</div></div>
+    </div>
+  </div>
 </main>
 
 <div id="sheet" role="dialog" aria-modal="true" aria-label="Coin detail">
@@ -339,6 +487,216 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     if (m >= 5) return '#00ff9c'; if (m >= 2) return '#4ade80'; if (m >= 1.15) return '#a3e635';
     if (m >= .85) return '#7d8d86'; if (m >= .5) return '#fbbf24'; if (m >= .25) return '#fb7185';
     return '#ef4444'; }
+
+  /* ── market weather + news ticker (all key-free, server-proxied) ──────── */
+  function wfmt(n) { n = Number(n) || 0;
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'; return n.toFixed(2); }
+  function loadMarketWeather() {
+    var box = $('mktChips'); if (!box) return;
+    fetch('/api/tufish/watch?ids=bitcoin,ethereum,solana', { signal: AbortSignal.timeout(8000) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.coins || !d.coins.length) return;
+        box.innerHTML = d.coins.map(function (c) {
+          var ch = Number(c.change24h) || 0, up = ch >= 0;
+          return '<span class="mkt"><b>' + esc(c.symbol) + '</b> $' + wfmt(c.price) +
+            ' <i class="' + (up ? 'up' : 'dn') + '">' + (up ? '▲' : '▼') + (up ? '+' : '') +
+            ch.toFixed(1) + '%</i></span>';
+        }).join('');
+      }).catch(function () {});
+  }
+  function loadTicker() {
+    var tr = $('ttrack'); if (!tr) return;
+    fetch('/api/tufish/news?q=crypto', { signal: AbortSignal.timeout(10000) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var items = (d && d.items) || [];
+        if (!items.length) return;
+        var one = items.map(function (it) {
+          return '<span class="tt"><span class="ts">' + esc(it.source || 'NEWS') + '</span>' +
+            '<a href="' + esc(it.link) + '" target="_blank" rel="noopener">' + esc(it.title) + '</a></span>';
+        }).join('');
+        tr.innerHTML = one + one;   // two copies → seamless 60s loop
+      }).catch(function () {});
+  }
+  /* News context pinned to one signal — the headline read before you bet. */
+  function fillCoinNews(sym) {
+    var box = $('cnNews'); if (!box || !sym) { if (box) box.textContent = 'News offline.'; return; }
+    box.innerHTML = '<span style="color:var(--ink-faint)">…</span>';
+    fetch('/api/tufish/news?q=' + encodeURIComponent(sym), { signal: AbortSignal.timeout(8000) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var items = (d && d.items) || [];
+        if (!items.length) { box.textContent = 'No fresh headlines for ' + sym + '.'; return; }
+        box.innerHTML = items.slice(0, 3).map(function (it) {
+          return '<a href="' + esc(it.link) + '" target="_blank" rel="noopener">' + esc(it.title) +
+            ' <em>— ' + esc(it.source || 'news') + '</em></a>';
+        }).join('');
+      }).catch(function () { box.textContent = 'News offline.'; });
+  }
+
+  /* ── demo trading app ────────────────────────────────────────────────────
+     Paper desk wired to the same portfolio the auto-trader uses (zerox-demo),
+     which already carries ZEROX's paybox receiving + agent execution wallets.
+     Fills happen at the CURRENT price fetched at press time; the equity line
+     only moves on what really happened. */
+
+  var DEMO = { userId: 'zerox-demo', chart: null };
+  var DEMO_IDS = { BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana' };
+
+  function injectChart() {
+    if (window.LightweightCharts) return;
+    var sc = document.createElement('script');
+    sc.src = 'https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js';
+    document.head.appendChild(sc);
+  }
+  function ensureDemo() {
+    var v = $('v-demo'); if (!v) return;
+    [].forEach.call(document.querySelectorAll('.view'), function (x) { x.classList.remove('on'); });
+    v.classList.add('on');
+    injectChart();
+    loadDemo();
+  }
+  function demoPrices(syms) {
+    syms = (syms || []).filter(function (x) { return x; });
+    var want = {};
+    syms.forEach(function (s0) {
+      if (DEMO_IDS[s0]) want[DEMO_IDS[s0]] = s0;
+      else want[s0.toLowerCase()] = s0;
+    });
+    var out = {};
+    return fetch('/api/tufish/watch?ids=' + encodeURIComponent(Object.keys(want).join(',')), { signal: AbortSignal.timeout(8000) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        (d && d.coins || []).forEach(function (c) { out[c.symbol] = Number(c.price) || 0; });
+        return out;
+      })
+      .catch(function () { return out; });
+  }
+  function drawEquity(pts) {
+    var el = $('dChart'); if (!el || !window.LightweightCharts) return;
+    if (DEMO.chart) { try { DEMO.chart.remove(); } catch (e) {} DEMO.chart = null; }
+    DEMO.chart = LightweightCharts.createChart(el, {
+      width: el.clientWidth, height: Math.max(160, el.clientHeight || 210),
+      layout: { background: { type: 'solid', color: '#05080b' }, textColor: '#93a49b', fontSize: 10 },
+      grid: { vertLines: { color: 'rgba(120,150,140,.08)' }, horzLines: { color: 'rgba(120,150,140,.08)' } },
+      rightPriceScale: { borderColor: 'rgba(120,150,140,.2)' },
+      timeScale: { borderColor: 'rgba(120,150,140,.2)', timeVisible: true, secondsVisible: false }
+    });
+    var line = DEMO.chart.addLineSeries({ color: '#00ff9c', lineWidth: 2, priceLineVisible: false,
+      lastValueVisible: true, crosshairMarkerVisible: true });
+    line.setData(pts.map(function (q) {
+      return { time: Math.floor(q.t / 1000), value: Math.round(q.s * 100) / 100 };
+    }));
+  }
+  function renderDemo(p) {
+    var eqB = $('demoEquity'), pn = $('demoPnl'), op = $('dOpen'), cl = $('dClosed'), st = $('dSettle');
+    if (!eqB) return;
+    eqB.textContent = '-'; pn.textContent = ''; op.innerHTML = '<div class="d-empty">-</div>';
+    cl.innerHTML = '<div class="d-empty">-</div>'; if (st) st.textContent = '';
+    if (!p || !p.exists) {
+      op.innerHTML = '<div class="d-empty">No account yet. Hit Seed $1K.</div>';
+      return;
+    }
+    var bal = Number(p.balance) || 0, start = Number(p.startingBalance) || bal;
+    var open = p.openTrades || [], closed = p.closedTrades || [];
+    var unreal = 0, syms = open.map(function (o) { return o.symbol; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; });
+    demoPrices(syms).then(function (px) {
+      open.forEach(function (o) {
+        var cur = px[o.symbol];
+        if (cur && o.entry) {
+          var mult = o.side === 'sell' ? o.entry / cur : cur / o.entry;
+          unreal += (Number(o.notional) || 0) * (mult - 1);
+        }
+      });
+      var eq = bal + unreal;
+      eqB.textContent = '$' + money(eq);
+      var pl = eq - start, pp = start ? (pl / start * 100) : 0;
+      pn.textContent = (pl >= 0 ? '+' : '') + money(pl) + '  (' + (pl >= 0 ? '+' : '') + pp.toFixed(1) + '%)';
+      pn.className = pl >= 0 ? 'pos' : 'neg';
+      var wins = closed.filter(function (t) { return Number(t.pnl) > 0; }).length;
+      if (st) st.textContent = 'wired to ZEROX paybox' +
+        (p.paybox && p.paybox.sol ? ' · SOL ' + String(p.paybox.sol).slice(0, 6) + '…' : '') +
+        ' · closed ' + closed.length + ' · win ' + closed.length ? (wins / closed.length * 100).toFixed(0) : 0 + '%';
+      op.innerHTML = open.length ? open.map(function (o) {
+        return '<div class="dt"><span class="sm">' + esc(o.symbol) + '</span><span class="en">@$' +
+          money(o.entry) + (o.side === 'sell' ? ' ↓' : ' ↑') + '</span>' +
+          '<span class="pl"></span><button class="cx" data-close-sym="' + esc(o.symbol) + '" data-side="' + (o.side === 'sell' ? 'sell' : 'buy') + '">CLOSE</button></div>';
+      }).join('') : '<div class="d-empty">No open positions.</div>';
+      var last = closed.slice(-12).reverse();
+      cl.innerHTML = last.length ? last.map(function (t) {
+        var ppct = Number(t.pnlPct) || 0;
+        return '<div class="dt"><span class="sm">' + esc(t.symbol) + '</span>' +
+          '<span class="pl ' + (ppct >= 0 ? 'pos' : 'neg') + '">' + (ppct >= 0 ? '+' : '') +
+          ppct.toFixed(1) + '%</span><span class="pl ' + (ppct >= 0 ? 'pos' : 'neg') + '">' +
+          (t.pnl >= 0 ? '+' : '') + '$' + money(t.pnl) + '</span></div>';
+      }).join('') : '<div class="d-empty">No closed trades yet.</div>';
+    });
+    if (p.equity && p.equity.length) drawEquity(p.equity);
+  }
+  function loadDemo() {
+    fetch('/api/prove-edge/portfolio?userId=' + DEMO.userId, { signal: AbortSignal.timeout(8000) })
+      .then(function (r) { return r.json(); })
+      .then(function (p) { renderDemo(p); })
+      .catch(function () {
+        var eqB = $('demoEquity'); if (eqB) eqB.textContent = 'offline';
+      });
+  }
+  function demoToast(msg) {
+    var b = $('demoOpen'); if (!b) return;
+    var old = b.textContent; b.textContent = msg;
+    setTimeout(function () { b.textContent = old; }, 1600);
+  }
+  function openDemo() {
+    var sym0 = ($('demoSym').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+    if (!sym0) { demoToast('SYMBOL?'); return; }
+    demoPrices([sym0]).then(function (px) {
+      var price = px[sym0] || px[sym0.toLowerCase()];
+      if (!price) { demoToast('NO PRICE'); return; }
+      fetch('/api/prove-edge/trade', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: DEMO.userId, symbol: sym0, side: 'buy', sizePct: 0.02, entry: price })
+      }).then(function (r) { return r.json(); })
+        .then(function (t) {
+          demoToast(t && t.ok ? 'OPENED @ ' + price : (t && t.error ? 'OPEN FAIL' : 'OPEN FAIL'));
+          loadDemo();
+        }).catch(function () { demoToast('OPEN FAIL'); });
+    });
+  }
+  function closeDemo(sym, side) {
+    demoPrices([sym]).then(function (px) {
+      var price = px[sym] || px[sym.toLowerCase()];
+      if (!price) { demoToast('NO PRICE'); return; }
+      fetch('/api/prove-edge/trade', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: DEMO.userId, symbol: sym, side: side || 'buy', exit: price })
+      }).then(function (r) { return r.json(); })
+        .then(function (t) { demoToast(t && t.ok ? 'CLOSED' : 'CLOSE FAIL'); loadDemo(); })
+        .catch(function () { demoToast('CLOSE FAIL'); });
+    });
+  }
+  var dV = $('v-demo');
+  if (dV) dV.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-close-sym]');
+    if (b) { closeDemo(b.dataset.closeSym, b.dataset.side || 'buy'); return; }
+    if (e.target.closest('#demoOpen')) { openDemo(); return; }
+    if (e.target.closest('#demoSeed')) {
+      fetch('/api/prove-edge/portfolio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: DEMO.userId, startingBalance: 1000, perTradeStake: 0.02 })
+      }).then(function (r) { return r.json(); }).then(function (p2) { loadDemo(); }).catch(function () {});
+      return;
+    }
+    if (e.target.closest('#demoReset')) {
+      fetch('/api/prove-edge/portfolio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: DEMO.userId, startingBalance: 1000, perTradeStake: 0.02, reset: true })
+      }).then(function (r) { return r.json(); }).then(function (p2) { loadDemo(); }).catch(function () {});
+      return;
+    }
+  });
   function catOf(c) { var s = c.source;
     if (s === 'new_pools') return { c: 'pre', l: 'pre-bond' };
     if (s === 'bonded') return { c: 'bond', l: 'bonded' };
@@ -607,10 +965,12 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
         '<div class="zxhire-q" id="zxOut"></div>' +
         '<div class="zxhire-q" id="zxAcp" style="font-size:10.5px;margin-top:6px;color:var(--ink-faint);min-height:0"></div>' +
       '</div>' +
+      '<div id="cnw"><span class="cnl">NEWS CONTEXT</span><span id="cnNews" class="cnv">…</span></div>' +
       '<p class="note">Not advice. This is what the scanner saw, with the numbers behind it.' +
       (s.any ? '' : ' <b style="color:#fbbf24">No socials found — treat with care.</b>') + '</p>';
     $('sheet').classList.add('on');
     acpStatus();
+    fillCoinNews(c.symbol);
     var cpy = $('cpy');
     if (cpy) cpy.addEventListener('click', function () {
       var ok = function () { cpy.textContent = 'Copied'; setTimeout(function () { cpy.textContent = 'Copy CA'; }, 1600); };
@@ -699,17 +1059,39 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
     MK.cat = b.dataset.k; applyFilters();
   });
   var apptabs = $('apptabs');
+  /* Swarm app: lazy-load the MiroFish terminal into the embedded frame the
+     first time it is opened, then show it. Nothing is fetched until the tab
+     is tapped, so Signals stays instant. */
+  function ensureSwarm() {
+    var v = $('v-swarm'); if (!v) return;
+    [].forEach.call(document.querySelectorAll('.view'), function (x) { x.classList.remove('on'); });
+    v.classList.add('on');
+    var f = $('swarmIframe');
+    if (f && !f.getAttribute('src')) f.setAttribute('src', '/mirofish-terminal.html');
+  }
   if (apptabs) apptabs.addEventListener('click', function (e) {
     var b = e.target.closest('.atab'); if (!b) return;
     [].forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
     APP = b.dataset.app;
-    $('cats').style.display = APP === 'mk' ? 'none' : '';
-    $('filters').style.display = APP === 'mk' ? 'none' : '';
-    if (mkcats) mkcats.style.display = APP === 'mk' ? '' : 'none';
-    $('toTerm').style.display = APP === 'mk' ? 'none' : '';
+    var isPanel = APP === 'swarm' || APP === 'demo';
+    var bar = document.querySelector('main .bar');
+    $('modes').style.display = isPanel ? 'none' : '';
+    $('cats').style.display = (APP === 'mk' || isPanel) ? 'none' : '';
+    $('filters').style.display = (APP === 'mk' || isPanel) ? 'none' : '';
+    if (mkcats) mkcats.style.display = (APP === 'mk' && !isPanel) ? '' : 'none';
+    $('toTerm').style.display = (APP === 'mk' || isPanel) ? 'none' : '';
+    if (bar) bar.style.display = isPanel ? 'none' : '';
     if (APP === 'mk' && !MK.loaded) loadMarkets();
+    else if (APP === 'swarm') ensureSwarm();
+    else if (APP === 'demo') ensureDemo();
     else { restoreChips(); applyFilters(); }
   });
+  /* Deep-linkable: /signals.html#swarm opens straight into the swarm app so
+     launchers (Simple Mode wheel, landing nav) land where they point. */
+  if (location.hash === '#swarm' || location.hash === '#demo') {
+    var hb = document.querySelector('.atab[data-app="' + location.hash.slice(1) + '"]');
+    if (hb) { hb.click(); }
+  }
   $('filters').addEventListener('click', function (e) {
     var b = e.target.closest('.chip'); if (!b) return;
     if (b.dataset.t !== undefined) {
@@ -741,7 +1123,10 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   }
 
   var rz; window.addEventListener('resize', function () {
-    clearTimeout(rz); rz = setTimeout(function () { if (P.mode === 'bub') renderBub(); }, 220); });
+    clearTimeout(rz); rz = setTimeout(function () {
+      if (P.mode === 'bub') renderBub();
+      if (DEMO.chart) DEMO.chart.applyOptions({ width: $('dChart').clientWidth });
+    }, 220); });
 
   /* ── data ──────────────────────────────────────────────────────────────── */
   function enrichVisible() {
@@ -815,6 +1200,8 @@ main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
   load();
   setInterval(load, 60000);
   loadMarkets();
+  loadMarketWeather();
+  loadTicker();
 })();
 </script>
 </body>

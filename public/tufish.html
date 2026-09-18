@@ -3,100 +3,260 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🐟 TuFish — Yin &amp; Yang of Research &amp; AI</title>
+<title>🐟 TuFish — Sentiment Swimmer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#03060e; --bg2:rgba(6,16,30,.72); --border:rgba(0,240,255,.28);
+  --bg:#050a12; --bg2:rgba(6,16,30,.72); --border:rgba(0,240,255,.28);
   --cyan:#00f0ff; --green:#38ffb0; --gold:#ffd24a; --mag:#ff2bd6;
   --text:#dff4ff; --text2:#5ac7e0; --text3:#9fc9dc; --red:#ff6a8a;
+  --pos:#1AFF1A; --pos-dim:rgba(26,255,26,.42);
+  --neg:#FF3B30; --neg-dim:rgba(255,59,48,.42);
+  --neu:#D4AF37; --neu-dim:rgba(212,175,55,.38);
+  --acc:#00BFFF;
+  --fish:var(--neu); --fish-glow:rgba(212,175,55,.45);
+  --yoff:0px; --wig-amp:6deg; --wig-time:2s; --bub-time:4s; --bub-opacity:.35;
   --f-display:'Space Grotesk',system-ui,sans-serif;
   --f-body:'Chakra Petch',system-ui,sans-serif;
   --f-mono:'IBM Plex Mono',ui-monospace,monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--f-body);color:var(--text);min-height:100vh;overflow-x:hidden;
-  background:radial-gradient(ellipse 90% 60% at 30% 12%,rgba(0,240,255,.10),transparent 55%),
-  radial-gradient(ellipse 80% 60% at 85% 90%,rgba(255,43,214,.09),transparent 55%),var(--bg);}
-.header{background:linear-gradient(90deg,rgba(3,10,20,.96),rgba(5,18,34,.7));
-  padding:14px 22px;border-bottom:1px solid var(--cyan);box-shadow:0 0 30px rgba(0,240,255,.18);display:flex;
-  justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-.header h1{font-family:var(--f-display);font-size:18px;font-weight:700;letter-spacing:1.5px;color:#eaffff;display:flex;align-items:center;gap:8px;}
-.header h1 .yin{background:linear-gradient(90deg,#00f0ff,#7ef9ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  background:radial-gradient(ellipse 90% 60% at 30% 8%,rgba(0,191,255,.10),transparent 55%),
+  radial-gradient(ellipse 80% 60% at 85% 92%,rgba(255,43,214,.08),transparent 55%),
+  var(--bg);}
+.header{position:sticky;top:0;z-index:50;background:linear-gradient(90deg,rgba(4,12,22,.96),rgba(6,20,36,.72));
+  padding:12px 22px;border-bottom:1px solid var(--acc);box-shadow:0 0 30px rgba(0,191,255,.16);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  backdrop-filter:blur(5px);}
+.header h1{font-family:var(--f-display);font-size:18px;font-weight:700;letter-spacing:1.5px;color:#eaffff;display:flex;align-items:center;gap:10px;}
+.logo{width:34px;height:34px;border-radius:9px;object-fit:cover;border:1px solid var(--acc);
+  box-shadow:0 0 16px rgba(0,191,255,.4);}
+.header h1 .yin{background:linear-gradient(90deg,var(--acc),#9ff3ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
 .sub{font-family:var(--f-mono);font-size:10px;color:var(--text2);font-weight:400;letter-spacing:2px;}
 .badge{padding:4px 11px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.5px;font-family:var(--f-mono);
-  border:1px solid var(--border);background:rgba(4,14,24,.6);white-space:nowrap;}
+  border:1px solid var(--border);background:rgba(4,14,24,.6);white-space:nowrap;transition:.3s;}
 .badge.online{border-color:var(--green);color:var(--green);box-shadow:0 0 12px rgba(56,255,176,.3);}
 .badge.offline{border-color:var(--red);color:var(--red);}
-.wrap{max-width:1180px;margin:0 auto;padding:22px;}
-.search{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
-.search input{flex:1;min-width:240px;background:rgba(4,14,24,.8);border:1px solid var(--border);
-  color:var(--text);padding:14px 18px;border-radius:11px;font-size:15px;outline:none;font-family:var(--f-body);transition:.2s;}
-.search input::placeholder{color:var(--text2);opacity:.7;}
-.search input:focus{border-color:var(--cyan);box-shadow:0 0 18px rgba(0,240,255,.3);}
-.btn{padding:14px 28px;border:none;border-radius:11px;cursor:pointer;font-family:var(--f-display);font-weight:700;
-  font-size:13px;text-transform:uppercase;letter-spacing:1.5px;
-  background:linear-gradient(135deg,var(--cyan),#7ef9ff);color:#02121a;transition:.15s;box-shadow:0 0 20px rgba(0,240,255,.35);}
-.btn:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(0,240,255,.6);}
+.wrap{max-width:1180px;margin:0 auto;padding:20px;}
+.hero{margin-bottom:18px;}
+.hero .big{display:flex;gap:8px;flex-wrap:wrap;}
+.hero input{flex:1;min-width:240px;background:rgba(4,14,24,.85);border:1px solid var(--border);
+  color:var(--text);padding:16px 20px;border-radius:13px;font-size:16px;outline:none;font-family:var(--f-body);transition:.2s;
+  box-shadow:inset 0 0 22px rgba(0,191,255,.05);}
+.hero input::placeholder{color:var(--text2);opacity:.7;}
+.hero input:focus{border-color:var(--acc);box-shadow:0 0 22px rgba(0,191,255,.35);}
+.btn{padding:16px 32px;border:none;border-radius:13px;cursor:pointer;font-family:var(--f-display);font-weight:700;
+  font-size:14px;text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;
+  background:linear-gradient(135deg,var(--acc),#7ef0ff);color:#02121a;transition:.15s;box-shadow:0 0 22px rgba(0,191,255,.4);}
+.btn:hover{transform:translateY(-1px);box-shadow:0 0 34px rgba(0,191,255,.65);}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-.taiji{display:flex;justify-content:center;margin:4px 0 18px;}
-.taiji .sym{font-size:36px;animation:spin 14s linear infinite;filter:drop-shadow(0 0 14px rgba(0,240,255,.6));will-change:transform;}
-.taiji.paused .sym{animation-play-state:paused;}
-@keyframes spin{to{transform:rotate(360deg);}}
-@media(prefers-reduced-motion:reduce){.taiji .sym{animation:none;}}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.hero .hint{margin-top:8px;font-family:var(--f-mono);font-size:10px;color:var(--text2);letter-spacing:.5px;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px;}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:rgba(4,14,24,.5);
+  color:var(--text2);cursor:pointer;font-family:var(--f-mono);font-size:11px;transition:.15s;}
+.chip:hover{border-color:var(--acc);color:var(--acc);box-shadow:0 0 12px rgba(0,191,255,.25);}
+.chip.mkt{border-color:rgba(255,210,74,.35);color:var(--gold);} .chip.mkt:hover{border-color:var(--gold);box-shadow:0 0 12px rgba(255,210,74,.25);}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;min-height:120px;
+  backdrop-filter:blur(5px);box-shadow:0 0 34px -8px rgba(0,191,255,.22),inset 0 0 60px rgba(0,40,70,.12);}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
 @media(max-width:820px){.grid{grid-template-columns:1fr;}}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;min-height:220px;
-  backdrop-filter:blur(5px);box-shadow:0 0 34px -8px rgba(0,240,255,.28),inset 0 0 60px rgba(0,60,90,.14);}
+
+/* ── Gauge ─────────────────────────────────────────────── */
+.gauge{position:relative;overflow:hidden;padding:0;}
+.gauge-top{display:flex;align-items:center;gap:18px;padding:16px 20px 12px;flex-wrap:wrap;}
+.gauge-left{display:flex;align-items:baseline;gap:12px;min-width:150px;}
+.gauge-score{font-family:var(--f-display);font-size:42px;font-weight:700;letter-spacing:1px;line-height:1;}
+.gauge-label{font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:2px;}
+.gauge.pos .gauge-score, .gauge.pos .gauge-label{color:var(--pos);}
+.gauge.neg .gauge-score, .gauge.neg .gauge-label{color:var(--neg);}
+.gauge.neu .gauge-score, .gauge.neu .gauge-label{color:var(--neu);}
+.gauge-mid{flex:1;min-width:220px;}
+.meter{height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.1);}
+.meter-fill{height:100%;width:0;border-radius:6px;transition:width 1s ease, background 1s ease;
+  background:linear-gradient(90deg,var(--neg),var(--neu),var(--pos));}
+.gauge-sub{margin-top:7px;font-family:var(--f-mono);font-size:10px;color:var(--text2);letter-spacing:.4px;}
+.fal-chip{font-family:var(--f-mono);font-size:9px;letter-spacing:1px;color:var(--acc);
+  border:1px dashed rgba(0,191,255,.5);padding:3px 9px;border-radius:10px;opacity:.9;}
+.tank{position:relative;height:360px;margin:0 10px;
+  background:radial-gradient(ellipse at 50% 20%,rgba(0,191,255,.12),transparent 55%) , var(--bg);
+  border:1px solid rgba(0,191,255,.18);border-radius:14px;overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:center;
+  background-size:cover;background-position:center;}
+.waterline{position:absolute;left:0;right:0;top:58%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,191,255,.4),rgba(26,255,26,.3),transparent);}
+.waterline::after{content:'';position:absolute;inset:0;box-shadow:0 2px 14px rgba(0,191,255,.25);}
+.bub{position:absolute;bottom:-22px;border-radius:50%;border:1px solid rgba(180,240,255,.55);
+  animation:rise var(--bub-time) ease-in infinite;opacity:var(--bub-opacity);pointer-events:none;}
+.b1{left:22%;width:10px;height:10px;} .b2{left:55%;width:6px;height:6px;animation-delay:1.1s;} .b3{left:78%;width:13px;height:13px;animation-delay:2.2s;}
+@keyframes rise{0%{transform:translateY(0)}100%{transform:translateY(-430px)}}
+#fish-svg{position:relative;width:min(300px,88%);margin-bottom:36px;z-index:3;filter:drop-shadow(0 4px 18px rgba(0,0,0,.55));}
+#fishShift{transition:transform 1.1s cubic-bezier(.22,1,.36,1);will-change:transform;
+  transform:translate(0,var(--yoff));}
+#bob{animation:bob 4.2s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(-7px) rotate(-1.2deg)}50%{transform:translateY(7px) rotate(1.2deg)}}
+#tail{transform-box:fill-box;transform-origin:88% 50%;animation:wig var(--wig-time) ease-in-out infinite;}
+@keyframes wig{0%,100%{transform:rotate(var(--wig-amp))}50%{transform:rotate(calc(var(--wig-amp) * -1))}}
+.fish-body{filter:drop-shadow(0 0 16px var(--fish-glow));}
+.gauge-foot{display:flex;align-items:center;gap:12px;padding:12px 20px 16px;flex-wrap:wrap;}
+.market{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;flex-wrap:wrap;}
+.market[hidden]{display:none;}
+.mkt-sym{font-weight:700;color:var(--acc);}
+.mkt-price{color:var(--text);}
+.mkt-chg{padding:2px 8px;border-radius:8px;font-weight:600;}
+.mkt-chg.up{color:var(--pos);background:var(--pos-dim);}
+.mkt-chg.down{color:var(--neg);background:var(--neg-dim);}
+.mkt-rank{font-size:9px;color:var(--text2);border:1px solid var(--border);padding:1px 7px;border-radius:8px;}
+.falbtn{padding:9px 16px;font-size:11px;margin-left:auto;border-radius:10px;
+  background:linear-gradient(135deg,#0b1a2c,#10283d);color:var(--acc);border:1px solid rgba(0,191,255,.45);
+  box-shadow:none;}
+.falbtn:hover{box-shadow:0 0 18px rgba(0,191,255,.4);}
+.fal-state{font-family:var(--f-mono);font-size:9px;color:var(--text2);letter-spacing:.4px;}
+
+/* ── Feed / buckets ────────────────────────────────────── */
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.card-h .t{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--cyan);}
+.card-h .cnt{margin-left:auto;font-family:var(--f-mono);font-size:9px;color:var(--text2);letter-spacing:1px;}
+.feed{max-height:460px;overflow:auto;padding-right:4px;}
+.feed::-webkit-scrollbar{width:6px;} .feed::-webkit-scrollbar-thumb{background:rgba(0,191,255,.3);border-radius:3px;}
+.hitem{display:flex;gap:10px;padding:9px 2px;border-bottom:1px solid rgba(0,191,255,.08);}
+.hitem:last-child{border-bottom:none;}
+.hbadge{flex:none;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:2px;}
+.hbadge.pos{background:var(--pos-dim);color:var(--pos);}
+.hbadge.neg{background:var(--neg-dim);color:var(--neg);}
+.hbadge.neu{background:rgba(212,175,55,.16);color:var(--neu);}
+.hitem a{color:var(--text);text-decoration:none;font-size:13px;line-height:1.45;display:block;}
+.hitem a:hover{color:var(--cyan);}
+.hitem .hs{font-family:var(--f-mono);font-size:9px;color:var(--text2);letter-spacing:.4px;margin-top:2px;}
+.hitem .hs b{color:var(--acc);font-weight:500;}
+.buckets{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:10px;}
+.bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%;}
+.bcol .bar{width:100%;max-width:44px;border-radius:6px 6px 2px 2px;transition:height .8s ease;position:relative;min-height:4px;}
+.bcol.strong-neg .bar{background:linear-gradient(180deg,var(--neg),#7a120c);}
+.bcol.mild-neg .bar{background:rgba(255,59,48,.45);}
+.bcol.neutral .bar{background:rgba(212,175,55,.4);}
+.bcol.mild-pos .bar{background:rgba(26,255,26,.45);}
+.bcol.strong-pos .bar{background:linear-gradient(180deg,#d9ffd9,var(--pos));}
+.bcol .bl{font-family:var(--f-mono);font-size:8px;color:var(--text2);letter-spacing:.3px;white-space:nowrap;}
+.bcol .bn{font-family:var(--f-mono);font-size:10px;color:var(--text);}
+
+/* ── Yin / Yang ────────────────────────────────────────── */
 .card.yin{border-top:2px solid var(--cyan);}
-.card.yang{border-top:2px solid var(--mag);box-shadow:0 0 34px -8px rgba(255,43,214,.28),inset 0 0 60px rgba(90,0,70,.14);}
-.card-h{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;
-  border-bottom:1px solid var(--border);}
-.card-h .t{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;}
+.card.yang{border-top:2px solid var(--mag);box-shadow:0 0 34px -8px rgba(255,43,214,.24),inset 0 0 60px rgba(90,0,70,.12);}
 .yin .card-h .t{color:var(--cyan);} .yang .card-h .t{color:var(--mag);}
 .card-h .who{margin-left:auto;font-family:var(--f-mono);font-size:9px;color:var(--text2);letter-spacing:1px;}
 .res-title{font-family:var(--f-display);font-size:17px;font-weight:600;margin-bottom:8px;color:var(--text);}
 .res-title a{color:var(--cyan);text-decoration:none;}
 .res-title a:hover{text-decoration:underline;text-shadow:0 0 8px var(--cyan);}
 .res-body{font-size:14px;line-height:1.6;color:var(--text3);}
-.res-thumb{float:right;max-width:120px;border-radius:8px;margin:0 0 8px 12px;border:1px solid var(--border);}
+.res-thumb{float:right;max-width:110px;border-radius:8px;margin:0 0 8px 12px;border:1px solid var(--border);}
 .ai-body{font-size:14px;line-height:1.65;color:var(--text3);white-space:pre-wrap;}
 .meta{margin-top:12px;font-family:var(--f-mono);font-size:10px;color:var(--text2);letter-spacing:.5px;}
-.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--cyan);
-  border-radius:50%;animation:spin2 .8s linear infinite;display:inline-block;vertical-align:middle;}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cyan);
+  border-radius:50%;animation:spin2 .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
 @keyframes spin2{to{transform:rotate(360deg);}}
 .muted{color:var(--text2);font-size:13px;}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
-.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:rgba(4,14,24,.5);
-  color:var(--text2);cursor:pointer;font-family:var(--f-mono);font-size:11px;transition:.15s;}
-.chip:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,240,255,.25);}
-.chip.mkt{border-color:rgba(255,210,74,.35);color:var(--gold);} .chip.mkt:hover{border-color:var(--gold);box-shadow:0 0 12px rgba(255,210,74,.25);}
-.foot{text-align:center;margin-top:24px;font-family:var(--f-mono);font-size:10px;color:var(--text2);letter-spacing:.5px;}
+.foot{text-align:center;margin-top:22px;font-family:var(--f-mono);font-size:10px;color:var(--text2);letter-spacing:.5px;line-height:1.8;}
 .foot a{color:var(--text3);text-decoration:none;} .foot a:hover{color:var(--cyan);}
 .foot code{color:var(--gold);}
+@media(prefers-reduced-motion:reduce){#bob,#tail,.bub,.spinner{animation:none!important;}}
 </style>
 <script src="/sw-heal.js"></script>
 </head>
 <body>
 <div class="header">
-  <h1><span style="font-size:20px">🐟</span> <span>Tu<span class="yin">Fish</span></span> <span class="sub">YIN &amp; YANG OF RESEARCH &amp; AI</span></h1>
+  <h1><img class="logo" id="logo" src="/fal/tufish-logo.png" alt="TuFish"> <span>Tu<span class="yin">Fish</span></span> <span class="sub">SENTIMENT SWIMMER</span></h1>
   <div style="display:flex;gap:8px;align-items:center">
     <span class="badge online" id="badge-research">◐ RESEARCH</span>
     <span class="badge offline" id="badge-ai">◑ AI</span>
+    <span class="badge offline" id="badge-market">☰ MARKET</span>
   </div>
 </div>
 
 <div class="wrap">
-  <div class="taiji"><span class="sym">☯</span></div>
-
-  <div class="search">
-    <input type="text" id="q" placeholder="Ask anything… e.g. 'quantum computing', 'Bitcoin', 'Carl Jung'"
-           onkeydown="if(event.key==='Enter')run()">
-    <button class="btn" id="go" onclick="run()">Seek</button>
+  <div class="hero">
+    <div class="big">
+      <input type="text" id="q" placeholder="Scan a coin or topic… e.g. 'Bitcoin', 'Solana', 'AI chips', 'Ethereum ETF'"
+             autofocus onkeydown="if(event.key==='Enter')run()">
+      <button class="btn" id="go" onclick="run()">Scan Sentiment</button>
+    </div>
+    <div class="hint">enter ↵ or pick a chip ↓ · TuFish swims up for positive news, down for negative · fish glows green / red / gold</div>
   </div>
 
   <div class="chips" id="chips"></div>
+
+  <div class="card gauge neu" id="gaugeCard">
+    <div class="gauge-top">
+      <div class="gauge-left">
+        <div class="gauge-score" id="gaugeScore">—</div>
+        <div class="gauge-label" id="gaugeLabel">NEUTRAL</div>
+      </div>
+      <div class="gauge-mid">
+        <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+        <div class="gauge-sub" id="gaugeSub">Ask something to scan the news &amp; markets.</div>
+      </div>
+      <span class="fal-chip">generated on fal.ai</span>
+    </div>
+
+    <div class="tank" id="tank">
+      <div class="waterline"></div>
+      <span class="bub b1"></span><span class="bub b2"></span><span class="bub b3"></span>
+      <svg id="fish-svg" viewBox="0 0 300 170" aria-label="TuFish sentiment gauge">
+        <g id="fishShift">
+          <g id="bob">
+            <g id="tail">
+              <path d="M64,62 L10,34 L26,76 Z" fill="var(--fish)" opacity=".85"/>
+              <path d="M64,108 L10,136 L26,94 Z" fill="var(--fish)" opacity=".85"/>
+            </g>
+            <g class="fish-body">
+              <path d="M124,44 L150,10 L176,44 Z" fill="var(--fish)" opacity=".7"/>
+              <path d="M124,126 L150,162 L176,126 Z" fill="var(--fish)" opacity=".7"/>
+              <path d="M70,64 C100,40 180,40 232,56 C255,64 270,76 274,85 C270,94 255,106 232,114 C180,130 100,130 70,106 C60,96 60,74 70,64 Z" fill="var(--fish)"/>
+              <path d="M196,86 L216,66 L224,88 Z" fill="var(--fish)" opacity=".75"/>
+              <path d="M206,58 Q217,85 206,112" fill="none" stroke="rgba(3,10,18,.55)" stroke-width="3"/>
+              <path d="M214,62 Q224,85 214,108" fill="none" stroke="rgba(3,10,18,.35)" stroke-width="2"/>
+              <path d="M272,85 Q266,80 262,77" fill="none" stroke="rgba(3,10,18,.6)" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="241" cy="66" r="6" fill="#0c1a2b"/>
+              <circle cx="243" cy="64" r="2.3" fill="#d9f7ff"/>
+            </g>
+          </g>
+        </g>
+        <g class="fish-body" style="pointer-events:none">
+          <ellipse cx="150" cy="150" rx="80" ry="8" fill="rgba(0,0,0,.35)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="gauge-foot">
+      <div class="market" id="market"></div>
+      <button class="btn falbtn" id="falBtn" onclick="sketchScene()">Sketch aquarium · fal.ai</button>
+      <span class="fal-state" id="falState"></span>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.6fr 1fr;">
+    <div class="card">
+      <div class="card-h">
+        <span style="font-size:15px">📰</span>
+        <span class="t">News Feed · Scored</span>
+        <span class="cnt" id="feedCnt">—</span>
+      </div>
+      <div class="feed" id="feed">
+        <div class="muted">Headlines from Google News, each scored + / − by TuFish's lexicon.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h">
+        <span style="font-size:15px">📊</span>
+        <span class="t">Mood Spread</span>
+        <span class="cnt" id="bucketsCnt"></span>
+      </div>
+      <div class="buckets" id="buckets">
+        <div class="muted">Distribution of headline sentiment.</div>
+      </div>
+    </div>
+  </div>
 
   <div class="grid">
     <div class="card yin">
@@ -105,41 +265,132 @@ body{font-family:var(--f-body);color:var(--text);min-height:100vh;overflow-x:hid
         <span class="t">Yin · Research</span>
         <span class="who">Wikipedia · live</span>
       </div>
-      <div id="research"><div class="muted">Ask a question to gather real-world knowledge.</div></div>
+      <div id="research"><div class="muted">TuFish grounds every scan in real research.</div></div>
     </div>
-
     <div class="card yang">
       <div class="card-h">
         <span style="font-size:16px">◑</span>
         <span class="t">Yang · AI</span>
         <span class="who" id="ai-who">ZEROX · SHADDAI</span>
       </div>
-      <div id="ai"><div class="muted">The AI reflects on your question, grounded by the research side.</div></div>
+      <div id="ai"><div class="muted">The AI reads the fish's mood and gives its take.</div></div>
     </div>
   </div>
 
   <div class="foot">
     TuFish lives in the <b>ZEROX / Agora</b> temple of the SHADDAI world ·
-    Research = free Wikipedia REST · AI = SHADDAI <code>/api/model/chat</code> ·
+    Sentiment = Google News RSS + Wikipedia (free) + CoinGecko (free), blended 65/35 for coins ·
+    Visuals = fal.ai FLUX · AI = SHADDAI <code>/api/model/chat</code> ·
     <a href="/world">← back to world</a>
   </div>
 </div>
 
 <script>
-const MKT = ['Bitcoin','Ethereum','Solana','Decentralized finance','Stablecoin','Prediction market','Federal Reserve'];
-const GEN = ['Artificial intelligence','Quantum computing','Carl Jung','Yin and yang'];
+const MKT = ['Bitcoin','Ethereum','Solana','AI chips','Ethereum ETF','Dogecoin'];
+const GEN = ['Artificial intelligence','Quantum computing','Federal Reserve','Yin and yang'];
 const chips = document.getElementById('chips');
 function addChip(s, mkt){ const c=document.createElement('div'); c.className='chip'+(mkt?' mkt':''); c.textContent=s;
   c.onclick=()=>{ document.getElementById('q').value=s; run(); }; chips.appendChild(c); }
 MKT.forEach(s=>addChip(s,true)); GEN.forEach(s=>addChip(s,false));
 
-// ---- Perf: pause the taiji spin animation while the tab/embed is hidden ----
-const taiji = document.querySelector('.taiji');
-function syncTaiji(){ if(taiji) taiji.classList.toggle('paused', document.hidden); }
-document.addEventListener('visibilitychange', syncTaiji, { passive: true });
-syncTaiji();
+const gaugeCard = document.getElementById('gaugeCard');
+const tank = document.getElementById('tank');
 
-// ---- Probe AI backend availability (non-blocking) ----
+const THEME = {
+  positive:{color:'#1AFF1A', glow:'rgba(26,255,26,.5)'},
+  negative:{color:'#FF3B30', glow:'rgba(255,59,48,.5)'},
+  neutral: {color:'#D4AF37', glow:'rgba(212,175,55,.45)'}
+};
+
+function setGauge(score, magnitude, polarity){
+  const t = THEME[polarity] || THEME.neutral;
+  tank.style.setProperty('--fish', t.color);
+  tank.style.setProperty('--fish-glow', t.glow);
+  const mag = Math.max(0.06, (magnitude||0)/100);
+  tank.style.setProperty('--yoff', (-(score||0)*0.85)+'px');
+  tank.style.setProperty('--wig-amp', (6+34*mag)+'deg');
+  tank.style.setProperty('--wig-time', Math.max(0.45, 1.9-1.35*mag)+'s');
+  tank.style.setProperty('--bub-time', Math.max(1.2, 4.5-3.2*mag)+'s');
+  tank.style.setProperty('--bub-opacity', (0.15+0.5*mag).toFixed(2));
+  tank.style.setProperty('--yoff', (-(score||0)*0.85)+'px');
+  gaugeCard.classList.remove('pos','neg','neu');
+  gaugeCard.classList.add(polarity);
+  const el = document.getElementById('gaugeScore');
+  el.textContent = score==null ? '—' : (score>=0?'+':'')+score;
+  el.style.color = t.color;
+  document.getElementById('gaugeLabel').textContent = ({
+    positive:'POSITIVE', negative:'NEGATIVE', neutral:'NEUTRAL'
+  })[polarity];
+  document.getElementById('meterFill').style.width = Math.max(3,(magnitude||0))+'%';
+}
+
+function ago(days){
+  if (days==null || days < 0.02) return 'just now';
+  const m = Math.round(days*1440);
+  if (m < 60) return m + 'm ago';
+  if (days < 1) return Math.max(1,Math.round(days*24)) + 'h ago';
+  return Math.round(days) + 'd ago';
+}
+
+function renderFeed(list){
+  const el = document.getElementById('feed');
+  const cnt = document.getElementById('feedCnt');
+  if (!list || !list.length){
+    el.innerHTML = '<div class="muted">No fresh headlines for this query.</div>';
+    cnt.textContent = '0 heads';
+    return;
+  }
+  cnt.textContent = list.length + ' heads';
+  el.innerHTML = list.map(h => {
+    const b = h.label === 'pos' ? 'pos' : (h.label === 'neg' ? 'neg' : 'neu');
+    const arrow = b==='pos' ? '▲' : (b==='neg' ? '▼' : '●');
+    const title = h.title.replace(/^\s*"/,'').replace(/"\s*$/,'');
+    const link = h.link || '#';
+    return '<div class="hitem">' +
+      '<div class="hbadge '+b+'">'+arrow+'</div>' +
+      '<div><a href="'+escapeHtml(link)+'" target="_blank" rel="noopener">'+escapeHtml(title)+'</a>' +
+      '<div class="hs">'+(h.source ? '<b>'+escapeHtml(h.source)+'</b> · ' : '')+ago(h.days)+'</div></div></div>';
+  }).join('');
+}
+
+function renderBuckets(b){
+  const el = document.getElementById('buckets');
+  const cnt = document.getElementById('bucketsCnt');
+  if (!b){
+    el.innerHTML = '<div class="muted">Distribution of headline sentiment.</div>';
+    cnt.textContent = ''; return;
+  }
+  cnt.textContent = b.reduce((a,n)=>a+n,0) + ' scored';
+  const labels = ['Strong −','Mild −','Neutral','Mild +','Strong +'];
+  const cls = ['strong-neg','mild-neg','neutral','mild-pos','strong-pos'];
+  const max = Math.max(1, ...b);
+  el.innerHTML = b.map((n,i)=>
+    '<div class="bcol '+cls[i]+'">' +
+      '<span class="bn">'+n+'</span>' +
+      '<div class="bar" style="height:'+Math.max(4, Math.round(n/max*100))+'%"></div>' +
+      '<span class="bl">'+labels[i]+'</span>' +
+    '</div>').join('');
+}
+
+function renderMarket(m){
+  const el = document.getElementById('market');
+  if (!m){
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  const chg = m.change24h;
+  const up = chg == null || chg >= 0;
+  el.innerHTML =
+    '<span class="mkt-sym">'+escapeHtml(m.symbol)+'</span>' +
+    '<span class="mkt-price">$'+Number(m.price).toLocaleString(undefined,{maximumFractionDigits:6})+'</span>' +
+    (chg==null ? '' : '<span class="mkt-chg '+(up?'up':'down')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+'%</span>') +
+    (m.rank ? '<span class="mkt-rank">rank #'+m.rank+'</span>' : '') +
+    '<span class="mkt-rank" style="font-size:8px">CoinGecko live</span>';
+  const badge = document.getElementById('badge-market');
+  badge.className = 'badge online'; badge.textContent = '☰ MARKET';
+}
+
 let AI_ONLINE = false;
 (async () => {
   try {
@@ -153,73 +404,75 @@ let AI_ONLINE = false;
   b.textContent = (AI_ONLINE ? '◑ AI' : '◑ AI OFFLINE');
 })();
 
-const escapeHtml = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const escapeHtml = s => String(s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
 async function run() {
   const q = document.getElementById('q').value.trim();
   if (!q) return;
   const goBtn = document.getElementById('go');
   goBtn.disabled = true;
+  document.getElementById('gaugeScore').textContent = '…';
+  document.getElementById('gaugeSub').textContent = 'TuFish is diving into the news stream…';
   document.getElementById('research').innerHTML = '<div class="muted"><span class="spinner"></span> Gathering research…</div>';
   document.getElementById('ai').innerHTML = '<div class="muted"><span class="spinner"></span> AI reflecting…</div>';
 
-  // Research first so the AI can be grounded by it.
-  const research = await fetchResearch(q);
-  renderResearch(research);
-  await fetchAI(q, research);
+  let senti = null;
+  try {
+    const r = await fetch('/api/tufish/sentiment?q=' + encodeURIComponent(q), { signal: AbortSignal.timeout(20000) });
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || ('status ' + r.status));
+    senti = d;
+  } catch (e) {
+    setGauge(0, 0, 'neutral');
+    document.getElementById('gaugeScore').textContent = '!';
+    document.getElementById('gaugeLabel').textContent = 'OFFLINE';
+    const gm = document.getElementById('gaugeSub');
+    gm.textContent = 'Could not reach /api/tufish/sentiment.';
+    gm.style.color = 'var(--neg)';
+    document.getElementById('research').innerHTML = '<div class="muted">' + escapeHtml(e.message || String(e)) + '</div>';
+    goBtn.disabled = false;
+    return;
+  }
+
+  setGauge(senti.score, senti.magnitude, senti.polarity);
+  document.getElementById('gaugeSub').textContent =
+    senti.title + ' · ' + senti.meta.news + ' headlines' + (senti.market ? ' · live price' : '') +
+    ' · confidence ' + Math.round(senti.confidence*100) + '%';
+  renderFeed(senti.headlines);
+  renderBuckets(senti.buckets);
+  renderMarket(senti.market);
+  renderResearch(senti.wiki);
+  await fetchAI(q, senti);
 
   goBtn.disabled = false;
 }
 
-// ===== YIN — real Wikipedia REST summary (no key) =====
-async function fetchResearch(q) {
-  // Resolve a canonical title first (handles fuzzy queries), then fetch summary.
-  let title = q;
-  try {
-    const s = await fetch('https://en.wikipedia.org/w/rest.php/v1/search/page?q=' +
-      encodeURIComponent(q) + '&limit=1', { signal: AbortSignal.timeout(9000) });
-    if (s.ok) {
-      const sd = await s.json();
-      if (sd.pages && sd.pages.length) title = sd.pages[0].title;
-    }
-  } catch {}
-  try {
-    const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' +
-      encodeURIComponent(title.replace(/ /g,'_')), { signal: AbortSignal.timeout(9000) });
-    if (!r.ok) return { error: 'No Wikipedia article found for "' + q + '".' };
-    const d = await r.json();
-    return {
-      title: d.title,
-      extract: d.extract || 'No summary available.',
-      url: (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || null,
-      thumb: (d.thumbnail && d.thumbnail.source) || null
-    };
-  } catch (e) {
-    return { error: 'Research fetch failed: ' + (e.message || e) };
-  }
-}
-
-function renderResearch(r) {
+function renderResearch(w){
   const el = document.getElementById('research');
-  if (r.error) { el.innerHTML = '<div class="muted">' + escapeHtml(r.error) + '</div>'; return; }
+  if (!w || !w.extract) { el.innerHTML = '<div class="muted">No Wikipedia article for this query.</div>'; return; }
   el.innerHTML =
-    (r.thumb ? '<img class="res-thumb" src="' + escapeHtml(r.thumb) + '" alt="">' : '') +
-    '<div class="res-title">' + (r.url
-      ? '<a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">' + escapeHtml(r.title) + '</a>'
-      : escapeHtml(r.title)) + '</div>' +
-    '<div class="res-body">' + escapeHtml(r.extract) + '</div>' +
+    (w.thumb ? '<img class="res-thumb" src="' + escapeHtml(w.thumb) + '" alt="">' : '') +
+    '<div class="res-title">' + (w.url
+      ? '<a href="' + escapeHtml(w.url) + '" target="_blank" rel="noopener">' + escapeHtml(w.title) + '</a>'
+      : escapeHtml(w.title)) + '</div>' +
+    '<div class="res-body">' + escapeHtml(w.extract) + '</div>' +
     '<div class="meta">Source: Wikipedia (live REST API)</div>';
 }
 
-// ===== YANG — real SHADDAI AI via /api/model/chat =====
-async function fetchAI(q, research) {
+async function fetchAI(q, senti) {
   const el = document.getElementById('ai');
-  const grounding = (research && !research.error && research.extract)
-    ? ('\n\nResearch context (from Wikipedia):\n' + research.extract.slice(0, 1200))
-    : '';
-  const prompt = 'You are ZEROX, the markets & intelligence agent of SHADDAI. ' +
-    'A user is researching: "' + q + '". Give a concise, insightful 2-4 sentence take — ' +
-    'connect the topic to opportunity, risk, or a fresh angle.' + grounding;
+  const polar = (senti.polarity||'neutral').toUpperCase();
+  const grounding = (senti.wiki && senti.wiki.extract)
+    ? ('\n\nWikipedia research:\n' + senti.wiki.extract.slice(0, 900)) : '';
+  const marketLine = senti.market
+    ? ('\nLive market: ' + senti.market.name + ' (' + senti.market.symbol + ') $' + senti.market.price +
+       (senti.market.change24h!=null ? ' · 24h ' + senti.market.change24h.toFixed(2) + '%' : '') + '.') : '';
+  const prompt = 'You are ZEROX, the markets & intelligence agent of SHADDAI. A user asked TuFish to scan: "' +
+    q + '". Result: sentiment score ' + (senti.score>=0?'+':'') + senti.score +
+    ' (range -100..100), polarity ' + polar + ', magnitude ' + senti.magnitude +
+    ', built from ' + senti.meta.news + ' news headlines.' +
+    ' Give a concise, insightful 2-4 sentence take — do you agree with the fish? Where is the risk, where is the edge?' +
+    marketLine + grounding;
   try {
     const r = await fetch('/api/model/chat', {
       method: 'POST',
@@ -237,6 +490,57 @@ async function fetchAI(q, research) {
   } catch (e) {
     el.innerHTML = '<div class="muted">◑ AI offline — could not reach SHADDAI model backend.' +
       '<br><span style="font-size:11px">' + escapeHtml(e.message || String(e)) + '</span></div>';
+  }
+}
+
+// ── fal.ai aquarium scene ─────────────────────────────────
+function applyScene(url){
+  tank.style.backgroundImage = "linear-gradient(180deg, rgba(3,8,18,.18), rgba(3,8,18,.55)), url('" + String(url).replace(/\\/g,'\\\\').replace(/'/g, "\\'") + "')";
+}
+(function restoreScene(){ try { const u = localStorage.getItem('tufish_scene'); if (u) applyScene(u); } catch(e){} })();
+
+async function sketchScene(){
+  const btn = document.getElementById('falBtn');
+  const st = document.getElementById('falState');
+  btn.disabled = true;
+  st.textContent = '⌛ fal.ai is dreaming…';
+  st.style.color = 'var(--acc)';
+  const prompt = "ultra-detailed dark cyberpunk aquarium scene, empty tank with no fish, deep abyss blue-black water, bioluminescent teal and emerald underwater plants and coral, faint shafts of pale light from above, drifting particles, atmospheric haze, cinematic lighting, 4k";
+  const payload = { prompt, width: 1024, height: 576, model: 'fal' };
+  try {
+    let url = null;
+    try {
+      const r = await fetch('/api/image/generate', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload), signal: AbortSignal.timeout(60000)
+      });
+      const d = await r.json();
+      if (d && d.success) url = d.url || d.image_url || null;
+    } catch {}
+    if (!url) {
+      try {
+        const r = await fetch('/api/image/generate-premium', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ prompt, width: 1024, height: 576 }), signal: AbortSignal.timeout(60000)
+        });
+        const d = await r.json();
+        if (d && d.success) url = d.url || d.image_url || null;
+      } catch {}
+    }
+    if (url) {
+      applyScene(url);
+      try { localStorage.setItem('tufish_scene', url); } catch {}
+      st.textContent = '✓ fal.ai FLUX aquarium painted';
+      st.style.color = 'var(--pos)';
+    } else {
+      st.textContent = '⛔ fal.ai unreachable (demo limit?) — try again shortly';
+      st.style.color = 'var(--neg)';
+    }
+  } catch (e) {
+    st.textContent = '⛔ error: ' + (e.message || e);
+    st.style.color = 'var(--neg)';
+  } finally {
+    btn.disabled = false;
   }
 }
 </script>

@@ -300,17 +300,19 @@ async function trackTick() {
       // tiny trade → a fake "250x". Never record a peak (or fire a win) unless the
       // call had real liquidity (liq >= $10K) at entry. Prevents false ATH / hit-rate.
       const hasRealLiq = (Number(call.liq) || 0) >= 10000;
-      if (call.curMult > call.peakMult && hasRealLiq) {
-        call.peakMult = call.curMult; changed = true;
-        // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
-        try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
-      }
+       const currentOfficial = _capM(call, call.curMult);
+       const peakOfficial = _capM(call, call.peakMult);
+       if (currentOfficial > peakOfficial && hasRealLiq) {
+         call.peakMult = call.curMult; changed = true;
+         // feed the new peak into token-db so ZEROX learning has real win/loss outcomes (closes the loop)
+         try { require('./token-db').updateOutcome(call.mint, { peakMult: call.peakMult, curMult: call.curMult, curFdv: call.curFdv }); } catch (e) { console.warn('[pnl] updateOutcome error:', e.message); }
+       }
       // Trail snapshotting — store FDV history for sparklines (Race to 1B tab)
       if (!call.trail) call.trail = [];
       call.trail.push({ t: _now, fdv: call.curFdv, mult: call.curMult });
       // cap at 200 points (~17h at 5min intervals) to keep JSON size reasonable
       if (call.trail.length > 200) call.trail = call.trail.slice(-200);
-      // Fire the HIGHEST newly-crossed milestone. A token that jumps 1x -> 1000x+
+       // Fire the HIGHEST newly-crossed milestone. A token that jumps 1x -> 1000x+
       // between two 8-min ticks used to get stuck announcing "2x WIN" forever (the
       // lowest uncrossed level got broadcast, then every level above it was silently
       // consumed by later ticks without ever posting — see ZCAT: peak 6,429,223x,
@@ -318,7 +320,8 @@ async function trackTick() {
       // sent said "2x"). Recording every crossed level still keeps the PNL card's
       // milestone trail accurate; only the headline now reflects reality.
       if (hasRealLiq) {
-        const _newlyCrossed = MILESTONES.filter(m => call.peakMult >= m && !call.milestones.includes(m));
+        const cappedPeak = _capM(call, call.peakMult);
+        const _newlyCrossed = MILESTONES.filter(m => cappedPeak >= m && !call.milestones.includes(m));
         if (_newlyCrossed.length) {
           call.milestones.push(..._newlyCrossed);
           hit = _newlyCrossed[_newlyCrossed.length - 1];   // broadcast the highest, not the lowest
@@ -358,12 +361,12 @@ function stats(period) {
   const since = _now - span * 24 * 3600 * 1000;
   const rows = _state.calls.filter(c => c.ts >= since && c.source !== 'seed' && (Number(c.liq) || 0) >= 10000);
   const total = rows.length;
-  const hits2 = rows.filter(c => c.peakMult >= 2).length;
-  const hits5 = rows.filter(c => c.peakMult >= 5).length;
-  const hits10 = rows.filter(c => c.peakMult >= 10).length;
+  const hits2 = rows.filter(c => _capM(c, c.peakMult) >= 2).length;
+  const hits5 = rows.filter(c => _capM(c, c.peakMult) >= 5).length;
+  const hits10 = rows.filter(c => _capM(c, c.peakMult) >= 10).length;
   const hitRate = total ? Math.round((hits2 / total) * 100) : 0;
   const avgPeak = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total).toFixed(1) : '0';
-  const best = rows.slice().sort((a, b) => b.peakMult - a.peakMult).slice(0, 5);
+  const best = rows.slice().sort((a, b) => _capM(b, b.peakMult) - _capM(a, a.peakMult)).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
   const bestTxt = best.length
     ? best.map(c => `• <b>$${_esc(c.symbol || c.name || '?')}</b> — <b>${_dispPeak(c)}x</b>`).join('\n')
@@ -373,8 +376,8 @@ function stats(period) {
   const srcLines = sources.map(src => {
     const s = rows.filter(c => c.source === src);
     if (!s.length) return null;
-    const r2 = s.filter(c => c.peakMult >= 2).length;
-    const r5 = s.filter(c => c.peakMult >= 5).length;
+    const r2 = s.filter(c => _capM(c, c.peakMult) >= 2).length;
+    const r5 = s.filter(c => _capM(c, c.peakMult) >= 5).length;
     return `  ${src.padEnd(10)} ${String(s.length).padStart(3)} calls · 2x: ${Math.round(r2/s.length*100)}% · 5x: ${Math.round(r5/s.length*100)}%`;
   }).filter(Boolean).join('\n');
   const ch = core.channel() || '@ShaddaiLabs';
@@ -434,12 +437,12 @@ function distribution() {
   _now = Date.now();
   const rows = _state.calls;
   const total = rows.length;
-  const inB = (lo, hi) => rows.filter(c => c.peakMult >= lo && (hi ? c.peakMult < hi : true)).length;
+  const inB = (lo, hi) => rows.filter(c => _capM(c, c.peakMult) >= lo && (hi ? _capM(c, c.peakMult) < hi : true)).length;
   const b12 = inB(1, 2), b25 = inB(2, 5), b510 = inB(5, 10), b10 = inB(10, 0);
   const hits = b25 + b510 + b10;
   const hitRate = total ? Math.round((hits / total) * 100) : 0;
   const avg = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total) : 0;
-  const top = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => b.peakMult - a.peakMult).slice(0, 250);
+  const top = rows.slice().filter(c => c.symbol || c.name).sort((a, b) => _capM(b, b.peakMult) - _capM(a, a.peakMult)).slice(0, 250);
   const ch = core.channel() || '@ShaddaiLabs';
   // Show as many top performers as fit — Telegram hard-caps a message at 4096 chars, so build the
   // list up to a safe budget (leaves room for the header/footer) then note how many more there are.
@@ -789,8 +792,8 @@ function _shape(c) {
     rank: Number(c.rank) || 0,
     entryFdv: Number(c.entryFdv) || 0,
     entryPrice: Number(c.entryPrice) || 0,
-    currentMult: Number((c.curMult || 1).toFixed ? +Number(c.curMult || 1).toFixed(4) : c.curMult) || 1,
-    peakMult: +Number(c.peakMult || 1).toFixed(4),
+    currentMult: +_capM(c, c.curMult).toFixed(4),
+    peakMult: +_capM(c, c.peakMult).toFixed(4),
     ts: c.ts || 0,
     // Health / quality metrics (used by the Pro-Signals LAUNCHES pane + Ask ZEROX tool)
     name: c.name || '',
