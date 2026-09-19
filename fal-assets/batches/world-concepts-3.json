@@ -1,0 +1,26 @@
+[
+ {
+  "id": "bld-bio-pod-tower-v2",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no signs, no watermark. One sleek monolithic candy-red bio-architecture building: smooth flowing lofted shells like fused glossy mushroom caps stacked in three tiers, wide rounded tinted glass bands, thick green rooftop gardens on each tier, sweeping red ramps flowing down the sides. A building, not a tree, not fruit, futuristic eco-architecture.",
+  "out": "fal-assets/world/concepts2/buildings/bld-bio-pod-tower-v2.png"
+ },
+ {
+  "id": "bld-sky-dome-v2",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no signs, no watermark. A hi-tech sky-dome habitat: a geodesic dome of hexagonal glass panels on brushed titanium ribs, glowing white-blue interior light, a floating metal ring halo above it, a landing pad platform, a cluster of antenna arrays, sleek and clean, no moss, no stairs, no rocks.",
+  "out": "fal-assets/world/concepts2/buildings/bld-sky-dome-v2.png"
+ },
+ {
+  "id": "bld-holo-market-v2",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no signs, no watermark. A futuristic holo-market plaza pavilion: a sweeping white curved canopy roof on slender pylons with floating gold holographic rings above it, glowing vending pillars along the base, a marble disc platform, sleek and clean, no signs, no stalls, no awnings.",
+  "out": "fal-assets/world/concepts2/buildings/bld-holo-market-v2.png"
+ }
+]
