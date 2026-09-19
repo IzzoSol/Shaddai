@@ -12,7 +12,7 @@ function isAdmin(chatId) {
 
 router.get('/tg', (req, res) => {
   const j = tgc.load().slice(-60).reverse();
-  res.json({ ok: true, count: j.length, journal: j, adminId: process.env.SHADDAI_ADMIN_ID || '' });
+  res.json({ ok: true, count: j.length, journal: j, adminId: process.env.SHADDAI_ADMIN_ID || '', status: tgc.status() });
 });
 
 router.post('/tg', async (req, res) => {

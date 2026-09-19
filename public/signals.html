@@ -84,105 +84,7 @@ header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:4
 .tgc-res{ margin-top:4px; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
 .tg-compose{ display:flex; gap:8px; align-items:flex-end; }
 #tgIn{ flex:1; resize:vertical; min-height:56px; background:var(--shell); color:var(--ink); border:1px solid var(--edge2); border-radius:6px; padding:8px 10px; font-family:var(--f-mono); font-size:12px; }
-/* TG Code console */
-.view#v-tg{ display:none; } .view#v-tg.on{ display:flex; flex-direction:column; }
-.tg-ch{ display:flex; flex-direction:column; gap:10px; padding:12px; height:100%; overflow:hidden; }
-.tg-bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:var(--f-mono); font-size:12px; letter-spacing:.06em; color:var(--ink-soft-b); }
-.tg-feed{ flex:1; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:4px 2px; }
-.tgc{ border:1px solid var(--edge2); border-left:3px solid var(--emerald); border-radius:6px; background:rgba(0,255,156,.03); padding:8px 10px; font-family:var(--f-mono); font-size:12px; line-height:1.5; }
-.tgc.err{ border-left-color:var(--rose); background:rgba(255,80,80,.05); }
-.tgc.empty{ opacity:.55; border-style:dashed; }
-.tgc-head{ display:flex; gap:10px; color:var(--ink-soft); font-size:11px; }
-.tgc-code{ color:#8fffc9; white-space:pre-wrap; word-break:break-word; }
-.tgc-res{ margin-top:4px; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
-.tg-compose{ display:flex; gap:8px; align-items:flex-end; }
-#tgIn{ flex:1; resize:vertical; min-height:56px; background:var(--shell); color:var(--ink); border:1px solid var(--edge2); border-radius:6px; padding:8px 10px; font-family:var(--f-mono); font-size:12px; }
 
-/* ── filter rails ──────────────────────────────────────────────────────── */
-.rails{ flex:0 0 auto; background:var(--shell); border-bottom:1px solid var(--edge); }
-.rail{ display:flex; gap:6px; overflow-x:auto; padding:8px 12px;
-  scrollbar-width:none; -ms-overflow-style:none; }
-.rail::-webkit-scrollbar{ display:none; }
-.rail + .rail{ padding-top:0; }
-.chip{ flex:0 0 auto; min-height:44px; padding:0 12px; display:inline-flex; align-items:center; gap:6px;
-  border:1px solid var(--edge2); border-radius:4px; background:linear-gradient(180deg,var(--card),#0b1116);
-  color:var(--ink-soft); font-family:var(--f-mono); font-size:13px; font-weight:600; letter-spacing:.04em;
-  cursor:pointer; white-space:nowrap; transition:background .15s, color .15s, border-color .15s, box-shadow .15s; }
- .chip[aria-pressed=true]{ background:var(--emerald); color:#04120c; border-color:var(--emerald);
-   box-shadow:0 0 18px -4px rgba(0,255,156,.8), inset 0 0 8px rgba(0,255,156,.4); }
- .rail.modes .chip{ font-size:15px; padding:0 18px; }
- .rail.modes .chip[aria-pressed=true]{ background:var(--gold); border-color:var(--gold); color:#140f02;
-   box-shadow:0 0 18px -4px rgba(232,196,92,.8); }
- .chip .ct{ font-size:10px; opacity:.7; font-weight:600; }
-
-/* ── the one scrolling surface ─────────────────────────────────────────── */
-main{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
-  -webkit-overflow-scrolling:touch; padding:8px calc(4vw,8px) calc(16vw,24px); }
- .bar{ display:flex; justify-content:space-between; align-items:baseline; gap:6px;
-   font-size:11px; color:var(--ink-faint); letter-spacing:.08em; margin-bottom:6px; }
- .bar b{ color:var(--ink); font-size:13px; }
- .empty{ padding:32px 14px; text-align:center; color:var(--ink-faint); font-size:12px; line-height:1.5; }
- .view{ display:none; } .view.on{ display:block; }
-
-/* ── SWARM — MiroFish terminal embedded full-bleed ────────────────────── */
-#v-swarm{ display:none; flex-direction:column; height:100%; }
-#v-swarm.on{ display:flex; }
-.swarm-ch{ display:flex; align-items:center; gap:8px; flex:0 0 auto; font-size:10.5px;
-  letter-spacing:.1em; color:var(--ink-soft); padding:2px 2px 8px; }
-.swarm-ch b{ font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--gold);
-  text-shadow:0 0 10px rgba(232,196,92,.45); white-space:nowrap; }
-.swarm-ch .sc-note{ color:var(--ink-faint); white-space:nowrap; overflow:hidden;
-  text-overflow:ellipsis; font-size:10px; }
-.swarm-ch .sc-full{ margin-left:auto; flex:0 0 auto; text-decoration:none; color:var(--ink-soft);
-  border:1px solid var(--edge2); padding:4px 12px; border-radius:2px; font-size:10px;
-  font-weight:600; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
-.swarm-ch .sc-full:active{ color:var(--gold); border-color:var(--gold); }
-#v-swarm iframe{ flex:1 1 auto; min-height:0; width:100%; border:0; display:block;
-  background:#010b10; }
-
-/* ── MARKET STRIP + NEWS TICKER — one 34px band under the header ──────────
-   Left are the live market dots (BTC/ETH/SOL); right is the key-free news
-   feed scrolling forever. Pauses on hold. The strip is global — it stays
-   across all three apps (Signals / Markets / Swarm). */
-#mktstrip{ flex:0 0 auto; display:flex; align-items:stretch; gap:10px;
-  background:#04070a; border-bottom:1px solid var(--edge); padding:4px 10px; min-height:34px; }
-#mktChips{ display:flex; gap:6px; align-items:center; flex:0 0 auto; }
-#mktChips .mkt{ display:inline-flex; align-items:center; gap:6px; font-size:12px;
-  font-weight:700; letter-spacing:.03em; padding:5px 11px; border:1px solid var(--edge2);
-  border-radius:15px; color:var(--ink-soft); background:rgba(255,255,255,.02);
-  white-space:nowrap; font-variant-numeric:tabular-nums; }
-#mktChips .mkt b{ color:var(--ink); }
-#mktChips .mkt .up{ color:var(--emerald); text-shadow:0 0 8px rgba(0,255,156,.5); }
-#mktChips .mkt .dn{ color:#fb7185; text-shadow:0 0 8px rgba(251,113,133,.4); }
-#ticker{ flex:1 1 auto; min-width:0; overflow:hidden; display:flex; align-items:center;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);
-  mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent); }
-#ttrack{ display:inline-flex; align-items:center; white-space:nowrap; will-change:transform;
-  animation:tick 60s linear infinite; }
-#ticker:hover #ttrack{ animation-play-state:paused; }
-@keyframes tick{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
-.tt{ font-size:12.5px; color:var(--ink-soft); letter-spacing:.02em; padding:0 20px;
-  border-right:1px solid var(--edge2); display:inline-flex; align-items:center; gap:7px; }
-.tt a{ color:inherit; text-decoration:none; }
-.tt a:active{ color:var(--gold); }
-.tt .ts{ color:#d4af37; font-weight:700; text-transform:uppercase; letter-spacing:.09em; font-size:10px; }
-
-/* ── NEWS CONTEXT — the headline strip inside a coin sheet ──────────── */
-#cnw{ margin-top:14px; border-top:1px solid var(--edge); padding-top:12px; }
-#cnw .cnl{ display:flex; align-items:center; gap:7px; font-size:9.5px; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--gold); margin-bottom:7px; }
-#cnw .cnl::before{ content:''; width:5px; height:5px; background:var(--gold);
-  box-shadow:0 0 8px var(--gold); border-radius:50%; }
-#cnw .cnv{ display:block; font-size:12.5px; line-height:1.55; color:var(--ink-soft); }
-#cnw .cnv a{ display:block; color:var(--ink-soft); text-decoration:none; padding:3px 0;
-  border-left:2px solid var(--edge2); padding-left:9px; margin-bottom:2px; }
-#cnw .cnv a em{ font-style:normal; color:var(--ink-faint); font-size:10.5px; }
-#cnw .cnv a:active{ color:var(--gold); border-color:var(--gold); }
-
-/* Button feel — the bare chips get a thumb, a radius and a press state so a
-   tap reads as a tap, not a link. */
-.chip{ min-height:36px; border-radius:3px; }
-.chip:active, .atab:active{ transform:scale(.96); }
 .atab{ padding:10px 16px; }
 
 /* ── DEMO TRADING — one-thumb paper desk with a live equity chart ─────────
@@ -404,7 +306,7 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
     <button class="atab on" data-app="sig" aria-pressed="true" type="button">Signals</button>
     <button class="atab" data-app="mk" aria-pressed="false" type="button">Markets</button>
     <button class="atab" data-app="swarm" aria-pressed="false" type="button">🐟 Swarm</button>
-    <button class="atab" data-app="demo" aria-pressed="false" type="button">🧪 Demo</button><button class="atab" data-app="tg" aria-pressed="false" type="button">TG Code</button><button class="atab" data-app="tg" aria-pressed="false" type="button">TG Code</button>
+    <button class="atab" data-app="demo" aria-pressed="false" type="button">🧪 Demo</button><button class="atab" data-app="tg" aria-pressed="false" type="button">TG Code</button>
   </div>
   <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
@@ -478,17 +380,7 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
   </div>
 <div class="view" id="v-tg">
     <div class="tg-ch">
-      <div class="tg-bar"><b>⌨ TERMINAL CODE</b> <span class="sc-note">sandboxed JS · admin gated · 4s cap · also reachable via /code from Telegram</span></div>
-      <div class="tg-feed" id="tgFeed"><div class="tgc">… loading journal</div></div>
-      <div class="tg-compose">
-        <textarea id="tgIn" rows="3" spellcheck="false" placeholder="Type JS to run on the backend — e.g.  (() => { const n = Math.floor(Math.random()*100); return 'roll '+n; })()"></textarea>
-        <button class="atab" id="tgRun" type="button" style="flex:0 0 auto;">Run ▸</button>
-      </div>
-    </div>
-  </div>
-<div class="view" id="v-tg">
-    <div class="tg-ch">
-      <div class="tg-bar"><b>⌨ TERMINAL CODE</b> <span class="sc-note">sandboxed JS · admin gated · 4s cap · also reachable via /code from Telegram</span></div>
+      <div class="tg-bar"><b>⌨ TERMINAL CODE</b> <span class="sc-note" id="tgStatus">sandboxed JS · admin gated · 4s cap · /code via Telegram</span></div>
       <div class="tg-feed" id="tgFeed"><div class="tgc">… loading journal</div></div>
       <div class="tg-compose">
         <textarea id="tgIn" rows="3" spellcheck="false" placeholder="Type JS to run on the backend — e.g.  (() => { const n = Math.floor(Math.random()*100); return 'roll '+n; })()"></textarea>
@@ -1156,40 +1048,8 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
           '</div>';
       });
       box.innerHTML = html || '<div class="tgc empty">No runs yet — send <code>/code 2+2</code> from Telegram, or type below.</div>';
-    }).catch(function () { if (!silent) { var box = $('tgFeed'); if (box) box.innerHTML = '<div class="tgc err">⚠ bridge offline — is /api/terminal/tg mounted?</div>'; } });
-  }
-  function sendTG() {
-    var inp = $('tgIn'); if (!inp) return;
-    var code = inp.value.trim(); if (!code) return;
-    inp.value = '… running …';
-    fetch('/api/terminal/tg', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: code, chatId: 'terminal' }) })
-      .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.ok) { loadTG(); } else { inp.value = code; if (d && d.error) alert('❌ ' + d.error); else alert('❌ run failed'); } })
-      .catch(function () { inp.value = code; alert('❌ bridge unreachable'); });
-  }
-  var tgTimer = null;
-  function ensureTG() {
-    var v = $('v-tg'); if (!v) return;
-    [].forEach.call(document.querySelectorAll('.view'), function (x) { x.classList.remove('on'); });
-    v.classList.add('on');
-    loadTG();
-    var run = $('tgRun'); if (run) run.onclick = sendTG;
-    if (tgTimer === null) tgTimer = setInterval(function () { if (APP === 'tg') loadTG(true); }, 20000);
-  }
-  function tgEsc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  function loadTG(silent) {
-    fetch('/api/terminal/tg?_=' + Date.now()).then(function (r) { return r.json(); }).then(function (d) {
-      var box = $('tgFeed'); if (!box || !(d && d.ok)) return;
-      var html = '';
-      (d.journal || []).forEach(function (e) {
-        var hh = new Date(e.t).toLocaleTimeString();
-        html += '<div class="tgc' + (e.err ? ' err' : ' ok') + '">' +
-          '<div class="tgc-head"><b>' + hh + '</b><span>' + tgEsc(String(e.chat || '').slice(0, 12)) + '</span></div>' +
-          '<div class="tgc-code">' + tgEsc(e.code) + '</div>' +
-          (e.result ? '<div class="tgc-res">' + tgEsc(e.result) + '</div>' : '') +
-          '</div>';
-      });
-      box.innerHTML = html || '<div class="tgc empty">No runs yet — send <code>/code 2+2</code> from Telegram, or type below.</div>';
+      var st = d.status; var sb = $('tgStatus');
+      if (sb && st) { sb.textContent = 'host ' + st.host + (st.host === 'render' ? ' · 24/7 cloud' : ' · laptop only') + ' · admin ' + (st.admin ? 'SET' : 'UNSET') + ' · bot token ' + (st.token ? 'set' : 'MISSING') + ' · ' + st.journal + ' runs · ' + st.states + ' keys'; }
     }).catch(function () { if (!silent) { var box = $('tgFeed'); if (box) box.innerHTML = '<div class="tgc err">⚠ bridge offline — is /api/terminal/tg mounted?</div>'; } });
   }
   function sendTG() {
