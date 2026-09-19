@@ -429,7 +429,30 @@ swarm extra CSS
   text-shadow:0 0 16px color-mix(in srgb, var(--pc,var(--flat)) 60%, transparent);
   filter:drop-shadow(0 0 4px rgba(0,0,0,.4)); }
 
-/* ── sheet ─────────────────────────────────────────────────────────────── */
+/* ── live ticker on signal cards (coingecko majors, cached 60s) ── */
+  var TICK = {}, TICKMAP = { BTC:'bitcoin', ETH:'ethereum', SOL:'solana', BONK:'bonk', DOGE:'dogecoin', PEPE:'pepe', WIF:'dogwifcoin', BOME:'book-of-meme', XRP:'ripple', ADA:'cardano', AVAX:'avalanche-2', LINK:'chainlink', DOT:'polkadot', LTC:'litecoin', NEAR:'near', SUI:'sui', HNT:'helium', TON:'the-open-network', TRX:'tron', AAVE:'aave', JUP:'jupiter-exchange-solana', PYTH:'pyth-network', JTO:'jito-governance-token', WBNB:'binancecoin' };
+  function paint(boot, p, chg) { var up = chg >= 0; boot.textContent = '$' + Number(p).toFixed(p >= 1000 ? 2 : p >= 1 ? 3 : 6) + ' ' + (up ? '\u25b2' : '\u25bc') + (chg >= 0 ? '+' : '') + Number(chg).toFixed(2) + '%'; boot.className = 'tick ' + (up ? 'up' : 'dn'); }
+  function tickRows() {
+    if (APP !== 'sig') return;
+    [].forEach.call(document.querySelectorAll('.row, .rank'), function (el) {
+      if (el.__ticked) return; el.__ticked = true;
+      var mint = el.getAttribute('data-mint') || '';
+      var c = VIEW.concat(ALL, TOP, MK.feed).find(function (x) { return x.mint === mint; });
+      var symEl = el.querySelector('.sym') || el.querySelector('.s');
+      if (!symEl || !c) return;
+      var u = String(c.symbol || c.name || '').trim().toUpperCase(), id = TICKMAP[u];
+      if (!id) return;
+      var boot = document.createElement('i'); boot.className = 'tick'; boot.textContent = '\u2026';
+      symEl.parentNode.insertBefore(boot, symEl.nextSibling);
+      var chg = typeof c.chg24 === 'number' ? c.chg24 : 0;
+      if (TICK[id] && Date.now() - TICK[id].t < 60000) return paint(boot, TICK[id].p, chg);
+      fetch('/api/coingecko/price/' + id + '?_=' + Date.now()).then(function (r) { return r.json(); }).then(function (j) {
+        var k = Object.keys(j || {})[0], p = k && j[k] && j[k].usd;
+        if (p) { TICK[id] = { p: p, t: Date.now() }; paint(boot, p, chg); } else { boot.remove(); }
+      }).catch(function () { boot.remove(); });
+    });
+  }
+  /* ── sheet ─────────────────────────────────────────────────────────────── */
 #sheet{ position:fixed; inset:0; z-index:70; display:none; }
 #sheet.on{ display:block; }
 #sheet .scrim{ position:absolute; inset:0; background:rgba(0,0,0,.74); }
@@ -539,7 +562,8 @@ background:
   .swarm-chip:hover{ transform:translateY(-2px); }
   .hl:hover b{ color:#7dffb2; }
   .tgc{ background:rgba(0,255,156,.05); }
-</style>
+.tick{ display:block; font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:.04em; margin-top:3px; } .tick.up{ color:#59ffb4; text-shadow:0 0 8px rgba(89,255,180,.45); } .tick.dn{ color:#ff7a7a; }
+  </style>
 <script src="/sw-heal.js"></script>
 </head>
 <body>
@@ -1102,6 +1126,7 @@ background:
     ['list', 'bub', 'heat', 'rank'].forEach(function (m) { $('v-' + m).classList.toggle('on', m === P.mode); });
     if (P.mode === 'list') renderList(); else if (P.mode === 'rank') renderRank();
     else if (P.mode === 'heat') renderHeat(); else renderBub();
+    tickRows();
   }
 
   /* ── sheet ─────────────────────────────────────────────────────────────── */
@@ -1227,6 +1252,14 @@ background:
   }
   function zxAsk(sym) {
     var out = $('zxOut'), btn = $('zxScan');
+    var c = VIEW.concat(ALL, TOP, MK.feed).find(function (x) { return (x.symbol || x.name || '') === sym || x.mint === sym; });
+    function _fallback() {
+      var m = c && mult(c);
+      out.innerHTML = '<b>ZEROX (local read)</b> — engine offline, using the tape: <b>' + esc(c ? (c.symbol || c.name || '?') : sym) + '</b> ' +
+        (m ? 'trades <b>' + m.toFixed(2) + 'x</b> from call · ' : '') +
+        (c && c.chg24 ? '24h <b>' + (c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24) + '%</b> · ' : '') +
+        '→ ' + (m > 1.5 ? '<b>TAKE PROFIT</b> (trim 1/3–1/2).' : m > 1 ? '<b>HOLD</b> (tight stop to call).' : '<b>AVOID</b> (below par).');
+    }
     if (!out) return;
     out.innerHTML = '';
     out.textContent = 'ZEROX is reading ' + sym + '…';
@@ -1235,9 +1268,9 @@ background:
       body: JSON.stringify({ agent: 'ZEROX', task: sym + ' — read the call (live multiples, liquidity, holder/insider flags). Give a 2-line, decisive take: hold, take profit, or avoid, and why.' })
     }).then(function (r) { return r.json(); }).then(function (j) {
       if (j && j.response) { out.textContent = j.response.slice(0, 400); }
-      else if (j && j.error) { out.textContent = 'ZEROX: ' + j.error; }
-      else { out.textContent = 'ZEROX is offline — check the agent engine.'; }
-    }).catch(function () { out.textContent = 'ZEROX unreachable right now.'; });
+      else if (j && j.error) { out.textContent = 'ZEROX: ' + j.error; _fallback(); }
+      else { _fallback(); }
+    }).catch(function () { _fallback(); });
     if (btn) btn.textContent = '…';
   }
   document.addEventListener('click', function (e) {
