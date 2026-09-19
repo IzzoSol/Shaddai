@@ -393,11 +393,11 @@ function weaponPower(){ const id=activeWeapon(); if(!id) return 1; return WEAPON
 // The 7 SHADDAI agents as themed pixel characters (chakra accents)
 const AGENTS=[
   {name:'SHADDAI', role:'Orchestrator', accent:'#e8c45c', rig:{suit:'#241f44',cap:'#e8c45c',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199'}},
-  {name:'ORACLE',  role:'Research',     accent:'#8b7bf0', rig:{hoodie:'#3a2f5a',hoodUp:true,emblem:'#8b7bf0',skin:'#e7b58a'}},
-  {name:'QUILL',   role:'Writing',      accent:'#5fe0ff', rig:{suit:'#173a4a',cap:'#5fe0ff',tie:'#5fe0ff',glasses:true,skin:'#f0c199'}},
-  {name:'TURTLE',  role:'Design',       accent:'#00ff9c', rig:{hoodie:'#1f5a44',cap:'#00ff9c',emblem:'#00ff9c',skin:'#caa06f'}},
+  {name:'ORACLE',  role:'Research',     accent:'#8b7bf0', rig:{sprite:'oracle',hoodie:'#3a2f5a',hoodUp:true,emblem:'#8b7bf0',skin:'#e7b58a'}},
+  {name:'QUILL',   role:'Writing',      accent:'#5fe0ff', rig:{sprite:'quill',suit:'#173a4a',cap:'#5fe0ff',tie:'#5fe0ff',glasses:true,skin:'#f0c199'}},
+  {name:'TURTLE',  role:'Design',       accent:'#00ff9c', rig:{sprite:'turtle',hoodie:'#1f5a44',cap:'#00ff9c',emblem:'#00ff9c',skin:'#caa06f'}},
   {name:'NEXUS',   role:'Architect',    accent:'#87909c', rig:{robot:true,skin:'#8a9199',cap:'#87909c',shirt:'#6b7280',pants:'#3a3f47',led:'#c5ccd5',emblem:'#87909c'}},
-  {name:'ZEROX',   role:'Revenue',      accent:'#00c8ff', rig:{suit:'#3a2a1a',cap:'#00c8ff',tie:'#00c8ff',emblem:'#00c8ff',skin:'#caa06f'}},
+  {name:'ZEROX',   role:'Revenue',      accent:'#00c8ff', rig:{sprite:'zerox',suit:'#3a2a1a',cap:'#00c8ff',tie:'#00c8ff',emblem:'#00c8ff',skin:'#caa06f'}},
   {name:'PIKADON', role:'Security',     accent:'#ff5a4d', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'}},
 ];
 addEventListener('wheel',e=>{ if(state==='world'){ zoom=Math.max(0.5,Math.min(1.7,zoom-Math.sign(e.deltaY)*0.08)); } },{passive:true});

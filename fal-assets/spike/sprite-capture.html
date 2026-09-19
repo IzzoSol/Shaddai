@@ -109,6 +109,16 @@
       const box1 = new THREE.Box3().setFromObject(model);
       const size1 = box1.getSize(new THREE.Vector3());
       modelScale = 1.6 / Math.max(size1.x, size1.y, size1.z);
+      // Skeleton-based height (reliable; the skinned bbox is not): Head bone -> toe bones, +12% for the crown.
+      // Every humanoid is normalized to the same 1.75 unit height, which also fixes tall rigs (e.g. Leadr)
+      // overflowing the frame and losing their heads.
+      model.updateMatrixWorld(true);
+      const hb = model.getObjectByName('Head'), tl = model.getObjectByName('LeftToeBase'), tr = model.getObjectByName('RightToeBase');
+      if (hb && tl && tr) {
+        const hy = new THREE.Vector3().setFromMatrixPosition(hb.matrixWorld).y;
+        const fy = Math.min(new THREE.Vector3().setFromMatrixPosition(tl.matrixWorld).y, new THREE.Vector3().setFromMatrixPosition(tr.matrixWorld).y);
+        if (hy - fy > 0.01) modelScale = 1.75 / ((hy - fy) * 1.12);
+      }
       model.scale.setScalar(modelScale);
 
       const startAnim = (clip) => {

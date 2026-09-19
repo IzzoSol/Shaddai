@@ -162,7 +162,40 @@ window.PixelPeople = (function () {
     }
   }
 
+  // ---- painted rig sprites (Council + Citizens) ----
+  // Captured from the SAME rigged 3D models the 3D realm uses (tools/build-web-sprites.mjs), so a character
+  // looks identical in 2D and 3D. rig.sprite = id from assets/characters/index.json; anything else, or a
+  // sprite that hasn't loaded yet, falls back to the code-drawn voxel rig below.
+  const SPRITES = {};
+  const SPRITE_WORLD_H = 66;                       // px height of a standing person at scale 1 (matches the voxel guy)
+  function registerSprite(m) {
+    const s = SPRITES[m.id] = Object.assign({ ready: 0, clips: {} }, m);
+    Object.keys(m.clips).forEach(function (k) {
+      const img = new Image(); img.onload = function () { s.clips[k] = img; s.ready++; };
+      img.src = (m.dir || '') + m.clips[k];
+    });
+  }
+  function drawSprite(_ctx, rig, sx, sy, scale, t) {
+    const s = SPRITES[rig.sprite]; if (!s || !s.ready) return false;
+    const walk = rig.anim === 'walk';
+    const clip = s.clips.walk; if (!clip) return false;
+    const tt = (t || 0) / 1000 + (rig.__phase || 0);
+    const f = walk ? Math.floor(tt * 10) % s.frames : 0;           // 10 fps walk; idle holds frame 0 with a breath
+    const k = (SPRITE_WORLD_H * scale) / s.standH;                 // px per cell-px -> uniform world height
+    const dw = s.cell * k, dh = s.cell * k;
+    const bob = walk ? 0 : Math.sin(tt * 1.7) * 0.6 * scale;
+    _ctx.save(); _ctx.imageSmoothingEnabled = true; _ctx.imageSmoothingQuality = 'high';
+    _ctx.translate(Math.round(sx), Math.round(sy));
+    if (rig.flip) _ctx.scale(-1, 1);
+    _ctx.drawImage(clip, f * s.cell, 0, s.cell, s.cell, -s.centerX * k, -s.footY * k + bob, dw, dh);
+    _ctx.restore(); return true;
+  }
+  // load the sprite index once; harmless if absent (voxel fallback keeps working)
+  try { fetch('assets/characters/index.json').then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (a) { a.forEach(registerSprite); }).catch(function () {}); } catch (e) {}
+
   function draw(_ctx, rig, sx, sy, scale, t) {
+    if (rig && rig.sprite && drawSprite(_ctx, rig, sx, sy, scale, t)) return;
     ctx = _ctx; ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.round(sx), Math.round(sy)); ctx.scale(scale, scale);
     OX = 0; OY = 0; guy(rig, t || 0, rig.__phase || 0); ctx.restore();
@@ -217,8 +250,10 @@ window.PixelPeople = (function () {
     { office:'zerox',   rig:{suit:'#3a2a1a',cap:'#00c8ff',tie:'#00c8ff',emblem:'#00c8ff',skin:'#caa06f'} },
     { office:'pikadon', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'} },
   ];
+  const COUNCIL_SPRITES = { zerox:'zerox', quill:'quill', oracle:'oracle', turtle:'turtle' };   // painted rigs built so far
   OFFICE_LEADS.forEach(function(o, i){
     const rig = Object.assign({}, o.rig, { name:'Council', office:o.office, __phase:(100+i)*0.37 });
+    if (COUNCIL_SPRITES[o.office]) rig.sprite = COUNCIL_SPRITES[o.office];
     PRESETS.push({ name:'Council', rig });
   });
   function randomRig(){ SEED=(Date.now?0:0, (SEED*16807+1)&0x7fffffff); const i=(Math.abs(SEED)%PRESETS.length);
@@ -226,5 +261,5 @@ window.PixelPeople = (function () {
     const r = rnd()<0.12 ? robotPreset() : ARCH[(rnd()*ARCH.length)|0](pick(SKIN));
     r.__phase = rnd()*6; return r; }
 
-  return { draw, guy: draw, PRESETS, randomRig, shade, TW, TH };
+  return { draw, guy: draw, registerSprite, PRESETS, randomRig, shade, TW, TH };
 })();

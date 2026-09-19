@@ -1,0 +1,242 @@
+[
+ {
+  "id": "mount-forge-bull",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A huge armored mecha bison mount: orange-red hex armor plates over blue-grey mechanical body, massive dark curved horns, glowing cyan energy lines and ring on the shoulder, thick hydraulic legs, saddle blanket in sand tones. Desert-tech.",
+  "out": "fal-assets/world/concepts2/mounts/mount-forge-bull.png"
+ },
+ {
+  "id": "mount-glacier-mammoth",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A colossal armored mecha mammoth mount: cream-white ceramic head and body plates with deep blue armor, giant curved ivory tusks, amber glowing trim, heavy pillar legs, cargo pods on the back, ice-crystal debris at its feet. Frost-tech.",
+  "out": "fal-assets/world/concepts2/mounts/mount-glacier-mammoth.png"
+ },
+ {
+  "id": "mount-canopy-gorilla",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A hulking mecha gorilla mount: bronze-tan armored joints with glowing teal circular lens hubs, white fur mane, dark hands, small living trees and moss growing on its back armor. Forest-tech.",
+  "out": "fal-assets/world/concepts2/mounts/mount-canopy-gorilla.png"
+ },
+ {
+  "id": "mount-sky-hawk",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A giant mecha falcon mount with wings folded slightly: layered blue armor feather plates, white and orange mechanical chest, orange ring turbines in the body, sharp beak, talons gripping a floating slab of stone with grass. Beach-tech sky mount.",
+  "out": "fal-assets/world/concepts2/mounts/mount-sky-hawk.png"
+ },
+ {
+  "id": "vehicle-mining-powerarmor",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A giant boxy industrial power-armor exosuit with an open cockpit in the chest, white armor panels with yellow hazard stripes and green accents, hydraulic pistons and cables, huge fists and a heavy drill-claw arm, chunky wheeled boots, dusty. Underground-mining tech.",
+  "out": "fal-assets/world/concepts2/mounts/vehicle-mining-powerarmor.png"
+ },
+ {
+  "id": "transit-hyperloop-capsule",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A sleek chrome hyperloop passenger capsule, long teardrop body with a dark tinted canopy, warm gold light strip along the side, glowing edge, resting on a magnetic rail segment.",
+  "out": "fal-assets/world/concepts2/transit/transit-hyperloop-capsule.png"
+ },
+ {
+  "id": "transit-hyperloop-gate",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A circular hyperloop gate: a massive dark-steel ring frame with a glowing cyan-blue quantum tunnel disc inside, control pylons and cables, on a low platform.",
+  "out": "fal-assets/world/concepts2/transit/transit-hyperloop-gate.png"
+ },
+ {
+  "id": "transit-skyrail-pod",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A small futuristic two-seat sky-rail pod: glossy white body with a wraparound glass canopy, slim gold rail clamp on top, glowing soft blue underside.",
+  "out": "fal-assets/world/concepts2/transit/transit-skyrail-pod.png"
+ },
+ {
+  "id": "transit-cliff-elevator",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A futuristic cliff elevator car: a cylindrical glass-and-steel lift cabin with gold structural rings, hanging from a slim vertical rail spine, subtle emerald lighting.",
+  "out": "fal-assets/world/concepts2/transit/transit-cliff-elevator.png"
+ },
+ {
+  "id": "bld-bio-pod-tower",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A glossy candy-red organic bio-pod tower: fused bulb-shaped pods on curved stalks stacked in tiers, thick green rooftop gardens, round tinted windows, sweeping red ramps flowing down like roots. Eco-futurist habitat.",
+  "out": "fal-assets/world/concepts2/buildings/bld-bio-pod-tower.png"
+ },
+ {
+  "id": "bld-dome-habitat",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A futuristic dome habitat: a half-buried ribbed glass-and-ceramic dome with a ring terrace, glowing amber interior, lush vertical gardens on the ribs, a tubular airlock entrance.",
+  "out": "fal-assets/world/concepts2/buildings/bld-dome-habitat.png"
+ },
+ {
+  "id": "bld-sea-terrace-spire",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A futuristic sea-cliff terrace spire: a stepped white-and-black glass megastructure with slender spire towers, circular sky-garden decks and a curved black glass wall base.",
+  "out": "fal-assets/world/concepts2/buildings/bld-sea-terrace-spire.png"
+ },
+ {
+  "id": "bld-inverted-cube-hab",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A futuristic inverted stacked-cube habitat block: golden-brown modular boxes hung upside-down from a slim central mast with cable stays and solar-rib panels, glowing windows. Farm-tech.",
+  "out": "fal-assets/world/concepts2/buildings/bld-inverted-cube-hab.png"
+ },
+ {
+  "id": "bld-holo-market-hall",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A futuristic market hall: a low wide pavilion with a curved gold-and-glass roof, floating holographic sign rings, glowing stall bays along the sides, a marble podium base.",
+  "out": "fal-assets/world/concepts2/buildings/bld-holo-market-hall.png"
+ },
+ {
+  "id": "bld-neon-observatory",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. A futuristic observatory tower for the ORACLE: a slender obsidian spire with a violet glowing eye-shaped dome on top, sacred-geometry gold line inlay, floating ring platforms.",
+  "out": "fal-assets/world/concepts2/buildings/bld-neon-observatory.png"
+ },
+ {
+  "id": "item-hyperloop-gate-token",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A palm-sized hyperloop gate token: a dark metal ring with a glowing blue portal disc.",
+  "out": "fal-assets/world/concepts2/items/item-hyperloop-gate-token.png"
+ },
+ {
+  "id": "item-neural-ink-pen",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A futuristic neural-ink pen: a metal stylus with glowing cyan ink cartridge, next to a small ink bottle.",
+  "out": "fal-assets/world/concepts2/items/item-neural-ink-pen.png"
+ },
+ {
+  "id": "item-holo-decoy-projector",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A compact holographic decoy projector: a dark hex-base device projecting a glowing blue hologram of a small humanoid.",
+  "out": "fal-assets/world/concepts2/items/item-holo-decoy-projector.png"
+ },
+ {
+  "id": "item-molecular-disassembler",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A chunky sci-fi handheld molecular disassembler gun: dark grey body with a glowing blue cell chamber.",
+  "out": "fal-assets/world/concepts2/items/item-molecular-disassembler.png"
+ },
+ {
+  "id": "item-phase-cloak",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A hooded phase-cloak garment on a mannequin stand: dark violet fabric with glowing edge lines and a shimmering translucent hem.",
+  "out": "fal-assets/world/concepts2/items/item-phase-cloak.png"
+ },
+ {
+  "id": "item-bio-nano-jar",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A sealed glass jar of bio-nano swarm: dark canister full of glowing blue micro-particles in a lattice pattern with a metal cap. Health pack item.",
+  "out": "fal-assets/world/concepts2/items/item-bio-nano-jar.png"
+ },
+ {
+  "id": "item-gravity-modulator",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A gravity modulator: a cylindrical dark-metal device with three purple glowing pillars and a ring base.",
+  "out": "fal-assets/world/concepts2/items/item-gravity-modulator.png"
+ },
+ {
+  "id": "item-time-dilation-core",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A time dilation core: a metal gear-like ring globe with a glowing white-blue core in the center.",
+  "out": "fal-assets/world/concepts2/items/item-time-dilation-core.png"
+ },
+ {
+  "id": "item-psych-wave-emitter",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A psych-wave emitter: a dark metal wrist band with glowing purple gems and a faint wave graphic.",
+  "out": "fal-assets/world/concepts2/items/item-psych-wave-emitter.png"
+ },
+ {
+  "id": "item-atmospheric-harvester",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A four-legged atmospheric harvester machine: olive-grey body with pipes, a gas tank, a spider stance.",
+  "out": "fal-assets/world/concepts2/items/item-atmospheric-harvester.png"
+ },
+ {
+  "id": "item-quantum-data-shard",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A cluster of glowing translucent blue quantum data-shard crystals, faceted, floating slightly.",
+  "out": "fal-assets/world/concepts2/items/item-quantum-data-shard.png"
+ },
+ {
+  "id": "item-memetic-capsule",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A memetic capsule: a metal-capped cylinder full of glowing green liquid with a small hazard glyph. Potion item.",
+  "out": "fal-assets/world/concepts2/items/item-memetic-capsule.png"
+ },
+ {
+  "id": "item-subspace-storage-box",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A subspace storage box: a black cube crate with glowing blue circular ports on the faces, metal corners.",
+  "out": "fal-assets/world/concepts2/items/item-subspace-storage-box.png"
+ },
+ {
+  "id": "item-sleep-loop-pod",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. A sleek sleep-loop recovery pod: a white and chrome capsule bed with a glowing blue interior glass lid, small controls.",
+  "out": "fal-assets/world/concepts2/items/item-sleep-loop-pod.png"
+ },
+ {
+  "id": "item-ethics-override-plate",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square",
+  "body": "Single isolated game asset, full object visible, centered, straight-on three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Small game item render. An ethics-override device: a chunky dark plate with a gold border and a glowing warning label panel, hazard glow.",
+  "out": "fal-assets/world/concepts2/items/item-ethics-override-plate.png"
+ }
+]
