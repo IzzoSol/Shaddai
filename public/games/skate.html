@@ -115,6 +115,15 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 .dots{ display:flex; gap:7px; margin-top:16px; }
 .dots span{ width:8px; height:8px; border-radius:50%; background:var(--edge2); transition:background .15s, transform .15s; }
 .dots span.on{ background:var(--lime); transform:scale(1.3); }
+
+/* ── BOARD SELECT ── */
+.board-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:18px; max-width:700px; width:100%; }
+.board-card{ background:var(--panel); border:1px solid var(--edge); border-radius:14px; padding:18px 12px; text-align:center;
+  cursor:pointer; transition:border-color .15s, transform .1s; }
+.board-card:hover{ border-color:var(--cyan); transform:translateY(-4px); }
+.board-card.sel{ border-color:var(--lime); box-shadow:0 0 28px rgba(157,255,41,.35); }
+.board-card img{ width:100%; aspect-ratio:1/1; object-fit:contain; filter:drop-shadow(0 8px 14px rgba(0,0,0,.6)); }
+.board-card .name{ font-family:var(--f-display); font-size:14px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-top:10px; }
 [hidden]{ display:none!important; }
 </style>
 </head>
@@ -147,6 +156,14 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
     <div class="meta"><div class="name" id="riderName"></div><div class="tag" id="riderTag"></div></div>
   </div>
   <div class="dots" id="dots"></div>
+  <button id="btnPickBoard" class="neon-btn" disabled>Pick a Board <span class="chev">▸</span></button>
+</section>
+
+<!-- ── BOARD SELECT — cosmetic deck choice, same visual language as rider select ── -->
+<section id="boardSelect" class="screen">
+  <h2>Pick your board</h2>
+  <div class="sub">Cosmetic only for now — swaps the deck graphic, doesn't change how a trick lands.</div>
+  <div class="board-grid" id="boardGrid"></div>
   <button id="btnEnterHub" class="neon-btn" disabled>Enter the Hub <span class="chev">▸</span></button>
 </section>
 
@@ -339,7 +356,7 @@ function renderSelectUI() {
     lockState.remove();
   }
   document.querySelectorAll('#dots span').forEach((d, i) => d.classList.toggle('on', i === activeIndex));
-  document.getElementById('btnEnterHub').disabled = r.locked;
+  document.getElementById('btnPickBoard').disabled = r.locked;
   picked = r.locked ? null : r;
   loadRider(r);
 }
@@ -368,8 +385,33 @@ document.getElementById('btnPlay').addEventListener('click', () => {
 });
 animate();
 
+// ── Board select (cosmetic-only deck choice, same reveal pattern as riders) ──
+const BOARDS = [
+  { id: 'board_lime', name: 'Bolt', img: 'assets/skate/boards/board-lime.png' },
+  { id: 'board_magenta', name: 'Prism', img: 'assets/skate/boards/board-magenta.png' },
+  { id: 'board_cyan', name: 'Circuit', img: 'assets/skate/boards/board-cyan.png' },
+];
+let pickedBoard = null;
+const boardGridEl = document.getElementById('boardGrid');
+BOARDS.forEach((b) => {
+  const card = document.createElement('div');
+  card.className = 'board-card';
+  card.innerHTML = `<img src="${b.img}" alt="${b.name}"><div class="name">${b.name}</div>`;
+  card.addEventListener('click', () => {
+    pickedBoard = b;
+    document.querySelectorAll('.board-card').forEach((el) => el.classList.remove('sel'));
+    card.classList.add('sel');
+    document.getElementById('btnEnterHub').disabled = false;
+  });
+  boardGridEl.appendChild(card);
+});
+
+document.getElementById('btnPickBoard').addEventListener('click', () => { playShing(); show('boardSelect'); });
+
 document.getElementById('btnEnterHub').addEventListener('click', () => {
   document.getElementById('hubTitle').textContent = 'Welcome to The Hub, ' + picked.name;
+  document.getElementById('hubSub').textContent =
+    `Riding the ${pickedBoard.name} deck. Match flow (blind picks, letters, LENS clips) lands at Gate C. This confirms the pipeline end to end: real 3D rider, real captured sprite, real menu.`;
   show('hub');
 });
 </script>

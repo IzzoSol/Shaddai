@@ -1,0 +1,11 @@
+[
+  { "id": "skate-board-lime", "type": "text2img", "register": "skate", "size": "square_hd",
+    "body": "a skateboard deck viewed from directly above, top-down flat orthographic view, no rider, no background, plain neutral dark backdrop. Acid-lime green deck with a bold black graphic lightning-bolt stripe down the center, orange grip tape edges, small circular wheels barely visible at each end.",
+    "out": "fal-assets/spike/skate-board-lime.png" },
+  { "id": "skate-board-magenta", "type": "text2img", "register": "skate", "size": "square_hd",
+    "body": "a skateboard deck viewed from directly above, top-down flat orthographic view, no rider, no background, plain neutral dark backdrop. Hot-magenta deck with a bold black geometric triangle graphic down the center, cyan grip tape edges, small circular wheels barely visible at each end.",
+    "out": "fal-assets/spike/skate-board-magenta.png" },
+  { "id": "skate-board-cyan", "type": "text2img", "register": "skate", "size": "square_hd",
+    "body": "a skateboard deck viewed from directly above, top-down flat orthographic view, no rider, no background, plain neutral dark backdrop. Electric-cyan deck with a bold black circuit-pattern graphic down the center, violet grip tape edges, small circular wheels barely visible at each end.",
+    "out": "fal-assets/spike/skate-board-cyan.png" }
+]
