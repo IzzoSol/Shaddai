@@ -256,6 +256,21 @@ header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:4
   .agv.a4 .agv-note{ animation:swarmPop .35s .66s both; } .agv.a5 .agv-note{ animation:swarmPop .35s .74s both; }
   .agv.a6 .agv-note{ animation:swarmPop .35s .82s both; }
   .agv-note::before{ content:""; }
+  .msc{ font-style:normal; font-size:9px; letter-spacing:.1em; color:var(--ink-faint); text-transform:none; margin-left:auto; }
+  .src-profile.active{ border-color:var(--emerald); background:rgba(0,255,156,.12); box-shadow:0 0 14px -4px rgba(0,255,156,.6); }
+  .src-profile.active .src-pn b{ color:var(--emerald); }
+  .hed-strip{ display:flex; flex-wrap:wrap; gap:5px; padding:0 4px 2px; animation:swarmPop .4s .14s both; }
+  .hed-chip{ border:1px solid var(--edge2); background:rgba(255,255,255,.03); color:var(--ink-soft);
+    font-family:var(--f-mono); font-size:10.5px; padding:4px 8px; border-radius:3px; cursor:pointer; transition:transform .15s; }
+  .hed-chip b{ font-weight:900; }
+  .hed-chip.hed .b, .hed-chip.hed b{ color:var(--emerald); }
+  .hed-chip.neg b{ color:#ff7a7a; }
+  .hed-chip.neu b{ color:var(--gold); }
+  .hed-chip:hover{ transform:translateY(-1px); border-color:var(--emerald); }
+  .verdict{ overflow:hidden; }
+  .cf{ position:absolute; top:45%; left:50%; width:6px; height:11px; border-radius:2px; pointer-events:none;
+    animation:cfBurst .95s cubic-bezier(.2,.85,.4,1) forwards; z-index:3; }
+  @keyframes cfBurst{ 0%{ opacity:1; transform:translate(0,0) rotate(0); } 100%{ opacity:0; transform:translate(var(--dx),var(--dy)) rotate(var(--r)); } }
 swarm extra CSS
 
 .atab{ padding:10px 16px; }
@@ -1345,6 +1360,34 @@ background:
     return '<div class="ledger"><div class="led-row">' + seg + '</div>' +
       '<div class="led-lab"><i>fear</i><i>greed</i></div><div class="led-cnt">' + cnts + '</div></div>';
   }
+  function swarmHeadline(h, i) {
+    var c = h.label === 'pos' ? 'hl-pos' : (h.label === 'neg' ? 'hl-neg' : 'hl-neu');
+    var hv = ('' + ((h.source || '?').length * 11 + i * 5)).slice(0, 2);
+    var av = (h.source || '??').replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
+    return '<a class="hl' + (i < 3 ? ' top' : '') + '" href="' + tgEsc(h.link || '#') + '" target="_blank" rel="noopener">' +
+      '<span class="src-av h' + hv + '">' + av + '</span>' +
+      '<span class="hl-body"><b>' + tgEsc(h.title) + '</b><em>' + tgEsc(h.source || '') + ' \u2022 ' + (h.days || 0) + 'd ago</em></span>' +
+      '<span class="' + c + ' hl-mark">' + (h.label === 'pos' ? '\u25B2' : h.label === 'neg' ? '\u25BC' : '\u25C6') + '</span>' +
+      '</a>';
+  }
+  function renderHlList(d, container) {
+    var all = window._swarmHead || (d.headlines || []);
+    var src = window._swarmSrc || '';
+    var list = src ? all.filter(function (h) { return h.source === src; }) : all;
+    container.innerHTML = list.slice(0, 10).map(swarmHeadline).join('') ||
+      '<div class="swarm-idle">no stories from this source</div>';
+    var t = container.parentNode.querySelector('.swarm-mod-t');
+    if (t) t.innerHTML = '\u{1F50D} HEADLINE TAPE' + (src ? ' \u2192 ' + tgEsc(src) + ' <em class="msc">filtered</em>' : ' <em class="msc">' + list.length + ' stories</em>');
+  }
+  function swarmBurst(vcls) {
+    var cols = vcls === 'bull' ? ['#38e07a', '#a3ffd0', '#e8c45c', '#ffffff'] : (vcls === 'bear' ? ['#ff5d5d', '#ffb3b3', '#e8c45c', '#ffffff'] : ['#e8c45c', '#ffd76a', '#ffffff', '#9a8a58']);
+    var bits = [];
+    for (var n = 0; n < 26; n++) {
+      var col = cols[n % cols.length];
+      bits.push('<i class="cf" style="--dx:' + ((Math.random() * 200) - 100) + 'px;--dy:' + (Math.random() * 190 + 40) + 'px;--r:' + ((Math.random() * 900) - 450) + 'deg;background:' + col + '"></i>');
+    }
+    return bits.join('');
+  }
   function renderSwarm(d, votes, q, out) {
     var longs = votes.filter(function (v) { return v.side === 'long'; }).length;
     var shorts = votes.filter(function (v) { return v.side === 'short'; }).length;
@@ -1356,33 +1399,25 @@ background:
     var lbl = lead === 'long' ? (strong ? 'STRONG BULL' : 'BULLISH') : (lead === 'short' ? (strong ? 'STRONG BEAR' : 'BEARISH') : 'NEUTRAL');
     var glyph = vcls === 'bull' ? '\u{1F6A1}' : (vcls === 'bear' ? '\u{1F6A8}' : '\u{26B0}\u{FE0F}');
     var mk = d.market || null;
+    window._swarmHead = d.headlines || [];
+    window._swarmSrc = '';
     var srcs = {};
-    (d.headlines || []).forEach(function (h) {
+    window._swarmHead.forEach(function (h) {
       var k = h.source || 'unknown';
       var o = srcs[k] || (srcs[k] = { n: 0, pos: 0, neg: 0, neu: 0, best: '' });
       o.n++; if (h.label === 'pos') o.pos++; else if (h.label === 'neg') o.neg++; else o.neu++;
       if (h.link && !o.best) o.best = h.link;
     });
     var keys = Object.keys(srcs).sort(function (a, b) { return srcs[b].n - srcs[a].n; });
-    var srcHtml = keys.slice(0, 12).map(function (k, i) {
+    var srcHtml = keys.slice(0, 14).map(function (k, i) {
       var o = srcs[k];
       var tone = o.pos > o.neg ? 'pos' : (o.neg > o.pos ? 'neg' : 'neu');
       var av = k.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
       var hv = ('' + (k.length * 13 + o.n * 7)).slice(0, 2);
-      return '<a class="src-profile' + (i < 3 ? ' top' : '') + '" href="' + tgEsc(o.best || '#') + '" target="_blank" rel="noopener" title="' + tgEsc(k) + ' \u2014 ' + o.pos + ' + / ' + o.neg + ' - / ' + o.neu + ' =">' +
+      return '<a class="src-profile' + (i < 3 ? ' top' : '') + '" data-src="' + tgEsc(k) + '" href="' + tgEsc(o.best || '#') + '" target="_blank" rel="noopener" title="' + tgEsc(k) + ' \u2014 ' + o.pos + ' + / ' + o.neg + ' - / ' + o.neu + ' =">' +
         '<span class="src-av h' + hv + '">' + av + '</span>' +
         '<span class="src-pn"><b>' + tgEsc(k) + '</b><em>' + o.n + ' story' + (o.n > 1 ? 's' : '') + '</em></span>' +
         '<i class="src-dot ' + tone + '"></i></a>';
-    }).join('');
-    var head = (d.headlines || []).slice(0, 8).map(function (h, i) {
-      var c = h.label === 'pos' ? 'hl-pos' : (h.label === 'neg' ? 'hl-neg' : 'hl-neu');
-      var hv = ('' + ((h.source || '?').length * 11 + i * 5)).slice(0, 2);
-      var av = (h.source || '??').replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
-      return '<a class="hl' + (i < 3 ? ' top' : '') + '" href="' + tgEsc(h.link || '#') + '" target="_blank" rel="noopener">' +
-        '<span class="src-av h' + hv + '">' + av + '</span>' +
-        '<span class="hl-body"><b>' + tgEsc(h.title) + '</b><em>' + tgEsc(h.source || '') + ' \u2022 ' + (h.days || 0) + 'd ago</em></span>' +
-        '<span class="' + c + ' hl-mark">' + (h.label === 'pos' ? '\u25B2' : h.label === 'neg' ? '\u25BC' : '\u25C6') + '</span>' +
-        '</a>';
     }).join('');
     var cards = votes.map(function (v, i) {
       var c = v.side === 'long' ? 'bull' : (v.side === 'short' ? 'bear' : 'neu');
@@ -1402,14 +1437,21 @@ background:
       (mk ? '<span>' + tgEsc(mk.symbol || mk.id) + ' <b>$' + Number(mk.price).toLocaleString(undefined, { maximumFractionDigits: 6 }) + '</b> (' + (Number(mk.change24h) > 0 ? '+' : '') + Number(mk.change24h).toFixed(2) + '%)</span>' : '') +
       (d.meta && d.meta.news ? '<span>' + d.meta.news + ' headlines</span>' : '') +
       '</div>';
+    var recStrip = '';
     try {
       var hist = JSON.parse(localStorage.getItem('sh_swarm_h') || '[]');
       hist.unshift({ q: String(q).slice(0, 40), s: d.score || 0, p: d.polarity || 'neutral', l: lead, t: Date.now() });
       hist = hist.filter(function (x, i, a) { return a.findIndex(function (y) { return y.q === x.q; }) === i; }).slice(0, 8);
       localStorage.setItem('sh_swarm_h', JSON.stringify(hist));
+      var seen = hist.map(function (x) { return x.q; }).indexOf(String(q).slice(0, 40)) > 0 || hist.length > 1;
+      recStrip = hist.map(function (x, i) {
+        var c = x.p === 'positive' ? 'hed' : (x.p === 'negative' ? 'hed neg' : 'hed neu');
+        return '<button class="hed-chip ' + c + '" type="button" data-q="' + tgEsc(x.q) + '" title="' + tgEsc(x.q) + ' score ' + x.s + '">' + tgEsc(x.q) + ' <b>' + (x.s > 0 ? '+' : '') + x.s + '</b></button>';
+      }).join('');
     } catch (e) {}
     out.innerHTML =
       '<div class="verdict ' + vcls + '" data-score="' + (d.score || 0) + '">' +
+      (strong ? swarmBurst(vcls) : '') +
       '<span class="vd-bg">' + glyph + '</span>' +
       '<div class="vd-gauge">' + gaugeSVG(d.score || 0) + '</div>' +
       '<div class="vd-main"><b>' + lbl + '</b><em>' + tgEsc(d.q || q) + '</em><code>' + tally + '</code><i>long / short / flat</i>' +
@@ -1421,18 +1463,35 @@ background:
       '</div>' +
       toneLedger(d) +
       stats +
-      '<div class="swarm-mod m-src"><div class="swarm-mod-t">\u{1F4CC} WHO SAID IT \u2014 SENTIMENT SOURCES</div>' +
+      (recStrip ? '<div class="hed-strip"><span class="swarm-hint">\u231B probes</span>' + recStrip + '</div>' : '') +
+      '<div class="swarm-mod m-src"><div class="swarm-mod-t">\u{1F4CC} WHO SAID IT \u2014 SENTIMENT SOURCES <em class="msc">tap a source to filter</em></div>' +
       '<div class="src-grid">' + (srcHtml || '<div class="swarm-idle">no sources</div>') + '</div></div>' +
       '<div class="swarm-mod m-ag"><div class="swarm-mod-t">\u{1F41F} THE COUNCIL VOTES</div>' +
       '<div class="agv-grid">' + cards + '</div>' + '</div>' +
-      '<div class="swarm-mod m-hl"><div class="swarm-mod-t">\u{1F50D} HEADLINE TAPE</div>' +
-      '<div class="hl-list">' + (head || '<div class="swarm-idle">no headlines parsed</div>') + '</div>' +
+      '<div class="swarm-mod m-hl"><div class="swarm-mod-t">\u{1F50D} HEADLINE TAPE <em class="msc">' + window._swarmHead.length + ' stories</em></div>' +
+      '<div class="hl-list" id="swarmHlList">' + window._swarmHead.slice(0, 10).map(swarmHeadline).join('') + '</div>' +
       '</div>';
     var again = $('swarmAgain');
     if (again) again.onclick = function () {
       var qq = $('swarmQ'); if (qq) qq.value = again.getAttribute('data-q');
       runSwarm(qq ? qq.value : '');
     };
+    var hlL = $('swarmHlList');
+    [].forEach.call(out.querySelectorAll('.src-profile'), function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        var src = el.getAttribute('data-src');
+        window._swarmSrc = (window._swarmSrc === src) ? '' : src;
+        [].forEach.call(out.querySelectorAll('.src-profile'), function (x) { x.classList[window._swarmSrc && x.getAttribute('data-src') === window._swarmSrc ? 'add' : 'remove']('active'); });
+        if (hlL) renderHlList(d, hlL);
+      });
+    });
+    [].forEach.call(out.querySelectorAll('.hed-chip'), function (el) {
+      el.addEventListener('click', function () {
+        var qq = $('swarmQ'); if (qq) qq.value = el.getAttribute('data-q');
+        runSwarm(qq ? qq.value : '');
+      });
+    });
     setTimeout(function () {
       var bars = out.querySelectorAll('.agv-bar');
       [].forEach.call(bars, function (b) { b.setAttribute('style', '--w:' + b.getAttribute('data-c') + '%'); });
