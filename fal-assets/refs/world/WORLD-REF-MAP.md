@@ -48,3 +48,19 @@ Shared-layout rule (all cutaways): one floor-plan JSON drives BOTH the 2D side-v
 2. SHADDAI called ref W1's stadium lighting a "neon conflict." It isn't — that rule is about streetwear-neon *characters/art register*; sci-fi lighting is fine. Ignoring that flag unless you say otherwise.
 3. Villain name/lore is a suggestion, not canon.
 4. Dragon: no reference yet. Send one and it becomes the siege boss mount.
+
+## Batch 4 (2026-09-19, owner refs pasted inline) — RULE: futuristic only, no normal housing
+| # | Reference | Use |
+|---|---|---|
+| M1 | Armored mecha bison + rider (orange/blue-grey, cyan rings, horns) | Mount → built `mount-forge-bull` |
+| M2 | Armored mecha mammoth + rider (cream/blue/amber, tusks, ice) | Mount → `mount-glacier-mammoth` |
+| M3 | Mecha gorilla w/ trees growing on back (bronze, teal lens hubs) | Mount → `mount-canopy-gorilla` |
+| M4 | "Dune Wheel" monowheel mech, yellow armor, 4-rocket pods (stat-card format) | TODO: desert vehicle + stat card UI style |
+| M5 | "Power Armor 07" mining exosuit, drill arm | Vehicle → `vehicle-mining-powerarmor` |
+| V1 | Rimba Racer: hover pod-car, colorway variants, spherical thruster wheels | TODO: hover-car vehicle set (6 liveries) |
+| O1 | Floating modular ocean farm platforms w/ hab decks + walkways, drones, big blue sea | TODO: OCEAN realm (owner: big real ocean, boats, submarines, yachts, later buyable/parties) |
+| R1 | Volcano fortress city: obsidian spire castle ringed by terraces, lava rivers/falls, arched bridges, sunset | TODO: VOLCANO realm + dragon lair |
+| R2 | Digimon-style mall atrium hub (interactive directory, shops, hologram fountain) | City hub atrium interior style |
+| R3 | Moebius-style root city under giant tree | Forest realm |
+| T1 | Classified Technology Encyclopedia (15 items) | Shop items → `public/assets/items` (12 in shop) |
+| U1 | Art cheat sheet: 6 color harmonies | Lighting presets in world3d.html use these |
