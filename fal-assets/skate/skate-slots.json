@@ -1,0 +1,61 @@
+{
+  "_readme": "SKATE asset slot registry (Gate A, schema only — zero spend, zero reference images required). Every id here is a fixed contract: TURTLE/NEXUS build the client against these ids and specs regardless of what fills `src` later. Filling a slot with a real generated (or owner-uploaded) asset in Gate B changes ONLY that slot's `src` + `promptNotes` — never its id, spec, or the client code that references it. See SKATE-ART-BIBLE.md §1.",
+  "register": "skate",
+  "cast": [
+    { "id": "rider_01", "slots": {
+      "full_body": { "spec": "1024x1536, transparent bg, full-body idle pose, front-facing", "src": null },
+      "tpose":     { "spec": "1024x1536, transparent bg, true T-pose, arms/legs clearly separated, empty hands (hard rule per fal-assets/CHARACTER_WORKFLOW.md)", "src": null },
+      "board":     { "spec": "1024x512, transparent bg, deck top-graphic only, no rider", "src": null }
+    }},
+    { "id": "rider_02", "slots": {
+      "full_body": { "spec": "1024x1536, transparent bg, full-body idle pose, front-facing", "src": null },
+      "tpose":     { "spec": "1024x1536, transparent bg, true T-pose, arms/legs clearly separated, empty hands", "src": null },
+      "board":     { "spec": "1024x512, transparent bg, deck top-graphic only, no rider", "src": null }
+    }},
+    { "id": "rider_03", "slots": {
+      "full_body": { "spec": "1024x1536, transparent bg, full-body idle pose, front-facing", "src": null },
+      "tpose":     { "spec": "1024x1536, transparent bg, true T-pose, arms/legs clearly separated, empty hands", "src": null },
+      "board":     { "spec": "1024x512, transparent bg, deck top-graphic only, no rider", "src": null }
+    }},
+    { "id": "rider_04", "slots": {
+      "full_body": { "spec": "1024x1536, transparent bg, full-body idle pose, front-facing", "src": null },
+      "tpose":     { "spec": "1024x1536, transparent bg, true T-pose, arms/legs clearly separated, empty hands", "src": null },
+      "board":     { "spec": "1024x512, transparent bg, deck top-graphic only, no rider", "src": null }
+    }},
+    { "id": "rider_05", "slots": {
+      "full_body": { "spec": "1024x1536, transparent bg, full-body idle pose, front-facing", "src": null },
+      "tpose":     { "spec": "1024x1536, transparent bg, true T-pose, arms/legs clearly separated, empty hands", "src": null },
+      "board":     { "spec": "1024x512, transparent bg, deck top-graphic only, no rider", "src": null }
+    }},
+    { "id": "rider_06", "slots": {
+      "full_body": { "spec": "1024x1536, transparent bg, full-body idle pose, front-facing", "src": null },
+      "tpose":     { "spec": "1024x1536, transparent bg, true T-pose, arms/legs clearly separated, empty hands", "src": null },
+      "board":     { "spec": "1024x512, transparent bg, deck top-graphic only, no rider", "src": null }
+    }}
+  ],
+  "_cast_note": "6 generic placeholder ids (rider_01..06), one per Gate D 'owner's 6 images'. Do NOT assign final names/likenesses until the owner supplies (or confirms reuse of) reference art per rider — renaming an id after client code references it is a breaking change, per skate-slots.json's own reference-static contract.",
+
+  "env": {
+    "hub_plate": { "spec": "1920x1080, HUB (zone 00) establishing plate, no characters, matches map-layout.json zone 00", "src": null },
+    "spot_plates": [
+      { "id": "spot_00_ledge",        "zone": "00", "spec": "1920x1080 16:9, silhouette-only background plate (foreground filled by rider/action at render time)", "src": null },
+      { "id": "spot_01_big_stairs",   "zone": "01", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_02_handrail",     "zone": "02", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_03_manual_pad",   "zone": "03", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_04_bank_to_wall", "zone": "04", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_05_gap",          "zone": "05", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_06_curb_cut",     "zone": "06", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_07_quarterpipe",  "zone": "07", "spec": "1920x1080 16:9, silhouette-only background plate", "src": null },
+      { "id": "spot_08_rooftops",     "zone": "08", "spec": "1920x1080 16:9, silhouette-only background plate, fisheye-neon-canyon mood reference (tone TBD, see ART-BIBLE §3)", "src": null }
+    ]
+  },
+
+  "fx": {
+    "crowd_silhouettes": [
+      { "id": "crowd_sil_01", "spec": "128x128, transparent bg, single spectator silhouette, cheering pose", "src": null },
+      { "id": "crowd_sil_02", "spec": "128x128, transparent bg, single spectator silhouette, phone-recording pose", "src": null },
+      { "id": "crowd_sil_03", "spec": "128x128, transparent bg, single spectator silhouette, gasping/hands-up pose", "src": null },
+      { "id": "crowd_sil_04", "spec": "128x128, transparent bg, single spectator silhouette, seated/leaning pose", "src": null }
+    ]
+  }
+}

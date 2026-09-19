@@ -30,6 +30,12 @@ const CAST_LOCK = Object.freeze([
 
 const LAW = 'Original cast only. No real celebrity names or likenesses, ever. Cinematic performance with studio quality lights.';
 
+// SKATE's original-cast placeholder riders (Master Plan §2.9's "reference-
+// agnostic slot system" — these ids match fal-assets/skate/skate-slots.json's
+// rider_01..rider_06 exactly; real names/likenesses arrive at Gate D once the
+// owner's 6 reference images are in, WITHOUT this rewriter changing shape).
+const SKATE_RIDERS = Object.freeze(['rider_01', 'rider_02', 'rider_03', 'rider_04', 'rider_05', 'rider_06']);
+
 // Council persona faces for per-agent reveals (arcade-bet packs). All original
 // fictional characters of the SHADDAI universe — the no-celebrity rule holds.
 const AGENT_FACES = Object.freeze({
@@ -108,6 +114,21 @@ const EVENT_SCENES = Object.freeze({
   win: 'A blackjack player celebrates excitedly as chips are pushed toward them after a winning hand at the casino table.',
   blackjack: 'An intense blackjack card game. The seated character reveals a natural blackjack as the dealer turns over the hole card.',
   push: 'A blackjack player receives their bet back after a push (tie) with no winner.',
+
+  // ============================================
+  // SKATE — backend/hall/packs/skate.js
+  // Namespaced skate_land/skate_bail (NOT bare land/bail) — dodgeball already
+  // owns the bare key 'bail' above; a flat, unprefixed 'bail' here would have
+  // silently resolved SKATE clips to dodgeball's "knocked out" scene instead.
+  // buildLensContract() below tries `${pack}_${eventType}` before the bare
+  // eventType specifically so callers can still pass eventType:'land'/'bail'
+  // (the pack's own vocabulary, unchanged) with pack:'skate' and land here.
+  // {rider}/{trick}/{style}/{weather}/{accent} are filled from
+  // fal-assets/skate/atmosphere.json's locked vocab + the pack's own
+  // STYLE_LABELS/ROUND_TRICKS — never freeform text, per Master Plan §2.8.
+  // ============================================
+  skate_land: '{rider} lands a clean {trick} ({style}-style) at the spot, board snapping true under {weather} light. {accent}.',
+  skate_bail: '{rider} goes for a {trick} ({style}-style) and bails hard, board skittering away under {weather} light. {accent}.',
 });
 
 const DEFAULT_DURATION_SEC = 5;
@@ -123,28 +144,65 @@ function pickCast(seatId) {
   return CAST_LOCK[h % CAST_LOCK.length];
 }
 
+/** Same deterministic hash, over SKATE_RIDERS instead of the generic CAST_LOCK
+ *  pool — SKATE's cast is its own 6-rider roster, not the shared one. */
+function pickSkateRider(seatId) {
+  const s = String(seatId || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return SKATE_RIDERS[h % SKATE_RIDERS.length];
+}
+
+/** Fill every {slotName} present in a scene template from a slots object.
+ *  Unlike the single hardcoded {agent} substitution below, this is generic
+ *  so new packs can add named slots (SKATE's {trick}/{style}/{weather}/
+ *  {accent}) without another bespoke .replace() chain here. A slot with no
+ *  matching key in `slots` is left as literal text rather than silently
+ *  dropped — a missing slot should be loud, not invisible in the clip. */
+function fillSlots(template, slots) {
+  if (!slots) return template;
+  return template.replace(/\{(\w+)\}/g, (m, name) => (name in slots ? String(slots[name]) : m));
+}
+
 /**
- * buildLensContract({ matchId, pack, eventType, seatId, durationSec, agent, game })
+ * buildLensContract({ matchId, pack, eventType, seatId, durationSec, agent, game, slots })
  *   -> { SCENE_LOCK, CAST_LOCK, EVENT, LAW, DURATION, matchId, pack, prompt }
  * Throws on an eventType outside EVENT_SCENES (or, for arcade-bet reveals,
  * a game/result combination unknown to GAME_RESULTS).
+ *
+ * `pack`-prefixed lookup (`${pack}_${eventType}`) is tried BEFORE the bare
+ * eventType — this is what lets SKATE emit its pack's own plain 'land'/
+ * 'bail' vocabulary (backend/hall/packs/skate.js is unaware this rewriter
+ * exists) while resolving to `skate_land`/`skate_bail` instead of colliding
+ * with dodgeball's existing bare `bail` key. Every other existing caller is
+ * unaffected: they either don't pass `pack`, or their pack-prefixed key
+ * simply doesn't exist in EVENT_SCENES, so the bare-key fallback still fires
+ * exactly as before.
  */
 function buildLensContract(opts) {
-  const { matchId, pack, eventType, seatId, durationSec, agent, game } = opts || {};
+  const { matchId, pack, eventType, seatId, durationSec, agent, game, slots } = opts || {};
 
   // Arcade-bet reveals arrive as "<pack>_win" / "<pack>_lose" and carry the
   // picked agent + game from the match state — map them to a per-agent scene.
   const reveal = /^.+_(win|lose)$/.exec(eventType || '');
   const arcade = game && GAME_RESULTS[game] && reveal ? GAME_RESULTS[game][reveal[1]] : null;
   const agentFace = agent && AGENT_FACES[agent];
-  const scene = arcade
+  const isSkate = pack === 'skate';
+  const skateTemplate = isSkate && eventType ? EVENT_SCENES[`skate_${eventType}`] : null;
+  const rawScene = arcade
     ? arcade.replace('{agent}', agentFace ? `${agent}, ${agentFace}` : 'a hall player')
-    : EVENT_SCENES[eventType];
-  if (!scene) {
+    : (skateTemplate || (pack && EVENT_SCENES[`${pack}_${eventType}`]) || EVENT_SCENES[eventType]);
+  if (!rawScene) {
     throw new Error(`lens-rewriter: unfilmable event type '${eventType}' (expected one of: ${Object.keys(EVENT_SCENES).join(', ')} or a game/result pair)`);
   }
 
-  const cast = agentFace ? agent : pickCast(seatId);
+  const cast = isSkate ? pickSkateRider(seatId) : (agentFace ? agent : pickCast(seatId));
+  // {rider} is ALWAYS derived from `cast` (the same deterministic seatId
+  // mapping CAST_LOCK reports), never taken from caller-supplied `slots` —
+  // otherwise the scene text and CAST_LOCK could name two different riders
+  // for the same clip. Caller-supplied slots may still fill {trick}/{style}/
+  // {weather}/{accent}; a `slots.rider` is deliberately overwritten here.
+  const scene = fillSlots(rawScene, isSkate ? { ...slots, rider: cast } : slots);
   const duration = Number(durationSec) > 0 ? Math.min(Number(durationSec), MAX_DURATION_SEC) : DEFAULT_DURATION_SEC;
   const contract = {
     SCENE_LOCK: scene,
@@ -157,4 +215,4 @@ function buildLensContract(opts) {
   return { ...contract, matchId: matchId || null, pack: pack || null, prompt };
 }
 
-module.exports = { buildLensContract, CAST_LOCK, AGENT_FACES, GAME_RESULTS, LAW, EVENT_SCENES };
+module.exports = { buildLensContract, CAST_LOCK, SKATE_RIDERS, AGENT_FACES, GAME_RESULTS, LAW, EVENT_SCENES };

@@ -11,6 +11,7 @@
  */
 
 const blackjack = require('./blackjack');
+const skate = require('./skate');
 const { makeArcadeBetPack } = require('./arcade-bet');
 
 const basketball_bet = makeArcadeBetPack('basketball_bet', {
@@ -26,4 +27,4 @@ const sigilstorm_bet = makeArcadeBetPack('sigilstorm_bet', {
   game: 'sigil-storm', label: 'Sigil Storm', agents: ['ORACLE', 'NEXUS'],
 });
 
-module.exports = { blackjack, basketball_bet, football_bet, dodgeball_bet, sigilstorm_bet };
+module.exports = { blackjack, skate, basketball_bet, football_bet, dodgeball_bet, sigilstorm_bet };

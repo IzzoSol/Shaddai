@@ -1,0 +1,37 @@
+{
+  "_readme": "SKATE map layout (Gate A, schema only). 9 zones total, indexed 00-08 per the Master Plan's own naming ('9 zones (00 HUB ... 08 ROOFTOPS)'). RECONCILIATION NOTE: backend/hall/packs/skate.js's ROUND_TRICKS array (locked, tested, 9 rounds -- the round count is load-bearing for the S-K-A-T-E letter-reachability math, do not change it) uses its own spot labels (The Ledge...The Flatbar) that don't literally match this map's zone names (HUB...ROOFTOPS). Resolved by mapping ZONE to ROUND BY INDEX ONLY: each zone's `matchRound` is the index into ROUND_TRICKS: the pack's `summary().spot` label is still the source of truth for in-match UI text; this map's `label`/`theme` are the world-navigation framing around that same round. Never rename or reorder ROUND_TRICKS to match this file -- update this file to match the pack if either drifts.",
+
+  "zones": [
+    { "id": "00", "key": "hub",         "label": "The Hub",        "matchRound": 0, "roundSpotLabel": "The Ledge",
+      "theme": "social/menu plaza -- roster select, shop, fuel+streak meters; also round 0's match spot (the plaza IS skateable)",
+      "envSlot": "hub_plate", "spotPlateSlot": "spot_00_ledge", "adjacent": ["01"] },
+    { "id": "01", "key": "big_stairs",  "label": "Big Stairs",     "matchRound": 1, "roundSpotLabel": "The Big Stairs",
+      "envSlot": null, "spotPlateSlot": "spot_01_big_stairs", "adjacent": ["00", "02"] },
+    { "id": "02", "key": "handrail",    "label": "The Handrail",   "matchRound": 2, "roundSpotLabel": "The Handrail",
+      "envSlot": null, "spotPlateSlot": "spot_02_handrail", "adjacent": ["01", "03"] },
+    { "id": "03", "key": "manual_pad",  "label": "Manual Pad",     "matchRound": 3, "roundSpotLabel": "The Manual Pad",
+      "envSlot": null, "spotPlateSlot": "spot_03_manual_pad", "adjacent": ["02", "04"] },
+    { "id": "04", "key": "bank",        "label": "Bank to Wall",   "matchRound": 4, "roundSpotLabel": "The Bank to Wall",
+      "envSlot": null, "spotPlateSlot": "spot_04_bank_to_wall", "adjacent": ["03", "05"] },
+    { "id": "05", "key": "gap",         "label": "The Gap",        "matchRound": 5, "roundSpotLabel": "The Gap",
+      "envSlot": null, "spotPlateSlot": "spot_05_gap", "adjacent": ["04", "06"] },
+    { "id": "06", "key": "curb_cut",    "label": "Curb Cut",       "matchRound": 6, "roundSpotLabel": "The Curb Cut",
+      "envSlot": null, "spotPlateSlot": "spot_06_curb_cut", "adjacent": ["05", "07"] },
+    { "id": "07", "key": "quarterpipe", "label": "Quarterpipe",    "matchRound": 7, "roundSpotLabel": "The Quarterpipe",
+      "envSlot": null, "spotPlateSlot": "spot_07_quarterpipe", "adjacent": ["06", "08"] },
+    { "id": "08", "key": "rooftops",    "label": "The Rooftops",   "matchRound": 8, "roundSpotLabel": "The Flatbar",
+      "theme": "dense vertical neon-signage mood (fisheye night-canyon reference) -- content tone ('sexy at times' commentary attached to that reference) explicitly UNRESOLVED, do not bake mature content into any generated Rooftops asset until the owner decides either way",
+      "envSlot": null, "spotPlateSlot": "spot_08_rooftops", "adjacent": ["07"] }
+  ],
+
+  "_topology_note": "Linear chain (00-01-02-...-08) for Gate A/B's per-round match flow -- matches how skate.js's rounds already progress in a fixed sequence. `adjacent` is deliberately a real graph field (not just prev/next) so the future open-roam layer (Master Plan §0, §2.5 -- explicitly NOT Gate A/B/C scope) can widen this into a real explorable map later without a schema change, only new adjacency edges.",
+
+  "spot_unlock": {
+    "_note": "Gate D4 streak-retention hook: spots are catalog items, unlocked day-over-day (day1->7: board decal -> new trick -> spot unlock), same catalog/inventory system as backend/economy-routes.js's GET /catalog. Zone 00 (hub) is always unlocked; zones 01-08 gate behind catalog item ids below -- actual day-mapping is ORACLE's call at Gate D, not fixed here.",
+    "catalogItemIds": {
+      "01": "skate_spot_big_stairs", "02": "skate_spot_handrail", "03": "skate_spot_manual_pad",
+      "04": "skate_spot_bank", "05": "skate_spot_gap", "06": "skate_spot_curb_cut",
+      "07": "skate_spot_quarterpipe", "08": "skate_spot_rooftops"
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "_readme": "Every player-facing string in the SKATE client, by slot id. games/skate.html references strings ONLY by these ids -- never a literal. QUILL owns tone-lock: encouraging, concrete, no hype-slogan language ('EPIC', 'LEGENDARY', exclamation-point stacking). Money copy follows the same honest-ledger register as public/pricing.html elsewhere in this repo: say exactly what something costs and what it isn't, never oversell. LAW: 'trophy, not investment; Sparks, never cash' -- no string anywhere may imply cash-out, investment return, or guaranteed value.",
+
+  "portal": {
+    "dome_label": "SKATE",
+    "hub_tagline": "Nine spots. Blind picks. Every attempt films.",
+    "enter_cta": "Drop In"
+  },
+
+  "hub": {
+    "roster_prompt": "Pick your rider",
+    "roster_sub": "Cosmetic only for now -- every rider plays identically until boards and decals unlock.",
+    "spots_title": "The Spots",
+    "spot_locked": "Locked -- unlocks on a streak day",
+    "fuel_label": "Fuel",
+    "streak_label": "Streak",
+    "shop_cta": "Shop"
+  },
+
+  "buy_in": {
+    "prompt": "Buy in for {amount} Sparks",
+    "confirm_cta": "Skate for {amount}",
+    "insufficient": "You need {amount} Sparks to skate this table -- top up in the shop.",
+    "rematch_prompt": "Run it back for {amount} Sparks?",
+    "rematch_cta": "Run It Back"
+  },
+
+  "pick_toast": {
+    "locked_in": "Locked in. Waiting on the other rider…",
+    "waiting_opponent": "Your pick is in. They're still deciding.",
+    "both_in": "Both picks in -- revealing…",
+    "pick_prompt": "Pick your style, blind"
+  },
+
+  "reveal": {
+    "clash_intro": "Reveal…",
+    "same_style": "Same style -- you both ride it clean.",
+    "you_win_clash": "Your style takes it. They bail.",
+    "you_lose_clash": "Their style takes it. You bail.",
+    "letter_taken": "{rider} takes the {letter}."
+  },
+
+  "render_hud": {
+    "filming": "Filming it now—pick your next trick (ETA ~{eta}s)",
+    "flash_ready": "Instant replay ready",
+    "clip_ready": "Clip's in",
+    "clip_failed": "Clip didn't render -- your instant replay still counts",
+    "fuel_empty": "Out of fuel for real clips today -- still playing on instant replay, free, no limit."
+  },
+
+  "match_result": {
+    "win_title": "You win",
+    "lose_title": "S-K-A-T-E",
+    "push_title": "Push",
+    "win_sub": "{opponent} spelled it out first.",
+    "lose_sub": "You spelled the full word first.",
+    "push_sub": "Ran out of spots, even letters -- nobody spelled it."
+  },
+
+  "streak_unlocks": {
+    "day1": "Day 1 streak -- a new board decal is yours.",
+    "day3": "Day 3 streak -- a new trick style variant unlocked.",
+    "day7": "Day 7 streak -- a new spot is open."
+  },
+
+  "errors": {
+    "generic": "Something didn't load right. Try again in a moment.",
+    "match_not_found": "Couldn't find that match -- it may have ended.",
+    "already_picked": "You already locked in this round.",
+    "not_your_seat": "This isn't your table.",
+    "disconnected": "Connection dropped -- reconnecting…"
+  },
+
+  "wallet_consent": {
+    "connect_prompt": "Connect a wallet? Optional -- guests can skate under this session's identity.",
+    "connect_cta": "Connect Wallet",
+    "skip_cta": "Play as Guest",
+    "consent_note": "SHADDAI never sees your private key. You sign, we never hold custody.",
+    "no_embed_note": "Wallet connect only happens on the world/dashboard page, never inside an embedded match."
+  },
+
+  "nft_founder": {
+    "earned_only_note": "Founder boards are earned, not bought -- won by placing in a Canyon Cup.",
+    "soulbound_note": "A founder board is yours alone -- it doesn't trade, sell, or transfer.",
+    "not_investment_note": "This is a trophy, not an investment. It pays out nothing and represents no financial return.",
+    "mint_confirm": "Mint your Canyon Cup founder board?",
+    "founder_library_title": "Founder Boards"
+  }
+}

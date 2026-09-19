@@ -1,0 +1,46 @@
+{
+  "_readme": "Locked vocabulary for the SKATE Cinematic Compositor (Master Plan §4). backend/lib/lens-rewriter.js accepts ZERO freeform text (Master Plan §2.8) -- every value a clip prompt can reference has to exist here first. camera_verbs are the SAME vocabulary fal-assets/MASTER-PROMPTS.md already uses (dolly-in/push/pull/truck/crane/orbit/rack-focus/parallax), not a new set, so SKATE clips stay stylistically compatible with the rest of the fal pipeline.",
+
+  "weather": [
+    "clear_grid", "drizzle", "rain", "snow", "sunset_gold", "dawn_cyan", "storm", "heat_haze"
+  ],
+  "weather_note": "ONE weather value is picked per MATCH (a seed at startMatch time), not per clip -- same sky across all 9 rounds, matching Master Plan §4's coherence rule. Re-rolled fresh each new match.",
+
+  "accents": [
+    "confetti", "embers", "rain_streaks", "neon_fog", "lens_flares",
+    "crowd_chatter", "crowd_gasp", "crowd_roar", "silence_drop"
+  ],
+  "accents_note": "May vary per clip (unlike weather) -- picked per resolved attempt, biased by the event type: 'land' favors confetti/crowd_roar/lens_flares, 'bail' favors silence_drop/crowd_gasp. Exact selection weighting is NEXUS's call at Gate A5 wiring, not fixed here.",
+
+  "voice": [
+    "announcer_one_trick", "announcer_callout", "rival_taunt", "coach_encourage"
+  ],
+  "voice_note": "Client-side window.speechSynthesis only (Master Plan §4) -- free at every tier, no celebrity voices, QUILL-authored line pools per id live in copy-bible.json, never generated inline.",
+
+  "camera_verbs": [
+    "dolly-in", "push", "pull", "truck", "crane", "orbit", "rack-focus", "parallax"
+  ],
+  "camera_verbs_note": "Reused verbatim from fal-assets/MASTER-PROMPTS.md's existing MOVE vocabulary -- SKATE does not invent its own camera language.",
+
+  "model_tiers": {
+    "flash": {
+      "cost": "free",
+      "latency": "instant",
+      "render": "CSS/Pixi weather overlay composited over an instant, always-resolving flash-tier replay (no Fal call at all)",
+      "gate": "always available -- clipEligible is never required for flash"
+    },
+    "fuel": {
+      "cost": "1 fuel/day-grant OR 15 Sparks/clip once fuel is spent",
+      "latency": "seconds (image-to-video)",
+      "render": "image-to-video, scene plate + camera verb composed into ONE prompt per attempt",
+      "gate": "clipEligible = FAL configured && fuel>0 (Master Plan §2.3)"
+    },
+    "premium": {
+      "cost": "TBD at Gate B9 -- 'cheapest decent' rule, priced after ONE real measured generation",
+      "latency": "seconds-to-low-tens-of-seconds depending on FAL_VIDEO_MODEL",
+      "render": "text/video via env-swappable FAL_VIDEO_MODEL (default fal-ai/kling-video/v1.6/standard/text-to-video per backend/video-providers.js), full camera grammar + voice",
+      "gate": "clipEligible && premium currency (post-Gate-B9 pricing decision)"
+    }
+  },
+  "model_tiers_note": "Every attempt films (Master Plan §2.2, owner-locked, ~18 clips/match) -- the tier ladder controls WHICH renderer produces that clip, never whether one exists. The game must fully resolve on 'flash' alone with zero Fal credits (Master Plan §2.3, hard requirement, verified at Gate B8 with FAL_KEY absent)."
+}

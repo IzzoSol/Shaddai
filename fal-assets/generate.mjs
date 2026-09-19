@@ -26,6 +26,17 @@ const SPINE_PIXEL =
   "Isometric pixel-art, clean 2:1 tile projection, crisp anti-aliased edges, palette-locked colors " +
   "(emerald #00ff9c, gold #e8c45c, cyan #5fe0ff, obsidian #06080b, stone-grey #6b7280, deep-teal #0f3d3e). " +
   "Single light source upper-left 45 degrees, soft ambient occlusion, no gradient banding, game-ready spritesheet quality. ";
+// SKATE spine (fal-assets/skate/SKATE-ART-BIBLE.md §0) -- separate from the
+// pixel-world/cinematic spines above: Tron-grid x Samurai Jack neon street,
+// full-color vibrant palette on near-black (not the obsidian/emerald/gold
+// world palette), 3-band cel shading, not isometric.
+const SPINE_SKATE =
+  "Tron-grid neon street style fused with Samurai Jack graphic minimalism. Vibrant, saturated " +
+  "full-color palette (hot magenta, electric cyan, acid lime, deep violet, gold) glowing against " +
+  "near-black #0a0612 negative space. Bold, uniform-width black outlines on every shape. Flat " +
+  "cel-shaded coloring in exactly three tonal bands per surface (base, mid-shadow, dark-shadow) -- " +
+  "no soft gradients, no photorealistic rendering, no painterly blending. Clean vector-poster " +
+  "composition, dynamic action silhouettes, no text, no watermark. ";
 const NEG =
   "text, watermark, signature, logo, UI, letters, caption, low-res, jpeg artifacts, blurry, muddy, oversaturated, " +
   "garish rainbow, cartoon, childish, clip-art, stock-photo lighting, flat lighting, washed out, " +
@@ -50,7 +61,8 @@ function dataUri(path) {
 
 // ── build a fal request from a manifest job ───────────────────────────────
 function buildRequest(job) {
-  const spine = job.register === 'raw' ? '' : job.register === 'pixel' ? SPINE_PIXEL : SPINE_CINEMATIC;
+  const spine = job.register === 'raw' ? '' : job.register === 'pixel' ? SPINE_PIXEL
+    : job.register === 'skate' ? SPINE_SKATE : SPINE_CINEMATIC;
   const prompt = `${spine}${job.body} Negative: ${NEG}.`;
   const input = { prompt, num_images: 1 };
   if (job.size) input.image_size = job.size;              // e.g. "square_hd", "landscape_16_9"
