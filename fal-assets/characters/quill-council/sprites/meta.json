@@ -1,0 +1,24 @@
+{
+  "rawPxPerModelUnit": 204.8,
+  "cell": 512,
+  "clips": [
+    {
+      "clip": "walking",
+      "fitScale": 0.535059331175836,
+      "cropW": 583,
+      "cropH": 927
+    },
+    {
+      "clip": "running",
+      "fitScale": 0.5385450597176982,
+      "cropW": 536,
+      "cropH": 921
+    },
+    {
+      "clip": "action",
+      "fitScale": 0.4397163120567376,
+      "cropW": 697,
+      "cropH": 1128
+    }
+  ]
+}

@@ -33,9 +33,10 @@ const ROOT = resolve(__dirname, '..');
 const BASE_URL = 'http://localhost:8899';
 
 const CLIPS = ['walking', 'running', 'action'];
-const RAW_SIZE = 512;   // raw safe-zoomed render size
+const RAW_SIZE = 2048;  // raw safe-zoomed render size (4x the cell: crisp after fit-scaling)
 const OUT_SIZE = 512;   // final per-frame sprite cell size
-const PAD = 24;          // px padding around the trimmed union box
+const PAD = 24 * 4;      // px padding around the trimmed union box (raw pixels)
+const FIT_MARGIN = 16;   // px kept clear inside the final cell          // px padding around the trimmed union box
 
 async function captureRawFrames(page, name, clip, framesPerClip) {
   const glbPath = `../characters/${name}/${name}-${clip}.glb`;
@@ -82,9 +83,16 @@ async function processClip(frames, name, clip, outDir) {
   const cropW = right - left;
   const cropH = bottom - top;
 
+  let fitScale = 1;
   const finalFrames = [];
   for (let i = 0; i < frames.length; i++) {
-    const cropped = await sharp(frames[i]).extract({ left, top, width: cropW, height: cropH }).toBuffer();
+    // Fit the union box to the cell (uniform scale, bottom-anchored). RAW is
+    // 4x oversampled so this only ever DOWNscales = crisp. Characters used to
+    // fill ~45% of the cell at 512 raw; now they fill it.
+    const fit = Math.min((OUT_SIZE - 2 * FIT_MARGIN) / cropW, (OUT_SIZE - FIT_MARGIN) / cropH);
+    fitScale = fit;
+    const cropped = await sharp(frames[i]).extract({ left, top, width: cropW, height: cropH })
+      .resize({ width: Math.round(cropW * fit), height: Math.round(cropH * fit), kernel: 'lanczos3' }).toBuffer();
     const framed = await sharp({
       create: { width: OUT_SIZE, height: OUT_SIZE, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
     }).composite([{ input: cropped, gravity: 'south' }]).png().toBuffer();
@@ -98,7 +106,8 @@ async function processClip(frames, name, clip, outDir) {
   }).composite(composites);
   const stripPath = resolve(outDir, `${name}-${clip}-strip.png`);
   await strip.png().toFile(stripPath);
-  console.log(`   saved strip: ${stripPath} (${finalFrames.length} frames, ${OUT_SIZE}x${OUT_SIZE} each, union-cropped ${cropW}x${cropH})`);
+  console.log(`   saved strip: ${stripPath} (${finalFrames.length} frames, ${OUT_SIZE}x${OUT_SIZE} each, union-cropped ${cropW}x${cropH} raw, fit x${fitScale.toFixed(3)})`);
+  return { clip, fitScale, cropW, cropH };
 }
 
 async function main() {
@@ -117,12 +126,15 @@ async function main() {
   await page.setViewport({ width: RAW_SIZE, height: RAW_SIZE });
   await page.goto(`${BASE_URL}/spike/sprite-capture.html`, { waitUntil: 'load' });
 
+  const meta = [];
   for (const clip of CLIPS) {
     console.log(`  ${clip}...`);
     const frames = await captureRawFrames(page, name, clip, framesPerClip);
     if (!frames) continue;
-    await processClip(frames, name, clip, outDir);
+    meta.push(await processClip(frames, name, clip, outDir));
   }
+  // px per normalized model unit in the raw render = RAW/(2*FRAME_HALF); FRAME_HALF=5.0 in sprite-capture.html
+  writeFileSync(resolve(outDir, 'meta.json'), JSON.stringify({ rawPxPerModelUnit: RAW_SIZE / 10, cell: OUT_SIZE, clips: meta }, null, 2));
 
   await browser.close();
   console.log(`\n✔ Done. Sprite sheets in fal-assets/characters/${name}/sprites/`);
