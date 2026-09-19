@@ -64,6 +64,8 @@ html::after{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
   font-size:11px; font-weight:700; letter-spacing:.08em; padding:4px 9px; border-radius:3px;
   box-shadow:inset 0 0 12px rgba(232,196,92,.06); white-space:nowrap; }
 #ticker{ color:var(--ink-soft); text-shadow:0 1px 2px rgba(0,0,0,.6); }
+#ttrack{ position: relative; width: 200%; animation: ticker 180s linear infinite; }
+@keyframes ticker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
 
 /* ── header ────────────────────────────────────────────────────────────── */
 header{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -672,8 +674,9 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
   <div class="view on" id="v-list"></div>
   <div class="view" id="v-bub"><div id="bubbles"><canvas id="bcv"></canvas></div></div>
   <div class="view" id="v-heat"><div class="heat" id="heatGrid"></div></div>
-  <div class="view" id="v-rank"></div>
-  <div class="view" id="v-swarm">
+<div class="view" id="v-rank"></div>
+<div class="view" id="v-pulse"></div>
+<div class="view" id="v-swarm">
     <div class="swarm-ch"><b>TU FISH SWARM</b>
       <span class="sc-note">7-agent sentiment consensus &#183; real TuFish news + market</span>
       <a class="sc-full" href="/mirofish-terminal.html" target="_blank" rel="noopener">Full Terminal &#8212;</a>
@@ -1161,7 +1164,43 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
         }
       });
       if (++steps < 80) bub.raf = requestAnimationFrame(relax);
-    })();
+function renderPulse() {
+    var box = $('v-pulse'); if (!box) return;
+    var pulseCache = { items: [], t: 0 };
+    var pulseRender = function () {
+      fetch('/api/signals/calls?limit=30&all=1', { signal: AbortSignal.timeout(8000) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) return;
+          pulseCache.items = (d.items || []).slice().reverse();
+          pulseCache.t = Date.now();
+          renderPulseUI();
+        })
+        .catch(function () {});
+    };
+    setInterval(pulseRender, 5000);
+    pulseRender();
+
+    function renderPulseUI() {
+      var html = '';
+      pulseCache.items.slice(0, 20).forEach(function (c, i) {
+        var m = c.mult || 1, side = m > 1 ? 'long' : m < 1 ? 'short' : 'flat';
+        var sym = esc(c.symbol || c.name || '?'), multF = (m >= 1 ? m.toFixed(2) + 'x' : (m > 0 ? (m * 100).toFixed(1) + '%' : '—'));
+        var chg = c.chg24 != null ? (c.chg24 >= 0 ? '+' : '') + Math.round(c.chg24) + '%' : '—';
+        var when = c.ts ? new Date(c.ts).toLocaleTimeString() : '—';
+        html += '<div class="pcall" style="animation:pulseIn .2s ' + (i * .08) + 's forwards;background:rgba(255,255,255,.08);border-radius:6px;margin:4px 0;padding:6px 10px;">' +
+          '<span class="pulse-sym">' + sym + '</span>' +
+          '<span class="pulse-mult">' + multF + '</span>' +
+          '<span class="pulse-chg">' + chg + '</span>' +
+          '<span class="pulse-time">' + when + '</span>' + '</div>';
+      });
+      if (!html) html = '<div class="empty">No live calls — signals still flowing.</div>';
+      box.innerHTML = html + '<div class="pulse-live">Scanning: <span id="pulseCount">0</span> calls this interval</div>';
+      $('pulseCount').textContent = pulseCache.items.length;
+    }
+  }
+
+})();
   }
   $('bcv').addEventListener('click', function (e) {
     var r = this.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
@@ -1181,9 +1220,9 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
     $('cE').textContent = P.social === 'tw' ? 'with 𝕏' : P.social === 'any' ? 'with socials'
                         : P.social === 'none' ? 'no socials' : '';
     $('liveN').textContent = VIEW.length;
-    ['list', 'bub', 'heat', 'rank'].forEach(function (m) { $('v-' + m).classList.toggle('on', m === P.mode); });
+    ['list', 'bub', 'heat', 'rank', 'pulse'].forEach(function (m) { $('v-' + m).classList.toggle('on', m === P.mode); });
     if (P.mode === 'list') renderList(); else if (P.mode === 'rank') renderRank();
-    else if (P.mode === 'heat') renderHeat(); else renderBub();
+    else if (P.mode === 'heat') renderHeat(); else if (P.mode === 'pulse') renderPulse(); else renderBub();
     tickRows();
   }
 
