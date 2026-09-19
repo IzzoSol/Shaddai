@@ -670,7 +670,6 @@ function initHubWorld() {
   // a real walkway between the plaza and the building row (not scattered).
   const STREET_RING_R = 14;
   const STREET_COUNT = 12;
-  const streetProps = []; // filled in once the models load, below
 
   // ── Plaza skatepark: the ramp/rail obstacles arranged as an actual mini
   // course inside the clear plaza radius -- two ramps facing each other
@@ -735,7 +734,7 @@ function initHubWorld() {
   // ── Player: the actually-picked rider .glb, real WASD/arrow third-person
   // control, camera trailing behind with a damped follow (no snapping).
   const player = new THREE.Group();
-  player.position.set(0, 0, 6);
+  player.position.set(0, 0, 0); // dead center of the plaza skatepark -- clear of both ramps (z=+-8) and both rails (x=+-6)
   scene.add(player);
   let playerMixer = null;
 
@@ -745,7 +744,14 @@ function initHubWorld() {
   loader.load(picked.model, (gltf) => {
     const model = gltf.scene;
     normalizeHeight(model, RIDER_HEIGHT_M);
-    model.rotation.y = Math.PI; // face away from the default camera-behind position
+    // BUG FIX: this used to force rotation.y = Math.PI, which pointed the
+    // rider's FACE at the camera -- i.e. backward relative to travel, since
+    // updatePlayer()'s movement direction is (sin(yaw),0,cos(yaw)), the same
+    // +Z-forward convention this rigged model already uses unrotated. That
+    // made forward (W) walking look like moonwalking. No extra rotation:
+    // the model's native forward now matches the movement direction, so the
+    // rider's back is to the camera while skating forward, standard
+    // third-person convention.
     player.add(model);
     if (gltf.animations && gltf.animations.length) {
       playerMixer = new THREE.AnimationMixer(model);
@@ -877,7 +883,6 @@ function initHubWorld() {
     renderer.render(scene, camera);
   }
   animate();
-  window.__skateDebug = { keys, matchActive: () => matchActive, playerPos: () => player.position.toArray() }; // temp, removed before ship
 
   // ── Real match flow -- backed by THIS session's own backend work
   // (bot-seat auto-fill + the pack-mislabeling fix), not a client-side
