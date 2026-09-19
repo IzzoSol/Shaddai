@@ -3,7 +3,7 @@ const puppeteer=require('puppeteer');
 const p=await b.newPage();await p.setViewport({width:1280,height:720});
 const errs=[];p.on('pageerror',e=>errs.push('PAGEERR '+e.message.slice(0,200)));p.on('console',m=>{const t=m.text();if(m.type()==='error'||/warn|fail/i.test(t))errs.push(m.type()+': '+t.slice(0,160))});
 await p.goto('http://localhost:3000/world3d.html',{waitUntil:'domcontentloaded'});
-let ready=false;for(let i=0;i<70;i++){await new Promise(r=>setTimeout(r,2000));ready=await p.evaluate(()=>document.querySelector('#loading').hidden===true).catch(()=>false);if(ready)break;}
+let ready=false;for(let i=0;i<180;i++){await new Promise(r=>setTimeout(r,2000));ready=await p.evaluate(()=>document.querySelector('#loading').hidden===true).catch(()=>false);if(ready)break;}
 console.log('ready:',ready,'msg:',await p.evaluate(()=>document.querySelector('#loadmsg').textContent).catch(()=>'?'));
 await new Promise(r=>setTimeout(r,3500));
 await p.screenshot({path:'fal-assets/spike/w3d-1.png'});

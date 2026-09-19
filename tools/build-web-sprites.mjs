@@ -13,10 +13,10 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CELL = 256, FRAMES = 8;
 // game id -> capture source dir (oracle uses the skin-guided rebuild)
 const MAP = {
-  zerox: 'zerox-council', quill: 'quill-council', oracle: 'oracle-c2', turtle: 'turtle-council',
+  zerox: 'zerox-council', quill: 'quill-council', oracle: 'oracle-c2', turtle: 'turtle-council', nexus: 'nexus-council', pikadon: 'pikadon-council', shaddai: 'shaddai-council',
   leadr: 'leadr', gaeli: 'gaeli',
 };
-const NAMES = { zerox: 'ZEROX', quill: 'QUILL', oracle: 'ORACLE', turtle: 'TURTLE', leadr: 'Leadr', gaeli: 'Gaeli' };
+const NAMES = { zerox: 'ZEROX', quill: 'QUILL', oracle: 'ORACLE', turtle: 'TURTLE', nexus: 'NEXUS', pikadon: 'PIKADON', shaddai: 'SHADDAI', leadr: 'Leadr', gaeli: 'Gaeli' };
 const outRoot = join(ROOT, 'public/assets/characters');
 const index = [];
 for (const [id, src] of Object.entries(MAP)) {

@@ -631,6 +631,7 @@ function makePortal(pos, ry, col) {
 
 /* ───────────────────────── boot ───────────────────────── */
 (async function boot() {
+  try {
   buildTerrain(); buildOcean(); buildVolcano(); buildInterior(); tick('terrain'); loadSave();
   // characters + shared clips
   await Promise.all([
@@ -641,6 +642,9 @@ function makePortal(pos, ry, col) {
   const startHero = charSrc[save.hero] ? save.hero : (charSrc.zerox ? 'zerox' : Object.keys(charSrc)[0]); citySky = save.sky || 'dusk';
   spawnPlayer(startHero, new THREE.Vector3(save.x || 0, 0, save.z || 14)); syncRealm(true);
   // city layout (landmarks around the plaza; futuristic only)
+  // download every model in parallel first (browser cache), then place them in order -- much faster than serial loads
+  { const names = ['bld-neon-observatory','bld-sky-dome-v2','bld-sea-terrace-spire','bld-inverted-cube-hab','bld-bio-pod-tower-v2','bld-holo-market-v2','tower-crescent2','castle-siege','transit-cliff-elevator','vehicle-mining-powerarmor','transit-hyperloop-gate','transit-hyperloop-capsule','transit-skyrail-pod','mount-forge-bull','mount-glacier-mammoth','mount-canopy-gorilla','mount-sky-hawk','veh-hover-pod-green','veh-hover-pod-blue','veh-monowheel-mech','ocean-harbor-hub','ocean-catamaran','ocean-superyacht','ocean-submarine','ocean-skiff','ocean-farm-platform','volcano-fortress','volcano-ritual-circle','volcano-forge-tower','volcano-bridge','volcano-gate','volcano-dragon'];
+    $('#loadmsg').textContent = 'downloading world…'; await Promise.all(names.map((n) => fetch(`assets/models/${n}.glb`).then((r) => r.arrayBuffer()).catch(() => 0))); }
   const L = [
     ['bld-neon-observatory', { x: -42, z: -34, h: 30, r: 5.5, ry: 0.4 }], ['bld-sky-dome-v2', { x: 45, z: -34, w: 26, r: 11 }],
     ['bld-sea-terrace-spire', { x: -100, z: 20, h: 46, r: 12, ry: 1.2 }], ['bld-inverted-cube-hab', { x: 100, z: 34, h: 36, r: 6 }],
@@ -649,8 +653,6 @@ function makePortal(pos, ry, col) {
     ['transit-cliff-elevator', { x: 130, z: -70, h: 38, r: 3 }], ['vehicle-mining-powerarmor', { x: 420, z: -30, h: 6, r: 3 }],
   ];
   for (const [f, o] of L) { await place(f, o); }
-  gateA = await place('transit-hyperloop-gate', { x: 0, z: 44, h: 7, w: undefined }); if (gateA) makePortal(new THREE.Vector3(0, 3.6, 44), 0, 0x5fe0ff);
-  gateB = await place('transit-hyperloop-gate', { x: 420, z: 14, h: 7, ry: Math.PI }); if (gateB) makePortal(new THREE.Vector3(420, 3.6, 14), Math.PI, 0xff9a4a);
   // gates: city <-> desert/volcano/ocean, each with a return gate
   const gate = async (x, z, ry, to, col) => { const g = await place('transit-hyperloop-gate', { x, z, h: 7, ry }); if (g) makePortal(new THREE.Vector3(x, 3.6, z), ry, col); const l = makeLabel(REALMS[to].name, '#' + col.toString(16).padStart(6, '0'), 1.1); l.position.set(x, 9.5, z); world.add(l); GATES.push({ x, z, to }); };
   await gate(0, 44, 0, 'desert', 0xff9a4a); await gate(-30, 44, 0, 'volcano', 0xff4a1a); await gate(30, 44, 0, 'ocean', 0x4fc3ff);
@@ -692,5 +694,6 @@ function makePortal(pos, ry, col) {
   setTimeout(() => { $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); }, 350);
   window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, enterInterior, leaveInterior, applyPreset, strike, travel, step };
   loop();
+  } catch (e) { console.error('BOOT FAIL', e); $('#loadmsg').textContent = 'boot error: ' + e.message; $('#loadmsg').style.color = '#ff6a6a'; }
 })();
 </script></body></html>

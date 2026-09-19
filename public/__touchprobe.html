@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>probe:boot</title>
+<style>html,body{margin:0;background:#111}#f{border:0;display:block}</style>
+</head><body>
+<iframe id="f" width="390" height="844"></iframe>
+<script>
+const P = new URLSearchParams(location.search);
+const GAME = P.get('g') || 'dodgeball';
+const WAIT = +(P.get('wait') || 4000);
+const R = [];
+function say(){ document.title = 'RESULT|' + GAME + '|' + R.join(' | '); }
+function add(k,v){ R.push(k+'='+v); say(); }
+
+const URLS = {
+  dodgeball: '/games/dodgeball.html',
+  soccer:    '/games/shaddai-soccer.html',
+  xt:        '/games/xt-adventure.html',
+  tactics:   '/games/tactics.html',
+  arena:     '/games/battle-arena.html'
+};
+
+function mkTouch(w, el, id, x, y){
+  return new w.Touch({identifier:id, target:el, clientX:x, clientY:y, pageX:x, pageY:y});
+}
+function fire(w, el, type, touches){
+  const ev = new w.TouchEvent(type, {
+    bubbles:true, cancelable:true,
+    touches: type==='touchend'?[]:touches,
+    targetTouches: type==='touchend'?[]:touches,
+    changedTouches: touches
+  });
+  el.dispatchEvent(ev);
+}
+function overflow(d){
+  let n=0, worst=0;
+  d.querySelectorAll('*').forEach(el=>{
+    const r = el.getBoundingClientRect();
+    if (r.width>0 && r.height>0 && r.right > 391){ n++; worst=Math.max(worst, Math.round(r.right)); }
+  });
+  return n+'(max '+worst+'px)';
+}
+
+(async function(){
+  let html;
+  try { html = await (await fetch(URLS[GAME])).text(); }
+  catch(e){ add('FETCH','FAIL '+e); return; }
+
+  // inject an error collector + a <base> so relative URLs still resolve in srcdoc
+  const inj = '<base href="/games/"><script>window.__errs=[];' +
+    'window.addEventListener("error",function(e){window.__errs.push(String(e.message||e));});' +
+    'window.addEventListener("unhandledrejection",function(e){window.__errs.push("rej:"+e.reason);});' +
+    '<\/script>';
+  html = html.replace(/<head([^>]*)>/i, '<head$1>' + inj);
+
+  const f = document.getElementById('f');
+  f.srcdoc = html;
+
+  setTimeout(function(){
+    let w, d;
+    try { w = f.contentWindow; d = f.contentDocument; }
+    catch(e){ add('SAMEORIGIN','FAIL'); return; }
+
+    add('touchCapable', ('ontouchstart' in w));
+    const errs = (w.__errs||[]).filter(m=>!/unpkg|Failed to fetch|Loading|NetworkError/i.test(m));
+    add('jsErrors', errs.length ? JSON.stringify(errs.slice(0,3)) : '0');
+    add('overflow', overflow(d));
+
+    const pad = d.getElementById('shd-tc');
+    const dpad = d.getElementById('dpad');
+
+    if (GAME === 'tactics'){
+      add('dpadPresent', !!dpad);
+      add('dpadVisible', dpad ? w.getComputedStyle(dpad).display : 'n/a');
+      add('gridTouchAction', d.getElementById('grid') ? w.getComputedStyle(d.getElementById('grid')).touchAction : 'n/a');
+      const sideDisp = d.querySelector('.battle-side') ? w.getComputedStyle(d.querySelector('.battle-side')).display : 'n/a';
+      add('actionPanelDisplay', sideDisp);
+      const acts = d.querySelectorAll('.act-btn');
+      let small=0; acts.forEach(b=>{ const r=b.getBoundingClientRect(); if(r.height>0 && r.height<44) small++; });
+      add('actBtns', acts.length+' under44='+small);
+      // synthetic touch on the wired d-pad
+      if (dpad){
+        const b = dpad.querySelector('[data-key="d"]');
+        const r = b.getBoundingClientRect();
+        const t = mkTouch(w, b, 1, r.left+10, r.top+10);
+        fire(w, b, 'touchstart', [t]);
+        fire(w, b, 'touchend', [t]);
+        add('dpadFired', w.__TACTICS_LAST_TOUCH_KEY || 'NONE');
+      }
+      // tap-to-select on the battle canvas: confirm the handler is bound
+      const gc = d.getElementById('grid');
+      let tapped = 'n/a';
+      if (gc && w.tactics){
+        try {
+          w.tactics.deployBattle && w.tactics.deployBattle();
+          setTimeout(()=>{}, 0);
+        } catch(e){}
+      }
+      add('canvasTouchHandler', gc ? 'bound(see source)' : 'no-canvas');
+      return;
+    }
+
+    if (GAME === 'arena'){
+      // battle-arena is a pure DOM click UI - no canvas, no keyboard movement
+      add('canvases', d.querySelectorAll('canvas').length);
+      const picks = d.querySelectorAll('.apick');
+      let small=0; picks.forEach(b=>{const r=b.getBoundingClientRect(); if(r.height>0&&r.height<44) small++;});
+      add('agentPicks', picks.length+' under44='+small);
+      const sk = d.querySelectorAll('.skill');
+      let sksmall=0; sk.forEach(b=>{const r=b.getBoundingClientRect(); if(r.height>0&&r.height<44) sksmall++;});
+      add('skillRows', sk.length+' under44='+sksmall);
+      const fb = d.querySelector('.fightbtn');
+      add('fightBtnH', fb ? Math.round(fb.getBoundingClientRect().height) : 'none');
+      // tap an agent card and see whether selection state actually changes
+      if (picks.length){
+        const before = d.querySelectorAll('.apick.sel').length;
+        const el = picks[1] || picks[0];
+        const r = el.getBoundingClientRect();
+        const t = mkTouch(w, el, 1, r.left+5, r.top+5);
+        fire(w, el, 'touchstart', [t]);
+        fire(w, el, 'touchend', [t]);
+        el.click();  // taps produce a real click on mobile
+        add('tapSelectsAgent', d.querySelectorAll('.apick.sel').length !== before || el.classList.contains('sel'));
+      }
+      return;
+    }
+
+    // ---- action games (dodgeball / soccer / xt) ----
+    add('padPresent', !!pad);
+    if (!pad) return;
+    const api = w.__DB_TOUCH || w.__SOC_TOUCH || w.__XT_TOUCH;
+    add('apiHandle', !!api);
+    if (!api) return;
+
+    const stick = pad.querySelector('.shd-stick');
+    const btns = pad.querySelectorAll('.shd-btn');
+    add('btnCount', btns.length);
+    let small=0; btns.forEach(b=>{const r=b.getBoundingClientRect(); if(r.width<44||r.height<44) small++;});
+    const sr = stick.getBoundingClientRect();
+    add('under44', small + ' stick=' + Math.round(sr.width) + 'x' + Math.round(sr.height));
+
+    // --- stick: drag right, read the game's OWN keys{} map ---
+    const cx = sr.left + sr.width/2, cy = sr.top + sr.height/2;
+    const kn = api.keyNames;
+    const before = JSON.stringify([api.keys[kn.right], api.keys[kn.up]]);
+    let t1 = mkTouch(w, stick, 11, cx, cy);
+    fire(w, stick, 'touchstart', [t1]);
+    t1 = mkTouch(w, stick, 11, cx + sr.width, cy);
+    fire(w, stick, 'touchmove', [t1]);
+    const afterRight = !!api.keys[kn.right];
+    // --- multi-touch: press a button with a SECOND finger while the stick is held ---
+    const b0 = btns[0];
+    const br = b0.getBoundingClientRect();
+    const t2 = mkTouch(w, b0, 22, br.left+10, br.top+10);
+    fire(w, b0, 'touchstart', [t2]);
+    const actDown = api.lastAction;
+    const stickStillRight = !!api.keys[kn.right];
+    fire(w, b0, 'touchend', [t2]);
+    const actUp = api.lastAction;
+    const stickStillRight2 = !!api.keys[kn.right];
+    // --- diagonal up-left, then release ---
+    let t3 = mkTouch(w, stick, 11, cx - sr.width, cy - sr.width);
+    fire(w, stick, 'touchmove', [t3]);
+    const upLeft = [!!api.keys[kn.up], !!api.keys[kn.left]].join(',');
+    fire(w, stick, 'touchend', [t3]);
+    const released = [!!api.keys[kn.up], !!api.keys[kn.left], !!api.keys[kn.right]].join(',');
+
+    add('keysBefore', before);
+    add('stickRight', afterRight);
+    add('stickDiagUpLeft', upLeft);
+    add('stickReleaseClears', released);
+    add('btnAction', actDown + '/' + actUp);
+    add('btnErr', api.lastError || 'none');
+    add('multiTouchHeld', stickStillRight + ',' + stickStillRight2);
+
+    // hold-buttons that write directly into the game's keys map
+    const holdIdx = { soccer: [0,1], xt: [5] }[GAME];
+    if (holdIdx){
+      const res = [];
+      holdIdx.forEach(i=>{
+        const b = btns[i]; if(!b) return;
+        const r2 = b.getBoundingClientRect();
+        const tt = mkTouch(w, b, 33, r2.left+10, r2.top+10);
+        fire(w, b, 'touchstart', [tt]);
+        const k = GAME==='soccer' ? (i===0?' ':'shift') : 'shift';
+        const on = !!api.keys[k];
+        fire(w, b, 'touchend', [tt]);
+        const off = !!api.keys[k];
+        res.push(b.dataset.act + ':' + k.trim() + '=' + on + '->' + off);
+      });
+      add('holdKeys', res.join(';'));
+    }
+
+    const cv = d.querySelector('canvas');
+    add('canvasTouchAction', cv ? w.getComputedStyle(cv).touchAction : 'none-found');
+    add('bodyScrollWidth', d.documentElement.scrollWidth);
+  }, WAIT);
+})();
+</script>
+</body></html>

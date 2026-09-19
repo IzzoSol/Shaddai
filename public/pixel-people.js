@@ -250,7 +250,7 @@ window.PixelPeople = (function () {
     { office:'zerox',   rig:{suit:'#3a2a1a',cap:'#00c8ff',tie:'#00c8ff',emblem:'#00c8ff',skin:'#caa06f'} },
     { office:'pikadon', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'} },
   ];
-  const COUNCIL_SPRITES = { zerox:'zerox', quill:'quill', oracle:'oracle', turtle:'turtle' };   // painted rigs built so far
+  const COUNCIL_SPRITES = { zerox:'zerox', quill:'quill', oracle:'oracle', turtle:'turtle', nexus:'nexus', pikadon:'pikadon', shaddai:'shaddai' };   // painted rigs built so far
   OFFICE_LEADS.forEach(function(o, i){
     const rig = Object.assign({}, o.rig, { name:'Council', office:o.office, __phase:(100+i)*0.37 });
     if (COUNCIL_SPRITES[o.office]) rig.sprite = COUNCIL_SPRITES[o.office];

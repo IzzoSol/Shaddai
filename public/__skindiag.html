@@ -1,0 +1,43 @@
+<!doctype html><meta charset="utf-8"><title>skindiag</title>
+<style>html,body{margin:0;background:#fff;color:#000;font:11px monospace}
+iframe{position:absolute;left:-9999px;width:1440px;height:1000px;border:0}
+#out{white-space:pre;padding:8px}</style>
+<div id="out">…</div>
+<script>
+var s=(location.search.match(/s=([a-z]+)/)||[])[1]||'brutalist';
+try{localStorage.setItem('shd_theme_skin',s);localStorage.setItem('shaddai_onboarded','1');localStorage.setItem('shd_skin_dock_min','1');}catch(e){}
+var f=document.createElement('iframe');f.src='/dashboard?nc='+Date.now();document.body.appendChild(f);
+function lum(c){var m=(c||'').match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/);if(!m)return null;
+ if(m[4]!==undefined&&parseFloat(m[4])<0.35)return null;
+ return (0.2126*+m[1]+0.7152*+m[2]+0.0722*+m[3])/255;}
+setTimeout(function(){
+ try{f.contentWindow.setThemeSkin(s);}catch(e){}
+ setTimeout(step2,2500);
+},14000);
+function step2(){
+ var d=f.contentDocument,w=f.contentWindow,rows=[];
+ var all=d.querySelectorAll('body *');
+ for(var i=0;i<all.length;i++){var el=all[i];
+  var r=el.getBoundingClientRect(); if(r.width<70||r.height<24) continue;
+  if(el.closest('#shdSkinDock,#ly-intro,#shaddai-boot-overlay')) continue;
+  var cs=w.getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden') continue;
+  var bl=lum(cs.backgroundColor); var bi=cs.backgroundImage!=='none';
+  if(bl===null&&!bi) continue;
+  if(bl!==null&&bl<0.35){
+    rows.push('DARKBG '+el.tagName+'#'+(el.id||'')+'.'+(el.className&&el.className.baseVal===undefined?String(el.className).split(' ').slice(0,3).join('.'):'')+' bg='+cs.backgroundColor+' inline='+(el.style.backgroundColor||el.style.background?'Y':'n')+' painted='+(el.hasAttribute('data-skin-painted')?'Y':'n')+' '+Math.round(r.width)+'x'+Math.round(r.height));
+  }
+ }
+ // light-bg elements with light text
+ var bad=[];
+ for(var i=0;i<all.length;i++){var el=all[i];
+  if(!el.children.length&&el.textContent.trim().length>1){
+   var cs=w.getComputedStyle(el); var tl=lum(cs.color);
+   var p=el,pb=null; while(p&&p!==d.body){var pc=w.getComputedStyle(p).backgroundColor;var l=lum(pc);if(l!==null){pb=l;break;}p=p.parentElement;}
+   if(pb===null)pb=lum(w.getComputedStyle(d.body).backgroundColor);
+   if(tl!==null&&pb!==null&&Math.abs(tl-pb)<0.30){var r=el.getBoundingClientRect();if(r.width>10&&r.height>6)
+     bad.push('LOWCON <'+el.tagName+'> "'+el.textContent.trim().slice(0,24)+'" fg='+cs.color+' bgl='+pb.toFixed(2));}
+  }
+ }
+ document.getElementById('out').textContent='SKIN='+d.documentElement.getAttribute('data-theme-skin')+'\nbodyBG='+w.getComputedStyle(d.body).backgroundColor+'\n\n'+rows.slice(0,70).join('\n')+'\n\n'+bad.slice(0,60).join('\n');
+}
+</script>

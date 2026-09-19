@@ -1,0 +1,12 @@
+<!doctype html><meta charset=utf-8><title>shot</title><script>
+var q=new URLSearchParams(location.search), s=q.get('skin')||'glitch';
+try{
+ localStorage.setItem('shaddai_onboarded','1');
+ localStorage.setItem('shd_onboarded','true');
+ localStorage.setItem('shd_gamedata_clear_v3','1');
+ localStorage.setItem('shd_skin_dock_min','1');
+ if(s==='none'){localStorage.removeItem('shd_theme_skin');localStorage.removeItem('shaddai_skin');}
+ else {localStorage.setItem('shd_theme_skin',s);localStorage.setItem('shaddai_skin',s);}
+}catch(e){}
+location.replace('/dashboard');
+</script>
