@@ -1,0 +1,10 @@
+[
+ {
+  "id": "W6b-city-crescent-tower-asset",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Render a single, isolated game asset: a colossal crescent-shaped megatower composed of pale steel and glass rendered as opaque matte panels with thin dark edge outlines. The concave face features three massive stacked terraces, each cantilevered outward, supported by thick angular truss brackets and enclosed by solid glass balustrades. The convex side displays a ribbed, curved spine crowned by a tall vertical glass fin and a small rooftop mast with a few thick antennas. The tower rises from a wide, low, disc-shaped transit podium crossed by sleek solid skybridge arches with thin neon accent strips at podium level only. Full structure from base to antenna in a straight-on three-quarter elevation, camera slightly above, centered against a plain flat light-grey backdrop. Soft even three-point lighting, low-contrast shadows, no environment reflections, no people, vehicles, text, logos or clouds. A solid opaque silhouette, not a hollow ring. Avoid: transparent glass, thin wires, background scenery, sky, interior hollows, harsh shadows.",
+  "out": "fal-assets/world/concepts/W6b-city-crescent-tower-asset.png"
+ }
+]

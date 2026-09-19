@@ -114,7 +114,7 @@ async function main() {
   const actionIds = actionIdsArg ? actionIdsArg.split(',').map((s) => parseInt(s.trim(), 10)) : null;
 
   const key = falKey();
-  const outDir = `fal-assets/characters/${name}`;
+  const outDir = process.env.OUTDIR || `fal-assets/characters/${name}`;
 
   if (useM6) {
     console.log(`▶ meshy v6 pipeline for "${name}" -- $0.80 (mesh + T-pose + rig + animation, ${heightM} m)`);
@@ -123,6 +123,8 @@ async function main() {
       enable_pbr: true, symmetry_mode: 'auto', enable_animation: !!actionIds, target_polycount: 30000,
     };
     if (actionIds) input.animation_action_id = actionIds[0];
+    // --static : buildings/props/landmarks -- no rig, no T-pose (OUTDIR env chooses the folder)
+    if (argv.includes('--static')) { input.enable_rigging = false; input.enable_animation = false; input.pose_mode = ''; delete input.animation_action_id; }
     // Skin-tone fidelity: v6 texturing can lighten skin. --guide-texture feeds the reference back as texture guidance;
     // M6_TEXTURE_PROMPT adds an explicit instruction (e.g. "deep brown skin tone, do not lighten").
     if (argv.includes('--guide-texture')) input.texture_image_url = dataUri(imagePath);

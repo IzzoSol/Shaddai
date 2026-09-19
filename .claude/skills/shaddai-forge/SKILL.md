@@ -83,3 +83,11 @@ Deeper background, if the gotchas don't cover it:
 - **Confirm visual direction before building anything non-trivial.** The owner
   would rather approve a concept than pay for a finished thing they didn't want.
 - Default to **tall, real proportions** (7–8 heads). Chibi is opt-in now.
+
+## Updated pipeline (2026-09-19) — use this, it supersedes the Hunyuan route above
+
+**Engine:** Meshy v6 (`--meshy6`, $0.80, mesh + T-pose + rig + animation + real height). Hunyuan v2 + rigging is $0.96 and gives blank faces. Static objects: `--static` (buildings/props/landmarks, no rig) with `OUTDIR=fal-assets/world/assets/<name>`.
+
+**Asset workflow (owner-mandated):** 1) I describe the reference → 2) `shaddai_quill` writes the master image prompt → 3) `shaddai_turtle` gives the 3D-readiness checklist (solid opaque silhouette, plain grey background, soft even light, no transparent glass, thick trusses, no sky/foreground, single isolated object) → 4) `generate.mjs` batch → look at the image → 5) `character-pipeline.mjs ... --meshy6 [--static]` → 6) render it (`objshot.mjs` / `headshot.mjs` / `capture-sprites.mjs`) and LOOK before calling it done → 7) `shaddai_run_agent agent=SHADDAI` decides which realm/where it goes; record in `fal-assets/refs/world/WORLD-REF-MAP.md`.
+
+**Hard-won rules:** (a) Never feed a *scene* or a view-from-below plate to image-to-3D — it meshes literally (a ring-shaped tower became an empty hoop). Isolated object, full base-to-top, straight-on 3/4 view. (b) Check the FACE close-up (`headshot.mjs`) and skin tone against the reference — v6 texturing can lighten skin; `--guide-texture` + `M6_TEXTURE_PROMPT` improves it but is not a full fix yet. (c) Rigging/animation only exists for humanoids; interiors are separate cutaway scenes (isometric cutaway style works great for 2D + lots), building doors/lights are code/shader animation, not Meshy. (d) Run one headless capture at a time. (e) `pose-edit.mjs` (seedream, ~$0.03) turns an approved reference into a T-pose; ask for long horizontal arms + gloved hands.

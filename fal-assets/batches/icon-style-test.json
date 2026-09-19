@@ -1,0 +1,5 @@
+[
+  { "id": "icon-warrior", "type": "text2img", "register": "pixel", "size": "square_hd",
+    "body": "extreme close-up cropped portrait icon of a stylized cartoon knight character's face, big round comic-book eye visible under a low-pulled dark helmet brim, small circular glowing gem earring, bold thick black cartoon outlines, flat solid color shapes with no gradients except one duotone color wash across the whole image in deep gold-amber tones, heavy visible film-grain noise texture overlay across the entire image, minimalist graphic poster style, square crop tightly on the face filling the frame, no text, no logo",
+    "out": "fal-assets/spike/icon-warrior-test.png" }
+]
