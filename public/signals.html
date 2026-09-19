@@ -452,6 +452,41 @@ swarm extra CSS
       }).catch(function () { boot.remove(); });
     });
   }
+  /* ── theme switcher (HF image backgrounds, saved) ── */
+  var THEMES = [
+    { id: 'emerald', name: 'EMERALD', sw: '/img/bg.jpg' },
+    { id: 'signal', name: 'SIGNAL', sw: '/img/sig.jpg' },
+    { id: 'markets', name: 'MARKETS', sw: '/img/mk.jpg' },
+    { id: 'swarm', name: 'SWARM', sw: '/img/swarm.jpg' },
+    { id: 'circuit', name: 'CIRCUIT', sw: '/img/tg.jpg' }
+  ];
+  function applyTheme(t) {
+    try { localStorage.setItem('sh_theme', t); } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    var grid = $('themeGrid'); if (!grid) return;
+    [].forEach.call(grid.querySelectorAll('.ths'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.t === t)); });
+  }
+  function wireTheme() {
+    var wrap = $('themeWrap'), btn = $('themeBtn'), pop = $('themePop'), grid = $('themeGrid');
+    if (!wrap || !btn || !pop || !grid) return;
+    grid.innerHTML = THEMES.map(function (T) {
+      return '<button class="ths" data-t="' + T.id + '" style="background-image:url(' + T.sw + ')" aria-pressed="false">' +
+        '<span>' + T.name + '</span></button>';
+    }).join('');
+    var cur = 'emerald'; try { cur = localStorage.getItem('sh_theme') || 'emerald'; } catch (e) {}
+    applyTheme(cur);
+    grid.addEventListener('click', function (e) {
+      var b = e.target.closest('.ths'); if (!b) return;
+      applyTheme(b.dataset.t);
+      try { pop.hidden = true; } catch (err) {}
+    });
+    btn.addEventListener('click', function () { pop.hidden = !pop.hidden; });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) pop.hidden = true;
+    });
+  }
+  if (!document.documentElement.hasAttribute('data-theme')) applyTheme('emerald');
+  wireTheme();
   /* ── sheet ─────────────────────────────────────────────────────────────── */
 #sheet{ position:fixed; inset:0; z-index:70; display:none; }
 #sheet.on{ display:block; }
@@ -563,9 +598,25 @@ background:
   .hl:hover b{ color:#7dffb2; }
   .tgc{ background:rgba(0,255,156,.05); }
 .tick{ display:block; font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:.04em; margin-top:3px; } .tick.up{ color:#59ffb4; text-shadow:0 0 8px rgba(89,255,180,.45); } .tick.dn{ color:#ff7a7a; }
+  body::before{ content:''; position:fixed; inset:0; z-index:-1; background:center/cover no-repeat; opacity:.6; pointer-events:none; transition:opacity .5s, background .5s; }
+html[data-theme="emerald"] body::before{ background-image:url(/img/bg.jpg); }
+html[data-theme="signal"] body::before{ background-image:url(/img/sig.jpg); }
+html[data-theme="markets"] body::before{ background-image:url(/img/mk.jpg); }
+html[data-theme="swarm"] body::before{ background-image:url(/img/swarm.jpg); }
+html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
+.thw{ position:relative; }
+.thb{ width:34px; height:34px; border:1px solid rgba(232,196,92,.4); background:rgba(5,10,8,.55); color:#f4e3b2; font-size:15px; border-radius:5px; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.thb:hover{ border-color:var(--emerald); box-shadow:0 0 14px -4px rgba(0,255,156,.7); }
+.thp{ position:absolute; top:44px; right:0; z-index:80; background:rgba(6,11,9,.97); border:1px solid rgba(232,196,92,.35); border-radius:8px; padding:10px; box-shadow:0 14px 40px rgba(0,0,0,.6); width:196px; }
+.thp-h{ font-family:var(--f-mono); font-size:9px; font-weight:900; letter-spacing:.24em; color:var(--gold); margin-bottom:8px; }
+.thg{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.ths{ position:relative; height:44px; border-radius:5px; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,.14); cursor:pointer; overflow:hidden; }
+.ths span{ position:absolute; left:4px; bottom:3px; font-family:var(--f-mono); font-size:8px; font-weight:800; letter-spacing:.08em; color:#fff; text-shadow:0 0 6px #000, 0 1px 3px #000; }
+.ths[aria-pressed="true"]{ border-color:var(--emerald); box-shadow:0 0 0 1px var(--emerald), 0 0 16px rgba(0,255,156,.55); }
   </style>
 <script src="/sw-heal.js"></script>
 </head>
+  <script>try{var sh_t=localStorage.getItem('sh_theme')||'emerald';document.documentElement.setAttribute('data-theme',sh_t);}catch(e){}</script>
 <body>
 
 <header>
@@ -576,6 +627,7 @@ background:
     <button class="atab" data-app="swarm" aria-pressed="false" type="button">🐟 Swarm</button>
     <button class="atab" data-app="demo" aria-pressed="false" type="button">🧪 Demo</button><button class="atab" data-app="tg" aria-pressed="false" type="button">TG Code</button>
   </div>
+  <div id="themeWrap" class="thw"><button id="themeBtn" class="thb" type="button" title="Themes" aria-haspopup="true">▦</button><div id="themePop" class="thp" hidden><div class="thp-h">THEMES</div><div id="themeGrid" class="thg"></div></div></div>
   <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
 </header>
