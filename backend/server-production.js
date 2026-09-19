@@ -2001,6 +2001,7 @@ app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai
 app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
 app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
 app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish / MiroFish — free-API market data proxy (Polymarket + CoinGecko)
+app.use('/api/terminal', require('./lib/terminal-bridge'));           // Terminal TG bridge — /code sandboxed runner + journal
 app.use('/api/arena', require('./arena/routes'));                     // SHADDAI Arena Tier 0: agent-vs-agent (RPS/hi-lo/trivia) + replays
 app.use('/api/grok', require('./grok-connect'));                      // Import a Grok bot as a dashboard agent (selectable in Arena)
 app.use('/api', require('./dashboard-patches'));                      // P0 patch: auction/pricing/city-boost/news-analyze (dashboard wired calls)
@@ -2153,6 +2154,13 @@ app.post('/api/mastery/search', express.json(), async (req, res) => {
 app.post('/api/rag/scrape', express.json(), (req, res) => {
   const rscrape = require('./lib/rag-scrape');
   rscrape.handler(req, res);
+});
+// WEB SEARCH — keyless engines (Google News RSS + DuckDuckGo, SerpAPI if the key
+// is set). GET /api/search/web?q=&limit=. This is the route public/index.html
+// + brain.html already call; it simply never existed until NEXUS wired it.
+app.get('/api/search/web', (req, res) => {
+  const ws = require('./lib/websearch');
+  ws.handler(req, res);
 });
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
 app.use('/api/gridiron', require('./routes/gridiron-routes'));

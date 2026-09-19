@@ -71,6 +71,32 @@ header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:4
 .atab[aria-pressed=true]{ background:var(--emerald); border-color:var(--emerald); color:#04120c;
   box-shadow:0 0 18px -6px rgba(0,255,156,.85); }
 .atab+.atab{ margin-left:4px; }
+/* TG Code console */
+.view#v-tg{ display:none; } .view#v-tg.on{ display:flex; flex-direction:column; }
+.tg-ch{ display:flex; flex-direction:column; gap:10px; padding:12px; height:100%; overflow:hidden; }
+.tg-bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:var(--f-mono); font-size:12px; letter-spacing:.06em; color:var(--ink-soft-b); }
+.tg-feed{ flex:1; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:4px 2px; }
+.tgc{ border:1px solid var(--edge2); border-left:3px solid var(--emerald); border-radius:6px; background:rgba(0,255,156,.03); padding:8px 10px; font-family:var(--f-mono); font-size:12px; line-height:1.5; }
+.tgc.err{ border-left-color:var(--rose); background:rgba(255,80,80,.05); }
+.tgc.empty{ opacity:.55; border-style:dashed; }
+.tgc-head{ display:flex; gap:10px; color:var(--ink-soft); font-size:11px; }
+.tgc-code{ color:#8fffc9; white-space:pre-wrap; word-break:break-word; }
+.tgc-res{ margin-top:4px; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
+.tg-compose{ display:flex; gap:8px; align-items:flex-end; }
+#tgIn{ flex:1; resize:vertical; min-height:56px; background:var(--shell); color:var(--ink); border:1px solid var(--edge2); border-radius:6px; padding:8px 10px; font-family:var(--f-mono); font-size:12px; }
+/* TG Code console */
+.view#v-tg{ display:none; } .view#v-tg.on{ display:flex; flex-direction:column; }
+.tg-ch{ display:flex; flex-direction:column; gap:10px; padding:12px; height:100%; overflow:hidden; }
+.tg-bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:var(--f-mono); font-size:12px; letter-spacing:.06em; color:var(--ink-soft-b); }
+.tg-feed{ flex:1; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:4px 2px; }
+.tgc{ border:1px solid var(--edge2); border-left:3px solid var(--emerald); border-radius:6px; background:rgba(0,255,156,.03); padding:8px 10px; font-family:var(--f-mono); font-size:12px; line-height:1.5; }
+.tgc.err{ border-left-color:var(--rose); background:rgba(255,80,80,.05); }
+.tgc.empty{ opacity:.55; border-style:dashed; }
+.tgc-head{ display:flex; gap:10px; color:var(--ink-soft); font-size:11px; }
+.tgc-code{ color:#8fffc9; white-space:pre-wrap; word-break:break-word; }
+.tgc-res{ margin-top:4px; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
+.tg-compose{ display:flex; gap:8px; align-items:flex-end; }
+#tgIn{ flex:1; resize:vertical; min-height:56px; background:var(--shell); color:var(--ink); border:1px solid var(--edge2); border-radius:6px; padding:8px 10px; font-family:var(--f-mono); font-size:12px; }
 
 /* ── filter rails ──────────────────────────────────────────────────────── */
 .rails{ flex:0 0 auto; background:var(--shell); border-bottom:1px solid var(--edge); }
@@ -378,7 +404,7 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
     <button class="atab on" data-app="sig" aria-pressed="true" type="button">Signals</button>
     <button class="atab" data-app="mk" aria-pressed="false" type="button">Markets</button>
     <button class="atab" data-app="swarm" aria-pressed="false" type="button">🐟 Swarm</button>
-    <button class="atab" data-app="demo" aria-pressed="false" type="button">🧪 Demo</button>
+    <button class="atab" data-app="demo" aria-pressed="false" type="button">🧪 Demo</button><button class="atab" data-app="tg" aria-pressed="false" type="button">TG Code</button><button class="atab" data-app="tg" aria-pressed="false" type="button">TG Code</button>
   </div>
   <a id="toTerm" href="/pro-signals.html?full=1">▤ Full terminal</a>
   <a class="x" href="/index.html" aria-label="Close">&times;</a>
@@ -448,6 +474,26 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
     <div class="d-grid">
       <div class="d-pane"><h4>Open positions</h4><div id="dOpen" class="d-empty">-</div></div>
       <div class="d-pane"><h4>Closed trades</h4><div id="dClosed" class="d-empty">-</div></div>
+    </div>
+  </div>
+<div class="view" id="v-tg">
+    <div class="tg-ch">
+      <div class="tg-bar"><b>⌨ TERMINAL CODE</b> <span class="sc-note">sandboxed JS · admin gated · 4s cap · also reachable via /code from Telegram</span></div>
+      <div class="tg-feed" id="tgFeed"><div class="tgc">… loading journal</div></div>
+      <div class="tg-compose">
+        <textarea id="tgIn" rows="3" spellcheck="false" placeholder="Type JS to run on the backend — e.g.  (() => { const n = Math.floor(Math.random()*100); return 'roll '+n; })()"></textarea>
+        <button class="atab" id="tgRun" type="button" style="flex:0 0 auto;">Run ▸</button>
+      </div>
+    </div>
+  </div>
+<div class="view" id="v-tg">
+    <div class="tg-ch">
+      <div class="tg-bar"><b>⌨ TERMINAL CODE</b> <span class="sc-note">sandboxed JS · admin gated · 4s cap · also reachable via /code from Telegram</span></div>
+      <div class="tg-feed" id="tgFeed"><div class="tgc">… loading journal</div></div>
+      <div class="tg-compose">
+        <textarea id="tgIn" rows="3" spellcheck="false" placeholder="Type JS to run on the backend — e.g.  (() => { const n = Math.floor(Math.random()*100); return 'roll '+n; })()"></textarea>
+        <button class="atab" id="tgRun" type="button" style="flex:0 0 auto;">Run ▸</button>
+      </div>
     </div>
   </div>
 </main>
@@ -1087,11 +1133,79 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
     var f = $('swarmIframe');
     if (f && !f.getAttribute('src')) f.setAttribute('src', '/mirofish-terminal.html');
   }
+  var tgTimer = null;
+  function ensureTG() {
+    var v = $('v-tg'); if (!v) return;
+    [].forEach.call(document.querySelectorAll('.view'), function (x) { x.classList.remove('on'); });
+    v.classList.add('on');
+    loadTG();
+    var run = $('tgRun'); if (run) run.onclick = sendTG;
+    if (tgTimer === null) tgTimer = setInterval(function () { if (APP === 'tg') loadTG(true); }, 20000);
+  }
+  function tgEsc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function loadTG(silent) {
+    fetch('/api/terminal/tg?_=' + Date.now()).then(function (r) { return r.json(); }).then(function (d) {
+      var box = $('tgFeed'); if (!box || !(d && d.ok)) return;
+      var html = '';
+      (d.journal || []).forEach(function (e) {
+        var hh = new Date(e.t).toLocaleTimeString();
+        html += '<div class="tgc' + (e.err ? ' err' : ' ok') + '">' +
+          '<div class="tgc-head"><b>' + hh + '</b><span>' + tgEsc(String(e.chat || '').slice(0, 12)) + '</span></div>' +
+          '<div class="tgc-code">' + tgEsc(e.code) + '</div>' +
+          (e.result ? '<div class="tgc-res">' + tgEsc(e.result) + '</div>' : '') +
+          '</div>';
+      });
+      box.innerHTML = html || '<div class="tgc empty">No runs yet — send <code>/code 2+2</code> from Telegram, or type below.</div>';
+    }).catch(function () { if (!silent) { var box = $('tgFeed'); if (box) box.innerHTML = '<div class="tgc err">⚠ bridge offline — is /api/terminal/tg mounted?</div>'; } });
+  }
+  function sendTG() {
+    var inp = $('tgIn'); if (!inp) return;
+    var code = inp.value.trim(); if (!code) return;
+    inp.value = '… running …';
+    fetch('/api/terminal/tg', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: code, chatId: 'terminal' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok) { loadTG(); } else { inp.value = code; if (d && d.error) alert('❌ ' + d.error); else alert('❌ run failed'); } })
+      .catch(function () { inp.value = code; alert('❌ bridge unreachable'); });
+  }
+  var tgTimer = null;
+  function ensureTG() {
+    var v = $('v-tg'); if (!v) return;
+    [].forEach.call(document.querySelectorAll('.view'), function (x) { x.classList.remove('on'); });
+    v.classList.add('on');
+    loadTG();
+    var run = $('tgRun'); if (run) run.onclick = sendTG;
+    if (tgTimer === null) tgTimer = setInterval(function () { if (APP === 'tg') loadTG(true); }, 20000);
+  }
+  function tgEsc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function loadTG(silent) {
+    fetch('/api/terminal/tg?_=' + Date.now()).then(function (r) { return r.json(); }).then(function (d) {
+      var box = $('tgFeed'); if (!box || !(d && d.ok)) return;
+      var html = '';
+      (d.journal || []).forEach(function (e) {
+        var hh = new Date(e.t).toLocaleTimeString();
+        html += '<div class="tgc' + (e.err ? ' err' : ' ok') + '">' +
+          '<div class="tgc-head"><b>' + hh + '</b><span>' + tgEsc(String(e.chat || '').slice(0, 12)) + '</span></div>' +
+          '<div class="tgc-code">' + tgEsc(e.code) + '</div>' +
+          (e.result ? '<div class="tgc-res">' + tgEsc(e.result) + '</div>' : '') +
+          '</div>';
+      });
+      box.innerHTML = html || '<div class="tgc empty">No runs yet — send <code>/code 2+2</code> from Telegram, or type below.</div>';
+    }).catch(function () { if (!silent) { var box = $('tgFeed'); if (box) box.innerHTML = '<div class="tgc err">⚠ bridge offline — is /api/terminal/tg mounted?</div>'; } });
+  }
+  function sendTG() {
+    var inp = $('tgIn'); if (!inp) return;
+    var code = inp.value.trim(); if (!code) return;
+    inp.value = '… running …';
+    fetch('/api/terminal/tg', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: code, chatId: 'terminal' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok) { loadTG(); } else { inp.value = code; if (d && d.error) alert('❌ ' + d.error); else alert('❌ run failed'); } })
+      .catch(function () { inp.value = code; alert('❌ bridge unreachable'); });
+  }
   if (apptabs) apptabs.addEventListener('click', function (e) {
     var b = e.target.closest('.atab'); if (!b) return;
     [].forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
     APP = b.dataset.app;
-    var isPanel = APP === 'swarm' || APP === 'demo';
+    var isPanel = APP === 'swarm' || APP === 'demo' || APP === 'tg';
     var bar = document.querySelector('main .bar');
     $('modes').style.display = isPanel ? 'none' : '';
     $('cats').style.display = (APP === 'mk' || isPanel) ? 'none' : '';
@@ -1102,11 +1216,12 @@ background:linear-gradient(90deg, rgba(6,14,8,.94), rgba(6,14,8,.72) 55%, rgba(6
     if (APP === 'mk' && !MK.loaded) loadMarkets();
     else if (APP === 'swarm') ensureSwarm();
     else if (APP === 'demo') ensureDemo();
+    else if (APP === 'tg') ensureTG();
     else { restoreChips(); applyFilters(); }
   });
   /* Deep-linkable: /signals.html#swarm opens straight into the swarm app so
      launchers (Simple Mode wheel, landing nav) land where they point. */
-  if (location.hash === '#swarm' || location.hash === '#demo') {
+  if (location.hash === '#swarm' || location.hash === '#demo' || location.hash === '#tg') {
     var hb = document.querySelector('.atab[data-app="' + location.hash.slice(1) + '"]');
     if (hb) { hb.click(); }
   }

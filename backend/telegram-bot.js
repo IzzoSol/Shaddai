@@ -988,6 +988,24 @@ async function _handle(cfg, update) {
     case 'hot': case 'heat': case 'hotcalls': case 'heatmap': return _hotCmd(t, chatId, cfg);
     case 'leaderboard': case 'tops': case 'scoreboard': case 'podium': return _leaderboardCmd(t, chatId, cfg, arg, update);
 
+    // /code <js> — run sandboxed JS in the terminal (admin-gated, 4s timeout)
+    case 'code': case 'run': case 'exec': {
+      const tcx = require('./lib/tg-code');
+      const adminId = String(process.env.SHADDAI_ADMIN_ID || '').trim();
+      const caller = String(update.message && update.message.from ? update.message.from.id : chatId);
+      if (adminId && caller !== adminId) {
+        return _send(t, chatId, '⛔ <b>Admin only.</b> Set <code>SHADDAI_ADMIN_ID</code> to your Telegram id to unlock <code>/code</code>.');
+      }
+      if (!arg) {
+        return _send(t, chatId, '🧪 <b>Terminal Code Runner</b>\n\nRun sandboxed JS on the backend — no fs/network, 4s cap.\n\n<code>/code Math.max(2,7) + 1 &#8226; 8</code>\n<code>/code const a=[3,1,2]; a.sort()</code>\n<code>/code Date.now()</code>\n\nResults land in the terminal\u2019s <b>TG</b> tab.');
+      }
+      const e = tcx.runCode(arg, caller);
+      const body = '🧪 <b>exec</b>\n<code>' + _esc(e.code) + '</code>\n━━━━━━━━━━━━━━━\n' +
+        ((e.err ? '❌ <i>' + _esc(e.err) + '</i>' : '<b>▶ ok</b>') + (e.result ? '\n<code>' + _esc(e.result) + '</code>' : '') +
+        '\n<i>TS ' + new Date(e.t).toLocaleTimeString() + ' · logged to terminal TG tab</i>');
+      return _send(t, chatId, body.slice(0, 4048));
+    }
+
     case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
 
     // /lb — leaderboard (text only, no image, no HF)
@@ -1138,6 +1156,7 @@ async function _getUpdates(token, offset) {
 async function _registerCommands(token) {
   const commands = [
     { command: 'start',   description: 'Welcome + links' },
+    { command: 'code',    description: 'Run sandboxed JS in the terminal (admin)' },
     { command: 'temple',  description: 'The Axiom + doors — GitHub, X, website, lounge' },
     { command: 'help',    description: 'All commands list' },
     { command: 'active',  description: 'Live calls right now — not rugged, sorted by gain' },
