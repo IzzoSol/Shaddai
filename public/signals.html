@@ -108,6 +108,70 @@ header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:4
 .tgc-res{ margin-top:4px; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
 .tg-compose{ display:flex; gap:8px; align-items:flex-end; }
 #tgIn{ flex:1; resize:vertical; min-height:56px; background:var(--shell); color:var(--ink); border:1px solid var(--edge2); border-radius:6px; padding:8px 10px; font-family:var(--f-mono); font-size:12px; }
+/* Tu Fish swarm */
+.view#v-swarm{ display:none; } .view#v-swarm.on{ display:flex; flex-direction:column; }
+.swarm-ch{ display:flex; align-items:center; gap:9px; padding:10px 12px;
+  font-family:var(--f-display); font-weight:900; letter-spacing:.05em; font-size:16px;
+  color:var(--ink); text-shadow:0 0 14px rgba(0,255,156,.28); }
+.swarm-compose{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:0 12px 10px; }
+#swarmQ{ flex:1 1 180px; background:var(--shell); color:var(--ink); border:1px solid var(--edge2);
+  border-radius:4px; padding:10px 12px; font-family:var(--f-mono); font-size:14px; }
+#swarmQ:focus{ outline:none; border-color:var(--emerald); box-shadow:0 0 0 1px var(--emerald), 0 0 22px -8px var(--emerald); }
+#swarmRun{ align-self:stretch; }
+.swarm-chips{ display:flex; gap:6px; flex-wrap:wrap; width:100%; }
+.swarm-chip{ border:1px solid var(--edge2); background:rgba(0,255,156,.04); color:var(--ink-soft);
+  font-family:var(--f-mono); font-size:11px; font-weight:700; letter-spacing:.06em;
+  padding:5px 10px; border-radius:3px; cursor:pointer; }
+.swarm-chip:active{ color:var(--emerald); border-color:rgba(0,255,156,.6); }
+.swarm-out{ flex:1; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:4px 12px 20px; }
+.swarm-idle{ border:1px dashed var(--edge2); border-radius:6px; padding:14px; color:var(--ink-faint);
+  font-size:12.5px; line-height:1.6; background:rgba(255,255,255,.015); }
+.swarm-idle.err{ border-color:rgba(255,80,80,.4); color:#f3a3a3; }
+.verdict{ display:flex; align-items:center; gap:10px; padding:13px 16px; border-radius:6px; font-size:15px;
+  letter-spacing:.05em; border:1px solid; }
+.verdict.bull{ color:#04120c; background:linear-gradient(135deg, var(--emerald), #38e07a); border-color:#59ffb4;
+  box-shadow:0 0 34px -10px rgba(0,255,156,.8); font-weight:900; }
+.verdict.bear{ color:#2a0909; background:linear-gradient(135deg, #ff5d5d, #e23a3a); border-color:#ff8f8f;
+  box-shadow:0 0 34px -10px rgba(255,90,90,.7); font-weight:900; }
+.verdict.neu{ color:#f4e3b2; background:linear-gradient(135deg, rgba(232,196,92,.9), rgba(150,120,40,.85));
+  border-color:#ffe9a6; box-shadow:0 0 34px -12px rgba(232,196,92,.7); }
+.verdict em{ font-style:normal; font-size:12px; font-weight:600; opacity:.85; text-transform:uppercase; letter-spacing:.08em; }
+.swarm-stats{ display:flex; flex-wrap:wrap; gap:6px 16px; font-family:var(--f-mono); font-size:12px; color:var(--ink-soft);
+  padding:10px 4px 0; }
+.swarm-stats b{ color:var(--ink); }
+.swarm-stats .pol-pos{ color:var(--emerald); text-transform:uppercase; font-weight:700; }
+.swarm-stats .pol-neg{ color:#ff7a7a; text-transform:uppercase; font-weight:700; }
+.swarm-stats .pol-neu{ color:var(--gold); text-transform:uppercase; font-weight:700; }
+.agv-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+.agv{ border:1px solid var(--edge2); border-left:3px solid var(--flat); border-radius:5px;
+  background:linear-gradient(180deg, rgba(14,20,26,.9), rgba(10,14,19,.9)); padding:9px 10px; }
+.agv.bull{ border-left-color:var(--emerald); box-shadow:inset 0 0 18px -14px var(--emerald); }
+.agv.bear{ border-left-color:#ff5d5d; box-shadow:inset 0 0 18px -14px #ff5d5d; }
+.agv.neu{ border-left-color:var(--gold); }
+.agv-top{ display:flex; align-items:center; gap:7px; }
+.agv-glyph{ font-size:15px; }
+.agv-name{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); flex:1; }
+.agv-vote{ font-family:var(--f-mono); font-size:9.5px; font-weight:900; letter-spacing:.08em;
+  padding:3px 6px; border-radius:2px; color:#04120c; }
+.agv.bull .agv-vote{ background:var(--emerald); }
+.agv.bear .agv-vote{ background:#ff6a6a; }
+.agv.neu .agv-vote{ background:var(--gold); color:#2a2108; }
+.agv-bar{ height:3px; border-radius:2px; background:rgba(255,255,255,.07); margin:7px 0 6px; overflow:hidden; }
+.agv-bar i{ display:block; height:100%; background:linear-gradient(90deg, var(--emerald), #a3ffd0); }
+.agv.bear .agv-bar i{ background:linear-gradient(90deg, #ff5d5d, #ffb3b3); }
+.agv.neu .agv-bar i{ background:linear-gradient(90deg, var(--gold), #f7e0a0); }
+.agv-note{ font-size:11px; color:var(--ink-faint); line-height:1.45; }
+.swarm-hl{ border:1px solid var(--edge2); border-radius:6px; overflow:hidden; }
+.swarm-hl-t{ font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint);
+  padding:9px 12px; border-bottom:1px solid var(--edge); background:rgba(255,255,255,.02); }
+.hl{ display:flex; align-items:baseline; gap:8px; padding:9px 12px; text-decoration:none; color:var(--ink-soft);
+  font-size:12.5px; line-height:1.4; border-bottom:1px solid var(--edge); }
+.hl:last-child{ border-bottom:0; }
+.hl span{ font-size:10px; }
+.hl-pos{ color:var(--emerald); }
+.hl-neg{ color:#ff7a7a; }
+.hl-neu{ color:var(--gold); }
+.hl i{ font-style:normal; font-size:10px; color:var(--ink-faint); white-space:nowrap; margin-left:auto; }
 
 .atab{ padding:10px 16px; }
 
@@ -386,12 +450,20 @@ background:
   <div class="view" id="v-heat"><div class="heat" id="heatGrid"></div></div>
   <div class="view" id="v-rank"></div>
   <div class="view" id="v-swarm">
-    <div class="swarm-ch"><b>🐟 MIROFISH SWARM</b>
-      <span class="sc-note">7-agent consensus · PIN 4444</span>
-      <a class="sc-full" href="/mirofish-terminal.html" target="_blank" rel="noopener">⛶ Full</a>
+    <div class="swarm-ch"><b>TU FISH SWARM</b>
+      <span class="sc-note">7-agent sentiment consensus &#183; real TuFish news + market</span>
+      <a class="sc-full" href="/mirofish-terminal.html" target="_blank" rel="noopener">Full Terminal &#8212;</a>
     </div>
-    <iframe id="swarmIframe" title="MiroFish Swarm Terminal" src=""></iframe>
+    <div class="swarm-compose">
+      <input id="swarmQ" type="text" placeholder="any coin &#8212; SOL, WIF, DOGE, PEPE&#8230;" autocomplete="off" spellcheck="false" />
+      <button class="dbtn" id="swarmRun" type="button">Release Swarm &#11201;</button>
+      <div class="swarm-chips" id="swarmChips"></div>
+    </div>
+    <div class="swarm-out" id="swarmOut">
+      <div class="swarm-idle">The swarm waits for a target. Name a coin and all seven read the TuFish headline tape + live market before voting long, flat or short &#8230;</div>
+    </div>
   </div>
+</div>
   <div class="view" id="v-demo">
     <div class="d-head">
       <div class="d-bal">
@@ -1060,8 +1132,129 @@ background:
     var v = $('v-swarm'); if (!v) return;
     [].forEach.call(document.querySelectorAll('.view'), function (x) { x.classList.remove('on'); });
     v.classList.add('on');
-    var f = $('swarmIframe');
-    if (f && !f.getAttribute('src')) f.setAttribute('src', '/mirofish-terminal.html');
+    seedSwarmChips();
+    if (!window._swarmWired) { window._swarmWired = true; wireSwarm(); }
+    var q = $('swarmQ'); if (q && !q.value) { try { q.focus(); } catch (e) {} }
+  }
+  var SWARM_AGENTS = [
+    { n: 'Momentum', g: '\u{1F3C3}', f: function (v) {
+        if (v.s >= 5) return { side: 'long', conf: Math.min(1, 0.5 + Math.abs(v.s) / 110), note: 'headline flow is green — riding the tape' };
+        if (v.s <= -5) return { side: 'short', conf: Math.min(1, 0.5 + Math.abs(v.s) / 110), note: 'tape turned red — momentum fading' };
+        return { side: 'flat', conf: 0.4, note: 'chop — no clear thrust either way' };
+      } },
+    { n: 'Value', g: '\u{1F4C9}', f: function (v) {
+        if (v.mk && v.mk.change24h < -1 && v.s > 0) return { side: 'long', conf: 0.62, note: 'dip with a good news backdrop — mispriced' };
+        if (v.s >= 15) return { side: 'long', conf: 0.55, note: 'sturdy tape at a fair entry' };
+        if (v.s <= -15) return { side: 'short', conf: 0.52, note: 'degrading narrative — avoid catching it' };
+        return { side: 'flat', conf: 0.45, note: 'no edge worth taking' };
+      } },
+    { n: 'Sentinel', g: '\u{1F6A8}', f: function (v) {
+        if (!v.meta.news || v.meta.news < 3) return { side: 'flat', conf: 0.35, note: 'news tape too thin to trust' };
+        if (v.pol === 'negative') return { side: 'short', conf: Math.min(1, 0.5 + Math.abs(v.s) / 90), note: 'confirmed negative narrative loop' };
+        if (v.pol === 'positive') return { side: 'long', conf: Math.min(1, 0.5 + Math.abs(v.s) / 90), note: 'clean positive signal — no alarms' };
+        return { side: 'flat', conf: 0.4, note: 'mixed tape — standing watch' };
+      } },
+    { n: 'Volume', g: '\u{1F4F3}', f: function (v) {
+        var heat = v.meta.news + (v.mk ? 1 : 0);
+        if (v.mk && v.mk.change24h > 3 && v.s > 2) return { side: 'long', conf: 0.6, note: 'volume confirming +' + v.mk.change24h.toFixed(1) + '% move' };
+        if (v.mk && v.mk.change24h < -3 && v.s < 0) return { side: 'short', conf: 0.58, note: 'heavy tape flushing on bad sentiment' };
+        if (heat >= 12 && v.s > 0) return { side: 'long', conf: 0.52, note: 'thick tape, bid-side tilt' };
+        if (heat >= 12 && v.s < 0) return { side: 'short', conf: 0.5, note: 'thick tape, ask-side tilt' };
+        return { side: 'flat', conf: 0.42, note: 'thin tape — no conviction' };
+      } },
+    { n: 'Whale', g: '\u{1F40B}', f: function (v) {
+        if (v.s > 50) return { side: 'short', conf: 0.55, note: 'crowd is overheated long — fading the top' };
+        if (v.s < -50) return { side: 'long', conf: 0.55, note: 'panic turn — buying the washout' };
+        if (v.s >= 10) return { side: 'long', conf: 0.48, note: 'sized in quietly with the trend' };
+        if (v.s <= -10) return { side: 'short', conf: 0.46, note: 'trimming into strength short' };
+        return { side: 'flat', conf: 0.5, note: 'no crowd to fade — patient' };
+      } },
+    { n: 'Fearless', g: '\u{2694}\u{FE0F}', f: function (v) {
+        if (v.s >= 2) return { side: 'long', conf: Math.min(1, 0.62 + Math.abs(v.s) / 80), note: 'staying aggressive — first mover' };
+        if (v.s <= -2) return { side: 'short', conf: Math.min(1, 0.6 + Math.abs(v.s) / 80), note: 'no hesitation — short the drift' };
+        return { side: 'flat', conf: 0.4, note: 'flat = conviction too' };
+      } },
+    { n: 'Sage', g: '\u{1F33F}', f: function (v) {
+        var mkBlend = v.mk ? Math.max(-40, Math.min(40, v.mk.change24h * 2)) : 0;
+        var raw = v.s * 0.7 + mkBlend * 0.3;
+        var conf = 0.4 + v.conf * 0.35 + Math.min(0.2, v.m / 60);
+        if (raw >= 8) return { side: 'long', conf: Math.min(1, conf), note: 'news + price agree — highest-conviction setup' };
+        if (raw <= -8) return { side: 'short', conf: Math.min(1, conf), note: 'both tapes agree against it' };
+        return { side: 'flat', conf: 0.5, note: 'divergent tapes — wait for alignment' };
+      } }
+  ];
+  function wireSwarm() {
+    var run = $('swarmRun'), q = $('swarmQ');
+    if (run) run.onclick = function () { runSwarm(q && q.value || ''); };
+    if (q) q.addEventListener('keydown', function (e) { if (e.key === 'Enter') runSwarm(q.value); });
+    var chips = $('swarmChips');
+    if (chips) chips.addEventListener('click', function (e) {
+      var b = e.target.closest('.swarm-chip'); if (!b) return;
+      var qq = $('swarmQ'); if (qq) qq.value = b.dataset.q;
+      runSwarm(b.dataset.q);
+    });
+  }
+  function seedSwarmChips() {
+    var chips = $('swarmChips'); if (!chips || chips.children.length) return;
+    var picks = [];
+    try { (TOP || []).slice(0, 10).forEach(function (o) { var tk = o && (o.ticker || o.symbol); if (tk && picks.indexOf(tk) < 0 && picks.length < 6) picks.push(tk); }); } catch (e) {}
+    if (!picks.length) picks = ['SOL', 'WIF', 'DOGE', 'PEPE', 'BONK', 'BTC'];
+    chips.innerHTML = picks.map(function (t) { return '<button class="swarm-chip" type="button" data-q="' + tgEsc(t) + '">' + tgEsc(t) + '</button>'; }).join('');
+  }
+  function swarmVote(d) {
+    return { s: d.score || 0, m: d.magnitude || 0, conf: d.confidence || 0, pol: d.polarity || 'neutral', meta: d.meta || {}, mk: d.market || null, he: d.headlines || [] };
+  }
+  function runSwarm(raw) {
+    var q = String(raw || '').trim(); if (!q) return;
+    var out = $('swarmOut'); 
+    out.innerHTML = '<div class="swarm-idle">\u{1F41F} releasing the swarm on <b>' + tgEsc(q) + '</b> &#183; reading TuFish news + market &#8230;</div>';
+    fetch('/api/tufish/sentiment?q=' + encodeURIComponent(q) + '&_=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.ok === false) { out.innerHTML = '<div class="swarm-idle err">\u26A0 ' + tgEsc(d && (d.message || d.error) || 'sentiment engine gave nothing') + '</div>'; return; }
+        var opts = swarmVote(d);
+        var votes = SWARM_AGENTS.map(function (a) { var r = a.f(opts); return { name: a.n, glyph: a.g, side: r.side, conf: Math.min(1, Math.max(0, r.conf)), note: r.note }; });
+        renderSwarm(d, votes, q, out);
+      })
+      .catch(function () { out.innerHTML = '<div class="swarm-idle err">\u26A0 swarm lost &#8212; sentiment engine unreachable</div>'; });
+  }
+  function renderSwarm(d, votes, q, out) {
+    var longs = votes.filter(function (v) { return v.side === 'long'; }).length;
+    var shorts = votes.filter(function (v) { return v.side === 'short'; }).length;
+    var flats = votes.length - longs - shorts;
+    var lead = longs > shorts ? 'long' : (shorts > longs ? 'short' : 'flat');
+    var tally = longs + '/' + shorts + '/' + flats;
+    var strong = Math.max(longs, shorts) >= 5;
+    var vcls = lead === 'long' ? 'bull' : (lead === 'short' ? 'bear' : 'neu');
+    var lbl = lead === 'long' ? (strong ? 'STRONG BULL' : 'BULLISH') : (lead === 'short' ? (strong ? 'STRONG BEAR' : 'BEARISH') : 'NEUTRAL');
+    var mk = d.market || null;
+    var head = (d.headlines || []).slice(0, 7).map(function (h) {
+      var c = h.label === 'pos' ? 'hl-pos' : (h.label === 'neg' ? 'hl-neg' : 'hl-neu');
+      return '<a class="hl" href="' + tgEsc(h.link || '#') + '" target="_blank" rel="noopener"><span class="' + c + '">' + (h.label === 'pos' ? '▲' : (h.label === 'neg' ? '▼' : '◆')) + '</span>' + tgEsc(h.title) + '<i>' + tgEsc(h.source || '') + ' &#183; ' + (h.days || 0) + 'd</i></a>';
+    }).join('');
+    var stats = '<div class="swarm-stats">' +
+      '<span>score <b>' + d.score + '</b></span>' +
+      '<span class="pol-' + (d.polarity === 'positive' ? 'pos' : d.polarity === 'negative' ? 'neg' : 'neu') + '">' + tgEsc(d.polarity || 'neutral') + '</span>' +
+      '<span>magnitude <b>' + d.magnitude + '</b></span>' +
+      '<span>confidence <b>' + Math.round((d.confidence || 0) * 100) + '%</b></span>' +
+      (mk ? '<span>' + tgEsc(mk.symbol || mk.id) + ' <b>$' + Number(mk.price).toLocaleString(undefined, { maximumFractionDigits: 6 }) + '</b> (' + (Number(mk.change24h) > 0 ? '+' : '') + Number(mk.change24h).toFixed(2) + '%)</span>' : '') +
+      (d.meta && d.meta.news ? '<span>' + d.meta.news + ' headlines</span>' : '') +
+      '</div>';
+    var cards = votes.map(function (v) {
+      var c = v.side === 'long' ? 'bull' : (v.side === 'short' ? 'bear' : 'neu');
+      var vb = v.side.toUpperCase();
+      return '<div class="agv ' + c + '"><div class="agv-top"><b class="agv-glyph">' + v.glyph + '</b><span class="agv-name">' + tgEsc(v.name) + '</span><code class="agv-vote">' + vb + '</code></div>' +
+        '<div class="agv-bar"><i style="width:' + Math.round(v.conf * 100) + '%"></i></div>' +
+        '<div class="agv-note">' + tgEsc(v.note) + '</div></div>';
+    }).join('');
+    out.innerHTML =
+      '<div class="verdict ' + vcls + '">' +
+      (vcls === 'bull' ? '\u{1F6A1}' : vcls === 'bear' ? '\u{1F6A8}' : '\u{26B0}\u{FE0F}') +
+      ' <b>' + lbl + '</b> <em>' + tally + ' long/short/flat &#183; consensus ' + lead.toUpperCase() + '</em>' +
+      '</div>' +
+      stats +
+      '<div class="agv-grid">' + cards + '</div>' +
+      '<div class="swarm-hl"><div class="swarm-hl-t">TuFish headline tape &#8212; top stories</div>' + (head || '<div class="swarm-idle">no headlines parsed</div>') + '</div>';
   }
   var tgTimer = null;
   function ensureTG() {
