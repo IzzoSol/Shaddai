@@ -24,17 +24,32 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 .screen{ display:none; min-height:100vh; flex-direction:column; align-items:center; padding:5vh 5vw 8vh; }
 .screen.active{ display:flex; }
 
-/* ── INTRO ── */
-#intro{ justify-content:center; text-align:center; gap:22px; }
-#intro h1{ font-family:var(--f-display); font-weight:900; font-size:clamp(38px,9vw,86px);
+/* ── INTRO — big anime hero splash, per owner ref (neon key-art, "shing" impact) ── */
+#intro{ justify-content:flex-end; text-align:center; gap:16px; padding:0 5vw 6vh; position:relative;
+  min-height:100vh; overflow:hidden; }
+#intro .hero-bg{ position:absolute; inset:0; z-index:0;
+  background-image:linear-gradient(180deg, rgba(10,6,18,.15) 0%, rgba(10,6,18,.55) 55%, rgba(10,6,18,.95) 100%),
+    url('assets/skate/intro-hero.png');
+  background-size:cover; background-position:center 20%;
+  animation:heroIn 1.1s cubic-bezier(.2,.8,.2,1) both, heroGlow 3.2s ease-in-out .9s infinite alternate; }
+@keyframes heroIn{ from{ opacity:0; transform:scale(1.06); filter:brightness(.6) saturate(.7); }
+  to{ opacity:1; transform:scale(1); filter:brightness(1) saturate(1); } }
+@keyframes heroGlow{ from{ filter:drop-shadow(0 0 0 rgba(255,47,176,0)); }
+  to{ filter:drop-shadow(0 0 46px rgba(41,232,255,.25)); } }
+#intro > *{ position:relative; z-index:1; }
+#intro h1{ font-family:var(--f-display); font-weight:900; font-size:clamp(34px,7.5vw,72px);
   margin:0; letter-spacing:.03em; background:linear-gradient(135deg,var(--magenta),var(--cyan),var(--lime));
-  -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 0 60px rgba(255,47,176,.35); }
-#intro .sub{ color:var(--ink-soft); font-size:14px; letter-spacing:.1em; text-transform:uppercase; }
-#intro button{ margin-top:18px; font-family:var(--f-display); font-weight:900; font-size:18px; letter-spacing:.08em;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  text-shadow:0 0 60px rgba(255,47,176,.45); animation:titleShing .7s cubic-bezier(.2,.9,.3,1) .3s both; }
+@keyframes titleShing{ from{ opacity:0; letter-spacing:.4em; filter:brightness(2.2); }
+  to{ opacity:1; letter-spacing:.03em; filter:brightness(1); } }
+#intro .sub{ color:var(--ink-soft); font-size:14px; letter-spacing:.1em; text-transform:uppercase;
+  text-shadow:0 2px 12px rgba(0,0,0,.8); }
+#intro button{ margin-top:6px; font-family:var(--f-display); font-weight:900; font-size:18px; letter-spacing:.08em;
   padding:16px 48px; background:linear-gradient(135deg,var(--magenta),var(--violet)); color:#fff; border:none;
-  border-radius:4px; cursor:pointer; text-transform:uppercase; box-shadow:0 0 40px rgba(255,47,176,.4); }
+  border-radius:4px; cursor:pointer; text-transform:uppercase; box-shadow:0 0 40px rgba(255,47,176,.5); }
 #intro button:hover{ filter:brightness(1.15); }
-#intro .credit{ margin-top:24px; font-size:10px; color:var(--ink-faint); letter-spacing:.1em; }
+#intro .credit{ margin-top:18px; font-size:10px; color:var(--ink-faint); letter-spacing:.1em; text-shadow:0 2px 8px rgba(0,0,0,.9); }
 
 /* ── CHARACTER SELECT ── */
 #select h2{ font-family:var(--f-display); font-size:clamp(22px,4vw,32px); margin:0 0 6px; text-align:center; }
@@ -63,6 +78,7 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 
 <!-- ── INTRO (copy from fal-assets/skate/copy-bible.json portal.*) ── -->
 <section id="intro" class="screen active">
+  <div class="hero-bg" aria-hidden="true"></div>
   <h1>S · K · A · T · E</h1>
   <div class="sub">Nine spots. Blind picks. Every attempt films.</div>
   <button id="btnPlay">Drop In</button>
@@ -105,7 +121,30 @@ function show(id) {
   document.getElementById(id).classList.add('active');
 }
 
-document.getElementById('btnPlay').addEventListener('click', () => show('select'));
+// Synthesized "shing" impact sound -- a fast bright frequency sweep with a
+// quick decay, classic UI-flourish/sword-shing shape. No audio asset, no
+// Fal spend, plays on a real click so browser autoplay policies never
+// block it (unlike anything fired on unprompted page load).
+function playShing() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(2800, now + 0.09);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.28);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.42);
+  } catch (e) { /* audio unsupported or blocked -- silent fallback, never breaks the click */ }
+}
+
+document.getElementById('btnPlay').addEventListener('click', () => { playShing(); show('select'); });
 
 const rosterEl = document.getElementById('roster');
 ROSTER.forEach((r) => {
