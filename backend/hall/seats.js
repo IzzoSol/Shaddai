@@ -12,11 +12,15 @@
 
 const crypto = require('crypto');
 
-const VALID_KINDS = new Set(['human', 'shaddai', 'grok', 'paybox', 'webhook']);
+const VALID_KINDS = new Set(['human', 'shaddai', 'grok', 'paybox', 'webhook', 'bot']);
 // Kinds whose moves arrive via a real HTTP callback the mailbox POSTs to.
 // human: a UI button click is the move (no HTTP hop).
 // shaddai: routed through the main backend's agent-invocation surface
 //   instead of a seat-owner-registered endpoint (see hall/mailbox.js).
+// bot: an in-process random-legal-move opponent (see hall/mailbox.js
+//   dispatchToBot) -- zero latency, zero cost, no endpoint/model needed.
+//   Lets any pack that declares `minSeats: 2` (e.g. skate.js) actually be
+//   playable solo against the house without a second human/agent seat.
 const ENDPOINT_REQUIRED_KINDS = new Set(['grok', 'paybox', 'webhook']);
 
 const seats = new Map(); // id -> seat record

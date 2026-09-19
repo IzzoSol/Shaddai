@@ -213,6 +213,32 @@ async function run() {
       }
     }
 
+    // 9. SKATE: a real solo-vs-house match plays end to end through the HTTP
+    //    route, auto-filled with a 'bot' seat (skate.js declares minSeats:2,
+    //    no real matchmaking exists yet). Also the regression check for the
+    //    match.pack mislabeling bug (routes.js used to store `pack.key ||
+    //    'blackjack'`, and skate.js never set `.key`, so every skate match
+    //    was silently treated as blackjack on every lookup after creation).
+    {
+      const { seat } = await post('/api/casino/seats', { kind: 'human', display_name: 'Skater', sparks_ref: 'u:skater' });
+      await economySvc.grant('u:skater', 100, 'test_bonus', 'k9');
+      const created = await post('/api/casino/tables', { seatId: seat.id, wager: 0, pack: 'skate' });
+      assert.strictEqual(created.ok, true);
+      assert.strictEqual(created.legal.length, 3, 'skate always offers 3 blind style buttons while a round is open');
+
+      const fetched = await get(`/api/casino/tables/${created.matchId}`);
+      assert.strictEqual(fetched.state.pack, 'skate', 'BUG REGRESSION: match.pack must be "skate", not "blackjack"');
+
+      let table = created, guard = 0;
+      while (table.state.phase !== 'settled' && guard++ < 30) {
+        const legal = table.legal.length ? table.legal : (await get(`/api/casino/tables/${created.matchId}`)).legal;
+        table = await post(`/api/casino/tables/${created.matchId}/move`, { move: legal[0].id });
+      }
+      assert.strictEqual(table.state.phase, 'settled', 'a real skate match must settle within a bounded number of rounds');
+      assert.ok(['win', 'lose', 'push'].includes(table.settlement.score));
+      console.log(`PASS: a real skate-vs-bot match plays end to end via HTTP and settles (result=${table.settlement.score})`);
+    }
+
     console.log('\nAll routes-integration checks passed');
   } finally {
     server.close();

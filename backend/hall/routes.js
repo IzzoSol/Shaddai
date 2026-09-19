@@ -129,6 +129,41 @@ async function driveToHumanOrEnd(match) {
   }
 }
 
+/**
+ * Locks in bot picks for packs with NO turnSeat (simultaneous-pick packs
+ * like skate.js -- both seats pick blind, there's no "whose turn is it").
+ * driveToHumanOrEnd above is a no-op for these (match.state.turnSeat is
+ * undefined -> getSeat(undefined) -> null -> breaks immediately), which is
+ * correct for skate's OWN move but leaves the bot seat's blind pick
+ * unsubmitted forever. This walks match.state.seats (a field every
+ * minSeats>1 pack must expose) and has any non-human seat that hasn't
+ * picked yet submit one immediately -- bots don't need to see the human's
+ * pick since it's hidden until resolve() anyway. Guarded to `minSeats > 1`
+ * so single-seat packs (blackjack, arcade-bet) are never touched by this.
+ */
+async function driveBotPicks(match) {
+  const pack = PACKS[match.pack];
+  if (!pack || (pack.minSeats || 1) <= 1) return;
+  for (let guard = 0; guard < 4; guard++) { // hard cap: never spin forever on a bug
+    if (match.state.phase !== 'picking') break;
+    const seatIds = match.state.seats || [];
+    const pendingId = seatIds.find((id) => {
+      const s = seatsStore.getSeat(id);
+      return s && s.kind !== 'human' && !(match.state.picks && match.state.picks[id]);
+    });
+    if (!pendingId) break;
+    const seat = seatsStore.getSeat(pendingId);
+    const legal = pack.getButtons(match.state);
+    if (!legal.length) break;
+    const payload = {
+      match_id: match.id, pack: match.pack, you: seat.id, mode: 'versus',
+      sparks: match.wager, legal, state: match.state, timeout_ms: 15000,
+    };
+    const { moveId } = await mailbox.dispatchTurn(seat, payload, legal[0].id);
+    match.state = pack.applyMove(match.state, seat.id, moveId);
+  }
+}
+
 // Shaddai-Arcade issue #4 (ZEROX Sparks pricing sanity): docs/HALL-PHASE1-
 // SPEC.md's own economy section calls for "grant(winner.sparks_ref, pot -
 // rake, 'hall:bj_win', idemKey); rake goes to a house account (house:hall)".
@@ -210,14 +245,33 @@ router.post('/api/casino/tables', json, async (req, res) => {
       }
     }
 
+    // minSeats > 1 (skate.js) -- no real matchmaking exists yet, so fill the
+    // remaining seat(s) with an in-process 'bot' seat (random legal move,
+    // zero cost/latency) rather than blocking the whole pack on a feature
+    // that isn't built. A real second human/agent seat is a future increment.
+    const seatIds = [seatId];
+    const minSeats = pack.minSeats || 1;
+    for (let i = seatIds.length; i < minSeats; i++) {
+      const bot = seatsStore.createSeat({ kind: 'bot', display_name: 'House Skater' });
+      seatIds.push(bot.id);
+    }
+
     // await, not a bare call: arcade-bet packs' startMatch stays sync today,
     // but awaiting a non-promise is a harmless no-op and keeps this call
     // site correct if a future pack's startMatch ever needs to be async.
-    let state = await pack.startMatch([seatId], amount);
-    const match = { id: newMatchId(), pack: pack.key || 'blackjack', seatId, wager: amount, state, sparksApplied: false };
+    let state = await pack.startMatch(seatIds, amount);
+    // BUG FIX: this used to be `pack.key || 'blackjack'` -- only arcade-bet
+    // packs ever set `.key`, so every OTHER pack (blackjack, skate) silently
+    // mislabeled its own match as 'blackjack' here, which then made every
+    // later lookup (GET /tables/:id, /move, settleIfDone) resolve the WRONG
+    // pack module. Falling back to the requested `packKey` (what the caller
+    // actually asked for) instead of straight to 'blackjack' fixes this for
+    // every existing key-less pack, not just skate.
+    const match = { id: newMatchId(), pack: pack.key || packKey || 'blackjack', seatId, wager: amount, state, sparksApplied: false };
     matches.set(match.id, match);
 
     await driveToHumanOrEnd(match);
+    await driveBotPicks(match); // lock the bot's blind pick for round 0 (skate-style packs)
     const settlement = await settleIfDone(match);
 
     res.json({
@@ -282,7 +336,10 @@ router.post('/api/casino/tables/:id/move', json, async (req, res) => {
     const match = matches.get(req.params.id);
     if (!match) return res.status(404).json({ ok: false, error: 'match not found' });
     const pack = PACKS[match.pack];
-    const seat = seatsStore.getSeat(match.state.turnSeat);
+    // turnSeat-based packs (blackjack, arcade-bet) name whose move is due;
+    // simultaneous-pick packs (skate.js, minSeats>1) have no turnSeat -- the
+    // human seat is just the one that created this table (match.seatId).
+    const seat = seatsStore.getSeat(match.state.turnSeat || match.seatId);
     if (!seat || seat.kind !== 'human') {
       return res.status(409).json({ ok: false, error: 'it is not a human seat\'s turn' });
     }
@@ -291,6 +348,7 @@ router.post('/api/casino/tables/:id/move', json, async (req, res) => {
 
     await driveToHumanOrEnd(match);
     const settlement = await settleIfDone(match);
+    await driveBotPicks(match); // lock the bot's blind pick for the round resolve() just opened
 
     res.json({ ok: true, state: match.state, legal: pack.getButtons(match.state), settlement });
   } catch (e) {

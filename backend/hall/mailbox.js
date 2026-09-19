@@ -56,6 +56,20 @@ function isLegalMove(legal, moveId) {
   return Array.isArray(legal) && legal.some((b) => b && b.id === moveId);
 }
 
+/**
+ * dispatchToBot(payload) -> a uniformly-random legal move id.
+ * The house opponent for packs that need a second seat (skate.js) but have
+ * no real matchmaking yet -- see hall/routes.js's minSeats auto-fill. No
+ * network hop, no LLM call, no Fal spend: this is the deliberately-cheap
+ * "someone is on the other side of the RPS pick" seat, not a smart AI.
+ */
+function dispatchToBot(payload) {
+  const legal = payload.legal || [];
+  if (!legal.length) return null;
+  const pick = legal[Math.floor(Math.random() * legal.length)];
+  return pick.id;
+}
+
 async function dispatchToWebhook(seat, payload, timeoutMs) {
   const res = await axios.post(seat.endpoint, payload, { timeout: timeoutMs });
   const body = res && res.data;
@@ -104,6 +118,7 @@ async function dispatchTurn(seat, payload, defaultMoveId, opts) {
   const timeoutMs = payload.timeout_ms || 15000;
 
   async function attempt() {
+    if (seat.kind === 'bot') return dispatchToBot(payload);
     if (seat.kind === 'shaddai') return dispatchToShaddai(seat, payload, opts);
     return dispatchToWebhook(seat, payload, timeoutMs);
   }

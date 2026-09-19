@@ -249,6 +249,13 @@ function summary(state) {
 module.exports = {
   // exported for tests / reuse; not part of the public pack contract itself
   LETTERS, STYLES, STYLE_LABELS, CRUSHES, ROUND_TRICKS, styleWinner,
+  // 2-seat pack, no solo/crowd mode (see startMatch's own guard above) --
+  // hall/routes.js reads this to auto-fill a 'bot' seat when the caller
+  // only supplies one seatId, so a real skate match is playable solo.
+  minSeats: 2,
+  key: 'skate', // routes.js stores match.pack from pack.key -- must be explicit,
+  // not left to default to 'blackjack' like the old bug did for every
+  // non-arcade-bet pack (fixed in routes.js at the same time as this).
   // the pack contract
   startMatch, getButtons, applyMove, resolve, summary,
 };

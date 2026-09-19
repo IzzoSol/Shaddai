@@ -83,7 +83,25 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
    with a 3D model"). ── */
 #select h2{ font-family:var(--f-display); font-size:clamp(22px,4vw,32px); margin:0 0 4px; text-align:center; }
 #select .sub{ color:var(--ink-soft); font-size:13px; margin-bottom:18px; text-align:center; }
-.swivel-wrap{ display:flex; align-items:center; gap:14px; width:100%; max-width:820px; }
+
+/* ── Mario-Kart/Sochi-style select layout: a grid of clickable portrait
+   cards on one side, a live preview panel (the 3D swivel stage) on the
+   other. Clicking a card selects the rider directly -- no prev/next
+   arrow-hunting needed, per owner ref screenshots. ── */
+.select-wrap{ display:flex; gap:22px; width:100%; max-width:960px; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
+.roster-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; flex:1 1 300px; max-width:340px; }
+.roster-card{ position:relative; background:var(--panel); border:2px solid var(--edge); border-radius:12px;
+  padding:10px 6px 8px; text-align:center; cursor:pointer; transition:border-color .15s, transform .1s, box-shadow .15s; }
+.roster-card:hover{ border-color:var(--cyan); transform:translateY(-3px); }
+.roster-card.sel{ border-color:var(--lime); box-shadow:0 0 22px rgba(157,255,41,.4); }
+.roster-card.locked{ cursor:not-allowed; opacity:.55; }
+.roster-card.locked:hover{ transform:none; border-color:var(--edge); }
+.roster-card .portrait{ width:100%; aspect-ratio:1/1; border-radius:8px; overflow:hidden; background:var(--bg);
+  display:flex; align-items:center; justify-content:center; font-size:26px; }
+.roster-card .portrait img{ width:100%; height:100%; object-fit:cover; }
+.roster-card .cname{ font-family:var(--f-display); font-size:11px; font-weight:700; letter-spacing:.04em;
+  text-transform:uppercase; margin-top:6px; }
+.swivel-wrap{ display:flex; align-items:center; gap:14px; flex:1 1 380px; max-width:460px; }
 .swivel-stage{ position:relative; flex:1; aspect-ratio:4/3; max-height:56vh; border-radius:16px; overflow:hidden;
   border:1px solid var(--edge2); box-shadow:inset 0 0 80px rgba(0,0,0,.65); }
 /* Neon-city backdrop (reuses the already-generated intro hero art — zero
@@ -101,10 +119,6 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 .swivel-stage .lock-state{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
   justify-content:center; gap:10px; color:var(--ink-faint); }
 .swivel-stage .lock-state .lock-icon{ font-size:52px; opacity:.5; }
-.swivel-arrow{ flex:none; width:52px; height:52px; border-radius:50%; border:1px solid var(--edge2);
-  background:rgba(21,13,36,.8); color:var(--ink); font-size:22px; cursor:pointer; display:flex; align-items:center;
-  justify-content:center; transition:border-color .15s, background .15s, transform .1s; }
-.swivel-arrow:hover{ border-color:var(--cyan); background:rgba(41,232,255,.12); transform:scale(1.06); }
 .swivel-info{ display:flex; align-items:center; gap:14px; margin-top:18px; }
 .swivel-info .icon-badge{ width:56px; height:56px; border-radius:50%; overflow:hidden; border:2px solid var(--edge2);
   box-shadow:0 0 20px rgba(157,255,41,.25); background:var(--bg); flex:none; }
@@ -112,18 +126,20 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 .swivel-info .icon-badge.locked{ display:flex; align-items:center; justify-content:center; font-size:22px; opacity:.5; }
 .swivel-info .meta .name{ font-family:var(--f-display); font-size:20px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:left; }
 .swivel-info .meta .tag{ font-size:11px; color:var(--ink-faint); letter-spacing:.05em; text-transform:uppercase; text-align:left; }
-.dots{ display:flex; gap:7px; margin-top:16px; }
-.dots span{ width:8px; height:8px; border-radius:50%; background:var(--edge2); transition:background .15s, transform .15s; }
-.dots span.on{ background:var(--lime); transform:scale(1.3); }
 
-/* ── BOARD SELECT ── */
-.board-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:18px; max-width:700px; width:100%; }
-.board-card{ background:var(--panel); border:1px solid var(--edge); border-radius:14px; padding:18px 12px; text-align:center;
-  cursor:pointer; transition:border-color .15s, transform .1s; }
-.board-card:hover{ border-color:var(--cyan); transform:translateY(-4px); }
-.board-card.sel{ border-color:var(--lime); box-shadow:0 0 28px rgba(157,255,41,.35); }
-.board-card img{ width:100%; aspect-ratio:1/1; object-fit:contain; filter:drop-shadow(0 8px 14px rgba(0,0,0,.6)); }
-.board-card .name{ font-family:var(--f-display); font-size:14px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-top:10px; }
+/* ── BOARD SELECT — same grid+swivel-preview language as rider select, now
+   backed by REAL 3D board models (fal-assets/character-pipeline.mjs --meshy6
+   --static on the flat deck art), not flat card thumbnails. ── */
+#boardSelect h2{ font-family:var(--f-display); font-size:clamp(22px,4vw,32px); margin:0 0 4px; text-align:center; }
+#boardSelect .sub{ color:var(--ink-soft); font-size:13px; margin-bottom:18px; text-align:center; }
+.board-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; flex:1 1 300px; max-width:340px; }
+.board-card{ position:relative; background:var(--panel); border:2px solid var(--edge); border-radius:12px;
+  padding:10px 6px 8px; text-align:center; cursor:pointer; transition:border-color .15s, transform .1s, box-shadow .15s; }
+.board-card:hover{ border-color:var(--cyan); transform:translateY(-3px); }
+.board-card.sel{ border-color:var(--lime); box-shadow:0 0 22px rgba(157,255,41,.4); }
+.board-card .portrait{ width:100%; aspect-ratio:1/1; border-radius:8px; overflow:hidden; background:var(--bg); }
+.board-card .portrait img{ width:100%; height:100%; object-fit:contain; padding:8px; }
+.board-card .name{ font-family:var(--f-display); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-top:6px; }
 [hidden]{ display:none!important; }
 </style>
 </head>
@@ -142,28 +158,37 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 <section id="select" class="screen">
   <h2>Pick your rider</h2>
   <div class="sub">Cosmetic only for now — every rider plays identically until boards and decals unlock.</div>
-  <div class="swivel-wrap">
-    <button class="swivel-arrow" id="btnPrev" aria-label="Previous rider">‹</button>
-    <div class="swivel-stage" id="swivelStage">
-      <div class="city-bg"></div>
-      <div class="city-tint"></div>
-      <div class="grid-lines"></div>
+  <div class="select-wrap">
+    <div class="roster-grid" id="rosterGrid"></div>
+    <div class="swivel-wrap">
+      <div class="swivel-stage" id="swivelStage">
+        <div class="city-bg"></div>
+        <div class="city-tint"></div>
+        <div class="grid-lines"></div>
+      </div>
     </div>
-    <button class="swivel-arrow" id="btnNext" aria-label="Next rider">›</button>
   </div>
   <div class="swivel-info">
     <div class="icon-badge" id="iconBadge"></div>
     <div class="meta"><div class="name" id="riderName"></div><div class="tag" id="riderTag"></div></div>
   </div>
-  <div class="dots" id="dots"></div>
   <button id="btnPickBoard" class="neon-btn" disabled>Pick a Board <span class="chev">▸</span></button>
 </section>
 
-<!-- ── BOARD SELECT — cosmetic deck choice, same visual language as rider select ── -->
+<!-- ── BOARD SELECT — real 3D deck models, grid+swivel-preview like rider select ── -->
 <section id="boardSelect" class="screen">
   <h2>Pick your board</h2>
-  <div class="sub">Cosmetic only for now — swaps the deck graphic, doesn't change how a trick lands.</div>
-  <div class="board-grid" id="boardGrid"></div>
+  <div class="sub">Cosmetic only for now — swaps the deck model, doesn't change how a trick lands.</div>
+  <div class="select-wrap">
+    <div class="board-grid" id="boardGrid"></div>
+    <div class="swivel-wrap">
+      <div class="swivel-stage" id="boardStage">
+        <div class="city-bg"></div>
+        <div class="city-tint"></div>
+        <div class="grid-lines"></div>
+      </div>
+    </div>
+  </div>
   <button id="btnEnterHub" class="neon-btn" disabled>Enter the Hub <span class="chev">▸</span></button>
 </section>
 
@@ -235,107 +260,117 @@ function playShing() {
 
 document.getElementById('btnPlay').addEventListener('click', () => { playShing(); show('select'); });
 
-// ── Real 3D swivel viewer (three.js) — replaces the old flat sprite-card
-// grid entirely. One live WebGL stage, auto-turntabling the loaded rider's
-// actual rigged .glb (the same file capture-sprites.mjs already renders
-// sprites from), with left/right arrows to cycle the roster. Locked riders
-// show an honest lock state in the viewport instead of loading anything.
-const stageEl = document.getElementById('swivelStage');
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(38, 4 / 3, 0.01, 100);
-camera.position.set(0, 0.6, 5.2);
-camera.lookAt(0, 0.5, 0); // BUG FIX: camera was never aimed at the model at all,
-// which is why Gabi rendered as a strange off-center close-up crop. Pulled
-// back further + lower target to give generous margin around the
-// conservative scale above.
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-stageEl.appendChild(renderer.domElement);
+// ── Shared 3D swivel-viewer factory — one live WebGL stage per <div>,
+// auto-turntabling whatever .glb is loaded into it. Used for BOTH the rider
+// stage and the board stage (previously duplicated inline for riders only;
+// extracted here so the real 3D boards below reuse the exact same
+// zoom-to-fit + MeshoptDecoder + OrbitControls code instead of a second
+// copy drifting out of sync with it).
+function makeSwivelViewer(stageEl) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 4 / 3, 0.01, 100);
+  camera.position.set(0, 0.6, 5.2);
+  camera.lookAt(0, 0.5, 0); // BUG FIX (kept from the original rider viewer): camera must be
+  // aimed at the model, not left at its default look direction, or it
+  // renders as a strange off-center close-up crop.
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stageEl.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
-keyLight.position.set(2, 4, 3);
-scene.add(keyLight);
-const rimMagenta = new THREE.DirectionalLight(0xff2fb0, 0.9);
-rimMagenta.position.set(-3, 1.5, -2);
-scene.add(rimMagenta);
-const rimCyan = new THREE.DirectionalLight(0x29e8ff, 0.6);
-rimCyan.position.set(3, 0.5, -3);
-scene.add(rimCyan);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
+  keyLight.position.set(2, 4, 3);
+  scene.add(keyLight);
+  const rimMagenta = new THREE.DirectionalLight(0xff2fb0, 0.9);
+  rimMagenta.position.set(-3, 1.5, -2);
+  scene.add(rimMagenta);
+  const rimCyan = new THREE.DirectionalLight(0x29e8ff, 0.6);
+  rimCyan.position.set(3, 0.5, -3);
+  scene.add(rimCyan);
 
-// Manual drag/zoom as a safety net on top of the auto-swivel: the
-// auto-framing math (below) is a best-effort fit against a documented-
-// unreliable CPU bounding box on these skinned meshes, so give the viewer
-// a real way to find the model even if auto-fit is imperfect for a given
-// rider, same pattern as fal-assets/spike/roster-viewer.html.
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0.5, 0);
-controls.enableDamping = true;
-controls.minDistance = 0.5;
-controls.maxDistance = 12;
-controls.autoRotate = false; // the model itself spins (below); don't double-rotate the camera too
+  // Manual drag/zoom as a safety net on top of the auto-swivel: the
+  // auto-framing math below is a best-effort fit against a documented-
+  // unreliable CPU bounding box on these meshes, so give the viewer a real
+  // way to find the model even if auto-fit is imperfect for a given asset.
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0.5, 0);
+  controls.enableDamping = true;
+  controls.minDistance = 0.5;
+  controls.maxDistance = 12;
+  controls.autoRotate = false; // the model itself spins (below); don't double-rotate the camera too
 
-function resizeStage() {
-  const r = stageEl.getBoundingClientRect();
-  if (!r.width || !r.height) return;
-  renderer.setSize(r.width, r.height);
-  camera.aspect = r.width / r.height;
-  camera.updateProjectionMatrix();
-}
-addEventListener('resize', resizeStage);
+  function resize() {
+    const r = stageEl.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
 
-const loader = new GLTFLoader();
-loader.setMeshoptDecoder(MeshoptDecoder);
-let currentModel = null, mixer = null;
-const clock = new THREE.Clock();
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  let currentModel = null, mixer = null;
+  const clock = new THREE.Clock();
 
-function clearStage() {
-  if (currentModel) { scene.remove(currentModel); currentModel = null; }
-  mixer = null;
-}
+  function clear() {
+    if (currentModel) { scene.remove(currentModel); currentModel = null; }
+    mixer = null;
+  }
 
-function loadRider(r) {
-  clearStage();
-  if (r.locked || !r.model) return; // honest lock state is pure CSS (.lock-state), no fake model
-  loader.load(r.model, (gltf) => {
-    const model = gltf.scene;
-    scene.add(model); // must be IN the scene with world matrices updated before measuring
-    model.updateMatrixWorld(true);
-    currentModel = model;
+  function load(url, { onLoaded } = {}) {
+    clear();
+    if (!url) return; // honest lock state is pure CSS (.lock-state), no fake model
+    loader.load(url, (gltf) => {
+      const model = gltf.scene;
+      scene.add(model); // must be IN the scene with world matrices updated before measuring
+      model.updateMatrixWorld(true);
+      currentModel = model;
 
-    // Real zoom-to-fit, not a fixed guessed camera position: measure the
-    // model's bounding SPHERE (radius-based, not box-axis-based, so it
-    // doesn't matter which axis the auto-rigged mesh happens to be long
-    // on) and place the camera at the distance that sphere actually needs
-    // to fill the frame, with margin. This is what makes the viewer
-    // correct for ANY rider's proportions, not just Gabi's specifically.
-    const box = new THREE.Box3().setFromObject(model);
-    const sphere = box.getBoundingSphere(new THREE.Sphere());
-    const fovRad = camera.fov * Math.PI / 180;
-    const fitDist = (sphere.radius / Math.sin(fovRad / 2)) * 1.35; // 1.35 = margin so it never clips
-    camera.position.set(sphere.center.x, sphere.center.y, sphere.center.z + fitDist);
-    camera.lookAt(sphere.center);
-    controls.target.copy(sphere.center);
-    controls.minDistance = fitDist * 0.2;
-    controls.maxDistance = fitDist * 3;
+      // Real zoom-to-fit, not a fixed guessed camera position: measure the
+      // model's bounding SPHERE (radius-based, not box-axis-based, so it
+      // doesn't matter which axis the asset happens to be long on) and
+      // place the camera at the distance that sphere actually needs to
+      // fill the frame, with margin. Works for a rider OR a board -- any
+      // proportions, not tuned to one asset.
+      const box = new THREE.Box3().setFromObject(model);
+      const sphere = box.getBoundingSphere(new THREE.Sphere());
+      const fovRad = camera.fov * Math.PI / 180;
+      const fitDist = (sphere.radius / Math.sin(fovRad / 2)) * 1.35; // 1.35 = margin so it never clips
+      camera.position.set(sphere.center.x, sphere.center.y, sphere.center.z + fitDist);
+      camera.lookAt(sphere.center);
+      controls.target.copy(sphere.center);
+      controls.minDistance = fitDist * 0.2;
+      controls.maxDistance = fitDist * 3;
+      controls.update();
+
+      if (gltf.animations && gltf.animations.length) {
+        mixer = new THREE.AnimationMixer(model);
+        mixer.clipAction(gltf.animations[0]).play();
+      }
+      if (onLoaded) onLoaded(model);
+    }, undefined, (err) => console.error('[skate] model FAILED to load', url, err));
+  }
+
+  function tick() {
+    const dt = clock.getDelta();
+    if (mixer) mixer.update(dt);
+    if (currentModel) currentModel.rotation.y += dt * 0.6; // continuous turntable swivel
     controls.update();
+    renderer.render(scene, camera);
+  }
 
-    if (gltf.animations && gltf.animations.length) {
-      mixer = new THREE.AnimationMixer(model);
-      mixer.clipAction(gltf.animations[0]).play();
-    }
-  }, undefined, (err) => console.error('[skate] rider model FAILED to load', r.id, err));
+  function animate() {
+    requestAnimationFrame(animate);
+    tick();
+  }
+  animate();
+
+  return { stageEl, resize, load, clear };
 }
 
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta();
-  if (mixer) mixer.update(dt);
-  if (currentModel) currentModel.rotation.y += dt * 0.6; // continuous turntable swivel
-  controls.update();
-  renderer.render(scene, camera);
-}
+const riderViewer = makeSwivelViewer(document.getElementById('swivelStage'));
 
 function renderSelectUI() {
   const r = ROSTER[activeIndex];
@@ -344,69 +379,83 @@ function renderSelectUI() {
   const badge = document.getElementById('iconBadge');
   if (r.locked) { badge.className = 'icon-badge locked'; badge.innerHTML = '🔒'; }
   else { badge.className = 'icon-badge'; badge.innerHTML = `<img src="${r.icon}" alt="">`; }
-  let lockState = stageEl.querySelector('.lock-state');
+  let lockState = riderViewer.stageEl.querySelector('.lock-state');
   if (r.locked) {
     if (!lockState) {
       lockState = document.createElement('div');
       lockState.className = 'lock-state';
       lockState.innerHTML = '<span class="lock-icon">🔒</span><span>Coming soon</span>';
-      stageEl.appendChild(lockState);
+      riderViewer.stageEl.appendChild(lockState);
     }
   } else if (lockState) {
     lockState.remove();
   }
-  document.querySelectorAll('#dots span').forEach((d, i) => d.classList.toggle('on', i === activeIndex));
+  syncRosterGridSelection();
   document.getElementById('btnPickBoard').disabled = r.locked;
   picked = r.locked ? null : r;
-  loadRider(r);
+  riderViewer.load(r.locked ? null : r.model);
 }
 
-const dotsEl = document.getElementById('dots');
-ROSTER.forEach((_, i) => {
-  const d = document.createElement('span');
-  d.addEventListener('click', () => { activeIndex = i; renderSelectUI(); });
-  dotsEl.appendChild(d);
+// ── Roster grid — Mario-Kart/Sochi-style portrait buttons. Click a card to
+// select that rider directly (locked cards are inert, same honesty rule as
+// the old lock-state viewport overlay: no fake preview, no fake pick).
+const rosterGridEl = document.getElementById('rosterGrid');
+ROSTER.forEach((r, i) => {
+  const card = document.createElement('div');
+  card.className = 'roster-card' + (r.locked ? ' locked' : '');
+  card.innerHTML = `<div class="portrait">${r.locked ? '🔒' : `<img src="${r.icon}" alt="${r.name}">`}</div>
+    <div class="cname">${r.locked ? '???' : r.name}</div>`;
+  if (!r.locked) {
+    card.addEventListener('click', () => { activeIndex = i; renderSelectUI(); });
+  }
+  rosterGridEl.appendChild(card);
 });
 
-document.getElementById('btnPrev').addEventListener('click', () => {
-  activeIndex = (activeIndex - 1 + ROSTER.length) % ROSTER.length;
-  renderSelectUI();
-});
-document.getElementById('btnNext').addEventListener('click', () => {
-  activeIndex = (activeIndex + 1) % ROSTER.length;
-  renderSelectUI();
-});
+function syncRosterGridSelection() {
+  document.querySelectorAll('.roster-card').forEach((el, i) => el.classList.toggle('sel', i === activeIndex));
+}
 
 // First layout pass needs the stage visible+sized -- 'select' isn't
 // .active on load, so size once it becomes visible (btnPlay click) rather
 // than at 0x0 on page load.
 document.getElementById('btnPlay').addEventListener('click', () => {
-  requestAnimationFrame(() => { resizeStage(); renderSelectUI(); });
+  requestAnimationFrame(() => { riderViewer.resize(); renderSelectUI(); });
 });
-animate();
 
-// ── Board select (cosmetic-only deck choice, same reveal pattern as riders) ──
+// ── Board select — REAL 3D deck models (fal-assets/character-pipeline.mjs
+// --meshy6 --static on the flat art), same grid+swivel-preview pattern as
+// rider select. thumb is the original flat art (cheap, for the grid icon);
+// model is the actual generated .glb the swivel stage renders.
 const BOARDS = [
-  { id: 'board_lime', name: 'Bolt', img: 'assets/skate/boards/board-lime.png' },
-  { id: 'board_magenta', name: 'Prism', img: 'assets/skate/boards/board-magenta.png' },
-  { id: 'board_cyan', name: 'Circuit', img: 'assets/skate/boards/board-cyan.png' },
+  { id: 'board_lime', name: 'Bolt', thumb: 'assets/skate/boards/board-lime.png', model: 'assets/skate/boards/board_lime/board_lime.glb' },
+  { id: 'board_magenta', name: 'Prism', thumb: 'assets/skate/boards/board-magenta.png', model: 'assets/skate/boards/board_magenta/board_magenta.glb' },
+  { id: 'board_cyan', name: 'Circuit', thumb: 'assets/skate/boards/board-cyan.png', model: 'assets/skate/boards/board_cyan/board_cyan.glb' },
 ];
 let pickedBoard = null;
+let activeBoardIndex = 0;
+const boardViewer = makeSwivelViewer(document.getElementById('boardStage'));
 const boardGridEl = document.getElementById('boardGrid');
-BOARDS.forEach((b) => {
+BOARDS.forEach((b, i) => {
   const card = document.createElement('div');
   card.className = 'board-card';
-  card.innerHTML = `<img src="${b.img}" alt="${b.name}"><div class="name">${b.name}</div>`;
-  card.addEventListener('click', () => {
-    pickedBoard = b;
-    document.querySelectorAll('.board-card').forEach((el) => el.classList.remove('sel'));
-    card.classList.add('sel');
-    document.getElementById('btnEnterHub').disabled = false;
-  });
+  card.innerHTML = `<div class="portrait"><img src="${b.thumb}" alt="${b.name}"></div><div class="name">${b.name}</div>`;
+  card.addEventListener('click', () => { activeBoardIndex = i; renderBoardUI(); });
   boardGridEl.appendChild(card);
 });
 
-document.getElementById('btnPickBoard').addEventListener('click', () => { playShing(); show('boardSelect'); });
+function renderBoardUI() {
+  const b = BOARDS[activeBoardIndex];
+  pickedBoard = b;
+  document.querySelectorAll('.board-card').forEach((el, i) => el.classList.toggle('sel', i === activeBoardIndex));
+  document.getElementById('btnEnterHub').disabled = false;
+  boardViewer.load(b.model);
+}
+
+document.getElementById('btnPickBoard').addEventListener('click', () => {
+  playShing();
+  show('boardSelect');
+  requestAnimationFrame(() => { boardViewer.resize(); renderBoardUI(); });
+});
 
 document.getElementById('btnEnterHub').addEventListener('click', () => {
   document.getElementById('hubTitle').textContent = 'Welcome to The Hub, ' + picked.name;

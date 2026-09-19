@@ -206,6 +206,9 @@ function summary(state) {
 module.exports = {
   // exported for tests / reuse; not part of the public pack contract itself
   newShuffledDeck, handValue, isBlackjack,
+  key: 'blackjack', // explicit now -- routes.js used to silently rely on
+  // pack.key defaulting to 'blackjack' for EVERY key-less pack (a real bug
+  // fixed alongside this: see routes.js's match.pack assignment).
   // the pack contract
   startMatch, getButtons, applyMove, resolve, summary,
 };
