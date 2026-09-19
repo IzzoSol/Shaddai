@@ -1,0 +1,5 @@
+[
+  { "id": "skate-gabi-tpose", "type": "text2img", "register": "skate", "size": "portrait_4_3",
+    "body": "full-body character reference sheet of a young female skater with a curly dark afro pulled back in a green headband, warm brown skin, round gold hoop earrings, wearing an oversized acid-lime green tech-jacket with a hot-pink crop top underneath, black leggings with a bold orange side-stripe, chunky lime-and-orange platform sneakers. CRITICAL POSE REQUIREMENT: both arms locked completely straight out horizontally to the sides at shoulder height like a scarecrow, elbows straight, both open hands and all fingers clearly visible in empty air, nothing held, nothing overlapping the torso or limbs, legs standing straight and slightly apart, facing directly forward, true T-pose for 3D rigging. Plain flat neutral grey background, no props, no skateboard in hand, no weapon.",
+    "out": "fal-assets/spike/skate-gabi-tpose.png" }
+]

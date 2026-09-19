@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SKATE — SHADDAI Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* Palette matches fal-assets/skate/SKATE-ART-BIBLE.md §0 SPINE_SKATE exactly
+   -- Tron-grid x Samurai Jack, vibrant full-color on near-black, NOT the
+   world's obsidian/emerald/gold spine. */
+:root{
+  --bg:#0a0612; --panel:#150d24; --ink:#f0eaff; --ink-soft:#a898c4; --ink-faint:#6b5c8a;
+  --edge:rgba(200,150,255,.18); --edge2:rgba(200,150,255,.35);
+  --magenta:#ff2fb0; --cyan:#29e8ff; --lime:#9dff29; --gold:#ffd23d; --violet:#8b2fff;
+  --f-display:'Cinzel',serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; min-height:100%; }
+body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%); color:var(--ink);
+  font-family:var(--f-mono); min-height:100vh; overflow-x:hidden; }
+.screen{ display:none; min-height:100vh; flex-direction:column; align-items:center; padding:5vh 5vw 8vh; }
+.screen.active{ display:flex; }
+
+/* ── INTRO ── */
+#intro{ justify-content:center; text-align:center; gap:22px; }
+#intro h1{ font-family:var(--f-display); font-weight:900; font-size:clamp(38px,9vw,86px);
+  margin:0; letter-spacing:.03em; background:linear-gradient(135deg,var(--magenta),var(--cyan),var(--lime));
+  -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 0 60px rgba(255,47,176,.35); }
+#intro .sub{ color:var(--ink-soft); font-size:14px; letter-spacing:.1em; text-transform:uppercase; }
+#intro button{ margin-top:18px; font-family:var(--f-display); font-weight:900; font-size:18px; letter-spacing:.08em;
+  padding:16px 48px; background:linear-gradient(135deg,var(--magenta),var(--violet)); color:#fff; border:none;
+  border-radius:4px; cursor:pointer; text-transform:uppercase; box-shadow:0 0 40px rgba(255,47,176,.4); }
+#intro button:hover{ filter:brightness(1.15); }
+#intro .credit{ margin-top:24px; font-size:10px; color:var(--ink-faint); letter-spacing:.1em; }
+
+/* ── CHARACTER SELECT ── */
+#select h2{ font-family:var(--f-display); font-size:clamp(22px,4vw,32px); margin:0 0 6px; text-align:center; }
+#select .sub{ color:var(--ink-soft); font-size:13px; margin-bottom:28px; text-align:center; }
+.roster{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; max-width:900px; width:100%; }
+.rider-card{ background:var(--panel); border:1px solid var(--edge); border-radius:10px; padding:16px 10px; text-align:center;
+  cursor:pointer; transition:border-color .15s,transform .1s; position:relative; overflow:hidden; }
+.rider-card:hover:not(.locked){ border-color:var(--cyan); transform:translateY(-3px); }
+.rider-card.sel{ border-color:var(--lime); box-shadow:0 0 24px rgba(157,255,41,.3); }
+.rider-card.locked{ cursor:not-allowed; opacity:.45; }
+.rider-card .portrait{ width:100%; aspect-ratio:1/1.3; display:flex; align-items:flex-end; justify-content:center;
+  margin-bottom:8px; background:radial-gradient(circle at 50% 30%, rgba(255,47,176,.08), transparent 70%); border-radius:8px; overflow:hidden; }
+.rider-card .portrait img{ max-width:88%; max-height:96%; image-rendering:auto;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.6)); }
+.rider-card .lock-icon{ font-size:32px; opacity:.6; }
+.rider-card .name{ font-family:var(--f-display); font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+.rider-card .tag{ font-size:10px; color:var(--ink-faint); margin-top:2px; letter-spacing:.05em; text-transform:uppercase; }
+#select button.go{ margin-top:30px; font-family:var(--f-display); font-weight:900; font-size:16px; letter-spacing:.06em;
+  padding:14px 44px; background:var(--lime); color:#0a1200; border:none; border-radius:4px; cursor:pointer;
+  text-transform:uppercase; }
+#select button.go:disabled{ opacity:.3; cursor:not-allowed; }
+[hidden]{ display:none!important; }
+</style>
+</head>
+<body>
+
+<!-- ── INTRO (copy from fal-assets/skate/copy-bible.json portal.*) ── -->
+<section id="intro" class="screen active">
+  <h1>S · K · A · T · E</h1>
+  <div class="sub">Nine spots. Blind picks. Every attempt films.</div>
+  <button id="btnPlay">Drop In</button>
+  <div class="credit">SHADDAI Arcade · Gate B prototype · flash-tier only, zero Fal credits used yet</div>
+</section>
+
+<!-- ── CHARACTER SELECT (hub.roster_prompt / roster_sub) ── -->
+<section id="select" class="screen">
+  <h2>Pick your rider</h2>
+  <div class="sub">Cosmetic only for now — every rider plays identically until boards and decals unlock.</div>
+  <div class="roster" id="roster"></div>
+  <button class="go" id="btnEnterHub" disabled>Enter the Hub</button>
+</section>
+
+<!-- ── HUB (placeholder landing after select — full match flow is Gate C) ── -->
+<section id="hub" class="screen">
+  <h2 id="hubTitle">Welcome to The Hub</h2>
+  <div class="sub" id="hubSub">Match flow (blind picks, letters, LENS clips) lands at Gate C. This confirms the pipeline end to end: real 3D rider, real captured sprite, real menu.</div>
+</section>
+
+<script>
+// Real riders only — rider_01 (GABI) has a real captured sprite from the
+// Gate B pipeline (fal-assets/character-pipeline.mjs + capture-sprites.mjs).
+// The other 5 slots from fal-assets/skate/skate-slots.json are still
+// placeholder/null `src` -- shown locked, never faked with stock art.
+const ROSTER = [
+  { id: 'rider_01', name: 'Gabi', tag: 'Ready', locked: false,
+    frames: Array.from({length:8}, (_,i) => `assets/skate/gabi/gabi-walking-0${i}.png`) },
+  { id: 'rider_02', name: '???', tag: 'Coming soon', locked: true, frames: [] },
+  { id: 'rider_03', name: '???', tag: 'Coming soon', locked: true, frames: [] },
+  { id: 'rider_04', name: '???', tag: 'Coming soon', locked: true, frames: [] },
+  { id: 'rider_05', name: '???', tag: 'Coming soon', locked: true, frames: [] },
+  { id: 'rider_06', name: '???', tag: 'Coming soon', locked: true, frames: [] },
+];
+const FRAME_MS = 140;
+let picked = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+document.getElementById('btnPlay').addEventListener('click', () => show('select'));
+
+const rosterEl = document.getElementById('roster');
+ROSTER.forEach((r) => {
+  const card = document.createElement('div');
+  card.className = 'rider-card' + (r.locked ? ' locked' : '');
+  if (r.locked) {
+    card.innerHTML = `<div class="portrait"><span class="lock-icon">🔒</span></div><div class="name">${r.name}</div><div class="tag">${r.tag}</div>`;
+  } else {
+    card.innerHTML = `<div class="portrait"><img id="img-${r.id}" src="${r.frames[0]}" alt="${r.name}"></div><div class="name">${r.name}</div><div class="tag">${r.tag}</div>`;
+    let frame = 0;
+    setInterval(() => {
+      frame = (frame + 1) % r.frames.length;
+      const img = document.getElementById('img-' + r.id);
+      if (img) img.src = r.frames[frame];
+    }, FRAME_MS);
+  }
+  card.addEventListener('click', () => {
+    if (r.locked) return;
+    picked = r;
+    document.querySelectorAll('.rider-card').forEach((el) => el.classList.remove('sel'));
+    card.classList.add('sel');
+    document.getElementById('btnEnterHub').disabled = false;
+  });
+  rosterEl.appendChild(card);
+});
+
+document.getElementById('btnEnterHub').addEventListener('click', () => {
+  document.getElementById('hubTitle').textContent = 'Welcome to The Hub, ' + picked.name;
+  show('hub');
+});
+</script>
+</body>
+</html>
