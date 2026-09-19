@@ -17,7 +17,7 @@ services:
     healthCheckPath: /api/model/health
     autoDeploy: true
 
-# FORCE REDEPLOY MARKER: 2026-09-08 20:56:17
+# FORCE REDEPLOY MARKER: 2026-09-19 19:22:00
     envVars:
       - key: NODE_VERSION
         value: "20"
