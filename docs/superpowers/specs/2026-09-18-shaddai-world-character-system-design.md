@@ -102,3 +102,79 @@ Total for gates 1–2 + 4 (3 mounts): under **$8**. Well inside the remaining bu
 2. The teal-haired ninja-suit character and the green-haired flail character: extra Citizens, or should they become council members?
 3. Casino-slot mecha: Hall guardian, premium mount, or boss?
 4. Content level for full-body Council art (§4 note).
+
+---
+
+## 9. Relationship to the existing world master prompt
+
+The world master prompt is `fal-assets/SHADDAI-WORLD-ART-BIBLE.md` (v3 "FULL WORLD", 14 parts: terrain, swappable bodies, clothing layers, weapons, vehicles, food, buildings, overworld map, crowds, budget, consistency rules). It targets the **isometric 2D pixel world**. This spec is its **3D-rig counterpart**; both must stay locked to the same identity, so:
+
+| Art Bible part | 3D-side equivalent (this spec) |
+|---|---|
+| 0.4 Seven-color agent key | §9.1 below (updated — owner refs override 2 rows) |
+| 2 Swappable bodies / 2.2 agent skins | Council (Tier A) + Citizens (Tier B), §2–3 |
+| 3 Clothing & gear layers, 3.2 headwear | Cosmetic slots + catalog, §11 |
+| 4 Weapons, 4.2 signature weapons | Bone-attached weapons + Council signature set, §11 |
+| 5 Vehicles/boats, 7 Buildings, 8 Overworld map | Realm art-direction spec + §5–6 |
+| 11 Consistency rules | Applies unchanged; read before any batch |
+
+### 9.1 Agent color key — reconciled with owner references
+
+| Agent | Art Bible key | Owner reference | Decision |
+|---|---|---|---|
+| SHADDAI | gold / obsidian | none supplied | keep gold/obsidian until a ref arrives |
+| NEXUS | cyan / steel | teal + orange | **cyan primary, orange accent** |
+| ZEROX | emerald + gold / brass | black + electric cyan | **ref wins: black + cyan, gold accents** (this is also what roster.json already said) |
+| ORACLE | violet / obsidian | black + violet | matches |
+| TURTLE | emerald / copper | green hair + orange headset | matches (orange = copper family) |
+| QUILL | gold + cream / brass | violet robe, copper filigree, blue feather | **ref wins: violet + copper, cream vest** |
+| PIKADON | crimson + black / dark steel | black + crimson + amber | matches |
+
+Building liveries, vehicle passes and weapon passes for ZEROX and QUILL follow the new rows. Flagged for owner confirmation (§8 Q5).
+
+## 10. Animation — "attack, move and everything"
+
+### 10.1 Key finding (verified, free)
+All Meshy rigs share one identical 26-bone skeleton with identical names. A clip made on **one** character plays on **every** character by bone name. Tested 2026-09-18: mage's Charged_Spell_Cast played on Leadr's much taller body. Raw copy squashed the legs (Meshy clips bake per-bone translations in the donor's limb lengths); **rotations-only + hips translation rescaled by hips-height ratio** produced a clean pose. That logic now lives in `sprite-capture.html` (`retargetClip`) and must be reused by the 3D realm runtime.
+
+Consequence: the animation library is built **once** (~a dozen rig calls on one donor) and applies to all ~40 characters, present and future, including every new Council member. No per-character animation spend.
+
+### 10.2 Required clip set
+| Clip | Status |
+|---|---|
+| walk, run | owned (every rig) |
+| combat stance / ready | owned (Combat_Stance) |
+| melee attack | owned (Left_Slash); add a second variant + heavy finisher |
+| spell cast | owned (Charged_Spell_Cast) |
+| ranged shot | owned (Archery_Shot) |
+| relaxed idle (looping, non-combat) | **needed** |
+| jump / land | **needed** |
+| hit reaction | **needed** (Meshy id 178 known) |
+| death / knockdown | **needed** |
+| dodge / roll | **needed** |
+| victory + 2 emotes (wave, dance) | **needed** |
+| interact / gather / craft | **needed** |
+| mounted (seated) idle + ride | **needed** — plus seat anchor per mount |
+
+Ids for the missing clips are looked up in the Meshy animation library before any spend. Cost ≈ one rig call per clip (est. $0.15–0.20 each; the rig is the cheaper half of the ~$0.60 character cost) → **≈ $2 total, once**.
+
+### 10.3 Citizens (voxel) animation
+Code-authored on the box rig (arm/leg swing, weapon swing arcs, hit flash, death tip-over) — $0, and it lives in the same `pixel-people.js` walk math already shipped.
+
+### 10.4 "Perfect" gate
+`forge.mjs check` will render a contact sheet of **every** required clip per character; I look at it and reject anything with squashed limbs, foot-sliding, clipping through gear, or wrong scale before the character counts as done. No character ships on "the file exists".
+
+## 11. Accessories & cosmetics that match
+
+Matching is a rule, not a hope — every item carries data the renderer enforces:
+
+- **One catalog** (`public/assets/accessories/catalog.json`, already shipping in the Vault) drives 2D **and** 3D. An item = `{id, slot, agentAffinity[], palette, anchor, imgScale, model3d}`. Same id → same look in both worlds (parity §4.10).
+- **Slots:** hat/head, mask/face, back, wings, weapon (main), weapon (off), pet, aura, footwear-glow. Council members own a **signature set** styled to their key (§9.1): ZEROX cyan-glow blade + coin-sigil clasp; QUILL feather-quill + scroll satchel; PIKADON crest shield + horned helm variant; NEXUS relay-antenna headset; ORACLE violet halo/eye aura; TURTLE orange headphones + visor.
+- **Tint-to-wearer:** universal items pull hue from the wearer's accent color so they never clash; Council signature items are locked to the agent key.
+- **Pets:** owner refs include a plush companion (teal-haired sheet) and drone-bugs — first pets.
+- **Weapons:** existing 6 items + spiked flail (owner ref, green-latex character) + ZEROX's glowing blade; all through the existing bone-attach + compensation fix, with procedural fallback for thin blades.
+- **Citizens:** every catalog item is also a voxel-box recipe, so the same item exists at both fidelities.
+
+## 12. Revised open questions
+5. Confirm the two color-key overrides (ZEROX → black/cyan/gold, QUILL → violet/copper/cream).
+6. Which weapons/pets from the reference set do you want first?

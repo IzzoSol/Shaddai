@@ -75,7 +75,27 @@
     window.__debug = { boxMin: box.min.toArray(), boxMax: box.max.toArray(), rigPos: rig.position.toArray(), modelScale };
   }
 
-  window.__loadClip = function (glbPath) {
+  // clipPath (optional): play THIS file's animation on glbPath's body. All Meshy rigs
+  // share one 26-bone skeleton, so clips retarget by bone name for free.
+  // Keep bone ROTATIONS (portable across bodies); drop per-bone translations
+  // (baked to the donor's limb lengths -> squashes taller/shorter bodies);
+  // keep Hips translation, rescaled by hips-height ratio so root motion fits.
+  function retargetClip(clip, body) {
+    const hips = body.getObjectByName('Hips');
+    const out = [];
+    for (const t of clip.tracks) {
+      if (t.name.endsWith('.quaternion')) { out.push(t); continue; }
+      if (t.name === 'Hips.position' && hips) {
+        const donorY = t.values[1] || 1;
+        const k = hips.position.y / donorY;
+        const v = Float32Array.from(t.values, (x) => x * k);
+        out.push(new THREE.VectorKeyframeTrack(t.name, t.times, v));
+      }
+    }
+    return new THREE.AnimationClip(clip.name, clip.duration, out);
+  }
+
+  window.__loadClip = function (glbPath, clipPath) {
     window.__ready = false;
     if (model) { rig.remove(model); model = null; mixer = null; action = null; }
     loader.load(glbPath, (gltf) => {
@@ -89,6 +109,21 @@
       modelScale = 1.6 / Math.max(size1.x, size1.y, size1.z);
       model.scale.setScalar(modelScale);
 
+      const startAnim = (clip) => {
+        if (clipPath) clip = retargetClip(clip, model);
+        mixer = new THREE.AnimationMixer(model);
+        action = mixer.clipAction(clip);
+        action.play();
+        window.__duration = clip.duration;
+        mixer.setTime(0);
+        recenter();
+        renderer.render(scene, camera);
+        window.__ready = true;
+      };
+      if (clipPath) {
+        loader.load(clipPath, (cg) => startAnim(cg.animations[0]), undefined, () => { window.__ready = 'error'; });
+        return;
+      }
       if (gltf.animations && gltf.animations.length) {
         mixer = new THREE.AnimationMixer(model);
         action = mixer.clipAction(gltf.animations[0]);
