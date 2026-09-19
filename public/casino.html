@@ -215,6 +215,9 @@
     opacity: 0; pointer-events: none; transition: opacity 0.25s;
   }
   .toast.show { opacity: 1; }
+  .hall-art { margin: 8px auto 4px; width: min(760px, 92vw); border-radius: 14px; overflow: hidden; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+  .hall-art img { display: block; width: 100%; height: auto; }
+  .hud-pill.claimed { opacity: .55; }
 </style>
 </head>
 <body>
@@ -225,11 +228,14 @@
   <div class="hud-brand">The Casino</div>
   <div class="hud-right">
     <span class="hud-pill" id="sparks-pill">Sparks —</span>
+    <button class="hud-btn" id="daily-claim" title="Claim daily Sparks" hidden>✦ 25</button>
     <button class="hud-btn" id="btn-line" title="Line (coach chat)">💬</button>
     <button class="hud-btn" id="btn-lens-hud" title="Lens" disabled>🎬</button>
     <button class="hud-btn" id="btn-menu" title="Menu">☰</button>
   </div>
 </div>
+
+<div class="hall-art" id="hall-art" hidden><img id="hall-art-img" alt=""></div>
 
 <!-- ROOM -->
 <section id="view-room">
@@ -310,7 +316,7 @@
     lensReady: "Clip's ready.",
     lensFail: "Couldn't get the shot this time. Your 15 Sparks are back in your balance.",
     lensInsufficient: 'You need 15 Sparks for a Lens clip.',
-    lensNoEvent: 'Nothing to film right now — Lens only works right after a bust, win, or blackjack.',
+    lensNoEvent: 'Nothing to film right now — Lens works right after a result (win, bust, blackjack, or an arcade reveal).',
     lensDisabled: "Lens isn't running at this table yet. Check back soon.",
     tableGone: "That table isn't active anymore.",
   };
@@ -326,6 +332,12 @@
     { pack: 'sigilstorm_bet', name: 'Sigil Storm', tag: 'Watch & bet' },
   ];
   const DEFAULT_WAGER = 25;
+
+  // Cast — the seven council faces behind every watch-and-bet table. Plain
+  // glyphs, no likenesses: the human player sits in the eighth chair. The Lens
+  // adapter turns the winning/losing agent into the fal cutscene at the reveal.
+  const FACES = { SHADDAI: '👑', NEXUS: '⚙️', ORACLE: '🔮', ZEROX: '💰', TURTLE: '🎨', QUILL: '✍️', PIKADON: '🛡️' };
+  const face = (name) => FACES[name] || '🎮';
 
   let seatId = localStorage.getItem('hall_seat_id');
   let matchId = null;
@@ -343,19 +355,116 @@
     toast._t = setTimeout(() => el.classList.remove('show'), ms || 2600);
   }
   async function api(method, path, body) {
-    const res = await fetch(path, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    const headers = { 'Content-Type': 'application/json' };
+    const id = localStorage.getItem('shd_userid') || localStorage.getItem('shd_email');
+    if (id) headers['x-user-id'] = id; // same identity the seat wallet uses (dev fallback path)
+    const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.ok === false) throw Object.assign(new Error(data.error || `${method} ${path} failed`), { status: res.status, data });
     return data;
   }
   async function ensureSeat() {
     if (seatId) return seatId;
-    const { seat } = await api('POST', '/api/casino/seats', { kind: 'human', display_name: 'You' });
+    const uid = localStorage.getItem('shd_userid') || localStorage.getItem('shd_email') || '';
+    const { seat } = await api('POST', '/api/casino/seats', {
+      kind: 'human', display_name: 'You',
+      sparks_ref: uid || undefined, // canonical wallet id = raw identity, same key the profile faucet uses
+    });
     seatId = seat.id;
     localStorage.setItem('hall_seat_id', seatId);
     return seatId;
   }
+  // Sparks wallet: balance + one-time starter (server-side, idempotent).
+  const sparksPill = document.getElementById('sparks-pill');
+  const dailyBtn = document.getElementById('daily-claim');
+  const DAILY_SPARKS = 25; // mirrors backend/hall/earn-store.js
+  function applyEarn(snap) {
+    dailyBtn.hidden = false;
+    const claimedToday = !!(snap && snap.dailyClaimedToday);
+    dailyBtn.disabled = claimedToday;
+    dailyBtn.classList.toggle('claimed', claimedToday);
+    dailyBtn.textContent = claimedToday ? '✓ claimed' : `✦ ${DAILY_SPARKS}`;
+    dailyBtn.title = (snap && snap.streak > 1) ? `Winning streak: ${snap.streak} days` : 'Claim daily Sparks';
+  }
+  dailyBtn.addEventListener('click', async () => {
+    try {
+      const r = await api('GET', '/api/casino/earn/daily');
+      toast(r.replayed ? `Already claimed today (${r.amount})` : `+${r.amount} daily Sparks`);
+      refreshSparks();
+    } catch (e) {
+      toast(e.status === 401 ? 'Sign in to claim daily Sparks' : (e.message || 'Could not claim daily Sparks'));
+    }
+  });
+  async function refreshSparks() {
+    try {
+      const p = await api('GET', '/api/casino/profile');
+      sparksPill.textContent = `Sparks ${p.balance}`;
+      sparksPill.classList.toggle('has-balance', p.balance > 0);
+      applyEarn(p.earn);
+      if (p.starter && p.starter.given) toast(`New wallet — ${p.starter.amount} starter Sparks. Go play.`);
+      return p;
+    } catch (e) {
+      sparksPill.classList.remove('has-balance');
+      sparksPill.textContent = e.status === 401 ? 'Sparks — sign in' : 'Sparks —';
+      dailyBtn.hidden = true; dailyBtn.disabled = false; dailyBtn.textContent = `✦ ${DAILY_SPARKS}`;
+      return null;
+    }
+  }
+
+  // HF menu art banner (GET /api/casino/art). Best-effort: hide on failure.
+  const hallArtBox = document.getElementById('hall-art');
+  const hallArtImg = document.getElementById('hall-art-img');
+  function setHallArt(pack) {
+    pack = pack || 'hall';
+    hallArtBox.hidden = false;
+    hallArtImg.onerror = () => { hallArtBox.hidden = true; };
+    if (hallArtImg.dataset.pack === pack) return; // avoid re-setting src on every room poll (no flicker)
+    hallArtImg.dataset.pack = pack;
+    hallArtImg.src = `/api/casino/art?pack=${encodeURIComponent(pack)}`;
+  }
   function openSheet(id) { document.getElementById('sheet-backdrop').classList.add('show'); document.getElementById(id).classList.add('show'); }
+
+  // ── SFX (procedural WebAudio — no assets, game feel) ──────────────────────
+  let audioCtx = null;
+  document.addEventListener('pointerdown', () => {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }, { once: true });
+  function sfx(type) {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audioCtx.currentTime;
+      const tone = (freq, when, dur, shape = 'triangle') => {
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.type = shape; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.05, when); g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+        o.connect(g); g.connect(audioCtx.destination); o.start(when); o.stop(when + dur + 0.02);
+      };
+      if (type === 'card') {
+        tone(620, t, 0.09, 'square'); tone(930, t + 0.04, 0.07, 'square');
+      } else if (type === 'pick') {
+        tone(440, t, 0.08);
+      } else if (type === 'win') {
+        [523.25, 659.25, 783.99].forEach((f, i) => tone(f, t + i * 0.11, 0.45));
+      } else if (type === 'lose') {
+        tone(196, t, 0.35, 'sawtooth'); tone(147, t + 0.16, 0.4, 'sawtooth');
+      }
+    } catch (_) { /* sound is best-effort */ }
+  }
+
+  // Run it back — reopen the same table type with one tap after a settle.
+  async function sitAgain(pack) {
+    try {
+      await ensureSeat();
+      const res = await api('POST', '/api/casino/tables', { seatId, wager: DEFAULT_WAGER, pack });
+      if (res.settlement && res.settlement.sparksError) { toast(COPY.buyinInsufficient(DEFAULT_WAGER)); return; }
+      toast(COPY.buyinToast(DEFAULT_WAGER));
+      matchId = res.matchId;
+      enterMatch(activeTable, res.state, res.legal, res.settlement);
+    } catch (e) {
+      toast(e.status === 402 || /insufficient/i.test(e.message || '') ? COPY.buyinInsufficient(DEFAULT_WAGER) : (e.message || 'Could not run it back.'));
+    }
+  }
   function closeSheets() {
     document.getElementById('sheet-backdrop').classList.remove('show');
     document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('show'));
@@ -394,6 +503,7 @@
       if (watchBtn) watchBtn.addEventListener('click', () => enterSpectate(row.matchId));
       strip.appendChild(card);
     }
+    setHallArt('hall');
   }
   async function refreshRoom() {
     try {
@@ -430,6 +540,7 @@
   let activeTable = null;
   function enterMatch(table, state, legal, settlement) {
     activeTable = table;
+    setHallArt(table.pack);
     document.body.classList.add('in-match');
     document.getElementById('view-room').style.display = 'none';
     document.getElementById('view-table').classList.add('active');
@@ -447,6 +558,10 @@
       }
     }
     const score = settlement && settlement.score;
+    if (score && (score === 'win' || score === 'blackjack')) {
+      if (settlement.earn) toast(`Win bonus +${settlement.earn.bonus} Sparks (streak ${settlement.earn.streak})`);
+      refreshSparks(); // payout + earn bonus changed the wallet behind this settled hand
+    }
     const turnLine = document.getElementById('turn-line');
     const timeoutTrack = document.getElementById('timeout-track');
     const timeoutFill = document.getElementById('timeout-fill');
@@ -462,7 +577,7 @@
     if (score) {
       statusText = (state && state.simSummary) ? state.simSummary : (COPY.outcome[score] || score);
     } else if (state && Array.isArray(state.agents)) {
-      statusText = `Pick who to back at ${state.label || 'this table'}: ${state.agents.join(' or ')}`;
+      statusText = `Pick who to back at ${state.label || 'this table'}: ${state.agents.map((a) => `${face(a)} ${a}`).join('  ·  ')}`;
     } else {
       statusText = 'You 12 · Dealer showing';
     }
@@ -481,6 +596,10 @@
       lensBtn.className = 'rail-btn lens'; lensBtn.textContent = COPY.lensButton; lensBtn.disabled = !canLens;
       lensBtn.addEventListener('click', requestLens);
       rail.appendChild(lensBtn);
+      const againBtn = document.createElement('button');
+      againBtn.className = 'rail-btn primary'; againBtn.textContent = '⟳ Run it back';
+      againBtn.addEventListener('click', () => sitAgain(activeTable.pack));
+      rail.appendChild(againBtn);
       const leaveBtn = document.createElement('button');
       leaveBtn.className = 'rail-btn secondary'; leaveBtn.textContent = 'Back to the room';
       leaveBtn.addEventListener('click', leaveTable);
@@ -491,14 +610,16 @@
     rail.classList.add('show'); // ENGINE-VISION.md: bottom rail is ALWAYS <=3 legal buttons, full-width thirds
     for (const b of legal) {
       const btn = document.createElement('button');
-      btn.className = 'rail-btn'; btn.textContent = b.label;
-      btn.addEventListener('click', () => submitMove(b.id));
+      btn.className = 'rail-btn'; btn.textContent = FACES[b.id] ? `${FACES[b.id]} ${b.label}` : b.label;
+      btn.addEventListener('click', () => { if (FACES[b.id]) sfx('pick'); submitMove(b.id); });
       rail.appendChild(btn);
     }
   }
   async function submitMove(moveId) {
     try {
       const res = await api('POST', `/api/casino/tables/${matchId}/move`, { move: moveId });
+      if (res.settlement && res.settlement.score) sfx(res.settlement.score === 'win' || res.settlement.score === 'blackjack' ? 'win' : 'lose');
+      else sfx('card');
       renderMatch(res.state, res.legal, res.settlement);
     } catch (e) { toast(COPY.illegalHuman); }
   }
@@ -509,6 +630,7 @@
     try {
       const clip = await api('POST', `/api/casino/tables/${matchId}/lens`);
       pollLens(clip.jobId);
+      refreshSparks(); // the 15 Sparks just left the wallet
     } catch (e) {
       if (e.status === 402) toast(COPY.lensInsufficient);
       else if (e.status === 409) toast(COPY.lensNoEvent);
@@ -570,6 +692,7 @@
 
   function leaveTable() {
     matchId = null; activeTable = null; spectateId = null;
+    setHallArt('hall');
     clearInterval(spectatePoll); clearInterval(lensPollTimer);
     document.body.classList.remove('in-match', 'in-spectate');
     document.getElementById('view-table').classList.remove('active');
@@ -609,6 +732,7 @@
   const deepTable = params.get('table');
 
   refreshRoom();
+  refreshSparks();
   clearInterval(roomPoll);
   roomPoll = setInterval(() => { if (!document.body.classList.contains('in-match') && !document.body.classList.contains('in-spectate')) refreshRoom(); }, 5000);
 

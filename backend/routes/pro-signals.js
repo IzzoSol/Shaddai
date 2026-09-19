@@ -570,6 +570,115 @@ router.post('/zerox/access', express.json({ limit: '16kb' }), (req, res) => {
   }
 });
 
+// POST /api/pro-signals/zerox/sentiment — the "$1 SENTIMENT" batch read from the
+// Pro Signals heat tab. One dollar (or one Ask-ZEROX credit) unlocks ZEROX ranking
+// the BEST few coins to size into right now, each with sentiment + thesis + entry/
+// exit. Same honest gate as pay-ask: credits on a wallet address, OR a Solscan txn
+// link/signature pasted as proof of the $1 payment (webhook reconciles later).
+router.post('/zerox/sentiment', express.json({ limit: '32kb' }), async (req, res) => {
+  try {
+    const { address, solscanUrl, txn, n, q } = (req.body || {});
+    const proof = String(solscanUrl || txn || '').trim();
+    const payer = String(address || '').trim();
+    const want = Math.max(1, Math.min(parseInt(n, 10) || 5, 12));
+
+    // Same payment gate as pay-ask: credit spend first, txn proof as fallback.
+    let paidWith = null;
+    if (payer) {
+      try {
+        const credits = require('../lib/zerox-credits');
+        paidWith = credits.spend(payer, 1) ? 'credit' : null;
+      } catch (e) { paidWith = null; }
+    }
+    if (!paidWith && !proof) {
+      return res.status(400).json({ ok: false, error: 'no credits on that wallet — paste the Solscan txn link of your $1 payment as proof' });
+    }
+    if (!paidWith) {
+      const looksLikeTxn = /^[A-Za-z0-9]{64,88}$/.test(proof);
+      const looksLikeSolscan = /solscan\.io\/tx\//i.test(proof);
+      if (!looksLikeTxn && !looksLikeSolscan) {
+        return res.status(400).json({ ok: false, error: 'that is not a Solscan transaction link or signature' });
+      }
+    }
+
+    // Rank the whole call book for "best few coins to size in": priority =
+    // healthy + liquid + recent + still climbing (not already 10x'd the trade).
+    // Enrich the top candidates live for real current fdv/price, then ZEROX-read.
+    const calls = loadCalls();
+    let pool = calls.filter(c => !c.closed && (c.symbol || c.mint));
+    const now = Date.now();
+    pool = pool.map(c => {
+      const peak = c.peakMult || 1;
+      const cur = typeof c.currentMult === 'number' ? c.currentMult : (c.curMult || 1);
+      const age = now - (c.ts || 0);
+      const liq = Number(c.liq) || 0;
+      const holders = Number(c.holders) || 0;
+      const vol = Number(c.vol24) || 0;
+      const viab = Number(c.viabilityScore) || 0;
+      const risk = Number(c.riskScore) || 0;
+      // Recent + liquid + viable + above entry but not exhausted — the "size in now" setup.
+      let s = 0;
+      s += Math.min(30, liq / 40000 * 30);              // $40K liq = full marks
+      s += Math.min(20, holders / 3000 * 20);           // 3K holders = full marks
+      s += Math.min(20, vol / 500000 * 20);             // $500K 24h vol = full marks
+      s += Math.min(15, viab);                          // ZEROX viability /100
+      s += Math.max(-15, 30 - risk * 0.3);              // lower risk = bonus
+      s += cur >= 1 && cur < 3 ? 10 : cur >= 3 ? 5 : -10; // climbing but not blown off
+      s -= age > 7 * 86400000 ? 8 : age > 3 * 86400000 ? 4 : 0; // freshness
+      c._sz = s;
+      c._cur = cur;
+      return c;
+    });
+    pool.sort((a, b) => (b._sz || 0) - (a._sz || 0));
+    const top = pool.slice(0, want);
+
+    const enrichMod = require('../lib/token-enrich');
+    let liveMap = {};
+    try {
+      const edges = await enrichMod.enrich(top.map(c => c.mint).filter(Boolean));
+      if (edges) liveMap = edges;
+    } catch (e) { /* live data is a bonus */ }
+
+    const zerox = require('../lib/zerox-thesis');
+    const picks = top.map((c, i) => {
+      const read = zerox.build(c, liveMap[c.mint] || {});
+      return {
+        rank: i + 1,
+        sizeIn: Math.round((c._sz || 0) * 10) / 10,
+        ...read,
+      };
+    });
+
+    // Record intent for review + reconciliation (one entry per batch; fee = 1).
+    const file = path.join(DATA_DIR, 'zerox-approvals.json');
+    let all = { approvals: [] };
+    try { all = JSON.parse(fs.readFileSync(file, 'utf8')) || all; } catch (e) {}
+    all.approvals.unshift({
+      kind: paidWith ? 'sentiment-credit' : 'sentiment',
+      question: q ? String(q).slice(0, 300) : `ZEROX sentiment — best ${top.length} coins to size in`,
+      mints: top.map(c => c.mint).filter(Boolean),
+      symbols: top.map(c => c.symbol).filter(Boolean),
+      proof,
+      payer: payer || null,
+      proofKind: paidWith ? 'credit' : (proof.indexOf('solscan.io') >= 0 ? 'solscan' : 'txn'),
+      status: 'accepted',
+      fee: paidWith ? '1 credit' : '1 USDC',
+      submittedAt: Date.now(),
+    });
+    fs.writeFileSync(file, JSON.stringify(all, null, 2));
+
+    return res.json({
+      ok: true,
+      status: 'accepted',
+      fee: paidWith ? '1 credit · deducted from wallet ' + payer : '1 USDC (paybox webhook confirms real charge later)',
+      count: picks.length,
+      rows: picks,
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // POST /api/pro-signals/zerox/pay-ask â€" $1 pay-to-ask flow. User sends $1
 // USDC to the ZEROX paybox wallet, pastes the Solscan txn as proof, asks a
 // question about a coin (mint or symbol). We record the intent for reconciliation

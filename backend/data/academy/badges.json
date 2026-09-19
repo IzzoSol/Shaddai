@@ -26,5 +26,12 @@
       "name": "Channel Opener",
       "desc": "Proof you can open a Solana payment channel."
     }
+  ],
+  "lesson_1789318397740": [
+    {
+      "id": "channel-opener",
+      "name": "Channel Opener",
+      "desc": "Proof you can open a Solana payment channel."
+    }
   ]
 }

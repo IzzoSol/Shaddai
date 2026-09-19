@@ -2,15 +2,15 @@
   "agents": {
     "ZEROX": {
       "id": "ZEROX",
-      "calls": 1,
-      "successes": 1,
+      "calls": 3,
+      "successes": 3,
       "failures": 0,
       "neutral": 0,
-      "totalLatency": 421,
-      "avgLatency": 421,
-      "accuracy": 0.75,
+      "totalLatency": 9552,
+      "avgLatency": 3184,
+      "accuracy": 0.875,
       "successRate": 1,
-      "lastAt": "2026-09-06T01:28:23.971Z"
+      "lastAt": "2026-09-19T17:27:27.034Z"
     },
     "NEXUS": {
       "id": "NEXUS",
@@ -61,6 +61,22 @@
       "outcome": true,
       "latencyMs": 1871,
       "at": "2026-09-06T04:23:44.850Z"
+    },
+    {
+      "agent": "ZEROX",
+      "tool": "whale_scan,fetch_price",
+      "task": "SOL — read the call (live multiples, liquidity, holder/insider flags). Give a 2-line, decisive take.",
+      "outcome": true,
+      "latencyMs": 4730,
+      "at": "2026-09-19T17:23:35.590Z"
+    },
+    {
+      "agent": "ZEROX",
+      "tool": "fetch_price,whale_scan",
+      "task": "SOL — read the call (live multiples, liquidity, holder/insider flags). Give a 2-line, decisive take.",
+      "outcome": true,
+      "latencyMs": 4401,
+      "at": "2026-09-19T17:27:27.034Z"
     }
   ]
 }

@@ -326,3 +326,6 @@
 {"ts":"2026-09-06T04:22:40.712Z","qHash":"7fd4a60d36138c9b","query":"Explain what SHADDAI is in 2 lines.","method":"miss","hit":false,"latencyMs":45}
 {"ts":"2026-09-06T04:22:42.208Z","qHash":"70904d24a77fd8bf","query":"Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":18}
 {"ts":"2026-09-06T04:23:43.005Z","qHash":"70904d24a77fd8bf","query":"Security-audit this URL: https://google.com. Report RISK LEVEL in 3 lines.","method":"miss","hit":false,"latencyMs":33}
+{"ts":"2026-09-13T16:30:22.545Z","qHash":"4e22a1356210f8d9","query":"Reply with exactly the seven-character s","method":"miss","hit":false,"latencyMs":110}
+{"ts":"2026-09-19T17:23:30.903Z","qHash":"f0e10e1a3a6068b1","query":"SOL — read the call (live multiples, liquidity, holder/insider flags). Give a 2-line, decisive take.","method":"miss","hit":false,"latencyMs":43}
+{"ts":"2026-09-19T17:27:22.662Z","qHash":"f0e10e1a3a6068b1","query":"SOL — read the call (live multiples, liquidity, holder/insider flags). Give a 2-line, decisive take.","method":"miss","hit":false,"latencyMs":28}

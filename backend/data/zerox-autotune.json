@@ -1,30 +1,18 @@
 {
-  "lastRun": 1788902322931,
+  "lastRun": 1789837704008,
   "suggestions": [
     {
       "filter": "rugMinScore",
       "direction": "tighten",
-      "reason": "safe rug: 0% vs risky: 20%",
+      "reason": "safe rug: 67% vs risky: 21%",
       "confidence": "medium"
     },
     {
       "filter": "requireLocked",
       "direction": "keep_strict",
-      "reason": "locked LP winners: 0%, no lock losers: 20%",
+      "reason": "locked LP winners: 67%, no lock losers: 21%",
       "confidence": "high"
-    },
-    {
-      "filter": "new_pools_enabled",
-      "direction": "deprioritize",
-      "reason": "new_pools hit rate only 6% (752 calls)",
-      "confidence": "medium"
-    },
-    {
-      "filter": "minHolders",
-      "direction": "raise",
-      "reason": "100+ holders win rate: 15%, <20 holders: 14%",
-      "confidence": "medium"
     }
   ],
-  "timestamp": 1788902322931
+  "timestamp": 1789837704008
 }

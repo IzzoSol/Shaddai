@@ -140,4 +140,55 @@ router.post('/api/world/redeem', json, (req, res) => {
   return res.status(403).json({ ok: false, error: 'invalid code' });
 });
 
+// ── WORLD SAVE SYNC (cross-device) — the game session rides the account. ─────
+//   GET /api/world/saves  → pull your save ({save:{}}) for this uid.
+//   PUT /api/world/saves  → push your save (body {save:{...}}), atomic write.
+// Identity comes from softAuth (verified session → req.userId), never a raw
+// header. Guest/local dev traffic gets 401 so a guest's local progress can
+// never overwrite an account's cloud save. PIKADON: uid is sanitized to
+// [A-Za-z0-9_@.-] with a length cap, so the file path can never escape
+// data/world-saves/ via traversal (dots alone cannot climb a directory).
+const WORLD_SAVES_DIR = path.join(__dirname, 'data', 'world-saves');
+function saveUid(uid) {
+  // softAuth's off-production dev default is the 'local' sentinel — that is a
+  // shared anonymous identity, never an account. Reject it so guests cannot
+  // read or overwrite the (per-account) cloud save.
+  if (!uid || String(uid) === 'local') return null;
+  const clean = String(uid).replace(/[^a-zA-Z0-9_@.\-]/g, '').trim();
+  return clean && clean.length <= 120 ? clean : null;
+}
+const worldSaveJson = express.json({ limit: '2mb' });
+
+router.get('/api/world/saves', softAuth, (req, res) => {
+  const uid = saveUid(req.userId);
+  if (!uid) return res.status(401).json({ ok: false, error: 'sign in to sync saves', needSignIn: true });
+  try {
+    const f = path.join(WORLD_SAVES_DIR, uid + '.json');
+    const raw = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+    const data = raw ? JSON.parse(raw) : {};
+    res.json({ ok: true, uid, at: data.at || 0, save: data.save || {} });
+  } catch (e) {
+    // corrupt/missing store → start clean; never hard-fail the world for a save
+    res.json({ ok: true, uid, at: 0, save: {} });
+  }
+});
+
+router.put('/api/world/saves', softAuth, worldSaveJson, (req, res) => {
+  const uid = saveUid(req.userId);
+  if (!uid) return res.status(401).json({ ok: false, error: 'sign in to sync saves', needSignIn: true });
+  const save = (req.body && typeof req.body.save === 'object' && req.body.save) ? req.body.save : null;
+  if (!save) return res.status(400).json({ ok: false, error: 'save object required' });
+  try {
+    fs.mkdirSync(WORLD_SAVES_DIR, { recursive: true });
+    const f = path.join(WORLD_SAVES_DIR, uid + '.json');
+    const tmp = f + '.tmp-' + process.pid + '-' + Date.now();
+    fs.writeFileSync(tmp, JSON.stringify({ uid, at: Date.now(), save }), 'utf8');
+    fs.renameSync(tmp, f);                      // atomic: a crash can't truncate the real save
+    res.json({ ok: true, at: Date.now() });
+  } catch (e) {
+    console.error('[world-saves] write failed:', e && e.message);
+    res.status(500).json({ ok: false, error: 'could not write save' });
+  }
+});
+
 module.exports = router;

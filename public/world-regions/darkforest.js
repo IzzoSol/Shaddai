@@ -71,6 +71,13 @@ window.RegionGen['darkforest'] = function (api) {
   // supply crates at spawn camp
   api.prop('crate', 24, 48);
   api.prop('crate', 28, 48);
+  // WAYSTONE — the one way out: a transit landmark at spawn so a trapped siege
+  // survivor can open travel (game.html opens travel only near kind==='transit').
+  api.prop('lamp', 30, 46);
+  api.prop('lamp', 30, 50);
+  api.building({ col: 31, row: 47, w: 2, d: 2, floors: 2,
+    wall: '#131022', roof: '#3a2a6a', glass: '#7f6aff',
+    name: 'WAYSTONE', kind: 'transit', landmark: 'waystone' });
 
   // ── 4. CASTLE OF SHADOWS ───────────────────────────────────────────────────
   // clear castle grounds

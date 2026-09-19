@@ -1,0 +1,106 @@
+[
+ {
+  "id": "terrain-tech-cobble-street",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Glowing tech-cobblestone street: each cobble a dark carbon-fiber slab edged with faint neon-gold veins in the seams, warm amber glow, subtle bevels and metallic sheen.",
+  "out": "fal-assets/world/terrain/terrain-tech-cobble-street.png"
+ },
+ {
+  "id": "terrain-emerald-grass",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Luminous vibrant emerald grass, dense jade blades with micro-variations, tiny bioluminescent cyan-green flowers scattered evenly, faint natural sheen.",
+  "out": "fal-assets/world/terrain/terrain-emerald-grass.png"
+ },
+ {
+  "id": "terrain-circuit-sand",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Pale beige sand with matte grain and shallow ripples, thin glowing teal circuit-like lines tracing repeating patterns across it.",
+  "out": "fal-assets/world/terrain/terrain-circuit-sand.png"
+ },
+ {
+  "id": "terrain-lava-crust",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Cooled lava crust: dark glossy basalt intersected by glowing magenta cracks branching like veins, soft neon pulse highlights.",
+  "out": "fal-assets/world/terrain/terrain-lava-crust.png"
+ },
+ {
+  "id": "terrain-teal-water",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Deep teal water surface with gentle ripples and soft pale-blue caustic patterns, tiny gold sparkles like fireflies.",
+  "out": "fal-assets/world/terrain/terrain-teal-water.png"
+ },
+ {
+  "id": "terrain-root-moss-floor",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Mossy forest-root floor: deep emerald moss with cream-colored roots weaving in a lattice, tiny amber luminescent mushrooms sprouting sparsely.",
+  "out": "fal-assets/world/terrain/terrain-root-moss-floor.png"
+ },
+ {
+  "id": "terrain-obsidian-plaza",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Polished obsidian plaza tiles: deep black glass with gold sacred-geometry inlay forming a repeating lattice, delicate gold highlights.",
+  "out": "fal-assets/world/terrain/terrain-obsidian-plaza.png"
+ },
+ {
+  "id": "terrain-red-regolith",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Red desert regolith: fine rust-colored sand with scattered small rock fragments and gentle darker tire-track ripples.",
+  "out": "fal-assets/world/terrain/terrain-red-regolith.png"
+ },
+ {
+  "id": "terrain-frost-plates",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Frost-tech ice plates: translucent pale-blue glassy ice with thin glowing blue crack lines forming a geometric lattice.",
+  "out": "fal-assets/world/terrain/terrain-frost-plates.png"
+ },
+ {
+  "id": "terrain-harvest-field",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat and evenly lit, no perspective, no objects, no text, perfect tileability, high-resolution detail. Golden wheat field from above: warm amber stalks in neat parallel rows forming a subtle harvest-tech grid with faint gold filament lines between rows.",
+  "out": "fal-assets/world/terrain/terrain-harvest-field.png"
+ },
+ {
+  "id": "realm-city-atrium-hub",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital illustration, no text, no logos, no watermark. SHADDAI City hub interior: a vast multi-level futuristic glass atrium with hanging gardens, a towering circular central spire tower ringed with glowing platforms, a huge glowing holographic golden sacred-geometry fountain at the plaza center, tiered balconies of neon-lit shop fronts in gold, emerald and cyan, a grand illuminated gate arch at the front, banners with abstract glyphs, a glowing directory pylon, crowds of small figures, obsidian and gold palette with emerald accent, cinematic depth.",
+  "out": "fal-assets/world/concepts2/realms/realm-city-atrium-hub.png"
+ },
+ {
+  "id": "realm-forest-root-city",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital illustration, no text, no logos, no watermark. Forest realm in a hand-inked Moebius-style illustration with flat pastel color: a futuristic city built between the enormous buttress roots of a colossal tree, winding cream-colored roads looping through root valleys, districts of yellow, purple and pink mushroom-cap domes and slender towers, a tall white-and-gold spire nestled in the trunk, small flying saucers drifting between giant glowing mushrooms, dense green forest wall behind.",
+  "out": "fal-assets/world/concepts2/realms/realm-forest-root-city.png"
+ },
+ {
+  "id": "map-world-overview",
+  "type": "text2img",
+  "register": "raw",
+  "size": "landscape_16_9",
+  "body": "Game concept art plate, polished digital illustration, no text, no logos, no watermark. Illustrated top-down isometric world map of eight futuristic realms connected by glowing hyperloop lines: a golden neon central city hub with a tall spire, a golden farm-tech plain with suspended cube habitats, a turquoise beach-tech cliff coast, a forest of giant roots and mushrooms, a red desert with a dome terminal, a bright eco-pod district, a volcano with magenta lava rivers, and a dark violet gothic castle realm, ocean around the edges, painted cel-shaded, rich readable regions.",
+  "out": "fal-assets/world/concepts2/realms/map-world-overview.png"
+ }
+]

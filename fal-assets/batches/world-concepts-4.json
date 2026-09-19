@@ -1,0 +1,138 @@
+[
+ {
+  "id": "ocean-catamaran",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A sleek futuristic sailing catamaran: gold-and-white twin hulls, glowing emerald hydrofoils, a curved solar-sail wing mast, small glass cabin.",
+  "out": "fal-assets/world/concepts3/ocean-catamaran.png"
+ },
+ {
+  "id": "ocean-superyacht",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A luxury futuristic super-yacht: long white-and-obsidian hull with gold trim, tiered glass observation decks, a rooftop helipad, glowing cyan underlight strip.",
+  "out": "fal-assets/world/concepts3/ocean-superyacht.png"
+ },
+ {
+  "id": "ocean-submarine",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A compact futuristic research submarine: chrome hull with a large transparent bubble canopy, teal glowing thrusters, small side fins, portholes.",
+  "out": "fal-assets/world/concepts3/ocean-submarine.png"
+ },
+ {
+  "id": "ocean-skiff",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A small futuristic hover speed skiff: red-and-white sleek hull, glowing jet nozzles, a low windscreen, two seats.",
+  "out": "fal-assets/world/concepts3/ocean-skiff.png"
+ },
+ {
+  "id": "ocean-farm-platform",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A floating modular ocean-farm platform: white hexagonal hull deck with four green crop plots, a small walkway plank, a drone dock, cyan lights along the hull.",
+  "out": "fal-assets/world/concepts3/ocean-farm-platform.png"
+ },
+ {
+  "id": "ocean-harbor-hub",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A floating harbor dock hub: a round white-and-gold platform with a mooring ring, two slim cranes, glowing bollards, a small control cabin.",
+  "out": "fal-assets/world/concepts3/ocean-harbor-hub.png"
+ },
+ {
+  "id": "volcano-fortress",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A colossal obsidian fortress-city keep: black tiered circular citadel with many tall thin spires, glowing orange windows on every tier, a blazing golden beacon on top, terraced rings.",
+  "out": "fal-assets/world/concepts3/volcano-fortress.png"
+ },
+ {
+  "id": "volcano-dragon",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A majestic western dragon standing with wings fully spread symmetrically: obsidian-black scales with glowing magenta and orange cracks, horned head, long tail with spiked tip, ember glow.",
+  "out": "fal-assets/world/concepts3/volcano-dragon.png"
+ },
+ {
+  "id": "volcano-bridge",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. An obsidian arched bridge with glowing lava-orange lamps along the rails, sturdy pillars at each end.",
+  "out": "fal-assets/world/concepts3/volcano-bridge.png"
+ },
+ {
+  "id": "volcano-ritual-circle",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A broad flat obsidian stone disc platform with a concentric glowing orange sigil ring etched in the surface.",
+  "out": "fal-assets/world/concepts3/volcano-ritual-circle.png"
+ },
+ {
+  "id": "volcano-forge-tower",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A lava-forge tower: dark stone monolith with a glowing orange furnace mouth and a tall chimney stack with thin smoke.",
+  "out": "fal-assets/world/concepts3/volcano-forge-tower.png"
+ },
+ {
+  "id": "volcano-gate",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A small glossy black obsidian gate arch with molten-orange trim glowing along its edges.",
+  "out": "fal-assets/world/concepts3/volcano-gate.png"
+ },
+ {
+  "id": "veh-hover-pod-green",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A hover pod-car racer: rounded bubble glass canopy dome, red racing seat visible inside, four spherical ring-thruster pods with yellow stripes, olive-green and lime livery.",
+  "out": "fal-assets/world/concepts3/veh-hover-pod-green.png"
+ },
+ {
+  "id": "veh-hover-pod-blue",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A hover pod-car racer: rounded bubble glass canopy dome, red racing seat, four spherical ring-thruster pods with white stripes, blue-and-white livery.",
+  "out": "fal-assets/world/concepts3/veh-hover-pod-blue.png"
+ },
+ {
+  "id": "veh-monowheel-mech",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A monowheel desert mech: one large knobby tire, a spherical armored yellow-and-black body with a green glowing lens eye, two arms ending in four-barrel rocket pods.",
+  "out": "fal-assets/world/concepts3/veh-monowheel-mech.png"
+ },
+ {
+  "id": "veh-hyperloop-hauler",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic. A large futuristic cargo hauler truck: boxy white body with hazard-yellow stripes, six chunky wheels, a sleek cab with a glass canopy.",
+  "out": "fal-assets/world/concepts3/veh-hyperloop-hauler.png"
+ },
+ {
+  "id": "char-nyx-tpose",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Character reference sheet illustration, painted digital cel-shaded art with bold clean linework. NYX VESPER, a tall menacing adult, black turtleneck and long black coat with glowing violet seams, gloved hands, his face a fully black featureless void, his head wrapped in a roaring mane of red orange and yellow fire streaming upward with rainbow spark dust. Standing in a strict scarecrow T-POSE facing the camera: BOTH ARMS LOCKED COMPLETELY STRAIGHT OUT HORIZONTALLY TO THE SIDES at shoulder height, elbows straight, open empty gloved hands with fingers spread, large gap of empty background between each hand and torso, nothing held, legs straight shoulder-width apart. REAL ADULT PROPORTIONS 7.5 heads tall. Plain flat light-grey background, full body head to feet, no text, no watermark.",
+  "out": "fal-assets/world/concepts3/char-nyx-tpose.png"
+ }
+]

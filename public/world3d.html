@@ -30,12 +30,18 @@ canvas{display:block}
 #joy{position:fixed;left:24px;bottom:110px;width:120px;height:120px;border-radius:50%;border:2px solid rgba(232,196,92,.4);background:rgba(8,11,18,.35);z-index:11;display:none}
 #joy i{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(0,255,156,.35);border:1px solid var(--em)}
 .tb{position:fixed;right:18px;z-index:11;width:64px;height:64px;border-radius:50%;background:rgba(8,11,18,.6);border:2px solid var(--gold);color:var(--gold);font-weight:700;display:none;align-items:center;justify-content:center}
+#mm{top:190px;right:12px;padding:4px}#mm canvas{display:block;border-radius:8px}
+#map{position:fixed;inset:0;z-index:45;background:rgba(3,5,10,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#mapc{max-width:94vw;max-height:84vh;border:1px solid rgba(232,196,92,.5);border-radius:12px;cursor:pointer}
+#maphint{color:#e8c45c;letter-spacing:.12em;font-size:13px}
 @media (hover:none){#joy,.tb{display:flex}#help{display:none}}
 </style></head><body>
 <div id="loading"><h1>SHADDAI</h1><div id="bar"><i></i></div><div id="loadmsg">waking the world…</div></div>
 <div id="fade"></div><div id="toast"></div><div id="prompt"></div>
-<div class="panel" id="top"><b>SHADDAI · WORLD 3D</b><div id="realm">City Hub · Dusk</div><div id="who"></div></div>
-<div class="panel" id="help"><kbd>W A S D</kbd> move · <kbd>Shift</kbd> run<br><kbd>Drag</kbd> look · <kbd>Wheel</kbd> zoom<br><kbd>E</kbd> interact / ride / enter<br><kbd>F</kbd> strike · <kbd>G</kbd> cast<br><kbd>1–6</kbd> switch hero · <kbd>L</kbd> light<br><kbd>Space</kbd>/<kbd>C</kbd> fly up/down (hawk)</div>
+<div class="panel" id="top"><b>SHADDAI · WORLD 3D</b><div id="realm">City Hub · Dusk</div><div id="who"></div><div id="sparks"></div></div>
+<div class="panel" id="mm"><canvas id="mmc" width="160" height="150"></canvas></div>
+<div id="map" style="display:none"><canvas id="mapc" width="900" height="800"></canvas><div id="maphint">Click a realm to fast-travel · M to close</div></div>
+<div class="panel" id="help"><kbd>W A S D</kbd> move · <kbd>Shift</kbd> run<br><kbd>Drag</kbd> look · <kbd>Wheel</kbd> zoom<br><kbd>E</kbd> interact / ride / enter<br><kbd>F</kbd> strike · <kbd>G</kbd> cast<br><kbd>1–9</kbd> switch hero · <kbd>M</kbd> map<br><kbd>B</kbd> build · <kbd>N</kbd> next · <kbd>Z</kbd> undo · <kbd>L</kbd> light<br><kbd>Space</kbd>/<kbd>C</kbd> fly up/down (hawk)</div>
 <div id="chars"></div>
 <div id="joy"><i></i></div>
 <div class="tb" id="tbE" style="bottom:120px">E</div><div class="tb" id="tbF" style="bottom:198px">F</div><div class="tb" id="tbR" style="bottom:42px">RUN</div>
@@ -86,6 +92,11 @@ const PRESETS = {
   desert: { label: 'Desert Terminal · Dusk', harmony: 'triadic (rust/teal/gold)',  sky: ['#41224a', '#ff9a4a'], fog: '#5c2f2a', fogN: 60, fogF: 480, hemi: ['#ff9d6a', '#4a2418', 0.8], sun: ['#ffae5c', 2.9, [80, 30, -20]], bloom: 0.6, exp: 1.05, stars: 0.2 },
   inside: { label: 'Shop Interior',        harmony: 'monochromatic gold',          sky: ['#0a0812', '#0a0812'], fog: '#0d0a14', fogN: 60, fogF: 240, hemi: ['#8f7a4a', '#120e08', 0.9], sun: ['#ffd9a0', 0.0, [0, 30, 0]], bloom: 0.35, exp: 0.85, stars: 0 },
 };
+Object.assign(PRESETS, {
+  ocean:   { label: 'Ocean · Midday',       harmony: 'analogous (teal/blue)',      sky: ['#2f78d0', '#c6e6ff'], fog: '#a8cdec', fogN: 120, fogF: 900, hemi: ['#d6ecff', '#2a6c7a', 1.0], sun: ['#fff0d2', 3.4, [60, 90, 40]], bloom: 0.3, exp: 1.0, stars: 0 },
+  volcano: { label: 'Volcano Keep · Ember',  harmony: 'analogous (red/orange/gold)', sky: ['#20080a', '#ff6a2a'], fog: '#3a1208', fogN: 40, fogF: 420, hemi: ['#ff9a6a', '#2c0e0a', 0.75], sun: ['#ffb070', 2.4, [-40, 50, -30]], bloom: 0.85, exp: 1.0, stars: 0.15 },
+  castle:  { label: 'Siege Castle · Blacklight', harmony: 'split-complementary (indigo/magenta/orange)', sky: ['#0c0630', '#3a1a7a'], fog: '#150a3a', fogN: 40, fogF: 380, hemi: ['#5a4bd0', '#100820', 0.7], sun: ['#8a7aff', 1.4, [-30, 60, 20]], bloom: 1.0, exp: 1.1, stars: 1 },
+});
 const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: { top: { value: new THREE.Color() }, bot: { value: new THREE.Color() } },
   vertexShader: 'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
   fragmentShader: 'varying vec3 p;uniform vec3 top;uniform vec3 bot;void main(){float h=clamp(p.y*1.4+.15,0.,1.);gl_FragColor=vec4(mix(bot,top,pow(h,.7)),1.);}' });
@@ -148,7 +159,132 @@ function buildTerrain() {
   const lava = new THREE.Mesh(new THREE.CircleGeometry(38, 64), new THREE.MeshStandardMaterial({ map: tex('lava-crust', 8), emissive: 0xff2a8a, emissiveMap: tex('lava-crust', 8), emissiveIntensity: 0.6, roughness: 0.6 }));
   lava.rotation.x = -Math.PI / 2; lava.position.set(-190, 0.03, -160); world.add(lava);
 }
-let waterMesh;
+let waterMesh; const farmPlats = [];
+
+/* ── realms ── */
+const V0 = { x: -900, z: -160 };
+const REALMS = {
+  city:    { name: 'CITY HUB',        x: 0,    z: 16,   yaw: 0,       col: '#e8c45c', preset: null },
+  desert:  { name: 'DESERT TERMINAL', x: 420,  z: -6,   yaw: Math.PI, col: '#ff9a4a', preset: 'desert' },
+  ocean:   { name: 'OCEAN HARBOR',    x: 0,    z: 872,  yaw: 0,       col: '#4fc3ff', preset: 'ocean' },
+  volcano: { name: 'VOLCANO KEEP',    x: V0.x, z: V0.z + 128, yaw: Math.PI, col: '#ff5a2a', preset: 'volcano' },
+  castle:  { name: 'SIEGE CASTLE',    x: -190, z: -108, yaw: Math.PI, col: '#a06bff', preset: 'castle' },
+};
+function detectRealm(p) {
+  if (p.z > 800) return 'ocean';
+  if (p.x < -600) return 'volcano';
+  if (p.x > 300) return 'desert';
+  if (Math.hypot(p.x + 190, p.z + 160) < 90) return 'castle';
+  return 'city';
+}
+
+/* ── ocean: multi-wave sine sum, the SAME function on GPU and CPU so boats ride the real surface ── */
+const WAVES = [[1, 0.2, 0.55, 38, 1.0], [0.4, 1, 0.35, 23, 1.3], [-0.6, 0.8, 0.2, 13, 1.7], [0.9, -0.5, 0.12, 7, 2.1]];   // dx,dz,amp,length,speed
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function waveH(x, z, t) { let h = 0; for (const [dx, dz, A, L, sp] of WAVES) { const l = Math.hypot(dx, dz); h += A * Math.sin(((dx * x + dz * z) / l) * (6.28318 / L) + t * sp); } return h * smooth(895, 960, z); }
+const F = (x) => Number(x).toFixed(5);
+const WH_GLSL = 'float wh(vec2 p,float t,out vec2 g){float h=0.;g=vec2(0.);' + WAVES.map(([dx, dz, A, L, sp]) => { const l = Math.hypot(dx, dz), k = 6.28318 / L; return `{float ph=dot(p,vec2(${F(dx / l)},${F(dz / l)}))*${F(k)}+t*${F(sp)};h+=${F(A)}*sin(ph);g+=${F(A * k)}*cos(ph)*vec2(${F(dx / l)},${F(dz / l)});}`; }).join('') + 'float c=smoothstep(895.,960.,p.y);g*=c;return h*c;}';
+const oceanMat = new THREE.ShaderMaterial({
+  fog: true, side: THREE.DoubleSide,
+  uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { t: { value: 0 }, skyTop: { value: new THREE.Color() }, skyBot: { value: new THREE.Color() }, sunDir: { value: new THREE.Vector3(0.5, 0.7, 0.3) }, sunCol: { value: new THREE.Color(1, 0.95, 0.85) } }]),
+  vertexShader: [
+    'uniform float t; varying vec3 vW; varying vec3 vN; varying float vH;',
+    WH_GLSL,
+    '#include <fog_pars_vertex>',
+    'void main(){ vec4 w=modelMatrix*vec4(position,1.); vec2 g; float h=wh(w.xz,t,g); w.y+=h; vW=w.xyz; vH=h; vN=normalize(vec3(-g.x,1.,-g.y));',
+    ' vec4 mvPosition=viewMatrix*w; gl_Position=projectionMatrix*mvPosition;',
+    '#include <fog_vertex>',
+    '}'].join('\n'),
+  fragmentShader: [
+    'uniform float t; uniform vec3 skyTop; uniform vec3 skyBot; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vW; varying vec3 vN; varying float vH;',
+    '#include <fog_pars_fragment>',
+    'void main(){',
+    ' vec3 N=normalize(vN); N.xz+=0.06*vec2(sin(vW.x*1.7+t*1.3+sin(vW.z*.9)),cos(vW.z*1.9+t*1.1)); N=normalize(N);',
+    ' vec3 V=normalize(cameraPosition-vW); float fr=pow(1.-max(dot(N,V),0.),4.);',
+    ' float deep=smoothstep(900.,1040.,vW.z); vec3 body=mix(vec3(.10,.74,.70),vec3(.015,.10,.30),deep);',
+    ' vec3 R=reflect(-V,N); vec3 refl=mix(skyBot,skyTop,clamp(R.y*1.6,0.,1.));',
+    ' vec3 col=mix(body,refl,clamp(fr*.85+.1,0.,1.));',
+    ' float sp=pow(max(dot(reflect(-sunDir,N),V),0.),110.); col+=sunCol*sp*1.6;',
+    ' float foam=smoothstep(.5,.95,vH/.9)*.55+(1.-smoothstep(900.,914.,vW.z))*.7*(.5+.5*sin(vW.x*.5+t*2.));',
+    ' col=mix(col,vec3(1.),clamp(foam,0.,1.)*.75); gl_FragColor=vec4(col,1.);',
+    '#include <fog_fragment>',
+    '}'].join('\n'),
+});
+const lavaMat = new THREE.ShaderMaterial({
+  fog: true, uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { t: { value: 0 } }]),
+  vertexShader: ['varying vec2 vUv;', '#include <fog_pars_vertex>', 'void main(){ vUv=uv; vec4 mvPosition=modelViewMatrix*vec4(position,1.); gl_Position=projectionMatrix*mvPosition;', '#include <fog_vertex>', '}'].join('\n'),
+  fragmentShader: [
+    'varying vec2 vUv; uniform float t;',
+    '#include <fog_pars_fragment>',
+    'float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+    'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}',
+    'float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*n(p);p*=2.03;a*=.5;}return s;}',
+    'void main(){ vec2 p=vUv*vec2(4.,22.); p.y-=t*.35; float f=fbm(p+fbm(p*1.7+t*.12)*1.4); float crust=smoothstep(.44,.64,f);',
+    ' vec3 lava=mix(vec3(1.,.22,.02),vec3(1.,.82,.22),smoothstep(.2,.5,1.-f)); vec3 col=mix(lava*2.3,vec3(.06,.02,.02),crust); gl_FragColor=vec4(col,1.);',
+    '#include <fog_fragment>',
+    '}'].join('\n'),
+});
+
+
+
+
+/* ───────────────────────── ocean / volcano builders ───────────────────────── */
+let oceanMesh;
+function buildOcean() {
+  oceanMesh = new THREE.Mesh(new THREE.PlaneGeometry(1700, 1700, 300, 300).rotateX(-Math.PI / 2), oceanMat);
+  oceanMesh.position.set(0, -0.5, 1750); oceanMesh.frustumCulled = false; scene.add(oceanMesh);
+  const sandT = tex('circuit-sand', 90);
+  const shore = new THREE.Mesh(new THREE.PlaneGeometry(1500, 210), new THREE.MeshStandardMaterial({ map: sandT, roughness: 1 }));
+  shore.rotation.x = -Math.PI / 2; shore.position.set(0, 0.012, 795); shore.receiveShadow = true; world.add(shore);
+  const dockM = new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.45, metalness: 0.5 }), gold = new THREE.MeshStandardMaterial({ color: 0xe8c45c, roughness: 0.3, metalness: 0.9, emissive: 0xe8c45c, emissiveIntensity: 0.25 });
+  const dock = new THREE.Mesh(new THREE.CylinderGeometry(24, 24.6, 1.6, 64), dockM); dock.position.set(0, -0.5, 932); dock.receiveShadow = true; dock.castShadow = true; world.add(dock);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(24, 0.35, 8, 96), gold); rim.rotation.x = Math.PI / 2; rim.position.set(0, 0.32, 932); world.add(rim);
+  const walk = new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 34), dockM); walk.position.set(0, -0.05, 905); walk.receiveShadow = true; world.add(walk);
+  [-3.5, 3.5].forEach((x) => { for (let z = 890; z <= 916; z += 4) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.1, 10), gold); b.position.set(x, 0.55, z); world.add(b); } });
+  const lamp = new THREE.PointLight(0xffe0a8, 380, 90, 1.6); lamp.position.set(0, 10, 932); world.add(lamp);
+}
+const lavaStrips = [];
+function buildVolcano() {
+  const g = new THREE.Mesh(new THREE.CircleGeometry(330, 96), new THREE.MeshStandardMaterial({ map: tex('lava-crust', 26), emissive: 0xff3a10, emissiveMap: tex('lava-crust', 26), emissiveIntensity: 0.32, roughness: 0.85, metalness: 0.1 }));
+  g.rotation.x = -Math.PI / 2; g.position.set(V0.x, 0.02, V0.z); g.receiveShadow = true; world.add(g);
+  const plaza = new THREE.Mesh(new THREE.CircleGeometry(78, 72), new THREE.MeshStandardMaterial({ map: tex('obsidian-plaza', 18), roughness: 0.3, metalness: 0.5, emissive: 0x2a0a00, emissiveIntensity: 0.6 }));
+  plaza.rotation.x = -Math.PI / 2; plaza.position.set(V0.x, 0.05, V0.z); plaza.receiveShadow = true; world.add(plaza);
+  const rim = new THREE.Mesh(new THREE.RingGeometry(77, 78.4, 96), new THREE.MeshBasicMaterial({ color: 0xff7a2a })); rim.rotation.x = -Math.PI / 2; rim.position.set(V0.x, 0.07, V0.z); world.add(rim);
+  [[0.3, 210, 40], [2.5, 240, 36], [4.4, 230, 44], [5.6, 210, 30]].forEach(([a, len, w]) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), lavaMat); m.rotation.x = -Math.PI / 2; m.rotation.z = a;
+    const r = 78 + len / 2; m.position.set(V0.x + Math.sin(a) * r, 0.1, V0.z + Math.cos(a) * r); world.add(m); lavaStrips.push(m);
+    const l = new THREE.PointLight(0xff5a1a, 420, 90, 1.7); l.position.set(m.position.x, 6, m.position.z); world.add(l);
+  });
+}
+const embers = (() => { const n = 500, g = new THREE.BufferGeometry(), a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { a[i * 3] = (Math.random() - 0.5) * 120; a[i * 3 + 1] = Math.random() * 40; a[i * 3 + 2] = (Math.random() - 0.5) * 120; } g.setAttribute('position', new THREE.BufferAttribute(a, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xff8a3a, size: 0.35, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending })); p.visible = false; scene.add(p); return p; })();
+
+/* ───────────────────────── save / plots / sparks ───────────────────────── */
+const SAVE_KEY = 'shaddai3d.v1';
+const save = { sparks: 600, inv: [], plots: [], sky: 'dusk', hero: 'zerox', x: 0, z: 16 };
+let citySky = 'dusk';
+function loadSave() { try { const j = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (j) Object.assign(save, j); } catch (e) {} }
+function writeSave() { try { if (player) { save.hero = state.hero; if (state.where !== 'inside' && !mountedOn) { save.x = +player.root.position.x.toFixed(1); save.z = +player.root.position.z.toFixed(1); } } save.sky = citySky; localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+function hud() { const e = $('#sparks'); if (e) e.textContent = `⚡ ${save.sparks} Sparks · ${save.inv.length} items · ${save.plots.length} plots`; }
+setInterval(() => writeSave(), 4000); addEventListener('beforeunload', writeSave);
+const BUILDS = [['bld-bio-pod-tower-v2', { h: 26, r: 7 }, 'Bio-Pod Tower'], ['bld-sky-dome-v2', { w: 24, r: 10 }, 'Sky Dome'], ['bld-holo-market-v2', { w: 24, r: 10 }, 'Holo Market'], ['bld-inverted-cube-hab', { h: 30, r: 5 }, 'Cube Habitat'], ['bld-neon-observatory', { h: 28, r: 5 }, 'Observatory']];
+let buildIdx = 0; const plotObjs = [];
+async function placePlot(rec) { const def = BUILDS.find((b) => b[0] === rec.f); if (!def) return; const g = await place(rec.f, Object.assign({ x: rec.x, z: rec.z, ry: rec.ry }, def[1])); if (g) plotObjs.push({ rec, g }); }
+
+/* ───────────────────────── map ───────────────────────── */
+const MB = { x0: -1150, x1: 520, z0: -380, z1: 1120 };
+function drawMap(cv, big) {
+  const g = cv.getContext('2d'), w = cv.width, h = cv.height, X = (x) => ((x - MB.x0) / (MB.x1 - MB.x0)) * w, Z = (z) => ((z - MB.z0) / (MB.z1 - MB.z0)) * h, sx = w / (MB.x1 - MB.x0);
+  g.fillStyle = '#070b12'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#0d3a5a'; g.fillRect(0, Z(900), w, h - Z(900));
+  g.fillStyle = '#1b4a30'; g.fillRect(X(-700), Z(-380), X(700) - X(-700), Z(900) - Z(-380));
+  g.fillStyle = '#8a4a2a'; g.beginPath(); g.arc(X(420), Z(0), 90 * sx, 0, 7); g.fill();
+  g.fillStyle = '#6a1a10'; g.beginPath(); g.arc(X(V0.x), Z(V0.z), 330 * sx, 0, 7); g.fill();
+  g.fillStyle = '#e8c45c33'; g.beginPath(); g.arc(X(0), Z(0), 120 * sx, 0, 7); g.fill();
+  for (const r of Object.values(REALMS)) { g.fillStyle = r.col; g.beginPath(); g.arc(X(r.x), Z(r.z), big ? 9 : 4, 0, 7); g.fill(); if (big) { g.font = '600 20px system-ui'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(r.name, X(r.x), Z(r.z) - 16); } }
+  if (player) { const p = player.root.position; g.save(); g.translate(X(p.x), Z(p.z)); g.rotate(-player.yaw + Math.PI); g.fillStyle = '#00ff9c'; g.beginPath(); g.moveTo(0, -(big ? 12 : 6)); g.lineTo(big ? 8 : 4, big ? 9 : 5); g.lineTo(-(big ? 8 : 4), big ? 9 : 5); g.fill(); g.restore(); }
+}
+function toggleMap(on) { const m = $('#map'); const show = on === undefined ? m.style.display === 'none' : on; m.style.display = show ? 'flex' : 'none'; if (show) drawMap($('#mapc'), true); }
+$('#mapc').addEventListener('click', (e) => { const r = e.target.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fz = (e.clientY - r.top) / r.height, wx = MB.x0 + fx * (MB.x1 - MB.x0), wz = MB.z0 + fz * (MB.z1 - MB.z0); let best = null, bd = 1e9; for (const [id, rr] of Object.entries(REALMS)) { const d = Math.hypot(rr.x - wx, rr.z - wz); if (d < bd) { bd = d; best = id; } } if (best && bd < 260) { toggleMap(false); travelTo(best); } });
 
 /* ───────────────────────── static models ───────────────────────── */
 async function place(name, o) {
@@ -168,6 +304,7 @@ async function place(name, o) {
 const HEROES = [
   { id: 'zerox', name: 'ZEROX', role: 'Revenue', accent: '#00c8ff' }, { id: 'quill', name: 'QUILL', role: 'Writing', accent: '#e0a060' },
   { id: 'oracle', name: 'ORACLE', role: 'Research', accent: '#a06bff' }, { id: 'turtle', name: 'TURTLE', role: 'Design', accent: '#00ff9c' },
+  { id: 'nexus', name: 'NEXUS', role: 'Architect', accent: '#38d0c0' }, { id: 'pikadon', name: 'PIKADON', role: 'Security', accent: '#ff5a4d' }, { id: 'shaddai', name: 'SHADDAI', role: 'Orchestrator', accent: '#e8c45c' },
   { id: 'leadr', name: 'Leadr', role: 'Citizen', accent: '#ff7a3a' }, { id: 'gaeli', name: 'Gaeli', role: 'Citizen', accent: '#b6ff3a' },
 ];
 const charSrc = {}, clipSrc = {};
@@ -216,6 +353,15 @@ function strike(a, kind) {
   const n = a.A[kind]; if (!n || a.busy > 0) return;
   play(a, kind, 0.12, 1); a.busy = n.getClip().duration * 0.95;
   vfxBurst(a, kind);
+}
+function boatPose(m, dt, driven) {
+  const g = m.grp; if (driven) { g.position.z = clamp(g.position.z, 908, 2500); g.position.x = clamp(g.position.x, -780, 780); }
+  const x = g.position.x, z = g.position.z, H = (a, b) => waveH(a, b, T), h0 = H(x, z), hx = (H(x + 2, z) - H(x - 2, z)) / 4, hz = (H(x, z + 2) - H(x, z - 2)) / 4, ys = m.yaw;
+  const fw = hx * Math.sin(ys) + hz * Math.cos(ys), sd = hx * Math.cos(ys) - hz * Math.sin(ys);
+  const dive = m.sub && driven && state.keys['c'];
+  g.position.y = damp(g.position.y, dive ? -4.5 : -0.5 + h0 + 0.22, dive ? 1.6 : 6, dt);
+  g.rotation.x = damp(g.rotation.x, -Math.atan(fw) * 0.9, 4, dt); g.rotation.z = damp(g.rotation.z, -Math.atan(sd) * 0.8, 4, dt);
+  if (m.rider) m.rider.root.visible = !m.sub;
 }
 function makeLabel(text, color = '#ffffff', scale = 1) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
@@ -270,7 +416,8 @@ async function addMount(file, name, o) {
   const grp = await place(file, o); if (!grp) return;
   const box = new THREE.Box3().setFromObject(grp);
   const lab = makeLabel(name, '#e8c45c', 0.9); lab.position.set(0, box.max.y + 1.0, 0); grp.add(lab);
-  mounts.push({ name, grp, seat: box.max.y * (o.seatK || 0.9), speed: o.speed || 8, hover: !!o.hover, baseY: o.hover ? (o.hoverY || 3) : 0, vel: 0, yaw: o.ry || 0, t: Math.random() * 6, rider: null, lab, home: grp.position.clone() });
+  if (o.boat) grp.rotation.order = 'YXZ';
+  mounts.push({ name, grp, boat: !!o.boat, sub: !!o.sub, seat: box.max.y * (o.seatK || 0.9), speed: o.speed || 8, hover: !!o.hover, baseY: o.hover ? (o.hoverY || 3) : 0, vel: 0, yaw: o.ry || 0, t: Math.random() * 6, rider: null, lab, home: grp.position.clone() });
 }
 
 /* ───────────────────────── shop interior ───────────────────────── */
@@ -309,8 +456,8 @@ function buildInterior() {
 }
 
 /* ───────────────────────── game state ───────────────────────── */
-const state = { hero: 'zerox', where: 'city', keys: {}, cam: { yaw: 0, pitch: 0.5, dist: 10.5 }, joy: { x: 0, y: 0 }, run: false, fading: false };
-let player = null, npcs = [], gateA, gateB, portalMats = [], capsule, skypod, mountedOn = null;
+const state = { hero: 'zerox', where: 'city', realm: 'city', snap: 0, keys: {}, cam: { yaw: 0, pitch: 0.5, dist: 10.5 }, joy: { x: 0, y: 0 }, run: false, fading: false };
+let player = null, npcs = [], portalMats = [], capsule, skypod, mountedOn = null; const GATES = [];
 const camTarget = new THREE.Vector3();
 
 function toast(t) { const e = $('#toast'); e.textContent = t; e.style.opacity = 1; clearTimeout(toast.t); toast.t = setTimeout(() => (e.style.opacity = 0), 1900); }
@@ -344,8 +491,12 @@ function updateNpc(n, dt) {
 /* ───────────────────────── input ───────────────────────── */
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(); state.keys[k] = true;
-  if (k >= '1' && k <= '6') { const h = HEROES[+k - 1]; if (h && charSrc[h.id]) { const p = player.root.position.clone(); spawnPlayer(h.id, p); } }
-  if (k === 'l') { const order = ['dusk', 'day', 'night']; if (state.where === 'city') { applyPreset(order[(order.indexOf(presetName) + 1) % 3]); toast(PRESETS[presetName].label.toUpperCase()); } }
+  if (k >= '1' && k <= '9') { const h = HEROES.filter((x) => charSrc[x.id])[+k - 1]; if (h && charSrc[h.id]) { const p = player.root.position.clone(); spawnPlayer(h.id, p); } }
+  if (k === 'l') { const order = ['dusk', 'day', 'night']; if (state.realm === 'city' && state.where !== 'inside') { citySky = order[(order.indexOf(citySky) + 1) % 3]; applyPreset(citySky); toast(PRESETS[citySky].label.toUpperCase()); writeSave(); } }
+  if (k === 'm') toggleMap();
+  if (k === 'n') { buildIdx = (buildIdx + 1) % BUILDS.length; toast('BUILD: ' + BUILDS[buildIdx][2].toUpperCase()); }
+  if (k === 'b' && player && state.where !== 'inside' && !mountedOn) { if (save.plots.length >= 40) { toast('PLOT LIMIT'); } else { const p = player.root.position, rec = { f: BUILDS[buildIdx][0], x: +(p.x + Math.sin(player.yaw) * 14).toFixed(1), z: +(p.z + Math.cos(player.yaw) * 14).toFixed(1), ry: +player.yaw.toFixed(2) }; save.plots.push(rec); placePlot(rec); hud(); writeSave(); toast('PLACED ' + BUILDS[buildIdx][2].toUpperCase()); } }
+  if (k === 'z' && plotObjs.length) { const o = plotObjs.pop(); world.remove(o.g); const i = save.plots.indexOf(o.rec); if (i >= 0) save.plots.splice(i, 1); hud(); writeSave(); toast('REMOVED'); }
   if (k === 'e') interact();
   if (k === 'f' && player && !mountedOn) strike(player, 'slash'); if (k === 'g' && player && !mountedOn) strike(player, 'cast');
 });
@@ -367,12 +518,12 @@ function nearest() {
   if (!player) return null; const p = player.root.position; let best = null, bd = 1e9;
   const consider = (kind, pos, r, label, ref) => { const d = Math.hypot(pos.x - p.x, pos.z - p.z); if (d < r && d < bd) { bd = d; best = { kind, label, ref }; } };
   if (mountedOn) return { kind: 'dismount', label: `E — dismount ${mountedOn.name}` };
-  if (state.where === 'city') {
+  if (state.where !== 'inside') {
     mounts.forEach((m) => consider('mount', m.grp.position, Math.max(4, m.grp.userData.size.x * 0.7), `E — ride ${m.name}`, m));
     consider('enter', new THREE.Vector3(45, 0, -16), 6.5, 'E — enter the Sky Dome Bazaar', null);
     consider('enter', new THREE.Vector3(-42, 0, -25), 6, 'E — enter ORACLE Observatory Shop', null);
   }
-  if (state.where === 'inside') { consider('exit', new THREE.Vector3(INT.x, INT.y, INT.z + 24), 7, 'E — leave the shop', null); shopItems.forEach((s) => consider('item', new THREE.Vector3(INT.x + s.x, 0, INT.z + s.z), 3.2, `${s.name} — ${s.price}⚡  (E to inspect)`, s)); }
+  if (state.where === 'inside') { consider('exit', new THREE.Vector3(INT.x, INT.y, INT.z + 24), 7, 'E — leave the shop', null); shopItems.forEach((s) => consider('item', new THREE.Vector3(INT.x + s.x, 0, INT.z + s.z), 3.2, `${s.name} — ${s.price}⚡  (E to buy)`, s)); }
   return best;
 }
 function interact() {
@@ -380,23 +531,29 @@ function interact() {
   if (n.kind === 'mount') mount(n.ref); else if (n.kind === 'dismount') dismount();
   else if (n.kind === 'enter') fadeThen(() => enterInterior());
   else if (n.kind === 'exit') fadeThen(() => leaveInterior());
-  else if (n.kind === 'item') toast(`${n.ref.name.toUpperCase()}\n${n.ref.price} SPARKS`);
+  else if (n.kind === 'item') { const it = n.ref; if (save.sparks >= it.price) { save.sparks -= it.price; save.inv.push(it.name); hud(); writeSave(); toast(`ACQUIRED\n${it.name.toUpperCase()}`); } else toast('NOT ENOUGH SPARKS'); }
 }
 function mount(m) { if (m.rider) return; mountedOn = m; m.rider = player; m.grp.add(player.root); player.root.position.set(0, m.seat, 0); player.root.rotation.set(0, 0, 0); player.yaw = 0; play(player, 'idle', 0.2); toast(`MOUNTED · ${m.name.toUpperCase()}`); }
-function dismount(silent) { if (!mountedOn) return; const m = mountedOn, wp = new THREE.Vector3(); m.grp.getWorldPosition(wp); scene.add(player.root); player.root.position.set(wp.x + Math.sin(m.yaw + 1.6) * 3, 0, wp.z + Math.cos(m.yaw + 1.6) * 3); m.rider = null; mountedOn = null; if (!silent) toast('DISMOUNTED'); }
+function dismount(silent) { if (!mountedOn) return; const m = mountedOn, wp = new THREE.Vector3(); m.grp.getWorldPosition(wp); scene.add(player.root); player.root.position.set(wp.x + Math.sin(m.yaw + 1.6) * 3, 0, wp.z + Math.cos(m.yaw + 1.6) * 3); m.rider = null; mountedOn = null; player.root.visible = true; if (!silent) toast('DISMOUNTED'); }
 function enterInterior() { if (mountedOn) dismount(true); state.snap = 1; state.where = 'inside'; applyPreset('inside', true); sun.castShadow = false; player.root.position.set(INT.x, INT.y, INT.z + 21); player.yaw = Math.PI; state.cam.yaw = Math.PI; sky.visible = false; motes.visible = false; world.visible = false; toast('SPARKS BAZAAR'); }
-function leaveInterior() { state.snap = 1; state.where = 'city'; applyPreset('dusk', true); sun.castShadow = true; sky.visible = true; motes.visible = true; world.visible = true; player.root.position.set(45, 0, -10); player.yaw = 0; state.cam.yaw = Math.PI; }
-function travel(toDesert) {
+function leaveInterior() { state.snap = 1; state.where = 'city'; state.realm = 'city'; applyPreset(citySky, true); sun.castShadow = true; sky.visible = true; motes.visible = true; world.visible = true; player.root.position.set(45, 0, -10); player.yaw = 0; state.cam.yaw = Math.PI; }
+function syncRealm(force) {
+  const r = detectRealm(player.root.position);
+  if (!force && r === state.realm) return;
+  state.realm = r; const pre = r === 'city' ? citySky : REALMS[r].preset; applyPreset(pre, force);
+  if (!force) toast(REALMS[r].name);
+}
+function travelTo(id) {
+  const r = REALMS[id]; if (!r || state.fading) return;
   fadeThen(() => {
     state.snap = 1; if (mountedOn) dismount(true);
-    if (toDesert) { player.root.position.set(420, 0, -8); state.where = 'desert'; applyPreset('desert', true); toast('DESERT TERMINAL'); }
-    else { player.root.position.set(0, 0, 28); state.where = 'city'; applyPreset('dusk', true); toast('CITY HUB'); }
-    state.cam.yaw = toDesert ? Math.PI : 0;
+    if (state.where === 'inside') { state.where = 'city'; sun.castShadow = true; sky.visible = true; motes.visible = true; world.visible = true; }
+    player.root.position.set(r.x, 0, r.z); player.yaw = r.yaw || 0; state.cam.yaw = (r.yaw || 0) + Math.PI; syncRealm(true); toast(r.name); writeSave();
   });
 }
 
 /* ───────────────────────── main loop ───────────────────────── */
-const clock = new THREE.Clock(); let T = 0, portalCool = 0;
+const clock = new THREE.Clock(); let T = 0, portalCool = 0, realmTimer = 0, dragon = null, mmT = 0;
 function step(dt) {
   T += dt; portalCool = Math.max(0, portalCool - dt);
   // input vector relative to camera
@@ -414,6 +571,7 @@ function step(dt) {
       m.grp.rotation.y = m.yaw; m.grp.position.x += Math.sin(m.yaw) * m.vel * dt; m.grp.position.z += Math.cos(m.yaw) * m.vel * dt;
       m.t += dt * (2 + m.vel * 0.7);
       if (m.hover) { let up = (state.keys[' '] ? 1 : 0) - (state.keys['c'] ? 1 : 0); m.baseY = clamp(m.baseY + up * 8 * dt, 2, 60); m.grp.position.y = damp(m.grp.position.y, m.baseY + Math.sin(T * 2.1) * 0.35, 4, dt); m.grp.rotation.z = damp(m.grp.rotation.z, -angDiff(m.yaw, Math.atan2(want.x, want.z)) * 0.25 * (moving ? 1 : 0), 3, dt); m.grp.rotation.x = damp(m.grp.rotation.x, moving ? 0.16 : 0, 3, dt); }
+      else if (m.boat) { boatPose(m, dt, true); }
       else { m.grp.position.y = Math.abs(Math.sin(m.t)) * 0.07 * (m.vel / m.speed); m.grp.rotation.z = Math.sin(m.t) * 0.02 * (m.vel / m.speed); }
       P.mixer.update(dt); camTarget.copy(m.grp.position); camTarget.y += m.seat * 0.6 + 1.2; P.speed = m.vel;
     } else {
@@ -423,32 +581,40 @@ function step(dt) {
       P.root.rotation.y = P.yaw; P.busy = Math.max(0, P.busy - dt); locomote(P, P.speed, dt); P.mixer.update(dt);
       if (state.where !== 'inside') for (const c of colliders) { const dx = P.root.position.x - c.x, dz = P.root.position.z - c.z, d = Math.hypot(dx, dz); if (d < c.r) { P.root.position.x = c.x + (dx / d) * c.r; P.root.position.z = c.z + (dz / d) * c.r; } }
       else { const dx = P.root.position.x - INT.x, dz = P.root.position.z - INT.z, d = Math.hypot(dx, dz); if (d > 24.5) { P.root.position.x = INT.x + (dx / d) * 24.5; P.root.position.z = INT.z + (dz / d) * 24.5; } }
+      { const q = P.root.position; if (q.z > 899) { const onDock = Math.hypot(q.x, q.z - 932) < 23.4, onWalk = Math.abs(q.x) < 3.4 && q.z < 912; if (!onDock && !onWalk) { if (q.z < 912) q.z = 899; else { const dx = q.x, dz = q.z - 932, d = Math.hypot(dx, dz) || 1; q.x = (dx / d) * 23.4; q.z = 932 + (dz / d) * 23.4; } } } }
       camTarget.copy(P.root.position); camTarget.y += 1.5;
     }
-    // portals
-    if (portalCool <= 0 && !state.fading) {
-      const ga = new THREE.Vector3(0, 0, 44), gb = new THREE.Vector3(420, 0, 14);
+    // portals (gates list)
+    if (portalCool <= 0 && !state.fading && state.where !== 'inside') {
       const pp = mountedOn ? mountedOn.grp.position : P.root.position;
-      if (state.where === 'city' && Math.hypot(pp.x - ga.x, pp.z - ga.z) < 2.6) { portalCool = 3; travel(true); }
-      if (state.where === 'desert' && Math.hypot(pp.x - gb.x, pp.z - gb.z) < 2.6) { portalCool = 3; travel(false); }
+      for (const gt of GATES) if (Math.hypot(pp.x - gt.x, pp.z - gt.z) < 2.7) { portalCool = 3; travelTo(gt.to); break; }
     }
   }
   npcs.forEach((n) => updateNpc(n, dt));
   doors.forEach((d) => d.update(dt, player ? [player, ...npcs] : npcs)); if (exitDoor && state.where === 'inside') exitDoor.update(dt, [player]);
-  mounts.forEach((m) => { if (m.rider) return; m.t += dt; if (m.hover) m.grp.position.y = m.baseY + Math.sin(T * 1.6 + m.t) * 0.3 + 0.2 * Math.sin(T * 0.7); else m.grp.position.y = 0; m.lab.visible = true; });
+  mounts.forEach((m) => { if (m.rider) return; m.t += dt; if (m.boat) { boatPose(m, dt, false); return; } if (m.hover) m.grp.position.y = m.baseY + Math.sin(T * 1.6 + m.t) * 0.3 + 0.2 * Math.sin(T * 0.7); else m.grp.position.y = 0; m.lab.visible = true; });
   portalMats.forEach((m) => (m.uniforms.t.value = T));
   if (capsule) { const ph = (Math.sin(T * 0.22) * 0.5 + 0.5), e = ph * ph * (3 - 2 * ph); capsule.position.x = -78 + e * 156; capsule.rotation.y = Math.cos(T * 0.22) > 0 ? Math.PI / 2 : -Math.PI / 2; capsule.position.y = 1.1 + Math.sin(T * 3) * 0.04; }
   if (skypod) { const a = T * 0.11; skypod.position.set(Math.sin(a) * 62, 15 + Math.sin(T * 1.3) * 0.5, Math.cos(a) * 62); skypod.rotation.y = a + Math.PI / 2; skypod.rotation.z = Math.sin(T * 1.1) * 0.05; }
+  farmPlats.forEach((f) => { f.position.y = Math.sin(T * 0.8 + f.userData.bob) * 0.18; f.rotation.z = Math.sin(T * 0.6 + f.userData.bob) * 0.012; });
   shopItems.forEach((s) => { s.spr.position.y = s.base + Math.sin(T * 1.6 + s.i) * 0.22; s.disc.material.opacity = 0.4 + 0.2 * Math.sin(T * 2 + s.i); });
   if (waterMesh) waterMesh.material.map.offset.set(T * 0.01, T * 0.006);
   updateVfx(dt); motes.rotation.y += dt * 0.01; motes.position.copy(camTarget).setY(0);
+  sky.position.copy(camera.position); starPts.position.copy(camera.position);
+  oceanMat.uniforms.t.value = T; oceanMat.uniforms.skyTop.value.copy(skyMat.uniforms.top.value); oceanMat.uniforms.skyBot.value.copy(skyMat.uniforms.bot.value); oceanMat.uniforms.sunDir.value.copy(cur.sunPos).normalize(); oceanMat.uniforms.sunCol.value.copy(cols.sun);
+  lavaMat.uniforms.t.value = T;
+  if (state.realm === 'volcano' && state.where !== 'inside') { embers.visible = true; embers.position.set(camTarget.x, 0, camTarget.z); const a = embers.geometry.attributes.position; for (let i = 0; i < a.count; i++) { let y = a.getY(i) + dt * (2 + (i % 5)); if (y > 40) y = 0; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(T + i) * dt * 0.6); } a.needsUpdate = true; } else embers.visible = false;
+  realmTimer -= dt; if (realmTimer <= 0 && state.where !== 'inside' && player) { realmTimer = 0.4; syncRealm(false); }
+  if (dragon) { const a = T * 0.16; dragon.position.set(V0.x + Math.cos(a) * 62, 52 + Math.sin(T * 0.9) * 3, V0.z + Math.sin(a) * 62); dragon.rotation.y = -a; dragon.rotation.z = Math.sin(T * 0.9) * 0.08; dragon.rotation.x = 0.06 + Math.sin(T * 1.8) * 0.05; dragon.scale.y = 1 + Math.sin(T * 3.2) * 0.035; }
   // camera (damped orbit, collision-free)
   const c = state.cam, cp = new THREE.Vector3(Math.sin(c.yaw) * Math.cos(c.pitch), Math.sin(c.pitch), Math.cos(c.yaw) * Math.cos(c.pitch)).multiplyScalar(c.dist * (mountedOn ? 1.5 : 1)).add(camTarget);
-  if (state.where !== 'inside') cp.y = Math.max(cp.y, 0.6);
+  if (state.where !== 'inside' && !(mountedOn && mountedOn.sub)) cp.y = Math.max(cp.y, 0.6);
   if (state.snap) { camera.position.copy(cp); state.snap = 0; } else camera.position.lerp(cp, 1 - Math.exp(-12 * dt)); camera.lookAt(camTarget);
   // sun follows the player so shadows stay crisp
   const sp = presetCur && camTarget; sun.target.position.copy(camTarget); sun.position.copy(cur.sunPos).add(camTarget);
   if (presetK < 1) { presetK = Math.min(1, presetK + dt * 0.8); blendPreset(clamp(dt * 3, 0, 1)); } else blendPreset(clamp(dt * 3, 0, 1));
+  if (state.realm === 'ocean' && state.where !== 'inside' && camera.position.y < -0.5 + waveH(camera.position.x, camera.position.z, T) - 0.15) { scene.fog.color.set(0x06304a); scene.fog.near = 1; scene.fog.far = 55; }
+  mmT -= dt; if (mmT <= 0) { mmT = 0.25; drawMap($('#mmc'), false); }
   // prompt
   const n = nearest(), pr = $('#prompt'); if (n) { pr.style.display = 'block'; pr.textContent = n.label; } else pr.style.display = 'none';
 }
@@ -465,14 +631,15 @@ function makePortal(pos, ry, col) {
 
 /* ───────────────────────── boot ───────────────────────── */
 (async function boot() {
-  buildTerrain(); buildInterior(); tick('terrain');
+  buildTerrain(); buildOcean(); buildVolcano(); buildInterior(); tick('terrain'); loadSave();
   // characters + shared clips
   await Promise.all([
     ...HEROES.map(async (h) => { const g = await loadG(`assets/models/chars/${h.id}.glb`, `hero ${h.name}`); if (g) charSrc[h.id] = { scene: g.scene, walk: g.animations[0] }; }),
     ...['run', 'idle', 'slash', 'cast'].map(async (c) => { const g = await loadG(`assets/models/chars/clip-${c}.glb`, `clip ${c}`); if (g && g.animations[0]) clipSrc[c] = g.animations[0]; }),
   ]);
   const bar = $('#chars'); HEROES.forEach((h, i) => { if (!charSrc[h.id]) return; const b = document.createElement('button'); b.dataset.id = h.id; b.textContent = `${i + 1} ${h.name}`; b.onclick = () => spawnPlayer(h.id, player.root.position.clone()); bar.appendChild(b); });
-  spawnPlayer(charSrc.zerox ? 'zerox' : Object.keys(charSrc)[0], new THREE.Vector3(0, 0, 14));
+  const startHero = charSrc[save.hero] ? save.hero : (charSrc.zerox ? 'zerox' : Object.keys(charSrc)[0]); citySky = save.sky || 'dusk';
+  spawnPlayer(startHero, new THREE.Vector3(save.x || 0, 0, save.z || 14)); syncRealm(true);
   // city layout (landmarks around the plaza; futuristic only)
   const L = [
     ['bld-neon-observatory', { x: -42, z: -34, h: 30, r: 5.5, ry: 0.4 }], ['bld-sky-dome-v2', { x: 45, z: -34, w: 26, r: 11 }],
@@ -484,21 +651,46 @@ function makePortal(pos, ry, col) {
   for (const [f, o] of L) { await place(f, o); }
   gateA = await place('transit-hyperloop-gate', { x: 0, z: 44, h: 7, w: undefined }); if (gateA) makePortal(new THREE.Vector3(0, 3.6, 44), 0, 0x5fe0ff);
   gateB = await place('transit-hyperloop-gate', { x: 420, z: 14, h: 7, ry: Math.PI }); if (gateB) makePortal(new THREE.Vector3(420, 3.6, 14), Math.PI, 0xff9a4a);
+  // gates: city <-> desert/volcano/ocean, each with a return gate
+  const gate = async (x, z, ry, to, col) => { const g = await place('transit-hyperloop-gate', { x, z, h: 7, ry }); if (g) makePortal(new THREE.Vector3(x, 3.6, z), ry, col); const l = makeLabel(REALMS[to].name, '#' + col.toString(16).padStart(6, '0'), 1.1); l.position.set(x, 9.5, z); world.add(l); GATES.push({ x, z, to }); };
+  await gate(0, 44, 0, 'desert', 0xff9a4a); await gate(-30, 44, 0, 'volcano', 0xff4a1a); await gate(30, 44, 0, 'ocean', 0x4fc3ff);
+  await gate(420, 14, Math.PI, 'city', 0x5fe0ff); await gate(V0.x, V0.z + 150, 0, 'city', 0x5fe0ff); await gate(0, 846, 0, 'city', 0x5fe0ff);
   // rail + shuttling capsule + sky-rail pod
   const rail = new THREE.Mesh(new THREE.BoxGeometry(170, 0.5, 2.2), new THREE.MeshStandardMaterial({ color: 0x16151e, metalness: 0.8, roughness: 0.3, emissive: 0xe8c45c, emissiveIntensity: 0.35 })); rail.position.set(0, 0.25, 100); world.add(rail);
   const rl = new THREE.Mesh(new THREE.BoxGeometry(170, 0.05, 0.25), new THREE.MeshBasicMaterial({ color: 0x00ff9c })); rl.position.set(0, 0.52, 100); world.add(rl);
   const cg = await place('transit-hyperloop-capsule', { x: 0, z: 100, w: 15 }); if (cg) { capsule = cg; cg.position.y = 1.1; }
   const sg = await place('transit-skyrail-pod', { x: 0, z: 0, w: 6 }); if (sg) { skypod = sg; }
-  // mounts corral (rideable) + hovering hawk
+  // mounts corral
   await addMount('mount-forge-bull', 'FORGE BULL', { x: -20, z: 34, h: 2.9, ry: 0.5, speed: 11, seatK: 0.92 });
   await addMount('mount-glacier-mammoth', 'GLACIER MAMMOTH', { x: -32, z: 46, h: 5.0, ry: 0.2, speed: 8, seatK: 0.9 });
   await addMount('mount-canopy-gorilla', 'CANOPY GORILLA', { x: 20, z: 34, h: 4.4, ry: -0.5, speed: 9, seatK: 0.85 });
   await addMount('mount-sky-hawk', 'SKY HAWK', { x: 34, z: 46, h: 3.6, ry: -0.2, speed: 16, hover: true, hoverY: 3.4, seatK: 0.85 });
-  // doors: sliding gate at the Sky Dome, hinged door at the Holo Market
+  await addMount('veh-hover-pod-green', 'HOVER POD', { x: -8, z: 56, w: 5.2, ry: 0.3, speed: 22, hover: true, hoverY: 1.1, seatK: 0.55 });
+  await addMount('veh-hover-pod-blue', 'HOVER POD II', { x: 8, z: 56, w: 5.2, ry: -0.3, speed: 24, hover: true, hoverY: 1.1, seatK: 0.55 });
+  await addMount('veh-monowheel-mech', 'DUNE WHEEL', { x: 412, z: -24, h: 5.4, ry: 0.5, speed: 15, seatK: 0.95 });
+  // doors
   doors.push(new Door({ x: 45, z: -16, ry: 0, w: 6, h: 5.6, type: 'slide' }), new Door({ x: 64, z: 60, ry: 0, w: 4.2, h: 4.6, type: 'hinge', color: 0x00ff9c }), new Door({ x: -42, z: -25, ry: 0.4, w: 4, h: 5, type: 'slide', color: 0xa06bff }));
+  // ── OCEAN realm ──
+  await place('ocean-harbor-hub', { x: 0, z: 932, w: 30, y: 0.3, r: 0 });
+  await addMount('ocean-catamaran', 'CATAMARAN', { x: -34, z: 962, w: 15, ry: 0.6, speed: 15, seatK: 0.55, boat: true });
+  await addMount('ocean-superyacht', 'SUPER-YACHT', { x: 44, z: 1000, w: 46, ry: 0.4, speed: 10, seatK: 0.5, boat: true });
+  await addMount('ocean-submarine', 'RESEARCH SUB  (C to dive)', { x: 0, z: 985, w: 15, ry: 0, speed: 9, seatK: 0.5, boat: true, sub: true });
+  await addMount('ocean-skiff', 'HOVER SKIFF', { x: 30, z: 962, w: 7, ry: -0.5, speed: 26, seatK: 0.55, boat: true });
+  const farm = [[-90, 1060, 0.2], [-140, 1120, 0.9], [-60, 1160, 2.0], [110, 1090, 0.4], [150, 1150, 1.2], [70, 1200, 2.6], [-20, 1250, 0.7], [220, 1220, 1.8]];
+  for (const [x, z, ry] of farm) { const f = await place('ocean-farm-platform', { x, z, w: 34, ry, y: -0.9 }); if (f) { f.userData.bob = Math.random() * 6; farmPlats.push(f); } }
+  // ── VOLCANO realm ──
+  await place('volcano-fortress', { x: V0.x, z: V0.z, h: 78, r: 24 });
+  await place('volcano-ritual-circle', { x: V0.x + 70, z: V0.z + 64, w: 40, y: 0.05 });
+  await place('volcano-forge-tower', { x: V0.x - 84, z: V0.z + 34, h: 38, r: 9, ry: 0.6 });
+  await place('volcano-bridge', { x: V0.x + 46, z: V0.z + 120, w: 44, y: 0.1, ry: 0.4 }); await place('volcano-bridge', { x: V0.x - 46, z: V0.z + 120, w: 44, y: 0.1, ry: -0.4 });
+  await place('volcano-gate', { x: V0.x, z: V0.z + 108, h: 16, y: 0.05 });
+  dragon = await place('volcano-dragon', { x: V0.x, z: V0.z - 62, h: 26 }); if (dragon) { const lab = makeLabel('DRAGON', '#ff7a3a', 1.4); lab.position.set(0, 24, 0); dragon.add(lab); }
+  // ── SIEGE CASTLE label ──
+  loadSave(); hud();
+  for (const rec of save.plots) placePlot(rec);
   $('#loadmsg').textContent = 'ready'; $('#bar i').style.width = '100%';
   setTimeout(() => { $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); }, 350);
-  window.__w = { THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, enterInterior, leaveInterior, applyPreset, strike, travel, step };
+  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, enterInterior, leaveInterior, applyPreset, strike, travel, step };
   loop();
 })();
 </script></body></html>

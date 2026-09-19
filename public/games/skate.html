@@ -141,6 +141,54 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
 .board-card .portrait img{ width:100%; height:100%; object-fit:contain; padding:8px; }
 .board-card .name{ font-family:var(--f-display); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-top:6px; }
 [hidden]{ display:none!important; }
+
+/* ── OPEN-WORLD HUB — a real free-roam 3D plaza (Tron-grid neon city,
+   procedural geometry: zero Fal spend, exact SPINE_SKATE palette). Riders
+   patrol the plaza; walk up to one and challenge it to a real backend-driven
+   SKATE match without leaving the 3D view. ── */
+#hub{ padding:0; position:relative; overflow:hidden; }
+#hubStage{ position:relative; width:100%; height:100vh; }
+#hubStage canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+.hub-hud{ position:absolute; inset:0; pointer-events:none; z-index:2; }
+.hud-top{ position:absolute; top:18px; left:18px; right:18px; display:flex; justify-content:space-between;
+  align-items:flex-start; font-family:var(--f-mono); }
+.hud-card{ background:rgba(10,6,18,.72); border:1px solid var(--edge2); border-radius:10px; padding:8px 14px;
+  backdrop-filter:blur(4px); }
+.hud-card .label{ font-size:10px; color:var(--ink-faint); letter-spacing:.08em; text-transform:uppercase; }
+.hud-card .value{ font-family:var(--f-display); font-size:15px; font-weight:700; }
+.hud-hint{ position:absolute; bottom:28px; left:50%; transform:translateX(-50%); text-align:center;
+  font-size:12px; color:var(--ink-soft); letter-spacing:.06em; text-shadow:0 2px 8px rgba(0,0,0,.9); }
+.prompt-e{ position:absolute; padding:6px 14px; border-radius:20px; background:rgba(10,6,18,.85);
+  border:1px solid var(--lime); color:var(--lime); font-family:var(--f-display); font-size:12px; font-weight:700;
+  letter-spacing:.08em; transform:translate(-50%,-140%); white-space:nowrap;
+  box-shadow:0 0 18px rgba(157,255,41,.4); animation:promptPulse 1.4s ease-in-out infinite; }
+@keyframes promptPulse{ 0%,100%{ opacity:.75; } 50%{ opacity:1; } }
+
+/* Match HUD -- overlays the 3D view when a challenge is live, pointer-events
+   re-enabled only on its own panel so the world keeps rendering behind it. */
+.match-hud{ position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center;
+  padding:0 5vw 6vh; pointer-events:none; z-index:3; }
+.match-panel{ pointer-events:auto; background:rgba(10,6,18,.9); border:1px solid var(--edge2); border-radius:16px;
+  padding:22px 26px; max-width:520px; width:100%; box-shadow:0 0 60px rgba(0,0,0,.7); text-align:center; }
+.match-panel .spot{ font-family:var(--f-display); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-soft); margin-bottom:4px; }
+.match-panel .letters{ display:flex; justify-content:center; gap:16px; margin:8px 0 16px; font-family:var(--f-display); }
+.match-panel .letters .row{ display:flex; gap:4px; align-items:center; }
+.match-panel .letters .who{ font-size:10px; color:var(--ink-faint); margin-right:4px; text-transform:uppercase; }
+.match-panel .letters .pip{ width:20px; height:20px; border-radius:4px; border:1px solid var(--edge2);
+  display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--ink-faint); }
+.match-panel .letters .pip.on{ background:var(--magenta); color:#fff; border-color:var(--magenta); }
+.style-row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.style-btn{ flex:1 1 120px; background:linear-gradient(120deg, rgba(255,47,176,.14), rgba(41,232,255,.1));
+  border:1px solid var(--edge2); border-radius:10px; padding:12px 10px; cursor:pointer; color:var(--ink);
+  font-family:var(--f-display); font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  transition:border-color .15s, transform .1s; }
+.style-btn:hover{ border-color:var(--cyan); transform:translateY(-2px); }
+.style-btn .trick{ display:block; font-size:10px; color:var(--ink-soft); font-weight:400; text-transform:none; margin-top:3px; }
+.match-panel .result{ font-family:var(--f-display); font-size:15px; margin:6px 0 14px; min-height:20px; }
+.match-panel .result.land{ color:var(--lime); }
+.match-panel .result.bail{ color:var(--magenta); }
+.clip-video{ width:100%; border-radius:10px; margin-top:12px; background:#000; }
 </style>
 </head>
 <body>
@@ -192,10 +240,29 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
   <button id="btnEnterHub" class="neon-btn" disabled>Enter the Hub <span class="chev">▸</span></button>
 </section>
 
-<!-- ── HUB (placeholder landing after select — full match flow is Gate C) ── -->
+<!-- ── HUB — open-world plaza: real free-roam, real backend matches, real
+     Lens video-on-win with an honest no-credits fallback ── -->
 <section id="hub" class="screen">
-  <h2 id="hubTitle">Welcome to The Hub</h2>
-  <div class="sub" id="hubSub">Match flow (blind picks, letters, LENS clips) lands at Gate C. This confirms the pipeline end to end: real 3D rider, real captured sprite, real menu.</div>
+  <div id="hubStage"></div>
+  <div class="hub-hud">
+    <div class="hud-top">
+      <div class="hud-card"><div class="label">Rider</div><div class="value" id="hudRider">—</div></div>
+      <div class="hud-card"><div class="label">Deck</div><div class="value" id="hudBoard">—</div></div>
+    </div>
+    <div class="hud-hint" id="hudHint">WASD / arrows to skate · walk up to a rider and press E to challenge</div>
+    <div id="promptE" class="prompt-e" hidden>Press E — Challenge</div>
+  </div>
+  <div class="match-hud" id="matchHud" hidden>
+    <div class="match-panel">
+      <div class="spot" id="matchSpot">—</div>
+      <div class="letters" id="matchLetters"></div>
+      <div class="result" id="matchResult"></div>
+      <div class="style-row" id="matchButtons"></div>
+      <video class="clip-video" id="matchClip" hidden controls autoplay></video>
+      <button id="btnLensClip" class="neon-btn" hidden style="margin-top:14px;">🎬 Film the Winning Trick <span class="chev">▸</span></button>
+      <button id="btnLeaveMatch" class="neon-btn" hidden style="margin-top:14px;">Back to the Plaza <span class="chev">▸</span></button>
+    </div>
+  </div>
 </section>
 
 <script type="importmap">
@@ -212,6 +279,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // registered or parsing a compressed buffer silently hangs/fails.
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { clone as cloneSkinnedModel } from 'three/addons/utils/SkeletonUtils.js';
 
 // Real riders only — rider_01 (GABI) has a real rigged .glb from the Gate B
 // pipeline (fal-assets/character-pipeline.mjs: hunyuan3d mesh + meshy rig).
@@ -458,11 +526,504 @@ document.getElementById('btnPickBoard').addEventListener('click', () => {
 });
 
 document.getElementById('btnEnterHub').addEventListener('click', () => {
-  document.getElementById('hubTitle').textContent = 'Welcome to The Hub, ' + picked.name;
-  document.getElementById('hubSub').textContent =
-    `Riding the ${pickedBoard.name} deck. Match flow (blind picks, letters, LENS clips) lands at Gate C. This confirms the pipeline end to end: real 3D rider, real captured sprite, real menu.`;
+  document.getElementById('hudRider').textContent = picked.name;
+  document.getElementById('hudBoard').textContent = pickedBoard.name;
   show('hub');
+  requestAnimationFrame(() => initHubWorld());
 });
+
+/* ── OPEN-WORLD HUB ───────────────────────────────────────────────────────
+ * A real free-roam 3D plaza -- not a placeholder screen. Procedural
+ * Tron-grid neon-city geometry (zero Fal spend, exact SPINE_SKATE palette:
+ * magenta/cyan/lime edges on near-black), the player's actual picked rider
+ * .glb under third-person WASD control, and 2 NPC "House Skater" riders
+ * (SkeletonUtils.clone of the same rigged Gabi model -- regular clone()
+ * breaks skinned-mesh bone bindings) patrolling the plaza. Walk up to one
+ * and press E to challenge it to a REAL match through the same
+ * /api/casino/* routes this session's backend work just made playable
+ * (bot-seat auto-fill, the pack.pack mislabeling bug fix).
+ *
+ * On a win, "Film the Winning Trick" hits the already-built, Sparks-gated
+ * Lens endpoint (POST /api/casino/tables/:id/lens) for a real Fal video
+ * clip; a 402 (no Sparks) or 503 (no FAL_KEY) falls back honestly to just
+ * showing the trick text result -- exactly the owner's own spec ("if you
+ * have credits... if not it just shows the trick normally"), not faked
+ * either way.
+ */
+let hubInited = false;
+function initHubWorld() {
+  if (hubInited) return; // idempotent -- btnEnterHub can only fire once per session anyway, but never re-init
+  hubInited = true;
+
+  const stageEl = document.getElementById('hubStage');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0612);
+  scene.fog = new THREE.Fog(0x0a0612, 18, 70);
+
+  const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.05, 200);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stageEl.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0x8866ff, 0.55));
+  const moon = new THREE.DirectionalLight(0xbdb4ff, 0.7);
+  moon.position.set(-6, 12, -4);
+  scene.add(moon);
+
+  // ── Ground: dark plaza slab + a bright Tron grid overlay (two materials,
+  // no texture asset needed -- pure procedural geometry, zero Fal spend).
+  const GROUND_SIZE = 140;
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(GROUND_SIZE, GROUND_SIZE),
+    new THREE.MeshStandardMaterial({ color: 0x120a1e, roughness: 0.85, metalness: 0.1 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+  const grid = new THREE.GridHelper(GROUND_SIZE, 56, 0x29e8ff, 0x8b2fff);
+  grid.material.opacity = 0.35;
+  grid.material.transparent = true;
+  grid.position.y = 0.01;
+  scene.add(grid);
+
+  // ── CITY LAYOUT PLAN (procedural, zero Fal spend; a natural next-spend
+  // upgrade path once this composition is approved is swapping the boxes
+  // for real Fal-generated building models on the exact same footprints):
+  //
+  //   radius 0-11   PLAZA        the skate court itself -- open ground,
+  //                              only the ramp/rail obstacles, kept clear
+  //                              so movement and matches read cleanly.
+  //   radius ~14    STREET RING  lampposts + trees alternating at even
+  //                              angular spacing, marking a real walkway
+  //                              around the plaza (not scattered litter).
+  //   radius ~19-24 BUILDING ROW one building per angular slot, ALL
+  //                              rotated to face the plaza center, so the
+  //                              skyline reads as a street frontage instead
+  //                              of random boxes facing random directions.
+  //
+  // This replaces the earlier "scattered ring, 3 random radii" version the
+  // owner correctly flagged as looking arbitrary rather than composed.
+  const NEON_COLORS = [0xff2fb0, 0x29e8ff, 0x9dff29, 0xffd23d, 0x8b2fff];
+
+  // Real texture, not another flat-color box: a canvas-drawn window grid
+  // (glowing cells on a dark facade) so buildings read as buildings up
+  // close, not silhouettes. Cheap (one small canvas per unique color, reused
+  // across every building of that color) and zero Fal spend.
+  const windowTexCache = new Map();
+  function windowTexture(colorHex) {
+    if (windowTexCache.has(colorHex)) return windowTexCache.get(colorHex);
+    const size = 128;
+    const cnv = document.createElement('canvas');
+    cnv.width = cnv.height = size;
+    const ctx = cnv.getContext('2d');
+    ctx.fillStyle = '#0f0a1a';
+    ctx.fillRect(0, 0, size, size);
+    const c = '#' + colorHex.toString(16).padStart(6, '0');
+    const cell = 16, pad = 3;
+    for (let y = 0; y < size; y += cell) {
+      for (let x = 0; x < size; x += cell) {
+        if (Math.random() < 0.6) {
+          ctx.fillStyle = c;
+          ctx.globalAlpha = 0.35 + Math.random() * 0.5;
+          ctx.fillRect(x + pad, y + pad, cell - pad * 2, cell - pad * 2);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    const tex = new THREE.CanvasTexture(cnv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    windowTexCache.set(colorHex, tex);
+    return tex;
+  }
+
+  const buildings = [];
+  function makeBuilding(x, z, w, h, d, colorHex, facingAngle) {
+    const geo = new THREE.BoxGeometry(w, h, d);
+    const tex = windowTexture(colorHex).clone();
+    tex.needsUpdate = true;
+    tex.repeat.set(Math.max(1, Math.round(w / 1.2)), Math.max(1, Math.round(h / 1.2)));
+    const mat = new THREE.MeshStandardMaterial({ map: tex, color: 0xffffff, roughness: 0.55, metalness: 0.25 });
+    const box = new THREE.Mesh(geo, mat);
+    box.position.set(x, h / 2, z);
+    box.rotation.y = facingAngle; // faces the plaza -- a real street frontage, not a random-facing box
+    scene.add(box);
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo),
+      new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.9 })
+    );
+    edges.position.copy(box.position);
+    edges.rotation.copy(box.rotation);
+    scene.add(edges);
+    buildings.push(box);
+  }
+  const BUILDING_RING_R = 21;
+  const BUILDING_COUNT = 16;
+  for (let i = 0; i < BUILDING_COUNT; i++) {
+    const angle = (i / BUILDING_COUNT) * Math.PI * 2;
+    const x = Math.cos(angle) * BUILDING_RING_R, z = Math.sin(angle) * BUILDING_RING_R;
+    const w = 3.5 + (i % 3), d = 3.5 + ((i + 2) % 3), h = 7 + ((i * 5) % 12);
+    makeBuilding(x, z, w, h, d, NEON_COLORS[i % NEON_COLORS.length], angle + Math.PI / 2);
+  }
+
+  // ── Street ring: lampposts + trees alternating at even spacing, marking
+  // a real walkway between the plaza and the building row (not scattered).
+  const STREET_RING_R = 14;
+  const STREET_COUNT = 12;
+  const streetProps = []; // filled in once the models load, below
+
+  // ── Plaza skatepark: the ramp/rail obstacles arranged as an actual mini
+  // course inside the clear plaza radius -- two ramps facing each other
+  // across a run, two rails flanking it as line obstacles -- not scattered
+  // at arbitrary coordinates.
+  const PLAZA_PROPS = [
+    { model: 'assets/skate/props/prop_ramp/prop_ramp.glb', h: 3.0, pos: [0, 0, -8], rotY: 0 },
+    { model: 'assets/skate/props/prop_ramp/prop_ramp.glb', h: 3.0, pos: [0, 0, 8], rotY: Math.PI },
+    { model: 'assets/skate/props/prop_rail/prop_rail.glb', h: 1.1, pos: [-6, 0, 0], rotY: Math.PI / 2 },
+    { model: 'assets/skate/props/prop_rail/prop_rail.glb', h: 1.1, pos: [6, 0, 0], rotY: -Math.PI / 2 },
+  ];
+
+  function resize() {
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+
+  // ── Real 3D park props (ramp, rail, lamppost, tree) -- fal-generated via
+  // fal-assets/character-pipeline.mjs --meshy6 --static from TURTLE/QUILL-
+  // authored reference art (fal-assets/batches/skate-park-props*.json), NOT
+  // the procedural building boxes above. Scattered INSIDE the plaza (not on
+  // the building ring) so the player can actually skate up to and around
+  // them. Meshy's raw output scale varies per asset, so every prop is
+  // normalized to a real-world target height on load rather than trusting
+  // native mesh units -- correct regardless of what scale Meshy returned.
+  function normalizeHeight(obj, targetH) {
+    obj.updateMatrixWorld(true);
+    const size = new THREE.Box3().setFromObject(obj).getSize(new THREE.Vector3());
+    if (size.y > 0.0001) obj.scale.multiplyScalar(targetH / size.y);
+  }
+  // Street ring entries computed from STREET_RING_R/STREET_COUNT (declared
+  // above with the layout plan) -- lamppost/tree alternate at every other
+  // angular slot, each rotated to face the plaza like real street furniture.
+  const STREET_PROPS = [];
+  for (let i = 0; i < STREET_COUNT; i++) {
+    const angle = (i / STREET_COUNT) * Math.PI * 2 + Math.PI / STREET_COUNT; // offset from buildings' angles
+    const x = Math.cos(angle) * STREET_RING_R, z = Math.sin(angle) * STREET_RING_R;
+    if (i % 2 === 0) {
+      STREET_PROPS.push({ model: 'assets/skate/props/prop_lamppost/prop_lamppost.glb', h: 4.5, pos: [x, 0, z], rotY: angle });
+    } else {
+      STREET_PROPS.push({ model: 'assets/skate/props/prop_tree/prop_tree.glb', h: 5.0, pos: [x, 0, z], rotY: angle });
+    }
+  }
+  const PROPS = [...PLAZA_PROPS, ...STREET_PROPS];
+  PROPS.forEach((p) => {
+    loader.load(p.model, (gltf) => {
+      const obj = gltf.scene;
+      normalizeHeight(obj, p.h);
+      obj.position.set(p.pos[0], p.pos[1], p.pos[2]);
+      obj.rotation.y = p.rotY || 0;
+      scene.add(obj);
+    }, undefined, (err) => console.error('[skate] park prop failed to load', p.model, err));
+  });
+
+  // ── Player: the actually-picked rider .glb, real WASD/arrow third-person
+  // control, camera trailing behind with a damped follow (no snapping).
+  const player = new THREE.Group();
+  player.position.set(0, 0, 6);
+  scene.add(player);
+  let playerMixer = null;
+
+  const RIDER_HEIGHT_M = 1.7; // real-world target -- same normalization the props use, and for the
+  // same reason: raw Meshy output scale is inconsistent, and skipping this made the camera end up
+  // INSIDE an oversized model (caught live: player rendered as an extreme, cut-off close-up).
+  loader.load(picked.model, (gltf) => {
+    const model = gltf.scene;
+    normalizeHeight(model, RIDER_HEIGHT_M);
+    model.rotation.y = Math.PI; // face away from the default camera-behind position
+    player.add(model);
+    if (gltf.animations && gltf.animations.length) {
+      playerMixer = new THREE.AnimationMixer(model);
+      playerMixer.clipAction(gltf.animations[0]).play();
+    }
+  }, undefined, (err) => console.error('[skate] hub player model failed', err));
+
+  // ── NPC "House Skater" riders: SkeletonUtils.clone of the SAME rigged
+  // Gabi asset (the only real rigged model this roster has) -- a plain
+  // Object3D.clone() would share/break the skinned mesh's bone bindings, so
+  // this MUST use SkeletonUtils. Tinted via a color multiply on each clone's
+  // own material instances (cloned materials, not shared) so the two NPCs
+  // read as distinct riders at a glance without needing separate art.
+  const NPCS = [
+    { pos: new THREE.Vector3(9, 0, -4), tint: 0xff2fb0, name: 'Prism Runner' },
+    { pos: new THREE.Vector3(-10, 0, 3), tint: 0x29e8ff, name: 'Circuit Ghost' },
+  ];
+  const npcObjs = [];
+  loader.load(ROSTER[0].model, (gltf) => { // Gabi is the only real rigged rider -- honest reuse, not fake distinct art
+    NPCS.forEach((npc) => {
+      const clone = cloneSkinnedModel(gltf.scene);
+      clone.traverse((o) => {
+        if (o.isMesh && o.material) {
+          o.material = o.material.clone();
+          o.material.color = o.material.color ? o.material.color.clone().lerp(new THREE.Color(npc.tint), 0.45) : new THREE.Color(npc.tint);
+          o.material.emissive = new THREE.Color(npc.tint);
+          o.material.emissiveIntensity = 0.15;
+        }
+      });
+      normalizeHeight(clone, RIDER_HEIGHT_M);
+      clone.position.copy(npc.pos);
+      clone.rotation.y = Math.random() * Math.PI * 2;
+      scene.add(clone);
+      let mixer = null;
+      if (gltf.animations && gltf.animations.length) {
+        mixer = new THREE.AnimationMixer(clone);
+        mixer.clipAction(gltf.animations[0]).play();
+      }
+      npcObjs.push({ obj: clone, mixer, name: npc.name, angle: Math.random() * Math.PI * 2, radius: 2.5 + Math.random() * 2, center: npc.pos.clone() });
+    });
+  }, undefined, (err) => console.error('[skate] NPC model failed', err));
+
+  // ── Input + movement ──
+  const keys = new Set();
+  addEventListener('keydown', (e) => { keys.add(e.key.toLowerCase()); onInteractKey(e); });
+  addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+  const MOVE_SPEED = 5.2, TURN_SPEED = 2.6;
+  const clock = new THREE.Clock();
+  const camOffset = new THREE.Vector3(0, 3.2, 7.5);
+  const camTarget = new THREE.Vector3();
+  const camCurrent = new THREE.Vector3(0, 4, 14);
+
+  let nearestNpc = null;
+  const promptEl = document.getElementById('promptE');
+
+  // BUG FIX: these must exist before animate()'s first (synchronous) call
+  // below -- animate() reads matchActive on its very first invocation, and
+  // a `let` declared later in this same function is in the temporal dead
+  // zone until its own line runs, throwing "Cannot access before
+  // initialization" and killing the render loop before a single frame
+  // draws (caught live: the hub rendered as a blank screen).
+  let seatId = null;
+  let matchActive = false;
+  let matchId = null;
+
+  function updatePlayer(dt) {
+    const turning = (keys.has('a') || keys.has('arrowleft') ? 1 : 0) - (keys.has('d') || keys.has('arrowright') ? 1 : 0);
+    player.rotation.y += turning * TURN_SPEED * dt;
+    const forward = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
+    if (forward !== 0) {
+      const dir = new THREE.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
+      player.position.addScaledVector(dir, forward * MOVE_SPEED * dt);
+      // clamp to the plaza floor so the player can't skate off into the void
+      const R = GROUND_SIZE / 2 - 4;
+      player.position.x = Math.max(-R, Math.min(R, player.position.x));
+      player.position.z = Math.max(-R, Math.min(R, player.position.z));
+    }
+    if (playerMixer) playerMixer.update(dt);
+  }
+
+  function updateNpcs(dt) {
+    npcObjs.forEach((n) => {
+      n.angle += dt * 0.35;
+      n.obj.position.set(
+        n.center.x + Math.cos(n.angle) * n.radius,
+        0,
+        n.center.z + Math.sin(n.angle) * n.radius
+      );
+      n.obj.rotation.y = -n.angle + Math.PI / 2;
+      if (n.mixer) n.mixer.update(dt);
+    });
+  }
+
+  function updateInteractPrompt() {
+    if (matchActive) { promptEl.hidden = true; nearestNpc = null; return; }
+    let closest = null, closestDist = 3.2; // challenge range, world units
+    npcObjs.forEach((n) => {
+      const d = n.obj.position.distanceTo(player.position);
+      if (d < closestDist) { closest = n; closestDist = d; }
+    });
+    nearestNpc = closest;
+    if (closest) {
+      const screenPos = closest.obj.position.clone().add(new THREE.Vector3(0, 2.2, 0)).project(camera);
+      promptEl.style.left = `${(screenPos.x * 0.5 + 0.5) * stageEl.clientWidth}px`;
+      promptEl.style.top = `${(-screenPos.y * 0.5 + 0.5) * stageEl.clientHeight}px`;
+      promptEl.textContent = `Press E — Challenge ${closest.name}`;
+      promptEl.hidden = false;
+    } else {
+      promptEl.hidden = true;
+    }
+  }
+
+  function updateCamera() {
+    const yaw = player.rotation.y;
+    const behind = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(-camOffset.z);
+    camTarget.set(player.position.x + behind.x, player.position.y + camOffset.y, player.position.z + behind.z);
+    camCurrent.lerp(camTarget, 0.08);
+    camera.position.copy(camCurrent);
+    camera.lookAt(player.position.x, player.position.y + 1.2, player.position.z);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    if (!matchActive) updatePlayer(dt);
+    updateNpcs(dt);
+    updateCamera();
+    updateInteractPrompt();
+    renderer.render(scene, camera);
+  }
+  animate();
+  window.__skateDebug = { keys, matchActive: () => matchActive, playerPos: () => player.position.toArray() }; // temp, removed before ship
+
+  // ── Real match flow -- backed by THIS session's own backend work
+  // (bot-seat auto-fill + the pack-mislabeling fix), not a client-side
+  // simulation. One seat is created lazily on first challenge and reused.
+  async function api(path, opts) {
+    const res = await fetch(path, {
+      method: opts && opts.body ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: opts && opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) { const err = new Error(json.error || `HTTP ${res.status}`); err.status = res.status; err.body = json; throw err; }
+    return json;
+  }
+
+  async function ensureSeat() {
+    if (seatId) return seatId;
+    const { seat } = await api('/api/casino/seats', { body: { kind: 'human', display_name: picked.name } });
+    seatId = seat.id;
+    return seatId;
+  }
+
+  const matchHud = document.getElementById('matchHud');
+  const matchSpotEl = document.getElementById('matchSpot');
+  const matchLettersEl = document.getElementById('matchLetters');
+  const matchResultEl = document.getElementById('matchResult');
+  const matchButtonsEl = document.getElementById('matchButtons');
+  const matchClipEl = document.getElementById('matchClip');
+  const btnLensClip = document.getElementById('btnLensClip');
+  const btnLeaveMatch = document.getElementById('btnLeaveMatch');
+
+  function renderLetters(letters) {
+    const ids = Object.keys(letters);
+    const [you, foe] = [seatId, ids.find((id) => id !== seatId)];
+    const LETTERS = ['S', 'K', 'A', 'T', 'E'];
+    function row(label, got) {
+      return `<div class="row"><span class="who">${label}</span>${LETTERS.map((L, i) =>
+        `<span class="pip${i < got.length ? ' on' : ''}">${L}</span>`).join('')}</div>`;
+    }
+    matchLettersEl.innerHTML = row('You', letters[you] || []) + row('Foe', letters[foe] || []);
+  }
+
+  function renderButtons(legal, roundLabel) {
+    matchButtonsEl.innerHTML = '';
+    legal.forEach((b) => {
+      const btn = document.createElement('button');
+      btn.className = 'style-btn';
+      btn.textContent = b.label;
+      btn.addEventListener('click', () => submitMove(b.id));
+      matchButtonsEl.appendChild(btn);
+    });
+  }
+
+  async function startMatch(npc) {
+    matchActive = true;
+    matchResultEl.textContent = '';
+    matchClipEl.hidden = true;
+    btnLensClip.hidden = true;
+    btnLeaveMatch.hidden = true;
+    matchHud.hidden = false;
+    matchSpotEl.textContent = `Challenging ${npc.name}…`;
+    try {
+      await ensureSeat();
+      const table = await api('/api/casino/tables', { body: { seatId, wager: 0, pack: 'skate' } });
+      matchId = table.matchId;
+      matchSpotEl.textContent = table.state.round != null ? `Round ${table.state.round + 1}` : 'SKATE';
+      renderLetters(table.state.letters);
+      renderButtons(table.legal);
+    } catch (e) {
+      matchResultEl.textContent = `Could not start a match: ${e.message}`;
+      matchResultEl.className = 'result bail';
+      btnLeaveMatch.hidden = false;
+    }
+  }
+
+  async function submitMove(moveId) {
+    matchButtonsEl.innerHTML = '';
+    try {
+      const res = await api(`/api/casino/tables/${matchId}/move`, { body: { move: moveId } });
+      renderLetters(res.state.letters);
+      const events = (res.settlement && res.settlement.events) || [];
+      const myEvent = events[0]; // seats[0] is always the human seat (see routes.js)
+      if (myEvent) {
+        matchResultEl.textContent = myEvent === 'land' ? 'LANDED IT' : 'BAILED';
+        matchResultEl.className = 'result ' + myEvent;
+      }
+      if (res.settlement && res.settlement.score !== null) {
+        // Match settled -- show final result + (win only) the Lens option.
+        const scoreLabel = { win: 'YOU WIN THE GAME OF SKATE', lose: 'YOU LOSE — S-K-A-T-E', push: 'PUSH — EVEN MATCH' }[res.settlement.score] || res.settlement.score;
+        matchSpotEl.textContent = scoreLabel;
+        btnLeaveMatch.hidden = false;
+        if (res.settlement.score === 'win' && events.length) {
+          btnLensClip.hidden = false;
+          btnLensClip.disabled = false;
+          btnLensClip.innerHTML = '🎬 Film the Winning Trick <span class="chev">▸</span>';
+        }
+      } else {
+        matchSpotEl.textContent = `Round ${res.state.round + 1}`;
+        setTimeout(() => renderButtons(res.legal), 900); // brief beat so the land/bail text reads before the next round's buttons appear
+      }
+    } catch (e) {
+      matchResultEl.textContent = `Move failed: ${e.message}`;
+      matchResultEl.className = 'result bail';
+    }
+  }
+
+  btnLensClip.addEventListener('click', async () => {
+    btnLensClip.disabled = true;
+    btnLensClip.innerHTML = 'Rendering clip… <span class="chev">▸</span>';
+    try {
+      const clip = await api(`/api/casino/tables/${matchId}/lens`, { body: {} });
+      // Poll for completion -- same contract public/casino.html already uses.
+      let status = clip;
+      let guard = 0;
+      while (status.status !== 'completed' && guard++ < 30) {
+        await new Promise((r) => setTimeout(r, 2000));
+        status = await api(`/api/casino/tables/${matchId}/lens/${clip.jobId}`);
+      }
+      if (status.videoUrl) {
+        matchClipEl.src = status.videoUrl;
+        matchClipEl.hidden = false;
+        btnLensClip.hidden = true;
+      } else {
+        throw new Error('clip never finished rendering');
+      }
+    } catch (e) {
+      // Honest fallback, per the owner's own spec: no credits / no Fal key
+      // -> just show the trick result normally, never fake a video.
+      const short = e.status === 402 ? 'not enough Sparks for a clip this run' : e.status === 503 ? 'video generation is offline right now' : e.message;
+      matchResultEl.textContent += ` (${short} — trick shown as a result, not a clip)`;
+      btnLensClip.hidden = true;
+    }
+  });
+
+  btnLeaveMatch.addEventListener('click', () => {
+    matchActive = false;
+    matchId = null;
+    matchHud.hidden = true;
+  });
+
+  function onInteractKey(e) {
+    if (e.key.toLowerCase() !== 'e') return;
+    if (matchActive || !nearestNpc) return;
+    startMatch(nearestNpc);
+  }
+}
 </script>
 </body>
 </html>

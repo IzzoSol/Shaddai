@@ -9,7 +9,7 @@
       "_note": "Sandbox response (PAY_SANDBOX=1). Identical JSON shape to real x402."
     },
     "costUsdc": 0.001,
-    "ts": 1788507439779
+    "ts": 1789318397747
   },
   "18bfd8293f5c9525194d7ede22a5cbb02514206d0b8414f4fef12e3080df92bd": {
     "response": {

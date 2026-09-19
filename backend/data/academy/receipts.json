@@ -63,5 +63,18 @@
       "openedAt": "2026-09-04T07:37:19.775Z",
       "closedAt": "2026-09-04T07:37:19.779Z"
     }
+  ],
+  "lesson_1789318397740": [
+    {
+      "tabId": "tab_7635843bb79d",
+      "provider": "helius",
+      "callsMade": 1,
+      "totalSpent": 0.001,
+      "refunded": 0.499,
+      "rail": "sandbox-channel",
+      "sig": "sandbox",
+      "openedAt": "2026-09-13T16:53:17.742Z",
+      "closedAt": "2026-09-13T16:53:17.748Z"
+    }
   ]
 }

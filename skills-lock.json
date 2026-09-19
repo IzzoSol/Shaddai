@@ -1,6 +1,48 @@
 {
   "version": 1,
   "skills": {
+    "character-design": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/character-design/SKILL.md",
+      "computedHash": "f5403a8be973e5f292bd3e51eb7faa82103f44775267c5daebfe10f9c252cd29"
+    },
+    "fal-gamedev": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/fal-gamedev/SKILL.md",
+      "computedHash": "1eb03d6a53a6ba28ae08ffb0a50f08e7c95cc0000da0c4bd7f62db5a842bb0e7"
+    },
+    "fal-models-catalog": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/fal-models-catalog/SKILL.md",
+      "computedHash": "c9755fbbe7e56fdec1f8dc5347d1e8d858736b7c23d8d77f04f9140b544095e6"
+    },
+    "fal-prompting": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/fal-prompting/SKILL.md",
+      "computedHash": "5d0c1820e74b8faf5d7b3156700d1647edf60a535325b498c76b57f40b252ede"
+    },
+    "fal-recipes": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/fal-recipes/SKILL.md",
+      "computedHash": "389a15f64ca7d5c6ea02bda429a91c0cee9a8a0751bdf72bebf94ff785f26257"
+    },
+    "fal-regenerate-3d": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/fal-regenerate-3d/SKILL.md",
+      "computedHash": "10330ab4d14600561af6f52b46f76aa60bda912ec614660216009cd5bff5cbd9"
+    },
+    "genmedia-workflow": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/genmedia-workflow/SKILL.md",
+      "computedHash": "b49ce42b6e952778aa08f9c42a8f2aae18c20c7ee0f72a2f9091e15e9edec7bc"
+    },
     "gsap-core": {
       "source": "greensock/gsap-skills",
       "sourceType": "github",
@@ -72,6 +114,12 @@
       "sourceType": "github",
       "skillPath": "higgsfield-soul-id/SKILL.md",
       "computedHash": "6d468aafc15bacee9f4e86c2726e8351e18fe588301974332535db5a666de7c6"
+    },
+    "model-routing": {
+      "source": "fal-ai-community/skills",
+      "sourceType": "github",
+      "skillPath": "skills/model-routing/SKILL.md",
+      "computedHash": "ffaa8e374afd7e5f0ecc166c906e18222d3fa8dc88693ac8c0f39052680208c7"
     }
   }
 }

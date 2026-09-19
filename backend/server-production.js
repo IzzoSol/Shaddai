@@ -2162,6 +2162,13 @@ app.get('/api/search/web', (req, res) => {
   const ws = require('./lib/websearch');
   ws.handler(req, res);
 });
+// RESEARCH → LEARN — search live web, scrape the top public pages (SSRF-guarded),
+// and fold them into a named agent KB so the brain grows from real data.
+// POST /api/research/learn { q, agent='ORACLE', limit=3, maxChars=60000 }
+app.post('/api/research/learn', express.json({ limit: '64kb' }), (req, res) => {
+  const rl = require('./lib/research-learn');
+  rl.handler(req, res);
+});
 // GRIDIRON PROSPECT — Game character saves, loads, and exports
 app.use('/api/gridiron', require('./routes/gridiron-routes'));
 // CRYPTO DATA API — keyless, read-only façade over existing market proxies (/api/data/v1/*)

@@ -369,11 +369,80 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .bubble span{display:block;font-family:'Share Tech Mono',monospace;font-weight:700;}
 
 /* ── HEATMAP VIEW ──────────────────────────────────── */
-.heatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:3px;padding:12px;}
-.heatcell{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;color:#000;font-family:'Share Tech Mono',monospace;}
-.heatcell:hover{transform:scale(1.06);z-index:2;box-shadow:0 4px 12px rgba(0,0,0,.5);}
-.heatcell span{font-size:8px;font-weight:700;opacity:.85;}
-.heatcell b{font-size:11px;}
+.heat-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:7px 12px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;}
+.ht-group{display:flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:3px;padding:2px;background:var(--bg2);}
+.ht-lab{font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:1.5px;color:var(--muted);padding:0 6px;}
+.ht-btn{font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;padding:4px 9px;background:transparent;color:var(--text2);border:none;cursor:pointer;border-radius:2px;transition:all .15s;}
+.ht-btn:hover{color:var(--text);}
+.ht-btn.on{background:var(--cgrd);color:var(--P);box-shadow:0 0 0 1px var(--P),var(--gP);text-shadow:var(--gP);}
+.ht-money{border-color:rgba(232,196,92,.55);background:linear-gradient(90deg,rgba(232,196,92,.12),rgba(0,255,156,.06));}
+.ht-money .ht-btn{color:rgba(232,196,92,.95);text-shadow:0 0 10px rgba(232,196,92,.4);}
+.ht-money .ht-btn:hover{color:#fff;background:rgba(232,196,92,.14);}
+.ht-legend{display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);}
+.ht-swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+.heatgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:7px;padding:12px;}
+.heatcell{position:relative;aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;transition:transform .13s,box-shadow .13s,border-color .13s;color:#fff;font-family:'Share Tech Mono',monospace;overflow:hidden;border:2px solid transparent;background:var(--bg2);}
+.heatcell:hover{transform:translateY(-2px);z-index:2;box-shadow:0 8px 20px rgba(0,0,0,.55);}
+.heatcell .hc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.92;}
+.heatcell .hc-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.12) 0%,rgba(0,0,0,.35) 55%,rgba(0,0,0,.82) 100%);}
+.heatcell .hc-top{position:absolute;top:5px;left:6px;z-index:2;font-size:10px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 4px rgba(0,0,0,.9);}
+.heatcell .hc-badges{position:absolute;top:4px;right:5px;z-index:2;display:flex;gap:3px;}
+.heatcell .hc-badge{font-size:7px;font-weight:700;padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);}
+.heatcell .hc-mid{position:absolute;z-index:2;bottom:22px;left:0;right:0;text-align:center;font-size:13px;font-weight:800;text-shadow:0 1px 6px rgba(0,0,0,.9);letter-spacing:.5px;}
+.heatcell .hc-name{position:absolute;z-index:2;bottom:2px;left:6px;right:6px;font-size:8px;color:rgba(255,255,255,.85);text-shadow:0 1px 3px rgba(0,0,0,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.heatcell .hc-bar{position:absolute;left:0;right:0;bottom:0;height:3px;z-index:2;}
+.heatcell.noimg .hc-mid{bottom:auto;top:50%;transform:translateY(-50%);}
+.heat-tiers{padding:0 12px 4px;}
+.ht-tier{display:flex;align-items:center;gap:8px;padding:7px 0 3px;font-family:'Syncopate',sans-serif;font-size:7px;font-weight:700;letter-spacing:2px;border-bottom:1px solid var(--border2);margin-top:6px;}
+.ht-tier:first-child{margin-top:0;}
+.ht-tier i{font-style:normal;font-size:9px;}
+.ht-count{font-family:'Share Tech Mono',monospace;font-weight:400;letter-spacing:1px;font-size:8px;opacity:.7;}
+.heatgrid.hg-tier{padding-top:6px;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));}
+/* heat GRAPHS mode — full-width horizontal buttons */
+.heat-graphs{padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+.hg-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg2);cursor:pointer;transition:all .13s;}
+.hg-row:hover{border-color:var(--P);box-shadow:0 0 12px rgba(232,196,92,.14);transform:translateX(2px);}
+.hg-rank{width:24px;font-size:11px;font-weight:800;color:var(--label);text-align:center;flex-shrink:0;}
+.hg-ico{width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);background:var(--bg3);}
+.hg-txt{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px;}
+.hg-sym{font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hg-name{font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hg-band{min-width:110px;display:flex;flex-direction:column;gap:3px;flex:2;}
+.hg-bar{height:7px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;}
+.hg-bar-f{height:100%;border-radius:3px;transition:width .4s;}
+.hg-meta{display:flex;gap:10px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--label);flex-shrink:0;}
+.hg-meta b{color:var(--text);font-weight:700;}
+/* heat bubbles with images */
+.heat-bubbles{display:flex;flex-wrap:wrap;gap:10px;padding:16px;align-content:flex-start;justify-content:center;}
+.hb-bubble{position:relative;border-radius:50%;overflow:hidden;cursor:pointer;transition:transform .15s;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hb-bubble:hover{transform:scale(1.1);z-index:2;}
+.hb-bubble img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.88;}
+.hb-bubble .hb-shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.85) 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;}
+.hb-bubble b{font-size:9px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9);}
+.hb-bubble span{font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9);}
+/* ASK ZEROX $1 sentiment modal */
+.zxpay-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.zxpay-title{font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;color:#e8c45c;text-shadow:0 0 16px rgba(232,196,92,.5);}
+.zxpay-sub{font-size:9px;color:var(--muted);margin-top:2px;}
+.zxpay-wallet{border:1px solid rgba(0,255,156,.25);background:linear-gradient(90deg,rgba(0,255,156,.07),rgba(0,255,156,.02));border-radius:6px;padding:10px 12px;margin:10px 0;word-break:break-all;font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.6;}
+.zxpay-wallet b{font-family:'Syncopate',sans-serif;font-size:7px;letter-spacing:2px;color:#00ff9c;display:block;margin-bottom:3px;}
+.zxpay-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.zxpay-field{flex:1;min-width:180px;font-family:'Share Tech Mono',monospace;font-size:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 10px;outline:none;border-radius:4px;}
+.zxpay-field:focus{border-color:var(--P);}
+.zxpay-big{width:100%;min-height:44px;background:linear-gradient(90deg,rgba(232,196,92,.16),rgba(0,255,156,.1));border:1px solid rgba(232,196,92,.5);color:#e8c45c;font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:4px;margin-top:10px;transition:all .15s;}
+.zxpay-big:hover:not(:disabled){box-shadow:0 0 18px rgba(232,196,92,.35);color:#fff;}
+.zxpay-big:disabled{opacity:.45;cursor:wait;}
+.zxpay-link{font-size:9px;color:var(--C);text-decoration:none;border:1px solid rgba(34,211,238,.35);padding:5px 10px;border-radius:4px;display:inline-block;margin-top:6px;}
+.zxpay-link:hover{background:rgba(34,211,238,.08);}
+.zxpay-note{font-size:8px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.sent-row{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);}
+.sent-row-top{display:flex;align-items:center;gap:8px;}
+.sent-rank{font-size:12px;font-weight:800;color:#e8c45c;min-width:26px;}
+.sent-sym{font-weight:800;font-size:12px;}
+.sent-tag{font-size:8px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.5px;}
+.sent-score{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;}
+.sent-line{font-size:9px;color:var(--text2);line-height:1.5;font-family:'Share Tech Mono',monospace;}
+.sent-line b{color:var(--text);}
 
 /* ── RANKED VIEW ───────────────────────────────────── */
 .rankwrap{display:flex;flex-direction:column;padding:8px 12px;}
@@ -1176,6 +1245,17 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
   </div>
 </div>
 
+<!-- ASK ZEROX $1 SENTIMENT MODAL -->
+<div class="almo" id="sentpaydl" onclick="if(event.target===this)closeSentPay()">
+  <div class="almo-bx" style="width:min(680px,94vw);max-height:90vh;display:flex;flex-direction:column;">
+    <div class="almo-h" style="background:linear-gradient(90deg,#0c0a02,#05080c);border-bottom:1px solid rgba(232,196,92,.3);">
+      <span class="almo-hd" id="zsp-title" style="color:#e8c45c;text-shadow:0 0 12px rgba(232,196,92,.4)">🎓 ASK ZEROX $1 — BEST COINS TO SIZE IN</span>
+      <button class="almo-x" onclick="closeSentPay()">✕</button>
+    </div>
+    <div class="almo-bd"><div id="zsp-body" style="padding:16px;overflow-y:auto"></div></div>
+  </div>
+</div>
+
 <!-- PNL MODAL -->
 <div class="almo" id="pnlmodal" onclick="if(event.target===this)closePnl()">
   <div class="almo-bx" style="width:min(960px,94vw);max-width:96vw;background:#05080c;border:1px solid rgba(240,192,96,.35);">
@@ -1293,7 +1373,7 @@ function init(){
   setInterval(fetchTrending,900000);setInterval(fetchDexHot,120000);
   setInterval(fetchJupiter,30000);setInterval(fetchSolNet,30000);
   setupSrc();renderAlerts();restoreFil();
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAlerts();closeSent();}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAlerts();closeSent();if(typeof closeSentPay==='function')closeSentPay();}});
   // Restore panel state
   if(localStorage.getItem('rc_hidden')==='1') document.getElementById('app').classList.add('rc-hidden');
 }
@@ -1503,17 +1583,111 @@ function renderBubbles(el,rows){
     '</div>';
   }).join('')+'</div>';
 }
+/* ── HEAT VIEW (TURTLE overhaul) ───────────────────────────────────────────
+   Full-button image cells, tiered organization (MOON/WIN/FLAT/PAIN with live
+   color changes), three customizable render styles — squares / graphs / bubbles —
+   and a $1 ASK ZEROX sentiment button wired to PayBox + txn-verify. */
+let _heatStyle = localStorage.getItem('ot_heatstyle') || 'squares';
+let _heatFresh = localStorage.getItem('ot_heatfresh') || 'all'; // hours, or 'all'
+function setHeatStyle(s,el){
+  _heatStyle=s;
+  localStorage.setItem('ot_heatstyle',s);
+  document.querySelector('#heat-style').querySelectorAll('.ht-btn').forEach(b=>b.classList.toggle('on',b.dataset.hs===s));
+  renderHeatmap(document.getElementById('slist'),_getFilteredRows());
+}
+function setHeatFresh(v,el){
+  _heatFresh=v;
+  localStorage.setItem('ot_heatfresh',v);
+  document.querySelector('#heat-fresh').querySelectorAll('.ht-btn').forEach(b=>b.classList.toggle('on',b.dataset.hf===v));
+  renderHeatmap(document.getElementById('slist'),_getFilteredRows());
+}
+function _coinImg(c){ return (c.img||'')||(c.mint&&_img[c.mint])||''; }
+function _multLabel(c){const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);return peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%');}
+function _tier(d){if(d>=5)return['MOON','#00ff41','🌕'];if(d>=2)return['WIN','#00ff9c','✅'];if(d>=1)return['FLAT','#f4c842','●'];return['PAIN','#ff3d5a','▼'];}
+function _freshCut(rows){ if(_heatFresh==='all') return rows; const cut=Date.now()-parseInt(_heatFresh)*3600000; return rows.filter(c=>(c.ts||0)>=cut); }
 function renderHeatmap(el,rows){
-  const list=rows.slice(0,150);
-  el.innerHTML='<div class="heatgrid">'+list.map(c=>{
+  if(!el) return;
+  const tool=()=>'<div class="heat-tools">'+
+    '<span class="ht-lab">HEAT STYLE</span>'+
+    '<div class="ht-group" id="heat-style">'+
+      '<button class="ht-btn'+( _heatStyle==='squares'?' on':'')+'" data-hs="squares" onclick="setHeatStyle(\'squares\')" title="Full-button image tiles, color-banded by performance">▦ SQUARES</button>'+
+      '<button class="ht-btn'+( _heatStyle==='graphs'?' on':'')+'" data-hs="graphs" onclick="setHeatStyle(\'graphs\')" title="Full-width ranked bar rows — best for spread analysis">▤ GRAPHS</button>'+
+      '<button class="ht-btn'+( _heatStyle==='bubbles'?' on':'')+'" data-hs="bubbles" onclick="setHeatStyle(\'bubbles\')" title="Image bubbles sized by FDV">● BUBBLES</button>'+
+    '</div>'+
+    '<span class="ht-lab" style="margin-left:6px">FRESH</span>'+
+    '<div class="ht-group" id="heat-fresh">'+
+      '<button class="ht-btn'+( _heatFresh==='all'?' on':'')+'" data-hf="all" onclick="setHeatFresh(\'all\')">ALL</button>'+
+      '<button class="ht-btn'+( _heatFresh==='24'?' on':'')+'" data-hf="24" onclick="setHeatFresh(\'24\')">24H</button>'+
+      '<button class="ht-btn'+( _heatFresh==='7'?' on':'')+'" data-hf="7" onclick="setHeatFresh(\'7\')">7D</button>'+
+    '</div>'+
+    '<div class="ht-group ht-money">'+
+      '<button class="ht-btn" id="askzerox1" onclick="openSentiment()" title="$1 → ZEROX ranks the best few coins to size in + sentiment">🎓 ASK ZEROX $1</button>'+
+    '</div>'+
+    '<div class="ht-legend" style="margin-left:auto">'+
+      '<span class="ht-swatch" style="background:#00ff41"></span>MOON'+'<span class="ht-swatch" style="background:#00ff9c;margin-left:6px"></span>WIN'+
+      '<span class="ht-swatch" style="background:#f4c842;margin-left:6px"></span>FLAT'+
+      '<span class="ht-swatch" style="background:#ff3d5a;margin-left:6px"></span>PAIN'+
+    '</div>'+
+  '</div>';
+  let base=_freshCut(rows);
+  const N={squares:120,graphs:60,bubbles:70}[_heatStyle]||60;
+  if(_heatStyle==='graphs') return el.innerHTML=tool()+renderHeatGraphs(_freshCut(rows).slice(0,N));
+  if(_heatStyle==='bubbles') return el.innerHTML=tool()+renderHeatBubbles(_freshCut(rows).slice(0,N));
+  const list=_freshCut(rows).slice(0,N);
+  const tiers=[['PAIN',d=>d<1],['FLAT',d=>d<2],['WIN',d=>d<5],['MOON',d=>d>=5]];
+  let html=tool();
+  for(const [tname,fn] of tiers){
+    const bucket=list.filter(c=>fn(_perfMult(c)));
+    if(!bucket.length) continue;
+    const [sym,color,icon]=_tier(tname==='MOON'?5:tname==='WIN'?2:tname==='FLAT'?1:0);
+    html+='<div class="heat-tiers"><div class="ht-tier" style="color:'+color+'"><i>'+icon+'</i>'+tname+' <span class="ht-count">'+bucket.length+' · '+sym+'</span></div></div>';
+    html+='<div class="heatgrid hg-tier">'+bucket.map(c=>_heatSquare(c)).join('')+'</div>';
+  }
+  el.innerHTML=html;
+}
+function _perfMult(c){const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);return peak>=2?peak:cur;}
+function _heatSquare(c){
+  const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
+  const mult=_perfMult(c); const col=_perfColor(mult);
+  const img=_coinImg(c); const L=(c.symbol||'?').charAt(0).toUpperCase();
+  const src=SC[c.source]||'#888';
+  return '<div class="heatcell '+(_heatStyle==='squares'?(img?'':'noimg'):'')+'" title="'+esc(c.symbol||'?')+' — '+(c.name?esc(c.name):'')+' · entry '+usd(c.entryFdv)+' · peak '+peak.toFixed(1)+'× · '+ago(c.ts)+' ago" '+
+    'style="border-color:'+col+'" onclick="makePnl(\''+(c.mint||'')+'\')">'+
+    (img?'<img class="hc-img" src="'+esc(img)+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+
+    '<div class="hc-shade" style="background:linear-gradient(180deg,'+col+'30 0%,rgba(0,0,0,.35) 55%,rgba(0,0,0,.85) 100%)"></div>'+
+    '<span class="hc-top" style="color:'+col+'">'+esc((c.symbol||'?').slice(0,7))+'</span>'+
+    '<span class="hc-badges"><span class="hc-badge" style="color:'+src+'">'+esc((c.source||'theo').slice(0,5))+'</span></span>'+
+    '<span class="hc-mid" style="color:'+col+'">'+(peak>=5?'🌕 ':'')+_multLabel(c)+'</span>'+
+    '<span class="hc-name">'+esc((c.name||'').slice(0,26))+' · '+ago(c.ts)+'</span>'+
+    '<div class="hc-bar" style="background:'+col+'"></div>'+
+  '</div>';
+}
+function renderHeatGraphs(list){
+  const maxMult=Math.max(1,...list.map(c=>c.peakMult||1));
+  return '<div class="heat-graphs">'+list.map((c,i)=>{
+    const peak=c.peakMult||1; const col=_perfColor(peak);
+    const img=_coinImg(c); const nowFdv=(c.entryFdv||0)*peak;
+    return '<div class="hg-row" onclick="makePnl(\''+(c.mint||'')+'\')" title="ASK ZEROX or generate PNL — tap for actions">'+
+      '<span class="hg-rank">#'+(i+1)+'</span>'+
+      (img?'<img class="hg-ico" src="'+esc(img)+'" loading="lazy" onerror="this.style.display=\'none\'">':'<div class="hg-ico" style="display:flex;align-items:center;justify-content:center;font-weight:800;color:'+col+'">'+(c.symbol||'?').charAt(0)+'</div>')+
+      '<div class="hg-txt"><span class="hg-sym" style="color:'+col+'">'+esc((c.symbol||'?').slice(0,10))+'</span><span class="hg-name">'+esc((c.name||'').slice(0,30))+' · '+ago(c.ts)+'</span></div>'+
+      '<div class="hg-band"><div class="hg-bar"><div class="hg-bar-f" style="width:'+Math.max(3,Math.min(100,Math.round(peak/maxMult*100)))+'%;background:linear-gradient(90deg,'+col+'66,'+col+')"></div></div></div>'+
+      '<div class="hg-meta"><span>entry <b>'+usd(c.entryFdv)+'</b></span><span>now <b style="color:'+col+'">'+usd(nowFdv)+'</b></span><span>peak <b style="color:#f4c842">'+peak.toFixed(1)+'×</b></span></div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function renderHeatBubbles(list){
+  const maxFdv=Math.max(1,...list.map(c=>c.entryFdv||1));
+  return '<div class="heat-bubbles">'+list.map(c=>{
     const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
-    const mult=peak>=2?peak:cur;
-    const col=_perfColor(mult);
-    const intensity=Math.min(1,Math.abs(mult-1)/4+.25);
-    return '<div class="heatcell" title="'+esc(c.symbol||'?')+' — peak '+peak.toFixed(1)+'×" '+
-      'style="background:'+col+';opacity:'+intensity.toFixed(2)+'" onclick="makePnl(\''+(c.mint||'')+'\')">'+
-      '<span>'+esc((c.symbol||'?').slice(0,5))+'</span>'+
-      '<b>'+(peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%'))+'</b>'+
+    const size=26+Math.round(Math.sqrt((c.entryFdv||1)/maxFdv)*84);
+    const col=_perfColor(peak>=2?peak:cur);
+    const img=_coinImg(c);
+    const inner=img
+      ?'<img src="'+esc(img)+'" loading="lazy" onerror="this.parentNode.style.background=\''+col+'\'">'
+      :'';
+    return '<div class="hb-bubble" style="width:'+size+'px;height:'+size+'px;border-color:'+col+';box-shadow:0 0 '+(size/8)+'px '+col+'55'+'" title="'+esc(c.symbol||'?')+' — peak '+peak.toFixed(1)+'×" onclick="makePnl(\''+(c.mint||'')+'\')">'+
+      inner+'<div class="hb-shade"><b>'+esc((c.symbol||'?').slice(0,8))+'</b><span style="color:'+col+'">'+(peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%'))+'</span></div>'+
     '</div>';
   }).join('')+'</div>';
 }
@@ -1581,7 +1755,7 @@ function renderSplit(el,rows){
     const col=_healthColor(h);
     const peak=c.peakMult||1,cur=typeof c.currentMult==='number'?c.currentMult:(c.curMult||1);
     const multLab=peak>=2?peak.toFixed(1)+'×':(cur>=1?'+'+Math.round((cur-1)*100)+'%':Math.round((cur-1)*100)+'%');
-    const soc=c.socials&&(c.socials.twitter?'𝕏 ':c.socials.website?'🌐 ':c.socials.telegram?'✈ ':''):'';
+    const soc=(c.socials&&c.socials.twitter)?'𝕏 ':(c.socials&&c.socials.website)?'🌐 ':(c.socials&&c.socials.telegram)?'✈ ':'';
     return '<div class="launch-row" onclick="askZerox(\''+esc(c.mint||'')+'\')" title="'+esc(c.symbol||'?')+' — health '+h+'/100">'+
       '<span class="launch-rank">'+((i+1))+')</span>'+
       '<span class="launch-sym" style="color:'+col+'">'+esc(c.symbol||'?')+'</span>'+
@@ -2274,6 +2448,105 @@ function zxRender(body,j,sym){
 function zxCell(k,v,c){return '<div class="zx-cell"><div class="zx-k">'+k+'</div><div class="zx-v" style="color:'+c+'">'+v+'</div></div>';}
 function ccazorx(m){if(m&&navigator.clipboard) navigator.clipboard.writeText(m).then(()=>toast('CA COPIED'));}
 function closeZx(){const m=document.getElementById('zxmodal');if(m)m.classList.remove('on');}
+
+/* ── ASK ZEROX $1 — SENTIMENT / BEST COINS (PayBox + txn-verify) ─────────────
+   $1 unlocks ZEROX ranking the best few coins to size into right now + sentiment.
+   Payment: Ask-ZEROX credits on a wallet address, OR send 1 USDC to the ZEROX
+   PayBox wallet and paste the Solscan txn as proof. POSTs the new
+   /api/pro-signals/zerox/sentiment endpoint and renders the ranked picks. */
+let _zsp={wallet:null,active:false};
+function closeSentPay(){const m=document.getElementById('sentpaydl');if(m)m.classList.remove('on');_zsp.active=false;}
+async function openSentiment(){
+  const mod=document.getElementById('sentpaydl'),body=document.getElementById('zsp-body'),tt=document.getElementById('zsp-title');
+  if(!mod) return;
+  _zsp.active=true;
+  if(tt) tt.textContent='🎓 ASK ZEROX $1 — BEST COINS TO SIZE IN';
+  if(body) body.innerHTML='<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--muted);padding:26px;text-align:center;letter-spacing:2px">LOADING WALLET…</div>';
+  mod.classList.add('on');
+  let wallet='', checkout='';
+  try{
+    const w=await fetch(BASE+'/api/paybox/wallets',{signal:AbortSignal.timeout(12000)});
+    const wj=await w.json();
+    const sol=(wj.wallets||[]).find(x=>/sol|zero|evm/i.test(x.label||'')||/^[1-9A-HJ-NP-Za-km-z]{32,44}/.test(x.address||''))||(wj.wallets||[])[0];
+    wallet=(sol&&sol.address)||'';
+  }catch(e){ /* wallet optional — checkout link still shown */ }
+  try{
+    const c=await fetch(BASE+'/api/paybox/tip-link?agent=ZEROX&amount_usd=1',{signal:AbortSignal.timeout(12000)});
+    const cj=await c.json();
+    checkout=(cj&&(cj.checkoutUrl||cj.checkout_url))||'';
+  }catch(e){ /* checkout link optional */ }
+  body.innerHTML=
+    '<div class="zxpay-head">'+
+      '<div style="font-size:26px">🧠</div>'+
+      '<div><div class="zxpay-title">ZEROOX READS THE BOARD — $1</div>'+
+      '<div class="zxpay-sub">one dollar (or 1 Ask-ZEROX credit) → ZEROX ranks the best few coins to size into right now, each with sentiment + theses</div></div>'+
+    '</div>'+
+    (wallet?('<div class="zxpay-wallet"><b>◈ SEND 1 USDC (SOL) TO ZEROX PAYBOX WALLET</b>'+
+      '<div style="font-size:9px;color:#93a49b;margin-bottom:4px">copy the address, send $1 from your wallet</div>'+
+      wallet+
+      '<div class="zxpay-row"><button class="zxpay-link" style="border:none;color:#00ff9c;background:none;cursor:pointer;padding:0;margin:0" onclick="copyTxt(\''+wallet+'\')">📋 COPY ADDRESS</button>'+
+      (checkout?'<a class="zxpay-link" href="'+esc(checkout)+'" target="_blank">💳 MOONPAY — PAY $1 CHECKOUT (if available)</a>':'')+
+      '</div></div>'):'')+
+    '<div style="margin-top:10px;font-size:9px;color:var(--muted)">or — if your wallet already holds Ask-ZEROX credits, paste it below and ZEROX uses 1 credit.</div>'+
+    '<div class="zxpay-row">'+
+      '<input class="zxpay-field" id="zsp-wallet" placeholder="YOUR WALLET (SOL) — spend 1 credit if you have credits" value="">'+
+    '</div>'+
+    '<div class="zxpay-row">'+
+      '<input class="zxpay-field" id="zsp-txn" placeholder="OR — SOLSCAN TXN LINK OF YOUR $1 PAYMENT (proof)">'+
+      '<input class="zxpay-field" id="zsp-n" placeholder="HOW MANY (3-12)" value="5" style="max-width:110px;min-width:90px">'+
+    '</div>'+
+    '<button class="zxpay-big" id="zsp-go" onclick="runSentiment()">🔮 RUN ZEROX SENTIMENT — RANK BEST COINS</button>'+
+    '<div id="zsp-res" style="margin-top:14px"></div>';
+}
+async function runSentiment(){
+  const go=document.getElementById('zsp-go');
+  if(go){go.disabled=true;go.textContent='ZEROX RANKING THE BOOK…';}
+  const res=document.getElementById('zsp-res');
+  if(res) res.innerHTML='<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--P);padding:10px;text-align:center;letter-spacing:1px">⚙ RANKING HEALTHIEST SETUPS, SCANNING LIQ / HOLDERS / VOL / RISK…</div>';
+  try{
+    const address=(document.getElementById('zsp-wallet')||{}).value||'';
+    const txn=(document.getElementById('zsp-txn')||{}).value||'';
+    const n=Math.max(1,Math.min(parseInt((document.getElementById('zsp-n')||{}).value)||5,12));
+    const r=await fetch(BASE+'/api/pro-signals/zerox/sentiment',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({address:address.trim(),solscanUrl:txn.trim(),q:'ZEROX sentiment — best coins to size in now',n}),
+      signal:AbortSignal.timeout(30000),
+    });
+    const j=await r.json();
+    if(!j||!j.ok){
+      if(res) res.innerHTML='<div style="color:var(--A);font-family:\'Share Tech Mono\',monospace;font-size:10px;padding:12px">'+(j&&j.error?esc(String(j.error)):'ZEROX COULD NOT RANK')+'</div>';
+      return;
+    }
+    let html='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(0,255,156,.3);background:rgba(0,255,156,.06);border-radius:6px;margin-bottom:12px;font-family:\'Share Tech Mono\',monospace;font-size:9px;color:var(--S)">✔ PAID: '+esc(j.fee||'1 USDC')+' — '+j.count+' COINS RANKED</div>';
+    (j.rows||[]).forEach(rx=>{
+      const v=rx.sentiment||{},col=v.color||'#00ff9c';
+      const escM=(rx.mint||'');
+      const spark=(rx.entry&&rx.entry.zones||[]).slice(0,2).map(z=>'<span>'+esc(z.label)+' '+usd(z.hi)+'</span>').join(' · ');
+      html+='<div class="sent-row"><div class="sent-row-top">'+
+        '<span class="sent-rank">#'+rx.rank+'</span>'+
+        '<span class="sent-sym" style="color:'+col+'">'+esc(rx.symbol||'?')+'</span>'+
+        '<span class="sent-tag" style="background:'+col+'22;color:'+col+';border:1px solid '+col+'66">'+esc(v.emoji||'')+' '+esc(v.tag||'')+'</span>'+
+        '<span class="sent-score" style="color:'+col+'">'+rx.score+'/100</span>'+
+      '</div>'+
+      '<div class="sent-line"><b>THESIS:</b> '+esc(rx.thesis||'')+'</div>'+
+      '<div class="sent-line"><b>ENTRY:</b> '+spark+'</div>'+
+      '<div class="sent-line"><b>EXIT:</b> '+(rx.exit&&rx.exit.targets||[]).map(t=>esc(t.zone+' '+t.label)).join(' · ')+'</div>'+
+      '<div class="sent-line" style="color:'+col+'">'+esc(rx.bottomLine||'')+'</div>'+
+      '<div class="zxpay-row">'+
+        '<button class="zxpay-link" style="margin:4px 0 0" onclick="closeSentPay();askZerox(\''+escM+'\')">🍽 FULL READ</button>'+
+        '<button class="zxpay-link" style="margin:4px 0 0" onclick="window.open(\'https://dexscreener.com/solana/'+escM+'\',\'_blank\')">📈 DEX</button>'+
+        '<button class="zxpay-link" style="margin:4px 0 0" onclick="window.open(\'https://solscan.io/token/'+escM+'\',\'_blank\')">🔎 SOLSCAN</button>'+
+      '</div></div>';
+    });
+    html+='<div style="text-align:center;margin-top:6px"><button class="zxpay-link" style="cursor:pointer" onclick="closeSentPay()">DONE — CLOSE</button></div>';
+    if(res) res.innerHTML=html;
+  }catch(e){
+    if(res) res.innerHTML='<div style="color:var(--A);font-family:\'Share Tech Mono\',monospace;font-size:10px;padding:12px">SENTIMENT UNREACHABLE — CHECK SERVER</div>';
+  }finally{
+    if(go){go.disabled=false;go.textContent='🔮 RUN ZEROX SENTIMENT — RANK BEST COINS';}
+  }
+}
+function copyTxt(t){if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('ADDRESS COPIED'));}
 function tickAlerts(){
   if(!_alerts.length||!_calls.length) return;
   let ch=false;

@@ -1,0 +1,26 @@
+[
+ {
+  "id": "terrain-circuit-sand",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Full-frame flat macro texture swatch filling the entire image edge to edge with uniform even detail, no vignette, no border, no central composition, no focal point, evenly distributed, top-down, evenly lit, no objects, no text. Pale beige sand grains with fine rippled dunes texture and thin glowing teal circuit-trace lines running across the whole surface at regular intervals.",
+  "out": "fal-assets/world/terrain/terrain-circuit-sand.png"
+ },
+ {
+  "id": "terrain-red-regolith",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Full-frame flat macro texture swatch filling the entire image edge to edge with uniform even detail, no vignette, no border, no central composition, no focal point, evenly distributed, top-down, evenly lit, no objects, no text. Rust-red desert regolith, fine granular dust with many small scattered gravel fragments evenly distributed and faint parallel tire-track ripples.",
+  "out": "fal-assets/world/terrain/terrain-red-regolith.png"
+ },
+ {
+  "id": "terrain-root-moss-floor",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Full-frame flat macro texture swatch filling the entire image edge to edge with uniform even detail, no vignette, no border, no central composition, no focal point, evenly distributed, top-down, evenly lit, no objects, no text. Dense deep-green moss carpet with a network of cream-colored thin roots crossing it evenly everywhere and tiny amber glowing mushroom caps sprinkled evenly.",
+  "out": "fal-assets/world/terrain/terrain-root-moss-floor.png"
+ }
+]

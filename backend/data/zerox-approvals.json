@@ -1,0 +1,53 @@
+{
+  "approvals": [
+    {
+      "kind": "sentiment",
+      "question": "ZEROX sentiment - best coins to size in now",
+      "mints": [
+        "J8X5ygWHY5uHFch7m3MisSC7eDAWpAkgi1pyqfT5pump",
+        "biddm3N7RjyjfcnzmjgrQJ24QKooBGUy1RYP1aEgtzW",
+        "EpEfnZxQyiBXppSKi8sncc8w4corn1UJbF9G91fQpump"
+      ],
+      "symbols": [],
+      "proof": "solscan.io/tx/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "payer": null,
+      "proofKind": "solscan",
+      "status": "accepted",
+      "fee": "1 USDC",
+      "submittedAt": 1789839995700
+    },
+    {
+      "kind": "pay-ask",
+      "question": "Test vault question",
+      "mint": "GJAFwCtWqgeRgNqKfAeKkYcCxxZWqBozexJfdVnzzzWT",
+      "symbol": null,
+      "proof": "https://solscan.io/tx/5KtPn1qYpVhqQZqWqVzJm8tJYtyszPkkQ9mWQ1o2zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+      "proofKind": "solscan",
+      "status": "accepted",
+      "fee": "1 USDC",
+      "submittedAt": 1788930657754
+    },
+    {
+      "kind": "pay-ask",
+      "question": "Test vault question",
+      "mint": "GJAFwCtWqgeRgNqKfAeKkYcCxxZWqBozexJfdVnzzzWT",
+      "symbol": null,
+      "proof": "https://solscan.io/tx/5KtPn1qYpVhqQZqWqVzJm8tJYtyszPkkQ9mWQ1o2zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+      "proofKind": "solscan",
+      "status": "accepted",
+      "fee": "1 USDC",
+      "submittedAt": 1788930631620
+    },
+    {
+      "kind": "pay-ask",
+      "question": "Is this a good entry right now?",
+      "mint": "MUCHWOW",
+      "symbol": "MUCHWOW",
+      "proof": "https://solscan.io/tx/5ePZXb1vjoxrVKqF4Y2TWPvZbBBvDjZo9h3h3Gq7fYx4RXjFtzUQmNQ2HDgN1UKfT2X8fPRyJ7dwJjDqLTkJzi7P",
+      "proofKind": "solscan",
+      "status": "accepted",
+      "fee": "1 USDC",
+      "submittedAt": 1788928719585
+    }
+  ]
+}

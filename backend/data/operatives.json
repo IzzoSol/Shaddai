@@ -1,6 +1,83 @@
-﻿{
-    "nextTokenId":  28,
-    "operatives":  {
-
-                   }
+{
+  "nextTokenId": 27,
+  "operatives": {
+    "op_x_1789259692530": {
+      "id": "op_x_1789259692530",
+      "tokenId": 3,
+      "owner": "local",
+      "codename": "Traveler",
+      "archetype": "pixel",
+      "model": "SHADDAI",
+      "rarity": "common",
+      "look": {
+        "archetype": "pixel",
+        "rig": {
+          "name": "Casual",
+          "shirt": "#2f6fe8",
+          "pants": "#37414f",
+          "shoeStyle": "sneaker",
+          "shoe": "#e8e8e8",
+          "cap": "#1a1a1a",
+          "hair": "#b0b0b0",
+          "skin": "#f2c9a0",
+          "__phase": 6.29,
+          "anim": "idle",
+          "office": "quill",
+          "hoodUp": true,
+          "watch": "#e8c33a",
+          "tie": "#c0392b",
+          "robot": true,
+          "led": "#5fe0ff",
+          "emblem": "#5fe0ff",
+          "glasses": true
+        }
+      },
+      "portrait": null,
+      "brain": {
+        "tier": "free",
+        "brainId": "ollama-local",
+        "persona": ""
+      },
+      "tools": [],
+      "room": {
+        "theme": "neon-loft",
+        "scene": null,
+        "wearablesLook": {
+          "archetype": "pixel",
+          "rig": {
+            "name": "Robot",
+            "robot": true,
+            "skin": "#7a3ac0",
+            "cap": "#7a3ac0",
+            "shirt": "#4a2080",
+            "pants": "#4a2080",
+            "shoe": "#3b1a66",
+            "led": "#f2c84a",
+            "emblem": "#f2c84a",
+            "__phase": 36.63,
+            "anim": "idle"
+          }
+        }
+      },
+      "inventory": {
+        "files": [],
+        "collectables": [],
+        "cosmetics": []
+      },
+      "economy": {
+        "auraEarned": 0,
+        "creditsSpent": 0,
+        "jobsDone": 0,
+        "earnings": 0
+      },
+      "stats": {
+        "speed": 40,
+        "power": 40,
+        "iq": 40
+      },
+      "createdAt": 1789259692530,
+      "updatedAt": 1789315019762,
+      "source": "pixel-forge"
+    }
+  }
 }

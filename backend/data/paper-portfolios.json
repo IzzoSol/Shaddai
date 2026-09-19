@@ -1,0 +1,54 @@
+{
+  "zerox-demo": {
+    "userId": "zerox-demo",
+    "startingBalance": 1000,
+    "balance": 1000,
+    "perTradeStake": 0.02,
+    "paybox": [
+      {
+        "label": "ZEROX · Solana",
+        "address": "43ZGQ9pMBYR774c7W8e9o4PyYk4xJh2Vz3AsJDhEKHmn",
+        "chain": "solana",
+        "note": "SOL and SPL tokens only"
+      },
+      {
+        "label": "ZEROX · Robinhood",
+        "address": "0x6A0Ce35f920163599fE2C00d63991d92DA7069FA",
+        "chain": "evm",
+        "note": "EVM address — confirm the network before sending"
+      }
+    ],
+    "execution": {
+      "base": "0xf4cf0a113f06b113cec2a8bf5a5f115d203dd966",
+      "solana": "8vSSZ42zi3oBw47F1CZi2GaWRMANfZhwxaFCVbjsTZHs"
+    },
+    "createdAt": 1789761236073,
+    "updatedAt": 1789765235910,
+    "openTrades": [],
+    "closedTrades": [
+      {
+        "symbol": "SOL",
+        "side": "buy",
+        "sizePct": 0.02,
+        "entry": 113.44,
+        "notional": 20,
+        "openedAt": 1789765231860,
+        "exit": 113.44,
+        "pnl": 0,
+        "status": "closed",
+        "closedAt": 1789765235910,
+        "pnlPct": 0
+      }
+    ],
+    "equity": [
+      {
+        "t": 1789761236073,
+        "s": 1000
+      },
+      {
+        "t": 1789765235910,
+        "s": 1000
+      }
+    ]
+  }
+}

@@ -90,5 +90,17 @@
     "state": "sleeping",
     "mood": "sleeping",
     "updatedAt": "2026-07-08T14:13:42.946Z"
+  },
+  "op_traveler": {
+    "owner": "op_traveler",
+    "codename": "Traveler",
+    "operativeId": "op_x_1789259692530",
+    "theme": "command-center",
+    "build": {
+      "slots": {}
+    },
+    "tools": [],
+    "createdAt": "2026-09-13T00:34:52.548Z",
+    "updatedAt": "2026-09-13T00:34:52.548Z"
   }
 }

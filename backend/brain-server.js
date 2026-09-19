@@ -287,22 +287,40 @@ function agentInfo(id) {
 }
 
 // Grounded LLM answer. Returns null when no provider works.
-async function groundedLLM(agentId, query, chunks) {
+// opt.live=true injects REAL-TIME web results (ORACLE layer) into the context
+// so the brain answers from current data, not only the static corpus.
+async function groundedLLM(agentId, query, chunks, opt) {
   const llm = getLLM();
   if (!llm || !llm.callLLM) return null;
   const meta = AGENT_META[agentId] || AGENT_META.SHADDAI;
   const context = (chunks || []).slice(0, 5).map((c, i) =>
     `[${i + 1}] (${c.system || c.topic || 'knowledge'}) ${(c.text || '').slice(0, 900)}`
   ).join('\n\n');
+  let liveBlock = '';
+  if (opt && opt.live) {
+    try {
+      const ws = require('./lib/websearch');
+      const w = await ws.webSearch(query, { limit: 4 });
+      if (w.ok && w.count) {
+        liveBlock = '\n\nLIVE WEB RESULTS (fetched just now — treat as current, weigh for recency vs the corpus):\n' +
+          w.results.map((r, i) =>
+            `[web ${i + 1}] ${r.title}\n  ${(r.snippet || '').slice(0, 350)}\n  source: ${r.url}`
+          ).join('\n');
+        if (opt._cs) opt._cs({ kind: 'websearch', count: w.count, engine: w.engine, at: new Date().toISOString() });
+      }
+    } catch (e) {
+      console.warn('[brain] live web grounding failed:', e && e.message);
+    }
+  }
   // five-layer grounding: route guidance + digested knowledge + tools ledger
   const layers = knowledge.contextFor(agentId, query);
-  const sys = `${SYSTEM_PROMPTS[agentId] || SYSTEM_PROMPTS.SHADDAI}\n\n${layers}\n\nGrounded knowledge excerpts (use them, cite sources naturally — when a ≈timestamp is present, mention it):\n${context}`;
+  const sys = `${SYSTEM_PROMPTS[agentId] || SYSTEM_PROMPTS.SHADDAI}\n\n${layers}\n\nGrounded knowledge excerpts (use them, cite sources naturally — when a ≈timestamp is present, mention it):\n${context}${liveBlock}`;
   try {
     const r = await llm.callLLM(
       [{ role: 'system', content: sys }, { role: 'user', content: query }],
       { maxTokens: 900, agentName: agentId, temperature: 0.35 }
     );
-    return { content: r.content, provider: r.provider, model: r.model };
+    return { content: r.content, provider: r.provider, model: r.model, live: liveBlock ? true : false };
   } catch (_) { return null; }
 }
 
@@ -557,14 +575,16 @@ router.get('/ask', async (req, res) => {
   const q = String(req.query.q || '').trim();
   const agent = String(req.query.agent || 'SHADDAI').trim().toUpperCase();
   const k = Math.max(1, Math.min(parseInt(req.query.k, 10) || 6, 15));
+  const live = (req.query.live === '1' || req.query.live === 'true');
   if (!q) return res.status(400).json({ error: 'missing q' });
 
   const start = Date.now();
   const hits = searchChunks2(agent, q, k);
   let answer = null;
+  const evidence = [];
 
   if (hits.length) {
-    answer = await groundedLLM(agent, q, hits) || ragFallback(agent, q, hits);
+    answer = await groundedLLM(agent, q, hits, { live, _cs: (e) => evidence.push(e) }) || ragFallback(agent, q, hits);
   }
   if (!answer) {
     answer = { content: 'No grounded knowledge matched this query, and no LLM provider was reachable.', provider: 'none', model: '' };
@@ -577,6 +597,8 @@ router.get('/ask', async (req, res) => {
     answer: answer.content,
     llm_powered: answer.provider !== 'rag-only' && answer.provider !== 'none',
     provider: answer.provider,
+    live: !!(live && answer.live),
+    oracle: evidence,
     ms: Date.now() - start,
     sources: hits.slice(0, 5).map(h => ({
       agent, title: h.title, score: h.score,
@@ -594,6 +616,7 @@ router.get('/ask', async (req, res) => {
 router.get('/synthesize', async (req, res) => {
   if (!checkFreeQuota(req, res)) return;
   const q = String(req.query.q || '').trim();
+  const live = (req.query.live === '1' || req.query.live === 'true');
   if (!q) return res.status(400).json({ error: 'missing q' });
 
   const start = Date.now();
@@ -601,7 +624,7 @@ router.get('/synthesize', async (req, res) => {
     const meta = agentInfo(id);
     const hits = searchChunks2(id, q, 4);
     let ans = null;
-    if (hits.length) ans = await groundedLLM(id, q, hits) || ragFallback(id, q, hits);
+    if (hits.length) ans = await groundedLLM(id, q, hits, { live }) || ragFallback(id, q, hits);
     return {
       agent: id,
       role: meta.role,
@@ -609,6 +632,7 @@ router.get('/synthesize', async (req, res) => {
       rag_used: hits.length,
       answer: ans ? ans.content : null,
       llm_powered: !!(ans && ans.provider !== 'rag-only' && ans.provider !== 'none'),
+      live: !!(live && ans && ans.live),
       top: hits.slice(0, 2).map(h => ({ title: h.title, score: h.score })),
     };
   }));
@@ -617,7 +641,7 @@ router.get('/synthesize', async (req, res) => {
     agent: 'SHADDAI', role: '', score: 0, rag_used: 0, answer: null, llm_powered: false, top: [],
   });
 
-  res.json({ agents, ms: Date.now() - start, llm_powered: agents.some(a => a.llm_powered) });
+  res.json({ agents, ms: Date.now() - start, llm_powered: agents.some(a => a.llm_powered), live: agents.some(a => a.live) });
 });
 
 // ── crosstalk ───────────────────────────────────────────────────────────────
