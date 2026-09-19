@@ -123,6 +123,10 @@ async function main() {
       enable_pbr: true, symmetry_mode: 'auto', enable_animation: !!actionIds, target_polycount: 30000,
     };
     if (actionIds) input.animation_action_id = actionIds[0];
+    // Skin-tone fidelity: v6 texturing can lighten skin. --guide-texture feeds the reference back as texture guidance;
+    // M6_TEXTURE_PROMPT adds an explicit instruction (e.g. "deep brown skin tone, do not lighten").
+    if (argv.includes('--guide-texture')) input.texture_image_url = dataUri(imagePath);
+    if (process.env.M6_TEXTURE_PROMPT) input.texture_prompt = process.env.M6_TEXTURE_PROMPT;
     const sub = await submit('fal-ai/meshy/v6/image-to-3d', input, key);
     const res = await pollUntilDone(sub.status_url, sub.response_url, key, 'meshy v6', 900000);
     if (res.detail) { console.error('❌ MESHY V6 FAILED: ' + JSON.stringify(res.detail)); process.exit(1); }

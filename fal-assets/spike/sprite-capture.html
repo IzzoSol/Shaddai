@@ -41,8 +41,10 @@
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   stage.appendChild(renderer.domElement);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+  const ambL = new THREE.AmbientLight(0xffffff, 1.0);
+  scene.add(ambL);
   const key = new THREE.DirectionalLight(0xffffff, 1.5);
+  window.__setLight = (k) => { ambL.intensity = 1.0 * k; key.intensity = 1.5 * k; };
   key.position.set(2, 4, 3);
   scene.add(key);
   const rim = new THREE.DirectionalLight(0x5fe0ff, 0.5);
