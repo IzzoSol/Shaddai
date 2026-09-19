@@ -95,7 +95,7 @@
     return new THREE.AnimationClip(clip.name, clip.duration, out);
   }
 
-  window.__loadClip = function (glbPath, clipPath) {
+  window.__loadClip = function (glbPath, clipPath, armK) {
     window.__ready = false;
     if (model) { rig.remove(model); model = null; mixer = null; action = null; }
     loader.load(glbPath, (gltf) => {
@@ -110,7 +110,10 @@
       model.scale.setScalar(modelScale);
 
       const startAnim = (clip) => {
-        if (clipPath) clip = retargetClip(clip, model);
+        // Any per-character proportion tweak requires rotations-only clips, else the
+        // clip's baked bone translations would overwrite the stretched joints.
+        if (armK && armK !== 1) window.__stretchArms(armK);
+        if (clipPath || (armK && armK !== 1)) clip = retargetClip(clip, model);
         mixer = new THREE.AnimationMixer(model);
         action = mixer.clipAction(clip);
         action.play();
@@ -122,6 +125,10 @@
       };
       if (clipPath) {
         loader.load(clipPath, (cg) => startAnim(cg.animations[0]), undefined, () => { window.__ready = 'error'; });
+        return;
+      }
+      if (armK && armK !== 1 && gltf.animations && gltf.animations.length) {
+        startAnim(gltf.animations[0]);
         return;
       }
       if (gltf.animations && gltf.animations.length) {
@@ -141,6 +148,20 @@
       renderer.render(scene, camera);
       window.__ready = true;
     }, undefined, (err) => { console.error('load fail', err); window.__ready = 'error'; });
+  };
+
+  // Proportion fix: lengthen arms by moving child joint offsets (translation only;
+  // limbs stretch at elbow/wrist, hands stay unscaled). k = 1.0 -> unchanged.
+  window.__stretchArms = function (k) {
+    for (const side of ['Left', 'Right']) {
+      for (const n of [side + 'ForeArm', side + 'Hand']) {
+        const b = model.getObjectByName(n);
+        if (b) b.position.multiplyScalar(k);
+      }
+    }
+    model.updateMatrixWorld(true);
+    recenter();
+    renderer.render(scene, camera);
   };
 
   window.__setTime = function (t) {

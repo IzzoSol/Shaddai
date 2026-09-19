@@ -4,21 +4,21 @@
   "clips": [
     {
       "clip": "walking",
-      "fitScale": 0.535059331175836,
-      "cropW": 583,
-      "cropH": 927
+      "fitScale": 0.6254728877679697,
+      "cropW": 492,
+      "cropH": 793
     },
     {
       "clip": "running",
-      "fitScale": 0.5385450597176982,
-      "cropW": 536,
-      "cropH": 921
+      "fitScale": 0.6254728877679697,
+      "cropW": 468,
+      "cropH": 793
     },
     {
       "clip": "action",
-      "fitScale": 0.4397163120567376,
-      "cropW": 697,
-      "cropH": 1128
+      "fitScale": 0.5287846481876333,
+      "cropW": 570,
+      "cropH": 938
     }
   ]
 }

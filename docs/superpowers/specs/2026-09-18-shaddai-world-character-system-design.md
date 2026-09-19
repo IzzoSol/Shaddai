@@ -88,14 +88,14 @@ Per the realm art-direction spec: 8 regions (city, meadow, beach, forest, desert
 | Gate | Work | Est. spend | Owner sees |
 |---|---|---|---|
 | 0 | This spec approved; assign SHADDAI ref | $0 | — |
-| 1 | QUILL from `quill-tpose-ref.png` (rig-ready): mesh + rig + sprites | ~$0.65 | 3D model + sprites |
-| 2 | ZEROX, ORACLE, NEXUS, PIKADON, TURTLE: concept image → **approve** → T-pose fix (~$0.05 edit) → mesh/rig. Nothing 3D before approval. | ~$0.75 each, ~$3.75 | concept, then model |
+| 1 | QUILL from `quill-tpose-ref.png` (rig-ready): mesh + rig + sprites | ~$0.80 | 3D model + sprites |
+| 2 | ZEROX, ORACLE, NEXUS, PIKADON, TURTLE: concept image → **approve** → T-pose fix (~$0.05 edit) → mesh/rig. Nothing 3D before approval. | ~$0.85 each, ~$4.25 | concept, then model |
 | 3 | Modular voxel creator (code only) | $0 (fal) | live creator page |
 | 4 | Premium mounts from mecha refs (concept → approve → mesh) | ~$0.50 each | concepts first |
 | 5 | Realm maps + hub interiors, one realm at a time | TBD per realm | concept per realm |
 | 6 | Extra hero characters (teal ninja, green flail) | ~$0.75 each | concept first |
 
-Total for gates 1–2 + 4 (3 mounts): under **$8**. Well inside the remaining budget.
+Total for gates 1–2 + 4 (3 mounts): under **$10**, plus the animation library ($9.60 or $0 via a free clip pack).
 
 ## 8. Open questions for the owner
 1. Which reference is **SHADDAI**?
@@ -156,7 +156,7 @@ Consequence: the animation library is built **once** (~a dozen rig calls on one 
 | interact / gather / craft | **needed** |
 | mounted (seated) idle + ride | **needed** — plus seat anchor per mount |
 
-Ids for the missing clips are looked up in the Meshy animation library before any spend. Cost ≈ one rig call per clip (est. $0.15–0.20 each; the rig is the cheaper half of the ~$0.60 character cost) → **≈ $2 total, once**.
+Ids for the missing clips are looked up in the Meshy animation library before any spend. **CORRECTION (verified against fal pricing API 2026-09-19):** `fal-ai/meshy/rigging` is **$0.80 per call**, not ~$0.15–0.20. Hunyuan v2 mesh is $0.16, so a Hunyuan+rig character is $0.96, not ~$0.60. Meshy v6 image-to-3d with rigging+animation is **$0.80 all-in** and sharper — now the default engine (`character-pipeline.mjs --meshy6`). At $0.80/clip, 12 new clips ≈ **$9.60, once**. Cheaper option: the owner downloads a free clip pack (e.g. Mixamo, needs the owner's login) and I retarget it by bone name (Mixamo's `mixamorig` prefix is a trivial rename) — $0 and hundreds of clips.
 
 ### 10.3 Citizens (voxel) animation
 Code-authored on the box rig (arm/leg swing, weapon swing arcs, hit flash, death tip-over) — $0, and it lives in the same `pixel-people.js` walk math already shipped.

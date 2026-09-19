@@ -24,7 +24,7 @@
  */
 import puppeteer from 'puppeteer';
 import sharp from 'sharp';
-import { mkdirSync, writeFileSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -45,7 +45,10 @@ async function captureRawFrames(page, name, clip, framesPerClip) {
     console.log(`   (skip ${clip} -- no file at ${abs})`);
     return null;
   }
-  await page.evaluate((p) => window.__loadClip(p), glbPath);
+  // Optional per-character proportion fix (see proportions.json) -- e.g. {"armK": 1.3}
+  const propPath = resolve(ROOT, `fal-assets/characters/${name}/proportions.json`);
+  const armK = existsSync(propPath) ? (JSON.parse(readFileSync(propPath, 'utf8')).armK || 1) : 1;
+  await page.evaluate((p, k) => window.__loadClip(p, null, k), glbPath, armK);
   await page.waitForFunction(() => window.__ready === true || window.__ready === 'error', { timeout: 30000 });
   const ready = await page.evaluate(() => window.__ready);
   if (ready === 'error') { console.log(`   (skip ${clip} -- load error)`); return null; }

@@ -91,7 +91,15 @@ async function download(url, outPath) {
 }
 
 async function main() {
-  const [, , name, imagePath, actionIdsArg] = process.argv;
+  // --meshy6 : ONE call (fal-ai/meshy/v6/image-to-3d, $0.80) = mesh + T-pose + rig + animation + real-world height.
+  //   Sharper faces/textures than hunyuan v2 ($0.16) + meshy rigging ($0.80) = $0.96, and cheaper.
+  // --height <m> : rigging_height_meters (default 1.8; the SHADDAI adult unit)
+  const argv = process.argv.slice(2);
+  const useM6 = argv.includes('--meshy6');
+  const hIdx = argv.indexOf('--height');
+  const heightM = hIdx >= 0 ? parseFloat(argv[hIdx + 1]) : 1.8;
+  const pos = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--height');
+  const [name, imagePath, actionIdsArg] = pos;
   if (!name || !imagePath) {
     console.error('usage: node fal-assets/character-pipeline.mjs <name> <path-to-clean-pose-image.png> [action_ids]');
     console.error('  action_ids: optional comma-separated Meshy animation-library ids, e.g. "89,97,178"');
@@ -108,7 +116,27 @@ async function main() {
   const key = falKey();
   const outDir = `fal-assets/characters/${name}`;
 
-  console.log(`▶ character pipeline for "${name}" -- this spends real money (~$0.50-0.60 total).`);
+  if (useM6) {
+    console.log(`▶ meshy v6 pipeline for "${name}" -- $0.80 (mesh + T-pose + rig + animation, ${heightM} m)`);
+    const input = {
+      image_url: dataUri(imagePath), pose_mode: 't-pose', enable_rigging: true, rigging_height_meters: heightM,
+      enable_pbr: true, symmetry_mode: 'auto', enable_animation: !!actionIds, target_polycount: 30000,
+    };
+    if (actionIds) input.animation_action_id = actionIds[0];
+    const sub = await submit('fal-ai/meshy/v6/image-to-3d', input, key);
+    const res = await pollUntilDone(sub.status_url, sub.response_url, key, 'meshy v6', 900000);
+    if (res.detail) { console.error('❌ MESHY V6 FAILED: ' + JSON.stringify(res.detail)); process.exit(1); }
+    const saves6 = [['model_glb', `${name}-mesh.glb`], ['rigged_character_glb', `${name}-rigged.glb`], ['rigged_character_fbx', `${name}-rigged.fbx`], ['animation_glb', `${name}-action.glb`], ['animation_fbx', `${name}-action.fbx`]];
+    for (const [k2, file] of saves6) if (res[k2]?.url) { const f = await download(res[k2].url, `${outDir}/${file}`); console.log(`   saved: ${f.abs} (${(f.bytes / 1e6).toFixed(2)} MB)`); }
+    for (const [ak, av] of Object.entries(res.basic_animations || {})) if (av?.url) {
+      const ext = ak.endsWith('_fbx') ? 'fbx' : 'glb';
+      const f = await download(av.url, `${outDir}/${name}-${ak.replace(/_(glb|fbx)$/, '')}.${ext}`); console.log(`   saved: ${f.abs} (${(f.bytes / 1e6).toFixed(2)} MB)`);
+    }
+    console.log(`
+✔ Done. Character "${name}" (meshy v6) in ${outDir}/`);
+    return;
+  }
+  console.log(`▶ character pipeline for "${name}" -- this spends real money (~$0.96 total: hunyuan $0.16 + rigging $0.80).`);
   if (actionIds) console.log(`   extra animation presets requested: ${actionIds.join(', ')}`);
 
   console.log('1/2: image-to-3D (fal-ai/hunyuan3d/v2, textured_mesh:true)...');
