@@ -166,6 +166,21 @@ async function cmdCharacter(name, flags) {
   cmdCheck(name);
 }
 
+// Image-only: N T-pose variants, ~$0.025 each, NO mesh/rig. Approve a look first.
+async function cmdConcept(name, flags) {
+  const look = arg(flags, 'look');
+  if (!look) throw new Error('--look is required');
+  const n = parseInt(arg(flags, 'n', '3'), 10);
+  const prompt = composePrompt({ look, proportions: arg(flags, 'proportions', 'tall'), style: arg(flags, 'style', 'painted') });
+  const key = falKey();
+  for (let i = 1; i <= n; i++) {
+    const out = `fal-assets/spike/concept-${name}-${i}.png`;
+    const r = await text2img(prompt, out, key);
+    console.log(`  saved ${out} (${(r.bytes / 1e3).toFixed(0)} KB)`);
+  }
+  console.log('Pick one, then: forge.mjs character <name> ... (or copy the winner to spike/char-<name>-tpose.png)');
+}
+
 function cmdCheck(name) {
   const dir = resolve(ROOT, `fal-assets/characters/${name}`);
   if (!existsSync(dir)) { console.log(`✗ no such character: ${name}`); return; }
@@ -186,6 +201,7 @@ const commands = {
   character: () => cmdCharacter(name, flags),
   sprites: () => run('capture-sprites.mjs', [name, flags[0] || '8']),
   check: () => cmdCheck(name),
+  concept: () => cmdConcept(name, flags),
 };
 
 if (!commands[cmd] || !name) {
