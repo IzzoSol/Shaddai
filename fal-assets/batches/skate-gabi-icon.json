@@ -1,0 +1,5 @@
+[
+  { "id": "skate-gabi-icon-raw", "type": "text2img", "register": "raw", "size": "square_hd",
+    "body": "a graphic icon illustration, extremely tight close-up crop showing only the upper face and hair of a cartoon female skater character, filling the entire square frame edge to edge with no margin, no border, no frame, no vignette, no card shape. A curly dark afro with a headband is pulled low over the brow, covering most of the face and one eye, leaving only ONE large simple cartoon eye visible: a plain white circle with a thin black ring iris and one small white highlight dot, no eyelashes, no pupil detail, no anime styling. A tiny round gold hoop earring hangs near the visible cheek. Thick, bold, uniform-width black outlines trace every single shape. Coloring is flat cel-shaded blocks only -- two or three flat tones per surface, absolutely no soft gradients, no 3D rendering, no glossy highlights. Flat 2D vector illustration, minimalist app-icon or sticker style, square composition, no text, no logo, no watermark",
+    "out": "fal-assets/spike/skate-gabi-icon-raw.png" }
+]

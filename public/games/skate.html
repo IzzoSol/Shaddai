@@ -45,32 +45,76 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
   to{ opacity:1; letter-spacing:.03em; filter:brightness(1); } }
 #intro .sub{ color:var(--ink-soft); font-size:14px; letter-spacing:.1em; text-transform:uppercase;
   text-shadow:0 2px 12px rgba(0,0,0,.8); }
-#intro button{ margin-top:6px; font-family:var(--f-display); font-weight:900; font-size:18px; letter-spacing:.08em;
-  padding:16px 48px; background:linear-gradient(135deg,var(--magenta),var(--violet)); color:#fff; border:none;
-  border-radius:4px; cursor:pointer; text-transform:uppercase; box-shadow:0 0 40px rgba(255,47,176,.5); }
-#intro button:hover{ filter:brightness(1.15); }
 #intro .credit{ margin-top:18px; font-size:10px; color:var(--ink-faint); letter-spacing:.1em; text-shadow:0 2px 8px rgba(0,0,0,.9); }
 
-/* ── CHARACTER SELECT ── */
-#select h2{ font-family:var(--f-display); font-size:clamp(22px,4vw,32px); margin:0 0 6px; text-align:center; }
-#select .sub{ color:var(--ink-soft); font-size:13px; margin-bottom:28px; text-align:center; }
-.roster{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; max-width:900px; width:100%; }
-.rider-card{ background:var(--panel); border:1px solid var(--edge); border-radius:10px; padding:16px 10px; text-align:center;
-  cursor:pointer; transition:border-color .15s,transform .1s; position:relative; overflow:hidden; }
-.rider-card:hover:not(.locked){ border-color:var(--cyan); transform:translateY(-3px); }
-.rider-card.sel{ border-color:var(--lime); box-shadow:0 0 24px rgba(157,255,41,.3); }
-.rider-card.locked{ cursor:not-allowed; opacity:.45; }
-.rider-card .portrait{ width:100%; aspect-ratio:1/1.3; display:flex; align-items:flex-end; justify-content:center;
-  margin-bottom:8px; background:radial-gradient(circle at 50% 30%, rgba(255,47,176,.08), transparent 70%); border-radius:8px; overflow:hidden; }
-.rider-card .portrait img{ max-width:88%; max-height:96%; image-rendering:auto;
-  filter:drop-shadow(0 8px 14px rgba(0,0,0,.6)); }
-.rider-card .lock-icon{ font-size:32px; opacity:.6; }
-.rider-card .name{ font-family:var(--f-display); font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
-.rider-card .tag{ font-size:10px; color:var(--ink-faint); margin-top:2px; letter-spacing:.05em; text-transform:uppercase; }
-#select button.go{ margin-top:30px; font-family:var(--f-display); font-weight:900; font-size:16px; letter-spacing:.06em;
-  padding:14px 44px; background:var(--lime); color:#0a1200; border:none; border-radius:4px; cursor:pointer;
-  text-transform:uppercase; }
-#select button.go:disabled{ opacity:.3; cursor:not-allowed; }
+/* ── NEON-CUT BUTTON — deliberate treatment, not a generic gradient pill.
+   Angular clipped corners (Tron-grid motif), a double-layer glow ring, a
+   scanline sweep on hover, and a chevron that shifts on interaction. Shared
+   by every primary CTA in the client (Drop In, Enter the Hub, and future
+   Gate C buttons) so the whole UI reads as one designed system. ── */
+.neon-btn{ position:relative; margin-top:6px; display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--f-display); font-weight:900; font-size:17px; letter-spacing:.12em;
+  padding:17px 40px 17px 32px; background:linear-gradient(120deg, rgba(255,47,176,.16), rgba(139,47,255,.16));
+  color:var(--ink); border:1px solid rgba(255,255,255,.14); cursor:pointer; text-transform:uppercase;
+  clip-path:polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  transition:letter-spacing .2s ease, transform .12s ease; overflow:hidden; }
+.neon-btn::before{ content:''; position:absolute; inset:0; padding:1px;
+  background:linear-gradient(120deg, var(--magenta), var(--cyan), var(--lime));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+  clip-path:inherit; opacity:.85; }
+.neon-btn::after{ content:''; position:absolute; top:0; left:-60%; width:40%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; }
+.neon-btn:hover{ letter-spacing:.16em; transform:translateY(-2px);
+  box-shadow:0 0 28px rgba(255,47,176,.35), 0 0 50px rgba(41,232,255,.18); }
+.neon-btn:hover::after{ left:130%; }
+.neon-btn:disabled{ opacity:.3; cursor:not-allowed; filter:grayscale(.4); }
+.neon-btn:disabled:hover{ letter-spacing:.12em; transform:none; box-shadow:none; }
+.neon-btn:disabled:hover::after{ left:-60%; }
+.neon-btn .chev{ font-size:14px; transition:transform .2s ease; }
+.neon-btn:hover .chev{ transform:translateX(4px); }
+
+/* ── CHARACTER SELECT — a real 3D swivel viewer, not a flat card grid.
+   The rigged .glb (same file the free sprite capture already renders from)
+   loads into a live three.js stage and auto-turntables continuously; arrows
+   cycle riders. The duotone icon is a glowing badge beside the name, per
+   owner ref ("these [duotone] types with the agent type in front of it
+   with a 3D model"). ── */
+#select h2{ font-family:var(--f-display); font-size:clamp(22px,4vw,32px); margin:0 0 4px; text-align:center; }
+#select .sub{ color:var(--ink-soft); font-size:13px; margin-bottom:18px; text-align:center; }
+.swivel-wrap{ display:flex; align-items:center; gap:14px; width:100%; max-width:820px; }
+.swivel-stage{ position:relative; flex:1; aspect-ratio:4/3; max-height:56vh; border-radius:16px; overflow:hidden;
+  border:1px solid var(--edge2); box-shadow:inset 0 0 80px rgba(0,0,0,.65); }
+/* Neon-city backdrop (reuses the already-generated intro hero art — zero
+   new spend), heavily blurred+darkened so it reads as depth behind the
+   rider rather than a flat grid card. */
+.swivel-stage .city-bg{ position:absolute; inset:-6%; background-image:url('assets/skate/intro-hero.png');
+  background-size:cover; background-position:center 25%; filter:blur(7px) brightness(.4) saturate(1.3); }
+.swivel-stage .city-tint{ position:absolute; inset:0;
+  background:radial-gradient(ellipse at 50% 78%, rgba(157,255,41,.14), transparent 60%),
+    linear-gradient(180deg, rgba(10,6,18,.35) 0%, rgba(10,6,18,.75) 100%); }
+.swivel-stage .grid-lines{ position:absolute; inset:0;
+  background:repeating-linear-gradient(90deg, rgba(200,150,255,.06) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(0deg, rgba(200,150,255,.06) 0 1px, transparent 1px 44px); }
+.swivel-stage canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; z-index:1; }
+.swivel-stage .lock-state{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:10px; color:var(--ink-faint); }
+.swivel-stage .lock-state .lock-icon{ font-size:52px; opacity:.5; }
+.swivel-arrow{ flex:none; width:52px; height:52px; border-radius:50%; border:1px solid var(--edge2);
+  background:rgba(21,13,36,.8); color:var(--ink); font-size:22px; cursor:pointer; display:flex; align-items:center;
+  justify-content:center; transition:border-color .15s, background .15s, transform .1s; }
+.swivel-arrow:hover{ border-color:var(--cyan); background:rgba(41,232,255,.12); transform:scale(1.06); }
+.swivel-info{ display:flex; align-items:center; gap:14px; margin-top:18px; }
+.swivel-info .icon-badge{ width:56px; height:56px; border-radius:50%; overflow:hidden; border:2px solid var(--edge2);
+  box-shadow:0 0 20px rgba(157,255,41,.25); background:var(--bg); flex:none; }
+.swivel-info .icon-badge img{ width:100%; height:100%; object-fit:cover; }
+.swivel-info .icon-badge.locked{ display:flex; align-items:center; justify-content:center; font-size:22px; opacity:.5; }
+.swivel-info .meta .name{ font-family:var(--f-display); font-size:20px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; text-align:left; }
+.swivel-info .meta .tag{ font-size:11px; color:var(--ink-faint); letter-spacing:.05em; text-transform:uppercase; text-align:left; }
+.dots{ display:flex; gap:7px; margin-top:16px; }
+.dots span{ width:8px; height:8px; border-radius:50%; background:var(--edge2); transition:background .15s, transform .15s; }
+.dots span.on{ background:var(--lime); transform:scale(1.3); }
 [hidden]{ display:none!important; }
 </style>
 </head>
@@ -81,16 +125,29 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
   <div class="hero-bg" aria-hidden="true"></div>
   <h1>S · K · A · T · E</h1>
   <div class="sub">Nine spots. Blind picks. Every attempt films.</div>
-  <button id="btnPlay">Drop In</button>
+  <button id="btnPlay" class="neon-btn">Drop In <span class="chev">▸</span></button>
   <div class="credit">SHADDAI Arcade · Gate B prototype · flash-tier only, zero Fal credits used yet</div>
 </section>
 
-<!-- ── CHARACTER SELECT (hub.roster_prompt / roster_sub) ── -->
+<!-- ── CHARACTER SELECT — live 3D swivel viewer (hub.roster_prompt / roster_sub) ── -->
 <section id="select" class="screen">
   <h2>Pick your rider</h2>
   <div class="sub">Cosmetic only for now — every rider plays identically until boards and decals unlock.</div>
-  <div class="roster" id="roster"></div>
-  <button class="go" id="btnEnterHub" disabled>Enter the Hub</button>
+  <div class="swivel-wrap">
+    <button class="swivel-arrow" id="btnPrev" aria-label="Previous rider">‹</button>
+    <div class="swivel-stage" id="swivelStage">
+      <div class="city-bg"></div>
+      <div class="city-tint"></div>
+      <div class="grid-lines"></div>
+    </div>
+    <button class="swivel-arrow" id="btnNext" aria-label="Next rider">›</button>
+  </div>
+  <div class="swivel-info">
+    <div class="icon-badge" id="iconBadge"></div>
+    <div class="meta"><div class="name" id="riderName"></div><div class="tag" id="riderTag"></div></div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <button id="btnEnterHub" class="neon-btn" disabled>Enter the Hub <span class="chev">▸</span></button>
 </section>
 
 <!-- ── HUB (placeholder landing after select — full match flow is Gate C) ── -->
@@ -99,22 +156,37 @@ body{ background:radial-gradient(ellipse at 50% -10%, #2a1240 0%, var(--bg) 60%)
   <div class="sub" id="hubSub">Match flow (blind picks, letters, LENS clips) lands at Gate C. This confirms the pipeline end to end: real 3D rider, real captured sprite, real menu.</div>
 </section>
 
-<script>
-// Real riders only — rider_01 (GABI) has a real captured sprite from the
-// Gate B pipeline (fal-assets/character-pipeline.mjs + capture-sprites.mjs).
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// These character GLBs are meshopt-compressed (same pipeline as
+// fal-assets/spike/roster-viewer.html) -- GLTFLoader needs the decoder
+// registered or parsing a compressed buffer silently hangs/fails.
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Real riders only — rider_01 (GABI) has a real rigged .glb from the Gate B
+// pipeline (fal-assets/character-pipeline.mjs: hunyuan3d mesh + meshy rig).
 // The other 5 slots from fal-assets/skate/skate-slots.json are still
-// placeholder/null `src` -- shown locked, never faked with stock art.
+// placeholder/null `src` -- shown locked in the viewport, never faked with
+// a stock model.
 const ROSTER = [
   { id: 'rider_01', name: 'Gabi', tag: 'Ready', locked: false,
-    frames: Array.from({length:8}, (_,i) => `assets/skate/gabi/gabi-walking-0${i}.png`) },
-  { id: 'rider_02', name: '???', tag: 'Coming soon', locked: true, frames: [] },
-  { id: 'rider_03', name: '???', tag: 'Coming soon', locked: true, frames: [] },
-  { id: 'rider_04', name: '???', tag: 'Coming soon', locked: true, frames: [] },
-  { id: 'rider_05', name: '???', tag: 'Coming soon', locked: true, frames: [] },
-  { id: 'rider_06', name: '???', tag: 'Coming soon', locked: true, frames: [] },
+    icon: 'assets/skate/gabi/gabi-icon.png', model: 'assets/skate/gabi/gabi-walking.glb' },
+  { id: 'rider_02', name: '???', tag: 'Coming soon', locked: true },
+  { id: 'rider_03', name: '???', tag: 'Coming soon', locked: true },
+  { id: 'rider_04', name: '???', tag: 'Coming soon', locked: true },
+  { id: 'rider_05', name: '???', tag: 'Coming soon', locked: true },
+  { id: 'rider_06', name: '???', tag: 'Coming soon', locked: true },
 ];
-const FRAME_MS = 140;
 let picked = null;
+let activeIndex = 0;
 
 function show(id) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
@@ -146,30 +218,155 @@ function playShing() {
 
 document.getElementById('btnPlay').addEventListener('click', () => { playShing(); show('select'); });
 
-const rosterEl = document.getElementById('roster');
-ROSTER.forEach((r) => {
-  const card = document.createElement('div');
-  card.className = 'rider-card' + (r.locked ? ' locked' : '');
+// ── Real 3D swivel viewer (three.js) — replaces the old flat sprite-card
+// grid entirely. One live WebGL stage, auto-turntabling the loaded rider's
+// actual rigged .glb (the same file capture-sprites.mjs already renders
+// sprites from), with left/right arrows to cycle the roster. Locked riders
+// show an honest lock state in the viewport instead of loading anything.
+const stageEl = document.getElementById('swivelStage');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 4 / 3, 0.01, 100);
+camera.position.set(0, 0.6, 5.2);
+camera.lookAt(0, 0.5, 0); // BUG FIX: camera was never aimed at the model at all,
+// which is why Gabi rendered as a strange off-center close-up crop. Pulled
+// back further + lower target to give generous margin around the
+// conservative scale above.
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stageEl.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
+keyLight.position.set(2, 4, 3);
+scene.add(keyLight);
+const rimMagenta = new THREE.DirectionalLight(0xff2fb0, 0.9);
+rimMagenta.position.set(-3, 1.5, -2);
+scene.add(rimMagenta);
+const rimCyan = new THREE.DirectionalLight(0x29e8ff, 0.6);
+rimCyan.position.set(3, 0.5, -3);
+scene.add(rimCyan);
+
+// Manual drag/zoom as a safety net on top of the auto-swivel: the
+// auto-framing math (below) is a best-effort fit against a documented-
+// unreliable CPU bounding box on these skinned meshes, so give the viewer
+// a real way to find the model even if auto-fit is imperfect for a given
+// rider, same pattern as fal-assets/spike/roster-viewer.html.
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.5, 0);
+controls.enableDamping = true;
+controls.minDistance = 0.5;
+controls.maxDistance = 12;
+controls.autoRotate = false; // the model itself spins (below); don't double-rotate the camera too
+
+function resizeStage() {
+  const r = stageEl.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  renderer.setSize(r.width, r.height);
+  camera.aspect = r.width / r.height;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resizeStage);
+
+const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+let currentModel = null, mixer = null;
+const clock = new THREE.Clock();
+
+function clearStage() {
+  if (currentModel) { scene.remove(currentModel); currentModel = null; }
+  mixer = null;
+}
+
+function loadRider(r) {
+  clearStage();
+  if (r.locked || !r.model) return; // honest lock state is pure CSS (.lock-state), no fake model
+  loader.load(r.model, (gltf) => {
+    const model = gltf.scene;
+    scene.add(model); // must be IN the scene with world matrices updated before measuring
+    model.updateMatrixWorld(true);
+    currentModel = model;
+
+    // Real zoom-to-fit, not a fixed guessed camera position: measure the
+    // model's bounding SPHERE (radius-based, not box-axis-based, so it
+    // doesn't matter which axis the auto-rigged mesh happens to be long
+    // on) and place the camera at the distance that sphere actually needs
+    // to fill the frame, with margin. This is what makes the viewer
+    // correct for ANY rider's proportions, not just Gabi's specifically.
+    const box = new THREE.Box3().setFromObject(model);
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const fovRad = camera.fov * Math.PI / 180;
+    const fitDist = (sphere.radius / Math.sin(fovRad / 2)) * 1.35; // 1.35 = margin so it never clips
+    camera.position.set(sphere.center.x, sphere.center.y, sphere.center.z + fitDist);
+    camera.lookAt(sphere.center);
+    controls.target.copy(sphere.center);
+    controls.minDistance = fitDist * 0.2;
+    controls.maxDistance = fitDist * 3;
+    controls.update();
+
+    if (gltf.animations && gltf.animations.length) {
+      mixer = new THREE.AnimationMixer(model);
+      mixer.clipAction(gltf.animations[0]).play();
+    }
+  }, undefined, (err) => console.error('[skate] rider model FAILED to load', r.id, err));
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  if (mixer) mixer.update(dt);
+  if (currentModel) currentModel.rotation.y += dt * 0.6; // continuous turntable swivel
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function renderSelectUI() {
+  const r = ROSTER[activeIndex];
+  document.getElementById('riderName').textContent = r.name;
+  document.getElementById('riderTag').textContent = r.tag;
+  const badge = document.getElementById('iconBadge');
+  if (r.locked) { badge.className = 'icon-badge locked'; badge.innerHTML = '🔒'; }
+  else { badge.className = 'icon-badge'; badge.innerHTML = `<img src="${r.icon}" alt="">`; }
+  let lockState = stageEl.querySelector('.lock-state');
   if (r.locked) {
-    card.innerHTML = `<div class="portrait"><span class="lock-icon">🔒</span></div><div class="name">${r.name}</div><div class="tag">${r.tag}</div>`;
-  } else {
-    card.innerHTML = `<div class="portrait"><img id="img-${r.id}" src="${r.frames[0]}" alt="${r.name}"></div><div class="name">${r.name}</div><div class="tag">${r.tag}</div>`;
-    let frame = 0;
-    setInterval(() => {
-      frame = (frame + 1) % r.frames.length;
-      const img = document.getElementById('img-' + r.id);
-      if (img) img.src = r.frames[frame];
-    }, FRAME_MS);
+    if (!lockState) {
+      lockState = document.createElement('div');
+      lockState.className = 'lock-state';
+      lockState.innerHTML = '<span class="lock-icon">🔒</span><span>Coming soon</span>';
+      stageEl.appendChild(lockState);
+    }
+  } else if (lockState) {
+    lockState.remove();
   }
-  card.addEventListener('click', () => {
-    if (r.locked) return;
-    picked = r;
-    document.querySelectorAll('.rider-card').forEach((el) => el.classList.remove('sel'));
-    card.classList.add('sel');
-    document.getElementById('btnEnterHub').disabled = false;
-  });
-  rosterEl.appendChild(card);
+  document.querySelectorAll('#dots span').forEach((d, i) => d.classList.toggle('on', i === activeIndex));
+  document.getElementById('btnEnterHub').disabled = r.locked;
+  picked = r.locked ? null : r;
+  loadRider(r);
+}
+
+const dotsEl = document.getElementById('dots');
+ROSTER.forEach((_, i) => {
+  const d = document.createElement('span');
+  d.addEventListener('click', () => { activeIndex = i; renderSelectUI(); });
+  dotsEl.appendChild(d);
 });
+
+document.getElementById('btnPrev').addEventListener('click', () => {
+  activeIndex = (activeIndex - 1 + ROSTER.length) % ROSTER.length;
+  renderSelectUI();
+});
+document.getElementById('btnNext').addEventListener('click', () => {
+  activeIndex = (activeIndex + 1) % ROSTER.length;
+  renderSelectUI();
+});
+
+// First layout pass needs the stage visible+sized -- 'select' isn't
+// .active on load, so size once it becomes visible (btnPlay click) rather
+// than at 0x0 on page load.
+document.getElementById('btnPlay').addEventListener('click', () => {
+  requestAnimationFrame(() => { resizeStage(); renderSelectUI(); });
+});
+animate();
 
 document.getElementById('btnEnterHub').addEventListener('click', () => {
   document.getElementById('hubTitle').textContent = 'Welcome to The Hub, ' + picked.name;
