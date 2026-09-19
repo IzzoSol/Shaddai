@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>SHADDAI World 3D</title>
+<script>try{navigator.serviceWorker&&navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})});window.caches&&caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})})}catch(e){}</script>
 <style>
 :root{--gold:#e8c45c;--ink:#06080b;--em:#00ff9c;--cy:#5fe0ff}
 *{box-sizing:border-box}
@@ -39,6 +40,7 @@ canvas{display:block}
 <div id="loading"><h1>SHADDAI</h1><div id="bar"><i></i></div><div id="loadmsg">waking the world…</div></div>
 <div id="fade"></div><div id="toast"></div><div id="prompt"></div>
 <div class="panel" id="top"><b>SHADDAI · WORLD 3D</b><div id="realm">City Hub · Dusk</div><div id="who"></div><div id="sparks"></div></div>
+<a id="classic" href="/game.html" style="position:fixed;left:12px;top:108px;z-index:10;color:#e8c45c;text-decoration:none;font-size:12px;letter-spacing:.1em;background:rgba(8,11,18,.62);border:1px solid rgba(232,196,92,.35);border-radius:10px;padding:6px 12px">◧ CLASSIC 2D WORLD</a>
 <div class="panel" id="mm"><canvas id="mmc" width="160" height="150"></canvas></div>
 <div id="map" style="display:none"><canvas id="mapc" width="900" height="800"></canvas><div id="maphint">Click a realm to fast-travel · M to close</div></div>
 <div class="panel" id="help"><kbd>W A S D</kbd> move · <kbd>Shift</kbd> run<br><kbd>Drag</kbd> look · <kbd>Wheel</kbd> zoom<br><kbd>E</kbd> interact / ride / enter<br><kbd>F</kbd> strike · <kbd>G</kbd> cast<br><kbd>1–9</kbd> switch hero · <kbd>M</kbd> map<br><kbd>B</kbd> build · <kbd>N</kbd> next · <kbd>Z</kbd> undo · <kbd>L</kbd> light<br><kbd>Space</kbd>/<kbd>C</kbd> fly up/down (hawk)</div>
@@ -641,6 +643,11 @@ function makePortal(pos, ry, col) {
   const bar = $('#chars'); HEROES.forEach((h, i) => { if (!charSrc[h.id]) return; const b = document.createElement('button'); b.dataset.id = h.id; b.textContent = `${i + 1} ${h.name}`; b.onclick = () => spawnPlayer(h.id, player.root.position.clone()); bar.appendChild(b); });
   const startHero = charSrc[save.hero] ? save.hero : (charSrc.zerox ? 'zerox' : Object.keys(charSrc)[0]); citySky = save.sky || 'dusk';
   spawnPlayer(startHero, new THREE.Vector3(save.x || 0, 0, save.z || 14)); syncRealm(true);
+  for (const rec of save.plots) placePlot(rec);
+  $('#loadmsg').textContent = 'ready'; $('#bar i').style.width = '100%'; hud();
+  $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); const st = document.createElement('div'); st.id = 'stream'; st.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:12;font-size:12px;color:#e8c45c;letter-spacing:.1em;background:rgba(8,11,18,.6);padding:4px 12px;border-radius:12px'; st.textContent = 'streaming world…'; document.body.appendChild(st);
+  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, enterInterior, leaveInterior, applyPreset, strike, travel, step };
+  loop();
   // city layout (landmarks around the plaza; futuristic only)
   // download every model in parallel first (browser cache), then place them in order -- much faster than serial loads
   { const names = ['bld-neon-observatory','bld-sky-dome-v2','bld-sea-terrace-spire','bld-inverted-cube-hab','bld-bio-pod-tower-v2','bld-holo-market-v2','tower-crescent2','castle-siege','transit-cliff-elevator','vehicle-mining-powerarmor','transit-hyperloop-gate','transit-hyperloop-capsule','transit-skyrail-pod','mount-forge-bull','mount-glacier-mammoth','mount-canopy-gorilla','mount-sky-hawk','veh-hover-pod-green','veh-hover-pod-blue','veh-monowheel-mech','ocean-harbor-hub','ocean-catamaran','ocean-superyacht','ocean-submarine','ocean-skiff','ocean-farm-platform','volcano-fortress','volcano-ritual-circle','volcano-forge-tower','volcano-bridge','volcano-gate','volcano-dragon'];
@@ -689,11 +696,7 @@ function makePortal(pos, ry, col) {
   dragon = await place('volcano-dragon', { x: V0.x, z: V0.z - 62, h: 26 }); if (dragon) { const lab = makeLabel('DRAGON', '#ff7a3a', 1.4); lab.position.set(0, 24, 0); dragon.add(lab); }
   // ── SIEGE CASTLE label ──
   loadSave(); hud();
-  for (const rec of save.plots) placePlot(rec);
-  $('#loadmsg').textContent = 'ready'; $('#bar i').style.width = '100%';
-  setTimeout(() => { $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); }, 350);
-  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, enterInterior, leaveInterior, applyPreset, strike, travel, step };
-  loop();
+  { const st = document.getElementById('stream'); if (st) st.remove(); toast('WORLD READY'); }
   } catch (e) { console.error('BOOT FAIL', e); $('#loadmsg').textContent = 'boot error: ' + e.message; $('#loadmsg').style.color = '#ff6a6a'; }
 })();
 </script></body></html>
