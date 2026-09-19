@@ -1,0 +1,106 @@
+[
+ {
+  "id": "W5-desert-hyperloop-terminal",
+  "type": "text2img",
+  "register": "raw",
+  "size": "landscape_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Desert-tech realm: a glass-domed hyperloop terminal concourse seen from a raised balcony, curved steel-and-glass ribs, sunken planters with tropical plants, curved lounge seating, marble floor with warm gold light strips, a sleek chrome capsule train on a track at the right, through the glass a red desert with rovers, trucks and astronauts, orange-red palette outside and warm gold inside.",
+  "out": "fal-assets/world/concepts/W5-desert-hyperloop-terminal.png"
+ },
+ {
+  "id": "W1-sky-station-dome",
+  "type": "text2img",
+  "register": "raw",
+  "size": "landscape_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Sky Station: an enormous transparent ribbed dome of curved metal arches over a lush green mountainside at night, a giant blue planet and small moon in a starfield above, a tiered softly lit building at left, a bullet-train viaduct crossing the slope, a floodlit sports stadium at right, deep blue and emerald palette.",
+  "out": "fal-assets/world/concepts/W1-sky-station-dome.png"
+ },
+ {
+  "id": "W2-beach-cliff-megacity",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Beach-tech realm: aerial view of a coastal megacity built on stepped sea-cliff plateaus, a colossal curving black glass sea-wall along one edge, each plateau holding dense futuristic blocks with slender spire towers and circular garden plazas, looping roads, forested hillside, small boats on deep turquoise ocean, bright daylight.",
+  "out": "fal-assets/world/concepts/W2-beach-cliff-megacity.png"
+ },
+ {
+  "id": "W3-suburb-tree-tunnel-road",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Suburb realm: painterly view down a long straight road lined with small white houses with terracotta roofs, telephone poles and small cars, colossal columnar trees with flat mushroom canopies arching overhead into a green tunnel toward a bright vanishing point, deep blue sky, saturated greens.",
+  "out": "fal-assets/world/concepts/W3-suburb-tree-tunnel-road.png"
+ },
+ {
+  "id": "W4-farm-inverted-cube-city",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Farm-tech realm: a massive upside-down city of stacked wooden-brown box blocks hanging overhead framing a gap of sky, beneath it patchwork golden wheat fields, orange-roof farmhouses and tree lines, hazy sea on the horizon, low golden-hour light.",
+  "out": "fal-assets/world/concepts/W4-farm-inverted-cube-city.png"
+ },
+ {
+  "id": "W6-city-crescent-megatower",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. City hub landmark: a giant crescent-shaped megatower of pale steel and glass with stacked cantilevered truss-supported terraces on the concave side and a ribbed curved spine, rising from a wide low disc-shaped transit podium with glass skybridges, busy plaza with small crowds, a bus and cars in the foreground, dramatic blue sky, subtle neon streetwear accents at street level.",
+  "out": "fal-assets/world/concepts/W6-city-crescent-megatower.png"
+ },
+ {
+  "id": "W7-suburb-red-pod-homes",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Suburb Eco-Haven: glossy candy-red mushroom-cap pod houses on curved stalks stacked in tiers, thick green rooftop gardens and moss, round windows with green polka-dot decals, sweeping red curved ramps and slides winding down through greenery to a paved path, sunny sky, playful eco-futurist.",
+  "out": "fal-assets/world/concepts/W7-suburb-red-pod-homes.png"
+ },
+ {
+  "id": "C1-beach-domed-house-cutaway",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Architectural cross-section poster style: a domed round house half sunk in water, palm and jungle trees on the roof, open timber terrace, dry upper rooms with plants, flooded turquoise lower rooms like an aquarium with stairs, blueprint-style annotation lines but no readable text, pale green paper background.",
+  "out": "fal-assets/world/concepts/C1-beach-domed-house-cutaway.png"
+ },
+ {
+  "id": "C2-forest-amphitheater",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Isometric cutaway poster: a forest amphitheater with a tall conical black timber-lattice pavilion and circular stage on a wooded hill, terraced stone steps, a large circular pond with a fountain ripple, green-roofed pavilions, a small island platform, teal water, cream paper background, annotation lines but no readable text.",
+  "out": "fal-assets/world/concepts/C2-forest-amphitheater.png"
+ },
+ {
+  "id": "C3-suburb-bunker-cutaway",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Cutaway of a huge underground bunker below a wooden barn on a grassy hill: a central glass elevator shaft and many stacked rooms \u2014 living room, kitchen, bedrooms, library, dining hall, cinema, spa pool, playroom, hydroponic grow room, food storage, clinic, workshop, generators \u2014 each room lit and furnished, dirt and rock around it.",
+  "out": "fal-assets/world/concepts/C3-suburb-bunker-cutaway.png"
+ },
+ {
+  "id": "C4-farm-eco-home-cutaway",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Cutaway of a small underground home: a solar-panel wooden cabin and a wind turbine on a green meadow, a concrete dome entrance with a vault door, a shaft with stairs and elevator, four furnished levels with living room, kitchen, bedrooms, office with two monitors, gym, pantry with canned goods, batteries and a yellow generator.",
+  "out": "fal-assets/world/concepts/C4-farm-eco-home-cutaway.png"
+ },
+ {
+  "id": "S1-siege-castle",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Darkforest siege castle at night in blacklight-neon style: indigo stone gothic castle with pointed spires and a glowing portcullis gate, a giant brain-shaped orb crowning the tallest tower, a swirling blue galaxy moon in a starfield sky, a wide cobbled causeway with glowing magenta cracks like cooled lava, stone walls with flaming braziers, pink-red lava fields either side.",
+  "out": "fal-assets/world/concepts/S1-siege-castle.png"
+ },
+ {
+  "id": "S2-siege-lands-stairs",
+  "type": "text2img",
+  "register": "raw",
+  "size": "portrait_4_3",
+  "body": "Game concept art plate, polished digital painting with clean readable shapes suited to become both an isometric 2D game map and a 3D level, no text, no logos, no watermark, no people close-up. Low-angle view up a long orange-lit stone staircase on a grassy hill to a lone dark gabled house with lit yellow windows, above it a violent indigo cosmic sky with glittering violet stars, a twisted starry vortex tower and a giant staring eye formed in the clouds.",
+  "out": "fal-assets/world/concepts/S2-siege-lands-stairs.png"
+ }
+]
