@@ -29,7 +29,7 @@
   // no matter where it lands, and let the Node-side pixel analysis
   // (sharp trim, in capture-sprites.mjs) find the real silhouette bounds
   // from the actual rendered pixels and crop/center from that.
-  const FRAME_HALF = 3.0;
+  const FRAME_HALF = 5.0;
   const FRAME_CENTER_Y = 1.0;
   const camera = new THREE.OrthographicCamera(-FRAME_HALF, FRAME_HALF, FRAME_HALF, -FRAME_HALF, 0.01, 100);
   camera.position.set(0, FRAME_CENTER_Y, 4);
