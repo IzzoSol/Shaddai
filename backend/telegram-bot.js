@@ -1005,8 +1005,21 @@ async function _handle(cfg, update) {
         '\n<i>TS ' + new Date(e.t).toLocaleTimeString() + ' · logged to terminal TG tab</i>');
       return _send(t, chatId, body.slice(0, 4048));
     }
+// /swarm <coin> — 7-agent TuFish sentiment verdict (big bold, phone-friendly)
+    case 'swarm': case 'fish': case 'swarmcouncil': {
+      const coin = String(arg || '').trim().split(/\s+/)[0];
+      if (!coin) return _send(t, chatId, '🐟 <b>Tu Fish Swarm</b>\n\nAll seven read the headline tape + live market and vote long / flat / short.\n\n<code>/swarm SOL</code>  <code>/swarm WIF</code>  <code>/swarm DOGE</code>\n\nSame council that runs the terminal\u2019s Swarm tab.');
+      try {
+        const sfc = require('./lib/swarm-markdown');
+        const r = await sfc.swarmVerdict(coin);
+        if (r.error) return _send(t, chatId, '⚠️ ' + _esc(r.error));
+        return _send(t, chatId, r.markdown.slice(0, 4048));
+      } catch (e) {
+        return _send(t, chatId, '⚠️ Swarm lost — sentiment engine unreachable.');
+      }
+    }
 
-    case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
+case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /month/i.test(arg) ? 'month' : 'day'; return _send(t, chatId, _pnl.stats(per)); }
 
     // /lb — leaderboard (text only, no image, no HF)
     case 'lb': return _send(t, chatId, _pnl.pnlCaption(arg || 'week'));
@@ -1157,6 +1170,7 @@ async function _registerCommands(token) {
   const commands = [
     { command: 'start',   description: 'Welcome + links' },
     { command: 'code',    description: 'Run sandboxed JS in the terminal (admin)' },
+    { command: 'swarm',   description: '7-agent TuFish sentiment verdict on a coin' },
     { command: 'temple',  description: 'The Axiom + doors — GitHub, X, website, lounge' },
     { command: 'help',    description: 'All commands list' },
     { command: 'active',  description: 'Live calls right now — not rugged, sorted by gain' },

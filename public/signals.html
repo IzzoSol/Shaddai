@@ -271,6 +271,17 @@ header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:4
   .cf{ position:absolute; top:45%; left:50%; width:6px; height:11px; border-radius:2px; pointer-events:none;
     animation:cfBurst .95s cubic-bezier(.2,.85,.4,1) forwards; z-index:3; }
   @keyframes cfBurst{ 0%{ opacity:1; transform:translate(0,0) rotate(0); } 100%{ opacity:0; transform:translate(var(--dx),var(--dy)) rotate(var(--r)); } }
+  @media (max-width:640px){
+    .verdict{ flex-wrap:wrap; gap:8px 10px; padding:13px 14px; }
+    .vd-gauge{ order:1; }
+    .vd-main{ order:2; flex:1; min-width:0; flex-wrap:wrap; }
+    .vd-main b{ font-size:clamp(22px,8.5vw,34px); }
+    .vd-meta{ order:3; margin-left:0; width:100%; justify-content:space-between; }
+    .vd-bg{ font-size:84px; top:-14px; }
+    .vd-score{ font-size:24px; }
+    .agv-grid{ grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); }
+    .swarm-mod-t{ font-size:10px; }
+  }
 swarm extra CSS
 
 .atab{ padding:10px 16px; }
