@@ -99,6 +99,8 @@ header a.x{ font-size:20px; color:var(--ink-soft); text-decoration:none; width:4
   box-shadow:0 0 18px -6px rgba(0,255,156,.85); }
 .atab+.atab{ margin-left:4px; }
 /* TG Code console */
+.view{ display:none; flex:1 1 auto; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; }
+.view.on{ display:block; }
 .view#v-tg{ display:none; } .view#v-tg.on{ display:flex; flex-direction:column; }
 .tg-ch{ display:flex; flex-direction:column; gap:10px; padding:12px; height:100%; overflow:hidden; }
 .tg-bar{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:var(--f-mono); font-size:12px; letter-spacing:.06em; color:var(--ink-soft-b); }
