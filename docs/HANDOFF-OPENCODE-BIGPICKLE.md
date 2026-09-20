@@ -48,3 +48,23 @@ Tasks (each one turn):
 4. **Character texture quality is low.** Source textures from Meshy are small (a full hero GLB is only ~1.2 MB even at 2048 pack). Options: `fal-ai/hyper3d/rodin/v2` with `addons:["HighPack"]` (4K textures) but Meshy rigging rejected one Rodin mesh, so rig with `tripo3d/tripo/v2.5/rig`; or run each texture through a fal upscaler and re-embed.
 5. **Map reference** (`Screenshot 2026-09-17 160017.png`): a regional 3D isometric island map with named zones and level ranges (Greenwood Lv 1-6, Sunveil Desert 30-45, Mistwood Jungle 45-60, Winterspire, Copper Highlands, Oakheart Coast, etc.), a "Find me" button, +/- zoom, click-to-set-waypoint, drag to rotate, scroll to zoom. Build the SHADDAI map screen in this style (realm zones, level bands, waypoint). Other screenshots (2026-09-17 160028, 160830) are further map/UI references, not yet reviewed.
 6. **LF2 style/clothing reference folder** `C:\Users\Brittany\OneDrive\Pictures\LF2` (not yet read) is for character clothing and fighting-game style.
+
+## Owner request 2026-09-20 (2D game fixes)
+- DONE on main (f730b37): removed the empty operative preview box (#createCanvasWrap hidden in public/game.html).
+- Browser popups (alert/confirm/prompt) must become in-game toasts/modals. Exact spots:
+    public/game.html:1703:function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; const raw=prompt('Rename room:
+    public/game.html:1766:  const raw=prompt('Name your '+pre.label+':', pre.label); if(raw===null) return;
+    public/game.html:1772:function deleteRoom(id){ if(!confirm('Delete this room? (its decor is also removed)'))return;
+    public/game.html:1826:  var raw=prompt('Name your office (your brand):','My Command Office'); if(raw===null)return;
+    public/pixel-forge.html:474:  if(!opId){ alert('Could not reach the gallery — try again.'); return; }
+    public/pixel-forge.html:487:      alert(msg);
+    public/pixel-forge.html:489:  }catch(_){ alert('Could not reach the vault — try again.'); }
+    public/js/market.js:55:      alert('You must reach Total Level 5 before using the market.');
+    public/js/market.js:137:      alert('Your bid must exceed the current price.');
+    public/js/market.js:168:      alert('Bid could not be processed.');
+    public/js/market.js:226:    alert('Listing created successfully.');
+    public/js/market.js:266:    alert('Sale completed!');
+    public/js/skills.js:97:  alert(`🛠️ New skill tier unlocked: ${tree} Tier ${tier.id}\nTL increased by ${tier.effect.tlGain}.`);
+- Forge (public/pixel-forge.html): customization/cosmetics catalog does not fit the characters; rebuild options around the 7 Council heroes + Citizen kits (see docs/superpowers/specs/2026-09-18-shaddai-world-character-system-design.md sections 3 and 11) and remove items that do not fit.
+- Spawn: player should spawn at a defined point in the City hub plaza, not random/edge; check state 'world' entry in public/game.html.
+- Sign-ins: verify that different accounts (email, wallet, Google) merge to ONE identity and do not overwrite each other (see public/auth.js and backend/auth routes; memory note SHADDAI_AUTH_WORLD_DASH_20260714).
