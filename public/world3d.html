@@ -68,7 +68,7 @@ const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d 
 
 /* ───────────────────────── renderer / scene ───────────────────────── */
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
@@ -233,7 +233,7 @@ const lavaMat = new THREE.ShaderMaterial({
 /* ───────────────────────── ocean / volcano builders ───────────────────────── */
 let oceanMesh;
 function buildOcean() {
-  oceanMesh = new THREE.Mesh(new THREE.PlaneGeometry(1700, 1700, 300, 300).rotateX(-Math.PI / 2), oceanMat);
+  oceanMesh = new THREE.Mesh(new THREE.PlaneGeometry(1700, 1700, 220, 220).rotateX(-Math.PI / 2), oceanMat);
   oceanMesh.position.set(0, -0.5, 1750); oceanMesh.frustumCulled = false; scene.add(oceanMesh);
   const sandT = tex('circuit-sand', 90);
   const shore = new THREE.Mesh(new THREE.PlaneGeometry(1500, 210), new THREE.MeshStandardMaterial({ map: sandT, roughness: 1, color: 0xb59a76 }));
@@ -291,14 +291,15 @@ $('#mapc').addEventListener('click', (e) => { const r = e.target.getBoundingClie
 /* ───────────────────────── static models ───────────────────────── */
 async function place(name, o) {
   const g = await loadG(`assets/models/${name}.glb`, name); if (!g) return null;
-  const m = g.scene, box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3());
+  const m = g.scene; if (o.align) { const b0 = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()); if (b0.x > b0.z * 1.12) m.rotation.y = (o.flip ? -1 : 1) * Math.PI / 2; else if (o.flip) m.rotation.y = Math.PI; m.updateMatrixWorld(true); }
+  const box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3());
   const s = o.h ? o.h / sz.y : o.w / Math.max(sz.x, sz.z); m.scale.setScalar(s); m.updateMatrixWorld(true);
   const b2 = new THREE.Box3().setFromObject(m), c = b2.getCenter(new THREE.Vector3());
   m.position.set(-c.x, -b2.min.y + (o.y || 0), -c.z);
   const grp = new THREE.Group(); grp.add(m); grp.position.set(o.x, 0, o.z); grp.rotation.y = o.ry || 0; world.add(grp);
   m.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; if (n.material) { n.material.envMapIntensity = 0.45; if (n.material.emissiveIntensity > 0.01) n.material.emissiveIntensity *= 0.6; if (n.material.map) n.material.map.anisotropy = 8; } } });
   if (o.r) colliders.push({ x: o.x, z: o.z, r: o.r });
-  grp.userData = { size: sz.clone().multiplyScalar(s) };
+  grp.userData = { size: sz.clone().multiplyScalar(s), cull: true };
   return grp;
 }
 
@@ -309,22 +310,18 @@ const HEROES = [
   { id: 'nexus', name: 'NEXUS', role: 'Architect', accent: '#38d0c0' }, { id: 'pikadon', name: 'PIKADON', role: 'Security', accent: '#ff5a4d' }, { id: 'shaddai', name: 'SHADDAI', role: 'Orchestrator', accent: '#e8c45c' },
   { id: 'leadr', name: 'Leadr', role: 'Citizen', accent: '#ff7a3a' }, { id: 'gaeli', name: 'Gaeli', role: 'Citizen', accent: '#b6ff3a' },
 ];
-const charSrc = {}, clipSrc = {};
-// in-place retarget: rotations are portable; per-bone translations are baked to the donor's limbs (squash), and
-// Hips X/Z is root motion (causes sliding/snapping on loop) -> keep Hips Y only, rescaled to the body.
-function retarget(clip, body, name) {
-  const hips = body.getObjectByName('Hips'), tracks = [];
-  for (const t of clip.tracks) {
-    if (t.name.endsWith('.quaternion')) { tracks.push(t); continue; }
-    if (t.name === 'Hips.position' && hips) {
-      const v = Float32Array.from(t.values), n = v.length / 3, d0 = v[1] || 1, k = hips.position.y / d0;
-      for (let i = 0; i < n; i++) { v[i * 3] = hips.position.x; v[i * 3 + 1] = t.values[i * 3 + 1] * k; v[i * 3 + 2] = hips.position.z; }
-      tracks.push(new THREE.VectorKeyframeTrack(t.name, t.times, v));
-    }
-  }
+const charSrc = {};   // id -> { scene, walk, run, action } ; every clip belongs to THAT body (retargeting across bodies is what deformed them before)
+// own-body clip: only cancel horizontal root drift so loops don't snap. Nothing is retargeted or rescaled.
+function fixClip(clip, name) {
+  const tracks = clip.tracks.map((t) => {
+    if (t.name === 'Hips.position') { const v = Float32Array.from(t.values); for (let i = 0; i < v.length; i += 3) { v[i] = t.values[0]; v[i + 2] = t.values[2]; } return new THREE.VectorKeyframeTrack(t.name, t.times, v); }
+    return t;
+  });
   return new THREE.AnimationClip(name, clip.duration, tracks);
 }
-function makeActor(id, opts = {}) {
+const BONES = ['Hips', 'Spine', 'Spine01', 'Spine02', 'neck', 'Head', 'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
+const CHILD = { Spine: 'Spine01', Spine01: 'Spine02', Spine02: 'neck', LeftArm: 'LeftForeArm', LeftForeArm: 'LeftHand', RightArm: 'RightForeArm', RightForeArm: 'RightHand', LeftUpLeg: 'LeftLeg', LeftLeg: 'LeftFoot', RightUpLeg: 'RightLeg', RightLeg: 'RightFoot' };
+function makeActor(id) {
   const src = charSrc[id]; if (!src) return null;
   const model = SkeletonUtils.clone(src.scene), root = new THREE.Group(); root.add(model);
   model.updateMatrixWorld(true);
@@ -332,29 +329,70 @@ function makeActor(id, opts = {}) {
   const hy = wp('Head'), fy = Math.min(wp('LeftToeBase') ?? 0, wp('RightToeBase') ?? 0);
   const k = 1.8 / ((hy - fy) * 1.12 || 1); model.scale.setScalar(k); model.position.y = -fy * k;   // every hero = 1.8 m, feet on the ground
   model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.frustumCulled = false; if (n.material) n.material.envMapIntensity = 0.7; } });
+  model.updateMatrixWorld(true);
+  // capture the rest (T-pose) skeleton in actor space: used by the seated-pose solver
+  const bones = {}, rest = {}, restDir = {}; BONES.forEach((n) => { bones[n] = model.getObjectByName(n); });
+  const qi = new THREE.Quaternion(); const wq = (o) => o.getWorldQuaternion(new THREE.Quaternion()), wpos = (o) => new THREE.Vector3().setFromMatrixPosition(o.matrixWorld);
+  for (const n of BONES) if (bones[n]) { rest[n] = wq(bones[n]); const c = bones[CHILD[n]]; if (c) restDir[n] = wpos(c).sub(wpos(bones[n])).normalize(); }
+  const hipsH = bones.Hips ? wpos(bones.Hips).y - 0 : 0.95;
+  const sideL = bones.LeftUpLeg && bones.RightUpLeg ? Math.sign(wpos(bones.LeftUpLeg).x - wpos(bones.RightUpLeg).x) || 1 : 1;
   const mixer = new THREE.AnimationMixer(model), A = {};
-  A.walk = mixer.clipAction(retarget(src.walk, model, 'walk'));
-  for (const c of ['run', 'idle', 'slash', 'cast']) if (clipSrc[c]) A[c] = mixer.clipAction(retarget(clipSrc[c], model, c));
-  A.idle = A.idle || A.walk;
-  ['slash', 'cast'].forEach((c) => { if (A[c]) { A[c].setLoop(THREE.LoopOnce, 1); A[c].clampWhenFinished = true; } });
-  const a = { id, root, model, mixer, A, cur: null, speed: 0, yaw: 0, busy: 0, hero: HEROES.find((h) => h.id === id) };
-  play(a, 'idle', 0); root.userData.actor = a; return a;
+  A.walk = mixer.clipAction(fixClip(src.walk, 'walk'));
+  A.run = mixer.clipAction(fixClip(src.run || src.walk, 'run'));
+  A.idle = mixer.clipAction(fixClip(src.walk, 'idle'));        // frozen first frame of the hero's own walk = neutral standing pose
+  const a = { id, root, model, mixer, A, cur: null, speed: 0, yaw: 0, busy: 0, bones, rest, restDir, hipsH, sideL, seat: null, hero: HEROES.find((h) => h.id === id) };
+  play(a, 'idle', 0, 0); root.userData.actor = a; addAttack(a); return a;
+}
+function addAttack(a) {
+  const src = charSrc[a.id]; if (!src || !src.action || a.A.attack) return;
+  const c = a.A.attack = a.mixer.clipAction(fixClip(src.action, 'attack')); c.setLoop(THREE.LoopOnce, 1); c.clampWhenFinished = true;
+  a.attackKind = /slash/i.test(src.action.name) ? 'slash' : 'cast';
+}
+async function ensureAction(id) {
+  const src = charSrc[id]; if (!src || src.action || src.actionLoading) return; src.actionLoading = true;
+  const g = await loadG(`assets/models/chars/${id}-action.glb`); if (g && g.animations[0]) src.action = g.animations[0];
 }
 function play(a, name, fade = 0.2, ts = 1) {
   const n = a.A[name]; if (!n) return; n.timeScale = ts;
-  if (a.cur === n) return; n.reset(); n.enabled = true; n.setEffectiveWeight(1);
+  if (a.cur === n) return; n.reset(); n.enabled = true; n.setEffectiveWeight(1); n.timeScale = ts;
   if (a.cur) { a.cur.crossFadeTo(n, fade, false); } n.play(); a.cur = n; a.curName = name;
 }
 function locomote(a, speed, dt) {
-  if (a.busy > 0) return;
-  if (speed < 0.15) play(a, 'idle', 0.25, 1);
-  else if (speed < 3.4) play(a, 'walk', 0.2, clamp(speed / 1.5, 0.6, 1.9));
-  else play(a, 'run', 0.2, clamp(speed / 3.9, 0.8, 1.7));
+  if (a.busy > 0 || a.seat) return;
+  if (speed < 0.15) play(a, 'idle', 0.25, 0);
+  else if (speed < 3.6) play(a, 'walk', 0.2, clamp(speed / 1.45, 0.6, 1.9));
+  else play(a, 'run', 0.2, clamp(speed / 3.6, 0.8, 1.6));
 }
-function strike(a, kind) {
-  const n = a.A[kind]; if (!n || a.busy > 0) return;
-  play(a, kind, 0.12, 1); a.busy = n.getClip().duration * 0.95;
-  vfxBurst(a, kind);
+function strike(a) {
+  const n = a.A.attack; if (!n) { ensureAction(a.id).then(() => addAttack(a)); return; } if (a.busy > 0) return;
+  play(a, 'attack', 0.12, 1); a.busy = n.getClip().duration * 0.95; vfxBurst(a, a.attackKind || 'slash');
+}
+/* seated-pose solver: aims each bone toward a target direction (actor space: +z forward, +y up, left = +x*sideL).
+   Works on any hero because every rig shares one skeleton; nothing is scaled or retargeted, so meshes never stretch. */
+const SEAT_POSES = {
+  ride: { thigh: [0.55, -0.32, 0.77], shin: [0.18, -1, -0.28], upper: [0.32, -0.42, 0.85], fore: [0.12, -0.15, 1], lean: 0.06 },
+  sit:  { thigh: [0.12, -0.06, 1], shin: [0.02, -1, 0.12], upper: [0.28, -0.5, 0.8], fore: [0.1, -0.06, 1], lean: -0.05 },
+};
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _va = new THREE.Vector3(), _vb = new THREE.Vector3();
+function aim(a, name, dir, rootQ, rootQinv) {
+  const b = a.bones[name], rq = a.rest[name], rd = a.restDir[name]; if (!b || !rq || !rd) return;
+  const par = b.parent; par.updateWorldMatrix(true, false);
+  _qa.setFromUnitVectors(rd, _va.copy(dir).normalize());              // rotation taking the rest direction to the wanted one
+  _qb.copy(_qa).multiply(rq);                                          // wanted orientation, actor space
+  par.getWorldQuaternion(_qc); _qc.premultiply(rootQinv);              // parent orientation now, actor space
+  b.quaternion.copy(_qc.invert().multiply(_qb)); b.updateMatrixWorld(true);
+}
+function applySeat(a) {
+  const pose = SEAT_POSES[a.seat]; if (!pose) return;
+  const rootQ = a.root.getWorldQuaternion(new THREE.Quaternion()), inv = rootQ.clone().invert(), sL = a.sideL, sR = -a.sideL;
+  const V = (v, sd) => new THREE.Vector3(v[0] * sd, v[1], v[2]);
+  a.model.updateMatrixWorld(true);
+  const lean = new THREE.Vector3(0, 1, pose.lean);
+  aim(a, 'Spine', lean, rootQ, inv); aim(a, 'Spine01', lean, rootQ, inv); aim(a, 'Spine02', lean, rootQ, inv);
+  aim(a, 'LeftUpLeg', V(pose.thigh, sL), rootQ, inv); aim(a, 'LeftLeg', V(pose.shin, sL), rootQ, inv);
+  aim(a, 'RightUpLeg', V(pose.thigh, sR), rootQ, inv); aim(a, 'RightLeg', V(pose.shin, sR), rootQ, inv);
+  aim(a, 'LeftArm', V(pose.upper, sL), rootQ, inv); aim(a, 'LeftForeArm', V(pose.fore, sL), rootQ, inv);
+  aim(a, 'RightArm', V(pose.upper, sR), rootQ, inv); aim(a, 'RightForeArm', V(pose.fore, sR), rootQ, inv);
 }
 function boatPose(m, dt, driven) {
   const g = m.grp; if (driven) { g.position.z = clamp(g.position.z, 908, 2500); g.position.x = clamp(g.position.x, -780, 780); }
@@ -415,11 +453,13 @@ const doors = [];
 /* ───────────────────────── mounts & vehicles ───────────────────────── */
 const mounts = [];   // {name,grp,seat,speed,hover,baseY,vel,yaw,t}
 async function addMount(file, name, o) {
-  const grp = await place(file, o); if (!grp) return;
-  const box = new THREE.Box3().setFromObject(grp);
+  const grp = await place(file, Object.assign({ align: !!(o.boat || o.veh) }, o)); if (!grp) return;
+  const box = new THREE.Box3().setFromObject(grp), len = box.max.z - box.min.z, wid = box.max.x - box.min.x;
   const lab = makeLabel(name, '#e8c45c', 0.9); lab.position.set(0, box.max.y + 1.0, 0); grp.add(lab);
-  if (o.boat) grp.rotation.order = 'YXZ';
-  mounts.push({ name, grp, boat: !!o.boat, sub: !!o.sub, seat: box.max.y * (o.seatK || 0.9), speed: o.speed || 8, hover: !!o.hover, baseY: o.hover ? (o.hoverY || 3) : 0, vel: 0, yaw: o.ry || 0, t: Math.random() * 6, rider: null, lab, home: grp.position.clone() });
+  if (o.boat || o.hover || o.veh) grp.rotation.order = 'YXZ';
+  const sp = o.seatPos || [0, o.seatY ?? 0.85, o.seatZ ?? -0.06];   // seat point as fractions: x of width, y of height, z of length (from centre)
+  const seat = new THREE.Vector3(sp[0] * wid, sp[1] * box.max.y, sp[2] * len);
+  mounts.push({ name, grp, boat: !!o.boat, sub: !!o.sub, veh: !!(o.veh || o.hover), pose: o.pose || 'ride', seatV: seat, speed: o.speed || 8, hover: !!o.hover, baseY: o.hover ? (o.hoverY || 3) : 0, vel: 0, yaw: o.ry || 0, t: Math.random() * 6, rider: null, lab, home: grp.position.clone(), len });
 }
 
 /* ───────────────────────── shop interior ───────────────────────── */
@@ -467,7 +507,7 @@ async function fadeThen(fn) { if (state.fading) return; state.fading = true; $('
 
 function spawnPlayer(id, at) {
   if (player) { scene.remove(player.root); }
-  player = makeActor(id); if (!player) return; player.root.position.copy(at || new THREE.Vector3(0, 0, 12)); scene.add(player.root);
+  player = makeActor(id); if (!player) return; ensureAction(id).then(() => addAttack(player)); player.root.position.copy(at || new THREE.Vector3(0, 0, 12)); scene.add(player.root);
   state.hero = id; $('#who').textContent = `${player.hero.name} · ${player.hero.role}`;
   document.querySelectorAll('#chars button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
   if (mountedOn) dismount(true);
@@ -496,11 +536,12 @@ addEventListener('keydown', (e) => {
   if (k >= '1' && k <= '9') { const h = HEROES.filter((x) => charSrc[x.id])[+k - 1]; if (h && charSrc[h.id]) { const p = player.root.position.clone(); spawnPlayer(h.id, p); } }
   if (k === 'l') { const order = ['dusk', 'day', 'night']; if (state.realm === 'city' && state.where !== 'inside') { citySky = order[(order.indexOf(citySky) + 1) % 3]; applyPreset(citySky); toast(PRESETS[citySky].label.toUpperCase()); writeSave(); } }
   if (k === 'm') toggleMap();
+  if (k === 'g' && e.shiftKey) applyTier((perf.tier + 2) % 3);
   if (k === 'n') { buildIdx = (buildIdx + 1) % BUILDS.length; toast('BUILD: ' + BUILDS[buildIdx][2].toUpperCase()); }
   if (k === 'b' && player && state.where !== 'inside' && !mountedOn) { if (save.plots.length >= 40) { toast('PLOT LIMIT'); } else { const p = player.root.position, rec = { f: BUILDS[buildIdx][0], x: +(p.x + Math.sin(player.yaw) * 14).toFixed(1), z: +(p.z + Math.cos(player.yaw) * 14).toFixed(1), ry: +player.yaw.toFixed(2) }; save.plots.push(rec); placePlot(rec); hud(); writeSave(); toast('PLACED ' + BUILDS[buildIdx][2].toUpperCase()); } }
   if (k === 'z' && plotObjs.length) { const o = plotObjs.pop(); world.remove(o.g); const i = save.plots.indexOf(o.rec); if (i >= 0) save.plots.splice(i, 1); hud(); writeSave(); toast('REMOVED'); }
   if (k === 'e') interact();
-  if (k === 'f' && player && !mountedOn) strike(player, 'slash'); if (k === 'g' && player && !mountedOn) strike(player, 'cast');
+  if (k === 'f' && player && !mountedOn) strike(player); if (k === 'g' && player && !mountedOn) strike(player, 'cast');
 });
 addEventListener('keyup', (e) => (state.keys[e.key.toLowerCase()] = false));
 let drag = null; renderer.domElement.addEventListener('pointerdown', (e) => { if (e.clientX < innerWidth * 0.4 && e.pointerType === 'touch') return; drag = { x: e.clientX, y: e.clientY }; });
@@ -513,7 +554,7 @@ addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; cam
   j.addEventListener('touchstart', (e) => { id = e.changedTouches[0].identifier; mv(e.changedTouches[0]); }, { passive: true });
   j.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) mv(t); }, { passive: true });
   j.addEventListener('touchend', () => { id = null; state.joy.x = state.joy.y = 0; knob.style.transform = ''; });
-  $('#tbE').addEventListener('touchstart', () => interact()); $('#tbF').addEventListener('touchstart', () => player && strike(player, 'slash')); $('#tbR').addEventListener('touchstart', () => (state.run = !state.run)); })();
+  $('#tbE').addEventListener('touchstart', () => interact()); $('#tbF').addEventListener('touchstart', () => player && strike(player)); $('#tbR').addEventListener('touchstart', () => (state.run = !state.run)); })();
 
 /* ───────────────────────── interaction ───────────────────────── */
 function nearest() {
@@ -535,8 +576,18 @@ function interact() {
   else if (n.kind === 'exit') fadeThen(() => leaveInterior());
   else if (n.kind === 'item') { const it = n.ref; if (save.sparks >= it.price) { save.sparks -= it.price; save.inv.push(it.name); hud(); writeSave(); toast(`ACQUIRED\n${it.name.toUpperCase()}`); } else toast('NOT ENOUGH SPARKS'); }
 }
-function mount(m) { if (m.rider) return; mountedOn = m; m.rider = player; m.grp.add(player.root); player.root.position.set(0, m.seat, 0); player.root.rotation.set(0, 0, 0); player.yaw = 0; play(player, 'idle', 0.2); toast(`MOUNTED · ${m.name.toUpperCase()}`); }
-function dismount(silent) { if (!mountedOn) return; const m = mountedOn, wp = new THREE.Vector3(); m.grp.getWorldPosition(wp); scene.add(player.root); player.root.position.set(wp.x + Math.sin(m.yaw + 1.6) * 3, 0, wp.z + Math.cos(m.yaw + 1.6) * 3); m.rider = null; mountedOn = null; player.root.visible = true; if (!silent) toast('DISMOUNTED'); }
+function mount(m) {
+  if (m.rider || !player) return; mountedOn = m; m.rider = player; m.grp.add(player.root);
+  const P = player; P.seat = m.pose; P.root.rotation.set(0, 0, 0); P.yaw = 0; P.speed = 0; play(P, 'idle', 0, 0);
+  P.root.position.set(m.seatV.x, m.seatV.y - P.hipsH + 0.12, m.seatV.z); state.follow = 1;
+  toast(`MOUNTED · ${m.name.toUpperCase()}`);
+}
+function dismount(silent) {
+  if (!mountedOn) return; const m = mountedOn, wp = new THREE.Vector3(); m.grp.getWorldPosition(wp);
+  scene.add(player.root); player.root.position.set(wp.x + Math.sin(m.yaw + 1.6) * 3.2, 0, wp.z + Math.cos(m.yaw + 1.6) * 3.2); player.root.rotation.set(0, 0, 0); player.yaw = m.yaw;
+  BONES.forEach((n) => { const b = player.bones[n]; if (b) b.quaternion.identity(); });
+  player.seat = null; m.rider = null; mountedOn = null; player.root.visible = true; if (!silent) toast('DISMOUNTED');
+}
 function enterInterior() { if (mountedOn) dismount(true); state.snap = 1; state.where = 'inside'; applyPreset('inside', true); sun.castShadow = false; player.root.position.set(INT.x, INT.y, INT.z + 21); player.yaw = Math.PI; state.cam.yaw = Math.PI; sky.visible = false; motes.visible = false; world.visible = false; toast('SPARKS BAZAAR'); }
 function leaveInterior() { state.snap = 1; state.where = 'city'; state.realm = 'city'; applyPreset(citySky, true); sun.castShadow = true; sky.visible = true; motes.visible = true; world.visible = true; player.root.position.set(45, 0, -10); player.yaw = 0; state.cam.yaw = Math.PI; }
 function syncRealm(force) {
@@ -554,6 +605,30 @@ function travelTo(id) {
   });
 }
 
+
+/* ───────────────────────── performance governor ───────────────────────── */
+const perf = { acc: 0, n: 0, tier: 2, cool: 4, cullT: 0 };
+function applyTier(t) {
+  perf.tier = t;
+  const pr = t >= 2 ? Math.min(devicePixelRatio, 1.5) : t === 1 ? 1 : 0.75;
+  renderer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight); renderer.setSize(innerWidth, innerHeight);
+  bloom.enabled = t >= 1; renderer.shadowMap.autoUpdate = t >= 1;
+  sun.shadow.mapSize.set(t >= 2 ? 2048 : 1024, t >= 2 ? 2048 : 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  toast(['LOW', 'MEDIUM', 'HIGH'][t] + ' GRAPHICS');
+}
+function perfFrame(dt) {
+  perf.acc += dt; perf.n++;
+  if (perf.n >= 90) { const ms = (perf.acc / perf.n) * 1000; perf.acc = 0; perf.n = 0; perf.cool--; if (perf.cool <= 0 && !state.fading) { if (ms > 26 && perf.tier > 0) { applyTier(perf.tier - 1); perf.cool = 4; } else if (ms < 13 && perf.tier < 2 && perf.cool < -6) { applyTier(perf.tier + 1); perf.cool = 4; } } window.__fps = Math.round(1000 / ms); }
+}
+// distance-cull placed models and every non-local light: each active light costs every pixel on every material
+function cullPass(dt) {
+  perf.cullT -= dt; if (perf.cullT > 0 || !player) return; perf.cullT = 0.4;
+  const c = camera.position;
+  for (const o of world.children) { if (o.userData && o.userData.cull) { const d = Math.hypot(o.position.x - c.x, o.position.z - c.z), r = (o.userData.size ? Math.max(o.userData.size.x, o.userData.size.z) : 20); o.visible = d < 520 + r; } else if (o.isLight) { o.visible = Math.hypot(o.position.x - c.x, o.position.z - c.z) < 150; } }
+  const inOcean = state.realm === 'ocean' || c.z > 620; if (oceanMesh) oceanMesh.visible = inOcean;
+  interior.visible = state.where === 'inside';
+}
+
 /* ───────────────────────── main loop ───────────────────────── */
 const clock = new THREE.Clock(); let T = 0, portalCool = 0, realmTimer = 0, dragon = null, mmT = 0;
 function step(dt) {
@@ -568,14 +643,18 @@ function step(dt) {
     const P = player, moving = im > 0.05;
     if (mountedOn) {
       const m = mountedOn, sp = m.speed * (running ? 1.35 : 1);
-      m.vel = damp(m.vel, moving ? sp : 0, 3.2, dt);
-      if (moving) { const ty = Math.atan2(want.x, want.z); m.yaw += angDiff(m.yaw, ty) * clamp(3.5 * dt, 0, 1); }
+      const thr = (state.keys['w'] || state.keys['arrowup'] ? 1 : 0) - (state.keys['s'] || state.keys['arrowdown'] ? 1 : 0) - state.joy.y, str = (state.keys['d'] || state.keys['arrowright'] ? 1 : 0) - (state.keys['a'] || state.keys['arrowleft'] ? 1 : 0) + state.joy.x;
+      m.vel = damp(m.vel, thr > 0.05 ? sp * thr : thr < -0.05 ? sp * 0.35 * thr : 0, thr ? 2.6 : 3.4, dt);
+      const turn = (m.boat ? 0.7 : m.hover ? 1.5 : 1.3) * clamp(Math.abs(m.vel) / (m.speed * 0.35) + 0.25, 0, 1);
+      m.yaw -= str * turn * dt * (m.vel < -0.1 ? -1 : 1);
       m.grp.rotation.y = m.yaw; m.grp.position.x += Math.sin(m.yaw) * m.vel * dt; m.grp.position.z += Math.cos(m.yaw) * m.vel * dt;
-      m.t += dt * (2 + m.vel * 0.7);
-      if (m.hover) { let up = (state.keys[' '] ? 1 : 0) - (state.keys['c'] ? 1 : 0); m.baseY = clamp(m.baseY + up * 8 * dt, 2, 60); m.grp.position.y = damp(m.grp.position.y, m.baseY + Math.sin(T * 2.1) * 0.35, 4, dt); m.grp.rotation.z = damp(m.grp.rotation.z, -angDiff(m.yaw, Math.atan2(want.x, want.z)) * 0.25 * (moving ? 1 : 0), 3, dt); m.grp.rotation.x = damp(m.grp.rotation.x, moving ? 0.16 : 0, 3, dt); }
+      m.t += dt * (2.2 + Math.abs(m.vel) * 0.85);
+      if (m.hover) { const up = (state.keys[' '] ? 1 : 0) - (state.keys['c'] ? 1 : 0); m.baseY = clamp(m.baseY + up * 8 * dt, m.name.includes('HAWK') ? 2 : 0.8, 60); m.grp.position.y = damp(m.grp.position.y, m.baseY + Math.sin(T * 2.1) * 0.12 + (m.veh && !m.name.includes('HAWK') ? 0 : 0.25), 4, dt); m.grp.rotation.z = damp(m.grp.rotation.z, -str * 0.22 * clamp(Math.abs(m.vel) / m.speed, 0, 1), 3, dt); m.grp.rotation.x = damp(m.grp.rotation.x, thr > 0 ? 0.1 : thr < 0 ? -0.06 : 0, 3, dt); }
       else if (m.boat) { boatPose(m, dt, true); }
-      else { m.grp.position.y = Math.abs(Math.sin(m.t)) * 0.07 * (m.vel / m.speed); m.grp.rotation.z = Math.sin(m.t) * 0.02 * (m.vel / m.speed); }
-      P.mixer.update(dt); camTarget.copy(m.grp.position); camTarget.y += m.seat * 0.6 + 1.2; P.speed = m.vel;
+      else { const sf = clamp(Math.abs(m.vel) / m.speed, 0, 1.2); m.grp.position.y = Math.abs(Math.sin(m.t)) * 0.14 * sf; m.grp.rotation.z = Math.sin(m.t) * 0.05 * sf; m.grp.rotation.x = Math.sin(m.t * 2) * 0.03 * sf; }
+      // chase camera settles behind the vehicle unless the player is dragging the view
+      if (!drag && Math.abs(m.vel) > 0.6) state.cam.yaw += angDiff(state.cam.yaw, m.yaw + Math.PI) * clamp(1.8 * dt, 0, 1);
+      P.mixer.update(dt); camTarget.copy(m.grp.position); camTarget.y += m.seatV.y * 0.7 + 1.0; P.speed = m.vel; applySeat(P);
     } else {
       const sp = running ? 6.4 : 2.5; P.speed = damp(P.speed, moving ? sp : 0, moving ? 9 : 12, dt);
       if (moving) { const ty = Math.atan2(want.x, want.z); P.yaw += angDiff(P.yaw, ty) * clamp(11 * dt, 0, 1); }
@@ -620,7 +699,7 @@ function step(dt) {
   // prompt
   const n = nearest(), pr = $('#prompt'); if (n) { pr.style.display = 'block'; pr.textContent = n.label; } else pr.style.display = 'none';
 }
-function loop() { requestAnimationFrame(loop); const dt = Math.min(clock.getDelta(), 0.05); try { step(dt); } catch (e) { if (!loop.err) { console.error(e); loop.err = 1; } } composer.render(); }
+function loop() { requestAnimationFrame(loop); const dt = Math.min(clock.getDelta(), 0.05); perfFrame(dt); try { step(dt); cullPass(dt); } catch (e) { if (!loop.err) { console.error(e); loop.err = 1; } } composer.render(); }
 
 /* ───────────────────────── portal shader ───────────────────────── */
 function makePortal(pos, ry, col) {
@@ -634,18 +713,18 @@ function makePortal(pos, ry, col) {
 /* ───────────────────────── boot ───────────────────────── */
 (async function boot() {
   try {
-  buildTerrain(); buildOcean(); buildVolcano(); buildInterior(); tick('terrain'); loadSave();
+  buildTerrain(); buildOcean(); buildVolcano(); buildInterior(); interior.visible = false; tick('terrain'); loadSave();
   // characters + shared clips
-  const loadHero = async (h) => { if (charSrc[h.id]) return; const g = await loadG(`assets/models/chars/${h.id}.glb`, `hero ${h.name}`); if (g) charSrc[h.id] = { scene: g.scene, walk: g.animations[0] }; };
+  const loadHero = async (h) => { if (charSrc[h.id]) return; const [g, r, w] = await Promise.all([loadG(`assets/models/chars/${h.id}.glb`, `hero ${h.name}`), loadG(`assets/models/chars/${h.id}-run.glb`), loadG(`assets/models/chars/${h.id}-walk.glb`)]); if (g) charSrc[h.id] = { scene: g.scene, walk: (w && w.animations[0]) || g.animations[0], run: r && r.animations[0] }; };
   const addBtn = (h) => { if (!charSrc[h.id] || document.querySelector(`#chars button[data-id="${h.id}"]`)) return; const b = document.createElement('button'); b.dataset.id = h.id; b.textContent = h.name; b.onclick = () => spawnPlayer(h.id, player.root.position.clone()); $('#chars').appendChild(b); };
   const startId = HEROES.some((h) => h.id === save.hero) ? save.hero : 'zerox';
-  await Promise.all([loadHero(HEROES.find((h) => h.id === startId)), ...['run', 'idle', 'slash', 'cast'].map(async (c) => { const g = await loadG(`assets/models/chars/clip-${c}.glb`, `clip ${c}`); if (g && g.animations[0]) clipSrc[c] = g.animations[0]; })]);
+  await loadHero(HEROES.find((h) => h.id === startId));
   const startHero = charSrc[startId] ? startId : Object.keys(charSrc)[0]; citySky = save.sky || 'dusk';
   spawnPlayer(startHero, new THREE.Vector3(save.x || 0, 0, save.z || 14)); syncRealm(true);
   for (const rec of save.plots) placePlot(rec);
   $('#loadmsg').textContent = 'ready'; $('#bar i').style.width = '100%'; hud();
   $('#loading').hidden = true; toast('WELCOME TO SHADDAI'); const st = document.createElement('div'); st.id = 'stream'; st.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:12;font-size:12px;color:#e8c45c;letter-spacing:.1em;background:rgba(8,11,18,.6);padding:4px 12px;border-radius:12px'; st.textContent = 'streaming world…'; document.body.appendChild(st);
-  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, enterInterior, leaveInterior, applyPreset, strike, step };
+  window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, dismount, enterInterior, leaveInterior, applyPreset, strike, step };
   loop();
   (async () => { for (const h of HEROES) { await loadHero(h); addBtn(h); } rebuildNpcs(); })();
   // city layout (landmarks around the plaza; futuristic only)
