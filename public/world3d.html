@@ -388,7 +388,6 @@ function applySeat(a) {
   const V = (v, sd) => new THREE.Vector3(v[0] * sd, v[1], v[2]);
   a.model.updateMatrixWorld(true);
   const lean = new THREE.Vector3(0, 1, pose.lean);
-  aim(a, 'Spine', lean, rootQ, inv); aim(a, 'Spine01', lean, rootQ, inv); aim(a, 'Spine02', lean, rootQ, inv);
   aim(a, 'LeftUpLeg', V(pose.thigh, sL), rootQ, inv); aim(a, 'LeftLeg', V(pose.shin, sL), rootQ, inv);
   aim(a, 'RightUpLeg', V(pose.thigh, sR), rootQ, inv); aim(a, 'RightLeg', V(pose.shin, sR), rootQ, inv);
   aim(a, 'LeftArm', V(pose.upper, sL), rootQ, inv); aim(a, 'LeftForeArm', V(pose.fore, sL), rootQ, inv);
