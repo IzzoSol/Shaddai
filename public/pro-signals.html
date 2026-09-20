@@ -18,6 +18,8 @@
    from instead of bouncing between the two pages. */
 (function () {
   try {
+    var embedded = false; try { embedded = window.self !== window.top; } catch (e) { embedded = true; }
+    if (embedded) return;   // inside a dashboard window: always show the terminal, never bounce to the phone view
     var forced = /[?&]full=1/.test(location.search);
     if (forced) { try { sessionStorage.setItem('shd_sig_full', '1'); } catch (e) {} return; }
     if (sessionStorage.getItem('shd_sig_full') === '1') return;
