@@ -21,3 +21,6 @@ Serve: `python -m http.server 8790 --directory public` then open `/world3d.html`
 
 ## Pipeline
 `tools/gen-models.sh <batch> <concept-dir> <list> <out-dir> [parallel]`; images via `fal-assets/generate.mjs`; 3D via `fal-assets/character-pipeline.mjs <name> <img> --meshy6 --static`; compress with `npx @gltf-transform/cli optimize in out --compress meshopt --texture-compress webp --texture-size 1024`. QUILL writes prompts, TURTLE checks 3D-readiness, SHADDAI places (MCP tools `shaddai_quill/turtle/run_agent`). Rules: futuristic only (no ordinary houses), isolated single object on flat grey bg, look at every output.
+
+## Character engine test (2026-09-20)
+`node fal-assets/rodin-rig.mjs <name> <tpose.png> <actionId> [rodin|tripo]` = new mesh engine + Meshy auto-rig. Result on ZEROX: **Rodin v2 (fal-ai/hyper3d/rodin/v2, $0.40, TAPose:true) is the cleanest** (crisp hair buns, glossy suit, tidy hands; outputs in fal-assets/characters/zerox-rodin, not committed - binaries). Tripo v2.5 (tripo3d/tripo/v2.5/image-to-3d; needs a hosted URL, script uploads to fal storage) came out rotated sideways and lost detail. Meshy v6 80k-poly = no improvement over current. NEXT: rebuild the other heroes with Rodin, check each in a walk + attack frame before replacing, then re-package with tools/build-web-sprites.mjs and the compress step.
