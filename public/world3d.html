@@ -41,6 +41,7 @@ canvas{display:block}
 <div id="fade"></div><div id="toast"></div><div id="prompt"></div>
 <div class="panel" id="top"><b>SHADDAI · WORLD 3D</b><div id="realm">City Hub · Dusk</div><div id="who"></div><div id="sparks"></div></div>
 <a id="classic" href="/game.html" style="position:fixed;left:12px;top:108px;z-index:10;color:#e8c45c;text-decoration:none;font-size:12px;letter-spacing:.1em;background:rgba(8,11,18,.62);border:1px solid rgba(232,196,92,.35);border-radius:10px;padding:6px 12px">◧ CLASSIC 2D WORLD</a>
+<a href="/SHADDAI-WORLD-3D.html" style="position:fixed;left:12px;top:142px;z-index:10;color:#5fe0ff;text-decoration:none;font-size:12px;letter-spacing:.1em;background:rgba(8,11,18,.62);border:1px solid rgba(95,224,255,.35);border-radius:10px;padding:6px 12px">◈ ORIGINAL 3D WORLD</a>
 <div class="panel" id="mm"><canvas id="mmc" width="160" height="150"></canvas></div>
 <div id="map" style="display:none"><canvas id="mapc" width="900" height="800"></canvas><div id="maphint">Click a realm to fast-travel · M to close</div></div>
 <div class="panel" id="help"><kbd>W A S D</kbd> move · <kbd>Shift</kbd> run<br><kbd>Drag</kbd> look · <kbd>Wheel</kbd> zoom<br><kbd>E</kbd> interact / ride / enter<br><kbd>F</kbd> strike · <kbd>G</kbd> cast<br><kbd>1–9</kbd> switch hero · <kbd>M</kbd> map<br><kbd>B</kbd> build · <kbd>N</kbd> next · <kbd>Z</kbd> undo · <kbd>L</kbd> light<br><kbd>Space</kbd>/<kbd>C</kbd> fly up/down (hawk)</div>
@@ -726,15 +727,22 @@ function makePortal(pos, ry, col) {
   window.__w = { travelTo, syncRealm, waveH, REALMS, THREE, scene, camera, state, spawnPlayer, get player() { return player; }, get mounts() { return mounts; }, mount, dismount, enterInterior, leaveInterior, applyPreset, strike, step };
   loop();
   (async () => { for (const h of HEROES) { await loadHero(h); addBtn(h); } rebuildNpcs(); })();
+
+  // ── city plan: ring road (r=95), four avenues, lamp posts, plaza spokes ──
+  { const roadM = new THREE.MeshStandardMaterial({ map: tex('tech-cobble-street', 6), roughness: 0.5, metalness: 0.2, emissive: 0x2a1a00, emissiveIntensity: 0.6 });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(88, 100, 128), roadM); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04; ring.receiveShadow = true; world.add(ring);
+    const edgeM = new THREE.MeshBasicMaterial({ color: 0xe8c45c }); [88, 100].forEach((r) => { const e = new THREE.Mesh(new THREE.RingGeometry(r - 0.2, r, 128), edgeM); e.rotation.x = -Math.PI / 2; e.position.y = 0.06; world.add(e); });
+    const lampM = new THREE.MeshStandardMaterial({ color: 0x14121c, metalness: 0.8, roughness: 0.3 }), glowM = new THREE.MeshBasicMaterial({ color: 0xffe0a0 });
+    for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, x = Math.sin(a) * 104, z = -Math.cos(a) * 104; const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 5.5, 8), lampM); pole.position.set(x, 2.75, z); const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), glowM); head.position.set(x, 5.7, z); world.add(pole, head); } }
   // city layout (landmarks around the plaza; futuristic only)
   // download every model in parallel first (browser cache), then place them in order -- much faster than serial loads
   { const names = ['bld-neon-observatory','bld-sky-dome-v2','bld-sea-terrace-spire','bld-inverted-cube-hab','bld-bio-pod-tower-v2','bld-holo-market-v2','tower-crescent2','castle-siege','transit-cliff-elevator','vehicle-mining-powerarmor','transit-hyperloop-gate','transit-hyperloop-capsule','transit-skyrail-pod','mount-forge-bull','mount-glacier-mammoth','mount-canopy-gorilla','mount-sky-hawk','veh-hover-pod-green','veh-hover-pod-blue','veh-monowheel-mech','ocean-harbor-hub','ocean-catamaran','ocean-superyacht','ocean-submarine','ocean-skiff','ocean-farm-platform','volcano-fortress','volcano-ritual-circle','volcano-forge-tower','volcano-bridge','volcano-gate','volcano-dragon'];
     $('#loadmsg').textContent = 'downloading world…'; await Promise.all(names.map((n) => fetch(`assets/models/${n}.glb`).then((r) => r.arrayBuffer()).catch(() => 0))); }
   const L = [
-    ['bld-neon-observatory', { x: -42, z: -34, h: 30, r: 5.5, ry: 0.4 }], ['bld-sky-dome-v2', { x: 45, z: -34, w: 26, r: 11 }],
-    ['bld-sea-terrace-spire', { x: -100, z: 20, h: 46, r: 12, ry: 1.2 }], ['bld-inverted-cube-hab', { x: 100, z: 34, h: 36, r: 6 }],
-    ['bld-bio-pod-tower-v2', { x: -66, z: 78, h: 28, r: 8 }], ['bld-holo-market-v2', { x: 64, z: 76, w: 26, r: 11, ry: 3.4 }],
-    ['tower-crescent2', { x: 0, z: -120, h: 70, r: 12 }], ['castle-siege', { x: -190, z: -160, h: 50, r: 20, ry: 0.6 }],
+    ['bld-neon-observatory', { x: -90, z: -76, h: 30, r: 5.5, ry: 2.27 }], ['bld-sky-dome-v2', { x: 90, z: -76, w: 26, r: 11, ry: 4.01 }],
+    ['bld-sea-terrace-spire', { x: -134, z: 24, h: 46, r: 12, ry: 1.4 }], ['bld-inverted-cube-hab', { x: 130, z: 23, h: 36, r: 6, ry: 4.89 }],
+    ['bld-bio-pod-tower-v2', { x: -76, z: 90, h: 28, r: 8, ry: 0.7 }], ['bld-holo-market-v2', { x: 76, z: 90, w: 26, r: 11, ry: 5.59 }],
+    ['tower-crescent2', { x: 0, z: -190, h: 70, r: 12 }], ['castle-siege', { x: -190, z: -160, h: 50, r: 20, ry: 0.6 }],
     ['transit-cliff-elevator', { x: 130, z: -70, h: 38, r: 3 }], ['vehicle-mining-powerarmor', { x: 420, z: -30, h: 6, r: 3 }],
   ];
   for (const [f, o] of L) { await place(f, o); }
