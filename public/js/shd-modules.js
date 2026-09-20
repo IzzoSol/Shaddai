@@ -124,7 +124,13 @@
       art: '/assets/enter/rag.jpg',
       artVary: ['/assets/enter/rag.jpg','/assets/enter/rag-1.jpg','/assets/enter/rag-2.jpg','/assets/enter/rag-3.jpg','/assets/enter/rag-4.jpg'],
       accent: C.emerald,
-      geo: 'graph'
+      geo: 'graph',
+      // Locked while the real rebuilt RAG brain (the model-grounded corpus
+      // work, see RAG_BRAIN_REBUILD memory) gets wired in here -- what this
+      // door currently opens is NOT that, so it's gated shut rather than
+      // left live showing the wrong thing.
+      gate: '9999',
+      lockNote: 'The RAG Brain is being rebuilt right now — check back soon.'
     },
     {
       id: 'athenaeum',
@@ -208,7 +214,7 @@
       name: 'CONNECT',
       kicker: 'Your keys · your assistant',
       blurb: 'Plug in the accounts you already pay for, and point your own Claude or Grok at the council. Twenty-two connectors, and we take nothing on what you make.',
-      href: '/connectors.html',
+      href: '/dashboard', // was /connectors.html -- owner wants Connect landing on the dashboard directly
       art: '/assets/xto/facade-a.jpg',
       artVary: ['/assets/xto/facade-a.jpg','/assets/shops/launchpad.jpg','/assets/shops/neuralforge.jpg'],
       accent: C.emerald,

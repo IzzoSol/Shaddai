@@ -1,0 +1,66 @@
+[
+ {
+  "id": "terrain-neon-road",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Futuristic asphalt road surface, dark charcoal with fine grain, faint glowing cyan lane dashes repeating evenly and thin gold edge lines.",
+  "out": "fal-assets/world/terrain2/terrain-neon-road.png"
+ },
+ {
+  "id": "terrain-sidewalk-tiles",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Futuristic sidewalk: pale grey stone hex tiles with thin glowing emerald seams, subtle wear.",
+  "out": "fal-assets/world/terrain2/terrain-sidewalk-tiles.png"
+ },
+ {
+  "id": "terrain-snow",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Fresh snow field with soft wind ripples and sparkling ice crystals, cool white-blue tones.",
+  "out": "fal-assets/world/terrain2/terrain-snow.png"
+ },
+ {
+  "id": "terrain-mountain-rock",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Rugged grey-brown mountain rock face texture with cracks and strata, cool shadows.",
+  "out": "fal-assets/world/terrain2/terrain-mountain-rock.png"
+ },
+ {
+  "id": "terrain-dunes",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Golden desert sand dunes with fine wind ripples and soft shadow gradients, warm tones.",
+  "out": "fal-assets/world/terrain2/terrain-dunes.png"
+ },
+ {
+  "id": "terrain-river-water",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Clear river water surface, turquoise with gentle flow ripples, soft caustics and pale foam streaks.",
+  "out": "fal-assets/world/terrain2/terrain-river-water.png"
+ },
+ {
+  "id": "terrain-meadow-grass",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Lush stylized meadow grass with varied greens, tiny wildflowers in yellow and white, natural blade detail.",
+  "out": "fal-assets/world/terrain2/terrain-meadow-grass.png"
+ },
+ {
+  "id": "terrain-ocean-deep",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Seamless top-down tile texture, square, flat evenly lit, fills the entire frame edge to edge with uniform detail, no vignette, no focal point, no objects, no text. Deep blue ocean surface with layered swell ripples and soft light glints.",
+  "out": "fal-assets/world/terrain2/terrain-ocean-deep.png"
+ }
+]
