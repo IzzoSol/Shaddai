@@ -63,7 +63,10 @@ html::after{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #mktChips .mkt{ border:1px solid rgba(232,196,92,.35); color:#f4e3b2; background:rgba(232,196,92,.07);
   font-size:11px; font-weight:700; letter-spacing:.08em; padding:4px 9px; border-radius:3px;
   box-shadow:inset 0 0 12px rgba(232,196,92,.06); white-space:nowrap; }
-#ticker{ color:var(--ink-soft); text-shadow:0 1px 2px rgba(0,0,0,.6); }
+#ticker{ color:var(--ink-soft); text-shadow:0 1px 2px rgba(0,0,0,.6); overflow:hidden; }
+#ttrack{ position:relative; width:max-content; min-width:100%; display:flex; gap:34px; padding-right:34px;
+  animation:ticker 180s linear infinite; will-change:transform; }
+@keyframes ticker{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
 
 /* ── header ────────────────────────────────────────────────────────────── */
 header{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -411,6 +414,72 @@ swarm extra CSS
   filter:drop-shadow(0 0 6px rgba(0,0,0,.35)); }
 .cell .so{ position:absolute; left:7px; bottom:7px; font-size:11px; opacity:.75; }
 .cell.dark{ color:#f4fbf7; }
+/* ── HEAT TOOLBAR + tiered squares / graphs / bubbles ──────────────────── */
+.heat-tool{ grid-column:1/-1; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  padding:10px 2px; }
+.ht-lab{ font-size:9px; font-weight:900; letter-spacing:.18em; color:var(--ink-faint); }
+.ht-btn{ border:1px solid var(--edge2); background:rgba(255,255,255,.02); color:var(--ink-soft);
+  font-family:var(--f-mono); font-size:10.5px; font-weight:800; letter-spacing:.08em;
+  padding:6px 10px; border-radius:3px; cursor:pointer; transition:all .15s; }
+.ht-btn:hover{ color:var(--emerald); border-color:rgba(0,255,156,.55); }
+.ht-btn.on{ background:var(--emerald); border-color:var(--emerald); color:#04120c; }
+.ht-legend{ margin-left:auto; display:flex; align-items:center; gap:6px; font-size:9px;
+  font-weight:800; letter-spacing:.1em; color:var(--ink-faint); }
+.ht-legend .sw{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+.ht-tier{ grid-column:1/-1; display:flex; align-items:center; gap:7px;
+  font-family:var(--f-display); font-weight:900; letter-spacing:.08em; font-size:14px;
+  padding:16px 2px 6px; text-shadow:0 0 12px color-mix(in srgb, currentColor 55%, transparent); }
+.ht-tier i{ font-style:normal; }
+.ht-count{ font-family:var(--f-mono); font-size:9.5px; font-weight:700; letter-spacing:.14em;
+  color:var(--ink-faint); border:1px solid var(--edge); padding:2px 7px; border-radius:3px; }
+.heat-graphs{ grid-column:1/-1; display:flex; flex-direction:column; gap:3px; padding:2px 0 16px; }
+.hg-row{ display:grid; grid-template-columns:auto minmax(0,1fr) minmax(60px,34%) auto auto;
+  align-items:center; gap:10px; padding:8px 4px; border-bottom:1px solid var(--edge);
+  cursor:pointer; min-height:58px; }
+.hg-row:hover{ background:rgba(255,255,255,.03); }
+.hg-ico{ width:40px; height:40px; border-radius:6px; overflow:hidden; display:grid; place-items:center;
+  background:rgba(255,255,255,.04); border:1px solid var(--edge2); font-weight:900; color:var(--ink-soft); }
+.hg-ico img{ width:100%; height:100%; object-fit:cover; }
+.hg-txt{ min-width:0; } .hg-txt b{ display:block; font-size:15px; color:var(--ink); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; text-shadow:0 0 10px rgba(0,255,156,.18); }
+.hg-txt i{ display:block; font-style:normal; font-size:10.5px; color:var(--ink-faint); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; }
+.hg-bar{ height:6px; border-radius:3px; background:rgba(255,255,255,.06); overflow:hidden; }
+.hg-bar span{ display:block; height:100%; border-radius:3px; box-shadow:0 0 10px color-mix(in srgb, currentColor 40%, transparent); }
+.hg-val{ font-size:15px; font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.hb-bubble{ position:relative; overflow:hidden; border:2px solid; border-radius:50%; cursor:pointer;
+  justify-self:center; display:grid; place-items:center; flex:none; }
+.hb-bubble img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.hb-bubble::after{ content:""; position:absolute; inset:0; background:
+  linear-gradient(to bottom, rgba(1,3,2,.18), rgba(1,3,2,.85)); }
+.hb-b{ position:relative; z-index:1; align-self:flex-end; margin-bottom:20%; font-size:12px;
+  font-weight:900; text-shadow:0 1px 4px #000; }
+.hb-m{ position:absolute; z-index:1; bottom:12%; left:50%; transform:translateX(-50%);
+  font-size:11px; font-weight:900; text-shadow:0 1px 4px #000; white-space:nowrap; }
+
+/* ── PULSE: live TG call tape ───────────────────────────────────────────── */
+.view#v-pulse{ display:none; } .view#v-pulse.on{ display:flex; flex-direction:column; }
+.pulse-live{ flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:12px 14px 6px;
+  font-family:var(--f-mono); font-size:12.5px; color:var(--ink-faint); letter-spacing:.04em; }
+.pulse-live b{ color:var(--emerald); text-shadow:0 0 12px rgba(0,255,156,.6); }
+.pulse-strip{ flex:1; overflow:auto; display:flex; flex-direction:column; padding:4px 8px 18px; }
+.pcall{ display:flex; align-items:center; gap:11px; padding:11px 12px; margin:4px 4px;
+  border:1px solid var(--edge); border-left:3px solid var(--pc,#00ff9c); border-radius:6px;
+  background:linear-gradient(90deg, rgba(0,255,156,.05), rgba(255,255,255,.012));
+  animation:hbIn .4s both; }
+.pcall.in{ animation:hbIn .45s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes hbIn{ 0%{ opacity:0; transform:translateY(14px) scale(.97); } 100%{ opacity:1; transform:none; } }
+.pcall img, .pc-av{ width:38px; height:38px; border-radius:6px; object-fit:cover; flex:none;
+  background:rgba(255,255,255,.05); }
+.pc-av{ display:grid; place-items:center; font-weight:900; font-size:15px; color:var(--pc,#00ff9c);
+  border:1px solid var(--edge2); }
+.pc-t{ min-width:0; flex:1 1 auto; }
+.pc-t b{ display:block; font-size:15px; color:var(--ink); white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis; text-shadow:0 0 10px rgba(0,255,156,.18); }
+.pc-t i{ display:block; font-style:normal; font-size:10.5px; color:var(--ink-faint); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; }
+.pc-m{ flex:none; font-size:18px; font-weight:900; font-variant-numeric:tabular-nums;
+  filter:drop-shadow(0 0 8px color-mix(in srgb, currentColor 45%, transparent)); }
 
 /* ── RANKED ────────────────────────────────────────────────────────────── */
 .rank{ display:flex; align-items:center; gap:12px; padding:13px 4px;
@@ -643,6 +712,7 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
     <button class="chip" data-m="bub"  aria-pressed="false">🫧 Bubbles</button>
     <button class="chip" data-m="heat" aria-pressed="false">🔲 Heatmap</button>
     <button class="chip" data-m="rank" aria-pressed="false">🏆 Ranked</button>
+    <button class="chip" data-m="pulse" aria-pressed="false">💓 Pulse</button>
   </div>
   <div class="rail" id="cats" aria-label="Category"></div>
   <div class="rail" id="filters" aria-label="Filters">
@@ -667,6 +737,7 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
   <div class="view" id="v-bub"><div id="bubbles"><canvas id="bcv"></canvas></div></div>
   <div class="view" id="v-heat"><div class="heat" id="heatGrid"></div></div>
   <div class="view" id="v-rank"></div>
+  <div class="view" id="v-pulse"></div>
   <div class="view" id="v-swarm">
     <div class="swarm-ch"><b>TU FISH SWARM</b>
       <span class="sc-note">7-agent sentiment consensus &#183; real TuFish news + market</span>
@@ -1087,23 +1158,90 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
     }).join('') : emptyMsg();
   }
 
-  function renderHeat() {
-    var by = VIEW.slice().sort(function (a, b) {
-      return h2(b) - h2(a); });
-    function h2(x) { return x.__top || x.__market ? (x.chg24 || 0) : mult(x) * 100; }
-    $('heatGrid').innerHTML = by.length ? by.map(function (c) {
-      var m = mult(c), isDex = (c.__top || c.__market);
-      var v = isDex ? 1 + (c.chg24 || 0) / 100 : m, bg = rampHex(v);
-      var big = isDex ? Math.round(c.chg24 || 0) + '%' : (m ? (m >= 10 ? Math.round(m) : m.toFixed(1)) + 'x' : '—');
+  function heatPerf(c) { return (c.__top || c.__market) ? 1 + ((c.chg24 || 0) / 100) : (mult(c) || 0); }
+  function heatTier(p) {
+    return p >= 5 ? ['MOON', '#00ff41', '🌕'] : p >= 1.5 ? ['WIN', '#00ff9c', '✅']
+      : p >= 1 ? ['FLAT', '#f4c842', '●'] : ['PAIN', '#ff3d5a', '▼'];
+  }
+  function heatStyle() { try { return localStorage.getItem('shd_heat_style') || 'squares'; } catch (e) { return 'squares'; } }
+  function setHeatStyle(s) { try { localStorage.setItem('shd_heat_style', s); } catch (e) {} renderHeat(); }
+  function heatTool() {
+    var hs = heatStyle();
+    return '<div class="heat-tool">' +
+      '<span class="ht-lab">HEAT STYLE</span>' +
+      '<button class="ht-btn' + (hs === 'squares' ? ' on' : '') + '" data-hs="squares">▦ SQUARES</button>' +
+      '<button class="ht-btn' + (hs === 'graphs' ? ' on' : '') + '" data-hs="graphs">▤ GRAPHS</button>' +
+      '<button class="ht-btn' + (hs === 'bubbles' ? ' on' : '') + '" data-hs="bubbles">● BUBBLES</button>' +
+      '<span class="ht-legend"><span class="sw" style="background:#00ff41"></span>MOON' +
+      '<span class="sw" style="background:#00ff9c"></span>WIN' +
+      '<span class="sw" style="background:#f4c842"></span>FLAT' +
+      '<span class="sw" style="background:#ff3d5a"></span>PAIN</span></div>';
+  }
+  function heatCell(c) {
+    var p = heatPerf(c), isDex = (c.__top || c.__market), bg = rampHex(p);
+    var big = isDex ? Math.round(c.chg24 || 0) + '%' : (p ? (p >= 10 ? Math.round(p) : p.toFixed(1)) + 'x' : '—');
+    var i = info(c);
+    return '<button class="cell" style="background:' + bg + '" data-mint="' + esc(c.mint) + '">' +
+      (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy">' : '') +
+      '<span class="s">' + esc((c.symbol || c.name || '?').slice(0, 8)) + '</span>' +
+      '<span class="m">' + big + '</span>' +
+      (i && i.socials && i.socials.twitter ? '<span class="so">𝕏</span>' : '') + '<span class="zo" data-dex="' + esc(c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '">DEX \u2197</span></button>';
+  }
+  function renderHeatSquares() {
+    var list = VIEW.slice().sort(function (a, b) { return heatPerf(b) - heatPerf(a); }).slice(0, 120);
+    if (!list.length) return emptyMsg();
+    var buckets = { MOON: [], WIN: [], FLAT: [], PAIN: [] };
+    list.forEach(function (c) { buckets[heatTier(heatPerf(c))[0]].push(c); });
+    var html = '';
+    ['MOON', 'WIN', 'FLAT', 'PAIN'].forEach(function (t) {
+      var B = buckets[t]; if (!B.length) return;
+      var m = heatTier(t === 'MOON' ? 5 : t === 'WIN' ? 1.5 : 1);
+      html += '<div class="ht-tier" style="color:' + m[1] + '"><i>' + m[2] + '</i>' + t +
+        ' <span class="ht-count">' + B.length + '</span></div>' +
+        B.map(heatCell).join('');
+    });
+    return html;
+  }
+  function renderHeatGraphs() {
+    var list = VIEW.slice().sort(function (a, b) { return heatPerf(b) - heatPerf(a); }).slice(0, 60);
+    if (!list.length) return emptyMsg();
+    var maxP = Math.max.apply(null, list.map(function (c) { return heatPerf(c) || 0; }).concat([1]));
+    return '<div class="heat-graphs">' + list.map(function (c) {
+      var p = heatPerf(c), col = rampHex(p), isDex = (c.__top || c.__market);
+      var big = isDex ? Math.round(c.chg24 || 0) + '%' : (p ? (p >= 10 ? Math.round(p) : p.toFixed(2)) + 'x' : '—');
       var i = info(c);
-      // text colour computed against the fill, not assumed
-      var dark = (v < .5 && v > 0) || v === 0;
-      return '<button class="cell' + (dark ? ' dark' : '') + '" style="background:' + bg + '" data-mint="' + esc(c.mint) + '">' +
-        (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy">' : '') +
-        '<span class="s">' + esc((c.symbol || c.name || '?').slice(0, 8)) + '</span>' +
-        '<span class="m">' + big + '</span>' +
-        (i && i.socials && i.socials.twitter ? '<span class="so">𝕏</span>' : '') + '<span class="zo" data-dex="' + esc(c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '">DEX \u2197</span></button>';
-    }).join('') : emptyMsg();
+      return '<div class="hg-row" data-mint="' + esc(c.mint) + '">' +
+        '<span class="hg-ico">' + (i && i.image ? '<img src="' + esc(i.image) + '" loading="lazy" alt="">' : (c.symbol || '?').charAt(0).toUpperCase()) + '</span>' +
+        '<div class="hg-txt"><b>' + esc((c.symbol || c.name || '?').slice(0, 10)) + '</b>' +
+        '<i>' + (esc((c.name || '').slice(0, 26)) || '—') + ' · ' + ago(c.ts || 0) + '</i></div>' +
+        '<div class="hg-bar"><span style="width:' + Math.max(3, Math.min(100, Math.round(p / maxP * 100))) + '%;background:' + col + '"></span></div>' +
+        '<div class="hg-val" style="color:' + col + '">' + big + '</div>' +
+        '<span class="zo" data-dex="' + esc(c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '">DEX \u2197</span></div>';
+    }).join('') + '</div>';
+  }
+  function renderHeatBubbles() {
+    var list = VIEW.slice().sort(function (a, b) { return heatPerf(b) - heatPerf(a); }).slice(0, 70);
+    if (!list.length) return emptyMsg();
+    var sizes = list.map(function (c) { return Number(c.curFdv || c.entryFdv || c.vol24) || 1; });
+    var mx = Math.max.apply(null, sizes.concat([1]));
+    return list.map(function (c) {
+      var p = heatPerf(c), col = rampHex(p), i = info(c);
+      var r = Math.max(44, Math.min(116, 36 + Math.sqrt((Number(c.curFdv || c.entryFdv || c.vol24) || 1) / mx) * 72));
+      return '<div class="hb-bubble" style="width:' + r + 'px;height:' + r + 'px;border-color:' + col + ';box-shadow:0 0 ' + (r / 7).toFixed(1) + 'px ' + col + '66" data-mint="' + esc(c.mint) + '">' +
+        (i && i.image ? '<img src="' + esc(i.image) + '" loading="lazy" alt="">' : '') +
+        '<span class="hb-b" style="color:' + col + '">' + esc((c.symbol || '?').slice(0, 7)) + '</span>' +
+        '<span class="hb-m" style="color:' + col + '">' + ((c.__top || c.__market) ? Math.round(c.chg24 || 0) + '%' : (p ? p.toFixed(1) + 'x' : '—')) + '</span></div>';
+    }).join('');
+  }
+  function renderHeat() {
+    var grid = $('heatGrid'), hs = heatStyle();
+    if (!grid) return;
+    grid.style.gridTemplateColumns = hs === 'graphs' ? '1fr' : 'repeat(auto-fill,minmax(150px,1fr))';
+    grid.innerHTML = heatTool() + (hs === 'graphs' ? renderHeatGraphs()
+      : hs === 'bubbles' ? renderHeatBubbles() : renderHeatSquares());
+    [].forEach.call(grid.querySelectorAll('.ht-btn'), function (b) {
+      b.addEventListener('click', function () { setHeatStyle(b.dataset.hs); });
+    });
   }
 
   var bub = { nodes: [], raf: 0 };
@@ -1175,9 +1313,9 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
     $('cE').textContent = P.social === 'tw' ? 'with 𝕏' : P.social === 'any' ? 'with socials'
                         : P.social === 'none' ? 'no socials' : '';
     $('liveN').textContent = VIEW.length;
-    ['list', 'bub', 'heat', 'rank'].forEach(function (m) { $('v-' + m).classList.toggle('on', m === P.mode); });
+    ['list', 'bub', 'heat', 'rank', 'pulse'].forEach(function (m) { $('v-' + m).classList.toggle('on', m === P.mode); });
     if (P.mode === 'list') renderList(); else if (P.mode === 'rank') renderRank();
-    else if (P.mode === 'heat') renderHeat(); else renderBub();
+    else if (P.mode === 'heat') renderHeat(); else if (P.mode === 'pulse') renderPulse(); else renderBub();
     tickRows();
   }
 
@@ -1855,6 +1993,39 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
     if (c) thShow(c, e);
   });
 
+  /* ── Pulse: live TG call tape ──────────────────────────────────────────── */
+  /* Polls the raw calls feed every 5s and teases out the newest call each
+     interval, so the tape visibly "pulses" as fresh signals land. */
+  function renderPulse() {
+    var w = $('v-pulse');
+    if (!w || P.mode !== 'pulse') return;
+    fetch('/api/signals/calls?limit=40&all=1', { signal: AbortSignal.timeout(8000) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var list = Array.isArray(d) ? d : (d.calls || d.list || []);
+        list = list.filter(function (c) { return c && c.mint && c.source !== 'test' && c.source !== 'seed'; });
+        if (!list.length) return;
+        var last = renderPulse._last || [];
+        renderPulse._last = list.map(function (c) { return c.id || c.mint; });
+        var fresh = list.filter(function (c) { return last.indexOf(c.id || c.mint) === -1; }).length;
+        list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+        w.innerHTML = '<div class="pulse-live">💓 <b>' + fresh + '</b> new this interval · scanning ' +
+          list.length + ' calls</div><div class="pulse-strip">' +
+          list.slice(0, 30).map(function (c, idx) {
+            var p = mult(c), col = rampHex(p), i = info(c);
+            var big = p ? (p >= 10 ? Math.round(p) : p.toFixed(1)) + 'x' : '—';
+            return '<div class="pcall' + (idx < fresh ? ' in' : '') + '" style="--pc:' + col + '" data-mint="' + esc(c.mint) + '" data-dex="https://dexscreener.com/solana/' + esc(c.mint) + '">' +
+              (i && i.image ? '<img src="' + esc(i.image) + '" loading="lazy" alt="">'
+                : '<b class="pc-av">' + esc((c.symbol || '?').charAt(0).toUpperCase()) + '</b>') +
+              '<div class="pc-t"><b>' + esc((c.symbol || c.name || '?').slice(0, 9)) + '</b>' +
+              '<i>' + esc((c.source || '').slice(0, 8)) + ' · ' + ago(c.ts || 0) + ' · peak ' +
+              (c.peakMult ? c.peakMult.toFixed(1) + 'x' : '—') + '</i></div>' +
+              '<span class="pc-m" style="color:' + col + '">' + big + '</span></div>';
+          }).join('') + '</div>';
+      }).catch(function () {});
+  }
+  renderPulse();
+  setInterval(renderPulse, 5000);
 
 })();
 </script>
