@@ -1483,6 +1483,7 @@ function updateWallet(){ const el=document.getElementById('wallet'); if(!el)retu
     '<span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; try{ ftueRender(); }catch(_){} }
 // ---- FIRST-TIME ONBOARDING (FTUE): a guided quest that reveals the game's depth ----
 let ftue={}; try{ ftue=JSON.parse(localStorage.getItem('shaddai.ftue')||'{}'); }catch(_){ ftue={}; }
+ftue.done=true;   // owner: no unrequested onboarding popups/steps — the guided quest panel is disabled
 function ftueSave(){ try{ localStorage.setItem('shaddai.ftue',JSON.stringify(ftue)); }catch(_){} }
 const FTUE_STEPS=[
   {id:'earn', label:'Earn your first Gold — Work 💼, fish, or fight', done:()=>(quest.earn||0)>0},
