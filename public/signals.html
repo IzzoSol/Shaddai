@@ -398,9 +398,6 @@ swarm extra CSS
   opacity:1; object-fit:cover; image-rendering:auto; transform:scale(1.02);
   filter:saturate(1.25) contrast(1.05);
   transition:transform .7s cubic-bezier(.2,.7,.2,1), opacity .35s, filter .35s; }
-/* heat images: no jank — stable box, decode async, no layout shift, no hover re-scale, hide broken art */
-.cell{ contain:layout paint; background-color:#0b0f18; }
-.cell img{ background:#0b0f18; transform:none !important; transition:opacity .35s ease !important; will-change:auto; image-rendering:auto; }
 .cell:hover img{ transform:none !important; filter:saturate(1.35) contrast(1.06); }
 .cell img[src=""], .cell img:not([src]){ display:none; }
 /* heat can never paint over toolbar/buttons: the whole grid is a clipped stacking context below the chrome */
