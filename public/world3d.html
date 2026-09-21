@@ -758,10 +758,10 @@ function makePortal(pos, ry, col) {
   // mounts corral
   await addMount('mount-forge-bull', 'FORGE BULL', { x: -20, z: 34, h: 2.9, ry: 0.5, speed: 11, seatK: 0.92 });
   await addMount('mount-glacier-mammoth', 'GLACIER MAMMOTH', { x: -32, z: 46, h: 5.0, ry: 0.2, speed: 8, seatK: 0.9 });
-  await addMount('mount-canopy-gorilla', 'CANOPY GORILLA', { x: 20, z: 34, h: 4.4, ry: -0.5, speed: 9, seatK: 0.85 });
-  await addMount('mount-sky-hawk', 'SKY HAWK', { x: 34, z: 46, h: 3.6, ry: -0.2, speed: 16, hover: true, hoverY: 3.4, seatK: 0.85 });
-  await addMount('veh-hover-pod-green', 'HOVER POD', { x: -8, z: 56, w: 5.2, ry: 0.3, speed: 22, hover: true, hoverY: 1.1, seatK: 0.55 });
-  await addMount('veh-hover-pod-blue', 'HOVER POD II', { x: 8, z: 56, w: 5.2, ry: -0.3, speed: 24, hover: true, hoverY: 1.1, seatK: 0.55 });
+await addMount('mount-canopy-gorilla', 'CANOPY GORILLA', { x: 20, z: 34, h: 4.4, ry: -0.5, speed: 9, seatY: 0.95, seatK: 0.85 });
+await addMount('mount-sky-hawk', 'SKY HAWK', { x: 34, z: 46, h: 3.6, ry: -0.2, speed: 16, hover: true, hoverY: 3.4, seatY: 0.95, seatK: 0.85 });
+await addMount('veh-hover-pod-green', 'HOVER POD', { x: -8, z: 56, w: 5.2, ry: 0.3, speed: 22, hover: true, hoverY: 1.1, seatY: 0.55, seatK: 0.55 });
+await addMount('veh-hover-pod-blue', 'HOVER POD II', { x: 8, z: 56, w: 5.2, ry: -0.3, speed: 24, hover: true, hoverY: 1.1, seatY: 0.55, seatK: 0.55 });
   await addMount('veh-monowheel-mech', 'DUNE WHEEL', { x: 412, z: -24, h: 5.4, ry: 0.5, speed: 15, seatK: 0.95 });
   // doors
   doors.push(new Door({ x: 45, z: -16, ry: 0, w: 6, h: 5.6, type: 'slide' }), new Door({ x: 64, z: 60, ry: 0, w: 4.2, h: 4.6, type: 'hinge', color: 0x00ff9c }), new Door({ x: -42, z: -25, ry: 0.4, w: 4, h: 5, type: 'slide', color: 0xa06bff }));
