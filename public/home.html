@@ -76,7 +76,7 @@ code{ font-family:var(--f-mono); }
 #descentBg{ position:fixed; inset:0; width:100%; height:100%;
   z-index:-1; border:0; pointer-events:none; opacity:0; will-change:opacity;
   transition:opacity 1.1s var(--ease); background:var(--void); }
-#descentBg.lit{ opacity:.9; }
+#descentBg.lit{ opacity:.62; }
 /* ── IMMERSIVE VIEW: strip the page to just the interactive Descent ── */
 body.immersive .bar > *:not(.mark), body.immersive section.blk, body.immersive .band,
 body.immersive .foot, body.immersive .hero-center, body.immersive #sky, body.immersive .hero-glow{ visibility:hidden; pointer-events:none; }
@@ -296,6 +296,7 @@ section.blk::before, .band.arrival-fade::before{ content:''; position:absolute; 
 .hero::after{ content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
   background:linear-gradient(180deg, rgba(6,8,11,.35) 0%, transparent 22%, transparent 66%, var(--void) 100%); }
 .hero-center{ position:relative; z-index:5; text-align:center; padding:0 var(--gutter); }
+.hero-center .kick, .hero-center .tag{ text-shadow:0 1px 12px rgba(6,8,11,.85), 0 0 2px rgba(6,8,11,.7); }
 .hero-center .kick{ font-family:var(--f-hud); font-weight:600; font-size:11px; letter-spacing:.5em; text-transform:uppercase; color:var(--gold);
   opacity:0; animation:rise 1s .2s var(--ease) forwards; display:inline-flex; align-items:center; gap:12px; }
 .hero-center .kick::before, .hero-center .kick::after{ content:''; width:26px; height:1px; background:var(--gold-dim); }
@@ -1538,7 +1539,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
     if(glow){ glow.style.setProperty('--mx',(ex/W*100).toFixed(1)+'%'); glow.style.setProperty('--my',(ey/H*100).toFixed(1)+'%'); }
     var breathe=0.5+0.5*Math.sin(t*0.0006);
     var px=(ex-cxp)/W, py=(ey-cyp)/H;
-    ctx.clearRect(0,0,W,H); ctx.fillStyle='#06080b'; ctx.fillRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); /* transparent — the fixed /lab-molecules?bg=1 descent backdrop shows through the hero */
 
     /* composite the pre-baked nebula (cheap drawImage) with a breathing/parallax offset */
     ctx.globalAlpha=0.7+0.3*breathe;
@@ -1679,18 +1680,17 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
      fallback for browsers without rIC (Safari < 16). */
   var _descLoaded=false;
   function _triggerDescent(){if(_descLoaded)return;_descLoaded=true;lazyLoad();}
-  /* PERF: do NOT auto-load the descent WebGL iframe on idle/timeout — parsing its
-     126KB JS + booting a WebGL context blocks the main thread for ~1-3s, which is
-     the "scroll then freeze for a few seconds" jank users feel. Load ONLY on
-     explicit user action (the Ascend/View button via window.__loadDescent). */
-  /* (auto-load disabled for perf)
+  /* Auto-load the descent WebGL iframe so the lab-molecules scene sits behind the
+     SHADDAI hero intro (the requested landing look). Give the hero a beat to paint
+     first via idle-callback / short timeout; the suspension logic above still hides
+     the iframe when scrolled past or in immersive mode, so it can't stall scroll. */
+  _triggerDescent = function(){ if(_descLoaded) return; _descLoaded = true; lazyLoad(); };
   if(window.requestIdleCallback){
-    requestIdleCallback(_triggerDescent, {timeout:8000});
+    requestIdleCallback(_triggerDescent, {timeout:3000});
   } else {
-    if(document.readyState!=='loading') setTimeout(_triggerDescent, 6000);
-    else document.addEventListener('DOMContentLoaded', function(){ setTimeout(_triggerDescent, 6000); });
+    if(document.readyState!=='loading') setTimeout(_triggerDescent, 1200);
+    else document.addEventListener('DOMContentLoaded', function(){ setTimeout(_triggerDescent, 1200); });
   }
-  */
 
   /* ── PERF: suspend the descent WebGL iframe while it isn't doing useful work ──
      The descent iframe (lab-molecules.html in ?bg=1 mode) renders a WebGL molecule
