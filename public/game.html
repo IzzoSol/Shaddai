@@ -2134,6 +2134,33 @@ async function claimOfficeGame(){
   }catch(_){}
   setInterval(syncDpadVisibility, 600);
 
+  // ── Game Boy layout: always-visible A / B (bottom-right) + START / SELECT pills (bottom-centre) ──
+  // A = USE (tool/attack/interact), B = ENTER (doors). START opens/closes the extra action cluster, SELECT jumps to the Store.
+  const gb=document.createElement('div'); gb.id='gbPad';
+  gb.style.cssText='position:fixed;left:0;right:0;bottom:0;height:150px;z-index:54;pointer-events:none;display:none;font-family:system-ui,sans-serif';
+  document.body.appendChild(gb);
+  function gbBtn(txt,sz,right,bottom,col,fn,sub){
+    const b=document.createElement('button');
+    b.innerHTML='<span style="font-size:'+(sz*0.42)+'px;font-weight:800;line-height:1">'+txt+'</span>'+(sub?'<span style="font-size:8px;letter-spacing:.08em;opacity:.8;margin-top:2px">'+sub+'</span>':'');
+    b.style.cssText='position:absolute;pointer-events:auto;right:'+right+'px;bottom:calc('+bottom+'px + env(safe-area-inset-bottom));width:'+sz+'px;height:'+sz+'px;border-radius:50%;border:2px solid '+col+';background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.18),rgba(10,14,25,.82));color:'+col+';display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 12px '+col+'44;-webkit-user-select:none';
+    const go=e=>{ e.preventDefault(); try{ fn(); }catch(_){} b.style.transform='scale(.92)'; setTimeout(()=>{b.style.transform='';},90); };
+    b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+    gb.appendChild(b); return b;
+  }
+  function gbPill(txt,left,fn){
+    const b=document.createElement('button'); b.textContent=txt;
+    b.style.cssText='position:absolute;pointer-events:auto;left:calc(50% + '+left+'px);bottom:calc(16px + env(safe-area-inset-bottom));width:62px;height:24px;border-radius:12px;border:1px solid rgba(232,196,92,.6);background:rgba(10,14,25,.78);color:#e8c45c;font-size:9px;font-weight:700;letter-spacing:.14em;transform:rotate(-18deg);touch-action:manipulation';
+    const go=e=>{ e.preventDefault(); try{ fn(); }catch(_){} };
+    b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+    gb.appendChild(b); return b;
+  }
+  gbBtn('A',66,20,50,'#00e5a0',()=>{ if(typeof useActiveTool==='function') useActiveTool(); },'USE');
+  gbBtn('B',56,96,26,'#e8c45c',()=>{ if(typeof tryDoor==='function') tryDoor(); },'ENTER');
+  gbPill('START',-30,()=>{ tog.click(); });
+  gbPill('SELECT',-98,()=>{ const st=[].find.call(document.querySelectorAll('button,.panel'),x=>/store/i.test(x.textContent||'')&&x.offsetParent); if(st) st.click(); });
+  setInterval(()=>{ gb.style.display = pad.style.display==='block' ? 'block' : 'none'; }, 400);
+
+
   // SPACE = use/attack with the equipped tool (owner request). Ignored while typing in chat.
   window.addEventListener('keydown',function(e){
     if(e.code==='Space' && state==='world'){
