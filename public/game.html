@@ -532,7 +532,8 @@ function genWorld(rid){
     props.push({type:'building',col:50,row:50,w:3,d:3,floors:1, wall:'#1a2438',roof:'#3a6a9a',glass:'#5fe0ff',name:'STATION',kind:'transit',landmark:'station'});
     for(let i=0;i<18;i++){ let col,r,k=0; do{ col=(Math.random()*GW)|0; r=(Math.random()*GH)|0; k++; }while(tiles[r][col]!==PATH&&k<50); if(tiles[r][col]===PATH) props.push({type:'hovercar',col,row:r,color:CARCOLS[i%CARCOLS.length]}); }
     spawnCitizens(14);
-    player.col=CC; player.row=CR+R+4; cam.col=player.col; cam.row=player.row; bakeGround(); return;
+    // defined hub spawn: the Town Square plaza, fronting SHADDAI HQ (not the old south-edge default)
+    player.col=CC+0.5; player.row=CR+4; cam.col=player.col; cam.row=player.row; bakeGround(); return;
   }
 
   // ===== NATURE REGIONS (organic layout) =====
