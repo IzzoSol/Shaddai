@@ -66,10 +66,19 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 .bub:active{transform:scale(.96)}
 .bub.sq{border-radius:14%}.bub.sq .bub-ava{border-radius:10%}
 .bub.fb{overflow:hidden}
-.bub.fb .bub-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;z-index:0;pointer-events:none}
-.bub.fb .sy,.bub.fb .mx,.bub.fb .sub-rt,.bub.fb .bub-ava,.bub.fb .safeco{position:relative;z-index:1}
+.bub.fb .bub-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.88;z-index:0;pointer-events:none}
+.bub.fb .bub-bg:empty{display:none}
+.bub.fb::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,8,18,.80) 0%,rgba(4,8,18,.20) 50%,rgba(4,8,18,.08) 100%);z-index:0;pointer-events:none}
+html[data-theme="light"] .bub.fb::after{background:linear-gradient(0deg,rgba(248,250,255,.85) 0%,rgba(248,250,255,.25) 55%,rgba(248,250,255,.10) 100%)}
+.bub.fb .sy,.bub.fb .mx,.bub.fb .sub-rt{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.bub.fb .bub-ava{display:none}
 .bub-s .bub-ava{width:20px;height:20px;margin-bottom:1px}
 .bub-s .bub-ava-fb{font-size:9px}
+.gbar{display:block;width:100%;height:3px;border-radius:2px;background:rgba(148,163,184,.28);overflow:hidden;margin-top:3px;position:relative;z-index:1}
+.bub.fb .gbar{background:rgba(148,163,184,.40)}
+.gbar i{display:block;height:100%;border-radius:2px;background:var(--emerald)}
+.gbar.dn i{background:var(--amber)}
+.gbar.dn i:not([style]){background:var(--edge)}
 .pc24{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em}
 .pc24.up{color:var(--emerald)}.pc24.dn{color:var(--amber)}
 .csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
@@ -601,13 +610,13 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
     <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span></div>
     <div class="legend"><span><i aria-hidden="true" style="background:var(--emerald)"></i>≥1×</span><span><i aria-hidden="true" style="background:var(--amber)"></i>&lt;1×</span><span><i aria-hidden="true" style="background:var(--edge)"></i>flat</span></div>
     <div class="chips" role="group" aria-label="Multiplier filter" style="margin-bottom:8px">
-      <button class="chip on" aria-pressed="true" data-hf="all">All</button>
+      <button class="chip on" aria-pressed="true" data-hf="new">✧ New</button>
+      <button class="chip" aria-pressed="false" data-hf="all">All</button>
       <button class="chip" aria-pressed="false" data-hf="live">Live</button>
       <button class="chip" aria-pressed="false" data-hf="100">100x+</button>
       <button class="chip" aria-pressed="false" data-hf="10">10x+</button>
       <button class="chip" aria-pressed="false" data-hf="1">1x+</button>
       <button class="chip" aria-pressed="false" data-hf="dead">Done</button>
-      <button class="chip" aria-pressed="false" data-hf="new">✧ New</button>
     </div>
     <div id="heat-bubbles"></div>
   </section>
@@ -730,7 +739,7 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all', source: 'all', liveFlag: 0, newFlag: 0, q: '', firstFeed: true };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'new', source: 'all', liveFlag: 0, newFlag: 0, q: '', firstFeed: true };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */
@@ -931,12 +940,13 @@ function safetyLabel(score) {
    view read as the big XL tiles, the rest step down in three clean sizes —
    a fixed grid (see #heat-bubbles) instead of ad-hoc per-bubble pixel widths,
    so the layout stays aligned and predictable at any list length. */
-function bubTier(rank, n) {
+function bubTier(rank, n, c) {
   var pct = n > 1 ? rank / (n - 1) : 0;
-  if (pct < 0.06) return 'xl';
-  if (pct < 0.22) return 'l';
-  if (pct < 0.5) return 'm';
-  return 's';
+  var rankIdx = 3 - Math.min(3, Math.floor(pct * 4));
+  var fdv = Number((c && (c.curFdv || c.entryFdv)) || 0);
+  var mcIdx = fdv >= 25e6 ? 3 : fdv >= 10e6 ? 2 : fdv >= 3e6 ? 1 : 0;
+  var tier = ['s', 'm', 'l', 'xl'][Math.min(3, Math.max(rankIdx, mcIdx))];
+  return tier;
 }
 var heatImgCache = {};
 function enrichBatch(mints) {
@@ -961,7 +971,7 @@ function fillBubbleAvatars(mints) {
       var slot = el('heat-bubbles').querySelector('.bub[data-mint="' + mint + '"] .bub-ava');
       if (!slot) return;
       var im = document.createElement('img');
-      im.loading = 'lazy'; im.alt = '';
+      im.loading = 'lazy'; im.alt = ''; im.referrerPolicy = 'no-referrer';
       im.addEventListener('error', function () { im.remove(); });
       im.src = img;
       slot.textContent = '';
@@ -969,7 +979,7 @@ function fillBubbleAvatars(mints) {
       var bg = el('heat-bubbles').querySelector('.bub[data-mint="' + mint + '"] .bub-bg');
       if (bg) {
         var bi = document.createElement('img');
-        bi.loading = 'lazy'; bi.alt = '';
+        bi.loading = 'lazy'; bi.alt = ''; bi.referrerPolicy = 'no-referrer';
         bi.addEventListener('error', function () { bi.remove(); });
         bi.src = img;
         bg.appendChild(bi);
@@ -985,7 +995,6 @@ function renderHeat() {
   var mGate = state.heat;
   if (mGate !== 'all' && mGate !== 'live' && mGate !== 'dead' && mGate !== 'new' && mGate !== 'mix') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= Number(mGate); });
   if (mGate === 'live') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= 1; });
-  if (mGate === 'new') list = list.filter(function (c) { return !c.ts || (Date.now() - c.ts) < 86400000; });
   if (mGate === 'new') list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
   else list.sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); });
   list = list.slice(0, 60);
@@ -997,23 +1006,27 @@ function renderHeat() {
   var avatarMints = [];
   list.forEach(function (c, i) {
     var m = Number(c.curMult) || 0;
-    var tier = bubTier(i, list.length);
+    var tier = bubTier(i, list.length, c);
     var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
     var b = document.createElement('button');
-    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq fb' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
+    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq' : '') + (c.img ? ' fb' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
     b.dataset.mint = c.mint;
     b.setAttribute('aria-label', (c.symbol || 'coin') + ' ' + (m ? m.toFixed(2) + '×' : 'new call') + ', safety ' + (c.safetyScore != null ? c.safetyScore : 'unknown'));
+    if (c.name) b.title = c.name;
     var avatar = '';
     var big = tier === 'xl' || tier === 'l';
     avatarMints.push(c.mint);
     var letter = esc(String(c.symbol || '?')[0]).toUpperCase();
-    var coinImg = c.img ? '<img src="' + esc(c.img) + '" loading="lazy" alt="" onerror="this.outerHTML=\'\'">' : '';
-    avatar = (big ? '<span class="bub-bg">' + (c.img ? coinImg : '') + '</span>' : '') +
-      '<span class="bub-ava">' + (coinImg || '<span class="bub-ava-fb">' + letter + '</span>') + '</span>';
+    var coinImg = c.img ? '<img src="' + esc(c.img) + '" loading="lazy" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=\'\'">' : '';
+    avatar = '<span class="bub-bg">' + (c.img ? coinImg : '') + '</span>' +
+      '<span class="bub-ava"><span class="bub-ava-fb">' + letter + '</span></span>';
+    var peak = Math.max(Number(c.peakMult) || 0, Number(c.curMult) || 0, 1);
+    var gbarW = Math.max(0, Math.min(Math.round((m / peak) * 100), 100));
     b.innerHTML = avatar +
       '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
       '<span class="mx" style="color:' + main + '">' + (m ? m.toFixed(2) + '×' : 'new') + '</span>' +
-      '<span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>';
+      '<span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>' +
+      '<span class="gbar ' + (m >= 1 ? 'up' : 'dn') + '" title="peak ' + peak.toFixed(2) + '× · now ' + m.toFixed(2) + '×"><i style="width:' + gbarW + '%"></i></span>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
