@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><script>try{if(localStorage.getItem("shaddai.region")&&!/[?&](menu|fresh)/.test(location.search)){document.documentElement.classList.add("shd-skip-menus")}}catch(e){}</script><style>html.shd-skip-menus #create,html.shd-skip-menus #region{display:none !important}</style><meta charset="utf-8">
+<!doctype html><html lang="en"><head><script>try{if(localStorage.getItem("shaddai.region")&&!/[?&](menu|fresh)/.test(location.search)){document.documentElement.classList.add("shd-skip-menus")}}catch(e){}</script><style>html.shd-skip-menus #create,html.shd-skip-menus #region,#create{display:none !important}</style><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#06080b">
 <style>html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}input,textarea{-webkit-user-select:text;user-select:text}canvas{touch-action:none}#dpad{bottom:calc(14px + env(safe-area-inset-bottom)) !important;left:calc(14px + env(safe-area-inset-left)) !important}</style>
@@ -1361,7 +1361,8 @@ fit(); setPreset(0);
   }
   // No redundant "create your character" if you JUST forged one (and aren't forcing ?menu):
   // your agent is already built — go straight to picking where to spawn.
-  else if(forgedIn && !/[?&](menu|fresh)/.test(location.search)){
+  else {
+    // owner: the "Choose your operative" screen is removed — go straight to the realm picker
     try{ goRegion(); }catch(e){}
   }
 }catch(e){ console.warn('boot hand-off',e); } })();
