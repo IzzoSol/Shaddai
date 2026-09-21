@@ -329,6 +329,8 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 #sheet .s-btn:active{opacity:.85}
 
 .empty{color:var(--faint);font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:40px 0}
+.skel-bub{height:76px;border-radius:12px;background:linear-gradient(100deg,var(--panel) 40%,var(--bg2) 50%,var(--panel) 60%);background-size:200% 100%;animation:skel 1.2s linear infinite;border:1px solid var(--edge)}
+@keyframes skel{to{background-position:-200% 0}}
 .err{font-family:var(--f-mono);font-size:11px;color:var(--red);letter-spacing:.06em;text-align:center;padding:30px 10px;line-height:1.7}
 
 /* ── market strip + news ticker (key-free, mirrors the Master Terminal) ── */
@@ -1073,7 +1075,16 @@ function renderHeat() {
   }
   var metaEl = el('heat-meta');
   if (metaEl) metaEl.textContent = (t0 && tm > 0 ? 'top ' + esc(t0.symbol || '?') + ' ' + tm.toFixed(1) + '× · ' : '') + 'Σ FDV ' + money(totFdv);
-  if (!list.length) { div.innerHTML = '<div class="empty">NO SIGNALS YET</div>'; return; }
+  if (!list.length) {
+    if (state.firstFeed && !state.feed.length) {
+      var sk = '';
+      for (var si = 0; si < 16; si++) sk += '<div class="skel-bub"></div>';
+      div.innerHTML = sk;
+      return;
+    }
+    div.innerHTML = '<div class="empty">NO SIGNALS YET</div>';
+    return;
+  }
   var frag = document.createDocumentFragment();
   var avatarMints = [];
   list.forEach(function (c, i) {
@@ -1084,7 +1095,6 @@ function renderHeat() {
     var b = document.createElement('button');
     b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq' : '') + (c.img ? ' fb' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
     b.style.boxShadow = tier === 'xl' ? '0 0 26px ' + glowHex + '55,0 2px 8px rgba(0,0,0,.45)' : tier === 'l' ? '0 0 15px ' + glowHex + '38' : '0 1px 3px rgba(0,0,0,.35)';
-    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq' : '') + (c.img ? ' fb' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
     b.dataset.mint = c.mint;
     b.setAttribute('aria-label', (c.symbol || 'coin') + ' ' + (m ? m.toFixed(2) + '×' : 'new call') + ', safety ' + (c.safetyScore != null ? c.safetyScore : 'unknown'));
     if (c.name) b.title = c.name;
