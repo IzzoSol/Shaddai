@@ -64,6 +64,10 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   text-align:center; overflow:hidden; transition:transform .08s;
 }
 .bub:active{transform:scale(.96)}
+.bub.sq{border-radius:14%}.bub.sq .bub-ava{border-radius:10%}
+.csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
+.csearch:focus{outline:none;border-color:var(--gold)}
+.chip.tog.on{outline:1px solid var(--gold);outline-offset:0}
 .bub .sy{font-family:var(--f-mono);font-weight:700;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .bub .mx{font-family:var(--f-mono);font-weight:800;line-height:1.1}
 .bub .sub-rt{font-family:var(--f-mono);letter-spacing:.07em;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -596,6 +600,7 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
       <button class="chip" aria-pressed="false" data-hf="10">10x+</button>
       <button class="chip" aria-pressed="false" data-hf="1">1x+</button>
       <button class="chip" aria-pressed="false" data-hf="dead">Done</button>
+      <button class="chip" aria-pressed="false" data-hf="new">✧ New</button>
     </div>
     <div id="heat-bubbles"></div>
   </section>
@@ -610,7 +615,10 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
       <button class="chip" aria-pressed="false" data-s="score">Top</button>
       <button class="chip" aria-pressed="false" data-s="ts">Fresh</button>
       <button class="chip" aria-pressed="false" data-s="hot">Hot</button>
+      <button class="chip tog" aria-pressed="false" data-l="1">LIVE</button>
+      <button class="chip tog" aria-pressed="false" data-n="1">NEW</button>
     </div>
+    <input class="csearch" id="calls-search" placeholder="🔍 search symbol / mint…" spellcheck="false" autocomplete="off">
     <button class="adv-toggle" id="adv-toggle" aria-expanded="false" aria-controls="adv-panel">
       <span>Advanced Filters</span><span class="adv-caret" aria-hidden="true">▾</span>
     </button>
@@ -715,7 +723,7 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all', source: 'all', firstFeed: true };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all', source: 'all', liveFlag: 0, newFlag: 0, q: '', firstFeed: true };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */
@@ -767,6 +775,7 @@ async function fetchJSON(u) {
 }
 async function refresh() {
   setText('updated', '');
+  renderAll();
   var r = await Promise.allSettled([loadFeed(), loadDex(), loadWallets()]);
   var ok = r.filter(function (x) { return x.status === 'fulfilled'; }).length;
   renderAll();
@@ -805,6 +814,7 @@ async function loadFeed() {
   var live = fresh.filter(function (c) { return (Number(c.curMult) || 0) >= 1; }).length;
   console.log('[SHADDAI] feed loaded:', fresh.length, 'calls,', live, 'live (≥1×)');
   state.feed = fresh;
+  try { sessionStorage.setItem('ss_feed', JSON.stringify(fresh)); } catch (e) {}
   return state.feed.length;
 }
 function toast(msg, onClick) {
@@ -906,9 +916,11 @@ function renderHeat() {
   if (state.heat === 'dead') list = all.filter(isDeadCoin);
   else list = liveOnly(all);
   var mGate = state.heat;
-  if (mGate !== 'all' && mGate !== 'live' && mGate !== 'dead') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= Number(mGate); });
+  if (mGate !== 'all' && mGate !== 'live' && mGate !== 'dead' && mGate !== 'new' && mGate !== 'mix') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= Number(mGate); });
   if (mGate === 'live') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= 1; });
-  list.sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); });
+  if (mGate === 'new') list = list.filter(function (c) { return !c.ts || (Date.now() - c.ts) < 86400000; });
+  if (mGate === 'new') list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+  else list.sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); });
   list = list.slice(0, 60);
   var div = el('heat-bubbles');
   div.textContent = '';
@@ -921,7 +933,7 @@ function renderHeat() {
     var tier = bubTier(i, list.length);
     var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
     var b = document.createElement('button');
-    b.className = 'bub bub-' + tier + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
+    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
     b.dataset.mint = c.mint;
     b.setAttribute('aria-label', (c.symbol || 'coin') + ' ' + (m ? m.toFixed(2) + '×' : 'new call') + ', safety ' + (c.safetyScore != null ? c.safetyScore : 'unknown'));
     var avatar = '';
@@ -945,6 +957,10 @@ function filtered() {
   var list = state.feed.slice();
   if (state.risk !== 'all') list = list.filter(function (c) { return (c.riskTier || 'medium') === state.risk; });
   if (state.source !== 'all') list = list.filter(function (c) { return (c.source || '').toLowerCase() === state.source; });
+  if (state.liveFlag) list = list.filter(function (c) { return (Number(c.curMult) || 0) >= 1; });
+  if (state.newFlag) list = list.filter(function (c) { return !c.ts || (Date.now() - c.ts) < 86400000; });
+  var q = (state.q || '').trim().toLowerCase();
+  if (q) list = list.filter(function (c) { return String(c.symbol || '').toLowerCase().indexOf(q) >= 0 || String(c.name || '').toLowerCase().indexOf(q) >= 0 || String(c.mint || '').toLowerCase().indexOf(q) >= 0; });
   list.sort(function (a, b) {
     if (state.sort === 'ts') return (b.ts || 0) - (a.ts || 0);
     if (state.sort === 'hot') return (Number(b.curMult) || 0) - (Number(a.curMult) || 0);
@@ -995,10 +1011,12 @@ function renderCalls() {
       '<span class="ags">' + ago(c.ts) + '</span></span>' +
       tokStrip(c) +
       '<div class="row-acts">' +
+        '<span class="row-act ch" role="button" tabindex="0" aria-label="Open chart for ' + esc(c.symbol || 'coin') + '">⛭ Chart</span>' +
         '<span class="row-act cp" role="button" tabindex="0" aria-label="Copy mint address for ' + esc(c.symbol || 'coin') + '">⧉ Copy</span>' +
         '<span class="row-act sh" role="button" tabindex="0" aria-label="Share ' + esc(c.symbol || 'coin') + ' call on X">𝕏 Share</span>' +
       '</div>';
     r.onclick = function () { openCoin(c); };
+    wireRowAction(r.querySelector('.row-act.ch'), function () { window.open('https://gmgn.ai/sol/token/' + c.mint, '_blank', 'noopener'); });
     wireRowAction(r.querySelector('.row-act.cp'), function () { copyMint(c.mint, this); });
     wireRowAction(r.querySelector('.row-act.sh'), function () { shareCall(c); });
     frag.appendChild(r);
@@ -1228,6 +1246,11 @@ function coinSheet(c, e) {
     (c.milestones && c.milestones.length ? '<div class="s-toks">' + c.milestones.map(function (x) { return '<span class="tok-safe">' + x + 'x hit</span>'; }).join('') + '</div>' : '') +
     (c.closed ? '<div class="s-toks"><span class="warn" style="color:var(--amber);font-size:10px">pool closed</span></div>' : '') +
     socialChips(e) +
+    '<div class="s-toks">' +
+      '<a class="tok-safe soc-link" href="https://gmgn.ai/sol/token/' + esc(c.mint) + '" target="_blank" rel="noopener">GMGN ⛭</a>' +
+      '<a class="tok-safe soc-link" href="https://jup.ag/swap/SOL-' + esc(c.mint) + '" target="_blank" rel="noopener">Swap ⟳</a>' +
+      '<a class="tok-safe soc-link" href="https://dexscreener.com/solana/' + esc(c.mint) + '" target="_blank" rel="noopener">Chart ↗</a>' +
+    '</div>' +
     '<button class="s-btn sb-gold" id="sheet-open-dex">Open on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" id="sheet-copy-mint">Copy mint</button>' +
     '<button class="s-btn sb-ghost" id="sheet-ask-zerox">Ask ZEROX $1</button>';
@@ -1473,6 +1496,18 @@ wireChipGroup('px', function (v) { pnlMult = v === 'live' ? 'live' : Number(v) |
 wireChipGroup('r', function (v) { state.risk = v; renderCalls(); });
 wireChipGroup('s', function (v) { state.sort = v; renderCalls(); });
 wireChipGroup('src', function (v) { state.source = v; renderCalls(); });
+function wireTog(attr, key) {
+  document.querySelectorAll('.chip[data-' + attr + ']').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var on = !b.classList.contains('on');
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      state[key] = on ? 1 : 0; renderCalls();
+    });
+  });
+}
+wireTog('l', 'liveFlag');
+wireTog('n', 'newFlag');
+(function () { var inp = el('calls-search'); if (!inp) return; inp.addEventListener('input', function () { state.q = inp.value; renderCalls(); }); })();
 
 /* ---------------- advanced filters (collapsible) ---------------- */
 el('adv-toggle').addEventListener('click', function () {
@@ -1512,6 +1547,11 @@ function loadTicker(){ var t=document.getElementById('ttrack'); if(!t)return; fe
 loadWeather();
 loadTicker();
 initPnlImages().then(renderPNL);
+(function boot() {
+  try { var cached = sessionStorage.getItem('ss_feed'); if (cached) { var arr = JSON.parse(cached); if (Array.isArray(arr) && arr.length) { state.feed = arr; state.firstFeed = false; } } } catch (e) {}
+  renderAll();
+  refresh();
+})();
 setInterval(refresh, 60000);
 </script>
 </body>
