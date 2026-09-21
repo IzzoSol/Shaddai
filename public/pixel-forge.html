@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/js/ingame-dialogs.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHADDAI · The Pixel Forge</title>
@@ -471,7 +472,7 @@ async function buyAcc(id){
   if(!pfRequireSignIn()) return;
   const a=CAT[id]; if(!a) return;
   const opId=await ensureOperative();
-  if(!opId){ alert('Could not reach the gallery — try again.'); return; }
+  if(!opId){ gameToast('Could not reach the gallery — try again.'); return; }
   try{
     const r=await fetch('/api/cosmetics/purchase',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ operativeId:opId, accessoryId:id })});
@@ -484,9 +485,9 @@ async function buyAcc(id){
       persistLook();
     } else {
       const msg=(d.error||'purchase failed') + (typeof d.sparks==='number' ? ' — you have '+d.sparks.toLocaleString()+' ⚡' : '');
-      alert(msg);
+      gameToast(msg);
     }
-  }catch(_){ alert('Could not reach the vault — try again.'); }
+  }catch(_){ gameToast('Could not reach the vault — try again.'); }
 }
 function buildAccs(){
   const host=document.getElementById('accgrid'); if(!host) return; host.innerHTML='';

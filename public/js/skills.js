@@ -94,7 +94,7 @@ async function addSkillXP(treeId, xpEarned) {
    ----------------------------------------------------------- */
 const skillUnlockedHandler = (e) => {
   const {tree, tier} = e.detail;
-  alert(`🛠️ New skill tier unlocked: ${tree} Tier ${tier.id}\nTL increased by ${tier.effect.tlGain}.`);
+  gameToast(`🛠️ New skill tier unlocked: ${tree} Tier ${tier.id}\nTL increased by ${tier.effect.tlGain}.`);
   // Example: mark tutorial step as done
   const steps = JSON.parse(localStorage.getItem('tutorialSteps') || '{}');
   steps[`skill_${tree.toLowerCase()}_t${tier.id}`] = true;

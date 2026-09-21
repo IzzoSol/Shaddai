@@ -52,7 +52,7 @@
   const checkMarketAccess = () => {
     const tl = getTL();
     if (tl < 5) {
-      alert('You must reach Total Level 5 before using the market.');
+      gameToast('You must reach Total Level 5 before using the market.');
       return false;
     }
     return true;
@@ -134,7 +134,7 @@
   const placeBid = async (listingId, currentPrice) => {
     const newBid = parseInt(marketUI.bidInput.value);
     if (newBid <= currentPrice) {
-      alert('Your bid must exceed the current price.');
+      gameToast('Your bid must exceed the current price.');
       return;
     }
 
@@ -165,7 +165,7 @@
       marketUI.bidInput.value = '';
     } catch (e) {
       console.error('Bid failed:', e);
-      alert('Bid could not be processed.');
+      gameToast('Bid could not be processed.');
     }
   };
 
@@ -223,7 +223,7 @@
       bid: 0
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(listingStore));
-    alert('Listing created successfully.');
+    gameToast('Listing created successfully.');
   }
 
   /** Settle a sale (player buying an item) */
@@ -263,7 +263,7 @@
     delete listingStore[listingId];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(listingStore));
 
-    alert('Sale completed!');
+    gameToast('Sale completed!');
   }
 
   // expose these for other modules (e.g., UI buttons)

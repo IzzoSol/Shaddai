@@ -1,6 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SHADDAI · World</title>
+<script src="/js/ingame-dialogs.js"></script>
 <script src="/state-scope.js?v=1"></script>
 <script src="/world-gate.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1700,7 +1701,7 @@ const ROOM_THEMES=[
   {id:'ocean',name:'Deep Ocean',tint:'#0c1c26',wall:'#123040',floor:['#1a4258','#154a5a']},
   {id:'ember',name:'Ember Forge',tint:'#1e1410',wall:'#2a1e18',floor:['#4a3630','#3e2c26']} ];
 function themeById(id){ return ROOM_THEMES.find(t=>t.id===id)||ROOM_THEMES[0]; }
-function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; const raw=prompt('Rename room:', r.name||''); if(raw===null)return; r.name=(raw||'').trim().slice(0,24)||r.name; saveRooms(rooms); const rp=document.getElementById('roomsPanel'); if(rp&&!rp.classList.contains('hide'))openRooms(); if(inInterior&&inInterior.__customRoom&&inInterior.roomId===id){ inInterior.name=r.name; const pr=document.getElementById('prompt'); if(pr)pr.textContent='🏠 '+r.name+' — WASD to walk · Decorate it · reach the door to leave'; } }
+function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; gamePrompt('Rename this room', r.name||'', function(raw){ if(raw===null||raw===undefined)return; r.name=String(raw||'').trim().slice(0,24)||r.name; saveRooms(rooms); const rp=document.getElementById('roomsPanel'); if(rp&&!rp.classList.contains('hide'))openRooms(); if(inInterior&&inInterior.__customRoom&&inInterior.roomId===id){ inInterior.name=r.name; const pr=document.getElementById('prompt'); if(pr)pr.textContent='🏠 '+r.name+' — WASD to walk · Decorate it · reach the door to leave'; } }); }
 function setRoomTheme(themeId){ roomTheme=themeById(themeId);
   if(inInterior&&inInterior.__customRoom){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===inInterior.roomId); if(r){ r.theme=themeId; saveRooms(rooms); } }
   else if(interiorType==='office'){
@@ -1763,16 +1764,18 @@ function roomsHtml(){
   return h; }
 function createRoom(kind){
   const pre=ROOM_PRESETS.find(p=>p.kind===kind)||{label:kind};
-  const raw=prompt('Name your '+pre.label+':', pre.label); if(raw===null) return;
-  const name=(raw||'').trim().slice(0,24) || pre.label;
-  const rooms=loadRooms(); const id='r'+Date.now().toString(36);
-  rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id);
-  try{ toast('🏠 "'+name+'" created — you are inside. WASD to walk · door to leave.'); }catch(_){}
+  gamePrompt('Name your '+pre.label, pre.label, function(raw){
+    if(raw===null||raw===undefined) return;
+    const name=String(raw||'').trim().slice(0,24) || pre.label;
+    const rooms=loadRooms(); const id='r'+Date.now().toString(36);
+    rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id);
+    try{ toast('🏠 "'+name+'" created — you are inside. WASD to walk · door to leave.'); }catch(_){}
+  });
 }
-function deleteRoom(id){ if(!confirm('Delete this room? (its decor is also removed)'))return;
+function deleteRoom(id){ gameConfirm('Delete this room? (its decor is also removed)', function(ok){ if(!ok) return;
   saveRooms(loadRooms().filter(r=>r.id!==id));
   try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); delete d['room_'+id]; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){}
-  openRooms(); }
+  openRooms(); }, 'Delete'); }
 function enterRoom(id){
   const room=loadRooms().find(r=>r.id===id); if(!room)return;
   closeRooms(); if(typeof closeHubRooms==='function')closeHubRooms();
@@ -1823,8 +1826,12 @@ function claimLot(lotProp){
   el.innerHTML=h; el.classList.remove('hide');
 }
 function doClaim(presetId){
-  var raw=prompt('Name your office (your brand):','My Command Office'); if(raw===null)return;
-  var name=(raw||'').trim().slice(0,40)||'My Command Office';
+  gamePrompt('Name your office (your brand)','My Command Office', function(raw){
+    if(raw===null||raw===undefined)return;
+    doClaimWithName(presetId, String(raw||'').trim().slice(0,40)||'My Command Office');
+  });
+}
+function doClaimWithName(presetId, name){
   var uid=localStorage.getItem('shd_userid')||'';
   var pre=OFFICE_PRESETS.find(function(p){return p.id===presetId;})||{accent:'#00e5a0'};
   var clickedLot=_claimLot;
