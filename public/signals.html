@@ -644,18 +644,18 @@ swarm extra CSS
 .cell .zo{position:absolute;z-index:2;right:6px;bottom:6px;font-size:10px;font-weight:700;letter-spacing:.4px;
 color:#fff;background:rgba(2,6,3,.72);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 6px;
 cursor:pointer;text-shadow:0 1px 2px #000;}.row{position:relative;overflow:hidden;background-size:cover;background-position:85% 50%;}
-.row::before{content:&quot;&quot;;position:absolute;inset:0;z-index:0;pointer-events:none;
+.row::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
 background:
   linear-gradient(90deg, rgba(4,11,7,.93), rgba(4,11,7,.64) 55%, rgba(4,11,7,.28)),
   linear-gradient(to top, rgba(2,5,3,.6), transparent 46%);}
-.row::after{content:&quot;&quot;;position:absolute;inset:0;z-index:0;pointer-events:none;
+.row::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
   background:linear-gradient(160deg, color-mix(in srgb, var(--pc,#00ff9c) 18%, transparent), transparent 55%);
   mix-blend-mode:soft-light;}
 .row>*{position:relative;z-index:1;}
 .row:hover{box-shadow:0 0 0 1px rgba(255,215,130,.4);}
 .cell{transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;}
-.cell:hover{transform:scale(1.03);border-color:rgba(255,215,130,.6);box-shadow:0 0 18px rgba(255,215,130,.25);z-index:2;}
-.cell img{opacity:.72;filter:saturate(1.18) contrast(1.05);}
+.cell:hover{transform:none;border-color:rgba(255,215,130,.6);box-shadow:inset 0 0 0 2px rgba(255,215,130,.7);z-index:1;}
+.cell img{opacity:1;filter:saturate(1.18) contrast(1.05);}
 /* ── v6 art: full-bleed image tabs + module imagery + brightness ── */
   .atab{ position:relative; padding:13px 18px; font-size:12.5px; letter-spacing:.1em; color:#fff;
     border:1px solid rgba(255,255,255,.16); border-radius:6px; overflow:hidden;
