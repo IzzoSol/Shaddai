@@ -136,7 +136,7 @@ const texLoader = new THREE.TextureLoader();
 let loadTotal = 40, loadDone = 0;
 const tick = (msg) => { loadDone++; $('#bar i').style.width = Math.min(100, (loadDone / loadTotal) * 100) + '%'; if (msg) $('#loadmsg').textContent = msg; };
 const loadG = async (url, msg) => { try { const g = await gltf.loadAsync(url); tick(msg); return g; } catch (e) { console.warn('load fail', url, e); tick(); return null; } };
-const tex = (name, rep, srgb = true) => { const t = texLoader.load(`assets/terrain/${name}.webp`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+const tex = (name, rep, srgb = true) => { const t = texLoader.load(`assets/terrain/${/\.(webp|png)$/i.test(name) ? name : name + '.webp'}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 /* ───────────────────────── terrain ───────────────────────── */
 const world = new THREE.Group(); scene.add(world);
@@ -151,9 +151,13 @@ function buildTerrain() {
   const plaza = new THREE.Mesh(new THREE.CircleGeometry(36, 96), new THREE.MeshStandardMaterial({ map: tex('obsidian-plaza', 40), roughness: 0.4, metalness: 0.25, envMapIntensity: 0.6 }));
   plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.02; plaza.receiveShadow = true; world.add(plaza);
   const ringM = new THREE.MeshBasicMaterial({ color: 0xe8c45c }); [36.2, 24, 12].forEach((r, i) => { const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.18, r, 128), ringM); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; world.add(m); });
-  const cobT = tex('tech-cobble-street', 4);
+  const cobT = tex('neon-road.png', 4);
   const cobM = new THREE.MeshStandardMaterial({ map: cobT, roughness: 0.55, metalness: 0.2, emissive: 0x3a2400, emissiveMap: cobT, emissiveIntensity: 0.9 });
-  for (let i = 0; i < 4; i++) { const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 150), cobM.clone()); road.material.map = cobT.clone(); road.material.map.needsUpdate = true; road.material.map.repeat.set(2, 30); road.material.emissiveMap = road.material.map; road.rotation.x = -Math.PI / 2; road.rotation.z = i * Math.PI / 2; road.position.set(Math.sin(i * Math.PI / 2) * 111, 0.03, Math.cos(i * Math.PI / 2) * 111); road.receiveShadow = true; world.add(road); }
+  for (let i = 0; i < 4; i++) {
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 150), cobM.clone()); road.material.map = cobT.clone(); road.material.map.needsUpdate = true; road.material.map.repeat.set(2, 30); road.material.emissiveMap = road.material.map; road.rotation.x = -Math.PI / 2; road.rotation.z = i * Math.PI / 2; road.position.set(Math.sin(i * Math.PI / 2) * 111, 0.03, Math.cos(i * Math.PI / 2) * 111); road.receiveShadow = true; world.add(road);
+    const sidT = tex('sidewalk-tiles.png', 2);
+    [-1, 1].forEach((s) => { const sw = new THREE.Mesh(new THREE.PlaneGeometry(3, 150), new THREE.MeshStandardMaterial({ map: sidT.clone(), roughness: 0.85 })); sw.material.map.repeat.set(1, 30); sw.rotation.x = -Math.PI / 2; sw.rotation.z = i * Math.PI / 2; sw.position.set(Math.sin(i * Math.PI / 2) * 111 + Math.cos(i * Math.PI / 2) * s * 6.7, 0.032, Math.cos(i * Math.PI / 2) * 111 - Math.sin(i * Math.PI / 2) * s * 6.7); sw.receiveShadow = true; world.add(sw); });
+  }
   const water = new THREE.Mesh(new THREE.CircleGeometry(20, 64), new THREE.MeshStandardMaterial({ map: tex('teal-water', 5), roughness: 0.1, metalness: 0.6, emissive: 0x0a3a44, emissiveIntensity: 0.8 }));
   water.rotation.x = -Math.PI / 2; water.position.set(120, 0.04, -20); world.add(water); waterMesh = water;
   const desert = new THREE.Mesh(new THREE.CircleGeometry(90, 64), new THREE.MeshStandardMaterial({ map: tex('red-regolith', 24), roughness: 1 }));
@@ -161,6 +165,9 @@ function buildTerrain() {
   const pad = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshStandardMaterial({ map: tex('obsidian-plaza', 16), roughness: 0.3, metalness: 0.4 })); pad.rotation.x = -Math.PI / 2; pad.position.set(420, 0.05, 0); world.add(pad);
   const lava = new THREE.Mesh(new THREE.CircleGeometry(38, 64), new THREE.MeshStandardMaterial({ map: tex('lava-crust', 8), emissive: 0xff2a8a, emissiveMap: tex('lava-crust', 8), emissiveIntensity: 0.6, roughness: 0.6 }));
   lava.rotation.x = -Math.PI / 2; lava.position.set(-190, 0.03, -160); world.add(lava);
+  const dunes = new THREE.Mesh(new THREE.RingGeometry(82, 150, 96), new THREE.MeshStandardMaterial({ map: tex('dunes.png', 26), roughness: 1 })); dunes.rotation.x = -Math.PI / 2; dunes.position.set(420, 0.022, 0); dunes.receiveShadow = true; world.add(dunes);
+  const snow = new THREE.Mesh(new THREE.PlaneGeometry(1200, 470), new THREE.MeshStandardMaterial({ map: tex('snow.png', 60), roughness: 0.95 })); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.012, -635); snow.receiveShadow = true; world.add(snow);
+  [[-300, -500, 26], [120, -560, 34], [-80, -700, 30], [330, -650, 24], [-520, -580, 42]].forEach(([x, z, r]) => { const rk = new THREE.Mesh(new THREE.CircleGeometry(r, 40), new THREE.MeshStandardMaterial({ map: tex('mountain-rock.png', Math.round(r / 6)), roughness: 1 })); rk.rotation.x = -Math.PI / 2; rk.position.set(x, 0.018, z); rk.receiveShadow = true; world.add(rk); });
 }
 let waterMesh; const farmPlats = [];
 
