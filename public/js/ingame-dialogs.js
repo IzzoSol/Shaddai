@@ -15,4 +15,13 @@
   };
   if (document.head) document.head.appendChild(css); else document.addEventListener('DOMContentLoaded', function () { document.head.appendChild(css); });
   window.alert = function (m) { window.gameToast(m); };
+  // prompt(): never blocks. Returns the suggested default (auto-name) and says so; rename flows keep the current name.
+  window.prompt = function (m, def) { window.gameToast('✎ ' + (def || 'Default') + ' (auto-named — rename it later in settings)'); return def == null ? '' : String(def); };
+  // confirm(): never blocks. First call asks on-screen and returns false; the SAME question repeated within 4s returns true.
+  var pend = {};
+  window.confirm = function (m) {
+    var k = String(m), now = Date.now();
+    if (pend[k] && now - pend[k] < 4000) { delete pend[k]; return true; }
+    pend[k] = now; window.gameToast('⚠ ' + k + ' — do it again within 4s to confirm', 4000); return false;
+  };
 })();
