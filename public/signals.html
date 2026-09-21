@@ -998,7 +998,7 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
   function avatar(c, cls) {
     var i = info(c), sym = (c.symbol || c.name || '?').slice(0, 2).toUpperCase();
     return i && i.image
-      ? '<img class="av ' + (cls || '') + '" src="' + esc(i.image) + '" alt="" loading="lazy" ' +
+      ? '<img class="av ' + (cls || '') + '" src="' + esc(i.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer" ' +
         'onerror="this.outerHTML=\'<div class=&quot;av ph&quot;>' + esc(sym) + '</div>\'">'
       : '<div class="av ph ' + (cls || '') + '">' + esc(sym) + '</div>';
   }
@@ -1108,7 +1108,7 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
       // text colour computed against the fill, not assumed
       var dark = (v < .5 && v > 0) || v === 0;
       return '<button class="cell' + (dark ? ' dark' : '') + '" style="background:' + bg + '" data-mint="' + esc(c.mint) + '">' +
-        (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy">' : '') +
+        (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : '') +
         '<span class="s">' + esc((c.symbol || c.name || '?').slice(0, 8)) + '</span>' +
         '<span class="m">' + big + '</span>' +
         (i && i.socials && i.socials.twitter ? '<span class="so">𝕏</span>' : '') + '<span class="zo" data-dex="' + esc(c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '">DEX \u2197</span></button>';

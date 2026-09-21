@@ -2168,4 +2168,54 @@ window.addEventListener('beforeunload', function(){ if(cloudPushT){ clearTimeout
 requestAnimationFrame(loop);
 </script>
 <script src="home-btn.js" defer onerror="this.remove()"></script>
+<style>
+  /* ── MOBILE TOUCH CONTROLS for the 2D world ── */
+  #touchPad{ position:fixed; left:0; right:0; bottom:0; z-index:60; display:none; padding:10px 14px 14px;
+    justify-content:space-between; align-items:flex-end; pointer-events:none; }
+  #touchPad.show{ display:flex; }
+  #dpad{ pointer-events:auto; display:grid; grid-template-columns:repeat(3,58px); grid-template-rows:repeat(3,58px); gap:4px; }
+  #dpad .db{ width:58px; height:58px; border-radius:10px; border:1px solid rgba(0,255,156,.28);
+    background:rgba(6,10,16,.55); color:#9fe8c4; font-size:20px; display:grid; place-items:center;
+    touch-action:none; user-select:none; -webkit-user-select:none; }
+  #dpad .db:active{ background:rgba(0,255,156,.22); }
+  #dpad .d0{ grid-area:1/2; } #dpad .d1{ grid-area:2/1; } #dpad .d2{ grid-area:2/3; } #dpad .d3{ grid-area:3/2; }
+  #touchAct{ pointer-events:auto; display:flex; gap:12px; align-items:flex-end; }
+  #touchAct .ab{ min-width:64px; height:64px; border-radius:50%; border:1px solid rgba(255,214,130,.3);
+    background:rgba(10,14,20,.55); color:#ffd682; font-weight:800; font-size:13px; letter-spacing:.08em;
+    display:grid; place-items:center; touch-action:none; user-select:none; -webkit-user-select:none;
+    box-shadow:0 0 14px rgba(232,196,92,.18); }
+  #touchAct .ab:active{ background:rgba(232,196,92,.25); }
+  #touchAct .ab.small{ width:54px; height:54px; }
+  @media (pointer:coarse), (hover:none){ #touchPad{ display:flex; } }
+</style>
+<script>
+  /* Virtual D-pad + action buttons that write into the shared `keys` table so the 2D
+     world runs identically on touch: same WASD/arrow/space/e semantics. */
+  (function(){
+    if(!('ontouchstart' in window) && !(matchMedia && matchMedia('(pointer:coarse)').matches)) return;
+    var pad=document.createElement('div'); pad.id='touchPad';
+    var dpad=document.createElement('div'); dpad.id='dpad';
+    var binds=[{c:'d0',k:'arrowup',l:'▲'},{c:'d1',k:'arrowleft',l:'◀'},{c:'d2',k:'arrowright',l:'▶'},{c:'d3',k:'arrowdown',l:'▼'}];
+    binds.forEach(function(b){ var el=document.createElement('div'); el.className='db '+b.c; el.textContent=b.l;
+      var down=function(){ if(window.__blessTouch) keys[b.k]=true; };
+      var up=function(){ if(window.__blessTouch) keys[b.k]=false; };
+      el.addEventListener('touchstart',function(e){ e.preventDefault(); down(); },{passive:false});
+      el.addEventListener('touchend',function(e){ e.preventDefault(); up(); },{passive:false});
+      el.addEventListener('touchcancel',function(){ up(); });
+      dpad.appendChild(el); });
+    var act=document.createElement('div'); act.id='touchAct';
+    var acts=[{k:'e',l:'DOOR',small:true},{k:'c',l:'CHAT',small:true},{k:' ',l:'⚔'}];
+    acts.forEach(function(a){ var el=document.createElement('div'); el.className='ab'+(a.small?' small':'');
+      el.textContent=a.l;
+      var down=function(){ if(!window.__blessTouch) return; keys[a.k]=true; if(a.k==='e'&&typeof tryDoor==='function') tryDoor(); if(a.k===' '&&typeof doAttack==='function') doAttack(); };
+      var up=function(){ if(window.__blessTouch) keys[a.k]=false; };
+      el.addEventListener('touchstart',function(e){ e.preventDefault(); down(); },{passive:false});
+      el.addEventListener('touchend',function(e){ e.preventDefault(); up(); },{passive:false});
+      el.addEventListener('touchcancel',function(){ up(); });
+      act.appendChild(el); });
+    pad.appendChild(dpad); pad.appendChild(act);
+    document.body.appendChild(pad);
+    window.__blessTouch=true;
+  })();
+</script>
 </body></html>

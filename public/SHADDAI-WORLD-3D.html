@@ -171,6 +171,16 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <style>
   body.cursor-mode{cursor:default}
   body.play-mode{cursor:none}
+  /* ── MOBILE TOUCH: floating virtual joystick (left) + look-pad (right) ── */
+  #tzMove{position:fixed;left:0;top:0;bottom:0;width:52vw;z-index:70;touch-action:none;display:none}
+  #tzLook{position:fixed;right:0;top:0;bottom:0;width:48vw;z-index:70;touch-action:none;display:none}
+  #tJoy{position:fixed;z-index:71;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 50% 50%, rgba(39,224,255,.10), rgba(8,12,22,.55) 70%);
+    border:1px solid rgba(39,224,255,.28);box-shadow:0 0 22px rgba(39,224,255,.15);opacity:0;transition:opacity .18s}
+  #tJoyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, rgba(143,239,255,.9), rgba(39,224,255,.35) 60%);
+    border:1px solid rgba(143,239,255,.7);box-shadow:0 0 14px rgba(39,224,255,.45)}
+  @media (pointer:coarse), (hover:none){ #tzMove,#tzLook{display:block} }
   #modeToggle{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:64;
     display:block;pointer-events:auto;cursor:pointer;user-select:none;
     font-family:'Orbitron','Chakra Petch',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;
@@ -2517,7 +2527,7 @@ addEventListener('mousemove', function(e){
   if(_look.tPitch < -_LOOK_PLIM) _look.tPitch = -_LOOK_PLIM;
 }, { passive:true });
 function _applyLook(dt){
-  if(!controls.isLocked || window._uiMode!=='play' || !_look.init) return;
+  if((!(controls.isLocked || _touchCtrl.on)) || window._uiMode!=='play' || !_look.init) return;
   const k = 1 - Math.exp(-_LOOK_DAMP * Math.min(dt, 0.05));   // frame-rate independent; cap dt so a stall can't over-rotate
   _look.yaw   += (_look.tYaw   - _look.yaw)   * k;
   _look.pitch += (_look.tPitch - _look.pitch) * k;
@@ -2528,6 +2538,84 @@ function _applyLook(dt){
 const keys = {};
 addEventListener('keydown', e=>{ keys[e.code]=true; });
 addEventListener('keyup', e=>{ keys[e.code]=false; });
+
+// ── MOBILE TOUCH CONTROLS (virtual joystick + touch-look) ────────────────────
+// Only built when the device asks for touch. A floating left-thumb joystick maps to
+// the existing WASD `keys` table (forward/strafe), and dragging the right half of the
+// screen feeds camera yaw/pitch into the same smoothed `_look` targets the mouse uses.
+// Active only in PLAY mode, so it can never fight pointer-lock or an open tool panel.
+const _touchCtrl = { on:false, uid:0 };
+const _TOUCH_AWARE = (('ontouchstart' in window) || (matchMedia && matchMedia('(pointer:coarse)').matches))
+                     || /\?.*(mobile|touch)=1/.test(location.search);
+if(_TOUCH_AWARE){
+  const _tzMove = document.createElement('div');
+  const _tzLook = document.createElement('div');
+  const _joy    = document.createElement('div');
+  const _jk     = document.createElement('div');
+  _tzMove.id='tzMove'; _tzLook.id='tzLook';
+  _joy.id='tJoy'; _jk.id='tJoyKnob'; _joy.appendChild(_jk);
+  _tzMove.appendChild(_joy);
+  document.body.appendChild(_tzMove); document.body.appendChild(_tzLook);
+  const _JOY_R = 52, _DEAD = 0.22;
+  let _joyId=-1, _joyOx=0, _joyOy=0, _joyX=0, _joyY=0, _lookId=-1, _lx=0, _ly=0;
+  function _touchTick(){ return _touchCtrl.on && !(_dialogue&&_dialogue.isOpen()) && !(_radio&&_radio.isOpen&&_radio.isOpen()); }
+  function _joyLook(){
+    let dx=(_joyX-_joyOx), dy=(_joyY-_joyOy), d=Math.hypot(dx,dy), mag=Math.min(1, d/_JOY_R);
+    if(d>_JOY_R){ dx*=_JOY_R/d; dy*=_JOY_R/d; }
+    _jk.style.transform='translate('+dx+'px,'+dy+'px)';
+    if(mag<_DEAD){ keys['KeyW']=keys['KeyS']=keys['KeyA']=keys['KeyD']=false; keys['ShiftLeft']=false; return; }
+    const nx=dx/(mag*_JOY_R), ny=dy/(mag*_JOY_R);           // normalized -1..1
+    keys['KeyW']=ny < -_DEAD; keys['KeyS']= ny > _DEAD;     // up = forward
+    keys['KeyA']=nx < -_DEAD; keys['KeyD']= nx > _DEAD;
+    keys['ShiftLeft']= mag>0.82;                            // deep push = run
+  }
+  _tzMove.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    if(window._uiMode!=='play'){ _touchCtrl.on=true; window._uiMode='play'; _reflectMode(); }
+    for(const t of e.changedTouches){
+      if(_joyId>=0) continue;
+      _joyId=t.identifier; _joyOx=_joyX=t.clientX; _joyOy=_joyY=t.clientY;
+      _joy.style.opacity='1';
+      const jr=_JOY_R+22;
+      _joy.style.left=t.clientX+'px'; _joy.style.top=t.clientY+'px';
+      _joy.style.width=(jr*2)+'px'; _joy.style.height=(jr*2)+'px';
+      _jk.style.transform='translate(0px,0px)';
+    }
+  }, {passive:false});
+  _tzMove.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier===_joyId){ _joyX=t.clientX; _joyY=t.clientY; _joyLook(); }
+    }
+  }, {passive:false});
+  _tzMove.addEventListener('touchend', function(e){
+    e.preventDefault();
+    for(const t of e.changedTouches){ if(t.identifier===_joyId){ _joyId=-1; _joy.style.opacity='0';
+      keys['KeyW']=keys['KeyS']=keys['KeyA']=keys['KeyD']=keys['ShiftLeft']=false; } }
+  }, {passive:false});
+  _tzLook.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    if(window._uiMode!=='play'){ _touchCtrl.on=true; window._uiMode='play'; _reflectMode(); }
+    if(!_look.init) _seedLook();
+    for(const t of e.changedTouches){ if(_lookId<0){ _lookId=t.identifier; _lx=t.clientX; _ly=t.clientY; } }
+  }, {passive:false});
+  _tzLook.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier!==_lookId) continue;
+      const dx=(t.clientX-_lx), dy=(t.clientY-_ly); _lx=t.clientX; _ly=t.clientY;
+      if(!_look.init) _seedLook();
+      _look.tYaw   -= dx * _LOOK_SENS;
+      _look.tPitch -= dy * _LOOK_SENS;
+      if(_look.tPitch >  _LOOK_PLIM) _look.tPitch =  _LOOK_PLIM;
+      if(_look.tPitch < -_LOOK_PLIM) _look.tPitch = -_LOOK_PLIM;
+    }
+  }, {passive:false});
+  _tzLook.addEventListener('touchend', function(e){
+    e.preventDefault();
+    for(const t of e.changedTouches){ if(t.identifier===_lookId){ _lookId=-1; } }
+  }, {passive:false});
+}
 
 // ── CURSOR ⇄ PLAY (walk) DUAL MODE ───────────────────────────────────────────
 // The world used PointerLockControls with an "any click re-locks" handler, so the
@@ -3949,7 +4037,7 @@ function animate(){
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
   right.crossVectors(fwd, camera.up).normalize();
   const _uiOpen = (_dialogue&&_dialogue.isOpen()) || (_radio&&_radio.isOpen&&_radio.isOpen());
-  if(controls.isLocked && !_uiOpen){
+  if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
     const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
     const baseSp = bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:11);
     const _maxSp = veh.speed(baseSp);                          // VEHICLE-HOOK: faster when mounted
@@ -4037,7 +4125,7 @@ function animate(){
   // walking character animation: Walk/Run when moving, Idle otherwise
   if(playerMixer){
     playerMixer.update(dt);
-    const mv = controls.isLocked && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
+    const mv = (controls.isLocked || _touchCtrl.on) && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
     const rn = keys['ShiftLeft']||keys['ShiftRight'];
     const _pAnimName = bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle');
     const _attacking = clock.elapsedTime < _pAttackUntil;   // a one-shot attack/flip owns the mixer right now
