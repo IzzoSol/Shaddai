@@ -65,6 +65,13 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 }
 .bub:active{transform:scale(.96)}
 .bub.sq{border-radius:14%}.bub.sq .bub-ava{border-radius:10%}
+.bub.fb{overflow:hidden}
+.bub.fb .bub-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;z-index:0;pointer-events:none}
+.bub.fb .sy,.bub.fb .mx,.bub.fb .sub-rt,.bub.fb .bub-ava,.bub.fb .safeco{position:relative;z-index:1}
+.bub-s .bub-ava{width:20px;height:20px;margin-bottom:1px}
+.bub-s .bub-ava-fb{font-size:9px}
+.pc24{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em}
+.pc24.up{color:var(--emerald)}.pc24.dn{color:var(--amber)}
 .csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
 .csearch:focus{outline:none;border-color:var(--gold)}
 .chip.tog.on{outline:1px solid var(--gold);outline-offset:0}
@@ -815,8 +822,60 @@ async function loadFeed() {
   console.log('[SHADDAI] feed loaded:', fresh.length, 'calls,', live, 'live (≥1×)');
   state.feed = fresh;
   try { sessionStorage.setItem('ss_feed', JSON.stringify(fresh)); } catch (e) {}
+  DexMerge.mergeInto(fresh).then(function () { renderHeat(); if (state.tab === 'calls') renderCalls(); });
   return state.feed.length;
 }
+/* Free, keyless DexScreener batch merger — live 24h %change, USD price, volume
+   and logo per coin fed back into the feed (30 mints per request, ICPS of the
+   most liquid pair wins). No API key, no proxy needed. */
+var DexMerge = (function () {
+  var cache = {};
+  function k(m) { return 'ds_' + (m || '').slice(0, 12); }
+  function fetchBatch(mints) {
+    return fetch('https://api.dexscreener.com/latest/dex/tokens/' + mints.join(','), { signal: AbortSignal.timeout(12000) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+  function mergeInto(list) {
+    if (!list || !list.length) return Promise.resolve();
+    var need = list.filter(function (c) { return c && c.mint && !cache[k(c.mint)]; }).map(function (c) { return c.mint; });
+    if (!need.length) return Promise.resolve();
+    var chunks = [];
+    for (var i = 0; i < need.length; i += 30) chunks.push(need.slice(i, i + 30));
+    return Promise.all(chunks.map(function (ch) {
+      return fetchBatch(ch).then(function (j) {
+        if (!j || !j.pairs) return;
+        var byMint = {};
+        j.pairs.forEach(function (pr) {
+          if (!pr || !pr.baseToken) return;
+          var m = pr.baseToken.address;
+          if (!byMint[m] || (Number(pr.liquidity && pr.liquidity.usd) || 0) > (Number(byMint[m].liquidity && byMint[m].liquidity.usd) || 0)) byMint[m] = pr;
+        });
+        Object.keys(byMint).forEach(function (m) {
+          var pr = byMint[m], pc = pr.priceChange || {};
+          cache[k(m)] = {
+            pc24: Number(pc.h24) || 0,
+            usd: Number(pr.priceUsd) || 0,
+            vol24usd: Number(pr.volume && pr.volume.h24) || 0,
+            pairUrl: pr.url || '',
+            img: (pr.info && pr.info.imageUrl) || (pr.baseToken && pr.baseToken.logoURI) || ''
+          };
+        });
+      });
+    })).then(function () {
+      list.forEach(function (c) {
+        var rec = cache[k(c.mint)];
+        if (!rec) return;
+        c.pc24 = rec.pc24;
+        c.usd = rec.usd;
+        c.v24 = rec.vol24usd;
+        c.dsUrl = rec.pairUrl;
+        if (!c.img && rec.img) c.img = rec.img;
+      });
+    });
+  }
+  return { mergeInto: mergeInto };
+})();
 function toast(msg, onClick) {
   try {
     var t = document.createElement('div');
@@ -907,6 +966,14 @@ function fillBubbleAvatars(mints) {
       im.src = img;
       slot.textContent = '';
       slot.appendChild(im);
+      var bg = el('heat-bubbles').querySelector('.bub[data-mint="' + mint + '"] .bub-bg');
+      if (bg) {
+        var bi = document.createElement('img');
+        bi.loading = 'lazy'; bi.alt = '';
+        bi.addEventListener('error', function () { bi.remove(); });
+        bi.src = img;
+        bg.appendChild(bi);
+      }
     });
   });
 }
@@ -933,14 +1000,16 @@ function renderHeat() {
     var tier = bubTier(i, list.length);
     var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
     var b = document.createElement('button');
-    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
+    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq fb' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
     b.dataset.mint = c.mint;
     b.setAttribute('aria-label', (c.symbol || 'coin') + ' ' + (m ? m.toFixed(2) + '×' : 'new call') + ', safety ' + (c.safetyScore != null ? c.safetyScore : 'unknown'));
     var avatar = '';
-    if (tier !== 's') {
-      avatarMints.push(c.mint);
-      avatar = '<span class="bub-ava"><span class="bub-ava-fb">' + esc(String(c.symbol || '?')[0]).toUpperCase() + '</span></span>';
-    }
+    var big = tier === 'xl' || tier === 'l';
+    avatarMints.push(c.mint);
+    var letter = esc(String(c.symbol || '?')[0]).toUpperCase();
+    var coinImg = c.img ? '<img src="' + esc(c.img) + '" loading="lazy" alt="" onerror="this.outerHTML=\'\'">' : '';
+    avatar = (big ? '<span class="bub-bg">' + (c.img ? coinImg : '') + '</span>' : '') +
+      '<span class="bub-ava">' + (coinImg || '<span class="bub-ava-fb">' + letter + '</span>') + '</span>';
     b.innerHTML = avatar +
       '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
       '<span class="mx" style="color:' + main + '">' + (m ? m.toFixed(2) + '×' : 'new') + '</span>' +
@@ -1008,6 +1077,7 @@ function renderCalls() {
       '<span class="scor">S ' + (c.score || 0) + '</span>' +
       '<span class="saf-badge" style="color:' + safeColor + ';border-color:' + safeColor + '88">SF ' + (c.safetyScore || '?') + '</span>' +
       '<span class="fdv">$' + fdvTxt + '</span>' +
+      '<span class="pc24 ' + ((c.pc24 || 0) >= 0 ? 'up' : 'dn') + '">' + (c.pc24 != null ? ((c.pc24 >= 0 ? '▲' : '▼') + Math.abs(Math.round(c.pc24)) + '%') : '') + '</span>' +
       '<span class="ags">' + ago(c.ts) + '</span></span>' +
       tokStrip(c) +
       '<div class="row-acts">' +
@@ -1215,6 +1285,8 @@ function coinSheet(c, e) {
     ['Score', c.score || 0],
     ['Risk', c.riskTier || 'medium'],
     ['Safety', (c.safetyScore != null ? c.safetyScore + ' ' + safetyLabel(c.safetyScore) : '—')],
+    ['24h', c.pc24 != null ? pct(c.pc24) : '—'],
+    ['USD', c.usd ? '$' + dec(c.usd) : '—'],
     ['Holders', c.holders || '—'],
     ['Top 10', c.top10Pct != null ? Math.round(c.top10Pct) + '%' : '—'],
     ['LP lock', c.lpPct != null ? Math.round(c.lpPct) + '%' : '—'],
