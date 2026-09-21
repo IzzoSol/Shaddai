@@ -92,6 +92,7 @@ html[data-theme="light"] .bub.fb::after{background:linear-gradient(0deg,rgba(248
 .pc24{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em}
 .pc24.up{color:var(--emerald)}.pc24.dn{color:var(--amber)}
 .px{color:var(--txt2);font-size:11px;padding:1px 6px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel)}
+.new-pill{font-size:8px;letter-spacing:.08em;color:#03120c;background:linear-gradient(92deg,#10e5a4,#59f0c0);border-radius:4px;padding:2px 5px;font-weight:800}
 .csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
 .csearch:focus{outline:none;border-color:var(--gold)}
 .chip.tog.on{outline:1px solid var(--gold);outline-offset:0}
@@ -1179,6 +1180,7 @@ function renderCalls() {
       '<span class="fdv">$' + fdvTxt + '</span>' +
       '<span class="pc24 ' + ((c.pc24 || 0) >= 0 ? 'up' : 'dn') + '">' + (c.pc24 != null ? ((c.pc24 >= 0 ? '▲' : '▼') + Math.abs(Math.round(c.pc24)) + '%') : '') + '</span>' +
       (c.usd ? '<span class="px">$' + dec(c.usd) + '</span>' : '') +
+      (!c.ts || (Date.now() - (Number(c.ts) || 0)) < 86400000 ? '<span class="new-pill">NEW</span>' : '') +
       '<span class="ags">' + ago(c.ts) + '</span></span>' +
       tokStrip(c) +
       '<div class="row-acts">' +
