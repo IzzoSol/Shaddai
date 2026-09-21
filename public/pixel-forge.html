@@ -173,6 +173,14 @@
   .kitchip:hover{border-color:var(--cyan);color:var(--cyan)}
   .kitchip.on{border-color:var(--gold);color:var(--gold);background:rgba(232,196,92,.08);
     box-shadow:0 0 10px rgba(232,196,92,.25)}
+  .kitgrp{width:100%;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:2px;
+    color:var(--muted);margin:2px 0 -2px;text-transform:uppercase}
+  .kitchip .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor;flex:none}
+  .kitchip.council{border-color:rgba(122,135,148,.3)}
+  .acc.locked{opacity:.45}
+  .acc.locked .act.off{border-color:rgba(122,135,148,.35);background:transparent;color:var(--muted);cursor:not-allowed}
+  .acc .sig{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.6px;color:var(--cyan);
+    margin-top:3px;text-transform:uppercase}
   .accgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:9px}
   .acc{background:rgba(12,17,25,.55);border:1px solid rgba(122,135,148,.22);border-radius:11px;
     padding:8px;position:relative;transition:.16s}
@@ -439,16 +447,31 @@ function persistLook(){
       body:JSON.stringify({ look:{archetype:'pixel', rig:JSON.parse(JSON.stringify(rig)) } })}).catch(function(){});
   }catch(_){}
 }
+function applyCouncil(office){
+  const p=(PP.PRESETS||[]).find(x=>x.name==='Council' && x.rig && x.rig.office===office);
+  if(p){ rig=JSON.parse(JSON.stringify(p.rig)); rig.anim='idle'; }
+  else { rig.office=office; delete rig.sprite; }
+}
 function buildKits(){
   const host=document.getElementById('kitrow'); host.innerHTML='';
+  const grpLbl=(t)=>{ const g=document.createElement('div'); g.className='kitgrp'; g.textContent=t; host.appendChild(g); };
+  grpLbl('Citizens');
   const kits=[{id:'classic',label:'Classic',img:null},
     {id:'voxel',label:'Voxel',img:ACC_BASE.replace('/accessories/','/kits/')+'voxel-portrait.png'}];
   kits.forEach(k=>{
     const b=document.createElement('div'); b.className='kitchip'; b.dataset.kit=k.id;
     if(k.img){ const im=document.createElement('img'); im.src=k.img; im.alt=''; b.appendChild(im); }
     const sp=document.createElement('span'); sp.textContent=k.label; b.appendChild(sp);
-    b.onclick=()=>{ rig.kit=k.id; [...host.children].forEach(x=>x.classList.toggle('on',x.dataset.kit===k.id)); persistLook(); };
-    host.appendChild(b); if(k.id===currentKit()) b.classList.add('on');
+    b.onclick=()=>{ rig.kit=k.id; delete rig.sprite; delete rig.name; persistLook(); buildKits(); buildAccs(); };
+    host.appendChild(b); if(!rig.office && k.id===currentKit()) b.classList.add('on');
+  });
+  grpLbl('The Council');
+  OFFICES.forEach(o=>{
+    const b=document.createElement('div'); b.className='kitchip council'; b.dataset.office=o.id;
+    const dot=document.createElement('span'); dot.className='dot'; dot.style.background=o.accent; b.appendChild(dot);
+    const sp=document.createElement('span'); sp.textContent=o.label; b.appendChild(sp);
+    b.onclick=()=>{ applyCouncil(o.id); syncUI(); persistLook(); buildKits(); buildAccs(); };
+    host.appendChild(b); if(rig.office===o.id) b.classList.add('on');
   });
 }
 function buildSlotTabs(){
@@ -491,17 +514,25 @@ async function buyAcc(id){
 }
 function buildAccs(){
   const host=document.getElementById('accgrid'); if(!host) return; host.innerHTML='';
+  const office=rig.office || null;
   const list=(CATALOG||[]).filter(a=> slotFilter==='All' || a.slot===slotFilter);
   if(!list.length){ const e=document.createElement('div'); e.style.cssText='grid-column:1/-1;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10px;padding:8px 0'; e.textContent='—'; host.appendChild(e); return; }
   list.forEach(a=>{
-    const card=document.createElement('div'); card.className='acc';
+    const aff=(a.agentAffinity||[]).filter(Boolean);
+    const locked = !!(aff.length && !(office && aff.indexOf(office)!==-1));
+    const card=document.createElement('div'); card.className='acc'+(locked?' locked':'');
     const img=document.createElement('img'); img.src=ACC_BASE+a.imageFile; img.alt=''; img.loading='lazy';
     const rar=document.createElement('div'); rar.className='rar'; rar.style.background=RARITY_COLOR[a.rarity]||'#9aa4ad'; rar.style.color=RARITY_COLOR[a.rarity]||'#9aa4ad';
     const nm=document.createElement('div'); nm.className='an'; nm.textContent=a.name||a.id;
     const pr=document.createElement('div'); pr.className='ap';
     pr.textContent = owned[a.id] ? 'OWNED' : (a.sparksPrice+' ⚡ '+(a.rarity||'').toUpperCase());
     const bt=document.createElement('button'); bt.className='act';
-    if(owned[a.id]){
+    if(locked){
+      const g=document.createElement('div'); g.className='sig';
+      g.textContent='Requires '+aff.map(id=>(OFFICES.find(o=>o.id===id)||{}).label||id.toUpperCase()).join(' · ');
+      card.appendChild(g);
+      bt.textContent='Locked'; bt.classList.add('off');
+    } else if(owned[a.id]){
       bt.textContent=itemEquipped(a.id)?'Equipped':'Equip';
       if(itemEquipped(a.id)) bt.classList.add('on');
       bt.onclick=()=>toggleEquip(a.id);
