@@ -237,8 +237,20 @@ let DC = ctx; // active draw context (swapped to an offscreen while baking build
 const ccv = document.getElementById('ccv'), cctx = ccv.getContext('2d');
 let DPR = Math.min(devicePixelRatio||1, 2), W=0, H=0;
 function fit(){ DPR=Math.min(devicePixelRatio||1,2); window.DPR=DPR; W=innerWidth; H=innerHeight; c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;
-  const wr=document.getElementById('createCanvasWrap'); ccv.width=wr.clientWidth*DPR; ccv.height=wr.clientHeight*DPR; cctx.setTransform(DPR,0,0,DPR,0,0); cctx.imageSmoothingEnabled=false; }
+  fitCCV(); }
+const _createWrap=document.getElementById('createCanvasWrap');
+// size the operative preview canvas; guarded so a 0×0 canvas (wrapper hidden when fit()
+// first runs) can never blank the preview box — resurrect once the box has layout.
+function fitCCV(){
+  if(_createWrap && _createWrap.clientWidth && _createWrap.clientHeight){
+    ccv.width=_createWrap.clientWidth*DPR; ccv.height=_createWrap.clientHeight*DPR;
+    cctx.setTransform(DPR,0,0,DPR,0,0); cctx.imageSmoothingEnabled=false;
+    return true;
+  }
+  return false;
+}
 addEventListener('resize', fit);
+try{ if(_createWrap) new ResizeObserver(fitCCV).observe(_createWrap); }catch(_e){}
 
 // ---------- player + state ----------
 let state='create';
