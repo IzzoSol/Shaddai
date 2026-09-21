@@ -240,9 +240,10 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
-<script src="/world-layout.js?v=20260719fix"></script>
-<script src="/world-terrain.js?v=20260704u"></script>
+<script src="/world-layout.js?v=20260921a"></script>
+<script src="/world-terrain.js?v=20260921a"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
+<script src="/world-ocean.js?v=20260921a"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260719bridges"></script>
 <script src="/world-spawn.js?v=20260719fix"></script>
@@ -272,6 +273,7 @@ import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';   /
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';   // ocean/mount GLBs are meshopt-compressed
 // shared Draco decoder so the optimized (Draco-compressed) agent/vehicle GLBs load
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/');
@@ -321,6 +323,7 @@ scene.fog = new THREE.FogExp2(0x070b1a, 0.0036);  // ATMOSPHERE POLISH: fog colo
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 1500);  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
 camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple — that made the warm-up frame show "inside shaddai's temple")
+window.__w3dDebug = { scene, camera };   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
 
 const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
@@ -378,7 +381,7 @@ __loadMgr.onLoad = function(){ window.__assetsReady = true; };
 const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoader(dracoLoader);
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
-let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null;
+let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null;
 window.__worldBuilt = false;
 (function(){
   const L = window.WORLD_LAYOUT;
@@ -386,6 +389,13 @@ window.__worldBuilt = false;
     // Light/fast + things others depend on synchronously (agent placement + theme engine read terrain).
     if(L && window.buildWorldTerrain)  worldTerrain  = window.buildWorldTerrain(THREE, scene, L);
     if(L && window.buildWorldBiomes)   worldBiomes   = window.buildWorldBiomes(THREE, scene, L);
+    // CRYSTAL SEA (handoff step 2) — SW ocean cove: shader waves + gold harbor + moored
+    // boats. Needs its own GLTFLoader with BOTH decoders (the ocean-*.glb pack is meshopt).
+    if(L && window.buildWorldOcean){
+      const _ocLoader = new GLTFLoader(__loadMgr);
+      _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
+      worldOcean = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });
+    }
     // REMOVED (owner): the bronze "Market Sentinel" statue in front of ZEROX. worldMarkets stays null (null-guarded in the loop).
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
@@ -1457,7 +1467,7 @@ scene.add(skyDome);
 // from the player's nearest biome. (World Labs panorama kept for the future Marble portal world.)
 const _skyHorizon = skyMat.uniforms.horizon.value;
 const _skyGlow = skyMat.uniforms.glow.value;
-const _biomeSky = { grid:0x163a6e, forest:0x1a5a2e, arctic:0x2a5a8e, desert:0x6e4a18, void:0x3a1a6e };
+const _biomeSky = { grid:0x163a6e, forest:0x1a5a2e, arctic:0x2a5a8e, desert:0x6e4a18, void:0x3a1a6e, ocean:0x0a3a4e };
 // Pre-allocated colors — eliminate 3 `new THREE.Color()` allocations per frame
 const _skyC1 = new THREE.Color(), _skyC2 = new THREE.Color(), _skyFogC = new THREE.Color();
 function updateSkyForBiome(x, z){
@@ -4232,6 +4242,7 @@ function animate(){
     if(window.__spawnWasLo){ _applyQualityTier(_Q.tier); window.__spawnWasLo = false; }  // restore full quality the instant we land
     // drive the organized-world modules (only when NOT mid-spawn)
     if(worldBiomes)   worldBiomes.update(t);
+    if(worldOcean)    worldOcean.update(t);
     if(worldTerrain)  worldTerrain.update(t);
     if(worldMarkets)  worldMarkets.update(t);
     if(worldBuildings) worldBuildings.update(t);

@@ -43,6 +43,11 @@
       { id: 'arctic', name: 'Arctic Vault', center: [-150, -240], radius: 150, color: 0xaaddff, ground: 'snow',   fog: 0xaaccee, water: true  },
       { id: 'desert', name: 'Sand Sea',     center: [150, -240],  radius: 150, color: 0xff7a18, ground: 'sand',   fog: 0x1a0800, water: false },
       { id: 'void',   name: 'Deep Void',    center: [0, -360],    radius: 130, color: 0x9b59f5, ground: 'void',   fog: 0x050010, water: false },
+      // CRYSTAL SEA (2026-09-21, handoff step 2) — open animated ocean in the SW corner,
+      // mirroring the 2D world's beach realm (deep water at far SW). Sand biome color =
+      // the cove beach ring; the teal water itself is the shader plane from world-ocean.js.
+      // `dock` = the gold harbor disc position (rawElevation carves a walkable sand pad there).
+      { id: 'ocean',  name: 'Crystal Sea',  center: [-295, 290],  radius: 95,  color: 0xc2a176, ground: 'sand',   fog: 0x06283a, water: true, dock: [-227, 223] },
     ],
 
     // ── AGENT SECTORS — Seed of Life. SHADDAI = center; 6 agents on the hexagon. ──
