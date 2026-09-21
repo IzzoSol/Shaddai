@@ -71,11 +71,13 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   border-radius:12px; padding:8px 6px; border:1px solid var(--edge2); background:var(--panel);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
   text-align:center; overflow:hidden; transition:transform .08s;
+  position:relative; isolation:isolate;
 }
 .bub:active{transform:scale(.96)}
 .bub.sq{border-radius:14%}.bub.sq .bub-ava{border-radius:10%}
 .bub.fb{overflow:hidden}
-.bub.fb .bub-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.88;z-index:0;pointer-events:none}
+.bub.fb .bub-bg{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.88;z-index:0;pointer-events:none;overflow:hidden}
+.bub-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:var(--panel)}
 .bub.fb .bub-bg:empty{display:none}
 .bub.fb::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,8,18,.80) 0%,rgba(4,8,18,.20) 50%,rgba(4,8,18,.08) 100%);z-index:0;pointer-events:none}
 html[data-theme="light"] .bub.fb::after{background:linear-gradient(0deg,rgba(248,250,255,.85) 0%,rgba(248,250,255,.25) 55%,rgba(248,250,255,.10) 100%)}
@@ -111,6 +113,7 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 .bub-s .sy{font-size:10px}
 .bub-s .mx{font-size:12px}
 .bub-s .sub-rt{display:none}
+.bub-s .gbar,.bub-s .bub-spark{display:none}
 
 .bub-m{grid-column:span 2;grid-row:span 1}
 .bub-m .sy{font-size:12px}
@@ -1048,6 +1051,7 @@ function fillBubbleAvatars(mints) {
         bi.loading = 'lazy'; bi.alt = ''; bi.referrerPolicy = 'no-referrer';
         bi.addEventListener('error', function () { bi.remove(); });
         bi.src = img;
+        bg.innerHTML = '';
         bg.appendChild(bi);
       }
     });
