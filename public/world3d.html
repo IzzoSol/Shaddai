@@ -757,6 +757,11 @@ function makePortal(pos, ry, col) {
   const gate = async (x, z, ry, to, col) => { const g = await place('transit-hyperloop-gate', { x, z, h: 7, ry }); if (g) makePortal(new THREE.Vector3(x, 3.6, z), ry, col); const l = makeLabel(REALMS[to].name, '#' + col.toString(16).padStart(6, '0'), 1.1); l.position.set(x, 9.5, z); world.add(l); GATES.push({ x, z, to }); };
   await gate(0, 44, 0, 'desert', 0xff9a4a); await gate(-30, 44, 0, 'volcano', 0xff4a1a); await gate(30, 44, 0, 'ocean', 0x4fc3ff);
   await gate(420, 14, Math.PI, 'city', 0x5fe0ff); await gate(V0.x, V0.z + 150, 0, 'city', 0x5fe0ff); await gate(0, 846, 0, 'city', 0x5fe0ff);
+  // street props: benches on the ring road, obsidian rocks in the tundra/volcano gap, mushroom pods + pod blocks in the suburbs
+  [0.45, 1.55, 2.6, 3.7, 4.8, 5.9].forEach((a) => { const x = Math.sin(a) * 103, z = -Math.cos(a) * 103; place('prop-bench', { x, z, h: 1.1, ry: -a }); });
+  [[250, -520, 22], [-450, -620, 26], [-120, -740, 20], [60, -700, 18], [-260, -560, 24], [390, -520, 20]].forEach(([x, z, w]) => place('prop-obsidian-rocks', { x, z, w, ry: Math.random() * 6 } ));
+  [[60, -130, 16], [110, -150, 16], [-72, -152, 16], [30, -195, 16], [150, -70, 16], [-150, -120, 16]].forEach(([x, z, w]) => place('homes-mushroom-pods', { x, z, w, ry: Math.random() * 6 }));
+  [[186, -82, 30], [-186, 64, 28], [-176, -124, 30], [182, 150, 26]].forEach(([x, z, h]) => place('bld-apartment-pod-block', { x, z, h, ry: Math.random() * 6 }));
   // rail + shuttling capsule + sky-rail pod
   const rail = new THREE.Mesh(new THREE.BoxGeometry(170, 0.5, 2.2), new THREE.MeshStandardMaterial({ color: 0x16151e, metalness: 0.8, roughness: 0.3, emissive: 0xe8c45c, emissiveIntensity: 0.35 })); rail.position.set(0, 0.25, 100); world.add(rail);
   const rl = new THREE.Mesh(new THREE.BoxGeometry(170, 0.05, 0.25), new THREE.MeshBasicMaterial({ color: 0x00ff9c })); rl.position.set(0, 0.52, 100); world.add(rl);
