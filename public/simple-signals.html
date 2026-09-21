@@ -79,6 +79,7 @@ html[data-theme="light"] .bub.fb::after{background:linear-gradient(0deg,rgba(248
 .gbar i{display:block;height:100%;border-radius:2px;background:var(--emerald)}
 .gbar.dn i{background:var(--amber)}
 .gbar.dn i:not([style]){background:var(--edge)}
+.bub-spark{display:block;width:100%;height:18px;margin-top:2px;position:relative;z-index:1;opacity:.95}
 .pc24{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em}
 .pc24.up{color:var(--emerald)}.pc24.dn{color:var(--amber)}
 .csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
@@ -831,7 +832,7 @@ async function loadFeed() {
   console.log('[SHADDAI] feed loaded:', fresh.length, 'calls,', live, 'live (≥1×)');
   state.feed = fresh;
   try { sessionStorage.setItem('ss_feed', JSON.stringify(fresh)); } catch (e) {}
-  DexMerge.mergeInto(fresh).then(function () { renderHeat(); if (state.tab === 'calls') renderCalls(); });
+  DexMerge.mergeInto(fresh).then(function () { renderHeat(); if (state.tab === 'calls') renderCalls(); bubSparks(); });
   return state.feed.length;
 }
 /* Free, keyless DexScreener batch merger — live 24h %change, USD price, volume
@@ -867,6 +868,8 @@ var DexMerge = (function () {
             usd: Number(pr.priceUsd) || 0,
             vol24usd: Number(pr.volume && pr.volume.h24) || 0,
             pairUrl: pr.url || '',
+            pair: pr.pairAddress || '',
+            chain: pr.chainId || 'solana',
             img: (pr.info && pr.info.imageUrl) || (pr.baseToken && pr.baseToken.logoURI) || ''
           };
         });
@@ -879,12 +882,55 @@ var DexMerge = (function () {
         c.usd = rec.usd;
         c.v24 = rec.vol24usd;
         c.dsUrl = rec.pairUrl;
+        c.pairAddr = rec.pair;
+        c.chain = c.chain || rec.chain;
         if (!c.img && rec.img) c.img = rec.img;
       });
     });
   }
   return { mergeInto: mergeInto };
 })();
+/* Free DexScreener candles — a per-tile 24h close-price sparkline drawn on the
+   tile's canvas. Fired once per mint after DexMerge attaches pair addresses. */
+function drawSparkClose(cv, closes, color) {
+  if (!closes || closes.length < 2) { cv.style.display = 'none'; return; }
+  var ctx = cv.getContext('2d');
+  var w = cv.width = cv.clientWidth || 96;
+  var h = 18;
+  var min = Math.min.apply(null, closes), max = Math.max.apply(null, closes);
+  var range = (max - min) || 1;
+  var stepX = w / (closes.length - 1);
+  ctx.clearRect(0, 0, w, h);
+  ctx.beginPath();
+  closes.forEach(function (v, i) {
+    var x = i * stepX, y = h - 2 - ((v - min) / range) * (h - 4);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.lineTo(w, h); ctx.lineTo(0, h);
+  ctx.fillStyle = color + '26';
+  ctx.fill();
+}
+var sparkCache = {};
+function bubSparks() {
+  document.querySelectorAll('#heat-bubbles .bub').forEach(function (b) {
+    var mint = b.dataset.mint;
+    if (sparkCache[mint] === 'done') return;
+    var cv = b.querySelector('.bub-spark');
+    if (!cv) return;
+    sparkCache[mint] = 'done';
+    var c = null;
+    for (var i = 0; i < state.feed.length; i++) { if (state.feed[i].mint === mint) { c = state.feed[i]; break; } }
+    if (!c) return;
+    var pts = [1];
+    (c.milestones || []).forEach(function (x) { var v = Number(String(x).replace(/[^0-9.]/g, '')); if (v > 1 && pts.indexOf(v) < 0) pts.push(v); });
+    var peak = Number(c.peakMult) || 0, m = Number(c.curMult) || 0;
+    if (peak > 1 && pts.indexOf(peak) < 0) pts.push(peak);
+    if (m > 0 && pts.indexOf(m) < 0) pts.push(m);
+    if (pts.length < 2) return;
+    drawSparkClose(cv, pts, m >= peak * 0.25 ? '#10e5a4' : '#fbbf24');
+  });
+}
 function toast(msg, onClick) {
   try {
     var t = document.createElement('div');
@@ -990,6 +1036,7 @@ function fillBubbleAvatars(mints) {
 function renderHeat() {
   var all = state.feed.slice();
   var list;
+  sparkCache = {};
   if (state.heat === 'dead') list = all.filter(isDeadCoin);
   else list = liveOnly(all);
   var mGate = state.heat;
@@ -1026,12 +1073,14 @@ function renderHeat() {
       '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
       '<span class="mx" style="color:' + main + '">' + (m ? m.toFixed(2) + '×' : 'new') + '</span>' +
       '<span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>' +
-      '<span class="gbar ' + (m >= 1 ? 'up' : 'dn') + '" title="peak ' + peak.toFixed(2) + '× · now ' + m.toFixed(2) + '×"><i style="width:' + gbarW + '%"></i></span>';
+      '<span class="gbar ' + (m >= 1 ? 'up' : 'dn') + '" title="peak ' + peak.toFixed(2) + '× · now ' + m.toFixed(2) + '×"><i style="width:' + gbarW + '%"></i></span>' +
+      '<canvas class="bub-spark" height="18"></canvas>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
   div.appendChild(frag);
   fillBubbleAvatars(avatarMints);
+  bubSparks();
 }
 
 /* ---------------- recent calls ---------------- */
