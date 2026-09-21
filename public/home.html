@@ -2141,7 +2141,7 @@ function tick(el,to,suf){ if(!el) return; suf=suf||''; var t0=performance.now();
 (function(){
   var player=document.getElementById('descentPlayer'), exit=document.getElementById('descentExit');
   if(!player) return;
-  var SRC='/brain.html', frame=null;   // Ascend now opens the real RAG Brain
+  var SRC='/rag-cockpit.html', frame=null;   // Ascend opens the Neural Cockpit (3D RAG brain)
   function openPlayer(e){ if(e) e.preventDefault();
     if(window.__shutMobile) window.__shutMobile();
     if(!frame){ frame=document.createElement('iframe'); frame.title='SHADDAI Brain'; frame.setAttribute('allow','autoplay; fullscreen'); frame.src=SRC; player.appendChild(frame); }
