@@ -1196,7 +1196,7 @@ html[data-theme="circuit"] body::before{ background-image:url(/img/tg.jpg); }
     var big = isDex ? Math.round(c.chg24 || 0) + '%' : (p ? (p >= 10 ? Math.round(p) : p.toFixed(1)) + 'x' : '—');
     var i = info(c);
     return '<button class="cell" style="background:' + bg + '" data-mint="' + esc(c.mint) + '">' +
-      (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">' : '') +
+      (i && i.image ? '<img src="' + esc(i.image) + '" alt="" loading="lazy" decoding="async" onerror="this.remove()">' : '') +
       '<span class="s">' + esc((c.symbol || c.name || '?').slice(0, 8)) + '</span>' +
       '<span class="m">' + big + '</span>' +
       (i && i.socials && i.socials.twitter ? '<span class="so">𝕏</span>' : '') + '<span class="zo" data-dex="' + esc(c.pairUrl || ('https://dexscreener.com/solana/' + c.mint)) + '">DEX \u2197</span></button>';
