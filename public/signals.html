@@ -403,6 +403,10 @@ swarm extra CSS
 .cell img{ background:#0b0f18; transform:none !important; transition:opacity .35s ease !important; will-change:auto; image-rendering:auto; }
 .cell:hover img{ transform:none !important; filter:saturate(1.35) contrast(1.06); }
 .cell img[src=""], .cell img:not([src]){ display:none; }
+/* heat can never paint over toolbar/buttons: the whole grid is a clipped stacking context below the chrome */
+.view{ isolation:isolate; position:relative; z-index:0; }
+.heat{ isolation:isolate; contain:paint; position:relative; z-index:0; }
+.cell:hover{ z-index:1 !important; }
 /* heat overlap fix: every card is an isolated, clipped box; its image is pinned inside it */
 .heat{ align-items:stretch; grid-auto-rows:auto; }
 .cell{ min-width:0; width:100%; overflow:hidden !important; isolation:isolate; position:relative; }
