@@ -876,7 +876,7 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
   <div class="corner" id="cornerCluster">
     <a class="cc-link cc-startfree" id="cornerStart" href="/blueprint.html" title="Why SHADDAI — the honest competitive breakdown">Why</a>
     <a class="cc-link cc-deck" id="cornerDeck" href="/dashboard" title="Enter the Command Hub">Command Hub</a>
-    <button class="cc-ascend" id="cornerAscend" type="button" data-descent title="Open the SHADDAI RAG Brain">▶ Ascend</button>
+    <button class="cc-ascend" id="cornerAscend" type="button" data-descent title="Open the full-screen Ascent player">▶ Ascend</button>
   </div>
   <button class="menuBtn" id="menuBtn" aria-expanded="false" aria-controls="mobileNav">☰ Menu</button>
 </header>
@@ -2141,10 +2141,10 @@ function tick(el,to,suf){ if(!el) return; suf=suf||''; var t0=performance.now();
 (function(){
   var player=document.getElementById('descentPlayer'), exit=document.getElementById('descentExit');
   if(!player) return;
-  var SRC='/rag-cockpit.html', frame=null;   // Ascend opens the Neural Cockpit (3D RAG brain)
+  var SRC='/lab-molecules.html', frame=null;
   function openPlayer(e){ if(e) e.preventDefault();
     if(window.__shutMobile) window.__shutMobile();
-    if(!frame){ frame=document.createElement('iframe'); frame.title='SHADDAI Brain'; frame.setAttribute('allow','autoplay; fullscreen'); frame.src=SRC; player.appendChild(frame); }
+    if(!frame){ frame=document.createElement('iframe'); frame.title='The Ascent'; frame.setAttribute('allow','autoplay; fullscreen'); frame.src=SRC; player.appendChild(frame); }
     document.body.classList.add('player-open'); player.classList.add('open'); player.setAttribute('aria-hidden','false');
     exit.focus(); }
   function closePlayer(){ player.classList.remove('open'); player.setAttribute('aria-hidden','true');
