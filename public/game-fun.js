@@ -18,10 +18,14 @@
   var PROG_KEY = 'shaddai.progression';
   var PROG = readProg();
   var G_PET = { col: 0, row: 0 };
+  var BRIDGE_KEY = 'shaddai.bridge';
+  var MONO = null;
+  var gfGateNear = false;
+  var HUNT = { n: 5, cells: null, used: 0 };
 
   // ---- persistence ----
   function readProg() {
-    var base = { stats: { hp: 0, atk: 0, spd: 0, chr: 0 }, pts: 0, pet: -1, bestCombo: 0, map: false, adopted: false };
+    var base = { stats: { hp: 0, atk: 0, spd: 0, chr: 0 }, pts: 0, pet: -1, bestCombo: 0, map: false, adopted: false, hunt: null };
     try {
       var r = JSON.parse(localStorage.getItem(PROG_KEY) || '{}');
       Object.keys(base).forEach(function (k) { if (r[k] !== undefined) base[k] = r[k]; });
@@ -32,7 +36,7 @@
   }
   function persistProg() {
     try {
-      localStorage.setItem(PROG_KEY, JSON.stringify({ stats: PROG.stats, pts: PROG.pts || 0, pet: PROG.pet, map: PROG.map, bestCombo: PROG.bestCombo || 0, adopted: PROG.adopted }));
+      localStorage.setItem(PROG_KEY, JSON.stringify({ stats: PROG.stats, pts: PROG.pts || 0, pet: PROG.pet, map: PROG.map, bestCombo: PROG.bestCombo || 0, adopted: PROG.adopted, hunt: PROG.hunt || null }));
     } catch (_) {}
   }
   function applyStats() {
@@ -223,6 +227,8 @@
       PROG.map = !PROG.map; persistProg();
       try { toast(PROG.map ? '🗺 World map on (M to hide)' : '🗺 World map off'); } catch (_) {}
     }
+    else if (k === 'g') { gfWarp(); }
+    else if (k === 'h') { gfHuntToggle(); }
   }
 
   // ---- wrap core functions (game.html top-level function declarations = window props) ----
@@ -299,6 +305,7 @@
     window.renderWorld = function (time) {
       try { if (_rawRW) _rawRW(time); } catch (_) {}
       try { drawPet(time); } catch (_) {}
+      try { gfDrawMonolith(time); } catch (_) {}
       try { if (PROG.map) drawMiniMap(time); } catch (_) {}
     };
 
@@ -316,9 +323,204 @@
     addEventListener('keydown', gfKeys);
   }
 
+  // ============ 2D⇄3D REALM GATE ============
+  function gfReadTicket() { try { return JSON.parse(localStorage.getItem(BRIDGE_KEY) || 'null'); } catch (_) { return null; } }
+  function gfWriteTicket(t) { try { localStorage.setItem(BRIDGE_KEY, JSON.stringify(t)); } catch (_) {} }
+  function gfClearTicket() { try { localStorage.removeItem(BRIDGE_KEY); } catch (_) {} }
+  function gfRegionId() { try { return (typeof region !== 'undefined' && region && region.id) ? region.id : (localStorage.getItem('shaddai.region') || 'agentcity'); } catch (_) { return 'agentcity'; } }
+  function gfCharName() { try { if (typeof player !== 'undefined' && player && player.name) return player.name; var p = JSON.parse(localStorage.getItem('shaddai.player') || 'null'); return (p && p.name) || 'Wanderer'; } catch (_) { return 'Wanderer'; } }
+
+  function gfTo3D() {
+    var c = -1, r = -1;
+    try { if (typeof player !== 'undefined' && player) { c = Math.round(player.col); r = Math.round(player.row); } } catch (_) {}
+    gfWriteTicket({ from: '2d', region: gfRegionId(), col: c, row: r, name: gfCharName(), ts: Date.now() });
+    try { toast('⛩ Opening the realm gate…'); } catch (_) {}
+    setTimeout(function () { location.href = '/world3d'; }, 350);
+  }
+
+  function gfGateBtn() {
+    try {
+      var tb = document.getElementById('topbtns'); if (!tb || tb.querySelector('#gfGate3d')) return;
+      var b = document.createElement('button');
+      b.id = 'gfGate3d';
+      b.className = 'panel';
+      b.style.cssText = 'padding:9px 13px;border-color:rgba(95,224,255,.45);color:#5fe0ff;font-weight:700';
+      b.textContent = '⛩ 3D Realm';
+      b.onclick = gfTo3D;
+      tb.appendChild(b);
+    } catch (_) {}
+  }
+
+  function gfFindMonolith() {
+    try {
+      if (typeof props === 'undefined' || typeof tiles === 'undefined' || typeof GW === 'undefined' || typeof GH === 'undefined') return null;
+      for (var i = 0; i < props.length; i++) {
+        var p = props[i];
+        if (p && p.landmark) return { col: Math.round(p.col + ((p.w || 1) / 2) + 2), row: Math.round(p.row + ((p.d || 1) / 2) - 2) };
+      }
+      if (typeof walkable !== 'function') return null;
+      var cx = (GW / 2) | 0, cy = (GH / 2) | 0;
+      for (var d = 3; d < 16; d++) for (var a = 0; a < 24; a++) {
+        var c = Math.round(cx + Math.sin(a * Math.PI / 12) * d), rr = Math.round(cy + Math.cos(a * Math.PI / 12) * d);
+        if (walkable(c, rr)) return { col: c, row: rr };
+      }
+      return null;
+    } catch (_) { return null; }
+  }
+
+  function gfDrawMonolith(time) {
+    try {
+      if (state !== 'world' || spectate) { gfGateNear = false; return; }
+      if (typeof walkable === 'function') {
+        if (MONO && !walkable(MONO.col, MONO.row)) MONO = null;
+        if (!MONO) MONO = gfFindMonolith();
+      }
+      if (!MONO) return;
+      var pt; try { pt = w2s(MONO.col, MONO.row); } catch (_) { return; }
+      var x = pt[0], y = pt[1];
+      var pulse = (Math.sin(time / 420) + 1) / 2;
+      ctx.save();
+      ctx.translate(Math.round(W / 2), Math.round(H * 0.42)); ctx.scale(zoom, zoom);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.2 + pulse * 0.28;
+      ctx.fillStyle = '#5fe0ff';
+      ctx.beginPath(); ctx.arc(x, y - 6, 26 + pulse * 10, 0, 7); ctx.fill();
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#0e1a2a';
+      ctx.fillRect(x - 7, y - 27, 14, 35);
+      ctx.strokeStyle = '#5fe0ff'; ctx.lineWidth = 2;
+      ctx.strokeRect(x - 7, y - 27, 14, 35);
+      ctx.fillStyle = '#5fe0ff';
+      ctx.font = '600 11px "Chakra Petch",system-ui,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('3D', x, y - 13);
+      ctx.globalAlpha = 0.55 + pulse * 0.45;
+      ctx.font = '700 8px "Chakra Petch",system-ui,sans-serif';
+      ctx.fillText('GATE', x, y - 3);
+      ctx.globalAlpha = 1; ctx.fillStyle = '#00e5a0';
+      ctx.font = '600 9px "Chakra Petch",system-ui,sans-serif';
+      ctx.fillText('⛩ G', x, y + 11);
+      ctx.textAlign = 'start';
+      ctx.restore();
+      gfGateNear = (typeof player !== 'undefined' && player) ? Math.hypot(player.col - MONO.col, player.row - MONO.row) < 2.4 : false;
+      if (gfGateNear && Math.random() < 0.05) { try { addChips(MONO.col, MONO.row, '#5fe0ff'); } catch (_) {} }
+    } catch (_) {}
+  }
+
+  function gfWarp() {
+    try {
+      if (typeof player === 'undefined' || !player) { gfTo3D(); return; }
+      if (!gfGateNear) { toast('The ⛩ 3D Gate glows somewhere out there — find the blue pillar!'); return; }
+      gfTo3D();
+    } catch (_) {}
+  }
+
+  function gfRestoreFrom3D() {
+    var t = gfReadTicket();
+    if (!t || t.from !== '3d') return;
+    gfClearTicket();
+    var apply = function () {
+      try {
+        if (!player) return false;
+        var c = Math.round(t.col), r = Math.round(t.row);
+        if (c > 0 && r > 0 && typeof walkable === 'function' && walkable(c, r)) {
+          player.col = c; player.row = r;
+          try { if (typeof cam !== 'undefined' && cam) { cam.col = c; cam.row = r; } } catch (_) {}
+        }
+        toast('⛩ Back from the 3D realm!' + (t.name ? ' (' + t.name + ')' : ''));
+        try { addFloat(player.col, player.row, '⛩ 3D → 2D', '#5fe0ff'); } catch (_) {}
+        return true;
+      } catch (_) { return false; }
+    };
+    if (apply()) return;
+    var tt = 0; var iv = setInterval(function () { tt++; if (apply() || tt > 40) clearInterval(iv); }, 300);
+  }
+
+  // ============ HUNT GRID (TURTLE #2) ============
+  var HUNT_ICON = { empty: '·', gold: '💵', xp: '✦', hide: '🟫', chest: '🏆' };
+  var HUNT_COLOR = { empty: '#5a6a7a', gold: '#ffe9a8', xp: '#7ffcd0', hide: '#e8c45c', chest: '#ffe14a' };
+  function gfHuntSeed(silent) {
+    var arr = [];
+    for (var i = 0; i < 25; i++) {
+      var roll = Math.random(), kind = 'empty';
+      if (roll >= 0.55 && roll < 0.73) kind = 'gold';
+      else if (roll >= 0.73 && roll < 0.85) kind = 'xp';
+      else if (roll >= 0.85 && roll < 0.93) kind = 'hide';
+      else if (roll >= 0.93) kind = 'chest';
+      arr.push({ k: kind, done: false });
+    }
+    HUNT.cells = arr; HUNT.used = 0;
+    PROG.hunt = arr.map(function (c) { return { k: c.k, done: c.done }; });
+    persistProg();
+    if (!silent) { try { toast('🗺 A fresh hunting ground takes root!'); } catch (_) {} }
+  }
+  function gfHuntEnsure() {
+    if (HUNT.cells && HUNT.cells.length === 25) return;
+    if (PROG.hunt && Array.isArray(PROG.hunt) && PROG.hunt.length === 25) {
+      HUNT.cells = PROG.hunt.map(function (c) { return { k: c.k, done: !!c.done }; });
+      HUNT.used = HUNT.cells.filter(function (c) { return c.done; }).length;
+      return;
+    }
+    gfHuntSeed(true);
+  }
+  function gfHuntReveal(i) {
+    try {
+      if (state !== 'world') { toast('Enter the world to hunt'); return; }
+      gfHuntEnsure();
+      var c = HUNT.cells[i]; if (!c || c.done) return;
+      c.done = true; HUNT.used++;
+      var got = '', col = '#7ffcd0';
+      if (c.k === 'gold') { var g = 5 + ((Math.random() * 12) | 0); money = (money || 0) + g; got = '+💵' + g; col = '#ffe9a8'; }
+      else if (c.k === 'xp') { var x = 8 + ((Math.random() * 16) | 0); addXP(x); got = '+' + x + ' XP'; }
+      else if (c.k === 'hide') { inv.hide = (inv.hide || 0) + 1; got = '+1 🟫 hide'; col = '#e8c45c'; }
+      else if (c.k === 'chest') { var g2 = 12 + ((Math.random() * 16) | 0), x2 = 15 + ((Math.random() * 20) | 0); money = (money || 0) + g2; addXP(x2); got = '🏆 +💵' + g2 + ' · +' + x2 + ' XP'; col = '#ffe14a'; }
+      else got = 'just shrubbery…';
+      try { saveEcon(); persistProg(); } catch (_) {}
+      try { if (player) addFloat(player.col, player.row, got, col); } catch (_) {}
+      if (c.k !== 'empty') toast('🌿 ' + got);
+      gfHuntBuild();
+      if (HUNT.used >= 25) setTimeout(function () { toast('🗺 Ground cleared — reseed the hunt!'); }, 600);
+    } catch (_) {}
+  }
+  function gfHuntCell(i) {
+    var c = HUNT.cells[i];
+    var ico = HUNT_ICON[c.k], col = HUNT_COLOR[c.k];
+    var box = 'width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:17px';
+    if (c.done) return '<div style="' + box + ';background:#0f1826;border:1px solid rgba(255,255,255,.06);color:' + col + '">' + ico + '</div>';
+    return '<button onclick="gfHunt(\'' + i + '\')" style="' + box + ';background:linear-gradient(160deg,#12202f,#0c1420);border:1px solid rgba(0,229,160,.25);color:#7ffcd0;font-weight:800;cursor:pointer">?</button>';
+  }
+  function gfHuntBuild() {
+    var el = document.getElementById('gfHunt'); if (!el) return;
+    gfHuntEnsure();
+    var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:14px;letter-spacing:.06em">🗺 HUNT GROUND</b><button onclick="gfHunt(\'close\')" style="background:none;border:1px solid rgba(255,255,255,.2);color:#9fb2c4;border-radius:6px;padding:2px 9px;cursor:pointer;font-size:12px">✕</button></div>';
+    h += '<div style="font-size:11px;color:#9fb2c4;margin-bottom:8px">Tap a tile to see what the wilds hid · <b style="color:#00e5a0">' + HUNT.used + '</b>/25 cleared</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;justify-content:center">';
+    for (var i = 0; i < 25; i++) h += gfHuntCell(i);
+    h += '</div>';
+    h += '<button onclick="gfHunt(\'seed\')" style="margin-top:9px;width:100%;padding:7px;background:rgba(18,32,47,.8);border:1px solid rgba(0,229,160,.35);color:#00e5a0;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">🌱 Reseed hunting ground</button>';
+    el.innerHTML = h;
+  }
+  function gfHuntToggle() {
+    var el = document.getElementById('gfHunt');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'gfHunt'; el.className = 'panel';
+      el.style.cssText = 'position:fixed;left:16px;top:200px;width:264px;max-height:82vh;overflow:auto;padding:14px 16px;z-index:60';
+      document.body.appendChild(el);
+    }
+    el.classList.toggle('hide');
+    gfHuntBuild();
+  }
+  window.gfHunt = function (arg) {
+    if (arg === 'close') { var el = document.getElementById('gfHunt'); if (el) el.classList.add('hide'); }
+    else if (arg === 'seed') { gfHuntSeed(false); gfHuntBuild(); }
+    else gfHuntReveal(parseInt(arg, 10));
+  };
+
   // ---- init ----
   function init() {
     try { wire(); } catch (_) {}
+    try { gfGateBtn(); } catch (_) {}
+    try { gfRestoreFrom3D(); } catch (_) {}
     if (typeof levelFor === 'function' && typeof credits !== 'undefined') {
       var L = levelFor(credits);
       try { applyStats(); } catch (_) {}
