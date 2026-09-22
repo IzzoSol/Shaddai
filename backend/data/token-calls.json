@@ -1162,9 +1162,9 @@
       "entryFdv": 63134,
       "entryPrice": 7.764e-7,
       "ts": 1789777232549,
-      "peakMult": 1.6010073811258594,
-      "curMult": 1.6010073811258594,
-      "curFdv": 101078,
+      "peakMult": 1.7755884309563785,
+      "curMult": 1.7755884309563785,
+      "curFdv": 112100,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -1714,9 +1714,9 @@
       "entryFdv": 26721,
       "entryPrice": 0.004242,
       "ts": 1789824527018,
-      "peakMult": 1.4929081995434303,
-      "curMult": 1.4929081995434303,
-      "curFdv": 39892,
+      "peakMult": 2.0424011077429736,
+      "curMult": 2.0424011077429736,
+      "curFdv": 54575,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -1741,7 +1741,9 @@
         "devPct": 0,
         "venue": ""
       },
-      "milestones": [],
+      "milestones": [
+        2
+      ],
       "closed": false
     },
     {
@@ -2502,9 +2504,9 @@
       "entryFdv": 71319,
       "entryPrice": 3.205e-7,
       "ts": 1789859834365,
-      "peakMult": 1.481007866066546,
-      "curMult": 1.481007866066546,
-      "curFdv": 105624,
+      "peakMult": 1.9617072589352067,
+      "curMult": 1.9617072589352067,
+      "curFdv": 139907,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -2970,9 +2972,9 @@
       "entryFdv": 82709,
       "entryPrice": 7.65e-7,
       "ts": 1789917027738,
-      "peakMult": 1,
-      "curMult": 1,
-      "curFdv": 82709,
+      "peakMult": 1.1111487262571182,
+      "curMult": 1.1111487262571182,
+      "curFdv": 91902,
       "features": {
         "sourceCount": 1,
         "sources": [
@@ -3150,6 +3152,123 @@
         "fdvAtCall": 111115,
         "volAtCall": 0,
         "liqAtCall": 27659.8,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "sdyKwWzC8EnriZWBBwm8YX25nKGmtQdZAHBEGLUpump",
+      "chain": "solana",
+      "name": "I Nuke U",
+      "symbol": "INU",
+      "source": "boosted",
+      "entryFdv": 47737,
+      "entryPrice": 4.776e-7,
+      "ts": 1789921119021,
+      "peakMult": 1.066489305989065,
+      "curMult": 1.066489305989065,
+      "curFdv": 50911,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 47737,
+        "volAtCall": 0,
+        "liqAtCall": 19264.14,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "4QCKwhetNJ2Sd5xKhtmUYw5aC2rT9gKW2W72ix2Wpump",
+      "chain": "solana",
+      "name": "The Black Jean",
+      "symbol": "JEANSEM",
+      "source": "boosted",
+      "entryFdv": 243902,
+      "entryPrice": 0.00000226,
+      "ts": 1789921119156,
+      "peakMult": 1,
+      "curMult": 1,
+      "curFdv": 243902,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 243902,
+        "volAtCall": 0,
+        "liqAtCall": 42699.43,
+        "devPct": 0,
+        "venue": ""
+      },
+      "milestones": [],
+      "closed": false
+    },
+    {
+      "mint": "EnGnwy5koQkE8i2HLAfmNqyCmjdPhyG12yyPutTQpump",
+      "chain": "solana",
+      "name": "wager.fun",
+      "symbol": "W",
+      "source": "boosted",
+      "entryFdv": 67608,
+      "entryPrice": 6.365e-7,
+      "ts": 1789924026378,
+      "peakMult": 1.0951070879185896,
+      "curMult": 1.0951070879185896,
+      "curFdv": 74038,
+      "features": {
+        "sourceCount": 1,
+        "sources": [
+          "boosted"
+        ],
+        "socialScore": 0,
+        "hasWebsite": false,
+        "hasTwitter": false,
+        "hasTelegram": false,
+        "hasDiscord": false,
+        "locked": false,
+        "top10Pct": 0,
+        "insiders": 0,
+        "bundlers": false,
+        "snipers": false,
+        "rugScore": 0,
+        "lpPct": 0,
+        "holders": 0,
+        "fdvAtCall": 67608,
+        "volAtCall": 0,
+        "liqAtCall": 22615.55,
         "devPct": 0,
         "venue": ""
       },

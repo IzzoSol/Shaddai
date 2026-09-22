@@ -1,0 +1,5 @@
+import puppeteer from 'puppeteer'; import sharp from 'sharp'; import { existsSync } from 'fs';
+const names=process.argv.slice(2);const b=await puppeteer.launch({headless:'new'});const p=await b.newPage();await p.setViewport({width:800,height:1000});
+await p.goto('http://localhost:8765/spike/sprite-capture.html',{waitUntil:'load'});const tiles=[];
+for(const n of names){const f=`fal-assets/characters/${n}/${n}-rigged.glb`;if(!existsSync(f)){continue;}await p.evaluate((u)=>window.__loadClip(u),`../characters/${n}/${n}-rigged.glb`);await p.waitForFunction(()=>window.__ready===true||window.__ready==='error',{timeout:60000});await p.evaluate(()=>window.__setTime(0));const s=await p.screenshot({omitBackground:true});tiles.push(await sharp(s).trim({threshold:10}).flatten({background:'#dfe3ea'}).resize({height:520,width:340,fit:'contain',background:'#dfe3ea'}).png().toBuffer());}
+await sharp({create:{width:340*tiles.length,height:520,channels:3,background:'#dfe3ea'}}).composite(tiles.map((t,i)=>({input:t,left:i*340,top:0}))).png().toFile('fal-assets/spike/bind-sheet.png');await b.close();console.log(tiles.length);
