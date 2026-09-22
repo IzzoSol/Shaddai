@@ -246,6 +246,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-ocean.js?v=20260921b"></script>
 <script src="/world-volcano.js?v=20260921b"></script>
 <script src="/world-realmprops.js?v=20260921b"></script>
+<script src="/world-actions.js?v=20260921c"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260719bridges"></script>
 <script src="/world-spawn.js?v=20260719fix"></script>
@@ -3923,9 +3924,19 @@ let _avatarYaw=0, _avatarYawInit=false;   // eased character facing — turns sm
 function _lerpAngle(a, b, t){ let d=b-a; while(d>Math.PI)d-=6.283185307; while(d<-Math.PI)d+=6.283185307; return a+d*t; }
 const clock=new THREE.Clock();
 // RIDEABLE VOYAGERS REMOVED (owner: "there's a car and a space vehicle under shaddai ... sloppy").
-// Keep a no-op `veh` stub so the movement hooks (speed/baseY/flyControl/update/mode) still work — this
-// spawns NO craft into the world. (Was initRideables(...) which parked a Slipstream + Arctic Rover.)
-const veh = { mode:false, speed:function(s){ return s; }, baseY:function(g){ return g; }, flyControl:function(){}, update:function(){} };
+// The stub KEPT the movement hooks (speed/baseY/flyControl/update/mode) alive — and now
+// world-actions.js REPLACES the stub with the hoverboard + tricks + Sparks economy.
+// The board only spawns at the plaza + the sea dock (contextual, not random clutter).
+let veh = { mode:false, speed:function(s){ return s; }, baseY:function(g){ return g; }, flyControl:function(){}, update:function(){} };
+try{
+  const _acLoader = new GLTFLoader(__loadMgr);
+  _acLoader.setDRACOLoader(dracoLoader); _acLoader.setMeshoptDecoder(MeshoptDecoder);
+  if (window.buildWorldActions) veh = window.buildWorldActions({
+    THREE, scene, loader: _acLoader,
+    playerPosGetter: function(){ return playerPos; },
+    isShift: function(){ return !!(keys['ShiftLeft']||keys['ShiftRight']); },
+  });
+}catch(e){ console.warn('world-actions init failed:', e && e.message); }
 
 // ══════════════════════════════════════════════════════════════════════════
 // FPS-ADAPTIVE QUALITY GOVERNOR — auto-tunes render quality to hold 50-60fps
