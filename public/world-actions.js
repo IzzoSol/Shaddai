@@ -113,6 +113,11 @@ window.buildWorldActions = function (opts) {
         if (d2 < bd) { bd = d2; best = { kind: 'boat', b: f }; }
       }
     }
+    // owned hovercar parked at the garage beacon
+    if (carMesh && carGroup.visible && !st.mode) {
+      var d3 = (p.x - carMesh.position.x) * (p.x - carMesh.position.x) + (p.z - carMesh.position.z) * (p.z - carMesh.position.z);
+      if (d3 < bd) { bd = d3; best = { kind: 'car', b: { m: carGroup, name: 'HOVERCAR' } }; }
+    }
     return best;
   }
 
@@ -145,6 +150,9 @@ window.buildWorldActions = function (opts) {
     if (e.code !== 'KeyE' && e.code !== 'Space') return;
     var p = P(); if (!p) return;
     if (e.code === 'KeyE') {
+      // COLOSSEUM first: E near the arena opens the spectate/tourney modal
+      var Lm = window.__worldLandmarks;
+      if (Lm && Lm.arenaPos && Math.hypot(p.x - Lm.arenaPos[0], p.z - Lm.arenaPos[1]) < 50) { openArena(); return; }
       if (st.mode) {                                    // dismount — park it where legal
         if (!dismountAllowed()) { pop('SAIL BACK TO SHORE TO DISMOUNT', '#5fe0ff'); return; }
         st.mode = false; land();
@@ -168,10 +176,12 @@ window.buildWorldActions = function (opts) {
           pop('SAILING: ' + (n.b.name || 'VESSEL'), '#00e5a0');
         } else if (n && n.kind === 'hoverboard') {
           st.mode = 'hoverboard'; st.board = n.b; pop('HOVERBOARD', '#00ff9c');
+        } else if (n && n.kind === 'car') {
+          st.mode = 'car'; pop('HOVERCAR — cruise engaged', '#5fe0ff');
         }
       }
     } else if (e.code === 'Space' && st.mode === 'hoverboard' && st.air <= 0) {   // OLLIE (boards only)
-      st.vy = 7.2; st.air = 0.001;
+      st.vy = OLLIE_VY[garage().boardTier || 1] || 7.2; st.air = 0.001;
     }
   });
 
@@ -201,11 +211,109 @@ window.buildWorldActions = function (opts) {
     } catch (_) {}
   }, 6000);
 
+  // ── GARAGE (B at the plaza beacon): buy the hovercar, upgrade board+car with Sparks.
+  //    Procedural hovercar now; the real fal model replaces it in the same spot Thursday.
+  var GAR_KEY = 'shd.garage3d';
+  function garage() { try { return JSON.parse(localStorage.getItem(GAR_KEY) || '{"board":1,"boardTier":1,"car":0,"carTier":1}'); } catch (e) { return { board: 1, boardTier: 1, car: 0, carTier: 1 }; } }
+  function saveGarage(g) { try { localStorage.setItem(GAR_KEY, JSON.stringify(g)); } catch (e) {} }
+  var BOARD_SPD = [0, 2.1, 2.5, 3.0], CAR_SPD = [0, 0, 2.8, 3.4, 4.2];
+  var OLLIE_VY = [0, 7.2, 8.0, 9.0];
+
+  var carMesh = null, carGroup = new THREE.Group();
+  carGroup.name = 'garage-car';
+  group.add(carGroup);
+  function buildCar() {
+    while (carGroup.children.length) carGroup.remove(carGroup.children[0]);
+    var g = new THREE.Group();
+    var hull = new THREE.Mesh(track(new THREE.BoxGeometry(2.4, 0.6, 4.6)), track(new THREE.MeshStandardMaterial({ color: 0x14121c, roughness: 0.3, metalness: 0.85 })));
+    hull.position.y = 0.9; g.add(hull);
+    var canopy = new THREE.Mesh(track(new THREE.SphereGeometry(1.1, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2)), track(new THREE.MeshStandardMaterial({ color: 0x5fe0ff, transparent: true, opacity: 0.45, roughness: 0.1, metalness: 0.4, emissive: 0x5fe0ff, emissiveIntensity: 0.5 })));
+    canopy.position.y = 1.2; g.add(canopy);
+    var trimF = new THREE.Mesh(track(new THREE.BoxGeometry(2.5, 0.12, 0.5)), track(new THREE.MeshStandardMaterial({ color: 0xe8c45c, emissive: 0xe8c45c, emissiveIntensity: 1.1, metalness: 0.9, roughness: 0.25 })));
+    trimF.position.set(0, 0.72, 2.15); g.add(trimF);
+    var under = new THREE.PointLight(0x00ff9c, 2.4, 8); under.position.y = 0.3; g.add(under);
+    g.name = 'hovercar';
+    carGroup.add(g);
+    carMesh = g;
+  }
+  function seatCar() {
+    var G = garage();
+    var L = window.__worldLandmarks;
+    var gx = (L && L.garagePos) ? L.garagePos[0] + 9 : 35, gz = (L && L.garagePos) ? L.garagePos[1] + 9 : 105;
+    carGroup.visible = !!G.car;
+    if (G.car) { buildCar(); carMesh.position.set(gx, 0, gz); }
+  }
+  setTimeout(seatCar, 1500);   // landmarks built by then
+
+  // ── SHOP MODAL (B) + ARENA MODAL (E at colosseum) ──
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(4,6,12,.72);backdrop-filter:blur(4px)';
+  modal.innerHTML = '<div style="min-width:320px;max-width:400px;background:linear-gradient(160deg,#0d1220,#06080b);border:1px solid rgba(232,196,92,.45);border-radius:14px;padding:22px 24px;font-family:system-ui,sans-serif;color:#e8c45c;box-shadow:0 0 40px rgba(232,196,92,.15)"><div id="shTitle" style="font-weight:900;letter-spacing:.14em;font-size:15px;margin-bottom:14px"></div><div id="shBody" style="font-size:13px;color:#9fe8c4;line-height:1.55"></div><div id="shBtns" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"></div><div style="margin-top:10px;text-align:right;font-size:11px;opacity:.8">⚡ <span id="shBal"></span></div></div>';
+  document.body.appendChild(modal);
+  function closeModal() { modal.style.display = 'none'; }
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  function openModal(title, bodyHTML, btns) {
+    document.getElementById('shTitle').textContent = title;
+    document.getElementById('shBody').innerHTML = bodyHTML;
+    var holder = document.getElementById('shBtns'); holder.innerHTML = '';
+    btns.forEach(function (b) {
+      var el = document.createElement('button');
+      el.textContent = b.label;
+      el.style.cssText = 'flex:1;padding:9px 12px;border-radius:8px;border:1px solid rgba(232,196,92,.5);background:rgba(232,196,92,.08);color:#e8c45c;font-weight:700;font-size:12px;cursor:pointer' + (b.disabled ? ';opacity:.4;pointer-events:none' : '');
+      el.onclick = function () { b.fn(); };
+      holder.appendChild(el);
+    });
+    document.getElementById('shBal').textContent = sparks();
+    modal.style.display = 'flex';
+  }
+  function buy(label, cost, fn) {
+    if (sparks() < cost) { pop('NOT ENOUGH SPARKS', '#ff5a6e'); return; }
+    addSparks(-cost); fn(); pop('PURCHASED: ' + label, '#00ff9c'); openGarage();  // refresh
+  }
+  function openGarage() {
+    var G = garage();
+    var boardT = G.boardTier, carT = G.carTier;
+    var btns = [];
+    if (boardT < 3) btns.push({ label: 'BOARD TIER ' + (boardT + 1) + ' — ' + (boardT === 1 ? 300 : 600) + '⚡', disabled: sparks() < (boardT === 1 ? 300 : 600), fn: function () { buy('BOARD T' + (boardT + 1), boardT === 1 ? 300 : 600, function () { G.boardTier++; saveGarage(G); }); } });
+    if (!G.car) btns.push({ label: 'HOVERCAR — 500⚡', disabled: sparks() < 500, fn: function () { buy('HOVERCAR', 500, function () { G.car = 1; saveGarage(G); seatCar(); }); } });
+    else if (carT < 4) btns.push({ label: 'CAR TIER ' + (carT + 1) + ' — ' + (carT === 1 ? 500 : 900) + '⚡', disabled: sparks() < (carT === 1 ? 500 : 900), fn: function () { buy('CAR T' + (carT + 1), carT === 1 ? 500 : 900, function () { G.carTier++; saveGarage(G); }); } });
+    btns.push({ label: 'CLOSE', fn: closeModal });
+    openModal('◈ SHADDAI GARAGE',
+      'Hoverboard <b>Tier ' + boardT + '</b> — speed ×' + BOARD_SPD[boardT] + (G.car ? '<br>Hovercar <b>Tier ' + carT + '</b> — speed ×' + CAR_SPD[carT] + ' <span style="opacity:.7">(E to ride, parked at the beacon)</span>' : '<br>Hovercar — <span style="opacity:.7">not owned</span>')
+      + '<br><span style="opacity:.65;font-size:11px">Earn sparks: hoverboard tricks, tourneys, jobs.</span>', btns);
+  }
+  // ARENA: walk in + spectate now; tourney/wager ledger foundation (games land Thursday)
+  var TO_KEY = 'shd.tourney';
+  function tourney() { try { return JSON.parse(localStorage.getItem(TO_KEY) || '{"fightPool":0,"fightN":0,"skatePool":0,"skateN":0}'); } catch (e) { return { fightPool: 0, fightN: 0, skatePool: 0, skateN: 0 }; } }
+  function saveTourney(t) { try { localStorage.setItem(TO_KEY, JSON.stringify(t)); } catch (e) {} }
+  function openArena() {
+    var T = tourney();
+    openModal('⚔ SHADDAI COLOSSEUM',
+      '<b>FIGHTING</b> — entry 50⚡ · pool ' + T.fightPool + '⚡ · ' + T.fightN + ' entered<br>'
+      + '<b>SKATE JAM</b> — entry 30⚡ · pool ' + T.skatePool + '⚡ · ' + T.skateN + ' entered<br>'
+      + '<span style="opacity:.65;font-size:11px">Winner takes the pool. Matches open with the coming build — entry sparks are held in the pool.</span>',
+      [
+        { label: 'ENTER FIGHT (50⚡)', disabled: sparks() < 50, fn: function () { addSparks(-50); var t = tourney(); t.fightPool += 50; t.fightN++; saveTourney(t); pop('ENTERED — FIGHT POOL ' + t.fightPool + '⚡', '#c084fc'); closeModal(); } },
+        { label: 'ENTER SKATE (30⚡)', disabled: sparks() < 30, fn: function () { addSparks(-30); var t = tourney(); t.skatePool += 30; t.skateN++; saveTourney(t); pop('ENTERED — SKATE POOL ' + t.skatePool + '⚡', '#c084fc'); closeModal(); } },
+        { label: 'SPECTATE', fn: closeModal },
+      ]);
+  }
+
+  addEventListener('keydown', function (e) {
+    if (e.code !== 'KeyB') return;
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
+    var p = P(); if (!p) return;
+    var L = window.__worldLandmarks;
+    if (L && Math.hypot(p.x - L.garagePos[0], p.z - L.garagePos[1]) < 22) openGarage();
+  });
+
   var lastT = 0;
   return {
     get mode() { return st.mode; },
     speed: function (base) {
-      if (st.mode === 'hoverboard') return base * 2.1;   // board = fast glide
+      if (st.mode === 'hoverboard') return base * BOARD_SPD[garage().boardTier || 1];   // board = fast glide
+      if (st.mode === 'car') return base * CAR_SPD[garage().carTier || 1];             // hovercar = faster
       if (st.mode === 'boat') {
         var n = (st.boat && st.boat.name) || '';
         if (/SKIFF/i.test(n)) return base * 3.2;         // skiff = sprinter
@@ -223,6 +331,10 @@ window.buildWorldActions = function (opts) {
         if (gy > 0.2) return gy + 0.35;                  // beached on the shelf — fine, futuristic hull
         var O = ocAPI();
         return 0.05 + (O && O.waveH ? O.waveH(p.x, p.z, performance.now() / 1000) * 0.6 : 0) + 0.35;
+      }
+      if (st.mode === 'car') {                           // hovercar glides over everything
+        if (gy < -0.5) { var O3 = ocAPI(); gy = 0.05 + (O3 && O3.waveH ? O3.waveH(p.x, p.z, performance.now() / 1000) * 0.5 : 0); }
+        return gy + 1.05;
       }
       // hoverboard: ride waves over water, jump arcs on land
       if (gy < -0.5) {
@@ -250,6 +362,11 @@ window.buildWorldActions = function (opts) {
         st.boat.m.position.x = p.x; st.boat.m.position.z = p.z;
         st.boat.m.rotation.y = yaw + 1.5708;            // models face +X; face travel heading
         if (st.boatCfg) { st.boatCfg.x = p.x; st.boatCfg.z = p.z; }
+        return;
+      }
+      if (st.mode === 'car' && carMesh) {
+        carGroup.position.x = p.x; carGroup.position.z = p.z;
+        carGroup.rotation.y = yaw;
         return;
       }
       // hoverboard
