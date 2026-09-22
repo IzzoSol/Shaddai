@@ -584,6 +584,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'", "'unsafe-inline'",
+        "'wasm-unsafe-eval'",   // WASM only (NOT js eval) — Meshopt/Draco decoders the 3D world's GLB models need WebAssembly.instantiate()
         "https://cdnjs.cloudflare.com",
         "https://unpkg.com",
         "https://s3.tradingview.com",
