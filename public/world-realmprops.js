@@ -1,0 +1,107 @@
+/* world-realmprops.js — FULL MAP (2026-09-21): the three remaining outer realms,
+ * built from EXISTING shipped models — zero fal spend (realer props Thursday).
+ *
+ *   DARKFOREST (NW): castle-siege keep on a mist rise + obsidian rocks + crystal
+ *                    clusters — matches the 2D darkforest realm (moat castle).
+ *   SUBURB (E):      the pod-block residential arc + inverted-cube hab + a business
+ *                    crescent (neon-observatory office, sea-terrace-spire office,
+ *                    holo-market) — the "offices" district matching the 2D city rooms.
+ *   MEADOW (SE):     homes-mushroom-pods village circle — the farm/meadow realm.
+ *
+ * Integration (classic script, same pattern as world-ocean.js / world-volcano.js):
+ *   worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout, loader });
+ *   worldRealmProps.update(t);
+ */
+window.buildWorldRealmProps = function (opts) {
+  var THREE = opts.THREE, scene = opts.scene, layout = opts.layout || window.WORLD_LAYOUT;
+  if (!THREE || !scene || !layout) return null;
+  var group = new THREE.Group();
+  group.name = 'world-realm-props';
+  scene.add(group);
+  var disposables = [];
+  var track = function (o) { disposables.push(o); return o; };
+  var placed = 0;
+
+  function biome(id) { return (layout.biomes || []).find(function (x) { return x.id === id; }); }
+  function fit(m, w) {
+    var box = new THREE.Box3().setFromObject(m);
+    var sz = box.getSize(new THREE.Vector3());
+    m.scale.multiplyScalar(w / Math.max(sz.x, sz.z, 0.001));
+    var box2 = new THREE.Box3().setFromObject(m);
+    return -box2.min.y;
+  }
+  function place(b, cfg) {
+    var cx = b ? b.center[0] : 0, cz = b ? b.center[1] : 0, r = (b && b.radius) || 120;
+    return { x: cx + (cfg.dx || 0) * r, z: cz + (cfg.dz || 0) * r, w: (cfg.w || 0.5) * r };
+  }
+
+  // ── per-realm model manifests (dx/dz = fraction of biome radius; w = fraction too) ──
+  var MANIFESTS = [
+    { biome: 'darkforest', models: [
+      { id: 'castle-siege',          dx: 0,     dz: 0,     w: 0.72, ry: 0.4 },
+      { id: 'prop-obsidian-rocks',  dx: 0.52,  dz: -0.4,  w: 0.20, ry: 0 },
+      { id: 'prop-obsidian-rocks',  dx: -0.55, dz: 0.45,  w: 0.24, ry: 1.2 },
+      { id: 'prop-crystal-cluster', dx: 0.58,  dz: 0.5,   w: 0.16, ry: 0.6 },
+      { id: 'prop-crystal-cluster', dx: -0.5,  dz: -0.52, w: 0.14, ry: 2.1 },
+      { id: 'prop-crystal-cluster', dx: 0.1,   dz: 0.62,  w: 0.18, ry: 1.5 },
+    ]},
+    { biome: 'suburb', models: [
+      { id: 'bld-apartment-pod-block', dx: -0.5, dz: 0.35, w: 0.62, ry: 0.2 },
+      { id: 'bld-inverted-cube-hab',   dx: -0.15, dz: -0.5, w: 0.55, ry: -0.3 },
+      { id: 'bld-neon-observatory',    dx: 0.45, dz: 0.4,  w: 0.60, ry: 0.5, office: true },
+      { id: 'bld-sea-terrace-spire',   dx: 0.55, dz: -0.2, w: 0.58, ry: -0.6, office: true },
+      { id: 'bld-holo-market-v2',      dx: 0.0,  dz: 0.55, w: 0.50, ry: 3.14 },
+    ]},
+    { biome: 'meadow', models: [
+      { id: 'homes-mushroom-pods', dx: 0,     dz: 0,     w: 0.85, ry: 0 },
+      { id: 'homes-mushroom-pods', dx: -0.5,  dz: 0.4,   w: 0.5,  ry: 0.8 },
+      { id: 'homes-mushroom-pods', dx: 0.45,  dz: -0.42, w: 0.45, ry: 2.4 },
+    ]},
+  ];
+
+  function fallback(cfg, w) {
+    var g = new THREE.Group();
+    var core = new THREE.Mesh(track(new THREE.BoxGeometry(w * 0.35, w * 0.45, w * 0.35)),
+      track(new THREE.MeshStandardMaterial({ color: 0x141a24, roughness: 0.6, metalness: 0.35, emissive: 0x0a1420, emissiveIntensity: 0.3 })));
+    core.position.y = w * 0.22; g.add(core);
+    return g;
+  }
+
+  MANIFESTS.forEach(function (mf) {
+    var b = biome(mf.biome);
+    if (!b) return;
+    mf.models.forEach(function (cfg) {
+      var P = place(b, cfg);
+      function mount(m, fromGLB) {
+        if (fromGLB) m.traverse(function (o) {
+          if (o.isMesh && o.material && o.material.map) o.material.map.colorSpace = THREE.SRGBColorSpace;
+        });
+        var yOff = fit(m, P.w);
+        m.name = 'realm-' + mf.biome + '-' + cfg.id + (cfg.office ? '-office' : '');
+        m.position.set(P.x, yOff, P.z);
+        m.rotation.y = cfg.ry || 0;
+        group.add(m);
+        placed++;
+      }
+      if (opts.loader) {
+        opts.loader.load('/assets/models/' + cfg.id + '.glb', function (g) { mount(g.scene, true); },
+          undefined, function () { mount(fallback(cfg, P.w), false); });
+      } else {
+        mount(fallback(cfg, P.w), false);
+      }
+    });
+  });
+
+  var api = {
+    group: group,
+    count: function () { return placed; },
+    update: function () {},
+    dispose: function () {
+      scene.remove(group);
+      disposables.forEach(function (d) { if (d.geometry) d.geometry.dispose(); if (d.material) d.material.dispose(); });
+      try { if (window.__worldRealmProps === api) delete window.__worldRealmProps; } catch (e) {}
+    },
+  };
+  try { window.__worldRealmProps = api; } catch (e) {}
+  return api;
+};

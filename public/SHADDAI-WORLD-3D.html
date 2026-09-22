@@ -240,10 +240,12 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
-<script src="/world-layout.js?v=20260921a"></script>
-<script src="/world-terrain.js?v=20260921a"></script>
+<script src="/world-layout.js?v=20260921b"></script>
+<script src="/world-terrain.js?v=20260921b"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
-<script src="/world-ocean.js?v=20260921a"></script>
+<script src="/world-ocean.js?v=20260921b"></script>
+<script src="/world-volcano.js?v=20260921b"></script>
+<script src="/world-realmprops.js?v=20260921b"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260719bridges"></script>
 <script src="/world-spawn.js?v=20260719fix"></script>
@@ -317,7 +319,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060d);
-scene.fog = new THREE.FogExp2(0x070b1a, 0.0036);  // ATMOSPHERE POLISH: fog color 0x04060d→0x070b1a — a touch bluer/less pure-black so distance fades INTO the sky's deep-blue instead of a flat black cutoff (density unchanged, so R=260 hexagon landmarks stay visible).
+scene.fog = new THREE.FogExp2(0x070b1a, 0.0026);  // FULL MAP: 0.0036→0.0026 — the map tripled (half 380→720); slightly thinner fog keeps the outer realms readable at distance while preserving the night mood.
 // PBR metal armor (the agent bodies) needs an environment to reflect, or it renders flat/grey.
 { const _pm = new THREE.PMREMGenerator(renderer); scene.environment = _pm.fromScene(new RoomEnvironment(), 0.03).texture; }
 
@@ -381,7 +383,7 @@ __loadMgr.onLoad = function(){ window.__assetsReady = true; };
 const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoader(dracoLoader);
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
-let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null;
+let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null, worldVolcano=null, worldRealmProps=null;
 window.__worldBuilt = false;
 (function(){
   const L = window.WORLD_LAYOUT;
@@ -389,12 +391,14 @@ window.__worldBuilt = false;
     // Light/fast + things others depend on synchronously (agent placement + theme engine read terrain).
     if(L && window.buildWorldTerrain)  worldTerrain  = window.buildWorldTerrain(THREE, scene, L);
     if(L && window.buildWorldBiomes)   worldBiomes   = window.buildWorldBiomes(THREE, scene, L);
-    // CRYSTAL SEA (handoff step 2) — SW ocean cove: shader waves + gold harbor + moored
-    // boats. Needs its own GLTFLoader with BOTH decoders (the ocean-*.glb pack is meshopt).
-    if(L && window.buildWorldOcean){
+    // FULL MAP realms (2026-09-21): CRYSTAL SEA + EMBERFALL volcano + darkforest/suburb/
+    // meadow props. One shared GLTFLoader with BOTH decoders (the model pack is meshopt).
+    {
       const _ocLoader = new GLTFLoader(__loadMgr);
       _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
-      worldOcean = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });
+      if(L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });
+      if(L && window.buildWorldVolcano)   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader });
+      if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader });
     }
     // REMOVED (owner): the bronze "Market Sentinel" statue in front of ZEROX. worldMarkets stays null (null-guarded in the loop).
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
@@ -1467,7 +1471,7 @@ scene.add(skyDome);
 // from the player's nearest biome. (World Labs panorama kept for the future Marble portal world.)
 const _skyHorizon = skyMat.uniforms.horizon.value;
 const _skyGlow = skyMat.uniforms.glow.value;
-const _biomeSky = { grid:0x163a6e, forest:0x1a5a2e, arctic:0x2a5a8e, desert:0x6e4a18, void:0x3a1a6e, ocean:0x0a3a4e };
+const _biomeSky = { grid:0x163a6e, forest:0x1a5a2e, arctic:0x2a5a8e, desert:0x6e4a18, void:0x3a1a6e, ocean:0x0a3a4e, meadow:0x1a4a2e, suburb:0x3a4a6e, volcano:0x4a1a10, darkforest:0x0a1220 };
 // Pre-allocated colors — eliminate 3 `new THREE.Color()` allocations per frame
 const _skyC1 = new THREE.Color(), _skyC2 = new THREE.Color(), _skyFogC = new THREE.Color();
 function updateSkyForBiome(x, z){
@@ -4243,6 +4247,7 @@ function animate(){
     // drive the organized-world modules (only when NOT mid-spawn)
     if(worldBiomes)   worldBiomes.update(t);
     if(worldOcean)    worldOcean.update(t);
+    if(worldVolcano)  worldVolcano.update(t);
     if(worldTerrain)  worldTerrain.update(t);
     if(worldMarkets)  worldMarkets.update(t);
     if(worldBuildings) worldBuildings.update(t);

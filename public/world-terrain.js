@@ -15,14 +15,13 @@
  */
 window.buildWorldTerrain = function (THREE, scene, layout) {
   var _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const SIZE = 820;          // world units across (X and Z)
-  // PERF: SEGS 220→140. The vertex-build loop is the dominant load cost (heavy
-  // per-vertex work × vertexCount). 221²=48,841 → 141²=19,881 verts (~59% fewer).
-  // Shortest terrain feature wavelength ≈ 2π/0.09 ≈ 70u; at 140 segs a cell is
-  // 820/140 ≈ 5.9u (~12 samples/wave) so the visible silhouette is unchanged.
+  const SIZE = 1500;         // FULL MAP (2026-09-21): 820→1500 — outer realm ring at R~540 (terrain ±750)
+  // PERF: SEGS 220→140 (now 190 for the bigger map). The vertex-build loop is the dominant
+  // load cost (~per-vertex work × vertexCount). 190²=36,300 verts; cell = 1500/190 ≈ 7.9u
+  // (~9 samples of the ~70u shortest terrain wave) — silhouette unchanged.
   // heightAt() is a SEPARATE analytic function — its VALUES are not affected.
-  const SEGS = 140;          // grid resolution (visual mesh only)
-  const MAX_H = 8;           // modest max amplitude (~ +/- 8)
+  const SEGS = 190;          // grid resolution (visual mesh only)
+  const MAX_H = 18;          // FULL MAP: 8→18 — the mountain ring between realms needs headroom
 
   const GRID_FLAT_R = 120;   // fully flat radius around grid center
   const GRID_RAMP   = 70;    // smooth ramp-out distance past the flat radius
@@ -41,6 +40,10 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     return s - Math.floor(s); // 0..1
   }
   function smooth(t) { return t * t * (3 - 2 * t); }
+
+  // FULL MAP: mountain-pass bearings (radians) toward each outer realm + the ocean
+  // harbor — computed from the biome centers in world-layout.js (atan2(z,x) convention).
+  const _PASSES = [0.785, 0.074, -0.736, -2.405, 2.366];  // meadow, suburb, volcano, darkforest, ocean
   function valueNoise(x, z) {
     const xi = Math.floor(x), zi = Math.floor(z);
     const xf = x - xi, zf = z - zi;
@@ -89,6 +92,27 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
       case 'void': // low swells
         h = h * 2.6 + swell * 1.4;
         break;
+      case 'meadow': // FULL MAP: soft open pasture — gentler than the forest hills
+        h = h * 3.6 + swell * 1.2;
+        break;
+      case 'suburb': // FULL MAP: gentle graded lots for the pod blocks
+        h = h * 2.2 + swell * 0.8;
+        break;
+      case 'volcano': { // FULL MAP: rocky rises + a broad crater rise around the fortress
+        h = h * 6.0 + swell * 1.2;
+        h += (valueNoise(x * 0.09, z * 0.09) - 0.5) * 2.4; // sharper detail
+        const vc = biome.center, vr = biome.radius;
+        const dv = Math.hypot(x - vc[0], z - vc[1]);
+        if (dv < vr * 0.95) {                 // volcanic plateau: fortress sits on a high shelf
+          const t = dv <= vr * 0.45 ? 0 : smooth(Math.min(1, (dv - vr * 0.45) / (vr * 0.5)));
+          h = Math.max(h, 6.5 - t * 5.5);     // crater floor ~6.5, blending to natural past 0.95r
+        }
+        break;
+      }
+      case 'darkforest': // FULL MAP: rolling dark-mist hills
+        h = h * 4.4 + swell * 1.3;
+        h += (valueNoise(x * 0.11, z * 0.11) - 0.5) * 1.6;
+        break;
       case 'ocean': {
         // CRYSTAL SEA basin (handoff step 2): flat sea floor below the shader-water
         // plane (world-ocean.js, water at y≈0.05), then a sandy shelf that rises past
@@ -116,6 +140,27 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
       default:      // 'grid' fringe / fallback — very gentle
         h = h * 1.6 + swell * 0.6;
         break;
+    }
+
+    // ── MOUNTAIN RING (FULL MAP, 2026-09-21): the outer realms sit at R~540 across a
+    // mountain barrier at R 380-520 — travel between realms is NOT trivial: cross a
+    // pass, or sail. Angular noise shapes the ridge; five explicit passes are carved
+    // toward the four outer realms + the ocean harbor. The Crystal Sea basin is exempt
+    // (its own case just ran). The sacred city core (R≤380) is untouched by design.
+    if (biome.id !== 'ocean') {
+      const dc2 = Math.hypot(x, z);
+      if (dc2 > 380 && dc2 < 520) {
+        const band = Math.sin((dc2 - 380) / 140 * Math.PI);          // 0 at edges, 1 at ~450
+        const ang = Math.atan2(z, x);
+        let dip = 0;                                                 // carved passes
+        for (let pi = 0; pi < _PASSES.length; pi++) {
+          let dA = Math.abs(ang - _PASSES[pi]);
+          if (dA > Math.PI) dA = Math.PI * 2 - dA;
+          if (dA < 0.42) dip = Math.max(dip, 1 - dA / 0.42);
+        }
+        const rough = 0.55 + 0.45 * Math.sin(ang * 5.0 + Math.sin(ang * 2.3) * 2.0);
+        h += band * rough * (1 - dip) * 15.0;                        // ridge up to ~+15
+      }
     }
 
     h = Math.max(-MAX_H, Math.min(MAX_H, h));
@@ -256,6 +301,30 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
         // wet-sand ripple banding around the cove (reads as tide lines on the beach)
         const band = Math.sin(x * 0.11 + z * 0.07) * 0.5 + 0.5;
         dr = (band - 0.5) * 0.10; dg = (band - 0.5) * 0.05; db = -(band - 0.5) * 0.06;
+        break;
+      }
+      case 'meadow': {
+        // warm sunlit pasture patches
+        const t = cn2 * 0.6 + cn3 * 0.4;
+        dg = (t - 0.5) * 0.10; dr = (t - 0.5) * 0.06;
+        break;
+      }
+      case 'suburb': {
+        // cool paved lots vs soft lawns
+        const t = cn2;
+        db = (t - 0.5) * 0.08; dg = (t - 0.5) * 0.05;
+        break;
+      }
+      case 'volcano': {
+        // dark rust banding / ash
+        const band = Math.sin(x * 0.03 + z * 0.05) * 0.5 + 0.5;
+        dr = (band - 0.5) * 0.16; dg = -(band - 0.5) * 0.08; db = -(band - 0.5) * 0.05;
+        break;
+      }
+      case 'darkforest': {
+        // deep blue-green mottle
+        const t = cn1 * 0.5 + cn3 * 0.5;
+        db = (t - 0.5) * 0.10; dg = -(t - 0.5) * 0.05;
         break;
       }
       default: break;

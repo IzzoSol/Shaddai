@@ -24,6 +24,7 @@ window.buildWorldOcean = function (opts) {
   if (!b) return null;
 
   var CX = b.center[0], CZ = b.center[1];
+  var RAD = b.radius || 95;                    // FULL MAP: every zone scales with the biome radius
   var DOCK = b.dock || [CX + 70, CZ - 66];
   var F = function (x) { return Number(x).toFixed(5); };
   var sstep = function (a, bb, x) { x = Math.min(1, Math.max(0, (x - a) / (bb - a))); return x * x * (3 - 2 * x); };
@@ -34,10 +35,16 @@ window.buildWorldOcean = function (opts) {
   var disposables = [];
   var track = function (o) { disposables.push(o); return o; };
 
+  var WAVE_IN  = +(RAD * 0.74).toFixed(2);     // full wave height inside
+  var WAVE_OUT = +(RAD * 0.93).toFixed(2);     // calm past (flat shore)
+  var DEEP_IN  = +(RAD * 0.26).toFixed(2);     // deep-gradient start
+  var DEEP_OUT = +(RAD * 0.63).toFixed(2);     // deep-gradient end
+  var FOAM_A   = +(RAD * 0.84).toFixed(2);     // shoreline foam band (≈ the waterline)
+  var FOAM_B   = +(RAD * 1.01).toFixed(2);
+
   // ── WAVES — same 4-wave sum as world3d.html; radial fade so the cove is lively
   //    in the middle and flat calm at the shore + over the dock jetty. ──
   var WAVES = [[1, 0.2, 0.55, 38, 1.0], [0.4, 1, 0.35, 23, 1.3], [-0.6, 0.8, 0.2, 13, 1.7], [0.9, -0.5, 0.12, 7, 2.1]];
-  var WAVE_IN = 70, WAVE_OUT = 88; // full height inside WAVE_IN, zero past WAVE_OUT
   function waveH(x, z, t) {
     var h = 0;
     for (var i = 0; i < WAVES.length; i++) {
@@ -80,18 +87,19 @@ window.buildWorldOcean = function (opts) {
       'void main(){',
       ' vec3 N=normalize(vN); N.xz+=0.06*vec2(sin(vW.x*1.7+t*1.3+sin(vW.z*.9)),cos(vW.z*1.9+t*1.1)); N=normalize(N);',
       ' vec3 V=normalize(cameraPosition-vW); float fr=pow(1.-max(dot(N,V),0.),4.);',
-      ' float deep=1.-smoothstep(25.,60.,vD); vec3 body=mix(vec3(.05,.62,.58),vec3(.012,.09,.26),deep);',
+      ' float deep=1.-smoothstep(' + F(DEEP_IN) + ',' + F(DEEP_OUT) + ',vD); vec3 body=mix(vec3(.05,.62,.58),vec3(.012,.09,.26),deep);',
       ' vec3 R=reflect(-V,N); vec3 refl=mix(skyBot,skyTop,clamp(R.y*1.6,0.,1.));',
       ' vec3 col=mix(body,refl,clamp(fr*.85+.1,0.,1.));',
       ' float sp=pow(max(dot(reflect(-sunDir,N),V),0.),110.); col+=sunCol*sp*1.6;',
-      ' float foam=smoothstep(.5,.95,vH/.9)*.5+(1.-smoothstep(80.,96.,vD))*.45*(.5+.5*sin(vW.x*.5+t*2.));',
+      ' float foam=smoothstep(.5,.95,vH/.9)*.5+(1.-smoothstep(' + F(FOAM_A) + ',' + F(FOAM_B) + ',vD))*.45*(.5+.5*sin(vW.x*.5+t*2.));',
       ' col=mix(col,vec3(1.),clamp(foam,0.,1.)*.75); gl_FragColor=vec4(col,1.);',
       '#include <fog_fragment>',
       '}'].join('\n'),
   });
 
-  // ── WATER PLANE — 190×190 covers the whole cove incl. the buried corners, GPU waves ──
-  var waterGeo = new THREE.PlaneGeometry(190, 190, 110, 110);
+  // ── WATER PLANE — 2·RAD covers the whole cove incl. the buried corners, GPU waves ──
+  var PLANE = RAD * 2, PSEG = Math.max(64, Math.round(RAD * 0.73));
+  var waterGeo = new THREE.PlaneGeometry(PLANE, PLANE, PSEG, PSEG);
   waterGeo.rotateX(-Math.PI / 2);
   var waterMesh = new THREE.Mesh(waterGeo, oceanMat);
   waterMesh.position.set(CX, 0.05, CZ);
@@ -148,13 +156,20 @@ window.buildWorldOcean = function (opts) {
   var beacon = new THREE.Mesh(track(new THREE.SphereGeometry(0.55, 14, 14)), beaconMat);
   beacon.position.y = 13.2; tower.add(beacon);
 
-  // ── BOATS — moored in the wave zone near the harbor, riding the real surface ──
+  // ── BOATS/SHIPS — moored in the wave zone near the harbor, riding the real surface.
+  //    FULL MAP: positions are dir/perp fractions of RAD (dir = toward the plaza),
+  //    sizes scale with RAD so the sea grows, the fleet grows with it. ──
+  var DIR = [0.714, -0.702], PERP = [0.702, 0.714], SC = RAD / 95;
+  function atB(dfr, pfr) {
+    return [CX + (DIR[0] * dfr + PERP[0] * pfr) * RAD, CZ + (DIR[1] * dfr + PERP[1] * pfr) * RAD];
+  }
   var BOATS = [
-    { id: 'ocean-skiff',      name: 'HOVER SKIFF',  w: 8,  x: -242.3, z: 255.1, ry: -0.80, bob: 0.55, ph: 0.0 },
-    { id: 'ocean-catamaran',  name: 'CATAMARAN',    w: 12, x: -247.8, z: 235.2, ry: -0.45, bob: 0.50, ph: 1.7 },
-    { id: 'ocean-superyacht', name: 'SUPER-YACHT',  w: 18, x: -273.3, z: 240.6, ry: -1.05, bob: 0.35, ph: 3.1 },
-    { id: 'ocean-submarine',  name: 'RESEARCH SUB', w: 9,  x: -249.6, z: 279.0, ry:  0.35, bob: 0.45, ph: 4.4 },
+    { id: 'ocean-skiff',      name: 'HOVER SKIFF',  w: 12 * SC, d: 0.57, p:  0.19, ry: -0.80, bob: 0.55, ph: 0.0 },
+    { id: 'ocean-catamaran',  name: 'CATAMARAN',    w: 19 * SC, d: 0.76, p: -0.06, ry: -0.45, bob: 0.50, ph: 1.7 },
+    { id: 'ocean-superyacht', name: 'SUPER-YACHT', w: 30 * SC, d: 0.53, p: -0.21, ry: -1.05, bob: 0.35, ph: 3.1 },
+    { id: 'ocean-submarine',  name: 'RESEARCH SUB', w: 14 * SC, d: 0.42, p:  0.25, ry:  0.35, bob: 0.45, ph: 4.4 },
   ];
+  BOATS.forEach(function (c) { var P = atB(c.d, c.p); c.x = P[0]; c.z = P[1]; });
   var boats = [];
 
   function fitBoat(m, w) {
@@ -209,6 +224,9 @@ window.buildWorldOcean = function (opts) {
     group: group,
     waveH: waveH,
     dockPos: [DOCK[0], DOCK[1]],
+    center: [CX, CZ],
+    radius: RAD,
+    boats: function () { return boats.map(function (bb) { return { m: bb.m, name: bb.cfg.name }; }); },
     boatCount: function () { return boats.length; },
     boatList: function () { return boats.map(function (b) { return b.cfg.id; }); },
     update: function (t) {
