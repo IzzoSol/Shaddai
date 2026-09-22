@@ -162,7 +162,7 @@
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation:none!important;transition:none!important}
   }
-  /* ── kit picker + cosmetics shelves ── */
+  /* ── kit picker ── */
   .kitrow{display:flex;gap:8px;align-items:center}
   .kitchip{display:flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:10px;
     letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px 6px 6px;border-radius:10px;
@@ -172,21 +172,6 @@
   .kitchip:hover{border-color:var(--cyan);color:var(--cyan)}
   .kitchip.on{border-color:var(--gold);color:var(--gold);background:rgba(232,196,92,.08);
     box-shadow:0 0 10px rgba(232,196,92,.25)}
-  .accgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:9px}
-  .acc{background:rgba(12,17,25,.55);border:1px solid rgba(122,135,148,.22);border-radius:11px;
-    padding:8px;position:relative;transition:.16s}
-  .acc:hover{border-color:rgba(95,224,255,.4)}
-  .acc .rar{position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;
-    box-shadow:0 0 8px currentColor}
-  .acc img{display:block;width:100%;height:44px;object-fit:contain;image-rendering:pixelated}
-  .acc .an{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.5px;color:var(--ink);
-    margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acc .ap{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--gold);margin-top:2px}
-  .acc .act{margin-top:6px;width:100%;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:1px;
-    padding:6px 0;border-radius:7px;border:1px solid rgba(0,255,156,.4);background:rgba(0,255,156,.08);
-    color:#00e5a0;cursor:pointer;transition:.15s;text-transform:uppercase}
-  .acc .act:hover{background:rgba(0,255,156,.2)}
-  .acc .act.on{border-color:var(--gold);background:rgba(232,196,92,.14);color:var(--gold)}
   ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(122,135,148,.3);border-radius:4px}
 </style>
 <script src="/sw-heal.js"></script>
@@ -219,11 +204,6 @@
     <div class="styrow" id="sty-shoe" style="margin-top:6px"></div></div>
   <div class="crow"><div class="clabel">Cap</div><div class="sw" id="sw-cap"></div></div>
   <div class="crow"><div class="clabel">Extras</div><div class="toggles" id="toggles"></div></div>
-
-  <div class="csection">Vault</div>
-  <div class="crow"><div class="clabel">Sparks</div><div id="sparksBal" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold)">— ⚡</div></div>
-  <div class="crow"><div class="clabel">Slot</div><div class="styrow" id="slot-tabs"></div></div>
-  <div class="crow"><div class="accgrid" id="accgrid"></div></div>
 </div>
 
 <div class="film" id="film"></div>
@@ -370,47 +350,11 @@ function syncUI(){
   [...document.getElementById('toggles').children].forEach(b=>{ const f=b.dataset.f; b.classList.toggle('on',!!rig[f]); });
 }
 
-// ── Kit picker + cosmetics vault (fal-forged accessories, catalog-driven) ──
-const ACC_BASE='/assets/accessories/';
-const SLOTMETA={ hat:{label:'Hat',icon:'🎩'}, mask:{label:'Mask',icon:'🎭'}, pet:{label:'Pet',icon:'🐾'},
-  weapon:{label:'Weapon',icon:'⚔️'}, wings:{label:'Wings',icon:'🪽'} };
-const RARITY_COLOR={ common:'#9aa4ad', rare:'#5fe0ff', epic:'#c9a6ff', legendary:'#ffd66b', mythic:'#ff5a4d' };
-let CATALOG=[], CAT={}, myOperativeId=null, owned={}, slotFilter='All';
+// ── Kit picker (body kits only) ──
+let myOperativeId=null;
 function currentKit(){ return (rig && rig.kit) || 'voxel'; }
 
-function loadCosmetics(){
-  fetch('/api/cosmetics/catalog').then(r=>r.json()).then(d=>{ if(d && d.ok && Array.isArray(d.accessories)){ CATALOG=d.accessories; return; } throw new Error('api'); })
-    .catch(()=> fetch(ACC_BASE+'catalog.json').then(r=>r.json()).then(d=>{ CATALOG = Array.isArray(d) ? d : (d.accessories||[]); }) )
-    .then(()=>{ CAT={}; (CATALOG||[]).forEach(a=>CAT[a.id]=a); buildKits(); buildSlotTabs(); buildAccs(); fetchBalance(); })
-    .catch(()=>{ /* offline: vault just stays silent */ });
-}
-function fetchBalance(){
-  fetch('/api/billing/balance').then(r=>r.json()).then(d=>{
-    if(d && typeof d.creditsRemaining==='number'){ document.getElementById('sparksBal').textContent = d.creditsRemaining.toLocaleString()+' ⚡'; }
-  }).catch(()=>{});
-}
-// Build the operative row (mirrors pfForge) and remember its id for the vault.
-function ensureOperative(){ return new Promise(resolve=>{
-  if(myOperativeId){ resolve(myOperativeId); return; }
-  const name=(document.getElementById('nameIn').value||'Traveler').slice(0,16);
-  const owner=localStorage.getItem('shd_userid')||'me';
-  fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ codename:name, owner:owner, archetype:'pixel', rarity:'common', look:{archetype:'pixel', rig:rig}, source:'pixel-forge' })})
-    .then(r=>r.json()).then(g=>{ if(g && g.id){ myOperativeId=g.id; hydrateFromOperative(g); } resolve(g && g.id ? g.id : null); })
-    .catch(()=>resolve(null));
-}); }
-function hydrateFromOperative(op){
-  try{
-    const inv=op.inventory||{};
-    (inv.ownedCosmetics||[]).forEach(id=>{ owned[id]=true; });
-    const equipped=op.look && op.look.rig && op.look.rig.accessories;
-    if(equipped){ rig.accessories=rig.accessories||{}; Object.assign(rig.accessories, equipped); }
-  }catch(_){}
-  buildAccs();
-}
-// Restore the player's LAST pixel operative on load — re-forging must never reset
-// your saved character (kit, colors, name) or your equipped accessories.
-function loadSavedOperative(){
+function persistLook(){
   var owner=localStorage.getItem('shd_userid');
   // Guests & offline: there is no account scoped operative yet, but the local player
   // save (written by persistLook/pfForge) still holds the forged rig — restore it.
@@ -421,7 +365,7 @@ function loadSavedOperative(){
         rig=Object.assign({},rig,JSON.parse(JSON.stringify(lr.rig)));
         var ni=document.getElementById('nameIn');
         if(ni && (ni.value||'')==='' && lr.name) ni.value=lr.name;
-        try{ buildKits(); syncUI(); buildAccs(); }catch(_){}
+        try{ buildKits(); syncUI(); }catch(_){}
       }
     }catch(_){}
     return;
@@ -437,17 +381,14 @@ function loadSavedOperative(){
       if(op.id) myOperativeId=op.id;
       if(op.look && op.look.rig){ try{ var r2=JSON.parse(JSON.stringify(op.look.rig)); if(r2&&typeof r2==='object') rig=Object.assign({},rig,r2); }catch(_){} }
       if(op.codename){ var ni=document.getElementById('nameIn'); if(ni&&(ni.value||'')==='') ni.value=op.codename; }
-      hydrateFromOperative(op);
       try{ buildKits(); syncUI(); }catch(_){}
     })
     .catch(function(){});
 }
-// Persist the current look (kit, colors, accessories) to the operative whenever the
-// player changes something — an equipped accessory survives the next visit.
+// Persist the current look (kit, colors) to the operative whenever the player changes something.
 function persistLook(){
-  // Mirror to the local player save too, so guests/offline builds keep their kit + equips
-  // between visits even before an account-backed operative exists. game.html boots from
-  // this save, so swapping a hat here is how it actually shows up on the forged character.
+  // Mirror to the local player save too, so guests/offline builds keep their kit + colors
+  // between visits even before an account-backed operative exists. game.html boots from this save.
   try{
     var nm=document.getElementById('nameIn'); nm=nm?(nm.value||'Traveler').slice(0,16):'Traveler';
     localStorage.setItem('shaddai.player', JSON.stringify({name:nm, rig:JSON.parse(JSON.stringify(rig)), source:'forge'}));
@@ -461,75 +402,13 @@ function persistLook(){
 function buildKits(){
   const host=document.getElementById('kitrow'); host.innerHTML='';
   const kits=[{id:'classic',label:'Classic',img:null},
-    {id:'voxel',label:'Voxel',img:ACC_BASE.replace('/accessories/','/kits/')+'voxel-portrait.png'}];
+    {id:'voxel',label:'Voxel',img:'/assets/kits/voxel-portrait.png'}];
   kits.forEach(k=>{
     const b=document.createElement('div'); b.className='kitchip'; b.dataset.kit=k.id;
     if(k.img){ const im=document.createElement('img'); im.src=k.img; im.alt=''; b.appendChild(im); }
     const sp=document.createElement('span'); sp.textContent=k.label; b.appendChild(sp);
     b.onclick=()=>{ rig.kit=k.id; [...host.children].forEach(x=>x.classList.toggle('on',x.dataset.kit===k.id)); persistLook(); };
     host.appendChild(b); if(k.id===currentKit()) b.classList.add('on');
-  });
-}
-function buildSlotTabs(){
-  const host=document.getElementById('slot-tabs'); host.innerHTML='';
-  ['All',...Object.keys(SLOTMETA)].forEach(s=>{
-    const b=document.createElement('div'); b.className='sty'; b.textContent=SLOTMETA[s] ? SLOTMETA[s].icon+' '+SLOTMETA[s].label : s;
-    b.dataset.slot=s; b.onclick=()=>{ slotFilter=s; [...host.children].forEach(x=>x.classList.toggle('on',x.dataset.slot===s)); buildAccs(); };
-    host.appendChild(b); if(s==='All') b.classList.add('on');
-  });
-}
-function itemEquipped(id){ const a=CAT[id]; return !!(a && rig.accessories && rig.accessories[a.slot]===id); }
-function toggleEquip(id){
-  const a=CAT[id]; if(!a) return;
-  rig.accessories=rig.accessories||{};
-  if(rig.accessories[a.slot]===id) delete rig.accessories[a.slot];
-  else rig.accessories[a.slot]=id;
-  buildAccs();
-  persistLook();
-}
-async function buyAcc(id){
-  if(!pfRequireSignIn()) return;
-  const a=CAT[id]; if(!a) return;
-  const opId=await ensureOperative();
-  if(!opId){ alert('Could not reach the gallery — try again.'); return; }
-  try{
-    const r=await fetch('/api/cosmetics/purchase',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ operativeId:opId, accessoryId:id })});
-    const d=await r.json().catch(()=>({}));
-    if(d.ok || d.alreadyOwned){
-      owned[id]=true;
-      if(typeof d.sparks==='number') document.getElementById('sparksBal').textContent=d.sparks.toLocaleString()+' ⚡';
-      if(!itemEquipped(id) && rig.accessories) rig.accessories[a.slot]=id;
-      buildAccs();
-      persistLook();
-    } else {
-      const msg=(d.error||'purchase failed') + (typeof d.sparks==='number' ? ' — you have '+d.sparks.toLocaleString()+' ⚡' : '');
-      alert(msg);
-    }
-  }catch(_){ alert('Could not reach the vault — try again.'); }
-}
-function buildAccs(){
-  const host=document.getElementById('accgrid'); if(!host) return; host.innerHTML='';
-  const list=(CATALOG||[]).filter(a=> slotFilter==='All' || a.slot===slotFilter);
-  if(!list.length){ const e=document.createElement('div'); e.style.cssText='grid-column:1/-1;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10px;padding:8px 0'; e.textContent='—'; host.appendChild(e); return; }
-  list.forEach(a=>{
-    const card=document.createElement('div'); card.className='acc';
-    const img=document.createElement('img'); img.src=ACC_BASE+a.imageFile; img.alt=''; img.loading='lazy';
-    const rar=document.createElement('div'); rar.className='rar'; rar.style.background=RARITY_COLOR[a.rarity]||'#9aa4ad'; rar.style.color=RARITY_COLOR[a.rarity]||'#9aa4ad';
-    const nm=document.createElement('div'); nm.className='an'; nm.textContent=a.name||a.id;
-    const pr=document.createElement('div'); pr.className='ap';
-    pr.textContent = owned[a.id] ? 'OWNED' : (a.sparksPrice+' ⚡ '+(a.rarity||'').toUpperCase());
-    const bt=document.createElement('button'); bt.className='act';
-    if(owned[a.id]){
-      bt.textContent=itemEquipped(a.id)?'Equipped':'Equip';
-      if(itemEquipped(a.id)) bt.classList.add('on');
-      bt.onclick=()=>toggleEquip(a.id);
-    } else {
-      bt.textContent='Buy · '+a.sparksPrice+' ⚡';
-      bt.onclick=()=>buyAcc(a.id);
-    }
-    card.appendChild(rar); card.appendChild(img); card.appendChild(nm); card.appendChild(pr); card.appendChild(bt);
-    host.appendChild(card);
   });
 }
 
@@ -616,7 +495,7 @@ function pfForge(){
     fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ codename:name, owner:owner, archetype:'pixel', rarity:'common', look:{archetype:'pixel', rig:out.rig}, source:'pixel-forge' })})
       .then(function(r){ return r.json(); })
-      .then(function(g){ if(g && g.id){ myOperativeId=g.id; hydrateFromOperative(g); } })
+      .then(function(g){ if(g && g.id){ myOperativeId=g.id; } })
       .catch(function(){});
   }catch(e){}
   return out;
@@ -633,7 +512,7 @@ document.getElementById('enter').addEventListener('click',()=>{
   setTimeout(()=>{ location.href='region-select.html?v='+Math.floor(performance.now()); },650);
 });
 
-buildCust(); buildFilm(); markCell(1); loadCosmetics(); loadSavedOperative(); requestAnimationFrame(frame);
+buildCust(); buildFilm(); markCell(1); buildKits(); loadSavedOperative(); requestAnimationFrame(frame);
 </script>
 
 <script src="/free-use-tracker.js?v=1" defer></script>
