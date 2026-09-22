@@ -85,11 +85,14 @@ window.buildWorldActions = function (opts) {
   // ── RIDE STATE ──
   var st = {
     mode: false, board: null,
+    boat: null, boatCfg: null, lastGy: 0,               // sea vessels (from world-ocean)
     jy: 0, vy: 0, air: 0,                 // jump arc + air-time
     spin: 0, lastYaw: 0,                  // spin accumulation
     flips: 0, flipAngle: 0,               // kickflip roll
     riding: false,
   };
+
+  function ocAPI() { return window.__worldOcean || null; }
 
   function nearBoard() {
     var p = P(); if (!p) return null;
@@ -98,7 +101,17 @@ window.buildWorldActions = function (opts) {
       var b = boards[i];
       if (b === st.board) continue;
       var d = (p.x - b.m.position.x) * (p.x - b.m.position.x) + (p.z - b.m.position.z) * (p.z - b.m.position.z);
-      if (d < bd) { bd = d; best = b; }
+      if (d < bd) { bd = d; best = { kind: 'hoverboard', b: b }; }
+    }
+    // moored sea vessels win if closer (E boards a SHIP when standing at the harbor)
+    var O = ocAPI();
+    if (O && O.boatCount && O.boatCount()) {
+      var fleet = O.boats();
+      for (var j = 0; j < fleet.length; j++) {
+        var f = fleet[j];
+        var d2 = (p.x - f.m.position.x) * (p.x - f.m.position.x) + (p.z - f.m.position.z) * (p.z - f.m.position.z);
+        if (d2 < bd) { bd = d2; best = { kind: 'boat', b: f }; }
+      }
     }
     return best;
   }
@@ -117,34 +130,104 @@ window.buildWorldActions = function (opts) {
     if (pts > 0) { addSparks(pts); pop(name + '  +' + pts + ' ⚡'); }
   }
 
+  function dismountAllowed() {
+    var p = P();
+    if (st.lastGy > -0.5) return true;                    // shallow water / beach
+    var O = ocAPI();
+    if (O && O.dockPos) {
+      var d = Math.hypot(p.x - O.dockPos[0], p.z - O.dockPos[1]);
+      if (d < 45) return true;                            // at the harbor
+    }
+    return false;
+  }
+
   addEventListener('keydown', function (e) {
     if (e.code !== 'KeyE' && e.code !== 'Space') return;
     var p = P(); if (!p) return;
     if (e.code === 'KeyE') {
-      if (st.mode) {                                    // dismount — park it
+      if (st.mode) {                                    // dismount — park it where legal
+        if (!dismountAllowed()) { pop('SAIL BACK TO SHORE TO DISMOUNT', '#5fe0ff'); return; }
         st.mode = false; land();
+        if (st.boat) { if (st.boatCfg) { st.boatCfg.x = p.x; st.boatCfg.z = p.z; } st.boat = null; st.boatCfg = null; }
         if (st.board) { st.board.m.position.set(p.x, st.board.yOff, p.z); st.board = null; }
-        pop('BOARD PARKED', '#5fe0ff');
+        pop('DOCKED', '#5fe0ff');
       } else {
-        var b = nearBoard();
-        if (b) { st.mode = 'hoverboard'; st.board = b; pop('HOVERBOARD', '#00ff9c'); }
+        var n = nearBoard();
+        if (n && n.kind === 'boat') {
+          st.mode = 'boat'; st.boat = n.b;
+          // find the ocean cfg so parked-bob follows the boat after we move it
+          var O = ocAPI();
+          if (O) {
+            var fleet = O.boats();
+            st.boatCfg = null;
+            // boats() returns {m,name}; find cfg through the ocean module's internals is not
+            // exposed — instead we re-sync cfg lazily: world-ocean bobs via cfg.x/z, so we
+            // push the live position back by matching the mesh reference through a side table.
+            st.boatCfg = O.cfgOf && O.cfgOf(n.b) || null;
+          }
+          pop('SAILING: ' + (n.b.name || 'VESSEL'), '#00e5a0');
+        } else if (n && n.kind === 'hoverboard') {
+          st.mode = 'hoverboard'; st.board = n.b; pop('HOVERBOARD', '#00ff9c');
+        }
       }
-    } else if (e.code === 'Space' && st.mode && st.air <= 0) {   // OLLIE
+    } else if (e.code === 'Space' && st.mode === 'hoverboard' && st.air <= 0) {   // OLLIE (boards only)
       st.vy = 7.2; st.air = 0.001;
     }
   });
 
+  // ── HERO SWITCH (H) — cycle the council bodies via the host's setPlayerCharacter(code).
+  //    The bodies+clips are preloaded per code (host _pcCache); choice persists.
+  var HEROES = ['SHADDAI', 'ZEROX', 'ORACLE', 'NEXUS', 'TURTLE', 'QUILL', 'PIKADON'];
+  var heroIdx = 0;
+  addEventListener('keydown', function (e) {
+    if (e.code !== 'KeyH') return;
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
+    if (typeof window.setPlayerCharacter !== 'function') return;
+    heroIdx = (heroIdx + 1) % HEROES.length;
+    var code = HEROES[heroIdx];
+    window.setPlayerCharacter(code);
+    try { localStorage.setItem('shd.hero3d', code); } catch (_) {}
+    pop('NOW PLAYING: ' + code, '#c084fc');
+  });
+  // restore the last hero once the host exposes setPlayerCharacter (built later in the module)
+  setTimeout(function () {
+    try {
+      var saved = localStorage.getItem('shd.hero3d');
+      if (saved && typeof window.setPlayerCharacter === 'function') {
+        window.setPlayerCharacter(saved);
+        heroIdx = Math.max(0, HEROES.indexOf(saved));
+      }
+    } catch (_) {}
+  }, 6000);
+
   var lastT = 0;
   return {
     get mode() { return st.mode; },
-    speed: function (base) { return st.mode ? base * 2.1 : base; },   // board = fast glide
+    speed: function (base) {
+      if (st.mode === 'hoverboard') return base * 2.1;   // board = fast glide
+      if (st.mode === 'boat') {
+        var n = (st.boat && st.boat.name) || '';
+        if (/SKIFF/i.test(n)) return base * 3.2;         // skiff = sprinter
+        if (/YACHT/i.test(n)) return base * 1.6;         // yacht = stately
+        return base * 2.4;                               // catamaran / sub
+      }
+      return base;
+    },
     flyControl: function () {},
     baseY: function (gy) {
       var p = P();
+      st.lastGy = gy;
       if (!st.mode || !p) return gy;
-      if (gy < -0.5) {                                                 // hovering over water: ride the waves
-        var O = window.__worldOcean;
-        gy = 0.05 + (O && O.waveH ? O.waveH(p.x, p.z, performance.now() / 1000) * 0.5 : 0);
+      if (st.mode === 'boat') {                          // stand on the deck
+        if (gy > 0.2) return gy + 0.35;                  // beached on the shelf — fine, futuristic hull
+        var O = ocAPI();
+        return 0.05 + (O && O.waveH ? O.waveH(p.x, p.z, performance.now() / 1000) * 0.6 : 0) + 0.35;
+      }
+      // hoverboard: ride waves over water, jump arcs on land
+      if (gy < -0.5) {
+        var O2 = ocAPI();
+        gy = 0.05 + (O2 && O2.waveH ? O2.waveH(p.x, p.z, performance.now() / 1000) * 0.5 : 0);
       }
       return gy + st.jy + 0.22;
     },
@@ -155,29 +238,35 @@ window.buildWorldActions = function (opts) {
         var bb = boards[i];
         if (bb !== st.board) bb.m.position.y = bb.yOff + Math.abs(Math.sin(t * 1.6 + i * 2)) * 0.08;
       }
-      if (!st.mode || !st.board) {
+      if (!st.mode) {
         var nb = nearBoard();
-        if (nb && t - lastT > 1.2) { pop('[E] RIDE HOVERBOARD', '#5fe0ff'); lastT = t + 0.6; }   // gentle hint
+        if (nb && t - lastT > 1.2) { pop('[E] RIDE ' + (nb.kind === 'boat' ? (nb.b.name || 'VESSEL') : 'HOVERBOARD'), '#5fe0ff'); lastT = t + 0.6; }
         return;
       }
       var p = P();
-      // jump arc
+      var yaw = Math.atan2(fwd ? fwd.x : 0, fwd ? fwd.z : 1);
+      if (st.mode === 'boat' && st.boat) {
+        // move hull under the captain; world-ocean's own update bobs Y via cfg (we sync it)
+        st.boat.m.position.x = p.x; st.boat.m.position.z = p.z;
+        st.boat.m.rotation.y = yaw + 1.5708;            // models face +X; face travel heading
+        if (st.boatCfg) { st.boatCfg.x = p.x; st.boatCfg.z = p.z; }
+        return;
+      }
+      // hoverboard
       if (st.air > 0 || st.jy > 0) {
         st.air += dt; st.vy -= 22 * dt; st.jy += st.vy * dt;
         if (st.jy <= 0) { st.jy = 0; land(); }
         if (opts.isShift && opts.isShift()) { st.flipAngle += dt * 12.5; if (st.flipAngle >= 6.2832) { st.flips++; st.flipAngle = 0; } }
       } else if (st.air === 0 && st.jy === 0 && st.vy !== 0) { st.air = 0.001; }
       // spin tracking
-      var yaw = Math.atan2(fwd ? fwd.x : 0, fwd ? fwd.z : 1);
       var d = yaw - st.lastYaw;
       while (d > Math.PI) d -= 6.283185; while (d < -Math.PI) d += 6.283185;
       if (st.air > 0) st.spin += d;
       st.lastYaw = yaw;
       // seat the board under the rider
-      st.board.m.position.set(p.x, (st.board.m.position.y), p.z);
+      st.board.m.position.set(p.x, st.board.m.position.y, p.z);
       st.board.m.rotation.y = yaw;
       st.board.m.rotation.z = -st.flipAngle;
-      var groundY = st.board.m.position.y - st.jy * 0 + 0;   // keep simple: board bobs at baseY height
     },
     sparks: sparks,
     dispose: function () {

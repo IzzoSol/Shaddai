@@ -227,6 +227,7 @@ window.buildWorldOcean = function (opts) {
     center: [CX, CZ],
     radius: RAD,
     boats: function () { return boats.map(function (bb) { return { m: bb.m, name: bb.cfg.name }; }); },
+    cfgOf: function (mesh) { for (var i = 0; i < boats.length; i++) { if (boats[i].m === mesh) return boats[i].cfg; } return null; },
     boatCount: function () { return boats.length; },
     boatList: function () { return boats.map(function (b) { return b.cfg.id; }); },
     update: function (t) {
