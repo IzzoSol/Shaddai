@@ -485,14 +485,10 @@ function select(id){
   renderHint();
 }
 
-/* ---- ENTER — preserves original travel/hand-off logic ---- */
-function enter(){
-  if(!selId || flying) return;
-  const r=REALMS.find(x=>x.id===selId); if(!r) return;
-  if((r.locked || WORLDS_LOCKED) && curMode()!=='spectate') return;   // play needs unlock; spectate can preview locked realms
-  // Identity gate: must have forged a character (has a Player Code), entered a code,
-  // or signed in. Spectating is open. Otherwise open the unified sign-in/code gate.
-  if(curMode()!=='spectate' && window.worldHasAccess && !window.worldHasAccess()){ if(window.openWorldGate) window.openWorldGate(); return; }
+/* ---- ENTER — identity FIRST, then realm. Skipping identity restarts the journey. ---- */
+let pendingRealm = null;   // realm picked while the identity gate is still open
+
+function flyTo(r){
   flying=true;
   // Travel card — name the destination so the hand-off reads as a journey.
   const fl=document.getElementById('flash');
@@ -516,7 +512,30 @@ function enter(){
     location.href='game.html?v='+Math.floor(performance.now());
   },1300);
 }
+function enter(){
+  if(!selId || flying) return;
+  const r=REALMS.find(x=>x.id===selId); if(!r) return;
+  if((r.locked || WORLDS_LOCKED) && curMode()!=='spectate') return;   // play needs unlock; spectate can preview locked realms
+  // Identity gate: you must enter a Player Code / sign in BEFORE you get to pick a realm.
+  // On grant the pending realm auto-enters; on dismiss (✕) the journey restarts from the top.
+  if(curMode()!=='spectate' && window.worldHasAccess && !window.worldHasAccess()){
+    if(pendingRealm) return;                    // already waiting on the gate
+    pendingRealm=r.id;
+    if(window.openWorldGate){ window.openWorldGate(); return; }
+  }
+  flyTo(r);
+}
 document.getElementById('enterBtn').addEventListener('click',enter);
+window.addEventListener('shd:worldgate-grant',function(){
+  if(!pendingRealm) return;
+  const rid=pendingRealm; pendingRealm=null;
+  const r=REALMS.find(x=>x.id===rid); if(r) flyTo(r);
+});
+window.addEventListener('shd:worldgate-close',function(){
+  pendingRealm=null;
+  try{ localStorage.removeItem('shaddai.region'); }catch(e){}
+  location.href='/enter.html';   // skipped identity → start the 2D journey over
+});
 
 /* ---- mode row (guest wired; others are labeled stubs) ---- */
 document.querySelectorAll('.mode').forEach(m=>{
@@ -533,6 +552,16 @@ document.querySelectorAll('.mode').forEach(m=>{
 /* Sign in / Code — the unified identity gate (Player Code or email sign-in). */
 var _si=document.getElementById('signInBtn');
 if(_si) _si.addEventListener('click',function(){ if(window.openWorldGate) window.openWorldGate(); else location.href='/index.html'; });
+
+/* ---- IDENTITY FIRST — the gate opens before the realm grid is usable, so step 1 is
+   forging/signing in, step 2 is picking a realm. Closing the gate (✕) restarts the
+   whole 2D journey from the beginning (enter.html). Spectate stays open to everyone. ---- */
+(function(){
+  const local=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+  if(local) return;
+  const boot=function(){ if(curMode()==='spectate') return; if(window.worldHasAccess && window.worldHasAccess()) return; if(window.openWorldGate) window.openWorldGate(); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
 
 /* default-highlight Green Meadow */
 select('meadow');

@@ -3,15 +3,6 @@
   "version": "61.0.0",
   "description": "SHADDAI - AI Agent Marketplace with Real Agent Execution",
   "main": "backend/server-production.js",
-  "overrides": {
-    "stream-json": "^3.6.0",
-    "jayson": {
-      "uuid": "^11.1.0"
-    },
-    "gaxios": {
-      "uuid": "^11.1.0"
-    }
-  },
   "scripts": {
     "start": "node backend/server-production.js",
     "agents": "node backend/multi-agent-server.js",
@@ -44,19 +35,19 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.22.3",
+    "express-rate-limit": "^6.11.2",
     "firebase-admin": "^14.4.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.12.0",
     "meshoptimizer": "^1.2.0",
-    "multer": "^2.1.1",
-    "node-cron": "^4.6.0",
-    "node-fetch": "^2.6.7",
+"multer": "^2.1.1",
+"node-fetch": "^2.6.7",
     "pdf-parse": "^2.4.5",
     "puppeteer": "^25.3.0",
     "sharp": "^0.35.3",
     "stripe": "^14.8.0",
-    "uuid": "^14.0.2",
+    "uuid": "^11.1.1",
     "winston": "^3.11.0",
     "ws": "^8.14.2"
   },

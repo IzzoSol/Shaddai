@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#05070a">
+<meta name="description" content="ZEROX·SIGNALS — live pro signal bubble map. Real-time multiplier, safety, FDV and 24h data for every call on Solana. Chart, copy, swap and ask ZEROX from one sheet.">
+<meta property="og:title" content="ZEROX·SIGNALS">
+<meta property="og:description" content="Live pro-signal heat map — every call, multiplier, safety score and 24h change. One tap to chart, copy, swap or ask ZEROX.">
+<meta property="og:type" content="website">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZEROX·SIGNALS">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E">
 <title>ZEROX·SIGNALS</title>
 <style>
 :root{
@@ -62,8 +71,33 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   border-radius:12px; padding:8px 6px; border:1px solid var(--edge2); background:var(--panel);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
   text-align:center; overflow:hidden; transition:transform .08s;
+  position:relative; isolation:isolate;
 }
 .bub:active{transform:scale(.96)}
+.bub.sq{border-radius:14%}.bub.sq .bub-ava{border-radius:10%}
+.bub.fb{overflow:hidden}
+.bub.fb .bub-bg{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.88;z-index:0;pointer-events:none;overflow:hidden}
+.bub-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:var(--panel)}
+.bub.fb .bub-bg:empty{display:none}
+.bub.fb::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,8,18,.80) 0%,rgba(4,8,18,.20) 50%,rgba(4,8,18,.08) 100%);z-index:0;pointer-events:none}
+html[data-theme="light"] .bub.fb::after{background:linear-gradient(0deg,rgba(248,250,255,.85) 0%,rgba(248,250,255,.25) 55%,rgba(248,250,255,.10) 100%)}
+.bub.fb .sy,.bub.fb .mx,.bub.fb .sub-rt{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.bub.fb .bub-ava{display:none}
+.bub-s .bub-ava{width:20px;height:20px;margin-bottom:1px}
+.bub-s .bub-ava-fb{font-size:9px}
+.gbar{display:block;width:100%;height:3px;border-radius:2px;background:rgba(148,163,184,.28);overflow:hidden;margin-top:3px;position:relative;z-index:1}
+.bub.fb .gbar{background:rgba(148,163,184,.40)}
+.gbar i{display:block;height:100%;border-radius:2px;background:var(--emerald)}
+.gbar.dn i{background:var(--amber)}
+.gbar.dn i:not([style]){background:var(--edge)}
+.bub-spark{display:block;width:100%;height:18px;margin-top:2px;position:relative;z-index:1;opacity:.95}
+.pc24{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em}
+.pc24.up{color:var(--emerald)}.pc24.dn{color:var(--amber)}
+.px{color:var(--txt2);font-size:11px;padding:1px 6px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel)}
+.new-pill{font-size:8px;letter-spacing:.08em;color:#03120c;background:linear-gradient(92deg,#10e5a4,#59f0c0);border-radius:4px;padding:2px 5px;font-weight:800}
+.csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
+.csearch:focus{outline:none;border-color:var(--gold)}
+.chip.tog.on{outline:1px solid var(--gold);outline-offset:0}
 .bub .sy{font-family:var(--f-mono);font-weight:700;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .bub .mx{font-family:var(--f-mono);font-weight:800;line-height:1.1}
 .bub .sub-rt{font-family:var(--f-mono);letter-spacing:.07em;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -79,6 +113,7 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 .bub-s .sy{font-size:10px}
 .bub-s .mx{font-size:12px}
 .bub-s .sub-rt{display:none}
+.bub-s .gbar,.bub-s .bub-spark{display:none}
 
 .bub-m{grid-column:span 2;grid-row:span 1}
 .bub-m .sy{font-size:12px}
@@ -298,6 +333,8 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 #sheet .s-btn:active{opacity:.85}
 
 .empty{color:var(--faint);font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:40px 0}
+.skel-bub{height:76px;border-radius:12px;background:linear-gradient(100deg,var(--panel) 40%,var(--bg2) 50%,var(--panel) 60%);background-size:200% 100%;animation:skel 1.2s linear infinite;border:1px solid var(--edge)}
+@keyframes skel{to{background-position:-200% 0}}
 .err{font-family:var(--f-mono);font-size:11px;color:var(--red);letter-spacing:.06em;text-align:center;padding:30px 10px;line-height:1.7}
 
 /* ── market strip + news ticker (key-free, mirrors the Master Terminal) ── */
@@ -498,6 +535,10 @@ html[data-theme="light"] #nav{background:rgba(255,255,255,.92)}
 .s-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))!important;gap:7px}
 .s-cell{border-radius:10px;background:rgba(13,19,32,.5)}
 html[data-theme="light"] .s-cell{background:#fff}
+.s-btn{transition:transform .15s,box-shadow .2s,border-color .18s,color .18s}
+.s-btn.sb-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.s-btn.sb-gold:hover{transform:translateY(-1px);box-shadow:0 12px 28px -10px rgba(232,196,92,.6)}
+.s-btn:active{transform:scale(.975)}
 
 /* ---------- PNL tile ---------- */
 .pnl-tile{border:1px solid var(--edge2);border-radius:12px;overflow:hidden;box-shadow:var(--card-shadow);padding:0;position:relative;transition:box-shadow .2s,transform .15s}
@@ -522,6 +563,9 @@ html[data-theme="light"] .toast{background:rgba(255,255,255,.96);color:#8a6d1a}
   .view.on{animation:viewIn .22s cubic-bezier(.2,.8,.3,1)}
 }
 @keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- numerals: tabular so live prices/mults don't jitter on refresh ---------- */
+.mx,.sub-rt,.pc24,.px,.row .l2,.s-cell dd,.dc-pr,.dc-chg,.pv,.s-mx{font-variant-numeric:tabular-nums}
 
 /* ---------- button hover/press language ---------- */
 #btn-refresh:hover,#btn-theme:hover{box-shadow:0 0 0 1px currentColor inset,0 0 14px -2px currentColor}
@@ -583,14 +627,15 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
   <div id="mktChips"><span class="mkt">↻ markets</span></div>
   <div id="ticker" aria-live="polite"><div id="ttrack"></div></div>
 </div>
+</header>
 
-
-
+<div id="views">
   <section class="view on" id="v-heat" role="tabpanel" aria-labelledby="nav-heat">
-    <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span></div>
+    <div class="view-h"><span class="ti">Heatmap</span><span class="count" id="heat-count"></span><span class="count" id="heat-meta" style="opacity:.55;font-size:10.5px"></span></div>
     <div class="legend"><span><i aria-hidden="true" style="background:var(--emerald)"></i>≥1×</span><span><i aria-hidden="true" style="background:var(--amber)"></i>&lt;1×</span><span><i aria-hidden="true" style="background:var(--edge)"></i>flat</span></div>
     <div class="chips" role="group" aria-label="Multiplier filter" style="margin-bottom:8px">
-      <button class="chip on" aria-pressed="true" data-hf="all">All</button>
+      <button class="chip on" aria-pressed="true" data-hf="new">✧ New</button>
+      <button class="chip" aria-pressed="false" data-hf="all">All</button>
       <button class="chip" aria-pressed="false" data-hf="live">Live</button>
       <button class="chip" aria-pressed="false" data-hf="100">100x+</button>
       <button class="chip" aria-pressed="false" data-hf="10">10x+</button>
@@ -610,7 +655,10 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
       <button class="chip" aria-pressed="false" data-s="score">Top</button>
       <button class="chip" aria-pressed="false" data-s="ts">Fresh</button>
       <button class="chip" aria-pressed="false" data-s="hot">Hot</button>
+      <button class="chip tog" aria-pressed="false" data-l="1">LIVE</button>
+      <button class="chip tog" aria-pressed="false" data-n="1">NEW</button>
     </div>
+    <input class="csearch" id="calls-search" placeholder="🔍 search symbol / mint…" spellcheck="false" autocomplete="off">
     <button class="adv-toggle" id="adv-toggle" aria-expanded="false" aria-controls="adv-panel">
       <span>Advanced Filters</span><span class="adv-caret" aria-hidden="true">▾</span>
     </button>
@@ -683,7 +731,7 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
     <div id="pnl-list"></div>
   </section>
 
-</main>
+</div>
 
 <nav id="nav" role="tablist" aria-label="Signal views">
   <button class="nt on" id="nav-heat" role="tab" aria-selected="true" aria-controls="v-heat" data-v="heat"><i aria-hidden="true">◉</i><small>HEAT</small></button>
@@ -715,7 +763,7 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'all', source: 'all', firstFeed: true };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'new', source: 'all', liveFlag: 0, newFlag: 0, q: '', firstFeed: true };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */
@@ -767,6 +815,7 @@ async function fetchJSON(u) {
 }
 async function refresh() {
   setText('updated', '');
+  renderAll();
   var r = await Promise.allSettled([loadFeed(), loadDex(), loadWallets()]);
   var ok = r.filter(function (x) { return x.status === 'fulfilled'; }).length;
   renderAll();
@@ -805,7 +854,105 @@ async function loadFeed() {
   var live = fresh.filter(function (c) { return (Number(c.curMult) || 0) >= 1; }).length;
   console.log('[SHADDAI] feed loaded:', fresh.length, 'calls,', live, 'live (≥1×)');
   state.feed = fresh;
+  try { sessionStorage.setItem('ss_feed', JSON.stringify(fresh)); } catch (e) {}
+  DexMerge.mergeInto(fresh).then(function () { renderHeat(); if (state.tab === 'calls') renderCalls(); bubSparks(); });
   return state.feed.length;
+}
+/* Free, keyless DexScreener batch merger — live 24h %change, USD price, volume
+   and logo per coin fed back into the feed (30 mints per request, ICPS of the
+   most liquid pair wins). No API key, no proxy needed. */
+var DexMerge = (function () {
+  var cache = {};
+  function k(m) { return 'ds_' + (m || '').slice(0, 12); }
+  function fetchBatch(mints) {
+    return fetch('https://api.dexscreener.com/latest/dex/tokens/' + mints.join(','), { signal: AbortSignal.timeout(12000) })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+  function mergeInto(list) {
+    if (!list || !list.length) return Promise.resolve();
+    var need = list.filter(function (c) { return c && c.mint && !cache[k(c.mint)]; }).map(function (c) { return c.mint; });
+    if (!need.length) return Promise.resolve();
+    var chunks = [];
+    for (var i = 0; i < need.length; i += 30) chunks.push(need.slice(i, i + 30));
+    return Promise.all(chunks.map(function (ch) {
+      return fetchBatch(ch).then(function (j) {
+        if (!j || !j.pairs) return;
+        var byMint = {};
+        j.pairs.forEach(function (pr) {
+          if (!pr || !pr.baseToken) return;
+          var m = pr.baseToken.address;
+          if (!byMint[m] || (Number(pr.liquidity && pr.liquidity.usd) || 0) > (Number(byMint[m].liquidity && byMint[m].liquidity.usd) || 0)) byMint[m] = pr;
+        });
+        Object.keys(byMint).forEach(function (m) {
+          var pr = byMint[m], pc = pr.priceChange || {};
+          cache[k(m)] = {
+            pc24: Number(pc.h24) || 0,
+            usd: Number(pr.priceUsd) || 0,
+            vol24usd: Number(pr.volume && pr.volume.h24) || 0,
+            pairUrl: pr.url || '',
+            pair: pr.pairAddress || '',
+            chain: pr.chainId || 'solana',
+            img: (pr.info && pr.info.imageUrl) || (pr.baseToken && pr.baseToken.logoURI) || ''
+          };
+        });
+      });
+    })).then(function () {
+      list.forEach(function (c) {
+        var rec = cache[k(c.mint)];
+        if (!rec) return;
+        c.pc24 = rec.pc24;
+        c.usd = rec.usd;
+        c.v24 = rec.vol24usd;
+        c.dsUrl = rec.pairUrl;
+        c.pairAddr = rec.pair;
+        c.chain = c.chain || rec.chain;
+        if (!c.img && rec.img) c.img = rec.img;
+      });
+    });
+  }
+  return { mergeInto: mergeInto };
+})();
+/* Free DexScreener candles — a per-tile 24h close-price sparkline drawn on the
+   tile's canvas. Fired once per mint after DexMerge attaches pair addresses. */
+function drawSparkClose(cv, closes, color) {
+  if (!closes || closes.length < 2) { cv.style.display = 'none'; return; }
+  var ctx = cv.getContext('2d');
+  var w = cv.width = cv.clientWidth || 96;
+  var h = 18;
+  var min = Math.min.apply(null, closes), max = Math.max.apply(null, closes);
+  var range = (max - min) || 1;
+  var stepX = w / (closes.length - 1);
+  ctx.clearRect(0, 0, w, h);
+  ctx.beginPath();
+  closes.forEach(function (v, i) {
+    var x = i * stepX, y = h - 2 - ((v - min) / range) * (h - 4);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.lineTo(w, h); ctx.lineTo(0, h);
+  ctx.fillStyle = color + '26';
+  ctx.fill();
+}
+var sparkCache = {};
+function bubSparks() {
+  document.querySelectorAll('#heat-bubbles .bub').forEach(function (b) {
+    var mint = b.dataset.mint;
+    if (sparkCache[mint] === 'done') return;
+    var cv = b.querySelector('.bub-spark');
+    if (!cv) return;
+    sparkCache[mint] = 'done';
+    var c = null;
+    for (var i = 0; i < state.feed.length; i++) { if (state.feed[i].mint === mint) { c = state.feed[i]; break; } }
+    if (!c) return;
+    var pts = [1];
+    (c.milestones || []).forEach(function (x) { var v = Number(String(x).replace(/[^0-9.]/g, '')); if (v > 1 && pts.indexOf(v) < 0) pts.push(v); });
+    var peak = Number(c.peakMult) || 0, m = Number(c.curMult) || 0;
+    if (peak > 1 && pts.indexOf(peak) < 0) pts.push(peak);
+    if (m > 0 && pts.indexOf(m) < 0) pts.push(m);
+    if (pts.length < 2) return;
+    drawSparkClose(cv, pts, m >= peak * 0.25 ? '#10e5a4' : '#fbbf24');
+  });
 }
 function toast(msg, onClick) {
   try {
@@ -862,12 +1009,13 @@ function safetyLabel(score) {
    view read as the big XL tiles, the rest step down in three clean sizes —
    a fixed grid (see #heat-bubbles) instead of ad-hoc per-bubble pixel widths,
    so the layout stays aligned and predictable at any list length. */
-function bubTier(rank, n) {
+function bubTier(rank, n, c) {
   var pct = n > 1 ? rank / (n - 1) : 0;
-  if (pct < 0.06) return 'xl';
-  if (pct < 0.22) return 'l';
-  if (pct < 0.5) return 'm';
-  return 's';
+  var rankIdx = 3 - Math.min(3, Math.floor(pct * 4));
+  var fdv = Number((c && (c.curFdv || c.entryFdv)) || 0);
+  var mcIdx = fdv >= 25e6 ? 3 : fdv >= 10e6 ? 2 : fdv >= 3e6 ? 1 : 0;
+  var tier = ['s', 'm', 'l', 'xl'][Math.min(3, Math.max(rankIdx, mcIdx))];
+  return tier;
 }
 var heatImgCache = {};
 function enrichBatch(mints) {
@@ -892,52 +1040,90 @@ function fillBubbleAvatars(mints) {
       var slot = el('heat-bubbles').querySelector('.bub[data-mint="' + mint + '"] .bub-ava');
       if (!slot) return;
       var im = document.createElement('img');
-      im.loading = 'lazy'; im.alt = '';
+      im.loading = 'lazy'; im.alt = ''; im.referrerPolicy = 'no-referrer';
       im.addEventListener('error', function () { im.remove(); });
       im.src = img;
       slot.textContent = '';
       slot.appendChild(im);
+      var bg = el('heat-bubbles').querySelector('.bub[data-mint="' + mint + '"] .bub-bg');
+      if (bg) {
+        var bi = document.createElement('img');
+        bi.loading = 'lazy'; bi.alt = ''; bi.referrerPolicy = 'no-referrer';
+        bi.addEventListener('error', function () { bi.remove(); });
+        bi.src = img;
+        bg.innerHTML = '';
+        bg.appendChild(bi);
+      }
     });
   });
 }
 function renderHeat() {
   var all = state.feed.slice();
   var list;
+  sparkCache = {};
   if (state.heat === 'dead') list = all.filter(isDeadCoin);
   else list = liveOnly(all);
   var mGate = state.heat;
-  if (mGate !== 'all' && mGate !== 'live' && mGate !== 'dead') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= Number(mGate); });
+  if (mGate !== 'all' && mGate !== 'live' && mGate !== 'dead' && mGate !== 'new' && mGate !== 'mix') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= Number(mGate); });
   if (mGate === 'live') list = list.filter(function (c) { return (Number(c.curMult) || 0) >= 1; });
-  list.sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); });
+  if (mGate === 'new') list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+  else list.sort(function (a, b) { return (Number(b.curMult) || 0) - (Number(a.curMult) || 0); });
   list = list.slice(0, 60);
   var div = el('heat-bubbles');
   div.textContent = '';
   el('heat-count').textContent = list.length;
-  if (!list.length) { div.innerHTML = '<div class="empty">NO SIGNALS YET</div>'; return; }
+  var t0 = null, tm = 0, totFdv = 0;
+  for (var fi = 0; fi < list.length; fi++) {
+    totFdv += Number(list[fi].curFdv || list[fi].entryFdv) || 0;
+    var cm = Number(list[fi].curMult) || 0;
+    if (cm > tm) { tm = cm; t0 = list[fi]; }
+  }
+  var metaEl = el('heat-meta');
+  if (metaEl) metaEl.textContent = (t0 && tm > 0 ? 'top ' + esc(t0.symbol || '?') + ' ' + tm.toFixed(1) + '× · ' : '') + 'Σ FDV ' + money(totFdv);
+  if (!list.length) {
+    if (state.firstFeed && !state.feed.length) {
+      var sk = '';
+      for (var si = 0; si < 16; si++) sk += '<div class="skel-bub"></div>';
+      div.innerHTML = sk;
+      return;
+    }
+    div.innerHTML = '<div class="empty">NO SIGNALS YET</div>';
+    return;
+  }
   var frag = document.createDocumentFragment();
   var avatarMints = [];
   list.forEach(function (c, i) {
     var m = Number(c.curMult) || 0;
-    var tier = bubTier(i, list.length);
+    var tier = bubTier(i, list.length, c);
     var main = (m >= 1 ? 'var(--emerald)' : 'var(--amber)');
+    var glowHex = (m >= 1 ? '#59ffa0' : '#fbbf24');
     var b = document.createElement('button');
-    b.className = 'bub bub-' + tier + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
+    b.className = 'bub bub-' + tier + (tier === 'xl' || tier === 'l' ? ' sq' : '') + (c.img ? ' fb' : '') + ' ' + (m >= 1 ? 'up' : 'flat') + ' ' + deadClass(c);
+    b.style.boxShadow = tier === 'xl' ? '0 0 26px ' + glowHex + '55,0 2px 8px rgba(0,0,0,.45)' : tier === 'l' ? '0 0 15px ' + glowHex + '38' : '0 1px 3px rgba(0,0,0,.35)';
     b.dataset.mint = c.mint;
     b.setAttribute('aria-label', (c.symbol || 'coin') + ' ' + (m ? m.toFixed(2) + '×' : 'new call') + ', safety ' + (c.safetyScore != null ? c.safetyScore : 'unknown'));
+    if (c.name) b.title = c.name;
     var avatar = '';
-    if (tier !== 's') {
-      avatarMints.push(c.mint);
-      avatar = '<span class="bub-ava"><span class="bub-ava-fb">' + esc(String(c.symbol || '?')[0]).toUpperCase() + '</span></span>';
-    }
+    var big = tier === 'xl' || tier === 'l';
+    avatarMints.push(c.mint);
+    var letter = esc(String(c.symbol || '?')[0]).toUpperCase();
+    var coinImg = c.img ? '<img src="' + esc(c.img) + '" loading="lazy" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=\'\'">' : '';
+    avatar = '<span class="bub-bg">' + (c.img ? coinImg : '') + '</span>' +
+      '<span class="bub-ava"><span class="bub-ava-fb">' + letter + '</span></span>';
+    var peak = Math.max(Number(c.peakMult) || 0, Number(c.curMult) || 0, 1);
+    var gbarW = Math.max(0, Math.min(Math.round((m / peak) * 100), 100));
     b.innerHTML = avatar +
       '<span class="sy">' + esc(c.symbol || '?') + '</span>' +
       '<span class="mx" style="color:' + main + '">' + (m ? m.toFixed(2) + '×' : 'new') + '</span>' +
-      '<span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>';
+      '<span class="sub-rt"><span class="' + (m >= 1 ? 'up2' : 'dn2') + '">' + (m >= 1 ? '▲' : '▼') + '</span> · SF ' + (c.safetyScore != null ? c.safetyScore : '?') + ' · ' + money(c.curFdv || c.entryFdv) + '</span>' +
+      '<span class="gbar ' + (m >= 1 ? 'up' : 'dn') + '" title="peak ' + peak.toFixed(2) + '× · now ' + m.toFixed(2) + '×"><i style="width:' + gbarW + '%"></i></span>' +
+      '<canvas class="bub-spark" height="18"></canvas>';
     b.onclick = function () { openCoin(c); };
     frag.appendChild(b);
   });
   div.appendChild(frag);
   fillBubbleAvatars(avatarMints);
+  bubSparks();
 }
 
 /* ---------------- recent calls ---------------- */
@@ -945,6 +1131,10 @@ function filtered() {
   var list = state.feed.slice();
   if (state.risk !== 'all') list = list.filter(function (c) { return (c.riskTier || 'medium') === state.risk; });
   if (state.source !== 'all') list = list.filter(function (c) { return (c.source || '').toLowerCase() === state.source; });
+  if (state.liveFlag) list = list.filter(function (c) { return (Number(c.curMult) || 0) >= 1; });
+  if (state.newFlag) list = list.filter(function (c) { return !c.ts || (Date.now() - c.ts) < 86400000; });
+  var q = (state.q || '').trim().toLowerCase();
+  if (q) list = list.filter(function (c) { return String(c.symbol || '').toLowerCase().indexOf(q) >= 0 || String(c.name || '').toLowerCase().indexOf(q) >= 0 || String(c.mint || '').toLowerCase().indexOf(q) >= 0; });
   list.sort(function (a, b) {
     if (state.sort === 'ts') return (b.ts || 0) - (a.ts || 0);
     if (state.sort === 'hot') return (Number(b.curMult) || 0) - (Number(a.curMult) || 0);
@@ -992,13 +1182,18 @@ function renderCalls() {
       '<span class="scor">S ' + (c.score || 0) + '</span>' +
       '<span class="saf-badge" style="color:' + safeColor + ';border-color:' + safeColor + '88">SF ' + (c.safetyScore || '?') + '</span>' +
       '<span class="fdv">$' + fdvTxt + '</span>' +
+      '<span class="pc24 ' + ((c.pc24 || 0) >= 0 ? 'up' : 'dn') + '">' + (c.pc24 != null ? ((c.pc24 >= 0 ? '▲' : '▼') + Math.abs(Math.round(c.pc24)) + '%') : '') + '</span>' +
+      (c.usd ? '<span class="px">$' + dec(c.usd) + '</span>' : '') +
+      (!c.ts || (Date.now() - (Number(c.ts) || 0)) < 86400000 ? '<span class="new-pill">NEW</span>' : '') +
       '<span class="ags">' + ago(c.ts) + '</span></span>' +
       tokStrip(c) +
       '<div class="row-acts">' +
+        '<span class="row-act ch" role="button" tabindex="0" aria-label="Open chart for ' + esc(c.symbol || 'coin') + '">⛭ Chart</span>' +
         '<span class="row-act cp" role="button" tabindex="0" aria-label="Copy mint address for ' + esc(c.symbol || 'coin') + '">⧉ Copy</span>' +
         '<span class="row-act sh" role="button" tabindex="0" aria-label="Share ' + esc(c.symbol || 'coin') + ' call on X">𝕏 Share</span>' +
       '</div>';
     r.onclick = function () { openCoin(c); };
+    wireRowAction(r.querySelector('.row-act.ch'), function () { window.open('https://gmgn.ai/sol/token/' + c.mint, '_blank', 'noopener'); });
     wireRowAction(r.querySelector('.row-act.cp'), function () { copyMint(c.mint, this); });
     wireRowAction(r.querySelector('.row-act.sh'), function () { shareCall(c); });
     frag.appendChild(r);
@@ -1197,6 +1392,8 @@ function coinSheet(c, e) {
     ['Score', c.score || 0],
     ['Risk', c.riskTier || 'medium'],
     ['Safety', (c.safetyScore != null ? c.safetyScore + ' ' + safetyLabel(c.safetyScore) : '—')],
+    ['24h', c.pc24 != null ? pct(c.pc24) : '—'],
+    ['USD', c.usd ? '$' + dec(c.usd) : '—'],
     ['Holders', c.holders || '—'],
     ['Top 10', c.top10Pct != null ? Math.round(c.top10Pct) + '%' : '—'],
     ['LP lock', c.lpPct != null ? Math.round(c.lpPct) + '%' : '—'],
@@ -1228,6 +1425,11 @@ function coinSheet(c, e) {
     (c.milestones && c.milestones.length ? '<div class="s-toks">' + c.milestones.map(function (x) { return '<span class="tok-safe">' + x + 'x hit</span>'; }).join('') + '</div>' : '') +
     (c.closed ? '<div class="s-toks"><span class="warn" style="color:var(--amber);font-size:10px">pool closed</span></div>' : '') +
     socialChips(e) +
+    '<div class="s-toks">' +
+      '<a class="tok-safe soc-link" href="https://gmgn.ai/sol/token/' + esc(c.mint) + '" target="_blank" rel="noopener">GMGN ⛭</a>' +
+      '<a class="tok-safe soc-link" href="https://jup.ag/swap/SOL-' + esc(c.mint) + '" target="_blank" rel="noopener">Swap ⟳</a>' +
+      '<a class="tok-safe soc-link" href="https://dexscreener.com/solana/' + esc(c.mint) + '" target="_blank" rel="noopener">Chart ↗</a>' +
+    '</div>' +
     '<button class="s-btn sb-gold" id="sheet-open-dex">Open on DexScreener ↗</button>' +
     '<button class="s-btn sb-ghost" id="sheet-copy-mint">Copy mint</button>' +
     '<button class="s-btn sb-ghost" id="sheet-ask-zerox">Ask ZEROX $1</button>';
@@ -1473,6 +1675,18 @@ wireChipGroup('px', function (v) { pnlMult = v === 'live' ? 'live' : Number(v) |
 wireChipGroup('r', function (v) { state.risk = v; renderCalls(); });
 wireChipGroup('s', function (v) { state.sort = v; renderCalls(); });
 wireChipGroup('src', function (v) { state.source = v; renderCalls(); });
+function wireTog(attr, key) {
+  document.querySelectorAll('.chip[data-' + attr + ']').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var on = !b.classList.contains('on');
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      state[key] = on ? 1 : 0; renderCalls();
+    });
+  });
+}
+wireTog('l', 'liveFlag');
+wireTog('n', 'newFlag');
+(function () { var inp = el('calls-search'); if (!inp) return; inp.addEventListener('input', function () { state.q = inp.value; renderCalls(); }); })();
 
 /* ---------------- advanced filters (collapsible) ---------------- */
 el('adv-toggle').addEventListener('click', function () {
@@ -1512,6 +1726,11 @@ function loadTicker(){ var t=document.getElementById('ttrack'); if(!t)return; fe
 loadWeather();
 loadTicker();
 initPnlImages().then(renderPNL);
+(function boot() {
+  try { var cached = sessionStorage.getItem('ss_feed'); if (cached) { var arr = JSON.parse(cached); if (Array.isArray(arr) && arr.length) { state.feed = arr; state.firstFeed = false; } } } catch (e) {}
+  renderAll();
+  refresh();
+})();
 setInterval(refresh, 60000);
 </script>
 </body>

@@ -1,8 +1,10 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html><html lang="en"><head><script>try{if(localStorage.getItem("shaddai.region")&&!/[?&](menu|fresh)/.test(location.search)){document.documentElement.classList.add("shd-skip-menus")}}catch(e){}</script><style>html.shd-skip-menus #create,html.shd-skip-menus #region{display:none !important}</style><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#06080b">
+<style>html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}input,textarea{-webkit-user-select:text;user-select:text}canvas{touch-action:none}#dpad{bottom:calc(14px + env(safe-area-inset-bottom)) !important;left:calc(14px + env(safe-area-inset-left)) !important}</style>
 <title>SHADDAI · World</title>
 <script src="/js/ingame-dialogs.js"></script>
-<script src="/state-scope.js?v=2"></script>
+<script src="/state-scope.js?v=1"></script>
 <script src="/world-gate.js?v=3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -25,7 +27,7 @@
   input{font-family:inherit;background:#0c1119;border:1px solid #2a3346;color:var(--ink);border-radius:9px;padding:9px 12px;font-size:14px;width:100%}
   /* create */
   #create{left:50%;top:50%;transform:translate(-50%,-50%);width:min(720px,94vw);padding:18px 20px;text-align:center}
-  #createCanvasWrap{background:radial-gradient(120% 90% at 50% 12%,#1a2740,#0c1119 72%);border-radius:12px;border:1px solid #1c2740;height:300px;margin:10px 0;position:relative}
+  #createCanvasWrap{display:none !important;background:radial-gradient(120% 90% at 50% 12%,#1a2740,#0c1119 72%);border-radius:12px;border:1px solid #1c2740;height:300px;margin:10px 0;position:relative}
   #ccv{width:100%;height:100%}
   .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:8px}
   .pill{font-size:11px;color:var(--dim);border:1px solid #26314a;border-radius:20px;padding:3px 10px}
@@ -236,21 +238,9 @@ const c = document.getElementById('c'), ctx = c.getContext('2d');
 let DC = ctx; // active draw context (swapped to an offscreen while baking building sprites)
 const ccv = document.getElementById('ccv'), cctx = ccv.getContext('2d');
 let DPR = Math.min(devicePixelRatio||1, 2), W=0, H=0;
-function fit(){ DPR=Math.min(devicePixelRatio||1,2); window.DPR=DPR; W=innerWidth; H=innerHeight; c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;
-  fitCCV(); }
-const _createWrap=document.getElementById('createCanvasWrap');
-// size the operative preview canvas; guarded so a 0×0 canvas (wrapper hidden when fit()
-// first runs) can never blank the preview box — resurrect once the box has layout.
-function fitCCV(){
-  if(_createWrap && _createWrap.clientWidth && _createWrap.clientHeight){
-    ccv.width=_createWrap.clientWidth*DPR; ccv.height=_createWrap.clientHeight*DPR;
-    cctx.setTransform(DPR,0,0,DPR,0,0); cctx.imageSmoothingEnabled=false;
-    return true;
-  }
-  return false;
-}
+function fit(){ DPR=Math.min(devicePixelRatio||1,2); window.DPR=DPR; W=innerWidth; H=innerHeight-(window.__gbDeck||0); c.style.width=W+'px'; c.style.height=H+'px'; c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;
+  const wr=document.getElementById('createCanvasWrap'); ccv.width=wr.clientWidth*DPR; ccv.height=wr.clientHeight*DPR; cctx.setTransform(DPR,0,0,DPR,0,0); cctx.imageSmoothingEnabled=false; }
 addEventListener('resize', fit);
-try{ if(_createWrap) new ResizeObserver(fitCCV).observe(_createWrap); }catch(_e){}
 
 // ---------- player + state ----------
 let state='create';
@@ -405,13 +395,13 @@ function activeWeapon(){ if(equippedWeapon&&inv[equippedWeapon]) return equipped
 function weaponPower(){ const id=activeWeapon(); if(!id) return 1; return WEAPON_POWER[id]+((weaponUp[id]||0)*0.5); }
 // The 7 SHADDAI agents as themed pixel characters (chakra accents)
 const AGENTS=[
-  {name:'SHADDAI', role:'Orchestrator', accent:'#e8c45c', rig:{sprite:'shaddai',suit:'#241f44',cap:'#e8c45c',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199'}},
+  {name:'SHADDAI', role:'Orchestrator', accent:'#e8c45c', rig:{suit:'#241f44',cap:'#e8c45c',tie:'#ffd45c',emblem:'#ffd45c',skin:'#f0c199'}},
   {name:'ORACLE',  role:'Research',     accent:'#8b7bf0', rig:{sprite:'oracle',hoodie:'#3a2f5a',hoodUp:true,emblem:'#8b7bf0',skin:'#e7b58a'}},
   {name:'QUILL',   role:'Writing',      accent:'#5fe0ff', rig:{sprite:'quill',suit:'#173a4a',cap:'#5fe0ff',tie:'#5fe0ff',glasses:true,skin:'#f0c199'}},
   {name:'TURTLE',  role:'Design',       accent:'#00ff9c', rig:{sprite:'turtle',hoodie:'#1f5a44',cap:'#00ff9c',emblem:'#00ff9c',skin:'#caa06f'}},
-  {name:'NEXUS',   role:'Architect',    accent:'#87909c', rig:{sprite:'nexus',robot:true,skin:'#8a9199',cap:'#87909c',shirt:'#6b7280',pants:'#3a3f47',led:'#c5ccd5',emblem:'#87909c'}},
+  {name:'NEXUS',   role:'Architect',    accent:'#87909c', rig:{robot:true,skin:'#8a9199',cap:'#87909c',shirt:'#6b7280',pants:'#3a3f47',led:'#c5ccd5',emblem:'#87909c'}},
   {name:'ZEROX',   role:'Revenue',      accent:'#00c8ff', rig:{sprite:'zerox',suit:'#3a2a1a',cap:'#00c8ff',tie:'#00c8ff',emblem:'#00c8ff',skin:'#caa06f'}},
-  {name:'PIKADON', role:'Security',     accent:'#ff5a4d', rig:{sprite:'pikadon',jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'}},
+  {name:'PIKADON', role:'Security',     accent:'#ff5a4d', rig:{jacket:'#331616',cap:'#ff5a4d',emblem:'#ff5a4d',shoeStyle:'boot',skin:'#8a5a3a'}},
 ];
 addEventListener('wheel',e=>{ if(state==='world'){ zoom=Math.max(0.5,Math.min(1.7,zoom-Math.sign(e.deltaY)*0.08)); } },{passive:true});
 const GRASS=0,WATER=1,SAND=2,PATH=3,DOCK=4,LAVA=5;
@@ -544,8 +534,7 @@ function genWorld(rid){
     props.push({type:'building',col:50,row:50,w:3,d:3,floors:1, wall:'#1a2438',roof:'#3a6a9a',glass:'#5fe0ff',name:'STATION',kind:'transit',landmark:'station'});
     for(let i=0;i<18;i++){ let col,r,k=0; do{ col=(Math.random()*GW)|0; r=(Math.random()*GH)|0; k++; }while(tiles[r][col]!==PATH&&k<50); if(tiles[r][col]===PATH) props.push({type:'hovercar',col,row:r,color:CARCOLS[i%CARCOLS.length]}); }
     spawnCitizens(14);
-    // defined hub spawn: the Town Square plaza, fronting SHADDAI HQ (not the old south-edge default)
-    player.col=CC+0.5; player.row=CR+4; cam.col=player.col; cam.row=player.row; bakeGround(); return;
+    player.col=CC; player.row=CR+R+4; cam.col=player.col; cam.row=player.row; bakeGround(); return;
   }
 
   // ===== NATURE REGIONS (organic layout) =====
@@ -1361,8 +1350,8 @@ fit(); setPreset(0);
   if(/[?&](menu|fresh)/.test(location.search)){ localStorage.removeItem('shaddai.region'); }
   try{ if(localStorage.getItem('shaddai.mode')==='spectate') spectate=true; localStorage.removeItem('shaddai.mode'); }catch(e){}
   const pj=localStorage.getItem('shaddai.player');
-  let forgedIn=false;
-  if(pj){ const pp=JSON.parse(pj); if(pp&&pp.rig){ player.rig=pp.rig; player.name=(pp.name||'Traveler').slice(0,16); document.getElementById('nameInput').value=player.name; if(pp.source==='forge') forgedIn=true; } }
+  let forgedIn=false, hasLook=false;
+  if(pj){ const pp=JSON.parse(pj); if(pp&&pp.rig){ player.rig=pp.rig; player.name=(pp.name||'Traveler').slice(0,16); document.getElementById('nameInput').value=player.name; if(pp.source==='forge') forgedIn=true; hasLook=true; } }
   const rg=localStorage.getItem('shaddai.region');
   if(rg && REGIONS.some(x=>x.id===rg)){
     regionSel=rg;
@@ -1372,8 +1361,11 @@ fit(); setPreset(0);
   }
   // No redundant "create your character" if you JUST forged one (and aren't forcing ?menu):
   // your agent is already built — go straight to picking where to spawn.
-  else if(forgedIn && !/[?&](menu|fresh)/.test(location.search)){
-    try{ goRegion(); }catch(e){}
+  else {
+    // Identity + player come FIRST: you forged/picked a character → on to the realm picker.
+    // Bare first visit (no saved rig) → stay on the "Choose your operative" panel so the
+    // player is picked or signed in before any realm is chosen, exactly like the 2D door.
+    if(hasLook){ try{ goRegion(); }catch(e){} }
   }
 }catch(e){ console.warn('boot hand-off',e); } })();
 
@@ -1496,6 +1488,7 @@ function updateWallet(){ const el=document.getElementById('wallet'); if(!el)retu
     '<span style="font-size:11px;opacity:.75">'+(typeof weaponLabel==='function'?weaponLabel():'')+'</span>'; try{ ftueRender(); }catch(_){} }
 // ---- FIRST-TIME ONBOARDING (FTUE): a guided quest that reveals the game's depth ----
 let ftue={}; try{ ftue=JSON.parse(localStorage.getItem('shaddai.ftue')||'{}'); }catch(_){ ftue={}; }
+ftue.done=true;   // owner: no unrequested onboarding popups/steps — the guided quest panel is disabled
 function ftueSave(){ try{ localStorage.setItem('shaddai.ftue',JSON.stringify(ftue)); }catch(_){} }
 const FTUE_STEPS=[
   {id:'earn', label:'Earn your first Gold — Work 💼, fish, or fight', done:()=>(quest.earn||0)>0},
@@ -1714,7 +1707,7 @@ const ROOM_THEMES=[
   {id:'ocean',name:'Deep Ocean',tint:'#0c1c26',wall:'#123040',floor:['#1a4258','#154a5a']},
   {id:'ember',name:'Ember Forge',tint:'#1e1410',wall:'#2a1e18',floor:['#4a3630','#3e2c26']} ];
 function themeById(id){ return ROOM_THEMES.find(t=>t.id===id)||ROOM_THEMES[0]; }
-function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; gamePrompt('Rename this room', r.name||'', function(raw){ if(raw===null||raw===undefined)return; r.name=String(raw||'').trim().slice(0,24)||r.name; saveRooms(rooms); const rp=document.getElementById('roomsPanel'); if(rp&&!rp.classList.contains('hide'))openRooms(); if(inInterior&&inInterior.__customRoom&&inInterior.roomId===id){ inInterior.name=r.name; const pr=document.getElementById('prompt'); if(pr)pr.textContent='🏠 '+r.name+' — WASD to walk · Decorate it · reach the door to leave'; } }); }
+function renameRoom(id){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===id); if(!r)return; const raw=prompt('Rename room:', r.name||''); if(raw===null)return; r.name=(raw||'').trim().slice(0,24)||r.name; saveRooms(rooms); const rp=document.getElementById('roomsPanel'); if(rp&&!rp.classList.contains('hide'))openRooms(); if(inInterior&&inInterior.__customRoom&&inInterior.roomId===id){ inInterior.name=r.name; const pr=document.getElementById('prompt'); if(pr)pr.textContent='🏠 '+r.name+' — WASD to walk · Decorate it · reach the door to leave'; } }
 function setRoomTheme(themeId){ roomTheme=themeById(themeId);
   if(inInterior&&inInterior.__customRoom){ const rooms=loadRooms(); const r=rooms.find(x=>x.id===inInterior.roomId); if(r){ r.theme=themeId; saveRooms(rooms); } }
   else if(interiorType==='office'){
@@ -1777,18 +1770,16 @@ function roomsHtml(){
   return h; }
 function createRoom(kind){
   const pre=ROOM_PRESETS.find(p=>p.kind===kind)||{label:kind};
-  gamePrompt('Name your '+pre.label, pre.label, function(raw){
-    if(raw===null||raw===undefined) return;
-    const name=String(raw||'').trim().slice(0,24) || pre.label;
-    const rooms=loadRooms(); const id='r'+Date.now().toString(36);
-    rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id);
-    try{ toast('🏠 "'+name+'" created — you are inside. WASD to walk · door to leave.'); }catch(_){}
-  });
+  const raw=prompt('Name your '+pre.label+':', pre.label); if(raw===null) return;
+  const name=(raw||'').trim().slice(0,24) || pre.label;
+  const rooms=loadRooms(); const id='r'+Date.now().toString(36);
+  rooms.push({id,name,kind,theme:'obsidian',created:Date.now()}); saveRooms(rooms); enterRoom(id);
+  try{ toast('🏠 "'+name+'" created — you are inside. WASD to walk · door to leave.'); }catch(_){}
 }
-function deleteRoom(id){ gameConfirm('Delete this room? (its decor is also removed)', function(ok){ if(!ok) return;
+function deleteRoom(id){ if(!confirm('Delete this room? (its decor is also removed)'))return;
   saveRooms(loadRooms().filter(r=>r.id!==id));
   try{ const d=JSON.parse(localStorage.getItem('shaddai.decor')||'{}'); delete d['room_'+id]; localStorage.setItem('shaddai.decor',JSON.stringify(d)); }catch(e){}
-  openRooms(); }, 'Delete'); }
+  openRooms(); }
 function enterRoom(id){
   const room=loadRooms().find(r=>r.id===id); if(!room)return;
   closeRooms(); if(typeof closeHubRooms==='function')closeHubRooms();
@@ -1839,12 +1830,8 @@ function claimLot(lotProp){
   el.innerHTML=h; el.classList.remove('hide');
 }
 function doClaim(presetId){
-  gamePrompt('Name your office (your brand)','My Command Office', function(raw){
-    if(raw===null||raw===undefined)return;
-    doClaimWithName(presetId, String(raw||'').trim().slice(0,40)||'My Command Office');
-  });
-}
-function doClaimWithName(presetId, name){
+  var raw=prompt('Name your office (your brand):','My Command Office'); if(raw===null)return;
+  var name=(raw||'').trim().slice(0,40)||'My Command Office';
   var uid=localStorage.getItem('shd_userid')||'';
   var pre=OFFICE_PRESETS.find(function(p){return p.id===presetId;})||{accent:'#00e5a0'};
   var clickedLot=_claimLot;
@@ -2150,6 +2137,33 @@ async function claimOfficeGame(){
   }catch(_){}
   setInterval(syncDpadVisibility, 600);
 
+  // ── Game Boy layout: always-visible A / B (bottom-right) + START / SELECT pills (bottom-centre) ──
+  // A = USE (tool/attack/interact), B = ENTER (doors). START opens/closes the extra action cluster, SELECT jumps to the Store.
+  const gb=document.createElement('div'); gb.id='gbPad';
+  gb.style.cssText='position:fixed;left:0;right:0;bottom:0;height:150px;z-index:54;pointer-events:none;display:none;font-family:system-ui,sans-serif';
+  document.body.appendChild(gb);
+  function gbBtn(txt,sz,right,bottom,col,fn,sub){
+    const b=document.createElement('button');
+    b.innerHTML='<span style="font-size:'+(sz*0.42)+'px;font-weight:800;line-height:1">'+txt+'</span>'+(sub?'<span style="font-size:8px;letter-spacing:.08em;opacity:.8;margin-top:2px">'+sub+'</span>':'');
+    b.style.cssText='position:absolute;pointer-events:auto;right:'+right+'px;bottom:calc('+bottom+'px + env(safe-area-inset-bottom));width:'+sz+'px;height:'+sz+'px;border-radius:50%;border:2px solid '+col+';background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.18),rgba(10,14,25,.82));color:'+col+';display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 12px '+col+'44;-webkit-user-select:none';
+    const go=e=>{ e.preventDefault(); try{ fn(); }catch(_){} b.style.transform='scale(.92)'; setTimeout(()=>{b.style.transform='';},90); };
+    b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+    gb.appendChild(b); return b;
+  }
+  function gbPill(txt,left,fn){
+    const b=document.createElement('button'); b.textContent=txt;
+    b.style.cssText='position:absolute;pointer-events:auto;left:calc(50% + '+left+'px);bottom:calc(16px + env(safe-area-inset-bottom));width:62px;height:24px;border-radius:12px;border:1px solid rgba(232,196,92,.6);background:rgba(10,14,25,.78);color:#e8c45c;font-size:9px;font-weight:700;letter-spacing:.14em;transform:rotate(-18deg);touch-action:manipulation';
+    const go=e=>{ e.preventDefault(); try{ fn(); }catch(_){} };
+    b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+    gb.appendChild(b); return b;
+  }
+  gbBtn('A',66,20,50,'#00e5a0',()=>{ if(typeof useActiveTool==='function') useActiveTool(); },'USE');
+  gbBtn('B',56,96,26,'#e8c45c',()=>{ if(typeof tryDoor==='function') tryDoor(); },'ENTER');
+  gbPill('START',-30,()=>{ tog.click(); });
+  gbPill('SELECT',-98,()=>{ const st=[].find.call(document.querySelectorAll('button,.panel'),x=>/store/i.test(x.textContent||'')&&x.offsetParent); if(st) st.click(); });
+  setInterval(()=>{ gb.style.display = pad.style.display==='block' ? 'block' : 'none'; }, 400);
+
+
   // SPACE = use/attack with the equipped tool (owner request). Ignored while typing in chat.
   window.addEventListener('keydown',function(e){
     if(e.code==='Space' && state==='world'){
@@ -2168,75 +2182,93 @@ window.addEventListener('beforeunload', function(){ if(cloudPushT){ clearTimeout
 requestAnimationFrame(loop);
 </script>
 <script src="home-btn.js" defer onerror="this.remove()"></script>
-<style>
-  /* ── MOBILE TOUCH CONTROLS v2 — compact, cornered, collapsible, out of the view ── */
-  #touchPad{ position:fixed; left:0; right:0; bottom:0; z-index:60; display:none; padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-    justify-content:space-between; align-items:flex-end; pointer-events:none; }
-  #touchPad.show{ display:flex; }
-  #touchPad.hidden .cluster{ display:none; }
-  #touchToggle{ pointer-events:auto; width:34px; height:34px; border-radius:50%; border:1px solid rgba(232,196,92,.35);
-    background:rgba(10,14,20,.6); color:#e8c45c; font-size:14px; display:grid; place-items:center; margin:0 auto 4px; }
-  #dpad{ pointer-events:auto; display:grid; grid-template-columns:repeat(3,46px); grid-template-rows:repeat(3,46px); gap:3px; opacity:.82; }
-  #dpad .db{ width:46px; height:46px; border-radius:9px; border:1px solid rgba(0,255,156,.28);
-    background:rgba(6,10,16,.45); color:#9fe8c4; font-size:16px; display:grid; place-items:center;
-    touch-action:none; user-select:none; -webkit-user-select:none; }
-  #dpad .db:active{ background:rgba(0,255,156,.22); }
-  #dpad .d0{ grid-area:1/2; } #dpad .d1{ grid-area:2/1; } #dpad .d2{ grid-area:2/3; } #dpad .d3{ grid-area:3/2; }
-  #touchAct{ pointer-events:auto; display:flex; flex-direction:column; gap:8px; align-items:flex-end; opacity:.82; }
-  #touchAct .row{ display:flex; gap:8px; align-items:center; }
-  #touchAct .ab{ width:52px; height:52px; border-radius:50%; border:1px solid rgba(255,214,130,.3);
-    background:rgba(10,14,20,.45); color:#ffd682; font-weight:800; font-size:11px; letter-spacing:.06em;
-    display:grid; place-items:center; touch-action:none; user-select:none; -webkit-user-select:none;
-    box-shadow:0 0 14px rgba(232,196,92,.18); }
-  #touchAct .ab:active{ background:rgba(232,196,92,.25); }
-  #touchAct .ab.big{ width:60px; height:60px; }
-  #touchAct .ab.run.on{ background:rgba(0,255,156,.28); border-color:rgba(0,255,156,.6); color:#9fe8c4; }
-  @media (pointer:coarse), (hover:none){ #touchPad{ display:flex; } }
-</style>
+
 <script>
-  /* Virtual D-pad + action buttons that write into the shared `keys` table so the 2D
-     world runs identically on touch: same WASD/arrow/space/e semantics. */
-  (function(){
-    if(!('ontouchstart' in window) && !(matchMedia && matchMedia('(pointer:coarse)').matches)) return;
-    var pad=document.createElement('div'); pad.id='touchPad';
-    var left=document.createElement('div'); left.className='cluster'; left.id='dpad';
-    var dpad=left;
-    var binds=[{c:'d0',k:'arrowup',l:'▲'},{c:'d1',k:'arrowleft',l:'◀'},{c:'d2',k:'arrowright',l:'▶'},{c:'d3',k:'arrowdown',l:'▼'}];
-    binds.forEach(function(b){ var el=document.createElement('div'); el.className='db '+b.c; el.textContent=b.l;
-      var down=function(){ if(window.__blessTouch) keys[b.k]=true; };
-      var up=function(){ if(window.__blessTouch) keys[b.k]=false; };
-      el.addEventListener('touchstart',function(e){ e.preventDefault(); down(); },{passive:false});
-      el.addEventListener('touchend',function(e){ e.preventDefault(); up(); },{passive:false});
-      el.addEventListener('touchcancel',function(){ up(); });
-      dpad.appendChild(el); });
-    var act=document.createElement('div'); act.className='cluster'; act.id='touchAct';
-    var runRow=document.createElement('div'); runRow.className='row';
-    var doorChat=[{k:'e',l:'DOOR'},{k:'c',l:'CHAT'}];
-    doorChat.forEach(function(a){ var el=document.createElement('div'); el.className='ab';
-      el.textContent=a.l;
-      var down=function(){ if(!window.__blessTouch) return; keys[a.k]=true; if(a.k==='e'&&typeof tryDoor==='function') tryDoor(); };
-      var up=function(){ if(window.__blessTouch) keys[a.k]=false; };
-      el.addEventListener('touchstart',function(e){ e.preventDefault(); down(); },{passive:false});
-      el.addEventListener('touchend',function(e){ e.preventDefault(); up(); },{passive:false});
-      el.addEventListener('touchcancel',function(){ up(); });
-      runRow.appendChild(el); });
-    var atkEl=document.createElement('div'); atkEl.className='ab big'; atkEl.textContent='⚔';
-    atkEl.addEventListener('touchstart',function(e){ e.preventDefault(); if(window.__blessTouch){ keys[' ']=true; if(typeof doAttack==='function') doAttack(); } },{passive:false});
-    atkEl.addEventListener('touchend',function(e){ e.preventDefault(); if(window.__blessTouch) keys[' ']=false; },{passive:false});
-    atkEl.addEventListener('touchcancel',function(){ if(window.__blessTouch) keys[' ']=false; });
-    var runEl=document.createElement('div'); runEl.className='ab run'; runEl.textContent='RUN';
-    var runOn=false;
-    runEl.addEventListener('touchstart',function(e){ e.preventDefault(); if(!window.__blessTouch) return;
-      runOn=!runOn; runEl.classList.toggle('on',runOn); keys['shift']=runOn; },{passive:false});
-    runRow.appendChild(runEl);
-    act.appendChild(runRow); act.appendChild(atkEl);
-    var tog=document.createElement('div'); tog.id='touchToggle'; tog.textContent='⌄';
-    tog.addEventListener('touchstart',function(e){ e.preventDefault(); pad.classList.toggle('hidden');
-      tog.textContent = pad.classList.contains('hidden') ? '⌃' : '⌄';
-      if(pad.classList.contains('hidden')){ keys['arrowup']=keys['arrowdown']=keys['arrowleft']=keys['arrowright']=keys[' ']=keys['shift']=false; } },{passive:false});
-    pad.appendChild(dpad); pad.appendChild(tog); pad.appendChild(act);
-    document.body.appendChild(pad);
-    window.__blessTouch=true;
-  })();
+/* SHADDAI Game Boy deck: screen on top, controls underneath (D-pad left, A/B right, START/SELECT centre).
+   Shows on touch devices and narrow windows while in the world/interiors. */
+(function(){
+  /* v3 (owner 2026-09-21): "the gaming pad is in the way of the screen" — the 200px deck
+     ate half a landscape phone. Now: SLIM 132px deck, COLLAPSE handle (▲/▼, remembered),
+     and a RUN toggle (keys.shift = the x1.9 move speed). Brand + themes kept. */
+  var DECK_H=132, COL_H=26, deck=document.createElement('div'); deck.id='gbDeck';
+  deck.style.cssText='position:fixed;left:0;right:0;bottom:0;height:'+DECK_H+'px;z-index:60;display:none;background:radial-gradient(120% 90% at 20% 20%,rgba(170,140,255,.55),rgba(76,44,150,.92) 60%,rgba(38,20,84,.98));border-top:3px solid rgba(215,200,255,.75);box-shadow:0 -8px 26px rgba(30,10,80,.7),inset 0 2px 0 rgba(255,255,255,.25);touch-action:none;-webkit-user-select:none;user-select:none;padding-bottom:env(safe-area-inset-bottom)';
+  var st=document.createElement('style'); st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}#gbDeck .dp{width:42px;height:42px;border-radius:9px;border:1px solid #2b2540;background:linear-gradient(180deg,#26212f,#0d0b14);color:#d9d2f0;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{background:#3a3050;transform:translateY(2px)}#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,#e6f8fa,#a5d3d8 65%,#7fb4bb);color:#2a3f45;box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}#gbDeck .pill{width:64px;height:20px;border-radius:10px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,#d7eef0,#9cc6cb);color:#33484e;font-size:8px;font-weight:800;letter-spacing:.12em;transform:rotate(-14deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .pill.on{filter:brightness(1.5)}#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),rgba(190,170,255,.28) 60%,rgba(120,90,220,.3));border:2px solid rgba(235,225,255,.6);box-shadow:inset 0 0 18px rgba(255,255,255,.25)}#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad{display:none !important}';
+  document.head.appendChild(st);
+  // SHADDAI GAMES themes (default = green). Tap the THEME chip to cycle; choice is remembered.
+  var THEMES=[
+   {n:'GREEN',  s:['rgba(120,255,180,.5)','rgba(18,110,70,.95)','rgba(6,50,34,.98)'],  bd:'rgba(190,255,220,.75)', bz:'rgba(150,255,200,.3)', a:['#eafff2','#a6e8c3','#6fc79a'], t:'#1f4a36', pl:['#dcffec','#8fd6b2'], d:['#1f2b26','#0a100d']},
+   {n:'PURPLE', s:['rgba(170,140,255,.55)','rgba(76,44,150,.92)','rgba(38,20,84,.98)'],  bd:'rgba(215,200,255,.75)', bz:'rgba(190,170,255,.3)', a:['#e6f8fa','#a5d3d8','#7fb4bb'], t:'#2a3f45', pl:['#d7eef0','#9cc6cb'], d:['#26212f','#0d0b14']},
+   {n:'GOLD',   s:['rgba(255,225,140,.5)','rgba(140,100,20,.95)','rgba(60,40,6,.98)'],  bd:'rgba(255,235,170,.75)', bz:'rgba(255,225,150,.28)', a:['#fff6d8','#e8c45c','#b8922e'], t:'#4a3608', pl:['#fff0c2','#d9b455'], d:['#2a2414','#100c05']},
+   {n:'CYAN',   s:['rgba(120,230,255,.5)','rgba(20,90,130,.95)','rgba(6,36,60,.98)'],   bd:'rgba(190,240,255,.75)', bz:'rgba(150,235,255,.3)',  a:['#e8fbff','#8fdcef','#5cb6d0'], t:'#124052', pl:['#d4f4fb','#86cfe2'], d:['#1c2830','#090f14']},
+   {n:'RED',    s:['rgba(255,150,140,.5)','rgba(140,30,40,.95)','rgba(56,10,16,.98)'],  bd:'rgba(255,200,195,.75)', bz:'rgba(255,170,160,.28)', a:['#ffeceb','#ee9a94','#c9655f'], t:'#4a1414', pl:['#ffe0dd','#e38f89'], d:['#2d1e20','#100809']}
+  ];
+  var ti=0; try{ti=Math.max(0,Math.min(THEMES.length-1,parseInt(localStorage.getItem('shd.gbTheme')||'0',10)||0))}catch(e){}
+  function applyTheme(){
+    var t=THEMES[ti];
+    deck.style.background='radial-gradient(120% 90% at 20% 20%,'+t.s[0]+','+t.s[1]+' 60%,'+t.s[2]+')';
+    deck.style.borderTop='3px solid '+t.bd; deck.style.boxShadow='0 -8px 26px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.25)';
+    st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}'+
+     '#gbDeck .dp{width:42px;height:42px;border-radius:9px;border:1px solid rgba(0,0,0,.45);background:linear-gradient(180deg,'+t.d[0]+','+t.d[1]+');color:#e6efe9;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{filter:brightness(1.5);transform:translateY(2px)}'+
+     '#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,'+t.a[0]+','+t.a[1]+' 65%,'+t.a[2]+');color:'+t.t+';box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}'+
+     '#gbDeck .pill{width:64px;height:20px;border-radius:10px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,'+t.pl[0]+','+t.pl[1]+');color:'+t.t+';font-size:8px;font-weight:800;letter-spacing:.12em;transform:rotate(-14deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .pill.on{filter:brightness(1.5)}'+
+     '#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),'+t.bz+');border:2px solid '+t.bd+';box-shadow:inset 0 0 18px rgba(255,255,255,.25)}'+
+     '#gbDeck .brand{position:absolute;left:0;right:0;top:6px;text-align:center;pointer-events:none;font:900 10px/1 system-ui,sans-serif;letter-spacing:.42em;color:rgba(255,255,255,.92);text-shadow:0 2px 0 rgba(0,0,0,.35),0 0 12px rgba(255,255,255,.35)}'+
+     '#gbDeck .thm{left:auto;right:calc(18px + env(safe-area-inset-right));top:8px;width:72px;height:18px;border-radius:9px;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.28);color:#fff;font-size:7px;font-weight:800;letter-spacing:.16em}'+
+     '#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad{display:none !important}';
+  }
+  function add(cls,txt,css,down,up){
+    var b=document.createElement('button'); b.className=cls; b.textContent=txt; b.style.cssText=css;
+    var on=function(e){e.preventDefault(); b.classList.add('on'); try{down&&down()}catch(_){}};
+    var off=function(e){if(e)e.preventDefault(); b.classList.remove('on'); try{up&&up()}catch(_){}};
+    b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off,{passive:false}); b.addEventListener('touchcancel',off,{passive:false});
+    b.addEventListener('mousedown',on); b.addEventListener('mouseup',off); b.addEventListener('mouseleave',off);
+    deck.appendChild(b); return b;
+  }
+  var bz=document.createElement('div'); bz.className='bezel'; bz.style.cssText='left:calc(36px + env(safe-area-inset-left));top:16px;width:98px;height:98px'; deck.appendChild(bz);
+  function dir(k){return function(){keys[k]=true}} function undir(k){return function(){keys[k]=false}}
+  var L='left:calc(14px + env(safe-area-inset-left));';
+  add('dp','▲',L+'top:4px;margin-left:54px',dir('w'),undir('w'));
+  add('dp','◀',L+'top:46px',dir('a'),undir('a'));
+  add('dp','▶',L+'top:46px;margin-left:108px',dir('d'),undir('d'));
+  add('dp','▼',L+'top:88px;margin-left:54px',dir('s'),undir('s'));
+  function tap(fn){return function(){fn()}}
+  add('ab','A','right:calc(16px + env(safe-area-inset-right));top:34px;width:56px;height:56px;font-size:24px;color:#00e5a0;border-color:#00e5a0',tap(function(){if(typeof useActiveTool==='function')useActiveTool()}));
+  add('ab','B','right:calc(82px + env(safe-area-inset-right));top:70px;width:48px;height:48px;font-size:20px;color:#e8c45c;border-color:#e8c45c',tap(function(){if(typeof tryDoor==='function')tryDoor()}));
+  function clickText(re){var el=[].find.call(document.querySelectorAll('button,.panel'),function(x){return re.test(x.textContent||'')&&x.offsetParent});if(el)el.click()}
+  add('pill','BAG','left:calc(50% - 148px);bottom:calc(8px + env(safe-area-inset-bottom))',tap(function(){clickText(/bag/i)}));
+  var runP=add('pill','RUN: OFF','left:calc(50% - 32px);bottom:calc(8px + env(safe-area-inset-bottom))',tap(function(){ window.__gbRun=!(window.__gbRun||false); try{keys['shift']=!!window.__gbRun}catch(_){}; runP.textContent='RUN: '+(window.__gbRun?'ON':'OFF'); runP.classList.toggle('on',!!window.__gbRun); }));
+  add('pill','STORE','left:calc(50% + 84px);bottom:calc(8px + env(safe-area-inset-bottom))',tap(function(){clickText(/store/i)}));
+  var br=document.createElement('div'); br.className='brand'; br.textContent='SHADDAI GAMES'; deck.appendChild(br);
+  var th=add('thm','THEME: '+THEMES[ti].n,'',function(){ti=(ti+1)%THEMES.length; try{localStorage.setItem('shd.gbTheme',String(ti))}catch(e){} th.textContent='THEME: '+THEMES[ti].n; applyTheme();});
+  applyTheme();
+  document.body.appendChild(deck);
+  // COLLAPSE handle — hides the deck to a 26px strip so the screen is clear (remembered).
+  var collapsed=false; try{ collapsed=localStorage.getItem('shd.gbCollapsed')==='1'; }catch(e){}
+  var handle=document.createElement('button'); handle.className='thm handle'; handle.textContent='▼ CONTROLS';
+  handle.addEventListener('touchstart',function(e){e.preventDefault(); setCollapsed(!collapsed);},{passive:false});
+  handle.addEventListener('click',function(e){e.preventDefault(); setCollapsed(!collapsed);});
+  deck.appendChild(handle);
+  function setCollapsed(v){ collapsed=v; try{localStorage.setItem('shd.gbCollapsed',v?'1':'0')}catch(e){} applyMode(); }
+  function applyMode(){
+    deck.classList.toggle('collapsed',collapsed);
+    deck.style.height=(collapsed?COL_H:DECK_H)+'px';
+    handle.textContent=collapsed?'▲ CONTROLS':'▼ CONTROLS';
+    window.__gbDeck=collapsed?COL_H:DECK_H; try{fit()}catch(e){}
+  }
+  var narrow=matchMedia('(max-width: 900px)'), coarse=matchMedia('(pointer: coarse)');
+  function sync(){
+    var want=(narrow.matches||coarse.matches||('ontouchstart' in window))&&(typeof state!=='undefined')&&(state==='world'||state==='interior');
+    var h=want?(collapsed?COL_H:DECK_H):0;
+    if((window.__gbDeck||0)!==h){
+      window.__gbDeck=h;
+      deck.style.display=want?'block':'none';
+      deck.classList.toggle('collapsed',collapsed);
+      deck.style.height=(want?(collapsed?COL_H:DECK_H):DECK_H)+'px';
+      handle.textContent=collapsed?'▲ CONTROLS':'▼ CONTROLS';
+      try{fit()}catch(e){}
+    }
+  }
+  setInterval(sync,300); addEventListener('resize',sync); sync();
+})();
 </script>
 </body></html>

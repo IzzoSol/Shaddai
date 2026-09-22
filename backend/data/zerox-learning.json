@@ -1,314 +1,324 @@
 {
-  "lastAnalyzed": 1789837702705,
+  "lastAnalyzed": 1789917022255,
   "patterns": {
     "source:boosted": {
-      "wins": 10,
-      "losses": 38,
-      "totalMult": 55.47067075968721,
+      "wins": 11,
+      "losses": 57,
+      "totalMult": 107.68962348110502,
       "peakMults": [],
-      "winRate": 21,
-      "avgMult": 5.5,
-      "sampleSize": 48
+      "winRate": 16,
+      "avgMult": 9.8,
+      "sampleSize": 68
     },
     "sourceCount:1": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
       "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
     },
     "socialScore:0": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
       "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
     },
     "hasWebsite:false": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
       "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
     },
     "hasTwitter:false": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
       "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
     },
     "locked:false": {
-      "wins": 10,
-      "losses": 38,
-      "totalMult": 55.47067075968721,
+      "wins": 11,
+      "losses": 58,
+      "totalMult": 107.68962348110502,
       "peakMults": [],
-      "winRate": 21,
-      "avgMult": 5.5,
-      "sampleSize": 48
+      "winRate": 16,
+      "avgMult": 9.8,
+      "sampleSize": 69
     },
     "top10Bucket:clean": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
       "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
     },
     "fdvBucket:small": {
-      "wins": 8,
-      "losses": 24,
-      "totalMult": 25.904258289497516,
-      "peakMults": [],
-      "winRate": 25,
-      "avgMult": 3.2,
-      "sampleSize": 32
-    },
-    "rugBucket:risky": {
-      "wins": 10,
-      "losses": 38,
-      "totalMult": 55.47067075968721,
-      "peakMults": [],
-      "winRate": 21,
-      "avgMult": 5.5,
-      "sampleSize": 48
-    },
-    "bundlers:false": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
-      "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
-    },
-    "snipers:false": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
-      "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
-    },
-    "venue:unknown": {
-      "wins": 10,
-      "losses": 38,
-      "totalMult": 55.47067075968721,
-      "peakMults": [],
-      "winRate": 21,
-      "avgMult": 5.5,
-      "sampleSize": 48
-    },
-    "lpBucket:none": {
-      "wins": 10,
-      "losses": 38,
-      "totalMult": 55.47067075968721,
-      "peakMults": [],
-      "winRate": 21,
-      "avgMult": 5.5,
-      "sampleSize": 48
-    },
-    "holderBucket:few": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
-      "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
-    },
-    "liqBucket:deep": {
-      "wins": 12,
-      "losses": 39,
-      "totalMult": 66.90659306732627,
-      "peakMults": [],
-      "winRate": 24,
-      "avgMult": 5.6,
-      "sampleSize": 51
-    },
-    "source:trending_pools": {
-      "wins": 2,
-      "losses": 1,
-      "totalMult": 11.435922307639064,
-      "peakMults": [],
-      "winRate": 67,
-      "avgMult": 5.7,
-      "sampleSize": 3
-    },
-    "locked:true": {
-      "wins": 2,
-      "losses": 1,
-      "totalMult": 11.435922307639064,
-      "peakMults": [],
-      "winRate": 67,
-      "avgMult": 5.7,
-      "sampleSize": 3
-    },
-    "rugBucket:safe": {
-      "wins": 2,
-      "losses": 1,
-      "totalMult": 11.435922307639064,
-      "peakMults": [],
-      "winRate": 67,
-      "avgMult": 5.7,
-      "sampleSize": 3
-    },
-    "venue:pumpswap": {
-      "wins": 2,
-      "losses": 1,
-      "totalMult": 11.435922307639064,
-      "peakMults": [],
-      "winRate": 67,
-      "avgMult": 5.7,
-      "sampleSize": 3
-    },
-    "lpBucket:full": {
-      "wins": 2,
-      "losses": 1,
-      "totalMult": 11.435922307639064,
-      "peakMults": [],
-      "winRate": 67,
-      "avgMult": 5.7,
-      "sampleSize": 3
-    },
-    "fdvBucket:micro": {
-      "wins": 3,
-      "losses": 12,
-      "totalMult": 8.20596323900645,
+      "wins": 9,
+      "losses": 36,
+      "totalMult": 30.647755604623196,
       "peakMults": [],
       "winRate": 20,
-      "avgMult": 2.7,
-      "sampleSize": 15
+      "avgMult": 3.4,
+      "sampleSize": 45
+    },
+    "rugBucket:risky": {
+      "wins": 11,
+      "losses": 57,
+      "totalMult": 107.68962348110502,
+      "peakMults": [],
+      "winRate": 16,
+      "avgMult": 9.8,
+      "sampleSize": 68
+    },
+    "bundlers:false": {
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
+      "peakMults": [],
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
+    },
+    "snipers:false": {
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
+      "peakMults": [],
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
+    },
+    "venue:unknown": {
+      "wins": 11,
+      "losses": 57,
+      "totalMult": 107.68962348110502,
+      "peakMults": [],
+      "winRate": 16,
+      "avgMult": 9.8,
+      "sampleSize": 68
+    },
+    "lpBucket:none": {
+      "wins": 11,
+      "losses": 58,
+      "totalMult": 107.68962348110502,
+      "peakMults": [],
+      "winRate": 16,
+      "avgMult": 9.8,
+      "sampleSize": 69
+    },
+    "holderBucket:few": {
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
+      "peakMults": [],
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
+    },
+    "liqBucket:deep": {
+      "wins": 14,
+      "losses": 59,
+      "totalMult": 123.33053521825548,
+      "peakMults": [],
+      "winRate": 19,
+      "avgMult": 8.8,
+      "sampleSize": 73
+    },
+    "source:trending_pools": {
+      "wins": 3,
+      "losses": 2,
+      "totalMult": 15.640911737150471,
+      "peakMults": [],
+      "winRate": 60,
+      "avgMult": 5.2,
+      "sampleSize": 5
+    },
+    "locked:true": {
+      "wins": 3,
+      "losses": 1,
+      "totalMult": 15.640911737150471,
+      "peakMults": [],
+      "winRate": 75,
+      "avgMult": 5.2,
+      "sampleSize": 4
+    },
+    "rugBucket:safe": {
+      "wins": 3,
+      "losses": 1,
+      "totalMult": 15.640911737150471,
+      "peakMults": [],
+      "winRate": 75,
+      "avgMult": 5.2,
+      "sampleSize": 4
+    },
+    "venue:pumpswap": {
+      "wins": 3,
+      "losses": 2,
+      "totalMult": 15.640911737150471,
+      "peakMults": [],
+      "winRate": 60,
+      "avgMult": 5.2,
+      "sampleSize": 5
+    },
+    "lpBucket:full": {
+      "wins": 3,
+      "losses": 1,
+      "totalMult": 15.640911737150471,
+      "peakMults": [],
+      "winRate": 75,
+      "avgMult": 5.2,
+      "sampleSize": 4
+    },
+    "fdvBucket:micro": {
+      "wins": 4,
+      "losses": 19,
+      "totalMult": 29.570294531000524,
+      "peakMults": [],
+      "winRate": 17,
+      "avgMult": 7.4,
+      "sampleSize": 23
     },
     "fdvBucket:mid": {
       "wins": 1,
-      "losses": 3,
-      "totalMult": 32.79637153882231,
+      "losses": 4,
+      "totalMult": 63.11248508263177,
       "peakMults": [],
-      "winRate": 25,
-      "avgMult": 32.8,
-      "sampleSize": 4
+      "winRate": 20,
+      "avgMult": 63.1,
+      "sampleSize": 5
+    },
+    "rugBucket:ok": {
+      "wins": 0,
+      "losses": 1,
+      "totalMult": 0,
+      "peakMults": [],
+      "winRate": 0,
+      "avgMult": 1,
+      "sampleSize": 1
     }
   },
   "weights": {
-    "source:boosted": -29,
-    "sourceCount:1": -26,
-    "socialScore:0": -26,
-    "hasWebsite:false": -26,
-    "hasTwitter:false": -26,
-    "locked:false": -29,
-    "top10Bucket:clean": -26,
-    "fdvBucket:small": -25,
-    "rugBucket:risky": -29,
-    "bundlers:false": -26,
-    "snipers:false": -26,
-    "venue:unknown": -29,
-    "lpBucket:none": -29,
-    "holderBucket:few": -26,
-    "liqBucket:deep": -26,
-    "source:trending_pools": 17,
-    "locked:true": 17,
-    "rugBucket:safe": 17,
-    "venue:pumpswap": 17,
-    "lpBucket:full": 17,
-    "fdvBucket:micro": -30,
-    "fdvBucket:mid": -25
+    "source:boosted": -34,
+    "sourceCount:1": -31,
+    "socialScore:0": -31,
+    "hasWebsite:false": -31,
+    "hasTwitter:false": -31,
+    "locked:false": -34,
+    "top10Bucket:clean": -31,
+    "fdvBucket:small": -30,
+    "rugBucket:risky": -34,
+    "bundlers:false": -31,
+    "snipers:false": -31,
+    "venue:unknown": -34,
+    "lpBucket:none": -34,
+    "holderBucket:few": -31,
+    "liqBucket:deep": -31,
+    "source:trending_pools": 10,
+    "locked:true": 25,
+    "rugBucket:safe": 25,
+    "venue:pumpswap": 10,
+    "lpBucket:full": 25,
+    "fdvBucket:micro": -33,
+    "fdvBucket:mid": -30,
+    "rugBucket:ok": -50
   },
-  "totalAnalyzed": 51,
+  "totalAnalyzed": 73,
   "crossRef": {
     "boosted+fdv:not_micro": {
       "wins": 7,
-      "losses": 27,
-      "winRate": 21,
-      "sampleSize": 34
+      "losses": 39,
+      "winRate": 15,
+      "sampleSize": 46
     },
     "boosted+locked:false": {
-      "wins": 10,
-      "losses": 38,
-      "winRate": 21,
-      "sampleSize": 48
+      "wins": 11,
+      "losses": 57,
+      "winRate": 16,
+      "sampleSize": 68
     },
     "boosted+rug:bad": {
-      "wins": 10,
-      "losses": 38,
-      "winRate": 21,
-      "sampleSize": 48
+      "wins": 11,
+      "losses": 57,
+      "winRate": 16,
+      "sampleSize": 68
     },
     "boosted+lp:unlocked": {
-      "wins": 10,
-      "losses": 38,
-      "winRate": 21,
-      "sampleSize": 48
+      "wins": 11,
+      "losses": 57,
+      "winRate": 16,
+      "sampleSize": 68
     },
     "fdv:not_micro+lp:unlocked": {
       "wins": 7,
-      "losses": 27,
-      "winRate": 21,
-      "sampleSize": 34
+      "losses": 40,
+      "winRate": 15,
+      "sampleSize": 47
     },
     "rug:bad+locked:false": {
-      "wins": 10,
-      "losses": 38,
-      "winRate": 21,
-      "sampleSize": 48
+      "wins": 11,
+      "losses": 57,
+      "winRate": 16,
+      "sampleSize": 68
     },
     "trending_pools+fdv:not_micro": {
-      "wins": 2,
-      "losses": 0,
-      "winRate": 100,
-      "sampleSize": 2
+      "wins": 3,
+      "losses": 1,
+      "winRate": 75,
+      "sampleSize": 4
     },
     "trending_pools+locked:true": {
-      "wins": 2,
+      "wins": 3,
       "losses": 1,
-      "winRate": 67,
-      "sampleSize": 3
+      "winRate": 75,
+      "sampleSize": 4
     },
     "trending_pools+rug:ok": {
-      "wins": 2,
-      "losses": 1,
-      "winRate": 67,
-      "sampleSize": 3
+      "wins": 3,
+      "losses": 2,
+      "winRate": 60,
+      "sampleSize": 5
     },
     "trending_pools+lp:locked": {
-      "wins": 2,
+      "wins": 3,
       "losses": 1,
-      "winRate": 67,
-      "sampleSize": 3
+      "winRate": 75,
+      "sampleSize": 4
     },
     "fdv:not_micro+lp:locked": {
-      "wins": 2,
+      "wins": 3,
       "losses": 0,
       "winRate": 100,
-      "sampleSize": 2
-    },
-    "rug:ok+locked:true": {
-      "wins": 2,
-      "losses": 1,
-      "winRate": 67,
       "sampleSize": 3
     },
-    "boosted+fdv:micro": {
+    "rug:ok+locked:true": {
       "wins": 3,
-      "losses": 11,
-      "winRate": 21,
-      "sampleSize": 14
+      "losses": 1,
+      "winRate": 75,
+      "sampleSize": 4
+    },
+    "boosted+fdv:micro": {
+      "wins": 4,
+      "losses": 18,
+      "winRate": 18,
+      "sampleSize": 22
     },
     "fdv:micro+lp:unlocked": {
-      "wins": 3,
-      "losses": 11,
-      "winRate": 21,
-      "sampleSize": 14
+      "wins": 4,
+      "losses": 18,
+      "winRate": 18,
+      "sampleSize": 22
     },
     "trending_pools+fdv:micro": {
       "wins": 0,
@@ -321,41 +331,59 @@
       "losses": 1,
       "winRate": 0,
       "sampleSize": 1
+    },
+    "trending_pools+locked:false": {
+      "wins": 0,
+      "losses": 1,
+      "winRate": 0,
+      "sampleSize": 1
+    },
+    "trending_pools+lp:unlocked": {
+      "wins": 0,
+      "losses": 1,
+      "winRate": 0,
+      "sampleSize": 1
+    },
+    "rug:ok+locked:false": {
+      "wins": 0,
+      "losses": 1,
+      "winRate": 0,
+      "sampleSize": 1
     }
   },
   "failureProfile": {
-    "fdv": 89482,
+    "fdv": 87984,
     "rugScore": 2,
-    "lpPct": 3,
+    "lpPct": 2,
     "holders": 0,
     "top10Pct": 0,
     "socialScore": 0,
-    "vol24h": 35415,
-    "liq": 25354,
-    "sampleSize": 39
+    "vol24h": 47379,
+    "liq": 25184,
+    "sampleSize": 59
   },
   "winnerProfile": {
-    "fdv": 103752,
-    "rugScore": 15,
-    "lpPct": 17,
+    "fdv": 101208,
+    "rugScore": 19,
+    "lpPct": 21,
     "holders": 0,
     "top10Pct": 0,
     "socialScore": 0,
-    "vol24h": 716107,
-    "liq": 26741,
-    "sampleSize": 12
+    "vol24h": 957435,
+    "liq": 26664,
+    "sampleSize": 14
   },
-  "overallHitRate": 24,
+  "overallHitRate": 19,
   "hitRateBySource": {
     "boosted": {
-      "wins": 10,
-      "total": 48,
-      "hitRate": 21
+      "wins": 11,
+      "total": 68,
+      "hitRate": 16
     },
     "trending_pools": {
-      "wins": 2,
-      "total": 3,
-      "hitRate": 67
+      "wins": 3,
+      "total": 5,
+      "hitRate": 60
     }
   }
 }

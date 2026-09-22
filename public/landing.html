@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Familjen+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="/assets/ui/hero-nexus.png">
+<link rel="preload" as="image" href="/assets/ui/grid-deep.png">
 <style>
   :root{
     --void:#060710; --void2:#0b0d1a; --panel:#0e1124; --line:#1b2140;
@@ -143,6 +145,13 @@
   .agrow .pct{ font-family:var(--mono); font-size:13px; text-align:right; }
   .agrow .snip{ grid-column:2/4; font-size:13px; color:var(--mut); line-height:1.5; border-left:2px solid var(--line); padding-left:10px; margin-top:2px; }
   @media(max-width:560px){ .agrow{ grid-template-columns:60px 1fr 38px; } }
+  /* ══ smoothness: skip off-screen layout/paint; respect reduced-motion ══ */
+  .loop,.council,.live,.brain,.proof,.band{ content-visibility:auto; contain-intrinsic-size:auto 760px; }
+  @media (prefers-reduced-motion: reduce){
+    .track{ animation:none; }
+    .scrollhint::after{ animation:none; }
+    .rv{ opacity:1 !important; transform:none !important; }
+  }
 </style>
 <script src="/sw-heal.js"></script>
 </head>
@@ -265,7 +274,14 @@ const ARCH = [
 const NAMES = { 'street-deity':'Street Deity','gaia-link':'Gaia-Link' };
 const card = (id,role)=>`<a class="agent" href="/forge.html"><div class="img" style="background-image:url('/api/forge/art/arch-${id}.png')"></div>
   <div class="meta"><div class="nm">${NAMES[id]||id.charAt(0).toUpperCase()+id.slice(1)}</div><div class="role">${role}</div></div></a>`;
-document.getElementById('track').innerHTML = (ARCH.map(a=>card(a[0],a[1])).join('')).repeat(2);
+let _trackBuilt=false;
+function buildTrack(){ if(_trackBuilt)return; _trackBuilt=true;
+  const t=document.getElementById('track'); if(t) t.innerHTML=(ARCH.map(a=>card(a[0],a[1])).join('')).repeat(2);
+}
+// 16 archetype images ≈2.4MB — build the marquee only when the roster nears the viewport
+(function lazyMarquee(){ const m=document.querySelector('.marquee'); if(!m){ buildTrack(); return; }
+  const mo=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ buildTrack(); mo.disconnect(); } }),{rootMargin:'500px'});
+  mo.observe(m); })();
 
 // scroll reveals
 const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold:.15 });
@@ -273,15 +289,22 @@ document.querySelectorAll('.rv:not(.in)').forEach(el=>io.observe(el));
 
 /* ── real data: live Render cloud API (no localhost) ── */
 const CLOUD='https://shaddai-g81x.onrender.com';
+const idle=(fn)=>{ if('requestIdleCallback' in window && window.requestIdleCallback) window.requestIdleCallback(()=>fn(),{timeout:2000}); else setTimeout(fn,1500); };
 async function apiFetch(p,o){
-  const r=await fetch(CLOUD+p,o);
-  if(!r.ok&&r.status>=500) throw new Error('HTTP '+r.status);
-  return r;
+  o=o||{};
+  if(!o.signal){
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),20000);
+    try{ o.signal=ctrl.signal; return await fetch(CLOUD+p,o); }
+    catch(e){ throw (e&&e.name==='AbortError')?new Error('timeout') : e; }
+    finally{ clearTimeout(t); }
+  }
+  return fetch(CLOUD+p,o);
 }
 
-// live AURA savings in the proof stat
-apiFetch('/api/aura/stats').then(r=>r.json()).then(s=>{ const el=document.getElementById('auraNum');
-  if(el) el.textContent = '$'+(s.costSavedUsd!=null? Number(s.costSavedUsd).toFixed(4) : '0'); }).catch(()=>{});
+// live AURA savings in the proof stat — idle so it never contends with first paint
+idle(()=>apiFetch('/api/aura/stats').then(r=>r.json()).then(s=>{ const el=document.getElementById('auraNum');
+  if(el) el.textContent = '$'+(s.costSavedUsd!=null? Number(s.costSavedUsd).toFixed(4) : '0'); }).catch(()=>{}));
 
 /* ── helpers ── */
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -360,9 +383,12 @@ async function askBrain(q){
 }
 document.getElementById('bq').addEventListener('keydown',e=>{if(e.key==='Enter')askBrain();});
 document.getElementById('bqGo').addEventListener('click',()=>askBrain());
-loadSignals();
-setInterval(loadSignals,30000);
-askBrain('AI agents and market intelligence');
+idle(()=>loadSignals());
+setInterval(()=>{ if(!document.hidden) loadSignals(); },30000);
+// the ~8s brain demo runs only when the reader reaches that section, not on load
+(function lazyBrain(){ const b=document.getElementById('brain'); if(!b){ askBrain('AI agents and market intelligence'); return; }
+  const bo=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ bo.disconnect(); askBrain('AI agents and market intelligence'); } }),{rootMargin:'400px'});
+  bo.observe(b); })();
 </script>
 </body>
 </html>

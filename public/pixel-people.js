@@ -48,6 +48,43 @@ window.PixelPeople = (function () {
   }
   loadCatalog(); // fire on module load — accessories before the catalog arrives simply don't draw yet
 
+  // ---- proportional accessory overlays ----
+  // Accessories are sized as a fraction of the character's OWN height and anchored to its
+  // live body box, so the same catalog reads correctly on any rig — the code-drawn classic
+  // & voxel kits AND the painted sprites (previously sprites returned before accessories
+  // drew at all, and code rigs got tiny fixed-author-scale floats that never sat on the
+  // body). Layouts are tuned like a classic MMO wardrobe: helms crown the head, weapons
+  // hang from the hand, pets heel, wings spread behind. Anchor y is a fraction of height
+  // below the head-top (0=top, 1=feet); m: 'bottom' = item sits on the point (rises up),
+  // 'top' = hangs from the point (extends down), 'center' = centred on the point.
+  const ACC_ORDER = ['wings','hat','mask','weapon','pet'];
+  const ACC_LAYOUT = { hat:{s:0.72,x:0.00,m:'bottom',y:0.02},
+    mask:{s:0.46,x:0.00,m:'center',y:0.60}, weapon:{s:1.00,x:0.38,m:'top',y:0.42},
+    pet:{s:0.44,x:-0.52,m:'center',y:0.16}, wings:{s:1.28,x:0.00,m:'center',y:0.46} };
+  function overlayAccessories(c, rig, top, feet, cx, charH, slots) {
+    if(!_catalog || !rig.accessories) return;
+    const H = Math.max(1, feet - top);
+    const set = slots || ACC_ORDER;
+    const wasSmooth = c.imageSmoothingEnabled; c.imageSmoothingEnabled = true;
+    for(let si=0; si<set.length; si++){
+      const id = rig.accessories[set[si]]; if(!id) continue;
+      const item = _catalog[id]; if(!item) continue;
+      const img = getImg(item.imageFile);
+      if(!img.complete || !img.naturalWidth) continue;
+      const Lg = ACC_LAYOUT[item.slot] || ACC_LAYOUT.hat;
+      const fit = Math.max(img.naturalWidth, img.naturalHeight);
+      const sc = (Lg.s * H) / fit, dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+      const posY = top + Lg.y * H;
+      const dy = Lg.m === 'bottom' ? posY - dh : (Lg.m === 'top' ? posY : posY - dh / 2);
+      const dx = cx + Lg.x * H - dw / 2;
+      c.save(); c.globalAlpha = 0.30;                       // soft drop shadow (depth behind the body-ground)
+      c.drawImage(img, Math.round(dx) + 1, Math.round(dy) + 1, dw, dh);
+      c.restore();
+      c.drawImage(img, Math.round(dx), Math.round(dy), dw, dh);
+    }
+    c.imageSmoothingEnabled = wasSmooth;
+  }
+
   function shade(hex, amt) {
     const n = parseInt(hex.slice(1), 16); let r = (n>>16)&255, g = (n>>8)&255, b = n&255;
     const f = amt<0?0:255, t = Math.abs(amt);
@@ -100,6 +137,7 @@ window.PixelPeople = (function () {
     const VO = isVoxel ? { edge:true, voxel:true } : E;         // flat, harder-shaded faces for the voxel kit
     const [cx,cy]=iso(0,0);
     ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(cx,cy+3,14,6,0,0,7);ctx.fill();
+    if(rig.accessories && _catalog) overlayAccessories(ctx, rig, -(47 + L), 3, 0, 50 + L*0.2, ['wings']);
     armPart(col+0.18+str,row-0.18+str,sleeve,skin,L,{short:rig.short,watch:rig.watch,vox:isVoxel});
     if(rig.dress){shoePart(col-0.02,row+0.02,'heel',shoe,L,isVoxel);shoePart(col+0.02,row-0.02,'heel',shoe,L,isVoxel);boxL(col,row,0.5*VS,0.4*VS,13,rig.dress,3+L,VO);boxL(col,row,0.36*VS,0.26*VS,12,rig.dress,16+L,VO);}
     else{for(const g of [[-0.08,0.08,1],[0.08,-0.08,-1]]){const c=col+g[0]+str*g[2],r=row+g[1]+str*g[2];shoePart(c,r,rig.shoeStyle,shoe,L,isVoxel);boxL(c,r,0.13*VS,0.13*VS,6,pants,4+L,VO);}
@@ -142,24 +180,11 @@ window.PixelPeople = (function () {
       ctx.fillStyle=shade(skin,-0.34);ctx.fillRect(fx-2,ey+7,4,1);ctx.fillRect(fx-3,ey+6,1,1);ctx.fillRect(fx+2,ey+6,1,1); // mouth corners turn the flat line into a slight smile
       if(rig.glasses){ctx.strokeStyle='#0e1116';ctx.lineWidth=1.4;ctx.strokeRect(fx-6,ey-1,5,5);ctx.strokeRect(fx+2,ey-1,5,5);ctx.beginPath();ctx.moveTo(fx-1,ey+1);ctx.lineTo(fx+2,ey+1);ctx.stroke();}
     }
-    // ---- accessory image overlays (fal assets, catalog-driven) — anchored to the rig's
-    // live animated coordinates (cx/cy + the walk-bob L), so cosmetics move WITH the walk
-    // cycle like every procedural cosmetic does today, never a static screen offset. ----
-    if(rig.accessories && _catalog){
-      const order = ['wings','hat','mask','weapon','pet'];   // wings behind, hat/pet on top
-      const wasSmooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true;
-      for(let si=0; si<order.length; si++){
-        const id = rig.accessories[order[si]]; if(!id) continue;
-        const item = _catalog[id]; if(!item) continue;
-        const img = getImg(item.imageFile);
-        if(!img.complete || !img.naturalWidth) continue;
-        const sc = item.imgScale || 0.5, dw = img.naturalWidth*sc, dh = img.naturalHeight*sc;
-        const ox = (item.anchorOffset && item.anchorOffset.x) || 0;
-        const oy = (item.anchorOffset && item.anchorOffset.y) || 0;
-        ctx.drawImage(img, Math.round(ox - dw/2), Math.round(-(25 + L) + oy - dh/2), dw, dh);
-      }
-      ctx.imageSmoothingEnabled = wasSmooth;
-    }
+    // ---- accessory image overlays — sized + anchored PROPORTIONALLY to the rig's live
+    // body box (head-top .. feet, centre), so every cosmetic sits ON the forged character
+    // (classic + voxel kits) instead of a fixed tiny author-scale float. Wings already drew
+    // behind the body in the pre-pass above; hat/mask/weapon/pet land on top here. ----
+    if(rig.accessories && _catalog) overlayAccessories(ctx, rig, -(47 + L), 3, 0, 50 + L*0.2, ['hat','mask','weapon','pet']);
   }
 
   // ---- painted rig sprites (Council + Citizens) ----
@@ -188,6 +213,9 @@ window.PixelPeople = (function () {
     _ctx.translate(Math.round(sx), Math.round(sy));
     if (rig.flip) _ctx.scale(-1, 1);
     _ctx.drawImage(clip, f * s.cell, 0, s.cell, s.cell, -s.centerX * k, -s.footY * k + bob, dw, dh);
+    // painted sprites carry accessories too — anchored to the sprite's own body box
+    // (feet=0, head-top = -footY*k) so the same catalog sits ON the painted character.
+    overlayAccessories(_ctx, rig, (-s.footY * k) + bob, 0, -s.centerX * k, s.footY * k);
     _ctx.restore(); return true;
   }
   // load the sprite index once; harmless if absent (voxel fallback keeps working)

@@ -120,7 +120,7 @@ async function main() {
     console.log(`▶ meshy v6 pipeline for "${name}" -- $0.80 (mesh + T-pose + rig + animation, ${heightM} m)`);
     const input = {
       image_url: dataUri(imagePath), pose_mode: 't-pose', enable_rigging: true, rigging_height_meters: heightM,
-      enable_pbr: true, symmetry_mode: 'auto', enable_animation: !!actionIds, target_polycount: 30000,
+      enable_pbr: true, symmetry_mode: 'auto', enable_animation: !!actionIds, target_polycount: parseInt(process.env.M6_POLY || '30000', 10),
     };
     if (actionIds) input.animation_action_id = actionIds[0];
     // --static : buildings/props/landmarks -- no rig, no T-pose (OUTDIR env chooses the folder)

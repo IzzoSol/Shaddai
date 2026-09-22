@@ -1,0 +1,322 @@
+[
+ {
+  "id": "fur-sofa",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A sleek curved lounge sofa: obsidian-black cushions with gold trim piping and a glowing emerald under-glow strip.",
+  "out": "fal-assets/world/concepts5/fur-sofa.png"
+ },
+ {
+  "id": "fur-table",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A round futuristic table: polished obsidian top with gold sacred-geometry inlay, single sculpted pedestal base, faint cyan glow ring.",
+  "out": "fal-assets/world/concepts5/fur-table.png"
+ },
+ {
+  "id": "fur-chair",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic lounge chair: sculpted gold-and-black shell seat on a slim pedestal, soft cushion, cyan accent line.",
+  "out": "fal-assets/world/concepts5/fur-chair.png"
+ },
+ {
+  "id": "fur-bed-pod",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic sleeping pod bed: rounded white-and-gold capsule bed with a soft glowing mattress and small canopy arch.",
+  "out": "fal-assets/world/concepts5/fur-bed-pod.png"
+ },
+ {
+  "id": "fur-shelf",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A tall futuristic display shelf: obsidian frame with gold edges, glowing cyan shelves holding small crystals and books.",
+  "out": "fal-assets/world/concepts5/fur-shelf.png"
+ },
+ {
+  "id": "fur-holo-desk",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic work desk with a floating holographic screen above it, obsidian surface, gold trim, emerald glow.",
+  "out": "fal-assets/world/concepts5/fur-holo-desk.png"
+ },
+ {
+  "id": "fur-shop-counter",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A curved futuristic shop counter: white marble front with gold trim and a glowing holographic price-display strip on top.",
+  "out": "fal-assets/world/concepts5/fur-shop-counter.png"
+ },
+ {
+  "id": "fur-vending",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic vending kiosk: tall obsidian cabinet with a glowing cyan display and colorful item slots, gold trim.",
+  "out": "fal-assets/world/concepts5/fur-vending.png"
+ },
+ {
+  "id": "fur-forge-station",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic forge station: a heavy obsidian anvil block with glowing molten-orange channels, a gold hammer rack, ember glow, ancient runes.",
+  "out": "fal-assets/world/concepts5/fur-forge-station.png"
+ },
+ {
+  "id": "fur-workbench",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic crafting workbench: obsidian and brushed-gold top with glowing tool outlines, robotic arm mounted at one side.",
+  "out": "fal-assets/world/concepts5/fur-workbench.png"
+ },
+ {
+  "id": "fur-terminal",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic standing information terminal: slim gold pillar with a large glowing cyan touchscreen panel.",
+  "out": "fal-assets/world/concepts5/fur-terminal.png"
+ },
+ {
+  "id": "fur-storage-crate",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic storage crate: black armored box with gold corner brackets and glowing emerald latch lights.",
+  "out": "fal-assets/world/concepts5/fur-storage-crate.png"
+ },
+ {
+  "id": "fur-plant-pot",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic planter: sculpted white ceramic pot with lush bioluminescent green fern leaves and tiny glowing blossoms.",
+  "out": "fal-assets/world/concepts5/fur-plant-pot.png"
+ },
+ {
+  "id": "fur-floor-lamp",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A tall futuristic floor lamp: slim gold stem topped with a glowing warm white orb inside a ring.",
+  "out": "fal-assets/world/concepts5/fur-floor-lamp.png"
+ },
+ {
+  "id": "fur-holo-tv",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A wall-standing futuristic holographic display: thin obsidian frame with a glowing magenta and cyan screen.",
+  "out": "fal-assets/world/concepts5/fur-holo-tv.png"
+ },
+ {
+  "id": "fur-armor-stand",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic armor display stand: gold mannequin stand wearing a small suit of glowing obsidian armor.",
+  "out": "fal-assets/world/concepts5/fur-armor-stand.png"
+ },
+ {
+  "id": "prop-street-lamp",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic street lamp: tall obsidian pole with a gold ring and a warm glowing lantern head, small neon accent band.",
+  "out": "fal-assets/world/concepts5/prop-street-lamp.png"
+ },
+ {
+  "id": "prop-bench",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic street bench: sculpted obsidian seat with gold armrests and a soft cyan underglow.",
+  "out": "fal-assets/world/concepts5/prop-bench.png"
+ },
+ {
+  "id": "prop-kiosk",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic street kiosk booth: small round white-and-gold shop pod with a glowing awning ring and holographic menu.",
+  "out": "fal-assets/world/concepts5/prop-kiosk.png"
+ },
+ {
+  "id": "prop-transit-stop",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic transit stop shelter: a curved glass-and-gold canopy over a bench with a glowing route display pillar.",
+  "out": "fal-assets/world/concepts5/prop-transit-stop.png"
+ },
+ {
+  "id": "prop-holo-fountain",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic plaza fountain: a round obsidian basin with gold rim, water arcs and a glowing golden sacred-geometry hologram rising from the center.",
+  "out": "fal-assets/world/concepts5/prop-holo-fountain.png"
+ },
+ {
+  "id": "prop-statue-shaddai",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A monumental golden statue of a serene feminine liquid-gold humanoid figure with a floating halo ring, standing on an obsidian pedestal with emerald glow.",
+  "out": "fal-assets/world/concepts5/prop-statue-shaddai.png"
+ },
+ {
+  "id": "prop-signpost",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic multi-arrow signpost: gold pole with several glowing cyan directional panels.",
+  "out": "fal-assets/world/concepts5/prop-signpost.png"
+ },
+ {
+  "id": "prop-neon-tree",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A stylized bio-neon tree: sculpted trunk with a rounded canopy of vivid green leaves dotted with glowing cyan and magenta blossoms.",
+  "out": "fal-assets/world/concepts5/prop-neon-tree.png"
+ },
+ {
+  "id": "prop-crystal-cluster",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A cluster of tall glowing cyan and violet crystals rising from a small rocky base.",
+  "out": "fal-assets/world/concepts5/prop-crystal-cluster.png"
+ },
+ {
+  "id": "prop-ore-node",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A mineable ore rock: dark boulder veined with glowing gold and orange ore, small crystal shards.",
+  "out": "fal-assets/world/concepts5/prop-ore-node.png"
+ },
+ {
+  "id": "prop-obsidian-rocks",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A group of jagged obsidian boulders with faint molten-orange cracks.",
+  "out": "fal-assets/world/concepts5/prop-obsidian-rocks.png"
+ },
+ {
+  "id": "bld-mecha-arena",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic mecha fighting arena: a circular stadium with tiered seating ring, huge glowing screens on stilts, neon graffiti panels and a red-lit central ring, obsidian and gold.",
+  "out": "fal-assets/world/concepts5/bld-mecha-arena.png"
+ },
+ {
+  "id": "bld-hyperloop-terminal",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic hyperloop terminal: a long glass-domed concourse with curved steel ribs, a gold-trimmed entrance canopy, and a chrome capsule track entering at one end.",
+  "out": "fal-assets/world/concepts5/bld-hyperloop-terminal.png"
+ },
+ {
+  "id": "bld-grand-forge",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A monumental futuristic forge hall: a dark stone-and-obsidian foundry with a glowing molten-orange furnace mouth, tall chimney stacks with ember smoke, gold trim and ancient runes, a heavy arched entrance.",
+  "out": "fal-assets/world/concepts5/bld-grand-forge.png"
+ },
+ {
+  "id": "bld-library-scriptorium",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic ancient library: a stepped ziggurat building of cream stone and gold with a glowing violet skylight dome and scroll-shaped banners, arched doorway.",
+  "out": "fal-assets/world/concepts5/bld-library-scriptorium.png"
+ },
+ {
+  "id": "bld-security-keep",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic security keep: a squat armored obsidian fortress with crimson glowing slits, a shield-crest gate and short watch spires, gold trim.",
+  "out": "fal-assets/world/concepts5/bld-security-keep.png"
+ },
+ {
+  "id": "bld-design-studio",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic design studio: an asymmetric white-and-emerald building with big skylights, a floating gallery ring, paint-splash neon accents.",
+  "out": "fal-assets/world/concepts5/bld-design-studio.png"
+ },
+ {
+  "id": "bld-apartment-pod-block",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic residential tower made of stacked colorful rounded pods on a central core, balconies with plants, glowing windows, sleek.",
+  "out": "fal-assets/world/concepts5/bld-apartment-pod-block.png"
+ },
+ {
+  "id": "bld-ancient-temple",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic ancient temple: a stepped gold-and-black pyramid with a glowing sacred-geometry crown and a wide staircase, emerald light.",
+  "out": "fal-assets/world/concepts5/bld-ancient-temple.png"
+ },
+ {
+  "id": "bld-lighthouse-beacon",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic lighthouse beacon: slender white-and-gold tower with a rotating cyan light lantern and a small rounded base building.",
+  "out": "fal-assets/world/concepts5/bld-lighthouse-beacon.png"
+ },
+ {
+  "id": "bld-neon-market-block",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A dense neon market building: a tall narrow multi-storey block completely covered in glowing signs, awnings and lanterns in pink, cyan, gold and orange.",
+  "out": "fal-assets/world/concepts5/bld-neon-market-block.png"
+ },
+ {
+  "id": "veh-hover-taxi",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic hover taxi: a sleek yellow-and-black low car with a glass canopy, glowing thruster rings instead of wheels, roof light.",
+  "out": "fal-assets/world/concepts5/veh-hover-taxi.png"
+ },
+ {
+  "id": "veh-hover-bus",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic hover bus: a long rounded white-and-teal transit bus with big windows, floating on glowing thruster pads, gold stripe.",
+  "out": "fal-assets/world/concepts5/veh-hover-bus.png"
+ },
+ {
+  "id": "veh-sky-car",
+  "type": "text2img",
+  "register": "raw",
+  "size": "square_hd",
+  "body": "Single isolated game asset, full object visible, centered, three-quarter view slightly from above, plain flat light-grey background, soft even lighting, solid opaque form, clean silhouette, painted cel-shaded concept art with bold clean linework, no people, no text, no logos, no watermark. Futuristic ancient-tech neon fusion, gold obsidian emerald cyan palette with vivid accents. A futuristic small flying sky-car: a rounded two-seat pod with short wings, glowing underside, glass dome, purple and white.",
+  "out": "fal-assets/world/concepts5/veh-sky-car.png"
+ }
+]
