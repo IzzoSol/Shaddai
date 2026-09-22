@@ -200,3 +200,6 @@ _BACKUP-*/
 server/data/
 server/node_modules/
 
+
+backend/data/*.backup-*.json
+backend/data/*pre-repair-backup*
