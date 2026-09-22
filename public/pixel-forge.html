@@ -412,7 +412,20 @@ function hydrateFromOperative(op){
 // your saved character (kit, colors, name) or your equipped accessories.
 function loadSavedOperative(){
   var owner=localStorage.getItem('shd_userid');
-  if(!owner || owner.indexOf('guest')===0) return;
+  // Guests & offline: there is no account scoped operative yet, but the local player
+  // save (written by persistLook/pfForge) still holds the forged rig — restore it.
+  if(!owner || owner.indexOf('guest')===0){
+    try{
+      var lr=JSON.parse(localStorage.getItem('shaddai.player')||'null');
+      if(lr && lr.rig && typeof lr.rig==='object' && Object.keys(lr.rig).length>1){
+        rig=Object.assign({},rig,JSON.parse(JSON.stringify(lr.rig)));
+        var ni=document.getElementById('nameIn');
+        if(ni && (ni.value||'')==='' && lr.name) ni.value=lr.name;
+        try{ buildKits(); syncUI(); buildAccs(); }catch(_){}
+      }
+    }catch(_){}
+    return;
+  }
   fetch('/api/operatives?owner='+encodeURIComponent(owner),{cache:'no-store'})
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -432,6 +445,13 @@ function loadSavedOperative(){
 // Persist the current look (kit, colors, accessories) to the operative whenever the
 // player changes something — an equipped accessory survives the next visit.
 function persistLook(){
+  // Mirror to the local player save too, so guests/offline builds keep their kit + equips
+  // between visits even before an account-backed operative exists. game.html boots from
+  // this save, so swapping a hat here is how it actually shows up on the forged character.
+  try{
+    var nm=document.getElementById('nameIn'); nm=nm?(nm.value||'Traveler').slice(0,16):'Traveler';
+    localStorage.setItem('shaddai.player', JSON.stringify({name:nm, rig:JSON.parse(JSON.stringify(rig)), source:'forge'}));
+  }catch(_){}
   if(!myOperativeId) return;
   try{
     fetch('/api/operatives/'+myOperativeId,{method:'PATCH',headers:{'Content-Type':'application/json'},

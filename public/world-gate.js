@@ -75,7 +75,7 @@
       '<div class="foot">SHADDAI · private beta</div></div>';
     document.body.appendChild(g);
     document.documentElement.style.overflow = 'hidden';
-    if (force) { var cl = document.getElementById('shdWgClose'); if (cl) cl.onclick = function () { document.documentElement.style.overflow = ''; g.remove(); }; }
+    if (force) { var cl = document.getElementById('shdWgClose'); if (cl) cl.onclick = function () { document.documentElement.style.overflow = ''; g.remove(); try { document.dispatchEvent(new CustomEvent('shd:worldgate-close')); } catch (e) {} }; }
 
     document.getElementById('shdWgSignin').onclick = function () {
       // Sign-in lives on the dashboard; send them there and return here after.
@@ -99,6 +99,7 @@
             msg.style.color = '#00e5a0'; msg.textContent = d.userId ? 'Welcome back — save restored.' : 'Welcome in.';
             document.documentElement.style.overflow = '';
             var el = document.getElementById('shdWorldGate'); if (el) el.remove();
+            try { document.dispatchEvent(new CustomEvent('shd:worldgate-grant', { detail: { userId: d.userId || null } })); } catch (e) {}
           } else { msg.style.color = '#ff8fa3'; msg.textContent = (d && d.error === 'invalid code') ? 'That code isn\'t valid.' : (d && d.error) || 'Try again.'; }
         })
         .catch(function () { msg.style.color = '#ff8fa3'; msg.textContent = 'Network error — try again.'; });

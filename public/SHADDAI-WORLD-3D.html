@@ -4394,6 +4394,23 @@ function animate(){
 animate();
 // dev: overhead camera for screenshots — ?overhead=tx,tz overrides to a top-down view of that point
 { const _oh=new URLSearchParams(location.search).get('overhead'); if(_oh){ const p=_oh.split(',').map(Number); (function ohLoop(){ requestAnimationFrame(ohLoop); camera.position.set(p[0]||0, 95, (p[1]||0)+34); camera.lookAt(p[0]||0, 0, p[1]||0); })(); } }
+// studio deep-links — ?room=observatory|library|museum spawns the camera facing that hall
+// (used by the Athenaeum's "In the World" buttons). Override loop keeps the view pinned,
+// the same way ?overhead does for screenshots.
+{ const _rm=(new URLSearchParams(location.search).get('room')||'').toLowerCase();
+  if(_rm==='observatory'||_rm==='library'||_rm==='museum'){
+    const _L3=window.WORLD_LAYOUT||{};
+    const _sec3=(c)=>(_L3.sector&&_L3.sector(c)&&_L3.sector(c).pos)||null;
+    const _or=_sec3('ORACLE'), _qu=_sec3('QUILL'), _tu=_sec3('TURTLE');
+    const ROOMS={
+      observatory:{ look:[(_or&&_or[0])||260,20,(_or&&_or[1])||0],  cam:[((_or&&_or[0])||260)-50,42,((_or&&_or[1])||0)+24]  },
+      library:    { look:[(_qu&&_qu[0])||130,8,(_qu&&_qu[1])||225], cam:[((_qu&&_qu[0])||130)-32,26,((_qu&&_qu[1])||225)+27] },
+      museum:     { look:[(_tu&&_tu[0])||130,8,(_tu&&_tu[1])||-225],cam:[((_tu&&_tu[0])||130)-32,26,((_tu&&_tu[1])||-225)-27] },
+    };
+    const _R=ROOMS[_rm];
+    camera.position.set(_R.cam[0],_R.cam[1],_R.cam[2]); camera.lookAt(_R.look[0],_R.look[1],_R.look[2]);
+    (function rmLoop(){ requestAnimationFrame(rmLoop); camera.position.set(_R.cam[0],_R.cam[1],_R.cam[2]); camera.lookAt(_R.look[0],_R.look[1],_R.look[2]); })();
+  } }
 
 addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); _applyQualityTier(_Q.tier); }); // _applyQualityTier calls renderer.setSize + composer.setSize at the correct physical resolution for the current tier
 </script>
