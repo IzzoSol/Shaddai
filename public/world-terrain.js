@@ -89,6 +89,30 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
       case 'void': // low swells
         h = h * 2.6 + swell * 1.4;
         break;
+      case 'ocean': {
+        // CRYSTAL SEA basin (handoff step 2): flat sea floor below the shader-water
+        // plane (world-ocean.js, water at y≈0.05), then a sandy shelf that rises past
+        // the waterline (~0.86·r) up to a beach crest at the rim, blending back to
+        // natural terrain. Mirrors the 2D beach realm's sand→water transition.
+        const oc  = biome.center, orr = biome.radius;
+        const dd  = Math.hypot(x - oc[0], z - oc[1]);
+        const inn = orr * 0.65;   // flat floor out to here
+        const rim = orr * 1.05;   // beach crest (above water)
+        if (dd <= inn)      h = -3.4;
+        else if (dd <= rim) h = -3.4 + 5.0 * smooth((dd - inn) / (rim - inn));
+        else                h = 1.6 + (h - 1.6) * smooth(Math.min(1, (dd - rim) / (orr * 0.3)));
+        // Gold-harbor sand pad (biome.dock): a level, walkable jetty plateau so the
+        // dock disc sits flush with the ground — and a dry sand spur reaching over
+        // the waterline, the natural boardwalk out to the moored boats.
+        if (biome.dock) {
+          const dp = Math.hypot(x - biome.dock[0], z - biome.dock[1]);
+          if (dp < 17) {
+            const t = dp <= 10 ? 0 : smooth((dp - 10) / 7);
+            h = Math.max(h, 1.78 - 0.4 * t);
+          }
+        }
+        break;
+      }
       default:      // 'grid' fringe / fallback — very gentle
         h = h * 1.6 + swell * 0.6;
         break;
@@ -226,6 +250,12 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
         // deep-purple flicker vs muted-blue swells
         const t = cn1 * 0.6 + cn3 * 0.4;
         dr = (t - 0.5) * 0.08; db = (t - 0.5) * 0.14;
+        break;
+      }
+      case 'ocean': {
+        // wet-sand ripple banding around the cove (reads as tide lines on the beach)
+        const band = Math.sin(x * 0.11 + z * 0.07) * 0.5 + 0.5;
+        dr = (band - 0.5) * 0.10; dg = (band - 0.5) * 0.05; db = -(band - 0.5) * 0.06;
         break;
       }
       default: break;

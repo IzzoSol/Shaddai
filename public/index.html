@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="theme-color" content="#00ff88">
-<script src="/state-scope.js?v=1"></script>
+<script src="/state-scope.js?v=2"></script>
 <!-- ── SEO / Bio ──────────────────────────────────────────────────────────── -->
 <meta name="description" content="SHADDAI is a sovereign AI agent empire — seven specialized agents and 200+ real, executable tools. Forge your own operatives, run autonomous workflows, explore a living 3D world, and power it all with your own free API key.">
 <meta name="keywords" content="SHADDAI, AI agents, AI agent marketplace, autonomous agents, agent forge, BYOK, Llama 70B, Groq, AI workflows, 3D agent world, sovereign AI">
@@ -75,7 +75,7 @@
         // Canonical sign-in flag, readable by every page (game, forge, rooms).
         try{ if(u){ localStorage.setItem('shd_signed_in','1'); if(u.email) localStorage.setItem('shd_email',u.email); if(u.displayName) localStorage.setItem('shd_displayName',u.displayName);
           // Unify identity: your account uid becomes shd_userid, so gallery/rooms/office follow your account across devices.
-          try{ var _uid=u.uid, _old=localStorage.getItem('shd_userid'); if(_uid){ if(_old&&_old!==_uid){ try{ var _r=localStorage.getItem('shaddai.rooms.'+_old); if(_r&&!localStorage.getItem('shaddai.rooms.'+_uid)) localStorage.setItem('shaddai.rooms.'+_uid,_r); }catch(_e){} } localStorage.setItem('shd_userid',_uid); } }catch(_e){}
+          try{ var _uid=u.uid, _old=localStorage.getItem('shd_userid'); if(_uid){ if(_old&&_old!==_uid){ try{ var _r=localStorage.getItem('shaddai.rooms.'+_old); if(_r&&!localStorage.getItem('shaddai.rooms.'+_uid)) localStorage.setItem('shaddai.rooms.'+_uid,_r); }catch(_e){} try{ if(window.__shdMergeIdentity) window.__shdMergeIdentity(_old,_uid); }catch(_e){} } localStorage.setItem('shd_userid',_uid); } }catch(_e){}
           // Monthly spark stipend: $30/month = 300 sparks
           try{ var _sparks = Number(localStorage.getItem('shd_sparks')||0||localStorage.getItem('shaddai.sparks')||0); localStorage.setItem('shd_sparks', _sparks + 300); }catch(_e){}
           // Dispatch storage event so nav updates immediately

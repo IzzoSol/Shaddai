@@ -1,0 +1,18 @@
+<!doctype html><meta charset=utf-8><title>d2</title><body style="background:#111;color:#ddd;font:11px monospace">
+<pre id=out>…</pre><iframe id=f style="width:1440px;height:900px;border:0"></iframe><script>
+try{localStorage.setItem('shaddai_onboarded','1');localStorage.setItem('shd_onboarded','true');localStorage.setItem('shd_skin_dock_min','1');localStorage.removeItem('shd_theme_skin');localStorage.setItem('shaddai_skin','glitch');}catch(e){}
+var f=document.getElementById('f'); f.src='/dashboard?t='+Date.now();
+f.onload=function(){setTimeout(function(){
+ var d=f.contentDocument,w=f.contentWindow,L=[];
+ var el=d.elementFromPoint?null:null;
+ // find the big tiles: look for elements whose text is AGENTS / FORGE
+ [].slice.call(d.querySelectorAll('*')).forEach(function(e){
+   var t=(e.textContent||'').trim();
+   if(t==='AGENTS'||t==='FORGE'||t==='WORKFLOWS'){ var p=e.closest('a,div,button');
+     for(var i=0;i<4&&p;i++){ L.push(t+' anc'+i+': <'+p.tagName+'> id='+p.id+' class='+p.className+' style="'+(p.getAttribute('style')||'').slice(0,180)+'"'); p=p.parentElement; }
+     L.push('---'); }
+ });
+ var tb=d.getElementById('topBar'); L.push('topBar class='+(tb&&tb.className)+' style='+(tb&&(tb.getAttribute('style')||'').slice(0,200)));
+ document.getElementById('out').textContent=L.slice(0,60).join('\n');
+},3500);};
+</script>

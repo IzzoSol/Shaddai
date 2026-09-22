@@ -2187,9 +2187,12 @@ requestAnimationFrame(loop);
 /* SHADDAI Game Boy deck: screen on top, controls underneath (D-pad left, A/B right, START/SELECT centre).
    Shows on touch devices and narrow windows while in the world/interiors. */
 (function(){
-  var DECK_H=200, deck=document.createElement('div'); deck.id='gbDeck';
+  /* v3 (owner 2026-09-21): "the gaming pad is in the way of the screen" — the 200px deck
+     ate half a landscape phone. Now: SLIM 132px deck, COLLAPSE handle (▲/▼, remembered),
+     and a RUN toggle (keys.shift = the x1.9 move speed). Brand + themes kept. */
+  var DECK_H=132, COL_H=26, deck=document.createElement('div'); deck.id='gbDeck';
   deck.style.cssText='position:fixed;left:0;right:0;bottom:0;height:'+DECK_H+'px;z-index:60;display:none;background:radial-gradient(120% 90% at 20% 20%,rgba(170,140,255,.55),rgba(76,44,150,.92) 60%,rgba(38,20,84,.98));border-top:3px solid rgba(215,200,255,.75);box-shadow:0 -8px 26px rgba(30,10,80,.7),inset 0 2px 0 rgba(255,255,255,.25);touch-action:none;-webkit-user-select:none;user-select:none;padding-bottom:env(safe-area-inset-bottom)';
-  var st=document.createElement('style'); st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}#gbDeck .dp{width:58px;height:58px;border-radius:10px;border:1px solid #2b2540;background:linear-gradient(180deg,#26212f,#0d0b14);color:#d9d2f0;font-size:20px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{background:#3a3050;transform:translateY(2px)}#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,#e6f8fa,#a5d3d8 65%,#7fb4bb);color:#2a3f45;box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}#gbDeck .pill{width:78px;height:26px;border-radius:13px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,#d7eef0,#9cc6cb);color:#33484e;font-size:10px;font-weight:800;letter-spacing:.14em;transform:rotate(-24deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),rgba(190,170,255,.28) 60%,rgba(120,90,220,.3));border:2px solid rgba(235,225,255,.6);box-shadow:inset 0 0 18px rgba(255,255,255,.25)}#dpad,#gbPad{display:none !important}';
+  var st=document.createElement('style'); st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}#gbDeck .dp{width:42px;height:42px;border-radius:9px;border:1px solid #2b2540;background:linear-gradient(180deg,#26212f,#0d0b14);color:#d9d2f0;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{background:#3a3050;transform:translateY(2px)}#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,#e6f8fa,#a5d3d8 65%,#7fb4bb);color:#2a3f45;box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}#gbDeck .pill{width:64px;height:20px;border-radius:10px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,#d7eef0,#9cc6cb);color:#33484e;font-size:8px;font-weight:800;letter-spacing:.12em;transform:rotate(-14deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .pill.on{filter:brightness(1.5)}#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),rgba(190,170,255,.28) 60%,rgba(120,90,220,.3));border:2px solid rgba(235,225,255,.6);box-shadow:inset 0 0 18px rgba(255,255,255,.25)}#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad{display:none !important}';
   document.head.appendChild(st);
   // SHADDAI GAMES themes (default = green). Tap the THEME chip to cycle; choice is remembered.
   var THEMES=[
@@ -2205,12 +2208,13 @@ requestAnimationFrame(loop);
     deck.style.background='radial-gradient(120% 90% at 20% 20%,'+t.s[0]+','+t.s[1]+' 60%,'+t.s[2]+')';
     deck.style.borderTop='3px solid '+t.bd; deck.style.boxShadow='0 -8px 26px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.25)';
     st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}'+
-     '#gbDeck .dp{width:58px;height:58px;border-radius:10px;border:1px solid rgba(0,0,0,.45);background:linear-gradient(180deg,'+t.d[0]+','+t.d[1]+');color:#e6efe9;font-size:20px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{filter:brightness(1.5);transform:translateY(2px)}'+
+     '#gbDeck .dp{width:42px;height:42px;border-radius:9px;border:1px solid rgba(0,0,0,.45);background:linear-gradient(180deg,'+t.d[0]+','+t.d[1]+');color:#e6efe9;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{filter:brightness(1.5);transform:translateY(2px)}'+
      '#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,'+t.a[0]+','+t.a[1]+' 65%,'+t.a[2]+');color:'+t.t+';box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}'+
-     '#gbDeck .pill{width:78px;height:26px;border-radius:13px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,'+t.pl[0]+','+t.pl[1]+');color:'+t.t+';font-size:10px;font-weight:800;letter-spacing:.14em;transform:rotate(-24deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}'+
+     '#gbDeck .pill{width:64px;height:20px;border-radius:10px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,'+t.pl[0]+','+t.pl[1]+');color:'+t.t+';font-size:8px;font-weight:800;letter-spacing:.12em;transform:rotate(-14deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .pill.on{filter:brightness(1.5)}'+
      '#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),'+t.bz+');border:2px solid '+t.bd+';box-shadow:inset 0 0 18px rgba(255,255,255,.25)}'+
-     '#gbDeck .brand{position:absolute;left:0;right:0;top:8px;text-align:center;pointer-events:none;font:900 15px/1 system-ui,sans-serif;letter-spacing:.42em;color:rgba(255,255,255,.92);text-shadow:0 2px 0 rgba(0,0,0,.35),0 0 12px rgba(255,255,255,.35)}#gbDeck .brand small{display:block;margin-top:5px;font-size:8px;letter-spacing:.35em;opacity:.75}'+
-     '#gbDeck .thm{left:calc(50% - 39px);top:64px;width:78px;height:24px;border-radius:12px;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.28);color:#fff;font-size:9px;font-weight:800;letter-spacing:.16em}#dpad,#gbPad{display:none !important}';
+     '#gbDeck .brand{position:absolute;left:0;right:0;top:6px;text-align:center;pointer-events:none;font:900 10px/1 system-ui,sans-serif;letter-spacing:.42em;color:rgba(255,255,255,.92);text-shadow:0 2px 0 rgba(0,0,0,.35),0 0 12px rgba(255,255,255,.35)}'+
+     '#gbDeck .thm{left:auto;right:calc(18px + env(safe-area-inset-right));top:8px;width:72px;height:18px;border-radius:9px;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.28);color:#fff;font-size:7px;font-weight:800;letter-spacing:.16em}'+
+     '#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad{display:none !important}';
   }
   function add(cls,txt,css,down,up){
     var b=document.createElement('button'); b.className=cls; b.textContent=txt; b.style.cssText=css;
@@ -2220,28 +2224,49 @@ requestAnimationFrame(loop);
     b.addEventListener('mousedown',on); b.addEventListener('mouseup',off); b.addEventListener('mouseleave',off);
     deck.appendChild(b); return b;
   }
-  var bz=document.createElement('div'); bz.className='bezel'; bz.style.cssText='left:calc(2px + env(safe-area-inset-left));top:2px;width:196px;height:196px'; deck.appendChild(bz);
+  var bz=document.createElement('div'); bz.className='bezel'; bz.style.cssText='left:calc(36px + env(safe-area-inset-left));top:16px;width:98px;height:98px'; deck.appendChild(bz);
   function dir(k){return function(){keys[k]=true}} function undir(k){return function(){keys[k]=false}}
-  var L='left:calc(18px + env(safe-area-inset-left));';
-  add('dp','▲',L+'top:14px;margin-left:62px',dir('w'),undir('w'));
-  add('dp','◀',L+'top:76px',dir('a'),undir('a'));
-  add('dp','▶',L+'top:76px;margin-left:124px',dir('d'),undir('d'));
-  add('dp','▼',L+'top:138px;margin-left:62px;height:52px',dir('s'),undir('s'));
+  var L='left:calc(14px + env(safe-area-inset-left));';
+  add('dp','▲',L+'top:4px;margin-left:54px',dir('w'),undir('w'));
+  add('dp','◀',L+'top:46px',dir('a'),undir('a'));
+  add('dp','▶',L+'top:46px;margin-left:108px',dir('d'),undir('d'));
+  add('dp','▼',L+'top:88px;margin-left:54px',dir('s'),undir('s'));
   function tap(fn){return function(){fn()}}
-  add('ab','A','right:calc(20px + env(safe-area-inset-right));top:46px;width:74px;height:74px;font-size:30px;color:#00e5a0;border-color:#00e5a0',tap(function(){if(typeof useActiveTool==='function')useActiveTool()}));
-  add('ab','B','right:calc(108px + env(safe-area-inset-right));top:96px;width:62px;height:62px;font-size:26px;color:#e8c45c;border-color:#e8c45c',tap(function(){if(typeof tryDoor==='function')tryDoor()}));
+  add('ab','A','right:calc(16px + env(safe-area-inset-right));top:34px;width:56px;height:56px;font-size:24px;color:#00e5a0;border-color:#00e5a0',tap(function(){if(typeof useActiveTool==='function')useActiveTool()}));
+  add('ab','B','right:calc(82px + env(safe-area-inset-right));top:70px;width:48px;height:48px;font-size:20px;color:#e8c45c;border-color:#e8c45c',tap(function(){if(typeof tryDoor==='function')tryDoor()}));
   function clickText(re){var el=[].find.call(document.querySelectorAll('button,.panel'),function(x){return re.test(x.textContent||'')&&x.offsetParent});if(el)el.click()}
-  add('pill','SELECT','left:calc(50% - 86px);bottom:calc(18px + env(safe-area-inset-bottom))',tap(function(){clickText(/bag/i)}));
-  add('pill','START','left:calc(50% + 12px);bottom:calc(18px + env(safe-area-inset-bottom))',tap(function(){clickText(/store/i)}));
-  var br=document.createElement('div'); br.className='brand'; br.innerHTML='SHADDAI GAMES<small>◆ CRYPTO ARCADE ◆</small>'; deck.appendChild(br);
+  add('pill','BAG','left:calc(50% - 148px);bottom:calc(8px + env(safe-area-inset-bottom))',tap(function(){clickText(/bag/i)}));
+  var runP=add('pill','RUN: OFF','left:calc(50% - 32px);bottom:calc(8px + env(safe-area-inset-bottom))',tap(function(){ window.__gbRun=!(window.__gbRun||false); try{keys['shift']=!!window.__gbRun}catch(_){}; runP.textContent='RUN: '+(window.__gbRun?'ON':'OFF'); runP.classList.toggle('on',!!window.__gbRun); }));
+  add('pill','STORE','left:calc(50% + 84px);bottom:calc(8px + env(safe-area-inset-bottom))',tap(function(){clickText(/store/i)}));
+  var br=document.createElement('div'); br.className='brand'; br.textContent='SHADDAI GAMES'; deck.appendChild(br);
   var th=add('thm','THEME: '+THEMES[ti].n,'',function(){ti=(ti+1)%THEMES.length; try{localStorage.setItem('shd.gbTheme',String(ti))}catch(e){} th.textContent='THEME: '+THEMES[ti].n; applyTheme();});
   applyTheme();
   document.body.appendChild(deck);
+  // COLLAPSE handle — hides the deck to a 26px strip so the screen is clear (remembered).
+  var collapsed=false; try{ collapsed=localStorage.getItem('shd.gbCollapsed')==='1'; }catch(e){}
+  var handle=document.createElement('button'); handle.className='thm handle'; handle.textContent='▼ CONTROLS';
+  handle.addEventListener('touchstart',function(e){e.preventDefault(); setCollapsed(!collapsed);},{passive:false});
+  handle.addEventListener('click',function(e){e.preventDefault(); setCollapsed(!collapsed);});
+  deck.appendChild(handle);
+  function setCollapsed(v){ collapsed=v; try{localStorage.setItem('shd.gbCollapsed',v?'1':'0')}catch(e){} applyMode(); }
+  function applyMode(){
+    deck.classList.toggle('collapsed',collapsed);
+    deck.style.height=(collapsed?COL_H:DECK_H)+'px';
+    handle.textContent=collapsed?'▲ CONTROLS':'▼ CONTROLS';
+    window.__gbDeck=collapsed?COL_H:DECK_H; try{fit()}catch(e){}
+  }
   var narrow=matchMedia('(max-width: 900px)'), coarse=matchMedia('(pointer: coarse)');
   function sync(){
     var want=(narrow.matches||coarse.matches||('ontouchstart' in window))&&(typeof state!=='undefined')&&(state==='world'||state==='interior');
-    var h=want?DECK_H:0;
-    if((window.__gbDeck||0)!==h){window.__gbDeck=h; deck.style.display=want?'block':'none'; try{fit()}catch(e){}}
+    var h=want?(collapsed?COL_H:DECK_H):0;
+    if((window.__gbDeck||0)!==h){
+      window.__gbDeck=h;
+      deck.style.display=want?'block':'none';
+      deck.classList.toggle('collapsed',collapsed);
+      deck.style.height=(want?(collapsed?COL_H:DECK_H):DECK_H)+'px';
+      handle.textContent=collapsed?'▲ CONTROLS':'▼ CONTROLS';
+      try{fit()}catch(e){}
+    }
   }
   setInterval(sync,300); addEventListener('resize',sync); sync();
 })();

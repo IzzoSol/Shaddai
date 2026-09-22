@@ -1,0 +1,33 @@
+<!doctype html><meta charset=utf-8><title>diag</title>
+<body style="background:#222;color:#eee;font:12px monospace">
+<pre id=out>booting</pre>
+<iframe id=f src="/dashboard" style="width:1440px;height:900px;border:0"></iframe>
+<script>
+var SKIN = new URLSearchParams(location.search).get('skin') || 'brutalist';
+var MODE = new URLSearchParams(location.search).get('mode') || 'ls';
+try{ if(MODE==='ls') localStorage.setItem('shd_theme_skin', SKIN); else localStorage.removeItem('shd_theme_skin'); }catch(e){}
+var f=document.getElementById('f');
+f.src='/dashboard?t='+Date.now();
+function rep(){
+  var d=f.contentDocument, w=f.contentWindow, L=[];
+  function cs(sel,props){ var el= sel==='body'?d.body: (sel==='html'?d.documentElement: d.querySelector(sel)); if(!el) return sel+': MISSING';
+    var c=w.getComputedStyle(el); return sel+' -> '+props.map(function(p){return p+'='+c.getPropertyValue(p);}).join(' | '); }
+  L.push('attr data-theme-skin = '+d.documentElement.getAttribute('data-theme-skin'));
+  L.push('body data-theme = '+d.body.getAttribute('data-theme'));
+  L.push('window.setThemeSkin = '+typeof w.setThemeSkin);
+  L.push('#shd-skin-force present = '+!!d.getElementById('shd-skin-force'));
+  L.push('painted count = '+d.querySelectorAll('[data-skin-painted]').length);
+  L.push('--sk-bg = ['+w.getComputedStyle(d.documentElement).getPropertyValue('--sk-bg')+']');
+  L.push('--shell = ['+w.getComputedStyle(d.documentElement).getPropertyValue('--shell')+']');
+  L.push('--bg-card = ['+w.getComputedStyle(d.documentElement).getPropertyValue('--bg-card')+']');
+  L.push(cs('html',['background-color','color']));
+  L.push(cs('body',['background-color','color','font-family']));
+  L.push(cs('.card',['background-color','color']));
+  L.push(cs('.card-title',['color']));
+  L.push(cs('#sbNav',['background-color']));
+  L.push('body inline style = '+d.body.getAttribute('style'));
+  L.push('overlays: '+[].slice.call(d.querySelectorAll('body > div')).filter(function(e){var c=w.getComputedStyle(e);return c.position==='fixed'&&c.display!=='none'&&parseInt(c.zIndex||0)>500;}).map(function(e){return (e.id||e.className)+'@z'+w.getComputedStyle(e).zIndex+' bg='+w.getComputedStyle(e).backgroundColor;}).join(', '));
+  document.getElementById('out').textContent=L.join('\n');
+}
+f.onload=function(){ setTimeout(rep,4000); };
+</script>

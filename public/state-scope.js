@@ -29,13 +29,37 @@
 
   var uid = '';
   try { uid = String(localStorage.getItem('shd_userid') || '').trim(); } catch (e) {}
-  if (!uid || uid.indexOf('guest') === 0 || uid === 'local') return; // guests/local stay device-scoped
 
   var P = 'shaddai.';
   function scoped(k) { return P + uid + '.' + k.slice(P.length); }
   function isScopable(k) { return typeof k === 'string' && k.indexOf(P) === 0 && k.indexOf(P + 'rooms.') !== 0; }
 
   var _s = Storage.prototype.setItem, _g = Storage.prototype.getItem, _r = Storage.prototype.removeItem;
+
+  // Merge the account-scoped state of another uid into this one WITHOUT
+  // overwriting anything we already hold. Called by index.html's auth
+  // handler whenever the signed-in uid changes (e.g. email vs Google, or a
+  // second account on the same browser) so both accounts land on ONE
+  // identity instead of one silently replacing the other.
+  // Defined even when no session exists yet — the auth handler calls it
+  // AFTER a provider sign-in completes, on whichever page that happens on.
+  window.__shdMergeIdentity = function (fromUid, toUid) {
+    try {
+      if (!fromUid || !toUid || fromUid === toUid) return;
+      var pre = P + fromUid + '.', dstPre = P + toUid + '.';
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf(pre) !== 0) continue;
+        var rest = k.slice(pre.length);              // e.g. "econ", "player", "decor"
+        if (rest.indexOf('rooms.') === 0) continue;   // rooms are already hand-scoped by roomsKey()
+        var dst = dstPre + rest;                      // same key under the new identity's namespace
+        if (_g.call(localStorage, dst) !== null) continue; // keep what the new identity already owns — never overwrite
+        try { _s.call(localStorage, dst, _g.call(localStorage, k)); } catch (e2) {}
+      }
+    } catch (e) {}
+  };
+
+  if (!uid || uid.indexOf('guest') === 0 || uid === 'local') return; // guests/local stay device-scoped
 
   Storage.prototype.setItem = function (k, v) {
     if (this === window.localStorage && isScopable(k)) return _s.call(this, scoped(k), v);

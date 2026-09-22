@@ -1,0 +1,14 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#111;display:flex;gap:4px">
+<script>
+['glitch','brutalist','frost'].forEach(s=>{
+  const f=document.createElement('iframe');
+  f.src='/dashboard'; f.style.cssText='width:520px;height:620px;border:0';
+  f.onload=()=>setTimeout(()=>{try{
+    f.contentDocument.documentElement.setAttribute('data-theme-skin',s);
+    const t=f.contentDocument.createElement('div');
+    t.textContent=s.toUpperCase();
+    t.style.cssText='position:fixed;bottom:4px;left:6px;z-index:99999;font:11px monospace;color:#fff;background:#000;padding:2px 7px';
+    f.contentDocument.body.appendChild(t);}catch(e){}},2200);
+  document.body.appendChild(f);
+});
+</script></body>

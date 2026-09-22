@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>skintest</title>
+<style>html,body{margin:0;height:100%}iframe{border:0;width:100vw;height:100vh;display:block}</style>
+<script>
+var s=(location.search.match(/s=([a-z]+)/)||[])[1]||'glitch';
+try{localStorage.setItem('shd_theme_skin',s);localStorage.setItem('shaddai_onboarded','1');
+localStorage.setItem('shd_skin_dock_min','1');}catch(e){}
+document.write('<iframe id="f" src="/dashboard?nocache='+Date.now()+'"></iframe>');
+</script>

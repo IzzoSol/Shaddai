@@ -1,0 +1,8 @@
+<!doctype html><meta charset=utf-8><body style="margin:0;background:#1b2a24"><canvas id=c width=1400 height=420></canvas>
+<script src="pixel-people.js"></script><script>
+const c=document.getElementById('c'),x=c.getContext('2d');const PP=window.PixelPeople;
+const ids=['zerox','quill','oracle','turtle','leadr','gaeli'];
+window.frame=function(t){x.fillStyle='#22382f';x.fillRect(0,0,1400,420);
+ ids.forEach((id,i)=>{PP.draw(x,{sprite:id,anim:'walk',__phase:i*0.3},120+i*200,330,3,t);x.fillStyle='#fff';x.font='16px sans-serif';x.fillText(id,90+i*200,380);});
+ PP.draw(x,JSON.parse(JSON.stringify(PP.PRESETS[3].rig)),1320,330,3,t);x.fillText('voxel (old)',1270,380);};
+</script>
