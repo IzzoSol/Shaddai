@@ -68,19 +68,21 @@ Retry evidence to never repeat: redo-shaddai-zerox ×3, char-walk-test ×5, worl
 rod-retry, floor-ember-retry batches = the waste this system kills.
 
 ## 5. EXECUTION LEDGER (order, est. cost out of ~$129)
-A. 2D mobile pad fix — out of screen, compact, collapsible, RUN toggle, correct wiring  ~$3  [NOW]
-B. Volcano realm placement in 3D (all models EXIST — zero fal)                        ~$5  [NOW]
-C. Darkforest + suburb + meadow biome placements                                        ~$6
-D. Rideables: seat-anchor system + hoverboard TRICKS in 3D realm (ollie/flip/grind HUD)~$7
-E. NPCs: ambient citizens + operative avatars per biome                                  ~$3
-F. Skate ARCADE (C:\Users\Brittany\Shaddai-Royale): tasks 1-7 per handoff §SKATE       ~$8
-G. Cross-realm sync: shared cloud profile (sparks/inv) + 2D↔3D portals                 ~$5
-H. Dashboard AGENT FORGE (§8)                                                          ~$9
-I. Ship/finish ledger §3 fal-assets + MAKE list via gates                               ~$6 fal
-J. Pollinations → fal image swap (all placeholder art) + cache by prompt-hash           ~$3
-K. Merge feat/world3d → main after owner walk + screenshot pack                         ~$4
-L. ONE PIKADON audit at the very end (§9) — not before                                  ~$2
-≈ $61 + reserve. Agent calls: plan ONCE (this doc), execute ME, audit ONCE (L).
+A. 2D mobile deck v3 — slim 132px, collapse handle, RUN, wired — DONE (50f78a6)
+B. FULL MAP — half 720, terrain 1500/190segs, mountain ring w/ 5 passes — DONE (b980fe2)
+C. 4 outer realms placed (volcano 6 models + lavaMat, darkforest castle, suburb offices, meadow) — DONE (b980fe2)
+D. Hoverboard + tricks + SPARKS (ollie/flip/360/big-air, HUD, localStorage) — DONE (3c13f7a)
+E. CSP wasm fix ('wasm-unsafe-eval' — world entry restored) — DONE (2953c8e)
+F. All merged to main + live — DONE (c4264a4)
+REMAINING (Thursday fal+Claude session):
+G. RIDEABLE BOATS — copy the world-actions.js veh-hook pattern (E-mount, speed×2.4, baseY=waveH); expose via window.__worldOcean.boats()
+H. HERO SWITCHING (be the 9 chars) — chars/<name>.glb + -walk/-run/-action clips exist; hook = host _loadHero (~L2923) + _addClipsFrom + playerMixer (L4127); UI: H key cycles, persist localStorage 'shd.hero3d'
+I. SHOPS/INTERIOR polish — host already builds shop interiors (world-interiors.js); add kiosk stalls at plaza + market prices wired to Sparks
+J. SKATE REALM — ship fal-assets skate-park-props/boards GLBs (compress w/ gltf-transform), place a plaza skatepark; tricks already exist via world-actions
+K. FAL ASSET PASS — realer boats/ships (ocean pack redo at HIGH detail), missing props (street-lamp, kiosk, holo-fountain, statue...), hero -HQ textures via HF upscale, cosmetics retexture (§6)
+L. GROK BOT IMPORT / AGENT FORGE (§8) — /api/operatives + BYOK wrapper + dashboard picker
+M. SPARKS SYNC — shd.sparks3d ↔ 2D economy via cloud profile (single ledger both realms)
+N. ONE PIKADON audit at the very end (§9) — not before
 
 ## 6. COSMETICS — LF2 is STYLE REFERENCE ONLY. NO LF2 characters, NO sprites of them.
 Outfit/clothing variants per hero (combat, formal, casual) = retexture via image-edit
