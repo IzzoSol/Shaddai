@@ -40,13 +40,13 @@ afterAll(() => {
 });
 
 describe('GET /api/cosmetics/catalog', () => {
-  test('serves the 9-item accessory catalog with slots + prices', async () => {
+  test('serves the 11-item accessory catalog with slots + prices', async () => {
     const res = await request(makeApp('u1')).get('/api/cosmetics/catalog');
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.accessories.length).toBe(9);
+    expect(res.body.accessories.length).toBe(11);
     const ids = res.body.accessories.map(a => a.id);
-    for (const expectId of ['hat_crown', 'hat_horns', 'mask_visor', 'pet_drone', 'pet_wisp', 'weapon_axe', 'weapon_staff', 'wings_dark', 'wings_feather']) {
+    for (const expectId of ['hat_crown', 'mask_visor', 'pet_drone', 'pet_wisp', 'weapon_staff', 'wings_dark', 'wings_feather']) {
       expect(ids).toContain(expectId);
     }
     const wings = res.body.accessories.find(a => a.id === 'wings_dark');
@@ -64,13 +64,13 @@ describe('POST /api/cosmetics/purchase', () => {
     const start = startingBalance(owner);
 
     const res = await request(makeApp(owner)).post('/api/cosmetics/purchase')
-      .send({ operativeId: op.id, accessoryId: 'weapon_axe' });
+      .send({ operativeId: op.id, accessoryId: 'weapon_staff' });
 
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
     expect(res.body.alreadyOwned).toBe(false);
-    expect(res.body.sparks).toBe(start - 50);   // weapon_axe = 50 sparks
-    expect(res.body.operative.inventory.ownedCosmetics).toContain('weapon_axe');
+    expect(res.body.sparks).toBe(start - 50);   // weapon_staff = 50 sparks
+    expect(res.body.operative.inventory.ownedCosmetics).toContain('weapon_staff');
 
     expect(billing.getCustomer(owner).creditsRemaining).toBe(start - 50);
   });

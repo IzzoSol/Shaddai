@@ -13,19 +13,6 @@
     "imgScale": 0.25
   },
   {
-    "id": "hat_horns",
-    "slot": "hat",
-    "kit": "any",
-    "anchorOffset": {
-      "x": 0,
-      "y": -15
-    },
-    "imageFile": "hat_horns.png",
-    "rarity": "common",
-    "sparksPrice": 40,
-    "imgScale": 0.25
-  },
-  {
     "id": "mask_visor",
     "slot": "mask",
     "kit": "any",
@@ -63,19 +50,6 @@
     "rarity": "rare",
     "sparksPrice": 90,
     "imgScale": 0.24
-  },
-  {
-    "id": "weapon_axe",
-    "slot": "weapon",
-    "kit": "any",
-    "anchorOffset": {
-      "x": 17,
-      "y": 7
-    },
-    "imageFile": "weapon_axe.png",
-    "rarity": "common",
-    "sparksPrice": 50,
-    "imgScale": 0.25
   },
   {
     "id": "weapon_staff",
