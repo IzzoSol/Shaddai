@@ -142,6 +142,16 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
         break;
     }
 
+    // ── COLOSSEUM (world-landmarks.js): level walk-in arena plateau at [-14,460] —
+    // the south light-trail ends here; the arena floor (y≈1.32) is terrain-walkable.
+    {
+      const dA = Math.hypot(x + 14, z - 460);
+      if (dA < 54) {
+        const tA = dA <= 46 ? 0 : smooth(Math.min(1, (dA - 46) / 8));
+        h = Math.max(h, 1.3 - tA * 0.3);
+      }
+    }
+
     // ── MOUNTAIN RING (FULL MAP, 2026-09-21): the outer realms sit at R~540 across a
     // mountain barrier at R 380-520 — travel between realms is NOT trivial: cross a
     // pass, or sail. Angular noise shapes the ridge; five explicit passes are carved
