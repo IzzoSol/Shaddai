@@ -75,14 +75,41 @@ D. Hoverboard + tricks + SPARKS (ollie/flip/360/big-air, HUD, localStorage) — 
 E. CSP wasm fix ('wasm-unsafe-eval' — world entry restored) — DONE (2953c8e)
 F. All merged to main + live — DONE (c4264a4)
 REMAINING (Thursday fal+Claude session):
-G. RIDEABLE BOATS — copy the world-actions.js veh-hook pattern (E-mount, speed×2.4, baseY=waveH); expose via window.__worldOcean.boats()
-H. HERO SWITCHING (be the 9 chars) — chars/<name>.glb + -walk/-run/-action clips exist; hook = host _loadHero (~L2923) + _addClipsFrom + playerMixer (L4127); UI: H key cycles, persist localStorage 'shd.hero3d'
-I. SHOPS/INTERIOR polish — host already builds shop interiors (world-interiors.js); add kiosk stalls at plaza + market prices wired to Sparks
-J. SKATE REALM — ship fal-assets skate-park-props/boards GLBs (compress w/ gltf-transform), place a plaza skatepark; tricks already exist via world-actions
-K. FAL ASSET PASS — realer boats/ships (ocean pack redo at HIGH detail), missing props (street-lamp, kiosk, holo-fountain, statue...), hero -HQ textures via HF upscale, cosmetics retexture (§6)
-L. GROK BOT IMPORT / AGENT FORGE (§8) — /api/operatives + BYOK wrapper + dashboard picker
-M. SPARKS SYNC — shd.sparks3d ↔ 2D economy via cloud profile (single ledger both realms)
-N. ONE PIKADON audit at the very end (§9) — not before
+G. RIDEABLE BOATS — DONE (cd2a3f3). H. HERO SWITCH (H key) — DONE (cd2a3f3).
+I. Roads — DONE: light-trail roads plaza→all realms+colosseum (fe77ee5).
+I2. WALK-IN COLOSSEUM — DONE foundation: mecha-arena on plateau, E opens spectate/tourney modal, sparks pools ledger (fe77ee5).
+I3. GARAGE — DONE foundation: B at plaza beacon, hovercar 500⚡ + board/car tier upgrades (fe77ee5).
+J-L. FAL MODELS (below), M. SPARKS SYNC 2D↔3D, N. PIKADON audit — Thursday.
+
+## 11. THURSDAY FAL ALLOCATION — $111, SURGICAL, one-shot gates (§4) enforced, Opus 5.5 executes
+  $25  OCEAN PACK REDO — realer ships: skiff/catamaran/yacht/submarine HIGH detail, same spots.
+  $15  HOVERCAR + HOVERBOARD real meshes — replace the procedural car (world-actions seatCar)
+       and upgrade the board; keep veh-hook API identical.
+  $12  MISSING PROPS — street-lamp, kiosk, transit-stop, holo-fountain, statue-shaddai,
+       neon-tree, ore-node, signpost → line the light-trail roads + plaza + dock.
+  $10  LIFE — farm animals (ox/chickens for Meadowfields), skatepark rails+ramps
+       (plaza + colosseum), arena dressing (banners, crowd stands).
+  $14  HERO -HQ — 4 heroes via Rodin HighPack + tripo rig (Meshy rejected one Rodin mesh);
+       HF-upscale fallback for the other 5. Walk/attack frames verified BEFORE batch.
+  $15  COSMETICS — outfit retexture per hero via image-edit (kontext/nano-banana) on the
+       base concept. LF2 = STYLE REFERENCE ONLY. NO LF2 characters, ever.
+  $10  SKATE VIDEO — arcade trick videos (video-as-you-play showcase, ~18/match),
+       behind ENABLE_FAL; ROTATE FAL_KEY FIRST (never commit keys).
+  $10  RESERVE — gate failures only; a concept that fails twice is DESIGNED wrong, stop.
+
+## 12. VISION CURATION — "agentic commerce meets gaming and tools" (the alignment law)
+  ONE LEDGER: sparks is the single currency — dashboard tools, 2D realm, 3D realm, tourneys.
+  EVERY WORLD VENUE = A DASHBOARD TOOL, embodied:
+    ZEROX Markets → the trading floors; Colosseum → agent-vs-agent games (fight, skate, then
+    dodgeball/football); Forge → agent/character creation; Meadowfields farms → yield/jobs;
+    Ocean → trade routes (boat cargo runs later).
+  AGENTS ARE PLAYERS: imported agents (BYOK grok/LLM via the Agent Forge) trade, learn,
+  enter tourneys, earn sparks — agent-to-agent commerce. Their bodies walk the realms
+    (operative NPCs already spawn from /api/operatives).
+  2D↔3D = SAME WORLD: same map shape, same sparks, portals between them (2D city door ↔
+    3D plaza). Play how you want — or skip the world and use the dashboard tools alone.
+  ALIGNMENT RULE: any new feature must touch at least two of {dashboard, 2D, 3D} or it
+    doesn't ship — the realms are the tools' bodies.
 
 ## 6. COSMETICS — LF2 is STYLE REFERENCE ONLY. NO LF2 characters, NO sprites of them.
 Outfit/clothing variants per hero (combat, formal, casual) = retexture via image-edit
