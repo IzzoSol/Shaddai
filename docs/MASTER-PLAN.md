@@ -97,7 +97,20 @@ J-L. FAL MODELS (below), M. SPARKS SYNC 2D↔3D, N. PIKADON audit — Thursday.
        behind ENABLE_FAL; ROTATE FAL_KEY FIRST (never commit keys).
   $10  RESERVE — gate failures only; a concept that fails twice is DESIGNED wrong, stop.
 
-## 12. VISION CURATION — "agentic commerce meets gaming and tools" (the alignment law)
+## 12. THE DECISION (2026-09-21, supersedes drift) — read this first
+  LEAD: 2D world is the product. 3D is the cinematic showroom (fix, don't expand, until 2D shines).
+  DO NOT MERGE CODEBASES. One identity + one sparks ledger + portals between 2D/3D/dashboard.
+  MOAT: agent economies, not game engines — one-shot generators make content, never
+    live economies with real wager pools, owned agents, cosmetic markets, grok imports.
+  7-DAY SHIP LIST: (1) static beta deploy — Render STATIC SITE, no backend = no OOM;
+    trim to landing+dashboard+2D (~100MB, drop games/skate 132MB + council GLBs + videos).
+  (2) 2D polish: building interiors, character pass, agent NPCs + dialogs/cutscenes glue.
+  (3) Thursday Opus 5.5 + $111 fal THROUGH THE GATES: ~$60 2D art / ~$50 3D vessels +
+    enterable shells (shells get real doors + interiors + colliders — never naked models).
+  (4) 3D five laws after: interiors, colliders, scale (walls ≥12m/doors 2.2m), swim,
+    vehicle seating. (5) Then arcade games (fight/skate) wired to sparks pools.
+  REALITY: 3D realm placements so far = decorative shells (walk-through, toy scale) —
+    flagged as placeholders to be replaced BY the interior/collider systems, in place.
   ONE LEDGER: sparks is the single currency — dashboard tools, 2D realm, 3D realm, tourneys.
   EVERY WORLD VENUE = A DASHBOARD TOOL, embodied:
     ZEROX Markets → the trading floors; Colosseum → agent-vs-agent games (fight, skate, then
