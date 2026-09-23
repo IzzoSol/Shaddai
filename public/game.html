@@ -1477,7 +1477,7 @@ async function apiPost(path,body){ for(const base of API_BASES){ try{ const r=aw
 const GOODS=[ {id:'wood',name:'Wood',ico:'🪵',base:5},{id:'hide',name:'Animal Hide',ico:'🟫',base:9},{id:'water',name:'Fresh Water',ico:'💧',base:4},{id:'ore',name:'Raw Ore',ico:'🪨',base:8},{id:'trinket',name:'Trinket',ico:'💎',base:16} ];
 // per-region demand & premiums (multiplier on base; missing good = weak 0.55 price; ALL = big bazaar buys everything)
 const MARKET_DEMAND={ meadow:{wood:1.0,hide:1.1,fish:0.9,trinket:1.1,water:0.7,ore:0.8}, beach:{fish:1.3,water:0.6,trinket:1.2,hide:0.9,wood:0.9}, forest:{wood:0.7,hide:0.8,fish:1.0,water:0.9,trinket:1.0,ore:0.9}, desert:{wood:1.6,water:1.9,hide:1.2,ore:1.1,trinket:1.1,fish:0.8}, city:{fish:1.1,trinket:1.4,ore:1.3,hide:1.1,wood:1.0,water:1.0}, volcano:{water:2.3,fish:1.3,hide:1.4,wood:1.5,ore:0.9}, agentcity:{ALL:1.5}, suburb:{ALL:1.0} };
-const FISH=[ {id:'minnow',name:'Minnow',ico:'🐟',val:6,w:5},{id:'bass',name:'Bass',ico:'🐟',val:12,w:4},{id:'salmon',name:'Salmon',ico:'🐠',val:22,w:2.5},{id:'tuna',name:'Big Tuna',ico:'🐡',val:48,w:1,big:true},{id:'levi',name:'Leviathan',ico:'🐋',val:130,w:0.3,big:true} ];
+const FISH=[ {id:'minnow',name:'Minnow',ico:'🐟',val:6,w:5},{id:'bass',name:'Bass',ico:'🐟',val:12,w:4},{id:'salmon',name:'Salmon',ico:'🐠',val:22,w:2.5},{id:'tuna',name:'Big Tuna',ico:'🐡',val:48,w:1,big:true},{id:'levi',name:'Leviathan',ico:'🐋',val:130,w:0.3,big:true},{id:'pearl',name:'Void-Pearl',ico:'~',val:400,w:0.05,big:true} ];
 function levelFor(c){ return 1+Math.floor(Math.sqrt(c/45)); }
 function loadEcon(){ try{ const e=JSON.parse(localStorage.getItem('shaddai.econ')||'{}'); if(typeof e.money==='number')money=e.money; if(typeof e.credits==='number')credits=e.credits; if(e.inv)Object.assign(inv,e.inv); if(e.fish)Object.assign(fish,e.fish); if(typeof e.bank==='number')bank=e.bank; if(typeof e.coin==='number')coin=e.coin; if(typeof e.coinPrice==='number')coinPrice=e.coinPrice; if(e.stash)Object.assign(stash,e.stash); if(e.weaponUp)Object.assign(weaponUp,e.weaponUp); if(typeof e.equippedWeapon==='string')equippedWeapon=e.equippedWeapon; if(e.quest)Object.assign(quest,e.quest); if(e.questDone)Object.assign(questDone,e.questDone); }catch(_){} }
 function saveEcon(){ try{ localStorage.setItem('shaddai.econ',JSON.stringify({money,credits,inv,fish,bank,coin,coinPrice,stash,weaponUp,equippedWeapon,quest,questDone})); localStorage.setItem('shaddai.level',String(levelFor(credits))); }catch(_){} updateWallet(); scheduleCloudPush(); try{ if(typeof renderHotbar==='function') renderHotbar(); }catch(_){} }
@@ -1871,25 +1871,32 @@ function openJobs(){ if(state!=='world')return; state='jobs'; const j=JOBS[regio
   el.classList.remove('hide'); }
 function doJob(){ if(jobCooldown>0){ toast('Rest a moment ('+Math.ceil(jobCooldown)+'s)'); return; } const j=JOBS[region&&region.id]||JOBS.meadow; const pay=j.pay[0]+((Math.random()*(j.pay[1]-j.pay[0]+1))|0); money+=pay; quest.earn+=pay; addXP(Math.ceil(pay*0.6)); jobCooldown=6; saveEcon(); toast('+💵'+pay+' · +'+Math.ceil(pay*0.6)+' XP'); if(state==='jobs') openJobs(); }
 // ---- fishing (click near water → cast → random 15–30s bite → random-size fish) ----
-let fishingActive=false, fishBonus=0, fishTimer=null;
+let fishingActive=false, fishingBite=false, fishBonus=0, fishTimer=null;
 function rollFish(){ let total=FISH.reduce((s,f)=>s+f.w,0), r=Math.random()*total; for(const f of FISH){ r-=f.w; if(r<=0) return f; } return FISH[0]; }
 function isNearWater(){ for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){ const c=(player.col+dc)|0,rr=(player.row+dr)|0,t=tiles[rr]&&tiles[rr][c]; if(t===WATER||t===DOCK)return true; } return false; }
 function castFish(){
-  if(fishingActive){ toast('🎣 Line\'s already out — wait for a bite…'); return; }
-  if(fishCooldown>0){ toast('Reel in first… ('+Math.ceil(fishCooldown)+'s)'); return; }
-  if(!isNearWater()){ toast('🎣 Stand by the water to cast'); return; }
-  if(!(act==='rod'||inv.rod)){ toast('Equip a 🎣 Fishing Rod (Store) to fish here'); return; }
-  fishingActive=true; toast('🎣 Cast! Line out — waiting for a bite…');
-  const wait=15000+Math.random()*15000;                 // random 15–30s hit
-  fishTimer=setTimeout(()=>{ fishingActive=false; fishCooldown=2;
-    if(Math.random()<0.22){ toast('🎣 …the one that got away.'); return; }   // random hit rate
-    const f=rollFish(), sr=Math.random();
-    const size = sr<0.45?{k:'small',m:0.6,l:'a small '} : sr<0.82?{k:'med',m:1.0,l:'a '} : sr<0.96?{k:'big',m:1.9,l:'a BIG '} : {k:'huge',m:3.4,l:'a HUGE '};
-    fish[f.id]=(fish[f.id]||0)+1;
-    if(size.m>1) fishBonus+=Math.round(f.val*(size.m-1));               // bigger fish → higher price
-    const xp=Math.round((f.big?12:5)*size.m); quest.fish++; addXP(xp); saveEcon();
-    toast('🎣 Caught '+size.l+' '+itemIcon(f.id,24,f.ico)+' '+f.name+' · ~💵'+Math.round(f.val*size.m)+' · +'+xp+' XP');
+  if(fishingBite){ reelFish(); return; }               // BITE! SPACE reels (skill window)
+  if(fishingActive){ toast('Line already out - wait for the strike...'); return; }
+  if(fishCooldown>0){ toast('Reel in first... ('+Math.ceil(fishCooldown)+'s)'); return; }
+  if(!isNearWater()){ toast('Stand by the water to cast'); return; }
+  if(!(act==='rod'||inv.rod)){ toast('Equip a Fishing Rod (Store) to fish here'); return; }
+  fishingActive=true; toast('Cast! Watch for the strike -');
+  const wait=3000+Math.random()*9000;                   // strike in 3-12s: snappy loop, skill matters
+  fishTimer=setTimeout(()=>{
+    fishingActive=false; fishingBite=true;
+    toast('>> A STRIKE! Press SPACE to reel! <<');
+    fishTimer=setTimeout(()=>{ if(fishingBite){ fishingBite=false; fishCooldown=2; toast('...the one that got away.'); } },1600);
   }, wait);
+}
+function reelFish(){
+  if(!fishingBite) return;
+  clearTimeout(fishTimer); fishingBite=false; fishCooldown=2;
+  const f=rollFish(), sr=Math.random();
+  const size = sr<0.45?{k:'small',m:0.6,l:'a small '} : sr<0.82?{k:'med',m:1.0,l:'a '} : sr<0.96?{k:'big',m:1.9,l:'a BIG '} : {k:'huge',m:3.4,l:'a HUGE '};
+  fish[f.id]=(fish[f.id]||0)+1;
+  if(size.m>1) fishBonus+=Math.round(f.val*(size.m-1));
+  const xp=Math.round((f.big?12:5)*size.m); quest.fish++; addXP(xp); saveEcon();
+  toast('Caught '+size.l+' '+itemIcon(f.id,24,f.ico)+' '+f.name+' - worth ~'+Math.round(f.val*size.m)+' +'+xp+' XP');
 }
 function sellFish(){ let n=0,g=0; for(const f of FISH){ const c=fish[f.id]||0; if(c){ n+=c; g+=c*f.val; fish[f.id]=0; } } g+=fishBonus; if(!n&&!fishBonus){ toast('No fish to sell'); return; } fishBonus=0; money+=g; quest.earn+=g; addXP(Math.ceil(g*0.4)); saveEcon(); toast('💰 Sold '+n+' fish for 💵'+g+' — haggle bigger catches at the 🤝 market'); if(state==='inv') openInv(); }
 function bottleWater(){ if(gatherCooldown>0){ toast('One moment…'); return; } gatherCooldown=1.5; inv.water=(inv.water||0)+1; addXP(1); saveEcon(); toast('💧 Bottled fresh water (+1) — sells hot in the desert & volcano!'); }
