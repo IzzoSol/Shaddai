@@ -41,7 +41,11 @@
   //   here (skipped below — the ground centre is the open bazaar), left as-is.
   var COLLIDER_R = {
     SHADDAI: 76, ZEROX: 67, ORACLE: 64, NEXUS: 64,
-    TURTLE: 64,  QUILL: 119, PIKADON: 67, bazaar: 37
+    TURTLE: 64,  QUILL: 119, PIKADON: 67, bazaar: 37,
+    // REALM STRUCTURES (interior law, 2026-09-23): doors at each realm's real position on
+    // the big map — colosseum floor r46 south [-14,460]; garage pad [26,96] by the plaza;
+    // fortress on the volcano crater shelf [420,-380]; castle keep in darkforest [-420,-380].
+    COLOSSEUM: 46, GARAGE: 12, FORTRESS: 34, CASTLE: 34
   };
   // FRONT-DOOR GATE: the "[E] ENTER" prompt only fires when the player stands on the
   // building's ENTRANCE side — the side facing world-centre. We bake a normalized front
@@ -66,6 +70,13 @@
     PIKADON : { label: 'PIKADON — The Aegis',     accent: 0xff5a6e, floor: 0x1a0206, propFn: 'vaultRoom'     },
     ZEROX   : { label: 'ZEROX — The Markets',     accent: 0x27e0ff, floor: 0x001220, propFn: 'tradingFloor'  },
     bazaar  : { label: 'THE BAZAAR — Agora Hall', accent: 0x00e5a0, floor: 0x000d08, propFn: 'bazaarHall'    },
+    // REALM VENUES (interior law): themed rooms behind the realm-structure doors. V1 reuses
+    // the strongest existing room-builders with new accents; Thursday's fal pass dresses
+    // each with its own furniture kit + dressed walls in the same code slots.
+    COLOSSEUM: { label: 'COLOSSEUM — Tourney Hall', accent: 0xe8c45c, floor: 0x141005, propFn: 'tradingFloor' },
+    GARAGE   : { label: 'GARAGE — Hover Works',     accent: 0x00ff9c, floor: 0x00140d, propFn: 'serverRoom'   },
+    FORTRESS : { label: 'EMBERFALL — War Room',     accent: 0xff5a10, floor: 0x140802, propFn: 'throneRoom'  },
+    CASTLE   : { label: 'DARKREALM — Siege Keep',    accent: 0x9b59f5, floor: 0x0c0514, propFn: 'arcaneLibrary' },
   };
 
   /* ─── factory ────────────────────────────────────────────────────────────── */
@@ -87,6 +98,17 @@
     var baz = layout.landmark && layout.landmark('bazaar');
     if (baz) allSectors.push({ code: 'bazaar', name: 'The Bazaar',
                                pos: baz.pos, color: baz.color || 0x00e5a0 });
+
+    // ── REALM STRUCTURES as enterable doors (interior law, 2026-09-23) ─────────────
+    // Each sits at its real position on the big map — realms are separated by terrain
+    // and distance; these doors are the E-portals into sized-correct interior instances.
+    var REALM_SECTORS = [
+      { code: 'COLOSSEUM', name: 'The Colosseum', pos: [-14, 460], color: 0xe8c45c },  // south trail end
+      { code: 'GARAGE',    name: 'The Garage',     pos: [26, 96],   color: 0x00ff9c },  // plaza east
+      { code: 'FORTRESS',  name: 'Emberfall Keep', pos: [420, -380], color: 0xff5a10 }, // volcano crater shelf
+      { code: 'CASTLE',    name: 'Darkrealm Keep', pos: [-420, -380], color: 0x9b59f5 },// darkforest castle
+    ];
+    for (var _ri = 0; _ri < REALM_SECTORS.length; _ri++) allSectors.push(REALM_SECTORS[_ri]);
 
     /* ── state ── */
     var currentCode   = null;
