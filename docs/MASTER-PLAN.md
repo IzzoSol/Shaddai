@@ -109,8 +109,18 @@ J-L. FAL MODELS (below), M. SPARKS SYNC 2D↔3D, N. PIKADON audit — Thursday.
     enterable shells (shells get real doors + interiors + colliders — never naked models).
   (4) 3D five laws after: interiors, colliders, scale (walls ≥12m/doors 2.2m), swim,
     vehicle seating. (5) Then arcade games (fight/skate) wired to sparks pools.
-  REALITY: 3D realm placements so far = decorative shells (walk-through, toy scale) —
-    flagged as placeholders to be replaced BY the interior/collider systems, in place.
+## 13. 2D POLISH WORK ORDER (next session, code+existing art, zero fal)
+  Direction = 2.5D, NOT perspective 3D: shadow blobs, animated water tiles, parallax
+  clouds, day/night tint, window lights, cutscene letterbox on doors+dialogs.
+  1. BUILDING EXTERIORS: multi-tile facades + signage + night-lit windows, per-region style.
+  2. INTERIORS: real rooms for every shop/office/forge — themed floor/wall sets, furniture,
+     NPC shopkeeper with dialog, counter UI. (This is the "inside buildings" fix.)
+  3. ITEMS: crisp icon pass (weapons/tools/fishing); FISHING = cast/reel timing minigame.
+  4. CHARACTERS: operative roster sprites + walk/attack frames + COSMETIC OVERLAY layer
+     (hats/armor/tints) — that overlay IS the cosmetics marketplace hook.
+  5. AGENTIC GLUE: agents as walking NPCs, quest dialogs, agent-run shops, in-world chat.
+  Skate/arcade games live in public/games/ (skate.html, dodgeball.html, basketball-jam.html,
+  battle-arena.html) — wire them into the city as arcade doors with sparks entry fees.
   ONE LEDGER: sparks is the single currency — dashboard tools, 2D realm, 3D realm, tourneys.
   EVERY WORLD VENUE = A DASHBOARD TOOL, embodied:
     ZEROX Markets → the trading floors; Colosseum → agent-vs-agent games (fight, skate, then
