@@ -3925,8 +3925,9 @@ let _smoothBaseY;   // eased camera ground height â€” kills the vertical ji
 // structures." Pure scalar, zero per-frame allocation.
 let _lastDeckY = null;
 let _avatarYaw=0, _avatarYawInit=false;   // eased character facing â€” turns smoothly instead of snapping
-// shortest-path angle interpolation (handles the Â±Ï€ wrap so turning never spins the long way)
+// shortest-path angle interpolation (handles the ±π wrap so turning never spins the long way)
 function _lerpAngle(a, b, t){ let d=b-a; while(d>Math.PI)d-=6.283185307; while(d<-Math.PI)d+=6.283185307; return a+d*t; }
+let _swimming=false;   // SWIM LAW: true while floating on a water surface (slower move, no seafloor walking)
 const clock=new THREE.Clock();
 // RIDEABLE VOYAGERS REMOVED (owner: "there's a car and a space vehicle under shaddai ... sloppy").
 // The stub KEPT the movement hooks (speed/baseY/flyControl/update/mode) alive â€” and now
@@ -4079,7 +4080,7 @@ function animate(){
   const _uiOpen = (_dialogue&&_dialogue.isOpen()) || (_radio&&_radio.isOpen&&_radio.isOpen());
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
     const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
-    const baseSp = bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:11);
+    const baseSp = bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:(_swimming?7:11));
     const _maxSp = veh.speed(baseSp);                          // VEHICLE-HOOK: faster when mounted
     // Build the desired move direction from input, then ease VELOCITY toward it (accel/decel) instead of
     // snapping speed 0â†”max every frame â€” makes walking + start/stop feel smooth, not robotic.
@@ -4145,6 +4146,17 @@ function animate(){
     groundY = (_ey!=null) ? _ey : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0); }
   if(!isFinite(groundY)) groundY = 0;   // guard: a bad height sample must never drop the player through the floor
   if(_interiors && _interiors.isInside()) groundY = 0;   // interior rooms have a flat floor at y=0
+  // ── SWIM LAW (five-laws §14.3): if the terrain under us is below the waterline, the player
+  // FLOATS on the surface (bob included) instead of walking the seafloor. Water bodies are
+  // the Crystal Sea basin + any biome marked water:true with a floor below ~-0.45.
+  if (!veh.mode && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
+    if (groundY < -0.45) {
+      const _ocean = window.__worldOcean;
+      const _wave = (_ocean && _ocean.waveH) ? _ocean.waveH(playerPos.x, playerPos.z, clock.elapsedTime) * 0.55 : 0;
+      groundY = 0.05 + _wave - 1.05;            // body floats: eye sits above the surface, legs submerged
+      _swimming = true;
+    } else _swimming = false;
+  } else _swimming = false;
   const _rawBaseY = veh.baseY(groundY);          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.

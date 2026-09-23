@@ -334,10 +334,12 @@ window.buildWorldActions = function (opts) {
       var p = P();
       st.lastGy = gy;
       if (!st.mode || !p) return gy;
-      if (st.mode === 'boat') {                          // stand on the deck
+      if (st.mode === 'boat') {                          // stand ON DECK — sit IN the vessel (five-laws seating)
         if (gy > 0.2) return gy + 0.35;                  // beached on the shelf — fine, futuristic hull
         var O = ocAPI();
-        return 0.05 + (O && O.waveH ? O.waveH(p.x, p.z, performance.now() / 1000) * 0.6 : 0) + 0.35;
+        var nm = (st.boat && st.boat.name) || '';
+        var seat = /YACHT/i.test(nm) ? 1.6 : /SUB/i.test(nm) ? 1.25 : /CATAMARAN/i.test(nm) ? 0.85 : 0.55;
+        return 0.05 + (O && O.waveH ? O.waveH(p.x, p.z, performance.now() / 1000) * 0.6 : 0) + seat;
       }
       if (st.mode === 'car') {                           // hovercar glides over everything
         if (gy < -0.5) { var O3 = ocAPI(); gy = 0.05 + (O3 && O3.waveH ? O3.waveH(p.x, p.z, performance.now() / 1000) * 0.5 : 0); }
