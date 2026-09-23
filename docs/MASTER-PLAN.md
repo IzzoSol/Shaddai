@@ -227,3 +227,18 @@ NOW: shared backend profile — sparks + inventory + name sync between 2D and 3D
 already have cloud save hooks: cloudUid/push/pull in 2D; add same to 3D host).
 Portals: 2D city door ↔ 3D plaza; 2D beach ↔ Crystal Sea; per-realm equivalents.
 LATER: live position mirror (2D↔3D same-account ghost), marketplace items usable in both.
+
+## 15. STATUS LOG 2026-09-23 (done items - do NOT redo)
+  x 2.5D FEEL (2D) - already existed: sun/moon + day/night tint, animated water ripples
+    + foam, character shadows, night lamps, birds, vignette, FX chips.
+  x FISHING (2D) - bite-window minigame (cast 3-12s -> STRIKE -> SPACE in 1.6s window),
+    Void-Pearl 1-in-100 (400 val). (ae161da)
+  x ARCADE (2D) - games as venues w/ sparks entry fees + score-bridge listener. (74a36ae)
+  x ONE SPARKS LEDGER 2D<->3D - shd.sparks3d shared localStorage. (14.3-M begun)
+  x TACTICS v1 (3D) - FFT battles at the Colosseum: CT/AGI turns, stats, BFS move, bot
+    opponents, pot payouts, win-scaling tiers. world-tactics.js. (17f9a7f)
+  x 3D five-laws #4 SWIM (surface float, no seafloor walk) + #5 VESSEL SEATING. (ac13c62)
+  x Master World Spec v2 saved to Obsidian + skate-threejs ref cloned for Thursday physics.
+  REMAINING (in order): (1) INTERIOR LAW - real door+interior+colliders per enterable,
+    E-portals to sized-correct instances; (2) COLLIDER + SCALE LAWS; (3) arcade score
+    bridge (games postMessage {shdGame, shdScore}); (4) agentic NPC quest dialogs.
