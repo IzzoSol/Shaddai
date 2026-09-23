@@ -150,9 +150,12 @@ window.buildWorldActions = function (opts) {
     if (e.code !== 'KeyE' && e.code !== 'Space') return;
     var p = P(); if (!p) return;
     if (e.code === 'KeyE') {
-      // COLOSSEUM first: E near the arena opens the spectate/tourney modal
+      // COLOSSEUM: the realm DOOR enters the Tourney Hall (world-interiors). Inside,
+      // the betting board greets you (auto-open on entry, B to reopen). This outdoor
+      // trigger is only the fallback when the interiors module failed to build.
       var Lm = window.__worldLandmarks;
-      if (Lm && Lm.arenaPos && Math.hypot(p.x - Lm.arenaPos[0], p.z - Lm.arenaPos[1]) < 50) { openArena(); return; }
+      var _noInteriors = !window.buildWorldInteriors;
+      if (_noInteriors && Lm && Lm.arenaPos && Math.hypot(p.x - Lm.arenaPos[0], p.z - Lm.arenaPos[1]) < 50) { openArena(); return; }
       if (st.mode) {                                    // dismount — park it where legal
         if (!dismountAllowed()) { pop('SAIL BACK TO SHORE TO DISMOUNT', '#5fe0ff'); return; }
         st.mode = false; land();
@@ -313,7 +316,22 @@ window.buildWorldActions = function (opts) {
     var p = P(); if (!p) return;
     var L = window.__worldLandmarks;
     if (L && Math.hypot(p.x - L.garagePos[0], p.z - L.garagePos[1]) < 22) openGarage();
+    // realm venue boards: B reopens the panel while inside the Colosseum / Garage halls
+    else if (window._currentInterior === 'COLOSSEUM') openArena();
+    else if (window._currentInterior === 'GARAGE') openGarage();
   });
+
+  // ── REALM VENUE BOARDS (interior law): entering the Colosseum Hall greets you with the
+  //    tourney board; entering the Hover Works opens the garage shop. Watch the host's
+  //    _currentInterior (set on enter/exit) — no hooks needed in the interiors module.
+  var _lastInterior = null;
+  setInterval(function () {
+    var cur = window._currentInterior || null;
+    if (cur === _lastInterior) return;
+    _lastInterior = cur;
+    if (cur === 'COLOSSEUM') setTimeout(function () { if (window._currentInterior === 'COLOSSEUM') openArena(); }, 350);
+    if (cur === 'GARAGE')    setTimeout(function () { if (window._currentInterior === 'GARAGE') openGarage(); }, 350);
+  }, 400);
 
   var lastT = 0;
   return {
