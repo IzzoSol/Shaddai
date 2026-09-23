@@ -293,7 +293,14 @@ window.buildWorldActions = function (opts) {
       + '<b>SKATE JAM</b> — entry 30⚡ · pool ' + T.skatePool + '⚡ · ' + T.skateN + ' entered<br>'
       + '<span style="opacity:.65;font-size:11px">Winner takes the pool. Matches open with the coming build — entry sparks are held in the pool.</span>',
       [
-        { label: 'ENTER FIGHT (50⚡)', disabled: sparks() < 50, fn: function () { addSparks(-50); var t = tourney(); t.fightPool += 50; t.fightN++; saveTourney(t); pop('ENTERED — FIGHT POOL ' + t.fightPool + '⚡', '#c084fc'); closeModal(); } },
+        { label: 'ENTER FIGHT (50⚡)', disabled: sparks() < 50, fn: function () {
+            addSparks(-50); var t = tourney(); t.fightPool += 50; t.fightN++; saveTourney(t);
+            closeModal();
+            var T = window.__worldTactics;
+            if (T && T.startFight({ entry: 50, pool: t.fightPool - 50, tier: Math.min(3, Math.floor((t.wins || 0) / 2)) })) {
+              pop('FIGHT! tier ' + Math.min(3, Math.floor((t.wins || 0) / 2)) + ' · pot ' + (t.fightPool) + '⚡', '#c084fc');
+            } else { pop('ENTERED — FIGHT POOL ' + t.fightPool + '⚡ (engine loading)', '#c084fc'); }
+          } },
         { label: 'ENTER SKATE (30⚡)', disabled: sparks() < 30, fn: function () { addSparks(-30); var t = tourney(); t.skatePool += 30; t.skateN++; saveTourney(t); pop('ENTERED — SKATE POOL ' + t.skatePool + '⚡', '#c084fc'); closeModal(); } },
         { label: 'SPECTATE', fn: closeModal },
       ]);

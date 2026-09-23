@@ -247,6 +247,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-volcano.js?v=20260921b"></script>
 <script src="/world-realmprops.js?v=20260921b"></script>
 <script src="/world-actions.js?v=20260921c"></script>
+<script src="/world-tactics.js?v=20260923a"></script>
 <script src="/world-trails.js?v=20260921d"></script>
 <script src="/world-landmarks.js?v=20260921d"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
@@ -3941,6 +3942,16 @@ try{
     isShift: function(){ return !!(keys['ShiftLeft']||keys['ShiftRight']); },
   });
 }catch(e){ console.warn('world-actions init failed:', e && e.message); }
+
+// TACTICS ENGINE (§14.3.1): FFT grid battles — the Colosseum's ENTER FIGHT launches a
+// real match (sparks stake in, pool out on victory; bot units pick their own moves).
+let worldTactics = null;
+try {
+  if (window.buildWorldTactics) worldTactics = window.buildWorldTactics({
+    sparks: { get: function(){ return veh && veh.sparks ? veh.sparks() : 0; },
+             add:  function(n){ try { localStorage.setItem('shd.sparks3d', String((parseInt(localStorage.getItem('shd.sparks3d')||'0',10)||0)+n)); } catch(e){} } },
+  });
+}catch(e){ console.warn('world-tactics init failed:', e && e.message); }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // FPS-ADAPTIVE QUALITY GOVERNOR â€” auto-tunes render quality to hold 50-60fps
