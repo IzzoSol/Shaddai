@@ -7,34 +7,47 @@ window.RegionGen['darkforest'] = function (api) {
 
   function inb(c, r) { return c >= 0 && c <= 51 && r >= 0 && r <= 51; }
 
-  // ── 1. WINDING SHADOW TRAIL south→north ────────────────────────────────────
-  //  Zone 1 clearing: (22, 42)
-  //  Zone 2 clearing: (14, 35)
-  //  Zone 3 clearing: (28, 28)
-  //  Zone 4 clearing: (38, 20)
-  //  Castle moat crossing: (28, 15)
+  // ── 1. THE LONG SHADOW MARCH — a winding 8-leg trail ───────────────────────
+  //  The siege is a deep-castle journey now: 6 campfire checkpoints snaking
+  //  across the WHOLE forest (south → west → north-east → back to the gate).
+  //  You have to really TRAVEL before the gates, and each leg justifies a camp.
+  //  Campfire clearings (must match DarkRealm.S.campfires exactly):
+  //    Zone 1 camp: (22, 42)
+  //    Zone 2 camp: (10, 38)
+  //    Zone 3 camp: (6,  26)
+  //    Zone 4 camp: (14, 16)
+  //    Zone 5 camp: (28, 20)
+  //    Zone 6 camp: (42, 14)
+  //  Moat crossing: (28, 15) → Castle gate: (28, 8)
   var knots = [
-    [26, 47],  // spawn
-    [22, 42],  // zone 1 campfire
-    [14, 35],  // zone 2 campfire
-    [28, 28],  // zone 3 campfire
-    [38, 20],  // zone 4 campfire
+    [26, 47],  // spawn waystone
+    [22, 42],  // zone 1 camp
+    [10, 38],  // zone 2 camp
+    [ 6, 26],  // zone 3 camp
+    [14, 16],  // zone 4 camp
+    [28, 20],  // zone 5 camp
+    [42, 14],  // zone 6 camp
     [28, 15],  // moat crossing
     [28,  8],  // castle gate
   ];
   for (var ki = 0; ki < knots.length - 1; ki++) {
     var ka = knots[ki], kb = knots[ki + 1];
-    var kw = (ki === 0 || ki === 6) ? 3 : 2;
+    var kw = (ki === 0 || ki === 7) ? 3 : 2;   // wide at spawn + final gate charge
     api.roadLine(ka[0], ka[1], kb[0], kb[1], kw, T.PATH);
   }
-  // branching side-paths — extra combat space per zone
+  // branching side-paths — extra combat space per zone (patrol pockets)
   var branches = [
     [22, 42, 32, 44],  // zone 1 east branch
-    [22, 42, 12, 44],  // zone 1 west branch
-    [14, 35,  6, 32],  // zone 2 deeper west
-    [28, 28, 40, 30],  // zone 3 east flank
-    [38, 20, 46, 18],  // zone 4 far east
-    [38, 20, 30, 16],  // zone 4 direct charge north
+    [22, 42, 12, 46],  // zone 1 west branch
+    [10, 38,  4, 44],  // zone 2 south-west lobe
+    [10, 38,  4, 32],  // zone 2 deep west
+    [ 6, 26,  2, 30],  // zone 3 forest's edge
+    [ 6, 26, 12, 20],  // zone 3 to zone 4 scout cut
+    [14, 16, 22, 12],  // zone 4 east flank
+    [28, 20, 38, 24],  // zone 5 east flank
+    [28, 20, 24, 14],  // zone 5 north horn
+    [42, 14, 48,  8],  // zone 6 far east ridge
+    [42, 14, 46, 20],  // zone 6 south tower approach
   ];
   branches.forEach(function (b) {
     api.roadLine(b[0], b[1], b[2], b[3], 1, T.PATH);
@@ -43,9 +56,11 @@ window.RegionGen['darkforest'] = function (api) {
   // ── 2. CAMPFIRE CLEARINGS (matched to DarkRealm.S.campfires positions) ─────
   var campClears = [
     { c: 22, r: 42, rad: 5 },
-    { c: 14, r: 35, rad: 5 },
-    { c: 28, r: 28, rad: 5 },
-    { c: 38, r: 20, rad: 5 },
+    { c: 10, r: 38, rad: 5 },
+    { c:  6, r: 26, rad: 5 },
+    { c: 14, r: 16, rad: 5 },
+    { c: 28, r: 20, rad: 5 },
+    { c: 42, r: 14, rad: 5 },
   ];
   campClears.forEach(function (cs) {
     api.disc(cs.c, cs.r, cs.rad, T.GRASS);  // cleared area
@@ -118,6 +133,14 @@ window.RegionGen['darkforest'] = function (api) {
   api.prop('rock', 24, 16); api.prop('rock', 33, 16);
   api.prop('fence', 23, 16); api.prop('fence', 34, 16);
   api.prop('crate', 22, 15); api.prop('crate', 35, 15); // siege supplies
+
+  // Inner Ward furniture — barracks benches, keep braziers, vault clutter.
+  // Keeps the gate corridor (cols 27-29, row 13) and keep door clear.
+  api.prop('bench', 22, 12); api.prop('bench', 33, 12);
+  api.prop('lamp', 24, 11); api.prop('lamp', 31, 11);  // keep braziers + vault torch
+  api.prop('crate', 23, 6); api.prop('crate', 33, 6);  // ward supply piles
+  api.prop('crate', 22, 8); api.prop('crate', 33, 10); // barracks crates
+  api.prop('crate', 26, 12); api.prop('crate', 30, 5); // vault clutter
 
   // ── 5. DARK RUINS scattered in the forest ──────────────────────────────────
   var ruins = [[9,27],[44,32],[6,48],[46,10],[40,44],[12,20],[18,15]];

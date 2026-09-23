@@ -554,8 +554,8 @@ addEventListener('keydown', (e) => {
   if (k === 'm') toggleMap();
   if (k === 'g' && e.shiftKey) applyTier((perf.tier + 2) % 3);
   if (k === 'n') { buildIdx = (buildIdx + 1) % BUILDS.length; toast('BUILD: ' + BUILDS[buildIdx][2].toUpperCase()); }
-  if (k === 'b' && player && state.where !== 'inside' && !mountedOn) { if (save.plots.length >= 40) { toast('PLOT LIMIT'); } else { const p = player.root.position, rec = { f: BUILDS[buildIdx][0], x: +(p.x + Math.sin(player.yaw) * 14).toFixed(1), z: +(p.z + Math.cos(player.yaw) * 14).toFixed(1), ry: +player.yaw.toFixed(2) }; save.plots.push(rec); placePlot(rec); hud(); writeSave(); toast('PLACED ' + BUILDS[buildIdx][2].toUpperCase()); } }
-  if (k === 'z' && plotObjs.length) { const o = plotObjs.pop(); world.remove(o.g); const i = save.plots.indexOf(o.rec); if (i >= 0) save.plots.splice(i, 1); hud(); writeSave(); toast('REMOVED'); }
+  if (k === 'b' && player && state.where !== 'inside' && !mountedOn) { if (save.plots.length >= 40) { toast('PLOT LIMIT'); } else { const plotCost = save.plots.length === 0 ? 0 : 25; if (save.sparks < plotCost) { toast('NEED ⚡ SPARKS'); } else { const p = player.root.position, rec = { f: BUILDS[buildIdx][0], x: +(p.x + Math.sin(player.yaw) * 14).toFixed(1), z: +(p.z + Math.cos(player.yaw) * 14).toFixed(1), ry: +player.yaw.toFixed(2) }; if (plotCost) save.sparks -= plotCost; save.plots.push(rec); placePlot(rec); hud(); writeSave(); toast('PLACED ' + BUILDS[buildIdx][2].toUpperCase() + (plotCost ? ' · −' + plotCost + '⚡' : '')); } } }
+  if (k === 'z' && plotObjs.length) { const o = plotObjs.pop(); world.remove(o.g); const i = save.plots.indexOf(o.rec); if (i >= 0) save.plots.splice(i, 1); save.sparks += 10; hud(); writeSave(); toast('REMOVED +10⚡'); }
   if (k === 'e') interact();
   if (k === 'f' && player && !mountedOn) strike(player); if (k === 'g' && player && !mountedOn) strike(player, 'cast');
 });

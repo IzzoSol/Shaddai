@@ -7622,6 +7622,14 @@ window.enter3DWorld=function(){
       </div>
     </div><!-- /3-col -->
 
+    <!-- ACHIEVEMENTS STRIP -->
+    <div class="ec-pad" style="padding-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(232,196,92,0.07);border:1px solid rgba(232,196,92,0.18);border-radius:8px;padding:9px 12px">
+        <span style="font-size:10px;color:#e8c45c;font-weight:700">🏅 Achievements</span>
+        <span style="font-size:13px;color:#e8c45c;font-weight:700"><span id="ecAchCount">0</span> <span style="font-size:9px;color:#8a9ab0">unlocked</span></span>
+      </div>
+    </div>
+    <!-- /achievements -->
     <!-- TRANSACTION HISTORY -->
     <div class="ec-pad" style="padding-top:12px">
       <div class="ec-sec" style="color:#8a9ab0">📋 Recent Transactions</div>
@@ -30648,6 +30656,12 @@ function initEconomyTab() {
   try {
     var ref = localStorage.getItem('shaddai_ref_code') || (uid ? uid.slice(0,8).toUpperCase() : '—');
     var rc = document.getElementById('ecRefCode'); if (rc) rc.textContent = ref;
+  } catch(_) {}
+  // Transaction history (signal drops from game state)
+  try {
+    var achs = JSON.parse(localStorage.getItem('shd_achievements') || '[]');
+    var ac = document.getElementById('ecAchCount');
+    if (ac) ac.textContent = achs.length || 0;
   } catch(_) {}
   // Transaction history (signal drops from game state)
   try {

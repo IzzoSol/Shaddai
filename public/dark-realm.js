@@ -16,22 +16,35 @@ window.DarkRealm = (function () {
     CHAIN_HP:           800,
     DRAGON_HP:          8000,
     DRAGON_RAGE_MULT:   1.5,     // damage multiplier if any chains unbroken
-    FOREST_ZONE_KILLS:  30,      // kills to unlock next forest zone (5 zones total)
+    FOREST_ZONE_KILLS:  24,      // kills to unlock next forest zone (6 zones — a long march)
+    FOREST_ZONES:       6,       // number of forest zones + campfire checkpoints
     DOWN_REVIVE_MS:     60000,   // auto-revive after 60s solo
-    CAMPFIRE_RADIUS:    2.0,     // tiles — how close to campfire to revive
+    CAMPFIRE_RADIUS:    2.0,     // tiles — how close to campfire to revive/camp
     SCHEDULED_INTERVAL: 2 * 3600 * 1000, // every 2 hours
     DRAGON_BREATH_DMG:  18,
     DRAGON_TAIL_DMG:    12,
     MOAT_DRAIN_PER_DAY: 3.5,   // natural drain — ~29 days to fully dry
     MOAT_SIEGE_DRAIN:   5,     // each completed siege drains 5%
     MOAT_DROUGHT_DRAIN: 2,     // per Sun Shrine offering (costs 100 Sparks)
+    CAMP: {                    // fire/camp survival — the pack comes at night
+      BASE_FUEL:       60,     // seconds of burn a fresh camp starts with
+      FUEL_PER_WOOD:   80,     // seconds added per wood upgrade
+      WOOD_PER_LEVEL:  2,      // wood cost per upgrade (scales as it grows)
+      MAX_LEVEL:       4,      // bigger fire fights off MORE wolves
+      PACK_TIME:       16000,  // ms between wolf packs stalking the camp
+      REPEL_TIME:      4000,   // ms between fire scorch ticks
+      REGEN_HP:        2.2,    // hp/sec healed while the fire burns
+      REPEL_PER_LEVEL: 2,      // wolves scorched per tick per fire level
+      RADIUS:          2.2,    // base fire radius (tiles)
+      RADIUS_PER_LEVEL: 1.1,   // radius growth per level
+    },
   };
 
   // ── State ──────────────────────────────────────────────────────────────────
   const S = {
     active:       false,
     phase:        'idle',        // idle | forest | moat | gate | chains | final | victory | defeat
-    forestZone:   1,             // 1-5 escalating difficulty
+    forestZone:   1,             // 1-6 escalating difficulty
     killCount:    0,
     gateHP:       CFG.GATE_HP,
     gateMaxHP:    CFG.GATE_HP,
@@ -54,6 +67,11 @@ window.DarkRealm = (function () {
     log:          [],
     moatLevel:    100,   // 0 = dry/crossable · 100 = full/impassable
     moatSavedTs:  0,     // when moat was last persisted (for natural drain calc)
+    camp: { on: 0, at: -1, level: 0, fuel: 0, packTimer: 0, repelTimer: 0, packCount: 0, fireOut: false },
+    towersSpawned: false,   // 4 Tower Knights guard the Inner Ward
+    knightsDown: 0,
+    basementSpawned: false, // wolves + guard loose from the vault
+    chestLooted: false,     // basement vault chest (chains+ phase pickup)
   };
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -122,14 +140,29 @@ window.DarkRealm = (function () {
     if (S.nextScheduled === 0) S.nextScheduled = Date.now() + CFG.SCHEDULED_INTERVAL;
     _savePersist();
     _resetState();
-    // Campfire positions match darkforest.js zone clearings exactly
+    // Campfire positions match world-regions/darkforest.js clearings exactly
     S.campfires = [
       { col: 22, row: 42, cacheSearched: false },  // Zone 1 campfire
-      { col: 14, row: 35, cacheSearched: false },  // Zone 2 campfire
-      { col: 28, row: 28, cacheSearched: false },  // Zone 3 campfire
-      { col: 38, row: 20, cacheSearched: false },  // Zone 4 campfire
+      { col: 10, row: 38, cacheSearched: false },  // Zone 2 campfire
+      { col:  6, row: 26, cacheSearched: false },  // Zone 3 campfire
+      { col: 14, row: 16, cacheSearched: false },  // Zone 4 campfire
+      { col: 28, row: 20, cacheSearched: false },  // Zone 5 campfire
+      { col: 42, row: 14, cacheSearched: false },  // Zone 6 campfire
     ];
     if (!S.active && Date.now() >= S.nextScheduled) openSiege();
+    // Inject castle guard types into Combat registry (idempotent, avoids editing combat.js)
+    try {
+      if (window.Combat && window.Combat.TYPES) {
+        if (!window.Combat.TYPES.tower_knight) window.Combat.TYPES.tower_knight = {
+          name: 'Tower Knight', hp: 240, speed: 1.5, dmg: 26, r: 1.2, color: '#4a4f5e',
+          size: 1.4, tough: 3.2, shape: 'humanoid', eye: '#ffd700', glow: '#b89a2a'
+        };
+        if (!window.Combat.TYPES.basement_guard) window.Combat.TYPES.basement_guard = {
+          name: 'Basement Guard', hp: 140, speed: 1.8, dmg: 20, r: 1.1, color: '#2a2e3a',
+          size: 1.2, tough: 2.2, shape: 'humanoid', eye: '#ff6a3a', glow: '#c03060'
+        };
+      }
+    } catch (_) {}
     _updateHud();
   }
 
@@ -153,6 +186,9 @@ window.DarkRealm = (function () {
     S.downedAutoReviveTimer = 0;
     S.waveRespawnTimer = 20000;
     S.log = [];
+    S.camp = { on: 0, at: -1, level: 0, fuel: 0, packTimer: 0, repelTimer: 0, packCount: 0, fireOut: false };
+    S.towersSpawned = false; S.knightsDown = 0;
+    S.basementSpawned = false; S.chestLooted = false;
     // reset campfire cache flags for new siege
     S.campfires.forEach(function (cf) { cf.cacheSearched = false; });
   }
@@ -162,7 +198,7 @@ window.DarkRealm = (function () {
     if (!window.Combat || !window.Combat.spawnDarkZone) return;
     const wf = (typeof walkable === 'function') ? walkable : (window.walkable || function () { return true; });
     const GW = window.GW || 52, GH = window.GH || 52;
-    let newEnemies = window.Combat.spawnDarkZone(zoneNum, wf, GW, GH);
+    let newEnemies = window.Combat.spawnDarkZone(Math.min(zoneNum, 5), wf, GW, GH);
     if (small && newEnemies.length > 3) newEnemies = newEnemies.slice(0, 3);
     if (!window.enemies) window.enemies = [];
     // Remove any already-dead enemies first to keep array clean
@@ -191,6 +227,7 @@ window.DarkRealm = (function () {
   function endSiege(outcome) {
     S.active = false;
     S.phase = outcome; // 'victory' or 'defeat'
+    if (S.camp.on) campBreak('⚔ The siege has ended — your campfire goes cold.');
     S.nextScheduled = Date.now() + CFG.SCHEDULED_INTERVAL;
     _distributeRewards(outcome);
     // Each completed siege naturally drains the moat
@@ -203,11 +240,13 @@ window.DarkRealm = (function () {
 
   // ── Main Update ─────────────────────────────────────────────────────────────
   function update(dt, player, enemies) {
+    S.lastPlayer = player;
     if (!window.regionSel || window.regionSel !== 'darkforest') return;
     if (!S.active) {
       if (Date.now() >= S.nextScheduled) openSiege();
       return;
     }
+    _updateChestPickup(player);
 
     // ── Downed state ─────────────────────────────────────────────────────────
     if (S.downedAt) {
@@ -234,6 +273,8 @@ window.DarkRealm = (function () {
       return;
     }
 
+    if (S.camp.on && S.phase === 'forest') _updateCamp(dt, player, enemies);
+
     if (S.phase === 'forest') _updateForest(dt, player, enemies);
     else if (S.phase === 'moat') _updateMoat();
     else if (S.phase === 'gate') _updateGate(dt, player, enemies);
@@ -245,7 +286,7 @@ window.DarkRealm = (function () {
   function _updateForest(dt, player, enemies) {
     const prevZone = S.forestZone;
     const zoneThreshold = CFG.FOREST_ZONE_KILLS * S.forestZone;
-    if (S.killCount >= zoneThreshold && S.forestZone < 5) {
+    if (S.killCount >= zoneThreshold && S.forestZone < CFG.FOREST_ZONES) {
       S.forestZone++;
       addLog('◈ Zone ' + S.forestZone + ' — enemies grow stronger!', '#ff7700');
       if (typeof toast === 'function') toast('☠ Zone ' + S.forestZone + ' — the shadows deepen!');
@@ -263,7 +304,7 @@ window.DarkRealm = (function () {
       S.waveRespawnTimer = 12000; // check again in 12s
     }
 
-    if (S.killCount >= CFG.FOREST_ZONE_KILLS * 5) {
+    if (S.killCount >= CFG.FOREST_ZONE_KILLS * CFG.FOREST_ZONES) {
       if (S.moatLevel > 0) {
         S.phase = 'moat';
         addLog('💧 THE CASTLE MOAT BLOCKS YOUR PATH!', '#2266ff');
@@ -274,6 +315,7 @@ window.DarkRealm = (function () {
         S.phase = 'gate';
         addLog('⚔ THE CASTLE GATES ARE BEFORE YOU — attack!', '#ff0000');
         if (typeof toast === 'function') toast('⚔ Castle Gate breached range! Attack the gates!');
+        _castleKnights();
         _savePersist();
       }
     }
@@ -286,8 +328,96 @@ window.DarkRealm = (function () {
       S.phase = 'gate';
       addLog('☀ THE MOAT HAS DRIED — storm the gates!', '#ff0000');
       if (typeof toast === 'function') toast('☀ MOAT DRIED — CHARGE THE GATES!');
+      _castleKnights();
       _savePersist();
     }
+  }
+
+  // ── Castle Ward ───────────────────────────────────────────────────────────────
+  // 4 Tower Knights guard the Inner Ward corners once the castle gates open.
+  function _castleKnights() {
+    if (S.towersSpawned || !window.enemies || !window.Combat) return;
+    S.towersSpawned = true;
+    const spots = [[22, 6], [32, 6], [22, 13], [32, 13]];
+    spots.forEach(function (p, i) {
+      window.enemies.push({
+        id: '_tknight_' + i + '_' + Date.now(),
+        kind: 'tower_knight',
+        towerKnight: true, tkIndex: i,
+        col: p[0] + 0.5, row: p[1] + 0.5, tc: 27.5, tr: 9.5,
+        hp: 240, maxhp: 240, speed: 1.5, dmg: 26, r: 1.2, atkCd: 1.4,
+        dead: false, hitFlash: 0, aggro: 9, bob: Math.random() * 6.28
+      });
+    });
+    addLog('⚔ The 4 Tower Knights descend — guard the Inner Ward!', '#ffcc00');
+    if (typeof toast === 'function') toast('⚔ 4 Tower Knights block the Inner Ward!');
+  }
+
+  // When the gates shatter, wolves + a guard burst from the basement vault.
+  function _basementAmbush() {
+    if (S.basementSpawned || !window.enemies || !window.Combat) return;
+    S.basementSpawned = true;
+    function mk(kind, c, r, extra) {
+      window.enemies.push(Object.assign({
+        id: '_basement_' + c + '_' + r + '_' + Date.now(),
+        kind: kind, basementMob: true,
+        col: c + 0.5, row: r + 0.5, tc: 27.5, tr: 9.5,
+        dead: false, hitFlash: 0, bob: Math.random() * 6.28
+      }, extra));
+    }
+    mk('wolf', 30, 11, { hp: 55, maxhp: 55, speed: 2.4, dmg: 12, r: 0.8, atkCd: 1.0, aggro: 10 });
+    mk('wolf', 32, 11, { hp: 55, maxhp: 55, speed: 2.4, dmg: 12, r: 0.8, atkCd: 1.0, aggro: 10 });
+    mk('basement_guard', 31, 12, { hp: 140, maxhp: 140, speed: 1.8, dmg: 20, r: 1.1, atkCd: 1.3, aggro: 9 });
+    addLog('📦 The basement wards rattle — wolves loose from the vault!', '#ffaa00');
+    if (typeof toast === 'function') toast('📦 Wolves burst from the basement vault!');
+  }
+
+  // Castle drop handling for Tower Knights / basement mobs (phase-agnostic).
+  function _onCastleKill(enemy) {
+    const isKnight = !!enemy.towerKnight;
+    const gold = isKnight ? 50 : 18;
+    const sparks = isKnight ? 25 : 8;
+    if (window.wallet && typeof window.wallet.add === 'function') {
+      try {
+        window.wallet.add(gold);
+        if (typeof addFloat === 'function') { try { addFloat(enemy.col, enemy.row, '💵+' + gold, '#ffe9a8'); } catch (_) {} }
+      } catch (_) {}
+    }
+    if (window.wallet && typeof window.wallet.addInv === 'function' && (isKnight || Math.random() < 0.5)) {
+      try { window.wallet.addInv('potion', 1); } catch (_) {}
+    }
+    if (window.__sparks && typeof window.__sparks.add === 'function') {
+      try { window.__sparks.add('siege', sparks, (isKnight ? 'Tower Knight' : 'Basement wolf') + ' slain'); } catch (_) {}
+    }
+    addLog((isKnight
+      ? ('⚔ Tower Knight falls! +' + gold + ' gold · +1 potion · +' + sparks + '⚡')
+      : ('📦 Basement beast slain! +' + gold + ' gold · +' + sparks + '⚡')), '#aaffaa');
+    if (isKnight) S.knightsDown++;
+    if (S.knightsDown >= 4) {
+      addLog('🏴 The Inner Ward is clear — the keep stands open!', '#ffcc00');
+      if (typeof toast === 'function') toast('🏴 All Tower Knights fallen!');
+    }
+  }
+
+  // Basement vault chest pickup (chains+ / final) — claims once by proximity.
+  function _updateChestPickup(player) {
+    if (S.chestLooted || !player) return;
+    if (S.phase !== 'chains' && S.phase !== 'final' && S.phase !== 'victory') return;
+    const dx = player.col - 31.5, dy = player.row - 11.5;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) return;
+    S.chestLooted = true;
+    const gold = 40;
+    if (window.wallet && typeof window.wallet.add === 'function') {
+      try { window.wallet.add(gold); } catch (_) {}
+    }
+    if (window.wallet && typeof window.wallet.addInv === 'function') {
+      try { window.wallet.addInv('potion', 2); } catch (_) {}
+    }
+    if (window.__sparks && typeof window.__sparks.add === 'function') {
+      try { window.__sparks.add('siege', 30, 'Basement vault chest'); } catch (_) {}
+    }
+    addLog('📜 Basement Vault opened! +' + gold + ' gold · +2 potions · +30⚡', '#e8c45c');
+    if (typeof toast === 'function') toast('📜 BASEMENT VAULT — treasure, howled over by wolves!');
   }
 
   // ── Gate Phase ─────────────────────────────────────────────────────────────
@@ -304,6 +434,7 @@ window.DarkRealm = (function () {
       addLog('💥 THE GATES SHATTER — the dragon stirs within!', '#ff0000');
       addLog('◈ Break the chains before it breaks free!', '#cc44ff');
       if (typeof toast === 'function') toast('💥 Gates broken — the Dragon AWAKENS!');
+      _basementAmbush();
       _savePersist();
     }
   }
@@ -478,9 +609,8 @@ window.DarkRealm = (function () {
           window.playerHP = Math.min(window.playerHP + drop.hp, window.playerMaxHP || 100);
           if (typeof updateHP === 'function') updateHP();
         }
-        if (drop.sparks && typeof money !== 'undefined') {
-          window.money = (window.money || 0) + drop.sparks;
-          if (typeof saveEcon === 'function') saveEcon();
+        if (drop.sparks && window.wallet && typeof window.wallet.add === 'function') {
+          window.wallet.add(drop.sparks);
           if (typeof updateWallet === 'function') updateWallet();
         }
         addLog('📦 Cache found: ' + drop.label, '#ffcc44');
@@ -503,6 +633,218 @@ window.DarkRealm = (function () {
     return null;
   }
 
+  // ── CAMP SYSTEM — the pack comes at night ──────────────────────────────────
+  //  You camp at a campfire. Wolves + knights surround the fire. The bigger
+  //  fire, the MORE of the pack it scorches away. Fire out → swarm.
+  const PK_STATS = {
+    wolf:      { hp: 26,  speed: 2.4, dmg: 6,  r: 0.9 },
+    direwolf:  { hp: 90,  speed: 2.6, dmg: 16, r: 1.1 },
+    bonehound: { hp: 34,  speed: 2.8, dmg: 9,  r: 0.9 },
+    cultist:   { hp: 46,  speed: 2.0, dmg: 13, r: 1.0 },
+  };
+  const CAMP_NAMES = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
+
+  function _hasCampfireNear(player) {
+    return nearCampfire(player) !== null;
+  }
+
+  function campToggle() {
+    if (S.camp.on) { campBreak('🔥 Camp broken. Keep your fire lit, wanderer.'); return; }
+    if (S.phase !== 'forest') { try { toast('Only during the forest march'); } catch (_) {} return; }
+    const player = S.lastPlayer || window.player;
+    if (!_hasCampfireNear(player)) { try { toast('Find a campfire clearing to make camp.'); } catch (_) {} return; }
+    const idx = nearCampfire(player).campfireIndex;
+    S.camp.on = 1;
+    S.camp.at = idx;
+    S.camp.level = 1;
+    S.camp.fuel = CFG.CAMP.BASE_FUEL;
+    S.camp.fireOut = false;
+    S.camp.packTimer = 9000;
+    S.camp.repelTimer = 0;
+    addLog('🏕 Camp made at the ' + CAMP_NAMES[idx] + ' clearing — fire lit. Feed it wood!', '#ffaa22');
+    try { toast('🏕 Camp made — feed the fire! (F = break camp · add wood in the camp panel)'); } catch (_) {}
+    campBuild();
+    _campRefresh();
+  }
+
+  function campAddWood() {
+    if (!S.camp.on) return;
+    const wk = window.wallet;
+    const baseNeed = CFG.CAMP.WOOD_PER_LEVEL;
+    const need = S.camp.level >= CFG.CAMP.MAX_LEVEL
+      ? baseNeed * CFG.CAMP.MAX_LEVEL      // max fire: just refuel
+      : baseNeed * (S.camp.level || 1);    // growing fire: fuel + grows
+    if (!wk || typeof wk.takeWood !== 'function') { try { toast('Camp needs the wallet — world not ready.'); } catch (_) {} return; }
+    if (wk.wood() < need) { try { toast('Need ' + need + ' wood to feed the fire.'); } catch (_) {} return; }
+    wk.takeWood(need);
+    if (S.camp.level < CFG.CAMP.MAX_LEVEL) {
+      S.camp.level = Math.min(CFG.CAMP.MAX_LEVEL, (S.camp.level || 1) + 1);
+    }
+    S.camp.fuel += CFG.CAMP.FUEL_PER_WOOD;
+    if (S.camp.fireOut) S.camp.fireOut = false;
+    addLog('🔥 Fire now Lv ' + S.camp.level + ' — +' + CFG.CAMP.FUEL_PER_WOOD + 's burn. Bigger flames fight off MORE wolves.', '#ffaa22');
+    try { toast('🔥 Fire Lv ' + S.camp.level + ' — the pack smells ash, not fear.'); } catch (_) {}
+    _campRefresh();
+  }
+
+  function campRekindle() {
+    if (!S.camp.on || !S.camp.fireOut) return;
+    S.camp.fireOut = false;
+    S.camp.level = Math.max(1, S.camp.level || 1);
+    S.camp.fuel = CFG.CAMP.BASE_FUEL;
+    addLog('🔥 Fire rekindled! The pack howls with rage.', '#ffaa22');
+    try { toast('🔥 Rekindled! Stay close to the flames.'); } catch (_) {}
+    _campRefresh();
+  }
+
+  function campBreak(msg) {
+    S.camp.on = 0;
+    S.camp.at = -1;
+    S.camp.level = 0;
+    S.camp.fuel = 0;
+    S.camp.packTimer = 0;
+    S.camp.repelTimer = 0;
+    S.camp.fireOut = false;
+    if (msg) addLog(msg, '#ff6622');
+    _campRefresh();
+    _updateHud();
+  }
+
+  // panel (lazy-built once)
+  function campBuild() {
+    let el = document.getElementById('darkCampPanel');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'darkCampPanel';
+    el.className = 'panel';
+    el.style.cssText = 'position:fixed;left:50%;top:92px;transform:translateX(-50%);z-index:24;width:360px;max-width:92vw;padding:14px 16px;background:rgba(20,8,2,0.88);backdrop-filter:blur(10px);border:1px solid rgba(255,120,20,0.35);border-radius:12px;display:none;box-shadow:0 8px 40px rgba(0,0,0,0.6)';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function _campRefresh() {
+    const el = document.getElementById('darkCampPanel');
+    if (!el) return;
+    if (!S.camp.on) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const lvl = S.camp.level || 1;
+    const out = S.camp.fireOut;
+    const pct = Math.max(0, Math.min(100, Math.round((S.camp.fuel / (CFG.CAMP.BASE_FUEL + CFG.CAMP.FUEL_PER_WOOD * 3)) * 100)));
+    let flames = '';
+    for (let i = 1; i <= 4; i++) flames += i <= lvl ? '🔥' : '·';
+    let h = '<div style="display:flex;justify-content:space-between;align-items:center">';
+    h += '<div style="font-family:\'Orbitron\',monospace;font-size:13px;color:#ff9933">🏕 CAMP · ' + CAMP_NAMES[S.camp.at].toUpperCase() + ' CLEARING</div>';
+    h += '<button onclick="DarkRealm.campBreak()" style="font-family:\'Share Tech Mono\',monospace;font-size:9px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#ffaa66;cursor:pointer">✕ BREAK</button>';
+    h += '</div>';
+    h += '<div style="margin-top:10px;font-family:\'Share Tech Mono\',monospace;font-size:11px;color:' + (out ? '#ff4040' : '#ffcc88') + '">' + (out ? '💀 FIRE OUT — REKINDLE NOW!' : flames + ' FIRE Lv ' + lvl + '/4') + '</div>';
+    h += '<div style="margin-top:6px;height:8px;background:rgba(255,120,20,0.15);border-radius:5px"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#ff6622,#ffcc44);border-radius:5px"></div></div>';
+    h += '<div style="font-size:9px;font-family:\'Share Tech Mono\',monospace;color:rgba(255,170,80,0.6);margin-top:4px">Fuel ' + Math.floor(S.camp.fuel) + 's · Wolf pack circling every 16s · Fire scorches the pack</div>';
+    h += '<div style="display:flex;gap:8px;margin-top:10px">';
+    if (out) {
+      h += '<button onclick="DarkRealm.campRekindle()" style="flex:1;font-family:\'Share Tech Mono\',monospace;font-size:10px;padding:8px;border-radius:8px;border:1px solid rgba(255,60,60,0.5);background:rgba(255,30,30,0.12);color:#ff6060;cursor:pointer">🔥 REKINDLE</button>';
+    }
+    h += '<button onclick="DarkRealm.campAddWood()" style="flex:1;font-family:\'Share Tech Mono\',monospace;font-size:10px;padding:8px;border-radius:8px;border:1px solid rgba(255,150,40,0.4);background:rgba(255,120,20,0.1);color:#ffaa44;cursor:pointer">🪵 FEED WOOD (+' + CFG.CAMP.FUEL_PER_WOOD + 's' + (lvl < CFG.CAMP.MAX_LEVEL ? ', +1 Lv' : '') + ')</button>';
+    h += '<button onclick="DarkRealm.campBreak()" style="flex:1;font-family:\'Share Tech Mono\',monospace;font-size:10px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:#dde;cursor:pointer">🏕 CAMP (F)</button>';
+    h += '</div>';
+    h += '<div style="margin-top:8px;font-size:8px;font-family:\'Share Tech Mono\',monospace;color:rgba(255,180,90,0.45)">Bigger fires burn more of the pack · Move away to break camp · Slain pack drops 💵 gold</div>';
+    el.innerHTML = h;
+  }
+
+  // hearts tick while fire burns; fuel drains; packs stalk in; fire scorches
+  function _updateCamp(dt, player, enemies) {
+    const cf = S.campfires[S.camp.at];
+    if (!cf || !player) { campBreak('🏕 Camp lost.'); return; }
+    const dx = player.col - cf.col, dy = player.row - cf.row;
+    if (Math.sqrt(dx * dx + dy * dy) > CFG.CAMPFIRE_RADIUS + 3) {
+      campBreak('⚠ You wandered off — the fire is left behind.');
+      return;
+    }
+    const burning = S.camp.fuel > 0 && !S.camp.fireOut;
+
+    if (burning && window.playerHP !== undefined) {
+      window.playerHP = Math.min(window.playerMaxHP || 100, window.playerHP + CFG.CAMP.REGEN_HP * dt / 1000);
+    }
+    if (S.camp.fuel > 0) {
+      S.camp.fuel = Math.max(0, S.camp.fuel - dt / 1000);
+      if (S.camp.fuel <= 0) {
+        S.camp.fireOut = true;
+        addLog('💀 THE FIRE IS OUT — the pack closes in! Rekindle NOW!', '#ff0000');
+        if (typeof toast === 'function') toast('💀 FIRE OUT! Rekindle before the wolves overwhelm you!');
+        _spawnPack(cf, enemies, true);
+      }
+    }
+    S.camp.packTimer += dt;
+    if (S.camp.packTimer >= CFG.CAMP.PACK_TIME) {
+      S.camp.packTimer = 0;
+      _spawnPack(cf, enemies, false);
+    }
+    S.camp.repelTimer += dt;
+    if (S.camp.repelTimer >= CFG.CAMP.REPEL_TIME) {
+      S.camp.repelTimer = 0;
+      if (burning) _campRepel(cf);
+    }
+    _campRefresh();
+  }
+
+  function _spawnPack(cf, enemies, ambush) {
+    if (!enemies || !window.walkable) return;
+    const night = (typeof window.tod !== 'undefined')
+      ? ((Math.cos(window.tod * 6.283185) + 1) / 2) > 0.5
+      : true;
+    const lvl = S.camp.level || 1;
+    let size = ambush ? (5 + lvl * 2) : (2 + Math.floor(lvl * 0.7) + (night ? 1 : 0));
+    size = Math.min(10, size);
+    const knightFlavor = S.forestZone >= 4;   // deep forest: bonehounds + cultists (the knight ranks)
+    const pool = knightFlavor ? ['direwolf', 'bonehound', 'cultist'] : ['wolf', 'wolf', 'direwolf'];
+    const scale = 1 + (S.forestZone - 1) * 0.1;
+    const seed = Date.now();
+    let placed = 0;
+    for (let i = 0; i < size; i++) {
+      const ang = (i / size) * 6.283 + Math.random() * 0.7;
+      const rad = 4.6 + Math.random() * 2.0;
+      const c = Math.round(cf.col + Math.cos(ang) * rad);
+      const r = Math.round(cf.row + Math.sin(ang) * rad);
+      if (window.walkable && !window.walkable(c, r)) continue;
+      const kind = pool[(Math.random() * pool.length) | 0];
+      const st = PK_STATS[kind] || PK_STATS.wolf;
+      enemies.push({
+        id: 'pack' + seed + '_' + i,
+        kind: kind,
+        col: c + 0.5, row: r + 0.5,
+        tc: c, tr: r,
+        hp: st.hp * scale, maxhp: st.hp * scale,
+        speed: st.speed, dmg: st.dmg, r: st.r,
+        atkCd: Math.random(),
+        dead: false, hitFlash: 0,
+        aggro: 12, bob: Math.random() * 6.28,
+        campPack: true
+      });
+      placed++;
+    }
+    if (placed) {
+      S.camp.packCount += placed;
+      addLog((ambush ? '💀 AMBUSH! ' : '🐺 ') + placed + (knightFlavor ? ' knights+lupines ' : ' wolves ') + 'circle the camp.', ambush ? '#ff4040' : '#ff8844');
+    }
+  }
+
+  function _campRepel(cf) {
+    if (!window.enemies || !window.enemies.length) return;
+    const lvl = S.camp.level || 1;
+    const maxKill = lvl * CFG.CAMP.REPEL_PER_LEVEL;
+    const rad = CFG.CAMP.RADIUS + (lvl - 1) * CFG.CAMP.RADIUS_PER_LEVEL;
+    let burst = 0;
+    window.enemies.forEach(function (e) {
+      if (e.dead || !e.campPack) return;
+      if (burst >= maxKill) return;
+      const d = Math.hypot(e.col - cf.col, e.row - cf.row);
+      if (d < rad) { e.dead = true; e.hitFlash = 1; burst++; }
+    });
+    if (burst) {
+      addLog('🔥 The fire scorches ' + burst + ' of the pack away!', '#ff8800');
+      if (typeof toast === 'function') toast('🔥 ' + burst + ' wolves burned by your fire!');
+    }
+  }
+
   // ── Gate Guardian Spawn ─────────────────────────────────────────────────────
   function _spawnGateGuardian() {
     if (!window.enemies || !window.Combat) return;
@@ -521,11 +863,21 @@ window.DarkRealm = (function () {
 
   // ── Enemy Kill Hook ─────────────────────────────────────────────────────────
   function onEnemyKill(enemy) {
+    if (!enemy) return;
+    // Castle ward kills count even outside the forest phase
+    if (enemy.towerKnight || enemy.basementMob) _onCastleKill(enemy);
     if (!S.active || S.phase !== 'forest') return;
     S.killCount++;
     S.contrib.kills++;
     const zone = S.forestZone;
     S.poolSparks += 10 * zone; // contribution to prize pool
+    if (enemy && enemy.campPack) {
+      const gold = 3 * zone;
+      if (window.wallet && typeof window.wallet.add === 'function') {
+        window.wallet.add(gold);
+        if (typeof addFloat === 'function') { try { addFloat(enemy.col, enemy.row, '💵+' + gold, '#ffe9a8'); } catch (_) {} }
+      }
+    }
     if (S.killCount % 10 === 0) {
       addLog('◈ ' + S.killCount + ' enemies slain — Zone ' + zone, '#44cc88');
     }
@@ -539,12 +891,42 @@ window.DarkRealm = (function () {
       + S.contrib.dragonDmg * 0.02
       + S.contrib.chainBreaks * 100;
     const cosmetics = [];
+    let conquerGold = 0, conquerSparks = 0;
     if (outcome === 'victory') {
-      cosmetics.push({ id: 'dragon_scale', name: 'Dragon Scale Armor', rarity: 'legendary' });
-      if (S.contrib.chainBreaks > 0) cosmetics.push({ id: 'chain_breaker', name: 'Chain Breaker Badge', rarity: 'epic' });
-      if (S.contrib.gateDmg > 500) cosmetics.push({ id: 'gate_cracker', name: 'Gate Cracker Badge', rarity: 'rare' });
+      // First-conqueror bounty decays: the first siege of the keep is a legend,
+      // repeat runs settle into useful gear (wallet/sparks granted below).
+      let priorClears = 0;
+      try { priorClears = JSON.parse(localStorage.getItem('shaddai.drRewards') || '[]').length; } catch (_) {}
+      if (priorClears === 0) {
+        conquerGold = 150; conquerSparks = 50;
+        cosmetics.push({ id: 'dragon_scale', name: 'Dragon Scale Armor', rarity: 'legendary' });
+        cosmetics.push({ id: 'first_conqueror', name: 'First Conqueror of the Keep', rarity: 'epic' });
+      } else if (priorClears <= 2) {
+        conquerGold = 75;
+        cosmetics.push({ id: 'chain_breaker', name: 'Chain Breaker Badge', rarity: 'epic' });
+        if (S.contrib.gateDmg > 500) cosmetics.push({ id: 'gate_cracker', name: 'Gate Cracker Badge', rarity: 'rare' });
+      } else if (priorClears <= 5) {
+        conquerGold = 30;
+        cosmetics.push({ id: 'keep_raider', name: 'Keep Raider Mark', rarity: 'rare' });
+      } else {
+        conquerGold = 15; conquerSparks = 15;
+        cosmetics.push({ id: 'ashes_of_conquest', name: 'Ashes of Conquest', rarity: 'common' });
+      }
     }
     if (S.contrib.kills >= 50) cosmetics.push({ id: 'shadow_slayer', name: 'Shadow Slayer Cape', rarity: 'rare' });
+
+    if (conquerGold > 0 && window.wallet && typeof window.wallet.add === 'function') {
+      try {
+        window.wallet.add(conquerGold);
+        addLog('💵 Conqueror bounty: +' + conquerGold + ' gold!', '#ffe9a8');
+      } catch (_) {}
+    }
+    if (conquerSparks > 0 && window.__sparks && typeof window.__sparks.add === 'function') {
+      try {
+        window.__sparks.add('siege', conquerSparks, 'Conqueror bounty');
+        addLog('⚡ Conqueror bounty: +' + conquerSparks + ' Sparks!', '#ffcc00');
+      } catch (_) {}
+    }
 
     // Save rewards locally
     try {
@@ -757,6 +1139,29 @@ window.DarkRealm = (function () {
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, W, H);
 
+    // ── Basement vault chest marker ─────────────────────────────────────────
+    if (!S.chestLooted && (S.phase === 'chains' || S.phase === 'final' || S.phase === 'victory') && cam) {
+      const cdx = 31, cdr = 11;
+      const sx = (cdx - cdr) * TW / 2 - (cam.col - cam.row) * TW / 2 + W / 2;
+      const sy = (cdx + cdr) * TH / 2 - (cam.col + cam.row) * TH / 2 + H / 2;
+      if (sx > -80 && sx < W + 80 && sy > -80 && sy < H + 80) {
+        const pulse = 0.3 + 0.18 * Math.sin(Date.now() / 300);
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#e8c45c';
+        ctx.beginPath(); ctx.ellipse(sx, sy + 6, 17, 6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.globalAlpha = 0.55 + 0.45 * pulse;
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔒', sx, sy - 8);
+        ctx.font = 'bold 8px monospace';
+        ctx.fillStyle = 'rgba(232,196,92,0.9)';
+        ctx.fillText('BASEMENT VAULT', sx, sy + 2);
+        ctx.globalAlpha = 1;
+      }
+    }
+
     // ── Dragon battle atmosphere — red pulse on wing buff hit ─────────────
     if ((S.phase === 'chains' || S.phase === 'final') && S.dragonFlash > 0) {
       const flashAlpha = Math.min(0.35, (S.dragonFlash / 200) * 0.35);
@@ -776,23 +1181,48 @@ window.DarkRealm = (function () {
       ctx.fillRect(0, 0, W, H);
     }
 
-    // ── Campfire beacons ───────────────────────────────────────────────────
-    S.campfires.forEach(function (cf) {
+    // ── Campfire beacons (a lit camp grows the fire the player stands by) ────
+    S.campfires.forEach(function (cf, i) {
       const sx = (cf.col - cf.row) * TW / 2 - (cam.col - cam.row) * TW / 2 + W / 2;
       const sy = (cf.col + cf.row) * TH / 2 - (cam.col + cam.row) * TH / 2 + H / 2;
-      // Glow ring
+      const lvl = (S.camp.on && S.camp.at === i) ? S.camp.level : 0;
+      const out = (S.camp.on && S.camp.at === i) && S.camp.fireOut;
+      const grow = lvl > 0 ? (1 + lvl * 0.55) : 1;
+      const rad = 34 * grow;
+      const r = out ? 80 : 255, g = out ? 60 : 136, b = out ? 40 : 0;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = 0.25 + 0.1 * Math.sin(Date.now() / 400);
-      const grd = ctx.createRadialGradient(sx, sy, 4, sx, sy, 40);
-      grd.addColorStop(0, '#ff8800'); grd.addColorStop(1, 'rgba(255,80,0,0)');
-      ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(sx, sy, 40, 0, 6.28); ctx.fill();
+      ctx.globalAlpha = (out ? 0.35 : 0.25 + 0.1 * Math.sin(Date.now() / 400));
+      const grd = ctx.createRadialGradient(sx, sy, 4, sx, sy, rad);
+      grd.addColorStop(0, 'rgb(' + r + ',' + g + ',' + b + ')');
+      grd.addColorStop(1, 'rgba(255,80,0,0)');
+      ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(sx, sy, rad, 0, 6.28); ctx.fill();
       ctx.restore();
-      ctx.fillStyle = '#ffaa22'; ctx.font = 'bold 16px Share Tech Mono';
-      ctx.textAlign = 'center'; ctx.fillText('🔥', sx, sy - 4);
-      ctx.fillStyle = 'rgba(255,200,80,0.7)'; ctx.font = '8px Share Tech Mono';
-      ctx.fillText('CAMPFIRE', sx, sy + 12);
+      ctx.fillStyle = out ? '#556677' : '#ffaa22';
+      ctx.font = 'bold ' + Math.round(16 * Math.min(2, grow)) + 'px Share Tech Mono';
+      ctx.textAlign = 'center'; ctx.fillText(out ? '💨' : '🔥', sx, sy - 4);
+      ctx.fillStyle = lvl > 0 ? 'rgba(255,220,120,0.85)' : (out ? 'rgba(120,140,160,0.6)' : 'rgba(255,200,80,0.7)');
+      ctx.font = '8px Share Tech Mono';
+      ctx.fillText(lvl > 0 ? ('FIRE Lv ' + lvl) : (out ? 'FIRE OUT — REKINDLE' : 'CAMPFIRE'), sx, sy + 12);
     });
+
+    // ── Red eyes: wolves/knight pack stalking the camp ──────────────────────
+    if (window.enemies && S.camp.on && !S.camp.fireOut) {
+      window.enemies.forEach(function (e) {
+        if (!e || e.dead || !e.campPack) return;
+        const ex = (e.col - e.row) * TW / 2 - (cam.col - cam.row) * TW / 2 + W / 2;
+        const ey = (e.col + e.row) * TH / 2 - (cam.col + cam.row) * TH / 2 + H / 2;
+        const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 130 + e.bob * 7);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = pulse * 0.9;
+        ctx.fillStyle = '#ff2222';
+        ctx.beginPath();
+        ctx.arc(ex - 3, ey - 6, 1.6, 0, 6.28); ctx.arc(ex + 3, ey - 6, 1.6, 0, 6.28);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
 
     // ── DRAGON VISUAL (chains + final phases) ─────────────────────────────────
     if (S.phase === 'chains' || S.phase === 'final') {
@@ -840,7 +1270,7 @@ window.DarkRealm = (function () {
     // ── Forest zone / kill counter ─────────────────────────────────────────
     if (S.phase === 'forest') {
       const zoneGoal = CFG.FOREST_ZONE_KILLS * S.forestZone;
-      const pct = Math.min(1, S.killCount / (CFG.FOREST_ZONE_KILLS * 5));
+      const pct = Math.min(1, S.killCount / (CFG.FOREST_ZONE_KILLS * CFG.FOREST_ZONES));
       const barW = 220, bx = W / 2 - barW / 2;
       ctx.fillStyle = 'rgba(0,0,0,0.78)';
       ctx.beginPath(); ctx.roundRect(bx - 4, 12, barW + 8, 30, 6); ctx.fill();
@@ -913,8 +1343,8 @@ window.DarkRealm = (function () {
       h += '<div style="padding:12px 14px;background:rgba(100,0,200,0.12);border:1px solid rgba(153,0,255,0.4);border-radius:10px;margin-bottom:14px">';
       h += '<div style="font-family:\'Orbitron\',monospace;font-size:13px;color:#cc44ff">' + (phaseMap[S.phase] || S.phase.toUpperCase()) + '</div>';
       if (S.phase === 'forest') {
-        const pct = Math.min(100, (S.killCount / (CFG.FOREST_ZONE_KILLS * 5) * 100)).toFixed(0);
-        h += '<div style="font-size:9px;font-family:\'Share Tech Mono\',monospace;color:rgba(200,150,255,0.7);margin-top:4px">Zone ' + S.forestZone + '/5 · ' + S.killCount + ' enemies slain · ' + pct + '% to gates</div>';
+        const pct = Math.min(100, (S.killCount / (CFG.FOREST_ZONE_KILLS * CFG.FOREST_ZONES) * 100)).toFixed(0);
+        h += '<div style="font-size:9px;font-family:\'Share Tech Mono\',monospace;color:rgba(200,150,255,0.7);margin-top:4px">Zone ' + S.forestZone + '/' + CFG.FOREST_ZONES + ' · ' + S.killCount + ' enemies slain · ' + pct + '% to gates</div>';
       }
       if (S.phase === 'moat') {
         h += '<div style="margin-top:8px"><div style="height:10px;background:rgba(0,0,80,.3);border-radius:5px"><div style="height:100%;width:' + Math.round(S.moatLevel) + '%;background:linear-gradient(90deg,#1a44cc,#2266ff);border-radius:5px"></div></div>';
@@ -1074,6 +1504,7 @@ window.DarkRealm = (function () {
     init, update, render, openPanel, openSiege, endSiege,
     attackGate, attackChain, attackDragon,
     onEnemyKill, addDrought, searchCampfireCache, nearCampfire,
+    campToggle, campAddWood, campRekindle, campBreak,
     get active() { return S.active; },
     get phase() { return S.phase; },
     get moatLevel() { return S.moatLevel; },
