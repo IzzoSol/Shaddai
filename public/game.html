@@ -128,6 +128,7 @@
   <button class="panel" style="padding:9px 13px" onclick="openInv()">🎒 Bag</button>
   <button class="panel" style="padding:9px 13px" onclick="openRooms()">🏠 Rooms</button>
   <button class="panel" style="padding:9px 13px;border-color:rgba(0,255,156,.35);color:#00ff9c" onclick="openTactics()">⚔ Tactics</button>
+  <button class="panel" style="padding:9px 13px;border-color:rgba(232,196,92,.4);color:#e8c45c;font-weight:700" onclick="openArcade()">🎮 Arcade</button>
   <button id="siegeBtn" class="panel hide" style="padding:9px 13px;border-color:rgba(204,68,255,.4);color:#cc44ff;font-weight:700" onclick="if(window.DarkRealm)DarkRealm.openPanel()">☠ <span id="siegeTxt">—</span></button>
 </div>
 <div id="ftue" style="position:fixed;left:16px;top:132px;z-index:6;display:none;width:236px;background:linear-gradient(160deg,rgba(16,24,39,.96),rgba(10,15,26,.96));border:1px solid rgba(0,229,160,.35);border-radius:12px;padding:11px 13px;box-shadow:0 6px 18px rgba(0,0,0,.45);font-family:'Chakra Petch',system-ui,sans-serif"></div>
@@ -190,6 +191,17 @@
   <iframe id="tacticsFrame" style="flex:1;width:100%;border:none;background:#06090f" src="/games/tactics.html"></iframe>
 </div>
 
+<!-- SHADDAI ARCADE (games as venues, sparks entry fees, shared 2D/3D ledger) -->
+<div id="arcadePanel" class="panel hide" style="right:16px;top:68px;width:min(420px,calc(100vw - 32px));padding:16px 18px;z-index:9;display:none"></div>
+<div id="arcadeOverlay" class="hide" style="position:fixed;inset:0;z-index:20;background:rgba(4,6,12,.96);display:none;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:linear-gradient(180deg,rgba(6,9,15,.96),rgba(6,9,15,.7));border-bottom:1px solid rgba(232,196,92,.2);z-index:2">
+    <span style="font-family:'Press Start 2P',monospace;font-size:12px;color:#e8c45c">🎮 ARCADE</span>
+    <span style="font-size:11px;color:#7a8794">Sparks venue — fees feed the pots</span>
+    <button onclick="closeArcadeGame()" style="padding:7px 14px;border:1px solid rgba(232,196,92,.25);border-radius:6px;background:rgba(15,21,32,.5);color:#7a8794;font-size:11px;cursor:pointer;font-family:inherit">✕ Leave</button>
+  </div>
+  <iframe id="arcadeFrame" style="flex:1;width:100%;border:none;background:#06090f" src="about:blank"></iframe>
+</div>
+
 <script>
 function openTactics(){
   var el=document.getElementById('tacticsOverlay');
@@ -209,6 +221,64 @@ function openTacticsFromPub(){
   closeTravel(); hideIntUI();
   openTactics();
 }
+</script>
+
+<!-- SHADDAI ARCADE — games as venues with sparks entry fees. The sparks ledger is the
+     SAME one the 3D world uses (shd.sparks3d, same-origin localStorage): playing the
+     2D arcade and riding hoverboards in 3D earns/spends ONE balance. Games that
+     postMessage({shdGame, shdScore}) get automatic score payouts. -->
+<script>
+window.shdSparks = {
+  get: function(){ try { return parseInt(localStorage.getItem('shd.sparks3d')||'0',10)||0; } catch(e){ return 0; } },
+  add: function(n){ try { localStorage.setItem('shd.sparks3d', String(window.shdSparks.get()+n)); } catch(e){} return window.shdSparks.get(); },
+};
+var ARCADE_GAMES = [
+  { id:'skate',        name:'SKATE JAM',    file:'/games/skate.html',            fee:20, desc:'Hoverboard trick runs' },
+  { id:'basketball',   name:'BASKETBALL',   file:'/games/basketball-jam.html',   fee:10, desc:'Court classic' },
+  { id:'dodgeball',    name:'DODGEBALL',    file:'/games/dodgeball.html',         fee:10, desc:'Dodge, win, survive' },
+  { id:'sigil',        name:'SIGIL STORM',  file:'/games/sigil-storm.html',       fee:10, desc:'Pattern reflex duel' },
+];
+function openArcade(){
+  var el = document.getElementById('arcadePanel'); if(!el) return;
+  var bal = window.shdSparks.get();
+  var h = '<div style="font-weight:800;color:#e8c45c;font-size:15px;letter-spacing:.1em;margin-bottom:4px">🎮 SHADDAI ARCADE</div>'
+    + '<div style="font-size:11px;color:#7a8794;margin-bottom:12px">Entry fees and payouts use <b style="color:#9fe8c4">Sparks</b> — the same balance as the 3D world. ⚡ <b id="arcBal">'+bal+'</b></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">';
+  ARCADE_GAMES.forEach(function(g){
+    h += '<div style="border:1px solid rgba(232,196,92,.3);border-radius:10px;padding:10px 12px;background:rgba(12,18,28,.7)">'
+      + '<div style="font-weight:800;color:#e8c45c;font-size:12px">'+g.name+'</div>'
+      + '<div style="font-size:10px;color:#7a8794;margin:3px 0 8px">'+g.desc+'</div>'
+      + '<button '+(bal<g.fee?'disabled ':'')+'onclick="playArcade(\''+g.id+'\')" style="width:100%;padding:7px;border-radius:7px;border:1px solid rgba(232,196,92,.5);background:rgba(232,196,92,.08);color:#e8c45c;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit'+(bal<g.fee?';opacity:.35;pointer-events:none':'')+'">PLAY · '+g.fee+'⚡</button></div>';
+  });
+  h += '</div><div style="margin-top:10px;text-align:right"><button onclick="closeArcade()" style="padding:7px 13px;border-radius:7px;border:1px solid rgba(122,135,148,.3);background:rgba(15,21,32,.5);color:#7a8794;font-size:11px;cursor:pointer;font-family:inherit">Close</button></div>';
+  el.innerHTML = h;
+  el.style.display = 'block';
+  el.classList.remove('hide');
+}
+function closeArcade(){ var el=document.getElementById('arcadePanel'); if(el){ el.style.display='none'; el.classList.add('hide'); } }
+function playArcade(id){
+  var g = ARCADE_GAMES.find(function(x){ return x.id===id; }); if(!g) return;
+  if(window.shdSparks.get() < g.fee){ toast('Not enough Sparks — earn more in the 3D world or at the docks'); return; }
+  window.shdSparks.add(-g.fee);
+  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Report a win to claim the pot.');
+  closeArcade();
+  var ov = document.getElementById('arcadeOverlay');
+  if(ov){ ov.style.display='flex'; var f=document.getElementById('arcadeFrame'); if(f) f.src=g.file; }
+  var T = (window.__arcadePot = window.__arcadePot||{}); T[g.id] = (T[g.id]||0) + g.fee;
+}
+function closeArcadeGame(){
+  var ov = document.getElementById('arcadeOverlay');
+  if(ov){ ov.style.display='none'; var f=document.getElementById('arcadeFrame'); if(f) f.src='about:blank'; }
+}
+// future-proof score bridge: any game that reports a score gets an automatic payout
+addEventListener('message', function(ev){
+  try {
+    var d = typeof ev.data==='string' ? JSON.parse(ev.data) : ev.data;
+    if(!d || !d.shdGame) return;
+    var pay = Math.round((d.shdScore||0) * 0.5);            // score → sparks at half rate
+    if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + ' — scored ' + d.shdScore); }
+  } catch(e){}
+});
 </script>
 
 <script src="interiors.js" onerror="window.__noInteriors=1"></script>
