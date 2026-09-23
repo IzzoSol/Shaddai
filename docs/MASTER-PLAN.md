@@ -109,7 +109,60 @@ J-L. FAL MODELS (below), M. SPARKS SYNC 2D↔3D, N. PIKADON audit — Thursday.
     enterable shells (shells get real doors + interiors + colliders — never naked models).
   (4) 3D five laws after: interiors, colliders, scale (walls ≥12m/doors 2.2m), swim,
     vehicle seating. (5) Then arcade games (fight/skate) wired to sparks pools.
-## 13. 2D POLISH WORK ORDER (next session, code+existing art, zero fal)
+## 14. THE COMPLETE BUILD BIBLE (final, 2026-09-22 — Opus 5.5 executes Thursday)
+$100 fal HARD CAP (cannot buy more). 6 HF keys. Opus 5.5 + 20d Claude Pro for code.
+RULE OF RULES: canary first (ONE model per family, verified), then batch. Concept-gate
+before 3D. A model fails twice = the PROMPT is wrong — redesign the prompt, never re-roll.
+Reuse: 18 terrain textures, existing GLB pack, forge chars (engineer/mage/scout/warrior
+already generated in fal-assets — FINISH/SHIP them, never regenerate).
+
+### 14.1 FAL ALLOCATION — every dollar mapped
+  $35  SEVEN AGENTS, deformed→perfect: per-agent $5 = concept/tpose $1 + Rodin HighPack
+       mesh $2 + tripo rig $1 + clips (walk/run/attack/finisher-pose) $1. CANARY: SHADDAI
+       only; verify headshot+walk+attack frames; then batch the other 6.
+  $15  CITY KIT — 5 ENTERABLE buildings, ONE GLB each w/ visible doorway + interior room:
+       shop, forge, arcade (skate world door!), bank, office. 12-30m scale, doors 2.2×1.2m.
+  $12  SHIPS+VEHICLES: realer skiff/yacht/submarine (replace in-place), hovercar (replace
+       procedural), siege ram. Ship interior = cockpit the player sits IN (seat anchor).
+  $8   COSMETICS: 7 agents × 2 outfits via image-EDIT retexture (kontext) — never full regen.
+  $10  FATality/finisher VIDEO cutscenes ×2 demos (the fal continuous-prompt showcase):
+       finisher picked by winner, scene generated from both combatants' archetypes →
+       always different. FREE tier gets flash+text; PRO gets generated scene (paywall).
+  $20  RESERVE — gate failures ONLY.
+  $0   Terrain (reuse 18 webp), NPC forge roster (exists), skate park GLBs (exist — COMPRESS:
+       props are 10-21MB raw → gltf-transform to ~1MB. $0 fal, pure local).
+
+### 14.2 STANDARDS (pixels, size, physics — nothing unaccounted)
+  2D: 16px tiles; sprites 48×48, 4-direction × 3-frame walk; UI 8px grid, no overlap;
+      deck ≤132px mobile w/ collapse (done). Day/night tint cycle. Shadow blobs.
+  3D: player 1.8m; doors 2.2×1.2m; buildings 12-30m; GLB ≤1.2MB (meshopt+webp@1024);
+      props ≤30k tris, chars ≤80k. Player sits IN vehicles (seat anchor), camera cockpit.
+      Every enterable: real door + furnished interior + colliders. No naked walk-through.
+
+### 14.3 SYSTEMS (code — Opus/GLM/BigPickle, zero fal)
+  1. TACTICS COMBAT (FFT): grid battle for colosseum+siege+wilderness. CT turn order by
+     AGI; STR/AGI/INT/HP; move+act per turn; skills per agent archetype; AGENTIC: an AI
+     agent (or grok bot) picks its own options — humans bet sparks on matches (pools).
+  2. CASTLE SIEGE: forest camps (solo/team) → dragon boss in darkforest castle → loot/gold/
+     sparks. SIEGE PASS gates entry — pass revenue shares to master-plan members (residual).
+     MOAT = LIQUIDITY POOLS: moat depth = pool size; invest at windows; the DeFi hook.
+  3. SKATE WORLD: wire skate.html into the city as the arcade building door; sparks entry
+     fees; 3D skatepark later (same engine, different time — shared fatality/trick scene
+     engine for landing the final trick).
+  4. MODEL-FORCE FOR PLAYERS: dashboard flow → user describes operative → gates apply →
+     body + walk/attack clips → their grok bot WEARS it → fights in colosseum/CtF/1v1
+     shooter (same tactics foundation, different modes). BYOK wrapper (§8).
+  5. 2D POLISH per §13 + fishing minigame + cosmetic overlay layer.
+  6. ECONOMY: one sparks ledger (2D+3D+dashboard); wager pools; cosmetic market; later
+     x402/wallets, plots/ad-space, music submissions (in-game radio), art in turtle museum,
+     NFT-of-month, agent classes (teach/learn), token/staking — ALL on this foundation.
+
+### 14.4 THURSDAY EXECUTION ORDER
+  1. Read this §14 + §4 gates. 2. Ship+compress existing forge/GLB assets ($0). 3. Canary
+  agent (SHADDAI) → verify → batch 6. 4. City kit canary (shop) → verify → batch 4.
+  5. Ships/vehicles while agents batch. 6. Code: tactics engine + colosseum wiring +
+  skate building door. 7. Cosmetics retexture. 8. Fatality video demos LAST (only if ≥$10
+  reserve intact). 9. One PIKADON audit (§9). 10. Update §12 line: 3D returns to beta.
   Direction = 2.5D, NOT perspective 3D: shadow blobs, animated water tiles, parallax
   clouds, day/night tint, window lights, cutscene letterbox on doors+dialogs.
   1. BUILDING EXTERIORS: multi-tile facades + signage + night-lit windows, per-region style.
