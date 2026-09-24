@@ -54,11 +54,18 @@ gate ships with Thursday fal) · 4 ✅ SWIM · 5 ✅ SEATING. Realm shells are s
 placeholder GLBs — Thursday's fal models replace them IN PLACE (positions in
 world-layout.js realmColliders + the module manifests are the slots).
 
+## DONE 2026-09-24 (Claude, zero fal) — see MASTER-PLAN §15
+Arcade score bridge (4 games pay once per paid entry) · ONE sparks ledger for real
+(sparks-ledger.js; shd.sparks3d fork folded in) · agentic NPC quest dialogs (npc-dialog.js) ·
+boot TDZ fix (saved-region players had NO agents) · 2D exteriors + emissive light layer.
+Probes: tools/probe-arcade.cjs, probe-dialog.cjs, probe-exteriors.cjs (puppeteer or playwright).
+Known pre-existing noise: games/tactics.html logs "Unexpected token 'export'" + CLAN_NAMES
+undefined in its iframe — untouched, worth a look.
+
 ## NEXT (your order of work)
 A. If MCP is up: agents assist — NEXUS engine review, TURTLE visual QA, QUILL prompts,
    ORACLE research, ZEROX economy math, PIKADON audit AT THE END (one call, not per-step).
-B. Code (zero fal): (1) arcade score bridge — teach games to postMessage; (2) agentic
-   NPC quest dialogs in 2D; (3) 2D building exteriors pass (signage/night windows).
+B. Code (zero fal): DONE 2026-09-24 (score bridge, NPC dialogs, exteriors).
 C. THURSDAY FAL ($111, $100 budget, §4 gates + canary-first + scale-check): 7 agents
    (HighPack+tripo, canary=SHADDAI first), 5 enterable city buildings, ship/hovercar
    rework, cosmetics retexture, fatality video demos last. Skate physics reference:

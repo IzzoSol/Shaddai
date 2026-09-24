@@ -239,6 +239,16 @@ LATER: live position mirror (2D↔3D same-account ghost), marketplace items usab
     opponents, pot payouts, win-scaling tiers. world-tactics.js. (17f9a7f)
   x 3D five-laws #4 SWIM (surface float, no seafloor walk) + #5 VESSEL SEATING. (ac13c62)
   x Master World Spec v2 saved to Obsidian + skate-threejs ref cloned for Thursday physics.
+  x 2026-09-24 ARCADE SCORE BRIDGE - skate/basketball/dodgeball/sigil post {shdGame,shdScore,
+    shdWin}; parent pays ONCE per paid entry, iframe+origin checked, per-game caps. (3669537)
+  x 2026-09-24 ONE LEDGER FOR REAL - sparks-ledger.js: shaddai.sparks (+shd_sparks mirror). 3D
+    actions/tactics/arcade were on a forked key (shd.sparks3d) - now unified, old key folded in once.
+  x 2026-09-24 AGENTIC NPC DIALOGS (2D) - npc-dialog.js: E on an agent = letterboxed dialog
+    (quest/talk/trade/ask). Agent scores candidate quests vs persona + its stock needs + your state,
+    picks one and says why; trust tiers scale pay (gold+XP+sparks); !/?/... markers.
+  x 2026-09-24 BOOT FIX - saved-region boot hit TDZ (fishes/BOTS) -> no region gen, NO AGENTS. Fixed.
+  x 2026-09-24 2D EXTERIORS - per-region facades, venue signs, dusk-to-night windows, door spill,
+    half-res emissive light layer w/ depth occlusion (after the night tint). (e31fb2c)
   REMAINING (in order): (1) INTERIOR LAW - real door+interior+colliders per enterable,
     E-portals to sized-correct instances; (2) COLLIDER + SCALE LAWS; (3) arcade score
     bridge (games postMessage {shdGame, shdScore}); (4) agentic NPC quest dialogs.
