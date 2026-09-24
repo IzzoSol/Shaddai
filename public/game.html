@@ -259,7 +259,7 @@ function openArcade(){
 function closeArcade(){ var el=document.getElementById('arcadePanel'); if(el){ el.style.display='none'; el.classList.add('hide'); } }
 // score → sparks per game: pay = min(cap, score*rate) + (win ? winBonus : 0). One claim per paid entry.
 var ARCADE_PAY = {
-  skate:      { rate:1,     cap:60, winBonus:0  },   // skate posts 60/20/0 itself
+  skate:      { rate:1,     cap:40, winBonus:0  },   // skate posts 40/15/0 itself (luck game: EV just under the 20 fee)
   basketball: { rate:1,     cap:30, winBonus:15 },   // points scored
   dodgeball:  { rate:0.005, cap:30, winBonus:15 },   // ~5000 pts/match
   sigil:      { rate:0.005, cap:35, winBonus:10 },   // ~4000 pts/run
@@ -327,7 +327,7 @@ addEventListener('message', function(ev){
 <script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
 <script src="auth.js" onerror="0"></script>
-<script src="config/buildings.js" onerror="0"></script>
+<script type="module" src="config/buildings.js" onerror="0"></script>
 <script src="js/skills.js" onerror="0"></script>
 <script src="js/market.js" onerror="0"></script>
 <script src="js/mmo-client.js" onerror="0"></script>
@@ -592,6 +592,9 @@ function genWorld(rid){
     // COLISEUM — grand arena at the city's heart, correlates with 3D castle-siege
     props.push({type:'building',col:36,row:30,w:7,d:7,floors:4, wall:'#2a1a3a',roof:'#e8c45c',glass:'#cc44ff',accent:'#cc44ff',name:'COLISEUM',kind:'colosseum',landmark:'colosseum'});
     for(let rr=29;rr<37;rr++)for(let cc=32;cc<41;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-36.5,rr-33)<2.8?PATH:GRASS);
+    // ARCADE — mirrors the Coliseum on the west side: walk in (E) to play skate/hoops/dodgeball/sigil for sparks
+    props.push({type:'building',col:19,row:30,w:5,d:4,floors:3, wall:'#1e2447',roof:'#2a2150',glass:'#5a3a8a',accent:'#ff5ac8',name:'ARCADE',kind:'arcade'});
+    for(let rr=29;rr<37;rr++)for(let cc=18;cc<26;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-21.5,rr-34.5)<2.4?PATH:GRASS);
     // market stalls ring the square
     // ═══ FOUNDERS' ROW — the offices YOU own in SHADDAI City (World → OFFICE → Rooms → Agents) ═══
     // 30 lots along a northern boulevard, fetched live from /api/city/offices. Your office glows emerald.
@@ -947,7 +950,7 @@ const FACADE={
   volcano:   {trim:'#ff6a2a', ember:1, win:'255,150,70', sign:'ember'},
   darkforest:{trim:'#8b5cf6', rune:1, win:'190,150,255', sign:'rune'},
 };
-const SIGN_ICON={shop:'🛒',market:'⚖',bank:'🏦',diner:'🍜',tavern:'🍺',pub:'🥊',forge:'⚒',library:'📚',office:'💼',hub:'◈',transit:'🚉',agent:'◈',colosseum:'⚔',castle:'🏰'};
+const SIGN_ICON={shop:'🛒',market:'⚖',bank:'🏦',diner:'🍜',tavern:'🍺',pub:'🥊',forge:'⚒',library:'📚',office:'💼',hub:'◈',transit:'🚉',agent:'◈',colosseum:'⚔',castle:'🏰',arcade:'🎮'};
 function facadeStyle(){ return FACADE[(region&&region.id)||'meadow']||FACADE.meadow; }
 function edgeLine(a,b,col,w){ DC.strokeStyle=col; DC.lineWidth=w; DC.beginPath(); DC.moveTo(a[0],a[1]); DC.lineTo(b[0],b[1]); DC.stroke(); }
 function drawFacadeDetail(b,f,wall,dk,dv,seed,time,fs){
@@ -1068,12 +1071,13 @@ function tryDoor(){
   const nb=nearBot(); if(nb){ if(window.AgentDialog&&AgentDialog.open(nb)) return; openBotShop(nb); return; }
   for(const p of props){ if(p.type!=='building') continue;
     const dc=(p.col+p.w/2)-player.col, dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.4){
-      if(p.kind==='transit') openTravel(); else if(p.kind==='colosseum') openColosseum(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
+      if(p.kind==='transit') openTravel(); else if(p.kind==='colosseum') openColosseum(); else if(p.kind==='arcade') openArcade(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
 }
 let intRoom={w:9,h:7,door:{col:4,row:6},furniture:[],order:[],npc:1};
 let intView={ox:0,oy:0,S:1}, decorMode=false, decorPick=null, wardrobeOpen=false;
 function fitem(col,row,w,d,h,color,type){ return {col,row,w,d,h,color,type:type||'box'}; }
 function interiorKindFor(b){ const n=(b.name||'').toUpperCase(), k=b.kind;
+  if(k==='arcade') return 'arcade';
   if(k==='hub'||/\bHQ\b|BAZAAR|TOWN SQUARE/.test(n)) return 'hub';
   if(k==='market') return 'market';
   if(k==='transit') return 'transit';
