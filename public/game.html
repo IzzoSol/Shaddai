@@ -292,6 +292,7 @@ function arcadeClaim(d){
   if(!S || S.claimed || S.id !== d.shdGame) return 0;
   S.claimed = true;
   var pay = arcadePayout(d.shdGame, d.shdScore, !!d.shdWin);
+  if(d.shdWin && window.AgentDialog) AgentDialog.arcadeWin();
   if(pay > 0){ window.shdSparks.add(pay, 'Arcade payout: ' + d.shdGame); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + (d.shdWin ? ' — WIN' : '') + ' (score ' + d.shdScore + ')'); }
   else toast(String(d.shdGame).toUpperCase() + ' over — no payout this run');
   return pay;
@@ -489,7 +490,7 @@ function bakeGround(){
   if(typeof spawnFishes==='function') spawnFishes();
   if(window.Combat && region){ const night=((Math.cos(tod*6.283185)+1)/2)>0.5; try{ enemies=Combat.spawnFor(region.id,night,walkable,GW,GH)||[]; }catch(_){ enemies=[]; } }
 }
-let tiles=[], props=[], npcs=[], region=null, cam={col:30,row:30}, tod=0.34;
+let tiles=[], props=[], npcs=[], fishes=[], region=null, cam={col:30,row:30}, tod=0.34;
 let enemies=[], playerHP=100, playerMaxHP=100, hurtFlash=0, atkSwing=0;   // combat
 let playerSignal=100, playerMaxSignal=100;   // travel Signal — drains in unfamiliar districts
 const WEAPON_POWER={ shield:1.2, sword:1.7, bow:2.0, axe:2.6, staff:3.4 };
@@ -755,6 +756,12 @@ function drawCar(sx,sy,color){ ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();c
   ctx.fillStyle='#ffe9a0'; ctx.fillRect(Math.round(sx)+15,Math.round(sy)-4,2,2);
   ctx.fillStyle='#e0402a'; ctx.fillRect(Math.round(sx)-17,Math.round(sy)-4,2,2); }
 function roundRectC(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+// quest marker over agents: '!' has work · '?' ready to turn in · '…' in progress
+function questMark(sx,sy,m,accent,time){ if(!m) return; const bob=Math.sin(time/260)*3, y=sy-72+bob;
+  ctx.font="bold "+(m==='…'?14:17)+"px 'Fredoka',sans-serif"; ctx.textAlign='center';
+  ctx.fillStyle='rgba(8,10,20,.9)'; ctx.beginPath(); ctx.arc(sx,y-6,10,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=m==='?'?'#4fe07a':'#e8c45c'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle=m==='?'?'#4fe07a':m==='!'?'#e8c45c':'#9aa6b4'; ctx.fillText(m,sx,y); }
 function agentLabel(sx,sy,name,accent){ ctx.font="bold 13px 'Fredoka',sans-serif"; ctx.textAlign='center'; const lw=ctx.measureText(name).width+16;
   ctx.fillStyle='rgba(8,10,20,.9)'; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.fill();
   ctx.strokeStyle=accent; ctx.lineWidth=1; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.stroke();
@@ -973,7 +980,7 @@ function tryDoor(){
   if(state==='interior'){ if(leaveInterior()) return; state='world'; inInterior=null; currentRoomKey=null; roomTheme=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); return; }
   if(state==='travel'){ closeTravel(); return; }
   if(state!=='world'||spectate) return;
-  const nb=nearBot(); if(nb){ openBotShop(nb); return; }
+  const nb=nearBot(); if(nb){ if(window.AgentDialog&&AgentDialog.open(nb)) return; openBotShop(nb); return; }
   for(const p of props){ if(p.type!=='building') continue;
     const dc=(p.col+p.w/2)-player.col, dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.4){
       if(p.kind==='transit') openTravel(); else if(p.kind==='colosseum') openColosseum(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
@@ -1247,7 +1254,7 @@ function update(dt){
     if(!spectate){ let near=null; const nb=nearBot();
       for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
       const pr=document.getElementById('prompt');
-      if(nb){ pr.classList.remove('hide'); pr.textContent='Press E to trade with '+nb.name; }
+      if(nb){ pr.classList.remove('hide'); pr.textContent='Press E to talk to '+nb.name; }
       else if(near){ pr.classList.remove('hide'); pr.textContent='Press E to enter '+near.name; }
       else if(!inInterior) pr.classList.add('hide'); }
     updateFishes(dt);
@@ -1405,7 +1412,7 @@ function renderWorld(time){
       else if(p.type==='fence')drawFence(sx,sy); else if(p.type==='lamp')drawLamp(sx,sy,time); else if(p.type==='bench')drawBench(sx,sy); else if(p.type==='stall')drawStall(sx,sy,p.color); else if(p.type==='farm')drawFarm(sx,sy,p.ready!==false); else if(p.type==='chicken')drawChicken(sx,sy); else if(p.type==='sheep')drawSheep(sx,sy); else if(p.type==='crate')drawCrate(sx,sy); else if(p.type==='boat')drawBoat(sx,sy,time);
       else if(p.type==='tractor')drawTractor(sx,sy); else if(p.type==='haybale')drawHaybale(sx,sy); else if(p.type==='flowers')drawFlowers(sx,sy); else if(p.type==='well')drawWell(sx,sy); else if(p.type==='foodcart')drawFoodcart(sx,sy);
       if(_sh>0) ctx.restore(); }}); }
-  for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,0.8,time); if(n.name) agentLabel(sx,sy,n.name,n.accent); }}); }
+  for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,0.8,time); if(n.name) agentLabel(sx,sy,n.name,n.accent); if(n.bot&&window.AgentDialog) questMark(sx,sy,AgentDialog.marker(n),n.accent,time); }}); }
   if(window.Combat) for(const e of enemies){ const [sx,sy]=w2s(e.col,e.row); if(cull(sx,sy)) continue; obj.push({k:e.col+e.row+0.003, draw:()=>Combat.draw(ctx,e,sx,sy,time)}); }
   for(const rid in remote){ const r=remote[rid]; if(!r.rig||r.region!==region.id||r.col===undefined) continue; const [sx,sy]=w2s(r.col,r.row); if(cull(sx,sy)) continue;
     obj.push({k:r.col+r.row+0.005, draw:()=>{ PP.draw(ctx,r.rig,sx,sy,0.8,time); agentLabel(sx,sy,r.name||'Traveler','#5fe0ff'); }}); }
@@ -1516,13 +1523,15 @@ function loop(time){ const dt=Math.min((time-last)/1000||0,0.05); last=time;
   if(dt>0.001){ fpsAvg=fpsAvg*0.92+(1/dt)*0.08; LOW=fpsAvg<42; } update(dt);
   if(state==='create'){ cctx.clearRect(0,0,ccv.width,ccv.height); PP.draw(cctx, player.rig, ccv.clientWidth/2, ccv.clientHeight*0.86, 2.6, time); }
   else if(state==='region'){ if(window.RegionMap&&window.RegionMap.draw&&!window.__noMap){ ctx.clearRect(0,0,W,H); window.RegionMap.draw(ctx,W,H,REGIONS,regionSel,time/1000); } }
-  else if(state==='world') renderWorld(time);
+  else if(state==='world'||state==='dialog') renderWorld(time);
   else if(state==='interior') renderInterior(time);
   requestAnimationFrame(loop);
 }
 fit(); setPreset(0);
 // ---- hand-off from Pixel Forge + Region Selector ----
-(function boot(){ try{
+// deferred one tick: entering a saved region runs genWorld, which touches BOTS/fishes/etc. declared
+// further down this script — running inline hit TDZ errors (no region generator, no agents).
+setTimeout(function boot(){ try{
   // ?embed=office / ?office → COMMAND VIEW: this is the dashboard "Office" — the same
   // 2D world engine + art, loaded straight into SHADDAI City (your command district).
   // Skips create/region so the office view matches the world EXACTLY (it IS the world).
@@ -1563,7 +1572,7 @@ fit(); setPreset(0);
     // player is picked or signed in before any realm is chosen, exactly like the 2D door.
     if(hasLook){ try{ goRegion(); }catch(e){} }
   }
-}catch(e){ console.warn('boot hand-off',e); } })();
+}catch(e){ console.warn('boot hand-off',e); } }, 0);
 
 // ---------- MULTIPLAYER (WebSocket relay via mp-server.js) ----------
 let MP=null, myId=null; const remote={}; let lastSent=0;
@@ -2409,7 +2418,8 @@ function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!
 })();
 // CLICK-TO-INTERACT: uses the active hotbar tool (chop/mine/fish/heal/attack).
 c.addEventListener('click',function(){ useActiveTool(); });
-let fishes=[];
+// fishes is declared up top with tiles/props/npcs — a boot hand-off into a saved region runs
+// genWorld→bakeGround→spawnFishes before this line, and a late `let` threw a TDZ error there.
 function spawnFishes(){ fishes=[]; if(!waterTiles||!waterTiles.length) return; const n=Math.min(26,Math.max(4,(waterTiles.length/10)|0));
   for(let i=0;i<n;i++){ const t=waterTiles[(Math.random()*waterTiles.length)|0], big=Math.random()<0.12;
     fishes.push({col:t[0]+0.5,row:t[1]+0.5,tc:t[0]+0.5,tr:t[1]+0.5,big,ph:Math.random()*6,speed:big?0.3:0.6,dir:1}); } }
@@ -2540,7 +2550,7 @@ async function claimOfficeGame(){
     // styling and never get a 'hide' class, so that selector matched on every
     // single frame during normal gameplay and permanently hid the D-pad. Now
     // only real overlay/modal ids are checked.
-    const open = document.querySelector('#intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide), #store:not(.hide), #inv:not(.hide), #jobs:not(.hide), #region:not(.hide), #create:not(.hide), #galleryPick:not(.hide)');
+    const open = document.querySelector('#intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #agentDialog:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide), #store:not(.hide), #inv:not(.hide), #jobs:not(.hide), #region:not(.hide), #create:not(.hide), #galleryPick:not(.hide)');
     pad.style.display = (open || (state!=='world' && state!=='interior')) ? 'none' : 'block';
   }
   // Cheap mutation observer — re-eval when any panel toggles.
@@ -2685,4 +2695,5 @@ requestAnimationFrame(loop);
 })();
 </script>
 <script src="game-fun.js" defer onerror="this.remove()"></script>
+<script src="npc-dialog.js" defer onerror="this.remove()"></script>
 </body></html>
