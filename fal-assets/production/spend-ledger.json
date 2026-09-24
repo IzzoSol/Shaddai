@@ -69,6 +69,20 @@
       "step": "mesh",
       "usd": 0.375,
       "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from bld-arcade-hf-20260924-155005-1.png"
+    },
+    {
+      "at": "2026-09-24T18:56:00.516Z",
+      "id": "item-rune-hammer",
+      "step": "mesh",
+      "usd": 0.225,
+      "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from rune-hammer.png"
+    },
+    {
+      "at": "2026-09-24T18:58:06.845Z",
+      "id": "item-quill-pen",
+      "step": "mesh",
+      "usd": 0.225,
+      "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from quill-pen.png"
     }
   ]
 }

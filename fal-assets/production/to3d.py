@@ -22,6 +22,8 @@ HERO_FAMILIES = {"building", "agent"}
 def concept_for(aid):
     c = sorted(glob.glob(os.path.join(HERE, "concepts", aid, "*.png")))
     c += [p for p in [os.path.join(FAL, "concepts", aid + ".png")] if os.path.exists(p)]
+    if not c:   # owner-supplied, already-approved images count as the concept
+        c = sorted(p for p in glob.glob(os.path.join(HERE, "refs", aid, "*.*")) if p.lower().endswith((".png", ".jpg", ".jpeg", ".webp")))
     return c[-1] if c else None
 
 

@@ -617,6 +617,20 @@
       "endpoint": "fal-ai/flux-pro/kontext",
       "usd_est": 0.04,
       "note": "owner-picked SHADDAI hall, sign spelling fix"
+    },
+    {
+      "at": "2026-09-24T18:53:18.677051+00:00",
+      "id": "agent-oracle",
+      "endpoint": "fal-ai/flux-pro/kontext",
+      "usd_est": 0.04,
+      "note": "weapon removal on owner T-pose ref"
+    },
+    {
+      "at": "2026-09-24T18:53:29.163309+00:00",
+      "id": "agent-pikadon",
+      "endpoint": "fal-ai/flux-pro/kontext",
+      "usd_est": 0.04,
+      "note": "weapon removal on owner T-pose ref"
     }
   ]
 }
