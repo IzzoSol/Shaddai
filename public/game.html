@@ -259,7 +259,7 @@ function openArcade(){
 function closeArcade(){ var el=document.getElementById('arcadePanel'); if(el){ el.style.display='none'; el.classList.add('hide'); } }
 // score → sparks per game: pay = min(cap, score*rate) + (win ? winBonus : 0). One claim per paid entry.
 var ARCADE_PAY = {
-  skate:      { rate:1,     cap:60, winBonus:0  },   // skate posts 60/20/0 itself
+  skate:      { rate:1,     cap:40, winBonus:0  },   // skate posts 40/15/0 itself (luck game: EV just under the 20 fee)
   basketball: { rate:1,     cap:30, winBonus:15 },   // points scored
   dodgeball:  { rate:0.005, cap:30, winBonus:15 },   // ~5000 pts/match
   sigil:      { rate:0.005, cap:35, winBonus:10 },   // ~4000 pts/run

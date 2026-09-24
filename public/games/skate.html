@@ -888,14 +888,60 @@ function initHubWorld() {
   // (bot-seat auto-fill + the pack-mislabeling fix), not a client-side
   // simulation. One seat is created lazily on first challenge and reused.
   async function api(path, opts) {
-    const res = await fetch(path, {
-      method: opts && opts.body ? 'POST' : 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: opts && opts.body ? JSON.stringify(opts.body) : undefined,
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) { const err = new Error(json.error || `HTTP ${res.status}`); err.status = res.status; err.body = json; throw err; }
+    if (offline) return localApi(path, opts);
+    let res, json;
+    try {
+      res = await fetch(path, {
+        method: opts && opts.body ? 'POST' : 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: opts && opts.body ? JSON.stringify(opts.body) : undefined,
+      });
+      json = await res.json();
+    } catch (e) { json = null; }
+    // No Hall backend (static beta / offline): play the same rules locally.
+    // Only before a server match exists — never switch engines mid-match.
+    if ((!json || res.status === 404 || res.status >= 500) && !matchId && /^\/api\/casino\/(seats|tables)$/.test(path)) {
+      offline = true; return localApi(path, opts);
+    }
+    json = json || {};
+    if (!res || !res.ok) { const err = new Error(json.error || `HTTP ${res ? res.status : 'offline'}`); err.status = res && res.status; err.body = json; throw err; }
     return json;
+  }
+
+  // ── LOCAL S.K.A.T.E. — a faithful port of backend/hall/packs/skate.js (keep in sync):
+  // both riders pick a style blind; flip beats air, air beats grind, grind beats flip;
+  // same style = both land; the loser of a clash takes the next letter; 9 rounds max.
+  let offline = false, local = null;
+  const L_LETTERS = ['S', 'K', 'A', 'T', 'E'], L_STYLES = ['flip', 'air', 'grind'];
+  const L_LABELS = { flip: 'Flip', air: 'Air', grind: 'Grind' }, L_CRUSHES = { flip: 'air', air: 'grind', grind: 'flip' };
+  const L_ROUNDS = 9;
+  const localLegal = () => L_STYLES.map((st) => ({ id: 'style_' + st, label: L_LABELS[st] }));
+  const localState = () => ({ round: local.round, letters: { [local.you]: local.letters.you.slice(), [local.bot]: local.letters.bot.slice() } });
+  async function localApi(path, opts) {
+    if (path === '/api/casino/seats') return { seat: { id: 'local-you' } };
+    if (path === '/api/casino/tables') {
+      local = { id: 'local-' + Date.now(), you: seatId || 'local-you', bot: 'local-house', round: 0, letters: { you: [], bot: [] } };
+      return { matchId: local.id, state: localState(), legal: localLegal() };
+    }
+    const mv = path.match(/\/move$/);
+    if (mv && local) {
+      const mine = String(opts.body.move).replace('style_', '');
+      if (!L_CRUSHES[mine]) throw new Error('illegal move');
+      const foe = L_STYLES[(Math.random() * 3) | 0];            // the House Skater picks blind, like the server bot
+      let events = ['land', 'land'];
+      if (mine !== foe) {
+        const iWin = L_CRUSHES[mine] === foe, loser = iWin ? 'bot' : 'you';
+        local.letters[loser].push(L_LETTERS[local.letters[loser].length]);
+        events = iWin ? ['land', 'bail'] : ['bail', 'land'];
+      }
+      const y = local.letters.you.length, b = local.letters.bot.length;
+      let score = null;
+      if (y >= 5 || b >= 5) score = b >= 5 ? 'win' : 'lose';
+      else if (local.round + 1 >= L_ROUNDS) score = y === b ? 'push' : (y < b ? 'win' : 'lose');
+      else local.round++;
+      return { state: localState(), settlement: { score, events }, legal: score ? [] : localLegal() };
+    }
+    throw new Error('Filming the trick needs the SHADDAI server — connect it to render clips');
   }
 
   async function ensureSeat() {
@@ -974,8 +1020,9 @@ function initHubWorld() {
         const scoreLabel = { win: 'YOU WIN THE GAME OF SKATE', lose: 'YOU LOSE — S-K-A-T-E', push: 'PUSH — EVEN MATCH' }[res.settlement.score] || res.settlement.score;
         matchSpotEl.textContent = scoreLabel;
         btnLeaveMatch.hidden = false;
-        // SHADDAI arcade score bridge: win 60 / push 20 / lose 0 (parent caps + pays once)
-        try{ if(window.parent!==window) window.parent.postMessage({shdGame:'skate', shdScore:({ win: 60, push: 20 }[res.settlement.score] || 0), shdWin:res.settlement.score === 'win'}, location.origin); }catch(e){}
+        // SHADDAI arcade score bridge: win 40 / push 15 / lose 0 vs a 20⚡ entry. Blind RPS picks win ~41% and
+        // push ~20% even when random, so EV ≈ 19.4 < 20 — a tiny house edge, not a free sparks faucet.
+        try{ if(window.parent!==window) window.parent.postMessage({shdGame:'skate', shdScore:({ win: 40, push: 15 }[res.settlement.score] || 0), shdWin:res.settlement.score === 'win'}, location.origin); }catch(e){}
         if (res.settlement.score === 'win' && events.length) {
           btnLensClip.hidden = false;
           btnLensClip.disabled = false;
