@@ -75,3 +75,10 @@ disk; drop them in `fal-assets/production/refs/cos-*/` for image-edit fidelity.
 | O2 | Stained-glass cargo pants (magenta/violet/amber glass panels), mauve crop mock-neck, cream high-tops | magenta #d6259a, violet #7a2c8f, amber #f7b267 | "CATHEDRAL" outfit (fits ORACLE violet / TURTLE) |
 | O3 | Flame-gradient hooded drape/cape over white tee, red tactical cargo w/ straps, red high-tops, gold bangles | red #d7261e, orange #ff7a1a | "EMBER" outfit (fits PIKADON red) |
 | A1 | Underground cyber fight-pit: roped ring w/ glowing red floor sigil, tiered steel balconies packed with crowd, neon holo billboards (pink/cyan), graffiti, cables, haze + top-down spotlight | cyan #29c6ff, pink #ff3fa4, sigil red #ff4a2a | COLOSSEUM Tourney Hall interior + tactics battle backdrop — build in CODE ($0 fal; interior law) |
+
+## Batch 6 (2026-09-24, files on disk) — MAP / BIOME DIRECTION
+| File | What | Use |
+|---|---|---|
+| fantasy-biomes-grid.jpg | 28 isometric biome tiles (Firelands, Icebound, Crystal Forest, Voidscar, Mushroom Forest, Underwater…) | 2D realm tile palette + future realm ideas |
+| realm-map-city-network.jpg | "Map of Nestria cities": central crystal hub, ~12 colored cities linked by light roads, legend panel | Region-select / world-map screen UI |
+| hub-and-8-realms-floating.jpg | Floating central city with 8 themed floating islands linked by light bridges, radial | Matches our layout (City hub + 8 realms + light-trail roads) — world-map + 3D overview reference |
