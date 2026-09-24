@@ -249,6 +249,8 @@ LATER: live position mirror (2D↔3D same-account ghost), marketplace items usab
   x 2026-09-24 BOOT FIX - saved-region boot hit TDZ (fishes/BOTS) -> no region gen, NO AGENTS. Fixed.
   x 2026-09-24 2D EXTERIORS - per-region facades, venue signs, dusk-to-night windows, door spill,
     half-res emissive light layer w/ depth occlusion (after the night tint). (e31fb2c)
+  x 2026-09-24 ARCADE BUILDING (2D city) + OFFLINE SKATE + $0 COMPRESSION (skate 105→7MB,
+    council heads 53→15MB). Skate can now ship on the static beta.
   REMAINING (in order): (1) INTERIOR LAW - real door+interior+colliders per enterable,
     E-portals to sized-correct instances; (2) COLLIDER + SCALE LAWS; (3) arcade score
     bridge (games postMessage {shdGame, shdScore}); (4) agentic NPC quest dialogs.
