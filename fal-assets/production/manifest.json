@@ -37,7 +37,7 @@
     },
     "vehicle": {
       "cap_usd": 12,
-      "canary": "veh-hovercar",
+      "canary": "veh-skiff",
       "order": 3
     },
     "cosmetic": {
@@ -328,7 +328,7 @@
       "family": "building",
       "name": "City Shop",
       "canary": true,
-      "status": "ready-concept",
+      "status": "concept-approved",
       "slot": {
         "file": "public/world-layout.js (new realmColliders row) + 3D plaza",
         "note": "mirror 2D city.js MALL tryPlace(col4,row40)"
@@ -342,7 +342,8 @@
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
       },
-      "batch": "hub10"
+      "batch": "hub10",
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "bld-forge",
@@ -368,7 +369,7 @@
       "id": "bld-arcade",
       "family": "building",
       "name": "SHADDAI Arcade",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "slot": {
         "file": "public/world-layout.js + 3D plaza",
         "note": "mirror 2D ARCADE (west of HQ, commit 4b4949e); E = arcade overlay (skate door)"
@@ -382,7 +383,8 @@
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
       },
-      "batch": "hub10"
+      "batch": "hub10",
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "bld-bank",
@@ -449,7 +451,7 @@
       "id": "veh-skiff",
       "family": "vehicle",
       "name": "Hover Skiff",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "slot": {
         "file": "public/world-ocean.js id 'ocean-skiff' (w 12*SC)",
         "note": "same id + same w = drop-in; seat 0.55"
@@ -463,7 +465,8 @@
         "need": []
       },
       "batch": "hub10",
-      "silhouette": "sleek 12m hover-skiff, open cockpit deck for one standing pilot, twin rear thruster pods, low wedge hull"
+      "silhouette": "sleek 12m hover-skiff, open cockpit deck for one standing pilot, twin rear thruster pods, low wedge hull",
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "veh-superyacht",
@@ -598,7 +601,7 @@
       "id": "hub-dock",
       "family": "prop",
       "name": "Crystal Sea dock",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "batch": "hub10",
       "canary": false,
       "slot": {
@@ -611,13 +614,14 @@
         "have": [],
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-      }
+      },
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "hub-bridge-span",
       "family": "prop",
       "name": "Light-bridge span",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "batch": "hub10",
       "canary": false,
       "slot": {
@@ -630,13 +634,14 @@
         "have": [],
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-      }
+      },
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "prop-crate",
       "family": "prop",
       "name": "Cargo crate",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "batch": "hub10",
       "canary": true,
       "slot": {
@@ -649,13 +654,14 @@
         "have": [],
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-      }
+      },
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "prop-neon-tree",
       "family": "prop",
       "name": "Neon tree",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "batch": "hub10",
       "canary": false,
       "slot": {
@@ -668,13 +674,14 @@
         "have": [],
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-      }
+      },
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "hub-door",
       "family": "prop",
       "name": "Door module",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "batch": "hub10",
       "canary": false,
       "slot": {
@@ -687,13 +694,14 @@
         "have": [],
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-      }
+      },
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     },
     {
       "id": "prop-signpost",
       "family": "prop",
       "name": "Venue sign",
-      "status": "ready-concept",
+      "status": "concept-approved",
       "batch": "hub10",
       "canary": false,
       "slot": {
@@ -706,7 +714,8 @@
         "have": [],
         "need": [],
         "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-      }
+      },
+      "approved": "owner 2026-09-24 (\"everything else looks great\")"
     }
   ]
 }

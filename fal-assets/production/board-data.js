@@ -39,7 +39,7 @@ window.FAL_BOARD = {
    },
    "vehicle": {
     "cap_usd": 12,
-    "canary": "veh-hovercar",
+    "canary": "veh-skiff",
     "order": 3
    },
    "cosmetic": {
@@ -333,7 +333,7 @@ window.FAL_BOARD = {
     "family": "building",
     "name": "City Shop",
     "canary": true,
-    "status": "ready-concept",
+    "status": "concept-approved",
     "slot": {
      "file": "public/world-layout.js (new realmColliders row) + 3D plaza",
      "note": "mirror 2D city.js MALL tryPlace(col4,row40)"
@@ -348,6 +348,7 @@ window.FAL_BOARD = {
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
     "batch": "hub10",
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/bld-shop/bld-shop-hf-20260924-154954-1.png"
     ]
@@ -376,7 +377,7 @@ window.FAL_BOARD = {
     "id": "bld-arcade",
     "family": "building",
     "name": "SHADDAI Arcade",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "slot": {
      "file": "public/world-layout.js + 3D plaza",
      "note": "mirror 2D ARCADE (west of HQ, commit 4b4949e); E = arcade overlay (skate door)"
@@ -391,6 +392,7 @@ window.FAL_BOARD = {
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
     "batch": "hub10",
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/bld-arcade/bld-arcade-hf-20260924-155005-1.png"
     ]
@@ -460,7 +462,7 @@ window.FAL_BOARD = {
     "id": "veh-skiff",
     "family": "vehicle",
     "name": "Hover Skiff",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "slot": {
      "file": "public/world-ocean.js id 'ocean-skiff' (w 12*SC)",
      "note": "same id + same w = drop-in; seat 0.55"
@@ -475,6 +477,7 @@ window.FAL_BOARD = {
     },
     "batch": "hub10",
     "silhouette": "sleek 12m hover-skiff, open cockpit deck for one standing pilot, twin rear thruster pods, low wedge hull",
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/veh-skiff/veh-skiff-hf-20260924-154941-1.png"
     ]
@@ -612,7 +615,7 @@ window.FAL_BOARD = {
     "id": "hub-dock",
     "family": "prop",
     "name": "Crystal Sea dock",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -626,6 +629,7 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/hub-dock/hub-dock-hf-20260924-154928-1.png"
     ]
@@ -634,7 +638,7 @@ window.FAL_BOARD = {
     "id": "hub-bridge-span",
     "family": "prop",
     "name": "Light-bridge span",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -648,6 +652,7 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/hub-bridge-span/hub-bridge-span-hf-20260924-154920-1.png"
     ]
@@ -656,7 +661,7 @@ window.FAL_BOARD = {
     "id": "prop-crate",
     "family": "prop",
     "name": "Cargo crate",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "batch": "hub10",
     "canary": true,
     "slot": {
@@ -670,6 +675,7 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/prop-crate/prop-crate-hf-20260924-154718-1.png"
     ]
@@ -678,7 +684,7 @@ window.FAL_BOARD = {
     "id": "prop-neon-tree",
     "family": "prop",
     "name": "Neon tree",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -692,6 +698,7 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/prop-neon-tree/prop-neon-tree-hf-20260924-154912-1.png"
     ]
@@ -700,7 +707,7 @@ window.FAL_BOARD = {
     "id": "hub-door",
     "family": "prop",
     "name": "Door module",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -714,6 +721,7 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/hub-door/hub-door-hf-20260924-154856-1.png"
     ]
@@ -722,7 +730,7 @@ window.FAL_BOARD = {
     "id": "prop-signpost",
     "family": "prop",
     "name": "Venue sign",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -736,6 +744,7 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
+    "approved": "owner 2026-09-24 (\"everything else looks great\")",
     "concepts": [
      "production/concepts/prop-signpost/prop-signpost-hf-20260924-154904-1.png"
     ]
@@ -800,7 +809,7 @@ window.FAL_BOARD = {
    {
     "id": "bld-shop",
     "family": "building",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -814,7 +823,7 @@ window.FAL_BOARD = {
    {
     "id": "bld-arcade",
     "family": "building",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -842,7 +851,7 @@ window.FAL_BOARD = {
    {
     "id": "veh-skiff",
     "family": "vehicle",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -898,42 +907,42 @@ window.FAL_BOARD = {
    {
     "id": "hub-dock",
     "family": "prop",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "hub-bridge-span",
     "family": "prop",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "prop-crate",
     "family": "prop",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "prop-neon-tree",
     "family": "prop",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "hub-door",
     "family": "prop",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "prop-signpost",
     "family": "prop",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 0,
     "refsNeed": 0
    }
@@ -977,6 +986,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 0.03,
- "builtAt": "2026-09-24T16:27:55.282Z"
+ "spent": 0.22,
+ "builtAt": "2026-09-24T17:04:50.512Z"
 };

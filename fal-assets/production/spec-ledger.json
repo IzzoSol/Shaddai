@@ -29,6 +29,587 @@
       "usd_est": 0.0031,
       "px": 1024,
       "note": "A/B single-view test"
+    },
+    {
+      "at": "2026-09-24T16:45:17.542463+00:00",
+      "id": "unit-shaddai",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:45:21.768086+00:00",
+      "id": "bld-arcade-palace",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:01.514123+00:00",
+      "id": "bld-arcade-palace",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:16.295568+00:00",
+      "id": "unit-pilot",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:19.984129+00:00",
+      "id": "unit-oracle",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:24.936664+00:00",
+      "id": "unit-bot-heavy",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:29.285454+00:00",
+      "id": "unit-bot-scout",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:37.706726+00:00",
+      "id": "unit-shaddai-attack",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:42.129978+00:00",
+      "id": "unit-pilot-attack",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:45.775177+00:00",
+      "id": "unit-oracle-attack",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:50.322208+00:00",
+      "id": "unit-bot-heavy-attack",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:55.127126+00:00",
+      "id": "unit-bot-scout-attack",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:46:58.429627+00:00",
+      "id": "fishing-icons",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:47:02.617920+00:00",
+      "id": "arcade-cabinet",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:47:04.276148+00:00",
+      "id": "arcade-thumb-skate",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0008,
+      "px": 512
+    },
+    {
+      "at": "2026-09-24T16:47:06.826434+00:00",
+      "id": "arcade-thumb-basketball",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0008,
+      "px": 512
+    },
+    {
+      "at": "2026-09-24T16:47:09.384024+00:00",
+      "id": "arcade-thumb-dodgeball",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0008,
+      "px": 512
+    },
+    {
+      "at": "2026-09-24T16:47:12.158862+00:00",
+      "id": "arcade-thumb-sigil",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0008,
+      "px": 512
+    },
+    {
+      "at": "2026-09-24T16:47:16.887596+00:00",
+      "id": "sparks-icons",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:47:23.128325+00:00",
+      "id": "fx-splash-ring",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:47:25.722924+00:00",
+      "id": "fx-foam-tile",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0008,
+      "px": 512
+    },
+    {
+      "at": "2026-09-24T16:47:28.268415+00:00",
+      "id": "fx-swim-vignette",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0008,
+      "px": 512
+    },
+    {
+      "at": "2026-09-24T16:47:31.964412+00:00",
+      "id": "veh-ocean-skiff",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:47:37.509707+00:00",
+      "id": "veh-ocean-catamaran",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:47:41.034462+00:00",
+      "id": "veh-ocean-superyacht",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:07.744142+00:00",
+      "id": "veh-ocean-submarine",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:11.219395+00:00",
+      "id": "veh-hovercar",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:18.008111+00:00",
+      "id": "veh-hoverboard-v2",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:22.239628+00:00",
+      "id": "kit-tourney-betting-board",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:25.259371+00:00",
+      "id": "kit-tourney-champion-banner",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:29.180749+00:00",
+      "id": "kit-tourney-weapon-rack",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:33.289820+00:00",
+      "id": "kit-tourney-trophy-pedestal",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:38.859311+00:00",
+      "id": "kit-tourney-tier-gate",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:42.224601+00:00",
+      "id": "kit-garage-vehicle-pedestal",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:46.294771+00:00",
+      "id": "kit-garage-spec-bench",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:52.148703+00:00",
+      "id": "kit-garage-parts-shelf",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:55.374328+00:00",
+      "id": "kit-garage-tool-wall",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:48:59.394579+00:00",
+      "id": "kit-war-map-table",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:02.913623+00:00",
+      "id": "kit-war-throne",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:07.681887+00:00",
+      "id": "kit-war-lava-hearth",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:12.033254+00:00",
+      "id": "kit-war-weapon-wall",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:15.610569+00:00",
+      "id": "kit-siege-throne",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:19.789797+00:00",
+      "id": "kit-siege-window-frame",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:23.682466+00:00",
+      "id": "kit-siege-plan-table",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:27.600308+00:00",
+      "id": "kit-siege-dragon-banner",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:31.658024+00:00",
+      "id": "prop-street-lamp",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:34.442785+00:00",
+      "id": "prop-kiosk",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:39.315655+00:00",
+      "id": "prop-transit-stop",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:44.100065+00:00",
+      "id": "prop-holo-fountain",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:47.943400+00:00",
+      "id": "prop-statue-shaddai",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:51.805636+00:00",
+      "id": "prop-neon-tree",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:49:57.358256+00:00",
+      "id": "prop-ore-node",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:01.083975+00:00",
+      "id": "prop-signpost",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:06.257867+00:00",
+      "id": "hero-fortress",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:10.732667+00:00",
+      "id": "hero-colosseum",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:15.516598+00:00",
+      "id": "hero-sky-dome",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:19.618100+00:00",
+      "id": "hero-desert-terminal",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:23.419323+00:00",
+      "id": "hero-forest-amphitheater",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:28.183217+00:00",
+      "id": "hero-beach-market-dome",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:31.895845+00:00",
+      "id": "hero-farm-sky-structure",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:35.377723+00:00",
+      "id": "hero-city-megatower",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:39.349338+00:00",
+      "id": "hero-mushroom-pods",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:44.364855+00:00",
+      "id": "hero-arctic-outpost",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:47.730803+00:00",
+      "id": "hero-void-rift-gate",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T16:50:51.477088+00:00",
+      "id": "hero-castle",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:13.827759+00:00",
+      "id": "unit-pilot",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:16.980913+00:00",
+      "id": "veh-ocean-submarine",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:20.838035+00:00",
+      "id": "veh-hovercar",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:23.588393+00:00",
+      "id": "veh-hoverboard-v2",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:26.897683+00:00",
+      "id": "kit-tourney-champion-banner",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:30.203771+00:00",
+      "id": "kit-garage-tool-wall",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:33.707715+00:00",
+      "id": "kit-war-map-table",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:37.291528+00:00",
+      "id": "kit-war-throne",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:40.501842+00:00",
+      "id": "kit-war-lava-hearth",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:44.380800+00:00",
+      "id": "kit-war-weapon-wall",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:47.265976+00:00",
+      "id": "kit-siege-throne",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:50.790319+00:00",
+      "id": "kit-siege-window-frame",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:54.497636+00:00",
+      "id": "kit-siege-plan-table",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:07:58.187844+00:00",
+      "id": "kit-siege-dragon-banner",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:08:01.379527+00:00",
+      "id": "prop-street-lamp",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:08:05.206454+00:00",
+      "id": "hero-fortress",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:08:08.880801+00:00",
+      "id": "hero-colosseum",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:08:12.949344+00:00",
+      "id": "hero-beach-market-dome",
+      "endpoint": "fal-ai/flux/schnell",
+      "usd_est": 0.0031,
+      "px": 1024
     }
   ]
 }
