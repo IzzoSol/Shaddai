@@ -46,6 +46,8 @@
   #controls{left:50%;right:auto;transform:translateX(-50%);bottom:calc(84px + var(--gb,0px));white-space:nowrap;   /* centred above the RPG hotbar (bottom:16px, ~56px tall) */ padding:10px 14px;font-size:12px;color:var(--dim)}
   #controls b{color:var(--ink)}
   @media (pointer:coarse),(max-width:760px){ #controls{display:none!important} }
+  /* side panels (top:68px) never run under the mobile control deck (--gb) or off-screen */
+  #store,#inv,#wardrobe,#storage,#bank,#forge,#quests,#market,#hubrooms,#agentlive,#colosseum,#travel,#arcadePanel{max-height:calc(100vh - 84px - var(--gb,0px))!important;overflow:auto}
   #controls{transition:opacity .6s ease} #controls.dim{opacity:0;pointer-events:none}   /* keyboard hints mean nothing on touch — the deck has its own labels */
   #shopBtn{position:fixed;right:16px;top:16px;z-index:5}
   #prompt{left:50%;bottom:calc(24px + var(--gb,0px));transform:translateX(-50%);padding:8px 16px;font-size:13px;color:var(--grn);z-index:6}
@@ -246,6 +248,9 @@ function openArcade(){
   var bal = window.shdSparks.get();
   var h = '<div style="font-weight:800;color:#e8c45c;font-size:15px;letter-spacing:.1em;margin-bottom:4px">🎮 SHADDAI ARCADE</div>'
     + '<div style="font-size:11px;color:#7a8794;margin-bottom:12px">Entry fees and payouts use <b style="color:#9fe8c4">Sparks</b> — the same balance as the 3D world. ⚡ <b id="arcBal">'+bal+'</b></div>'
+    + (bal < Math.min.apply(null, ARCADE_GAMES.map(function(g){ return g.fee; }))
+        ? '<div style="font-size:11px;color:#e8c45c;border:1px dashed rgba(232,196,92,.35);border-radius:8px;padding:8px 10px;margin-bottom:10px">⚡ Need sparks? Take a quest from an agent (look for the <b>!</b>), sell goods to agents, or win at the Coliseum.</div>'
+        : '')
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">';
   ARCADE_GAMES.forEach(function(g){
     h += '<div style="border:1px solid rgba(232,196,92,.3);border-radius:10px;padding:10px 12px;background:rgba(12,18,28,.7)">'
