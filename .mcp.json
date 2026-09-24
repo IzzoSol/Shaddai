@@ -2,7 +2,7 @@
   "mcpServers": {
     "shaddai": {
       "command": "node",
-      "args": ["C:\\Users\\Brittany\\Shaddai\\shaddai-mcp\\mcp-unified.js"],
+      "args": ["shaddai-mcp/mcp-unified.js"],
       "env": {
         "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com",
         "SHADDAI_ENABLE_MONEY": "1",
