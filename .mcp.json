@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["shaddai-mcp/mcp-unified.js"],
       "env": {
-        "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com",
+        "SHADDAI_API_URL": "https://shaddai-r383.onrender.com",
         "SHADDAI_ENABLE_MONEY": "1",
         "SHADDAI_RATE_PER_SEC": "5",
         "VIRTUALS_BASE_WALLET": "0xf4cf0a113f06b113cec2a8bf5a5f115d203dd966",
