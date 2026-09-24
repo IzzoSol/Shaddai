@@ -42,7 +42,10 @@ for (const a of M.assets) {
 }
 
 const spentBy = (pred) => ledger.entries.filter(pred).reduce((s, e) => s + e.usd, 0);
-const totalSpent = () => spentBy(() => true);
+// spec-sheets.py (concept sheets on fal schnell) keeps its own estimated ledger — it counts toward the same $100
+const SPEC_PATH = join(HERE, 'spec-ledger.json');
+const specSpent = () => existsSync(SPEC_PATH) ? JSON.parse(readFileSync(SPEC_PATH, 'utf8')).entries.reduce((s, e) => s + (e.usd_est || 0), 0) : 0;
+const totalSpent = () => spentBy(() => true) + specSpent();
 const assetById = (id) => M.assets.find((a) => a.id === id);
 const refPath = (p) => join(FAL, p);
 
