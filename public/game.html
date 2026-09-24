@@ -46,6 +46,8 @@
   #controls{left:50%;right:auto;transform:translateX(-50%);bottom:calc(84px + var(--gb,0px));white-space:nowrap;   /* centred above the RPG hotbar (bottom:16px, ~56px tall) */ padding:10px 14px;font-size:12px;color:var(--dim)}
   #controls b{color:var(--ink)}
   @media (pointer:coarse),(max-width:760px){ #controls{display:none!important} }
+  /* side panels (top:68px) never run under the mobile control deck (--gb) or off-screen */
+  #store,#inv,#wardrobe,#storage,#bank,#forge,#quests,#market,#hubrooms,#agentlive,#colosseum,#travel,#arcadePanel{max-height:calc(100vh - 84px - var(--gb,0px))!important;overflow:auto}
   #controls{transition:opacity .6s ease} #controls.dim{opacity:0;pointer-events:none}   /* keyboard hints mean nothing on touch — the deck has its own labels */
   #shopBtn{position:fixed;right:16px;top:16px;z-index:5}
   #prompt{left:50%;bottom:calc(24px + var(--gb,0px));transform:translateX(-50%);padding:8px 16px;font-size:13px;color:var(--grn);z-index:6}
@@ -142,7 +144,7 @@
   <span style="color:#5fe0ff;font-size:13px;letter-spacing:1px">👁 Spectating — watching the living world</span>
   <button class="primary" style="padding:7px 14px;font-size:13px" onclick="joinPlay()">▶ Join &amp; Play</button>
 </div>
-<div id="intActions" class="hide" style="position:fixed;left:16px;top:70px;z-index:7;display:flex;gap:8px;flex-wrap:wrap"></div>
+<div id="intActions" class="hide" style="position:fixed;left:16px;top:160px;z-index:7;display:flex;gap:8px;flex-wrap:wrap"></div>
 <div id="decorBar" class="panel hide" style="left:50%;bottom:calc(16px + var(--gb,0px));transform:translateX(-50%);z-index:8;display:flex;gap:6px;align-items:center;padding:8px 12px;flex-wrap:wrap;max-width:94vw"></div>
 <div id="wardrobe" class="panel hide" style="right:16px;top:68px;width:min(420px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="storage" class="panel hide" style="right:16px;top:68px;width:min(460px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
@@ -246,6 +248,9 @@ function openArcade(){
   var bal = window.shdSparks.get();
   var h = '<div style="font-weight:800;color:#e8c45c;font-size:15px;letter-spacing:.1em;margin-bottom:4px">🎮 SHADDAI ARCADE</div>'
     + '<div style="font-size:11px;color:#7a8794;margin-bottom:12px">Entry fees and payouts use <b style="color:#9fe8c4">Sparks</b> — the same balance as the 3D world. ⚡ <b id="arcBal">'+bal+'</b></div>'
+    + (bal < Math.min.apply(null, ARCADE_GAMES.map(function(g){ return g.fee; }))
+        ? '<div style="font-size:11px;color:#e8c45c;border:1px dashed rgba(232,196,92,.35);border-radius:8px;padding:8px 10px;margin-bottom:10px">⚡ Need sparks? Take a quest from an agent (look for the <b>!</b>), sell goods to agents, or win at the Coliseum.</div>'
+        : '')
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">';
   ARCADE_GAMES.forEach(function(g){
     h += '<div style="border:1px solid rgba(232,196,92,.3);border-radius:10px;padding:10px 12px;background:rgba(12,18,28,.7)">'
@@ -1073,6 +1078,7 @@ function tryDoor(){
   const nb=nearBot(); if(nb){ if(window.AgentDialog&&AgentDialog.open(nb)) return; openBotShop(nb); return; }
   for(const p of props){ if(p.type!=='building') continue;
     const dc=(p.col+p.w/2)-player.col, dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.4){
+      if(/^WELL$/i.test(p.name||'')){ if(typeof bottleWater==='function') bottleWater(); else toast('A deep, cold well'); return; }   // a well is not a house
       if(p.kind==='transit') openTravel(); else if(p.kind==='colosseum') openColosseum(); else if(p.kind==='arcade') openArcade(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
 }
 let intRoom={w:9,h:7,door:{col:4,row:6},furniture:[],order:[],npc:1};
@@ -1085,10 +1091,10 @@ function interiorKindFor(b){ const n=(b.name||'').toUpperCase(), k=b.kind;
   if(k==='transit') return 'transit';
   if(/DINER|CAFE/.test(n)) return 'diner';
   if(/BANK|EXCHANGE|VAULT|TREAS/.test(n)) return 'bank';
-  if(/TAVERN|INN|BAR|KEEPER/.test(n)) return 'tavern';
+  if(/TAVERN|\bINN\b|\bBAR\b|KEEPER/.test(n)) return 'tavern';   // word-bounded: BARN / INNER ≠ tavern
   if(/PUB|FIGHT CLUB|ARENA/.test(n)) return 'pub';
   if(/FORGE|SMELTER/.test(n)) return 'forge';
-  if(/LIBRARY|ATHEN|CODEX/.test(n)) return 'library';
+  if(/LIBRARY|ATHEN|CODEX|CHAPEL|TEMPLE|SHRINE|CHURCH/.test(n)) return 'library';   // quiet halls, not bedrooms
   if(k==='siege'||/KEEP|CASTLE|DARK TOWER/.test(n)) return 'castle';
   if(/COLISEUM|ARENA/.test(n)) return 'colosseum';
   if(/SHOP|STORE|MARKET|GROCER|BAKERY|TRAPPER|TRADING|POST/.test(n)) return 'shop';
@@ -1285,7 +1291,7 @@ function enterInterior(b){ roomTheme=null; state='interior'; inInterior=b; inter
   buildInterior(interiorType);
   player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
   const pr=document.getElementById('prompt'); pr.classList.remove('hide');
-  pr.textContent=(interiorType==='home'?'🏠 A Home':('Inside '+(b.name||interiorType)))+' — WASD to walk · reach the door or press E to exit';
+  pr.textContent=(interiorType==='home'?'🏠 A Home':('Inside '+(b.name||interiorType)))+(ACT_KEY()==='Tap B'?' — walk to the door or tap B to exit':' — WASD to walk · reach the door or press E to exit');
   const mb=document.getElementById('moveinBtn'); if(b.suburb){ mb.classList.remove('hide'); mb.textContent=isMyHome(b)?'🏠 This is your home ✓':'🏠 Move in here'; } else mb.classList.add('hide');
   refreshIntActions(); }
 // (removed dead 'coming soon' shop stub — openShop opens the real Store, defined below)
@@ -1346,7 +1352,7 @@ function update(dt){
       for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
       const pr=document.getElementById('prompt');
       if(nb){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+' to talk to '+nb.name; }
-      else if(near){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+' to enter '+near.name; }
+      else if(near){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+(/^WELL$/i.test(near.name||'')?' to draw water from the well':' to enter '+near.name); }
       else if(!inInterior) pr.classList.add('hide'); }
     updateFishes(dt);
     if(hurtFlash>0) hurtFlash-=dt; if(atkSwing>0) atkSwing-=dt;
