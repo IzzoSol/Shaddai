@@ -333,7 +333,7 @@ window.FAL_BOARD = {
     "family": "building",
     "name": "City Shop",
     "canary": true,
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "slot": {
      "file": "public/world-layout.js (new realmColliders row) + 3D plaza",
      "note": "mirror 2D city.js MALL tryPlace(col4,row40)"
@@ -661,7 +661,7 @@ window.FAL_BOARD = {
     "id": "prop-crate",
     "family": "prop",
     "name": "Cargo crate",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "batch": "hub10",
     "canary": true,
     "slot": {
@@ -752,7 +752,78 @@ window.FAL_BOARD = {
   ]
  },
  "ledger": {
-  "entries": []
+  "entries": [
+   {
+    "at": "2026-09-24T17:12:45.141Z",
+    "id": "prop-crate",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-crate-hf-20260924-154718-1.png"
+   },
+   {
+    "at": "2026-09-24T17:16:25.531Z",
+    "id": "bld-shop",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from bld-shop-hf-20260924-154954-1.png"
+   },
+   {
+    "at": "2026-09-24T17:32:25.386Z",
+    "id": "prop-crate",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-crate-hf-20260924-154718-1.png"
+   },
+   {
+    "at": "2026-09-24T17:34:32.924Z",
+    "id": "hub-door",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from hub-door-hf-20260924-154856-1.png"
+   },
+   {
+    "at": "2026-09-24T18:36:12.046Z",
+    "id": "prop-signpost",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-signpost.png"
+   },
+   {
+    "at": "2026-09-24T18:39:12.010Z",
+    "id": "prop-neon-tree",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-neon-tree-hf-20260924-154912-1.png"
+   },
+   {
+    "at": "2026-09-24T18:40:52.855Z",
+    "id": "hub-bridge-span",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from hub-bridge-span-hf-20260924-154920-1.png"
+   },
+   {
+    "at": "2026-09-24T18:42:26.029Z",
+    "id": "hub-dock",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from hub-dock-hf-20260924-154928-1.png"
+   },
+   {
+    "at": "2026-09-24T18:44:53.664Z",
+    "id": "veh-skiff",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from veh-skiff-hf-20260924-154941-1.png"
+   },
+   {
+    "at": "2026-09-24T18:49:05.307Z",
+    "id": "bld-arcade",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from bld-arcade-hf-20260924-155005-1.png"
+   }
+  ]
  },
  "validation": {
   "problems": [],
@@ -809,7 +880,7 @@ window.FAL_BOARD = {
    {
     "id": "bld-shop",
     "family": "building",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -921,7 +992,7 @@ window.FAL_BOARD = {
    {
     "id": "prop-crate",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -986,6 +1057,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 0.22,
- "builtAt": "2026-09-24T17:04:50.512Z"
+ "spent": 2.86,
+ "builtAt": "2026-09-24T18:49:47.413Z"
 };

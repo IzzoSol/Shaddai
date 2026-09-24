@@ -203,3 +203,8 @@ server/node_modules/
 
 backend/data/*.backup-*.json
 backend/data/*pre-repair-backup*
+
+# fal raw downloads (huge, re-derivable from *-response.json); ship/ holds the compressed GLBs
+fal-assets/production/models/*.glb
+fal-assets/production/models/*.obj
+fal-assets/production/models/*-obj/

@@ -610,6 +610,13 @@
       "endpoint": "fal-ai/flux/schnell",
       "usd_est": 0.0031,
       "px": 1024
+    },
+    {
+      "at": "2026-09-24T17:33:16.156146+00:00",
+      "id": "bld-shaddai-hall",
+      "endpoint": "fal-ai/flux-pro/kontext",
+      "usd_est": 0.04,
+      "note": "owner-picked SHADDAI hall, sign spelling fix"
     }
   ]
 }

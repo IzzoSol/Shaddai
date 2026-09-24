@@ -328,7 +328,7 @@
       "family": "building",
       "name": "City Shop",
       "canary": true,
-      "status": "concept-approved",
+      "status": "mesh-approved",
       "slot": {
         "file": "public/world-layout.js (new realmColliders row) + 3D plaza",
         "note": "mirror 2D city.js MALL tryPlace(col4,row40)"
@@ -641,7 +641,7 @@
       "id": "prop-crate",
       "family": "prop",
       "name": "Cargo crate",
-      "status": "concept-approved",
+      "status": "mesh-approved",
       "batch": "hub10",
       "canary": true,
       "slot": {

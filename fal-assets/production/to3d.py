@@ -69,12 +69,27 @@ def main():
             sys.exit(f"STOP: fal status {st.get('status')}")
         time.sleep(5)
     res = req(sub["response_url"], key)
-    url = (res.get("model_glb") or {}).get("url")
-    if not url:
-        sys.exit("STOP: no GLB in response: " + ",".join(res.keys()))
     out = os.path.join(HERE, "models"); os.makedirs(out, exist_ok=True)
+    json.dump(res, open(os.path.join(out, aid + "-response.json"), "w"), indent=2)   # keep every paid-for URL
     dst = os.path.join(out, aid + ".glb")
-    open(dst, "wb").write(urllib.request.urlopen(url, timeout=300).read())
+    dl = lambda u, p: open(p, "wb").write(urllib.request.urlopen(u, timeout=300).read())
+    urls = [(res.get("model_glb") or {}).get("url")] + [v.get("url") if isinstance(v, dict) else v for v in (res.get("model_urls") or {}).values()]
+    glb = next((u for u in urls if u and u.split("?")[0].lower().endswith(".glb")), None)
+    if glb:
+        dl(glb, dst)
+    else:   # rapid tier: OBJ + MTL + texture -> GLB
+        objd = os.path.join(out, aid + "-obj"); os.makedirs(objd, exist_ok=True)
+        obj = next((u for u in urls if u and u.split("?")[0].lower().endswith(".obj")), None) or sys.exit("STOP: no GLB/OBJ in response")
+        dl(obj, os.path.join(objd, "model.obj"))
+        for k in ("material_mtl", "texture"):
+            u = (res.get(k) or {}).get("url")
+            if u: dl(u, os.path.join(objd, os.path.basename(u.split("?")[0])))
+        mtl = next((f for f in os.listdir(objd) if f.endswith(".mtl")), None)
+        if mtl:   # point the OBJ at the MTL file we actually saved
+            src_obj = open(os.path.join(objd, "model.obj"), encoding="utf-8", errors="ignore").read()
+            import re
+            open(os.path.join(objd, "model.obj"), "w", encoding="utf-8").write(re.sub(r"^mtllib .*$", "mtllib " + mtl, src_obj, count=1, flags=re.M))
+        subprocess.run("npx --yes obj2gltf -i model.obj -o ../" + aid + ".glb", cwd=objd, shell=True, check=True)
     thumb = (res.get("thumbnail") or {}).get("url")
     if thumb:
         open(os.path.join(out, aid + "-thumb.png"), "wb").write(urllib.request.urlopen(thumb, timeout=120).read())
