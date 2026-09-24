@@ -241,7 +241,7 @@ window.FAL_BOARD = {
     "id": "agent-oracle",
     "family": "agent",
     "name": "ORACLE — Seer",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "slot": {
      "file": "fal-assets/characters/oracle-council/",
      "note": "replace in place"
@@ -261,6 +261,7 @@ window.FAL_BOARD = {
     },
     "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-oracle/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
     "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
+    "shipped": "public/assets/models/chars/oracle-v2.glb (+ -walk/-run); pedestal stripped by tools/ual/strip-pedestal.mjs; UAL2 moves verified in ual-lab",
     "concepts": [
      "production/concepts/agent-oracle/agent-oracle-tpose-noweapon.png"
     ]
@@ -316,7 +317,7 @@ window.FAL_BOARD = {
     "id": "agent-pikadon",
     "family": "agent",
     "name": "PIKADON — Guardian",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "slot": {
      "file": "fal-assets/characters/pikadon-council/",
      "note": "replace in place"
@@ -336,6 +337,7 @@ window.FAL_BOARD = {
     },
     "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-pikadon/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
     "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
+    "shipped": "public/assets/models/chars/pikadon-v2.glb (+ -walk/-run); pedestal stripped; UAL2 verified",
     "concepts": [
      "production/concepts/agent-pikadon/agent-pikadon-tpose-noweapon.png"
     ]
@@ -902,6 +904,13 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.8,
     "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
+   },
+   {
+    "at": "2026-09-24T19:41:25.262Z",
+    "id": "agent-pikadon",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
    }
   ]
  },
@@ -932,7 +941,7 @@ window.FAL_BOARD = {
    {
     "id": "agent-oracle",
     "family": "agent",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "refsHave": 2,
     "refsNeed": 0
    },
@@ -953,7 +962,7 @@ window.FAL_BOARD = {
    {
     "id": "agent-pikadon",
     "family": "agent",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "refsHave": 2,
     "refsNeed": 0
    },
@@ -1151,6 +1160,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 5.15,
- "builtAt": "2026-09-24T19:23:47.393Z"
+ "spent": 5.95,
+ "builtAt": "2026-09-24T19:43:33.815Z"
 };
