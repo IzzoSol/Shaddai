@@ -326,10 +326,8 @@ addEventListener('message', function(ev){
 <script src="dark-realm.js" onerror="0"></script>
 <script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
-<script src="auth.js" onerror="0"></script>
 <script type="module" src="config/buildings.js" onerror="0"></script>
 <script src="js/skills.js" onerror="0"></script>
-<script src="js/market.js" onerror="0"></script>
 <script src="js/mmo-client.js" onerror="0"></script>
 <script>
 'use strict';
@@ -987,14 +985,14 @@ function drawFacadeDetail(b,f,wall,dk,dv,seed,time,fs){
   if(glow){ const d=facePt(f.lf,f.fr,f.tL,f.tF,0.5,0); emitG(d[0]-4,d[1]+5,20,9,fs.win,0.3*dk); }
 }
 function drawBuildingBody(b,sx,sy,dk,time){
-  const fs=facadeStyle();
+  const fs=facadeStyle(), glass=b.glass||'#4a5a6e';   // some generators (suburb homes) omit glass
   const floorH=18, h=b.floors*floorH, seed=(b.col*3+b.row*5)|0;
   const jw=((seed%5)-2)*0.045, wall=shade(b.wall,jw), roof=shade(b.roof,jw); // per-building tone variation
   DC.fillStyle='rgba(0,0,0,0.20)'; DC.beginPath(); DC.ellipse(sx,sy+4,(b.w+b.d)*13,(b.w+b.d)*6,0,0,7); DC.fill();
   const f=isoBox(sx,sy,b.w,b.d,h,wall);
   occlude([f.lf,f.fr,f.rt,[f.tR[0],f.tR[1]-12],[f.tB[0],f.tB[1]-12],[f.tL[0],f.tL[1]-12]]);   // hull + roof kit
-  winGrid(f.lf,f.fr,f.tL,f.tF, Math.max(2,Math.round(b.w*1.8)), b.floors, b.glass, dk, seed, fs.win, time);
-  winGrid(f.fr,f.rt,f.tF,f.tR, Math.max(2,Math.round(b.d*1.8)), b.floors, shade(b.glass,-0.12), dk, seed+2, fs.win, time);
+  winGrid(f.lf,f.fr,f.tL,f.tF, Math.max(2,Math.round(b.w*1.8)), b.floors, glass, dk, seed, fs.win, time);
+  winGrid(f.fr,f.rt,f.tF,f.tR, Math.max(2,Math.round(b.d*1.8)), b.floors, shade(glass,-0.12), dk, seed+2, fs.win, time);
   const dv=Math.min(0.85, 1.2/b.floors);
   qfill(facePt(f.lf,f.fr,f.tL,f.tF,0.40,dv),facePt(f.lf,f.fr,f.tL,f.tF,0.60,dv),
         facePt(f.lf,f.fr,f.tL,f.tF,0.60,0),facePt(f.lf,f.fr,f.tL,f.tF,0.40,0), b.kind==='home'?'#5a3a24':'#1c2230');
