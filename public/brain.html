@@ -782,7 +782,7 @@ AGENTS.forEach(a=>{const r=parseInt(a.color.slice(1,3),16),g=parseInt(a.color.sl
 // Same-origin (the server that serves /brain already mounts the brain routes),
 // with a localhost:3000 fallback for file:// opens.
 const API=(typeof location!=='undefined'&&location.origin&&location.origin!=='null')?location.origin:'http://localhost:3000';
-const RENDER_API='https://shaddai-g81x.onrender.com';
+const RENDER_API='https://shaddai-r383.onrender.com';
 // Committed knowledge-base snapshot — if every live endpoint is unreachable (e.g.
 // sleeping Render free instance), show these real committed counts instead of 0s.
 const COMMITTED_KB={videos:126,chunks:2194,terms:24051,words:1062641,systems:['SHADDAI','NEXUS','ZEROX','ORACLE','TURTLE','QUILL','PIKADON'],agents:[

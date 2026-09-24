@@ -288,7 +288,7 @@ const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.
 document.querySelectorAll('.rv:not(.in)').forEach(el=>io.observe(el));
 
 /* ── real data: live Render cloud API (no localhost) ── */
-const CLOUD='https://shaddai-g81x.onrender.com';
+const CLOUD='https://shaddai-r383.onrender.com';
 const idle=(fn)=>{ if('requestIdleCallback' in window && window.requestIdleCallback) window.requestIdleCallback(()=>fn(),{timeout:2000}); else setTimeout(fn,1500); };
 async function apiFetch(p,o){
   o=o||{};
