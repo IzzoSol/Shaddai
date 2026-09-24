@@ -15,9 +15,10 @@ window.buildWorldActions = function (opts) {
   if (!THREE || !scene) return null;
   var P = opts.playerPosGetter || function () { return window._playerPos; };
 
-  var SPARK_KEY = 'shd.sparks3d';
-  function sparks() { try { return parseInt(localStorage.getItem(SPARK_KEY) || '0', 10) || 0; } catch (e) { return 0; } }
-  function addSparks(n) { try { localStorage.setItem(SPARK_KEY, String(sparks() + n)); } catch (e) {} hud(); }
+  // ONE ledger (sparks-ledger.js): the same balance as the 2D realm, arcade and dashboard
+  var L = window.ShdSparks;
+  function sparks() { return L ? L.get() : 0; }
+  function addSparks(n) { if (L) L.add(n, '3d', n >= 0 ? 'earned in World 3D' : 'spent in World 3D'); hud(); }
 
   // ── HUD: sparks chip + trick toast (pure DOM, gold on obsidian) ──
   var chip = document.createElement('div');

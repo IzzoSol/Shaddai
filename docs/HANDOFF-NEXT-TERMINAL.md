@@ -54,11 +54,35 @@ gate ships with Thursday fal) · 4 ✅ SWIM · 5 ✅ SEATING. Realm shells are s
 placeholder GLBs — Thursday's fal models replace them IN PLACE (positions in
 world-layout.js realmColliders + the module manifests are the slots).
 
+## DONE 2026-09-24 (Claude, zero fal) — see MASTER-PLAN §15
+Arcade score bridge (4 games pay once per paid entry) · ONE sparks ledger for real
+(sparks-ledger.js; shd.sparks3d fork folded in) · agentic NPC quest dialogs (npc-dialog.js) ·
+boot TDZ fix (saved-region players had NO agents) · 2D exteriors + emissive light layer.
+Probes: tools/probe-arcade.cjs, probe-dialog.cjs, probe-exteriors.cjs (puppeteer or playwright).
+Round 2 (same day): tactics CLAN_NAMES/ENEMY_CLANS import fix + game.html module-script fix
+(page is now error-free) · ARCADE building in SHADDAI City (west of HQ, E = arcade) · Skate
+plays with NO backend (local port of hall/packs/skate.js; payout 40/15 — random play was a
++12.6⚡ faucet) · $0 compression (§14.1): skate props/boards/GABI 105MB→7MB (meshopt+webp),
+council heads 53MB→15MB (webp only — rag-cockpit/brain-head have no Meshopt decoder).
+⇒ Skate is now small enough to ship on the static beta (§12 dropped it for size).
+Cosmetics catalog is EMPTY ON PURPOSE (owner removed them 09-21) — Thursday retexture track.
+Probes added: probe-skate-offline.cjs (node only).
+Round 3 — POLISH (owner: polish main, no beta work for now):
+- Removed 2 broken stub overlays every player saw on load: js/market.js (unstyled bid box) +
+  auth.js (dup name modal + 5 alert() popups). Game keeps its own create screen/FTUE/market.
+- mmo-client.js: dropped its real-clock darkness overlay (double night tint); ⚔ MMO button
+  only appears when the dev MMO server (:3001) answers.
+- Suburb: homes w/o glass crashed the building renderer every frame — fixed.
+- HUD: controls hint centred above hotbar, fades after 30s / for fish+gather bars, hidden on
+  touch; prompts say "Tap B" on touch. Interiors: action buttons below the HUD; BARN≠tavern;
+  chapels→quiet hall; WELL draws water. Panels capped above the mobile deck. Arcade explains
+  how to earn sparks at 0⚡. region-select header buttons no longer wrap on phones.
+Audit: all 9 regions boot with 0 page errors, 7 agents each; combat spawns 5-9 foes/region.
+
 ## NEXT (your order of work)
 A. If MCP is up: agents assist — NEXUS engine review, TURTLE visual QA, QUILL prompts,
    ORACLE research, ZEROX economy math, PIKADON audit AT THE END (one call, not per-step).
-B. Code (zero fal): (1) arcade score bridge — teach games to postMessage; (2) agentic
-   NPC quest dialogs in 2D; (3) 2D building exteriors pass (signage/night windows).
+B. Code (zero fal): DONE 2026-09-24 (score bridge, NPC dialogs, exteriors).
 C. THURSDAY FAL ($111, $100 budget, §4 gates + canary-first + scale-check): 7 agents
    (HighPack+tripo, canary=SHADDAI first), 5 enterable city buildings, ship/hovercar
    rework, cosmetics retexture, fatality video demos last. Skate physics reference:

@@ -66,6 +66,15 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
 const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+/* ── 2D⇄3D REALM BRIDGE — module-scope API consumed by world3d-bridge.js ── */
+window.__w3 = {
+  get player() { return player; },
+  get state() { return state; },
+  get save() { return save; },
+  hud, writeSave, toast,
+  teleport(x, z) { if (player) { player.root.position.set(x, 0, z); } },
+  realmId() { return state ? state.realm : 'city'; }
+};
 
 /* ───────────────────────── renderer / scene ───────────────────────── */
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -545,8 +554,8 @@ addEventListener('keydown', (e) => {
   if (k === 'm') toggleMap();
   if (k === 'g' && e.shiftKey) applyTier((perf.tier + 2) % 3);
   if (k === 'n') { buildIdx = (buildIdx + 1) % BUILDS.length; toast('BUILD: ' + BUILDS[buildIdx][2].toUpperCase()); }
-  if (k === 'b' && player && state.where !== 'inside' && !mountedOn) { if (save.plots.length >= 40) { toast('PLOT LIMIT'); } else { const p = player.root.position, rec = { f: BUILDS[buildIdx][0], x: +(p.x + Math.sin(player.yaw) * 14).toFixed(1), z: +(p.z + Math.cos(player.yaw) * 14).toFixed(1), ry: +player.yaw.toFixed(2) }; save.plots.push(rec); placePlot(rec); hud(); writeSave(); toast('PLACED ' + BUILDS[buildIdx][2].toUpperCase()); } }
-  if (k === 'z' && plotObjs.length) { const o = plotObjs.pop(); world.remove(o.g); const i = save.plots.indexOf(o.rec); if (i >= 0) save.plots.splice(i, 1); hud(); writeSave(); toast('REMOVED'); }
+  if (k === 'b' && player && state.where !== 'inside' && !mountedOn) { if (save.plots.length >= 40) { toast('PLOT LIMIT'); } else { const plotCost = save.plots.length === 0 ? 0 : 25; if (save.sparks < plotCost) { toast('NEED ⚡ SPARKS'); } else { const p = player.root.position, rec = { f: BUILDS[buildIdx][0], x: +(p.x + Math.sin(player.yaw) * 14).toFixed(1), z: +(p.z + Math.cos(player.yaw) * 14).toFixed(1), ry: +player.yaw.toFixed(2) }; if (plotCost) save.sparks -= plotCost; save.plots.push(rec); placePlot(rec); hud(); writeSave(); toast('PLACED ' + BUILDS[buildIdx][2].toUpperCase() + (plotCost ? ' · −' + plotCost + '⚡' : '')); } } }
+  if (k === 'z' && plotObjs.length) { const o = plotObjs.pop(); world.remove(o.g); const i = save.plots.indexOf(o.rec); if (i >= 0) save.plots.splice(i, 1); save.sparks += 10; hud(); writeSave(); toast('REMOVED +10⚡'); }
   if (k === 'e') interact();
   if (k === 'f' && player && !mountedOn) strike(player); if (k === 'g' && player && !mountedOn) strike(player, 'cast');
 });
@@ -797,4 +806,6 @@ await addMount('veh-hover-pod-blue', 'HOVER POD II', { x: 8, z: 56, w: 5.2, ry: 
   { const st = document.getElementById('stream'); if (st) st.remove(); toast('WORLD READY'); }
   } catch (e) { console.error('BOOT FAIL', e); $('#loadmsg').textContent = 'boot error: ' + e.message; $('#loadmsg').style.color = '#ff6a6a'; }
 })();
-</script></body></html>
+</script>
+<script src="world3d-bridge.js" defer onerror="this.remove()"></script>
+</body></html>

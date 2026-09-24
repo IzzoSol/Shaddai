@@ -13,7 +13,7 @@
   *{box-sizing:border-box;-webkit-user-select:none;user-select:none;}
   html,body{margin:0;height:100%;background:#0d1017;color:var(--ink);font-family:var(--font);overflow:hidden;}
   #c{position:fixed;inset:0;width:100vw;height:100vh;display:block;image-rendering:pixelated;}
-  .panel{position:fixed;z-index:5;background:rgba(14,19,27,.92);border:1px solid #223;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .panel{position:fixed;z-index:5;background:linear-gradient(180deg,rgba(18,24,36,.97),rgba(10,14,22,.94));border:1px solid rgba(120,150,200,.28);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(6px);}
   .hide{display:none!important;}
   h1{margin:0 0 10px;font-family:var(--retro);font-size:13px;line-height:1.6;letter-spacing:.5px}h1 b{color:var(--grn)}
   .sub{color:var(--dim);font-size:13px;margin-bottom:14px}
@@ -43,10 +43,14 @@
   /* hud */
   #hud{left:16px;top:16px;padding:10px 14px}
   #hud .who{font-size:14px}#hud .where{color:var(--grn);font-size:12px}
-  #controls{right:16px;bottom:16px;padding:10px 14px;font-size:12px;color:var(--dim)}
+  #controls{left:50%;right:auto;transform:translateX(-50%);bottom:calc(84px + var(--gb,0px));white-space:nowrap;   /* centred above the RPG hotbar (bottom:16px, ~56px tall) */ padding:10px 14px;font-size:12px;color:var(--dim)}
   #controls b{color:var(--ink)}
+  @media (pointer:coarse),(max-width:760px){ #controls{display:none!important} }
+  /* side panels (top:68px) never run under the mobile control deck (--gb) or off-screen */
+  #store,#inv,#wardrobe,#storage,#bank,#forge,#quests,#market,#hubrooms,#agentlive,#colosseum,#travel,#arcadePanel{max-height:calc(100vh - 84px - var(--gb,0px))!important;overflow:auto}
+  #controls{transition:opacity .6s ease} #controls.dim{opacity:0;pointer-events:none}   /* keyboard hints mean nothing on touch — the deck has its own labels */
   #shopBtn{position:fixed;right:16px;top:16px;z-index:5}
-  #prompt{left:50%;bottom:24px;transform:translateX(-50%);padding:8px 16px;font-size:13px;color:var(--grn);z-index:6}
+  #prompt{left:50%;bottom:calc(24px + var(--gb,0px));transform:translateX(-50%);padding:8px 16px;font-size:13px;color:var(--grn);z-index:6}
   #siegeBtn.siege-active{animation:darkSiegePulse 1.1s ease-in-out infinite;}
   @keyframes darkSiegePulse{0%,100%{box-shadow:0 0 0 0 rgba(204,68,255,.55)}50%{box-shadow:0 0 14px 4px rgba(204,68,255,.55)}}
 </style><script src="/sw-heal.js"></script>
@@ -111,15 +115,17 @@
   <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span id="sigTxt" style="color:#00e5a0;font-size:12px;min-width:34px">📡 100</span><div style="flex:1;height:7px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden"><div id="sigFill" style="width:100%;height:100%;background:#00e5a0;transition:width .3s,background .3s"></div></div></div></div>
 <!-- QUICK BACK TO DASHBOARD (skip opening) -->
 <button onclick="location.href='/index.html'" title="Back to dashboard (Esc)" id="quickBack" style="position:fixed;top:10px;right:12px;z-index:25;background:rgba(6,8,11,.82);border:1px solid rgba(0,229,160,.35);color:#00e5a0;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:7px 13px;border-radius:8px;cursor:pointer;font-weight:700;backdrop-filter:blur(6px)">▲ Dashboard</button>
+<button onclick="toggleFullscreen()" id="fsBtn" title="Fullscreen (F)" style="position:fixed;top:52px;right:12px;z-index:25;background:rgba(6,8,11,.82);border:1px solid rgba(0,229,160,.35);color:#00e5a0;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:1px;padding:7px 11px;border-radius:8px;cursor:pointer;font-weight:700;backdrop-filter:blur(6px);line-height:1">⛶</button>
 <!-- CITY CLAIM PANEL -->
-<div id="claimPanel" class="panel hide" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:10;padding:14px 20px;text-align:center;min-width:200px">
+<div id="claimPanel" class="panel hide" style="position:fixed;bottom:calc(90px + var(--gb,0px));left:50%;transform:translateX(-50%);z-index:10;padding:14px 20px;text-align:center;min-width:200px">
   <div id="claimTitle" style="font-weight:700;font-size:14px;margin-bottom:4px">📦 Your Plot</div>
   <div id="claimAmt" style="color:#00e5a0;font-size:22px;font-weight:700;margin-bottom:10px">0 Sparks</div>
   <button onclick="claimYield()" style="background:#00e5a0;color:#06080b;font-weight:700;border:none;padding:8px 22px;border-radius:6px;cursor:pointer;font-size:14px">Claim</button>
   <div style="font-size:11px;color:#5a6a7a;margin-top:6px" id="claimReserve"></div>
 </div>
-<div id="topbtns" class="hide" style="position:fixed;right:16px;top:16px;z-index:6;display:flex;gap:8px">
+<div id="topbtns" class="hide" style="position:fixed;right:16px;top:16px;z-index:6;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 32px)">
   <button class="panel" style="padding:9px 13px;border-color:rgba(0,229,160,.3);color:#00e5a0;font-weight:700" onclick="location.href='index.html'">← Dashboard</button>
+  <button class="panel" style="padding:9px 13px" onclick="toggleFullscreen()" title="Fullscreen (F)">⛶</button>
   <button class="panel" style="padding:9px 13px" onclick="openStore()">🛒 Store</button>
   <button class="panel" style="padding:9px 13px" onclick="openMarket()">🤝 Swap</button>
   <button class="panel" style="padding:9px 13px" onclick="openJobs()">💼 Work</button>
@@ -133,13 +139,13 @@
 <div id="store" class="panel hide" style="right:16px;top:68px;width:min(460px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:8"></div>
 <div id="inv" class="panel hide" style="right:16px;top:68px;width:min(460px,calc(100vw - 32px));max-height:82vh;overflow:auto;padding:18px 20px;z-index:8"></div>
 <div id="jobs" class="panel hide" style="right:16px;top:68px;width:min(420px,calc(100vw - 32px));padding:18px 20px;z-index:8;text-align:center"></div>
-<button id="moveinBtn" class="panel hide" style="left:50%;bottom:74px;transform:translateX(-50%);z-index:7;padding:10px 18px;font-weight:700" onclick="moveIn()">🏠 Move in here</button>
-<div id="specHud" class="panel hide" style="left:50%;bottom:20px;transform:translateX(-50%);z-index:7;display:flex;gap:12px;align-items:center;padding:9px 16px">
+<button id="moveinBtn" class="panel hide" style="left:50%;bottom:calc(74px + var(--gb,0px));transform:translateX(-50%);z-index:7;padding:10px 18px;font-weight:700" onclick="moveIn()">🏠 Move in here</button>
+<div id="specHud" class="panel hide" style="left:50%;bottom:calc(20px + var(--gb,0px));transform:translateX(-50%);z-index:7;display:flex;gap:12px;align-items:center;padding:9px 16px">
   <span style="color:#5fe0ff;font-size:13px;letter-spacing:1px">👁 Spectating — watching the living world</span>
   <button class="primary" style="padding:7px 14px;font-size:13px" onclick="joinPlay()">▶ Join &amp; Play</button>
 </div>
-<div id="intActions" class="hide" style="position:fixed;left:16px;top:70px;z-index:7;display:flex;gap:8px;flex-wrap:wrap"></div>
-<div id="decorBar" class="panel hide" style="left:50%;bottom:16px;transform:translateX(-50%);z-index:8;display:flex;gap:6px;align-items:center;padding:8px 12px;flex-wrap:wrap;max-width:94vw"></div>
+<div id="intActions" class="hide" style="position:fixed;left:16px;top:160px;z-index:7;display:flex;gap:8px;flex-wrap:wrap"></div>
+<div id="decorBar" class="panel hide" style="left:50%;bottom:calc(16px + var(--gb,0px));transform:translateX(-50%);z-index:8;display:flex;gap:6px;align-items:center;padding:8px 12px;flex-wrap:wrap;max-width:94vw"></div>
 <div id="wardrobe" class="panel hide" style="right:16px;top:68px;width:min(420px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="storage" class="panel hide" style="right:16px;top:68px;width:min(460px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="bank" class="panel hide" style="right:16px;top:68px;width:min(420px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
@@ -149,13 +155,14 @@
 <div id="hubrooms" class="panel hide" style="right:16px;top:68px;width:min(500px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="roomsPanel" class="panel hide" style="right:16px;top:68px;width:min(500px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
 <div id="agentlive" class="panel hide" style="right:16px;top:68px;width:min(460px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
-<div id="fishBar" class="panel hide" style="right:16px;bottom:64px;z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
+  <div id="colosseum" class="panel hide" style="right:16px;top:68px;width:min(520px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:9"></div>
+  <div id="fishBar" class="panel hide" style="right:16px;bottom:calc(64px + var(--gb,0px));z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
   <span style="color:#5fe0ff;font-size:12px">🌊 Waterside</span>
   <button style="padding:6px 12px" onclick="castFish()">🎣 Cast</button>
   <button style="padding:6px 12px" onclick="bottleWater()">💧 Bottle</button>
   <button style="padding:6px 12px" onclick="sellFish()">💰 Sell fish</button>
 </div>
-<div id="gatherBar" class="panel hide" style="right:16px;bottom:108px;z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
+<div id="gatherBar" class="panel hide" style="right:16px;bottom:calc(108px + var(--gb,0px));z-index:7;display:flex;gap:8px;align-items:center;padding:8px 12px">
   <span class="glabel" style="color:#8fe08f;font-size:12px">🌲 Woods</span>
   <button class="gbtn" style="padding:6px 12px" onclick="doGather()">🪓 Chop wood</button>
 </div>
@@ -167,8 +174,8 @@
 <div id="controls" class="panel hide"><b>WASD</b> move · <b>Space</b> use/attack · <b>E</b> enter door · <b>C</b> chat · <b>1–6</b> tools · <b>I</b> bag · <b>Shift</b> run · <b>T</b> day/night · <b>wheel</b> zoom · <b>⚔ Tactics</b> top-right</div>
 <div id="prompt" class="panel hide"></div>
 <div id="mpstatus" class="panel hide" style="left:16px;top:70px;padding:6px 12px;font-size:12px;color:#00ff9c;z-index:6">🟢 1 online</div>
-<div id="chatlog" class="panel hide" style="left:16px;bottom:130px;width:min(340px,44vw);max-height:170px;overflow-y:auto;padding:8px 12px;font-size:12.5px;line-height:1.5;z-index:6"></div>
-<input id="chatinput" class="hide" maxlength="200" placeholder="Say something… (Enter to send)" style="position:fixed;left:16px;bottom:96px;width:min(340px,44vw);z-index:7;font-family:var(--font);background:rgba(10,15,24,.96);border:1px solid #2a3346;color:#eaf3fb;border-radius:9px;padding:9px 12px;font-size:14px;outline:none">
+<div id="chatlog" class="panel hide" style="left:16px;bottom:calc(130px + var(--gb,0px));width:min(340px,44vw);max-height:170px;overflow-y:auto;padding:8px 12px;font-size:12.5px;line-height:1.5;z-index:6"></div>
+<input id="chatinput" class="hide" maxlength="200" placeholder="Say something… (Enter to send)" style="position:fixed;left:16px;bottom:calc(96px + var(--gb,0px));width:min(340px,44vw);z-index:7;font-family:var(--font);background:rgba(10,15,24,.96);border:1px solid #2a3346;color:#eaf3fb;border-radius:9px;padding:9px 12px;font-size:14px;outline:none">
 
 <!-- TRAVEL MENU -->
 <div id="travel" class="panel hide" style="right:16px;top:68px;width:min(460px,calc(100vw - 32px));max-height:88vh;overflow:auto;padding:18px 20px;z-index:7">
@@ -221,13 +228,14 @@ function openTacticsFromPub(){
 </script>
 
 <!-- SHADDAI ARCADE — games as venues with sparks entry fees. The sparks ledger is the
-     SAME one the 3D world uses (shd.sparks3d, same-origin localStorage): playing the
+     SAME one the 3D world + dashboard use (sparks-ledger.js → shaddai.sparks): playing the
      2D arcade and riding hoverboards in 3D earns/spends ONE balance. Games that
-     postMessage({shdGame, shdScore}) get automatic score payouts. -->
+     postMessage({shdGame, shdScore, shdWin}) get one capped payout per paid entry. -->
+<script src="sparks-ledger.js"></script>
 <script>
 window.shdSparks = {
-  get: function(){ try { return parseInt(localStorage.getItem('shd.sparks3d')||'0',10)||0; } catch(e){ return 0; } },
-  add: function(n){ try { localStorage.setItem('shd.sparks3d', String(window.shdSparks.get()+n)); } catch(e){} return window.shdSparks.get(); },
+  get: function(){ return window.ShdSparks.get(); },
+  add: function(n, note){ return window.ShdSparks.add(n, 'arcade', note); },
 };
 var ARCADE_GAMES = [
   { id:'skate',        name:'SKATE JAM',    file:'/games/skate.html',            fee:20, desc:'Hoverboard trick runs' },
@@ -240,6 +248,9 @@ function openArcade(){
   var bal = window.shdSparks.get();
   var h = '<div style="font-weight:800;color:#e8c45c;font-size:15px;letter-spacing:.1em;margin-bottom:4px">🎮 SHADDAI ARCADE</div>'
     + '<div style="font-size:11px;color:#7a8794;margin-bottom:12px">Entry fees and payouts use <b style="color:#9fe8c4">Sparks</b> — the same balance as the 3D world. ⚡ <b id="arcBal">'+bal+'</b></div>'
+    + (bal < Math.min.apply(null, ARCADE_GAMES.map(function(g){ return g.fee; }))
+        ? '<div style="font-size:11px;color:#e8c45c;border:1px dashed rgba(232,196,92,.35);border-radius:8px;padding:8px 10px;margin-bottom:10px">⚡ Need sparks? Take a quest from an agent (look for the <b>!</b>), sell goods to agents, or win at the Coliseum.</div>'
+        : '')
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">';
   ARCADE_GAMES.forEach(function(g){
     h += '<div style="border:1px solid rgba(232,196,92,.3);border-radius:10px;padding:10px 12px;background:rgba(12,18,28,.7)">'
@@ -253,27 +264,54 @@ function openArcade(){
   el.classList.remove('hide');
 }
 function closeArcade(){ var el=document.getElementById('arcadePanel'); if(el){ el.style.display='none'; el.classList.add('hide'); } }
+// score → sparks per game: pay = min(cap, score*rate) + (win ? winBonus : 0). One claim per paid entry.
+var ARCADE_PAY = {
+  skate:      { rate:1,     cap:40, winBonus:0  },   // skate posts 40/15/0 itself (luck game: EV just under the 20 fee)
+  basketball: { rate:1,     cap:30, winBonus:15 },   // points scored
+  dodgeball:  { rate:0.005, cap:30, winBonus:15 },   // ~5000 pts/match
+  sigil:      { rate:0.005, cap:35, winBonus:10 },   // ~4000 pts/run
+};
+function arcadePayout(id, score, win){
+  var r = ARCADE_PAY[id]; if(!r) return 0;
+  var s = Math.max(0, +score || 0);
+  return Math.min(r.cap, Math.round(s * r.rate)) + (win ? r.winBonus : 0);
+}
 function playArcade(id){
   var g = ARCADE_GAMES.find(function(x){ return x.id===id; }); if(!g) return;
   if(window.shdSparks.get() < g.fee){ toast('Not enough Sparks — earn more in the 3D world or at the docks'); return; }
-  window.shdSparks.add(-g.fee);
-  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Report a win to claim the pot.');
+  window.shdSparks.add(-g.fee, 'Arcade entry: ' + g.name);
+  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Finish a match to get paid.');
   closeArcade();
+  window.__arcadeSession = { id:g.id, claimed:false };
   var ov = document.getElementById('arcadeOverlay');
   if(ov){ ov.style.display='flex'; var f=document.getElementById('arcadeFrame'); if(f) f.src=g.file; }
   var T = (window.__arcadePot = window.__arcadePot||{}); T[g.id] = (T[g.id]||0) + g.fee;
 }
 function closeArcadeGame(){
+  window.__arcadeSession = null;
   var ov = document.getElementById('arcadeOverlay');
   if(ov){ ov.style.display='none'; var f=document.getElementById('arcadeFrame'); if(f) f.src='about:blank'; }
 }
-// future-proof score bridge: any game that reports a score gets an automatic payout
+// SCORE BRIDGE: games post {shdGame, shdScore, shdWin} on match end. Accepted only from the
+// arcade iframe, same origin, for the game that was paid for, once per entry.
+function arcadeClaim(d){
+  var S = window.__arcadeSession;
+  if(!S || S.claimed || S.id !== d.shdGame) return 0;
+  S.claimed = true;
+  var pay = arcadePayout(d.shdGame, d.shdScore, !!d.shdWin);
+  if(d.shdWin && window.AgentDialog) AgentDialog.arcadeWin();
+  if(pay > 0){ window.shdSparks.add(pay, 'Arcade payout: ' + d.shdGame); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + (d.shdWin ? ' — WIN' : '') + ' (score ' + d.shdScore + ')'); }
+  else toast(String(d.shdGame).toUpperCase() + ' over — no payout this run');
+  return pay;
+}
 addEventListener('message', function(ev){
   try {
+    var f = document.getElementById('arcadeFrame');
+    if(!f || ev.source !== f.contentWindow || ev.origin !== location.origin) return;
     var d = typeof ev.data==='string' ? JSON.parse(ev.data) : ev.data;
-    if(!d || !d.shdGame) return;
-    var pay = Math.round((d.shdScore||0) * 0.5);            // score → sparks at half rate
-    if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + ' — scored ' + d.shdScore); }
+    if(!d) return;
+    if(d.shdGame) arcadeClaim(d);
+    else if(d.type==='exitGame' || d.type==='shaddai-close-panel') closeArcadeGame();
   } catch(e){}
 });
 </script>
@@ -295,10 +333,8 @@ addEventListener('message', function(ev){
 <script src="dark-realm.js" onerror="0"></script>
 <script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
-<script src="auth.js" onerror="0"></script>
-<script src="config/buildings.js" onerror="0"></script>
+<script type="module" src="config/buildings.js" onerror="0"></script>
 <script src="js/skills.js" onerror="0"></script>
-<script src="js/market.js" onerror="0"></script>
 <script src="js/mmo-client.js" onerror="0"></script>
 <script>
 'use strict';
@@ -387,7 +423,7 @@ const REGIONS=[
   {id:'suburb',    name:'The Suburbs',  color:'#7ab07a', img:'/hero/suburb.png',         grass:'#5aa85a', water:'#2f7fd0', sand:'#e0cf9a', tree:'oak',    transit:'rail', density:0.05, desc:'Residential · 20 homes to visit', emoji:'🏘️'},
   {id:'darkforest',name:'Dark Realm',   color:'#1a0a2e', img:'/hero/darkforest.png', grass:'#1a1a1a', water:'#100020', sand:'#2a1a2a', tree:'pine',   transit:'rail', density:0.85, desc:'⚠ Siege the Shadow Keep · Dragon awaits', emoji:'🐉', dark:true},
 ];
-let regionSel='agentcity';
+let regionSel='meadow';   // fresh players start in the startup realm (Green Meadow: farm jobs, market, fishing dock)
 function updateRegionName(){ const r=REGIONS.find(x=>x.id===regionSel)||REGIONS[0]; const a=document.getElementById('regionSelName'); if(a)a.textContent=r.emoji+' '+r.name; const b=document.getElementById('enterRegionName'); if(b)b.textContent=r.name; }
 function buildRegionGrid(){ const g=document.getElementById('regionGrid'); g.innerHTML='';
   REGIONS.forEach(r=>{
@@ -418,9 +454,11 @@ function goRegion(){ if(!isSignedIn()){ checkSignGate(); return; }
   location.href='region-select.html?v='+Math.floor(performance.now());
 }
 c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); buildRegionGrid(); } } });
-function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); }
+function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); const qb=document.getElementById('quickBack'); if(qb) qb.style.display=''; const fb=document.getElementById('fsBtn'); if(fb) fb.style.display=''; }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
-  genWorld(regionSel); if(!window.__drInit){ window.__drInit=true; if(window.DarkRealm) DarkRealm.init(); } updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
+  genWorld(regionSel); if(!window.__drInit){ window.__drInit=true; if(window.DarkRealm) DarkRealm.init(); } updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); window.__ctlShownAt=performance.now(); updateWallet();
+  const qb=document.getElementById('quickBack'); if(qb) qb.style.display='none';
+  const fb=document.getElementById('fsBtn'); if(fb) fb.style.display='none';
   try{ if(typeof grantStarter==='function') grantStarter(); if(typeof renderHotbar==='function') renderHotbar(); }catch(_){}
   const r=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWho').textContent='🙂 '+player.name; document.getElementById('hudWhere').textContent='📍 '+r.name; mpHello(); showSplash(regionSel);
   const sh=document.getElementById('specHud');
@@ -428,7 +466,7 @@ function enterWorld(){ state='world'; document.getElementById('region').classLis
     if(specTarget){ cam.col=specTarget.col; cam.row=specTarget.row; } sh.classList.remove('hide'); document.getElementById('hudWho').textContent='👁 Spectating'; }
   else sh.classList.add('hide'); }
 function joinPlay(){ spectate=false; document.getElementById('specHud').classList.add('hide'); document.getElementById('topbtns').classList.remove('hide');
-  player.col=Math.round(cam.col); player.row=Math.round(cam.row); if(!walkable(player.col,player.row)){ player.col=Math.round(GW/2); player.row=Math.round(GH/2); }
+  const _spj=spawnSafe(cam.col,cam.row); player.col=_spj.c; player.row=_spj.r;
   cam.col=player.col; cam.row=player.row; document.getElementById('hudWho').textContent='🙂 '+player.name; mpHello(); }
 function heroFor(rid){ return 'hero/'+(rid==='agentcity'?'shaddai-city':rid)+'.png'; }
 function showSplash(rid){ const s=document.getElementById('splash'), im=document.getElementById('splashImg'), t=document.getElementById('splashTitle'); if(!s)return;
@@ -457,7 +495,7 @@ function bakeGround(){
   if(typeof spawnFishes==='function') spawnFishes();
   if(window.Combat && region){ const night=((Math.cos(tod*6.283185)+1)/2)>0.5; try{ enemies=Combat.spawnFor(region.id,night,walkable,GW,GH)||[]; }catch(_){ enemies=[]; } }
 }
-let tiles=[], props=[], npcs=[], region=null, cam={col:30,row:30}, tod=0.34;
+let tiles=[], props=[], npcs=[], fishes=[], region=null, cam={col:30,row:30}, tod=0.34;
 let enemies=[], playerHP=100, playerMaxHP=100, hurtFlash=0, atkSwing=0;   // combat
 let playerSignal=100, playerMaxSignal=100;   // travel Signal — drains in unfamiliar districts
 const WEAPON_POWER={ shield:1.2, sword:1.7, bow:2.0, axe:2.6, staff:3.4 };
@@ -535,7 +573,7 @@ function genWorld(rid){
   // distinct per-region generator (loaded from world-regions/*.js) takes priority
   if(window.RegionGen && typeof window.RegionGen[rid]==='function'){
     try{ for(let r=0;r<GH;r++)for(let col=0;col<GW;col++) tiles[r][col]=GRASS;
-      window.RegionGen[rid](makeGenApi(rid)); finalizeGen(); ensureCivic(rid); bakeGround(); return; }
+      window.RegionGen[rid](makeGenApi(rid)); finalizeGen(); ensureCivic(rid); bakeGround(); spawnBots(rid); return; }
     catch(e){ console.warn('RegionGen fail '+rid,e); tiles=[]; for(let r=0;r<GH;r++){ tiles[r]=[]; for(let col=0;col<GW;col++) tiles[r][col]=(region.city?PATH:GRASS); } props=[]; npcs=[]; }
   }
 
@@ -556,7 +594,13 @@ function genWorld(rid){
     // TOWN SQUARE — the Grand Bazaar plaza + SHADDAI HQ (the Pro users' dashboard rooms) at the sacred center
     for(let rr=25;rr<36;rr++)for(let cc=25;cc<36;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-30.5,rr-30.5)<5.2?PATH:GRASS);
     props.push({type:'building',col:28,row:28,w:5,d:5,floors:8, wall:'#1b2440',roof:'#e8c45c',glass:'#c9a6ff',accent:'#e8c45c',name:'SHADDAI HQ',kind:'hub',landmark:'hq'});
-    for(const a of [[27,27],[34,27],[27,34],[34,34]]){ if(tiles[a[1]]&&tiles[a[1]][a[0]]!==undefined) props.push({type:'stall',col:a[0],row:a[1],color:AGENTS[(a[0]+a[1])%7].accent}); }  // market stalls ring the square
+    // COLISEUM — grand arena at the city's heart, correlates with 3D castle-siege
+    props.push({type:'building',col:36,row:30,w:7,d:7,floors:4, wall:'#2a1a3a',roof:'#e8c45c',glass:'#cc44ff',accent:'#cc44ff',name:'COLISEUM',kind:'colosseum',landmark:'colosseum'});
+    for(let rr=29;rr<37;rr++)for(let cc=32;cc<41;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-36.5,rr-33)<2.8?PATH:GRASS);
+    // ARCADE — mirrors the Coliseum on the west side: walk in (E) to play skate/hoops/dodgeball/sigil for sparks
+    props.push({type:'building',col:19,row:30,w:5,d:4,floors:3, wall:'#1e2447',roof:'#2a2150',glass:'#5a3a8a',accent:'#ff5ac8',name:'ARCADE',kind:'arcade'});
+    for(let rr=29;rr<37;rr++)for(let cc=18;cc<26;cc++) if(tiles[rr]&&tiles[rr][cc]!==undefined) tiles[rr][cc]=(Math.hypot(cc-21.5,rr-34.5)<2.4?PATH:GRASS);
+    // market stalls ring the square
     // ═══ FOUNDERS' ROW — the offices YOU own in SHADDAI City (World → OFFICE → Rooms → Agents) ═══
     // 30 lots along a northern boulevard, fetched live from /api/city/offices. Your office glows emerald.
     (function foundersRow(){
@@ -604,7 +648,7 @@ function genWorld(rid){
     props.push({type:'building',col:50,row:50,w:3,d:3,floors:1, wall:'#1a2438',roof:'#3a6a9a',glass:'#5fe0ff',name:'STATION',kind:'transit',landmark:'station'});
     for(let i=0;i<18;i++){ let col,r,k=0; do{ col=(Math.random()*GW)|0; r=(Math.random()*GH)|0; k++; }while(tiles[r][col]!==PATH&&k<50); if(tiles[r][col]===PATH) props.push({type:'hovercar',col,row:r,color:CARCOLS[i%CARCOLS.length]}); }
     spawnCitizens(14);
-    player.col=CC; player.row=CR+R+4; cam.col=player.col; cam.row=player.row; bakeGround(); return;
+    player.col=CC; player.row=CR+R+4; cam.col=player.col; cam.row=player.row; bakeGround(); spawnBots(rid); return;
   }
 
   // ===== NATURE REGIONS (organic layout) =====
@@ -645,12 +689,23 @@ function genWorld(rid){
     tiles[r][col]=(r<b.row||col<b.col||r>=b.row+b.d||col>=b.col+b.w)?PATH:GRASS; } props.push({type:'building',...b}); });
   props=props.filter(p=> p.type==='building' || !props.some(b=>b.type==='building'&&p.col>=b.col&&p.col<b.col+b.w&&p.row>=b.row&&p.row<b.row+b.d));
   spawnCitizens(14);
-  player.col=30; player.row=30; cam.col=30; cam.row=30; ensureCivic(rid); bakeGround();
+  player.col=30; player.row=30; cam.col=30; cam.row=30; ensureCivic(rid); bakeGround(); spawnBots(rid);
 }
 function walkable(col,row){ col|=0; row|=0; if(col<0||row<0||col>=GW||row>=GH) return false; const t=tiles[row][col]; if(t===WATER||t===LAVA) return false;
   // buildings + solid props block
   for(const p of props){ if((p.type==='building'||p.type==='volcano') && col>=p.col&&col<p.col+p.w && row>=p.row&&row<p.row+p.d) return false;
     if((p.type==='fence'||p.type==='stall'||p.type==='crate'||p.type==='tractor'||p.type==='haybale'||p.type==='well'||p.type==='foodcart') && (col|0)===p.col && (row|0)===p.row) return false; } return true; }
+// nearest walkable tile (anti-water-stuck): spiral out from a point so players
+// never respawn/spawn-recover onto WATER/LAVA where they couldn't move off.
+function spawnSafe(col,row){ col=Math.round(col||0); row=Math.round(row||0);
+  if(walkable(col,row)) return {c:col,r:row};
+  for(let rad=1;rad<=GH;rad++){ for(let dr=-rad;dr<=rad;dr++){ for(let dc=-rad;dc<=rad;dc++){
+    if(Math.max(Math.abs(dc),Math.abs(dr))!==rad) continue;
+    const c=col+dc, r=row+dr;
+    if(c>=0&&r>=0&&c<GW&&r<GH&&walkable(c,r)) return {c,r};
+  } } }
+  for(let r=0;r<GH;r++)for(let c=0;c<GW;c++) if(walkable(c,r)) return {c,r};
+  return {c:Math.round(GW/2), r:Math.round(GH/2)}; }
 function npcRetarget(n){ let k=0; do{ n.tc=1+Math.random()*(GW-2); n.tr=1+Math.random()*(GH-2); k++;}while(!walkable(n.tc,n.tr)&&k<20); }
 
 function w2s(col,row){ return [ ((col-cam.col)-(row-cam.row))*TW/2, ((col-cam.col)+(row-cam.row))*TH/2 ]; }
@@ -709,6 +764,14 @@ function drawCar(sx,sy,color){ ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();c
   ctx.fillStyle='#ffe9a0'; ctx.fillRect(Math.round(sx)+15,Math.round(sy)-4,2,2);
   ctx.fillStyle='#e0402a'; ctx.fillRect(Math.round(sx)-17,Math.round(sy)-4,2,2); }
 function roundRectC(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+// quest marker over agents: '!' has work · '?' ready to turn in · '…' in progress
+function questMark(sx,sy,m,accent,time){ if(!m) return; const bob=Math.sin(time/260)*3, y=sy-72+bob;
+  ctx.font="bold "+(m==='…'?14:17)+"px 'Fredoka',sans-serif"; ctx.textAlign='center';
+  ctx.fillStyle='rgba(8,10,20,.9)'; ctx.beginPath(); ctx.arc(sx,y-6,10,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=m==='?'?'#4fe07a':'#e8c45c'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle=m==='?'?'#4fe07a':m==='!'?'#e8c45c':'#9aa6b4'; ctx.fillText(m,sx,y); }
+// 'Press E' on keyboards, 'Tap B' (the deck's gold ENTER button) on touch screens
+const ACT_KEY=(()=>{ const t=('ontouchstart' in window)||(window.matchMedia&&matchMedia('(pointer: coarse)').matches); return ()=>t?'Tap B':'Press E'; })();
 function agentLabel(sx,sy,name,accent){ ctx.font="bold 13px 'Fredoka',sans-serif"; ctx.textAlign='center'; const lw=ctx.measureText(name).width+16;
   ctx.fillStyle='rgba(8,10,20,.9)'; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.fill();
   ctx.strokeStyle=accent; ctx.lineWidth=1; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.stroke();
@@ -840,21 +903,105 @@ function drawFoodcart(sx,sy){ ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx
 function facePt(bl,br,tl,tr,u,v){ const bx=bl[0]+(br[0]-bl[0])*u, by=bl[1]+(br[1]-bl[1])*u;
   const tx=tl[0]+(tr[0]-tl[0])*u, ty=tl[1]+(tr[1]-tl[1])*u; return [bx+(tx-bx)*v, by+(ty-by)*v]; }
 function qfill(a,b,c,d,fill){ DC.beginPath();DC.moveTo(a[0],a[1]);DC.lineTo(b[0],b[1]);DC.lineTo(c[0],c[1]);DC.lineTo(d[0],d[1]);DC.closePath();DC.fillStyle=fill;DC.fill(); }
-function winGrid(bl,br,tl,tr,cols,floors,glass,dk,seed){
-  const mx=0.16, my=0.20;
+// night windows come on gradually from dusk (more lit as it gets darker), each window has its own
+// switch-on point, a few flicker (TVs), and the light colour follows the region's facade style
+// EMISSIVE LAYER: lights (lit windows, neon, signs, door spill) go into an offscreen light canvas as
+// the world draws in depth order; each building/character drawn afterwards ERASES the lights behind
+// it, then the canvas is added ('lighter') AFTER the day/night tint — so lights glow, never bleed.
+let LC=null, LX=null, lightsOn=false;
+// half-resolution: 4× cheaper to fill + composite, and the upscale reads as a soft bloom.
+function lightCtx(){ if(DC!==ctx) return null;
+  if(!LC){ LC=document.createElement('canvas'); LX=LC.getContext('2d'); }
+  const lw=Math.ceil(c.width/2), lh=Math.ceil(c.height/2); if(LC.width!==lw||LC.height!==lh){ LC.width=lw; LC.height=lh; }
+  const m=ctx.getTransform(); LX.setTransform(m.a/2,m.b/2,m.c/2,m.d/2,m.e/2,m.f/2); lightsOn=true; return LX; }
+function lightPoly(g,pts){ g.beginPath(); g.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) g.lineTo(pts[i][0],pts[i][1]); }
+function emitQ(a,b,c2,d,col){ const g=lightCtx(); if(!g) return; lightPoly(g,[a,b,c2,d]); g.closePath(); g.fillStyle=col; g.fill(); }
+function emitL(pts,col,w,blur){ const g=lightCtx(); if(!g) return; lightPoly(g,pts); g.strokeStyle=col;
+  if(blur&&!LOW){ g.globalAlpha=0.28; g.lineWidth=w+blur*0.6; g.stroke(); g.globalAlpha=1; }   // cheap halo (no shadowBlur)
+  g.lineWidth=w; g.stroke(); }
+function emitG(x,y,rx,ry,rgb,a){ const g=lightCtx(); if(!g) return; const gr=g.createRadialGradient(x,y,1,x,y,rx);
+  gr.addColorStop(0,'rgba('+rgb+','+a.toFixed(2)+')'); gr.addColorStop(1,'rgba('+rgb+',0)'); g.fillStyle=gr; g.beginPath(); g.ellipse(x,y,rx,ry,0,0,7); g.fill(); }
+function occlude(pts){ if(!lightsOn) return; const g=lightCtx(); if(!g) return; g.save(); g.globalCompositeOperation='destination-out'; lightPoly(g,pts); g.closePath(); g.fillStyle='#000'; g.fill(); g.restore(); }
+function occludeChar(sx,sy){ occlude([[sx-15,sy-46],[sx+15,sy-46],[sx+15,sy+4],[sx-15,sy+4]]); }
+function drawEmissive(){ if(!lightsOn||!LC) return; ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.globalCompositeOperation='lighter'; ctx.imageSmoothingEnabled=true; ctx.drawImage(LC,0,0,c.width,c.height); ctx.restore();
+  LX.setTransform(1,0,0,1,0,0); LX.clearRect(0,0,LC.width,LC.height); lightsOn=false; }
+function winHash(i,f,seed){ const x=Math.sin(i*127.1+f*311.7+seed*74.7)*43758.5453; return x-Math.floor(x); }
+function winGrid(bl,br,tl,tr,cols,floors,glass,dk,seed,wc,time){
+  const mx=0.16, my=0.20, litFrac=dk<0.35?0:Math.min(0.5,(dk-0.35)*1.1), dark=dk>0.35?shade(glass,-0.35*dk):glass;
+  const warm=[], tint=[], curt=[];   // lit quads batched per colour: one fill each on the world + light layers
   for(let f=0;f<floors;f++){ const v0=(f+my)/floors, v1=(f+1-my)/floors;
     for(let i=0;i<cols;i++){ const u0=(i+mx)/cols, u1=(i+1-mx)/cols;
       const a=facePt(bl,br,tl,tr,u0,v1), b2=facePt(bl,br,tl,tr,u1,v1), c2=facePt(bl,br,tl,tr,u1,v0), d2=facePt(bl,br,tl,tr,u0,v0);
-      const lit=((i*7+f*13+seed)%5===0);
-      qfill(a,b2,c2,d2, (dk>0.4&&lit)?('rgba(255,224,150,'+(0.55+dk*0.35).toFixed(2)+')'):glass); } }
+      const h=winHash(i,f,seed);
+      if(h>=litFrac){ qfill(a,b2,c2,d2,dark); continue; }
+      let al=1; if(h<0.05&&time) al=0.7+0.3*Math.sin(time/90+i*3+f);   // flickering screen-light
+      ((wc&&h>litFrac*0.35)?tint:warm).push([a,b2,c2,d2,al]);            // mostly warm lamps; the region tint on the rest
+      curt.push([d2,c2,facePt(bl,br,tl,tr,u1,(v0+v1)/2),facePt(bl,br,tl,tr,u0,(v0+v1)/2)]); } }
+  if(!curt.length) return;
+  const A=(0.5+dk*0.4), path=(g,qs)=>{ g.beginPath(); for(const q of qs){ g.moveTo(q[0][0],q[0][1]); g.lineTo(q[1][0],q[1][1]); g.lineTo(q[2][0],q[2][1]); g.lineTo(q[3][0],q[3][1]); g.closePath(); } };
+  for(const [qs,rgb] of [[warm,'255,214,140'],[tint,wc]]){ if(!qs.length) continue;
+    path(DC,qs); DC.fillStyle='rgba('+rgb+','+A.toFixed(2)+')'; DC.fill();
+    const flick=qs.filter(q=>q[4]<1); if(flick.length){ path(DC,flick); DC.fillStyle='rgba(0,0,0,0.18)'; DC.fill(); }
+    const g=lightCtx(); if(g){ path(g,qs.filter(q=>q[4]>=1)); g.fillStyle='rgba('+rgb+','+(A*0.75).toFixed(2)+')'; g.fill(); } }
+  path(DC,curt); DC.fillStyle='rgba(0,0,0,0.16)'; DC.fill();   // curtains: darker lower pane
 }
-function drawBuildingBody(b,sx,sy,dk){
+// ---- 2D EXTERIORS PASS: per-region facade style + storefront signage + door light spill ----
+const FACADE={
+  city:      {trim:'#5fe0ff', neon:1, win:'170,225,255', sign:'neon'},
+  agentcity: {trim:'#c9a6ff', neon:1, win:'225,210,255', sign:'neon'},
+  suburb:    {trim:'#eef1f4', win:'255,226,160', sign:'board'},
+  meadow:    {trim:'#5a3a24', beams:1, win:'255,214,140', sign:'wood'},
+  forest:    {trim:'#4a3220', beams:1, win:'255,200,120', sign:'wood'},
+  beach:     {trim:'#eef1f4', band:'#5fc8d8', win:'255,232,170', sign:'board'},
+  desert:    {trim:'#8a5a32', win:'255,190,110', sign:'painted'},
+  volcano:   {trim:'#ff6a2a', ember:1, win:'255,150,70', sign:'ember'},
+  darkforest:{trim:'#8b5cf6', rune:1, win:'190,150,255', sign:'rune'},
+};
+const SIGN_ICON={shop:'🛒',market:'⚖',bank:'🏦',diner:'🍜',tavern:'🍺',pub:'🥊',forge:'⚒',library:'📚',office:'💼',hub:'◈',transit:'🚉',agent:'◈',colosseum:'⚔',castle:'🏰',arcade:'🎮'};
+function facadeStyle(){ return FACADE[(region&&region.id)||'meadow']||FACADE.meadow; }
+function edgeLine(a,b,col,w){ DC.strokeStyle=col; DC.lineWidth=w; DC.beginPath(); DC.moveTo(a[0],a[1]); DC.lineTo(b[0],b[1]); DC.stroke(); }
+function drawFacadeDetail(b,f,wall,dk,dv,seed,time,fs){
+  const glow=dk>0.42, fl=Math.max(1,b.floors);
+  // per-region trim: timber floor beams / beach colour band / corner trims (neon at night in the city)
+  if(fs.beams){ for(let k=1;k<fl;k++){ const v=k/fl;
+      edgeLine(facePt(f.lf,f.fr,f.tL,f.tF,0,v),facePt(f.lf,f.fr,f.tL,f.tF,1,v),fs.trim,2);
+      edgeLine(facePt(f.fr,f.rt,f.tF,f.tR,0,v),facePt(f.fr,f.rt,f.tF,f.tR,1,v),shade(fs.trim,-0.2),2); } }
+  if(fs.band){ const v=Math.min(0.95,dv+0.16);
+    qfill(facePt(f.lf,f.fr,f.tL,f.tF,0,v),facePt(f.lf,f.fr,f.tL,f.tF,1,v),facePt(f.lf,f.fr,f.tL,f.tF,1,v+0.04),facePt(f.lf,f.fr,f.tL,f.tF,0,v+0.04),fs.band); }
+  edgeLine(f.fr,f.tF,fs.neon?shade(fs.trim,-0.35):shade(wall,-0.28),1.5);
+  if(fs.neon && glow){ const pu=0.55+0.45*Math.sin(time/600+seed);   // neon roofline + corner tube
+    emitL([f.fr,f.tF],fs.trim,1.5*pu+0.6,8); emitL([f.tL,f.tF,f.tR],fs.trim,1,6); }
+  if(fs.ember){ const pu=0.5+0.5*Math.sin(time/380+seed);   // lava seams in the basalt
+    emitL([facePt(f.fr,f.rt,f.tF,f.tR,0.2,0.05),facePt(f.fr,f.rt,f.tF,f.tR,0.35,0.3),facePt(f.fr,f.rt,f.tF,f.tR,0.28,0.5),facePt(f.fr,f.rt,f.tF,f.tR,0.45,0.72)],
+      'rgba(255,'+(90+Math.round(pu*60))+',30,'+(0.35+pu*0.4).toFixed(2)+')',1.2,6); }
+  if(fs.rune){ const pu=0.4+0.6*Math.abs(Math.sin(time/900+seed)), c=facePt(f.fr,f.rt,f.tF,f.tR,0.5,Math.min(0.8,dv+0.25)); // glowing ward rune
+    const rc='rgba(170,120,255,'+(0.3+pu*0.5).toFixed(2)+')';
+    emitL([[c[0],c[1]-6],[c[0]+4,c[1]],[c[0],c[1]+6],[c[0]-4,c[1]],[c[0],c[1]-6]],rc,1.3,6); emitL([[c[0],c[1]-6],[c[0],c[1]+6]],rc,1,0); }
+  // storefront signage: fascia board over the door with the venue's icon (homes stay plain)
+  const ik=b.kind==='home'?'home':interiorKindFor(b), icon=SIGN_ICON[ik]||(b.kind==='shop'?SIGN_ICON.shop:null);
+  if(icon){ const v0=Math.min(0.9,dv+0.09), v1=Math.min(0.97,v0+Math.max(0.1,0.34/fl));
+    const p0=facePt(f.lf,f.fr,f.tL,f.tF,0.2,v0), p1=facePt(f.lf,f.fr,f.tL,f.tF,0.8,v0), p2=facePt(f.lf,f.fr,f.tL,f.tF,0.8,v1), p3=facePt(f.lf,f.fr,f.tL,f.tF,0.2,v1);
+    const ac=b.accent||fs.trim, lit=glow&&(fs.sign==='neon'||fs.sign==='ember'||fs.sign==='rune');
+    const face={neon:'#0a0f1a',ember:'#1a0d08',rune:'#120a20',wood:'#6a4a2a',painted:'#d8b98a',board:'#eef1f4'}[fs.sign]||'#1c2230';
+    qfill(p0,p1,p2,p3,face); occlude([p0,p1,p2,p3]);
+    DC.strokeStyle=shade(lit?ac:face,-0.3); DC.lineWidth=1; DC.beginPath(); DC.moveTo(p0[0],p0[1]); DC.lineTo(p1[0],p1[1]); DC.lineTo(p2[0],p2[1]); DC.lineTo(p3[0],p3[1]); DC.closePath(); DC.stroke();
+    if(lit) emitL([p0,p1,p2,p3,p0],ac,1.5,10);
+    const c=facePt(f.lf,f.fr,f.tL,f.tF,0.5,(v0+v1)/2); DC.font='9px sans-serif'; DC.textAlign='center'; DC.textBaseline='middle';
+    DC.globalAlpha=lit?1:(glow?0.75:0.95); DC.fillText(icon,c[0],c[1]); DC.globalAlpha=1; DC.textBaseline='alphabetic';
+    if(glow&&(fs.sign==='wood'||fs.sign==='board'||fs.sign==='painted')){ const lp=facePt(f.lf,f.fr,f.tL,f.tF,0.84,v1);   // lantern beside the sign
+      DC.fillStyle='rgba(255,210,120,0.95)'; DC.fillRect(Math.round(lp[0])-1,Math.round(lp[1])-1,3,3); emitG(lp[0],lp[1],6,6,'255,200,110',0.6*dk); } }
+  // warm light spilling from the doorway onto the ground at night
+  if(glow){ const d=facePt(f.lf,f.fr,f.tL,f.tF,0.5,0); emitG(d[0]-4,d[1]+5,20,9,fs.win,0.3*dk); }
+}
+function drawBuildingBody(b,sx,sy,dk,time){
+  const fs=facadeStyle(), glass=b.glass||'#4a5a6e';   // some generators (suburb homes) omit glass
   const floorH=18, h=b.floors*floorH, seed=(b.col*3+b.row*5)|0;
   const jw=((seed%5)-2)*0.045, wall=shade(b.wall,jw), roof=shade(b.roof,jw); // per-building tone variation
   DC.fillStyle='rgba(0,0,0,0.20)'; DC.beginPath(); DC.ellipse(sx,sy+4,(b.w+b.d)*13,(b.w+b.d)*6,0,0,7); DC.fill();
   const f=isoBox(sx,sy,b.w,b.d,h,wall);
-  winGrid(f.lf,f.fr,f.tL,f.tF, Math.max(2,Math.round(b.w*1.8)), b.floors, b.glass, dk, seed);
-  winGrid(f.fr,f.rt,f.tF,f.tR, Math.max(2,Math.round(b.d*1.8)), b.floors, shade(b.glass,-0.12), dk, seed+2);
+  occlude([f.lf,f.fr,f.rt,[f.tR[0],f.tR[1]-12],[f.tB[0],f.tB[1]-12],[f.tL[0],f.tL[1]-12]]);   // hull + roof kit
+  winGrid(f.lf,f.fr,f.tL,f.tF, Math.max(2,Math.round(b.w*1.8)), b.floors, glass, dk, seed, fs.win, time);
+  winGrid(f.fr,f.rt,f.tF,f.tR, Math.max(2,Math.round(b.d*1.8)), b.floors, shade(glass,-0.12), dk, seed+2, fs.win, time);
   const dv=Math.min(0.85, 1.2/b.floors);
   qfill(facePt(f.lf,f.fr,f.tL,f.tF,0.40,dv),facePt(f.lf,f.fr,f.tL,f.tF,0.60,dv),
         facePt(f.lf,f.fr,f.tL,f.tF,0.60,0),facePt(f.lf,f.fr,f.tL,f.tF,0.40,0), b.kind==='home'?'#5a3a24':'#1c2230');
@@ -868,7 +1015,8 @@ function drawBuildingBody(b,sx,sy,dk){
     for(let i=0;i<5;i++){ const t0=i/5,t1=(i+1)/5;
       const p0=[aL[0]+(aR[0]-aL[0])*t0,aL[1]+(aR[1]-aL[1])*t0], p1=[aL[0]+(aR[0]-aL[0])*t1,aL[1]+(aR[1]-aL[1])*t1];
       const q0=[bL[0]+(bR[0]-bL[0])*t0,bL[1]+(bR[1]-bL[1])*t0], q1=[bL[0]+(bR[0]-bL[0])*t1,bL[1]+(bR[1]-bL[1])*t1];
-      qfill(p0,p1,q1,q0,(i&1)?'#eef1f4':ac); } }
+      qfill(p0,p1,q1,q0,(i&1)?'#eef1f4':ac); } occlude([aL,aR,bR,bL]); }
+  drawFacadeDetail(b,f,wall,dk,dv,seed,time||0,fs);
   isoBox(sx,sy-h,b.w+0.06,b.d+0.06,5,roof);
   if(b.kind==='home'){
     if(region&&region.id==='desert'){ // adobe: flat parapet roof + protruding viga log-ends
@@ -889,7 +1037,7 @@ function drawBuilding(b,sx,sy,time){
     nameplate(sx,sy-104,b.name); return;
   }
   const dk=(Math.cos(tod*6.283185)+1)/2, h=b.floors*18;
-  drawBuildingBody(b,sx,sy,dk);
+  drawBuildingBody(b,sx,sy,dk,time);
   if(b.accent){ ctx.save();ctx.shadowColor=b.accent;ctx.shadowBlur=12;ctx.fillStyle=b.accent;ctx.fillRect(Math.round(sx)-11,Math.round(sy-h)-3,22,3);ctx.restore(); }
   if(b.name) nameplate(sx,sy-h-16,b.name);
 }
@@ -897,36 +1045,58 @@ function drawBuilding(b,sx,sy,time){
 // ---------- input ----------
 const keys={};
 addEventListener('keydown',e=>{ const ci=document.getElementById('chatinput');
+  if(e.key==='f'||e.key==='F'){ toggleFullscreen(); return; }
   if(e.key==='Enter'){ if(document.activeElement===ci){ const t=ci.value.trim(); if(t&&MP&&MP.readyState===1) MP.send(JSON.stringify({t:'chat',text:t})); ci.value=''; }
     else if(state==='world'||state==='interior'){ openChat(); } return; }
   if(document.activeElement===ci){ if(e.key==='Escape'){ closeChat(); } return; } // typing — don't move
   if((e.key==='c'||e.key==='C') && (state==='world'||state==='interior')){ e.preventDefault(); openChat(); return; }
-  if(e.key==='Escape' && document.activeElement!==ci && (state==='world'||state==='interior')){ location.href='/index.html'; return; }
+  if(e.key==='Escape' && document.activeElement!==ci && (state==='world'||state==='interior')){ if(document.fullscreenElement||document.webkitFullscreenElement){ toggleFullscreen(); return; } location.href='/index.html'; return; }
   keys[e.key.toLowerCase()]=true; if(e.key==='e'||e.key==='E') tryDoor(); if(e.key==='t'||e.key==='T') tod=(tod+0.28)%1;
   if(e.key===' '||e.code==='Space'){ e.preventDefault(); doAttack(); } });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+function toggleFullscreen(){
+  try{
+    if(!document.fullscreenElement && !document.webkitFullscreenElement){
+      const el=document.documentElement;
+      if(el.requestFullscreen) el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } else {
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  }catch(_){}
+}
+function syncFsBtn(){ const on=!(!document.fullscreenElement&&!document.webkitFullscreenElement); const b=document.getElementById('fsBtn'); if(b){ b.textContent=on?'✕':'⛶'; b.title=on?'Exit fullscreen (F)':'Fullscreen (F)'; b.style.borderColor=on?'rgba(255,150,150,.5)':'rgba(0,229,160,.35)'; b.style.color=on?'#ff9a9a':'#00e5a0'; } }
+document.addEventListener('fullscreenchange',syncFsBtn); document.addEventListener('webkitfullscreenchange',syncFsBtn);
+if(document.readyState==='interactive'||document.readyState==='complete') syncFsBtn(); else document.addEventListener('DOMContentLoaded',syncFsBtn);
+addEventListener('resize',()=>{ try{fit()}catch(_){} });
 let inInterior=null, interiorType='office';
 function tryDoor(){
   if(state==='interior'){ if(leaveInterior()) return; state='world'; inInterior=null; currentRoomKey=null; roomTheme=null; document.getElementById('prompt').classList.add('hide'); document.getElementById('moveinBtn').classList.add('hide'); hideIntUI(); return; }
   if(state==='travel'){ closeTravel(); return; }
   if(state!=='world'||spectate) return;
+  const nb=nearBot(); if(nb){ if(window.AgentDialog&&AgentDialog.open(nb)) return; openBotShop(nb); return; }
   for(const p of props){ if(p.type!=='building') continue;
     const dc=(p.col+p.w/2)-player.col, dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.4){
-      if(p.kind==='transit') openTravel(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
+      if(/^WELL$/i.test(p.name||'')){ if(typeof bottleWater==='function') bottleWater(); else toast('A deep, cold well'); return; }   // a well is not a house
+      if(p.kind==='transit') openTravel(); else if(p.kind==='colosseum') openColosseum(); else if(p.kind==='arcade') openArcade(); else if(p.__office && p.__unclaimed) claimLot(p); else enterInterior(p); return; } }
 }
 let intRoom={w:9,h:7,door:{col:4,row:6},furniture:[],order:[],npc:1};
 let intView={ox:0,oy:0,S:1}, decorMode=false, decorPick=null, wardrobeOpen=false;
 function fitem(col,row,w,d,h,color,type){ return {col,row,w,d,h,color,type:type||'box'}; }
 function interiorKindFor(b){ const n=(b.name||'').toUpperCase(), k=b.kind;
+  if(k==='arcade') return 'arcade';
   if(k==='hub'||/\bHQ\b|BAZAAR|TOWN SQUARE/.test(n)) return 'hub';
   if(k==='market') return 'market';
   if(k==='transit') return 'transit';
   if(/DINER|CAFE/.test(n)) return 'diner';
   if(/BANK|EXCHANGE|VAULT|TREAS/.test(n)) return 'bank';
-  if(/TAVERN|INN|BAR|KEEPER/.test(n)) return 'tavern';
+  if(/TAVERN|\bINN\b|\bBAR\b|KEEPER/.test(n)) return 'tavern';   // word-bounded: BARN / INNER ≠ tavern
   if(/PUB|FIGHT CLUB|ARENA/.test(n)) return 'pub';
   if(/FORGE|SMELTER/.test(n)) return 'forge';
-  if(/LIBRARY|ATHEN|CODEX/.test(n)) return 'library';
+  if(/LIBRARY|ATHEN|CODEX|CHAPEL|TEMPLE|SHRINE|CHURCH/.test(n)) return 'library';   // quiet halls, not bedrooms
+  if(k==='siege'||/KEEP|CASTLE|DARK TOWER/.test(n)) return 'castle';
+  if(/COLISEUM|ARENA/.test(n)) return 'colosseum';
   if(/SHOP|STORE|MARKET|GROCER|BAKERY|TRAPPER|TRADING|POST/.test(n)) return 'shop';
   if(k==='shop') return 'shop'; if(k==='home') return 'home'; if(k==='agent') return 'agent';
   return 'office'; }
@@ -982,6 +1152,33 @@ function buildInterior(kind){
   else if(kind==='hub'){ F=[fitem(3.5,0.4,2,0.5,13,'#1a1a30','tv'),
     fitem(0.9,1.1,1.3,1.1,17,'#2a2440','screen'), fitem(6.1,1.1,1.3,1.1,17,'#2a2440','screen'), fitem(0.9,4,1.3,1.1,17,'#2a2440','screen'), fitem(6.1,4,1.3,1.1,17,'#2a2440','screen'),
     fitem(3.5,2.5,1.8,1.6,4,'#c9a6ff','rug'), fitem(3.95,2.95,0.9,0.9,11,'#e8c45c'), plant(0.7,4.7),plant(7.6,4.7)]; }
+  else if(kind==='castle'){ F=[rug(4,2.7,3.2,2.4,'#4a2030'),
+    fitem(3.9,2.9,1.5,1.4,20,'#24262e','throne'), fitem(3.9,3,1.2,0.35,8,'#e8c45c'),
+    fitem(3.5,0.8,0.5,0.5,16,'#c9a6ff'), fitem(4.9,0.8,0.5,0.5,16,'#c9a6ff'),
+    fitem(1.2,0.8,0.7,2.2,20,'#5a4636','shelf'), fitem(7.2,0.8,0.7,2.2,20,'#5a4636','shelf'),
+    fitem(1.1,4.2,0.7,1.5,20,'#5a4636','shelf'), fitem(7.2,4.2,0.7,1.5,20,'#5a4636','shelf'),
+    fitem(2.3,4.5,0.6,0.6,10,'#7a5636','barrel'), fitem(3,4.5,0.6,0.6,10,'#7a5636','barrel'),
+    fitem(5.1,4.3,1.2,0.8,6,'#8a6a4a','crate'), fitem(5.4,4.35,0.7,0.35,9,'#e8c45c'),
+    fitem(6.5,4.2,0.9,0.9,16,'#a43a2a','chest'), fitem(4.1,0.75,0.6,0.3,16,'#ff7a3a')]; }
+  else if(kind==='colosseum'){ 
+    // Grand arena interior: sand floor, tiered stands, VIP boxes, commentator booth
+    F=[
+      rug(0.5,0.5,12,8,'#c9a86a'), // arena sand floor (full room)
+      // VIP boxes (agent-themed corners)
+      fitem(0.5,0.5,3,1.5,8,'#e8c45c','banner'), fitem(1,0.7,0.6,0.6,20,'#e8c45c','crystal'), // SHADDAI box
+      fitem(10.5,0.5,2.5,1.5,8,'#8b7bf0','banner'), fitem(11,0.7,0.6,0.6,20,'#8b7bf0','crystal'), // ORACLE box
+      fitem(0.5,7,3,1.5,8,'#5fe0ff','banner'), fitem(1,7.2,0.6,0.6,20,'#5fe0ff','crystal'), // QUILL box
+      fitem(10.5,7,2.5,1.5,8,'#00ff9c','banner'), fitem(11,7.2,0.6,0.6,20,'#00ff9c','crystal'), // TURTLE box
+      // commentator booth (center top)
+      fitem(5.5,0.8,2,0.8,12,'#1a1a30','screen'), fitem(5.5,1.1,0.5,0.5,10,'#5fe0ff','crystal'),
+      // arena pillars (decor)
+      fitem(2.5,2.5,0.5,0.5,22,'#c9b98a','pillar'), fitem(10.5,2.5,0.5,0.5,22,'#c9b98a','pillar'),
+      fitem(2.5,5.5,0.5,0.5,22,'#c9b98a','pillar'), fitem(10.5,5.5,0.5,0.5,22,'#c9b98a','pillar'),
+      // champion statues (center)
+      fitem(6.3,3.5,0.6,0.6,24,'#e8c45c','crystal'), fitem(6.5,3.8,0.6,0.6,24,'#cc44ff','crystal'),
+      // entry arch
+      fitem(6,7.5,1.5,0.5,14,'#c9b98a','pillar'), fitem(7.5,7.5,1.5,0.5,14,'#c9b98a','pillar'),
+    ]; }
   else { F=[fitem(4,1.5,2,0.9,10,'#5a6a8a','counter'), plant(7.3,4.5)]; }
   const IW=13, IH=9, sx=(IW-1)/8, sy=(IH-1)/6;   // BIGGER room — scale the 9x7 layout up so there's room to walk
   F.forEach(it=>{ it.col=+(it.col*sx).toFixed(2); it.row=+(it.row*sy).toFixed(2); });
@@ -1055,6 +1252,21 @@ c.addEventListener('contextmenu',e=>{ if(state==='interior'&&decorMode){ e.preve
   const X=(e.clientX-intView.ox)/((TW/2)*intView.S), Y=(e.clientY-intView.oy)/((TH/2)*intView.S); const hit=decorHitAt((X+Y)/2,(Y-X)/2);
   if(hit>=0){ intRoom.furniture.splice(hit,1); saveDecorNow(); toast('🗑️ Removed'); } } });
 function restHere(){ toast('😴 You rest a while… fully refreshed.'); }
+function castleThrone(){ try{
+  const last=+(localStorage.getItem('shaddai.castleThrone')||0);
+  if(Date.now()-last<86400000){ toast('👑 The Shadow Throne is spent for today — return tomorrow.'); return; }
+  localStorage.setItem('shaddai.castleThrone',Date.now());
+  if(window.wallet&&typeof window.wallet.add==='function'){ window.wallet.add(15); toast('👑 +15 Gold — a King\u2019s tithe from the Shadow Throne.'); }
+  else toast('👑 The throne grants its favor — return when your coffers are set.');
+  }catch(_){}
+}
+function castleCellar(){ try{
+  if(localStorage.getItem('shaddai.castleCellar')){ toast('🫙 The cellar cask is drained — it was raided days ago.'); return; }
+  localStorage.setItem('shaddai.castleCellar','1');
+  if(window.wallet&&typeof window.wallet.addInv==='function'){ window.wallet.addInv('potion',1); toast('🫙 +1 Potion from a dusty cask in the Loot Cellar.'); }
+  else toast('🫙 You pocket the cask\u2019s finds — return when your pack can stow them.');
+  }catch(_){}
+}
 function refreshIntActions(){ const ia=document.getElementById('intActions'); if(!ia)return; let b='';
   if(inInterior&&inInterior.suburb&&isMyHome(inInterior)) b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openWardrobe()">👕 Wardrobe</button><button onclick="openStorage()">📦 Storage</button>';
   else if(inInterior&&inInterior.__customRoom) b='<button onclick="openDecorate()">🎨 Decorate</button><button onclick="openRoomTheme()">🖌️ Theme</button><button onclick="openWardrobe()">👕 Wardrobe</button>';
@@ -1066,6 +1278,7 @@ function refreshIntActions(){ const ia=document.getElementById('intActions'); if
   else if(interiorType==='forge') b='<button onclick="openForge()">⚒️ Forge</button>';
   else if(interiorType==='market') b='<button onclick="openMarket()">🤝 Trade at the Swap Market</button>';
   else if(interiorType==='hub') b='<button onclick="openMarket()">🤝 Grand Bazaar</button><button onclick="openHubRooms()">🏛️ Pro Rooms</button>';
+  else if(interiorType==='castle') b='<button onclick="restHere()">😴 Rest in the Keep</button><button onclick="castleThrone()">👑 Throne Bonus</button><button onclick="castleCellar()">🫙 Loot Cellar</button>';
   if(b){ ia.innerHTML=b; ia.classList.remove('hide'); } else ia.classList.add('hide'); }
 function enterInterior(b){ roomTheme=null; state='interior'; inInterior=b; interiorType=interiorKindFor(b);
   if(interiorType==='office'){
@@ -1078,7 +1291,7 @@ function enterInterior(b){ roomTheme=null; state='interior'; inInterior=b; inter
   buildInterior(interiorType);
   player.icol=intRoom.door.col; player.irow=intRoom.door.row-1.1;
   const pr=document.getElementById('prompt'); pr.classList.remove('hide');
-  pr.textContent=(interiorType==='home'?'🏠 A Home':('Inside '+(b.name||interiorType)))+' — WASD to walk · reach the door or press E to exit';
+  pr.textContent=(interiorType==='home'?'🏠 A Home':('Inside '+(b.name||interiorType)))+(ACT_KEY()==='Tap B'?' — walk to the door or tap B to exit':' — WASD to walk · reach the door or press E to exit');
   const mb=document.getElementById('moveinBtn'); if(b.suburb){ mb.classList.remove('hide'); mb.textContent=isMyHome(b)?'🏠 This is your home ✓':'🏠 Move in here'; } else mb.classList.add('hide');
   refreshIntActions(); }
 // (removed dead 'coming soon' shop stub — openShop opens the real Store, defined below)
@@ -1112,7 +1325,7 @@ function update(dt){
     if(fadeV>=1&&pendingRegion){ genWorld(pendingRegion); regionSel=pendingRegion; const rr=REGIONS.find(x=>x.id===regionSel); document.getElementById('hudWhere').textContent='📍 '+rr.name; if(travelClockAdd){ tod=(tod+travelClockAdd)%1; travelClockAdd=0; } updateHP(); playerSignal=playerMaxSignal; updateSignal(); pendingRegion=null; fadeV=1; fadeDir=-1; }
     else if(fadeV<=0){ fadeV=0; fadeDir=0; } }
   if(state==='world'){
-    if(!spectate){ const run=keys['shift']?1.9:1, v=3.2*run*dt; let mc=0,mr=0;
+    if(!spectate){ const run=keys['shift']?1.9:1, v=3.2*run*(window.__spdMult?window.__spdMult():1)*dt; let mc=0,mr=0;
       if(keys['w']||keys['arrowup']){mc-=1;mr-=1;} if(keys['s']||keys['arrowdown']){mc+=1;mr+=1;}
       if(keys['a']||keys['arrowleft']){mc-=1;mr+=1;} if(keys['d']||keys['arrowright']){mc+=1;mr-=1;}
       if(mc||mr){ const nc=player.col+mc*v*0.5, nr=player.row+mr*v*0.5;
@@ -1133,10 +1346,14 @@ function update(dt){
     for(const rid in remote){ const r=remote[rid]; if(r.tcol!==undefined){ r.col+=(r.tcol-r.col)*Math.min(1,dt*10); r.row+=(r.trow-r.row)*Math.min(1,dt*10); if(r.rig)r.rig.anim=r.anim; } }
     // npcs
     for(const n of npcs){ if(n.pause>0){n.pause-=dt;n.rig.anim='idle';continue;} const dx=n.tc-n.col,dy=n.tr-n.row,d=Math.hypot(dx,dy);
-      if(d<0.1){n.pause=0.5+Math.random()*2;npcRetarget(n);n.rig.anim='idle';} else{ const s=n.speed*dt; const nc=n.col+dx/d*s,nr=n.row+dy/d*s; if(walkable(nc,nr)){n.col=nc;n.row=nr;n.rig.anim='walk';} else npcRetarget(n);} }
+      if(d<0.1){n.pause=0.5+Math.random()*2;(n.bot?botRetarget:npcRetarget)(n);n.rig.anim='idle';} else{ const s=n.speed*dt; const nc=n.col+dx/d*s,nr=n.row+dy/d*s; if(walkable(nc,nr)){n.col=nc;n.row=nr;n.rig.anim='walk';} else (n.bot?botRetarget:npcRetarget)(n);} }
     // door prompt (not while spectating)
-    if(!spectate){ let near=null; for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
-      const pr=document.getElementById('prompt'); if(near){ pr.classList.remove('hide'); pr.textContent='Press E to enter '+near.name; } else if(!inInterior) pr.classList.add('hide'); }
+    if(!spectate){ let near=null; const nb=nearBot();
+      for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
+      const pr=document.getElementById('prompt');
+      if(nb){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+' to talk to '+nb.name; }
+      else if(near){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+(/^WELL$/i.test(near.name||'')?' to draw water from the well':' to enter '+near.name); }
+      else if(!inInterior) pr.classList.add('hide'); }
     updateFishes(dt);
     if(hurtFlash>0) hurtFlash-=dt; if(atkSwing>0) atkSwing-=dt;
     if(window.Combat && enemies.length && !spectate){ const dmg=Combat.update(enemies, player, dt, walkable);
@@ -1146,6 +1363,19 @@ function update(dt){
         if(sb) sb.classList.remove('hide');
         if(window.enemies && window.enemies!==enemies) enemies=window.enemies;
         window.enemies=enemies; window.playerHP=playerHP; window.playerMaxHP=playerMaxHP;
+  // expose wallet hooks for external modules (dark-realm camps, sparks, etc.)
+  // money/inv/fish are script-scoped lets — this is the safe gateway to grant/spend.
+  window.wallet = {
+    get money(){ return money||0; },
+    add(n){ n=Math.round(n||0); money=Math.max(0,money+n); if(n) saveEcon(); if(typeof updateWallet==='function') updateWallet(); },
+    spend(n){ n=Math.round(n||0); if(n>money) return false; money-=n; if(n) saveEcon(); if(typeof updateWallet==='function') updateWallet(); return true; },
+    count(id){ return (inv[id]||0)+(fish[id]||0); },
+    has(id){ return this.count(id)>0; },
+    addInv(id,amt){ amt=amt||1; inv[id]=(inv[id]||0)+amt; saveEcon(); },
+    take(id,amt){ amt=Math.min(amt||0,inv[id]||0); if(amt<=0) return 0; inv[id]-=amt; if(inv[id]<=0)delete inv[id]; saveEcon(); return amt; },
+    wood(){ return inv.wood||0; },
+    takeWood(n){ return this.take('wood',n); }
+  };
         updateDarkRealm(dt*1000, player, enemies);
         enemies=window.enemies; playerHP=window.playerHP;
         updateHP();
@@ -1161,7 +1391,7 @@ function update(dt){
   }
   else if(state==='interior'){
     if(decorMode||wardrobeOpen||storageOpen||bankOpen||forgeOpen||questsOpen||hubOpen||agentLiveOpen){ player.rig.anim='idle'; return; }   // pause while a panel is open
-    const v=2.6*dt; let mc=0,mr=0;
+    const v=2.6*(window.__spdMult?window.__spdMult():1)*dt; let mc=0,mr=0;
     if(keys['w']||keys['arrowup']){mc-=1;mr-=1;} if(keys['s']||keys['arrowdown']){mc+=1;mr+=1;}
     if(keys['a']||keys['arrowleft']){mc-=1;mr+=1;} if(keys['d']||keys['arrowright']){mc+=1;mr-=1;}
     if(mc||mr){ const nc=player.icol+mc*v*0.5, nr=player.irow+mr*v*0.5;
@@ -1279,11 +1509,11 @@ function renderWorld(time){
       else if(p.type==='fence')drawFence(sx,sy); else if(p.type==='lamp')drawLamp(sx,sy,time); else if(p.type==='bench')drawBench(sx,sy); else if(p.type==='stall')drawStall(sx,sy,p.color); else if(p.type==='farm')drawFarm(sx,sy,p.ready!==false); else if(p.type==='chicken')drawChicken(sx,sy); else if(p.type==='sheep')drawSheep(sx,sy); else if(p.type==='crate')drawCrate(sx,sy); else if(p.type==='boat')drawBoat(sx,sy,time);
       else if(p.type==='tractor')drawTractor(sx,sy); else if(p.type==='haybale')drawHaybale(sx,sy); else if(p.type==='flowers')drawFlowers(sx,sy); else if(p.type==='well')drawWell(sx,sy); else if(p.type==='foodcart')drawFoodcart(sx,sy);
       if(_sh>0) ctx.restore(); }}); }
-  for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,0.8,time); if(n.name) agentLabel(sx,sy,n.name,n.accent); }}); }
+  for(const n of npcs){ const [sx,sy]=w2s(n.col,n.row); if(cull(sx,sy)) continue; obj.push({k:n.col+n.row, draw:()=>{ PP.draw(ctx,n.rig,sx,sy,0.8,time); occludeChar(sx,sy); if(n.name) agentLabel(sx,sy,n.name,n.accent); if(n.bot&&window.AgentDialog) questMark(sx,sy,AgentDialog.marker(n),n.accent,time); }}); }
   if(window.Combat) for(const e of enemies){ const [sx,sy]=w2s(e.col,e.row); if(cull(sx,sy)) continue; obj.push({k:e.col+e.row+0.003, draw:()=>Combat.draw(ctx,e,sx,sy,time)}); }
   for(const rid in remote){ const r=remote[rid]; if(!r.rig||r.region!==region.id||r.col===undefined) continue; const [sx,sy]=w2s(r.col,r.row); if(cull(sx,sy)) continue;
-    obj.push({k:r.col+r.row+0.005, draw:()=>{ PP.draw(ctx,r.rig,sx,sy,0.8,time); agentLabel(sx,sy,r.name||'Traveler','#5fe0ff'); }}); }
-  if(!spectate){ const [sx,sy]=w2s(player.col,player.row); obj.push({k:player.col+player.row+0.01, draw:()=>{ PP.draw(ctx,player.rig,sx,sy,0.8,time); }}); }
+    obj.push({k:r.col+r.row+0.005, draw:()=>{ PP.draw(ctx,r.rig,sx,sy,0.8,time); occludeChar(sx,sy); agentLabel(sx,sy,r.name||'Traveler','#5fe0ff'); }}); }
+  if(!spectate){ const [sx,sy]=w2s(player.col,player.row); obj.push({k:player.col+player.row+0.01, draw:()=>{ PP.draw(ctx,player.rig,sx,sy,0.8,time); occludeChar(sx,sy); }}); }
   obj.sort((a,b)=>a.k-b.k); for(const o of obj) o.draw();
   drawFx();
   ctx.restore();
@@ -1292,6 +1522,7 @@ function renderWorld(time){
   if(dk<0.3){ ctx.fillStyle='rgba(255,214,150,'+((0.3-dk)*0.11).toFixed(3)+')'; ctx.fillRect(0,0,W,H); } // warm daylight
   if(dk>0.02){ ctx.fillStyle='rgba(14,20,52,'+(dk*0.62).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
     if(dk>0.45){ ctx.fillStyle='rgba(150,170,255,'+((dk-0.45)*0.14).toFixed(3)+')'; ctx.fillRect(0,0,W,H); } }
+  drawEmissive();
   drawBirds(time); drawAmbient(dk); drawVignette();
   if(window.DarkRealm) renderDarkRealm(ctx,cam,TW,TH);
   if(fadeV>0){ ctx.fillStyle='rgba(0,0,0,'+fadeV.toFixed(3)+')'; ctx.fillRect(0,0,W,H); }
@@ -1314,7 +1545,7 @@ function texturePattern(id){
 }
 function renderInterior(time){
   ctx.clearRect(0,0,W,H);
-  const tint=(roomTheme&&roomTheme.tint)||{home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',pub:'#1a1810',forge:'#1e1410',library:'#1c1a26',transit:'#141a22'}[interiorType]||'#161b26';
+  const tint=(roomTheme&&roomTheme.tint)||{home:'#241c2c',shop:'#221d28',agent:'#101120',office:'#161b26',diner:'#2a1e1a',bank:'#1c2018',tavern:'#241a12',pub:'#1a1810',forge:'#1e1410',library:'#1c1a26',transit:'#141a22',castle:'#140d18'}[interiorType]||'#161b26';
   const bg=ctx.createRadialGradient(W/2,H*0.34,60,W/2,H*0.34,H); bg.addColorStop(0,shade(tint,0.05)); bg.addColorStop(1,'#070a0f');
   ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   const IW=intRoom.w,IH=intRoom.h, ox=W/2, oy=H*0.22, S=Math.min(1.15, W/((IW+IH)*46));
@@ -1362,7 +1593,7 @@ function renderInterior(time){
     ctx.drawImage(im,c[0],c[1],c[2],c[3],sx-dw/2,sy-dh+3*S,dw,dh);
     ctx.restore(); }
   // back walls (L-shape behind the room)
-  const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',pub:'#2a1e14',forge:'#2a1e18',library:'#2a2636',transit:'#20283a'}[interiorType]||'#232a38';
+  const wallH=72, wc=(roomTheme&&roomTheme.wall)||{home:'#3a2e44',shop:'#332d3a',agent:'#181a30',office:'#232a38',diner:'#3a2a24',bank:'#2a2e22',tavern:'#3a281a',pub:'#2a1e14',forge:'#2a1e18',library:'#2a2636',transit:'#20283a',castle:'#241a2a'}[interiorType]||'#232a38';
   // Real fal-generated wall/floor textures (2026-09-14) for the 10 ROOM_THEMES --
   // falls back to the flat color above whenever there's no theme or the image
   // hasn't finished loading yet (next frame picks it up once it has).
@@ -1372,7 +1603,7 @@ function renderInterior(time){
   wall(is(-0.5,-0.5), is(IW-0.5,-0.5), shade(wc,-0.04));
   wall(is(-0.5,IH-0.5), is(-0.5,-0.5), shade(wc,-0.2));
   // floor
-  const fl=(roomTheme&&roomTheme.floor)||{home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],pub:['#5a3a28','#4e3222'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4']}[interiorType]||['#c2c6cc','#b4b8be'];
+  const fl=(roomTheme&&roomTheme.floor)||{home:['#7a5a44','#6b4d38'],shop:['#c8bca0','#bcaf92'],agent:['#1a2036','#151a2e'],office:['#c2c6cc','#b4b8be'],diner:['#c8a888','#bc9c7c'],bank:['#b8b89a','#acac8e'],tavern:['#6a4a2e','#5c3f26'],pub:['#5a3a28','#4e3222'],forge:['#3a332e','#2e2824'],library:['#7a6a56','#6c5e4c'],transit:['#9aa4b0','#8e98a4'],castle:['#3a3040','#332b39']}[interiorType]||['#c2c6cc','#b4b8be'];
   for(const [col,r] of intRoom.order){ const [sx,sy]=is(col,r);
     ctx.fillStyle=floorPat||((col+r)&1?fl[0]:fl[1]); ctx.beginPath();ctx.moveTo(sx,sy-TH/2*S);ctx.lineTo(sx+TW/2*S,sy);ctx.lineTo(sx,sy+TH/2*S);ctx.lineTo(sx-TW/2*S,sy);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.stroke(); }
@@ -1390,13 +1621,15 @@ function loop(time){ const dt=Math.min((time-last)/1000||0,0.05); last=time;
   if(dt>0.001){ fpsAvg=fpsAvg*0.92+(1/dt)*0.08; LOW=fpsAvg<42; } update(dt);
   if(state==='create'){ cctx.clearRect(0,0,ccv.width,ccv.height); PP.draw(cctx, player.rig, ccv.clientWidth/2, ccv.clientHeight*0.86, 2.6, time); }
   else if(state==='region'){ if(window.RegionMap&&window.RegionMap.draw&&!window.__noMap){ ctx.clearRect(0,0,W,H); window.RegionMap.draw(ctx,W,H,REGIONS,regionSel,time/1000); } }
-  else if(state==='world') renderWorld(time);
+  else if(state==='world'||state==='dialog') renderWorld(time);
   else if(state==='interior') renderInterior(time);
   requestAnimationFrame(loop);
 }
 fit(); setPreset(0);
 // ---- hand-off from Pixel Forge + Region Selector ----
-(function boot(){ try{
+// deferred one tick: entering a saved region runs genWorld, which touches BOTS/fishes/etc. declared
+// further down this script — running inline hit TDZ errors (no region generator, no agents).
+setTimeout(function boot(){ try{
   // ?embed=office / ?office → COMMAND VIEW: this is the dashboard "Office" — the same
   // 2D world engine + art, loaded straight into SHADDAI City (your command district).
   // Skips create/region so the office view matches the world EXACTLY (it IS the world).
@@ -1437,7 +1670,7 @@ fit(); setPreset(0);
     // player is picked or signed in before any realm is chosen, exactly like the 2D door.
     if(hasLook){ try{ goRegion(); }catch(e){} }
   }
-}catch(e){ console.warn('boot hand-off',e); } })();
+}catch(e){ console.warn('boot hand-off',e); } }, 0);
 
 // ---------- MULTIPLAYER (WebSocket relay via mp-server.js) ----------
 let MP=null, myId=null; const remote={}; let lastSent=0;
@@ -1596,12 +1829,12 @@ function signalDrop(){
   const office=props.find(p=>p.__source&&p.__office);
   if(office){ rx=office.col+1; ry=office.row+2; }
   player.col=rx; player.row=ry; cam.col=rx; cam.row=ry;
-  if(!walkable(player.col,player.row)){ player.col=Math.round(GW/2); player.row=Math.round(GH/2); cam.col=player.col; cam.row=player.row; }
+  if(!walkable(player.col,player.row)){ const _spr=spawnSafe(Math.round(GW/2),Math.round(GH/2)); player.col=_spr.c; player.row=_spr.r; cam.col=player.col; cam.row=player.row; }
   const uid=window.__shd_uid||localStorage.getItem('shd_signed_in');
   if(uid) fetch('/api/city/signal-drop',{method:'POST',headers:{'Content-Type':'application/json','x-user-id':uid},body:'{}',keepalive:true}).catch(()=>{});
   toast('📡 Signal lost — rescue taxi 💵'+fee+' · signal restored');
 }
-function respawnPlayer(){ playerHP=playerMaxHP; updateHP(); if(inv.potion){ } player.col=Math.round(GW/2); player.row=Math.round(GH/2); if(!walkable(player.col,player.row)){ for(let r=1;r<GH;r++){ if(walkable(GW/2|0,r)){ player.row=r; break; } } } cam.col=player.col; cam.row=player.row; hurtFlash=0; toast('💫 You were downed — respawned at the plaza'); }
+function respawnPlayer(){ playerHP=playerMaxHP; updateHP(); if(inv.potion){ } const _sp=spawnSafe(Math.round(GW/2),Math.round(GH/2)); player.col=_sp.c; player.row=_sp.r; cam.col=player.col; cam.row=player.row; hurtFlash=0; toast('💫 You were downed — respawned at the plaza'); }
 function addXP(n){ const b=levelFor(credits); credits+=n; const nl=levelFor(credits); if(nl>b){ toast('⭐ Level up! You are now Level '+nl); try{ celebrateLevelUp(nl); }catch(_){} } }
 // JUICE: a real level-up celebration (self-contained overlay — no render-loop coupling)
 function celebrateLevelUp(lvl){
@@ -1622,7 +1855,10 @@ function celebrateLevelUp(lvl){
   el.style.animation='luPop 1.7s ease-out'; if(glow) glow.style.animation='luGlow 1.7s ease-out';
 }
 function toast(msg){ const pr=document.getElementById('prompt'); if(!pr)return; pr.classList.remove('hide'); pr.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(()=>pr.classList.add('hide'),1900); }
-function closePanel(){ state='world'; ['store','inv','jobs'].forEach(id=>document.getElementById(id).classList.add('hide')); }
+setInterval(function(){ const c=document.getElementById('controls'); if(!c||c.classList.contains('hide')) return;
+  const busy=['fishBar','gatherBar'].some(id=>{ const e=document.getElementById(id); return e&&!e.classList.contains('hide'); });
+  c.classList.toggle('dim', busy || performance.now()-(window.__ctlShownAt||0)>30000); }, 400);
+function closePanel(){ state='world'; ['store','inv','jobs','colosseum'].forEach(id=>document.getElementById(id).classList.add('hide')); }
 function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(money<it.price){ toast('Not enough money'); return; } money-=it.price; inv[id]=(inv[id]||0)+1; ftue.bought=1; ftueSave(); saveEcon(); openStore(); }
 function openStore(){ if(state==='jobs')return; state='store'; const el=document.getElementById('store');
   let h='<h1>🛒 <b>General Store</b></h1><div class="sub" style="margin-bottom:12px">💵 <b style="color:#e8c45c">'+money+'</b> · weapons · tools · home goods</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
@@ -1630,6 +1866,96 @@ function openStore(){ if(state==='jobs')return; state='store'; const el=document
     h+='<div class="rcard" style="min-height:104px;background:linear-gradient(150deg,#1a2233,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+itemIcon(it.id,30,it.ico)+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+it.cat+(owned?' · own '+owned:'')+'</small></div><button '+(can?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can?'':';opacity:.5')+'" onclick="buy(\''+it.id+'\')">💵 '+it.price+'</button></div>'; }
   h+='</div><div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openInv()">🎒 Inventory</button><button onclick="closePanel()">Close</button></div>';
   el.innerHTML=h; el.classList.remove('hide'); document.getElementById('inv').classList.add('hide'); }
+// ---- LIVING WORLD: the 7 SHADDAI agents as roaming vendor bots (bible Phase 4) ----
+// Each region hosts all 7 agents as task bots: they wander their plaza, sell a
+// themed stock, and buy your gathered goods at a premium. Every trade also
+// credits the ⚡ spark ledger (gfSparkAdd → shd_sparks/shds_tx_history on the
+// dashboard) so the living economy is blockchain-ready later.
+const BOTS=[
+  {key:'shaddai',name:'SHADDAI',accent:'#e8c45c',rigIdx:0,line:'Crown standard: the finest gear, fairly priced.',
+    sells:[['staff',180],['shield',55],['art',50],['rug',38]], buys:[['trinket',1.5],['ore',1.4],['water',1.3]], spark:6},
+  {key:'oracle',name:'ORACLE',accent:'#8b7bf0',rigIdx:1,line:'Knowledge pays — trade in what you find.',
+    sells:[['potion',18],['lantern',22],['hplant',28],['hlamp',32]], buys:[['water',1.5],['hide',1.3],['trinket',1.4]], spark:5},
+  {key:'quill',name:'QUILL',accent:'#5fe0ff',rigIdx:2,line:'Stories need supplies — buy from me, sell your tales.',
+    sells:[['rug',38],['bed',100],['art',50],['potion',19]], buys:[['trinket',1.5],['wood',1.3],['hide',1.2]], spark:5},
+  {key:'turtle',name:'TURTLE',accent:'#00ff9c',rigIdx:3,line:'Make your home beautiful — handcrafted goods.',
+    sells:[['sofa',85],['tv',125],['hplant',28],['rug',38]], buys:[['wood',1.4],['hide',1.2],['water',1.2]], spark:5},
+  {key:'nexus',name:'NEXUS',accent:'#87909c',rigIdx:4,line:'Raw material in, tools out. Trade with the forge.',
+    sells:[['pick',40],['axe',110],['lantern',22],['tv',125]], buys:[['ore',1.6],['wood',1.4]], spark:6},
+  {key:'zerox',name:'ZEROX',accent:'#00c8ff',rigIdx:5,line:'Goods flow where prices are fair — and I pay well.',
+    sells:[['sword',55],['bow',75],['shield',60],['potion',18]], buys:[['ore',1.5],['trinket',1.6],['hide',1.4]], spark:7},
+  {key:'pikadon',name:'PIKADON',accent:'#ff5a4d',rigIdx:6,line:'Verified gear from an audited inventory. Trade safe.',
+    sells:[['sword',55],['shield',58],['potion',19],['art',48]], buys:[['hide',1.5],['ore',1.4],['wood',1.3]], spark:6},
+];
+let activeBot=null;
+function botStock(bot){ if(!bot.stk){ bot.stk={}; for(const s of (BOTS.find(b=>b.key===bot.botKey)||BOTS[0]).sells) bot.stk[s[0]]=3; } return bot.stk; }
+function spawnBots(rid){
+  if(!Array.isArray(npcs)) return;
+  // SHADDAI City already has the 7 agents standing at their HQ towers — make THEM
+  // the traders (walk up + E) instead of spawning same-named duplicates in the plaza.
+  if(rid==='agentcity'){
+    for(const n of npcs){ const a=AGENTS.find(x=>x.name===n.name); if(!a||!n.agent) continue;
+      const b=BOTS.find(x=>x.name===n.name)||BOTS[0];
+      n.bot=true; n.botKey=b.key; n.__hub={col:n.col,row:n.row}; n.speed=0; }
+    return; }
+  const cc=Math.round((player&&player.col)||GW/2), cr=Math.round((player&&player.row)||GH/2);
+  const placed=[];
+  const cfg=BOTS.slice();
+  cfg.sort(()=>Math.random()-0.5);
+  for(let bi=0;bi<cfg.length;bi++){ const b=cfg[bi];
+    const a=AGENTS[b.rigIdx%AGENTS.length]||AGENTS[0];
+    const rig=JSON.parse(JSON.stringify(a.rig)); rig.__phase=bi*1.13;
+    let col=cc,row=cr,k=0, ok=false;
+    while(k<120&&!ok){ col=Math.round(cc+(Math.random()*16-8)); row=Math.round(cr+(Math.random()*16-8)); k++;
+      if(col<1||row<1||col>=GW-1||row>=GH-1) continue;
+      if(!walkable(col,row)) continue;
+      if(placed.some(p=>Math.hypot(p[0]-col,p[1]-row)<3.2)) continue;
+      ok=true; }
+    if(!ok) continue;
+    placed.push([col,row]);
+    const bot={rig,name:b.name,accent:b.accent,agent:true,bot:true,botKey:b.key,col,row,tc:col,tr:row,pause:0.4+Math.random()*2,speed:0.7,__hub:{col,row}};
+    npcs.push(bot); }
+}
+function botRetarget(n){ const h=n.__hub||{col:n.col,row:n.row}; let k=0, ok=false;
+  while(k<30&&!ok){ n.tc=h.col+(Math.random()*10-5); n.tr=h.row+(Math.random()*10-5); k++; if(n.tc<1||n.tr<1||n.tc>=GW-1||n.tr>=GH-1) continue; if(walkable(n.tc,n.tr)) ok=true; } if(!ok){ n.tc=h.col; n.tr=h.row; } }
+function nearBot(){ let best=null,bd=1.9; for(const n of npcs){ if(!n.bot) continue; const d=Math.hypot(n.col-player.col,n.row-player.row); if(d<bd){ bd=d; best=n; } } return best; }
+function botCfgFor(bot){ return BOTS.find(b=>b.key===bot.botKey)||BOTS[0]; }
+function openBotShop(bot){ if(!bot) return; activeBot=bot; const cfg=botCfgFor(bot); botStock(bot); state='store';
+  const el=document.getElementById('store');
+  let h='<h1 style="color:'+cfg.accent+'">🛒 <b>'+esc(cfg.name)+'</b></h1>';
+  h+='<div class="sub" style="margin-bottom:10px;border-left:3px solid '+cfg.accent+';padding-left:8px;opacity:.9">'+esc(cfg.line)+'</div>';
+  h+='<div class="sub" style="margin-bottom:12px">💵 <b style="color:#e8c45c">'+money+'</b> · ⚡ <b style="color:#c9a6ff">'+(typeof gfSparkBal==='function'?gfSparkBal():0)+'</b> · trades pay '+(cfg.spark||5)+'⚡</div>';
+  h+='<div class="sub" style="margin-bottom:6px;color:'+cfg.accent+'">⬇ BUY from '+esc(cfg.name)+'</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
+  for(const [id,price] of cfg.sells){ const it=itemMeta(id), owned=inv[id]||0, can=money>=price, stk=bot.stk[id]||0, out=stk<=0;
+    const catId=STORE.find(x=>x.id===id); const cat=catId?catId.cat:'';
+    h+='<div class="rcard" style="min-height:112px;background:linear-gradient(150deg,'+cfg.accent+'33,#0f1420);cursor:default;color:#eaf3fb;justify-content:space-between"><div><div style="font-size:26px">'+itemIcon(id,30,it.ico)+'</div><div class="rnm" style="font-size:14px">'+it.name+'</div><small style="opacity:.7">'+(cat?cat+' · ':'')+(owned?'own '+owned+' · ':'')+(out?'restocking':'×'+stk+' in stock')+'</small></div><button '+(can&&!out?'class="primary"':'')+' style="margin-top:6px;padding:6px 10px;font-size:12px'+(can&&!out?'':';opacity:.5')+'" onclick="buyBot(\''+id+'\')">💵 '+price+'</button></div>'; }
+  const sp=cfg.spark||5;
+  h+='</div><div class="sub" style="margin:12px 0 6px;color:#00ff9c">⬆ SELL goods to '+esc(cfg.name)+' — +'+(sp-2)+'⚡ per sale</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">';
+  for(const [gid,prem] of cfg.buys){ const g=GOODS.find(x=>x.id===gid); if(!g) continue; const held=inv[gid]||0, price=Math.max(1,Math.round(g.base*prem));
+    h+='<div class="rcard" style="min-height:92px;background:#141a26;cursor:pointer;color:#eaf3fb" onclick="sellBot(\''+gid+'\')"><div style="font-size:22px">'+itemIcon(gid,26,g.ico)+'</div><div class="rnm" style="font-size:12px">'+g.name+'</div><small>×'+held+' → 💵'+price+'</small></div>'; }
+  h+='</div><div class="sub" style="margin-top:10px;opacity:.6;font-size:11px">'+esc(cfg.name)+' wanders the plaza — find them near the center. Stock restocks over time.</div>';
+  h+='<div class="row" style="margin-top:14px;justify-content:space-between"><button onclick="openInv()">🎒 Inventory</button><button onclick="closePanel()">Close</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); document.getElementById('inv').classList.add('hide'); }
+function buyBot(id){ const bot=activeBot, cfg=botCfgFor(bot); if(!bot||!cfg) return; const it=cfg.sells.find(s=>s[0]===id); if(!it) return;
+  const price=it[1], stk=botStock(bot)[id]||0;
+  if(stk<=0){ toast((cfg.name||'Bot')+' is restocking — check back soon'); return; }
+  if(money<price){ toast('Not enough money'); return; }
+  money-=price; inv[id]=(inv[id]||0)+1; botStock(bot)[id]=stk-1; ftue.bought=1; ftueSave(); saveEcon();
+  try{ if(typeof gfAchTrack==='function') gfAchTrack('shop',1); }catch(_){}
+  try{ if(typeof gfSparkAdd==='function') gfSparkAdd('trade',1,'Bought '+id+' from '+cfg.name); }catch(_){}
+  toast('Bought '+itemMeta(id).name+' from '+cfg.name); openBotShop(bot); }
+function sellBot(gid){ const bot=activeBot, cfg=botCfgFor(bot); if(!bot||!cfg) return;
+  const g=GOODS.find(x=>x.id===gid), buy=cfg.buys.find(b=>b[0]===gid); if(!g||!buy) return;
+  const held=inv[gid]||0; if(held<=0){ toast('No '+g.name+' to sell'); return; }
+  const price=Math.max(1,Math.round(g.base*buy[1]));
+  inv[gid]--; if(inv[gid]<=0) delete inv[gid]; money+=price; quest.sell=(quest.sell||0)+1; saveEcon();
+  try{ if(typeof gfAchTrack==='function') gfAchTrack('market',1); }catch(_){}
+  try{ if(typeof gfSparkAdd==='function') gfSparkAdd('trade',(cfg.spark||5)-2,'Sold '+gid+' to '+cfg.name+' (+'+price+'💵)'); }catch(_){}
+  toast('Sold '+g.name+' for 💵'+price+' · +⚡ spark'); openBotShop(bot); }
+// bots restock their racks over time — the economy keeps turning while you play
+function botRestock(){ for(const n of npcs){ if(!n.bot) continue; const stk=botStock(n);
+  for(const k in stk){ if(stk[k]<3) stk[k]++; } } }
+setInterval(botRestock, 20000);
 // Inventory is unified into the RPG Backpack (I key / Bag button). openInv now opens it.
 function openInv(){ toggleBackpack(true); }
 // ---- item metadata (spans store + fish) ----
@@ -1747,6 +2073,126 @@ function counterOffer(){ const o=marketQueue[marketIdx]; if(!o||marketCountered)
   else { toast('🧑 “Too rich for my blood.” They move on.'); nextTrader(); } }
 function declineOffer(){ nextTrader(); }
 function closeMarket(){ marketOpen=false; const el=document.getElementById('market'); if(el)el.classList.add('hide'); state=(marketPrevState==='interior'?'interior':'world'); saveEcon(); }
+// ── COLISEUM: Grand Arena in SHADDAI City — correlates with 3D castle-siege (−190,−160) ──
+let colosseumOpen=false, colosseumMode='lobby', colosseumBracket=null, colosseumWager=0, colosseumSpectating=false, colosseumFight=null;
+const COLISEUM_WAGERS=[10,25,50,100,250]; // spark entry tiers
+function openColosseum(){ if(state!=='world'&&state!=='interior'){ toast('Find the Coliseum in SHADDAI City'); return; }
+  if(!region||region.id!=='agentcity'){ toast('The Grand Coliseum stands only in SHADDAI City'); return; }
+  colosseumOpen=true; colosseumMode='lobby'; state='colosseum';
+  const el=document.getElementById('colosseum'); if(!el)return;
+  const bal=typeof gfSparkBal==='function'?gfSparkBal():0;
+  let h='<h1 style="color:#cc44ff">🏟️ <b>GRAND COLISEUM</b></h1>';
+  h+='<div class="sub" style="margin-bottom:10px;border-left:3px solid #cc44ff;padding-left:8px;opacity:.9">Where legends are forged — wager ⚡ sparks, fight for glory.</div>';
+  h+='<div class="sub" style="margin-bottom:12px">⚡ <b style="color:#c9a6ff">'+bal+'</b> sparks &nbsp;·&nbsp; 💵 <b style="color:#e8c45c">'+money+'</b> gold</div>';
+  h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">';
+  h+='<div class="rcard" style="cursor:pointer;min-height:100px;background:linear-gradient(150deg,#cc44ff22,#0f1420);border:1px solid #cc44ff55;color:#eaf3fb;justify-content:center;align-items:center" onclick="colosseumEnterSpectate()"><div style="font-size:28px">👁</div><div class="rnm" style="font-size:14px">Spectate</div><small style="opacity:.7">Watch live matches (2D/3D)</small></div>';
+  h+='<div class="rcard" style="cursor:pointer;min-height:100px;background:linear-gradient(150deg,#e8c45c22,#0f1420);border:1px solid #e8c45c55;color:#eaf3fb;justify-content:center;align-items:center" onclick="colosseumOpenBracket()"><div style="font-size:28px">🏆</div><div class="rnm" style="font-size:14px">Tournament</div><small style="opacity:.7">Enter a bracket — wager ⚡</small></div>';
+  h+='<div class="rcard" style="cursor:pointer;min-height:100px;background:linear-gradient(150deg,#00ff9c22,#0f1420);border:1px solid #00ff9c55;color:#eaf3fb;justify-content:center;align-items:center" onclick="colosseumQuickMatch()"><div style="font-size:28px">⚔</div><div class="rnm" style="font-size:14px">Quick Match</div><small style="opacity:.7">Instant duel — no wager</small></div>';
+  h+='<div class="rcard" style="cursor:pointer;min-height:100px;background:linear-gradient(150deg,#5fe0ff22,#0f1420);border:1px solid #5fe0ff55;color:#eaf3fb;justify-content:center;align-items:center" onclick="colosseumOpenHall()"><div style="font-size:28px">🏛️</div><div class="rnm" style="font-size:14px">Hall of Champions</div><small style="opacity:.7">Past victors & cosmetics</small></div>';
+  h+='<div class="rcard" style="cursor:pointer;min-height:100px;background:linear-gradient(150deg,#8b7bf022,#0f1420);border:1px solid #8b7bf055;color:#eaf3fb;justify-content:center;align-items:center" onclick="colosseumPortal3D()"><div style="font-size:28px">🌐</div><div class="rnm" style="font-size:14px">Enter 3D Arena</div><small style="opacity:.7">Portal to Siege Castle</small></div>';
+  h+='</div>';
+  h+='<div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="closeColosseum()">Leave Coliseum</button></div>';
+  el.innerHTML=h; el.classList.remove('hide'); }
+function closeColosseum(){ colosseumOpen=false; colosseumMode='lobby'; colosseumBracket=null; colosseumFight=null;
+  const el=document.getElementById('colosseum'); if(el)el.classList.add('hide'); state='world'; }
+function colosseumEnterSpectate(){ colosseumMode='spectate'; colosseumSpectating=true;
+  const el=document.getElementById('colosseum'); const bal=typeof gfSparkBal==='function'?gfSparkBal():0;
+  let h='<h1 style="color:#cc44ff">👁 <b>SPECTATE ARENA</b></h1>';
+  h+='<div class="sub" style="margin-bottom:12px">Live matches — 2D arena or portal to 3D Siege Castle.</div>';
+  h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">';
+  h+='<div class="rcard" style="cursor:pointer;min-height:90px;background:linear-gradient(150deg,#cc44ff22,#0f1420);border:1px solid #cc44ff55;color:#eaf3fb" onclick="colosseumSpectate2D()"><div style="font-size:24px">📺</div><div class="rnm" style="font-size:13px">Watch 2D Match</div><small style="opacity:.7">Camera follows combatants</small></div>';
+  h+='<div class="rcard" style="cursor:pointer;min-height:90px;background:linear-gradient(150deg,#8b7bf022,#0f1420);border:1px solid #8b7bf055;color:#eaf3fb" onclick="colosseumSpectate3D()"><div style="font-size:24px">🌐</div><div class="rnm" style="font-size:13px">Watch 3D Siege</div><small style="opacity:.7">Siege Castle live feed</small></div>';
+  h+='</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="openColosseum()">Back</button></div>';
+  el.innerHTML=h; }
+function colosseumSpectate2D(){ spectate=true; closeColosseum(); toast('👁 Spectating 2D arena — press E to join'); }
+function colosseumSpectate3D(){ if(window.__w3&&window.__w3.enterColosseum){ window.__w3.enterColosseum(); closeColosseum(); toast('🌐 Portal opened to 3D Siege Castle'); } else { toast('3D world not loaded — open world3d.html first'); } }
+function colosseumPortal3D(){ if(window.__w3&&window.__w3.enterColosseum){ window.__w3.enterColosseum(); closeColosseum(); toast('🌐 Portal opened — you appear in the 3D Siege Castle'); } else { toast('3D world not loaded — open world3d.html in another tab'); } }
+function colosseumOpenBracket(){ colosseumMode='bracket'; const el=document.getElementById('colosseum');
+  let h='<h1 style="color:#cc44ff">🏆 <b>TOURNAMENT BRACKET</b></h1>';
+  h+='<div class="sub" style="margin-bottom:12px">Choose your wager tier — winner takes the pool (minus 10% house).</div>';
+  h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">';
+  COLISEUM_WAGERS.forEach(w=>{ const can=typeof gfSparkSpend==='function' && gfSparkBal()>=w;
+    h+='<div class="rcard" style="cursor:'+(can?'pointer':'default')+';min-height:90px;background:linear-gradient(150deg,'+(can?'#e8c45c22':'#2a1a2a22')+',#0f1420);border:1px solid '+(can?'#e8c45c55':'#444')+';color:'+(can?'#eaf3fb':'#777')+'" '+(can?'onclick="colosseumJoinBracket('+w+')"':'')+'><div style="font-size:22px">🏅</div><div class="rnm" style="font-size:13px">⚡ '+w+' Sparks</div><small style="opacity:.7">Pool: ⚡'+(w*7)+' · 8 fighters</small></div>'; });
+  h+='</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="openColosseum()">Back</button></div>';
+  el.innerHTML=h; }
+function colosseumJoinBracket(wager){ if(typeof gfSparkSpend!=='function' || gfSparkBal()<wager){ toast('Insufficient ⚡ sparks'); return; }
+  if(!gfSparkSpend('colosseum',wager,'Coliseum entry ⚡'+wager)){ toast('Wager failed'); return; }
+  colosseumWager=wager; colosseumMode='bracket'; colosseumBracket=colosseumGenBracket(wager);
+  toast('🏅 Entered ⚡'+wager+' tournament — bracket generated!'); colosseumRenderBracket(); }
+function colosseumGenBracket(wager){ const names=['Valerius','Kaelen','Sylas','Mira','Thorne','Lyra','Darius','Nyx','Rook','Vesper','Kova','Zeph'];
+  // 8 fighters (you + 7 NPCs), single elimination
+  const fighters=['You',...names.slice(0,7)].map((n,i)=>({name:n,player:i===0,hp:100,max:100,atk:8+Math.random()*6,def:3+Math.random()*4,spd:4+Math.random()*3,equip:['sword','shield','potion','staff'].slice(0,2+Math.floor(Math.random()*2))}));
+  return {wager,round:1,fighters,matches:[[0,1],[2,3],[4,5],[6,7]],winners:[]};
+}
+function colosseumRenderBracket(){ const el=document.getElementById('colosseum'); if(!el||!colosseumBracket)return;
+  const b=colosseumBracket;
+  let h='<h1 style="color:#cc44ff">🏆 <b>ROUND '+b.round+' — ⚡'+b.wager+' TOURNAMENT</b></h1>';
+  h+='<div class="sub" style="margin-bottom:10px">Winner takes ⚡'+(b.wager*8*0.9)+' pool. Click a match to fight.</div>';
+  h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">';
+  b.matches.forEach((m,mi)=>{ const f1=b.fighters[m[0]], f2=b.fighters[m[1]];
+    const done=b.winners.includes(f1.name)||b.winners.includes(f2.name);
+    h+='<div class="rcard" style="cursor:'+(done?'default':'pointer')+';min-height:110px;background:linear-gradient(150deg,'+(done?'#1a2a1a':'#2a1a2a')+',#0f1420);border:1px solid '+(done?'#4fe07a55':'#cc44ff55')+';color:#eaf3fb" '+(done?'':'onclick="colosseumFightMatch('+mi+')"')+'><div style="font-size:12px;opacity:.8">Match '+(mi+1)+'</div>';
+    h+='<div style="display:flex;justify-content:space-between;margin:6px 0;font-size:12px"><span>'+(f1.player?'▶ ':'')+f1.name+'</span><span>HP '+f1.hp+'</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;font-size:12px"><span>'+(f2.player?'▶ ':'')+f2.name+'</span><span>HP '+f2.hp+'</span></div>';
+    if(done) h+='<div style="font-size:11px;color:#4fe07a;margin-top:4px">✓ '+ (f1.player||f2.player?'YOU ':'')+ (b.winners.includes(f1.name)?f1.name:f2.name)+' advances</div>';
+    h+='</div>'; });
+  h+='</div>';
+  if(b.round>=3 && b.winners.length===1){ const champ=b.fighters.find(f=>f.name===b.winners[0]);
+    h+='<div class="sub" style="margin-top:12px;color:#e8c45c;font-weight:700">🏆 CHAMPION: '+champ.name+' wins ⚡'+Math.round(b.wager*8*0.9)+'!';
+    if(champ.player){ h+=' <button class="primary" onclick="colosseumClaimPrize()">Claim Prize</button>'; }
+    h+='</div>';
+  }
+  h+='<div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="openColosseum()">Back</button></div>';
+  el.innerHTML=h; }
+function colosseumFightMatch(mi){ const b=colosseumBracket; if(!b||mi>=b.matches.length) return; const m=b.matches[mi];
+  const f1=b.fighters[m[0]], f2=b.fighters[m[1]];
+  if(!f1.player && !f2.player){ // NPC vs NPC — simulate
+    const win=Math.random()<0.5?f1:f2; b.winners.push(win.name);
+    if(b.winners.length===b.matches.length){ b.round++; b.matches=colosseumNextRound(b); b.winners=[]; }
+    colosseumRenderBracket(); return; }
+  // Player involved — enter real-time combat
+  const you=f1.player?f1:f2, opp=f1.player?f2:f1;
+  colosseumFight={you,opp,turn:0,log:['⚔ Combat begins!']};
+  colosseumMode='fight'; colosseumRenderFight(); }
+function colosseumNextRound(b){ const next=[]; for(let i=0;i<b.winners.length;i+=2){ if(i+1<b.winners.length){ next.push([b.fighters.findIndex(f=>f.name===b.winners[i]), b.fighters.findIndex(f=>f.name===b.winners[i+1])]); } else { next.push([b.fighters.findIndex(f=>f.name===b.winners[i]), -1]); } } return next; }
+function colosseumClaimPrize(){ const b=colosseumBracket; if(!b)return; const prize=Math.round(b.wager*8*0.9);
+  if(typeof gfSparkAdd==='function') gfSparkAdd('colosseum',prize,'Tournament champion ⚡'+b.wager);
+  toast('🏆 Claimed ⚡'+prize+' sparks! Champion of the Coliseum!'); colosseumBracket=null; openColosseum(); }
+function colosseumRenderFight(){ const el=document.getElementById('colosseum'), f=colosseumFight; if(!el||!f)return;
+  let h='<h1 style="color:#cc44ff">⚔ <b>'+f.you.name+' vs '+f.opp.name+'</b></h1>';
+  h+='<div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="color:#4fe07a">YOU HP: '+f.you.hp+'/'+f.you.max+'</div><div style="color:#ff5a5a">FOE HP: '+f.opp.hp+'/'+f.opp.max+'</div></div>';
+  h+='<div style="background:#0a0f1a;padding:10px;border-radius:8px;min-height:80px;font-family:monospace;font-size:12px;color:#eaf3fb">'+f.log.slice(-6).join('<br>')+'</div>';
+  h+='<div class="row" style="margin-top:10px;gap:8px">';
+  if(f.turn%2===0){ h+='<button class="primary" onclick="colosseumAct(\'attack\')">⚔ Attack</button><button onclick="colosseumAct(\'block\')">🛡 Block</button><button onclick="colosseumAct(\'dodge\')">💨 Dodge</button><button onclick="colosseumAct(\'item\')">🧪 Item</button>'; }
+  else { h+='<div style="color:#777;padding:8px">Opponent is deciding…</div>'; }
+  h+='</div><div class="row" style="margin-top:10px;justify-content:flex-end"><button onclick="colosseumFlee()">Flee</button></div>';
+  el.innerHTML=h; if(f.turn%2===1){ setTimeout(colosseumEnemyTurn,800); } }
+function colosseumAct(action){ const f=colosseumFight; if(!f||f.turn%2!==0) return; let dmg=0, log='';
+  if(action==='attack'){ dmg=Math.max(1,Math.floor(f.you.atk*(0.8+Math.random()*0.4)-f.opp.def*0.3)); f.opp.hp-=dmg; log='You strike for '+dmg+'!'; }
+  else if(action==='block'){ f.you.blocking=true; log='You raise your guard.'; }
+  else if(action==='dodge'){ f.you.dodging=Math.random()<0.6; log=f.you.dodging?'You dodge nimbly!':'You fail to dodge!'; }
+  else if(action==='item'){ const pot=inv.potion||0; if(pot<=0){ log='No potions!'; } else { inv.potion--; const heal=20+Math.floor(Math.random()*15); f.you.hp=Math.min(f.you.max,f.you.hp+heal); log='You drink a potion (+'+heal+' HP)'; saveEcon(); } }
+  f.log.push(log); f.turn++; colosseumRenderFight(); if(f.opp.hp<=0){ f.log.push('🏆 VICTORY! '+f.opp.name+' falls!'); setTimeout(()=>{ b.winners.push(f.you.name); colosseumFight=null; colosseumRenderBracket(); },1200); } }
+function colosseumEnemyTurn(){ const f=colosseumFight; if(!f||f.opp.hp<=0) return;
+  const act=['attack','block','dodge'][(Math.random()*3)|0]; let dmg=0, log='';
+  if(act==='attack'){ dmg=Math.max(1,Math.floor(f.opp.atk*(0.7+Math.random()*0.5)-f.you.def*0.3)); if(f.you.dodging){ dmg=0; log='You dodge '+f.opp.name+'\'s attack!'; } else if(f.you.blocking){ dmg=Math.floor(dmg*0.4); log='You block '+f.opp.name+' ('+dmg+' dmg)'; } else { log=f.opp.name+' hits you for '+dmg+'!'; } f.you.hp-=dmg; }
+  else if(act==='block'){ f.opp.blocking=true; log=f.opp.name+' braces for impact.'; }
+  else { f.opp.dodging=Math.random()<0.5; log=f.opp.name+' tries to dodge.'; }
+  f.log.push(log); f.you.blocking=false; f.you.dodging=false; f.opp.blocking=false; f.opp.dodging=false; f.turn++; colosseumRenderFight();
+  if(f.you.hp<=0){ f.log.push('☠ DEFEAT — '+f.you.name+' falls.'); setTimeout(()=>{ colosseumFight=null; openColosseum(); toast('☠ Eliminated from the tournament'); },1500); } }
+function colosseumFlee(){ colosseumFight=null; openColosseum(); toast('You fled the arena.'); }
+function colosseumQuickMatch(){ // instant 1v1 vs random NPC, no wager
+  const opp={name:['Scout','Raider','Duelist','Blade'][Math.random()*4|0],hp:80,max:80,atk:7+Math.random()*5,def:2+Math.random()*3,spd:4+Math.random()*3};
+  colosseumFight={you:{name:'You',hp:100,max:100,atk:10,def:5,spd:6,equip:['sword']},opp,turn:0,log:['⚔ Quick match!']};
+  colosseumMode='fight'; colosseumRenderFight(); }
+function colosseumOpenHall(){ const el=document.getElementById('colosseum');
+  const champs=JSON.parse(localStorage.getItem('shaddai.colosseum.champs')||'[]');
+  let h='<h1 style="color:#cc44ff">🏛️ <b>HALL OF CHAMPIONS</b></h1>';
+  h+='<div class="sub" style="margin-bottom:12px">Eternal record of those who conquered the arena.</div>';
+  if(!champs.length){ h+='<div class="rcard" style="min-height:80px;background:#141a26;color:#777;justify-content:center;align-items:center">No champions yet — be the first.</div>'; }
+  else { h+='<div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">'; champs.slice(0,12).reverse().forEach(c=>{ h+='<div class="rcard" style="min-height:90px;background:linear-gradient(150deg,#e8c45c11,#0f1420);border:1px solid #e8c45c33;color:#eaf3fb"><div style="font-size:20px">🏆</div><div class="rnm" style="font-size:13px">'+c.name+'</div><small>⚡'+c.wager+' · '+c.date+'</small></div>'; }); h+='</div>'; }
+  h+='<div class="row" style="margin-top:14px;justify-content:flex-end"><button onclick="openColosseum()">Back</button></div>';
+  el.innerHTML=h; }
 // ---- SHADDAI HQ: the Pro users' dashboard rooms ----
 function hubRoomsHtml(){ let h='<h1>🏛️ <b>SHADDAI HQ — Pro Rooms</b></h1><div class="sub" style="margin-bottom:12px">The living rooms of SHADDAI\'s operatives — synced from your dashboard. Step into one.</div><div class="regions" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">';
   AGENTS.forEach((a,i)=>{ const st=agentStatus[a.name.toUpperCase()], on=st?(st.status||'online'):null;
@@ -2073,7 +2519,8 @@ function renderBackpack(){ const el=document.getElementById('rpgBackpack'); if(!
 })();
 // CLICK-TO-INTERACT: uses the active hotbar tool (chop/mine/fish/heal/attack).
 c.addEventListener('click',function(){ useActiveTool(); });
-let fishes=[];
+// fishes is declared up top with tiles/props/npcs — a boot hand-off into a saved region runs
+// genWorld→bakeGround→spawnFishes before this line, and a late `let` threw a TDZ error there.
 function spawnFishes(){ fishes=[]; if(!waterTiles||!waterTiles.length) return; const n=Math.min(26,Math.max(4,(waterTiles.length/10)|0));
   for(let i=0;i<n;i++){ const t=waterTiles[(Math.random()*waterTiles.length)|0], big=Math.random()<0.12;
     fishes.push({col:t[0]+0.5,row:t[1]+0.5,tc:t[0]+0.5,tr:t[1]+0.5,big,ph:Math.random()*6,speed:big?0.3:0.6,dir:1}); } }
@@ -2204,7 +2651,7 @@ async function claimOfficeGame(){
     // styling and never get a 'hide' class, so that selector matched on every
     // single frame during normal gameplay and permanently hid the D-pad. Now
     // only real overlay/modal ids are checked.
-    const open = document.querySelector('#intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide), #store:not(.hide), #inv:not(.hide), #jobs:not(.hide), #region:not(.hide), #create:not(.hide), #galleryPick:not(.hide)');
+    const open = document.querySelector('#intActions:not(.hide), #decorBar:not(.hide), #wardrobe:not(.hide), #storage:not(.hide), #bank:not(.hide), #quests:not(.hide), #hubrooms:not(.hide), #forge:not(.hide), #agentlive:not(.hide), #agentDialog:not(.hide), #signGate:not(.hide), #tacticsOverlay:not(.hide), #store:not(.hide), #inv:not(.hide), #jobs:not(.hide), #region:not(.hide), #create:not(.hide), #galleryPick:not(.hide)');
     pad.style.display = (open || (state!=='world' && state!=='interior')) ? 'none' : 'block';
   }
   // Cheap mutation observer — re-eval when any panel toggles.
@@ -2269,7 +2716,7 @@ requestAnimationFrame(loop);
      and a RUN toggle (keys.shift = the x1.9 move speed). Brand + themes kept. */
   var DECK_H=132, COL_H=26, deck=document.createElement('div'); deck.id='gbDeck';
   deck.style.cssText='position:fixed;left:0;right:0;bottom:0;height:'+DECK_H+'px;z-index:60;display:none;background:radial-gradient(120% 90% at 20% 20%,rgba(170,140,255,.55),rgba(76,44,150,.92) 60%,rgba(38,20,84,.98));border-top:3px solid rgba(215,200,255,.75);box-shadow:0 -8px 26px rgba(30,10,80,.7),inset 0 2px 0 rgba(255,255,255,.25);touch-action:none;-webkit-user-select:none;user-select:none;padding-bottom:env(safe-area-inset-bottom)';
-  var st=document.createElement('style'); st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}#gbDeck .dp{width:42px;height:42px;border-radius:9px;border:1px solid #2b2540;background:linear-gradient(180deg,#26212f,#0d0b14);color:#d9d2f0;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{background:#3a3050;transform:translateY(2px)}#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,#e6f8fa,#a5d3d8 65%,#7fb4bb);color:#2a3f45;box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}#gbDeck .pill{width:64px;height:20px;border-radius:10px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,#d7eef0,#9cc6cb);color:#33484e;font-size:8px;font-weight:800;letter-spacing:.12em;transform:rotate(-14deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .pill.on{filter:brightness(1.5)}#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),rgba(190,170,255,.28) 60%,rgba(120,90,220,.3));border:2px solid rgba(235,225,255,.6);box-shadow:inset 0 0 18px rgba(255,255,255,.25)}#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad{display:none !important}';
+  var st=document.createElement('style'); st.textContent='#gbDeck button{position:absolute;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:system-ui,sans-serif;cursor:pointer}#gbDeck .dp{width:42px;height:42px;border-radius:9px;border:1px solid #2b2540;background:linear-gradient(180deg,#26212f,#0d0b14);color:#d9d2f0;font-size:16px;box-shadow:0 3px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}#gbDeck .dp.on{background:#3a3050;transform:translateY(2px)}#gbDeck .ab{border-radius:50%;font-weight:800;border:3px solid rgba(255,255,255,.55);background:radial-gradient(circle at 35% 28%,#e6f8fa,#a5d3d8 65%,#7fb4bb);color:#2a3f45;box-shadow:0 5px 10px rgba(0,0,0,.5),inset 0 -3px 6px rgba(0,0,0,.18)}#gbDeck .ab.on{transform:translateY(3px);filter:brightness(.92)}#gbDeck .pill{width:64px;height:20px;border-radius:10px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(180deg,#d7eef0,#9cc6cb);color:#33484e;font-size:8px;font-weight:800;letter-spacing:.12em;transform:rotate(-14deg);box-shadow:0 3px 6px rgba(0,0,0,.45)}#gbDeck .pill.on{filter:brightness(1.5)}#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),rgba(190,170,255,.28) 60%,rgba(120,90,220,.3));border:2px solid rgba(235,225,255,.6);box-shadow:inset 0 0 18px rgba(255,255,255,.25)}#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad,#actToggle,#actCluster{display:none !important}';
   document.head.appendChild(st);
   // SHADDAI GAMES themes (default = green). Tap the THEME chip to cycle; choice is remembered.
   var THEMES=[
@@ -2291,7 +2738,7 @@ requestAnimationFrame(loop);
      '#gbDeck .bezel{position:absolute;pointer-events:none;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.35),'+t.bz+');border:2px solid '+t.bd+';box-shadow:inset 0 0 18px rgba(255,255,255,.25)}'+
      '#gbDeck .brand{position:absolute;left:0;right:0;top:6px;text-align:center;pointer-events:none;font:900 10px/1 system-ui,sans-serif;letter-spacing:.42em;color:rgba(255,255,255,.92);text-shadow:0 2px 0 rgba(0,0,0,.35),0 0 12px rgba(255,255,255,.35)}'+
      '#gbDeck .thm{left:auto;right:calc(18px + env(safe-area-inset-right));top:8px;width:72px;height:18px;border-radius:9px;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.28);color:#fff;font-size:7px;font-weight:800;letter-spacing:.16em}'+
-     '#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad{display:none !important}';
+     '#gbDeck .handle{left:calc(50% - 52px);top:-17px;width:104px;height:17px;border-radius:9px 9px 0 0;font-size:7px;letter-spacing:.18em}#gbDeck.collapsed>*:not(.handle){display:none !important}#dpad,#gbPad,#actToggle,#actCluster{display:none !important}';
   }
   function add(cls,txt,css,down,up){
     var b=document.createElement('button'); b.className=cls; b.textContent=txt; b.style.cssText=css;
@@ -2330,14 +2777,14 @@ requestAnimationFrame(loop);
     deck.classList.toggle('collapsed',collapsed);
     deck.style.height=(collapsed?COL_H:DECK_H)+'px';
     handle.textContent=collapsed?'▲ CONTROLS':'▼ CONTROLS';
-    window.__gbDeck=collapsed?COL_H:DECK_H; try{fit()}catch(e){}
+    window.__gbDeck=collapsed?COL_H:DECK_H; document.documentElement.style.setProperty('--gb',(collapsed?COL_H:DECK_H)+'px'); try{fit()}catch(e){}
   }
   var narrow=matchMedia('(max-width: 900px)'), coarse=matchMedia('(pointer: coarse)');
   function sync(){
     var want=(narrow.matches||coarse.matches||('ontouchstart' in window))&&(typeof state!=='undefined')&&(state==='world'||state==='interior');
     var h=want?(collapsed?COL_H:DECK_H):0;
     if((window.__gbDeck||0)!==h){
-      window.__gbDeck=h;
+      window.__gbDeck=h; document.documentElement.style.setProperty('--gb',h+'px');
       deck.style.display=want?'block':'none';
       deck.classList.toggle('collapsed',collapsed);
       deck.style.height=(want?(collapsed?COL_H:DECK_H):DECK_H)+'px';
@@ -2348,4 +2795,6 @@ requestAnimationFrame(loop);
   setInterval(sync,300); addEventListener('resize',sync); sync();
 })();
 </script>
+<script src="game-fun.js" defer onerror="this.remove()"></script>
+<script src="npc-dialog.js" defer onerror="this.remove()"></script>
 </body></html>

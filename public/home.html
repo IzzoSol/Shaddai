@@ -1921,7 +1921,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   function left(){ return Math.max(0, CAP+bonus()-used()); }
   function shareOnX(){
     var text='Just found @shaddai_ai — a sovereign AI agent empire: 7 specialist agents + a grounded RAG brain that cites its sources. Try the brain demo:';
-    var u='https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(location.origin||'https://shaddai-g81x.onrender.com');
+    var u='https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(location.origin||'https://shaddai-r383.onrender.com');
     try{ window.open(u,'_blank','noopener,noreferrer'); }catch(e){ window.open(u,'_blank'); }
     // Grant +3 the moment the share intent opens (trust model — no X API needed).
     if(!shared()){

@@ -385,7 +385,9 @@ window.RegionGen['meadow'] = function(api){
   // a stone well on the market green
   putProp('well',32,30); putProp('well',10,44);
   // ------------------------------------------------------------
-  // 10) SPAWN — near the market green center on open ground
+  // 10) SPAWN — on the footbridge over the Silver Stream (fishing dock)
+  //     New players start right on the pier: fishBar lights up immediately,
+  //     market green / farm fields / jobs are a step away.
   // ------------------------------------------------------------
-  api.spawn(30, 33);
+  api.spawn(30, 30);
 };

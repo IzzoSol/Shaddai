@@ -2684,6 +2684,7 @@ function endGame() {
   // Clear any lingering center message so it doesn't overlap the card
   if (game.msgEl) { game.msgEl.style.opacity = '0'; game.msgTimer = 0; }
   document.getElementById('endscreen').classList.add('show');
+  try{ if(window.parent!==window) window.parent.postMessage({shdGame:'basketball', shdScore:game.scoreYou, shdWin:game.scoreYou > game.scoreAI}, location.origin); }catch(e){}   // SHADDAI arcade score bridge
 }
 
 // ─────────────────────────────────────────────────────────────────
