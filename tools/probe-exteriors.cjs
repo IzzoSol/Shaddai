@@ -21,7 +21,10 @@ const port = process.argv[2] || 8790;
       const f = () => { tod = 0.02; requestAnimationFrame(f); }; f();
       const o = drawEmissive; let frames = 0, lit = 0;
       drawEmissive = function () { frames++; if (lightsOn) lit++; return o(); };
-      setTimeout(() => res({ region: region.id, buildings: bs.length, venue: t0 && t0.name, frames, lit, signs: bs.filter((q) => q.kind !== 'home' && SIGN_ICON[interiorKindFor(q)]).length }), 900);
+      // wait for real frames (slow software GL can take seconds on the densest regions), max 8s
+      const t0s = performance.now();
+      const done = () => res({ region: region.id, buildings: bs.length, venue: t0 && t0.name, frames, lit, signs: bs.filter((q) => q.kind !== 'home' && SIGN_ICON[interiorKindFor(q)]).length });
+      (function wait() { if (frames >= 3 || performance.now() - t0s > 8000) done(); else setTimeout(wait, 150); })();
     }));
     const pass = r.frames > 0 && (r.buildings === 0 || r.lit > 0) && errs.length === 0;
     ok = ok && pass; rows.push((pass ? 'ok  ' : 'BAD ') + JSON.stringify(r) + (errs.length ? ' ERR ' + errs.join(' | ') : ''));
