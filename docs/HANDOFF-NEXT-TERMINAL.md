@@ -67,6 +67,17 @@ council heads 53MB→15MB (webp only — rag-cockpit/brain-head have no Meshopt 
 ⇒ Skate is now small enough to ship on the static beta (§12 dropped it for size).
 Cosmetics catalog is EMPTY ON PURPOSE (owner removed them 09-21) — Thursday retexture track.
 Probes added: probe-skate-offline.cjs (node only).
+Round 3 — POLISH (owner: polish main, no beta work for now):
+- Removed 2 broken stub overlays every player saw on load: js/market.js (unstyled bid box) +
+  auth.js (dup name modal + 5 alert() popups). Game keeps its own create screen/FTUE/market.
+- mmo-client.js: dropped its real-clock darkness overlay (double night tint); ⚔ MMO button
+  only appears when the dev MMO server (:3001) answers.
+- Suburb: homes w/o glass crashed the building renderer every frame — fixed.
+- HUD: controls hint centred above hotbar, fades after 30s / for fish+gather bars, hidden on
+  touch; prompts say "Tap B" on touch. Interiors: action buttons below the HUD; BARN≠tavern;
+  chapels→quiet hall; WELL draws water. Panels capped above the mobile deck. Arcade explains
+  how to earn sparks at 0⚡. region-select header buttons no longer wrap on phones.
+Audit: all 9 regions boot with 0 page errors, 7 agents each; combat spawns 5-9 foes/region.
 
 ## NEXT (your order of work)
 A. If MCP is up: agents assist — NEXUS engine review, TURTLE visual QA, QUILL prompts,
