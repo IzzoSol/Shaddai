@@ -1002,7 +1002,7 @@ function postScore(finalScore){
     var hp=Math.round(teamHp(teamA));
     apReport(win ? 1000+hp : hp, win);   // score = win?1000+remainingHP:remainingHP
   }
-  try{ window.parent.postMessage({type:'shaddai-game-score', game:'dodgeball', score:finalScore}, '*'); }catch(e){}
+  try{ window.parent.postMessage({type:'shaddai-game-score', game:'dodgeball', score:finalScore, win:!!G.victory}, '*'); }catch(e){}
   try{
     fetch('/api/leaderboard/dodgeball', {
       method:'POST', headers:{'Content-Type':'application/json'},

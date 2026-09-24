@@ -16,7 +16,8 @@
   if (!T) { document.body.innerHTML = '<h1>Missing tactics-engine.js</h1>'; return; }
 
   const { RACES, JOBS, JOB_LIST, ABILS, ABILITIES, ABILITY_BY_NAME, ABILITY_CAT,
-          EQUIP, AILMENTS, LAW_POOL, STORY_MISSIONS, DISPATCH, ENCOUNTERS } = T;
+          EQUIP, AILMENTS, LAW_POOL, STORY_MISSIONS, DISPATCH, ENCOUNTERS,
+          ENEMY_CLANS, CLAN_NAMES } = T;
 
   const SAVE_KEY = 'shaddai_tactics_save';
   const COLS = 16, ROWS = 12;

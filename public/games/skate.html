@@ -973,6 +973,7 @@ function initHubWorld() {
         // Match settled -- show final result + (win only) the Lens option.
         const scoreLabel = { win: 'YOU WIN THE GAME OF SKATE', lose: 'YOU LOSE — S-K-A-T-E', push: 'PUSH — EVEN MATCH' }[res.settlement.score] || res.settlement.score;
         matchSpotEl.textContent = scoreLabel;
+        try { window.parent.postMessage({ type: 'shaddai-game-score', game: 'skate', score: res.settlement.score === 'win' ? 40 : res.settlement.score === 'push' ? 20 : 0, win: res.settlement.score === 'win' }, '*'); } catch (e) {}
         btnLeaveMatch.hidden = false;
         if (res.settlement.score === 'win' && events.length) {
           btnLensClip.hidden = false;

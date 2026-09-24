@@ -3,7 +3,7 @@
  * to spawn a distinct interior/room layout.  All blueprints are versioned
  * so the client can auto‑update without a full redeploy.
  */
-export const BUILDINGS = {
+var BUILDINGS = window.BUILDINGS = {
   // -----------------------------------------------------------------
   // 1️⃣  Forge – crafting station
   // -----------------------------------------------------------------
