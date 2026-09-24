@@ -64,3 +64,14 @@ Shared-layout rule (all cutaways): one floor-plan JSON drives BOTH the 2D side-v
 | R3 | Moebius-style root city under giant tree | Forest realm |
 | T1 | Classified Technology Encyclopedia (15 items) | Shop items → `public/assets/items` (12 in shop) |
 | U1 | Art cheat sheet: 6 color harmonies | Lighting presets in world3d.html use these |
+
+## Batch 5 (2026-09-24, owner pasted inline — "clothing ideas etc") — COSMETICS DIRECTION
+Theme = **ART-PRINT TECHWEAR**: a famous-art-movement print on oversized streetwear/cargo
+silhouettes, gold hardware, chunky high-top sneakers. Pasted in chat only — originals NOT on
+disk; drop them in `fal-assets/production/refs/cos-*/` for image-edit fidelity.
+| # | Reference | Palette | Proposed use |
+|---|---|---|---|
+| O1 | Starry-Night hoodie + cargo joggers: navy/sky-blue fabric, gold swirl embroidery, gold drawcords/zips, blue-gold high-tops, swatch board | navy #1f3a78, sky #8fb0e0, gold #e8c45c | "STARRY" outfit (gold = brand gold — fits QUILL or ORACLE) |
+| O2 | Stained-glass cargo pants (magenta/violet/amber glass panels), mauve crop mock-neck, cream high-tops | magenta #d6259a, violet #7a2c8f, amber #f7b267 | "CATHEDRAL" outfit (fits ORACLE violet / TURTLE) |
+| O3 | Flame-gradient hooded drape/cape over white tee, red tactical cargo w/ straps, red high-tops, gold bangles | red #d7261e, orange #ff7a1a | "EMBER" outfit (fits PIKADON red) |
+| A1 | Underground cyber fight-pit: roped ring w/ glowing red floor sigil, tiered steel balconies packed with crowd, neon holo billboards (pink/cyan), graffiti, cables, haze + top-down spotlight | cyan #29c6ff, pink #ff3fa4, sigil red #ff4a2a | COLOSSEUM Tourney Hall interior + tactics battle backdrop — build in CODE ($0 fal; interior law) |

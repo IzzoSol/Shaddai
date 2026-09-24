@@ -1,6 +1,2 @@
-13 more outfits (7 agents x 2 minus canary) (cos-batch)
-Drop reference images (png/jpg/webp) in this folder, then run:
-  node fal-assets/production/preflight.mjs
-
-What this asset needs:
-- owner picks the 2 outfit themes (plan says combat / formal / casual — pick 2)
+11 more art-print techwear outfits
+Drop the stained-glass (O2) and flame (O3) outfit sheets here.

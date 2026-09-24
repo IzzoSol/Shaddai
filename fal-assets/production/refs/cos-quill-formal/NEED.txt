@@ -1,7 +1,0 @@
-QUILL formal outfit (cos-quill-formal)
-Drop reference images (png/jpg/webp) in this folder, then run:
-  node fal-assets/production/preflight.mjs
-
-What this asset needs:
-- approved agent-quill T-pose concept (produced by the agent canary)
-- outfit style ref

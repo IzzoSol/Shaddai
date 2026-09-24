@@ -22,7 +22,7 @@ window.FAL_BOARD = {
    "agent": "full body T-pose facing camera, arms straight out at shoulder height, open empty hands, legs shoulder-width, 7.5-head realistic adult proportions (NOT chibi), 1.8m. Use forge.mjs POSE block verbatim — it is the wording that survives auto-rigging.",
    "building": "exterior shell, ONE clearly visible ground-level doorway 2.2m x 1.2m facing camera, readable at 128px, futuristic only (no normal houses/roofs/barns). Interiors are built in CODE with existing fur-*.glb (image-to-3D cannot make usable interiors — do not pay for them).",
    "vehicle": "side-3/4 view, whole hull visible, open cockpit/deck where the pilot sits (seat anchor is set in code), no people, no water/ground in frame.",
-   "cosmetic": "image-EDIT of the approved agent T-pose concept only — same pose, same body, only the outfit changes.",
+   "cosmetic": "image-EDIT of the approved agent T-pose concept only — same pose, same body, only the outfit changes. Theme = ART-PRINT TECHWEAR (famous-art-movement print on oversized streetwear/cargo, gold hardware, chunky high-tops) — refs/world/WORLD-REF-MAP.md batch 5.",
    "video": "image-to-video from two APPROVED agent concepts; 5s; no text."
   },
   "families": {
@@ -43,7 +43,7 @@ window.FAL_BOARD = {
    },
    "cosmetic": {
     "cap_usd": 8,
-    "canary": "cos-quill-formal",
+    "canary": "cos-quill-starry",
     "order": 4
    },
    "video": {
@@ -505,9 +505,9 @@ window.FAL_BOARD = {
     }
    },
    {
-    "id": "cos-quill-formal",
+    "id": "cos-quill-starry",
     "family": "cosmetic",
-    "name": "QUILL formal outfit",
+    "name": "QUILL — STARRY outfit (O1)",
     "canary": true,
     "status": "needs-ref",
     "slot": {
@@ -517,16 +517,18 @@ window.FAL_BOARD = {
     "refs": {
      "have": [],
      "need": [
-      "approved agent-quill T-pose concept (produced by the agent canary)",
-      "outfit style ref"
+      "O1 Starry-Night outfit sheet (pasted in chat 2026-09-24 — drop the file here)",
+      "approved agent-quill T-pose concept"
      ]
-    }
+    },
+    "palette": "navy #1f3a78, sky #8fb0e0, gold #e8c45c embroidery",
+    "silhouette": "oversized Starry-Night hoodie + cargo joggers, gold swirl embroidery, gold zips/drawcords, blue-gold high-top sneakers"
    },
    {
     "id": "cos-batch",
     "family": "cosmetic",
     "count": 11,
-    "name": "11 more outfits (6 agents x 2 minus canary)",
+    "name": "11 more ART-PRINT TECHWEAR outfits (O1 STARRY / O2 CATHEDRAL / O3 EMBER + more movements)",
     "status": "needs-ref",
     "slot": {
      "file": "cosmetics catalog",
@@ -535,7 +537,8 @@ window.FAL_BOARD = {
     "refs": {
      "have": [],
      "need": [
-      "owner picks the 2 outfit themes (plan says combat / formal / casual — pick 2)"
+      "O2 stained-glass + O3 flame outfit sheets (pasted in chat — drop files)",
+      "owner confirms which agent wears which theme (proposal in refs/world/WORLD-REF-MAP.md batch 5)"
      ]
     }
    },
@@ -699,7 +702,7 @@ window.FAL_BOARD = {
     "refsNeed": 1
    },
    {
-    "id": "cos-quill-formal",
+    "id": "cos-quill-starry",
     "family": "cosmetic",
     "status": "needs-ref",
     "refsHave": 0,
@@ -710,7 +713,7 @@ window.FAL_BOARD = {
     "family": "cosmetic",
     "status": "needs-ref",
     "refsHave": 0,
-    "refsNeed": 1
+    "refsNeed": 2
    },
    {
     "id": "vid-finisher-1",
@@ -761,5 +764,5 @@ window.FAL_BOARD = {
   }
  },
  "spent": 0,
- "builtAt": "2026-09-24T15:18:28.272Z"
+ "builtAt": "2026-09-24T15:19:24.380Z"
 };

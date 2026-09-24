@@ -1,0 +1,3 @@
+QUILL - STARRY outfit (cos-quill-starry)
+Drop the Starry-Night outfit sheet (O1, pasted in chat 2026-09-24) here, then run:
+  node fal-assets/production/preflight.mjs
