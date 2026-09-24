@@ -1295,7 +1295,7 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 
 <script>
 'use strict';
-const CLOUD = 'https://shaddai-g81x.onrender.com';
+const CLOUD = 'https://shaddai-r383.onrender.com';
 const BASE = CLOUD;   // live data ALWAYS via Render cloud — no localhost
 const MIRO = 'http://localhost:5001';
 
@@ -1965,7 +1965,7 @@ function _drawPnl(){
   x.textAlign='right';
   x.font='14px "Share Tech Mono",monospace';
   x.fillStyle='rgba(255,255,255,.6)';
-  x.fillText('shaddai-g81x.onrender.com/pro-signals.html',W-40,H-30);
+  x.fillText('shaddai-r383.onrender.com/pro-signals.html',W-40,H-30);
   x.restore();
 
   // show
@@ -2006,7 +2006,7 @@ function sharePnl(){
     const f=fileFromDataUrl(_pnl.dataUrl,'shaddai-pnl.png');
     if(navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Shaddai PNL',text:txt}).catch(()=>{});return;}
   }
-  const u='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+' — https://shaddai-g81x.onrender.com/pro-signals.html');
+  const u='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+' — https://shaddai-r383.onrender.com/pro-signals.html');
   window.open(u,'_blank');
 }
 function fileFromDataUrl(dataUrl,name){
@@ -2046,7 +2046,7 @@ function gshare(i){
   let gal=[];try{gal=JSON.parse(localStorage.getItem('ot_pnl_gal')||'[]');}catch(e){}
   const g=gal[i];if(!g)return;
   const txt='$'+g.symbol+' '+g.mult+' ATH 🚀 — Shaddai Signals';
-  const u='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+' — https://shaddai-g81x.onrender.com/pro-signals.html');
+  const u='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt+' — https://shaddai-r383.onrender.com/pro-signals.html');
   window.open(u,'_blank');
 }
 function gdel(i){
@@ -3347,7 +3347,7 @@ function renderFS() {
   } else if(_fsTab==='news') {
     const stamp = '<div style="background:#00ff41;color:#000;font-weight:800;font-size:11px;padding:6px 10px;text-align:center">LOADED NEWS · '+new Date().toLocaleTimeString()+'</div>';
     fsc.innerHTML=stamp+'<div style="padding:20px;text-align:center;color:var(--muted)">LOADING LIVE NEWS…</div>';
-    fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
+    fetch('https://shaddai-r383.onrender.com/api/news/actually-relevant')
       .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(j=>{
         let items = j.articles || j.results || [];
@@ -3494,7 +3494,7 @@ function loadWindowContent(id) {
     }
   } else if(id==='news-mkt') {
     body.innerHTML='<div style="padding:16px;text-align:center;color:var(--text2)">LOADING LIVE NEWS…</div>';
-    fetch('https://shaddai-g81x.onrender.com/api/news/actually-relevant')
+    fetch('https://shaddai-r383.onrender.com/api/news/actually-relevant')
       .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(j=>{
         const items=(j.articles||j.results||[]).slice(0,30);
