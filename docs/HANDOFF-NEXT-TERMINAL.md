@@ -59,8 +59,14 @@ Arcade score bridge (4 games pay once per paid entry) · ONE sparks ledger for r
 (sparks-ledger.js; shd.sparks3d fork folded in) · agentic NPC quest dialogs (npc-dialog.js) ·
 boot TDZ fix (saved-region players had NO agents) · 2D exteriors + emissive light layer.
 Probes: tools/probe-arcade.cjs, probe-dialog.cjs, probe-exteriors.cjs (puppeteer or playwright).
-Known pre-existing noise: games/tactics.html logs "Unexpected token 'export'" + CLAN_NAMES
-undefined in its iframe — untouched, worth a look.
+Round 2 (same day): tactics CLAN_NAMES/ENEMY_CLANS import fix + game.html module-script fix
+(page is now error-free) · ARCADE building in SHADDAI City (west of HQ, E = arcade) · Skate
+plays with NO backend (local port of hall/packs/skate.js; payout 40/15 — random play was a
++12.6⚡ faucet) · $0 compression (§14.1): skate props/boards/GABI 105MB→7MB (meshopt+webp),
+council heads 53MB→15MB (webp only — rag-cockpit/brain-head have no Meshopt decoder).
+⇒ Skate is now small enough to ship on the static beta (§12 dropped it for size).
+Cosmetics catalog is EMPTY ON PURPOSE (owner removed them 09-21) — Thursday retexture track.
+Probes added: probe-skate-offline.cjs (node only).
 
 ## NEXT (your order of work)
 A. If MCP is up: agents assist — NEXUS engine review, TURTLE visual QA, QUILL prompts,
