@@ -1,38 +1,71 @@
-# HANDOFF — NEXT TERMINAL (2026-09-22, end of GLM session)
+# HANDOFF — CLAUDE (2026-09-23, from the GLM/opencode sessions)
 
-Read docs/MASTER-PLAN.md FIRST — §12 THE DECISION, §13 2D work order, §14 THE COMPLETE
-BUILD BIBLE ($111 fal / $100 spendable, canary-first, gates, fal ledger, standards).
+Read docs/MASTER-PLAN.md FIRST: §4 gates (fal one-shot rules), §12 THE DECISION,
+§14 build bible ($111 fal ledger), §15 status log. Obsidian has the vision-session
+MASTER-WORLD-SPEC-v2.md (spatial law, tactics, economy/dopamine, AI architecture).
 
-## STATE — everything committed & pushed, nothing mid-work
-- Main repo: C:\Users\Brittany\Shaddai (main @ latest) + worktree C:\Users\Brittany\Shaddai-3d (feat/world3d, same tip). MAIN IS LIVE-DEPLOYING REPO.
-- Beta repo: C:\Users\Brittany\Shaddai-Beta → github.com/IzzoSol/Shaddai-Beta (PRIVATE) → Render STATIC site (live). Root=landing (fast gradient, WebGL iframe force-off), /game.html = 2D, /games/*.html = arcade, /dashboard.html = degraded shell. Site files in repo under site/.
-- Main Render site (backend): SUSPENDED/OOM'd — 512MB Node can't hold the backend (signals 13MB JSON etc). User decisions pending: resume / 1GB tier / lazy-load fix (offer: "lazy-load it").
-- Dev server: python -m http.server 8790 --directory public (from Shaddai-3d). Probes: NODE_PATH=C:/Users/Brittany/Shaddai/node_modules; node tools/probe-boot.cjs 8790 (?peek=1 flow for full entry).
+## STATE (everything committed + pushed, nothing mid-work)
+- Repo: C:\Users\Brittany\Shaddai (main, live) + worktree C:\Users\Brittany\Shaddai-3d
+  (feat/world3d, same tip). Beta static site: github.com/IzzoSol/Shaddai-Beta → Render
+  static (root=landing; 2D at /game.html; arcade at /games/*; 3D excluded until polished).
+- Main Render backend: was suspended (512MB OOM). A new Render was made. MCP agents API
+  was 503 during this session — if still down, its service needs restarting too.
+- Dev server: python -m http.server 8790 --directory public (from Shaddai-3d).
+  Probes: NODE_PATH=C:/Users/Brittany/Shaddai/node_modules → tools/probe-boot.cjs,
+  probe-2d.cjs, probe-tactics.cjs, probe-swim.cjs (peek entry flow is flaky in headless
+  SwiftShader — logic probes are reliable).
 
-## DONE THIS SESSION (all pushed to main)
-Full 3D map half 380→720 (terrain 1500/190-seg, mountain ring R380-520 w/ 5 carved passes); 10 biomes incl. 4 new realms (volcano fortress+dragon+lava shader, darkforest castle, suburb offices, meadow) — BUT see §12 REALITY: placed GLBs are decorative walk-through shells = PLACEHOLDERS to be replaced by real door+interior+collider systems; Crystal Sea scaled r150; light-trail roads; walk-in colosseum [-14,460] + E-tourney modal (sparks pools ledger); garage shop (B at [26,96], hovercar 500⚡, tiers); rideable ships+hoverboard+car (E); tricks→sparks (Space/Shift); hero switch (H, 7 bodies); 2D mobile deck v3 (slim/collapse/RUN); CSP wasm-unsafe-eval fix (world entry WASM error); deploy slim (removed runtime backup blobs, gitignored).
+## DONE (this session, in order — all on main)
+1. TACTICS ENGINE v1 (world-tactics.js): FFT grid battles at the Colosseum — CT turn
+   order by AGI, STR/AGI/INT/HP, BFS move, archetypes (Pilot/SHADDAI/ORACLE ally +
+   Heavy/Scout enemies), agentic bot option-scoring, sparks stake/pot, win-scaling tiers
+   0-3, fixed 200ms CT clock (rAF-proof). ENTER FIGHT in the arena modal launches it.
+2. FISHING minigame (game.html): cast 3-12s → STRIKE prompt → SPACE in a 1.6s window to
+   reel, else it escapes; Void-Pearl 1-in-100 (val 400).
+3. SHADDAI ARCADE (game.html): top-bar Arcade button → sparks entry fees (skate 20,
+   basketball/dodgeball/sigil 10), overlay iframe, postMessage {shdGame, shdScore}
+   score-bridge listener ready for auto payouts (games don't post yet).
+4. ONE SPARKS LEDGER 2D↔3D: shd.sparks3d shared localStorage — 2D arcade + 3D
+   hoverboard/tricks/tourneys/garage all read/write the SAME balance.
+5. SWIM LAW: below-waterline terrain floats the player on the surface (wave-bob, swim
+   speed 7) — no more seafloor walking.
+6. VESSEL SEATING: per-hull seat heights (yacht 1.6 / sub 1.25 / catamaran 0.85 /
+   skiff 0.55) — pilot sits IN, not ON.
+7. INTERIOR LAW: 4 realm structures are E-portals into themed halls — COLOSSEUM Tourney
+   Hall (betting board auto-opens; B reopens), GARAGE Hover Works (shop auto-opens),
+   FORTRESS Emberfall War Room, CASTLE Darkrealm Siege Keep. Doors at each realm's REAL
+   big-map position: colosseum [-14,460] south, garage [26,96], fortress [420,-380]
+   volcano, castle [-420,-380] darkforest. V1 reuses strongest room builders w/ new
+   accents — fal Thursday dresses each room in the same code slots (THEMES propFn).
+8. COLLIDER LAW: 18 solid realm colliders from layout.realmColliders (fortress r30,
+   castle r34, office towers r16-20, market, cube-hab, apartment pods, forge tower,
+   ritual circle, 3 meadow villages, rocks/crystals). Stations keep their pillar/
+   elevator system (BUILDINGS_SOLID untouched). Colosseum plateau stays walk-in.
+   Gates pass-through. Door prompts fire at 50u — outside the walls.
+9. Earlier this week (also done): FULL MAP half 720 (terrain 1500, mountain ring
+   R380-520 with 5 carved passes), 10 biomes (4 new realms), light-trail roads to every
+   realm, Crystal Sea r150 scaled shader ocean + 4 ships, rideable ships+hoverboard+
+   hovercar (E), tricks→sparks, hero switch (H), garage tiers (B), castle moat glow,
+   CSP wasm-unsafe-eval fix (world entry), 2D mobile deck v3 (slim/collapse/RUN).
 
-## NEXT SESSIONS — in order
-1. §13+§14.3: TACTICS ENGINE (FFT-style: grid, CT turn order by AGI, STR/AGI/INT/HP,
-   move+act, archetype skills, AGENTIC options for AI/grok combatants, sparks wager pools)
-   + colosseum wiring + castle siege (siege pass→member residuals; moat=liquidity-pool hook)
-   + skate.html wired as an arcade BUILDING door. 2. 2D polish: 2.5D (shadows/day-night),
-   building interiors w/ teller-grade layouts, fishing, cosmetic overlay layer, menu kit.
-3. THURSDAY (Opus 5.5 + $111 fal, MCP agents online): §14.1 ledger + §14.4 order —
-   canary-first, ship/compress existing forge chars ($0), 7 agents HighPack+tripo, 5
-   enterable city buildings (ONE GLB w/ doorway+interior), ships/hovercar redo, cosmetics
-   retexture, fatality video demos LAST. Agent assignments: SHADDAI orchestrates,
-   NEXUS=engine/economy, TURTLE=2.5D+cosmetics QA, QUILL=dialogs/cutscenes, ORACLE=gates+OSS
-   research, PIKADON=one audit at END (keys, leakage, wallet/LP security), ZEROX=economy math.
-4. Beta: after tactics+interiors land, re-sync Shaddai-Beta from public (robocopy excludes
-   in §beta note below) and add 3D world back when §12 five-laws pass.
-   Robocopy exclusions used: /XD council forge-models models agents terrain furniture bot
-   journey vfx xto traders realms _parked buildings /XF SHADDAI-WORLD-3D.html world3d.html
-   world-*.js — then Move files into site/, root index.html=home.html copy, dashboard.html=old index.
+## FIVE-LAWS SCORECARD
+1 ✅ INTERIOR (4 halls) · 2 ✅ COLLIDERS (18) · 3 ◐ SCALE (COLLIDER_R sized; scale-check
+gate ships with Thursday fal) · 4 ✅ SWIM · 5 ✅ SEATING. Realm shells are still
+placeholder GLBs — Thursday's fal models replace them IN PLACE (positions in
+world-layout.js realmColliders + the module manifests are the slots).
 
-## RULES (unchanged)
-Never spend fal without canary+gates (§4/§14); $111 fal is unreplaceable — $100 budget,
-$11 hard reserve for redos; never commit secrets/FAL_KEY (rotate before ENABLE_FAL);
-never `git pull --rebase`/`git stash`; don't push main without asking (standing approval
-was session-scoped); LF/CRLF warnings are harmless; keep every milestone: probe → commit
-→ push branch → merge main → push main (user wants to SEE progress; ship at safe points).
+## NEXT (your order of work)
+A. If MCP is up: agents assist — NEXUS engine review, TURTLE visual QA, QUILL prompts,
+   ORACLE research, ZEROX economy math, PIKADON audit AT THE END (one call, not per-step).
+B. Code (zero fal): (1) arcade score bridge — teach games to postMessage; (2) agentic
+   NPC quest dialogs in 2D; (3) 2D building exteriors pass (signage/night windows).
+C. THURSDAY FAL ($111, $100 budget, §4 gates + canary-first + scale-check): 7 agents
+   (HighPack+tripo, canary=SHADDAI first), 5 enterable city buildings, ship/hovercar
+   rework, cosmetics retexture, fatality video demos last. Skate physics reference:
+   C:\Users\Brittany\skate-threejs-ref (full TS game — mine the controller/animation).
+
+## RULES
+Never spend fal without §4 gates; canary before batch; a model failing twice = the
+prompt is wrong. Never read/commit the API keys vault without explicit permission.
+No `git pull --rebase`/`git stash`. Ask before pushing main (standing approval was
+given this session). Probe→commit→push branch→merge main→push main at every milestone.
