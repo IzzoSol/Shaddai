@@ -98,6 +98,19 @@
       return null;
     }
 
+    // ── REALM COLLIDERS (collider law, 2026-09-23): solid circles for the placed realm
+    // models, from layout.realmColliders (single source of truth in world-layout.js).
+    // Registered BEFORE the BUILDINGS_SOLID early-return so they apply in BOTH modes —
+    // the stations keep their pillar/elevator design, but realm structures are solid.
+    var _rc = (layout.realmColliders && Array.isArray(layout.realmColliders)) ? layout.realmColliders : [];
+    for (var _rk = 0; _rk < _rc.length; _rk++) {
+      var _r = _rc[_rk];
+      if (!_r || !isFinite(_r.x) || !isFinite(_r.z) || !(_r.r > 0)) continue;
+      var rr = _r.r + PLAYER_BUF;
+      _colliders.push({ box: false, cx: _r.x, cz: _r.z, r: rr, r2: rr * rr, label: _r.label || 'realm' });
+    }
+    console.log('[world-collision] Built ' + _rc.length + ' REALM colliders (solid realm structures).');
+
     if (!BUILDINGS_SOLID) {
       // No building colliders. __hubColliders (bazaar stalls) still apply via _pushOut.
       _built = true;

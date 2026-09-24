@@ -104,6 +104,36 @@
     portal: function (code) { return this.spawnPortals.find(function (p) { return p.code === code; }); },
     landmark: function (id) { return this.landmarks.find(function (l) { return l.id === id; }); },
 
+    // ── REALM COLLIDERS (collider law, 2026-09-23) — solid circles for every placed realm
+    // model. Positions mirror the placement code exactly (world-volcano.js / world-
+    // realmprops.js / world-landmarks.js). Radii = half the model's placed width, clamped
+    // for play. The COLOSSEUM stays collider-free (walk-in venue); gates/arches are
+    // pass-through; the dragon flies. Door prompts trigger at COLLIDER_R+DOOR_EXTRA (50u
+    // for fortress/castle) — always outside the wall, so E fires first.
+    realmColliders: [
+      // EMBERFALL (volcano crater shelf, center [420,-380])
+      { x: 420,   z: -380,   r: 30, label: 'volcano-fortress' },
+      { x: 331.6, z: -329,   r: 18, label: 'volcano-forge-tower' },
+      { x: 515.2, z: -437.8, r: 8,  label: 'volcano-ritual-circle' },
+      // DARKREALM (center [-420,-380])
+      { x: -420,   z: -380,   r: 34, label: 'castle-siege' },
+      { x: -331.6, z: -448,   r: 4,  label: 'obsidian-rocks-1' },
+      { x: -513.5, z: -303.5, r: 5,  label: 'obsidian-rocks-2' },
+      { x: -321.4, z: -295,   r: 3,  label: 'crystal-cluster-1' },
+      { x: -518.6, z: -291.6, r: 3,  label: 'crystal-cluster-2' },
+      { x: -403,   z: -274.6, r: 3,  label: 'crystal-cluster-3' },
+      // SUBURB (center [540,40])
+      { x: 465,   z: 92.5, r: 20, label: 'bld-apartment-pod-block' },
+      { x: 517.5, z: -35,  r: 18, label: 'bld-inverted-cube-hab' },
+      { x: 607.5, z: 100,  r: 20, label: 'bld-neon-observatory-office' },
+      { x: 622.5, z: 10,   r: 19, label: 'bld-sea-terrace-spire-office' },
+      { x: 540,   z: 122.5,r: 16, label: 'bld-holo-market' },
+      // MEADOWFIELDS (center [400,400])
+      { x: 400,   z: 400,   r: 24, label: 'homes-mushroom-pods-1' },
+      { x: 315,   z: 468,   r: 14, label: 'homes-mushroom-pods-2' },
+      { x: 476.5, z: 328.6, r: 13, label: 'homes-mushroom-pods-3' },
+    ],
+
     biomeAt: function (x, z) {
       var best = this.biomes[0], bd = Infinity;
       for (var i = 0; i < this.biomes.length; i++) {
