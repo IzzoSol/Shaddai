@@ -226,7 +226,7 @@ function openTacticsFromPub(){
 <!-- SHADDAI ARCADE — games as venues with sparks entry fees. The sparks ledger is the
      SAME one the 3D world uses (shd.sparks3d, same-origin localStorage): playing the
      2D arcade and riding hoverboards in 3D earns/spends ONE balance. Games that
-     postMessage({shdGame, shdScore}) get automatic score payouts. -->
+     postMessage({shdGame, shdScore, shdWin}) get one capped payout per paid entry. -->
 <script>
 window.shdSparks = {
   get: function(){ try { return parseInt(localStorage.getItem('shd.sparks3d')||'0',10)||0; } catch(e){ return 0; } },
@@ -256,27 +256,53 @@ function openArcade(){
   el.classList.remove('hide');
 }
 function closeArcade(){ var el=document.getElementById('arcadePanel'); if(el){ el.style.display='none'; el.classList.add('hide'); } }
+// score → sparks per game: pay = min(cap, score*rate) + (win ? winBonus : 0). One claim per paid entry.
+var ARCADE_PAY = {
+  skate:      { rate:1,     cap:60, winBonus:0  },   // skate posts 60/20/0 itself
+  basketball: { rate:1,     cap:30, winBonus:15 },   // points scored
+  dodgeball:  { rate:0.005, cap:30, winBonus:15 },   // ~5000 pts/match
+  sigil:      { rate:0.005, cap:35, winBonus:10 },   // ~4000 pts/run
+};
+function arcadePayout(id, score, win){
+  var r = ARCADE_PAY[id]; if(!r) return 0;
+  var s = Math.max(0, +score || 0);
+  return Math.min(r.cap, Math.round(s * r.rate)) + (win ? r.winBonus : 0);
+}
 function playArcade(id){
   var g = ARCADE_GAMES.find(function(x){ return x.id===id; }); if(!g) return;
   if(window.shdSparks.get() < g.fee){ toast('Not enough Sparks — earn more in the 3D world or at the docks'); return; }
   window.shdSparks.add(-g.fee);
-  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Report a win to claim the pot.');
+  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Finish a match to get paid.');
   closeArcade();
+  window.__arcadeSession = { id:g.id, claimed:false };
   var ov = document.getElementById('arcadeOverlay');
   if(ov){ ov.style.display='flex'; var f=document.getElementById('arcadeFrame'); if(f) f.src=g.file; }
   var T = (window.__arcadePot = window.__arcadePot||{}); T[g.id] = (T[g.id]||0) + g.fee;
 }
 function closeArcadeGame(){
+  window.__arcadeSession = null;
   var ov = document.getElementById('arcadeOverlay');
   if(ov){ ov.style.display='none'; var f=document.getElementById('arcadeFrame'); if(f) f.src='about:blank'; }
 }
-// future-proof score bridge: any game that reports a score gets an automatic payout
+// SCORE BRIDGE: games post {shdGame, shdScore, shdWin} on match end. Accepted only from the
+// arcade iframe, same origin, for the game that was paid for, once per entry.
+function arcadeClaim(d){
+  var S = window.__arcadeSession;
+  if(!S || S.claimed || S.id !== d.shdGame) return 0;
+  S.claimed = true;
+  var pay = arcadePayout(d.shdGame, d.shdScore, !!d.shdWin);
+  if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + (d.shdWin ? ' — WIN' : '') + ' (score ' + d.shdScore + ')'); }
+  else toast(String(d.shdGame).toUpperCase() + ' over — no payout this run');
+  return pay;
+}
 addEventListener('message', function(ev){
   try {
+    var f = document.getElementById('arcadeFrame');
+    if(!f || ev.source !== f.contentWindow || ev.origin !== location.origin) return;
     var d = typeof ev.data==='string' ? JSON.parse(ev.data) : ev.data;
-    if(!d || !d.shdGame) return;
-    var pay = Math.round((d.shdScore||0) * 0.5);            // score → sparks at half rate
-    if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + ' — scored ' + d.shdScore); }
+    if(!d) return;
+    if(d.shdGame) arcadeClaim(d);
+    else if(d.type==='exitGame' || d.type==='shaddai-close-panel') closeArcadeGame();
   } catch(e){}
 });
 </script>
