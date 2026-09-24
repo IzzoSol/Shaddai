@@ -224,13 +224,14 @@ function openTacticsFromPub(){
 </script>
 
 <!-- SHADDAI ARCADE — games as venues with sparks entry fees. The sparks ledger is the
-     SAME one the 3D world uses (shd.sparks3d, same-origin localStorage): playing the
+     SAME one the 3D world + dashboard use (sparks-ledger.js → shaddai.sparks): playing the
      2D arcade and riding hoverboards in 3D earns/spends ONE balance. Games that
      postMessage({shdGame, shdScore, shdWin}) get one capped payout per paid entry. -->
+<script src="sparks-ledger.js"></script>
 <script>
 window.shdSparks = {
-  get: function(){ try { return parseInt(localStorage.getItem('shd.sparks3d')||'0',10)||0; } catch(e){ return 0; } },
-  add: function(n){ try { localStorage.setItem('shd.sparks3d', String(window.shdSparks.get()+n)); } catch(e){} return window.shdSparks.get(); },
+  get: function(){ return window.ShdSparks.get(); },
+  add: function(n, note){ return window.ShdSparks.add(n, 'arcade', note); },
 };
 var ARCADE_GAMES = [
   { id:'skate',        name:'SKATE JAM',    file:'/games/skate.html',            fee:20, desc:'Hoverboard trick runs' },
@@ -271,7 +272,7 @@ function arcadePayout(id, score, win){
 function playArcade(id){
   var g = ARCADE_GAMES.find(function(x){ return x.id===id; }); if(!g) return;
   if(window.shdSparks.get() < g.fee){ toast('Not enough Sparks — earn more in the 3D world or at the docks'); return; }
-  window.shdSparks.add(-g.fee);
+  window.shdSparks.add(-g.fee, 'Arcade entry: ' + g.name);
   toast('⚡−'+g.fee+' — ' + g.name + ' starting. Finish a match to get paid.');
   closeArcade();
   window.__arcadeSession = { id:g.id, claimed:false };
@@ -291,7 +292,7 @@ function arcadeClaim(d){
   if(!S || S.claimed || S.id !== d.shdGame) return 0;
   S.claimed = true;
   var pay = arcadePayout(d.shdGame, d.shdScore, !!d.shdWin);
-  if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + (d.shdWin ? ' — WIN' : '') + ' (score ' + d.shdScore + ')'); }
+  if(pay > 0){ window.shdSparks.add(pay, 'Arcade payout: ' + d.shdGame); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + (d.shdWin ? ' — WIN' : '') + ' (score ' + d.shdScore + ')'); }
   else toast(String(d.shdGame).toUpperCase() + ' over — no payout this run');
   return pay;
 }

@@ -8,12 +8,15 @@ const port = process.argv[2] || 8790;
   else { const { chromium } = require('playwright'); b = await chromium.launch(); p = await b.newPage(); }
   const errs = [];
   p.on('pageerror', (e) => errs.push('PAGEERR ' + String(e.message).slice(0, 130)));
+  // seed a legacy 3D-fork balance: sparks-ledger.js must fold it into the shared wallet once
+  await p.goto(`http://localhost:${port}/sparks-ledger.js`);
+  await p.evaluate(() => { localStorage.clear(); localStorage.setItem('shaddai.sparks', '70'); localStorage.setItem('shd.sparks3d', '30'); });
   await p.goto(`http://localhost:${port}/game.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await sleep(2500);
   const r = await p.evaluate(async () => {
     const w = (ms) => new Promise((r) => setTimeout(r, ms));
-    localStorage.setItem('shd.sparks3d', '100');
     const out = {};
+    out.migrated = shdSparks.get() === 100 && localStorage.getItem('shd.sparks3d') === null && localStorage.getItem('shd_sparks') === '100';
     // 1. forged message from the top window (not the iframe) must be ignored
     window.postMessage({ shdGame: 'dodgeball', shdScore: 99999, shdWin: true }, location.origin);
     await w(150); out.forgedIgnored = shdSparks.get() === 100;
@@ -33,7 +36,7 @@ const port = process.argv[2] || 8790;
     return out;
   });
   console.log(JSON.stringify(r));
-  const ok = r.forgedIgnored && r.afterFee === 90 && r.afterWin === 131 && r.dupeIgnored && r.closed;
+  const ok = r.migrated && r.forgedIgnored && r.afterFee === 90 && r.afterWin === 131 && r.dupeIgnored && r.closed;
   console.log(ok ? 'PASS' : 'FAIL', '| ERR:', errs.slice(0, 5).join(' | ') || 'none');
   await b.close(); process.exit(ok ? 0 : 1);
 })().catch((e) => { console.log('FAIL', String(e).slice(0, 250)); process.exit(1); });
