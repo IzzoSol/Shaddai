@@ -1,0 +1,6 @@
+Hover Skiff (veh-skiff)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- optional look ref; current GLB is the shape baseline

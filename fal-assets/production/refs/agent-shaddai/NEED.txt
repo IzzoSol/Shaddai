@@ -1,0 +1,7 @@
+SHADDAI — The Source (agent-shaddai)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- FULL-BODY front reference of SHADDAI in the CURRENT council style (the other 6 are portrait-style realistic humans in sci-fi gear) — nothing exists; the rigged render is a bare gold figure with no design source
+- optional: back view / cape detail

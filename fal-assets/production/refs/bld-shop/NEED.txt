@@ -1,0 +1,6 @@
+City Shop (bld-shop)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- ONE image of a futuristic storefront/mall you like (the WORLD-REF-MAP images were pasted in chat, never saved — drop originals here)

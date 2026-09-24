@@ -1,0 +1,6 @@
+NEXUS — Architect (agent-nexus)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- FULL-BODY reference (have portrait only — body, legs, boots are currently guessed by the generator = the deformity source)

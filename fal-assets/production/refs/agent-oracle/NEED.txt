@@ -1,0 +1,6 @@
+ORACLE — Seer (agent-oracle)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- FULL-BODY reference (portrait only)

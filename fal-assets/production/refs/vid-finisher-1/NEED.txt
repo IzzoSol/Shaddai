@@ -1,0 +1,6 @@
+Finisher cutscene demo 1 (vid-finisher-1)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- 2 approved agent concepts

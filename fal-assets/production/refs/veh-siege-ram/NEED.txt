@@ -1,0 +1,6 @@
+Siege Ram (veh-siege-ram)
+Drop reference images (png/jpg/webp) in this folder, then run:
+  node fal-assets/production/preflight.mjs
+
+What this asset needs:
+- siege ram reference + confirm siege mode is being built
