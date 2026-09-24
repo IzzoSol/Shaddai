@@ -96,6 +96,7 @@ pre{white-space:pre-wrap;background:#080c11;border:1px solid var(--line);border-
     var r = a.refs||{}, have = r.have||[], need = r.need||[];
     var th = have.map(function(p){ return isImg(p) ? '<figure><img loading="lazy" src="'+esc(src(p))+'" alt=""><figcaption>ref</figcaption></figure>' : ''; }).join('');
     if(!have.length) th += '<div class="empty">NO REF<br>drop into<br>production/<br>refs/'+esc(a.id)+'/</div>';
+    (a.concepts||[]).forEach(function(p){ th += '<figure><img loading="lazy" src="'+esc(src(p))+'" alt="" style="outline:2px solid var(--cy)"><figcaption style="color:var(--cy)">HF concept</figcaption></figure>'; });
     if(r.current_state && isImg(r.current_state)) th += '<figure><img loading="lazy" src="'+esc(src(r.current_state))+'" alt=""><figcaption>current</figcaption></figure>';
     if(r.legacy_concept) th += '<figure><img loading="lazy" src="'+esc(src(r.legacy_concept))+'" alt="" style="opacity:.55"><figcaption>legacy</figcaption></figure>';
     var needs = need.length ? '<ul class="need">'+need.map(function(n){ return '<li'+(/^optional/i.test(n)?' class="need opt"':'')+'>'+esc(n)+'</li>'; }).join('')+'</ul>' : '';

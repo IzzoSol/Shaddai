@@ -35,6 +35,11 @@ for (const a of M.assets) {
   a.refs.have = [...new Set([...(a.refs.have || []), ...found])];
   a.refs.dropped = found.length;
 }
+// HF concept outputs (hf-concept.py) show on the board for owner approval
+for (const a of M.assets) {
+  const dir = join(HERE, 'concepts', a.id);
+  if (existsSync(dir)) a.concepts = readdirSync(dir).filter((f) => /\.(png|jpe?g|webp)$/i.test(f)).sort().map((f) => `production/concepts/${a.id}/${f}`);
+}
 
 const spentBy = (pred) => ledger.entries.filter(pred).reduce((s, e) => s + e.usd, 0);
 const totalSpent = () => spentBy(() => true);
@@ -58,7 +63,7 @@ function validate() {
       if (p && !existsSync(refPath(p)) && !existsSync(resolve(FAL, '..', p))) problems.push(`${a.id}: ${k} not on disk ${p}`);
     }
     const need = (a.refs && a.refs.need) || [];
-    if (a.status !== 'needs-ref' && RANK[a.status] < RANK['concept-approved'] && have.length === 0 && need.some((n) => !/^optional/i.test(n)))
+    if (a.status !== 'needs-ref' && a.status !== 'cut' && RANK[a.status] < RANK['concept-approved'] && have.length === 0 && need.some((n) => !/^optional/i.test(n)))
       problems.push(`${a.id}: status ${a.status} but has no refs and still needs: ${need[0]}`);
     rows.push({ id: a.id, family: a.family, status: a.status, refsHave: have.length, refsNeed: need.filter((n) => !/^optional/i.test(n)).length });
   }

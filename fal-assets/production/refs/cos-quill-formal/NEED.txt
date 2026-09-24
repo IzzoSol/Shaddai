@@ -1,7 +1,7 @@
-SHADDAI formal outfit (cos-shaddai-formal)
+QUILL formal outfit (cos-quill-formal)
 Drop reference images (png/jpg/webp) in this folder, then run:
   node fal-assets/production/preflight.mjs
 
 What this asset needs:
-- approved agent-shaddai T-pose concept (produced by the agent canary)
+- approved agent-quill T-pose concept (produced by the agent canary)
 - outfit style ref
