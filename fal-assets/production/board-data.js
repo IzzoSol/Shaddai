@@ -23,11 +23,12 @@ window.FAL_BOARD = {
    "building": "exterior shell, ONE clearly visible ground-level doorway 2.2m x 1.2m facing camera, readable at 128px, futuristic only (no normal houses/roofs/barns). Interiors are built in CODE with existing fur-*.glb (image-to-3D cannot make usable interiors — do not pay for them).",
    "vehicle": "side-3/4 view, whole hull visible, open cockpit/deck where the pilot sits (seat anchor is set in code), no people, no water/ground in frame.",
    "cosmetic": "image-EDIT of the approved agent T-pose concept only — same pose, same body, only the outfit changes. Theme = ART-PRINT TECHWEAR (famous-art-movement print on oversized streetwear/cargo, gold hardware, chunky high-tops) — refs/world/WORLD-REF-MAP.md batch 5.",
-   "video": "image-to-video from two APPROVED agent concepts; 5s; no text."
+   "video": "image-to-video from two APPROVED agent concepts; 5s; no text.",
+   "prop": "single isolated prop, readable silhouette at 128px, sized for a 1.8m player, futuristic only."
   },
   "families": {
    "agent": {
-    "cap_usd": 35,
+    "cap_usd": 26,
     "canary": "agent-quill",
     "order": 1
    },
@@ -51,6 +52,11 @@ window.FAL_BOARD = {
     "canary": "vid-finisher-1",
     "order": 5,
     "only_if_reserve_intact": true
+   },
+   "prop": {
+    "cap_usd": 9,
+    "canary": "prop-crate",
+    "order": 2
    }
   },
   "pipelines": {
@@ -137,6 +143,23 @@ window.FAL_BOARD = {
      "cap_usd": 5,
      "gate": "reserve >= $10 still intact"
     }
+   ],
+   "prop": [
+    {
+     "step": "concept",
+     "what": "text -> isolated prop front image on HF",
+     "model": "HF black-forest-labs/FLUX.1-dev (hf-concept.py)",
+     "cap_usd": 0,
+     "gate": "OWNER approves the PNG",
+     "billing": "hf"
+    },
+    {
+     "step": "mesh",
+     "what": "approved PNG -> textured GLB",
+     "model": "fal-ai/hyper3d/rodin/v2 | fal-ai/hunyuan3d/v2",
+     "cap_usd": 1.5,
+     "gate": "scale-check vs 1.8m player; <=1.2MB"
+    }
    ]
   },
   "assets": [
@@ -210,7 +233,9 @@ window.FAL_BOARD = {
      "need": [],
      "dropped": 1
     },
-    "defects": "OWNER: note issues"
+    "defects": "OWNER: note issues",
+    "batch": "hub10",
+    "concepts": []
    },
    {
     "id": "agent-oracle",
@@ -308,7 +333,7 @@ window.FAL_BOARD = {
     "family": "building",
     "name": "City Shop",
     "canary": true,
-    "status": "needs-ref",
+    "status": "ready-concept",
     "slot": {
      "file": "public/world-layout.js (new realmColliders row) + 3D plaza",
      "note": "mirror 2D city.js MALL tryPlace(col4,row40)"
@@ -319,10 +344,10 @@ window.FAL_BOARD = {
     "silhouette": "wide glass front, cantilevered canopy",
     "refs": {
      "have": [],
-     "need": [
-      "ONE image of a futuristic storefront/mall you like (the WORLD-REF-MAP images were pasted in chat, never saved — drop originals here)"
-     ]
-    }
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    },
+    "batch": "hub10"
    },
    {
     "id": "bld-forge",
@@ -348,7 +373,7 @@ window.FAL_BOARD = {
     "id": "bld-arcade",
     "family": "building",
     "name": "SHADDAI Arcade",
-    "status": "needs-ref",
+    "status": "ready-concept",
     "slot": {
      "file": "public/world-layout.js + 3D plaza",
      "note": "mirror 2D ARCADE (west of HQ, commit 4b4949e); E = arcade overlay (skate door)"
@@ -359,10 +384,10 @@ window.FAL_BOARD = {
     "silhouette": "marquee sign + ramp/skate bowl edge visible",
     "refs": {
      "have": [],
-     "need": [
-      "arcade/skate-venue exterior reference"
-     ]
-    }
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    },
+    "batch": "hub10"
    },
    {
     "id": "bld-bank",
@@ -440,10 +465,10 @@ window.FAL_BOARD = {
     "refs": {
      "have": [],
      "current_state": "public/assets/models/ocean-skiff.glb",
-     "need": [
-      "optional look ref; current GLB is the shape baseline"
-     ]
-    }
+     "need": []
+    },
+    "batch": "hub10",
+    "silhouette": "sleek 12m hover-skiff, open cockpit deck for one standing pilot, twin rear thruster pods, low wedge hull"
    },
    {
     "id": "veh-superyacht",
@@ -573,6 +598,120 @@ window.FAL_BOARD = {
       "2 approved agent concepts"
      ]
     }
+   },
+   {
+    "id": "hub-dock",
+    "family": "prop",
+    "name": "Crystal Sea dock",
+    "status": "ready-concept",
+    "batch": "hub10",
+    "canary": false,
+    "slot": {
+     "file": "public/world-ocean.js harbor (next to ocean-harbor-hub)"
+    },
+    "dims": "12 x 4m",
+    "palette": "style_lock",
+    "silhouette": "floating dock segment 12m long x 4m wide, obsidian deck plates with gold edge trim, emerald light strips, mooring posts with cyan caps",
+    "refs": {
+     "have": [],
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    }
+   },
+   {
+    "id": "hub-bridge-span",
+    "family": "prop",
+    "name": "Light-bridge span",
+    "status": "ready-concept",
+    "batch": "hub10",
+    "canary": false,
+    "slot": {
+     "file": "light-trail roads (hub -> realms), ref refs/world/hub-and-8-realms-floating.jpg"
+    },
+    "dims": "20 x 5m",
+    "palette": "style_lock",
+    "silhouette": "one straight bridge span 20m long x 5m wide, obsidian deck with glowing emerald light-trail center line, gold hexagon railing posts, cyan hologram rails",
+    "refs": {
+     "have": [],
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    }
+   },
+   {
+    "id": "prop-crate",
+    "family": "prop",
+    "name": "Cargo crate",
+    "status": "ready-concept",
+    "batch": "hub10",
+    "canary": true,
+    "slot": {
+     "file": "plaza/dock/market scatter (MASTER-PLAN §3 storage-crate)"
+    },
+    "dims": "1.2m cube",
+    "palette": "style_lock",
+    "silhouette": "sci-fi cargo crate 1.2m cube, brushed obsidian metal, gold corner brackets, emerald seam lights, small cyan status panel",
+    "refs": {
+     "have": [],
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    }
+   },
+   {
+    "id": "prop-neon-tree",
+    "family": "prop",
+    "name": "Neon tree",
+    "status": "ready-concept",
+    "batch": "hub10",
+    "canary": false,
+    "slot": {
+     "file": "plaza + road lining (MASTER-PLAN §3 neon-tree)"
+    },
+    "dims": "6m tall",
+    "palette": "style_lock",
+    "silhouette": "futuristic tree 6m tall, dark metallic trunk, canopy of emerald bioluminescent leaves with cyan glow veins",
+    "refs": {
+     "have": [],
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    }
+   },
+   {
+    "id": "hub-door",
+    "family": "prop",
+    "name": "Door module",
+    "status": "ready-concept",
+    "batch": "hub10",
+    "canary": false,
+    "slot": {
+     "file": "every enterable building (INTERIOR LAW door size)"
+    },
+    "dims": "2.2 x 1.2m opening",
+    "palette": "style_lock",
+    "silhouette": "standalone door frame module 2.2m tall x 1.2m wide opening inside a 3.4 x 2.8m obsidian frame, gold sacred-geometry arch, emerald energy field in the opening",
+    "refs": {
+     "have": [],
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    }
+   },
+   {
+    "id": "prop-signpost",
+    "family": "prop",
+    "name": "Venue sign",
+    "status": "ready-concept",
+    "batch": "hub10",
+    "canary": false,
+    "slot": {
+     "file": "venue entrances + road junctions (MASTER-PLAN §3 signpost)"
+    },
+    "dims": "3.5m tall",
+    "palette": "style_lock",
+    "silhouette": "tall standing holographic signpost 3.5m, obsidian pole, gold hexagon cap, two cyan blank holo panels (no text)",
+    "refs": {
+     "have": [],
+     "need": [],
+     "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
+    }
    }
   ]
  },
@@ -634,9 +773,9 @@ window.FAL_BOARD = {
    {
     "id": "bld-shop",
     "family": "building",
-    "status": "needs-ref",
+    "status": "ready-concept",
     "refsHave": 0,
-    "refsNeed": 1
+    "refsNeed": 0
    },
    {
     "id": "bld-forge",
@@ -648,9 +787,9 @@ window.FAL_BOARD = {
    {
     "id": "bld-arcade",
     "family": "building",
-    "status": "needs-ref",
+    "status": "ready-concept",
     "refsHave": 0,
-    "refsNeed": 1
+    "refsNeed": 0
    },
    {
     "id": "bld-bank",
@@ -728,6 +867,48 @@ window.FAL_BOARD = {
     "status": "needs-ref",
     "refsHave": 0,
     "refsNeed": 1
+   },
+   {
+    "id": "hub-dock",
+    "family": "prop",
+    "status": "ready-concept",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hub-bridge-span",
+    "family": "prop",
+    "status": "ready-concept",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-crate",
+    "family": "prop",
+    "status": "ready-concept",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-neon-tree",
+    "family": "prop",
+    "status": "ready-concept",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hub-door",
+    "family": "prop",
+    "status": "ready-concept",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-signpost",
+    "family": "prop",
+    "status": "ready-concept",
+    "refsHave": 0,
+    "refsNeed": 0
    }
   ],
   "worst": {
@@ -735,7 +916,7 @@ window.FAL_BOARD = {
     "perAsset": 4.2,
     "n": 6,
     "worst": 25.2,
-    "cap": 35
+    "cap": 26
    },
    "building": {
     "perAsset": 2.6,
@@ -760,9 +941,15 @@ window.FAL_BOARD = {
     "n": 2,
     "worst": 10,
     "cap": 10
+   },
+   "prop": {
+    "perAsset": 1.5,
+    "n": 6,
+    "worst": 9,
+    "cap": 9
    }
   }
  },
  "spent": 0,
- "builtAt": "2026-09-24T15:19:24.380Z"
+ "builtAt": "2026-09-24T15:35:01.202Z"
 };

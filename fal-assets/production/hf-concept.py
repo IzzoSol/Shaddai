@@ -18,7 +18,37 @@ from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FAL = os.path.dirname(HERE)
-MODEL = "black-forest-labs/FLUX.1-Kontext-dev"
+MODEL = "black-forest-labs/FLUX.1-Kontext-dev"      # image edit (has a ref)
+T2I_MODEL = "black-forest-labs/FLUX.1-dev"          # text only (no ref)
+
+
+def tokens():
+    """HF_TOKENS (comma-separated) > HF_TOKEN > ~/.shaddai/hf_tokens.txt (one per line). Never printed."""
+    out = [t.strip() for t in os.environ.get("HF_TOKENS", "").split(",") if t.strip()]
+    if os.environ.get("HF_TOKEN"): out.append(os.environ["HF_TOKEN"].strip())
+    f = os.path.join(os.path.expanduser("~"), ".shaddai", "hf_tokens.txt")
+    if os.path.exists(f): out += [l.strip() for l in open(f, encoding="utf-8") if l.strip().startswith("hf_")]
+    seen = []
+    for t in out:
+        if t not in seen: seen.append(t)
+    return seen or [None]   # None = huggingface_hub's own `hf auth login` cache
+
+
+def call_with_rotation(fn):
+    """Try each token; move on for out-of-credit / rate-limit / no-scope. All rate-limited = stop."""
+    toks, limited = tokens(), 0
+    for i, t in enumerate(toks):
+        try:
+            return fn(t), i + 1
+        except Exception as e:
+            code = getattr(getattr(e, "response", None), "status_code", None)
+            msg = str(e).replace(t or "", "hf_***")[:160]
+            if code in (402, 403, 429) or "credit" in msg.lower() or "rate" in msg.lower():
+                limited += code == 429
+                print(f"  key #{i + 1}: HTTP {code} — trying next key")
+                continue
+            raise
+    sys.exit("STOP: every HF key is out of credit or rate-limited" if limited == len(toks) else "STOP: no HF key could run this (see codes above)")
 
 # Verbatim from fal-assets/forge.mjs POSE — the wording that survives auto-rigging. Do not reword.
 POSE = ("standing in a strict scarecrow T-POSE facing the camera dead-on: "
@@ -72,7 +102,7 @@ def build_prompt(M, a, ref_is_portrait):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("id")
-    ap.add_argument("--n", type=int, default=2, help="variants per run (default 2)")
+    ap.add_argument("--n", type=int, default=1, help="variants per run (default 1 — one image at a time)")
     ap.add_argument("--provider", default="wavespeed", help="HF provider: wavespeed | replicate | fal-ai")
     ap.add_argument("--go", action="store_true")
     ar = ap.parse_args()
@@ -84,19 +114,26 @@ def main():
     if a["status"] != "ready-concept":
         sys.exit(f"BLOCKED: {ar.id} is '{a['status']}' — concepts only run at 'ready-concept'")
     ref = pick_ref(a)
-    if not ref:
-        sys.exit(f"BLOCKED: {ar.id} has no reference image on disk")
-
     from PIL import Image
-    img = Image.open(ref).convert("RGB")
-    portrait = img.size[1] / img.size[0] < 1.3
-    prompt = build_prompt(M, a, portrait)
+    if ref:
+        img = Image.open(ref).convert("RGB")
+        portrait = img.size[1] / img.size[0] < 1.3
+        prompt = build_prompt(M, a, portrait)
+    elif a["family"] == "agent":
+        sys.exit(f"BLOCKED: {ar.id} is an agent with no reference image on disk")
+    else:
+        img, portrait = None, False
+        prompt = " ".join([M["style_lock"], M["family_rules"][a["family"]], M["shot"],
+                           f"Subject: {a.get('silhouette', a['name'])}.", f"Scale: {a.get('dims', '')}.",
+                           "NEGATIVE: " + M["negative"]])
 
     ledger_p = os.path.join(HERE, "hf-ledger.json")
     ledger = json.load(open(ledger_p, encoding="utf-8")) if os.path.exists(ledger_p) else {"entries": []}
     runs = [e for e in ledger["entries"] if e["id"] == ar.id]
-    print(f"asset   {ar.id} ({a['name']})\nref     {os.path.relpath(ref, FAL)}  {img.size} {'PORTRAIT' if portrait else 'full-body'}")
-    print(f"model   {MODEL} via HF provider '{ar.provider}' — billed to HUGGING FACE, not fal")
+    model = MODEL if img is not None else T2I_MODEL
+    print(f"asset   {ar.id} ({a['name']})")
+    print("ref     " + (f"{os.path.relpath(ref, FAL)}  {img.size} {'PORTRAIT' if portrait else 'full-body'}" if img is not None else "none — text-to-image"))
+    print(f"model   {model} via HF provider '{ar.provider}' — billed to HUGGING FACE, not fal")
     print(f"runs    {len(runs)} previous --go run(s) of max 2\nprompt  {prompt}\n")
     if len(runs) >= 2:
         sys.exit("BLOCKED: 2 runs already — the prompt/ref is wrong. Change it, then clear this asset's hf-ledger entries by hand.")
@@ -105,18 +142,22 @@ def main():
         return
 
     from huggingface_hub import InferenceClient
-    img.thumbnail((1024, 1024))
-    buf = io.BytesIO(); img.save(buf, format="PNG")
-    client = InferenceClient(provider=ar.provider)
+    if img is not None:
+        img.thumbnail((1024, 1024))
+        buf = io.BytesIO(); img.save(buf, format="PNG")
+        gen = lambda t: InferenceClient(provider=ar.provider, api_key=t).image_to_image(buf.getvalue(), prompt=prompt, model=model)
+    else:
+        gen = lambda t: InferenceClient(provider=ar.provider, api_key=t).text_to_image(prompt, model=model, width=1024, height=1024)
     out_dir = os.path.join(HERE, "concepts", ar.id); os.makedirs(out_dir, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     saved = []
     for i in range(ar.n):
-        res = client.image_to_image(buf.getvalue(), prompt=prompt, model=MODEL)
+        res, keyno = call_with_rotation(gen)
+        print(f"  generated with key #{keyno}")
         p = os.path.join(out_dir, f"{ar.id}-hf-{stamp}-{i + 1}.png"); res.save(p); saved.append(os.path.relpath(p, FAL))
         print("saved", saved[-1])
-    ledger["entries"].append({"at": stamp, "id": ar.id, "provider": ar.provider, "model": MODEL, "n": ar.n,
-                              "ref": os.path.relpath(ref, FAL), "files": saved})
+    ledger["entries"].append({"at": stamp, "id": ar.id, "provider": ar.provider, "model": model, "n": ar.n,
+                              "ref": os.path.relpath(ref, FAL) if ref else None, "files": saved})
     json.dump(ledger, open(ledger_p, "w", encoding="utf-8"), indent=2)
     print("\nNext: node fal-assets/production/preflight.mjs  (board shows the concepts) → owner approves → status concept-approved")
 

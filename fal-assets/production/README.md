@@ -18,3 +18,14 @@ to generate, its references, its code slot, the composed prompt, and the $ gates
 agents (canary SHADDAI) → buildings (canary shop) → vehicles (canary hovercar) →
 cosmetics (canary SHADDAI formal) → finisher videos (last, only if reserve intact).
 Caps are policy ceilings — confirm live prices on fal.ai/models before `--go`.
+
+## Hub 10 (owner plan 2026-09-24) — HF fronts tonight, fal on the best 3 only
+Keys: `HF_TOKENS` (comma-separated) env, or `hf auth login`, or `~/.shaddai/hf_tokens.txt`
+(one per line, never committed). The script rotates keys on 402/403/429 and stops if all are limited.
+One image at a time, in this order:
+```
+for id in prop-crate hub-door prop-signpost prop-neon-tree hub-bridge-span hub-dock veh-skiff bld-shop bld-arcade agent-zerox; do
+  python fal-assets/production/hf-concept.py $id --go || break
+done
+node fal-assets/production/preflight.mjs   # board shows every PNG → owner approves 3 → fal mesh on those 3 only
+```
