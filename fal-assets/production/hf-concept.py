@@ -104,6 +104,7 @@ def main():
     ap.add_argument("id")
     ap.add_argument("--n", type=int, default=1, help="variants per run (default 1 — one image at a time)")
     ap.add_argument("--provider", default="wavespeed", help="HF provider: wavespeed | replicate | fal-ai")
+    ap.add_argument("--model", default=None, help="override model (e.g. black-forest-labs/FLUX.1-schnell on nscale)")
     ap.add_argument("--go", action="store_true")
     ar = ap.parse_args()
 
@@ -130,7 +131,7 @@ def main():
     ledger_p = os.path.join(HERE, "hf-ledger.json")
     ledger = json.load(open(ledger_p, encoding="utf-8")) if os.path.exists(ledger_p) else {"entries": []}
     runs = [e for e in ledger["entries"] if e["id"] == ar.id]
-    model = MODEL if img is not None else T2I_MODEL
+    model = ar.model or (MODEL if img is not None else T2I_MODEL)
     print(f"asset   {ar.id} ({a['name']})")
     print("ref     " + (f"{os.path.relpath(ref, FAL)}  {img.size} {'PORTRAIT' if portrait else 'full-body'}" if img is not None else "none — text-to-image"))
     print(f"model   {model} via HF provider '{ar.provider}' — billed to HUGGING FACE, not fal")

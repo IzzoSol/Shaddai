@@ -347,7 +347,10 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
-    "batch": "hub10"
+    "batch": "hub10",
+    "concepts": [
+     "production/concepts/bld-shop/bld-shop-hf-20260924-154954-1.png"
+    ]
    },
    {
     "id": "bld-forge",
@@ -387,7 +390,10 @@ window.FAL_BOARD = {
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
     },
-    "batch": "hub10"
+    "batch": "hub10",
+    "concepts": [
+     "production/concepts/bld-arcade/bld-arcade-hf-20260924-155005-1.png"
+    ]
    },
    {
     "id": "bld-bank",
@@ -468,7 +474,10 @@ window.FAL_BOARD = {
      "need": []
     },
     "batch": "hub10",
-    "silhouette": "sleek 12m hover-skiff, open cockpit deck for one standing pilot, twin rear thruster pods, low wedge hull"
+    "silhouette": "sleek 12m hover-skiff, open cockpit deck for one standing pilot, twin rear thruster pods, low wedge hull",
+    "concepts": [
+     "production/concepts/veh-skiff/veh-skiff-hf-20260924-154941-1.png"
+    ]
    },
    {
     "id": "veh-superyacht",
@@ -616,7 +625,10 @@ window.FAL_BOARD = {
      "have": [],
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-    }
+    },
+    "concepts": [
+     "production/concepts/hub-dock/hub-dock-hf-20260924-154928-1.png"
+    ]
    },
    {
     "id": "hub-bridge-span",
@@ -635,7 +647,10 @@ window.FAL_BOARD = {
      "have": [],
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-    }
+    },
+    "concepts": [
+     "production/concepts/hub-bridge-span/hub-bridge-span-hf-20260924-154920-1.png"
+    ]
    },
    {
     "id": "prop-crate",
@@ -654,7 +669,10 @@ window.FAL_BOARD = {
      "have": [],
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-    }
+    },
+    "concepts": [
+     "production/concepts/prop-crate/prop-crate-hf-20260924-154718-1.png"
+    ]
    },
    {
     "id": "prop-neon-tree",
@@ -673,7 +691,10 @@ window.FAL_BOARD = {
      "have": [],
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-    }
+    },
+    "concepts": [
+     "production/concepts/prop-neon-tree/prop-neon-tree-hf-20260924-154912-1.png"
+    ]
    },
    {
     "id": "hub-door",
@@ -692,7 +713,10 @@ window.FAL_BOARD = {
      "have": [],
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-    }
+    },
+    "concepts": [
+     "production/concepts/hub-door/hub-door-hf-20260924-154856-1.png"
+    ]
    },
    {
     "id": "prop-signpost",
@@ -711,7 +735,10 @@ window.FAL_BOARD = {
      "have": [],
      "need": [],
      "note": "text-only (owner plan 2026-09-24): generated from the spec below; owner approves the PNG"
-    }
+    },
+    "concepts": [
+     "production/concepts/prop-signpost/prop-signpost-hf-20260924-154904-1.png"
+    ]
    }
   ]
  },
@@ -951,5 +978,5 @@ window.FAL_BOARD = {
   }
  },
  "spent": 0,
- "builtAt": "2026-09-24T15:35:01.202Z"
+ "builtAt": "2026-09-24T15:57:27.189Z"
 };
