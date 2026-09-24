@@ -11,8 +11,8 @@
 window.buildWorldTactics = function (opts) {
   opts = opts || {};
   var SPK = opts.sparks || {
-    get: function () { try { return parseInt(localStorage.getItem('shd.sparks3d') || '0', 10) || 0; } catch (e) { return 0; } },
-    add: function (n) { try { localStorage.setItem('shd.sparks3d', String(SPK.get() + n)); } catch (e) {} },
+    get: function () { return window.ShdSparks ? window.ShdSparks.get() : 0; },
+    add: function (n) { if (window.ShdSparks) window.ShdSparks.add(n, 'tactics', 'Colosseum tactics'); },
   };
   var TOURN = (function () { try { return JSON.parse(localStorage.getItem('shd.tourney') || '{"fightPool":0,"fightN":0,"skatePool":0,"skateN":0,"wins":0,"losses":0}'); } catch (e) { return { fightPool: 0, fightN: 0, skatePool: 0, skateN: 0, wins: 0, losses: 0 }; } })();
   function saveT() { try { localStorage.setItem('shd.tourney', JSON.stringify(TOURN)); } catch (e) {} }

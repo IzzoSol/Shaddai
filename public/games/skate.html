@@ -974,6 +974,8 @@ function initHubWorld() {
         const scoreLabel = { win: 'YOU WIN THE GAME OF SKATE', lose: 'YOU LOSE — S-K-A-T-E', push: 'PUSH — EVEN MATCH' }[res.settlement.score] || res.settlement.score;
         matchSpotEl.textContent = scoreLabel;
         btnLeaveMatch.hidden = false;
+        // SHADDAI arcade score bridge: win 60 / push 20 / lose 0 (parent caps + pays once)
+        try{ if(window.parent!==window) window.parent.postMessage({shdGame:'skate', shdScore:({ win: 60, push: 20 }[res.settlement.score] || 0), shdWin:res.settlement.score === 'win'}, location.origin); }catch(e){}
         if (res.settlement.score === 'win' && events.length) {
           btnLensClip.hidden = false;
           btnLensClip.disabled = false;

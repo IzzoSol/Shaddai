@@ -246,8 +246,9 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-ocean.js?v=20260921b"></script>
 <script src="/world-volcano.js?v=20260921b"></script>
 <script src="/world-realmprops.js?v=20260921b"></script>
-<script src="/world-actions.js?v=20260921c"></script>
-<script src="/world-tactics.js?v=20260923a"></script>
+<script src="/sparks-ledger.js?v=20260924a"></script>
+<script src="/world-actions.js?v=20260924a"></script>
+<script src="/world-tactics.js?v=20260924a"></script>
 <script src="/world-trails.js?v=20260921d"></script>
 <script src="/world-landmarks.js?v=20260921d"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
@@ -3950,7 +3951,7 @@ let worldTactics = null;
 try {
   if (window.buildWorldTactics) worldTactics = window.buildWorldTactics({
     sparks: { get: function(){ return veh && veh.sparks ? veh.sparks() : 0; },
-             add:  function(n){ try { localStorage.setItem('shd.sparks3d', String((parseInt(localStorage.getItem('shd.sparks3d')||'0',10)||0)+n)); } catch(e){} } },
+             add:  function(n){ if (window.ShdSparks) window.ShdSparks.add(n, 'tactics', 'Colosseum tactics'); } },
   });
 }catch(e){ console.warn('world-tactics init failed:', e && e.message); }
 

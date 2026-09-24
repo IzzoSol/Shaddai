@@ -1003,6 +1003,7 @@ function postScore(finalScore){
     apReport(win ? 1000+hp : hp, win);   // score = win?1000+remainingHP:remainingHP
   }
   try{ window.parent.postMessage({type:'shaddai-game-score', game:'dodgeball', score:finalScore}, '*'); }catch(e){}
+  try{ if(window.parent!==window) window.parent.postMessage({shdGame:'dodgeball', shdScore:finalScore, shdWin:!!G.victory}, location.origin); }catch(e){}   // SHADDAI arcade score bridge
   try{
     fetch('/api/leaderboard/dodgeball', {
       method:'POST', headers:{'Content-Type':'application/json'},
