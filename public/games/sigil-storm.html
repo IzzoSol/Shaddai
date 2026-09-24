@@ -854,7 +854,7 @@
     if(finalScore>G.best){ G.best=finalScore; saveBest(finalScore);
       document.getElementById("ovBest").textContent="✦ NEW BEST SIGIL ✦"; }
     else document.getElementById("ovBest").textContent="BEST  "+G.best.toLocaleString();
-    try{ window.parent.postMessage({type:"shaddai-game-score", game:"sigil-storm", score:finalScore, win:G.wave>3}, "*"); }catch(e){}
+    try{ window.parent.postMessage({type:"shaddai-game-score", game:"sigil-storm", score:finalScore}, "*"); }catch(e){}
     // Arcade-hub integration: register the run on the leaderboard (human plays too, not just autoplay).
     if(!AP.on){
       var won = G.wave>3;

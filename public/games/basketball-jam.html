@@ -2684,7 +2684,6 @@ function endGame() {
   // Clear any lingering center message so it doesn't overlap the card
   if (game.msgEl) { game.msgEl.style.opacity = '0'; game.msgTimer = 0; }
   document.getElementById('endscreen').classList.add('show');
-  try{ window.parent.postMessage({type:'shaddai-game-score', game:'basketball', score:game.scoreYou, win:game.scoreYou>game.scoreAI}, '*'); }catch(e){}
 }
 
 // ─────────────────────────────────────────────────────────────────

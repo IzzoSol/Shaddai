@@ -257,48 +257,23 @@ function playArcade(id){
   var g = ARCADE_GAMES.find(function(x){ return x.id===id; }); if(!g) return;
   if(window.shdSparks.get() < g.fee){ toast('Not enough Sparks — earn more in the 3D world or at the docks'); return; }
   window.shdSparks.add(-g.fee);
-  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Win to double your fee.');
+  toast('⚡−'+g.fee+' — ' + g.name + ' starting. Report a win to claim the pot.');
   closeArcade();
   var ov = document.getElementById('arcadeOverlay');
   if(ov){ ov.style.display='flex'; var f=document.getElementById('arcadeFrame'); if(f) f.src=g.file; }
-  var T = (window.__arcadePot = window.__arcadePot||{}); T[g.id] = g.fee;
+  var T = (window.__arcadePot = window.__arcadePot||{}); T[g.id] = (T[g.id]||0) + g.fee;
 }
 function closeArcadeGame(){
   var ov = document.getElementById('arcadeOverlay');
   if(ov){ ov.style.display='none'; var f=document.getElementById('arcadeFrame'); if(f) f.src='about:blank'; }
 }
-// SCORE BRIDGE — games report {type:'shaddai-game-score', game, score, win?} (or the
-// legacy {shdGame, shdScore}). Payout is ONE per paid entry, only from the arcade frame,
-// capped at 3x the fee so no game's score scale can print sparks. Win = 2x fee floor.
-var ARCADE_RATE = { skate:1, basketball:2, dodgeball:0.05, sigil:0.01 };
-function arcadeGameId(raw){
-  raw = String(raw||'').toLowerCase();
-  if(raw.indexOf('sigil')===0) return 'sigil';
-  if(raw.indexOf('basket')===0) return 'basketball';
-  return raw;
-}
-function arcadePayout(id, score, win){
-  var g = ARCADE_GAMES.find(function(x){ return x.id===id; }); if(!g) return 0;
-  var pay = Math.round((score||0) * (ARCADE_RATE[id]||0));
-  if(win) pay = Math.max(pay, g.fee*2);
-  return Math.max(0, Math.min(pay, g.fee*3));
-}
-window.arcadePayout = arcadePayout;
+// future-proof score bridge: any game that reports a score gets an automatic payout
 addEventListener('message', function(ev){
   try {
     var d = typeof ev.data==='string' ? JSON.parse(ev.data) : ev.data;
-    if(!d) return;
-    var raw = d.shdGame || (d.type==='shaddai-game-score' ? d.game : null);
-    if(!raw) return;
-    var f = document.getElementById('arcadeFrame');
-    if(!f || ev.source !== f.contentWindow) return;          // only the game we launched
-    var id = arcadeGameId(raw), T = window.__arcadePot || {};
-    if(!T[id]) return;                                       // no paid entry = no payout
-    T[id] = 0;                                               // one payout per entry
-    var score = +(d.shdScore!=null ? d.shdScore : d.score) || 0;
-    var pay = arcadePayout(id, score, !!d.win);
-    if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + id.toUpperCase() + ' — scored ' + score); }
-    else toast(id.toUpperCase() + ' over — no payout this run. Play again?');
+    if(!d || !d.shdGame) return;
+    var pay = Math.round((d.shdScore||0) * 0.5);            // score → sparks at half rate
+    if(pay > 0){ window.shdSparks.add(pay); toast('⚡+' + pay + ' from ' + String(d.shdGame).toUpperCase() + ' — scored ' + d.shdScore); }
   } catch(e){}
 });
 </script>
