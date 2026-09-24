@@ -83,6 +83,20 @@
       "step": "mesh",
       "usd": 0.225,
       "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from quill-pen.png"
+    },
+    {
+      "at": "2026-09-24T19:17:19.364Z",
+      "id": "agent-oracle",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
+    },
+    {
+      "at": "2026-09-24T19:23:47.368Z",
+      "id": "agent-oracle",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
     }
   ]
 }

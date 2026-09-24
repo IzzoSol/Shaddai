@@ -3,5 +3,10 @@
   "private": true,
   "type": "module",
   "description": "Offline bake: Quaternius UAL2 (CC0) clips -> per-frame bone directions for runtime direction retargeting",
-  "dependencies": { "three": "0.160.0" }
+  "dependencies": {
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "meshoptimizer": "^1.2.0",
+    "three": "0.160.0"
+  }
 }

@@ -236,7 +236,7 @@
       "id": "agent-oracle",
       "family": "agent",
       "name": "ORACLE — Seer",
-      "status": "concept-approved",
+      "status": "mesh-approved",
       "slot": {
         "file": "fal-assets/characters/oracle-council/",
         "note": "replace in place"
@@ -253,7 +253,8 @@
         "need": []
       },
       "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-oracle/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
-      "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")"
+      "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
+      "shipped": "public/assets/models/chars/oracle-v2.glb (+ -walk/-run); pedestal stripped by tools/ual/strip-pedestal.mjs; UAL2 moves verified in ual-lab"
     },
     {
       "id": "agent-turtle",

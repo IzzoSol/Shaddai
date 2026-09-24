@@ -29,7 +29,7 @@ window.FAL_BOARD = {
   "families": {
    "agent": {
     "cap_usd": 26,
-    "canary": "agent-quill",
+    "canary": "agent-oracle",
     "order": 1
    },
    "building": {
@@ -241,7 +241,7 @@ window.FAL_BOARD = {
     "id": "agent-oracle",
     "family": "agent",
     "name": "ORACLE — Seer",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "slot": {
      "file": "fal-assets/characters/oracle-council/",
      "note": "replace in place"
@@ -260,6 +260,7 @@ window.FAL_BOARD = {
      "dropped": 1
     },
     "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-oracle/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
+    "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
     "concepts": [
      "production/concepts/agent-oracle/agent-oracle-tpose-noweapon.png"
     ]
@@ -315,7 +316,7 @@ window.FAL_BOARD = {
     "id": "agent-pikadon",
     "family": "agent",
     "name": "PIKADON — Guardian",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "slot": {
      "file": "fal-assets/characters/pikadon-council/",
      "note": "replace in place"
@@ -334,6 +335,7 @@ window.FAL_BOARD = {
      "dropped": 1
     },
     "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-pikadon/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
+    "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
     "concepts": [
      "production/concepts/agent-pikadon/agent-pikadon-tpose-noweapon.png"
     ]
@@ -886,6 +888,20 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.225,
     "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from quill-pen.png"
+   },
+   {
+    "at": "2026-09-24T19:17:19.364Z",
+    "id": "agent-oracle",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
+   },
+   {
+    "at": "2026-09-24T19:23:47.368Z",
+    "id": "agent-oracle",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
    }
   ]
  },
@@ -916,7 +932,7 @@ window.FAL_BOARD = {
    {
     "id": "agent-oracle",
     "family": "agent",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 2,
     "refsNeed": 0
    },
@@ -937,7 +953,7 @@ window.FAL_BOARD = {
    {
     "id": "agent-pikadon",
     "family": "agent",
-    "status": "ready-concept",
+    "status": "concept-approved",
     "refsHave": 2,
     "refsNeed": 0
    },
@@ -1135,6 +1151,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 3.39,
- "builtAt": "2026-09-24T19:04:34.168Z"
+ "spent": 5.15,
+ "builtAt": "2026-09-24T19:23:47.393Z"
 };

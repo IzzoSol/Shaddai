@@ -241,7 +241,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
 <script src="/world-layout.js?v=20260921b"></script>
-<script src="/world-terrain.js?v=20260921b"></script>
+<script src="/world-terrain.js?v=20260924m"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
 <script src="/world-ocean.js?v=20260921b"></script>
 <script src="/world-volcano.js?v=20260921b"></script>
@@ -395,6 +395,7 @@ window.__worldBuilt = false;
   try{
     // Light/fast + things others depend on synchronously (agent placement + theme engine read terrain).
     if(L && window.buildWorldTerrain)  worldTerrain  = window.buildWorldTerrain(THREE, scene, L);
+    if(worldTerrain && window.__w3dDebug) window.__w3dDebug.terrain = worldTerrain;   // probe hook: heightAt sampling
     if(L && window.buildWorldBiomes)   worldBiomes   = window.buildWorldBiomes(THREE, scene, L);
     // FULL MAP realms (2026-09-21): CRYSTAL SEA + EMBERFALL volcano + darkforest/suburb/
     // meadow props. One shared GLTFLoader with BOTH decoders (the model pack is meshopt).
@@ -4096,8 +4097,17 @@ function animate(){
     const _acc = 1 - Math.exp(-14*dt);                          // ~14/s: responsive but smooth (frame-rate independent)
     _vel.x += (_targetVel.x - _vel.x) * _acc;
     _vel.z += (_targetVel.z - _vel.z) * _acc;
+    const _px0 = playerPos.x, _pz0 = playerPos.z;
     playerPos.x += _vel.x * dt;
     playerPos.z += _vel.z * dt;
+    // CLIMB LIMIT (mountain ring only, R 370-530): slopes steeper than ~40° block the move, so the passes
+    // are the real routes between realms. City/realm ground, interiors, lifts and flying craft are untouched.
+    { const _r = Math.hypot(playerPos.x, playerPos.z);
+      if (_r > 370 && _r < 530 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
+        const _h0 = worldTerrain.heightAt(_px0, _pz0), _h1 = worldTerrain.heightAt(playerPos.x, playerPos.z);
+        const _run = Math.hypot(playerPos.x - _px0, playerPos.z - _pz0), _flying = veh.mode && veh.baseY(_h1) > _h1 + 2;
+        if (!_flying && _run > 1e-4 && (_h1 - _h0) / _run > 0.84) { playerPos.x = _px0; playerPos.z = _pz0; _vel.x *= -0.2; _vel.z *= -0.2; }
+      } }
     veh.flyControl(veh.speed(11), dt);                          // VEHICLE-HOOK: craft up/down (Space/Shift)
     if(bikeMode){ trailPos.push(playerPos.x, 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
     // Inside a building interior the player is teleported far off-map (rooms at x≈6000) — skip the

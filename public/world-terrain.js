@@ -21,7 +21,8 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
   // (~9 samples of the ~70u shortest terrain wave) — silhouette unchanged.
   // heightAt() is a SEPARATE analytic function — its VALUES are not affected.
   const SEGS = 190;          // grid resolution (visual mesh only)
-  const MAX_H = 18;          // FULL MAP: 8→18 — the mountain ring between realms needs headroom
+  const MAX_H = 64;          // MOUNTAINS v2: 18→64 so the 60m ridge is not clipped (other biomes stay well under 18)
+  const SHADE_H = 18;        // elevation-shading scale (kept at the old cap so low terrain shades exactly as before)
 
   const GRID_FLAT_R = 120;   // fully flat radius around grid center
   const GRID_RAMP   = 70;    // smooth ramp-out distance past the flat radius
@@ -43,7 +44,24 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
 
   // FULL MAP: mountain-pass bearings (radians) toward each outer realm + the ocean
   // harbor — computed from the biome centers in world-layout.js (atan2(z,x) convention).
-  const _PASSES = [0.785, 0.074, -0.736, -2.405, 2.366];  // meadow, suburb, volcano, darkforest, ocean
+  const _PASSES = [0.785, 0.074, -0.736, -2.405, 2.366, 1.6];  // meadow, suburb, volcano, darkforest, ocean, colosseum road
+  // MOUNTAINS v2 (2026-09-24, World Planner): passes were ±0.42 rad (~2/3 of the ring was gap, a 15m hill) —
+  // now narrow canyon notches through a 60m ridge, and the ground under every placed structure stays flat.
+  const PASS_W = 0.16, RIDGE_H = 60;
+  let _flatZones = null;   // [x, z, radius] from WORLD_LAYOUT.realmColliders + colosseum + harbor, built on first use
+  function flatZones() {
+    if (_flatZones) return _flatZones;
+    const L = (typeof window !== 'undefined' && window.WORLD_LAYOUT) || {};
+    _flatZones = (L.realmColliders || []).map((c) => [c.x, c.z, c.r + 6]);
+    _flatZones.push([-14, 460, 54]);
+    const oc = (L.biomes || []).find((b) => b.id === 'ocean'); if (oc && oc.dock) _flatZones.push([oc.dock[0], oc.dock[1], 20]);
+    return _flatZones;
+  }
+  function flatness(x, z) {   // 1 inside a structure's footprint, easing to 0 over the next 28u
+    let f = 0;
+    for (const [fx, fz, fr] of flatZones()) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 28) f = Math.max(f, d <= fr ? 1 : 1 - smooth((d - fr) / 28)); }
+    return f;
+  }
   function valueNoise(x, z) {
     const xi = Math.floor(x), zi = Math.floor(z);
     const xf = x - xi, zf = z - zi;
@@ -166,10 +184,10 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
         for (let pi = 0; pi < _PASSES.length; pi++) {
           let dA = Math.abs(ang - _PASSES[pi]);
           if (dA > Math.PI) dA = Math.PI * 2 - dA;
-          if (dA < 0.42) dip = Math.max(dip, 1 - dA / 0.42);
+          if (dA < PASS_W) dip = Math.max(dip, smooth(1 - dA / PASS_W));
         }
         const rough = 0.55 + 0.45 * Math.sin(ang * 5.0 + Math.sin(ang * 2.3) * 2.0);
-        h += band * rough * (1 - dip) * 15.0;                        // ridge up to ~+15
+        h += band * rough * (1 - dip) * (1 - flatness(x, z)) * RIDGE_H;   // ridge up to ~+60, canyon passes
       }
     }
 
@@ -341,7 +359,7 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     }
 
     // ── ELEVATION SHADE: valleys darken, ridge crests lighten ────────────────
-    const elevShade = THREE.MathUtils.clamp(0.68 + (y / MAX_H) * 0.38, 0.40, 1.12);
+    const elevShade = THREE.MathUtils.clamp(0.68 + (y / SHADE_H) * 0.38, 0.40, 1.12);
 
     // ── LARGE-SCALE BLOTCH: soil-patch color variation (stronger than before) ─
     // Range ±0.425 → multiplier 1 ± 0.119  (was ±0.85 → mult 1 ± 0.153 but

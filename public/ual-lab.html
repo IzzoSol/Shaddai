@@ -40,7 +40,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { attachUAL } from '/ual-retarget.js';
 
-const AGENTS = ['quill', 'nexus', 'pikadon', 'zerox', 'oracle', 'turtle', 'shaddai', 'leadr', 'gaeli'];
+const AGENTS = ['oracle-v2', 'quill', 'nexus', 'pikadon', 'zerox', 'oracle', 'turtle', 'shaddai', 'leadr', 'gaeli'];
 const GROUPS = { Combat: /Sword|Melee|Shield|Hit|Throw|Block|Dash/, Move: /Jump|Slide|Climb|Walk|Zombie_Walk|Lay/, Idle: /Idle|Yes|TPose/, World: /Farm|Tree|Chest|Consume|Rail|Phone|Lantern|Zombie/ };
 const $ = (s) => document.querySelector(s);
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
