@@ -41,6 +41,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
 function falKey() {
+  if (process.env.FAL_KEY) return process.env.FAL_KEY.trim();   // env first (never printed); .env fallback
   const env = readFileSync(join(ROOT, '.env'), 'utf8');
   const m = env.match(/^FAL_KEY\s*=\s*(.+)$/m);
   if (!m) throw new Error('FAL_KEY not found in .env');

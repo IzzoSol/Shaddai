@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Planner</title>
+<style>
+:root{--bg:#06080b;--panel:#0d1219;--line:#1d2733;--ink:#dfe7ee;--dim:#7a8794;--gold:#e8c45c;--em:#00ff9c;--cy:#5fe0ff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px system-ui,Segoe UI,sans-serif}
+body{display:grid;grid-template-columns:1fr 320px;height:100vh}
+#mapwrap{position:relative;overflow:hidden;background:#05070a}
+svg{width:100%;height:100%;display:block;cursor:grab}
+svg.panning{cursor:grabbing}
+aside{background:var(--panel);border-left:1px solid var(--line);padding:14px;overflow:auto}
+h1{font-size:14px;letter-spacing:.14em;color:var(--gold);margin:0 0 2px}
+.sub{color:var(--dim);font-size:11px;margin-bottom:12px}
+.sub a{color:var(--cy)}
+h2{font-size:11px;letter-spacing:.14em;color:var(--dim);margin:14px 0 6px}
+.layers label{display:flex;gap:6px;align-items:center;font-size:12px;margin:3px 0;cursor:pointer}
+.sw{width:10px;height:10px;border-radius:50%;display:inline-block}
+#sel{border:1px solid var(--line);border-radius:10px;padding:10px;min-height:80px;font-size:12px}
+#sel img{max-width:100%;border-radius:6px;background:#3a3f46;margin-top:6px}
+#sel .k{color:var(--dim)}
+button{background:#101822;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer}
+button:hover{border-color:var(--gold);color:var(--gold)}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+#hud{position:absolute;left:10px;bottom:10px;background:rgba(13,18,25,.85);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font:11px ui-monospace,Consolas,monospace;color:var(--dim);pointer-events:none}
+.legend div{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--dim);margin:2px 0}
+text{font-family:system-ui,Segoe UI,sans-serif;pointer-events:none}
+.pl{cursor:move}
+@media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:60vh auto}aside{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="mapwrap">
+  <svg id="map" viewBox="-780 -780 1560 1560" aria-label="World map"></svg>
+  <div id="hud">drag map to pan · wheel to zoom · drag a marker to move it</div>
+</div>
+<aside>
+  <h1>WORLD PLANNER</h1>
+  <div class="sub">Live from <code>public/world-layout.js</code> · 1 unit ≈ 1 m · <a href="board.html">← asset board</a></div>
+  <h2>SELECTED</h2>
+  <div id="sel">Click anything on the map.</div>
+  <h2>LAYERS</h2>
+  <div class="layers" id="layers"></div>
+  <h2>LEGEND</h2>
+  <div class="legend">
+    <div><span class="sw" style="background:#00ff9c"></span>shipped 3D model (placed)</div>
+    <div><span class="sw" style="background:#e8c45c"></span>approved concept — 3D next</div>
+    <div><span class="sw" style="background:#7a8794"></span>existing model in the world today</div>
+    <div><span class="sw" style="background:#6b4a2b"></span>mountain ring (R 380–520)</div>
+    <div><span class="sw" style="background:#5fe0ff"></span>light-trail road / pass</div>
+  </div>
+  <h2>YOUR EDITS</h2>
+  <div class="sub" id="edits">No moves yet.</div>
+  <div class="row"><button id="copy">Copy layout for Claude</button><button id="reset">Reset moves</button></div>
+</aside>
+<script src="../../public/world-layout.js"></script>
+<script src="placements.js"></script>
+<script src="board-data.js"></script>
+<script>
+(function(){
+  const L = window.WORLD_LAYOUT, P = window.FAL_PLACEMENTS || [], svg = document.getElementById('map');
+  if (!L) { document.getElementById('sel').textContent = 'world-layout.js not found (open this from the repo).'; return; }
+  const NS = 'http://www.w3.org/2000/svg', hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0');
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
+  const PASSES = [[0.785, 'Meadow pass'], [0.074, 'Suburb pass'], [-0.736, 'Volcano pass'], [-2.405, 'Darkforest pass'], [2.366, 'Ocean road']];
+  const ROUTES = [[0.785, 540], [0.074, 540], [-0.736, 520], [-2.405, 540], [2.366, 265], [1.6, 440]];
+  const STATUS = { shipped: '#00ff9c', concept: '#e8c45c', planned: '#5fe0ff' };
+  let moves = {}; try { moves = JSON.parse(localStorage.getItem('shd.mapMoves') || '{}'); } catch (e) {}
+  const layers = {};
+  const layer = (name, on) => { const g = el('g', { 'data-layer': name }); layers[name] = g; if (!on) g.style.display = 'none'; return g; };
+
+  // ── ground: world bounds + mountain ring with pass gaps ─────────────────────────────
+  const gBase = layer('Terrain', true);
+  el('rect', { x: -L.half, y: -L.half, width: L.half * 2, height: L.half * 2, fill: '#0b1117', stroke: '#1d2733' }, gBase);
+  // mountain band drawn as wedges, skipping ±0.42 rad around each pass
+  const inPass = (a) => PASSES.some(([p]) => { let d = Math.abs(a - p); if (d > Math.PI) d = 2 * Math.PI - d; return d < 0.42; });
+  for (let i = 0; i < 180; i++) {
+    const a0 = -Math.PI + i * 2 * Math.PI / 180, a1 = a0 + 2 * Math.PI / 180, am = (a0 + a1) / 2;
+    const ocean = Math.hypot(Math.cos(am) * 450 - L.biomes.find(b => b.id === 'ocean').center[0], Math.sin(am) * 450 - L.biomes.find(b => b.id === 'ocean').center[1]) < 150;
+    if (ocean) continue;
+    const dip = inPass(am);
+    const pt = (r, a) => `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
+    el('path', { d: `M${pt(380, a0)} L${pt(520, a0)} A520,520 0 0,1 ${pt(520, a1)} L${pt(380, a1)} A380,380 0 0,0 ${pt(380, a0)} Z`, fill: dip ? '#2a2016' : '#6b4a2b', opacity: dip ? 0.55 : 0.85 }, gBase);
+  }
+  // biomes
+  const gBio = layer('Realms', true);
+  L.biomes.forEach((b) => {
+    el('circle', { cx: b.center[0], cy: b.center[1], r: b.radius, fill: hex(b.color), 'fill-opacity': b.water ? 0.22 : 0.16, stroke: hex(b.color), 'stroke-opacity': 0.55, 'stroke-width': 2 }, gBio)
+      .addEventListener('click', () => show({ title: b.name, rows: [['realm id', b.id], ['center', b.center.join(', ')], ['radius', b.radius + ' m'], ['ground', b.ground], ['distance from spawn', dist(b.center) + ' m']] }));
+    const t = el('text', { x: b.center[0], y: b.center[1] - b.radius + 22, 'text-anchor': 'middle', fill: hex(b.color), 'font-size': 20, 'font-weight': 700 }, gBio); t.textContent = b.name.toUpperCase();
+  });
+  const oc = L.biomes.find(b => b.id === 'ocean');
+  el('circle', { cx: oc.center[0], cy: oc.center[1], r: oc.radius * 0.72, fill: '#0a5a78', 'fill-opacity': 0.45 }, gBio);
+  // roads: trails + hex roads
+  const gRd = layer('Roads & passes', true);
+  ROUTES.forEach(([a, end]) => el('line', { x1: Math.cos(a) * 72, y1: Math.sin(a) * 72, x2: Math.cos(a) * end, y2: Math.sin(a) * end, stroke: '#5fe0ff', 'stroke-width': 3, 'stroke-dasharray': '10 6', opacity: 0.8 }, gRd));
+  PASSES.forEach(([a, n]) => { const t = el('text', { x: Math.cos(a) * 450, y: Math.sin(a) * 450 + 4, 'text-anchor': 'middle', fill: '#5fe0ff', 'font-size': 13 }, gRd); t.textContent = n; });
+  L.roads.forEach(([a, b]) => { const A = L.sector(a).pos, B = L.sector(b).pos; el('line', { x1: A[0], y1: A[1], x2: B[0], y2: B[1], stroke: '#e8c45c', 'stroke-width': 2, opacity: 0.45 }, gRd); });
+  L.sacred.rings.forEach((r) => el('circle', { cx: 0, cy: 0, r, fill: 'none', stroke: '#e8c45c', 'stroke-opacity': 0.18 }, gRd));
+  // city: agent stations + landmarks
+  const gCity = layer('City & stations', true);
+  L.sectors.forEach((s) => {
+    el('circle', { cx: s.pos[0], cy: s.pos[1], r: 12, fill: hex(s.color), stroke: '#06080b', 'stroke-width': 2 }, gCity).addEventListener('click', () => show({ title: s.code + ' — ' + s.name, rows: [['station', s.building], ['pos', s.pos.join(', ')], ['realm', s.biome]] }));
+    const t = el('text', { x: s.pos[0], y: s.pos[1] - 17, 'text-anchor': 'middle', fill: hex(s.color), 'font-size': 13, 'font-weight': 700 }, gCity); t.textContent = s.code;
+  });
+  const fixed = [['Spawn', [L.spawn[0], L.spawn[2]], '#ffffff'], ['Bazaar', [-100, 100], '#00e5a0'], ['Garage (B)', [26, 96], '#e8c45c'], ['Colosseum', [-14, 460], '#ff4a8a'], ['Harbor dock', oc.dock, '#e8c45c']];
+  fixed.forEach(([n, p, c]) => { el('rect', { x: p[0] - 5, y: p[1] - 5, width: 10, height: 10, fill: c, transform: `rotate(45 ${p[0]} ${p[1]})` }, gCity); const t = el('text', { x: p[0] + 9, y: p[1] + 4, fill: c, 'font-size': 12 }, gCity); t.textContent = n; });
+  // existing placed models today (collider table)
+  const gOld = layer('Existing models', true);
+  L.realmColliders.forEach((c) => el('circle', { cx: c.x, cy: c.z, r: Math.max(3, c.r), fill: '#7a8794', 'fill-opacity': 0.35, stroke: '#7a8794' }, gOld).addEventListener('click', () => show({ title: c.label, rows: [['existing model', 'in the world today'], ['pos', c.x + ', ' + c.z], ['collider radius', c.r + ' m']] })));
+  // planned / shipped placements (draggable)
+  const gNew = layer('New models', true);
+  const thumbs = {}; try { (window.FAL_BOARD.manifest.assets || []).forEach((a) => { const c = (a.concepts || [])[0]; if (c) thumbs[a.id] = '../' + c; }); } catch (e) {}
+  const thumbFor = (id) => thumbs[id] || `../concepts/${id}.png`;
+  P.forEach((p, pi) => {
+    const pts = p.multi || (p.pos ? [p.pos] : []);
+    const col = STATUS[p.status] || '#5fe0ff';
+    if (p.kind === 'scatter') {
+      el('circle', { cx: p.pos[0], cy: p.pos[1], r: p.r, fill: '#3ddc84', 'fill-opacity': 0.06, stroke: '#3ddc84', 'stroke-dasharray': '4 6', 'stroke-opacity': 0.6 }, gNew);
+      if (p.ring) el('circle', { cx: p.pos[0], cy: p.pos[1], r: p.ring, fill: 'none', stroke: '#3ddc84', 'stroke-dasharray': '4 6', 'stroke-opacity': 0.4 }, gNew);
+      return;
+    }
+    pts.forEach((q, qi) => {
+      const key = p.id + '#' + qi, cur = moves[key] || q;
+      const g = el('g', { class: 'pl', transform: `translate(${cur[0]} ${cur[1]})` }, gNew);
+      el('circle', { r: Math.max(5, p.r || 5), fill: col, 'fill-opacity': 0.28, stroke: col, 'stroke-width': 2 }, g);
+      el('circle', { r: 3, fill: col }, g);
+      if (!p.multi || qi === 0) { const t = el('text', { x: 8, y: -8, fill: col, 'font-size': 11 }, g); t.textContent = p.id.replace(/^(hero|bld|prop|hub|veh)-/, ''); }
+      g.addEventListener('pointerdown', (e) => startDrag(e, g, key, p, cur));
+      g.addEventListener('click', () => show({ title: p.id, img: thumbFor(p.id), rows: [['status', p.status], ['kind', p.kind], ['pos', (moves[key] || q).map(Math.round).join(', ')], ['footprint radius', (p.r || '—') + ' m'], ['distance from spawn', dist(moves[key] || q) + ' m'], ['note', p.note || '']] }));
+    });
+  });
+  // scale bar
+  const gS = layer('Scale', true);
+  el('line', { x1: -700, y1: 740, x2: -600, y2: 740, stroke: '#dfe7ee', 'stroke-width': 3 }, gS);
+  const st = el('text', { x: -700, y: 732, fill: '#dfe7ee', 'font-size': 13 }, gS); st.textContent = '100 m';
+  const nt = el('text', { x: 0, y: -750, 'text-anchor': 'middle', fill: '#7a8794', 'font-size': 13 }, gS); nt.textContent = '▲ north (−Z)';
+
+  // ── layers panel ──────────────────────────────────────────────────────────────────
+  const lp = document.getElementById('layers');
+  Object.keys(layers).forEach((n) => { const lab = document.createElement('label'); lab.innerHTML = `<input type="checkbox" ${layers[n].style.display === 'none' ? '' : 'checked'}> ${n}`; lab.querySelector('input').onchange = (e) => { layers[n].style.display = e.target.checked ? '' : 'none'; }; lp.appendChild(lab); });
+
+  function dist(p) { return Math.round(Math.hypot(p[0] - L.spawn[0], p[1] - L.spawn[2])); }
+  function show(o) {
+    const s = document.getElementById('sel');
+    s.innerHTML = `<b>${o.title}</b>` + o.rows.map(([k, v]) => `<div><span class="k">${k}:</span> ${v}</div>`).join('') + (o.img ? `<img src="${o.img}" alt="" onerror="this.remove()">` : '');
+  }
+  // ── pan / zoom / drag ─────────────────────────────────────────────────────────────
+  let vb = [-780, -780, 1560, 1560], pan = null, drag = null;
+  const setVB = () => svg.setAttribute('viewBox', vb.join(' '));
+  const toWorld = (e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+  svg.addEventListener('wheel', (e) => { e.preventDefault(); const w = toWorld(e), k = e.deltaY > 0 ? 1.15 : 1 / 1.15; vb = [w.x - (w.x - vb[0]) * k, w.y - (w.y - vb[1]) * k, vb[2] * k, vb[3] * k]; setVB(); }, { passive: false });
+  svg.addEventListener('pointerdown', (e) => { if (drag) return; pan = { x: e.clientX, y: e.clientY, vb: vb.slice() }; svg.classList.add('panning'); });
+  function startDrag(e, g, key, p, cur) { e.stopPropagation(); drag = { g, key, p }; svg.setPointerCapture(e.pointerId); }
+  svg.addEventListener('pointermove', (e) => {
+    const w = toWorld(e); document.getElementById('hud').textContent = `x ${Math.round(w.x)} · z ${Math.round(w.y)} · ${Math.round(Math.hypot(w.x, w.y))} m from center · realm: ${L.biomeAt(w.x, w.y).name}`;
+    if (drag) { drag.g.setAttribute('transform', `translate(${w.x} ${w.y})`); moves[drag.key] = [Math.round(w.x), Math.round(w.y)]; return; }
+    if (pan) { const r = svg.getBoundingClientRect(), sx = vb[2] / r.width, sy = vb[3] / r.height; vb[0] = pan.vb[0] - (e.clientX - pan.x) * sx; vb[1] = pan.vb[1] - (e.clientY - pan.y) * sy; setVB(); }
+  });
+  addEventListener('pointerup', () => { if (drag) { try { localStorage.setItem('shd.mapMoves', JSON.stringify(moves)); } catch (e) {} renderEdits(); } drag = null; pan = null; svg.classList.remove('panning'); });
+  function renderEdits() { const n = Object.keys(moves).length; document.getElementById('edits').textContent = n ? `${n} marker(s) moved — press Copy and paste it to Claude.` : 'No moves yet.'; }
+  document.getElementById('copy').onclick = (e) => { const txt = 'MAP MOVES ' + JSON.stringify(moves); try { navigator.clipboard.writeText(txt); e.target.textContent = 'Copied ✓'; } catch (x) { prompt('Copy this:', txt); } };
+  document.getElementById('reset').onclick = () => { moves = {}; try { localStorage.removeItem('shd.mapMoves'); } catch (e) {} location.reload(); };
+  renderEdits();
+})();
+</script>
+</body>
+</html>
