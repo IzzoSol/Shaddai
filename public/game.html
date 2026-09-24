@@ -43,8 +43,10 @@
   /* hud */
   #hud{left:16px;top:16px;padding:10px 14px}
   #hud .who{font-size:14px}#hud .where{color:var(--grn);font-size:12px}
-  #controls{right:16px;bottom:calc(16px + var(--gb,0px));padding:10px 14px;font-size:12px;color:var(--dim)}
+  #controls{left:50%;right:auto;transform:translateX(-50%);bottom:calc(84px + var(--gb,0px));white-space:nowrap;   /* centred above the RPG hotbar (bottom:16px, ~56px tall) */ padding:10px 14px;font-size:12px;color:var(--dim)}
   #controls b{color:var(--ink)}
+  @media (pointer:coarse),(max-width:760px){ #controls{display:none!important} }
+  #controls{transition:opacity .6s ease} #controls.dim{opacity:0;pointer-events:none}   /* keyboard hints mean nothing on touch — the deck has its own labels */
   #shopBtn{position:fixed;right:16px;top:16px;z-index:5}
   #prompt{left:50%;bottom:calc(24px + var(--gb,0px));transform:translateX(-50%);padding:8px 16px;font-size:13px;color:var(--grn);z-index:6}
   #siegeBtn.siege-active{animation:darkSiegePulse 1.1s ease-in-out infinite;}
@@ -326,10 +328,8 @@ addEventListener('message', function(ev){
 <script src="dark-realm.js" onerror="0"></script>
 <script src="weapon-art.js" onerror="0"></script>
 <script src="pixel-people.js"></script>
-<script src="auth.js" onerror="0"></script>
 <script type="module" src="config/buildings.js" onerror="0"></script>
 <script src="js/skills.js" onerror="0"></script>
-<script src="js/market.js" onerror="0"></script>
 <script src="js/mmo-client.js" onerror="0"></script>
 <script>
 'use strict';
@@ -451,7 +451,7 @@ function goRegion(){ if(!isSignedIn()){ checkSignGate(); return; }
 c.addEventListener('click',e=>{ if(state==='region'&&window.RegionMap&&window.RegionMap.hitTest){ const id=window.RegionMap.hitTest(e.clientX,e.clientY,W,H,REGIONS); if(id){ regionSel=id; updateRegionName(); buildRegionGrid(); } } });
 function backToCreate(){ state='create'; document.getElementById('region').classList.add('hide'); document.getElementById('create').classList.remove('hide'); const qb=document.getElementById('quickBack'); if(qb) qb.style.display=''; const fb=document.getElementById('fsBtn'); if(fb) fb.style.display=''; }
 function enterWorld(){ state='world'; document.getElementById('region').classList.add('hide');
-  genWorld(regionSel); if(!window.__drInit){ window.__drInit=true; if(window.DarkRealm) DarkRealm.init(); } updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); updateWallet();
+  genWorld(regionSel); if(!window.__drInit){ window.__drInit=true; if(window.DarkRealm) DarkRealm.init(); } updateHP(); updateSignal(); document.getElementById('hud').classList.remove('hide'); document.getElementById('topbtns').classList.remove('hide'); document.getElementById('controls').classList.remove('hide'); window.__ctlShownAt=performance.now(); updateWallet();
   const qb=document.getElementById('quickBack'); if(qb) qb.style.display='none';
   const fb=document.getElementById('fsBtn'); if(fb) fb.style.display='none';
   try{ if(typeof grantStarter==='function') grantStarter(); if(typeof renderHotbar==='function') renderHotbar(); }catch(_){}
@@ -765,6 +765,8 @@ function questMark(sx,sy,m,accent,time){ if(!m) return; const bob=Math.sin(time/
   ctx.fillStyle='rgba(8,10,20,.9)'; ctx.beginPath(); ctx.arc(sx,y-6,10,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle=m==='?'?'#4fe07a':'#e8c45c'; ctx.lineWidth=1.5; ctx.stroke();
   ctx.fillStyle=m==='?'?'#4fe07a':m==='!'?'#e8c45c':'#9aa6b4'; ctx.fillText(m,sx,y); }
+// 'Press E' on keyboards, 'Tap B' (the deck's gold ENTER button) on touch screens
+const ACT_KEY=(()=>{ const t=('ontouchstart' in window)||(window.matchMedia&&matchMedia('(pointer: coarse)').matches); return ()=>t?'Tap B':'Press E'; })();
 function agentLabel(sx,sy,name,accent){ ctx.font="bold 13px 'Fredoka',sans-serif"; ctx.textAlign='center'; const lw=ctx.measureText(name).width+16;
   ctx.fillStyle='rgba(8,10,20,.9)'; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.fill();
   ctx.strokeStyle=accent; ctx.lineWidth=1; roundRectC(sx-lw/2,sy-62,lw,18,5); ctx.stroke();
@@ -987,14 +989,14 @@ function drawFacadeDetail(b,f,wall,dk,dv,seed,time,fs){
   if(glow){ const d=facePt(f.lf,f.fr,f.tL,f.tF,0.5,0); emitG(d[0]-4,d[1]+5,20,9,fs.win,0.3*dk); }
 }
 function drawBuildingBody(b,sx,sy,dk,time){
-  const fs=facadeStyle();
+  const fs=facadeStyle(), glass=b.glass||'#4a5a6e';   // some generators (suburb homes) omit glass
   const floorH=18, h=b.floors*floorH, seed=(b.col*3+b.row*5)|0;
   const jw=((seed%5)-2)*0.045, wall=shade(b.wall,jw), roof=shade(b.roof,jw); // per-building tone variation
   DC.fillStyle='rgba(0,0,0,0.20)'; DC.beginPath(); DC.ellipse(sx,sy+4,(b.w+b.d)*13,(b.w+b.d)*6,0,0,7); DC.fill();
   const f=isoBox(sx,sy,b.w,b.d,h,wall);
   occlude([f.lf,f.fr,f.rt,[f.tR[0],f.tR[1]-12],[f.tB[0],f.tB[1]-12],[f.tL[0],f.tL[1]-12]]);   // hull + roof kit
-  winGrid(f.lf,f.fr,f.tL,f.tF, Math.max(2,Math.round(b.w*1.8)), b.floors, b.glass, dk, seed, fs.win, time);
-  winGrid(f.fr,f.rt,f.tF,f.tR, Math.max(2,Math.round(b.d*1.8)), b.floors, shade(b.glass,-0.12), dk, seed+2, fs.win, time);
+  winGrid(f.lf,f.fr,f.tL,f.tF, Math.max(2,Math.round(b.w*1.8)), b.floors, glass, dk, seed, fs.win, time);
+  winGrid(f.fr,f.rt,f.tF,f.tR, Math.max(2,Math.round(b.d*1.8)), b.floors, shade(glass,-0.12), dk, seed+2, fs.win, time);
   const dv=Math.min(0.85, 1.2/b.floors);
   qfill(facePt(f.lf,f.fr,f.tL,f.tF,0.40,dv),facePt(f.lf,f.fr,f.tL,f.tF,0.60,dv),
         facePt(f.lf,f.fr,f.tL,f.tF,0.60,0),facePt(f.lf,f.fr,f.tL,f.tF,0.40,0), b.kind==='home'?'#5a3a24':'#1c2230');
@@ -1343,8 +1345,8 @@ function update(dt){
     if(!spectate){ let near=null; const nb=nearBot();
       for(const p of props){ if(p.type==='building'){ const dc=(p.col+p.w/2)-player.col,dr=(p.row+p.d/2)-player.row; if(Math.hypot(dc,dr)<2.2) near=p; } }
       const pr=document.getElementById('prompt');
-      if(nb){ pr.classList.remove('hide'); pr.textContent='Press E to talk to '+nb.name; }
-      else if(near){ pr.classList.remove('hide'); pr.textContent='Press E to enter '+near.name; }
+      if(nb){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+' to talk to '+nb.name; }
+      else if(near){ pr.classList.remove('hide'); pr.textContent=ACT_KEY()+' to enter '+near.name; }
       else if(!inInterior) pr.classList.add('hide'); }
     updateFishes(dt);
     if(hurtFlash>0) hurtFlash-=dt; if(atkSwing>0) atkSwing-=dt;
@@ -1847,6 +1849,9 @@ function celebrateLevelUp(lvl){
   el.style.animation='luPop 1.7s ease-out'; if(glow) glow.style.animation='luGlow 1.7s ease-out';
 }
 function toast(msg){ const pr=document.getElementById('prompt'); if(!pr)return; pr.classList.remove('hide'); pr.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(()=>pr.classList.add('hide'),1900); }
+setInterval(function(){ const c=document.getElementById('controls'); if(!c||c.classList.contains('hide')) return;
+  const busy=['fishBar','gatherBar'].some(id=>{ const e=document.getElementById(id); return e&&!e.classList.contains('hide'); });
+  c.classList.toggle('dim', busy || performance.now()-(window.__ctlShownAt||0)>30000); }, 400);
 function closePanel(){ state='world'; ['store','inv','jobs','colosseum'].forEach(id=>document.getElementById(id).classList.add('hide')); }
 function buy(id){ const it=STORE.find(x=>x.id===id); if(!it)return; if(money<it.price){ toast('Not enough money'); return; } money-=it.price; inv[id]=(inv[id]||0)+1; ftue.bought=1; ftueSave(); saveEcon(); openStore(); }
 function openStore(){ if(state==='jobs')return; state='store'; const el=document.getElementById('store');

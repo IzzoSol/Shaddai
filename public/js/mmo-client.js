@@ -506,9 +506,15 @@
     tick();
     setInterval(tick, 60 * 1000);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installDayNight);
-  else installDayNight();
+  // installDayNight() is NOT installed on game.html: the game runs its own day/night cycle (tod, T key)
+  // and draws night lights after its tint — a second real-clock overlay darkened the world at in-game
+  // noon and dimmed every light. Kept above for pages without their own cycle.
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildPanel);
-  else buildPanel();
+  // The panel only works while the dev MMO server (server/index.js :3001) is up — so the ⚔ MMO button
+  // appears only when that server answers, instead of dangling in front of every player.
+  function boot() {
+    fetch(API + '/', { cache: 'no-store' }).then(function (r) { if (r.ok) buildPanel(); }).catch(function () {});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
