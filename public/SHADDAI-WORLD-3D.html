@@ -284,7 +284,8 @@ import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';   /
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';   // ocean/mount GLBs are meshopt-compressed
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { attachUAL } from './ual-retarget.js?v=20260925a';   // Quaternius UAL2 (CC0) moves on any rigged body — no stretching (docs/COLOSSEUM…, /ual-lab.html)   // ocean/mount GLBs are meshopt-compressed
 // shared Draco decoder so the optimized (Draco-compressed) agent/vehicle GLBs load
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/');
@@ -389,7 +390,7 @@ __loadMgr.onProgress = function(url, loaded, total){
   var pl  = document.getElementById('loadPct'); if(pl)  pl.textContent  = pct + '%';
 };
 __loadMgr.onLoad = function(){ window.__assetsReady = true; };
-const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoader(dracoLoader);
+const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoader(dracoLoader); agentBodyLoader.setMeshoptDecoder(MeshoptDecoder);   // agent bodies v11 are meshopt+webp (tools/ual/build-agent.mjs)
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
 let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null, worldVolcano=null, worldRealmProps=null, worldTrails=null, worldLandmarks=null;
@@ -1535,7 +1536,7 @@ function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
-  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=10';  // v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
+  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=11';  // v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
   _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
   return _pcCache[code];
 }
@@ -1575,7 +1576,7 @@ function _nextAgentBody(){
   // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
   // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
   const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
-  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=10';  // v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
+  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=11';  // v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
   agentBodyLoader.load(url, (gltf)=>{
     try{
       const body = gltf.scene;
@@ -1667,6 +1668,16 @@ function _nextAgentBody(){
         entry._mixer = mixer; entry._actions = actions; entry._curAction = null;
         entry._poseSnap = _snapshotPose(body);   // rest pose → restore after one-shot clips so flip/attack don't leave the body facing backward
         console.log('🕺 '+code+' rig clips:', Object.keys(actions).join(','));
+        // UAL2 moves (CC0): a real idle + sword/heavy/flip for agents whose rig ships only walk/run. attachUAL
+        // captures this body's rest pose NOW (before the mixer first updates), clips build when the data arrives.
+        try{ const _u=attachUAL(THREE, body, mixer, actions); entry._ual=_u;
+          _u.ready.then(function(ok){ if(!ok) return;
+            ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Heavy_Combo','NinjaJump_Start'].forEach(function(n){ _u.add(n); });
+            if(!actions['attack1'] && actions['ual_Sword_Regular_A']) actions['attack1']=actions['ual_Sword_Regular_A'];
+            if(!actions['heavy'] && actions['ual_Sword_Heavy_Combo']) actions['heavy']=actions['ual_Sword_Heavy_Combo'];
+            if(!actions['flip'] && actions['ual_NinjaJump_Start']) actions['flip']=actions['ual_NinjaJump_Start'];
+            if(entry._idleSlow && actions['ual_Idle_FoldArms_Loop']){ actions['idle']=actions['ual_Idle_FoldArms_Loop']; entry._idleSlow=false; playAgentAction(entry,'idle',{}); }
+          }); }catch(e){ console.warn('[ual] agent', code, e.message); }
         playAgentAction(entry, 'idle', entry._idleSlow ? {timeScale:0.55} : {});
       }
       // real 3D body replaces the floating holograph: drop the billboard, beam & glow.
@@ -3085,6 +3096,10 @@ window.setPlayerCharacter = function(code){
     for(const k in playerClips) delete playerClips[k];
     playerMixer = (g.animations&&g.animations.length) ? new THREE.AnimationMixer(m) : null;
     if(playerMixer)(g.animations||[]).forEach(function(cl){ playerClips[cl.name]=playerMixer.clipAction(cl); });
+    // UAL2 moves on the picked operative (rest pose captured before the first mixer update)
+    if(playerMixer){ try{ const _u=attachUAL(THREE, m, playerMixer, playerClips); window.__playerUAL=_u;
+      _u.ready.then(function(ok){ if(ok) ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Regular_B','Sword_Heavy_Combo','Sword_Block','NinjaJump_Start','Hit_Knockback'].forEach(function(n){ _u.add(n); }); });
+    }catch(e){ console.warn('[ual] player', e.message); } }
     playerAction = _clip('Idle')||_clip('Walk')||(Object.values(playerClips)[0]||null);
     if(playerAction) playerAction.play();
     _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery for this character's rig
@@ -3098,10 +3113,10 @@ window.setPlayerCharacter = function(code){
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
 const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'],
   // combat one-shots — descriptive Meshy/Mixamo clip names matched by substring (e.g. TURTLE = Neon Valkyrie).
-  flip:['flip','backflip','vault','parkour','handstand','roll'],
+  flip:['flip','backflip','vault','parkour','handstand','roll','ual_ninjajump_start'],
   kick:['kick','roundhouse','high_kick','sweep','flying'],
-  heavy:['heavy','spin_kick','double_kick','power','special','cast'],
-  attack1:['roundhouse','flying','high_kick','kick','attack1'] };
+  heavy:['heavy','spin_kick','double_kick','power','special','cast','ual_sword_heavy_combo'],
+  attack1:['roundhouse','flying','high_kick','kick','attack1','ual_sword_regular_a'] };
 function _clip(name){
   const aliases=(_ALIAS[name]||[name]).map(s=>s.toLowerCase());
   const keys=Object.keys(playerClips);
