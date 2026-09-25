@@ -137,13 +137,13 @@
     // col = collider radius as a fraction of the half-size (0 = walk-on / walk-through / flying).
     // world-volcano.js + world-realmprops.js mount exactly these; colliders + flat ground derive from them.
     realmModels: [
-      { realm: 'volcano',    id: 'volcano-fortress',        len: 80, fx: 0,     fz: 0,     y: 6.6, ry: 0.26, col: 0.78 },
+      { realm: 'volcano',    id: 'hero-fortress',           len: 80, fx: 0,     fz: 0,     y: 6.6, ry: 0.26, col: 0.78, src: 'fal' },   // fal landmark (was the volcano-fortress placeholder)
       { realm: 'volcano',    id: 'volcano-forge-tower',     len: 20, fx: -0.52, fz: 0.30,  y: 6.6, ry: -0.4, col: 0.8 },
       { realm: 'volcano',    id: 'volcano-ritual-circle',   len: 30, fx: 0.56,  fz: -0.34, y: 6.6, ry: 0.9,  col: 0 },
       { realm: 'volcano',    id: 'volcano-dragon',          len: 40, fx: 0.18,  fz: 0.10,  y: 60,  ry: -2.2, col: 0, anim: 'dragon' },
       { realm: 'volcano',    id: 'volcano-bridge',          len: 45, fx: 0.62,  fz: 0.62,  y: 0,   ry: 0.7,  col: 0 },
       { realm: 'volcano',    id: 'volcano-gate',            len: 30, toCity: 0.92,         y: 0,   ry: 2.4,  col: 0 },
-      { realm: 'darkforest', id: 'castle-siege',            len: 70, fx: 0,     fz: 0,     ry: 0.4,  col: 0.8 },
+      { realm: 'darkforest', id: 'hero-castle',             len: 70, fx: 0,     fz: 0,     ry: 0.4,  col: 0.8, src: 'fal' },   // fal landmark (was castle-siege)
       { realm: 'darkforest', id: 'prop-obsidian-rocks',     len: 14, fx: 0.52,  fz: -0.4,  ry: 0,    col: 0.8 },
       { realm: 'darkforest', id: 'prop-obsidian-rocks',     len: 16, fx: -0.55, fz: 0.45,  ry: 1.2,  col: 0.8 },
       { realm: 'darkforest', id: 'prop-crystal-cluster',    len: 8,  fx: 0.58,  fz: 0.5,   ry: 0.6,  col: 0.8 },
@@ -154,9 +154,18 @@
       { realm: 'suburb',     id: 'bld-neon-observatory',    len: 35, fx: 0.45,  fz: 0.4,   ry: 0.5,  col: 0.8, office: true },
       { realm: 'suburb',     id: 'bld-sea-terrace-spire',   len: 30, fx: 0.55,  fz: -0.2,  ry: -0.6, col: 0.8, office: true },
       { realm: 'suburb',     id: 'bld-holo-market-v2',      len: 32, fx: 0.0,   fz: 0.55,  ry: 3.14, col: 0.8 },
-      { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 40, fx: 0,     fz: 0,     ry: 0,    col: 0.75 },
+      { realm: 'meadow',     id: 'hero-mushroom-pods',      len: 40, fx: 0,     fz: 0,     ry: 0,    col: 0.75, src: 'fal' },
+      { realm: 'meadow',     id: 'hero-farm-sky-structure', len: 40, fx: 0.32,  fz: 0.30,  y: 120, ry: 0.4, col: 0, src: 'fal' },   // floats ~30 m above the fields
       { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 26, fx: -0.5,  fz: 0.4,   ry: 0.8,  col: 0.75 },
       { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 24, fx: 0.45,  fz: -0.42, ry: 2.4,  col: 0.75 },
+      // ── realm landmarks from fal (MAP v3): one centerpiece per realm, real size ──
+      { realm: 'suburb',     id: 'hero-city-megatower',     len: 40, fx: 0.18,  fz: -0.28, ry: 0.6,  col: 0.8, src: 'fal' },   // ~200 m tall skyline anchor
+      { realm: 'forest',     id: 'hero-forest-amphitheater',len: 50, fx: 0,     fz: 0,     ry: 0,    col: 0.35, src: 'fal' },
+      { realm: 'arctic',     id: 'hero-sky-dome',           len: 120, fx: 0,    fz: 0,     ry: 0,    col: 0,   src: 'fal' },     // walk-in dome (interior next)
+      { realm: 'arctic',     id: 'hero-arctic-outpost',     len: 40, fx: 0.45,  fz: 0.35,  ry: -0.8, col: 0.8, src: 'fal' },
+      { realm: 'desert',     id: 'hero-desert-terminal',    len: 60, fx: 0,     fz: 0,     ry: 2.5,  col: 0.8, src: 'fal' },
+      { realm: 'void',       id: 'hero-void-rift-gate',     len: 50, fx: 0,     fz: 0,     ry: 1.57, col: 0,   src: 'fal' },     // walk through the ring
+      { realm: 'ocean',      id: 'hero-beach-market-dome',  len: 40, fx: 0.62,  fz: -0.35, ry: 2.2,  col: 0.8, src: 'fal' },
     ],
     realmColliders: [],   // derived below from realmModels (+ world-falprops.js appends its own)
 
@@ -180,6 +189,7 @@
       if (m.toCity != null) { var d = Math.hypot(b.center[0], b.center[1]) || 1; m.x = Math.round(b.center[0] - b.center[0] / d * b.radius * m.toCity); m.z = Math.round(b.center[1] - b.center[1] / d * b.radius * m.toCity); }
       else { m.x = Math.round(b.center[0] + (m.fx || 0) * b.radius); m.z = Math.round(b.center[1] + (m.fz || 0) * b.radius); }
       m.w = m.len * PM;                                  // world units along the longest side
+      m.url = m.src === 'fal' ? '/assets/models/fal/' + m.id + '.glb' : '/assets/models/' + m.id + '.glb';
       if (m.col > 0) L.realmColliders.push({ x: m.x, z: m.z, r: Math.round(m.w / 2 * m.col), label: m.id, realm: m.realm });
     });
     L.realmModelsFor = function (realm) { return L.realmModels.filter(function (m) { return m.realm === realm && m.w; }); };

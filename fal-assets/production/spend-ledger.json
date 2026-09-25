@@ -251,6 +251,13 @@
       "step": "mesh",
       "usd": 0.225,
       "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-ore-node.png"
+    },
+    {
+      "at": "2026-09-25T17:58:35.039Z",
+      "id": "hero-fortress",
+      "step": "mesh",
+      "usd": 0.375,
+      "note": "hunyuan-3d v3.1 pro (batch; ledger line was missed)"
     }
   ]
 }

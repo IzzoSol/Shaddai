@@ -38,8 +38,8 @@ window.buildWorldRealmProps = function (opts) {
 
   // ── per-realm model manifests (dx/dz = fraction of biome radius; w = fraction too) ──
   // MAP v2: realm models come from the master list in world-layout.js (real sizes); literal below = v1 fallback
-  var _mv2 = layout.realmModelsFor ? ['darkforest', 'suburb', 'meadow'].map(function (r) {
-    return { biome: r, models: layout.realmModelsFor(r).map(function (m) { return { id: m.id, abs: true, x: m.x, z: m.z, w: m.w, ry: m.ry || 0, office: m.office }; }) };
+  var _mv2 = layout.realmModelsFor ? ['darkforest', 'suburb', 'meadow', 'forest', 'arctic', 'desert', 'void', 'ocean'].map(function (r) {
+    return { biome: r, models: layout.realmModelsFor(r).map(function (m) { return { id: m.id, abs: true, x: m.x, z: m.z, w: m.w, y: m.y || 0, ry: m.ry || 0, office: m.office, url: m.url }; }) };
   }).filter(function (mf) { return mf.models.length; }) : [];
   var MANIFESTS = _mv2.length ? _mv2 : [
     { biome: 'darkforest', models: [
@@ -83,14 +83,15 @@ window.buildWorldRealmProps = function (opts) {
         });
         var yOff = fit(m, P.w);
         m.name = 'realm-' + mf.biome + '-' + cfg.id + (cfg.office ? '-office' : '');
-        m.position.set(P.x, yOff, P.z);
+        var gH = opts.heightAt ? opts.heightAt(P.x, P.z) : 0;   // MAP v3: sit ON the terrain (was hard y=0 — models sank/floated)
+        m.position.set(P.x, gH + (cfg.y || 0) + yOff, P.z);
         m.rotation.y = cfg.ry || 0;
         group.add(m);
         placed++;
         if (window.__registerPlaceable) window.__registerPlaceable('realm:' + mf.biome + ':' + cfg.id, m, { source: 'world-layout.js realmModels', realm: mf.biome, id: cfg.id });
       }
       if (opts.loader) {
-        opts.loader.load('/assets/models/' + cfg.id + '.glb', function (g) { mount(g.scene, true); },
+        opts.loader.load(cfg.url || ('/assets/models/' + cfg.id + '.glb'), function (g) { mount(g.scene, true); },
           undefined, function () { mount(fallback(cfg, P.w), false); });
       } else {
         mount(fallback(cfg, P.w), false);

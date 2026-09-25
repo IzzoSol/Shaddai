@@ -168,7 +168,7 @@ window.FAL_BOARD = {
     "family": "agent",
     "name": "SHADDAI — The Source",
     "canary": false,
-    "status": "cut",
+    "status": "concept-approved",
     "slot": {
      "file": "public/assets/models/chars/ + fal-assets/characters/shaddai-council/",
      "note": "replaces shaddai-council-rigged.glb in place; 2D sprites re-captured free via capture-sprites.mjs"
@@ -178,15 +178,13 @@ window.FAL_BOARD = {
     "emissive": "gold halo ring + chest sigil",
     "silhouette": "longest coat/cape of the council, halo ring above head — reads as leader at 128px",
     "refs": {
-     "have": [],
-     "current_state": "characters/shaddai-council/sprites/shaddai-council-walking-00.png",
-     "legacy_concept": "model-refs/SHADDAI-model.png",
-     "need": [
-      "FULL-BODY front reference of SHADDAI in the CURRENT council style (the other 6 are portrait-style realistic humans in sci-fi gear) — nothing exists; the rigged render is a bare gold figure with no design source",
-      "optional: back view / cape detail"
-     ]
+     "have": [
+      "production/concepts/unit-shaddai/unit-shaddai-tpose-clean.png"
+     ],
+     "need": []
     },
-    "defects": "CUT for now (owner, 2026-09-24: leave out SHADDAI) — revisit once a design exists"
+    "defects": "CUT for now (owner, 2026-09-24: leave out SHADDAI) — revisit once a design exists",
+    "approved": "owner 2026-09-24 multi-select \"Hooded SHADDAI commander\" (horned hood, green/gold cape)"
    },
    {
     "id": "agent-nexus",
@@ -1772,6 +1770,13 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.225,
     "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-ore-node.png"
+   },
+   {
+    "at": "2026-09-25T17:58:35.039Z",
+    "id": "hero-fortress",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "hunyuan-3d v3.1 pro (batch; ledger line was missed)"
    }
   ]
  },
@@ -1781,9 +1786,9 @@ window.FAL_BOARD = {
    {
     "id": "agent-shaddai",
     "family": "agent",
-    "status": "cut",
-    "refsHave": 0,
-    "refsNeed": 1
+    "status": "concept-approved",
+    "refsHave": 1,
+    "refsNeed": 0
    },
    {
     "id": "agent-nexus",
@@ -2279,8 +2284,8 @@ window.FAL_BOARD = {
   "worst": {
    "agent": {
     "perAsset": 1.35,
-    "n": 6,
-    "worst": 8.1,
+    "n": 7,
+    "worst": 9.45,
     "cap": 20
    },
    "building": {
@@ -2315,6 +2320,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 12.33,
- "builtAt": "2026-09-25T08:38:03.297Z"
+ "spent": 12.7,
+ "builtAt": "2026-09-25T17:58:35.053Z"
 };

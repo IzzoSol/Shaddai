@@ -94,7 +94,7 @@ window.buildWorldVolcano = function (opts) {
   // ── MODELS — every shipped volcano asset, seated on the crater shelf/rim ──
   // MAP v2: the master realm-model list in world-layout.js (real sizes) wins; the literal below is the v1 fallback
   var MODELS = (layout.realmModelsFor && layout.realmModelsFor('volcano').length) ? layout.realmModelsFor('volcano').map(function (m) {
-    return { id: m.id, w: m.w, x: m.x, z: m.z, y: m.y || 0, ry: m.ry || 0, anim: m.anim };
+    return { id: m.id, w: m.w, x: m.x, z: m.z, y: m.y || 0, ry: m.ry || 0, anim: m.anim, url: m.url };
   }) : [
     { id: 'volcano-fortress',     w: RAD * 0.62, x: CX,                 z: CZ,                 y: 6.6,  ry: 0.26 },
     { id: 'volcano-forge-tower',  w: RAD * 0.40, x: CX - RAD * 0.52,    z: CZ + RAD * 0.30,    y: 6.6,  ry: -0.4 },
@@ -121,7 +121,8 @@ window.buildWorldVolcano = function (opts) {
     });
     var yOff = fit(m, cfg.w);
     m.name = 'volcano-' + cfg.id;
-    m.position.set(cfg.x, (cfg.y || 0) + yOff, cfg.z);
+    var gH = opts.heightAt ? opts.heightAt(cfg.x, cfg.z) : (cfg.y || 0);   // MAP v3: terrain height (crater shelf etc.)
+    m.position.set(cfg.x, (opts.heightAt ? gH + (cfg.anim === 'dragon' ? (cfg.y || 0) : 0) : gH) + yOff, cfg.z);
     m.rotation.y = cfg.ry || 0;
     group.add(m);
     placed.push({ m: m, cfg: cfg });
@@ -139,7 +140,7 @@ window.buildWorldVolcano = function (opts) {
 
   if (opts.loader) {
     MODELS.forEach(function (cfg) {
-      opts.loader.load('/assets/models/' + cfg.id + '.glb', function (g) { mountModel(cfg, g.scene, true); },
+      opts.loader.load(cfg.url || ('/assets/models/' + cfg.id + '.glb'), function (g) { mountModel(cfg, g.scene, true); },
         undefined, function () { mountModel(cfg, fallback(cfg), false); });
     });
   } else {
