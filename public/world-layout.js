@@ -114,7 +114,7 @@
     // 3D BAZAAR zone (SHADDAI-WORLD-3D.html) so the minimap 'B' marker points at the real bazaar.
     landmarks: [
       { id: 'bazaar', name: 'The Bazaar', pos: [-100, 100], color: 0x00e5a0, footprint: 46, building: 'bazaar' },
-      { id: 'colosseum', name: 'Southern Colosseum', pos: [0, 1235], color: 0xe8c45c, footprint: 190, building: 'colosseum' },   // MAP v3: due south on the atlas, just outside the transit ring
+      { id: 'colosseum', name: 'Southern Colosseum', pos: [0, 1660], color: 0xe8c45c, footprint: 420, building: 'colosseum' },   // MAP v3: due south on the atlas, just outside the transit ring. REAL size (world-colosseum.js: ~784 × 644 u + lobby facing the city) → centre 1660 puts the lobby steps ~40u beyond the ring deck
       { id: 'emblem', name: 'SH Emblem',  pos: [0, 0],   color: 0xffcf4a },
     ],
 

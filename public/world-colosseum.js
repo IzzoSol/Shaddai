@@ -56,6 +56,72 @@
     return 999;                                                     // outer shell
   }
 
+  // ── WORLD EXTERIOR (atlas "Southern Colosseum") — the SAME building at the SAME real size, standing on the map
+  //    just outside the transit ring, lobby facing the city. Walk up the front steps → E at the lobby doors →
+  //    you're inside the arena instance above. Parse time: publishes the door + pushes shell/lobby colliders. ──
+  var _L = window.WORLD_LAYOUT, _lm = _L && _L.landmark && _L.landmark('colosseum');
+  if (_lm) {
+    var CX = _lm.pos[0], CZ = _lm.pos[1], FACE = Math.atan2(-CZ, -CX);   // unit dir from the colosseum toward the city
+    var fX = Math.cos(FACE), fZ = Math.sin(FACE), sX = fZ, sZ = -fX;       // front (lobby side) + side axes = three.js local +z / +x at rotation.y = atan2(fX, fZ)
+    // local metres (lx along the long axis, lz toward the lobby/front) → world units
+    var W = function (lx, lz) { return [CX + (sX * lx + fX * lz) * U, CZ + (sZ * lx + fZ * lz) * U]; };
+    var ext = { x: CX, z: CZ, face: FACE, W: W, door: W(0, LOBBY_Z0 + LOBBY_D + 1), front: [fX, fZ] };
+    window.COLOSSEUM_WORLD = ext;
+    if (_L.realmColliders) {
+      var ring = Math.round((Math.PI * (A + B + 2 * SHELL)) / 7);   // ~7 m spacing, r 5 m → a continuous wall
+      for (var ci = 0; ci < ring; ci++) { var ct = ci / ring * Math.PI * 2, p = W((A + SHELL - 4) * Math.cos(ct), (B + SHELL - 4) * Math.sin(ct)); _L.realmColliders.push({ x: Math.round(p[0]), z: Math.round(p[1]), r: Math.round(5 * U), label: 'colosseum-shell' }); }
+      for (var lx2 = -LOBBY_W / 2 + 6; lx2 <= LOBBY_W / 2 - 6; lx2 += 8) for (var lz2 = LOBBY_Z0 + 2; lz2 <= LOBBY_Z0 + LOBBY_D - 5; lz2 += 8) { var q2 = W(lx2, lz2); _L.realmColliders.push({ x: Math.round(q2[0]), z: Math.round(q2[1]), r: Math.round(6 * U), label: 'colosseum-lobby' }); }
+    }
+    window.buildColosseumExterior = function (THREE, opts) {
+      var scene = opts.scene, heightAt = opts.heightAt || function () { return 0; };
+      var g0 = heightAt(CX, CZ);
+      var group = new THREE.Group(); group.name = 'colosseum-exterior'; group.position.set(CX, g0, CZ);
+      group.rotation.y = Math.atan2(fX, fZ);   // local +z → front (toward the city), local +x → (sX, sZ)
+      var root = new THREE.Group(); root.scale.setScalar(U); group.add(root);
+      var M = function (c, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.05 }, o || {})); };
+      var mats = { stone: M(0xd8c9a8), dark: M(0x6f624d), recess: M(0x2a241c), trim: M(0xc9a24a, { metalness: 0.6, roughness: 0.35 }), seat: M(0xbfae8c), sand: M(0xd9c08a, { roughness: 1 }), banner: M(0x9e1b1b, { side: THREE.DoubleSide }),
+        star: new THREE.MeshStandardMaterial({ color: 0x5fe0ff, emissive: 0x5fe0ff, emissiveIntensity: 2.2, roughness: 0.2 }) };
+      function ell(d, y, h, mat, open) { var m = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, h, 160, 1, !!open), mat); m.scale.set(A + d, 1, B + d); m.position.y = y + h / 2; if (open) m.material.side = THREE.DoubleSide; root.add(m); return m; }
+      // outer wall: dark arch recesses behind a colonnade of pillars, 4 storeys, gold cornices; attic storey on top
+      var storeys = 4, per = 80, sh = (CROWN_H - 8) / storeys;
+      ell(SHELL - 1.6, 0, CROWN_H, mats.recess, true);
+      var pil = new THREE.InstancedMesh(new THREE.BoxGeometry(2.6, sh - 1.4, 2.4), mats.stone, storeys * per), mm = new THREE.Matrix4(), qq = new THREE.Quaternion(), vv = new THREE.Vector3(), ss = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0), k = 0;
+      for (var s = 0; s < storeys; s++) for (var i = 0; i < per; i++) {
+        var t = i / per * Math.PI * 2, nx = (A + SHELL) * Math.cos(t), nz = (B + SHELL) * Math.sin(t);
+        pil.setMatrixAt(k++, mm.compose(vv.set(nx, s * sh + (sh - 1.4) / 2, nz), qq.setFromAxisAngle(up, -Math.atan2(nz / ((B + SHELL) * (B + SHELL)), nx / ((A + SHELL) * (A + SHELL)))), ss));
+      }
+      pil.castShadow = true; root.add(pil);
+      for (var c = 1; c <= storeys; c++) ell(SHELL + 0.4, c * sh - 1.4, 1.4, mats.trim, true);
+      ell(SHELL, CROWN_H - 8, 8, mats.stone, true);                     // attic storey
+      ell(SHELL + 0.5, CROWN_H - 0.8, 0.8, mats.trim, true);            // crown line
+      // roof ring + seating bowl (seen from the air / the maglev) + sand floor
+      var rim = new THREE.Mesh(new THREE.RingGeometry(1 - 0.02, 1, 160), mats.stone); rim.rotation.x = -Math.PI / 2; rim.scale.set(A + SHELL, B + SHELL, 1); rim.position.y = CROWN_H; root.add(rim);
+      var bowl = new THREE.Mesh(new THREE.CylinderGeometry(1, 0.58, H_UP, 160, 1, true), mats.seat); bowl.material.side = THREE.DoubleSide; bowl.scale.set(A + UP1, 1, B + UP1); bowl.position.y = H_UP / 2; root.add(bowl);
+      var cap = new THREE.Mesh(new THREE.RingGeometry(1, (A + SHELL) / (A + UP1), 160), mats.stone); cap.rotation.x = -Math.PI / 2; cap.scale.set(A + UP1, B + UP1, 1); cap.position.y = H_UP; root.add(cap);
+      var sand = new THREE.Mesh(new THREE.CircleGeometry(1, 96), mats.sand); sand.rotation.x = -Math.PI / 2; sand.scale.set(A, B, 1); sand.position.y = 0.2; root.add(sand);
+      // banners on the outside of the attic
+      var bg = new THREE.PlaneGeometry(5, 14);
+      for (var b = 0; b < 20; b++) { var tb = b / 20 * Math.PI * 2, bn = new THREE.Mesh(bg, mats.banner); bn.position.set((A + SHELL + 0.9) * Math.cos(tb), CROWN_H - 12, (B + SHELL + 0.9) * Math.sin(tb)); bn.lookAt(bn.position.x * 2, CROWN_H - 12, bn.position.z * 2); root.add(bn); }
+      // lobby: temple front — podium steps, 8 columns, pediment, bronze doors, the atlas star emblem
+      var lob = new THREE.Group(); lob.position.set(0, 0, LOBBY_Z0 + LOBBY_D / 2); root.add(lob);
+      var hall = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W, LOBBY_H, LOBBY_D), mats.stone); hall.position.y = LOBBY_H / 2; hall.castShadow = true; lob.add(hall);
+      for (var st = 0; st < 4; st++) { var step = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W + 8 - st * 2, 0.5, 6 - st * 1.2), mats.dark); step.position.set(0, 0.25 + st * 0.5, LOBBY_D / 2 + 3 - st * 0.6); lob.add(step); }
+      var colG = new THREE.CylinderGeometry(1.2, 1.4, LOBBY_H - 4, 20);
+      for (var cx2 = -3.5; cx2 <= 3.5; cx2++) { var col = new THREE.Mesh(colG, mats.stone); col.position.set(cx2 * 7.8, 2 + (LOBBY_H - 4) / 2, LOBBY_D / 2 + 3); col.castShadow = true; lob.add(col); }
+      var ent = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W + 4, 2.4, 8), mats.trim); ent.position.set(0, LOBBY_H - 0.8, LOBBY_D / 2 + 2); lob.add(ent);
+      var tri = new THREE.Shape(); tri.moveTo(-(LOBBY_W + 4) / 2, 0); tri.lineTo((LOBBY_W + 4) / 2, 0); tri.lineTo(0, 8); tri.closePath();
+      var ped = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: 8, bevelEnabled: false }), mats.stone); ped.position.set(0, LOBBY_H + 0.4, LOBBY_D / 2 - 2); ped.castShadow = true; lob.add(ped);   // pediment
+      var door = new THREE.Mesh(new THREE.BoxGeometry(12, 16, 0.6), M(0x6b4a22, { metalness: 0.7, roughness: 0.4 })); door.position.set(0, 8 + 2, LOBBY_D / 2 + 0.35); lob.add(door);
+      var star = new THREE.Mesh(new THREE.OctahedronGeometry(3.2, 0), mats.star); star.scale.set(1, 1.5, 0.35); star.position.set(0, LOBBY_H + 5, LOBBY_D / 2 + 6.5); lob.add(star);
+      var glow = new THREE.PointLight(0x5fe0ff, 60, 60 * U, 1.8); glow.position.set(0, LOBBY_H + 5, LOBBY_D / 2 + 10); lob.add(glow);
+      var sign = (function () { var cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; var x = cv.getContext('2d'); x.fillStyle = '#e8dcc0'; x.fillRect(0, 0, 1024, 128); x.fillStyle = '#5a4520'; x.font = '700 72px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SOUTHERN COLOSSEUM', 512, 68); var tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; return new THREE.Mesh(new THREE.PlaneGeometry(44, 5.5), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.8 })); })();
+      sign.position.set(0, LOBBY_H - 0.8, LOBBY_D / 2 + 6.05); lob.add(sign);
+      scene.add(group);
+      if (window.__registerPlaceable) window.__registerPlaceable('landmark:colosseum', group, { source: 'world-colosseum.js' });
+      return { group: group, door: ext.door, update: function (t) { star.rotation.y = t * 0.6; } };
+    };
+  }
+
   window.buildColosseumArena = function (THREE, opts) {
     var scene = opts.scene;
     var group = new THREE.Group(); group.name = 'interior_COLOSSEUM'; group.position.set(X0, 0, Z0); group.visible = false;

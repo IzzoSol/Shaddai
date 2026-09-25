@@ -208,3 +208,4 @@ backend/data/*pre-repair-backup*
 fal-assets/production/models/*.glb
 fal-assets/production/models/*.obj
 fal-assets/production/models/*-obj/
+.probe-profile/

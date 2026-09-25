@@ -240,12 +240,12 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
-<script src="/world-layout.js?v=20260925m5"></script>
+<script src="/world-layout.js?v=20260925m6"></script>
 <script src="/world-editor.js?v=20260925b"></script>
-<script src="/world-transit.js?v=20260925c"></script>
+<script src="/world-transit.js?v=20260925e"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
-<script src="/world-colosseum.js?v=20260925a"></script>
+<script src="/world-colosseum.js?v=20260925b"></script>
 <script src="/world-terrain.js?v=20260925m2"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
 <script src="/world-ocean.js?v=20260925m3"></script>
@@ -255,12 +255,12 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-actions.js?v=20260924a"></script>
 <script src="/world-tactics.js?v=20260924a"></script>
 <script src="/world-trails.js?v=20260925m3"></script>
-<script src="/world-landmarks.js?v=20260925m2"></script>
+<script src="/world-landmarks.js?v=20260925m3"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260719bridges"></script>
 <script src="/world-spawn.js?v=20260925a"></script>
 <script src="/world-themes.js?v=20260703h"></script>
-<script src="/world-interiors.js?v=20260925fix"></script>
+<script src="/world-interiors.js?v=20260925m3"></script>
 <script src="/world-cutscene.js?v=20260704d"></script>
 <script src="/world-npcs.js?v=20260703g"></script>
 <script src="/world-elevators.js?v=20260719fix"></script>
@@ -412,6 +412,7 @@ window.__worldBuilt = false;
       if(L && window.buildWorldVolcano)   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });
+      if(window.buildColosseumExterior) window.__colosseumExt = window.buildColosseumExterior(THREE, { scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // real-size Southern Colosseum on the map (lobby doors → E → arena)
       if(L && window.buildWorldFalProps)  window.__worldFalProps = window.buildWorldFalProps({ THREE, scene, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // fal models at REAL size (×3.89 u/m)
       if(L && window.buildWorldNature)    window.__worldNature = window.buildWorldNature({ THREE, scene, loader: _ocLoader, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // CC0 nature, instanced, real size
       if(L && window.buildWorldTransit)   window.__worldTransitApi = window.buildWorldTransit({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // Ringed Realm maglev (stations, trains, E to ride)
@@ -4329,6 +4330,7 @@ function animate(){
     if(worldTrails)   worldTrails.update(t);
     if(window.__worldTransitApi) window.__worldTransitApi.update(t, dt);
     if(worldLandmarks) worldLandmarks.update(t);
+    if(window.__colosseumExt) window.__colosseumExt.update(t);
     if(worldTerrain)  worldTerrain.update(t);
     if(worldMarkets)  worldMarkets.update(t);
     if(worldBuildings) worldBuildings.update(t);

@@ -7,18 +7,34 @@
  * Refs: fal-assets/refs/transit/*.jpg (white capsule maglevs, glass tubes, viaducts over snow + city).
  *
  * Parse time: pushes every pylon into WORLD_LAYOUT.realmColliders (solid) — load right after world-layout.js.
+ * Spokes: every station links to an inner-ring HUB on The Grid's edge (E at a hub also opens the ride menu).
  * Build:  window.buildWorldTransit({ THREE, scene, layout, heightAt }) → { update(t, dt), stations, near(x,z) }
  */
 (function () {
   var L = window.WORLD_LAYOUT; if (!L || !L.transit) return;
   var PM = 7 / 1.8, R = L.transit.radius, PYLON_EVERY = 18 * PM;
   var N_PYL = Math.round((2 * Math.PI * R) / PYLON_EVERY);
+  // realm roads (same bearings as world-trails / world-nature): no pylon may stand on one (12u each side)
+  var ROAD_A = (L.biomes || []).filter(function (b) { return b.id !== 'grid'; }).map(function (b) { return Math.atan2(b.center[1], b.center[0]); });
+  var _co = L.landmark && L.landmark('colosseum'); if (_co) ROAD_A.push(Math.atan2(_co.pos[1], _co.pos[0]));
+  function onRoad(x, z) { return ROAD_A.some(function (a) { return x * Math.cos(a) + z * Math.sin(a) > 0 && Math.abs(-x * Math.sin(a) + z * Math.cos(a)) < 20; }); }
   var pylons = [];
-  for (var i = 0; i < N_PYL; i++) { var a = i / N_PYL * Math.PI * 2; pylons.push([Math.cos(a) * R, Math.sin(a) * R, a]); }
-  // spoke: Central Station (city edge) → the ring, due south
+  for (var i = 0; i < N_PYL; i++) { var a = i / N_PYL * Math.PI * 2, px = Math.cos(a) * R, pz = Math.sin(a) * R; if (!onRoad(px, pz)) pylons.push([px, pz, a]); }
+  // SPOKES (atlas): every station is linked to The Grid by a straight elevated line. Ring stations start at an
+  // inner-ring HUB on the city edge; Central Station's own spoke starts at the station. Straddle bents (twin
+  // pylons ±7 m either side of the deck) keep the realm road under each spoke clear.
   var central = (L.stations || []).find(function (s) { return s.id === 'central'; });
-  var spoke = [];
-  if (central) { var d0 = Math.hypot(central.pos[0], central.pos[1]), sa = Math.atan2(central.pos[1], central.pos[0]); for (var r = d0 + PYLON_EVERY; r < R - PYLON_EVERY * 0.5; r += PYLON_EVERY) spoke.push([Math.cos(sa) * r, Math.sin(sa) * r, sa]); }
+  var HUB_R = ((L.city && L.city.radius) || 650) + 12 * PM, LAT = 7 * PM;
+  var spokes = (L.stations || []).map(function (s) {
+    var a = Math.atan2(s.pos[1], s.pos[0]), r0 = s.id === 'central' ? Math.hypot(s.pos[0], s.pos[1]) : HUB_R;
+    return { id: s.id, st: s, a: a, r0: r0 };
+  }).filter(function (sp) { return R - sp.r0 > PYLON_EVERY; });
+  var spoke = [];   // bent pylons
+  spokes.forEach(function (sp) {
+    var ca = Math.cos(sp.a), sa = Math.sin(sp.a);
+    for (var r = sp.r0 + PYLON_EVERY; r < R - PYLON_EVERY * 0.5; r += PYLON_EVERY)
+      [-LAT, LAT].forEach(function (l) { spoke.push([ca * r - sa * l, sa * r + ca * l, sp.a]); });
+  });
   pylons.concat(spoke).forEach(function (p) { L.realmColliders.push({ x: Math.round(p[0]), z: Math.round(p[1]), r: Math.round(1.6 * PM), label: 'maglev-pylon' }); });
 
   window.buildWorldTransit = function (opts) {
@@ -60,13 +76,40 @@
       collars.setMatrixAt(k, mm.compose(pv.set(p[0], DECK_Y - DECK_T - 0.4 * PM, p[1]), q.identity(), sv.set(1, 1, 1)));
     });
     cols.castShadow = true; group.add(cols); group.add(collars);
-    // spoke deck (straight) from Central Station to the ring
-    if (central && spoke.length) {
-      var a0 = Math.atan2(central.pos[1], central.pos[0]), d0 = Math.hypot(central.pos[0], central.pos[1]), len = R - d0;
+    // spoke decks (straight) from each hub / Central Station out to the ring, with a crossbeam on every bent
+    var beams = [];
+    spokes.forEach(function (sp) {
+      var len = R - sp.r0 - DECK_W / 2, mid = sp.r0 + len / 2, yaw = Math.atan2(Math.cos(sp.a), Math.sin(sp.a));
       var sd = new THREE.Mesh(new THREE.BoxGeometry(DECK_W * 0.6, DECK_T, len), M.concrete);
-      sd.position.set(Math.cos(a0) * (d0 + len / 2), DECK_Y - DECK_T / 2, Math.sin(a0) * (d0 + len / 2)); sd.rotation.y = Math.atan2(Math.cos(a0), Math.sin(a0)); group.add(sd);
-      var sr = new THREE.Mesh(new THREE.BoxGeometry(0.4 * PM, 0.3 * PM, len), M.rail); sr.position.copy(sd.position); sr.position.y = DECK_Y + 0.2 * PM; sr.rotation.y = sd.rotation.y; group.add(sr);
+      sd.position.set(Math.cos(sp.a) * mid, DECK_Y - DECK_T / 2, Math.sin(sp.a) * mid); sd.rotation.y = yaw; sd.receiveShadow = true; group.add(sd);
+      [-1, 1].forEach(function (s) {
+        var sr = new THREE.Mesh(new THREE.BoxGeometry(0.4 * PM, 0.3 * PM, len), M.rail); sr.position.copy(sd.position); sr.position.y = DECK_Y + 0.2 * PM; sr.rotation.y = yaw;
+        sr.position.x += Math.cos(yaw) * s * 1.2 * PM; sr.position.z -= Math.sin(yaw) * s * 1.2 * PM; group.add(sr);
+        var ed = new THREE.Mesh(new THREE.BoxGeometry(0.25 * PM, 0.25 * PM, len), M.gold); ed.position.copy(sd.position); ed.position.y = DECK_Y + 0.1 * PM; ed.rotation.y = yaw;
+        ed.position.x += Math.cos(yaw) * s * DECK_W * 0.3; ed.position.z -= Math.sin(yaw) * s * DECK_W * 0.3; group.add(ed);
+      });
+      for (var r = sp.r0 + PYLON_EVERY; r < R - PYLON_EVERY * 0.5; r += PYLON_EVERY) beams.push([Math.cos(sp.a) * r, Math.sin(sp.a) * r, yaw]);
+    });
+    if (beams.length) {
+      var bm = new THREE.InstancedMesh(new THREE.BoxGeometry(2 * LAT + 3 * PM, 1.4 * PM, 2.2 * PM), M.concrete, beams.length), qy = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+      beams.forEach(function (b, k) { bm.setMatrixAt(k, mm.compose(pv.set(b[0], DECK_Y - DECK_T - 0.7 * PM, b[1]), qy.setFromAxisAngle(up, b[2] + Math.PI / 2), sv.set(1, 1, 1))); });
+      bm.castShadow = true; group.add(bm);
     }
+    // ── inner-ring HUBS (atlas cyan nodes on the city edge): gold-ringed plaza, floating beacon crystal, lift to the spoke ──
+    var hubs = [], beacons = [];
+    spokes.forEach(function (sp) {
+      if (sp.id === 'central') return;
+      var hx = Math.cos(sp.a) * sp.r0, hz = Math.sin(sp.a) * sp.r0, g = heightAt(hx, hz);
+      var H = new THREE.Group(); H.position.set(hx, g, hz); group.add(H);
+      var disc = new THREE.Mesh(new THREE.CylinderGeometry(10 * PM, 10.5 * PM, 0.5 * PM, 48), M.concrete); disc.position.y = 0.25 * PM; disc.receiveShadow = true; H.add(disc);
+      var rim = new THREE.Mesh(new THREE.TorusGeometry(10 * PM, 0.25 * PM, 6, 64), M.gold); rim.rotation.x = Math.PI / 2; rim.position.y = 0.55 * PM; H.add(rim);
+      var inner = new THREE.Mesh(new THREE.TorusGeometry(4 * PM, 0.18 * PM, 6, 48), M.rail); inner.rotation.x = Math.PI / 2; inner.position.y = 0.55 * PM; H.add(inner);
+      var lift = new THREE.Mesh(new THREE.CylinderGeometry(2.2 * PM, 2.2 * PM, DECK_Y - g, 16, 1, true), M.glass); lift.position.set(0, (DECK_Y - g) / 2, 0); H.add(lift);
+      var crystal = new THREE.Mesh(new THREE.OctahedronGeometry(2.4 * PM, 0), M.rail); crystal.position.y = DECK_Y - g + 6 * PM; crystal.scale.y = 1.6; H.add(crystal); beacons.push(crystal);
+      var board = nameBoard(sp.st.name.replace(/ (Station|Terminal|Halt|Hub)$/i, '') + ' Line'); board.scale.setScalar(0.6); board.position.set(0, 6 * PM, 0); board.rotation.y = -sp.a - Math.PI / 2; H.add(board);
+      hubs.push({ id: 'hub-' + sp.id, name: sp.st.name.replace(/ (Station|Terminal|Halt|Hub)$/i, '') + ' Line · Grid Hub', station: sp.id, x: hx, z: hz, group: H });
+      if (window.__registerPlaceable) window.__registerPlaceable('transit:hub-' + sp.id, H, { source: 'world-transit.js', id: 'hub-' + sp.id });
+    });
     // ── stations: platform + curved glass canopy with gold ribs + name board, and a ground lift pad ──
     var stations = [];
     function nameBoard(text) {
@@ -114,13 +157,13 @@
 
     // ── boarding: E at a station pad → destination menu → ride (camera follows the train) → arrive ──
     var ui = null, riding = null;
-    function near(x, z) { var best = null, bd = 16 * PM; stations.forEach(function (s) { var d = Math.hypot(s.x - x, s.z - z); if (d < bd) { bd = d; best = s; } }); return best; }
+    function near(x, z) { var best = null, bd = 16 * PM; stations.concat(hubs).forEach(function (s) { var d = Math.hypot(s.x - x, s.z - z); if (d < bd) { bd = d; best = s; } }); return best; }
     function menu(from) {
       if (ui) ui.remove();
       ui = document.createElement('div');
       ui.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99998;background:rgba(6,8,11,.94);border:1px solid #e8c45c;border-radius:14px;padding:18px 20px;font:14px Georgia,serif;color:#dfe7ee;min-width:320px';
       ui.innerHTML = '<div style="color:#e8c45c;letter-spacing:.2em;font-size:12px;margin-bottom:4px">RINGED REALM MAGLEV</div><div style="font-size:18px;margin-bottom:12px">' + from.name + '</div>' +
-        stations.filter(function (s) { return s !== from; }).map(function (s) { return '<button data-to="' + s.id + '" style="display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px;background:#101822;border:1px solid #1d2733;color:#dfe7ee;border-radius:8px;cursor:pointer;font:inherit">→ ' + s.name + '</button>'; }).join('') +
+        stations.filter(function (s) { return s !== from && s.id !== from.station; }).map(function (s) { return '<button data-to="' + s.id + '" style="display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px;background:#101822;border:1px solid #1d2733;color:#dfe7ee;border-radius:8px;cursor:pointer;font:inherit">→ ' + s.name + '</button>'; }).join('') +
         '<div style="color:#7a8794;font-size:12px;margin-top:8px">Esc to close</div>';
       document.body.appendChild(ui);
       if (document.exitPointerLock) document.exitPointerLock();
@@ -143,11 +186,12 @@
     }, true);
 
     var api = {
-      group: group, stations: stations, near: near, deckY: DECK_Y,
+      group: group, stations: stations, hubs: hubs, near: near, deckY: DECK_Y,
       _frames: 0,
       status: function () { return riding ? { f: api._frames, t: +riding.t.toFixed(2), dur: +riding.dur.toFixed(2), to: riding.dest.id } : null; },   // probe/debug
       update: function (t, dt) {
         api._frames++; dt = Math.min(dt || 0.016, 0.1);
+        for (var bi = 0; bi < beacons.length; bi++) { beacons[bi].rotation.y += dt * 0.9; beacons[bi].position.y += Math.sin(t * 1.6 + bi) * 0.02; }
         trains.forEach(function (tr) { if (riding && riding.tr === tr) return; tr.s += tr.dir * SPEED * dt / tr.r; placeTrain(tr); });
         if (riding) {
           var rd = riding; rd.t += dt; var k = Math.min(1, rd.t / rd.dur), e2 = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;

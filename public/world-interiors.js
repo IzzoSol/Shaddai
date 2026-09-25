@@ -102,11 +102,20 @@
     // ── REALM STRUCTURES as enterable doors (interior law, 2026-09-23) ─────────────
     // Each sits at its real position on the big map — realms are separated by terrain
     // and distance; these doors are the E-portals into sized-correct interior instances.
+    // MAP v3 (2026-09-25): positions come from the live layout — the old hard-coded v2 spots left doors floating
+    // in empty terrain ("press E everywhere"). Colosseum door = its real lobby doors (world-colosseum.js);
+    // keeps = the hero models' real collider circles.
+    var _LY = global.WORLD_LAYOUT || {}, _rc = function (id) { return (_LY.realmColliders || []).find(function (c) { return c.label === id; }); };
+    var _cw = global.COLOSSEUM_WORLD, _fo = _rc('hero-fortress'), _ca = _rc('hero-castle');
+    if (_cw) COLLIDER_R.COLOSSEUM = 4;
+    if (_fo) COLLIDER_R.FORTRESS = _fo.r;
+    if (_ca) COLLIDER_R.CASTLE = _ca.r;
     var REALM_SECTORS = [
-      { code: 'COLOSSEUM', name: 'The Colosseum', pos: [-14, 460], color: 0xe8c45c },  // south trail end
+      // colosseum: sector centre sits just inside the lobby doors so the door leaf lands ON them, facing the city
+      { code: 'COLOSSEUM', name: 'The Colosseum', pos: _cw ? [_cw.door[0] - _cw.front[0] * 4.5, _cw.door[1] - _cw.front[1] * 4.5] : [0, 1210], color: 0xe8c45c },
       { code: 'GARAGE',    name: 'The Garage',     pos: [26, 96],   color: 0x00ff9c },  // plaza east
-      { code: 'FORTRESS',  name: 'Emberfall Keep', pos: [420, -380], color: 0xff5a10 }, // volcano crater shelf
-      { code: 'CASTLE',    name: 'Darkrealm Keep', pos: [-420, -380], color: 0x9b59f5 },// darkforest castle
+      { code: 'FORTRESS',  name: 'Emberfall Keep', pos: _fo ? [_fo.x, _fo.z] : [1477, -642], color: 0xff5a10 },
+      { code: 'CASTLE',    name: 'Darkrealm Keep', pos: _ca ? [_ca.x, _ca.z] : [-1970, -635], color: 0x9b59f5 },
     ];
     for (var _ri = 0; _ri < REALM_SECTORS.length; _ri++) allSectors.push(REALM_SECTORS[_ri]);
 
