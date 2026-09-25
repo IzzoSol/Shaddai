@@ -2761,6 +2761,7 @@ let _interiors = null;
 if (window.buildWorldInteriors) {
   try {
     _interiors = window.buildWorldInteriors({ THREE, scene, camera, controls, playerPos, layout: window.WORLD_LAYOUT });
+    window.__w3dDebug.interiors = _interiors;   // probe hook (tools/probe-colosseum.cjs)
     const _doorPrompt = document.createElement('div');
     _doorPrompt.style.cssText = 'position:fixed;bottom:96px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(39,224,255,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
     document.body.appendChild(_doorPrompt);

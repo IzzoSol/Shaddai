@@ -134,14 +134,14 @@
     var skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: { top: { value: new THREE.Color() }, bot: { value: new THREE.Color() } },
       vertexShader: 'varying float h; void main(){ h = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
       fragmentShader: 'uniform vec3 top; uniform vec3 bot; varying float h; void main(){ gl_FragColor = vec4(mix(bot, top, clamp(h*1.4+0.25,0.0,1.0)), 1.0); }' });
-    var sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), skyMat); root.add(sky);
+    var sky = new THREE.Mesh(new THREE.SphereGeometry(420, 32, 16), skyMat); sky.frustumCulled = false; root.add(sky);
     var hemi = new THREE.HemisphereLight(0xfff1d6, 0x6b5a42, 1.1); root.add(hemi);
-    var sun = new THREE.DirectionalLight(0xffe2b0, 2.2); sun.position.set(-120, 200, -80); root.add(sun);
+    var sun = new THREE.DirectionalLight(0xffe2b0, 2.2); sun.position.set(-120, 200, -80); root.add(sun); root.add(sun.target);   // aim at the arena, not the far-away world origin
     var torches = []; for (var tI = 0; tI < 8; tI++) { var tt = tI / 8 * Math.PI * 2, pl = new THREE.PointLight(0xff9a3c, 0, 90); pl.position.set((A + LOW1) * Math.cos(tt), H_LOW + 4, (B + LOW1) * Math.sin(tt)); root.add(pl); torches.push(pl); }
 
     // ── themes (admin presets) ──
     var THEMES = {
-      classic:  { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0xc9a24a, banner: 0x9e1b1b, top: 0x6fa8dc, bot: 0xf2dcb0, sun: 2.2, hemi: 1.1, torch: 0 },
+      classic:  { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0xc9a24a, banner: 0x9e1b1b, top: 0x6fa8dc, bot: 0xf2dcb0, sun: 1.5, hemi: 0.95, torch: 0 },
       royal:    { stone: 0xf1ede6, dark: 0xcfc6b8, seat: 0xe6ddcc, trim: 0xe8c45c, banner: 0x1c2f6b, top: 0x8fb8ea, bot: 0xfff3dc, sun: 2.4, hemi: 1.2, torch: 0 },
       night:    { stone: 0x5e5647, dark: 0x3b352c, seat: 0x544b3d, trim: 0xe8c45c, banner: 0x6b0f0f, top: 0x05070f, bot: 0x2a1c10, sun: 0.25, hemi: 0.35, torch: 3.5 },
       festival: { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0x00ff9c, banner: 0xff3fa4, top: 0x2b1055, bot: 0xff8a3c, sun: 1.2, hemi: 0.9, torch: 2.5 },
@@ -152,6 +152,7 @@
       mats.stone.color.setHex(T.stone); mats.stoneDark.color.setHex(T.dark); mats.seat.color.setHex(T.seat); mats.trim.color.setHex(T.trim); mats.banner.color.setHex(T.banner);
       skyMat.uniforms.top.value.setHex(T.top); skyMat.uniforms.bot.value.setHex(T.bot); sun.intensity = T.sun; hemi.intensity = T.hemi;
       torches.forEach(function (p) { p.intensity = T.torch; });
+      env.fog.color.setHex(T.bot);
       drawScreen((current.field.toUpperCase()) + '  ·  ' + current.theme.toUpperCase());
     }
     // ── field modes (drawn onto the floor canvas; the canvas covers the ellipse's 124 × 88 m box) ──
@@ -202,6 +203,19 @@
       if (e.code === 'KeyX' && camIdx >= 0) spectate(-1);
     });
 
+    // ── environment swap: the outdoor world's fog + view distance are tuned for the open map; inside this
+    //    800-unit bowl they turn everything navy. While the arena is visible use a light warm haze + long view. ──
+    var env = { saved: null, fog: new THREE.Fog(0xf2dcb0, 900, 4200) };
+    setInterval(function () {
+      var cam = window.__w3dDebug && window.__w3dDebug.camera;
+      if (group.visible && !env.saved) {
+        env.saved = { fog: scene.fog, far: cam ? cam.far : null }; scene.fog = env.fog;
+        if (cam && cam.far < 5000) { cam.far = 5000; cam.updateProjectionMatrix(); }
+      } else if (!group.visible && env.saved) {
+        scene.fog = env.saved.fog; if (cam && env.saved.far) { cam.far = env.saved.far; cam.updateProjectionMatrix(); }
+        env.saved = null; if (camIdx >= 0) spectate(-1);
+      }
+    }, 250);
     var params = new URLSearchParams(location.search);
     setField(params.get('field') || 'sand'); setTheme(params.get('colo') || 'classic');
     scene.add(group);
