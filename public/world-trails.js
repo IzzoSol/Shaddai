@@ -24,6 +24,7 @@ window.buildWorldTrails = function (opts) {
   var _co = layout.landmark && layout.landmark('colosseum');
   if (_co) ROUTES.push({ a: Math.atan2(_co.pos[1], _co.pos[0]), end: Math.round(Math.hypot(_co.pos[0], _co.pos[1]) - (_co.footprint || 40)), name: 'colosseum' });
   window.WORLD_ROUTES = ROUTES;   // shared with falprops (trail-head signs), nature (road clearance), the planner
+  var RING_R = layout.transit && layout.transit.radius;   // MAP v3: the golden transit ring through every station
 
   // collect marker transforms
   var pts = [];
@@ -37,6 +38,10 @@ window.buildWorldTrails = function (opts) {
     pts.push({ x: gx, z: gz, y: heightAt(gx, gz) + 0.1, r: -1 });
   });
 
+  if (RING_R) {
+    for (var ra = 0; ra < Math.PI * 2; ra += 6 / RING_R) { var rx = Math.cos(ra) * RING_R, rz = Math.sin(ra) * RING_R; pts.push({ x: rx, z: rz, y: heightAt(rx, rz) + 0.08, r: RING_R }); }
+    (layout.stations || []).forEach(function (st) { pts.push({ x: st.pos[0], z: st.pos[1], y: heightAt(st.pos[0], st.pos[1]) + 0.1, r: -1 }); });   // station caps
+  }
   var geo = new THREE.CircleGeometry(1, 12);
   geo.rotateX(-Math.PI / 2);
   var mat = new THREE.MeshBasicMaterial({ color: 0xe8c45c, transparent: true, opacity: 0.85,

@@ -49,7 +49,7 @@ text{font-family:system-ui,Segoe UI,sans-serif;pointer-events:none}
     <div><span class="sw" style="background:#00ff9c"></span>shipped 3D model (placed)</div>
     <div><span class="sw" style="background:#e8c45c"></span>approved concept — 3D next</div>
     <div><span class="sw" style="background:#7a8794"></span>existing model in the world today</div>
-    <div><span class="sw" style="background:#6b4a2b"></span>mountain ring (R 380–520, 60m ridge)</div>
+    <div><span class="sw" style="background:#e8c45c"></span>golden transit ring + stations (dragon gates)</div>
     <div><span class="sw" style="background:#5fe0ff"></span>light-trail road / pass</div>
   </div>
   <h2>YOUR EDITS</h2>
@@ -79,7 +79,7 @@ text{font-family:system-ui,Segoe UI,sans-serif;pointer-events:none}
   el('rect', { x: -L.half, y: -L.half, width: L.half * 2, height: L.half * 2, fill: '#0b1117', stroke: '#1d2733' }, gBase);
   // mountain band drawn as wedges, skipping ±0.42 rad around each pass
   const inPass = (a) => PASSES.some(([p]) => { let d = Math.abs(a - p); if (d > Math.PI) d = 2 * Math.PI - d; return d < MN.passW; });
-  for (let i = 0; i < 180; i++) {
+  for (let i = 0; i < (MN.ridge ? 180 : 0); i++) {
     const a0 = -Math.PI + i * 2 * Math.PI / 180, a1 = a0 + 2 * Math.PI / 180, am = (a0 + a1) / 2;
     const ocean = Math.hypot(Math.cos(am) * ((MN.r0 + MN.r1) / 2) - L.biomes.find(b => b.id === 'ocean').center[0], Math.sin(am) * ((MN.r0 + MN.r1) / 2) - L.biomes.find(b => b.id === 'ocean').center[1]) < L.biomes.find(b => b.id === 'ocean').radius;
     if (ocean) continue;
@@ -99,7 +99,12 @@ text{font-family:system-ui,Segoe UI,sans-serif;pointer-events:none}
   // roads: trails + hex roads
   const gRd = layer('Roads & passes', true);
   ROUTES.forEach(([a, end]) => el('line', { x1: Math.cos(a) * 72, y1: Math.sin(a) * 72, x2: Math.cos(a) * end, y2: Math.sin(a) * end, stroke: '#5fe0ff', 'stroke-width': 3, 'stroke-dasharray': '10 6', opacity: 0.8 }, gRd));
-  PASSES.forEach(([a, n]) => { const t = el('text', { x: Math.cos(a) * (MN.r0 + MN.r1) / 2, y: Math.sin(a) * (MN.r0 + MN.r1) / 2 + 4, 'text-anchor': 'middle', fill: '#5fe0ff', 'font-size': 13 }, gRd); t.textContent = n; });
+  if (L.transit) {   // MAP v3: golden transit ring + the atlas stations
+    el('circle', { cx: 0, cy: 0, r: L.transit.radius, fill: 'none', stroke: '#e8c45c', 'stroke-width': 10, opacity: 0.7 }, gRd);
+    (L.stations || []).forEach((st) => { el('circle', { cx: st.pos[0], cy: st.pos[1], r: 34, fill: '#0b1117', stroke: '#e8c45c', 'stroke-width': 8 }, gRd).addEventListener('click', () => show({ title: st.name, rows: [['realm', st.realm], ['dragon', st.dragon || '—'], ['pos', st.pos.join(', ')], ['distance from spawn', dist(st.pos) + ' m']] }));
+      const t = el('text', { x: st.pos[0], y: st.pos[1] - 48, 'text-anchor': 'middle', fill: '#e8c45c', 'font-size': 40 }, gRd); t.textContent = st.name; });
+  }
+  if (MN.ridge) PASSES.forEach(([a, n]) => { const t = el('text', { x: Math.cos(a) * (MN.r0 + MN.r1) / 2, y: Math.sin(a) * (MN.r0 + MN.r1) / 2 + 4, 'text-anchor': 'middle', fill: '#5fe0ff', 'font-size': 40 }, gRd); t.textContent = n; });
   L.roads.forEach(([a, b]) => { const A = L.sector(a).pos, B = L.sector(b).pos; el('line', { x1: A[0], y1: A[1], x2: B[0], y2: B[1], stroke: '#e8c45c', 'stroke-width': 2, opacity: 0.45 }, gRd); });
   L.sacred.rings.forEach((r) => el('circle', { cx: 0, cy: 0, r, fill: 'none', stroke: '#e8c45c', 'stroke-opacity': 0.18 }, gRd));
   // city: agent stations + landmarks

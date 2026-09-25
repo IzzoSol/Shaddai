@@ -32,33 +32,47 @@
   var PIKADON_POS = vtx(-156);                  // ≈ [-106,-238], xz-azimuth −114°
 
   window.WORLD_LAYOUT = {
-    half: 2500,                  // MAP v2 (2026-09-25): 720→2500 — realms spread far apart (owner: "a really big map")
+    half: 2600,                  // MAP v3 (2026-09-25): matches the owner's atlas ("Word of Shaddai — the Ringed Realm")
     spawn: [0, 2, 70],          // player start: on the central axis, just south of the Source
     sacred: { radius: R, center: [0, 0], rings: [60, 130, 200, 260] }, // concentric plaza rings
 
-    // ── MAP v2 geometry — every system reads these (terrain ridge, climb limit, trails, nature, planner) ──
-    // Realms are placed by compass BEARING (atan2(z,x), same as before — keeps 2D parity) and DISTANCE.
-    // Inner realms ~900u out; the Wilds + a 60 m mountain ring at R 1350-1650 with one canyon pass per
-    // outer realm (each guarded by its dragon — docs/COLOSSEUM-AND-DRAGONS-SPEC.md); outer realms ~2050u out.
-    mountains: { r0: 1350, r1: 1650, ridge: 60, passW: 0.07 },
-    city: { radius: 420 },
+    // ── MAP v3 geometry (owner atlas): realms are WEDGES filling the disc (nearest-center wins), joined by a golden
+    // TRANSIT RING at R 1150 with one named station per realm border; each station is held by that realm's dragon.
+    // No mountain wall — mountains only where the atlas draws them (Emberfall). Bearings = atan2(z,x); north = -z.
+    mountains: { r0: 0, r1: 0, ridge: 0, passW: 0 },   // ring removed (kept as a zero-width record so old readers no-op)
+    city: { radius: 650 },
+    transit: { radius: 1150 },
 
-    // ── BIOME REGIONS (nearest-center wins for ground/fog blending) ──
+    // ── BIOME REGIONS — centers measured from the owner's atlas (distance ∝ atlas radius; outer rim ≈ 2400u) ──
     biomes: (function () {
       var P = function (bearing, dist) { return [Math.round(Math.cos(bearing) * dist), Math.round(Math.sin(bearing) * dist)]; };
       return [
-        { id: 'grid',       name: 'The Grid',       center: [0, 0],               radius: 420, color: 0x27e0ff, ground: 'grid',   fog: 0x000814, water: false },
-        // inner ring (inside the mountains) — spaced so none overlap each other or the city
-        { id: 'forest',     name: 'Quill Forest',   center: P(0.62, 900),         radius: 250, color: 0x3ddc84, ground: 'meadow', fog: 0x0a1a0a, water: false },
-        { id: 'arctic',     name: 'Arctic Vault',   center: P(-2.13, 900),        radius: 230, color: 0xaaddff, ground: 'snow',   fog: 0xaaccee, water: true  },
-        { id: 'desert',     name: 'Sand Sea',       center: P(-1.01, 900),        radius: 230, color: 0xff7a18, ground: 'sand',   fog: 0x1a0800, water: false },
-        { id: 'void',       name: 'Deep Void',      center: P(-1.5708, 1120),     radius: 200, color: 0x9b59f5, ground: 'void',   fog: 0x050010, water: false },
-        // outer ring (beyond the mountains) — one pass each
-        { id: 'ocean',      name: 'Crystal Sea',    center: P(2.366, 1980),       radius: 480, color: 0xc2a176, ground: 'sand',   fog: 0x06283a, water: true, dock: P(2.366, 1560) },
-        { id: 'meadow',     name: 'Meadowfields',   center: P(0.785, 2050),       radius: 330, color: 0x8fd06a, ground: 'meadow', fog: 0x0a140a, water: false },
-        { id: 'suburb',     name: 'The Suburbs',    center: P(0.074, 2050),       radius: 330, color: 0x9aa8b8, ground: 'grid',   fog: 0x0a0e14, water: false },
-        { id: 'volcano',    name: 'Emberfall',      center: P(-0.736, 2050),      radius: 330, color: 0x8a2a10, ground: 'lava',   fog: 0x1a0600, water: false, dock: null },
-        { id: 'darkforest', name: 'Darkforest',     center: P(-2.405, 2050),      radius: 330, color: 0x2a3a4a, ground: 'void',   fog: 0x04060a, water: false },
+        { id: 'grid',       name: 'The Grid',       center: [0, 0],           radius: 650, color: 0x27e0ff, ground: 'grid',   fog: 0x000814, water: false },
+        { id: 'void',       name: 'Deep Void',      center: P(-1.571, 1340),  radius: 460, color: 0x9b59f5, ground: 'void',   fog: 0x050010, water: false },
+        { id: 'desert',     name: 'Sand Sea',       center: P(-0.93, 1480),   radius: 480, color: 0xff7a18, ground: 'sand',   fog: 0x1a0800, water: false },
+        { id: 'volcano',    name: 'Emberfall',      center: P(-0.41, 1610),   radius: 480, color: 0x8a2a10, ground: 'lava',   fog: 0x1a0600, water: false, dock: null },
+        { id: 'forest',     name: 'Quill Forest',   center: P(0.06, 1080),    radius: 330, color: 0x3ddc84, ground: 'meadow', fog: 0x0a1a0a, water: false },
+        { id: 'suburb',     name: 'The Suburbs',    center: P(0.17, 1855),    radius: 480, color: 0x9aa8b8, ground: 'grid',   fog: 0x0a0e14, water: false },
+        { id: 'meadow',     name: 'Meadowfields',   center: P(0.866, 1590),   radius: 520, color: 0x8fd06a, ground: 'meadow', fog: 0x0a140a, water: false },
+        { id: 'ocean',      name: 'Crystal Sea',    center: P(2.70, 1900),    radius: 620, color: 0xc2a176, ground: 'sand',   fog: 0x06283a, water: true, dock: P(2.62, 1250) },
+        { id: 'darkforest', name: 'Darkforest',     center: P(-2.83, 2070),   radius: 520, color: 0x2a3a4a, ground: 'void',   fog: 0x04060a, water: false },
+        { id: 'arctic',     name: 'Arctic Vault',   center: P(-2.19, 1585),   radius: 480, color: 0xaaddff, ground: 'snow',   fog: 0xaaccee, water: true  },
+      ];
+    })(),
+
+    // ── TRANSIT RING STATIONS (owner atlas names) — each at its realm's border on the ring; dragon = gate boss ──
+    stations: (function () {
+      var P = function (bearing) { return [Math.round(Math.cos(bearing) * 1150), Math.round(Math.sin(bearing) * 1150)]; };
+      return [
+        { id: 'central',    name: 'Central Station',        pos: [0, 700],         realm: 'grid',       dragon: null },
+        { id: 'rift',       name: 'Rift Gate Station',      pos: P(-1.571), realm: 'void',       dragon: 'void' },
+        { id: 'desert',     name: 'Desert Terminal',        pos: P(-0.98),  realm: 'desert',     dragon: 'tan' },
+        { id: 'forge',      name: 'Emberfall Forge Station',pos: P(-0.40),  realm: 'volcano',    dragon: 'red' },
+        { id: 'suburb',     name: 'Suburb Transit Hub',     pos: P(0.22),   realm: 'suburb',     dragon: 'black' },
+        { id: 'meadow',     name: 'Meadowfields Halt',      pos: P(0.90),   realm: 'meadow',     dragon: 'green' },
+        { id: 'harbor',     name: 'Harbor Line Station',    pos: P(2.45),   realm: 'ocean',      dragon: 'teal' },
+        { id: 'darkvault',  name: 'Darkvault Station',      pos: P(-2.80),  realm: 'darkforest', dragon: 'dark' },
+        { id: 'arctic',     name: 'Arctic Outpost Station', pos: P(-2.20),  realm: 'arctic',     dragon: 'blue' },
       ];
     })(),
 
@@ -100,7 +114,7 @@
     // 3D BAZAAR zone (SHADDAI-WORLD-3D.html) so the minimap 'B' marker points at the real bazaar.
     landmarks: [
       { id: 'bazaar', name: 'The Bazaar', pos: [-100, 100], color: 0x00e5a0, footprint: 46, building: 'bazaar' },
-      { id: 'colosseum', name: 'The Colosseum', pos: [Math.round(Math.cos(1.6) * 1100), Math.round(Math.sin(1.6) * 1100)], color: 0xe8c45c, footprint: 180, building: 'colosseum' },   // MAP v2: own plaza, south
+      { id: 'colosseum', name: 'Southern Colosseum', pos: [0, 1235], color: 0xe8c45c, footprint: 190, building: 'colosseum' },   // MAP v3: due south on the atlas, just outside the transit ring
       { id: 'emblem', name: 'SH Emblem',  pos: [0, 0],   color: 0xffcf4a },
     ],
 
