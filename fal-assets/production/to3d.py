@@ -87,6 +87,11 @@ def main():
             u = (res.get(k) or {}).get("url")
             if u: dl(u, os.path.join(objd, os.path.basename(u.split("?")[0])))
         mtl = next((f for f in os.listdir(objd) if f.endswith(".mtl")), None)
+        if mtl:   # the MTL's map_Kd names the texture WITHOUT fal's random prefix — save a copy under that name
+            import re as _re, shutil
+            want = _re.search(r"^map_Kd\s+(\S+)", open(os.path.join(objd, mtl), encoding="utf-8", errors="ignore").read(), _re.M)
+            tex = next((f for f in os.listdir(objd) if "texture" in f and f.endswith(".png")), None)
+            if want and tex and tex != want.group(1): shutil.copyfile(os.path.join(objd, tex), os.path.join(objd, want.group(1)))
         if mtl:   # point the OBJ at the MTL file we actually saved
             src_obj = open(os.path.join(objd, "model.obj"), encoding="utf-8", errors="ignore").read()
             import re

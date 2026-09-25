@@ -5,14 +5,14 @@
 // Owner drags markers in map.html, presses "Copy layout", and pastes it back to Claude to wire into code.
 window.FAL_PLACEMENTS = [
   // ── SHIPPED (3D done) ──────────────────────────────────────────────────────────────
-  { id: 'bld-shop',        status: 'shipped', kind: 'one',  pos: [-40, 118], rot: 0,    r: 7,  note: 'plaza shop, beside the bazaar' },
-  { id: 'bld-arcade',      status: 'shipped', kind: 'one',  pos: [70, 60],   rot: -0.8, r: 9,  note: 'ASSET-SPEC C3 arcade slot (between garage and plaza) — skate door' },
-  { id: 'hub-dock',        status: 'shipped', kind: 'one',  pos: [-205, 205], rot: 0.8, r: 6,  note: 'Crystal Sea harbor, next to the gold dock disc [-193,190]' },
+  { id: 'bld-shop',        status: 'shipped', kind: 'one',  pos: [-40, -85], rot: 0,    r: 26, note: 'IN WORLD — north plaza; sized to ASSET-SPEC 12-13 m base (50 u wide, ~29 u tall)' },
+  { id: 'bld-arcade',      status: 'shipped', kind: 'one',  pos: [62, -55],  rot: -0.8, r: 31, note: 'IN WORLD — NE plaza (free-ground map); 16 m = 62 u tall' },
+  { id: 'hub-dock',        status: 'shipped', kind: 'one',  pos: [-330, 330], rot: 0.8, r: 24, note: 'HELD — harbor already has a dock; goes to the ocean farm field' },
   { id: 'veh-skiff',       status: 'shipped', kind: 'replace', pos: [-242, 255], r: 6,  note: 'replaces ocean-skiff in world-ocean.js (same id + width)' },
   { id: 'prop-signpost',   status: 'shipped', kind: 'one', multi: [[53, 50], [72, 5], [50, -48], [-53, -49], [-49, 51], [-2, 72]], r: 2, note: 'one at every trail head (meadow, suburb, volcano, darkforest, ocean, colosseum)' },
-  { id: 'prop-neon-tree',  status: 'shipped', kind: 'one', multi: [[65, 113], [-65, 113], [130, 0], [-130, 0], [65, -113], [-65, -113]], r: 3, note: 'ring 130, between the agent stations' },
+  { id: 'prop-neon-tree',  status: 'shipped', kind: 'one', multi: [[130, 0], [-130, 0], [-65, -113], [0, -60], [40, -40], [-20, -50]], r: 14, note: 'IN WORLD — 6 m = 23 u; moved 3 off existing props' },
   { id: 'hub-bridge-span', status: 'shipped', kind: 'one', multi: [[318, 318], [449, 33], [334, -302], [-334, -302], [-320, 310]], r: 10, note: 'light bridges across each mountain pass (R≈450)' },
-  { id: 'prop-crate',      status: 'shipped', kind: 'one', multi: [[-186, 198], [-199, 184], [34, 104], [-94, 110]], r: 1, note: 'dock, garage, bazaar' },
+  { id: 'prop-crate',      status: 'shipped', kind: 'one', multi: [[36, 110], [44, 118], [30, 122], [-86, 124]], r: 3, note: 'IN WORLD — garage + bazaar' },
   { id: 'hub-door',        status: 'shipped', kind: 'attach', note: 'door module: attached to every enterable building (2.2×1.2m opening), not placed alone' },
   { id: 'item-rune-hammer', status: 'shipped', kind: 'attach', note: 'PIKADON weapon → hand bone' },
   { id: 'item-quill-pen',  status: 'shipped', kind: 'attach', note: 'QUILL weapon → hand bone' },

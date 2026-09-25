@@ -241,6 +241,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
 <script src="/world-layout.js?v=20260921b"></script>
+<script src="/world-falprops.js?v=20260924a"></script>
 <script src="/world-terrain.js?v=20260924m"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
 <script src="/world-ocean.js?v=20260921b"></script>
@@ -406,6 +407,7 @@ window.__worldBuilt = false;
       if(L && window.buildWorldVolcano)   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader });
       if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader });
       if(L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });
+      if(L && window.buildWorldFalProps)  window.__worldFalProps = window.buildWorldFalProps({ THREE, scene, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // fal models at REAL size (×3.89 u/m)
       if(L && window.buildWorldTrails)    worldTrails     = window.buildWorldTrails({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
     }
     // REMOVED (owner): the bronze "Market Sentinel" statue in front of ZEROX. worldMarkets stays null (null-guarded in the loop).
@@ -4545,6 +4547,7 @@ function animate(){
     }
   }
 
+  if(window.__probeCam){ const pc=window.__probeCam; camera.position.set(pc.pos[0],pc.pos[1],pc.pos[2]); camera.lookAt(pc.look[0],pc.look[1],pc.look[2]); }   // probe-only camera override (tools/probe-falprops.cjs); unset in normal play
   composer.render();
 }
 animate();
