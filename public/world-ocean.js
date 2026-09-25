@@ -159,7 +159,7 @@ window.buildWorldOcean = function (opts) {
   // ── BOATS/SHIPS — moored in the wave zone near the harbor, riding the real surface.
   //    FULL MAP: positions are dir/perp fractions of RAD (dir = toward the plaza),
   //    sizes scale with RAD so the sea grows, the fleet grows with it. ──
-  var DIR = [0.714, -0.702], PERP = [0.702, 0.714], SC = RAD / 95;
+  var DIR = [0.714, -0.702], PERP = [0.702, 0.714], SC = 7 / 1.8;   // MAP v2: hull sizes in REAL metres (w: 12 * SC = a 12 m skiff), not scaled with the sea
   function atB(dfr, pfr) {
     return [CX + (DIR[0] * dfr + PERP[0] * pfr) * RAD, CZ + (DIR[1] * dfr + PERP[1] * pfr) * RAD];
   }
@@ -193,6 +193,7 @@ window.buildWorldOcean = function (opts) {
     m.rotation.y = cfg.ry;
     group.add(m);
     boats.push({ m: m, cfg: cfg, yOff: fit.yOff });
+    if (window.__registerPlaceable) window.__registerPlaceable('ocean:' + cfg.id, m, { source: 'world-ocean.js BOATS', id: cfg.id });
   }
 
   function fallbackBoat(cfg) {

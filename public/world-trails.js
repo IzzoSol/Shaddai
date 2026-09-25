@@ -16,14 +16,14 @@ window.buildWorldTrails = function (opts) {
   scene.add(group);
 
   // trail heads: bearing (atan2(z,x) convention, matches world-terrain _PASSES) + end radius
-  var ROUTES = [
-    { a: 0.785,  end: 540, name: 'meadow' },
-    { a: 0.074,  end: 540, name: 'suburb' },
-    { a: -0.736, end: 520, name: 'volcano' },
-    { a: -2.405, end: 540, name: 'darkforest' },
-    { a: 2.366,  end: 265, name: 'ocean-dock' },
-    { a: 1.6,    end: 440, name: 'colosseum' },   // south road to the arena
-  ];
+  // MAP v2: one road per realm (city → realm edge) + the colosseum, all derived from WORLD_LAYOUT
+  var ROUTES = (layout.biomes || []).filter(function (bm) { return bm.id !== 'grid'; }).map(function (bm) {
+    var d = Math.hypot(bm.center[0], bm.center[1]);
+    return { a: Math.atan2(bm.center[1], bm.center[0]), end: Math.round(d - bm.radius * 0.55), name: bm.id };
+  });
+  var _co = layout.landmark && layout.landmark('colosseum');
+  if (_co) ROUTES.push({ a: Math.atan2(_co.pos[1], _co.pos[0]), end: Math.round(Math.hypot(_co.pos[0], _co.pos[1]) - (_co.footprint || 40)), name: 'colosseum' });
+  window.WORLD_ROUTES = ROUTES;   // shared with falprops (trail-head signs), nature (road clearance), the planner
 
   // collect marker transforms
   var pts = [];

@@ -16,7 +16,9 @@
   var face = function (x, z) { return Math.atan2(-x, -z); };   // yaw that faces the city center
 
   // roadside signs: one at each light-trail head, 14u to the side of the road so the path stays clear
-  var TRAILS = [0.785, 0.074, -0.736, -2.405, 2.366, 1.6];
+  // MAP v2: one sign at the head of every road (bearing toward each realm + the colosseum)
+  var TRAILS = (L.biomes || []).filter(function (b) { return b.id !== 'grid'; }).map(function (b) { return Math.atan2(b.center[1], b.center[0]); });
+  var _coF = L.landmark && L.landmark('colosseum'); if (_coF) TRAILS.push(Math.atan2(_coF.pos[1], _coF.pos[0]));
   var signs = TRAILS.map(function (a) {
     var r = 84, px = -Math.sin(a) * 14, pz = Math.cos(a) * 14;
     return [Math.cos(a) * r + px, Math.sin(a) * r + pz];
@@ -51,7 +53,7 @@
     var group = new THREE.Group(); group.name = 'world-fal-props'; scene.add(group);
     var placed = 0, failed = 0;
     ITEMS.forEach(function (it) {
-      loader.load('/assets/models/fal/' + it.id + '.glb?v=20260924', function (g) {
+      (window.__queueLoad || function (l, u, a, b) { l.load(u, a, undefined, b); })(loader, '/assets/models/fal/' + it.id + '.glb?v=20260924', function (g) {
         it.at.forEach(function (p, k) {
           var m = k === 0 ? g.scene : g.scene.clone(true);
           m.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (o.material && o.material.map) o.material.map.colorSpace = THREE.SRGBColorSpace; } });
@@ -68,8 +70,9 @@
           holder.name = 'fal-' + it.id + '-' + k;
           holder.userData.falId = it.id; holder.userData.label = it.label || null;
           group.add(holder); placed++;
+          if (window.__registerPlaceable) window.__registerPlaceable('fal:' + it.id + '#' + k, holder, { source: 'world-falprops.js', id: it.id });
         });
-      }, undefined, function () { failed++; console.warn('[falprops] missing ' + it.id); });
+      }, function (err) { failed++; console.warn('[falprops] failed ' + it.id + ': ' + (err && (err.message || err))); });
     });
     return { group: group, stats: function () { return { placed: placed, failed: failed, colliders: L.realmColliders.filter(function (c) { return /^fal-/.test(c.label); }).length }; } };
   };

@@ -92,7 +92,10 @@ window.buildWorldVolcano = function (opts) {
   })();
 
   // ── MODELS — every shipped volcano asset, seated on the crater shelf/rim ──
-  var MODELS = [
+  // MAP v2: the master realm-model list in world-layout.js (real sizes) wins; the literal below is the v1 fallback
+  var MODELS = (layout.realmModelsFor && layout.realmModelsFor('volcano').length) ? layout.realmModelsFor('volcano').map(function (m) {
+    return { id: m.id, w: m.w, x: m.x, z: m.z, y: m.y || 0, ry: m.ry || 0, anim: m.anim };
+  }) : [
     { id: 'volcano-fortress',     w: RAD * 0.62, x: CX,                 z: CZ,                 y: 6.6,  ry: 0.26 },
     { id: 'volcano-forge-tower',  w: RAD * 0.40, x: CX - RAD * 0.52,    z: CZ + RAD * 0.30,    y: 6.6,  ry: -0.4 },
     { id: 'volcano-ritual-circle',w: RAD * 0.30, x: CX + RAD * 0.56,    z: CZ - RAD * 0.34,    y: 6.6,  ry: 0.9 },
@@ -122,7 +125,8 @@ window.buildWorldVolcano = function (opts) {
     m.rotation.y = cfg.ry || 0;
     group.add(m);
     placed.push({ m: m, cfg: cfg });
-    if (cfg.anim === 'dragon') dragonMesh = m;
+    if (window.__registerPlaceable) window.__registerPlaceable('realm:volcano:' + cfg.id, m, { source: 'world-layout.js realmModels', realm: 'volcano', id: cfg.id });
+    if (cfg.anim === 'dragon') { dragonMesh = m; m.userData.baseY = m.position.y; }
   }
 
   function fallback(cfg) {
@@ -151,7 +155,7 @@ window.buildWorldVolcano = function (opts) {
       embers.position.y = 6.5 + Math.sin(t * 0.4) * 1.2;
       if (dragonMesh) {                       // slow menace-sway over the fortress
         dragonMesh.rotation.y = -2.2 + Math.sin(t * 0.18) * 0.35;
-        dragonMesh.position.y = 26 + Math.sin(t * 0.5) * 1.4;
+        dragonMesh.position.y = (dragonMesh.userData.baseY || 26) + Math.sin(t * 0.5) * 1.4;
       }
       for (var j = 0; j < lavaLights.length; j++) lavaLights[j].intensity = 400 + Math.sin(t * 2.1 + j) * 90;
     },

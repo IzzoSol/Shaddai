@@ -3,6 +3,8 @@
 // status: shipped (compressed GLB in fal-assets/production/ship) · concept (approved image, no 3D yet) · planned
 // kind:   one = single placement · replace = swaps an existing model IN PLACE (same coords) · scatter = zone
 // Owner drags markers in map.html, presses "Copy layout", and pastes it back to Claude to wire into code.
+var _B = function (id, fx, fz) { var L = window.WORLD_LAYOUT, b = L && L.biomes.find(function (x) { return x.id === id; }); return b ? [Math.round(b.center[0] + (fx || 0) * b.radius), Math.round(b.center[1] + (fz || 0) * b.radius)] : [0, 0]; };
+var _LM = function (id) { var L = window.WORLD_LAYOUT, l = L && L.landmark(id); return l ? l.pos : [0, 0]; };
 window.FAL_PLACEMENTS = [
   // ── SHIPPED (3D done) ──────────────────────────────────────────────────────────────
   { id: 'bld-shop',        status: 'shipped', kind: 'one',  pos: [-40, -85], rot: 0,    r: 26, note: 'IN WORLD — north plaza; sized to ASSET-SPEC 12-13 m base (50 u wide, ~29 u tall)' },
@@ -11,26 +13,26 @@ window.FAL_PLACEMENTS = [
   { id: 'veh-skiff',       status: 'shipped', kind: 'replace', pos: [-242, 255], r: 6,  note: 'replaces ocean-skiff in world-ocean.js (same id + width)' },
   { id: 'prop-signpost',   status: 'shipped', kind: 'one', multi: [[53, 50], [72, 5], [50, -48], [-53, -49], [-49, 51], [-2, 72]], r: 2, note: 'one at every trail head (meadow, suburb, volcano, darkforest, ocean, colosseum)' },
   { id: 'prop-neon-tree',  status: 'shipped', kind: 'one', multi: [[130, 0], [-130, 0], [-65, -113], [0, -60], [40, -40], [-20, -50]], r: 14, note: 'IN WORLD — 6 m = 23 u; moved 3 off existing props' },
-  { id: 'hub-bridge-span', status: 'shipped', kind: 'one', multi: [[318, 318], [449, 33], [334, -302], [-334, -302], [-320, 310]], r: 10, note: 'light bridges across each mountain pass (R≈450)' },
+  { id: 'hub-bridge-span', status: 'shipped', kind: 'one', multi: (window.WORLD_LAYOUT ? window.WORLD_LAYOUT.biomes.filter(function (b) { return Math.hypot(b.center[0], b.center[1]) > 1650; }).map(function (b) { var a = Math.atan2(b.center[1], b.center[0]); return [Math.round(Math.cos(a) * 1500), Math.round(Math.sin(a) * 1500)]; }) : []), r: 10, note: 'light bridges across each mountain pass (R≈450)' },
   { id: 'prop-crate',      status: 'shipped', kind: 'one', multi: [[36, 110], [44, 118], [30, 122], [-86, 124]], r: 3, note: 'IN WORLD — garage + bazaar' },
   { id: 'hub-door',        status: 'shipped', kind: 'attach', note: 'door module: attached to every enterable building (2.2×1.2m opening), not placed alone' },
   { id: 'item-rune-hammer', status: 'shipped', kind: 'attach', note: 'PIKADON weapon → hand bone' },
   { id: 'item-quill-pen',  status: 'shipped', kind: 'attach', note: 'QUILL weapon → hand bone' },
 
   // ── REALM LANDMARKS (approved concepts → 3D next, ~$0.375 each) ───────────────────────
-  { id: 'hero-colosseum',          status: 'concept', kind: 'replace', pos: [-14, 460], r: 46, note: 'replaces bld-mecha-arena on the walk-in plateau' },
-  { id: 'hero-fortress',           status: 'concept', kind: 'replace', pos: [420, -380], r: 30, note: 'Emberfall crater shelf; gate on the SW face' },
-  { id: 'hero-castle',             status: 'concept', kind: 'replace', pos: [-420, -380], r: 34, note: 'Darkforest; drawbridge on the SE face, moat r34' },
+  { id: 'hero-colosseum',          status: 'concept', kind: 'replace', pos: _LM('colosseum'), r: 46, note: 'replaces bld-mecha-arena on the walk-in plateau' },
+  { id: 'hero-fortress',           status: 'concept', kind: 'replace', pos: _B('volcano'), r: 30, note: 'Emberfall crater shelf; gate on the SW face' },
+  { id: 'hero-castle',             status: 'concept', kind: 'replace', pos: _B('darkforest'), r: 34, note: 'Darkforest; drawbridge on the SE face, moat r34' },
   { id: 'bld-shaddai-hall',        status: 'concept', kind: 'one', pos: [0, 150], r: 10, note: 'owner-picked SHADDAI hall (sign fixed) — the city front door' },
-  { id: 'hero-forest-amphitheater', status: 'concept', kind: 'one', pos: [215, 150], r: 25, note: 'Quill Forest center (ref C2 Sylvan Arena)' },
-  { id: 'hero-sky-dome',           status: 'concept', kind: 'one', pos: [-150, -250], r: 30, note: 'Arctic Vault — green dome in the snow (ref W1)' },
-  { id: 'hero-desert-terminal',    status: 'concept', kind: 'one', pos: [150, -250], r: 22, note: 'Sand Sea hyperloop terminal (ref W5)' },
-  { id: 'hero-void-rift-gate',     status: 'concept', kind: 'one', pos: [0, -370], r: 18, note: 'Deep Void center' },
-  { id: 'hero-arctic-outpost',     status: 'concept', kind: 'one', pos: [-95, -300], r: 14, note: 'Arctic research outpost' },
-  { id: 'hero-beach-market-dome',  status: 'concept', kind: 'one', pos: [-250, 235], r: 14, note: 'Crystal Sea market in the shallows (ref C1)' },
-  { id: 'hero-farm-sky-structure', status: 'concept', kind: 'one', pos: [440, 450], r: 20, note: 'Meadowfields floating farm (ref W4)' },
-  { id: 'hero-mushroom-pods',      status: 'concept', kind: 'replace', pos: [400, 400], r: 24, note: 'replaces homes-mushroom-pods (ref W7)' },
-  { id: 'hero-city-megatower',     status: 'concept', kind: 'one', pos: [575, -45], r: 18, note: 'Suburbs skyline anchor (ref W6)' },
+  { id: 'hero-forest-amphitheater', status: 'concept', kind: 'one', pos: _B('forest'), r: 25, note: 'Quill Forest center (ref C2 Sylvan Arena)' },
+  { id: 'hero-sky-dome',           status: 'concept', kind: 'one', pos: _B('arctic', 0, -0.05), r: 30, note: 'Arctic Vault — green dome in the snow (ref W1)' },
+  { id: 'hero-desert-terminal',    status: 'concept', kind: 'one', pos: _B('desert', 0, -0.04), r: 22, note: 'Sand Sea hyperloop terminal (ref W5)' },
+  { id: 'hero-void-rift-gate',     status: 'concept', kind: 'one', pos: _B('void'), r: 18, note: 'Deep Void center' },
+  { id: 'hero-arctic-outpost',     status: 'concept', kind: 'one', pos: _B('arctic', 0.3, -0.25), r: 14, note: 'Arctic research outpost' },
+  { id: 'hero-beach-market-dome',  status: 'concept', kind: 'one', pos: _B('ocean', 0.45, -0.4), r: 14, note: 'Crystal Sea market in the shallows (ref C1)' },
+  { id: 'hero-farm-sky-structure', status: 'concept', kind: 'one', pos: _B('meadow', 0.25, 0.3), r: 20, note: 'Meadowfields floating farm (ref W4)' },
+  { id: 'hero-mushroom-pods',      status: 'concept', kind: 'replace', pos: _B('meadow'), r: 24, note: 'replaces homes-mushroom-pods (ref W7)' },
+  { id: 'hero-city-megatower',     status: 'concept', kind: 'one', pos: _B('suburb', 0.2, -0.3), r: 18, note: 'Suburbs skyline anchor (ref W6)' },
 
   // ── STREET + ROOM KITS (approved concepts) ────────────────────────────────────────────
   { id: 'prop-street-lamp',   status: 'concept', kind: 'along', note: 'every 40u along all 6 light-trail roads' },

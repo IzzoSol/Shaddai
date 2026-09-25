@@ -32,30 +32,35 @@
   var PIKADON_POS = vtx(-156);                  // ≈ [-106,-238], xz-azimuth −114°
 
   window.WORLD_LAYOUT = {
-    half: 720,                   // FULL MAP (2026-09-21): 380→720 — outer realm ring at R~540
+    half: 2500,                  // MAP v2 (2026-09-25): 720→2500 — realms spread far apart (owner: "a really big map")
     spawn: [0, 2, 70],          // player start: on the central axis, just south of the Source
     sacred: { radius: R, center: [0, 0], rings: [60, 130, 200, 260] }, // concentric plaza rings
 
+    // ── MAP v2 geometry — every system reads these (terrain ridge, climb limit, trails, nature, planner) ──
+    // Realms are placed by compass BEARING (atan2(z,x), same as before — keeps 2D parity) and DISTANCE.
+    // Inner realms ~900u out; the Wilds + a 60 m mountain ring at R 1350-1650 with one canyon pass per
+    // outer realm (each guarded by its dragon — docs/COLOSSEUM-AND-DRAGONS-SPEC.md); outer realms ~2050u out.
+    mountains: { r0: 1350, r1: 1650, ridge: 60, passW: 0.07 },
+    city: { radius: 420 },
+
     // ── BIOME REGIONS (nearest-center wins for ground/fog blending) ──
-    biomes: [
-      { id: 'grid',   name: 'The Grid',     center: [0, 0],       radius: 200, color: 0x27e0ff, ground: 'grid',   fog: 0x000814, water: false },
-      { id: 'forest', name: 'Quill Forest', center: [210, 150],   radius: 150, color: 0x3ddc84, ground: 'meadow', fog: 0x0a1a0a, water: false },
-      { id: 'arctic', name: 'Arctic Vault', center: [-150, -240], radius: 150, color: 0xaaddff, ground: 'snow',   fog: 0xaaccee, water: true  },
-      { id: 'desert', name: 'Sand Sea',     center: [150, -240],  radius: 150, color: 0xff7a18, ground: 'sand',   fog: 0x1a0800, water: false },
-      { id: 'void',   name: 'Deep Void',    center: [0, -360],    radius: 130, color: 0x9b59f5, ground: 'void',   fog: 0x050010, water: false },
-      // CRYSTAL SEA (handoff step 2) — open animated ocean in the SW corner,
-      // mirroring the 2D world's beach realm (deep water at far SW). Sand biome color =
-      // the cove beach ring; the teal water itself is the shader plane from world-ocean.js.
-      // `dock` = the gold harbor disc position (rawElevation carves a walkable sand pad there).
-      // FULL MAP: r 95→150, water plane scales with it (world-ocean.js is fully parametrized).
-      { id: 'ocean',  name: 'Crystal Sea',  center: [-295, 290],  radius: 150, color: 0xc2a176, ground: 'sand',   fog: 0x06283a, water: true, dock: [-193, 190] },
-      // ── OUTER REALM RING (2026-09-21 "full map" — every 2D realm now exists in 3D) ──
-      // 2D world-regions parity: meadow(farm) SE, suburb E, volcano NE, darkforest NW.
-      { id: 'meadow',     name: 'Meadowfields',   center: [400, 400],   radius: 170, color: 0x8fd06a, ground: 'meadow', fog: 0x0a140a, water: false },
-      { id: 'suburb',     name: 'The Suburbs',    center: [540, 40],    radius: 150, color: 0x9aa8b8, ground: 'grid',   fog: 0x0a0e14, water: false },
-      { id: 'volcano',    name: 'Emberfall',     center: [420, -380],  radius: 170, color: 0x8a2a10, ground: 'lava',   fog: 0x1a0600, water: false, dock: null },
-      { id: 'darkforest', name: 'Darkforest',    center: [-420, -380], radius: 170, color: 0x2a3a4a, ground: 'void',   fog: 0x04060a, water: false },
-    ],
+    biomes: (function () {
+      var P = function (bearing, dist) { return [Math.round(Math.cos(bearing) * dist), Math.round(Math.sin(bearing) * dist)]; };
+      return [
+        { id: 'grid',       name: 'The Grid',       center: [0, 0],               radius: 420, color: 0x27e0ff, ground: 'grid',   fog: 0x000814, water: false },
+        // inner ring (inside the mountains) — spaced so none overlap each other or the city
+        { id: 'forest',     name: 'Quill Forest',   center: P(0.62, 900),         radius: 250, color: 0x3ddc84, ground: 'meadow', fog: 0x0a1a0a, water: false },
+        { id: 'arctic',     name: 'Arctic Vault',   center: P(-2.13, 900),        radius: 230, color: 0xaaddff, ground: 'snow',   fog: 0xaaccee, water: true  },
+        { id: 'desert',     name: 'Sand Sea',       center: P(-1.01, 900),        radius: 230, color: 0xff7a18, ground: 'sand',   fog: 0x1a0800, water: false },
+        { id: 'void',       name: 'Deep Void',      center: P(-1.5708, 1120),     radius: 200, color: 0x9b59f5, ground: 'void',   fog: 0x050010, water: false },
+        // outer ring (beyond the mountains) — one pass each
+        { id: 'ocean',      name: 'Crystal Sea',    center: P(2.366, 1980),       radius: 480, color: 0xc2a176, ground: 'sand',   fog: 0x06283a, water: true, dock: P(2.366, 1560) },
+        { id: 'meadow',     name: 'Meadowfields',   center: P(0.785, 2050),       radius: 330, color: 0x8fd06a, ground: 'meadow', fog: 0x0a140a, water: false },
+        { id: 'suburb',     name: 'The Suburbs',    center: P(0.074, 2050),       radius: 330, color: 0x9aa8b8, ground: 'grid',   fog: 0x0a0e14, water: false },
+        { id: 'volcano',    name: 'Emberfall',      center: P(-0.736, 2050),      radius: 330, color: 0x8a2a10, ground: 'lava',   fog: 0x1a0600, water: false, dock: null },
+        { id: 'darkforest', name: 'Darkforest',     center: P(-2.405, 2050),      radius: 330, color: 0x2a3a4a, ground: 'void',   fog: 0x04060a, water: false },
+      ];
+    })(),
 
     // ── AGENT SECTORS — Seed of Life. SHADDAI = center; 6 agents on the hexagon. ──
     sectors: [
@@ -95,6 +100,7 @@
     // 3D BAZAAR zone (SHADDAI-WORLD-3D.html) so the minimap 'B' marker points at the real bazaar.
     landmarks: [
       { id: 'bazaar', name: 'The Bazaar', pos: [-100, 100], color: 0x00e5a0, footprint: 46, building: 'bazaar' },
+      { id: 'colosseum', name: 'The Colosseum', pos: [Math.round(Math.cos(1.6) * 1100), Math.round(Math.sin(1.6) * 1100)], color: 0xe8c45c, footprint: 180, building: 'colosseum' },   // MAP v2: own plaza, south
       { id: 'emblem', name: 'SH Emblem',  pos: [0, 0],   color: 0xffcf4a },
     ],
 
@@ -110,29 +116,36 @@
     // for play. The COLOSSEUM stays collider-free (walk-in venue); gates/arches are
     // pass-through; the dragon flies. Door prompts trigger at COLLIDER_R+DOOR_EXTRA (50u
     // for fortress/castle) — always outside the wall, so E fires first.
-    realmColliders: [
-      // EMBERFALL (volcano crater shelf, center [420,-380])
-      { x: 420,   z: -380,   r: 30, label: 'volcano-fortress' },
-      { x: 331.6, z: -329,   r: 18, label: 'volcano-forge-tower' },
-      { x: 515.2, z: -437.8, r: 8,  label: 'volcano-ritual-circle' },
-      // DARKREALM (center [-420,-380])
-      { x: -420,   z: -380,   r: 34, label: 'castle-siege' },
-      { x: -331.6, z: -448,   r: 4,  label: 'obsidian-rocks-1' },
-      { x: -513.5, z: -303.5, r: 5,  label: 'obsidian-rocks-2' },
-      { x: -321.4, z: -295,   r: 3,  label: 'crystal-cluster-1' },
-      { x: -518.6, z: -291.6, r: 3,  label: 'crystal-cluster-2' },
-      { x: -403,   z: -274.6, r: 3,  label: 'crystal-cluster-3' },
-      // SUBURB (center [540,40])
-      { x: 465,   z: 92.5, r: 20, label: 'bld-apartment-pod-block' },
-      { x: 517.5, z: -35,  r: 18, label: 'bld-inverted-cube-hab' },
-      { x: 607.5, z: 100,  r: 20, label: 'bld-neon-observatory-office' },
-      { x: 622.5, z: 10,   r: 19, label: 'bld-sea-terrace-spire-office' },
-      { x: 540,   z: 122.5,r: 16, label: 'bld-holo-market' },
-      // MEADOWFIELDS (center [400,400])
-      { x: 400,   z: 400,   r: 24, label: 'homes-mushroom-pods-1' },
-      { x: 315,   z: 468,   r: 14, label: 'homes-mushroom-pods-2' },
-      { x: 476.5, z: 328.6, r: 13, label: 'homes-mushroom-pods-3' },
+    // ── MASTER REALM-MODEL LIST (MAP v2, 2026-09-25) — the ONE place realm models are placed + sized.
+    // len = REAL longest horizontal side in metres (× 7/1.8 → world units; never a fraction of the realm).
+    // fx/fz = offset as a fraction of the realm radius (positions spread with the realm); toCity = distance
+    // from the realm center toward the city, as a fraction of the radius (gates on the approach road).
+    // col = collider radius as a fraction of the half-size (0 = walk-on / walk-through / flying).
+    // world-volcano.js + world-realmprops.js mount exactly these; colliders + flat ground derive from them.
+    realmModels: [
+      { realm: 'volcano',    id: 'volcano-fortress',        len: 80, fx: 0,     fz: 0,     y: 6.6, ry: 0.26, col: 0.78 },
+      { realm: 'volcano',    id: 'volcano-forge-tower',     len: 20, fx: -0.52, fz: 0.30,  y: 6.6, ry: -0.4, col: 0.8 },
+      { realm: 'volcano',    id: 'volcano-ritual-circle',   len: 30, fx: 0.56,  fz: -0.34, y: 6.6, ry: 0.9,  col: 0 },
+      { realm: 'volcano',    id: 'volcano-dragon',          len: 40, fx: 0.18,  fz: 0.10,  y: 60,  ry: -2.2, col: 0, anim: 'dragon' },
+      { realm: 'volcano',    id: 'volcano-bridge',          len: 45, fx: 0.62,  fz: 0.62,  y: 0,   ry: 0.7,  col: 0 },
+      { realm: 'volcano',    id: 'volcano-gate',            len: 30, toCity: 0.92,         y: 0,   ry: 2.4,  col: 0 },
+      { realm: 'darkforest', id: 'castle-siege',            len: 70, fx: 0,     fz: 0,     ry: 0.4,  col: 0.8 },
+      { realm: 'darkforest', id: 'prop-obsidian-rocks',     len: 14, fx: 0.52,  fz: -0.4,  ry: 0,    col: 0.8 },
+      { realm: 'darkforest', id: 'prop-obsidian-rocks',     len: 16, fx: -0.55, fz: 0.45,  ry: 1.2,  col: 0.8 },
+      { realm: 'darkforest', id: 'prop-crystal-cluster',    len: 8,  fx: 0.58,  fz: 0.5,   ry: 0.6,  col: 0.8 },
+      { realm: 'darkforest', id: 'prop-crystal-cluster',    len: 7,  fx: -0.5,  fz: -0.52, ry: 2.1,  col: 0.8 },
+      { realm: 'darkforest', id: 'prop-crystal-cluster',    len: 9,  fx: 0.1,   fz: 0.62,  ry: 1.5,  col: 0.8 },
+      { realm: 'suburb',     id: 'bld-apartment-pod-block', len: 45, fx: -0.5,  fz: 0.35,  ry: 0.2,  col: 0.8 },
+      { realm: 'suburb',     id: 'bld-inverted-cube-hab',   len: 30, fx: -0.15, fz: -0.5,  ry: -0.3, col: 0.8 },
+      { realm: 'suburb',     id: 'bld-neon-observatory',    len: 35, fx: 0.45,  fz: 0.4,   ry: 0.5,  col: 0.8, office: true },
+      { realm: 'suburb',     id: 'bld-sea-terrace-spire',   len: 30, fx: 0.55,  fz: -0.2,  ry: -0.6, col: 0.8, office: true },
+      { realm: 'suburb',     id: 'bld-holo-market-v2',      len: 32, fx: 0.0,   fz: 0.55,  ry: 3.14, col: 0.8 },
+      { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 40, fx: 0,     fz: 0,     ry: 0,    col: 0.75 },
+      { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 26, fx: -0.5,  fz: 0.4,   ry: 0.8,  col: 0.75 },
+      { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 24, fx: 0.45,  fz: -0.42, ry: 2.4,  col: 0.75 },
     ],
+    realmColliders: [],   // derived below from realmModels (+ world-falprops.js appends its own)
+
 
     biomeAt: function (x, z) {
       var best = this.biomes[0], bd = Infinity;
@@ -144,4 +157,18 @@
     },
     sector: function (code) { return this.sectors.find(function (s) { return s.code === code; }); },
   };
+
+  // ── MAP v2: resolve every realm model to absolute position + world size, and derive its collider ──
+  (function (L) {
+    var PM = 7 / 1.8;
+    L.realmModels.forEach(function (m) {
+      var b = L.biomes.find(function (x) { return x.id === m.realm; }); if (!b) return;
+      if (m.toCity != null) { var d = Math.hypot(b.center[0], b.center[1]) || 1; m.x = Math.round(b.center[0] - b.center[0] / d * b.radius * m.toCity); m.z = Math.round(b.center[1] - b.center[1] / d * b.radius * m.toCity); }
+      else { m.x = Math.round(b.center[0] + (m.fx || 0) * b.radius); m.z = Math.round(b.center[1] + (m.fz || 0) * b.radius); }
+      m.w = m.len * PM;                                  // world units along the longest side
+      if (m.col > 0) L.realmColliders.push({ x: m.x, z: m.z, r: Math.round(m.w / 2 * m.col), label: m.id, realm: m.realm });
+    });
+    L.realmModelsFor = function (realm) { return L.realmModels.filter(function (m) { return m.realm === realm && m.w; }); };
+  })(window.WORLD_LAYOUT);
+
 })();

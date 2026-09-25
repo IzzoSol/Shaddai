@@ -240,20 +240,21 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
-<script src="/world-layout.js?v=20260921b"></script>
-<script src="/world-falprops.js?v=20260924a"></script>
-<script src="/world-nature.js?v=20260924a"></script>
+<script src="/world-layout.js?v=20260925m2"></script>
+<script src="/world-editor.js?v=20260925b"></script>
+<script src="/world-falprops.js?v=20260925m4"></script>
+<script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum.js?v=20260925a"></script>
-<script src="/world-terrain.js?v=20260924m"></script>
+<script src="/world-terrain.js?v=20260925m2"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
-<script src="/world-ocean.js?v=20260921b"></script>
-<script src="/world-volcano.js?v=20260921b"></script>
-<script src="/world-realmprops.js?v=20260921b"></script>
+<script src="/world-ocean.js?v=20260925m3"></script>
+<script src="/world-volcano.js?v=20260925m3"></script>
+<script src="/world-realmprops.js?v=20260925m3"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
 <script src="/world-actions.js?v=20260924a"></script>
 <script src="/world-tactics.js?v=20260924a"></script>
-<script src="/world-trails.js?v=20260921d"></script>
-<script src="/world-landmarks.js?v=20260921d"></script>
+<script src="/world-trails.js?v=20260925m2"></script>
+<script src="/world-landmarks.js?v=20260925m2"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260719bridges"></script>
 <script src="/world-spawn.js?v=20260719fix"></script>
@@ -327,11 +328,11 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060d);
-scene.fog = new THREE.FogExp2(0x070b1a, 0.0026);  // FULL MAP: 0.0036→0.0026 — the map tripled (half 380→720); slightly thinner fog keeps the outer realms readable at distance while preserving the night mood.
+scene.fog = new THREE.FogExp2(0x070b1a, 0.0006);   // MAP v2: 5000u world — soft haze at ~1500u, far-horizon fade at ~2500u (was 0.0026 = 96% fog at 700u)  // FULL MAP: 0.0036→0.0026 — the map tripled (half 380→720); slightly thinner fog keeps the outer realms readable at distance while preserving the night mood.
 // PBR metal armor (the agent bodies) needs an environment to reflect, or it renders flat/grey.
 { const _pm = new THREE.PMREMGenerator(renderer); scene.environment = _pm.fromScene(new RoomEnvironment(), 0.03).texture; }
 
-const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 1500);  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
+const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 6000);   // MAP v2: see distant realms + the mountain ring  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
 camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple — that made the warm-up frame show "inside shaddai's temple")
 window.__w3dDebug = { scene, camera };   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
 
@@ -1326,7 +1327,7 @@ const TERRAIN = {
 };
 window.applyTerrain = function(k){
   const P=TERRAIN[k]; if(!P) return;
-  scene.background.set(P.bg); scene.fog.color.set(P.fog); scene.fog.density=P.density;
+  scene.background.set(P.bg); scene.fog.color.set(P.fog); scene.fog.density=P.density*0.25;   // MAP v2: presets were tuned for a 760u world
   key.color.set(P.l1); gold.color.set(P.l2);
   const GC={ grid:null, snow:0xcfe0f0, desert:0xc8903c, void:null, neon:0x3a1050, meadow:0x8fd99a };
   const gc=GC[k]; ground.visible=(gc!=null);
@@ -1476,7 +1477,7 @@ const skyMat = new THREE.ShaderMaterial({
     '}',
   ].join('\n'),
 });
-const skyDome = new THREE.Mesh(new THREE.SphereGeometry(1400, 40, 24), skyMat);
+const skyDome = new THREE.Mesh(new THREE.SphereGeometry(5200, 40, 24), skyMat);   // MAP v2: encloses the 5000u map (follows the camera; < far 6000)
 skyDome.renderOrder = -1;
 scene.add(skyDome);
 
@@ -1498,7 +1499,7 @@ function updateSkyForBiome(x, z){
   if(scene.fog){ _skyFogC.set(b.fog || 0x04060d); scene.fog.color.lerp(_skyFogC, 0.04); }
 }
 // open up the fog so the distant biomes/sky are visible (was 0.008 — swallowed everything past ~200u)
-scene.fog.density = 0.0022;
+scene.fog.density = 0.0006;   // MAP v2 (see scene.fog above)
 
 // central monument — THE SOURCE (glowing obelisk)
 const monument = new THREE.Group();
@@ -4110,7 +4111,8 @@ function animate(){
     // CLIMB LIMIT (mountain ring only, R 370-530): slopes steeper than ~40° block the move, so the passes
     // are the real routes between realms. City/realm ground, interiors, lifts and flying craft are untouched.
     { const _r = Math.hypot(playerPos.x, playerPos.z);
-      if (_r > 370 && _r < 530 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
+      const _MN=(window.WORLD_LAYOUT&&window.WORLD_LAYOUT.mountains)||{r0:380,r1:520};
+      if (_r > _MN.r0 - 10 && _r < _MN.r1 + 10 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
         const _h0 = worldTerrain.heightAt(_px0, _pz0), _h1 = worldTerrain.heightAt(playerPos.x, playerPos.z);
         const _run = Math.hypot(playerPos.x - _px0, playerPos.z - _pz0), _flying = veh.mode && veh.baseY(_h1) > _h1 + 2;
         if (!_flying && _run > 1e-4 && (_h1 - _h0) / _run > 0.84) { playerPos.x = _px0; playerPos.z = _pz0; _vel.x *= -0.2; _vel.z *= -0.2; }

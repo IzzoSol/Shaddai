@@ -31,12 +31,17 @@ window.buildWorldRealmProps = function (opts) {
     return -box2.min.y;
   }
   function place(b, cfg) {
+    if (cfg.abs) return { x: cfg.x, z: cfg.z, w: cfg.w };   // MAP v2 master list: absolute position + real-size width
     var cx = b ? b.center[0] : 0, cz = b ? b.center[1] : 0, r = (b && b.radius) || 120;
     return { x: cx + (cfg.dx || 0) * r, z: cz + (cfg.dz || 0) * r, w: (cfg.w || 0.5) * r };
   }
 
   // ── per-realm model manifests (dx/dz = fraction of biome radius; w = fraction too) ──
-  var MANIFESTS = [
+  // MAP v2: realm models come from the master list in world-layout.js (real sizes); literal below = v1 fallback
+  var _mv2 = layout.realmModelsFor ? ['darkforest', 'suburb', 'meadow'].map(function (r) {
+    return { biome: r, models: layout.realmModelsFor(r).map(function (m) { return { id: m.id, abs: true, x: m.x, z: m.z, w: m.w, ry: m.ry || 0, office: m.office }; }) };
+  }).filter(function (mf) { return mf.models.length; }) : [];
+  var MANIFESTS = _mv2.length ? _mv2 : [
     { biome: 'darkforest', models: [
       { id: 'castle-siege',          dx: 0,     dz: 0,     w: 0.72, ry: 0.4 },
       { id: 'prop-obsidian-rocks',  dx: 0.52,  dz: -0.4,  w: 0.20, ry: 0 },
@@ -82,6 +87,7 @@ window.buildWorldRealmProps = function (opts) {
         m.rotation.y = cfg.ry || 0;
         group.add(m);
         placed++;
+        if (window.__registerPlaceable) window.__registerPlaceable('realm:' + mf.biome + ':' + cfg.id, m, { source: 'world-layout.js realmModels', realm: mf.biome, id: cfg.id });
       }
       if (opts.loader) {
         opts.loader.load('/assets/models/' + cfg.id + '.glb', function (g) { mount(g.scene, true); },

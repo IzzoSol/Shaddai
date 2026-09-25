@@ -9,7 +9,8 @@ window.buildWorldLandmarks = function (opts) {
   var dis = [], track = function (o) { dis.push(o); return o; };
 
   // ── COLOSSEUM (south road end, [-14, 460]): bld-mecha-arena on a walk-in plateau ──
-  var AR = { x: -14, z: 460 };
+  var _coLm = layout && layout.landmark && layout.landmark('colosseum');
+  var AR = _coLm ? { x: _coLm.pos[0], z: _coLm.pos[1] } : { x: -14, z: 460 };   // MAP v2: from WORLD_LAYOUT
   var arenaFloor = new THREE.Mesh(track(new THREE.CircleGeometry(46, 48)),
     track(new THREE.MeshStandardMaterial({ color: 0x1a1626, roughness: 0.5, metalness: 0.4, emissive: 0x2a1a40, emissiveIntensity: 0.5 })));
   arenaFloor.rotation.x = -Math.PI / 2;

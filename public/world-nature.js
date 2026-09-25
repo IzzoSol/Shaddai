@@ -15,20 +15,23 @@ window.buildWorldNature = function (opts) {
 
   // ── seeded RNG ──
   var seed = 1337; function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
-  var TRAILS = [0.785, 0.074, -0.736, -2.405, 2.366, 1.6];
+  var MNT = L.mountains || { r0: 380, r1: 520 };
+  // MAP v2: road bearings + lengths from the layout (same formula as world-trails.js)
+  var ROADS = (L.biomes || []).filter(function (b) { return b.id !== 'grid'; }).map(function (b) { return [Math.atan2(b.center[1], b.center[0]), Math.hypot(b.center[0], b.center[1])]; });
+  var _coN = L.landmark && L.landmark('colosseum'); if (_coN) ROADS.push([Math.atan2(_coN.pos[1], _coN.pos[0]), Math.hypot(_coN.pos[0], _coN.pos[1])]);
   var sectors = (L.sectors || []).map(function (s) { return s.pos; });
   function clear(x, z, pad) {
     var r = Math.hypot(x, z);
     if (r < 100) return false;                                    // plaza core stays open
-    if (r > 372 && r < 528) return false;                         // mountain ridge band
-    for (var i = 0; i < TRAILS.length; i++) {                     // light-trail roads: 12u each side
-      var a = TRAILS[i], along = x * Math.cos(a) + z * Math.sin(a), off = Math.abs(-x * Math.sin(a) + z * Math.cos(a));
-      if (along > 60 && along < 560 && off < 12 + pad) return false;
+    if (r > MNT.r0 - 8 && r < MNT.r1 + 8) return false;           // mountain ridge band
+    for (var i = 0; i < ROADS.length; i++) {                      // light-trail roads: 12u each side
+      var a = ROADS[i][0], along = x * Math.cos(a) + z * Math.sin(a), off = Math.abs(-x * Math.sin(a) + z * Math.cos(a));
+      if (along > 60 && along < ROADS[i][1] && off < 12 + pad) return false;
     }
     for (var s = 0; s < sectors.length; s++) if (Math.hypot(x - sectors[s][0], z - sectors[s][1]) < 55 + pad) return false;
     var cs = L.realmColliders || [];
     for (var c = 0; c < cs.length; c++) if (Math.hypot(x - cs[c].x, z - cs[c].z) < cs[c].r + 8 + pad) return false;
-    if (Math.hypot(x + 14, z - 460) < 60) return false;            // colosseum plateau
+    if (_coN && Math.hypot(x - _coN.pos[0], z - _coN.pos[1]) < (_coN.footprint || 46) + 30) return false;   // colosseum plaza
     var h = heightAt(x, z); if (!isFinite(h) || h < 0.3 || h > 25) return false;   // no water, no ridge tops
     return true;
   }
@@ -70,7 +73,7 @@ window.buildWorldNature = function (opts) {
   var _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
   Object.keys(byModel).forEach(function (name) {
     var list = byModel[name];
-    loader.load('/assets/models/nature/' + name + '.glb', function (g) {
+    (window.__queueLoad || function (l, u, a, b) { l.load(u, a, undefined, b); })(loader, '/assets/models/nature/' + name + '.glb', function (g) {
       g.scene.updateMatrixWorld(true);
       var box = new THREE.Box3().setFromObject(g.scene), sz = box.getSize(new THREE.Vector3());
       var parts = []; g.scene.traverse(function (o) { if (o.isMesh) parts.push(o); });
@@ -89,7 +92,7 @@ window.buildWorldNature = function (opts) {
         group.add(im); made++;
       });
       instances += list.length;
-    }, undefined, function () { failed++; });
+    }, function (err) { failed++; if (failed < 4) console.warn('[nature] failed ' + name + ': ' + (err && (err.message || err))); });
   });
   return { group: group, stats: function () { return { planned: PLAN.length, instances: instances, meshes: made, failed: failed }; } };
 };

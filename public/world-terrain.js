@@ -15,12 +15,12 @@
  */
 window.buildWorldTerrain = function (THREE, scene, layout) {
   var _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const SIZE = 1500;         // FULL MAP (2026-09-21): 820→1500 — outer realm ring at R~540 (terrain ±750)
+  const SIZE = 2 * ((layout && layout.half) || 750);   // MAP v2: terrain covers the whole layout (±half)
   // PERF: SEGS 220→140 (now 190 for the bigger map). The vertex-build loop is the dominant
   // load cost (~per-vertex work × vertexCount). 190²=36,300 verts; cell = 1500/190 ≈ 7.9u
   // (~9 samples of the ~70u shortest terrain wave) — silhouette unchanged.
   // heightAt() is a SEPARATE analytic function — its VALUES are not affected.
-  const SEGS = 190;          // grid resolution (visual mesh only)
+  const SEGS = SIZE > 2000 ? 300 : 190;   // grid resolution (visual mesh only) — MAP v2: 300 (cell ≈16.7u); chunked LOD comes with the new intro
   const MAX_H = 64;          // MOUNTAINS v2: 18→64 so the 60m ridge is not clipped (other biomes stay well under 18)
   const SHADE_H = 18;        // elevation-shading scale (kept at the old cap so low terrain shades exactly as before)
 
@@ -44,16 +44,25 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
 
   // FULL MAP: mountain-pass bearings (radians) toward each outer realm + the ocean
   // harbor — computed from the biome centers in world-layout.js (atan2(z,x) convention).
-  const _PASSES = [0.785, 0.074, -0.736, -2.405, 2.366, 1.6];  // meadow, suburb, volcano, darkforest, ocean, colosseum road
+  const MNT = (layout && layout.mountains) || { r0: 380, r1: 520, ridge: 60, passW: 0.16 };
+  // one canyon pass toward every realm that sits beyond the ring (MAP v2: derived, never hand-typed)
+  const _PASSES = ((layout && layout.biomes) || []).filter(function (b) { return Math.hypot(b.center[0], b.center[1]) > MNT.r1; })
+    .map(function (b) { return Math.atan2(b.center[1], b.center[0]); });
   // MOUNTAINS v2 (2026-09-24, World Planner): passes were ±0.42 rad (~2/3 of the ring was gap, a 15m hill) —
   // now narrow canyon notches through a 60m ridge, and the ground under every placed structure stays flat.
-  const PASS_W = 0.16, RIDGE_H = 60;
+  const PASS_W = MNT.passW, RIDGE_H = MNT.ridge;
+  let _coloCache = null;
+  function _colo() {   // colosseum plaza from WORLD_LAYOUT.landmarks (MAP v2), fallback to the v1 spot
+    if (_coloCache) return _coloCache;
+    const lm = layout && layout.landmark && layout.landmark('colosseum');
+    return (_coloCache = lm ? { x: lm.pos[0], z: lm.pos[1], r: lm.footprint || 54 } : { x: -14, z: 460, r: 46 });
+  }
   let _flatZones = null;   // [x, z, radius] from WORLD_LAYOUT.realmColliders + colosseum + harbor, built on first use
   function flatZones() {
     if (_flatZones) return _flatZones;
     const L = (typeof window !== 'undefined' && window.WORLD_LAYOUT) || {};
     _flatZones = (L.realmColliders || []).map((c) => [c.x, c.z, c.r + 6]);
-    _flatZones.push([-14, 460, 54]);
+    const CO = _colo(); _flatZones.push([CO.x, CO.z, CO.r + 10]);
     const oc = (L.biomes || []).find((b) => b.id === 'ocean'); if (oc && oc.dock) _flatZones.push([oc.dock[0], oc.dock[1], 20]);
     return _flatZones;
   }
@@ -163,10 +172,10 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     // ── COLOSSEUM (world-landmarks.js): level walk-in arena plateau at [-14,460] —
     // the south light-trail ends here; the arena floor (y≈1.32) is terrain-walkable.
     {
-      const dA = Math.hypot(x + 14, z - 460);
-      if (dA < 54) {
-        const tA = dA <= 46 ? 0 : smooth(Math.min(1, (dA - 46) / 8));
-        h = Math.max(h, 1.3 - tA * 0.3);
+      const CO = _colo(), dA = Math.hypot(x - CO.x, z - CO.z);
+      if (dA < CO.r + 40) {                                     // MAP v2: the colosseum's own flat plaza
+        const tA = dA <= CO.r ? 0 : smooth(Math.min(1, (dA - CO.r) / 40));
+        h = h * tA + 1.3 * (1 - tA);
       }
     }
 
@@ -177,8 +186,8 @@ window.buildWorldTerrain = function (THREE, scene, layout) {
     // (its own case just ran). The sacred city core (R≤380) is untouched by design.
     if (biome.id !== 'ocean') {
       const dc2 = Math.hypot(x, z);
-      if (dc2 > 380 && dc2 < 520) {
-        const band = Math.sin((dc2 - 380) / 140 * Math.PI);          // 0 at edges, 1 at ~450
+      if (dc2 > MNT.r0 && dc2 < MNT.r1) {
+        const band = Math.sin((dc2 - MNT.r0) / (MNT.r1 - MNT.r0) * Math.PI);   // 0 at edges, 1 mid-ring
         const ang = Math.atan2(z, x);
         let dip = 0;                                                 // carved passes
         for (let pi = 0; pi < _PASSES.length; pi++) {
