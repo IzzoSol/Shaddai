@@ -2432,6 +2432,12 @@
 
     function buildRoom(code) {
       var uc     = upperCode(code);
+      /* COLOSSEUM = the real-size arena instance (world-colosseum.js), not a generic hall. */
+      if (uc === 'COLOSSEUM' && global.buildColosseumArena) {
+        disposeAllExcept(uc);
+        rooms[uc] = global.buildColosseumArena(THREE, { scene: scene });
+        return;
+      }
       /* PERF: only ONE interior in memory at a time — free every other built
          room before this one is created (guards against warming several rooms
          while walking past their doors outdoors). */

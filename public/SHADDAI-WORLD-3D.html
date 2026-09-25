@@ -243,6 +243,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260921b"></script>
 <script src="/world-falprops.js?v=20260924a"></script>
 <script src="/world-nature.js?v=20260924a"></script>
+<script src="/world-colosseum.js?v=20260925a"></script>
 <script src="/world-terrain.js?v=20260924m"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
 <script src="/world-ocean.js?v=20260921b"></script>
@@ -4112,6 +4113,7 @@ function animate(){
         const _run = Math.hypot(playerPos.x - _px0, playerPos.z - _pz0), _flying = veh.mode && veh.baseY(_h1) > _h1 + 2;
         if (!_flying && _run > 1e-4 && (_h1 - _h0) / _run > 0.84) { playerPos.x = _px0; playerPos.z = _pz0; _vel.x *= -0.2; _vel.z *= -0.2; }
       } }
+    if(window.__colosseumArena && _interiors && _interiors.isInside() && window.__colosseumArena.contains(playerPos.x, playerPos.z)) window.__colosseumArena.resolve(playerPos, _px0, _pz0);   // arena: 1 m step-up rule (walls/podium solid, tiers + ramps walkable)
     veh.flyControl(veh.speed(11), dt);                          // VEHICLE-HOOK: craft up/down (Space/Shift)
     if(bikeMode){ trailPos.push(playerPos.x, 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
     // Inside a building interior the player is teleported far off-map (rooms at x≈6000) — skip the
@@ -4161,7 +4163,7 @@ function animate(){
   { const _ey = _elevators ? _elevators.groundY() : null;
     groundY = (_ey!=null) ? _ey : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0); }
   if(!isFinite(groundY)) groundY = 0;   // guard: a bad height sample must never drop the player through the floor
-  if(_interiors && _interiors.isInside()) groundY = 0;   // interior rooms have a flat floor at y=0
+  if(_interiors && _interiors.isInside()) groundY = (window.__colosseumArena && window.__colosseumArena.contains(playerPos.x, playerPos.z)) ? Math.min(window.__colosseumArena.heightAt(playerPos.x, playerPos.z), 400) : 0;   // interiors: flat floor, except the real-size colosseum (walkable tiers)
   // ── SWIM LAW (five-laws §14.3): if the terrain under us is below the waterline, the player
   // FLOATS on the surface (bob included) instead of walking the seafloor. Water bodies are
   // the Crystal Sea basin + any biome marked water:true with a floor below ~-0.45.
