@@ -3200,7 +3200,16 @@
       });
     }
 
-    function isInside() { return currentCode !== null; }
+    function isInside() {
+      /* SAFETY NET (2026-09-25): every room lives on an off-map island (x ≥ ROOM_ISLAND_X). If we think we're
+         inside but the player is standing on the normal map (e.g. a spawn sky-dive moved them after enter()),
+         clear the stuck state — otherwise collisions, terrain height and door prompts all switch off outdoors. */
+      if (currentCode !== null && playerPos && playerPos.x < ROOM_ISLAND_X - 1000) {
+        if (rooms[currentCode] && rooms[currentCode].group) rooms[currentCode].group.visible = false;
+        currentCode = null; hideHint(); hideToolPanel();
+      }
+      return currentCode !== null;
+    }
 
     function nearestDoor(x, z) {
       /* PERF: O(doors), zero allocations, squared-distance compares.

@@ -4082,6 +4082,7 @@ function animate(){
     } else _liftPrompt.style.display='none';
   }
   const _spawnBusy = !!(worldSpawn && worldSpawn.isAnimating());
+  window.__spawnBusy = _spawnBusy;   // read by the ?room=colosseum deep link (never enter a room mid-sky-dive)
   if(!_spawnBusy) _applyLook(dt);   // damped mouse-look → drives camera orientation before movement reads it
   // movement (manual, relative to camera yaw)
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
@@ -4563,8 +4564,10 @@ animate();
 // the same way ?overhead does for screenshots.
 { const _rm=(new URLSearchParams(location.search).get('room')||'').toLowerCase();
   // ?room=colosseum — walk straight into the real-size arena once you've picked a spawn (C = broadcast cams, X = back)
-  if(_rm==='colosseum'){ const _t=setInterval(()=>{ const I=window.__w3dDebug&&window.__w3dDebug.interiors, sp=document.getElementById('spawnPicker');
-    if(I && (!sp || sp.offsetParent===null) && window.__worldBuilt){ clearInterval(_t); if(!I.isInside()) I.enter('COLOSSEUM'); } }, 600); }
+  if(_rm==='colosseum'){ let _landed=0; const _t=setInterval(()=>{ const I=window.__w3dDebug&&window.__w3dDebug.interiors, sp=document.getElementById('spawnPicker');
+    const ready = I && window.__worldBuilt && (!sp || sp.offsetParent===null) && window.__spawnBusy===false;
+    _landed = ready ? _landed+1 : 0;                         // must stay landed ~1.2 s (sky-dive fully over) before entering
+    if(_landed>=2){ clearInterval(_t); if(!I.isInside()) I.enter('COLOSSEUM'); } }, 600); }
   if(_rm==='observatory'||_rm==='library'||_rm==='museum'){
     const _L3=window.WORLD_LAYOUT||{};
     const _sec3=(c)=>(_L3.sector&&_L3.sector(c)&&_L3.sector(c).pos)||null;
