@@ -1777,6 +1777,13 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.375,
     "note": "hunyuan-3d v3.1 pro (batch; ledger line was missed)"
+   },
+   {
+    "at": "2026-09-25T18:08:22.665Z",
+    "id": "agent-shaddai",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
    }
   ]
  },
@@ -2320,6 +2327,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 12.7,
- "builtAt": "2026-09-25T17:58:35.053Z"
+ "spent": 13.5,
+ "builtAt": "2026-09-25T18:08:22.731Z"
 };

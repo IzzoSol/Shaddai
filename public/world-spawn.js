@@ -1094,6 +1094,7 @@
       pickPortal:    pickPortal,
       update:        update,
       isAnimating:   isAnimating,
+      state:         function () { return _state; },   // debug/probe
       portalMarkers: portalMarkers,
     };
   };
