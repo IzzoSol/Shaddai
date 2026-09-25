@@ -63,9 +63,12 @@ ul.needs li{margin:2px 0}
 <script src="board-data.js"></script>
 <script src="placements.js"></script>
 <script src="atlas-data.js"></script>
+<script src="atlas-refs.js"></script>
 <script>
 (function(){
-  const A = window.ATLAS, L = window.WORLD_LAYOUT, B = window.FAL_BOARD || { manifest: { assets: [] }, spent: 0 };
+  const A = window.ATLAS, L = window.WORLD_LAYOUT, AR = window.ATLAS_REFS || {};
+  A.realms.forEach((r) => { r.refs = Array.from(new Set((r.refs || []).concat(AR[r.id] || []))); });
+  const B = window.FAL_BOARD || { manifest: { assets: [] }, spent: 0 };
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // image for an asset id: shipped 3D thumb > HF/fal concept > spec concept
   const man = {}; (B.manifest.assets || []).forEach((a) => { man[a.id] = a; });

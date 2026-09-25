@@ -50,3 +50,21 @@ All reference images live in `fal-assets/refs/` (world/, characters/, agents/, v
 - Robots: base = unicycle workers; humanoids = paid upgrades that fight (owner, 2026-09-24).
 - SHADDAI council agent left out for now; tactics SHADDAI = horned hood (pending approval).
 - Buildings are futuristic only — no normal houses/roofs/barns.
+
+## Batch 2026-09-25 — 71 references from Downloads (owner: "this is everything … put them in the right places")
+Filed by realm prefix under `fal-assets/refs/{world,interiors,characters,vfx}/`; `fal-assets/production/build-atlas-refs.py` maps every file to its realm and the Atlas shows them.
+| Realm | New refs |
+|---|---|
+| Arctic | snow peaks, aurora city, spiral ice city, ringed ice city, snow-canyon city, white dome village, mountain tech station, **blue dragon** |
+| Sand Sea | dune terrain ×2, dome village, dome houses sheet, dune houses, Mars greenhouse domes, **tan dragon** |
+| Crystal Sea | underwater tube city, underwater train, sea-dome park, spire islands, coastal cliff city |
+| Meadowfields | cliff cave homes, hillside earth homes, eco-structures kit, green hills ×2, terraced farms + train; home cutaways (eco-underwater, underground) |
+| Quill Forest | treehouse sketches, walkway bridges, stepping stones, world tree, pod village, **QUILL library interior (floating shelves)**, **green dragon** |
+| Darkforest | teal + green cathedral forests, neon swamp, ruin arch stairs |
+| Emberfall | lava crack / lava rock / lava river textures, **red dragon**, dragon-breath FX sheet |
+| Suburbs | giant tree road B, green tower boulevard |
+| Deep Void | cloud stair tower, fire portal corridor, golden ring pyramid city |
+| Colosseum | neon exterior; stadium, floor, warm arena, jumbotron dome interiors |
+| City / Bazaar | glass elevator tower, SHADDAI sky terrace, golden-dome bazaar, grand hall, NEXUS code wall, hover-car traffic sheet, furniture kits ×2, orange unicycle bot |
+| The Wilds (between missions) | giant stone face, overgrown tank, ring-portal garden city, coastal ring highway, floating broken arches, green-glow cave, crystal cave waterfall, rock set |
+Dragons: 4 delivered (red/blue/tan/green) — boss + mount candidates, 1 per realm.

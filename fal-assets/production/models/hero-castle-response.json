@@ -1,0 +1,43 @@
+{
+  "model_glb": {
+    "url": "https://v3b.fal.media/files/b/0aabd097/Cq8WO6X5UPthRAXxB4Wv5_model.glb",
+    "content_type": "model/gltf-binary",
+    "file_name": "model.glb",
+    "file_size": 64572720
+  },
+  "thumbnail": {
+    "url": "https://v3b.fal.media/files/b/0aabd097/VjIunH4lnttZPxzSl1v0P_preview.png",
+    "content_type": "image/png",
+    "file_name": "preview.png",
+    "file_size": 137014
+  },
+  "model_urls": {
+    "glb": {
+      "url": "https://v3b.fal.media/files/b/0aabd097/Cq8WO6X5UPthRAXxB4Wv5_model.glb",
+      "content_type": "model/gltf-binary",
+      "file_name": "model.glb",
+      "file_size": 64572720
+    },
+    "fbx": null,
+    "obj": {
+      "url": "https://v3b.fal.media/files/b/0aabd096/7PtVk-fmD84zzcpl72LGE_a86d0c76183eba41b757090da6e7fcda.obj",
+      "content_type": "model/obj",
+      "file_name": "a86d0c76183eba41b757090da6e7fcda.obj",
+      "file_size": 35664020
+    },
+    "mtl": {
+      "url": "https://v3b.fal.media/files/b/0aabd096/UGq3c4Hmku0pTjB2rW9DX_material.mtl",
+      "content_type": "text/plain",
+      "file_name": "material.mtl",
+      "file_size": 245
+    },
+    "texture": {
+      "url": "https://v3b.fal.media/files/b/0aabd096/zjJVlrmWBux6o4d1gh1Ww_texture_pbr_20250901_metallic.png",
+      "content_type": "image/png",
+      "file_name": "texture_pbr_20250901_metallic.png",
+      "file_size": 8301147
+    },
+    "usdz": null
+  },
+  "seed": null
+}

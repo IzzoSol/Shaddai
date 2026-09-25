@@ -1632,6 +1632,146 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.375,
     "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from bld-shaddai-hall.png"
+   },
+   {
+    "at": "2026-09-25T07:42:55.795Z",
+    "id": "hero-castle",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-castle.png"
+   },
+   {
+    "at": "2026-09-25T07:46:44.585Z",
+    "id": "hero-mushroom-pods",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-mushroom-pods.png"
+   },
+   {
+    "at": "2026-09-25T07:50:18.897Z",
+    "id": "hero-farm-sky-structure",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-farm-sky-structure.png"
+   },
+   {
+    "at": "2026-09-25T07:54:40.777Z",
+    "id": "hero-forest-amphitheater",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-forest-amphitheater.png"
+   },
+   {
+    "at": "2026-09-25T07:58:26.463Z",
+    "id": "hero-sky-dome",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-sky-dome.png"
+   },
+   {
+    "at": "2026-09-25T08:02:30.946Z",
+    "id": "hero-desert-terminal",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-desert-terminal.png"
+   },
+   {
+    "at": "2026-09-25T08:06:06.113Z",
+    "id": "hero-void-rift-gate",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-void-rift-gate.png"
+   },
+   {
+    "at": "2026-09-25T08:10:13.952Z",
+    "id": "hero-arctic-outpost",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-arctic-outpost.png"
+   },
+   {
+    "at": "2026-09-25T08:14:23.341Z",
+    "id": "hero-beach-market-dome",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-beach-market-dome.png"
+   },
+   {
+    "at": "2026-09-25T08:17:24.191Z",
+    "id": "hero-city-megatower",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from hero-city-megatower.png"
+   },
+   {
+    "at": "2026-09-25T08:19:48.036Z",
+    "id": "veh-ocean-catamaran",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from veh-ocean-catamaran.png"
+   },
+   {
+    "at": "2026-09-25T08:21:51.991Z",
+    "id": "veh-ocean-superyacht",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from veh-ocean-superyacht.png"
+   },
+   {
+    "at": "2026-09-25T08:23:39.217Z",
+    "id": "veh-ocean-submarine",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from veh-ocean-submarine.png"
+   },
+   {
+    "at": "2026-09-25T08:25:12.782Z",
+    "id": "veh-hoverboard-v2",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from veh-hoverboard-v2.png"
+   },
+   {
+    "at": "2026-09-25T08:26:42.081Z",
+    "id": "prop-street-lamp",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-street-lamp.png"
+   },
+   {
+    "at": "2026-09-25T08:28:16.051Z",
+    "id": "prop-kiosk",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-kiosk.png"
+   },
+   {
+    "at": "2026-09-25T08:29:57.288Z",
+    "id": "prop-transit-stop",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-transit-stop.png"
+   },
+   {
+    "at": "2026-09-25T08:31:59.127Z",
+    "id": "prop-holo-fountain",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-holo-fountain.png"
+   },
+   {
+    "at": "2026-09-25T08:34:52.738Z",
+    "id": "prop-statue-shaddai",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-statue-shaddai.png"
+   },
+   {
+    "at": "2026-09-25T08:37:31.965Z",
+    "id": "prop-ore-node",
+    "step": "mesh",
+    "usd": 0.225,
+    "note": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d from prop-ore-node.png"
    }
   ]
  },
@@ -2175,6 +2315,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 6.33,
- "builtAt": "2026-09-25T07:35:06.828Z"
+ "spent": 12.33,
+ "builtAt": "2026-09-25T08:38:03.297Z"
 };
