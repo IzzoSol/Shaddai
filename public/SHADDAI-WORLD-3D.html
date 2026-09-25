@@ -4562,6 +4562,9 @@ animate();
 // (used by the Athenaeum's "In the World" buttons). Override loop keeps the view pinned,
 // the same way ?overhead does for screenshots.
 { const _rm=(new URLSearchParams(location.search).get('room')||'').toLowerCase();
+  // ?room=colosseum — walk straight into the real-size arena once you've picked a spawn (C = broadcast cams, X = back)
+  if(_rm==='colosseum'){ const _t=setInterval(()=>{ const I=window.__w3dDebug&&window.__w3dDebug.interiors, sp=document.getElementById('spawnPicker');
+    if(I && (!sp || sp.offsetParent===null) && window.__worldBuilt){ clearInterval(_t); if(!I.isInside()) I.enter('COLOSSEUM'); } }, 600); }
   if(_rm==='observatory'||_rm==='library'||_rm==='museum'){
     const _L3=window.WORLD_LAYOUT||{};
     const _sec3=(c)=>(_L3.sector&&_L3.sector(c)&&_L3.sector(c).pos)||null;
