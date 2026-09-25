@@ -28,17 +28,17 @@ window.FAL_BOARD = {
   },
   "families": {
    "agent": {
-    "cap_usd": 26,
+    "cap_usd": 20,
     "canary": "agent-oracle",
     "order": 1
    },
    "building": {
-    "cap_usd": 15,
+    "cap_usd": 16,
     "canary": "bld-shop",
     "order": 2
    },
    "vehicle": {
-    "cap_usd": 12,
+    "cap_usd": 10,
     "canary": "veh-skiff",
     "order": 3
    },
@@ -54,7 +54,7 @@ window.FAL_BOARD = {
     "only_if_reserve_intact": true
    },
    "prop": {
-    "cap_usd": 9,
+    "cap_usd": 16,
     "canary": "prop-crate",
     "order": 2
    }
@@ -347,7 +347,7 @@ window.FAL_BOARD = {
     "family": "building",
     "name": "City Shop",
     "canary": true,
-    "status": "mesh-approved",
+    "status": "shipped",
     "slot": {
      "file": "public/world-layout.js (new realmColliders row) + 3D plaza",
      "note": "mirror 2D city.js MALL tryPlace(col4,row40)"
@@ -391,7 +391,7 @@ window.FAL_BOARD = {
     "id": "bld-arcade",
     "family": "building",
     "name": "SHADDAI Arcade",
-    "status": "concept-approved",
+    "status": "shipped",
     "slot": {
      "file": "public/world-layout.js + 3D plaza",
      "note": "mirror 2D ARCADE (west of HQ, commit 4b4949e); E = arcade overlay (skate door)"
@@ -476,7 +476,7 @@ window.FAL_BOARD = {
     "id": "veh-skiff",
     "family": "vehicle",
     "name": "Hover Skiff",
-    "status": "concept-approved",
+    "status": "shipped",
     "slot": {
      "file": "public/world-ocean.js id 'ocean-skiff' (w 12*SC)",
      "note": "same id + same w = drop-in; seat 0.55"
@@ -629,7 +629,7 @@ window.FAL_BOARD = {
     "id": "hub-dock",
     "family": "prop",
     "name": "Crystal Sea dock",
-    "status": "concept-approved",
+    "status": "shipped",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -652,7 +652,7 @@ window.FAL_BOARD = {
     "id": "hub-bridge-span",
     "family": "prop",
     "name": "Light-bridge span",
-    "status": "concept-approved",
+    "status": "shipped",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -675,7 +675,7 @@ window.FAL_BOARD = {
     "id": "prop-crate",
     "family": "prop",
     "name": "Cargo crate",
-    "status": "mesh-approved",
+    "status": "shipped",
     "batch": "hub10",
     "canary": true,
     "slot": {
@@ -698,7 +698,7 @@ window.FAL_BOARD = {
     "id": "prop-neon-tree",
     "family": "prop",
     "name": "Neon tree",
-    "status": "concept-approved",
+    "status": "shipped",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -721,7 +721,7 @@ window.FAL_BOARD = {
     "id": "hub-door",
     "family": "prop",
     "name": "Door module",
-    "status": "concept-approved",
+    "status": "shipped",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -744,7 +744,7 @@ window.FAL_BOARD = {
     "id": "prop-signpost",
     "family": "prop",
     "name": "Venue sign",
-    "status": "concept-approved",
+    "status": "shipped",
     "batch": "hub10",
     "canary": false,
     "slot": {
@@ -767,7 +767,7 @@ window.FAL_BOARD = {
     "id": "item-rune-hammer",
     "family": "prop",
     "name": "Rune war hammer (PIKADON weapon)",
-    "status": "concept-approved",
+    "status": "shipped",
     "approved": "owner-supplied image 2026-09-24",
     "slot": {
      "file": "hand-bone attach (world3d + tactics)"
@@ -787,7 +787,7 @@ window.FAL_BOARD = {
     "id": "item-quill-pen",
     "family": "prop",
     "name": "Glowing quill pen (QUILL weapon)",
-    "status": "concept-approved",
+    "status": "shipped",
     "approved": "owner-supplied image 2026-09-24",
     "slot": {
      "file": "hand-bone attach (world3d + tactics)"
@@ -801,6 +801,720 @@ window.FAL_BOARD = {
      ],
      "need": [],
      "dropped": 1
+    }
+   },
+   {
+    "id": "bld-arcade-palace",
+    "family": "building",
+    "name": "bld-arcade-palace",
+    "status": "cut",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "18x14m base x 16m tall, doorway 2.2x1.2m",
+    "silhouette": "futuristic entertainment hall, facade covered in rows of glowing cyan screen panels showing abstract shapes, gold marquee arch, obsidian columns, glowing doorway",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    },
+    "defects": "duplicate of shipped bld-arcade"
+   },
+   {
+    "id": "arcade-cabinet",
+    "family": "prop",
+    "name": "arcade-cabinet",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "about 1.9m tall",
+    "silhouette": "retro-futuristic arcade cabinet, gold trim, cyan screen",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "veh-ocean-catamaran",
+    "family": "vehicle",
+    "name": "veh-ocean-catamaran",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "19x11x7m",
+    "silhouette": "twin-hull luxury catamaran, twin seats, emerald glass canopy",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "veh-ocean-superyacht",
+    "family": "vehicle",
+    "name": "veh-ocean-superyacht",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "30x11x9m",
+    "silhouette": "futuristic mega-yacht, wraparound cockpit, 2 deck levels, gold accents, captain seat",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "veh-ocean-submarine",
+    "family": "vehicle",
+    "name": "veh-ocean-submarine",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "14x6x6m",
+    "silhouette": "elongated torpedo-shaped research submarine, long cylindrical hull, glass viewport dome at the bow, small rear fins, cyan running lights",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "veh-hoverboard-v2",
+    "family": "vehicle",
+    "name": "veh-hoverboard-v2",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "3.4x1x0.4m",
+    "silhouette": "long narrow skateboard-shaped hover deck with no wheels, seen from above at 3/4, emerald underglow strip along the edge, gold side rails, no rider",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-tourney-betting-board",
+    "family": "prop",
+    "name": "kit-tourney-betting-board",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: betting holo-board, gold and emerald palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-tourney-champion-banner",
+    "family": "prop",
+    "name": "kit-tourney-champion-banner",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: blank fabric champion banner hanging from a stand, decorated only with a geometric star emblem, no words, gold and emerald palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-tourney-weapon-rack",
+    "family": "prop",
+    "name": "kit-tourney-weapon-rack",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: weapon rack, gold and emerald palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-tourney-trophy-pedestal",
+    "family": "prop",
+    "name": "kit-tourney-trophy-pedestal",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: trophy pedestal, gold and emerald palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-tourney-tier-gate",
+    "family": "prop",
+    "name": "kit-tourney-tier-gate",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: tier gate arch, gold and emerald palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-garage-vehicle-pedestal",
+    "family": "prop",
+    "name": "kit-garage-vehicle-pedestal",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: rotating vehicle pedestal, emerald and gold palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-garage-spec-bench",
+    "family": "prop",
+    "name": "kit-garage-spec-bench",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: holo spec bench, emerald and gold palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-garage-parts-shelf",
+    "family": "prop",
+    "name": "kit-garage-parts-shelf",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: parts shelf, emerald and gold palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-garage-tool-wall",
+    "family": "prop",
+    "name": "kit-garage-tool-wall",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: wall pegboard holding futuristic wrenches, drills and power tools, emerald and gold palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-war-map-table",
+    "family": "prop",
+    "name": "kit-war-map-table",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: tactical map table with holo realm-map, ember orange and obsidian palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-war-throne",
+    "family": "prop",
+    "name": "kit-war-throne",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: obsidian throne, ember orange and obsidian palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-war-lava-hearth",
+    "family": "prop",
+    "name": "kit-war-lava-hearth",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: rectangular fireplace hearth with a glowing orange lava pool inside, heavy obsidian stone surround, ember orange and obsidian palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-war-weapon-wall",
+    "family": "prop",
+    "name": "kit-war-weapon-wall",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: wall-mounted rack holding several futuristic swords and spears, ember orange and obsidian palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-siege-throne",
+    "family": "prop",
+    "name": "kit-siege-throne",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: dark throne, violet and black palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-siege-window-frame",
+    "family": "prop",
+    "name": "kit-siege-window-frame",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: moat-facing arched window frame, violet and black palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-siege-plan-table",
+    "family": "prop",
+    "name": "kit-siege-plan-table",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: rectangular war table with a violet holographic map of a castle projected above it, violet and black palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "kit-siege-dragon-banner",
+    "family": "prop",
+    "name": "kit-siege-dragon-banner",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "room prop, <=30k tris",
+    "silhouette": "dungeon-scale room prop: banner of the dragon, violet and black palette",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "prop-street-lamp",
+    "family": "prop",
+    "name": "prop-street-lamp",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "5m tall",
+    "silhouette": "futuristic sci-fi street light, sleek curved metal pole ending in a glowing horizontal light bar, not an old-fashioned lantern",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "prop-kiosk",
+    "family": "prop",
+    "name": "prop-kiosk",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "3m tall",
+    "silhouette": "futuristic vendor kiosk",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "prop-transit-stop",
+    "family": "prop",
+    "name": "prop-transit-stop",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "4m tall",
+    "silhouette": "futuristic transit stop shelter",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "prop-holo-fountain",
+    "family": "prop",
+    "name": "prop-holo-fountain",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "6m tall",
+    "silhouette": "holographic fountain",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "prop-statue-shaddai",
+    "family": "prop",
+    "name": "prop-statue-shaddai",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "5m tall",
+    "silhouette": "obsidian monolith statue of a hooded figure holding a gold sphere, sacred geometry",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "prop-ore-node",
+    "family": "prop",
+    "name": "prop-ore-node",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "2m tall",
+    "silhouette": "crystal ore node",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-fortress",
+    "family": "building",
+    "name": "hero-fortress",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "80x60m base x 45m tall",
+    "silhouette": "obsidian volcanic citadel, three stepped tiers, glowing orange lava waterfalls pouring down its edges, ember orange palette, gold command spire, open gate",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-colosseum",
+    "family": "building",
+    "name": "hero-colosseum",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "90m diameter, walk-in",
+    "silhouette": "single circular colosseum stadium building seen from outside at 3/4 above, tiered steel stands visible over the rim, arched entrance gates, neon pink and cyan light strips, no characters, no mech",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-sky-dome",
+    "family": "building",
+    "name": "hero-sky-dome",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "120m dome (ref W1)",
+    "silhouette": "transparent ribbed glass dome over a lush green hill with a tiered lit building inside, bullet-train viaduct passing by",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-desert-terminal",
+    "family": "building",
+    "name": "hero-desert-terminal",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "60m (ref W5)",
+    "silhouette": "glass-domed hyperloop terminal on red desert ground, gold light strips, chrome capsule docked",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-forest-amphitheater",
+    "family": "building",
+    "name": "hero-forest-amphitheater",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "50m (ref C2)",
+    "silhouette": "conical black timber-lattice pavilion over a circular stage with terraced steps and a round pond",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-beach-market-dome",
+    "family": "building",
+    "name": "hero-beach-market-dome",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "40m (ref C1)",
+    "silhouette": "domed round marketplace half-sunk in turquoise water, rooftop palms, lit shop windows with no signage",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-farm-sky-structure",
+    "family": "building",
+    "name": "hero-farm-sky-structure",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "60m (ref W4)",
+    "silhouette": "floating farm-tech structure of stacked glowing boxes hanging over golden wheat fields",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-city-megatower",
+    "family": "building",
+    "name": "hero-city-megatower",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "200m spire (ref W6)",
+    "silhouette": "pale steel-glass crescent megatower with cantilevered truss terraces on a disc transit podium",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-mushroom-pods",
+    "family": "building",
+    "name": "hero-mushroom-pods",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "12-20m homes (ref W7), candy-red #FF4D4D + moss green",
+    "silhouette": "glossy candy-red mushroom-cap pod homes on curved stalks, rooftop gardens, round windows, sweeping ramps",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-arctic-outpost",
+    "family": "building",
+    "name": "hero-arctic-outpost",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "40m",
+    "silhouette": "arctic research outpost, ice-blue glowing domes on stilts, antenna mast",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-void-rift-gate",
+    "family": "building",
+    "name": "hero-void-rift-gate",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "50m tall",
+    "silhouette": "colossal void rift gate, floating obsidian ring with a violet starfield portal inside",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "hero-castle",
+    "family": "building",
+    "name": "hero-castle",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24 ('these are all amazing' — concepts folder)",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "70x70m base x 55m tall",
+    "silhouette": "dark crystal castle, floating rune-shard towers, violet energy moat glow, open drawbridge on the SE face",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
+    }
+   },
+   {
+    "id": "bld-shaddai-hall",
+    "family": "building",
+    "name": "SHADDAI Hall (owner-picked, sign fixed)",
+    "status": "concept-approved",
+    "approved": "owner 2026-09-24",
+    "slot": {
+     "file": "public/world-falprops.js"
+    },
+    "dims": "22 x 22 m base, 24 m tall",
+    "palette": "style_lock",
+    "refs": {
+     "have": [],
+     "need": []
     }
    }
   ]
@@ -911,6 +1625,13 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.8,
     "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
+   },
+   {
+    "at": "2026-09-25T05:15:44.629Z",
+    "id": "bld-shaddai-hall",
+    "step": "mesh",
+    "usd": 0.375,
+    "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from bld-shaddai-hall.png"
    }
   ]
  },
@@ -969,7 +1690,7 @@ window.FAL_BOARD = {
    {
     "id": "bld-shop",
     "family": "building",
-    "status": "mesh-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -983,7 +1704,7 @@ window.FAL_BOARD = {
    {
     "id": "bld-arcade",
     "family": "building",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -1011,7 +1732,7 @@ window.FAL_BOARD = {
    {
     "id": "veh-skiff",
     "family": "vehicle",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
@@ -1067,57 +1788,351 @@ window.FAL_BOARD = {
    {
     "id": "hub-dock",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "hub-bridge-span",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "prop-crate",
     "family": "prop",
-    "status": "mesh-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "prop-neon-tree",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "hub-door",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "prop-signpost",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 0,
     "refsNeed": 0
    },
    {
     "id": "item-rune-hammer",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 1,
     "refsNeed": 0
    },
    {
     "id": "item-quill-pen",
     "family": "prop",
-    "status": "concept-approved",
+    "status": "shipped",
     "refsHave": 1,
+    "refsNeed": 0
+   },
+   {
+    "id": "bld-arcade-palace",
+    "family": "building",
+    "status": "cut",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "arcade-cabinet",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "veh-ocean-catamaran",
+    "family": "vehicle",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "veh-ocean-superyacht",
+    "family": "vehicle",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "veh-ocean-submarine",
+    "family": "vehicle",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "veh-hoverboard-v2",
+    "family": "vehicle",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-tourney-betting-board",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-tourney-champion-banner",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-tourney-weapon-rack",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-tourney-trophy-pedestal",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-tourney-tier-gate",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-garage-vehicle-pedestal",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-garage-spec-bench",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-garage-parts-shelf",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-garage-tool-wall",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-war-map-table",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-war-throne",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-war-lava-hearth",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-war-weapon-wall",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-siege-throne",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-siege-window-frame",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-siege-plan-table",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "kit-siege-dragon-banner",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-street-lamp",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-kiosk",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-transit-stop",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-holo-fountain",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-statue-shaddai",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "prop-ore-node",
+    "family": "prop",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-fortress",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-colosseum",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-sky-dome",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-desert-terminal",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-forest-amphitheater",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-beach-market-dome",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-farm-sky-structure",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-city-megatower",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-mushroom-pods",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-arctic-outpost",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-void-rift-gate",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "hero-castle",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
+    "refsNeed": 0
+   },
+   {
+    "id": "bld-shaddai-hall",
+    "family": "building",
+    "status": "concept-approved",
+    "refsHave": 0,
     "refsNeed": 0
    }
   ],
@@ -1126,19 +2141,19 @@ window.FAL_BOARD = {
     "perAsset": 1.35,
     "n": 6,
     "worst": 8.1,
-    "cap": 26
+    "cap": 20
    },
    "building": {
     "perAsset": 0.8,
-    "n": 5,
-    "worst": 4,
-    "cap": 15
+    "n": 18,
+    "worst": 14.4,
+    "cap": 16
    },
    "vehicle": {
     "perAsset": 0.8,
-    "n": 5,
-    "worst": 4,
-    "cap": 12
+    "n": 9,
+    "worst": 7.2,
+    "cap": 10
    },
    "cosmetic": {
     "perAsset": 0.45,
@@ -1154,12 +2169,12 @@ window.FAL_BOARD = {
    },
    "prop": {
     "perAsset": 0.5,
-    "n": 8,
-    "worst": 4,
-    "cap": 9
+    "n": 32,
+    "worst": 16,
+    "cap": 16
    }
   }
  },
- "spent": 5.95,
- "builtAt": "2026-09-24T19:43:33.815Z"
+ "spent": 6.33,
+ "builtAt": "2026-09-25T07:35:06.828Z"
 };

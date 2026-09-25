@@ -104,6 +104,13 @@
       "step": "mesh",
       "usd": 0.8,
       "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
+    },
+    {
+      "at": "2026-09-25T05:15:44.629Z",
+      "id": "bld-shaddai-hall",
+      "step": "mesh",
+      "usd": 0.375,
+      "note": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d from bld-shaddai-hall.png"
     }
   ]
 }
