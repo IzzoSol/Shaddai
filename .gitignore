@@ -209,3 +209,4 @@ fal-assets/production/models/*.glb
 fal-assets/production/models/*.obj
 fal-assets/production/models/*-obj/
 .probe-profile/
+public/assets/terrain/_test/
