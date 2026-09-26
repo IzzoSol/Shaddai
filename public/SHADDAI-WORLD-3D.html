@@ -260,6 +260,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-landmarks.js?v=20260925m3"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260926obb"></script>
+<script src="/world-player-controller.js?v=20260926a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
 <script src="/world-spawn.js?v=20260925a"></script>
 <script src="/world-themes.js?v=20260703h"></script>
 <script src="/world-interiors.js?v=20260926v4"></script>
@@ -3261,7 +3262,7 @@ function _setupPlayerRig(m, animations, label, gen){
   if(u && u.ok){
     u.ready.then(function(ok){
       if(gen!==_playerRigGen || mixer!==playerMixer) return;   // body swapped since → never touch the new rig
-      if(ok){ ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Regular_B','Sword_Heavy_Combo','Sword_Block','NinjaJump_Start','Hit_Knockback'].forEach(function(n){ try{ u.add(n); }catch(_){} });
+      if(ok){ ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Regular_B','Sword_Heavy_Combo','Sword_Block','NinjaJump_Start','Hit_Knockback','NinjaJump_Idle_Loop','NinjaJump_Land','Slide_Start','Slide_Loop','Slide_Exit','ClimbUp_1m'].forEach(function(n){ try{ u.add(n); }catch(_){} });
         _resolvePlayerCanon(m); }                             // upgrades a frozen-frame idle to the UAL idle
       report();
     });
@@ -3371,6 +3372,17 @@ addEventListener('keydown', e=>{ if(e.code==='KeyV') thirdPerson=!thirdPerson; }
 // procedural lunge/flip so the move still reads (spec §4 fallback).
 let _pAttackUntil = 0, _pComboFlip = false, _pTween = null;
 function _typingNow(){ return /input|textarea|select/i.test((document.activeElement||{}).tagName||''); }
+// PLAYER CONTROLLER events -> one-shot clips (resolved by playPlayerOnce; no-op if the rig lacks them)
+function _onPctlEvents(evs){
+  for (let i=0;i<evs.length;i++){ const e=evs[i];
+    if (e.type==='jump' || e.type==='doubleJump') playPlayerOnce('ual_NinjaJump_Start', {timeScale:1.4});
+    else if (e.type==='hardLand') playPlayerOnce('ual_Hit_Knockback', {timeScale:1.3});
+    else if (e.type==='land' && e.impact > 6 && e.impact <= 12) playPlayerOnce('ual_NinjaJump_Land', {timeScale:1.3});
+    else if (e.type==='roll') playPlayerOnce('ual_Slide_Start', {timeScale:1.2});
+    else if (e.type==='rollEnd') playPlayerOnce('ual_Slide_Exit', {timeScale:1.4});
+    else if (e.type==='climb') { const a = playerClips['ual_ClimbUp_1m']; const d = a && a.getClip() ? a.getClip().duration : 0.6; playPlayerOnce('ual_ClimbUp_1m', {timeScale: d/0.6}); }
+  }
+}
 function playPlayerOnce(clipName, opts){
   opts = opts||{};
   // resolve exact name first, else fall through to alias/substring match (descriptive Meshy clip names).
@@ -4194,6 +4206,8 @@ let _avatarYaw=0, _avatarYawInit=false;   // eased character facing — turns sm
 // shortest-path angle interpolation (handles the ±π wrap so turning never spins the long way)
 function _lerpAngle(a, b, t){ let d=b-a; while(d>Math.PI)d-=6.283185307; while(d<-Math.PI)d+=6.283185307; return a+d*t; }
 let _swimming=false;   // SWIM LAW: true while floating on a water surface (slower move, no seafloor walking)
+let _pctl = null, _pctlOut = null, _pctlOn = false, _pctlWasOn = false, _pctlDeckY = null, _walkToggle = false;
+addEventListener('keydown', e=>{ if(e.code==='CapsLock' && !e.repeat) _walkToggle = !_walkToggle; });
 const clock=new THREE.Clock();
 // RIDEABLE VOYAGERS REMOVED (owner: "there's a car and a space vehicle under shaddai ... sloppy").
 // The stub KEPT the movement hooks (speed/baseY/flyControl/update/mode) alive — and now
@@ -4225,6 +4239,23 @@ try{
     time: function(){ return clock.elapsedTime; },
   });
 }catch(e){ console.warn('world-hoverboard init failed:', e && e.message); }
+// PLAYER CONTROLLER - real ground, slopes, steps, walls, jump/roll/climb/land compression (docs/PLAYER-CONTROLLER.md)
+try{
+  if (window.buildPlayerController) {
+    const _terrH = function(x,z){ return window.WORLD_HEIGHT_AT ? window.WORLD_HEIGHT_AT(x,z) : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(x,z) : 0); };
+    _pctl = window.buildPlayerController({
+      THREE,
+      heightAt: function(x,z){
+        let h = _terrH(x,z);
+        if (_pctlDeckY != null && _pctlDeckY > h && Math.abs(x-playerPos.x) < 4 && Math.abs(z-playerPos.z) < 4) h = _pctlDeckY;
+        if (window.WORLD_BRIDGE_GROUNDY) { const b = window.WORLD_BRIDGE_GROUNDY(x, z, playerPos.y, 2.5); if (b !== null && b > h) h = b; }
+        return h;
+      },
+      colliders: window.buildPlayerController.worldColliders(window),
+      waterHeightAt: MAP_V4 ? function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; } : function(){ return 0.05; },
+    });
+  }
+}catch(e){ console.warn('player controller init failed:', e && e.message); _pctl = null; }
 
 // TACTICS ENGINE (§14.3.1): FFT grid battles — the Colosseum's ENTER FIGHT launches a
 // real match (sparks stake in, pool out on victory; bot units pick their own moves).
@@ -4362,6 +4393,9 @@ function animate(){
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
   right.crossVectors(fwd, camera.up).normalize();
   const _uiOpen = (_dialogue&&_dialogue.isOpen()) || (_radio&&_radio.isOpen&&_radio.isOpen());
+_pctlOn = !!_pctl && !_spawnBusy && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
+          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding());
+_pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
     const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
     const baseSp = bikeMode?36:(keys['ShiftLeft']||keys['ShiftRight']?26:(_swimming?7:11));
@@ -4381,6 +4415,19 @@ function animate(){
         left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
         boost: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'] }, _camYaw);
       const _hv = hover.velocity(); _vel.x = _hv.x; _vel.z = _hv.z;
+    } else if (_pctlOn) {
+      { const _cp = _pctl.getPos();
+        if (!_pctlWasOn) _pctl.setPos(playerPos.x, undefined, playerPos.z);
+        else if (Math.abs(playerPos.x-_cp.x) + Math.abs(playerPos.z-_cp.z) > 1e-3) _pctl.setPos(playerPos.x, playerPos.y, playerPos.z); }
+      _pctl.setFacing(_avatarYaw);
+      _pctlOut = _pctl.step(dt, {
+        fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
+        left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
+        sprint: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'],
+        roll: !!keys['KeyC'], crouch: !!keys['KeyZ'], walk: _walkToggle }, _camYaw);
+      playerPos.set(_pctlOut.pos.x, _pctlOut.pos.y, _pctlOut.pos.z);   // host keeps ownership of playerPos (y = feet)
+      _vel.x = _pctlOut.vel.x; _vel.z = _pctlOut.vel.z;
+      _onPctlEvents(_pctlOut.events);
     } else {
       _moveDir.set(0,0,0);
       if(keys['KeyW']||keys['ArrowUp'])    _moveDir.add(fwd);
@@ -4399,7 +4446,7 @@ function animate(){
     // are the real routes between realms. City/realm ground, interiors, lifts and flying craft are untouched.
     { const _r = Math.hypot(playerPos.x, playerPos.z);
       const _MN=(window.WORLD_LAYOUT&&window.WORLD_LAYOUT.mountains)||{r0:380,r1:520};
-      if (_r > _MN.r0 - 10 && _r < _MN.r1 + 10 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
+      if (!_pctlOn && _r > _MN.r0 - 10 && _r < _MN.r1 + 10 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
         const _h0 = worldTerrain.heightAt(_px0, _pz0), _h1 = worldTerrain.heightAt(playerPos.x, playerPos.z);
         const _run = Math.hypot(playerPos.x - _px0, playerPos.z - _pz0), _flying = veh.mode && veh.baseY(_h1) > _h1 + 2;
         if (!_flying && _run > 1e-4 && (_h1 - _h0) / _run > 0.84) { playerPos.x = _px0; playerPos.z = _pz0; _vel.x *= -0.2; _vel.z *= -0.2; }
@@ -4418,7 +4465,7 @@ function animate(){
       // building collision: single source of truth — right-sized solid walls WITH a door gap.
       // Use world-collision.js as the single source of truth (fully-solid, shape-aware colliders
       // built from WORLD_LAYOUT). Entry is via door + cutscene, not walking through the wall.
-      if (window.WORLD_RESOLVE_POS) window.WORLD_RESOLVE_POS(playerPos); else _resolveBuildingCollision();
+      if (!_pctlOn) { if (window.WORLD_RESOLVE_POS) window.WORLD_RESOLVE_POS(playerPos); else _resolveBuildingCollision(); }
       // ── ANTI-FALL EDGE CLAMP (owner: "you can fall off structures / between walls") ──
       // Elevated Sky-Nexus arrival decks, skybridges and the SHADDAI temple island are walkable floors
       // exposed only through _elevators.groundY() (deck footprint lives in world-elevators.js). They have NO
@@ -4444,9 +4491,11 @@ function animate(){
       }
     }
   } else {
+    if (_pctlOn && _pctlWasOn) { _pctlOut = _pctl.step(dt, {}, Math.atan2(fwd.x, fwd.z)); playerPos.set(_pctlOut.pos.x, _pctlOut.pos.y, _pctlOut.pos.z); _vel.x = _pctlOut.vel.x; _vel.z = _pctlOut.vel.z; }
     _vel.x *= Math.max(0, 1 - dt*12);   // no input / not locked: coast to a stop, don't freeze mid-stride
     _vel.z *= Math.max(0, 1 - dt*12);
   }
+  _pctlWasOn = _pctlOn;
   // place camera by view mode (1st person = eyes; 3rd person = pulled back behind the avatar)
   // Eye height scales with the (now taller) player body so 1st-person sits at the head, not the waist,
   // and the 3rd-person cam frames the full body. Bike eye is left as-is (you sit low on the bike).
@@ -4477,7 +4526,11 @@ function animate(){
       _swimming = true;
     } else _swimming = false;
   } else _swimming = false;
-  const _rawBaseY = (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY);          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
+  const _pctlActive = _pctlOn && !!_pctlOut;
+if (_pctlActive) { groundY = _pctlOut.renderPos.y; _swimming = _pctlOut.swimming; }   // controller owns ground + swim
+const _rawBaseY = _pctlActive ? _pctlOut.renderPos.y : ((hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY));
+const _pDip = _pctlActive ? _pctlOut.compression * 0.35 * V4_U : 0;   // landing / crouch camera dip (<= 0.35 m)
+const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
   if(_smoothBaseY===undefined || _spawnBusy || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
@@ -4504,6 +4557,10 @@ function animate(){
     // idle ↔ walk ↔ run blended by ACTUAL speed (walk 11 u/s, sprint 26 u/s), shared gait phase so the
     // feet keep up with the floor; weights + one-shot always sum to 1 → never the bind/T-pose.
     const _pSpdL = bikeMode ? 0 : Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
+    if (_pctlOn && _pctlOut && clock.elapsedTime >= _pAttackUntil) {   // looped air / slide poses via the one-shot layer
+      if (_pctlOut.state==='airborne') playPlayerOnce('ual_NinjaJump_Idle_Loop');
+      else if (_pctlOut.state==='slide') playPlayerOnce('ual_Slide_Loop');
+    }
     const _osw = _updatePlayerLoco(dt, _pSpdL);
     playerMixer.update(dt);
     _playerBreath(clock.elapsedTime, _osw);
@@ -4530,13 +4587,14 @@ function animate(){
     // walking feel less rigid. SNAP on big jumps (interior teleport / respawn) so we never slide the map.
     // Pull-back distance + camera lift scale with body height so the taller player is framed the same
     // (was fwd*8 and eye+2.2, both tuned for the old 3.6 body). eye is already height-scaled above.
-    _camTarget.set(playerPos.x - fwd.x*(8*_PLAYER_EYE_K), baseY + eye + 2.2*_PLAYER_EYE_K, playerPos.z - fwd.z*(8*_PLAYER_EYE_K));
+    _camTarget.set(playerPos.x - fwd.x*(8*_PLAYER_EYE_K), baseY - _pDip + eye + 2.2*_PLAYER_EYE_K, playerPos.z - fwd.z*(8*_PLAYER_EYE_K));
     if(camera.position.distanceToSquared(_camTarget) > 1600) camera.position.copy(_camTarget);   // >40u = teleport → snap
     else camera.position.lerp(_camTarget, 1 - Math.exp(-9*dt));
-    playerAvatar.visible=!veh.mode; playerAvatar.position.set(playerPos.x,baseY,playerPos.z);
-    { const _yt=Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
+    playerAvatar.visible=!veh.mode;
+    if (_feetY !== null) playerAvatar.position.set(_pctlOut.renderPos.x, _feetY, _pctlOut.renderPos.z); else playerAvatar.position.set(playerPos.x,baseY,playerPos.z);   // FEET ON THE GROUND (was the eased camera height)
+    { const _yt=(_pctlActive && (_pctlOut.state==='roll'||_pctlOut.state==='climb')) ? _pctlOut.facing : Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
       if(!_avatarYawInit){ _avatarYaw=_yt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _yt, 1-Math.exp(-11*dt));
-      playerAvatar.rotation.y=_avatarYaw; }
+      playerAvatar.rotation.y=_avatarYaw; if (_pctlActive && playerMixer) playerAvatar.rotation.z = -_pctlOut.lean * 0.12; }
     // procedural WALK for characters with no skeletal clips (agent standees) — step bob + sway.
     // GLIDE agents (SHADDAI / NEXUS): skip the |sin| step-bob → smooth hover + slight forward lean,
     // so their locomotion reads as gliding, not stepping. SHADDAI's F = FLY adds a buoyant rise.
@@ -4550,22 +4608,22 @@ function animate(){
       if(_scholar){
         // QUILL "floating scholar": buoyant hover + slightly UPRIGHT posture (small BACKWARD lean, more
         // when idle) + a gentle page-flutter idle sway (tiny z-roll) so he reads as a drifting scribe.
-        playerAvatar.position.y = baseY + _rise + Math.sin(clock.elapsedTime*1.25)*0.07;   // soft buoyant hover
+        playerAvatar.position.y = (_feetY !== null ? _feetY : baseY) + _rise + Math.sin(clock.elapsedTime*1.25)*0.07;   // soft buoyant hover
         playerAvatar.rotation.x = (_mv2 ? -0.02 : 0.05);                                   // upright: nose-up drift when idle, near-flat when gliding forward
         playerAvatar.rotation.z = (_mv2 ? 0 : Math.sin(clock.elapsedTime*2.6)*0.035);      // page-flutter idle sway
       } else if(_glide){
         // smooth hover (no footstep bob) + gentle forward head/torso lean when moving
-        playerAvatar.position.y = baseY + _rise + Math.sin(clock.elapsedTime*1.4)*0.06;   // slight buoyant hover
+        playerAvatar.position.y = (_feetY !== null ? _feetY : baseY) + _rise + Math.sin(clock.elapsedTime*1.4)*0.06;   // slight buoyant hover
         playerAvatar.rotation.x = (_mv2 ? -0.10 : -0.04);                                  // lean forward (more while moving)
         playerAvatar.rotation.z = 0;
       } else {
         const _wt2 = clock.elapsedTime * ((keys['ShiftLeft']||keys['ShiftRight']) ? 15 : 10);
-        if(_mv2){ playerAvatar.position.y = baseY + Math.abs(Math.sin(_wt2))*0.35; playerAvatar.rotation.z = Math.sin(_wt2)*0.06; }
-        else { playerAvatar.position.y = baseY + Math.sin(clock.elapsedTime*2)*0.05; playerAvatar.rotation.z = 0; }
+        if(_mv2){ playerAvatar.position.y = (_feetY !== null ? _feetY : baseY) + Math.abs(Math.sin(_wt2))*0.35; playerAvatar.rotation.z = Math.sin(_wt2)*0.06; }
+        else { playerAvatar.position.y = (_feetY !== null ? _feetY : baseY) + Math.sin(clock.elapsedTime*2)*0.05; playerAvatar.rotation.z = 0; }
       }
     }
   } else {
-    camera.position.set(playerPos.x, baseY + eye, playerPos.z);
+    camera.position.set(playerPos.x, baseY - _pDip + eye, playerPos.z);
     playerAvatar.visible=false;
   }
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
