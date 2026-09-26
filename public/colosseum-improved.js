@@ -541,6 +541,205 @@ function buildColosseumImproved(THREE, opts) {
   let spectatorEnergy = 100;
   let eventCount = 0;
   let isGameActive = false;
+  let trapActivated = false;
+  let treasureHidden = true;
+
+  // ─── GUARDS / NPCs ───
+  const guardsGroup = new THREE.Group();
+  guardsGroup.name = 'GUARDS';
+  group.add(guardsGroup);
+
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    const x = Math.cos(angle) * (FIELD_R_X + 15);
+    const z = Math.sin(angle) * (FIELD_R_L || 32);
+
+    const guard = new THREE.Group();
+
+    // Guard body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.8), mats.steel);
+    body.position.y = 1;
+    body.castShadow = true;
+    guard.add(body);
+
+    // Guard head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), mats.steel);
+    head.position.y = 2.5;
+    head.castShadow = true;
+    guard.add(head);
+
+    // Spear
+    const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.5), mats.steel);
+    spear.position.set(0.5, 1.5, 0);
+    spear.castShadow = true;
+    guard.add(spear);
+
+    guard.position.set(x, PODIUM_H, z);
+    guard.userData.angle = angle;
+    guard.userData.patrolSpeed = 0.5;
+    guardsGroup.add(guard);
+  }
+
+  // ─── VENDOR STALLS ───
+  const vendorGroup = new THREE.Group();
+  vendorGroup.name = 'VENDORS';
+  group.add(vendorGroup);
+
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const x = Math.cos(angle) * (promR_in + 2);
+    const z = Math.sin(angle) * (promR_in + 2);
+
+    // Stall counter
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(4, 1.5, 2), mats.wood);
+    counter.position.set(x, PROM_H + 0.8, z);
+    counter.castShadow = true;
+    vendorGroup.add(counter);
+
+    // Roof
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(5, 0.2, 2.5), mats.stone);
+    roof.position.set(x, PROM_H + 2.5, z);
+    roof.castShadow = true;
+    vendorGroup.add(roof);
+
+    // Items on display
+    for (let j = 0; j < 3; j++) {
+      const item = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.5, 0.5),
+        new THREE.MeshStandardMaterial({
+          color: new THREE.Color().setHSL(i / 4, 0.8, 0.6),
+          metalness: 0.7
+        })
+      );
+      item.position.set(x - 1 + j * 1, PROM_H + 1.2, z);
+      item.castShadow = true;
+      vendorGroup.add(item);
+    }
+  }
+
+  // ─── SPECIAL EVENT ARENAS (hidden chambers) ───
+  const eventArenasGroup = new THREE.Group();
+  eventArenasGroup.name = 'EVENT_ARENAS';
+  group.add(eventArenasGroup);
+
+  // Ice arena (north)
+  const iceFloor = new THREE.Mesh(new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({
+      color: 0xb4e7ff,
+      roughness: 0.1,
+      metalness: 0.3,
+      transparent: true,
+      opacity: 0.8
+    })
+  );
+  iceFloor.rotation.x = -Math.PI / 2;
+  iceFloor.position.set(0, 0.02, 80);
+  iceFloor.visible = false;
+  eventArenasGroup.add(iceFloor);
+
+  // Fire arena (south)
+  const fireFloor = new THREE.Mesh(new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({
+      color: 0xff6b1a,
+      roughness: 0.8,
+      emissive: 0xff3300,
+      emissiveIntensity: 0.5
+    })
+  );
+  fireFloor.rotation.x = -Math.PI / 2;
+  fireFloor.position.set(0, 0.02, -80);
+  fireFloor.visible = false;
+  eventArenasGroup.add(fireFloor);
+
+  // Poison arena (east)
+  const poisonFloor = new THREE.Mesh(new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({
+      color: 0x2d5a2d,
+      roughness: 0.9,
+      map: (() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#2d5a2d';
+        ctx.fillRect(0, 0, 128, 128);
+        ctx.fillStyle = '#00ff00';
+        for (let i = 0; i < 20; i++) {
+          ctx.fillRect(Math.random() * 128, Math.random() * 128, 20, 20);
+        }
+        return new THREE.CanvasTexture(canvas);
+      })()
+    })
+  );
+  poisonFloor.rotation.x = -Math.PI / 2;
+  poisonFloor.position.set(80, 0.02, 0);
+  poisonFloor.visible = false;
+  eventArenasGroup.add(poisonFloor);
+
+  // ─── TREASURE CHAMBER ───
+  const treasureGroup = new THREE.Group();
+  treasureGroup.name = 'TREASURE';
+  group.add(treasureGroup);
+
+  // Hidden below in dungeon
+  const treasureChest = new THREE.Mesh(new THREE.BoxGeometry(3, 2, 2), mats.wood);
+  treasureChest.position.set(0, -8 + 1, 0);
+  treasureChest.castShadow = true;
+  treasureGroup.add(treasureChest);
+
+  // Gold coins (visual)
+  for (let i = 0; i < 10; i++) {
+    const coin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        metalness: 0.9,
+        roughness: 0.2
+      })
+    );
+    coin.position.set(
+      -1 + Math.random() * 2,
+      -6 + Math.random() * 1,
+      -1 + Math.random() * 2
+    );
+    coin.rotation.x = Math.random() * Math.PI;
+    coin.castShadow = true;
+    treasureGroup.add(coin);
+  }
+
+  // ─── TRAP SYSTEMS ───
+  const trapGroup = new THREE.Group();
+  trapGroup.name = 'TRAPS';
+  group.add(trapGroup);
+
+  // Floor spikes (hidden on arena)
+  const spikePattern = document.createElement('canvas');
+  spikePattern.width = 256;
+  spikePattern.height = 256;
+  const spikeCtx = spikePattern.getContext('2d');
+  spikeCtx.fillStyle = '#d2b48c';
+  spikeCtx.fillRect(0, 0, 256, 256);
+  spikeCtx.fillStyle = '#333';
+  for (let i = 0; i < 20; i++) {
+    spikeCtx.fillRect(Math.random() * 256, Math.random() * 256, 10, 10);
+  }
+
+  // Trap zones (invisible colliders)
+  for (let i = 0; i < 3; i++) {
+    const trapZone = new THREE.Mesh(
+      new THREE.BoxGeometry(15, 0.1, 15),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
+    );
+    const angle = (i / 3) * Math.PI * 2;
+    trapZone.position.set(
+      Math.cos(angle) * 30,
+      0.2,
+      Math.sin(angle) * 30
+    );
+    trapZone.userData.isTrap = true;
+    trapZone.userData.trapType = ['spike', 'fire', 'slow'][i];
+    trapGroup.add(trapZone);
+  }
 
   // ─── API ───
   return {
@@ -602,6 +801,109 @@ function buildColosseumImproved(THREE, opts) {
         eventCount: eventCount,
         spectatorEnergy: spectatorEnergy,
         spectators: this.getSpectatorCount(),
+        timestamp: Date.now()
+      };
+    },
+
+    // ─── GUARD MECHANICS ───
+    getGuards: () => guardsGroup,
+    updateGuards: function(deltaTime) {
+      guardsGroup.children.forEach(guard => {
+        if (guard.userData.patrolSpeed) {
+          guard.userData.angle += guard.userData.patrolSpeed * deltaTime * 0.1;
+          const newX = Math.cos(guard.userData.angle) * (FIELD_R_X + 15);
+          const newZ = Math.sin(guard.userData.angle) * (FIELD_R_Z || 32);
+          guard.position.x = newX;
+          guard.position.z = newZ;
+          guard.rotation.y = guard.userData.angle + Math.PI / 2;
+        }
+      });
+    },
+    pauseGuards: function() {
+      guardsGroup.children.forEach(g => g.userData.patrolSpeed = 0);
+    },
+    resumeGuards: function() {
+      guardsGroup.children.forEach(g => g.userData.patrolSpeed = 0.5);
+    },
+
+    // ─── VENDOR MECHANICS ───
+    getVendors: () => vendorGroup,
+    buyFromVendor: function(vendorIndex, itemIndex) {
+      return {
+        success: true,
+        item: ['health_potion', 'strength_buff', 'speed_buff'][itemIndex],
+        cost: 100 + itemIndex * 50,
+        quantity: 1
+      };
+    },
+
+    // ─── SPECIAL EVENT ARENAS ───
+    activateSpecialArena: function(arenaType) {
+      const arenas = {
+        ice: eventArenasGroup.children[0],
+        fire: eventArenasGroup.children[1],
+        poison: eventArenasGroup.children[2]
+      };
+      Object.values(arenas).forEach(a => a.visible = false);
+      if (arenas[arenaType]) arenas[arenaType].visible = true;
+      currentMode = arenaType;
+      return { arena: arenaType, active: true };
+    },
+
+    // ─── TREASURE SYSTEM ───
+    getTreasure: () => treasureGroup,
+    claimTreasure: function() {
+      if (treasureHidden) {
+        treasureHidden = false;
+        return {
+          success: true,
+          treasure: 'Gold Coins',
+          amount: 500,
+          message: 'Treasure claimed!'
+        };
+      }
+      return { success: false, message: 'Treasure already claimed' };
+    },
+    isTreasureAvailable: () => treasureHidden,
+
+    // ─── TRAP MECHANICS ───
+    getTraps: () => trapGroup,
+    checkForTrap: function(x, z) {
+      for (let trap of trapGroup.children) {
+        const dx = trap.position.x - x;
+        const dz = trap.position.z - z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 10) {
+          return {
+            triggered: true,
+            type: trap.userData.trapType,
+            damage: trap.userData.trapType === 'spike' ? 15 : 10
+          };
+        }
+      }
+      return { triggered: false };
+    },
+    activateTrap: function(trapIndex) {
+      trapActivated = true;
+      return { trapId: trapIndex, active: true, warning: 'TRAP ACTIVATED!' };
+    },
+    deactivateTraps: function() {
+      trapActivated = false;
+      return { allTraps: 'DEACTIVATED' };
+    },
+
+    // ─── FULL COLOSSEUM STATE ───
+    getFullState: function() {
+      return {
+        game: this.getGameState(),
+        guards: guardsGroup.children.length,
+        vendors: vendorGroup.children.length / 5, // 5 objects per vendor
+        spectators: this.getSpectatorCount(),
+        spectatorEnergy: spectatorEnergy,
+        trapsActive: trapActivated,
+        treasureAvailable: treasureHidden,
+        currentMode: currentMode,
+        dimensions: this.dims,
         timestamp: Date.now()
       };
     }
