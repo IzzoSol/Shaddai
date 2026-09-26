@@ -46,6 +46,8 @@
     }
   }
   window.__queueLoad = function (loader, url, ok, fail) { Q.push({ loader: loader, url: url, ok: ok, fail: fail, tries: 0 }); pump(); };
+  var _qTotal = 0; var _origQL = window.__queueLoad; window.__queueLoad = function (l, u, ok, f) { _qTotal++; return _origQL(l, u, ok, f); };
+  window.__loadQueueStats = function () { return { queued: Q.length, active: active, total: _qTotal }; };   // intro gate: wait for streaming models before the sky-dive
 
   if (!/[?&]edit=1\b/.test(location.search)) return;
 

@@ -241,7 +241,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
 <script src="/world-layout.js?v=20260926v4"></script>
-<script src="/world-editor.js?v=20260926v4"></script>
+<script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-transit.js?v=20260925e"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
@@ -461,6 +461,13 @@ window.__worldBuilt = false;
           isWater: (_v4Water && _v4Water.isWater) ? (x, z)=> _v4Water.isWater(x, z) : null, terrainMeta: _v4Meta });
         window.__w3dDebug.fillV4 = _v4Fill;
       }).catch(function(e){ console.warn('[map-v4] fill failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
+      if(!api) return api;
+      return _loadScript('/world-clusters-v4.js?v=20260926a').then(function(){
+        const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
+        return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
+      }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -3974,14 +3981,19 @@ window.removeAgent = function(a){
     // way to the old 9s fallback even though the world was fully walkable. Assets that trickle in a
     // beat late (agent bodies) just pop in behind the already-shown button. Hard 5s fallback so a
     // stuck build can never trap you on the loading screen.
-    if((window.__worldBuilt && elapsed > 900) || elapsed > 5000){
+    // SMOOTH INTRO (2026-09-26): also wait for the streamed models (shared load queue) so NOTHING loads during the
+    // sky-dive — on integrated GPUs the dive stuttered because GLBs + shader compiles landed mid-flight. Full
+    // detail is kept; we just finish loading first (hard cap 25 s so a dead URL can never trap the player).
+    var _qs = window.__loadQueueStats ? window.__loadQueueStats() : null, _qBusy = _qs ? (_qs.queued + _qs.active) : 0;
+    if(_qs && _qs.total){ var _qp = Math.round(100 * (1 - _qBusy / Math.max(1, _qs.total))); ln.textContent = 'streaming the realms… ' + _qp + '%'; }
+    if((window.__worldBuilt && elapsed > 900 && _qBusy === 0) || elapsed > 25000){
       clearInterval(msgI);
       if(!_warmed){
         _warmed = true;
         ln.textContent='compiling the grid…';
         // WARM-UP: compile all shaders + render one frame NOW (behind the intro) so the first
         // frame after you jack in is instant — this is what removes the entry stutter.
-        try { renderer.compile(scene, camera); composer.render(); } catch(e){ console.warn('warmup', e && e.message); }
+        try { if(renderer.compileAsync){ renderer.compileAsync(scene, camera).then(function(){ try{ composer.render(); }catch(_){} }); } else { renderer.compile(scene, camera); composer.render(); } } catch(e){ console.warn('warmup', e && e.message); }   // compileAsync: no main-thread freeze on the loading screen
       }
       var bar=document.getElementById('loadBar'); if(bar) bar.style.width='100%';
       var pl=document.getElementById('loadPct'); if(pl) pl.textContent='100%';

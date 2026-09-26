@@ -75,6 +75,14 @@ def source(key):
     new = [o for o in bpy.data.objects if o not in before]
     c = bpy.data.collections.new('SRC ' + key); SRC.children.link(c)
     for o in new: link(o, c)
+    # kit rocks/dunes lose their textures on import (salmon blobs in renders) → give them a proper rock/sand material
+    OVR = {'kit-mountain01': (0.33, 0.33, 0.36), 'kit-mountain05': (0.22, 0.2, 0.21), 'kit-sand-mount': (0.84, 0.69, 0.43)}
+    if key in OVR:
+        Mr = mat('V4-' + key, OVR[key], 0, 0.9)
+        for o in new:
+            if o.type == 'MESH':
+                for i in range(len(o.data.materials)): o.data.materials[i] = Mr
+                if not o.data.materials: o.data.materials.append(Mr)
     bpy.context.view_layer.update()
     mn, mx = Vector((1e9,) * 3), Vector((-1e9,) * 3)
     for o in new:
