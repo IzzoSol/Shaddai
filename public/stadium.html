@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stadium</title>
+  <style>
+    body { margin: 0; padding: 0; background: #000; color: #0f0; font-family: monospace; }
+    #viewport { width: 100vw; height: 100vh; }
+    #status { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #0f0; z-index: 1000; }
+  </style>
+</head>
+<body>
+  <div id="viewport"></div>
+  <div id="status">Loading Three.js...</div>
+
+  <script src="https://unpkg.com/three@r128/build/three.min.js"></script>
+  <script>
+    console.log('Script started');
+
+    function updateStatus(msg) {
+      console.log(msg);
+      document.getElementById('status').textContent = msg;
+    }
+
+    function startup() {
+      try {
+        updateStatus('Initializing scene...');
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        scene.fog = new THREE.Fog(0x1a1a1a, 400, 1000);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 2000);
+        camera.position.set(200, 120, 200);
+        camera.lookAt(0, 40, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('viewport').appendChild(renderer.domElement);
+
+        updateStatus('Building arena...');
+
+        // Materials
+        const sandMat = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.95 });
+        const waterMat = new THREE.MeshStandardMaterial({ color: 0x1a7fb0, roughness: 0.2, transparent: true, opacity: 0.8 });
+        const seatMat = new THREE.MeshStandardMaterial({ color: 0x8b6f47, roughness: 0.8 });
+        const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb8956a, roughness: 0.85 });
+        const steelMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.5 });
+        const marbleMat = new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.3 });
+
+        // Floor
+        const sand = new THREE.Mesh(new THREE.PlaneGeometry(100, 64), sandMat);
+        sand.name = 'sand';
+        sand.rotation.x = -Math.PI / 2;
+        sand.position.y = 0.01;
+        sand.receiveShadow = true;
+        scene.add(sand);
+
+        const water = new THREE.Mesh(new THREE.PlaneGeometry(100, 64), waterMat);
+        water.name = 'water';
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = 0.5;
+        water.visible = false;
+        scene.add(water);
+
+        // Boats
+        const boats = [];
+        for (let i = 0; i < 2; i++) {
+          const boat = new THREE.Group();
+          const hull = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 15), steelMat);
+          hull.castShadow = true;
+          boat.add(hull);
+
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 14), steelMat);
+          mast.position.y = 9;
+          boat.add(mast);
+
+          const sail = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), marbleMat);
+          sail.position.set(3, 7, 0);
+          boat.add(sail);
+
+          boat.position.set((i ? 45 : -45), 1.5, (i ? 35 : -35));
+          boat.userData.phase = i * Math.PI;
+          boat.userData.baseY = 1.5;
+          boat.visible = false;
+          scene.add(boat);
+          boats.push(boat);
+        }
+
+        // Rocks
+        const rocks = [];
+        for (let i = 0; i < 8; i++) {
+          const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(3.5, 2), stoneMat);
+          const angle = (i / 8) * Math.PI * 2;
+          rock.position.set(Math.cos(angle) * 45, 2.5, Math.sin(angle) * 45);
+          rock.castShadow = true;
+          rock.visible = false;
+          scene.add(rock);
+          rocks.push(rock);
+        }
+
+        // Podium
+        const podGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(50, 0),
+          new THREE.Vector2(53, 0),
+          new THREE.Vector2(53, 2),
+          new THREE.Vector2(50, 2)
+        ], 64);
+        const pod = new THREE.Mesh(podGeo, stoneMat);
+        pod.castShadow = true;
+        pod.receiveShadow = true;
+        scene.add(pod);
+
+        // Lower bleachers
+        for (let i = 0; i < 20; i++) {
+          const r1 = 53 + i * 2.5;
+          const r2 = 53 + (i + 1) * 2.5;
+          const geo = new THREE.LatheGeometry([
+            new THREE.Vector2(r1, 0),
+            new THREE.Vector2(r2, 0),
+            new THREE.Vector2(r2, 0.75),
+            new THREE.Vector2(r1, 0.75)
+          ], 64);
+          const row = new THREE.Mesh(geo, seatMat);
+          row.position.y = 2 + i * 0.75;
+          row.castShadow = true;
+          row.receiveShadow = true;
+          scene.add(row);
+        }
+
+        // Promenade
+        const promGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(103, 0),
+          new THREE.Vector2(107, 0),
+          new THREE.Vector2(107, 1.5),
+          new THREE.Vector2(103, 1.5)
+        ], 64);
+        const prom = new THREE.Mesh(promGeo, stoneMat);
+        prom.position.y = 18;
+        prom.castShadow = true;
+        prom.receiveShadow = true;
+        scene.add(prom);
+
+        // Upper bleachers
+        for (let i = 0; i < 20; i++) {
+          const r1 = 107 + i * 2.5;
+          const r2 = 107 + (i + 1) * 2.5;
+          const geo = new THREE.LatheGeometry([
+            new THREE.Vector2(r1, 0),
+            new THREE.Vector2(r2, 0),
+            new THREE.Vector2(r2, 0.6),
+            new THREE.Vector2(r1, 0.6)
+          ], 64);
+          const row = new THREE.Mesh(geo, seatMat);
+          row.position.y = 18 + i * 0.6;
+          row.castShadow = true;
+          row.receiveShadow = true;
+          scene.add(row);
+        }
+
+        // Roof
+        const roofGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(157, 0),
+          new THREE.Vector2(167, 0),
+          new THREE.Vector2(167, 35),
+          new THREE.Vector2(157, 35)
+        ], 64);
+        const roof = new THREE.Mesh(roofGeo, steelMat);
+        roof.castShadow = true;
+        roof.receiveShadow = true;
+        scene.add(roof);
+
+        // Pillars
+        for (let i = 0; i < 32; i++) {
+          const angle = (i / 32) * Math.PI * 2;
+          const x = Math.cos(angle) * 162;
+          const z = Math.sin(angle) * 162;
+          const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 32, 12), steelMat);
+          pillar.position.set(x, 16, z);
+          pillar.castShadow = true;
+          scene.add(pillar);
+        }
+
+        // Lobby
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(85, 45), marbleMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(0, 18, 210);
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(85, 32, 1), stoneMat);
+        backWall.position.set(0, 16, 238);
+        backWall.castShadow = true;
+        scene.add(backWall);
+
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 32, 45), stoneMat);
+        leftWall.position.set(-42.5, 16, 210);
+        leftWall.castShadow = true;
+        scene.add(leftWall);
+
+        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 32, 45), stoneMat);
+        rightWall.position.set(42.5, 16, 210);
+        rightWall.castShadow = true;
+        scene.add(rightWall);
+
+        // Columns
+        const colGeo = new THREE.CylinderGeometry(1.6, 1.6, 28, 12);
+        [[-4, -2], [-4, 2], [0, -2], [0, 2], [4, -2], [4, 2]].forEach(([cx, cz]) => {
+          const col = new THREE.Mesh(colGeo, marbleMat);
+          col.position.set(cx * 12, 14, 210 + cz * 15);
+          col.castShadow = true;
+          scene.add(col);
+        });
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+
+        const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+        sun.position.set(120, 120, 120);
+        sun.castShadow = true;
+        sun.shadow.mapSize.width = 4096;
+        sun.shadow.mapSize.height = 4096;
+        sun.shadow.camera.far = 900;
+        scene.add(sun);
+
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * Math.PI * 2;
+          const light = new THREE.SpotLight(0xffd700, 2);
+          light.position.set(Math.cos(angle) * 165, 34, Math.sin(angle) * 165);
+          light.target.position.set(0, 20, 0);
+          light.castShadow = true;
+          scene.add(light);
+        }
+
+        updateStatus('Running...');
+
+        // Variables
+        let mode = 'sand';
+        let frameCount = 0;
+        let lastTime = Date.now();
+
+        // Animation
+        function animate() {
+          requestAnimationFrame(animate);
+
+          // Boat animation
+          boats.forEach(boat => {
+            boat.userData.phase += 0.016 * 2;
+            boat.position.y = boat.userData.baseY + Math.sin(boat.userData.phase) * 0.6;
+            boat.rotation.z = Math.sin(boat.userData.phase * 0.5) * 0.12;
+          });
+
+          frameCount++;
+          const now = Date.now();
+          if (now - lastTime >= 1000) {
+            updateStatus(`Mode: ${mode.toUpperCase()} | FPS: ${frameCount}`);
+            frameCount = 0;
+            lastTime = now;
+          }
+
+          renderer.render(scene, camera);
+        }
+
+        // Input
+        let isDragging = false, lastX = 0, lastY = 0;
+
+        document.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          const dx = e.clientX - lastX;
+          const dy = e.clientY - lastY;
+          camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -dx * 0.01);
+          lastX = e.clientX;
+          lastY = e.clientY;
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+
+        document.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const d = camera.position.length();
+          const dir = camera.position.clone().normalize();
+          const nd = Math.max(60, Math.min(600, d + e.deltaY * 0.2));
+          camera.position.copy(dir.multiplyScalar(nd));
+        });
+
+        // Mode switching
+        window.setMode = (m) => {
+          mode = m;
+          scene.getObjectByName('sand').visible = (m === 'sand');
+          scene.getObjectByName('water').visible = (m === 'water' || m === 'naval');
+          boats.forEach(b => b.visible = (m === 'water' || m === 'naval'));
+          rocks.forEach(r => r.visible = (m === 'terrain'));
+        };
+
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+
+      } catch (err) {
+        updateStatus('ERROR: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startup);
+    } else {
+      setTimeout(startup, 100);
+    }
+  </script>
+</body>
+</html>
