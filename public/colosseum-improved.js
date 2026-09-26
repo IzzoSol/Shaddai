@@ -262,13 +262,13 @@ function buildColosseumImproved(THREE, opts) {
     group.add(pillar);
   }
 
-  // ─── GRAND LOBBY (south side) ───
+  // ─── GRAND CATHEDRAL LOBBY (reference image #2) ───
   const lobbyX = FIELD_R_X + 60;
   const lobbyZ = roofR + 10 + LOBBY_H / 2;
-  const lobbyW = 80;
-  const lobbyD = 40;
+  const lobbyW = 120;  // Expanded
+  const lobbyD = 60;   // Expanded
 
-  // Lobby floor
+  // Lobby floor (marble expanse)
   const lobbyFloorGeo = new THREE.PlaneGeometry(lobbyW, lobbyD);
   const lobbyFloor = new THREE.Mesh(lobbyFloorGeo, mats.marble);
   lobbyFloor.rotation.x = -Math.PI / 2;
@@ -276,31 +276,97 @@ function buildColosseumImproved(THREE, opts) {
   lobbyFloor.receiveShadow = true;
   group.add(lobbyFloor);
 
-  // Lobby walls
-  const wallGeo = new THREE.BoxGeometry(lobbyW, LOBBY_H, 1);
-  const backWall = new THREE.Mesh(wallGeo, mats.stone);
-  backWall.position.set(0, LOBBY_H / 2, lobbyZ + lobbyD / 2);
+  // Soaring arched ceiling (cathedral style)
+  const ceilingArc = new THREE.LatheGeometry([
+    new THREE.Vector2(0, 0),
+    new THREE.Vector2(lobbyW / 2, 0),
+    new THREE.Vector2(lobbyW / 2, LOBBY_H * 1.2),
+    new THREE.Vector2(0, LOBBY_H * 1.2)
+  ], 32);
+  const ceiling = new THREE.Mesh(ceilingArc, mats.stone);
+  ceiling.position.set(0, PROM_H + LOBBY_H * 1.1, lobbyZ);
+  ceiling.castShadow = true;
+  group.add(ceiling);
+
+  // Massive back wall (cathedral backdrop)
+  const backWallGeo = new THREE.BoxGeometry(lobbyW + 20, LOBBY_H * 1.3, 2);
+  const backWall = new THREE.Mesh(backWallGeo, mats.stone);
+  backWall.position.set(0, PROM_H + LOBBY_H * 0.65, lobbyZ + lobbyD / 2 + 5);
   backWall.castShadow = true;
   group.add(backWall);
 
-  const sideWallGeo = new THREE.BoxGeometry(1, LOBBY_H, lobbyD);
+  // Side walls (towering pillars)
+  const sideWallGeo = new THREE.BoxGeometry(2, LOBBY_H * 1.3, lobbyD);
   [-1, 1].forEach(side => {
     const wall = new THREE.Mesh(sideWallGeo, mats.stone);
-    wall.position.set(side * (lobbyW / 2), LOBBY_H / 2, lobbyZ);
+    wall.position.set(side * (lobbyW / 2 + 2), PROM_H + LOBBY_H * 0.65, lobbyZ);
     wall.castShadow = true;
     group.add(wall);
   });
 
-  // Lobby columns
-  const colGeo = new THREE.CylinderGeometry(1.5, 1.5, LOBBY_H - 4, 12);
-  for (let cx = -3; cx <= 3; cx++) {
-    for (let cz = -1; cz <= 1; cz++) {
-      if (cx === 0 && cz === 0) continue;
-      const col = new THREE.Mesh(colGeo, mats.marble);
-      col.position.set(cx * 15, LOBBY_H / 2, lobbyZ + (cz - 0.5) * 15);
-      col.castShadow = true;
-      group.add(col);
-    }
+  // Central glowing platform (cathedral altar style, reference image #2)
+  const centralPlatformGeo = new THREE.CylinderGeometry(15, 15, 2, 32);
+  const platformMat = new THREE.MeshStandardMaterial({
+    color: 0xffed4e,
+    emissive: 0xffed4e,
+    emissiveIntensity: 0.6,
+    metalness: 0.3,
+    roughness: 0.2
+  });
+  const centralPlatform = new THREE.Mesh(centralPlatformGeo, platformMat);
+  centralPlatform.position.set(0, PROM_H + 1.5, lobbyZ);
+  centralPlatform.castShadow = true;
+  group.add(centralPlatform);
+
+  // Glowing orb in center of platform
+  const orbGeo = new THREE.SphereGeometry(3, 32, 32);
+  const orbMat = new THREE.MeshStandardMaterial({
+    color: 0xffed4e,
+    emissive: 0xffed4e,
+    emissiveIntensity: 1.0,
+    metalness: 0.5,
+    roughness: 0.1
+  });
+  const orb = new THREE.Mesh(orbGeo, orbMat);
+  orb.position.set(0, PROM_H + 5, lobbyZ);
+  orb.castShadow = true;
+  group.add(orb);
+
+  // Add orb light source
+  const orbLight = new THREE.PointLight(0xffed4e, 3, 100);
+  orbLight.position.set(0, PROM_H + 5, lobbyZ);
+  group.add(orbLight);
+
+  // Grand columns (cathedral pillars)
+  const colGeo = new THREE.CylinderGeometry(3, 3.5, LOBBY_H * 1.2, 12);
+  const colPositions = [
+    [-4, -1.5], [-4, 1.5],
+    [0, -1.5], [0, 1.5],
+    [4, -1.5], [4, 1.5],
+    [-2, 0], [2, 0]
+  ];
+  colPositions.forEach(([cx, cz]) => {
+    const col = new THREE.Mesh(colGeo, mats.marble);
+    col.position.set(cx * 12, PROM_H + LOBBY_H * 0.6, lobbyZ + cz * 20);
+    col.castShadow = true;
+    group.add(col);
+  });
+
+  // Arched openings (architectural detail)
+  for (let i = 0; i < 8; i++) {
+    const arch = new THREE.Mesh(
+      new THREE.TorusGeometry(8, 1, 16, 10, 0, Math.PI),
+      mats.stone
+    );
+    const angle = (i / 8) * Math.PI * 2;
+    arch.position.set(
+      Math.cos(angle) * 40,
+      PROM_H + LOBBY_H * 0.8,
+      lobbyZ + Math.sin(angle) * 30
+    );
+    arch.rotation.z = angle;
+    arch.castShadow = true;
+    group.add(arch);
   }
 
   // ─── WALKWAYS ───
