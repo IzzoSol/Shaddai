@@ -344,7 +344,8 @@ try{ window.startPerfHud && window.startPerfHud(renderer); }catch(_){}   // prob
 // water (world-water.js). OFF by default: without the flag nothing below changes. See docs/MAP-V4-INTEGRATION.md.
 const MAP_V4 = (function(){ try{ return /[?&]map=v4(?:&|$|#)/.test(location.search); }catch(_){ return false; } })();
 const V4_U = 7/1.8;                       // units per metre (scale law) — terrain.json units_per_m
-let _v4T = null, _v4Water = null, _v4Meta = null, _v4Fill = null;   // terrain api / water api / terrain.json once loaded
+let _v4T = null, _v4Water = null, _v4Meta = null, _v4Fill = null;
+let _v4Sky = null;                        // MAP v4 sky/day-night (world-sky-v4.js)   // terrain api / water api / terrain.json once loaded
 window.__MAP_V4 = MAP_V4;
 if(MAP_V4){
   camera.near = 0.5; camera.far = 48000; camera.updateProjectionMatrix();   // ~39 000-unit-wide world (half 19 444)
@@ -375,6 +376,7 @@ const DAYNIGHT = {
 };
 let _dnAccum = 0;   // PERF: accumulates dt between throttled updateDayNight() calls (~7.5Hz)
 function updateDayNight(dt){
+  if(_v4Sky) return;   // MAP v4: world-sky-v4.js owns time, sun/moon light, hemi, fog, exposure
   DAYNIGHT.t = (DAYNIGHT.t + dt / DAYNIGHT.cycleSec) % 1;
   const t = DAYNIGHT.t;
   const elev = Math.sin((t - 0.25) * Math.PI * 2);            // -1..1, +1 at noon
@@ -391,7 +393,7 @@ function updateDayNight(dt){
   sun.position.set(Math.cos(ang) * 120, Math.sin(ang) * 120 + 8, 40);
   if(!window._themeLocked) scene.background.lerpColors(DAYNIGHT.nightBG, DAYNIGHT.dayBG, day);
 }
-addEventListener('keydown', e=>{ if(e.code==='KeyN'){ DAYNIGHT.cycleSec = DAYNIGHT.cycleSec > 60 ? 12 : 240; } });
+addEventListener('keydown', e=>{ if(e.code==='KeyN'){ if(_v4Sky) _v4Sky.setDayLength(_v4Sky.dayLengthMin > 1 ? 0.2 : 24); else DAYNIGHT.cycleSec = DAYNIGHT.cycleSec > 60 ? 12 : 240; } });
 
 // Agent/building GLB loader — declared BEFORE the world-build IIFE because that IIFE uses it.
 // (Was previously declared lower in the file, which threw a temporal-dead-zone error and silently
@@ -450,6 +452,7 @@ window.__worldBuilt = false;
     .then(function(api){
       _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;
       try{ _v4Water = _buildV4Water(api); window.__w3dDebug.waterV4 = _v4Water; }catch(e){ console.warn('[map-v4] water build failed:', e && e.message); }
+      if(_v4Sky && _v4Water) _v4Sky.setWater(_v4Water);   // sky may have loaded first
       console.info('[map-v4] terrain ready · half', Math.round(api.half||0), 'u · grid centre h', api.heightAt(0,0).toFixed(1), 'u · water', _v4Water ? 'on' : 'off');
       return api;
     })
@@ -1580,6 +1583,7 @@ const _biomeSky = { grid:0x163a6e, forest:0x1a5a2e, arctic:0x2a5a8e, desert:0x6e
 // Pre-allocated colors — eliminate 3 `new THREE.Color()` allocations per frame
 const _skyC1 = new THREE.Color(), _skyC2 = new THREE.Color(), _skyFogC = new THREE.Color();
 function updateSkyForBiome(x, z){
+  if(_v4Sky) return;                // MAP v4: fog colour must equal the v4 sky horizon
   if(window._themeLocked) return;   // a global theme owns the sky/fog — don't fight it
   if(!window.WORLD_LAYOUT || !window.WORLD_LAYOUT.biomeAt) return;
   const b = window.WORLD_LAYOUT.biomeAt(x, z);
@@ -1594,6 +1598,15 @@ scene.fog.density = 0.0006;   // MAP v2 (see scene.fog above)
 // MAP v4: FogExp2 = 1-exp(-(d·ρ)²). ρ=0.000055 → ~6% haze at 5 000u, ~50% at ~15 000u, ~95% at ~31 000u, so the
 // far rim of a 39 000u world fades out before the 48 000u far plane instead of a hard cut.
 if(MAP_V4) scene.fog.density = 0.000055;
+if(MAP_V4){
+  skyDome.visible = false; starGroup.visible = false;   // replaced by world-sky-v4.js (stars/clouds/moon are in its shader)
+  sun2.visible = false; rim.visible = false;            // one directional light only: the sky drives `sun`
+  _loadScript('/world-sky-v4.js?v=20260926sky').then(function(){
+    _v4Sky = window.buildWorldSkyV4({ THREE, scene, renderer, camera, sunLight: sun, hemiLight: hemi, ambientLight: ambient,
+      fog: scene.fog, water: _v4Water, dayLengthMin: 24 });
+    window.__w3dDebug.skyV4 = _v4Sky;
+  }).catch(function(e){ console.warn('[map-v4] sky failed:', e && e.message); });
+}
 
 // central monument — THE SOURCE (glowing obelisk)
 const monument = new THREE.Group();
@@ -4258,6 +4271,7 @@ function _applyQualityTier(idx){
   bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
   _Q.tier = idx;
   window.__quality = t.name;
+  if(typeof _v4Sky !== 'undefined' && _v4Sky) _v4Sky.setQuality(t.name);   // shadow map size + cadence
   // At the low tiers, hide the agents' additive aura/crown particles — they're pure eye-candy and the
   // heaviest transparent OVERDRAW in the scene. Restored automatically when the governor climbs back up.
   try {
@@ -4572,7 +4586,7 @@ function animate(){
   const t=clock.elapsedTime;
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
-  if(MAP_V4){ if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); }
+  if(MAP_V4){ if(_v4Sky) _v4Sky.update(dt, playerPos); if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
   // cheap so the fall is buttery. Everything resumes the instant you land.
