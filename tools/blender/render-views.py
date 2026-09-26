@@ -12,9 +12,9 @@ def look(pos, tgt, lens=35):
     cam.data.type = 'PERSP'; cam.data.lens = lens; cam.location = pos
     cam.rotation_euler = (Vector(tgt) - Vector(pos)).to_track_quat('-Z', 'Y').to_euler()
 if v == 'top':
-    cam.data.type = 'ORTHO'; cam.data.ortho_scale = 6200; cam.location = (0, -150, 8000); cam.rotation_euler = (0, 0, 0)
+    cam.data.type = 'ORTHO'; cam.data.ortho_scale = float(NS.get('SHD_ORTHO', 6200)); cam.location = (0, 0, 9000); cam.rotation_euler = (0, 0, 0)
 elif v == 'atlas':
-    look((0, -5200, 4300), (0, 150, 0), 30)
+    k = float(NS.get('SHD_ORTHO', 6200)) / 6200; look((0, -5200 * k, 4300 * k), (0, 150 * k, 0), 30)
 elif v == 'city':
     look((0, -260, 170), (0, 0, 0), 30)
 else:
