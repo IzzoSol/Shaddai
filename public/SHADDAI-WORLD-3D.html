@@ -243,7 +243,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
-<script src="/world-transit.js?v=20260925e"></script>
+<script src="/world-transit.js?v=20260926drg"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum.js?v=20260926v4"></script>
@@ -481,6 +481,27 @@ window.__worldBuilt = false;
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
+      if(!api) return api;
+      return _loadScript('/world-dragons.js?v=20260926a').then(function(){
+        const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
+        const KEY = 'w3d_dragons_defeated';
+        const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
+        window.__dragons = window.buildWorldDragons({ THREE, scene, camera, loader: dl, heightAt: api.heightAt,
+          layout: window.WORLD_LAYOUT,
+          getPlayer: ()=> ({ pos: playerAvatar ? playerAvatar.position : playerPos,
+                             alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) }),
+          onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
+          isDefeated: id => load().indexOf(id) >= 0,
+          setDefeated: id => { const a = load(); if(a.indexOf(id) < 0){ a.push(id); try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(_){} } },
+          modelFor: () => null });
+        window.__w3dDebug.dragons = window.__dragons;
+        ['land','roar','swoop'].forEach(function(ev){ window.__dragons.on(ev, function(e){
+          if(!e || !e.shake || !e.pos) return; const d = Math.hypot(e.pos.x - playerPos.x, e.pos.z - playerPos.z);
+          if(d < 150 * V4_U){ window.__dragonShake && window.__dragonShake(e.shake.intensity, e.shake.duration); } }); });
+        window.__dragons.on('defeated', function(e){ if(window.__toast) window.__toast('🐉 ' + (e && e.name || 'The dragon') + ' bows — crossing open'); });
+      }).catch(function(e){ console.warn('[map-v4] dragons failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -3417,9 +3438,17 @@ const _SIGNATURE = {
 };
 // Return the active player's signature entry (or a sane default).
 function _playerSig(){ return _SIGNATURE[(window._playerCharacter||'').toUpperCase()] || {vfx:'orb',clip:null,color:0x9fb0e0}; }
+window.__playerHP = 100; let _dragonKB = null, _shakeT = 0, _shakeI = 0;
+window.__dragonShake = function(i, d){ _shakeI = Math.max(_shakeI, i || 0.4); _shakeT = Math.max(_shakeT, d || 0.3); };
+window.__onDragonHit = function(dmg, kind, info){
+  window.__playerHP = Math.max(0, window.__playerHP - dmg);
+  if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
+  window.__dragonShake(kind === 'stagger' ? 0.25 : 0.6, 0.35);
+  if(window.__playerHP <= 0){ window.__playerHP = 100; const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); }
+};
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
-  _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
+  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
 
 // ── Q = PROJECTILE — fire the current agent's signature bolt (+ a cast pose if the rig has one) ──
 function playerProjectile(){
@@ -3438,7 +3467,7 @@ function playerProjectile2(){
 }
 // ── F = FLIP (rigged flip clip). SHADDAI = FLY (rise/float). Others without a flip clip: tiny hop no-op. ──
 let _flyUntil = 0, _flyImpulse = 0;
-function playerFlipOrFly(){
+function playerFlipOrFly(){ if(window.__dragons) window.__dragons.setPlayerInvulnerable(0.45);
   const code=(window._playerCharacter||'').toUpperCase();
   if(code==='SHADDAI'){ _flyUntil = clock.elapsedTime + 1.1; _flyImpulse = 1; return; }  // F = fly: brief buoyant rise/float
   if(playPlayerOnce('flip')) return;                       // rigged agents (TURTLE = Backflip / Parkour_Vault) play the real clip
@@ -3446,7 +3475,7 @@ function playerFlipOrFly(){
   _pTween={t:0,dur:0.5,kind:'hop'};                        // boneless non-SHADDAI → tiny procedural hop
 }
 // ── K = KICK (rigged kick clip). TURTLE has several kicks (aliased into attack1). Others: no-op. ──
-function playerKick(){
+function playerKick(){ if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 10);
   // try common kick clip names first, then the aliased attack slot the loader mapped kicks into.
   if(playPlayerOnce('kick',{timeScale:1.1})) { _attackFlash(); return; }
   if(playPlayerOnce('attack1',{timeScale:1.1})) { _attackFlash(); return; }  // TURTLE: roundhouse/high_kick → attack1 alias
@@ -3578,6 +3607,8 @@ function _updateCombat(dt){
   // projectiles
   for(let i=_projectiles.length-1;i>=0;i--){ const p=_projectiles[i];
     p.age+=dt; p.o.position.addScaledVector(p.vel,dt);
+      if(window.__dragons && !p.hitDragon){ const _hid = window.__dragons.hitTest(p.o.position, 1.5);
+        if(_hid){ p.hitDragon = true; window.__dragons.damage(_hid, 18, p.o.position, p.dtype || 'arcane'); p.age = p.life; } }
     if(p.spin) p.o.rotation.z += p.spin*dt;
     if(p.feather) p.o.rotation.y += 8*dt;
     const k=1-p.age/p.life;
@@ -4645,6 +4676,8 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
   if(MAP_V4){ if(_v4Sky) _v4Sky.update(dt, playerPos); if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); }
+  if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
+  if(_dragonKB){ playerPos.x += _dragonKB.x*dt; playerPos.z += _dragonKB.z*dt; if((_dragonKB.t -= dt) <= 0) _dragonKB = null; }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
   // cheap so the fall is buttery. Everything resumes the instant you land.
@@ -4913,6 +4946,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   }
 
   if(window.__probeCam){ const pc=window.__probeCam; camera.position.set(pc.pos[0],pc.pos[1],pc.pos[2]); camera.lookAt(pc.look[0],pc.look[1],pc.look[2]); }   // probe-only camera override (tools/probe-falprops.cjs); unset in normal play
+  if(_shakeT > 0){ _shakeT -= dt; camera.position.x += (Math.random()-0.5)*_shakeI; camera.position.y += (Math.random()-0.5)*_shakeI; }   // dragon hits / stomps
   composer.render();
   window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }

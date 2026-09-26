@@ -170,6 +170,9 @@
       ui.addEventListener('click', function (e) { var to = e.target.getAttribute('data-to'); if (!to) return; var dest = stations.find(function (s) { return s.id === to; }); ui.remove(); ui = null; ride(from, dest); });
     }
     function ride(from, dest) {
+      if (window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id)) {   // crossing dragons: beaten once = open forever
+        if (window.__toast) window.__toast('🐉 A dragon guards ' + dest.name + ' — defeat it at the crossing first'); return;
+      }
       var tr = trains[0], a0 = Math.atan2(from.z, from.x), a1 = Math.atan2(dest.z, dest.x);
       var da = a1 - a0; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
       riding = { tr: tr, a0: a0, da: da, t: 0, dur: Math.max(4, Math.min(12, Math.abs(da) * tr.r / SPEED)), dest: dest, dir: tr.dir };
