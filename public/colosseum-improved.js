@@ -544,6 +544,44 @@ function buildColosseumImproved(THREE, opts) {
   let trapActivated = false;
   let treasureHidden = true;
 
+  // ─── AGENT SYSTEM ───
+  const agents = {};
+  const roleSlots = {
+    guard: { count: 12, assigned: [], available: 12 },
+    vendor: { count: 4, assigned: [], available: 4 },
+    spectator: { count: 40, assigned: [], available: 40 },
+    champion: { count: 2, assigned: [], available: 2 },
+    master: { count: 1, assigned: [], available: 1 }
+  };
+
+  const skillRegistry = {
+    // Guard skills
+    'guard:patrol': { role: 'guard', level: 1, xp: 0, bonus: { speed: 0.5 } },
+    'guard:defend': { role: 'guard', level: 1, xp: 0, bonus: { armor: 5 } },
+    'guard:intimidate': { role: 'guard', level: 2, xp: 100, bonus: { threat: 10 } },
+    'guard:elite_combat': { role: 'guard', level: 3, xp: 500, bonus: { damage: 15 } },
+
+    // Vendor skills
+    'vendor:sell': { role: 'vendor', level: 1, xp: 0, bonus: { salesChance: 0.5 } },
+    'vendor:appraise': { role: 'vendor', level: 2, xp: 100, bonus: { pricing: 1.2 } },
+    'vendor:persuade': { role: 'vendor', level: 2, xp: 100, bonus: { persuasion: 15 } },
+    'vendor:master_trader': { role: 'vendor', level: 3, xp: 500, bonus: { profit: 0.3 } },
+
+    // Champion skills
+    'champion:fight': { role: 'champion', level: 1, xp: 0, bonus: { damage: 10 } },
+    'champion:endurance': { role: 'champion', level: 2, xp: 200, bonus: { health: 50 } },
+    'champion:legendary_strike': { role: 'champion', level: 3, xp: 1000, bonus: { damage: 50 } },
+
+    // Spectator skills
+    'spectator:cheer': { role: 'spectator', level: 1, xp: 0, bonus: { morale: 5 } },
+    'spectator:judge': { role: 'spectator', level: 2, xp: 100, bonus: { judging: 20 } },
+    'spectator:crowd_leader': { role: 'spectator', level: 3, xp: 500, bonus: { influence: 30 } },
+
+    // Master/Coordinator
+    'master:orchestrate': { role: 'master', level: 1, xp: 0, bonus: { coordination: 100 } },
+    'master:arena_control': { role: 'master', level: 2, xp: 500, bonus: { control: 100 } }
+  };
+
   // ─── GUARDS / NPCs ───
   const guardsGroup = new THREE.Group();
   guardsGroup.name = 'GUARDS';
@@ -905,6 +943,145 @@ function buildColosseumImproved(THREE, opts) {
         currentMode: currentMode,
         dimensions: this.dims,
         timestamp: Date.now()
+      };
+    },
+
+    // ─── AGENT SYSTEM ───
+    assignAgent: function(agentId, role, name) {
+      if (!roleSlots[role]) return { success: false, error: 'Invalid role' };
+      if (roleSlots[role].available <= 0) return { success: false, error: 'No slots available' };
+
+      agents[agentId] = {
+        id: agentId,
+        name: name,
+        role: role,
+        skills: {},
+        xp: 0,
+        level: 1,
+        stats: { health: 100, armor: 0, damage: 10, speed: 1.0 },
+        assignedAt: Date.now()
+      };
+
+      roleSlots[role].assigned.push(agentId);
+      roleSlots[role].available--;
+
+      return {
+        success: true,
+        agent: agents[agentId],
+        message: `Agent ${name} assigned as ${role}`
+      };
+    },
+
+    unassignAgent: function(agentId) {
+      if (!agents[agentId]) return { success: false, error: 'Agent not found' };
+
+      const role = agents[agentId].role;
+      roleSlots[role].assigned = roleSlots[role].assigned.filter(a => a !== agentId);
+      roleSlots[role].available++;
+      delete agents[agentId];
+
+      return { success: true, message: `Agent ${agentId} unassigned` };
+    },
+
+    learnSkill: function(agentId, skillKey) {
+      if (!agents[agentId]) return { success: false, error: 'Agent not found' };
+      if (!skillRegistry[skillKey]) return { success: false, error: 'Skill not found' };
+
+      const skill = skillRegistry[skillKey];
+      const agent = agents[agentId];
+
+      if (skill.role !== agent.role) {
+        return { success: false, error: `Skill ${skillKey} not available for role ${agent.role}` };
+      }
+
+      if (agent.xp < skill.xp) {
+        return { success: false, error: `Not enough XP. Need ${skill.xp}, have ${agent.xp}` };
+      }
+
+      agent.skills[skillKey] = { learned: true, masteryLevel: 1, practicedCount: 0 };
+      agent.xp -= skill.xp;
+
+      // Apply skill bonuses to stats
+      Object.entries(skill.bonus).forEach(([stat, bonus]) => {
+        if (stat === 'damage') agent.stats.damage += bonus;
+        if (stat === 'armor') agent.stats.armor += bonus;
+        if (stat === 'health') agent.stats.health += bonus;
+        if (stat === 'speed') agent.stats.speed += bonus;
+      });
+
+      if (agent.level < skill.level) agent.level = skill.level;
+
+      return {
+        success: true,
+        agent: agent,
+        message: `Agent learned skill: ${skillKey}`,
+        statsAfter: agent.stats
+      };
+    },
+
+    earnXP: function(agentId, amount) {
+      if (!agents[agentId]) return { success: false, error: 'Agent not found' };
+
+      agents[agentId].xp += amount;
+      return { success: true, totalXP: agents[agentId].xp, agent: agents[agentId] };
+    },
+
+    getAgent: function(agentId) {
+      return agents[agentId] || null;
+    },
+
+    getAllAgents: function() {
+      return Object.values(agents);
+    },
+
+    getRoleStatus: function() {
+      const status = {};
+      Object.entries(roleSlots).forEach(([role, data]) => {
+        status[role] = {
+          total: data.count,
+          assigned: data.assigned.length,
+          available: data.available,
+          agents: data.assigned.map(id => agents[id])
+        };
+      });
+      return status;
+    },
+
+    getSkillRegistry: function() {
+      return skillRegistry;
+    },
+
+    practiceSkill: function(agentId, skillKey) {
+      if (!agents[agentId]) return { success: false };
+      if (!agents[agentId].skills[skillKey]) return { success: false, error: 'Agent does not have this skill' };
+
+      const skill = agents[agentId].skills[skillKey];
+      skill.practicedCount++;
+      agents[agentId].xp += 10; // Practice gives XP
+
+      // Mastery increases with practice
+      if (skill.practicedCount % 10 === 0) {
+        skill.masteryLevel++;
+      }
+
+      return {
+        success: true,
+        practicedCount: skill.practicedCount,
+        masteryLevel: skill.masteryLevel,
+        xpGained: 10
+      };
+    },
+
+    getAgentStats: function(agentId) {
+      if (!agents[agentId]) return null;
+      return {
+        agent: agents[agentId].name,
+        role: agents[agentId].role,
+        level: agents[agentId].level,
+        xp: agents[agentId].xp,
+        skills: Object.keys(agents[agentId].skills),
+        stats: agents[agentId].stats,
+        skillMastery: agents[agentId].skills
       };
     }
   };
