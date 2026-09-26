@@ -242,6 +242,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
+<script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
 <script src="/world-transit.js?v=20260925e"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
@@ -337,7 +338,8 @@ scene.fog = new THREE.FogExp2(0x070b1a, 0.0006);   // MAP v2: 5000u world — so
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 6000);   // MAP v2: see distant realms + the mountain ring  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
 camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple — that made the warm-up frame show "inside shaddai's temple")
-window.__w3dDebug = { scene, camera };   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
+window.__w3dDebug = { scene, camera, renderer };
+try{ window.startPerfHud && window.startPerfHud(renderer); }catch(_){}   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
 // ── MAP v4 FLAG (?map=v4) — Blender-baked ~10 km heightmap terrain (world-terrain-v4.js) + Tidewater-style
 // water (world-water.js). OFF by default: without the flag nothing below changes. See docs/MAP-V4-INTEGRATION.md.
 const MAP_V4 = (function(){ try{ return /[?&]map=v4(?:&|$|#)/.test(location.search); }catch(_){ return false; } })();
@@ -464,7 +466,7 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
-      return _loadScript('/world-clusters-v4.js?v=20260926a').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20260926lod').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
@@ -4570,7 +4572,7 @@ function animate(){
   const t=clock.elapsedTime;
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
-  if(MAP_V4){ if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); }
+  if(MAP_V4){ if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
   // cheap so the fall is buttery. Everything resumes the instant you land.
@@ -4840,6 +4842,7 @@ function animate(){
 
   if(window.__probeCam){ const pc=window.__probeCam; camera.position.set(pc.pos[0],pc.pos[1],pc.pos[2]); camera.lookAt(pc.look[0],pc.look[1],pc.look[2]); }   // probe-only camera override (tools/probe-falprops.cjs); unset in normal play
   composer.render();
+  window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }
 animate();
 // dev: overhead camera for screenshots — ?overhead=tx,tz overrides to a top-down view of that point
