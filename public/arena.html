@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SHADDAI Colosseum</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: #0a0e0c; font-family: monospace; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    #panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #00ff9c;
+      color: #00ff9c;
+      padding: 20px;
+      z-index: 100;
+      border-radius: 8px;
+      width: 280px;
+    }
+
+    h2 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #00ff9c;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      font-size: 12px;
+    }
+
+    .buttons {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #00ff9c;
+    }
+
+    button {
+      width: 100%;
+      background: rgba(0, 255, 156, 0.1);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      padding: 10px;
+      margin: 5px 0;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: rgba(0, 255, 156, 0.3);
+    }
+
+    button.active {
+      background: #00ff9c;
+      color: #000;
+    }
+
+    #event {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #00ff9c;
+      font-size: 11px;
+      color: #5fe0ff;
+      line-height: 1.6;
+    }
+
+    #info {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      padding: 15px;
+      font-size: 11px;
+      z-index: 100;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <h2>⚔️ COLOSSEUM</h2>
+    <div class="stat"><span>Diameter:</span><span>240m</span></div>
+    <div class="stat"><span>Field:</span><span>100×64m</span></div>
+    <div class="stat"><span>Height:</span><span>35m</span></div>
+    <div class="stat"><span>Seats:</span><span>40 rows</span></div>
+
+    <div class="buttons">
+      <button class="active" onclick="switchMode('sand')">🏜️ SAND</button>
+      <button onclick="switchMode('water')">💧 WATER</button>
+      <button onclick="switchMode('naval')">⛵ NAVAL</button>
+      <button onclick="switchMode('terrain')">🏔️ TERRAIN</button>
+    </div>
+
+    <div id="event">Ready for combat...</div>
+  </div>
+
+  <div id="info">
+    <div>Mode: <span id="modeName">SAND</span></div>
+    <div>FPS: <span id="fps">0</span></div>
+  </div>
+
+  <script src="https://unpkg.com/three@r128/build/three.min.js"></script>
+  <script>
+    let scene, camera, renderer, clock;
+    let colosseum = {};
+    let frameCount = 0;
+    let lastTime = Date.now();
+    let currentMode = 'sand';
+
+    function init() {
+      // Create scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0e0c);
+      scene.fog = new THREE.Fog(0x0a0e0c, 300, 1000);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000);
+      camera.position.set(150, 80, 150);
+      camera.lookAt(0, 30, 0);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+      document.body.appendChild(renderer.domElement);
+
+      clock = new THREE.Clock();
+
+      // Build colosseum
+      buildArena();
+
+      // Setup input
+      setupInput();
+      window.addEventListener('resize', onWindowResize);
+
+      // Start animation loop
+      animate();
+    }
+
+    function buildArena() {
+      // Materials
+      const materials = {
+        sand: new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.95 }),
+        water: new THREE.MeshStandardMaterial({ color: 0x1a8fd6, roughness: 0.2, transparent: true, opacity: 0.85 }),
+        seat: new THREE.MeshStandardMaterial({ color: 0x9b7962, roughness: 0.8 }),
+        stone: new THREE.MeshStandardMaterial({ color: 0xc9a961, roughness: 0.85 }),
+        steel: new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.5 }),
+        marble: new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.3 })
+      };
+
+      // SAND FLOOR
+      const sandFloor = new THREE.Mesh(
+        new THREE.PlaneGeometry(100, 64),
+        materials.sand
+      );
+      sandFloor.name = 'sandFloor';
+      sandFloor.rotation.x = -Math.PI / 2;
+      sandFloor.position.y = 0.01;
+      sandFloor.receiveShadow = true;
+      scene.add(sandFloor);
+
+      // WATER FLOOR
+      const waterFloor = new THREE.Mesh(
+        new THREE.PlaneGeometry(100, 64),
+        materials.water
+      );
+      waterFloor.name = 'waterFloor';
+      waterFloor.rotation.x = -Math.PI / 2;
+      waterFloor.position.y = 0.5;
+      waterFloor.receiveShadow = true;
+      waterFloor.visible = false;
+      scene.add(waterFloor);
+
+      // BOATS
+      colosseum.boats = [];
+      for (let i = 0; i < 2; i++) {
+        const boat = new THREE.Group();
+
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 15), materials.steel);
+        hull.castShadow = true;
+        hull.receiveShadow = true;
+        boat.add(hull);
+
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 12), materials.steel);
+        mast.position.y = 8;
+        mast.castShadow = true;
+        boat.add(mast);
+
+        const sail = new THREE.Mesh(new THREE.PlaneGeometry(6, 8), materials.marble);
+        sail.position.set(3, 6, 0);
+        boat.add(sail);
+
+        boat.position.set((i === 0 ? -35 : 35), 1.5, (i === 0 ? -25 : 25));
+        boat.userData.phase = i * Math.PI;
+        boat.userData.baseY = 1.5;
+        boat.visible = false;
+        scene.add(boat);
+        colosseum.boats.push(boat);
+      }
+
+      // TERRAIN ROCKS
+      colosseum.rocks = new THREE.Group();
+      for (let i = 0; i < 8; i++) {
+        const rock = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(3 + Math.random() * 2, 2),
+          materials.stone
+        );
+        const angle = (i / 8) * Math.PI * 2;
+        rock.position.set(Math.cos(angle) * 40, 2, Math.sin(angle) * 40);
+        rock.castShadow = true;
+        colosseum.rocks.add(rock);
+      }
+      colosseum.rocks.visible = false;
+      scene.add(colosseum.rocks);
+
+      // PODIUM
+      const podGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(50, 0),
+        new THREE.Vector2(53, 0),
+        new THREE.Vector2(53, 2),
+        new THREE.Vector2(50, 2)
+      ], 64);
+      const podium = new THREE.Mesh(podGeo, materials.stone);
+      podium.castShadow = true;
+      podium.receiveShadow = true;
+      scene.add(podium);
+
+      // LOWER BLEACHERS (20 rows)
+      for (let i = 0; i < 20; i++) {
+        const r1 = 53 + i * 2.5;
+        const r2 = 53 + (i + 1) * 2.5;
+        const rowGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(r1, 0),
+          new THREE.Vector2(r2, 0),
+          new THREE.Vector2(r2, 0.75),
+          new THREE.Vector2(r1, 0.75)
+        ], 64);
+        const row = new THREE.Mesh(rowGeo, materials.seat);
+        row.position.y = 2 + i * 0.75;
+        row.castShadow = true;
+        row.receiveShadow = true;
+        scene.add(row);
+      }
+
+      // PROMENADE
+      const promGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(103, 0),
+        new THREE.Vector2(107, 0),
+        new THREE.Vector2(107, 1),
+        new THREE.Vector2(103, 1)
+      ], 64);
+      const prom = new THREE.Mesh(promGeo, materials.stone);
+      prom.position.y = 18;
+      prom.castShadow = true;
+      prom.receiveShadow = true;
+      scene.add(prom);
+
+      // UPPER BLEACHERS (20 rows)
+      for (let i = 0; i < 20; i++) {
+        const r1 = 107 + i * 2.5;
+        const r2 = 107 + (i + 1) * 2.5;
+        const rowGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(r1, 0),
+          new THREE.Vector2(r2, 0),
+          new THREE.Vector2(r2, 0.6),
+          new THREE.Vector2(r1, 0.6)
+        ], 64);
+        const row = new THREE.Mesh(rowGeo, materials.seat);
+        row.position.y = 18 + i * 0.6;
+        row.castShadow = true;
+        row.receiveShadow = true;
+        scene.add(row);
+      }
+
+      // ROOF
+      const roofGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(157, 0),
+        new THREE.Vector2(165, 0),
+        new THREE.Vector2(165, 35),
+        new THREE.Vector2(157, 35)
+      ], 64);
+      const roof = new THREE.Mesh(roofGeo, materials.steel);
+      roof.castShadow = true;
+      roof.receiveShadow = true;
+      scene.add(roof);
+
+      // PILLARS (32)
+      for (let i = 0; i < 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        const x = Math.cos(angle) * 161;
+        const z = Math.sin(angle) * 161;
+        const pillar = new THREE.Mesh(
+          new THREE.CylinderGeometry(1.2, 1.2, 30, 12),
+          materials.steel
+        );
+        pillar.position.set(x, 15, z);
+        pillar.castShadow = true;
+        scene.add(pillar);
+      }
+
+      // GRAND LOBBY
+      const lobbyFloor = new THREE.Mesh(
+        new THREE.PlaneGeometry(80, 40),
+        materials.marble
+      );
+      lobbyFloor.rotation.x = -Math.PI / 2;
+      lobbyFloor.position.set(0, 18, 200);
+      lobbyFloor.receiveShadow = true;
+      scene.add(lobbyFloor);
+
+      const backWall = new THREE.Mesh(
+        new THREE.BoxGeometry(80, 30, 1),
+        materials.stone
+      );
+      backWall.position.set(0, 15, 240);
+      backWall.castShadow = true;
+      scene.add(backWall);
+
+      // Side walls
+      const sideWall = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 30, 40),
+        materials.stone
+      );
+      sideWall.castShadow = true;
+
+      const leftWall = sideWall.clone();
+      leftWall.position.set(-40, 15, 200);
+      scene.add(leftWall);
+
+      const rightWall = sideWall.clone();
+      rightWall.position.set(40, 15, 200);
+      scene.add(rightWall);
+
+      // COLUMNS IN LOBBY
+      const colGeo = new THREE.CylinderGeometry(1.5, 1.5, 26, 12);
+      const cols = [[-3, -1], [-3, 1], [0, -1], [0, 1], [3, -1], [3, 1]];
+      cols.forEach(([cx, cz]) => {
+        const col = new THREE.Mesh(colGeo, materials.marble);
+        col.position.set(cx * 15, 13, 200 + cz * 15);
+        col.castShadow = true;
+        scene.add(col);
+      });
+
+      // LIGHTING
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambient);
+
+      const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+      sun.position.set(100, 100, 100);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 4096;
+      sun.shadow.mapSize.height = 4096;
+      sun.shadow.camera.far = 800;
+      scene.add(sun);
+
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const light = new THREE.SpotLight(0xffd700, 2);
+        light.position.set(Math.cos(angle) * 161, 33, Math.sin(angle) * 161);
+        light.target.position.set(0, 15, 0);
+        light.castShadow = true;
+        scene.add(light);
+      }
+    }
+
+    function setupInput() {
+      let isDragging = false;
+      let lastX = 0, lastY = 0;
+
+      document.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -dx * 0.01);
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const dist = camera.position.length();
+        const dir = camera.position.clone().normalize();
+        const newDist = Math.max(50, Math.min(500, dist + e.deltaY * 0.2));
+        camera.position.copy(dir.multiplyScalar(newDist));
+      });
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const deltaTime = clock.getDelta();
+
+      // Animate boats
+      colosseum.boats.forEach((boat) => {
+        boat.userData.phase += deltaTime * 2;
+        boat.position.y = boat.userData.baseY + Math.sin(boat.userData.phase) * 0.5;
+        boat.rotation.z = Math.sin(boat.userData.phase * 0.5) * 0.1;
+      });
+
+      // FPS counter
+      frameCount++;
+      const now = Date.now();
+      if (now - lastTime >= 1000) {
+        document.getElementById('fps').textContent = frameCount;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+
+      // Update floor visibility
+      const sandFloor = scene.getObjectByName('sandFloor');
+      const waterFloor = scene.getObjectByName('waterFloor');
+
+      sandFloor.visible = (mode === 'sand');
+      waterFloor.visible = (mode === 'water' || mode === 'naval');
+
+      // Update boats
+      colosseum.boats.forEach(b => {
+        b.visible = (mode === 'water' || mode === 'naval');
+      });
+
+      // Update rocks
+      colosseum.rocks.visible = (mode === 'terrain');
+
+      // Update UI
+      document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('modeName').textContent = mode.toUpperCase();
+
+      // Update event message
+      const events = {
+        sand: '⚔️ GLADIATOR COMBAT\nFighters enter the arena for combat!',
+        water: '🌊 WATER SPECTACLE\nThe arena fills with water!',
+        naval: '⛵ NAVAL BATTLE\nBoats engage in combat!',
+        terrain: '🏔️ TERRAIN COMBAT\nMixed environment fight!'
+      };
+      document.getElementById('event').textContent = events[mode];
+    }
+
+    // Start
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
