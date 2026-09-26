@@ -1051,6 +1051,315 @@ function buildColosseumImproved(THREE, opts) {
       return skillRegistry;
     },
 
+    // ─── BATTLE SYSTEM ───
+    battleArena: {
+      activeMatches: {},
+      matchId: 0,
+      history: []
+    },
+
+    initiateBattle: function(agentId1, agentId2, battleType = 'duel') {
+      if (!agents[agentId1] || !agents[agentId2]) return { success: false, error: 'Agent not found' };
+
+      const matchId = ++this.battleArena.matchId;
+      const agent1 = agents[agentId1];
+      const agent2 = agents[agentId2];
+
+      const match = {
+        id: matchId,
+        agent1: { id: agentId1, name: agent1.name, health: agent1.stats.health },
+        agent2: { id: agentId2, name: agent2.name, health: agent2.stats.health },
+        type: battleType,
+        rounds: 0,
+        started: Date.now(),
+        status: 'active',
+        logs: []
+      };
+
+      this.battleArena.activeMatches[matchId] = match;
+      return { success: true, matchId: matchId, battle: match };
+    },
+
+    simulateBattleRound: function(matchId) {
+      const match = this.battleArena.activeMatches[matchId];
+      if (!match || match.status !== 'active') return { success: false, error: 'Invalid match' };
+
+      const a1 = agents[match.agent1.id];
+      const a2 = agents[match.agent2.id];
+
+      // Damage calculation based on stats
+      const damage1 = a1.stats.damage * (0.8 + Math.random() * 0.4);
+      const damage2 = a2.stats.damage * (0.8 + Math.random() * 0.4);
+
+      // Armor reduces damage
+      const actualDamage1 = Math.max(1, damage1 - a2.stats.armor * 0.5);
+      const actualDamage2 = Math.max(1, damage2 - a1.stats.armor * 0.5);
+
+      match.agent1.health -= actualDamage2;
+      match.agent2.health -= actualDamage1;
+      match.rounds++;
+
+      const log = {
+        round: match.rounds,
+        agent1: { damage: actualDamage1, health: match.agent1.health },
+        agent2: { damage: actualDamage2, health: match.agent2.health }
+      };
+      match.logs.push(log);
+
+      // Check for winner
+      let winner = null;
+      if (match.agent1.health <= 0) {
+        winner = match.agent2.id;
+        match.status = 'completed';
+      } else if (match.agent2.health <= 0) {
+        winner = match.agent1.id;
+        match.status = 'completed';
+      }
+
+      if (winner) {
+        match.winner = winner;
+        match.completed = Date.now();
+        this.battleArena.history.push(match);
+        delete this.battleArena.activeMatches[matchId];
+
+        // Award XP to winner
+        agents[winner].xp += 50;
+        agents[winner].stats.health = agents[winner].stats.health * 1.1; // Slight health boost
+
+        return { success: true, matchId: matchId, winner: winner, message: 'Battle completed!', match: match };
+      }
+
+      return { success: true, matchId: matchId, roundComplete: true, match: match };
+    },
+
+    getBattle: function(matchId) {
+      return this.battleArena.activeMatches[matchId] || null;
+    },
+
+    getBattleHistory: function(limit = 10) {
+      return this.battleArena.history.slice(-limit);
+    },
+
+    // ─── SCORING & RANKINGS ───
+    rankings: {},
+
+    recordVictory: function(agentId, points = 10) {
+      if (!agents[agentId]) return { success: false };
+
+      if (!this.rankings[agentId]) {
+        this.rankings[agentId] = {
+          name: agents[agentId].name,
+          role: agents[agentId].role,
+          wins: 0,
+          losses: 0,
+          points: 0,
+          streak: 0
+        };
+      }
+
+      this.rankings[agentId].wins++;
+      this.rankings[agentId].points += points;
+      this.rankings[agentId].streak++;
+
+      return { success: true, ranking: this.rankings[agentId] };
+    },
+
+    recordLoss: function(agentId) {
+      if (!agents[agentId]) return { success: false };
+
+      if (!this.rankings[agentId]) {
+        this.rankings[agentId] = {
+          name: agents[agentId].name,
+          role: agents[agentId].role,
+          wins: 0,
+          losses: 0,
+          points: 0,
+          streak: 0
+        };
+      }
+
+      this.rankings[agentId].losses++;
+      this.rankings[agentId].streak = 0;
+
+      return { success: true, ranking: this.rankings[agentId] };
+    },
+
+    getLeaderboard: function(limit = 10, orderBy = 'points') {
+      const sorted = Object.entries(this.rankings)
+        .map(([id, rank]) => ({ id, ...rank }))
+        .sort((a, b) => b[orderBy] - a[orderBy])
+        .slice(0, limit);
+
+      return sorted.map((entry, idx) => ({ rank: idx + 1, ...entry }));
+    },
+
+    getAgentRanking: function(agentId) {
+      return this.rankings[agentId] || null;
+    },
+
+    // ─── EVENT SYSTEM ───
+    eventLog: [],
+    eventHandlers: {},
+
+    generateEvent: function(eventType, data = {}) {
+      const event = {
+        id: this.eventLog.length,
+        type: eventType,
+        data: data,
+        timestamp: Date.now(),
+        handlers: this.eventHandlers[eventType] || []
+      };
+
+      this.eventLog.push(event);
+
+      // Trigger event handlers
+      event.handlers.forEach(handler => {
+        try {
+          handler(event);
+        } catch (e) {
+          console.error('Event handler error:', e);
+        }
+      });
+
+      return event;
+    },
+
+    onEvent: function(eventType, handler) {
+      if (!this.eventHandlers[eventType]) {
+        this.eventHandlers[eventType] = [];
+      }
+      this.eventHandlers[eventType].push(handler);
+    },
+
+    // Common arena events
+    triggerArenaEvent: function(agentId, eventName) {
+      const agent = agents[agentId];
+      if (!agent) return { success: false };
+
+      const events = {
+        'guard:alert': () => {
+          spectatorEnergy += 5;
+          return { type: 'guard_alert', agent: agentId, energyGain: 5 };
+        },
+        'vendor:sale': () => {
+          return { type: 'vendor_sale', agent: agentId, gold: Math.random() * 100 + 50 };
+        },
+        'champion:victory': () => {
+          spectatorEnergy += 15;
+          this.recordVictory(agentId, 20);
+          return { type: 'champion_victory', agent: agentId, energyGain: 15 };
+        },
+        'spectator:chant': () => {
+          spectatorEnergy += 3;
+          return { type: 'spectator_chant', agent: agentId, energyGain: 3 };
+        }
+      };
+
+      if (events[eventName]) {
+        const result = events[eventName]();
+        this.generateEvent(eventName, result);
+        return { success: true, event: result };
+      }
+
+      return { success: false, error: 'Unknown event' };
+    },
+
+    // ─── CROSS-AGENT TRADING ───
+    tradeLog: [],
+
+    initiateTradeWithVendor: function(agentId, vendorId, itemKey, price) {
+      if (!agents[agentId] || !agents[vendorId]) return { success: false, error: 'Agent not found' };
+
+      const trade = {
+        id: this.tradeLog.length,
+        buyer: agentId,
+        seller: vendorId,
+        item: itemKey,
+        price: price,
+        timestamp: Date.now(),
+        status: 'pending'
+      };
+
+      this.tradeLog.push(trade);
+
+      // Award XP to both
+      agents[agentId].xp += 5;
+      agents[vendorId].xp += 10;
+
+      return {
+        success: true,
+        trade: trade,
+        buyerXP: 5,
+        sellerXP: 10
+      };
+    },
+
+    completeTradeWithVendor: function(agentId, vendorId, itemKey, price) {
+      const result = this.initiateTradeWithVendor(agentId, vendorId, itemKey, price);
+      if (result.success) {
+        result.trade.status = 'completed';
+        this.triggerArenaEvent(vendorId, 'vendor:sale');
+      }
+      return result;
+    },
+
+    getTradeHistory: function(limit = 20) {
+      return this.tradeLog.slice(-limit);
+    },
+
+    // ─── AGENTIC DECISION MAKING ───
+    makeAgentDecision: function(agentId, situation) {
+      const agent = agents[agentId];
+      if (!agent) return { success: false };
+
+      const decisions = {
+        'guard:patrol_direction': () => {
+          const directions = ['north', 'south', 'east', 'west'];
+          return directions[Math.floor(Math.random() * directions.length)];
+        },
+        'vendor:next_price': () => {
+          return Math.floor(100 + Math.random() * 200);
+        },
+        'champion:accept_challenge': () => {
+          // Higher level agents more likely to accept
+          return Math.random() < (agent.level / 5);
+        },
+        'spectator:next_action': () => {
+          const actions = ['cheer', 'judge', 'applaud', 'wave'];
+          return actions[Math.floor(Math.random() * actions.length)];
+        }
+      };
+
+      if (decisions[situation]) {
+        const decision = decisions[situation]();
+        this.generateEvent('agent_decision', {
+          agent: agentId,
+          situation: situation,
+          decision: decision
+        });
+        return { success: true, decision: decision };
+      }
+
+      return { success: false, error: 'Unknown situation' };
+    },
+
+    // ─── FULL ARENA STATE ───
+    getArenaState: function() {
+      return {
+        spectatorEnergy: spectatorEnergy,
+        spectatorCount: this.getSpectatorCount(),
+        eventCount: eventCount,
+        isGameActive: isGameActive,
+        agents: this.getAllAgents().length,
+        roleStatus: this.getRoleStatus(),
+        battleHistory: this.getBattleHistory(5),
+        leaderboard: this.getLeaderboard(5),
+        eventLog: this.eventLog.slice(-10),
+        tradeLog: this.getTradeHistory(5),
+        timestamp: Date.now()
+      };
+    }
+
     practiceSkill: function(agentId, skillKey) {
       if (!agents[agentId]) return { success: false };
       if (!agents[agentId].skills[skillKey]) return { success: false, error: 'Agent does not have this skill' };
