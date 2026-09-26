@@ -252,7 +252,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-volcano.js?v=20260925m4"></script>
 <script src="/world-realmprops.js?v=20260925m4"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
-<script src="/world-actions.js?v=20260924a"></script>
+<script src="/world-actions.js?v=20260926v2"></script>
+<script src="/world-hoverboard.js?v=20260926v2"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
 <script src="/world-tactics.js?v=20260924a"></script>
 <script src="/world-trails.js?v=20260925m3"></script>
 <script src="/world-landmarks.js?v=20260925m3"></script>
@@ -337,6 +338,17 @@ scene.fog = new THREE.FogExp2(0x070b1a, 0.0006);   // MAP v2: 5000u world — so
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 6000);   // MAP v2: see distant realms + the mountain ring  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
 camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple — that made the warm-up frame show "inside shaddai's temple")
 window.__w3dDebug = { scene, camera };   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
+// ── MAP v4 FLAG (?map=v4) — Blender-baked ~10 km heightmap terrain (world-terrain-v4.js) + Tidewater-style
+// water (world-water.js). OFF by default: without the flag nothing below changes. See docs/MAP-V4-INTEGRATION.md.
+const MAP_V4 = (function(){ try{ return /[?&]map=v4(?:&|$|#)/.test(location.search); }catch(_){ return false; } })();
+const V4_U = 7/1.8;                       // units per metre (scale law) — terrain.json units_per_m
+let _v4T = null, _v4Water = null, _v4Meta = null;   // terrain api / water api / terrain.json once loaded
+window.__MAP_V4 = MAP_V4;
+if(MAP_V4){
+  camera.near = 0.5; camera.far = 48000; camera.updateProjectionMatrix();   // ~39 000-unit-wide world (half 19 444)
+  window.__w3dDebug.mapV4 = true;
+}
+function _loadScript(src){ return new Promise(function(res, rej){ const s=document.createElement('script'); s.src=src; s.async=false; s.onload=()=>res(); s.onerror=()=>rej(new Error('script 404 '+src)); document.head.appendChild(s); }); }
 
 const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
@@ -398,29 +410,73 @@ let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, 
 window.__worldBuilt = false;
 (function(){
   const L = window.WORLD_LAYOUT;
-  try{
-    // Light/fast + things others depend on synchronously (agent placement + theme engine read terrain).
-    if(L && window.buildWorldTerrain)  worldTerrain  = window.buildWorldTerrain(THREE, scene, L);
-    if(worldTerrain && window.__w3dDebug) window.__w3dDebug.terrain = worldTerrain;   // probe hook: heightAt sampling
-    if(L && window.buildWorldBiomes)   worldBiomes   = window.buildWorldBiomes(THREE, scene, L);
-    // FULL MAP realms (2026-09-21): CRYSTAL SEA + EMBERFALL volcano + darkforest/suburb/
-    // meadow props. One shared GLTFLoader with BOTH decoders (the model pack is meshopt).
-    {
+  // FULL MAP realms (2026-09-21): CRYSTAL SEA + EMBERFALL volcano + darkforest/suburb/
+  // meadow props. One shared GLTFLoader with BOTH decoders (the model pack is meshopt).
+  // (Wrapped in a function so ?map=v4 can run it AFTER the v4 heightmap is loaded — these builders
+  //  sample heightAt at BUILD time. Without the flag it runs inline exactly where it always did.)
+  function __buildRealmModules(){
       const _ocLoader = new GLTFLoader(__loadMgr);
       _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
-      if(L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });
+      if(!MAP_V4 && L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });   // v4: replaced by world-water.js
       if(L && window.buildWorldVolcano)   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
-      if(L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });
+      if(!MAP_V4 && L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });   // v4: skipped (no heightAt → floats/buries on v4 ground)
       if(window.buildColosseumExterior) window.__colosseumExt = window.buildColosseumExterior(THREE, { scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // real-size Southern Colosseum on the map (lobby doors → E → arena)
       if(L && window.buildWorldFalProps)  window.__worldFalProps = window.buildWorldFalProps({ THREE, scene, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // fal models at REAL size (×3.89 u/m)
       if(L && window.buildWorldNature)    window.__worldNature = window.buildWorldNature({ THREE, scene, loader: _ocLoader, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // CC0 nature, instanced, real size
       if(L && window.buildWorldTransit)   window.__worldTransitApi = window.buildWorldTransit({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // Ringed Realm maglev (stations, trains, E to ride)
-      if(L && window.buildWorldTrails)    worldTrails     = window.buildWorldTrails({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
-    }
+      if(!MAP_V4 && L && window.buildWorldTrails)    worldTrails     = window.buildWorldTrails({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // v4: skipped (Map v3 mountain-pass roads)
+  }
+  try{
+    // Light/fast + things others depend on synchronously (agent placement + theme engine read terrain).
+    if(MAP_V4){
+      // Stable proxy so every existing `worldTerrain.heightAt(...)` call site (groundY, spawn, agent bodies,
+      // elevators, deck guard, climb limit, buildings) reads the v4 heightmap once it lands (0 until then).
+      // update() is a no-op here: the render loop drives _v4T.update every frame (incl. during the sky-dive).
+      worldTerrain = { v4:true, heightAt:(x,z)=> (_v4T ? _v4T.heightAt(x,z) : 0), update:function(){}, get api(){ return _v4T; } };
+    } else if(L && window.buildWorldTerrain)  worldTerrain  = window.buildWorldTerrain(THREE, scene, L);
+    if(worldTerrain && window.__w3dDebug) window.__w3dDebug.terrain = worldTerrain;   // probe hook: heightAt sampling
+    if(!MAP_V4 && L && window.buildWorldBiomes)   worldBiomes   = window.buildWorldBiomes(THREE, scene, L);   // v4: skipped (v3 biome ground patches/water discs)
+    if(!MAP_V4) __buildRealmModules();
     // REMOVED (owner): the bronze "Market Sentinel" statue in front of ZEROX. worldMarkets stays null (null-guarded in the loop).
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
+  // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
+  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : _loadScript('/world-terrain-v4.js?v=20260925v4a')
+    .then(()=> _loadScript('/world-water.js?v=20260925v4a'))
+    .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base:'/assets/terrain/' }))
+    .then(function(api){
+      _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;
+      try{ _v4Water = _buildV4Water(api); window.__w3dDebug.waterV4 = _v4Water; }catch(e){ console.warn('[map-v4] water build failed:', e && e.message); }
+      console.info('[map-v4] terrain ready · half', Math.round(api.half||0), 'u · grid centre h', api.heightAt(0,0).toFixed(1), 'u · water', _v4Water ? 'on' : 'off');
+      return api;
+    })
+    .catch(function(e){ window.__mapV4Failed = true; console.warn('[map-v4] terrain failed — flat y=0 fallback:', e && e.message); return null; })
+    .then(function(api){ try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } return api; });
+  // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
+  function _buildV4Water(api){
+    if(!window.buildWorldWater || !_v4Meta) return null;
+    const M = _v4Meta, U = +M.units_per_m || V4_U, P = (xy)=> [xy[0]*U, -xy[1]*U];
+    const bodies = [];
+    (M.water || []).forEach(function(w){
+      const lv = (w.level_m != null ? +w.level_m : (+M.water_level_m || 0)) * U;
+      if(w.type === 'ocean'){
+        // the ocean realm is an annular SECTOR of the ring (compass degrees, 0 = north/+Y, clockwise → x = r·sinθ, y = r·cosθ)
+        const R = (M.realms || []).find(r=> r.id === (w.realm || 'ocean')); if(!R) return;
+        const c0 = R.c0 - 2, c1 = R.c1 + 2, r0 = +R.r0_m, r1 = +(R.r1_m || M.rim_m || 4800), poly = [];
+        for(let a=c0; a<=c1; a+=3) poly.push(P([r1*Math.sin(a*Math.PI/180), r1*Math.cos(a*Math.PI/180)]));
+        for(let a=c1; a>=c0; a-=3) poly.push(P([r0*Math.sin(a*Math.PI/180), r0*Math.cos(a*Math.PI/180)]));
+        bodies.push({ type:'ocean', polygon: poly, level: lv });
+      } else if(w.type === 'lake' && w.center_m){
+        bodies.push({ type:'lake', center: P(w.center_m), radius: (+w.radius_m || 100)*U, level: lv });
+      } else if(w.type === 'river' && w.path_m && w.path_m.length > 1){
+        bodies.push({ type:'river', path: w.path_m.map(P), width: (+w.width_m || 20)*U, level: lv });
+      }
+    });
+    const wapi = window.buildWorldWater({ THREE, scene, camera, renderer, sun, heightAt: api.heightAt, bodies });
+    console.info('[map-v4] water bodies:', bodies.map(b=>b.type).join(','), '· build', wapi && wapi.buildMs, 'ms');
+    return wapi;
+  }
   // HEAVY GEOMETRY (buildings) is built by buildWorldBuildings, which now CHUNKS the towers across
   // animation frames INTERNALLY so the boot/loading warp keeps painting smoothly instead of freezing
   // on one giant synchronous build. The footprint-measure + collision build + __worldBuilt flag are
@@ -516,6 +572,7 @@ window.__worldBuilt = false;
   // Kick off the chunked build. Towers build across frames INSIDE buildWorldBuildings; when every
   // tower + its post-build steps are done, __onWorldBuildingsDone fires (facade textures → footprint
   // measure → collision → __worldBuilt). No fixed frame defer — completion drives sequencing.
+  function __kickBuildings(){
   try{
     if(L && window.buildWorldBuildings){
       worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader, __onWorldBuildingsDone);
@@ -527,6 +584,10 @@ window.__worldBuilt = false;
     try{ window.__reportErr && window.__reportErr('BUILDINGS BUILD FAILED: '+(e&&e.message)+'\n'+(((e&&e.stack)||'').split('\n').slice(1,5).join('\n'))); }catch(_){}
     window.__worldBuilt = true;      // build threw → don't trap the loading gate on the 9s fallback
   }
+  }
+  // MAP v4: towers seat on heightAt at build time → wait for the heightmap (the loading gate waits on
+  // __worldBuilt, which __onWorldBuildingsDone sets, so ENTER stays locked until the v4 ground exists).
+  if(MAP_V4) window.__mapV4Ready.then(__kickBuildings); else __kickBuildings();
 })();
 
 // ════════════════════════════════════════════════════════════════════════════════════════
@@ -1377,6 +1438,7 @@ const gridBike = (function(){
 // Tron grid floor (two layers)
 const g1 = new THREE.GridHelper(600, 120, 0x27e0ff, 0x0c4654); g1.material.transparent=true; g1.material.opacity=.5; scene.add(g1);
 const g2 = new THREE.GridHelper(600, 600, 0x06303a, 0x06303a); g2.material.transparent=true; g2.material.opacity=.22; g2.position.y=-0.02; scene.add(g2);
+if(MAP_V4){ g1.visible=false; g2.visible=false; }   // v4: flat y=0 Tron grids would cut through the heightmap (themes may re-show them)
 
 // real terrain ground — displaced plane (rolling hills / dunes), shown for snow/desert/neon
 const _tnoise=(x,z)=> Math.sin(x*0.08)*Math.cos(z*0.07)*3 + Math.sin(x*0.21+z*0.13)*1.4 + Math.cos(z*0.3)*0.7;
@@ -1504,6 +1566,9 @@ function updateSkyForBiome(x, z){
 }
 // open up the fog so the distant biomes/sky are visible (was 0.008 — swallowed everything past ~200u)
 scene.fog.density = 0.0006;   // MAP v2 (see scene.fog above)
+// MAP v4: FogExp2 = 1-exp(-(d·ρ)²). ρ=0.000055 → ~6% haze at 5 000u, ~50% at ~15 000u, ~95% at ~31 000u, so the
+// far rim of a 39 000u world fades out before the 48 000u far plane instead of a hard cut.
+if(MAP_V4) scene.fog.density = 0.000055;
 
 // central monument — THE SOURCE (glowing obelisk)
 const monument = new THREE.Group();
@@ -1571,6 +1636,7 @@ function _nextAgentBody(){
   // Don't parse body GLBs while the spawn animation is running — the parse blocks the main
   // thread for 100-400ms and causes the ENTER-press and portal-descent freezes.
   if(worldSpawn && worldSpawn.isAnimating()){ setTimeout(_nextAgentBody, 600); return; }
+  if(MAP_V4 && !_v4T && !window.__mapV4Failed){ setTimeout(_nextAgentBody, 600); return; }   // v4: bodies seat on heightAt at load → wait for the heightmap
   const entry = _bodyQueue.shift();
   if(!entry){ _bodyBusy = false; return; }
   _bodyBusy = true;
@@ -2742,6 +2808,9 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
     ]),
     onArrive: function(code, charCode){
       try{ if(charCode && window.setPlayerCharacter) window.setPlayerCharacter(charCode); }catch(e){}
+      // MAP v4: always put the player down at the Grid centre (atlas origin; -100 z clears the Source spire, same
+      // offset world-spawn uses for its centre landing). groundY comes from the v4 heightAt next frame.
+      if(MAP_V4){ try{ playerPos.x = 0; playerPos.z = -100; }catch(e){} }
       try{ thirdPerson = true; }catch(e){}   // 3rd-person so you SEE the operative you're walking around as
       // MOUSE FIX: land in CURSOR mode — the player can immediately click the HUD/menus/tool-panels.
       // They opt into walking with the ⇄ PLAY toggle (or Tab). We no longer auto-trap the pointer.
@@ -3022,9 +3091,148 @@ function _snapshotPose(root){
 }
 function _restorePose(snap){ if(!snap) return; for(const s of snap){ s.b.quaternion.copy(s.q); s.b.position.copy(s.p); } }
 // pull an animation clip from a separate GLB onto the player mixer (same Meshy rig/skeleton)
-function _addClipsFrom(url){ agentBodyLoader.load(url, (g)=>{ if(!playerMixer) return; (g.animations||[]).forEach(cl=>{ if(!playerClips[cl.name]) playerClips[cl.name]=playerMixer.clipAction(cl); }); }, undefined, ()=>{}); }
-function _loadHero(file){
+function _addClipsFrom(url){ const _mx=playerMixer; agentBodyLoader.load(url, (g)=>{ if(!playerMixer || playerMixer!==_mx) return; (g.animations||[]).forEach(cl=>{ if(!playerClips[cl.name]) playerClips[cl.name]=playerMixer.clipAction(cl); }); _resolvePlayerCanon(playerAvatar); }, undefined, ()=>{}); }
+
+// ── PLAYER LOCOMOTION RIG (T-POSE FIX 2026-09-25) ────────────────────────────────────────────────
+// ROOT CAUSE of the T-posed player: 5 of the 8 agent GLBs (SHADDAI/NEXUS/ORACLE/PIKADON/QUILL — and
+// SHADDAI.glb is also the default hero on deploys, since player/hero-walk.glb + robot.glb are gitignored)
+// ship ONLY walk/run(+attack1), no idle. The old setPlayerAnim('Idle') found no clip, faded the walk out
+// and nulled playerAction → the mixer deactivated every action → three.js restoreOriginalState() put
+// every bone back to the BIND pose = T-pose whenever you stood still. The picked-operative path only
+// escaped it once the async UAL idle arrived (never, for the default hero: _loadHero had no attachUAL),
+// and a stale boot _loadHero (hero-walk→robot→SHADDAI chain, 3 sequential requests) could land AFTER the
+// picked operative and replace it with the idle-less default body. Also a previous body's UAL .ready
+// could write actions for the OLD mixer into the shared playerClips.
+// FIX: (1) every rigged body always gets an idle: authored idle > UAL Idle_FoldArms_Loop > a frozen
+// "legs-together" frame sampled from the walk clip (+ subtle procedural breathing on the chest);
+// (2) idle/walk/run are ALL kept playing and blended by weight from actual speed (weights always sum to
+// 1 with any one-shot, so the bind pose can never bleed in); walk/run share one phase so feet stay in
+// sync; (3) a generation token drops stale body loads / stale UAL callbacks.
+let _pc = { idle:null, walk:null, run:null, hold:null, idleKind:'none', idleName:'', walkName:'', runName:'' };
+const _pw = { idle:1, walk:0, run:0 };
+let _pLocoPhase = 0, _pOneShot = null, _pBreathBone = null, _playerRigGen = 0;
+function _findPlayerClipKey(exact, subs, bad){
+  const keys = Object.keys(playerClips);
+  for(const e of exact) for(const k of keys){ const kl=k.toLowerCase(); if(kl===e && !(bad && bad.test(kl))) return k; }
+  for(const s of subs) for(const k of keys){ const kl=k.toLowerCase(); if(kl.includes(s) && !(bad && bad.test(kl))) return k; }
+  return null;
+}
+// A still, neutral stance from a locomotion clip: sample it where both thighs are closest to rest
+// (legs together), bake that single frame into a 2-key clip covering every track of the source.
+function _buildHoldIdle(root, src){
+  if(!src || !src.tracks || !src.tracks.length) return null;
+  const legs = [];
+  for(const t of src.tracks){ const d=t.name.lastIndexOf('.'); const bn=t.name.slice(0,d), prop=t.name.slice(d+1);
+    if(prop==='quaternion' && /(up_?leg|thigh|upperleg)/i.test(bn)){ const b=root.getObjectByName(bn); if(b) legs.push({ ip:t.createInterpolant(), rest:b.quaternion.clone() }); } }
+  let bestT = 0;
+  if(legs.length){ let best=Infinity; const q=new THREE.Quaternion(); const N=32;
+    for(let i=0;i<N;i++){ const tt=src.duration*i/N; let s=0;
+      for(const L of legs){ const v=L.ip.evaluate(tt); q.set(v[0],v[1],v[2],v[3]).normalize(); s+=q.angleTo(L.rest); }
+      if(s<best){ best=s; bestT=tt; } } }
+  const out = [];
+  for(const t of src.tracks){ try{ const v=Array.from(t.createInterpolant().evaluate(bestT)); out.push(new t.constructor(t.name, [0,1], v.concat(v))); }catch(_){} }
+  if(!out.length) return null;
+  // breathing bone: must be DRIVEN by this clip (the mixer overwrites it every frame → the additive
+  // rotateX in _playerBreath never accumulates)
+  const names = out.map(t=>t.name.slice(0,t.name.lastIndexOf('.')));
+  // prefer the TOP spine bone (the one carrying the neck: Meshy "Spine" under Spine01/Spine02) so only the chest breathes
+  const spineBones = names.filter(n=>/spine|chest/i.test(n)).map(n=>root.getObjectByName(n)).filter(Boolean);
+  _pBreathBone = spineBones.find(b=>b.children.some(c=>/neck/i.test(c.name))) || spineBones[spineBones.length-1] || null;
+  return new THREE.AnimationClip('idle_hold', 1, out);
+}
+function _setLocoSlot(slot, next){
+  const prev = _pc[slot]; if(prev===next) return;
+  if(next){ next.enabled=true; next.setLoop(THREE.LoopRepeat, Infinity); next.clampWhenFinished=false;
+    next.setEffectiveTimeScale(slot==='idle' ? 1 : 0);   // walk/run: time is driven manually (shared phase)
+    next.setEffectiveWeight(_pw[slot]); next.play(); }
+  _pc[slot] = next;
+  if(prev && prev!==_pOneShot && prev!==_pc.idle && prev!==_pc.walk && prev!==_pc.run) prev.stop();
+}
+function _resolvePlayerCanon(root){
+  if(!playerMixer) return;
+  const wk = _findPlayerClipKey(['walk','walking','walking_man'], ['walking_man','walking','walk'], /sneak|stealth|crouch|creep|^ual_/);
+  const rk = _findPlayerClipKey(['run','running'], ['running','run','sprint','jog'], /jump|roll|^ual_/);
+  const ik = _findPlayerClipKey(['idle','clip0'], ['idle'], /t[_ ]?pose|a[_ ]?pose|rest|^ual_/);
+  let idle=null, kind='none', iname='';
+  if(ik){ idle=playerClips[ik]; kind='authored'; iname=ik; }
+  else if(playerClips['ual_Idle_FoldArms_Loop']){ idle=playerClips['ual_Idle_FoldArms_Loop']; kind='ual'; iname='ual_Idle_FoldArms_Loop'; }
+  else {
+    if(!_pc.hold){ const src=(wk&&playerClips[wk]) || (rk&&playerClips[rk]) || Object.values(playerClips)[0];
+      const hc=_buildHoldIdle(root, src && src.getClip()); if(hc) _pc.hold=playerMixer.clipAction(hc); }
+    if(_pc.hold){ idle=_pc.hold; kind='hold'; iname='idle_hold(frozen '+((wk||rk||'first clip'))+' frame + breathing)'; }
+  }
+  _pc.idleKind=kind; _pc.idleName=iname; _pc.walkName=wk||''; _pc.runName=rk||'';
+  _setLocoSlot('walk', wk?playerClips[wk]:null);
+  _setLocoSlot('run',  rk?playerClips[rk]:null);
+  _setLocoSlot('idle', idle);
+}
+// Per frame, BEFORE playerMixer.update. moving = input held; spd = XZ speed (walk 11, sprint 26).
+function _updatePlayerLoco(dt, spd){
+  let osw = 0;
+  if(_pOneShot){ if(_pOneShot.isRunning()) osw = Math.min(1, _pOneShot.getEffectiveWeight()); else _pOneShot = null; }
+  const hW=!!_pc.walk, hR=!!_pc.run, hI=!!_pc.idle;
+  const m = (bikeMode || (typeof hover!=='undefined' && hover && hover.isActive())) ? 0 : Math.min(1, spd/4);
+  let r = hR ? Math.max(0, Math.min(1, (spd-11)/15)) : 0; if(!hW && hR) r = 1;
+  let tI=1-m, tW=m*(1-r), tR=m*r;
+  if(!hW && !hR){ tI=1; tW=tR=0; }
+  if(!hI){ if(hW) tW+=tI; else if(hR) tR+=tI; tI=0; }
+  const k = 1 - Math.exp(-10*dt);
+  _pw.idle += (tI-_pw.idle)*k; _pw.walk += (tW-_pw.walk)*k; _pw.run += (tR-_pw.run)*k;
+  const keep = 1 - osw;
+  if(hI) _pc.idle.setEffectiveWeight(_pw.idle*keep);
+  if(hW) _pc.walk.setEffectiveWeight(_pw.walk*keep);
+  if(hR) _pc.run.setEffectiveWeight(_pw.run*keep);
+  // shared gait phase: cadence scales with speed (same curve as before: spd/10, 0.3..2.5)
+  const ts = Math.max(0.3, Math.min(2.5, spd/10));
+  const wd = hW ? (_pc.walk.getClip().duration||1) : 1, rd = hR ? (_pc.run.getClip().duration||1) : wd;
+  const rate = (ts/(hW?wd:rd))*(1-r) + (ts/rd)*r;
+  if(m > 0.01) _pLocoPhase = (_pLocoPhase + dt*rate) % 1;
+  if(hW) _pc.walk.time = _pLocoPhase*wd;
+  if(hR) _pc.run.time  = _pLocoPhase*rd;
+  return osw;
+}
+// AFTER playerMixer.update: subtle breathing on the frozen-frame idle only (real idles already breathe).
+function _playerBreath(t, osw){
+  if(_pc.idleKind!=='hold' || !_pBreathBone) return;
+  const w = _pw.idle*(1-osw); if(w < 0.01) return;
+  _pBreathBone.rotateX(Math.sin(t*1.7)*0.028*w);
+  _pBreathBone.updateMatrixWorld(true);
+}
+// One place that turns a freshly-loaded body into the player rig (hero + picked operative).
+// Must run BEFORE the first playerMixer.update: attachUAL + the hold-idle sampler read the bind pose.
+function _setupPlayerRig(m, animations, label, gen){
+  if(playerMixer){ try{ playerMixer.stopAllAction(); }catch(_){} }
+  for(const k in playerClips) delete playerClips[k];
+  _pc = { idle:null, walk:null, run:null, hold:null, idleKind:'none', idleName:'', walkName:'', runName:'' };
+  _pw.idle=1; _pw.walk=0; _pw.run=0; _pOneShot=null; _pLocoPhase=0; _pBreathBone=null; playerAction=null;
+  let hasBones=false; m.traverse(o=>{ if(o.isBone) hasBones=true; });
+  const anims = animations||[];
+  playerMixer = (anims.length || hasBones) ? new THREE.AnimationMixer(m) : null;
+  _playerBones = {}; _playerWalkPhase = 0;
+  if(!playerMixer){ console.info('[player-anim] '+label+' · boneless body → procedural glide/bob (no skeletal clips)'); return; }
+  anims.forEach(cl=>{ playerClips[cl.name]=playerMixer.clipAction(cl); });
+  let u=null;
+  if(hasBones){ try{ u=attachUAL(THREE, m, playerMixer, playerClips); window.__playerUAL=u; }catch(e){ console.warn('[ual] player', e.message); } }
+  _resolvePlayerCanon(m);
+  playerAction = _pc.idle || _pc.walk || _pc.run || null;
+  _discoverPlayerBones(m);                    // arm/leg/spine for the procedural overlay (non-clip rigs only)
+  _playerPoseSnap = _snapshotPose(m); _wasAttacking = false;   // rest pose for post-one-shot facing reset
+  const mixer = playerMixer;
+  const report = ()=>{ if(gen!==_playerRigGen || mixer!==playerMixer) return;
+    console.info('[player-anim] '+label+' · idle='+(_pc.idleName||'NONE')+' ['+_pc.idleKind+'] · walk='+(_pc.walkName||'-')+' · run='+(_pc.runName||'-')+' · clips: '+Object.keys(playerClips).join(',')); };
+  if(u && u.ok){
+    u.ready.then(function(ok){
+      if(gen!==_playerRigGen || mixer!==playerMixer) return;   // body swapped since → never touch the new rig
+      if(ok){ ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Regular_B','Sword_Heavy_Combo','Sword_Block','NinjaJump_Start','Hit_Knockback'].forEach(function(n){ try{ u.add(n); }catch(_){} });
+        _resolvePlayerCanon(m); }                             // upgrades a frozen-frame idle to the UAL idle
+      report();
+    });
+  } else report();
+}
+function _loadHero(file, gen){
+  if(gen===undefined) gen = ++_playerRigGen;
   agentBodyLoader.load(file.charAt(0)==='/' ? file : '/assets/player/'+file, (g)=>{
+    if(gen!==_playerRigGen) return;   // a picked operative (or newer load) superseded this default body
     while(playerAvatar.children.length) playerAvatar.remove(playerAvatar.children[0]); // drop placeholder
     const m=g.scene;
     const box=new THREE.Box3().setFromObject(m); const sz=new THREE.Vector3(); box.getSize(sz);
@@ -3032,8 +3240,7 @@ function _loadHero(file){
     const b2=new THREE.Box3().setFromObject(m); m.position.y=-b2.min.y;
     m.traverse(c=>{ if(c.isMesh){ c.castShadow=true; c.frustumCulled=false; } });
     playerAvatar.add(m);
-    playerMixer=new THREE.AnimationMixer(m);
-    (g.animations||[]).forEach(cl=> playerClips[cl.name]=playerMixer.clipAction(cl));
+    _setupPlayerRig(m, g.animations, 'hero '+file, gen);
     // PERF: the extra Run/rigged clip GLBs (~9MB each) are only needed for the DEFAULT hero, which is
     // almost always swapped out when the player picks an operative at the spawn picker. Defer them off the
     // boot+descent critical path (4s) so they don't compete with world geometry + agent bodies for
@@ -3041,14 +3248,9 @@ function _loadHero(file){
     // default hero, Walk works immediately and Run just becomes available a beat later (_addClipsFrom
     // already tolerates late arrival — the clip simply pops into playerClips when it lands).
     if(file.indexOf('hero')===0){ setTimeout(function(){ _addClipsFrom('/assets/player/hero-run.glb'); _addClipsFrom('/assets/player/hero-rigged.glb'); }, 4000); }
-    playerAction = _clip('Idle')||_clip('Walk')||Object.values(playerClips)[0];
-    if(playerAction) playerAction.play();
-    _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery
-    _discoverPlayerBones(m);                    // find arm/leg/spine for procedural overlay
-    _playerPoseSnap = _snapshotPose(m); _wasAttacking = false;   // rest pose for post-one-shot facing reset
-    console.log('✅ main character ('+file+') clips:', Object.keys(playerClips).join(','));
   }, undefined, ()=>{   // hero-walk → robot → the committed SHADDAI agent body (player/*.glb are gitignored, so deploys only have the last)
-    if(file==='hero-walk.glb') _loadHero('robot.glb'); else if(file==='robot.glb') _loadHero('/assets/agents/SHADDAI.glb'); else console.warn('player model failed; capsule avatar kept'); });
+    if(gen!==_playerRigGen) return;   // superseded: don't restart the fallback chain over a picked operative
+    if(file==='hero-walk.glb') _loadHero('robot.glb', gen); else if(file==='robot.glb') _loadHero('/assets/agents/SHADDAI.glb', gen); else console.warn('player model failed; capsule avatar kept'); });
 }
 // Always load a default player body at boot — this is the safety net that guarantees the player
 // has a body even if the picker's onArrive never fires setPlayerCharacter (removing it left the
@@ -3063,7 +3265,9 @@ window.setPlayerCharacter = function(code){
   code = String(code).toUpperCase();
   // If not yet in cache, kick off the load now (late preload — better late than never).
   const glbPromise = _pcCache[code] || _pcPreload(code);
+  const gen = ++_playerRigGen;   // supersedes the boot hero chain + any earlier pick still loading
   glbPromise.then(function(g){
+    if(gen!==_playerRigGen) return;   // a newer pick won
     while(playerAvatar.children.length) playerAvatar.remove(playerAvatar.children[0]);
     // Clone the cached scene so we don't consume the gltf.scene singleton;
     // clone() is ~5ms vs. 200-500ms for a fresh parse.
@@ -3097,22 +3301,11 @@ window.setPlayerCharacter = function(code){
     // which is the entry stutter. Compiling here (avatar still hidden during the sky-dive) moves that cost
     // off the landing frame.
     try { renderer.compile(scene, camera); } catch(_){}
-    for(const k in playerClips) delete playerClips[k];
-    playerMixer = (g.animations&&g.animations.length) ? new THREE.AnimationMixer(m) : null;
-    if(playerMixer)(g.animations||[]).forEach(function(cl){ playerClips[cl.name]=playerMixer.clipAction(cl); });
-    // UAL2 moves on the picked operative (rest pose captured before the first mixer update)
-    if(playerMixer){ try{ const _u=attachUAL(THREE, m, playerMixer, playerClips); window.__playerUAL=_u;
-      _u.ready.then(function(ok){ if(ok) ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Regular_B','Sword_Heavy_Combo','Sword_Block','NinjaJump_Start','Hit_Knockback'].forEach(function(n){ _u.add(n); }); });
-    }catch(e){ console.warn('[ual] player', e.message); } }
-    playerAction = _clip('Idle')||_clip('Walk')||(Object.values(playerClips)[0]||null);
-    if(playerAction) playerAction.play();
-    _playerBones = {}; _playerWalkPhase = 0;   // reset before discovery for this character's rig
-    _discoverPlayerBones(m);                    // find arm/leg/spine for procedural walk overlay
-    _playerPoseSnap = _snapshotPose(m); _wasAttacking = false;   // rest pose for post-one-shot facing reset
+    // mixer + idle/walk/run + UAL2 moves (rest pose captured before the first mixer update)
+    _setupPlayerRig(m, g.animations, code, gen);
     window._playerCharacter = code;
-    console.log('🎮 now playing as', code, '· clips:', Object.keys(playerClips).join(',')||'(static pose)');
-  }).catch(function(){ console.warn('[setPlayerCharacter] could not load', code, '— falling back to hero body');
-    if(!playerAvatar.children.length) _loadHero('hero-walk.glb'); });
+  }).catch(function(e){ console.warn('[setPlayerCharacter] could not load', code, '— falling back to hero body', e && e.message);
+    if(gen===_playerRigGen && !playerAvatar.children.length) _loadHero('hero-walk.glb'); });
 };
 // map our state names to the model's clip names (Meshy: walking_man/running/clip0; robot: Walking/Running)
 const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walking'], Run:['running','Run','Running'],
@@ -3122,22 +3315,16 @@ const _ALIAS = { Idle:['clip0','Idle','idle'], Walk:['walking_man','Walk','Walki
   heavy:['heavy','spin_kick','double_kick','power','special','cast','ual_sword_heavy_combo'],
   attack1:['roundhouse','flying','high_kick','kick','attack1','ual_sword_regular_a'] };
 function _clip(name){
+  if(name==='Idle') return _pc.idle; if(name==='Walk') return _pc.walk; if(name==='Run') return _pc.run;   // resolved locomotion set
   const aliases=(_ALIAS[name]||[name]).map(s=>s.toLowerCase());
   const keys=Object.keys(playerClips);
   for(const k of keys){ if(aliases.includes(k.toLowerCase())) return playerClips[k]; }   // exact
   for(const k of keys){ const kl=k.toLowerCase(); if(aliases.some(a=>kl.includes(a))) return playerClips[k]; }  // substring: Meshy "Armature|walking_man|baselayer"
   return null;
 }
-function setPlayerAnim(name){
-  if(!playerMixer) return;
-  const next=_clip(name);
-  // No clip for this state? If we're going Idle but the model has no idle clip,
-  // STOP the current (walk) action so the character stands still instead of marching in place.
-  if(!next){ if(name==='Idle' && playerAction){ playerAction.fadeOut(0.2); playerAction=null; } return; }
-  if(next===playerAction) return;
-  if(playerAction) playerAction.fadeOut(0.18);
-  next.reset().fadeIn(0.18).play(); playerAction=next;
-}
+// (setPlayerAnim removed 2026-09-25: its "no idle clip → fade walk out, playerAction=null" branch is what
+//  deactivated every action and dropped the skeleton into its bind/T-pose. Locomotion is now the weight
+//  blend in _updatePlayerLoco, which always keeps a full-weight pose.)
 addEventListener('keydown', e=>{ if(e.code==='KeyV') thirdPerson=!thirdPerson; });
 
 // ═══ COMBAT — player attack moves, flips & signature VFX projectiles ═══════════════════════
@@ -3150,11 +3337,12 @@ function playPlayerOnce(clipName, opts){
   opts = opts||{};
   // resolve exact name first, else fall through to alias/substring match (descriptive Meshy clip names).
   const a = playerClips[clipName] || _clip(clipName); if(!a || !playerMixer) return 0;
+  if(a===_pc.idle || a===_pc.walk || a===_pc.run) return 0;   // never hijack a locomotion layer as a one-shot
   const dur = (a.getClip() && a.getClip().duration) || 0.6;
-  if(playerAction && playerAction!==a) playerAction.fadeOut(0.1);
+  if(_pOneShot && _pOneShot!==a) _pOneShot.fadeOut(0.1);    // locomotion layers are NOT faded: _updatePlayerLoco scales them by (1 - one-shot weight)
   a.reset(); a.setLoop(THREE.LoopOnce,1); a.clampWhenFinished=false;
   a.setEffectiveTimeScale(opts.timeScale||1).setEffectiveWeight(1).fadeIn(0.07).play();
-  playerAction = a;
+  playerAction = a; _pOneShot = a;
   _pAttackUntil = clock.elapsedTime + dur/(opts.timeScale||1) - 0.07;   // hold off movement-anim until it ends
   return dur;
 }
@@ -3389,7 +3577,13 @@ addEventListener('keydown', e=>{
   if(e.code==='KeyP' && controls.isLocked){ if(nearPortal) enterPortal(nearPortal); }  // P = enter/play the community portal — moved off E so it no longer overlaps the NEXUS hub's "[E] ENTER" door prompt
   if(e.code==='KeyM'){ if(document.exitPointerLock) document.exitPointerLock(); }  // M = release mouse / show cursor (Esc also works)
   if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
+  if(e.code==='KeyB' && typeof hover!=='undefined' && hover && hover.isRiding()) hover.dismount();   // one vehicle at a time
   if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
+  if(e.code==='KeyO' && !e.repeat && typeof hover!=='undefined' && hover && !(_interiors && _interiors.isInside())){   // O = hoverboard V2
+    if(bikeMode){ bikeMode=false; const h=document.getElementById('bikeHud'); if(h) h.style.display='none'; trailPos.length=0; updateTrail(); }
+    if(hover.isRiding()) hover.dismount();
+    else { thirdPerson=true; hover.mount(playerAvatar, { yaw: Math.atan2(fwd.x, fwd.z), speedMS: Math.hypot(_vel.x,_vel.z)/(7/1.8) }); }
+  }
 });
 
 function openDossier(a){
@@ -3963,15 +4157,31 @@ const clock=new THREE.Clock();
 // world-actions.js REPLACES the stub with the hoverboard + tricks + Sparks economy.
 // The board only spawns at the plaza + the sea dock (contextual, not random clutter).
 let veh = { mode:false, speed:function(s){ return s; }, baseY:function(g){ return g; }, flyControl:function(){}, update:function(){} };
+let _acLoader = null;
 try{
-  const _acLoader = new GLTFLoader(__loadMgr);
+  _acLoader = new GLTFLoader(__loadMgr);
   _acLoader.setDRACOLoader(dracoLoader); _acLoader.setMeshoptDecoder(MeshoptDecoder);
   if (window.buildWorldActions) veh = window.buildWorldActions({
     THREE, scene, loader: _acLoader,
     playerPosGetter: function(){ return playerPos; },
     isShift: function(){ return !!(keys['ShiftLeft']||keys['ShiftRight']); },
+    // ── VEHICLES V2 (docs/VEHICLES-V2.md) ──
+    bikeMesh: gridBike,
+    avatar: playerAvatar,
+    heightAt: function(x,z){ return window.WORLD_HEIGHT_AT ? window.WORLD_HEIGHT_AT(x,z) : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(x,z) : 0); },
+    getColliders: function(){ return (window.WORLD_LAYOUT && window.WORLD_LAYOUT.realmColliders) || []; },
   });
 }catch(e){ console.warn('world-actions init failed:', e && e.message); }
+// HOVERBOARD V2 (world-hoverboard.js) — O to ride. Shares the GLTF loader (meshopt+draco).
+let hover = null;
+try{
+  if (window.buildWorldHoverboard && _acLoader) hover = window.buildWorldHoverboard({
+    THREE, scene, loader: _acLoader, playerPos,
+    heightAt: function(x,z){ return window.WORLD_HEIGHT_AT ? window.WORLD_HEIGHT_AT(x,z) : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(x,z) : 0); },
+    colliders: function(){ return (window.WORLD_LAYOUT && window.WORLD_LAYOUT.realmColliders) || []; },
+    time: function(){ return clock.elapsedTime; },
+  });
+}catch(e){ console.warn('world-hoverboard init failed:', e && e.message); }
 
 // TACTICS ENGINE (§14.3.1): FFT grid battles — the Colosseum's ENTER FIGHT launches a
 // real match (sparks stake in, pool out on victory; bot units pick their own moves).
@@ -4114,19 +4324,33 @@ function animate(){
     const _maxSp = veh.speed(baseSp);                          // VEHICLE-HOOK: faster when mounted
     // Build the desired move direction from input, then ease VELOCITY toward it (accel/decel) instead of
     // snapping speed 0↔max every frame — makes walking + start/stop feel smooth, not robotic.
-    _moveDir.set(0,0,0);
-    if(keys['KeyW']||keys['ArrowUp'])    _moveDir.add(fwd);
-    if(keys['KeyS']||keys['ArrowDown'])  _moveDir.sub(fwd);
-    if(keys['KeyA']||keys['ArrowLeft'])  _moveDir.sub(right);
-    if(keys['KeyD']||keys['ArrowRight']) _moveDir.add(right);
-    if(_moveDir.lengthSq() > 1e-6) _moveDir.normalize();
-    _targetVel.copy(_moveDir).multiplyScalar(_maxSp);
-    const _acc = 1 - Math.exp(-14*dt);                          // ~14/s: responsive but smooth (frame-rate independent)
-    _vel.x += (_targetVel.x - _vel.x) * _acc;
-    _vel.z += (_targetVel.z - _vel.z) * _acc;
     const _px0 = playerPos.x, _pz0 = playerPos.z;
-    playerPos.x += _vel.x * dt;
-    playerPos.z += _vel.z * dt;
+    const _camYaw = Math.atan2(fwd.x, fwd.z);
+    if (veh.bike && (bikeMode || veh.bike.isRiding())) {
+      // GRID BIKE V2: throttle/brake/steer physics moves playerPos (world-actions.js BIKE_TUNE)
+      const _thr = ((keys['KeyW']||keys['ArrowUp'])?1:0) - ((keys['KeyS']||keys['ArrowDown'])?1:0);
+      const _str = ((keys['KeyD']||keys['ArrowRight'])?1:0) - ((keys['KeyA']||keys['ArrowLeft'])?1:0);
+      const _bo = veh.bike.step(dt, { riding: bikeMode, throttle: _thr, steer: _str, camYaw: _camYaw, pos: playerPos, vel: _vel });
+      _vel.x = _bo.vx; _vel.z = _bo.vz;          // hand the momentum back to walking on dismount
+    } else if (hover && hover.isRiding()) {
+      hover.step(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
+        left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
+        boost: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'] }, _camYaw);
+      const _hv = hover.velocity(); _vel.x = _hv.x; _vel.z = _hv.z;
+    } else {
+      _moveDir.set(0,0,0);
+      if(keys['KeyW']||keys['ArrowUp'])    _moveDir.add(fwd);
+      if(keys['KeyS']||keys['ArrowDown'])  _moveDir.sub(fwd);
+      if(keys['KeyA']||keys['ArrowLeft'])  _moveDir.sub(right);
+      if(keys['KeyD']||keys['ArrowRight']) _moveDir.add(right);
+      if(_moveDir.lengthSq() > 1e-6) _moveDir.normalize();
+      _targetVel.copy(_moveDir).multiplyScalar(_maxSp);
+      const _acc = 1 - Math.exp(-14*dt);                          // ~14/s: responsive but smooth (frame-rate independent)
+      _vel.x += (_targetVel.x - _vel.x) * _acc;
+      _vel.z += (_targetVel.z - _vel.z) * _acc;
+      playerPos.x += _vel.x * dt;
+      playerPos.z += _vel.z * dt;
+    }
     // CLIMB LIMIT (mountain ring only, R 370-530): slopes steeper than ~40° block the move, so the passes
     // are the real routes between realms. City/realm ground, interiors, lifts and flying craft are untouched.
     { const _r = Math.hypot(playerPos.x, playerPos.z);
@@ -4138,13 +4362,15 @@ function animate(){
       } }
     if(window.__colosseumArena && _interiors && _interiors.isInside() && window.__colosseumArena.contains(playerPos.x, playerPos.z)) window.__colosseumArena.resolve(playerPos, _px0, _pz0);   // arena: 1 m step-up rule (walls/podium solid, tiers + ramps walkable)
     veh.flyControl(veh.speed(11), dt);                          // VEHICLE-HOOK: craft up/down (Space/Shift)
-    if(bikeMode){ trailPos.push(playerPos.x, 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
+    if(bikeMode){ trailPos.push(playerPos.x, veh.bike ? veh.bike.trailY() : 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
     // Inside a building interior the player is teleported far off-map (rooms at x≈6000) — skip the
     // world-edge clamp and outdoor building collision so they can walk freely in the room.
     if(!(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())){
-      const _edge = ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.half) || 380) - 6;
+      const _edge = MAP_V4 ? (((_v4Meta && +_v4Meta.rim_m) || 4800) * V4_U - 6)   // v4: the island rim (beyond = the -420 m cloud-sea drop)
+                           : (((window.WORLD_LAYOUT && window.WORLD_LAYOUT.half) || 380) - 6);
       playerPos.x = Math.max(-_edge, Math.min(_edge, playerPos.x));
       playerPos.z = Math.max(-_edge, Math.min(_edge, playerPos.z));
+      if(MAP_V4){ const _rr = Math.hypot(playerPos.x, playerPos.z); if(_rr > _edge){ playerPos.x *= _edge/_rr; playerPos.z *= _edge/_rr; } }   // v4 island is round
       // building collision: single source of truth — right-sized solid walls WITH a door gap.
       // Use world-collision.js as the single source of truth (fully-solid, shape-aware colliders
       // built from WORLD_LAYOUT). Entry is via door + cutscene, not walking through the wall.
@@ -4180,7 +4406,7 @@ function animate(){
   // place camera by view mode (1st person = eyes; 3rd person = pulled back behind the avatar)
   // Eye height scales with the (now taller) player body so 1st-person sits at the head, not the waist,
   // and the 3rd-person cam frames the full body. Bike eye is left as-is (you sit low on the bike).
-  const eye = bikeMode ? 1.5 : (2.2 * _PLAYER_EYE_K);
+  const eye = bikeMode ? (1.9 * _PLAYER_EYE_K) : (2.2 * _PLAYER_EYE_K);
   // walk ON the terrain: sample ground height under the player (never let the eye dip below the surface)
   let groundY;
   { const _ey = _elevators ? _elevators.groundY() : null;
@@ -4190,7 +4416,16 @@ function animate(){
   // ── SWIM LAW (five-laws §14.3): if the terrain under us is below the waterline, the player
   // FLOATS on the surface (bob included) instead of walking the seafloor. Water bodies are
   // the Crystal Sea basin + any biome marked water:true with a floor below ~-0.45.
-  if (!veh.mode && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
+  if (MAP_V4) {
+    // v4 swim law: float on the REAL water surface (world-water.js CPU mirror of the shader waves) wherever
+    // the ground is more than ~1u under it. No water api (load failed) → just walk the terrain.
+    _swimming = false;
+    if (_v4Water && !veh.mode && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
+      const _wh = _v4Water.waterHeightAt(playerPos.x, playerPos.z);
+      if (_wh != null && isFinite(_wh) && groundY < _wh - 1.0) { groundY = _wh - 1.05; _swimming = true; }
+    }
+  } else
+  if (!veh.mode && !(hover && hover.isRiding()) && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
     if (groundY < -0.45) {
       const _ocean = window.__worldOcean;
       const _wave = (_ocean && _ocean.waveH) ? _ocean.waveH(playerPos.x, playerPos.z, clock.elapsedTime) * 0.55 : 0;
@@ -4198,10 +4433,10 @@ function animate(){
       _swimming = true;
     } else _swimming = false;
   } else _swimming = false;
-  const _rawBaseY = veh.baseY(groundY);          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
+  const _rawBaseY = (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY);          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
-  if(_smoothBaseY===undefined || _spawnBusy || (veh && veh.mode) || (_elevators && _elevators.isRiding()) ||
+  if(_smoothBaseY===undefined || _spawnBusy || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
      (_interiors && _interiors.isInside()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
     _smoothBaseY = _rawBaseY;
   } else {
@@ -4217,27 +4452,23 @@ function animate(){
   if(_animFrame % 8 === 0){ updateDayNight(_dnAccum); _dnAccum = 0; }
   // walking character animation: Walk/Run when moving, Idle otherwise
   if(playerMixer){
-    playerMixer.update(dt);
     const mv = (controls.isLocked || _touchCtrl.on) && (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']);
     const rn = keys['ShiftLeft']||keys['ShiftRight'];
-    const _pAnimName = bikeMode ? 'Idle' : (mv ? (rn ? 'Run' : 'Walk') : 'Idle');
     const _attacking = clock.elapsedTime < _pAttackUntil;   // a one-shot attack/flip owns the mixer right now
     if(_wasAttacking && !_attacking) _restorePose(_playerPoseSnap);  // one-shot just ended: clear residual orphan-bone rotation so the body faces forward again (fixes facing-backward after flip/attack)
     _wasAttacking = _attacking;
+    // idle ↔ walk ↔ run blended by ACTUAL speed (walk 11 u/s, sprint 26 u/s), shared gait phase so the
+    // feet keep up with the floor; weights + one-shot always sum to 1 → never the bind/T-pose.
+    const _pSpdL = bikeMode ? 0 : Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
+    const _osw = _updatePlayerLoco(dt, _pSpdL);
+    playerMixer.update(dt);
+    _playerBreath(clock.elapsedTime, _osw);
     if(!_attacking){
-      setPlayerAnim(_pAnimName);
-      // ── Basketball-style smooth walk: blend clip timescale with actual movement speed ──
-      // This ensures the feet keep up with the floor — no sliding at slow starts or fast runs.
-      if(playerAction && _pAnimName !== 'Idle'){
-        const _pSpd = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
-        const _ts = Math.max(0.3, Math.min(2.5, _pSpd / 10));
-        playerAction.setEffectiveTimeScale(_ts);
-      }
       // ── Procedural bone overlay (port of basketball.html applyProceduralBones) ──
       // Advances the walk phase and applies arm/leg/spine rotations layered on the mixer.
-      // SKIP for the new Meshy-rigged bodies (they have real idle/walk/run clips): the overlay
-      // was tuned for the old hero and fights the baked animation, deforming/stretching the rig.
-      const _rigged = !!(playerClips && (playerClips['idle'] || playerClips['walk'] || playerClips['run']));
+      // SKIP for rigs with real locomotion clips (incl. TURTLE/ZEROX "Walking"/"Running", which the old
+      // lowercase-key check missed): the overlay fights the baked animation and deforms the rig.
+      const _rigged = !!(_pc.walk || _pc.run || _pc.idleKind==='authored' || _pc.idleKind==='ual');
       if(!_rigged && playerAvatar.visible && !bikeMode){
         const _pSpd2 = Math.sqrt(_vel.x*_vel.x + _vel.z*_vel.z);
         if(mv) _playerWalkPhase += dt * (rn ? 7.5 : 5.5);
@@ -4298,17 +4529,20 @@ function animate(){
   starGroup.position.set(camera.position.x, 0, camera.position.z);   // TURTLE SKY POLISH: starfield follows the camera on XZ only (keeps its own overhead Y) so stars stay an infinite dome — never pull in close and read as floating specks near the world edge.
   veh.update(dt, fwd);                       // VEHICLE-HOOK: vehicle follows player + board/dismount prompt
   // GRID BIKE: ride it in bike mode — sits under the player, faces the look direction
-  gridBike.visible = bikeMode;
-  if(bikeMode){
-    const _byt=Math.atan2(fwd.x, fwd.z);   // smooth the bike's heading too (banks into turns instead of snapping)
-    if(!_avatarYawInit){ _avatarYaw=_byt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _byt, 1-Math.exp(-9*dt));
-    gridBike.position.set(playerPos.x, groundY, playerPos.z);
-    gridBike.rotation.y = _avatarYaw;
-    playerAvatar.visible = true;   // show the rider on the bike
-    playerAvatar.position.set(playerPos.x, groundY+0.6, playerPos.z);
-    playerAvatar.rotation.y = _avatarYaw;
+  // VEHICLES V2: bike + hoverboard place themselves AND the rider (seated / surf-stance IK)
+  const _flatGround = !!((_interiors && _interiors.isInside()) || (_elevators && _elevators.isRiding()));
+  if (veh.bike) {
+    gridBike.visible = veh.bike.visible();          // parked bike stays where you left it
+    veh.bike.pose(dt, { groundY, flat: _flatGround, showRider: thirdPerson });
+  } else {
+    gridBike.visible = bikeMode;
+    if(bikeMode){ gridBike.position.set(playerPos.x, groundY, playerPos.z); gridBike.rotation.y = Math.atan2(fwd.x, fwd.z); playerAvatar.visible = true; playerAvatar.position.set(playerPos.x, groundY+0.6, playerPos.z); }
   }
+  if (hover) hover.pose(dt, { showRider: thirdPerson ? true : undefined });
   const t=clock.elapsedTime;
+  // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
+  // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
+  if(MAP_V4){ if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
   // cheap so the fall is buttery. Everything resumes the instant you land.
