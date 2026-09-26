@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Three.js</title>
+  <style>
+    body { margin: 0; background: #000; color: #0f0; font-family: monospace; }
+    canvas { display: block; }
+    #log {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #0f0;
+      padding: 15px;
+      max-width: 400px;
+      font-size: 12px;
+      z-index: 100;
+    }
+    .msg { margin: 5px 0; padding: 5px; border-bottom: 1px solid #0f0; }
+    .err { color: #f00; }
+    .ok { color: #0f0; }
+  </style>
+</head>
+<body>
+  <div id="log"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/build/three.min.js"></script>
+
+  <script>
+    const logEl = document.getElementById('log');
+
+    function log(msg, type = 'ok') {
+      const div = document.createElement('div');
+      div.className = 'msg ' + type;
+      div.textContent = msg;
+      logEl.appendChild(div);
+      console.log(msg);
+    }
+
+    function init() {
+      try {
+        log('1. Checking Three.js...', 'ok');
+        if (typeof THREE === 'undefined') {
+          log('ERROR: THREE not found!', 'err');
+          return;
+        }
+        log('✓ Three.js loaded', 'ok');
+
+        log('2. Creating scene...', 'ok');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        log('✓ Scene created', 'ok');
+
+        log('3. Creating camera...', 'ok');
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+        log('✓ Camera created', 'ok');
+
+        log('4. Creating renderer...', 'ok');
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        log('✓ Renderer created', 'ok');
+
+        log('5. Creating test cube...', 'ok');
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        log('✓ Cube created', 'ok');
+
+        log('6. Starting animation...', 'ok');
+        function animate() {
+          requestAnimationFrame(animate);
+          cube.rotation.x += 0.01;
+          cube.rotation.y += 0.01;
+          renderer.render(scene, camera);
+        }
+        animate();
+        log('✓ Animation running', 'ok');
+
+        log('SUCCESS: All working!', 'ok');
+
+      } catch (err) {
+        log('EXCEPTION: ' + err.message, 'err');
+        console.error(err);
+      }
+    }
+
+    // Wait for Three.js
+    let tries = 0;
+    function waitForThree() {
+      tries++;
+      if (typeof THREE === 'undefined') {
+        if (tries < 50) {
+          setTimeout(waitForThree, 100);
+        } else {
+          log('ERROR: Three.js took too long to load', 'err');
+        }
+        return;
+      }
+      init();
+    }
+
+    log('0. Waiting for Three.js...', 'ok');
+    waitForThree();
+  </script>
+</body>
+</html>
