@@ -342,7 +342,7 @@ window.__w3dDebug = { scene, camera };   // probe/diagnostic hook (same pattern 
 // water (world-water.js). OFF by default: without the flag nothing below changes. See docs/MAP-V4-INTEGRATION.md.
 const MAP_V4 = (function(){ try{ return /[?&]map=v4(?:&|$|#)/.test(location.search); }catch(_){ return false; } })();
 const V4_U = 7/1.8;                       // units per metre (scale law) — terrain.json units_per_m
-let _v4T = null, _v4Water = null, _v4Meta = null;   // terrain api / water api / terrain.json once loaded
+let _v4T = null, _v4Water = null, _v4Meta = null, _v4Fill = null;   // terrain api / water api / terrain.json once loaded
 window.__MAP_V4 = MAP_V4;
 if(MAP_V4){
   camera.near = 0.5; camera.far = 48000; camera.updateProjectionMatrix();   // ~39 000-unit-wide world (half 19 444)
@@ -452,7 +452,16 @@ window.__worldBuilt = false;
       return api;
     })
     .catch(function(e){ window.__mapV4Failed = true; console.warn('[map-v4] terrain failed — flat y=0 fallback:', e && e.message); return null; })
-    .then(function(api){ try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } return api; });
+    .then(function(api){ try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } return api; })
+    .then(function(api){   // MAP v4 FILL (world-fill-v4.js): realm vegetation, waystations, floating islands, bridges
+      if(!api || !_v4Meta) return api;
+      return _loadScript('/world-fill-v4.js?v=20260926a').then(function(){
+        const fl = new GLTFLoader(); fl.setDRACOLoader(dracoLoader); fl.setMeshoptDecoder(MeshoptDecoder);   // own loader: streams after entry
+        _v4Fill = window.buildWorldFillV4({ THREE, scene, camera, loader: fl, heightAt: api.heightAt,
+          isWater: (_v4Water && _v4Water.isWater) ? (x, z)=> _v4Water.isWater(x, z) : null, terrainMeta: _v4Meta });
+        window.__w3dDebug.fillV4 = _v4Fill;
+      }).catch(function(e){ console.warn('[map-v4] fill failed:', e && e.message); }).then(function(){ return api; });
+    });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
     if(!window.buildWorldWater || !_v4Meta) return null;
@@ -4542,7 +4551,7 @@ function animate(){
   const t=clock.elapsedTime;
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
-  if(MAP_V4){ if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); }
+  if(MAP_V4){ if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
   // cheap so the fall is buttery. Everything resumes the instant you land.
