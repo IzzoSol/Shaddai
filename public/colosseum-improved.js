@@ -335,6 +335,119 @@ function buildColosseumImproved(THREE, opts) {
   walkRim.receiveShadow = true;
   group.add(walkRim);
 
+  // ─── UNDERGROUND PASSAGES (dungeons) ───
+  const undergroundGroup = new THREE.Group();
+  undergroundGroup.name = 'UNDERGROUND';
+  group.add(undergroundGroup);
+
+  // Main dungeon chamber
+  const dungeonFloor = new THREE.Mesh(new THREE.PlaneGeometry(120, 100), mats.stone);
+  dungeonFloor.rotation.x = -Math.PI / 2;
+  dungeonFloor.position.y = -8;
+  dungeonFloor.receiveShadow = true;
+  undergroundGroup.add(dungeonFloor);
+
+  // Dungeon walls
+  const dungeonWallGeo = new THREE.BoxGeometry(120, 8, 1);
+  [-50, 50].forEach(z => {
+    const wall = new THREE.Mesh(dungeonWallGeo, mats.concrete);
+    wall.position.set(0, -4, z);
+    wall.castShadow = true;
+    undergroundGroup.add(wall);
+  });
+
+  const dungeonSideGeo = new THREE.BoxGeometry(1, 8, 100);
+  [-60, 60].forEach(x => {
+    const wall = new THREE.Mesh(dungeonSideGeo, mats.concrete);
+    wall.position.set(x, -4, 0);
+    wall.castShadow = true;
+    undergroundGroup.add(wall);
+  });
+
+  // Gates
+  const gateGeo = new THREE.BoxGeometry(8, 8, 0.5);
+  const gateMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7, metalness: 0.8 });
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2;
+    const gateX = Math.cos(angle) * 50;
+    const gateZ = Math.sin(angle) * 45;
+    const gate = new THREE.Mesh(gateGeo, gateMat);
+    gate.position.set(gateX, 0, gateZ);
+    gate.castShadow = true;
+    undergroundGroup.add(gate);
+  }
+
+  // ─── CROWD SPECTATORS ───
+  const crowdGroup = new THREE.Group();
+  crowdGroup.name = 'CROWD';
+  group.add(crowdGroup);
+
+  // Simple spectator placeholders (small spheres)
+  for (let i = 0; i < 40; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = FIELD_R_X + 10 + Math.random() * 30;
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+    const h = 2 + Math.random() * 28;
+
+    const spectator = new THREE.Mesh(
+      new THREE.SphereGeometry(0.4, 8, 8),
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5),
+        roughness: 0.6
+      })
+    );
+    spectator.position.set(x, h, z);
+    spectator.castShadow = true;
+    crowdGroup.add(spectator);
+  }
+
+  // ─── EQUIPMENT RACKS ───
+  const equipGroup = new THREE.Group();
+  equipGroup.name = 'EQUIPMENT';
+  group.add(equipGroup);
+
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const x = Math.cos(angle) * 35;
+    const z = Math.sin(angle) * 35;
+
+    // Rack frame
+    const rack = new THREE.Mesh(new THREE.BoxGeometry(4, 6, 2), mats.steel);
+    rack.position.set(x, 3, z);
+    rack.castShadow = true;
+    equipGroup.add(rack);
+
+    // Weapons (small cubes on rack)
+    for (let j = 0; j < 3; j++) {
+      const weapon = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 1.5), mats.steel);
+      weapon.position.set(x - 1.5 + j * 1.5, 4 + j * 1.5, z);
+      weapon.castShadow = true;
+      equipGroup.add(weapon);
+    }
+  }
+
+  // ─── REST AREAS (benches in lobby) ───
+  const benchGeo = new THREE.BoxGeometry(8, 1, 2);
+  for (let i = 0; i < 4; i++) {
+    const bench = new THREE.Mesh(benchGeo, mats.wood);
+    bench.position.set(-30 + i * 20, PROM_H + 1, 200);
+    bench.castShadow = true;
+    group.add(bench);
+  }
+
+  // ─── HEALING STATION (medical area) ───
+  const healPlatform = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), mats.marble);
+  healPlatform.rotation.x = -Math.PI / 2;
+  healPlatform.position.set(0, PROM_H + 0.01, 170);
+  healPlatform.receiveShadow = true;
+  group.add(healPlatform);
+
+  const healPillar = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 4), mats.stone);
+  healPillar.position.set(0, PROM_H + 2, 170);
+  healPillar.castShadow = true;
+  group.add(healPillar);
+
   // ─── LIGHTING ───
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   group.add(ambientLight);
@@ -359,6 +472,11 @@ function buildColosseumImproved(THREE, opts) {
     light.castShadow = true;
     group.add(light);
   }
+
+  // Underground dungeon lighting
+  const dungeonLight = new THREE.PointLight(0xff6600, 0.8, 200);
+  dungeonLight.position.set(0, -4, 0);
+  group.add(dungeonLight);
 
   // ─── ARENA MODE SWITCHING ───
   let currentMode = 'sand';
@@ -419,6 +537,11 @@ function buildColosseumImproved(THREE, opts) {
     }
   };
 
+  // ─── STATE & MECHANICS ───
+  let spectatorEnergy = 100;
+  let eventCount = 0;
+  let isGameActive = false;
+
   // ─── API ───
   return {
     group: group,
@@ -426,8 +549,10 @@ function buildColosseumImproved(THREE, opts) {
       FIELD_W, FIELD_L,
       LOW_BLEACH_H, UP_BLEACH_H,
       ROOF_H, LOBBY_H,
-      OUTER_R, roofR
+      OUTER_R, roofR,
+      DUNGEON_DEPTH: 8
     },
+
     getHeightAt: function(x, z) {
       const dist = Math.sqrt(x * x + z * z);
       if (dist < FIELD_R_X) return GROUND_Y; // Field
@@ -437,14 +562,49 @@ function buildColosseumImproved(THREE, opts) {
       if (dist < roofR) return PROM_H + (dist - promR_out) * (UP_BLEACH_H / (rowCount * rowDepth)); // Upper bleachers
       return ROOF_H; // Roof
     },
+
     canWalkAt: function(x, z) {
       const dist = Math.sqrt(x * x + z * z);
       return dist < roofR + 5; // Can walk anywhere up to roof edge
     },
+
+    getSpectatorCount: function() {
+      return 42000 + Math.floor(spectatorEnergy * 100);
+    },
+
+    setSpectatorEnergy: function(energy) {
+      spectatorEnergy = Math.max(0, Math.min(100, energy));
+    },
+
+    startEvent: function(eventType) {
+      isGameActive = true;
+      eventCount++;
+      return { eventId: eventCount, type: eventType, spectators: this.getSpectatorCount() };
+    },
+
+    endEvent: function() {
+      isGameActive = false;
+      this.setSpectatorEnergy(spectatorEnergy - 5);
+    },
+
     setArenaMode: setArenaMode,
     getCurrentMode: () => currentMode,
     updateArena: updateArena,
-    getArenaGroup: () => arenaGroup
+    getArenaGroup: () => arenaGroup,
+    getUnderground: () => undergroundGroup,
+    getCrowd: () => crowdGroup,
+    getEquipment: () => equipGroup,
+
+    getGameState: function() {
+      return {
+        mode: currentMode,
+        isActive: isGameActive,
+        eventCount: eventCount,
+        spectatorEnergy: spectatorEnergy,
+        spectators: this.getSpectatorCount(),
+        timestamp: Date.now()
+      };
+    }
   };
 }
 
