@@ -87,73 +87,73 @@
   {
    "id": "rift",
    "name": "Rift Gate Station",
-   "compass": 0,
+   "compass": 0.0,
    "xy_m": [
     0.0,
-    2828.5714285714284
+    2828.6
    ]
   },
   {
    "id": "desert",
    "name": "Desert Terminal",
-   "compass": 27,
+   "compass": 31.0,
    "xy_m": [
-    1284.1445564061464,
-    2520.275596989955
+    1456.8,
+    2424.6
    ]
   },
   {
    "id": "forge",
    "name": "Emberfall Forge Station",
-   "compass": 61,
+   "compass": 54.0,
    "xy_m": [
-    2473.924314480005,
-    1371.3186401253536
+    2288.4,
+    1662.6
    ]
   },
   {
    "id": "suburb",
    "name": "Suburb Transit Hub",
-   "compass": 104,
+   "compass": 90.0,
    "xy_m": [
-    2744.550768609247,
-    -684.2933618390603
+    2828.6,
+    0.0
    ]
   },
   {
    "id": "meadow",
    "name": "Meadowfields Halt",
-   "compass": 142,
+   "compass": 142.1,
    "xy_m": [
-    1741.4424587782908,
-    -2228.944703059013
+    1737.5,
+    -2232.0
    ]
   },
   {
    "id": "harbor",
    "name": "Harbor Line Station",
-   "compass": 221,
+   "compass": 225.0,
    "xy_m": [
-    -1855.7098248588627,
-    -2134.7499554872697
+    -2000.1,
+    -2000.1
    ]
   },
   {
    "id": "darkvault",
    "name": "Darkvault Station",
-   "compass": 296,
+   "compass": 299.1,
    "xy_m": [
-    -2542.3031595319294,
-    1239.964100917676
+    -2471.5,
+    1375.6
    ]
   },
   {
    "id": "arctic",
    "name": "Arctic Outpost Station",
-   "compass": 332,
+   "compass": 333.4,
    "xy_m": [
-    -1327.9338490229482,
-    2497.4803340866792
+    -1266.5,
+    2529.2
    ]
   }
  ],
@@ -1677,5 +1677,6 @@
    "radius_m": 260
   }
  ],
- "note": "height16.bin: uint16 LE, row 0 = north (+Y / game -z), col 0 = west; h_m = min_m + v/65535*(max_m-min_m). Game: x_u = X_m*U, z_u = -Y_m*U."
+ "note": "height16.bin: uint16 LE, row 0 = north (+Y / game -z), col 0 = west; h_m = min_m + v/65535*(max_m-min_m). Game: x_u = X_m*U, z_u = -Y_m*U.",
+ "stations_note": "station bearings = owner canon table (tools/blender/canon/world-layout.json), snapped to the gold ring"
 }

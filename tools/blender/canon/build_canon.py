@@ -19,6 +19,7 @@ HM = np.fromfile(os.path.join(REPO, 'public/assets/terrain/height16.bin'), dtype
 CELL = 2 * HALF / N
 GRID_R, RING_R, WL = LAY['map']['gridRadius_m'], LAY['map']['goldRingRadius_m'], T['water_level_m']
 rng = random.Random(37)
+COLL = {'obb': [], 'circle': []}   # game colliders (metres; exported to public/assets/world/canon-colliders-v4.json)
 LOG = {'added': {}, 'deleted': []}
 def logadd(col, n=1): LOG['added'][col] = LOG['added'].get(col, 0) + n
 
@@ -152,6 +153,7 @@ mon.cyl(0, 0, GZ + 8, 36, 0.4, MAT['canopy'], seg=64, open_top=False)           
 for c in (0, 90, 180, 270):                                                           # 4 stair heads onto the N/E/S/W spokes
     for k in range(10):
         x, y = at(c, 34 + k * 1.6); mon.box(x, y, GZ, 10, 1.7, 4 - k * 0.4, math.radians(-c), MAT['concrete'])
+COLL['circle'].append({'x': 0, 'y': 0, 'r': 7.5, 'top': GZ + 60, 'kind': 'monument'}); COLL['circle'].append({'x': 0, 'y': 0, 'r': 34, 'top': GZ + 4.3, 'kind': 'central-station-deck', 'walkableTop': True})
 mon.to_object('LM_ShaddaiMonument_CentralStation', C['01_Grid_Streets'])
 text('CENTRAL STATION', (*at(180, 36.5), GZ + 11), 3, 0, C['01_Grid_Streets'], MAT['plateText'])
 
@@ -192,6 +194,7 @@ for (a0, a1) in WEDGES:
                     cr_, sr_ = math.cos(rot), math.sin(rot)
                     for ex, ey, sx_, sy_ in ((0, depth / 2, wdt, 0.45), (0, -depth / 2, wdt, 0.45), (wdt / 2, 0, 0.45, depth), (-wdt / 2, 0, 0.45, depth)):
                         blk.box(x + ex * cr_ - ey * sr_, y + ex * sr_ + ey * cr_, GZ + h + 0.3, sx_, sy_, 0.35, rot, MAT['roofglow'])   # thin neon roof edge
+                    COLL['obb'].append({'x': round(x, 2), 'y': round(y, 2), 'hx': round(wdt / 2, 2), 'hy': round(depth / 2, 2), 'rot': round(rot, 4), 'top': round(GZ + h + 0.3, 2), 'kind': 'grid-block'})
                     nb += 1; area_fp += wdt * depth
                 a += da + math.degrees(rng.uniform(4, 6) / rc)                        # 4-6 m local paths between buildings
             r += depth + rng.uniform(5, 7); row += 1
@@ -284,9 +287,11 @@ if STEP >= 3:
                     a = face + math.radians(-120 + s_ * 30); ox_, oy_ = cx_ + 11 * math.cos(a), cy_ + 11 * math.sin(a)
                     if abs(math.degrees(a - face)) % 360 < 40: continue
                     civ.box(ox_, oy_, z, 9, 6, 9, a + math.pi / 2, MAT['civic']); civ.box(ox_, oy_, z + 9, 9.4, 6.4, 0.8, a + math.pi / 2, MAT['greenroof'])
+                    COLL['obb'].append({'x': round(ox_, 2), 'y': round(oy_, 2), 'hx': 4.5, 'hy': 3.0, 'rot': round(a + math.pi / 2, 4), 'top': round(z + 9.8, 2), 'kind': 'civic-court'})
             else:                                                                     # round hall with a roof garden
                 rr_ = rng.uniform(8, 12); hh = rng.uniform(8, 12)
                 civ.cyl(cx_, cy_, z, rr_, hh, MAT['civic'], seg=28); civ.cyl(cx_, cy_, z + hh, rr_ + 0.6, 0.9, MAT['greenroof'], seg=28)
+                COLL['circle'].append({'x': round(cx_, 2), 'y': round(cy_, 2), 'r': round(rr_, 2), 'top': round(z + hh + 0.9, 2), 'kind': 'civic-hall'})
                 for g_ in range(5):
                     a = rng.uniform(0, 6.283); civ.cyl(cx_ + rr_ * 0.5 * math.cos(a), cy_ + rr_ * 0.5 * math.sin(a), z + hh + 0.9, 1.4, 1.6, MAT['leaf2'], seg=8, r2=0.2)
             ncv += 1
@@ -357,6 +362,30 @@ LOG['metrics'] = {'grid_buildings_4_wedges': nb, 'grid_density_4_wedges': round(
 json.dump(LOG, open(os.path.join(REPO, 'tools/blender/canon/build-log-step%d.json' % STEP), 'w'), indent=1)
 print('CANON', json.dumps(LOG['metrics']))
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(REPO, '.bl-cache', 'canon-step%d.blend' % STEP), compress=True)
+
+# ── EXPORT to the game (argv 'export'): canon districts as one GLB in METRES (game scales by U) + collider list ──
+if 'export' in argv:
+    EXP = ['01_Grid_Streets', '02_Grid_Blocks', '06_Meadow_Quill', '15_Agents']
+    for o in list(bpy.data.objects):
+        if o.type == 'FONT' and any(o.name in bpy.data.collections[n].objects for n in EXP):
+            me_ = o.to_mesh().copy(); ob_ = bpy.data.objects.new(o.name + '_mesh', me_); ob_.matrix_world = o.matrix_world.copy()
+            for m_ in o.data.materials: me_.materials.append(m_)
+            for c_ in o.users_collection: c_.objects.link(ob_)
+            bpy.data.objects.remove(o, do_unlink=True)
+    for o in bpy.context.scene.objects: o.select_set(False)
+    keep = [o for n in EXP for o in bpy.data.collections[n].objects if o.type == 'MESH']
+    for o in keep: o.select_set(True)
+    bpy.context.view_layer.objects.active = keep[0]
+    outg = os.path.join(REPO, '.bl-cache', 'canon-v4-raw.glb')
+    bpy.ops.export_scene.gltf(filepath=outg, export_format='GLB', use_selection=True, export_apply=True, export_yup=True)
+    U_ = 7 / 1.8
+    def g(p): return {'x': round(p['x'] * U_, 2), 'z': round(-p['y'] * U_, 2)}
+    colls = {'version': 1, 'units_per_m': U_, 'note': 'game units; obb rot = rotation about +Y (same sign as Blender Z because z = -Y); top = walkable top (units)',
+             'obb': [dict(g(o), hx=round(o['hx'] * U_, 2), hz=round(o['hy'] * U_, 2), rot=o['rot'], top=round(o['top'] * U_, 2), kind=o['kind']) for o in COLL['obb']],
+             'circle': [dict(g(c), r=round(c['r'] * U_, 2), top=round(c['top'] * U_, 2), kind=c['kind'], walkableTop=c.get('walkableTop', False)) for c in COLL['circle']]}
+    os.makedirs(os.path.join(REPO, 'public/assets/world'), exist_ok=True)
+    json.dump(colls, open(os.path.join(REPO, 'public/assets/world/canon-colliders-v4.json'), 'w'), separators=(',', ':'))
+    print('EXPORT glb', outg, 'obb', len(COLL['obb']), 'circle', len(COLL['circle']))
 
 # ── approval renders: top-down ortho of the whole disc (+ DEBUG overlay) and 1.6 m eye-level per step ──
 if RENDER:

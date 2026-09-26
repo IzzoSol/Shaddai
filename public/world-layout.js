@@ -202,8 +202,8 @@
         { id: 'darkforest', c0: 262, c1: 318, r0_m: 1900, r1_m: 4800 }, { id: 'arctic', c0: 314, c1: 346, r0_m: 1900, r1_m: 4800 }
       ],
       stations: [
-        { id: 'rift', compass: 0 }, { id: 'desert', compass: 27 }, { id: 'forge', compass: 61 }, { id: 'suburb', compass: 104 },
-        { id: 'meadow', compass: 142 }, { id: 'harbor', compass: 221 }, { id: 'darkvault', compass: 296 }, { id: 'arctic', compass: 332 }
+        { id: 'rift', compass: 0 }, { id: 'desert', compass: 31 }, { id: 'forge', compass: 54 }, { id: 'suburb', compass: 90 },       // canon table bearings (2026-09-26)
+        { id: 'meadow', compass: 142.1 }, { id: 'harbor', compass: 225 }, { id: 'darkvault', compass: 299.1 }, { id: 'arctic', compass: 333.4 }
       ],
       _fallback: true
     };

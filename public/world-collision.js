@@ -105,6 +105,11 @@
     var _rc = (layout.realmColliders && Array.isArray(layout.realmColliders)) ? layout.realmColliders : [];
     for (var _rk = 0; _rk < _rc.length; _rk++) {
       var _r = _rc[_rk];
+      if (_r && isFinite(_r.x) && isFinite(_r.z) && _r.hx > 0 && _r.hz > 0) {   // ROTATED BOX (canon city blocks, 2026-09-26)
+        var _rot = _r.rot || 0;
+        _colliders.push({ box: true, obb: true, cx: _r.x, cz: _r.z, hx: _r.hx + PLAYER_BUF, hz: _r.hz + PLAYER_BUF, c: Math.cos(_rot), s: Math.sin(_rot), label: _r.label || 'obb' });
+        continue;
+      }
       if (!_r || !isFinite(_r.x) || !isFinite(_r.z) || !(_r.r > 0)) continue;
       var rr = _r.r + PLAYER_BUF;
       _colliders.push({ box: false, cx: _r.x, cz: _r.z, r: rr, r2: rr * rr, label: _r.label || 'realm' });
@@ -176,7 +181,9 @@
     for (var i = 0; i < _colliders.length; i++) {
       var c = _colliders[i];
       var dx = x - c.cx, dz = z - c.cz;
-      if (c.box) {
+      if (c.obb) {
+        if (Math.abs(dx * c.c - dz * c.s) < c.hx && Math.abs(dx * c.s + dz * c.c) < c.hz) return true;
+      } else if (c.box) {
         if (Math.abs(dx) < c.hx && Math.abs(dz) < c.hz) return true;
       } else {
         if (dx * dx + dz * dz < c.r2) return true;
@@ -196,7 +203,13 @@
     for (var i = 0; i < _colliders.length; i++) {
       var c = _colliders[i];
       var dx = pos.x - c.cx, dz = pos.z - c.cz;
-      if (c.box) {
+      if (c.obb) {   // rotated box: into local frame (rot about +Y: local x = (c, -s), local z = (s, c) in x/z), push out, back
+        var lx = dx * c.c - dz * c.s, lz = dx * c.s + dz * c.c;
+        if (Math.abs(lx) < c.hx && Math.abs(lz) < c.hz) {
+          if (c.hx - Math.abs(lx) < c.hz - Math.abs(lz)) lx = lx < 0 ? -c.hx - 0.01 : c.hx + 0.01; else lz = lz < 0 ? -c.hz - 0.01 : c.hz + 0.01;   // +0.01: float round-trip must land OUTSIDE
+          pos.x = c.cx + lx * c.c + lz * c.s; pos.z = c.cz - lx * c.s + lz * c.c;
+        }
+      } else if (c.box) {
         if (Math.abs(dx) < c.hx && Math.abs(dz) < c.hz) {
           var penX = c.hx - Math.abs(dx);
           var penZ = c.hz - Math.abs(dz);
