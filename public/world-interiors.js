@@ -22,7 +22,13 @@
   'use strict';
 
   /* ─── layout constants ──────────────────────────────────────────────────── */
-  var ROOM_ISLAND_X  = 6000;
+  /* Off-map room island. world-layout.js publishes window.ROOM_ISLAND_X (Map v3: 6000; ?map=v4: 30000, because the
+     v4 terrain reaches ±19444u). The colosseum arena instance sits at ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX
+     (v3: 12000) — world-colosseum.js must read the same global (see docs/LAYOUT-V4.md). */
+  var _MAP_V4 = false; try { _MAP_V4 = /[?&]map=v4(?:&|$|#)/.test(global.location.search); } catch (e) {}
+  var ROOM_ISLAND_X  = (typeof global.ROOM_ISLAND_X === 'number' && isFinite(global.ROOM_ISLAND_X)) ? global.ROOM_ISLAND_X : (_MAP_V4 ? 30000 : 6000);
+  global.ROOM_ISLAND_X = ROOM_ISLAND_X;   /* set early (parse time) — world-colosseum.js builds its arena lazily */
+  var COLOSSEUM_ISLAND_DX = 6000;
   var ROOM_SPACING   = 500;
   var ROOM_W         = 80;
   var ROOM_H         = 22;
@@ -135,10 +141,11 @@
     var _entering     = false;
     var _exiting      = false;
     var _warnedOnce   = {};
-    /* the room island band: rooms at ROOM_ISLAND_X + idx*ROOM_SPACING, the colosseum instance at x=12000
-       (±1200 walkable). Anything outside this X band is the normal map → you are NOT inside. */
+    /* the room island band: rooms at ROOM_ISLAND_X + idx*ROOM_SPACING, the colosseum instance at
+       ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX (v3: x=12000, ±1200 walkable). Anything outside this X band is the
+       normal map → you are NOT inside. (v3: [5000, 14500]; v4: [29000, 38500] — beyond the ±19444u terrain.) */
     var ISLAND_X_MIN  = ROOM_ISLAND_X - 1000;
-    var ISLAND_X_MAX  = 14500;
+    var ISLAND_X_MAX  = ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX + 2500;
     var ROOM_BAND     = 240;   /* generic 80×80 room: past this from its origin you walked out through a wall */
 
     /* ── basic helpers ── */

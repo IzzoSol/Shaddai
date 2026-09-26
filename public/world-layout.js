@@ -181,12 +181,140 @@
     sector: function (code) { return this.sectors.find(function (s) { return s.code === code; }); },
   };
 
+  // ── MAP v4 (?map=v4, 2026-09-26) — the ≈10 km Blender-baked world. Rewrites the map-scale fields of
+  // WORLD_LAYOUT from public/assets/terrain/terrain.json (tools/blender/terrain-v4.py) so every layout-driven
+  // module (transit, colosseum, realm props/volcano, interiors doors, colliders) lands on the v4 terrain.
+  // Without the flag nothing below runs and the layout is exactly Map v3. See docs/LAYOUT-V4.md.
+  var MAP_V4 = false;
+  try { MAP_V4 = /[?&]map=v4(?:&|$|#)/.test(location.search); } catch (e) {}
+  window.WORLD_LAYOUT.mapVersion = MAP_V4 ? 'v4' : 'v3';
+  window.WORLD_LAYOUT.terrainMeta = null;
+  if (MAP_V4) (function (L) {
+    // Fallback mirror of terrain.json (map-scale fields only). REGENERATE from public/assets/terrain/terrain.json
+    // whenever tools/blender/terrain-v4.py is re-run; the synchronous XHR below normally supersedes it.
+    var FALLBACK = {
+      half_units: 19444.444444444445, half_m: 5000, units_per_m: 7 / 1.8, grid_r_m: 1600, ring_r_m: 2828.5714285714284, rim_m: 4800,
+      realms: [
+        { id: 'void', c0: 344, c1: 16, r0_m: 1900, r1_m: 4800 }, { id: 'desert', c0: 14, c1: 45, r0_m: 1900, r1_m: 4800 },
+        { id: 'volcano', c0: 45, c1: 80, r0_m: 1900, r1_m: 4800 }, { id: 'suburb', c0: 80, c1: 122, r0_m: 3278.5714285714284, r1_m: 4800 },
+        { id: 'forest', c0: 86, c1: 120, r0_m: 1720, r1_m: 3128.5714285714284 }, { id: 'meadow', c0: 122, c1: 172, r0_m: 1900, r1_m: 4800 },
+        { id: 'colo', c0: 172, c1: 196, r0_m: 1800, r1_m: 4800 }, { id: 'ocean', c0: 196, c1: 265, r0_m: 1850, r1_m: 4800 },
+        { id: 'darkforest', c0: 262, c1: 318, r0_m: 1900, r1_m: 4800 }, { id: 'arctic', c0: 314, c1: 346, r0_m: 1900, r1_m: 4800 }
+      ],
+      stations: [
+        { id: 'rift', compass: 0 }, { id: 'desert', compass: 27 }, { id: 'forge', compass: 61 }, { id: 'suburb', compass: 104 },
+        { id: 'meadow', compass: 142 }, { id: 'harbor', compass: 221 }, { id: 'darkvault', compass: 296 }, { id: 'arctic', compass: 332 }
+      ],
+      _fallback: true
+    };
+    var T = null;
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/assets/terrain/terrain.json', false);   // synchronous: this classic script must finish before the modules parse
+      xhr.send(null);
+      if (xhr.status >= 200 && xhr.status < 300) T = JSON.parse(xhr.responseText);
+    } catch (e) {}
+    if (!T || !T.realms || !T.half_units) { T = FALLBACK; try { console.warn('[world-layout] map v4: terrain.json unavailable — using the embedded fallback numbers'); } catch (e) {} }
+    L.terrainMeta = T;
+
+    var U = +T.units_per_m || 7 / 1.8, D2R = Math.PI / 180;
+    var RIM = +T.rim_m || 4800, GRID_R = +T.grid_r_m * U, RING_R = +T.ring_r_m * U;
+    // compass (deg clockwise from north) + radius (metres) → game [x, z]   (X = east, Y = north; z = -Y·U)
+    function C(deg, rM) { var a = deg * D2R; return [Math.sin(a) * rM * U, -Math.cos(a) * rM * U]; }
+    function norm(d) { d %= 360; return d < 0 ? d + 360 : d; }
+    function span(c0, c1) { return norm(c1 - c0) || 360; }
+    function inArc(deg, c0, c1) { return norm(deg - c0) <= span(c0, c1); }
+    L.compassOf = function (x, z) { return norm(Math.atan2(x, -z) / D2R); };   // game → compass degrees
+
+    L.half = +T.half_units;
+    L.city = { radius: GRID_R };
+    L.transit = { radius: RING_R };
+    L.mountains = { r0: 0, r1: 0, ridge: 0, passW: 0 };
+
+    // ── biomes: same ids/names/colors/ground/fog; centre = wedge centroid, radius = inscribed; + sector (game units)
+    var byId = {}; L.biomes.forEach(function (b) { byId[b.id] = b; });
+    var ALIAS = { void: 'void', desert: 'desert', volcano: 'volcano', suburb: 'suburb', forest: 'forest', meadow: 'meadow', ocean: 'ocean', darkforest: 'darkforest', arctic: 'arctic' };   // 'colo' is not a biome (grid-like plain)
+    var nb = [Object.assign({}, byId.grid, { center: [0, 0], radius: Math.round(GRID_R), sector: null })];
+    T.realms.forEach(function (r) {
+      var id = ALIAS[r.id]; if (!id || !byId[id]) return;
+      var sp = span(r.c0, r.c1), mid = norm(r.c0 + sp / 2), rm = (+r.r0_m + +r.r1_m) / 2;
+      var halfArc = rm * Math.sin(Math.min(sp / 2, 90) * D2R), halfDepth = (+r.r1_m - +r.r0_m) / 2;
+      var c = C(mid, rm), b = Object.assign({}, byId[id], {
+        center: [Math.round(c[0]), Math.round(c[1])],
+        radius: Math.round(Math.min(halfArc, halfDepth) * U),
+        sector: { c0: r.c0, c1: r.c1, r0: +r.r0_m * U, r1: +r.r1_m * U }
+      });
+      if (id === 'ocean') { var h = (T.stations || []).find(function (s) { return s.id === 'harbor'; }), dk = C(h ? h.compass : mid, +r.r0_m); b.dock = [Math.round(dk[0]), Math.round(dk[1])]; }
+      nb.push(b);
+    });
+    L.biomes = nb;
+    var colo = T.realms.find(function (r) { return r.id === 'colo'; });
+    L.biomeAt = function (x, z) {
+      var bs = this.biomes, grid = bs[0], r = Math.hypot(x, z);
+      if (r <= this.city.radius) return grid;
+      var deg = norm(Math.atan2(x, -z) / D2R), best = null, bd = Infinity, i, b, s, d;
+      for (i = 1; i < bs.length; i++) {             // 1) inside a sector (overlapping edges → nearest centre)
+        b = bs[i]; s = b.sector;
+        if (s && inArc(deg, s.c0, s.c1) && r >= s.r0 && r <= s.r1) { d = Math.hypot(x - b.center[0], z - b.center[1]); if (d < bd) { bd = d; best = b; } }
+      }
+      if (best) return best;
+      if (colo && inArc(deg, colo.c0, colo.c1)) return grid;   // colosseum wedge = grid-like plain
+      for (i = 1; i < bs.length; i++) {             // 2) same bearing, radially outside the band (ring zone / beyond rim)
+        b = bs[i]; s = b.sector;
+        if (s && inArc(deg, s.c0, s.c1)) { d = r < s.r0 ? s.r0 - r : r - s.r1; if (d < bd) { bd = d; best = b; } }
+      }
+      if (best) return best;
+      for (i = 0; i < bs.length; i++) { b = bs[i]; d = Math.hypot(x - b.center[0], z - b.center[1]); if (d < bd) { bd = d; best = b; } }   // 3) nearest centre
+      return best || grid;
+    };
+
+    // ── stations: v4 ring positions, same ids/names/realms/dragons; Central on the Grid edge due south
+    var st3 = {}; L.stations.forEach(function (s) { st3[s.id] = s; });
+    var ns = [Object.assign({}, st3.central, { pos: [0, Math.round(GRID_R + 40)] })];
+    (T.stations || []).forEach(function (s) {
+      var p = s.xy_m ? [s.xy_m[0] * U, -s.xy_m[1] * U] : C(s.compass, +T.ring_r_m);
+      ns.push(Object.assign({}, st3[s.id] || { id: s.id, name: s.name, realm: null, dragon: null }, { pos: [Math.round(p[0]), Math.round(p[1])], compass: s.compass }));
+    });
+    L.stations = ns;
+
+    // ── colosseum due south just outside the ring (same real-size building)
+    var co = L.landmark('colosseum'); if (co) { co.pos = [0, Math.round((+T.ring_r_m + 300) * U)]; co.footprint = 420; }
+
+    // ── realm models: owner-atlas placement [compass°, fraction of rim radius, yaw° (null = keep)] per id, in order
+    var ATLAS = {
+      'hero-void-rift-gate': [[0, 0.637, 180]], 'hero-desert-terminal': [[27, 0.644, 207]], 'hero-fortress': [[66, 0.807, 246]],
+      'volcano-forge-tower': [[58, 0.637, 0]], 'volcano-ritual-circle': [[72, 0.704, 0]], 'volcano-dragon': [[63, 0.726, 240]],
+      'volcano-bridge': [[64, 0.678, 64]], 'volcano-gate': [[61, 0.622, 241]], 'hero-city-megatower': [[100, 0.833, 0]],
+      'bld-apartment-pod-block': [[94, 0.770, 0]], 'bld-inverted-cube-hab': [[109, 0.785, 0]], 'bld-neon-observatory': [[114, 0.881, 0]],
+      'bld-sea-terrace-spire': [[90, 0.896, 0]], 'bld-holo-market-v2': [[104, 0.689, 284]], 'hero-forest-amphitheater': [[127, 0.793, 0]],
+      'hero-mushroom-pods': [[140, 0.704, 0]], 'hero-farm-sky-structure': [[152, 0.833, 0]],
+      'homes-mushroom-pods': [[134, 0.748, 0], [146, 0.770, 0]], 'hero-sky-dome': [[338, 0.837, 0]], 'hero-arctic-outpost': [[332, 0.637, 152]],
+      'hero-castle': [[292, 0.815, 112]], 'prop-obsidian-rocks': [[284, 0.704, null], [300, 0.759, null]],
+      'prop-crystal-cluster': [[288, 0.870, null], [296, 0.667, null], [278, 0.796, null]], 'hero-beach-market-dome': [[224, 0.652, 44]]
+    };
+    var seen = {};
+    L.realmModels.forEach(function (m) {
+      var list = ATLAS[m.id], k = seen[m.id] = (seen[m.id] || 0) + 1, a = list && list[k - 1];
+      if (!a) { try { console.warn('[world-layout] map v4: no atlas slot for ' + m.id + ' #' + k); } catch (e) {} return; }
+      var p = C(a[0], a[1] * RIM);
+      m.x = Math.round(p[0]); m.z = Math.round(p[1]); m.compass = a[0]; m._v4 = true;
+      if (m.id === 'hero-forest-amphitheater') m.realm = 'meadow';   // owner's atlas draws the amphitheater in MEADOWFIELDS (127°), not Quill Forest
+      if (a[2] != null) m.ry = a[2] * D2R;
+      delete m.toCity;
+    });
+  })(window.WORLD_LAYOUT);
+
+  // Off-map interior island (world-interiors.js rooms; world-colosseum.js arena at ROOM_ISLAND_X + 6000).
+  // v3 keeps 6000 (arena 12000); v4's terrain reaches ±19444u, so the island moves beyond it.
+  window.ROOM_ISLAND_X = MAP_V4 ? 30000 : 6000;
+
   // ── MAP v2: resolve every realm model to absolute position + world size, and derive its collider ──
   (function (L) {
     var PM = 7 / 1.8;
     L.realmModels.forEach(function (m) {
       var b = L.biomes.find(function (x) { return x.id === m.realm; }); if (!b) return;
-      if (m.toCity != null) { var d = Math.hypot(b.center[0], b.center[1]) || 1; m.x = Math.round(b.center[0] - b.center[0] / d * b.radius * m.toCity); m.z = Math.round(b.center[1] - b.center[1] / d * b.radius * m.toCity); }
+      if (m._v4) { /* MAP v4: x/z already placed from the owner's atlas above */ }
+      else if (m.toCity != null) { var d = Math.hypot(b.center[0], b.center[1]) || 1; m.x = Math.round(b.center[0] - b.center[0] / d * b.radius * m.toCity); m.z = Math.round(b.center[1] - b.center[1] / d * b.radius * m.toCity); }
       else { m.x = Math.round(b.center[0] + (m.fx || 0) * b.radius); m.z = Math.round(b.center[1] + (m.fz || 0) * b.radius); }
       m.w = m.len * PM;                                  // world units along the longest side
       m.url = m.src === 'fal' ? '/assets/models/fal/' + m.id + '.glb' : '/assets/models/' + m.id + '.glb';

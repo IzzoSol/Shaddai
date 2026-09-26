@@ -1,7 +1,7 @@
 /* world-editor.js — in-game PLACEMENT EDITOR (admin), 2026-09-25.
  *
  * Always-on core (tiny): modules call  window.__registerPlaceable(key, object3D, info)  for every placed model.
- * Saved owner edits (localStorage 'shd.placementEdits') are re-applied the moment an object registers.
+ * Saved owner edits (localStorage 'shd.placementEdits', or 'shd.placementEdits.v4' under ?map=v4) are re-applied the moment an object registers.
  *
  * Editor UI: open the world with ?edit=1 → Tab (free cursor) → click a model → gizmo:
  *   W move · E rotate · R scale · F focus camera · Del hide · Ctrl+Z undo last · Esc deselect
@@ -9,7 +9,9 @@
  * Claude bakes the copied JSON into world-layout.js realmModels / world-falprops.js ITEMS (colliders follow).
  */
 (function () {
-  var KEY = 'shd.placementEdits';
+  // Edits are namespaced by map version so Map v3 edits never pin Map v4 models (v3 keeps the original key).
+  var _v4 = (window.WORLD_LAYOUT && window.WORLD_LAYOUT.mapVersion === 'v4') || /[?&]map=v4(?:&|$|#)/.test(location.search);
+  var KEY = _v4 ? 'shd.placementEdits.v4' : 'shd.placementEdits';
   var edits = {}; try { edits = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
   var reg = {};          // key -> { obj, info }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(edits)); } catch (e) {} }
@@ -115,7 +117,7 @@
     if (t.dataset.k) { select(t.dataset.k); focusSel(); }
     if (t.dataset.m && tc) { tc.setMode(t.dataset.m); [].forEach.call(el.querySelectorAll('[data-m]'), function (b) { b.classList.toggle('on', b === t); }); }
     if (t.id === 'edSnap' && tc) { snap = !snap; tc.setTranslationSnap(snap ? 5 : null); tc.setRotationSnap(snap ? Math.PI / 12 : null); t.textContent = 'Snap: ' + (snap ? '5u / 15°' : 'off'); }
-    if (t.id === 'edCopy') { var txt = 'PLACEMENT EDITS ' + JSON.stringify(edits); try { navigator.clipboard.writeText(txt); t.textContent = 'Copied ✓'; setTimeout(function () { t.textContent = 'Copy for Claude'; }, 1500); } catch (x) { prompt('Copy this:', txt); } }
+    if (t.id === 'edCopy') { var txt = 'PLACEMENT EDITS ' + (_v4 ? '(map v4) ' : '') + JSON.stringify(edits); try { navigator.clipboard.writeText(txt); t.textContent = 'Copied ✓'; setTimeout(function () { t.textContent = 'Copy for Claude'; }, 1500); } catch (x) { prompt('Copy this:', txt); } }
     if (t.id === 'edReset' && confirm('Reset every placement edit?')) { edits = {}; save(); location.reload(); }
   });
   document.getElementById('edQ').addEventListener('input', refresh);

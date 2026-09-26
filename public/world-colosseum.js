@@ -11,7 +11,7 @@
  * podium wall, tunnel walls and outer shell solid while stairs, ramps and tiers stay walkable.
  */
 (function () {
-  var U = 7 / 1.8, X0 = 12000, Z0 = 0;
+  var U = 7 / 1.8, X0 = (typeof window.ROOM_ISLAND_X === 'number' ? window.ROOM_ISLAND_X + 6000 : 12000), Z0 = 0;   // v4: room island moves beyond the 10 km world (world-interiors sets ROOM_ISLAND_X)
   // ── dimensions (metres) ──
   var A = 62, B = 44;                      // arena floor ellipse semi-axes (124 × 88 m): 100 × 64 field + runoff
   var POD_T = 2, POD_H = 4;                // podium wall thickness / height
