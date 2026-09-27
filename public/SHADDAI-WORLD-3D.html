@@ -470,14 +470,21 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
-      return _loadScript('/world-clusters-v4.js?v=20260926lod').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20260927fabric').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
     })
+    .then(function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
+      if(!api) return api;
+      return _loadScript('/world-clusters-v4.js?v=20260927fabric').then(function(){
+        const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
+        return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4' });   // full <250 m · lod1 <900 · block lod2 <2600
+      }).then(function(c){ window.__w3dDebug.gridFabricV4 = c; }).catch(function(e){ console.warn('[map-v4] grid fabric failed:', e && e.message); }).then(function(){ return api; });
+    })
     .then(function(api){   // MAP v4 CANON CITY (world-canon-v4.js ← Blender build_canon.py export): Grid, monument, Agora, pads, Meadowfields — solid colliders
       if(!api) return api;
-      return _loadScript('/world-canon-v4.js?v=20260927s6').then(function(){
+      return _loadScript('/world-canon-v4.js?v=20260927s7').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
@@ -518,6 +525,17 @@ window.__worldBuilt = false;
           isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null });
         window.__w3dDebug.wildlife = window.__wildlife;
       }).catch(function(e){ console.warn('[map-v4] wildlife failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
+      if(!api) return api;
+      return _loadScript('/world-city-v3.js?v=20260927a').then(function(){
+        window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
+          getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
+          onInteract: m => { if(window.__onCityInteract) window.__onCityInteract(m); else console.info('[city-v3] interact', m.name, m.dashboard_id, m.endpoint); },
+          onPing: e => { if(window.__onCityPing) window.__onCityPing(e); } });
+        window.__w3dDebug.cityV3 = window.__cityV3;
+        return window.__cityV3.ready;
+      }).catch(function(e){ console.warn('[map-v4] city v3 failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -4692,9 +4710,10 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   const t=clock.elapsedTime;
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
-  if(MAP_V4){ if(_v4Sky) _v4Sky.update(dt, playerPos); if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); }
+  if(MAP_V4){ if(_v4Sky) _v4Sky.update(dt, playerPos); if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); if(window.__w3dDebug.gridFabricV4 && window.__w3dDebug.gridFabricV4.update) window.__w3dDebug.gridFabricV4.update(t, dt, camera.position); }
   if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
   if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);
+  if(MAP_V4 && window.__cityV3 && !_spawnBusy) window.__cityV3.update(dt);
   if(_dragonKB){ playerPos.x += _dragonKB.x*dt; playerPos.z += _dragonKB.z*dt; if((_dragonKB.t -= dt) <= 0) _dragonKB = null; }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render

@@ -202,6 +202,7 @@ for k in range(8):                                                              
     uu = 102 + (k % 4) * 5.5; zz = lz + (1.3 if k < 4 else 3.7)
     cl.box(*PL_(uu, -6.52), zz, 0.05, 2.0, 1.6, LROT, M3['slot'])
     marker('SLOT_GALLERY_%02d' % (k + 1), *PL_(uu, -6.52), zz, slot_kind='SLOT_GALLERY', filled=None, price_sparks='set by seller', nft_later='optional provenance flag only')
+    gp_ = PL_(uu, -6.52); SLOTS.append({'slot_id': 'SLOT_GALLERY_%02d' % (k + 1), 'kind': 'SLOT_GALLERY', 'host': 'BLD_GALLERY_SHOP', 'pos_m': [round(gp_[0], 2), round(gp_[1], 2), round(zz, 2)], 'yaw': round(-math.degrees(LROT + math.pi / 2), 2), 'w_m': 2.0, 'h_m': 1.6, 'filled': None})
 marker('BLD_GALLERY_SHOP', gx_, gy_, lz, endpoint='bazaar-routes (SPARKS; PayBox/x402 pay-IN only)', dashboard_id='culture.gallery')
 marker('OBJ_EXHIBIT_INTAKE', *PL_(126.5, -6.0), lz, submits_to='TURTLE museum (core city) — jury, scarce', skill_required='oracle.exhibit', dashboard_id='culture.exhibit')
 cl.box(*PL_(126.5, -7.0), lz, 1.0, 1.2, 1.4, LROT, M3['graph']); cl.box(*PL_(126.5, -6.45), lz + 1.0, 0.05, 0.9, 0.3, LROT, M3['cyan'])
