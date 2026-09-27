@@ -21,8 +21,19 @@ MARK = []
 def marker(name, x, y, z=None, **props):
     z = GZ if z is None else z
     e = bpy.data.objects.new(name, None); e.empty_display_type = 'PLAIN_AXES'; e.empty_display_size = 3; e.location = (x, y, z)
-    for k, v in props.items(): e[k] = json.dumps(v) if isinstance(v, (list, dict)) else v
+    for k, v in props.items():
+        if v is not None: e[k] = json.dumps(v) if isinstance(v, (list, dict)) else v
     C['07_MARKERS'].objects.link(e); MARK.append({'name': name, 'pos_m': [round(x, 2), round(y, 2), round(z, 2)], 'props': props}); return e
+# Marker data schema (city-v3/markers@2), mirrored by tools/city/normalize-markers.mjs: keep the two in sync (its --check cross-checks this file).
+#   endpoints=[ep(service, method, path, status)]  machine-readable routes (status 'new' = service being written; method 'MCP' = MCP tool name)
+#   sparks_price=number|None + price_rule='fixed'|'seller'|'per-skill'|'per-class'|'dynamic' (+ price_unit, price_key -> docs/city-v3/PRICES.md)
+#   dashboard_id on every interactive marker; legacy={...} keeps the old prose fields for one release. No route pays SPARKS out.
+def ep(service, method=None, path=None, status=None):
+    d = {'service': service}
+    if method: d['method'] = method
+    if path: d['path'] = path
+    if status: d['status'] = status
+    return d
 def frame(c_deg, r0):
     """local frame at bearing c: u = outward radial, v = clockwise tangent. P(u, v) → world xy; ROT = box rot (local y = u, local x = v)."""
     a = math.radians(c_deg); ux, uy = math.sin(a), math.cos(a); vx, vy = uy, -ux; cx, cy = r0 * ux, r0 * uy
@@ -67,15 +78,15 @@ ring_pts = [(PLAZA_C[0] + 60 * math.sin(2 * math.pi * k / 128), PLAZA_C[1] + 60 
 pl.ribbon(ring_pts, 0.6, M3['emer']); pl.to_object('COMMONS_PLAZA', C['06_COMMONS'])
 
 SKY = MeshBuf(); SLOTS = []   # warm rooftop skylights (night top-down 'constellation') + art slot registry (art-slots-v4.json)
-def art_slot(buf, kind, host, x, y, z, rot, w, h, face_off, add_mesh=True):
+def art_slot(buf, kind, host, x, y, z, rot, w, h, face_off, add_mesh=True, ht=None):
     # empty slot = blank dark panel; filled = emissive artwork card (runtime swap by slot_id). face_off = local -y offset of the façade
     c_, s_ = math.cos(rot), math.sin(rot); fx, fy = x + face_off * s_, y - face_off * c_
     if add_mesh: buf.box(fx, fy, z, w, 0.06, h, rot, M3['slot'])
-    SLOTS.append({'slot_id': '%s_%05d' % (kind, len(SLOTS) + 1), 'kind': kind, 'host': host, 'pos_m': [round(fx, 2), round(fy, 2), round(z, 2)], 'yaw': round(-math.degrees(rot), 2), 'w_m': w, 'h_m': h, 'filled': None})
+    SLOTS.append({'slot_id': '%s_%05d' % (kind, len(SLOTS) + 1), 'kind': kind, **ht, 'pos_m': [round(fx, 2), round(fy, 2), round(z, 2)], 'yaw': round(-math.degrees(rot), 2), 'w_m': w, 'h_m': h, 'filled': None, 'legacy': {'host': host}})
 
 # ── 01 HOUSING: the 4 built wedges become lived-in (lit windows 45-60 %, arcade bands, courier pads) ──
 hb = MeshBuf(); wb = MeshBuf(); blocks = [o for o in COLL['obb'] if o['kind'] == 'grid-block']
-for b in blocks:
+for bi, b in enumerate(blocks):
     c_, s_ = math.cos(b['rot']), math.sin(b['rot']); hx, hy = b['hx'], b['hy']; top = b['top'] - 0.3
     def W(lx, ly): return (b['x'] + lx * c_ - ly * s_, b['y'] + lx * s_ + ly * c_)
     for side in (-1, 1):                                                      # arcade band on both street faces (±y = radial faces)
@@ -83,8 +94,8 @@ for b in blocks:
         lx_, ly_ = W(0, side * (hy + 0.06)); hb.box(lx_, ly_, GZ + 3.3, 2 * hx * 0.92, 0.12, 0.15, b['rot'], M3['cyan'])
     p_lit = rng.uniform(0.45, 0.60); z = GZ + 4.4
     if rng.random() < p_lit: SKY.box(b['x'], b['y'], b['top'] + 0.02, 2 * hx * 0.45, 2 * hy * 0.35, 0.06, b['rot'], M3['warm'])
-    art_slot(hb, 'SLOT_FACADE', 'housing', b['x'], b['y'], GZ + 4.6, b['rot'], 2.4, 3.0, hy + 0.1)                 # 1 façade slot on the core-facing face
-    art_slot(hb, 'SLOT_HOME', 'housing', b['x'], b['y'], GZ + 5.0, b['rot'], 1.6, 1.1, 0, add_mesh=False)         # interior home slot (data only)
+    art_slot(hb, 'SLOT_FACADE', 'housing', b['x'], b['y'], GZ + 4.6, b['rot'], 2.4, 3.0, hy + 0.1, ht={'host_type': 'housing', 'host_id': bi})                 # 1 façade slot on the core-facing face
+    art_slot(hb, 'SLOT_HOME', 'housing', b['x'], b['y'], GZ + 5.0, b['rot'], 1.6, 1.1, 0, add_mesh=False, ht={'host_type': 'housing', 'host_id': bi})         # interior home slot (data only)
     while z + 1.8 < top:
         for (face, half, span) in ((1, hy, hx), (-1, hy, hx), (2, hx, hy), (-2, hx, hy)):
             nb_ = max(1, int(2 * span // 6)); bw = 2 * span / nb_
@@ -139,7 +150,7 @@ def fabric(a0, a1, weights, caps, skip, cluster, col, gap=(5, 8), row_gap=(5, 7)
         if m['collider']:
             COLL['obb'].append({'x': round(x, 2), 'y': round(y, 2), 'hx': m['w'] / 2, 'hy': m['d'] / 2, 'rot': round(rot, 4), 'top': round(GZ + m['h'], 2), 'kind': cluster + '-' + k[3:]})
             if rng.random() < 0.55: SKY.box(x, y, GZ + m['h'] + 0.35, m['w'] * 0.35, m['d'] * 0.3, 0.06, rot, M3['warm'])
-            art_slot(None, 'SLOT_FACADE', '%s item %d (%s; library artslot-* material)' % (cluster, len(ITEMS) - 1, k), x, y, GZ + 3.4, rot, 2.4, 2.4, m['d'] / 2 + 0.1, add_mesh=False)
+            art_slot(None, 'SLOT_FACADE', '%s item %d (%s; library artslot-* material)' % (cluster, len(ITEMS) - 1, k), x, y, GZ + 3.4, rot, 2.4, 2.4, m['d'] / 2 + 0.1, add_mesh=False, ht={'host_type': 'fabric', 'host_id': len(ITEMS) - 1, 'host_key': k, 'host_cluster': cluster})
     return len(ITEMS) - n0
 
 # Culture Lane (owner culture addendum): ONE short street off the monument plaza, heading outward along the petal axis
@@ -162,24 +173,24 @@ for sp in (135.0, 157.5):
 hubs = []
 for i, (c0, r_) in enumerate(((2.0, 700), (92.0, 700), (182.0, 700), (272.0, 700))):   # A-D: one per built wedge, on the spoke sidewalk
     x, y = at(c0, r_); hubs.append((x, y))
-    marker('HUB_HOME_' + 'ABCD'[i], x, y, slot_type='both', rent_sparks_per_day=5, vendor_enabled=True, agent_capacity=2, dashboard_id='home.' + 'abcd'[i], home_id='home.' + 'abcd'[i])
+    marker('HUB_HOME_' + 'ABCD'[i], x, y, slot_type='both', rent_sparks_per_day=5, vendor_enabled=True, agent_capacity=2, dashboard_id='home.' + 'abcd'[i], home_id='home.' + 'abcd'[i], endpoints=[ep('home', 'GET', '/api/home/status', 'new'), ep('home', 'POST', '/api/home/inhabit', 'new'), ep('home', 'POST', '/api/home/rent', 'new'), ep('home', 'POST', '/api/home/checkin', 'new')], sparks_price=5, price_rule='fixed', price_key='home.rent', price_unit='day')
 for i, a_ in enumerate((120, 175)):                                           # E-F: Commons, on the plaza ring
     x, y = PLAZA_C[0] + 66 * math.sin(math.radians(a_)), PLAZA_C[1] + 66 * math.cos(math.radians(a_))
-    marker('HUB_HOME_' + 'EF'[i], x, y, slot_type='home', rent_sparks_per_day=5, vendor_enabled=False, agent_capacity=3, dashboard_id='home.' + 'ef'[i], home_id='home.' + 'ef'[i])
+    marker('HUB_HOME_' + 'EF'[i], x, y, slot_type='home', rent_sparks_per_day=5, vendor_enabled=False, agent_capacity=3, dashboard_id='home.' + 'ef'[i], home_id='home.' + 'ef'[i], endpoints=[ep('home', 'GET', '/api/home/status', 'new'), ep('home', 'POST', '/api/home/inhabit', 'new'), ep('home', 'POST', '/api/home/rent', 'new'), ep('home', 'POST', '/api/home/checkin', 'new')], sparks_price=5, price_rule='fixed', price_key='home.rent', price_unit='day')
 st = MeshBuf(); n_ = 0
 for (hx_, hy_) in hubs:                                                       # 6 stalls near hubs A-D (arcade edges), 6 around the plaza
     for k in range(2 if n_ < 4 else 1):
         if n_ >= 6: break
         x, y = hx_ + (k * 4 - 2), hy_ - 5; n_ += 1
         st.box(x, y, GZ, 2, 2, 0.12, 0, M3['graph']); st.box(x, y, GZ + 0.12, 2.1, 0.08, 0.05, 0, M3['emer'])
-        marker('STALL_%03d' % n_, x, y, pad_m=2, sparks_price=0, paybox_merchant_id='stall.%03d' % n_, endpoint='bazaar-routes', vendor_offline=True, dashboard_id='stall.%03d' % n_)
+        marker('STALL_%03d' % n_, x, y, pad_m=2, sparks_price=None, price_rule='seller', price_key='bazaar.item', paybox_merchant_id='stall.%03d' % n_, endpoints=[ep('bazaar', 'GET', '/api/bazaar/list'), ep('bazaar', 'POST', '/api/bazaar/buy')], vendor_offline=True, dashboard_id='stall.%03d' % n_, legacy={'endpoint': 'bazaar-routes', 'sparks_price': 0})
 for k in range(6):
     n_ += 1; a_ = math.radians(30 + k * 50); x, y = PLAZA_C[0] + 74 * math.sin(a_), PLAZA_C[1] + 74 * math.cos(a_)
     st.box(x, y, PZ, 2, 2, 0.12, a_, M3['graph']); st.box(x, y, PZ + 0.12, 2.1, 0.08, 0.05, a_, M3['emer'])
-    marker('STALL_%03d' % n_, x, y, PZ, pad_m=2, sparks_price=0, paybox_merchant_id='stall.%03d' % n_, endpoint='bazaar-routes', vendor_offline=True, dashboard_id='stall.%03d' % n_)
+    marker('STALL_%03d' % n_, x, y, PZ, pad_m=2, sparks_price=None, price_rule='seller', price_key='bazaar.item', paybox_merchant_id='stall.%03d' % n_, endpoints=[ep('bazaar', 'GET', '/api/bazaar/list'), ep('bazaar', 'POST', '/api/bazaar/buy')], vendor_offline=True, dashboard_id='stall.%03d' % n_, legacy={'endpoint': 'bazaar-routes', 'sparks_price': 0})
 st.to_object('STALL_Pads', C['06_COMMONS'])
 x, y = PLAZA_C[0] - 70 * math.sin(math.radians(146.25)), PLAZA_C[1] - 70 * math.cos(math.radians(146.25))   # plaza edge on the core-facing side
-marker('NODE_MAIL', x, y, PZ, endpoint='agentmail-routes', dashboard_id='mail')
+marker('NODE_MAIL', x, y, PZ, endpoints=[ep('agentmail', 'GET', '/api/agentmail/messages')], dashboard_id='mail', legacy={'endpoint': 'agentmail-routes'})
 
 # ── CULTURE LANE (SE Commons, off the monument plaza): broadcast booth, gallery shop, arcade alcove, 4 studios. NOT a 5th petal. ──
 cl = MeshBuf(); lz = PZ
@@ -195,29 +206,29 @@ def lane_bld(name, u0, u1, side, depth, h, m, glass=True):
 bx, by, bu, bv = lane_bld('BLD_BROADCAST', 78, 94, -1, 12, 9, M3['steel'])
 cl.box(*PL_(bu, bv), lz + 9.3, 0.4, 0.4, 3.0, LROT, M3['steel']); cl.cyl(*PL_(bu, bv), lz + 12.0, 0.5, 1.5, M3['graph'], seg=24, r2=3.2, open_top=True)   # roof dish
 cl.box(*PL_(bu, -6.35), lz + 7.4, 0.1, 5, 0.6, LROT, M3['cyan'])                                                       # ON-AIR bar
-marker('BLD_BROADCAST', bx, by, lz, endpoint='radio queue (new, SPARKS-only; tiny capped per-spin pay)', skill_required='music.compose|music.perform', dashboard_id='culture.radio')
-marker('OBJ_RADIO_QUEUE', *PL_(bu, -5.0), lz, queue='city radio + building speakers', unlock_slot_sparks=5, spin_pay_sparks_capped=True, dashboard_id='culture.radio.queue')
+marker('BLD_BROADCAST', bx, by, lz, endpoints=[ep('radio', 'GET', '/api/radio/queue', 'new')], skill_required='music.compose|music.perform', dashboard_id='culture.radio', legacy={'endpoint': 'radio queue (new, SPARKS-only; tiny capped per-spin pay)'})
+marker('OBJ_RADIO_QUEUE', *PL_(bu, -5.0), lz, queue='city radio + building speakers', unlock_slot_sparks=5, spin_pay_sparks_capped=True, dashboard_id='culture.radio.queue', endpoints=[ep('radio', 'GET', '/api/radio/queue', 'new'), ep('radio', 'POST', '/api/radio/queue/unlock', 'new')], sparks_price=5, price_rule='fixed', price_key='radio.slot_unlock', price_unit='each')
 gx_, gy_, gu, gv = lane_bld('BLD_GALLERY_SHOP', 100, 124, -1, 12, 6.5, M3['pale'])
 for k in range(8):                                                                                                   # SLOT_GALLERY_01-08: blank until a piece is placed
     uu = 102 + (k % 4) * 5.5; zz = lz + (1.3 if k < 4 else 3.7)
     cl.box(*PL_(uu, -6.52), zz, 0.05, 2.0, 1.6, LROT, M3['slot'])
-    marker('SLOT_GALLERY_%02d' % (k + 1), *PL_(uu, -6.52), zz, slot_kind='SLOT_GALLERY', filled=None, price_sparks='set by seller', nft_later='optional provenance flag only')
-    gp_ = PL_(uu, -6.52); SLOTS.append({'slot_id': 'SLOT_GALLERY_%02d' % (k + 1), 'kind': 'SLOT_GALLERY', 'host': 'BLD_GALLERY_SHOP', 'pos_m': [round(gp_[0], 2), round(gp_[1], 2), round(zz, 2)], 'yaw': round(-math.degrees(LROT + math.pi / 2), 2), 'w_m': 2.0, 'h_m': 1.6, 'filled': None})
-marker('BLD_GALLERY_SHOP', gx_, gy_, lz, endpoint='bazaar-routes (SPARKS; PayBox/x402 pay-IN only)', dashboard_id='culture.gallery')
-marker('OBJ_EXHIBIT_INTAKE', *PL_(126.5, -6.0), lz, submits_to='TURTLE museum (core city) — jury, scarce', skill_required='oracle.exhibit', dashboard_id='culture.exhibit')
+    marker('SLOT_GALLERY_%02d' % (k + 1), *PL_(uu, -6.52), zz, slot_kind='SLOT_GALLERY', filled=None, nft_later='optional provenance flag only', dashboard_id='culture.gallery.slot.%02d' % (k + 1), endpoints=[ep('bazaar', 'POST', '/api/bazaar/buy')], sparks_price=None, price_rule='seller', price_key='gallery.piece', legacy={'price_sparks': 'set by seller'})
+    gp_ = PL_(uu, -6.52); SLOTS.append({'slot_id': 'SLOT_GALLERY_%02d' % (k + 1), 'kind': 'SLOT_GALLERY', 'host_type': 'gallery', 'host_id': 'BLD_GALLERY_SHOP', 'pos_m': [round(gp_[0], 2), round(gp_[1], 2), round(zz, 2)], 'yaw': round(-math.degrees(LROT + math.pi / 2), 2), 'w_m': 2.0, 'h_m': 1.6, 'filled': None, 'legacy': {'host': 'BLD_GALLERY_SHOP'}})
+marker('BLD_GALLERY_SHOP', gx_, gy_, lz, endpoints=[ep('bazaar', 'GET', '/api/bazaar/list'), ep('bazaar', 'POST', '/api/bazaar/list-item')], sparks_price=None, price_rule='fixed', price_key='gallery.listing', price_unit='each', dashboard_id='culture.gallery', legacy={'endpoint': 'bazaar-routes (SPARKS; PayBox/x402 pay-IN only)'})
+marker('OBJ_EXHIBIT_INTAKE', *PL_(126.5, -6.0), lz, submits_to='TURTLE museum (core city) — jury, scarce', skill_required='oracle.exhibit', dashboard_id='culture.exhibit', endpoints=[], sparks_price=None, price_rule='fixed', price_key='exhibit.submit', price_unit='each')
 cl.box(*PL_(126.5, -7.0), lz, 1.0, 1.2, 1.4, LROT, M3['graph']); cl.box(*PL_(126.5, -6.45), lz + 1.0, 0.05, 0.9, 0.3, LROT, M3['cyan'])
 ax_, ay_, au, av = lane_bld('BLD_ARCADE', 78, 94, 1, 12, 5.5, M3['steel'])
 for k in range(4):                                                                                                   # 4 cabinets, no casino floor
     cx2, cy2 = PL_(80.5 + k * 3.8, 8.6); cl.box(cx2, cy2, lz, 0.9, 0.8, 1.9, LROT, M3['graph']); cl.box(*PL_(80.5 + k * 3.8, 8.15), lz + 1.1, 0.05, 0.6, 0.5, LROT, M3['cyan'])
-    marker('ARCADE_CAB_%02d' % (k + 1), cx2, cy2, lz, game=['reflex', 'rhythm', 'prediction', 'skill'][k], prize='SPARKS or cosmetics (no gambling)')
-marker('BLD_ARCADE', ax_, ay_, lz, note='arcade alcove: 4 skill cabinets; the Hall stays inside ZEROX downtown', dashboard_id='culture.arcade')
+    marker('ARCADE_CAB_%02d' % (k + 1), cx2, cy2, lz, game=['reflex', 'rhythm', 'prediction', 'skill'][k], prize='SPARKS or cosmetics (no gambling)', dashboard_id='culture.arcade.cab.%02d' % (k + 1), endpoints=[ep('arcade', 'GET', '/api/arcade/games'), ep('arcade', 'POST', '/api/arcade/result')])
+marker('BLD_ARCADE', ax_, ay_, lz, note='arcade alcove: 4 skill cabinets; the Hall stays inside ZEROX downtown', dashboard_id='culture.arcade', endpoints=[ep('arcade', 'GET', '/api/arcade/games'), ep('arcade', 'GET', '/api/arcade/leaderboard')])
 for k in range(4):                                                                                                   # STUDIO_01-04: tiny rentable production rooms
     sx2, sy2, su, sv = lane_bld('STUDIO_%02d' % (k + 1), 100 + k * 10, 108 + k * 10, 1, 8, 4.5, M3['graph'])
     cl.box(*PL_(su, 6.47), lz + 2.2, 0.06, 5.0, 1.2, LROT, M3['warm'])
-    marker('STUDIO_%02d' % (k + 1), sx2, sy2, lz, rent_sparks_per_day=3, for_skills=['music.compose', 'turtle.art.motion', 'quill.lyric'], dashboard_id='culture.studio.%02d' % (k + 1))
+    marker('STUDIO_%02d' % (k + 1), sx2, sy2, lz, rent_sparks_per_day=3, for_skills=['music.compose', 'turtle.art.motion', 'quill.lyric'], dashboard_id='culture.studio.%02d' % (k + 1), endpoints=[ep('economy', 'POST', '/api/economy/spend')], sparks_price=3, price_rule='fixed', price_key='studio.rent', price_unit='day')
 cl.box(*PL_(166, 7.9), lz, 0.5, 48, 4.2, LROT, M3['graph'])   # the agent art wall
-for k in range(6): art_slot(cl, 'SLOT_FACADE', 'culture lane wall', *PL_(144 + k * 8, 7.2), lz + 1.6, LROT + math.pi / 2, 2.4, 2.4, 0.0)   # agent art wall
-cl.to_object('CULTURE_LANE', C['06_COMMONS']); marker('CULTURE_LANE', *PL_((LANE_U0 + LANE_U1) / 2, 0), lz, note='a block, not a petal', dashboard_id='culture')
+for k in range(6): art_slot(cl, 'SLOT_FACADE', 'culture lane wall', *PL_(144 + k * 8, 7.2), lz + 1.6, LROT + math.pi / 2, 2.4, 2.4, 0.0, ht={'host_type': 'culture-lane', 'host_id': 'CULTURE_LANE'})   # agent art wall
+cl.to_object('CULTURE_LANE', C['06_COMMONS']); marker('CULTURE_LANE', *PL_((LANE_U0 + LANE_U1) / 2, 0), lz, note='a block, not a petal', dashboard_id='culture', endpoints=[])
 
 # ── 02 ACADEMY + FORGE campus (NE petal, outer third, plaza faces the core) ──
 CC = 56.25; P, ROT = frame(CC, 1290); cz = H(*P(0, 0)); cb = MeshBuf()
@@ -231,11 +242,11 @@ hbd.box(x, y, cz, 3.2, 0.9, 10.5, ROT, M3['steel'], taper=0.86)
 for side in (-1, 1): xx, yy = P(side * 0.47, 0); hbd.box(xx, yy, cz + 2.0, 2.4, 0.04, 7.2, ROT, M3['cyan'])
 hbd.to_object('OBJ_HIRING_BOARD', C['02_ACADEMY_FORGE'])
 COLL['obb'].append({'x': round(x, 2), 'y': round(y, 2), 'hx': 1.6, 'hy': 0.45, 'rot': round(ROT, 4), 'top': round(cz + 10.5, 2), 'kind': 'hiring-board'})
-marker('OBJ_HIRING_BOARD', x, y, cz, endpoint='hire-routes:/api/hire/rates,/api/hire/:agent; x402-agent-routes:/:name/hire; work-sessions:/assign', skill_required='work.hire', dashboard_id='hiring', paybox_merchant_id='city.hiring')
+marker('OBJ_HIRING_BOARD', x, y, cz, endpoints=[ep('hire', 'GET', '/api/hire/rates'), ep('hire', 'POST', '/api/hire/:agent'), ep('x402-agent', 'POST', '/api/x402/agent/:name/hire'), ep('work-sessions', 'POST', '/api/work/assign'), ep('work-sessions', 'GET', '/api/work/active')], sparks_price=None, price_rule='dynamic', price_key='hire.contract', skill_required='work.hire', dashboard_id='hiring', paybox_merchant_id='city.hiring', legacy={'endpoint': 'hire-routes:/api/hire/rates,/api/hire/:agent; x402-agent-routes:/:name/hire; work-sessions:/assign'})
 kx, ky = P(-20, 30); kb = MeshBuf(); kb.box(kx, ky, cz, 1.2, 0.8, 2.2, ROT, M3['graph']); kb.box(*P(-20.42, 30), cz + 1.1, 0.9, 0.04, 0.7, ROT, M3['cyan'])
 for k in range(4): a = k * math.pi / 4; kb.box(kx, ky, cz + 2.2, 1.0 * abs(math.cos(a)) + 0.12, 0.12 + 1.0 * abs(math.sin(a)), 0.1, ROT, M3['gold'])   # spark glyph
 kb.to_object('OBJ_SPARKS_KIOSK', C['02_ACADEMY_FORGE'])
-marker('OBJ_SPARKS_KIOSK', kx, ky, cz, endpoint='economy-routes:/balance,/catalog,/catalog/purchase', paybox_merchant_id='city.kiosk', dashboard_id='sparks')
+marker('OBJ_SPARKS_KIOSK', kx, ky, cz, endpoints=[ep('economy', 'GET', '/api/economy/balance'), ep('economy', 'GET', '/api/economy/catalog'), ep('economy', 'POST', '/api/economy/catalog/purchase')], sparks_price=None, price_rule='dynamic', price_key='kiosk.catalog', paybox_merchant_id='city.kiosk', dashboard_id='sparks', legacy={'endpoint': 'economy-routes:/balance,/catalog,/catalog/purchase'})
 for nm, (u_, v_) in (('SPAWN_TRAINEE', (-10, -30)), ('SPAWN_TEACHER', (8, -34)), ('SPAWN_HIRE', (-14, 8))): marker(nm, *P(u_, v_), cz)
 
 # Forge wing (+v side, toward Emberfall): long open-ended foundry, ribs every 8 m, ember only in bay throats
@@ -251,7 +262,7 @@ for k, (u_, v_) in enumerate([(u, FV + v) for u in (-14, 6, 26) for v in (-8, 8)
     fb.box(*P(u_, v_), cz + 0.3, 8, 10, 0.02, ROT, M3['steel'])
     for (du, dv, su, sv) in ((5, 0, 0.3, 8), (-5, 0, 0.3, 8), (0, 4, 10, 0.3), (0, -4, 10, 0.3)): fb.box(*P(u_ + du, v_ + dv), cz + 0.3, sv, su, 0.06, ROT, M3['ember'] if du > 0 else M3['steel'])
     fb.box(*P(u_ + 4.9, v_), cz + 0.3, 6, 0.4, 1.4, ROT, M3['ember'])        # the bay throat (only orange light)
-    marker('BAY_%02d' % (k + 1), *P(u_, v_), cz, skill_install=True, dashboard_id='forge.bay.%02d' % (k + 1))
+    marker('BAY_%02d' % (k + 1), *P(u_, v_), cz, skill_install=True, dashboard_id='forge.bay.%02d' % (k + 1), endpoints=[ep('skills-market', 'GET', '/api/skills/receipts')])
 for u_ in range(U0 + 4, U1, 8): fb.box(*P(u_, FV), cz + 0.3, 0.3, 3.0, 0.03, ROT, M3['ember'])               # floor channel dashes
 gx0 = FV + 0.0                                                               # roof glyph: anvil + circuit (cyan, readable top-down)
 for (du, dv, su, sv) in ((10, 0, 4, 16), (6, 0, 4, 6), (2, 0, 3, 11)): fb.box(*P(du, gx0 + dv), cz + 17.2, sv, su, 0.2, ROT, M3['cyan'])
@@ -268,35 +279,35 @@ for i, (u_, v_) in enumerate(((-18, 44), (-10, 46), (-2, 44))):             # FR
     else:
         for s_ in (-1, 1):
             fr.box(*P(u_, v_ + s_ * 1.3), cz + 4.0, 1.4, 0.3, 0.3, ROT, M3['graph']); fr.box(*P(u_ - 0.2, v_ + s_ * 2.6), cz + 2.6, 2.4, 0.05, 1.8, ROT, M3['steel'])
-    marker('FRAME_%02d' % (i + 1), x, y, cz, frame_type='winged' if i == 2 else 'bipedal', skill_required='forge.frame.winged' if i == 2 else 'forge.frame.basic', hands=(i < 2))
+    marker('FRAME_%02d' % (i + 1), x, y, cz, frame_type='winged' if i == 2 else 'bipedal', skill_required='forge.frame.winged' if i == 2 else 'forge.frame.basic', hands=(i < 2), dashboard_id='forge.frame.%02d' % (i + 1), endpoints=[])
 x, y = P(-26, 50); fr.box(x, y, cz, 0.9, 0.9, 1.2, ROT, M3['steel']); fr.box(x, y, cz + 1.2, 0.08, 0.5, 0.02, ROT, M3['cyan']); fr.cyl(x, y, cz + 0.02, 1.3, 0.04, M3['cyanDim'], seg=24)
-marker('NODE_SKILL_INSTALL', x, y, cz, endpoint='skills-market-routes:/api/skills/market/:id/run,/api/skills/receipts', paybox_merchant_id='forge.install', sparks_price='per skill (DOC_SKILLS)', seat_anim_s=3, dashboard_id='forge.install')
+marker('NODE_SKILL_INSTALL', x, y, cz, endpoints=[ep('skills-market', 'POST', '/api/skills/market/:id/run'), ep('skills-market', 'GET', '/api/skills/receipts')], paybox_merchant_id='forge.install', sparks_price=None, price_rule='per-skill', price_key='install.tier', seat_anim_s=3, dashboard_id='forge.install', legacy={'endpoint': 'skills-market-routes:/api/skills/market/:id/run,/api/skills/receipts', 'sparks_price': 'per skill (DOC_SKILLS)'})
 x, y = P(-26, 54); fr.box(x, y, cz, 0.9, 2.4, 0.9, ROT, M3['graph']); fr.box(*P(-26.4, 54), cz + 0.9, 0.1, 2.0, 1.2, ROT, M3['steel'])
-marker('NODE_REPAIR', x, y, cz, skill_required='forge.repair', dashboard_id='forge.repair')
+marker('NODE_REPAIR', x, y, cz, skill_required='forge.repair', dashboard_id='forge.repair', endpoints=[], sparks_price=None, price_rule='fixed', price_key='forge.repair', price_unit='each')
 fr.to_object('FORGE_Frames_Install_Repair', C['02_ACADEMY_FORGE'])
 
 # Academy wing (-v side): half-bowl lecture terrace facing the plaza + 3-level hall behind (pale stone, cyan glass fins, no orange)
 ab = MeshBuf(); AV = -95; AU = 18; AF = AV + 30   # AF = plaza-facing façade (hall is 60 m along v)
 ab.box(*P(AU, AV), cz, 60, 34, 0.3, ROT, M3['pale'])
-for k in range(4): ab.box(*P(AU - 12 + k * 8.5, AV - 6), cz + 0.3, 12, 7.5, 4.2, ROT, M3['glassC']); marker('CLASS_%02d' % (k + 1), *P(AU - 12 + k * 8.5, AV - 6), cz, endpoint='academy-routes:/catalog,/quote,/open_tab,/spend,/close_tab', dashboard_id='academy.class.%02d' % (k + 1))
-ab.box(*P(AU, AV), cz + 4.5, 56, 30, 4.5, ROT, M3['pale']); marker('ARCHIVE', *P(AU, AV), cz + 4.5, dashboard_id='academy.archive', note='ORACLE research wing (ORACLE pad nearby)')
+for k in range(4): ab.box(*P(AU - 12 + k * 8.5, AV - 6), cz + 0.3, 12, 7.5, 4.2, ROT, M3['glassC']); marker('CLASS_%02d' % (k + 1), *P(AU - 12 + k * 8.5, AV - 6), cz, endpoints=[ep('academy', 'GET', '/api/academy/catalog'), ep('academy', 'POST', '/api/academy/quote'), ep('academy', 'POST', '/api/academy/open_tab'), ep('academy', 'POST', '/api/academy/spend'), ep('academy', 'POST', '/api/academy/close_tab')], sparks_price=None, price_rule='per-class', price_key='academy.tuition', dashboard_id='academy.class.%02d' % (k + 1), legacy={'endpoint': 'academy-routes:/catalog,/quote,/open_tab,/spend,/close_tab'})
+ab.box(*P(AU, AV), cz + 4.5, 56, 30, 4.5, ROT, M3['pale']); marker('ARCHIVE', *P(AU, AV), cz + 4.5, dashboard_id='academy.archive', endpoints=[], note='ORACLE research wing (ORACLE pad nearby)')
 ab.box(*P(AU, AV), cz + 9.0, 56, 30, 4.2, ROT, M3['glassC']); ab.box(*P(AU, AV), cz + 13.2, 57, 31, 0.4, ROT, M3['pale'])
 for k in range(14): ab.box(*P(AU - 16 + k * 2.45, AF + 0.6), cz + 0.3, 1.2, 0.2, 12.8, ROT, M3['glassC'])                         # cyan glass fins (plaza-facing)
 for k in range(18): ab.box(*P(AU - 17 + k * 2.0, AF + 0.5), cz + 13.6, 0.06, 0.06, 1.0, ROT, M3['steel'])
 ab.box(*P(AU, AF + 0.5), cz + 14.6, 0.06, 34, 0.06, ROT, M3['cyan']); marker('DECK_OBSERVE', *P(AU, AV), cz + 13.6, walkable=True)
-ab.box(*P(AU + 10, AF + 0.4), cz + 5.5, 0.2, 8, 4, ROT, M3['cyan']); marker('OBJ_CLASS_BOARD', *P(AU + 10, AF + 0.4), cz + 5.5, endpoint='academy-routes:/catalog', dashboard_id='academy.board')
+ab.box(*P(AU + 10, AF + 0.4), cz + 5.5, 0.2, 8, 4, ROT, M3['cyan']); marker('OBJ_CLASS_BOARD', *P(AU + 10, AF + 0.4), cz + 5.5, endpoints=[ep('academy', 'GET', '/api/academy/catalog')], dashboard_id='academy.board', legacy={'endpoint': 'academy-routes:/catalog'})
 for i in range(7):                                                            # half-bowl rows (open toward the plaza, +v)
     r_ = 6 + i * 2.2
     for k in range(18):
         a = math.pi * (k + 0.5) / 18; ab.box(*P(-4 + r_ * math.cos(a) * 0 + (r_ * math.cos(a)), AF + 20 - r_ * math.sin(a) * 0.9), cz + i * 0.45, 2.0, 1.9, 0.45 * (i + 1), ROT + a, M3['pale'])
 x, y = P(-4, AF + 20); ab.cyl(x, y, cz, 3.2, 0.6, M3['pale'], seg=32); ab.cyl(x, y, cz + 0.6, 3.3, 0.05, M3['cyan'], seg=32)
-marker('OBJ_GRADUATION_DAIS', x, y, cz + 0.6, dashboard_id='academy.graduation')
+marker('OBJ_GRADUATION_DAIS', x, y, cz + 0.6, dashboard_id='academy.graduation', endpoints=[])
 gx, gy = P(AU, AV)                                                           # roof glyph: open ring + eye
 for k in range(40): a = 2 * math.pi * k / 40; ab.box(gx + 10 * math.cos(a), gy + 10 * math.sin(a), cz + 13.7, 1.6, 0.7, 0.15, a + math.pi / 2, M3['cyan'])
 ab.box(gx, gy, cz + 13.7, 3.0, 3.0, 0.2, ROT, M3['cyan'])
 for nm, u_, sk_ in (('CLASS_ART', 33, ['turtle.art.still', 'turtle.art.motion', 'quill.prose', 'quill.lyric', 'oracle.exhibit']), ('CLASS_MUSIC', 44, ['music.compose', 'music.perform'])):
     ab.box(*P(u_, AF + 6), cz, 10, 10, 5.0, ROT, M3['glassC']); ab.box(*P(u_, AF + 6), cz + 5.0, 10.4, 10.4, 0.3, ROT, M3['pale'])   # practice rooms beside the terrace
-    marker(nm, *P(u_, AF + 6), cz, teaches=sk_, endpoint='academy-routes:/catalog,/quote,/open_tab,/spend,/close_tab', dashboard_id='academy.' + nm[6:].lower())
+    marker(nm, *P(u_, AF + 6), cz, teaches=sk_, endpoints=[ep('academy', 'GET', '/api/academy/catalog'), ep('academy', 'POST', '/api/academy/quote'), ep('academy', 'POST', '/api/academy/open_tab'), ep('academy', 'POST', '/api/academy/spend'), ep('academy', 'POST', '/api/academy/close_tab')], sparks_price=None, price_rule='per-class', price_key='academy.tuition', dashboard_id='academy.' + nm[6:].lower(), legacy={'endpoint': 'academy-routes:/catalog,/quote,/open_tab,/spend,/close_tab'})
 ab.to_object('ACADEMY_HALL', C['02_ACADEMY_FORGE'])
 COLL['obb'].append({'x': round(gx, 2), 'y': round(gy, 2), 'hx': 28, 'hy': 15, 'rot': round(ROT, 4), 'top': round(cz + 13.6, 2), 'kind': 'academy-hall'})
 sp = MeshBuf()                                                                # canopy spine linking Forge ↔ Academy (connected roofs)
@@ -323,12 +334,12 @@ for i, (h_, a_deg) in enumerate(((30, 0), (42, 90), (54, 180), (66, 270))):
     pb.cyl(ex, ey, pz_ + h_, 7, 1.2, M3['graph'], seg=40); pb.cyl(ex, ey, pz_ + h_ + 1.2, 7.1, 0.3, M3['cyanDim'], seg=40, open_top=True)
     PADS_.append((ex, ey, pz_ + h_ + 1.2))
     COLL['circle'].append({'x': round(ex, 2), 'y': round(ey, 2), 'r': 7, 'top': round(pz_ + h_ + 1.2, 2), 'kind': 'perch-pad', 'walkableTop': True})
-    marker('PERCH_' + 'ABCD'[i], ex, ey, pz_ + h_ + 1.2, perch_access='pilot.dragon', dashboard_id='perch.' + 'abcd'[i])
+    marker('PERCH_' + 'ABCD'[i], ex, ey, pz_ + h_ + 1.2, perch_access='pilot.dragon', dashboard_id='perch.' + 'abcd'[i], endpoints=[])
 pb.to_object('PERCH_SPIRE', C['03_PERCH'])
 COLL['circle'].append({'x': round(PX_, 2), 'y': round(PY_, 2), 'r': 22, 'top': round(pz_ + PH + 2.5, 2), 'kind': 'perch-crown', 'walkableTop': True})
 COLL['obb'].append({'x': round(PX_, 2), 'y': round(PY_, 2), 'hx': 5, 'hy': 5, 'rot': round(math.radians(-50), 4), 'top': round(pz_ + PH, 2), 'kind': 'perch-shaft'})
 PERCH_CROWN = (PX_, PY_, pz_ + PH + 2.5)
-marker('PERCH_MAIN', *PERCH_CROWN, perch_access='pilot.dragon', capacity_dragons=3, dashboard_id='perch.main', status='landing = status hit')
+marker('PERCH_MAIN', *PERCH_CROWN, perch_access='pilot.dragon', capacity_dragons=3, dashboard_id='perch.main', endpoints=[], status='landing = status hit')
 
 # ── 04 TRACK: TRACK_MAIN on the existing r1600 ring road (CCW), gate at the N spoke, NW Race Quarter ──
 tb = MeshBuf(); RR = GRID_R
@@ -342,22 +353,22 @@ for s_ in (-1, 1): gb.box(gx, gy + s_ * 10, GZ, 2.2, 3.0, 15, 0, M3['steel']); C
 gb.box(gx, gy, GZ + 15, 2.4, 23, 2.0, 0, M3['steel'])
 for k in range(36): a = 2 * math.pi * k / 36; gb.box(gx, gy + 7.2 * math.cos(a), GZ + 7.8 + 7.2 * math.sin(a), 0.5, 0.9, 0.9, 0, M3['cyan'])
 gb.to_object('GATE_START', C['04_TRACK'])
-marker('GATE_START', gx, gy, GZ, endpoint='race (new): entry = economy /spend, prize = economy /grant', paybox_merchant_id='race.gate', sparks_price=10, lanes=4, pulse=True, dashboard_id='race.gate', skill_required='race.circuit')
+marker('GATE_START', gx, gy, GZ, endpoints=[ep('race', 'GET', '/api/race/track', 'new'), ep('race', 'GET', '/api/race/heats', 'new'), ep('race', 'POST', '/api/race/heats/:heatId/enter', 'new')], paybox_merchant_id='race.gate', sparks_price=10, price_rule='fixed', price_key='race.entry', price_unit='entry', legacy={'endpoint': 'race (new): entry = economy /spend, prize = economy /grant'}, lanes=4, pulse=True, dashboard_id='race.gate', skill_required='race.circuit')
 rq = MeshBuf()
 for i in range(8):                                                            # PIT_01-08 parallel to the ribbon, inside the ring, NW side
     c_ = 358.0 - i * 1.0; x, y = at(c_, RR - 16); rot = math.radians(-c_); Pp, _ = frame(c_, RR - 16)
     rq.box(*Pp(-3.8, 0), GZ, 11, 0.4, 4.5, rot, M3['steel']); rq.box(*Pp(0, -5.3), GZ, 0.4, 8, 4.5, rot, M3['graph']); rq.box(*Pp(0, 5.3), GZ, 0.4, 8, 4.5, rot, M3['graph'])
     rq.box(x, y, GZ + 4.5, 11.2, 8.4, 0.3, rot, M3['steel']); rq.box(*Pp(3.9, 0), GZ + 4.3, 10.4, 0.1, 0.12, rot, M3['cyan'])
     COLL['obb'].append({'x': round(x, 2), 'y': round(y, 2), 'hx': 5.5, 'hy': 4, 'rot': round(rot, 4), 'top': round(GZ + 4.8, 2), 'kind': 'pit'})
-    marker('PIT_%02d' % (i + 1), x, y, GZ, paybox_merchant_id='race.pit.%02d' % (i + 1), sparks_price=5, dashboard_id='race.pit.%02d' % (i + 1))
+    marker('PIT_%02d' % (i + 1), x, y, GZ, paybox_merchant_id='race.pit.%02d' % (i + 1), sparks_price=5, price_rule='fixed', price_key='race.pit', price_unit='each', dashboard_id='race.pit.%02d' % (i + 1), endpoints=[ep('race', 'GET', '/api/race/heats/:heatId', 'new')])
 tx_, ty_ = at(356.0, RR - 36); rq.box(tx_, ty_, GZ, 6, 6, 42, math.radians(4), M3['steel'], taper=0.8)
 for s_ in (-1, 1): rq.box(tx_ + s_ * 1.4, ty_ + 2.5, GZ + 32, 2.4, 0.15, 5.5, math.radians(4 + s_ * 12), M3['cyan'])     # two-screen face toward the gate
-rq.to_object('RACE_Pits_Tower', C['04_TRACK']); marker('TOWER_RACE', tx_, ty_, GZ, screens=2, dashboard_id='race.tower')
+rq.to_object('RACE_Pits_Tower', C['04_TRACK']); marker('TOWER_RACE', tx_, ty_, GZ, screens=2, dashboard_id='race.tower', endpoints=[ep('race', 'GET', '/api/race/heats', 'new')])
 COLL['obb'].append({'x': round(tx_, 2), 'y': round(ty_, 2), 'hx': 3, 'hy': 3, 'rot': round(math.radians(4), 4), 'top': round(GZ + 42, 2), 'kind': 'race-tower'})
 Ps, RS = frame(326.25, 1250); sk = MeshBuf(); sx_, sy_ = Ps(0, 0)          # PLAZA_SKATE: small ribbon + bowl (hover/skate class only)
 disc_fan(sk, ellipse_pts(Ps, 34, 22, GZ + 0.03), M3['char']); sk.ribbon(ellipse_pts(Ps, 30, 18, GZ + 0.08), 3.0, M3['track']); sk.ribbon(ellipse_pts(Ps, 31.7, 19.7, GZ + 0.1), 0.25, M3['cyan'])
 for i in range(5): sk.cyl(*Ps(0, 0), GZ + 0.05 - 0, 9 - i * 1.4, 0.5 + i * 0.0, M3['graph'] if i % 2 else M3['char'], seg=40, r2=9 - i * 1.4 + 0.8, open_top=True)
-sk.to_object('PLAZA_SKATE', C['04_TRACK']); marker('PLAZA_SKATE', sx_, sy_, GZ, skill_required='race.skate', note='SKATE pack (Hall) arena', dashboard_id='race.skate')
+sk.to_object('PLAZA_SKATE', C['04_TRACK']); marker('PLAZA_SKATE', sx_, sy_, GZ, skill_required='race.skate', note='SKATE pack (Hall) arena', dashboard_id='race.skate', endpoints=[])
 Pv, RV = frame(341.25, 1370); vb = MeshBuf(); disc_fan(vb, ellipse_pts(Pv, 24, 14, GZ + 0.03, n=4), M3['char'])
 vb.box(*Pv(0, 0), GZ, 26, 46, 0.15, RV, M3['char']); vb.box(*Pv(12.8, 0), GZ + 0.15, 0.2, 46, 0.1, RV, M3['cyan'])
 VEH = [('VEH_GROUND_RUNNER', 'street', 'drive.ground'), ('VEH_HOVER_SLIDE', 'skate/hover', 'drive.hover'), ('VEH_RAIL_NEEDLE', 'mag-rail', 'drive.rail'),
@@ -373,8 +384,8 @@ for i, (nm, cls, gate) in enumerate(VEH):
     elif nm == 'VEH_HAULER': vb.box(x, y, z + 0.6, 2.8, 8.0, 3.0, RV, M3['graph']); vb.box(*Pv(-2 - 3.2, v_), z + 0.6, 2.8, 1.8, 2.2, RV, M3['steel'])
     elif nm == 'VEH_SKY_SKIFF': vb.box(x, y, z + 1.0, 1.4, 4.2, 1.0, RV, M3['graph'], taper=0.7); vb.box(x, y, z + 1.3, 5.8, 1.4, 0.1, RV, M3['steel']); vb.box(x, y, z + 0.0, 0.3, 0.3, 1.0, RV, M3['steel'])
     else: vb.box(x, y, z, 1.2, 1.2, 1.4, RV, M3['steel']); vb.box(x, y, z + 1.4, 1.1, 1.6, 0.35, RV, M3['graph']); vb.box(x, y, z + 1.75, 0.2, 1.4, 0.5, RV, M3['cyan'])
-    marker(nm, x, y, z, vehicle_class=cls, skill_gate=gate, paybox_merchant_id='race.vehicle.' + nm[4:].lower(), dashboard_id='vehicle.' + nm[4:].lower())
-vb.to_object('PAD_VEHICLE_SHOP', C['04_TRACK']); marker('PAD_VEHICLE_SHOP', *Pv(0, 0), GZ, dashboard_id='race.vehicles')
+    marker(nm, x, y, z, vehicle_class=cls, skill_gate=gate, paybox_merchant_id='race.vehicle.' + nm[4:].lower(), dashboard_id='vehicle.' + nm[4:].lower(), endpoints=[], sparks_price=None, price_rule='fixed', price_key='vehicle.checkout', price_unit='day')
+vb.to_object('PAD_VEHICLE_SHOP', C['04_TRACK']); marker('PAD_VEHICLE_SHOP', *Pv(0, 0), GZ, dashboard_id='race.vehicles', endpoints=[])
 rc_ = bpy.data.curves.new('ROUTE_COURIER', 'CURVE'); rc_.dimensions = '3D'; spl = rc_.splines.new('POLY')
 RP = [PERCH_CROWN, (*at(38, 900), GZ + 70), (*at(20, 190), GZ + 45), (*at(8, 900), GZ + 35), (gx, gy, GZ + 22)]
 spl.points.add(len(RP) - 1)
@@ -401,7 +412,7 @@ for (x, y, ac, rc, w, d) in slots(202.5, 270.0, 170, GRID_R, lambda: rng.choice(
     for (lx, ly, sx, sy) in ((0, pd / 2, pw, 0.25), (0, -pd / 2, pw, 0.25), (pw / 2, 0, 0.25, pd), (-pw / 2, 0, 0.25, pd)): pb2.box(x + lx * c_ - ly * s_, y + lx * s_ + ly * c_, GZ + 0.18, sx, sy, 0.06, rot, M3['plotLine'])
     bx, by = x + (-pw / 2 + 0.8) * c_ - (-pd / 2 + 0.8) * s_, y + (-pw / 2 + 0.8) * s_ + (-pd / 2 + 0.8) * c_
     pb2.box(bx, by, GZ, 0.35, 0.35, 3.0, rot, M3['steel']); pb2.box(bx, by, GZ + 3.0, 0.6, 0.6, 0.6, rot, M3['beaconOff'])
-    art_slot(pb2, 'SLOT_HOME', 'PLOT-SW-%04d' % (len(PLOTS) + 1), bx, by, GZ + 1.3, rot, 1.2, 0.9, 0.2)
+    art_slot(pb2, 'SLOT_HOME', 'PLOT-SW-%04d' % (len(PLOTS) + 1), bx, by, GZ + 1.3, rot, 1.2, 0.9, 0.2, ht={'host_type': 'plot', 'host_id': 'PLOT-SW-%04d' % (len(PLOTS) + 1)})
     PLOTS.append({'plot_id': 'PLOT-SW-%04d' % (len(PLOTS) + 1), 'x_m': round(x, 1), 'y_m': round(y, 1), 'w_m': pw, 'd_m': pd, 'yaw': round(-math.degrees(rot), 2), 'beacon_m': [round(bx, 1), round(by, 1)],
                   'state': 'empty', 'mode': None, 'owner_id': None, 'pending_sparks': 0, 'boost_lock': 0, 'art_slot': SLOTS[-1]['slot_id']})
 pb2.to_object('PLOT_Pads_Beacons', C['05_PLOTS'])
@@ -409,13 +420,13 @@ DO = at(205.5, 760); db = MeshBuf(); rd = math.radians(-205.5)
 db.box(*DO, GZ, 30, 18, 10, rd, M3['steel']); db.box(*DO, GZ + 10, 30.4, 18.4, 0.3, rd, M3['graph'])
 Pd, _ = frame(205.5, 760); db.box(*Pd(-9.2, 0), GZ + 3.2, 26, 0.12, 0.2, rd, M3['cyan']); db.box(*Pd(0, 0), GZ + 10.3, 4, 4, 0.2, rd, M3['cyan'])   # lintel + roof glyph (deed square)
 COLL['obb'].append({'x': round(DO[0], 2), 'y': round(DO[1], 2), 'hx': 15, 'hy': 9, 'rot': round(rd, 4), 'top': round(GZ + 10.3, 2), 'kind': 'deed-office'})
-marker('DEED_OFFICE', *DO, GZ, endpoint='plot system (plot_buy / plot_status)', paybox_merchant_id='city.deeds', sparks_price='claim fee (DOC_PLOTS)', dashboard_id='plots.deeds')
+marker('DEED_OFFICE', *DO, GZ, endpoints=[ep('plots', 'MCP', 'plot_buy'), ep('plots', 'MCP', 'plot_status')], paybox_merchant_id='city.deeds', sparks_price=None, price_rule='dynamic', price_key='plot.claim', dashboard_id='plots.deeds', legacy={'endpoint': 'plot system (plot_buy / plot_status)', 'sparks_price': 'claim fee (DOC_PLOTS)'})
 BY = at(205.5, 900); Pb, _ = frame(205.5, 900); db.box(*BY, GZ, 30, 50, 0.12, rd, M3['char'])
 for (u_, v_, su, sv) in ((-25, 0, 0.2, 30), (25, 0, 0.2, 30), (0, -15, 50, 0.2), (0, 15, 50, 0.2)): db.box(*Pb(u_, v_), GZ, sv, su, 1.2, rd, M3['steel'])
 db.to_object('DEED_OFFICE_BUILDER_YARD', C['05_PLOTS'])
 for i, k in enumerate(('sc-storefront-s', 'sc-garden', 'sc-techlab')):      # Builder Yard showroom: the first catalogue of the building library
     o = PROTO[k].copy(); o.hide_render = False; C['05_PLOTS'].objects.link(o); o.hide_set(False); o.location = (*Pb(-12 + i * 12, 0), GZ + 0.12); o.rotation_euler = (0, 0, rd)
-marker('BUILDER_YARD', *BY, GZ, catalogue=[k for k in META], dashboard_id='plots.builder')
+marker('BUILDER_YARD', *BY, GZ, catalogue=[k for k in META], dashboard_id='plots.builder', endpoints=[ep('economy', 'GET', '/api/economy/catalog'), ep('economy', 'POST', '/api/economy/catalog/purchase')], sparks_price=None, price_rule='dynamic', price_key='builder.kit')
 LOG['metrics']['v3_plots'] = len(PLOTS)
 
 # ── AGENT_PROXY_01..08 (max 8): at homes, plaza, pits — home_id / job_id / schedule (DOC_WORLD §agents) ──
@@ -439,10 +450,10 @@ for i, (nm, body) in enumerate(DOCS.items()):
 
 # ── data for the game + dashboard (same ids everywhere) ──
 wd = os.path.join(REPO, 'public/assets/world'); os.makedirs(wd, exist_ok=True)
-json.dump({'version': 1, 'note': 'SHADDAI City v3 markers (metres, X east, Y north, Z up; game x = X*U, z = -Y*U, y = Z*U)', 'markers': MARK}, open(os.path.join(wd, 'markers-v4.json'), 'w'), indent=0)
+json.dump({'version': 1, 'note': 'SHADDAI City v3 markers (metres, X east, Y north, Z up; game x = X*U, z = -Y*U, y = Z*U)', 'schema': 'city-v3/markers@2 (endpoints[], sparks_price number|null + price_rule, dashboard_id; see tools/city/normalize-markers.mjs, docs/city-v3/PRICES.md)', 'markers': MARK}, open(os.path.join(wd, 'markers-v4.json'), 'w'), indent=0)
 json.dump({'version': 1, 'note': 'Grid fabric (Commons SE, NE campus, NW race) — building library instances; clusters-loader format (yaw deg, loader applies -yaw about +Y)', 'units_per_m': 7 / 1.8,
            'counts': {c: sum(1 for i in ITEMS if i['cluster'] == c) for c in ('commons', 'ne-campus', 'nw-race')}, 'items': ITEMS}, open(os.path.join(wd, 'grid-fabric-v4.json'), 'w'), separators=(',', ':'))
-json.dump({'version': 1, 'note': 'art slots: empty = blank panel, filled = emissive artwork card (SPARKS placement; NFT later = provenance only)', 'slots': SLOTS}, open(os.path.join(wd, 'art-slots-v4.json'), 'w'), separators=(',', ':'))
+json.dump({'version': 1, 'note': 'art slots: empty = blank panel, filled = emissive artwork card (SPARKS placement; NFT later = provenance only)', 'schema': 'city-v3/art-slots@2 (host_type + host_id; legacy.host kept one release)', 'slots': SLOTS}, open(os.path.join(wd, 'art-slots-v4.json'), 'w'), separators=(',', ':'))
 json.dump({'version': 1, 'note': 'SW Plot District — states empty/claimed/built/listed/lapsed; lights = ledger (dark → beacon → windows → cyan edge)', 'plots': PLOTS}, open(os.path.join(wd, 'plots-v4.json'), 'w'), separators=(',', ':'))
 
 # ── cameras ──

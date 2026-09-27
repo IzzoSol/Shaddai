@@ -20,7 +20,9 @@
   var STATES = ['empty', 'claimed', 'built', 'listed', 'lapsed'];
   // lights = ledger (DOC_PLOTS): empty dark · claimed beacon · built warm windows · listed cyan edge · lapsed dims
   var STATE_COLORS = { empty: 0x000000, claimed: 0x00ff9c, built: 0xfff2d0, listed: 0x3dfff0, lapsed: 0x3a3c40 };
-  var INTERACTIVE_KEYS = ['endpoint', 'dashboard_id', 'paybox_merchant_id', 'skill_required', 'skill_gate'];
+  var INTERACTIVE_KEYS = ['endpoints', 'endpoint', 'dashboard_id', 'paybox_merchant_id', 'skill_required', 'skill_gate'];
+  // markers@2 (tools/city/normalize-markers.mjs): endpoints[] + sparks_price number|null + price_rule; old prose kept in props.legacy
+  var PRICE_RULE_LABEL = { seller: 'set by seller', 'per-skill': 'per skill', 'per-class': 'per class', dynamic: 'varies' };
   var PREFIX = /^(OBJ|NODE|BLD|HUB|VEH|PAD|PLAZA)_/;
 
   function toGame(p) { return { x: (+p[0] || 0) * U, y: (+p[2] || 0) * U, z: -(+p[1] || 0) * U }; }
@@ -52,19 +54,24 @@
     var skill = has(props.skill_required) ? String(props.skill_required) : (has(props.skill_gate) ? String(props.skill_gate) : null);
     var price = props.sparks_price;
     if (typeof price === 'string' && price.trim() !== '' && isFinite(+price)) price = +price;
-    var interactive = INTERACTIVE_KEYS.some(function (k) { return has(props[k]); });
+    var interactive = INTERACTIVE_KEYS.some(function (k) { return Array.isArray(props[k]) ? props[k].length > 0 : has(props[k]); });
+    var legacy = (props.legacy && typeof props.legacy === 'object') ? props.legacy : {};
+    var endpoints = Array.isArray(props.endpoints) ? props.endpoints : [];
+    var endpoint = has(props.endpoint) ? props.endpoint : (has(legacy.endpoint) ? legacy.endpoint : null);
     return {
       name: String(m && m.name || ''), title: niceName(m && m.name), pos_m: pos_m, pos: toGame(pos_m), props: props,
       interactive: interactive, dashboard_id: has(props.dashboard_id) ? props.dashboard_id : null,
-      endpoint: has(props.endpoint) ? props.endpoint : null, merchant: has(props.paybox_merchant_id) ? props.paybox_merchant_id : null,
-      sparks_price: has(price) ? price : null, skill: skill, skills: skill ? skill.split('|') : []
+      endpoints: endpoints, endpoint: endpoint, merchant: has(props.paybox_merchant_id) ? props.paybox_merchant_id : null,
+      sparks_price: has(price) ? price : null, price_rule: has(props.price_rule) ? props.price_rule : null, price_unit: has(props.price_unit) ? props.price_unit : null,
+      skill: skill, skills: skill ? skill.split('|') : []
     };
   }
   function promptParts(mk) {   // "E — Hiring Board · work.hire" (+ gold SPARKS price when there is one)
     var main = 'E — ' + mk.title + (mk.skill ? ' · ' + mk.skill : '');
     var price = null;
-    if (typeof mk.sparks_price === 'number' && mk.sparks_price > 0) price = mk.sparks_price + ' SPARKS';
+    if (typeof mk.sparks_price === 'number' && mk.sparks_price > 0) price = mk.sparks_price + ' SPARKS' + (mk.price_unit === 'day' ? '/day' : '');
     else if (typeof mk.sparks_price === 'string') price = 'SPARKS · ' + mk.sparks_price;
+    else if (mk.sparks_price == null && PRICE_RULE_LABEL[mk.price_rule]) price = 'SPARKS · ' + PRICE_RULE_LABEL[mk.price_rule];
     return { main: main, price: price };
   }
   function nearestIn(list, pos, r_m, vTol_m) {
