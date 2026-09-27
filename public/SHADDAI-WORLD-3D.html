@@ -506,6 +506,18 @@ window.__worldBuilt = false;
           if(d < 150 * V4_U){ window.__dragonShake && window.__dragonShake(e.shake.intensity, e.shake.duration); } }); });
         window.__dragons.on('defeated', function(e){ if(window.__toast) window.__toast('🐉 ' + (e && e.name || 'The dragon') + ' bows — crossing open'); });
       }).catch(function(e){ console.warn('[map-v4] dragons failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
+      if(!api || !_v4Meta) return api;
+      return _loadScript('/world-wildlife-v4.js?v=20260927a').then(function(){
+        const wl = new GLTFLoader(); wl.setMeshoptDecoder(MeshoptDecoder);
+        window.__wildlife = window.buildWorldWildlifeV4({ THREE, scene, loader: wl, cloneSkinned, heightAt: api.heightAt, terrainMeta: _v4Meta,
+          getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) }),
+          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
+          onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
+          isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null });
+        window.__w3dDebug.wildlife = window.__wildlife;
+      }).catch(function(e){ console.warn('[map-v4] wildlife failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -3452,7 +3464,7 @@ window.__onDragonHit = function(dmg, kind, info){
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
-  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
+  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 12); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
 
 // ── Q = PROJECTILE — fire the current agent's signature bolt (+ a cast pose if the rig has one) ──
 function playerProjectile(){
@@ -3479,7 +3491,7 @@ function playerFlipOrFly(){ if(window.__dragons) window.__dragons.setPlayerInvul
   _pTween={t:0,dur:0.5,kind:'hop'};                        // boneless non-SHADDAI → tiny procedural hop
 }
 // ── K = KICK (rigged kick clip). TURTLE has several kicks (aliased into attack1). Others: no-op. ──
-function playerKick(){ if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 10);
+function playerKick(){ if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 10); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 14);
   // try common kick clip names first, then the aliased attack slot the loader mapped kicks into.
   if(playPlayerOnce('kick',{timeScale:1.1})) { _attackFlash(); return; }
   if(playPlayerOnce('attack1',{timeScale:1.1})) { _attackFlash(); return; }  // TURTLE: roundhouse/high_kick → attack1 alias
@@ -3613,6 +3625,7 @@ function _updateCombat(dt){
     p.age+=dt; p.o.position.addScaledVector(p.vel,dt);
       if(window.__dragons && !p.hitDragon){ const _hid = window.__dragons.hitTest(p.o.position, 1.5);
         if(_hid){ p.hitDragon = true; window.__dragons.damage(_hid, 18, p.o.position, p.dtype || 'arcane'); p.age = p.life; } }
+      if(window.__wildlife && p.age < p.life){ const _wid = window.__wildlife.hitTest(p.o.position, 1.2); if(_wid){ window.__wildlife.damage(_wid, 18); p.age = p.life; } }
     if(p.spin) p.o.rotation.z += p.spin*dt;
     if(p.feather) p.o.rotation.y += 8*dt;
     const k=1-p.age/p.life;
@@ -4681,6 +4694,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
   if(MAP_V4){ if(_v4Sky) _v4Sky.update(dt, playerPos); if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); }
   if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
+  if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);
   if(_dragonKB){ playerPos.x += _dragonKB.x*dt; playerPos.z += _dragonKB.z*dt; if((_dragonKB.t -= dt) <= 0) _dragonKB = null; }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
