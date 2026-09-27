@@ -70,3 +70,20 @@ These are ebooks, videos, Grok/Pinterest page saves, repos (cobalt, MiroFish, Op
 3. Modular SciFi MegaKit → first enterable Grid shop/agent office (the "useful buildings" goal).
 4. Iguana (Sand Sea), tuna + underwater props (Crystal Sea).
 5. Voxel vehicles as Grid traffic; neon signs/billboards on Grid streets.
+
+## Visual survey + fit test (2026-09-27, later)
+- **Survey:** `node tools/ual/survey-models.mjs` counted 368 GLB/glTF files by header only (low RAM). `tools/blender/assets/thumbs.py` rendered 477 thumbnails, and `tools/ual/contact-sheet.mjs` built labelled contact sheets in `.bl-cache/survey/sheets/*.jpg`.
+- **Kit textures live in a shared `Textures/` folder.** The thumbnailer and the fit script relink them automatically.
+- **Fit test:** `tools/blender/assets/city-block-fit.py` renders to `.bl-cache/renders/cityfit-street-eye.png` / `cityfit-aerial.png`, and the scene opens in Blender from `.bl-cache/city-block-fit.blend`. It builds one Shaddai City corner:
+  - Downtown streets, sidewalks, bollards and planters
+  - a Sci-Fi MegaKit storefront (16×12 m, 2 floors + crown) with its red strips swapped for **emerald**
+  - the owner's SHADDAI banner as the rooftop billboard and the Agent Collective emblem over the door
+  - plaza props: crypto kiosk, hologram teleport, floor ring with a planet hologram, code-bush planters, neon blade sign, glitch ad screen
+  - a 1.8 m citizen for scale
+- **Verdicts:**
+  - **Sci-Fi MegaKit = the Shaddai building kit.** It covers storefronts, offices, interiors, ramps, stairs, rails, terminals and crates.
+  - **Downtown = streets/street furniture only.**
+  - **Voxel packs** (dark stone + emerald glow) fit the palette → wilderness points of interest, Void/Sand ruins, and ships as traffic.
+  - **Creatures:** fix scale and textures on conversion. Source sizes are wrong: iguana 27 m, mech 11 m, insect monster 16 m, tuna 4.8 m.
+  - **Downloads\"MODELS FOR FAL"\BILLBOARDS and ART:** billboard content (SHADDAI banner, Agent Collective emblem, Dreamers clock, 5 glitch tiles) plus 2 building style refs (blue reactor complex, floating sky-station).
+- **Fit-test polish still needed:** corner pieces, a door leaf, interior lighting, and roof edge trims.
