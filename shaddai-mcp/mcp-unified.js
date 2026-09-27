@@ -188,11 +188,15 @@ async function lookupPrice(symOrMint) {
 // 1) The API base must be HTTPS with a real hostname. This blocks SSRF / key
 //    exfiltration if SHADDAI_API_URL is ever tampered with — reject before the
 //    first request so the SHADDAI_API_KEY can never be shipped to a bad host.
+//    Loopback is exempt: traffic to localhost/127.0.0.1/[::1] never leaves the
+//    machine, so it cannot ship a key to a remote host. Any non-loopback host
+//    must still be HTTPS with a real hostname.
 const _envApi = (process.env.SHADDAI_API_URL || 'https://shaddai-g81x.onrender.com').replace(/\/+$/, '');
+const _LOOPBACK = /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d{1,5})?$/;
 const _apiMatch = /^https:\/\/([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d{1,5})?$/.exec(_envApi);
-if (!_apiMatch) {
+if (!_apiMatch && !_LOOPBACK.test(_envApi)) {
   // no access to stdout yet at this point (readline set up below) — fail fast
-  throw new Error('SHADDAI_API_URL must be an https:// URL with a hostname (rejected by PIKADON guard): ' + _envApi);
+  throw new Error('SHADDAI_API_URL must be an https:// URL with a hostname, or a http:// loopback address (rejected by PIKADON guard): ' + _envApi);
 }
 const API = _envApi;
 const API_KEY = process.env.SHADDAI_API_KEY || ''; // optional — gate access to paying users
