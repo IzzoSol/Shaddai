@@ -118,7 +118,7 @@ const near = (a, b, eps) => Math.abs(a - b) < (eps || 1e-9);
     assert.strictEqual(s.filledSlots, 0);
     const hb = api.marker('OBJ_HIRING_BOARD');
     assert.ok(hb && hb.interactive && hb.skill === 'work.hire' && hb.merchant === 'city.hiring');
-    assert.ok(near(hb.pos.x, 1072.6 * U, 1e-6) && near(hb.pos.z, -716.69 * U, 1e-6) && near(hb.pos.y, 6 * U, 1e-6));
+    assert.ok(near(hb.pos.x, 1073.97 * U, 1e-6) && near(hb.pos.z, -717.61 * U, 1e-6) && near(hb.pos.y, 6 * U, 1e-6));
     ['HUB_HOME_A', 'NODE_SKILL_INSTALL', 'GATE_START', 'DEED_OFFICE', 'PERCH_MAIN'].forEach(n => assert.ok(api.marker(n) && api.marker(n).interactive, n));
     assert.ok(!api.marker('CP_03').interactive && !api.marker('AGENT_PROXY_01').interactive);
   });

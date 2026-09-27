@@ -448,6 +448,32 @@ for i, (nm, body) in enumerate(DOCS.items()):
     o.hide_render = True; C['08_DOCS'].objects.link(o)
     open(os.path.join(REPO, 'docs', 'city-v3', nm + '.md'), 'w', encoding='utf-8').write(body)
 
+# ── UNSTICK: interactive markers buried inside a solid OBB move DOOR_M outside the nearest façade, at street level; markers that
+#    shared a building slide 3 m apart along the façade. Identical to tools/city/unstick-markers.mjs (keep in sync).
+DOOR_M = 1.2; _placed = []
+def _is_interactive(p): return bool(p.get('dashboard_id') or p.get('endpoints') or p.get('paybox_merchant_id') or p.get('skill_required') or p.get('skill_gate'))
+def _inside(o, x, y, z):
+    if z >= o['top'] - 0.3: return None
+    c, s_ = math.cos(o['rot']), math.sin(o['rot']); dx, dy = x - o['x'], y - o['y']; lx, ly = dx * c + dy * s_, -dx * s_ + dy * c
+    return (lx, ly, c, s_) if abs(lx) < o['hx'] and abs(ly) < o['hy'] else None
+for m_ in MARK:
+    if not _is_interactive(m_['props']): continue
+    x, y, z = m_['pos_m']; moved = False; tan = None
+    for _ in range(6):
+        hit = next(((o, h) for o in COLL['obb'] for h in [_inside(o, x, y, z)] if h), None)
+        if not hit: break
+        o, (lx, ly, c, s_) = hit; nx, ny = lx, ly
+        if o['hx'] - abs(lx) < o['hy'] - abs(ly): nx = (-1 if lx < 0 else 1) * (o['hx'] + DOOR_M); tan = (-s_, c)
+        else: ny = (-1 if ly < 0 else 1) * (o['hy'] + DOOR_M); tan = (c, s_)
+        x = o['x'] + nx * c - ny * s_; y = o['y'] + nx * s_ + ny * c; z = min(z, GZ); moved = True
+    if moved:
+        x0, y0 = x, y; k = 1
+        while any(math.hypot(px - x, py - y) < 1.5 for px, py in _placed) and k < 12:
+            st = math.ceil(k / 2) * 3 * (1 if k % 2 else -1); x, y = x0 + tan[0] * st, y0 + tan[1] * st; k += 1
+        _placed.append((x, y)); m_.setdefault('legacy', {})['pos_m_buried'] = m_['pos_m']; m_['pos_m'] = [round(x, 2), round(y, 2), round(z, 2)]
+        e_ = bpy.data.objects.get(m_['name'])
+        if e_: e_.location = tuple(m_['pos_m'])
+
 # ── data for the game + dashboard (same ids everywhere) ──
 wd = os.path.join(REPO, 'public/assets/world'); os.makedirs(wd, exist_ok=True)
 json.dump({'version': 1, 'note': 'SHADDAI City v3 markers (metres, X east, Y north, Z up; game x = X*U, z = -Y*U, y = Z*U)', 'schema': 'city-v3/markers@2 (endpoints[], sparks_price number|null + price_rule, dashboard_id; see tools/city/normalize-markers.mjs, docs/city-v3/PRICES.md)', 'markers': MARK}, open(os.path.join(wd, 'markers-v4.json'), 'w'), indent=0)

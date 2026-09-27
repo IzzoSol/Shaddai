@@ -549,6 +549,21 @@ window.__worldBuilt = false;
         const _prevCityPing = window.__onCityPing;
         window.__onCityPing = function(e){ if(_prevCityPing) try{ _prevCityPing(e); }catch(_){} window.__hudV4.ping(e); };
       }).catch(function(e){ console.warn('[map-v4] hud failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 VOID CASTLE (world-void-castle.js): owner's void-castle aesthetic on the Deep Void pit's north lip — procedural, 28k tris, 11 draws
+      if(!api || !_v4Meta) return api;
+      return _loadScript('/world-void-castle.js?v=20260927a').then(function(){
+        window.__voidCastle = window.buildWorldVoidCastle({ THREE, scene, heightAt: api.heightAt, terrainMeta: _v4Meta,
+          getPlayer: ()=> ({ pos: playerPos }),
+          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
+          quality: window.__quality });
+        const L = window.WORLD_LAYOUT;
+        if(L){ L.realmColliders = L.realmColliders || []; Array.prototype.push.apply(L.realmColliders, window.__voidCastle.colliders); }
+        const tops = window.WORLD_WALKABLE_TOPS = window.WORLD_WALKABLE_TOPS || [];
+        Array.prototype.push.apply(tops, window.__voidCastle.walkableTops);
+        if(L && window.buildWorldCollision) window.buildWorldCollision(L);
+        window.__w3dDebug.voidCastle = window.__voidCastle;
+      }).catch(function(e){ console.warn('[map-v4] void castle failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -4727,7 +4742,8 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
   if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);
   if(MAP_V4 && window.__cityV3 && !_spawnBusy) window.__cityV3.update(dt);
-  if(MAP_V4 && window.__hudV4) window.__hudV4.update(dt);   // outside _spawnBusy: bars stay live during a sky-dive
+  if(MAP_V4 && window.__hudV4) window.__hudV4.update(dt);
+  if(MAP_V4 && window.__voidCastle) window.__voidCastle.update(t, dt);   // outside _spawnBusy: bars stay live during a sky-dive
   if(_dragonKB){ playerPos.x += _dragonKB.x*dt; playerPos.z += _dragonKB.z*dt; if((_dragonKB.t -= dt) <= 0) _dragonKB = null; }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
