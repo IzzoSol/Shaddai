@@ -484,7 +484,7 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
-      return _loadScript('/world-dragons.js?v=20260926a').then(function(){
+      return _loadScript('/world-dragons.js?v=20260926rig').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
         const KEY = 'w3d_dragons_defeated';
         const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
@@ -495,7 +495,8 @@ window.__worldBuilt = false;
           onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
           isDefeated: id => load().indexOf(id) >= 0,
           setDefeated: id => { const a = load(); if(a.indexOf(id) < 0){ a.push(id); try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(_){} } },
-          modelFor: () => null });
+          modelFor: () => '/assets/creatures/dragon-rigged.glb',   // rigged dragon (owner download, 136 bones, fly/idle/walk/run) via tools/blender/assets/export-dragon.py
+          cloneSkinned: cloneSkinned });
         window.__w3dDebug.dragons = window.__dragons;
         ['land','roar','swoop'].forEach(function(ev){ window.__dragons.on(ev, function(e){
           if(!e || !e.shake || !e.pos) return; const d = Math.hypot(e.pos.x - playerPos.x, e.pos.z - playerPos.z);
