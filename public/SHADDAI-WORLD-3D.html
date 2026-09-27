@@ -536,6 +536,18 @@ window.__worldBuilt = false;
         window.__w3dDebug.cityV3 = window.__cityV3;
         return window.__cityV3.ready;
       }).catch(function(e){ console.warn('[map-v4] city v3 failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 HUD (world-hud-v4.js): HP / stamina bars, dragon boss bar, pack-hunting chip, SPARKS + city ping toasts
+      if(!api) return api;
+      return _loadScript('/world-hud-v4.js?v=20260927a').then(function(){
+        window.__hudV4 = window.buildHudV4({
+          getHP: ()=> window.__playerHP == null ? 100 : window.__playerHP,
+          getStamina: ()=> (_pctlOut && _pctlOut.stamina != null) ? _pctlOut.stamina : 1,
+          dragons: window.__dragons || null, wildlife: window.__wildlife || null });
+        window.__w3dDebug.hudV4 = window.__hudV4;
+        const _prevCityPing = window.__onCityPing;
+        window.__onCityPing = function(e){ if(_prevCityPing) try{ _prevCityPing(e); }catch(_){} window.__hudV4.ping(e); };
+      }).catch(function(e){ console.warn('[map-v4] hud failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -4714,6 +4726,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
   if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);
   if(MAP_V4 && window.__cityV3 && !_spawnBusy) window.__cityV3.update(dt);
+  if(MAP_V4 && window.__hudV4) window.__hudV4.update(dt);   // outside _spawnBusy: bars stay live during a sky-dive
   if(_dragonKB){ playerPos.x += _dragonKB.x*dt; playerPos.z += _dragonKB.z*dt; if((_dragonKB.t -= dt) <= 0) _dragonKB = null; }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
