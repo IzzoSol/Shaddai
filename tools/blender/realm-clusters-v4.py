@@ -35,8 +35,9 @@ def add(key, x, y, L, yaw=0.0, lift=0.0, by_height=False, cluster='', s=0.35):
 # ── SUBURBS: street-grid district aligned to the radial, blocks 70 m, streets 18 m ──
 SUB = ['bld-apartment-pod-block', 'bld-inverted-cube-hab', 'bld-neon-observatory', 'bld-sea-terrace-spire', 'hero-city-megatower', 'bld-holo-market-v2']
 SUBL = {'bld-apartment-pod-block': 45, 'bld-inverted-cube-hab': 30, 'bld-neon-observatory': 35, 'bld-sea-terrace-spire': 30, 'hero-city-megatower': 40, 'bld-holo-market-v2': 32}
-c0 = 102; ox, oy = at(c0, 3950); ux, uy = math.sin(math.radians(c0)), math.cos(math.radians(c0)); vx, vy = uy, -ux
-for i in range(-3, 4):
+c0 = 102; ox, oy = at(c0, 3950)
+SUBURBS_CLUSTER = False   # canon step 6 builds the Suburbs district (build_canon.py) — this generator would overlap it; ux, uy = math.sin(math.radians(c0)), math.cos(math.radians(c0)); vx, vy = uy, -ux
+for i in (range(-3, 4) if SUBURBS_CLUSTER else []):
     for j in range(-4, 5):
         bx, by = ox + ux * i * 88 + vx * j * 88, oy + uy * i * 88 + vy * j * 88
         for k in range(rng.choice((2, 3, 3, 4))):

@@ -16,8 +16,8 @@
   window.buildWorldCanonV4 = function (opts) {
     var THREE = opts.THREE, scene = opts.scene, loader = opts.loader;
     var st = { meshes: 0, obb: 0, circle: 0 };
-    var glb = new Promise(function (res, rej) { loader.load('/assets/world/canon-v4.glb?v=2', res, undefined, rej); });
-    var col = fetch('/assets/world/canon-colliders-v4.json?v=2').then(function (r) { return r.json(); });
+    var glb = new Promise(function (res, rej) { loader.load('/assets/world/canon-v4.glb?v=3', res, undefined, rej); });
+    var col = fetch('/assets/world/canon-colliders-v4.json?v=3').then(function (r) { return r.json(); });
     return Promise.all([glb, col]).then(function (both) {
       var g = both[0], C = both[1];
       var root = g.scene; root.name = 'world-canon-v4'; root.scale.setScalar(U);   // metres → units (axes already match)
