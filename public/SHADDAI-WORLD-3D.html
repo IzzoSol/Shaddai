@@ -243,7 +243,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
-<script src="/world-transit.js?v=20260926drg"></script>
+<script src="/world-transit.js?v=20260927train"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum.js?v=20260926v4"></script>
@@ -481,6 +481,9 @@ window.__worldBuilt = false;
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
+      // real maglev train model on the gold ring (owner download, tools/blender/assets/convert-asset.py --opaque)
+      if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
+        tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
     })
     .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;

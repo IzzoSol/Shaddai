@@ -77,6 +77,19 @@ if TEX:
             nm_ = nt.nodes.new('ShaderNodeNormalMap'); nt.links.new(t.outputs['Color'], nm_.inputs['Color']); nt.links.new(nm_.outputs['Normal'], bs.inputs['Normal'])
         print('MAT', m.name, os.path.basename(col or '-'), os.path.basename(nor or '-'))
 
+# ── --opaque: some exports ship bodies with alpha 0 + a baked 'SKY' reflection image → solid pearl body (maglev refs: white capsule)
+if '--opaque' in a:
+    for m in {s_.material for o in meshes for s_ in o.material_slots if s_.material}:
+        if not m.use_nodes: continue
+        nt = m.node_tree; bs = next((n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+        if not bs: continue
+        for n in list(nt.nodes):
+            if n.type == 'TEX_IMAGE' and n.image and 'sky' in n.image.name.lower():
+                for l in list(n.outputs[0].links): nt.links.remove(l)
+        if bs.inputs['Alpha'].default_value < 0.05:
+            bs.inputs['Alpha'].default_value = 1.0; bs.inputs['Base Color'].default_value = (0.93, 0.95, 0.97, 1); bs.inputs['Roughness'].default_value = 0.22; bs.inputs['Metallic'].default_value = 0.25
+            print('OPAQUE', m.name)
+
 # ── real size: scale the top-level roots so the measured extent equals --size metres ──
 bpy.context.view_layer.update()
 dg = bpy.context.evaluated_depsgraph_get()

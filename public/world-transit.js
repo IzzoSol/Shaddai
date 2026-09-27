@@ -189,6 +189,20 @@
     }, true);
 
     var api = {
+      // Swap the procedural capsule cars for a real train model (owner download: Superconductor maglev, 60 m, length along
+      // the model's Z). Each train becomes 2 coupled 60 m units; placeTrain keeps driving them along the ring.
+      setTrainModel: function (model, unitLenM) {
+        CAR = (unitLenM || 60) * PM; GAP = 0.8 * PM;
+        trains.forEach(function (tr) {
+          tr.cars.forEach(function (m) { group.remove(m); });
+          tr.cars = [0, 1].map(function () {
+            var w = new THREE.Group(), c = model.clone(true); c.rotation.y = Math.PI / 2; c.scale.setScalar(PM); c.position.y = -2.0 * PM;   // base 0.2 m over the guideway (placeTrain puts car centres 2.2 m up); model metres → units; length Z → the car's X axis
+            c.traverse(function (o) { if (o.isMesh) { o.castShadow = true; } }); w.add(c); w.position.y = 0; group.add(w); return w;
+          });
+          placeTrain(tr);
+        });
+        return true;
+      },
       group: group, stations: stations, hubs: hubs, near: near, deckY: DECK_Y,
       _frames: 0,
       status: function () { return riding ? { f: api._frames, t: +riding.t.toFixed(2), dur: +riding.dur.toFixed(2), to: riding.dest.id } : null; },   // probe/debug
