@@ -458,7 +458,7 @@ window.__worldBuilt = false;
       return api;
     })
     .catch(function(e){ window.__mapV4Failed = true; console.warn('[map-v4] terrain failed — flat y=0 fallback:', e && e.message); return null; })
-    .then(function(api){ try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } return api; })
+    .then(function(api){ try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } try{ __kickBuildings(); }catch(e){ console.warn('buildings kick failed:', e && e.message); } return api; })   // ENTER gate needs the terrain + core buildings only, not fabric/canon/dragons/city
     .then(function(api){   // MAP v4 FILL (world-fill-v4.js): realm vegetation, waystations, floating islands, bridges
       if(!api || !_v4Meta) return api;
       return _loadScript('/world-fill-v4.js?v=20260926a').then(function(){
@@ -470,27 +470,27 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
-      return _loadScript('/world-clusters-v4.js?v=20260927fabric').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20260927fabric2').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
     })
     .then(function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      return _loadScript('/world-clusters-v4.js?v=20260927fabric').then(function(){
+      return (window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20260927fabric2')).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4' });   // full <250 m · lod1 <900 · block lod2 <2600
       }).then(function(c){ window.__w3dDebug.gridFabricV4 = c; }).catch(function(e){ console.warn('[map-v4] grid fabric failed:', e && e.message); }).then(function(){ return api; });
     })
     .then(function(api){   // MAP v4 CANON CITY (world-canon-v4.js ← Blender build_canon.py export): Grid, monument, Agora, pads, Meadowfields — solid colliders
       if(!api) return api;
+      // real maglev train model on the gold ring (owner download, tools/blender/assets/convert-asset.py --opaque)
+      if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
+        tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
       return _loadScript('/world-canon-v4.js?v=20260927s7').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
-      // real maglev train model on the gold ring (owner download, tools/blender/assets/convert-asset.py --opaque)
-      if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
-        tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
     })
     .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
@@ -528,9 +528,10 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
       if(!api) return api;
-      return _loadScript('/world-city-v3.js?v=20260927a').then(function(){
+      return _loadScript('/world-city-v3.js?v=20260927b').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
+          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')),
           onInteract: m => { if(window.__onCityInteract) window.__onCityInteract(m); else console.info('[city-v3] interact', m.name, m.dashboard_id, m.endpoint); },
           onPing: e => { if(window.__onCityPing) window.__onCityPing(e); } });
         window.__w3dDebug.cityV3 = window.__cityV3;
@@ -683,7 +684,7 @@ window.__worldBuilt = false;
   }
   // MAP v4: towers seat on heightAt at build time → wait for the heightmap (the loading gate waits on
   // __worldBuilt, which __onWorldBuildingsDone sets, so ENTER stays locked until the v4 ground exists).
-  if(MAP_V4) window.__mapV4Ready.then(__kickBuildings); else __kickBuildings();
+  if(!MAP_V4) __kickBuildings();   // v4: kicked right after the terrain step inside __mapV4Ready
 })();
 
 // ════════════════════════════════════════════════════════════════════════════════════════

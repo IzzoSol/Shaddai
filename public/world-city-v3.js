@@ -8,7 +8,7 @@
  * Yaw (plots, slots): degrees, "clusters-loader format" → three rotation.y = -yaw·π/180 (== Blender rot about +Z).
  *
  *   window.buildWorldCityV3({ THREE, scene, getPlayer: () => ({pos}), heightAt?, fetchJSON?, onInteract?(marker), onPing?(evt),
- *                             base?, radius_m? (3), vTol_m? (6), keyTarget? (window), document? })
+ *                             base?, radius_m? (3), vTol_m? (6), keyTarget? (window), document?, canInteract?() })
  *     → { ready: Promise, update(dt), markers, nearest(pos, r_m), current(), interact(), setPlotState(plot_id, state),
  *         placeArt(slot_id, texture|null), plot(id), slot(id), stats(), dispose() }
  *
@@ -127,16 +127,25 @@
     }
 
     // ── E to interact ──
+    // CAPTURE phase + stopImmediatePropagation when we actually handle the press: same convention as the transit
+    // station menu / npc-dialog (earlier capture listeners still win), so the host's bubble-phase E handlers
+    // (building doors, SHADDAI 2nd projectile, dossier, kiosk, board dismount) don't ALSO fire at a city marker.
+    // opts.canInteract?() → false hides the prompt and leaves E to the host (riding, cutscene, menus open ...).
     var keyTarget = opts.keyTarget || (typeof window !== 'undefined' ? window : null);
+    function allowed() { if (!opts.canInteract) return true; try { return !!opts.canInteract(); } catch (err) { return false; } }
     function onKey(e) {
       if (!e || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key !== 'e' && e.key !== 'E') return;
+      if (e.code !== 'KeyE' && e.key !== 'e' && e.key !== 'E') return;
       if (isTyping(e.target) || (doc && isTyping(doc.activeElement))) return;
-      interact();
+      if (!current || !allowed()) return;
+      if (interact()) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+      }
     }
-    if (keyTarget && keyTarget.addEventListener) keyTarget.addEventListener('keydown', onKey);
+    if (keyTarget && keyTarget.addEventListener) keyTarget.addEventListener('keydown', onKey, true);
     function interact() {
-      if (!current) return false;
+      if (!current || !loaded || disposed) return false;
       if (opts.onInteract) { try { opts.onInteract(current); } catch (err) { warn('onInteract threw: ' + (err && err.message)); } }
       return true;
     }
@@ -245,7 +254,7 @@
       if (acc < THROTTLE_S) return;                   // ~5 Hz scan + DOM
       acc = 0;
       var P = opts.getPlayer ? opts.getPlayer() : null;
-      current = (P && P.pos) ? nearestIn(markers, P.pos, R_M, VTOL) : null;
+      current = (P && P.pos && allowed()) ? nearestIn(markers, P.pos, R_M, VTOL) : null;
       renderPrompt(current);
     }
     function stats() {
@@ -259,7 +268,7 @@
     }
     function dispose() {
       disposed = true;
-      if (keyTarget && keyTarget.removeEventListener) keyTarget.removeEventListener('keydown', onKey);
+      if (keyTarget && keyTarget.removeEventListener) keyTarget.removeEventListener('keydown', onKey, true);
       if (promptEl && promptEl.parentNode) promptEl.parentNode.removeChild(promptEl);
       Object.keys(artMeshes).forEach(function (id) { artMeshes[id].material.dispose(); });
       if (beacons) { beacons.geometry.dispose(); beacons.material.dispose(); }

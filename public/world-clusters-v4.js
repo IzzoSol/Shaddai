@@ -8,7 +8,8 @@
  * PERF (measured 2026-09-26: rev 1 drew 9.65 M triangles — 45 % of the frame — because every copy of every full-detail
  * model was one world-spanning InstancedMesh: never frustum-culled, always in the shadow pass). Same detail up close,
  * far cheaper overall (our gamedev repo's game-qa-performance checklist: cull, LOD, instance):
- *   • instances are split into ~1 km CELLS → each cell's InstancedMesh has a tight bounding sphere → frustum culling works
+ *   • instances are split into CELLS (realm 1 km, grid fabric 250 m — preset cell_m) → each cell's InstancedMesh has a tight
+ *     bounding sphere → frustum culling works
  *   • per cell, distance picks the model: < near_m → full model (casts shadows) · < far_m → lod1 (simplified, no shadow)
  *     · < hide_m → lod2 (coarser, no shadow) · beyond → hidden (fog)
  *   • lod1/lod2 = public/assets/models/lod/<key>-lod{1,2}.glb (gltf-transform simplify, generated from the same source model);
@@ -22,10 +23,11 @@
  *       near_m?, far_m?, hide_m?  (tier distances in metres; defaults come from presetFor(url)) })
  *     → Promise<{ group, update(t, dt, camPos), stats(), dispose() }>
  *
- *   Pure helpers (for node tests) on window.__clustersV4Internals: { U, CELL_M, urlOf, presetFor, pickTier }.
+ *   Extra opts: cell_m? (cell size), collide? (RegExp of keys that get circle colliders | false; default from preset).
+ *   Pure helpers (for node tests) on window.__clustersV4Internals: { U, CELL_M, urlOf, presetFor, pickTier, collides }.
  */
 (function () {
-  var U = 7 / 1.8, CELL_M = 1000, CELL = CELL_M * U;
+  var U = 7 / 1.8, CELL_M = 1000;
   var REALM_URL = '/assets/world/realm-clusters-v4.json';
   var ROOT = ['bld-apartment-pod-block', 'bld-inverted-cube-hab', 'bld-neon-observatory', 'bld-sea-terrace-spire', 'bld-holo-market-v2',
     'homes-mushroom-pods', 'prop-obsidian-rocks', 'prop-crystal-cluster', 'volcano-forge-tower', 'volcano-ritual-circle', 'volcano-dragon', 'volcano-bridge', 'volcano-gate'];
@@ -34,10 +36,16 @@
     return lod ? '/assets/models/lod/' + key + '-lod' + lod + '.glb' : (ROOT.indexOf(key) >= 0 ? '/assets/models/' : '/assets/models/fal/') + key + '.glb';
   }
   // default tier distances (metres) per placement file: realm = rev-2 behaviour; grid fabric = city buildings
+  // cell_m: instancing/LOD cell size. The tier test is |cam − cell centroid| − 0.7·cell, so a 1 km cell turned the fabric's
+  //   "full < 250 m" into "full < ~950 m" (≈ 46 M full-detail tris + shadow pass at spawn). 250 m cells keep the band honest.
+  // collide: which keys push a circle collider into WORLD_LAYOUT.realmColliders (null = legacy rule: all but lamp|crystal).
+  //   Grid fabric: canon-colliders-v4.json already has exact OBBs for every collider:true sc-* type, and sc-market / sc-garden /
+  //   sc-teleport are walk-in (collider:false) — only sc-ad-pylon has no canon OBB.
   function presetFor(url) {
-    if (url && /grid-fabric/.test(url)) return { name: 'grid-fabric-v4', near_m: 250, far_m: 900, hide_m: 2600 };
-    return { name: 'world-clusters-v4', near_m: 450, far_m: 2500, hide_m: 2500 };
+    if (url && /grid-fabric/.test(url)) return { name: 'grid-fabric-v4', near_m: 250, far_m: 900, hide_m: 2600, cell_m: 250, collide: /^sc-ad-pylon$/ };
+    return { name: 'world-clusters-v4', near_m: 450, far_m: 2500, hide_m: 2500, cell_m: CELL_M, collide: null };
   }
+  function collides(key, rule) { return rule === false ? false : (rule && typeof rule.test === 'function' ? rule.test(key) : !/lamp|crystal/.test(key)); }
   // d = distance (units) from camera to the cell's nearest edge-ish; returns 0 full · 1 lod1 · 2 lod2 · 3 hidden
   function pickTier(d, near, far, hide, has1, has2) {
     if (d < near) return 0;
@@ -45,7 +53,7 @@
     if (d < hide) return has2 ? 2 : (has1 ? 1 : 0);
     return 3;
   }
-  window.__clustersV4Internals = { U: U, CELL_M: CELL_M, urlOf: urlOf, presetFor: presetFor, pickTier: pickTier };
+  window.__clustersV4Internals = { U: U, CELL_M: CELL_M, urlOf: urlOf, presetFor: presetFor, pickTier: pickTier, collides: collides };
 
   window.buildWorldClustersV4 = function (opts) {
     var THREE = opts.THREE, scene = opts.scene, loader = opts.loader, heightAt = opts.heightAt || function () { return 0; };
@@ -53,6 +61,7 @@
     var NEAR = (opts.near_m != null ? opts.near_m : pre.near_m) * U, FAR = (opts.far_m != null ? opts.far_m : pre.far_m) * U;
     var hideM = opts.hide_m != null ? opts.hide_m : (pre.hide_m > pre.far_m ? pre.hide_m : null);   // realm preset: no lod2 band
     var HIDE = hideM == null ? FAR : Math.max(FAR, hideM * U);
+    var CELL = (opts.cell_m || pre.cell_m || CELL_M) * U, COLLIDE = opts.collide !== undefined ? opts.collide : pre.collide, pushed = 0;
     var WANT2 = HIDE > FAR, TAG = '[clusters-v4' + (opts.name ? ':' + opts.name : (url === REALM_URL ? '' : ':' + pre.name)) + '] ';
     var group = new THREE.Group(); group.name = opts.name || pre.name; scene.add(group);
     var st = { items: 0, types: 0, cells: 0, meshes: 0, near: 0, mid: 0, far: 0, hidden: 0, failed: [], noLod2: [] }, cells = {};
@@ -107,15 +116,15 @@
             mats.forEach(function (m) { c.centre.x += m.elements[12]; c.centre.z += m.elements[14]; c.n++; });
           });
           var L = window.WORLD_LAYOUT;
-          if (L && L.realmColliders && !/lamp|crystal/.test(key)) byKey[key].forEach(function (it) {
-            L.realmColliders.push({ x: Math.round(it.x_m * U), z: Math.round(-it.y_m * U), r: Math.round(it.len_m * 0.42 * U), label: 'cluster:' + it.cluster });
+          if (L && L.realmColliders && collides(key, COLLIDE)) byKey[key].forEach(function (it) {
+            pushed++; L.realmColliders.push({ x: Math.round(it.x_m * U), z: Math.round(-it.y_m * U), r: Math.round(it.len_m * 0.42 * U), label: 'cluster:' + it.cluster });
           });
         }).catch(function (e) { st.failed.push(key); console.warn(TAG + key + ' failed: ' + (e && e.message)); });
       })).then(function () {
         Object.keys(cells).forEach(function (ck) { var c = cells[ck]; c.centre.x /= c.n; c.centre.z /= c.n; });
         st.cells = Object.keys(cells).length;
-        if (window.buildWorldCollision && window.WORLD_LAYOUT) window.buildWorldCollision(window.WORLD_LAYOUT);
-        console.info(TAG + st.items + ' pieces · ' + st.types + ' model types · ' + st.cells + ' cells · ' + st.meshes + ' chunk meshes (LOD: full < ' + Math.round(NEAR / U) + ' m, lod1 < ' + Math.round(FAR / U) + ' m' + (WANT2 ? ', lod2 < ' + Math.round(HIDE / U) + ' m' : '') + ')' + (st.failed.length ? ' · failed ' + st.failed.join(',') : '') + (st.noLod2.length ? ' · no lod2: ' + st.noLod2.join(',') : ''));
+        if (pushed && window.buildWorldCollision && window.WORLD_LAYOUT) window.buildWorldCollision(window.WORLD_LAYOUT);   // full rebuild — skip when nothing new
+        console.info(TAG + st.items + ' pieces · ' + st.types + ' model types · ' + st.cells + ' cells · ' + st.meshes + ' chunk meshes · ' + Math.round(CELL / U) + ' m cells · ' + pushed + ' colliders (LOD: full < ' + Math.round(NEAR / U) + ' m, lod1 < ' + Math.round(FAR / U) + ' m' + (WANT2 ? ', lod2 < ' + Math.round(HIDE / U) + ' m' : '') + ')' + (st.failed.length ? ' · failed ' + st.failed.join(',') : '') + (st.noLod2.length ? ' · no lod2: ' + st.noLod2.join(',') : ''));
         var acc = 1;
         return {
           group: group,

@@ -165,15 +165,15 @@ const near = (a, b, eps) => Math.abs(a - b) < (eps || 1e-9);
     assert.strictEqual(s.filled, true); assert.strictEqual(api.stats().filledSlots, 1);
     const tex2 = new THREE.Texture(); api.placeArt(id, tex2);
     assert.strictEqual(api._artMesh(id), m, 'replace reuses mesh'); assert.strictEqual(m.material.emissiveMap, tex2);
-    api.placeArt('SLOT_HOME_06632', tex);
-    assert.strictEqual(api._artMesh('SLOT_FACADE_00001').geometry === api._artMesh('SLOT_HOME_06632').geometry, false, 'different sizes → different geo');
+    api.placeArt(api.plot('PLOT-SW-0001').art_slot, tex);
+    assert.strictEqual(api._artMesh('SLOT_FACADE_00001').geometry === api._artMesh(api.plot('PLOT-SW-0001').art_slot).geometry, false, 'different sizes → different geo');
     assert.strictEqual(api.stats().filledSlots, 2);
     assert.strictEqual(api.placeArt(id, null), true);
     assert.strictEqual(api._artMesh(id), null); assert.strictEqual(m.parent, null); assert.strictEqual(s.filled, null);
     assert.strictEqual(api.stats().filledSlots, 1);
     assert.strictEqual(api.placeArt('SLOT_NOPE', tex), false);
     assert.deepStrictEqual(pings.map(p => p.filled), [true, true, true, false]);
-    api.placeArt('SLOT_HOME_06632', null);
+    api.placeArt(api.plot('PLOT-SW-0001').art_slot, null);
   });
 
   await test('update(): ~5 Hz scan picks the nearest interactive marker, prompt + E key → onInteract', () => {
