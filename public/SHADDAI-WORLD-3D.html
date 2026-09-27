@@ -250,7 +250,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-terrain.js?v=20260925m2"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
 <script src="/world-ocean.js?v=20260925m3"></script>
-<script src="/world-volcano.js?v=20260925m4"></script>
+<script src="/world-volcano.js?v=20260926v4"></script>
 <script src="/world-realmprops.js?v=20260925m4"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
 <script src="/world-actions.js?v=20260926v2"></script>
@@ -477,7 +477,7 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 CANON CITY (world-canon-v4.js ← Blender build_canon.py export): Grid, monument, Agora, pads, Meadowfields — solid colliders
       if(!api) return api;
-      return _loadScript('/world-canon-v4.js?v=20260926a').then(function(){
+      return _loadScript('/world-canon-v4.js?v=20260926b').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });

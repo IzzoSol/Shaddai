@@ -19,6 +19,7 @@ window.buildWorldVolcano = function (opts) {
   if (!b) return null;
 
   var CX = b.center[0], CZ = b.center[1], RAD = b.radius || 170;
+  var V4 = layout.mapVersion === 'v4';   // Map v4: the baked terrain volcano + canon lava channel (build_canon step 5) + flying dragons replace the v3 shelf/strips/lights/statue
   var group = new THREE.Group();
   group.name = 'world-volcano';
   scene.add(group);
@@ -55,12 +56,13 @@ window.buildWorldVolcano = function (opts) {
   shelf.rotation.x = -Math.PI / 2;
   shelf.position.set(CX, 6.56, CZ);
   shelf.receiveShadow = true;
-  group.add(shelf);
+  if (!V4) group.add(shelf);
 
   // ── LAVA CHANNELS: 4 uv-scroll strips radiating off the shelf (like world3d buildVolcano) ──
   var lavaLights = [];
   [[0.3, RAD * 0.62, RAD * 0.22], [2.5, RAD * 0.72, RAD * 0.20], [4.4, RAD * 0.68, RAD * 0.24], [5.6, RAD * 0.62, RAD * 0.17]]
     .forEach(function (cfg) {
+      if (V4) return;   // v4: no flat strips / 400-intensity point lights (perf + they float over the real relief)
       var a = cfg[0], len = cfg[1], w = cfg[2];
       var m = new THREE.Mesh(track(new THREE.PlaneGeometry(w, len)), makeLavaMat());
       m.rotation.x = -Math.PI / 2; m.rotation.z = a;
@@ -95,7 +97,7 @@ window.buildWorldVolcano = function (opts) {
   // MAP v2: the master realm-model list in world-layout.js (real sizes) wins; the literal below is the v1 fallback
   var MODELS = (layout.realmModelsFor && layout.realmModelsFor('volcano').length) ? layout.realmModelsFor('volcano').map(function (m) {
     return { id: m.id, w: m.w, x: m.x, z: m.z, y: m.y || 0, ry: m.ry || 0, anim: m.anim, url: m.url };
-  }) : [
+  }).filter(function (m) { return !(V4 && m.id === 'volcano-dragon'); }) : [
     { id: 'volcano-fortress',     w: RAD * 0.62, x: CX,                 z: CZ,                 y: 6.6,  ry: 0.26 },
     { id: 'volcano-forge-tower',  w: RAD * 0.40, x: CX - RAD * 0.52,    z: CZ + RAD * 0.30,    y: 6.6,  ry: -0.4 },
     { id: 'volcano-ritual-circle',w: RAD * 0.30, x: CX + RAD * 0.56,    z: CZ - RAD * 0.34,    y: 6.6,  ry: 0.9 },
