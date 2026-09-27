@@ -64,6 +64,8 @@ def storefront_l():
 def office():
     t = shell(20, 20, 4); put(DL + 'Japanese_Sign_12.glb', 10.4, -6, 6, rot=90, fit=4)
     return {'w': 20, 'd': 20, 'h': t, 'collider': True, 'use': 'agent offices / co-work'}
+def office_mid():
+    t = shell(20, 16, 5); return {'w': 20, 'd': 16, 'h': t, 'collider': True, 'use': 'agent offices, 5 floors (skyline variety)'}
 def market():
     # open market hall: columns + canopy roof, stalls inside, glitch ad screens
     for i in range(8):
@@ -79,7 +81,7 @@ def market():
 def techlab():
     t = shell(20, 16, 3, upper=FLAT)
     put(SCI + P_ + 'Platform_Stairs_4Wide.gltf', 12, -4, 0, rot=90); put(SCI + P_ + 'Platform_Stairs_4Wide.gltf', 12, 0.1, 2.0, rot=90)
-    put(DL + 'FreeSample/FreeSample/SateliteDish.fbx', 4, 3, t, fit=4.0); put(SCI + PR + 'Prop_Fan_Small.gltf', -5, 3, t)
+    put(SCI + CO + 'Column_Simple.gltf', 4, 3, t, fit=4.0); put(SCI + PR + 'Prop_Fan_Small.gltf', -5, 3, t); put(SCI + PR + 'Prop_Vent_Big.gltf', 0, -3, t)   # (SateliteDish.fbx lost its texture → black ball)
     put(SCI + PR + 'Prop_Computer.gltf', -6, -8.6, 0, rot=180)
     return {'w': 20, 'd': 16, 'h': t, 'collider': True, 'use': 'NEXUS-style lab / workshop'}
 def garden():
@@ -108,7 +110,7 @@ def ad_pylon():
         r = k * 120; emissive_plane(art(col + ' GLITCH*'), 1.3 * math.sin(math.radians(r)), -1.3 * math.cos(math.radians(r)), 6 + k * 3.5, 2.4, rot=r, strength=2.5)
     return {'w': 4, 'd': 4, 'h': 18, 'collider': True, 'use': 'street ad pylon (animated glitch screens)'}
 
-TYPES = {'storefront-s': storefront_s, 'storefront-l': storefront_l, 'office': office, 'market': market, 'techlab': techlab,
+TYPES = {'storefront-s': storefront_s, 'storefront-l': storefront_l, 'office': office, 'office-mid': office_mid, 'market': market, 'techlab': techlab,
          'garden': garden, 'teleport': teleport, 'civic-tower': civic_tower, 'ad-pylon': ad_pylon}
 meta = {}; lineup = []
 x0 = 0.0

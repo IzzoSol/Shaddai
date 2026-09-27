@@ -117,7 +117,7 @@ for (lx, ly), lr in LAKES:
     H = H * (1 - (1 - sstep(lr, lr + 120, d)) * (d >= lr)) + (d >= lr) * (1 - sstep(lr, lr + 120, d)) * np.minimum(H, WATER_LVL + 2)
 
 # ── The Grid (flat city district), ring corridor, station pads, colosseum plaza ──
-g = 1 - sstep(GRID_R - 40, GRID_R + 160, R); H = H * (1 - g) + 6.0 * g
+g = 1 - sstep(GRID_R + 30, GRID_R + 200, R); H = H * (1 - g) + 6.0 * g   # flat to r1630: the outer ring road + TRACK_MAIN (r1600 ±6.4) must sit ON the Grid, not under the rim
 ringband = 1 - sstep(40, 160, np.abs(R - RING_R)); H = H * (1 - ringband * 0.85) + ringband * 0.85 * np.clip(H, 3, 14)
 STATIONS = [('rift', 'Rift Gate Station', 0), ('desert', 'Desert Terminal', 31), ('forge', 'Emberfall Forge Station', 54), ('suburb', 'Suburb Transit Hub', 90),
             ('meadow', 'Meadowfields Halt', 142.1), ('harbor', 'Harbor Line Station', 225), ('darkvault', 'Darkvault Station', 299.1), ('arctic', 'Arctic Outpost Station', 333.4)]

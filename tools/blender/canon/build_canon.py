@@ -484,6 +484,10 @@ if STEP >= 6:
     LOG.setdefault('metrics', {})
     SUB_DENSITY = foot / max(area, 1); print('SUBURBS blocks', nbs, 'density', round(SUB_DENSITY, 3))
 
+# ═════════ STEP 7: SHADDAI CITY v3 — housing / campus / perch / track / commons / plots / markers / docs (city_v3.py) ═════════
+if STEP >= 7:
+    exec(open(os.path.join(REPO, 'tools/blender/canon/city_v3.py'), encoding='utf-8').read())
+
 # ── 16 DEBUG: atlas image empty (north-up, 0.35), 10x10 grid, station empties — only in the DEBUG view layer ──
 img = bpy.data.images.load(os.path.join(REPO, LAY['map']['source']))
 E = bpy.data.objects.new('DEBUG_AtlasOverlay', None); E.empty_display_type = 'IMAGE'; E.data = img
@@ -525,6 +529,7 @@ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(REPO, '.bl-cache', 'canon-step
 # ── EXPORT to the game (argv 'export'): canon districts as one GLB in METRES (game scales by U) + collider list ──
 if 'export' in argv:
     EXP = ['01_Grid_Streets', '02_Grid_Blocks', '06_Meadow_Quill', '07_Void', '08_Emberfall', '09_Suburbs', '15_Agents']
+    if STEP >= 7: EXP += ['01_HOUSING', '02_ACADEMY_FORGE', '03_PERCH', '04_TRACK', '05_PLOTS', '06_COMMONS']   # sc-* proxies stay Blender-only (game: grid-commons-v4.json)
     for o in list(bpy.data.objects):
         if o.type == 'FONT' and any(o.name in bpy.data.collections[n].objects for n in EXP):
             me_ = o.to_mesh().copy(); ob_ = bpy.data.objects.new(o.name + '_mesh', me_); ob_.matrix_world = o.matrix_world.copy()
@@ -532,7 +537,7 @@ if 'export' in argv:
             for c_ in o.users_collection: c_.objects.link(ob_)
             bpy.data.objects.remove(o, do_unlink=True)
     for o in bpy.context.scene.objects: o.select_set(False)
-    keep = [o for n in EXP for o in bpy.data.collections[n].objects if o.type == 'MESH']
+    keep = [o for n in EXP for o in bpy.data.collections[n].objects if o.type == 'MESH' and not o.name.startswith('sc-')]
     for o in keep: o.select_set(True)
     bpy.context.view_layer.objects.active = keep[0]
     outg = os.path.join(REPO, '.bl-cache', 'canon-v4-raw.glb')
@@ -564,6 +569,11 @@ if RENDER:
             cam.rotation_euler = (Vector(tgt) - Vector(pos)).to_track_quat('-Z', 'Y').to_euler()
         sc.render.filepath = os.path.join(OUT, 'canon-s%d-%s.png' % (STEP, name)); bpy.ops.render.render(write_still=True); print('SHOT', name)
     EYE = 1.6
+    if STEP >= 7:   # v3 run: only the v3 approval shots (the step 1-6 shots cost ~30 min on this laptop)
+        _shoot = shoot
+        def shoot(name, *a_, **k_):
+            only = next((x.split('=')[1].split(',') for x in argv if x.startswith('only=')), None)   # e.g. only=v3-top-night,v3-race-quarter
+            if name.startswith('v3') and (only is None or name in only): return _shoot(name, *a_, **k_)
     shoot('top', ortho=10600, res=(1400, 1400))
     shoot('top-debug', layer='DEBUG', ortho=10600, res=(1400, 1400))
     shoot('grid-top', ortho=3600, res=(1400, 1400))
@@ -591,4 +601,19 @@ if RENDER:
         mt = next(l for l in LAY['landmarks'] if l['id'] == 'sky-megatower')['pos_m']; tb = [s_ for s_ in LAY['stations'] if s_['id'] == 'suburb-transit-hub'][0]['bearing']
         x, y = at(tb, RING_R + 120); shoot('eye-suburbs-highway', pos=(x, y + 4, H(x, y) + 0.4 + EYE), tgt=(*at(tb, RING_R + 900), H(x, y) + 20))
         shoot('suburbs-oblique', pos=(mt[0] - 900, mt[1] + 700, H(*mt) + 420), tgt=(mt[0] + 100, mt[1] - 50, H(*mt)), lens=26)
+    if STEP >= 7:
+        shoot('v3-top-day', ortho=3500, res=(1600, 1600))
+        bg.inputs['Color'].default_value = (0.004, 0.006, 0.012, 1); bg.inputs['Strength'].default_value = 1.0; ld.energy = 0.08
+        shoot('v3-top-night', ortho=3500, res=(1600, 1600))
+        sc.camera = bpy.data.objects['CAM_GATE']; sc.render.resolution_x, sc.render.resolution_y = 1280, 720
+        for v in sc.view_layers: v.use = (v.name == 'MAIN')
+        sc.render.filepath = os.path.join(OUT, 'canon-s7-v3-cam-gate-night.png'); bpy.ops.render.render(write_still=True); sc.camera = cam
+        bg.inputs['Color'].default_value = (0.55, 0.72, 0.95, 1); bg.inputs['Strength'].default_value = 0.9; ld.energy = 4.0
+        pz0 = V3_SHOTS['plaza']; shoot('v3-campus-oblique', pos=(pz0[0] - 260, pz0[1] - 170, GZ + 170), tgt=(pz0[0] + 20, pz0[1] + 10, GZ + 8), lens=28)
+        pc0 = V3_SHOTS['perch']; shoot('v3-perch', pos=(pc0[0] - 150, pc0[1] - 170, GZ + 60), tgt=(pc0[0], pc0[1], GZ + 55), lens=24)
+        cm0 = V3_SHOTS['commons']; shoot('v3-commons-oblique', pos=(cm0[0] - 240, cm0[1] + 230, GZ + 150), tgt=(cm0[0] + 30, cm0[1] - 30, GZ + 5), lens=28)
+        shoot('v3-eye-commons-plaza', pos=(cm0[0] + 70, cm0[1] + 30, GZ + 1.6), tgt=(cm0[0], cm0[1], GZ + 25), lens=20)
+        gt0 = V3_SHOTS['gate']; shoot('v3-race-quarter', pos=(gt0[0] - 260, gt0[1] - 200, GZ + 140), tgt=(gt0[0] - 60, gt0[1] - 60, GZ + 5), lens=28)
+        ln0 = V3_SHOTS['lane']; shoot('v3-culture-lane', pos=(ln0[0] - 90, ln0[1] + 70, GZ + 45), tgt=(ln0[0], ln0[1], GZ + 3), lens=26)
+        do0 = V3_SHOTS['deed']; shoot('v3-plots-deed', pos=(do0[0] - 200, do0[1] - 300, GZ + 180), tgt=(do0[0] - 150, do0[1] - 80, GZ), lens=28)
 print('CANON DONE')
