@@ -13,7 +13,7 @@ CLIPS = arg('--clips'); REN = arg('--rename'); TEX = arg('--tex'); RENDER = arg(
 if SRC:
     for o in list(bpy.data.objects): bpy.data.objects.remove(o, do_unlink=True)
     ext = os.path.splitext(SRC)[1].lower()
-    if ext == '.fbx': bpy.ops.import_scene.fbx(filepath=SRC, automatic_bone_orientation=True)
+    if ext == '.fbx': bpy.ops.import_scene.fbx(filepath=SRC, automatic_bone_orientation=('--fbx-raw' not in a), ignore_leaf_bones=('--fbx-raw' in a))
     elif ext == '.obj': bpy.ops.wm.obj_import(filepath=SRC)
     elif ext == '.dae': bpy.ops.wm.collada_import(filepath=SRC)
     elif ext in ('.glb', '.gltf'): bpy.ops.import_scene.gltf(filepath=SRC)
@@ -38,9 +38,19 @@ def split_action(src, name, f0, f1):
     new.use_fake_user = True
     return new
 
-meshes = [o for o in bpy.data.objects if o.type == 'MESH' and o.visible_get() is not False]
 arms = [o for o in bpy.data.objects if o.type == 'ARMATURE']
+meshes = [o for o in bpy.data.objects if o.type == 'MESH' and o.visible_get() is not False]
+if arms:   # a rigged character: only meshes bound to the skeleton count (ignore stray ground planes / props in the file)
+    bound = [o for o in meshes if o.parent in arms or any(md.type == 'ARMATURE' for md in o.modifiers)]
+    if bound: meshes = bound
 print('FOUND meshes', [(o.name, len(o.data.polygons)) for o in meshes][:12], 'armatures', [(o.name, len(o.data.bones)) for o in arms], 'actions', [ac.name for ac in bpy.data.actions][:30])
+
+# ── clean clip names: 'Armature|Armature|Wolf_Run_Cycle_' → 'run'-ish readable names ──
+for ac in bpy.data.actions:
+    nm = ac.name.split('|')[-1].strip('_ ').lower()
+    for pre in ('wolf_', 'armature_', 'mixamo.com'): nm = nm.replace(pre, '')
+    nm = nm.replace('_cycle', '').replace('cycle', '').strip('_ ') or ac.name
+    if nm != ac.name and not bpy.data.actions.get(nm): ac.name = nm
 
 # ── clips: rename and/or split one timeline into named clips ──
 if REN:
@@ -60,15 +70,26 @@ if CLIPS and bpy.data.actions:
 if TEX:
     files = glob.glob(os.path.join(TEX, '**', '*.*'), recursive=True)
     def pick(words):
-        for f in files:
-            n = os.path.basename(f).lower()
-            if any(w in n for w in words): return f
+        for w in words:                                  # priority order: the material's own keyword first
+            for f in files:
+                if w and w in os.path.basename(f).lower(): return f
         return None
     for m in {s.material for o in meshes for s in o.material_slots if s.material}:
         m.use_nodes = True; nt = m.node_tree
+        outs = [n for n in nt.nodes if n.type == 'OUTPUT_MATERIAL']
+        if len(outs) > 1:
+            keep = next((o for o in outs if o.is_active_output), outs[0]); keep.target = 'ALL'
+            for o in outs:
+                if o is not keep:
+                    for l in list(o.inputs['Surface'].links): nt.links.remove(l)
+                    o.target = 'CYCLES'; o.is_active_output = False
+            keep.is_active_output = True
         if any(n.type == 'TEX_IMAGE' and n.image for n in nt.nodes): continue
         bs = next((n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'), None) or nt.nodes.new('ShaderNodeBsdfPrincipled')
-        col = pick(['basecolor', 'base_color', 'albedo', 'diffuse', '_col', 'body', m.name.lower().split('.')[0]])
+        outn = next((n for n in nt.nodes if n.type == 'OUTPUT_MATERIAL'), None) or nt.nodes.new('ShaderNodeOutputMaterial')
+        if not outn.inputs['Surface'].is_linked: nt.links.new(bs.outputs[0], outn.inputs['Surface'])   # legacy (2.7x) materials: the BSDF was never wired
+        mk = m.name.lower().replace('wolf', '').replace('_', ' ').strip().split(' ')[0].rstrip('s')   # 'Wolf_Fur'→'fur', 'eyes'→'eye'
+        col = pick([m.name.lower(), mk if len(mk) > 2 else None, 'basecolor', 'base_color', 'albedo', 'diffuse', '_col', 'body'])
         nor = pick(['normal', '_nor', '_n.'])
         if col:
             t = nt.nodes.new('ShaderNodeTexImage'); t.image = bpy.data.images.load(col, check_existing=True); nt.links.new(t.outputs['Color'], bs.inputs['Base Color'])
@@ -115,10 +136,13 @@ print('EXPORTED', OUT, os.path.getsize(OUT))
 
 if RENDER is not None:
     sc = bpy.context.scene
+    for o in meshes:
+        if arg('--hide') and arg('--hide').lower() in o.name.lower(): o.hide_render = True; print('HIDDEN', o.name)
     arm = arms[0] if arms else None
     if arm and arm.animation_data is None: arm.animation_data_create()
     acts = [ac for ac in bpy.data.actions if not ac.name.startswith('_')]
-    if arm and acts: arm.animation_data.action = acts[0]
+    pref = next((ac for n in ('idle', 'walk', 'fly', 'swim', 'run') for ac in acts if ac.name == n), None) or next((ac for ac in acts if ac.frame_range[1] - ac.frame_range[0] > 4), acts[0] if acts else None)
+    if arm and pref: arm.animation_data.action = pref; print('POSE', pref.name)
     sc.frame_set(int(RENDER))
     dg = bpy.context.evaluated_depsgraph_get(); mn, mx = Vector((1e9,) * 3), Vector((-1e9,) * 3)
     for o in meshes:

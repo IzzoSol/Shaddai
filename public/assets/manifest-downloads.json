@@ -1,0 +1,8 @@
+{
+  "note": "Owner-downloaded assets converted for the game (tools/blender/assets/*.py). Licenses: confirm before public release.",
+  "assets": [
+    { "id": "dragon-rigged", "file": "/assets/creatures/dragon-rigged.glb", "source": "Downloads/Dragon_Baked_Actions.blend (BGE dragon, 2016)", "license": "unknown — owner to confirm (likely Blendswap/Sketchfab CC-BY; credit author)", "real_size_m": "wingspan 18-26 (scaled per element in world-dragons.js)", "tris": 37986, "bones": 136, "animations": ["fly", "idle", "walk", "run"], "notes": "wing-skin texture missing in the source (author temp path); tinted per element in code" },
+    { "id": "maglev-train", "file": "/assets/vehicles/maglev-train.glb", "source": "Downloads/Superconductor+Train+Free.zip (FBX 7.4)", "license": "unknown — owner to confirm (free download, 2018)", "real_size_m": 60, "tris": 19680, "bones": 0, "animations": [], "notes": "--opaque fix: body shipped alpha 0 + SKY reflection image" },
+    { "id": "wolf", "file": "/assets/creatures/wolf.glb", "source": "Downloads/Wolf-Rigged-and-Game-Ready.zip (native .blend)", "license": "by Dennis Haupt (3dhaupt.com) — free download (Blendswap/Sketchfab, usually CC-BY: credit the author); readme in /licenses/wolf-3dhaupt-readme.txt", "real_size_m": 1.6, "bones": 59, "animations": ["walk", "run", "idle", "creep", "creep_alt", "sit", "face", "jaw", "rest"], "notes": "FBX version has broken bone orientations — use the .blend" }
+  ]
+}
