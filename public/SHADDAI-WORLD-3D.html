@@ -3780,8 +3780,13 @@ addEventListener('click', (ev)=>{
   if(!controls.isLocked){ return; }                 // (shouldn't happen) never trap from a stray click
   if(targeted){ openDossier(targeted.a); }
 });
+// MAGLEV aboard (world-transit.js walkable ride): no mounts / vehicles inside the cabin; every other key (M map, C chat,
+// T talk, Tab, HUD / phone / inventory) is left alone — the ride itself only ever takes E (sit / stand).
+function _onTrainNow(){ const T = window.__worldTransitApi; return !!(T && T.aboard && T.aboard()); }
+let _trainWasOn = false, _trainPrevTP = null;
 addEventListener('keydown', function(e){   // DRAGON RIDING keys (capture: runs before the E/F/B/O handlers)
   const R = window.__dragonRide; if(!R || e.repeat) return;
+  if(_onTrainNow()) return;   // aboard the maglev: no dragon mount / dismount keys
   if(R.isRiding()){
     if(e.code==='KeyE' || e.code==='KeyF'){ e.stopImmediatePropagation(); e.preventDefault(); R.dismount(); }
     else if(e.code==='KeyB' || e.code==='KeyO' || e.code==='KeyH'){ e.stopImmediatePropagation(); }   // one mount at a time
@@ -3806,6 +3811,7 @@ addEventListener('keydown', e=>{
   if(e.code==='KeyP' && controls.isLocked){ if(nearPortal) enterPortal(nearPortal); }  // P = enter/play the community portal — moved off E so it no longer overlaps the NEXUS hub's "[E] ENTER" door prompt
   if(e.code==='KeyM'){ if(document.exitPointerLock) document.exitPointerLock(); }  // M = release mouse / show cursor (Esc also works)
   if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
+  if((e.code==='KeyB' || e.code==='KeyO') && _onTrainNow()) return;   // maglev cabin: no bike / hoverboard aboard
   if(e.code==='KeyB' && typeof hover!=='undefined' && hover && hover.isRiding()) hover.dismount();   // one vehicle at a time
   if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
   if(e.code==='KeyO' && !e.repeat && typeof hover!=='undefined' && hover && !(_interiors && _interiors.isInside())){   // O = hoverboard V2
@@ -4568,6 +4574,11 @@ function animate(){
   const _spawnBusy = !!(worldSpawn && worldSpawn.isAnimating());
   window.__spawnBusy = _spawnBusy;   // read by the ?room=colosseum deep link (never enter a room mid-sky-dive)
   if(_spawnBusy) window.__spawnEverBusy = true;   // one-shot latch: true once the sky-dive has actually run (?goto= readiness gate — see below)
+  // MAGLEV (world-transit.js): trains move BEFORE the player so a rider walking the aisle never lags the car a frame
+  if(window.__worldTransitApi && !_spawnBusy) window.__worldTransitApi.update(clock.elapsedTime, dt);
+  const _onTrain = _onTrainNow();
+  if(_onTrain && _look.init){ const _tyd = window.__worldTransitApi.aboardYawDelta(); _look.yaw += _tyd; _look.tYaw += _tyd; }   // the view turns with the train
+  if(_onTrain !== _trainWasOn){ if(_onTrain){ _trainPrevTP = thirdPerson; thirdPerson = false; } else if(_trainPrevTP !== null){ thirdPerson = _trainPrevTP; _trainPrevTP = null; } _trainWasOn = _onTrain; }   // cabin = 1st person (V still toggles)
   if(!_spawnBusy) _applyLook(dt);   // damped mouse-look → drives camera orientation before movement reads it
   // movement (manual, relative to camera yaw)
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
@@ -4581,7 +4592,7 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
 _pctlOn = !!_pctl && !_spawnBusy && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
-          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding());
+          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
     const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
@@ -4597,6 +4608,10 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       const _str = ((keys['KeyD']||keys['ArrowRight'])?1:0) - ((keys['KeyA']||keys['ArrowLeft'])?1:0);
       const _bo = veh.bike.step(dt, { riding: bikeMode, throttle: _thr, steer: _str, camYaw: _camYaw, pos: playerPos, vel: _vel });
       _vel.x = _bo.vx; _vel.z = _bo.vz;          // hand the momentum back to walking on dismount
+    } else if (_onTrain) {   // MAGLEV: WASD walks the cabin in train-local space (colliders + seats); E sits (world-transit.js)
+      const _tv = window.__worldTransitApi.walk(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
+        left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']), sprint: !!(keys['ShiftLeft']||keys['ShiftRight']) }, _camYaw);
+      _vel.x = _tv.x; _vel.z = _tv.z;
     } else if (window.__dragonRide && window.__dragonRide.isRiding()) {
       _vel.x = 0; _vel.z = 0;                       // position already written by the ride
     } else if (hover && hover.isRiding()) {
@@ -4635,7 +4650,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     // are the real routes between realms. City/realm ground, interiors, lifts and flying craft are untouched.
     { const _r = Math.hypot(playerPos.x, playerPos.z);
       const _MN=(window.WORLD_LAYOUT&&window.WORLD_LAYOUT.mountains)||{r0:380,r1:520};
-      if (!_pctlOn && _r > _MN.r0 - 10 && _r < _MN.r1 + 10 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
+      if (!_pctlOn && !_onTrain && _r > _MN.r0 - 10 && _r < _MN.r1 + 10 && worldTerrain && worldTerrain.heightAt && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())) {
         const _h0 = worldTerrain.heightAt(_px0, _pz0), _h1 = worldTerrain.heightAt(playerPos.x, playerPos.z);
         const _run = Math.hypot(playerPos.x - _px0, playerPos.z - _pz0), _flying = veh.mode && veh.baseY(_h1) > _h1 + 2;
         if (!_flying && _run > 1e-4 && (_h1 - _h0) / _run > 0.84) { playerPos.x = _px0; playerPos.z = _pz0; _vel.x *= -0.2; _vel.z *= -0.2; }
@@ -4645,7 +4660,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     if(bikeMode){ trailPos.push(playerPos.x, veh.bike ? veh.bike.trailY() : 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
     // Inside a building interior the player is teleported far off-map (rooms at x≈6000) — skip the
     // world-edge clamp and outdoor building collision so they can walk freely in the room.
-    if(!(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding())){
+    if(!(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !_onTrain){
       const _edge = MAP_V4 ? (((_v4Meta && +_v4Meta.rim_m) || 4800) * V4_U - 6)   // v4: the island rim (beyond = the -420 m cloud-sea drop)
                            : (((window.WORLD_LAYOUT && window.WORLD_LAYOUT.half) || 380) - 6);
       playerPos.x = Math.max(-_edge, Math.min(_edge, playerPos.x));
@@ -4693,6 +4708,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
   let groundY;
   { const _ey = _elevators ? _elevators.groundY() : null;
     groundY = (_ey!=null) ? _ey : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : 0); }
+  if(_onTrain) groundY = playerPos.y;   // MAGLEV: the cabin floor under you (world-transit.js writes playerPos.y)
   if(!isFinite(groundY)) groundY = 0;   // guard: a bad height sample must never drop the player through the floor
   if(_interiors && _interiors.isInside()) groundY = (window.__colosseumArena && window.__colosseumArena.contains(playerPos.x, playerPos.z)) ? Math.min(window.__colosseumArena.heightAt(playerPos.x, playerPos.z), 400) : 0;   // interiors: flat floor, except the real-size colosseum (walkable tiers)
   // ── SWIM LAW (five-laws §14.3): if the terrain under us is below the waterline, the player
@@ -4702,12 +4718,12 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     // v4 swim law: float on the REAL water surface (world-water.js CPU mirror of the shader waves) wherever
     // the ground is more than ~1u under it. No water api (load failed) → just walk the terrain.
     _swimming = false;
-    if (_v4Water && !veh.mode && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside()) && !(window.__dragonRide && window.__dragonRide.isRiding())) {
+    if (_v4Water && !veh.mode && !_onTrain && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside()) && !(window.__dragonRide && window.__dragonRide.isRiding())) {
       const _wh = _v4Water.waterHeightAt(playerPos.x, playerPos.z);
       if (_wh != null && isFinite(_wh) && groundY < _wh - 1.0) { groundY = _wh - 1.05; _swimming = true; }
     }
   } else
-  if (!veh.mode && !(hover && hover.isRiding()) && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
+  if (!veh.mode && !_onTrain && !(hover && hover.isRiding()) && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
     if (groundY < -0.45) {
       const _ocean = window.__worldOcean;
       const _wave = (_ocean && _ocean.waveH) ? _ocean.waveH(playerPos.x, playerPos.z, clock.elapsedTime) * 0.55 : 0;
@@ -4717,12 +4733,12 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
   } else _swimming = false;
   const _pctlActive = _pctlOn && !!_pctlOut;
 if (_pctlActive) { groundY = _pctlOut.renderPos.y; _swimming = _pctlOut.swimming; }   // controller owns ground + swim
-const _rawBaseY = _pctlActive ? _pctlOut.renderPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY));
+const _rawBaseY = _pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY));
 const _pDip = _pctlActive ? _pctlOut.compression * 0.35 * V4_U : 0;   // landing / crouch camera dip (<= 0.35 m)
 const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
-  if(_smoothBaseY===undefined || _spawnBusy || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
+  if(_smoothBaseY===undefined || _spawnBusy || _onTrain || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
      (_interiors && _interiors.isInside()) || (window.__dragonRide && window.__dragonRide.isRiding()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
     _smoothBaseY = _rawBaseY;
   } else {
@@ -4823,6 +4839,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
     if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
     playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
   } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
+  if(_onTrain && playerAvatar.visible){ const _sy = window.__worldTransitApi.seatYaw(); if(_sy !== null){ playerAvatar.rotation.y = _sy; _avatarYaw = _sy; } }   // MAGLEV: seated → face along the seat
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
   skyDome.position.copy(camera.position);   // PERF: sky follows the camera (standard skybox trick) so the r=1400 dome is always centred on the viewer → the tightened far plane (1500) never clips it. Gradient is direction-based so the look is identical.
   starGroup.position.set(camera.position.x, 0, camera.position.z);   // TURTLE SKY POLISH: starfield follows the camera on XZ only (keeps its own overhead Y) so stars stay an infinite dome — never pull in close and read as floating specks near the world edge.
@@ -4868,7 +4885,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
     if(worldOcean)    worldOcean.update(t);
     if(worldVolcano)  worldVolcano.update(t);
     if(worldTrails)   worldTrails.update(t);
-    if(window.__worldTransitApi) window.__worldTransitApi.update(t, dt);
+    // (maglev update moved to the top of the frame, before player movement — see _onTrainNow)
     if(worldLandmarks) worldLandmarks.update(t);
     if(window.__colosseumExt) window.__colosseumExt.update(t);
     if(worldTerrain)  worldTerrain.update(t);
