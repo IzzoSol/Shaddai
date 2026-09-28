@@ -136,7 +136,8 @@ Shop types (from the interiors recipes):
 2. **Weapons in code** (`world-weapons.js`) + hand/back sockets + draw/sheathe.
 3. **Combat core for players** (`world-combat.js`): light/heavy/abilities/ultimate per the table, hit-frame events, telegraph rules, stamina.
 4. **Gear/orb system** (`world-gear.js`): slots, code-built meshes, protection orbs with element resist that hooks into the dragon `statusMods`.
-5. **Items + inventory + the agent phone** (`world-inventory.js`): consumables, hotbar, phone UI tab. It must work on the train (the ride only takes E).
+5. **Agent phone:** pulled up with a key or tap (P), and pops up on events (job offer, chat, dragon alert). Apps: **Map**, **Inventory**, **Jobs**, **Marketplace**, **News**, **Chat**. It works everywhere, including on the train and in shops. Visual style: WAIT for the owner's phone refs before building the UI.
+   **Items + inventory** (`world-inventory.js`): consumables, hotbar, phone UI tab. It must work on the train (the ride only takes E).
 6. **Shops** (`world-shops.js`): wire the interiors counter/shelf/NPC slots to the catalogue, the agent-run/human-run modes, and the market fee.
 7. **Economy wiring:** SPARKS ledger calls to the existing backend (`/api/...` SPARKS endpoints); plots, farm tower, skill packs, colosseum passes.
 8. **Jobs** for agents/bots (work loops + payouts) and chat bubbles.
