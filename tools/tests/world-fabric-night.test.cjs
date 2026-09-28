@@ -4,7 +4,18 @@
  * Tests public/world-clusters-v4.js's pure `glowFor` classifier AND the `opts.onMaterial` hook end to end
  * (real `three` from tools/ual, a fake GLTFLoader + fake fetch — no browser, no GPU, no real GLBs).
  * Mirrors exactly what the host (public/SHADDAI-WORLD-3D.html) is expected to wire for the fabric step:
- *   onMaterial: function (mat) { var g = I.glowFor(mat.name); if (g) _v4Sky.addEmissive(mat, g); }
+ *   onMaterial: function (mat) { var g = I.glowFor(mat); if (g) _v4Sky.addEmissive(mat, g); }
+ *
+ * Fix round 1 (review task-2-review.md): glowFor used to take just a material NAME and false-positived on
+ * non-emissive materials whose names happen to match a bucket regex, and false-negatived real emissive
+ * materials whose names match no regex. glowFor now takes the MATERIAL and gates on it actually emitting
+ * (isEmissive: non-black `.emissive` or an `.emissiveMap`) before the name even picks a bucket; any
+ * genuinely emissive material with no name match gets DEFAULT_GLOW instead of being silently skipped.
+ * The material names/emissiveFactors/emissiveMap flags below are the REAL values from a full sweep of every
+ * public/assets/models/shaddai-city/*.glb and lod/*.glb via `node <tmp>/inspect-emissive.mjs <file>`
+ * (@gltf-transform/core, same lib tools/ual/inspect-glb.mjs uses, extended to print emissiveFactor /
+ * KHR_materials_emissive_strength / emissive texture presence) — see task-2-report.md "Fix round 1" for the
+ * full per-file listing.
  * Run: node tools/tests/world-fabric-night.test.cjs   (exits non-zero on failure)
  */
 const path = require('path');
@@ -27,44 +38,78 @@ function test(name, fn) {
 }
 
 // ---- part 1: the pure classifier (no build needed) --------------------------------------------
-function assertGlow(name, dayMul, nightMul, msg) {   // I.glowFor's object is built in the vm's own realm: compare fields, not deepStrictEqual (cross-realm prototypes differ)
-  const g = I.glowFor(name);
-  assert.ok(g, msg || name);
-  assert.strictEqual(g.dayMul, dayMul, (msg || name) + ' dayMul');
-  assert.strictEqual(g.nightMul, nightMul, (msg || name) + ' nightMul');
+// A plain object shaped like a THREE material is enough for glowFor (it only reads .name/.emissive/.emissiveMap/.emissiveIntensity).
+function fakeMat(name, rgb, hasMap) {
+  return { name, emissive: { r: (rgb && rgb[0]) || 0, g: (rgb && rgb[1]) || 0, b: (rgb && rgb[2]) || 0 }, emissiveMap: hasMap ? {} : null, emissiveIntensity: 1 };
 }
-test('glowFor: matches by material-name pattern with the exact briefed multipliers', () => {
-  assertGlow('M_Glass', 0.2, 2.4);
-  assertGlow('Glass_smoked_02', 0.2, 2.4);
-  assertGlow('trim_emerald', 0.6, 1.8);
-  assertGlow('M_EmeraldTrim', 0.6, 1.8);
-  assertGlow('block-emerald', 0.6, 1.8, 'lod2 emerald block reuses the trim multipliers');
-  assertGlow('block-skylight', 0.3, 2.0);
-  assertGlow('artslot-02', 0.8, 1.4);
+function assertGlow(mat, dayMul, nightMul, msg) {   // I.glowFor's object is built in the vm's own realm: compare fields, not deepStrictEqual (cross-realm prototypes differ)
+  const g = I.glowFor(mat);
+  assert.ok(g, (msg || mat.name) + ': expected a bucket, got null');
+  assert.strictEqual(g.dayMul, dayMul, (msg || mat.name) + ' dayMul');
+  assert.strictEqual(g.nightMul, nightMul, (msg || mat.name) + ' nightMul');
+}
+function assertSkipped(mat, msg) { assert.strictEqual(I.glowFor(mat), null, (msg || mat.name) + ': expected null (skipped)'); }
+
+test('glowFor: real emissive materials get the briefed multipliers, by name pattern', () => {
+  assertGlow(fakeMat('M_Glass', [0.25, 0.2, 0.1375], false), 0.2, 2.4, 'M_Glass (sc-* buildings)');
+  assertGlow(fakeMat('MI_Trim_01', [0, 1, 0.61], true), 0.6, 1.8, 'MI_Trim_01 (real emerald trim, strength 6)');
+  assertGlow(fakeMat('SciFi_Trim', [1, 1, 1], true), 0.6, 1.8);
+  assertGlow(fakeMat('Urban_Trim', [1, 1, 1], true), 0.6, 1.8);
+  assertGlow(fakeMat('block-skylight', [1, 0.95, 0.82], false), 0.3, 2.0, 'lod2 block-skylight');
+  assertGlow(fakeMat('block-emerald', [0, 1, 0.61], false), 0.6, 1.8, 'lod2 block-emerald folded into trim bucket (controller ruling)');
+  assertGlow(fakeMat('artslot-05-GREEN GLITCH', [1, 1, 1], true), 0.8, 1.4);
+  assertGlow(fakeMat('artslot-01-Gemini_Generated_Image_2', [1, 1, 1], true), 0.8, 1.4);
 });
 
-test('glowFor: non-emissive / unrecognised materials return null (skip)', () => {
-  assert.strictEqual(I.glowFor('M_Concrete'), null);
-  assert.strictEqual(I.glowFor('sidewalk'), null);
-  assert.strictEqual(I.glowFor(''), null);
+test('glowFor Fix#2: MI_PaddedWall (real emissive, emerald, matches no old regex) → trim bucket via /padd/i', () => {
+  assertGlow(fakeMat('MI_PaddedWall', [0, 1, 0.61], true), 0.6, 1.8);
+});
+
+test('glowFor Fix#3: real emissive materials with NO name match → DEFAULT_GLOW (0.6/1.8), not skipped', () => {
+  assertGlow(fakeMat('Atlas_Sign', [1, 1, 1], true), 0.6, 1.8, 'Atlas_Sign (lit signage, real material, no name match)');
+  assertGlow(fakeMat('M_Light', [1, 1, 1], false), 0.6, 1.8, 'M_Light (real material, no name match)');
+});
+
+test('glowFor Fix#1: non-emissive materials are skipped EVEN when the name matches a bucket regex', () => {
+  // real "Trim" family: emissiveFactor is genuinely [0,0,0] and no emissiveMap for these three
+  assertSkipped(fakeMat('MI_Trim_02', [0, 0, 0], false));
+  assertSkipped(fakeMat('MI_Trim_03', [0, 0, 0], false));
+  assertSkipped(fakeMat('MI_Trim_03_Dark', [0, 0, 0], false));
+  assertSkipped(fakeMat('MI_Trim_MetalConcrete', [0, 0, 0], false), 'name matches /trim/i but is not emissive');
+});
+
+test('glowFor: other non-emissive / unrelated real materials are skipped', () => {
+  ['block-facade', 'Table_Futuristic_01', 'Teleporter', 'HoloPOAP', 'HoloPot', 'MI_Decal_Grey',
+    'M_Decal_Screen', 'M_Black', 'M_LightFade_Red', 'Colony_Marbres_01_Mat', 'MI_Dirt', 'BC_Code_Bush_Mat',
+    'Seat_01', 'Plant_01_Mat'].forEach(n => assertSkipped(fakeMat(n, [0, 0, 0], false)));
+  assertSkipped(fakeMat('', null, false));
+  assert.strictEqual(I.glowFor(null), null);
   assert.strictEqual(I.glowFor(undefined), null);
 });
 
 // ---- part 2: buildWorldClustersV4 + opts.onMaterial, end to end -------------------------------
 // Fake building library: each sc- key resolves to one "gltf" with fixed materials (some SHARED
 // across keys/instances/cells, exactly like real glTF materials reused across many placements).
-const matGlass = new THREE.MeshStandardMaterial({ name: 'M_Glass' });
-const matTrim = new THREE.MeshStandardMaterial({ name: 'trim_emerald' });
-const matArtslot = new THREE.MeshStandardMaterial({ name: 'artslot-02' });
-const matSkylight = new THREE.MeshStandardMaterial({ name: 'block-skylight' });
-const matPlain = new THREE.MeshStandardMaterial({ name: 'M_Concrete' });   // no known pattern → skipped
+// Names/emissive data below are the REAL ones from sc-office.glb / lod/sc-office-lod2.glb / sc-storefront-s.glb.
+function realMat(name, rgb, hasMap, intensity) {
+  const m = new THREE.MeshStandardMaterial({ name, emissive: new THREE.Color(rgb ? rgb[0] : 0, rgb ? rgb[1] : 0, rgb ? rgb[2] : 0), emissiveIntensity: intensity != null ? intensity : 1 });
+  if (hasMap) m.emissiveMap = new THREE.Texture();   // presence is all glowFor checks
+  return m;
+}
+const matGlass = realMat('M_Glass', [0.25, 0.2, 0.1375], false);
+const matTrim01 = realMat('MI_Trim_01', [0, 1, 0.61], true, 6);
+const matTrimDead = realMat('MI_Trim_02', [0, 0, 0], false);          // Fix#1 regression: name matches /trim/i, NOT emissive
+const matPaddedWall = realMat('MI_PaddedWall', [0, 1, 0.61], true, 6); // Fix#2: real emissive, no old regex match
+const matAtlasSign = realMat('Atlas_Sign', [1, 1, 1], true);           // Fix#3: real emissive, no name match → default bucket
+const matArtslot = realMat('artslot-01-Gemini_Generated_Image_2', [1, 1, 1], true, 2.5);
+const matSkylight = realMat('block-skylight', [1, 0.95, 0.82], false);
 
 const MODELS = {
-  'sc-office': [matGlass, matTrim],
+  'sc-office': [matGlass, matTrim01, matTrimDead, matPaddedWall, matAtlasSign],
   'sc-office-mid': [matGlass],       // same M_Glass instance as sc-office: dedupe across KEYS
   'sc-storefront-s': [matArtslot],
   'sc-techlab': [matSkylight],
-  'sc-market': [matPlain]
+  'sc-market': [matTrimDead]         // same dead-trim instance reused: still must never register
 };
 
 function makeGltf(mats) {
@@ -98,7 +143,7 @@ const PLAN = {
 ctx.fetch = function () { return Promise.resolve({ json: () => Promise.resolve(PLAN) }); };
 
 function fakeSky() { return { calls: [], addEmissive(mat, o) { this.calls.push({ uuid: mat.uuid, name: mat.name, dayMul: o.dayMul, nightMul: o.nightMul }); } }; }
-function hostOnMaterial(sky) { return function (mat) { const g = I.glowFor(mat.name); if (g) sky.addEmissive(mat, g); }; }
+function hostOnMaterial(sky) { return function (mat) { const g = I.glowFor(mat); if (g) sky.addEmissive(mat, g); }; }   // exactly the host snippet
 
 async function main() {
   let sky, api;
@@ -120,25 +165,39 @@ async function main() {
     const byUuid = {};
     sky.calls.forEach(c => { byUuid[c.uuid] = (byUuid[c.uuid] || 0) + 1; });
     assert.strictEqual(byUuid[matGlass.uuid], 1, 'M_Glass shared by sc-office (×2 cells) + sc-office-mid → still 1 call');
-    assert.strictEqual(byUuid[matTrim.uuid], 1);
+    assert.strictEqual(byUuid[matTrim01.uuid], 1);
+    assert.strictEqual(byUuid[matPaddedWall.uuid], 1);
+    assert.strictEqual(byUuid[matAtlasSign.uuid], 1);
     assert.strictEqual(byUuid[matArtslot.uuid], 1);
     assert.strictEqual(byUuid[matSkylight.uuid], 1);
   });
 
-  test('non-emissive material (M_Concrete) is skipped: never reaches addEmissive', () => {
-    assert.ok(!sky.calls.some(c => c.uuid === matPlain.uuid));
+  test('Fix#1 regression: non-emissive MI_Trim_02 never reaches addEmissive, even reused across two keys', () => {
+    assert.ok(!sky.calls.some(c => c.uuid === matTrimDead.uuid));
   });
 
-  test('right multipliers by material-name pattern', () => {
+  test('Fix#2: MI_PaddedWall (real emissive, matched no old regex) now registers with the trim bucket', () => {
+    const c = sky.calls.find(x => x.uuid === matPaddedWall.uuid);
+    assert.ok(c, 'MI_PaddedWall should have registered');
+    assert.deepStrictEqual([c.dayMul, c.nightMul], [0.6, 1.8]);
+  });
+
+  test('Fix#3: Atlas_Sign (real emissive, no name match) now registers with the default bucket', () => {
+    const c = sky.calls.find(x => x.uuid === matAtlasSign.uuid);
+    assert.ok(c, 'Atlas_Sign should have registered');
+    assert.deepStrictEqual([c.dayMul, c.nightMul], [0.6, 1.8]);
+  });
+
+  test('right multipliers by material-name pattern (glass / trim / skylight / artslot)', () => {
     const find = uuid => sky.calls.find(c => c.uuid === uuid);
     assert.deepStrictEqual([find(matGlass.uuid).dayMul, find(matGlass.uuid).nightMul], [0.2, 2.4]);
-    assert.deepStrictEqual([find(matTrim.uuid).dayMul, find(matTrim.uuid).nightMul], [0.6, 1.8]);
+    assert.deepStrictEqual([find(matTrim01.uuid).dayMul, find(matTrim01.uuid).nightMul], [0.6, 1.8]);
     assert.deepStrictEqual([find(matSkylight.uuid).dayMul, find(matSkylight.uuid).nightMul], [0.3, 2.0]);
     assert.deepStrictEqual([find(matArtslot.uuid).dayMul, find(matArtslot.uuid).nightMul], [0.8, 1.4]);
   });
 
-  test('total addEmissive calls == unique emissive materials seen (4), not one per instance/cell/key-repeat', () => {
-    assert.strictEqual(sky.calls.length, 4);
+  test('total addEmissive calls == unique GENUINELY emissive materials seen (6), dead trim excluded', () => {
+    assert.strictEqual(sky.calls.length, 6);
   });
 
   await (async () => {

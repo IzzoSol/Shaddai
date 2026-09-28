@@ -25,7 +25,9 @@
  *
  *   Extra opts: cell_m? (cell size), collide? (RegExp of keys that get circle colliders | false; default from preset),
  *     onMaterial? (fn(material) called once per UNIQUE material, deduped by material.uuid, as parts are built —
- *     grid-fabric night glow: host wires this to `_v4Sky.addEmissive(mat, __clustersV4Internals.glowFor(mat.name))`).
+ *     grid-fabric night glow: host wires this to `var g = __clustersV4Internals.glowFor(mat); if (g) _v4Sky.addEmissive(mat, g);`
+ *     — glowFor gates on the material ACTUALLY being emissive (emissive color non-black or an emissiveMap), so it
+ *     needs the material object, not just its name).
  *   Pure helpers (for node tests) on window.__clustersV4Internals: { U, CELL_M, urlOf, presetFor, pickTier, collides, glowFor }.
  */
 (function () {
@@ -48,18 +50,32 @@
     return { name: 'world-clusters-v4', near_m: 450, far_m: 2500, hide_m: 2500, cell_m: CELL_M, collide: null };
   }
   function collides(key, rule) { return rule === false ? false : (rule && typeof rule.test === 'function' ? rule.test(key) : !/lamp|crystal/.test(key)); }
-  // night glow (Task 2): grid-fabric building materials → _v4Sky.addEmissive(mat, {dayMul, nightMul}) multipliers, by material-name
-  // pattern (glTF material names from the shaddai-city building library). null = not a known emissive material (skip).
+  // night glow (Task 2): grid-fabric building materials → _v4Sky.addEmissive(mat, {dayMul, nightMul}) multipliers.
+  // Fix round 1 (review): name-regex alone false-positived on non-emissive Trim variants (MI_Trim_02/03/03_Dark,
+  // MI_Trim_MetalConcrete — emissiveFactor all-zero, no emissiveMap) and false-negatived real emissive materials
+  // whose names match no rule (MI_PaddedWall, Atlas_Sign, M_Light — confirmed via a full sweep of every
+  // shaddai-city/*.glb + lod/*.glb with @gltf-transform/core; see task-2-report.md "Fix round 1"). A material is
+  // now a glow CANDIDATE only if it actually emits (isEmissive); the name only picks which multiplier bucket a
+  // true emissive candidate falls into, and any true emissive with no name match gets DEFAULT_GLOW rather than
+  // being silently skipped.
+  function isEmissive(mat) {
+    if (!mat) return false;
+    var c = mat.emissive, nonBlack = !!(c && (c.r || c.g || c.b));
+    var intensityOk = mat.emissiveIntensity == null || mat.emissiveIntensity > 0;
+    return (nonBlack || !!mat.emissiveMap) && intensityOk;
+  }
+  var DEFAULT_GLOW = { dayMul: 0.6, nightMul: 1.8 };   // any other genuinely-emissive material (e.g. Atlas_Sign, M_Light)
   var GLOW_RULES = [
-    { test: /glass/i, dayMul: 0.2, nightMul: 2.4 },        // smoked glass (M_Glass)
-    { test: /skylight/i, dayMul: 0.3, nightMul: 2.0 },     // lod2 block-skylight
-    { test: /artslot/i, dayMul: 0.8, nightMul: 1.4 },      // artslot-* panels
-    { test: /emerald|trim/i, dayMul: 0.6, nightMul: 1.8 }  // emerald trim + lod2 block-emerald
+    { test: /glass/i, dayMul: 0.2, nightMul: 2.4 },          // smoked glass (M_Glass)
+    { test: /skylight/i, dayMul: 0.3, nightMul: 2.0 },       // lod2 block-skylight
+    { test: /artslot/i, dayMul: 0.8, nightMul: 1.4 },        // artslot-* panels
+    { test: /emerald|trim|padd/i, dayMul: 0.6, nightMul: 1.8 } // emerald trim + lod2 block-emerald + MI_PaddedWall
   ];
-  function glowFor(name) {
-    name = (name || '') + '';
+  function glowFor(mat) {   // mat: the real material (needs .name, .emissive {r,g,b}, .emissiveMap, .emissiveIntensity)
+    if (!isEmissive(mat)) return null;
+    var name = (mat && mat.name || '') + '';
     for (var i = 0; i < GLOW_RULES.length; i++) if (GLOW_RULES[i].test.test(name)) return { dayMul: GLOW_RULES[i].dayMul, nightMul: GLOW_RULES[i].nightMul };
-    return null;
+    return { dayMul: DEFAULT_GLOW.dayMul, nightMul: DEFAULT_GLOW.nightMul };
   }
   // d = distance (units) from camera to the cell's nearest edge-ish; returns 0 full · 1 lod1 · 2 lod2 · 3 hidden
   function pickTier(d, near, far, hide, has1, has2) {
