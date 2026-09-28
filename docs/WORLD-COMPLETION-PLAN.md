@@ -20,7 +20,17 @@ Interiors v3 (3,349 enterable buildings, sand houses, farm tower) · train v2 bu
 8. **Vehicles in code, $0:** hover cars ×10, hoverboards ×9, rider seat sockets + rider-gear tiers (see FAL-MODEL-MAP.md). Grok bots: 2 wheel styles × 4 tiers.
 9. **Furniture library in code:** agentic style, from the owner's furniture sheet; interiors pick it up automatically.
 10. **Arcade + casino bot:** already in the interiors recipes; wire the cabinets to the real SHADDAI Arcade games.
-11. **Day/night lighting pass** + final whole-branch review → owner OK → push.
+11. **Agentic world layer:**
+    - agents live in the realms with jobs (farm, shop clerk, courier, guard, dealer);
+    - SPARKS earn/spend loop (closed-loop);
+    - world chat + agent chat bubbles;
+    - the agent phone works everywhere, including on the train and at hubs;
+    - hire Grok bots/agents to run shops.
+    Wire these to the existing backend (`/api/agents`, SPARKS ledger, MCP on the beta site).
+12. **Day/night lighting pass** + final whole-branch review → owner OK → push.
+
+## Fastest way through (owner wants it done today)
+After the usage reset, run items 1–12 back-to-back with ONE helper at a time, each with its own tests + commit. Items 2, 5, 8 and 9 are pure code and can run while the owner reviews visuals from items 1 and 3.
 
 ## Rules
 Ask before any fal spend or delete · one heavy job at a time (8 GB laptop) · SPARKS closed-loop · futuristic only · the owner approves visuals.
