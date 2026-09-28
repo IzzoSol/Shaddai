@@ -24,7 +24,7 @@
  * is untouched, this module only ever reads `goto` and only ever writes the player's x/z).
  *
  *   window.buildWorldGoto({ city, getPlayerHandle, isReady, onDone, colliders?, window? })
- *     city            — the world-city-v3 API (city.marker(id), city.markers[])
+ *     city            — the world-city-v3 API, read only after its `.ready` resolves (city.markers[])
  *     getPlayerHandle — () => the mutable player position handle ({x,y,z}), e.g. window.__w3dDebug.playerPos
  *     isReady         — () => true once it is safe to move the player (intro gate passed, sky-dive over)
  *     onDone(found)   — called once resolution is settled: found===false when there was a `goto` id that
@@ -84,14 +84,12 @@
     return { x: p.x, z: p.z, bearing: BEARINGS[0] };
   }
 
-  // dashboard_id (exact, then case-insensitive) else marker name (case-insensitive).
+  // dashboard_id (exact, then case-insensitive) else marker name (case-insensitive). Reads city.markers[]
+  // directly rather than city.marker(id) (exact-name-only, case-sensitive) — this module is only ever
+  // wired up after window.__cityV3.ready, so markers[] is always populated by then.
   function findMarker(city, id) {
     if (!city || !id) return null;
-    var list = (city.markers && city.markers.length) ? city.markers : null;
-    if (!list) {
-      if (city.marker) { var m0 = city.marker(id); if (m0) return m0; }
-      return null;
-    }
+    var list = city.markers || [];
     var low = String(id).toLowerCase(), i, m;
     for (i = 0; i < list.length; i++) { m = list[i]; if (m && m.dashboard_id != null && String(m.dashboard_id) === id) return m; }
     for (i = 0; i < list.length; i++) { m = list[i]; if (m && m.dashboard_id != null && String(m.dashboard_id).toLowerCase() === low) return m; }

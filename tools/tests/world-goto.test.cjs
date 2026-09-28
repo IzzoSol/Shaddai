@@ -106,6 +106,33 @@ function fakePlayer(x, z) { return { x: x, z: z, y: 0 }; }
     assert.strictEqual(g.apply(), false, 'apply is one-shot');
   });
 
+  test('readiness gate: mirrors the host fix — __worldBuilt && !__spawnBusy is NOT enough; must also be in-world AND past the sky-dive (not just idle-before-it)', () => {
+    // Regression for fix round 1: on the loading screen __worldBuilt is already true and the spawn
+    // system is 'idle' (= !__spawnBusy) BEFORE ENTER is even clicked, so a naive
+    // `isReady = () => __worldBuilt && !__spawnBusy` fires immediately and worldSpawn.pickPortal()
+    // (the sky-dive landing) then clobbers the position we just set, with apply() never re-firing
+    // (it is one-shot). The real host gate (SHADDAI-WORLD-3D.html, wired here) additionally requires
+    // document.body.classList.contains('in-world') (set right before startSkydive()) AND a one-shot
+    // "__spawnEverBusy" latch (true only once worldSpawn.isAnimating() has actually been observed true,
+    // i.e. the sky-dive/descent ran) before treating "not busy" as "arrived", not "hasn't started yet".
+    window.location.search = '?goto=hiring';
+    let worldBuilt = true, spawnBusy = false, spawnEverBusy = false, inWorld = false;   // loading-screen state: already "not busy"
+    const isReady = () => worldBuilt && inWorld && spawnEverBusy && spawnBusy === false;
+    const player = fakePlayer(0, 0);
+    const g = build({ city, getPlayerHandle: () => player, isReady }).resolve();
+    assert.ok(g.target);
+    assert.strictEqual(g.apply(), false, 'loading screen: __worldBuilt && !spawnBusy true, but not in-world yet');
+    inWorld = true;   // ENTER clicked
+    assert.strictEqual(g.apply(), false, 'in-world, but sky-dive has not run yet (still "not busy" == pre-dive idle)');
+    spawnBusy = true;   // sky-dive/descent running
+    assert.strictEqual(g.apply(), false, 'mid sky-dive: busy');
+    spawnEverBusy = true;
+    assert.strictEqual(g.apply(), false, 'still busy (descending)');
+    spawnBusy = false;  // landed — pickPortal has placed the player; now safe to move them again
+    assert.strictEqual(g.apply(), true, 'post-dive idle: ready');
+    assert.ok(Math.hypot(player.x - g.target.pos.x, player.z - g.target.pos.z) > 0);
+  });
+
   test('faces the marker: bearing is one of the 8 compass ticks, and running it backwards lands back on the marker', () => {
     window.location.search = '?goto=hiring';
     const player = fakePlayer(0, 0);

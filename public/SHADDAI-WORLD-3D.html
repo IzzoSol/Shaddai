@@ -544,14 +544,27 @@ window.__worldBuilt = false;
         window.__worldGoto = window.buildWorldGoto({
           city: window.__cityV3,
           getPlayerHandle: function(){ return playerPos; },
-          isReady: function(){ return !!window.__worldBuilt && window.__spawnBusy === false; },
+          // Not just __worldBuilt && !__spawnBusy: both are already true on the LOADING SCREEN, before
+          // ENTER is even clicked (spawn starts 'idle' = not busy). Also require 'in-world' (set right
+          // before startSkydive(), i.e. ENTER was pressed) AND __spawnEverBusy (the sky-dive/descent has
+          // actually run at least once) so apply() can't fire before worldSpawn.pickPortal() places the
+          // player — which would otherwise overwrite our move and never re-fire.
+          isReady: function(){
+            if(!window.__worldBuilt) return false;
+            if(!document.body.classList.contains('in-world')) return false;
+            if(!worldSpawn) return true;   // no sky-dive system on this build — in-world is enough
+            return window.__spawnBusy === false && !!window.__spawnEverBusy;
+          },
           onDone: function(found){   // face the marker the same instant the player arrives (snap, like fast travel)
             if(found && window.__worldGoto && window.__worldGoto.approach) { _look.yaw = _look.tYaw = window.__worldGoto.approach.bearing; }
           }
         });
         window.__worldGoto.resolve();
         if(window.__worldGoto.target){
-          const _gotoIv = setInterval(function(){ if(window.__worldGoto.apply()) clearInterval(_gotoIv); }, 400);
+          let _gotoTries = 0;
+          const _gotoIv = setInterval(function(){
+            if(window.__worldGoto.apply() || ++_gotoTries > 750) clearInterval(_gotoIv);   // give up after ~5 min (750 * 400ms)
+          }, 400);
         }
       }).catch(function(e){ console.warn('[map-v4] goto failed:', e && e.message); }).then(function(){ return api; });
     })
@@ -4510,6 +4523,7 @@ function animate(){
   }
   const _spawnBusy = !!(worldSpawn && worldSpawn.isAnimating());
   window.__spawnBusy = _spawnBusy;   // read by the ?room=colosseum deep link (never enter a room mid-sky-dive)
+  if(_spawnBusy) window.__spawnEverBusy = true;   // one-shot latch: true once the sky-dive has actually run (?goto= readiness gate — see below)
   if(!_spawnBusy) _applyLook(dt);   // damped mouse-look → drives camera orientation before movement reads it
   // movement (manual, relative to camera yaw)
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
