@@ -314,6 +314,104 @@
       "step": "concept",
       "usd": 0.08,
       "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T15:20:54.166Z",
+      "id": "agent-shaddai",
+      "step": "concept",
+      "usd": 0.04,
+      "note": "fal flux-pro/kontext T-pose concept"
+    },
+    {
+      "at": "2026-09-28T15:21:25.558Z",
+      "id": "agent-nexus",
+      "step": "concept",
+      "usd": 0.08,
+      "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T15:21:48.911Z",
+      "id": "agent-nexus",
+      "step": "concept",
+      "usd": 0.04,
+      "note": "fal flux-pro/kontext T-pose concept"
+    },
+    {
+      "at": "2026-09-28T15:22:30.030Z",
+      "id": "agent-turtle",
+      "step": "concept",
+      "usd": 0.08,
+      "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T15:22:50.732Z",
+      "id": "agent-turtle",
+      "step": "concept",
+      "usd": 0.04,
+      "note": "fal flux-pro/kontext T-pose concept"
+    },
+    {
+      "at": "2026-09-28T19:50:00.070Z",
+      "id": "agent-shaddai",
+      "step": "concept",
+      "usd": 0.08,
+      "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T19:50:12.888Z",
+      "id": "agent-shaddai",
+      "step": "concept",
+      "usd": 0.08,
+      "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T20:10:05.183Z",
+      "id": "agent-zerox",
+      "step": "mesh",
+      "usd": 0.96,
+      "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+    },
+    {
+      "at": "2026-09-28T20:10:05.506Z",
+      "id": "agent-nexus",
+      "step": "mesh",
+      "usd": 0.96,
+      "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+    },
+    {
+      "at": "2026-09-28T20:10:05.845Z",
+      "id": "agent-quill",
+      "step": "mesh",
+      "usd": 0.96,
+      "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+    },
+    {
+      "at": "2026-09-28T20:10:06.174Z",
+      "id": "agent-shaddai",
+      "step": "mesh",
+      "usd": 0.96,
+      "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+    },
+    {
+      "at": "2026-09-28T20:10:06.419Z",
+      "id": "agent-turtle",
+      "step": "mesh",
+      "usd": 0.16,
+      "note": "hunyuan v2 mesh; rig failed"
+    },
+    {
+      "at": "2026-09-28T20:10:06.702Z",
+      "id": "agent-zerox",
+      "step": "mesh",
+      "usd": 0.16,
+      "note": "hunyuan v2, stopped (old ref)"
+    },
+    {
+      "at": "2026-09-28T20:10:06.968Z",
+      "id": "agent-shaddai",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 50k T-pose rig"
     }
   ]
 }

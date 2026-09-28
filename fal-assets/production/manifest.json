@@ -166,7 +166,7 @@
       "family": "agent",
       "name": "SHADDAI — The Source",
       "canary": false,
-      "status": "concept-approved",
+      "status": "mesh-approved",
       "slot": {
         "file": "public/assets/models/chars/ + fal-assets/characters/shaddai-council/",
         "note": "replaces shaddai-council-rigged.glb in place; 2D sprites re-captured free via capture-sprites.mjs"
