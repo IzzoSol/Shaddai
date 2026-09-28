@@ -98,6 +98,61 @@
       "files": [
         "production\\concepts\\bld-arcade\\bld-arcade-hf-20260924-155005-1.png"
       ]
+    },
+    {
+      "at": "20260928-060150",
+      "id": "agent-zerox",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "production\\refs\\agent-zerox\\zerox-fullbody-katana.png",
+      "files": [
+        "production\\concepts\\agent-zerox\\agent-zerox-fal-20260928-060150-1.png"
+      ]
+    },
+    {
+      "at": "20260928-060203",
+      "id": "agent-nexus",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "refs\\agents\\agent-nexus.png",
+      "files": [
+        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-060203-1.png"
+      ]
+    },
+    {
+      "at": "20260928-060214",
+      "id": "agent-quill",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "production\\refs\\agent-quill\\quill-tpose-owner-20260928.png",
+      "files": [
+        "production\\concepts\\agent-quill\\agent-quill-fal-20260928-060214-1.png"
+      ]
+    },
+    {
+      "at": "20260928-060405",
+      "id": "agent-nexus",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "refs\\agents\\agent-nexus.png",
+      "files": [
+        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-060405-1.png"
+      ]
+    },
+    {
+      "at": "20260928-061247",
+      "id": "agent-zerox",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "production\\refs\\agent-zerox\\zerox-fullbody-katana.png",
+      "files": [
+        "production\\concepts\\agent-zerox\\agent-zerox-fal-20260928-061247-1.png"
+      ]
     }
   ]
 }

@@ -106,6 +106,8 @@ def main():
     ap.add_argument("--provider", default="wavespeed", help="HF provider: wavespeed | replicate | fal-ai")
     ap.add_argument("--model", default=None, help="override model (e.g. black-forest-labs/FLUX.1-schnell on nscale)")
     ap.add_argument("--go", action="store_true")
+    ap.add_argument("--pose", action="store_true", help="with --fal: 2-image Kontext (character + 1.8 m UAL2 mannequin T-pose from manifest pose_ref) — locks the exact T-pose + proportions")
+    ap.add_argument("--fal", action="store_true", help="run on fal (fal-ai/flux-pro/kontext, ~$0.04/img) instead of HF — key from FAL_KEY env or ../Shaddai/.env; spend logged via preflight.mjs")
     ar = ap.parse_args()
 
     M, A = load()
@@ -134,7 +136,8 @@ def main():
     model = ar.model or (MODEL if img is not None else T2I_MODEL)
     print(f"asset   {ar.id} ({a['name']})")
     print("ref     " + (f"{os.path.relpath(ref, FAL)}  {img.size} {'PORTRAIT' if portrait else 'full-body'}" if img is not None else "none — text-to-image"))
-    print(f"model   {model} via HF provider '{ar.provider}' — billed to HUGGING FACE, not fal")
+    if ar.fal: print(f"model   fal-ai/flux-pro/kontext{'' if img is not None else '/text-to-image'} via fal — ~$0.04/image, billed to FAL")
+    else: print(f"model   {model} via HF provider '{ar.provider}' — billed to HUGGING FACE, not fal")
     print(f"runs    {len(runs)} previous --go run(s) of max 2\nprompt  {prompt}\n")
     if len(runs) >= 2:
         sys.exit("BLOCKED: 2 runs already — the prompt/ref is wrong. Change it, then clear this asset's hf-ledger entries by hand.")
@@ -142,6 +145,8 @@ def main():
         print(f"DRY RUN — add --go to generate {ar.n} variant(s).")
         return
 
+    if ar.fal and (ar.go or ar.pose):
+        return run_fal(ar, a, img, prompt, ref, ledger, ledger_p)
     from huggingface_hub import InferenceClient
     if img is not None:
         img.thumbnail((1024, 1024))
@@ -161,6 +166,59 @@ def main():
                               "ref": os.path.relpath(ref, FAL) if ref else None, "files": saved})
     json.dump(ledger, open(ledger_p, "w", encoding="utf-8"), indent=2)
     print("\nNext: node fal-assets/production/preflight.mjs  (board shows the concepts) → owner approves → status concept-approved")
+
+
+def fal_key():
+    k = os.environ.get("FAL_KEY", "").strip()
+    if k: return k
+    for env in (os.path.join(FAL, "..", ".env"), os.path.join(os.path.expanduser("~"), "Shaddai", ".env")):
+        if os.path.exists(env):
+            for l in open(env, encoding="utf-8"):
+                if l.strip().startswith("FAL_KEY="): return l.split("=", 1)[1].strip().strip('"').strip("'")
+    sys.exit("BLOCKED: no FAL_KEY (env or Shaddai/.env)")
+
+
+def run_fal(ar, a, img, prompt, ref, ledger, ledger_p):
+    """fal FLUX Kontext (pro): same prompt + reference as the HF path. Never prints the key. Logs $ via preflight."""
+    import base64, urllib.request, subprocess
+    key = fal_key()
+    if img is not None and ar.pose:
+        from PIL import Image as _I
+        pose_p = os.path.join(HERE, a.get("pose_ref", "refs/_pose/tpose-male-1.8m.png"))
+        pim = _I.open(pose_p).convert("RGB"); pim.thumbnail((1024, 1536)); pb = io.BytesIO(); pim.save(pb, format="PNG")
+        img.thumbnail((1024, 1024)); buf = io.BytesIO(); img.save(buf, format="PNG")
+        rules = (" " + a.get("charm_rule", "") + ". " + a.get("weapon_rule", "") + ".")
+        pose_prompt = ("Image 1 is the CHARACTER. Image 2 is a plain grey mannequin that shows the EXACT required pose and body proportions. "
+                       "Redraw the character from image 1 standing in EXACTLY the pose of image 2: a strict T-pose, both arms straight out horizontally at shoulder height, "
+                       "palms down, fingers together, elbows and wrists straight, legs straight and slightly apart, feet flat, facing the camera dead-on, head level. "
+                       "Match image 2's body proportions and limb lengths exactly (realistic adult, about 7.5 heads tall; same arm span, leg length and shoulder width as the mannequin). "
+                       "Keep image 1's face, hair, skin tone, outfit design, materials and colours exactly. Whole body visible head to toe, centred, plain flat mid-grey background, even studio light. "
+                       "Nothing in the hands." + rules + " " + prompt)
+        url, body = "https://fal.run/fal-ai/flux-pro/kontext/max/multi", {"prompt": pose_prompt, "image_urls": ["data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(), "data:image/png;base64," + base64.b64encode(pb.getvalue()).decode()], "num_images": 1, "output_format": "png", "aspect_ratio": "2:3"}
+        if not ar.go:
+            print("POSE MODE (fal-ai/flux-pro/kontext/max/multi, ~$0.08/img) pose_ref:", a.get("pose_ref")); print("prompt:", pose_prompt[:900]); return
+    elif img is not None:
+        img.thumbnail((1024, 1024)); buf = io.BytesIO(); img.save(buf, format="PNG")
+        url, body = "https://fal.run/fal-ai/flux-pro/kontext", {"prompt": prompt, "image_url": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(), "num_images": 1, "output_format": "png"}
+    else:
+        url, body = "https://fal.run/fal-ai/flux-pro/kontext/text-to-image", {"prompt": prompt, "num_images": 1, "output_format": "png", "aspect_ratio": "3:4"}
+    out_dir = os.path.join(HERE, "concepts", ar.id); os.makedirs(out_dir, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S"); saved = []
+    for i in range(ar.n):
+        req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Authorization": "Key " + key, "Content-Type": "application/json"})
+        try:
+            res = json.load(urllib.request.urlopen(req, timeout=300))
+        except urllib.error.HTTPError as e:
+            sys.exit(f"STOP: fal HTTP {e.code}: {e.read()[:300].decode(errors='replace')}")
+        u = res["images"][0]["url"]
+        p = os.path.join(out_dir, f"{ar.id}-fal-{stamp}-{i + 1}.png")
+        urllib.request.urlretrieve(u, p); saved.append(os.path.relpath(p, FAL)); print("saved", saved[-1])
+        try: subprocess.run(["node", os.path.join(HERE, "preflight.mjs"), "log", ar.id, "concept", ("0.08" if ar.pose else "0.04"), ("fal kontext max/multi + mannequin T-pose" if ar.pose else "fal flux-pro/kontext T-pose concept")], check=False)
+        except Exception as e: print("  (spend log failed:", e, ")")
+    ledger["entries"].append({"at": stamp, "id": ar.id, "provider": "fal", "model": "fal-ai/flux-pro/kontext", "n": ar.n,
+                              "ref": os.path.relpath(ref, FAL) if ref else None, "files": saved})
+    json.dump(ledger, open(ledger_p, "w", encoding="utf-8"), indent=2)
+    print("Next: owner approves the concept -> status concept-approved -> then mesh")
 
 
 if __name__ == "__main__":
