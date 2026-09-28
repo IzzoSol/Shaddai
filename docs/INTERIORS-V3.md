@@ -4,7 +4,7 @@ Walk-in building interiors for Map v4 (`?map=v4`). When you get near a building 
 
 v2 (`public/world-interiors.js`, the 7 agent buildings with portal enter/exit) is unchanged and keeps working. v3 is a separate module.
 
-Test: `node --expose-gc tools/tests/world-interiors-v3.test.cjs` (15 tests: real three from `tools/ual`, the real city JSON, no browser). Without `--expose-gc` the heap check is skipped.
+Test: `node --expose-gc tools/tests/world-interiors-v3.test.cjs` (18 tests: real three from `tools/ual`, the real city JSON, no browser). Without `--expose-gc` the heap check is skipped.
 
 ## Which buildings are enterable (3,349)
 
@@ -119,6 +119,49 @@ iv3.isInside(); iv3.current(); iv3.stats(); iv3.handleInteract(marker) /* true i
 ```
 
 **3.** Optional: `window.__onInteriorUse = e => { if(e.type === 'arcade') openGame(e.marker.props.game); … }` to launch a game straight from a cabinet. A bed use arrives as `type: 'rest'` with the home's `dashboard_id`.
+
+## Sand houses and growth-farm towers (owner scope, 2026-09-28)
+
+These use the `sand` style: printed sand-glass walls (`#c8a676`), a warm emissive print seam (`#ffa24a`) on the door frame and ceiling edge, and a sand floor. They are never plain mud huts. The `farm` style uses bio-glass with a leaf-green seam. Humans and agents use the same slots: `iv3.slots(id)` returns the world position of every NPC slot, every use point and the door, for agent navigation.
+
+| Recipe (`register({ key })`) | Archetype (owner ref `LF2/MODELS FOR FAL/7b8b…jpg`) | Uses | NPC slots |
+|---|---|---|---|
+| `sand-dome` (`sand-house-01`), default 14×9×5.5 m | twin domes + awning, joined by an arch (partition doorway) | respawn (bed pod), cook/hydration, craft (workbench), comms | crafter |
+| `sand-tower` (`sand-house-02`), 12×12×12 m or `r:` for a round shell | round tower + solar wing | respawn, cook, craft, comms | operator |
+| `sand-stepped` (`sand-house-03`), 13×10×7 m | stepped block, stairs to the roof terrace | roof (stair head → host moves the player up), respawn, cook, craft, comms | crafter |
+| `sand-courtyard` (`sand-house-04`), 20×18×6 m | arched courtyard compound: back rooms plus two side wings round a court | respawn, cook, craft, comms, trade (counter), quest | trader, quest-giver |
+| `farm-tower` (`bld-farm-tower`), 18×18×40 m (ref `9ff6…jpg`, FAL-MODEL-MAP "Growth-farm towers") | ground-floor community market + food-wall ring + living-pod spine | farm-market (SPARKS counter), 8 × harvest (food-wall stations), 2 × pod (rentable), lift | vendor, farmer (agent) |
+
+**Use markers.** Each use becomes a marker:
+
+| Use | Marker |
+|---|---|
+| respawn | `SAND_RESPAWN_*` (`props.respawn`) |
+| cook | `NODE_HYDRATION` |
+| craft | `NODE_CRAFT` |
+| comms | `NODE_MAIL` (the agentmail panel) |
+| trade | `STALL_*` (bazaar, `currency: 'SPARKS'`) |
+| quest | `NODE_QUEST` |
+| farm-market | `STALL_FARM_*` (`currency: 'SPARKS'`, `owner_id`) |
+| harvest | `NODE_HARVEST` (`station`, `owner_id`) |
+| pod | `NODE_POD` (`pod`, `owner_id`, `rent_currency: 'SPARKS'`) |
+
+**Farm hooks** are data only. There is no economy code here.
+
+- `layout.farm = { ownerId, farmerSlot, cycle, currency:'SPARKS', harvest[], market, levels[] }`.
+- `levels[r] = { level, y, pods[4]{id, seat, bed, tenant}, harvest[3] }` holds the upper rings. They are data only until multi-floor support lands.
+- `iv3.setOwner(id, ownerId)` updates the layout and the `owner_id` of the live markers. Claims go through the existing plot economy (`plot_buy`).
+- SPARKS stays closed-loop. There is no value-out control or vocabulary, and a test greps the code for it.
+
+**Round realm habitats.** Any `sand-habitat-base` circle in `canon-colliders-v4.json` (game units), or in `data.sandHabitats`, is indexed as a `sand-tower`. The room is a square inscribed in the circle. The four ring caps between the square and the circle stay solid, and the front cap is split by the door gap, facing the city centre. While the player is near, the circle collider is swapped out and later restored, exactly as for OBBs.
+
+**Blender-side change these habitats need** (`tools/blender/canon/realms_v1.py`, `build_sand`; Blender was not run):
+
+1. Today each habitat is 5 closed printed rings plus a cap with no opening, and its collider is one solid circle (`sand-habitat-base`, r = base_r).
+2. Cut a door opening, 2.4 m wide × 3 m tall, in the lowest ring on the side facing the city centre (bearing `atan2(-y, -x)`). That is the side the runtime puts the door on.
+3. Export the collider as it is now (the runtime swaps it). Add `door_bearing` to the circle row so the runtime can use the real bearing instead of "faces the centre".
+4. The current export has no `sand-habitat-base` rows in `public/assets/world/canon-colliders-v4.json` (0 found). Re-export the realms colliders so they reach the game.
+5. The collar at `zc - 0.2` is the print-seam glow. The interior seam colour matches it.
 
 ## Needs a real browser look
 

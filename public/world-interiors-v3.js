@@ -96,6 +96,9 @@
     'broadcast-desk': { fp: [2.4, 1.2], h: 0.9, use: [0, 1.1], npc: [[0, -0.95]], color: 0x241c2e },
     'lift': { fp: [2.2, 2.2], h: 3.0, use: [0, 1.6], color: 0x1a1e24 },
     'stairs': { fp: [1.4, 4.2], h: 0.2, color: 0x2a2e34, noCol: true },
+    'hydro-station': { fp: [1.6, 0.7], h: 1.1, use: [0, 0.9], color: 0x1c3a44 },          // cook / water still (sand houses)
+    'comms-console': { fp: [1.2, 0.8], h: 1.3, use: [0, 0.95], npc: [[1.05, 0.3]], color: 0x241c2e },
+    'grow-rack': { fp: [2.0, 0.7], h: 2.4, use: [0, 0.9], npc: [[1.4, 0.5]], color: 0x1f3a22 },   // food-wall harvest station
     'rug': { fp: [3.0, 2.0], h: 0.02, overlay: true, color: 0x123a30 },
     'ceiling-light': { fp: [1.2, 1.2], h: 0.08, overlay: true, ceiling: true, color: 0xd8fff0 }
   };
@@ -163,7 +166,7 @@
     var W = b.w, D = b.d, H = b.h, dw = R.doorW || 2.4;
     var L = { id: b.id, recipe: b.recipe, W: W, D: D, H: H, ceil: clamp(Math.min(H - 0.3, R.ceil || 4.2), 3.0, 8), open: !!R.open,
       door: { x: clamp(b.doorX || 0, -W / 2 + dw / 2 + 0.6, W / 2 - dw / 2 - 0.6), w: dw, h: Math.min(3.0, H - 0.4) },
-      walls: [], items: [], clear: [], uses: [], npcs: [], lights: [], colliders: [], solids: (b.solids || []).slice() };
+      walls: [], items: [], clear: [], uses: [], npcs: [], lights: [], colliders: [], solids: (b.solids || []).slice(), style: R.style || null };
     var T = WALL_T, inner = { x0: -W / 2 + T, x1: W / 2 - T, z0: -D / 2 + T, z1: D / 2 - T };
     var rng = rngOf(hash(b.id + '|' + b.recipe)), metas = {};
     function M(kind) { return metas[kind] || (metas[kind] = metaFor(kind, furniture)); }
@@ -238,7 +241,7 @@
       }
       return out;
     }
-    function depth(kind, q) { var m = M(kind); return ((q & 1) ? m.fp[0] : m.fp[1]) / 2; }
+    function depth(kind) { return M(kind).fp[1] / 2; }   // extent away from the wall it backs onto (any quarter turn)
     // against a wall, facing into the room: back (q0), left (q1), right (q3)
     function atBack(kind, x, opt, off) { return place(kind, x, inner.z0 + depth(kind, 0) + (off || 0.02), 0, opt); }
     function atLeft(kind, z, opt, off) { return place(kind, inner.x0 + depth(kind, 1) + (off || 0.02), z, 1, opt); }
@@ -437,6 +440,79 @@
     placeGames(c, ARCADE_GAMES.slice(0, 6));
     lights3(c, [0, 0, i.z0 + 3]);
   }
+  // ── SAND HOUSES (owner ref LF2/MODELS FOR FAL/7b8b…jpg): printed sand-glass, warm emissive seams. Every one has
+  //    sleep (rest/respawn), cook/hydration, workbench (craft), comms, 1–2 NPC slots (humans + agents use the same slots) ──
+  function sandCore(c, zone, opt) {   // zone: {x0,x1,z0,z1} room-local; opt.npc roles
+    var cx = (zone.x0 + zone.x1) / 2;
+    var out = {};
+    out.bed = firstOf(c, 'bed-pod', [zone.x0 + 1.2, zone.x0 + 1.6, cx], zone.z0 + c.depth('bed-pod', 0) + 0.02, 0, { use: 'respawn' });
+    out.hydro = firstOf(c, 'hydro-station', [zone.x1 - 0.9, zone.x1 - 1.4, cx], zone.z0 + c.depth('hydro-station', 0) + 0.02, 0, { use: 'cook' });
+    return out;
+  }
+  function sandDome(c) {          // 01 twin-dome home + awning: two domes joined by an arch (partition with a doorway)
+    var i = c.inner, mx = 0.4;
+    c.partZ(mx, i.z0, i.z1 - 2.6, [{ z: i.z0 + 2.2, w: 1.8 }]);
+    sandCore(c, { x0: i.x0, x1: mx - 0.1, z0: i.z0, z1: i.z1 });
+    c.atRight('workbench', -0.4, { use: 'craft', npc: 'crafter' }, 1.25) || c.atBack('workbench', (mx + i.x1) / 2, { use: 'craft' });
+    firstOf(c, 'comms-console', [i.x1 - 1.0, mx + 1.2], i.z1 - 3.4, 2, { use: 'comms' }) || c.atLeft('comms-console', 0.8, { use: 'comms' });
+    c.place('rug', (i.x0 + mx) / 2, 0.6, 0);
+    c.light((i.x0 + mx) / 2, -0.5); c.light((mx + i.x1) / 2, -0.5);
+  }
+  function sandTower(c) {         // 02 round tower + solar wing (square room inscribed in the round shell; ring caps stay solid)
+    var i = c.inner;
+    sandCore(c, { x0: i.x0, x1: i.x1, z0: i.z0, z1: i.z1 });
+    c.atLeft('comms-console', 0.6, { use: 'comms', npc: 'operator' }) || c.atLeft('comms-console', 2.0, { use: 'comms', npc: 'operator' }) || c.atRight('comms-console', 2.0, { use: 'comms', npc: 'operator' }) || c.atLeft('comms-console', 1.2, { use: 'comms' });
+    c.atRight('workbench', 0.4, { use: 'craft' }, 0.02);
+    c.place('rug', 0, 0.6, 0);
+    lights3(c, [0, 0]);
+  }
+  function sandStepped(c) {       // 03 stepped block, stairs to the roof terrace
+    var i = c.inner;
+    c.place('stairs', i.x1 - 0.8, i.z0 + 2.3, 0, {}) && c.clearRect(i.x1 - 0.8, i.z0 + 5.0, 0.9, 0.6, 'stairs-foot');
+    c.atRight('terminal', i.z0 + 5.6 + 0.6, { use: 'roof' });   // stair head → roof terrace (host moves the player up)
+    sandCore(c, { x0: i.x0, x1: i.x1 - 2.0, z0: i.z0, z1: i.z1 });
+    c.atLeft('workbench', 0.6, { use: 'craft', npc: 'crafter' }, 1.25) || c.atLeft('workbench', 0.6, { use: 'craft' });
+    firstOf(c, 'comms-console', [-1.0, 1.0, -2.5], 1.6, 0, { use: 'comms' });
+    lights3(c, [-1, -1]);
+  }
+  function sandCourtyard(c) {     // 04 arched courtyard compound: rooms on three sides of an open court
+    var i = c.inner, rz = i.z0 + 5.0, lx = i.x0 + 5.5, rx = i.x1 - 5.5;
+    c.partX(rz, lx, rx, [{ x: 0, w: 2.0 }]);                                               // back rooms (sleep / cook)
+    c.partZ(lx, i.z0, i.z1 - 3.0, [{ z: rz + 3.0, w: 2.0 }]); c.partZ(rx, i.z0, i.z1 - 3.0, [{ z: rz + 3.0, w: 2.0 }]);
+    sandCore(c, { x0: lx + 0.1, x1: rx - 0.1, z0: i.z0, z1: rz - 0.1 });
+    c.atLeft('workbench', rz + 1.5, { use: 'craft' }) || c.atLeft('workbench', 0, { use: 'craft' });
+    c.atRight('comms-console', rz + 1.5, { use: 'comms' });
+    firstOf(c, 'counter', [0, -1.5, 1.5], rz + 3.2, 0, { use: 'trade', npc: 'trader' });            // courtyard trade counter
+    firstOf(c, 'lectern', [i.x0 + 2.5, i.x1 - 2.5], i.z1 - 3.2, 2, { use: 'quest', npc: 'quest-giver' });
+    c.place('planter', lx + 0.6, i.z1 - 3.6, 0); c.place('planter', rx - 0.6, i.z1 - 3.6, 0);
+    lights3(c, [i.z0 + 2.5, rz + 2, i.z0 + 2.5]);
+  }
+  // ── GROWTH-FARM TOWER (docs/FAL-MODEL-MAP.md "Growth-farm towers"): ownable; data hooks only, no economy code.
+  //    Ground floor: community market counter (SPARKS only) + food-wall harvest stations + farmer-agent slot + lift;
+  //    upper rings (L.farm.levels): rentable living pods + harvest stations as data for the multi-floor pass. ──
+  function farmTower(c) {
+    var i = c.inner, L = c.L;
+    firstOf(c, 'counter', [0, -2, 2], i.z0 + 1.3 + 0.4 + 0.02 + 3.2, 0, { use: 'farm-market', npc: 'vendor' });
+    var harvest = [];
+    harvest = harvest.concat(c.run('grow-rack', 'x', i.z0 + c.depth('grow-rack', 0) + 0.02, i.x0 + 0.3, i.x1 - 0.3, 0, { gap: 0.6, max: 5, use: 'harvest', each: function (k) { return { use: 'harvest', npc: k === 0 ? 'farmer' : null, tag: 'ring0-' + k }; } }));
+    harvest = harvest.concat(c.run('grow-rack', 'z', i.x0 + c.depth('grow-rack', 1) + 0.02, i.z0 + 2.2, i.z1 - 2.5, 1, { gap: 0.8, max: 3, each: function (k) { return { use: 'harvest', tag: 'ring0-w' + k }; } }));
+    c.atRight('lift', -2.5, { use: 'lift' }) || c.atRight('lift', 0, { use: 'lift' });
+    c.run('bed-pod', 'z', i.x1 - c.depth('bed-pod') - 0.02, 0.5, i.z1 - 0.3, 3, { gap: 0.6, max: 2, each: function (k) { return { use: 'pod', tag: 'pod-0-' + k }; } });   // ground-floor rentable pods
+    c.run('sofa', 'x', 1.2, i.x0 + 2.5, -2.5, 0, { gap: 1.0, max: 2 });
+    c.place('rug', -1, 2.0, 0);
+    lights3(c, [0, 0, i.z0 + 2]);
+    var ringH = 3.6, rings = Math.max(1, Math.min(8, Math.floor((c.H - 8) / ringH))), levels = [];     // top ~8 m = solar canopy + rain pool
+    for (var r = 1; r <= rings; r++) {
+      var pods = [], racks = [], k;
+      for (k = 0; k < 4; k++) pods.push({ id: 'pod-' + r + '-' + k, x: i.x0 + 1.4 + k * ((i.x1 - i.x0 - 2.8) / 3), z: i.z0 + 1.0, face: 0, seat: true, bed: true, tenant: null });
+      for (k = 0; k < 3; k++) racks.push({ id: 'ring' + r + '-' + k, x: i.x0 + 2 + k * ((i.x1 - i.x0 - 4) / 2), z: i.z1 - 1.5, face: 2 });
+      levels.push({ level: r, y: 0.2 + r * ringH, pods: pods, harvest: racks });
+    }
+    L.farm = { ownerId: c.b.ownerId || null, farmerSlot: null, cycle: 0, currency: 'SPARKS', levels: levels,
+      harvest: harvest.map(function (it) { return it.use; }), market: null };
+    L.npcs.forEach(function (n) { if (n.role === 'farmer') L.farm.farmerSlot = n; });
+    L.uses.forEach(function (u) { if (u.type === 'farm-market') L.farm.market = u; });
+  }
   var RECIPES = {
     'storefront-s': { label: 'Shop floor + counter + shelves + back office', build: function (c) { storefront(c, false); } },
     'storefront-l': { label: 'Flagship store: counter, shelves, holo-shelves, lounge, back office', doorW: 3.0, build: function (c) { storefront(c, true); } },
@@ -454,8 +530,15 @@
     'campus': { label: 'Academy hall: 3 classrooms + forge bays', doorW: 3.0, build: campus },
     'bank': { label: 'Bank: teller counters + SPARKS kiosks', doorW: 3.0, build: bank },
     'forge': { label: 'Forge: anvil stations + workbenches', doorW: 3.0, build: forge },
-    'shaddai-hall': { label: 'SHADDAI Hall: casino tables, bar, cabinets', doorW: 3.0, build: hall }
+    'shaddai-hall': { label: 'SHADDAI Hall: casino tables, bar, cabinets', doorW: 3.0, build: hall },
+    'sand-dome': { label: 'Sand house 01: twin domes + awning — sleep/respawn, hydration, workbench, comms', style: 'sand', ceil: 4.0, size: [14, 9, 5.5], build: sandDome },
+    'sand-tower': { label: 'Sand house 02: round tower + solar wing — respawn, hydration, craft, comms + operator', style: 'sand', ceil: 4.2, size: [12, 12, 12], build: sandTower },
+    'sand-stepped': { label: 'Sand house 03: stepped block, stairs to the roof terrace', style: 'sand', ceil: 3.8, size: [13, 10, 7], build: sandStepped },
+    'sand-courtyard': { label: 'Sand house 04: arched courtyard compound — rooms round a court, trader + quest-giver', style: 'sand', ceil: 4.0, doorW: 3.0, size: [20, 18, 6], build: sandCourtyard },
+    'farm-tower': { label: 'Growth-farm tower: market counter, food-wall harvest ring, farmer slot, lift; pod rings as data', style: 'farm', doorW: 3.0, ceil: 4.6, size: [18, 18, 40], build: farmTower }
   };
+  BOARD_RECIPES['sand-house-01'] = 'sand-dome'; BOARD_RECIPES['sand-house-02'] = 'sand-tower'; BOARD_RECIPES['sand-house-03'] = 'sand-stepped';
+  BOARD_RECIPES['sand-house-04'] = 'sand-courtyard'; BOARD_RECIPES['bld-farm-tower'] = 'farm-tower'; BOARD_RECIPES['farm-tower'] = 'farm-tower';
 
   // ════════════════════════════ USE → city marker (city-v3 / city-actions pipeline) ════════════════════════════
   // Each use point becomes a marker shaped like world-city-v3's normMarker(), so city-v3 shows the E-prompt and
@@ -475,7 +558,19 @@
     deed: function () { return { name: 'DEED_OFFICE', dashboard_id: 'plots.deeds', props: { paybox_merchant_id: 'city.deeds' } }; },
     radio: function () { return { name: 'BLD_BROADCAST', dashboard_id: 'culture.radio', endpoints: [{ service: 'radio', method: 'GET', path: '/api/radio/queue' }] }; },
     bank: function () { return { name: 'OBJ_SPARKS_KIOSK', dashboard_id: 'sparks', props: { paybox_merchant_id: 'city.kiosk' } }; },
-    studio: function (b) { return { name: 'STUDIO_' + up(b.short), dashboard_id: 'culture.studio.' + b.short }; }
+    studio: function (b) { return { name: 'STUDIO_' + up(b.short), dashboard_id: 'culture.studio.' + b.short }; },
+    // sand houses (realm habitats) — humans and agents
+    respawn: function (b) { return { name: 'SAND_RESPAWN_' + up(b.short), dashboard_id: 'realm.respawn.' + b.short, props: { action: 'rest', respawn: true } }; },
+    cook: function (b) { return { name: 'NODE_HYDRATION', dashboard_id: 'realm.hydration', props: { action: 'cook' } }; },
+    craft: function () { return { name: 'NODE_CRAFT', dashboard_id: 'realm.craft', props: { action: 'craft' } }; },
+    comms: function () { return { name: 'NODE_MAIL', dashboard_id: 'mail', props: { action: 'comms' }, endpoints: [{ service: 'agentmail', method: 'GET', path: '/api/agentmail/messages' }] }; },
+    trade: function (b) { return { name: 'STALL_' + up(b.short), dashboard_id: 'stall.' + b.short, props: { currency: 'SPARKS' }, endpoints: [{ service: 'bazaar', method: 'GET', path: '/api/bazaar/list' }] }; },
+    quest: function (b) { return { name: 'NODE_QUEST', dashboard_id: 'realm.quest.' + b.short, props: { action: 'quest' } }; },
+    roof: function () { return { name: 'NODE_ROOF', dashboard_id: 'interior.roof', props: { action: 'roof' } }; },
+    // growth-farm tower — data hooks only (SPARKS closed-loop; no cash-out, no yield-on-deposit)
+    'farm-market': function (b) { return { name: 'STALL_FARM_' + up(b.short), dashboard_id: 'farm.' + b.short + '.market', props: { currency: 'SPARKS', owner_id: b.ownerId || null }, endpoints: [{ service: 'bazaar', method: 'GET', path: '/api/bazaar/list' }] }; },
+    harvest: function (b, u) { return { name: 'NODE_HARVEST', dashboard_id: 'farm.' + b.short + '.harvest', props: { station: u.tag || null, owner_id: b.ownerId || null, action: 'harvest' } }; },
+    pod: function (b, u) { return { name: 'NODE_POD', dashboard_id: 'farm.' + b.short + '.pod', props: { pod: u.tag || null, owner_id: b.ownerId || null, rent_currency: 'SPARKS' } }; }
   };
   function homeMk(b, action) { var hid = b.homeId || 'home.' + b.short; return { name: b.homeName || 'HUB_HOME_' + up(b.short), dashboard_id: hid, props: { home_id: hid, action: action } }; }
   function niceTitle(name) { return String(name).replace(/^(OBJ|NODE|BLD|HUB)_/, '').toLowerCase().split('_').map(function (w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : w; }).join(' '); }
@@ -559,14 +654,30 @@
       b.homeId = props.home_id || props.dashboard_id || null; b.homeName = m.name;
       out.push(b);
     });
+    // 4) Sand realm habitats (realms_v1.py build_sand → circle colliders kind 'sand-habitat-base', game units) — when exported
+    var circles = ((data.canon && data.canon.circle) || []).concat(data.sandHabitats || []);
+    circles.forEach(function (o) { if (o && o.kind === 'sand-habitat-base' && o.r > 0) out.push(circleHabitat(o, 'sand-tower')); });
     return out;
   }
-  function registerBoard(spec) {   // future placements of the production-board family (bld-bank, bld-forge, bld-shaddai-hall …)
+  // round habitat: a square room inscribed in the round shell; the 4 ring caps between square and circle stay solid
+  // (front cap split by the door gap); the door faces the city centre.
+  function circleHabitat(o, recipe) {
+    var r = o.r / U, s = Math.floor(r * Math.SQRT2 * 10) / 10, dw = RECIPES[recipe].doorW || 2.4, len = Math.hypot(o.x, o.z) || 1;
+    var dx = -o.x / len, dz = -o.z / len, h = RECIPES[recipe].size[2], hs = s / 2, solids = [];
+    function cap(x0, x1, z0, z1) { if (x1 - x0 > 0.05 && z1 - z0 > 0.05) solids.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hx: (x1 - x0) / 2, hz: (z1 - z0) / 2, h: h }); }
+    cap(-hs, hs, -r, -hs); cap(-r, -hs, -hs, hs); cap(hs, r, -hs, hs); cap(-hs, -dw / 2, hs, r); cap(dw / 2, hs, hs, r);
+    var id = 'sand:' + Math.round(o.x) + ',' + Math.round(o.z);
+    return { id: id, short: shortId(id), key: o.kind, recipe: recipe, source: 'realm', cx: o.x, cz: o.z, rot: Math.atan2(dx, dz), w: s, d: s, h: h,
+      doorX: 0, canon: o, solids: solids, ext: null, ownerId: null };
+  }
+  function registerBoard(spec) {   // placements of the production-board family (bld-bank, bld-forge, bld-shaddai-hall, sand-house-0n, farm-tower …)
     var recipe = spec.recipe || BOARD_RECIPES[spec.key] || null;
     if (!recipe || !RECIPES[recipe]) throw new Error('unknown recipe for ' + (spec.key || spec.recipe));
+    if (spec.r > 0) { var ch = circleHabitat({ x: spec.x, z: spec.z, r: spec.r, kind: spec.key || recipe }, recipe); if (spec.id) { ch.id = spec.id; ch.short = shortId(spec.id); } ch.ownerId = spec.ownerId || null; return ch; }
+    var sz = RECIPES[recipe].size || [20, 16, 8];
     return { id: spec.id || 'board:' + (spec.key || recipe) + '@' + Math.round(spec.x) + ',' + Math.round(spec.z), short: shortId(spec.id || spec.key || recipe),
-      key: spec.key || recipe, recipe: recipe, source: 'board', cx: spec.x, cz: spec.z, rot: spec.rot || 0, w: spec.w || 20, d: spec.d || 16, h: spec.h || 8,
-      doorX: spec.doorX || 0, canon: spec.canon || null, solids: [], ext: spec.ext || null };
+      key: spec.key || recipe, recipe: recipe, source: 'board', cx: spec.x, cz: spec.z, rot: spec.rot || 0, w: spec.w || sz[0], d: spec.d || sz[1], h: spec.h || sz[2],
+      doorX: spec.doorX || 0, canon: spec.canon || null, solids: [], ext: spec.ext || null, ownerId: spec.ownerId || null };
   }
 
   // room-local collider rects → world OBBs (realmColliders format: {x,z,hx,hz,rot,top,label}); bottom = floor
@@ -599,7 +710,11 @@
   }
 
   // ════════════════════════════ RUNTIME ════════════════════════════
-  var NPC_COLORS = { shopkeeper: 0x00ff9c, clerk: 0x3dfff0, receptionist: 0x3dfff0, worker: 0x8fa3b8, staff: 0x8fa3b8, vendor: 0xe8c45c,
+  var STYLE_DEF = {
+    sand: { wall: 0xc8a676, floor: 0x9c7b52, ceil: 0xb08d60, seam: 0xffa24a, glassWalls: false },   // printed sand-glass, warm print-seam glow
+    farm: { wall: 0x1d3326, floor: 0x243a2a, ceil: 0x18261c, seam: 0x7dff6a, glassWalls: false }
+  };
+  var NPC_COLORS = { crafter: 0xffa24a, operator: 0x3dfff0, trader: 0xe8c45c, 'quest-giver': 0xd6a6ff, farmer: 0x7dff6a, shopkeeper: 0x00ff9c, clerk: 0x3dfff0, receptionist: 0x3dfff0, worker: 0x8fa3b8, staff: 0x8fa3b8, vendor: 0xe8c45c,
     engineer: 0x6fd3ff, curator: 0xd6a6ff, host: 0xff6fa8, teacher: 0xe8c45c, smith: 0xff9a3d, teller: 0x00ff9c, dealer: 0xe8c45c, bartender: 0xff6fa8 };
 
   function build(opts) {
@@ -621,6 +736,20 @@
       trim: new THREE.MeshStandardMaterial({ color: 0x00ff9c, emissive: 0x00ff9c, emissiveIntensity: 1.2, name: 'int3-trim' }),
       glass: new THREE.MeshStandardMaterial({ color: 0x0f2a24, emissive: 0x00ff9c, emissiveIntensity: 0.25, transparent: true, opacity: 0.55, roughness: 0.1, metalness: 0.4, name: 'int3-door' })
     };
+    // style sets: default = obsidian + emerald; 'sand' = printed sand-glass + warm emissive seam; 'farm' = bio-glass + leaf-green seam
+    var styles = { 'default': mats };
+    function styleMats(style) {
+      if (!style || !STYLE_DEF[style]) return mats;
+      if (styles[style]) return styles[style];
+      var S = STYLE_DEF[style];
+      return (styles[style] = {
+        wall: new THREE.MeshStandardMaterial({ color: S.wall, roughness: 0.55, metalness: 0.05, transparent: S.glassWalls, opacity: S.glassWalls ? 0.92 : 1, name: 'int3-wall-' + style }),
+        floor: new THREE.MeshStandardMaterial({ color: S.floor, roughness: 0.7, metalness: 0.05, name: 'int3-floor-' + style }),
+        ceil: new THREE.MeshStandardMaterial({ color: S.ceil, roughness: 0.8, name: 'int3-ceil-' + style }),
+        trim: new THREE.MeshStandardMaterial({ color: S.seam, emissive: S.seam, emissiveIntensity: 1.3, name: 'int3-seam-' + style }),
+        glass: new THREE.MeshStandardMaterial({ color: S.floor, emissive: S.seam, emissiveIntensity: 0.25, transparent: true, opacity: 0.55, roughness: 0.1, metalness: 0.3, name: 'int3-door-' + style })
+      });
+    }
     var fbMats = {}, templates = {}, npcGeo = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.26, 1.1, 4, 8) : new THREE.CylinderGeometry(0.26, 0.26, 1.6, 10);
     npcGeo.translate(0, 0.8, 0);
     var visorGeo = new THREE.BoxGeometry(0.36, 0.1, 0.12); visorGeo.translate(0, 1.5, 0.22);
@@ -676,16 +805,17 @@
         if (w.kind !== 'part') { if (Math.abs(Math.abs(z) - (D / 2 - T / 2)) < 1e-3 && hx > hz) z -= Math.sign(z) * I; else if (Math.abs(Math.abs(x) - (W / 2 - T / 2)) < 1e-3) x -= Math.sign(x) * I; }
         walls.push([x, 0, z, hx * 2, w.h, hz * 2, 0]);
       });
-      inst(unitBox, mats.wall, walls, 'int3-walls');
-      inst(unitBox, mats.floor, [[0, 0, 0, W - 2 * I, 0.04, D - 2 * I, 0]], 'int3-floor');
-      if (!L.open) inst(unitBox, mats.ceil, [[0, L.ceil, 0, W - 2 * I, 0.06, D - 2 * I, 0]], 'int3-ceil');
+      var sm = styleMats(L.style);
+      inst(unitBox, sm.wall, walls, 'int3-walls');
+      inst(unitBox, sm.floor, [[0, 0, 0, W - 2 * I, 0.04, D - 2 * I, 0]], 'int3-floor');
+      if (!L.open) inst(unitBox, sm.ceil, [[0, L.ceil, 0, W - 2 * I, 0.06, D - 2 * I, 0]], 'int3-ceil');
       var dr = L.door, fz = D / 2 - I;
-      inst(unitBox, mats.trim, [
+      inst(unitBox, sm.trim, [
         [dr.x - dr.w / 2 - 0.06, 0, fz, 0.12, dr.h, T + 0.1, 0], [dr.x + dr.w / 2 + 0.06, 0, fz, 0.12, dr.h, T + 0.1, 0],
         [dr.x, dr.h, fz, dr.w + 0.24, 0.12, T + 0.1, 0], [0, L.ceil - 0.05, -D / 2 + T + I, W - 2 * T - 2 * I, 0.04, 0.04, 0]
       ], 'int3-trim');
       var leaves = [];
-      for (var s = 0; s < 2; s++) { var lf = new THREE.Mesh(unitBox, mats.glass); lf.scale.set(dr.w / 2, dr.h, 0.06); lf.position.set(dr.x + (s ? 1 : -1) * dr.w / 4, 0, D / 2 + 0.04); lf.name = 'int3-door-leaf'; g.add(lf); leaves.push(lf); }
+      for (var s = 0; s < 2; s++) { var lf = new THREE.Mesh(unitBox, sm.glass); lf.scale.set(dr.w / 2, dr.h, 0.06); lf.position.set(dr.x + (s ? 1 : -1) * dr.w / 4, 0, D / 2 + 0.04); lf.name = 'int3-door-leaf'; g.add(lf); leaves.push(lf); }
       // furniture: one InstancedMesh per template part per kind
       var byKind = {};
       L.items.forEach(function (it) { (byKind[it.kind] = byKind[it.kind] || []).push(it); });
@@ -720,7 +850,10 @@
 
     // ── colliders: swap the building's solid OBB for its shell while near (never edits canon data) ──
     function layoutRef() { return opts.layout || win.WORLD_LAYOUT || null; }
-    function sameObb(c, o) { return c && o && c.hx > 0 && Math.abs(c.x - o.x) < 0.5 && Math.abs(c.z - o.z) < 0.5 && Math.abs(c.hx - o.hx) < 0.5 && Math.abs(c.hz - o.hz) < 0.5; }
+    function sameObb(c, o) {
+      if (!c || !o || Math.abs(c.x - o.x) >= 0.5 || Math.abs(c.z - o.z) >= 0.5) return false;
+      return o.hx > 0 ? (c.hx > 0 && Math.abs(c.hx - o.hx) < 0.5 && Math.abs(c.hz - o.hz) < 0.5) : (c.r > 0 && Math.abs(c.r - o.r) < 0.5);
+    }
     function swap(r, on) {
       var Lay = layoutRef(), rc = Lay && Lay.realmColliders;
       if (!rc) return;
@@ -904,6 +1037,26 @@
       use: function (pos) { var m = nearestUse(pos); return m ? handleInteract(m) : false; },
       setNpcFactory: function (fn) { npcFactory = typeof fn === 'function' ? fn : null; },
       layoutOf: function (id) { var b = byId[id]; return b ? makeLayout(b, furniture) : null; },
+      // agents use the same slots as humans: world positions of every NPC slot and use point of a building
+      slots: function (id) {
+        var b = byId[id]; if (!b) return null;
+        var L = (active && active.b === b) ? active.L : makeLayout(b, furniture), y = floorOf(b);
+        function w(p, extra) { var q = toWorld(b, p.x, p.z), o = { x: q[0], y: y, z: q[1] }; for (var k in extra) o[k] = extra[k]; return o; }
+        return { npcs: L.npcs.map(function (n) { return w(n, { role: n.role, kind: n.kind }); }),
+          uses: L.uses.map(function (u) { return w(u, { type: u.type, kind: u.kind, tag: u.tag }); }), door: w({ x: L.door.x, z: L.D / 2 + 1.0 }, {}), farm: L.farm || null };
+      },
+      // ownable buildings (growth-farm towers, homes): data hook only — the plot/ledger backend owns claims and SPARKS
+      setOwner: function (id, ownerId) {
+        var b = byId[id]; if (!b) return false;
+        b.ownerId = ownerId == null ? null : String(ownerId);
+        var recs = cache.concat(active ? [active] : []);
+        recs.forEach(function (r) {
+          if (r.b !== b) return;
+          if (r.L.farm) r.L.farm.ownerId = b.ownerId;
+          r.markers.forEach(function (m) { if ('owner_id' in m.props) m.props.owner_id = b.ownerId; });
+        });
+        return true;
+      },
       stats: function () {
         var by = {}; buildings.forEach(function (b) { by[b.recipe] = (by[b.recipe] || 0) + 1; });
         return { loaded: loaded, buildings: buildings.length, byRecipe: by, active: active ? active.b.id : null, inside: inside,
@@ -917,7 +1070,7 @@
         lightPool.forEach(function (l) { scene.remove(l); }); disposed = true;
         Object.keys(templates).forEach(function (k) { templates[k].parts.forEach(function (p) { p.geo.dispose(); }); });
         unitBox.dispose(); npcGeo.dispose(); visorGeo.dispose();
-        Object.keys(mats).forEach(function (k) { mats[k].dispose(); });
+        Object.keys(styles).forEach(function (s) { var set = styles[s]; Object.keys(set).forEach(function (k) { set[k].dispose(); }); });
         Object.keys(fbMats).forEach(function (k) { fbMats[k].dispose(); }); Object.keys(npcMats).forEach(function (k) { npcMats[k].dispose(); });
       }
     };
@@ -925,7 +1078,7 @@
   }
 
   var PURE = { U: U, WALL_T: WALL_T, PLAYER_R: PLAYER_R, ACTIVATE_M: ACTIVATE_M, RELEASE_M: RELEASE_M, MAX_NPCS: MAX_NPCS, MAX_LIGHTS: MAX_LIGHTS, CACHE_N: CACHE_N,
-    SC_TYPES: SC_TYPES, CANON_BUILDINGS: CANON_BUILDINGS, BOARD_RECIPES: BOARD_RECIPES, RECIPES: RECIPES, FALLBACK: FALLBACK, ARCADE_GAMES: ARCADE_GAMES,
+    SC_TYPES: SC_TYPES, CANON_BUILDINGS: CANON_BUILDINGS, STYLE_DEF: STYLE_DEF, circleHabitat: circleHabitat, BOARD_RECIPES: BOARD_RECIPES, RECIPES: RECIPES, FALLBACK: FALLBACK, ARCADE_GAMES: ARCADE_GAMES,
     hash: hash, rngOf: rngOf, rotPt: rotPt, rectsOverlap: rectsOverlap, inRect: inRect, metaFor: metaFor, resolveKind: resolveKind,
     makeLayout: makeLayout, indexBuildings: indexBuildings, registerBoard: registerBoard, faceFrame: faceFrame, toWorld: toWorld, toLocal: toLocal,
     worldColliders: worldColliders, reachability: reachability, useMarker: useMarker, USE_MARKERS: USE_MARKERS };

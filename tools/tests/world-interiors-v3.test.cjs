@@ -266,5 +266,73 @@ test('update() is allocation-free in steady state', () => {
   w.iv.dispose();
 });
 
+// ───────────────────────── sand houses + growth-farm tower (owner scope 2026-09-28) ─────────────────────────
+const SAND_SPECS = [{ key: 'sand-house-01', x: 900, z: 400 }, { key: 'sand-house-02', x: 1100, z: 400 }, { key: 'sand-house-03', x: 1300, z: 400, rot: 0.7 },
+  { key: 'sand-house-04', x: 1500, z: 400, rot: -1.2 }, { key: 'sand-house-02', x: 1700, z: 400, r: 9 * U }, { key: 'sand-house-02', x: 1900, z: 500, r: 7 * U }];
+
+test('sand houses (4 archetypes + round realm habitats): door gap, closed shell, sleep/cook/craft/comms, 1–2 NPC slots, reachable', () => {
+  SAND_SPECS.forEach(s => {
+    const b = P.registerBoard(s), L = P.makeLayout(b, null), id = b.recipe + '@' + s.x;
+    assert.strictEqual(L.style, 'sand', id);
+    assert.strictEqual(P.reachability(L, { doorClosed: true }).inside, 0, id + ' leaks');
+    const reach = P.reachability(L);
+    const types = L.uses.map(u => u.type);
+    ['respawn', 'cook', 'craft', 'comms'].forEach(t => assert.ok(types.includes(t), id + ' has ' + t));
+    assert.ok(L.npcs.length >= 1 && L.npcs.length <= 2, id + ' npcs ' + L.npcs.length);
+    const hit = (x, z) => L.colliders.some(c => Math.abs(x - c.x) < c.hx + P.PLAYER_R - 1e-3 && Math.abs(z - c.z) < c.hz + P.PLAYER_R - 1e-3);
+    L.uses.forEach(u => assert.ok(reach.ok(u.x, u.z) && !hit(u.x, u.z), id + ' use ' + u.type));
+    L.npcs.forEach(n => assert.ok(!hit(n.x, n.z), id + ' npc ' + n.role));
+    const solid = L.items.filter(i => !i.overlay);
+    for (let a = 0; a < solid.length; a++) for (let c = a + 1; c < solid.length; c++) assert.ok(!P.rectsOverlap(solid[a].rect, solid[c].rect), id + ' overlap');
+    if (s.r) {   // round habitat: square room inside the circle, ring caps solid, door on the circle edge facing the centre
+      assert.ok(L.W <= s.r / U * Math.SQRT2 + 1e-6 && L.solids.length === 5, id + ' inscribed + 5 caps');
+      const d = P.toWorld(b, L.door.x, s.r / U), toC = Math.hypot(d[0], d[1]), fromC = Math.hypot(s.x, s.z);
+      assert.ok(toC < fromC, 'door faces the city centre');
+    }
+  });
+  const C = P.makeLayout(P.registerBoard(SAND_SPECS[3]), null);
+  assert.ok(C.uses.some(u => u.type === 'trade') && C.uses.some(u => u.type === 'quest'), 'courtyard trader + quest-giver');
+  assert.ok(P.makeLayout(P.registerBoard(SAND_SPECS[2]), null).uses.some(u => u.type === 'roof'), 'stepped block: stairs to the roof');
+});
+
+test('growth-farm tower: ownerId slot, farmer slot, harvest stations, SPARKS market counter, rentable pods (data hooks only)', () => {
+  const b = P.registerBoard({ key: 'farm-tower', x: 2000, z: -300 }), L = P.makeLayout(b, null);
+  assert.strictEqual(L.style, 'farm');
+  assert.ok(L.farm && L.farm.ownerId === null && L.farm.currency === 'SPARKS');
+  assert.ok(L.farm.farmerSlot && L.farm.farmerSlot.role === 'farmer', 'farmer-agent slot');
+  assert.ok(L.farm.harvest.length >= 6 && L.farm.harvest.every(u => u.type === 'harvest'));
+  assert.ok(L.farm.market && L.farm.market.type === 'farm-market');
+  assert.ok(L.uses.filter(u => u.type === 'pod').length >= 2 && L.farm.levels.length >= 4 && L.farm.levels.every(l => l.pods.length === 4 && l.harvest.length === 3));
+  assert.strictEqual(P.reachability(L, { doorClosed: true }).inside, 0);
+  const mk = P.useMarker(Object.assign({}, b, { ownerId: 'u1' }), L.farm.market);
+  assert.strictEqual(mk.props.currency, 'SPARKS'); assert.strictEqual(mk.props.owner_id, 'u1');
+  const src = require('fs').readFileSync(path.join(ROOT, 'public/world-interiors-v3.js'), 'utf8');
+  const code = src.split('\n').filter(l => !/^\s*(\/\/|\*|\/\*)/.test(l)).map(l => l.replace(/\/\/.*$/, '')).join('\n');
+  assert.ok(!/withdraw|cash[\s-]?out|redeem|payout/i.test(code), 'no value-out vocabulary in code');
+});
+
+test('runtime: register a farm tower + a round sand habitat; owner hook; slots for agents; circle collider swapped and restored', () => {
+  const w = makeWorld();
+  const farm = w.iv.register({ key: 'farm-tower', id: 'farm:test', x: 3000, z: 3000, rot: 0.3 });
+  const circ = { x: 3400, z: 3000, r: 9 * U, kind: 'sand-habitat-base' };
+  w.L.realmColliders.push(circ);
+  const sand = w.iv.register({ key: 'sand-house-02', id: 'sand:test', x: circ.x, z: circ.z, r: circ.r, canon: circ });
+  assert.ok(w.iv.setOwner('farm:test', 'player-7'));
+  const sl = w.iv.slots('farm:test');
+  assert.ok(sl.npcs.some(n => n.role === 'farmer') && sl.uses.some(u => u.type === 'harvest') && sl.door, 'agents get world slots');
+  put(w, farm, 0, 0); step(w, 2);
+  assert.strictEqual(w.iv.current().id, 'farm:test');
+  put(w, farm, w.iv.active().L.door.x, farm.d / 2 - 1.5); step(w, 1, 0.1);
+  const fm = w.city.markers.find(m => m.interior && m.interior.type === 'farm-market');
+  assert.ok(fm && fm.props.owner_id === 'player-7' && fm.props.currency === 'SPARKS');
+  assert.strictEqual(w.iv.active().L.farm.ownerId, 'player-7');
+  put(w, sand, 0, 0); step(w, 2);
+  assert.strictEqual(w.iv.current().id, 'sand:test');
+  assert.ok(!w.L.realmColliders.includes(circ), 'solid habitat circle swapped out');
+  put(w, sand, 0, 200); step(w, 2);
+  assert.ok(w.L.realmColliders.includes(circ), 'restored');
+  w.iv.dispose();
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
