@@ -273,3 +273,8 @@ and `hall/packs/` listing.
   Tiers: Basic (free) → Racer → Dragon-Knight → Legendary (SPARKS/level unlocks). Cost: $0 procedural, or ~$0.375 if one hero gear piece needs fal.
 - **Travel progression:** hoverboard (starter) → hover car → Tron bike → mount/beast → dragon. Each unlocks by level or SPARKS, and faster tiers open far realms sooner.
 - **Dependency:** riders appear once the agent meshes are approved and rigged (see character plan). Until then, placeholder capsules sit on the seats so the wiring can ship now.
+
+### Realm villains: 7 castle bosses, each behind its realm dragon (owner 2026-09-28)
+- **Villain #1 (lava castle, behind the lava dragon):** red armoured woman with red bob hair and steel mech gauntlets. Owner T-pose ref: `fal-assets/production/refs/villain-lava/villain-lava-tpose.png`. Build it with character-pipeline (`villain-lava`, ~$0.96) → rigged + walk/run. Attacks are code-driven (gauntlet slam, fire dash) using UAL clips.
+- **Villains #2–7:** one per remaining realm castle (void, ice, crystal, sand, darkforest, storm). Owner will supply the refs; until then realms reuse villain #1 with a realm tint.
+- **Other bosses:** the Iodine creature mesh (`fal-assets/creatures/iodine/`) stays a separate creature boss. Skeleton packs (`public/assets/creatures/skeleton.glb`) are the Void/lava minions.
