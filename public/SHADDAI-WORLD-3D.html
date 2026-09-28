@@ -3582,7 +3582,7 @@ window.__onDragonHit = function(dmg, kind, info){
   window.__playerHP = Math.max(0, window.__playerHP - dmg);
   if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
   window.__dragonShake(kind === 'stagger' ? 0.25 : 0.6, 0.35);
-  if(window.__playerHP <= 0){ window.__playerHP = 100; const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); }
+  if(window.__playerHP <= 0){ window.__playerHP = 100; if(window.__dragons && window.__dragons.clearStatus) window.__dragons.clearStatus(); const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); }
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
@@ -4644,7 +4644,8 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       if(keys['KeyA']||keys['ArrowLeft'])  _moveDir.sub(right);
       if(keys['KeyD']||keys['ArrowRight']) _moveDir.add(right);
       if(_moveDir.lengthSq() > 1e-6) _moveDir.normalize();
-      _targetVel.copy(_moveDir).multiplyScalar(_maxSp);
+      const _dm = window.__dragons && window.__dragons.statusMods ? window.__dragons.statusMods() : null;   // dragon status: ice/shock slow, thorn root
+      _targetVel.copy(_moveDir).multiplyScalar(_dm ? (_dm.rooted ? 0 : _maxSp * _dm.speedMul) : _maxSp);
       const _acc = 1 - Math.exp(-14*dt);                          // ~14/s: responsive but smooth (frame-rate independent)
       _vel.x += (_targetVel.x - _vel.x) * _acc;
       _vel.z += (_targetVel.z - _vel.z) * _acc;
