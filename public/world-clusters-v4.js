@@ -23,8 +23,10 @@
  *       near_m?, far_m?, hide_m?  (tier distances in metres; defaults come from presetFor(url)) })
  *     → Promise<{ group, update(t, dt, camPos), stats(), dispose() }>
  *
- *   Extra opts: cell_m? (cell size), collide? (RegExp of keys that get circle colliders | false; default from preset).
- *   Pure helpers (for node tests) on window.__clustersV4Internals: { U, CELL_M, urlOf, presetFor, pickTier, collides }.
+ *   Extra opts: cell_m? (cell size), collide? (RegExp of keys that get circle colliders | false; default from preset),
+ *     onMaterial? (fn(material) called once per UNIQUE material, deduped by material.uuid, as parts are built —
+ *     grid-fabric night glow: host wires this to `_v4Sky.addEmissive(mat, __clustersV4Internals.glowFor(mat.name))`).
+ *   Pure helpers (for node tests) on window.__clustersV4Internals: { U, CELL_M, urlOf, presetFor, pickTier, collides, glowFor }.
  */
 (function () {
   var U = 7 / 1.8, CELL_M = 1000;
@@ -46,6 +48,19 @@
     return { name: 'world-clusters-v4', near_m: 450, far_m: 2500, hide_m: 2500, cell_m: CELL_M, collide: null };
   }
   function collides(key, rule) { return rule === false ? false : (rule && typeof rule.test === 'function' ? rule.test(key) : !/lamp|crystal/.test(key)); }
+  // night glow (Task 2): grid-fabric building materials → _v4Sky.addEmissive(mat, {dayMul, nightMul}) multipliers, by material-name
+  // pattern (glTF material names from the shaddai-city building library). null = not a known emissive material (skip).
+  var GLOW_RULES = [
+    { test: /glass/i, dayMul: 0.2, nightMul: 2.4 },        // smoked glass (M_Glass)
+    { test: /skylight/i, dayMul: 0.3, nightMul: 2.0 },     // lod2 block-skylight
+    { test: /artslot/i, dayMul: 0.8, nightMul: 1.4 },      // artslot-* panels
+    { test: /emerald|trim/i, dayMul: 0.6, nightMul: 1.8 }  // emerald trim + lod2 block-emerald
+  ];
+  function glowFor(name) {
+    name = (name || '') + '';
+    for (var i = 0; i < GLOW_RULES.length; i++) if (GLOW_RULES[i].test.test(name)) return { dayMul: GLOW_RULES[i].dayMul, nightMul: GLOW_RULES[i].nightMul };
+    return null;
+  }
   // d = distance (units) from camera to the cell's nearest edge-ish; returns 0 full · 1 lod1 · 2 lod2 · 3 hidden
   function pickTier(d, near, far, hide, has1, has2) {
     if (d < near) return 0;
@@ -53,7 +68,7 @@
     if (d < hide) return has2 ? 2 : (has1 ? 1 : 0);
     return 3;
   }
-  window.__clustersV4Internals = { U: U, CELL_M: CELL_M, urlOf: urlOf, presetFor: presetFor, pickTier: pickTier, collides: collides };
+  window.__clustersV4Internals = { U: U, CELL_M: CELL_M, urlOf: urlOf, presetFor: presetFor, pickTier: pickTier, collides: collides, glowFor: glowFor };
 
   window.buildWorldClustersV4 = function (opts) {
     var THREE = opts.THREE, scene = opts.scene, loader = opts.loader, heightAt = opts.heightAt || function () { return 0; };
@@ -65,6 +80,7 @@
     var WANT2 = HIDE > FAR, TAG = '[clusters-v4' + (opts.name ? ':' + opts.name : (url === REALM_URL ? '' : ':' + pre.name)) + '] ';
     var group = new THREE.Group(); group.name = opts.name || pre.name; scene.add(group);
     var st = { items: 0, types: 0, cells: 0, meshes: 0, near: 0, mid: 0, far: 0, hidden: 0, failed: [], noLod2: [] }, cells = {};
+    var seenMat = {};   // dedupe by material.uuid: onMaterial fires once per unique material even though it's reused across many cells/instances
     function load(url) { return new Promise(function (res, rej) { if (window.__queueLoad) window.__queueLoad(loader, url, res, rej); else loader.load(url, res, undefined, rej); }); }
     function parts(root) {   // mesh parts with transforms baked relative to the model's base-centre (one instance matrix places the whole model)
       root.updateMatrixWorld(true);
@@ -74,6 +90,7 @@
         if (!o.isMesh || o.isSkinnedMesh) return;
         var geo = o.geometry.clone(); geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toBase, o.matrixWorld));
         if (o.material && o.material.map) o.material.map.colorSpace = THREE.SRGBColorSpace;
+        if (opts.onMaterial && o.material && !seenMat[o.material.uuid]) { seenMat[o.material.uuid] = true; opts.onMaterial(o.material); }
         out.push({ geo: geo, mat: o.material });
       });
       return { parts: out, wid: Math.max(size.x, size.z, 1e-4), hgt: Math.max(size.y, 1e-4) };
