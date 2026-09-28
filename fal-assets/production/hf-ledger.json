@@ -111,17 +111,6 @@
       ]
     },
     {
-      "at": "20260928-060203",
-      "id": "agent-nexus",
-      "provider": "fal",
-      "model": "fal-ai/flux-pro/kontext",
-      "n": 1,
-      "ref": "refs\\agents\\agent-nexus.png",
-      "files": [
-        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-060203-1.png"
-      ]
-    },
-    {
       "at": "20260928-060214",
       "id": "agent-quill",
       "provider": "fal",
@@ -133,17 +122,6 @@
       ]
     },
     {
-      "at": "20260928-060405",
-      "id": "agent-nexus",
-      "provider": "fal",
-      "model": "fal-ai/flux-pro/kontext",
-      "n": 1,
-      "ref": "refs\\agents\\agent-nexus.png",
-      "files": [
-        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-060405-1.png"
-      ]
-    },
-    {
       "at": "20260928-061247",
       "id": "agent-zerox",
       "provider": "fal",
@@ -152,6 +130,52 @@
       "ref": "production\\refs\\agent-zerox\\zerox-fullbody-katana.png",
       "files": [
         "production\\concepts\\agent-zerox\\agent-zerox-fal-20260928-061247-1.png"
+      ]
+    },
+    {
+      "at": "20260928-145958",
+      "id": "agent-nexus",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "refs\\agents\\agent-nexus.png",
+      "files": [
+        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-145958-1.png"
+      ]
+    },
+    {
+      "at": "20260928-150040",
+      "id": "agent-nexus",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "refs\\agents\\agent-nexus.png",
+      "files": [
+        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-150040-1.png"
+      ]
+    }
+  ],
+  "archived": [
+    {
+      "at": "20260928-060203",
+      "id": "agent-nexus",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "refs\\agents\\agent-nexus.png",
+      "files": [
+        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-060203-1.png"
+      ]
+    },
+    {
+      "at": "20260928-060405",
+      "id": "agent-nexus",
+      "provider": "fal",
+      "model": "fal-ai/flux-pro/kontext",
+      "n": 1,
+      "ref": "refs\\agents\\agent-nexus.png",
+      "files": [
+        "production\\concepts\\agent-nexus\\agent-nexus-fal-20260928-060405-1.png"
       ]
     }
   ]

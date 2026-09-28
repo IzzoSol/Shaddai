@@ -300,6 +300,20 @@
       "step": "concept",
       "usd": 0.08,
       "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T15:00:10.751Z",
+      "id": "agent-nexus",
+      "step": "concept",
+      "usd": 0.08,
+      "note": "fal kontext max/multi + mannequin T-pose"
+    },
+    {
+      "at": "2026-09-28T15:00:56.240Z",
+      "id": "agent-nexus",
+      "step": "concept",
+      "usd": 0.08,
+      "note": "fal kontext max/multi + mannequin T-pose"
     }
   ]
 }

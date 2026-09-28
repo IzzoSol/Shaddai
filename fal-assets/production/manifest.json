@@ -186,7 +186,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "(signature weapon TBD)",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-male-1.8m.png"
+      "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png"
     },
     {
       "id": "agent-nexus",
@@ -212,7 +212,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "laser blaster/emitter",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-male-1.8m.png"
+      "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png"
     },
     {
       "id": "agent-zerox",
@@ -240,7 +240,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "glowing teal katana",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-female-1.8m.png"
+      "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg"
     },
     {
       "id": "agent-oracle",
@@ -268,7 +268,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "purple orb wand-staff (glowing violet orb in a clawed crown) + glowing violet blade at the left hip",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-female-1.8m.png",
+      "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg",
       "owner_ref": "refs/agent-oracle/oracle-tpose-owner.jpg",
       "owner_note": "OWNER 2026-09-28: \"this is perfect\" — the gold-standard reference (true T-pose, look, detail). Use as the quality bar for all agents.",
       "rig_prep": "for the 3D mesh: remove the staff behind the back and the hip blade (separate weapon items) so the auto-rig sees a clean silhouette; keep everything else identical"
@@ -298,7 +298,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "electric spiked flail (chrome spiked ball on chain, crackling with electricity)",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-female-1.8m.png"
+      "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg"
     },
     {
       "id": "agent-quill",
@@ -326,7 +326,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "thrown feather quill darts",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-male-1.8m.png"
+      "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png"
     },
     {
       "id": "agent-pikadon",
@@ -354,7 +354,7 @@
       "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
       "weapon": "war hammer",
       "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-      "pose_ref": "refs/_pose/tpose-male-1.8m.png"
+      "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png"
     },
     {
       "id": "bld-shop",

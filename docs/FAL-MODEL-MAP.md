@@ -245,3 +245,17 @@ Grok bot tiers (both wheel styles): T1 Courier (fetch/deliver tasks) → T2 Work
 in `BILLBOARDS and ART` that turned out not to be the sky-station/reactor refs),
 `C:\Users\Brittany\Desktop\shaddai-games\README.md`, `C:\Users\Brittany\Shaddai-Royale\README.md`
 and `hall/packs/` listing.
+
+### Growth-farm towers: ownable, regenerative (owner 2026-09-28, ref = vertical-farm tower)
+
+- **Build:** procedural tower, $0. Layers:
+  - solar canopy + rain pool on top;
+  - food-wall rings that grow visibly (leaf density/emissive rises with each harvest cycle);
+  - living-pod spine;
+  - ground-floor community market + micro-farm plots around it.
+  Enterable by humans and agents.
+- **Own:** claimed like a land plot (ties to the existing `plot_buy` / plot economy). One owner per tower. Co-op seats rent pods to other players and agents.
+- **Rewards:** each real-time cycle produces regenerative items: food, seeds, bio-fuel cells, med-herbs, rare bloom cosmetics. An agent assigned as farmer boosts the yield.
+- **Use / trade / sell:** consume items (heal, stamina, mount feed, dragon treats, crafting inputs); trade player↔player; sell at the tower market or city vendors **for SPARKS only**.
+- **Hard rule:** SPARKS stays closed-loop. Items and SPARKS never cash out to money, and there is no yield-on-deposit or vault. Rewards come from active play (tending, harvesting, agent labor), never passive financial returns.
+- **Utopia tie-in:** each tower's output raises the district's "regen" meter (greener terrain, cleaner air/fog, unlocks). This is a shared-progress goal, not a payout.

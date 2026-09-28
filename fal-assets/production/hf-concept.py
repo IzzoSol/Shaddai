@@ -188,10 +188,10 @@ def run_fal(ar, a, img, prompt, ref, ledger, ledger_p):
         pim = _I.open(pose_p).convert("RGB"); pim.thumbnail((1024, 1536)); pb = io.BytesIO(); pim.save(pb, format="PNG")
         img.thumbnail((1024, 1024)); buf = io.BytesIO(); img.save(buf, format="PNG")
         rules = (" " + a.get("charm_rule", "") + ". " + a.get("weapon_rule", "") + ".")
-        pose_prompt = ("Image 1 is the CHARACTER. Image 2 is a plain grey mannequin that shows the EXACT required pose and body proportions. "
+        pose_prompt = ("Image 1 is the CHARACTER (design, face, hair, outfit, armour, colours). Image 2 is a DIFFERENT character used ONLY as the pose, body-proportion and rendering-quality guide: copy its exact T-pose, its body proportions and limb lengths, and its level of detail and illustration quality — but NOT its clothing, colours, hair, face, gender, weapons or accessories. "
                        "Redraw the character from image 1 standing in EXACTLY the pose of image 2: a strict T-pose, both arms straight out horizontally at shoulder height, "
                        "palms down, fingers together, elbows and wrists straight, legs straight and slightly apart, feet flat, facing the camera dead-on, head level. "
-                       "Match image 2's body proportions and limb lengths exactly (realistic adult, about 7.5 heads tall; same arm span, leg length and shoulder width as the mannequin). "
+                       "Match image 2's body proportions and limb lengths exactly (realistic adult, about 7.5 heads tall). The whole body must be fully designed and detailed in image 1's style, head to toe — armour and outfit continue down the arms and legs, never plain or mannequin-like. "
                        "Keep image 1's face, hair, skin tone, outfit design, materials and colours exactly. Whole body visible head to toe, centred, plain flat mid-grey background, even studio light. "
                        "Nothing in the hands." + rules + " " + prompt)
         url, body = "https://fal.run/fal-ai/flux-pro/kontext/max/multi", {"prompt": pose_prompt, "image_urls": ["data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(), "data:image/png;base64," + base64.b64encode(pb.getvalue()).decode()], "num_images": 1, "output_format": "png", "aspect_ratio": "2:3"}

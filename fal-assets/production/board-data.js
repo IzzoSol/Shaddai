@@ -176,7 +176,7 @@ window.FAL_BOARD = {
     "dims": "1.8m humanoid",
     "palette": "gold #e8c45c primary, white/ivory cloth, obsidian under-armor",
     "emissive": "gold halo ring + chest sigil",
-    "silhouette": "longest coat/cape of the council, halo ring above head — reads as leader at 128px",
+    "silhouette": "longest coat/cape of the council, halo ring above head — reads as leader at 128px; NO horns of any kind",
     "refs": {
      "have": [
       "production/concepts/unit-shaddai/unit-shaddai-tpose-clean.png"
@@ -184,7 +184,11 @@ window.FAL_BOARD = {
      "need": []
     },
     "defects": "CUT for now (owner, 2026-09-24: leave out SHADDAI) — revisit once a design exists",
-    "approved": "owner 2026-09-24 multi-select \"Hooded SHADDAI commander\" (horned hood, green/gold cape)"
+    "approved": "owner 2026-09-24 multi-select \"Hooded SHADDAI commander\" (horned hood, green/gold cape)",
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "(signature weapon TBD)",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png"
    },
    {
     "id": "agent-nexus",
@@ -197,8 +201,8 @@ window.FAL_BOARD = {
     },
     "dims": "1.8m humanoid",
     "palette": "cyan #5fe0ff + orange accents on teal/black armor",
-    "emissive": "cyan headset rings, orange chest panels",
-    "silhouette": "widest shoulders, helmet with ear-rings",
+    "emissive": "cyan headset rings, orange chest panels, electric-blue arc coils on gauntlets and spine",
+    "silhouette": "TALL full-body heavy mech-armored architect (about 7.5-8 heads tall, long legs, NOT stocky) built from the helmet design: widest shoulders, helmet with ear-rings, segmented armor plates, conduit cables along arms and legs, power-core chest panel, gauntlets with coil emitters (electric attacks); clearly visible glowing electric-blue arc coils wrapped around both forearms and a lightning conduit down the spine",
     "refs": {
      "have": [
       "refs/agents/agent-nexus.png"
@@ -206,7 +210,17 @@ window.FAL_BOARD = {
      "current_state": "characters/nexus-council/sprites/nexus-council-walking-00.png",
      "need": []
     },
-    "defects": "portrait-only ref (owner OK'd 2026-09-24: 'you can see the idea'): the HF concept step invents the body — owner MUST approve the T-pose before any fal mesh spend"
+    "defects": "portrait-only ref (owner OK'd 2026-09-24: 'you can see the idea'): the HF concept step invents the body — owner MUST approve the T-pose before any fal mesh spend",
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "laser blaster/emitter",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png",
+    "concepts": [
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-060203-1.png",
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-060405-1.png",
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-145958-1.png",
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-150040-1.png"
+    ]
    },
    {
     "id": "agent-zerox",
@@ -233,7 +247,14 @@ window.FAL_BOARD = {
     },
     "defects": "OWNER: note issues",
     "batch": "hub10",
-    "concepts": []
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "glowing teal katana",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg",
+    "concepts": [
+     "production/concepts/agent-zerox/agent-zerox-fal-20260928-060150-1.png",
+     "production/concepts/agent-zerox/agent-zerox-fal-20260928-061247-1.png"
+    ]
    },
    {
     "id": "agent-oracle",
@@ -260,6 +281,13 @@ window.FAL_BOARD = {
     "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-oracle/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
     "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
     "shipped": "public/assets/models/chars/oracle-v2.glb (+ -walk/-run); pedestal stripped by tools/ual/strip-pedestal.mjs; UAL2 moves verified in ual-lab",
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "purple orb wand-staff (glowing violet orb in a clawed crown) + glowing violet blade at the left hip",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg",
+    "owner_ref": "refs/agent-oracle/oracle-tpose-owner.jpg",
+    "owner_note": "OWNER 2026-09-28: \"this is perfect\" — the gold-standard reference (true T-pose, look, detail). Use as the quality bar for all agents.",
+    "rig_prep": "for the 3D mesh: remove the staff behind the back and the hip blade (separate weapon items) so the auto-rig sees a clean silhouette; keep everything else identical",
     "concepts": [
      "production/concepts/agent-oracle/agent-oracle-tpose-noweapon.png"
     ]
@@ -285,7 +313,11 @@ window.FAL_BOARD = {
      "current_state": "characters/turtle-council/sprites/turtle-council-walking-00.png",
      "need": []
     },
-    "defects": "OWNER: note issues"
+    "defects": "OWNER: note issues",
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "electric spiked flail (chrome spiked ball on chain, crackling with electricity)",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg"
    },
    {
     "id": "agent-quill",
@@ -297,19 +329,28 @@ window.FAL_BOARD = {
      "note": "replace in place"
     },
     "dims": "1.8m humanoid",
-    "palette": "brown/gold long coat, purple robe accents",
-    "emissive": "gold sacred-geometry halo (portrait backdrop)",
-    "silhouette": "long frock coat, quiver/scroll at back",
+    "palette": "black coat, copper #c87533 filigree, dark red #6e1414 lining, cream #efe3c8 vest, brown leather",
+    "emissive": "faint amber ink-glow circuitry on the coat filigree, small cyan holo-quill at the wrist",
+    "silhouette": "old-school human scribe-adventurer: long black frock coat with copper/orange filigree and dark red lining, cream button vest, feather-quill bandolier across the chest, feather quills at both wrists, leather scroll satchel, thigh rig of ink vials, knee-high boots, SHADDAI emerald S-sigil charm-pendant necklace; subtly agentic: faint ink-glow circuitry traced along the filigree, tiny holo-quill projector at the left wrist",
     "refs": {
      "have": [
       "refs/agents/QUILL-council.png",
-      "refs/agents/quill-tpose-ref.png"
+      "refs/agents/quill-tpose-ref.png",
+      "production/refs/agent-quill/quill-tpose-owner-20260928.png"
      ],
      "current_state": "characters/quill-council/sprites/quill-council-walking-00.png",
-     "need": []
+     "need": [],
+     "dropped": 1
     },
     "defects": "ref quill-tpose-ref.png is ALREADY a clean T-pose — owner can approve it directly as the concept (skips the concept step). Owner re-supplied it 2026-09-24, so the frontier coat is accepted.",
-    "canary": true
+    "canary": true,
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "thrown feather quill darts",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png",
+    "concepts": [
+     "production/concepts/agent-quill/agent-quill-fal-20260928-060214-1.png"
+    ]
    },
    {
     "id": "agent-pikadon",
@@ -336,6 +377,10 @@ window.FAL_BOARD = {
     "defects": "owner supplied a new full-body T-pose design 2026-09-24 (production/refs/agent-pikadon/). Next: remove held weapons (image edit) -> owner approves -> meshy v6 mesh+rig",
     "approved": "owner 2026-09-24 (AskUserQuestion: \"Yes both\")",
     "shipped": "public/assets/models/chars/pikadon-v2.glb (+ -walk/-run); pedestal stripped; UAL2 verified",
+    "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
+    "weapon": "war hammer",
+    "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
+    "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png",
     "concepts": [
      "production/concepts/agent-pikadon/agent-pikadon-tpose-noweapon.png"
     ]
@@ -1784,6 +1829,55 @@ window.FAL_BOARD = {
     "step": "mesh",
     "usd": 0.8,
     "note": "meshy v6 image-to-3d (mesh+rig+walk/run)"
+   },
+   {
+    "at": "2026-09-28T06:02:02.849Z",
+    "id": "agent-zerox",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T06:02:13.824Z",
+    "id": "agent-nexus",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T06:02:22.545Z",
+    "id": "agent-quill",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T06:04:14.265Z",
+    "id": "agent-nexus",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T06:13:02.484Z",
+    "id": "agent-zerox",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T15:00:10.751Z",
+    "id": "agent-nexus",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T15:00:56.240Z",
+    "id": "agent-nexus",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
    }
   ]
  },
@@ -1829,7 +1923,7 @@ window.FAL_BOARD = {
     "id": "agent-quill",
     "family": "agent",
     "status": "ready-concept",
-    "refsHave": 2,
+    "refsHave": 3,
     "refsNeed": 0
    },
    {
@@ -2327,6 +2421,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 13.5,
- "builtAt": "2026-09-25T18:08:22.731Z"
+ "spent": 13.9,
+ "builtAt": "2026-09-28T15:00:56.250Z"
 };
