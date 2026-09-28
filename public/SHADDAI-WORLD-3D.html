@@ -606,6 +606,16 @@ window.__worldBuilt = false;
         if(L && window.buildWorldCollision) window.buildWorldCollision(L);
         window.__w3dDebug.voidCastle = window.__voidCastle;
       }).catch(function(e){ console.warn('[map-v4] void castle failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 SKY TRAFFIC (world-sky-traffic.js): 40 voxel ships on 12 lanes over The Grid, night running lights
+      if(!api) return api;
+      return _loadScript('/world-sky-traffic.js?v=20260928a').then(function(){
+        const sl = new GLTFLoader(); sl.setMeshoptDecoder(MeshoptDecoder);
+        window.__skyTraffic = window.buildWorldSkyTraffic({ THREE, scene, loader: sl, heightAt: api.heightAt,
+          getPlayer: ()=> ({ pos: playerPos }),
+          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0) });
+        window.__w3dDebug.skyTraffic = window.__skyTraffic;
+      }).catch(function(e){ console.warn('[map-v4] sky traffic failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -4786,7 +4796,8 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);
   if(MAP_V4 && window.__cityV3 && !_spawnBusy) window.__cityV3.update(dt);
   if(MAP_V4 && window.__hudV4) window.__hudV4.update(dt);
-  if(MAP_V4 && window.__voidCastle) window.__voidCastle.update(t, dt);   // outside _spawnBusy: bars stay live during a sky-dive
+  if(MAP_V4 && window.__voidCastle) window.__voidCastle.update(t, dt);
+  if(MAP_V4 && window.__skyTraffic) window.__skyTraffic.update(dt);   // outside _spawnBusy: bars stay live during a sky-dive
   if(_dragonKB){ playerPos.x += _dragonKB.x*dt; playerPos.z += _dragonKB.z*dt; if((_dragonKB.t -= dt) <= 0) _dragonKB = null; }
   // ENTRY-LAG FIX: during the sky-dive / descent, the heavy per-frame work (NPC AI, building &
   // biome animation, theme particles, minimap redraw) is invisible/irrelevant — skip it and render
