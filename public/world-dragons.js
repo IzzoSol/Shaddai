@@ -47,6 +47,15 @@
     farDist: 1500, farHz: 5, maxDt: 0.1,
     // look
     wingspan: [18, 26], hp: 600,
+    // world rules (2026-09-27): wild dragons never stand inside The Grid (r < cityR from the island centre). They may
+    // only cross it HIGH: inside the city (plus a cityBuffer ramp) the terrain clearance target rises to cityOverfly.
+    // A player inside the city is never attacked (attacks abort, hurtPlayer refuses).
+    cityR: 1630, cityBuffer: 300, cityOverfly: 150, cityMargin: 40,
+    // night (opts.nightFactor() 0..1, world-sky-v4): more aggressive after dark. Telegraphs NEVER shorten.
+    // Each multiplier is the full-night value; day = 1. cooldown ×0.55, alert radius ×1.6, leash ×1.3, breath dps ×1.25,
+    // retreat threshold ×0.5 (fights on longer before resting).
+    night: { cooldownMul: 0.55, alertMul: 1.6, leashMul: 1.3, dpsMul: 1.25, retreatMul: 0.5 },
+    minWindup: 0.6,   // design floor for every wind-up (a dodge-roll window). minTelegraph (0.8) is the enforced value ≥ this.
   };
 
   // element palette (from fal-assets/refs/dragons/dragons-7-elements-sheet.jpg). style → breath particle style.
@@ -75,21 +84,23 @@
   function approach(v, target, maxStep) { var d = target - v; return Math.abs(d) <= maxStep ? target : v + (d > 0 ? maxStep : -maxStep); }
   function hyp2(x, z) { return Math.sqrt(x * x + z * z); }
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  var ACTIVE_STATES = { alert: 1, takeoff: 1, patrol: 1, attack: 1 };   // states that count toward the leash timer
   function hashStr(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 
   // ───────────────────────────────────────── FLIGHT MODEL ─────────────────────────────────────────────────
   // f = { x,y,z (units), yaw, pitch, bank (rad), speed (m/s), yawRate (rad/s), mode:'fly'|'hover'|'ground',
   //       stalled, takeoff, flap (0..1 effort), vy (m/s), floorHits }
   function createFlight(x, y, z, yaw) {
-    return { x: x, y: y, z: z, yaw: yaw || 0, pitch: 0, bank: 0, speed: 0, yawRate: 0, mode: 'ground', stalled: false, takeoff: false, flap: 0, vy: 0, floorHits: 0, hvx: 0, hvz: 0 };
+    return { x: x, y: y, z: z, yaw: yaw || 0, pitch: 0, bank: 0, speed: 0, yawRate: 0, mode: 'ground', stalled: false, takeoff: false, flap: 0, vy: 0, floorHits: 0, hvx: 0, hvz: 0, hc: -1 };
   }
 
   // Highest terrain (units) along the look-ahead fan: current heading, target heading, ±side.
   function lookAheadFloor(f, heightAt, yawTarget, speedMS, tune, lookMaxM, narrow) {
     var best = heightAt(f.x, f.z), secs = tune.lookAheadSec, side = tune.lookAheadSideDeg * D2R;
-    var dirs = narrow ? [f.yaw] : [f.yaw, yawTarget, f.yaw + side * Math.sign(wrapPi(yawTarget - f.yaw) || 1)];
-    for (var d = 0; d < dirs.length; d++) {
-      var sy = Math.sin(dirs[d]), cy = Math.cos(dirs[d]);
+    var nd = narrow ? 1 : 3, sideYaw = f.yaw + side * Math.sign(wrapPi(yawTarget - f.yaw) || 1);   // no per-call array (hot path)
+    for (var d = 0; d < nd; d++) {
+      var dir = d === 0 ? f.yaw : d === 1 ? yawTarget : sideYaw;
+      var sy = Math.sin(dir), cy = Math.cos(dir);
       for (var i = 0; i < secs.length; i++) {
         var dist = Math.min(Math.max(speedMS, 12) * secs[i] + 10, lookMaxM || Infinity) * U;
         var h = heightAt(f.x + sy * dist, f.z + cy * dist);
@@ -111,7 +122,7 @@
       var e0 = wrapPi(yawT - f.yaw);
       f.yaw = wrapPi(f.yaw + clamp(e0, -1.2 * dt, 1.2 * dt));
       f.speed = 0; f.pitch = approach(f.pitch, 0, dt); f.bank = approach(f.bank, 0, 2 * dt); f.yawRate = 0; f.vy = 0;
-      f.y = ground + (cmd.standH || 0); f.flap = 0; f.hvx = 0; f.hvz = 0; f.hc = null;
+      f.y = ground + (cmd.standH || 0); f.flap = 0; f.hvx = 0; f.hvz = 0; f.hc = -1;
       return f;
     }
 
@@ -128,7 +139,7 @@
       if (f.y < gH) { f.y = gH; f.vy = Math.max(0, f.vy); }
       f.pitch = approach(f.pitch, clamp(f.vy / 30, -0.25, 0.35), 1.2 * dt);
       f.bank = approach(f.bank, 0, 1.5 * dt); f.flap = 1;
-      f.hvx = Math.sin(f.yaw) * f.speed; f.hvz = Math.cos(f.yaw) * f.speed; f.hc = null;
+      f.hvx = Math.sin(f.yaw) * f.speed; f.hvz = Math.cos(f.yaw) * f.speed; f.hc = -1;
       return f;
     }
 
@@ -181,7 +192,7 @@
     //    to the 25 m patrol floor never pops the dragon upward — it climbs out instead. (No teleporting.)
     var hcT = cmd.hardClear != null ? cmd.hardClear : tune.clearPatrol;
     var clrNow = (f.y - heightAt(f.x, f.z)) / U;
-    if (f.hc == null) f.hc = Math.min(hcT, Math.max(0, clrNow));   // just entered flight (take-off): start from where we are
+    if (!(f.hc >= 0)) f.hc = Math.min(hcT, Math.max(0, clrNow));   // just entered flight (take-off): start from where we are
     f.hc = hcT <= f.hc ? hcT : Math.min(hcT, Math.max(f.hc, clrNow) + tune.hardRise * dt);
     var hard = heightAt(f.x, f.z) + f.hc * U;
     if (f.y < hard) { f.floorHits++; f.y = hard; if (f.pitch < 0) f.pitch = 0; }
@@ -193,11 +204,21 @@
    *         isDefeated(id), setDefeated(id), seed, tune } */
   function createDragonsCore(opts) {
     var tune = opts.tune || TUNE;
+    if (tune !== TUNE) { var tm = {}; for (var tk in TUNE) tm[tk] = TUNE[tk]; for (var tk2 in tune) tm[tk2] = tune[tk2]; tune = tm; }   // older partial overrides still get the new keys
+    var NIGHT = tune.night || TUNE.night;
+    function aggr(mul) { return 1 + ((mul == null ? 1 : mul) - 1) * core.night; }   // 1 by day → mul at full night
+    function inCityM(x, z) { return hyp2(x, z) / U < tune.cityR; }
+    // push a ground point out of The Grid (radially from the island centre) → never stands inside r < cityR + margin
+    function pushOut(p, marginM) {
+      var r = hyp2(p.x, p.z), rMin = (tune.cityR + (marginM == null ? tune.cityMargin : marginM)) * U;
+      if (r < rMin) { if (r < 1e-6) { p.x = rMin; p.z = 0; } else { p.x *= rMin / r; p.z *= rMin / r; } if (p.h != null) p.h = heightAt(p.x, p.z); }
+      return p;
+    }
     var heightAt = opts.heightAt || function () { return 0; };
     var layout = opts.layout || {};
     var listeners = {};
     var now = 0, attackSeq = 0;
-    var core = { dragons: [], attacker: null, violations: 0, playerInvulnUntil: -1, rollUntil: -1, time: function () { return now; } };
+    var core = { dragons: [], attacker: null, violations: 0, playerInvulnUntil: -1, rollUntil: -1, night: 0, time: function () { return now; } };
     var stats = { hits: 0, telegraphs: 0, refused: 0, floorHits: 0 };
 
     function on(ev, cb) { (listeners[ev] = listeners[ev] || []).push(cb); return function () { off(ev, cb); }; }
@@ -219,6 +240,7 @@
         var px = cx + (ox * Math.cos(ang) - oz * Math.sin(ang)) * dist, pz = cz + (oz * Math.cos(ang) + ox * Math.sin(ang)) * dist;
         var h = heightAt(px, pz); if (!best || h > best.h) best = { x: px, z: pz, h: h };
       }
+      pushOut(best);                                                      // never perch inside The Grid
       var span = lerp(tune.wingspan[0], tune.wingspan[1], rnd());
       var yaw0 = Math.atan2(cx - best.x, cz - best.z);                   // perched facing the crossing
       var def = !!(opts.isDefeated && opts.isDefeated(s.id));
@@ -226,7 +248,7 @@
         id: s.id, name: (ELEMENTS[el].label) + ' Dragon of ' + (s.name || s.id), station: s.id, realm: s.realm, element: el, colorKey: s.dragon,
         wingspan: span, bodyRadius: span * 0.2, standH: span * 0.16,
         home: { x: cx, z: cz }, out: { x: ox, z: oz }, perch: { x: best.x, z: best.z },
-        landSpot: { x: cx + ox * tune.landOffset * U, z: cz + oz * tune.landOffset * U },
+        landSpot: pushOut({ x: cx + ox * tune.landOffset * U, z: cz + oz * tune.landOffset * U }),
         hpMax: tune.hp, hp: tune.hp, defeated: def, rested: false,
         state: def ? 'peaceful' : 'perch', stateT: 0, atk: null, cooldown: 1.5, staggerT: 0, leashT: 0,
         orbitDir: rnd() < 0.5 ? 1 : -1, orbitPhase: rnd() * 6.28, attackCount: 0, rnd: rnd,
@@ -234,21 +256,29 @@
         breathing: false, inhaling: false, jaw: 0, coneAxis: null, mouth: null, headYaw: 0, headPitch: 0, bow: 0,
         lod: 'near', lodAcc: 0, distToPlayer: Infinity, lastTickAt: -1, ambientT: 0, cmd: null,
         telegraph: null,   // {kind, pos:{x,z}, radius, start, dur}
-        invulnUntil: -1,
+        invulnUntil: -1, ridden: false, attackEndAt: -1e9, cooldownSet: 1.5,
       };
       d.f.mode = 'ground';
       core.dragons.push(d);
     });
 
+    var _P = { x: 0, y: 0, z: 0, alive: true, inCity: false }, _noP = { x: 0, y: 0, z: 0, alive: false, inCity: false };   // reused every frame (no allocation)
     function player() {
       var p = opts.getPlayer ? opts.getPlayer() : null;
       if (!p || !p.pos) return null;
-      return { x: p.pos.x, y: p.pos.y != null ? p.pos.y : heightAt(p.pos.x, p.pos.z), z: p.pos.z, alive: p.alive !== false };
+      _P.x = p.pos.x; _P.y = p.pos.y != null ? p.pos.y : heightAt(p.pos.x, p.pos.z); _P.z = p.pos.z; _P.alive = p.alive !== false;
+      _P.inCity = inCityM(_P.x, _P.z);
+      return _P;
     }
     function setState(d, s) { if (d.state === s) return; var prev = d.state; d.state = s; d.stateT = 0; emit('state', { id: d.id, from: prev, to: s }); }
     function clearOK(d) { return (d.f.y - heightAt(d.f.x, d.f.z)) / U >= tune.clearPatrol + 1; }   // safe to hand over to the 25 m patrol floor
     function releaseToken(d) { if (core.attacker === d.id) core.attacker = null; }
-    function endAttack(d, cool) { d.atk = null; d.breathing = false; d.inhaling = false; d.telegraph = null; releaseToken(d); d.cooldown = cool != null ? cool : lerp(tune.attackCooldown[0], tune.attackCooldown[1], d.rnd()); }
+    function endAttack(d, cool) {
+      var had = !!d.atk;
+      d.atk = null; d.breathing = false; d.inhaling = false; d.telegraph = null; releaseToken(d);
+      d.cooldown = cool != null ? cool : lerp(tune.attackCooldown[0], tune.attackCooldown[1], d.rnd()) * aggr(NIGHT.cooldownMul);   // shorter at night
+      if (had) { d.attackEndAt = now; d.cooldownSet = d.cooldown; }
+    }
     function startTelegraph(d, kind, dur, pos, radius) {
       d.atk.telegraphAt = now; d.atk.telegraphDur = dur;
       d.telegraph = { kind: kind, pos: pos ? { x: pos.x, z: pos.z } : null, radius: radius || 0, start: now, dur: dur };
@@ -261,6 +291,7 @@
       var illegal = d.defeated || !a || a.telegraphAt == null || now - a.telegraphAt < tune.minTelegraph - 1e-9 || (core.attacker != null && core.attacker !== d.id);
       if (illegal) { stats.refused++; core.violations++; return false; }       // should never happen — counted for tests
       if (!P || !P.alive) { stats.refused++; return false; }
+      if (P.inCity) { stats.refused++; return false; }                          // The Grid is a safe zone
       if (now < core.rollUntil) { stats.refused++; emit('dodged', { id: d.id, kind: kind, attackId: a.id }); return false; }   // dodge-roll i-frames (host)
       if (knock && now < core.playerInvulnUntil) { stats.refused++; return false; }   // player i-frames (dodge roll / post-knockback)
       if (knock) core.playerInvulnUntil = now + tune.playerIFrames;
@@ -273,7 +304,15 @@
     function knockFrom(sx, sz, P, speedMS, up) { var dx = P.x - sx, dz = P.z - sz, l = hyp2(dx, dz) || 1; return { x: dx / l * speedMS * U, y: (up || 6) * U, z: dz / l * speedMS * U }; }
 
     // ── flight command helpers ──
-    function cmdFly(d, tx, ty, tz, speed, extra) { var c = { tx: tx, ty: ty, tz: tz, speed: speed, minClear: tune.clearPatrolTarget, hardClear: tune.clearPatrol, standH: d.standH * U }; if (extra) for (var k in extra) c[k] = extra[k]; d.cmd = c; return c; }
+    // one reusable command object per dragon (no per-frame allocation); every field reset on each call
+    function cmdFly(d, tx, ty, tz, speed, extra) {
+      var c = d._cmdBuf || (d._cmdBuf = {});
+      c.tx = tx; c.ty = ty; c.tz = tz; c.speed = speed; c.minClear = tune.clearPatrolTarget; c.hardClear = tune.clearPatrol; c.standH = d.standH * U;
+      c.dive = false; c.maxBankDeg = 0; c.lookMax = 0; c.lookNarrow = false; c.vzFF = 0; c.wobble = 0; c.sink = 0; c.climb = 0;
+      if (extra) for (var k in extra) c[k] = extra[k];
+      d.cmd = c; return c;
+    }
+    function cmdHover(d, tx, ty, tz, speed, sink, climb) { var c = cmdFly(d, tx, ty, tz, speed); c.sink = sink; c.climb = climb; return c; }
     function orbitCmd(d, P, radiusM, altM, speed) {
       var ang = Math.atan2(d.f.x - P.x, d.f.z - P.z) + d.orbitDir * tune.orbitLeadRad;
       return cmdFly(d, P.x + Math.sin(ang) * radiusM * U, P.y + altM * U, P.z + Math.cos(ang) * radiusM * U, speed);
@@ -295,7 +334,7 @@
         return false;
       }
       // hover: glide horizontally onto the spot, descend
-      d.cmd = { tx: spot.x, ty: dist < 6 ? gx - 5 * U : gx + 8 * U, tz: spot.z, speed: 12, sink: 6, climb: 6, standH: d.standH * U };
+      cmdHover(d, spot.x, dist < 6 ? gx - 5 * U : gx + 8 * U, spot.z, 12, 6, 6);
       if (dist < 6 && f.y <= gx + 0.3 * U) { f.y = gx; return true; }
       return false;
     }
@@ -315,7 +354,7 @@
       d.atk = { id: ++attackSeq, kind: kind, phase: 'setup', t: 0, telegraphAt: null };
       core.attacker = d.id;
       setState(d, 'attack');
-      emit('attack', { id: d.id, kind: kind, attackId: d.atk.id });
+      emit('attack', { id: d.id, kind: kind, attackId: d.atk.id, sinceLast: now - d.attackEndAt, cooldown: d.cooldownSet, night: core.night });
     }
 
     // ── per-attack update. returns nothing; fills d.cmd ──
@@ -369,7 +408,7 @@
         d.coneAxis = c; d.mouth = mouth;
         if (now >= a.nextTick) {
           a.nextTick = now + B.tick;
-          if (inCone(mouth, c, { x: P.x, y: P.y + 1.2 * U, z: P.z }, B.len, B.endRadius)) hurtPlayer(d, B.dps * B.tick, 'breath', null, P);
+          if (inCone(mouth, c, { x: P.x, y: P.y + 1.2 * U, z: P.z }, B.len, B.endRadius)) hurtPlayer(d, B.dps * B.tick * aggr(NIGHT.dpsMul), 'breath', null, P);
         }
         var along = (P.x - f.x) * a.dirx + (P.z - f.z) * a.dirz;
         if (now - a.breathStart > B.dur || along < -15 * U) { a.phase = 'exit'; d.breathing = false; d.coneAxis = null; }
@@ -431,7 +470,7 @@
       var a = d.atk, f = d.f;
       if (a.phase === 'setup') {
         var side = hyp2(P.x - d.home.x, P.z - d.home.z) > 1 ? { x: (P.x - d.home.x), z: (P.z - d.home.z) } : d.out, sl = hyp2(side.x, side.z) || 1;
-        a.spot = { x: d.home.x + side.x / sl * tune.landOffset * U, z: d.home.z + side.z / sl * tune.landOffset * U };
+        a.spot = pushOut({ x: d.home.x + side.x / sl * tune.landOffset * U, z: d.home.z + side.z / sl * tune.landOffset * U });
         a.phase = 'approach';
       }
       if (a.phase === 'approach') {
@@ -483,7 +522,7 @@
       var f = d.f;
       d.stateT += dt; if (d.atk) d.atk.t += dt;
       d.staggerT = Math.max(0, d.staggerT - dt);
-      if (!P) P = { x: d.home.x, y: heightAt(d.home.x, d.home.z), z: d.home.z, alive: false };   // no player (menus/loading) → disengage
+      if (!P) { _noP.x = d.home.x; _noP.y = heightAt(d.home.x, d.home.z); _noP.z = d.home.z; P = _noP; }   // no player (menus/loading) → disengage
       var pH = P ? hyp2(P.x - d.home.x, P.z - d.home.z) / U : Infinity;
       var engaged = P && P.alive && !d.defeated;
 
@@ -491,16 +530,16 @@
       if (d.defeated) return brainDefeated(d, P, dt);
 
       // leash: player gone far / dead → return home and heal
-      var active = ['alert', 'takeoff', 'patrol', 'attack'].indexOf(d.state) >= 0;
+      var active = ACTIVE_STATES[d.state] === 1;
       if (active) {
-        if (!engaged || pH > tune.leashRadius) d.leashT += dt; else d.leashT = 0;
+        if (!engaged || pH > tune.leashRadius * aggr(NIGHT.leashMul)) d.leashT += dt; else d.leashT = 0;
         if (d.leashT > tune.leashTime) { endAttack(d, 2); d.leashT = 0; setState(d, 'return'); }
       }
 
       switch (d.state) {
         case 'perch':
           cmdFly(d, f.x + Math.sin(f.yaw), 0, f.z + Math.cos(f.yaw), 0);
-          if (engaged && pH < tune.alertRadius) { setState(d, 'alert'); d.atk = { id: ++attackSeq, kind: 'roar', phase: 'setup', t: 0, telegraphAt: null }; }
+          if (engaged && pH < tune.alertRadius * aggr(NIGHT.alertMul)) { setState(d, 'alert'); d.atk = { id: ++attackSeq, kind: 'roar', phase: 'setup', t: 0, telegraphAt: null }; }
           break;
         case 'alert':   // perched roar, then take off
           cmdFly(d, P.x, 0, P.z, 0);
@@ -524,12 +563,13 @@
           if (P) orbitCmd(d, P, R, A, tune.speedCruise, d.staggerT > 0 ? { wobble: Math.sin(now * 25) * 0.3 } : null);
           if (d.staggerT > 0 && d.cmd) d.cmd.wobble = Math.sin(now * 25) * 0.3;
           d.cooldown -= dt;
-          if (d.hp < d.hpMax * tune.retreatHpFrac && !d.rested) { setState(d, 'retreat'); break; }
-          if (engaged && d.cooldown <= 0 && (core.attacker == null || core.attacker === d.id) && d.stateT > 1.5) startAttack(d, chooseAttack(d, P));
+          if (d.hp < d.hpMax * tune.retreatHpFrac * aggr(NIGHT.retreatMul) && !d.rested) { setState(d, 'retreat'); break; }
+          if (engaged && !P.inCity && d.cooldown <= 0 && (core.attacker == null || core.attacker === d.id) && d.stateT > 1.5) startAttack(d, chooseAttack(d, P));
           break;
         }
         case 'attack':
           if (!d.atk) { setState(d, 'patrol'); break; }
+          if (P.inCity && d.atk.kind !== 'land') { endAttack(d); setState(d, 'patrol'); break; }   // player fled into The Grid: abort, circle high
           if (d.atk.kind === 'breath') updateBreath(d, P, dt);
           else if (d.atk.kind === 'swoop') updateSwoop(d, P, dt);
           else if (d.atk.kind === 'roar') updateRoar(d, P, dt);
@@ -551,10 +591,13 @@
           beginTakeoff(d); break;
       }
       // hover → fly handover once the take-off climb has some height and speed
-      if (f.mode === 'hover' && f.takeoff) {
-        d.cmd = { tx: f.x + Math.sin(f.yaw) * 100 * U, ty: heightAt(f.x, f.z) + 40 * U, tz: f.z + Math.cos(f.yaw) * 100 * U, speed: 14, climb: 10, sink: 4, standH: d.standH * U };
-        if (f.y - heightAt(f.x, f.z) > 14 * U) { f.mode = 'fly'; f.speed = Math.max(f.speed, 12); f.pitch = 0.3; }
-      }
+      if (f.mode === 'hover' && f.takeoff) takeoffClimb(d);
+    }
+    // hover → fly handover once the take-off climb has some height (flapping hover climb, then pitch into flight)
+    function takeoffClimb(d) {
+      var f = d.f;
+      cmdHover(d, f.x + Math.sin(f.yaw) * 100 * U, heightAt(f.x, f.z) + 40 * U, f.z + Math.cos(f.yaw) * 100 * U, 14, 4, 10);
+      if (f.y - heightAt(f.x, f.z) > 14 * U) { f.mode = 'fly'; f.speed = Math.max(f.speed, 12); f.pitch = 0.3; }
     }
 
     function brainDefeated(d, P, dt) {
@@ -577,10 +620,7 @@
           break;
         case 'ambient_takeoff':
           cmdFly(d, f.x + Math.sin(f.yaw) * 300 * U, heightAt(f.x, f.z) + 120 * U, f.z + Math.cos(f.yaw) * 300 * U, tune.speedCruise, { minClear: 12, hardClear: 0 });
-          if (f.mode === 'hover' && f.takeoff) {
-            d.cmd = { tx: f.x + Math.sin(f.yaw) * 100 * U, ty: heightAt(f.x, f.z) + 40 * U, tz: f.z + Math.cos(f.yaw) * 100 * U, speed: 14, climb: 10, sink: 4, standH: d.standH * U };
-            if (f.y - heightAt(f.x, f.z) > 14 * U) { f.mode = 'fly'; f.speed = Math.max(f.speed, 12); f.pitch = 0.3; }
-          }
+          if (f.mode === 'hover' && f.takeoff) takeoffClimb(d);
           if (f.mode === 'fly' && !f.takeoff && clearOK(d)) setState(d, 'ambient');
           break;
         case 'ambient': {  // lazy high loops above the realm, then come back to perch
@@ -605,7 +645,7 @@
 
     // ── public: damage from the player ──
     function damage(id, amount, hitPos, type) {
-      var d = byId(id); if (!d || d.defeated || !(amount > 0)) return false;
+      var d = byId(id); if (!d || d.defeated || d.ridden || !(amount > 0)) return false;
       if (now < d.invulnUntil) return false;                                   // i-frames
       var res = (RESIST[d.element] || {})[type || 'physical'] || 0;
       amount = amount * (1 - res);
@@ -633,22 +673,38 @@
     // ── tick ──
     function step(d, P, dt) {
       brain(d, P, dt);
-      var c = d.cmd || { tx: d.f.x, ty: d.f.y, tz: d.f.z, speed: 0, standH: d.standH * U };
+      var c = d.cmd || cmdFly(d, d.f.x, d.f.y, d.f.z, 0);
       c.standH = d.standH * U;
+      cityGuard(d, c);
       stepFlight(d.f, c, dt, heightAt, tune);
       // head/jaw targets (animation hints consumed by the visual layer)
       var jawT = d.breathing ? 1 : d.inhaling ? 0.35 : (d.atk && d.telegraph && (d.telegraph.kind === 'roar' || d.telegraph.kind === 'swoop') ? 0.9 : 0);
       if (d.state === 'alert' && d.telegraph) jawT = 0.9;
       d.jaw = approach(d.jaw, jawT, 3 * dt);
     }
+    // The Grid overfly: within cityR (+ cityBuffer ramp, using the target and an 8 s look-ahead) the clearance target
+    // rises toward cityOverfly, so a wild dragon only ever crosses the city high. Ground/hover (landings) are always outside.
+    function cityGuard(d, c) {
+      var f = d.f; if (f.mode !== 'fly') return;
+      var R = tune.cityR, B = tune.cityBuffer;
+      var r = Math.min(hyp2(f.x, f.z), hyp2(f.x + f.hvx * 8 * U, f.z + f.hvz * 8 * U), hyp2(c.tx, c.tz)) / U;
+      if (r >= R + B) return;
+      var k = clamp((R + B - r) / B, 0, 1), base = c.minClear != null ? c.minClear : tune.clearPatrolTarget;
+      var clr = lerp(base, tune.cityOverfly, k);
+      if (base < clr) c.minClear = clr;
+      if (hyp2(c.tx, c.tz) / U < R) c.ty = Math.max(c.ty, heightAt(c.tx, c.tz) + tune.cityOverfly * U);
+      c.dive = false;
+    }
     function update(dt) {
       dt = Math.min(Math.max(dt || 0, 0), tune.maxDt);
       now += dt;
+      if (opts.nightFactor) { var nf = +opts.nightFactor(); core.night = nf > 0 ? (nf < 1 ? nf : 1) : 0; }
       var P = player();
       for (var i = 0; i < core.dragons.length; i++) {
         var d = core.dragons[i];
+        if (d.ridden) { d.lod = 'near'; d.distToPlayer = 0; continue; }   // a tamed/ridden dragon is flown by world-dragon-ride.js
         d.distToPlayer = P ? Math.sqrt(Math.pow(P.x - d.f.x, 2) + Math.pow(P.z - d.f.z, 2)) / U : Infinity;
-        var far = d.distToPlayer > tune.farDist && d.state !== 'attack';
+        var far = d.distToPlayer > tune.farDist && d.state !== 'attack' && !(d.f.mode === 'fly' && hyp2(d.f.x, d.f.z) / U < tune.cityR + tune.cityBuffer);   // full-rate near/over the city (overfly climb)
         d.lod = far ? 'far' : 'near';
         if (far) { d.lodAcc += dt; var fs = 1 / tune.farHz; if (d.lodAcc < fs) continue; var sdt = d.lodAcc; d.lodAcc = 0; while (sdt > 1e-6) { var s = Math.min(sdt, 0.2); step(d, P, s); sdt -= s; } }
         else { d.lodAcc = 0; step(d, P, dt); }
@@ -663,6 +719,44 @@
         hits: stats.hits, telegraphs: stats.telegraphs, refused: stats.refused, violations: core.violations, floorHits: stats.floorHits, time: now };
     };
     core.setPlayerInvulnerable = function (sec) { core.rollUntil = Math.max(core.rollUntil, now + (sec || 0)); };
+    // ── player → dragon hit helpers (pure; the THREE api delegates here). Same pattern as world-wildlife-v4 wolves. ──
+    var _hc = { x: 0, y: 0, z: 0 };
+    core.hitTest = function (pos, radiusUnits) {   // sphere vs body (+ outstretched wings when airborne) → id | null
+      var best = null, bd = Infinity;
+      for (var i = 0; i < core.dragons.length; i++) {
+        var d = core.dragons[i]; if (d.defeated || d.ridden) continue;
+        var dx = pos.x - d.f.x, dy = (pos.y || 0) - d.f.y, dz = pos.z - d.f.z, dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        var r = (d.f.mode === 'ground' ? d.wingspan * 0.28 : d.wingspan * 0.42) * U + (radiusUnits || 0);
+        if (dist < r && dist < bd) { bd = dist; best = d.id; }
+      }
+      return best;
+    };
+    core.meleeHit = function (pos, fwd, reachUnits, dmg, type) {   // cone in front of the player (swing / kick) → id | null
+      var hit = null;
+      for (var i = 0; i < core.dragons.length; i++) {
+        var d = core.dragons[i]; if (d.defeated || d.ridden) continue;
+        var dx = d.f.x - pos.x, dy = d.f.y - (pos.y || 0), dz = d.f.z - pos.z, dist = Math.sqrt(dx * dx + dy * dy + dz * dz) - d.bodyRadius * U;
+        if (dist > reachUnits) continue;
+        var fl = Math.sqrt(fwd.x * fwd.x + fwd.z * fwd.z) || 1, hl = hyp2(dx, dz) || 1;
+        if ((dx * fwd.x + dz * fwd.z) / (fl * hl) < 0.35 && hl > d.bodyRadius * U) continue;
+        _hc.x = d.f.x; _hc.y = d.f.y; _hc.z = d.f.z;
+        if (core.damage(d.id, dmg, _hc, type)) hit = d.id;
+      }
+      return hit;
+    };
+    // tame/ride hand-off (world-dragon-ride.js): only a DEFEATED (bowed) dragon can be ridden. While ridden the core skips it.
+    // Release puts it down where the rider left it and it flies home to its perch (ambient loop) — never stays in The Grid.
+    core.setRidden = function (id, on, pos) {
+      var d = byId(id); if (!d) return false;
+      if (on) { if (!d.defeated || d.ridden) return false; d.ridden = true; d.breathing = d.inhaling = false; d.telegraph = null; emit('ridden', { id: d.id, on: true }); return true; }
+      if (!d.ridden) return false;
+      d.ridden = false;
+      if (pos) { d.f.x = pos.x; d.f.z = pos.z; d.f.y = pos.y != null ? pos.y : heightAt(pos.x, pos.z) + d.standH * U; if (pos.yaw != null) d.f.yaw = pos.yaw; }
+      d.f.mode = 'ground'; d.f.speed = 0; d.f.vy = 0; d.f.hc = -1; d.ambientT = 0; d.bow = 0;
+      d.state = 'peaceful'; beginTakeoff(d);
+      emit('ridden', { id: d.id, on: false });
+      return true;
+    };
     core._forceAttack = function (id, kind) { var d = byId(id); if (!d || d.defeated) return false; if (d.f.mode !== 'fly') return false; endAttack(d, 0); startAttack(d, kind); return true; };
     return core;
   }
@@ -681,6 +775,27 @@
     var dl = Math.sqrt(vx * vx + vy * vy + vz * vz) / U;
     var perp = Math.sqrt(Math.max(0, dl * dl - along * along));
     return perp <= 1.2 + endRM * (along / lenM);   // 1.2 m throat radius at the mouth
+  }
+
+  /* Animation blend for rigged dragons (pure, allocation-free — fills `out`). p = { fold 0..1 (1 = wings folded, standing),
+   * glide 0..1, flapEffort 0..1, hover 0|1, groundMove 0..1 }. Weights over {fly, glide, idle, walk, run} always sum to 1.
+   * Air: fly (timeScale 0.8 → 1.8 with effort, slower in a glide) blended with glide (if the GLB has one, else fly slowed to
+   * 0.35 = wings held). Ground: idle ↔ walk ↔ run by groundMove. Take-off/landing = fold crossfades air ↔ ground. */
+  function clipWeights(p, out, hasGlide, hasWalk, hasRun, hasIdle) {
+    var air = clamp(1 - (p.fold || 0), 0, 1), gl = clamp(p.glide || 0, 0, 1) * (p.hover ? 0 : 1), mv = clamp(p.groundMove || 0, 0, 1);
+    var effort = clamp(p.flapEffort || 0, 0, 1);
+    out.glide = hasGlide ? air * gl : 0;
+    out.fly = air - out.glide;
+    var g = 1 - air;
+    var runK = hasRun ? clamp((mv - 0.6) / 0.4, 0, 1) : 0;
+    var mvW = clamp(mv * 2.5, 0, 1);   // any real ground motion reads as walking quickly
+    out.run = hasRun ? g * mvW * runK : 0;
+    out.walk = hasWalk ? g * mvW * (1 - runK) : 0;
+    out.idle = g - out.walk - out.run;
+    if (!hasIdle) { out.fly += out.idle; out.idle = 0; }   // no idle clip: a folded, slowed fly pose is better than bind pose
+    out.flyScale = lerp(0.8, 1.8, effort) * (p.hover ? 1.25 : 1) * (hasGlide ? 1 : lerp(1, 0.35, gl)) * (hasIdle ? 1 : lerp(1, 0.2, g));
+    out.walkScale = lerp(0.8, 1.3, mv);
+    return out;
   }
 
   // ───────────────────────────────────────── VISUALS (browser, THREE) ─────────────────────────────────────
@@ -894,18 +1009,31 @@
         mixer = new THREE.AnimationMixer(sceneCopy);
         gltf.animations.forEach(function (clip) { actions[clip.name.toLowerCase()] = mixer.clipAction(clip); });
       }
-      var cur = null;
-      function play(names) { for (var i = 0; i < names.length; i++) { var a = actions[names[i]]; if (a) { if (cur !== a) { a.reset().fadeIn(0.3).play(); if (cur) cur.fadeOut(0.3); cur = a; } return a; } } return null; }
+      // Weight-blended clips (fly / idle / walk / run all running, weights from clipWeights): no pops between take-off,
+      // cruise, glide, landing and standing. Bones the clips animate get procedural look-at ADDED on top of the clip pose;
+      // bones no clip touches are posed from their bind pose (so nothing accumulates frame to frame).
+      var CLIP_ALIASES = { fly: ['fly', 'flying', 'flap', 'hover'], idle: ['idle', 'perch', 'stand'], walk: ['walk'], run: ['run'], glide: ['glide'] };
+      var slots = {}, animated = new Set();
+      if (mixer) {
+        Object.keys(CLIP_ALIASES).forEach(function (k) { var al = CLIP_ALIASES[k]; for (var i = 0; i < al.length; i++) if (actions[al[i]]) { slots[k] = actions[al[i]]; break; } });
+        Object.keys(slots).forEach(function (k) { var a = slots[k]; a.enabled = true; a.setEffectiveWeight(0); a.play(); });
+        gltf.animations.forEach(function (clip) { clip.tracks.forEach(function (t) { animated.add(t.name.split('.')[0]); }); });
+      }
+      var hasFlyClip = !!(slots.fly || slots.glide), W = { fly: 0, glide: 0, idle: 0, walk: 0, run: 0, flyScale: 1, walkScale: 1 };
       var q = new THREE.Quaternion(), e = new THREE.Euler();
-      function rot(b, x, y, z) { if (!b) return; e.set(x, y, z); q.setFromEuler(e); b.quaternion.copy(bind.get(b)).multiply(q); }
+      function rot(b, x, y, z) { if (!b) return; e.set(x, y, z); q.setFromEuler(e); if (hasFlyClip && animated.has(b.name)) b.quaternion.multiply(q); else b.quaternion.copy(bind.get(b)).multiply(q); }
       this.root = R; this.mats = {};
       this.hasClips = !!mixer;
       this.pose = function (p, dt) {
         var usedClip = false;
-        if (mixer) {
-          var a = p.fold > 0.5 ? play(['idle', 'perch', 'stand']) : p.glide > 0.6 ? play(['glide', 'fly', 'flying']) : play(['fly', 'flying', 'flap', 'hover']);
-          if (a) { a.timeScale = p.fold > 0.5 ? 1 : lerp(0.8, 1.8, p.flapEffort); usedClip = true; }
-          mixer.update(dt);
+        if (mixer && hasFlyClip) {
+          clipWeights(p, W, !!slots.glide, !!slots.walk, !!slots.run, !!slots.idle);
+          for (var k in slots) slots[k].setEffectiveWeight(W[k] || 0);
+          if (slots.fly) slots.fly.timeScale = W.flyScale;
+          if (slots.glide) slots.glide.timeScale = 1;
+          if (slots.walk) slots.walk.timeScale = W.walkScale;
+          if (slots.run) slots.run.timeScale = W.walkScale;
+          mixer.update(dt); usedClip = true;
         }
         if (!usedClip) {
           var amp = lerp(0.9, 0.12, p.glide) * (1 - p.fold);
@@ -1041,7 +1169,7 @@
       var rig = new ProcRig(d.element); holder.add(rig.root);
       var sil = new THREE.Mesh(buildGeo().sil, silMat); sil.visible = false; holder.add(sil);
       holder.scale.setScalar(d.wingspan * U);
-      var v = { d: d, holder: holder, rig: rig, sil: sil, breath: new Breath(d.element), flapPhase: Math.random() * 6, tailPhase: 0, headYaw: 0, headPitch: 0, fold: 1, legs: 1, glide: 0 };
+      var v = { d: d, holder: holder, rig: rig, sil: sil, breath: new Breath(d.element), flapPhase: Math.random() * 6, tailPhase: 0, headYaw: 0, headPitch: 0, fold: 1, legs: 1, glide: 0, groundMove: 0, lastYaw: d.f.yaw, lastX: d.f.x, lastZ: d.f.z };
       var url = opts.modelFor ? opts.modelFor(d.id, d) : null;
       if (url) loadGLB(url, function (gltf) {
         if (!gltf || disposed) return;
@@ -1066,6 +1194,8 @@
       var tgShown = false, dsShown = false;
       for (var i = 0; i < V.length; i++) {
         var v = V[i], d = v.d, f = d.f;
+        v.holder.visible = !d.ridden;            // the ride module draws a ridden dragon
+        if (d.ridden) continue;
         v.holder.position.set(f.x, f.y, f.z);
         v.holder.rotation.set(-f.pitch, f.yaw, -f.bank, 'YXZ');
         var far = d.lod === 'far';
@@ -1073,6 +1203,9 @@
         if (!far) {
           // animation drivers
           var ground = f.mode === 'ground', hover = f.mode === 'hover';
+          // ground locomotion (turn-in-place / ground slide) → walk/run clip weight
+          var gmv = ground && dt > 0 ? Math.min(1, Math.abs(wrapPi(f.yaw - v.lastYaw)) / dt / 0.9 + hyp2(f.x - v.lastX, f.z - v.lastZ) / U / dt / 8) : 0;
+          v.groundMove = approach(v.groundMove, gmv, dt * 3); v.lastYaw = f.yaw; v.lastX = f.x; v.lastZ = f.z;
           v.fold = approach(v.fold, ground ? 1 : 0, dt * (ground ? 1.2 : 2.5));
           v.legs = approach(v.legs, ground || (hover && f.vy < 0) ? 1 : 0, dt * 2);
           v.glide = approach(v.glide, ground ? 0 : hover ? 0 : f.flap < 0.3 ? 1 : 0, dt * 1.5);
@@ -1090,7 +1223,7 @@
           v.rig.pose({ time: clock, flapPhase: v.flapPhase, flapSweep: 1, flapEffort: f.flap, glide: v.glide, fold: v.fold, legsDown: v.legs,
             tailPhase: v.tailPhase, tailAmp: ground ? 0.12 : 0.22, tailBank: f.bank, tailLift: -f.pitch,
             headYaw: v.headYaw, headPitch: v.headPitch, neckRaise: d.state === 'alert' || (d.telegraph && d.telegraph.kind === 'roar') ? 0.35 : 0,
-            jaw: d.jaw, bow: d.bow, breathe: ground ? Math.sin(clock * 1.6 + i) : 0, breathing: d.breathing, inhaling: d.inhaling }, dt);
+            jaw: d.jaw, bow: d.bow, breathe: ground ? Math.sin(clock * 1.6 + i) : 0, breathing: d.breathing, inhaling: d.inhaling, groundMove: v.groundMove, hover: hover ? 1 : 0 }, dt);
         }
         // breath VFX (only the active dragon ever emits; cheap no-op otherwise)
         var emitting = d.breathing && !far;
@@ -1120,31 +1253,8 @@
       updateDecals(dt);
     }
 
-    // ── player → dragon hit helpers ──
-    var _c = { x: 0, y: 0, z: 0 };
-    function hitTest(pos, radiusUnits) {   // sphere test against each dragon's body (and outstretched wings when flying)
-      var best = null, bd = Infinity;
-      for (var i = 0; i < core.dragons.length; i++) {
-        var d = core.dragons[i]; if (d.defeated) continue;
-        var dx = pos.x - d.f.x, dy = pos.y - d.f.y, dz = pos.z - d.f.z, dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        var r = (d.f.mode === 'ground' ? d.wingspan * 0.28 : d.wingspan * 0.42) * U + (radiusUnits || 0);
-        if (dist < r && dist < bd) { bd = dist; best = d.id; }
-      }
-      return best;
-    }
-    function meleeHit(pos, fwd, reachUnits, dmg) {   // cone in front of the player (melee swing/kick)
-      var hit = null;
-      for (var i = 0; i < core.dragons.length; i++) {
-        var d = core.dragons[i]; if (d.defeated) continue;
-        var dx = d.f.x - pos.x, dy = d.f.y - pos.y, dz = d.f.z - pos.z, dist = Math.sqrt(dx * dx + dy * dy + dz * dz) - d.bodyRadius * U;
-        if (dist > reachUnits) continue;
-        var fl = Math.sqrt(fwd.x * fwd.x + fwd.z * fwd.z) || 1, hl = hyp2(dx, dz) || 1;
-        if ((dx * fwd.x + dz * fwd.z) / (fl * hl) < 0.35 && hl > d.bodyRadius * U) continue;
-        _c.x = d.f.x; _c.y = d.f.y; _c.z = d.f.z;
-        core.damage(d.id, dmg, _c); hit = d.id;
-      }
-      return hit;
-    }
+    // ── player → dragon hit helpers: pure versions live in the core (core.hitTest / core.meleeHit) ──
+    var hitTest = core.hitTest, meleeHit = core.meleeHit;
     function isOpen(stationId) { var d = null; core.dragons.forEach(function (x) { if (x.station === stationId) d = x; }); return !d || d.defeated; }
 
     function dispose() {
@@ -1166,7 +1276,7 @@
   }
 
   var EXPORTS = { TUNE: TUNE, ELEMENTS: ELEMENTS, COLOR_TO_ELEMENT: COLOR_TO_ELEMENT, U: U, createFlight: createFlight, stepFlight: stepFlight,
-    createDragonsCore: createDragonsCore, inCone: inCone, mouthPos: mouthPos, forwardVec: forwardVec, lookAheadFloor: lookAheadFloor, buildWorldDragons: buildWorldDragons };
+    createDragonsCore: createDragonsCore, clipWeights: clipWeights, inCone: inCone, mouthPos: mouthPos, forwardVec: forwardVec, lookAheadFloor: lookAheadFloor, buildWorldDragons: buildWorldDragons };
   if (typeof module !== 'undefined' && module.exports) module.exports = EXPORTS;
   if (typeof window !== 'undefined') { window.buildWorldDragons = buildWorldDragons; window.WorldDragons = EXPORTS; }
 })(typeof window !== 'undefined' ? window : globalThis);

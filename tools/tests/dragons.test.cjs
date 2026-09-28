@@ -289,5 +289,183 @@ test('perf: dragons > 1500 m away update at 5 Hz', () => {
   return ticks + ' brain ticks in 10 s';
 });
 
+// ───────────── 2026-09-27 additions: wind-ups, cooldowns, hit volumes, player→dragon, city rule, night, perf, clips ─────────────
+test('wind-ups: every attack kind telegraphs ≥ 0.6 s (enforced minTelegraph ≥ minWindup), ≥ 3 kinds in a live fight', () => {
+  const T = DR.TUNE;
+  assert(T.minTelegraph >= T.minWindup && T.minWindup >= 0.6);
+  const winds = { breath: T.breath.inhale, swoop: T.swoop.telegraph, stomp: T.stomp.telegraph, tail: T.tail.telegraph, roar: T.roar.telegraph };
+  for (const k in winds) assert(winds[k] >= 0.6, k + ' wind-up ' + winds[k]);
+  const L = ringLayout(1, 2828), st = L.stations[1], P = mkPlayer(st.pos[0] * 0.97, st.pos[1] * 0.97, flat);
+  const core = DR.createDragonsCore({ heightAt: flat, layout: L, getPlayer: () => P, seed: 21, nightFactor: () => 1 });
+  const ev = record(core);
+  for (let i = 0; i < 300 * 60; i++) core.update(1 / 60);
+  const tele = ev.filter(e => e.ev === 'telegraph');
+  const kinds = new Set(tele.map(e => e.kind));
+  assert(kinds.size >= 3, 'fewer than 3 attack kinds telegraphed: ' + [...kinds]);
+  assert(Math.min(...tele.map(e => e.dur)) >= 0.6);
+  return Object.entries(winds).map(([k, v]) => k + ' ' + v + ' s').join(', ') + '; live kinds ' + [...kinds].join('/');
+});
+
+test('cooldowns: a new attack never starts before the previous cooldown elapsed (day + night)', () => {
+  const out = [];
+  for (const night of [0, 1]) {
+    const L = ringLayout(1, 2828), st = L.stations[1], P = mkPlayer(st.pos[0] * 0.97, st.pos[1] * 0.97, hills);
+    const core = DR.createDragonsCore({ heightAt: hills, layout: L, getPlayer: () => P, seed: 4, nightFactor: () => night });
+    const ev = record(core);
+    for (let i = 0; i < 400 * 60; i++) core.update(1 / 60);
+    const atk = ev.filter(e => e.ev === 'attack' && e.sinceLast < 1e8);
+    assert(atk.length >= 4, 'only ' + atk.length + ' attacks');
+    for (const a of atk) assert(a.sinceLast >= a.cooldown - 1e-9, 'attack ' + a.kind + ' after ' + a.sinceLast.toFixed(2) + ' s < cooldown ' + a.cooldown.toFixed(2));
+    out.push((night ? 'night ' : 'day ') + atk.length + ' attacks, min gap ' + Math.min(...atk.map(a => a.sinceLast)).toFixed(2) + ' s');
+  }
+  return out.join('; ');
+});
+
+function landedDragon(seed) {   // a dragon landed for its ground-attack loop on flat ground
+  const L = ringLayout(1, 2828), st = L.stations[1];
+  const P = mkPlayer(st.pos[0] * 0.97, st.pos[1] * 0.97, flat);
+  const core = DR.createDragonsCore({ heightAt: flat, layout: L, getPlayer: () => P, seed });
+  const ev = record(core), d = core.dragons[0];
+  for (let i = 0; i < 60 * 25 && d.state !== 'patrol'; i++) core.update(1 / 60);
+  assert(core._forceAttack(d.id, 'land'));
+  for (let i = 0; i < 60 * 40 && !(d.atk && d.atk.phase === 'ground'); i++) core.update(1 / 60);
+  assert(d.atk && d.atk.phase === 'ground', 'never landed');
+  d.atk.groundUntil = core.time() + 30;
+  const inFront = m => P.set(d.f.x + Math.sin(d.f.yaw) * m * U, d.f.z + Math.cos(d.f.yaw) * m * U);
+  const n0 = ev.length;
+  return { core, ev, d, P, inFront, n0 };
+}
+test('hit volume: stomp hits inside 18 m; a player who steps to 25 m during the wind-up takes nothing', () => {
+  const A = landedDragon(8); A.inFront(10);
+  for (let i = 0; i < 60 * 3; i++) A.core.update(1 / 60);
+  const hitIn = A.ev.filter(e => e.ev === 'hit' && e.kind === 'stomp').length;
+  assert(hitIn >= 1, 'stationary player inside the stomp was not hit');
+  const B = landedDragon(8); B.inFront(10);
+  let moved = false;
+  for (let i = 0; i < 60 * 6; i++) { B.core.update(1 / 60); if (!moved && B.d.atk && B.d.atk.sub === 'stomp') { moved = true; B.inFront(25); } }
+  assert(moved, 'no stomp wind-up');
+  const hitsOut = B.ev.slice(B.n0).filter(e => e.ev === 'hit');
+  assert.strictEqual(hitsOut.length, 0, 'hit outside the volume: ' + JSON.stringify(hitsOut[0]));
+  return 'inside: ' + hitIn + ' stomp hit(s); stepped out: 0 hits';
+});
+
+test('player → dragon: hitTest/meleeHit drain HP → hurt → downed → defeated (HUD boss events)', () => {
+  const L = { stations: [{ id: 'm', pos: [2828 * U, 0], dragon: 'black' }] };
+  const core = DR.createDragonsCore({ heightAt: flat, layout: L, getPlayer: () => null });
+  const ev = record(core), d = core.dragons[0];
+  const fx = Math.sin(d.f.yaw), fz = Math.cos(d.f.yaw);
+  assert.strictEqual(core.hitTest({ x: d.f.x, y: d.f.y, z: d.f.z }, 1), 'm', 'bolt at the body missed');
+  assert.strictEqual(core.hitTest({ x: d.f.x + 60 * U, y: d.f.y, z: d.f.z }, 1), null, 'bolt 60 m away hit');
+  assert.strictEqual(core.meleeHit({ x: d.f.x - fx * 8 * U, y: d.f.y, z: d.f.z - fz * 8 * U }, { x: -fx, z: -fz }, 6 * U, 12), null, 'swing facing away hit');
+  let n = 0;
+  while (!d.defeated && n < 2000) { core.meleeHit({ x: d.f.x - fx * 8 * U, y: d.f.y, z: d.f.z - fz * 8 * U }, { x: fx, z: fz }, 6 * U, 30); core.update(1 / 60); n++; }
+  assert(d.defeated, 'not defeated after ' + n + ' swings');
+  for (let i = 0; i < 60 * 60; i++) core.update(1 / 60);   // (it may have woken and taken off → glide, land, bow)
+  const hurt = ev.filter(e => e.ev === 'hurt'), downed = ev.filter(e => e.ev === 'downed'), def = ev.filter(e => e.ev === 'defeated');
+  assert(hurt.length > 5 && hurt.every(e => e.hpMax === d.hpMax && e.hp >= 0), 'hurt payloads');
+  assert.strictEqual(downed.length, 1); assert.strictEqual(def.length, 1);
+  assert(def[0].t > downed[0].t, 'defeated before downed');
+  assert.strictEqual(core.hitTest({ x: d.f.x, y: d.f.y, z: d.f.z }, 1), null, 'defeated dragon still hittable');
+  return hurt.length + ' hurt → downed @' + downed[0].t.toFixed(1) + ' s → defeated @' + def[0].t.toFixed(1) + ' s';
+});
+
+test('The Grid: no dragon ever on the ground at r < 1630 m (even a station inside); city overflights stay high', () => {
+  const R = DR.TUNE.cityR;
+  const L = { stations: [{ id: 'edge', pos: [0, -1900 * U], dragon: 'red' }, { id: 'inside', pos: [1500 * U, 0], dragon: 'blue' }] };
+  const P = mkPlayer(0, -1750 * U, hills);
+  const core = DR.createDragonsCore({ heightAt: hills, layout: L, getPlayer: () => P, seed: 13, nightFactor: () => 1 });
+  for (const d of core.dragons) assert(Math.hypot(d.f.x, d.f.z) / U >= R, d.id + ' spawned at r ' + (Math.hypot(d.f.x, d.f.z) / U).toFixed(0));
+  let groundIn = 0, minOver = Infinity, overSteps = 0, t = 0;
+  for (let i = 0; i < 480 * 60; i++) {
+    t += 1 / 60;
+    const r = 1615 + 165 * Math.sin(t * 0.03), a = 0.25 * Math.sin(t * 0.011);   // player wanders across the city edge
+    P.set(Math.sin(a) * r * U, -Math.cos(a) * r * U);
+    core.update(1 / 60);
+    for (const d of core.dragons) {
+      if (Math.hypot(d.f.x, d.f.z) / U >= R) continue;
+      if (d.f.mode !== 'fly') groundIn++; else { overSteps++; minOver = Math.min(minOver, (d.f.y - hills(d.f.x, d.f.z)) / U); }
+    }
+  }
+  assert.strictEqual(groundIn, 0, groundIn + ' ground/hover steps inside The Grid');
+  if (overSteps) assert(minOver >= 90, 'overflew the city only ' + minOver.toFixed(1) + ' m up');
+  return 'overfly steps ' + overSteps + (overSteps ? ', min clearance over the city ' + minOver.toFixed(0) + ' m' : '');
+});
+
+test('The Grid: a player inside the city is never damaged (attacks abort, guard refuses)', () => {
+  const L = { stations: [{ id: 'edge', pos: [0, -1800 * U], dragon: 'red' }] };
+  const P = mkPlayer(0, -1700 * U, flat);
+  const core = DR.createDragonsCore({ heightAt: flat, layout: L, getPlayer: () => P, seed: 2, nightFactor: () => 1 });
+  const ev = record(core), d = core.dragons[0];
+  for (let i = 0; i < 60 * 25 && d.state !== 'patrol'; i++) core.update(1 / 60);
+  P.set(0, -1500 * U);
+  const t0 = core.time();
+  let minOver = Infinity;
+  for (let i = 0; i < 180 * 60; i++) { core.update(1 / 60); if (Math.hypot(d.f.x, d.f.z) / U < DR.TUNE.cityR - 50) minOver = Math.min(minOver, d.f.y / U); }
+  assert.strictEqual(ev.filter(e => e.ev === 'hit' && e.t > t0).length, 0, 'player hit inside the city');
+  assert.strictEqual(core.violations, 0);
+  if (isFinite(minOver)) assert(minOver >= 90, 'dragon only ' + minOver.toFixed(0) + ' m over the city');
+  return 'no hits in 180 s; min altitude deep over the city ' + (isFinite(minOver) ? minOver.toFixed(0) + ' m' : 'n/a');
+});
+
+test('night: more aggressive (wider alert, more attacks); telegraphs never shorten', () => {
+  function run(night) {
+    const L = ringLayout(1, 2828), st = L.stations[1], P = mkPlayer(st.pos[0] * 0.97, st.pos[1] * 0.97, hills);
+    const core = DR.createDragonsCore({ heightAt: hills, layout: L, getPlayer: () => P, seed: 17, nightFactor: () => night });
+    const ev = record(core);
+    for (let i = 0; i < 400 * 60; i++) core.update(1 / 60);
+    return { attacks: ev.filter(e => e.ev === 'attack').length, tele: ev.filter(e => e.ev === 'telegraph') };
+  }
+  const day = run(0), night = run(1);
+  assert(night.attacks > day.attacks, 'night ' + night.attacks + ' vs day ' + day.attacks);
+  assert(Math.min(...night.tele.map(e => e.dur)) >= DR.TUNE.minTelegraph);
+  function alerted(night) {
+    const L = ringLayout(1, 2828), st = L.stations[1], k = 1 - 300 / 2828, P = mkPlayer(st.pos[0] * k, st.pos[1] * k, flat);
+    const core = DR.createDragonsCore({ heightAt: flat, layout: L, getPlayer: () => P, nightFactor: () => night });
+    for (let i = 0; i < 60 * 2; i++) core.update(1 / 60);
+    return core.dragons[0].state !== 'perch';
+  }
+  assert(!alerted(0) && alerted(1), 'alert radius not night-scaled');
+  return 'attacks in 400 s: day ' + day.attacks + ' / night ' + night.attacks + '; 300 m out wakes it only at night';
+});
+
+// Allocation probe. Runs in a FRESH node process (earlier tests make hot functions polymorphic, which changes what V8
+// boxes). Flat terrain returns the small integer 0, so any bytes left come from the module itself. We take the minimum
+// new-space growth over several 2000-update bursts (a burst with a scavenge is discarded). A per-frame object literal
+// such as the old per-tick cmd object, the look-ahead dirs array or the player() copy costs well over 100 B/update. What
+// remains is V8 boxing doubles returned from non-inlined functions (~16 B each), which the budget allows.
+function probeAlloc(setupSrc, budgetB) {
+  const cp = require('child_process');
+  const src = "const v8=require('v8');const ns=()=>v8.getHeapSpaceStatistics().find(s=>s.space_name==='new_space').space_used_size;" +
+    setupSrc + ";for(let i=0;i<30000;i++)STEP();let best=Infinity;for(let k=0;k<12;k++){const a=ns();for(let i=0;i<2000;i++)STEP();const b=ns();if(b>=a)best=Math.min(best,(b-a)/2000);}process.stdout.write(JSON.stringify({best,info:typeof INFO==='function'?INFO():''}));";
+  const out = JSON.parse(cp.execFileSync(process.execPath, ['-e', src], { encoding: 'utf8', timeout: 60000 }));
+  assert(out.best < budgetB, 'allocated ' + out.best.toFixed(1) + ' B/update (budget ' + budgetB + ')');
+  return out;
+}
+test('perf: patrol + perched core updates allocate no objects per frame (fresh-process probe)', () => {
+  const file = JSON.stringify(path.join(__dirname, '..', '..', 'public', 'world-dragons.js'));
+  const r = probeAlloc("const DR=require(" + file + "),U=DR.U;const t=JSON.parse(JSON.stringify(DR.TUNE));t.attackCooldown=[1e9,1e9];" +
+    "const P={pos:{x:2750*U,y:0,z:0},alive:true};const core=DR.createDragonsCore({heightAt:()=>0,layout:{stations:[{id:'a',pos:[2828*U,0],dragon:'red'}]},getPlayer:()=>P,tune:t});" +
+    "const STEP=()=>core.update(1/60);const INFO=()=>core.dragons[0].state", 120);
+  assert.strictEqual(r.info, 'patrol');
+  return r.best.toFixed(1) + ' B/update in patrol (only V8 double boxing, no object literals)';
+});
+
+test('clips: fly/idle/walk/run weights sum to 1; air = fly, standing = idle, take-off crossfades', () => {
+  const W = {};
+  const cases = [[{ fold: 0, glide: 0, flapEffort: 0.5 }, 'fly'], [{ fold: 1, glide: 0, groundMove: 0 }, 'idle'], [{ fold: 1, groundMove: 0.4 }, 'walk'], [{ fold: 1, groundMove: 1 }, 'run']];
+  for (const [p, top] of cases) {
+    DR.clipWeights(p, W, false, true, true, true);
+    const sum = W.fly + W.glide + W.idle + W.walk + W.run;
+    assert(Math.abs(sum - 1) < 1e-9, 'sum ' + sum);
+    const best = ['fly', 'idle', 'walk', 'run'].reduce((a, b) => (W[b] > W[a] ? b : a));
+    assert.strictEqual(best, top, JSON.stringify(p));
+  }
+  DR.clipWeights({ fold: 0.5, glide: 0 }, W, false, true, true, true);
+  assert(Math.abs(W.fly - 0.5) < 1e-9 && Math.abs(W.idle - 0.5) < 1e-9, 'mid take-off not a 50/50 crossfade');
+  DR.clipWeights({ fold: 0, glide: 1, flapEffort: 0 }, W, false, true, true, true);
+  assert(W.flyScale < 0.4, 'glide should slow the fly clip, got ' + W.flyScale);
+  return 'ok';
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

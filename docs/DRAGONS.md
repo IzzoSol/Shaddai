@@ -26,6 +26,7 @@ const dragons = window.buildWorldDragons({
   heightAt: (x, z) => units,         // terrain height
   layout: WORLD_LAYOUT,              // reads layout.stations[] {id, name, pos:[x,z], realm, dragon}
   getPlayer: () => ({ pos: {x, y, z} /* feet */, alive: bool }),
+  nightFactor: () => 0..1,           // optional (world-sky-v4): more aggressive at night — see "Night" below
   onHitPlayer: (dmg, kind, info) => {},   // kind: 'breath'|'swoop'|'stomp'|'tail'|'stagger'
                                           // info: {id, attackId, knockback:{x,y,z} u/s | null, from, element, sinceTelegraph}
   isDefeated: (id) => bool,          // persisted state, checked at load
@@ -52,6 +53,11 @@ Returns `api`:
 | `stats()` | `{dragons, defeated, attacker, states, hits, telegraphs, refused, violations, floorHits, time}` |
 | `dispose()` | removes everything and frees geometries/materials |
 | `forceAttack(id, kind)` | debug: `'breath'|'swoop'|'land'|'roar'` (the dragon must be airborne) |
+| `core.setRidden(id, on, pos?)` | tame hand-off for `world-dragon-ride.js`: only a **defeated** dragon can be ridden. While ridden the core skips it, it can't be hit and its mesh is hidden. Release (`on=false`, `pos={x,y,z,yaw}`) sets it down there and it flies home on an ambient loop |
+
+`hitTest` / `meleeHit` are now pure and live on the core too (`core.hitTest`, `core.meleeHit(pos, fwd, reach, dmg, type?)`),
+so node tests drive the same code the browser uses. `WorldDragons.clipWeights(p, out, hasGlide, hasWalk, hasRun, hasIdle)`
+is the pure animation blend (below).
 
 `window.__worldDragons` points at the live api. `window.WorldDragons` exposes `TUNE`, `ELEMENTS`,
 `createDragonsCore`, `stepFlight`, … for probes.
@@ -75,7 +81,11 @@ Each payload includes `id` and `t`, the core clock in seconds. Shake payloads ar
 | `interrupt` | a heavy hit (≥ 8 % max hp) cancelled a telegraph | `kind` |
 | `downed` | hp reached 0 | — |
 | `defeated` | glide → land → bow finished; the crossing opens | `station`, `element`, `name` |
-| `state`, `attack`, `takeoff` | AI bookkeeping | `from`/`to`, `kind` |
+| `state`, `attack`, `takeoff` | AI bookkeeping | `from`/`to`, `kind`; `attack` also carries `sinceLast` (s since the previous attack ended), `cooldown` (what was owed), `night` |
+| `ridden` | tamed dragon mounted / released | `on` |
+
+The HUD (`world-hud-v4.js`) already listens to `telegraph`/`attack`/`hit`/`hurt`/`interrupt`/`downed`/`defeated` for the boss bar.
+Every player hit on a dragon (melee, kick, bolt) goes through `damage()` → `hurt`, so the bar fills and drains with no extra wiring.
 
 ---
 
@@ -149,6 +159,40 @@ perch ──(player < 250 m of crossing, not beaten)──▶ alert (perched roa
   Every damage path goes through one guard, `hurtPlayer`, which refuses the hit if the dragon is defeated, the token isn't held,
   or less than 0.8 s has passed since the telegraph. `violations` counts refusals; it's 0 in all tests.
 
+## Attacks at a glance (all dodgeable)
+| attack | wind-up (telegraph) | hit volume | damage | cooldown after |
+|---|---|---|---|---|
+| fire-breath strafe | 1.0 s inhale, run line locks | cone 35 m, 8 m end radius, ±12° sideways sweep; particles leave **scorch decals** | 24 dps (×1.25 at night), 0.25 s ticks | 2.2–4 s (×0.55 at night) |
+| dive swoop / claw pass | 1.2 s screech + growing ground shadow | 6.5 m sphere at the pass, locked point | 26 + knockback | same |
+| stomp (landed) | 0.9 s ring | 18 m radial | 20 + knockback | per ground move |
+| tail sweep (landed, player behind) | 0.8 s | 22 m, rear arc | 16 + knockback | per ground move |
+| roar knock-back | 0.8 s | 20 m | 0 + stagger knockback | 1.2 s |
+
+`minWindup` (0.6 s) is the design floor and `minTelegraph` (0.8 s) is what `hurtPlayer` enforces, so a roll always fits.
+
+## World rules (2026-09-27)
+- **The Grid is dragon-free on the ground.** Perches, defeat land spots and landed-attack spots are pushed radially out to
+  `cityR + cityMargin` (1630 + 40 m) from the island centre, even for a station placed inside the city.
+- **Overflights are high.** In flight, when the dragon, its 8 s look-ahead or its target is within `cityR + cityBuffer`,
+  the clearance target ramps up to `cityOverfly` (150 m) and dives are cancelled. Tests show 150 m minimum over the city.
+- **The city is a safe zone.** A player inside `cityR` is never attacked: attacks other than an already-landed ground loop abort,
+  and `hurtPlayer` refuses. The dragon keeps circling high overhead until the leash sends it home.
+
+## Night
+`opts.nightFactor()` (0 day … 1 night, from `world-sky-v4`) scales aggression linearly. At full night the attack cooldown is ×0.55,
+the alert radius ×1.6 (400 m), the leash ×1.3, breath dps ×1.25 and the retreat threshold ×0.5, so it fights longer before resting.
+**Telegraphs never shorten.** In the tests, 400 s of fighting gives 16 attacks by day and 19 at night.
+
+## Animation (BoneRig, `dragon-rigged.glb`)
+The rigged GLB has 136 bones and the clips `fly`/`idle`/`walk`/`run`. All clips play at once, and their weights come from `clipWeights`,
+so the weights always sum to 1:
+- **air** (wings open): `fly`. Its timeScale follows flap effort (0.8 → 1.8), runs ×1.25 in a hover, and drops to ×0.35 in a glide
+  (wings held) when the GLB has no `glide` clip.
+- **ground** (wings folded): `idle` ↔ `walk` ↔ `run` by ground motion (turning in place or sliding).
+- **take-off / landing:** `fold` ramps between air and ground, so fly and idle crossfade smoothly with no clip pop.
+Procedural neck/head/jaw look-at is multiplied onto the clip pose for bones the clips animate. Bones that no clip touches are posed from bind.
+A GLB with no clips still gets the procedural wing/tail flap.
+
 ## Visuals
 - **ProcRig (default).** Procedural and built at unit wingspan, then scaled to 18–26 m. It has true split wings:
   arm and hand pivots with bone struts and scalloped membranes. There's also a 3-segment neck, a head with
@@ -166,8 +210,8 @@ perch ──(player < 250 m of crossing, not beaten)──▶ alert (perched roa
   - jaw drop below `uJawY`
   - element tint in the fragment shader
   Axis fix: `tune.modelFix = {rx, ry, rz}`.
-- **BoneRig** (skinned GLB). Clips named `fly`/`flying`/`flap`/`hover`, `glide`, `idle`/`perch`/`stand` play
-  through an `AnimationMixer` (timeScale follows flap effort). If there are no clips, wing, tip and tail bones
+- **BoneRig** (skinned GLB). Clips named `fly`/`flying`/`flap`/`hover`, `glide`, `idle`/`perch`/`stand`, `walk`, `run` are
+  weight-blended through one `AnimationMixer` (see Animation above). If there are no fly clips, wing, tip and tail bones
   are driven procedurally. Neck, head and jaw bones always get the procedural look-at and jaw on top.
 - **Breath:** one `THREE.Points` per dragon, a pooled buffer of 400 particles, and a custom ShaderMaterial
   (point size scales with distance; soft / diamond / ring shapes). Blending is additive, except shadow, which uses normal blending.
@@ -188,7 +232,9 @@ attackCooldown [2.2,4], retreatHpFrac 0.3, restTime 8, restRegenFrac 0.12, perch
 minTelegraph 0.8, breath{inhale 1, dur 2.4, len 35, endRadius 8, alt 13, dps 24, tick 0.25, headTurnDeg 75,
 latDeg 12, lineupDist 130}, swoop{telegraph 1.2, alt 58, dist [110,190], passAlt 3, hitRadius 6.5, dmg 26,
 knock 16}, stomp{0.9 s, 18 m, 20 dmg}, tail{0.8 s, 22 m, 16 dmg}, roar{0.8 s, 20 m}, groundTime [6,9],
-dragonIFrames 0.12, playerIFrames 0.6, farDist 1500, farHz 5, wingspan [18,26], hp 600.`
+dragonIFrames 0.12, playerIFrames 0.6, farDist 1500, farHz 5, wingspan [18,26], hp 600, cityR 1630, cityBuffer 300,
+cityOverfly 150, cityMargin 40, night{cooldownMul 0.55, alertMul 1.6, leashMul 1.3, dpsMul 1.25, retreatMul 0.5}, minWindup 0.6.`
+A partial `tune` override is now merged over `TUNE` (missing keys fall back), so older overrides keep working.
 To override, pass `tune: Object.assign(JSON.parse(JSON.stringify(WorldDragons.TUNE)), {...})`.
 
 ## Patterns applied from `shaddai-threejs-gamedev-master` (read-only reference)
@@ -311,3 +357,21 @@ is the unlock moment.
   no step moves faster than 50 m/s, and bank stays ≤ 60°.
 - Dragons defeated at load never telegraph or hit. A mid-fight defeat runs glide → land → bow → `setDefeated`, with no hostile events after.
 - Dragon i-frames and element resistances work, and far dragons tick at 5 Hz.
+- Every wind-up is ≥ 0.6 s, and a live night fight telegraphs ≥ 3 attack kinds. Cooldowns are respected by day and at night:
+  every `attack` has `sinceLast ≥ cooldown`.
+- Hit volume: a stationary player inside the stomp is hit. A player who steps to 25 m during the wind-up takes 0 hits.
+- Player → dragon: `hitTest` and `meleeHit` drain HP → `hurt` events → `downed` → `defeated`. After that the dragon can't be hit.
+- The Grid: no ground or hover step inside r < 1630 m, even for a station placed inside the city. Overflights stay ≥ 150 m up.
+  A player inside the city takes 0 hits.
+- Night: more attacks and a wider alert radius. Telegraph lengths are unchanged.
+- Perf: a fresh-process allocation probe shows about 80 B per update in patrol. That is only V8 boxing doubles; there are no per-frame
+  object or array literals any more (the cmd object, the look-ahead array and the player copy are reused).
+- `clipWeights` always sums to 1, air → fly, standing → idle, and mid take-off is a 50/50 crossfade.
+
+## Host changes still to apply (coordinator)
+The host already builds the dragons (block `MAP v4 CROSSING DRAGONS`) and wires melee, kick, bolts, roll i-frames, shake and the HUD.
+Two small additions:
+1. In the `window.buildWorldDragons({ … })` call, add
+   `nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),`
+   (the same expression the wildlife block uses), and bump the script to `'/world-dragons.js?v=20260927ride'`.
+2. Riding: see `docs/DRAGON-RIDE.md`.
