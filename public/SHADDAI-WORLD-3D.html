@@ -243,7 +243,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
-<script src="/world-transit.js?v=20260927train"></script>
+<script src="/world-transit.js?v=20260928train2"></script>
+<script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum.js?v=20260926v4"></script>
@@ -486,7 +487,9 @@ window.__worldBuilt = false;
     .then(function(api){   // MAP v4 CANON CITY (world-canon-v4.js ← Blender build_canon.py export): Grid, monument, Agora, pads, Meadowfields — solid colliders
       if(!api) return api;
       // real maglev train model on the gold ring (owner download, tools/blender/assets/convert-asset.py --opaque)
-      if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
+      // SHADDAI's own maglev (world-train-v2.js, built in code) — preferred; the downloaded GLB stays as fallback
+      if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel && window.buildMaglevTrainV2){ try{ const tv2 = window.buildMaglevTrainV2({ THREE }); window.__worldTransitApi.setTrainModel(tv2, tv2.userData.lengthM, 1); if(_v4Sky && _v4Sky.addEmissive) tv2.userData.emissiveMats.forEach(function(m){ _v4Sky.addEmissive(m); }); window.__trainV2 = tv2; }catch(e){ console.warn('[transit] train v2 failed:', e && e.message); } }
+      else if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
         tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
       return _loadScript('/world-canon-v4.js?v=20260927s7').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);

@@ -108,20 +108,24 @@ def main():
     ap.add_argument("--go", action="store_true")
     ap.add_argument("--pose", action="store_true", help="with --fal: 2-image Kontext (character + 1.8 m UAL2 mannequin T-pose from manifest pose_ref) — locks the exact T-pose + proportions")
     ap.add_argument("--fal", action="store_true", help="run on fal (fal-ai/flux-pro/kontext, ~$0.04/img) instead of HF — key from FAL_KEY env or ../Shaddai/.env; spend logged via preflight.mjs")
+    ap.add_argument("--src", default=None, help="override the reference image (path relative to fal-assets/ or absolute) — e.g. a previous concept to fix")
+    ap.add_argument("--edit", default=None, help="with --fal: single-image Kontext edit using THIS prompt instead of the built one (e.g. 'remove the horns'); allowed on concept-approved rows")
+    ap.add_argument("--tag", default="", help="filename tag, e.g. 'weapon' or 'noweapon'")
     ar = ap.parse_args()
 
     M, A = load()
     a = A.get(ar.id)
     if not a:
         sys.exit(f"BLOCKED: no manifest row '{ar.id}'")
-    if a["status"] != "ready-concept":
+    if a["status"] != "ready-concept" and not (ar.edit and a["status"] == "concept-approved"):
         sys.exit(f"BLOCKED: {ar.id} is '{a['status']}' — concepts only run at 'ready-concept'")
-    ref = pick_ref(a)
+    ref = (ar.src if os.path.isabs(ar.src) else os.path.join(FAL, ar.src)) if ar.src else pick_ref(a)
+    if ref and not os.path.exists(ref): sys.exit(f"BLOCKED: --src not found: {ref}")
     from PIL import Image
     if ref:
         img = Image.open(ref).convert("RGB")
         portrait = img.size[1] / img.size[0] < 1.3
-        prompt = build_prompt(M, a, portrait)
+        prompt = (ar.edit + " Keep everything else about the character exactly identical: face, hair, body, proportions, pose, outfit, colours, framing and plain grey background.") if ar.edit else build_prompt(M, a, portrait)
     elif a["family"] == "agent":
         sys.exit(f"BLOCKED: {ar.id} is an agent with no reference image on disk")
     else:
@@ -132,7 +136,8 @@ def main():
 
     ledger_p = os.path.join(HERE, "hf-ledger.json")
     ledger = json.load(open(ledger_p, encoding="utf-8")) if os.path.exists(ledger_p) else {"entries": []}
-    runs = [e for e in ledger["entries"] if e["id"] == ar.id]
+    rref = os.path.relpath(ref, FAL) if ref else None
+    runs = [e for e in ledger["entries"] if e["id"] == ar.id and e.get("ref") == rref and e.get("edit") == ar.edit]   # cap is per (ref, edit) attempt
     model = ar.model or (MODEL if img is not None else T2I_MODEL)
     print(f"asset   {ar.id} ({a['name']})")
     print("ref     " + (f"{os.path.relpath(ref, FAL)}  {img.size} {'PORTRAIT' if portrait else 'full-body'}" if img is not None else "none — text-to-image"))
@@ -211,12 +216,12 @@ def run_fal(ar, a, img, prompt, ref, ledger, ledger_p):
         except urllib.error.HTTPError as e:
             sys.exit(f"STOP: fal HTTP {e.code}: {e.read()[:300].decode(errors='replace')}")
         u = res["images"][0]["url"]
-        p = os.path.join(out_dir, f"{ar.id}-fal-{stamp}-{i + 1}.png")
+        p = os.path.join(out_dir, f"{ar.id}-fal-{stamp}-{i + 1}{'-' + ar.tag if ar.tag else ''}.png")
         urllib.request.urlretrieve(u, p); saved.append(os.path.relpath(p, FAL)); print("saved", saved[-1])
         try: subprocess.run(["node", os.path.join(HERE, "preflight.mjs"), "log", ar.id, "concept", ("0.08" if ar.pose else "0.04"), ("fal kontext max/multi + mannequin T-pose" if ar.pose else "fal flux-pro/kontext T-pose concept")], check=False)
         except Exception as e: print("  (spend log failed:", e, ")")
     ledger["entries"].append({"at": stamp, "id": ar.id, "provider": "fal", "model": "fal-ai/flux-pro/kontext", "n": ar.n,
-                              "ref": os.path.relpath(ref, FAL) if ref else None, "files": saved})
+                              "ref": os.path.relpath(ref, FAL) if ref else None, "edit": ar.edit, "files": saved})
     json.dump(ledger, open(ledger_p, "w", encoding="utf-8"), indent=2)
     print("Next: owner approves the concept -> status concept-approved -> then mesh")
 
