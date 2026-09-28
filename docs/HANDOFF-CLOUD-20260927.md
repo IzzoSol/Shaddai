@@ -47,3 +47,30 @@ This covers repo `IzzoSol/Shaddai`, branch **`feat/world3d`**, for the 3D world,
 - SPARKS is closed-loop: no cash-out, yield or vault anywhere.
 - Designs must be futuristic tech-fusion only.
 - **Never print or commit secrets.** An Anthropic API key was pasted in chat on 2026-09-27; the owner has been told to revoke it.
+
+## UPDATE — end of session (2026-09-27, late)
+**Done and committed:**
+- City v3 plan (both tasks reviewed clean): the `?goto=` deep link (e2860b39) and fabric night glow (98ea4bef, host wiring c257bf3b).
+- City action panels wired (a759997a). All 146 tests passed at the last full run.
+- Dashboard (1859a1f0).
+- Main characters plan: `docs/MAIN-CHARACTERS-PLAN.md` (3736e986). Estimated fal cost is about $5–11 for 6 agents.
+
+**Backend:** branch `feat/city-backend` in worktree `C:\Users\Brittany\Shaddai-city-backend` (d6a2d3e9). It is NOT pushed. It mounts home and race, and hardens payments (auth-derived user, idempotency, bazaar identity bug fixed). Tests: 13, 12, 12 and 16, all green.
+
+**Helpers still running at session end.** Check `git log`; if a helper's work isn't committed, re-run it from the prompt idea below:
+- **Realm steps:** `tools/blender/canon/realms_v1.py` + build_canon step 8. Written only, not run. Next: run `blender -b ... build_canon.py -- <repo> step=8 norender`, one render at a time with `only=v8-<realm>`.
+- **Dragons:** flight/attacks upgrade + `public/world-dragon-ride.js`. Host snippet: `docs/DRAGON-RIDE.md`.
+- **Sky traffic:** voxel ships → `public/assets/vehicles/ships/*.glb` + `public/world-sky-traffic.js`. Host snippet: `docs/SKY-TRAFFIC.md`.
+- **Final review:** `.superpowers/sdd/2026-09-27-city-v3-finish/final-review.md` (local only).
+
+**Owner answers pending:**
+- TURTLE reference
+- ZEROX katana
+- NEXUS full-body
+- QUILL tpose file
+- Prices
+- SPARKS vs SHAD-Credits
+- Mid-LOD bake OK
+- The gamedev repo: owner wants it shared; the unlicensed-source parts get rewritten in our own words first
+
+**Cleanup:** 51 files (403 MB) recycled in Downloads and 9 files (422 MB) in MODELS FOR FAL. They are in the Recycle Bin, not emptied. The SHADDAI API MCP returned 503 all day; OpenCode is fixing it on the beta site.
