@@ -567,6 +567,17 @@ window.__worldBuilt = false;
         window.__onCityPing = function(e){ if(_prevCityPing) try{ _prevCityPing(e); }catch(_){} window.__hudV4.ping(e); };
       }).catch(function(e){ console.warn('[map-v4] hud failed:', e && e.message); }).then(function(){ return api; });
     })
+    .then(function(api){   // MAP v4 CITY ACTIONS (world-city-actions.js): E at a marker → action panel (kiosk, hire, academy, seat, home, race, stalls, plots)
+      if(!api || !window.__cityV3) return api;
+      return _loadScript('/world-city-actions.js?v=20260927a').then(function(){
+        window.__cityActions = window.buildCityActions({
+          city: window.__cityV3,
+          // apiBase: 'https://<api-host>',   // only if the world is not served by the API server itself
+          onClose: function(i){ if(i && i.wasLocked && renderer && renderer.domElement.requestPointerLock) try{ renderer.domElement.requestPointerLock(); }catch(_){} }
+        });   // sets window.__onCityInteract, which the City v3 onInteract already forwards to
+        window.__w3dDebug.cityActions = window.__cityActions;
+      }).catch(function(e){ console.warn('[map-v4] city actions failed:', e && e.message); }).then(function(){ return api; });
+    })
     .then(function(api){   // MAP v4 VOID CASTLE (world-void-castle.js): owner's void-castle aesthetic on the Deep Void pit's north lip — procedural, 28k tris, 11 draws
       if(!api || !_v4Meta) return api;
       return _loadScript('/world-void-castle.js?v=20260927a').then(function(){
