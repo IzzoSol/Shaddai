@@ -259,3 +259,17 @@ and `hall/packs/` listing.
 - **Use / trade / sell:** consume items (heal, stamina, mount feed, dragon treats, crafting inputs); trade player↔player; sell at the tower market or city vendors **for SPARKS only**.
 - **Hard rule:** SPARKS stays closed-loop. Items and SPARKS never cash out to money, and there is no yield-on-deposit or vault. Rewards come from active play (tending, harvesting, agent labor), never passive financial returns.
 - **Utopia tie-in:** each tower's output raises the district's "regen" meter (greener terrain, cleaner air/fog, unlocks). This is a shared-progress goal, not a payout.
+
+### Riders on mounts / bikes / boards / dragons: $0 per combination (owner 2026-09-28)
+
+- **Never generate agent+mount combos.** 7 agents × N mounts would be 7N paid models. Instead, attach riders at runtime:
+  1. Every mount/vehicle GLB gets one `seat` socket (an empty/bone), plus an optional `seat2` for a passenger.
+  2. Every agent is rigged on the shared UAL skeleton, so ONE retargeted `ride_sit` pose/clip (plus a lean-left/right blend) works on all 7.
+  3. Mounting parents the agent to `seat`, plays `ride_sit`, and hides the weapon on the back. The cost is one clip, done once, free.
+- **Rider outfits = cosmetic upgrades, not separate characters.** One rider-gear kit on the same skeleton is swapped over any agent:
+  - helmet/visor, flight cloak, saddle armor;
+  - trim recolored per agent palette (ZEROX teal, ORACLE purple, …).
+
+  Tiers: Basic (free) → Racer → Dragon-Knight → Legendary (SPARKS/level unlocks). Cost: $0 procedural, or ~$0.375 if one hero gear piece needs fal.
+- **Travel progression:** hoverboard (starter) → hover car → Tron bike → mount/beast → dragon. Each unlocks by level or SPARKS, and faster tiers open far realms sooner.
+- **Dependency:** riders appear once the agent meshes are approved and rigged (see character plan). Until then, placeholder capsules sit on the seats so the wiring can ship now.
