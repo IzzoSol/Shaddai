@@ -211,5 +211,20 @@ test('perf: 60 000+ riding updates (flying circles with boost) allocate no objec
   return out.best + ' B over 2000 updates (' + (out.best / 2000).toFixed(2) + ' B/update)';
 });
 
+test('element breath (2026-09-28): held breath drains stamina, stops when empty or on dismount; tamed element from opts', () => {
+  const A = mk({ element: 'ice' }); A.standAt('PERCH_MAIN');
+  const ev = []; A.r.on('breath', e => ev.push(e.on));
+  assert(A.r.mount('tamed') && A.r.isRiding());
+  run(A.r, 0.5, IN({ breath: true }));
+  assert(A.r.breath().on && A.r.element() === 'ice' && A.r.stamina() < 1, 'breathing ice, draining');
+  run(A.r, 10, IN({ breath: true }));
+  assert(ev.indexOf(false) > 0, 'stops when stamina runs out (stamina ' + A.r.stamina().toFixed(2) + ')');
+  run(A.r, 6, IN());
+  run(A.r, 0.2, IN({ breath: true })); assert(A.r.breath().on);
+  assert(A.r.dismount() && !A.r.breath().on, 'dismount ends the breath');
+  assert(ev.length >= 4 && ev.every((v, i) => v === (i % 2 === 0)) && ev[ev.length - 1] === false, 'events ' + ev.join(','));   // resumes once stamina recovers past boostResume
+  return 'on/off events ' + ev.join(',');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

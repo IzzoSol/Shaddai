@@ -56,26 +56,110 @@
     // retreat threshold ×0.5 (fights on longer before resting).
     night: { cooldownMul: 0.55, alertMul: 1.6, leashMul: 1.3, dpsMul: 1.25, retreatMul: 0.5 },
     minWindup: 0.6,   // design floor for every wind-up (a dodge-roll window). minTelegraph (0.8) is the enforced value ≥ this.
+    // element status caps (2026-09-28): dur = max seconds from NOW (refresh, never stack), mag = max strength.
+    // root is the only hard CC: ≤ 0.9 s, refused during player i-frames, then `immune` s of root immunity (≤ 19 % uptime).
+    status: { slow: { dur: 2.5, mag: 0.45 }, burn: { dur: 3, mag: 6, tick: 0.5 }, root: { dur: 0.9, mag: 1, immune: 4 },
+              blind: { dur: 3, mag: 0.6 }, drain: { dur: 3, mag: 0.4 }, shock: { dur: 0.6, mag: 0.25 } },
+    hazardMax: 10,    // lingering ground pools (lava / ice) alive at once, all dragons — pooled, oldest recycled
+    hazardTick: 0.5,  // s between pool damage / status ticks on the player
+    shardMax: 24,     // crystal shard projectiles alive at once, all dragons — pooled, oldest recycled
   };
 
-  // element palette (from fal-assets/refs/dragons/dragons-7-elements-sheet.jpg). style → breath particle style.
+  // ── ELEMENTS (2026-09-28): 7 elements from the owner's ref sheets (docs/DRAGON-ELEMENTS.md).
+  //    Downloads/image (29).jpg → VOID black-purple smoke · CRYSTAL silver shards · LIGHTNING violet arcs
+  //    Downloads/image (27).jpg → ICE spikes · LAVA magma crust · THORN vines · SAND blast
+  //    body/belly/membrane/glow = dragon materials; breathA (hot core) → breathB (cool edge) = breath particles;
+  //    scorch = ground decal left by breath particles; blend 'add' = additive emissive, 'norm' = dark smoke.
   var ELEMENTS = {
-    fire:   { body: 0x5a1a08, belly: 0xff7a18, membrane: 0x7a2208, glow: 0xff5a10, breathA: 0xfff0a0, breathB: 0xff4a08, style: 'fire',   scorch: 0x140804, blend: 'add',  label: 'Fire' },
-    ice:    { body: 0x1e5c9c, belly: 0x9fe8ff, membrane: 0x2a78c0, glow: 0x7fe0ff, breathA: 0xffffff, breathB: 0x40b8ff, style: 'ice',    scorch: 0xcfefff, blend: 'add',  label: 'Ice' },
-    sand:   { body: 0x9c8058, belly: 0xe0c89a, membrane: 0xb89a6a, glow: 0xffcf60, breathA: 0xffe7a0, breathB: 0xc08a30, style: 'sand',   scorch: 0x6a5230, blend: 'add',  label: 'Sand' },
-    poison: { body: 0x3e5218, belly: 0x9acd32, membrane: 0x4e6a1e, glow: 0xb8ff40, breathA: 0xe0ff80, breathB: 0x4a8a10, style: 'thorns', scorch: 0x1a2a06, blend: 'add',  label: 'Poison' },
-    void:   { body: 0x3a1266, belly: 0xb070ff, membrane: 0x5a1e9a, glow: 0xc06aff, breathA: 0xf0c8ff, breathB: 0x8a2aff, style: 'swirl',  scorch: 0x12041e, blend: 'add',  label: 'Void' },
-    shadow: { body: 0x120c1a, belly: 0x3a2450, membrane: 0x1a1024, glow: 0x9a40ff, breathA: 0x6a30b0, breathB: 0x0a0610, style: 'smoke',  scorch: 0x050308, blend: 'norm', label: 'Shadow' },
-    steel:  { body: 0x6a6e76, belly: 0xc8ccd4, membrane: 0x50545c, glow: 0xdfe8ff, breathA: 0xffffff, breathB: 0x9aa4b4, style: 'blades', scorch: 0x2a2c30, blend: 'add',  label: 'Steel' },
-    tide:   { body: 0x0e5a5a, belly: 0x5ff0e0, membrane: 0x127a78, glow: 0x40fff0, breathA: 0xe0fffc, breathB: 0x10b8b0, style: 'spray',  scorch: 0x0a3a3a, blend: 'add',  label: 'Tide' },
+    ice:       { body: 0x1e5c9c, belly: 0x9fe8ff, membrane: 0x2a78c0, glow: 0x7fe0ff, breathA: 0xffffff, breathB: 0x40b8ff, style: 'ice',       scorch: 0xcfefff, blend: 'add',  label: 'Ice' },
+    lava:      { body: 0x3a1408, belly: 0xff7a18, membrane: 0x5a1a08, glow: 0xff5a10, breathA: 0xffd040, breathB: 0xff3a08, style: 'lava',      scorch: 0x140804, blend: 'add',  label: 'Lava' },
+    thorn:     { body: 0x34461a, belly: 0x9acd32, membrane: 0x4e6a1e, glow: 0xb8ff40, breathA: 0xd8f59a, breathB: 0x3e6a1a, style: 'thorn',     scorch: 0x1a2a06, blend: 'add',  label: 'Thorn' },
+    sand:      { body: 0x9c8058, belly: 0xe0c89a, membrane: 0xb89a6a, glow: 0xffcf60, breathA: 0xffe7a0, breathB: 0xa87a38, style: 'sand',      scorch: 0x6a5230, blend: 'add',  label: 'Sand' },
+    void:      { body: 0x120c1a, belly: 0x3a2450, membrane: 0x1a1024, glow: 0x9a40ff, breathA: 0x8a3aff, breathB: 0x08040e, style: 'void',      scorch: 0x050308, blend: 'norm', label: 'Void' },
+    crystal:   { body: 0x6a6e76, belly: 0xd8dce4, membrane: 0x8a90a0, glow: 0xeef4ff, breathA: 0xffffff, breathB: 0xa8b0c4, style: 'crystal',   scorch: 0x2a2c30, blend: 'add',  label: 'Crystal' },
+    lightning: { body: 0x2a1250, belly: 0xb070ff, membrane: 0x4a1e8a, glow: 0xc06aff, breathA: 0xf4e0ff, breathB: 0x9a40ff, style: 'lightning', scorch: 0x12041e, blend: 'add',  label: 'Storm' },
   };
-  // WORLD_LAYOUT.stations[].dragon colour → element
-  var COLOR_TO_ELEMENT = { red: 'fire', blue: 'ice', tan: 'sand', green: 'poison', void: 'void', dark: 'shadow', black: 'steel', teal: 'tide' };
+  // pre-2026-09-28 element names (and synonyms) → the 7 canonical elements
+  var ELEMENT_ALIAS = { fire: 'lava', magma: 'lava', frost: 'ice', poison: 'thorn', vine: 'thorn', shadow: 'void', smoke: 'void', steel: 'crystal', silver: 'crystal', tide: 'crystal', storm: 'lightning' };
+  // realm id (world-layout regions / stations[].realm) → element. Takes priority over the station colour.
+  var REALM_TO_ELEMENT = { arctic: 'ice', volcano: 'lava', lava: 'lava', darkforest: 'thorn', meadow: 'thorn', forest: 'thorn', desert: 'sand', sand: 'sand', beach: 'sand',
+    void: 'void', rift: 'void', ocean: 'crystal', crystal: 'crystal', suburb: 'lightning', storm: 'lightning', sky: 'lightning' };
+  // WORLD_LAYOUT.stations[].dragon colour → element (fallback when the realm is unknown)
+  var COLOR_TO_ELEMENT = { red: 'lava', blue: 'ice', tan: 'sand', green: 'thorn', void: 'void', dark: 'thorn', black: 'lightning', teal: 'crystal' };
   // damage-type resistances (fraction removed). damage(id, amount, pos, type) — type is the player's damage kind.
   var RESIST = {
-    fire:   { fire: 0.6, ice: -0.25 }, ice: { ice: 0.6, fire: -0.25 }, sand: { physical: 0.2 }, poison: { poison: 0.7 },
-    void:   { arcane: 0.5, light: -0.25 }, shadow: { arcane: 0.3, light: -0.3 }, steel: { physical: 0.35, arcane: -0.2 }, tide: { fire: 0.4, lightning: -0.3 },
+    lava: { fire: 0.6, ice: -0.25 }, ice: { ice: 0.6, fire: -0.25 }, sand: { physical: 0.2, lightning: 0.3 }, thorn: { poison: 0.7, fire: -0.25 },
+    void: { arcane: 0.5, light: -0.25 }, crystal: { physical: 0.35, arcane: -0.2 }, lightning: { lightning: 0.6, ice: -0.2 },
   };
+  // station → element: explicit s.element, else realm, else colour, else the colour key itself (legacy names aliased)
+  function resolveElement(s) {
+    var e = (s && (s.element || REALM_TO_ELEMENT[s.realm] || COLOR_TO_ELEMENT[s.dragon] || s.dragon)) || 'lava';
+    e = ELEMENT_ALIAS[e] || e;
+    return ELEMENTS[e] ? e : 'lava';
+  }
+
+  /* Per-element ATTACK tuning (metres / seconds). Every element uses the same telegraph-enforced breath run; this only
+   * changes the hit volume, the damage and the rider effect.
+   *   shape  'cone'  : continuous cone, ticks every breath.tick           (ice, lava, void)
+   *          'line'  : narrow long beam (inCone with a small end radius)  (thorn, crystal, lightning)
+   *          'burst' : wide short cone that only hits once per `pulse`   (sand)
+   *   inhale : breath wind-up, clamped UP to TUNE.minTelegraph (never shorter)
+   *   status : applied to the player on a landed hit (capped by TUNE.status; see applyStatus). Melee hits apply half.
+   *   hazard : ground pool left on the beam's ground line (lava = burn DoT, ice = slow patch); lingers `life` s
+   *   shards : bouncing projectiles fired down the beam (crystal)
+   *   chain  : arcs to a player within r of the beam who dodged the beam itself (lightning) */
+  var ELEMENT_TUNE = {
+    ice:       { shape: 'cone',  inhale: 1.0, len: 35, endR: 8,   dps: 20, dmgType: 'ice',       status: { kind: 'slow', dur: 1.6, mag: 0.35 },
+                 hazard: { kind: 'ice', r: 4.5, life: 5, every: 0.4, dps: 0, status: { kind: 'slow', dur: 1.0, mag: 0.25 } },
+                 counter: 'Roll out of the cone; stay off frosted ground (slow, no damage).' },
+    lava:      { shape: 'cone',  inhale: 1.1, len: 33, endR: 8,   dps: 22, dmgType: 'fire',      status: { kind: 'burn', dur: 3, mag: 5 },
+                 hazard: { kind: 'lava', r: 4, life: 4, every: 0.4, dps: 10, status: { kind: 'burn', dur: 2, mag: 4 } },
+                 counter: 'Roll sideways, then keep off the glowing pools for 4 s.' },
+    thorn:     { shape: 'line',  inhale: 1.0, len: 42, endR: 3,   dps: 20, dmgType: 'poison',    status: { kind: 'root', dur: 0.8, mag: 1 },
+                 counter: 'Narrow lash: side-step 4 m. Roots last 0.8 s and are followed by 4 s of root immunity.' },
+    sand:      { shape: 'burst', inhale: 0.9, len: 32, endR: 11,  dps: 22, dmgType: 'physical',  pulse: 0.6, status: { kind: 'blind', dur: 2.5, mag: 0.55 },
+                 counter: 'Wide but pulsed: roll between puffs or break line of sight; the haze fades in 2.5 s.' },
+    void:      { shape: 'cone',  inhale: 1.0, len: 35, endR: 9,   dps: 20, dmgType: 'arcane',    status: { kind: 'drain', dur: 2, mag: 0.3 }, drainHeal: 0.5,
+                 counter: 'Every tick heals the dragon, so break the cone early; drain cuts stamina regen for 2 s.' },
+    crystal:   { shape: 'line',  inhale: 1.0, len: 40, endR: 3.5, dps: 12, dmgType: 'physical',
+                 shards: { every: 0.3, n: 3, speed: 38, spread: 0.12, dmg: 6, r: 1.4, bounces: 2, rest: 0.45, life: 2.4 },
+                 counter: 'Thin beam, but the shards bounce twice: keep moving, never stand where they land.' },
+    lightning: { shape: 'line',  inhale: 1.2, len: 45, endR: 2.5, dps: 22, dmgType: 'lightning', chain: { r: 10, frac: 0.45 }, status: { kind: 'shock', dur: 0.5, mag: 0.2 },
+                 counter: 'Longest wind-up. Dodging the beam is not enough: get > 10 m from it or the arc jumps to you.' },
+  };
+  function elementTune(el) { return ELEMENT_TUNE[ELEMENT_ALIAS[el] || el] || ELEMENT_TUNE.lava; }
+  function breathInhale(el, tune) { tune = tune || TUNE; var E = elementTune(el); return Math.max(tune.minTelegraph, E.inhale || tune.breath.inhale); }
+
+  /* STATUS — pure, allocation-free. ST = newStatus(); caps = TUNE.status. Returns the duration actually applied (0 = refused).
+   *  - every kind refreshes (never stacks) and is capped at caps[kind].dur from NOW and at caps[kind].mag
+   *  - root (the only hard CC) is refused while the player has i-frames (blockUntil = max(post-knockback i-frames, dodge
+   *    roll)), while already rooted, and for caps.root.immune s after a root ends → never a stun-lock */
+  function newStatus() {
+    return { slow: { until: -1, mag: 0 }, burn: { until: -1, mag: 0 }, root: { until: -1, mag: 0, immune: -1 }, blind: { until: -1, mag: 0 }, drain: { until: -1, mag: 0 }, shock: { until: -1, mag: 0 } };
+  }
+  function applyStatus(ST, kind, dur, mag, now, caps, blockUntil) {
+    var c = caps[kind], s = ST[kind];
+    if (!c || !s || !(dur > 0)) return 0;
+    dur = Math.min(dur, c.dur); mag = Math.min(mag == null ? 1 : mag, c.mag);
+    if (kind === 'root') {
+      if (now < (blockUntil == null ? -1 : blockUntil) || now < s.until || now < s.immune) return 0;
+      s.until = now + dur; s.mag = 1; s.immune = s.until + c.immune;
+      return dur;
+    }
+    var active = now < s.until;
+    s.until = Math.min(Math.max(s.until, now + dur), now + c.dur);
+    s.mag = active ? Math.max(s.mag, mag) : mag;
+    return s.until - now;
+  }
+  // host-facing modifiers (fills `out`): speedMul 0..1 (0 = rooted), haze 0..1 (blind), drain 0..1 (stamina-regen cut), burning
+  function statusMods(ST, now, out) {
+    out = out || {};
+    var rooted = now < ST.root.until, slow = now < ST.slow.until ? ST.slow.mag : 0, shock = now < ST.shock.until ? ST.shock.mag : 0;
+    out.rooted = rooted; out.speedMul = rooted ? 0 : 1 - Math.max(slow, shock);
+    out.haze = now < ST.blind.until ? ST.blind.mag : 0; out.drain = now < ST.drain.until ? ST.drain.mag : 0;
+    out.burning = now < ST.burn.until; out.slowed = slow > 0 || shock > 0;
+    return out;
+  }
 
   // ───────────────────────────────────────── math helpers ─────────────────────────────────────────────────
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -230,7 +314,7 @@
     var centre = [0, 0];
     stations.forEach(function (s, i) {
       var rnd = mulberry32(hashStr(s.id) ^ (opts.seed || 1337));
-      var el = COLOR_TO_ELEMENT[s.dragon] || (ELEMENTS[s.dragon] ? s.dragon : 'fire');
+      var el = resolveElement(s);
       var cx = s.pos[0], cz = s.pos[1], r = hyp2(cx - centre[0], cz - centre[1]) || 1;
       var ox = (cx - centre[0]) / r, oz = (cz - centre[1]) / r;          // outward (into the realm wilderness)
       // perch: highest ground among a few samples 50–120 m outward of the crossing (a rock / arch)
@@ -286,9 +370,11 @@
       emit('telegraph', { id: d.id, kind: kind, dur: dur, pos: d.telegraph.pos, radius: radius || 0, attackId: d.atk.id });
     }
     // THE ONLY path that damages the player: enforces telegraph ≥ minTelegraph and "defeated never attacks".
-    function hurtPlayer(d, dmg, kind, knock, P) {
-      var a = d.atk;
-      var illegal = d.defeated || !a || a.telegraphAt == null || now - a.telegraphAt < tune.minTelegraph - 1e-9 || (core.attacker != null && core.attacker !== d.id);
+    // src (optional) = {id, telegraphAt} of the attack that spawned a lingering effect (lava pool, crystal shard, burn DoT):
+    // it must itself have telegraphed ≥ minTelegraph; the one-attacker token is not required (the attack may have ended).
+    function hurtPlayer(d, dmg, kind, knock, P, src) {
+      var a = src || d.atk;
+      var illegal = d.defeated || !a || a.telegraphAt == null || now - a.telegraphAt < tune.minTelegraph - 1e-9 || (!src && core.attacker != null && core.attacker !== d.id);
       if (illegal) { stats.refused++; core.violations++; return false; }       // should never happen — counted for tests
       if (!P || !P.alive) { stats.refused++; return false; }
       if (P.inCity) { stats.refused++; return false; }                          // The Grid is a safe zone
@@ -301,6 +387,103 @@
       if (opts.onHitPlayer) { try { opts.onHitPlayer(dmg, kind, info); } catch (e) {} }
       return true;
     }
+    // ── element effects (2026-09-28): status on the player, ground hazards, crystal shards. All pooled, no per-frame allocation. ──
+    var SCAPS = tune.status || TUNE.status;
+    core.status = newStatus();
+    var BURN = { d: null, id: 0, tel: 0, next: 0 };                  // burn DoT source (last burning hit)
+    var _src = { id: 0, telegraphAt: 0 }, _pp = { x: 0, y: 0, z: 0 };
+    var HZ = [], SH = [], hzCursor = 0, shCursor = 0;
+    for (var hi = 0; hi < (tune.hazardMax || 10); hi++) HZ.push({ on: false, kind: '', el: '', d: null, x: 0, z: 0, r: 0, born: 0, until: 0, next: 0, dps: 0, st: null, srcId: 0, srcTel: 0 });
+    for (var si = 0; si < (tune.shardMax || 24); si++) SH.push({ on: false, el: '', d: null, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, bounces: 0, until: 0, dmg: 0, r: 0, rest: 0, maxB: 0, srcId: 0, srcTel: 0 });
+    core.hazards = HZ; core.shards = SH;
+    function statusBlock() { return Math.max(core.playerInvulnUntil, core.rollUntil); }
+    function giveStatus(d, S, scale, src) {
+      if (!S) return 0;
+      var got = applyStatus(core.status, S.kind, S.dur * (scale || 1), S.mag, now, SCAPS, statusBlock());
+      if (got > 0) {
+        if (S.kind === 'burn') { var from = src || d.atk; BURN.d = d; BURN.id = from.id; BURN.tel = from.telegraphAt; if (BURN.next < now) BURN.next = now + (SCAPS.burn.tick || 0.5); }
+        emit('status', { id: d.id, element: d.element, kind: S.kind, dur: got, mag: core.status[S.kind].mag });
+      }
+      return got;
+    }
+    // a landed element hit → status + void drain-heal
+    function elementHit(d, E, dmg, scale) {
+      giveStatus(d, E.status, scale);
+      if (E.drainHeal && dmg > 0 && !d.defeated) d.hp = Math.min(d.hpMax, d.hp + dmg * E.drainHeal);
+    }
+    function spawnHazard(d, H, x, z, rScale) {
+      if (!H || inCityM(x, z)) return null;
+      var h = HZ[hzCursor]; hzCursor = (hzCursor + 1) % HZ.length;
+      h.on = true; h.kind = H.kind; h.el = d.element; h.d = d; h.x = x; h.z = z; h.r = H.r * (rScale || 1); h.born = now; h.until = now + H.life; h.next = now;
+      h.dps = H.dps || 0; h.st = H.status || null; h.srcId = d.atk ? d.atk.id : 0; h.srcTel = d.atk ? d.atk.telegraphAt : null;
+      emit('hazard', { id: d.id, element: d.element, kind: H.kind, x: x, z: z, r: h.r, life: H.life });
+      return h;
+    }
+    function fireShard(d, S, mouth, ax, ay, az) {
+      var p = SH[shCursor]; shCursor = (shCursor + 1) % SH.length;
+      var sp = S.speed * (0.85 + 0.3 * d.rnd()) * U, j = S.spread;
+      p.on = true; p.el = d.element; p.d = d; p.x = mouth.x; p.y = mouth.y; p.z = mouth.z;
+      p.vx = (ax + (d.rnd() - 0.5) * 2 * j) * sp; p.vy = (ay + (d.rnd() - 0.5) * 2 * j) * sp; p.vz = (az + (d.rnd() - 0.5) * 2 * j) * sp;
+      p.bounces = 0; p.maxB = S.bounces; p.rest = S.rest; p.until = now + S.life; p.dmg = S.dmg; p.r = S.r;
+      p.srcId = d.atk.id; p.srcTel = d.atk.telegraphAt;
+    }
+    // first point along the breath axis that meets the ground (6 samples), else the beam end dropped to the ground
+    var _gp = { x: 0, z: 0 };
+    function beamGround(mouth, c, lenM) {
+      for (var k = 1; k <= 6; k++) {
+        var s = lenM * (0.3 + 0.7 * k / 6) * U, x = mouth.x + c.x * s, y = mouth.y + c.y * s, z = mouth.z + c.z * s;
+        if (y <= heightAt(x, z) + 0.5 * U || k === 6) { _gp.x = x; _gp.z = z; return _gp; }
+      }
+      return _gp;
+    }
+    // squared distance (m²) from p to the segment [a, a + c·len]
+    function segDist2(a, c, lenM, px, py, pz) {
+      var vx = px - a.x, vy = py - a.y, vz = pz - a.z, t = clamp((vx * c.x + vy * c.y + vz * c.z), 0, lenM * U);
+      var dx = vx - c.x * t, dy = vy - c.y * t, dz = vz - c.z * t;
+      return (dx * dx + dy * dy + dz * dz) / (U * U);
+    }
+    // per-frame: pools, shards, burn DoT. Every damage goes through hurtPlayer with the spawning attack as src.
+    function updateEffects(P, dt) {
+      var tickS = tune.hazardTick || 0.5;
+      for (var i = 0; i < HZ.length; i++) {
+        var h = HZ[i]; if (!h.on) continue;
+        if (now >= h.until || h.d.defeated) { h.on = false; continue; }
+        if (!P || !P.alive || now < h.next) continue;
+        if (hyp2(P.x - h.x, P.z - h.z) > h.r * U || P.y - heightAt(h.x, h.z) > 3 * U) continue;
+        h.next = now + tickS; _src.id = h.srcId; _src.telegraphAt = h.srcTel;
+        if (hurtPlayer(h.d, h.dps * tickS, h.kind, null, P, _src)) giveStatus(h.d, h.st, 1, _src);
+      }
+      for (var j = 0; j < SH.length; j++) {
+        var p = SH[j]; if (!p.on) continue;
+        if (now >= p.until || p.d.defeated) { p.on = false; continue; }
+        p.vy -= G * U * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+        var gy = heightAt(p.x, p.z) + 0.3 * U;
+        if (p.y < gy) {                                   // bounce: restitution + ground friction; dies after maxB bounces
+          p.y = gy; p.vy = Math.abs(p.vy) * p.rest; p.vx *= 0.7; p.vz *= 0.7; p.bounces++;
+          if (p.bounces > p.maxB) { p.on = false; continue; }
+        }
+        if (P && P.alive) {
+          var dx = P.x - p.x, dy = P.y + 1 * U - p.y, dz = P.z - p.z;
+          if (dx * dx + dy * dy + dz * dz < p.r * p.r * U * U) {
+            p.on = false; _src.id = p.srcId; _src.telegraphAt = p.srcTel;
+            hurtPlayer(p.d, p.dmg, 'shard', null, P, _src);
+          }
+        }
+      }
+      if (BURN.d && now < core.status.burn.until) {
+        if (BURN.d.defeated) { core.status.burn.until = -1; BURN.d = null; }
+        else if (now >= BURN.next && P) {
+          BURN.next = now + (SCAPS.burn.tick || 0.5); _src.id = BURN.id; _src.telegraphAt = BURN.tel;
+          hurtPlayer(BURN.d, core.status.burn.mag * (SCAPS.burn.tick || 0.5), 'burn', null, P, _src);
+        }
+      }
+    }
+    function clearEffects(d) {   // "defeated never attacks": its pools, shards and burn die with it
+      for (var i = 0; i < HZ.length; i++) if (HZ[i].d === d) HZ[i].on = false;
+      for (var j = 0; j < SH.length; j++) if (SH[j].d === d) SH[j].on = false;
+      if (BURN.d === d) { BURN.d = null; core.status.burn.until = -1; }
+    }
+
     function knockFrom(sx, sz, P, speedMS, up) { var dx = P.x - sx, dz = P.z - sz, l = hyp2(dx, dz) || 1; return { x: dx / l * speedMS * U, y: (up || 6) * U, z: dz / l * speedMS * U }; }
 
     // ── flight command helpers ──
@@ -359,7 +542,7 @@
 
     // ── per-attack update. returns nothing; fills d.cmd ──
     function updateBreath(d, P, dt) {
-      var a = d.atk, B = tune.breath, f = d.f;
+      var a = d.atk, B = tune.breath, f = d.f, E = elementTune(d.element), inh = breathInhale(d.element, tune), eLen = E.len || B.len;
       var dx = P.x - f.x, dz = P.z - f.z, hd = hyp2(dx, dz) / U;
       var altCmd = P.y + B.alt * U;
       if (a.phase === 'setup') {                    // open distance, then line up the run
@@ -370,11 +553,11 @@
       }
       if (a.phase === 'approach') {                 // head straight at the player, descend to strafe height
         cmdFly(d, P.x, altCmd, P.z, tune.speedCruise, { minClear: tune.clearStrafe + 1, hardClear: tune.clearStrafe, lookMax: hd < 220 ? hd + 25 : null, dive: true });
-        var altP = (f.y - P.y) / U, err = Math.abs(wrapPi(Math.atan2(dx, dz) - f.yaw)), altOK = altP < B.len - 3;   // overhead slant must fit inside the 35 m cone
-        var hdB = hd - f.speed * B.inhale;                           // horizontal range when the breath actually starts
-        if (altOK && hdB > 8 && Math.sqrt(hdB * hdB + altP * altP) <= B.len - 3 && err < 0.35) {
+        var altP = (f.y - P.y) / U, err = Math.abs(wrapPi(Math.atan2(dx, dz) - f.yaw)), altOK = altP < eLen - 3;   // overhead slant must fit inside the element's reach
+        var hdB = hd - f.speed * inh;                                // horizontal range when the breath actually starts
+        if (altOK && hdB > 8 && Math.sqrt(hdB * hdB + altP * altP) <= eLen - 3 && err < 0.35) {
           a.phase = 'inhale'; a.lock = { x: P.x, y: P.y, z: P.z }; a.dirx = Math.sin(f.yaw); a.dirz = Math.cos(f.yaw);
-          d.inhaling = true; startTelegraph(d, 'breath', B.inhale, a.lock, B.endRadius);
+          d.inhaling = true; startTelegraph(d, 'breath', inh, a.lock, E.endR != null ? E.endR : B.endRadius);
         } else if (hd < 25 || a.t > 22) { a.phase = 'setup'; a.t = 0; }       // overshot / never lined up → go round again
         return;
       }
@@ -383,7 +566,7 @@
       var alongL = ((a.lock.x - f.x) * a.dirx + (a.lock.z - f.z) * a.dirz) / U;
       cmdFly(d, ext.x, a.lock.y + B.alt * U, ext.z, tune.speedCruise, { minClear: tune.clearStrafe + 1, hardClear: tune.clearStrafe, maxBankDeg: 20, lookMax: Math.max(alongL, 0) + 25 });
       if (a.phase === 'inhale') {
-        if (now - a.telegraphAt >= B.inhale) { a.phase = 'breath'; a.breathStart = now; a.nextTick = now; d.inhaling = false; d.breathing = true; emit('breath', { id: d.id, attackId: a.id, element: d.element, dur: B.dur }); }
+        if (now - a.telegraphAt >= inh) { a.phase = 'breath'; a.breathStart = now; a.nextTick = now; a.nextHz = now + 0.2; a.nextShard = now; d.inhaling = false; d.breathing = true; emit('breath', { id: d.id, attackId: a.id, element: d.element, dur: B.dur, shape: E.shape, len: eLen, endR: E.endR }); }
         return;
       }
       if (a.phase === 'breath') {
@@ -406,10 +589,18 @@
         var fd = c.x * fwd.x + c.y * fwd.y + c.z * fwd.z;   // keep within 80° of forward (the neck can curl under the chest)
         if (fd < Math.cos(80 * D2R)) { c = { x: lerp(fwd.x, c.x, 0.6), y: lerp(fwd.y, c.y, 0.6) - 0.3, z: lerp(fwd.z, c.z, 0.6) }; cl = Math.sqrt(c.x * c.x + c.y * c.y + c.z * c.z) || 1; c = { x: c.x / cl, y: c.y / cl, z: c.z / cl }; }
         d.coneAxis = c; d.mouth = mouth;
-        if (now >= a.nextTick) {
-          a.nextTick = now + B.tick;
-          if (inCone(mouth, c, { x: P.x, y: P.y + 1.2 * U, z: P.z }, B.len, B.endRadius)) hurtPlayer(d, B.dps * B.tick * aggr(NIGHT.dpsMul), 'breath', null, P);
+        if (now >= a.nextTick) {                    // element hit volume: cone / line (small end radius) / burst (pulsed)
+          var per = E.shape === 'burst' ? (E.pulse || 0.6) : B.tick;
+          a.nextTick = now + per;
+          var dmg = (E.dps || B.dps) * per * aggr(NIGHT.dpsMul);
+          _pp.x = P.x; _pp.y = P.y + 1.2 * U; _pp.z = P.z;
+          if (inCone(mouth, c, _pp, eLen, E.endR != null ? E.endR : B.endRadius)) { if (hurtPlayer(d, dmg, 'breath', null, P)) elementHit(d, E, dmg, 1); }
+          else if (E.chain && segDist2(mouth, c, eLen, _pp.x, _pp.y, _pp.z) <= E.chain.r * E.chain.r) {   // lightning: arc jumps to a near-miss
+            if (hurtPlayer(d, dmg * E.chain.frac, 'chain', null, P)) { elementHit(d, E, dmg * E.chain.frac, 0.5); emit('arc', { id: d.id, element: d.element, from: { x: mouth.x, y: mouth.y, z: mouth.z }, to: { x: _pp.x, y: _pp.y, z: _pp.z } }); }
+          }
         }
+        if (E.hazard && now >= a.nextHz) { a.nextHz = now + E.hazard.every; var gp = beamGround(mouth, c, eLen); spawnHazard(d, E.hazard, gp.x, gp.z, 1); }
+        if (E.shards && now >= a.nextShard) { a.nextShard = now + E.shards.every; for (var sn = 0; sn < E.shards.n; sn++) fireShard(d, E.shards, mouth, c.x, c.y, c.z); }
         var along = (P.x - f.x) * a.dirx + (P.z - f.z) * a.dirz;
         if (now - a.breathStart > B.dur || along < -15 * U) { a.phase = 'exit'; d.breathing = false; d.coneAxis = null; }
         return;
@@ -446,7 +637,7 @@
         var glideH = S.passAlt + (a.h0 - S.passAlt) * clamp(gk / 0.88, 0, 1);   // straight dive line, levels out ~12% before the lock
         cmdFly(d, a.lock.x + a.dirx * 60 * U, a.lock.y + glideH * U, a.lock.z + a.dirz * 60 * U, tune.speedDive, { dive: true, minClear: S.passAlt, hardClear: tune.clearDive, maxBankDeg: 30, lookMax: Math.max(along / U, 0) + 8, lookNarrow: true, vzFF: gk > 0 ? -Math.hypot(f.hvx, f.hvz) * slope : 0 });
         var pd = Math.sqrt(Math.pow(P.x - f.x, 2) + Math.pow(P.z - f.z, 2)) / U, pdy = Math.abs(f.y - (P.y + 1 * U)) / U;
-        if (!a.didHit && pd < S.hitRadius && pdy < 7) { a.didHit = true; hurtPlayer(d, S.dmg, 'swoop', knockFrom(f.x - a.dirx * U, f.z - a.dirz * U, P, S.knock, 7), P); }
+        if (!a.didHit && pd < S.hitRadius && pdy < 7) { a.didHit = true; if (hurtPlayer(d, S.dmg, 'swoop', knockFrom(f.x - a.dirx * U, f.z - a.dirz * U, P, S.knock, 7), P)) elementHit(d, elementTune(d.element), S.dmg, 0.5); }
         if (along < -10 * U || a.t > 9) { a.phase = 'pullup'; a.pullT = now; d.telegraph = null; }
         return;
       }
@@ -498,10 +689,12 @@
         if (now - a.telegraphAt >= T2.telegraph) {
           if (a.sub === 'stomp') {
             emit('land', { id: d.id, kind: 'stomp', pos: { x: f.x, y: f.y, z: f.z }, shake: { intensity: 1.0, duration: 0.6 }, radius: T2.radius });
-            if (hd <= T2.radius) hurtPlayer(d, T2.dmg, 'stomp', knockFrom(f.x, f.z, P, T2.knock, 8), P);
+            var ES = elementTune(d.element);
+            if (ES.hazard) spawnHazard(d, ES.hazard, f.x, f.z, 1.6);   // lava / ice stomp leaves a pool around the feet
+            if (hd <= T2.radius && hurtPlayer(d, T2.dmg, 'stomp', knockFrom(f.x, f.z, P, T2.knock, 8), P)) elementHit(d, ES, T2.dmg, 0.5);
           } else if (a.sub === 'tail') {
             emit('tailswipe', { id: d.id, pos: { x: f.x, y: f.y, z: f.z }, radius: T2.radius, shake: { intensity: 0.4, duration: 0.3 } });
-            if (hd <= T2.radius && fwdDot < 0.3) hurtPlayer(d, T2.dmg, 'tail', knockFrom(f.x, f.z, P, T2.knock, 5), P);
+            if (hd <= T2.radius && fwdDot < 0.3 && hurtPlayer(d, T2.dmg, 'tail', knockFrom(f.x, f.z, P, T2.knock, 5), P)) elementHit(d, elementTune(d.element), T2.dmg, 0.5);
           } else {
             emit('roar', { id: d.id, attackId: a.id, pos: { x: f.x, y: f.y, z: f.z }, radius: T2.radius, shake: { intensity: 0.5, duration: 1.0 } });
             if (hd <= T2.radius) hurtPlayer(d, 0, 'stagger', knockFrom(f.x, f.z, P, 4, 2), P);
@@ -661,7 +854,7 @@
         emit('interrupt', { id: d.id, kind: d.atk.kind }); endAttack(d, 1.5); setState(d, 'patrol');
       }
       if (d.hp <= 0) {
-        d.defeated = true; endAttack(d, 999); d.breathing = false; d.inhaling = false;
+        d.defeated = true; endAttack(d, 999); d.breathing = false; d.inhaling = false; clearEffects(d);
         emit('downed', { id: d.id });
         if (d.f.mode === 'ground') { setState(d, 'bow'); } else { d.f.stalled = false; setState(d, 'defeated_glide'); }
       }
@@ -709,6 +902,7 @@
         if (far) { d.lodAcc += dt; var fs = 1 / tune.farHz; if (d.lodAcc < fs) continue; var sdt = d.lodAcc; d.lodAcc = 0; while (sdt > 1e-6) { var s = Math.min(sdt, 0.2); step(d, P, s); sdt -= s; } }
         else { d.lodAcc = 0; step(d, P, dt); }
       }
+      updateEffects(P, dt);
       stats.floorHits = 0; for (var j = 0; j < core.dragons.length; j++) stats.floorHits += core.dragons[j].f.floorHits;
     }
 
@@ -718,6 +912,10 @@
       return { dragons: core.dragons.length, defeated: core.dragons.filter(function (d) { return d.defeated; }).length, attacker: core.attacker, states: st,
         hits: stats.hits, telegraphs: stats.telegraphs, refused: stats.refused, violations: core.violations, floorHits: stats.floorHits, time: now };
     };
+    var _mods = {};
+    core.statusMods = function (out) { return statusMods(core.status, now, out || _mods); };   // host: speedMul / rooted / haze / drain / burning
+    core.clearStatus = function () { var k; for (k in core.status) { core.status[k].until = -1; core.status[k].mag = 0; } core.status.root.immune = -1; BURN.d = null; };   // respawn / death
+    core.effectsLive = function () { var h = 0, s2 = 0, i; for (i = 0; i < HZ.length; i++) if (HZ[i].on) h++; for (i = 0; i < SH.length; i++) if (SH[i].on) s2++; return { hazards: h, shards: s2, hazardMax: HZ.length, shardMax: SH.length }; };
     core.setPlayerInvulnerable = function (sec) { core.rollUntil = Math.max(core.rollUntil, now + (sec || 0)); };
     // ── player → dragon hit helpers (pure; the THREE api delegates here). Same pattern as world-wildlife-v4 wolves. ──
     var _hc = { x: 0, y: 0, z: 0 };
@@ -798,6 +996,236 @@
     return out;
   }
 
+  /* ELEMENT FX SIM (pure, node-testable, allocation-free). One sim per element, shared by every dragon of that element
+   * (and one for the ridden dragon). The THREE layer wraps the typed arrays below as buffer attributes (zero copy):
+   *   particles → one THREE.Points (additive emissive sprites; void = normal-blend smoke)
+   *   shards    → one InstancedMesh (ice spikes, lava crust chunks, thorns, crystal shards) + the core's crystal projectiles
+   *   arcs      → FX_CAPS.arcs jittered line strips (lightning)
+   * Per-frame inputs go through sim.io (Float64Array) instead of arguments: passing doubles into a non-inlined call boxes
+   * them (a heap allocation per call). io = [dt, mouthX, mouthY, mouthZ, axisX, axisY, axisZ, lenM, time].
+   * Caps (bounded, documented in docs/DRAGON-ELEMENTS.md): FX_CAPS. Nothing grows after construction. */
+  var FX_CAPS = { particles: 320, shards: 48, projectiles: 24, arcs: 4, arcSegs: 16, decals: 96 };
+  var FX_STYLE = {
+    ice:       { speed: 38, spread: 0.11, s0: 0.6, s1: 2.2, life: 0.9,  grav: -2,  shape: 1, rate: 150,
+                 shard: { rate: 24, size: [0.5, 1.4], life: 0.8, speed: 34, grav: -3,   geo: 'spike', color: 0xbfeaff, blend: 'add' } },
+    lava:      { speed: 30, spread: 0.16, s0: 1.0, s1: 4.5, life: 1.0,  grav: 3,   shape: 0, rate: 170,
+                 shard: { rate: 12, size: [0.4, 0.9], life: 1.1, speed: 26, grav: -9.8, geo: 'chunk', color: 0x2a1206, blend: 'norm' } },
+    thorn:     { speed: 36, spread: 0.08, s0: 0.5, s1: 1.4, life: 0.8,  grav: -1,  shape: 1, rate: 90,
+                 shard: { rate: 28, size: [0.8, 2.2], life: 0.9, speed: 36, grav: -1,   geo: 'spike', color: 0x557a28, blend: 'norm' } },
+    sand:      { speed: 30, spread: 0.24, s0: 0.5, s1: 3.2, life: 1.1,  grav: -6,  shape: 0, rate: 230, pulse: 0.6 },
+    void:      { speed: 22, spread: 0.26, s0: 1.8, s1: 7.0, life: 1.5,  grav: 0.8, shape: 0, rate: 140, swirl: 4 },
+    crystal:   { speed: 46, spread: 0.07, s0: 0.3, s1: 0.8, life: 0.6,  grav: 0,   shape: 1, rate: 90,
+                 shard: { rate: 30, size: [0.6, 1.6], life: 0.7, speed: 44, grav: -2,   geo: 'spike', color: 0xe8eef8, blend: 'add' } },
+    lightning: { speed: 50, spread: 0.05, s0: 0.3, s1: 1.0, life: 0.35, grav: 0,   shape: 0, rate: 160, arcs: { every: 0.07, life: 0.12, jitter: 1.6 } },
+  };
+  function createFxSim(el, heightAt) {
+    el = ELEMENT_ALIAS[el] || el; if (!FX_STYLE[el]) el = 'lava';
+    var st = FX_STYLE[el], N = FX_CAPS.particles, SN = st.shard ? FX_CAPS.shards : 0, AN = st.arcs ? FX_CAPS.arcs : 0, AS = FX_CAPS.arcSegs;
+    heightAt = heightAt || function () { return 0; };
+    var sim = {
+      el: el, style: st, n: N, sn: SN, an: AN, arcSegs: AS,
+      io: new Float64Array(9),
+      pos: new Float32Array(N * 3), size: new Float32Array(N), alpha: new Float32Array(N), heat: new Float32Array(N),
+      vel: new Float32Array(N * 3), age: new Float32Array(N), life: new Float32Array(N), sw: new Float32Array(N),
+      sPos: new Float32Array(SN * 3), sVel: new Float32Array(SN * 3), sAge: new Float32Array(SN), sLife: new Float32Array(SN), sSize: new Float32Array(SN),
+      arcPts: new Float32Array(AN * (AS + 1) * 3), arcLife: new Float32Array(AN), arcMax: new Float32Array(AN),
+      live: 0, sLive: 0, aLive: 0, onGround: null,   // onGround(x, z) — set once by the view (scorch / frost decals)
+    };
+    for (var i = 0; i < N; i++) { sim.life[i] = 1; sim.age[i] = 1; }
+    for (var j = 0; j < SN; j++) { sim.sLife[j] = 1; sim.sAge[j] = 1; }
+    var cursor = 0, sCursor = 0, aCursor = 0, arcFlip = 0;
+    // xorshift32 PRNG: Math.random() returns a fresh heap number per call in current V8 (≈16 B each); this one does not
+    var RS = new Uint32Array([(hashStr(el) ^ 0x9e3779b9) >>> 0 || 1]);
+    function rnd() { var x = RS[0]; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; RS[0] = x; return (x >>> 0) / 4294967296; }
+    var ACC = new Float64Array(4);   // [particle, shard, arc, decal] accumulators — a closure var holding a double boxes on every write
+    var io = sim.io, pos = sim.pos, vel = sim.vel, age = sim.age, life = sim.life, size = sim.size, alpha = sim.alpha, heat = sim.heat, sw = sim.sw;
+    // spawn one arc strip from arcIo[0..2] to arcIo[3..5] (life arcIo[6] s, 0 = style default): straight line + random
+    // offsets that are 0 at both ends. Callers fill sim.arcIo first (no double arguments → no boxing).
+    var arcIo = sim.arcIo = new Float64Array(7);
+    sim.arc = function () {
+      if (!AN) return;
+      var x0 = arcIo[0], y0 = arcIo[1], z0 = arcIo[2], x1 = arcIo[3], y1 = arcIo[4], z1 = arcIo[5], lifeS = arcIo[6];
+      var a = aCursor; aCursor = (aCursor + 1) % AN;
+      var jit = st.arcs.jitter * U, b = a * (AS + 1) * 3;
+      for (var k = 0; k <= AS; k++) {
+        var t = k / AS, e = Math.sin(Math.PI * t) * jit;
+        sim.arcPts[b + k * 3] = x0 + (x1 - x0) * t + (rnd() - 0.5) * 2 * e;
+        sim.arcPts[b + k * 3 + 1] = y0 + (y1 - y0) * t + (rnd() - 0.5) * 2 * e;
+        sim.arcPts[b + k * 3 + 2] = z0 + (z1 - z0) * t + (rnd() - 0.5) * 2 * e;
+      }
+      sim.arcLife[a] = sim.arcMax[a] = lifeS || st.arcs.life;
+    };
+    // emit for one frame from io (mouth + unit axis). Burst elements puff on a `pulse` beat.
+    sim.emit = function () {
+      var dt = io[0], mx = io[1], my = io[2], mz = io[3], ax = io[4], ay = io[5], az = io[6], lenM = io[7] || 35;
+      var rate = st.rate;
+      if (st.pulse) rate *= Math.sin(io[8] * 2 * Math.PI / st.pulse) > 0.2 ? 2.4 : 0.15;
+      ACC[0] += rate * dt;
+      while (ACC[0] >= 1) {
+        ACC[0] -= 1; var p = cursor; cursor = (cursor + 1) % N;
+        var sp = st.speed * (0.8 + rnd() * 0.4) * U, s = st.spread;
+        vel[p * 3] = (ax + (rnd() - 0.5) * 2 * s) * sp; vel[p * 3 + 1] = (ay + (rnd() - 0.5) * 2 * s) * sp; vel[p * 3 + 2] = (az + (rnd() - 0.5) * 2 * s) * sp;
+        pos[p * 3] = mx; pos[p * 3 + 1] = my; pos[p * 3 + 2] = mz; age[p] = 0; life[p] = st.life * (0.8 + rnd() * 0.4); sw[p] = rnd() * 6.28;
+      }
+      if (SN) {
+        var sh = st.shard; ACC[1] += sh.rate * dt;
+        while (ACC[1] >= 1) {
+          ACC[1] -= 1; var q = sCursor; sCursor = (sCursor + 1) % SN;
+          var ssp = sh.speed * (0.8 + rnd() * 0.4) * U, js = st.spread * 1.4;
+          sim.sVel[q * 3] = (ax + (rnd() - 0.5) * 2 * js) * ssp; sim.sVel[q * 3 + 1] = (ay + (rnd() - 0.5) * 2 * js) * ssp; sim.sVel[q * 3 + 2] = (az + (rnd() - 0.5) * 2 * js) * ssp;
+          sim.sPos[q * 3] = mx; sim.sPos[q * 3 + 1] = my; sim.sPos[q * 3 + 2] = mz;
+          sim.sAge[q] = 0; sim.sLife[q] = sh.life * (0.8 + rnd() * 0.4); sim.sSize[q] = (sh.size[0] + rnd() * (sh.size[1] - sh.size[0])) * U;
+        }
+      }
+      if (AN) {
+        ACC[2] += dt;
+        if (ACC[2] >= st.arcs.every) {
+          ACC[2] = 0; arcFlip ^= 1;
+          var L = lenM * (0.75 + rnd() * 0.25) * U;
+          if (arcFlip) { arcIo[0] = mx; arcIo[1] = my; arcIo[2] = mz; arcIo[3] = mx + ax * L; arcIo[4] = my + ay * L; arcIo[5] = mz + az * L; }
+          else {   // branch: from a point on the beam down to the ground nearby
+            var t0 = (0.4 + rnd() * 0.5) * L;
+            arcIo[0] = mx + ax * t0; arcIo[1] = my + ay * t0; arcIo[2] = mz + az * t0;
+            arcIo[3] = arcIo[0] + (rnd() - 0.5) * 12 * U; arcIo[5] = arcIo[2] + (rnd() - 0.5) * 12 * U;
+            arcIo[4] = heightAt(arcIo[3], arcIo[5]) + 0.2 * U;
+          }
+          arcIo[6] = 0; sim.arc();
+        }
+      }
+    };
+    // advance everything by io[0]
+    sim.step = function () {
+      var dt = io[0], live = 0, t, k;
+      ACC[3] += dt;
+      for (k = 0; k < N; k++) {
+        if (age[k] >= life[k]) { if (alpha[k] !== 0) { alpha[k] = 0; size[k] = 0; } continue; }
+        age[k] += dt; if (age[k] >= life[k]) { alpha[k] = 0; size[k] = 0; continue; }
+        live++;
+        t = age[k] / life[k];
+        vel[k * 3 + 1] += st.grav * U * dt; vel[k * 3] *= (1 - 0.6 * dt); vel[k * 3 + 2] *= (1 - 0.6 * dt); vel[k * 3 + 1] *= (1 - 0.3 * dt);
+        pos[k * 3] += vel[k * 3] * dt; pos[k * 3 + 1] += vel[k * 3 + 1] * dt; pos[k * 3 + 2] += vel[k * 3 + 2] * dt;
+        if (st.swirl) { pos[k * 3] += Math.cos(sw[k] + t * st.swirl) * 2.4 * U * dt; pos[k * 3 + 2] += Math.sin(sw[k] + t * st.swirl) * 2.4 * U * dt; }
+        if ((k & 3) === 0) {   // ground contact → decal (rate-limited) + stop
+          var gy = heightAt(pos[k * 3], pos[k * 3 + 2]);
+          if (pos[k * 3 + 1] < gy + 0.4 * U) {
+            pos[k * 3 + 1] = gy + 0.4 * U; vel[k * 3 + 1] = Math.abs(vel[k * 3 + 1]) * 0.1; vel[k * 3] *= 0.5; vel[k * 3 + 2] *= 0.5;
+            if (ACC[3] > 0.12 && sim.onGround) { ACC[3] = 0; sim.onGround(pos[k * 3], pos[k * 3 + 2]); }
+          }
+        }
+        size[k] = (st.s0 + (st.s1 - st.s0) * t) * U; alpha[k] = (1 - t) * Math.min(1, t * 8); heat[k] = 1 - t;
+      }
+      sim.live = live;
+      var sl = 0;
+      for (k = 0; k < SN; k++) {
+        if (sim.sAge[k] >= sim.sLife[k]) continue;
+        sim.sAge[k] += dt; if (sim.sAge[k] >= sim.sLife[k]) continue;
+        sl++;
+        sim.sVel[k * 3 + 1] += st.shard.grav * U * dt;
+        sim.sPos[k * 3] += sim.sVel[k * 3] * dt; sim.sPos[k * 3 + 1] += sim.sVel[k * 3 + 1] * dt; sim.sPos[k * 3 + 2] += sim.sVel[k * 3 + 2] * dt;
+        var sg = heightAt(sim.sPos[k * 3], sim.sPos[k * 3 + 2]) + 0.2 * U;
+        if (sim.sPos[k * 3 + 1] < sg) { sim.sPos[k * 3 + 1] = sg; sim.sVel[k * 3] = 0; sim.sVel[k * 3 + 1] = 0; sim.sVel[k * 3 + 2] = 0; }   // spikes stick where they land
+      }
+      sim.sLive = sl;
+      var al = 0;
+      for (k = 0; k < AN; k++) if (sim.arcLife[k] > 0) { sim.arcLife[k] -= dt; if (sim.arcLife[k] > 0) al++; }
+      sim.aLive = al;
+    };
+    sim.busy = function () { return sim.live > 0 || sim.sLive > 0 || sim.aLive > 0; };
+    return sim;
+  }
+
+  /* THREE wrapper around createFxSim: one Points (+ one InstancedMesh for shard elements, + FX_CAPS.arcs line strips for
+   * lightning). Buffers wrap the sim's typed arrays directly. update(dt, emitting, mouth, axis, lenM, projectiles?) —
+   * mouth/axis are plain {x,y,z} (read, never stored); projectiles = core.shards (crystal) drawn in the same InstancedMesh.
+   * Allocation-free per frame. Used by buildWorldDragons (one per element) and by world-dragon-ride.js (the ridden dragon). */
+  var FX_VS = [
+    'attribute float aSize; attribute float aAlpha; attribute float aHeat; varying float vAlpha; varying float vHeat;',
+    'uniform float uScale;',
+    'void main(){ vAlpha = aAlpha; vHeat = aHeat; vec4 mv = modelViewMatrix * vec4(position,1.0);',
+    '  gl_PointSize = aSize * uScale / max(-mv.z, 1.0); gl_Position = projectionMatrix * mv; }'].join('\n');
+  var FX_FS = [
+    'uniform vec3 uA; uniform vec3 uB; uniform float uShape; varying float vAlpha; varying float vHeat;',
+    'void main(){ vec2 p = gl_PointCoord * 2.0 - 1.0; float r = length(p); float a;',
+    '  if (uShape < 0.5) a = smoothstep(1.0, 0.0, r);',                                   // soft puff (lava, sand, void smoke, sparks)
+    '  else a = step(abs(p.x) + abs(p.y), 1.0) * (1.0 - 0.5 * r);',                       // diamond glint (ice, thorn, crystal)
+    '  if (a * vAlpha < 0.01) discard; vec3 col = mix(uB, uA, vHeat); gl_FragColor = vec4(col, a * vAlpha); }'].join('\n');
+  function buildElementFx(THREE, parent, el, heightAt, onGround) {
+    var sim = createFxSim(el, heightAt), E = ELEMENTS[sim.el], st = sim.style, owned = [];
+    function own(o) { owned.push(o); return o; }
+    sim.onGround = onGround || null;
+    var geo = own(new THREE.BufferGeometry());
+    geo.setAttribute('position', new THREE.BufferAttribute(sim.pos, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(sim.size, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aAlpha', new THREE.BufferAttribute(sim.alpha, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aHeat', new THREE.BufferAttribute(sim.heat, 1).setUsage(THREE.DynamicDrawUsage));
+    var mat = own(new THREE.ShaderMaterial({
+      uniforms: { uA: { value: new THREE.Color(E.breathA) }, uB: { value: new THREE.Color(E.breathB) }, uShape: { value: st.shape }, uScale: { value: 600 } },
+      vertexShader: FX_VS, fragmentShader: FX_FS, transparent: true, depthWrite: false, toneMapped: false,
+      blending: E.blend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending,
+    }));
+    var pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.visible = false; pts.name = 'dragon-fx-' + sim.el; parent.add(pts);
+    // shards: ice spikes / crystal shards / thorns (long thin octahedra) or lava crust chunks (squat), + core projectiles
+    var inst = null, SCOUNT = 0, _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _sc = new THREE.Vector3(), _qq = new THREE.Quaternion(), _dir = new THREE.Vector3(), _Y = new THREE.Vector3(0, 1, 0);
+    if (st.shard) {
+      var sg = own(new THREE.OctahedronGeometry(0.5, 0)); sg.scale(st.shard.geo === 'chunk' ? 1.2 : 0.28, st.shard.geo === 'chunk' ? 0.6 : 1.6, st.shard.geo === 'chunk' ? 1 : 0.28);
+      var sm = own(new THREE.MeshBasicMaterial({ color: st.shard.color, transparent: true, opacity: st.shard.blend === 'add' ? 0.9 : 1, depthWrite: st.shard.blend !== 'add', toneMapped: false,
+        blending: st.shard.blend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending }));
+      SCOUNT = sim.sn + FX_CAPS.projectiles;
+      inst = new THREE.InstancedMesh(sg, sm, SCOUNT); inst.frustumCulled = false; inst.count = 0; inst.visible = false; parent.add(inst);
+    }
+    // lightning arcs: one line strip per arc slot, drawRange 0 when idle
+    var lines = [];
+    for (var a = 0; a < sim.an; a++) {
+      var lg = own(new THREE.BufferGeometry());
+      lg.setAttribute('position', new THREE.BufferAttribute(sim.arcPts.subarray(a * (sim.arcSegs + 1) * 3, (a + 1) * (sim.arcSegs + 1) * 3), 3).setUsage(THREE.DynamicDrawUsage));
+      var lm = own(new THREE.LineBasicMaterial({ color: a & 1 ? E.breathA : E.breathB, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+      var ln = new THREE.Line(lg, lm); ln.frustumCulled = false; ln.visible = false; parent.add(ln); lines.push(ln);
+    }
+    function orient(x, y, z, vx, vy, vz, s) {
+      _p.set(x, y, z); _dir.set(vx, vy, vz); var l = _dir.length();
+      if (l > 1e-4) _qq.setFromUnitVectors(_Y, _dir.multiplyScalar(1 / l)); else _qq.identity();
+      _sc.set(s, s, s); _m.compose(_p, _qq, _sc);
+    }
+    var io = sim.io;   // io[8] = running time (a typed slot, not a boxed closure double)
+    var fx = {
+      sim: sim, el: sim.el, points: pts, shards: inst, arcs: lines, _emit: null,
+      update: function (dt, emitting, mouth, axis, lenM, projectiles) {
+        io[0] = dt; io[8] += dt;
+        if (emitting && mouth && axis) { io[1] = mouth.x; io[2] = mouth.y; io[3] = mouth.z; io[4] = axis.x; io[5] = axis.y; io[6] = axis.z; io[7] = lenM || 35; sim.emit(); }
+        var busy = emitting || sim.busy();
+        if (busy) sim.step();
+        pts.visible = sim.live > 0;
+        if (pts.visible || emitting) { geo.attributes.position.needsUpdate = true; geo.attributes.aSize.needsUpdate = true; geo.attributes.aAlpha.needsUpdate = true; geo.attributes.aHeat.needsUpdate = true; }
+        if (inst) {
+          var n = 0, k;
+          for (k = 0; k < sim.sn; k++) {
+            if (sim.sAge[k] >= sim.sLife[k]) continue;
+            var fade = 1 - sim.sAge[k] / sim.sLife[k];
+            orient(sim.sPos[k * 3], sim.sPos[k * 3 + 1], sim.sPos[k * 3 + 2], sim.sVel[k * 3], sim.sVel[k * 3 + 1] + 1e-3, sim.sVel[k * 3 + 2], sim.sSize[k] * Math.min(1, fade * 3));
+            inst.setMatrixAt(n++, _m);
+          }
+          if (projectiles) for (k = 0; k < projectiles.length && n < SCOUNT; k++) {
+            var p = projectiles[k]; if (!p.on || p.el !== sim.el) continue;
+            orient(p.x, p.y, p.z, p.vx, p.vy, p.vz, 1.3 * U); inst.setMatrixAt(n++, _m);
+          }
+          inst.count = n; inst.visible = n > 0; if (n) inst.instanceMatrix.needsUpdate = true;
+        }
+        for (var j = 0; j < lines.length; j++) {
+          var life = sim.arcLife[j], on = life > 0;
+          lines[j].visible = on;
+          if (on) { lines[j].material.opacity = Math.min(1, life / sim.arcMax[j] * 1.5); lines[j].geometry.attributes.position.needsUpdate = true; }
+        }
+        return busy;
+      },
+      setScale: function (s) { mat.uniforms.uScale.value = s; },
+      dispose: function () {
+        parent.remove(pts); if (inst) parent.remove(inst); for (var i = 0; i < lines.length; i++) parent.remove(lines[i]);
+        for (var o = 0; o < owned.length; o++) { try { owned[o].dispose(); } catch (e) {} }
+      },
+    };
+    return fx;
+  }
+
   // ───────────────────────────────────────── VISUALS (browser, THREE) ─────────────────────────────────────
   function buildWorldDragons(opts) {
     var THREE = opts.THREE, scene = opts.scene;
@@ -850,9 +1278,9 @@
 
     function makeMaterials(el) {
       var E = ELEMENTS[el];
-      var body = track(new THREE.MeshStandardMaterial({ color: E.body, roughness: 0.55, metalness: el === 'steel' ? 0.75 : 0.2, emissive: E.glow, emissiveIntensity: el === 'fire' ? 0.18 : 0.05 }));
-      var belly = track(new THREE.MeshStandardMaterial({ color: E.belly, roughness: 0.6, metalness: el === 'steel' ? 0.6 : 0.1 }));
-      var mem = track(new THREE.MeshStandardMaterial({ color: E.membrane, roughness: 0.8, side: THREE.DoubleSide, transparent: el === 'void' || el === 'ice', opacity: el === 'void' || el === 'ice' ? 0.88 : 1, emissive: E.glow, emissiveIntensity: 0.07 }));
+      var body = track(new THREE.MeshStandardMaterial({ color: E.body, roughness: 0.55, metalness: el === 'crystal' ? 0.75 : 0.2, emissive: E.glow, emissiveIntensity: el === 'lava' ? 0.18 : el === 'lightning' ? 0.12 : 0.05 }));
+      var belly = track(new THREE.MeshStandardMaterial({ color: E.belly, roughness: 0.6, metalness: el === 'crystal' ? 0.6 : 0.1 }));
+      var mem = track(new THREE.MeshStandardMaterial({ color: E.membrane, roughness: 0.8, side: THREE.DoubleSide, transparent: el === 'void' || el === 'ice' || el === 'crystal', opacity: el === 'void' || el === 'ice' || el === 'crystal' ? 0.88 : 1, emissive: E.glow, emissiveIntensity: 0.07 }));
       var glow = track(new THREE.MeshBasicMaterial({ color: E.glow, toneMapped: false }));
       return { body: body, belly: belly, mem: mem, glow: glow };
     }
@@ -948,7 +1376,7 @@
       var len = baked.zMax - baked.zMin;
       var U_ = { uFlap: { value: 0 }, uFlapLag: { value: 0 }, uBody: { value: 0.09 }, uTail: { value: 0 }, uTailStart: { value: baked.zMin + len * 0.38 }, uZMin: { value: baked.zMin }, uZMax: { value: baked.zMax },
         uNeck: { value: baked.zMax - len * 0.3 }, uHeadYaw: { value: 0 }, uHeadPitch: { value: 0 }, uJaw: { value: 0 }, uJawY: { value: lerp(baked.yMin, baked.yMax, 0.45) },
-        uTint: { value: new THREE.Color(E.body).lerp(new THREE.Color(E.belly), 0.35) }, uTintAmt: { value: el === 'fire' ? 0 : 0.85 } };
+        uTint: { value: new THREE.Color(E.body).lerp(new THREE.Color(E.belly), 0.35) }, uTintAmt: { value: el === 'lava' ? 0 : 0.85 } };
       mat.onBeforeCompile = function (sh) {
         for (var k in U_) sh.uniforms[k] = U_[k];
         sh.vertexShader = 'uniform float uFlap,uFlapLag,uBody,uTail,uTailStart,uZMin,uZMax,uNeck,uHeadYaw,uHeadPitch,uJaw,uJawY;\n' + sh.vertexShader.replace('#include <begin_vertex>', [
@@ -1048,110 +1476,52 @@
       };
     }
 
-    // ── breath particles (GPU points, pooled) ──
-    var PMAX = 400;
-    var particleVS = [
-      'attribute float aSize; attribute float aAlpha; attribute float aHeat; varying float vAlpha; varying float vHeat;',
-      'uniform float uScale;',
-      'void main(){ vAlpha = aAlpha; vHeat = aHeat; vec4 mv = modelViewMatrix * vec4(position,1.0);',
-      '  gl_PointSize = aSize * uScale / max(-mv.z, 1.0); gl_Position = projectionMatrix * mv; }'].join('\n');
-    var particleFS = [
-      'uniform vec3 uA; uniform vec3 uB; uniform float uShape; varying float vAlpha; varying float vHeat;',
-      'void main(){ vec2 p = gl_PointCoord * 2.0 - 1.0; float r = length(p); float a;',
-      '  if (uShape < 0.5) a = smoothstep(1.0, 0.0, r);',                                    // soft (fire, sand, smoke, spray)
-      '  else if (uShape < 1.5) a = step(abs(p.x) + abs(p.y), 1.0) * (1.0 - 0.5 * r);',       // shard / blade diamond
-      '  else a = smoothstep(0.25, 0.0, abs(r - 0.65)) + 0.3 * smoothstep(1.0, 0.0, r);',     // arcane ring
-      '  if (a * vAlpha < 0.01) discard; vec3 col = mix(uB, uA, vHeat); gl_FragColor = vec4(col, a * vAlpha); }'].join('\n');
-    var STYLE = {
-      fire:   { speed: 30, spread: 0.16, s0: 1.0, s1: 5.0, life: 1.0, grav: 3.0, shape: 0, rate: 190 },
-      ice:    { speed: 38, spread: 0.11, s0: 0.7, s1: 1.8, life: 0.9, grav: -2.0, shape: 1, rate: 170 },
-      sand:   { speed: 30, spread: 0.2,  s0: 0.6, s1: 2.6, life: 1.1, grav: -9.8, shape: 0, rate: 200 },
-      thorns: { speed: 34, spread: 0.13, s0: 0.9, s1: 2.0, life: 1.0, grav: -1.0, shape: 1, rate: 150 },
-      swirl:  { speed: 26, spread: 0.18, s0: 1.2, s1: 4.2, life: 1.3, grav: 0.5, shape: 2, rate: 140, swirl: 6 },
-      smoke:  { speed: 24, spread: 0.24, s0: 1.6, s1: 6.5, life: 1.4, grav: 1.0, shape: 0, rate: 150 },
-      blades: { speed: 46, spread: 0.09, s0: 0.8, s1: 1.2, life: 0.75, grav: 0, shape: 1, rate: 150 },
-      spray:  { speed: 34, spread: 0.2,  s0: 0.6, s1: 2.8, life: 1.0, grav: -6.0, shape: 0, rate: 190 },
-    };
-    function Breath(el) {
-      var E = ELEMENTS[el], st = STYLE[E.style] || STYLE.fire;
-      var geo = track(new THREE.BufferGeometry());
-      var pos = new Float32Array(PMAX * 3), size = new Float32Array(PMAX), alpha = new Float32Array(PMAX), heat = new Float32Array(PMAX);
-      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
-      geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1).setUsage(THREE.DynamicDrawUsage));
-      geo.setAttribute('aAlpha', new THREE.BufferAttribute(alpha, 1).setUsage(THREE.DynamicDrawUsage));
-      geo.setAttribute('aHeat', new THREE.BufferAttribute(heat, 1).setUsage(THREE.DynamicDrawUsage));
-      var mat = track(new THREE.ShaderMaterial({
-        uniforms: { uA: { value: new THREE.Color(E.breathA) }, uB: { value: new THREE.Color(E.breathB) }, uShape: { value: st.shape }, uScale: { value: 600 } },
-        vertexShader: particleVS, fragmentShader: particleFS, transparent: true, depthWrite: false,
-        blending: E.blend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending,
-      }));
-      var pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.visible = false; group.add(pts);
-      var P = []; for (var i = 0; i < PMAX; i++) P.push({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 1, life: 1, alive: false, sw: 0 });
-      var cursor = 0, acc = 0, live = 0, decalAcc = 0, self = this; this.live = 0;
-      this.update = function (dt, emitting, mouth, axis, onGround) {
-        if (emitting && mouth && axis) {
-          acc += st.rate * dt;
-          while (acc >= 1) {
-            acc -= 1; var p = P[cursor]; cursor = (cursor + 1) % PMAX;
-            var jx = (Math.random() - 0.5) * 2 * st.spread, jy = (Math.random() - 0.5) * 2 * st.spread, jz = (Math.random() - 0.5) * 2 * st.spread;
-            var sp = st.speed * (0.8 + Math.random() * 0.4) * U;
-            p.vx = (axis.x + jx) * sp; p.vy = (axis.y + jy) * sp; p.vz = (axis.z + jz) * sp;
-            p.x = mouth.x; p.y = mouth.y; p.z = mouth.z; p.age = 0; p.life = st.life * (0.8 + Math.random() * 0.4); p.alive = true; p.sw = Math.random() * 6.28;
-          }
-        }
-        live = 0; decalAcc += dt;
-        for (var k = 0; k < PMAX; k++) {
-          var q = P[k];
-          if (!q.alive) { alpha[k] = 0; size[k] = 0; continue; }
-          q.age += dt; if (q.age >= q.life) { q.alive = false; alpha[k] = 0; size[k] = 0; continue; }
-          live++;
-          var t = q.age / q.life;
-          q.vy += st.grav * U * dt; q.vx *= (1 - 0.6 * dt); q.vz *= (1 - 0.6 * dt); q.vy *= (1 - 0.3 * dt);
-          q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
-          if (st.swirl) { q.x += Math.cos(q.sw + t * st.swirl) * 0.8 * U * dt * 3; q.z += Math.sin(q.sw + t * st.swirl) * 0.8 * U * dt * 3; }
-          if ((k & 3) === 0) {   // ground contact → scorch decal (rate-limited) + stop
-            var gy = heightAt(q.x, q.z);
-            if (q.y < gy + 0.4 * U) { q.y = gy + 0.4 * U; q.vy = Math.abs(q.vy) * 0.1; q.vx *= 0.5; q.vz *= 0.5; if (decalAcc > 0.12 && onGround) { decalAcc = 0; onGround(q.x, q.z); } }
-          }
-          pos[k * 3] = q.x; pos[k * 3 + 1] = q.y; pos[k * 3 + 2] = q.z;
-          size[k] = lerp(st.s0, st.s1, t) * U; alpha[k] = (1 - t) * Math.min(1, t * 8); heat[k] = 1 - t;
-        }
-        pts.visible = live > 0; self.live = live;
-        if (live > 0 || emitting) { geo.attributes.position.needsUpdate = true; geo.attributes.aSize.needsUpdate = true; geo.attributes.aAlpha.needsUpdate = true; geo.attributes.aHeat.needsUpdate = true; }
-      };
-      this.setScale = function (s) { mat.uniforms.uScale.value = s; };
-      this.dispose = function () { group.remove(pts); };
+    // ── element FX: ONE pooled system per element (lazy), shared by every dragon of that element. See createFxSim. ──
+    var fxByEl = {};
+    function fxFor(el) {
+      el = ELEMENT_ALIAS[el] || el;
+      if (!fxByEl[el]) { fxByEl[el] = buildElementFx(THREE, group, el, heightAt, function (x, z) { addDecal(x, z, ELEMENTS[el].scorch, 4, el === 'ice' ? 6 : 9); }); fxList.push(fxByEl[el]); }
+      return fxByEl[el];
     }
+    var fxList = [];
 
-    // ── scorch decals: one InstancedMesh shared by every dragon ──
-    var DMAX = 96;
+    // ── ground decals: one InstancedMesh shared by every dragon (scorch, frost patches, lava pools). Allocation-free. ──
+    var DMAX = FX_CAPS.decals;
     var decalGeo = track(new THREE.PlaneGeometry(1, 1)); decalGeo.rotateX(-Math.PI / 2);
-    var dCol = new Float32Array(DMAX * 3), dFade = new Float32Array(DMAX);
+    var dCol = new Float32Array(DMAX * 3), dFade = new Float32Array(DMAX), dGlow = new Float32Array(DMAX);
     decalGeo.setAttribute('aCol', new THREE.InstancedBufferAttribute(dCol, 3).setUsage(THREE.DynamicDrawUsage));
     decalGeo.setAttribute('aFade', new THREE.InstancedBufferAttribute(dFade, 1).setUsage(THREE.DynamicDrawUsage));
+    decalGeo.setAttribute('aGlow', new THREE.InstancedBufferAttribute(dGlow, 1).setUsage(THREE.DynamicDrawUsage));
     var decalMat = track(new THREE.ShaderMaterial({
-      vertexShader: 'attribute vec3 aCol; attribute float aFade; varying vec3 vCol; varying float vFade; varying vec2 vUv; void main(){ vCol=aCol; vFade=aFade; vUv=uv; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position,1.0); }',
-      fragmentShader: 'varying vec3 vCol; varying float vFade; varying vec2 vUv; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); } void main(){ vec2 p = vUv*2.0-1.0; float r = length(p); float n = h(floor(vUv*9.0)); float a = smoothstep(1.0, 0.35 + 0.25*n, r) * vFade * 0.85; if (a < 0.01) discard; gl_FragColor = vec4(vCol, a); }',
-      transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+      uniforms: { uTime: { value: 0 } },
+      vertexShader: 'attribute vec3 aCol; attribute float aFade; attribute float aGlow; varying vec3 vCol; varying float vFade; varying float vGlow; varying vec2 vUv; void main(){ vCol=aCol; vFade=aFade; vGlow=aGlow; vUv=uv; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position,1.0); }',
+      // aGlow 0 = scorch/frost; 1 = molten lava pool (bright cracked crust: glow veins pulse, dark crust plates)
+      fragmentShader: 'uniform float uTime; varying vec3 vCol; varying float vFade; varying float vGlow; varying vec2 vUv; float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); } void main(){ vec2 p = vUv*2.0-1.0; float r = length(p); float n = h(floor(vUv*9.0)); float a = smoothstep(1.0, 0.35 + 0.25*n, r) * vFade * 0.85; if (a < 0.01) discard; vec3 c = vCol; if (vGlow > 0.5) { float cr = h(floor(vUv*6.0)); float vein = smoothstep(0.08, 0.0, abs(fract(vUv.x*6.0 + cr) - 0.5) * abs(fract(vUv.y*6.0 + cr*1.7) - 0.5)); c = mix(vec3(0.16,0.05,0.02), vCol * (1.4 + 0.3*sin(uTime*3.0 + cr*6.0)), clamp(vein + (1.0 - r)*0.5, 0.0, 1.0)); a = min(1.0, a * 1.2); } gl_FragColor = vec4(c, a); }',
+      transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, toneMapped: false,
     }));
     var decals = new THREE.InstancedMesh(decalGeo, decalMat, DMAX); decals.frustumCulled = false; decals.count = DMAX; group.add(decals);
-    var dLife = new Float32Array(DMAX), dMax = new Float32Array(DMAX), dCursor = 0, _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _up = new THREE.Vector3(0, 1, 0), _n = new THREE.Vector3(), _v = new THREE.Vector3(), _s = new THREE.Vector3();
+    var dLife = new Float32Array(DMAX), dMax = new Float32Array(DMAX), dCursor = 0, _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _up = new THREE.Vector3(0, 1, 0), _n = new THREE.Vector3(), _v = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
     for (var di = 0; di < DMAX; di++) { _m4.makeScale(0, 0, 0); decals.setMatrixAt(di, _m4); }
-    function addDecal(x, z, color, sizeM) {
+    function addDecal(x, z, color, sizeM, lifeS, glow) {
       var i = dCursor; dCursor = (dCursor + 1) % DMAX;
       var e = 1.5 * U, hx = heightAt(x + e, z) - heightAt(x - e, z), hz = heightAt(x, z + e) - heightAt(x, z - e);
       _n.set(-hx, 2 * e, -hz).normalize(); _q.setFromUnitVectors(_up, _n);
-      _q.multiply(new THREE.Quaternion().setFromAxisAngle(_up, Math.random() * 6.28));
-      var s = sizeM * U * (0.7 + Math.random() * 0.6);
+      _q.multiply(_q2.setFromAxisAngle(_up, Math.random() * 6.28));
+      var s = sizeM * U * (glow ? 1 : 0.7 + Math.random() * 0.6);
       _m4.compose(_v.set(x, heightAt(x, z) + 0.15 * U, z), _q, _s.set(s, 1, s)); decals.setMatrixAt(i, _m4);
-      var c = new THREE.Color(color); dCol[i * 3] = c.r; dCol[i * 3 + 1] = c.g; dCol[i * 3 + 2] = c.b; dLife[i] = dMax[i] = 9;
-      decals.instanceMatrix.needsUpdate = true; decalGeo.attributes.aCol.needsUpdate = true;
+      _c.setHex(color); dCol[i * 3] = _c.r; dCol[i * 3 + 1] = _c.g; dCol[i * 3 + 2] = _c.b; dLife[i] = dMax[i] = lifeS || 9; dGlow[i] = glow ? 1 : 0;
+      decals.instanceMatrix.needsUpdate = true; decalGeo.attributes.aCol.needsUpdate = true; decalGeo.attributes.aGlow.needsUpdate = true;
     }
     function updateDecals(dt) {
-      var any = false;
-      for (var i = 0; i < DMAX; i++) if (dLife[i] > 0) { dLife[i] -= dt; dFade[i] = Math.max(0, dLife[i] / dMax[i]); any = true; if (dLife[i] <= 0) { _m4.makeScale(0, 0, 0); decals.setMatrixAt(i, _m4); decals.instanceMatrix.needsUpdate = true; } }
+      var any = false; decalMat.uniforms.uTime.value = clock;
+      for (var i = 0; i < DMAX; i++) if (dLife[i] > 0) { dLife[i] -= dt; dFade[i] = Math.max(0, Math.min(1, dLife[i] / dMax[i] * 3)); any = true; if (dLife[i] <= 0) { _m4.makeScale(0, 0, 0); decals.setMatrixAt(i, _m4); decals.instanceMatrix.needsUpdate = true; } }
       if (any) decalGeo.attributes.aFade.needsUpdate = true;
     }
+    // core ground hazards → decals that live exactly as long as the pool (lava glows, ice patch = frost)
+    var HAZ_COL = { lava: 0xff5a10, ice: 0xcfefff };
+    core.on('hazard', function (e) { addDecal(e.x, e.z, HAZ_COL[e.kind] || ELEMENTS[e.element].scorch, e.r * 2, e.life, e.kind === 'lava'); });
+    // lightning chain hit → an arc strip from the beam to the player
+    core.on('arc', function (e) { var fx = fxFor(e.element); fx.sim.arcIo[0] = e.from.x; fx.sim.arcIo[1] = e.from.y; fx.sim.arcIo[2] = e.from.z; fx.sim.arcIo[3] = e.to.x; fx.sim.arcIo[4] = e.to.y; fx.sim.arcIo[5] = e.to.z; fx.sim.arcIo[6] = 0.2; fx.sim.arc(); });
 
     // ── ground telegraph marker (swoop shadow / stomp ring). Max one attacker → one marker. ──
     var tgGroup = new THREE.Group(); tgGroup.visible = false; group.add(tgGroup);
@@ -1169,7 +1539,7 @@
       var rig = new ProcRig(d.element); holder.add(rig.root);
       var sil = new THREE.Mesh(buildGeo().sil, silMat); sil.visible = false; holder.add(sil);
       holder.scale.setScalar(d.wingspan * U);
-      var v = { d: d, holder: holder, rig: rig, sil: sil, breath: new Breath(d.element), flapPhase: Math.random() * 6, tailPhase: 0, headYaw: 0, headPitch: 0, fold: 1, legs: 1, glide: 0, groundMove: 0, lastYaw: d.f.yaw, lastX: d.f.x, lastZ: d.f.z };
+      var v = { d: d, holder: holder, rig: rig, sil: sil, fx: null, flapPhase: Math.random() * 6, tailPhase: 0, headYaw: 0, headPitch: 0, fold: 1, legs: 1, glide: 0, groundMove: 0, lastYaw: d.f.yaw, lastX: d.f.x, lastZ: d.f.z };
       var url = opts.modelFor ? opts.modelFor(d.id, d) : null;
       if (url) loadGLB(url, function (gltf) {
         if (!gltf || disposed) return;
@@ -1190,7 +1560,7 @@
       core.update(dt);
       var P = opts.getPlayer ? opts.getPlayer() : null;
       var cam = opts.camera || null;
-      if (cam && cam.projectionMatrix) { var sc = (root.innerHeight || 800) * 0.5 * cam.projectionMatrix.elements[5]; V.forEach(function (v) { v.breath.setScale(sc); }); }
+      var sc = cam && cam.projectionMatrix ? (root.innerHeight || 800) * 0.5 * cam.projectionMatrix.elements[5] : 0;
       var tgShown = false, dsShown = false;
       for (var i = 0; i < V.length; i++) {
         var v = V[i], d = v.d, f = d.f;
@@ -1225,13 +1595,8 @@
             headYaw: v.headYaw, headPitch: v.headPitch, neckRaise: d.state === 'alert' || (d.telegraph && d.telegraph.kind === 'roar') ? 0.35 : 0,
             jaw: d.jaw, bow: d.bow, breathe: ground ? Math.sin(clock * 1.6 + i) : 0, breathing: d.breathing, inhaling: d.inhaling, groundMove: v.groundMove, hover: hover ? 1 : 0 }, dt);
         }
-        // breath VFX (only the active dragon ever emits; cheap no-op otherwise)
-        var emitting = d.breathing && !far;
-        if (emitting || v.breath.live > 0) {
-          var mouth = d.mouth || null, axis = d.coneAxis || null;
-          if (emitting && !mouth) mouth = mouthPos(d);
-          v.breath.update(dt, emitting, mouth, axis, function (x, z) { addDecal(x, z, ELEMENTS[d.element].scorch, 4); });
-        }
+        // breath VFX: feed the shared per-element system (only the active dragon ever emits)
+        if (d.breathing && !far && d.mouth && d.coneAxis) { if (!v.fx) v.fx = fxFor(d.element); v.fx._emit = d; }
         // ground telegraph + drop shadow for the active attacker
         if (d.telegraph && d.telegraph.pos && core.attacker === d.id || (d.telegraph && d.state === 'alert')) {
           var T = d.telegraph, prog = clamp((core.time() - T.start) / T.dur, 0, 1), r = Math.max(T.radius, 3) * U;
@@ -1250,6 +1615,13 @@
         }
       }
       tgGroup.visible = tgShown; dropShadow.visible = dsShown;
+      // element systems: one emit (the breathing dragon, if any) + one step each; crystal projectiles drawn from core.shards
+      for (var fi = 0; fi < fxList.length; fi++) {
+        var fx = fxList[fi], src = fx._emit || null; fx._emit = null;
+        if (sc) fx.setScale(sc);
+        fx.update(dt, !!src, src ? src.mouth : null, src ? src.coneAxis : null, src ? elementTune(src.element).len : 0, core.shards);
+      }
+      for (var si2 = 0; si2 < core.shards.length; si2++) { var sp2 = core.shards[si2]; if (sp2.on && !fxByEl[sp2.el]) fxFor(sp2.el); }
       updateDecals(dt);
     }
 
@@ -1259,14 +1631,15 @@
 
     function dispose() {
       disposed = true;
-      V.forEach(function (v) { v.breath.dispose(); });
+      fxList.forEach(function (fx) { fx.dispose(); });
       scene.remove(group);
       disposables.forEach(function (o) { try { o.dispose && o.dispose(); } catch (e) {} });
       try { if (root.__worldDragons === api) delete root.__worldDragons; } catch (e) {}
     }
 
     var api = {
-      group: group, core: core, dragons: core.dragons, tune: tune, elements: ELEMENTS,
+      group: group, core: core, dragons: core.dragons, tune: tune, elements: ELEMENTS, elementTune: ELEMENT_TUNE, fxFor: fxFor,
+      statusMods: core.statusMods, clearStatus: core.clearStatus,
       update: update, damage: core.damage, hitTest: hitTest, meleeHit: meleeHit, isOpen: isOpen,
       on: core.on, off: core.off, stats: core.stats, dispose: dispose,
       forceAttack: core._forceAttack, setPlayerInvulnerable: core.setPlayerInvulnerable,
@@ -1275,8 +1648,11 @@
     return api;
   }
 
-  var EXPORTS = { TUNE: TUNE, ELEMENTS: ELEMENTS, COLOR_TO_ELEMENT: COLOR_TO_ELEMENT, U: U, createFlight: createFlight, stepFlight: stepFlight,
+  var EXPORTS = { TUNE: TUNE, ELEMENTS: ELEMENTS, COLOR_TO_ELEMENT: COLOR_TO_ELEMENT, REALM_TO_ELEMENT: REALM_TO_ELEMENT, ELEMENT_ALIAS: ELEMENT_ALIAS,
+    ELEMENT_TUNE: ELEMENT_TUNE, FX_CAPS: FX_CAPS, FX_STYLE: FX_STYLE, resolveElement: resolveElement, elementTune: elementTune, breathInhale: breathInhale,
+    newStatus: newStatus, applyStatus: applyStatus, statusMods: statusMods, createFxSim: createFxSim, buildElementFx: buildElementFx, U: U, createFlight: createFlight, stepFlight: stepFlight,
     createDragonsCore: createDragonsCore, clipWeights: clipWeights, inCone: inCone, mouthPos: mouthPos, forwardVec: forwardVec, lookAheadFloor: lookAheadFloor, buildWorldDragons: buildWorldDragons };
   if (typeof module !== 'undefined' && module.exports) module.exports = EXPORTS;
-  if (typeof window !== 'undefined') { window.buildWorldDragons = buildWorldDragons; window.WorldDragons = EXPORTS; }
+  if (typeof window !== 'undefined') window.buildWorldDragons = buildWorldDragons;
+  root.WorldDragons = EXPORTS;   // also on globalThis under node: world-dragon-ride.js reads the element tables from here
 })(typeof window !== 'undefined' ? window : globalThis);

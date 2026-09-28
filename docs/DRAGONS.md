@@ -90,10 +90,11 @@ Every player hit on a dragon (melee, kick, bolt) goes through `damage()` → `hu
 ---
 
 ## Elements
-The colour of each station's dragon maps to an element. Palettes are sampled from `fal-assets/refs/dragons/dragons-7-elements-sheet.jpg`.
+Superseded 2026-09-28 by **[DRAGON-ELEMENTS.md](DRAGON-ELEMENTS.md)**, which covers the 7 ref-sheet elements (ice, lava, thorn, sand, void, crystal, lightning),
+the realm → element table, per-element breath shapes, status effects and caps, pooled VFX, and the rider breath.
+Old colour/element names still resolve: red→lava, blue→ice, tan→sand, green/dark→thorn, void→void, black→lightning, teal→crystal.
 
-| layout `dragon` | element | breath style (particles) | resists / weak to |
-|---|---|---|---|
+---|---|---|---|
 | red | fire | fire (soft, rising, grows) | fire 60 % / ice −25 % |
 | blue | ice | ice shards (diamond, fast) | ice 60 % / fire −25 % |
 | tan | sand | sand (heavy, falls) | physical 20 % |

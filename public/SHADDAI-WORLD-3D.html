@@ -498,7 +498,7 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
-      return _loadScript('/world-dragons.js?v=20260927ride').then(function(){
+      return _loadScript('/world-dragons.js?v=20260928elem').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
         const KEY = 'w3d_dragons_defeated';
         const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
@@ -517,6 +517,8 @@ window.__worldBuilt = false;
           if(!e || !e.shake || !e.pos) return; const d = Math.hypot(e.pos.x - playerPos.x, e.pos.z - playerPos.z);
           if(d < 150 * V4_U){ window.__dragonShake && window.__dragonShake(e.shake.intensity, e.shake.duration); } }); });
         window.__dragons.on('defeated', function(e){ if(window.__toast) window.__toast('🐉 ' + (e && e.name || 'The dragon') + ' bows — crossing open'); });
+        // element status (slow/burn/root/blind/drain/shock) → optional HUD/controller hook; movement reads __dragons.statusMods().speedMul
+        window.__dragons.on('status', function(e){ if(window.__onDragonStatus) try{ window.__onDragonStatus(e); }catch(_){} });
       }).catch(function(e){ console.warn('[map-v4] dragons failed:', e && e.message); }).then(function(){ return api; });
     })
     .then(function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
@@ -545,13 +547,16 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
       if(!api) return api;
-      return _loadScript('/world-dragon-ride.js?v=20260927a').then(function(){
+      return _loadScript('/world-dragon-ride.js?v=20260928elem').then(function(){
         return fetch('/assets/world/markers-v4.json').then(r => r.json()).then(function(mj){
           const rl = new GLTFLoader(); rl.setDRACOLoader(dracoLoader); rl.setMeshoptDecoder(MeshoptDecoder);
           window.__dragonRide = window.buildDragonRide({ THREE, scene, loader: rl, cloneSkinned, heightAt: api.heightAt,
-            playerPos, markers: (mj && mj.markers) || [], dragons: window.__dragons || null,
+            playerPos, markers: (mj && mj.markers) || [], dragons: window.__dragons || null, camera,
             hasSkill: window.__hasSkill || undefined });   // prod: window.__hasSkill = id => <skills ledger has id>
           window.__w3dDebug.dragonRide = window.__dragonRide;
+          // element breath while riding: hold the left mouse button (capture phase so no projectile fires while mounted)
+          const _rb = on => e => { if(e.button !== 0 || !window.__dragonRide.isRiding()) return; e.stopImmediatePropagation(); (window.__dragonRideIn || (window.__dragonRideIn = {})).breath = on; };
+          addEventListener('mousedown', _rb(true), true); addEventListener('mouseup', _rb(false), true);
           window.__dragonRide.on('refused', function(e){ if(!window.__toast) return;
             window.__toast({ skill: '🐉 Needs the pilot.dragon skill (Perch access)', far: '🐉 Stand on a Perch pad or at the Dragon Harness',
               airborne: '🐉 Land first, or hover low over a Perch pad', wild: '🐉 That dragon has not bowed to you' }[e.reason] || ('🐉 ' + e.reason)); });

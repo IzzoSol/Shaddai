@@ -8,7 +8,9 @@
  *     playerPos: {x, y, z},                  // host's playerPos (feet). Written every frame while riding.
  *     markers: [{name, pos_m:[X,Y,Z]}, …],   // markers-v4.json rows (PERCH_MAIN / PERCH_A–D / VEH_DRAGON_HARNESS used)
  *     hasSkill(id) → bool,                   // skill gate for 'pilot.dragon'. Omitted = allowed (dev default).
- *     getInput() → {fwd, back, left, right, climb, dive},   // optional; update(dt, input) overrides it
+ *     getInput() → {fwd, back, left, right, climb, dive, breath},   // optional; update(dt, input) overrides it
+ *     element: 'void',                       // the tamed dragon's element (a ridden WILD dragon always uses its own)
+ *     onBreathTick(b) → void,                // optional: every breath tick (b = the reused BREATH object, see below)
  *     dragons: window.__dragons,             // optional: lets you ride a DEFEATED wild dragon (core.setRidden hand-off)
  *     THREE, scene, loader, cloneSkinned, modelUrl,         // optional visual (rigged GLB, fly/idle/walk clip blend)
  *     tune: {...}                            // optional overrides of RIDE_TUNE (metres / seconds)
@@ -19,6 +21,9 @@
  *
  * Controls (host maps keys → input): W throttle up / S throttle down (slow to a hover) · A/D yaw (banked turn) ·
  * Space climb (pitch up) · Shift dive + BOOST (drains stamina) · E/F dismount (grounded, or hovering ≤ 10 m over a perch pad).
+ * input.breath (held) → ELEMENT BREATH (2026-09-28): the dragon breathes its own element (shape / reach / dps from
+ * WorldDragons.ELEMENT_TUNE, docs/DRAGON-ELEMENTS.md), drains stamina, and damages wild dragons in the volume through
+ * dragons.core.damage(id, dmg, pos, element damage type). breath() → BREATH {on, element, shape, mouth, axis, len, endR}.
  * On the ground or in a hover, W flies forward, S backs up, Space rises, Shift sinks.
  *
  * Units: world units on XZ, Y up, U = 7/1.8 units per metre. Marker metres: X east, Y north, Z up → game (X·U, Z·U, −Y·U).
@@ -44,6 +49,8 @@
     takeoffVy: 6, minClear: 3,
     // stamina
     boostDrain: 0.22, regen: 0.14, regenDelay: 1.0, boostResume: 0.15,
+    // element breath (rider attack): stamina drain /s, damage tick, aim pitch below the flight path
+    element: 'void', breathDrain: 0.18, breathTick: 0.25, breathPitch: 0.18, breathDpsMul: 1.0,
     // camera (metres): behind/above the saddle, pulls back with speed, lags smoothly
     camBack: 17, camUp: 6.5, camBackPerMS: 0.22, camLook: 12, camLag: 5, fovBase: 62, fovBoost: 12,
     saddleUp: 0.34, saddleFwd: 0.08,   // × wingspan
@@ -85,7 +92,12 @@
     var SAD = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, bank: 0 };
     var HUD = { riding: false, mode: 'none', stamina: 1, boosting: false, speed: 0, alt: 0, canDismount: false, perch: null };
     var NEAR = { name: null, kind: null, dist: 0, ok: false };
-    var ZERO_IN = { fwd: false, back: false, left: false, right: false, climb: false, dive: false };
+    var ZERO_IN = { fwd: false, back: false, left: false, right: false, climb: false, dive: false, breath: false };
+    // element breath (reused; never reallocated). mouth/axis in units / unit vector.
+    var BREATH = { on: false, element: opts.element || T.element, shape: 'cone', len: 35, endR: 8, dps: 20, dmgType: 'physical', pulse: 0,
+      mouth: { x: 0, y: 0, z: 0 }, axis: { x: 0, y: 0, z: 1 }, next: 0, t: 0, hits: 0 };
+    var BEV = { on: false, element: '' };   // 'breath' start/stop event payload (reused)
+    var _hp = { x: 0, y: 0, z: 0 };
     var listeners = {};
     function on(ev, cb) { (listeners[ev] = listeners[ev] || []).push(cb); return function () { off(ev, cb); }; }
     function off(ev, cb) { var l = listeners[ev]; if (l) { var i = l.indexOf(cb); if (i >= 0) l.splice(i, 1); } }
@@ -135,13 +147,13 @@
         var wd = Math.sqrt((playerPos.x - w.f.x) * (playerPos.x - w.f.x) + (playerPos.z - w.f.z) * (playerPos.z - w.f.z)) / U;
         if (wd > T.wildRadius + w.wingspan * 0.5) return refuse('far');
         if (!dcore.setRidden(which, true)) return refuse('busy');
-        D.wildId = which; T.wingspan = w.wingspan;
+        D.wildId = which; T.wingspan = w.wingspan; BREATH.element = w.element || BREATH.element;
         var gy = groundAt(w.f.x, w.f.z), air = w.f.y - gy > 3 * U;
         placeAt(w.f.x, air ? w.f.y : gy, w.f.z, w.f.yaw, air ? 'hover' : 'ground'); D.perch = _padHit;
         beginRide(); return true;
       }
       var p = nearestMount(); if (!p) return refuse('far');
-      D.wildId = null;
+      D.wildId = null; BREATH.element = opts.element || T.element;
       if (p === D) { beginRide(); return true; }                        // parked steed right here
       // call: glide in from high & outside, land on the pad top (harness: on the ground next to it)
       var tx = p.x, tz = p.z, ty = p.kind === 'perch' ? p.y : groundAt(p.x, p.z);
@@ -177,7 +189,7 @@
       } else {   // beside the saddle, on the right
         playerPos.x = D.x + Math.cos(D.yaw) * side; playerPos.z = D.z - Math.sin(D.yaw) * side; playerPos.y = heightAt(playerPos.x, playerPos.z);
       }
-      st.riding = false; st.boosting = false;
+      st.riding = false; st.boosting = false; stopBreath();
       var wild = D.wildId;
       if (wild != null && dcore && dcore.setRidden) { SAD.x = D.x; SAD.y = D.y; SAD.z = D.z; SAD.yaw = D.yaw; dcore.setRidden(wild, false, SAD); D.wildId = null; D.mode = 'none'; D.parked = false; }
       else { D.parked = true; }
@@ -286,11 +298,54 @@
       D.glide = approach(D.glide, D.mode === 'fly' && D.flap < 0.3 ? 1 : 0, dt * 1.5);
     }
 
+    // ── element breath ──
+    function elementProfile() {
+      var W = root.WorldDragons, el = BREATH.element;
+      if (W && W.ELEMENT_ALIAS && W.ELEMENT_ALIAS[el]) BREATH.element = el = W.ELEMENT_ALIAS[el];
+      var E = W && W.elementTune ? W.elementTune(el) : null;
+      BREATH.shape = E ? E.shape : 'cone'; BREATH.len = E ? E.len : 35; BREATH.endR = E ? E.endR : 8; BREATH.dps = (E ? E.dps : 20) * T.breathDpsMul;
+      BREATH.dmgType = E ? E.dmgType : 'physical'; BREATH.pulse = E && E.pulse ? E.pulse : 0;
+    }
+    function stopBreath() { if (!BREATH.on) return; BREATH.on = false; BEV.on = false; BEV.element = BREATH.element; emit('breath', BEV); }
+    // allocation-free cone test (same volume as WorldDragons.inCone: 1.2 m throat + endR at len), extraM = target radius
+    function inBreath(px, py, pz, extraM) {
+      var M = BREATH.mouth, A = BREATH.axis, vx = px - M.x, vy = py - M.y, vz = pz - M.z;
+      var along = (vx * A.x + vy * A.y + vz * A.z) / U;
+      if (along < 0.5 || along > BREATH.len + extraM) return false;
+      var dl2 = (vx * vx + vy * vy + vz * vz) / (U * U), perp = Math.sqrt(Math.max(0, dl2 - along * along));
+      return perp <= 1.2 + extraM + BREATH.endR * Math.min(1, along / BREATH.len);
+    }
+    function stepBreath(I) {
+      var dt = DTA[0];
+      var want = !!I.breath && st.riding && D.mode !== 'none' && !st.exhausted && st.stamina > 0;
+      if (!want) { stopBreath(); return; }
+      if (!BREATH.on) { elementProfile(); BREATH.on = true; BREATH.next = 0; BREATH.t = 0; BEV.on = true; BEV.element = BREATH.element; emit('breath', BEV); }
+      st.stamina = Math.max(0, st.stamina - T.breathDrain * dt); st.regenWait = T.regenDelay;
+      if (st.stamina <= 0) { st.exhausted = true; emit('stamina-empty', BEV); stopBreath(); return; }
+      BREATH.t += dt;
+      // mouth ahead of the saddle; axis = heading pitched breathPitch below the flight path
+      var r = T.wingspan * 0.45 * U, cp = Math.cos(D.pitch);
+      BREATH.mouth.x = D.x + Math.sin(D.yaw) * cp * r; BREATH.mouth.y = D.y + Math.sin(D.pitch) * r - 0.6 * U; BREATH.mouth.z = D.z + Math.cos(D.yaw) * cp * r;
+      var ap = D.pitch - T.breathPitch, ca = Math.cos(ap);
+      BREATH.axis.x = Math.sin(D.yaw) * ca; BREATH.axis.y = Math.sin(ap); BREATH.axis.z = Math.cos(D.yaw) * ca;
+      if (BREATH.t < BREATH.next) return;
+      var per = BREATH.pulse || T.breathTick; BREATH.next = BREATH.t + per;
+      if (dcore && dcore.dragons) {
+        for (var i = 0; i < dcore.dragons.length; i++) {
+          var w = dcore.dragons[i]; if (w.defeated || w.ridden) continue;
+          if (inBreath(w.f.x, w.f.y, w.f.z, w.bodyRadius || 4)) { _hp.x = w.f.x; _hp.y = w.f.y; _hp.z = w.f.z; if (dcore.damage(w.id, BREATH.dps * per, _hp, BREATH.dmgType)) BREATH.hits++; }
+        }
+      }
+      if (opts.onBreathTick) { try { opts.onBreathTick(BREATH); } catch (e) {} }
+    }
+
     function update(dt, input) {
       DTA[0] = Math.min(Math.max(dt || 0, 0), 0.1);
       if (st.arriving) { stepArrive(); animDrivers(); writeSaddle(); return; }
-      if (!st.riding) { if (D.mode !== 'none') animDrivers(); return; }
-      stepRide(input || (opts.getInput ? opts.getInput() : null) || ZERO_IN);
+      if (!st.riding) { stopBreath(); if (D.mode !== 'none') animDrivers(); return; }
+      var I = input || (opts.getInput ? opts.getInput() : null) || ZERO_IN;
+      stepRide(I);
+      stepBreath(I);
       animDrivers();
       writeSaddle();
       playerPos.x = SAD.x; playerPos.y = SAD.y; playerPos.z = SAD.z;   // host keeps its avatar on the saddle
@@ -312,6 +367,7 @@
       state: function () { return st.arriving ? 'arriving' : st.riding ? D.mode : (D.parked ? 'parked' : 'none'); },
       stamina: function () { return st.stamina; }, boosting: function () { return st.boosting; },
       hud: hud, saddle: function () { return SAD; }, camera: function () { return CAM; }, groundAt: groundAt,
+      breath: function () { return BREATH; }, element: function () { return BREATH.element; }, setElement: function (el) { if (el) { BREATH.element = el; if (BREATH.on) elementProfile(); } },
       lastRefusal: function () { return st.refusal; }, on: on, off: off,
     };
   }
@@ -338,9 +394,20 @@
       ready = true;
     }, undefined, function (e) { if (root.console) console.warn('[dragon-ride] model failed:', e && e.message); });
     var P = { fold: 1, glide: 0, flapEffort: 0, hover: 0, groundMove: 0 };
+    // element breath VFX: the same pooled per-element system the wild dragons use (WorldDragons.buildElementFx), built lazily
+    var fx = null, fxEl = null;
+    function breathFx(dt) {
+      var B = core.breath(), W = root.WorldDragons;
+      if (!W || !W.buildElementFx) return;
+      if (B.on && fxEl !== B.element) { if (fx) fx.dispose(); fx = W.buildElementFx(THREE, scene, B.element, opts.heightAt || null, null); fxEl = B.element; }
+      if (!fx) return;
+      if (opts.camera && opts.camera.projectionMatrix) fx.setScale((root.innerHeight || 800) * 0.5 * opts.camera.projectionMatrix.elements[5]);
+      fx.update(dt, B.on, B.mouth, B.axis, B.len, null);
+    }
     return {
       update: function (dt) {
         var D = core.dragon, st = core.state();
+        breathFx(dt);
         holder.visible = ready && st !== 'none';
         if (!holder.visible) return;
         holder.position.set(D.x, D.y, D.z); holder.rotation.set(-D.pitch, D.yaw, -D.bank, 'YXZ');
@@ -354,7 +421,7 @@
           mixer.update(dt);
         }
       },
-      dispose: function () { dead = true; scene.remove(holder); if (mixer) mixer.stopAllAction(); },
+      dispose: function () { dead = true; scene.remove(holder); if (mixer) mixer.stopAllAction(); if (fx) fx.dispose(); },
     };
   }
 
