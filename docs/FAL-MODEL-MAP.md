@@ -206,6 +206,32 @@ Everything here is **already built or fully speced in code** — none of it need
 
 ---
 
+## Owner batch 2026-09-28 — vehicles, boards, sand houses, grok bots (PLAN ONLY, $0 spent)
+
+Refs (all in `OneDrive\Pictures\LF2\MODELS FOR FAL\`):
+- `4131ef92….jpg` — 10 retro-futurist hover cars (sedan, taxi pod, van, box truck, cargo pickup, wagon)
+- `29f7a77a….jpg` — 9 hoverboards (WildStar sheet)
+- `7b8b9019….jpg` — 4 sand-house archetypes (01 twin dome · 02 tower + solar wing · 03 stepped block + roof stairs · 04 arched courtyard)
+- `9ff6d8b1….jpg` — solar vertical-farm tower (community ground floor + living pods)
+- Grok bots: `fc6ed6df`, `f30c04bd`, `e748c454`, `92815f70` + unicycle blueprint (chat image #72)
+
+**Rule:** anything people or agents walk INTO is built procedurally (Blender/three.js) with real door gaps and interiors, never as a fal mesh. fal/hunyuan output is a closed 40k-tri shell: no doors, no rooms.
+
+| Item | Route | Why | Cost |
+|---|---|---|---|
+| Sand houses ×4 archetypes + interiors | Procedural: Blender `build_sand` + interiors-v3 recipes (agent briefed) | must be enterable; shells + seats + NPC slots | $0 |
+| Vertical-farm tower | Procedural (stacked pod rings + canopy) | enterable, repeatable | $0 |
+| Hover cars ×10 | Procedural three.js kit (body box + cabin glass + hover pads + palette), seats for driver/agent | 10 variants from 1 kit; drivable + NPC traffic | $0 |
+| Hero cars ×3 (taxi pod, box truck, wagon) | optional fal image→3D, then decimate to ≤8k tris | only if the kit looks too plain | 3 × $0.375 = $1.13 |
+| Hoverboards ×9 | Procedural three.js (deck + 2–4 thruster pods + emissive trim), rider stands on deck | flat shapes suit code; recolor = free skins | $0 |
+| Grok bots, wheel style A + B (unicycle) × 4 tiers | T1–T2 procedural (task drones); T3–T4 fal mesh + Blender rig by hand (not the humanoid auto-rigger) | tiers = SPARKS/level unlocks; T4 humanoid fights beside you | ~4 × $0.375 = $1.50 |
+
+**Batch total if every optional item runs: ≈ $2.63.** The procedural kits come first. fal runs only on the owner's OK after seeing the free version.
+
+Grok bot tiers (both wheel styles): T1 Courier (fetch/deliver tasks) → T2 Worker (gather/craft) → T3 Guardian (defends, ranged) → T4 Humanoid (melee, fights beside you, agent pilots it). Unlock by SPARKS or level; SPARKS is a closed loop and pay-in only.
+
+---
+
 ## Sources consulted (read-only)
 
 `docs/MAIN-CHARACTERS-PLAN.md`, `docs/FAL-NEEDS-PLAN.md`, `docs/GLB-INVENTORY.md`,
