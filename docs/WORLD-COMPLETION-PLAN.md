@@ -29,6 +29,10 @@ Interiors v3 (3,349 enterable buildings, sand houses, farm tower) · train v2 bu
     Wire these to the existing backend (`/api/agents`, SPARKS ledger, MCP on the beta site).
 12. **Day/night lighting pass** + final whole-branch review → owner OK → push.
 
+## Later (owner 2026-09-28)
+- **Hover skate park:** a futuristic hoverboard park in one region/building. Trick events from `world-hoverboards.js` feed the SKATE hidden-RPS versus mode, and the fal video cutscene is generated from the trick/prompt picked. It runs on the fal budget, so build it later.
+- **Outfits on the fal bodies:** clothing swaps = code-built gear layers on bone sockets + material tint/decal swaps. Separate a body's clothing regions in Blender only if a full swap is needed.
+
 ## Fastest way through (owner wants it done today)
 After the usage reset, run items 1–12 back-to-back with ONE helper at a time, each with its own tests + commit. Items 2, 5, 8 and 9 are pure code and can run while the owner reviews visuals from items 1 and 3.
 

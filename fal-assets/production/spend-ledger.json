@@ -412,6 +412,34 @@
       "step": "mesh",
       "usd": 0.8,
       "note": "meshy v6 50k T-pose rig"
+    },
+    {
+      "at": "2026-09-28T20:24:28.086Z",
+      "id": "agent-zerox",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 50k T-pose rig (remake)"
+    },
+    {
+      "at": "2026-09-28T20:24:28.388Z",
+      "id": "agent-nexus",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 50k T-pose rig (remake)"
+    },
+    {
+      "at": "2026-09-28T20:24:28.989Z",
+      "id": "agent-turtle",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 50k T-pose rig (remake)"
+    },
+    {
+      "at": "2026-09-28T20:24:29.225Z",
+      "id": "agent-quill",
+      "step": "mesh",
+      "usd": 0.8,
+      "note": "meshy v6 50k T-pose rig (remake)"
     }
   ]
 }

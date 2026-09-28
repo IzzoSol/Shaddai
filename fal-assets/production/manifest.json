@@ -192,7 +192,7 @@
       "id": "agent-nexus",
       "family": "agent",
       "name": "NEXUS — Architect",
-      "status": "ready-concept",
+      "status": "mesh-approved",
       "slot": {
         "file": "fal-assets/characters/nexus-council/",
         "note": "replace in place"
@@ -218,7 +218,7 @@
       "id": "agent-zerox",
       "family": "agent",
       "name": "ZEROX — Trader",
-      "status": "ready-concept",
+      "status": "mesh-approved",
       "slot": {
         "file": "fal-assets/characters/zerox-council/",
         "note": "replace in place"
@@ -277,7 +277,7 @@
       "id": "agent-turtle",
       "family": "agent",
       "name": "TURTLE — Designer",
-      "status": "ready-concept",
+      "status": "mesh-approved",
       "slot": {
         "file": "fal-assets/characters/turtle-council/",
         "note": "replace in place"
@@ -304,7 +304,7 @@
       "id": "agent-quill",
       "family": "agent",
       "name": "QUILL — Scribe",
-      "status": "ready-concept",
+      "status": "mesh-approved",
       "slot": {
         "file": "fal-assets/characters/quill-council/",
         "note": "replace in place"
