@@ -495,7 +495,7 @@ window.__worldBuilt = false;
     })
     .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
-      return _loadScript('/world-dragons.js?v=20260926rig').then(function(){
+      return _loadScript('/world-dragons.js?v=20260927ride').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
         const KEY = 'w3d_dragons_defeated';
         const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
@@ -503,6 +503,7 @@ window.__worldBuilt = false;
           layout: window.WORLD_LAYOUT,
           getPlayer: ()=> ({ pos: playerAvatar ? playerAvatar.position : playerPos,
                              alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) }),
+          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
           onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
           isDefeated: id => load().indexOf(id) >= 0,
           setDefeated: id => { const a = load(); if(a.indexOf(id) < 0){ a.push(id); try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(_){} } },
@@ -532,12 +533,27 @@ window.__worldBuilt = false;
       return _loadScript('/world-city-v3.js?v=20260927b').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
-          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')),
+          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(window.__dragonRide && window.__dragonRide.isRiding()),
           onInteract: m => { if(window.__onCityInteract) window.__onCityInteract(m); else console.info('[city-v3] interact', m.name, m.dashboard_id, m.endpoint); },
           onPing: e => { if(window.__onCityPing) window.__onCityPing(e); } });
         window.__w3dDebug.cityV3 = window.__cityV3;
         return window.__cityV3.ready;
       }).catch(function(e){ console.warn('[map-v4] city v3 failed:', e && e.message); }).then(function(){ return api; });
+    })
+    .then(function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
+      if(!api) return api;
+      return _loadScript('/world-dragon-ride.js?v=20260927a').then(function(){
+        return fetch('/assets/world/markers-v4.json').then(r => r.json()).then(function(mj){
+          const rl = new GLTFLoader(); rl.setDRACOLoader(dracoLoader); rl.setMeshoptDecoder(MeshoptDecoder);
+          window.__dragonRide = window.buildDragonRide({ THREE, scene, loader: rl, cloneSkinned, heightAt: api.heightAt,
+            playerPos, markers: (mj && mj.markers) || [], dragons: window.__dragons || null,
+            hasSkill: window.__hasSkill || undefined });   // prod: window.__hasSkill = id => <skills ledger has id>
+          window.__w3dDebug.dragonRide = window.__dragonRide;
+          window.__dragonRide.on('refused', function(e){ if(!window.__toast) return;
+            window.__toast({ skill: '🐉 Needs the pilot.dragon skill (Perch access)', far: '🐉 Stand on a Perch pad or at the Dragon Harness',
+              airborne: '🐉 Land first, or hover low over a Perch pad', wild: '🐉 That dragon has not bowed to you' }[e.reason] || ('🐉 ' + e.reason)); });
+        });
+      }).catch(function(e){ console.warn('[map-v4] dragon ride failed:', e && e.message); }).then(function(){ return api; });
     })
     .then(function(api){   // MAP v4 GOTO (world-goto.js): `?goto=<dashboard_id|marker name>` deep link from the dashboard
       if(!api || !window.__cityV3) return api;
@@ -574,7 +590,7 @@ window.__worldBuilt = false;
       return _loadScript('/world-hud-v4.js?v=20260927a').then(function(){
         window.__hudV4 = window.buildHudV4({
           getHP: ()=> window.__playerHP == null ? 100 : window.__playerHP,
-          getStamina: ()=> (_pctlOut && _pctlOut.stamina != null) ? _pctlOut.stamina : 1,
+          getStamina: ()=> (window.__dragonRide && window.__dragonRide.isRiding()) ? window.__dragonRide.stamina() : ((_pctlOut && _pctlOut.stamina != null) ? _pctlOut.stamina : 1),
           dragons: window.__dragons || null, wildlife: window.__wildlife || null });
         window.__w3dDebug.hudV4 = window.__hudV4;
         const _prevCityPing = window.__onCityPing;
@@ -3761,6 +3777,20 @@ addEventListener('click', (ev)=>{
   if(!controls.isLocked){ return; }                 // (shouldn't happen) never trap from a stray click
   if(targeted){ openDossier(targeted.a); }
 });
+addEventListener('keydown', function(e){   // DRAGON RIDING keys (capture: runs before the E/F/B/O handlers)
+  const R = window.__dragonRide; if(!R || e.repeat) return;
+  if(R.isRiding()){
+    if(e.code==='KeyE' || e.code==='KeyF'){ e.stopImmediatePropagation(); e.preventDefault(); R.dismount(); }
+    else if(e.code==='KeyB' || e.code==='KeyO' || e.code==='KeyH'){ e.stopImmediatePropagation(); }   // one mount at a time
+    return;
+  }
+  if(e.code==='KeyH' && controls.isLocked && !R.isArriving() && !(_interiors && _interiors.isInside())){
+    if(bikeMode){ bikeMode=false; const h=document.getElementById('bikeHud'); if(h) h.style.display='none'; trailPos.length=0; updateTrail(); }
+    if(hover && hover.isRiding()) hover.dismount();
+    const wild = window.__dragons && window.__dragons.dragons.find(d => d.defeated && !d.ridden && Math.hypot(d.f.x-playerPos.x, d.f.z-playerPos.z) < 45*V4_U);
+    if(R.mount(wild ? wild.id : 'tamed')) thirdPerson = true;
+  }
+}, true);
 addEventListener('keydown', e=>{
   if(e.code==='KeyE' && controls.isLocked){
     // SHADDAI is the only agent with a SECOND projectile → E fires it, UNLESS he's at a building door
@@ -4540,8 +4570,15 @@ function animate(){
   camera.getWorldDirection(fwd); fwd.y=0; fwd.normalize();
   right.crossVectors(fwd, camera.up).normalize();
   const _uiOpen = (_dialogue&&_dialogue.isOpen()) || (_radio&&_radio.isOpen&&_radio.isOpen());
+  if(window.__dragonRide){   // DRAGON RIDING: the ride owns playerPos while mounted (and animates the call-in glide)
+    const _rl = (controls.isLocked || _touchCtrl.on) && !_uiOpen, _ri = window.__dragonRideIn || (window.__dragonRideIn = {});
+    _ri.fwd = _rl && !!(keys['KeyW']||keys['ArrowUp']); _ri.back = _rl && !!(keys['KeyS']||keys['ArrowDown']);
+    _ri.left = _rl && !!(keys['KeyA']||keys['ArrowLeft']); _ri.right = _rl && !!(keys['KeyD']||keys['ArrowRight']);
+    _ri.climb = _rl && !!keys['Space']; _ri.dive = _rl && !!(keys['ShiftLeft']||keys['ShiftRight']);
+    window.__dragonRide.update(dt, _ri);
+  }
 _pctlOn = !!_pctl && !_spawnBusy && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
-          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding());
+          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding());
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
     const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
@@ -4557,6 +4594,8 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       const _str = ((keys['KeyD']||keys['ArrowRight'])?1:0) - ((keys['KeyA']||keys['ArrowLeft'])?1:0);
       const _bo = veh.bike.step(dt, { riding: bikeMode, throttle: _thr, steer: _str, camYaw: _camYaw, pos: playerPos, vel: _vel });
       _vel.x = _bo.vx; _vel.z = _bo.vz;          // hand the momentum back to walking on dismount
+    } else if (window.__dragonRide && window.__dragonRide.isRiding()) {
+      _vel.x = 0; _vel.z = 0;                       // position already written by the ride
     } else if (hover && hover.isRiding()) {
       hover.step(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
         left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
@@ -4660,7 +4699,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     // v4 swim law: float on the REAL water surface (world-water.js CPU mirror of the shader waves) wherever
     // the ground is more than ~1u under it. No water api (load failed) → just walk the terrain.
     _swimming = false;
-    if (_v4Water && !veh.mode && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside())) {
+    if (_v4Water && !veh.mode && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside()) && !(window.__dragonRide && window.__dragonRide.isRiding())) {
       const _wh = _v4Water.waterHeightAt(playerPos.x, playerPos.z);
       if (_wh != null && isFinite(_wh) && groundY < _wh - 1.0) { groundY = _wh - 1.05; _swimming = true; }
     }
@@ -4675,13 +4714,13 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
   } else _swimming = false;
   const _pctlActive = _pctlOn && !!_pctlOut;
 if (_pctlActive) { groundY = _pctlOut.renderPos.y; _swimming = _pctlOut.swimming; }   // controller owns ground + swim
-const _rawBaseY = _pctlActive ? _pctlOut.renderPos.y : ((hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY));
+const _rawBaseY = _pctlActive ? _pctlOut.renderPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY));
 const _pDip = _pctlActive ? _pctlOut.compression * 0.35 * V4_U : 0;   // landing / crouch camera dip (<= 0.35 m)
 const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
   if(_smoothBaseY===undefined || _spawnBusy || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
-     (_interiors && _interiors.isInside()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
+     (_interiors && _interiors.isInside()) || (window.__dragonRide && window.__dragonRide.isRiding()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
     _smoothBaseY = _rawBaseY;
   } else {
     _smoothBaseY += (_rawBaseY - _smoothBaseY) * Math.min(1, dt*16);
@@ -4773,6 +4812,14 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
     camera.position.set(playerPos.x, baseY - _pDip + eye, playerPos.z);
     playerAvatar.visible=false;
   }
+  if(window.__dragonRide && window.__dragonRide.isRiding()){   // DRAGON RIDING chase cam + seated avatar
+    const _c = window.__dragonRide.camera(), _s = window.__dragonRide.saddle();
+    if(window.__rideBaseFov == null) window.__rideBaseFov = camera.fov;
+    camera.position.set(_c.x, _c.y, _c.z); camera.lookAt(_c.lx, _c.ly, _c.lz);
+    const _fov = window.__rideBaseFov + (_c.fov - window.__dragonRide.tune.fovBase);   // boost FOV kick relative to the host FOV
+    if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
+    playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
+  } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
   skyDome.position.copy(camera.position);   // PERF: sky follows the camera (standard skybox trick) so the r=1400 dome is always centred on the viewer → the tightened far plane (1500) never clips it. Gradient is direction-based so the look is identical.
   starGroup.position.set(camera.position.x, 0, camera.position.z);   // TURTLE SKY POLISH: starfield follows the camera on XZ only (keeps its own overhead Y) so stars stay an infinite dome — never pull in close and read as floating specks near the world edge.
