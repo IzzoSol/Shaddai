@@ -488,6 +488,11 @@ if STEP >= 6:
 if STEP >= 7:
     exec(open(os.path.join(REPO, 'tools/blender/canon/city_v3.py'), encoding='utf-8').read())
 
+# ═════════ STEP 8: FRONTIER REALMS v1 — sand print cluster, darkforest hex pads, crystal harbour, arctic shelf city,
+#            colosseum, dragon lairs (realms_v1.py) ═════════
+if STEP >= 8:
+    exec(open(os.path.join(REPO, 'tools/blender/canon/realms_v1.py'), encoding='utf-8').read())
+
 # ── 16 DEBUG: atlas image empty (north-up, 0.35), 10x10 grid, station empties — only in the DEBUG view layer ──
 img = bpy.data.images.load(os.path.join(REPO, LAY['map']['source']))
 E = bpy.data.objects.new('DEBUG_AtlasOverlay', None); E.empty_display_type = 'IMAGE'; E.data = img
@@ -530,6 +535,7 @@ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(REPO, '.bl-cache', 'canon-step
 if 'export' in argv:
     EXP = ['01_Grid_Streets', '02_Grid_Blocks', '06_Meadow_Quill', '07_Void', '08_Emberfall', '09_Suburbs', '15_Agents']
     if STEP >= 7: EXP += ['01_HOUSING', '02_ACADEMY_FORGE', '03_PERCH', '04_TRACK', '05_PLOTS', '06_COMMONS']   # sc-* proxies stay Blender-only (game: grid-commons-v4.json)
+    if STEP >= 8: EXP += ['30_SAND', '31_DARKFOREST', '32_CRYSTAL', '33_ARCTIC', '34_COLOSSEUM', '35_LAIRS']
     for o in list(bpy.data.objects):
         if o.type == 'FONT' and any(o.name in bpy.data.collections[n].objects for n in EXP):
             me_ = o.to_mesh().copy(); ob_ = bpy.data.objects.new(o.name + '_mesh', me_); ob_.matrix_world = o.matrix_world.copy()
@@ -569,11 +575,12 @@ if RENDER:
             cam.rotation_euler = (Vector(tgt) - Vector(pos)).to_track_quat('-Z', 'Y').to_euler()
         sc.render.filepath = os.path.join(OUT, 'canon-s%d-%s.png' % (STEP, name)); bpy.ops.render.render(write_still=True); print('SHOT', name)
     EYE = 1.6
-    if STEP >= 7:   # v3 run: only the v3 approval shots (the step 1-6 shots cost ~30 min on this laptop)
+    if STEP >= 7:   # v3/v8 runs: only the v3/v8 approval shots (the step 1-6 shots cost ~30 min on this laptop)
         _shoot = shoot
         def shoot(name, *a_, **k_):
-            only = next((x.split('=')[1].split(',') for x in argv if x.startswith('only=')), None)   # e.g. only=v3-top-night,v3-race-quarter
-            if name.startswith('v3') and (only is None or name in only): return _shoot(name, *a_, **k_)
+            only = next((x.split('=')[1].split(',') for x in argv if x.startswith('only=')), None)   # e.g. only=v3-top-night,v8-sand
+            prefixes = ('v3',) + (('v8',) if STEP >= 8 else ())
+            if name.startswith(prefixes) and (only is None or name in only): return _shoot(name, *a_, **k_)
     shoot('top', ortho=10600, res=(1400, 1400))
     shoot('top-debug', layer='DEBUG', ortho=10600, res=(1400, 1400))
     shoot('grid-top', ortho=3600, res=(1400, 1400))
@@ -616,4 +623,11 @@ if RENDER:
         gt0 = V3_SHOTS['gate']; shoot('v3-race-quarter', pos=(gt0[0] - 260, gt0[1] - 200, GZ + 140), tgt=(gt0[0] - 60, gt0[1] - 60, GZ + 5), lens=28)
         ln0 = V3_SHOTS['lane']; shoot('v3-culture-lane', pos=(ln0[0] - 90, ln0[1] + 70, GZ + 45), tgt=(ln0[0], ln0[1], GZ + 3), lens=26)
         do0 = V3_SHOTS['deed']; shoot('v3-plots-deed', pos=(do0[0] - 200, do0[1] - 300, GZ + 180), tgt=(do0[0] - 150, do0[1] - 80, GZ), lens=28)
+    if STEP >= 8:
+        sp = V8_SHOTS['sand']; shoot('v8-sand', pos=(sp[0] - 60, sp[1] - 60, H(*sp) + 40), tgt=(sp[0], sp[1], H(*sp) + 10), lens=26)
+        dp = V8_SHOTS['darkforest']; shoot('v8-darkforest', pos=(dp[0] - 70, dp[1] - 40, H(*dp) + 30), tgt=(dp[0], dp[1], H(*dp) + 12), lens=26)
+        cp = V8_SHOTS['crystal']; shoot('v8-crystal', pos=(cp[0] - 90, cp[1] - 60, H(*cp) + 45), tgt=(cp[0], cp[1], WL + 8), lens=26)
+        ap = V8_SHOTS['arctic']; shoot('v8-arctic', pos=(ap[0] - 120, ap[1] - 80, H(*ap) + 90), tgt=(ap[0], ap[1], H(*ap) + 40), lens=26)
+        co = V8_SHOTS['colosseum']; shoot('v8-colosseum', pos=(co[0] - 180, co[1] - 180, H(*co) + 90), tgt=(co[0], co[1], H(*co) + 30), lens=26)
+        lp = V8_SHOTS['lairs']; shoot('v8-lairs', pos=(lp[0] - 40, lp[1] - 30, H(*lp) + 20), tgt=(lp[0], lp[1], H(*lp) + 6), lens=24)
 print('CANON DONE')
