@@ -1,7 +1,23 @@
 # WORLD COMPLETION PLAN (start here, 2026-09-28)
 Branch `feat/world3d` (not pushed). The owner is low on usage, so work ONE item at a time and tick it off here.
 
-## Running at session end: check git log + outputs first
+## STATUS 2026-09-28 evening (read first)
+- **Done + committed:**
+  - all 7 agents: Meshy v6, T-pose, 50k, rigged; ORACLE and PIKADON had been approved earlier;
+  - weapons (a739cae4);
+  - train v2 + walkable ride (98216ea3);
+  - dragon elements (7aae7643) + slow/root wiring;
+  - GAME-SYSTEMS-PLAN.md.
+- **Helpers running at usage cut-off** (check git log; resume unfinished ones by re-dispatching with the same brief):
+  1. Animation library (world-anim.js, agent-clips.glb/json, ANIMATION-LIBRARY.md).
+  2. Hoverboards + tricks + riders (world-hoverboards.js, world-riders.js, RIDERS.md).
+  3. Load speed + light loading screen (PERF-LOAD.md; old intro behind `?intro=cinematic`). The owner reported a 5-min load and freezes; this is TOP priority.
+  4. Realm cities from refs (realm_cities_v1.py STEP 8b, public/assets/world/realms/*, REALM-CITIES.md), one realm per headless run.
+- **Next:** Blender placement board: a LAYOUT collection in the owner's Shaddai3D.blend ↔ export JSON the game reads, so Blender decides "where goes where". Then import the realm cities into the owner's Blender.
+- The owner's Blender has a "TODAY 2026-09-28" collection (agents, train, weapons).
+- Local preview: `python -m http.server 3013` in public/. Render deploys main only, so nothing is pushed yet.
+
+## Running at session end (older): check git log + outputs first
 - 5-character fal build (ZEROX new owner T-pose, NEXUS, TURTLE, QUILL, SHADDAI no-horns) → `fal-assets/characters/<name>/`. Backup of the old models: `fal-assets/characters/_prev-20260928b/`. The script is in the session scratchpad (batch.sh); if it didn't finish, rerun `node fal-assets/character-pipeline.mjs <name> <png>` with FAL_KEY taken from ../Shaddai/.env. Refs are in `fal-assets/production/refs/agent-*/`.
 - Helper "walkable train" → `tools/tests/world-train-ride.test.cjs`: seat classes, map/phone/inventory usable while riding.
 - Helper "dragon elements" → `docs/DRAGON-ELEMENTS.md`: 7 elements (void, crystal, lightning, ice, lava, thorn, sand).
