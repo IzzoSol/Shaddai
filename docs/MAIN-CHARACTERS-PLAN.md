@@ -238,3 +238,31 @@ and `concepts/agent-*`; `fal-assets/characters/roster.json`; `public/assets/agen
 `agent-nexus.png`, `agent-pikadon.png`, `QUILL-council.png`, `ZEROX-council.png` (top-level LF2 folder) and
 `oracle-tpose-owner.jpg`, `pikadon-knight-tpose-owner.png`, `zerox-fullbody-katana.png`,
 `agent-oracle-tpose-noweapon.png`, `agent-pikadon-tpose-noweapon.png` (in-repo refs/concepts).
+
+## Owner decisions — 2026-09-28
+Refs are copied into `fal-assets/refs/characters/`. The originals stay on the Desktop.
+
+**ZEROX**
+- The katana is a separate weapon he **draws and attacks with**: sheathed at the hip, draw animation, slash combos.
+- Ref: `zerox-katana-ref.png`. A glowing teal curved blade, black/teal diamond-wrap handle, gold octagonal guard, bear emblem on the collar, gold pommel with a teal gem.
+- Keep it out of the body mesh. It's a prop attached to the right-hand bone.
+
+**NEXUS**
+- Approved: a **full-body heavy mech** designed from the helmet/collar portrait.
+- His attacks are **electric**: arc-discharge melee, a chain-lightning ranged attack, a ground-slam shock ring.
+- Show the T-pose concept for approval before spending on the mesh.
+
+**QUILL**
+- The T-pose ref is `quill-tpose-ref.png`: long black coat with copper filigree and red lining, cream vest, feather-quill bandolier and wrist quills, a scroll satchel, a thigh rig of ink vials, knee boots, a bear-pendant necklace.
+- He's **old-school human**, made "a little more agentic": subtle tech. Suggestions:
+  - faint ink-glow circuitry on the filigree;
+  - a small holo-quill at the wrist.
+- His attacks are **QUILL attacks**: thrown quill darts (volley), an ink splash/snare, a scroll-page shield.
+
+**TURTLE**
+- Weapon ref: `turtle-flail-ref.png`, a chrome spiked ball on a chain with a cylindrical grip. Attacks are a flail swing, a spin and a chain pull.
+- The body design question (chibi vs adult; goggles vs visor) is still open. The default is normal/taller proportions, per the owner rule.
+
+**Weapons pipeline**
+- Weapons are separate GLB props, attached to hand bones at runtime and swapped by animation state (sheathed → drawn).
+- Attack clips come from UAL2, plus custom per-weapon timing.
