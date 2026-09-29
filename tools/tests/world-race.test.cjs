@@ -33,4 +33,10 @@ t('items: weighted crate roll, Blue Line is Prime-only, shell 22 dmg, Ward Plate
 });
 t('ranked heats: Pad Rush / Foil Sip pocket vials are OFF; casual allows them', () => { assert.strictEqual(mk('plaza-cup', true).canUsePocket('pad-rush'), false); assert.strictEqual(mk('plaza-cup', true).canUsePocket('foil-sip'), false); assert.strictEqual(mk('plaza-cup', false).canUsePocket('pad-rush'), true); });
 t('max 8 riders per heat', () => { const r = W.create(W.CIRCUITS['plaza-cup'], { riders: Array.from({ length: 12 }, (_, i) => ({ id: 'r' + i })) }); assert.strictEqual(r.standings().length, 8); });
+t('3 city-scale tracks: Quarter Loop ~4.4 km, Grid Ring = the whole r1600 circle (~10 km, 8 CP gates), Train Ring r2829 (~17.8 km, map-wide)', () => {
+  const near = (a, b, tol) => Math.abs(a - b) / b < tol;
+  assert(near(W.trackLengthM('grid-ring'), 2 * Math.PI * 1600, 0.01), 'grid ' + W.trackLengthM('grid-ring')); assert(near(W.trackLengthM('train-ring'), 2 * Math.PI * 2829, 0.01), 'train ' + W.trackLengthM('train-ring')); assert(near(W.trackLengthM('quarter-loop'), 4427, 0.03), 'quarter ' + W.trackLengthM('quarter-loop'));
+  assert.strictEqual(W.CIRCUITS['grid-ring'].gates.length, 8); assert.strictEqual(W.CIRCUITS['grid-ring'].laps, 1); assert(W.CIRCUITS['train-ring'].openWorld); assert.strictEqual(W.CIRCUITS['quarter-loop'].scale, 'quarter');
+  const U = 7 / 1.8, g = W.trackWorld('grid-ring', U); assert(Math.abs(g[0].x) < 1e-6 && Math.abs(g[0].z + 1600 * U) < 1e-6, 'starts at the north gate (0, 1600 m) = world z -1600U'); const q = g[24]; assert(q.x < 0, 'counter-clockwise: 90 deg along the ring is WEST (CP_02 = (-1600, 0))');
+});
 console.log(pass + ' passed');

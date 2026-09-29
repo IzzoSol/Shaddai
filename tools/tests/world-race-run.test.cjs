@@ -41,4 +41,10 @@ t('finishing 1st pays 60 Sparks casual / 120 ranked; 3rd 20', () => {
   for (const [ranked, exp] of [[false, 60], [true, 120]]) { const { run, sparks, events } = mk(); run.start('plaza-cup', { ais: 1, ranked }); tick(run, at(0.99), 3.6); const R = run.race(), g = run._st().gates; for (let l = 0; l < 3; l++) for (let i = 0; i < g.length; i++) { run.update(0.05, { x: g[i].x, z: g[i].z, y: 0, yaw: 0, mode: g[i].kind === 'foil' ? 'foil' : 'pad', altM: g[i].kind === 'foil' ? 5 : 0.2, trick: g[i].verb ? { verb: g[i].verb, clean: true } : null }); }
     assert(R.rider('you').finished); const fin = events.find(e => e.type === 'finish'); assert(fin, 'finish event'); assert.strictEqual(fin.place, 1); assert.strictEqual(sparks.total, exp); }
 });
+t('city circuits: Grid Ring runs on the r1600 circle (8 CP gates, 24 crates, 16 pads); AI ride it; start pose is the north gate', () => {
+  const { run, events } = mk(); const sp = run.startPose('grid-ring'); assert(Math.abs(sp.x) / U < 130 && Math.abs(sp.z + 1600 * U) / U < 40, 'start pose just behind the north gate (' + Math.round(sp.x / U) + ', ' + Math.round(-sp.z / U) + ' m)'); run.start('grid-ring', { ais: 3 });
+  const st = run._st(); assert.strictEqual(st.gates.length, 8); assert.strictEqual(st.crates.length, 24); assert.strictEqual(st.pads.length, 16); assert(st.ais.every(a => Math.abs(Math.hypot(a.x, a.z) / U - 1600) < 25), 'AIs are on the ring');
+  tick(run, { x: 1e6, z: 1e6, y: 0, yaw: 0 }, 3.6); for (let i = 0; i < 400; i++) run.update(0.1, { x: 1e6, z: 1e6, y: 0, yaw: 0 }); assert(run.race().rider('ai0').gate >= 2, 'AI passed gates along the ring: ' + run.race().rider('ai0').gate);
+  const q = mk(); q.run.start('quarter-loop', { ais: 2 }); assert.strictEqual(q.run._st().gates.length, 12); const t2 = mk(); t2.run.start('train-ring', { ais: 2 }); assert.strictEqual(t2.run._st().gates.length, 12); assert(t2.run._st().C.openWorld);
+});
 console.log(pass + ' passed');

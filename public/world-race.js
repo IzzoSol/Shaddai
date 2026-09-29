@@ -25,6 +25,22 @@
     'rift-cut': { id: 'rift-cut', name: 'Rift Cut', laps: 2, cleanLapS: 78, rooms: ['forum', 'rift'], gates: [{ kind: 'pad' }, { kind: 'foil' }, { kind: 'either', rift: true }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'foil' }, { kind: 'pad' }], prime: true, sleepSprayBanned: true, lavaKill: true }
   };
 
+  /* CITY-SCALE CIRCUITS (owner 2026-09-29): Quarter Loop = the mini race around the grey NW petal (park + shops in the infield), Grid Ring = the WHOLE circle (outer ring road r 1600 m,
+   * CP_00..07 every 45 deg from the north start gate, counter-clockwise), Train Ring = the map-wide race around the maglev ring (r 2829 m). Park cups (above) run INSIDE the park. */
+  CIRCUITS['quarter-loop'] = { id: 'quarter-loop', name: 'Quarter Loop', scale: 'quarter', laps: 2, cleanLapS: 300, rooms: ['quarter'], lengthM: 4430, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }] };
+  CIRCUITS['grid-ring'] = { id: 'grid-ring', name: 'Grid Ring', scale: 'grid', laps: 1, cleanLapS: 620, rooms: ['grid'], lengthM: 10053, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }] };
+  CIRCUITS['train-ring'] = { id: 'train-ring', name: 'Train Ring (map-wide)', scale: 'train', laps: 1, cleanLapS: 1100, rooms: ['ring'], lengthM: 17775, prime: false, openWorld: true, gates: [{ kind: 'either' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'foil' }] };
+  var DEG = Math.PI / 180;
+  function pol(r, b) { return [r * Math.sin(b * DEG), r * Math.cos(b * DEG)]; }          // bearing (deg clockwise from north) -> metres [east, north]
+  function arc(r, b0, b1, n) { var o = []; for (var i = 0; i <= n; i++) o.push(pol(r, b0 + (b1 - b0) * i / n)); return o; }
+  var TRACKS = {
+    'grid-ring': function () { return arc(1600, 0, -360, 96).slice(0, -1); },
+    'train-ring': function () { return arc(2829, 0, -360, 144).slice(0, -1); },
+    'quarter-loop': function () { var out = arc(1600, 0, -67.5, 36), i, r; for (i = 1; i <= 8; i++) { r = 1600 - 100 * i; out.push(pol(r, -67.5)); } out = out.concat(arc(800, -67.5, 0, 24).slice(1)); for (i = 1; i < 8; i++) { r = 800 + 100 * i; out.push(pol(r, 0)); } return out; }
+  };
+  function trackWorld(cid, U) { var f = TRACKS[cid]; if (!f) return null; return f().map(function (p) { return { x: p[0] * U, y: 0, z: -p[1] * U }; }); }   // world: x east, z = -north (atlas rule)
+  function trackLengthM(cid) { var f = TRACKS[cid]; if (!f) return 0; var p = f(), L = 0; for (var i = 0; i < p.length; i++) { var a = p[i], b = p[(i + 1) % p.length]; L += Math.hypot(b[0] - a[0], b[1] - a[1]); } return L; }
+
   function create(circuit, opts) {
     opts = opts || {}; var ranked = !!opts.ranked, R = {}, riders = {}, order = [], t = 0, started = false, rng = opts.rng || Math.random;
     (opts.riders || []).slice(0, TUNE.maxRiders).forEach(function (r) { riders[r.id] = { id: r.id, name: r.name || r.id, deck: r.deck || 'park', gate: 0, lap: 0, checkpoint: -1, time: 0, finished: false, dnf: false, penaltyS: 0, trickS: 0, tricks: 0, hp: TUNE.hp, energy: 1, item: null, freeze: 0, boosting: false, ward: false, washes: 0, misses: 0 }; order.push(r.id); });
@@ -72,5 +88,5 @@
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
     return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
   }
-  root.WorldRace = { TUNE: TUNE, ITEMS: ITEMS, CIRCUITS: CIRCUITS, create: create, ribbon: ribbon };
+  root.WorldRace = { TUNE: TUNE, ITEMS: ITEMS, CIRCUITS: CIRCUITS, TRACKS: TRACKS, trackWorld: trackWorld, trackLengthM: trackLengthM, create: create, ribbon: ribbon };
 })(typeof window !== 'undefined' ? window : globalThis);
