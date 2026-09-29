@@ -385,7 +385,7 @@ function _loadScript(src){ return new Promise(function(res, rej){ const s=docume
 //    _ldStep(name, fn) wraps a promise-chain step; _ldBegin/_ldEnd bracket callback-driven builders. The same
 //    step list drives the loading-screen progress bar (_ldProgress → window.__loadProgress).
 const __LD = window.__LD = { steps: {}, order: [], long: [], t0: 0, done: false,
-  plan: MAP_V4 ? ['terrain','realm-modules','buildings','canon','city-v3','first-frame','fill','clusters','grid-fabric','dragons','wildlife','dragon-ride','goto','hud','city-actions','void-castle','sky-traffic','sky']
+  plan: MAP_V4 ? ['terrain','realm-modules','buildings','canon','city-v3','first-frame','fill','clusters','grid-fabric','dragons','wildlife','dragon-ride','goto','hud','city-actions','void-castle','sky-traffic','interiors-v3','sky']
                : ['buildings','first-frame'],
   // steps the SPAWN AREA needs before the loading screen lifts (the light loader's progress bar); the rest streams after entry
   critical: MAP_V4 ? ['terrain','realm-modules','buildings','canon','grid-fabric','city-v3','sky'] : ['buildings'] };
@@ -737,6 +737,21 @@ window.__worldBuilt = false;
           if (R && sh && sh.length) ['ORACLE','NEXUS'].forEach(function(n, i){ const w = sh[(i * 11) % sh.length]; if (w) R.spawnCompanion(n, R.skyShipVehicle(w), 'seat'); });
         }catch(e){ console.warn('[riders] ship companions failed:', e && e.message); } }, 20000);
       }).catch(function(e){ console.warn('[map-v4] sky traffic failed:', e && e.message); }).then(function(){ return api; });
+    }))
+    .then(_ldStep('interiors-v3', function(api){   // MAP v4 INTERIORS v3 (world-interiors-v3.js): 3,349 walk-in shops/offices/labs/market/homes/culture lane/deed office/campus (docs/INTERIORS-V3.md). Lazy: data index only until you are within 40 m.
+      if(!api) return api;
+      const furn = window.SHADDAI_FURNITURE ? Promise.resolve() : Promise.resolve();   // optional world-furniture.js does not exist yet: built-in box fallback
+      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20260928a'); }).then(function(){
+        window.__interiorsV3 = window.buildWorldInteriorsV3({ THREE, scene, heightAt: api.heightAt, city: window.__cityV3,
+          getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
+          onUse: function(e){ if(window.__onInteriorUse) window.__onInteriorUse(e); else console.info('[interiors-v3] use', e.type, e.kind, e.building.id); },
+          onEnter: function(b){ if(window.__hudV4 && window.__hudV4.ping) window.__hudV4.ping({ type: 'info', text: 'Entered ' + b.recipe }); } });
+        // E at an interior use point: tell v3 (onUse → launch game / rest / lift), then let city-actions open its panel as usual
+        const prev = window.__onCityInteract;
+        window.__onCityInteract = function(m){ const mine = window.__interiorsV3.handleInteract(m); if(prev && !(mine && m.interior && m.interior.type === 'lift')) prev(m); };
+        window.__w3dDebug.interiorsV3 = window.__interiorsV3;
+        return window.__interiorsV3.ready;
+      }).catch(function(e){ console.warn('[map-v4] interiors v3 failed:', e && e.message); }).then(function(){ return api; });
     }));
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
@@ -5020,6 +5035,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
   if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
   if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);
   if(MAP_V4 && window.__cityV3 && !_spawnBusy) window.__cityV3.update(dt);
+  if(MAP_V4 && window.__interiorsV3 && !_spawnBusy) window.__interiorsV3.update(dt);
   if(MAP_V4 && window.__hudV4) window.__hudV4.update(dt);
   if(MAP_V4 && window.__voidCastle) window.__voidCastle.update(t, dt);
   if(MAP_V4 && window.__skyTraffic) window.__skyTraffic.update(dt);   // outside _spawnBusy: bars stay live during a sky-dive
