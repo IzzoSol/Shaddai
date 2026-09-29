@@ -10,6 +10,7 @@ Legend: DONE (committed, tested) · PARTIAL · TODO. "Needs owner" = art/decisio
 | Underground station + elevator + maglev stop | DONE | `world-colosseum-metro.js` |
 | Trailer look: dragon PvP arena, spark pit, fighters with powers (slash arc, laser, hammer shockwave, orb, chain lightning, dragon breath) | TODO | reuse `world-weapons.js` (katana/laser/hammer/staff/flail), `world-dragons.js` elements (7), `world-dragon-ride.js`; new `ColosseumBattle` layer: 2-8 fighters, HP, i-frames, cameras (existing spectate cams) |
 | Events: signup, brackets, brawls for Sparks/PayBox, wagers later | TODO | client Navi Sparks demo only; server escrow/settle via `economy-service` (docs/CHAIN-READINESS.md order of work) |
+| Grand hall lobby (cathedral vault, portal, marble, Shaddai theme default) | DONE (owner ref `c2377bb5`); TODO: lobby CONNECTS ALL AROUND (outer concourse ring + stairs/ramps to the seats), fixed the metro 'black box' (now a navy/gold building) | 
 | GLB shell (Blender) | TODO (optional) | shell-only, seating stays procedural; plan Phase 1-2 |
 | Bots in the pit: owner kit lock, receipts, office stand | TODO | `world-bots.js` rules exist |
 
@@ -22,7 +23,7 @@ Legend: DONE (committed, tested) · PARTIAL · TODO. "Needs owner" = art/decisio
 | Hover SHIPS (vehicles) + cockpit interior + FIRST-PERSON view + boost | TODO | needs owner art (`f30c04bd...jpg` Rimba-style hover car, sketches promised); build in three.js code first, fal only for approved concepts; FPV camera at the cockpit socket, boost FOV punch, cockpit HUD in Navi cyan/gold; rider seat sockets exist in `world-riders.js` |
 | Ship flight animations (banking, hover bob, thruster FX) | TODO | procedural; reuse `HoverboardKit` flames/underglow patterns |
 | Hover-ship SHOPS in the world + inside homes (hangar/garage) | TODO | dealership stall (Ticket + Sparks), hangar room recipe in interiors v3 (`garage` exists as v2 room `GARAGE`), owned-ship spawn |
-| Park (7 rooms), race track around the park, circuits, gates, items, HP/ram | TODO | reference image in memory; map-wide ring race around the maglev ring; ranked rules (no Pad Rush vials) |
+| Park (7 rooms), race track around the park, circuits, gates, items, HP/ram | PARTIAL: `world-hoverpark.js` (7 tagged rooms, torii, deck, rails, banks, bowl, pool, rift gallery, ribbon, gates per circuit, crates; preview `hoverpark-preview.html`) + `world-race.js` rules (9/9 tests) + Navi race board. TODO: choose the park SITE on the map + host wiring (board ground query = max(terrain, park.heightAt), gate triggers -> `race.passGate`, foil/pad dual mode), ghosts, map-wide ring race | reference image in memory; map-wide ring race around the maglev ring; ranked rules (no Pad Rush vials) |
 | TSL/compute VFX + RenderPipeline bloom | DEFERRED | only after instancing; our ShaderMaterials (lava, water, floors) block WebGPU |
 
 ## C. Rigs / animation
