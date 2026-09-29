@@ -95,3 +95,31 @@ test('themes drive the emissive neon + velarium; velarium retracts/extends via o
   arena.setVelarium(0.5); for (let i = 0; i < 400; i++) arena.tick(0.05); assert.ok(Math.abs(arena.velarium.open - 0.5) < 0.01);
   arena.setTheme('classic');
 });
+
+test('stage 4 crowd: instanced, per-tier counts, seats sit on hLocal, quality hook scales cost', T, async () => {
+  const { THREE, arena } = await get(); const c = arena.crowd;
+  const total = c.seatsLower + c.seatsUpper; console.log('   [crowd] seats lower ' + c.seatsLower + ' upper ' + c.seatsUpper + ' total ' + total);
+  assert.ok(total > 24000, 'about 26k seats at 0.55 m spacing');
+  // every crowd instance stands on the walkable surface hLocal defines (never inside a tunnel / vomitorium)
+  const m = new THREE.Matrix4(), p = new THREE.Vector3(); let bad = 0;
+  for (const im of [c.farL, c.farU]) for (let i = 0; i < im.instanceMatrix.count; i += 7) { im.getMatrixAt(i, m); p.setFromMatrixPosition(m); const h = arena.hLocal(p.x, p.z); if (!(p.y - h > -0.01 && p.y - h < 0.6)) bad++; }
+  assert.equal(bad, 0, bad + ' crowd instances off the hLocal surface');
+  const rows = [];
+  for (const q of ['POTATO', 'LOW', 'MEDIUM', 'HIGH', 'ULTRA']) {
+    arena.setQuality(q); arena.group.visible = true; const s = stats(THREE, arena.group); arena.group.visible = false;
+    rows.push(q + ': calls ' + s.calls + ' tris ' + s.tris + ' inst ' + s.instances);
+  }
+  console.log('   [quality] ' + rows.join(' | '));
+  arena.setQuality('POTATO'); assert.ok(!c.farL.visible && !c.nearL.visible);
+  arena.setQuality('LOW'); assert.ok(c.farL.visible && c.farU.visible && !c.nearL.visible);
+  arena.setQuality('HIGH'); assert.ok(c.nearL.visible && c.farU.visible && !c.farL.visible);
+  arena.setQuality('ULTRA'); assert.ok(c.nearL.visible && c.nearU.visible);
+  arena.setQuality('MEDIUM'); assert.equal(arena.quality(), 'MEDIUM');
+});
+
+test('window.__quality string is honoured at build (POTATO builds no crowd, real lights <= tier)', T, async () => {
+  const r = await loadArena({ quality: 'POTATO' }); assert.equal(r.arena.quality(), 'POTATO'); assert.equal(r.arena.crowd.farL.count, 0);
+  let lights = 0; r.arena.group.traverse(o => { if (o.isPointLight && o.visible) lights++; }); assert.equal(lights, 0);
+  const h = await loadArena({ quality: 'HIGH' }); h.arena.setTheme('night'); let hl = 0; h.arena.group.traverse(o => { if (o.isPointLight && o.visible) hl++; }); assert.equal(hl, 4);
+  ctx = null;
+});

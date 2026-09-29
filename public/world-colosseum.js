@@ -149,8 +149,38 @@
       neon: new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xc9a24a, emissiveIntensity: 0.4, roughness: 0.4, metalness: 0.2 }) };
     var glowEntries = [{ mat: mats.neon, base: 0.4, amp: 0.2, phase: 0 }];   // world-interiors pulses these (emissiveIntensity = base + amp*wave) — themes retune base/amp
 
+    // ── QUALITY TIERS. window.__quality = 'POTATO' | 'LOW' | 'MEDIUM' | 'HIGH' | 'ULTRA' (string, or {tier}) is read at build and polled while the arena is open;
+    //    when unset the GPU string decides (Intel HD/UHD/Iris -> LOW). crowd = fraction of seats filled, near = crowd model detail (0 quads only, 1 lower tier solid, 2 both),
+    //    lights = real point lights, floor = pitch texture width, glb = load the GLB kit, agents = load the 7 agent bodies. ──
+    var TIERS = ['POTATO', 'LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
+    var QPARAM = {
+      POTATO: { crowd: 0,    near: 0, lights: 0, floor: 1024, glb: 0, agents: 0, kiosks: 0 },
+      LOW:    { crowd: 0.30, near: 0, lights: 0, floor: 1536, glb: 0, agents: 0, kiosks: 0 },
+      MEDIUM: { crowd: 0.55, near: 0, lights: 2, floor: 2048, glb: 1, agents: 3, kiosks: 8 },
+      HIGH:   { crowd: 0.75, near: 1, lights: 4, floor: 2048, glb: 1, agents: 7, kiosks: 24 },
+      ULTRA:  { crowd: 0.90, near: 2, lights: 6, floor: 3072, glb: 1, agents: 7, kiosks: 24 },
+    };
+    function readQuality() { var q = window.__quality; if (q && typeof q === 'object') q = q.tier || q.name || q.level; if (typeof q === 'string') { q = q.toUpperCase(); if (QPARAM[q]) return q; } return null; }
+    function detectTier() {
+      var forced = readQuality(); if (forced) return forced;
+      var gpu = '';
+      try {
+        var dbg = window.__w3dDebug && window.__w3dDebug.renderer, gl = dbg && dbg.getContext ? dbg.getContext() : null;
+        if (!gl) { var cv = document.createElement('canvas'); gl = cv.getContext && cv.getContext('webgl'); }
+        var ext = gl && gl.getExtension && gl.getExtension('WEBGL_debug_renderer_info'); if (ext) gpu = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
+      } catch (e) {}
+      var mem = (typeof navigator !== 'undefined' && navigator.deviceMemory) || 8, tier = 'MEDIUM';
+      if (/SwiftShader|llvmpipe|Software|Mali-4|Adreno \(TM\) [1-4]\d\d/i.test(gpu)) tier = 'POTATO';
+      else if (/Intel/i.test(gpu) && /HD|UHD|Iris|Graphics/i.test(gpu)) tier = /Iris Xe|Arc/i.test(gpu) ? 'MEDIUM' : 'LOW';
+      else if (/RTX|GTX 1[0-9]|RX [5-9]|Radeon Pro|Apple M/i.test(gpu)) tier = /RTX (3|4|5)|RX [7-9]|Apple M[2-9]/i.test(gpu) ? 'ULTRA' : 'HIGH';
+      if (mem <= 4 && TIERS.indexOf(tier) > 1) tier = 'LOW';
+      return tier;
+    }
+    var Q = QPARAM[detectTier()], qName = Q === QPARAM.POTATO ? 'POTATO' : Q === QPARAM.LOW ? 'LOW' : Q === QPARAM.MEDIUM ? 'MEDIUM' : Q === QPARAM.HIGH ? 'HIGH' : 'ULTRA';
+    var qualityHooks = [];
+
     // ── floor (canvas texture = field mode) ──
-    var fc = document.createElement('canvas'); fc.width = 2048; fc.height = 1454; var fx = fc.getContext('2d');
+    var fc = document.createElement('canvas'); fc.width = Q.floor; fc.height = Math.round(Q.floor * B / A); var fx = fc.getContext('2d');
     var ftex = new THREE.CanvasTexture(fc); ftex.colorSpace = THREE.SRGBColorSpace; ftex.anisotropy = 8; mats.floor.map = ftex;
     var floorGeo = new THREE.CircleGeometry(1, 96); floorGeo.rotateX(-Math.PI / 2);
     var floor = new THREE.Mesh(floorGeo, mats.floor); floor.scale.set(A, 1, B); floor.receiveShadow = true; root.add(floor);
@@ -330,7 +360,64 @@
     var sky = new THREE.Mesh(new THREE.SphereGeometry(420, 32, 16), skyMat); sky.frustumCulled = false; root.add(sky);
     var hemi = new THREE.HemisphereLight(0xfff1d6, 0x6b5a42, 1.1); root.add(hemi);
     var sun = new THREE.DirectionalLight(0xffe2b0, 2.2); sun.position.set(-120, 200, -80); root.add(sun); root.add(sun.target);   // aim at the arena, not the far-away world origin
-    var torches = []; for (var tI = 0; tI < 8; tI++) { var tt = tI / 8 * Math.PI * 2, pl = new THREE.PointLight(0xff9a3c, 0, 90); pl.position.set((A + LOW1) * Math.cos(tt), H_LOW + 4, (B + LOW1) * Math.sin(tt)); root.add(pl); torches.push(pl); }
+    // ── CROWD + TORCHES: every spectator is one instance (4 InstancedMeshes total), seat positions come from hLocal only ──
+    var CHEER = { value: 0.25 };                          // 0 = seated, 1 = on their feet (shader bob amplitude); setCrowdMood()
+    function crowdMat(base) {
+      var m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+      m.onBeforeCompile = function (sh) {
+        sh.uniforms.uTime = TIME; sh.uniforms.uCheer = CHEER;
+        sh.vertexShader = 'uniform float uTime; uniform float uCheer;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+          '#include <begin_vertex>\n#ifdef USE_INSTANCING\n float ph = float(gl_InstanceID) * 1.618; transformed.y += uCheer * (0.5 + 0.5 * sin(uTime * (3.0 + 5.0 * uCheer) + ph)) * 0.32 * (0.4 + position.y);\n#endif');
+      };
+      return m;
+    }
+    var seatsL = [], seatsU = [];
+    (function () {
+      var rng = (function (a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })(20260928);
+      function tierSeats(out, dStart, dEnd, h0, h1, rows, upper) {
+        for (var r = 0; r < rows; r++) {
+          var dMid = dStart + (r + 0.5) * (dEnd - dStart) / rows, yTop = h0 + (h1 - h0) * (r + 1) / rows, pts = perim(dMid, Math.floor(perim(dMid, 4).len / 0.55), 0.5), n = pts.length, per = n / D.SECTIONS;
+          for (var i = 0; i < n; i++) {
+            if ((i % per) < 2) continue;                                  // aisle between sections
+            var p = pts[i], smooth = upper ? H_LOW + ((dMid - PROM1) / (UP1 - PROM1)) * (H_UP - H_LOW) : tierH(dMid);
+            if (Math.abs(hLocal(p.x, p.z) - smooth) > 0.05) continue;     // tunnels / vomitoria / lobby cut-outs — hLocal is the sole authority
+            out.push({ x: p.x, y: yTop, z: p.z, yaw: p.yaw, sec: Math.floor(i / per), r: rng() });
+          }
+        }
+      }
+      tierSeats(seatsL, LOW0, LOW1, POD_H, H_LOW, ROWS, false);
+      tierSeats(seatsU, PROM1, UP1, H_LOW, H_UP, ROWS, true);
+      [seatsL, seatsU].forEach(function (a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } });   // shuffle so a prefix is a uniform density
+    })();
+    var PALETTE = [0xd94a4a, 0x3f7fd9, 0xe8c45c, 0x4fb87a, 0xa35bd6, 0xe98a3c, 0x36b8c9, 0xd9d9d9];
+    var nearGeo = mergeGeos([{ geo: new THREE.CylinderGeometry(0.16, 0.22, 0.62, 5, 1, true), m: T4(0, 0.31, 0) }, { geo: new THREE.OctahedronGeometry(0.15, 0), m: T4(0, 0.78, 0) }]);
+    var farGeo = mergeGeos([{ geo: new THREE.PlaneGeometry(0.46, 0.95), m: T4(0, 0.48, 0) }, { geo: new THREE.PlaneGeometry(0.46, 0.95).rotateY(Math.PI / 2), m: T4(0, 0.48, 0) }]);
+    var crowdMatFar = crowdMat(), crowdMatNear = crowdMat();
+    function crowdMesh(geo, mat, list, name) {
+      var im = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)), m = new THREE.Matrix4(), c = new THREE.Color();
+      for (var i = 0; i < list.length; i++) {
+        var s = list[i]; compose(m, s.x, s.y, s.z, s.yaw + Math.PI, 0.9 + s.r * 0.25, 0.9 + s.r * 0.25, 1); im.setMatrixAt(i, m);
+        c.setHex(PALETTE[(s.sec * 3 + (s.r * 4 | 0)) % PALETTE.length]).offsetHSL(0, 0, (s.r - 0.5) * 0.12); im.setColorAt(i, c);
+      }
+      im.count = 0; im.visible = false; im.name = name; im.frustumCulled = false; im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; root.add(im); return im;
+    }
+    var crowd = { farL: crowdMesh(farGeo, crowdMatFar, seatsL, 'crowd-far-lower'), farU: crowdMesh(farGeo, crowdMatFar, seatsU, 'crowd-far-upper'),
+      nearL: crowdMesh(nearGeo, crowdMatNear, seatsL, 'crowd-near-lower'), nearU: crowdMesh(nearGeo, crowdMatNear, seatsU, 'crowd-near-upper'), seatsLower: seatsL.length, seatsUpper: seatsU.length };
+    function setCount(im, n) { im.count = Math.max(0, Math.min(n, im.instanceMatrix.count)); im.visible = im.count > 0; }
+    function applyCrowd() {
+      var d = Q.crowd, nl = Math.floor(seatsL.length * d), nu = Math.floor(seatsU.length * d), near = Q.near;   // near: 0 none, 1 lower tier only, 2 both tiers
+      setCount(crowd.farL, near >= 1 ? 0 : nl); setCount(crowd.farU, near >= 2 ? 0 : nu); setCount(crowd.nearL, near >= 1 ? nl : 0); setCount(crowd.nearU, near >= 2 ? nu : 0);
+    }
+    // torches: 32 emissive flames on posts along the promenade parapet (1 draw call each for posts + flames); a few REAL point lights depending on the quality tier
+    var NTORCH = 32, torchPts = perim(PROM1 - 0.7, NTORCH, 0.25);
+    mats.flame = new THREE.MeshBasicMaterial({ color: 0xff9a3c });
+    instanced(new THREE.BoxGeometry(0.16, 1.3, 0.16), mats.stoneDark, NTORCH, function (i, m) { var p = torchPts[i]; compose(m, p.x, H_LOW + 0.65, p.z, p.yaw); }, 'torch-posts');
+    instanced(new THREE.ConeGeometry(0.22, 0.6, 6), mats.flame, NTORCH, function (i, m) { var p = torchPts[i]; compose(m, p.x, H_LOW + 1.6, p.z, 0); }, 'torch-flames');
+    var MAXL = 6, torches = [];
+    for (var tI = 0; tI < MAXL; tI++) { var lp = torchPts[Math.floor(tI * NTORCH / MAXL)], pl = new THREE.PointLight(0xff9a3c, 0, 70); pl.position.set(lp.x, H_LOW + 3, lp.z); pl.visible = false; root.add(pl); torches.push(pl); }
+    var torchIntensity = 0;
+    frameHooks.push(function () { for (var i = 0; i < torches.length; i++) if (torches[i].visible) torches[i].intensity = torchIntensity * (0.92 + 0.08 * Math.sin(TIME.value * 9 + i * 2.1)); });
+    function applyLights() { for (var i = 0; i < torches.length; i++) torches[i].visible = torchIntensity > 0 && i < Q.lights; }
 
     // ── themes (admin presets) ──
     var THEMES = {
@@ -344,7 +431,7 @@
       var T = THEMES[name] || THEMES.classic; current.theme = THEMES[name] ? name : 'classic';
       mats.stone.color.setHex(T.stone); mats.stoneDark.color.setHex(T.dark); mats.seat.color.setHex(T.seat); mats.trim.color.setHex(T.trim); mats.banner.color.setHex(T.banner);
       skyMat.uniforms.top.value.setHex(T.top); skyMat.uniforms.bot.value.setHex(T.bot); sun.intensity = T.sun; hemi.intensity = T.hemi;
-      torches.forEach(function (p) { p.intensity = T.torch; });
+      torchIntensity = T.torch; applyLights(); mats.flame.color.setHex(name === 'festival' ? 0xff5ac8 : 0xff9a3c);
       mats.recess.color.setHex(T.dark).multiplyScalar(0.3); velU.uC1.value.setHex(T.banner); velU.uC2.value.setHex(T.stone); vel.target = T.vel; if (!themeSet) { vel.open = T.vel; velU.uOpen.value = T.vel; velU.mesh.visible = T.vel > 0.02; themeSet = true; }
       mats.neon.emissive.setHex(T.trim); glowEntries[0].base = T.neon; glowEntries[0].amp = T.namp; mats.neon.emissiveIntensity = T.neon;
       env.fog.color.setHex(T.bot);
@@ -402,6 +489,7 @@
     //    800-unit bowl they turn everything navy. While the arena is visible use a light warm haze + long view. ──
     var env = { saved: null, fog: new THREE.Fog(0xf2dcb0, 900, 4200) };
     setInterval(function () {
+      var wq = readQuality(); if (wq && wq !== qName) api.setQuality(wq);
       var cam = window.__w3dDebug && window.__w3dDebug.camera;
       if (group.visible && !env.saved) {
         if (window.__shdVisitDistrict) window.__shdVisitDistrict('colosseum');
@@ -413,7 +501,7 @@
       }
     }, 250);
     var params = new URLSearchParams(location.search);
-    setField(params.get('field') || 'sand'); setTheme(params.get('colo') || 'classic');
+    setField(params.get('field') || 'sand'); setTheme(params.get('colo') || 'classic'); applyCrowd(); applyLights();
     scene.add(group);
 
     // ── ambient life for world-interiors' active-room loop: a time source (plain object whose rotation.y setter IS the clock — zero allocation),
@@ -445,7 +533,10 @@
       tick: function (dt) { var i; _clk += dt; TIME.value = _clk; for (i = 0; i < frameHooks.length; i++) frameHooks[i](dt); for (i = 0; i < glowEntries.length; i++) { var g = glowEntries[i]; g.mat.emissiveIntensity = g.base + g.amp * (0.5 + 0.5 * Math.sin(_clk * 1.15 + g.phase)); }
         var pa = motes.pts.geometry.attributes.position.array, hs = motes.hs; for (i = 0; i < motes.count; i++) { pa[i * 3] += motes.vel[i * 3]; pa[i * 3 + 1] += motes.vel[i * 3 + 1]; pa[i * 3 + 2] += motes.vel[i * 3 + 2]; if (pa[i * 3 + 1] > 21) pa[i * 3 + 1] = 1; if (pa[i * 3] > hs) pa[i * 3] -= hs * 2; if (pa[i * 3] < -hs) pa[i * 3] += hs * 2; if (pa[i * 3 + 2] > hs) pa[i * 3 + 2] -= hs * 2; if (pa[i * 3 + 2] < -hs) pa[i * 3 + 2] += hs * 2; }
         motes.pts.geometry.attributes.position.needsUpdate = true; },
-      setTheme: setTheme, setField: setField, spectate: spectate, cams: cams, vipSeats: vipSeats, agentSlots: agentSlots, setVelarium: function (o) { vel.target = Math.max(0, Math.min(1, o)); }, velarium: vel,
+      setTheme: setTheme, setField: setField, spectate: spectate, cams: cams, quality: function () { return qName; }, crowd: crowd,
+      setQuality: function (name) { name = String(name || '').toUpperCase(); if (!QPARAM[name]) return qName; Q = QPARAM[name]; qName = name; applyCrowd(); applyLights(); for (var qi = 0; qi < qualityHooks.length; qi++) qualityHooks[qi](Q, qName); return qName; },
+      setCrowdMood: function (v) { CHEER.value = Math.max(0, Math.min(1, v)); },
+      vipSeats: vipSeats, agentSlots: agentSlots, setVelarium: function (o) { vel.target = Math.max(0, Math.min(1, o)); }, velarium: vel,
       dims: Object.assign({}, D, { LOW1: LOW1, PROM1: PROM1, UP1: UP1, SHELL: SHELL, H_LOW: H_LOW, H_UP: H_UP, RAMP: RAMP, LOBBY_Z0: LOBBY_Z0 }), hLocal: hLocal,
       state: current, themes: Object.keys(THEMES),
     };
