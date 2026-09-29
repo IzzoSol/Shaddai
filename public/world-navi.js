@@ -252,14 +252,36 @@
     { id: 'l2', t: 'Targeting Matrix · Bot Skill', s: 'seller: lira', price: 850, cur: 'SPK', cat: 'Skills' },
     { id: 'l3', t: 'Aureate Strider · Hoverboard', s: 'seller: nova', price: 2450, cur: 'PBC', cat: 'Mounts' }
   ];
+  function openForm(title, fields, onSubmit) {
+    modalEl = document.createElement('div'); modalEl.className = 'modal';
+    modalEl.innerHTML = '<div><h3 style="margin:0 0 6px;color:' + THEME.gold + '">' + esc(title) + '</h3>' + fields.map(function (f) { return '<label style="font-size:12px;color:' + THEME.cyan + '">' + esc(f.label) + '</label><input data-f="' + f.key + '" placeholder="' + esc(f.ph || '') + '" ' + (f.num ? 'inputmode="numeric"' : '') + '>'; }).join('') +
+      '<div id="nvFormErr" style="color:#ff5a6e;min-height:18px;font-size:13px"></div><button class="b g" id="nvOk">SUBMIT</button><button class="b" id="nvNo">CANCEL</button></div>';
+    root.appendChild(modalEl); modalEl.querySelector('#nvNo').onclick = closeModal;
+    modalEl.querySelector('#nvOk').onclick = function () { var v = {}; fields.forEach(function (f) { v[f.key] = modalEl.querySelector('[data-f="' + f.key + '"]').value; }); var r = onSubmit(v); if (r && r.ok === false) { modalEl.querySelector('#nvFormErr').textContent = r.why || 'Check the fields'; return; } closeModal(); render(); };
+  }
+  function spendFn() { return function (n, kind, id) { return window.ShdSparks ? window.ShdSparks.spend(n, kind, id) : false; }; }
   M.market = function () {
+    var SC = window.WorldShowcase, rows = [], items = SC ? SC.list(null, { status: 'ok' }) : [];
+    LISTINGS.forEach(function (l) { rows.push({ id: l.id, t: l.t, s: l.s, tag: l.price + ' ' + l.cur }); });
+    items.forEach(function (i) { rows.push({ id: 'sc:' + i.id, t: i.title, s: SC.KINDS[i.kind].label + ' · ' + i.creator, tag: i.priceSparks ? i.priceSparks + ' SPK' : 'FREE' }); });
+    if (SC) { Object.keys(SC.KINDS).forEach(function (k) { rows.push({ id: 'sub:' + k, t: '＋ Submit ' + SC.KINDS[k].label.toLowerCase(), s: 'shown in ' + SC.KINDS[k].where, tag: 'YOURS' }); });
+      SC.ads.slots.forEach(function (a) { var st = SC.ads.state(a.id); rows.push({ id: 'ad:' + a.id, t: 'Ad space · ' + a.name, s: 'shaddai city', tag: st.free ? SC.TUNE.adPricePerDay + '/day' : 'TAKEN' }); }); }
     return {
-      title: 'MARKET', list: LISTINGS.map(function (l) { return { id: l.id, t: l.t, s: l.s, tag: l.price + ' ' + l.cur }; }), empty: 'Nothing listed right now.',
+      title: 'MARKET', list: rows, empty: 'Nothing listed right now.',
       detail: function (id) {
-        var l = LISTINGS.filter(function (x) { return x.id === id; })[0]; if (!l) return '<div class="empty">Tabs: Skills · Skins · Mounts · Upgrades · Radio tracks. Trade terminal lives here too.</div>';
+        if (id && id.indexOf('sub:') === 0) { var k = SC.KINDS[id.slice(4)]; return '<h3>SUBMIT ' + esc(k.label.toUpperCase()) + '</h3><div>Shown in the ' + esc(k.where) + '. Nothing appears or sells until it is reviewed.</div><button class="b g" data-a="submit">START</button>'; }
+        if (id && id.indexOf('ad:') === 0) { var a = SC.ads.slots.filter(function (x) { return x.id === id.slice(3); })[0], st = SC.ads.state(id.slice(3)); return '<h3>' + esc(a.name) + '</h3><div>' + (st.free ? 'Free · ' + SC.TUNE.adPricePerDay + ' Sparks/day (7 / 14 / 30 days)' : 'Taken until ' + new Date(st.until).toLocaleDateString() + ' · ' + esc(st.status)) + '</div><div class="empty">Images are reviewed before they show. No hate, scams or impersonation.</div>' + (st.free ? '<button class="b g" data-a="buyad">BUY 7 DAYS</button>' : ''); }
+        if (id && id.indexOf('sc:') === 0) { var it = SC.find(id.slice(3)); if (!it) return ''; return '<h3>' + esc(it.title) + '</h3><div>' + esc(SC.KINDS[it.kind].label) + ' by ' + esc(it.creator) + '</div><div style="margin:6px 0;font-size:12px;word-break:break-all">proof: ' + esc(it.fileHash || it.url) + '</div><div style="font-size:22px;color:' + THEME.gold + '">' + (it.priceSparks ? it.priceSparks + ' SPK' : 'FREE') + '</div><button class="b g" data-a="buysc">' + (it.priceSparks ? 'BUY' : 'GET') + '</button><div class="empty">' + SC.TUNE.burnPct + '% of every sale is burned, ' + SC.TUNE.housePct + '% goes to the house.</div>'; }
+        var l = LISTINGS.filter(function (x) { return x.id === id; })[0]; if (!l) return '<div class="empty">Art · Books · Tracks · NFT showcases · Ad space · Skins · Skills. Trade terminal lives here too.</div>';
         return '<h3>' + esc(l.t) + '</h3><div>' + esc(l.s) + '</div><div style="height:110px;margin:8px 0;border:1px dashed rgba(0,212,255,.4);display:flex;align-items:center;justify-content:center;color:#6f93b3">PREVIEW</div><div style="font-size:22px;color:' + THEME.gold + '">' + l.price + ' ' + l.cur + '</div><button class="b g" data-a="buy">BUY</button>';
       },
-      act: function (id, a) { var l = LISTINGS.filter(function (x) { return x.id === id; })[0]; if (l && a === 'buy') confirmBuy(l); }
+      act: function (id, a) {
+        if (!id) return;
+        if (a === 'submit') { var kind = id.slice(4); openForm('Submit ' + SC.KINDS[kind].label, [{ key: 'title', label: 'Title' }, { key: 'priceSparks', label: 'Price in Sparks (0 = free)', ph: '0', num: true }, { key: 'fileHash', label: 'File hash (sha256) — proves what you sold' }, { key: 'url', label: 'Link (https, optional)' }], function (v) { var r = SC.submit({ kind: kind, title: v.title, priceSparks: v.priceSparks || 0, fileHash: v.fileHash, url: v.url }); if (r.ok) toast('Submitted — pending review'); return r; }); }
+        else if (a === 'buysc') { var r = SC.buy(id.slice(3), spendFn()); toast(r.ok ? 'Yours: ' + r.item.title : r.why); }
+        else if (a === 'buyad') { var sid = id.slice(3); openForm('Buy ad space · 7 days', [{ key: 'imageHash', label: 'Image hash (sha256)' }], function (v) { var r = SC.ads.buy(sid, { imageHash: v.imageHash, days: 7 }, spendFn()); if (r.ok) toast('Ad bought — pending review'); return r; }); }
+        else if (a === 'buy') { var l = LISTINGS.filter(function (x) { return x.id === id; })[0]; if (l) confirmBuy(l); }
+      }
     };
   };
 
