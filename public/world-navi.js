@@ -174,8 +174,15 @@
     };
   };
 
+  // real world places: Colosseum door, maglev stations (harvested live; nothing is hard-coded to a guess)
+  function colosseumPin() { var d = window.__colosseumExt && window.__colosseumExt.door; return d ? { id: 'colo', t: 'Colosseum Door', kind: 'Colosseum', x: d[0], z: d[1] } : null; }
+  function harvestPins() {
+    var out = [], c = colosseumPin(); if (c) out.push(c);
+    try { var st = window.__worldTransitApi && window.__worldTransitApi.stations; if (st) st.forEach(function (q) { out.push({ id: 'st-' + q.id, t: (q.name || q.id) + ' Station', kind: 'Train', x: q.x, z: q.z }); }); } catch (e) { }
+    return out;
+  }
   function knownPins() {
-    var pins = S.pins.slice();
+    var pins = S.pins.concat(harvestPins());
     try { var c = window.__w3dDebug && window.__w3dDebug.cityActions; if (c && c.markers) c.markers.slice(0, 40).forEach(function (m) { if (m && m.x != null) pins.push({ id: 'm' + m.name, t: m.name, kind: 'Marker', x: m.x, z: m.z }); }); } catch (e) { }
     return pins;
   }
@@ -231,7 +238,7 @@
       },
       act: function (id, a) {
         var e = SPARK_EVENTS.filter(function (x) { return x.id === id; })[0]; if (!e) return;
-        if (a === 'su') { S.schedule.push({ id: e.id, t: e.t }); setWaypoint(e.pin); if (hooks().onSparksSignup) hooks().onSparksSignup(e.id); toast('Signed up. Navi will guide you to the door.'); }
+        if (a === 'su') { S.schedule.push({ id: e.id, t: e.t }); var cp = colosseumPin(); setWaypoint(cp ? { x: cp.x, z: cp.z, label: 'Colosseum Door', kind: 'Colosseum' } : e.pin); if (hooks().onSparksSignup) hooks().onSparksSignup(e.id); toast('Signed up. Navi will guide you to the door.'); }
         if (a === 'vs') toast('VS request: choose a target (coming with multiplayer roster).');
       }
     };
