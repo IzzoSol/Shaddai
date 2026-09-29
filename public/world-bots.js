@@ -81,7 +81,9 @@
 
   /* ── follower AI + bodies (needs THREE) ── */
   var bodies = {}, sim = {}, ctx = null;
+  var BODY = { scrap: 'scrap', lanky: 'lanky', tinker: 'scrap', warden: 'lanky', drifter: 'scrap', unicycle: 'unicycle', porter: 'unicycle', clerk: 'analyst', analyst: 'analyst', herald: 'analyst' };   // roster id -> rigged body (world-bot-bodies.js); variants recolour via def.style
   function mk(THREE, def) {
+    if (root.WorldBotBodies) { var bb = root.WorldBotBodies.build(THREE, BODY[def.id] || (def.kind === 'humanoid' ? 'scrap' : 'unicycle'), def.style); bb.root.userData.parts = {}; bb.root.userData.bot = bb; return bb.root; }
     var g = new THREE.Group(), st = def.style, M = function (c, e) { return new THREE.MeshLambertMaterial({ color: c, emissive: e || 0x000000 }); };
     var body = M(st.body), head = M(st.head), eye = M(0x111111, st.eye), acc = M(st.accent), dark = M(0x2a2f36);
     function add(geo, m, x, y, z, rx, ry, rz) { var o = new THREE.Mesh(geo, m); o.position.set(x, y, z); if (rx || ry || rz) o.rotation.set(rx || 0, ry || 0, rz || 0); g.add(o); return o; }
@@ -108,7 +110,7 @@
     if (!ctx) return;
     S.owned.forEach(function (r) {
       var want = r.bodyState === 'active';
-      if (want && !bodies[r.id]) { var m = mk(ctx.THREE, byId[r.id]); m.scale.setScalar(3.889); ctx.scene.add(m); bodies[r.id] = m; sim[r.id] = { x: null, z: null, yaw: 0, ph: 0, v: 0 }; }
+      if (want && !bodies[r.id]) { var m = mk(ctx.THREE, byId[r.id]); m.scale.setScalar(3.889); ctx.scene.add(m); bodies[r.id] = m; sim[r.id] = { x: null, z: null, yaw: 0, ph: 0, v: 0 }; if (m.userData.bot) { sim[r.id].mixer = new ctx.THREE.AnimationMixer(m); sim[r.id].bot = m.userData.bot; } }
       if (!want && bodies[r.id]) { ctx.scene.remove(bodies[r.id]); delete bodies[r.id]; delete sim[r.id]; }
     });
   }
@@ -129,6 +131,9 @@
       }
       s.ph += dt * (moving ? 9 : 0); var y = ctx.heightAt(s.x, s.z);
       m.position.set(s.x, y + (r.hoverboard ? 0.35 * U : 0), s.z); m.rotation.y = s.yaw;
+      if (s.mixer) {   // real rig: crossfade idle <-> walk clips
+        var want = moving ? 'walk' : 'idle'; if (s.clip !== want) { var a = s.mixer.clipAction(s.bot.clips[want] || s.bot.clips.idle); if (s.act) s.act.fadeOut(0.25); a.reset().fadeIn(0.25).play(); s.act = a; s.clip = want; } s.mixer.update(dt); return;
+      }
       var P = m.userData.parts, sw = moving ? Math.sin(s.ph) * 0.7 : 0;
       if (P.legL) { P.legL.rotation.x = sw; P.legR.rotation.x = -sw; } if (P.armL) { P.armL.rotation.x = -sw * 0.8; P.armR.rotation.x = sw * 0.8; } if (P.wheel) P.wheel.rotation.x += moving ? dt * 6 : 0;
     });

@@ -26,7 +26,7 @@ Legend: DONE (committed, tested) · PARTIAL · TODO. "Needs owner" = art/decisio
 | TSL/compute VFX + RenderPipeline bloom | DEFERRED | only after instancing; our ShaderMaterials (lava, water, floors) block WebGPU |
 
 ## C. Rigs / animation
-PIKADON + ORACLE rebuilt (done). Player UAL library (43+ clips) wired. TODO: swim animation + underwater pose, sit pose polish (Sit_Chair_Loop is used), bot walk cycles are procedural placeholders, remaining 7 bot bodies need owner refs, agent rigs for user-made models (vet -> approve -> rig -> implement pipeline, tiered).
+PIKADON + ORACLE rebuilt (done). **Bot bodies: code-built and RIGGED** (`public/world-bot-bodies.js`, preview `bots-preview.html`): SCRAP, LANKY, UNI-9, ANALYST, casino dealer bot (for the arcade building) with joint-hierarchy rigs + real AnimationClips (idle/walk/run/wave/talk); the other 6 roster bots are recolours of these four bodies until new refs arrive. Owner OK'd Tripo/Meshy if a body needs a mesh (ref crops in `fal-assets/production/refs/bots/`). TODO: place the casino bot in the arcade building interior (v3 `arcade` recipe NPC slot), body polish (chunkier shells, textures), unicycle wheel detail. Player UAL library (43+ clips) wired. TODO: swim animation + underwater pose, sit pose polish (Sit_Chair_Loop is used), bot walk cycles are procedural placeholders, remaining 7 bot bodies need owner refs, agent rigs for user-made models (vet -> approve -> rig -> implement pipeline, tiered).
 
 ## D. Worlds
 | Item | State |
