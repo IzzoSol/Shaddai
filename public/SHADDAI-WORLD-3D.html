@@ -4693,7 +4693,7 @@ window.__quality = _Q.tiers[_Q.tier].name;
 window.__fpsNow = function(){ return _Q.fps; };
 try{   // integrated / software GPUs (Intel HD/UHD, Mesa, SwiftShader) start on POTATO; the governor climbs if the machine proves fast
   const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_renderer_info'), _gpu = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : '';
-  window.__gpuName = _gpu; window.__lite = /[?&]lite=1/.test(location.search);   // lite is opt-in only (owner: no lite version) if(/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu)){ _Q.tier = 0; window.__quality = _Q.tiers[0].name; }
+  window.__gpuName = _gpu; window.__lite = /[?&]lite=1/.test(location.search); window.__fewLights = /[?&]fewlights=1/.test(location.search);   // lite is opt-in only (owner: no lite version) if(/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu)){ _Q.tier = 0; window.__quality = _Q.tiers[0].name; }
 }catch(_){}
 
 function _applyQualityTier(idx){
@@ -4821,6 +4821,16 @@ function animate(){
   }
   _animFrame++;
   const dt=Math.min(0.05, clock.getDelta());
+  // PERF LIGHT SWEEP: three shades every lit pixel against EVERY visible light (38 in this scene, most of them interior / Colosseum
+  // lights on the far room island). Outside: island lights are off. Inside a room: world lights are off. Toggling happens only when the
+  // inside/outside state changes (or every 4 s to catch lights built later), so shaders don't recompile mid-play.
+  (function(){ const st = window.__lightSweep = window.__lightSweep || { inside: null, t: 0, v: new THREE.Vector3(), off: 0 };
+    const inside = !!(_interiors && _interiors.isInside && _interiors.isInside()); st.t -= dt;
+    if(inside !== st.inside || st.t <= 0){ st.t = 4; st.inside = inside; let off = 0;
+      scene.traverse(function(o){ if(!o.isLight || o.isAmbientLight || o.isHemisphereLight || o.isDirectionalLight) return; if(o === key || o === gold || o === camFill) return;
+        o.getWorldPosition(st.v); const far = Math.abs(st.v.x) > 5500 || Math.abs(st.v.z) > 5500 || st.v.y > 1500;
+        const want = (!inside && window.__fewLights && o.isPointLight && !(o.parent && o.parent.name === 'world-volcano')) ? false : (inside ? far : !far); if(o.visible !== want){ o.visible = want; } if(!want) off++; });
+      st.off = off; } })();
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
   if(worldSpawn) worldSpawn.update(dt, clock.elapsedTime);

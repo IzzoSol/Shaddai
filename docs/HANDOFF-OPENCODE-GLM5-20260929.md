@@ -46,3 +46,10 @@ Cause: LITE mode skips the far/optional builds and POTATO tier used a 75 m cull 
 6. Agent buildings art/ad pylons; economy-service routes; Hedera/Solana adapters (docs/CHAIN-READINESS.md).
 7. SHADDAI intro (fal, ~$30 left, spend only on approved items) — last.
 - Docs to read first: `docs/MASTER-TASKBOARD.md`, `docs/PERF-LOAD.md`, `docs/NAVI.md`, `docs/REALM-HOMES.md`, `docs/CHAIN-READINESS.md`.
+
+## Addendum (late 2026-09-29): light + program findings
+- Headless probe `tools/_prog.cjs` at street level: **38-40 visible lights** (31 PointLights unnamed at scene root near the city core x~37..260, 4 volcano PointLights I=400, plus key/gold/camFill), 83 shader programs, 8,878 meshes (6,334 instanced), 1,564 unique materials (7,475 MeshStandard), 2,097 draw calls, 4.3 M tris, shadows off.
+- Every MeshStandard fragment loops all visible lights -> big cost on Intel HD 620 and big shader compile. Turning off all city-core point lights (`?fewlights=1`, opt-in flag added) did NOT shorten the headless first frame (still ~28 s) — but the headless renderer is software (SwiftShader), so it is rasterizer-bound and cannot show real-GPU compile/fill cost. **Profile on the real laptop** (Chrome DevTools Performance + `?perf=1`) before optimizing further.
+- Added `window.__lightSweep` (host, per-frame): lights on the far room island are off outside, world lights off inside rooms; re-checked every 4 s. `?fewlights=1` also disables city point lights outside.
+- Best candidates (do these on real hardware): replace the ~31 per-room/legacy PointLights with baked lightmaps or emissive-only materials; cap to ~8 real lights; merge static meshes per district; KTX2 textures; lower `sc-*` building triangle counts / LOD.
+- Lite mode is opt-in only (`?lite=1`). City fabric now loads in the background (no longer blocks the loading screen).
