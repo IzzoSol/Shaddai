@@ -25,7 +25,7 @@
     var g = new THREE.Group(); g.name = 'colosseum-metro'; root.add(g);
     var W = M.x1 - M.x0, D = M.z1 - M.z0, H = 8;
     function mat(c, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.75, metalness: 0.2 }, o || {})); }
-    var mTile = mat(0x2a2f38, { emissive: 0x141a22, emissiveIntensity: 1 }), mWall = mat(0x1a1d24, { emissive: 0x0e131a, emissiveIntensity: 1 }), mTrim = mat(0x00d4ff, { emissive: 0x00d4ff, emissiveIntensity: 1.4 }), mGold = mat(0xe8c45c, { emissive: 0xe8c45c, emissiveIntensity: 0.5 }),
+    var mTile = mat(0x2a2f38, { emissive: 0x141a22, emissiveIntensity: 1 }), mWall = mat(0x2b3860, { emissive: 0x17224a, emissiveIntensity: 0.9 }), mTrim = mat(0x00d4ff, { emissive: 0x00d4ff, emissiveIntensity: 1.4 }), mGold = mat(0xe8c45c, { emissive: 0xe8c45c, emissiveIntensity: 0.5 }),
       mRail = mat(0x9aa3ad, { metalness: 0.9, roughness: 0.3 }), mCar = mat(0xdfe6ee, { metalness: 0.6, roughness: 0.35 }), mWin = mat(0x0a1a22, { emissive: 0x66f0ff, emissiveIntensity: 0.7 }),
       mLight = mat(0xffffff, { emissive: 0xfff3d0, emissiveIntensity: 1.2 }), mDark = mat(0x07090c), mGlass = mat(0x0f2a30, { emissive: 0x00d4ff, emissiveIntensity: 0.25, transparent: true, opacity: 0.55 });
     function box(w, h, d, m, x, y, z) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); g.add(b); return b; }
@@ -36,6 +36,7 @@
     var floor = new THREE.Mesh(new THREE.PlaneGeometry(W, M.platform), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.25, emissive: 0x2a3140, emissiveMap: tex, emissiveIntensity: 0.55 })); floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, M.z0 + M.platform / 2); g.add(floor);
     box(W, 0.2, D - M.platform, mDark, cx, -1.1, pz1 + (D - M.platform) / 2);                            // trench bed
     box(W, 0.3, D, mWall, cx, H + 0.15, cz);                                                             // ceiling
+    box(W + 1.6, 0.6, 0.6, mGold, cx, H + 0.6, M.z0 - 0.8); box(W + 1.6, 0.6, 0.6, mGold, cx, H + 0.6, M.z1 + 0.8); box(0.6, 0.6, D + 1.6, mGold, M.x0 - 0.8, H + 0.6, cz); box(0.6, 0.6, D + 1.6, mGold, M.x1 + 0.8, H + 0.6, cz); box(W + 1.2, 0.25, 0.3, mTrim, cx, H + 1.05, M.z0 - 0.6); box(W + 1.2, 0.25, 0.3, mTrim, cx, H + 1.05, M.z1 + 0.6); box(0.3, 0.25, D + 1.2, mTrim, M.x0 - 0.6, H + 1.05, cz); box(0.3, 0.25, D + 1.2, mTrim, M.x1 + 0.6, H + 1.05, cz);   // gold cornice + cyan cap: reads as a building, not a black box
     box(W, H, 0.6, mWall, cx, H / 2, M.z0 - 0.3); box(W, H, 0.6, mWall, cx, H / 2, M.z1 + 0.3);         // long walls
     box(0.6, H, D, mWall, M.x0 - 0.3, H / 2, cz); box(0.6, H, D, mWall, M.x1 + 0.3, H / 2, cz);          // end walls
     box(W, 0.3, 0.3, mGold, cx, 0.02, pz1 - 0.3); box(W, 0.12, 0.4, mTrim, cx, H - 0.1, M.z0 + 0.4);   // platform edge strip + cyan cove

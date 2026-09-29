@@ -348,12 +348,14 @@
       var vm = new THREE.Mesh(g, velMat); vm.name = 'velarium'; vm.frustumCulled = false; vm.renderOrder = 5; root.add(vm); velU.mesh = vm;
     })();
     var vel = { target: 0.7, open: 0 };
+    frameHooks.push(function (dt) { for (var pr = 0; pr < portalRings.length; pr++) portalRings[pr].rotation.z += portalRings[pr].userData.spin * dt; });
     frameHooks.push(function (dt) { var k = Math.min(1, dt * 1.4); if (Math.abs(vel.target - vel.open) > 0.002) { vel.open += (vel.target - vel.open) * k; velU.uOpen.value = vel.open; velU.mesh.visible = vel.open > 0.02; } });
     function drawScreen(line2) {
       sx.fillStyle = '#05070a'; sx.fillRect(0, 0, 1024, 512); sx.strokeStyle = '#e8c45c'; sx.lineWidth = 10; sx.strokeRect(8, 8, 1008, 496);
       sx.fillStyle = '#e8c45c'; sx.font = '900 92px Georgia, serif'; sx.textAlign = 'center'; sx.fillText('THE COLOSSEUM', 512, 220);
       sx.fillStyle = '#dfe7ee'; sx.font = '600 44px system-ui, sans-serif'; sx.fillText(line2, 512, 330); stex.needsUpdate = true;
     }
+    var portalRings = [];   // lobby portal rings spin slowly (frame hook below)
     // ── lobby (grand hall) south of the shell ──
     var lobby = new THREE.Group(); lobby.position.set(0, 0, LOBBY_Z0 + LOBBY_D / 2); root.add(lobby);
     var lf = new THREE.Mesh(new THREE.PlaneGeometry(LOBBY_W, LOBBY_D), M(0xe9dcc0, { roughness: 0.4, metalness: 0.1 })); lf.rotation.x = -Math.PI / 2; lobby.add(lf);
@@ -365,6 +367,37 @@
     for (var cz = -1; cz <= 1; cz += 2) for (var cx = -3; cx <= 3; cx++) { if (cx === 0) continue; var col = new THREE.Mesh(colGeo, mats.stone); col.position.set(cx * 7.5, (LOBBY_H - 2) / 2, cz * 9); lobby.add(col); }
     var emblem = new THREE.Mesh(new THREE.RingGeometry(5, 6.2, 64), mats.trim); emblem.rotation.x = -Math.PI / 2; emblem.position.y = 0.05; lobby.add(emblem);
     var board = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), mats.screen); board.position.set(0, 14, LOBBY_D / 2 - 1); board.rotation.y = Math.PI; lobby.add(board);
+    // ── GRAND HALL upgrade (owner ref, 2026-09-29): ribbed vault + skylight shafts, swirled marble walls, gold-ringed portal to the arena, navy/gold floor, cyan LED ribs ──
+    (function () {
+      roof.visible = false;
+      var navyM = M(0x22346a, { roughness: 0.35, metalness: 0.5, emissive: 0x12204a, emissiveIntensity: 0.9 }), goldM = M(0xD4AF37, { roughness: 0.3, metalness: 0.9, emissive: 0xD4AF37, emissiveIntensity: 0.25 }), cyanM = new THREE.MeshBasicMaterial({ color: 0x00D4FF });
+      lf.material = M(0x111d3d, { roughness: 0.22, metalness: 0.55 });
+      var inl = [[0, 0, 1.2, LOBBY_D - 4], [-9, 0, 0.5, LOBBY_D - 4], [9, 0, 0.5, LOBBY_D - 4]]; inl.forEach(function (q) { var m = new THREE.Mesh(new THREE.PlaneGeometry(q[2], q[3]), goldM); m.rotation.x = -Math.PI / 2; m.position.set(q[0], 0.04, q[1]); lobby.add(m); });
+      var vr = LOBBY_W / 2, springY = 15, vaultH = LOBBY_H - springY;
+      var arch = new THREE.Shape(); arch.absellipse(0, 0, vr, vaultH, 0, Math.PI, false); arch.lineTo(-vr, 0);
+      var vg = new THREE.ExtrudeGeometry(arch, { depth: LOBBY_D, bevelEnabled: false, curveSegments: 40 }); vg.translate(0, 0, -LOBBY_D / 2);
+      var vault = new THREE.Mesh(vg, M(0x24346a, { roughness: 0.6, metalness: 0.3, emissive: 0x12204a, emissiveIntensity: 0.9 })); vault.material.side = THREE.BackSide; vault.position.set(0, springY, 0); lobby.add(vault);
+      for (var rb = -3; rb <= 3; rb++) { var rib = new THREE.Mesh(new THREE.TorusGeometry(vr - 0.15, 0.35, 8, 40, Math.PI), goldM); rib.scale.set(1, vaultH / vr, 1); rib.position.set(0, springY, rb * 4.4); lobby.add(rib); }
+      var apex = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, LOBBY_D - 1), cyanM); apex.position.set(0, LOBBY_H - 0.1, 0); lobby.add(apex);
+      var sk = new THREE.Mesh(new THREE.PlaneGeometry(6, LOBBY_D - 3), new THREE.MeshBasicMaterial({ color: 0xffe9b8 })); sk.rotation.x = Math.PI / 2; sk.position.set(0, LOBBY_H - 0.25, 0); lobby.add(sk);
+      for (var sh = -1; sh <= 1; sh++) { var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 2.0, LOBBY_H - 2, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xffdfa0, transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide })); shaft.position.set(sh * 8, (LOBBY_H - 2) / 2 + 1, sh * 4); shaft.rotation.z = sh * 0.06; lobby.add(shaft); }
+      var mc = document.createElement('canvas'); mc.width = 512; mc.height = 512; var mx = mc.getContext('2d'); var gr = mx.createLinearGradient(0, 0, 512, 512); gr.addColorStop(0, '#e8cf8a'); gr.addColorStop(0.5, '#f4e6bd'); gr.addColorStop(1, '#c9a24a'); mx.fillStyle = gr; mx.fillRect(0, 0, 512, 512);
+      for (var sw = 0; sw < 26; sw++) { mx.strokeStyle = sw % 3 ? 'rgba(212,175,55,0.5)' : 'rgba(15,26,54,0.42)'; mx.lineWidth = 2 + (sw % 5); mx.beginPath(); var y0 = (sw * 37) % 512; mx.moveTo(-10, y0); mx.bezierCurveTo(120, y0 - 120 + sw * 6, 260, y0 + 140 - sw * 4, 522, y0 + ((sw * 53) % 120) - 60); mx.stroke(); }
+      var mtex = new THREE.CanvasTexture(mc); mtex.colorSpace = THREE.SRGBColorSpace; mtex.wrapS = mtex.wrapT = THREE.RepeatWrapping; mtex.repeat.set(2, 1.6);
+      [-1, 1].forEach(function (sd) {
+        var panel = new THREE.Mesh(new THREE.PlaneGeometry(LOBBY_D - 2, LOBBY_H - 2), new THREE.MeshStandardMaterial({ map: mtex, roughness: 0.35, metalness: 0.25, emissive: 0x3a2a08, emissiveIntensity: 0.25 })); panel.rotation.y = -sd * Math.PI / 2; panel.position.set(sd * (LOBBY_W / 2 - 0.85), (LOBBY_H - 2) / 2 + 1, 0); lobby.add(panel);
+        for (var bz = -3; bz <= 3; bz++) { var buttress = new THREE.Mesh(new THREE.BoxGeometry(1.4, LOBBY_H - 1, 1.2), navyM); buttress.position.set(sd * (LOBBY_W / 2 - 1.5), (LOBBY_H - 1) / 2, bz * 4.4); lobby.add(buttress); var led = new THREE.Mesh(new THREE.BoxGeometry(0.12, LOBBY_H - 3, 0.12), cyanM); led.position.set(sd * (LOBBY_W / 2 - 2.25), (LOBBY_H - 1) / 2, bz * 4.4); lobby.add(led); }
+        var ban = document.createElement('canvas'); ban.width = 128; ban.height = 384; var bx = ban.getContext('2d'); bx.fillStyle = '#0d2b5c'; bx.fillRect(0, 0, 128, 384); bx.strokeStyle = '#D4AF37'; bx.lineWidth = 6; bx.strokeRect(6, 6, 116, 372); bx.fillStyle = '#D4AF37'; bx.font = '700 40px Georgia,serif'; bx.textAlign = 'center'; bx.save(); bx.translate(64, 200); bx.rotate(-Math.PI / 2); bx.fillText('S H A D D A I', 0, 12); bx.restore(); var btx = new THREE.CanvasTexture(ban); btx.colorSpace = THREE.SRGBColorSpace;
+        [-8.8, 8.8].forEach(function (zz) { var bn = new THREE.Mesh(new THREE.PlaneGeometry(3, 9), new THREE.MeshBasicMaterial({ map: btx, side: THREE.DoubleSide })); bn.rotation.y = -sd * Math.PI / 2; bn.position.set(sd * (LOBBY_W / 2 - 1.0), 15.5, zz); lobby.add(bn); });
+      });
+      lobby.children.slice().forEach(function (o) { if (o.geometry === colGeo) { o.material = navyM; [0.3, LOBBY_H - 2.3].forEach(function (yy) { var ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.22, 8, 24), goldM); ring.rotation.x = Math.PI / 2; ring.position.set(o.position.x, yy, o.position.z); lobby.add(ring); }); } });
+      var pz = -LOBBY_D / 2 + 0.9, pc = document.createElement('canvas'); pc.width = pc.height = 256; var px = pc.getContext('2d'); var rg = px.createRadialGradient(128, 128, 6, 128, 128, 126); rg.addColorStop(0, '#fff6d6'); rg.addColorStop(0.35, '#ffd27a'); rg.addColorStop(0.75, '#d99a2a'); rg.addColorStop(1, '#5a3a08'); px.fillStyle = rg; px.fillRect(0, 0, 256, 256);
+      var ptx = new THREE.CanvasTexture(pc); ptx.colorSpace = THREE.SRGBColorSpace; var disc = new THREE.Mesh(new THREE.CircleGeometry(8.4, 48), new THREE.MeshBasicMaterial({ map: ptx })); disc.position.set(0, 13, pz); lobby.add(disc);
+      [[8.9, 0.55], [7.2, 0.3], [5.4, 0.22], [3.6, 0.18]].forEach(function (q, i) { var r = new THREE.Mesh(new THREE.TorusGeometry(q[0], q[1], 10, 60), i % 2 ? cyanM : goldM); r.position.set(0, 13, pz + 0.15 + i * 0.05); r.userData.spin = (i % 2 ? 1 : -1) * (0.12 + i * 0.05); lobby.add(r); portalRings.push(r); });
+      for (var pk = 0; pk < 16; pk++) { var pa = pk / 16 * Math.PI * 2, spk = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), goldM); spk.position.set(Math.cos(pa) * 10.2, 13 + Math.sin(pa) * 10.2, pz + 0.1); spk.rotation.z = pa - Math.PI / 2; lobby.add(spk); }
+      var tc = document.createElement('canvas'); tc.width = 1024; tc.height = 160; var tx2 = tc.getContext('2d'); tx2.fillStyle = 'rgba(13,20,44,0.92)'; tx2.fillRect(0, 0, 1024, 160); tx2.strokeStyle = '#D4AF37'; tx2.lineWidth = 6; tx2.strokeRect(6, 6, 1012, 148); tx2.fillStyle = '#D4AF37'; tx2.font = '700 84px Georgia,serif'; tx2.textAlign = 'center'; tx2.textBaseline = 'middle'; tx2.fillText('S H A D D A I   C O L O S S E U M', 512, 84);
+      var ttx = new THREE.CanvasTexture(tc); ttx.colorSpace = THREE.SRGBColorSpace; var ttl = new THREE.Mesh(new THREE.PlaneGeometry(28, 4.4), new THREE.MeshBasicMaterial({ map: ttx })); ttl.rotation.y = Math.PI; ttl.position.set(0, 20.6, LOBBY_D / 2 - 0.9); lobby.add(ttl);
+    })();
     // ── sky + light (open-air bowl) ──
     var skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: { top: { value: new THREE.Color() }, bot: { value: new THREE.Color() } },
       vertexShader: 'varying float h; void main(){ h = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
@@ -565,6 +598,7 @@
 
     // ── themes (admin presets) ──
     var THEMES = {
+      shaddai:  { stone: 0x4a5f9c, dark: 0x243158, seat: 0x4a5c94, trim: 0xD4AF37, neonC: 0x00D4FF, banner: 0x123a80, top: 0x0a1338, bot: 0x2f4585, sun: 1.7, hemi: 1.15, torch: 2.4, neon: 1.7, namp: 0.5, vel: 0.6 },
       classic:  { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0xc9a24a, banner: 0x9e1b1b, top: 0x6fa8dc, bot: 0xf2dcb0, sun: 1.5, hemi: 0.95, torch: 0, neon: 0.35, namp: 0.15, vel: 0.7 },
       royal:    { stone: 0xf1ede6, dark: 0xcfc6b8, seat: 0xe6ddcc, trim: 0xe8c45c, banner: 0x1c2f6b, top: 0x8fb8ea, bot: 0xfff3dc, sun: 2.4, hemi: 1.2, torch: 0, neon: 0.3, namp: 0.1, vel: 0.9 },
       night:    { stone: 0x5e5647, dark: 0x3b352c, seat: 0x544b3d, trim: 0xe8c45c, banner: 0x6b0f0f, top: 0x05070f, bot: 0x2a1c10, sun: 0.25, hemi: 0.35, torch: 3.5, neon: 1.1, namp: 0.4, vel: 0 },
@@ -577,7 +611,7 @@
       skyMat.uniforms.top.value.setHex(T.top); skyMat.uniforms.bot.value.setHex(T.bot); sun.intensity = T.sun; hemi.intensity = T.hemi;
       torchIntensity = T.torch; applyLights(); mats.flame.color.setHex(name === 'festival' ? 0xff5ac8 : 0xff9a3c);
       mats.recess.color.setHex(T.dark).multiplyScalar(0.3); velU.uC1.value.setHex(T.banner); velU.uC2.value.setHex(T.stone); vel.target = T.vel; if (!themeSet) { vel.open = T.vel; velU.uOpen.value = T.vel; velU.mesh.visible = T.vel > 0.02; themeSet = true; }
-      mats.neon.emissive.setHex(T.trim); glowEntries[0].base = T.neon; glowEntries[0].amp = T.namp; mats.neon.emissiveIntensity = T.neon;
+      mats.neon.emissive.setHex(T.neonC || T.trim); glowEntries[0].base = T.neon; glowEntries[0].amp = T.namp; mats.neon.emissiveIntensity = T.neon;
       env.fog.color.setHex(T.bot);
       drawScreen((current.field.toUpperCase()) + '  ·  ' + current.theme.toUpperCase());
     }
@@ -647,7 +681,7 @@
       }
     }, 250);
     var params = new URLSearchParams(location.search);
-    setField(params.get('field') || 'sand'); setTheme(params.get('colo') || 'classic'); applyCrowd(); applyLights();
+    setField(params.get('field') || 'sand'); setTheme(params.get('colo') || 'shaddai'); applyCrowd(); applyLights();
     scene.add(group);
 
     // ── ambient life for world-interiors' active-room loop: a time source (plain object whose rotation.y setter IS the clock — zero allocation),
