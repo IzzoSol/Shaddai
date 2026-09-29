@@ -53,7 +53,7 @@ function weightsFor(c, p, names) {   // -> [[boneName, w], ...] (sum 1)
     add('head', rest * hd); add('tail', rest * tl * (1 - hd)); add('body', rest * (1 - hd) * (1 - tl));
   } else if (c.kind === 'wheelbot') {
     const ax = Math.abs(x), side = x >= 0 ? 'L' : 'R', dy = y - c.cy, dz = z - c.cz, rad = Math.sqrt(dy * dy + dz * dz);
-    const wheelW = sst(c.R * 1.04, c.R * 0.86, rad) * sst(c.cy + c.R * 0.4, c.cy - c.R * 0.1, y) * sst(c.tireHalf + 0.05 * c.H, c.tireHalf - 0.02 * c.H, ax);   // the tire (lower ring around the axle); the fender/shell above stays put
+    const wheelW = sst(c.R * 0.92, c.R * 0.7, rad) * sst(c.cy + c.R * 0.15, c.cy - c.R * 0.35, y) * sst(c.tireHalf + 0.05 * c.H, c.tireHalf - 0.02 * c.H, ax);   // the tire (lower ring around the axle); the fender/shell above stays put
     const armW = sst(c.armX - 0.06 * c.H, c.armX + 0.04 * c.H, ax) * sst(c.cy + 0.25 * c.H, c.cy + 0.45 * c.H, y) * sst(c.headY + 0.05 * c.H, c.headY - 0.12 * c.H, y) * (1 - wheelW), armLow = sst(c.elY + 0.06 * c.H, c.elY - 0.06 * c.H, y);
     const headW = sst(c.headY - 0.1 * c.H, c.headY + 0.03 * c.H, y) * (1 - armW) * (1 - wheelW);
     add('wheel', wheelW); add(`arm${side}_u`, armW * (1 - armLow)); add(`arm${side}_l`, armW * armLow); add('head', headW); add('body', Math.max(0, 1 - wheelW - armW - headW));
@@ -87,7 +87,7 @@ function clips(c) {   // -> { name: { dur, tracks: { bone: fn(t01) -> quat|null 
     out.walk = gait(1.0, c.stride, c.bob); out.run = gait(0.6, c.stride * 1.5, c.bob * 2);
   } else if (c.kind === 'wheelbot') {
     const roll = (dur, lean, arms, spin) => ({ dur, tracks: { wheel: t => qx(t * T * spin), body: t => qx(lean + Math.sin(t * T * 2) * 0.02), head: t => qy(Math.sin(t * T) * 0.1), armL_u: t => qx(-0.4 + Math.sin(t * T * 2) * arms), armR_u: t => qx(-0.4 - Math.sin(t * T * 2) * arms), armL_l: t => qx(-0.3), armR_l: t => qx(-0.3) } });
-    out.walk = roll(1.0, 0.1, 0.12, 2); out.run = roll(0.6, 0.2, 0.2, 5);
+    out.walk = roll(1.0, 0.1, 0.12, 0); out.run = roll(0.6, 0.2, 0.2, 0);   // no tire spin: Meshy fenders wrap the tire so a spinning wheel bone tears them (lean + arm swing + bob sell the roll)
     out.idle = { dur: 3.2, tracks: { body: t => qx(Math.sin(t * T) * 0.015), head: t => qy(Math.sin(t * T) * 0.3), armL_u: t => qx(-0.15 + Math.sin(t * T + 1) * 0.06), armR_u: t => qx(-0.15 + Math.sin(t * T + 2) * 0.06) } };
   } else if (c.kind === 'biped') {
     const gait = (dur, amp, bob) => { const tr = {};
