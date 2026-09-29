@@ -24,6 +24,10 @@
   **First job:** run `git diff public/SHADDAI-WORLD-3D.html`. If there's no commit named "perf"/"load" in the log, finish that work: measure → fix → commit. It is the TOP PRIORITY.
 - **Realm cities from refs:** cut off at the start, so nothing was built. The brief is in the plan: new `tools/blender/canon/realm_cities_v1.py` (STEP 8b), one realm per headless Blender run, refs in `fal-assets/production/atlas-refs.js` + `Downloads\shaddai-realms-visual-bible.md`. The owner wants cities integrated into the terrain "matching the reference images perfectly, the bridge look and everything".
 
+## Test status at handoff
+- All green: hoverboards 12/12, riders 8/8, weapons 15/15, train-v2 8/8, train-ride 14/14, dragon-elements 11/11.
+- **world-anim 12/13:** the only failure is the strict heap micro-check `update() allocates nothing`. The animator logic measures 17 B/call against a limit of 4, which is about 1 KB/s and has no visible effect. The anim helper was stopped before it tuned this. Fix it by finding the boxed-double write in `public/world-anim.js` `update()`/`setLocomotion` (write only on change, like the note in the test says). Do NOT loosen the test.
+
 ## Next, in order
 1. Finish/verify the load speed (above).
 2. **Wire into the host:** new agent GLBs (compress to `public/assets/agents/`), animation library, weapons, riders/hoverboards, interiors v3 snippet. One module at a time, node tests + one owner browser check.
