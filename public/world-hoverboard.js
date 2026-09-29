@@ -18,6 +18,17 @@
  *   hover.update(dt, {fwd,back,left,right,boost,jump}, camYaw)   // every frame, riding or not
  *   hover.board                                                  // the THREE.Group
  *
+ * 2026-09-28 FLY + TRICKS + 9 STYLES (docs/RIDERS.md): when public/world-hoverboards.js is loaded and no
+ * opts.modelUrl is given, the board is one of 9 CODE-BUILT styles (HoverboardKit; opts.style, opts.palette,
+ * hover.setStyle(id, palette)) with thruster flames + a pooled particle trail. Airborne:
+ *   hold Space (after ~0.2 s)  -> FLY: climb (drains stamina), release = glide; capped altitude + stamina
+ *   A / D                       -> spin (auto-completes to the next 180)
+ *   Shift+W / Shift+S           -> front / back flip          Shift alone -> grab
+ *   Shift+A / Shift+D           -> varial (board spins under your feet)
+ * or pass explicit input fields {spinL, spinR, flipF, flipB, grab, varialL, varialR}. Landing is checked
+ * (spin/flip/varial residual + board tilt): clean -> onTrick events with score/combo; too tilted -> BAIL.
+ *   hover.onTrick(fn) -> off()   fn({name, kind, deg, score, clean, combo, total, air})
+ *
  * ES5 classic script (same style as the other world-*.js modules): no imports, no build step.
  * Scale law: 1 m = 7/1.8 = 3.889 world units (characters are 7 u tall).
  */
@@ -63,6 +74,19 @@ window.buildWorldHoverboard = function (opts) {
     trailColor: 0x00ff9c,
     trailIntensity: 0.55,// additive brightness — subtle, per the reference
     light: false,        // under-glow PointLight (off by default: a dynamic light costs every lit material)
+    // -- FLY (2026-09-28) --
+    flyDelay: 0.22,      // s of air before a held Space turns into FLY (so a tap is still a hop)
+    flyClimbMS: 7,       // climb rate while held
+    flyAccel: 4,         // 1/s - how fast vy chases the climb / glide rate
+    glideSinkMS: 1.6,    // gentle sink after releasing (or when out of stamina)
+    flyMaxAltM: 45,      // ceiling above the surface under you
+    staminaDrain: 0.2,   // per second of climbing (~5 s of climb from full)
+    staminaRegen: 0.3,   // per second while hovering on the ground
+    flyResume: 0.15,     // after running dry, need this much back before climbing again
+    // -- TRICKS --
+    pivotM: 0.9,         // flips/spins pivot about the rider's waist, not the deck
+    bailSpeedK: 0.35,    // speed kept after a bail
+    bailTime: 0.7,       // wobble seconds
   };
   var MODEL = opts.modelUrl || '/assets/models/fal/veh-hoverboard-v2.glb';
 
@@ -89,9 +113,18 @@ window.buildWorldHoverboard = function (opts) {
   board.rotation.order = 'YXZ';
   board.visible = false;                     // appears on first mount (summoned under your feet)
   scene.add(board);
-  var inner = new THREE.Group();
-  board.add(inner);
+  // trick node: spins / flips about the rider's waist (pivotM above the board origin); inner = the mesh
+  // (varial spins only the inner, so the rider's feet stay put while the board turns under them)
+  var PIV = TUNE.pivotM * U;
+  var trick = new THREE.Group(); trick.rotation.order = 'YXZ'; trick.position.y = PIV;
+  board.add(trick);
+  var inner = new THREE.Group(); inner.position.y = -PIV;
+  trick.add(inner);
   var deckTop = 0.12 * U;                    // updated from the real model's bounds
+  var KIT = window.HoverboardKit, kit = null, styleId = null;
+  var useKit = !!(KIT && !opts.modelUrl && opts.style !== 'glb');
+  var fx = (useKit && window.buildHoverboardFX) ? window.buildHoverboardFX({ THREE: THREE, scene: scene, max: 160, size: 0.35 * U }) : null;
+  var TR = window.HoverboardTricks ? window.HoverboardTricks.create(opts.trickTune) : null;
 
   // Normalise any board model: longest horizontal axis → +Z, length → TUNE.lengthM, bottom
   // on y=0, centred. WHY: fal exports arrive with arbitrary axes/scales; one routine means a
@@ -125,7 +158,18 @@ window.buildWorldHoverboard = function (opts) {
     strip.position.y = 0.012; g.add(strip);
     return g;
   }
-  if (opts.loader) {
+  function setStyle(id, palette) {
+    if (!KIT) return null;
+    if (kit) { inner.remove(kit); kit.userData.dispose(); }
+    kit = KIT.build(THREE, id || 'sunburst', palette || opts.palette);
+    styleId = kit.userData.style;
+    kit.scale.setScalar(U);
+    inner.add(kit);
+    deckTop = kit.userData.deckTopM * U;
+    return kit;
+  }
+  if (useKit) setStyle(opts.style);
+  else if (opts.loader) {
     opts.loader.load(MODEL, function (g) {
       g.scene.traverse(function (o) {
         if (o.isMesh) { o.castShadow = true; if (o.material && o.material.map) o.material.map.colorSpace = THREE.SRGBColorSpace; }
@@ -143,7 +187,8 @@ window.buildWorldHoverboard = function (opts) {
   thrust.scale.set(0.55, 1, 1);             // oval under a long deck (x narrow before the -90° tilt → local x stays x)
   thrust.position.y = -0.02 * U;
   thrust.renderOrder = 2;
-  board.add(thrust);
+  thrust.visible = !useKit;                  // kit boards carry their own underglow + flames
+  inner.add(thrust);
   var glowLight = null;
   if (TUNE.light) { glowLight = new THREE.PointLight(TUNE.trailColor, 1.6, 3 * U); glowLight.position.y = -0.1 * U; board.add(glowLight); }
 
@@ -170,13 +215,16 @@ window.buildWorldHoverboard = function (opts) {
     riding: false, w: 0, restored: true, avatar: null,
     x: 0, z: 0, y: 0, vy: 0, air: false, v: 0, psi: 0, yawRate: 0, thr: 0,
     pitch: 0, roll: 0, jumpHeld: false, t: 0, surface: 0,
+    airT: 0, flying: false, climbing: false, stamina: 1, exhausted: false, bail: 0, thrustK: 0, restPrev: 0, restPrevOk: false,
   };
+  var TIN = { spinL: false, spinR: false, flipF: false, flipB: false, grab: false, varialL: false, varialR: false };
   var own = new THREE.Vector3();
   var pos = opts.playerPos || own;
   var RP = window.WorldRiderPose ? window.WorldRiderPose.create(THREE) : null;
   var V3 = THREE.Vector3;
   var _up = new V3(), _fw = new V3(), _lf = new V3(), _rf = new V3(), _rl = new V3(), _tp = new V3();
   var _standP = new V3(), _standQ = new THREE.Quaternion(), _riderQ = new THREE.Quaternion(), _yq = new THREE.Quaternion();
+  var _trQ = new THREE.Quaternion(), _handR = new V3(), _elbR = new V3();
   var _Y = new V3(0, 1, 0);
   var T = { spineDir: new V3(), neckDir: new V3(), footL: new V3(), footR: new V3(),
             kneePoleL: new V3(), kneePoleR: new V3(), armDirL: new V3(), armDirR: new V3(), foreDirL: new V3(), foreDirR: new V3() };
@@ -197,6 +245,8 @@ window.buildWorldHoverboard = function (opts) {
     s.surface = surfaceAt(s.x, s.z);
     s.y = s.surface + 0.05 * U; s.vy = 1.5 * U; s.air = false;   // a small lift-off as it powers up
     s.pitch = 0; s.roll = 0; s.yawRate = 0; s.thr = 0; trailCount = 0;
+    s.airT = 0; s.flying = false; s.climbing = false; s.bail = 0; s.restPrevOk = false;
+    if (TR) TR.reset();
   }
   function dismount() {
     if (!s.riding) return;
@@ -214,19 +264,20 @@ window.buildWorldHoverboard = function (opts) {
     var B = TUNE;
     s.x = pos.x; s.z = pos.z;                            // accept host collision corrections
     // steering: mouse (camera yaw) + A/D carve
-    var steer = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+    var steer = s.air ? 0 : (inp.right ? 1 : 0) - (inp.left ? 1 : 0);   // airborne: A/D are trick keys
     var target = (isFinite(camYaw) ? camYaw : s.psi) - steer * B.carveOffset;
-    var top = inp.boost ? B.boostMS : B.topMS;
+    var boost = !!inp.boost && !s.air;                   // airborne: Shift is the trick modifier
+    var top = boost ? B.boostMS : B.topMS;
     var sf = Math.min(1, Math.abs(s.v) / B.topMS);
     var maxRate = (B.turnRateLow + (B.turnRateHigh - B.turnRateLow) * sf) * (s.air ? 0.5 : 1);
     var rate = Math.max(-maxRate, Math.min(maxRate, wrap(target - s.psi) * B.steerGain));
     s.psi = wrap(s.psi + rate * dt);
     s.yawRate += (rate - s.yawRate) * (1 - Math.exp(-8 * dt));
     // throttle / brake / reverse / coast
-    var want = (inp.fwd ? 1 : 0) - (inp.back ? 1 : 0);
+    var want = (s.air && inp.boost) ? 0 : (inp.fwd ? 1 : 0) - (inp.back ? 1 : 0);   // Shift+W/S in the air = flips, not throttle
     s.thr += (want - s.thr) * (1 - Math.exp(-8 * dt));
     var th = s.thr, a = 0;
-    if (th > 0.02) a = s.v < -0.2 ? B.brakeMS2 : (inp.boost ? B.boostAccelMS2 : B.accelMS2) * th * Math.max(0, 1 - (s.v / top) * (s.v / top));
+    if (th > 0.02) a = s.v < -0.2 ? B.brakeMS2 : (boost ? B.boostAccelMS2 : B.accelMS2) * th * Math.max(0, 1 - (s.v / top) * (s.v / top));
     else if (th < -0.02) a = s.v > 0.2 ? -B.brakeMS2 * -th : -B.accelMS2 * 0.4 * -th * Math.max(0, 1 + s.v / B.reverseMS);
     if (s.v > top) a -= 3;                               // boost released: bleed back to cruise, don't snap
     var sx = Math.sin(s.psi), cz = Math.cos(s.psi), hl = 0.5 * B.lengthM * U;
@@ -265,18 +316,64 @@ window.buildWorldHoverboard = function (opts) {
     var bob = Math.sin(s.t * 2.1) * B.bobM * U * (1 - 0.6 * Math.min(1, Math.abs(s.v) / B.topMS));
     var rest = s.surface + B.hoverM * U + bob;
     var jump = !!inp.jump;
-    if (jump && !s.jumpHeld && !s.air && s.y < rest + 0.15 * U) { s.vy = B.hopMS * U; s.air = true; }
+    if (jump && !s.jumpHeld && !s.air && s.y < rest + 0.15 * U) { s.vy = B.hopMS * U; s.air = true; s.airT = 0; s.flying = false; }
     s.jumpHeld = jump;
+    if (s.bail > 0) s.bail = Math.max(0, s.bail - dt);
+    s.climbing = false;
     if (s.air) {
-      s.vy -= 9.81 * B.gravityK * U * dt;
+      s.airT += dt;
+      // FLY: hold Space -> climb on stamina; release (or run dry) -> glide; otherwise ballistic
+      if (s.exhausted && s.stamina >= B.flyResume) s.exhausted = false;
+      var kf = 1 - Math.exp(-B.flyAccel * dt);
+      if (jump && s.airT > B.flyDelay && s.stamina > 0 && !s.exhausted) {
+        s.flying = true; s.climbing = true;
+        s.vy += (B.flyClimbMS * U - s.vy) * kf;
+        s.stamina = Math.max(0, s.stamina - B.staminaDrain * dt);
+        if (s.stamina <= 0) s.exhausted = true;
+      } else if (s.flying && s.vy < -B.glideSinkMS * U) {
+        s.vy += (-B.glideSinkMS * U - s.vy) * kf;          // glide: bleed a dive back to a gentle sink
+      } else {
+        s.vy -= 9.81 * B.gravityK * U * dt * (s.flying ? 0.35 : 1);   // glide sinks gently, a hop is snappy
+        if (s.flying && s.vy < -B.glideSinkMS * U) s.vy = -B.glideSinkMS * U;
+      }
       s.y += s.vy * dt;
-      if (s.y <= rest && s.vy < 0) s.air = false;        // spring catches the landing (soft compression)
+      var ceil = s.surface + B.flyMaxAltM * U;
+      if (isFinite(opts.flyCeilingY) && opts.flyCeilingY < ceil) ceil = opts.flyCeilingY;
+      if (s.y > ceil) { s.y = ceil; if (s.vy > 0) s.vy = 0; }
+      if (s.y < s.surface + 0.08 * U) s.y = s.surface + 0.08 * U;   // terrain rose under a glide
+      // tricks: explicit fields win, else map WASD+Shift (see header)
+      if (TR) {
+        var sh = !!inp.boost;
+        TIN.spinL = inp.spinL !== undefined ? !!inp.spinL : (!sh && !!inp.left);
+        TIN.spinR = inp.spinR !== undefined ? !!inp.spinR : (!sh && !!inp.right);
+        TIN.varialL = inp.varialL !== undefined ? !!inp.varialL : (sh && !!inp.left);
+        TIN.varialR = inp.varialR !== undefined ? !!inp.varialR : (sh && !!inp.right);
+        TIN.flipF = inp.flipF !== undefined ? !!inp.flipF : (sh && !!inp.fwd);
+        TIN.flipB = inp.flipB !== undefined ? !!inp.flipB : (sh && !!inp.back);
+        TIN.grab = inp.grab !== undefined ? !!inp.grab : (sh && !inp.left && !inp.right && !inp.fwd && !inp.back);
+        TR.step(dt, TIN, true);
+      }
+      if (s.y <= rest && s.vy < 0) land();                 // spring catches the landing (soft compression)
     } else {
+      if (TR) TR.step(dt, null, false);
+      s.stamina = Math.min(1, s.stamina + B.staminaRegen * dt);
+      // damp RELATIVE to the ground's own vertical speed under the board (feed-forward), so the hover
+      // follows rolling terrain at speed instead of lagging into the slope / floating off crests
       var K = B.springK, C = 2 * Math.sqrt(K) * B.damping;
-      s.vy += (K * (rest - s.y) - C * s.vy) * dt;
+      var gv = s.restPrevOk ? Math.max(-40 * U, Math.min(40 * U, (rest - s.restPrev) / Math.max(dt, 1e-4))) : 0;
+      s.vy += (K * (rest - s.y) - C * (s.vy - gv)) * dt;
       s.y += s.vy * dt;
       if (s.y < s.surface + 0.08 * U) { s.y = s.surface + 0.08 * U; if (s.vy < 0) s.vy = 0; }   // never scrape through
     }
+    s.restPrev = rest; s.restPrevOk = !s.air;
+  }
+
+  // touchdown: the trick core checks spin/flip/varial residuals + board tilt -> clean or BAIL
+  function land() {
+    s.air = false; s.flying = false; s.airT = 0;
+    if (!TR) return;
+    var tilt = Math.max(Math.abs(s.pitch), Math.abs(s.roll));
+    if (!TR.land(tilt)) { s.v *= TUNE.bailSpeedK; s.bail = TUNE.bailTime; if (s.vy > 0) s.vy = 0; }
   }
 
   /* pose(dt) — VISUALS: board transform, glow, trail, rider stance. Call after the host has
@@ -301,15 +398,24 @@ window.buildWorldHoverboard = function (opts) {
       var carve = s.riding ? Math.max(-rmax, Math.min(rmax, -Math.atan(s.v * s.yawRate / 9.81))) : 0;
       s.pitch += (pT - s.pitch) * k;
       s.roll += (rT + carve - s.roll) * k;
+      var wob = s.bail > 0 ? Math.sin(s.t * 26) * 0.18 * (s.bail / TUNE.bailTime) : 0;   // bail wobble
       board.position.set(s.x, s.y, s.z);
-      board.rotation.set(s.pitch, s.psi, s.roll, 'YXZ');
+      board.rotation.set(s.pitch, s.psi, s.roll + wob, 'YXZ');
+      if (TR) { var A = TR.angles; trick.rotation.set(A.flip, A.spin, 0, 'YXZ'); inner.rotation.y = A.varial; }
       board.updateMatrixWorld(true);
+      if (kit) {
+        var tk = s.riding ? 0.25 + 0.6 * Math.min(1, Math.abs(s.v) / B.topMS) + (s.v > B.topMS ? 0.3 : 0) + (s.climbing ? 0.7 : 0) + (s.air ? 0.1 : 0) : 0.12;
+        s.thrustK += (tk - s.thrustK) * Math.min(1, dt * 8);
+        kit.userData.setThrust(s.thrustK, Math.sin(s.t * 37));
+        if (fx && s.riding) fx.emitFromBoard(kit, dt, s.thrustK, U);
+      }
       // thrust glow breathes with throttle/boost and flares on a hop
       var sp = Math.min(1, Math.abs(s.v) / B.boostMS);
       thrustMat.opacity = (s.riding ? 0.35 + 0.45 * sp : 0.22) + (s.air ? 0.15 : 0) + Math.sin(s.t * 9) * 0.04;
       if (glowLight) glowLight.intensity = 0.8 + 1.4 * sp;
       updateTrail(sx, cz);
     }
+    if (fx) fx.update(dt);
     // rider
     s.w = Math.max(0, Math.min(1, s.w + (s.riding ? dt : -dt) / B.mountTime));
     var av = s.avatar;
@@ -319,11 +425,13 @@ window.buildWorldHoverboard = function (opts) {
     var e = ease(s.w), rig = RP ? RP.bind(av) : null;
     // SURF STANCE (regular foot): body faces the board's RIGHT side, so the rider's left
     // (+X local) points at the nose. Rider yaw = board yaw − 90°, then the board's pitch/roll.
+    trick.getWorldQuaternion(_trQ);                         // board + spin/flip (varial excluded: feet stay)
     _yq.setFromAxisAngle(_Y, -Math.PI / 2);
-    _riderQ.copy(board.quaternion).multiply(_yq);
-    _up.set(0, 1, 0).applyQuaternion(board.quaternion);
-    var hipH = rig ? rig.hipH : 3.6, standH = rig && rig.hasBones ? B.crouchM * U : 0;
-    _tp.set(0, deckTop, 0); board.localToWorld(_tp);        // deck centre (world)
+    _riderQ.copy(_trQ).multiply(_yq);
+    _up.set(0, 1, 0).applyQuaternion(_trQ);
+    var grabW = TR ? TR.angles.grab : 0;
+    var hipH = rig ? rig.hipH : 3.6, standH = rig && rig.hasBones ? (B.crouchM + 0.25 * grabW) * U : 0;
+    _tp.set(0, deckTop - PIV, 0); trick.localToWorld(_tp);  // deck centre (world)
     _tp.addScaledVector(_up, -standH);                      // root drops → IK bends the knees
     _standP.copy(av.position); _standQ.copy(av.quaternion);
     av.position.lerpVectors(_standP, _tp, e);
@@ -331,12 +439,12 @@ window.buildWorldHoverboard = function (opts) {
     if (ctx.showRider !== undefined) av.visible = !!ctx.showRider;
     av.updateMatrixWorld(true);
     if (!RP || !rig || !rig.hasBones) return;
-    _fw.set(0, 0, 1).applyQuaternion(board.quaternion);    // board nose
+    _fw.set(0, 0, 1).applyQuaternion(_trQ);                // board nose
     _rf.set(0, 0, 1).applyQuaternion(_riderQ);             // rider's chest direction (board's right)
     _rl.set(1, 0, 0).applyQuaternion(_riderQ);             // rider's left (= board nose)
     // feet on the deck, spread along the board: rider-left foot at the nose
     var half = B.stanceM * 0.5 * U;
-    _tp.set(0, deckTop, 0); board.localToWorld(_tp);
+    _tp.set(0, deckTop - PIV, 0); trick.localToWorld(_tp);
     T.footL.copy(_tp).addScaledVector(_fw, half).addScaledVector(_up, rig.footH * 0.8);
     T.footR.copy(_tp).addScaledVector(_fw, -half).addScaledVector(_up, rig.footH * 0.8);
     T.kneePoleL.copy(_rf).addScaledVector(_rl, 0.4).addScaledVector(_up, 0.1);
@@ -350,6 +458,12 @@ window.buildWorldHoverboard = function (opts) {
     T.armDirR.copy(_rl).multiplyScalar(-0.85).addScaledVector(_up, -0.42).addScaledVector(_rf, 0.18);
     T.foreDirL.copy(_rl).multiplyScalar(0.75).addScaledVector(_up, -0.2).addScaledVector(_rf, 0.4);
     T.foreDirR.copy(_rl).multiplyScalar(-0.75).addScaledVector(_up, -0.2).addScaledVector(_rf, 0.4);
+    // GRAB: trailing hand reaches down to the toe-side rail (two-bone IK), knees deeper
+    if (grabW > 0.5) {
+      _handR.copy(_tp).addScaledVector(_rf, 0.18 * U).addScaledVector(_fw, -0.12 * U).addScaledVector(_up, 0.05 * U);
+      _elbR.copy(_rl).multiplyScalar(-0.6).addScaledVector(_up, 0.3).addScaledVector(_rf, 0.5);
+      T.handR = _handR; T.elbowPoleR = _elbR;
+    } else { T.handR = null; T.elbowPoleR = null; }
     RP.apply(e, T);
   }
 
@@ -361,7 +475,7 @@ window.buildWorldHoverboard = function (opts) {
       if (trailCount > 0) trailCount = Math.max(0, trailCount - 2);   // fade out over a few frames
       if (!trailCount) { trail.visible = false; return; }
     } else {
-      _tail.set(0, 0.04 * U, -0.5 * TUNE.lengthM * U); board.localToWorld(_tail);
+      _tail.set(0, 0.04 * U, -0.5 * TUNE.lengthM * U); inner.localToWorld(_tail);
       _side.set(cz, 0, -sx).multiplyScalar(TUNE.trailWidthM * 0.5 * U);   // board-left, horizontal
       tPos.copyWithin(6, 0, (NT - 1) * 6);                 // shift history back one sample
       tPos[0] = _tail.x + _side.x; tPos[1] = _tail.y; tPos[2] = _tail.z + _side.z;
@@ -396,11 +510,28 @@ window.buildWorldHoverboard = function (opts) {
     heading: function () { return s.psi; },
     velocity: function () { return { x: Math.sin(s.psi) * s.v * U, z: Math.cos(s.psi) * s.v * U }; },
     rideBaseY: function () { return s.y + deckTop - (TUNE.crouchM * U); },   // camera/eye base while riding
+    // -- 2026-09-28: styles, fly, tricks --
+    setStyle: function (id, palette) { if (!KIT) return null; useKit = true; thrust.visible = false; return setStyle(id, palette); },
+    setPalette: function (p) { if (kit) kit.userData.setPalette(p); },
+    style: function () { return styleId; },
+    kit: function () { return kit; },
+    trickNode: trick,
+    fx: fx,
+    tricks: TR,
+    onTrick: function (fn) { return TR ? TR.onTrick(fn) : function () {}; },
+    stamina: function () { return s.stamina; },
+    isFlying: function () { return s.flying; },
+    isAirborne: function () { return s.air; },
+    isBailing: function () { return s.bail > 0; },
+    altitudeM: function () { return (s.y - s.surface) / U; },
+    state: function () { return s; },
     step: step,
     pose: pose,
     update: function (dt, input, camYaw, ctx) { step(dt, input, camYaw); pose(dt, ctx); },
     dispose: function () {
       scene.remove(board); scene.remove(trail);
+      if (kit) kit.userData.dispose();
+      if (fx) fx.dispose();
       disposables.forEach(function (d) { if (d.dispose) d.dispose(); });
       if (RP) RP.restore();
     },

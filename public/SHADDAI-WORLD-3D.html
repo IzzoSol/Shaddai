@@ -255,7 +255,9 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realmprops.js?v=20260925m4"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
 <script src="/world-actions.js?v=20260926v2"></script>
-<script src="/world-hoverboard.js?v=20260926v2"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
+<script src="/world-hoverboards.js?v=20260928a"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
+<script src="/world-hoverboard.js?v=20260928a"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
+<script src="/world-riders.js?v=20260928a"></script>       <!-- RIDERS: generic mount(rider, vehicle, {seat}) for bike / dragon / ships -->
 <script src="/world-tactics.js?v=20260924a"></script>
 <script src="/world-trails.js?v=20260925m3"></script>
 <script src="/world-landmarks.js?v=20260925m3"></script>
@@ -639,6 +641,10 @@ window.__worldBuilt = false;
           getPlayer: ()=> ({ pos: playerPos }),
           nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0) });
         window.__w3dDebug.skyTraffic = window.__skyTraffic;
+        setTimeout(function(){ try{   // RIDERS: two AI agents ride along on sky-traffic ships (docs/RIDERS.md)
+          const R = window.__riders, sh = window.__skyTraffic && window.__skyTraffic._debug && window.__skyTraffic._debug.ships;
+          if (R && sh && sh.length) ['ORACLE','NEXUS'].forEach(function(n, i){ const w = sh[(i * 11) % sh.length]; if (w) R.spawnCompanion(n, R.skyShipVehicle(w), 'seat'); });
+        }catch(e){ console.warn('[riders] ship companions failed:', e && e.message); } }, 20000);
       }).catch(function(e){ console.warn('[map-v4] sky traffic failed:', e && e.message); }).then(function(){ return api; });
     });
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
@@ -4429,6 +4435,19 @@ try{
     time: function(){ return clock.elapsedTime; },
   });
 }catch(e){ console.warn('world-hoverboard init failed:', e && e.message); }
+// RIDERS (world-riders.js, docs/RIDERS.md): the player's agent SITS on the Grid Bike and the dragon saddle (IK on its own
+// bones); AI companions ride sky-traffic ships. Hoverboard tricks → toast + 'shaddai:trick' event (SKATE feed).
+let _riders = null;
+try{
+  if (window.buildRiders) {
+    _riders = window.__riders = window.buildRiders({ THREE, scene, cloneSkinned, loadCharacter: function(c){ return _pcPreload(c); } });
+    if (veh.bike) { veh.bike.setAvatar(null); window.__riderBike = _riders.bikeVehicle(gridBike, veh.bike.points, veh.bike); }   // riders owns the bike rider now
+  }
+  if (hover && hover.onTrick) hover.onTrick(function(e){
+    try{ window.dispatchEvent(new CustomEvent('shaddai:trick', { detail: e })); }catch(_){}
+    if (e.kind === 'summary' && window.__toast) window.__toast(e.clean ? ('🛹 +' + e.score + (e.combo > 1 ? '  x' + e.combo + ' COMBO' : '')) : '💥 BAIL');
+  });
+}catch(e){ console.warn('world-riders init failed:', e && e.message); }
 // PLAYER CONTROLLER - real ground, slopes, steps, walls, jump/roll/climb/land compression (docs/PLAYER-CONTROLLER.md)
 try{
   if (window.buildPlayerController) {
@@ -4861,6 +4880,11 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
     if(bikeMode){ gridBike.position.set(playerPos.x, groundY, playerPos.z); gridBike.rotation.y = Math.atan2(fwd.x, fwd.z); playerAvatar.visible = true; playerAvatar.position.set(playerPos.x, groundY+0.6, playerPos.z); }
   }
   if (hover) hover.pose(dt, { showRider: thirdPerson ? true : undefined });
+  if (_riders) {   // RIDERS: seat the player on the bike / dragon (after both placed themselves), then solve every rider
+    if (window.__riderBike) _riders.sync(playerAvatar, !!veh.bike.isRiding(), window.__riderBike, 'seat', { visible: function(){ return thirdPerson; } });
+    if (window.__dragonRide) { window.__riderDragon = window.__riderDragon || _riders.dragonVehicle(window.__dragonRide); _riders.sync(playerAvatar, window.__dragonRide.isRiding(), window.__riderDragon, 'saddle'); }
+    _riders.update(dt);
+  }
   const t=clock.elapsedTime;
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
