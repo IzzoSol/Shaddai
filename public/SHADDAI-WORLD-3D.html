@@ -1879,7 +1879,8 @@ if(MAP_V4){
   sun2.visible = false; rim.visible = false;            // one directional light only: the sky drives `sun`
   _ldBegin('sky'); _loadScript('/world-sky-v4.js?v=20260926sky').then(function(){
     _v4Sky = window.buildWorldSkyV4({ THREE, scene, renderer, camera, sunLight: sun, hemiLight: hemi, ambientLight: ambient,
-      fog: scene.fog, water: _v4Water, dayLengthMin: 24 });
+      fog: scene.fog, water: _v4Water, dayLengthMin: 24,
+      shadows: /[?&]shadows\b/.test(location.search) });   // PERF: shadow pass OFF by default (measured ~4,900 casters = a 2nd full scene draw on an HD 620); add ?shadows for it
     window.__w3dDebug.skyV4 = _v4Sky;
   }).catch(function(e){ console.warn('[map-v4] sky failed:', e && e.message); }).then(function(){ _ldEnd('sky'); });
 }
