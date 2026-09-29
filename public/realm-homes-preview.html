@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Realm homes preview</title><style>html,body{margin:0;background:#0b1016;overflow:hidden}#i{position:fixed;left:8px;top:6px;color:#9fd;font:12px monospace}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js"}}</script></head><body><div id="i"></div>
+<script src="/world-realm-homes.js"></script>
+<script type="module">
+import * as THREE from 'three';
+const U=7/1.8, r=new THREE.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);document.body.appendChild(r.domElement);
+const s=new THREE.Scene();s.background=new THREE.Color(0x9cc4e4);s.fog=new THREE.Fog(0x9cc4e4,400,2200);
+s.add(new THREE.HemisphereLight(0xffffff,0x557744,1.6));const d=new THREE.DirectionalLight(0xfff2d8,2.2);d.position.set(300,500,200);s.add(d);
+const H=(x,z)=>{const hill=Math.max(0,1-Math.hypot(x-40*U,z+10*U)/(70*U));return 22*U*hill*hill+ (x>0?x*0.02:0)};
+const g=new THREE.PlaneGeometry(1800,1000,120,70);g.rotateX(-Math.PI/2);const p=g.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,H(p.getX(i),p.getZ(i)));g.computeVertexNormals();
+s.add(new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:0x6ea24a})));
+const rh=window.buildWorldRealmHomes({THREE,scene:s,heightAt:H,layout:{realmColliders:[]}});
+const T=['earth-burrow','cave-home','leaf-tree-home','pod-home','arctic-dome'];
+T.forEach((t,i)=>rh.place(t,(i-2)*62*U*0.55-40,120,{yaw:0}));
+rh.village('earth-burrow',40*U,-10*U,6,{radius:34});
+const cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,1,4000);
+window.__set=(x,y,z,tx,ty,tz)=>{cam.position.set(x,y,z);cam.lookAt(tx,ty,tz);rh.update(x,z);r.render(s,cam);document.getElementById('i').textContent=JSON.stringify(rh.stats());};
+window.__set(-120,120,520,-120,25,120);window.__ready=1;
+</script></body></html>
