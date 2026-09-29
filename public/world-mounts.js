@@ -15,10 +15,11 @@
     { id: 'bull', name: 'Forge Bull', kind: 'mount', flying: false, store: ['forge', 'meadow'], price: 400, model: '/assets/mounts/bull.glb', clips: { idle: 'idle', walk: 'walk', run: 'run' }, saddle: 'saddle', note: 'Emberfall + Meadowfields' },
     { id: 'gorilla', name: 'Canopy Gorilla', kind: 'mount', flying: false, store: ['darkvault', 'suburb'], price: 500, model: '/assets/mounts/gorilla.glb', clips: { idle: 'idle', walk: 'walk', run: 'run' }, saddle: 'saddle', note: 'Darkforest + Suburbs' },
     { id: 'hawk', name: 'Sky Hawk', kind: 'mount', flying: true, store: ['harbor'], price: 0, model: '/assets/mounts/hawk.glb', clips: { idle: 'idle', fly: 'fly', glide: 'glide' }, saddle: 'saddle', note: 'Crystal Harbor - flying, the priciest mount' },
+    { id: 'skiff', name: 'Aero Skiff (hover ship)', kind: 'mount', flying: true, store: ['central', 'harbor'], price: 0, model: null, procedural: 'skiff', clips: null, saddle: 'saddle', note: 'flying hover ship - Shaddai neon' },
     { id: 'board-street', name: 'Street Hoverboard', kind: 'board', flying: false, store: ['central', 'suburb', 'harbor'], price: 150, style: 'sunburst', note: 'ground board (pad)' },
     { id: 'board-foil', name: 'Foil Hoverboard', kind: 'board', flying: true, store: ['central', 'harbor'], price: 0, style: 'racer', note: 'flying board (foil) - costs more' }
   ];
-  var BASE = { hawk: 700, 'board-foil': 350 };   // price before the flying multiplier
+  var BASE = { hawk: 700, skiff: 900, 'board-foil': 350 };   // price before the flying multiplier
   CATALOG.forEach(function (c) { if (c.flying && !c.price) c.price = Math.round(BASE[c.id] * TUNE.flyMul); });
   var byId = {}; CATALOG.forEach(function (c) { byId[c.id] = c; });
   var S = (function () { try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && j.owned) return j; } catch (e) { } return { owned: [], lost: [] }; })();
@@ -35,6 +36,6 @@
   }
   function lose(id, cause) { if (!has(id)) return false; S.owned = S.owned.filter(function (o) { return o.id !== id; }); if (S.lost.indexOf(id) < 0) S.lost.push(id); save(); if (root.Navi && root.Navi.toast) root.Navi.toast('You lost your ' + byId[id].name + ' (' + (cause || 'abandoned') + '). Buy another at a mount store.'); return true; }
   function damage(id, n) { var o = S.owned.filter(function (x) { return x.id === id; })[0]; if (!o) return null; o.hp = Math.max(0, o.hp - n); if (o.hp <= 0) lose(id, 'destroyed'); else save(); return o.hp; }
-  function summon(id) { var c = byId[id]; if (!c || !has(id)) return null; return { id: id, kind: c.kind, flying: c.flying, model: c.model || null, style: c.style || null, clips: c.clips || null, saddle: c.saddle || 'stand' }; }
+  function summon(id) { var c = byId[id]; if (!c || !has(id)) return null; return { id: id, procedural: c.procedural || null, kind: c.kind, flying: c.flying, model: c.model || null, style: c.style || null, clips: c.clips || null, saddle: c.saddle || 'stand' }; }
   root.WorldMounts = { CATALOG: CATALOG, TUNE: TUNE, def: function (id) { return byId[id]; }, storesAt: storesAt, buy: buy, has: has, owned: function () { return S.owned.slice(); }, lost: function () { return S.lost.slice(); }, lose: lose, damage: damage, replaceCost: replaceCost, summon: summon, _reset: function () { S = { owned: [], lost: [] }; save(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

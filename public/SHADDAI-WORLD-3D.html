@@ -272,6 +272,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum-floors.js?v=20260929a"></script>
 <script src="/world-colosseum-metro.js?v=20260929a"></script>   <!-- underground station: elevator + maglev ring stop -->
+<script src="/world-colosseum-vendors.js?v=20260929a"></script>   <!-- concourse vendors: E at any kiosk (snacks, drinks, gear, mounts, cosmetics, wagers) -->
 <script src="/world-colosseum.js?v=20260926v4"></script>
 <script src="/world-terrain.js?v=20260925m2"></script>
 <script src="/world-biomes.js?v=20260719fix2"></script>
@@ -588,7 +589,7 @@ window.__worldBuilt = false;
       return _loadScript('/world-city-v3.js?v=20260927b').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
-          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(window.__dragonRide && window.__dragonRide.isRiding()),
+          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(_rideOn()),
           onInteract: m => { if(window.__onCityInteract) window.__onCityInteract(m); else console.info('[city-v3] interact', m.name, m.dashboard_id, m.endpoint); },
           onPing: e => { if(window.__onCityPing) window.__onCityPing(e); } });
         window.__w3dDebug.cityV3 = window.__cityV3;
@@ -660,6 +661,15 @@ window.__worldBuilt = false;
         window.__w3dDebug.wildlife = window.__wildlife;
       }).catch(function(e){ console.warn('[map-v4] wildlife failed:', e && e.message); }).then(function(){ return api; });
     }))
+    .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
+      if(!api) return api;
+      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20260929a')]).then(function(){
+        const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
+        window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts });
+        window.__w3dDebug.mountRide = window.__mountRide;
+        return api;
+      }).catch(function(e){ console.warn('[mount-ride] failed', e && e.message); return api; });
+    }))
     .then(_ldStep('dragon-ride', function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
       if(!api) return api;
       return _loadScript('/world-dragon-ride.js?v=20260928elem').then(function(){
@@ -713,7 +723,7 @@ window.__worldBuilt = false;
       return _loadScript('/world-hud-v4.js?v=20260927a').then(function(){
         window.__hudV4 = window.buildHudV4({
           getHP: ()=> window.__playerHP == null ? 100 : window.__playerHP,
-          getStamina: ()=> (window.__dragonRide && window.__dragonRide.isRiding()) ? window.__dragonRide.stamina() : ((_pctlOut && _pctlOut.stamina != null) ? _pctlOut.stamina : 1),
+          getStamina: ()=> (_rideOn()) ? window.__dragonRide.stamina() : ((_pctlOut && _pctlOut.stamina != null) ? _pctlOut.stamina : 1),
           dragons: window.__dragons || null, wildlife: window.__wildlife || null });
         window.__w3dDebug.hudV4 = window.__hudV4;
         const _prevCityPing = window.__onCityPing;
@@ -3940,6 +3950,8 @@ addEventListener('click', (ev)=>{
 // T talk, Tab, HUD / phone / inventory) is left alone — the ride itself only ever takes E (sit / stand).
 function _onTrainNow(){ const T = window.__worldTransitApi; return !!(T && T.aboard && T.aboard()); }
 let _trainWasOn = false, _trainPrevTP = null;
+function _rideOn(){ return !!((window.__dragonRide && window.__dragonRide.isRiding && window.__dragonRide.isRiding()) || (window.__mountRide && window.__mountRide.isRiding())); }
+function _AR(){ return (window.__mountRide && window.__mountRide.isRiding()) ? window.__mountRide : window.__dragonRide; }
 addEventListener('keydown', function(e){   // DRAGON RIDING keys (capture: runs before the E/F/B/O handlers)
   const R = window.__dragonRide; if(!R || e.repeat) return;
   if(_onTrainNow()) return;   // aboard the maglev: no dragon mount / dismount keys
@@ -4826,8 +4838,9 @@ function animate(){
     _ri.climb = _rl && !!keys['Space']; _ri.dive = _rl && !!(keys['ShiftLeft']||keys['ShiftRight']);
     window.__dragonRide.update(dt, _ri);
   }
+  if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__dragonRideIn || {}; window.__mountRide.update(dt, _mi); }   // MOUNTS (world-mount-ride.js)
 _pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
-          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding()) && !_onTrain;
+          && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(_rideOn()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
     const _prevX = playerPos.x, _prevZ = playerPos.z;          // capture pre-move position for collision resolver
@@ -4849,7 +4862,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       _vel.x = _tv.x; _vel.z = _tv.z;
     } else if (window.WorldSit && window.WorldSit.isSeated()) {
       _vel.x = 0; _vel.z = 0;                       // seated: WorldSit pins position + facing
-    } else if (window.__dragonRide && window.__dragonRide.isRiding()) {
+    } else if (_rideOn()) {
       _vel.x = 0; _vel.z = 0;                       // position already written by the ride
     } else if (hover && hover.isRiding()) {
       hover.step(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
@@ -4956,7 +4969,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     // v4 swim law: float on the REAL water surface (world-water.js CPU mirror of the shader waves) wherever
     // the ground is more than ~1u under it. No water api (load failed) → just walk the terrain.
     _swimming = false;
-    if (_v4Water && !veh.mode && !_onTrain && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside()) && !(window.__dragonRide && window.__dragonRide.isRiding())) {
+    if (_v4Water && !veh.mode && !_onTrain && !(_elevators && _elevators.isRiding()) && !(_interiors && _interiors.isInside()) && !(_rideOn())) {
       const _wh = _v4Water.waterHeightAt(playerPos.x, playerPos.z);
       if (_wh != null && isFinite(_wh) && groundY < _wh - 1.0) { groundY = _wh - 1.05; _swimming = true; }
     }
@@ -4980,13 +4993,13 @@ if (window.WorldSurvival) {
 if (window.WorldBots) { window.WorldBots.update(dt, playerPos, window.__botZone ? window.__botZone() : 'wilderness'); }
 if (window.__raceTick) window.__raceTick(dt);   // park crates spin + race runtime (no-op until a heat starts)
 if (window.WorldSit) _diveY += window.WorldSit.update(dt, playerPos, playPlayerOnce, clock.elapsedTime, V4_U);   // seated: pins pos, plays Sit_Chair_Loop, lowers the body onto the seat
-const _rawBaseY = (_pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY))) - _diveY;
+const _rawBaseY = (_pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((_rideOn()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY))) - _diveY;
 const _pDip = _pctlActive ? _pctlOut.compression * 0.35 * V4_U : 0;   // landing / crouch camera dip (<= 0.35 m)
 const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
   if(_smoothBaseY===undefined || _spawnBusy || _onTrain || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
-     (_interiors && _interiors.isInside()) || (window.__dragonRide && window.__dragonRide.isRiding()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
+     (_interiors && _interiors.isInside()) || (_rideOn()) || Math.abs(_rawBaseY - _smoothBaseY) > 4){
     _smoothBaseY = _rawBaseY;
   } else {
     _smoothBaseY += (_rawBaseY - _smoothBaseY) * Math.min(1, dt*16);
@@ -5078,11 +5091,11 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     camera.position.set(playerPos.x, baseY - _pDip + eye, playerPos.z);
     playerAvatar.visible=false;
   }
-  if(window.__dragonRide && window.__dragonRide.isRiding()){   // DRAGON RIDING chase cam + seated avatar
-    const _c = window.__dragonRide.camera(), _s = window.__dragonRide.saddle();
+  if(_rideOn()){   // DRAGON RIDING chase cam + seated avatar
+    const _ar = _AR(), _c = _ar.camera(), _s = _ar.saddle();
     if(window.__rideBaseFov == null) window.__rideBaseFov = camera.fov;
     camera.position.set(_c.x, _c.y, _c.z); camera.lookAt(_c.lx, _c.ly, _c.lz);
-    const _fov = window.__rideBaseFov + (_c.fov - window.__dragonRide.tune.fovBase);   // boost FOV kick relative to the host FOV
+    const _fov = window.__rideBaseFov + (_c.fov - _ar.tune.fovBase);   // boost FOV kick relative to the host FOV
     if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
     playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
   } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
@@ -5105,6 +5118,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   if (_riders) {   // RIDERS: seat the player on the bike / dragon (after both placed themselves), then solve every rider
     if (window.__riderBike) _riders.sync(playerAvatar, !!veh.bike.isRiding(), window.__riderBike, 'seat', { visible: function(){ return thirdPerson; } });
     if (window.__dragonRide) { window.__riderDragon = window.__riderDragon || _riders.dragonVehicle(window.__dragonRide); _riders.sync(playerAvatar, window.__dragonRide.isRiding(), window.__riderDragon, 'saddle'); }
+    if (window.__mountRide) { window.__riderMount = window.__riderMount || _riders.dragonVehicle(window.__mountRide); _riders.sync(playerAvatar, window.__mountRide.isRiding(), window.__riderMount, 'saddle'); }
     _riders.update(dt);
   }
   const t=clock.elapsedTime;

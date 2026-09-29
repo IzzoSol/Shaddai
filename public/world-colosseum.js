@@ -49,6 +49,7 @@
     for (var i = 0; i < 24; i++) { var t = (i + 0.5) / 24 * Math.PI * 2, x = a * Math.cos(t), z = b * Math.sin(t), nx = x / (a * a), nz = z / (b * b), nl = Math.hypot(nx, nz); nx /= nl; nz /= nl; out.push({ id: i, x: x, z: z, nx: nx, nz: nz, yaw: Math.atan2(-nx, -nz) }); }
     return out;
   })();
+  window.COLOSSEUM_KIOSKS = KIOSKS;
   function inKiosk(x, z) { for (var i = 0; i < KIOSKS.length; i++) { var dx = x - KIOSKS[i].x, dz = z - KIOSKS[i].z; if (dx * dx + dz * dz < 1.44) return true; } return false; }
   function inLobby(x, z) { return Math.abs(x) <= LOBBY_W / 2 && z >= LOBBY_Z0 - 1 && z <= LOBBY_Z0 + LOBBY_D; }
   function tierH(dd) { return POD_H + ((dd - LOW0) / (LOW1 - LOW0)) * (H_LOW - POD_H); }
