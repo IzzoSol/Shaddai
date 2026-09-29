@@ -24,6 +24,17 @@
   **First job:** run `git diff public/SHADDAI-WORLD-3D.html`. If there's no commit named "perf"/"load" in the log, finish that work: measure → fix → commit. It is the TOP PRIORITY.
 - **Realm cities from refs:** cut off at the start, so nothing was built. The brief is in the plan: new `tools/blender/canon/realm_cities_v1.py` (STEP 8b), one realm per headless Blender run, refs in `fal-assets/production/atlas-refs.js` + `Downloads\shaddai-realms-visual-bible.md`. The owner wants cities integrated into the terrain "matching the reference images perfectly, the bridge look and everything".
 
+## Final state of the old terminal (read this)
+- **Load speed:** the helper was STOPPED mid-work. Its UNCOMMITTED edits are in `public/SHADDAI-WORLD-3D.html` (timing marks, loading-screen/time-slicing work in progress). First job: `git diff public/SHADDAI-WORLD-3D.html`, then finish, test and commit, or keep the good parts. Target: playable in under 30 s on the HD 620, no freezes, the old intro kept behind `?intro=cinematic`, and a light loading screen in the theme.
+- **Trailer (the owner wants it):**
+  - Shot script: `tools/blender/trailer/trailer-shots.py`, NOT yet rendered. Run it alone with ≥2 GB free RAM: `blender -b --factory-startup --python tools/blender/trailer/trailer-shots.py -- <repo> <outdir> tools/blender/trailer/src`. It renders the 7-agent lineup, close-ups, weapons, train and dragon.
+  - VO script: `tools/blender/trailer/vo-script.txt`. Free draft voice lines, Windows "David": `tools/blender/trailer/vo/vo1..8.wav`.
+  - Then assemble with ffmpeg: slow zoom/pan on each shot, crossfades, animated titles in emerald #00ff9c / gold #e8c45c (fonts: bahnschrift/segoeuib), VO timed per line. The best existing world renders are in `.bl-cache/renders/`: canon-s7-v3-top-day, -top-night, -commons-oblique, canon-s6-emberfall-oblique, canon-s6-void-oblique, -perch.
+  - The owner is OK using fal for more trailer variants (image-to-video clips from our renders, plus a better narrator voice). Quote the cost first; about $50 of fal credit is left.
+- **Blender:** the owner closed `Shaddai3D.blend` WITHOUT saving, so the "TODAY 2026-09-28" collection is gone. Re-import the 5 agents + `tools/blender/trailer/src/train.obj` + `weapons.obj` if they want them in Blender again.
+- **Push to main:** the owner asked for everything on `main` (+ the beta site). Do it only after the speed work is committed and all tests pass: merge `origin/main` into `feat/world3d`, test, then `git push origin feat/world3d:main`. `main` deploys production on Render.
+- The Colosseum is being worked on in this new terminal (the owner's plan: world-colosseum.js phases 0–6; the underground station uses `__worldTransitApi.addStation`, see TRAIN-RIDE.md).
+
 ## Test status at handoff
 - All green: hoverboards 12/12, riders 8/8, weapons 15/15, train-v2 8/8, train-ride 14/14, dragon-elements 11/11.
 - **world-anim 12/13:** the only failure is the strict heap micro-check `update() allocates nothing`. The animator logic measures 17 B/call against a limit of 4, which is about 1 KB/s and has no visible effect. The anim helper was stopped before it tuned this. Fix it by finding the boxed-double write in `public/world-anim.js` `update()`/`setLocomotion` (write only on change, like the note in the test says). Do NOT loosen the test.
