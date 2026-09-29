@@ -4414,7 +4414,7 @@ window.removeAgent = function(a){
     var shown=0, t0=Date.now(), warm=false;
     function set(p, label){ p=Math.max(shown, Math.min(100, Math.round(p))); if(p!==shown){ shown=p; bar.style.width=p+'%'; pct.textContent=p+'%'; } if(label && stepEl.textContent!==label) stepEl.textContent=label; }
     (function tick(){
-      var crit=(window.__LD && window.__LD.critical) || [], S=(window.__LD && window.__LD.steps) || {}, done=0, next=null;
+      var crit=((window.__LD && window.__LD.critical) || []).filter(function(k){ return !(window.__lite && (k==='grid-fabric' || k==='city-v3')); }), S=(window.__LD && window.__LD.steps) || {}, done=0, next=null;
       crit.forEach(function(k){ var st=S[k]; if(st && st.t1) done++; else if(!next) next=k; });
       var ready = crit.length ? done>=crit.length : !!window.__worldBuilt;
       if(!ready && Date.now()-t0 < 25000){ set(4 + 88*done/Math.max(1,crit.length), LABEL[next] || 'Loading'); setTimeout(tick, 150); return; }
@@ -4676,8 +4676,8 @@ const _Q = {
   // 4 tiers: LOW → MEDIUM → HIGH → ULTRA
   // Each tier defines: pixelRatio cap, bloom strength (0=off), prop/NPC cull radius
   tiers: [
-    { name:'POTATO', pr:0.55, bloomStr:0,    cullR:75   },  // weak GPUs settle here — still playable
-    { name:'LOW',    pr:0.75, bloomStr:0,    cullR:110  },
+    { name:'POTATO', pr:0.55, bloomStr:0,    cullR:170  },  // weak GPUs settle here — still playable
+    { name:'LOW',    pr:0.75, bloomStr:0,    cullR:230  },
     { name:'MEDIUM', pr:1.0,  bloomStr:0.14, cullR:220  },
     { name:'HIGH',   pr:1.2,  bloomStr:0.22, cullR:360  },
     { name:'ULTRA',  pr:1.5,  bloomStr:0.28, cullR:9999 },
