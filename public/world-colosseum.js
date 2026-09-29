@@ -208,22 +208,105 @@
     function ellipseLine(d, y, mat, h) { var g = new THREE.CylinderGeometry(1, 1, h, 192, 1, true); var m = new THREE.Mesh(g, mat); m.scale.set(A + d, 1, B + d); m.position.y = y + h / 2; m.material.side = THREE.DoubleSide; root.add(m); return m; }
     ellipseLine(0, POD_H - 0.3, mats.neon, 0.3);
     ellipseLine(PROM1 - 0.2, H_LOW, mats.stoneDark, 1.1);
-    // ── outer shell: 4 arcaded storeys (instanced pillars) + cornices to 46 m ──
-    ellipseLine(SHELL, 0, mats.stone, CROWN_H);
-    var storeys = 4, per = 80, sh = CROWN_H / storeys;
-    var pillarGeo = new THREE.BoxGeometry(2.2, sh - 1.2, 2.2), pillars = new THREE.InstancedMesh(pillarGeo, mats.stone, storeys * per), mm = new THREE.Matrix4(), k = 0;
-    for (var s2 = 0; s2 < storeys; s2++) for (var i2 = 0; i2 < per; i2++) {
-      var t = i2 / per * Math.PI * 2; mm.makeTranslation((A + SHELL - 1.2) * Math.cos(t), s2 * sh + sh / 2, (B + SHELL - 1.2) * Math.sin(t)); pillars.setMatrixAt(k++, mm);
+    // ── build helpers (build-time only; nothing here runs per frame) ──
+    var frameHooks = [];                                   // called from the interiors animation clock (see TIME below): fn(dt)
+    var _q = new THREE.Quaternion(), _up = new THREE.Vector3(0, 1, 0), _v = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1);
+    function compose(m, x, y, z, yaw, sx, sy, sz) { _q.setFromAxisAngle(_up, yaw || 0); return m.compose(_v.set(x, y, z), _q, _s.set(sx || 1, sy || 1, sz || 1)); }
+    function perim(d, n, phase) {           // n points at equal ARC LENGTH on the offset ellipse; yaw aims a model's local +z along the outward normal
+      var M2 = 720, a = A + d, b = B + d, cum = [0], px = a, pz = 0, i, len = 0;
+      for (i = 1; i <= M2; i++) { var t = i / M2 * Math.PI * 2, x = a * Math.cos(t), z = b * Math.sin(t); len += Math.hypot(x - px, z - pz); cum.push(len); px = x; pz = z; }
+      var out = [];
+      for (i = 0; i < n; i++) {
+        var target = (((i + (phase || 0)) / n) % 1) * len, lo = 0, hi = M2; while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (cum[mid] <= target) lo = mid; else hi = mid; }
+        var tt2 = (lo + (target - cum[lo]) / (cum[lo + 1] - cum[lo])) / M2 * Math.PI * 2, X = a * Math.cos(tt2), Z = b * Math.sin(tt2), nx = X / (a * a), nz = Z / (b * b), nl = Math.hypot(nx, nz);
+        out.push({ x: X, z: Z, nx: nx / nl, nz: nz / nl, yaw: Math.atan2(nx / nl, nz / nl) });
+      }
+      out.len = len; return out;
     }
-    root.add(pillars);
-    for (var c2 = 1; c2 <= storeys; c2++) ellipseLine(SHELL - 2.4, c2 * sh - 1.2, mats.trim, 1.0);
-    // ── banners (hang from the crown, facing in) ──
-    var bannerGeo = new THREE.PlaneGeometry(6, 16);
-    for (var b2 = 0; b2 < 24; b2++) { var tb = b2 / 24 * Math.PI * 2, bn = new THREE.Mesh(bannerGeo, mats.banner); bn.position.set((A + SHELL - 3) * Math.cos(tb), CROWN_H - 10, (B + SHELL - 3) * Math.sin(tb)); bn.lookAt(0, CROWN_H - 10, 0); root.add(bn); }
-    // ── two big screens (the one modern element) over the north + south ends ──
+    function mergeGeos(parts) {
+      var pos = [], nor = [], v = new THREE.Vector3(), nm = new THREE.Matrix3();
+      parts.forEach(function (p) { var g = p.geo.index ? p.geo.toNonIndexed() : p.geo, pa = g.attributes.position, na = g.attributes.normal; nm.getNormalMatrix(p.m);
+        for (var i = 0; i < pa.count; i++) { v.fromBufferAttribute(pa, i).applyMatrix4(p.m); pos.push(v.x, v.y, v.z); v.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); nor.push(v.x, v.y, v.z); } });
+      var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); return g;
+    }
+    function T4(x, y, z, sx, sy, sz) { return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion(), new THREE.Vector3(sx || 1, sy || 1, sz || 1)); }
+    function instanced(geo, mat, n, fill, name) {
+      var im = new THREE.InstancedMesh(geo, mat, n), m = new THREE.Matrix4(); im.name = name || 'inst';
+      for (var i = 0; i < n; i++) { fill(i, m); im.setMatrixAt(i, m); }
+      im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; root.add(im); return im;
+    }
+    function annulus(dIn, dOut, y, mat) {          // flat elliptic ring between two offsets (double-sided)
+      var N = 192, pos = [], a, b, c, d;
+      for (var i = 0; i < N; i++) { var t0 = i / N * Math.PI * 2, t1 = (i + 1) / N * Math.PI * 2;
+        a = [(A + dIn) * Math.cos(t0), (B + dIn) * Math.sin(t0)]; b = [(A + dIn) * Math.cos(t1), (B + dIn) * Math.sin(t1)]; c = [(A + dOut) * Math.cos(t1), (B + dOut) * Math.sin(t1)]; d = [(A + dOut) * Math.cos(t0), (B + dOut) * Math.sin(t0)];
+        pos.push(a[0], y, a[1], c[0], y, c[1], b[0], y, b[1], a[0], y, a[1], d[0], y, d[1], c[0], y, c[1]); }
+      var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+      var m = new THREE.Mesh(g, mat); mat.side = THREE.DoubleSide; root.add(m); return m;
+    }
+    function bayGeo(w, h, openW, openH, base, depth) {   // wall panel with an arched opening (extruded); local x = along the wall, y up, z = thickness
+      var sh = new THREE.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(w / 2, h); sh.lineTo(-w / 2, h); sh.closePath();
+      var r = openW / 2, hole = new THREE.Path(); hole.moveTo(-r, base); hole.lineTo(r, base); hole.lineTo(r, base + openH - r); hole.absarc(0, base + openH - r, r, 0, Math.PI, false); hole.lineTo(-r, base); sh.holes.push(hole);
+      var g = new THREE.ExtrudeGeometry(sh, { depth: depth, bevelEnabled: false, curveSegments: 5 }); g.translate(0, 0, -depth / 2); return g;
+    }
+    mats.recess = L(0x2a241c);
+
+    // ── outer wall interior: dark backing wall, base cap, then the 22-46 m DEAD BAND, now filled ──
+    //   y 22-34  arcaded storey (80 arched bays) + 40 VIP loggias (160 seats) + sky gallery / agent trading floor ledge at y = 32
+    //   y 34-46  attic storey (80 windows with statues + backlit niches), 4 big screens, banners, velarium rigging at the crown
+    var BAYS = 80, PA = SHELL - 1.6, wallH = CROWN_H - H_UP;
+    ellipseLine(SHELL, H_UP - 0.5, mats.recess, wallH + 0.5);
+    annulus(UP1, SHELL, H_UP, mats.stoneDark);
+    var bayPts = perim(PA, BAYS, 0), bayW = bayPts.len / BAYS * 1.03, ROWH = 12;
+    instanced(bayGeo(bayW, ROWH, 4.6, 8.6, 1.0, 1.4), mats.stone, BAYS, function (i, m) { var p = bayPts[i]; compose(m, p.x, H_UP, p.z, p.yaw); }, 'bays-lower');
+    instanced(bayGeo(bayW, ROWH, 3.0, 5.6, 2.6, 1.4), mats.stone, BAYS, function (i, m) { var p = bayPts[i]; compose(m, p.x, H_UP + ROWH, p.z, p.yaw); }, 'bays-attic');
+    [H_UP, H_UP + ROWH - 0.4, CROWN_H - 0.8].forEach(function (y) { ellipseLine(SHELL - 2.4, y, mats.trim, 0.8); });
+    // attic statues + backlit niches (emissive, themed)
+    var statueGeo = mergeGeos([{ geo: new THREE.BoxGeometry(1.3, 1.2, 1.3), m: T4(0, 0.6, 0) }, { geo: new THREE.CylinderGeometry(0.32, 0.45, 2.3, 8), m: T4(0, 2.35, 0) },
+      { geo: new THREE.SphereGeometry(0.3, 8, 6), m: T4(0, 3.75, 0) }, { geo: new THREE.BoxGeometry(1.5, 0.22, 0.28), m: T4(0, 3.1, 0) }]);
+    instanced(statueGeo, mats.stone, BAYS, function (i, m) { var p = bayPts[i]; compose(m, p.x - p.nx * 0.5, H_UP + ROWH + 2.6, p.z - p.nz * 0.5, p.yaw + Math.PI); }, 'statues');
+    instanced(new THREE.PlaneGeometry(2.7, 5.4), mats.neon, BAYS, function (i, m) { var p = bayPts[i]; compose(m, p.x + p.nx * 0.55, H_UP + ROWH + 2.6 + 2.7, p.z + p.nz * 0.55, p.yaw + Math.PI); }, 'niche-glow');
+    // VIP loggias: 40 balconies x 4 seats = 160
+    var NLOG = 40, logPts = perim(SHELL - 3.8, NLOG, 0.25), LOGY = H_UP + 3;
+    instanced(new THREE.BoxGeometry(5.4, 0.5, 3.4), mats.stoneDark, NLOG, function (i, m) { var p = logPts[i]; compose(m, p.x, LOGY, p.z, p.yaw); }, 'loggia-floor');
+    instanced(new THREE.BoxGeometry(5.4, 0.9, 0.14), mats.neon, NLOG, function (i, m) { var p = logPts[i]; compose(m, p.x - p.nx * 1.6, LOGY + 0.7, p.z - p.nz * 1.6, p.yaw); }, 'loggia-rail');
+    var vipSeatGeo = mergeGeos([{ geo: new THREE.BoxGeometry(0.62, 0.36, 0.56), m: T4(0, 0.45, 0) }, { geo: new THREE.BoxGeometry(0.62, 0.7, 0.1), m: T4(0, 0.85, 0.28) }]);
+    var vipSeats = [];
+    instanced(vipSeatGeo, mats.banner, NLOG * 4, function (i, m) {
+      var p = logPts[(i / 4) | 0], k2 = i % 4, lx = (k2 & 1 ? 1 : -1) * 0.95, lz = k2 < 2 ? 0.7 : -0.5, c = Math.cos(p.yaw), s = Math.sin(p.yaw);   // local (lx, lz) -> plan: x' = lx*c + lz*s, z' = -lx*s + lz*c
+      var wx = p.x + lx * c + lz * s, wz = p.z - lx * s + lz * c; compose(m, wx, LOGY + 0.25, wz, p.yaw); vipSeats.push({ x: wx, y: LOGY + 0.25, z: wz, yaw: p.yaw + Math.PI, loggia: (i / 4) | 0 });
+    }, 'vip-seats');
+    // sky gallery = the agent trading floor at y = 32 (ledge in front of the arcade, overlooking the arena)
+    var AGY = 32, GIN = SHELL - 7.2, GOUT = SHELL - 2.4;
+    annulus(GIN, GOUT, AGY, mats.stoneDark); ellipseLine(GIN, AGY - 0.6, mats.stoneDark, 0.6); ellipseLine(GIN, AGY, mats.neon, 0.14); ellipseLine(GIN, AGY + 0.95, mats.neon, 0.1);
+    var NAG = 24, agPts = perim((GIN + GOUT) / 2 + 0.6, NAG, 0.5), agentSlots = [];
+    instanced(new THREE.BoxGeometry(1.7, 1.05, 0.8), mats.stoneDark, NAG, function (i, m) { var p = agPts[i]; compose(m, p.x - p.nx * 0.9, AGY + 0.55, p.z - p.nz * 0.9, p.yaw); }, 'agent-desks');
+    instanced(new THREE.BoxGeometry(1.5, 0.08, 0.6), mats.neon, NAG, function (i, m) { var p = agPts[i]; compose(m, p.x - p.nx * 0.9, AGY + 1.1, p.z - p.nz * 0.9, p.yaw); }, 'agent-screens');
+    agPts.forEach(function (p, i) { agentSlots.push({ id: i, x: p.x + p.nx * 0.25, y: AGY, z: p.z + p.nz * 0.25, yaw: p.yaw + Math.PI }); });
+    // banners (40, instanced, hang from the crown facing in)
+    var bnPts = perim(SHELL - 3, 40, 0.5);
+    instanced(new THREE.PlaneGeometry(4.6, 13), mats.banner, 40, function (i, m) { var p = bnPts[i]; compose(m, p.x, CROWN_H - 8, p.z, p.yaw + Math.PI); }, 'banners');
+    // four big screens (N S E W) sharing one canvas texture
     var sc = document.createElement('canvas'); sc.width = 1024; sc.height = 512; var sx = sc.getContext('2d');
     var stex = new THREE.CanvasTexture(sc); stex.colorSpace = THREE.SRGBColorSpace; mats.screen.map = stex;
-    [[0, -1], [0, 1]].forEach(function (d) { var s3 = new THREE.Mesh(new THREE.PlaneGeometry(32, 16), mats.screen); s3.position.set(0, H_UP + 12, d[1] * (B + UP1 - 4)); s3.lookAt(0, H_UP + 12, 0); root.add(s3); });
+    var scrPos = [[0, -(B + UP1 - 4)], [0, (B + UP1 - 4)], [-(A + UP1 - 4), 0], [(A + UP1 - 4), 0]];
+    instanced(new THREE.PlaneGeometry(32, 16), mats.screen, 4, function (i, m) { var s3 = scrPos[i]; compose(m, s3[0], H_UP + 12, s3[1], Math.atan2(-s3[0], -s3[1])); }, 'screens');
+    // velarium: retractable Roman awning. Geometry is a unit fan; the vertex shader places it on the shell (uOpen 0 = furled, 1 = fully drawn), so retracting costs one uniform
+    var velU = { uOpen: { value: 0 }, uAB: { value: new THREE.Vector2(A, B) }, uShell: { value: SHELL }, uExt: { value: 21 }, uCrown: { value: CROWN_H }, uYin: { value: CROWN_H - 10 }, uC1: { value: new THREE.Color(0x9e1b1b) }, uC2: { value: new THREE.Color(0xd8c9a8) } };
+    var velMat = new THREE.ShaderMaterial({ uniforms: velU, side: THREE.DoubleSide, transparent: true, depthWrite: false,
+      vertexShader: 'uniform float uOpen; uniform vec2 uAB; uniform float uShell; uniform float uExt; uniform float uCrown; uniform float uYin; varying vec2 vUv;' +
+        'void main(){ float v = position.y; float d = uShell - v * uExt * uOpen; vec2 u = vec2(position.x, position.z);' +
+        ' vec3 p = vec3((uAB.x + d) * u.x, uCrown - v * uOpen * (uCrown - uYin) - sin(3.14159 * v) * 0.9 * uOpen, (uAB.y + d) * u.y); vUv = vec2(v, atan(u.y, u.x));' +
+        ' gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }',
+      fragmentShader: 'uniform vec3 uC1; uniform vec3 uC2; varying vec2 vUv; void main(){ float s = step(0.5, fract(vUv.y * 4.7746)); vec3 c = mix(uC1, uC2, s) * (0.72 + 0.28 * vUv.x); gl_FragColor = vec4(c, 0.86); }' });
+    (function () {
+      var NS = 192, NV = 6, pos = [], idx = [];
+      for (var vi = 0; vi <= NV; vi++) for (var si = 0; si <= NS; si++) { var t = si / NS * Math.PI * 2; pos.push(Math.cos(t), vi / NV, Math.sin(t)); }
+      for (var vj = 0; vj < NV; vj++) for (var sj = 0; sj < NS; sj++) { var a0 = vj * (NS + 1) + sj, b0 = a0 + 1, c0 = a0 + NS + 1, d0 = c0 + 1; idx.push(a0, c0, b0, b0, c0, d0); }
+      var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+      var vm = new THREE.Mesh(g, velMat); vm.name = 'velarium'; vm.frustumCulled = false; vm.renderOrder = 5; root.add(vm); velU.mesh = vm;
+    })();
+    var vel = { target: 0.7, open: 0 };
+    frameHooks.push(function (dt) { var k = Math.min(1, dt * 1.4); if (Math.abs(vel.target - vel.open) > 0.002) { vel.open += (vel.target - vel.open) * k; velU.uOpen.value = vel.open; velU.mesh.visible = vel.open > 0.02; } });
     function drawScreen(line2) {
       sx.fillStyle = '#05070a'; sx.fillRect(0, 0, 1024, 512); sx.strokeStyle = '#e8c45c'; sx.lineWidth = 10; sx.strokeRect(8, 8, 1008, 496);
       sx.fillStyle = '#e8c45c'; sx.font = '900 92px Georgia, serif'; sx.textAlign = 'center'; sx.fillText('THE COLOSSEUM', 512, 220);
@@ -251,17 +334,18 @@
 
     // ── themes (admin presets) ──
     var THEMES = {
-      classic:  { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0xc9a24a, banner: 0x9e1b1b, top: 0x6fa8dc, bot: 0xf2dcb0, sun: 1.5, hemi: 0.95, torch: 0, neon: 0.35, namp: 0.15 },
-      royal:    { stone: 0xf1ede6, dark: 0xcfc6b8, seat: 0xe6ddcc, trim: 0xe8c45c, banner: 0x1c2f6b, top: 0x8fb8ea, bot: 0xfff3dc, sun: 2.4, hemi: 1.2, torch: 0, neon: 0.3, namp: 0.1 },
-      night:    { stone: 0x5e5647, dark: 0x3b352c, seat: 0x544b3d, trim: 0xe8c45c, banner: 0x6b0f0f, top: 0x05070f, bot: 0x2a1c10, sun: 0.25, hemi: 0.35, torch: 3.5, neon: 1.1, namp: 0.4 },
-      festival: { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0x00ff9c, banner: 0xff3fa4, top: 0x2b1055, bot: 0xff8a3c, sun: 1.2, hemi: 0.9, torch: 2.5, neon: 2.2, namp: 0.9 },
+      classic:  { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0xc9a24a, banner: 0x9e1b1b, top: 0x6fa8dc, bot: 0xf2dcb0, sun: 1.5, hemi: 0.95, torch: 0, neon: 0.35, namp: 0.15, vel: 0.7 },
+      royal:    { stone: 0xf1ede6, dark: 0xcfc6b8, seat: 0xe6ddcc, trim: 0xe8c45c, banner: 0x1c2f6b, top: 0x8fb8ea, bot: 0xfff3dc, sun: 2.4, hemi: 1.2, torch: 0, neon: 0.3, namp: 0.1, vel: 0.9 },
+      night:    { stone: 0x5e5647, dark: 0x3b352c, seat: 0x544b3d, trim: 0xe8c45c, banner: 0x6b0f0f, top: 0x05070f, bot: 0x2a1c10, sun: 0.25, hemi: 0.35, torch: 3.5, neon: 1.1, namp: 0.4, vel: 0 },
+      festival: { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0x00ff9c, banner: 0xff3fa4, top: 0x2b1055, bot: 0xff8a3c, sun: 1.2, hemi: 0.9, torch: 2.5, neon: 2.2, namp: 0.9, vel: 1 },
     };
-    var current = { theme: 'classic', field: 'sand' };
+    var current = { theme: 'classic', field: 'sand' }, themeSet = false;
     function setTheme(name) {
       var T = THEMES[name] || THEMES.classic; current.theme = THEMES[name] ? name : 'classic';
       mats.stone.color.setHex(T.stone); mats.stoneDark.color.setHex(T.dark); mats.seat.color.setHex(T.seat); mats.trim.color.setHex(T.trim); mats.banner.color.setHex(T.banner);
       skyMat.uniforms.top.value.setHex(T.top); skyMat.uniforms.bot.value.setHex(T.bot); sun.intensity = T.sun; hemi.intensity = T.hemi;
       torches.forEach(function (p) { p.intensity = T.torch; });
+      mats.recess.color.setHex(T.dark).multiplyScalar(0.3); velU.uC1.value.setHex(T.banner); velU.uC2.value.setHex(T.stone); vel.target = T.vel; if (!themeSet) { vel.open = T.vel; velU.uOpen.value = T.vel; velU.mesh.visible = T.vel > 0.02; themeSet = true; }
       mats.neon.emissive.setHex(T.trim); glowEntries[0].base = T.neon; glowEntries[0].amp = T.namp; mats.neon.emissiveIntensity = T.neon;
       env.fog.color.setHex(T.bot);
       drawScreen((current.field.toUpperCase()) + '  ·  ' + current.theme.toUpperCase());
@@ -335,7 +419,7 @@
     // ── ambient life for world-interiors' active-room loop: a time source (plain object whose rotation.y setter IS the clock — zero allocation),
     //    pulsing neon, and sand-dust motes (Points kept in group units; interiors wraps them at ROOM_H) ──
     var TIME = { value: 0 }, _clk = 0, clockObj = { rotation: {} };
-    Object.defineProperty(clockObj.rotation, 'y', { get: function () { return _clk; }, set: function (v) { _clk = v; TIME.value = v; } });
+    Object.defineProperty(clockObj.rotation, 'y', { get: function () { return _clk; }, set: function (v) { var dt = v - _clk; _clk = v; TIME.value = v; for (var hi = 0; hi < frameHooks.length; hi++) frameHooks[hi](dt); } });
     var animObjs = [{ mesh: clockObj, axis: 'y', speed: 1 }];
     var motes = (function () {
       var n = 36, hs = 30 * U, pos = new Float32Array(n * 3), vel = new Float32Array(n * 3);
@@ -358,10 +442,11 @@
         return false;
       },
       // standalone tick for pages that don't run world-interiors (colosseum-viewer.html): same work the interiors loop does
-      tick: function (dt) { var i; _clk += dt; TIME.value = _clk; for (i = 0; i < glowEntries.length; i++) { var g = glowEntries[i]; g.mat.emissiveIntensity = g.base + g.amp * (0.5 + 0.5 * Math.sin(_clk * 1.15 + g.phase)); }
+      tick: function (dt) { var i; _clk += dt; TIME.value = _clk; for (i = 0; i < frameHooks.length; i++) frameHooks[i](dt); for (i = 0; i < glowEntries.length; i++) { var g = glowEntries[i]; g.mat.emissiveIntensity = g.base + g.amp * (0.5 + 0.5 * Math.sin(_clk * 1.15 + g.phase)); }
         var pa = motes.pts.geometry.attributes.position.array, hs = motes.hs; for (i = 0; i < motes.count; i++) { pa[i * 3] += motes.vel[i * 3]; pa[i * 3 + 1] += motes.vel[i * 3 + 1]; pa[i * 3 + 2] += motes.vel[i * 3 + 2]; if (pa[i * 3 + 1] > 21) pa[i * 3 + 1] = 1; if (pa[i * 3] > hs) pa[i * 3] -= hs * 2; if (pa[i * 3] < -hs) pa[i * 3] += hs * 2; if (pa[i * 3 + 2] > hs) pa[i * 3 + 2] -= hs * 2; if (pa[i * 3 + 2] < -hs) pa[i * 3 + 2] += hs * 2; }
         motes.pts.geometry.attributes.position.needsUpdate = true; },
-      setTheme: setTheme, setField: setField, spectate: spectate, cams: cams, dims: Object.assign({}, D, { LOW1: LOW1, PROM1: PROM1, UP1: UP1, SHELL: SHELL, H_LOW: H_LOW, H_UP: H_UP, RAMP: RAMP, LOBBY_Z0: LOBBY_Z0 }), hLocal: hLocal,
+      setTheme: setTheme, setField: setField, spectate: spectate, cams: cams, vipSeats: vipSeats, agentSlots: agentSlots, setVelarium: function (o) { vel.target = Math.max(0, Math.min(1, o)); }, velarium: vel,
+      dims: Object.assign({}, D, { LOW1: LOW1, PROM1: PROM1, UP1: UP1, SHELL: SHELL, H_LOW: H_LOW, H_UP: H_UP, RAMP: RAMP, LOBBY_Z0: LOBBY_Z0 }), hLocal: hLocal,
       state: current, themes: Object.keys(THEMES),
     };
     window.__colosseumArena = api;

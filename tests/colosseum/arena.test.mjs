@@ -74,3 +74,24 @@ test('perf report (informational)', T, async () => {
   console.log('   [perf] draw calls ~' + s.calls + ', triangles ~' + s.tris + ', instances ' + s.instances);
   assert.ok(s.calls < 200);
 });
+
+test('stage 3 dead band: 160 VIP seats in 40 loggias, 24 agent slots at y=32, arched bays at the shell', T, async () => {
+  const { THREE, arena } = await get(); const d = arena.dims;
+  assert.equal(arena.vipSeats.length, 160);
+  assert.equal(new Set(arena.vipSeats.map(s => s.loggia)).size, 40);
+  assert.equal(arena.agentSlots.length, 24); assert.ok(arena.agentSlots.every(s => s.y === 32));
+  for (const s of arena.vipSeats) { assert.ok(s.y > d.H_UP && s.y < d.CROWN_H); const off = Math.hypot(s.x / (d.A + d.SHELL), s.z / (d.B + d.SHELL)); assert.ok(off < 1, 'seat inside shell'); }
+  const names = []; arena.group.traverse(o => { if (o.isInstancedMesh) names.push(o.name + ':' + o.count); });
+  for (const want of ['bays-lower:80', 'bays-attic:80', 'statues:80', 'vip-seats:160', 'agent-desks:24', 'banners:40', 'screens:4']) assert.ok(names.includes(want), 'missing ' + want + ' in ' + names.join(','));
+  const bays = []; arena.group.traverse(o => { if (o.name === 'bays-lower') bays.push(o); });
+  assert.ok(bays[0].geometry.attributes.position.count / 3 > 40, 'arched bay has real triangles');
+  void THREE;
+});
+
+test('themes drive the emissive neon + velarium; velarium retracts/extends via one uniform', T, async () => {
+  const { arena } = await get();
+  arena.setTheme('festival'); assert.equal(arena.glowEntries[0].base, 2.2); assert.equal(arena.velarium.target, 1);
+  arena.setTheme('night'); assert.equal(arena.velarium.target, 0); assert.ok(arena.glowEntries[0].base > 1);
+  arena.setVelarium(0.5); for (let i = 0; i < 400; i++) arena.tick(0.05); assert.ok(Math.abs(arena.velarium.open - 0.5) < 0.01);
+  arena.setTheme('classic');
+});
