@@ -23,7 +23,7 @@ export async function loadArena(opts = {}) {
   delete globalThis.buildColosseumArena;
   vm.runInThisContext(fs.readFileSync(path.join(ROOT, 'public', 'world-colosseum.js'), 'utf8'), { filename: 'world-colosseum.js' });
   const scene = new THREE_M.Scene();
-  const arena = globalThis.buildColosseumArena(THREE_M, { scene, loader: opts.loader });
+  const arena = globalThis.buildColosseumArena(THREE_M, { scene, loader: opts.loader, kitGap: opts.kitGap });
   return { THREE: THREE_M, scene, arena };
 }
 // draw-call / triangle estimate for everything visible in the arena group

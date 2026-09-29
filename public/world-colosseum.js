@@ -43,6 +43,13 @@
     var k = Math.round(ang / step), da = Math.abs(ang - k * step);
     return da * r < STAIR_HALF;
   }
+  // 24 promenade kiosks (module scope so hLocal can make them solid — still the ONE collision source)
+  var KIOSK_D = LOW1 + 3.6, KIOSKS = (function () {
+    var out = [], a = A + KIOSK_D, b = B + KIOSK_D;
+    for (var i = 0; i < 24; i++) { var t = (i + 0.5) / 24 * Math.PI * 2, x = a * Math.cos(t), z = b * Math.sin(t), nx = x / (a * a), nz = z / (b * b), nl = Math.hypot(nx, nz); nx /= nl; nz /= nl; out.push({ id: i, x: x, z: z, nx: nx, nz: nz, yaw: Math.atan2(-nx, -nz) }); }
+    return out;
+  })();
+  function inKiosk(x, z) { for (var i = 0; i < KIOSKS.length; i++) { var dx = x - KIOSKS[i].x, dz = z - KIOSKS[i].z; if (dx * dx + dz * dz < 1.44) return true; } return false; }
   function inLobby(x, z) { return Math.abs(x) <= LOBBY_W / 2 && z >= LOBBY_Z0 - 1 && z <= LOBBY_Z0 + LOBBY_D; }
   function tierH(dd) { return POD_H + ((dd - LOW0) / (LOW1 - LOW0)) * (H_LOW - POD_H); }
   function rampH(d) { return tierH(RAMP) * (d / RAMP); }
@@ -56,7 +63,7 @@
     if (d < RAMP && inStairGap(x, z)) return rampH(d);             // vomitoria: one continuous ramp from the floor up into the lower tier
     if (d < LOW0) return POD_H;                                     // podium wall
     if (d < LOW1) return tierH(d);                                  // lower tier (smooth ramp under the steps)
-    if (d < PROM1) return H_LOW;                                    // promenade
+    if (d < PROM1) return inKiosk(x, z) ? 999 : H_LOW;             // promenade (kiosk footprints are solid)
     if (d < UP1) return H_LOW + ((d - PROM1) / (UP1 - PROM1)) * (H_UP - H_LOW);
     return 999;                                                     // outer shell
   }
@@ -419,6 +426,138 @@
     frameHooks.push(function () { for (var i = 0; i < torches.length; i++) if (torches[i].visible) torches[i].intensity = torchIntensity * (0.92 + 0.08 * Math.sin(TIME.value * 9 + i * 2.1)); });
     function applyLights() { for (var i = 0; i < torches.length; i++) torches[i].visible = torchIntensity > 0 && i < Q.lights; }
 
+    // ── KIOSKS (24, promenade ring): code-built stalls always exist; GLB kiosks replace them when the kit loads. Solid footprints live in hLocal (KIOSKS at module scope). ──
+    var kioskCode = { body: null, awning: null }, kioskGlbSet = {}, kioskSetSaved = {};
+    (function () {
+      kioskCode.body = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), mats.stoneDark, KIOSKS.length);
+      kioskCode.awning = new THREE.InstancedMesh(new THREE.BoxGeometry(2.6, 0.16, 1.9), mats.neon, KIOSKS.length);
+      [kioskCode.body, kioskCode.awning].forEach(function (im) { im.frustumCulled = false; im.name = 'kiosks-code'; root.add(im); });
+    })();
+    function refreshKioskCode() {           // instances covered by a loaded GLB kiosk are compacted out of the code meshes
+      var m = new THREE.Matrix4(), n = 0;
+      for (var i = 0; i < KIOSKS.length; i++) { if (kioskGlbSet[i]) continue; var k = KIOSKS[i];
+        kioskCode.body.setMatrixAt(n, compose(m, k.x, H_LOW + 1.2, k.z, k.yaw)); kioskCode.awning.setMatrixAt(n, compose(m, k.x - k.nx * 0.2, H_LOW + 2.6, k.z - k.nz * 0.2, k.yaw)); n++; }
+      kioskCode.body.count = kioskCode.awning.count = n; kioskCode.body.instanceMatrix.needsUpdate = kioskCode.awning.instanceMatrix.needsUpdate = true;
+    }
+    refreshKioskCode();
+    // portals: 4 arches at the tunnel mouths (code geometry; kit stand-arc01 replaces it)
+    var portalPts = [[A + 0.6, 0, Math.PI / 2], [-(A + 0.6), 0, -Math.PI / 2], [0, B + 0.6, 0], [0, -(B + 0.6), Math.PI]];
+    var portalCode = instanced(mergeGeos([{ geo: new THREE.BoxGeometry(1.4, 8.6, 1.6), m: T4(-(TUNNEL_HALF + 0.7), 4.3, 0) }, { geo: new THREE.BoxGeometry(1.4, 8.6, 1.6), m: T4(TUNNEL_HALF + 0.7, 4.3, 0) },
+      { geo: new THREE.BoxGeometry(2 * TUNNEL_HALF + 3.6, 1.6, 1.8), m: T4(0, 8.6, 0) }]), mats.stone, 4, function (i, m) { var p = portalPts[i]; compose(m, p[0], 0, p[1], p[2]); }, 'portals-code');
+    var vipSeatCode = root.children.filter(function (o) { return o.name === 'vip-seats'; })[0] || null;
+
+    // ── GLB KIT: lazy (after the arena is first entered), Meshopt+Draco GLTFLoader, runtime Box3 fit-to-span in METRES + ground snap
+    //    (idiom of world-landmarks.js:56-58 — accessor bounds in these GLBs are quantised garbage, so never trust them). Repeats are InstancedMesh. Any failure keeps the code geometry. ──
+    var KIT = {
+      kiosk: { url: '/assets/models/fal/prop-kiosk.glb', span: 2.8, axis: 'y' },
+      seat:  { url: '/assets/models/kit/seat.glb', span: 0.78, axis: 'x' },        // backrest is on -z, i.e. it faces +z
+      arch:  { url: '/assets/models/kit/stand-arc01.glb', span: 8.6, axis: 'x' },   // open at the centre (checked) -> safe over a tunnel mouth
+    };
+    var AGENTS = ['SHADDAI', 'ZEROX', 'ORACLE', 'QUILL', 'TURTLE', 'PIKADON', 'NEXUS'];
+    var kit = { loader: null, started: false, done: {}, failed: {}, group: new THREE.Group(), mixers: [], agentObjs: {} };
+    kit.group.name = 'colosseum-kit'; root.add(kit.group);
+    function getGLTFLoader(cb) {
+      if (kit.loader) return cb(kit.loader);
+      var ok = function (L) { kit.loader = L; cb(L); };
+      if (opts.loader && opts.loader.load) return ok(opts.loader);
+      if (window.__shdGLTF && window.__shdGLTF.loader) return ok(window.__shdGLTF.loader);   // host may share its meshopt+draco loader (docs/COLOSSEUM-HOST-SNIPPET.md)
+      try {
+        Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/loaders/DRACOLoader.js')]).then(function (m) {
+          var L = new m[0].GLTFLoader(); L.setMeshoptDecoder(m[1].MeshoptDecoder);
+          var dr = new m[2].DRACOLoader(); dr.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/'); L.setDRACOLoader(dr); ok(L);
+        }).catch(function () { cb(null); });
+      } catch (e) { cb(null); }
+    }
+    function fitObject(obj, span, axis) {   // scale so the chosen bbox axis is `span` metres, centre on x/z, put the lowest point at y = 0
+      obj.updateMatrixWorld(true);
+      var box = new THREE.Box3().setFromObject(obj), sz = box.getSize(new THREE.Vector3()), cur = axis === 'y' ? sz.y : axis === 'x' ? sz.x : axis === 'z' ? sz.z : Math.max(sz.x, sz.z);
+      if (!(cur > 1e-6) || !isFinite(cur)) return false;
+      obj.scale.multiplyScalar(span / cur); obj.updateMatrixWorld(true); box.setFromObject(obj);
+      obj.position.x -= (box.min.x + box.max.x) / 2; obj.position.z -= (box.min.z + box.max.z) / 2; obj.position.y -= box.min.y; obj.updateMatrixWorld(true);
+      return true;
+    }
+    function lam(m) {                        // GLB PBR -> Lambert: same texture, far cheaper fragments on integrated GPUs
+      if (!m || m.isMeshLambertMaterial || m.isMeshBasicMaterial) return m;
+      var n = new THREE.MeshLambertMaterial({ color: m.color ? m.color.clone() : new THREE.Color(0xffffff), map: m.map || null, emissive: m.emissive ? m.emissive.clone() : new THREE.Color(0), emissiveMap: m.emissiveMap || null, emissiveIntensity: m.emissiveIntensity == null ? 1 : m.emissiveIntensity, transparent: !!m.transparent, opacity: m.opacity == null ? 1 : m.opacity, side: m.side, alphaTest: m.alphaTest || 0 });
+      return n;
+    }
+    function loadFit(spec, cb) {             // -> cb(null, wrapperGroup) | cb(err)
+      getGLTFLoader(function (L) {
+        if (!L) return cb(new Error('no GLTFLoader'));
+        try {
+          L.load(spec.url, function (g) {
+            try { var w = new THREE.Group(); w.add(g.scene); if (!fitObject(w, spec.span, spec.axis)) return cb(new Error('empty model ' + spec.url)); w.userData.animations = g.animations || []; cb(null, w); }
+            catch (e) { cb(e); }
+          }, undefined, function (e) { cb(e || new Error('load failed ' + spec.url)); });
+        } catch (e) { cb(e); }
+      });
+    }
+    function bakeParts(w) {                  // flatten a fitted wrapper into [{geo, mat, mtx}] (no skinned meshes)
+      w.updateMatrixWorld(true); var parts = [];
+      w.traverse(function (o) { if (o.isMesh && !o.isSkinnedMesh) parts.push({ geo: o.geometry, mat: lam(o.material), mtx: o.matrixWorld.clone() }); });
+      return parts;
+    }
+    function instancePlacements(parts, mats4, name) {   // one InstancedMesh per sub-mesh; instance = placement x part matrix
+      var out = [], tmp = new THREE.Matrix4();
+      parts.forEach(function (pt, pi) {
+        var im = new THREE.InstancedMesh(pt.geo, pt.mat, mats4.length); im.name = 'kit-' + name + '-' + pi; im.frustumCulled = false;
+        for (var i = 0; i < mats4.length; i++) im.setMatrixAt(i, tmp.multiplyMatrices(mats4[i], pt.mtx));
+        im.instanceMatrix.needsUpdate = true; kit.group.add(im); out.push(im);
+      });
+      return out;
+    }
+    function kitStep(name, fn) {
+      if (kit.done[name] || kit.failed[name]) return;
+      loadFit(KIT[name], function (err, w) { if (err) { kit.failed[name] = String(err && err.message || err); return; } try { fn(w); kit.done[name] = true; } catch (e) { kit.failed[name] = String(e && e.message || e); } });
+    }
+    function place4(x, y, z, yaw) { return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(_up, yaw), new THREE.Vector3(1, 1, 1)); }
+    function startKit() {
+      if (kit.started || !Q.glb) return; kit.started = true;
+      var steps = [
+        function () { kitStep('arch', function (w) { var ms = portalPts.map(function (p) { return place4(p[0], 0, p[1], p[2]); }); kit.arch = instancePlacements(bakeParts(w), ms, 'arch'); portalCode.visible = false; }); },
+        function () { kitStep('kiosk', function (w) {
+          var want = Q.kiosks, step = Math.max(1, Math.round(KIOSKS.length / Math.max(1, want))), ms = []; kioskGlbSet = {};
+          for (var i = 0; i < KIOSKS.length; i += step) { var k = KIOSKS[i]; kioskGlbSet[i] = true; ms.push(place4(k.x, H_LOW, k.z, k.yaw + Math.PI)); }
+          kit.kiosk = instancePlacements(bakeParts(w), ms, 'kiosk'); kioskSetSaved = kioskGlbSet; refreshKioskCode(); }); },
+        function () { kitStep('seat', function (w) {
+          var ms = vipSeats.map(function (s) { return place4(s.x, s.y - 0.2, s.z, s.yaw); }); kit.seat = instancePlacements(bakeParts(w), ms, 'vipseat'); if (vipSeatCode) vipSeatCode.visible = false; }); },
+        function () { loadAgents(); },
+      ];
+      var i = 0, gap = opts.kitGap == null ? 400 : opts.kitGap; (function next() { if (i >= steps.length) return; steps[i++](); setTimeout(next, gap); })();   // spread the work so entering the arena never hitches
+    }
+    // agents: the council as vendors / ushers / greeter. Static poses driven by their baked idle clip (one mixer each, updated from the clock hook).
+    var vendorPosts = [];
+    (function () {
+      var ks = [0, 6, 12, 18], tag = ['ZEROX', 'ORACLE', 'QUILL', 'TURTLE'];
+      ks.forEach(function (ki, n) { var k = KIOSKS[ki]; vendorPosts.push({ agent: tag[n], x: k.x + k.nz * 1.9, y: H_LOW, z: k.z - k.nx * 1.9, face: k.yaw + Math.PI, role: 'vendor', kiosk: ki }); });
+      [0, 4].forEach(function (vi, n) { var th = VOM0 + vi * Math.PI * 2 / NVOM, cs = Math.cos(th), sn = Math.sin(th), rF = 1 / Math.sqrt((cs / A) * (cs / A) + (sn / B) * (sn / B)) - 2.2;
+        var ux = rF * cs + sn * (STAIR_HALF + 1.4), uz = rF * sn - cs * (STAIR_HALF + 1.4); vendorPosts.push({ agent: n ? 'NEXUS' : 'PIKADON', x: ux, y: 0, z: uz, face: Math.atan2(-ux, -uz), role: 'usher' }); });
+      vendorPosts.push({ agent: 'SHADDAI', x: 3.5, y: 0, z: LOBBY_Z0 + 12, face: 0, role: 'greeter' });
+    })();
+    var AGENT_PRIORITY = ['SHADDAI', 'ZEROX', 'ORACLE', 'QUILL', 'TURTLE', 'PIKADON', 'NEXUS'];
+    function loadAgents() {
+      var want = AGENT_PRIORITY.slice(0, Q.agents), i = 0;
+      (function next() {
+        if (i >= want.length) return; var name = want[i++], post = vendorPosts.filter(function (p) { return p.agent === name; })[0];
+        if (!post || kit.agentObjs[name]) return next();
+        loadFit({ url: '/assets/agents/' + name + '.glb', span: 1.8, axis: 'y' }, function (err, w) {
+          if (!err) {
+            w.position.set(post.x, post.y, post.z); w.rotation.y = post.face; w.name = 'agent-' + name; w.traverse(function (o) { if (o.isMesh) { o.frustumCulled = false; if (o.material && o.material.isMeshStandardMaterial) o.material = lam(o.material); } });
+            kit.group.add(w); kit.agentObjs[name] = w;
+            var clips = w.userData.animations, idle = null; for (var c = 0; c < clips.length; c++) if (/idle/i.test(clips[c].name)) idle = clips[c];
+            if (idle) { var mx = new THREE.AnimationMixer(w); mx.clipAction(idle).play(); mx.update(Math.random() * 2); kit.mixers.push(mx); }
+          } else kit.failed['agent-' + name] = String(err && err.message || err);
+          setTimeout(next, opts.kitGap == null ? 300 : opts.kitGap);
+        });
+      })();
+    }
+    frameHooks.push(function (dt) { for (var i = 0; i < kit.mixers.length; i++) kit.mixers[i].update(dt); });
+    qualityHooks.push(function () {          // tier change: show/hide the GLB layers; late upgrade starts the loader
+      var on = !!Q.glb;
+      kit.group.visible = on; if (kit.arch) portalCode.visible = !on; if (vipSeatCode && kit.seat) vipSeatCode.visible = !on;
+      if (!on) { kioskGlbSet = {}; refreshKioskCode(); } else if (kit.started) { kioskGlbSet = kioskSetSaved; refreshKioskCode(); } else startKit();
+    });
+
     // ── themes (admin presets) ──
     var THEMES = {
       classic:  { stone: 0xd8c9a8, dark: 0xa8977a, seat: 0xbfae8c, trim: 0xc9a24a, banner: 0x9e1b1b, top: 0x6fa8dc, bot: 0xf2dcb0, sun: 1.5, hemi: 0.95, torch: 0, neon: 0.35, namp: 0.15, vel: 0.7 },
@@ -493,6 +632,7 @@
       var cam = window.__w3dDebug && window.__w3dDebug.camera;
       if (group.visible && !env.saved) {
         if (window.__shdVisitDistrict) window.__shdVisitDistrict('colosseum');
+        startKit();
         env.saved = { fog: scene.fog, far: cam ? cam.far : null }; scene.fog = env.fog;
         if (cam && cam.far < 5000) { cam.far = 5000; cam.updateProjectionMatrix(); }
       } else if (!group.visible && env.saved) {
@@ -533,7 +673,7 @@
       tick: function (dt) { var i; _clk += dt; TIME.value = _clk; for (i = 0; i < frameHooks.length; i++) frameHooks[i](dt); for (i = 0; i < glowEntries.length; i++) { var g = glowEntries[i]; g.mat.emissiveIntensity = g.base + g.amp * (0.5 + 0.5 * Math.sin(_clk * 1.15 + g.phase)); }
         var pa = motes.pts.geometry.attributes.position.array, hs = motes.hs; for (i = 0; i < motes.count; i++) { pa[i * 3] += motes.vel[i * 3]; pa[i * 3 + 1] += motes.vel[i * 3 + 1]; pa[i * 3 + 2] += motes.vel[i * 3 + 2]; if (pa[i * 3 + 1] > 21) pa[i * 3 + 1] = 1; if (pa[i * 3] > hs) pa[i * 3] -= hs * 2; if (pa[i * 3] < -hs) pa[i * 3] += hs * 2; if (pa[i * 3 + 2] > hs) pa[i * 3 + 2] -= hs * 2; if (pa[i * 3 + 2] < -hs) pa[i * 3 + 2] += hs * 2; }
         motes.pts.geometry.attributes.position.needsUpdate = true; },
-      setTheme: setTheme, setField: setField, spectate: spectate, cams: cams, quality: function () { return qName; }, crowd: crowd,
+      setTheme: setTheme, setField: setField, spectate: spectate, cams: cams, quality: function () { return qName; }, kit: kit, kiosks: KIOSKS, vendorPosts: vendorPosts, startKit: startKit, crowd: crowd,
       setQuality: function (name) { name = String(name || '').toUpperCase(); if (!QPARAM[name]) return qName; Q = QPARAM[name]; qName = name; applyCrowd(); applyLights(); for (var qi = 0; qi < qualityHooks.length; qi++) qualityHooks[qi](Q, qName); return qName; },
       setCrowdMood: function (v) { CHEER.value = Math.max(0, Math.min(1, v)); },
       vipSeats: vipSeats, agentSlots: agentSlots, setVelarium: function (o) { vel.target = Math.max(0, Math.min(1, o)); }, velarium: vel,

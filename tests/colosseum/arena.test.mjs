@@ -123,3 +123,56 @@ test('window.__quality string is honoured at build (POTATO builds no crowd, real
   const h = await loadArena({ quality: 'HIGH' }); h.arena.setTheme('night'); let hl = 0; h.arena.group.traverse(o => { if (o.isPointLight && o.visible) hl++; }); assert.equal(hl, 4);
   ctx = null;
 });
+
+// ---- GLB kit: fake loaders (no network) exercise the Box3 fit, instancing, fallback and agent placement ----
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function fakeLoader(THREE, { fail = false, junkScale = 0.02 } = {}) {
+  return { load(url, ok, _p, err) {
+    setTimeout(() => {
+      if (fail) return err(new Error('404 ' + url));
+      const root = new THREE.Group(), node = new THREE.Group(); node.scale.setScalar(junkScale);   // baked node scale like the real quantised GLBs
+      node.add(new THREE.Mesh(new THREE.BoxGeometry(60, 95, 53), new THREE.MeshStandardMaterial({ color: 0x8899aa }))); root.add(node);
+      ok({ scene: root, animations: /agents/.test(url) ? [new THREE.AnimationClip('idle', 1, [])] : [] });
+    }, 0);
+  } };
+}
+
+test('GLB kit: Box3 fit-to-span (m) + ground snap, kiosks instanced, code geometry replaced', T, async () => {
+  const { THREE } = await loadArena({ quality: 'MEDIUM' });   // just to import THREE
+  const r = await loadArena({ quality: 'MEDIUM', loader: fakeLoader(THREE), kitGap: 0 }); const a = r.arena;
+  a.startKit(); await wait(150);
+  assert.deepEqual(Object.keys(a.kit.failed), [], JSON.stringify(a.kit.failed));
+  assert.ok(a.kit.done.kiosk && a.kit.done.seat && a.kit.done.arch);
+  const km = a.kit.group.children.filter(o => o.name.startsWith('kit-kiosk')); assert.equal(km.length, 1);
+  assert.equal(km[0].count, 8, 'MEDIUM shows 8 GLB kiosks');
+  const m = new THREE.Matrix4(); km[0].getMatrixAt(0, m); const b = new THREE.Box3().copy(km[0].geometry.boundingBox || (km[0].geometry.computeBoundingBox(), km[0].geometry.boundingBox)).applyMatrix4(m);
+  assert.ok(Math.abs((b.max.y - b.min.y) - 2.8) < 0.02, 'kiosk fitted to 2.8 m, got ' + (b.max.y - b.min.y)); assert.ok(Math.abs(b.min.y - a.dims.H_LOW) < 0.02, 'kiosk grounded on the promenade');
+  const codeK = a.group.children[0].children.find(o => o.name === 'kiosks-code'); assert.equal(codeK.count, 16, 'code kiosks compacted to the uncovered 16');
+  const seats = a.kit.group.children.filter(o => o.name.startsWith('kit-vipseat')); assert.equal(seats[0].count, 160);
+  const code = []; a.group.traverse(o => { if (o.name === 'portals-code' || o.name === 'vip-seats') code.push(o.visible); }); assert.deepEqual(code, [false, false]);
+});
+
+test('GLB kit: a failing loader leaves the code geometry fully intact (arena never broken)', T, async () => {
+  const { THREE } = await loadArena({ quality: 'HIGH' });
+  const r = await loadArena({ quality: 'HIGH', loader: fakeLoader(THREE, { fail: true }), kitGap: 0 }); const a = r.arena;
+  a.startKit(); await wait(150);
+  assert.ok(Object.keys(a.kit.failed).length >= 3); assert.equal(Object.keys(a.kit.agentObjs).length, 0);
+  const vis = {}; a.group.traverse(o => { if (['portals-code', 'vip-seats', 'kiosks-code'].includes(o.name)) vis[o.name] = o.visible; }); assert.deepEqual(vis, { 'portals-code': true, 'vip-seats': true, 'kiosks-code': true });
+  const codeK = []; a.group.traverse(o => { if (o.name === 'kiosks-code') codeK.push(o.count); }); assert.deepEqual(codeK, [24, 24]);
+});
+
+test('GLB kit: agents become vendors/ushers/greeter by tier (MEDIUM 3, HIGH 7, LOW none) with idle mixers', T, async () => {
+  const { THREE } = await loadArena({ quality: 'HIGH' });
+  const hi = (await loadArena({ quality: 'HIGH', loader: fakeLoader(THREE), kitGap: 0 })).arena; hi.startKit(); await wait(300);
+  assert.equal(Object.keys(hi.kit.agentObjs).length, 7); assert.ok(hi.kit.mixers.length === 7);
+  const roles = hi.vendorPosts.map(v => v.role).sort().join(','); assert.equal(roles, 'greeter,usher,usher,vendor,vendor,vendor,vendor');
+  const med = (await loadArena({ quality: 'MEDIUM', loader: fakeLoader(THREE), kitGap: 0 })).arena; med.startKit(); await wait(300); assert.equal(Object.keys(med.kit.agentObjs).length, 3);
+  const low = (await loadArena({ quality: 'LOW', loader: fakeLoader(THREE), kitGap: 0 })).arena; low.startKit(); await wait(150); assert.equal(low.kit.started, false, 'LOW never loads the kit');
+  ctx = null;
+});
+
+test('kiosk footprints are solid via hLocal (one collision system) and the promenade stays walkable elsewhere', T, async () => {
+  const { arena } = await get(); const { U, X0, Z0, d } = geo(arena); const k = arena.kiosks[3];
+  assert.equal(arena.heightAt(X0 + k.x * U, Z0 + k.z * U), 999);
+  const mid = { x: X0 + (k.x - k.nx * 2.4) * U, z: Z0 + (k.z - k.nz * 2.4) * U }; assert.ok(Math.abs(arena.heightAt(mid.x, mid.z) / U - d.H_LOW) < 1e-6, 'walkway beside the kiosk is open');
+});
