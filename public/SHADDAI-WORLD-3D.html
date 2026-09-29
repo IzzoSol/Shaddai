@@ -440,7 +440,9 @@ function _ldStep(name, fn){   // promise-chain step wrapper: .then(_ldStep('x', 
     if(r && typeof r.then === 'function') return r.then(function(x){ _ldEnd(name); return x; }, function(e){ _ldEnd(name); throw e; });
     _ldEnd(name); return r;
   }
-  return function(v){ return __LD.gatePassed ? _ldIdle().then(function(){ return run(v); }) : run(v); };
+  // PERF: after entry, every streaming step also waits for a healthy frame rate (>=42 fps EMA, max 25 s) so a heavy build never lands on top of a struggling frame
+  function _ldFps(){ return new Promise(function(res){ let w = 0; (function c(){ const f = window.__fpsNow ? window.__fpsNow() : 60; if(f >= 42 || (w += 500) > 25000) res(); else setTimeout(c, 500); })(); }); }
+  return function(v){ return __LD.gatePassed ? _ldIdle().then(_ldFps).then(function(){ return run(v); }) : run(v); };
 }
 function _ldProgress(last){
   const plan = __LD.plan; let n = 0; plan.forEach(function(k){ if(__LD.steps[k] && __LD.steps[k].t1) n++; });
@@ -4412,10 +4414,11 @@ window.removeAgent = function(a){
       var crit=(window.__LD && window.__LD.critical) || [], S=(window.__LD && window.__LD.steps) || {}, done=0, next=null;
       crit.forEach(function(k){ var st=S[k]; if(st && st.t1) done++; else if(!next) next=k; });
       var ready = crit.length ? done>=crit.length : !!window.__worldBuilt;
-      if(!ready && Date.now()-t0 < 45000){ set(4 + 88*done/Math.max(1,crit.length), LABEL[next] || 'Loading'); setTimeout(tick, 150); return; }
+      if(!ready && Date.now()-t0 < 25000){ set(4 + 88*done/Math.max(1,crit.length), LABEL[next] || 'Loading'); setTimeout(tick, 150); return; }
       if(warm) return; warm=true; set(94, LABEL.warm);
       _ldBegin('warm');
       var p = (renderer.compileAsync ? renderer.compileAsync(scene, camera) : Promise.resolve(renderer.compile(scene, camera)));
+      p = Promise.race([p, new Promise(function(r){ setTimeout(r, 6000); })]);   // PERF: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in
       p.catch(function(e){ console.warn('warmup', e && e.message); }).then(function(){
         _introWarming = true;   // animate() does quiet composer renders behind the screen (GPU uploads happen now, not on reveal)
         requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); window.__loadPlayable = true; document.getElementById('enterBtn').click(); }); });
@@ -4683,6 +4686,11 @@ const _Q = {
   cooldown:0,    // seconds before next tier change is allowed (hysteresis)
 };
 window.__quality = _Q.tiers[_Q.tier].name;
+window.__fpsNow = function(){ return _Q.fps; };
+try{   // integrated / software GPUs (Intel HD/UHD, Mesa, SwiftShader) start on POTATO; the governor climbs if the machine proves fast
+  const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_renderer_info'), _gpu = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : '';
+  window.__gpuName = _gpu; if(/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu)){ _Q.tier = 0; window.__quality = _Q.tiers[0].name; }
+}catch(_){}
 
 function _applyQualityTier(idx){
   if(idx < 0) idx = 0;
