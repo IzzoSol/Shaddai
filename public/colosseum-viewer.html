@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colosseum Viewer</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #06080b; font-family: system-ui, sans-serif; }
+    #ui { position: fixed; top: 12px; left: 12px; color: #e7f3ee; font: 12px/1.6 monospace; background: rgba(6,8,11,.8); border: 1px solid #1c2624; border-radius: 10px; padding: 10px 14px; z-index: 10; }
+    #ui b { color: #00ff9c; }
+    button { margin: 2px 2px 0 0; padding: 4px 9px; background: rgba(0,255,156,.18); border: 1px solid #00ff9c; color: #00ff9c; border-radius: 4px; cursor: pointer; font: inherit; }
+    button:hover { background: rgba(0,255,156,.35); }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <b>SHADDAI COLOSSEUM</b> &middot; drag = orbit, wheel = zoom<br>
+    Theme: <button data-t="classic">Classic</button><button data-t="royal">Royal</button><button data-t="night">Night</button><button data-t="festival">Festival</button><br>
+    Field: <button data-f="sand">Sand</button><button data-f="soccer">Soccer</button><button data-f="tactics">Tactics</button><button data-f="team-attack">Team</button><button data-f="party">Party</button><br>
+    Quality: <button data-q="POTATO">Potato</button><button data-q="LOW">Low</button><button data-q="MEDIUM">Med</button><button data-q="HIGH">High</button><button data-q="ULTRA">Ultra</button>
+  </div>
+  <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.180.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/" } }</script>
+  <!-- world-colosseum.js is a classic IIFE: it publishes window.buildColosseumArena (it has NO ES exports), so load it as a plain script first -->
+  <script src="/world-colosseum.js"></script>
+  <script type="module">
+    import * as THREE from 'three';
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x06080b);
+    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 6000);
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight); document.body.appendChild(renderer.domElement);
+    const arena = window.buildColosseumArena(THREE, { scene });     // the API object: the Object3D is arena.group
+    arena.group.visible = true;
+    const U = arena.dims.U, cx = arena.group.position.x, cz = arena.group.position.z;
+    let yaw = 0.6, pitch = 0.45, dist = 260 * U * 0.5;
+    const place = () => { camera.position.set(cx + Math.sin(yaw) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, cz + Math.cos(yaw) * Math.cos(pitch) * dist); camera.lookAt(cx, 8 * U, cz); };
+    let drag = false, lx = 0, ly = 0;
+    addEventListener('pointerdown', e => { if (e.target.closest('#ui')) return; drag = true; lx = e.clientX; ly = e.clientY; });
+    addEventListener('pointerup', () => drag = false);
+    addEventListener('pointermove', e => { if (!drag) return; yaw -= (e.clientX - lx) * 0.006; pitch = Math.max(0.05, Math.min(1.4, pitch + (e.clientY - ly) * 0.004)); lx = e.clientX; ly = e.clientY; place(); });
+    addEventListener('wheel', e => { dist = Math.max(30, Math.min(2500, dist * (1 + e.deltaY * 0.001))); place(); }, { passive: true });
+    document.getElementById('ui').addEventListener('click', e => { const b = e.target; if (b.dataset.t) arena.setTheme(b.dataset.t); if (b.dataset.f) arena.setField(b.dataset.f); if (b.dataset.q && arena.setQuality) arena.setQuality(b.dataset.q); });
+    addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+    place(); let last = performance.now();
+    (function loop(now) { requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; arena.tick(dt); if (!drag) {} renderer.render(scene, camera); })(last);
+  </script>
+</body>
+</html>
