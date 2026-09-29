@@ -270,7 +270,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ── Module state ────────────────────────────────────────────────────────────
 const canvas  = document.getElementById('c3d');
-const gltfLoader = new GLTFLoader();
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const gltfLoader = new GLTFLoader(); gltfLoader.setMeshoptDecoder(MeshoptDecoder);
 const texLoader  = new THREE.TextureLoader();
 const clock   = new THREE.Clock(false);
 
@@ -924,6 +925,7 @@ function startLoop() {
     rafId = requestAnimationFrame(go);
     const delta = clock.getDelta();
     const t     = clock.getElapsedTime();
+    if (window.__museumGreeterMixer) window.__museumGreeterMixer.update(delta);
     // gentle fresco light breathing
     if (ceilingGlow) ceilingGlow.intensity = 2.4 + Math.sin(t * 0.8) * 0.35;
     // kiosk billboard buttons + auto-advance
@@ -974,6 +976,8 @@ window.enterMuseum = function () {
     const b2 = new THREE.Box3().setFromObject(root);
     root.position.set(-4, -b2.min.y, 8); root.rotation.y = Math.PI;
     if (scene) scene.add(root);
+    const _ic = (gltf.animations||[]).find(a=>a.name==='idle') || (gltf.animations||[])[0];   // baked idle: never T-pose
+    if (_ic) { const mx = new THREE.AnimationMixer(root); mx.clipAction(_ic).play(); mx.update(0.001); window.__museumGreeterMixer = mx; }
   }).catch(() => {});
   startLoop();
   renderPending();

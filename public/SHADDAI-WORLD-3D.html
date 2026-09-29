@@ -1890,6 +1890,7 @@ composer.addPass(bloom);
 // ── agent billboards ──
 const loader = new THREE.TextureLoader(__loadMgr);
 const agentSprites = [];
+window.__w3dDebug.agentSprites = agentSprites;   // probe/tests: agent entries (body, _mixer, _actions)
 const labelEls = [];
 const labelLayer = document.getElementById('labels');
 function portraitOf(a){ return a.portrait || ('/assets/agents/'+a.codename.toUpperCase()+'-action.png'); }
@@ -1903,7 +1904,7 @@ function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
-  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=12';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
+  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=13';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
   _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
   return _pcCache[code];
 }
@@ -1919,7 +1920,7 @@ const _agentBodies = {};  // codename -> body mesh, so each agent has exactly ON
 // 90°-rotated forward axis, so with the shared formula it stood SIDEWAYS. Add a
 // per-code yaw offset (radians) that is ADDED to the computed facing so a mis-authored
 // model still ends up facing the same way as the others.  ← ZEROX SIDEWAYS FIX
-const _AGENT_YAW_FIX = { ZEROX: Math.PI/2 };   // +90° to un-rotate ZEROX's sideways stance
+const _AGENT_YAW_FIX = {};   // v6 Meshy bodies all face +Z (ZEROX's old Neon-Valkyrie +90° fix removed)   // +90° to un-rotate ZEROX's sideways stance
 const AGENT_BODY_HEIGHT = 7.0;   // match the billboard standee height
 // PLAYER body height. Owner: running/movement should "match height" — the player used to be scaled to
 // 3.6 units while every NPC agent stands 7.0 tall, so you felt tiny next to them and movement read as
@@ -1944,7 +1945,7 @@ function _nextAgentBody(){
   // 3D architect model they picked in the Forge (entry.a.model, UPPERCASE key).
   // If that GLB 404s, the error handler below leaves the billboard/ring fallback up.
   const modelKey = (entry.a.isOperative && entry.a.model) ? String(entry.a.model).toUpperCase() : code;
-  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=12';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
+  const url = '/assets/agents/' + encodeURIComponent(modelKey) + '.glb?v=13';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
   agentBodyLoader.load(url, (gltf)=>{
     try{
       const body = gltf.scene;
@@ -2045,8 +2046,10 @@ function _nextAgentBody(){
             if(!actions['heavy'] && actions['ual_Sword_Heavy_Combo']) actions['heavy']=actions['ual_Sword_Heavy_Combo'];
             if(!actions['flip'] && actions['ual_NinjaJump_Start']) actions['flip']=actions['ual_NinjaJump_Start'];
             if(entry._idleSlow && actions['ual_Idle_FoldArms_Loop']){ actions['idle']=actions['ual_Idle_FoldArms_Loop']; entry._idleSlow=false; playAgentAction(entry,'idle',{}); }
+            try{ mixer.update(0.0001); }catch(_){}   // attachUAL's clip build resets the bones to bind: re-apply the idle so a frozen (far) agent is never left in T-pose
           }); }catch(e){ console.warn('[ual] agent', code, e.message); }
-        playAgentAction(entry, 'idle', entry._idleSlow ? {timeScale:0.55} : {});
+        playAgentAction(entry, 'idle', entry._idleSlow ? {timeScale:0.55, crossfadeDuration:0} : {crossfadeDuration:0});
+        try{ mixer.update(0.001); }catch(_){}   // NEVER T-pose: the idle pose is applied to the skeleton before the first render
       }
       // real 3D body replaces the floating holograph: drop the billboard, beam & glow.
       // (the agent's portrait card still opens on click / press E via the dossier.)
@@ -2089,7 +2092,7 @@ function playAgentAction(entry, name, opts){
   a.reset();
   if(opts.once){ a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = !!opts.hold; }
   else { a.setLoop(THREE.LoopRepeat, Infinity); a.clampWhenFinished = false; }
-  a.enabled = true; a.setEffectiveTimeScale(opts.timeScale || 1).setEffectiveWeight(1).fadeIn(dur).play();
+  a.enabled = true; a.setEffectiveTimeScale(opts.timeScale || 1).setEffectiveWeight(1); if(dur > 0) a.fadeIn(dur); a.play();
   if(prev && prev !== a) prev.fadeOut(dur);
   entry._curAction = a;
   // One-shot moves auto-return to idle (or a caller-chosen clip) when finished.
@@ -3516,6 +3519,7 @@ function _setupPlayerRig(m, animations, label, gen){
   playerAction = _pc.idle || _pc.walk || _pc.run || null;
   _discoverPlayerBones(m);                    // arm/leg/spine for the procedural overlay (non-clip rigs only)
   _playerPoseSnap = _snapshotPose(m); _wasAttacking = false;   // rest pose for post-one-shot facing reset
+  try{ playerMixer.update(0.001); }catch(_){}   // NEVER T-pose: idle pose lands on the skeleton before the first render
   const mixer = playerMixer;
   const report = ()=>{ if(gen!==_playerRigGen || mixer!==playerMixer) return;
     console.info('[player-anim] '+label+' · idle='+(_pc.idleName||'NONE')+' ['+_pc.idleKind+'] · walk='+(_pc.walkName||'-')+' · run='+(_pc.runName||'-')+' · clips: '+Object.keys(playerClips).join(',')); };
@@ -3523,7 +3527,7 @@ function _setupPlayerRig(m, animations, label, gen){
     u.ready.then(function(ok){
       if(gen!==_playerRigGen || mixer!==playerMixer) return;   // body swapped since → never touch the new rig
       if(ok){ ['Idle_FoldArms_Loop','Sword_Regular_A','Sword_Regular_B','Sword_Heavy_Combo','Sword_Block','NinjaJump_Start','Hit_Knockback','NinjaJump_Idle_Loop','NinjaJump_Land','Slide_Start','Slide_Loop','Slide_Exit','ClimbUp_1m'].forEach(function(n){ try{ u.add(n); }catch(_){} });
-        _resolvePlayerCanon(m); }                             // upgrades a frozen-frame idle to the UAL idle
+        _resolvePlayerCanon(m); try{ mixer.update(0.0001); }catch(_){} }   // upgrades a frozen-frame idle to the UAL idle (+ re-apply the pose: the UAL clip build resets bones to bind)
       report();
     });
   } else report();

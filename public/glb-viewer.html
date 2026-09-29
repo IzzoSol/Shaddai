@@ -34,6 +34,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const params = new URLSearchParams(location.search);
@@ -66,7 +67,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.target.set(0,1,0);
 
 const _draco = new DRACOLoader(); _draco.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/');
-const _gl = new GLTFLoader(); _gl.setDRACOLoader(_draco);
+const _gl = new GLTFLoader(); _gl.setDRACOLoader(_draco); _gl.setMeshoptDecoder(MeshoptDecoder);
 _gl.load(url, (gltf)=>{
   const m = gltf.scene;
   const box = new THREE.Box3().setFromObject(m);
@@ -76,12 +77,14 @@ _gl.load(url, (gltf)=>{
   const box2 = new THREE.Box3().setFromObject(m); const c2 = new THREE.Vector3(); box2.getCenter(c2);
   m.position.sub(c2); m.position.y -= box2.min.y - c2.y; // feet ~0
   scene.add(m);
+  if (gltf.animations && gltf.animations.length) { window.__mx = new THREE.AnimationMixer(m); window.__mx.clipAction(gltf.animations.find(a=>a.name==='idle') || gltf.animations[0]).play(); window.__mx.update(0.001); }
   controls.target.set(0, 1.1, 0);
   info.innerHTML = '<b>loaded</b> · ' + size.x.toFixed(1)+'×'+size.y.toFixed(1)+'×'+size.z.toFixed(1);
 }, (p)=>{ info.textContent = Math.round(p.loaded/p.total*100)+'%'; }, (e)=>{ info.innerHTML='<span style="color:#ff5a6e">load failed: '+(e.message||e)+'</span>'; });
 
 addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
-(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+const _vclk = new THREE.Clock();
+(function loop(){ requestAnimationFrame(loop); if (window.__mx) window.__mx.update(_vclk.getDelta()); controls.update(); renderer.render(scene, camera); })();
 </script>
 
 <script src="/home-btn.js" defer></script>

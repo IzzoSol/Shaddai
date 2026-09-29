@@ -47621,7 +47621,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     function _build(container){
       ensureMV();
       mv = document.createElement('model-viewer');
-      mv.id = 'chamberMv';
+      mv.id = 'chamberMv'; mv.setAttribute('autoplay', '');   // agents ship a baked idle clip: never T-pose
       mv.setAttribute('camera-controls', '');
       mv.setAttribute('auto-rotate', '');
       mv.setAttribute('rotation-per-second', '18deg');
