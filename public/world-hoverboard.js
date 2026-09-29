@@ -124,6 +124,7 @@ window.buildWorldHoverboard = function (opts) {
   var KIT = window.HoverboardKit, kit = null, styleId = null;
   var useKit = !!(KIT && !opts.modelUrl && opts.style !== 'glb');
   var fx = (useKit && window.buildHoverboardFX) ? window.buildHoverboardFX({ THREE: THREE, scene: scene, max: 160, size: 0.35 * U }) : null;
+  var MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0 };   // external race modifiers (see setModifier)
   var TR = window.HoverboardTricks ? window.HoverboardTricks.create(opts.trickTune) : null;
 
   // Normalise any board model: longest horizontal axis → +Z, length → TUNE.lengthM, bottom
@@ -262,22 +263,24 @@ window.buildWorldHoverboard = function (opts) {
     if (!s.riding) return;
     inp = inp || {};
     var B = TUNE;
+    if (MOD.t > 0) MOD.t -= dt; if (MOD.stun > 0) MOD.stun -= dt;   // race modifiers: boost (mul), stun, steer noise (Sway Dust) — set by world-race-run.js
+    if (MOD.noise > 0) { MOD.nt -= dt; if (MOD.nt <= 0) MOD.noise = 0; else s.psi += Math.sin(s.t * 35) * MOD.noise * dt; }
     s.x = pos.x; s.z = pos.z;                            // accept host collision corrections
     // steering: mouse (camera yaw) + A/D carve
     var steer = s.air ? 0 : (inp.right ? 1 : 0) - (inp.left ? 1 : 0);   // airborne: A/D are trick keys
     var target = (isFinite(camYaw) ? camYaw : s.psi) - steer * B.carveOffset;
     var boost = !!inp.boost && !s.air;                   // airborne: Shift is the trick modifier
-    var top = boost ? B.boostMS : B.topMS;
+    var top = (boost ? B.boostMS : B.topMS) * (MOD.t > 0 ? MOD.mul : 1) * (MOD.stun > 0 ? 0.2 : 1);
     var sf = Math.min(1, Math.abs(s.v) / B.topMS);
     var maxRate = (B.turnRateLow + (B.turnRateHigh - B.turnRateLow) * sf) * (s.air ? 0.5 : 1);
     var rate = Math.max(-maxRate, Math.min(maxRate, wrap(target - s.psi) * B.steerGain));
     s.psi = wrap(s.psi + rate * dt);
     s.yawRate += (rate - s.yawRate) * (1 - Math.exp(-8 * dt));
     // throttle / brake / reverse / coast
-    var want = (s.air && inp.boost) ? 0 : (inp.fwd ? 1 : 0) - (inp.back ? 1 : 0);   // Shift+W/S in the air = flips, not throttle
+    var want = MOD.stun > 0 ? 0 : ((s.air && inp.boost) ? 0 : (inp.fwd ? 1 : 0) - (inp.back ? 1 : 0));   // Shift+W/S in the air = flips, not throttle
     s.thr += (want - s.thr) * (1 - Math.exp(-8 * dt));
     var th = s.thr, a = 0;
-    if (th > 0.02) a = s.v < -0.2 ? B.brakeMS2 : (boost ? B.boostAccelMS2 : B.accelMS2) * th * Math.max(0, 1 - (s.v / top) * (s.v / top));
+    if (th > 0.02) a = s.v < -0.2 ? B.brakeMS2 : ((boost || (MOD.t > 0 && MOD.mul > 1)) ? B.boostAccelMS2 : B.accelMS2) * th * Math.max(0, 1 - (s.v / top) * (s.v / top));
     else if (th < -0.02) a = s.v > 0.2 ? -B.brakeMS2 * -th : -B.accelMS2 * 0.4 * -th * Math.max(0, 1 + s.v / B.reverseMS);
     if (s.v > top) a -= 3;                               // boost released: bleed back to cruise, don't snap
     var sx = Math.sin(s.psi), cz = Math.cos(s.psi), hl = 0.5 * B.lengthM * U;
@@ -290,7 +293,7 @@ window.buildWorldHoverboard = function (opts) {
       s.v = Math.abs(s.v) <= dv ? 0 : s.v - (s.v > 0 ? dv : -dv);
     }
     if (vPrev > 0 && s.v < 0 && th >= -0.02) s.v = 0;
-    s.v = Math.max(-B.reverseMS, Math.min(B.boostMS * 1.05, s.v));
+    s.v = Math.max(-B.reverseMS, Math.min(B.boostMS * 1.05 * (MOD.t > 0 ? Math.max(1, MOD.mul) : 1), s.v));
     // move + collide (circle slide), then world edge
     var d_ = s.v * U * dt;
     s.x += sx * d_; s.z += cz * d_;
@@ -509,6 +512,8 @@ window.buildWorldHoverboard = function (opts) {
     isRiding: function () { return s.riding; },
     isActive: function () { return s.riding || s.w > 0; },          // still fading the rider off
     speedMS: function () { return s.v; },
+    setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } },   // race power-ups / attacks
+    modifier: function () { return MOD; },
     heading: function () { return s.psi; },
     velocity: function () { return { x: Math.sin(s.psi) * s.v * U, z: Math.cos(s.psi) * s.v * U }; },
     rideBaseY: function () { return s.y + deckTop - (TUNE.crouchM * U); },   // camera/eye base while riding

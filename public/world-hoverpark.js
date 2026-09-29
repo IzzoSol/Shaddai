@@ -76,8 +76,12 @@
     var crateGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4), crates = new THREE.InstancedMesh(crateGeo, M(0x2a2410, 0xD4AF37, 1.3, 0.8, 0.3), 12); var crPos = [];
     for (var ci = 0; ci < 12; ci++) { var q2 = loopAt(ci / 12 + 0.02); crPos.push([q2[0] + Math.cos(ci) * 2.5, 1.5, q2[1] + Math.sin(ci) * 2.5]); } R.add(crates);
     var _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1), tt = 0;
-    function update(dt) { tt += dt; for (var k = 0; k < crPos.length; k++) { _e.set(tt * 0.9 + k, tt * 1.3, tt * 0.5); _q.setFromEuler(_e); _p.set(crPos[k][0], crPos[k][1] + Math.sin(tt * 2 + k) * 0.25, crPos[k][2]); _m.compose(_p, _q, _s); crates.setMatrixAt(k, _m); } crates.instanceMatrix.needsUpdate = true; }
+    var crVis = crPos.map(function () { return true; });
+    function update(dt) { tt += dt; for (var k = 0; k < crPos.length; k++) { _e.set(tt * 0.9 + k, tt * 1.3, tt * 0.5); _q.setFromEuler(_e); _p.set(crPos[k][0], crPos[k][1] + Math.sin(tt * 2 + k) * 0.25, crPos[k][2]); _s.setScalar(crVis[k] ? 1 : 0.0001); _m.compose(_p, _q, _s); crates.setMatrixAt(k, _m); } crates.instanceMatrix.needsUpdate = true; }
     update(0);
+    // boost pads (turbo chevrons) along the race line: glowing, flat, driven over = 1 s turbo
+    var padLoc = []; [0.06, 0.2, 0.34, 0.5, 0.66, 0.82].forEach(function (u) { var q3 = loopAt(u); padLoc.push([q3[0], q3[1], q3[2]]); var pad = new THREE.Group(); pad.position.set(q3[0], 0.3, q3[1]); pad.rotation.y = q3[2];
+      for (var ch = 0; ch < 3; ch++) { var ar = new THREE.Shape(); ar.moveTo(-2.4, -1.1); ar.lineTo(0, 0.9); ar.lineTo(2.4, -1.1); ar.lineTo(2.4, -0.4); ar.lineTo(0, 1.6); ar.lineTo(-2.4, -0.4); ar.closePath(); var am = new THREE.Mesh(new THREE.ShapeGeometry(ar), new THREE.MeshBasicMaterial({ color: ch === 1 ? 0xD4AF37 : 0x00D4FF, side: THREE.DoubleSide })); am.rotation.x = -Math.PI / 2; am.position.set(0, 0, -1.6 + ch * 1.6); pad.add(am); } R.add(pad); });
     // ── extra surface height (world units) for banks / kicker / bowl so the board can ride them ──
     var cy = Math.cos(yaw), sy = Math.sin(yaw);
     function local(wx, wz) { var dx = (wx - anchor.x) / U, dz = (wz - anchor.z) / U; return [dx * cy - dz * sy, dx * sy + dz * cy]; }   // inverse of the group rotation
@@ -88,8 +92,10 @@
       h = Math.max(h, quarter(B0.x - 12, B0.z, 26, 6.5, 1, lx, lz), quarter(B0.x + 12, B0.z, 26, 6.5, -1, lx, lz), quarter(F0.x + F0.r + 3, F0.z, 10, 4, -1, lx, lz));
       var fr = Math.hypot(lx - F0.x, lz - F0.z); if (fr < F0.r) h = Math.min(h, -7 * (1 - (fr / F0.r) * (fr / F0.r))); return h * U + deckY;
     }
+    function toWorld(lx, ly, lz) { G.updateMatrixWorld(true); var v = new THREE.Vector3(lx, ly, lz).applyMatrix4(R.matrixWorld); return { x: v.x, y: v.y, z: v.z }; }
     function dispose() { scene.remove(G); G.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); }
-    return { group: G, rooms: ROOMS.map(function (r) { var v = new THREE.Vector3(r.x, 0, r.z); G.updateMatrixWorld(true); v.applyMatrix4(R.matrixWorld); return { id: r.id, name: r.name, x: v.x, z: v.z, r: r.r * U, tag: r.tag }; }), entrance: (function () { G.updateMatrixWorld(true); var v = new THREE.Vector3(0, 0, D - 14).applyMatrix4(R.matrixWorld); return { x: v.x, z: v.z }; })(), deckY: deckY, heightAt: heightAtWorld, gates: gates, ribbon: ribbon, crates: crates, update: update, dispose: dispose, loop: LOOP };
+    return { group: G, rooms: ROOMS.map(function (r) { var v = new THREE.Vector3(r.x, 0, r.z); G.updateMatrixWorld(true); v.applyMatrix4(R.matrixWorld); return { id: r.id, name: r.name, x: v.x, z: v.z, r: r.r * U, tag: r.tag }; }), entrance: (function () { G.updateMatrixWorld(true); var v = new THREE.Vector3(0, 0, D - 14).applyMatrix4(R.matrixWorld); return { x: v.x, z: v.z }; })(), deckY: deckY, heightAt: heightAtWorld, gates: gates, ribbon: ribbon, crates: crates, update: update, dispose: dispose, loop: LOOP,
+      setCrateVisible: function (i, v) { crVis[i] = !!v; }, cratesWorld: function () { return crPos.map(function (c) { return toWorld(c[0], c[1], c[2]); }); }, padsWorld: function () { return padLoc.map(function (q) { var w = toWorld(q[0], 0.3, q[1]); w.yaw = q[2] + yaw; return w; }); }, loopWorld: function () { return LOOP.map(function (q) { return toWorld(q[0], 0.4, q[1]); }); } };
   }
   function ribbonMesh(THREE, pts, width) {
     var n = pts.length, pos = [], idx = [], col = [], w = width / 2, up = new THREE.Vector3(0, 1, 0), a = new THREE.Vector3(), side = new THREE.Vector3(), i;
