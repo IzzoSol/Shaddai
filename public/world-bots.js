@@ -105,12 +105,25 @@
     }
     g.userData.parts = parts; g.userData.def = def; return g;
   }
-  function spawnBodies(THREE, scene, heightAt) { ctx = { THREE: THREE, scene: scene, heightAt: heightAt || function () { return 0; } }; syncBodies(); return bodies; }
+  // Rigged Meshy/procedural GLBs (public/assets/bots/*.glb, meshopt): loaded lazily; the code-built body shows until (and if) the file arrives. Companions are SMALLER than the player.
+  var BOT_GLB = { scrap: '/assets/bots/scrap.glb', lanky: '/assets/bots/lanky.glb', unicycle: '/assets/bots/uni9.glb', analyst: '/assets/bots/analyst.glb' }, BOT_H = { humanoid: 1.35, wheeled: 1.15 }, glbFail = {};
+  function pickClip(anims, re) { for (var i = 0; i < anims.length; i++) if (re.test(anims[i].name)) return anims[i]; return null; }
+  function upgradeToGlb(id) {
+    var url = BOT_GLB[BODY[id]], def = byId[id]; if (!url || !ctx || !ctx.loader || glbFail[url]) return;
+    ctx.loader.load(url, function (g) {
+      var old = bodies[id]; if (!old) return; var THREE = ctx.THREE, src = g.scene, inst = ctx.clone ? ctx.clone(src) : src.clone(true), U = 3.889;
+      var box = new THREE.Box3().setFromObject(inst), h = Math.max(0.01, box.max.y - box.min.y), k = U * BOT_H[def.kind] / h; inst.scale.multiplyScalar(k); inst.updateMatrixWorld(true);
+      var b2 = new THREE.Box3().setFromObject(inst); inst.position.y -= b2.min.y; var wrap = new THREE.Group(); wrap.add(inst); wrap.userData.glb = true;
+      var idle = pickClip(g.animations, /idle|stand|breath/i) || g.animations[0], walk = pickClip(g.animations, /walk|roll|drive|move/i) || idle, run = pickClip(g.animations, /run|sprint/i) || walk;
+      ctx.scene.remove(old); ctx.scene.add(wrap); bodies[id] = wrap; var sm = sim[id]; if (sm) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run } }; sm.clip = null; sm.act = null; }
+    }, undefined, function () { glbFail[url] = true; });
+  }
+  function spawnBodies(THREE, scene, heightAt, opts) { ctx = { THREE: THREE, scene: scene, heightAt: heightAt || function () { return 0; }, loader: opts && opts.loader, clone: opts && opts.cloneSkinned }; syncBodies(); return bodies; }
   function syncBodies() {
     if (!ctx) return;
     S.owned.forEach(function (r) {
       var want = r.bodyState === 'active';
-      if (want && !bodies[r.id]) { var m = mk(ctx.THREE, byId[r.id]); m.scale.setScalar(3.889); ctx.scene.add(m); bodies[r.id] = m; sim[r.id] = { x: null, z: null, yaw: 0, ph: 0, v: 0 }; if (m.userData.bot) { sim[r.id].mixer = new ctx.THREE.AnimationMixer(m); sim[r.id].bot = m.userData.bot; } }
+      if (want && !bodies[r.id]) { var m = mk(ctx.THREE, byId[r.id]); m.scale.setScalar(m.userData.bot ? 3.889 * BOT_H[byId[r.id].kind] / Math.max(0.5, m.userData.bot.height) : 3.889); ctx.scene.add(m); upgradeToGlb(r.id); bodies[r.id] = m; sim[r.id] = { x: null, z: null, yaw: 0, ph: 0, v: 0 }; if (m.userData.bot) { sim[r.id].mixer = new ctx.THREE.AnimationMixer(m); sim[r.id].bot = m.userData.bot; } }
       if (!want && bodies[r.id]) { ctx.scene.remove(bodies[r.id]); delete bodies[r.id]; delete sim[r.id]; }
     });
   }
