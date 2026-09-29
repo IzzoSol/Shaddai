@@ -27,7 +27,8 @@ const lib = await parse(fs.readFileSync('public/assets/anim/agent-clips.glb'));
 const TEX = +process.env.TEX || 1024;
 const BAKE = [['idle', META.locomotion.idle], ['walk', META.locomotion.walk], ['run', META.locomotion.run]];
 const ONLY = (process.env.ONLY || '').split(',').filter(Boolean);
-for (const n of ['zerox', 'turtle', 'pikadon', 'quill', 'oracle', 'nexus', 'shaddai']) {
+// NAMES=bot-scrap,bot-lanky OUT_DIR=public/assets/bots -> public/assets/bots/scrap.glb (companion bots; same 24-bone Meshy rig, same baked idle/walk/run)
+for (const n of (process.env.NAMES ? process.env.NAMES.split(',') : ['zerox', 'turtle', 'pikadon', 'quill', 'oracle', 'nexus', 'shaddai'])) {
   if (ONLY.length && !ONLY.includes(n)) continue;
   const src = `fal-assets/characters/${n}/${n}-rigged.glb`;
   // 1. retarget on a texture-free copy (three in node can't decode the PNG)
@@ -56,7 +57,8 @@ for (const n of ['zerox', 'turtle', 'pikadon', 'quill', 'oracle', 'nexus', 'shad
     textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [TEX, TEX], quality: 84 }),
     quantize({ quantizePosition: 14, quantizeNormal: 10, quantizeTexcoord: 12, quantizeWeight: 8 }),
     meshopt({ encoder: MeshoptEncoder, level: 'medium' }));
-  const outF = `public/assets/agents/${n.toUpperCase()}.glb`;
+  const outF = process.env.OUT_DIR ? `${process.env.OUT_DIR}/${n.replace(/^bot-/, '')}.glb` : `public/assets/agents/${n.toUpperCase()}.glb`;
+  fs.mkdirSync(path.dirname(outF), { recursive: true });
   await io.write(outF, doc);
   console.log(n, 'retargeted=' + anim.retargeted, (fs.statSync(outF).size / 1024).toFixed(0) + ' KB');
 }
