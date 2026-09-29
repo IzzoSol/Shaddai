@@ -196,4 +196,41 @@ test('no allocation: cruise, fly, tricks and FX frames build no THREE objects', 
   assert.strictEqual(allocs, 0, allocs + ' THREE objects allocated in 1200 frames');
 });
 
+test('trick core: barrel ROLL auto-completes, scores, lands clean; mid-roll = bail; flip+roll = Hurricane', () => {
+  const C = window.HoverboardTricks.create(), ev = []; C.onTrick(e => ev.push(e));
+  const I = o => Object.assign({ spinL: false, spinR: false, flipF: false, flipB: false, grab: false, varialL: false, varialR: false, rollL: false, rollR: false }, o);
+  for (let i = 0; i < 30; i++) C.step(1 / 60, I({ rollR: true }), true);
+  for (let i = 0; i < 60; i++) C.step(1 / 60, I({}), true);
+  assert(Math.abs(C.angles.roll - 2 * Math.PI) < 1e-6, 'roll settles on 360: ' + C.angles.roll);
+  assert.strictEqual(C.land(0), true);
+  assert.deepStrictEqual(ev.map(e => e.name), ['Barrel Roll', 'combo']);
+  assert(ev[0].kind === 'roll' && ev[0].clean && ev[0].score > 0 && ev[0].points === true);
+  ev.length = 0;
+  for (let i = 0; i < 20; i++) C.step(1 / 60, I({ rollL: true }), true);
+  assert.strictEqual(C.land(0), false, 'landing mid-roll must bail');
+  ev.length = 0;
+  for (let i = 0; i < 30; i++) C.step(1 / 60, I({ rollR: true, flipF: true }), true);
+  for (let i = 0; i < 80; i++) C.step(1 / 60, I({}), true);
+  assert.strictEqual(C.land(0), true);
+  assert(ev.some(e => e.name === 'Hurricane' && e.kind === 'named' && e.score > 0), 'flip + roll names a Hurricane: ' + ev.map(e => e.name));
+});
+
+test('trick core: BATTLE mode = no points, tricks become combat moves; Hoverskate mode scores', () => {
+  const I = o => Object.assign({ spinL: false, spinR: false, flipF: false, flipB: false, grab: false, varialL: false, varialR: false, rollL: false, rollR: false }, o);
+  const run = mode => {
+    const C = window.HoverboardTricks.create(), ev = []; C.setMode(mode); C.onTrick(e => ev.push(e));
+    for (let i = 0; i < 30; i++) C.step(1 / 60, I({ flipF: true, spinR: true }), true);
+    for (let i = 0; i < 80; i++) C.step(1 / 60, I({}), true);
+    C.land(0); return { C, ev };
+  };
+  const b = run('battle'), h = run('hoverskate');
+  assert.strictEqual(b.C.getMode(), 'battle');
+  assert(b.ev.every(e => e.score === 0), 'battle events never carry points');
+  assert.strictEqual(b.C.state.total, 0, 'battle never accrues a total');
+  const flip = b.ev.find(e => e.kind === 'flip'), spin = b.ev.find(e => e.kind === 'spin');
+  assert(flip && flip.move && flip.move.move === 'flip-dodge' && flip.move.iframesS > 0, 'flip = dodge with i-frames');
+  assert(spin && spin.move && spin.move.move === 'spin-strike' && spin.move.strikeR > 0, 'spin = strike');
+  assert(h.ev.some(e => e.score > 0) && h.C.state.total > 0, 'hoverskate scores');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

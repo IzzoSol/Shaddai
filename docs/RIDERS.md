@@ -108,3 +108,20 @@ riders.spawnCompanion('ORACLE', vehicle, 'seat2')   // capsule placeholder → r
 - **Dragon.** Check how high the rider sits. `saddle()` is `saddleUp·wingspan` above the dragon origin: before this change the avatar's *feet* were placed there, and now its *hips* are. If the rider sinks into the back or floats above it, tune `seats.saddle[1]` in `dragonVehicle`.
 - **Bike.** The rider is now posed by riders instead of `veh.bike.pose`, using the same pegs and grips. Check mount/dismount blending and first-person hiding.
 - **Ship companions.** The seat height comes from each ship's geometry bounds. Check that they sit on the hull and are visible at 60–140 m altitude, and check memory: two extra agent GLB clones.
+
+## Trick rules: what makes a flip, roll, spin (2026-09-29, Hoverskate)
+Every trick is **accumulated rotation in one airtime**, on one axis of the board:
+| Axis | Trick | Keys (in air) | Counts when | Base score |
+|---|---|---|---|---|
+| pitch (side-to-side axis) | Front / Back **Flip** | Shift+W / Shift+S | ≥ 1 full turn (360°) | 300 / turn (×1.25 for 2+) |
+| roll (nose-tail axis) | **Barrel Roll** | **Z / C** | ≥ 1 full turn | 260 / turn (×1.25 for 2+) |
+| yaw (vertical axis, body + board) | **Spin** | A / D | ≥ 180° | 100 / 180° (×1.5 at 720°+) |
+| yaw, board only | **Varial** | Shift+A / Shift+D | ≥ 180° | 120 / 180° |
+| none | **Grab** | hold Shift alone | held > 0.15 s | 150 + 200/s |
+Release a key and the rotation **auto-completes** to the next 180° (spin/varial) or 360° (flip/roll). A trick is **clean** only if every axis is within tolerance of a whole rotation (spin/varial 30°, flip/roll 35°) AND board tilt ≤ 45° AND no grab still held; otherwise **bail** (35% speed kept, 0.7 s wobble, zero points). Hops under 0.18 s never count.
+**Multi-axis = named combo** (extra event + 250 bonus): flip+spin **Corkscrew**, flip+roll **Hurricane**, roll+spin **Cyclone**, flip+varial **Tornado Flip**, roll+varial **Screw Shove**. Combo multiplier = number of distinct tricks.
+**Rider:** the body is rigid with the board (the rider quaternion is derived from the trick group), knees tuck during flips/rolls, trailing hand grabs the rail.
+
+### Two modes (`hover.tricks.setMode('hoverskate' | 'battle')`, default hoverskate)
+- **hoverskate**: points, combos, streaks. Game modes: best-trick sessions and speed races (track + Mario-Kart-style attacks are next).
+- **battle**: **no points ever**. Each clean trick fires a combat move on the event (`e.move`): flip = `flip-dodge` (0.5 s i-frames), roll = `barrel-roll` (0.6 s i-frames, 6 m sidestep), spin = `spin-strike` (5 m sweep ×1.4 dmg), varial = `board-bash` (4 m knock), grab = `brace` (+15% flight stamina). The host applies them; the trick core stays pure.

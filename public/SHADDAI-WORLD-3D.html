@@ -4791,7 +4791,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     } else if (hover && hover.isRiding()) {
       hover.step(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
         left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
-        boost: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'] }, _camYaw);
+        boost: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'], rollL: !!keys['KeyZ'], rollR: !!keys['KeyC'] }, _camYaw);   // Z/C = barrel roll (in air)
       const _hv = hover.velocity(); _vel.x = _hv.x; _vel.z = _hv.z;
     } else if (_pctlOn) {
       { const _cp = _pctl.getPos();

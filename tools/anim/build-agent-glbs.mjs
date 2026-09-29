@@ -26,7 +26,9 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies(
 const lib = await parse(fs.readFileSync('public/assets/anim/agent-clips.glb'));
 const TEX = +process.env.TEX || 1024;
 const BAKE = [['idle', META.locomotion.idle], ['walk', META.locomotion.walk], ['run', META.locomotion.run]];
+const ONLY = (process.env.ONLY || '').split(',').filter(Boolean);
 for (const n of ['zerox', 'turtle', 'pikadon', 'quill', 'oracle', 'nexus', 'shaddai']) {
+  if (ONLY.length && !ONLY.includes(n)) continue;
   const src = `fal-assets/characters/${n}/${n}-rigged.glb`;
   // 1. retarget on a texture-free copy (three in node can't decode the PNG)
   const tmp = await io.read(src);

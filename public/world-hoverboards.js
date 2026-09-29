@@ -406,14 +406,26 @@
     spinRate: 7.0,        // rad/s (≈ 400°/s: a 360 takes ~0.9 s of air)
     flipRate: 6.0,        // rad/s
     varialRate: 9.0,      // rad/s (board-only shove-it)
+    rollRate: 6.2,        // rad/s (barrel roll about the board's nose-tail axis)
     grabRate: 8,          // grab blend in/out per second
     spinTol: 30,          // landing tolerance (deg) vs the nearest 180
     flipTol: 35,          // vs the nearest full rotation
     varialTol: 30,        // vs the nearest 180
+    rollTol: 35,          // vs the nearest full rotation
     tiltTol: 45,          // board pitch/roll at touchdown
     minAir: 0.18,         // s — shorter hops never score
-    score: { spin: 100, flip: 300, varial: 120, grab: 150, grabPerS: 200, airPerS: 40 },
+    score: { spin: 100, flip: 300, roll: 260, varial: 120, grab: 150, grabPerS: 200, airPerS: 40, named: 250 },
   };
+  // BATTLE mode: tricks score nothing; each clean one becomes a combat move the host applies (dodge windows, strikes, bashes).
+  var BATTLE_MOVES = {
+    flip:   { move: 'flip-dodge',  iframesS: 0.5,  note: 'vertical dodge, invulnerable while inverted' },
+    roll:   { move: 'barrel-roll', iframesS: 0.6,  sidestepM: 6, note: 'lateral dodge' },
+    spin:   { move: 'spin-strike', strikeR: 5, dmgMul: 1.4, note: 'weapon sweep, radius 5 m' },
+    varial: { move: 'board-bash',  knockM: 4, dmgMul: 1.1, note: 'board shoves nearby targets' },
+    grab:   { move: 'brace',       staminaRefund: 0.15, note: 'regain flight stamina' },
+  };
+  // Named multi-axis combos (rotation on 2+ axes in ONE air): extra event + bonus in Hoverskate.
+  var NAMED = [['flip', 'spin', 'Corkscrew'], ['flip', 'roll', 'Hurricane'], ['roll', 'spin', 'Cyclone'], ['flip', 'varial', 'Tornado Flip'], ['roll', 'varial', 'Screw Shove']];
   var PI = Math.PI, TAU = 2 * PI, D2R = PI / 180;
   function resid(a, step) { var r = a - Math.round(a / step) * step; return Math.abs(r); }
   // advance angle toward the next multiple of `step` in the direction of `dir` (auto-complete after release)
@@ -430,20 +442,20 @@
       var T = {}, k;
       for (k in TRICK_TUNE) T[k] = TRICK_TUNE[k];
       if (tune) for (k in tune) T[k] = tune[k];
-      var A = { spin: 0, flip: 0, varial: 0, grab: 0 };             // current visual angles (rad) + grab weight
-      var S = { air: false, airT: 0, spinDir: 0, flipDir: 0, varDir: 0, spinMax: 0, flipMax: 0, varMax: 0,
+      var A = { spin: 0, flip: 0, varial: 0, grab: 0, roll: 0 }, mode = 'hoverskate';             // current visual angles (rad) + grab weight
+      var S = { air: false, airT: 0, spinDir: 0, flipDir: 0, varDir: 0, rollDir: 0, spinMax: 0, flipMax: 0, varMax: 0, rollMax: 0,
                 grabT: 0, grabbed: false, lastClean: true, combo: 0, total: 0, streak: 0 };
       var listeners = [];
       function reset() {
-        A.spin = A.flip = A.varial = A.grab = 0;
-        S.air = false; S.airT = 0; S.spinDir = S.flipDir = S.varDir = 0; S.spinMax = S.flipMax = S.varMax = 0; S.grabT = 0; S.grabbed = false;
+        A.spin = A.flip = A.varial = A.grab = A.roll = 0;
+        S.air = false; S.airT = 0; S.spinDir = S.flipDir = S.varDir = S.rollDir = 0; S.spinMax = S.flipMax = S.varMax = S.rollMax = 0; S.grabT = 0; S.grabbed = false;
       }
       function step(dt, inp, airborne) {
         if (airborne && !S.air) { reset(); S.air = true; }
         if (!airborne) {
           // on the ground: angles ease home (revert out of a switch landing), grab releases
           A.spin += (0 - A.spin) * Math.min(1, dt * 10); A.varial += (0 - A.varial) * Math.min(1, dt * 10);
-          A.flip = 0; A.grab = Math.max(0, A.grab - T.grabRate * dt);
+          A.flip = 0; A.roll = 0; A.grab = Math.max(0, A.grab - T.grabRate * dt);
           return;
         }
         S.airT += dt;
@@ -456,6 +468,10 @@
         var fw = (inp.flipF ? 1 : 0) - (inp.flipB ? 1 : 0);
         if (fw) { S.flipDir = fw; A.flip += fw * T.flipRate * dt; }
         else A.flip = settle(A.flip, S.flipDir, T.flipRate, TAU, dt);
+        // ROLL (barrel roll about the nose-tail axis): auto-completes to the next full rotation
+        var rw = (inp.rollR ? 1 : 0) - (inp.rollL ? 1 : 0);
+        if (rw) { S.rollDir = rw; A.roll += rw * T.rollRate * dt; }
+        else A.roll = settle(A.roll, S.rollDir, T.rollRate, TAU, dt);
         // VARIAL (board only): auto-completes to the next 180
         var vw = (inp.varialR ? 1 : 0) - (inp.varialL ? 1 : 0);
         if (vw) { S.varDir = vw; A.varial += vw * T.varialRate * dt; }
@@ -466,29 +482,38 @@
         S.spinMax = Math.max(S.spinMax, Math.abs(A.spin));
         S.flipMax = Math.max(S.flipMax, Math.abs(A.flip));
         S.varMax = Math.max(S.varMax, Math.abs(A.varial));
+        S.rollMax = Math.max(S.rollMax, Math.abs(A.roll));
       }
       function emit(ev) { for (var i = 0; i < listeners.length; i++) { try { listeners[i](ev); } catch (e) {} } }
       // touchdown: returns true = clean. Snaps angles (spin/varial keep their 180 → "switch", then revert on the ground)
       function land(tiltRad) {
         if (!S.air) return true;
         S.air = false;
-        var spinDeg = Math.round(S.spinMax / PI) * 180, flips = Math.round(S.flipMax / TAU), varDeg = Math.round(S.varMax / PI) * 180;
+        var spinDeg = Math.round(S.spinMax / PI) * 180, flips = Math.round(S.flipMax / TAU), varDeg = Math.round(S.varMax / PI) * 180, rolls = Math.round(S.rollMax / TAU);
         var tricks = [];
+        if (rolls >= 1) tricks.push({ kind: 'roll', deg: rolls * 360, name: (rolls > 1 ? (rolls === 2 ? 'Double ' : rolls + 'x ') : '') + 'Barrel Roll', base: T.score.roll * rolls * (rolls > 1 ? 1.25 : 1) });
         if (spinDeg >= 180) tricks.push({ kind: 'spin', deg: spinDeg, name: 'Spin ' + spinDeg, base: T.score.spin * (spinDeg / 180) * (spinDeg >= 720 ? 1.5 : 1) });
         if (flips >= 1) tricks.push({ kind: 'flip', deg: flips * 360, name: (flips > 1 ? (flips === 2 ? 'Double ' : flips + 'x ') : '') + (S.flipDir > 0 ? 'Front Flip' : 'Back Flip'), base: T.score.flip * flips * (flips > 1 ? 1.25 : 1) });
         if (varDeg >= 180) tricks.push({ kind: 'varial', deg: varDeg, name: 'Varial ' + varDeg, base: T.score.varial * (varDeg / 180) });
         if (S.grabbed && S.grabT > 0.15) tricks.push({ kind: 'grab', deg: 0, name: S.grabT > 1 ? 'Long Grab' : 'Grab', base: T.score.grab + T.score.grabPerS * S.grabT });
         var clean = resid(A.spin, PI) <= T.spinTol * D2R && resid(A.flip, TAU) <= T.flipTol * D2R &&
-                    resid(A.varial, PI) <= T.varialTol * D2R && Math.abs(tiltRad || 0) <= T.tiltTol * D2R && A.grab < 0.95;
-        if (S.airT < T.minAir && !tricks.length) { A.flip = 0; A.spin = Math.round(A.spin / PI) * PI; A.varial = Math.round(A.varial / PI) * PI; return true; }
-        var mult = tricks.length, total = 0, air = T.score.airPerS * S.airT;
+                    resid(A.varial, PI) <= T.varialTol * D2R && resid(A.roll, TAU) <= T.rollTol * D2R && Math.abs(tiltRad || 0) <= T.tiltTol * D2R && A.grab < 0.95;
+        if (S.airT < T.minAir && !tricks.length) { A.flip = 0; A.roll = 0; A.spin = Math.round(A.spin / PI) * PI; A.varial = Math.round(A.varial / PI) * PI; return true; }
+        var mult = tricks.length, total = 0, air = T.score.airPerS * S.airT, battle = mode === 'battle', have = {};
+        for (var hi = 0; hi < tricks.length; hi++) have[tricks[hi].kind] = 1;
         for (var i = 0; i < tricks.length; i++) {
-          var t = tricks[i], sc = clean ? Math.round(t.base * mult) : 0;
+          var t = tricks[i], sc = clean && !battle ? Math.round(t.base * mult) : 0;
           total += sc;
-          emit({ name: t.name, kind: t.kind, deg: t.deg, score: sc, clean: clean, combo: mult, total: 0, air: S.airT });
+          var evt = { name: t.name, kind: t.kind, deg: t.deg, score: sc, clean: clean, combo: mult, total: 0, air: S.airT, points: !battle };
+          if (battle && clean) evt.move = BATTLE_MOVES[t.kind];
+          emit(evt);
+        }
+        for (var ni = 0; ni < NAMED.length; ni++) if (have[NAMED[ni][0]] && have[NAMED[ni][1]]) {
+          var nb = clean && !battle ? T.score.named : 0; total += nb;
+          emit({ name: NAMED[ni][2], kind: 'named', deg: 0, score: nb, clean: clean, combo: mult, total: 0, air: S.airT, points: !battle, parts: [NAMED[ni][0], NAMED[ni][1]] });
         }
         if (tricks.length) {
-          if (clean) { total += Math.round(air); S.streak++; S.total += total; }
+          if (clean) { if (!battle) total += Math.round(air); S.streak++; S.total += total; }
           else S.streak = 0;
           S.combo = mult; S.lastClean = clean;
           emit({ name: clean ? 'combo' : 'bail', kind: 'summary', deg: 0, score: clean ? total : 0, clean: clean, combo: mult, total: S.total, air: S.airT });
@@ -497,7 +522,7 @@
           emit({ name: 'bail', kind: 'summary', deg: 0, score: 0, clean: false, combo: 0, total: S.total, air: S.airT });
         }
         // snap: flips are always cleared; spin/varial round to their nearest 180 (switch), then ease home on the ground
-        A.flip = 0; A.spin = Math.round(A.spin / PI) * PI; A.varial = Math.round(A.varial / PI) * PI;
+        A.flip = 0; A.roll = 0; A.spin = Math.round(A.spin / PI) * PI; A.varial = Math.round(A.varial / PI) * PI;
         if (Math.abs(A.spin) > 1e-6) A.spin = (Math.round(A.spin / PI) & 1) ? (A.spin > 0 ? PI : -PI) : 0;
         if (Math.abs(A.varial) > 1e-6) A.varial = (Math.round(A.varial / PI) & 1) ? (A.varial > 0 ? PI : -PI) : 0;
         return clean;
@@ -505,6 +530,7 @@
       var NOIN = {};
       return {
         tune: T, angles: A, state: S, reset: reset, step: step, land: land,
+        setMode: function (m) { mode = m === 'battle' ? 'battle' : 'hoverskate'; }, getMode: function () { return mode; }, BATTLE_MOVES: BATTLE_MOVES,
         onTrick: function (fn) { listeners.push(fn); return function () { var i = listeners.indexOf(fn); if (i >= 0) listeners.splice(i, 1); }; },
       };
     },

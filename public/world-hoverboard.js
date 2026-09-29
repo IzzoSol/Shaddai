@@ -217,7 +217,7 @@ window.buildWorldHoverboard = function (opts) {
     pitch: 0, roll: 0, jumpHeld: false, t: 0, surface: 0,
     airT: 0, flying: false, climbing: false, stamina: 1, exhausted: false, bail: 0, thrustK: 0, restPrev: 0, restPrevOk: false,
   };
-  var TIN = { spinL: false, spinR: false, flipF: false, flipB: false, grab: false, varialL: false, varialR: false };
+  var TIN = { spinL: false, spinR: false, flipF: false, flipB: false, grab: false, varialL: false, varialR: false, rollL: false, rollR: false };
   var own = new THREE.Vector3();
   var pos = opts.playerPos || own;
   var RP = window.WorldRiderPose ? window.WorldRiderPose.create(THREE) : null;
@@ -350,6 +350,7 @@ window.buildWorldHoverboard = function (opts) {
         TIN.varialR = inp.varialR !== undefined ? !!inp.varialR : (sh && !!inp.right);
         TIN.flipF = inp.flipF !== undefined ? !!inp.flipF : (sh && !!inp.fwd);
         TIN.flipB = inp.flipB !== undefined ? !!inp.flipB : (sh && !!inp.back);
+        TIN.rollL = !!inp.rollL; TIN.rollR = !!inp.rollR;
         TIN.grab = inp.grab !== undefined ? !!inp.grab : (sh && !inp.left && !inp.right && !inp.fwd && !inp.back);
         TR.step(dt, TIN, true);
       }
@@ -401,7 +402,7 @@ window.buildWorldHoverboard = function (opts) {
       var wob = s.bail > 0 ? Math.sin(s.t * 26) * 0.18 * (s.bail / TUNE.bailTime) : 0;   // bail wobble
       board.position.set(s.x, s.y, s.z);
       board.rotation.set(s.pitch, s.psi, s.roll + wob, 'YXZ');
-      if (TR) { var A = TR.angles; trick.rotation.set(A.flip, A.spin, 0, 'YXZ'); inner.rotation.y = A.varial; }
+      if (TR) { var A = TR.angles; trick.rotation.set(A.flip, A.spin, A.roll || 0, 'YXZ'); inner.rotation.y = A.varial; }
       board.updateMatrixWorld(true);
       if (kit) {
         var tk = s.riding ? 0.25 + 0.6 * Math.min(1, Math.abs(s.v) / B.topMS) + (s.v > B.topMS ? 0.3 : 0) + (s.climbing ? 0.7 : 0) + (s.air ? 0.1 : 0) : 0.12;
@@ -430,7 +431,8 @@ window.buildWorldHoverboard = function (opts) {
     _riderQ.copy(_trQ).multiply(_yq);
     _up.set(0, 1, 0).applyQuaternion(_trQ);
     var grabW = TR ? TR.angles.grab : 0;
-    var hipH = rig ? rig.hipH : 3.6, standH = rig && rig.hasBones ? (B.crouchM + 0.25 * grabW) * U : 0;
+    var tuck = TR && TR.state.air ? Math.min(1, (Math.abs(TR.angles.flip) + Math.abs(TR.angles.roll || 0)) / 1.2) : 0;   // knees pulled in mid-flip/roll
+    var hipH = rig ? rig.hipH : 3.6, standH = rig && rig.hasBones ? (B.crouchM + 0.25 * grabW + 0.16 * tuck) * U : 0;
     _tp.set(0, deckTop - PIV, 0); trick.localToWorld(_tp);  // deck centre (world)
     _tp.addScaledVector(_up, -standH);                      // root drops → IK bends the knees
     _standP.copy(av.position); _standQ.copy(av.quaternion);
@@ -450,7 +452,7 @@ window.buildWorldHoverboard = function (opts) {
     T.kneePoleL.copy(_rf).addScaledVector(_rl, 0.4).addScaledVector(_up, 0.1);
     T.kneePoleR.copy(_rf).addScaledVector(_rl, -0.4).addScaledVector(_up, 0.1);
     // torso: slight athletic hunch toward the toes + lean with the carve
-    T.spineDir.copy(_up).multiplyScalar(0.94).addScaledVector(_rf, 0.26).normalize();
+    T.spineDir.copy(_up).multiplyScalar(0.94 - 0.2 * tuck).addScaledVector(_rf, 0.26 + 0.4 * tuck).normalize();
     // head: look where the board goes, not where the chest points
     T.neckDir.copy(_up).multiplyScalar(0.85).addScaledVector(_fw, 0.5).normalize();
     // arms out for balance, along the board axis, slightly down; forearms relax forward
