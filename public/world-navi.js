@@ -322,7 +322,30 @@
     };
   };
 
-  M.plots = function () { return { title: 'PLOTS', list: [], empty: 'No home yet — claim a plot.', detail: function () { return '<h3>PLOTS & OFFICES</h3><div class="empty">Owned, rent, visit and stash incoming deliveries. Wire to the plots API from the dashboard.</div><button class="b g" data-a="dash">OPEN DASHBOARD PLOTS</button>'; }, act: function (id, a) { if (a === 'dash') window.open('/plots.html', '_blank'); } }; };
+  M.plots = function () {
+    var WS = window.WorldSurvival, sp = WS ? WS.spots() : [], act = WS ? WS.active() : null, auto = WS ? WS.isAuto() : true;
+    return {
+      title: 'PLOTS · HOMES · RESPAWN',
+      list: sp.map(function (x) { return { id: x.id, t: x.name, s: x.kind, tag: act && act.id === x.id ? (auto ? 'AUTO' : 'ACTIVE') : '' }; }),
+      empty: 'No home yet — claim a plot. Until then you respawn at the Bazaar.',
+      detail: function (id) {
+        if (!WS) return '<div class="empty">Survival module not loaded.</div>';
+        var x = sp.filter(function (q) { return q.id === id; })[0], near = WS.nearRest(), st = WS.state;
+        var head = '<h3>RESPAWN</h3><div>You wake at: <b style="color:' + THEME.gold + '">' + esc(act ? act.name : '—') + '</b>' + (auto ? ' (auto: home &gt; plot &gt; office &gt; realm bed &gt; Bazaar)' : ' (pinned)') + '</div>' +
+          '<div style="margin:6px 0">Breath ' + Math.round(st.breath * 100) + '% · HP ' + Math.round(window.__playerHP == null ? 100 : window.__playerHP) + '</div>';
+        var btns = '<button class="b g" data-a="save"' + (near ? '' : ' disabled') + '>SAVE SPOT HERE</button>' + '<button class="b" data-a="auto"' + (auto ? ' disabled' : '') + '>AUTO</button>';
+        if (!near) btns += '<div class="empty">Stand at a bed-pod, home, plot or office to save a spot.</div>'; else btns += '<div class="empty">Rest point in range: ' + esc(near.name) + '</div>';
+        if (x) btns += '<button class="b g" data-a="pin">RESPAWN HERE</button>' + (x.kind === 'bazaar' ? '' : '<button class="b" data-a="del">DELETE SPOT</button>') + '<button class="b" data-a="wp">SET WAYPOINT</button>';
+        return head + btns;
+      },
+      act: function (id, a) {
+        if (!WS) return; var x = sp.filter(function (q) { return q.id === id; })[0];
+        if (a === 'save') WS.saveHere(); else if (a === 'auto') WS.setActive('auto');
+        else if (a === 'pin' && x) WS.setActive(x.id); else if (a === 'del' && x) WS.removeSpot(x.id);
+        else if (a === 'wp' && x) setWaypoint({ x: x.x, z: x.z, label: x.name, kind: 'Spot' });
+      }
+    };
+  };
   M.wallet = function () {
     return {
       title: 'WALLET', list: [{ id: 'w1', t: 'PayBox', s: 'balance ' + S.kpis.paybox }, { id: 'w2', t: 'Sparks', s: String(sparks()) }], empty: '',

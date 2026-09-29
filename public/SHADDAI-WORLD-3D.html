@@ -300,6 +300,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-audio.js?v=20260703d"></script>
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
+<script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-navi.js?v=20260929a"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
@@ -3708,7 +3709,7 @@ window.__onDragonHit = function(dmg, kind, info){
   window.__playerHP = Math.max(0, window.__playerHP - dmg);
   if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
   window.__dragonShake(kind === 'stagger' ? 0.25 : 0.6, 0.35);
-  if(window.__playerHP <= 0){ window.__playerHP = 100; if(window.__dragons && window.__dragons.clearStatus) window.__dragons.clearStatus(); const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); }
+  if(window.__playerHP <= 0){ if(window.WorldSurvival){ window.WorldSurvival.die('dragon'); } else { window.__playerHP = 100; if(window.__dragons && window.__dragons.clearStatus) window.__dragons.clearStatus(); const c = window.WORLD_LAYOUT.stations[0].pos; playerPos.x = c[0]; playerPos.z = c[1]; if(window.__toast) window.__toast('💀 Downed — back at Central Station'); } }
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
@@ -4908,9 +4909,15 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
   } else _swimming = false;
   const _pctlActive = _pctlOn && !!_pctlOut;
 if (_pctlActive) { groundY = _pctlOut.renderPos.y; _swimming = _pctlOut.swimming; }   // controller owns ground + swim
-const _rawBaseY = _pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY));
+let _diveY = 0;   // WorldSurvival: X = dive, Space = surface; breath meter + drowning live there
+if (window.WorldSurvival) {
+  let _wY = null, _fY = 0;
+  if (_swimming && _v4Water) { _wY = _v4Water.waterHeightAt(playerPos.x, playerPos.z); _fY = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : ((_wY || 0) - 30); }
+  _diveY = window.WorldSurvival.diveOffset(dt, { swimming: _swimming && _wY != null && isFinite(_wY), waterY: _wY || 0, floorY: _fY, U: V4_U, wantDive: !!keys['KeyX'], wantUp: !!keys['Space'] });
+}
+const _rawBaseY = (_pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY))) - _diveY;
 const _pDip = _pctlActive ? _pctlOut.compression * 0.35 * V4_U : 0;   // landing / crouch camera dip (<= 0.35 m)
-const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
+const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
   // Ease the ground height so walking over terrain undulations glides instead of jittering the view.
   // SNAP (no ease) on spawn, flight, interior teleports, elevators, or any big jump so those don't slide.
   if(_smoothBaseY===undefined || _spawnBusy || _onTrain || (veh && veh.mode) || (hover && hover.isRiding()) || (_elevators && _elevators.isRiding()) ||
