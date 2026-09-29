@@ -129,11 +129,15 @@
     // ── size: clip speeds are for the canonical leg; strides scale with THIS agent's leg in world metres ──
     // (o.hipM = the agent's hip height in metres, if the host prefers to state it)
     var num = new Float64Array(3);   // [strideScale, full sum, upper sum] — doubles returned via this, never boxed
+    // three's getMaxScaleOnAxis() returns a boxed double, so the world scale is re-read only every 32nd call (a model's
+    // scale changes rarely); the result lives in num[0]
+    var ssTick = 0;
     function strideScale() {
-      if (o.hipM) { num[0] = o.hipM / skel.hipM; return num[0]; }
+      if (o.hipM) { num[0] = o.hipM / skel.hipM; return; }
+      if ((ssTick++ & 31) !== 0 && num[0] > 0) return;
       model.updateWorldMatrix(true, false);
       var s = legRatio * model.matrixWorld.getMaxScaleOnAxis() / upm;
-      num[0] = s > 0.1 && s < 10 ? s : 1; return num[0];
+      num[0] = s > 0.1 && s < 10 ? s : 1;
     }
 
     // ── locomotion slots: lower + upper actions each, phase-locked ─────────────────────────────────
@@ -152,7 +156,8 @@
     function mkOverlay() { return { action: null, name: '', meta: null, w: 0, target: 0, fade: 0.15, once: true, onHit: null, onEnd: null, hitIdx: 0, prevT: 0, age: 0, next: '', tag: '' }; }
     var full = [mkOverlay(), mkOverlay()], upper = [mkOverlay(), mkOverlay()];
 
-    var st = { target: 0, speed: 0, grounded: true, air: 0, phase: 0, jumping: false, fallLoop: false };
+    var sv = new Float64Array(3);   // [smoothed speed, cycle phase, seconds airborne] (typed array: a double field write can box)
+    var st = { target: 0, grounded: true, jumping: false, fallLoop: false };
     // debug values live in typed arrays (a keyed double store would box a HeapNumber every frame); read via getters
     var dW = new Float64Array(4), dTS = new Float64Array(4), dS = new Float64Array(4);   // dS: full, upper, speed, stride
     function view(arr) { var o = {}; LOCO.forEach(function (k, i) { Object.defineProperty(o, k, { get: function () { return arr[i]; }, enumerable: true }); }); return o; }
@@ -200,7 +205,7 @@
       play: function (name, opts) {
         opts = opts || {};
         var m = byName[name]; if (!m || !srcClips[name]) return false;
-        var layer = opts.layer || (m.upperOk && st.speed > 0.3 ? 'upper' : 'full');
+        var layer = opts.layer || (m.upperOk && sv[0] > 0.3 ? 'upper' : 'full');
         return startOverlay(layer === 'upper' ? upper : full, name, opts, layer);
       },
       stop: function (fade) {
@@ -213,7 +218,7 @@
       },
       land: function () {
         var a = meta.actions, was = st.jumping || st.fallLoop; st.jumping = false; st.fallLoop = false;
-        var walk = slotBy.walk ? slotBy.walk.speed * strideScale() : 1.5;
+        strideScale(); var walk = slotBy.walk ? slotBy.walk.speed * num[0] : 1.5;
         if (st.target > walk * 0.6 || !a.jumpLand) { if (was) { full[0].target = 0; full[0].fade = 0.12; } return false; }   // moving: blend straight back
         return api.play(a.jumpLand, { fade: 0.05, once: true, layer: 'full', timeScale: 1.4 });
       },
@@ -257,14 +262,14 @@
       if (!(dt > 0)) dt = 0;
       if (dt > 0.1) dt = 0.1;
       // requested speed, smoothed; air state
-      st.speed += (st.target - st.speed) * (1 - Math.exp(-dt / SPEED_TAU));
+      sv[0] += (st.target - sv[0]) * (1 - Math.exp(-dt / SPEED_TAU));
       if (!st.grounded) {
-        st.air += dt;
-        if (st.air > AIR_DELAY && !st.jumping && !st.fallLoop && meta.actions.jumpLoop) { st.fallLoop = true; chainOpts.fade = 0.2; api.play(meta.actions.jumpLoop, chainOpts); }
-      } else st.air = 0;
+        sv[2] += dt;
+        if (sv[2] > AIR_DELAY && !st.jumping && !st.fallLoop && meta.actions.jumpLoop) { st.fallLoop = true; chainOpts.fade = 0.2; api.play(meta.actions.jumpLoop, chainOpts); }
+      } else sv[2] = 0;
 
       // locomotion weights (sum to 1) + phase-locked cycle
-      strideScale(); var sc = num[0], v = st.speed, i, s;
+      strideScale(); var sc = num[0], v = sv[0], i, s;
       for (i = 0; i < slots.length; i++) { slots[i].w = 0; slots[i].ts = 0; }
       var idle = slotBy.idle, stride = 0, rate = 0;
       if (moving.length === 0 || v < 1e-3) { if (idle) idle.w = 1; else if (moving.length) moving[0].w = 1; }
@@ -285,7 +290,7 @@
           }
         }
         rate = stride > 0 ? v / stride : 0;             // cycles per second, shared by every gait
-        st.phase = (st.phase + rate * dt) % 1;
+        sv[1] = (sv[1] + rate * dt) % 1;
       }
       stepOverlays(full, dt, 1); stepOverlays(upper, dt, 2); var F = num[1], U = num[2];
       if (F > 1) F = 1; if (U > 1) U = 1;
@@ -296,7 +301,7 @@
         if (s.key === 'idle') s.ts = 1;
         else {
           s.ts = rate * s.dur;
-          if (s.w > 0 && !s.on) { var t0 = (((st.phase - rate * dt + s.phaseOff) % 1 + 1) % 1) * s.dur; s.lo.time = t0; s.hi.time = t0; }
+          if (s.w > 0 && !s.on) { var t0 = (((sv[1] - rate * dt + s.phaseOff) % 1 + 1) % 1) * s.dur; s.lo.time = t0; s.hi.time = t0; }
           if (s.ts !== s.cts) { s.lo.timeScale = s.ts; s.hi.timeScale = s.ts; s.cts = s.ts; }
         }
         s.on = s.w > 0;
