@@ -21,7 +21,7 @@
     var THREE = o.THREE, scene = o.scene, U = o.U || U0, anchor = o.anchor, hAt = o.heightAt || function () { return 0; }, yaw = o.yaw || 0;
     var G = new THREE.Group(); G.name = 'hoverpark'; scene.add(G);
     // raised deck: sample the terrain over the footprint and stand the park on its max so nothing clips
-    var maxH = -1e9; for (var sx = -180; sx <= 190; sx += 45) for (var sz = -140; sz <= 150; sz += 45) maxH = Math.max(maxH, hAt(anchor.x + sx * U, anchor.z + sz * U));
+    var maxH = -1e9, minH = 1e9; for (var sx = -180; sx <= 190; sx += 45) for (var sz = -140; sz <= 150; sz += 45) { var hh = hAt(anchor.x + sx * U, anchor.z + sz * U); maxH = Math.max(maxH, hh); minH = Math.min(minH, hh); }
     var deckY = maxH + 1.2 * U; G.position.set(anchor.x, deckY, anchor.z); G.rotation.y = yaw;
     var R = new THREE.Group(); R.scale.setScalar(U); G.add(R);   // author in metres
     var M = function (c, e, ei, m, r) { return new THREE.MeshStandardMaterial({ color: c, emissive: e || 0x000000, emissiveIntensity: ei || 0, metalness: m == null ? 0.4 : m, roughness: r == null ? 0.6 : r }); };
@@ -87,7 +87,10 @@
     function local(wx, wz) { var dx = (wx - anchor.x) / U, dz = (wz - anchor.z) / U; return [dx * cy - dz * sy, dx * sy + dz * cy]; }   // inverse of the group rotation
     function quarter(x0, z0, w, r, dir, lx, lz) { var dz = Math.abs(lz - z0); if (dz > w / 2) return 0; var t = dir > 0 ? lx - x0 : x0 - lx; if (t < 0 || t > r) return 0; return r - Math.sqrt(Math.max(0, r * r - (r - t) * (r - t))) < 0 ? 0 : Math.sqrt(Math.max(0, r * r - (r - t) * (r - t))); }
     function heightAtWorld(wx, wz) {
-      var l = local(wx, wz), lx = l[0], lz = l[1]; if (Math.abs(lx) > W || Math.abs(lz) > D) return null; var h = 0;
+      var ddx = wx - anchor.x, ddz = wz - anchor.z, far = (W + D + 60) * U; if (ddx * ddx + ddz * ddz > far * far) return null;   // cheap early-out (this is called for every terrain height query)
+      var l = local(wx, wz), lx = l[0], lz = l[1], ox = Math.max(Math.abs(lx) - W, 0), oz = Math.max(Math.abs(lz) - D, 0);
+      if (ox > 0 || oz > 0) { var dd = Math.sqrt(ox * ox + oz * oz); if (dd > 28) return null; return deckY - (dd / 28) * (deckY - minH); }   // 28 m apron ramp from the deck down to the lowest ground: roll on and off
+      var h = 0;
       var B0 = ROOMS[1], F0 = ROOMS[6];
       h = Math.max(h, quarter(B0.x - 12, B0.z, 26, 6.5, 1, lx, lz), quarter(B0.x + 12, B0.z, 26, 6.5, -1, lx, lz), quarter(F0.x + F0.r + 3, F0.z, 10, 4, -1, lx, lz));
       var fr = Math.hypot(lx - F0.x, lz - F0.z); if (fr < F0.r) h = Math.min(h, -7 * (1 - (fr / F0.r) * (fr / F0.r))); return h * U + deckY;

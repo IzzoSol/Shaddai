@@ -159,6 +159,7 @@
     // ── heightAt: bilinear over the raw Uint16 samples ──────────────────────────────────────────────────────
     // WHY Uint16 not a Float32 copy: 4096² would be 64 MB of floats; the affine HA+HB·v after interpolation is
     // two flops. Clamped at the footprint edge (the world is an island; beyond is the edge sea).
+    var EXTRA = { fn: null };   // setHeightExtra(fn): (x,z) -> height or null; the world takes max(terrain, extra). Used by the Hoverskate park (deck, banks, ramps).
     function heightAt(x, z) {
       var u = (x + HALF) * INV_CELL, v = (z + HALF) * INV_CELL;
       if (u < 0) u = 0; else if (u > NM1) u = NM1;
@@ -169,7 +170,9 @@
       var fx = u - i, fy = v - j, k = j * N + i;
       var h00 = HD[k], h10 = HD[k + 1], h01 = HD[k + N], h11 = HD[k + N + 1];
       var top = h00 + (h10 - h00) * fx, bot = h01 + (h11 - h01) * fx;
-      return HA + HB * (top + (bot - top) * fy);
+      var hb = HA + HB * (top + (bot - top) * fy);
+      if (EXTRA.fn !== null) { var ex = EXTRA.fn(x, z); if (ex !== null && ex > hb) return ex; }
+      return hb;
     }
     // normalAt: central differences; eps defaults to one heightmap cell (the data's own resolution)
     function normalAt(x, z, out, eps) {
@@ -394,7 +397,7 @@
 
     var api = {
       ready: false, mesh: group, material: material, meta: meta, seaLevel: SEA_U, half: HALF, source: hm.src,
-      heightAt: heightAt,
+      heightAt: heightAt, setHeightExtra: function (f) { EXTRA.fn = typeof f === 'function' ? f : null; },
       normalAt: function (x, z, out) { return normalAt(x, z, out); },
       update: update,
       stats: function () { var s = {}; for (var k in stats_) s[k] = stats_[k]; s.lodCounts = JSON.parse(JSON.stringify(stats_.lodCounts)); return s; },

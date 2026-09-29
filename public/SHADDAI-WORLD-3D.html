@@ -4752,6 +4752,7 @@ window.__getQualityTier = function(){ return _Q.tier; };
     const mk = cm.markers.filter(function(m){ return m.name === 'PLAZA_SKATE'; })[0]; if(!mk || !mk.pos){ console.warn('[race] PLAZA_SKATE marker missing'); return; }
     try {
       const park = window.__hoverPark = window.WorldHoverPark.build({ THREE, scene, anchor: { x: mk.pos.x, z: mk.pos.z }, heightAt: T.heightAt, yaw: Math.atan2(-mk.pos.x, -mk.pos.z), U: V4_U });
+      if(T.setHeightExtra) T.setHeightExtra(park.heightAt);   // banks / kicker / bowl / deck + apron are now real ground for the player, boards, NPCs
       const run = window.__raceRun = window.WorldRaceRun.create({ THREE, scene, park, hover, sparks: window.ShdSparks, U: V4_U, heightAt: T.heightAt, onEvent: function(e){
         const N = window.Navi; const say = function(m){ if(N && N.toast) N.toast(m); else if(window.__toast) window.__toast(m); };
         if(e.type === 'go') say('GO!'); else if(e.type === 'crate') say('Item: ' + e.item + '  (R to use)'); else if(e.type === 'pad') say('TURBO');
