@@ -2,7 +2,7 @@
  *
  *   var arena = window.buildColosseumArena(THREE, { scene })  → room record for world-interiors.js
  *   arena.heightAt(x, z) · arena.contains(x, z) · arena.resolve(pos, prevX, prevZ)
- *   arena.setTheme('classic'|'royal'|'night'|'festival') · arena.setField('sand'|'soccer'|'tactics'|'team-attack'|'party')
+ *   arena.setTheme('classic'|'royal'|'night'|'festival') · arena.setField('sand'|'soccer'|'tactics'|'team-attack'|'party'|'water'|'lava'|'void'|'grass'|'ice')  (last five: world-colosseum-floors.js)
  *   arena.spectate(i) (C cycles broadcast cams while inside, X returns to the player)
  *
  * Built on its own island (x = 12000) because the true-size bowl (~205 × 170 m ≈ 800 × 660 units) is wider
@@ -578,6 +578,7 @@
     }
     // ── field modes (drawn onto the floor canvas; the canvas covers the ellipse's 124 × 88 m box) ──
     function setField(mode) {
+      if (window.ColosseumFloors && api) { if (window.ColosseumFloors.modes.indexOf(mode) >= 0) { current.field = mode; drawScreen(mode.toUpperCase() + '  ·  ' + current.theme.toUpperCase()); return api.floors.apply(mode); } api.floors.clear(); }
       current.field = ['sand', 'soccer', 'tactics', 'team-attack', 'party'].indexOf(mode) >= 0 ? mode : 'sand';
       var W = fc.width, H = fc.height, px = W / (2 * A);            // pixels per metre
       var X = function (m) { return W / 2 + m * px; }, Y = function (m) { return H / 2 + m * px; };
@@ -678,8 +679,9 @@
       setCrowdMood: function (v) { CHEER.value = Math.max(0, Math.min(1, v)); },
       vipSeats: vipSeats, agentSlots: agentSlots, setVelarium: function (o) { vel.target = Math.max(0, Math.min(1, o)); }, velarium: vel,
       dims: Object.assign({}, D, { LOW1: LOW1, PROM1: PROM1, UP1: UP1, SHELL: SHELL, H_LOW: H_LOW, H_UP: H_UP, RAMP: RAMP, LOBBY_Z0: LOBBY_Z0 }), hLocal: hLocal,
-      state: current, themes: Object.keys(THEMES),
+      state: current, themes: Object.keys(THEMES), root: root, floorMesh: floor,
     };
+    if (window.ColosseumFloors) { window.ColosseumFloors.attach(THREE, api); frameHooks.push(function (dt) { api.floors.tick(dt); }); var pf = params.get('field'); if (pf && window.ColosseumFloors.modes.indexOf(pf) >= 0) setField(pf); }
     window.__colosseumArena = api;
     return api;
   };

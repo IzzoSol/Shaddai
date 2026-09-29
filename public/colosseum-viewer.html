@@ -16,11 +16,12 @@
   <div id="ui">
     <b>SHADDAI COLOSSEUM</b> &middot; drag = orbit, wheel = zoom<br>
     Theme: <button data-t="classic">Classic</button><button data-t="royal">Royal</button><button data-t="night">Night</button><button data-t="festival">Festival</button><br>
-    Field: <button data-f="sand">Sand</button><button data-f="soccer">Soccer</button><button data-f="tactics">Tactics</button><button data-f="team-attack">Team</button><button data-f="party">Party</button><br>
+    Field: <button data-f="sand">Sand</button><button data-f="soccer">Soccer</button><button data-f="tactics">Tactics</button><button data-f="team-attack">Team</button><button data-f="party">Party</button><button data-f="water">Naval</button><button data-f="lava">Lava</button><button data-f="void">Void</button><button data-f="grass">Grass</button><button data-f="ice">Ice</button><br>
     Quality: <button data-q="POTATO">Potato</button><button data-q="LOW">Low</button><button data-q="MEDIUM">Med</button><button data-q="HIGH">High</button><button data-q="ULTRA">Ultra</button>
   </div>
   <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.180.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/" } }</script>
   <!-- world-colosseum.js is a classic IIFE: it publishes window.buildColosseumArena (it has NO ES exports), so load it as a plain script first -->
+  <script src="/world-colosseum-floors.js"></script>
   <script src="/world-colosseum.js"></script>
   <script type="module">
     import * as THREE from 'three';
@@ -40,6 +41,7 @@
     addEventListener('wheel', e => { dist = Math.max(30, Math.min(2500, dist * (1 + e.deltaY * 0.001))); place(); }, { passive: true });
     document.getElementById('ui').addEventListener('click', e => { const b = e.target; if (b.dataset.t) arena.setTheme(b.dataset.t); if (b.dataset.f) arena.setField(b.dataset.f); if (b.dataset.q && arena.setQuality) arena.setQuality(b.dataset.q); });
     addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+    window.__viewer = { set(y, p, d) { yaw = y; pitch = p; dist = d; place(); }, arena };
     place(); let last = performance.now();
     (function loop(now) { requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; arena.tick(dt); if (!drag) {} renderer.render(scene, camera); })(last);
   </script>
