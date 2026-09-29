@@ -442,9 +442,7 @@ function _ldStep(name, fn){   // promise-chain step wrapper: .then(_ldStep('x', 
   }
   // PERF: after entry, every streaming step also waits for a healthy frame rate (>=42 fps EMA, max 25 s) so a heavy build never lands on top of a struggling frame
   function _ldFps(){ return new Promise(function(res){ let w = 0; (function c(){ const f = window.__fpsNow ? window.__fpsNow() : 60; if(f >= 42 || (w += 500) > 25000) res(); else setTimeout(c, 500); })(); }); }
-  // LITE MODE (weak GPUs / ?lite=1; ?full=1 forces everything): skip the far, heavy, optional builds so the core city stays smooth
-  const _LITE_SKIP = { 'fill':1, 'clusters':1, 'dragons':1, 'wildlife':1, 'void-castle':1, 'sky-traffic':1, 'grid-fabric':1 };
-  return function(v){ if(window.__lite && _LITE_SKIP[name]){ _ldBegin(name); _ldEnd(name); return v; }
+  return function(v){
     return __LD.gatePassed ? _ldIdle().then(_ldFps).then(function(){ return run(v); }) : run(v); };
 }
 function _ldProgress(last){
@@ -4415,7 +4413,7 @@ window.removeAgent = function(a){
     var shown=0, t0=Date.now(), warm=false;
     function set(p, label){ p=Math.max(shown, Math.min(100, Math.round(p))); if(p!==shown){ shown=p; bar.style.width=p+'%'; pct.textContent=p+'%'; } if(label && stepEl.textContent!==label) stepEl.textContent=label; }
     (function tick(){
-      var crit=((window.__LD && window.__LD.critical) || []).filter(function(k){ return !(window.__lite && (k==='grid-fabric' || k==='city-v3')); }), S=(window.__LD && window.__LD.steps) || {}, done=0, next=null;
+      var crit=(window.__LD && window.__LD.critical) || [], S=(window.__LD && window.__LD.steps) || {}, done=0, next=null;
       crit.forEach(function(k){ var st=S[k]; if(st && st.t1) done++; else if(!next) next=k; });
       var ready = crit.length ? done>=crit.length : !!window.__worldBuilt;
       if(!ready && Date.now()-t0 < 25000){ set(4 + 88*done/Math.max(1,crit.length), LABEL[next] || 'Loading'); setTimeout(tick, 150); return; }
@@ -4691,10 +4689,7 @@ const _Q = {
 };
 window.__quality = _Q.tiers[_Q.tier].name;
 window.__fpsNow = function(){ return _Q.fps; };
-try{   // integrated / software GPUs (Intel HD/UHD, Mesa, SwiftShader) start on POTATO; the governor climbs if the machine proves fast
-  const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_renderer_info'), _gpu = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : '';
-  window.__gpuName = _gpu; window.__lite = /[?&]lite=1/.test(location.search); window.__fewLights = /[?&]fewlights=1/.test(location.search);   // lite is opt-in only (owner: no lite version) if(/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu)){ _Q.tier = 0; window.__quality = _Q.tiers[0].name; }
-}catch(_){}
+try{ const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_renderer_info'); window.__gpuName = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : ''; }catch(_){}   // info only: every GPU starts on the normal tier (LOW) and the governor adapts
 
 function _applyQualityTier(idx){
   if(idx < 0) idx = 0;
