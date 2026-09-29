@@ -380,7 +380,7 @@ window.__w3dDebug = { scene, camera, renderer };
 try{ window.startPerfHud && window.startPerfHud(renderer); }catch(_){}   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
 // ── MAP v4 FLAG (?map=v4) — Blender-baked ~10 km heightmap terrain (world-terrain-v4.js) + Tidewater-style
 // water (world-water.js). OFF by default: without the flag nothing below changes. See docs/MAP-V4-INTEGRATION.md.
-const MAP_V4 = (function(){ try{ return /[?&]map=v4(?:&|$|#)/.test(location.search); }catch(_){ return false; } })();
+const MAP_V4 = (function(){ try{ return !/[?&]map=(?:v3|legacy)(?:&|$|#)/.test(location.search); }catch(_){ return true; } })();   // v4 (the real world) is the default; ?map=v3 = legacy
 const V4_U = 7/1.8;                       // units per metre (scale law) — terrain.json units_per_m
 let _v4T = null, _v4Water = null, _v4Meta = null, _v4Fill = null;
 let _v4Sky = null;                        // MAP v4 sky/day-night (world-sky-v4.js)   // terrain api / water api / terrain.json once loaded
