@@ -4735,6 +4735,10 @@ function _updateGovernor(dt){
 
 // Apply initial tier now (sets pixelRatio + composer size correctly from the start)
 _applyQualityTier(_Q.tier);
+// Public handles: the Navi caps quality while open, the ?perf=1 HUD forces tiers (keys 1-5, 0 = auto). cooldownS holds the governor off so it can't fight the request.
+window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.cooldown = cooldownS == null ? 8 : cooldownS; _Q.below45 = 0; _Q.above58 = 0; };
+window.__getQualityTier = function(){ return _Q.tier; };
+window.__qualityTierCount = _Q.tiers.length;
 
 function animate(){
   requestAnimationFrame(animate);

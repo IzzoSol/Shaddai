@@ -95,6 +95,7 @@
     var CELL = (opts.cell_m || pre.cell_m || CELL_M) * U, COLLIDE = opts.collide !== undefined ? opts.collide : pre.collide, pushed = 0;
     var WANT2 = HIDE > FAR, TAG = '[clusters-v4' + (opts.name ? ':' + opts.name : (url === REALM_URL ? '' : ':' + pre.name)) + '] ';
     var group = new THREE.Group(); group.name = opts.name || pre.name; scene.add(group);
+    var allK = [];   // per-model batches (see BATCHED below)
     var st = { items: 0, types: 0, cells: 0, meshes: 0, near: 0, mid: 0, far: 0, hidden: 0, failed: [], noLod2: [] }, cells = {};
     var seenMat = {};   // dedupe by material.uuid: onMaterial fires once per unique material even though it's reused across many cells/instances
     function load(url) { return new Promise(function (res, rej) { if (window.__queueLoad) window.__queueLoad(loader, url, res, rej); else loader.load(url, res, undefined, rej); }); }
@@ -133,32 +134,31 @@
             var ck = Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
             (byCell[ck] = byCell[ck] || []).push(m4.compose(p.set(x, y, z), q.setFromAxisAngle(yA, -(it.yaw || 0) * Math.PI / 180), s.set(k, k, k)).clone());
           });
+          // BATCHED: one InstancedMesh per (model, LOD set, part) — capacity = every instance of the model — refilled from the cells that are in
+          // that LOD band (see update). Draw calls drop from (cells x models x LODs x parts) to (models x LODs x parts). Content and LOD rules are unchanged.
+          var total = byKey[key].length, K = { total: total, cellMats: {}, sets: [] };
+          function makeSet(L, shadow) {
+            return L.parts.map(function (pt) {
+              var im = new THREE.InstancedMesh(pt.geo, pt.mat, total); im.count = 0; im.frustumCulled = false; im.castShadow = shadow; im.receiveShadow = true;
+              im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.visible = false; im.name = 'cluster:' + key; group.add(im); st.meshes++; return im;
+            });
+          }
+          var s0 = makeSet(L0, true), s1 = L1 ? makeSet(L1, false) : null, s2 = L2 ? makeSet(L2, false) : null;
+          K.sets = [s0, s1 || s0, s2 || s1 || s0];
           Object.keys(byCell).forEach(function (ck) {
             var mats = byCell[ck], c = cells[ck] || (cells[ck] = { entries: [], centre: new THREE.Vector3(), n: 0, state: -1 });
-            function build(L, shadow) {
-              return L.parts.map(function (pt) {
-                var im = new THREE.InstancedMesh(pt.geo, pt.mat, mats.length);
-                for (var i = 0; i < mats.length; i++) im.setMatrixAt(i, mats[i]);
-                im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); im.castShadow = shadow; im.receiveShadow = true;
-                im.visible = false; im.name = 'cluster:' + key; group.add(im); st.meshes++; return im;
-              });
-            }
-            // per-key tier sets so a key without lod1/lod2 falls back on its own, not per cell
-            var m0 = build(L0, true), m1 = L1 ? build(L1, false) : null, m2 = L2 ? build(L2, false) : null;
-            c.entries.push({ tiers: [m0, m1 || m0, m2 || m1 || m0] });
+            var arr = new Float32Array(mats.length * 16); mats.forEach(function (m, i) { m.toArray(arr, i * 16); });
+            K.cellMats[ck] = arr; c.entries.push({ K: K, ck: ck });
             mats.forEach(function (m) { c.centre.x += m.elements[12]; c.centre.z += m.elements[14]; c.n++; });
           });
-          var L = window.WORLD_LAYOUT;
-          if (L && L.realmColliders && collides(key, COLLIDE)) byKey[key].forEach(function (it) {
-            pushed++; L.realmColliders.push({ x: Math.round(it.x_m * U), z: Math.round(-it.y_m * U), r: Math.round(it.len_m * 0.42 * U), label: 'cluster:' + it.cluster });
-          });
+          allK.push(K);
         }).catch(function (e) { st.failed.push(key); console.warn(TAG + key + ' failed: ' + (e && e.message)); });
       })).then(function () {
         Object.keys(cells).forEach(function (ck) { var c = cells[ck]; c.centre.x /= c.n; c.centre.z /= c.n; });
         st.cells = Object.keys(cells).length;
         if (pushed && window.buildWorldCollision && window.WORLD_LAYOUT) window.buildWorldCollision(window.WORLD_LAYOUT);   // full rebuild — skip when nothing new
         console.info(TAG + st.items + ' pieces · ' + st.types + ' model types · ' + st.cells + ' cells · ' + st.meshes + ' chunk meshes · ' + Math.round(CELL / U) + ' m cells · ' + pushed + ' colliders (LOD: full < ' + Math.round(NEAR / U) + ' m, lod1 < ' + Math.round(FAR / U) + ' m' + (WANT2 ? ', lod2 < ' + Math.round(HIDE / U) + ' m' : '') + ')' + (st.failed.length ? ' · failed ' + st.failed.join(',') : '') + (st.noLod2.length ? ' · no lod2: ' + st.noLod2.join(',') : ''));
-        var acc = 1;
+        var acc = 1, lastYaw = 9, lastX = 1e9, lastZ = 1e9;
         return {
           group: group,
           update: function (t, dt, cam) {       // re-pick LODs 4×/s — cells are 1 km, so that's plenty
@@ -169,15 +169,38 @@
             // LOD each cell shows at a given distance. Restores automatically when the governor climbs.
             var qi = window.__w3dTierIdx, kf = qi === 0 ? 0.4 : qi === 1 ? 0.6 : qi === 2 ? 0.8 : qi === 3 ? 0.92 : 1;
             var nN = NEAR * kf, nF = FAR * kf, nH = HIDE * kf;
+            // FOG CUTOFF: with exp2 fog, everything beyond ~2.05/density is >98.5% fog colour (invisible). Never draw what fog already hides:
+            // the city fabric alone is ~2,000 draw calls at a 2.6 km hide radius. Content is untouched; only cells the fog fully covers switch off.
+            var fg = scene.fog, fogD = Infinity; if (/[?&]nofogcut=1/.test(location.search)) fg = null;   // A/B switch for perf tests
+            if (fg) { if (fg.density > 0) fogD = 2.05 / fg.density * 1.15; else if (fg.far) fogD = fg.far * 1.05; }
+            nF = Math.min(nF, Math.max(fogD, nN * 1.1)); nH = Math.min(nH, Math.max(fogD, nF)); st.fogCutoffM = isFinite(fogD) ? Math.round(fogD / U) : null;
+            var dirty = false, cx = cam.x, cz = cam.z, fx = 0, fz = 0, camObj = window.__w3dDebug && window.__w3dDebug.camera;
+            if (camObj) { var me = camObj.matrixWorld.elements; fx = -me[8]; fz = -me[10]; var fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl; }
+            var yawNow = Math.atan2(fx, fz), turned = Math.abs(Math.atan2(Math.sin(yawNow - lastYaw), Math.cos(yawNow - lastYaw))) > 0.26 || Math.hypot(cx - lastX, cz - lastZ) > 40 * U;   // >15 deg or 40 m
             Object.keys(cells).forEach(function (ck) {
-              var c = cells[ck], d = Math.hypot(c.centre.x - cam.x, c.centre.z - cam.z) - CELL * 0.7;
+              var c = cells[ck], dx = c.centre.x - cx, dz = c.centre.z - cz, d = Math.hypot(dx, dz) - CELL * 0.7;
               var s = pickTier(d, nN, nF, nH, true, true);   // per-key fallbacks are baked into each entry's tiers[]
+              // cells clearly BEHIND the camera are skipped (a cheap stand-in for per-chunk frustum culling); nearby cells always stay in
+              var back = d > CELL * 1.5 && camObj && (dx * fx + dz * fz) < -0.35 * Math.hypot(dx, dz);
+              if (back) s = 3;
               if (s === 0) st.near++; else if (s === 1) st.mid++; else if (s === 2) st.far++; else st.hidden++;
-              if (s === c.state) return; c.state = s;
-              c.entries.forEach(function (e) {
-                var show = s < 3 ? e.tiers[s] : null;
-                e.tiers.forEach(function (ms) { if (ms !== show) ms.forEach(function (m) { m.visible = false; }); });
-                if (show) show.forEach(function (m) { m.visible = true; });
+              if (s !== c.state) { c.state = s; dirty = true; }
+            });
+            if (!dirty && !turned) return;
+            lastYaw = yawNow; lastX = cx; lastZ = cz;
+            allK.forEach(function (K) {
+              var seen = [], si;
+              for (si = 0; si < 3; si++) { if (seen.indexOf(K.sets[si]) < 0) seen.push(K.sets[si]); }
+              seen.forEach(function (set) {
+                var n = 0, arr0 = set[0].instanceMatrix.array;
+                Object.keys(cells).forEach(function (ck) {
+                  var c = cells[ck]; if (c.state < 0 || c.state > 2 || K.sets[c.state] !== set) return;
+                  var src = K.cellMats[ck]; if (!src) return; arr0.set(src, n * 16); n += src.length / 16;
+                });
+                for (var j = 0; j < set.length; j++) {
+                  var im = set[j]; if (j > 0) im.instanceMatrix.array.set(arr0.subarray(0, n * 16));
+                  im.count = n; im.visible = n > 0; im.instanceMatrix.needsUpdate = true;
+                }
               });
             });
           },

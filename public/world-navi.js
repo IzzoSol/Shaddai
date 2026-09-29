@@ -71,7 +71,7 @@
   /* ---------------- styles ---------------- */
   var css = '' +
     '#navi{position:fixed;inset:0;z-index:9000;display:none;font-family:Rajdhani,"Segoe UI",sans-serif;color:' + THEME.white + ';user-select:none}' +
-    '#navi.on{display:block}#navi .bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(5,8,20,.55),rgba(5,8,20,.82));' + (low() ? '' : 'backdrop-filter:blur(3px);') + '}' +
+    '#navi.on{display:block}#navi .bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(5,8,20,.55),rgba(5,8,20,.82));}' +
     '#navi .scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,212,255,.035) 0 1px,transparent 1px 3px)}' +
     '#navi .stage{position:absolute;inset:0;transform:scale(.94);opacity:0;transition:transform .28s cubic-bezier(.2,.9,.3,1),opacity .28s}#navi.show .stage{transform:none;opacity:1}' +
     '#navi .orbwrap{position:absolute;left:50%;top:40%;width:min(46vh,40vw);height:min(46vh,40vw);transform:translate(-50%,-50%)}' +
@@ -425,13 +425,19 @@
 
   /* ---------------- open / close ---------------- */
   var wasLocked = false;
+  var capped = null;
   function open() {
     if (!root) build(); if (S.open) return;
+    var ti = window.__getQualityTier ? window.__getQualityTier() : 0, bg = root.querySelector('.bg');
+    bg.style.backdropFilter = bg.style.webkitBackdropFilter = (ti >= 3 && !low()) ? 'blur(3px)' : 'none';   // full-screen blur only on HIGH+ (a fill-rate tax)
+    if (ti > 2 && window.__setQualityTier) { capped = ti; window.__setQualityTier(2, 1e6); }              // Navi open: cap at MEDIUM; the world keeps running behind it
     wasLocked = !!document.pointerLockElement; if (wasLocked && document.exitPointerLock) try { document.exitPointerLock(); } catch (e) { }
     S.open = true; root.classList.add('on'); render(); requestAnimationFrame(function () { root.classList.add('show'); }); emit('open');
   }
   function close() {
-    if (!S.open) return; closeModal(); S.open = false; root.classList.remove('show'); setTimeout(function () { if (!S.open) root.classList.remove('on'); }, 280);
+    if (!S.open) return; closeModal(); S.open = false; root.classList.remove('show');
+    if (capped != null && window.__setQualityTier) { window.__setQualityTier(capped, 6); capped = null; }   // give the tier back (the governor may re-drop it if the machine cannot hold it)
+    setTimeout(function () { if (!S.open) root.classList.remove('on'); }, 280);
     var r = window.__w3dDebug && window.__w3dDebug.renderer; if (wasLocked && r && r.domElement.requestPointerLock) try { r.domElement.requestPointerLock(); } catch (e) { }
     persist(); emit('close');
   }

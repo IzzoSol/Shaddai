@@ -8,6 +8,11 @@
 (function () {
   if (!/[?&]perf=1\b/.test(location.search)) { window.startPerfHud = function () {}; window.__perfFrame = function () {}; return; }
   var r = null, el = null, hist = [], last = 0, acc = 0, frames = 0;
+  addEventListener('keydown', function (e) {   // 1-5 force a quality tier (POTATO..ULTRA) so you can FEEL each tax; 0 = back to the auto governor
+    if (/input|textarea/i.test((document.activeElement || {}).tagName || '') || !window.__setQualityTier) return;
+    if (e.code >= 'Digit1' && e.code <= 'Digit5') window.__setQualityTier(+e.code.slice(5) - 1, 1e9); else if (e.code === 'Digit0') window.__setQualityTier(window.__getQualityTier(), 1);
+  });
+  var lightAt = 0;
   window.startPerfHud = function (renderer) {
     r = renderer; if (r && r.info) r.info.autoReset = false;          // we reset per frame ourselves → totals include every pass
     el = document.createElement('div');
@@ -28,7 +33,9 @@
       var s = window.__perf = { fps: +(frames / acc).toFixed(1), frameMs: +mean.toFixed(1), p95Ms: +p95.toFixed(1), jankMs: +sd.toFixed(1),
         calls: calls, tris: tris, geometries: info.memory.geometries, textures: info.memory.textures, programs: info.programs ? info.programs.length : null,
         heapMB: mem, quality: window.__quality || '' };
-      el.textContent = 'FPS ' + s.fps + '  frame ' + s.frameMs + ' ms (p95 ' + s.p95Ms + ', jank ±' + s.jankMs + ')\n' +
+      if (now - lightAt > 3000) { lightAt = now; var sc = window.__w3dDebug && window.__w3dDebug.scene, n = 0; if (sc) sc.traverse(function (o) { if (o.isLight) n++; }); window.__lightCount = n; }
+      s.lights = window.__lightCount; s.dtMs = s.frameMs;
+      el.textContent = 'tier ' + s.quality + '  lights ' + s.lights + '  (keys 1-5 force, 0 auto)\n' + 'FPS ' + s.fps + '  frame ' + s.frameMs + ' ms (p95 ' + s.p95Ms + ', jank ±' + s.jankMs + ')\n' +
         'draw calls ' + calls + (calls > 500 ? '  ⚠ >500' : '') + '  tris ' + (tris / 1000).toFixed(0) + 'k\n' +
         'geo ' + s.geometries + '  tex ' + s.textures + '  shaders ' + s.programs + (mem != null ? '  heap ' + mem + ' MB' : '') + '\n' +
         'quality ' + s.quality;
