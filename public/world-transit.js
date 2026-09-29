@@ -55,7 +55,7 @@
     };
     // ── viaduct deck: an annulus band + parapet walls + gold edge lines ──
     function band(r0, r1, y0, y1, mat, seg) {   // vertical wall (r0==r1) or flat ring (y0==y1)
-      var g = r0 === r1 ? new THREE.CylinderGeometry(r0, r0, y1 - y0, seg || 720, 1, true) : new THREE.RingGeometry(r0, r1, seg || 720, 1);
+      var g = r0 === r1 ? new THREE.CylinderGeometry(r0, r0, y1 - y0, seg || 256, 1, true) : new THREE.RingGeometry(r0, r1, seg || 256, 1);
       var m = new THREE.Mesh(g, mat); if (r0 === r1) m.position.y = (y0 + y1) / 2; else { m.rotation.x = -Math.PI / 2; m.position.y = y0; }
       m.material.side = THREE.DoubleSide; m.receiveShadow = true; group.add(m); return m;
     }
@@ -67,7 +67,7 @@
     band(R + DECK_W / 2 + 0.2, R + DECK_W / 2 + 0.2, DECK_Y + 1.1 * PM - 0.5, DECK_Y + 1.1 * PM, M.gold);
     // two tracks, each a pair of glowing rails
     var TRACKS = [-2.4 * PM, 2.4 * PM];
-    TRACKS.forEach(function (off) { [-0.72 * PM, 0.72 * PM].forEach(function (g) { var t = new THREE.Mesh(new THREE.TorusGeometry(R + off + g, 0.22 * PM, 5, 720), M.rail); t.rotation.x = Math.PI / 2; t.position.y = DECK_Y + 0.25 * PM; group.add(t); }); });
+    TRACKS.forEach(function (off) { [-0.72 * PM, 0.72 * PM].forEach(function (g) { var t = new THREE.Mesh(new THREE.TorusGeometry(R + off + g, 0.22 * PM, 5, 256), M.rail); t.rotation.x = Math.PI / 2; t.position.y = DECK_Y + 0.25 * PM; group.add(t); }); });
     // pylons (instanced): tapered column + gold collar, standing on the terrain
     var colGeo = new THREE.CylinderGeometry(1.2 * PM, 1.7 * PM, 1, 12); colGeo.translate(0, 0.5, 0);
     var all = pylons.concat(spoke), cols = new THREE.InstancedMesh(colGeo, M.concrete, all.length), collars = new THREE.InstancedMesh(new THREE.CylinderGeometry(1.9 * PM, 1.9 * PM, 0.6 * PM, 12), M.gold, all.length);

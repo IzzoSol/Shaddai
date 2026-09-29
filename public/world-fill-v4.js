@@ -481,6 +481,11 @@
     var acc = 1e9, lastCam = new THREE.Vector3(1e9, 0, 0), frustum = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sph = new THREE.Sphere();
     var vis = { cells: 0, draws: 0, tris: 0 }, farDist = K.farDist, nearDist = K.nearDist;
     function refresh(cam) {
+      // QUALITY-GOVERNOR BUDGET: the FPS governor's tier scales the adaptive budget — weak GPUs get a tighter
+      // tri/draw budget (more aggressive LOD swap), fast machines keep the full budget. Restores on climb.
+      var _qi = window.__w3dTierIdx;
+      var bTris = _qi === 0 ? 0.6e6 : _qi === 1 ? 1.0e6 : _qi === 2 ? 1.2e6 : K.budgetTris;
+      var bDraws = _qi === 0 ? 80 : _qi === 1 ? 110 : _qi === 2 ? 130 : K.budgetDraws;
       var nv = 0, lim = { near: nearDist, small: K.smallDist, far: farDist, big: K.bigDist };
       for (var i = 0; i < cellList.length; i++) {
         var c = cellList[i], d = Math.max(0, Math.hypot(cam.x - c.cx, cam.z - c.cz) - c.R);
@@ -504,9 +509,9 @@
             if (frustum.intersectsSphere(_sph)) { draws++; var tt = im.userData.tris * im.count; tris += tt; if (cj.role === 'near') nearTris += tt; }
           }
         }
-        if (tris > K.budgetTris) { if (nearTris > tris * 0.5) nearDist = Math.max(K.nearMin, nearDist * 0.9); else farDist = Math.max(K.farMin, farDist * 0.9); }
-        else if (draws > K.budgetDraws) farDist = Math.max(K.farMin, farDist * 0.9);
-        else if (tris < K.budgetTris * 0.7 && draws < K.budgetDraws * 0.7) { nearDist = Math.min(nearDef, nearDist * 1.05); farDist = Math.min(K.farDist, farDist * 1.05); }
+        if (tris > bTris) { if (nearTris > tris * 0.5) nearDist = Math.max(K.nearMin, nearDist * 0.9); else farDist = Math.max(K.farMin, farDist * 0.9); }
+        else if (draws > bDraws) farDist = Math.max(K.farMin, farDist * 0.9);
+        else if (tris < bTris * 0.7 && draws < bDraws * 0.7) { nearDist = Math.min(nearDef, nearDist * 1.05); farDist = Math.min(K.farDist, farDist * 1.05); }
         uNear.value = nearDist;
       }
       vis.cells = nv; vis.draws = draws; vis.tris = Math.round(tris);

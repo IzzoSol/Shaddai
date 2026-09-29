@@ -163,9 +163,15 @@
           group: group,
           update: function (t, dt, cam) {       // re-pick LODs 4×/s — cells are 1 km, so that's plenty
             acc += dt || 0; if (acc < 0.25 || !cam) return; acc = 0; st.near = st.mid = st.far = st.hidden = 0;
+            // QUALITY-GOVERNOR LOD: scale the tier bands by the FPS governor's quality tier — a weak GPU
+            // tightens the bands (less full-detail inventory, fewer cells → fewer draw calls), a fast machine
+            // keeps the full preset distances. Content never changes: same models, same cells, only which
+            // LOD each cell shows at a given distance. Restores automatically when the governor climbs.
+            var qi = window.__w3dTierIdx, kf = qi === 0 ? 0.4 : qi === 1 ? 0.6 : qi === 2 ? 0.8 : qi === 3 ? 0.92 : 1;
+            var nN = NEAR * kf, nF = FAR * kf, nH = HIDE * kf;
             Object.keys(cells).forEach(function (ck) {
               var c = cells[ck], d = Math.hypot(c.centre.x - cam.x, c.centre.z - cam.z) - CELL * 0.7;
-              var s = pickTier(d, NEAR, FAR, HIDE, true, true);   // per-key fallbacks are baked into each entry's tiers[]
+              var s = pickTier(d, nN, nF, nH, true, true);   // per-key fallbacks are baked into each entry's tiers[]
               if (s === 0) st.near++; else if (s === 1) st.mid++; else if (s === 2) st.far++; else st.hidden++;
               if (s === c.state) return; c.state = s;
               c.entries.forEach(function (e) {
