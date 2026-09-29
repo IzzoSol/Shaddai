@@ -12,6 +12,10 @@ try: sc.render.engine = 'BLENDER_EEVEE_NEXT'
 except TypeError: sc.render.engine = 'BLENDER_EEVEE'
 sc.render.resolution_x, sc.render.resolution_y = 1280, 720
 sc.render.image_settings.file_format = 'PNG'
+try: bpy.context.preferences.system.gl_texture_limit = 'CLAMP_1024'   # 8 GB laptop: cap texture memory
+except Exception: pass
+try: sc.eevee.taa_render_samples = 16
+except Exception: pass
 try: sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Punchy'
 except Exception: pass
 w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True
