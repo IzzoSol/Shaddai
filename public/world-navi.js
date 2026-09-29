@@ -227,16 +227,31 @@
     { id: 'ev1', t: 'Dragons Colosseum · 1v1 Agent', s: 'Entry 50 ✦', pin: { x: 0, z: 1500, label: 'Colosseum Door', kind: 'Colosseum' } },
     { id: 'ev2', t: 'Cosmetic Wager Bracket', s: 'Entry: 1 skin', pin: { x: 0, z: 1500, label: 'Colosseum Door', kind: 'Colosseum' } }
   ];
+  var RACE_ENTRY = { casual: 25, ranked: 50 };
+  function raceRows() { var WR = window.WorldRace; return WR ? Object.keys(WR.CIRCUITS).map(function (k) { var c = WR.CIRCUITS[k]; return { id: 'race:' + k, t: '🏁 ' + c.name, s: c.laps + ' laps · ' + c.gates.length + ' gates' + (c.prime ? ' · PRIME' : ''), tag: 'RACE' }; }) : []; }
+  function raceDetail(id) {
+    var WR = window.WorldRace, c = WR.CIRCUITS[id.slice(5)], kinds = {}; c.gates.forEach(function (g) { kinds[g.kind] = (kinds[g.kind] || 0) + 1; });
+    return '<h3>' + esc(c.name.toUpperCase()) + '</h3><div>' + c.laps + ' laps · rooms: ' + esc(c.rooms.join(' → ')) + '</div><div style="margin:6px 0">Gates: ' + Object.keys(kinds).map(function (k) { return kinds[k] + ' ' + k; }).join(' · ') + '</div>' +
+      '<div class="empty">Score = time + capped trick bonus (8%) − wash 1.2 s − missed pad gate 0.8 s.' + (c.lavaKill ? ' Lava = DNF.' : '') + ' Ranked heats: no pocket vials (Pad Rush, Foil Sip). Crates and track pads only.</div>' +
+      '<button class="b g" data-a="race-casual">ENTER CASUAL · ' + RACE_ENTRY.casual + ' ✦</button><button class="b g" data-a="race-ranked">ENTER RANKED · ' + RACE_ENTRY.ranked + ' ✦</button><div class="empty">Ghost of the record line = Sparks cosmetic, never a faster board.</div>';
+  }
   M.sparks = function () {
     return {
-      title: 'SPARKS · COLOSSEUM', list: SPARK_EVENTS.map(function (e) { return { id: e.id, t: e.t, s: e.s }; }), empty: 'No sparks event this hour.',
+      title: 'SPARKS · COLOSSEUM · RACES', list: SPARK_EVENTS.map(function (e) { return { id: e.id, t: e.t, s: e.s }; }).concat(raceRows()), empty: 'No sparks event this hour.',
       detail: function (id) {
+        if (id && id.indexOf('race:') === 0 && window.WorldRace) return raceDetail(id);
         var e = SPARK_EVENTS.filter(function (x) { return x.id === id; })[0];
         var stats = '<h3>STATS</h3><div>Dragons slain ' + S.stats.dragonsSlain + ' · Trades ' + S.stats.trades + ' · Classes ' + S.stats.classes + ' · Record ' + S.stats.colosseum + '</div>';
         if (!e) return '<div class="empty">Pick an event. Sign-up routes you to the door — the fight does not start from the menu.</div>' + stats;
         return '<h3>' + esc(e.t) + '</h3><div>' + esc(e.s) + '</div><button class="b g" data-a="su">SIGN UP</button><button class="b" data-a="vs">VS REQUEST</button>' + stats;
       },
       act: function (id, a) {
+        if (id && id.indexOf('race:') === 0 && (a === 'race-casual' || a === 'race-ranked')) {
+          var ranked = a === 'race-ranked', cost = ranked ? RACE_ENTRY.ranked : RACE_ENTRY.casual, cid = id.slice(5), circ = window.WorldRace.CIRCUITS[cid];
+          if (circ.prime && !(window.NaviState && window.NaviState.flags && window.NaviState.flags.riftTicket)) { toast('Rift Cut is Prime: you need a Rift Ticket (Academy).'); return; }
+          if (!window.ShdSparks || !window.ShdSparks.spend(cost, 'race-entry', cid)) { toast('Not enough Sparks (' + cost + ')'); return; }
+          S.schedule.push({ id: 'race-' + cid, t: circ.name + (ranked ? ' (ranked)' : '') }); if (hooks().onRaceEnter) hooks().onRaceEnter(cid, ranked); toast('Entered ' + circ.name + ' — head to the Forum gate'); return;
+        }
         var e = SPARK_EVENTS.filter(function (x) { return x.id === id; })[0]; if (!e) return;
         if (a === 'su') { S.schedule.push({ id: e.id, t: e.t }); var cp = colosseumPin(); setWaypoint(cp ? { x: cp.x, z: cp.z, label: 'Colosseum Door', kind: 'Colosseum' } : e.pin); if (hooks().onSparksSignup) hooks().onSparksSignup(e.id); toast('Signed up. Navi will guide you to the door.'); }
         if (a === 'vs') toast('VS request: choose a target (coming with multiplayer roster).');

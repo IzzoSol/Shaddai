@@ -1,0 +1,36 @@
+// node tools/tests/world-race.test.cjs — Hoverskate race rules (owner's bank, 2026-09-29)
+const assert = require('assert'); global.window = global; require('../../public/world-race.js'); const W = global.WorldRace;
+let pass = 0; const t = (n, f) => { try { f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
+const mk = (id, ranked) => W.create(W.CIRCUITS[id], { ranked, riders: [{ id: 'a' }, { id: 'b' }, { id: 'c' }], rng: () => 0.01 });
+const lap = (r, id, over) => { const g = r.circuit.gates; for (let i = 0; i < g.length; i++) { const k = g[i].kind, s = Object.assign({ mode: k === 'foil' ? 'foil' : 'pad', altM: k === 'foil' ? 6 : 0.3, kissed: true, trick: g[i].verb ? { verb: g[i].verb, clean: true } : null }, over || {}); const res = r.passGate(id, i, s); assert(res.ok, id + ' gate ' + i + ' ' + JSON.stringify(res)); } };
+t('4 circuits; Rift Cut is Prime + lava kills', () => { assert.deepStrictEqual(Object.keys(W.CIRCUITS), ['plaza-cup', 'spine-cup', 'forum-grand', 'rift-cut']); assert(W.CIRCUITS['rift-cut'].prime && W.CIRCUITS['rift-cut'].lavaKill); });
+t('gates must be taken in order; a foil gate needs foil; a kiss gate needs a rail skim', () => {
+  const r = mk('spine-cup'); r.start(); assert.strictEqual(r.passGate('a', 3, { mode: 'pad' }).ok, false, 'wrong gate'); assert.strictEqual(r.passGate('a', 0, { mode: 'pad', altM: 0.2 }).ok, true);
+  assert.strictEqual(r.passGate('a', 1, { mode: 'foil', kissed: false }).ok, false, 'kiss without a rail'); assert.strictEqual(r.passGate('a', 1, { mode: 'foil', kissed: true }).ok, true);
+  assert.strictEqual(r.passGate('a', 2, { mode: 'pad' }).ok, false, 'foil gate on the pad');
+});
+t('score = time + wash 1.2 s + missed pad gate 0.8 s - trick bonus (capped 8% of a clean run)', () => {
+  const r = mk('plaza-cup'); r.start(); for (let i = 0; i < 620; i++) r.update(0.1);   // 62 s on the clock for rider a... all riders share the clock
+  r.wash('a'); r.wash('a'); assert.strictEqual(r.rider('a').penaltyS, 2.4);
+  r.passGate('a', 0, { mode: 'foil', altM: 3 }); assert.strictEqual(r.rider('a').misses, 1); assert.strictEqual(+r.rider('a').penaltyS.toFixed(1), 3.2);
+  r.rider('a').trickS = 999; const cap = W.CIRCUITS['plaza-cup'].cleanLapS * 0.08 * 3; assert.strictEqual(r.score('a'), +(r.rider('a').time + 3.2 - cap).toFixed(2));
+});
+t('a full race finishes; standings order by score; DNF sinks to the bottom', () => {
+  const r = mk('plaza-cup'); r.start(); const N = r.circuit.gates.length;
+  for (let l = 0; l < 3; l++) { lap(r, 'a'); lap(r, 'b'); } r.update(30); r.lavaTouch('c'); assert(r.rider('c').dnf); assert(r.finished());
+  const s = r.standings(); assert.strictEqual(s[2].id, 'c'); assert(s[0].finished && s[1].finished); assert.deepStrictEqual(s.map(x => x.place), [1, 2, 3]);
+});
+t('lava = DNF on lava circuits', () => { const r = mk('rift-cut'); r.start(); assert.strictEqual(r.lavaTouch('a').dnf, true); });
+t('ram: closing speed drives damage 8..18 (x1.25 boosting); wall ram = 6; hp<=0 respawns at the last checkpoint, frozen 1.4 s, item cleared, energy 40%', () => {
+  const r = mk('forum-grand'); r.start(); r.passGate('a', 0, { mode: 'pad', altM: 0 }); r.passGate('b', 0, { mode: 'pad', altM: 0 });
+  assert.strictEqual(r.ram('a', 'b', 0).damage, 8); assert.strictEqual(r.ram('a', 'b', 20).damage, 18); r.rider('a').boosting = true; assert.strictEqual(r.ram('a', 'b', 20).damage, 22.5);
+  assert.strictEqual(r.wallRam('c').hp, 94); r.rider('b').item = 'boost'; const dead = r.hit('b', 999); assert(dead.respawned); const b = r.rider('b'); assert.strictEqual(b.freeze, 1.4); assert.strictEqual(b.item, null); assert.strictEqual(b.energy, 0.4); assert.strictEqual(b.hp, 100);
+});
+t('items: weighted crate roll, Blue Line is Prime-only, shell 22 dmg, Ward Plate eats one hit', () => {
+  const r = mk('plaza-cup'); r.start(); assert.strictEqual(r.grabCrate('a').id, 'boost'); assert.strictEqual(r.grabCrate('a'), null, 'one item slot');
+  const r2 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }, { id: 'b' }], rng: () => 0.9999 }); r2.start(); assert.notStrictEqual(r2.grabCrate('a', false).id, 'blue'); const r3 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }], rng: () => 0.9999 }); assert.strictEqual(r3.grabCrate('a', true).id, 'blue');
+  r.rider('b').item = null; r.rider('a').item = 'shell'; assert.strictEqual(r.useItem('a', 'b').hit.hp, 78); r.rider('b').ward = true; assert(r.hit('b', 50).blocked);
+});
+t('ranked heats: Pad Rush / Foil Sip pocket vials are OFF; casual allows them', () => { assert.strictEqual(mk('plaza-cup', true).canUsePocket('pad-rush'), false); assert.strictEqual(mk('plaza-cup', true).canUsePocket('foil-sip'), false); assert.strictEqual(mk('plaza-cup', false).canUsePocket('pad-rush'), true); });
+t('max 8 riders per heat', () => { const r = W.create(W.CIRCUITS['plaza-cup'], { riders: Array.from({ length: 12 }, (_, i) => ({ id: 'r' + i })) }); assert.strictEqual(r.standings().length, 8); });
+console.log(pass + ' passed');
