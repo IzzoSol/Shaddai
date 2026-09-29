@@ -4821,16 +4821,22 @@ function animate(){
   }
   _animFrame++;
   const dt=Math.min(0.05, clock.getDelta());
-  // PERF LIGHT SWEEP: three shades every lit pixel against EVERY visible light (38 in this scene, most of them interior / Colosseum
-  // lights on the far room island). Outside: island lights are off. Inside a room: world lights are off. Toggling happens only when the
-  // inside/outside state changes (or every 4 s to catch lights built later), so shaders don't recompile mid-play.
-  (function(){ const st = window.__lightSweep = window.__lightSweep || { inside: null, t: 0, v: new THREE.Vector3(), off: 0 };
-    const inside = !!(_interiors && _interiors.isInside && _interiors.isInside()); st.t -= dt;
-    if(inside !== st.inside || st.t <= 0){ st.t = 4; st.inside = inside; let off = 0;
-      scene.traverse(function(o){ if(!o.isLight || o.isAmbientLight || o.isHemisphereLight || o.isDirectionalLight) return; if(o === key || o === gold || o === camFill) return;
-        o.getWorldPosition(st.v); const far = Math.abs(st.v.x) > 5500 || Math.abs(st.v.z) > 5500 || st.v.y > 1500;
-        const want = (!inside && window.__fewLights && o.isPointLight && !(o.parent && o.parent.name === 'world-volcano')) ? false : (inside ? far : !far); if(o.visible !== want){ o.visible = want; } if(!want) off++; });
-      st.off = off; } })();
+  // PERF LIGHT POOL: three shades every lit pixel against EVERY visible light (was 38-40, mostly small accent lights scattered over the
+  // city core, the volcano, interiors and the far room island). All accent PointLights are now registered here, hidden, and a FIXED pool
+  // of POOL_N real lights follows the nearest ones (position/colour/intensity/range copied from the originals every frame, so their own
+  // animation code keeps working). The light COUNT never changes after setup, so no shader recompiles mid-play.
+  (function(){ const POOL_N = 6, st = window.__lightSweep = window.__lightSweep || { inside: null, t: 0, sel: 0, acc: [], pool: null, v: new THREE.Vector3(), reg: new Set(), best: [] };
+    if(!st.pool){ st.pool = []; for(let i = 0; i < POOL_N; i++){ const L = new THREE.PointLight(0xffffff, 0, 60, 2); L.name = 'accent-pool'; scene.add(L); st.pool.push(L); } }
+    const inside = !!(_interiors && _interiors.isInside && _interiors.isInside()); st.t -= dt; st.sel -= dt;
+    if(st.t <= 0){ st.t = 4; scene.traverse(function(o){ if(!o.isPointLight || o.name === 'accent-pool' || o === key || o === gold || o === camFill || st.reg.has(o)) return; st.reg.add(o); st.acc.push(o); o.visible = false; }); }
+    if(inside !== st.inside){ st.inside = inside; st.sel = 0; }
+    if(st.sel <= 0){ st.sel = 0.3; const cp = camera.position, out = [];
+      for(let i = 0; i < st.acc.length; i++){ const o = st.acc[i]; if(o.visible) o.visible = false; o.getWorldPosition(st.v); const far = Math.abs(st.v.x) > 5500 || Math.abs(st.v.z) > 5500;
+        if(inside ? !far : far) continue; const dx = st.v.x - cp.x, dy = st.v.y - cp.y, dz = st.v.z - cp.z, d = Math.sqrt(dx*dx + dy*dy + dz*dz), rng = (o.distance || 60), sc = d - rng * 0.8;
+        if(d < rng * 2.2 && o.intensity > 0.001) out.push([sc, o]); }
+      out.sort(function(a, b){ return a[0] - b[0]; }); st.best = out; }
+    for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], e = st.best[i], o = e && e[1];
+      if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
   if(worldSpawn) worldSpawn.update(dt, clock.elapsedTime);
