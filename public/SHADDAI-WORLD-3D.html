@@ -584,11 +584,12 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      return (window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20260927glow')).then(function(){
+      (window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20260927glow')).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
           onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
-      }).then(function(c){ window.__w3dDebug.gridFabricV4 = c; }).catch(function(e){ console.warn('[map-v4] grid fabric failed:', e && e.message); }).then(function(){ return api; });
+      }).then(function(c){ window.__w3dDebug.gridFabricV4 = c; }).catch(function(e){ console.warn('[map-v4] grid fabric failed:', e && e.message); });
+      return api;   // PERF: don't wait for the fabric - it streams in behind the loading screen
     }))
     .then(_ldStep('city-v3', function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
       if(!api) return api;
@@ -4692,7 +4693,7 @@ window.__quality = _Q.tiers[_Q.tier].name;
 window.__fpsNow = function(){ return _Q.fps; };
 try{   // integrated / software GPUs (Intel HD/UHD, Mesa, SwiftShader) start on POTATO; the governor climbs if the machine proves fast
   const _gl = renderer.getContext(), _dbg = _gl.getExtension('WEBGL_debug_renderer_info'), _gpu = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : '';
-  window.__gpuName = _gpu; window.__lite = (/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu) && !/[?&]full=1/.test(location.search)) || /[?&]lite=1/.test(location.search); if(/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu)){ _Q.tier = 0; window.__quality = _Q.tiers[0].name; }
+  window.__gpuName = _gpu; window.__lite = /[?&]lite=1/.test(location.search);   // lite is opt-in only (owner: no lite version) if(/Intel|Mesa|SwiftShader|llvmpipe|Microsoft Basic/i.test(_gpu) && !/Arc|Iris Xe/i.test(_gpu)){ _Q.tier = 0; window.__quality = _Q.tiers[0].name; }
 }catch(_){}
 
 function _applyQualityTier(idx){
