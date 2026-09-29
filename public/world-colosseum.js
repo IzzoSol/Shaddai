@@ -53,8 +53,13 @@
   function inLobby(x, z) { return Math.abs(x) <= LOBBY_W / 2 && z >= LOBBY_Z0 - 1 && z <= LOBBY_Z0 + LOBBY_D; }
   function tierH(dd) { return POD_H + ((dd - LOW0) / (LOW1 - LOW0)) * (H_LOW - POD_H); }
   function rampH(d) { return tierH(RAMP) * (d / RAMP); }
+  // METRO (world-colosseum-metro.js): underground station hall EAST of the lobby, own walkable platform strip; the track trench is solid (999)
+  var METRO = { x0: 150, x1: 250, z0: LOBBY_Z0 + 2, z1: LOBBY_Z0 + 26, platform: 9, lobbyPad: [24, LOBBY_Z0 + 14], metroPad: [156, LOBBY_Z0 + 8] };
+  window.COLOSSEUM_METRO = METRO; window.COLOSSEUM_ISLAND = { x: X0, z: Z0, U: U };   // read by world-colosseum-metro.js at load (station registers before the arena is ever built)
+  function inMetro(x, z) { return x >= METRO.x0 && x <= METRO.x1 && z >= METRO.z0 && z <= METRO.z1; }
   // height in METRES at local (x, z); 999 = solid wall.  hLocal is the SOLE collision + seating source.
   function hLocal(x, z) {
+    if (inMetro(x, z)) return z <= METRO.z0 + METRO.platform ? 0 : 999;
     if (inLobby(x, z)) return 0;
     var d = offsetOf(x, z);
     if (d < 0) return 0;                                            // arena floor
@@ -663,7 +668,7 @@
       group: group, code: 'COLOSSEUM', animObjs: animObjs, motes: motes, glowEntries: glowEntries, time: TIME,
       // interiors spawn = origin.z + SPAWN_Z_OFFSET(28) → put the player in the lobby, facing the grand tunnel
       origin: { x: X0, z: Z0 + (LOBBY_Z0 + LOBBY_D * 0.65) * U - 28 },
-      contains: function (x, z) { var lx = (x - X0) / U, lz = (z - Z0) / U; return lx > -HALF_X && lx < HALF_X && lz > -HALF_Z_N && lz < HALF_Z_S; },
+      contains: function (x, z) { var lx = (x - X0) / U, lz = (z - Z0) / U; return (lx > -HALF_X && lx < HALF_X && lz > -HALF_Z_N && lz < HALF_Z_S) || inMetro(lx, lz); },
       heightAt: function (x, z) { var h = hLocal((x - X0) / U, (z - Z0) / U); return h >= 999 ? 999 : h * U; },
       resolve: function (pos, px, pz) {   // step-up limit 1 m: walls, podium and tunnel sides are solid, tiers/ramps walkable
         var h0 = api.heightAt(px, pz), h1 = api.heightAt(pos.x, pos.z);
@@ -679,8 +684,9 @@
       setCrowdMood: function (v) { CHEER.value = Math.max(0, Math.min(1, v)); },
       vipSeats: vipSeats, agentSlots: agentSlots, setVelarium: function (o) { vel.target = Math.max(0, Math.min(1, o)); }, velarium: vel,
       dims: Object.assign({}, D, { LOW1: LOW1, PROM1: PROM1, UP1: UP1, SHELL: SHELL, H_LOW: H_LOW, H_UP: H_UP, RAMP: RAMP, LOBBY_Z0: LOBBY_Z0 }), hLocal: hLocal,
-      state: current, themes: Object.keys(THEMES), root: root, floorMesh: floor,
+      state: current, themes: Object.keys(THEMES), root: root, floorMesh: floor, metro: METRO,
     };
+    if (window.ColosseumMetro) { window.ColosseumMetro.attach(THREE, api); frameHooks.push(function (dt) { api.metroApi.tick(dt); }); }
     if (window.ColosseumFloors) { window.ColosseumFloors.attach(THREE, api); frameHooks.push(function (dt) { api.floors.tick(dt); }); var pf = params.get('field'); if (pf && window.ColosseumFloors.modes.indexOf(pf) >= 0) setField(pf); }
     window.__colosseumArena = api;
     return api;

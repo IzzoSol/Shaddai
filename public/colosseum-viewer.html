@@ -22,6 +22,7 @@
   <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.180.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/" } }</script>
   <!-- world-colosseum.js is a classic IIFE: it publishes window.buildColosseumArena (it has NO ES exports), so load it as a plain script first -->
   <script src="/world-colosseum-floors.js"></script>
+  <script src="/world-colosseum-metro.js"></script>
   <script src="/world-colosseum.js"></script>
   <script type="module">
     import * as THREE from 'three';
@@ -41,7 +42,7 @@
     addEventListener('wheel', e => { dist = Math.max(30, Math.min(2500, dist * (1 + e.deltaY * 0.001))); place(); }, { passive: true });
     document.getElementById('ui').addEventListener('click', e => { const b = e.target; if (b.dataset.t) arena.setTheme(b.dataset.t); if (b.dataset.f) arena.setField(b.dataset.f); if (b.dataset.q && arena.setQuality) arena.setQuality(b.dataset.q); });
     addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-    window.__viewer = { set(y, p, d) { yaw = y; pitch = p; dist = d; place(); }, arena };
+    window.__viewer = { set(y, p, d) { yaw = y; pitch = p; dist = d; place(); }, arena, camera, look(x, y, z, tx, ty, tz) { camera.position.set(x, y, z); camera.lookAt(tx, ty, tz); } };
     place(); let last = performance.now();
     (function loop(now) { requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; arena.tick(dt); if (!drag) {} renderer.render(scene, camera); })(last);
   </script>
