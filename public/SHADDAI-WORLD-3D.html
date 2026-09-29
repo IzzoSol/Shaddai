@@ -164,7 +164,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
 <div class="hud" id="cross"></div>
 <div class="hud" id="coords">X 0 · Z 0</div>
-<div class="hud" id="hint"><span class="k">TAB</span> cursor⇄play · <span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">N</span> news · <span class="k">ESC</span> cursor</div>
+<div class="hud" id="hint"><span class="k">TAB</span> cursor⇄play · <span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">Y</span> navi · <span class="k">N</span> news · <span class="k">ESC</span> cursor</div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
 <div id="credits" class="hud" style="top:18px;right:24px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:#ffcf4a;text-shadow:0 0 12px rgba(255,207,74,.5)">⚡ — SHAD</div>
 <button id="terrBtn" onclick="var p=document.getElementById('terrPanel');p.style.display=p.style.display==='block'?'none':'block'" style="position:fixed;top:112px;left:24px;z-index:25;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#27e0ff;font-size:16px;width:38px;height:38px;border-radius:8px;cursor:pointer">⚙</button>
@@ -299,6 +299,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-audio.js?v=20260703d"></script>
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
+<script src="/world-navi.js?v=20260929a"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
 <script src="/portals/portal-plots.js?v=20260719fix"></script>
@@ -1300,7 +1301,10 @@ window.__worldBuilt = false;
     const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.15,PAD_R*0.8,10,18,1,true), new THREE.MeshBasicMaterial({ color:ch.c, transparent:true, opacity:0.0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
     beam.position.set(x,5,PADZ); root.add(beam);
     // colored fill light (cheap fantasy fill for the otherwise-flat outer ground)
-    const plight=new THREE.PointLight(ch.c, 0.0, 26, 2.0); plight.position.set(x,4,PADZ); root.add(plight);
+    // PERF: NOT added to the scene until the pad is first activated — an unlit light still counts in every
+    // material's shader (53→46 lights at spawn for free). Added lazily at activation (rare event = no recompile
+    // churn), so the glow appears exactly as before the moment you step on the pad.
+    const plight=new THREE.PointLight(ch.c, 0.0, 26, 2.0); plight.position.set(x,4,PADZ);
     // holographic info panel (billboarded, fades in when the player stands on this pad)
     const panel=new THREE.Mesh(new THREE.PlaneGeometry(9,5.6), new THREE.MeshBasicMaterial({ map:panelTex(ch), transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide }));
     const panelY=7.2; panel.position.set(x,panelY,PADZ); panel.visible=false; root.add(panel);
@@ -1332,11 +1336,11 @@ window.__worldBuilt = false;
       // pad glow: brighter once permanently activated
       p.disc.material.opacity = (p.activated?0.30:0.12) + 0.10*pulse;
       p.ring.material.opacity = (p.activated?0.75:0.45) + 0.15*pulse;
-      if(i===on && !p.activated){ p.activated=true; if(i<bridges.length) bridges[i].unlocked=true; }  // step-to-open
+      if(i===on && !p.activated){ p.activated=true; if(!p.plight.parent) root.add(p.plight); if(i<bridges.length) bridges[i].unlocked=true; }  // step-to-open
       const litTarget=p.activated?1:0;
       p.pReveal += (litTarget - p.pReveal)*Math.min(1,dt*3);
       p.beam.material.opacity = 0.10*p.pReveal*(0.7+0.3*pulse);
-      p.plight.intensity = 0.9*p.pReveal;
+      if(p.plight.parent) p.plight.intensity = 0.9*p.pReveal;
       // fruit bob + slow spin
       // (L) Learn: the healing fruit only appears after the player presses L on this pad.
       p.fruit.visible = p.learned;
@@ -4654,12 +4658,13 @@ function _applyQualityTier(idx){
   bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
   _Q.tier = idx;
   window.__quality = t.name;
+  window.__w3dTierIdx = idx;   // broadcast for the LOD systems (clusters/fill/realmprops tighten their bands on weak GPUs, restore on fast ones)
   if(typeof _v4Sky !== 'undefined' && _v4Sky) _v4Sky.setQuality(t.name);   // shadow map size + cadence
   // At the low tiers, hide the agents' additive aura/crown particles — they're pure eye-candy and the
   // heaviest transparent OVERDRAW in the scene. Restored automatically when the governor climbs back up.
   try {
     if (typeof agentSprites !== 'undefined' && agentSprites.length){
-      const _fx = (t.name !== 'POTATO');   // only the absolute lowest tier hides auras; everywhere else they stay on
+      const _fx = (t.name !== 'POTATO' && t.name !== 'LOW');   // hide auras at the two lowest tiers — pure eye-candy, heaviest transparent OVERDRAW; restored when the governor climbs
       for (let _i=0;_i<agentSprites.length;_i++){ const _s=agentSprites[_i];
         if(_s.aura && _s.aura.points) _s.aura.points.visible=_fx; else if(_s.aura && _s.aura.visible!==undefined) _s.aura.visible=_fx;
         if(_s.crown) _s.crown.visible=_fx;
@@ -5062,6 +5067,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y : null;             // exact f
     if(worldTrails)   worldTrails.update(t);
     // (maglev update moved to the top of the frame, before player movement — see _onTrainNow)
     if(worldLandmarks) worldLandmarks.update(t);
+    if(worldRealmProps) worldRealmProps.update(t, camera.position);   // distance-hide far realm GLBs (was never called: 28 full-detail landmarks with zero culling)
     if(window.__colosseumExt) window.__colosseumExt.update(t);
     if(worldTerrain)  worldTerrain.update(t);
     if(worldMarkets)  worldMarkets.update(t);
