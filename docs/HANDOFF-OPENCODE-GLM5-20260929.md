@@ -72,3 +72,17 @@ DONE and verified headless (software renderer; ratios trustworthy, absolute fps 
 
 ### Best next steps for GLM-5 (in order, measure each with the probes; profile the REAL laptop with DevTools Performance)
 1. `matrixAutoUpdate=false` + `updateMatrixWorld` once for all static meshes (city fabric, canon, props). 2. Merge/instance `world-realm-props`, `world-fal-props`, unnamed `Mesh`/`Group` (~1,400 meshes) per district; target < 800 calls first. 3. Impostor/billboard skyline + fog-hidden LOD for far city (already: fog cutoff `?nofogcut=1`). 4. Decimate remaining heavy assets (techlab, ACADEMY_HALL_1, realm/fal props) with `simplify-heavy.mjs`; KTX2/WebP textures; cut 1,564 unique materials by atlasing. 5. Stop the ~300 transparent-material `needsUpdate` churn (find who toggles `transparent`/`needsUpdate` every few seconds). 6. Water: skip transmit pass on Low. 7. Then restore visual polish per tier (owner: buildings look basic - fix with Blender: bevels, normal maps, emissive window atlas; keep tris low).
+
+## Addendum 3 (final): budgets from majidmanzarpour/threejs-game-skills (`skills/threejs-aaa-graphics-builder/references/technical-art.md`) vs OUR numbers
+| Metric | Their desktop budget | Ours now (street level) |
+|---|---|---|
+| draw calls | <= 300 | ~2,085 |
+| triangles | <= 750k | ~3.48M |
+| geometries | <= 300 | ~1,511 |
+| textures | <= 60 | ~267 |
+| unique materials | share roles aggressively | ~1,564 |
+| shadow-casting lights | <= 2 | 0 (shadows off) |
+| DPR cap | 2 | 0.55-1.5 by tier |
+Rules from that repo: instance/material-merge repeats; triangles only for near silhouettes, LOD/impostors behind (with hysteresis); shared material kit (bodyPrimary/trim/glass/emissiveSignal...) instead of one-off materials; trim sheets + decal meshes for detail instead of unique textures; fixed pools for VFX; report calls/tris/geoms/textures after each pass. Profiler skill: `skills/threejs-debug-profiler`.
+- A/B knobs added to the city fabric (`world-clusters-v4.js`): `?cell=500`, `?hide=1400`, `?near=`, `?far=` (metres). Headless test showed no clear win (0.47 default vs 0.40 cell=500 vs 0.33 hide=1400&far=600; noisy, software renderer) - re-test on the real laptop.
+- `tools/simplify-heavy.mjs`: `ALLOW_SKIN=1` (skinned ok), `ERR=0.15 NOLOCK=1` (aggressive). Voxel ship meshes do not simplify - reduce instance counts instead (done: 40 -> 20).

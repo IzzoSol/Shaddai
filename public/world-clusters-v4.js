@@ -46,7 +46,8 @@
   //   Grid fabric: canon-colliders-v4.json already has exact OBBs for every collider:true sc-* type, and sc-market / sc-garden /
   //   sc-teleport are walk-in (collider:false) — only sc-ad-pylon has no canon OBB.
   function presetFor(url) {
-    if (url && /grid-fabric/.test(url)) return { name: 'grid-fabric-v4', near_m: 250, far_m: 900, hide_m: 2600, cell_m: 250, collide: /^sc-ad-pylon$/ };
+var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(location.search); return m ? +m[1] : d; } catch (e) { return d; } };   // ?cell= / ?hide= / ?near= / ?far= tuning overrides for perf A/B
+    if (url && /grid-fabric/.test(url)) return { name: 'grid-fabric-v4', near_m: _q('near', 250), far_m: _q('far', 900), hide_m: _q('hide', 2600), cell_m: _q('cell', 250), collide: /^sc-ad-pylon$/ };
     return { name: 'world-clusters-v4', near_m: 450, far_m: 2500, hide_m: 2500, cell_m: CELL_M, collide: null };
   }
   function collides(key, rule) { return rule === false ? false : (rule && typeof rule.test === 'function' ? rule.test(key) : !/lamp|crystal/.test(key)); }
