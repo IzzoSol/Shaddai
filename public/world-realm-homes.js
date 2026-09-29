@@ -28,6 +28,7 @@
     S.leaf = { wall: 0xe8efe6, floor: 0xc9d8c2, ceil: 0x9cc27a, seam: 0x49b8ff, glassWalls: false };     // white lacquer, leaf ceiling, blue ribbing
     S.pod = { wall: 0xd7dde2, floor: 0x9a7a52, ceil: 0xc9d2d8, seam: 0x7dffd8, glassWalls: false };      // pale shell, wood floor
     S.ice = { wall: 0xdff3fb, floor: 0xb9d9e6, ceil: 0xeaf8ff, seam: 0x66f0ff, glassWalls: false };      // frosted white, cyan seam
+    var F = pure.FALLBACK; F.stool = F.stool || { fp: [0.5, 0.5], h: 0.45, color: 0x6b5033 }; F.bench = F.bench || { fp: [1.8, 0.5], h: 0.45, color: 0x6b5033 }; F.chair = F.chair || { fp: [0.6, 0.6], h: 0.9, color: 0x6b5033 };   // seats (WorldSit reads them)
     var R = pure.RECIPES, first = function (c, kind, xs, z, q, o) { for (var i = 0; i < xs.length; i++) { var it = c.place(kind, xs[i], z, q, o); if (it) return it; } return null; };
     function homeRecipe(extra) {     // one themed home: sleep/respawn, stash, wardrobe, mail, arcade x2, trade counter, craft, cook, comms
       return function (c) {
@@ -41,7 +42,7 @@
         c.atLeft('workbench', 0.6, { use: 'craft', npc: 'crafter' }, 1.25) || c.atLeft('workbench', -1.2, { use: 'craft' });
         first(c, 'stall', [-2.4, 2.4, 0], i.z1 - 1.4, 2, { use: 'trade', npc: 'trader' });
         c.atLeft('comms-console', i.z1 - 2.2, { use: 'comms' }) || c.atRight('comms-console', i.z1 - 2.2, { use: 'comms' });
-        first(c, 'sofa', [-2.4, 2.4, 0], 0.8, 0, {}); c.place('rug', 0, 0.2, 0); c.place('planter', i.x0 + 0.5, i.z1 - 0.5, 0);
+        first(c, 'sofa', [-2.4, 2.4, 0], 0.8, 0, {}); first(c, 'stool', [-1.3, 1.3, 0.4], -0.7, 0, {}); first(c, 'bench', [i.x1 - 1.4, i.x0 + 1.4], i.z1 - 0.5, 0, {}); c.place('rug', 0, 0.2, 0); c.place('planter', i.x0 + 0.5, i.z1 - 0.5, 0);
         if (extra) extra(c, i); c.light(0, 0); c.light(cx - 3, -1); c.light(cx + 3, -1);
       };
     }

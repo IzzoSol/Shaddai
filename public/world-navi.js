@@ -298,26 +298,38 @@
   };
 
   M.bots = function () {
+    var WB = window.WorldBots; if (!WB) return { title: 'BOTS', list: [], empty: 'Bots module not loaded.', detail: function () { return ''; } };
+    var st = WB.state(), zone = window.__botZone ? window.__botZone() : 'wilderness';
+    function tag(d) { var r = WB.rec(d.id); if (r) return r.bodyState === 'active' ? 'ACTIVE' : (r.bodyState === 'destroyed' ? 'DESTROYED' : 'OWNED'); return d.earn === 'starter' ? (st.picked ? 'LOCKED' : 'STARTER') : 'EARN'; }
     return {
-      title: 'BOTS', list: S.bots.map(function (b) { return { id: b.id, t: b.name, s: b.source, tag: S.flags.activeBot === b.id ? 'ACTIVE' : b.state }; }), empty: 'No bot bound — open Forge.',
+      title: 'BOTS · ' + WB.ROSTER.filter(function (d) { return WB.rec(d.id); }).length + '/10',
+      list: WB.ROSTER.map(function (d) { return { id: d.id, t: d.name, s: (d.kind === 'humanoid' ? 'humanoid' : 'wheeled · city only'), tag: tag(d) }; }),
+      empty: '',
       detail: function (id) {
-        var b = S.bots.filter(function (x) { return x.id === id; })[0]; if (!b) return '<div class="empty">Select a bot.</div><button class="b" data-a="imp">IMPORT GROK BOT</button><button class="b" data-a="forge">OPEN FORGE</button>';
-        return '<h3>' + esc(b.name) + '</h3><div>' + esc(b.source) + ' · skin ' + esc(b.skin) + ' · revenue ' + b.revenue + '</div><div style="margin:8px 0">Skills: ' + (b.skills.length ? esc(b.skills.join(', ')) : 'none equipped') + '</div>' +
-          '<button class="b g" data-a="act">SET ACTIVE</button><button class="b" data-a="forge">OPEN FORGE</button><button class="b" data-a="imp">IMPORT GROK BOT</button>';
+        var d = WB.def(id); if (!d) return '<div class="empty">Choose your first bot: SCRAP (humanoid) or UNI-9 (wheeled). The other eight are earned.</div>';
+        var r = WB.rec(id), h = '<h3>' + esc(d.name) + '</h3><div>' + esc(d.blurb) + '</div><div style="margin:6px 0;color:' + THEME.cyan + '">' + (d.kind === 'humanoid' ? 'HUMANOID · walks, fights, follows, carries' : 'WHEELED · talk here or call in a city · never in the wilds or fights') + '</div>';
+        if (!r) {
+          if (d.earn === 'starter') return h + (st.picked ? '<div class="empty">You chose your starter. This one is now earned like the rest.</div>' : '<button class="b g" data-a="pick">CHOOSE AS MY STARTER</button>');
+          return h + '<div class="empty">Locked · earn it: ' + esc(d.earn.replace(':', ' → ')) + '</div>' + (d.ref ? '' : '<div class="empty">Art pending your reference.</div>');
+        }
+        h += '<div>HP ' + r.hp + ' · skills ' + (r.skills.length ? esc(r.skills.join(', ')) : 'none yet') + '</div>';
+        if (d.kind === 'humanoid') h += '<div>Storage ' + r.storage.length + '/' + WB.storageCap(id) + (r.storage.length ? ' · ' + esc(r.storage.join(', ')) : '') + '</div>';
+        if (r.bodyState === 'destroyed') return h + '<div class="empty">Body destroyed. Your skill files are safe in the Navi. Build a new body (' + WB.TUNE.rebuildSparks + ' Sparks).</div><button class="b g" data-a="rebuild">REBUILD BODY</button>';
+        h += r.bodyState === 'active' ? '<button class="b" data-a="stow">STOW</button>' : '<button class="b g" data-a="call">CALL HERE</button>';
+        if (r.bodyState === 'active' || d.kind === 'humanoid') h += '<button class="b" data-a="follow">' + (r.follow === 'follow' ? 'FOLLOW → STAY' : 'STAY → FOLLOW') + '</button>';
+        if (d.kind === 'humanoid') h += '<button class="b" data-a="board">HOVERBOARD: ' + (r.hoverboard ? 'ON' : 'OFF') + '</button>';
+        h += '<button class="b" data-a="forge">OPEN FORGE</button><div class="empty">Zone now: ' + esc(zone) + '. You cannot attack another player\'s bot unless they challenge you and you accept, or you are in the Void.</div>';
+        return h;
       },
       act: function (id, a) {
-        if (a === 'act') { S.flags.activeBot = id; }
-        else if (a === 'forge') { window.open('/agent-forge.html', '_blank'); }
-        else if (a === 'imp') {
-          var name = window.prompt ? '' : ''; modalEl = document.createElement('div'); modalEl.className = 'modal';
-          modalEl.innerHTML = '<div><h3 style="margin:0;color:' + THEME.gold + '">IMPORT GROK BOT</h3><input id="nvBn" placeholder="Bot name"><input id="nvBs" placeholder="Source id / token name"><button class="b g" id="nvOk">IMPORT</button><button class="b" id="nvNo">CANCEL</button></div>';
-          root.appendChild(modalEl); modalEl.querySelector('#nvNo').onclick = closeModal;
-          modalEl.querySelector('#nvOk').onclick = function () {
-            var n = modalEl.querySelector('#nvBn').value.trim(), s = modalEl.querySelector('#nvBs').value.trim(); if (!n) return;
-            if (hooks().bindGrokBot) hooks().bindGrokBot({ name: n, sourceId: s });
-            S.bots.push({ id: 'b' + Date.now(), name: n, source: 'Grok-imported', skills: [], skin: 'Default', revenue: 0, state: 'STANDBY' }); persist(); closeModal(); render();
-          };
-        }
+        var d = WB.def(id); if (!d) { if (a === 'imp') toast('Grok import: coming with the Forge'); return; }
+        if (a === 'pick') { var g = WB.pickStarter(id); toast(g.ok ? d.name + ' is yours' : g.why); }
+        else if (a === 'call') { var c = WB.call(id, zone); toast(c.ok ? d.name + ' is with you' : c.why); }
+        else if (a === 'stow') WB.dismiss(id);
+        else if (a === 'follow') { var r = WB.rec(id); WB.setFollow(id, r.follow === 'follow' ? 'stay' : 'follow'); }
+        else if (a === 'board') { var q = WB.rec(id); WB.setHoverboard(id, !q.hoverboard); }
+        else if (a === 'rebuild') { var rb = WB.rebuild(id, function (n) { return window.ShdSparks ? window.ShdSparks.spend(n, 'bot-rebuild', id) : false; }); toast(rb.ok ? 'New body ready' : rb.why); }
+        else if (a === 'forge') window.open('/agent-forge.html', '_blank');
       }
     };
   };

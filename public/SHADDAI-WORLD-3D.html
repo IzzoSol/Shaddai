@@ -301,6 +301,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-audio.js?v=20260703d"></script>
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
+<script src="/world-bots.js?v=20260929a"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
+<script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-navi.js?v=20260929a"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
@@ -762,6 +764,12 @@ window.__worldBuilt = false;
             const plan = PLAN[st.id]; if(!plan) return; const len = Math.hypot(st.pos[0], st.pos[1]) || 1, ux = st.pos[0]/len, uz = st.pos[1]/len;
             plan.forEach(function(pl, k){ rh.village(pl[0], st.pos[0] + ux*(170 + k*90), st.pos[1] + uz*(170 + k*90), pl[1], { radius: 26, seed: 11 + k }); });
           });
+          window.__botZone = function(){   // where are we, for the bot rules: city (Grid + realm villages) | interior | fight (Colosseum) | void | wilderness
+            if(_interiors && _interiors.isInside()) return (window.__colosseumArena && window.__colosseumArena.group.visible) ? 'fight' : 'interior';
+            const b = window.WORLD_LAYOUT && window.WORLD_LAYOUT.biomeAt ? window.WORLD_LAYOUT.biomeAt(playerPos.x, playerPos.z) : null;
+            if(b && b.id === 'grid') return 'city'; if(b && b.id === 'void') return 'void';
+            return (rh.homes.some(function(h){ return Math.hypot(h.x - playerPos.x, h.z - playerPos.z) < 70*3.889; })) ? 'city' : 'wilderness'; };
+          if(window.WorldBots) window.WorldBots.spawnBodies(THREE, scene, api.heightAt);
           window.__w3dDebug.realmHomes = rh; setInterval(function(){ try{ rh.update(playerPos.x, playerPos.z); }catch(_){} }, 500);
           return window.__interiorsV3.ready;
         });
@@ -4777,7 +4785,7 @@ function animate(){
     _ri.climb = _rl && !!keys['Space']; _ri.dive = _rl && !!(keys['ShiftLeft']||keys['ShiftRight']);
     window.__dragonRide.update(dt, _ri);
   }
-_pctlOn = !!_pctl && !_spawnBusy && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
+_pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
           && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
@@ -4798,6 +4806,8 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       const _tv = window.__worldTransitApi.walk(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
         left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']), sprint: !!(keys['ShiftLeft']||keys['ShiftRight']) }, _camYaw);
       _vel.x = _tv.x; _vel.z = _tv.z;
+    } else if (window.WorldSit && window.WorldSit.isSeated()) {
+      _vel.x = 0; _vel.z = 0;                       // seated: WorldSit pins position + facing
     } else if (window.__dragonRide && window.__dragonRide.isRiding()) {
       _vel.x = 0; _vel.z = 0;                       // position already written by the ride
     } else if (hover && hover.isRiding()) {
@@ -4926,6 +4936,8 @@ if (window.WorldSurvival) {
   if (_swimming && _v4Water) { _wY = _v4Water.waterHeightAt(playerPos.x, playerPos.z); _fY = (worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(playerPos.x, playerPos.z) : ((_wY || 0) - 30); }
   _diveY = window.WorldSurvival.diveOffset(dt, { swimming: _swimming && _wY != null && isFinite(_wY), waterY: _wY || 0, floorY: _fY, U: V4_U, wantDive: !!keys['KeyX'], wantUp: !!keys['Space'] });
 }
+if (window.WorldBots) { window.WorldBots.update(dt, playerPos, window.__botZone ? window.__botZone() : 'wilderness'); }
+if (window.WorldSit) _diveY += window.WorldSit.update(dt, playerPos, playPlayerOnce, clock.elapsedTime, V4_U);   // seated: pins pos, plays Sit_Chair_Loop, lowers the body onto the seat
 const _rawBaseY = (_pctlActive ? _pctlOut.renderPos.y : _onTrain ? playerPos.y : ((window.__dragonRide && window.__dragonRide.isRiding()) ? playerPos.y : (hover && hover.isRiding()) ? hover.rideBaseY() : veh.baseY(groundY))) - _diveY;
 const _pDip = _pctlActive ? _pctlOut.compression * 0.35 * V4_U : 0;   // landing / crouch camera dip (<= 0.35 m)
 const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             // exact feet for the avatar (never the eased camera height)          // VEHICLE-HOOK: flight altitude when flying the craft, else ground
@@ -4990,7 +5002,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     else camera.position.lerp(_camTarget, 1 - Math.exp(-9*dt));
     playerAvatar.visible=!veh.mode;
     if (_feetY !== null) playerAvatar.position.set(_pctlOut.renderPos.x, _feetY, _pctlOut.renderPos.z); else playerAvatar.position.set(playerPos.x,baseY,playerPos.z);   // FEET ON THE GROUND (was the eased camera height)
-    { const _yt=(_pctlActive && (_pctlOut.state==='roll'||_pctlOut.state==='climb')) ? _pctlOut.facing : Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
+    { const _yt=(window.WorldSit && window.WorldSit.yaw()!=null) ? window.WorldSit.yaw() : (_pctlActive && (_pctlOut.state==='roll'||_pctlOut.state==='climb')) ? _pctlOut.facing : Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
       if(!_avatarYawInit){ _avatarYaw=_yt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _yt, 1-Math.exp(-11*dt));
       playerAvatar.rotation.y=_avatarYaw; if (_pctlActive && playerMixer) playerAvatar.rotation.z = -_pctlOut.lean * 0.12; }
     // procedural WALK for characters with no skeletal clips (agent standees) — step bob + sway.
