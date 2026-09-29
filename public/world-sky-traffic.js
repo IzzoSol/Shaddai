@@ -9,7 +9,7 @@
  *     a closed analytic loop (circle, or a straight-straight-semicircle-semicircle "racetrack"
  *     shape) so a ship just advances a t in [0,1) forever — no waypoint lists, no per-frame
  *     allocation.
- *   • SHIPS: one InstancedMesh per ship type (5 meshes, <= 40 instances total: 10/8/8/8/6).
+ *   • SHIPS: one InstancedMesh per ship type (5 meshes, 20 instances total (halved for perf): 5/4/4/4/3).
  *     Source ships are voxel-metre scale (2.6-8 m) — too small to read at 60-140 m altitude, so
  *     each type gets a visibility scale multiplier (x1.5-x3, smallest ship boosted the most; see
  *     SHIP_DEFS below and the manifest notes) applied only here, never baked into the GLB.
@@ -40,11 +40,11 @@
 
   // ---- ship set: file, per-type instance count, visibility scale multiplier, running-light tint
   var SHIP_DEFS = [
-    { id: 'chopper', file: '/assets/vehicles/ships/chopper.glb', count: 10, scale: 2.0, emissive: 0x8ef7ff, speed: 30 },
-    { id: 'cross', file: '/assets/vehicles/ships/cross.glb', count: 8, scale: 2.0, emissive: 0xff8f6b, speed: 24 },
-    { id: 'gunbike', file: '/assets/vehicles/ships/gunbike.glb', count: 8, scale: 2.0, emissive: 0xffb454, speed: 26 },
-    { id: 'tracer', file: '/assets/vehicles/ships/tracer.glb', count: 8, scale: 1.5, emissive: 0x5bd0ff, speed: 36 },
-    { id: 'pyramidship', file: '/assets/vehicles/ships/pyramidship.glb', count: 6, scale: 3.0, emissive: 0xffe08a, speed: 18 },
+    { id: 'chopper', file: '/assets/vehicles/ships/chopper.glb', count: 5, scale: 2.0, emissive: 0x8ef7ff, speed: 30 },
+    { id: 'cross', file: '/assets/vehicles/ships/cross.glb', count: 4, scale: 2.0, emissive: 0xff8f6b, speed: 24 },
+    { id: 'gunbike', file: '/assets/vehicles/ships/gunbike.glb', count: 4, scale: 2.0, emissive: 0xffb454, speed: 26 },
+    { id: 'tracer', file: '/assets/vehicles/ships/tracer.glb', count: 4, scale: 1.5, emissive: 0x5bd0ff, speed: 36 },
+    { id: 'pyramidship', file: '/assets/vehicles/ships/pyramidship.glb', count: 3, scale: 3.0, emissive: 0xffe08a, speed: 18 },
   ];
 
   // ---- lane layout (metres; converted to game units at build time)

@@ -73,12 +73,12 @@ function buildDefault(THREE, extra) {
 }
 
 (function main() {
-  test('build: 5 ship types load synchronously, 40 ships total, ready', () => {
+  test('build: 5 ship types load synchronously, 20 ships total, ready', () => {
     const traffic = buildDefault(THREE_REAL);
     const s = traffic.stats();
     assert.strictEqual(s.lanes, 12, 'expected 4 ring + 8 commuter lanes');
-    assert.strictEqual(s.shipsTotal, 40, 'expected exactly 40 ships total (<= 40 required)');
-    assert.strictEqual(s.shipsReady, 40, 'all 5 ship types should be ready with the fake loader');
+    assert.strictEqual(s.shipsTotal, 20, 'expected exactly 20 ships total (halved for perf)');
+    assert.strictEqual(s.shipsReady, 20, 'all 5 ship types should be ready with the fake loader');
     ['chopper', 'cross', 'gunbike', 'tracer', 'pyramidship'].forEach((id) => {
       assert.ok(s.types[id] && s.types[id].ready, id + ' should be ready');
     });
@@ -106,7 +106,7 @@ function buildDefault(THREE, extra) {
     const dt = 1 / 30;
     for (let i = 0; i < 300 * 30; i++) traffic.update(dt);
     const ships = traffic._debug.ships;
-    assert.strictEqual(ships.length, 40);
+    assert.strictEqual(ships.length, 20);
     let minAltM = Infinity, maxAltM = -Infinity;
     ships.forEach((w) => {
       assert.ok(isFinite(w.x) && isFinite(w.y) && isFinite(w.z), 'non-finite ship position');
