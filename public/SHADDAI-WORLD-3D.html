@@ -11,6 +11,8 @@
 <title>SHADDAI WORLD · 3D</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Cinzel+Decorative:wght@700;900&family=Share+Tech+Mono&family=Michroma&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>/* LOAD SCREEN (docs/PERF-LOAD.md): light loader by default; the old cinematic intro only with ?intro=cinematic */
+window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search); if(!window.__INTRO_CINEMATIC) document.documentElement.classList.add('intro-lite');</script>
 <script type="importmap">
 { "imports": {
   "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
@@ -58,6 +60,20 @@
   #intro::before{content:'';position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.16) 3px,rgba(0,0,0,.16) 4px);pointer-events:none}
   #intro::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(130% 100% at 50% 50%,transparent 52%,rgba(3,5,14,.55) 82%,rgba(2,3,9,.92) 100%)}
   #intro.gone{opacity:0;pointer-events:none}
+  /* ── LIGHT LOADING SCREEN (default; ?intro=cinematic restores the cinematic intro above) ── */
+  #introLite{display:none}
+  html.intro-lite #intro{background:#06080b;transition:opacity .45s ease-out;isolation:auto}
+  html.intro-lite #intro::before,html.intro-lite #intro::after{display:none}
+  html.intro-lite #portalCv,html.intro-lite #introInner{display:none}
+  html.intro-lite #introLite{display:block;text-align:center;width:min(460px,86vw)}
+  #introLite .wm{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(34px,7vw,72px);letter-spacing:.16em;color:#00ff9c;line-height:1}
+  #introLite .wm-sub{margin-top:12px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.42em;color:#e8c45c;text-transform:uppercase}
+  #introLite .lbar{margin:38px auto 0;height:3px;background:#141a21;border-radius:2px;overflow:hidden}
+  #introLite .lbar i{display:block;height:100%;width:0;background:#00ff9c;transition:width .35s ease-out}
+  #introLite .lrow{display:flex;justify-content:space-between;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.12em;color:#7d8a96;text-transform:uppercase}
+  #introLite .lrow b{color:#e8c45c;font-weight:400}
+  #introLite .tip{margin-top:26px;min-height:2.6em;font-family:'Chakra Petch',sans-serif;font-size:13px;line-height:1.35;color:#aab6c1}
+  #introLite .tip span{color:#00ff9c}
   #portalCv{position:absolute;inset:0;width:100%;height:100%}
   /* No box — content floats in the warp field. Two diagonal HUD corner-brackets frame it deliberately (never an accidental square). */
   #introInner{position:relative;z-index:2;text-align:center;padding:52px 74px;--hud:rgba(0,255,156,.34)}
@@ -206,6 +222,13 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <div id="intro">
+  <div id="introLite" aria-live="polite">
+    <div class="wm">SHADDAI</div>
+    <div class="wm-sub">World</div>
+    <div class="lbar"><i id="liteBar"></i></div>
+    <div class="lrow"><span id="liteStep">Loading the ground</span><b id="litePct">0%</b></div>
+    <div class="tip" id="liteTip"></div>
+  </div>
   <canvas id="portalCv"></canvas>
   <div id="introInner">
     <div id="iBootLines">▸ SHADDAI GRID · BOOT SEQUENCE INITIATED</div>
@@ -356,6 +379,73 @@ if(MAP_V4){
   window.__w3dDebug.mapV4 = true;
 }
 function _loadScript(src){ return new Promise(function(res, rej){ const s=document.createElement('script'); s.src=src; s.async=false; s.onload=()=>res(); s.onerror=()=>rej(new Error('script 404 '+src)); document.head.appendChild(s); }); }
+// ── LOAD PERF (docs/PERF-LOAD.md): performance.mark/measure around every startup step → window.__loadTimings +
+//    a '[load] step ms' console table once the chain settles. Long tasks (PerformanceObserver 'longtask') are
+//    attributed to the steps that were running when they fired (steps overlap: several stream in parallel).
+//    _ldStep(name, fn) wraps a promise-chain step; _ldBegin/_ldEnd bracket callback-driven builders. The same
+//    step list drives the loading-screen progress bar (_ldProgress → window.__loadProgress).
+const __LD = window.__LD = { steps: {}, order: [], long: [], t0: 0, done: false,
+  plan: MAP_V4 ? ['terrain','realm-modules','buildings','canon','city-v3','first-frame','fill','clusters','grid-fabric','dragons','wildlife','dragon-ride','goto','hud','city-actions','void-castle','sky-traffic','sky']
+               : ['buildings','first-frame'],
+  // steps the SPAWN AREA needs before the loading screen lifts (the light loader's progress bar); the rest streams after entry
+  critical: MAP_V4 ? ['terrain','realm-modules','buildings','canon','grid-fabric','city-v3','sky'] : ['buildings'] };
+window.__loadTimings = [];
+try{ new PerformanceObserver(function(l){ l.getEntries().forEach(function(e){ __LD.long.push([e.startTime, e.duration]); }); }).observe({ type:'longtask', buffered:true }); }catch(_){}
+function _ldBegin(name){
+  if(__LD.steps[name]) return; const t = performance.now();
+  __LD.steps[name] = { t0: t, t1: 0 }; __LD.order.push(name);
+  try{ performance.mark('load:'+name+':start'); }catch(_){}
+}
+function _ldEnd(name){
+  const s = __LD.steps[name]; if(!s || s.t1) return; s.t1 = performance.now();
+  try{ performance.mark('load:'+name+':end'); performance.measure('load:'+name, 'load:'+name+':start', 'load:'+name+':end'); }catch(_){}
+  let lsum = 0, lmax = 0; __LD.long.forEach(function(e){ if(e[0] >= s.t0 - 1 && e[0] < s.t1){ lsum += e[1]; if(e[1] > lmax) lmax = e[1]; } });
+  window.__loadTimings.push({ step: name, start: Math.round(s.t0), ms: Math.round(s.t1 - s.t0), longTaskMs: Math.round(lsum), maxTaskMs: Math.round(lmax) });
+  _ldProgress(name);
+}
+// PROGRESSIVE STARTUP: the far steps (realm fill/districts, dragons, wildlife, void castle, sky traffic…) wait here until
+// the player is in the world and the sky-dive has landed (or 20 s after entry, whichever first), so none of their
+// parsing / building / shader work lands on the loading screen or mid-dive. After the gate every step starts in an
+// idle slot (requestIdleCallback) so one step's finishing work never stacks on the next one's.
+function _ldIdle(){ return new Promise(function(res){ if(window.requestIdleCallback) requestIdleCallback(function(){ res(); }, { timeout: 1200 }); else setTimeout(res, 60); }); }
+function _ldDeferGate(api){
+  return new Promise(function(res){
+    let inAt = 0;
+    (function chk(){
+      const inWorld = document.body.classList.contains('in-world');
+      if(inWorld && !inAt) inAt = performance.now();
+      const landed = inWorld && window.__spawnBusy === false && (window.__spawnEverBusy || performance.now() - inAt > 4000);
+      if(landed || (inAt && performance.now() - inAt > 20000) || /[?&]nodefer\b/.test(location.search)){ __LD.gatePassed = true; res(api); return; }
+      setTimeout(chk, 250);
+    })();
+  });
+}
+function _ldStep(name, fn){   // promise-chain step wrapper: .then(_ldStep('x', function(api){ ... }))
+  function run(v){
+    _ldBegin(name); let r;
+    try{ r = fn(v); }catch(e){ _ldEnd(name); throw e; }
+    if(r && typeof r.then === 'function') return r.then(function(x){ _ldEnd(name); return x; }, function(e){ _ldEnd(name); throw e; });
+    _ldEnd(name); return r;
+  }
+  return function(v){ return __LD.gatePassed ? _ldIdle().then(function(){ return run(v); }) : run(v); };
+}
+function _ldProgress(last){
+  const plan = __LD.plan; let n = 0; plan.forEach(function(k){ if(__LD.steps[k] && __LD.steps[k].t1) n++; });
+  window.__loadProgress = { done: n, total: plan.length, last: last };
+  try{ window.__onLoadProgress && window.__onLoadProgress(window.__loadProgress); }catch(_){}
+  if(!__LD.done && n >= plan.length){ __LD.done = true; setTimeout(_ldReport, 50); }
+}
+function _ldReport(){
+  const lt = __LD.long, fr = __LD.steps['first-frame'] ? __LD.steps['first-frame'].t1 : 0;
+  const after = lt.filter(function(e){ return e[0] >= fr; });
+  window.__loadSummary = { playableMs: window.__loadPlayableAt ? Math.round(window.__loadPlayableAt) : null, settledMs: Math.round(performance.now()),
+    longTasks: lt.length, longTaskTotalMs: Math.round(lt.reduce(function(a,e){ return a+e[1]; },0)),
+    maxTaskMs: Math.round(lt.reduce(function(a,e){ return Math.max(a,e[1]); },0)), maxTaskAfterFirstFrameMs: Math.round(after.reduce(function(a,e){ return Math.max(a,e[1]); },0)) };
+  console.info('[load] step ms (wall; longTaskMs = main-thread long tasks while the step ran, steps overlap)');
+  try{ console.table(window.__loadTimings); }catch(_){ window.__loadTimings.forEach(function(r){ console.info('[load]', r.step, r.ms, 'ms'); }); }
+  console.info('[load] summary', JSON.stringify(window.__loadSummary));
+}
+window.__loadReport = _ldReport;
 
 const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
@@ -450,7 +540,7 @@ window.__worldBuilt = false;
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
-  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : _loadScript('/world-terrain-v4.js?v=20260925v4a')
+  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20260925v4a'))
     .then(()=> _loadScript('/world-water.js?v=20260925v4a'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base:'/assets/terrain/' }))
     .then(function(api){
@@ -461,32 +551,8 @@ window.__worldBuilt = false;
       return api;
     })
     .catch(function(e){ window.__mapV4Failed = true; console.warn('[map-v4] terrain failed — flat y=0 fallback:', e && e.message); return null; })
-    .then(function(api){ try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } try{ __kickBuildings(); }catch(e){ console.warn('buildings kick failed:', e && e.message); } return api; })   // ENTER gate needs the terrain + core buildings only, not fabric/canon/dragons/city
-    .then(function(api){   // MAP v4 FILL (world-fill-v4.js): realm vegetation, waystations, floating islands, bridges
-      if(!api || !_v4Meta) return api;
-      return _loadScript('/world-fill-v4.js?v=20260926a').then(function(){
-        const fl = new GLTFLoader(); fl.setDRACOLoader(dracoLoader); fl.setMeshoptDecoder(MeshoptDecoder);   // own loader: streams after entry
-        _v4Fill = window.buildWorldFillV4({ THREE, scene, camera, loader: fl, heightAt: api.heightAt,
-          isWater: (_v4Water && _v4Water.isWater) ? (x, z)=> _v4Water.isWater(x, z) : null, terrainMeta: _v4Meta });
-        window.__w3dDebug.fillV4 = _v4Fill;
-      }).catch(function(e){ console.warn('[map-v4] fill failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
-      if(!api) return api;
-      return _loadScript('/world-clusters-v4.js?v=20260927glow').then(function(){
-        const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
-        return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
-      }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
-      if(!api) return api;
-      return (window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20260927glow')).then(function(){
-        const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
-        return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
-          onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
-      }).then(function(c){ window.__w3dDebug.gridFabricV4 = c; }).catch(function(e){ console.warn('[map-v4] grid fabric failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 CANON CITY (world-canon-v4.js ← Blender build_canon.py export): Grid, monument, Agora, pads, Meadowfields — solid colliders
+    .then(function(api){ _ldEnd('terrain'); _ldBegin('realm-modules'); try{ __buildRealmModules(); }catch(e){ console.warn('world core build failed:', e && e.message); } _ldEnd('realm-modules'); try{ __kickBuildings(); }catch(e){ console.warn('buildings kick failed:', e && e.message); } return api; })   // ENTER gate needs the terrain + core buildings only, not fabric/canon/dragons/city
+    .then(_ldStep('canon', function(api){   // MAP v4 CANON CITY (world-canon-v4.js ← Blender build_canon.py export): Grid, monument, Agora, pads, Meadowfields — solid colliders
       if(!api) return api;
       // real maglev train model on the gold ring (owner download, tools/blender/assets/convert-asset.py --opaque)
       // SHADDAI's own maglev (world-train-v2.js, built in code) — preferred; the downloaded GLB stays as fallback
@@ -497,8 +563,56 @@ window.__worldBuilt = false;
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
+    }))
+    .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
+      if(!api) return api;
+      return (window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20260927glow')).then(function(){
+        const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
+        return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
+          onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
+      }).then(function(c){ window.__w3dDebug.gridFabricV4 = c; }).catch(function(e){ console.warn('[map-v4] grid fabric failed:', e && e.message); }).then(function(){ return api; });
+    }))
+    .then(_ldStep('city-v3', function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
+      if(!api) return api;
+      return _loadScript('/world-city-v3.js?v=20260927b').then(function(){
+        window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
+          getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
+          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(window.__dragonRide && window.__dragonRide.isRiding()),
+          onInteract: m => { if(window.__onCityInteract) window.__onCityInteract(m); else console.info('[city-v3] interact', m.name, m.dashboard_id, m.endpoint); },
+          onPing: e => { if(window.__onCityPing) window.__onCityPing(e); } });
+        window.__w3dDebug.cityV3 = window.__cityV3;
+        return window.__cityV3.ready;
+      }).catch(function(e){ console.warn('[map-v4] city v3 failed:', e && e.message); }).then(function(){ return api; });
+    }))
+    .then(_ldStep('city-actions', function(api){   // MAP v4 CITY ACTIONS (world-city-actions.js): E at a marker → action panel (kiosk, hire, academy, seat, home, race, stalls, plots)
+      if(!api || !window.__cityV3) return api;
+      return _loadScript('/world-city-actions.js?v=20260927a').then(function(){
+        window.__cityActions = window.buildCityActions({
+          city: window.__cityV3,
+          // apiBase: 'https://<api-host>',   // only if the world is not served by the API server itself
+          onClose: function(i){ if(i && i.wasLocked && renderer && renderer.domElement.requestPointerLock) try{ renderer.domElement.requestPointerLock(); }catch(_){} }
+        });   // sets window.__onCityInteract, which the City v3 onInteract already forwards to
+        window.__w3dDebug.cityActions = window.__cityActions;
+      }).catch(function(e){ console.warn('[map-v4] city actions failed:', e && e.message); }).then(function(){ return api; });
+    }))
+    .then(function(api){ return _ldDeferGate(api); })   // PROGRESSIVE STARTUP: everything below is far from the spawn → streams in AFTER the sky-dive, one step per idle slot
+    .then(_ldStep('fill', function(api){   // MAP v4 FILL (world-fill-v4.js): realm vegetation, waystations, floating islands, bridges
+      if(!api || !_v4Meta) return api;
+      return _loadScript('/world-fill-v4.js?v=20260926a').then(function(){
+        const fl = new GLTFLoader(); fl.setDRACOLoader(dracoLoader); fl.setMeshoptDecoder(MeshoptDecoder);   // own loader: streams after entry
+        _v4Fill = window.buildWorldFillV4({ THREE, scene, camera, loader: fl, heightAt: api.heightAt,
+          isWater: (_v4Water && _v4Water.isWater) ? (x, z)=> _v4Water.isWater(x, z) : null, terrainMeta: _v4Meta });
+        window.__w3dDebug.fillV4 = _v4Fill;
+      }).catch(function(e){ console.warn('[map-v4] fill failed:', e && e.message); }).then(function(){ return api; });
+    }))
+    .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
+      if(!api) return api;
+      return _loadScript('/world-clusters-v4.js?v=20260927glow').then(function(){
+        const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
+        return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
+      }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
+    }))
+    .then(_ldStep('dragons', function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
       return _loadScript('/world-dragons.js?v=20260928elem').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
@@ -522,8 +636,8 @@ window.__worldBuilt = false;
         // element status (slow/burn/root/blind/drain/shock) → optional HUD/controller hook; movement reads __dragons.statusMods().speedMul
         window.__dragons.on('status', function(e){ if(window.__onDragonStatus) try{ window.__onDragonStatus(e); }catch(_){} });
       }).catch(function(e){ console.warn('[map-v4] dragons failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
+    }))
+    .then(_ldStep('wildlife', function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
       if(!api || !_v4Meta) return api;
       return _loadScript('/world-wildlife-v4.js?v=20260927a').then(function(){
         const wl = new GLTFLoader(); wl.setMeshoptDecoder(MeshoptDecoder);
@@ -534,20 +648,8 @@ window.__worldBuilt = false;
           isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null });
         window.__w3dDebug.wildlife = window.__wildlife;
       }).catch(function(e){ console.warn('[map-v4] wildlife failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
-      if(!api) return api;
-      return _loadScript('/world-city-v3.js?v=20260927b').then(function(){
-        window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
-          getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
-          canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(window.__dragonRide && window.__dragonRide.isRiding()),
-          onInteract: m => { if(window.__onCityInteract) window.__onCityInteract(m); else console.info('[city-v3] interact', m.name, m.dashboard_id, m.endpoint); },
-          onPing: e => { if(window.__onCityPing) window.__onCityPing(e); } });
-        window.__w3dDebug.cityV3 = window.__cityV3;
-        return window.__cityV3.ready;
-      }).catch(function(e){ console.warn('[map-v4] city v3 failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
+    }))
+    .then(_ldStep('dragon-ride', function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
       if(!api) return api;
       return _loadScript('/world-dragon-ride.js?v=20260928elem').then(function(){
         return fetch('/assets/world/markers-v4.json').then(r => r.json()).then(function(mj){
@@ -564,8 +666,8 @@ window.__worldBuilt = false;
               airborne: '🐉 Land first, or hover low over a Perch pad', wild: '🐉 That dragon has not bowed to you' }[e.reason] || ('🐉 ' + e.reason)); });
         });
       }).catch(function(e){ console.warn('[map-v4] dragon ride failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 GOTO (world-goto.js): `?goto=<dashboard_id|marker name>` deep link from the dashboard
+    }))
+    .then(_ldStep('goto', function(api){   // MAP v4 GOTO (world-goto.js): `?goto=<dashboard_id|marker name>` deep link from the dashboard
       if(!api || !window.__cityV3) return api;
       return _loadScript('/world-goto.js?v=20260927a').then(function(){
         window.__worldGoto = window.buildWorldGoto({
@@ -594,8 +696,8 @@ window.__worldBuilt = false;
           }, 400);
         }
       }).catch(function(e){ console.warn('[map-v4] goto failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 HUD (world-hud-v4.js): HP / stamina bars, dragon boss bar, pack-hunting chip, SPARKS + city ping toasts
+    }))
+    .then(_ldStep('hud', function(api){   // MAP v4 HUD (world-hud-v4.js): HP / stamina bars, dragon boss bar, pack-hunting chip, SPARKS + city ping toasts
       if(!api) return api;
       return _loadScript('/world-hud-v4.js?v=20260927a').then(function(){
         window.__hudV4 = window.buildHudV4({
@@ -606,19 +708,8 @@ window.__worldBuilt = false;
         const _prevCityPing = window.__onCityPing;
         window.__onCityPing = function(e){ if(_prevCityPing) try{ _prevCityPing(e); }catch(_){} window.__hudV4.ping(e); };
       }).catch(function(e){ console.warn('[map-v4] hud failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 CITY ACTIONS (world-city-actions.js): E at a marker → action panel (kiosk, hire, academy, seat, home, race, stalls, plots)
-      if(!api || !window.__cityV3) return api;
-      return _loadScript('/world-city-actions.js?v=20260927a').then(function(){
-        window.__cityActions = window.buildCityActions({
-          city: window.__cityV3,
-          // apiBase: 'https://<api-host>',   // only if the world is not served by the API server itself
-          onClose: function(i){ if(i && i.wasLocked && renderer && renderer.domElement.requestPointerLock) try{ renderer.domElement.requestPointerLock(); }catch(_){} }
-        });   // sets window.__onCityInteract, which the City v3 onInteract already forwards to
-        window.__w3dDebug.cityActions = window.__cityActions;
-      }).catch(function(e){ console.warn('[map-v4] city actions failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 VOID CASTLE (world-void-castle.js): owner's void-castle aesthetic on the Deep Void pit's north lip — procedural, 28k tris, 11 draws
+    }))
+    .then(_ldStep('void-castle', function(api){   // MAP v4 VOID CASTLE (world-void-castle.js): owner's void-castle aesthetic on the Deep Void pit's north lip — procedural, 28k tris, 11 draws
       if(!api || !_v4Meta) return api;
       return _loadScript('/world-void-castle.js?v=20260927a').then(function(){
         window.__voidCastle = window.buildWorldVoidCastle({ THREE, scene, heightAt: api.heightAt, terrainMeta: _v4Meta,
@@ -632,8 +723,8 @@ window.__worldBuilt = false;
         if(L && window.buildWorldCollision) window.buildWorldCollision(L);
         window.__w3dDebug.voidCastle = window.__voidCastle;
       }).catch(function(e){ console.warn('[map-v4] void castle failed:', e && e.message); }).then(function(){ return api; });
-    })
-    .then(function(api){   // MAP v4 SKY TRAFFIC (world-sky-traffic.js): 40 voxel ships on 12 lanes over The Grid, night running lights
+    }))
+    .then(_ldStep('sky-traffic', function(api){   // MAP v4 SKY TRAFFIC (world-sky-traffic.js): 40 voxel ships on 12 lanes over The Grid, night running lights
       if(!api) return api;
       return _loadScript('/world-sky-traffic.js?v=20260928a').then(function(){
         const sl = new GLTFLoader(); sl.setMeshoptDecoder(MeshoptDecoder);
@@ -646,7 +737,7 @@ window.__worldBuilt = false;
           if (R && sh && sh.length) ['ORACLE','NEXUS'].forEach(function(n, i){ const w = sh[(i * 11) % sh.length]; if (w) R.spawnCompanion(n, R.skyShipVehicle(w), 'seat'); });
         }catch(e){ console.warn('[riders] ship companions failed:', e && e.message); } }, 20000);
       }).catch(function(e){ console.warn('[map-v4] sky traffic failed:', e && e.message); }).then(function(){ return api; });
-    });
+    }));
   // terrain.json water (metres, atlas XY: +Y = north) → world-water bodies (game units: x = X·U, z = -Y·U)
   function _buildV4Water(api){
     if(!window.buildWorldWater || !_v4Meta) return null;
@@ -759,6 +850,7 @@ window.__worldBuilt = false;
     // worldNPCs stays null so no wanderers exist. The update() call below is a no-op on null.
     /* worldNPCs = window.buildWorldNPCs(...) — DISABLED */
     window.__worldBuilt = true;   // set ONLY after every tower mesh + footprints + colliders exist
+    _ldEnd('buildings');
     if(__PERF_WORLD){ try{ console.log('[perf] TOTAL world build (towers→footprints)', Math.round((typeof performance!=='undefined'?performance.now():Date.now()) - __worldT0), 'ms'); }catch(_){} }
     console.log('✅ world built (heavy geo chunked across frames for a smooth loader)');
   }
@@ -768,15 +860,18 @@ window.__worldBuilt = false;
   // measure → collision → __worldBuilt). No fixed frame defer — completion drives sequencing.
   function __kickBuildings(){
   try{
+    _ldBegin('buildings');
     if(L && window.buildWorldBuildings){
       worldBuildings = window.buildWorldBuildings(THREE, scene, L, worldTerrain && worldTerrain.heightAt, agentBodyLoader, __onWorldBuildingsDone);
     } else {
       window.__worldBuilt = true;   // no builder present → don't trap the loading gate
+      _ldEnd('buildings');
     }
   }catch(e){
     console.warn('buildings build failed:', e && e.message);
     try{ window.__reportErr && window.__reportErr('BUILDINGS BUILD FAILED: '+(e&&e.message)+'\n'+(((e&&e.stack)||'').split('\n').slice(1,5).join('\n'))); }catch(_){}
     window.__worldBuilt = true;      // build threw → don't trap the loading gate on the 9s fallback
+    _ldEnd('buildings');
   }
   }
   // MAP v4: towers seat on heightAt at build time → wait for the heightmap (the loading gate waits on
@@ -1767,11 +1862,11 @@ if(MAP_V4) scene.fog.density = 0.000055;
 if(MAP_V4){
   skyDome.visible = false; starGroup.visible = false;   // replaced by world-sky-v4.js (stars/clouds/moon are in its shader)
   sun2.visible = false; rim.visible = false;            // one directional light only: the sky drives `sun`
-  _loadScript('/world-sky-v4.js?v=20260926sky').then(function(){
+  _ldBegin('sky'); _loadScript('/world-sky-v4.js?v=20260926sky').then(function(){
     _v4Sky = window.buildWorldSkyV4({ THREE, scene, renderer, camera, sunLight: sun, hemiLight: hemi, ambientLight: ambient,
       fog: scene.fog, water: _v4Water, dayLengthMin: 24 });
     window.__w3dDebug.skyV4 = _v4Sky;
-  }).catch(function(e){ console.warn('[map-v4] sky failed:', e && e.message); });
+  }).catch(function(e){ console.warn('[map-v4] sky failed:', e && e.message); }).then(function(){ _ldEnd('sky'); });
 }
 
 // central monument — THE SOURCE (glowing obelisk)
@@ -3888,6 +3983,7 @@ window.removeAgent = function(a){
 
 // ── CINEMATIC portal intro (performance-tuned: locked 60fps, zero per-frame allocs) ──
 (function(){
+  var LITE = !window.__INTRO_CINEMATIC;   // light loading screen (default) — the cinematic below only runs with ?intro=cinematic
   var cv=document.getElementById('portalCv'), x=cv.getContext('2d');
 
   // === SIZING: cap DPR at 1 during the intro — the 3D world is building behind this
@@ -4186,7 +4282,8 @@ window.removeAgent = function(a){
       }
     }
   }
-  raf=requestAnimationFrame(fr);
+  if(!LITE) raf=requestAnimationFrame(fr);   // LITE: no full-screen 2D canvas loop competing with the world build
+  if(LITE) _liteLoader();
 
   // Cycle loading messages every 750ms, then reveal button + shockwave at 2.6s
   var msgs=[
@@ -4199,10 +4296,11 @@ window.removeAgent = function(a){
   ];
   var mi=0, ln=document.getElementById('loadNote');
   var msgI=setInterval(function(){ mi=(mi+1)%msgs.length; ln.textContent=msgs[mi]; }, 750);
+  if(LITE) clearInterval(msgI);
   // REAL LOADING GATE: don't reveal JACK IN until every asset is loaded AND shaders are pre-compiled,
   // so you drop into a fully-built, stutter-free world — never a half-loaded one.
   var _t0 = Date.now(), _warmed = false;
-  (function _tryReady(){
+  if(!LITE) (function _tryReady(){
     var elapsed = Date.now() - _t0;
     // READY GATE: the world is genuinely enterable the moment __worldBuilt is true — every tower,
     // footprint and collider exists. We hold a short 900ms floor only so the warp animation reads,
@@ -4236,6 +4334,31 @@ window.removeAgent = function(a){
     if(bar && (parseFloat(bar.style.width)||0) < 90){ var creep=Math.min(90, Math.round(elapsed/5000*90)); if(creep>(parseFloat(bar.style.width)||0)){ bar.style.width=creep+'%'; var pl2=document.getElementById('loadPct'); if(pl2) pl2.textContent=creep+'%'; } }
     setTimeout(_tryReady, 200);
   })();
+
+  // ── LIGHT LOADER: progress = the startup steps the SPAWN AREA needs (__LD.critical, see _ldStep); everything else
+  //    streams in after entry (time-sliced). Once they're done: async shader warm-up (compileAsync, no main-thread
+  //    stall) + two quiet renders behind the screen, then fade straight into the sky-dive — no ENTER click, no warp. ──
+  function _liteLoader(){
+    var bar=document.getElementById('liteBar'), pct=document.getElementById('litePct'), stepEl=document.getElementById('liteStep'), tipEl=document.getElementById('liteTip');
+    var LABEL={ terrain:'Loading the ground', 'realm-modules':'Raising the realms', buildings:'Building the council towers', canon:'Building the Grid', 'grid-fabric':'Filling the city blocks', 'city-v3':'Lighting the plots', sky:'Painting the sky', warm:'Warming up the renderer' };
+    var TIPS=['Press <span>V</span> to switch first / third person.','Hold <span>Shift</span> to sprint.','Press <span>E</span> at a glowing marker to interact.','Press <span>N</span> to fast-forward the day.','The gold ring is the maglev: walk onto a station and press <span>E</span>.','Beat a crossing dragon and its bridge stays open for good.','Press <span>Tab</span> to free the cursor.'];
+    var ti=Math.floor(Math.random()*TIPS.length); tipEl.innerHTML=TIPS[ti]; setInterval(function(){ ti=(ti+1)%TIPS.length; tipEl.innerHTML=TIPS[ti]; }, 4500);
+    var shown=0, t0=Date.now(), warm=false;
+    function set(p, label){ p=Math.max(shown, Math.min(100, Math.round(p))); if(p!==shown){ shown=p; bar.style.width=p+'%'; pct.textContent=p+'%'; } if(label && stepEl.textContent!==label) stepEl.textContent=label; }
+    (function tick(){
+      var crit=(window.__LD && window.__LD.critical) || [], S=(window.__LD && window.__LD.steps) || {}, done=0, next=null;
+      crit.forEach(function(k){ var st=S[k]; if(st && st.t1) done++; else if(!next) next=k; });
+      var ready = crit.length ? done>=crit.length : !!window.__worldBuilt;
+      if(!ready && Date.now()-t0 < 45000){ set(4 + 88*done/Math.max(1,crit.length), LABEL[next] || 'Loading'); setTimeout(tick, 150); return; }
+      if(warm) return; warm=true; set(94, LABEL.warm);
+      _ldBegin('warm');
+      var p = (renderer.compileAsync ? renderer.compileAsync(scene, camera) : Promise.resolve(renderer.compile(scene, camera)));
+      p.catch(function(e){ console.warn('warmup', e && e.message); }).then(function(){
+        _introWarming = true;   // animate() does quiet composer renders behind the screen (GPU uploads happen now, not on reveal)
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); window.__loadPlayable = true; document.getElementById('enterBtn').click(); }); });
+      });
+    })();
+  }
 
   // Coming from the dashboard portal (?peek): auto-fire the ENTER flow so you STILL get the GTA
   // sky-dive + portal picker (previously it skipped straight in with no sky-dive).
@@ -4308,11 +4431,11 @@ window.removeAgent = function(a){
     AGENTS.forEach(function(a, i){ setTimeout(function(){ _pcPreload(a.codename); }, i * 500); });
     // Owner: no background music. Skip the ambient synth bed (_audio.start) and the radio auto-start;
     // keep only the one-shot warp SFX. The radio can still be started manually from the stations UI.
-    try{ if(_audio){ _audio.playSFX('warp'); } }catch(e){}
+    try{ if(_audio && !LITE){ _audio.playSFX('warp'); } }catch(e){}
     // fade the boot text out under the forming grid
     setTimeout(function(){ var ii=document.getElementById('introInner'); if(ii){ ii.style.transition='opacity .45s'; ii.style.opacity='0'; } }, 300);
     // run the grid→dimension transition, THEN drop into the already-loaded world
-    _dimensionWarp(function(){
+    (LITE ? function(done){ done(); } : _dimensionWarp)(function(){
       var intro=document.getElementById('intro'); intro.classList.add('gone');
       document.body.classList.add('in-world');   // hides the on-screen cursor-mode pill (Tab/ESC still work)
       setTimeout(function(){ intro.style.display='none'; }, 500);
@@ -4582,6 +4705,7 @@ function animate(){
       return;
     }
     _introGone = true;   // never check again
+    _ldBegin('first-frame'); requestAnimationFrame(function(){ _ldEnd('first-frame'); if(window.__loadPlayableAt == null) window.__loadPlayableAt = performance.now(); });
   }
   _animFrame++;
   const dt=Math.min(0.05, clock.getDelta());
