@@ -95,6 +95,105 @@ const P = {
       { card: [{ t: 'A PLACE TO STAY', f: 'big', s: 56, c: GOLD, at: 0 }, { t: '@ShaddaiAI', f: 'mono', s: 30, c: EM, at: 1.0 }], dur: 5.8 },
     ],
   },
+  awaken: {
+    model: 'seedance', res: [1920, 1080], sharp: true, total: 19,
+    music: 'Explosive modern action trailer: 128 BPM hybrid orchestral with heavy distorted synth bass, pounding drums and braams on every downbeat, fast risers, stutter edits, one silent beat then a huge final impact. No vocals.',
+    shots: [
+      { new: 'i2v', id: 'a1-lineup', image: SH + 't-02-lineup-low.png', prompt: 'Low angle: seven heroes snap out of their pose into combat stances in unison as stage lights slam on one by one, camera arcs fast around them.', off: 0.3, dur: 1.5, big: 'SEVEN AGENTS', col: GOLD },
+      { new: 'i2v', id: 'a2-zerox', image: SH + 't-03-close-zerox.png', prompt: 'She spins and slashes a crackling cyan lightning katana straight at the camera, fast 180 degree orbit around her, lightning arcs.', off: 0.6, dur: 1.1 },
+      { new: 'i2v', id: 'a3-nexus', image: SH + 't-03-close-nexus.png', prompt: 'He braces and fires a blazing teal energy beam from his wrist cannon past the camera, dolly zoom, sparks and recoil.', off: 0.8, dur: 1.1 },
+      { new: 'i2v', id: 'a4-turtle', image: SH + 't-03-close-turtle.png', prompt: 'She whirls a glowing electric green spiked flail overhead then slams it into the ground, green lightning explodes outward, camera cranes up fast.', off: 0.8, dur: 1.1 },
+      { new: 'i2v', id: 'a6-dragon', image: SH + 't-07-dragon.png', prompt: 'The dragon lunges and swoops low over the camera unleashing a torrent of fire, camera whips around to track it.', off: 0.5, dur: 1.4, big: 'FACE THEM', col: RED },
+      { new: 'i2v', id: 'a5-shaddai', image: SH + 't-03-close-shaddai.png', prompt: 'He slams his glowing palm forward and an emerald shockwave ring blasts outward, cape whips, camera is pushed back violently.', off: 0.7, dur: 1.2 },
+      { new: 'i2v', id: 'a7-train', image: SH + 't-06-train-side.png', prompt: 'Ground-level tracking shot racing beside the white maglev bullet train at extreme speed, then the camera whips up over its roof.', off: 0.4, dur: 1.2 },
+      { new: 'i2v', id: 'a2-zerox', image: SH + 't-03-close-zerox.png', prompt: '', off: 3.0, dur: 0.9 },
+      { new: 'i2v', id: 'a3-nexus', image: SH + 't-03-close-nexus.png', prompt: '', off: 3.0, dur: 0.9 },
+      { new: 'i2v', id: 'a4-turtle', image: SH + 't-03-close-turtle.png', prompt: '', off: 3.0, dur: 0.9 },
+      { new: 'i2v', id: 'a8-weapons', image: SH + 't-04-weapons.png', prompt: 'The seven weapons rise and ignite one by one with glowing energy, lightning and runes, camera glides fast along the row.', off: 0.4, dur: 1.5, big: 'FORGED', col: EM },
+      { new: 'i2v', id: 'a6-dragon', image: SH + 't-07-dragon.png', prompt: '', off: 3.0, dur: 1.3 },
+      { new: 'i2v', id: 'a5-shaddai', image: SH + 't-03-close-shaddai.png', prompt: '', off: 3.0, dur: 1.4, big: 'ONE GRID', col: GOLD },
+      { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'THE AGENTS ARE AWAKE', f: 'wide', s: 44, c: EM, at: 0.6 }], dur: 2.5 },
+    ],
+  },
+  ring: {
+    model: 'seedance', res: [1920, 1080], sharp: true, total: 19,
+    music: 'Driving cinematic electronic flythrough: 124 BPM, huge pulsing synth bass, epic drums building, bright arpeggios, a riser into a massive drop at the midpoint, ends on a hit. Uplifting and fast. No vocals.',
+    shots: [
+      { new: 'i2v', id: 'g1-dive', image: RN + 'canon-s7-v3-top-night.png', prompt: 'FPV drone plunges vertically down into the glowing center of the circular neon city at night, spinning as it falls, lights streak past.', off: 0.2, dur: 1.6, big: 'THE GRID', col: EM },
+      { new: 'i2v', id: 'g2-lava', image: RN + 'canon-s6-emberfall-oblique.png', prompt: 'FPV drone skims inches above rivers of glowing lava and banks hard around a volcanic spire, embers rushing past.', off: 0.4, dur: 1.3, label: 'EMBERFALL', transit: true },
+      { new: 'i2v', id: 'g3-rift', image: RN + 'canon-s6-void-oblique.png', prompt: 'Camera flies straight into the glowing purple spiral rift gate portal and warps through it in a burst of light.', off: 0.4, dur: 1.3, label: 'RIFT GATE', transit: true },
+      { new: 'i2v', id: 'g4-city', image: RN + 'canon-s7-v3-commons-oblique.png', prompt: 'Drone races low between futuristic city blocks at street level, weaving past towers with glowing emerald trim, dusk.', off: 0.4, dur: 1.3, label: 'THE COMMONS', transit: true },
+      { new: 'i2v', id: 'a7-train', image: SH + 't-06-train-side.png', prompt: 'Ground-level tracking shot racing beside the white maglev bullet train at extreme speed, then the camera whips up over its roof.', off: 2.2, dur: 1.2 },
+      { new: 'i2v', id: 'g6-meadow', image: RN + 'canon-s6-meadow-oblique.png', prompt: 'Drone sweeps fast and low over rolling green meadows toward a futuristic transit station, grass rippling.', off: 0.4, dur: 1.3, label: 'MEADOWFIELDS', transit: true },
+      { new: 'i2v', id: 'g7-suburbs', image: RN + 'canon-s6-suburbs-oblique.png', prompt: 'Drone dives over a dense grid of block towers as windows light up in waves, traffic streaks.', off: 0.4, dur: 1.3, label: 'THE SUBURBS', transit: true },
+      { new: 'i2v', id: 'g8-spire', image: RN + 'canon-s7-v3-perch.png', prompt: 'Fast orbit around the central white spire at golden hour as the city lights switch on below, lens flare.', off: 0.3, dur: 1.4, big: 'EIGHT REALMS', col: GOLD },
+      { new: 'i2v', id: 'g2-lava', image: RN + 'canon-s6-emberfall-oblique.png', prompt: '', off: 3.0, dur: 0.9 },
+      { new: 'i2v', id: 'g3-rift', image: RN + 'canon-s6-void-oblique.png', prompt: '', off: 3.0, dur: 0.9 },
+      { new: 'i2v', id: 'g4-city', image: RN + 'canon-s7-v3-commons-oblique.png', prompt: '', off: 3.0, dur: 0.9 },
+      { new: 'i2v', id: 'g1-dive', image: RN + 'canon-s7-v3-top-night.png', prompt: '', off: 3.0, dur: 1.6, big: 'ONE RING', col: EM },
+      { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'THE GRID IS LIVE', f: 'wide', s: 44, c: EM, at: 0.6 }], dur: 3.0 },
+    ],
+  },
+  radio: {
+    res: [1920, 1080], sharp: true, total: 30,
+    musicFile: ['C:/Users/Brittany/OneDrive/Desktop/New folder/Downloads/Guerilla Radio - Rage Against The Machine (1).mp3', 72.0],
+    shots: [
+      { new: 'i2v', id: 'r1-emblem', prompt: '', off: 0.5, dur: 1.5 },
+      { new: 'i2v', id: 'j3-eyes', prompt: '', off: 1.0, dur: 1.5 },
+      { new: 'i2v', id: 'a6-dragon', prompt: '', off: 0.6, dur: 1.2, big: 'LIGHTS OUT', col: GOLD },
+      { new: 'i2v', id: 'a2-zerox', prompt: '', off: 0.6, dur: 1.16 },
+      { v2: 'C-zerox', off: 1.6, dur: 1.16 },
+      { new: 'i2v', id: 'a3-nexus', prompt: '', off: 0.8, dur: 1.16 },
+      { v2: 'D-nexus', off: 1.6, dur: 1.16 },
+      { new: 'i2v', id: 'a4-turtle', prompt: '', off: 0.8, dur: 1.16 },
+      { v2: 'E-turtle', off: 1.4, dur: 1.16 },
+      { new: 'i2v', id: 'g1-dive', prompt: '', off: 0.2, dur: 1.16, big: 'GUERRILLA RADIO', col: EM },
+      { new: 'i2v', id: 'r7-chase', prompt: '', off: 0.6, dur: 1.16 },
+      { new: 'i2v', id: 'a7-train', prompt: '', off: 0.4, dur: 1.16 },
+      { new: 'i2v', id: 'g2-lava', prompt: '', off: 0.4, dur: 1.16 },
+      { new: 'i2v', id: 'g3-rift', prompt: '', off: 0.6, dur: 1.16, big: 'TURN IT UP', col: RED },
+      { v2: 'F-dragon', off: 1.2, dur: 1.16 },
+      { new: 'i2v', id: 'a5-shaddai', prompt: '', off: 0.7, dur: 1.16 },
+      { v2: 'I-shaddai', off: 1.0, dur: 1.16 },
+      { new: 'i2v', id: 'c8-colosseum', prompt: '', off: 0.6, dur: 1.16 },
+      { new: 'i2v', id: 'c9-brand', prompt: '', off: 0.6, dur: 1.16 },
+      { new: 'i2v', id: 'r4-run', prompt: '', off: 0.6, dur: 1.16 },
+      { new: 'i2v', id: 'e8-beacon', prompt: '', off: 0.8, dur: 1.16 },
+      { new: 'i2v', id: 'a8-weapons', prompt: '', off: 0.4, dur: 1.16 },
+      { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'THE GRID IS LIVE', f: 'wide', s: 44, c: EM, at: 0.5 }], dur: 3.76 },
+    ],
+  },
+  radio2: {
+    model: 'seedance', res: [1920, 1080], sharp: true, total: 31,
+    musicFile: ['C:/Users/Brittany/OneDrive/Desktop/New folder/Downloads/Guerilla Radio - Rage Against The Machine (1).mp3', 60.0],
+    shots: [
+      { new: 't2v', id: 'x1-zerox-dragon', prompt: 'A warrior woman in a black suit with glowing teal lines leaps high through the air slashing a crackling cyan lightning katana at a giant dark dragon breathing fire, epic arena at night, slow motion then speed ramp, camera orbits the clash.', off: 0.6, dur: 1.4, big: 'LIGHTS OUT', col: GOLD },
+      { new: 'i2v', id: 'a6-dragon', prompt: '', off: 0.8, dur: 1.16 },
+      { new: 'i2v', id: 'a2-zerox', prompt: '', off: 0.6, dur: 1.16 },
+      { new: 't2v', id: 'x2-nexus-dragon', prompt: "An armored hero with glowing teal and orange armor fires a massive teal energy beam from his wrist cannon that collides with a dragon's torrent of fire, beam struggle, sparks explode, low angle, camera shakes.", off: 0.8, dur: 1.4 },
+      { new: 'i2v', id: 'a3-nexus', prompt: '', off: 0.8, dur: 1.16 },
+      { new: 'i2v', id: 'x6-wall', image: SH + 't-07-dragon.png', prompt: 'The dragon charges forward and smashes through a massive stone and metal arena wall, debris explodes toward the camera, dust and embers.', off: 0.6, dur: 1.3, big: 'DRAGONS', col: RED },
+      { v2: 'F-dragon', off: 1.2, dur: 1.16 },
+      { new: 't2v', id: 'x3-colosseum', prompt: 'Epic battle inside a gigantic futuristic colosseum at night, armored heroes with glowing weapons clash in the arena, a roaring crowd, emerald floodlights sweep, sparks and dust, fast crane shot over the action.', off: 0.5, dur: 1.4, big: 'THE COLOSSEUM', col: EM },
+      { new: 'i2v', id: 'a4-turtle', prompt: '', off: 0.8, dur: 1.16 },
+      { new: 't2v', id: 'x4-naval', prompt: 'The futuristic colosseum arena is flooded and sleek glowing warships battle on the water, cannon blasts, huge splashes, crowd on the stands, sweeping drone shot.', off: 0.6, dur: 1.3 },
+      { new: 't2v', id: 'x5-hoverboard', prompt: 'A rider on a glowing futuristic hoverboard launches off a ramp high over a colosseum arena and spins a 720 trick against floodlights, sparks trail, camera tracks the jump.', off: 0.6, dur: 1.4 },
+      { new: 'i2v', id: 'g1-dive', prompt: '', off: 0.2, dur: 1.16, big: 'GUERRILLA RADIO', col: EM },
+      { new: 'i2v', id: 'x1-zerox-dragon', prompt: '', off: 2.6, dur: 1.16 },
+      { v2: 'C-zerox', off: 1.6, dur: 1.16 },
+      { new: 'i2v', id: 'a5-shaddai', prompt: '', off: 0.7, dur: 1.16 },
+      { new: 'i2v', id: 'x3-colosseum', prompt: '', off: 2.8, dur: 1.16 },
+      { new: 'i2v', id: 'r7-chase', prompt: '', off: 0.6, dur: 1.16, big: 'TURN IT UP', col: RED },
+      { new: 'i2v', id: 'a7-train', prompt: '', off: 0.4, dur: 1.16 },
+      { new: 'i2v', id: 'x2-nexus-dragon', prompt: '', off: 3.0, dur: 1.16 },
+      { new: 'i2v', id: 'x6-wall', prompt: '', off: 3.0, dur: 1.16 },
+      { new: 'i2v', id: 'c8-colosseum', prompt: '', off: 0.6, dur: 1.16 },
+      { new: 'i2v', id: 'a8-weapons', prompt: '', off: 0.4, dur: 1.16, big: 'FORGED', col: EM },
+      { new: 'i2v', id: 'x5-hoverboard', prompt: '', off: 3.0, dur: 1.0 },
+      { new: 'i2v', id: 'a1-lineup', prompt: '', off: 0.3, dur: 1.2 },
+      { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'ENTER THE GRID', f: 'wide', s: 44, c: EM, at: 0.4 }], dur: 2.04 },
+    ],
+  },
 };
 
 // ───────────── fal ─────────────
@@ -111,14 +210,16 @@ async function call(model, input, label) {
 }
 const dl = async (url, file) => writeFileSync(file, Buffer.from(await (await fetch(url)).arrayBuffer()));
 const datauri = (p) => `data:image/${extname(p) === '.png' ? 'png' : 'jpeg'};base64,` + readFileSync(p).toString('base64');
-async function clip(s) {
+async function clip(s, p) {
   const out = join(SRC, s.id + '.mp4'); if (existsSync(out)) return;
   let img = s.image ? datauri(s.image) : null;
   if (s.new === 't2v') {
     const r = await call('fal-ai/flux/schnell', { prompt: s.prompt + STYLE, image_size: 'landscape_16_9', num_images: 1 }, s.id + ' img');
     img = r.images[0].url;
   }
-  const r = await call('fal-ai/kling-video/v2.1/standard/image-to-video', { prompt: s.prompt + STYLE, image_url: img, duration: '5', negative_prompt: 'blur, distort, low quality, text, watermark, deformed hands, extra limbs' }, s.id);
+  const r = (p && p.model === 'seedance')
+    ? await call('fal-ai/bytedance/seedance/v1/pro/image-to-video', { prompt: s.prompt + ' Sharp focus, crisp detail, no motion blur, no text.', image_url: img, resolution: '1080p', duration: '5', camera_fixed: false }, s.id)
+    : await call('fal-ai/kling-video/v2.1/standard/image-to-video', { prompt: s.prompt + STYLE, image_url: img, duration: '5', negative_prompt: 'blur, distort, low quality, text, watermark, deformed hands, extra limbs' }, s.id);
   await dl(r.video.url, out); console.log('clip', s.id);
 }
 async function vo(name, p) {
@@ -129,6 +230,7 @@ async function vo(name, p) {
 }
 async function music(name, p) {
   const out = join(SRC, name + '-music.wav'); if (existsSync(out)) return;
+  if (p.musicFile) { run(['-ss', String(p.musicFile[1]), '-t', String(p.total + 1), '-i', p.musicFile[0], '-ac', '2', '-ar', '44100', out]); console.log('music(file)', name); return; }
   const r = await call('fal-ai/stable-audio-25/text-to-audio', { prompt: p.music, seconds_total: Math.ceil(p.total) + 2 }, name + ' music');
   await dl((r.audio && r.audio.url) || r.audio_file.url, out); console.log('music', name);
 }
@@ -137,8 +239,8 @@ async function music(name, p) {
 const run = (a) => execFileSync(FF, ['-y', '-loglevel', 'error', ...a], { stdio: 'inherit' });
 const esc = (s) => s.replace(/'/g, '').replace(/:/g, '\\:').replace(/%/g, '\\%');
 const fade = (d) => `if(lt(t,0.2),t/0.2,if(gt(t,${(d - 0.2).toFixed(2)}),(${d.toFixed(2)}-t)/0.2,1))`;
-function overlays(s) {
-  const d = s.dur, f = [];
+function overlays(s, p) {
+  const d = s.dur, f = [], K = p && p.res ? p.res[0] / 1280 : 1;
   if (s.label) {
     if (s.transit) {   // transit display: big phosphor board, top-left
       f.push(`drawbox=x=40:y=40:w=${Math.round(s.label.length * 34 + 60)}*min(t/0.25\\,1):h=86:color=black@0.72:t=fill`);
@@ -150,7 +252,7 @@ function overlays(s) {
     }
   }
   if (s.big) {
-    const fs = s.big.length <= 8 ? 120 : s.big.length <= 14 ? 84 : s.big.length <= 20 ? 64 : 52;
+    const fs = Math.round(K * (s.big.length <= 8 ? 120 : s.big.length <= 14 ? 84 : s.big.length <= 20 ? 64 : 52));
     f.push(`drawtext=fontfile='${FT.big}':text='${esc(s.big)}':fontcolor=${s.col || 'white'}:fontsize='${fs}*(1+0.14*max(0\\,1-t/0.3))':x=(w-tw)/2:y=(h-th)/2-12*min(t/0.6\\,1):alpha='${fade(d)}':shadowcolor=black@0.85:shadowx=4:shadowy=4`);
     f.push(`drawbox=x=(iw-${Math.min(1100, fs * 6)})/2:y=ih/2+${Math.round(fs * 0.62)}:w=${Math.min(1100, fs * 6)}*min(t/0.45\\,1):h=3:color=${s.col === EM ? GOLD : EM}@0.95:t=fill`);
   }
@@ -159,7 +261,8 @@ function overlays(s) {
   if (s.big) f.push(`drawbox=x=0:y=0:w=iw:h=ih:color=white@0.55:t=fill:enable='lt(t,0.066)'`);
   return f;
 }
-function renderShot(s, k, TMP) {
+function renderShot(s, k, TMP, p) {
+  const RW = p.res ? p.res[0] : 1280, RH = p.res ? p.res[1] : 720;
   const out = join(TMP, 's' + String(k).padStart(2, '0') + '.mp4'), d = s.dur;
   const enc = ['-an', '-r', '30', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', out];
   if (s.type) {   // blinking-cursor typing card
@@ -167,7 +270,7 @@ function renderShot(s, k, TMP) {
     for (let i = 1; i <= txt.length; i++) f.push(`drawtext=fontfile='${FT.mono}':text='${esc(txt.slice(0, i))}':fontcolor=${EM}:fontsize=72:x=(w-${txt.length * 43})/2:y=(h-th)/2:enable='between(t,${(0.6 + (i - 1) * per).toFixed(2)},${i === txt.length ? d : (0.6 + i * per).toFixed(2)})'`);
     f.push(`drawbox=x=(iw-${txt.length * 43})/2+${txt.length * 43}+6:y=(ih-70)/2:w=34:h=70:color=${EM}@0.9:t=fill:enable='lt(mod(t,0.8),0.4)'`);
     f.push(`drawtext=fontfile='${FT.mono}':text='shaddai@grid\\:~$':fontcolor=white@0.35:fontsize=24:x=60:y=60`);
-    run(['-f', 'lavfi', '-i', `color=c=0x020403:s=1280x720:r=30:d=${d}`, '-vf', f.join(','), ...enc]); return out;
+    run(['-f', 'lavfi', '-i', `color=c=0x020403:s=${RW}x${RH}:r=30:d=${d}`, '-vf', f.join(','), ...enc]); return out;
   }
   if (s.card) {
     const f = [];
@@ -179,21 +282,23 @@ function renderShot(s, k, TMP) {
     });
     f.push(`drawbox=x=(iw-420)/2:y=ih-150:w=420*min(t/1.2\\,1):h=2:color=${EM}@0.8:t=fill`);
     f.push(`fade=t=out:st=${(d - 0.5).toFixed(2)}:d=0.5`);
-    run(['-f', 'lavfi', '-i', `color=c=0x06080b:s=1280x720:r=30:d=${d}`, '-vf', f.join(','), ...enc]); return out;
+    run(['-f', 'lavfi', '-i', `color=c=0x06080b:s=${RW}x${RH}:r=30:d=${d}`, '-vf', f.join(','), ...enc]); return out;
   }
   const src = s.v2 ? V2 + s.v2 + '.mp4' : join(SRC, s.id + '.mp4');
   const off = s.off != null ? s.off : 0.4;
-  const vf = ['scale=1280:720:force_original_aspect_ratio=increase', 'crop=1280:720', 'fps=30', 'eq=contrast=1.10:saturation=1.15', 'vignette=PI/5', ...overlays(s)].join(',');
+  const vf = [`scale=${RW}:${RH}:force_original_aspect_ratio=increase:flags=lanczos`, `crop=${RW}:${RH}`, 'fps=30', p.sharp ? 'eq=contrast=1.12:saturation=1.18,unsharp=5:5:0.6' : 'eq=contrast=1.10:saturation=1.15,vignette=PI/5', ...overlays(s, p)].join(',');
   run(['-ss', String(off), '-t', String(d), '-i', src, '-vf', vf, ...enc]); return out;
 }
 function assemble(name, p) {
   const TMP = join(VID, '_tmp_' + name); mkdirSync(TMP, { recursive: true });
-  const parts = p.shots.map((s, k) => renderShot(s, k, TMP));
+  const parts = p.shots.map((s, k) => renderShot(s, k, TMP, p));
   const lst = join(TMP, 'list.txt'); writeFileSync(lst, parts.map((x) => `file '${x.replace(/\\/g, '/')}'\n`).join(''));
   const body = join(TMP, 'body.mp4'); run(['-f', 'concat', '-safe', '0', '-i', lst, '-c', 'copy', body]);
   const T = p.shots.reduce((a, s) => a + s.dur, 0), ms = Math.round(p.voAt * 1000);
   const out = join(ROOT, 'docs/video', 'shaddai-' + name + '.mp4');
-  run(['-i', body, '-i', join(SRC, name + '-music.wav'), '-i', join(SRC, name + '-vo.mp3'), '-filter_complex',
+  if (!p.vo) run(['-i', body, '-i', join(SRC, name + '-music.wav'), '-filter_complex', `[1:a]atrim=0:${T.toFixed(2)},afade=t=in:d=0.2,afade=t=out:st=${(T - 1.5).toFixed(2)}:d=1.5,alimiter=limit=0.95[a]`,
+    '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '256k', '-t', T.toFixed(2), out]);
+  else run(['-i', body, '-i', join(SRC, name + '-music.wav'), '-i', join(SRC, name + '-vo.mp3'), '-filter_complex',
     `[1:a]atrim=0:${T.toFixed(2)},afade=t=in:d=0.4,afade=t=out:st=${(T - 2).toFixed(2)}:d=2,volume=0.95[m];` +
     `[2:a]adelay=${ms}|${ms},highpass=f=70,acompressor=threshold=0.15:ratio=3:attack=10:release=150,volume=1.7,apad[v];[v]asplit[v1][v2];` +
     `[m][v1]sidechaincompress=threshold=0.04:ratio=6:attack=15:release=350[md];[md][v2]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]`,
@@ -206,8 +311,8 @@ function assemble(name, p) {
 const names = (process.argv[2] || 'raid,jackin,chase,enough').split(',');
 const jobs = [], seen = new Set();
 for (const n of names) {
-  const p = P[n]; jobs.push(() => vo(n, p), () => music(n, p));
-  for (const s of p.shots) if (s.new && !seen.has(s.id)) { seen.add(s.id); jobs.push(() => clip(s)); }
+  const p = P[n]; if (p.vo) jobs.push(() => vo(n, p)); jobs.push(() => music(n, p));
+  for (const s of p.shots) if (s.new && !seen.has(s.id)) { seen.add(s.id); jobs.push(() => clip(s, p)); }
 }
 let i = 0, fails = 0;
 const worker = async () => { while (i < jobs.length) { const j = jobs[i++]; try { await j(); } catch (e) { fails++; console.log('ERR', e.message); } } };
