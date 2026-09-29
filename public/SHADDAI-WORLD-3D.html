@@ -4746,7 +4746,7 @@ window.__getQualityTier = function(){ return _Q.tier; };
 (function bootRace(){
   let tries = 0; const iv = setInterval(function(){
     if(++tries > 600){ clearInterval(iv); return; }
-    const D = window.__w3dDebug, cm = window.__cityV3, T = D && D.terrain;
+    const D = window.__w3dDebug, cm = window.__cityV3, T = D && (D.terrainV4 || D.terrain);
     if(!(cm && cm.markers && cm.markers.length && T && T.heightAt && window.WorldHoverPark && window.WorldRaceRun && window.WorldRace && typeof hover !== 'undefined' && hover)) return;
     clearInterval(iv);
     const mk = cm.markers.filter(function(m){ return m.name === 'PLAZA_SKATE'; })[0]; if(!mk || !mk.pos){ console.warn('[race] PLAZA_SKATE marker missing'); return; }

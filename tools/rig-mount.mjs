@@ -14,6 +14,8 @@ await MeshoptDecoder.ready; await MeshoptEncoder.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
 
 const CFG = {
+  'bot-uni9': { out: 'uni9', kind: 'wheelbot', path: 'fal-assets/characters/bot-uni9/bot-uni9-mesh.glb', outDir: 'public/assets/bots' },
+  'bot-analyst': { out: 'analyst', kind: 'wheelbot', path: 'fal-assets/characters/bot-analyst/bot-analyst-mesh.glb', outDir: 'public/assets/bots' },
   'mount-forge-bull': { out: 'bull', kind: 'quad', body: [0, 0.2, -0.05], hip: -0.10, knee: -0.50, legX: 0.32, front: 0.32, rear: -0.45, legRZ: 0.32, legRX: 0.27, head: { joint: [0, 0.25, 0.5], z: 0.5, yMin: -0.2 }, tail: { joint: [0, 0.3, -0.85], z: -0.8 }, saddle: [0, 0.66, -0.1], stride: 0.55, bob: 0.02 },
   'mount-glacier-mammoth': { out: 'mammoth', kind: 'quad', body: [0, 0.1, 0], hip: -0.18, knee: -0.42, legX: 0.31, front: 0.26, rear: -0.34, legRZ: 0.28, legRX: 0.25, head: { joint: [0, 0.05, 0.5], z: 0.5, yMin: -0.42 }, tail: { joint: [0, -0.2, -0.75], z: -0.72 }, saddle: [0, 0.47, -0.05], stride: 0.42, bob: 0.015 },
   'mount-canopy-gorilla': { out: 'gorilla', kind: 'biped', pelvis: [0, -0.12, 0.05], spine: [0, 0.1, 0.05], head: { joint: [0, 0.6, 0.08], y: 0.52 }, shoulderY: 0.42, shoulderX: 0.55, elbowY: -0.05, armX: 0.42, hipX: 0.26, hipY: -0.15, kneeY: -0.58, saddle: [0, 0.72, -0.12], stride: 0.5, bob: 0.03 },
@@ -29,6 +31,8 @@ function skeleton(c) {   // [name, parent, worldPos]
   if (c.kind === 'biped') return [['root', null, [0, 0, 0]], ['pelvis', 'root', c.pelvis], ['spine', 'pelvis', c.spine], ['head', 'spine', c.head.joint],
     ['armL_u', 'spine', [c.shoulderX, c.shoulderY, 0]], ['armL_l', 'armL_u', [c.shoulderX + 0.2, c.elbowY, 0.1]], ['armR_u', 'spine', [-c.shoulderX, c.shoulderY, 0]], ['armR_l', 'armR_u', [-c.shoulderX - 0.2, c.elbowY, 0.1]],
     ['legL_u', 'pelvis', [c.hipX, c.hipY, 0.1]], ['legL_l', 'legL_u', [c.hipX + 0.02, c.kneeY, 0.15]], ['legR_u', 'pelvis', [-c.hipX, c.hipY, 0.1]], ['legR_l', 'legR_u', [-c.hipX - 0.02, c.kneeY, 0.15]]];
+  if (c.kind === 'wheelbot') return [['root', null, [0, 0, 0]], ['body', 'root', [0, c.cy, c.cz]], ['wheel', 'root', [c.cx, c.cy, c.cz]], ['head', 'body', [0, c.headY, c.cz]],
+    ['armL_u', 'body', [c.armX, c.shY, c.cz]], ['armL_l', 'armL_u', [c.armX + 0.06 * c.H, c.elY, c.cz + 0.02 * c.H]], ['armR_u', 'body', [-c.armX, c.shY, c.cz]], ['armR_l', 'armR_u', [-c.armX - 0.06 * c.H, c.elY, c.cz + 0.02 * c.H]]];
   return [['root', null, [0, 0, 0]], ['body', 'root', c.body], ['head', 'body', c.head.joint], ['tail', 'body', c.tail.joint],
     ['wingL_i', 'body', c.wing.inner], ['wingL_o', 'wingL_i', c.wing.outer], ['wingR_i', 'body', [-c.wing.inner[0], c.wing.inner[1], c.wing.inner[2]]], ['wingR_o', 'wingR_i', [-c.wing.outer[0], c.wing.outer[1], c.wing.outer[2]]]];
 }
@@ -47,6 +51,12 @@ function weightsFor(c, p, names) {   // -> [[boneName, w], ...] (sum 1)
     parts.forEach(q => add(q[0], q[1]));
     const rest = 1 - legs, hd = sst(c.head.z - 0.12, c.head.z + 0.12, z) * sst(c.head.yMin - 0.1, c.head.yMin + 0.1, y), tl = sst(c.tail.z + 0.12, c.tail.z - 0.12, z);
     add('head', rest * hd); add('tail', rest * tl * (1 - hd)); add('body', rest * (1 - hd) * (1 - tl));
+  } else if (c.kind === 'wheelbot') {
+    const ax = Math.abs(x), side = x >= 0 ? 'L' : 'R', dy = y - c.cy, dz = z - c.cz, rad = Math.sqrt(dy * dy + dz * dz);
+    const wheelW = sst(c.R * 1.04, c.R * 0.86, rad) * sst(c.cy + c.R * 0.4, c.cy - c.R * 0.1, y) * sst(c.tireHalf + 0.05 * c.H, c.tireHalf - 0.02 * c.H, ax);   // the tire (lower ring around the axle); the fender/shell above stays put
+    const armW = sst(c.armX - 0.06 * c.H, c.armX + 0.04 * c.H, ax) * sst(c.cy + 0.25 * c.H, c.cy + 0.45 * c.H, y) * sst(c.headY + 0.05 * c.H, c.headY - 0.12 * c.H, y) * (1 - wheelW), armLow = sst(c.elY + 0.06 * c.H, c.elY - 0.06 * c.H, y);
+    const headW = sst(c.headY - 0.1 * c.H, c.headY + 0.03 * c.H, y) * (1 - armW) * (1 - wheelW);
+    add('wheel', wheelW); add(`arm${side}_u`, armW * (1 - armLow)); add(`arm${side}_l`, armW * armLow); add('head', headW); add('body', Math.max(0, 1 - wheelW - armW - headW));
   } else if (c.kind === 'biped') {
     const side = Math.sign(x) >= 0 ? 'L' : 'R', ax = Math.abs(x);
     const armW = sst(c.armX - 0.08, c.armX + 0.08, ax) * sst(-0.9, -0.7, y) * sst(0.62, 0.5, y);   // outer columns between shoulder and hand
@@ -75,6 +85,10 @@ function clips(c) {   // -> { name: { dur, tracks: { bone: fn(t01) -> quat|null 
       return { dur, tracks: tr, root: t => [0, Math.abs(Math.sin(t * T)) * bob, 0] }; };
     out.idle = { dur: 3, tracks: { body: t => qx(Math.sin(t * T) * 0.015), head: t => qx(Math.sin(t * T + 0.8) * 0.05), tail: t => qy(Math.sin(t * T) * 0.2) } };
     out.walk = gait(1.0, c.stride, c.bob); out.run = gait(0.6, c.stride * 1.5, c.bob * 2);
+  } else if (c.kind === 'wheelbot') {
+    const roll = (dur, lean, arms, spin) => ({ dur, tracks: { wheel: t => qx(t * T * spin), body: t => qx(lean + Math.sin(t * T * 2) * 0.02), head: t => qy(Math.sin(t * T) * 0.1), armL_u: t => qx(-0.4 + Math.sin(t * T * 2) * arms), armR_u: t => qx(-0.4 - Math.sin(t * T * 2) * arms), armL_l: t => qx(-0.3), armR_l: t => qx(-0.3) } });
+    out.walk = roll(1.0, 0.1, 0.12, 2); out.run = roll(0.6, 0.2, 0.2, 5);
+    out.idle = { dur: 3.2, tracks: { body: t => qx(Math.sin(t * T) * 0.015), head: t => qy(Math.sin(t * T) * 0.3), armL_u: t => qx(-0.15 + Math.sin(t * T + 1) * 0.06), armR_u: t => qx(-0.15 + Math.sin(t * T + 2) * 0.06) } };
   } else if (c.kind === 'biped') {
     const gait = (dur, amp, bob) => { const tr = {};
       tr.legL_u = t => qx(-Math.sin(t * T) * amp); tr.legR_u = t => qx(Math.sin(t * T) * amp); tr.legL_l = t => qx(Math.max(0, Math.sin(t * T - 0.9)) * amp); tr.legR_l = t => qx(Math.max(0, -Math.sin(t * T - 0.9)) * amp);
@@ -91,7 +105,14 @@ function clips(c) {   // -> { name: { dur, tracks: { bone: fn(t01) -> quat|null 
 }
 
 async function rig(src) {
-  const c = CFG[src]; const doc = await io.read(`public/assets/models/${src}.glb`); const R = doc.getRoot(), buf = R.listBuffers()[0], scene = R.getDefaultScene() || R.listScenes()[0];
+  const c = CFG[src]; const doc = await io.read(c.path || `public/assets/models/${src}.glb`); const R = doc.getRoot(), buf = R.listBuffers()[0], scene = R.getDefaultScene() || R.listScenes()[0];
+  if (c.kind === 'wheelbot') {   // derive every joint from the mesh's own bounding box (Meshy static output, real-world scale, +z front)
+    let mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9], v = [0, 0, 0], lowZ = 0, lowN = 0; const P = [];
+    R.listMeshes().forEach(m => m.listPrimitives().forEach(pr => { const pos = pr.getAttribute('POSITION'); for (let i = 0; i < pos.getCount(); i++) { pos.getElement(i, v); P.push([v[0], v[1], v[2]]); for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], v[k]); mx[k] = Math.max(mx[k], v[k]); } } }));
+    const H = mx[1] - mn[1]; P.forEach(q => { if (q[1] < mn[1] + 0.25 * H) { lowZ += q[2]; lowN++; } });
+    c.H = H; c.R = 0.24 * H; c.cy = mn[1] + c.R; c.cx = 0; c.cz = lowN ? lowZ / lowN : (mn[2] + mx[2]) / 2; c.tireHalf = 0.09 * H; c.headY = mn[1] + 0.8 * H; c.shY = mn[1] + 0.62 * H; c.elY = mn[1] + 0.45 * H; c.armX = 0.2 * H; c.saddle = [0, mn[1] + 0.7 * H, c.cz - 0.02 * H];
+    console.log('  wheelbot', src, 'H', H.toFixed(2), 'wheel R', c.R.toFixed(2), 'axle z', c.cz.toFixed(2), 'bbox x', mn[0].toFixed(2), mx[0].toFixed(2));
+  }
   const meshNode = R.listNodes().find(n => n.getMesh()); const mesh = meshNode.getMesh(); const bones = skeleton(c), idx = {}; const nodes = {};
   // bones
   bones.forEach(([n, parent, w], i) => { const nd = doc.createNode(n); const pw = parent ? bones.find(b => b[0] === parent)[2] : [0, 0, 0]; nd.setTranslation([w[0] - pw[0], w[1] - pw[1], w[2] - pw[2]]); nodes[n] = nd; idx[n] = i; if (parent) nodes[parent].addChild(nd); });
@@ -120,7 +141,7 @@ async function rig(src) {
     if (cl.root) { const base = nodes.root.getTranslation(); mk(nodes.root, 'translation', 3, t => { const o = cl.root(t); return [base[0] + o[0], base[1] + o[1], base[2] + o[2]]; }); }
   }
   await doc.transform(prune({ keepLeaves: true }), meshopt({ encoder: MeshoptEncoder, level: 'medium' }));
-  fs.mkdirSync('public/assets/mounts', { recursive: true }); await io.write(`public/assets/mounts/${c.out}.glb`, doc);
-  console.log(c.out, 'bones', bones.length, 'clips', Object.keys(all).join(','), cut ? 'rock tris cut ' + cut : '', Math.round(fs.statSync(`public/assets/mounts/${c.out}.glb`).size / 1024) + ' KB');
+  const outDir = c.outDir || 'public/assets/mounts'; fs.mkdirSync(outDir, { recursive: true }); await io.write(`${outDir}/${c.out}.glb`, doc);
+  console.log(c.out, 'bones', bones.length, 'clips', Object.keys(all).join(','), cut ? 'rock tris cut ' + cut : '', Math.round(fs.statSync(`${outDir}/${c.out}.glb`).size / 1024) + ' KB');
 }
 const want = process.argv.slice(2); for (const k of Object.keys(CFG)) if (!want.length || want.some(w => k.includes(w))) await rig(k);
