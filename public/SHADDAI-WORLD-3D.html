@@ -4881,7 +4881,23 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } });
   if(!best) return; playerPos.x = best.x; playerPos.z = best.z + 14; if(hover && hover.isRiding && hover.isRiding()) hover.dismount();
   if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev: ' + best.name + ' - step onto the glowing lift pad and press E'); });
-// ── STARTER SPARKS (closed-loop, no cash-out): 500 welcome Sparks once, +100 daily check-in, so a new player can buy a mount / enter a race / reach the realms ──
+// ── TRAVEL (M panel > Travel): jump to the maglev / hoverskate park / Colosseum / Grid centre so every area can be tested quickly ──
+window.__travel = {
+  maglev: function(){ const T = window.__worldTransitApi; if(!T || !T.stations) return false; let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } }); if(!best) return false; if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = best.x; playerPos.z = best.z + 14; return best.name; },
+  park: function(){ const P = window.__hoverPark; if(!P) return false; if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = P.entrance.x; playerPos.z = P.entrance.z; return 'Hoverskate Park'; },
+  colosseum: function(){ if(!_interiors) return false; try{ if(!_interiors.isInside()){ _interiors.enter('COLOSSEUM'); window._currentInterior = 'COLOSSEUM'; } }catch(e){ return false; } return 'Colosseum'; },
+  grid: function(){ if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = 0; playerPos.z = 200; return 'The Grid'; }
+};
+// ── ENTRANCE BEACONS: tall glowing light pillars over the Colosseum door (gold) and every maglev station (cyan) so the entrances can be seen from far away; walk in and press E ──
+(function beacons(){ let n = 0; const iv = setInterval(function(){ if(++n > 240){ clearInterval(iv); return; } const C = window.COLOSSEUM_WORLD, T = window.__worldTransitApi, D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!C || !T || !T.stations || !T.stations.length || !H || !H.heightAt) return; clearInterval(iv);
+  const mk = function(x, z, col, tall){ const g = new THREE.Group(); const m = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(3, 6, tall, 12, 1, true), m); beam.position.y = tall / 2; g.add(beam);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(14, 1.2, 8, 32), new THREE.MeshBasicMaterial({ color: col, fog: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 3; g.add(ring);
+    g.position.set(x, H.heightAt(x, z), z); g.name = 'entrance-beacon'; scene.add(g); return g; };
+  mk(C.door[0], C.door[1], 0xffcf4a, 700); T.stations.forEach(function(st){ mk(st.x, st.z, 0x27e0ff, 500); });
+}, 1000); })();
+// STARTER SPARKS (closed-loop, no cash-out): 500 welcome Sparks once, +100 daily check-in, so a new player can buy a mount / enter a race / reach the realms ──
 (function starterSparks(){ let n = 0; const iv = setInterval(function(){ if(++n > 120){ clearInterval(iv); return; } const S = window.ShdSparks; if(!S || !S.add) return; clearInterval(iv);
   try{ const now = Date.now(); if(!localStorage.getItem('shd_welcome_v2')){ localStorage.setItem('shd_welcome_v2', String(now)); S.add(10000, 'welcome', 'beta test Sparks'); if(window.Navi && window.Navi.toast) window.Navi.toast('Beta: +10,000 Sparks - press M for mounts, bots, boards'); }
     const last = +localStorage.getItem('shd_checkin_v1') || 0; if(now - last > 20*3600*1000 && localStorage.getItem('shd_welcome_v2') !== String(now)){ localStorage.setItem('shd_checkin_v1', String(now)); S.add(100, 'checkin', 'daily check-in'); if(window.Navi && window.Navi.toast) window.Navi.toast('Daily check-in +100 Sparks'); } else if(!last) localStorage.setItem('shd_checkin_v1', String(now)); }catch(_){}
