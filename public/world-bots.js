@@ -28,7 +28,8 @@
     { id: 'herald',   kind: 'wheeled',  name: 'HERALD',   ref: null,       earn: 'hoverskate:forum-pass', style: { body: 0xb04a6a, head: 0x702a45, eye: 0xffd0e0, accent: 0xffffff }, blurb: 'Event caller: races, brackets, news.' }
   ];
   var byId = {}; ROSTER.forEach(function (b) { byId[b.id] = b; });
-  var STARTERS = ['scrap', 'unicycle'];
+  var STARTERS = ['scrap', 'unicycle'];   // free starter pick; everything else is BOUGHT (wheeled 150 = base, humanoid 600 = premium) or earned
+  var PRICE = { wheeled: 150, humanoid: 600 };   // Sparks (closed-loop)
 
   var S = load();
   function load() { try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && j.owned) return j; } catch (e) { } return { owned: [], active: null, picked: false, challenges: [] }; }
@@ -44,6 +45,11 @@
   function pickStarter(id) {
     if (S.picked) return { ok: false, why: 'starter already chosen' }; if (STARTERS.indexOf(id) < 0) return { ok: false, why: 'not a starter' };
     var g = grant(id, 'starter'); if (g.ok) { S.picked = true; save(); } return g;
+  }
+  function buy(id, spend) {
+    var def = byId[id]; if (!def) return { ok: false, why: 'unknown bot' }; if (rec(id)) return { ok: false, why: 'you already own it' };
+    var cost = PRICE[def.kind]; if (!spend || !spend(cost, 'bot', id)) return { ok: false, why: 'not enough Sparks (' + cost + ')' };
+    grant(id, 'bought'); return { ok: true, paid: cost, def: def };
   }
   function unlock(id, reason) { var def = byId[id]; if (!def || def.earn === 'starter') return { ok: false, why: 'starters are picked, not earned' }; return grant(id, reason || def.earn); }
   function storageCap(id) { var r = rec(id); return r ? TUNE.baseStorage + TUNE.storagePerSkill * r.skills.filter(function (s) { return /carry|pack|haul|storage/i.test(s); }).length : 0; }
@@ -154,7 +160,7 @@
       if (P.legL) { P.legL.rotation.x = sw; P.legR.rotation.x = -sw; } if (P.armL) { P.armL.rotation.x = -sw * 0.8; P.armR.rotation.x = sw * 0.8; } if (P.wheel) P.wheel.rotation.x += moving ? dt * 6 : 0;
     });
   }
-  root.WorldBots = { ROSTER: ROSTER, TUNE: TUNE, STARTERS: STARTERS, def: function (id) { return byId[id]; }, state: function () { return S; }, rec: rec, pickStarter: pickStarter, unlock: unlock, grant: grant, call: call, dismiss: dismiss,
+  root.WorldBots = { PRICE: PRICE, buy: buy, ROSTER: ROSTER, TUNE: TUNE, STARTERS: STARTERS, def: function (id) { return byId[id]; }, state: function () { return S; }, rec: rec, pickStarter: pickStarter, unlock: unlock, grant: grant, call: call, dismiss: dismiss,
     canAttackBot: canAttackBot, damage: damage, rebuild: rebuild, setFollow: setFollow, setHoverboard: setHoverboard, addSkill: addSkill, stow: stow, storageCap: storageCap, challenge: challenge, accept: accept,
     spawnBodies: spawnBodies, update: update, _sim: function () { return sim; }, on: function (f) { listeners.push(f); }, _reset: function () { S = { owned: [], active: null, picked: false, challenges: [] }; save(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

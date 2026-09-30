@@ -366,7 +366,7 @@
       if (!themed) {
         hemi.color.setRGB(pal.hSky[0], pal.hSky[1], pal.hSky[2]);
         hemi.groundColor.setRGB(pal.hGnd[0], pal.hGnd[1], pal.hGnd[2]);
-        if (fog) { fog.color.setRGB(pal.hor[0], pal.hor[1], pal.hor[2]); if (fog.density != null) fog.density = baseFogDensity * pal.fog; }
+        if (fog) { fog.color.setRGB(pal.hor[0], pal.hor[1], pal.hor[2]); if (fog.density != null) fog.density = baseFogDensity * Math.min(pal.fog, 1.5); }
         if (scene.background && scene.background.isColor) scene.background.setRGB(pal.hor[0], pal.hor[1], pal.hor[2]);
       }
       hemi.intensity = ls.hemi;
