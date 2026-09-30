@@ -4899,7 +4899,7 @@ window.__travel = {
 }, 1000); })();
 // STARTER SPARKS (closed-loop, no cash-out): 500 welcome Sparks once, +100 daily check-in, so a new player can buy a mount / enter a race / reach the realms ──
 (function starterSparks(){ let n = 0; const iv = setInterval(function(){ if(++n > 120){ clearInterval(iv); return; } const S = window.ShdSparks; if(!S || !S.add) return; clearInterval(iv);
-  try{ const now = Date.now(); if(!localStorage.getItem('shd_welcome_v2')){ localStorage.setItem('shd_welcome_v2', String(now)); S.add(10000, 'welcome', 'beta test Sparks'); if(window.Navi && window.Navi.toast) window.Navi.toast('Beta: +10,000 Sparks - press M for mounts, bots, boards'); }
+  try{ const now = Date.now(); if(!localStorage.getItem('shd_welcome_v2')){ localStorage.setItem('shd_welcome_v2', String(now)); S.add(10000, 'welcome', 'beta test Sparks'); if(window.Navi && window.Navi.toast) window.Navi.toast('Beta: +10,000 Sparks - press I for mounts, bots, boards, travel'); }
     const last = +localStorage.getItem('shd_checkin_v1') || 0; if(now - last > 20*3600*1000 && localStorage.getItem('shd_welcome_v2') !== String(now)){ localStorage.setItem('shd_checkin_v1', String(now)); S.add(100, 'checkin', 'daily check-in'); if(window.Navi && window.Navi.toast) window.Navi.toast('Daily check-in +100 Sparks'); } else if(!last) localStorage.setItem('shd_checkin_v1', String(now)); }catch(_){}
 }, 1000); })();
 // ── HOVERSKATE PARK + RACE (docs/MASTER-TASKBOARD.md): park at the PLAZA_SKATE marker (NW race quarter); Navi > Sparks > races starts a heat; R uses your item ──

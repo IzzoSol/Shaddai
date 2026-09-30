@@ -170,7 +170,7 @@
     function key(e) {
       if (e.repeat) return; var tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return;
       if (st.riding) { if (e.code === 'KeyE' || e.code === 'KeyF') { e.stopImmediatePropagation(); e.preventDefault(); dismount(); } else if (e.code === 'KeyB' || e.code === 'KeyO' || e.code === 'KeyH') e.stopImmediatePropagation(); return; }
-      if (e.code === 'KeyM') { panel(); e.stopImmediatePropagation(); }
+      if (e.code === 'KeyI') { panel(); e.stopImmediatePropagation(); e.preventDefault(); }
       else if (e.code === 'KeyE' && near()) { if (mount()) { e.stopImmediatePropagation(); e.preventDefault(); } }
     }
     if (typeof addEventListener === 'function') addEventListener('keydown', key, true);
