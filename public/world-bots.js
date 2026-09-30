@@ -115,7 +115,10 @@
       var box = new THREE.Box3().setFromObject(inst), h = Math.max(0.01, box.max.y - box.min.y), k = U * BOT_H[def.kind] / h; inst.scale.multiplyScalar(k); inst.updateMatrixWorld(true);
       var b2 = new THREE.Box3().setFromObject(inst); inst.position.y -= b2.min.y; var wrap = new THREE.Group(); wrap.add(inst); wrap.userData.glb = true;
       var idle = pickClip(g.animations, /idle|stand|breath/i) || g.animations[0], walk = pickClip(g.animations, /walk|roll|drive|move/i) || idle, run = pickClip(g.animations, /run|sprint/i) || walk;
-      ctx.scene.remove(old); ctx.scene.add(wrap); bodies[id] = wrap; var sm = sim[id]; if (sm) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run } }; sm.clip = null; sm.act = null; }
+      ctx.scene.remove(old); ctx.scene.add(wrap); bodies[id] = wrap;
+      // SIZE FIX (bots were giants): once the skeleton has run a few frames, measure the REAL skinned height and rescale the wrapper to the target companion height
+      setTimeout(function () { var w = bodies[id]; if (!w || !w.userData.glb) return; w.updateMatrixWorld(true); w.traverse(function (o) { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });
+        var bb = new THREE.Box3().setFromObject(w, true), hh = bb.max.y - bb.min.y, tgt = U * BOT_H[def.kind]; if (hh > 0.01 && (hh > tgt * 1.2 || hh < tgt * 0.8)) { w.scale.multiplyScalar(tgt / hh); w.updateMatrixWorld(true); } }, 1500); var sm = sim[id]; if (sm) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run } }; sm.clip = null; sm.act = null; }
     }, undefined, function () { glbFail[url] = true; });
   }
   function spawnBodies(THREE, scene, heightAt, opts) { ctx = { THREE: THREE, scene: scene, heightAt: heightAt || function () { return 0; }, loader: opts && opts.loader, clone: opts && opts.cloneSkinned }; syncBodies(); return bodies; }
