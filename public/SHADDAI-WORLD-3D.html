@@ -4725,33 +4725,71 @@ function _applyQualityTier(idx){
 
 // ── STATIC MERGE PASS (draw-call cut, nothing removed) ──
 // The probe found ~1,250 UNNAMED tiny meshes (glow discs, panels, rings, spawn decorations)
-// costing ~195k tris but ~1,250 DRAW CALLS — draw calls are the biggest CPU cost on HD 620.
+// costing ~195k tris but ~1,250 DRAW CALLS, plus ~334 unnamed InstancedMeshes (building chunks)
+// at 187k tris / 334 draws — draw calls are the biggest CPU cost on HD 620.
 // This pass merges them per material (opaque + additive-blended only; normal transparents are
-// skipped because alpha sort order matters). Animated objects are excluded. Originals are
+// skipped because alpha sort order matters). InstancedMeshes are BAKED (instances → real vertices,
+// same tris as drawn, ~6 MB extra memory). Animated objects are excluded. Originals are
 // HIDDEN, not removed — everything is recoverable if anything looks wrong.
-function _staticMerge(){
-  if(window.__staticMergeDone) return; window.__staticMergeDone = true;
+const _MERGE_GROUPS_OK = { 'world-fal-props': 1 };   // named groups whose content is fully static — safe to merge
+let _skipCache = null;
+function _mergeSkipSet(){   // animated objects (excluded from both dedup and merge) — cached
+  if(_skipCache) return _skipCache;
+  const skip = new Set();
+  const addSub = function(o){ if(!o || skip.has(o)) return; skip.add(o); if(o.traverse) o.traverse(function(c){ skip.add(c); }); };
+  if(typeof portals !== 'undefined') for(const p of portals){ addSub(p.ring); addSub(p.inner); }
+  if(typeof visitors !== 'undefined') for(const v of visitors){ addSub(v.mesh); }
+  if(typeof BAZAAR !== 'undefined' && BAZAAR.stalls) for(const s of BAZAAR.stalls){ addSub(s.disp); }
+  if(typeof danceTiles !== 'undefined') for(const tl of danceTiles){ addSub(tl); }
+  if(typeof pads !== 'undefined') for(const p of pads){ addSub(p.disc); addSub(p.ring); addSub(p.beam); addSub(p.panel); addSub(p.frame); addSub(p.fruit); }
+  if(typeof bridges !== 'undefined') for(const b of bridges){ addSub(b.grp); }
+  if(typeof models !== 'undefined') for(const k in models){ if(models[k] && models[k].model) addSub(models[k].model); }
+  if(typeof agentSprites !== 'undefined') for(const s of agentSprites){ addSub(s.body); addSub(s.aura); addSub(s.crown); addSub(s.frame); addSub(s.ring); }
+  if(typeof MKT !== 'undefined') addSub(MKT.group);
+  if(window._arcadeKiosk) addSub(window._arcadeKiosk.mesh || window._arcadeKiosk);
+  _skipCache = skip; return skip;
+}
+// MATERIAL DEDUP (handoff item 3): 1,564 unique materials for 7,475 MeshStandard — most are identical
+// duplicates (same color/rough/metal/map, different uuid). Re-pointing duplicates to one instance
+// lets the static merge form big batches (334 building IMs → ~dozens), cuts shader programs and
+// texture memory. Visually identical: the duplicates are byte-equal. Animated objects excluded.
+function _dedupMaterials(){
   try{
-    const skip = new Set();
-    const addSub = function(o){ if(!o || skip.has(o)) return; skip.add(o); if(o.traverse) o.traverse(function(c){ skip.add(c); }); };
-    if(typeof portals !== 'undefined') for(const p of portals){ addSub(p.ring); addSub(p.inner); }
-    if(typeof visitors !== 'undefined') for(const v of visitors){ addSub(v.mesh); }
-    if(typeof BAZAAR !== 'undefined' && BAZAAR.stalls) for(const s of BAZAAR.stalls){ addSub(s.disp); }
-    if(typeof danceTiles !== 'undefined') for(const tl of danceTiles){ addSub(tl); }
-    if(typeof pads !== 'undefined') for(const p of pads){ addSub(p.disc); addSub(p.ring); addSub(p.beam); addSub(p.panel); addSub(p.frame); addSub(p.fruit); }
-    if(typeof bridges !== 'undefined') for(const b of bridges){ addSub(b.grp); }
-    if(typeof models !== 'undefined') for(const k in models){ if(models[k] && models[k].model) addSub(models[k].model); }
-    if(typeof agentSprites !== 'undefined') for(const s of agentSprites){ addSub(s.body); addSub(s.aura); addSub(s.crown); addSub(s.frame); addSub(s.ring); }
-    if(typeof MKT !== 'undefined') addSub(MKT.group);
-    if(window._arcadeKiosk) addSub(window._arcadeKiosk.mesh || window._arcadeKiosk);
+    const skip = _mergeSkipSet(), seen = new Map();
+    let n = 0;
+    scene.traverseVisible(function(o){
+      if(!o.isMesh || !o.material || Array.isArray(o.material)) return;
+      for(let a = o; a; a = a.parent){ if(skip.has(a)) return; }
+      const m = o.material;
+      const key = (m.color ? m.color.getHexString() : '-') + '|' + (m.roughness != null ? (+m.roughness).toFixed(3) : '-') + '|' +
+        (m.metalness != null ? (+m.metalness).toFixed(3) : '-') + '|' + (m.emissive ? m.emissive.getHexString() : '-') + '|' +
+        (m.emissiveIntensity != null ? (+m.emissiveIntensity).toFixed(3) : '-') + '|' + (m.map ? m.map.uuid : '-') + '|' +
+        (m.transparent ? 1 : 0) + '|' + (m.blending || 0) + '|' + (m.opacity != null ? (+m.opacity).toFixed(3) : '-') + '|' + (m.side || 0) + '|' + (m.type || '') + '|' +
+        (m.vertexColors ? 1 : 0) + '|' + (m.flatShading ? 1 : 0) + '|' + (m.wireframe ? 1 : 0) + '|' + (m.depthWrite === false ? 0 : 1);
+      if(seen.has(key)){ if(o.material !== seen.get(key)){ o.material = seen.get(key); n++; } }
+      else seen.set(key, m);
+    });
+    console.info('[mat-dedup] re-pointed ' + n + ' duplicate materials');
+  }catch(e){ console.warn('[mat-dedup] failed:', e && e.message); }
+}
+function _staticMerge(){
+  if(window.__staticMergeN >= 3) return; window.__staticMergeN = (window.__staticMergeN || 0) + 1;   // up to 3 passes: +8s, +40s, +100s — later passes catch meshes the streaming steps added
+  try{
+    _dedupMaterials();
+    const skip = _mergeSkipSet();
     const cand = [];
     scene.traverseVisible(function(o){
       if(!o.isMesh || !o.geometry || o.isSkinnedMesh || skip.has(o) || o.name) return;
-      for(let a = o.parent; a && a !== scene; a = a.parent){ if(skip.has(a) || a.name) return; }
+      let namedOk = false;
+      for(let a = o.parent; a && a !== scene; a = a.parent){
+        if(skip.has(a)) return;
+        if(a.name){ if(_MERGE_GROUPS_OK[a.name]) { namedOk = true; break; } return; }
+      }
       if(o.geometry.morphAttributes && Object.keys(o.geometry.morphAttributes).length) return;
       const g = o.geometry;
-      const tris = (g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0)) / 3;
-      if(tris > 2000) return;
+      const perInstance = (g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0)) / 3;
+      const tris = o.isInstancedMesh ? perInstance * o.count : perInstance;
+      if(tris > (namedOk ? 60000 : 2000)) return;   // baked tris = drawn tris, so IMs of any size are fair game
       const m = o.material; if(!m || Array.isArray(m) || !m.isMaterial) return;
       if(m.transparent && m.blending !== THREE.AdditiveBlending) return;   // alpha sort order matters — skip
       cand.push(o);
@@ -4759,19 +4797,28 @@ function _staticMerge(){
     if(cand.length < 12){ console.info('[static-merge] only ' + cand.length + ' candidates — skipping'); return; }
     import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
       const byKey = {};
+      const _im4 = new THREE.Matrix4(), _wm = new THREE.Matrix4();
       for(const o of cand){
         o.updateMatrixWorld(true);
         const g = o.geometry, m = o.material;
         const sig = Object.keys(g.attributes).sort().join(',') + (g.index ? '|i' : '|n');
         const k = m.uuid + '|' + sig + '|' + (m.blending === THREE.AdditiveBlending ? 'add' : 'op');
         (byKey[k] = byKey[k] || { mat: m, geos: [], orig: [] });
-        byKey[k].geos.push(g.clone().applyMatrix4(o.matrixWorld));
+        if(o.isInstancedMesh){
+          for(let i = 0; i < o.count; i++){
+            o.getMatrixAt(i, _im4);
+            _wm.multiplyMatrices(o.matrixWorld, _im4);
+            byKey[k].geos.push(g.clone().applyMatrix4(_wm));
+          }
+        } else {
+          byKey[k].geos.push(g.clone().applyMatrix4(o.matrixWorld));
+        }
         byKey[k].orig.push(o);
       }
       let mergedN = 0, savedN = 0, savedTris = 0;
       for(const k in byKey){
         const b = byKey[k];
-        if(b.geos.length < 2){ b.geos.forEach(function(g){ g.dispose(); }); continue; }   // not worth a draw call
+        if(b.orig.length < 2){ b.geos.forEach(function(g){ g.dispose(); }); continue; }   // 1 origin = 1 draw either way — pointless merge, wasted memory
         const merged = BGU.mergeGeometries(b.geos, false);
         b.geos.forEach(function(g){ g.dispose(); });
         if(!merged) continue;
@@ -4897,9 +4944,9 @@ function animate(){
       out.sort(function(a, b){ return a[0] - b[0]; }); st.best = out; }
     for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], e = st.best[i], o = e && e[1];
       if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
-  if(!window.__staticMergeDone && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes once, after streaming settles
+  if((window.__staticMergeN || 0) < 3 && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
     if(window.__mergeArm == null) window.__mergeArm = performance.now();
-    else if(performance.now() - window.__mergeArm > 8000) _staticMerge();
+    else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
   }
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
