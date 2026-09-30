@@ -93,7 +93,7 @@
     function dismount() {
       if (!st.riding) return false;
       if (M.fl && M.y - gY(M.x, M.z) > 4 * U) { toast('Land first (hold Shift to dive)'); return false; }
-      st.riding = false; st.boosting = false; playerPos.x = M.x + Math.cos(M.yaw) * 3 * U; playerPos.z = M.z - Math.sin(M.yaw) * 3 * U; playerPos.y = gY(playerPos.x, playerPos.z); M.sp = 0; return true;
+      st.riding = false; st.boosting = false; if (o.onDismount) o.onDismount(M.yaw); playerPos.x = M.x + Math.cos(M.yaw) * 3 * U; playerPos.z = M.z - Math.sin(M.yaw) * 3 * U; playerPos.y = gY(playerPos.x, playerPos.z); M.sp = 0; return true;
     }
 
     function update(dt, inp) {

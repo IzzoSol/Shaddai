@@ -670,7 +670,7 @@ window.__worldBuilt = false;
       if(!api) return api;
       return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20260929a')]).then(function(){
         const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
-        window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts });
+        window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts, onDismount: function(yaw){ try{ playerAvatar.rotation.set(0, yaw, 0); _avatarYaw = yaw; playerAvatar.position.y = playerPos.y; }catch(_){} } });
         window.__w3dDebug.mountRide = window.__mountRide;
         return api;
       }).catch(function(e){ console.warn('[mount-ride] failed', e && e.message); return api; });
@@ -4876,8 +4876,8 @@ window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.coold
 window.__getQualityTier = function(){ return _Q.tier; };
 // ── STARTER SPARKS (closed-loop, no cash-out): 500 welcome Sparks once, +100 daily check-in, so a new player can buy a mount / enter a race / reach the realms ──
 (function starterSparks(){ let n = 0; const iv = setInterval(function(){ if(++n > 120){ clearInterval(iv); return; } const S = window.ShdSparks; if(!S || !S.add) return; clearInterval(iv);
-  try{ const now = Date.now(); if(!localStorage.getItem('shd_welcome_v1')){ localStorage.setItem('shd_welcome_v1', String(now)); S.add(500, 'welcome', 'starter Sparks'); if(window.Navi && window.Navi.toast) window.Navi.toast('Welcome! +500 Sparks - press M for mounts'); }
-    const last = +localStorage.getItem('shd_checkin_v1') || 0; if(now - last > 20*3600*1000 && localStorage.getItem('shd_welcome_v1') !== String(now)){ localStorage.setItem('shd_checkin_v1', String(now)); S.add(100, 'checkin', 'daily check-in'); if(window.Navi && window.Navi.toast) window.Navi.toast('Daily check-in +100 Sparks'); } else if(!last) localStorage.setItem('shd_checkin_v1', String(now)); }catch(_){}
+  try{ const now = Date.now(); if(!localStorage.getItem('shd_welcome_v2')){ localStorage.setItem('shd_welcome_v2', String(now)); S.add(10000, 'welcome', 'beta test Sparks'); if(window.Navi && window.Navi.toast) window.Navi.toast('Beta: +10,000 Sparks - press M for mounts, bots, boards'); }
+    const last = +localStorage.getItem('shd_checkin_v1') || 0; if(now - last > 20*3600*1000 && localStorage.getItem('shd_welcome_v2') !== String(now)){ localStorage.setItem('shd_checkin_v1', String(now)); S.add(100, 'checkin', 'daily check-in'); if(window.Navi && window.Navi.toast) window.Navi.toast('Daily check-in +100 Sparks'); } else if(!last) localStorage.setItem('shd_checkin_v1', String(now)); }catch(_){}
 }, 1000); })();
 // ── HOVERSKATE PARK + RACE (docs/MASTER-TASKBOARD.md): park at the PLAZA_SKATE marker (NW race quarter); Navi > Sparks > races starts a heat; R uses your item ──
 (function bootRace(){
@@ -4983,7 +4983,7 @@ function animate(){
     _ri.climb = _rl && !!keys['Space']; _ri.dive = _rl && !!(keys['ShiftLeft']||keys['ShiftRight']);
     window.__dragonRide.update(dt, _ri);
   }
-  if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__dragonRideIn || {}; window.__mountRide.update(dt, _mi); }   // MOUNTS (world-mount-ride.js)
+  if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }   // MOUNTS (world-mount-ride.js)
 _pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
           && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(_rideOn()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
