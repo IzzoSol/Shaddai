@@ -180,7 +180,14 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
             var yawNow = Math.atan2(fx, fz), turned = Math.abs(Math.atan2(Math.sin(yawNow - lastYaw), Math.cos(yawNow - lastYaw))) > 0.26 || Math.hypot(cx - lastX, cz - lastZ) > 40 * U;   // >15 deg or 40 m
             Object.keys(cells).forEach(function (ck) {
               var c = cells[ck], dx = c.centre.x - cx, dz = c.centre.z - cz, d = Math.hypot(dx, dz) - CELL * 0.7;
-              var s = pickTier(d, nN, nF, nH, true, true);   // per-key fallbacks are baked into each entry's tiers[]
+              // HYSTERESIS: keep the cell's CURRENT tier unless d is clearly outside its band edge ± HYST —
+              // stops the popping/flicker when the camera sits right on a boundary, and cuts dirty flips,
+              // which each drive a full O(cells×keys) instance-buffer rebuild. HYST = 0.15×cell ≈ 37 m.
+              var HYST = CELL * 0.15, s;
+              var lo = c.state === 0 ? -1e9 : c.state === 1 ? nN : c.state === 2 ? nF : nH;
+              var hi = c.state === 0 ? nN : c.state === 1 ? nF : c.state === 2 ? nH : 1e9;
+              if (c.state >= 0 && c.state <= 3 && d >= lo - HYST && d <= hi + HYST) s = c.state;
+              else s = pickTier(d, nN, nF, nH, true, true);   // per-key fallbacks are baked into each entry's tiers[]
               // cells clearly BEHIND the camera are skipped (a cheap stand-in for per-chunk frustum culling); nearby cells always stay in
               var back = d > CELL * 1.5 && camObj && (dx * fx + dz * fz) < -0.35 * Math.hypot(dx, dz);
               if (back) s = 3;
