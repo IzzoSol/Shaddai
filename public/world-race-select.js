@@ -12,7 +12,7 @@
 (function (root) {
   'use strict';
   var U = 7 / 1.8, FEE = { casual: 25, ranked: 50, gp: 60 }, GP_CUPS = ['plaza-cup', 'spine-cup', 'forum-grand'], GP_PTS = [10, 8, 6, 5, 4, 3, 2, 1], GP_MEDAL = [{ n: 'GOLD', min: 24, bonus: 120, c: '#e8c45c' }, { n: 'SILVER', min: 18, bonus: 60, c: '#cfd8e3' }, { n: 'BRONZE', min: 12, bonus: 25, c: '#c88a4a' }];
-  var BLURB = { 'plaza-cup': 'Warm-up lap around the park plaza. Wide lines, easy gates.', 'spine-cup': 'Rails and banks: the park’s technical cup.', 'forum-grand': 'Big bowl, big air, long straights.', 'rift-cut': 'PRIME heat: lava edge, blue-line items, no mercy.', 'quarter-loop': 'Two laps through the Race Quarter streets.', 'grid-ring': 'One long lap of the whole Grid ring.', 'train-ring': 'Map-wide endurance along the maglev ring.' };
+  var BLURB = { 'dragon-gate': 'Figure-8 under the torii gate: three laps, a crossing junction, lantern-lit straights.', 'plaza-cup': 'Warm-up lap around the park plaza. Wide lines, easy gates.', 'spine-cup': 'Rails and banks: the park’s technical cup.', 'forum-grand': 'Big bowl, big air, long straights.', 'rift-cut': 'PRIME heat: lava edge, blue-line items, no mercy.', 'quarter-loop': 'Two laps through the Race Quarter streets.', 'grid-ring': 'One long lap of the whole Grid ring.', 'train-ring': 'Map-wide endurance along the maglev ring.' };
   var THREE_ = null, thumbs = {}, ov = null, S = null, gp = null;
   function el(tag, css, html) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (html != null) e.innerHTML = html; return e; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }

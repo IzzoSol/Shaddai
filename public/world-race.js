@@ -30,10 +30,16 @@
   CIRCUITS['quarter-loop'] = { id: 'quarter-loop', name: 'Quarter Loop', scale: 'quarter', laps: 2, cleanLapS: 300, rooms: ['quarter'], lengthM: 4430, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }] };
   CIRCUITS['grid-ring'] = { id: 'grid-ring', name: 'Grid Ring', scale: 'grid', laps: 1, cleanLapS: 620, rooms: ['grid'], lengthM: 10053, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }] };
   CIRCUITS['train-ring'] = { id: 'train-ring', name: 'Train Ring (map-wide)', scale: 'train', laps: 1, cleanLapS: 1100, rooms: ['ring'], lengthM: 17775, prime: false, openWorld: true, gates: [{ kind: 'either' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'foil' }] };
+  /* DRAGON GATE CIRCUIT (owner refs 2026-10-01: torii start gate, figure-8 crossing, lantern posts, cones): a lemniscate (figure-8) a = 300 m centred 2100 m east / 300 m south of the Grid.
+   * The two lobes cross in the middle (a junction: gates are sequential by index so the crossing cannot be used as a shortcut). Chosen from the real heightmap: land all round, relief < 12 m, water within reach. */
+  var DG = { cx: 2100, cn: -300, a: 300 };
+  CIRCUITS['dragon-gate'] = { id: 'dragon-gate', name: 'Dragon Gate Circuit', scale: 'quarter', laps: 3, cleanLapS: 105, rooms: ['dragon'], lengthM: 1570, prime: false, torii: true, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }] };
   var DEG = Math.PI / 180;
   function pol(r, b) { return [r * Math.sin(b * DEG), r * Math.cos(b * DEG)]; }          // bearing (deg clockwise from north) -> metres [east, north]
   function arc(r, b0, b1, n) { var o = []; for (var i = 0; i <= n; i++) o.push(pol(r, b0 + (b1 - b0) * i / n)); return o; }
+  function lemniscate(n) { var o = []; for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, d = 1 + Math.sin(t) * Math.sin(t); o.push([DG.cx + DG.a * Math.cos(t) / d, DG.cn + DG.a * Math.sin(t) * Math.cos(t) / d]); } return o; }
   var TRACKS = {
+    'dragon-gate': function () { return lemniscate(72); },
     'grid-ring': function () { return arc(1600, 0, -360, 96).slice(0, -1); },
     'train-ring': function () { return arc(2829, 0, -360, 144).slice(0, -1); },
     'quarter-loop': function () { var out = arc(1600, 0, -67.5, 36), i, r; for (i = 1; i <= 8; i++) { r = 1600 - 100 * i; out.push(pol(r, -67.5)); } out = out.concat(arc(800, -67.5, 0, 24).slice(1)); for (i = 1; i < 8; i++) { r = 800 + 100 * i; out.push(pol(r, 0)); } return out; }

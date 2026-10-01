@@ -353,6 +353,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
 <script src="/world-race.js?v=20260929b"></script>
+<script src="/world-race-landmarks.js?v=20261001a"></script>
 <script src="/world-hoverpark.js?v=20260929a"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
@@ -4982,6 +4983,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootFarm3D(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFarm3D || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__farm3d = window.buildFarm3D({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.farm3d = window.__farm3d; }, 1000); })();
+// ── DRAGON GATE CIRCUIT landmarks (world-race-landmarks.js): torii start gate, lantern posts, cones, faint track ribbon ──
+(function bootRaceLandmarks(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
+  try{ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace }); D.raceLandmarks = window.__raceLandmarks; }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
 // ── CITIZENS (world-crowd.js): ~90 pedestrians strolling between entrances / forum / kiosks / stations; never inside measured building footprints ──
 (function bootCrowd(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildWorldCrowd || !H || !H.heightAt || !window.__loadPlayable || !window.__entrances) return; clearInterval(iv);
