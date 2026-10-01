@@ -310,6 +310,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-inventory.js?v=20261001a"></script>
 <script src="/world-offices.js?v=20261001a"></script>
 <script src="/world-quests.js?v=20261001a"></script>
+<script src="/world-farm3d.js?v=20261001a"></script>
 <script src="/world-arcade.js?v=20261001a"></script>   <!-- arcade: slots, higher-lower, hover dash -->
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
 <script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
@@ -4975,6 +4976,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── FARM PATCH (world-farm3d.js): six beds in the SW, growth visible, tap-to-tend button when near ──
+(function bootFarm3D(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!window.buildFarm3D || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
+  window.__farm3d = window.buildFarm3D({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.farm3d = window.__farm3d; }, 1000); })();
 // ── CITIZENS (world-crowd.js): ~90 pedestrians strolling between entrances / forum / kiosks / stations; never inside measured building footprints ──
 (function bootCrowd(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildWorldCrowd || !H || !H.heightAt || !window.__loadPlayable || !window.__entrances) return; clearInterval(iv);
@@ -5157,6 +5162,7 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__farm3d){ try{ window.__farm3d.update(dt); }catch(e){ console.warn('[farm3d] disabled after error', e && e.message); try{ window.__farm3d.dispose(); }catch(_){} window.__farm3d = null; } }
   if(window.__traffic && !(_interiors && _interiors.isInside())){ try{ window.__traffic.update(dt); }catch(e){ console.warn('[traffic] disabled after error', e && e.message); window.__traffic = null; } }
   if(window.__facade && !(_interiors && _interiors.isInside())){ try{ window.__facade.update(dt); }catch(e){ console.warn('[facade] disabled after error', e && e.message); window.__facade = null; } }
   if(window.__mobs){ try{ window.__mobs.update(dt); }catch(e){ console.warn('[mobs] disabled after error', e && e.message); window.__mobs = null; } }   // wilderness mobs
