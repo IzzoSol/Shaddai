@@ -853,10 +853,10 @@ app.get('/api/health', (req, res) => {
 const memTracker = require('./lib/mem-tracker');
 memTracker.start({
   onCritical: () => cache.clear(),
-  // Telegram DM at every 20% step of the memory limit (needs TELEGRAM_BOT_TOKEN + OWNER_TG_CHAT_ID).
+  // Telegram DM at every 20% step of the memory limit (uses SHADDAI_ADMIN_ID, or OWNER_TG_CHAT_ID if set).
   onBand: (band, m, dir) => {
     console.log(`[mem] band ${band}% (${dir}) — RSS ${m.rssMB} MB / ${m.limitMB} MB`);
-    const chat = process.env.OWNER_TG_CHAT_ID;
+    const chat = process.env.OWNER_TG_CHAT_ID || process.env.SHADDAI_ADMIN_ID;
     if (!chat) return;
     const icon = band >= 80 ? '🔴' : band >= 60 ? '🟠' : band >= 40 ? '🟡' : '🟢';
     const verb = dir === 'down' ? 'dropped to' : dir === 'start' ? 'started at' : 'crossed';
