@@ -4896,6 +4896,7 @@ window.__travel = {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(14, 1.2, 8, 32), new THREE.MeshBasicMaterial({ color: col, fog: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 3; g.add(ring);
     g.position.set(x, H.heightAt(x, z), z); g.name = 'entrance-beacon'; scene.add(g); return g; };
   mk(C.door[0], C.door[1], 0xffcf4a, 700); T.stations.forEach(function(st){ mk(st.x, st.z, 0x27e0ff, 500); });
+  let m = 0; const iv2 = setInterval(function(){ if(++m > 240){ clearInterval(iv2); return; } const P = window.__hoverPark; if(!P || !P.entrance) return; clearInterval(iv2); mk(P.entrance.x, P.entrance.z, 0xff3ea5, 600); }, 1000);   // magenta beacon at the Hoverskate park gate
 }, 1000); })();
 // STARTER SPARKS (closed-loop, no cash-out): 500 welcome Sparks once, +100 daily check-in, so a new player can buy a mount / enter a race / reach the realms ──
 (function starterSparks(){ let n = 0; const iv = setInterval(function(){ if(++n > 120){ clearInterval(iv); return; } const S = window.ShdSparks; if(!S || !S.add) return; clearInterval(iv);
