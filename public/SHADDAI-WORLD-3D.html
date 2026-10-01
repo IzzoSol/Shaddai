@@ -700,6 +700,19 @@ window.__worldBuilt = false;
         window.__w3dDebug.wildlife = window.__wildlife;
       }).catch(function(e){ console.warn('[map-v4] wildlife failed:', e && e.message); }).then(function(){ return api; });
     }))
+    .then(_ldStep('mobs', function(api){   // WILDERNESS MOBS (world-mobs.js): 8 camps, themed enemies, Sparks loot, respawn timer
+      if(!api) return api;
+      return _loadScript('/world-mobs.js?v=20261001a').then(function(){
+        window.__mobs = window.buildWorldMobs({ THREE, scene, camera, heightAt: api.heightAt, terrainMeta: _v4Meta || null,
+          getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) }),
+          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
+          onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
+          isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null,
+          onKill: function(k){ try{ if(window.ShdSparks) window.ShdSparks.add(k.sparks, 'mob-kill', k.name); const K = JSON.parse(localStorage.getItem('shd_mobkills_v1') || '{"total":0,"by":{}}'); K.total++; K.by[k.type] = (K.by[k.type] || 0) + 1; localStorage.setItem('shd_mobkills_v1', JSON.stringify(K)); }catch(_){}
+            if(window.Navi && window.Navi.toast) window.Navi.toast(k.name + ' defeated  +' + k.sparks + ' Sparks' + (k.night ? ' (night bonus)' : '')); } });
+        window.__w3dDebug.mobs = window.__mobs; return api;
+      }).catch(function(e){ console.warn('[mobs] failed', e && e.message); return api; });
+    }))
     .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
       if(!api) return api;
       return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20260929a')]).then(function(){
@@ -3786,7 +3799,7 @@ window.__onDragonHit = function(dmg, kind, info){
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
-  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 12); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
+  if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 12); if(window.__mobs) window.__mobs.meleeHit(playerAvatar.position, fwd, 5*V4_U, 14); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
 
 // ── Q = PROJECTILE — fire the current agent's signature bolt (+ a cast pose if the rig has one) ──
 function playerProjectile(){
@@ -3794,6 +3807,7 @@ function playerProjectile(){
   // rigged bodies punctuate the cast with their 'heavy' clip; boneless bodies get a tiny procedural lunge.
   if(!(sig.clip && playPlayerOnce(sig.clip))) _pTween={t:0,dur:0.32,kind:'lunge'};
   fireSignatureVFX(sig);
+  if(window.__mobs) window.__mobs.boltHit(playerAvatar.position, fwd, 32*V4_U, 16);   // Q bolt damages the first mob in line
 }
 // ── E (SHADDAI only) = SECOND projectile — he's the only agent with two attacks and no melee. ──
 function playerProjectile2(){
@@ -4983,6 +4997,11 @@ window.__travel = {
   mk(C.door[0], C.door[1], 0xffcf4a, 700); T.stations.forEach(function(st){ mk(st.x, st.z, 0x27e0ff, 500); });
   let m = 0; const iv2 = setInterval(function(){ if(++m > 240){ clearInterval(iv2); return; } const P = window.__hoverPark; if(!P || !P.entrance) return; clearInterval(iv2); mk(P.entrance.x, P.entrance.z, 0xff3ea5, 600); }, 1000);   // magenta beacon at the Hoverskate park gate
 }, 1000); })();
+// ── CAMP STATUS HUD: when a mob camp is near, show its name, how many are alive and the respawn timer ──
+(function campHud(){ let el = null; setInterval(function(){ const M = window.__mobs; if(!M || (_interiors && _interiors.isInside && _interiors.isInside())){ if(el) el.style.display = 'none'; return; }
+  const c = M.nearestCamp(playerPos); if(!el){ el = document.createElement('div'); el.id = 'campHud'; el.style.cssText = 'position:fixed;left:24px;bottom:44px;z-index:21;padding:6px 12px;border-radius:10px;background:linear-gradient(180deg,rgba(12,18,30,.88),rgba(5,8,15,.94));border:1px solid rgba(232,196,92,.34);color:#e9f4ee;font:600 11px "Chakra Petch",Rajdhani,sans-serif;letter-spacing:.08em;pointer-events:none;display:none'; document.body.appendChild(el); }
+  if(!c || c.distM > 170){ el.style.display = 'none'; return; } el.style.display = 'block';
+  el.innerHTML = '<span style="color:#e8c45c">' + c.name.toUpperCase() + ' CAMP</span> &middot; ' + c.alive + '/' + c.total + ' alive' + (c.respawnIn != null ? ' &middot; <span style="color:#00ff9c">respawn in ' + c.respawnIn + 's</span>' : '') + ' &middot; ' + c.distM + ' m'; }, 500); })();
 // STARTER SPARKS (closed-loop, no cash-out): 500 welcome Sparks once, +100 daily check-in, so a new player can buy a mount / enter a race / reach the realms ──
 (function starterSparks(){ let n = 0; const iv = setInterval(function(){ if(++n > 120){ clearInterval(iv); return; } const S = window.ShdSparks; if(!S || !S.add) return; clearInterval(iv);
   try{ const now = Date.now(); if(!localStorage.getItem('shd_welcome_v2')){ localStorage.setItem('shd_welcome_v2', String(now)); S.add(10000, 'welcome', 'beta test Sparks'); if(window.Navi && window.Navi.toast) window.Navi.toast('Beta: +10,000 Sparks - press I for mounts, bots, boards, travel'); }
@@ -5093,6 +5112,7 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__mobs) window.__mobs.update(dt);   // wilderness mobs
   if(window.__raceChallenge) window.__raceChallenge.update(dt);   // challenge races: countdown, rivals, checkpoints, payout   // MOUNTS (world-mount-ride.js)
 _pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
           && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(_rideOn()) && !_onTrain;
