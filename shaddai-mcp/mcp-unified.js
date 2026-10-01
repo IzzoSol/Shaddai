@@ -950,7 +950,7 @@ const SPECIALISTS = [
   { key: 'oracle',  agent: 'ORACLE',  desc: 'ORACLE — research, knowledge & intelligence. Use for: researching a topic, comparing options, market/knowledge questions, science, health/body, psychology, and anything needing live/current data.' },
   { key: 'zerox',   agent: 'ZEROX',   desc: 'ZEROX — revenue & business. Use for: pricing a product, building an irresistible offer, monetization strategy, and market/crypto analysis.' },
   { key: 'nexus',   agent: 'NEXUS',   desc: 'NEXUS — engineering & systems. Use for: technical plans, code, architecture, github/npm lookups, and structuring/assembling deliverables.' },
-  { key: 'turtle',  agent: 'TURTLE',  desc: 'TURTLE — design direction. Use for: brand and visual concepts, UX ideas, color/type direction. (For an actual image, use shaddai_generate_image.)' },
+  { key: 'turtle',  agent: 'TURTLE',  desc: 'TURTLE — design direction. Use for: brand and visual concepts, UX ideas, color/type direction. (For an actual image, use shaddai_generate_image. To build a GAME with TURTLE, use shaddai_turtle_build.)' },
   { key: 'quill',   agent: 'QUILL',   desc: 'QUILL — writing & copy. Use for: posts, sales pages, emails, docs, product descriptions, and any clear written content.' },
   { key: 'pikadon', agent: 'PIKADON', desc: 'PIKADON — security & risk. Use for: security audits, pre-launch checklists, vulnerability review, and "is this safe?" questions.' },
 ];
@@ -959,6 +959,46 @@ SPECIALISTS.forEach(s => TOOLS.push({
   description: s.desc,
   inputSchema: { type: 'object', properties: { task: { type: 'string', description: 'What you want this specialist to do.' } }, required: ['task'] },
 }));
+
+// ── Game-dev pillar (TURTLE + the game-dev library) ──────────────────────────
+TOOLS.push(
+  {
+    name: 'gamedev_search',
+    description: 'Search the SHADDAI game-dev + motion-studio library — skills, docs, code patterns, shaders and genre templates for Three.js/ECS/browser game building, plus SHADDAI Reel Forge, the code-rendered motion-video studio (motion kit, renderer, beat grid, sound synth, briefing cards, review loop). Game-dev reference material comes from SHADDAI plus MIT-licensed repos, with licenses recorded per source. Returns ranked passages with source and path; fetch the whole thing with gamedev_get.',
+    inputSchema: { type: 'object', properties: {
+      query: { type: 'string', description: 'What you want to build or learn, e.g. "rigidbody physics", "ECS archetype queries", "water shader".' },
+      source: { type: 'string', description: 'Optional — limit to one source (see gamedev_sources).' },
+      kind: { type: 'string', description: 'Optional — skill | doc | template | shader | code.' },
+      topK: { type: 'number', description: 'Max results (default 5, max 20).' },
+    }, required: ['query'] },
+  },
+  {
+    name: 'gamedev_get',
+    description: 'Fetch the full text of a game-dev library section by id (ids come from gamedev_search / gamedev_list).',
+    inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'Section id returned by gamedev_search.' } }, required: ['id'] },
+  },
+  {
+    name: 'gamedev_list',
+    description: 'List game-dev library items (skills, docs, templates, shaders) with titles and paths. Use to browse what exists before searching.',
+    inputSchema: { type: 'object', properties: {
+      source: { type: 'string', description: 'Optional — one source.' },
+      kind: { type: 'string', description: 'Optional — skill | doc | template | shader | code.' },
+    }, required: [] },
+  },
+  {
+    name: 'gamedev_sources',
+    description: 'List the game repos in the library with license, size and section counts.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'shaddai_turtle_build',
+    description: 'Ask TURTLE to help you BUILD a game, game feature, OR a code-rendered motion video with Reel Forge (showreels, product launch films, UI-flow loops, music videos — motion kit, beat-synced sound, review loop). TURTLE pulls from three places at once — the game-dev library (skills, patterns, templates), its RAG knowledge (design/creative), and its own reasoning — and returns a concrete build plan with code. Use for "make me a 3D action game", "add physics to my scene", "how should I structure my ECS".',
+    inputSchema: { type: 'object', properties: {
+      task: { type: 'string', description: 'What you want to build or fix. Include your genre, stack (e.g. Three.js) and what you already have.' },
+      genre: { type: 'string', description: 'Optional — 3d-action | 2d-platformer | arcade-game | isometric-rpg | puzzle-game | vr-experience | motion-video.' },
+    }, required: ['task'] },
+  },
+);
 
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
 async function callAPI(path, body, method) {
@@ -1275,6 +1315,45 @@ async function callTool(name, args) {
     out += '  chars: ' + d.chars + ' · links: ' + (d.links || []).length + '\n';
     out += '\n' + String(d.markdown || d.text || '').slice(0, 4000);
     return out;
+  }
+
+  // Game-dev pillar
+  if (name === 'gamedev_search') {
+    const d = await callAPIGet('/api/gamedev/search?q=' + encodeURIComponent(args.query || '') +
+      (args.source ? '&source=' + encodeURIComponent(args.source) : '') + (args.kind ? '&kind=' + encodeURIComponent(args.kind) : '') +
+      '&k=' + (Number(args.topK) || 5));
+    if (d.error) return 'Error: ' + d.error;
+    if (!d.results || !d.results.length) return 'No game-dev matches for "' + args.query + '". Try gamedev_list to browse.';
+    return d.results.map((r, i) => '[' + (i + 1) + '] ' + r.title + ' — ' + r.source + ':' + r.path + (r.part ? ' (part ' + r.part + ')' : '') +
+      ' [' + r.kind + ', score ' + r.score + ']\nid: ' + r.id + '\n' + r.text.slice(0, 1800)).join('\n\n---\n\n');
+  }
+  if (name === 'gamedev_get') {
+    const d = await callAPIGet('/api/gamedev/doc?id=' + encodeURIComponent(args.id || ''));
+    if (d.error) return 'Error: ' + d.error;
+    return '# ' + d.doc.title + '\n(' + d.doc.source + ':' + d.doc.path + ')\n\n' + d.doc.text;
+  }
+  if (name === 'gamedev_list') {
+    const d = await callAPIGet('/api/gamedev/list?' + (args.source ? 'source=' + encodeURIComponent(args.source) + '&' : '') + (args.kind ? 'kind=' + encodeURIComponent(args.kind) : ''));
+    if (d.error) return 'Error: ' + d.error;
+    return d.items.length + ' items\n' + d.items.slice(0, 200).map(i => '- [' + i.kind + '] ' + i.title + ' — ' + i.source + ':' + i.path).join('\n') + (d.items.length > 200 ? '\n…narrow with source/kind.' : '');
+  }
+  if (name === 'gamedev_sources') {
+    const d = await callAPIGet('/api/gamedev/sources');
+    if (d.error) return 'Error: ' + d.error;
+    return Object.entries(d.sources || {}).map(([k, v]) => '- ' + k + ' — ' + v.license + ', ' + v.sections + ' sections, ' + (v.bytes / 1048576).toFixed(1) + ' MB' + (v.origin ? ' (' + v.origin + ')' : '')).join('\n') || 'No sources ingested.';
+  }
+  if (name === 'shaddai_turtle_build') {
+    const q = (args.genre ? args.genre + ' ' : '') + args.task;
+    const [g, k] = await Promise.all([
+      callAPIGet('/api/gamedev/search?k=4&q=' + encodeURIComponent(q)).catch(() => ({})),
+      callAPIGet('/api/search?agent=TURTLE&k=2&q=' + encodeURIComponent(args.task)).catch(() => ({})),
+    ]);
+    const lib = (g.results || []).map(r => '### ' + r.title + ' (' + r.source + ':' + r.path + ')\n' + r.text.slice(0, 1500)).join('\n\n');
+    const rag = (k.results || []).map(r => '- ' + (r.title || r.source || '') + ': ' + String(r.text || '').slice(0, 400)).join('\n');
+    const ctx = (lib ? 'GAME-DEV LIBRARY:\n' + lib + '\n\n' : '') + (rag ? 'TURTLE KNOWLEDGE:\n' + rag + '\n\n' : '');
+    const d = await callAPI('/api/agentic/run', { agent: 'TURTLE', task: 'You are helping someone BUILD a game. Use the reference material below (cite the source paths you rely on), give a concrete step-by-step build plan and working code for their stack.\n\n' + ctx + 'REQUEST: ' + args.task });
+    if (d.error || !d.response) return (d.error ? 'TURTLE agent unavailable (' + d.error + '). ' : '') + 'Here is the reference material TURTLE found:\n\n' + (ctx || 'No matches — try gamedev_list.');
+    return d.response + (g.results && g.results.length ? '\n\nSources: ' + g.results.map(r => r.source + ':' + r.path).join(', ') : '');
   }
 
   // Specialist / agent runs

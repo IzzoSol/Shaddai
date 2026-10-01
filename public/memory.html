@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI Memory Tracker</title>
+<style>
+  :root { --bg:#06080b; --card:#0d1117; --line:#1c2430; --text:#e6edf3; --dim:#7d8896; --ok:#00ff9c; --warn:#e8c45c; --crit:#ff5c5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui,sans-serif; padding:20px 16px 40px; }
+  main { max-width:760px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--dim); font-size:13px; margin-bottom:18px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .label { color:var(--dim); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  .val { font-size:24px; font-weight:600; margin-top:2px; }
+  .bar { height:14px; background:var(--line); border-radius:7px; overflow:hidden; margin:8px 0 4px; }
+  .fill { height:100%; width:0; background:var(--ok); transition:width .4s, background .4s; }
+  canvas { width:100%; height:160px; display:block; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:12px; font-weight:600; }
+  .ok { background:#00ff9c22; color:var(--ok); } .warn { background:#e8c45c22; color:var(--warn); } .critical,.bad { background:#ff5c5c22; color:var(--crit); }
+  .row { display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .row:last-child { border-bottom:0; }
+  .row span:first-child { color:var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Memory Tracker</h1>
+  <div class="sub">Live process memory (RSS — what Render limits). Refreshes every 15s. <span id="stamp"></span></div>
+
+  <div class="card">
+    <div class="label">RSS vs limit <span id="lvl" class="pill ok">ok</span></div>
+    <div class="val"><span id="rss">–</span> / <span id="limit">–</span> MB <span style="font-size:15px;color:var(--dim)">(<span id="pct">–</span>%)</span></div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+    <div class="card"><div class="label">Peak</div><div class="val" id="peak">–</div></div>
+    <div class="card"><div class="label">Heap used</div><div class="val" id="heap">–</div></div>
+    <div class="card"><div class="label">Trend / hr</div><div class="val" id="trend">–</div></div>
+    <div class="card"><div class="label">Uptime</div><div class="val" id="up">–</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:10px">
+    <div class="label">RSS history (MB)</div>
+    <canvas id="chart" width="720" height="160"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:4px">Services</div>
+    <div class="row"><span>TG signals</span><span id="tg">–</span></div>
+    <div class="row"><span>MCP bridge</span><span id="mcp">–</span></div>
+    <div class="row"><span>Time to limit at current trend</span><span id="eta">–</span></div>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const COLORS = { ok:'#00ff9c', warn:'#e8c45c', critical:'#ff5c5c' };
+function fmtUp(s){ const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h>=24 ? Math.floor(h/24)+'d '+h%24+'h' : h+'h '+m+'m'; }
+function draw(hist, limit){
+  const c=$('chart'), g=c.getContext('2d'), W=c.width, H=c.height;
+  g.clearRect(0,0,W,H);
+  if(hist.length<2) return;
+  const max=Math.max(limit, ...hist.map(h=>h.rssMB));
+  const x=i=>i/(hist.length-1)*(W-4)+2, y=v=>H-6-(v/max)*(H-12);
+  g.strokeStyle='#e8c45c66'; g.setLineDash([4,4]); g.beginPath(); g.moveTo(0,y(limit)); g.lineTo(W,y(limit)); g.stroke(); g.setLineDash([]);
+  g.strokeStyle='#00ff9c'; g.lineWidth=2; g.beginPath();
+  hist.forEach((h,i)=>{ i?g.lineTo(x(i),y(h.rssMB)):g.moveTo(x(i),y(h.rssMB)); }); g.stroke();
+}
+async function load(){
+  try{
+    const [m,o]=await Promise.all([fetch('/api/memory').then(r=>r.json()), fetch('/api/ops/status').then(r=>r.json())]);
+    $('rss').textContent=m.current.rssMB; $('limit').textContent=m.limitMB; $('pct').textContent=m.percentOfLimit;
+    const f=$('fill'); f.style.width=Math.min(100,m.percentOfLimit)+'%'; f.style.background=COLORS[m.level];
+    const l=$('lvl'); l.textContent=m.level; l.className='pill '+m.level;
+    $('peak').textContent=m.peak.rssMB+' MB'; $('heap').textContent=m.current.heapUsedMB+' MB';
+    $('trend').textContent=(m.trendMBPerHour>0?'+':'')+m.trendMBPerHour+' MB'; $('up').textContent=fmtUp(m.uptimeSec);
+    $('eta').textContent=m.minutesToLimitAtTrend==null?'not growing':(m.minutesToLimitAtTrend>1440?'>24h':m.minutesToLimitAtTrend+' min');
+    const t=o.tgSignals;
+    $('tg').innerHTML=t.ok?'<span class="pill ok">live</span> last call '+t.lastCallAgeMin+' min ago · '+t.callsLast24h+' in 24h':'<span class="pill bad">stale</span> '+(t.lastCallAt||t.error||'no calls');
+    $('mcp').innerHTML=o.mcp.ok?'<span class="pill ok">ready</span>':'<span class="pill bad">missing</span>';
+    draw(m.history,m.limitMB);
+    $('stamp').textContent='· updated '+new Date().toLocaleTimeString();
+  }catch(e){ $('stamp').textContent='· fetch failed: '+e.message; }
+}
+load(); setInterval(load,15000);
+</script>
+</body>
+</html>

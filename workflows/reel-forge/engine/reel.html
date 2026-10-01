@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- Reel Forge stage — SHADDAI original.
+     The page exposes one entry point for the renderer: window.__paint(t, blurSpan, taps).
+     A reel is a list of "shots"; each shot paints itself from local time only. -->
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#0b0d10}canvas{display:block}</style>
+<canvas id="stage"></canvas>
+<script type="module">
+import { chase, spring, FEEL, remap, clamp01, seeded, cycle } from './kit.js';
+
+const REEL = { width: 1080, height: 1920, seconds: 12, loop: true };
+const ink = '#f4efe6', paper = '#0b0d10', accent = '#e8c45c';
+
+const stage = document.getElementById('stage');
+stage.width = REEL.width; stage.height = REEL.height;
+const ctx = stage.getContext('2d');
+
+// An off-screen buffer lets the renderer average several sub-moments into one
+// frame (motion blur) without leaving the browser.
+const acc = document.createElement('canvas'); acc.width = REEL.width; acc.height = REEL.height;
+const actx = acc.getContext('2d');
+
+// ── Shots ────────────────────────────────────────────────────────────────────
+// Replace these with your own. Each paints using local time `t` (0 at its start).
+const shots = [
+  { at: 0, len: 4, paint(c, t) {
+      const rise = spring(t - 0.05, ...FEEL.heavy);
+      c.save(); c.translate(REEL.width / 2, REEL.height * 0.5 + (1 - rise) * 140);
+      c.globalAlpha = remap(t, 0, 0.25);
+      c.fillStyle = ink; c.font = '800 220px system-ui, sans-serif'; c.textAlign = 'center';
+      c.fillText('FORGE', 0, 0);
+      c.fillStyle = accent; c.fillRect(-300 * rise, 46, 600 * rise, 14);
+      c.restore();
+  }},
+  { at: 4, len: 4, paint(c, t) {
+      const dice = seeded(11);
+      for (let i = 0; i < 40; i++) {
+        const col = i % 5, row = (i / 5) | 0;
+        const pop = spring(t - row * 0.06 - dice() * 0.12, ...FEEL.crisp);
+        const s = 150 * pop;
+        c.fillStyle = (i * 7) % 11 === 0 ? accent : ink;
+        c.fillRect(140 + col * 190 - s / 2, 380 + row * 190 - s / 2, s, s);
+      }
+  }},
+];
+
+// ── Paint ───────────────────────────────────────────────────────────────────
+function paintAt(c, t) {
+  c.fillStyle = paper; c.fillRect(0, 0, REEL.width, REEL.height);
+  const now = REEL.loop ? cycle(t, REEL.seconds) : t;
+  for (const s of shots) if (now >= s.at && now < s.at + s.len) s.paint(c, now - s.at);
+}
+
+// span: seconds of shutter to blur across; taps: how many sub-moments to average.
+window.__paint = (t, span = 0, taps = 1) => {
+  if (taps <= 1 || span <= 0) { paintAt(ctx, t); return REEL; }
+  actx.clearRect(0, 0, REEL.width, REEL.height);
+  ctx.globalAlpha = 1;
+  for (let i = 0; i < taps; i++) {
+    paintAt(actx, t - span * (1 - i / (taps - 1 || 1)));
+    ctx.globalAlpha = 1 / (i + 1);                    // running average
+    ctx.drawImage(acc, 0, 0);
+  }
+  ctx.globalAlpha = 1;
+  return REEL;
+};
+window.__reel = REEL;
+
+// Preview in a normal browser tab (the renderer drives frames itself).
+if (!navigator.webdriver) {
+  const t0 = performance.now();
+  (function tick() { paintAt(ctx, (performance.now() - t0) / 1000); requestAnimationFrame(tick); })();
+}
+</script>

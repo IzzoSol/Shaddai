@@ -1,0 +1,1968 @@
+{
+ "generatedAt": "2026-10-01T20:58:50.049Z",
+ "count": 103,
+ "categories": [
+  {
+   "name": "Game Dev (TURTLE)",
+   "blurb": "Build games with TURTLE and the game-dev library."
+  },
+  {
+   "name": "Agents",
+   "blurb": "Talk to the 7-agent council or run a task through them."
+  },
+  {
+   "name": "Knowledge & RAG",
+   "blurb": "Search and ask the SHADDAI knowledge brain."
+  },
+  {
+   "name": "Markets & ZEROX",
+   "blurb": "Prices, sentiment, paper trading and commissions."
+  },
+  {
+   "name": "Hall & Community",
+   "blurb": "Arcade, arena, quests, referrals and community stats."
+  },
+  {
+   "name": "Money & Ledger",
+   "blurb": "Spend caps, receipts, payments and plots. Money tools are off unless the operator enables them."
+  },
+  {
+   "name": "Automation",
+   "blurb": "Workflows, schedules, sub-agents, and the agent directory."
+  },
+  {
+   "name": "Web & Media",
+   "blurb": "Search/scrape the web, generate and fetch images and media."
+  }
+ ],
+ "tools": [
+  {
+   "name": "shaddai_orchestrate",
+   "category": "Agents",
+   "description": "Give SHADDAI a complex goal. It decomposes the task and routes each part to the right specialist agent, then returns a plan (execute=false) or runs it and returns combined results (execute=true).",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "The goal / request, in plain language."
+    },
+    {
+     "name": "execute",
+     "type": "boolean",
+     "required": false,
+     "description": "true = run the plan and return results; false (default) = return the plan only."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_run_agent",
+   "category": "Agents",
+   "description": "Run a single SHADDAI specialist on a task. The agent uses its real tools (live data, research, github, markets, etc.) and returns the result plus which tools fired.",
+   "params": [
+    {
+     "name": "agent",
+     "type": "string",
+     "required": true,
+     "description": "ORACLE | ZEROX | NEXUS | TURTLE | QUILL | PIKADON | SHADDAI"
+    },
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What to do."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_generate_image",
+   "category": "Web & Media",
+   "description": "Generate an image with TURTLE (SHADDAI's design agent). Use for logos, illustrations, concept art, thumbnails, social pins, brand visuals, spiritual/art visuals. Give a detailed prompt; returns an image URL you can show or embed.",
+   "params": [
+    {
+     "name": "prompt",
+     "type": "string",
+     "required": true,
+     "description": "Detailed description of the image to create."
+    },
+    {
+     "name": "width",
+     "type": "number",
+     "required": false,
+     "description": "optional pixel width (default 1024)"
+    },
+    {
+     "name": "height",
+     "type": "number",
+     "required": false,
+     "description": "optional pixel height (default 1024)"
+    }
+   ]
+  },
+  {
+   "name": "shaddai_list_agents",
+   "category": "Agents",
+   "description": "List the 7 SHADDAI agents and what each specializes in. Call this first if unsure which agent fits a task.",
+   "params": []
+  },
+  {
+   "name": "shaddai_search_mastery",
+   "category": "Knowledge & RAG",
+   "description": "Search SHADDAI mastery cards (knowledge distilled from thousands of transcripts). Finds relevant chapters from any agent's training: SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON. Returns up to 5 matching passages with source names and relevance scores.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What you want to know — the search question."
+    },
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Optional — narrow to one agent (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Defaults to all."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_create_agent",
+   "category": "Money & Ledger",
+   "description": "Create a named SHADDAI agent that can spend money ONLY up to the caps you set. SHADDAI does NOT host inference — the agent runs on the user's own API key. This is the permit layer: set daily_cap_usd and per_call_cap_usd, then the agent can pay/trade only inside those limits, and you can revoke it one-click. Every action is written to a public ledger.",
+   "params": [
+    {
+     "name": "name",
+     "type": "string",
+     "required": true,
+     "description": "Human name for the agent, e.g. \"Zerox-intern\"."
+    },
+    {
+     "name": "daily_cap_usd",
+     "type": "number",
+     "required": false,
+     "description": "Max USD the agent may spend per day. Default 5."
+    },
+    {
+     "name": "per_call_cap_usd",
+     "type": "number",
+     "required": false,
+     "description": "Max USD for a single call. Default 1. Hard ceiling 2500."
+    },
+    {
+     "name": "allowed_tools",
+     "type": "array",
+     "required": false,
+     "description": "Optional tool allow-list; blank = all tools."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_set_spend_policy",
+   "category": "Money & Ledger",
+   "description": "Update an existing agent's spend policy (new daily/per-call caps or tool allow-list). Apply the new limit immediately — existing daily spend counts against the new cap.",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "The agent id (agt_...)."
+    },
+    {
+     "name": "daily_cap_usd",
+     "type": "number",
+     "required": false,
+     "description": "New max daily spend in USD. Optional."
+    },
+    {
+     "name": "per_call_cap_usd",
+     "type": "number",
+     "required": false,
+     "description": "New max spend per single call in USD. Optional."
+    },
+    {
+     "name": "allowed_tools",
+     "type": "array",
+     "required": false,
+     "description": "Optional new tool allow-list; leave unset to keep current."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_revoke_agent",
+   "category": "Money & Ledger",
+   "description": "Revoke an agent immediately (one-click kill). The agent can no longer spend or run. Irreversible — recorded in the public ledger.",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "The agent id (agt_...) to revoke."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_get_agent_ledger",
+   "category": "Money & Ledger",
+   "description": "Read the public ledger — every agent_create / refuse / spend / revoke with redacted amounts. Show this before and after moving money so the user can see exactly what an agent did.",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": false,
+     "description": "Optional — narrow to a single agent id (agt_...). Omit for the full public ledger."
+    }
+   ]
+  },
+  {
+   "name": "rag_search",
+   "category": "Knowledge & RAG",
+   "description": "Search the SHADDAI RAG brain (mastery / transcrips / knowledge store) and return ranked text passages with scores, source titles and agents. This is the working RAG brain on the live API. Use for bible interpretation, lessons, horoscopes, moon cycles, and any grounded knowledge retrieval.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What to search for."
+    },
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Optional — narrow to one agent (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Defaults to all agents."
+    },
+    {
+     "name": "topK",
+     "type": "number",
+     "required": false,
+     "description": "Max results (default 6, max 30)."
+    }
+   ]
+  },
+  {
+   "name": "rag_ask",
+   "category": "Knowledge & RAG",
+   "description": "Ask the SHADDAI RAG brain a question and get a grounded, cited answer plus sources. Use for \"what does SHADDAI know about X?\" / bible interpretation, lessons, horoscopes, moon cycles, and any grounded Q&A. NOTE: free tier allows a few grounded asks per day; sending the SHADDAI_API_KEY raises/unlocks it.",
+   "params": [
+    {
+     "name": "question",
+     "type": "string",
+     "required": true,
+     "description": "The question to answer from the knowledge base."
+    },
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Optional — agent whose knowledge to answer from (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Default SHADDAI."
+    }
+   ]
+  },
+  {
+   "name": "list_rag_docs",
+   "category": "Knowledge & RAG",
+   "description": "List the organized knowledge digests for an agent — each a structured breakdown (title, thesis, chapters, insights, quotes) of one source. Use before asking to see what organized knowledge exists.",
+   "params": [
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Agent whose digests to list (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Default SHADDAI."
+    }
+   ]
+  },
+  {
+   "name": "memory_search",
+   "category": "Knowledge & RAG",
+   "description": "Semantic-memory search across saved SHADDAI notes. Returns scored text snippets by meaning, not keyword.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What to search for."
+    },
+    {
+     "name": "topK",
+     "type": "number",
+     "required": false,
+     "description": "Max results (default 10)."
+    }
+   ]
+  },
+  {
+   "name": "get_route",
+   "category": "Knowledge & RAG",
+   "description": "Route a message to the right SHADDAI agent based on what it is about (routeMessage). Returns which agent should handle it and why. Use when unsure which specialist fits a request.",
+   "params": [
+    {
+     "name": "message",
+     "type": "string",
+     "required": true,
+     "description": "The message / request to route."
+    }
+   ]
+  },
+  {
+   "name": "brain_overview",
+   "category": "Knowledge & RAG",
+   "description": "High-level stats for the whole SHADDAI knowledge brain: per-agent source/chunk/word counts, top terms, and corpus totals. Use to gauge what knowledge each agent holds before diving in.",
+   "params": []
+  },
+  {
+   "name": "brain_knowledge_map",
+   "category": "Knowledge & RAG",
+   "description": "The organized subject index of the SHADDAI brain — which agent owns which topics, and how many organized sources sit under each. Optional agent narrows to one specialist.",
+   "params": [
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Optional — narrow to one agent (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON). Omit for the whole corpus."
+    }
+   ]
+  },
+  {
+   "name": "brain_get_digest",
+   "category": "Knowledge & RAG",
+   "description": "Fetch the FULL structured digest for one source (all chapters, insights and quotes), given the agent and the digest name from list_rag_docs.",
+   "params": [
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Agent whose digest to fetch (SHADDAI, ORACLE, ZEROX, NEXUS, TURTLE, QUILL, PIKADON)."
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "required": true,
+     "description": "The digest name/id shown by list_rag_docs (e.g. \"DIGEST_hormozi_100m_offer\")."
+    }
+   ]
+  },
+  {
+   "name": "aura_ingest",
+   "category": "Knowledge & RAG",
+   "description": "Teach an agent: fetch a PUBLIC https URL (Jina → Firecrawl → bundled scraper), chunk it (~500 tokens) and store it in a labeled AURA box. box like \"oracle/demo\" (private to you) or \"hall/docs\" (shared, everyone reads free). Metered: free ingests per day, then a paid rail. PIKADON blocks internal/private/admin URLs.",
+   "params": [
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Public https:// URL to ingest (docs page, article, whitepaper...)."
+    },
+    {
+     "name": "box",
+     "type": "string",
+     "required": false,
+     "description": "Box id: \"office\" | \"office/slug\" | \"office/owner/slug\". Default \"hall/default\"."
+    },
+    {
+     "name": "title",
+     "type": "string",
+     "required": false,
+     "description": "Optional friendly title for the box."
+    }
+   ]
+  },
+  {
+   "name": "aura_search",
+   "category": "Knowledge & RAG",
+   "description": "Search the AURA boxes the caller can read (own private boxes + every hall/ box) and return ranked snippet hits with source URLs. Complements rag_search (the big TF-IDF brain) with YOUR personal/boxed knowledge.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What to search for."
+    },
+    {
+     "name": "box",
+     "type": "string",
+     "required": false,
+     "description": "Optional — restrict to a box (prefix), e.g. \"oracle/demo\"."
+    },
+    {
+     "name": "topK",
+     "type": "number",
+     "required": false,
+     "description": "Max snippets (default 3, max 8)."
+    }
+   ]
+  },
+  {
+   "name": "aura_boxes",
+   "category": "Knowledge & RAG",
+   "description": "List the AURA boxes visible to the caller: box id, office, owner, slug, visibility, title, source URL, chunk count. Use before searching to know what boxed knowledge exists.",
+   "params": []
+  },
+  {
+   "name": "shaddai_media_status",
+   "category": "Web & Media",
+   "description": "SHADDAI media engine — check the downloader: engine version, host and the 20+ supported services (YouTube, TikTok, Twitter/X, Instagram, Reddit, Vimeo, Bluesky, SoundCloud, Twitch clips...). Run this first to confirm the engine is online before fetching.",
+   "params": []
+  },
+  {
+   "name": "shaddai_media_fetch",
+   "category": "Web & Media",
+   "description": "SHADDAI media engine — download a PUBLIC video/audio from a supported service. Returns the file name, status and a working download/save link (open in a browser to save). downloadMode: auto | audio (audio-only) | mute (no audio). PIKADON blocks internal/private URLs.",
+   "params": [
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Public URL of the media to capture (YouTube, TikTok, Twitter/X, Instagram, Vimeo, Reddit, Bluesky, SoundCloud...)."
+    },
+    {
+     "name": "downloadMode",
+     "type": "string",
+     "required": false,
+     "description": "auto (default) | audio (audio only) | mute (video without audio)."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_capture",
+   "category": "Agents",
+   "description": "SHADDAI capture — ONE tool for all three: media download, web scraping, and the video clipper. mode: media = download a public video/audio (returns a working download link); scrape = turn a public https URL into clean markdown + title + links (SSRF-guarded, max_chars 300..200000, default 200000); clip = forward to the video clipper (clipper_path like /cp, plus optional payload object). Run /api/capture status first if unsure which sub-system is up.",
+   "params": [
+    {
+     "name": "mode",
+     "type": "string",
+     "required": true,
+     "description": "media | scrape | clip — what to do with the URL."
+    },
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Public https URL to capture, scrape, or clip."
+    },
+    {
+     "name": "downloadMode",
+     "type": "string",
+     "required": false,
+     "description": "media mode: auto (default) | audio | mute."
+    },
+    {
+     "name": "max_chars",
+     "type": "number",
+     "required": false,
+     "description": "scrape mode: how many characters of the page to keep (default 200000)."
+    },
+    {
+     "name": "clipper_path",
+     "type": "string",
+     "required": false,
+     "description": "clip mode: endpoint path on the clipper, e.g. /cp."
+    },
+    {
+     "name": "payload",
+     "type": "object",
+     "required": false,
+     "description": "clip mode: JSON payload forwarded to the clipper."
+    }
+   ]
+  },
+  {
+   "name": "zerox_virtuals_me",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — check the SHADDAI Virtuals ACP identity: agent id, wallet address, and registration state. Run this first to confirm the VIRTUALS_API_KEY is registered and active before creating jobs.",
+   "params": []
+  },
+  {
+   "name": "zerox_virtuals_agent",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — look up a Virtuals marketplace agent and its offerings by agent id. Use to discover what another agent can do before paying it (browse first, then create a job).",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "Virtuals agent id (e.g. \"8654\") or the public \"/api/agents/{id}/details\" slug."
+    }
+   ]
+  },
+  {
+   "name": "zerox_virtuals_job",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — create a paid job on the Virtuals ACP marketplace (buy a service from another agent). Needs the provider wallet address, the offering name, and the service requirements JSON. Poll with zerox_virtuals_job_status until COMPLETED/REJECTED/EXPIRED — payment is handled by ACP escrow automatically.",
+   "params": [
+    {
+     "name": "provider_wallet",
+     "type": "string",
+     "required": true,
+     "description": "Provider agent wallet address (0x...)."
+    },
+    {
+     "name": "offering",
+     "type": "string",
+     "required": true,
+     "description": "Job offering name, e.g. \"twitter_search\"."
+    },
+    {
+     "name": "requirements",
+     "type": "string",
+     "required": false,
+     "description": "Service requirements as JSON, e.g. {\"query\":\"AI agents\",\"count\":10}."
+    },
+    {
+     "name": "automated",
+     "type": "boolean",
+     "required": false,
+     "description": "IsAutomated flag. Default true."
+    }
+   ]
+  },
+  {
+   "name": "zerox_virtuals_job_status",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — poll the status of a Virtuals ACP job by id. Returns phase (REQUEST / COMPLETED / REJECTED / EXPIRED), deliverable, and memo history. Poll until it reaches a terminal phase.",
+   "params": [
+    {
+     "name": "job_id",
+     "type": "string",
+     "required": true,
+     "description": "The ACP job id returned by zerox_virtuals_job."
+    }
+   ]
+  },
+  {
+   "name": "zerox_virtuals_terminal_log",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — post an activity log entry to the Virtuals agent console (Terminal API) so your agent activity is visible live on virtuals.io while it works. Requires a Terminal access token for this key.",
+   "params": [
+    {
+     "name": "title",
+     "type": "string",
+     "required": true,
+     "description": "Activity title, max 255 chars."
+    },
+    {
+     "name": "body",
+     "type": "string",
+     "required": true,
+     "description": "Markdown body of the activity."
+    },
+    {
+     "name": "category",
+     "type": "string",
+     "required": false,
+     "description": "Activity category, e.g. \"general\" (default \"general\")."
+    },
+    {
+     "name": "framework",
+     "type": "string",
+     "required": false,
+     "description": "Framework name, e.g. \"game\" (default \"game\")."
+    }
+   ]
+  },
+  {
+   "name": "zerox_market_scan",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — scan live markets for opportunities: top movers by % change, biggest volume, and the crypto Fear & Greed climate. Use before pricing or recommending trades.",
+   "params": []
+  },
+  {
+   "name": "zerox_price",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — live price for a crypto symbol (BTC, ETH, SOL, WIF, ...) or a Solana token mint address. Returns price, 24h change and source. Comma-separate for multiple (e.g. \"BTC,SOL,WIF\").",
+   "params": [
+    {
+     "name": "symbols",
+     "type": "string",
+     "required": true,
+     "description": "Symbols or Solana mint addresses, comma-separated."
+    }
+   ]
+  },
+  {
+   "name": "zerox_sentiment",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — current crypto Fear & Greed index (0 extreme fear → 100 extreme greed). Use to judge whether markets favor buying (fear) or caution (greed).",
+   "params": []
+  },
+  {
+   "name": "zerox_commission_rate",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — get or set the commission rate ZEROX takes on deals it routes (e.g. 0.10 = 10%). With no args returns the current rate and what a $1,000 deal earns. Persisted to data/zerox-commissions.json.",
+   "params": [
+    {
+     "name": "rate",
+     "type": "number",
+     "required": false,
+     "description": "Optional new commission rate, 0..1 (e.g. 0.10 for 10%)."
+    }
+   ]
+  },
+  {
+   "name": "zerox_record_deal",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — record a closed deal and auto-compute the commission ZEROX takes on it (commission = flat_usd if given, else gross × current rate). Appends to the commission ledger. Use after an ACP job completes or a service is sold.",
+   "params": [
+    {
+     "name": "gross_usd",
+     "type": "number",
+     "required": true,
+     "description": "Gross value of the deal in USD."
+    },
+    {
+     "name": "counterparty",
+     "type": "string",
+     "required": true,
+     "description": "Who paid / was paid (agent name, wallet, or user)."
+    },
+    {
+     "name": "service",
+     "type": "string",
+     "required": true,
+     "description": "What was delivered (e.g. \"twitter_search job\", \"report\")."
+    },
+    {
+     "name": "venue",
+     "type": "string",
+     "required": false,
+     "description": "Venue: \"acp\", \"direct\", \"subscription\", etc. Default \"acp\"."
+    },
+    {
+     "name": "flat_usd",
+     "type": "number",
+     "required": false,
+     "description": "Optional flat fee in USD (overrides the rate)."
+    },
+    {
+     "name": "escrow_ref",
+     "type": "string",
+     "required": false,
+     "description": "Optional ACP job id or reference."
+    }
+   ]
+  },
+  {
+   "name": "zerox_commissions",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — commission ledger summary: total gross routed, total fees taken, current rate, per-venue breakdown, and the latest deals.",
+   "params": []
+  },
+  {
+   "name": "zerox_paper_open",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — open a PAPER position (simulated, no real money) at the live price. Sizes with Kelly criterion when confidence is given (else 25% of cash). Use to demo/manage trading for people before any real funds are wired.",
+   "params": [
+    {
+     "name": "symbol",
+     "type": "string",
+     "required": true,
+     "description": "Symbol (BTC, SOL, WIF...) or Solana mint."
+    },
+    {
+     "name": "side",
+     "type": "string",
+     "required": false,
+     "description": "buy or sell (short). Default buy."
+    },
+    {
+     "name": "qty",
+     "type": "number",
+     "required": false,
+     "description": "Optional quantity; defaults to a % of account cash."
+    },
+    {
+     "name": "confidence",
+     "type": "number",
+     "required": false,
+     "description": "Optional 0..1 edge estimate used for Kelly sizing."
+    },
+    {
+     "name": "account",
+     "type": "string",
+     "required": false,
+     "description": "Optional account name; default \"main\"."
+    }
+   ]
+  },
+  {
+   "name": "zerox_paper_close",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — close a PAPER position at the live price and realize its P&L into the account. Closes by position_id, or by symbol (closes all of it).",
+   "params": [
+    {
+     "name": "symbol",
+     "type": "string",
+     "required": false,
+     "description": "Symbol or mint of the position to close."
+    },
+    {
+     "name": "position_id",
+     "type": "string",
+     "required": false,
+     "description": "Exact position id to close (preferred over symbol)."
+    },
+    {
+     "name": "qty",
+     "type": "number",
+     "required": false,
+     "description": "Optional partial quantity; default all."
+    },
+    {
+     "name": "account",
+     "type": "string",
+     "required": false,
+     "description": "Optional account name; default \"main\"."
+    }
+   ]
+  },
+  {
+   "name": "zerox_paper_portfolio",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — paper account state: cash, open positions with live unrealized P&L, total equity, realized P&L and win rate. Use to report to people whose money ZEROX is demo-managing.",
+   "params": [
+    {
+     "name": "account",
+     "type": "string",
+     "required": false,
+     "description": "Optional account name; default \"main\"."
+    }
+   ]
+  },
+  {
+   "name": "zerox_paper_weekly",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — weekly paper-trading P&L report: this week vs last, best/worst trade, and a running total per week.",
+   "params": [
+    {
+     "name": "account",
+     "type": "string",
+     "required": false,
+     "description": "Optional account name; default \"main\"."
+    }
+   ]
+  },
+  {
+   "name": "zerox_wallet_status",
+   "category": "Markets & ZEROX",
+   "description": "ZEROX — live balance of the SHADDAI agent wallets (Virtuals ACP provider on Base + Solana agent wallet). Read-only, no funds moved. Use before any real-money action to confirm gas/funding exists.",
+   "params": []
+  },
+  {
+   "name": "forge_spawn_sub",
+   "category": "Automation",
+   "description": "HALL — spawn a lightweight sub-agent under a parent instance (owned office). Role = scanner|analyst|monitor|poster|runner. The sub does a bounded toolset of work; the platform cut is NOT double-charged inside an owner's own chain. Same owner, compound labor.",
+   "params": [
+    {
+     "name": "parent_id",
+     "type": "string",
+     "required": true,
+     "description": "The owning instance id (e.g. zerox-acct-1)."
+    },
+    {
+     "name": "role",
+     "type": "string",
+     "required": true,
+     "description": "scanner | analyst | monitor | poster | runner"
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "required": false,
+     "description": "Optional display name for the sub-agent."
+    },
+    {
+     "name": "tools",
+     "type": "array",
+     "required": false,
+     "description": "Optional tool allow-list for the sub."
+    },
+    {
+     "name": "takes_usd",
+     "type": "number",
+     "required": false,
+     "description": "Optional per-task attribution the sub \"keeps\" (default 0.10)."
+    }
+   ]
+  },
+  {
+   "name": "forge_delegate",
+   "category": "Automation",
+   "description": "HALL — delegate a batch of tasks to a sub-agent. Returns the work id; the journal is queued for the scheduler (auto-run hooks) or a runner can complete it with forge_complete_work.",
+   "params": [
+    {
+     "name": "sub_id",
+     "type": "string",
+     "required": true,
+     "description": "The sub-agent id (sub-...)."
+    },
+    {
+     "name": "tasks",
+     "type": "array",
+     "required": true,
+     "description": "The tasks, e.g. [\"scan So11111111111111111111111111111111111111112\",\"rank top 3\"]."
+    },
+    {
+     "name": "est_usd",
+     "type": "number",
+     "required": false,
+     "description": "Optional expected payout for this batch (attribution only)."
+    }
+   ]
+  },
+  {
+   "name": "forge_complete_work",
+   "category": "Automation",
+   "description": "HALL — mark a delegated work batch done and record its results. Credits the sub-agent: calls_done += tasks, earned_usd += expected.",
+   "params": [
+    {
+     "name": "work_id",
+     "type": "string",
+     "required": true,
+     "description": "The work item id (wk-...)."
+    },
+    {
+     "name": "results",
+     "type": "object",
+     "required": false,
+     "description": "Per-task results object to journal."
+    }
+   ]
+  },
+  {
+   "name": "forge_sub_status",
+   "category": "Automation",
+   "description": "HALL — list a parent's sub-agents, their live work queue, and delegation stats (sub_count, calls done, earned, queued batches).",
+   "params": [
+    {
+     "name": "parent_id",
+     "type": "string",
+     "required": true,
+     "description": "The owning instance id."
+    },
+    {
+     "name": "detail",
+     "type": "boolean",
+     "required": false,
+     "description": "true = full per-sub + per-work detail."
+    }
+   ]
+  },
+  {
+   "name": "directory_register",
+   "category": "Automation",
+   "description": "HALL — publish a forged office to Office Avenue so other users/agents can find and hire it. Prices are in USDC per tool name.",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "Instance id, e.g. zerox-acct-1."
+    },
+    {
+     "name": "templateId",
+     "type": "string",
+     "required": true,
+     "description": "hall | zerox | oracle | quill | turtle | nexus | pikadon"
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "required": true,
+     "description": "Display name."
+    },
+    {
+     "name": "owner",
+     "type": "string",
+     "required": true,
+     "description": "Owner identifier."
+    },
+    {
+     "name": "description",
+     "type": "string",
+     "required": false,
+     "description": "What this office offers."
+    },
+    {
+     "name": "prices_usdc",
+     "type": "object",
+     "required": false,
+     "description": "e.g. {\"scan\": 0.5, \"chart\": 9}."
+    },
+    {
+     "name": "status",
+     "type": "string",
+     "required": false,
+     "description": "live | sandbox (default live)."
+    }
+   ]
+  },
+  {
+   "name": "directory_search",
+   "category": "Automation",
+   "description": "HALL — search Office Avenue (instances + services + descriptions). Returns id, template, owner, price list, calls so far.",
+   "params": [
+    {
+     "name": "q",
+     "type": "string",
+     "required": false,
+     "description": "Search text; empty = all live instances."
+    },
+    {
+     "name": "template",
+     "type": "string",
+     "required": false,
+     "description": "Optional filter by template id (zerox, oracle, ...)."
+    }
+   ]
+  },
+  {
+   "name": "directory_list",
+   "category": "Automation",
+   "description": "HALL — list the 7 office templates you can forge, with their default services and accent color.",
+   "params": []
+  },
+  {
+   "name": "graph_log_discovery",
+   "category": "Knowledge & RAG",
+   "description": "ORACLE/HALL — log a collective-memory finding: rug_warning | alpha | pattern | correlation. Links agent → made → discovery → flags → target. Other agents later see it via graph_context.",
+   "params": [
+    {
+     "name": "agent_id",
+     "type": "string",
+     "required": true,
+     "description": "The instance id making the finding."
+    },
+    {
+     "name": "type",
+     "type": "string",
+     "required": true,
+     "description": "rug_warning | alpha | pattern | correlation"
+    },
+    {
+     "name": "target",
+     "type": "string",
+     "required": false,
+     "description": "What it flags (mint, contract, symbol, topic)."
+    },
+    {
+     "name": "reason",
+     "type": "string",
+     "required": true,
+     "description": "Why."
+    },
+    {
+     "name": "confidence",
+     "type": "number",
+     "required": false,
+     "description": "0..1 confidence."
+    },
+    {
+     "name": "was_correct",
+     "type": "boolean",
+     "required": false,
+     "description": "Optional — true/false once known (feeds reputation)."
+    }
+   ]
+  },
+  {
+   "name": "graph_context",
+   "category": "Knowledge & RAG",
+   "description": "ORACLE/HALL — fetch every discovery other agents have logged about a target, ranked by rep_score. Lets an instance inherit warnings (bundle-holder flags, rugs) instead of re-learning.",
+   "params": [
+    {
+     "name": "target",
+     "type": "string",
+     "required": true,
+     "description": "The mint/contract/symbol/topic to look up."
+    }
+   ]
+  },
+  {
+   "name": "graph_neighbors",
+   "category": "Knowledge & RAG",
+   "description": "ORACLE/HALL — BFS neighborhood around an entity in the AURA-lite graph (entities + edges + paths). Shows how things connect within N hops.",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "Entity id."
+    },
+    {
+     "name": "depth",
+     "type": "number",
+     "required": false,
+     "description": "Max hops (default 2)."
+    }
+   ]
+  },
+  {
+   "name": "ledger_receipt",
+   "category": "Money & Ledger",
+   "description": "HALL — log a paid receipt on an instance. Computes the platform split automatically (owner 85%, hall 15%). Append-only; this is the revenue source of truth.",
+   "params": [
+    {
+     "name": "instance_id",
+     "type": "string",
+     "required": true,
+     "description": "The office that earned it."
+    },
+    {
+     "name": "caller",
+     "type": "string",
+     "required": false,
+     "description": "Who paid (user or agent id)."
+    },
+    {
+     "name": "tool",
+     "type": "string",
+     "required": false,
+     "description": "Which tool/service was billed."
+    },
+    {
+     "name": "amount_usdc",
+     "type": "number",
+     "required": true,
+     "description": "Gross USDC charged."
+    },
+    {
+     "name": "note",
+     "type": "string",
+     "required": false,
+     "description": "Optional context."
+    }
+   ]
+  },
+  {
+   "name": "ledger_summary",
+   "category": "Money & Ledger",
+   "description": "HALL — platform ledger summary: receipts, gross, hall cut collected, owner share, per-instance breakdown, payouts made. Use monthly to see what owners are owed.",
+   "params": []
+  },
+  {
+   "name": "quota_status",
+   "category": "Money & Ledger",
+   "description": "HALL — free-tier quota check for a user: calls used today vs the free allowance (5/day). After the allowance, paid tools 402.",
+   "params": [
+    {
+     "name": "user_id",
+     "type": "string",
+     "required": true,
+     "description": "The user id."
+    }
+   ]
+  },
+  {
+   "name": "reputation_status",
+   "category": "Money & Ledger",
+   "description": "HALL — compute an instance's reputation from history: activity, corrected-lead accuracy, discovery citations. Returns tier (Novice→Master) + perks (discount, priority queue, vip tools, featured).",
+   "params": [
+    {
+     "name": "instance_id",
+     "type": "string",
+     "required": true,
+     "description": "The instance id."
+    }
+   ]
+  },
+  {
+   "name": "sched_add",
+   "category": "Automation",
+   "description": "HALL — schedule a recurring job (zerox.watch BTC threshold, hall.announce, collect_rent, oracle.weekly, pikadon.recheck, sub_agent_work). Returns job id.",
+   "params": [
+    {
+     "name": "type",
+     "type": "string",
+     "required": true,
+     "description": "Job type: zerox.watch | hall.announce | collect_rent | oracle.weekly | pikadon.recheck | sub_agent_work."
+    },
+    {
+     "name": "data",
+     "type": "string",
+     "required": false,
+     "description": "Optional JSON job payload, e.g. {\"symbol\":\"BTC\",\"threshold\":60000}."
+    },
+    {
+     "name": "every_ms",
+     "type": "number",
+     "required": false,
+     "description": "Repeat interval in ms (default 1h)."
+    },
+    {
+     "name": "at",
+     "type": "string",
+     "required": false,
+     "description": "Optional first-run ISO timestamp."
+    }
+   ]
+  },
+  {
+   "name": "sched_list",
+   "category": "Automation",
+   "description": "HALL — list scheduled jobs and their last result/error.",
+   "params": [
+    {
+     "name": "type",
+     "type": "string",
+     "required": false,
+     "description": "Optional job type filter."
+    }
+   ]
+  },
+  {
+   "name": "sched_cancel",
+   "category": "Automation",
+   "description": "HALL — cancel a scheduled job by id.",
+   "params": [
+    {
+     "name": "job_id",
+     "type": "string",
+     "required": true,
+     "description": "The scheduler job id."
+    }
+   ]
+  },
+  {
+   "name": "x402_info",
+   "category": "Money & Ledger",
+   "description": "HALL/PAYBOX — show x402 payment status: receiver wallet, per-tool USDC prices, whether the paywall is enforced, and the quote→intent→confirm flow.",
+   "params": []
+  },
+  {
+   "name": "x402_quote",
+   "category": "Money & Ledger",
+   "description": "HALL/PAYBOX — quote the USDC price of a paid tool on the Solana x402 rail.",
+   "params": [
+    {
+     "name": "tool",
+     "type": "string",
+     "required": true,
+     "description": "Tool name to price, e.g. zerox_market_scan."
+    }
+   ]
+  },
+  {
+   "name": "x402_intent",
+   "category": "Money & Ledger",
+   "description": "HALL/PAYBOX — create a payment intent and return a solana: pay link (memo = intent id). Pay it in any Solana USDC wallet, then x402_confirm.",
+   "params": [
+    {
+     "name": "tool",
+     "type": "string",
+     "required": true,
+     "description": "Paid tool name."
+    },
+    {
+     "name": "user_id",
+     "type": "string",
+     "required": false,
+     "description": "Your instance/user id (receives the ledger credit)."
+    }
+   ]
+  },
+  {
+   "name": "x402_confirm",
+   "category": "Money & Ledger",
+   "description": "HALL/PAYBOX — verify a Solana tx against the intent (reads postTokenBalances on-chain) and log the paid receipt if the USDC delta matches.",
+   "params": [
+    {
+     "name": "intent_id",
+     "type": "string",
+     "required": true,
+     "description": "Intent id returned by x402_intent."
+    },
+    {
+     "name": "tx",
+     "type": "string",
+     "required": true,
+     "description": "Solana transaction signature."
+    }
+   ]
+  },
+  {
+   "name": "hall_post",
+   "category": "Hall & Community",
+   "description": "SHADDAI — post a message to the Hall Telegram (@ShaddaiHall, or a bound chat). Requires TELEGRAM_BOT_TOKEN in backend/.env.",
+   "params": [
+    {
+     "name": "text",
+     "type": "string",
+     "required": true,
+     "description": "Message to send."
+    },
+    {
+     "name": "chat_id",
+     "type": "string",
+     "required": false,
+     "description": "Optional override chat id (defaults to TELEGRAM_HALL_CHAT_ID or the user\\'s bound chat)."
+    }
+   ]
+  },
+  {
+   "name": "hall_bind",
+   "category": "Hall & Community",
+   "description": "SHADDAI — bind an instance/user to a Telegram chat so its digests and paid-call receipts route there.",
+   "params": [
+    {
+     "name": "user_id",
+     "type": "string",
+     "required": true,
+     "description": "Instance or user id."
+    },
+    {
+     "name": "chat_id",
+     "type": "string",
+     "required": true,
+     "description": "Telegram chat id (the user\\'s DM or a group)."
+    }
+   ]
+  },
+  {
+   "name": "plot_status",
+   "category": "Money & Ledger",
+   "description": "HALL — list digital-property plots across Bazaar/Orcale Tower/Nexus Hub/Arena: owners, prices, rents, visits.",
+   "params": [
+    {
+     "name": "district",
+     "type": "string",
+     "required": false,
+     "description": "Optional district filter: bazaar | oracle_tower | nexus_hub | arena."
+    }
+   ]
+  },
+  {
+   "name": "plot_buy",
+   "category": "Money & Ledger",
+   "description": "HALL — register purchase of an available plot by an instance (paper ownership now; NFT minting hooks in later).",
+   "params": [
+    {
+     "name": "plot_id",
+     "type": "string",
+     "required": true,
+     "description": "Plot id from plot_status."
+    },
+    {
+     "name": "owner",
+     "type": "string",
+     "required": true,
+     "description": "Buying instance id."
+    },
+    {
+     "name": "tx",
+     "type": "string",
+     "required": false,
+     "description": "Optional purchase tx signature."
+    }
+   ]
+  },
+  {
+   "name": "mastery_create",
+   "category": "Knowledge & RAG",
+   "description": "HALL — an instance packages its patterns + memory snapshot as a sellable Mastery Pack (75% royalty to creator).",
+   "params": [
+    {
+     "name": "instance_id",
+     "type": "string",
+     "required": true,
+     "description": "Creating instance id."
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "required": true,
+     "description": "Pack name."
+    },
+    {
+     "name": "description",
+     "type": "string",
+     "required": false,
+     "description": "What a buyer gets."
+    },
+    {
+     "name": "price_usdc",
+     "type": "number",
+     "required": true,
+     "description": "Sale price in USDC."
+    },
+    {
+     "name": "patterns",
+     "type": "string",
+     "required": false,
+     "description": "Optional JSON array of encoded patterns ('{\"start\":\"PM bet\",\"ans\":\"buy\"}...')."
+    },
+    {
+     "name": "win_rate",
+     "type": "number",
+     "required": false,
+     "description": "Optional historical win rate."
+    }
+   ]
+  },
+  {
+   "name": "mastery_list",
+   "category": "Knowledge & RAG",
+   "description": "HALL — list mastery packs (optionally by creator), sales and 75% royalty revenue.",
+   "params": [
+    {
+     "name": "instance_id",
+     "type": "string",
+     "required": false,
+     "description": "Optional creator instance filter."
+    }
+   ]
+  },
+  {
+   "name": "workflow_create",
+   "category": "Automation",
+   "description": "HALL — build a no-code workflow whose steps are named MCP tools (zerox_price, graph_context, quill_rewrite...). Steps JSON: [{\"tool\":\"zerox_price\",\"args\":{\"symbol\":\"BTC\"}}].",
+   "params": [
+    {
+     "name": "name",
+     "type": "string",
+     "required": true,
+     "description": "Workflow name."
+    },
+    {
+     "name": "description",
+     "type": "string",
+     "required": false,
+     "description": "What it does."
+    },
+    {
+     "name": "steps",
+     "type": "string",
+     "required": true,
+     "description": "JSON array of {tool, args, on_fail} steps."
+    },
+    {
+     "name": "price_usdc",
+     "type": "number",
+     "required": false,
+     "description": "Optional asking price when published."
+    },
+    {
+     "name": "creator",
+     "type": "string",
+     "required": false,
+     "description": "Creator instance id."
+    },
+    {
+     "name": "published",
+     "type": "boolean",
+     "required": false,
+     "description": "True to publish immediately."
+    }
+   ]
+  },
+  {
+   "name": "workflow_run",
+   "category": "Automation",
+   "description": "HALL — execute a workflow. Step outputs land in {{step_1.output}} etc. and can be interpolated into later step args.",
+   "params": [
+    {
+     "name": "workflow_id",
+     "type": "string",
+     "required": true,
+     "description": "id from workflow_list."
+    },
+    {
+     "name": "context",
+     "type": "string",
+     "required": false,
+     "description": "Optional JSON seed context."
+    }
+   ]
+  },
+  {
+   "name": "workflow_list",
+   "category": "Automation",
+   "description": "HALL — list workflows, status (draft/published), step count, price.",
+   "params": []
+  },
+  {
+   "name": "bridge_register",
+   "category": "Automation",
+   "description": "HALL — register an external agent (Grok/Fable/Claude) as a live bridge. URL MUST be https. Split on paid calls: platform 15%, external owner 50%, coordination premium 35%.",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "Unique agent id."
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "required": false,
+     "description": "Display name."
+    },
+    {
+     "name": "platform",
+     "type": "string",
+     "required": false,
+     "description": "grok | fable | claude | custom."
+    },
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Base https endpoint; tool name is appended."
+    },
+    {
+     "name": "tools",
+     "type": "string",
+     "required": false,
+     "description": "Optional JSON array of exposed tool names."
+    },
+    {
+     "name": "prices_usdc",
+     "type": "string",
+     "required": false,
+     "description": "Optional JSON map tool → USDC price."
+    }
+   ]
+  },
+  {
+   "name": "bridge_call",
+   "category": "Automation",
+   "description": "HALL — call a registered external agent tool over the bridge (POST to base/tool). Records a per-call split note when a price exists.",
+   "params": [
+    {
+     "name": "agent_id",
+     "type": "string",
+     "required": true,
+     "description": "Registered bridge agent id."
+    },
+    {
+     "name": "tool",
+     "type": "string",
+     "required": true,
+     "description": "Tool name on the external agent."
+    },
+    {
+     "name": "params",
+     "type": "string",
+     "required": false,
+     "description": "Optional JSON params body."
+    }
+   ]
+  },
+  {
+   "name": "hall_gem_profile",
+   "category": "Hall & Community",
+   "description": "HALL — a uid’s spark wallet: sparks, score, streak, plays, wins, referral code, invites, bonus brain-asks. Same store the Telegram bots use.",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id (Telegram chat id or any stable id)."
+    }
+   ]
+  },
+  {
+   "name": "hall_daily_bonus",
+   "category": "Hall & Community",
+   "description": "HALL — claim the +25 daily spark refill for a uid (once per day).",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    }
+   ]
+  },
+  {
+   "name": "hall_quests",
+   "category": "Hall & Community",
+   "description": "HALL — cash in a uid’s daily quests: roll any bet +10, win any game +20, invite a friend +25. Idempotent per day.",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    }
+   ]
+  },
+  {
+   "name": "hall_referral",
+   "category": "Hall & Community",
+   "description": "HALL — issue a uid’s t.me deep-link referral (inviter +100 sparks + 2 free brain-asks per friend; friend +50).",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    },
+    {
+     "name": "bot_username",
+     "type": "string",
+     "required": false,
+     "description": "Optional bot username for the deep link (default ShaddaiHall)."
+    }
+   ]
+  },
+  {
+   "name": "hall_claim_referral",
+   "category": "Hall & Community",
+   "description": "HALL — accept a referral code for a uid (one per uid, self-invite blocked).",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    },
+    {
+     "name": "code",
+     "type": "string",
+     "required": true,
+     "description": "The ref_xxx code."
+    }
+   ]
+  },
+  {
+   "name": "hall_conviction",
+   "category": "Hall & Community",
+   "description": "HALL — stake sparks on a signal call (skin-in-the-game heat map). Sparks burn into the pool; cosmetics only.",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    },
+    {
+     "name": "symbol",
+     "type": "string",
+     "required": true,
+     "description": "Ticker, e.g. SOL."
+    },
+    {
+     "name": "amount",
+     "type": "number",
+     "required": false,
+     "description": "Sparks to stake (1–2000, default 10)."
+    }
+   ]
+  },
+  {
+   "name": "hall_hot",
+   "category": "Hall & Community",
+   "description": "HALL — the most-backed calls in the conviction room, ranked by sparks staked.",
+   "params": [
+    {
+     "name": "n",
+     "type": "number",
+     "required": false,
+     "description": "Optional count (default 10, max 20)."
+    }
+   ]
+  },
+  {
+   "name": "hall_leaderboard",
+   "category": "Hall & Community",
+   "description": "HALL — the community podium: top scorers, top referrers, hottest calls.",
+   "params": []
+  },
+  {
+   "name": "hall_community_stats",
+   "category": "Hall & Community",
+   "description": "HALL — community totals: souls, plays, wins, referrers, top score, sparks in wallets.",
+   "params": []
+  },
+  {
+   "name": "hall_arcade",
+   "category": "Hall & Community",
+   "description": "HALL — play a headless CPU arcade battle for a uid (basketball/football/dodgeball/sigil-storm) at a spark stake; win doubles up.",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    },
+    {
+     "name": "game",
+     "type": "string",
+     "required": false,
+     "description": "Optional game (default basketball)."
+    },
+    {
+     "name": "bet",
+     "type": "number",
+     "required": false,
+     "description": "Optional sparks (1–5000, default 10)."
+    }
+   ]
+  },
+  {
+   "name": "hall_arena",
+   "category": "Hall & Community",
+   "description": "HALL — two of the Seven fight a scripted best-of-7 tilt; the uid gambles paper sparks on the first agent named (win = 2× the bet).",
+   "params": [
+    {
+     "name": "uid",
+     "type": "string",
+     "required": true,
+     "description": "User / chat id."
+    },
+    {
+     "name": "a",
+     "type": "string",
+     "required": true,
+     "description": "First agent (your pick), e.g. ORACLE."
+    },
+    {
+     "name": "b",
+     "type": "string",
+     "required": true,
+     "description": "Second agent, e.g. ZEROX."
+    },
+    {
+     "name": "bet",
+     "type": "number",
+     "required": false,
+     "description": "Sparks at stake (5–200, default 10)."
+    }
+   ]
+  },
+  {
+   "name": "hall_arena_history",
+   "category": "Hall & Community",
+   "description": "HALL — recent agent-vs-agent bouts and their finals.",
+   "params": [
+    {
+     "name": "n",
+     "type": "number",
+     "required": false,
+     "description": "Count (default 5, max 20)."
+    }
+   ]
+  },
+  {
+   "name": "hall_astro",
+   "category": "Hall & Community",
+   "description": "ORACLE — zodiac horoscope + moon phase for a sign, grounded and deterministic for today.",
+   "params": [
+    {
+     "name": "sign",
+     "type": "string",
+     "required": false,
+     "description": "Zodiac sign, e.g. aries (default aries)."
+    }
+   ]
+  },
+  {
+   "name": "hall_music",
+   "category": "Hall & Community",
+   "description": "TURTLE — compose a procedural music spec (genre, BPM, bars, seconds). No audio bytes returned; recomposable via /music or the same spec.",
+   "params": [
+    {
+     "name": "genre",
+     "type": "string",
+     "required": false,
+     "description": "lofi | synthwave | trap | ambient | house | chip (default lofi)."
+    },
+    {
+     "name": "bars",
+     "type": "number",
+     "required": false,
+     "description": "Bars 2–16 (default 8)."
+    }
+   ]
+  },
+  {
+   "name": "hall_moon",
+   "category": "Hall & Community",
+   "description": "ORACLE — current Moon phase and illumination.",
+   "params": []
+  },
+  {
+   "name": "hall_rag_nav",
+   "category": "Hall & Community",
+   "description": "BRAIN — search the LOCAL SHADDAI brain (on-disk per-agent knowledge bases) and return the best passages organized by agent, with highlights. No live API needed. Narrow to one agent for a focused retrieval.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What you want to know."
+    },
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Optional — SHADDAI | ORACLE | ZEROX | NEXUS | TURTLE | QUILL | PIKADON to search one brain only."
+    }
+   ]
+  },
+  {
+   "name": "hall_brain_index",
+   "category": "Hall & Community",
+   "description": "BRAIN — what each agent’s knowledge base covers: topic terms + source names per agent. Use first to organize retrieval.",
+   "params": [
+    {
+     "name": "agent",
+     "type": "string",
+     "required": false,
+     "description": "Optional single agent to index."
+    }
+   ]
+  },
+  {
+   "name": "hall_flow",
+   "category": "Hall & Community",
+   "description": "HALL — run a simple composed workflow of real tools: daily (stats+leaderboard+hot+astro), intel (astro+conviction+arena log), know <topic> (local brain retrieval).",
+   "params": [
+    {
+     "name": "name",
+     "type": "string",
+     "required": true,
+     "description": "daily | intel | know."
+    },
+    {
+     "name": "arg",
+     "type": "string",
+     "required": false,
+     "description": "Optional — zodiac sign for daily/intel, or the topic for know."
+    }
+   ]
+  },
+  {
+   "name": "web_search",
+   "category": "Web & Media",
+   "description": "ORACLE/ZEROX — search the open web (Google News RSS then DuckDuckGo) and return ranked titles + snippets + URLs. No key needed. Use when the RAG brain does not already hold the answer, or for current/live data. Pair with rag_search: answer from the library first, fall out to the web here.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What to search for."
+    },
+    {
+     "name": "count",
+     "type": "number",
+     "required": false,
+     "description": "Max results (default 6, max 12)."
+    }
+   ]
+  },
+  {
+   "name": "web_scrape",
+   "category": "Web & Media",
+   "description": "ORACLE/ZEROX — fetch a URL and strip it to readable plain text (scripts/styles/tags removed). Use to pull a live token page, docs, or a competitor page into reasoning. HTTPS only, size-capped.",
+   "params": [
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Full https:// URL to scrape."
+    },
+    {
+     "name": "max_chars",
+     "type": "number",
+     "required": false,
+     "description": "Optional max characters returned (default 4000)."
+    }
+   ]
+  },
+  {
+   "name": "hall_web_scrape",
+   "category": "Hall & Community",
+   "description": "BRAIN — scrape a public https URL INTO an agent’s knowledge base. Persists a durable mastery page and live-indexes it (fetch returns organized, cited text). Give a topic worth the brain keeping — not one-off trivia. HTTPS only, SSRF-guarded, JS-heavy sites may return too little text.",
+   "params": [
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Full https:// URL to scrape and keep."
+    },
+    {
+     "name": "agent",
+     "type": "string",
+     "required": true,
+     "description": "Whose brain it enters: SHADDAI | ORACLE | ZEROX | NEXUS | TURTLE | QUILL | PIKADON."
+    },
+    {
+     "name": "slug",
+     "type": "string",
+     "required": false,
+     "description": "Optional short file name (defaults to host+path)."
+    },
+    {
+     "name": "max_chars",
+     "type": "number",
+     "required": false,
+     "description": "Optional cap on kept characters (default 60000)."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_oracle",
+   "category": "Agents",
+   "description": "ORACLE — research, knowledge & intelligence. Use for: researching a topic, comparing options, market/knowledge questions, science, health/body, psychology, and anything needing live/current data.",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want this specialist to do."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_zerox",
+   "category": "Agents",
+   "description": "ZEROX — revenue & business. Use for: pricing a product, building an irresistible offer, monetization strategy, and market/crypto analysis.",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want this specialist to do."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_nexus",
+   "category": "Agents",
+   "description": "NEXUS — engineering & systems. Use for: technical plans, code, architecture, github/npm lookups, and structuring/assembling deliverables.",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want this specialist to do."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_turtle",
+   "category": "Agents",
+   "description": "TURTLE — design direction. Use for: brand and visual concepts, UX ideas, color/type direction. (For an actual image, use shaddai_generate_image. To build a GAME with TURTLE, use shaddai_turtle_build.)",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want this specialist to do."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_quill",
+   "category": "Agents",
+   "description": "QUILL — writing & copy. Use for: posts, sales pages, emails, docs, product descriptions, and any clear written content.",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want this specialist to do."
+    }
+   ]
+  },
+  {
+   "name": "shaddai_pikadon",
+   "category": "Agents",
+   "description": "PIKADON — security & risk. Use for: security audits, pre-launch checklists, vulnerability review, and \"is this safe?\" questions.",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want this specialist to do."
+    }
+   ]
+  },
+  {
+   "name": "gamedev_search",
+   "category": "Game Dev (TURTLE)",
+   "description": "Search the SHADDAI game-dev + motion-studio library — skills, docs, code patterns, shaders and genre templates for Three.js/ECS/browser game building, plus SHADDAI Reel Forge, the code-rendered motion-video studio (motion kit, renderer, beat grid, sound synth, briefing cards, review loop). Game-dev reference material comes from SHADDAI plus MIT-licensed repos, with licenses recorded per source. Returns ranked passages with source and path; fetch the whole thing with gamedev_get.",
+   "params": [
+    {
+     "name": "query",
+     "type": "string",
+     "required": true,
+     "description": "What you want to build or learn, e.g. \"rigidbody physics\", \"ECS archetype queries\", \"water shader\"."
+    },
+    {
+     "name": "source",
+     "type": "string",
+     "required": false,
+     "description": "Optional — limit to one source (see gamedev_sources)."
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "required": false,
+     "description": "Optional — skill | doc | template | shader | code."
+    },
+    {
+     "name": "topK",
+     "type": "number",
+     "required": false,
+     "description": "Max results (default 5, max 20)."
+    }
+   ]
+  },
+  {
+   "name": "gamedev_get",
+   "category": "Game Dev (TURTLE)",
+   "description": "Fetch the full text of a game-dev library section by id (ids come from gamedev_search / gamedev_list).",
+   "params": [
+    {
+     "name": "id",
+     "type": "string",
+     "required": true,
+     "description": "Section id returned by gamedev_search."
+    }
+   ]
+  },
+  {
+   "name": "gamedev_list",
+   "category": "Game Dev (TURTLE)",
+   "description": "List game-dev library items (skills, docs, templates, shaders) with titles and paths. Use to browse what exists before searching.",
+   "params": [
+    {
+     "name": "source",
+     "type": "string",
+     "required": false,
+     "description": "Optional — one source."
+    },
+    {
+     "name": "kind",
+     "type": "string",
+     "required": false,
+     "description": "Optional — skill | doc | template | shader | code."
+    }
+   ]
+  },
+  {
+   "name": "gamedev_sources",
+   "category": "Game Dev (TURTLE)",
+   "description": "List the game repos in the library with license, size and section counts.",
+   "params": []
+  },
+  {
+   "name": "shaddai_turtle_build",
+   "category": "Game Dev (TURTLE)",
+   "description": "Ask TURTLE to help you BUILD a game, game feature, OR a code-rendered motion video with Reel Forge (showreels, product launch films, UI-flow loops, music videos — motion kit, beat-synced sound, review loop). TURTLE pulls from three places at once — the game-dev library (skills, patterns, templates), its RAG knowledge (design/creative), and its own reasoning — and returns a concrete build plan with code. Use for \"make me a 3D action game\", \"add physics to my scene\", \"how should I structure my ECS\".",
+   "params": [
+    {
+     "name": "task",
+     "type": "string",
+     "required": true,
+     "description": "What you want to build or fix. Include your genre, stack (e.g. Three.js) and what you already have."
+    },
+    {
+     "name": "genre",
+     "type": "string",
+     "required": false,
+     "description": "Optional — 3d-action | 2d-platformer | arcade-game | isometric-rpg | puzzle-game | vr-experience | motion-video."
+    }
+   ]
+  }
+ ]
+}

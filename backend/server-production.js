@@ -849,6 +849,106 @@ app.get('/api/health', (req, res) => {
   res.json(health);
 });
 
+// Memory tracker — RSS (what Render actually limits) sampled every minute.
+const memTracker = require('./lib/mem-tracker');
+memTracker.start({
+  onCritical: () => cache.clear(),
+  // Telegram DM at every 20% step of the memory limit (needs TELEGRAM_BOT_TOKEN + OWNER_TG_CHAT_ID).
+  onBand: (band, m, dir) => {
+    console.log(`[mem] band ${band}% (${dir}) — RSS ${m.rssMB} MB / ${m.limitMB} MB`);
+    const chat = process.env.OWNER_TG_CHAT_ID;
+    if (!chat) return;
+    const icon = band >= 80 ? '🔴' : band >= 60 ? '🟠' : band >= 40 ? '🟡' : '🟢';
+    const verb = dir === 'down' ? 'dropped to' : dir === 'start' ? 'started at' : 'crossed';
+    const top = require('./lib/ops-registry').list().filter(x => x.running).sort((a, b) => b.estimatedMB - a.estimatedMB).slice(0, 3)
+      .map(x => `${x.label} ~${x.estimatedMB}MB`).join(', ');
+    require('./telegram-core').send(chat, `${icon} <b>SHADDAI memory ${verb} ${band}%</b>
+RSS ${m.rssMB} / ${m.limitMB} MB (${m.percent}%) · heap ${m.heapUsedMB} MB
+Biggest: ${top || 'n/a'}
+Manage: /ops.html`).catch(() => {});
+  },
+});
+app.get('/api/memory', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(memTracker.snapshot({ points: Math.min(500, parseInt(req.query.points, 10) || 120) }));
+});
+
+// Service list + toggles. Reading is open (no secrets); changing needs x-admin-token = ADMIN_TOKEN.
+const opsReg = require('./lib/ops-registry');
+const opsAdmin = (req, res, next) => {
+  const tok = process.env.ADMIN_TOKEN;
+  if (!tok) return res.status(503).json({ ok: false, error: 'ADMIN_TOKEN not set on server — toggles disabled' });
+  if (req.headers['x-admin-token'] !== tok) return res.status(403).json({ ok: false, error: 'bad admin token' });
+  next();
+};
+app.get('/api/ops/services', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const services = opsReg.list();
+  res.json({ ok: true, limitMB: memTracker.LIMIT_MB, services, estimatedTotalMB: +services.reduce((a, x) => a + (x.running ? x.estimatedMB : 0), 0).toFixed(1), memory: memTracker.snapshot({ points: 1 }).current });
+});
+app.post('/api/ops/services/:id', express.json(), opsAdmin, (req, res) => {
+  const r = opsReg.setEnabled(req.params.id, req.body && req.body.enabled !== false);
+  res.status(r.ok ? 200 : 404).json(r);
+});
+app.post('/api/ops/restart', opsAdmin, (req, res) => {
+  res.json({ ok: true, note: 'restarting — Render relaunches the process in ~30-60s' });
+  setTimeout(() => process.exit(0), 500);
+});
+
+// Game-dev library — TURTLE + MCP users search skills/docs/templates from the ingested repos.
+const gamedevLib = require('./lib/gamedev-library');
+opsReg.hook('gamedev-library', (on) => gamedevLib.setOff(!on));
+if (!opsReg.enabled('gamedev-library')) gamedevLib.setOff(true);
+const gdWrap = (fn) => (req, res) => {
+  try { res.set('Cache-Control', 'no-store'); res.json(Object.assign({ ok: true }, fn(req))); }
+  catch (e) { res.status(/switched off/.test(e.message) ? 503 : 500).json({ ok: false, error: e.message }); }
+};
+app.get('/api/gamedev/sources', (req, res) => res.json(Object.assign({ ok: true }, gamedevLib.stats())));
+app.get('/api/gamedev/search', gdWrap((req) => {
+  const q = String(req.query.q || '').slice(0, 300);
+  if (!q) throw new Error('q required');
+  const results = gamedevLib.search(q, { source: req.query.source, kind: req.query.kind, k: parseInt(req.query.k, 10) || 6 });
+  return { query: q, count: results.length, results };
+}));
+app.get('/api/gamedev/doc', gdWrap((req) => {
+  const d = gamedevLib.get(String(req.query.id || ''));
+  if (!d) throw new Error('not found');
+  return { doc: d };
+}));
+app.get('/api/gamedev/list', gdWrap((req) => ({ items: gamedevLib.list({ source: req.query.source, kind: req.query.kind }) })));
+
+// One-glance ops check: memory + TG signals freshness + MCP bridge.
+app.get('/api/ops/status', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const mem = memTracker.snapshot({ points: 1 });
+  let tg = { ok: false };
+  try {
+    const rows = require('./telegram-pnl').callsJson({ limit: 2000 });
+    const last = rows[0];
+    const dayAgo = Date.now() - 86400000;
+    tg = {
+      ok: !!last && Date.now() - last.ts < 6 * 3600000, // stale if no call in 6h
+      lastCallAt: last ? new Date(last.ts).toISOString() : null,
+      lastCallAgeMin: last ? Math.round((Date.now() - last.ts) / 60000) : null,
+      callsLast24h: rows.filter((c) => (c.ts || 0) >= dayAgo).length,
+      totalCalls: rows.length,
+    };
+  } catch (e) { tg = { ok: false, error: String((e && e.message) || e) }; }
+  let mcp = { ok: false };
+  try {
+    const bp = path.join(__dirname, 'mcp-server-rag.js');
+    mcp = { ok: require('fs').existsSync(bp), bridge: 'mcp-server-rag.js' };
+  } catch (e) { mcp = { ok: false, error: String((e && e.message) || e) }; }
+  res.json({
+    ok: mem.level !== 'critical' && tg.ok && mcp.ok,
+    memory: { level: mem.level, rssMB: mem.current.rssMB, limitMB: mem.limitMB, percent: mem.percentOfLimit, peakMB: mem.peak.rssMB, trendMBPerHour: mem.trendMBPerHour },
+    tgSignals: tg,
+    mcp,
+    uptimeSec: mem.uptimeSec,
+    timestamp: mem.timestamp,
+  });
+});
+
 // MCP + RAG status — powers the landing page MCP/RAG section (also handy for
 // verifying the bridge + knowledge bases are ready for Claude Desktop/Code).
 // Cached: the KB stats read several MB of JSON, so don't recompute per hit.
@@ -2106,7 +2206,7 @@ app.post('/api/forge/upload', express.raw({ type: 'application/octet-stream', li
   } catch (e) { res.status(500).json({ ok: false, error: String(e && e.message || e) }); }
 });
 // AURA self-improvement: background auto-warm (no-op unless AURA_AUTOWARM=true)
-try { require('./aura-warmer').startAutoWarm(); } catch (_) {}
+try { require('./lib/ops-registry').boot('aura-warmer', () => require('./aura-warmer').startAutoWarm()); } catch (_) {}
 // Plug-in Payments — /api/stripe/{config,plans,create-checkout,verify}: hosted checkout links
 // (Payment Links / Lemon Squeezy / Gumroad) OR full Stripe. Fixes the previously-404 billing buttons.
 try { app.use('/api/stripe', require('./stripe-routes')); console.log('[prod] plug-in payments (/api/stripe) mounted'); }
@@ -3305,32 +3405,34 @@ if (!process.env.VERCEL_ENV) {
   try { require('./arena/socket').init(wss, require('./arena/matchmaker')); }
   catch (e) { console.warn('[arena] socket init skipped:', e && e.message); }
   server.listen(PORT, () => {
+    const ops = require('./lib/ops-registry');
     logger.info('SERVER', `SHADDAI Production Server v62 started on port ${PORT}`);
 
     // Public DexScreener → Telegram signals feed (no-op unless TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL set).
-    try { require('./telegram-signals').startTelegramSignals(); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
+    try { ops.boot('tg-signals', () => require('./telegram-signals').startTelegramSignals()); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
     // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
-    try { require('./telegram-bot').startTelegramBot(); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
+    try { ops.boot('tg-bot', () => { require('./telegram-bot').startTelegramBot(); return () => require('./telegram-bot').stopTelegramBot(); }); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
     // @TurtleMusicBot — dedicated music bot (no-op unless TURTLE_MUSIC_BOT_TOKEN set).
-    try { require('./turtle-music-bot').start(); } catch (e) { console.warn('[turtle-music-bot] init skipped:', e && e.message); }
+    try { ops.boot('turtle-music-bot', () => { require('./turtle-music-bot').start(); return () => require('./turtle-music-bot').stop(); }); } catch (e) { console.warn('[turtle-music-bot] init skipped:', e && e.message); }
     // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
-    try { require('./telegram-news').startNewsPoster(); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
+    try { ops.boot('tg-news', () => require('./telegram-news').startNewsPoster()); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
     // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
-    try { require('./telegram-pnl').startTracker(); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
+    try { ops.boot('tg-pnl', () => require('./telegram-pnl').startTracker()); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
 
     // Start DexScreener discovery loop (free, no key) → pushes new boosted tokens into signals
-    try { require('./telegram-pnl').startDiscovery(); console.log('[discovery] DexScreener boosted-token discovery armed'); } catch (e) { console.warn('[discovery] init skipped:', e && e.message); }
+    try { ops.boot('tg-discovery', () => require('./telegram-pnl').startDiscovery()); console.log('[discovery] DexScreener boosted-token discovery armed'); } catch (e) { console.warn('[discovery] init skipped:', e && e.message); }
 
     // ── KEEP-ALIVE: Render's free plan spins the service DOWN after ~15 min idle, which stops the
     // signal pollers (no calls when nobody's visiting). Self-ping the public URL every ~10 min so the
     // instance stays awake 24/7 and the pollers keep running. (Render auto-sets RENDER_EXTERNAL_URL.)
     try {
       const selfUrl = process.env.RENDER_EXTERNAL_URL || process.env.SELF_PING_URL;
-      if (selfUrl) {
+      if (selfUrl && ops.enabled('keep-alive')) {
         const ping = () => { fetch(selfUrl.replace(/\/$/, '') + '/api/model/health').then(() => {}).catch(() => {}); };
         const ka = setInterval(ping, 10 * 60 * 1000);   // every 10 min (< Render's ~15 min idle window)
         if (ka.unref) ka.unref();
         setTimeout(ping, 30000);
+        ops.boot('keep-alive', () => () => clearInterval(ka));
         console.log('[keep-alive] self-ping armed →', selfUrl, '(prevents free-plan spin-down so signals run 24/7)');
       } else {
         console.log('[keep-alive] not armed (no RENDER_EXTERNAL_URL) — set SELF_PING_URL or use an external uptime pinger to keep signals running 24/7.');
