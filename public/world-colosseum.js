@@ -56,7 +56,7 @@
   function rampH(d) { return tierH(RAMP) * (d / RAMP); }
   // METRO (world-colosseum-metro.js): underground station hall EAST of the lobby, own walkable platform strip; the track trench is solid (999)
   var METRO = { x0: 150, x1: 250, z0: LOBBY_Z0 + 2, z1: LOBBY_Z0 + 26, platform: 9, lobbyPad: [24, LOBBY_Z0 + 14], metroPad: [156, LOBBY_Z0 + 8] };
-  window.COLOSSEUM_METRO = METRO; window.COLOSSEUM_ISLAND = { x: X0, z: Z0, U: U };   // read by world-colosseum-metro.js at load (station registers before the arena is ever built)
+  window.COLOSSEUM_METRO = METRO; window.COLOSSEUM_ISLAND = { x: X0, z: Z0, U: U, lobbyZ0: LOBBY_Z0, lobbyD: LOBBY_D, A: A, B: B };   // read by world-colosseum-metro.js at load (station registers before the arena is ever built)
   function inMetro(x, z) { return x >= METRO.x0 && x <= METRO.x1 && z >= METRO.z0 && z <= METRO.z1; }
   // height in METRES at local (x, z); 999 = solid wall.  hLocal is the SOLE collision + seating source.
   function hLocal(x, z) {

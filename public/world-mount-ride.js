@@ -153,6 +153,8 @@
       });
       if (root.__travel) { h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">TRAVEL <small style="opacity:.6;font-weight:400">quick jump for testing</small></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
         [['maglev', 'Maglev station'], ['park', 'Hoverskate park'], ['colosseum', 'Colosseum'], ['grid', 'The Grid']].forEach(function (t) { h += '<button data-a="travel" data-id="' + t[0] + '" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:4px 9px;cursor:pointer">' + t[1] + '</button>'; }); h += '</div>'; }
+      if (root.__travel && root.__travel.colospot) { h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">COLOSSEUM <small style="opacity:.6;font-weight:400">go in, then change the arena floor</small></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+        [['colospot:lobby', 'Lobby'], ['colospot:arena', 'Arena floor']].concat(['sand', 'water', 'lava', 'void', 'grass', 'ice'].map(function (f) { return ['field:' + f, f]; })).forEach(function (t) { h += '<button data-a="travel2" data-id="' + t[0] + '" style="background:#0d1a16;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:4px 9px;cursor:pointer">' + t[1] + '</button>'; }); h += '</div>'; }
       if (root.WorldBots) { h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">HELPER BOTS <small style="opacity:.6;font-weight:400">wheeled = base, humanoid = premium</small></div>';
         root.WorldBots.ROSTER.forEach(function (b) { var own = root.WorldBots.rec(b.id); h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid #1d2a26"><span>' + b.name + ' <small style="opacity:.6">' + b.kind + ' - ' + (own ? 'owned' : root.WorldBots.PRICE[b.kind] + ' Sparks') + '</small></span>' +
           '<button data-id="' + b.id + '" data-a="' + (own ? 'bcall' : 'bbuy') + '" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:4px 9px;cursor:pointer">' + (own ? 'Call' : 'Buy') + '</button></div>'; }); }
@@ -161,6 +163,7 @@
       pnl.addEventListener('click', function (e) {
         var t = e.target; if (t.id === 'msx') { panel(); return; } var a = t.getAttribute && t.getAttribute('data-a'); if (!a) return; var id = t.getAttribute('data-id');
         if (a === 'buy') { var r = Mo.buy(id, o.spend || function (n, k, i) { return root.ShdSparks ? root.ShdSparks.spend(n, k, i) : false; }); toast(r.ok ? 'Bought ' + r.item.name + ' for ' + r.paid : r.why); panel(true); }
+        else if (a === 'travel2') { var pr = id.split(':'), t2 = root.__travel && root.__travel[pr[0]] && root.__travel[pr[0]](pr[1]); toast(t2 ? 'Colosseum: ' + t2 : 'Not ready (enter the Colosseum first)'); }
         else if (a === 'travel') { var tr = root.__travel && root.__travel[id] && root.__travel[id](); toast(tr ? 'Traveled: ' + tr : 'Not ready yet'); panel(); }
         else if (a === 'bbuy') { var rb = root.WorldBots.buy(id, o.spend || function (n, k, i) { return root.ShdSparks ? root.ShdSparks.spend(n, k, i) : false; }); toast(rb.ok ? 'Bought ' + rb.def.name + ' for ' + rb.paid : rb.why); panel(true); }
         else if (a === 'bcall') { try { root.WorldBots.call(id); toast('Calling ' + id); } catch (e) { toast('Could not call'); } panel(); }

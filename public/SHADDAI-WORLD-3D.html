@@ -4886,6 +4886,11 @@ window.__travel = {
   maglev: function(){ const T = window.__worldTransitApi; if(!T || !T.stations) return false; let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } }); if(!best) return false; if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = best.x; playerPos.z = best.z + 14; return best.name; },
   park: function(){ const P = window.__hoverPark; if(!P) return false; if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = P.entrance.x; playerPos.z = P.entrance.z; return 'Hoverskate Park'; },
   colosseum: function(){ if(!_interiors) return false; try{ if(!_interiors.isInside()){ _interiors.enter('COLOSSEUM'); window._currentInterior = 'COLOSSEUM'; } }catch(e){ return false; } return 'Colosseum'; },
+  // Colosseum spots (local metres -> island world units): 'lobby' = in the grand hall, 'arena' = middle of the arena floor
+  colospot: function(where){ const I = window.COLOSSEUM_ISLAND; if(!I || !_interiors) return false; try{ if(!_interiors.isInside()){ _interiors.enter('COLOSSEUM'); window._currentInterior = 'COLOSSEUM'; } }catch(e){ return false; }
+    const lz = where === 'lobby' ? I.lobbyZ0 + 12 : 0, place = function(){ playerPos.x = I.x; playerPos.z = I.z + lz * I.U; }; place(); setTimeout(place, 1500); setTimeout(place, 3500);   // entering sets its own spawn a moment later - re-place after it
+    return where === 'lobby' ? 'Colosseum lobby' : 'Colosseum arena floor'; },
+  field: function(name){ const A = window.__colosseumArena; if(!A || !A.setField) return false; try{ A.setField(name); }catch(e){ return false; } return 'Arena floor: ' + name; },
   grid: function(){ if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = 0; playerPos.z = 200; return 'The Grid'; }
 };
 // ── ENTRANCE BEACONS: tall glowing light pillars over the Colosseum door (gold) and every maglev station (cyan) so the entrances can be seen from far away; walk in and press E ──
