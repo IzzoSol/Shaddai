@@ -23,7 +23,7 @@
     close(); var v = VEND[i % VEND.length];
     if (v.mountStore) { if (root.__mountRide) root.__mountRide.panel(true); else toast('Mount store loading...'); return; }
     pnl = document.createElement('div'); pnl.style.cssText = 'position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:9999;width:340px;background:rgba(6,8,11,.95);border:1px solid #e8c45c;border-radius:12px;padding:14px;color:#dfe9e4;font:13px system-ui;box-shadow:0 0 30px rgba(232,196,92,.25)';
-    var h = '<div style="display:flex;justify-content:space-between;color:#e8c45c;font-weight:700"><span>' + v.name + '</span><span data-x="1" style="cursor:pointer">x</span></div><div style="opacity:.75;margin:4px 0 8px">&ldquo;' + v.hi + '&rdquo;</div>';
+    var h = '<div style="display:flex;justify-content:space-between;color:#e8c45c;font-weight:700"><span>' + v.name + '</span><span data-x="1" style="cursor:pointer">x</span></div><div style="opacity:.75;margin:4px 0 8px">&ldquo;' + ((root.WorldCopy && root.WorldCopy.pick('vendors.' + v.id)) || v.hi) + '&rdquo;</div>';
     v.items.forEach(function (it, k) { h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1d2a26"><span>' + it[0] + '<br><small style="opacity:.6">' + it[1] + ' Sparks</small></span><button data-k="' + k + '" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 10px;cursor:pointer">Buy</button></div>'; });
     pnl.innerHTML = h; document.body.appendChild(pnl);
     pnl.addEventListener('click', function (e) {

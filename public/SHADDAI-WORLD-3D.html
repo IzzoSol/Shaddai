@@ -306,6 +306,10 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum-floors.js?v=20260929a"></script>
 <script src="/world-colosseum-metro.js?v=20260929a"></script>   <!-- underground station: elevator + maglev ring stop -->
+<script src="/world-facade-details.js?v=20261001a"></script>   <!-- rooftop props + glow bands on the repeated city buildings -->
+<script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
+<script src="/world-crowd.js?v=20261001a"></script>   <!-- ~90 citizens walking the city -->
+<script src="/world-skatejam.js?v=20261001a"></script>   <!-- Skate Jam trick game (I > Races) -->
 <script src="/world-race-challenge.js?v=20261001a"></script>   <!-- challenge races + Sparks wagers (I > Races) -->
 <script src="/world-colosseum-vendors.js?v=20260929a"></script>   <!-- concourse vendors: E at any kiosk (snacks, drinks, gear, mounts, cosmetics, wagers) -->
 <script src="/world-colosseum.js?v=20260926v4"></script>
@@ -475,9 +479,10 @@ function _ldStep(name, fn){   // promise-chain step wrapper: .then(_ldStep('x', 
     _ldEnd(name); return r;
   }
   // PERF: after entry, every streaming step also waits for a healthy frame rate (>=42 fps EMA, max 25 s) so a heavy build never lands on top of a struggling frame
-  function _ldFps(){ return new Promise(function(res){ let w = 0; (function c(){ const f = window.__fpsNow ? window.__fpsNow() : 60; if(f >= 42 || (w += 500) > 25000) res(); else setTimeout(c, 500); })(); }); }
+  function _ldFps(){ return new Promise(function(res){ let w = 0; (function c(){ const f = window.__fpsNow ? window.__fpsNow() : 60; if(f >= 42 || (w += 500) > 3000) res(); else setTimeout(c, 500); })(); }); }   // max 3 s per HEAVY visual step (was 25 s: on a slow machine that stacked to minutes and delayed mounts/mobs/interiors)
+  const _LD_LIGHT = { 'mobs':1, 'mount-ride':1, 'dragon-ride':1, 'goto':1, 'hud':1, 'city-actions':1, 'city-v3':1, 'interiors-v3':1 };   // gameplay systems never wait for fps
   return function(v){
-    return __LD.gatePassed ? _ldIdle().then(_ldFps).then(function(){ return run(v); }) : run(v); };
+    return __LD.gatePassed ? (_LD_LIGHT[name] ? _ldIdle().then(function(){ return run(v); }) : _ldIdle().then(_ldFps).then(function(){ return run(v); })) : run(v); };
 }
 function _ldProgress(last){
   const plan = __LD.plan; let n = 0; plan.forEach(function(k){ if(__LD.steps[k] && __LD.steps[k].t1) n++; });
@@ -647,6 +652,29 @@ window.__worldBuilt = false;
       }).catch(function(e){ console.warn('[map-v4] city actions failed:', e && e.message); }).then(function(){ return api; });
     }))
     .then(function(api){ return _ldDeferGate(api); })   // PROGRESSIVE STARTUP: everything below is far from the spawn → streams in AFTER the sky-dive, one step per idle slot
+    // GAMEPLAY SYSTEMS FIRST (mobs + mounts + store panel): they load right after the city actions, ahead of the heavy visual extras (fill / clusters / dragons / wildlife)
+    .then(_ldStep('mobs', function(api){   // WILDERNESS MOBS (world-mobs.js): 8 camps, themed enemies, Sparks loot, respawn timer
+      if(!api) return api;
+      return _loadScript('/world-mobs.js?v=20261001a').then(function(){
+        window.__mobs = window.buildWorldMobs({ THREE, scene, camera, heightAt: api.heightAt, terrainMeta: _v4Meta || null,
+          getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) }),
+          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
+          onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
+          isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null,
+          onKill: function(k){ try{ if(window.ShdSparks) window.ShdSparks.add(k.sparks, 'mob-kill', k.name); const K = JSON.parse(localStorage.getItem('shd_mobkills_v1') || '{"total":0,"by":{}}'); K.total++; K.by[k.type] = (K.by[k.type] || 0) + 1; localStorage.setItem('shd_mobkills_v1', JSON.stringify(K)); }catch(_){}
+            if(window.Navi && window.Navi.toast) window.Navi.toast(k.name + ' defeated  +' + k.sparks + ' Sparks' + (k.night ? ' (night bonus)' : '') + (window.WorldCopy ? '  \u2014 ' + window.WorldCopy.pick('toasts.mob_kill') : '')); } });
+        window.__w3dDebug.mobs = window.__mobs; return api;
+      }).catch(function(e){ console.warn('[mobs] failed', e && e.message); return api; });
+    }))
+    .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
+      if(!api) return api;
+      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20260929a')]).then(function(){
+        const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
+        window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts, onDismount: function(yaw){ try{ playerAvatar.rotation.set(0, yaw, 0); _avatarYaw = yaw; playerAvatar.position.y = playerPos.y; }catch(_){} } });
+        window.__w3dDebug.mountRide = window.__mountRide;
+        return api;
+      }).catch(function(e){ console.warn('[mount-ride] failed', e && e.message); return api; });
+    }))
     .then(_ldStep('fill', function(api){   // MAP v4 FILL (world-fill-v4.js): realm vegetation, waystations, floating islands, bridges
       if(!api || !_v4Meta) return api;
       return _loadScript('/world-fill-v4.js?v=20260926a').then(function(){
@@ -699,28 +727,6 @@ window.__worldBuilt = false;
           isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null });
         window.__w3dDebug.wildlife = window.__wildlife;
       }).catch(function(e){ console.warn('[map-v4] wildlife failed:', e && e.message); }).then(function(){ return api; });
-    }))
-    .then(_ldStep('mobs', function(api){   // WILDERNESS MOBS (world-mobs.js): 8 camps, themed enemies, Sparks loot, respawn timer
-      if(!api) return api;
-      return _loadScript('/world-mobs.js?v=20261001a').then(function(){
-        window.__mobs = window.buildWorldMobs({ THREE, scene, camera, heightAt: api.heightAt, terrainMeta: _v4Meta || null,
-          getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) }),
-          nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
-          onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
-          isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null,
-          onKill: function(k){ try{ if(window.ShdSparks) window.ShdSparks.add(k.sparks, 'mob-kill', k.name); const K = JSON.parse(localStorage.getItem('shd_mobkills_v1') || '{"total":0,"by":{}}'); K.total++; K.by[k.type] = (K.by[k.type] || 0) + 1; localStorage.setItem('shd_mobkills_v1', JSON.stringify(K)); }catch(_){}
-            if(window.Navi && window.Navi.toast) window.Navi.toast(k.name + ' defeated  +' + k.sparks + ' Sparks' + (k.night ? ' (night bonus)' : '')); } });
-        window.__w3dDebug.mobs = window.__mobs; return api;
-      }).catch(function(e){ console.warn('[mobs] failed', e && e.message); return api; });
-    }))
-    .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
-      if(!api) return api;
-      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20260929a')]).then(function(){
-        const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
-        window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts, onDismount: function(yaw){ try{ playerAvatar.rotation.set(0, yaw, 0); _avatarYaw = yaw; playerAvatar.position.y = playerPos.y; }catch(_){} } });
-        window.__w3dDebug.mountRide = window.__mountRide;
-        return api;
-      }).catch(function(e){ console.warn('[mount-ride] failed', e && e.message); return api; });
     }))
     .then(_ldStep('dragon-ride', function(api){   // MAP v4 DRAGON RIDING (world-dragon-ride.js): H at a Perch pad / Dragon Harness → call + ride your dragon
       if(!api) return api;
@@ -4953,6 +4959,21 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } });
   if(!best) return; playerPos.x = best.x; playerPos.z = best.z + 14; if(hover && hover.isRiding && hover.isRiding()) hover.dismount();
   if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev: ' + best.name + ' - step onto the glowing lift pad and press E'); });
+// ── FACADE DETAILS (world-facade-details.js): rooftop vents/antennas + ground-floor glow bands in district colours, instanced, near the player only ──
+(function bootFacade(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!window.buildFacadeDetails || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
+  window.__facade = window.buildFacadeDetails({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.facade = window.__facade; }, 1000); })();
+// ── CITIZENS (world-crowd.js): ~90 pedestrians strolling between entrances / forum / kiosks / stations; never inside measured building footprints ──
+(function bootCrowd(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!window.buildWorldCrowd || !H || !H.heightAt || !window.__loadPlayable || !window.__entrances) return; clearInterval(iv);
+  window.__crowd = window.buildWorldCrowd({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; }, footprints: function(){ return window.__measuredFootprints || null; },
+    onTalk: function(c){ try{ const d = window.WorldCopy.district(c.x, c.z), line = window.WorldCopy.pick('citizens.' + d); if(!line) return; let b = document.getElementById('citizenBubble');
+      if(!b){ b = document.createElement('div'); b.id = 'citizenBubble'; b.style.cssText = 'position:fixed;left:50%;bottom:168px;transform:translateX(-50%);z-index:9100;max-width:min(88vw,430px);padding:9px 16px;border-radius:14px;background:linear-gradient(180deg,rgba(12,18,30,.94),rgba(5,8,15,.97));border:1px solid rgba(0,255,156,.45);color:#e9f4ee;font:600 13px "Chakra Petch",Rajdhani,sans-serif;letter-spacing:.04em;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.5);pointer-events:none;opacity:0;transition:opacity .25s'; document.body.appendChild(b); }
+      const names = { commons: 'Commons', campus: 'Campus', race_quarter: 'Race Quarter', plots: 'Plots' }; b.innerHTML = '<div style="color:#00ff9c;font-size:10px;letter-spacing:.2em;margin-bottom:2px">CITIZEN \u00B7 ' + String(names[d] || d).toUpperCase() + '</div>' + line; b.style.opacity = '1'; clearTimeout(b.__t); b.__t = setTimeout(function(){ b.style.opacity = '0'; }, 4200); }catch(_){} } }); D.crowd = window.__crowd; }, 1000); })();
+// ── HOVERBOARD RIDE + SKATE JAM: I panel > Boards > Ride mounts the board (style from the catalog); I > Races > Skate Jam starts the trick game ──
+window.__rideBoard = function(styleId){ try{ if(!hover) return false; if(window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if(!hover.isRiding()) hover.toggle(playerAvatar, {}); if(styleId && hover.setStyle){ const ids = (window.HoverboardKit && window.HoverboardKit.STYLES || []).map(function(x){ return x.id; }); hover.setStyle(ids.indexOf(styleId) >= 0 ? styleId : (ids[0] || styleId)); } return hover.isRiding(); }catch(e){ return false; } };
+(function bootJam(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } if(!window.buildSkateJam || typeof hover === 'undefined' || !hover || !window.__loadPlayable) return; clearInterval(iv);
+  window.__skateJam = window.buildSkateJam({ hover, playerPos, toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); window.__w3dDebug.skateJam = window.__skateJam; }, 1000); })();
 // ── CHALLENGE RACES (world-race-challenge.js): I > Races. Rival speed follows YOUR ride; wagers are Sparks (closed loop, 5% burn) ──
 (function bootChallenge(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildRaceChallenge || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
@@ -5112,8 +5133,11 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
-  if(window.__mobs) window.__mobs.update(dt);   // wilderness mobs
-  if(window.__raceChallenge) window.__raceChallenge.update(dt);   // challenge races: countdown, rivals, checkpoints, payout   // MOUNTS (world-mount-ride.js)
+  if(window.__facade && !(_interiors && _interiors.isInside())){ try{ window.__facade.update(dt); }catch(e){ console.warn('[facade] disabled after error', e && e.message); window.__facade = null; } }
+  if(window.__mobs){ try{ window.__mobs.update(dt); }catch(e){ console.warn('[mobs] disabled after error', e && e.message); window.__mobs = null; } }   // wilderness mobs
+  if(window.__crowd && !(_interiors && _interiors.isInside())){ try{ window.__crowd.update(dt); }catch(e){ console.warn('[crowd] disabled after error', e && e.message); window.__crowd = null; } }   // citizens
+  if(window.__skateJam){ try{ window.__skateJam.update(dt); }catch(e){ console.warn('[skatejam] disabled after error', e && e.message); window.__skateJam = null; } }   // skate jam run + hoverboard HUD (speed lines, stamina)
+  if(window.__raceChallenge){ try{ window.__raceChallenge.update(dt); }catch(e){ console.warn('[racechallenge] disabled after error', e && e.message); window.__raceChallenge = null; } }   // challenge races: countdown, rivals, checkpoints, payout   // MOUNTS (world-mount-ride.js)
 _pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
           && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(_rideOn()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;

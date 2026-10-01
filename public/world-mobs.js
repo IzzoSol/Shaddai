@@ -22,7 +22,7 @@
     stalker: { name: 'Forest Stalker', hp: 72, dmg: 9, speed: 6.0, loot: [18, 26], scale: 1.1, eye: 0xff5a6e, tint: 0x2a3a30 }
   };
   var ORDER = ['mummy', 'imp', 'wraith', 'stalker'];
-  var TUNE = { campsN: 8, perCamp: 4, ringExtraM: 420, aggroM: 40, leashM: 95, reachM: 2.6, windup: 0.6, cd: 1.9, maxAttackers: 2, respawnS: 90, simM: 260, showM: 520, wanderM: 11 };
+  var TUNE = { campsN: 8, perCamp: 4, ringExtraM: 420, ring2N: 8, ring2ExtraM: 1400, ring2PerCamp: 5, aggroM: 40, leashM: 95, reachM: 2.6, windup: 0.6, cd: 1.9, maxAttackers: 2, respawnS: 90, simM: 260, showM: 520, wanderM: 11 };
 
   root.buildWorldMobs = function (o) {
     var THREE = o.THREE, scene = o.scene, hAt = o.heightAt, T = o.terrainMeta || {}, GRID = T.grid_r_m || 1600, WL = (T.water_level_m != null ? T.water_level_m : 0);
@@ -68,22 +68,27 @@
     }
 
     // ---- camps: even angles around the belt, nudged off water ----
-    var rm = (GRID + TUNE.ringExtraM) * U;
-    for (var ci = 0; ci < TUNE.campsN; ci++) {
-      var ang = (ci / TUNE.campsN) * Math.PI * 2 + 0.4, r = rm, cx = 0, cz = 0, ok = false;
-      for (var tries = 0; tries < 30 && !ok; tries++) { var rr = rm * (1 + (tries % 10) * 0.04), aa = ang + Math.floor(tries / 10) * 0.12; cx = Math.sin(aa) * rr; cz = -Math.cos(aa) * rr; ok = !wet(cx, cz) && !wet(cx + 60 * U, cz) && !wet(cx, cz + 60 * U); }
-      if (!ok) continue;
-      var kind = ORDER[ci % ORDER.length], camp = { id: 'camp' + ci, kind: kind, x: cx, z: cz, mobs: [], marker: null, near: false };
-      var mk = new THREE.Group(); var ring = new THREE.Mesh(G.ring, ringMat); ring.rotation.x = -Math.PI / 2; ring.scale.setScalar(14 * U); ring.position.y = 0.4; mk.add(ring);
-      var fire = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3.4, 7), new THREE.MeshBasicMaterial({ color: TYPES[kind].eye, transparent: true, opacity: 0.8 })); fire.scale.setScalar(U * 0.9); fire.position.y = 1.7 * U * 0.9; mk.add(fire);
-      var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), new THREE.MeshLambertMaterial({ color: 0x3a2f24 })); pole.scale.setScalar(U); pole.position.set(3 * U, 2 * U, 0); mk.add(pole);
-      mk.position.set(cx, hAt(cx, cz), cz); group.add(mk); camp.marker = mk; camp.fire = fire; camps.push(camp);
-      for (var mi = 0; mi < TUNE.perCamp; mi++) {
-        var a2 = mi / TUNE.perCamp * 6.283, hx = cx + Math.cos(a2) * 6 * U, hz = cz + Math.sin(a2) * 6 * U, g = buildMob(kind), tp = TYPES[kind];
-        var mob = { g: g, kind: kind, camp: camp, hx: hx, hz: hz, x: hx, z: hz, yaw: a2, hp: tp.hp, max: tp.hp, state: 'idle', t: Math.random() * 6, windup: 0, cd: 0, dead: false, deadT: 0, respawnAt: 0, wx: hx, wz: hz, flash: 0, bob: Math.random() * 6 };
-        g.position.set(hx, hAt(hx, hz), hz); g.visible = false; group.add(g); camp.mobs.push(mob); st.spawned++;
+    // two rings: inner belt (8 camps x4) and a tougher outer ring (8 camps x5) so the wilderness keeps pushing back the farther you go
+    var RINGS = [{ n: TUNE.campsN, extra: TUNE.ringExtraM, phase: 0.4, per: TUNE.perCamp, off: 0 }, { n: TUNE.ring2N, extra: TUNE.ring2ExtraM, phase: 0.4 + Math.PI / TUNE.ring2N, per: TUNE.ring2PerCamp, off: 2 }];
+    var campIdx = 0;
+    RINGS.forEach(function (RG) {
+      var rm = (GRID + RG.extra) * U;
+      for (var ci = 0; ci < RG.n; ci++) {
+        var ang = (ci / RG.n) * Math.PI * 2 + RG.phase, cx = 0, cz = 0, ok = false;
+        for (var tries = 0; tries < 30 && !ok; tries++) { var rr = rm * (1 + (tries % 10) * 0.04), aa = ang + Math.floor(tries / 10) * 0.12; cx = Math.sin(aa) * rr; cz = -Math.cos(aa) * rr; ok = !wet(cx, cz) && !wet(cx + 60 * U, cz) && !wet(cx, cz + 60 * U); }
+        if (!ok) continue;
+        var kind = ORDER[(campIdx + RG.off) % ORDER.length], camp = { id: 'camp' + campIdx, kind: kind, x: cx, z: cz, mobs: [], marker: null, near: false, ring: RG.off ? 2 : 1 }; campIdx++;
+        var mk = new THREE.Group(); var ring = new THREE.Mesh(G.ring, ringMat); ring.rotation.x = -Math.PI / 2; ring.scale.setScalar(14 * U); ring.position.y = 0.4; mk.add(ring);
+        var fire = new THREE.Mesh(new THREE.ConeGeometry(1.2, 3.4, 7), new THREE.MeshBasicMaterial({ color: TYPES[kind].eye, transparent: true, opacity: 0.8 })); fire.scale.setScalar(U * 0.9); fire.position.y = 1.7 * U * 0.9; mk.add(fire);
+        var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 4, 6), new THREE.MeshLambertMaterial({ color: 0x3a2f24 })); pole.scale.setScalar(U); pole.position.set(3 * U, 2 * U, 0); mk.add(pole);
+        mk.position.set(cx, hAt(cx, cz), cz); group.add(mk); camp.marker = mk; camp.fire = fire; camps.push(camp);
+        for (var mi = 0; mi < RG.per; mi++) {
+          var a2 = mi / RG.per * 6.283, hx = cx + Math.cos(a2) * 6 * U, hz = cz + Math.sin(a2) * 6 * U, g = buildMob(kind), tp = TYPES[kind], hpK = RG.off ? 1.5 : 1;
+          var mob = { g: g, kind: kind, camp: camp, hx: hx, hz: hz, x: hx, z: hz, yaw: a2, hp: Math.round(tp.hp * hpK), max: Math.round(tp.hp * hpK), state: 'idle', t: Math.random() * 6, windup: 0, cd: 0, dead: false, deadT: 0, respawnAt: 0, wx: hx, wz: hz, flash: 0, bob: Math.random() * 6 };
+          g.position.set(hx, hAt(hx, hz), hz); g.visible = false; group.add(g); camp.mobs.push(mob); st.spawned++;
+        }
       }
-    }
+    });
 
     function night() { return o.nightFactor ? o.nightFactor() : 0; }
     function setBar(mob) { var p = mob.g.userData.parts, k = Math.max(0, mob.hp / mob.max); p.fg.scale.x = Math.max(0.001, k * 1.12); p.fg.position.x = -(1 - k) * 0.56; }

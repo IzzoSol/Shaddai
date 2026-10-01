@@ -104,8 +104,8 @@
     }
     function finish(playerWon) {
       S.phase = 'done';
-      if (playerWon) { var pay = Math.round(S.pot * (1 - FEE)); addF(pay, 'challenge win'); flash('rgba(232,196,92,.55)'); toast('YOU WIN! +' + pay + ' Sparks (5% burned)'); }
-      else { flash('rgba(255,90,110,.4)'); toast('You finished P' + S.place + ' - the wager is lost'); }
+      if (playerWon) { var pay = Math.round(S.pot * (1 - FEE)); addF(pay, 'challenge win'); flash('rgba(232,196,92,.55)'); toast('YOU WIN! +' + pay + ' Sparks (5% burned) \u2014 ' + (root.WorldCopy ? root.WorldCopy.pick('toasts.race_win') : '')); }
+      else { flash('rgba(255,90,110,.4)'); toast('P' + S.place + ' - the wager is lost \u2014 ' + (root.WorldCopy ? root.WorldCopy.pick('toasts.race_lose') : '')); }
       setTimeout(function () { if (S.phase === 'done') { S.phase = 'idle'; clearMarkers(); S.rivals.forEach(function (rv) { group.remove(rv.g); }); S.rivals = []; drawHud(); } }, 9000);
     }
     function update(dt) {
