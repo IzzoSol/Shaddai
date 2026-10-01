@@ -1,11 +1,28 @@
 {
   "name": "shaddai-mcp-unified",
   "version": "0.3.0",
-  "description": "SHADDAI — the unified local dev MCP proxy: 7-agent team, RAG brain, TURTLE art, and money ledger. NOT published on npm; the canonical public package is 'shaddai-mcp' built from backend/mcp-server-rag.js.",
-  "bin": { "shaddai-mcp-unified": "mcp-unified.js" },
+  "description": "SHADDAI \u2014 the unified local dev MCP proxy: 7-agent team, RAG brain, TURTLE art, and money ledger. NOT published on npm; the canonical public package is 'shaddai-mcp' built from backend/mcp-server-rag.js.",
+  "bin": {
+    "shaddai-mcp-unified": "mcp-unified.js"
+  },
   "type": "commonjs",
-  "engines": { "node": ">=18" },
-  "keywords": ["mcp", "model-context-protocol", "ai-agents", "claude", "cursor", "shaddai", "rag"],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "claude",
+    "cursor",
+    "shaddai",
+    "rag"
+  ],
   "license": "MIT",
-  "files": ["mcp-server.js", "mcp-unified.js", "README.md"]
+  "files": [
+    "mcp-server.js",
+    "mcp-unified.js",
+    "README.md",
+    "lib/"
+  ]
 }

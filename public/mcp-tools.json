@@ -1,10 +1,10 @@
 {
- "generatedAt": "2026-10-01T20:58:50.049Z",
- "count": 103,
+ "generatedAt": "2026-10-01T22:49:02.213Z",
+ "count": 105,
  "categories": [
   {
    "name": "Game Dev (TURTLE)",
-   "blurb": "Build games with TURTLE and the game-dev library."
+   "blurb": "Build games with TURTLE and the game-dev library, and look at a running game to find and fix what is wrong."
   },
   {
    "name": "Agents",
@@ -1961,6 +1961,86 @@
      "type": "string",
      "required": false,
      "description": "Optional — 3d-action | 2d-platformer | arcade-game | isometric-rpg | puzzle-game | vr-experience | motion-video."
+    }
+   ]
+  },
+  {
+   "name": "game_review",
+   "category": "Game Dev (TURTLE)",
+   "description": "LOOK at a browser game and find what is wrong. Runs the game at a local URL in a headless browser, takes screenshots over time (optionally pressing keys/clicking), and reports blank or frozen frames, flat or badly exposed lighting, console errors, missing assets, slow frames, too many draw calls, and a canvas that does not fill the window — each with the guide to read and where to look in the code. Returns a contact sheet image plus saved screenshots. Use it in a loop: review, fix ONE root cause in the code, review again into a new out_dir, then call game_review_compare. Runs locally; needs Playwright (npm i playwright && npx playwright install chromium) or the GAME_REVIEW_BROWSER env var pointing at Chrome/Chromium/Edge. Only local URLs are allowed unless allow_remote is true.",
+   "params": [
+    {
+     "name": "url",
+     "type": "string",
+     "required": true,
+     "description": "Game URL, e.g. http://localhost:5173 or a file:// URL."
+    },
+    {
+     "name": "seconds",
+     "type": "number",
+     "required": false,
+     "description": "How long to watch (default 8, max 60)."
+    },
+    {
+     "name": "shots",
+     "type": "number",
+     "required": false,
+     "description": "How many screenshots (default 6, max 12)."
+    },
+    {
+     "name": "width",
+     "type": "number",
+     "required": false,
+     "description": "Viewport width (default 1280). Use 390 with height 844 for a phone."
+    },
+    {
+     "name": "height",
+     "type": "number",
+     "required": false,
+     "description": "Viewport height (default 720)."
+    },
+    {
+     "name": "actions",
+     "type": "array",
+     "required": false,
+     "description": "Inputs to send while watching: { at: seconds, key: \"ArrowRight\", hold: 0.4 } | { at, click: [x, y] } | { at, type: \"text\" }."
+    },
+    {
+     "name": "out_dir",
+     "type": "string",
+     "required": false,
+     "description": "Where to save screenshots and the report (default: a new folder under the system temp directory)."
+    },
+    {
+     "name": "include_images",
+     "type": "boolean",
+     "required": false,
+     "description": "Return the contact sheet as an image (default true)."
+    },
+    {
+     "name": "allow_remote",
+     "type": "boolean",
+     "required": false,
+     "description": "Allow a non-local URL. Default false."
+    }
+   ]
+  },
+  {
+   "name": "game_review_compare",
+   "category": "Game Dev (TURTLE)",
+   "description": "Compare two game_review runs (before and after an edit): which findings were fixed or newly introduced, the performance change, and a verdict. Timing noise is reported as a note, not a regression.",
+   "params": [
+    {
+     "name": "before_dir",
+     "type": "string",
+     "required": true,
+     "description": "out_dir of the earlier run."
+    },
+    {
+     "name": "after_dir",
+     "type": "string",
+     "required": true,
+     "description": "out_dir of the later run."
     }
    ]
   }

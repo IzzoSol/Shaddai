@@ -1000,6 +1000,33 @@ TOOLS.push(
   },
 );
 
+// ── Game visual review (runs on YOUR machine: needs a browser) ───────────────
+TOOLS.push(
+  {
+    name: 'game_review',
+    description: 'LOOK at a browser game and find what is wrong. Runs the game at a local URL in a headless browser, takes screenshots over time (optionally pressing keys/clicking), and reports blank or frozen frames, flat or badly exposed lighting, console errors, missing assets, slow frames, too many draw calls, and a canvas that does not fill the window — each with the guide to read and where to look in the code. Returns a contact sheet image plus saved screenshots. Use it in a loop: review, fix ONE root cause in the code, review again into a new out_dir, then call game_review_compare. Runs locally; needs Playwright (npm i playwright && npx playwright install chromium) or the GAME_REVIEW_BROWSER env var pointing at Chrome/Chromium/Edge. Only local URLs are allowed unless allow_remote is true.',
+    inputSchema: { type: 'object', properties: {
+      url: { type: 'string', description: 'Game URL, e.g. http://localhost:5173 or a file:// URL.' },
+      seconds: { type: 'number', description: 'How long to watch (default 8, max 60).' },
+      shots: { type: 'number', description: 'How many screenshots (default 6, max 12).' },
+      width: { type: 'number', description: 'Viewport width (default 1280). Use 390 with height 844 for a phone.' },
+      height: { type: 'number', description: 'Viewport height (default 720).' },
+      actions: { type: 'array', description: 'Inputs to send while watching: { at: seconds, key: "ArrowRight", hold: 0.4 } | { at, click: [x, y] } | { at, type: "text" }.', items: { type: 'object' } },
+      out_dir: { type: 'string', description: 'Where to save screenshots and the report (default: a new folder under the system temp directory).' },
+      include_images: { type: 'boolean', description: 'Return the contact sheet as an image (default true).' },
+      allow_remote: { type: 'boolean', description: 'Allow a non-local URL. Default false.' },
+    }, required: ['url'] },
+  },
+  {
+    name: 'game_review_compare',
+    description: 'Compare two game_review runs (before and after an edit): which findings were fixed or newly introduced, the performance change, and a verdict. Timing noise is reported as a note, not a regression.',
+    inputSchema: { type: 'object', properties: {
+      before_dir: { type: 'string', description: 'out_dir of the earlier run.' },
+      after_dir: { type: 'string', description: 'out_dir of the later run.' },
+    }, required: ['before_dir', 'after_dir'] },
+  },
+);
+
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
 async function callAPI(path, body, method) {
   const headers = { 'Content-Type': 'application/json' };
@@ -1046,7 +1073,7 @@ function fmtLedger(entries) {
 }
 
 // ── Tool execution ───────────────────────────────────────────────────────────
-async function callTool(name, args) {
+async function callTool(name, args, ctx) {
   args = args || {};
 
   // Least-privilege gate: money tools refuse unless the operator explicitly
@@ -1354,6 +1381,27 @@ async function callTool(name, args) {
     const d = await callAPI('/api/agentic/run', { agent: 'TURTLE', task: 'You are helping someone BUILD a game. Use the reference material below (cite the source paths you rely on), give a concrete step-by-step build plan and working code for their stack.\n\n' + ctx + 'REQUEST: ' + args.task });
     if (d.error || !d.response) return (d.error ? 'TURTLE agent unavailable (' + d.error + '). ' : '') + 'Here is the reference material TURTLE found:\n\n' + (ctx || 'No matches — try gamedev_list.');
     return d.response + (g.results && g.results.length ? '\n\nSources: ' + g.results.map(r => r.source + ':' + r.path).join(', ') : '');
+  }
+
+  // Game visual review (local browser)
+  if (name === 'game_review' || name === 'game_review_compare') {
+    const NL = String.fromCharCode(10);
+    let api;
+    try { api = await import(require('url').pathToFileURL(path.join(__dirname, 'lib', 'game-review', 'index.mjs')).href); }
+    catch (e) { return 'Error: the game review module could not load: ' + e.message; }
+    if (name === 'game_review_compare') {
+      try { return JSON.stringify(api.compareRuns(path.resolve(String(args.before_dir || '')), path.resolve(String(args.after_dir || ''))), null, 2); }
+      catch (e) { return 'Error: ' + e.message; }
+    }
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const outDir = args.out_dir ? path.resolve(String(args.out_dir)) : path.join(require('os').tmpdir(), 'shaddai-game-review', stamp);
+    try {
+      const r = await api.reviewGame({ url: args.url, seconds: args.seconds, shots: args.shots, width: args.width, height: args.height, actions: args.actions, allowRemote: args.allow_remote === true }, outDir);
+      if (ctx && Array.isArray(ctx.images) && args.include_images !== false) {
+        try { const buf = require('fs').readFileSync(r.contactSheet); if (buf.length < 1500000) ctx.images.push({ data: buf.toString('base64'), mimeType: 'image/png' }); } catch (_) {}
+      }
+      return r.markdown + NL + 'Saved to: ' + outDir + NL + 'Files: contact.png, shot-NN.png, report.json, REPORT.md' + NL + 'Next: look at the screenshots, fix one root cause in the code, re-run into a new out_dir, then call game_review_compare.';
+    } catch (e) { return 'Error: ' + e.message; }
   }
 
   // Specialist / agent runs
@@ -2190,8 +2238,11 @@ rl.on('line', async (line) => {
         if (id !== undefined) send({ jsonrpc: '2.0', id, error: { code: -32005, message: 'Rate limit exceeded: ' + RATE_MAX_PER_SEC + ' tool calls/sec. Retry shortly.' } });
         return;
       }
-      const text = await callTool(params && params.name, (params && params.arguments) || {});
-      send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: String(text).slice(0, 12000) }] } });
+      const ctx = { images: [] };
+      const text = await callTool(params && params.name, (params && params.arguments) || {}, ctx);
+      const content = [{ type: 'text', text: String(text).slice(0, 12000) }];
+      for (const im of ctx.images) content.push({ type: 'image', data: im.data, mimeType: im.mimeType });
+      send({ jsonrpc: '2.0', id, result: { content } });
     } else if (method === 'ping') {
       send({ jsonrpc: '2.0', id, result: {} });
     } else if (id !== undefined) {

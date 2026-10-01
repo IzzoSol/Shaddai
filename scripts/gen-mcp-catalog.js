@@ -8,7 +8,7 @@ const fs = require('fs');
 const { TOOLS } = require(path.join(__dirname, '..', 'shaddai-mcp', 'mcp-unified.js'));
 
 const CATS = [
-  ['Game Dev (TURTLE)', /^(gamedev_|shaddai_turtle_build$)/, 'Build games with TURTLE and the game-dev library.'],
+  ['Game Dev (TURTLE)', /^(gamedev_|game_review|shaddai_turtle_build$)/, 'Build games with TURTLE and the game-dev library, and look at a running game to find and fix what is wrong.'],
   ['Agents', /^(shaddai_(orchestrate|run_agent|list_agents|nexus|oracle|zerox|turtle|quill|pikadon|capture)$)/, 'Talk to the 7-agent council or run a task through them.'],
   ['Knowledge & RAG', /^(rag_|list_rag_docs|memory_search|brain_|aura_|graph_|get_route|shaddai_search_mastery|mastery_)/, 'Search and ask the SHADDAI knowledge brain.'],
   ['Markets & ZEROX', /^zerox_/, 'Prices, sentiment, paper trading and commissions.'],
