@@ -30,7 +30,7 @@
   var saved = load();
   var S = window.NaviState = {
     open: false, module: saved.module || 'inv',
-    kpis: { sparks: 1284, paybox: 63.8, agentRev: 1668 },
+    kpis: { sparks: 0, paybox: null, agentRev: null },   // real values only: Sparks from the ledger; PayBox/agent revenue show a dash until the hook reports a number
     waypoint: saved.waypoint || null,
     radio: { band: 'Agent', playing: false, station: 'Agent FM 107.7' },
     flags: { hasHome: !!saved.hasHome, activeBot: saved.activeBot || null, mountedId: saved.mountedId || null, slots: {} },
@@ -64,6 +64,8 @@
   function emit(ev, a) { (listeners[ev] || []).forEach(function (f) { try { f(a); } catch (e) { } }); }
   function hooks() { return window.NaviHooks || {}; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pay() { var p = window.shaddaiPayBox, v = p && typeof p.balance === 'function' ? p.balance() : S.kpis.paybox; return v == null ? '—' : v; }
+  function rev() { var v = S.stats.agentRevenue || S.kpis.agentRev; return v ? v : '—'; }
   function sparks() { return window.ShdSparks && window.ShdSparks.get ? window.ShdSparks.get() : S.kpis.sparks; }
   function toast(m) { if (window.__toast) window.__toast(m); else console.log('[navi]', m); }
   function low() { return /[?&]q=low/.test(location.search) || localStorage.getItem('shd_quality') === 'low'; }
@@ -183,7 +185,16 @@
   var selected = null;
   var M = {};
 
+  /* REAL INVENTORY (owner 2026-10-01 Navi upgrade): built live from the game systems — operatives you own (skins), mounts/boards you own, and the shared item bag (crops, perk kits). No demo data. */
+  function realInventory() {
+    var out = [], WO = window.WorldOperatives, WM = window.WorldMounts, IV = window.ShdInv, cur = window._playerCharacter;
+    if (WO) WO.list().forEach(function (o) { if (o.owned) out.push({ id: 'op:' + o.code, cat: 'Skins', name: o.name, rarity: o.base ? 'Base operative' : 'Council operative', power: o.base ? 8 : Math.round(o.price / 100), tradable: false, equipped: cur === o.code, img: o.portrait }); });
+    if (WM) WM.owned().forEach(function (m) { var d = WM.def(m.id); if (d) out.push({ id: 'mt:' + m.id, cat: 'Mounts', name: d.name, rarity: d.flying ? 'Flying · hp ' + m.hp : 'hp ' + m.hp, power: Math.round((d.price || 0) / 100), tradable: false, equipped: S.flags.mountedId === 'mt:' + m.id }); });
+    if (IV) { var all = IV.all(); Object.keys(all).forEach(function (k) { var crop = /^crop-/.test(k); out.push({ id: 'it:' + k, cat: crop ? 'Consumables' : 'Gear', name: k.replace(/^crop-/, '').replace(/-/g, ' ').replace(/\w/g, function (c) { return c.toUpperCase(); }) + ' x' + all[k], rarity: crop ? 'Harvest' : 'Kit', power: 0, tradable: false, equipped: false }); }); }
+    return out;
+  }
   M.inv = function () {
+    S.inventory = realInventory();
     var cats = ['Skins', 'Skills', 'Mounts', 'Gear', 'Consumables', 'Quest'], out = [];
     cats.forEach(function (c) { var arr = S.inventory.filter(function (i) { return i.cat === c; }); if (arr.length) { out.push({ head: c + ' · ' + arr.length }); arr.forEach(function (i) { out.push({ id: i.id, t: i.name, s: i.rarity, tag: i.equipped ? 'EQUIPPED' : '' }); }); } });
     return {
@@ -192,13 +203,16 @@
         var it = S.inventory.filter(function (x) { return x.id === id; })[0]; if (!it) return '<div class="empty">Select an item.</div>';
         var home = S.flags.hasHome;
         return '<h3>' + esc(it.name) + '</h3><div>' + esc(it.cat) + ' · ' + esc(it.rarity) + '</div><div style="margin:8px 0">POWER ' + it.power + ' · ' + (it.tradable ? 'TRADABLE' : 'SOULBOUND') + '</div>' +
-          '<div style="height:120px;border:1px dashed rgba(0,212,255,.4);display:flex;align-items:center;justify-content:center;color:#6f93b3">3D PREVIEW SLOT</div>' +
+          (it.img ? '<div style="height:150px;border:1px solid rgba(0,212,255,.4);background:#050814 center/contain no-repeat url(' + it.img + ')"></div>' : '<div style="height:60px;border:1px dashed rgba(0,212,255,.4);display:flex;align-items:center;justify-content:center;color:#6f93b3">' + esc(it.cat) + '</div>') +
           '<button class="b" data-a="equip">' + (it.equipped ? 'UNEQUIP' : 'EQUIP') + '</button>' +
           '<button class="b g" data-a="home"' + (home ? '' : ' disabled title="No home yet"') + '>SEND TO HOME</button>' + (home ? '' : '<div class="empty">No home yet — claim a plot.</div>') +
           '<button class="b" data-a="drop"' + (it.tradable ? '' : ' disabled') + '>DROP</button>';
       },
       act: function (id, a) {
         var it = S.inventory.filter(function (x) { return x.id === id; })[0]; if (!it) return;
+        if (a === 'equip' && /^op:/.test(id)) { if (window.setPlayerCharacter) { window.setPlayerCharacter(id.slice(3)); toast('Switching to ' + it.name + '...'); } return; }
+        if (a === 'equip' && /^mt:/.test(id)) { var R = window.__mountRide, mid = id.slice(3); if (R) { if (S.flags.mountedId === id) { R.stow(); S.flags.mountedId = null; } else { R.summon(mid); S.flags.mountedId = id; } } return; }
+        if (a === 'equip' && /^it:/.test(id)) { toast('Use this at an office, the farm or the exchange.'); return; }
         if (a === 'equip') {
           it.equipped = !it.equipped;
           if (it.cat === 'Mounts') { S.flags.mountedId = it.equipped ? it.id : null; if (hooks().onEquipMount) hooks().onEquipMount(S.flags.mountedId); }
@@ -338,7 +352,7 @@
     modalEl = document.createElement('div'); modalEl.className = 'modal';
     var pb = !!(window.shaddaiPayBox && window.shaddaiPayBox.authorize), home = S.flags.hasHome;
     modalEl.innerHTML = '<div><h3 style="margin:0 0 8px;color:' + THEME.gold + '">CONFIRM PURCHASE</h3><div>' + esc(l.t) + '</div><div style="font-size:22px;margin:8px 0">' + l.price + ' ' + l.cur + '</div>' +
-      '<div>PayBox balance: ' + S.kpis.paybox + '</div>' + (home ? '<label><input type="checkbox" id="nvHome" style="width:auto"> Deliver to home</label>' : '') +
+      '<div>PayBox balance: ' + pay() + '</div>' + (home ? '<label><input type="checkbox" id="nvHome" style="width:auto"> Deliver to home</label>' : '') +
       (l.cur === 'PBC' && !pb ? '<div class="empty">PayBox not connected. Nothing will be charged or marked owned.</div>' : '') +
       '<button class="b g" id="nvOk">' + (l.cur === 'PBC' ? 'AUTHORIZE WITH PAYBOX' : 'SPEND SPARKS') + '</button><button class="b" id="nvNo">CANCEL</button></div>';
     root.appendChild(modalEl);
@@ -431,7 +445,7 @@
   };
   M.wallet = function () {
     return {
-      title: 'WALLET', list: [{ id: 'w1', t: 'PayBox', s: 'balance ' + S.kpis.paybox }, { id: 'w2', t: 'Sparks', s: String(sparks()) }], empty: '',
+      title: 'WALLET', list: [{ id: 'w1', t: 'PayBox', s: 'balance ' + pay() }, { id: 'w2', t: 'Sparks', s: String(sparks()) }], empty: '',
       detail: function () { var a = window.shaddaiPayBox && window.shaddaiPayBox.address; return '<h3>PAYBOX</h3><div>Address only — no keys ever live in the game.</div><div style="word-break:break-all;margin:8px 0">' + (a ? esc(a) : 'Not connected') + '</div><div class="empty">Purchases obey PayBox policy caps. PIKADON audits every authorization.</div>' + (a ? '<button class="b" data-a="copy">COPY ADDRESS</button>' : ''); },
       act: function (id, a) { if (a === 'copy' && navigator.clipboard) navigator.clipboard.writeText(window.shaddaiPayBox.address); }
     };
@@ -466,7 +480,7 @@
     for (var d = -3; d <= 3; d++) { var m = MODULES[(i + d + 12) % 12], c = d === 0 ? 'c' : (Math.abs(d) === 1 ? 'n1' : (Math.abs(d) === 2 ? 'n2' : 'n2')); h += '<button class="hx ' + c + '" data-m="' + m.id + '">' + m.ic + '<small>' + m.label + '</small></button>'; }
     elSw.innerHTML = h; elSw.onclick = function (e) { var b = e.target.closest('.hx'); if (b) setModule(b.dataset.m); };
     var n = elNodes.children; for (var k = 0; k < n.length; k++) n[k].classList.toggle('act', n[k].dataset.m === S.module);
-    elKp.innerHTML = '<div class="kpi gd"><b>SPARKS</b><span>' + sparks() + '</span></div><div class="kpi"><b>PAYBOX</b><span>' + S.kpis.paybox + '</span></div><div class="kpi"><b>AGENT REV</b><span>' + S.kpis.agentRev + '</span></div>';
+    elKp.innerHTML = '<div class="kpi gd"><b>SPARKS</b><span>' + sparks() + '</span></div><div class="kpi"><b>PAYBOX</b><span>' + pay() + '</span></div><div class="kpi"><b>AGENT REV</b><span>' + rev() + '</span></div>';
     var ab = S.bots.filter(function (b) { return b.id === S.flags.activeBot; })[0]; elCore.textContent = ab ? ab.name : 'NO ACTIVE BOT';
     SLOTS.forEach(function (s) { var e = root.querySelector('[data-s="' + s + '"]'); if (e) { e.classList.toggle('on', !!S.flags.slots[s]); e.textContent = s.toUpperCase() + (S.flags.slots[s] ? '' : ' · SOON'); } });
   }
