@@ -77,7 +77,8 @@
   }
   function rebuild(id, spend) {
     var r = rec(id); if (!r || r.bodyState !== 'destroyed') return { ok: false, why: 'body is fine' };
-    if (spend && !spend(TUNE.rebuildSparks)) return { ok: false, why: 'need ' + TUNE.rebuildSparks + ' Sparks for a new body' };
+    var cost = Math.round(TUNE.rebuildSparks * (1 - ((root.ShdInv && root.ShdInv.perk('rebuildDiscount')) || 0)));   // Nexus Bot Part Pack
+    if (spend && !spend(cost)) return { ok: false, why: 'need ' + cost + ' Sparks for a new body' };
     r.bodyState = 'stowed'; r.hp = byId[id].kind === 'humanoid' ? TUNE.humanoidHp : TUNE.wheeledHp; save(); emit('rebuilt', { id: id }); return { ok: true };
   }
   function setFollow(id, mode) { var r = rec(id); if (!r) return false; r.follow = mode === 'stay' ? 'stay' : 'follow'; save(); return true; }

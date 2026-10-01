@@ -79,7 +79,7 @@
     function spawnShell(srcId, targetId, dmg) { var sp = riderPos(srcId, st.lastPose); if (!sp || !targetId) return; var sh = { from: srcId, to: targetId, x: sp.x, z: sp.z, y: (sp.y || 0) + 1.2 * U, dmg: dmg, life: 4, mesh: null }; if (THREE && scene) { sh.mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5 * U, 10, 8), new THREE.MeshBasicMaterial({ color: 0x00D4FF })); scene.add(sh.mesh); } st.shells.push(sh); ev('shell', { from: srcId, to: targetId }); }
     function useFor(id, pose) {
       var r = R.rider(id); if (!r || !r.item || r.freeze > 0) return null; var item = r.item, me = riderPos(id, pose);
-      if (item === 'ward' || item === 'boost') { var out = R.useItem(id); if (item === 'boost') { if (id === api.playerId) { if (hover && hover.setModifier) hover.setModifier({ mul: FX.ITEM_BOOST.mul, dur: FX.ITEM_BOOST.dur }); } else { var a = st.ais.filter(function (x) { return x.id === id; })[0]; if (a) a.boostT = FX.ITEM_BOOST.dur; } r.boosting = false; ev('boost', { id: id }); } else ev('ward', { id: id }); return out; }
+      if (item === 'ward' || item === 'boost') { var out = R.useItem(id); if (item === 'boost') { if (id === api.playerId) { if (hover && hover.setModifier) hover.setModifier({ mul: FX.ITEM_BOOST.mul * (1 + ((root.ShdInv && root.ShdInv.perk('boostBonus')) || 0)), dur: FX.ITEM_BOOST.dur }); } else { var a = st.ais.filter(function (x) { return x.id === id; })[0]; if (a) a.boostT = FX.ITEM_BOOST.dur; } r.boosting = false; ev('boost', { id: id }); } else ev('ward', { id: id }); return out; }
       r.item = null;
       if (item === 'shell') { var t1 = nearestAhead(id, pose, FX.SHELL_RANGE_M); if (t1) spawnShell(id, t1, 22); else ev('fizzle', { id: id }); }
       else if (item === 'triple') { var t2 = nearestAhead(id, pose, FX.SHELL_RANGE_M); if (t2) { [0, 0.25, 0.5].forEach(function (d, k) { setTimeout(function () { if (R && st) spawnShell(id, t2, 22); }, d * 1000); }); } else ev('fizzle', { id: id }); }
@@ -109,7 +109,7 @@
       if (!me.finished && !me.dnf) { var g = st.gates[me.gate]; if (g && Math.hypot(pose.x - g.x, pose.z - g.z) < FX.GATE_M * U) { var res = R.passGate(api.playerId, me.gate, { mode: pose.mode || 'pad', altM: pose.altM || 0, kissed: pose.kissed !== false, trick: pose.trick || null }); if (res.ok) ev('gate', { gate: me.gate, note: res.note }); } }
       // crates + pads (player)
       st.crates.forEach(function (c) { if (!c.on) { c.t -= dt; if (c.t <= 0) { c.on = true; if (!c.track && park.setCrateVisible) park.setCrateVisible(c.i, true); } return; } if (Math.hypot(pose.x - c.x, pose.z - c.z) < FX.PICK_M * U && !me.item) { var it = R.grabCrate(api.playerId, st.prime); if (it) { c.on = false; c.t = FX.CRATE_RESPAWN_S; if (!c.track && park.setCrateVisible) park.setCrateVisible(c.i, false); ev('crate', { id: api.playerId, item: it.id }); } } });
-      st.padCool -= dt; if (st.padCool <= 0) st.pads.forEach(function (p) { if (Math.hypot(pose.x - p.x, pose.z - p.z) < FX.PAD_M * U) { st.padCool = 0.6; if (hover && hover.setModifier) hover.setModifier({ mul: FX.PAD_BOOST.mul, dur: FX.PAD_BOOST.dur }); ev('pad', {}); } });
+      st.padCool -= dt; if (st.padCool <= 0) st.pads.forEach(function (p) { if (Math.hypot(pose.x - p.x, pose.z - p.z) < FX.PAD_M * U) { st.padCool = 0.6; if (hover && hover.setModifier) hover.setModifier({ mul: FX.PAD_BOOST.mul * (1 + ((root.ShdInv && root.ShdInv.perk('boostBonus')) || 0)), dur: FX.PAD_BOOST.dur }); ev('pad', {}); } });
       // AIs
       var playerProg = me.lap + uOf(pose.x, pose.z);
       st.ais.forEach(function (a) {

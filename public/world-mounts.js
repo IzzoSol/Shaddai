@@ -37,7 +37,9 @@
     var cost = replaceCost(id); if (!spend || !spend(cost, 'mount', id)) return { ok: false, why: 'not enough Sparks (' + cost + ')' };
     S.owned.push({ id: id, at: Date.now(), hp: 100 }); S.lost = S.lost.filter(function (x) { return x !== id; }); save(); return { ok: true, paid: cost, item: c };
   }
-  function lose(id, cause) { if (!has(id)) return false; S.owned = S.owned.filter(function (o) { return o.id !== id; }); if (S.lost.indexOf(id) < 0) S.lost.push(id); save(); if (root.Navi && root.Navi.toast) root.Navi.toast('You lost your ' + byId[id].name + ' (' + (cause || 'abandoned') + '). Buy another at a mount store.'); return true; }
+  function lose(id, cause) { if (!has(id)) return false;
+    var ins = root.ShdInv && root.ShdInv.perk('insured'); if (ins && ins[id]) { delete ins[id]; root.ShdInv.setPerk('insured', ins); if (root.Navi && root.Navi.toast) root.Navi.toast('Insurance paid out - your ' + byId[id].name + ' is repaired'); return false; }   /* PIKADON policy consumed */
+    S.owned = S.owned.filter(function (o) { return o.id !== id; }); if (S.lost.indexOf(id) < 0) S.lost.push(id); save(); if (root.Navi && root.Navi.toast) root.Navi.toast('You lost your ' + byId[id].name + ' (' + (cause || 'abandoned') + '). Buy another at a mount store.'); return true; }
   function damage(id, n) { var o = S.owned.filter(function (x) { return x.id === id; })[0]; if (!o) return null; o.hp = Math.max(0, o.hp - n); if (o.hp <= 0) lose(id, 'destroyed'); else save(); return o.hp; }
   function summon(id) { var c = byId[id]; if (!c || !has(id)) return null; return { id: id, procedural: c.procedural || null, kind: c.kind, flying: c.flying, model: c.model || null, style: c.style || null, clips: c.clips || null, saddle: c.saddle || 'stand' }; }
   root.WorldMounts = { CATALOG: CATALOG, TUNE: TUNE, def: function (id) { return byId[id]; }, storesAt: storesAt, buy: buy, has: has, owned: function () { return S.owned.slice(); }, lost: function () { return S.lost.slice(); }, lose: lose, damage: damage, replaceCost: replaceCost, summon: summon, _reset: function () { S = { owned: [], lost: [] }; save(); } };
