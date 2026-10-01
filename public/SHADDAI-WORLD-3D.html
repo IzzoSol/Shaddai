@@ -4950,6 +4950,20 @@ window.__travel = {
   field: function(name){ const A = window.__colosseumArena; if(!A || !A.setField) return false; try{ A.setField(name); }catch(e){ return false; } return 'Arena floor: ' + name; },
   grid: function(){ if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = 0; playerPos.z = 200; return 'The Grid'; }
 };
+// ── CHARACTER POP (owner: "the character blends into the terrain"): fresnel rim light on the player's body (threejs-game-skills shader-cookbook recipe) + a soft contact shadow under the feet ──
+(function characterPop(){ const rimC = new THREE.Color(0xffd9a0); let shadow = null, lastApply = 0;
+  function rim(obj){ obj.traverse(function(o){ if(!(o.isMesh || o.isSkinnedMesh)) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    ms.forEach(function(m){ if(!m || (m.userData && m.userData.__rim) || !(m.isMeshStandardMaterial || m.isMeshPhysicalMaterial)) return; m.userData = m.userData || {}; m.userData.__rim = 1;
+      const prev = m.onBeforeCompile, prevKey = m.customProgramCacheKey;
+      m.onBeforeCompile = function(sh, r){ if(prev) prev.call(this, sh, r); sh.uniforms.uRimColor = { value: rimC }; sh.uniforms.uRimPower = { value: 2.6 }; sh.uniforms.uRimStrength = { value: 0.55 };
+        sh.fragmentShader = 'uniform vec3 uRimColor;\nuniform float uRimPower;\nuniform float uRimStrength;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n float fres = pow(1.0 - saturate(dot(normalize(vNormal), normalize(vViewPosition))), uRimPower);\n totalEmissiveRadiance += uRimColor * fres * uRimStrength;'); };
+      m.customProgramCacheKey = function(){ return 'rim|' + (prevKey ? prevKey.call(this) : ''); }; m.needsUpdate = true; }); }); }
+  function makeShadow(){ const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), g = x.createRadialGradient(64, 64, 4, 64, 64, 62); g.addColorStop(0, 'rgba(0,0,0,0.65)'); g.addColorStop(0.55, 'rgba(0,0,0,0.32)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(cv); const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); m.rotation.x = -Math.PI / 2; m.scale.set(11, 11, 1); m.renderOrder = 2; m.name = 'player-contact-shadow'; scene.add(m); return m; }
+  (function loop(){ requestAnimationFrame(loop); try{ const av = (typeof playerAvatar !== 'undefined') ? playerAvatar : null; if(!av) return; const now = performance.now();
+    if(now - lastApply > 1500){ lastApply = now; rim(av); }
+    if(!shadow) shadow = makeShadow(); shadow.visible = !!av.visible; if(av.visible){ shadow.position.set(av.position.x, av.position.y + 0.25, av.position.z); } }catch(_){} })();
+})();
 // ── ENTRANCE BEACONS: tall glowing light pillars over the Colosseum door (gold) and every maglev station (cyan) so the entrances can be seen from far away; walk in and press E ──
 (function beacons(){ let n = 0; const iv = setInterval(function(){ if(++n > 240){ clearInterval(iv); return; } const C = window.COLOSSEUM_WORLD, T = window.__worldTransitApi, D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!C || !T || !T.stations || !T.stations.length || !H || !H.heightAt) return; clearInterval(iv);
