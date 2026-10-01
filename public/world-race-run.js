@@ -15,7 +15,7 @@
   var FX = { PICK_M: 3.5, PAD_M: 4.5, GATE_M: 8, SHELL_MS: 34, SHELL_RANGE_M: 60, WAVE_M: 16, YANK_M: 12, CRATE_RESPAWN_S: 8, AI_BASE_MS: 12.5, AI_ITEM_DELAY_S: [1.2, 3.5], PRIZE: [60, 35, 20], PRIZE_RANKED_MUL: 2, PAD_BOOST: { mul: 1.35, dur: 1.0 }, ITEM_BOOST: { mul: 1.6, dur: 1.6 } };
   function create(o) {
     var park = o.park, hover = o.hover, U = o.U || U0, scene = o.scene, THREE = o.THREE, emit = o.onEvent || function () { }, WR = root.WorldRace, R = null, st = null;
-    var api = { playerId: 'you', hud: null };
+    var api = { playerId: 'you', hud: null, setVehicle: function (v) { hover = v || o.hover; } };   // setVehicle(adapter): any ride exposing setModifier/state/isFlying/altitudeM (hoverboard or a hover car via world-mount-ride raceAdapter)
     function ev(type, data) { data = data || {}; data.type = type; try { emit(data); } catch (e) { } }
 
     /* ── loop geometry (world units): posAt(u) with u in [0,1). Park cups use the park loop; city circuits use WorldRace.TRACKS (set per start) ── */
@@ -44,7 +44,7 @@
       buildHud(); ev('start', { circuit: cid, ranked: !!opts.ranked, scale: C.scale || 'park', lengthM: C.lengthM || null }); return api;
     }
     function place(a, p) { var sy = Math.sin(p.yaw), cy = Math.cos(p.yaw); a.x = p.x + cy * a.lane; a.z = p.z - sy * a.lane; a.y = p.y; a.yaw = p.yaw; }
-    function mkMesh(a) { if (!THREE || !scene) return null; var m = new THREE.Mesh(new THREE.BoxGeometry(0.7 * U, 0.16 * U, 1.7 * U), new THREE.MeshStandardMaterial({ color: 0x0B1020, emissive: [0x00D4FF, 0xD4AF37, 0xff4aa8, 0x9d6bff][a.id.charCodeAt(2) % 4], emissiveIntensity: 1.4, metalness: 0.6, roughness: 0.3 })); scene.add(m); return m; }
+    function mkMesh(a) { if (!THREE || !scene) return null; if (o.aiMesh) { var cm = null; try { cm = o.aiMesh(a); } catch (e) { } if (cm) { scene.add(cm); return cm; } } var m = new THREE.Mesh(new THREE.BoxGeometry(0.7 * U, 0.16 * U, 1.7 * U), new THREE.MeshStandardMaterial({ color: 0x0B1020, emissive: [0x00D4FF, 0xD4AF37, 0xff4aa8, 0x9d6bff][a.id.charCodeAt(2) % 4], emissiveIntensity: 1.4, metalness: 0.6, roughness: 0.3 })); scene.add(m); return m; }
     function stop() { if (st) { if (st.ribMesh && scene) scene.remove(st.ribMesh); st.ais.forEach(function (a) { if (a.mesh && scene) scene.remove(a.mesh); }); st.shells.forEach(function (s) { if (s.mesh && scene) scene.remove(s.mesh); }); } st = null; R = null; if (api.hud && api.hud.parentNode) api.hud.parentNode.removeChild(api.hud); api.hud = null; if (hover && hover.setModifier) hover.setModifier({ mul: 1, dur: 0, stun: 0, noise: 0 }); }
 
     /* ── HUD (Navi cyan/gold) ── */

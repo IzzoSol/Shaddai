@@ -3,7 +3,7 @@ const assert = require('assert'), store = {}; global.window = global; global.loc
 require('../../public/world-mounts.js'); const M = global.WorldMounts;
 let pass = 0; const t = (n, f) => { try { M._reset(); f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
 const wallet = b => { const w = { bal: b, spend: n => { if (w.bal < n) return false; w.bal -= n; return true; } }; return w; };
-t('4 rigged mounts + the Aero Skiff hover ship + 2 boards; each realm store sells its own', () => { assert.strictEqual(M.CATALOG.filter(c => c.kind === 'mount').length, 5); assert.strictEqual(M.CATALOG.filter(c => c.kind === 'board').length, 2); assert.deepStrictEqual(M.storesAt('arctic').map(c => c.id), ['mammoth']); assert(M.storesAt('forge').some(c => c.id === 'bull')); });
+t('4 rigged mounts + the Aero Skiff + 3 hover cars + 2 boards; each realm store sells its own', () => { assert.strictEqual(M.CATALOG.filter(c => c.kind === 'mount').length, 8); assert.strictEqual(M.CATALOG.filter(c => c.kind === 'board').length, 2); assert.deepStrictEqual(M.storesAt('arctic').map(c => c.id), ['mammoth']); assert(M.storesAt('forge').some(c => c.id === 'bull')); });
 t('the FLYING mount and the FLYING board cost more than their ground siblings', () => {
   const ground = M.CATALOG.filter(c => c.kind === 'mount' && !c.flying).map(c => c.price), fly = M.def('hawk').price; assert(fly > Math.max(...ground), 'hawk ' + fly + ' > ' + Math.max(...ground)); assert(M.def('board-foil').price > M.def('board-street').price);
 });

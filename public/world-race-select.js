@@ -1,0 +1,118 @@
+/* world-race-select.js — RACE SELECT SCREEN, Mario-Kart style (owner 2026-10-01): pick the cup / circuit, pick your ride (11 hover cars with 3D thumbnails + stat bars, or a hoverboard), pick the field, GO.
+ *
+ *   WorldRaceSelect.init({ THREE })                 once (thumbnails are rendered with a short-lived WebGL renderer, cached as images)
+ *   WorldRaceSelect.open({ cid?, ranked?, prepaid? })   cid = jump straight to ride select for that circuit (Navi race board); prepaid = the entry fee was already charged
+ *   WorldRaceSelect.gp()                             current Grand Prix state (cups, points) or null
+ *
+ * Modes: single CIRCUIT (7: Plaza / Spine / Forum / Rift + the city rings) or the SHADDAI GRAND PRIX (3 park cups back to back, points 10/8/6/5/4/3/2/1, medal bonus).
+ * Rules/economy: casual 25 / ranked 50 / Grand Prix 60 Sparks entry (spent through ShdSparks, refunded if the start fails); race prizes come from world-race-run (60/35/20, x2 ranked);
+ * Grand Prix medal bonus (closed-loop mint, capped by the daily race cap in world-race-run): GOLD +120, SILVER +60, BRONZE +25.
+ * Host contract: window.__raceStart(cid, { vehicle:'kart-<type>'|undefined, style?, ranked, ais }) starts the race; 'shaddai:race' CustomEvents carry run events (finish -> next GP leg).
+ */
+(function (root) {
+  'use strict';
+  var U = 7 / 1.8, FEE = { casual: 25, ranked: 50, gp: 60 }, GP_CUPS = ['plaza-cup', 'spine-cup', 'forum-grand'], GP_PTS = [10, 8, 6, 5, 4, 3, 2, 1], GP_MEDAL = [{ n: 'GOLD', min: 24, bonus: 120, c: '#e8c45c' }, { n: 'SILVER', min: 18, bonus: 60, c: '#cfd8e3' }, { n: 'BRONZE', min: 12, bonus: 25, c: '#c88a4a' }];
+  var BLURB = { 'plaza-cup': 'Warm-up lap around the park plaza. Wide lines, easy gates.', 'spine-cup': 'Rails and banks: the park’s technical cup.', 'forum-grand': 'Big bowl, big air, long straights.', 'rift-cut': 'PRIME heat: lava edge, blue-line items, no mercy.', 'quarter-loop': 'Two laps through the Race Quarter streets.', 'grid-ring': 'One long lap of the whole Grid ring.', 'train-ring': 'Map-wide endurance along the maglev ring.' };
+  var THREE_ = null, thumbs = {}, ov = null, S = null, gp = null;
+  function el(tag, css, html) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (html != null) e.innerHTML = html; return e; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function toast(m) { if (root.Navi && root.Navi.toast) root.Navi.toast(m); else if (root.__toast) root.__toast(m); }
+  function bal() { return root.ShdSparks && root.ShdSparks.get ? root.ShdSparks.get() : 0; }
+
+  // ---------- thumbnails ----------
+  function makeThumbs() {
+    if (!THREE_ || !root.WorldHoverCars || thumbs.__done) return; thumbs.__done = true;
+    try {
+      var cv = document.createElement('canvas'); cv.width = 220; cv.height = 130; var r = new THREE_.WebGLRenderer({ canvas: cv, alpha: true, antialias: false, preserveDrawingBuffer: true }); r.setSize(220, 130, false); r.setClearColor(0x000000, 0);
+      var sc = new THREE_.Scene(); sc.add(new THREE_.AmbientLight(0xffffff, 1.5)); var dl = new THREE_.DirectionalLight(0xffffff, 2.2); dl.position.set(3, 6, 4); sc.add(dl); var cam = new THREE_.PerspectiveCamera(32, 220 / 130, 0.1, 50);
+      root.WorldHoverCars.TYPES.forEach(function (t) { var g = root.WorldHoverCars.buildGroup(THREE_, t.id); sc.add(g); var b = new THREE_.Box3().setFromObject(g), sz = b.getSize(new THREE_.Vector3()), c = b.getCenter(new THREE_.Vector3()), d = Math.max(sz.x, sz.y * 1.4, sz.z) * 1.12; g.rotation.y = -0.65; cam.position.set(c.x + d * 0.55, c.y + d * 0.42, c.z + d * 0.85); cam.lookAt(c.x, c.y - 0.1, c.z); r.render(sc, cam); thumbs[t.id] = cv.toDataURL('image/png'); sc.remove(g); });
+      if (root.HoverboardKit && root.HoverboardKit.STYLES) root.HoverboardKit.STYLES.forEach(function (b) { try { var g2 = root.HoverboardKit.build(THREE_, b.id); sc.add(g2); var bb = new THREE_.Box3().setFromObject(g2), z2 = bb.getSize(new THREE_.Vector3()), c2 = bb.getCenter(new THREE_.Vector3()), d2 = Math.max(z2.x, z2.y * 2, z2.z) * 1.15; g2.rotation.y = -0.7; cam.position.set(c2.x + d2 * 0.5, c2.y + d2 * 0.6, c2.z + d2 * 0.8); cam.lookAt(c2.x, c2.y, c2.z); r.render(sc, cam); thumbs['board-' + b.id] = cv.toDataURL('image/png'); sc.remove(g2); } catch (e) { } });
+      r.dispose(); if (r.forceContextLoss) r.forceContextLoss();
+    } catch (e) { if (root.console) console.warn('[race-select] thumbnails failed', e && e.message); }
+  }
+
+  // ---------- circuits (+ minimap) ----------
+  function circuitPoints(cid) {
+    var WR = root.WorldRace, pts = null; try { if (WR.trackWorld) pts = WR.trackWorld(cid, U); } catch (e) { }
+    if (!pts && root.__hoverPark && root.__hoverPark.loopWorld) pts = root.__hoverPark.loopWorld(); return pts || [];
+  }
+  function minimap(cid) {
+    var pts = circuitPoints(cid); if (pts.length < 3) return '<div style="height:72px;opacity:.4;font-size:11px;padding-top:26px;text-align:center">map unavailable</div>';
+    var minX = 1e18, maxX = -1e18, minZ = 1e18, maxZ = -1e18; pts.forEach(function (p) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); });
+    var w = maxX - minX || 1, h = maxZ - minZ || 1, k = 92 / Math.max(w, h), step = Math.max(1, Math.floor(pts.length / 90)), d = '';
+    for (var i = 0; i < pts.length; i += step) { var p = pts[i]; d += (i ? 'L' : 'M') + (4 + (p.x - minX) * k).toFixed(1) + ' ' + (4 + (p.z - minZ) * k).toFixed(1); }
+    var s0 = pts[0]; return '<svg viewBox="0 0 100 100" width="96" height="72" style="display:block;margin:0 auto"><path d="' + d + 'Z" fill="none" stroke="#00ff9c" stroke-width="3" stroke-linejoin="round" opacity=".9"/><circle cx="' + (4 + (s0.x - minX) * k).toFixed(1) + '" cy="' + (4 + (s0.z - minZ) * k).toFixed(1) + '" r="4.5" fill="#e8c45c"/></svg>';
+  }
+  function lengthM(cid) { var WR = root.WorldRace, C = WR.CIRCUITS[cid]; if (C && C.lengthM) return C.lengthM; try { var pts = circuitPoints(cid), L = 0; for (var i = 0; i < pts.length; i++) { var a = pts[i], b = pts[(i + 1) % pts.length]; L += Math.hypot(b.x - a.x, b.z - a.z); } return Math.round(L / U); } catch (e) { return 0; } }
+
+  // ---------- rides ----------
+  function bar(v, max) { var n = Math.max(0, Math.min(5, Math.round(v / max * 5))), h = ''; for (var i = 0; i < 5; i++) h += '<i style="display:inline-block;width:13px;height:6px;margin-right:2px;border-radius:2px;background:' + (i < n ? 'linear-gradient(90deg,#00ff9c,#27e0ff)' : 'rgba(255,255,255,.14)') + '"></i>'; return h; }
+  function rideCards() {
+    var out = [], HC = root.WorldHoverCars; if (HC) HC.TYPES.forEach(function (t) { var k = HC.KARTS[t.id]; out.push({ id: 'kart-' + t.id, kind: 'car', name: t.name, thumb: thumbs[t.id], speed: k.top / 44 * 5, handle: k.handle / 2.8 * 5, accel: k.accel, weight: k.weight }); });
+    var BS = (root.HoverboardKit && root.HoverboardKit.STYLES) || []; BS.forEach(function (b) { out.push({ id: 'board-' + b.id, kind: 'board', name: b.name, style: b.id, thumb: thumbs['board-' + b.id], color: b.palette && ('#' + ('000000' + b.palette.deck.toString(16)).slice(-6)), speed: 3, handle: 5, accel: 4, weight: 1 }); });
+    return out;
+  }
+
+  // ---------- UI ----------
+  function close() { if (ov) { ov.remove(); ov = null; } }
+  var BTN = 'border-radius:10px;cursor:pointer;font:700 14px Rajdhani,sans-serif;letter-spacing:.1em;padding:10px 18px;border:1px solid #00ff9c;border-bottom-width:4px;background:linear-gradient(180deg,rgba(0,255,156,.32),rgba(0,120,80,.45));color:#eafff6';
+  var GBTN = BTN.replace(/0,255,156/g, '232,196,92').replace('#00ff9c', '#e8c45c').replace('0,120,80', '120,80,10').replace('#eafff6', '#ffe9b0');
+  function shell(title, stepN) {
+    close(); ov = el('div', 'position:fixed;inset:0;z-index:9700;background:radial-gradient(ellipse at 50% 30%,rgba(20,34,70,.96),rgba(3,6,14,.98));color:#e9f4ee;font:600 13px "Chakra Petch",Rajdhani,sans-serif;overflow:auto;padding:18px 22px');
+    ov.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;max-width:1000px;margin:0 auto"><div><div style="font:900 11px Orbitron,sans-serif;letter-spacing:.3em;color:#e8c45c">SHADDAI HOVER RACING</div><div style="font:900 26px Orbitron,sans-serif;letter-spacing:.12em;margin-top:2px">' + esc(title) + '</div></div><div style="text-align:right"><div style="letter-spacing:.2em;opacity:.7">STEP ' + stepN + ' / 3</div><div style="color:#e8c45c">⚡ ' + bal() + '</div><button data-a="x" style="' + GBTN.replace('padding:10px 18px', 'padding:5px 12px') + ';margin-top:4px">CLOSE</button></div></div><div id="rsBody" style="max-width:1000px;margin:14px auto"></div>';
+    document.body.appendChild(ov); ov.addEventListener('click', function (e) { var t = e.target.closest('[data-a]'); if (!t) return; var a = t.getAttribute('data-a'); if (a === 'x') close(); else if (S && S.handle) S.handle(a, t); }); return ov.querySelector('#rsBody');
+  }
+  function stepCup() {
+    var body = shell('CHOOSE YOUR CUP', 1), WR = root.WorldRace, ids = Object.keys(WR.CIRCUITS);
+    var h = '<div data-a="gp" style="cursor:pointer;display:flex;gap:16px;align-items:center;padding:14px 18px;margin-bottom:12px;border-radius:14px;border:2px solid #e8c45c;background:linear-gradient(135deg,rgba(232,196,92,.2),rgba(120,80,10,.25))"><div style="font:900 30px Orbitron">🏆</div><div style="flex:1"><div style="font:900 20px Orbitron,sans-serif;color:#e8c45c;letter-spacing:.1em">SHADDAI GRAND PRIX</div><div style="opacity:.8">Plaza Cup → Spine Cup → Forum Grand. Points 10/8/6/5/4/3/2/1. Medals pay GOLD +120 · SILVER +60 · BRONZE +25 Sparks.</div></div><div style="text-align:right"><div style="color:#e8c45c;font:900 18px Orbitron">' + FEE.gp + '⚡</div><small>3 races</small></div></div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">' + ids.map(function (cid) { var C = WR.CIRCUITS[cid]; return '<div data-a="cup" data-c="' + cid + '" style="cursor:pointer;padding:12px;border-radius:12px;border:1px solid rgba(0,255,156,.35);background:linear-gradient(160deg,rgba(18,28,50,.95),rgba(6,10,20,.97))">' + minimap(cid) + '<div style="font:900 14px Orbitron,sans-serif;margin-top:6px;color:#00ff9c">' + esc(C.name) + (C.prime ? ' <span style="color:#ff5a6e">PRIME</span>' : '') + '</div><div style="opacity:.75;font-size:12px;min-height:34px">' + esc(BLURB[cid] || '') + '</div><div style="font-size:12px;margin-top:4px">' + C.laps + ' lap' + (C.laps > 1 ? 's' : '') + ' · ' + (C.gates || []).length + ' gates · ' + Math.round(lengthM(cid)) + ' m</div><div style="font-size:12px;opacity:.8">casual ' + FEE.casual + '⚡ · ranked ' + FEE.ranked + '⚡</div></div>'; }).join('') + '</div>';
+    body.innerHTML = h; S.handle = function (a, t) { if (a === 'gp') { S.mode = 'gp'; S.cid = GP_CUPS[0]; S.ranked = false; stepRide(); } else if (a === 'cup') { S.mode = 'single'; S.cid = t.getAttribute('data-c'); stepRide(); } };
+  }
+  function stepRide() {
+    makeThumbs(); var body = shell('CHOOSE YOUR RIDE', 2), rides = rideCards(), sel = S.ride || rides[0].id;
+    function render() {
+      var cars = rides.filter(function (r) { return r.kind === 'car'; }), boards = rides.filter(function (r) { return r.kind === 'board'; });
+      var card = function (r) { var on = r.id === sel; return '<div data-a="ride" data-r="' + r.id + '" style="cursor:pointer;padding:8px;border-radius:12px;border:2px solid ' + (on ? '#e8c45c' : 'rgba(255,255,255,.12)') + ';background:' + (on ? 'linear-gradient(160deg,rgba(232,196,92,.2),rgba(20,20,10,.9))' : 'rgba(10,16,30,.9)') + ';box-shadow:' + (on ? '0 0 22px rgba(232,196,92,.35)' : 'none') + '">' +
+        (r.thumb ? '<img src="' + r.thumb + '" alt="" style="width:100%;height:auto;display:block;border-radius:8px">' : '<div style="height:110px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:' + (r.color || '#1a2a3a') + ';font:900 28px Orbitron">' + (r.kind === 'board' ? '▬' : '🚗') + '</div>') +
+        '<div style="font:800 12px Orbitron,sans-serif;margin:6px 0 4px">' + esc(r.name) + '</div><div style="font-size:11px;line-height:1.5">SPD ' + bar(r.speed, 5) + '<br>HND ' + bar(r.handle, 5) + '<br>ACC ' + bar(r.accel, 5) + '<br>WGT ' + bar(r.weight, 5) + '</div></div>'; };
+      body.innerHTML = '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span style="letter-spacing:.2em;color:#e8c45c">' + (S.mode === 'gp' ? 'GRAND PRIX' : esc((root.WorldRace.CIRCUITS[S.cid] || {}).name || S.cid)) + '</span><span style="flex:1"></span><button data-a="back" style="' + GBTN + '">← BACK</button><button data-a="next" style="' + BTN + '">NEXT →</button></div>' +
+        '<div style="font:800 12px Orbitron;letter-spacing:.2em;margin:4px 0 8px">HOVER CARS</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">' + cars.map(card).join('') + '</div>' +
+        '<div style="font:800 12px Orbitron;letter-spacing:.2em;margin:14px 0 8px">HOVERBOARDS <small style="opacity:.6;letter-spacing:0">(tricks, shortcuts, flight)</small></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">' + boards.map(card).join('') + '</div>';
+    }
+    S.handle = function (a, t) { if (a === 'ride') { sel = t.getAttribute('data-r'); S.ride = sel; render(); } else if (a === 'back') stepCup(); else if (a === 'next') { S.ride = sel; stepGrid(); } }; render();
+  }
+  function stepGrid() {
+    var body = shell('READY THE GRID', 3), C = root.WorldRace.CIRCUITS[S.cid], rides = rideCards(), r = rides.filter(function (x) { return x.id === S.ride; })[0] || rides[0], fee = S.prepaid ? 0 : (S.mode === 'gp' ? FEE.gp : (S.ranked ? FEE.ranked : FEE.casual));
+    S.ais = S.ais || 5;
+    function render() { body.innerHTML = '<div style="display:flex;gap:18px;flex-wrap:wrap"><div style="flex:1;min-width:260px;padding:14px;border-radius:14px;border:1px solid rgba(232,196,92,.4);background:rgba(10,16,30,.92)"><div style="letter-spacing:.2em;color:#e8c45c">TRACK</div>' + minimap(S.cid) + '<div style="text-align:center;font:900 15px Orbitron">' + (S.mode === 'gp' ? 'SHADDAI GRAND PRIX · leg 1/3 ' + esc(root.WorldRace.CIRCUITS[GP_CUPS[0]].name) : esc(C.name)) + '</div></div>' +
+      '<div style="flex:1;min-width:260px;padding:14px;border-radius:14px;border:1px solid rgba(0,255,156,.4);background:rgba(10,16,30,.92)"><div style="letter-spacing:.2em;color:#00ff9c">YOUR RIDE</div>' + (r.thumb ? '<img src="' + r.thumb + '" style="width:100%;max-width:240px;display:block;margin:6px auto;border-radius:8px">' : '') + '<div style="text-align:center;font:900 15px Orbitron">' + esc(r.name) + '</div></div></div>' +
+      '<div style="margin:14px 0;display:flex;gap:18px;flex-wrap:wrap;align-items:center"><span>RIVALS <b id="rsAis">' + S.ais + '</b></span><button data-a="ais-" style="' + GBTN + '">−</button><button data-a="ais+" style="' + GBTN + '">+</button>' + (S.mode === 'single' && !S.prepaid ? '<label style="cursor:pointer"><input type="checkbox" data-a="ranked" ' + (S.ranked ? 'checked' : '') + '> RANKED (x2 prizes, no pocket vials)</label>' : '') + '<span style="flex:1"></span><span style="color:#e8c45c;font-size:16px">Entry ' + fee + '⚡</span></div>' +
+      '<div style="display:flex;gap:10px"><button data-a="back" style="' + GBTN + '">← BACK</button><button data-a="go" style="' + BTN + ';font-size:18px;padding:12px 30px">START ENGINES</button></div><div id="rsMsg" style="margin-top:8px;color:#ff9a6e"></div><div style="opacity:.6;margin-top:8px;font-size:12px">R = use item · drive through crates and turbo pads · W/A/S/D + mouse</div>'; }
+    S.handle = function (a, t) { if (a === 'back') stepRide(); else if (a === 'ais+') { S.ais = Math.min(7, S.ais + 1); render(); } else if (a === 'ais-') { S.ais = Math.max(1, S.ais - 1); render(); } else if (a === 'ranked') { S.ranked = !!t.checked; render(); } else if (a === 'go') go(fee); }; render();
+  }
+  function go(fee) {
+    var msg = ov && ov.querySelector('#rsMsg'); if (typeof root.__raceStart !== 'function') { if (msg) msg.textContent = 'Race runtime still loading - try again in a moment.'; return; }
+    if (fee > 0 && !(root.ShdSparks && root.ShdSparks.spend(fee, 'race-entry', S.cid))) { if (msg) msg.textContent = 'Not enough Sparks (' + fee + ')'; return; }
+    var r = S.ride || '', veh = /^kart-/.test(r) ? r : undefined, style = /^board-/.test(r) ? r.slice(6) : undefined;
+    var okStart = root.__raceStart(S.cid, { vehicle: veh, style: style, ranked: !!S.ranked, ais: S.ais });
+    if (!okStart) { if (fee > 0 && root.ShdSparks) root.ShdSparks.add(fee, 'race-refund', 'start failed'); if (msg) msg.textContent = 'Could not start - refunded.'; return; }
+    if (S.mode === 'gp') gp = { cups: GP_CUPS.slice(), idx: 0, points: 0, places: [], ride: S.ride, ais: S.ais, medal: null };
+    close(); if (S.mode === 'gp') gpChip();
+  }
+
+  // ---------- Grand Prix series ----------
+  var chip = null;
+  function gpChip() { if (!gp) { if (chip) { chip.remove(); chip = null; } return; } if (!chip) { chip = el('div', 'position:fixed;left:24px;bottom:84px;z-index:9000;padding:6px 12px;border-radius:10px;background:linear-gradient(180deg,rgba(12,18,30,.92),rgba(5,8,15,.96));border:1px solid rgba(232,196,92,.5);color:#e9f4ee;font:700 11px "Chakra Petch",Rajdhani,sans-serif;letter-spacing:.1em;pointer-events:none'); document.body.appendChild(chip); } chip.innerHTML = '<span style="color:#e8c45c">GRAND PRIX</span> leg ' + Math.min(3, gp.idx + 1) + '/3 · ' + gp.points + ' pts' + (gp.places.length ? ' · ' + gp.places.map(function (p) { return 'P' + p; }).join(' ') : ''); }
+  if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('shaddai:race', function (ev) {
+    var e = ev.detail || {}; if (!gp || e.type !== 'finish' || e.id !== 'you') return;
+    var place = e.place || 8, pts = GP_PTS[Math.min(GP_PTS.length - 1, place - 1)]; gp.points += pts; gp.places.push(place); gp.idx++; gpChip(); toast('Leg ' + gp.idx + ' done: P' + place + ' (+' + pts + ' pts, total ' + gp.points + ')');
+    if (gp.idx >= gp.cups.length) { var m = null; GP_MEDAL.forEach(function (x) { if (!m && gp.points >= x.min) m = x; }); setTimeout(function () { if (m && root.ShdSparks) { root.ShdSparks.add(m.bonus, 'race-win', 'grand prix ' + m.n); } toast('GRAND PRIX COMPLETE — ' + gp.points + ' pts' + (m ? ' — ' + m.n + ' MEDAL +' + m.bonus + ' Sparks' : ' — no medal this time')); if (typeof document !== 'undefined') { var o = el('div', 'position:fixed;inset:0;z-index:9650;display:flex;align-items:center;justify-content:center;background:rgba(2,4,10,.82);font:700 14px "Chakra Petch",Rajdhani,sans-serif;color:#e9f4ee', '<div style="text-align:center;padding:30px 44px;border-radius:18px;border:2px solid ' + (m ? m.c : '#8fa3b8') + ';background:linear-gradient(180deg,#101a2c,#05080f)"><div style="font:900 14px Orbitron;letter-spacing:.3em;color:#e8c45c">SHADDAI GRAND PRIX</div><div style="font:900 44px Orbitron;color:' + (m ? m.c : '#8fa3b8') + ';margin:8px 0">' + (m ? m.n : 'FINISHED') + '</div><div>' + gp.points + ' points · ' + gp.places.map(function (p) { return 'P' + p; }).join(' / ') + '</div>' + (m ? '<div style="color:#00ff9c;margin-top:6px">+' + m.bonus + ' Sparks</div>' : '') + '<button style="' + BTN + ';margin-top:16px">CONTINUE</button></div>'); o.querySelector('button').onclick = function () { o.remove(); }; document.body.appendChild(o); } gp = null; gpChip(); }, 6500); return; }
+    setTimeout(function () { if (!gp) return; var cid = gp.cups[gp.idx]; toast('Next: ' + (root.WorldRace.CIRCUITS[cid] || {}).name + ' — starting…'); var r = gp.ride || '', veh = /^kart-/.test(r) ? r : undefined, style = /^board-/.test(r) ? r.slice(6) : undefined; if (root.__raceStart) root.__raceStart(cid, { vehicle: veh, style: style, ranked: false, ais: gp.ais }); }, 9000);
+  });
+
+  function open(o) {
+    o = o || {}; if (!root.WorldRace) { toast('Race rules still loading'); return; } S = { mode: 'single', cid: o.cid || null, ranked: !!o.ranked, prepaid: !!o.prepaid, ride: null, ais: 5, handle: null };
+    if (o.cid) stepRide(); else stepCup();
+  }
+  root.WorldRaceSelect = { init: function (o) { THREE_ = o && o.THREE || THREE_; }, open: open, close: close, gp: function () { return gp; }, _test: { gpBegin: function (ride, ais) { gp = { cups: GP_CUPS.slice(), idx: 0, points: 0, places: [], ride: ride, ais: ais, medal: null }; } }, _cfg: { FEE: FEE, GP_CUPS: GP_CUPS, GP_PTS: GP_PTS, GP_MEDAL: GP_MEDAL } };
+})(typeof window !== 'undefined' ? window : globalThis);

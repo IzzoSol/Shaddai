@@ -16,6 +16,9 @@
     { id: 'gorilla', name: 'Canopy Gorilla', kind: 'mount', flying: false, store: ['darkvault', 'suburb'], price: 500, model: '/assets/mounts/gorilla.glb', clips: { idle: 'idle', walk: 'walk', run: 'run' }, saddle: 'saddle', note: 'Darkforest + Suburbs' },
     { id: 'hawk', name: 'Sky Hawk', kind: 'mount', flying: true, store: ['harbor'], price: 0, model: '/assets/mounts/hawk.glb', clips: { idle: 'idle', fly: 'fly', glide: 'glide' }, saddle: 'saddle', note: 'Crystal Harbor - flying, the priciest mount' },
     { id: 'skiff', name: 'Aero Skiff (hover ship)', kind: 'mount', flying: true, store: ['central', 'harbor'], price: 0, model: null, procedural: 'skiff', clips: null, saddle: 'saddle', note: 'flying hover ship - Shaddai neon' },
+    { id: 'car-pod', name: 'Rimba Pod Racer', kind: 'mount', flying: false, store: ['central', 'harbor'], price: 1200, model: null, procedural: 'car:pod', clips: null, saddle: 'saddle', note: 'hover racing pod - fastest on the ground' },
+    { id: 'car-sedan', name: 'Streak Sedan', kind: 'mount', flying: false, store: ['central', 'suburb'], price: 700, model: null, procedural: 'car:sedan', clips: null, saddle: 'saddle', note: 'retro hover sedan' },
+    { id: 'car-van', name: 'Courier Van', kind: 'mount', flying: false, store: ['central', 'suburb', 'forge'], price: 500, model: null, procedural: 'car:van', clips: null, saddle: 'saddle', note: 'hover van - slow, roomy' },
     { id: 'board-street', name: 'Street Hoverboard', kind: 'board', flying: false, store: ['central', 'suburb', 'harbor'], price: 150, style: 'sunburst', note: 'ground board (pad)' },
     { id: 'board-foil', name: 'Foil Hoverboard', kind: 'board', flying: true, store: ['central', 'harbor'], price: 0, style: 'racer', note: 'flying board (foil) - costs more' }
   ];

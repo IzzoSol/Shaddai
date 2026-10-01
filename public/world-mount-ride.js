@@ -17,14 +17,17 @@
     bull:    { tall: 3.0, walk: 7,  run: 18, turn: 2.2 },
     mammoth: { tall: 4.6, walk: 5,  run: 12, turn: 1.4 },
     gorilla: { tall: 3.4, walk: 8,  run: 20, turn: 2.6 },
+    'car-pod': { tall: 1.4, walk: 20, run: 42, turn: 2.4, hover: 0.55 }, 'car-sedan': { tall: 1.4, walk: 16, run: 32, turn: 2.0, hover: 0.55 }, 'car-van': { tall: 2.0, walk: 12, run: 24, turn: 1.6, hover: 0.55 },
     skiff:   { tall: 1.5, walk: 4,  run: 8,  turn: 2.4, fly: { cruise: 40, boost: 78, climb: 20, ceil: 400 } },
     hawk:    { tall: 2.6, walk: 4,  run: 8,  turn: 2.0, fly: { cruise: 26, boost: 48, climb: 14, ceil: 320 } }
   };
+  function kartDef(id) { var m = /^kart-(.+)$/.exec(String(id)); return m ? { id: id, name: 'Kart ' + m[1], kind: 'mount', flying: false, model: null, procedural: 'car:' + m[1], saddle: 'saddle', kart: true } : null; }
+  function feelOf(id) { if (FEEL[id]) return FEEL[id]; var m = /^kart-(.+)$/.exec(String(id)), k = m && root.WorldHoverCars && root.WorldHoverCars.KARTS && root.WorldHoverCars.KARTS[m[1]]; return k ? { tall: k.tall, walk: k.top * 0.7, run: k.top, turn: k.handle, hover: 0.55 } : FEEL.bull; }
   var TUNE = { fovBase: 62, fovBoost: 8, summonDist: 6, mountRange: 9 };
 
   root.buildMountRide = function (o) {
     var THREE = o.THREE, scene = o.scene, loader = o.loader, heightAt = o.heightAt, playerPos = o.playerPos, Mo = o.mounts || root.WorldMounts;
-    var st = { riding: false, id: null, boosting: false };
+    var st = { riding: false, id: null, boosting: false }, MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0 }, raceMode = false;   // MOD = race modifiers (boost pads / items / stun / steer noise), set by world-race-run through raceAdapter()
     var M = { x: 0, z: 0, y: 0, yaw: 0, pitch: 0, bank: 0, sp: 0, vy: 0, def: null, fl: false };
     var SAD = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, bank: 0 };
     var CAM = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, fov: TUNE.fovBase, init: false };
@@ -37,12 +40,13 @@
 
     function load(id, done) {
       if (cache[id]) return done(cache[id]);
-      var d = Mo.def(id); if (!d) return;
-      if (!d.model && d.procedural === 'skiff') { cache[id] = { scene: buildSkiff(), anims: [], def: d, proc: true }; return done(cache[id]); }
+      var d = Mo.def(id) || kartDef(id); if (!d) return;
+      if (!d.model && d.procedural === 'skiff') { var sk = buildSkiff(); sk.scale.setScalar(U); cache[id] = { scene: sk, anims: [], def: d, proc: true }; return done(cache[id]); }   // authored in metres -> world units
+      if (!d.model && d.procedural && d.procedural.indexOf('car:') === 0 && root.WorldHoverCars) { var cg = root.WorldHoverCars.buildGroup(THREE, d.procedural.slice(4)); cg.scale.setScalar(U); cache[id] = { scene: cg, anims: [], def: d, proc: true }; return done(cache[id]); }
       if (!d.model) return;
       loader.load(d.model, function (g) {
         var root3 = g.scene, box = new THREE.Box3().setFromObject(root3), sz = new THREE.Vector3(); box.getSize(sz);
-        var f = FEEL[id] || FEEL.bull, k = f.tall * U / Math.max(sz.y, 0.001);
+        var f = feelOf(id), k = f.tall * U / Math.max(sz.y, 0.001);
         root3.scale.multiplyScalar(k); root3.position.y -= box.min.y * k;   // feet on the ground
         root3.traverse(function (n) { if (n.isMesh || n.isSkinnedMesh) { n.frustumCulled = false; n.castShadow = false; } });
         cache[id] = { scene: root3, anims: g.animations || [], def: d }; done(cache[id]);
@@ -66,7 +70,7 @@
     function show(id, x, z, yaw) {
       load(id, function (c) {
         while (holder.children.length) holder.remove(holder.children[0]);
-        holder.add(c.scene); cur = id; M.def = FEEL[id] || FEEL.bull; M.fl = !!(c.def.flying && M.def.fly);
+        holder.add(c.scene); cur = id; M.def = feelOf(id); M.fl = !!(c.def.flying && M.def.fly);
         M.x = x; M.z = z; M.y = gY(x, z) + (M.fl ? 0 : 0); M.yaw = yaw; M.sp = 0; M.pitch = 0; M.bank = 0; M.vy = 0;
         mixer = new THREE.AnimationMixer(c.scene); acts = {};
         c.anims.forEach(function (a) { acts[a.name] = mixer.clipAction(a); });
@@ -98,6 +102,8 @@
 
     function update(dt, inp) {
       if (!holder.visible || !cur) return; inp = inp || {};
+      if (MOD.t > 0) { MOD.t -= dt; if (MOD.t <= 0) MOD.mul = 1; } if (MOD.stun > 0) MOD.stun -= dt; if (MOD.nt > 0) { MOD.nt -= dt; if (MOD.nt <= 0) MOD.noise = 0; }
+      var topK = (MOD.t > 0 ? MOD.mul : 1) * (MOD.stun > 0 ? 0.2 : 1);
       var f = M.def, ride = st.riding, thr = ride ? ((inp.fwd ? 1 : 0) - (inp.back ? 0.4 : 0)) : 0, turn = ride ? ((inp.left ? 1 : 0) - (inp.right ? 1 : 0)) : 0;
       st.boosting = ride && !!inp.dive && !!inp.fwd;
       if (ride) {
@@ -110,12 +116,12 @@
           M.y = Math.max(gY(M.x, M.z) + 2 * U, Math.min(f.fly.ceil * U, M.y + M.vy * dt));
           M.pitch = approach(M.pitch, -M.vy / (f.fly.climb * U) * 0.5, 2 * dt); M.bank = approach(M.bank, turn * 0.5, 2.5 * dt);
         } else {
-          var top = (inp.dive ? f.run : f.walk) * U; M.sp = approach(M.sp, thr * top, (thr ? 14 : 24) * U * dt);
+          var top = ((inp.dive || raceMode) ? f.run : f.walk) * U * topK; M.sp = approach(M.sp, thr * top * (MOD.stun > 0 ? 0 : 1), (thr ? (raceMode ? 22 : 14) : 24) * U * dt); if (MOD.noise > 0) M.yaw += (Math.random() - 0.5) * MOD.noise * dt * 5;
           M.pitch = 0; M.bank = 0;
         }
       } else { M.sp = approach(M.sp, 0, 30 * U * dt); M.vy = 0; if (M.fl) M.y = Math.max(gY(M.x, M.z), M.y - 20 * U * dt); }
       M.x += Math.sin(M.yaw) * M.sp * dt; M.z += Math.cos(M.yaw) * M.sp * dt;
-      if (!M.fl) { var gy = gY(M.x, M.z); M.y += (gy - M.y) * Math.min(1, 14 * dt); }
+      if (!M.fl) { var gy = gY(M.x, M.z) + (f.hover || 0) * U; M.y += (gy - M.y) * Math.min(1, 14 * dt); }
       var bob = (cache[cur] && cache[cur].proc) ? Math.sin(performance.now() / 320) * 0.12 * U : 0;
       holder.position.set(M.x, M.y + bob, M.z); holder.rotation.set(M.pitch, M.yaw, M.bank);
       if (bob !== 0 && cache[cur].scene) cache[cur].scene.traverse(function (n) { if (n.name === 'flame') n.scale.y = 0.6 + Math.min(1.6, Math.abs(M.sp) / (30 * U)) + Math.sin(performance.now() / 60) * 0.12; });
@@ -157,6 +163,7 @@
       Mo.CATALOG.filter(function (c) { return c.kind === 'board'; }).forEach(function (c) { var own = Mo.has(c.id); h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1d2a26"><span>' + c.name + (c.flying ? ' &#9992;' : '') + '<br><small style="opacity:.6">' + (own ? 'owned' : Mo.replaceCost(c.id) + ' Sparks') + '</small></span><button data-id="' + c.id + '" data-a="' + (own ? 'ride' : 'buy') + '" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 10px;cursor:pointer">' + (own ? 'Ride' : 'Buy') + '</button></div>'; });
       if (root.__skateJam) h += '<div style="margin-top:6px"><button data-a="jam" style="background:#1a1608;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:5px 11px;cursor:pointer">Skate Jam (trick game)</button></div>';
       if (root.WorldAgentsUI) h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">AGENTS &amp; JOBS <small style="opacity:.6;font-weight:400">station, import Grok/Muse, hire</small></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button data-a="agents" data-id="agents" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 11px;cursor:pointer">My agents</button><button data-a="agents" data-id="import" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 11px;cursor:pointer">Import agent</button><button data-a="agents" data-id="jobs" style="background:#1a1608;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:5px 11px;cursor:pointer">Jobs board</button></div>';
+      if (root.WorldRaceSelect) h += '<div style="margin:10px 0 4px"><button data-a="rselect" style="width:100%;background:linear-gradient(180deg,rgba(232,196,92,.35),rgba(120,80,10,.5));color:#fff3c8;border:1px solid #e8c45c;border-bottom-width:4px;border-radius:10px;padding:9px;cursor:pointer;font:800 13px inherit;letter-spacing:.12em">\uD83C\uDFC1 HOVER RACING \u2014 pick cup, car &amp; GO</button></div>';
       if (root.__raceChallenge) { h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">RACES <small style="opacity:.6;font-weight:400">wager Sparks, pick spots on the map</small></div><div style="display:flex;gap:6px"><button data-a="race" data-id="build" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 11px;cursor:pointer">Race builder</button><button data-a="race" data-id="board" style="background:#1a1608;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:5px 11px;cursor:pointer">Challenge board</button></div>'; }
       if (root.__travel && root.__travel.colospot) { h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">COLOSSEUM <small style="opacity:.6;font-weight:400">go in, then change the arena floor</small></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
         [['colospot:lobby', 'Lobby'], ['colospot:arena', 'Arena floor']].concat(['sand', 'water', 'lava', 'void', 'grass', 'ice'].map(function (f) { return ['field:' + f, f]; })).forEach(function (t) { h += '<button data-a="travel2" data-id="' + t[0] + '" style="background:#0d1a16;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:4px 9px;cursor:pointer">' + t[1] + '</button>'; }); h += '</div>'; }
@@ -169,6 +176,7 @@
         var t = e.target; if (t.id === 'msx') { panel(); return; } var a = t.getAttribute && t.getAttribute('data-a'); if (!a) return; var id = t.getAttribute('data-id');
         if (a === 'buy') { var r = Mo.buy(id, o.spend || function (n, k, i) { return root.ShdSparks ? root.ShdSparks.spend(n, k, i) : false; }); toast(r.ok ? 'Bought ' + r.item.name + ' for ' + r.paid : r.why); panel(true); }
         else if (a === 'ride') { var bd = Mo.def(id); var okR = root.__rideBoard && root.__rideBoard(bd && bd.style); toast(okR ? 'Riding ' + (bd ? bd.name : 'board') + ' - Space hop, hold Space to fly, Shift boost' : 'Could not mount the board'); panel(); }
+        else if (a === 'rselect') { panel(); if (root.WorldRaceSelect) root.WorldRaceSelect.open(); }
         else if (a === 'agents') { panel(); if (root.WorldAgentsUI) root.WorldAgentsUI.open(id); }
         else if (a === 'jam') { panel(); if (root.__skateJam) root.__skateJam.open(); }
         else if (a === 'race') { panel(); if (root.__raceChallenge) { if (id === 'board') root.__raceChallenge.openBoard(); else root.__raceChallenge.openBuilder(); } }
@@ -188,6 +196,12 @@
     if (typeof addEventListener === 'function') addEventListener('keydown', key, true);
 
     return {
+      // ── race hooks (world-race-run.js drives a ride exactly like the hoverboard) ──
+      raceAdapter: { setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } }, state: function () { return { x: M.x, y: M.y, z: M.z, psi: M.yaw }; }, isFlying: function () { return M.fl; }, altitudeM: function () { return (M.y - gY(M.x, M.z)) / U; }, isRiding: function () { return st.riding; } },
+      setRaceMode: function (on) { raceMode = !!on; if (!on) { MOD.mul = 1; MOD.t = 0; MOD.stun = 0; MOD.noise = 0; } },
+      /* rentRace(id, x, z, yaw): put a RENTED kart on the grid and ride it (no ownership needed - race selection screen karts are free to pick) */
+      rentRace: function (id, x, z, yaw) { var d = Mo.def(id) || kartDef(id); if (!d) return false; if (st.riding) dismount(); show(id, x, z, yaw); if (!cur) return false; M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; playerPos.x = x; playerPos.z = z; st.riding = true; st.id = id; CAM.init = false; raceMode = true; return true; },
+      placeAt: function (x, z, yaw) { M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; },
       update: update, isRiding: function () { return st.riding; }, mount: mount, dismount: dismount, summon: summon, stow: stow, panel: panel, near: near,
       saddle: function () { return SAD; }, camera: function () { return CAM; }, tune: TUNE, boosting: function () { return st.boosting; }, stamina: function () { return 1; },
       state: function () { return { riding: st.riding, id: cur, x: M.x, y: M.y, z: M.z, yaw: M.yaw, sp: M.sp / U, flying: M.fl, visible: holder.visible }; },
