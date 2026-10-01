@@ -338,6 +338,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260926obb"></script>
 <script src="/world-player-controller.js?v=20260926a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
+<script src="/world-operatives.js?v=20261001a"></script>
 <script src="/world-spawn.js?v=20260925a"></script>
 <script src="/world-themes.js?v=20260703h"></script>
 <script src="/world-interiors.js?v=20260926v4"></script>
@@ -2027,7 +2028,7 @@ function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
   if(_pcCache[code]) return _pcCache[code];
-  const url = '/assets/agents/'+encodeURIComponent(code)+'.glb?v=13';  // v12 = SHADDAI rigged; v10 = TURTLE→Neon Valkyrie (dance idle/walk/run/vault); Meshy-rigged bodies
+  const url = (window.WorldOperatives && /^FORGE-/.test(code)) ? window.WorldOperatives.glbFor(code) : '/assets/agents/'+encodeURIComponent(code)+'.glb?v=13';  // FORGE-<id> = free base operatives (Forge 3D archetypes)
   _pcCache[code] = new Promise(function(res, rej){ agentBodyLoader.load(url, res, undefined, rej); });
   return _pcCache[code];
 }
@@ -3222,7 +3223,7 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
     THREE, scene, camera, controls, playerPos,
     layout: window.WORLD_LAYOUT,
     // Who you can play as — the 7 council operatives (each has a real GLB body + portrait).
-    characters: AGENTS.map(function(a){ return {
+    characters: window.WorldOperatives ? window.WorldOperatives.list().map(function(o){ return { code:o.code, label:o.name, name:o.name, color:o.color, portrait:o.portrait }; }) : AGENTS.map(function(a){ return {
       code: a.codename,
       name: a.role || a.codename,
       color: (typeof a.color==='string' ? parseInt(a.color.replace('#',''),16) : a.color),
@@ -3231,6 +3232,7 @@ if (window.buildWorldSpawn && window.WORLD_LAYOUT) {
       // Playable villain (Crimson Sentinel) — full combat rig; boss AI comes later.
       { code:'VILLAIN', name:'CRIMSON SENTINEL', color:0xff2a4d, portrait:'/assets/agents/VILLAIN-action.png' }
     ]),
+    access: window.WorldOperatives ? { owned: window.WorldOperatives.owned, price: window.WorldOperatives.price, unlock: window.WorldOperatives.unlock } : null,
     onArrive: function(code, charCode){
       try{ if(charCode && window.setPlayerCharacter) window.setPlayerCharacter(charCode); }catch(e){}
       // MAP v4: always put the player down at the Grid centre (atlas origin; -100 z clears the Source spire, same
@@ -4559,7 +4561,7 @@ window.removeAgent = function(a){
     try{ window.__worldWarmup && window.__worldWarmup(); }catch(_){}  // warm the 3D pipeline behind the warp → kills the reveal hitch
     btn.style.transition='transform .18s,opacity .3s'; btn.style.transform='scale(1.35)'; btn.style.opacity='0';
     // Kick off audio + STAGGERED character preloads NOW (during the ~1.5s warp) so they're ready on landing.
-    AGENTS.forEach(function(a, i){ setTimeout(function(){ _pcPreload(a.codename); }, i * 500); });
+    (window.WorldOperatives ? window.WorldOperatives.list().filter(function(o){ return o.owned; }).map(function(o){ return o.code; }) : AGENTS.map(function(a){ return a.codename; })).forEach(function(c, i){ setTimeout(function(){ _pcPreload(c); }, i * 500); });   // only the operatives you own (bases are free; premium preload once unlocked)
     // Owner: no background music. Skip the ambient synth bed (_audio.start) and the radio auto-start;
     // keep only the one-shot warp SFX. The radio can still be started manually from the stations UI.
     try{ if(_audio && !LITE){ _audio.playSFX('warp'); } }catch(e){}
