@@ -33,6 +33,13 @@
     var edge = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.2, bevelEnabled: false }), cyan); edge.rotation.x = Math.PI / 2; edge.position.y = 0.05; edge.scale.set(1.004, 1.004, 1); R.add(edge);
     // grid lines on the deck (cheap): thin cyan strips
     for (var gx = -180; gx <= 180; gx += 30) add(new THREE.BoxGeometry(0.25, 0.04, 2 * D - 40), M(0x0B1020, 0x00a5cc, 0.35), gx, 0.03, 0);
+    // ── ROOM COLOUR CODING (TURTLE audit 2026-10-01: the park read as black from the air): per-room ground-glow disc + bright rim ring + tall thin beacon, all unlit (no lights) ──
+    var ROOM_COL = { pad: 0x1E90FF, banks: 0x32CD32, spine: 0xFFD700, plaza: 0xFF8C00, pool: 0x00CED1, rift: 0xFF1493, forum: 0xFF4500 };
+    var discG = new THREE.CircleGeometry(1, 40), ringG2 = new THREE.RingGeometry(0.965, 1, 56), beamG2 = new THREE.CylinderGeometry(0.5, 0.9, 1, 8, 1, true);
+    ROOMS.forEach(function (rm) { var c = ROOM_COL[rm.id] || 0x00D4FF;
+      var disc = new THREE.Mesh(discG, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending })); disc.rotation.x = -Math.PI / 2; disc.scale.set(rm.r, rm.r, 1); disc.position.set(rm.x, 0.07, rm.z); R.add(disc);
+      var ring = new THREE.Mesh(ringG2, new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.scale.set(rm.r, rm.r, 1); ring.position.set(rm.x, 0.1, rm.z); R.add(ring);
+      var beam = new THREE.Mesh(beamG2, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); beam.scale.set(1, 70, 1); beam.position.set(rm.x, 35, rm.z); R.add(beam); });
     // ── torii entrance (SHADDAI) ──
     var torii = new THREE.Group(); torii.position.set(0, 0, D - 14); R.add(torii);
     [-9, 9].forEach(function (x) { var p = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 14, 14), M(0x3a0f12, 0x501014, 0.3, 0.3, 0.6)); p.position.set(x, 7, 0); torii.add(p); var l = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 10), M(0xffb060, 0xffa040, 1.8)); l.position.set(x, 12, 1.4); torii.add(l); });
