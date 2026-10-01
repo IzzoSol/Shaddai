@@ -19,7 +19,6 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
-const sparksCore = require('./sparksCore');
 const { readJson, writeJsonAtomic, withLock } = require('./lib/atomic');
 
 const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data');
@@ -35,8 +34,8 @@ const sha = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
 const rid = (p) => p + '_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
 function fail(res, code, msg, extra) { return res.status(code).json(Object.assign({ success: false, error: msg }, extra || {})); }
 function charOf(uid) { const db = readJson(CHARS_FILE, {}); return Object.values(db).find(c => c.userId === uid) || null; }
-function debit(uid, amount, kind, ref) { return withLock('chars', async () => { const db = readJson(CHARS_FILE, {}), c = Object.values(db).find(x => x.userId === uid); if (!c) return { ok: false, why: 'create a character first' }; c.currency = c.currency || { sparks: 0 }; if ((c.currency.sparks || 0) < amount) return { ok: false, why: 'not enough Sparks (' + amount + ')' }; c.currency.sparks -= amount; writeJsonAtomic(CHARS_FILE, db); sparksCore.recordSink(c, amount, kind, { ref }); return { ok: true, balance: c.currency.sparks }; }); }
-function credit(uid, amount, kind, ref) { return withLock('chars', async () => { const db = readJson(CHARS_FILE, {}), c = Object.values(db).find(x => x.userId === uid); if (!c) return { ok: false, why: 'recipient has no character' }; c.currency = c.currency || { sparks: 0 }; c.currency.sparks = (c.currency.sparks || 0) + amount; writeJsonAtomic(CHARS_FILE, db); sparksCore.recordChange(c, amount, kind, { ref }); return { ok: true, balance: c.currency.sparks }; }); }
+const ledger = require('./lib/ledger');
+const debit = (uid, amount, kind, ref) => ledger.debit(uid, amount, kind, ref), credit = (uid, amount, kind, ref) => ledger.credit(uid, amount, kind, ref);   // one economy (standalone characters.json OR the production economy-service)
 
 // ── secret hygiene ──
 const SECRET_KEY = /(private|secret|seed|mnemonic|passphrase|password|api[_-]?key|apikey|privkey)/i;
@@ -137,7 +136,7 @@ xagent.post('/jobs/:id/deliver', agentAuth, guard(async (req, res) => withLock('
 function posterOnly(fn) { return guard(async (req, res) => { const uid = uidOf(req); if (!uid) return fail(res, 401, 'sign in first'); return withLock('jobs', async () => { const db = jobsDb(), j = db.jobs[req.params.id]; if (!j) return fail(res, 404, 'job not found'); if (j.posterUid !== uid) return fail(res, 403, 'only the poster can do that'); return fn(req, res, db, j, uid); }); }); }
 jobs.post('/:id/approve', posterOnly(async (req, res, db, j) => {
   if (j.status !== 'delivered') return fail(res, 409, 'job is ' + j.status); const fee = Math.round(j.budget * FEE), pay = j.budget - fee, r = await credit(j.assigneeOwner, pay, 'job-payout', j.id); if (!r.ok) return fail(res, 400, r.why);
-  sparksCore.recordBurn(fee, 'job-fee', { ref: j.id }); j.status = 'approved'; j.approvedAt = new Date().toISOString(); j.paid = pay; j.fee = fee; saveJobs(db);
+  ledger.burn(fee, 'job-fee', j.id); j.status = 'approved'; j.approvedAt = new Date().toISOString(); j.paid = pay; j.fee = fee; saveJobs(db);
   const e = ext(), a = e.agents[j.assigneeAgentId]; if (a) { a.jobsDone = (a.jobsDone || 0) + 1; saveExt(e); try { const s = opStore(), op = s.get(a.operativeId); if (op) s.update(a.operativeId, { economy: Object.assign({}, op.economy, { jobsDone: ((op.economy || {}).jobsDone || 0) + 1, earnings: ((op.economy || {}).earnings || 0) + pay }) }); } catch (x) { } }
   res.json({ success: true, paid: pay, burned: fee, job: pub(j) });
 }));

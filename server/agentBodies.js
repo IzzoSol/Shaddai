@@ -16,7 +16,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const sparksCore = require('./sparksCore');
+const ledger = require('./lib/ledger');
 const { readJson, writeJsonAtomic, withLock } = require('./lib/atomic');
 
 const router = express.Router();
@@ -42,6 +42,8 @@ function bodies() { return readJson(BODIES_FILE, {}); }
 function saveBodies(db) { writeJsonAtomic(BODIES_FILE, db); }
 function chars() { return readJson(CHARS_FILE, {}); }
 function charOfUser(uid) { const db = chars(); return Object.values(db).find(c => c.userId === uid) || null; }
+// production users never hit /character/spawn: give them a minimal character record on first claim (energy for shifts; Sparks live in the ledger)
+function ensureChar(uid) { let c = charOfUser(uid); if (c) return c; const db = chars(), id = 'char_' + require('crypto').createHash('sha1').update(uid).digest('hex').slice(0, 10); c = db[id] = { id, userId: uid, inventory: {}, stats: { hp: 100, maxHp: 100, energy: 100, maxEnergy: 100 }, currency: { sparks: 0 } }; writeJsonAtomic(CHARS_FILE, db); return c; }
 function slug(s) { return String(s || 'agent').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 24); }
 
 // yield is derived SERVER-SIDE from what the forge produced (the old literal {sparks:12} threw archetype/rarity/tools away)
@@ -75,7 +77,7 @@ router.get('/forge-roster', guard(async (req, res) => {
 router.post('/claim', guard(async (req, res) => {
   const uid = uidOf(req); if (!uid) return fail(res, 401, 'sign in first');
   const operativeId = String((req.body && req.body.operativeId) || '').trim(); if (!operativeId) return fail(res, 400, 'operativeId required');
-  const ch = charOfUser(uid); if (!ch) return fail(res, 404, 'create a character first');
+  const ch = ensureChar(uid);
   const store = operativeStore(), op = store.get(operativeId);
   if (!op) return fail(res, 404, 'operative not found');
   if (op.owner !== uid) return fail(res, 403, 'that operative is not yours');   // ownership check against the Operative store
@@ -106,7 +108,7 @@ function grantRoute(handler) {
     return withLock('char:' + ch.id, async () => {
       const db = bodies(), g = db[id];
       if (!g) return fail(res, 404, 'body not found'); if (g.characterId !== ch.id) return fail(res, 403, 'not your body');
-      return handler(req, res, { db, g, ch });
+      return handler(req, res, { db, g, ch, uid });
     });
   });
 }
@@ -120,17 +122,16 @@ router.post('/shift/:grantId', grantRoute(async (req, res, { db, g, ch }) => {
   res.json({ success: true, grantId: g.grantId, endsAt: g.workState.shiftEndAt, presence: 'working' });
 }));
 
-router.post('/collect/:grantId', grantRoute(async (req, res, { db, g, ch }) => {
+router.post('/collect/:grantId', grantRoute(async (req, res, { db, g, ch, uid }) => {
   const idem = String(req.headers['idempotency-key'] || (req.body && req.body.idemKey) || '').trim().slice(0, 64);
   g.idem = g.idem || {};
   if (idem && g.idem[idem]) return res.json(Object.assign({ replay: true }, g.idem[idem]));   // never double-yield
   if (!g.workState.shiftEndAt) return fail(res, 400, 'not working');
   if (Date.now() < g.workState.shiftEndAt) return fail(res, 400, 'shift not finished');
-  const cdb = chars(), c = cdb[ch.id]; c.currency = c.currency || { sparks: 0 };
   const level = levelOf(g.workState), y = yieldFor(g), gained = { sparks: y.sparks * level };
-  c.currency.sparks = (c.currency.sparks || 0) + gained.sparks; writeJsonAtomic(CHARS_FILE, cdb); sparksCore.recordChange(c, gained.sparks, 'agent-yield', { ref: g.grantId });
+  const paid = await ledger.credit(uid, gained.sparks, 'agent-yield', g.grantId, 'collect:' + g.grantId + ':' + (g.workState.shifts || 0)); if (!paid.ok) return fail(res, 502, paid.why || 'ledger unavailable');   // idempotent per shift even if the ledger retries
   g.workState.shiftEndAt = 0; g.workState.shifts = (g.workState.shifts || 0) + 1;
-  const result = { success: true, gained, level, newLevel: levelOf(g.workState), sparks: c.currency.sparks };
+  const result = { success: true, gained, level, newLevel: levelOf(g.workState), sparks: paid.balance };
   if (idem) { g.idem[idem] = result; const ks = Object.keys(g.idem); if (ks.length > IDEM_KEEP) delete g.idem[ks[0]]; }
   db[g.grantId] = g; saveBodies(db); res.json(result);
 }));

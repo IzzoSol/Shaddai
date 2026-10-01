@@ -1998,6 +1998,16 @@ app.use('/api/collectables', require('./collectables/collectables-routes'));
 app.use('/api/rooms', require('./rooms/rooms-routes'));
 // Operatives — the unified Operative store (identity+look+brain+inventory+economy+stats)
 app.use('/api/operatives', require('./lib/operatives-routes'));
+// ── MMO agent layer (server/agentBodies.js + externalAgents.js): body grants, external agents (Grok/Muse/...), jobs market. Identity = softAuth's verified uid ONLY
+//    (the x-user-id header is overwritten); Sparks go through the production economy-service (SHADDAI_LEDGER=economy), so there is ONE economy. ──
+try {
+  process.env.SHADDAI_LEDGER = process.env.SHADDAI_LEDGER || 'economy';
+  const _mmoId = (req, res, next) => { req.headers['x-user-id'] = req.userId || ''; next(); };
+  const _ext = require('../server/externalAgents');
+  app.use('/api/mmo/agent', softAuth, _mmoId, require('../server/agentServer'));
+  app.use('/api/mmo/xagent', softAuth, _mmoId, _ext.xagent);
+  app.use('/api/mmo/jobs', softAuth, _mmoId, _ext.jobs);
+} catch (e) { console.warn('[mmo-agents] not mounted:', e && e.message); }
 app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai Radio: community tracks + city bulletin
 app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
 app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
