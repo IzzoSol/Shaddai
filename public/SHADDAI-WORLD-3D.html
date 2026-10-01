@@ -5390,6 +5390,11 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     { const _yt=(window.WorldSit && window.WorldSit.yaw()!=null) ? window.WorldSit.yaw() : (_pctlActive && (_pctlOut.state==='roll'||_pctlOut.state==='climb')) ? _pctlOut.facing : Math.atan2(fwd.x, fwd.z);   // ease facing toward the look direction (model faces -Z) — no snap-turn
       if(!_avatarYawInit){ _avatarYaw=_yt; _avatarYawInit=true; } else _avatarYaw=_lerpAngle(_avatarYaw, _yt, 1-Math.exp(-11*dt));
       playerAvatar.rotation.y=_avatarYaw; if (_pctlActive && playerMixer) playerAvatar.rotation.z = -_pctlOut.lean * 0.12; }
+    /* SWIM POSE (owner 2026-10-01): in deep water the avatar pitches face-down toward its heading and rides the surface; eases back upright on land. */
+    try{ playerAvatar.rotation.order='YXZ'; const _sw = _swimming && _pctlActive ? 1 : 0, _mvS = Math.min(1, Math.hypot(_vel.x, _vel.z) / (V4_U * 1.2));
+      window.__swimK = (window.__swimK || 0) + (_sw - (window.__swimK || 0)) * (1 - Math.exp(-6*dt));
+      playerAvatar.rotation.x = window.__swimK * (0.35 + 0.8 * _mvS);
+      if (window.__swimK > 0.01) playerAvatar.position.y += window.__swimK * (0.55 + 0.45 * _mvS) * V4_U; }catch(_){ }
     // procedural WALK for characters with no skeletal clips (agent standees) — step bob + sway.
     // GLIDE agents (SHADDAI / NEXUS): skip the |sin| step-bob → smooth hover + slight forward lean,
     // so their locomotion reads as gliding, not stepping. SHADDAI's F = FLY adds a buoyant rise.
