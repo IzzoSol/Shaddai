@@ -309,6 +309,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-facade-details.js?v=20261001a"></script>   <!-- rooftop props + glow bands on the repeated city buildings -->
 <script src="/world-inventory.js?v=20261001a"></script>
 <script src="/world-offices.js?v=20261001a"></script>
+<script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-arcade.js?v=20261001a"></script>   <!-- arcade: slots, higher-lower, hover dash -->
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
 <script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
@@ -668,7 +669,7 @@ window.__worldBuilt = false;
           nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
           onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
           isWater: (_v4Water && _v4Water.isWater) ? (x,z)=> _v4Water.isWater(x,z) : null,
-          onKill: function(k){ try{ if(window.ShdSparks) window.ShdSparks.add(k.sparks, 'mob-kill', k.name); const K = JSON.parse(localStorage.getItem('shd_mobkills_v1') || '{"total":0,"by":{}}'); K.total++; K.by[k.type] = (K.by[k.type] || 0) + 1; localStorage.setItem('shd_mobkills_v1', JSON.stringify(K)); }catch(_){}
+          onKill: function(k){ try{ if(window.WorldQuests) window.WorldQuests.note('kill',1); if(window.ShdSparks) window.ShdSparks.add(k.sparks, 'mob-kill', k.name); const K = JSON.parse(localStorage.getItem('shd_mobkills_v1') || '{"total":0,"by":{}}'); K.total++; K.by[k.type] = (K.by[k.type] || 0) + 1; localStorage.setItem('shd_mobkills_v1', JSON.stringify(K)); }catch(_){}
             if(window.Navi && window.Navi.toast) window.Navi.toast(k.name + ' defeated  +' + k.sparks + ' Sparks' + (k.night ? ' (night bonus)' : '') + (window.WorldCopy ? '  \u2014 ' + window.WorldCopy.pick('toasts.mob_kill') : '')); } });
         window.__w3dDebug.mobs = window.__mobs; return api;
       }).catch(function(e){ console.warn('[mobs] failed', e && e.message); return api; });
