@@ -29,4 +29,4 @@ async function credit(uid, amount, kind, ref, key) {
 }
 function burn(amount, kind, ref) { try { sparksCore.recordBurn(amount, kind, { ref }); } catch (e) { } }
 
-module.exports = { mode, balance, debit, credit, burn };
+module.exports = { mode, balance, debit, credit, burn, _setService: function (x) { svc = x; } };   // _setService: tests inject an isolated economy store
