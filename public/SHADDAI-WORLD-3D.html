@@ -139,6 +139,35 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   #dossier .acts button.hire{background:linear-gradient(90deg,var(--pc),color-mix(in srgb,var(--pc) 60%,#000));color:#04060d;border:none}
 </style>
 <script src="/sw-heal.js"></script>
+<style id="hudPolish">
+/* ═══ HUD POLISH (2026-10-01): one control language - obsidian glass, gold hairline, emerald accent, key-cap badges. No backdrop-blur (perf), no layout changes. ═══ */
+:root{--hud-bg:linear-gradient(180deg,rgba(12,18,30,.88),rgba(5,8,15,.94));--hud-line:rgba(232,196,92,.34);--hud-hi:#00ff9c;--hud-gold:#e8c45c;--hud-ink:#e9f4ee;--hud-dim:#8fa3b8;--hud-font:'Chakra Petch','Rajdhani','IBM Plex Mono',ui-monospace,sans-serif}
+#worldNav a,#terrBtn,#chatBtn,#naviBtn,#modeToggle,#helpChip{font-family:var(--hud-font)!important;color:var(--hud-ink)!important;background:var(--hud-bg)!important;border:1px solid var(--hud-line)!important;border-radius:11px!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)!important;letter-spacing:.09em!important;font-weight:600!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;transition:border-color .16s,box-shadow .16s,transform .16s,color .16s}
+#worldNav a:hover,#terrBtn:hover,#chatBtn:hover,#naviBtn:hover,#modeToggle:hover{border-color:var(--hud-hi)!important;color:var(--hud-hi)!important;box-shadow:0 6px 22px rgba(0,255,156,.22),inset 0 1px 0 rgba(255,255,255,.08)!important;transform:translateY(-1px)}
+#worldNav a:active,#terrBtn:active,#chatBtn:active,#naviBtn:active{transform:translateY(0)}
+#worldNav a.dash{border-color:var(--hud-line)!important}
+#chatBtn{font-size:12px!important;padding:8px 14px!important}
+#terrBtn{display:flex;align-items:center;justify-content:center}
+#naviBtn{padding:8px 14px!important;font-size:12px!important;color:var(--hud-gold)!important;letter-spacing:.14em!important}
+#credits{display:none!important}   /* old placeholder; the live Sparks chip (top-right) replaces it */
+#modeToggle{padding:6px 12px!important;font-size:11px!important}
+#helpChip{font-size:11px!important;color:var(--hud-hi)!important;font-weight:600!important;padding:6px 11px!important;border-color:rgba(0,255,156,.32)!important}
+#helpChip b{display:inline-block;min-width:16px;text-align:center;padding:0 5px;margin:0 2px;border-radius:5px;background:rgba(0,255,156,.12);border:1px solid rgba(0,255,156,.4);color:#eafff6}
+#credits{padding:6px 14px;border-radius:11px;background:var(--hud-bg);border:1px solid var(--hud-line);box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);font-family:var(--hud-font)!important;font-weight:700;letter-spacing:.1em!important;text-shadow:none!important;color:var(--hud-gold)!important}
+#top h1{font-family:var(--hud-font)!important;font-weight:700!important;font-size:19px!important;letter-spacing:.34em!important}
+#top .sub{font-family:var(--hud-font);letter-spacing:.3em!important;color:var(--hud-hi)!important;opacity:.75}
+#coords{font-family:var(--hud-font);color:var(--hud-dim)!important;opacity:.85!important;letter-spacing:.14em!important}
+/* controls bar: key caps + labels, 2 tidy rows, never overlaps (max-width + wrap) */
+#hint{bottom:12px!important;left:50%;transform:translateX(-50%);max-width:min(94vw,860px);display:flex;flex-wrap:wrap;justify-content:center;gap:7px 14px;padding:8px 14px;border-radius:12px;background:var(--hud-bg);border:1px solid var(--hud-line);
+  box-shadow:0 8px 22px rgba(0,0,0,.5);font:600 10.5px/1 var(--hud-font);letter-spacing:.07em!important;color:var(--hud-dim)!important;opacity:.92!important;animation:hintDim 1s ease 25s forwards}
+#hint .hk{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+#hint .hk b{min-width:19px;text-align:center;padding:3px 6px;border-radius:6px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.2);border-bottom-width:2px;color:#fff;font-weight:700;font-size:10px;margin-right:1px}
+#hint .hk em{font-style:normal;margin-left:5px;color:var(--hud-dim)}
+@keyframes hintDim{to{opacity:.38}}
+@media(max-width:700px){#hint{display:none}}
+#hint .hk:nth-of-type(n+5){}
+</style>
 </head>
 <body>
 <canvas id="c3d"></canvas>
@@ -165,7 +194,11 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
 <div class="hud" id="cross"></div>
 <div class="hud" id="coords">X 0 · Z 0</div>
-<div class="hud" id="hint"><span class="k">TAB</span> cursor⇄play · <span class="k">W A S D</span> move · <span class="k">MOUSE</span> look · <span class="k">SHIFT</span> run · <span class="k">Q</span> projectile · <span class="k">F</span> flip/fly · <span class="k">K</span> kick · <span class="k">E</span> interact · <span class="k">V</span> 3rd-person · <span class="k">B</span> bike · <span class="k">Y</span> navi · <span class="k">N</span> news · <span class="k">ESC</span> cursor</div>
+<div class="hud" id="hint" aria-label="Controls">
+  <span class="hk"><b>W</b><b>A</b><b>S</b><b>D</b><em>Move</em></span><span class="hk"><b>Shift</b><em>Run</em></span><span class="hk"><b>Space</b><em>Jump</em></span><span class="hk"><b>Mouse</b><em>Look</em></span>
+  <span class="hk"><b>E</b><em>Interact</em></span><span class="hk"><b>V</b><em>Camera</em></span><span class="hk"><b>I</b><em>Mounts &amp; Travel</em></span><span class="hk"><b>U</b><em>Maglev</em></span>
+  <span class="hk"><b>Y</b><em>Navi</em></span><span class="hk"><b>H</b><em>Map</em></span><span class="hk"><b>Tab</b><em>Cursor</em></span><span class="hk"><b>Esc</b><em>Menu</em></span>
+</div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
 <div id="credits" class="hud" style="top:18px;right:24px;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:#ffcf4a;text-shadow:0 0 12px rgba(255,207,74,.5)">⚡ — SHAD</div>
 <button id="terrBtn" onclick="var p=document.getElementById('terrPanel');p.style.display=p.style.display==='block'?'none':'block'" style="position:fixed;top:112px;left:24px;z-index:25;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#27e0ff;font-size:16px;width:38px;height:38px;border-radius:8px;cursor:pointer">⚙</button>
@@ -3352,7 +3385,7 @@ try { if(window.buildWorldChat){ window.__shaddaiChat = window.buildWorldChat();
 // ── 💬 CHAT button: the only way to open chat (name is asked on first open, never on load) ──
 (function(){
   var btn=document.createElement('button');
-  btn.textContent='💬 CHAT';
+  btn.textContent='💬 CHAT'; btn.id='chatBtn';
   btn.title='Open chat';
   btn.style.cssText='position:fixed;top:112px;left:70px;z-index:26;background:rgba(8,12,22,.85);border:1px solid rgba(39,224,255,.4);color:#8fefff;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;padding:8px 14px;border-radius:8px;cursor:pointer';
   document.body.appendChild(btn);
@@ -5993,7 +6026,7 @@ window._x402refresh();
   };
   addEventListener('keydown', e=>{ if((e.key==='h'||e.key==='H') && !e.repeat){ window._nexusDesk(); } });
 
-  const hint=document.createElement('div');
+  const hint=document.createElement('div'); hint.id='helpChip';
   hint.style.cssText='position:fixed;bottom:12px;right:14px;z-index:55;font-family:monospace;font-size:11px;color:#34e5b0;background:rgba(7,11,20,.7);border:1px solid rgba(52,229,176,.35);border-radius:8px;padding:6px 10px;pointer-events:none';
   hint.innerHTML='🧭 Press <b>H</b> — NEXUS map &amp; help';
   document.body.appendChild(hint);
