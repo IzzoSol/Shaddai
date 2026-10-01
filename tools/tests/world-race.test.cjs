@@ -3,8 +3,8 @@ const assert = require('assert'); global.window = global; require('../../public/
 let pass = 0; const t = (n, f) => { try { f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
 const mk = (id, ranked) => W.create(W.CIRCUITS[id], { ranked, riders: [{ id: 'a' }, { id: 'b' }, { id: 'c' }], rng: () => 0.01 });
 const lap = (r, id, over) => { const g = r.circuit.gates; for (let i = 0; i < g.length; i++) { const k = g[i].kind, s = Object.assign({ mode: k === 'foil' ? 'foil' : 'pad', altM: k === 'foil' ? 6 : 0.3, kissed: true, trick: g[i].verb ? { verb: g[i].verb, clean: true } : null }, over || {}); const res = r.passGate(id, i, s); assert(res.ok, id + ' gate ' + i + ' ' + JSON.stringify(res)); } };
-t('7 circuits; Rift Cut is Prime + lava kills', () => { assert.deepStrictEqual(Object.keys(W.CIRCUITS),
-           ['plaza-cup', 'spine-cup', 'forum-grand', 'rift-cut', 'quarter-loop', 'grid-ring', 'train-ring']); assert(W.CIRCUITS['rift-cut'].prime && W.CIRCUITS['rift-cut'].lavaKill); });
+t('8 circuits (incl. Dragon Gate); Rift Cut is Prime + lava kills', () => { assert.deepStrictEqual(Object.keys(W.CIRCUITS),
+           ['plaza-cup', 'spine-cup', 'forum-grand', 'rift-cut', 'quarter-loop', 'grid-ring', 'train-ring', 'dragon-gate']); assert(W.CIRCUITS['rift-cut'].prime && W.CIRCUITS['rift-cut'].lavaKill); });
 t('gates must be taken in order; a foil gate needs foil; a kiss gate needs a rail skim', () => {
   const r = mk('spine-cup'); r.start(); assert.strictEqual(r.passGate('a', 3, { mode: 'pad' }).ok, false, 'wrong gate'); assert.strictEqual(r.passGate('a', 0, { mode: 'pad', altM: 0.2 }).ok, true);
   assert.strictEqual(r.passGate('a', 1, { mode: 'foil', kissed: false }).ok, false, 'kiss without a rail'); assert.strictEqual(r.passGate('a', 1, { mode: 'foil', kissed: true }).ok, true);
