@@ -393,11 +393,32 @@
       });
       lobby.children.slice().forEach(function (o) { if (o.geometry === colGeo) { o.material = navyM; [0.3, LOBBY_H - 2.3].forEach(function (yy) { var ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, 0.22, 8, 24), goldM); ring.rotation.x = Math.PI / 2; ring.position.set(o.position.x, yy, o.position.z); lobby.add(ring); }); } });
       var pz = -LOBBY_D / 2 + 0.9, pc = document.createElement('canvas'); pc.width = pc.height = 256; var px = pc.getContext('2d'); var rg = px.createRadialGradient(128, 128, 6, 128, 128, 126); rg.addColorStop(0, '#fff6d6'); rg.addColorStop(0.35, '#ffd27a'); rg.addColorStop(0.75, '#d99a2a'); rg.addColorStop(1, '#5a3a08'); px.fillStyle = rg; px.fillRect(0, 0, 256, 256);
-      var ptx = new THREE.CanvasTexture(pc); ptx.colorSpace = THREE.SRGBColorSpace; var disc = new THREE.Mesh(new THREE.CircleGeometry(8.4, 48), new THREE.MeshBasicMaterial({ map: ptx })); disc.position.set(0, 13, pz); lobby.add(disc);
-      [[8.9, 0.55], [7.2, 0.3], [5.4, 0.22], [3.6, 0.18]].forEach(function (q, i) { var r = new THREE.Mesh(new THREE.TorusGeometry(q[0], q[1], 10, 60), i % 2 ? cyanM : goldM); r.position.set(0, 13, pz + 0.15 + i * 0.05); r.userData.spin = (i % 2 ? 1 : -1) * (0.12 + i * 0.05); lobby.add(r); portalRings.push(r); });
-      for (var pk = 0; pk < 16; pk++) { var pa = pk / 16 * Math.PI * 2, spk = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), goldM); spk.position.set(Math.cos(pa) * 10.2, 13 + Math.sin(pa) * 10.2, pz + 0.1); spk.rotation.z = pa - Math.PI / 2; lobby.add(spk); }
+      var ptx = new THREE.CanvasTexture(pc); ptx.colorSpace = THREE.SRGBColorSpace; var emb = new THREE.Group(); emb.position.set(0, 18.8, pz); emb.scale.setScalar(0.6); lobby.add(emb);   // the sun-disc emblem now hangs ABOVE the gate instead of walling the tunnel mouth
+      var disc = new THREE.Mesh(new THREE.CircleGeometry(8.4, 48), new THREE.MeshBasicMaterial({ map: ptx })); disc.position.set(0, 0, 0); emb.add(disc);
+      [[8.9, 0.55], [7.2, 0.3], [5.4, 0.22], [3.6, 0.18]].forEach(function (q, i) { var r = new THREE.Mesh(new THREE.TorusGeometry(q[0], q[1], 10, 60), i % 2 ? cyanM : goldM); r.position.set(0, 0, 0.15 + i * 0.05); r.userData.spin = (i % 2 ? 1 : -1) * (0.12 + i * 0.05); emb.add(r); portalRings.push(r); });
+      for (var pk = 0; pk < 16; pk++) { var pa = pk / 16 * Math.PI * 2, spk = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), goldM); spk.position.set(Math.cos(pa) * 10.2, Math.sin(pa) * 10.2, 0.1); spk.rotation.z = pa - Math.PI / 2; emb.add(spk); }
       var tc = document.createElement('canvas'); tc.width = 1024; tc.height = 160; var tx2 = tc.getContext('2d'); tx2.fillStyle = 'rgba(13,20,44,0.92)'; tx2.fillRect(0, 0, 1024, 160); tx2.strokeStyle = '#D4AF37'; tx2.lineWidth = 6; tx2.strokeRect(6, 6, 1012, 148); tx2.fillStyle = '#D4AF37'; tx2.font = '700 84px Georgia,serif'; tx2.textAlign = 'center'; tx2.textBaseline = 'middle'; tx2.fillText('S H A D D A I   C O L O S S E U M', 512, 84);
       var ttx = new THREE.CanvasTexture(tc); ttx.colorSpace = THREE.SRGBColorSpace; var ttl = new THREE.Mesh(new THREE.PlaneGeometry(28, 4.4), new THREE.MeshBasicMaterial({ map: ttx })); ttl.rotation.y = Math.PI; ttl.position.set(0, 20.6, LOBBY_D / 2 - 0.9); lobby.add(ttl);
+      // ── ENTRANCE (owner: "no entrance to the actual colosseum"): a real open GATE to the grand tunnel + glowing floor chevrons leading through it to the arena ──
+      (function () {
+        var gz = -LOBBY_D / 2 + 1.6, gw = TUNNEL_HALF + 0.9, gh = 11.5;
+        [-1, 1].forEach(function (sd) {
+          var pil = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, gh, 18), goldM); pil.position.set(sd * gw, gh / 2, gz); lobby.add(pil);
+          var cap = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.25, 8, 20), goldM); cap.rotation.x = Math.PI / 2; cap.position.set(sd * gw, gh, gz); lobby.add(cap);
+          var led = new THREE.Mesh(new THREE.BoxGeometry(0.14, gh - 1, 0.14), cyanM); led.position.set(sd * (gw - 1.1), gh / 2, gz + 0.2); lobby.add(led);
+        });
+        var lin = new THREE.Mesh(new THREE.BoxGeometry(gw * 2 + 2.4, 1.5, 2.0), goldM); lin.position.set(0, gh + 0.7, gz); lobby.add(lin);
+        var inner = new THREE.Mesh(new THREE.BoxGeometry(gw * 2 + 0.2, 0.22, 0.22), cyanM); inner.position.set(0, gh - 0.2, gz + 1.05); lobby.add(inner);
+        var sc = document.createElement('canvas'); sc.width = 1024; sc.height = 200; var sx = sc.getContext('2d'); sx.fillStyle = 'rgba(8,14,34,0.94)'; sx.fillRect(0, 0, 1024, 200); sx.strokeStyle = '#D4AF37'; sx.lineWidth = 8; sx.strokeRect(8, 8, 1008, 184);
+        sx.fillStyle = '#D4AF37'; sx.font = '700 96px Georgia,serif'; sx.textAlign = 'center'; sx.textBaseline = 'middle'; sx.fillText('THE ARENA', 512, 92); sx.fillStyle = '#00D4FF'; sx.font = '700 38px Georgia,serif'; sx.fillText('GRAND TUNNEL  ▲  SEATS · FIELD · STAGE', 512, 160);
+        var stx = new THREE.CanvasTexture(sc); stx.colorSpace = THREE.SRGBColorSpace; var sgn = new THREE.Mesh(new THREE.PlaneGeometry(15, 2.9), new THREE.MeshBasicMaterial({ map: stx })); sgn.position.set(0, gh + 2.9, gz + 1.1); lobby.add(sgn);
+        // floor chevrons (one InstancedMesh): from the lobby's middle, through the gate, down the tunnel to the arena edge
+        var tri = new THREE.Shape(); tri.moveTo(0, -1.3); tri.lineTo(1.5, 0.9); tri.lineTo(0.55, 0.9); tri.lineTo(0, -0.2); tri.lineTo(-0.55, 0.9); tri.lineTo(-1.5, 0.9); tri.closePath();
+        var cg = new THREE.ShapeGeometry(tri); cg.rotateX(-Math.PI / 2);
+        var z0l = LOBBY_D / 2 - 7, z1l = (B + 8) - (LOBBY_Z0 + LOBBY_D / 2), nCh = Math.max(4, Math.floor((z0l - z1l) / 5)), chv = new THREE.InstancedMesh(cg, new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.85, depthWrite: false }), nCh), cm = new THREE.Matrix4();
+        for (var ci = 0; ci < nCh; ci++) { cm.makeTranslation(0, 0.09, z0l - ci * 5); chv.setMatrixAt(ci, cm); } chv.instanceMatrix.needsUpdate = true; chv.frustumCulled = false; lobby.add(chv);
+        frameHooks.push(function () { chv.material.opacity = 0.55 + 0.35 * Math.sin(_clk * 3); });
+      })();
     })();
     // ── sky + light (open-air bowl) ──
     var skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: { top: { value: new THREE.Color() }, bot: { value: new THREE.Color() } },
