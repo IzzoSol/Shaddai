@@ -144,7 +144,7 @@
       if (typeof document === 'undefined') return;
       if (pnl) { pnl.remove(); pnl = null; if (force !== true) return; }
       pnl = document.createElement('div'); pnl.id = 'mountStore';
-      pnl.style.cssText = 'position:fixed;right:18px;top:80px;z-index:9999;width:320px;background:rgba(6,8,11,.94);border:1px solid #e8c45c;border-radius:12px;padding:14px;color:#dfe9e4;font:13px system-ui;box-shadow:0 0 30px rgba(232,196,92,.25)';
+      pnl.style.cssText = 'position:fixed;right:18px;top:80px;z-index:9999;width:340px;max-height:calc(100vh - 110px);overflow-y:auto;background:rgba(6,8,11,.94);border:1px solid #e8c45c;border-radius:12px;padding:14px;color:#dfe9e4;font:13px system-ui;box-shadow:0 0 30px rgba(232,196,92,.25)';
       var h = '<div style="display:flex;justify-content:space-between;font-weight:700;color:#e8c45c;margin-bottom:8px"><span>MOUNT STORE</span><span id="msx" style="cursor:pointer">x</span></div><div style="font-size:11px;opacity:.7;margin-bottom:8px">Flying mounts cost more. You can lose a mount if it is destroyed - rebuy here. Sparks are closed-loop.</div>';
       Mo.CATALOG.filter(function (c) { return c.kind === 'mount'; }).forEach(function (c) {
         var own = Mo.has(c.id);
