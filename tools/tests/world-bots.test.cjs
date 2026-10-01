@@ -39,4 +39,12 @@ t('follower lags: a humanoid trails the player and never outruns ~90% of their s
   assert(sm.x < p.x, 'bot is behind the player'); assert(gapM > 3 && gapM < 40, 'lags but keeps following: ' + gapM.toFixed(1) + ' m');
   const wheel = 'unicycle'; B.grant(wheel); B.call(wheel, 'city'); B.update(1 / 60, p, 'city'); assert.strictEqual(B.rec(wheel).bodyState, 'active'); B.update(1 / 60, p, 'wilderness'); assert.strictEqual(B.rec(wheel).bodyState, 'stowed', 'wheeled bot is recalled when you leave the city');
 });
+t('humanoid swims in deep water (pitched, at the surface) and walks on land', () => {
+  const THREE = { Group: class { constructor() { this.position = { set() { }, x: 0, y: 0, z: 0 }; this.rotation = { y: 0 }; this.scale = { setScalar() { } }; this.userData = {}; } add() { } }, MeshLambertMaterial: class { }, Mesh: class { constructor() { this.position = { set() { } }; this.rotation = { set() { } }; } }, BoxGeometry: class { }, CylinderGeometry: class { }, SphereGeometry: class { } };
+  const scene = { add() { }, remove() { } }; B.grant('scrap'); B.call('scrap', 'wilderness'); let wy = 5 * 3.889;
+  B.spawnBodies(THREE, scene, () => 0, { water: () => wy });
+  const p = { x: 0, z: 0 }; for (let i = 0; i < 120; i++) { p.x += 3 * 3.889 / 60; B.update(1 / 60, p, 'wilderness'); }
+  const m = Object.values(B._sim())[0]; assert.ok(m.swimK > 0.9, 'swimK ' + m.swimK);
+  wy = null; for (let i = 0; i < 120; i++) B.update(1 / 60, p, 'wilderness'); assert.ok(B._sim()['scrap'].swimK < 0.1, 'back on land');
+});
 console.log(pass + ' passed');

@@ -851,7 +851,7 @@ window.__worldBuilt = false;
             const b = window.WORLD_LAYOUT && window.WORLD_LAYOUT.biomeAt ? window.WORLD_LAYOUT.biomeAt(playerPos.x, playerPos.z) : null;
             if(b && b.id === 'grid') return 'city'; if(b && b.id === 'void') return 'void';
             return (rh.homes.some(function(h){ return Math.hypot(h.x - playerPos.x, h.z - playerPos.z) < 70*3.889; })) ? 'city' : 'wilderness'; };
-          if(window.WorldBots) window.WorldBots.spawnBodies(THREE, scene, api.heightAt, { loader: agentBodyLoader, cloneSkinned: (typeof cloneSkinned !== 'undefined' ? cloneSkinned : null) });
+          if(window.WorldBots) window.WorldBots.spawnBodies(THREE, scene, api.heightAt, { loader: agentBodyLoader, water: function(x,z){ try{ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; }catch(_){ return null; } }, cloneSkinned: (typeof cloneSkinned !== 'undefined' ? cloneSkinned : null) });
           window.__w3dDebug.realmHomes = rh; setInterval(function(){ try{ rh.update(playerPos.x, playerPos.z); }catch(_){} }, 500);
           return window.__interiorsV3.ready;
         });

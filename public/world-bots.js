@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
   var KEY = 'shd_bots_v1';
-  var TUNE = { followMinM: 3, followMaxM: 8, followSpeedK: 0.9, baseStorage: 4, storagePerSkill: 4, rebuildSparks: 250, humanoidHp: 120, wheeledHp: 90, hoverSpeedK: 1.1 };
+  var TUNE = { followMinM: 3, followMaxM: 8, followSpeedK: 0.9, baseStorage: 4, storagePerSkill: 4, rebuildSparks: 250, humanoidHp: 120, wheeledHp: 90, hoverSpeedK: 1.1, swimDepthM: 1.3 };
   var ROSTER = [
     { id: 'scrap',    kind: 'humanoid', name: 'SCRAP',    ref: 'e748c454', earn: 'starter',              style: { body: 0xd9772a, head: 0x4a5566, eye: 0xffc933, accent: 0xd4504a }, blurb: 'Box-head scrapper. Tough, loud, loyal.' },
     { id: 'lanky',    kind: 'humanoid', name: 'LANKY',    ref: '92815f70', earn: 'academy:class-3',      style: { body: 0xd8cfb8, head: 0xe0d6bd, eye: 0xffd35a, accent: 0xd4504a }, blurb: 'Tall and quiet. Long reach, red sneakers.' },
@@ -122,14 +122,14 @@
       inst.updateMatrixWorld(true); inst.traverse(function (o) { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });   // NORMALIZE BEFORE ADD: skinned meshes sit under a 0.01-scaled armature, so the plain node-based box reads ~0.02 tall and the old code scaled bots up ~260x ('giants'); measure the real skinned (precise) box instead
       var box = new THREE.Box3().setFromObject(inst, true), h = Math.max(0.01, box.max.y - box.min.y), k = U * BOT_H[def.kind] / h; inst.scale.multiplyScalar(k); inst.updateMatrixWorld(true);
       var b2 = new THREE.Box3().setFromObject(inst); inst.position.y -= b2.min.y; var wrap = new THREE.Group(); wrap.add(inst); wrap.userData.glb = true;
-      var idle = pickClip(g.animations, /idle|stand|breath/i) || g.animations[0], walk = pickClip(g.animations, /walk|roll|drive|move/i) || idle, run = pickClip(g.animations, /run|sprint/i) || walk;
+      var swimClip = pickClip(g.animations, /swim|tread|float/i), idle = pickClip(g.animations, /idle|stand|breath/i) || g.animations[0], walk = pickClip(g.animations, /walk|roll|drive|move/i) || idle, run = pickClip(g.animations, /run|sprint/i) || walk;
       ctx.scene.remove(old); ctx.scene.add(wrap); bodies[id] = wrap;
       // SIZE FIX (bots were giants): once the skeleton has run a few frames, measure the REAL skinned height and rescale the wrapper to the target companion height
       setTimeout(function () { var w = bodies[id]; if (!w || !w.userData.glb) return; w.updateMatrixWorld(true); w.traverse(function (o) { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });
-        var bb = new THREE.Box3().setFromObject(w, true), hh = bb.max.y - bb.min.y, tgt = U * BOT_H[def.kind]; if (hh > 0.01 && (hh > tgt * 1.2 || hh < tgt * 0.8)) { w.scale.multiplyScalar(tgt / hh); w.updateMatrixWorld(true); } }, 1500); var sm = sim[id]; if (sm) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run } }; sm.clip = null; sm.act = null; }
+        var bb = new THREE.Box3().setFromObject(w, true), hh = bb.max.y - bb.min.y, tgt = U * BOT_H[def.kind]; if (hh > 0.01 && (hh > tgt * 1.2 || hh < tgt * 0.8)) { w.scale.multiplyScalar(tgt / hh); w.updateMatrixWorld(true); } }, 1500); var sm = sim[id]; if (sm) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run, swim: swimClip } }; sm.clip = null; sm.act = null; }
     }, undefined, function () { glbFail[url] = true; });
   }
-  function spawnBodies(THREE, scene, heightAt, opts) { ctx = { THREE: THREE, scene: scene, heightAt: heightAt || function () { return 0; }, loader: opts && opts.loader, clone: opts && opts.cloneSkinned }; syncBodies(); return bodies; }
+  function spawnBodies(THREE, scene, heightAt, opts) { ctx = { THREE: THREE, scene: scene, heightAt: heightAt || function () { return 0; }, loader: opts && opts.loader, clone: opts && opts.cloneSkinned, water: opts && opts.water }; syncBodies(); return bodies; }
   function syncBodies() {
     if (!ctx) return;
     S.owned.forEach(function (r) {
@@ -154,11 +154,16 @@
         else s.yaw += (Math.atan2(dx, dz) - s.yaw) * Math.min(1, dt * 3);
       }
       s.ph += dt * (moving ? 9 : 0); var y = ctx.heightAt(s.x, s.z);
-      m.position.set(s.x, y + (r.hoverboard ? 0.35 * U : 0), s.z); m.rotation.y = s.yaw;
+      /* SWIM (owner 2026-10-01: swim rigging): humanoids in water deeper than chest height tread/swim at the surface, body pitched forward; wheeled bots never reach water (city only). */
+      var wy = ctx.water && def.kind === 'humanoid' ? ctx.water(s.x, s.z) : null, swimming = wy != null && wy - y > TUNE.swimDepthM * U;
+      m.rotation.order = 'YXZ'; s.swimK = (s.swimK || 0) + ((swimming ? 1 : 0) - (s.swimK || 0)) * Math.min(1, dt * 6);
+      if (swimming) { var hgt = 3.889 * BOT_H[def.kind]; y = wy - hgt * 0.75 + Math.sin(s.ph * 0.4 + s.x) * 0.04 * U; }
+      m.position.set(s.x, y + (r.hoverboard && !swimming ? 0.35 * U : 0), s.z); m.rotation.y = s.yaw; m.rotation.x = s.swimK * (moving ? 1.25 : 0.35);
       if (s.mixer) {   // real rig: crossfade idle <-> walk clips
-        var want = moving ? 'walk' : 'idle'; if (s.clip !== want) { var a = s.mixer.clipAction(s.bot.clips[want] || s.bot.clips.idle); if (s.act) s.act.fadeOut(0.25); a.reset().fadeIn(0.25).play(); s.act = a; s.clip = want; } s.mixer.update(dt); return;
+        var want = swimming && s.bot.clips.swim ? 'swim' : (moving ? 'walk' : 'idle'); if (s.clip !== want) { var a = s.mixer.clipAction(s.bot.clips[want] || s.bot.clips.idle); if (s.act) s.act.fadeOut(0.25); a.reset().fadeIn(0.25).play(); s.act = a; s.clip = want; } s.mixer.timeScale = swimming ? 1.5 : 1; s.mixer.update(dt); return;
       }
       var P = m.userData.parts, sw = moving ? Math.sin(s.ph) * 0.7 : 0;
+      if (swimming) sw = Math.sin(s.ph * 0.9 + 1) * 0.9;   /* flutter-kick while swimming */
       if (P.legL) { P.legL.rotation.x = sw; P.legR.rotation.x = -sw; } if (P.armL) { P.armL.rotation.x = -sw * 0.8; P.armR.rotation.x = sw * 0.8; } if (P.wheel) P.wheel.rotation.x += moving ? dt * 6 : 0;
     });
   }
