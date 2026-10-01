@@ -118,7 +118,8 @@
     var url = BOT_GLB[BODY[id]], def = byId[id]; if (!url || !ctx || !ctx.loader || glbFail[url]) return;
     ctx.loader.load(url, function (g) {
       var old = bodies[id]; if (!old) return; var THREE = ctx.THREE, src = g.scene, inst = ctx.clone ? ctx.clone(src) : src.clone(true), U = 3.889;
-      var box = new THREE.Box3().setFromObject(inst), h = Math.max(0.01, box.max.y - box.min.y), k = U * BOT_H[def.kind] / h; inst.scale.multiplyScalar(k); inst.updateMatrixWorld(true);
+      inst.updateMatrixWorld(true); inst.traverse(function (o) { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });   // NORMALIZE BEFORE ADD: skinned meshes sit under a 0.01-scaled armature, so the plain node-based box reads ~0.02 tall and the old code scaled bots up ~260x ('giants'); measure the real skinned (precise) box instead
+      var box = new THREE.Box3().setFromObject(inst, true), h = Math.max(0.01, box.max.y - box.min.y), k = U * BOT_H[def.kind] / h; inst.scale.multiplyScalar(k); inst.updateMatrixWorld(true);
       var b2 = new THREE.Box3().setFromObject(inst); inst.position.y -= b2.min.y; var wrap = new THREE.Group(); wrap.add(inst); wrap.userData.glb = true;
       var idle = pickClip(g.animations, /idle|stand|breath/i) || g.animations[0], walk = pickClip(g.animations, /walk|roll|drive|move/i) || idle, run = pickClip(g.animations, /run|sprint/i) || walk;
       ctx.scene.remove(old); ctx.scene.add(wrap); bodies[id] = wrap;
