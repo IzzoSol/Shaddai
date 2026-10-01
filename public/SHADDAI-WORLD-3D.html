@@ -4542,6 +4542,30 @@ const _bldgColliders = (function(){
   //  solid via window.__hubColliders, handled in _resolveBuildingCollision.)
   return list;
 })();
+// ── BUILDING ENTRANCES (owner: "cool looking buildings as models but no way to walk up or into the building"): every council building gets a REAL entrance
+//    built exactly where its collider stops you and its [E] door cone fires: gold gate + lintel, stepped approach, glowing door in the building colour, name sign, tall light pillar (visible from far) ──
+(function buildEntrances(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const L = window.WORLD_LAYOUT, D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!L || !L.sectors || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
+  const goldM = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.85, roughness: 0.3, emissive: 0x6b5410, emissiveIntensity: 0.35 }), stoneM = new THREE.MeshStandardMaterial({ color: 0x2a3550, roughness: 0.7, metalness: 0.2 });
+  const pilG = new THREE.CylinderGeometry(2.3, 2.8, 1, 16), boxG = new THREE.BoxGeometry(1, 1, 1), planeG = new THREE.PlaneGeometry(1, 1), beamG = new THREE.CylinderGeometry(2, 4, 1, 10, 1, true);
+  const root = new THREE.Group(); root.name = 'building-entrances'; scene.add(root); window.__entrances = [];
+  L.sectors.forEach(function(sec){ if(!sec || !sec.pos || sec.code === 'SHADDAI') return;
+    const cx = sec.pos[0], cz = sec.pos[1], r = (_BLDG_R[sec.code] || 50), cl = Math.hypot(cx, cz) || 1, fx = -cx / cl, fz = -cz / cl, round = !!_CYL_BLDG[sec.code];
+    let nx, nz, px, pz; if(round){ nx = fx; nz = fz; px = cx + nx * r; pz = cz + nz * r; } else if(Math.abs(fx) >= Math.abs(fz)){ nx = Math.sign(fx) || 1; nz = 0; px = cx + nx * r; pz = cz + fz / Math.abs(fx) * r * 0; } else { nx = 0; nz = Math.sign(fz) || 1; px = cx; pz = cz + nz * r; }
+    if(!round && nz === 0) pz = cz; const gy = H.heightAt(px, pz), col = new THREE.Color(sec.color || 0x27e0ff);
+    const g = new THREE.Group(); g.position.set(px, gy, pz); g.rotation.y = Math.atan2(nx, nz); root.add(g);   // local +z = outward from the building
+    const gw = 15, gh = 36;
+    [-1, 1].forEach(function(sd){ const pl = new THREE.Mesh(pilG, goldM); pl.scale.set(1, gh, 1); pl.position.set(sd * gw, gh / 2, 3); g.add(pl); const ledM = new THREE.MeshBasicMaterial({ color: col }); const led = new THREE.Mesh(boxG, ledM); led.scale.set(0.7, gh - 4, 0.7); led.position.set(sd * (gw - 3.2), gh / 2, 4.2); g.add(led); });
+    const lin = new THREE.Mesh(boxG, goldM); lin.scale.set(gw * 2 + 10, 4.5, 7); lin.position.set(0, gh + 2, 3); g.add(lin);
+    const door = new THREE.Mesh(planeG, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })); door.scale.set(gw * 2 - 4, gh - 2, 1); door.position.set(0, (gh - 2) / 2 + 0.5, 1.5); g.add(door);
+    [[2.2, 5], [1.5, 10], [0.8, 15]].forEach(function(st, i){ const sp = new THREE.Mesh(boxG, stoneM); sp.scale.set(gw * 2 + 16 + i * 6, st[0], 6); sp.position.set(0, st[0] / 2, st[1] + 3); g.add(sp); });   // 3-step approach rising to the door
+    const cv = document.createElement('canvas'); cv.width = 768; cv.height = 168; const cx2 = cv.getContext('2d'); cx2.fillStyle = 'rgba(8,12,28,0.92)'; cx2.fillRect(0, 0, 768, 168); cx2.strokeStyle = '#D4AF37'; cx2.lineWidth = 7; cx2.strokeRect(6, 6, 756, 156);
+    cx2.fillStyle = '#D4AF37'; cx2.font = '700 74px Georgia,serif'; cx2.textAlign = 'center'; cx2.textBaseline = 'middle'; cx2.fillText(String(sec.code), 384, 62); cx2.fillStyle = '#' + col.getHexString(); cx2.font = '600 40px Georgia,serif'; cx2.fillText(String(sec.name || '') + '   \u2022   [E] ENTER', 384, 128);
+    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const sign = new THREE.Mesh(planeG, new THREE.MeshBasicMaterial({ map: tx, transparent: true })); sign.scale.set(46, 10, 1); sign.position.set(0, gh + 11, 6.8); g.add(sign);
+    const beam = new THREE.Mesh(beamG, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); beam.scale.set(1, 520, 1); beam.position.set(0, 260, 2); g.add(beam);
+    window.__entrances.push({ code: sec.code, x: px, z: pz, nx: nx, nz: nz }); });
+  console.info('[entrances] built', window.__entrances.length);
+}, 1000); })();
 // SHAPE-AWARE solid collision with a real door opening:
 //  • BOX buildings → axis-aligned box (blocks flat faces AND corners correctly — no "barrier at the face
 //    but walk-through at the corner" any more); pushed out along the axis of least penetration (slides).
