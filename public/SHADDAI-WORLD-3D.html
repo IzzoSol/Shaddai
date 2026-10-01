@@ -306,6 +306,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-nature.js?v=20260925m4"></script>
 <script src="/world-colosseum-floors.js?v=20260929a"></script>
 <script src="/world-colosseum-metro.js?v=20260929a"></script>   <!-- underground station: elevator + maglev ring stop -->
+<script src="/world-race-challenge.js?v=20261001a"></script>   <!-- challenge races + Sparks wagers (I > Races) -->
 <script src="/world-colosseum-vendors.js?v=20260929a"></script>   <!-- concourse vendors: E at any kiosk (snacks, drinks, gear, mounts, cosmetics, wagers) -->
 <script src="/world-colosseum.js?v=20260926v4"></script>
 <script src="/world-terrain.js?v=20260925m2"></script>
@@ -4938,6 +4939,14 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } });
   if(!best) return; playerPos.x = best.x; playerPos.z = best.z + 14; if(hover && hover.isRiding && hover.isRiding()) hover.dismount();
   if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev: ' + best.name + ' - step onto the glowing lift pad and press E'); });
+// ── CHALLENGE RACES (world-race-challenge.js): I > Races. Rival speed follows YOUR ride; wagers are Sparks (closed loop, 5% burn) ──
+(function bootChallenge(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+  if(!window.buildRaceChallenge || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
+  window.__raceChallenge = window.buildRaceChallenge({ THREE, scene, heightAt: H.heightAt, playerPos,
+    getRider: function(){ const M = window.__mountRide; if(M && M.isRiding()){ const st = M.state(); return { id: st.id || 'bull', kind: st.flying ? 'fly' : 'ground' }; } if(typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding()) return { id: 'board', kind: 'board' }; return { id: 'foot', kind: 'foot' }; },
+    spend: function(a, k, i){ return window.ShdSparks ? window.ShdSparks.spend(a, k, i) : false; }, add: function(a, k, i){ if(window.ShdSparks) window.ShdSparks.add(a, k, i); },
+    toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } });
+}, 1000); })();
 // ── TRAVEL (M panel > Travel): jump to the maglev / hoverskate park / Colosseum / Grid centre so every area can be tested quickly ──
 window.__travel = {
   maglev: function(){ const T = window.__worldTransitApi; if(!T || !T.stations) return false; let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } }); if(!best) return false; if(_interiors && _interiors.isInside && _interiors.isInside()) _interiors.exit(); playerPos.x = best.x; playerPos.z = best.z + 14; return best.name; },
@@ -5083,7 +5092,8 @@ function animate(){
     _ri.climb = _rl && !!keys['Space']; _ri.dive = _rl && !!(keys['ShiftLeft']||keys['ShiftRight']);
     window.__dragonRide.update(dt, _ri);
   }
-  if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }   // MOUNTS (world-mount-ride.js)
+  if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__raceChallenge) window.__raceChallenge.update(dt);   // challenge races: countdown, rivals, checkpoints, payout   // MOUNTS (world-mount-ride.js)
 _pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
           && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(_rideOn()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
