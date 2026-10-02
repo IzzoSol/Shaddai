@@ -71,7 +71,13 @@ function createClasses({ store, registry, roles }) {
 
   const roster = (classId) => { const c = get(classId); return c ? Object.values(c.members) : []; };
 
-  return { create, join, grantScholarship, recordPass, roster, get };
+  // Public summaries: no member list.
+  const list = () => Object.values(load().items).map((c) => ({
+    id: c.id, name: c.name, track: c.track, tier: c.tier, kind: c.kind, syllabus: c.syllabus, teacher: c.teacher, room: c.room,
+    capacity: c.capacity, schedule: c.schedule, scholarshipSeats: c.scholarshipSeats, seats: Object.keys(c.members).length
+  }));
+
+  return { create, join, grantScholarship, recordPass, roster, get, list };
 }
 
 module.exports = { createClasses, KINDS };

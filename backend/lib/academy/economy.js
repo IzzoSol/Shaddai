@@ -70,7 +70,9 @@ function createAcademyEconomy({ economy, store, econ = ACADEMY_ECON, getSkill, o
     return { ok: true, split: cur.split };
   }
 
-  return { enroll, settle, get };
+  const forAgent = (agentId, skillId) => Object.values(load().items).filter((e) => e.agentId === agentId && e.skillId === skillId);
+
+  return { enroll, settle, get, forAgent };
 }
 
 module.exports = { ACADEMY_ECON, splitPrice, createAcademyEconomy };

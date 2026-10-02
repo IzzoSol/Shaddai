@@ -51,7 +51,8 @@ const SCRIPTS = [
   'lib/academy/academy-core.test.js',
   'lib/academy/review-fixes.test.js',
   'lib/academy/exam-admin.test.js',
-  'lib/academy/judge.test.js'
+  'lib/academy/judge.test.js',
+  'academy-school-routes.test.js'
 ];
 
 let passed = 0, failed = 0;
