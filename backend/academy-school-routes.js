@@ -8,6 +8,7 @@ const express = require('express');
 const { FACULTY } = require('./lib/academy/faculty');
 const { hasSecret } = require('./lib/academy/secrets');
 const { isSafeId } = require('./lib/academy/ids');
+const { buildToolManifest } = require('./lib/academy/tool-manifest');
 
 const isStr = (v) => typeof v === 'string' && v.length > 0 && v.length <= 200;
 
@@ -185,6 +186,89 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
   return router;
 }
 
-function createBotRouter() { return express.Router(); }   // replaced in Task 4
+// Bot side: identity comes from the bearer token only. The agent is the token's operative, the payer is its owner.
+function createBotRouter({ academy, operatives, agentAuth, fail, ok, wrap, bodyOf, send, isStr, publicSkill }) {
+  const r = express.Router();
+  r.get('/tools', (req, res) => ok(res, buildToolManifest({ baseUrl: req.protocol + '://' + req.get('host') + req.baseUrl.replace(/\/xagent$/, '') })));
+  r.use(agentAuth);
+  const who = (req) => ({ agentId: req.agent.operativeId, ownerId: req.agent.owner });
+
+  r.get('/catalog', wrap(async (req, res) => ok(res, { skills: academy.registry.list({ track: req.query.track, tier: req.query.tier }).map(publicSkill) })));
+
+  r.post('/enroll', wrap(async (req, res) => {
+    const b = bodyOf(req); const { agentId, ownerId } = who(req);
+    if (!isStr(b.skillId)) return fail(res, 400, 'skillId required');
+    const windowId = isStr(b.windowId) ? b.windowId : 'w' + crypto.randomBytes(6).toString('hex');
+    return send(res, await academy.tuition.enroll({ ownerId, agentId, skillId: b.skillId, windowId }), (x) => ({ enrollment: x.enrollment, replay: !!x.replay }));
+  }));
+
+  r.get('/skills/:id/lesson', wrap(async (req, res) => {
+    const { agentId, ownerId } = who(req);
+    const s = isSafeId(req.params.id) ? academy.registry.get(req.params.id) : null;
+    if (!s) return fail(res, 404, 'skill not found');
+    const e = academy.tuition.get(String(req.query.enrollmentId || ''));
+    if (!e || e.skillId !== s.id || e.agentId !== agentId || e.ownerId !== ownerId) return fail(res, 403, 'a paid enrollment for this skill is required');
+    return ok(res, { lesson: s.lesson });
+  }));
+
+  r.post('/exams/begin', wrap(async (req, res) => {
+    const b = bodyOf(req); const { agentId } = who(req);
+    if (!isStr(b.skillId)) return fail(res, 400, 'skillId required');
+    if (b.kind !== 'baseline' && b.kind !== 'exam') return fail(res, 400, 'kind must be baseline or exam');
+    if (!academy.tuition.forAgent(agentId, b.skillId).some((e) => e.status === 'paid')) return fail(res, 402, 'enroll first: a paid enrollment is required to take an exam');
+    return send(res, academy.exams.begin({ agentId, skillId: b.skillId, kind: b.kind, withSkill: b.kind === 'exam' }), (x) => ({ attemptId: x.attemptId, expiresAt: x.expiresAt, tasks: x.tasks }));
+  }));
+
+  r.post('/exams/submit', wrap(async (req, res) => {
+    const b = bodyOf(req); const { agentId } = who(req);
+    if (!isStr(b.attemptId)) return fail(res, 400, 'attemptId required');
+    const att = academy.exams.get(b.attemptId);
+    if (!att) return fail(res, 404, 'unknown attempt');
+    if (att.agentId !== agentId) return fail(res, 403, 'not your attempt');
+    return send(res, await academy.exams.submit({ attemptId: b.attemptId, outputs: b.outputs }), (x) => ({ status: x.status, score: x.score }));
+  }));
+
+  r.post('/homework', wrap(async (req, res) => {
+    const b = bodyOf(req); const { agentId } = who(req);
+    if (!isStr(b.skillId)) return fail(res, 400, 'skillId required');
+    const skill = academy.registry.get(b.skillId);
+    if (!skill) return fail(res, 404, 'skill not found');
+    if (!skill.homework) return fail(res, 400, 'this skill has no homework');
+    if (!academy.tuition.forAgent(agentId, b.skillId).length) return fail(res, 402, 'enroll first');
+    return send(res, await academy.homework.submit({ agentId, skillId: b.skillId, rubricId: skill.homework.rubric_id, artifact: b.artifact, provenance: b.provenance }),
+      (x) => ({ round: x.round, score: x.score, critique: x.critique, summary: x.summary }));
+  }));
+
+  r.post('/finish', wrap(async (req, res) => {
+    const b = bodyOf(req); const { agentId } = who(req);
+    if (!isStr(b.skillId) || !isStr(b.enrollmentId)) return fail(res, 400, 'skillId and enrollmentId required');
+    const out = await academy.finishExam({ agentId, skillId: b.skillId, enrollmentId: b.enrollmentId, classId: isStr(b.classId) ? b.classId : undefined });
+    return send(res, out, (x) => ({ passed: x.passed, installed: x.installed, classCompleted: !!x.classCompleted, receipt: x.receipt, split: x.split }));
+  }));
+
+  r.get('/receipts', wrap(async (req, res) => {
+    const { agentId } = who(req);
+    return ok(res, { receipts: academy.receipts.forAgent(agentId), chain: academy.receipts.verifyChain(agentId) });
+  }));
+
+  r.get('/skills', wrap(async (req, res) => {
+    const op = operatives.get(who(req).agentId);
+    return ok(res, { skills: (op && op.skills) || [] });
+  }));
+
+  r.get('/skills/:id/export', wrap(async (req, res) => {
+    const { agentId } = who(req);
+    const op = operatives.get(agentId);
+    const inst = isSafeId(req.params.id) && op ? (op.skills || []).find((s) => s.skillId === req.params.id) : null;
+    const rec = inst ? academy.receipts.get(inst.receiptId) : null;
+    const skill = inst ? academy.registry.get(inst.skillId) : null;
+    if (!inst || !rec || !skill || !rec.passed || rec.agentId !== agentId || !academy.receipts.verifyChain(agentId).ok) return fail(res, 404, 'no installed skill with a verified receipt');
+    const file = Object.assign(publicSkill(skill), { version: inst.version, hash: inst.hash, receipt: { receiptId: rec.receiptId, hash: rec.hash, baseline: rec.baseline, exam: rec.exam, lift: rec.lift, ts: rec.ts } });
+    if (skill.license === 'transferable' && skill.hash === inst.hash) file.lesson = skill.lesson;
+    return ok(res, { skill: file });
+  }));
+
+  return r;
+}
 
 module.exports = { createSchoolRouter, publicSkill, codeFor };
