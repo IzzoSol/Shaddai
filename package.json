@@ -10,6 +10,7 @@
     "dev:agents": "nodemon backend/multi-agent-server.js",
     "build": "echo 'Build process complete'",
     "test": "echo 'Running tests...'",
+    "test:markets": "node --test backend/markets/",
     "serve": "node backend/server-production.js",
     "uptime": "node scripts/uptimerobot-monitor.js"
   },
