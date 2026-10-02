@@ -4,286 +4,212 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>The Athenaeum — The Halls of the Seven · SHADDAI</title>
+<meta name="description" content="Seven halls, one for each agent, around a central arcade. Turn the hall, pick a building, walk in."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Chakra+Petch:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --obsidian:#06080b; --obsidian2:#0a0e13;
-  --emerald:#00ff9c; --gold:#e8c45c; --cyan:#5fe0ff;
-  --ink:#dfe7ea; --ink2:#8b9aa1;
-  --hair:rgba(232,196,92,.30);
-}
+:root{ --void:#06080b; --panel:#0b1016; --card:#0e141b; --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.34);
+  --ink:#e9efe9; --soft:#93a49b; --faint:#5d6b65; --emerald:#00ff9c; --gold:#e8c45c; --ac:#00ff9c; }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%;background:var(--obsidian);color:var(--ink);
-  font-family:'Fraunces',Georgia,serif;-webkit-font-smoothing:antialiased}
-body{
-  background:
-    radial-gradient(ellipse 90% 60% at 50% -8%, rgba(0,255,156,.06), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 50% 108%, rgba(95,224,255,.05), transparent 60%),
-    var(--obsidian);
-  min-height:100vh;display:flex;flex-direction:column;
-}
-::selection{background:var(--emerald);color:#04120c}
-a{color:inherit;text-decoration:none}
+html,body{background:var(--void);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100%}
+a{color:inherit;text-decoration:none} button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:1px solid var(--emerald);outline-offset:2px}
 
-/* ── faint sacred-geometry grid backdrop (cheap, static) ── */
-body::before{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
-  background-image:
-    linear-gradient(rgba(0,255,156,.035) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,255,156,.035) 1px,transparent 1px);
-  background-size:64px 64px;
-  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 30%,transparent 85%);
-          mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 30%,transparent 85%);
-}
+.top{display:flex;align-items:center;gap:14px;padding:12px clamp(14px,3vw,28px);border-bottom:1px solid var(--edge);background:rgba(6,8,11,.9);position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}
+.top h1{font:900 17px 'Cinzel',serif;letter-spacing:.16em}
+.top h1 b{color:var(--gold)}
+.top nav{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.top nav a{font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);border:1px solid var(--edge);border-radius:5px;padding:8px 12px}
+.top nav a:hover{color:var(--emerald);border-color:var(--emerald)}
 
-/* ── CORNER CLUSTER ── */
-.corner{position:fixed;top:0;left:0;right:0;z-index:20;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px;pointer-events:none}
-.corner .side{display:flex;gap:9px;pointer-events:auto}
-.cbtn{font-family:'Chakra Petch',sans-serif;font-size:11px;font-weight:600;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);
-  background:rgba(10,14,19,.72);border:1px solid var(--hair);
-  padding:8px 14px;cursor:pointer;transition:color .18s,border-color .18s,background .18s;
-  display:inline-flex;align-items:center;gap:7px}
-.cbtn:hover{color:var(--gold);border-color:rgba(232,196,92,.7);background:rgba(14,18,24,.9)}
-.cbtn .ic{font-size:13px;line-height:1}
-.cbtn.world{color:var(--emerald);border-color:rgba(0,255,156,.35)}
-.cbtn.world:hover{color:#7dffc8;border-color:rgba(0,255,156,.8);background:rgba(6,26,18,.6)}
+.main{max-width:1280px;margin:0 auto;padding:clamp(12px,2vw,24px);display:grid;gap:clamp(12px,2vw,22px);grid-template-columns:1fr minmax(300px,380px);align-items:start}
+@media(max-width:940px){.main{grid-template-columns:1fr}}
 
-/* ── HERO ── */
-.hero{position:relative;z-index:2;text-align:center;
-  padding:118px 20px 34px;max-width:960px;margin:0 auto}
-.hero .kicker{font-family:'IBM Plex Mono',monospace;font-size:10px;
-  letter-spacing:.5em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
-.hero .rule{width:min(420px,72vw);height:0;margin:0 auto 22px;
-  border-top:1px solid var(--hair)}
-.hero h1{
-  font-family:'Cinzel Decorative',serif;font-weight:900;
-  font-size:clamp(34px,8.5vw,88px);letter-spacing:.06em;line-height:1.02;
-  color:transparent;-webkit-text-fill-color:transparent;
-  -webkit-text-stroke:1.4px var(--emerald);
-  text-shadow:0 0 26px rgba(0,255,156,.28), 0 0 60px rgba(0,255,156,.12);
-}
-.hero .sub{font-family:'Fraunces',serif;font-style:italic;
-  font-size:clamp(13px,2vw,19px);color:var(--ink2);
-  letter-spacing:.02em;margin-top:18px;line-height:1.6}
-.hero .sub .amp{color:var(--gold);font-style:normal}
+/* 3D stage */
+.stage{position:relative;height:clamp(340px,64vh,640px);background:radial-gradient(120% 90% at 50% 30%,#0d151c 0%,#06080b 72%);border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.stage .hint{position:absolute;left:14px;bottom:12px;font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);pointer-events:none}
+.stage .tag{position:absolute;pointer-events:none;transform:translate(-50%,-100%);font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--c);
+  text-shadow:0 0 10px #000,0 0 3px #000;white-space:nowrap;transition:opacity .2s}
+.stage .tag.sel{color:#fff}
 
-/* ── HALL CARDS ── */
-.halls{position:relative;z-index:2;flex:1;
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:22px;max-width:1180px;width:100%;margin:24px auto 12px;padding:0 24px}
-.hall{position:relative;display:block;
-  aspect-ratio:3/4;min-height:360px;overflow:hidden;
-  border:1px solid var(--hair);background:var(--obsidian2);
-  transition:transform .2s ease,border-color .25s ease}
-.hall:hover{transform:translateY(-6px);border-color:rgba(0,255,156,.55)}
-.hall .bg{position:absolute;inset:0;background-size:cover;background-position:center top;
-  filter:grayscale(.35) contrast(1.02);transition:filter .3s ease,transform .35s ease}
-.hall:hover .bg{filter:grayscale(0) contrast(1.05);transform:scale(1.04)}
-/* dark scrim so text is always legible */
-.hall .scrim{position:absolute;inset:0;
-  background:linear-gradient(180deg,
-    rgba(6,8,11,.30) 0%,
-    rgba(6,8,11,.10) 30%,
-    rgba(6,8,11,.62) 62%,
-    rgba(6,8,11,.94) 100%)}
-/* accent tint per hall (cheap static gradient) */
-.hall.oracle  .tint{background:linear-gradient(180deg,transparent 40%,rgba(95,224,255,.14),transparent)}
-.hall.quill   .tint{background:linear-gradient(180deg,transparent 40%,rgba(232,196,92,.14),transparent)}
-.hall.turtle  .tint{background:linear-gradient(180deg,transparent 40%,rgba(0,255,156,.16),transparent)}
-.hall.council .tint{background:linear-gradient(180deg,transparent 40%,rgba(232,196,92,.22),transparent)}
-.hall.forge   .tint{background:linear-gradient(180deg,transparent 40%,rgba(232,196,92,.14),transparent)}
-.hall.music   .tint{background:linear-gradient(180deg,transparent 40%,rgba(0,255,156,.14),transparent)}
-.hall .tint{position:absolute;inset:0;pointer-events:none}
+/* panel */
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;overflow:hidden;border-top:2px solid var(--ac)}
+.panel .ph{height:170px;background-size:cover;background-position:50% 22%;position:relative}
+.panel .ph::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,var(--panel))}
+.panel .body{padding:4px 18px 18px}
+.panel .k{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ac)}
+.panel h2{font:900 24px 'Cinzel',serif;letter-spacing:.06em;margin:6px 0 6px}
+.panel p{font-size:14px;line-height:1.6;color:var(--soft)}
+.acts{display:grid;gap:8px;margin-top:16px}
+.acts a{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--edge2);border-radius:7px;font-size:13.5px;font-weight:500}
+.acts a small{font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em}
+.acts a:hover{border-color:var(--ac);color:var(--ac)}
+.acts a.pri{background:var(--ac);color:#04120c;border-color:transparent;font-weight:600}
+.acts a.pri small{color:rgba(4,18,12,.65)}
+.acts .soon{opacity:.5;pointer-events:none}
 
-/* HUD corner brackets */
-.hall .br{position:absolute;width:20px;height:20px;border:1.5px solid var(--gold);z-index:3;
-  opacity:.7;transition:opacity .25s,border-color .25s}
-.hall:hover .br{opacity:1;border-color:var(--emerald)}
-.hall .br.tl{top:10px;left:10px;border-right:none;border-bottom:none}
-.hall .br.tr{top:10px;right:10px;border-left:none;border-bottom:none}
-.hall .br.bl{bottom:10px;left:10px;border-right:none;border-top:none}
-.hall .br.br2{bottom:10px;right:10px;border-left:none;border-top:none}
-
-.hall .body{position:absolute;left:0;right:0;bottom:0;z-index:3;
-  padding:22px 22px 24px;display:flex;flex-direction:column;gap:8px}
-.hall .glyph{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.34em;
-  text-transform:uppercase;color:var(--gold)}
-.hall.oracle .glyph{color:var(--cyan)}
-.hall.turtle .glyph{color:var(--emerald)}
-.hall.council .glyph{color:var(--gold)}
-.hall.forge .glyph{color:var(--gold)}
-.hall.music .glyph{color:var(--emerald)}
-.hall .name{font-family:'Cinzel Decorative',serif;font-weight:900;
-  font-size:clamp(19px,2.5vw,26px);letter-spacing:.03em;color:var(--ink);
-  text-shadow:0 2px 18px rgba(0,0,0,.7)}
-.hall .desc{font-family:'Chakra Petch',sans-serif;font-size:12px;font-weight:500;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);line-height:1.5}
-.hall .enter{font-family:'Chakra Petch',sans-serif;font-size:12px;font-weight:700;
-  letter-spacing:.2em;text-transform:uppercase;color:var(--emerald);
-  margin-top:6px;display:inline-flex;align-items:center;gap:8px;
-  transition:gap .2s,color .2s}
-.hall.oracle .enter{color:var(--cyan)}
-.hall.quill  .enter{color:var(--gold)}
-.hall.council .enter{color:var(--gold)}
-.hall.forge  .enter{color:var(--gold)}
-.hall.music  .enter{color:var(--emerald)}
-.hall:hover .enter{gap:14px}
-/* Oracle's two-way entry buttons */
-.hall .enter2{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.hall .enterbtn{font-family:'Chakra Petch',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;padding:9px 13px;border-radius:8px;text-decoration:none;transition:.18s;
-  color:#04140c;background:linear-gradient(90deg,#5fe0ff,#00ff9c);border:1px solid transparent}
-.hall .enterbtn.alt{color:var(--cyan);background:rgba(6,8,11,.55);border:1px solid rgba(95,224,255,.4)}
-.hall .enterbtn:hover{transform:translateY(-1px);filter:brightness(1.08)}
-.hall .enterbtn.alt:hover{background:rgba(6,8,11,.8);border-color:var(--cyan)}
-.hall .hair{height:1px;background:linear-gradient(90deg,var(--hair),transparent);margin-top:2px}
-
-/* ── FOOTER LINE ── */
-.foot{position:relative;z-index:2;text-align:center;
-  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.34em;
-  text-transform:uppercase;color:rgba(139,154,161,.5);padding:26px 20px 30px}
-.foot .dot{color:var(--gold)}
-
-@media(max-width:860px){
-  .halls{grid-template-columns:1fr;gap:18px;max-width:460px}
-  .hall{aspect-ratio:16/10;min-height:240px}
-  .hall .bg{background-position:center 22%}
-  .hero{padding-top:104px}
-}
-@media(max-width:520px){
-  .corner{flex-direction:column;gap:10px;align-items:stretch}
-  .corner .side{justify-content:center;flex-wrap:wrap}
-  .hero{padding-top:150px}
-}
+/* hall chips (always-works nav, also the no-WebGL fallback) */
+.chips{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.chip{display:flex;gap:10px;align-items:center;padding:8px;border:1px solid var(--edge);border-radius:8px;background:var(--card);text-align:left}
+.chip i{width:38px;height:38px;border-radius:50%;background-size:cover;background-position:50% 20%;flex:0 0 auto;border:2px solid var(--c)}
+.chip b{display:block;font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.08em}
+.chip span{font-size:11.5px;color:var(--faint)}
+.chip:hover,.chip[aria-pressed=true]{border-color:var(--c)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-<script src="/sw-heal.js"></script>
 </head>
 <body>
-
-<!-- ═══════════ CORNER CLUSTER ═══════════ -->
-<nav class="corner">
-  <div class="side">
-    <a class="cbtn" href="/home.html"><span class="ic">⌂</span> Home</a>
-    <a class="cbtn" href="/dashboard"><span class="ic">▦</span> Dashboard</a>
-  </div>
-  <div class="side">
-    <a class="cbtn world" href="/SHADDAI-WORLD-3D.html"><span class="ic">◈</span> Enter the World</a>
-  </div>
-</nav>
-
-<!-- ═══════════ HERO ═══════════ -->
-<header class="hero">
-  <div class="kicker">The Halls of Knowledge</div>
-  <div class="rule"></div>
-  <h1>THE ATHENAEUM</h1>
-  <p class="sub">the halls of the Seven <span class="amp">—</span> knowledge, foresight, and craft</p>
+<header class="top">
+  <h1>THE <b>ATHENAEUM</b></h1>
+  <nav><a href="/enter.html">Doors</a><a href="/dashboard">Dashboard</a><a href="/SHADDAI-WORLD-3D.html">Enter the world</a></nav>
 </header>
 
-<!-- ═══════════ HALL CARDS ═══════════ -->
-<main class="halls">
+<div class="main">
+  <div class="stage" id="stage"><div class="hint" id="hint">drag to turn · click a hall</div></div>
 
-  <!-- Oracle's Observatory — two ways in -->
-  <div class="hall oracle">
-    <div class="bg" style="background-image:url('/assets/halls/observatory.png')"></div>
-    <div class="scrim"></div><div class="tint"></div>
-    <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
+  <aside class="panel" id="panel" aria-live="polite">
+    <div class="ph" id="pPhoto"></div>
     <div class="body">
-      <div class="glyph">◎ Hall I</div>
-      <div class="name">Oracle's Observatory</div>
-      <div class="hair"></div>
-      <div class="desc">research &amp; foresight · two ways in</div>
-      <div class="enter2">
-        <a class="enterbtn" href="/oracle-sky.html">◉ Astral Observatory →</a>
-        <a class="enterbtn alt" href="/SHADDAI-WORLD-3D.html?room=observatory">✦ In the World →</a>
-      </div>
+      <div class="k" id="pKind"></div>
+      <h2 id="pName"></h2>
+      <p id="pDesc"></p>
+      <div class="acts" id="pActs"></div>
     </div>
-  </div>
+  </aside>
 
-  <!-- Quill's Library — two ways in -->
-  <div class="hall quill">
-    <div class="bg" style="background-image:url('/assets/halls/library.png')"></div>
-    <div class="scrim"></div><div class="tint"></div>
-    <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
-    <div class="body">
-      <div class="glyph">✎ Hall II</div>
-      <div class="name">Quill's Library</div>
-      <div class="hair"></div>
-      <div class="desc">words, codices &amp; lore · two ways in</div>
-      <div class="enter2">
-        <a class="enterbtn" href="/library.html">✎ The Library →</a>
-        <a class="enterbtn alt" href="/SHADDAI-WORLD-3D.html?room=library">✦ In the World →</a>
-      </div>
-    </div>
-  </div>
+  <div class="chips" id="chips" role="group" aria-label="Halls"></div>
+</div>
 
-  <!-- Turtle's Museum — two ways in -->
-  <div class="hall turtle">
-    <div class="bg" style="background-image:url('/assets/halls/museum.png')"></div>
-    <div class="scrim"></div><div class="tint"></div>
-    <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
-    <div class="body">
-      <div class="glyph">🏛 Hall III</div>
-      <div class="name">Turtle's Museum</div>
-      <div class="hair"></div>
-      <div class="desc">art &amp; creation · two ways in</div>
-      <div class="enter2">
-        <a class="enterbtn" href="/museum.html">🏛 The Museum →</a>
-        <a class="enterbtn alt" href="/museum-3d.html">✦ Axiom Rotunda →</a>
-        <a class="enterbtn alt" href="/SHADDAI-WORLD-3D.html?room=museum">✦ In the World →</a>
-      </div>
-    </div>
-  </div>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script>
+<script>
+/* One entry per hall. 2D = the live page. world = a ?room= the 3D world already understands; absent means no walk-in yet. */
+var HALLS = [
+  {id:'SHADDAI', hall:'The Throne Hall',     col:'#c9a6ff', kind:'SHADDAI · orchestrator', img:'/assets/agents/SHADDAI-council.png',
+   desc:'Where the council meets. Meet the seven, see what each one owns, and set the direction.',
+   links:[{t:'Meet the Seven',s:'agents',h:'/agents.html',pri:1}]},
+  {id:'NEXUS',   hall:'The Forge',           col:'#5bc8d4', kind:'NEXUS · architect', img:'/assets/banners/nexus.jpg',
+   desc:'Build and import agents, wire their skills and tools, and put them to work in your office.',
+   links:[{t:'Forge an agent',s:'sign in',h:'/agent-forge.html',pri:1},{t:'Skills & items forge',s:'forge',h:'/forge.html'}]},
+  {id:'ZEROX',   hall:'The Exchange',        col:'#b87fdf', kind:'ZEROX · revenue', img:'/assets/agents/ZEROX-council.png',
+   desc:'Live signals, markets and the trading terminal. Calls are rug-filtered and tracked.',
+   links:[{t:'Open the terminal',s:'PIN 4444',h:'/signals.html',pri:1}]},
+  {id:'ORACLE',  hall:'The Observatory',     col:'#f0d080', kind:'ORACLE · research', img:'/assets/agents/ORACLE-council.png',
+   desc:'Research, foresight and pattern-finding under the open sky.',
+   links:[{t:'Astral Observatory',s:'2D',h:'/oracle-sky.html',pri:1},{t:'See it in the world',s:'3D flyover',h:'/SHADDAI-WORLD-3D.html?room=observatory'}]},
+  {id:'TURTLE',  hall:'The Studio & Museum', col:'#4dd4a0', kind:'TURTLE · creative', img:'/assets/bazaar/music.png',
+   desc:'Art, design, sound. Compose a track, make images and video, and browse the gallery.',
+   links:[{t:'Creative Studio',s:'create',h:'/creative-studio.html',pri:1},{t:'Music studio',s:'compose',h:'/turtle-music-bot.html'},{t:'Museum',s:'2D',h:'/museum.html'},{t:'See it in the world',s:'3D flyover',h:'/SHADDAI-WORLD-3D.html?room=museum'}]},
+  {id:'QUILL',   hall:'The Library',         col:'#e87f7f', kind:'QUILL · writing', img:'/assets/agents/QUILL-council.png',
+   desc:'Your knowledge and notes, searchable, with the council’s studied sources behind them.',
+   links:[{t:'Open the Library',s:'2D',h:'/library.html',pri:1},{t:'Ask the Brain',s:'PIN 4444',h:'/rag#QUILL'},{t:'See it in the world',s:'3D flyover',h:'/SHADDAI-WORLD-3D.html?room=library'}]},
+  {id:'PIKADON', hall:'The Watch',           col:'#f0a060', kind:'PIKADON · security', img:'/assets/agents/PIKADON-action.png',
+   desc:'Audit trails, permissions and risk checks. Nothing ships unreviewed.',
+   links:[{t:'Open Security',s:'dashboard',h:'/dashboard#security',pri:1}]},
+  {id:'ARCADE',  hall:'The Arcade',          col:'#00ff9c', kind:'Commons · play', img:'/assets/games/covers/hoops.svg', center:true,
+   desc:'Eight SHADDAI games. Play solo, with your bots, or against other people.',
+   links:[{t:'Play now',s:'8 games',h:'/arcade.html',pri:1},{t:'Arcade in the world',s:'building soon',h:'#',soon:1}]}
+];
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var sel=null;
 
-  <!-- The Council (SHADDAI) -->
-  <a class="hall council" href="/home.html">
-    <div class="bg" style="background-image:url('/assets/agents/SHADDAI-council.png')"></div>
-    <div class="scrim"></div><div class="tint"></div>
-    <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
-    <div class="body">
-      <div class="glyph">◈ Hall IV</div>
-      <div class="name">The Council</div>
-      <div class="hair"></div>
-      <div class="desc">the seven deliberate &amp; decide</div>
-      <span class="enter">Enter →</span>
-    </div>
-  </a>
+function show(id){
+  sel=HALLS.filter(function(h){return h.id===id})[0]||HALLS[0];
+  document.documentElement.style.setProperty('--ac',sel.col);
+  $('pPhoto').style.backgroundImage="url('"+sel.img+"')";
+  $('pKind').textContent=sel.kind; $('pName').textContent=sel.hall; $('pDesc').textContent=sel.desc;
+  $('pActs').innerHTML=sel.links.map(function(l){return '<a class="'+(l.pri?'pri ':'')+(l.soon?'soon':'')+'" href="'+esc(l.h)+'"><span>'+esc(l.t)+'</span><small>'+esc(l.s)+'</small></a>'}).join('');
+  [].forEach.call($('chips').children,function(c){c.setAttribute('aria-pressed',c.dataset.id===sel.id?'true':'false')});
+  if(window.__focus) window.__focus(sel.id);
+  try{history.replaceState(null,'','#'+sel.id)}catch(e){}
+}
+HALLS.forEach(function(h){
+  var b=document.createElement('button'); b.type='button'; b.className='chip'; b.dataset.id=h.id; b.style.setProperty('--c',h.col); b.setAttribute('aria-pressed','false');
+  b.innerHTML='<i style="background-image:url(\''+h.img+'\')"></i><div><b>'+esc(h.id==='ARCADE'?'ARCADE':h.id)+'</b><span>'+esc(h.hall)+'</span></div>';
+  b.addEventListener('click',function(){show(h.id)}); $('chips').appendChild(b);
+});
+var start=(location.hash||'').replace('#','').toUpperCase();
+show(HALLS.some(function(h){return h.id===start})?start:'SHADDAI');
+</script>
 
-  <!-- Nexus' Forge -->
-  <a class="hall forge" href="/forge.html">
-    <div class="bg" style="background-image:url('/assets/banners/nexus.jpg')"></div>
-    <div class="scrim"></div><div class="tint"></div>
-    <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
-    <div class="body">
-      <div class="glyph">⚙ Hall V</div>
-      <div class="name">Nexus' Forge</div>
-      <div class="hair"></div>
-      <div class="desc">craft — build what scales</div>
-      <span class="enter">Enter →</span>
-    </div>
-  </a>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+try{
+  const stage=document.getElementById('stage');
+  const r=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  r.setPixelRatio(Math.min(devicePixelRatio||1,1.75)); stage.insertBefore(r.domElement,stage.firstChild);
+  const sc=new THREE.Scene(); sc.fog=new THREE.FogExp2(0x06080b,.032);
+  const cam=new THREE.PerspectiveCamera(36,1,.1,200); cam.position.set(0,9.5,16.5);
+  sc.add(new THREE.HemisphereLight(0x99bbcc,0x0a1014,.9));
+  const key=new THREE.DirectionalLight(0xffffff,.9); key.position.set(6,12,8); sc.add(key);
+  const ctl=new OrbitControls(cam,r.domElement); ctl.enablePan=false; ctl.enableDamping=true; ctl.minDistance=9; ctl.maxDistance=28;
+  ctl.maxPolarAngle=Math.PI*.47; ctl.autoRotate=true; ctl.autoRotateSpeed=.5; ctl.target.set(0,1.2,0);
 
-  <!-- Turtle's Music Hall -->
-  <a class="hall music" href="/turtle-music-bot.html">
-    <div class="bg" style="background-image:url('/assets/bazaar/music.png')"></div>
-    <div class="scrim"></div><div class="tint"></div>
-    <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br br2"></span>
-    <div class="body">
-      <div class="glyph">🎼 Hall VI</div>
-      <div class="name">Turtle's Music Hall</div>
-      <div class="hair"></div>
-      <div class="desc">sound, score &amp; song</div>
-      <span class="enter">Enter →</span>
-    </div>
-  </a>
+  // plinth + ground grid
+  const plinth=new THREE.Mesh(new THREE.CylinderGeometry(11.5,12.2,.5,64),new THREE.MeshStandardMaterial({color:0x0b1219,roughness:.9}));
+  plinth.position.y=-.25; sc.add(plinth);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(11.1,11.5,96),new THREE.MeshBasicMaterial({color:0xe8c45c,transparent:true,opacity:.7,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=.02; sc.add(ring);
+  const grid=new THREE.GridHelper(80,40,0x12301f,0x0e1b17); grid.position.y=-.52; sc.add(grid);
 
-</main>
+  const mat=(c)=>new THREE.MeshStandardMaterial({color:0x101821,roughness:.55,metalness:.3,emissive:new THREE.Color(c),emissiveIntensity:.06});
+  const edges=(m,c)=>{ const l=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry,25),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:.9})); m.add(l); return m; };
+  const part=(g,c,x,y,z)=>{ const m=edges(new THREE.Mesh(g,mat(c)),c); m.position.set(x,y,z); return m; };
+  const B=THREE.BoxGeometry, C=THREE.CylinderGeometry, S=THREE.SphereGeometry;
+  const builders={
+    SHADDAI:(c,g)=>{ g.add(part(new C(1.9,2.1,1.6,32),c,0,.8,0)); g.add(part(new S(1.8,32,16,0,Math.PI*2,0,Math.PI/2),c,0,1.6,0)); g.add(part(new C(.12,.12,1.6,8),c,0,3.5,0)); },
+    NEXUS:(c,g)=>{ g.add(part(new B(3,1.8,2.4),c,0,.9,0)); g.add(part(new C(.35,.45,2.6,12),c,.9,3,.5)); g.add(part(new B(1.2,1,1.2),c,-.8,2.3,0)); },
+    ZEROX:(c,g)=>{ [0,1,2].forEach(i=>g.add(part(new B(3.2-i*.9,.9,3.2-i*.9),c,0,.45+i*.9,0))); g.add(part(new C(.02,.02,1.5,6),c,0,3.5,0)); },
+    ORACLE:(c,g)=>{ g.add(part(new C(1.5,1.7,2,32),c,0,1,0)); g.add(part(new S(1.5,32,16,0,Math.PI*2,0,Math.PI/2),c,0,2,0)); g.add(part(new B(.25,1.2,.25),c,0,3.3,0)); },
+    TURTLE:(c,g)=>{ const s=part(new S(2,32,16,0,Math.PI*2,0,Math.PI/2),c,0,0,0); s.scale.y=.7; g.add(s); [-1,0,1].forEach(i=>g.add(part(new B(.5,1.1,.5),c,i*1.2,.55,2))); },
+    QUILL:(c,g)=>{ g.add(part(new B(3.2,1.6,2.4),c,0,.8,0)); const roof=part(new C(0,2,1.6,4),c,0,2.4,0); roof.rotation.y=Math.PI/4; roof.scale.set(1.1,1,.82); g.add(roof); [-1.2,-.4,.4,1.2].forEach(x=>g.add(part(new C(.14,.14,1.6,8),c,x,.8,1.35))); },
+    PIKADON:(c,g)=>{ g.add(part(new B(2.6,2.4,2.6),c,0,1.2,0)); const t=part(new THREE.TorusGeometry(.9,.1,8,32),c,0,1.3,1.35); g.add(t); },
+    ARCADE:(c,g)=>{ g.add(part(new B(1.6,3.2,1.2),c,0,1.6,0)); g.add(part(new B(1.3,.9,.1),0x00ff9c,0,2.3,.62)); g.add(part(new B(1.8,.4,1.4),c,0,.2,0)); const rg=part(new THREE.TorusGeometry(2.2,.05,6,64),c,0,.1,0); rg.rotation.x=Math.PI/2; g.add(rg); }
+  };
+  const groups={}, pickables=[], tags={};
+  HALLS.forEach((h,i)=>{
+    const g=new THREE.Group(); const c=new THREE.Color(h.col);
+    builders[h.id](c,g);
+    const k=HALLS.filter(x=>!x.center).indexOf(h);
+    if(h.center){ g.position.set(0,0,0); g.scale.setScalar(1.1); }
+    else { const a=k/7*Math.PI*2-Math.PI/2; g.position.set(Math.cos(a)*7.4,0,Math.sin(a)*7.4); g.rotation.y=-a+Math.PI/2; }
+    g.userData.id=h.id; g.traverse(o=>{ if(o.isMesh) o.userData.hall=h.id; });
+    sc.add(g); groups[h.id]=g; pickables.push(g);
+    const d=document.createElement('div'); d.className='tag'; d.style.setProperty('--c',h.col); d.textContent=h.id; stage.appendChild(d); tags[h.id]=d;
+  });
 
-<footer class="foot">SHADDAI <span class="dot">·</span> Ancient Wisdom in Future Tech <span class="dot">·</span> The Seven</footer>
+  const ray=new THREE.Raycaster(), mp=new THREE.Vector2(); let down=null;
+  r.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY]; ctl.autoRotate=false;});
+  r.domElement.addEventListener('pointerup',e=>{
+    if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return;
+    const b=r.domElement.getBoundingClientRect(); mp.set((e.clientX-b.left)/b.width*2-1,-((e.clientY-b.top)/b.height)*2+1);
+    ray.setFromCamera(mp,cam); const hit=ray.intersectObjects(pickables,true)[0];
+    if(hit){ let o=hit.object; while(o&&!o.userData.id) o=o.parent; if(o) window.show(o.userData.id); }
+  });
 
+  // focus: glow the chosen hall, ease the camera target toward it
+  let tgt=new THREE.Vector3(0,1.2,0);
+  window.__focus=(id)=>{ Object.keys(groups).forEach(k=>groups[k].traverse(o=>{ if(o.isMesh&&o.material.emissiveIntensity!==undefined) o.material.emissiveIntensity=(k===id?.55:.06); }));
+    Object.keys(tags).forEach(k=>tags[k].classList.toggle('sel',k===id));
+    const p=groups[id].position; tgt.set(p.x*.45,1.2,p.z*.45); };
+  if(window.sel) window.__focus(window.sel.id);
+
+  const resize=()=>{ const w=stage.clientWidth,h=stage.clientHeight; r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); };
+  new ResizeObserver(resize).observe(stage); resize();
+  let vis=true; new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(stage);
+  const v=new THREE.Vector3();
+  (function loop(){ requestAnimationFrame(loop); if(!vis) return;
+    ctl.target.lerp(tgt,.06); ctl.update(); r.render(sc,cam);
+    const w=stage.clientWidth,h=stage.clientHeight;
+    for(const k in groups){ v.copy(groups[k].position); v.y=4.3; v.project(cam); const t=tags[k]; t.style.left=((v.x+1)/2*w)+'px'; t.style.top=((1-v.y)/2*h)+'px'; t.style.opacity=v.z<1?1:0; }
+  })();
+}catch(e){
+  const s=document.getElementById('stage'); s.style.display='none'; document.querySelector('.main').style.gridTemplateColumns='1fr';
+}
+</script>
+<script>window.show=show;</script>
 </body>
 </html>
