@@ -787,7 +787,7 @@
               if (!r.ok) { var was = lockEl.textContent; lockEl.textContent = r.msg; lockEl.style.color = '#ff7a8a'; setTimeout(function () { lockEl.textContent = was; lockEl.style.color = '#e8c45c'; }, 2200); return; }
               lockEl.remove(); lockEl = null; cb.style.opacity = '';
             }
-            _chosenChar = c.code;
+            _chosenChar = c.code; try { if (window.__pcPreload) window.__pcPreload(c.code); } catch (e) { }   // start downloading the body now, while you pick a portal
             chRow.querySelectorAll('.sp-char').forEach(function (x) {
               var on = x.getAttribute('data-code') === _chosenChar;
               x.classList.toggle('on', on);
