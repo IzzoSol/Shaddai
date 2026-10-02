@@ -475,5 +475,14 @@ test('elements (2026-09-28): ring colours map onto the 7 ref-sheet elements; eve
   return els.join(' ');
 });
 
+test('NO-FLY: dragons posted on the transit ring never enter the city keep-out (cityR + 250 m), even when the player lures one in from its post at night', () => {
+  const lim = DR.TUNE.cityR + DR.TUNE.noFlyBuffer, L = { stations: [0, 1, 2, 3, 4, 5].map(k => ({ id: 'st' + k, pos: [Math.sin(k * 1.047) * 2829 * U, -Math.cos(k * 1.047) * 2829 * U], dragon: ['red', 'blue', 'green'][k % 3] })) };
+  const P = mkPlayer(0, -1700 * U, hills); const core = DR.createDragonsCore({ heightAt: hills, layout: L, getPlayer: () => P, seed: 21, nightFactor: () => 1 });
+  let minR = Infinity, steps = 0, attacks = 0, t = 0;
+  for (let i = 0; i < 600 * 60; i++) { t += 1 / 60; const a = 0, r = 2250 + 560 * Math.cos(t * 0.04); P.set(Math.sin(a) * r * U, -Math.cos(a) * r * U);   /* the player walks from a dragon's post (r 2810) in to r 1690 and back, so the dragon chases right up to the keep-out */ core.update(1 / 60); for (const d of core.dragons) { const rr = Math.hypot(d.f.x, d.f.z) / U; minR = Math.min(minR, rr); steps++; if (d.state === 'attack') attacks++; } }
+  assert(minR >= lim - 130, 'a dragon came as close as ' + minR.toFixed(0) + ' m (limit ' + lim + ' m)');
+  return 'closest approach ' + minR.toFixed(0) + ' m of the city centre over ' + steps + ' dragon-steps, ' + attacks + ' attack steps';
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
