@@ -444,11 +444,11 @@
       if (tune) for (k in tune) T[k] = tune[k];
       var A = { spin: 0, flip: 0, varial: 0, grab: 0, roll: 0 }, mode = 'hoverskate';             // current visual angles (rad) + grab weight
       var S = { air: false, airT: 0, spinDir: 0, flipDir: 0, varDir: 0, rollDir: 0, spinMax: 0, flipMax: 0, varMax: 0, rollMax: 0,
-                grabT: 0, grabbed: false, lastClean: true, combo: 0, total: 0, streak: 0 };
+                grabT: 0, grabbed: false, grabKind: null, lastClean: true, combo: 0, total: 0, streak: 0 };
       var listeners = [];
       function reset() {
         A.spin = A.flip = A.varial = A.grab = A.roll = 0;
-        S.air = false; S.airT = 0; S.spinDir = S.flipDir = S.varDir = S.rollDir = 0; S.spinMax = S.flipMax = S.varMax = S.rollMax = 0; S.grabT = 0; S.grabbed = false;
+        S.air = false; S.airT = 0; S.spinDir = S.flipDir = S.varDir = S.rollDir = 0; S.spinMax = S.flipMax = S.varMax = S.rollMax = 0; S.grabT = 0; S.grabbed = false; S.grabKind = null;
       }
       function step(dt, inp, airborne) {
         if (airborne && !S.air) { reset(); S.air = true; }
@@ -478,6 +478,7 @@
         else A.varial = settle(A.varial, S.varDir, T.varialRate, PI, dt);
         // GRAB: blend in while held; time counts once it's really held
         A.grab = Math.max(0, Math.min(1, A.grab + (inp.grab ? 1 : -1) * T.grabRate * dt));
+        if (inp.grab && !S.grabKind && A.grab > 0.3) S.grabKind = inp.grabKind || 'indy';   /* the style is chosen when the hand reaches the board */
         if (A.grab > 0.8) { S.grabT += dt; S.grabbed = true; }
         S.spinMax = Math.max(S.spinMax, Math.abs(A.spin));
         S.flipMax = Math.max(S.flipMax, Math.abs(A.flip));
@@ -495,7 +496,7 @@
         if (spinDeg >= 180) tricks.push({ kind: 'spin', deg: spinDeg, name: 'Spin ' + spinDeg, base: T.score.spin * (spinDeg / 180) * (spinDeg >= 720 ? 1.5 : 1) });
         if (flips >= 1) tricks.push({ kind: 'flip', deg: flips * 360, name: (flips > 1 ? (flips === 2 ? 'Double ' : flips + 'x ') : '') + (S.flipDir > 0 ? 'Front Flip' : 'Back Flip'), base: T.score.flip * flips * (flips > 1 ? 1.25 : 1) });
         if (varDeg >= 180) tricks.push({ kind: 'varial', deg: varDeg, name: 'Varial ' + varDeg, base: T.score.varial * (varDeg / 180) });
-        if (S.grabbed && S.grabT > 0.15) tricks.push({ kind: 'grab', deg: 0, name: S.grabT > 1 ? 'Long Grab' : 'Grab', base: T.score.grab + T.score.grabPerS * S.grabT });
+        if (S.grabbed && S.grabT > 0.15) { var gv = root.HoverboardMoves && S.grabKind && root.HoverboardMoves.GRABS[S.grabKind]; tricks.push({ kind: 'grab', deg: 0, name: gv && S.grabKind !== 'indy' ? gv.name + (S.grabT > 1 ? ' (long)' : '') : (S.grabT > 1 ? 'Long Grab' : (gv ? gv.name : 'Grab')), base: T.score.grab + (gv ? gv.bonus : 0) + T.score.grabPerS * S.grabT }); }
         var clean = resid(A.spin, PI) <= T.spinTol * D2R && resid(A.flip, TAU) <= T.flipTol * D2R &&
                     resid(A.varial, PI) <= T.varialTol * D2R && resid(A.roll, TAU) <= T.rollTol * D2R && Math.abs(tiltRad || 0) <= T.tiltTol * D2R && A.grab < 0.95;
         if (S.airT < T.minAir && !tricks.length) { A.flip = 0; A.roll = 0; A.spin = Math.round(A.spin / PI) * PI; A.varial = Math.round(A.varial / PI) * PI; return true; }
@@ -531,6 +532,7 @@
       return {
         tune: T, angles: A, state: S, reset: reset, step: step, land: land,
         setMode: function (m) { mode = m === 'battle' ? 'battle' : 'hoverskate'; }, getMode: function () { return mode; }, BATTLE_MOVES: BATTLE_MOVES,
+        inject: function (evt) { S.total += evt.score || 0; if (evt.clean) S.streak++; evt.total = S.total; emit(evt); },
         onTrick: function (fn) { listeners.push(fn); return function () { var i = listeners.indexOf(fn); if (i >= 0) listeners.splice(i, 1); }; },
       };
     },

@@ -339,6 +339,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realmprops.js?v=20260925m4"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
 <script src="/world-actions.js?v=20260926v2"></script>
+<script src="/world-hoverboard-moves.js?v=20261002a"></script>
 <script src="/world-hoverboards.js?v=20260928a"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
 <script src="/world-hoverboard.js?v=20260928a"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
 <script src="/world-riders.js?v=20260928a"></script>       <!-- RIDERS: generic mount(rider, vehicle, {seat}) for bike / dragon / ships -->
@@ -5129,6 +5130,7 @@ window.__travel = {
     const mk = cm.markers.filter(function(m){ return m.name === 'PLAZA_SKATE'; })[0]; if(!mk || !mk.pos){ console.warn('[race] PLAZA_SKATE marker missing'); return; }
     try {
       const park = window.__hoverPark = window.WorldHoverPark.build({ THREE, scene, anchor: { x: mk.pos.x, z: mk.pos.z }, heightAt: T.heightAt, yaw: Math.atan2(-mk.pos.x, -mk.pos.z), U: V4_U });
+      try{ if(hover && hover.moves && park.railsWorld) hover.moves.setRails(park.railsWorld()); }catch(_){}   // magnet rails + the plaza ledge are grindable
       if(T.setHeightExtra) T.setHeightExtra(park.heightAt);   // banks / kicker / bowl / deck + apron are now real ground for the player, boards, NPCs
       const run = window.__raceRun = window.WorldRaceRun.create({ THREE, scene, park, hover, sparks: window.ShdSparks, U: V4_U, heightAt: T.heightAt,
         aiMesh: function(a){ if(!window.__raceKart || !window.WorldHoverCars) return null; const T2 = window.WorldHoverCars.TYPES, i = (a.id.charCodeAt(2) || 0), g = window.WorldHoverCars.buildGroup(THREE, T2[(i * 7) % T2.length].id, [0xffffff,0x6fd0ff,0xff7aa8,0xffd36a,0x9affc2,0xc7a6ff,0xff9a5a][i % 7]); g.scale.setScalar(V4_U); return g; },
@@ -5279,7 +5281,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
     } else if (hover && hover.isRiding()) {
       hover.step(dt, { fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
         left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
-        boost: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'], rollL: !!keys['KeyZ'], rollR: !!keys['KeyC'] }, _camYaw);   // Z/C = barrel roll (in air)
+        boost: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'], rollL: !!keys['KeyZ'], rollR: !!keys['KeyC'], manual: !!(keys['KeyG'] && !(keys['ShiftLeft'] || keys['ShiftRight'])), manualNose: !!(keys['KeyG'] && (keys['ShiftLeft'] || keys['ShiftRight'])), grabKind: keys['KeyQ'] ? 'melon' : keys['KeyE'] ? 'nose' : keys['KeyR'] ? 'tail' : keys['KeyF'] ? 'stale' : 'indy' }, _camYaw);   // Z/C = barrel roll (in air)
       const _hv = hover.velocity(); _vel.x = _hv.x; _vel.z = _hv.z;
     } else if (_pctlOn) {
       { const _cp = _pctl.getPos();
