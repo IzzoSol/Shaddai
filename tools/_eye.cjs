@@ -76,6 +76,15 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
       }
     }
     console.log('POS', JSON.stringify(await p.evaluate(() => { const q = window.__w3dDebug.playerPos; return [q.x | 0, q.y | 0, q.z | 0]; })));
+  } else if (mode === 'ride') {   // node tools/_eye.cjs ride kart-sedan kart-pod car-van board : third-person side + 3/4 shots of the rider ON each ride ('board' = the hoverboard)
+    const U = 7 / 1.8; for (const id of process.argv.slice(3)) {
+      await p.evaluate((id, U) => { const D = window.__w3dDebug, x = D.playerPos.x, z = D.playerPos.z; if (window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if (id === 'board') window.__rideBoard('obsidian'); else window.__mountRide.rentRace(id, x, z, 0); }, id, U);
+      await sleep(4000);
+      for (const [nm, ox, oz, oy] of [['side', 5.5, 0, 1.4], ['q34', 4, -4.5, 2.2]]) {
+        await p.evaluate((ox, oz, oy, U) => { const D = window.__w3dDebug, L = window.__camLock, P = D.playerPos, H = D.terrainV4 || D.terrain, gy = H.heightAt(P.x, P.z); L.on = true; L.px = P.x + ox * U; L.py = gy + oy * U + 1.5 * U; L.pz = P.z + oz * U; L.tx = P.x; L.ty = P.y + 0.3 * U; L.tz = P.z; }, ox, oz, oy, U);
+        await sleep(2500); await p.screenshot({ path: OUT + '/ride-' + id + '-' + nm + '.png' }); console.log('shot', id, nm);
+      }
+    }
   } else if (mode === 'at') {
     const [name, x, z, dist = 40, h = 8, yaw = 0] = process.argv.slice(3); const U = 7 / 1.8, a = (+yaw) * Math.PI / 180;
     await shot(name, +x * U + Math.sin(a) * +dist * U, +z * U + Math.cos(a) * +dist * U, +x * U, 0, +z * U, +h * U, 4 * U);

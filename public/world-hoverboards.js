@@ -8,7 +8,7 @@
  * Three pieces, all classic-script globals (no imports, no build step):
  *
  *   window.HoverboardKit
- *     .STYLES                          → [{id, name, palette}] ×9 (ids below)
+ *     .STYLES                          → [{id, name, palette}] ×10 (ids below)
  *     .build(THREE, id, palette?)      → THREE.Group in METRES (+Z = nose, deck top at userData.deckTopM)
  *         userData: { style, deckTopM, lengthM, tris, nozzles:[Object3D], flames:[Mesh], glowMats:[Mat],
  *                     underglow: Mesh, stand: Object3D (rider socket on the deck), setPalette(p), setThrust(k), dispose() }
@@ -32,6 +32,7 @@
 
   // ── STYLES (palettes: deck, trim, accent, glow, metal) ─────────────────────────────────
   var STYLES = [
+    { id: 'obsidian', name: 'Obsidian Gold', palette: { deck: 0x0d0f12, trim: 0xf2c21a, accent: 0xf2c21a, glow: 0x19e8c0, metal: 0x1a1d22 } },
     { id: 'sunburst', name: 'Sunburst Graffiti', palette: { deck: 0x19c8c8, trim: 0xffe23a, accent: 0xff2fa0, glow: 0xfff05a, metal: 0x2a3440 } },
     { id: 'hauler',   name: 'Brass Hauler',      palette: { deck: 0x7a5a32, trim: 0xb9c2cc, accent: 0x3a2a1a, glow: 0x3fffe0, metal: 0x4a5058 } },
     { id: 'redline',  name: 'Redline H-Frame',   palette: { deck: 0xf2f2f2, trim: 0xe0202a, accent: 0x1a1a1e, glow: 0x3aa0ff, metal: 0x9aa2ac } },
@@ -119,6 +120,19 @@
   // ── the 9 designs (metres; nose +Z; deck top ≈ 0.12 m) ──────────────────────────────────
   // Each registers nozzles with N(x, y, z, r, dir): dir 'back' = exhaust −Z, 'down' = hover pad −Y.
   var DESIGNS = {
+    // owner ref (veh-hoverboard-v2): long matte-black deck, teal glowing edge, gold corner wedges, two gold hex emblems, centre dot grid
+    obsidian: function (B, M, N) {
+      var OUT = [0, 0.97, 0.12, 0.95, 0.2, 0.84, 0.225, 0.62, 0.225, -0.62, 0.2, -0.84, 0.12, -0.95, 0, -0.97];
+      B.slab(OUT.map(function (v, i) { return i % 2 ? v * 1.0 : v * 1.05; }), 0.04, 0.1, M.glow, true);       // teal rim glow (a hair wider, just under the deck)
+      B.slab(OUT, 0.07, 0.12, M.deck, true);
+      [1, -1].forEach(function (zs) { B.slab([0.14, zs * 0.9, 0.205, zs * 0.8, 0.205, zs * 0.7, 0.14, zs * 0.76], 0.012, 0.132, M.trim, true); });   // gold corner wedges
+      [-1, 1].forEach(function (zs) { B.cyl(0.085, 0.085, 0.012, 6, 0, 0.126, zs * 0.5, M.trim); B.cyl(0.06, 0.06, 0.014, 6, 0, 0.127, zs * 0.5, M.deck); B.cyl(0.028, 0.028, 0.016, 3, 0, 0.128, zs * 0.5, M.trim); });   // hex emblems
+      [-1, 1].forEach(function (zs) { B.box(0.012, 0.012, 0.22, 0, 0.128, zs * 0.27, M.trim); });             // centre rules
+      for (var i = 0; i < 3; i++) for (var j = 0; j < 2; j++) B.box(0.014, 0.012, 0.014, (j - 0.5) * 0.06, 0.128, (i - 1) * 0.05, M.trim);   // dot grid
+      B.box(0.2, 0.02, 0.05, 0, 0.1, 0.97, M.glow);                                                      // nose light
+      [-1, 1].forEach(function (s) { N(s * 0.1, 0.03, -0.9, 0.06, 'back'); });
+      [[-1, 0.55], [1, 0.55], [-1, -0.55], [1, -0.55]].forEach(function (p) { N(p[0] * 0.12, 0.03, p[1], 0.07, 'down'); });
+    },
     // teal/yellow/magenta graffiti arrow, twin side pods with spike nose cones, rear ring intakes
     sunburst: function (B, M, N) {
       B.slab([0, 0.92, 0.14, 0.78, 0.26, 0.35, 0.28, -0.35, 0.2, -0.72, 0.08, -0.82, 0, -0.78], 0.07, 0.12, M.deck, true);
