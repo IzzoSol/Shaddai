@@ -1571,6 +1571,22 @@ app.get('/api/signals/calls', async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
+// GET /api/navi/signals — the Navi SIGNALS module. Tier is decided HERE from a VERIFIED Firebase identity (req.userEmail is only set on the verified path);
+// an X-User-ID header or ?userId= is never enough to unlock the paid feed. Free = delayed 3-call preview, paid = live feed. See lib/navi-signals.js.
+app.get('/api/navi/signals', async (req, res) => {
+  try {
+    const { buildSignalsResponse } = require('./lib/navi-signals');
+    let tier = 'free';
+    if ((req.headers.authorization || '').startsWith('Bearer ')) {
+      await new Promise((resolve) => { require('./auth-guard').verifyFirebaseToken(req, { status: () => ({ json: () => resolve() }), json: () => resolve() }, resolve); });
+      if (req.userEmail && req.userId) { try { const info = await BillingService.getSubscriptionInfo(req.userId); tier = (info && (info.tier || (info.subscription && info.subscription.tier))) || 'free'; } catch (e) { tier = 'free'; } }
+    }
+    const pnl = require('./telegram-pnl'); const calls = pnl.callsJson({ limit: 100 });
+    res.set('Cache-Control', 'private, no-store');
+    res.json(buildSignalsResponse({ tier, calls, now: Date.now() }));
+  } catch (e) { res.status(500).json({ ok: false, error: 'signals unavailable' }); }
+});
+
 app.get('/api/signals/stats', (req, res) => {
   try {
     const pnl = require('./telegram-pnl');
