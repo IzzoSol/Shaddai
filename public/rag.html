@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <script src="/sw-heal.js"></script>
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.js","three/addons/":"/vendor/three/addons/"}}</script>
 <style>
 :root{
   --void:#06080b; --panel:#0b1016; --card:#0e141b; --edge:rgba(120,150,140,.18); --edge2:rgba(120,150,140,.32);
@@ -183,6 +184,13 @@ var $ = function(id){ return document.getElementById(id); };
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
 var safeUrl = function(u){ return /^https?:\/\//i.test(u||'') ? u : ''; };
 var nf = new Intl.NumberFormat();
+/* Transcripts come from auto-captions, which repeat themselves ("going to over on hosting going to over on hosting").
+   Collapse any run of 2-10 words that repeats back-to-back, so excerpts read like text. */
+function clean(t){
+  t = String(t==null?'':t).replace(/\s+/g,' ').trim();
+  for(var i=0;i<3;i++){ var n=t.replace(/((?:\S+\s+){2,10}?)\1+/gi,'$1'); if(n===t) break; t=n; }
+  return t;
+}
 
 /* Canonical agent metadata: role, colour, what it is for. Portraits are the
    correct-likeness set in /assets/agents. */
@@ -244,9 +252,9 @@ async function load3D(id){
   $('vnote').textContent = 'loading 3D…';
   try{
     if(!T){
-      var THREE = await import('/vendor/three/three.module.js');
-      var G = await import('/vendor/three/addons/loaders/GLTFLoader.js');
-      var O = await import('/vendor/three/addons/controls/OrbitControls.js');
+      var THREE = await import('three');
+      var G = await import('three/addons/loaders/GLTFLoader.js');
+      var O = await import('three/addons/controls/OrbitControls.js');
       var canvas = document.createElement('canvas'); $('view').insertBefore(canvas, $('view').querySelector('.mode'));
       var r = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true});
       r.setPixelRatio(Math.min(devicePixelRatio||1, 1.75));
@@ -289,7 +297,7 @@ function srcRow(s, i){
   var link = safeUrl(s.deepLink);
   return '<div class="src"><button type="button" aria-expanded="false"><span class="n">['+(i+1)+']</span><span class="t">'+esc(s.title||'source')+'</span>'+
     '<span class="s">'+(s.timeLabel?esc(s.timeLabel)+' · ':'')+(s.score||0).toFixed(2)+'</span></button>'+
-    '<div class="body">'+esc(s.snippet||'')+(s.snippet && s.snippet.length>=200?'…':'')+(link?' <a href="'+esc(link)+'" target="_blank" rel="noopener">open source →</a>':'')+'</div></div>';
+    '<div class="body">'+esc(clean(s.snippet))+(s.snippet && s.snippet.length>=200?'…':'')+(link?' <a href="'+esc(link)+'" target="_blank" rel="noopener">open source →</a>':'')+'</div></div>';
 }
 function wireToggles(root){
   [].forEach.call(root.querySelectorAll('.src > button, .item > button'), function(b){
@@ -308,10 +316,15 @@ async function ask(){
     } else { $('routeNote').textContent=''; }
     var d = await getJSON('/api/ask?agent='+encodeURIComponent(agent)+'&q='+encodeURIComponent(q));
     $('ansBy').textContent = (d.agent||agent) + (d.role?' · '+d.role:'');
-    if(d.answer){
-      $('ansTxt').textContent = d.answer;
+    if(d.answer && d.llm_powered){
+      $('ansTxt').textContent = clean(d.answer);
       $('ansSrcs').innerHTML = (d.sources||[]).map(srcRow).join(''); wireToggles($('ansSrcs'));
       $('ansMeta').textContent = (d.sources||[]).length+' sources · '+(d.ms||0)+' ms'+(d.llm_powered?' · written from those sources':' · excerpts only');
+    } else if(d.sources && d.sources.length){
+      $('ansTxt').textContent = 'No written answer is available right now. These are the closest passages the council has studied. Tap one to read it.';
+      $('ansSrcs').innerHTML = d.sources.map(srcRow).join(''); wireToggles($('ansSrcs'));
+      var first = $('ansSrcs').querySelector('.src'); if(first) first.classList.add('open');
+      $('ansMeta').textContent = d.sources.length+' passages · '+(d.ms||0)+' ms';
     } else { $('ansTxt').textContent = 'Nothing grounded came back. Try rephrasing the question.'; }
   }catch(e){
     $('ansBy').textContent = 'unavailable'; $('ansTxt').textContent = 'The brain could not be reached. Try again in a moment.';
@@ -341,7 +354,7 @@ async function showTopic(t){
     box.innerHTML = rs.length ? rs.map(function(h){
       var link = safeUrl(h.deepLink);
       return '<div class="item"><button type="button" aria-expanded="false"><span class="t">'+esc(h.title||'passage')+'</span><span class="s">'+(h.timeLabel?esc(h.timeLabel):'')+'</span></button>'+
-        '<div class="body">'+esc((h.text||'').slice(0,900))+(link?'<br><a href="'+esc(link)+'" target="_blank" rel="noopener">open source →</a>':'')+'</div></div>';
+        '<div class="body">'+esc(clean((h.text||'').slice(0,1400)).slice(0,700))+(link?'<br><a href="'+esc(link)+'" target="_blank" rel="noopener">open source →</a>':'')+'</div></div>';
     }).join('') : '<div class="empty">No passages found for “'+esc(t)+'”.</div>';
     wireToggles(box);
   }catch(e){ box.innerHTML = '<div class="empty">Could not load passages.</div>'; }
