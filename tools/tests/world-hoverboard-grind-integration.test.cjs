@@ -30,4 +30,14 @@ t('grab styles: Melon / Nose / Tail / Stalefish are named and scored higher than
   const indy = grab('indy'), stale = grab('stale'), melon = grab('melon'); assert(indy && /Grab/.test(indy.name), JSON.stringify(indy)); assert(stale && /Stalefish/.test(stale.name), JSON.stringify(stale)); assert(melon && /Melon/.test(melon.name)); assert(stale.score >= indy.score, 'stalefish ' + stale.score + ' vs indy ' + indy.score);
 });
 t('a rail in the way never breaks plain riding when the moves are disabled', () => { const w = mk(); w.h.moves.setRails([]); w.run(5, IN({ fwd: true })); assert(w.h.speedMS() > 5 && !w.h.moves.state().grinding); });
+t('idle hover: parked or sitting still the board floats with a visible sway; a ground glow pool sits under it and fades with height', () => {
+  const w = mk(); const ys = [], ps = []; for (let i = 0; i < 360; i++) { w.h.update(1 / 60, IN(), w.h.heading()); w.h.pose(1 / 60, {}); ys.push(w.h.state().y); ps.push(w.h.board.rotation.x); }
+  assert(Math.max(...ys) - Math.min(...ys) > 0.02 * U, 'bobs while idle'); assert(Math.max(...ps) - Math.min(...ps) > 0.01, 'sways while idle');
+  const pool = w.scene.children.find(o => o.geometry && o.geometry.type === 'CircleGeometry' && o.parent === w.scene); assert(pool && pool.visible && pool.material.opacity > 0.1, 'pool glows under a low board');
+  w.run(0.1, IN({ fwd: true, jump: true })); for (let i = 0; i < 20; i++) { w.h.update(1 / 60, IN({ fwd: true }), w.h.heading()); w.h.pose(1 / 60, {}); } const lowO = pool.material.opacity; w.h.state().y; assert(pool.material.opacity <= 0.56);
+});
+t('a clean trick flashes the board lights, then they fade back to the base colour', () => {
+  const w = mk(); w.run(2, IN({ fwd: true })); w.h.pose(1 / 60, {}); const base = w.h.board.getObjectByProperty('type', 'Mesh') && 0; w.h.tricks.inject && w.h.tricks.inject({ name: 'Test', kind: 'grab', score: 100, clean: true, combo: 2 });
+  const pool = w.scene.children.find(o => o.geometry && o.geometry.type === 'CircleGeometry'); w.h.pose(1 / 60, {}); const c1 = pool.material.color.getHex(); for (let i = 0; i < 180; i++) w.h.pose(1 / 60, {}); const c2 = pool.material.color.getHex(); assert.notStrictEqual(c1, c2, 'colour faded back: ' + c1.toString(16) + ' -> ' + c2.toString(16));
+});
 console.log(pass + ' passed');

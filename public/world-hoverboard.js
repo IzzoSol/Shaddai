@@ -191,6 +191,14 @@ window.buildWorldHoverboard = function (opts) {
   thrust.renderOrder = 2;
   thrust.visible = !useKit;                  // kit boards carry their own underglow + flames
   inner.add(thrust);
+  // ground pool: an additive disc on the surface under the board. Tight + bright when low/slow, wide + faint when high.
+  var poolMat = track(new THREE.MeshBasicMaterial({ color: TUNE.trailColor, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+  var pool = new THREE.Mesh(track(new THREE.CircleGeometry(0.5 * U, 32)), poolMat);
+  pool.rotation.x = -Math.PI / 2; pool.renderOrder = 1; pool.visible = false; scene.add(pool);
+  var flash = 0, flashC = new THREE.Color(0xffffff), baseC = new THREE.Color(TUNE.trailColor), tmpC = new THREE.Color();
+  var FLASH_COL = { grab: 0xffd24a, flip: 0x7ad7ff, spin: 0xff6bd6, grind: 0xff9a3c, manual: 0x9dff7a };
+  var flashKind = '';
+  if (TR) TR.onTrick(function (e) { if (e && e.clean !== false) { flash = Math.min(1, 0.6 + 0.1 * (e.combo || 0)); flashKind = e.kind || ''; } });
   var glowLight = null;
   if (TUNE.light) { glowLight = new THREE.PointLight(TUNE.trailColor, 1.6, 3 * U); glowLight.position.y = -0.1 * U; board.add(glowLight); }
 
@@ -402,7 +410,7 @@ window.buildWorldHoverboard = function (opts) {
     if (board.visible) {
       if (!s.riding) {                                   // parked: idle hover where you left it
         s.surface = surfaceAt(s.x, s.z);
-        s.y += (s.surface + B.hoverM * U * 0.6 + Math.sin(s.t * 1.6) * B.bobM * U - s.y) * k;
+        s.y += (s.surface + B.hoverM * U * 0.6 + Math.sin(s.t * 1.6) * B.bobM * 1.6 * U - s.y) * k;
       }
       var sx = Math.sin(s.psi), cz = Math.cos(s.psi), hl = 0.4 * B.lengthM * U, hw = 0.2 * U;
       var pT = 0, rT = 0;
@@ -412,6 +420,8 @@ window.buildWorldHoverboard = function (opts) {
         pT = -Math.atan2(hf - hb, 2 * hl) * 0.8;
         rT = Math.atan2(hL - hR, 2 * hw) * 0.25;
       } else pT = -Math.atan2(s.vy, Math.max(Math.abs(s.v) * U, 1)) * 0.3;   // nose follows the arc a little
+      var idle = s.riding ? Math.max(0, 1 - Math.abs(s.v) / 3) : 1;   // 1 when sitting still, 0 once rolling
+      if (!s.air) { pT += Math.sin(s.t * 1.3) * 0.022 * idle; rT += Math.sin(s.t * 1.7 + 1.1) * 0.03 * idle; }   // mag-lev sway while hovering in place
       pT += (s.manualK || 0) * 0.22;   /* manual: nose up (nose manual: tail up) */
       var rmax = B.rollMaxDeg * Math.PI / 180;
       var carve = s.riding ? Math.max(-rmax, Math.min(rmax, -Math.atan(s.v * s.yawRate / 9.81))) : 0;
@@ -432,8 +442,23 @@ window.buildWorldHoverboard = function (opts) {
       var sp = Math.min(1, Math.abs(s.v) / B.boostMS);
       thrustMat.opacity = (s.riding ? 0.35 + 0.45 * sp : 0.22) + (s.air ? 0.15 : 0) + Math.sin(s.t * 9) * 0.04;
       if (glowLight) glowLight.intensity = 0.8 + 1.4 * sp;
+      // LIGHTS: base colour drifts toward white-hot at boost speed; tricks flash their own colour and fade
+      flash = Math.max(0, flash - dt * 2.2);
+      var hot = s.riding ? Math.max(0, Math.min(1, (s.v - B.topMS) / Math.max(1, B.boostMS - B.topMS))) : 0;
+      tmpC.copy(baseC).lerp(flashC.set(0xbff8ff), hot * 0.7).lerp(flashC.set(FLASH_COL[flashKind] || 0xffffff), Math.min(1, flash));
+      thrustMat.color.copy(tmpC); poolMat.color.copy(tmpC);
+      thrustMat.opacity += flash * 0.35;
+      // ground pool follows the surface under the board; fades with height, breathes at idle
+      var hAbove = Math.max(0, s.y - surfaceAt(s.x, s.z)), hM = hAbove / U;
+      pool.visible = hM < 6;
+      if (pool.visible) {
+        pool.position.set(s.x, surfaceAt(s.x, s.z) + 0.03 * U, s.z);
+        var idleK = s.riding ? 0 : 1, breathe = 0.5 + 0.5 * Math.sin(s.t * 2.4);
+        pool.scale.setScalar((0.9 + hM * 0.5 + 0.12 * breathe * (idleK || 0.4)) * (1 + flash * 0.5));
+        poolMat.opacity = Math.min(0.55, (0.38 + 0.12 * breathe + flash * 0.3) / (1 + hM * 1.4));
+      }
       updateTrail(sx, cz);
-    }
+    } else pool.visible = false;
     if (fx) fx.update(dt);
     // rider
     s.w = Math.max(0, Math.min(1, s.w + (s.riding ? dt : -dt) / B.mountTime));
