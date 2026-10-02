@@ -5139,9 +5139,10 @@ window.__travel = {
         try{ window.dispatchEvent(new CustomEvent('shaddai:race', { detail: e })); }catch(_){}
         if(e.type === 'finish' && e.id === 'you' && window.__mountRide) setTimeout(function(){ window.__mountRide.setRaceMode(false); }, 7000);
         const N = window.Navi; const say = function(m){ if(N && N.toast) N.toast(m); else if(window.__toast) window.__toast(m); };
-        if(e.type === 'go') say('GO!'); else if(e.type === 'crate') say('Item: ' + e.item + '  (R to use)'); else if(e.type === 'pad') say('TURBO');
+        if(e.type === 'go') say('GO!  X drift (hold in a turn, release = boost) · R item · T reset'); else if(e.type === 'crate') say('Item: ' + e.item + '  (R to use)'); else if(e.type === 'pad') say('TURBO');
         else if(e.type === 'hit' && e.id === 'you') say(e.blocked ? 'Ward blocked it' : ('Hit -' + e.dmg + ' HP ' + (e.why || ''))); else if(e.type === 'respawn' && e.id === 'you'){ playerPos.x = e.x; playerPos.z = e.z; try{ const hs = hover && hover.state && hover.state(); if(hs && e.yaw != null){ hs.x = e.x; hs.z = e.z; hs.psi = e.yaw; hs.v = 0; } if(e.yaw != null) _avatarYaw = e.yaw; }catch(_){} say(e.why === 'out of bounds' ? 'Out of bounds - back on the course (+' + (e.penaltyS||3) + 's)' : e.why === 'reset' ? 'Reset to the course (+' + (e.penaltyS||3) + 's)' : 'Respawn at the last checkpoint'); }
-        else if(e.type === 'warn'){ say(e.kind === 'wrongway' ? 'WRONG WAY - turn around' : e.kind === 'oob' ? 'OUT OF BOUNDS - return to the course (' + e.left + 's)' : 'Off the course'); }
+        else if(e.type === 'drift'){ say(['','BLUE','ORANGE','PURPLE'][e.level] + ' sparks - release for a boost'); } else if(e.type === 'driftboost'){ say('MINI-TURBO x' + e.mul); } else if(e.type === 'rocket'){ say('ROCKET START!'); } else if(e.type === 'slipstream'){ if(e.on) say('Slipstream - draft!'); } else if(e.type === 'lap'){ say('Lap ' + e.lap + ' done  ' + e.timeS + 's  (best ' + e.bestS + 's)'); } else if(e.type === 'seeker'){ say('Seeker Missile launched'); }
+        else if(e.type === 'warn'){ say(e.kind === 'incoming' ? 'INCOMING SEEKER - use your Ward!' : e.kind === 'earlystart' ? 'Too early - no rocket start' : e.kind === 'wrongway' ? 'WRONG WAY - turn around' : e.kind === 'oob' ? 'OUT OF BOUNDS - return to the course (' + e.left + 's)' : 'Off the course'); }
         else if(e.type === 'finish') say('FINISH  P' + e.place + '/' + e.of + '  ' + e.timeS + 's  +' + e.prize + ' Sparks');
       } });
       // Navi pins: the 7 rooms + the gate
