@@ -143,4 +143,4 @@ jobs.post('/:id/approve', posterOnly(async (req, res, db, j) => {
 jobs.post('/:id/reject', posterOnly(async (req, res, db, j) => { if (j.status !== 'delivered') return fail(res, 409, 'job is ' + j.status); j.status = 'accepted'; j.rejectNote = String((req.body && req.body.note) || '').slice(0, 300); saveJobs(db); res.json({ success: true, job: pub(j) }); }));
 jobs.post('/:id/cancel', posterOnly(async (req, res, db, j, uid) => { if (j.status !== 'open') return fail(res, 409, 'only open jobs can be cancelled'); const r = await credit(uid, j.budget, 'job-refund', j.id); if (!r.ok) return fail(res, 400, r.why); j.status = 'cancelled'; saveJobs(db); res.json({ success: true, refunded: j.budget }); }));
 
-module.exports = { xagent, jobs, _test: { findSecret, cleanWallet, FEE } };
+module.exports = { xagent, jobs, agentAuth, _test: { findSecret, cleanWallet, FEE } };

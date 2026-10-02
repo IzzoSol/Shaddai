@@ -2150,6 +2150,15 @@ app.use('/api/lesson-plan', require('./lesson-plan')); // grok-style lesson plan
 const _academyRoutes = require('./academy-routes'); // Agent Academy / Grok Training — pay agents to teach via MCP
 app.use('/api/academy', _academyRoutes);
 app.use('/x402/academy', _academyRoutes.paylabRouter); // merchant: sell the pay-lab lesson via x402
+// SHADDAI School: Academy skills, exams, homework, learning receipts. Human side = softAuth's verified uid; bot side = the existing shdx_ bearer (agentAuth).
+try {
+  const { createSchoolRouter } = require('./academy-school-routes');
+  const { getAcademy, uidFromReq } = require('./lib/academy/academy-instance');
+  const _ext_school = require('../server/externalAgents');
+  app.use('/api/school', softAuth, createSchoolRouter({
+    academy: getAcademy(), operatives: require('./lib/operatives'), uidOf: uidFromReq, agentAuth: _ext_school.agentAuth
+  }));
+} catch (e) { console.warn('[school] not mounted:', e && e.message); }
 // ZEROX live market data scan (GET /api/zerox/scan?symbol=<mint_or_symbol>). The
 // underlying module exports a bare helper function, so wire it as a real route
 // instead of an app.use mount (mounting the object crashed startup with
