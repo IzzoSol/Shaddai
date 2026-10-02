@@ -7434,17 +7434,115 @@ window.enter3DWorld=function(){
     <!-- A4: Billing sub-panel — standalone #billingView content relocated here at runtime by switchOfficeTab('billing') -->
     <div id="officeBilling" class="office-room" style="display:none"></div>
 
-    <!-- Library -->
+    <!-- Library (v101.3): one tabbed view — Brain search · My files · Notes -->
     <div id="officeLibrary" class="office-room" style="display:none">
+      <style id="lib2-css">
+        #officeLibrary .lib2-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+        #officeLibrary .lib2-head h2{font:700 18px 'Rajdhani',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0}
+        #officeLibrary .lib2-stats{display:flex;gap:18px;margin-left:auto;font:600 11px 'Share Tech Mono',monospace;color:var(--text-muted)}
+        #officeLibrary .lib2-stats b{display:block;font-size:16px;color:var(--text-primary,#e9efe9)}
+        #officeLibrary .lib2-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
+        #officeLibrary .lib2-tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--text-muted);padding:10px 16px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+        #officeLibrary .lib2-tab:hover{color:var(--accent)}
+        #officeLibrary .lib2-tab.on{color:#fff;border-bottom-color:var(--accent)}
+        #officeLibrary .lib2-pane{display:none} #officeLibrary .lib2-pane.on{display:block}
+        #officeLibrary .lib2-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+        #officeLibrary .lib2-hint{font-size:11px;color:var(--text-muted);margin:0 0 12px;line-height:1.5}
+        #officeLibrary .lib2-res{display:grid;gap:8px}
+        #officeLibrary .lib2-hit{border:1px solid var(--border);border-radius:8px;background:rgba(0,0,0,.28)}
+        #officeLibrary .lib2-hit>button{width:100%;display:flex;gap:10px;justify-content:space-between;text-align:left;background:none;border:0;color:inherit;padding:10px 12px;cursor:pointer;font:600 12px 'Rajdhani',sans-serif}
+        #officeLibrary .lib2-hit .sc{font:500 10px 'Share Tech Mono',monospace;color:var(--text-muted)}
+        #officeLibrary .lib2-hit .bd{display:none;padding:0 12px 12px;font-size:12px;line-height:1.65;color:var(--text-secondary,#9fb0b8)}
+        #officeLibrary .lib2-hit.open .bd{display:block}
+        #officeLibrary .lib2-empty{color:var(--text-muted);font-size:12px;padding:10px 0}
+      </style>
       <div class="card">
-        <div class="card-head"><span class="card-title">Library — Knowledge & Skills Repository</span></div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-          <button class="btn btn-accent" onclick="quickScanLibrary()">Quick Scan (Auto)</button>
-          <button class="btn btn-ghost" onclick="manualLibraryAdd()">Manual Add</button>
-          <button class="btn btn-ghost" onclick="exportLibrary()">Export Library</button>
+        <div class="lib2-head">
+          <h2>Library</h2>
+          <div class="lib2-stats">
+            <div><b id="libBannerDocs">—</b>documents</div>
+            <div><b id="libBannerNotes">—</b>notes</div>
+            <div><b id="ragChunkCount">…</b>council passages</div>
+          </div>
         </div>
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:12px">Library syncs with agent skills automatically. Use Quick Scan to detect new documents in configured paths.</div>
-        <div id="libGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px"></div>
+        <div class="lib2-tabs" role="tablist">
+          <button class="lib2-tab on" data-lib2="brain" onclick="libTab('brain')">Brain search</button>
+          <button class="lib2-tab" data-lib2="files" onclick="libTab('files')">My files</button>
+          <button class="lib2-tab" data-lib2="notes" onclick="libTab('notes')">Notes</button>
+        </div>
+
+        <!-- BRAIN SEARCH -->
+        <div class="lib2-pane on" id="lib2-brain">
+          <p class="lib2-hint">Search what the seven agents have studied. Tap a result to read the passage. For full answers with sources, <a href="/rag" target="_blank" style="color:var(--accent)">open the Brain</a>.</p>
+          <div class="lib2-row">
+            <input id="ragQuery" class="input" style="flex:1;min-width:200px;margin:0" placeholder="Search the council's knowledge…" onkeydown="if(event.key==='Enter')searchRAGBrain()">
+            <select id="ragAgentFilter" class="select" style="margin:0">
+              <option value="">All agents</option><option>SHADDAI</option><option>ORACLE</option><option>ZEROX</option><option>NEXUS</option><option>TURTLE</option><option>QUILL</option><option>PIKADON</option>
+            </select>
+            <button class="btn btn-accent" onclick="searchRAGBrain()">Search</button>
+          </div>
+          <div id="ragResults" class="lib2-res"></div>
+        </div>
+
+        <!-- MY FILES -->
+        <div class="lib2-pane" id="lib2-files">
+          <p class="lib2-hint">Your own documents. Drop files here, then embed them so you and your agents can ask questions about them.</p>
+          <div class="lib2-row">
+            <button class="btn btn-accent" onclick="document.getElementById('fileInput').click()">Upload files</button>
+            <button class="btn btn-ghost" onclick="quickScanLibrary()">Quick scan</button>
+            <button class="btn btn-ghost" onclick="manualLibraryAdd()">Add manually</button>
+            <button class="btn btn-ghost" onclick="analyzeAllFiles()">Analyze all</button>
+            <button class="btn btn-ghost" onclick="embedAllFiles()">Embed all</button>
+            <button class="btn btn-ghost" onclick="exportLibrary()">Export</button>
+            <button class="btn btn-ghost" onclick="showScanFolderUI()">Scan a folder</button>
+            <input type="file" id="fileInput" multiple accept=".txt,.md,.js,.html,.css,.json,.csv,.py,.pdf" style="display:none" onchange="handleFiles(this.files)">
+          </div>
+          <div id="scanFolderPanel" style="display:none;margin-bottom:12px;padding:12px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Folder scanning reads text files from a path on the machine running the server. It works on a local install, not on the hosted site.</div>
+            <div class="lib2-row" style="margin:0">
+              <input type="text" id="scanFolderPath" class="input" style="flex:1;margin:0" placeholder="Folder path on the server machine">
+              <button class="btn btn-accent" id="scanBtn" onclick="scanLocalFolder()">Scan</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('scanFolderPanel').style.display='none'">✕</button>
+            </div>
+            <div id="scanStatus" style="margin-top:8px;font-size:11px;color:var(--text-muted)"></div>
+          </div>
+          <div class="lib-drop" id="libDrop">Drag and drop files here, or use Upload</div>
+          <div id="libGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:12px"></div>
+          <div id="codePreview" style="display:none"></div>
+
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font:700 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#b06aff;margin-bottom:8px">Ask your files</div>
+            <div id="ragFileList" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;min-height:22px"><span class="lib2-empty">No embedded files yet. Upload files, then press Embed all.</span></div>
+            <div class="lib2-row" style="align-items:flex-end">
+              <textarea id="ragQuestion" class="input" rows="2" placeholder="Ask a question about your files…" style="flex:1;min-width:200px;resize:none;margin:0"></textarea>
+              <select id="ragFileSelect" class="select" style="margin:0"><option value="">All embedded files</option></select>
+              <button class="btn btn-accent" onclick="ragAsk()">Ask</button>
+            </div>
+            <div id="ragAnswer" style="display:none;margin-top:10px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:6px;padding:12px">
+              <div id="ragAnswerText" style="font-size:12px;line-height:1.7;white-space:pre-wrap"></div>
+              <div id="ragSources" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTES -->
+        <div class="lib2-pane" id="lib2-notes">
+          <div class="lib2-row">
+            <button class="btn btn-accent" onclick="createNote()">+ New note</button>
+            <button class="btn btn-ghost" onclick="aiSummarizeAllNotes()">Summarize all</button>
+            <button class="btn btn-ghost" onclick="aiExtractInsights()">Extract insights</button>
+            <button class="btn btn-ghost" onclick="exportAllNotes()">Export</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('csvInput').click()">Import CSV</button>
+            <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(this.files[0])">
+          </div>
+          <div class="lib2-row">
+            <input type="text" class="input" id="noteSearch" style="flex:1;margin:0" placeholder="Search notes…" oninput="handleNoteSearch(this.value)">
+            <button id="semanticSearchToggle" class="btn btn-ghost" onclick="toggleSemanticSearch()" title="Switch between keyword and meaning-based search">Keyword</button>
+            <select class="select" id="noteSortSelect" style="margin:0" onchange="sortNotes(this.value)"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="agent">By agent</option></select>
+          </div>
+          <div class="note-cats" id="noteCats"></div>
+          <div id="noteList"></div>
+        </div>
       </div>
     </div>
     
@@ -9530,129 +9628,8 @@ window.enter3DWorld=function(){
     </div>
   </div>
 
-  <!-- Library & Notes -->
-  <div id="library-notesView" class="view">
-    <div class="view-banner" style="border-color:rgba(176,106,255,0.22)">
-      <div class="view-banner-icon" style="background:linear-gradient(135deg,rgba(176,106,255,0.15),rgba(100,60,200,0.08))">📚</div>
-      <div class="view-banner-body">
-        <div class="view-banner-title" style="background:linear-gradient(90deg,#b06aff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Knowledge Base</div>
-        <div class="view-banner-sub">Library · notes · RAG search · ORACLE-powered semantic answers</div>
-      </div>
-      <div class="view-banner-stats">
-        <div class="view-banner-stat"><span id="libBannerDocs">—</span><small>documents</small></div>
-        <div class="view-banner-stat"><span id="libBannerNotes">—</span><small>notes</small></div>
-      </div>
-    </div>
-    <!-- ── RAG BRAIN SEARCH ── -->
-    <div style="margin-bottom:12px;border:1px solid rgba(124,58,237,0.35);border-radius:10px;padding:16px 18px;background:rgba(124,58,237,0.05)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-family:Orbitron,sans-serif;font-size:10px;font-weight:900;letter-spacing:1.5px;color:#a78bfa">🧠 RAG BRAIN — <span id="ragChunkCount">…</span> CHUNKS</div>
-        <select id="ragAgentFilter" style="background:#06080d;border:1px solid #2a3346;color:#a78bfa;border-radius:6px;padding:4px 8px;font-size:10px;font-family:inherit">
-          <option value="">All Agents</option>
-          <option value="SHADDAI">SHADDAI</option>
-          <option value="ORACLE">ORACLE</option>
-          <option value="ZEROX">ZEROX</option>
-          <option value="NEXUS">NEXUS</option>
-          <option value="TURTLE">TURTLE</option>
-          <option value="QUILL">QUILL</option>
-          <option value="PIKADON">PIKADON</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input id="ragQuery" placeholder="Search the council's mastery knowledge base…" style="flex:1;background:#06080d;border:1px solid #2a3346;color:#eaf3fb;border-radius:8px;padding:9px 12px;font-size:12px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')searchRAGBrain()">
-        <button onclick="searchRAGBrain()" style="background:#4c1d95;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px 16px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit">Search</button>
-      </div>
-      <div id="ragResults" style="font-size:11px;color:#5a6a7a;min-height:20px;line-height:1.65"></div>
-    </div>
-
-    <!-- Library Section -->
-    <details style="margin-bottom:12px;border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden">
-      <summary style="padding:14px;background:rgba(0,229,160,0.06);cursor:pointer;font-weight:700;color:var(--accent);display:flex;justify-content:space-between;align-items:center">
-        📚 Knowledge Library
-      </summary>
-      <div class="card" style="margin:0;border-radius:0;border-top:1px solid var(--border)">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-          <button class="btn btn-ghost" onclick="analyzeAllFiles()">Analyze All</button>
-          <button class="btn btn-secondary" onclick="showScanFolderUI()">Scan Folder</button>
-          <button class="btn btn-accent" onclick="document.getElementById('fileInput').click()">Upload Files</button>
-          <input type="file" id="fileInput" multiple accept=".txt,.md,.js,.html,.css,.json,.csv,.py,.pdf" style="display:none" onchange="handleFiles(this.files)">
-        </div>
-        <div id="scanFolderPanel" style="display:none;margin-bottom:12px;padding:12px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px">
-          <div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:8px">SCAN LOCAL FOLDER</div>
-          <div style="font-size:9px;color:var(--text-muted);margin-bottom:8px">Enter any folder path on your computer. The server will read all text files (txt, md, js, html, etc.) and add them to the library.</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input type="text" id="scanFolderPath" class="input" style="flex:1;margin:0;font-size:10px" placeholder="e.g. C:\Users\Brittany\OneDrive\Desktop\DREAMERS APP" value="C:\Users\Brittany\OneDrive\Desktop\DREAMERS APP">
-            <button class="btn btn-accent" id="scanBtn" onclick="scanLocalFolder()" style="white-space:nowrap">Scan</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('scanFolderPanel').style.display='none'" style="padding:8px 10px">✕</button>
-          </div>
-          <div id="scanStatus" style="margin-top:8px;font-size:10px;color:var(--text-muted)"></div>
-        </div>
-        <div class="lib-drop" id="libDrop">Drag and drop files here or click Upload</div>
-        <div class="lib-grid" id="libGrid__dup2"></div>
-        <div id="codePreview" style="display:none"></div>
-
-        <!-- ── RAG: Ask Your Files ── -->
-        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-            <div>
-              <span style="font-size:11px;font-weight:700;color:#b06aff">🧠 Ask Your Files (RAG)</span>
-              <span style="font-size:8px;color:var(--text-muted);margin-left:8px">Semantic search across embedded documents · requires <code style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:2px">ollama pull nomic-embed-text</code></span>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px" onclick="renderRagFileList()">↺ Refresh</button>
-              <button class="btn btn-ghost" style="font-size:8px;padding:3px 8px;border-color:#b06aff;color:#b06aff" onclick="embedAllFiles()">⚡ Embed All Files</button>
-            </div>
-          </div>
-          <!-- Embedded files list -->
-          <div id="ragFileList" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;min-height:24px">
-            <span style="font-size:9px;color:var(--text-muted)">No embedded files yet — upload files above then click Embed</span>
-          </div>
-          <!-- Ask panel -->
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-            <textarea id="ragQuestion" class="input" rows="2" placeholder="Ask a question about your files… e.g. 'What are the main features?' or 'Summarize the key points'" style="flex:1;min-width:200px;font-size:10px;resize:none"></textarea>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <select id="ragFileSelect" class="select" style="font-size:9px;padding:4px 8px">
-                <option value="">All embedded files</option>
-              </select>
-              <button class="btn btn-accent" style="font-size:9px;padding:6px 14px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;color:#fff;font-weight:700;white-space:nowrap" onclick="ragAsk()">Ask Files</button>
-            </div>
-          </div>
-          <div id="ragAnswer" style="display:none;margin-top:10px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:6px;padding:12px">
-            <div id="ragAnswerText" style="font-size:11px;line-height:1.7;color:var(--text-primary);white-space:pre-wrap"></div>
-            <div id="ragSources" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
-          </div>
-        </div>
-      </div>
-    </details>
-
-    <!-- Notes Section -->
-    <details style="margin-bottom:12px;border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden" open>
-      <summary style="padding:14px;background:rgba(0,229,160,0.06);cursor:pointer;font-weight:700;color:var(--accent);display:flex;justify-content:space-between;align-items:center">
-        📝 Notes and Knowledge Base
-      </summary>
-      <div class="card" style="margin:0;border-radius:0;border-top:1px solid var(--border)">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
-          <button class="btn btn-accent" style="font-size:11px;padding:8px 18px;font-weight:700" onclick="createNote()">+ New Note</button>
-          <button class="btn btn-ghost" style="font-size:10px;padding:7px 14px;border:1px solid var(--border)" onclick="aiSummarizeAllNotes()">&#129302; Summarize All</button>
-          <button class="btn btn-ghost" style="font-size:10px;padding:7px 14px;border:1px solid var(--border)" onclick="aiExtractInsights()">&#128161; Extract Insights</button>
-          <button class="btn btn-ghost" style="font-size:10px;padding:7px 14px;border:1px solid var(--border)" onclick="exportAllNotes()">&#128190; Export</button>
-          <button class="btn btn-ghost" style="font-size:10px;padding:7px 14px;border:1px solid var(--border)" onclick="document.getElementById('csvInput').click()">&#128194; Import CSV</button>
-          <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(this.files[0])">
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
-          <input type="text" class="input" id="noteSearch" style="flex:1;margin:0;font-size:10px;padding:6px 10px" placeholder="Search notes..." oninput="handleNoteSearch(this.value)">
-          <button id="semanticSearchToggle" class="btn btn-ghost" style="font-size:8px;padding:4px 8px;white-space:nowrap" onclick="toggleSemanticSearch()" title="Toggle semantic (AI) search">🔍 Keyword</button>
-          <select class="select" id="noteSortSelect" style="font-size:10px" onchange="sortNotes(this.value)">
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="agent">By Agent</option>
-          </select>
-        </div>
-        <div class="note-cats" id="noteCats"></div>
-        <div id="noteList"></div>
-      </div>
-    </details>
-  </div>
+  <!-- Library & Notes: content now lives in Office > Library (#officeLibrary). Empty shell kept so showView routing still works. -->
+  <div id="library-notesView" class="view"></div>
 
   <!-- Projects -->
   <div id="projectsView" class="view">
@@ -21134,7 +21111,7 @@ function renderLibrary() {
     var bn = document.getElementById('libBannerNotes'); if(bn) bn.textContent = S.notes ? S.notes.length : '0';
   } catch(e) {}
   if (S.files.length === 0) {
-    el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:50px;grid-column:1/-1">Drag and drop files here or click Upload Files</p>';
+    el.innerHTML = '';
     return;
   }
   el.innerHTML = S.files.map((f, i) => `
@@ -21210,7 +21187,7 @@ function renderNotes() {
           `}
         </div>`;
       }).join('')
-    : '<p style="color:var(--text-muted);text-align:center;padding:40px;font-size:12px">No notes in this category. Click "Add Note" to create one.</p>';
+    : '<p style="color:var(--text-muted);text-align:center;padding:40px;font-size:12px">No notes in this category. Press "+ New note" to create one.</p>';
 }
 
 function renderProjects() {
@@ -25780,25 +25757,41 @@ async function loadRagBrainStats() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadRagBrainStats); else loadRagBrainStats();
 
+function libTab(name) {
+  ['brain', 'files', 'notes'].forEach(function (t) {
+    var p = document.getElementById('lib2-' + t); if (p) p.classList.toggle('on', t === name);
+  });
+  [].forEach.call(document.querySelectorAll('#officeLibrary .lib2-tab'), function (b) { b.classList.toggle('on', b.getAttribute('data-lib2') === name); });
+  try { if (name === 'files') { renderLibrary(); if (typeof renderRagFileList === 'function') renderRagFileList(); } if (name === 'notes') renderNotes(); } catch (e) {}
+}
+function _libClean(t) {
+  t = String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
+  for (var i = 0; i < 3; i++) { var n = t.replace(/((?:\S+\s+){2,10}?)\1+/gi, '$1'); if (n === t) break; t = n; }
+  return t;
+}
 async function searchRAGBrain() {
   const q = (document.getElementById('ragQuery')||{}).value||'';
   const agent = (document.getElementById('ragAgentFilter')||{}).value||'';
   const out = document.getElementById('ragResults');
-  if (!q.trim()) { if(out) out.textContent='Enter a search query.'; return; }
-  if (out) out.innerHTML='<span style="color:#a78bfa">⟳ Searching RAG brain…</span>';
+  if (!q.trim()) { if(out) out.innerHTML='<div class="lib2-empty">Type something to search.</div>'; return; }
+  if (out) out.innerHTML='<div class="lib2-empty">Searching…</div>';
   try {
     const r = await fetch('/api/mastery/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,agent:agent||undefined})});
     const d = await r.json();
-    if (!d.ok||!d.results||!d.results.length) { if(out) out.textContent='No matches found for "'+q+'". Try different keywords.'; return; }
-    if (out) out.innerHTML = d.results.map(function(r,i){
-      return '<div style="border:1px solid rgba(124,58,237,0.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:rgba(0,0,0,0.3)">'
-        +'<div style="display:flex;justify-content:space-between;margin-bottom:5px">'
-          +'<span style="font-family:Orbitron,sans-serif;font-size:8px;color:#a78bfa;letter-spacing:1px">'+r.source+'</span>'
-          +'<span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:#3a4a5a">score: '+parseFloat(r.score||0).toFixed(3)+'</span>'
-        +'</div>'
-        +'<div style="color:#c4b8d8;line-height:1.6;font-size:11px">'+r.chunk.slice(0,400).replace(/</g,'&lt;')+(r.chunk.length>400?'…':'')+'</div>'
-      +'</div>';
-    }).join('');
+    if (!d.ok||!d.results||!d.results.length) { if(out) out.innerHTML='<div class="lib2-empty">No matches. Try different keywords.</div>'; return; }
+    if (out) {
+      out.innerHTML = '';
+      d.results.slice(0, 12).forEach(function (r) {
+        var el = document.createElement('div'); el.className = 'lib2-hit';
+        var btn = document.createElement('button'); btn.type = 'button';
+        var t = document.createElement('span'); t.textContent = String(r.source || 'passage');
+        var sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = parseFloat(r.score || 0).toFixed(2);
+        btn.appendChild(t); btn.appendChild(sc);
+        var bd = document.createElement('div'); bd.className = 'bd'; bd.textContent = _libClean(r.chunk).slice(0, 900);
+        btn.addEventListener('click', function () { el.classList.toggle('open'); });
+        el.appendChild(btn); el.appendChild(bd); out.appendChild(el);
+      });
+    }
   } catch(e) {
     if(out) out.innerHTML='<span style="color:#ff6b6b">Search error: '+e.message+'</span>';
   }
