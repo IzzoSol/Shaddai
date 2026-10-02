@@ -20,11 +20,13 @@ Subscriptions (Pro/Max/Founder) · NFTs: founder passes, plots, cosmetics (utili
 
 ## How to work a pass (the loop)
 1. Re-read this file + the checklist. Pick the highest-impact, easiest-first item that serves fun/look/clutter/retention.
-2. Audit with data first (plan JSON, node probes), screenshot only when memory allows and the owner has OK'd it.
+2. Audit with data first (plan JSON, node probes), then run the visual gate in `docs/QA-PROCESS.md` (screenshots + baseline compare) whenever free RAM allows. Owner wants screenshots and review; never skip the gate on visual work.
 3. Build the pure rules + test, then wire into the host page, then run all tests.
 4. Commit explicit paths, push `feat/world3d`, `main` (plumbing helper), beta. 
 5. Append a short entry to `docs/JOURNEY-LOG.md` (what worked, what broke, the reusable trick).
 6. Report: built / wired / verified / not verified / next.
+
+Visual review is mandatory: see `docs/QA-PROCESS.md` (`node tools/_qa.cjs run|compare|bless`).
 
 ## Current build order (easiest to hardest)
 Clutter + districts (started) → interiors by building role, stairs, doors → wire taming/crafting/hazard gear UI → hover feel + park/track polish → Colosseum dynamic terrain + seating → castle realm (valley, purple lava, siege day) → fish/grass/house items, villages, friend bots → bots in real 3D (autopilot / full control) → mobile → Navi/PayBox/signals/X → controller, first person, VR.
