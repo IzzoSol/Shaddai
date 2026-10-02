@@ -9,23 +9,25 @@
  */
 (function (root) {
   'use strict';
-  var U0 = 7 / 1.8, QUALITY = { HIGH: 7000, MEDIUM: 4200, LOW: 2200, POTATO: 0 }, R_M = 34, CELL_M = 0.9, REBUILD_M = 6;
+  var U0 = 7 / 1.8, QUALITY = { HIGH: 9000, MEDIUM: 5600, LOW: 2800, POTATO: 0 }, R_M = 34, CELL_M = 0.7, REBUILD_M = 6;
   function hash2(x, z) { var h = (x * 374761393 + z * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; h = h ^ (h >>> 16); return (h >>> 0) / 4294967296; }
   function tuftFor(cx, cz) {   // deterministic per cell: does it grow here, where in the cell, how tall, which way, what tint
     var a = hash2(cx, cz), b = hash2(cz + 91, cx - 17), c = hash2(cx * 7 + 3, cz * 13 - 5), d = hash2(cx - 40, cz + 77);
-    return { keep: a < 0.62, dx: b, dz: c, rot: d * Math.PI * 2, scale: 0.7 + hash2(cx + 5, cz + 9) * 0.7, tint: hash2(cx + 31, cz - 3) };
+    return { keep: a < 0.62, dx: b, dz: c, rot: d * Math.PI * 2, scale: 0.75 + hash2(cx + 5, cz + 9) * 0.55, tint: hash2(cx + 31, cz - 3) };
   }
   function edgeScale(d, R) { var t = Math.max(0, Math.min(1, (R - d) / (R * 0.25))); return t * t * (3 - 2 * t); }
 
-  function tuftGeometry(THREE, U) {   // 3 tapered blades at 60 degrees; colour darkens to the root
-    var pos = [], col = [], uv = [], H = 0.9 * U, W = 0.07 * U;
-    for (var i = 0; i < 3; i++) {
-      var a = i * Math.PI / 3, cx = Math.cos(a), sz = Math.sin(a);
-      var v = [[-W * cx, 0, -W * sz, 0, 0], [W * cx, 0, W * sz, 1, 0], [0, H, 0, 0.5, 1]];
-      v.forEach(function (p) { pos.push(p[0], p[1], p[2]); uv.push(p[3], p[4]); var k = 0.35 + 0.65 * p[4]; col.push(k * 0.8, k, k * 0.7); });
+  var BLADE_H_M = 0.55, BLADES = 7;
+  function tuftGeometry(THREE, U) {   // 7 fine, leaning, differently tall blades per tuft; colour darkens to the root (cheap: 7 triangles)
+    var pos = [], col = [], uv = [], H = BLADE_H_M * U, W = 0.05 * U;
+    for (var i = 0; i < BLADES; i++) {
+      var a = hash2(i, 11) * Math.PI * 2, ox = (hash2(i, 3) - 0.5) * 0.34 * U, oz = (hash2(i, 5) - 0.5) * 0.34 * U, h = H * (0.55 + hash2(i, 7) * 0.45), lean = (hash2(i, 9) - 0.5) * 0.28 * U, la = hash2(i, 13) * Math.PI * 2;
+      var cx = Math.cos(a), sz = Math.sin(a), tx = ox + Math.cos(la) * lean, tz = oz + Math.sin(la) * lean;
+      var v = [[ox - W * cx, 0, oz - W * sz, 0, 0], [ox + W * cx, 0, oz + W * sz, 1, 0], [tx, h, tz, 0.5, h / H]];
+      v.forEach(function (p) { pos.push(p[0], p[1], p[2]); uv.push(p[3], p[4]); var k = 0.62 + 0.38 * p[4]; col.push(k * 0.9, k, k * 0.78); });
     }
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
-    var n = g.attributes.normal; for (var k = 0; k < n.count; k++) n.setXYZ(k, 0, 1, 0);   // lit from above like the ground, not per-blade
+    var n = g.attributes.normal; for (var k2 = 0; k2 < n.count; k2++) n.setXYZ(k2, 0, 1, 0);   // lit from above like the ground, not per-blade
     return g;
   }
 
@@ -48,23 +50,23 @@
     var THREE = o.THREE, U = o.U || U0, R = R_M * U, CELL = CELL_M * U, heightAt = o.heightAt, allow = o.allow || function () { return true; }, waterAt = o.waterAt || null;
     var qName = o.quality || 'MEDIUM', cap = QUALITY[qName] != null ? QUALITY[qName] : QUALITY.MEDIUM;
     var uniforms = { uTime: { value: 0 }, uPlayer: { value: new THREE.Vector3(1e9, 0, 1e9) }, uWind: { value: 1 }, uPush: { value: 1.6 * U } };
-    var mat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide });
+    var mat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, emissive: 0x2c5a26, emissiveIntensity: 1 });   // emissive floor: a meadow at night is dark GREEN, never black spikes
     mat.onBeforeCompile = function (sh) {
       sh.uniforms.uTime = uniforms.uTime; sh.uniforms.uPlayer = uniforms.uPlayer; sh.uniforms.uWind = uniforms.uWind; sh.uniforms.uPush = uniforms.uPush;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime; uniform vec3 uPlayer; uniform float uWind; uniform float uPush;')
         .replace('#include <project_vertex>',
           'vec4 mvPosition = instanceMatrix * vec4(transformed, 1.0);\n' +
-          '  vec3 gb = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz; float gh = clamp(position.y / ' + (0.9 * U).toFixed(3) + ', 0.0, 1.0); float gk = gh * gh;\n' +
+          '  vec3 gb = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz; float gh = clamp(position.y / ' + (BLADE_H_M * U).toFixed(3) + ', 0.0, 1.0); float gk = gh * gh;\n' +
           '  float gust = sin(uTime * 0.7 + gb.x * 0.045 + gb.z * 0.03) * 0.5 + 0.5;\n' +
           '  float sw = sin(uTime * 1.9 + gb.x * 0.31 + gb.z * 0.23) * 0.55 + sin(uTime * 3.1 + gb.z * 0.5) * 0.18;\n' +
-          '  mvPosition.x += (sw * (0.35 + gust * 0.65)) * ' + (0.3 * U).toFixed(3) + ' * gk * uWind;\n' +
-          '  mvPosition.z += (cos(uTime * 1.5 + gb.x * 0.2) * 0.3 * (0.3 + gust * 0.7)) * ' + (0.2 * U).toFixed(3) + ' * gk * uWind;\n' +
+          '  mvPosition.x += (sw * (0.35 + gust * 0.65)) * ' + (0.2 * U).toFixed(3) + ' * gk * uWind;\n' +
+          '  mvPosition.z += (cos(uTime * 1.5 + gb.x * 0.2) * 0.3 * (0.3 + gust * 0.7)) * ' + (0.14 * U).toFixed(3) + ' * gk * uWind;\n' +
           '  vec2 away = gb.xz - uPlayer.xz; float pd = length(away); float push = smoothstep(uPush * 2.2, 0.0, pd) * gk; vec2 pdir = away / max(pd, 0.001);\n' +
           '  mvPosition.x += pdir.x * push * ' + (0.8 * U).toFixed(3) + '; mvPosition.z += pdir.y * push * ' + (0.8 * U).toFixed(3) + '; mvPosition.y -= push * ' + (0.35 * U).toFixed(3) + ' * gh;\n' +
           '  mvPosition = modelViewMatrix * mvPosition; gl_Position = projectionMatrix * mvPosition;');
     };
     var geo = tuftGeometry(THREE, U), mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, QUALITY.HIGH)); mesh.name = 'world-grass'; mesh.frustumCulled = false; mesh.count = 0; mesh.castShadow = false; mesh.receiveShadow = false; o.scene.add(mesh);
-    var cA = new THREE.Color(0x4f7d2a), cB = new THREE.Color(0xb7c24a), tmp = new THREE.Color(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pv = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    var cA = new THREE.Color(0x6aa83a), cB = new THREE.Color(0xc4d86a), tmp = new THREE.Color(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pv = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     var lastX = 1e9, lastZ = 1e9, count = 0, time = 0;
     function slopeOk(x, z, y) { var e = 2 * U; return Math.abs(heightAt(x + e, z) - y) < 1.1 * e && Math.abs(heightAt(x, z + e) - y) < 1.1 * e; }
     function rebuild(px, pz) {

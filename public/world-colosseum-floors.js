@@ -206,6 +206,7 @@
       var t = new THREE.CanvasTexture(fc); t.colorSpace = THREE.SRGBColorSpace; arena.__floorTexBackup = arena.__floorTexBackup || mat.map; mat.map = t; mat.needsUpdate = true;
     }
     function clear() { if (mode) { hideAll(); mode = null; API.state.mode = null; if (arena.__floorTexBackup) { arena.floorMesh.material.map = arena.__floorTexBackup; arena.floorMesh.material.needsUpdate = true; } } }
+    API.islands = function () { var out = []; for (var li = 0; li < 9; li++) { var a0 = li / 9 * 6.283, rr = li === 0 ? 0 : 0.5; out.push({ x: Math.cos(a0) * A * rr * 0.75 * (li ? 1 : 0), z: Math.sin(a0) * B * rr * 0.75 * (li ? 1 : 0), r: li === 0 ? 7 : 3.4 }); } return out; };
     API.apply = apply; API.clear = clear; API.handles = function (m) { return MODES.indexOf(m) >= 0; };
     API.tick = function (dt) {
       if (!mode || !root.parent || !root.parent.visible) return; time += dt; wU.uT.value = time; lU.uT.value = time;
