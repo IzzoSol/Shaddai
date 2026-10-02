@@ -272,11 +272,25 @@
     // colliders (room-local rects + height): shell/partition walls, furniture, and the solid leftovers of a host block
     L.walls.forEach(function (w) { L.colliders.push({ x: w.x, z: w.z, hx: w.hx, hz: w.hz, h: L.ceil, kind: 'wall:' + w.kind }); });
     L.items.forEach(function (it) { if (it.col) L.colliders.push({ x: it.col.x, z: it.col.z, hx: it.col.hx, hz: it.col.hz, h: it.col.h, kind: 'furn:' + it.kind }); });
+    L.steps = [];
+    L.items.forEach(function (it) { if (it.kind === 'stairs') stairSteps(it, L).forEach(function (st) { L.steps.push(st); L.colliders.push({ x: st.x, z: st.z, hx: st.hx, hz: st.hz, h: st.h, kind: 'step' }); }); });
     L.solids.forEach(function (s) { L.colliders.push({ x: s.x, z: s.z, hx: s.hx, hz: s.hz, h: s.h || H, kind: 'solid' }); });
     delete L.clear;
     return L;
   }
 
+  /* WALKABLE STAIRS: a 'stairs' item becomes a run of boxes rising along its long axis (ascent = the item's +local z, rotated by q).
+   * Risers are 0.2 m (the controller steps up to 0.45 m), the top tread stays under the ceiling so the head clears it. Returns room-local boxes {x,z,hx,hz,h}. */
+  var STAIR = { riser: 0.2, tread: 0.42, headroom: 1.9 };
+  function stairSteps(it, L) {
+    var m = it.rect, odd = it.q & 1, len = odd ? 2 * m.hx : 2 * m.hz, wid = odd ? 2 * m.hz : 2 * m.hx, dir = rotPt(0, 1, it.q);
+    var n = Math.max(2, Math.min(Math.floor(len / STAIR.tread), Math.floor((L.ceil - STAIR.headroom) / STAIR.riser))), tread = len / n, out = [];
+    for (var i = 0; i < n; i++) {
+      var t = (i + 0.5) * tread - len / 2;
+      out.push({ x: it.x + dir[0] * t, z: it.z + dir[1] * t, hx: odd ? tread / 2 : wid / 2, hz: odd ? wid / 2 : tread / 2, h: (i + 1) * STAIR.riser });
+    }
+    return out;
+  }
   // ════════════════════════════ RECIPES ════════════════════════════
   // build(ctx) places everything with ctx.place / run / atBack / atLeft / atRight / partX / partZ / light.
   // `use` = the E-prompt type (see USE_MARKERS), `npc` = role(s) for the piece's npcSlots.
@@ -816,6 +830,7 @@
       ], 'int3-trim');
       var leaves = [];
       for (var s = 0; s < 2; s++) { var lf = new THREE.Mesh(unitBox, sm.glass); lf.scale.set(dr.w / 2, dr.h, 0.06); lf.position.set(dr.x + (s ? 1 : -1) * dr.w / 4, 0, D / 2 + 0.04); lf.name = 'int3-door-leaf'; g.add(lf); leaves.push(lf); }
+      if (L.steps && L.steps.length) inst(unitBox, sm.floor, L.steps.map(function (st) { return [st.x, 0, st.z, st.hx * 2, st.h, st.hz * 2, 0]; }), 'int3-steps');   // walkable stair treads (colliders match)
       // furniture: one InstancedMesh per template part per kind
       var byKind = {};
       L.items.forEach(function (it) { (byKind[it.kind] = byKind[it.kind] || []).push(it); });
