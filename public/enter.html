@@ -1659,11 +1659,9 @@ if (renderer) {
   var out = document.getElementById('routerOut');
 
   var EG = [
-    'make me a 3D model and a voice over',
-    'trade the best coin on pumpfun',
-    'is this contract safe or a rug',
     'write me a launch thread',
-    'why do people buy things they do not need'
+    'is this contract safe or a rug',
+    'make me a 3D model and a voice over'
   ];
   EG.forEach(function(q){
     var b = document.createElement('button');
@@ -1682,14 +1680,19 @@ if (renderer) {
     fetch('/api/route?q=' + encodeURIComponent(q))
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var hits = (d.ranked || []).map(function(h, i){
-          return '<div class="router-hit' + (i ? '' : ' win') + '"><b>' + esc(h.agent) + '</b>' +
-                 (h.theme ? ' <span>' + esc(h.theme) + '</span>' : '') +
-                 (i === 0 ? ' · takes it' : ' · can support') + '</div>';
-        }).join('');
-        var topics = (d.matchedTopics || []).map(esc).join(', ');
-        out.innerHTML = '<div class="router-line">the council decided</div>' + hits +
-          (topics ? '<div class="router-why">matched on <b>' + topics + '</b></div>' : '');
+        var r = d.ranked || [];
+        if (!r.length) { out.innerHTML = '<div class="router-line">no agent matched &mdash; try rephrasing</div>'; return; }
+        var win = r[0], sup = r.slice(1, 3).map(function(h){ return esc(h.agent); }).join(' · ');
+        var topics = (d.matchedTopics || []).slice(0, 4).map(esc).join(', ');
+        try { localStorage.setItem('shd_route_task', JSON.stringify({ q: q, agent: win.agent, t: Date.now() })); } catch (e) {}
+        out.innerHTML =
+          '<div class="rjob"><div class="rjob-top"><span class="rjob-ag">' + esc(win.agent) + '</span>' +
+          '<span class="rjob-st">assigned</span></div>' +
+          '<div class="rjob-q">' + esc(q) + '</div>' +
+          '<ol class="rjob-steps"><li class="on">routed</li><li class="on">' + esc(win.agent) + ' takes it</li>' +
+          (sup ? '<li>' + sup + ' support</li>' : '') + '<li>output in your dashboard</li></ol>' +
+          (topics ? '<div class="router-why">matched on <b>' + topics + '</b></div>' : '') +
+          '<a class="rjob-go" href="/dashboard">Run it in the dashboard &rarr;</a></div>';
       })
       .catch(function(){ out.innerHTML = '<div class="router-line">router unreachable &mdash; try again in a moment</div>'; })
       .then(function(){ go.disabled = false; });
@@ -1717,6 +1720,18 @@ if (renderer) {
 .router-hit span{ color:var(--ink-faint,#4f5d57); }
 .router-why{ margin-top:6px; color:var(--ink-faint,#4f5d57); }
 .router-why b{ color:var(--cyan,#5fe0ff); }
+
+.router{ max-width:520px; margin:14px auto 0; padding:0 14px; }
+.router-bar input{ min-height:40px; }
+.rjob{ border:1px solid var(--edge,rgba(120,150,140,.28)); background:rgba(14,20,27,.55); border-radius:3px; padding:10px 12px; }
+.rjob-top{ display:flex; justify-content:space-between; align-items:center; }
+.rjob-ag{ color:var(--emerald,#00ff9c); font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:11px; }
+.rjob-st{ font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:#06080b; background:var(--emerald,#00ff9c); padding:2px 7px; border-radius:2px; }
+.rjob-q{ margin:6px 0 8px; color:var(--ink,#e9efe9); font-size:12px; }
+.rjob-steps{ list-style:none; display:flex; flex-wrap:wrap; gap:4px 14px; margin:0; padding:0; font-size:10.5px; color:var(--ink-faint,#4f5d57); }
+.rjob-steps li::before{ content:'○ '; } .rjob-steps li.on{ color:var(--ink-soft,#93a49b); } .rjob-steps li.on::before{ content:'● '; color:var(--emerald,#00ff9c); }
+.rjob-go{ display:inline-block; margin-top:9px; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--emerald,#00ff9c); text-decoration:none; }
+.rjob-go:hover{ text-decoration:underline; }
 </style>
 </body>
 </html>
