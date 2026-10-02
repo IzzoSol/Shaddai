@@ -73,10 +73,11 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
   async function gradeAll(a, outputs) {
     const bench = benchOf(a);
     const outs = outputs && typeof outputs === 'object' ? outputs : {};
-    const perTask = []; let needsReview = false;
+    const perTask = []; let needsReview = false; const kept = {};
     for (const tid of a.taskIds) {
       const task = bench.tasks.find((x) => x.id === tid);
       const c = cleanOutput(hasOwn(outs, tid) ? outs[tid] : undefined);
+      kept[tid] = c.value === undefined ? null : c.value;
       if (c.rejected) { perTask.push({ taskId: tid, score: 0, status: 'rejected' }); continue; }
       if (bench.grader === 'rubric') {
         if (c.value === null) { perTask.push({ taskId: tid, score: 0, status: 'graded' }); continue; }   // nothing usable: no judge spend
@@ -89,7 +90,7 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
         perTask.push({ taskId: tid, score, status: 'graded' });
       }
     }
-    if (needsReview) return { status: 'needs_review', score: null, perTask };
+    if (needsReview) return { status: 'needs_review', score: null, perTask, outputs: kept };
     return { status: 'graded', score: perTask.reduce((s, p) => s + p.score, 0) / perTask.length, perTask };
   }
 
@@ -107,6 +108,7 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     const d2 = load();                          // re-read after the await so concurrent writes are never overwritten
     const a2 = d2.attempts[attemptId];
     a2.perTask = result.perTask; a2.submittedAt = now(); a2.status = result.status; a2.score = result.score;
+    if (result.status === 'needs_review') a2.outputs = result.outputs || {};      // sanitized, kept only so an admin can review
     store.write('attempts', d2);
     return { ok: true, status: a2.status, score: a2.score, perTask: a2.perTask };
   }
@@ -129,7 +131,52 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     };
   }
 
-  return { begin, submit, evaluate };
+  // Safe public view of one attempt: no outputs, no answer data.
+  function get(attemptId) {
+    if (!isSafeId(attemptId)) return null;
+    const d = load();
+    if (!hasOwn(d.attempts, attemptId)) return null;
+    const a = d.attempts[attemptId];
+    return { id: a.id, agentId: a.agentId, skillId: a.skillId, kind: a.kind, status: a.status, expiresAt: a.expiresAt, taskIds: a.taskIds.slice() };
+  }
+
+  // Admin review queue for attempts the judges could not agree on.
+  function needsReview() {
+    const d = load();
+    return Object.values(d.attempts).filter((a) => a.status === 'needs_review').sort((x, y) => x.seq - y.seq).map((a) => {
+      const bench = benchOf(a);
+      return {
+        attemptId: a.id, agentId: a.agentId, skillId: a.skillId, benchmark: a.benchmark, kind: a.kind,
+        tasks: a.perTask.filter((p) => p.status === 'needs_review').map((p) => {
+          const task = bench.tasks.find((x) => x.id === p.taskId);
+          return { taskId: p.taskId, prompt: task ? task.prompt : '', output: hasOwn(a.outputs || {}, p.taskId) ? a.outputs[p.taskId] : null };
+        })
+      };
+    });
+  }
+
+  // An admin supplies the 0..1 score for every task that was stuck in review.
+  function resolve({ attemptId, by, taskScores }) {
+    if (!isSafeId(attemptId) || !isSafeId(by)) return err('attemptId and by required');
+    const d = load();
+    if (!hasOwn(d.attempts, attemptId)) return err('unknown attempt');
+    const a = d.attempts[attemptId];
+    if (a.status !== 'needs_review') return err('attempt is not awaiting review');
+    const pending = a.perTask.filter((p) => p.status === 'needs_review').map((p) => p.taskId);
+    const given = taskScores && typeof taskScores === 'object' ? Object.keys(taskScores) : [];
+    if (given.some((k) => !pending.includes(k))) return err('score given for a task that is not in review');
+    for (const tid of pending) {
+      const v = hasOwn(taskScores || {}, tid) ? taskScores[tid] : undefined;
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1) return err('every review task needs a score between 0 and 1');
+    }
+    for (const p of a.perTask) if (p.status === 'needs_review') { p.score = taskScores[p.taskId]; p.status = 'graded'; }
+    a.score = a.perTask.reduce((s, p) => s + p.score, 0) / a.perTask.length;
+    a.status = 'graded'; a.resolvedBy = by; a.resolvedAt = now(); delete a.outputs;
+    store.write('attempts', d);
+    return { ok: true, score: a.score };
+  }
+
+  return { begin, submit, evaluate, get, needsReview, resolve };
 }
 
 module.exports = { createExamService, sample, cleanOutput };
