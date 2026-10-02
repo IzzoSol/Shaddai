@@ -229,6 +229,7 @@
       <button class="bg prim" onclick="shdGate.email('signin')" style="flex:1">Sign In</button>
       <button class="bg make" onclick="shdGate.email('create')" style="flex:1">Create Account</button>
     </div>
+    <div class="row" style="margin-top:8px"><button class="bg" onclick="shdGate.guest()" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,.18);color:#9fb3b0">Continue as guest &middot; nothing is saved</button></div>
     <div class="msg" id="shdAuthMsg"></div>
     <div class="fine" id="shdAuthFine">Sign in to enter your world, forge agents, and claim your office in SHADDAI City. Everything saves to your account across sessions.</div>
   </div></div>
@@ -4244,6 +4245,14 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   }).catch(function(){});
 })();
 </script>
+<style id="v1013-fixes">
+/* v101.3: floating buttons no longer pile on top of each other (help / chat / shop) */
+#popChatBtn{ right:18px !important; bottom:18px !important; left:auto !important; top:auto !important; transform:none !important; }
+#shopFab{ right:18px !important; bottom:74px !important; left:auto !important; top:auto !important; transform:none !important; }
+#shdOnboardBtn{ right:22px !important; bottom:126px !important; left:auto !important; top:auto !important; transform:none !important; }
+/* tab-dock "Move" is a niche control; the sidebar is the default. Still reachable via Settings. */
+#tbNavMoverWrap{ display:none !important; }
+</style>
 </head>
 <body data-theme="dark" class="at-home">
 <div id="shaddaiScanlines"></div>
@@ -4301,7 +4310,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- CENTER cell — brand/version (grid-centered, can't collide) -->
   <div id="tbBrand" style="justify-self:center;display:flex;align-items:center;gap:10px;white-space:nowrap">
     <span style="font-weight:900;letter-spacing:5px;color:var(--accent);text-shadow:0 0 14px rgba(0,229,160,.5);font-size:13px">SHADDAI</span>
-    <span style="font-weight:800;letter-spacing:2px;color:#ffce63;font-size:10px;padding:2px 8px;border:1px solid rgba(255,206,99,.35);border-radius:999px;background:linear-gradient(135deg,rgba(255,206,99,.12),rgba(255,206,99,.02))">V94.44</span>
+    <span style="font-weight:800;letter-spacing:2px;color:#ffce63;font-size:10px;padding:2px 8px;border:1px solid rgba(255,206,99,.35);border-radius:999px;background:linear-gradient(135deg,rgba(255,206,99,.12),rgba(255,206,99,.02))">V101.3</span>
   </div>
   <style>
     #topBar .tb-meter{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font:700 9px/1 'Share Tech Mono',monospace;color:#ffce63;background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(255,176,32,.03));border:1px solid rgba(255,176,32,.28);cursor:pointer;white-space:nowrap;transition:.2s;user-select:none}
@@ -4358,10 +4367,10 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
         </div>
       </div>
       </span>
-      <button class="tb-seg" onclick="showAccountMenu()" id="dashBtn" title="Account — who's signed in / sign out" style="color:#a78bfa"><span class="ic">👤</span></button>
+      <button class="tb-seg" onclick="showAccountMenu()" id="dashBtn" title="Account — who's signed in / sign out" style="color:#a78bfa"><span class="ic">👤</span>Account</button>
       <button class="tb-seg" onclick="window.openToolRunner&&window.openToolRunner()" id="toolsBtn" title="Run any agent tool with inputs" style="color:#00e5a0"><span class="ic">🛠</span>Tools</button>
       <!-- Notifications button removed — unwired -->
-      <button class="tb-seg" id="broadcastBtn" onclick="toggleBroadcastMode()" title="Broadcast to ALL AIs simultaneously" style="color:#ffb020"><span class="ic">◉</span>ALL</button>
+      <button class="tb-seg" id="broadcastBtn" onclick="toggleBroadcastMode()" title="Send one message to every agent at once" style="color:#ffb020"><span class="ic">◉</span>Broadcast</button>
       <!-- Shop / credit-card button removed — unwired -->
       <a class="tb-seg" href="marketplace-shop-v2.html" target="_blank" title="Open the 2D Bazaar — set up your shop, sell content & agent work" style="color:#e8b84b"><span class="ic">🏪</span>Bazaar</a>
       <a class="tb-seg" href="achievements.html" target="_blank" title="Achievements & NFT Collection — your 100 operative cards, unlocks & progress" style="color:#ffcf4a"><span class="ic">🏆</span>Achievements</a>
@@ -4695,7 +4704,7 @@ window.enter3DWorld=function(){
 </script>
 
 <div id="sbNav">
-  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v91</span></div>
+  <div class="sb-brand">SHADDAI<span>AGENT EMPIRE · v101.3</span></div>
   <div class="sb-list">
     <!-- CORE -->
     <div style="font-size:7px;letter-spacing:1.8px;color:#2a3a4a;text-transform:uppercase;padding:6px 10px 3px;font-weight:800">Core</div>
@@ -59778,6 +59787,7 @@ html, body, main{ overflow-x:hidden; max-width:100%; }
 
 <script src="/world-agents-ui.js?v=20261001a"></script>
 <script src="/dashboard-agents.js?v=20261001a"></script>
+<script src="/js/dash-nav.js?v=1013" defer></script>
 </body>
 </html>
 
