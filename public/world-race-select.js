@@ -82,22 +82,28 @@
     S.handle = function (a, t) { if (a === 'ride') { sel = t.getAttribute('data-r'); S.ride = sel; render(); } else if (a === 'back') stepCup(); else if (a === 'next') { S.ride = sel; stepGrid(); } }; render();
   }
   function stepGrid() {
-    var body = shell('READY THE GRID', 3), C = root.WorldRace.CIRCUITS[S.cid], rides = rideCards(), r = rides.filter(function (x) { return x.id === S.ride; })[0] || rides[0], fee = S.prepaid ? 0 : (S.mode === 'gp' ? FEE.gp : (S.ranked ? FEE.ranked : FEE.casual));
+    var body = shell('READY THE GRID', 3), C = root.WorldRace.CIRCUITS[S.cid], rides = rideCards(), r = rides.filter(function (x) { return x.id === S.ride; })[0] || rides[0], fee = S.prepaid || (S.rm && S.rm !== 'race') ? 0 : (S.mode === 'gp' ? FEE.gp : (S.ranked ? FEE.ranked : FEE.casual));
     S.ais = S.ais || 5;
     function render() { body.innerHTML = '<div style="display:flex;gap:18px;flex-wrap:wrap"><div style="flex:1;min-width:260px;padding:14px;border-radius:14px;border:1px solid rgba(232,196,92,.4);background:rgba(10,16,30,.92)"><div style="letter-spacing:.2em;color:#e8c45c">TRACK</div>' + minimap(S.cid) + '<div style="text-align:center;font:900 15px Orbitron">' + (S.mode === 'gp' ? 'SHADDAI GRAND PRIX · leg 1/3 ' + esc(root.WorldRace.CIRCUITS[GP_CUPS[0]].name) : esc(C.name)) + '</div></div>' +
       '<div style="flex:1;min-width:260px;padding:14px;border-radius:14px;border:1px solid rgba(0,255,156,.4);background:rgba(10,16,30,.92)"><div style="letter-spacing:.2em;color:#00ff9c">YOUR RIDE</div>' + (r.thumb ? '<img src="' + r.thumb + '" style="width:100%;max-width:240px;display:block;margin:6px auto;border-radius:8px">' : '') + '<div style="text-align:center;font:900 15px Orbitron">' + esc(r.name) + '</div></div></div>' +
-      '<div style="margin:14px 0;display:flex;gap:18px;flex-wrap:wrap;align-items:center"><span>RIVALS <b id="rsAis">' + S.ais + '</b></span><button data-a="ais-" style="' + GBTN + '">−</button><button data-a="ais+" style="' + GBTN + '">+</button>' + (S.mode === 'single' && !S.prepaid ? '<label style="cursor:pointer"><input type="checkbox" data-a="ranked" ' + (S.ranked ? 'checked' : '') + '> RANKED (x2 prizes, no pocket vials)</label>' : '') + '<span style="flex:1"></span><span style="color:#e8c45c;font-size:16px">Entry ' + fee + '⚡</span></div>' +
+      '<div style="margin:12px 0 4px;letter-spacing:.2em;color:#e8c45c;font-size:12px">HOW DO YOU WANT TO RIDE?</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + [['race', 'RACE', 'vs NPC rivals, prizes'], ['trial', 'TIME TRIAL', 'solo clock, free, saves your best'], ['free', 'FREE RIDE', 'drive the track, no race'], ['online', 'ONLINE', 'race other players']].map(function (m) { var on = (S.rm || 'race') === m[0]; return '<button data-a="rm" data-m="' + m[0] + '" title="' + m[2] + '" style="cursor:pointer;padding:8px 12px;border-radius:9px;border:1px solid ' + (on ? '#00ff9c' : 'rgba(255,255,255,.22)') + ';background:' + (on ? 'rgba(0,255,156,.18)' : 'rgba(255,255,255,.05)') + ';color:#e9f4ee;font:700 13px Rajdhani,sans-serif">' + m[1] + '<br><small style="opacity:.65;font-weight:600">' + m[2] + '</small></button>'; }).join('') + '</div>' + pbLine(S.cid) +
+      '<div style="margin:14px 0;display:flex;gap:18px;flex-wrap:wrap;align-items:center">' + ((S.rm || 'race') === 'race' ? '<span>RIVALS <b id="rsAis">' + S.ais + '</b></span><button data-a="ais-" style="' + GBTN + '">−</button><button data-a="ais+" style="' + GBTN + '">+</button>' : '') + ((S.rm || 'race') === 'race' && S.mode === 'single' && !S.prepaid ? '<label style="cursor:pointer"><input type="checkbox" data-a="ranked" ' + (S.ranked ? 'checked' : '') + '> RANKED (x2 prizes, no pocket vials)</label>' : '') + '<span style="flex:1"></span><span style="color:#e8c45c;font-size:16px">Entry ' + fee + '⚡</span></div>' +
       '<div style="display:flex;gap:10px"><button data-a="back" style="' + GBTN + '">← BACK</button><button data-a="go" style="' + BTN + ';font-size:18px;padding:12px 30px">START ENGINES</button></div><div id="rsMsg" style="margin-top:8px;color:#ff9a6e"></div><div style="opacity:.6;margin-top:8px;font-size:12px">R = use item · drive through crates and turbo pads · W/A/S/D + mouse</div>'; }
-    S.handle = function (a, t) { if (a === 'back') stepRide(); else if (a === 'ais+') { S.ais = Math.min(7, S.ais + 1); render(); } else if (a === 'ais-') { S.ais = Math.max(1, S.ais - 1); render(); } else if (a === 'ranked') { S.ranked = !!t.checked; render(); } else if (a === 'go') go(fee); }; render();
+    S.handle = function (a, t) { if (a === 'back') stepRide(); else if (a === 'rm') { S.rm = t.getAttribute('data-m'); if (S.rm === 'online') { S.rm = 'race'; var m0 = ov && ov.querySelector('#rsMsg'); render(); m0 = ov && ov.querySelector('#rsMsg'); if (m0) m0.textContent = 'Online lobbies need the game server (not connected yet). Race NPC rivals for now - or join a challenge from the Navi race board.'; } else render(); } else if (a === 'ais+') { S.ais = Math.min(7, S.ais + 1); render(); } else if (a === 'ais-') { S.ais = Math.max(1, S.ais - 1); render(); } else if (a === 'ranked') { S.ranked = !!t.checked; render(); } else if (a === 'go') go(fee); }; render();
+  }
+  function pbLine(cid) {
+    var b = null; try { b = (JSON.parse((root.localStorage && root.localStorage.getItem('shd_pb_v1')) || '{}') || {})[cid]; } catch (e) { }
+    var f = function (x) { var m = Math.floor(x / 60); return m + ':' + ('0' + (x - m * 60).toFixed(1)).slice(-4); };
+    return '<div style="margin-top:6px;font-size:12px;opacity:.8">' + (b ? 'YOUR BEST  ' + (b.total != null ? 'race ' + f(b.total) : '') + (b.lap != null ? '   lap ' + f(b.lap) : '') : 'No best time yet on this track') + '</div>';
   }
   function go(fee) {
     var msg = ov && ov.querySelector('#rsMsg'); if (typeof root.__raceStart !== 'function') { if (msg) msg.textContent = 'Race runtime still loading - try again in a moment.'; return; }
     if (fee > 0 && !(root.ShdSparks && root.ShdSparks.spend(fee, 'race-entry', S.cid))) { if (msg) msg.textContent = 'Not enough Sparks (' + fee + ')'; return; }
     var r = S.ride || '', veh = /^kart-/.test(r) ? r : undefined, style = /^board-/.test(r) ? r.slice(6) : undefined;
-    var okStart = root.__raceStart(S.cid, { vehicle: veh, style: style, ranked: !!S.ranked, ais: S.ais });
+    var rm = S.rm || 'race', okStart = root.__raceStart(S.cid, { vehicle: veh, style: style, ranked: rm === 'race' && !!S.ranked, ais: rm === 'race' ? S.ais : 0, free: rm === 'free', mode: rm });
     if (!okStart) { if (fee > 0 && root.ShdSparks) root.ShdSparks.add(fee, 'race-refund', 'start failed'); if (msg) msg.textContent = 'Could not start - refunded.'; return; }
-    if (S.mode === 'gp') gp = { cups: GP_CUPS.slice(), idx: 0, points: 0, places: [], ride: S.ride, ais: S.ais, medal: null };
-    close(); if (S.mode === 'gp') gpChip();
+    if (S.mode === 'gp' && (S.rm || 'race') === 'race') gp = { cups: GP_CUPS.slice(), idx: 0, points: 0, places: [], ride: S.ride, ais: S.ais, medal: null };
+    close(); if (gp && S.mode === 'gp') gpChip();
   }
 
   // ---------- Grand Prix series ----------
@@ -111,8 +117,8 @@
   });
 
   function open(o) {
-    o = o || {}; if (!root.WorldRace) { toast('Race rules still loading'); return; } S = { mode: 'single', cid: o.cid || null, ranked: !!o.ranked, prepaid: !!o.prepaid, ride: null, ais: 5, handle: null };
+    o = o || {}; if (!root.WorldRace) { toast('Race rules still loading'); return; } S = { rm: 'race', mode: 'single', cid: o.cid || null, ranked: !!o.ranked, prepaid: !!o.prepaid, ride: null, ais: 5, handle: null };
     if (o.cid) stepRide(); else stepCup();
   }
-  root.WorldRaceSelect = { init: function (o) { THREE_ = o && o.THREE || THREE_; }, open: open, close: close, gp: function () { return gp; }, _test: { gpBegin: function (ride, ais) { gp = { cups: GP_CUPS.slice(), idx: 0, points: 0, places: [], ride: ride, ais: ais, medal: null }; } }, _cfg: { FEE: FEE, GP_CUPS: GP_CUPS, GP_PTS: GP_PTS, GP_MEDAL: GP_MEDAL } };
+  root.WorldRaceSelect = { init: function (o) { THREE_ = o && o.THREE || THREE_; }, open: open, close: close, gp: function () { return gp; }, _test: { go: function (o) { S = Object.assign({ rm: 'race', mode: 'single', cid: 'plaza-cup', ranked: false, prepaid: false, ride: 'board-sunburst', ais: 5 }, o); go(S.prepaid || (S.rm && S.rm !== 'race') ? 0 : (S.mode === 'gp' ? FEE.gp : (S.ranked ? FEE.ranked : FEE.casual))); }, gpBegin: function (ride, ais) { gp = { cups: GP_CUPS.slice(), idx: 0, points: 0, places: [], ride: ride, ais: ais, medal: null }; } }, _cfg: { FEE: FEE, GP_CUPS: GP_CUPS, GP_PTS: GP_PTS, GP_MEDAL: GP_MEDAL } };
 })(typeof window !== 'undefined' ? window : globalThis);
