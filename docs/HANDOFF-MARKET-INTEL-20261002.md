@@ -23,15 +23,15 @@ I built a standalone "Market Intel" engine + hub page. Owner reviewed the hub vi
 | Engine (60s snapshot cache, partial-failure tolerant) | `backend/markets/engine.js` | |
 | Paper ledger (JSON file `data/markets-paper.json`, git-ignored, per-module P&L, null-prototype owner keys) | `backend/markets/paper.js` | resets on Render deploy (ephemeral disk) |
 | Routes `/api/intel/{signals,quotes,correlations,modules,paper,paper/open,paper/close}` | `backend/markets/routes.js`, `index.js`, 1-line mount in `backend/server-production.js` (before `/api/cosmetics`) | reads public; paper needs `req.userId` (softAuth) |
-| Hub UI + "Intel" station | `public/markets-hub.html`, `public/index.html` (+`intelCard` before `proSignalsCard`, first entry in `STATIONS`, default station fallback `'intel'`) | **owner rejected the look** |
+| Hub UI + "Intel" station | (removed, see 2b) | owner rejected the look; reverted in `ddb83bff` |
 
 Also: spec + plan docs committed (they live on local `main` too — local `main` is 2 doc-only commits ahead of origin; the branch contains them. Don't push `main` without owner say-so).
 
 Self-review (reviewer subagent stalled, so author self-review only) found/fixed: close-at-entry free-exit bug, `__proto__` owner ids. Deferred minors: ledger keyed by symbol only (ticker collisions across classes), all-adapters-down snapshot cached 60s.
 
-## 2b. Decision needed first thing: what to do with the Intel station
+## 2b. RESOLVED: Intel station removed
 
-Given the pivot, the Intel station (first in the MK rail, default for new users) is a basic page the owner doesn't want shown. Options: (a) remove the `intel` STATIONS entry + `intelCard` + default change from `public/index.html` before anything merges; (b) keep the branch unmerged and cherry-pick only what's reused. **Recommended: (a), and keep `backend/markets/` only if something below reuses it** (signals/correlation could feed Pro Signals/MiroFish later; otherwise it's optional). Ask the owner — don't merge as-is.
+Owner said remove it. Commit `ddb83bff` reverts the Intel UI (`public/markets-hub.html` + the three `public/index.html` edits). The Markets rail and default station are back to the original. `backend/markets/` (engine, `/api/intel/*`, paper ledger, tests) is kept on the branch for optional reuse by Pro Signals / MiroFish / TG / MCP. `/api/intel` is still mounted in `server-production.js` (harmless, public read-only + login-gated paper); remove that one line if the engine is dropped. The hub page can be recovered from git history (`eb885f56`) if ever wanted.
 
 ## 3. What was NOT done
 
