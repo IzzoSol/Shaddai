@@ -1,6 +1,6 @@
 {
   "builtAt": "2026-05-22T16:55:35.289Z",
-  "source": "C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN",
+  "source": "C:\\Users\\YOU\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN",
   "totalSkills": 3022,
   "byAgent": {
     "QUILL": 250,
@@ -26588,7 +26588,7 @@
       "description": "archive-folder-analyzer skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Archive Folder Analyzer\n\nAnalyze the _ARCHIVED folder to identify duplicates and old files that can be cleaned up.\n\n## Steps\n\n1. Scan _ARCHIVED folders:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Directory -Filter '*ARCHIVED*' -ErrorAction SilentlyContinue\n   ```\n\n2. Compare with active folders to find duplicates\n\n3. Report what can be safely deleted",
+      "methodology": "# Archive Folder Analyzer\n\nAnalyze the _ARCHIVED folder to identify duplicates and old files that can be cleaned up.\n\n## Steps\n\n1. Scan _ARCHIVED folders:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Directory -Filter '*ARCHIVED*' -ErrorAction SilentlyContinue\n   ```\n\n2. Compare with active folders to find duplicates\n\n3. Report what can be safely deleted",
       "methodologyLength": 398,
       "source": "obsidian"
     },
@@ -26608,7 +26608,7 @@
       "description": "disk-space-analyzer skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Disk Space Analyzer\n\nAnalyze disk usage across directories to identify large files and folders taking up space.\n\n## Steps\n\n1. Run PowerShell to scan directories:\n   ```powershell\n   Get-ChildItem 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Directory | ForEach-Object {\n     $size = (Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum\n     [PSCustomObject]@{Folder=$_.Name; SizeGB=[math]::Round($size/1GB,2)}\n   } | Sort-Object SizeGB -Descending\n   ```\n\n2. Identify largest folders and files\n\n3. Report back with findings",
+      "methodology": "# Disk Space Analyzer\n\nAnalyze disk usage across directories to identify large files and folders taking up space.\n\n## Steps\n\n1. Run PowerShell to scan directories:\n   ```powershell\n   Get-ChildItem 'C:\\Users\\YOU\\OneDrive\\Desktop' -Directory | ForEach-Object {\n     $size = (Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum\n     [PSCustomObject]@{Folder=$_.Name; SizeGB=[math]::Round($size/1GB,2)}\n   } | Sort-Object SizeGB -Descending\n   ```\n\n2. Identify largest folders and files\n\n3. Report back with findings",
       "methodologyLength": 575,
       "source": "obsidian"
     },
@@ -26648,7 +26648,7 @@
       "description": "duplicate-file-detector skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Duplicate File Detector\n\nFind duplicate files wasting space by checking for files with same name and size in multiple locations.\n\n## Steps\n\n1. Find duplicate files by name:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -File -ErrorAction SilentlyContinue |\n     Group-Object Name | Where-Object { $_.Count -gt 1 } |\n     ForEach-Object {\n       Write-Host \"DUPLICATE: $($_.Name) - $($_.Count) copies\"\n       $_.Group | ForEach-Object { Write-Host \"  $($_.FullName)\" }\n     }\n   ```\n\n2. Report duplicates and total wasted space",
+      "methodology": "# Duplicate File Detector\n\nFind duplicate files wasting space by checking for files with same name and size in multiple locations.\n\n## Steps\n\n1. Find duplicate files by name:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -File -ErrorAction SilentlyContinue |\n     Group-Object Name | Where-Object { $_.Count -gt 1 } |\n     ForEach-Object {\n       Write-Host \"DUPLICATE: $($_.Name) - $($_.Count) copies\"\n       $_.Group | ForEach-Object { Write-Host \"  $($_.FullName)\" }\n     }\n   ```\n\n2. Report duplicates and total wasted space",
       "methodologyLength": 568,
       "source": "obsidian"
     },
@@ -26658,7 +26658,7 @@
       "description": "git-clone-cleaner skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Git Clone Cleaner\n\nFind incomplete or old git repositories that can be removed and re-cloned if needed.\n\n## Steps\n\n1. Find .git folders:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Directory -Filter '.git' -ErrorAction SilentlyContinue\n   ```\n\n2. Report repos and sizes",
+      "methodology": "# Git Clone Cleaner\n\nFind incomplete or old git repositories that can be removed and re-cloned if needed.\n\n## Steps\n\n1. Find .git folders:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Directory -Filter '.git' -ErrorAction SilentlyContinue\n   ```\n\n2. Report repos and sizes",
       "methodologyLength": 314,
       "source": "obsidian"
     },
@@ -26668,7 +26668,7 @@
       "description": "large-file-finder skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Large File Finder\n\nFind the largest files on the system to identify what can be deleted.\n\n## Steps\n\n1. Scan for largest files excluding personal folders:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -File -ErrorAction SilentlyContinue | \n     Where-Object { $_.FullName -notmatch 'Vidoes|Photos' } | \n     Sort-Object Length -Descending | \n     Select-Object -First 20 |\n     ForEach-Object { Write-Host \"$($_.FullName) - $([math]::Round($_.Length/1MB,2)) MB\" }\n   ```\n\n2. Report file sizes and what each file is",
+      "methodology": "# Large File Finder\n\nFind the largest files on the system to identify what can be deleted.\n\n## Steps\n\n1. Scan for largest files excluding personal folders:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -File -ErrorAction SilentlyContinue | \n     Where-Object { $_.FullName -notmatch 'Vidoes|Photos' } | \n     Sort-Object Length -Descending | \n     Select-Object -First 20 |\n     ForEach-Object { Write-Host \"$($_.FullName) - $([math]::Round($_.Length/1MB,2)) MB\" }\n   ```\n\n2. Report file sizes and what each file is",
       "methodologyLength": 555,
       "source": "obsidian"
     },
@@ -26678,7 +26678,7 @@
       "description": "large-media-finder skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Large Media Finder\n\nFind large video, audio, and image files that could be compressed or deleted.\n\n## Steps\n\n1. Find large media files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Include *.mp4,*.mov,*.avi,*.mkv,*.wav,*.aiff -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 10\n   ```\n\n2. Report sizes and formats",
+      "methodology": "# Large Media Finder\n\nFind large video, audio, and image files that could be compressed or deleted.\n\n## Steps\n\n1. Find large media files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Include *.mp4,*.mov,*.avi,*.mkv,*.wav,*.aiff -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 10\n   ```\n\n2. Report sizes and formats",
       "methodologyLength": 394,
       "source": "obsidian"
     },
@@ -26688,7 +26688,7 @@
       "description": "log-file-cleaner skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Log File Cleaner\n\nClean up log files and debug outputs that accumulate over time.\n\n## Steps\n\n1. Find .log and .tmp files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Include *.log,*.tmp -ErrorAction SilentlyContinue |\n     Measure-Object -Property Length -Sum |\n     ForEach-Object { Write-Host \"Total log files: $([math]::Round($_.Sum/1MB,2)) MB\" }\n   ```\n\n2. Delete old log files\n\n3. Report space freed",
+      "methodology": "# Log File Cleaner\n\nClean up log files and debug outputs that accumulate over time.\n\n## Steps\n\n1. Find .log and .tmp files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Include *.log,*.tmp -ErrorAction SilentlyContinue |\n     Measure-Object -Property Length -Sum |\n     ForEach-Object { Write-Host \"Total log files: $([math]::Round($_.Sum/1MB,2)) MB\" }\n   ```\n\n2. Delete old log files\n\n3. Report space freed",
       "methodologyLength": 449,
       "source": "obsidian"
     },
@@ -26698,7 +26698,7 @@
       "description": "node-modules-cleaner skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Node Modules Cleaner\n\nFind and clean node_modules folders that can be rebuilt from package.json.\n\n## Steps\n\n1. Find node_modules:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Directory -Filter 'node_modules' -ErrorAction SilentlyContinue\n   ```\n\n2. Check if package.json exists in parent\n\n3. Report size and whether safe to delete",
+      "methodology": "# Node Modules Cleaner\n\nFind and clean node_modules folders that can be rebuilt from package.json.\n\n## Steps\n\n1. Find node_modules:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Directory -Filter 'node_modules' -ErrorAction SilentlyContinue\n   ```\n\n2. Check if package.json exists in parent\n\n3. Report size and whether safe to delete",
       "methodologyLength": 374,
       "source": "obsidian"
     },
@@ -26728,7 +26728,7 @@
       "description": "old-installer-remover skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Old Installer Remover\n\nIdentify and remove old software installers (.exe, .msi) that are no longer needed after software is installed.\n\n## Steps\n\n1. Find installer files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Include *.exe,*.msi -ErrorAction SilentlyContinue |\n     Sort-Object Length -Descending |\n     ForEach-Object { Write-Host \"$($_.FullName) - $([math]::Round($_.Length/1MB,2)) MB\" }\n   ```\n\n2. Identify which can be deleted (already installed software)\n\n3. Delete with user confirmation",
+      "methodology": "# Old Installer Remover\n\nIdentify and remove old software installers (.exe, .msi) that are no longer needed after software is installed.\n\n## Steps\n\n1. Find installer files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Include *.exe,*.msi -ErrorAction SilentlyContinue |\n     Sort-Object Length -Descending |\n     ForEach-Object { Write-Host \"$($_.FullName) - $([math]::Round($_.Length/1MB,2)) MB\" }\n   ```\n\n2. Identify which can be deleted (already installed software)\n\n3. Delete with user confirmation",
       "methodologyLength": 544,
       "source": "obsidian"
     },
@@ -26798,7 +26798,7 @@
       "description": "zipped-folder-analyzer skill",
       "agent": "SHADDAI",
       "category": "system",
-      "methodology": "# Zipped Folder Analyzer\n\nFind and analyze compressed folders (.zip, .rar, .7z) that may contain extracted data or be duplicates.\n\n## Steps\n\n1. Find all zip files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\Brittany\\OneDrive\\Desktop' -Recurse -Include *.zip,*.rar,*.7z -ErrorAction SilentlyContinue |\n     Sort-Object Length -Descending |\n     ForEach-Object { Write-Host \"$($_.Name) - $([math]::Round($_.Length/1MB,2)) MB\" }\n   ```\n\n2. Identify if data was already extracted\n\n3. Report deletable archives",
+      "methodology": "# Zipped Folder Analyzer\n\nFind and analyze compressed folders (.zip, .rar, .7z) that may contain extracted data or be duplicates.\n\n## Steps\n\n1. Find all zip files:\n   ```powershell\n   Get-ChildItem -Path 'C:\\Users\\YOU\\OneDrive\\Desktop' -Recurse -Include *.zip,*.rar,*.7z -ErrorAction SilentlyContinue |\n     Sort-Object Length -Descending |\n     ForEach-Object { Write-Host \"$($_.Name) - $([math]::Round($_.Length/1MB,2)) MB\" }\n   ```\n\n2. Identify if data was already extracted\n\n3. Report deletable archives",
       "methodologyLength": 512,
       "source": "obsidian"
     },
