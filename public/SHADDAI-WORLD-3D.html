@@ -2037,6 +2037,7 @@ function portraitOf(a){ return a.portrait || ('/assets/agents/'+a.codename.toUpp
 // parsed+cached by the time the player picks a portal. setPlayerCharacter() then just clones
 // the cached scene — the expensive parse NEVER hits the main thread during descent.
 const _pcCache = {};   // UPPERCASE code → Promise<gltf>
+window.__pcPreload = function(c){ try{ return _pcPreload(c); }catch(_){ return null; } };   // the picker preloads an operative the moment you click it
 function _pcPreload(code){
   if(!code) return;
   code = String(code).toUpperCase();
@@ -3691,12 +3692,12 @@ function _loadHero(file, gen){
     if(file.indexOf('hero')===0){ setTimeout(function(){ _addClipsFrom('/assets/player/hero-run.glb'); _addClipsFrom('/assets/player/hero-rigged.glb'); }, 4000); }
   }, undefined, ()=>{   // hero-walk → robot → the committed SHADDAI agent body (player/*.glb are gitignored, so deploys only have the last)
     if(gen!==_playerRigGen) return;   // superseded: don't restart the fallback chain over a picked operative
-    if(file==='hero-walk.glb') _loadHero('robot.glb', gen); else if(file==='robot.glb') _loadHero('/assets/agents/SHADDAI.glb', gen); else console.warn('player model failed; capsule avatar kept'); });
+    if(file==='hero-walk.glb') _loadHero('robot.glb', gen); else if(file==='robot.glb') _loadHero(window.WorldOperatives ? window.WorldOperatives.glbFor(window.WorldOperatives.defaultCode()) : '/assets/agents/SHADDAI.glb', gen); else console.warn('player model failed; capsule avatar kept'); });
 }
 // Always load a default player body at boot — this is the safety net that guarantees the player
 // has a body even if the picker's onArrive never fires setPlayerCharacter (removing it left the
 // player bodiless = "models don't load"). The picked operative swaps this out on arrival.
-_loadHero('hero-walk.glb');  // ORIGINAL SHADDAI hero (Meshy-rigged). Falls back to robot.glb if missing.
+setTimeout(function(){ if(!playerAvatar.children.length) _loadHero('hero-walk.glb'); }, 22000);   // safety net only: a picked operative normally sets the body first (saves 3 requests + 1.3 MB at boot)
 
 // ── PLAY AS A CHOSEN OPERATIVE: swap the player body for that agent's real GLB (from the spawn picker) ──
 // Uses _pcCache — the GLB was preloaded during sky-dive, so .then() fires after the next microtask
@@ -4578,7 +4579,7 @@ window.removeAgent = function(a){
     try{ window.__worldWarmup && window.__worldWarmup(); }catch(_){}  // warm the 3D pipeline behind the warp → kills the reveal hitch
     btn.style.transition='transform .18s,opacity .3s'; btn.style.transform='scale(1.35)'; btn.style.opacity='0';
     // Kick off audio + STAGGERED character preloads NOW (during the ~1.5s warp) so they're ready on landing.
-    (window.WorldOperatives ? window.WorldOperatives.list().filter(function(o){ return o.owned; }).map(function(o){ return o.code; }) : AGENTS.map(function(a){ return a.codename; })).forEach(function(c, i){ setTimeout(function(){ _pcPreload(c); }, i * 500); });   // only the operatives you own (bases are free; premium preload once unlocked)
+    (window.WorldOperatives ? [window.WorldOperatives.defaultCode()] : AGENTS.map(function(a){ return a.codename; })).forEach(function(c, i){ setTimeout(function(){ _pcPreload(c); }, i * 500); });   /* LOAD SPEED: only the default operative (the others load when you click them in the picker) - was all 8 forge bases = 28 MB */   // only the operatives you own (bases are free; premium preload once unlocked)
     // Owner: no background music. Skip the ambient synth bed (_audio.start) and the radio auto-start;
     // keep only the one-shot warp SFX. The radio can still be started manually from the stations UI.
     try{ if(_audio && !LITE){ _audio.playSFX('warp'); } }catch(e){}
