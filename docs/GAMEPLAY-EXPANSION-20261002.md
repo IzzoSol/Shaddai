@@ -49,7 +49,7 @@ Existing pieces to hook: `world-quests.js` (daily board, QUILL library), `world-
     - Passive-mode players cannot be hit or loot; Void ignores the toggle.
 
 ## Done so far (running list)
-- Race modes + personal bests · hoverboard idle sway/lights/trick flashes · Obsidian board from ref · seated riders in cars + glass cabins · taming rules · passive/fight mode + Void forced fight · realm hazards wired (gas/cold/heat, HP floor 25) · Grid districts (Campus/Commons/Plots/Race) + named streets · **walkable stairs in interiors (colliders + treads; landing/roof access still to do)**
+- Race modes + personal bests · hoverboard idle sway/lights/trick flashes · Obsidian board from ref · seated riders in cars + glass cabins · taming rules · passive/fight mode (Backslash key; K is Kick) + Void forced fight · realm hazards wired (gas/cold/heat, HP floor 25) · Grid districts (Campus/Commons/Plots/Race) + named streets · **walkable stairs in interiors (colliders + treads; landing/roof access still to do)**
 
 ## Realm hazards and protective gear (BUILT: `public/world-realm-hazards.js`, 6 tests)
 - **Castle realm**: crowded with enemies; purple lava under the bridge (contact damage) and poison gas. Gas needs a **gas mask level 10** for full protection; a lower mask protects proportionally (level 5 = about half).
@@ -67,6 +67,11 @@ Existing pieces to hook: `world-quests.js` (daily board, QUILL library), `world-
 ## Realm-driven living (IDEA)
 - Players pick the realm they live, work and upgrade in. Each realm gets its own home styles, villages, community centre, arcade (duplicates allowed per realm), shops and a perk: Arctic = snowboarding, Lava realm = cheaper forging, and so on.
 - This is why the **street, neighbourhood, home and office organization must be cleaned up first**: one consistent grid, naming and building-slot system that every realm and every later layer (underground, sea, sky) can reuse.
+
+## Floating billboards and ad space (IDEA, owner 2026-10-02; reference image: a skyline of floating billboards and screens)
+- Skyline billboards floating over the Grid and the realm hubs, each a **rentable ad slot**. Content: real **news headlines, token prices, stock tickers, signals**, or a renter's own ad / project / clan banner.
+- Revenue stream: slot rental (Sparks or payment), premium slots by district and height, sponsored cosmetics. Renters can be clans, creators, brands and agents.
+- Build notes: instanced quads with a canvas/atlas texture refreshed on a timer (few draw calls); a slot table (id, position, size, renter, content feed, expiry); feeds come from the existing markets/signals engine and a news source; moderation + report flow before anything user-supplied is shown; the Race district and Commons plazas get the biggest boards, readable from the street.
 
 ## Bots, play modes, mobile (IDEA)
 - **Agent-vs-agent in real 3D**: humanoid bots play the hoverskate park, races and the Colosseum in the world itself, with spectator seating. You can watch, or take over.
