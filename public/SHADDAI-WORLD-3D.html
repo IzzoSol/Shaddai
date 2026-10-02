@@ -4991,6 +4991,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootFarm3D(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFarm3D || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__farm3d = window.buildFarm3D({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.farm3d = window.__farm3d; }, 1000); })();
+// ── RACE RESET KEY (T): put yourself back on the course (+3 s, 4 s cooldown). Ignored when a dialogue is open or no race is running. ──
+addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) return; try{ if(window.__raceRun && !(window._dialogue && window._dialogue.isOpen && window._dialogue.isOpen())) window.__raceRun.manualReset(); }catch(_){} });
 // ── DRAGON GATE CIRCUIT landmarks (world-race-landmarks.js): torii start gate, lantern posts, cones, faint track ribbon ──
 (function bootRaceLandmarks(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
@@ -5079,7 +5081,8 @@ window.__travel = {
         if(e.type === 'finish' && e.id === 'you' && window.__mountRide) setTimeout(function(){ window.__mountRide.setRaceMode(false); }, 7000);
         const N = window.Navi; const say = function(m){ if(N && N.toast) N.toast(m); else if(window.__toast) window.__toast(m); };
         if(e.type === 'go') say('GO!'); else if(e.type === 'crate') say('Item: ' + e.item + '  (R to use)'); else if(e.type === 'pad') say('TURBO');
-        else if(e.type === 'hit' && e.id === 'you') say(e.blocked ? 'Ward blocked it' : ('Hit -' + e.dmg + ' HP ' + (e.why || ''))); else if(e.type === 'respawn' && e.id === 'you'){ playerPos.x = e.x; playerPos.z = e.z; say('Respawn at the last checkpoint'); }
+        else if(e.type === 'hit' && e.id === 'you') say(e.blocked ? 'Ward blocked it' : ('Hit -' + e.dmg + ' HP ' + (e.why || ''))); else if(e.type === 'respawn' && e.id === 'you'){ playerPos.x = e.x; playerPos.z = e.z; try{ const hs = hover && hover.state && hover.state(); if(hs && e.yaw != null){ hs.x = e.x; hs.z = e.z; hs.psi = e.yaw; hs.v = 0; } if(e.yaw != null) _avatarYaw = e.yaw; }catch(_){} say(e.why === 'out of bounds' ? 'Out of bounds - back on the course (+' + (e.penaltyS||3) + 's)' : e.why === 'reset' ? 'Reset to the course (+' + (e.penaltyS||3) + 's)' : 'Respawn at the last checkpoint'); }
+        else if(e.type === 'warn'){ say(e.kind === 'wrongway' ? 'WRONG WAY - turn around' : e.kind === 'oob' ? 'OUT OF BOUNDS - return to the course (' + e.left + 's)' : 'Off the course'); }
         else if(e.type === 'finish') say('FINISH  P' + e.place + '/' + e.of + '  ' + e.timeS + 's  +' + e.prize + ' Sparks');
       } });
       // Navi pins: the 7 rooms + the gate

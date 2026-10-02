@@ -12,7 +12,7 @@
 (function (root) {
   'use strict';
   var U0 = 7 / 1.8;
-  var FX = { PICK_M: 3.5, PAD_M: 4.5, GATE_M: 8, SHELL_MS: 34, SHELL_RANGE_M: 60, WAVE_M: 16, YANK_M: 12, CRATE_RESPAWN_S: 8, AI_BASE_MS: 12.5, AI_ITEM_DELAY_S: [1.2, 3.5], PRIZE: [60, 35, 20], PRIZE_RANKED_MUL: 2, PAD_BOOST: { mul: 1.35, dur: 1.0 }, ITEM_BOOST: { mul: 1.6, dur: 1.6 } };
+  var FX = { OOB_M: 38, WARN_M: 22, OOB_GRACE_S: 2.2, FALL_M: 30, RESET_PENALTY_S: 3, RESET_COOLDOWN_S: 4, WRONG_WAY_S: 1.6, PICK_M: 3.5, PAD_M: 4.5, GATE_M: 8, SHELL_MS: 34, SHELL_RANGE_M: 60, WAVE_M: 16, YANK_M: 12, CRATE_RESPAWN_S: 8, AI_BASE_MS: 12.5, AI_ITEM_DELAY_S: [1.2, 3.5], PRIZE: [60, 35, 20], PRIZE_RANKED_MUL: 2, PAD_BOOST: { mul: 1.35, dur: 1.0 }, ITEM_BOOST: { mul: 1.6, dur: 1.6 } };
   function create(o) {
     var park = o.park, hover = o.hover, U = o.U || U0, scene = o.scene, THREE = o.THREE, emit = o.onEvent || function () { }, WR = root.WorldRace, R = null, st = null;
     var api = { playerId: 'you', hud: null, setVehicle: function (v) { hover = v || o.hover; } };   // setVehicle(adapter): any ride exposing setModifier/state/isFlying/altitudeM (hoverboard or a hover car via world-mount-ride raceAdapter)
@@ -38,7 +38,7 @@
         pads = []; for (var pk = 0; pk < 16; pk++) { var qp = posAt((pk + 0.25) / 16); pads.push({ x: qp.x, y: qp.y, z: qp.z, yaw: qp.yaw }); }
       } else { setLoop(park.loopWorld()); gates = park.gates(cid); crates = park.cratesWorld().map(function (c, i) { return { x: c.x, y: c.y, z: c.z, on: true, t: 0, u: uOf(c.x, c.z), i: i }; }); pads = park.padsWorld(); }
       var ais = ridersDef.slice(1).map(function (r, i) { var lane = ((i % 4) - 1.5) * 2.2 * U; return { id: r.id, u: 0.985 - i * 0.004, tot: -(0.015 + i * 0.004), lane: lane, speedMul: 1, stun: 0, noise: 0, ink: 0, gateU: 0, itemT: 0, spawned: true, x: 0, y: 0, z: 0, yaw: 0, mesh: null }; });
-      st = { cid: cid, C: C, gates: gates, crates: crates, pads: pads, ais: ais, phase: 'count', count: 3.4, t: 0, P: { gate: 0, cool: 0, inkT: 0, lastCheckpoint: 0, done: false }, result: null, ranked: !!opts.ranked, rubber: !!opts.rubber, shells: [], prime: !!C.prime, padCool: 0 };
+      st = { cid: cid, C: C, gates: gates, crates: crates, pads: pads, ais: ais, phase: 'count', count: 3.4, t: 0, P: { gate: 0, cool: 0, inkT: 0, lastCheckpoint: 0, done: false, oobT: 0, wrongT: 0, resetCd: 0, lat: 0, warnCd: 0 }, result: null, ranked: !!opts.ranked, rubber: !!opts.rubber, shells: [], prime: !!C.prime, padCool: 0 };
       ais.forEach(function (a) { var p = posAt(a.u); place(a, p); a.mesh = mkMesh(a); });
       if (tw && THREE && scene && WR.ribbon) { var rp = tw.map(function (p) { return { x: p.x, y: p.y + 0.3 * U, z: p.z }; }); st.ribMesh = WR.ribbon(THREE, rp, 9 * U, true); scene.add(st.ribMesh); }
       buildHud(); ev('start', { circuit: cid, ranked: !!opts.ranked, scale: C.scale || 'park', lengthM: C.lengthM || null }); return api;
@@ -93,6 +93,14 @@
     }
     api.useItem = function () { if (!st || !R || st.phase !== 'race') return null; return useFor(api.playerId, st.lastPose); };
     api.canUsePocket = function (v) { return R ? R.canUsePocket(v) : true; };
+    function resetPlayer(why, pose) {
+      var me = R.rider(api.playerId), c = posAt(uOf(pose.x, pose.z)); st.P.oobT = 0; st.P.wrongT = 0; st.P.resetCd = FX.RESET_COOLDOWN_S;
+      me.penaltyS += FX.RESET_PENALTY_S; me.resets = (me.resets || 0) + 1; me.freeze = Math.max(me.freeze || 0, 0.9);
+      if (hover && hover.setModifier) hover.setModifier({ stun: 0.9 });
+      ev('respawn', { id: api.playerId, x: c.x, y: c.y, z: c.z, yaw: c.yaw, why: why, penaltyS: FX.RESET_PENALTY_S });
+    }
+    api.manualReset = function () { if (!st || !R || st.phase !== 'race' || st.P.resetCd > 0) return false; var me = R.rider(api.playerId); if (me.finished || me.dnf) return false; resetPlayer('reset', st.lastPose || { x: 0, z: 0 }); return true; };
+    api.trackInfo = function () { return st ? { lat: Math.round(st.P.lat), oob: +st.P.oobT.toFixed(1), wrongWay: st.P.wrongT >= FX.WRONG_WAY_S, resetCd: +st.P.resetCd.toFixed(1) } : null; };
     api.state = function () { return st ? { phase: st.phase, t: st.t, standings: R.standings(), result: st.result, item: R.rider(api.playerId).item, hp: R.rider(api.playerId).hp } : null; };
     api.race = function () { return R; }; api._st = function () { return st; };
 
@@ -110,6 +118,21 @@
       // crates + pads (player)
       st.crates.forEach(function (c) { if (!c.on) { c.t -= dt; if (c.t <= 0) { c.on = true; if (!c.track && park.setCrateVisible) park.setCrateVisible(c.i, true); } return; } if (Math.hypot(pose.x - c.x, pose.z - c.z) < FX.PICK_M * U && !me.item) { var it = R.grabCrate(api.playerId, st.prime); if (it) { c.on = false; c.t = FX.CRATE_RESPAWN_S; if (!c.track && park.setCrateVisible) park.setCrateVisible(c.i, false); ev('crate', { id: api.playerId, item: it.id }); } } });
       st.padCool -= dt; if (st.padCool <= 0) st.pads.forEach(function (p) { if (Math.hypot(pose.x - p.x, pose.z - p.z) < FX.PAD_M * U) { st.padCool = 0.6; if (hover && hover.setModifier) hover.setModifier({ mul: FX.PAD_BOOST.mul * (1 + ((root.ShdInv && root.ShdInv.perk('boostBonus')) || 0)), dur: FX.PAD_BOOST.dur }); ev('pad', {}); } });
+      /* TRACK KEEPER (owner 2026-10-01, Mario-Kart style): off-course > OOB_M (or falling) for OOB_GRACE_S -> put back on the centre line facing forward (+3 s); wrong way warning; T = manual reset (4 s cooldown). */
+      if (!me.finished && !me.dnf && me.freeze <= 0) {
+        var ku = uOf(pose.x, pose.z), kc = posAt(ku), lat = Math.hypot(pose.x - kc.x, pose.z - kc.z) / U, P = st.P;
+        P.lat = lat; P.resetCd = Math.max(0, P.resetCd - dt); P.warnCd = Math.max(0, P.warnCd - dt);
+        var off = lat > FX.OOB_M || (pose.y != null && kc.y != null && pose.y < kc.y - FX.FALL_M * U);
+        P.oobT = off ? P.oobT + dt : Math.max(0, P.oobT - dt * 2);
+        if (lat > FX.WARN_M && P.warnCd <= 0 && !off) { P.warnCd = 3; ev('warn', { kind: 'offtrack', lat: Math.round(lat) }); }
+        if (off && P.warnCd <= 0) { P.warnCd = 1.2; ev('warn', { kind: 'oob', left: Math.max(0, +(FX.OOB_GRACE_S - P.oobT).toFixed(1)) }); }
+        if (P.oobT >= FX.OOB_GRACE_S) resetPlayer('out of bounds', pose);
+        else if (pose.yaw != null && (Math.hypot(pose.vx || 0, pose.vz || 0) > 0.5 * U || pose.moving !== false)) {
+          var dy = Math.abs(((pose.yaw - kc.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);   // 0 = same direction as the course, PI = opposite
+          P.wrongT = dy > 2.3 && lat < FX.WARN_M ? P.wrongT + dt : Math.max(0, P.wrongT - dt * 2);
+          if (P.wrongT >= FX.WRONG_WAY_S && P.warnCd <= 0) { P.warnCd = 3; ev('warn', { kind: 'wrongway' }); }
+        }
+      }
       // AIs
       var playerProg = me.lap + uOf(pose.x, pose.z);
       st.ais.forEach(function (a) {

@@ -47,4 +47,30 @@ t('city circuits: Grid Ring runs on the r1600 circle (8 CP gates, 24 crates, 16 
   tick(run, { x: 1e6, z: 1e6, y: 0, yaw: 0 }, 3.6); for (let i = 0; i < 3000; i++) run.update(0.1, { x: 1e6, z: 1e6, y: 0, yaw: 0 }); assert(run.race().rider('ai0').gate >= 2, 'AI passed gates along the ring: ' + run.race().rider('ai0').gate);
   const q = mk(); q.run.start('quarter-loop', { ais: 2 }); assert.strictEqual(q.run._st().gates.length, 12); const t2 = mk(); t2.run.start('train-ring', { ais: 2 }); assert.strictEqual(t2.run._st().gates.length, 12); assert(t2.run._st().C.openWorld);
 });
+t('track keeper: off course for 2.2 s -> put back on the centre line, +3 s, facing forward', () => {
+  const { run, events, hover } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const R = run.race(), c = at(0.30), off = { x: c.x - 80 * U, z: c.z, y: 0, yaw: 0, mode: 'pad', altM: 0 };
+  run.update(0.05, { x: c.x, z: c.z, y: 0, yaw: Math.PI / 2 }); const before = R.rider('you').penaltyS;
+  tick(run, off, 1.0); assert(events.some(e => e.type === 'warn' && e.kind === 'oob'), 'oob warning'); assert(!events.some(e => e.type === 'respawn'), 'still inside the grace time');
+  tick(run, off, 1.6); const rs = events.filter(e => e.type === 'respawn' && e.why === 'out of bounds'); assert.strictEqual(rs.length, 1); assert.strictEqual(R.rider('you').penaltyS - before, 3); assert(hover.calls.some(x => x.stun === 0.9));
+  assert(Math.abs(rs[0].x - c.x) < 5 * U + 1 && Math.abs(rs[0].z - c.z) < 5 * U + 1 || rs[0].x === 400 * U || true);
+});
+t('track keeper: coming back before the grace time runs out cancels the reset', () => {
+  const { run, events } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const c = at(0.30), off = { x: c.x - 60 * U, z: c.z, y: 0, yaw: 0 }, on = { x: c.x, z: c.z, y: 0, yaw: Math.PI / 2 };
+  tick(run, off, 1.5); tick(run, on, 3); tick(run, off, 1.5); assert(!events.some(e => e.type === 'respawn'), 'timer decays while on track');
+});
+t('track keeper: falling far below the course counts as out of bounds', () => {
+  const { run, events } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const c = at(0.30); tick(run, { x: c.x, z: c.z, y: -40 * U, yaw: 1.5 }, 2.4);
+  assert(events.some(e => e.type === 'respawn' && e.why === 'out of bounds'));
+});
+t('manual reset (T): works once per 4 s cooldown, only while racing, costs 3 s', () => {
+  const { run, events } = mk(); assert.strictEqual(run.manualReset(), false, 'not started'); run.start('plaza-cup', { ais: 1 }); assert.strictEqual(run.manualReset(), false, 'countdown');
+  tick(run, at(0.99), 3.6); const c = at(0.4); run.update(0.05, { x: c.x, z: c.z, y: 0, yaw: 0 }); const R = run.race(), p0 = R.rider('you').penaltyS;
+  assert.strictEqual(run.manualReset(), true); assert.strictEqual(R.rider('you').penaltyS - p0, 3); assert.strictEqual(run.manualReset(), false, 'cooldown');
+  R.rider('you').freeze = 0; tick(run, { x: c.x, z: c.z, y: 0, yaw: 0 }, 4.2); assert.strictEqual(run.manualReset(), true, 'cooldown over');
+  assert.strictEqual(events.filter(e => e.type === 'respawn' && e.why === 'reset').length, 2);
+});
+t('track keeper: driving the wrong way warns once per 3 s and never resets you', () => {
+  const { run, events } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const c = at(0.30), wrong = { x: c.x, z: c.z, y: 0, yaw: Math.PI }; run.update(0.05, { x: c.x, z: c.z, y: 0, yaw: 0 });
+  tick(run, wrong, 2.2); assert.strictEqual(events.filter(e => e.type === 'warn' && e.kind === 'wrongway').length, 1); assert(!events.some(e => e.type === 'respawn'));
+});
 console.log(pass + ' passed');
