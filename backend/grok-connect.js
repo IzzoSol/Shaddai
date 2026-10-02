@@ -13,6 +13,17 @@ const router = express.Router();
 const botStore = require('./arena/bot-store');
 const templates = require('./arena/bot-templates');
 
+let softAuth = (req, _res, next) => { req.userId = req.userId || 'local'; req.isAuthenticated = false; next(); };
+try { softAuth = require('./auth-guard').softAuth || softAuth; } catch (_) {}
+router.use(softAuth);
+
+// Importing a bot hands it tools and a brain, so it needs a real signed-in owner.
+// The owner is ALWAYS the verified identity, never a client-supplied ownerId.
+function requireSignedIn(req, res, next) {
+  if (req.isAuthenticated && req.userId && req.userId !== 'local') return next();
+  res.status(401).json({ ok: false, success: false, error: 'sign in to import a bot', signIn: '/' });
+}
+
 const connected = []; // in-memory roster of imported Grok bots (name -> ref)
 
 // Real dashboard tool loadout an imported Grok bot can use (must exist in TOOLS).
@@ -61,12 +72,13 @@ function buildAndRegisterBot({ name, persona, tools, ownerId, apiKey }) {
   };
   botStore.registerBot(bot);
   const eng = registerEngineAgent(bot, bot.persona);
-  connected.push({ id: bot.id, name: bot.name, hasKey: bot.hasKey, tools: eng.tools });
+  connected.push({ id: bot.id, ownerId: bot.ownerId, name: bot.name, hasKey: bot.hasKey, tools: eng.tools });
   return { bot, tools: eng.tools };
 }
 
 router.get('/status', (req, res) => {
-  res.json({ connected: connected.length, bots: connected });
+  const mine = req.isAuthenticated ? connected.filter(b => b.ownerId === req.userId) : [];
+  res.json({ connected: mine.length, bots: mine.map(({ ownerId, ...b }) => b) });
 });
 
 // List importable bot templates.
@@ -75,7 +87,7 @@ router.get('/templates', (req, res) => {
 });
 
 // Import a bot from a template (optionally overriding the name).
-router.post('/templates/:id/import', (req, res) => {
+router.post('/templates/:id/import', requireSignedIn, (req, res) => {
   try {
     const tpl = templates.getTemplate(req.params.id);
     if (!tpl) return res.status(404).json({ error: 'template not found' });
@@ -84,7 +96,7 @@ router.post('/templates/:id/import', (req, res) => {
       name: name || tpl.name,
       persona: tpl.persona,
       tools: tpl.tools,
-      ownerId: (req.body && req.body.ownerId) || 'anon',
+      ownerId: req.userId,
       apiKey: (req.body && req.body.apiKey) || ''
     });
     res.json({
@@ -98,11 +110,11 @@ router.post('/templates/:id/import', (req, res) => {
   }
 });
 
-router.post('/connect', (req, res) => {
+router.post('/connect', requireSignedIn, (req, res) => {
   try {
     const { name, persona, apiKey, tools } = req.body || {};
     const { bot, tools: engTools } = buildAndRegisterBot({
-      name, persona, tools, ownerId: req.body.ownerId, apiKey
+      name, persona, tools, ownerId: req.userId, apiKey
     });
     res.json({
       success: true,
@@ -115,10 +127,10 @@ router.post('/connect', (req, res) => {
 });
 
 // Chat with an imported Grok bot directly (AURA-first, tools available via engine).
-router.post('/chat', async (req, res) => {
+router.post('/chat', requireSignedIn, async (req, res) => {
   const { id, message, provider = 'grok' } = req.body || {};
   const bot = botStore.getBot(id);
-  if (!bot) return res.status(404).json({ error: 'bot not found' });
+  if (!bot || bot.ownerId !== req.userId) return res.status(404).json({ error: 'bot not found' });
   try {
     const r = await fetch('http://localhost:' + (process.env.PORT || 3000) + '/llm/chat', {
       method: 'POST',
@@ -132,4 +144,6 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+router.buildAndRegisterBot = buildAndRegisterBot;
+router.connected = connected;
 module.exports = router;
