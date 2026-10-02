@@ -6,8 +6,8 @@ const crypto = require('node:crypto');
 const fail = (status, error) => ({ ok: false, status, error });
 
 function createPaper({ file, now = Date.now, startBalance = 100000, maxSize = 10000, maxOpen = 10 }) {
-  let db = {};
-  try { db = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (_) { db = {}; }
+  let db = Object.create(null); // null prototype: owner ids like '__proto__' or 'constructor' are plain keys
+  try { Object.assign(db, JSON.parse(fs.readFileSync(file, 'utf8')) || {}); } catch (_) { db = Object.create(null); }
 
   function save() {
     fs.mkdirSync(path.dirname(file), { recursive: true });

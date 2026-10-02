@@ -58,3 +58,13 @@ test('corrupt ledger file starts fresh instead of crashing', () => {
   const file = tmp(); fs.writeFileSync(file, '{not json');
   assert.strictEqual(createPaper({ file }).portfolio({ owner: 'u', prices: {} }).cash, 100000);
 });
+
+test('owner ids that collide with Object.prototype keys get their own clean account', () => {
+  const p = createPaper({ file: tmp() });
+  for (const owner of ['__proto__', 'constructor', 'toString']) {
+    const o = p.open({ owner, signal: sig('buy', { id: owner }), sizeUsd: 100 });
+    assert.ok(o.ok, owner);
+    assert.strictEqual(p.portfolio({ owner, prices: {} }).openTrades.length, 1);
+  }
+  assert.strictEqual(({}).cash, undefined);
+});

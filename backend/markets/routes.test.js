@@ -58,3 +58,17 @@ test('paper open uses the SERVER signal (not client prices); unknown signal 404;
     assert.strictEqual((await fetch(b + '/paper')).status, 200);
   });
 });
+
+test('close refuses to guess a price when the symbol has no live quote (no free exit at entry)', async () => {
+  const noQuotes = { ...engine, quotes: async () => ({ quotes: [], errors: [{ adapter: 'yahoo', error: 'x' }], ts: 1 }) };
+  const app = express(); app.use(express.json());
+  app.use((req, _r, next) => { req.userId = 'u1'; next(); });
+  let closed = false;
+  app.use('/api/intel', createRouter({ engine: noQuotes, paper: { ...paper, close: () => { closed = true; return { ok: true, trade: {} }; } } }));
+  const srv = http.createServer(app).listen(0);
+  try {
+    const r = await fetch(`http://127.0.0.1:${srv.address().port}/api/intel/paper/close`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: 't1' }) });
+    assert.strictEqual(r.status, 409);
+    assert.strictEqual(closed, false);
+  } finally { srv.close(); }
+});

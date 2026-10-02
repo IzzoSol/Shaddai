@@ -36,7 +36,9 @@ function createRouter({ engine, paper }) {
     const id = String((req.body && req.body.id) || '');
     const open = paper.portfolio({ owner: String(req.userId), prices: {} }).openTrades.find((t) => t.id === id);
     const q = open && quotes.find((x) => x.symbol === open.symbol);
-    const out = paper.close({ owner: String(req.userId), id, price: q ? q.price : (open ? open.entry : NaN) });
+    // Never guess a price: closing at entry would give a free exit from a losing trade and corrupt strategy P&L.
+    if (open && !q) return res.status(409).json({ ok: false, error: 'no live price for this symbol right now, try again shortly' });
+    const out = paper.close({ owner: String(req.userId), id, price: q ? q.price : NaN });
     res.status(out.ok ? 200 : out.status).json(out);
   }));
 
