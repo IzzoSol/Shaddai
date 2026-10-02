@@ -4280,6 +4280,16 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 #shdOnboardBtn{ right:22px !important; bottom:126px !important; left:auto !important; top:auto !important; transform:none !important; }
 /* tab-dock "Move" is a niche control; the sidebar is the default. Still reachable via Settings. */
 #tbNavMoverWrap{ display:none !important; }
+/* v101.3 readability floor: the lint found 100+ elements per tab under 9.5px (inline font-size 6-9px). Lift them, keep hierarchy. */
+[style*="font-size:6px"],[style*="font-size: 6px"],[style*="font-size:7px"],[style*="font-size: 7px"],[style*="font-size:8px"],[style*="font-size: 8px"]{ font-size:10px !important; }
+[style*="font-size:8.5px"],[style*="font-size: 8.5px"],[style*="font-size:9px"],[style*="font-size: 9px"],[style*="font-size:9.5px"]{ font-size:11px !important; }
+/* class-based tiny labels found by dash-visual-lint */
+body :is(.dl-lbl,.dl-badge,.agent-stat,.quick-meta,.stat-label,.op-chip,.op-tool,.op-sec-label,.op-stat,.op-designation,.shdwf-agents,.shdwf-run,.agt-name,.agt-port,.kanban-col-head,.hud-lab,.agt-last,.mm-sub,.mm-chip-free,.mm-badge,.aura-sec-n,.aura-mut,.tk,.ts,.rpg-ability-lv,.np-stat-lbl,.hq-stat){ font-size:10.5px !important; }
+/* tap targets: buttons never smaller than 30px tall; 44px on touch */
+body .btn, body button.btn-ghost, body button.btn-accent, body button.btn-secondary{ min-height:30px; }
+@media (pointer:coarse){ body .btn, body button{ min-height:40px; } }
+/* guest badge sits right of the side rail instead of on top of it */
+body.ly-sb #shdGuestBadge{ left:226px !important; bottom:12px !important; }
 /* v101.3 baseline: anything without its own styling matches the theme instead of falling back to browser-default grey */
 body button:not([class]):not([style]){ font:600 11px 'Rajdhani','Share Tech Mono',monospace; letter-spacing:.08em; text-transform:uppercase; background:rgba(0,229,160,.08); color:#cfeee4; border:1px solid rgba(0,229,160,.35); border-radius:6px; padding:8px 14px; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
 body button:not([class]):not([style]):hover{ background:rgba(0,229,160,.18); border-color:rgba(0,229,160,.7); color:#fff; }
@@ -50465,6 +50475,11 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       // fallback: keyword-based if agents offline
       const agents = Object.keys(CONSENSUS_WEIGHTS);
       votes = agents.map(name => ({ agent: name, vote: 'HOLD', confidence: 0, weight: CONSENSUS_WEIGHTS[name], offline: true }));
+      weightedScore = 0; consensus = 'HOLD';
+    }
+    // a reachable server can still answer without votes (error JSON): treat as offline instead of crashing
+    if (!Array.isArray(votes)) {
+      votes = Object.keys(CONSENSUS_WEIGHTS).map(name => ({ agent: name, vote: 'HOLD', confidence: 0, weight: CONSENSUS_WEIGHTS[name], offline: true }));
       weightedScore = 0; consensus = 'HOLD';
     }
     // Update UI

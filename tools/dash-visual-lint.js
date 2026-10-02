@@ -16,7 +16,7 @@
       if (!visible(el)) return;
       var s = getComputedStyle(el), bg = rgb(s.backgroundColor);
       // browser-default look: light grey/white fill on a dark UI
-      if (bg && bg.a > .5 && lum(bg) > .6) out.defaultCtl.push(sel(el));
+      if (bg && bg.a > .5 && lum(bg) > .6 && Math.max(bg.r, bg.g, bg.b) - Math.min(bg.r, bg.g, bg.b) < 24) out.defaultCtl.push(sel(el));   // grey/white fill only (accent fills are intentional)
       var r = el.getBoundingClientRect();
       if ((r.height < 26 || r.width < 26) && el.tagName !== 'TEXTAREA') out.tiny.push(sel(el) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
       if (el.tagName === 'BUTTON' && !(el.textContent || '').trim() && !el.getAttribute('aria-label') && !el.getAttribute('title')) out.unnamed.push(sel(el));
@@ -49,7 +49,7 @@
       if (!el || !visible(el)) continue;
       var r = lintRoot(el);
       res.push({ view: name, defaultCtl: r.defaultCtl.length, tiny: r.tiny.length, smallText: r.smallText.length, lowContrast: r.lowContrast.length, unnamed: r.unnamed.length, brokenImg: r.brokenImg.length, overflowX: r.overflowX,
-        worst: { defaultCtl: top(r.defaultCtl, 3), tiny: top(r.tiny, 3), lowContrast: top(r.lowContrast, 3), unnamed: top(r.unnamed, 3) } });
+        worst: { smallText: top(r.smallText, 5), defaultCtl: top(r.defaultCtl, 3), tiny: top(r.tiny, 3), lowContrast: top(r.lowContrast, 3), unnamed: top(r.unnamed, 3) } });
     }
     // fixed-position overlap (global)
     var fx = [].filter.call(document.querySelectorAll('body *'), function (e) { var s = getComputedStyle(e); return s.position === 'fixed' && visible(e); })
