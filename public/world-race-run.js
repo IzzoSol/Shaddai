@@ -38,7 +38,7 @@
         pads = []; for (var pk = 0; pk < 16; pk++) { var qp = posAt((pk + 0.25) / 16); pads.push({ x: qp.x, y: qp.y, z: qp.z, yaw: qp.yaw }); }
       } else { setLoop(park.loopWorld()); gates = park.gates(cid); crates = park.cratesWorld().map(function (c, i) { return { x: c.x, y: c.y, z: c.z, on: true, t: 0, u: uOf(c.x, c.z), i: i }; }); pads = park.padsWorld(); }
       var ais = ridersDef.slice(1).map(function (r, i) { var lane = ((i % 4) - 1.5) * 2.2 * U; return { id: r.id, u: 0.985 - i * 0.004, tot: -(0.015 + i * 0.004), lane: lane, speedMul: 1, stun: 0, noise: 0, ink: 0, gateU: 0, itemT: 0, spawned: true, x: 0, y: 0, z: 0, yaw: 0, mesh: null }; });
-      st = { cid: cid, C: C, gates: gates, crates: crates, pads: pads, ais: ais, phase: 'count', count: 3.4, t: 0, P: { gate: 0, cool: 0, inkT: 0, lastCheckpoint: 0, done: false, oobT: 0, wrongT: 0, resetCd: 0, lat: 0, warnCd: 0 }, result: null, ranked: !!opts.ranked, rubber: !!opts.rubber, shells: [], prime: !!C.prime, padCool: 0 };
+      st = { cid: cid, C: C, gates: gates, crates: crates, pads: pads, ais: ais, phase: 'count', count: 3.4, t: 0, P: { gate: 0, cool: 0, inkT: 0, lastCheckpoint: 0, done: false, oobT: 0, wrongT: 0, resetCd: 0, lat: 0, warnCd: 0, drift: { active: false, dir: 0, charge: 0, level: 0 }, slipT: 0, slipOn: false, lx: null, lz: null, lyaw: null, speed: 0, yawRate: 0, lapSeen: 0, lapStart: 0, lapTimes: [], early: false, rocket: false }, result: null, ranked: !!opts.ranked, rubber: !!opts.rubber, shells: [], prime: !!C.prime, padCool: 0 };
       ais.forEach(function (a) { var p = posAt(a.u); place(a, p); a.mesh = mkMesh(a); });
       if (tw && THREE && scene && WR.ribbon) { var rp = tw.map(function (p) { return { x: p.x, y: p.y + 0.3 * U, z: p.z }; }); st.ribMesh = WR.ribbon(THREE, rp, 9 * U, true); scene.add(st.ribMesh); }
       buildHud(); ev('start', { circuit: cid, ranked: !!opts.ranked, scale: C.scale || 'park', lengthM: C.lengthM || null }); return api;
@@ -55,11 +55,11 @@
       var ink = document.createElement('div'); ink.id = 'rhInk'; ink.style.cssText = 'position:fixed;inset:0;z-index:7450;pointer-events:none;opacity:0;transition:opacity .2s;background:radial-gradient(circle at 30% 40%,#000 0 14%,transparent 15%),radial-gradient(circle at 70% 55%,#000 0 18%,transparent 19%),radial-gradient(circle at 50% 30%,#000 0 12%,transparent 13%)';
       h.appendChild(big); h.appendChild(ink); document.body.appendChild(h); api.hud = h;
     }
-    var ICON = { boost: '▲ BOOST', shell: '● SHELL', wave: '◗ WAVE', ink: '◍ INK', ward: '◈ WARD', yank: '⬍ YANK', sway: '≈ SWAY', pinch: '✦ PINCH', triple: '●●● TRIPLE', blue: '◆ BLUE LINE' };
+    var ICON = { seeker: '➤ SEEKER', boost: '▲ BOOST', shell: '● SHELL', wave: '◗ WAVE', ink: '◍ INK', ward: '◈ WARD', yank: '⬍ YANK', sway: '≈ SWAY', pinch: '✦ PINCH', triple: '●●● TRIPLE', blue: '◆ BLUE LINE' };
     function hudUpdate() {
       if (!api.hud || !R) return; var me = R.rider(api.playerId), s = R.standings(), mine = s.filter(function (x) { return x.id === api.playerId; })[0], q = function (id) { return api.hud.querySelector(id); };
-      q('#rhLap').textContent = 'LAP ' + Math.min(R.circuit.laps, me.lap + 1) + '/' + R.circuit.laps; q('#rhPlace').textContent = 'P' + (mine ? mine.place : '-') + '/' + s.length; q('#rhItem').textContent = me.item ? ICON[me.item] : (me.ward ? '◈ WARD ON' : '— no item —');
-      q('#rhHp').style.width = me.hp + '%'; q('#rhTime').textContent = (st.phase === 'race' ? st.t : 0).toFixed(1) + 's'; var big = q('#rhBig'); big.textContent = st.phase === 'count' ? (st.count > 0.4 ? String(Math.ceil(st.count - 0.4)) : 'GO!') : ''; q('#rhInk').style.opacity = st.P.inkT > 0 ? '0.92' : '0';
+      var lt = st.P.lapTimes, fmt = function (x) { var m = Math.floor(x / 60); return m + ':' + ('0' + (x - m * 60).toFixed(1)).slice(-4); }; q('#rhLap').textContent = 'LAP ' + Math.min(R.circuit.laps, me.lap + 1) + '/' + R.circuit.laps + (lt.length ? '  last ' + fmt(lt[lt.length - 1]) + '  best ' + fmt(Math.min.apply(null, lt)) : '') + (st.P.drift.active ? '  DRIFT ' + ['', 'BLUE', 'ORANGE', 'PURPLE'][st.P.drift.level] : '') + (st.P.slipOn ? '  DRAFT' : ''); q('#rhPlace').textContent = 'P' + (mine ? mine.place : '-') + '/' + s.length; q('#rhItem').textContent = me.item ? ICON[me.item] : (me.ward ? '◈ WARD ON' : '— no item —');
+      q('#rhHp').style.width = me.hp + '%'; q('#rhTime').textContent = fmt(st.phase === 'race' ? st.t : 0); var big = q('#rhBig'); big.textContent = st.phase === 'count' ? (st.count > 0.4 ? String(Math.ceil(st.count - 0.4)) : 'GO!') : ''; q('#rhInk').style.opacity = st.P.inkT > 0 ? '0.92' : '0';
     }
 
     /* ── helpers ── */
@@ -77,13 +77,14 @@
       if (res.respawned) { if (isMe) { var g = st.gates[Math.max(0, R.rider(targetId).gate - 1)] || st.gates[0]; ev('respawn', { id: targetId, x: g.x, z: g.z, y: g.y }); if (hover && hover.setModifier) hover.setModifier({ stun: 1.4 }); } else { var a2 = st.ais.filter(function (x) { return x.id === targetId; })[0]; if (a2) a2.stun = 1.4; } }
       ev('hit', { id: targetId, dmg: dmg, why: why || '', blocked: !!res.blocked, respawned: !!res.respawned }); return res;
     }
-    function spawnShell(srcId, targetId, dmg) { var sp = riderPos(srcId, st.lastPose); if (!sp || !targetId) return; var sh = { from: srcId, to: targetId, x: sp.x, z: sp.z, y: (sp.y || 0) + 1.2 * U, dmg: dmg, life: 4, mesh: null }; if (THREE && scene) { sh.mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5 * U, 10, 8), new THREE.MeshBasicMaterial({ color: 0x00D4FF })); scene.add(sh.mesh); } st.shells.push(sh); ev('shell', { from: srcId, to: targetId }); }
+    function spawnShell(srcId, targetId, dmg, kind) { var sp = riderPos(srcId, st.lastPose); if (!sp || !targetId) return; var seek = kind === 'seeker', sh = { from: srcId, to: targetId, x: sp.x, z: sp.z, y: (sp.y || 0) + 1.2 * U, dmg: dmg, life: seek ? 9 : 4, kind: kind || 'shell', mesh: null }; if (THREE && scene) { sh.mesh = seek ? new THREE.Mesh(new THREE.ConeGeometry(0.45 * U, 1.6 * U, 8), new THREE.MeshBasicMaterial({ color: 0xff3a3a })) : new THREE.Mesh(new THREE.SphereGeometry(0.5 * U, 10, 8), new THREE.MeshBasicMaterial({ color: 0x00D4FF })); if (seek) sh.mesh.rotation.x = Math.PI / 2; scene.add(sh.mesh); } st.shells.push(sh); ev(seek ? 'seeker' : 'shell', { from: srcId, to: targetId }); if (seek && targetId === api.playerId) ev('warn', { kind: 'incoming' }); }
     function useFor(id, pose) {
       var r = R.rider(id); if (!r || !r.item || r.freeze > 0) return null; var item = r.item, me = riderPos(id, pose);
       if (item === 'ward' || item === 'boost') { var out = R.useItem(id); if (item === 'boost') { if (id === api.playerId) { if (hover && hover.setModifier) hover.setModifier({ mul: FX.ITEM_BOOST.mul * (1 + ((root.ShdInv && root.ShdInv.perk('boostBonus')) || 0)), dur: FX.ITEM_BOOST.dur }); } else { var a = st.ais.filter(function (x) { return x.id === id; })[0]; if (a) a.boostT = FX.ITEM_BOOST.dur; } r.boosting = false; ev('boost', { id: id }); } else ev('ward', { id: id }); return out; }
       r.item = null;
       if (item === 'shell') { var t1 = nearestAhead(id, pose, FX.SHELL_RANGE_M); if (t1) spawnShell(id, t1, 22); else ev('fizzle', { id: id }); }
       else if (item === 'triple') { var t2 = nearestAhead(id, pose, FX.SHELL_RANGE_M); if (t2) { [0, 0.25, 0.5].forEach(function (d, k) { setTimeout(function () { if (R && st) spawnShell(id, t2, 22); }, d * 1000); }); } else ev('fizzle', { id: id }); }
+      else if (item === 'seeker') { var f2 = firstPlaceId(id); if (f2) spawnShell(id, f2, 30, 'seeker'); else ev('fizzle', { id: id }); }
       else if (item === 'blue') { var f = firstPlaceId(id); if (f) spawnShell(id, f, 30); }
       else if (item === 'wave') { R.standings().forEach(function (s) { if (s.id === id) return; var p = riderPos(s.id, pose); if (p && dist(me, p) < FX.WAVE_M * U) hitRider(s.id, 4, 0.6, 'wave'); }); ev('wave', { id: id }); }
       else if (item === 'ink') { var t3 = nearestAhead(id, pose, 60) || firstPlaceId(id); if (t3) { if (t3 === api.playerId) st.P.inkT = 2.5; else { var a3 = st.ais.filter(function (x) { return x.id === t3; })[0]; if (a3) a3.ink = 2.5; } ev('ink', { id: id, to: t3 }); } }
@@ -92,6 +93,8 @@
       else if (item === 'pinch') { var t5 = nearestAhead(id, pose, 40); if (t5) hitRider(t5, 0, 1.2, 'pinch'); }
       return { item: item };
     }
+    api.input = { drift: false, accel: false };   // host sets these each frame: drift (key X), accel (W) for the rocket start
+    api.setInput = function (i) { api.input.drift = !!(i && i.drift); api.input.accel = !!(i && i.accel); };
     api.useItem = function () { if (!st || !R || st.phase !== 'race') return null; return useFor(api.playerId, st.lastPose); };
     api.canUsePocket = function (v) { return R ? R.canUsePocket(v) : true; };
     function resetPlayer(why, pose) {
@@ -110,7 +113,12 @@
       if (!st || !R) return; dt = Math.min(dt, 0.1);
       if (!pose && hover && hover.state) { var hs = hover.state(); pose = { x: hs.x, y: hs.y, z: hs.z, yaw: hs.psi, mode: hover.isFlying && hover.isFlying() ? 'foil' : 'pad', altM: hover.altitudeM ? hover.altitudeM() : 0 }; }
       pose = pose || { x: 0, y: 0, z: 0, yaw: 0, mode: 'pad', altM: 0 }; st.lastPose = pose;
-      if (st.phase === 'count') { st.count -= dt; if (st.count <= 0) { st.phase = 'race'; R.start(); ev('go'); } hudUpdate(); return; }
+      if (st.phase === 'count') {
+        st.count -= dt; var Pc = st.P; if (api.input.accel && st.count > 1.5) Pc.early = true;   /* mashing the throttle too early = no rocket start */
+        if (api.input.accel && st.count <= 0.7 && !Pc.early) Pc.rocket = true;
+        if (st.count <= 0) { st.phase = 'race'; R.start(); ev('go'); if (Pc.rocket && hover && hover.setModifier) { hover.setModifier({ mul: 1.3, dur: 1.2 }); ev('rocket', {}); } else if (Pc.early) ev('warn', { kind: 'earlystart' }); Pc.lapStart = 0; }
+        hudUpdate(); return;
+      }
       if (st.phase === 'done') { hudUpdate(); return; }
       st.t += dt; R.update(dt); if (st.P.inkT > 0) st.P.inkT -= dt;
       // player gates
@@ -134,6 +142,19 @@
           if (P.wrongT >= FX.WRONG_WAY_S && P.warnCd <= 0) { P.warnCd = 3; ev('warn', { kind: 'wrongway' }); }
         }
       }
+      /* DRIFT + SLIPSTREAM + LAP SPLITS (owner 2026-10-02: Mario-Kart mechanics) */
+      { var P2 = st.P, spd = 0, yr = 0; if (P2.lx != null) { spd = Math.hypot(pose.x - P2.lx, pose.z - P2.lz) / U / Math.max(dt, 1e-4); var dyw = pose.yaw != null && P2.lyaw != null ? ((pose.yaw - P2.lyaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI : 0; yr = dyw / Math.max(dt, 1e-4); } P2.lx = pose.x; P2.lz = pose.z; P2.lyaw = pose.yaw; P2.speed = spd; P2.yawRate = yr;
+        if (!me.finished && !me.dnf && me.freeze <= 0) {
+          var dr = WR.driftStep(P2.drift, dt, { drift: api.input.drift, speed: spd, yawRate: yr });
+          if (dr.level !== P2.dLevel) { P2.dLevel = dr.level; if (dr.level) ev('drift', { level: dr.level }); }
+          if (dr.active && hover && hover.setModifier) hover.setModifier({ turn: yr * P2.drift.dir > 0 ? WR.DRIFT.turnIn : WR.DRIFT.turnOut, turnDur: 0.12 });
+          if (dr.released) { if (hover && hover.setModifier) hover.setModifier({ mul: dr.released.mul, dur: dr.released.dur }); ev('driftboost', { level: dr.released.level, mul: dr.released.mul, dur: dr.released.dur }); }
+          var others = st.ais.filter(function (a) { var rr = R.rider(a.id); return !rr.finished && !rr.dnf; }).map(function (a) { return { id: a.id, x: a.x, z: a.z, yaw: a.yaw }; });
+          var sl = pose.yaw != null ? WR.slipstream({ x: pose.x, z: pose.z, yaw: pose.yaw }, others, U) : null;
+          P2.slipT = sl ? P2.slipT + dt : Math.max(0, P2.slipT - dt * WR.SLIP.decayK);
+          var on = P2.slipT >= WR.SLIP.afterS; if (on) { if (hover && hover.setModifier) hover.setModifier({ mul: WR.SLIP.mul, dur: 0.2 }); } if (on !== P2.slipOn) { P2.slipOn = on; ev('slipstream', { on: on, behind: sl && sl.id }); }
+        }
+        if (me.lap > P2.lapSeen) { var lt = +(st.t - P2.lapStart).toFixed(2); P2.lapTimes.push(lt); P2.lapStart = st.t; P2.lapSeen = me.lap; ev('lap', { lap: me.lap, timeS: lt, bestS: Math.min.apply(null, P2.lapTimes) }); } }
       // AIs
       var playerProg = me.lap + uOf(pose.x, pose.z);
       st.ais.forEach(function (a) {
@@ -147,7 +168,7 @@
         if (r.item) { a.itemT -= dt; if (a.itemT <= 0) { if (r.item === 'blue' && !st.prime) r.item = null; else useFor(a.id, pose); a.itemT = 0; } }
       });
       // shells travel + hit
-      for (var si = st.shells.length - 1; si >= 0; si--) { var sh = st.shells[si], tp = riderPos(sh.to, pose); sh.life -= dt; if (!tp || sh.life <= 0) { if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); continue; } var dx = tp.x - sh.x, dz = tp.z - sh.z, dd = Math.hypot(dx, dz), stepM = FX.SHELL_MS * U * dt; if (dd <= stepM + 1.2 * U) { hitRider(sh.to, sh.dmg, 0.7, 'shell'); if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); } else { sh.x += dx / dd * stepM; sh.z += dz / dd * stepM; if (sh.mesh) sh.mesh.position.set(sh.x, sh.y, sh.z); } }
+      for (var si = st.shells.length - 1; si >= 0; si--) { var sh = st.shells[si], tp = riderPos(sh.to, pose); sh.life -= dt; if (!tp || sh.life <= 0) { if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); continue; } var dx = tp.x - sh.x, dz = tp.z - sh.z, dd = Math.hypot(dx, dz), stepM = FX.SHELL_MS * (sh.kind === 'seeker' ? 1.5 : 1) * U * dt; if (dd <= stepM + 1.2 * U) { hitRider(sh.to, sh.dmg, sh.kind === 'seeker' ? 2.0 : 0.7, sh.kind === 'seeker' ? 'seeker' : 'shell'); if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); } else { sh.x += dx / dd * stepM; sh.z += dz / dd * stepM; if (sh.mesh) { sh.mesh.position.set(sh.x, sh.y, sh.z); if (sh.kind === 'seeker') sh.mesh.rotation.z = Math.atan2(dx, dz); } } }
       // finish
       if (R.finished() || (me.finished && !st.result)) { if (R.finished() || me.finished) { st.phase = 'done'; var s2 = R.standings(), mine = s2.filter(function (x) { return x.id === api.playerId; })[0]; var prize = (FX.PRIZE[mine.place - 1] || 0) * (st.ranked ? FX.PRIZE_RANKED_MUL : 1); st.result = { place: mine.place, of: s2.length, timeS: me.finalS != null ? me.finalS : R.score(api.playerId), prize: prize, standings: s2 }; if (prize && o.sparks && o.sparks.add) o.sparks.add(prize, 'race-prize', st.cid); ev('finish', st.result); } }
       hudUpdate();

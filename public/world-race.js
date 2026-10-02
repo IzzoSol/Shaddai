@@ -15,9 +15,40 @@
   var ITEMS = [
     { id: 'boost', name: 'Boost', weight: 24, dur: 1.6 }, { id: 'shell', name: 'Spark Shell', weight: 20, dmg: 22, homing: 'lite' }, { id: 'wave', name: 'Wide Wave', weight: 12, knock: true },
     { id: 'ink', name: 'Ink Veil', weight: 12, dur: 2.5 }, { id: 'ward', name: 'Ward Plate', weight: 12 }, { id: 'yank', name: 'Magnet Yank', weight: 6, range: 12 },
-    { id: 'sway', name: 'Sway Dust', weight: 6, dur: 2 }, { id: 'pinch', name: 'Dragon Pinch', weight: 3, dur: 1.2 }, { id: 'triple', name: 'Triple Shell', weight: 3 }, { id: 'blue', name: 'Blue Line', weight: 1, primeOnly: true }
+    { id: 'sway', name: 'Sway Dust', weight: 6, dur: 2 }, { id: 'pinch', name: 'Dragon Pinch', weight: 3, dur: 1.2 }, { id: 'triple', name: 'Triple Shell', weight: 3 }, { id: 'blue', name: 'Blue Line', weight: 1, primeOnly: true }, { id: 'seeker', name: 'Seeker Missile', weight: 0, dmg: 30 }
   ];
   var POCKET = ['pad-rush', 'foil-sip'];
+  /* MARIO-KART ODDS (owner 2026-10-02): the further back you are, the better your crate. t = 0 leader .. 1 last.
+   * Leaders get defence + attacks (ward, shell, wave); the back of the pack gets boosts, triples and the SEEKER MISSILE (only from the lower half), which homes on FIRST place. Blue Line stays Prime-only. */
+  function itemWeights(place, n, prime) {
+    var t = n > 1 ? Math.max(0, Math.min(1, (place - 1) / (n - 1))) : 0;
+    return { boost: 18 + 26 * t, shell: 24 - 10 * t, wave: 12 - 3 * t, ink: 14 - 10 * t, ward: 14 - 8 * t, yank: 6, sway: 6, pinch: 3 + 3 * t, triple: 2 + 12 * t, seeker: t >= 0.5 ? (t - 0.4) * 28 : 0, blue: prime ? 1 + 8 * t : 0 };
+  }
+  /* DRIFT: hold the drift key while turning hard at speed -> charge; release for a MINI-TURBO. Levels: blue 0.9 s (x1.25 for 0.8 s), orange 1.8 s (x1.35 for 1.2 s), purple 2.8 s (x1.5 for 1.8 s).
+   * S = {active, dir, charge, level}; c = {drift, speed (m/s), yawRate (rad/s)} -> { released:{level,mul,dur}|null, level, active } */
+  var DRIFT = { minMS: 12, minYaw: 0.6, levels: [[0.9, 1.25, 0.8], [1.8, 1.35, 1.2], [2.8, 1.5, 1.8]], turnIn: 1.35, turnOut: 0.7 };
+  function levelOf(charge) { var L = 0; for (var i = 0; i < DRIFT.levels.length; i++) if (charge >= DRIFT.levels[i][0]) L = i + 1; return L; }
+  function driftStep(S, dt, c) {
+    var out = { released: null, level: S.level || 0, active: !!S.active };
+    if (!S.active) {
+      if (c.drift && c.speed >= DRIFT.minMS && Math.abs(c.yawRate) >= DRIFT.minYaw) { S.active = true; S.dir = c.yawRate > 0 ? 1 : -1; S.charge = 0; S.level = 0; out.active = true; }
+      return out;
+    }
+    var dirNow = c.yawRate > 0.15 ? 1 : (c.yawRate < -0.15 ? -1 : S.dir);
+    if (!c.drift || c.speed < DRIFT.minMS * 0.7) {   // release (or lost speed): pay out the mini-turbo
+      var L = levelOf(S.charge), lv = L ? DRIFT.levels[L - 1] : null; S.active = false; S.charge = 0; S.level = 0; out.active = false; out.level = 0; if (lv) out.released = { level: L, mul: lv[1], dur: lv[2] }; return out;
+    }
+    if (dirNow !== S.dir) { S.dir = dirNow; S.charge = Math.max(0, S.charge - 0.6); }   // swerving the other way bleeds the charge
+    S.charge += dt * (Math.abs(c.yawRate) > 0.4 ? 1 : 0.35); S.level = levelOf(S.charge); out.level = S.level; return out;
+  }
+  /* SLIPSTREAM: sit behind another rider (within rangeM, inside a coneDeg cone of THEIR travel direction) and you are in their wake. me = {x,z,yaw}; others = [{id,x,z,yaw}] */
+  var SLIP = { rangeM: 16, coneDeg: 16, afterS: 1.0, mul: 1.12, decayK: 2 };
+  function slipstream(me, others, U) {
+    var best = null, bd = SLIP.rangeM * U, fx = Math.sin(me.yaw), fz = Math.cos(me.yaw), cosMin = Math.cos(SLIP.coneDeg * Math.PI / 180);
+    for (var i = 0; i < others.length; i++) { var o = others[i], dx = o.x - me.x, dz = o.z - me.z, d = Math.hypot(dx, dz); if (d < 1e-6 || d > bd) continue; if ((dx * fx + dz * fz) / d < cosMin) continue; var ofx = Math.sin(o.yaw || 0), ofz = Math.cos(o.yaw || 0); if (ofx * fx + ofz * fz < 0.7) continue; bd = d; best = { id: o.id, dist: d }; }
+    return best;
+  }
+
   var CIRCUITS = {
     'plaza-cup': { id: 'plaza-cup', name: 'Plaza Cup', laps: 3, cleanLapS: 62, rooms: ['pad', 'banks', 'plaza', 'pool'], gates: [{ kind: 'pad' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'pad' }, { kind: 'pad', skip: 'water' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'pad' }], prime: false },
     'spine-cup': { id: 'spine-cup', name: 'Spine Cup', laps: 3, cleanLapS: 70, rooms: ['banks', 'spine', 'plaza'], gates: [{ kind: 'pad' }, { kind: 'kiss' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'trick', verb: 'grind' }, { kind: 'pad' }, { kind: 'foil' }], prime: false },
@@ -71,7 +102,7 @@
     R.hit = function (id, dmg) { var r = rd(id); if (!r || r.dnf || r.finished) return null; if (r.ward) { r.ward = false; return { blocked: true, hp: r.hp }; } r.hp = Math.max(0, r.hp - dmg); if (r.hp <= 0) { respawn(r); return { respawned: true, hp: r.hp }; } return { hp: r.hp }; };
     R.ram = function (a, b, closing) { var ra = rd(a), rb = rd(b); if (!ra || !rb || ra.freeze > 0 || rb.freeze > 0) return null; var c = Math.max(0, closing), d = TUNE.ramDmgMin + (TUNE.ramDmgMax - TUNE.ramDmgMin) * Math.min(1, c / 20); if (ra.boosting) d *= TUNE.ramBoostMul; return { impulse: +(c * 0.55).toFixed(2), damage: +d.toFixed(1), result: R.hit(b, d) }; };
     R.wallRam = function (id) { return R.hit(id, TUNE.wallDmg); };
-    R.grabCrate = function (id, prime) { var r = rd(id); if (!r || r.item) return null; var pool = ITEMS.filter(function (i) { return !i.primeOnly || prime; }), tot = pool.reduce(function (s, i) { return s + i.weight; }, 0), x = rng() * tot, pick = pool[0]; for (var i = 0; i < pool.length; i++) { x -= pool[i].weight; if (x <= 0) { pick = pool[i]; break; } } r.item = pick.id; return pick; };
+    R.grabCrate = function (id, prime) { var r = rd(id); if (!r || r.item) return null; var stand = R.standings(), pl = 1, n0 = stand.length; for (var si0 = 0; si0 < stand.length; si0++) if (stand[si0].id === id) pl = stand[si0].place || (si0 + 1); var W = itemWeights(pl, n0, prime), pool = ITEMS.filter(function (i) { return (!i.primeOnly || prime) && (W[i.id] || 0) > 0; }), tot = pool.reduce(function (s, i) { return s + W[i.id]; }, 0), x = rng() * tot, pick = pool[0]; for (var i = 0; i < pool.length; i++) { x -= W[pool[i].id]; if (x <= 0) { pick = pool[i]; break; } } r.item = pick.id; return pick; };
     R.useItem = function (id, target) {
       var r = rd(id); if (!r || !r.item || r.freeze > 0) return null; var it = ITEMS.filter(function (i) { return i.id === r.item; })[0]; r.item = null;
       if (it.id === 'ward') r.ward = true; else if (it.id === 'boost') r.boosting = true; else if (it.id === 'shell' && target) return { item: it.id, hit: R.hit(target, TUNE.shellDmg) };
@@ -94,5 +125,5 @@
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
     return new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
   }
-  root.WorldRace = { TUNE: TUNE, ITEMS: ITEMS, CIRCUITS: CIRCUITS, TRACKS: TRACKS, trackWorld: trackWorld, trackLengthM: trackLengthM, create: create, ribbon: ribbon };
+  root.WorldRace = { itemWeights: itemWeights, driftStep: driftStep, slipstream: slipstream, DRIFT: DRIFT, SLIP: SLIP, TUNE: TUNE, ITEMS: ITEMS, CIRCUITS: CIRCUITS, TRACKS: TRACKS, trackWorld: trackWorld, trackLengthM: trackLengthM, create: create, ribbon: ribbon };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -124,7 +124,7 @@ window.buildWorldHoverboard = function (opts) {
   var KIT = window.HoverboardKit, kit = null, styleId = null;
   var useKit = !!(KIT && !opts.modelUrl && opts.style !== 'glb');
   var fx = (useKit && window.buildHoverboardFX) ? window.buildHoverboardFX({ THREE: THREE, scene: scene, max: 160, size: 0.35 * U }) : null;
-  var MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0 };   // external race modifiers (see setModifier)
+  var MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0, turn: 1, tt: 0 };   // external race modifiers (see setModifier)
   var TR = window.HoverboardTricks ? window.HoverboardTricks.create(opts.trickTune) : null;
   var MV = window.HoverboardMoves ? window.HoverboardMoves.create() : null;   // rail grinds + manuals (world-hoverboard-moves.js)
 
@@ -273,7 +273,7 @@ window.buildWorldHoverboard = function (opts) {
     var boost = !!inp.boost && !s.air;                   // airborne: Shift is the trick modifier
     var top = (boost ? B.boostMS : B.topMS) * (MOD.t > 0 ? MOD.mul : 1) * (MOD.stun > 0 ? 0.2 : 1);
     var sf = Math.min(1, Math.abs(s.v) / B.topMS);
-    var maxRate = (B.turnRateLow + (B.turnRateHigh - B.turnRateLow) * sf) * (s.air ? 0.5 : 1);
+    if (MOD.tt > 0) MOD.tt -= dt; var maxRate = (B.turnRateLow + (B.turnRateHigh - B.turnRateLow) * sf) * (s.air ? 0.5 : 1) * (MOD.tt > 0 ? MOD.turn : 1);   // drift = wider/tighter arc
     var rate = Math.max(-maxRate, Math.min(maxRate, wrap(target - s.psi) * B.steerGain));
     s.psi = wrap(s.psi + rate * dt);
     s.yawRate += (rate - s.yawRate) * (1 - Math.exp(-8 * dt));
@@ -527,7 +527,7 @@ window.buildWorldHoverboard = function (opts) {
     isRiding: function () { return s.riding; },
     isActive: function () { return s.riding || s.w > 0; },          // still fading the rider off
     speedMS: function () { return s.v; },
-    setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } },   // race power-ups / attacks
+    setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } if (o.turn != null) { MOD.turn = o.turn; MOD.tt = o.turnDur || 0.15; } },   // race power-ups / attacks / drift steering
     modifier: function () { return MOD; },
     heading: function () { return s.psi; },
     velocity: function () { return { x: Math.sin(s.psi) * s.v * U, z: Math.cos(s.psi) * s.v * U }; },

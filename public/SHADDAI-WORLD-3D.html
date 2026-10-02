@@ -5159,7 +5159,7 @@ window.__travel = {
         else { if(M){ if(M.isRiding()) M.dismount(); M.setRaceMode(false); } run.setVehicle(null); playerPos.x = sp.x; playerPos.z = sp.z; if(!hover.isRiding() && typeof playerAvatar !== 'undefined') hover.toggle(playerAvatar, {}); if(o.style && hover.setStyle) hover.setStyle(o.style); }
         run.start(cid, { ranked: !!o.ranked, ais: o.ais || 5 }); return true; }catch(err){ console.warn('[race] start failed', err && err.message); return false; } };
       addEventListener('keydown', function(e){ if(e.code === 'KeyR' && run.state() && run.state().phase === 'race' && !e.repeat){ run.useItem(); e.stopImmediatePropagation(); } }, true);
-      window.__raceTick = function(dt){ park.update(dt); run.update(dt); };
+      window.__raceTick = function(dt){ park.update(dt); run.setInput({ drift: !!keys['KeyX'], accel: !!(keys['KeyW'] || keys['ArrowUp']) }); run.update(dt); };   // X = drift, W held at GO = rocket start
       console.info('[race] hoverskate park built at PLAZA_SKATE', Math.round(mk.pos.x), Math.round(mk.pos.z));
     } catch(err){ console.warn('[race] boot failed', err && err.message); }
   }, 500);
