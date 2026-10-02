@@ -29,7 +29,7 @@
 
   root.buildMountRide = function (o) {
     var THREE = o.THREE, scene = o.scene, loader = o.loader, heightAt = o.heightAt, playerPos = o.playerPos, Mo = o.mounts || root.WorldMounts;
-    var st = { riding: false, id: null, boosting: false }, MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0 }, raceMode = false;   // MOD = race modifiers (boost pads / items / stun / steer noise), set by world-race-run through raceAdapter()
+    var st = { riding: false, id: null, boosting: false }, MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0, turn: 1, tt: 0 }, raceMode = false;   // MOD = race modifiers (boost pads / items / stun / steer noise), set by world-race-run through raceAdapter()
     var M = { x: 0, z: 0, y: 0, yaw: 0, pitch: 0, bank: 0, sp: 0, vy: 0, def: null, fl: false };
     var SAD = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, bank: 0 };
     var CAM = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, fov: TUNE.fovBase, init: false };
@@ -110,7 +110,7 @@
       var f = M.def, ride = st.riding, thr = ride ? ((inp.fwd ? 1 : 0) - (inp.back ? 0.4 : 0)) : 0, turn = ride ? ((inp.left ? 1 : 0) - (inp.right ? 1 : 0)) : 0;
       st.boosting = ride && !!inp.dive && !!inp.fwd;
       if (ride) {
-        M.yaw += turn * f.turn * dt * (M.fl ? 1.1 : 1);
+        if (MOD.tt > 0) MOD.tt -= dt; M.yaw += turn * f.turn * dt * (M.fl ? 1.1 : 1) * (MOD.tt > 0 ? (MOD.turn || 1) : 1);
         if (M.fl) {
           var cr = st.boosting && !(inp.climb) ? f.fly.boost : f.fly.cruise, want = (inp.fwd ? cr : (inp.back ? 0 : f.fly.cruise * 0.3)) * U;
           M.sp = approach(M.sp, want, 26 * U * dt);
@@ -210,7 +210,7 @@
 
     return {
       // ── race hooks (world-race-run.js drives a ride exactly like the hoverboard) ──
-      raceAdapter: { setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } }, state: function () { return { x: M.x, y: M.y, z: M.z, psi: M.yaw }; }, isFlying: function () { return M.fl; }, altitudeM: function () { return (M.y - gY(M.x, M.z)) / U; }, isRiding: function () { return st.riding; } },
+      raceAdapter: { setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } if (o.turn != null) { MOD.turn = o.turn; MOD.tt = o.turnDur || 0.15; } }, state: function () { return { x: M.x, y: M.y, z: M.z, psi: M.yaw }; }, isFlying: function () { return M.fl; }, altitudeM: function () { return (M.y - gY(M.x, M.z)) / U; }, isRiding: function () { return st.riding; } },
       setRaceMode: function (on) { raceMode = !!on; if (!on) { MOD.mul = 1; MOD.t = 0; MOD.stun = 0; MOD.noise = 0; } },
       /* rentRace(id, x, z, yaw): put a RENTED kart on the grid and ride it (no ownership needed - race selection screen karts are free to pick) */
       rentRace: function (id, x, z, yaw) { var d = Mo.def(id) || kartDef(id); if (!d) return false; if (st.riding) dismount(); show(id, x, z, yaw); if (!cur) return false; M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; playerPos.x = x; playerPos.z = z; st.riding = true; st.id = id; CAM.init = false; raceMode = true; return true; },
