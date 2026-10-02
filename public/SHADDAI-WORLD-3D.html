@@ -314,6 +314,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-hazards.js?v=20261002a"></script>
 <script src="/world-combat-mode.js?v=20261002a"></script>
 <script src="/world-realm-zones.js?v=20261002a"></script>
+<script src="/world-districts.js?v=20261002a"></script>
 <script src="/world-tame.js?v=20261002a"></script>
 <script src="/world-skydock.js?v=20261001a"></script>
 <script src="/world-hazards.js?v=20261001a"></script>
@@ -5013,6 +5014,9 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
     toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); }catch(e){ console.warn('[realm-zones] failed', e && e.message); }
   addEventListener('keydown', function(e){ if(e.code !== 'KeyK' || e.repeat || !controls.isLocked) return; const r = window.WorldCombatMode.toggle(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON - no one can hurt you, you cannot fight' : 'Fight mode ON')); });
 }, 1500); })();
+// ── DISTRICT NAMES (world-districts.js): entering Campus / Commons / Plots / Race inside The Grid shows the district + street once ──
+(function bootDistrictToast(){ let last = null; setInterval(function(){ try{ const WD = window.WorldDistricts; if(!WD || typeof playerPos === 'undefined') return; const k = 7/1.8, x = playerPos.x / k, y = -playerPos.z / k;
+  if(Math.hypot(x, y) < 170 || Math.hypot(x, y) > 1600){ last = null; return; } const d = WD.at(x, y); if(d.id !== last){ last = d.id; if(window.Navi && window.Navi.toast) window.Navi.toast(d.name + ' District - ' + d.blurb + ' (' + WD.streetAt(x, y) + ')'); } }catch(_){} }, 1500); })();
 // ── REAL GRASS (world-grass.js): wind-swayed tufts that bend away from you; grows only where the terrain colour map is green; scales with the quality tier ──
 (function bootGrass(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
   if(!window.WorldGrass || !_v4T || !_v4Meta || !_v4Meta.half_units || !window.__loadPlayable) return; clearInterval(iv);

@@ -157,7 +157,7 @@
     plan.buildings.forEach(function (b) {
       var ch = chunks[chunkOf(b.x_m, b.y_m)], rho = b.rot_deg * RAD;
       var gy = groundY(b.x_m, b.y_m, Math.max(b.w_m, b.d_m) * 0.5);
-      var tint = TINTS[Math.floor(rnd() * TINTS.length)], acc = ACCENT[b.accent] || ACCENT.teal;
+      var WD = window.WorldDistricts, tint = WD ? WD.tintFor(b, rnd) : TINTS[Math.floor(rnd() * TINTS.length)], acc = ACCENT[WD ? WD.accentFor(b) : b.accent] || ACCENT.teal;   // district identity: accent + facade palette per quarter
       byId[b.id] = { b: b, gy: gy };
       b.tiers.forEach(function (t, i) {
         var w = t[0], d = t[1], z0 = t[2], h = t[3], ox = t[4], oy = t[5], ty = t[6];

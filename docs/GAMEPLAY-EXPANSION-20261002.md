@@ -55,6 +55,16 @@ Existing pieces to hook: `world-quests.js` (daily board, QUILL library), `world-
 - The Void drain has no counter mask; the only answer there is Fight mode and clothing.
 - Host wiring still to do: realm zone lists, a gear slot UI (masks + clothing), HUD warning, damage applied to the player health.
 
+## Castle realm (Darkforest / Shadow Keep) and Castle Siege Day (IDEA, owner 2026-10-02)
+- Terrain: the castle interior gets better terrain; a **valley beneath the bridge** is filled with **skeleton homes** and **purple lava**. The bridge crosses it. Heavy enemy density throughout.
+- Hazards: gas (mask 10), purple lava (lava mask + fire clothing), see Realm hazards above. High-level masks and shields are required to get through, so **multiple clans** matter.
+- **Siege Day**: a scheduled server-wide event; everyone is invited to storm the castle at once and fight **all 5 dragons** that fly there that day. Dragons drop **cosmetics and items**. Needs: event scheduler, a siege instance/zone with a capacity target, clan grouping, per-participant damage credit for drops, a countdown and announcement in the world.
+- Later in the castle: dungeons, treasure goblins, a deeper keep. Then sub-terranean worlds, sea worlds and sky realms.
+
+## Realm-driven living (IDEA)
+- Players pick the realm they live, work and upgrade in. Each realm gets its own home styles, villages, community centre, arcade (duplicates allowed per realm), shops and a perk: Arctic = snowboarding, Lava realm = cheaper forging, and so on.
+- This is why the **street, neighbourhood, home and office organization must be cleaned up first**: one consistent grid, naming and building-slot system that every realm and every later layer (underground, sea, sky) can reuse.
+
 ## Bots, play modes, mobile (IDEA)
 - **Agent-vs-agent in real 3D**: humanoid bots play the hoverskate park, races and the Colosseum in the world itself, with spectator seating. You can watch, or take over.
 - **Two control modes**: **Autopilot** (bot skills drive; you give simple intent like "go for the podium") and **Full control** (your input drives; bot skills only assist, second to you). Keep them as separate modes.
