@@ -51,6 +51,8 @@
     // only cross it HIGH: inside the city (plus a cityBuffer ramp) the terrain clearance target rises to cityOverfly.
     // A player inside the city is never attacked (attacks abort, hurtPlayer refuses).
     cityR: 1630, cityBuffer: 300, cityOverfly: 150, cityMargin: 40,
+    // NO-FLY (owner 2026-10-02: dragons belong at the realm entrances in the wilderness, never over Shaddai City): flight targets are pushed out to cityR + noFlyBuffer and a dragon that strays inside heads straight back out.
+    cityNoFly: true, noFlyBuffer: 250,
     // night (opts.nightFactor() 0..1, world-sky-v4): more aggressive after dark. Telegraphs NEVER shorten.
     // Each multiplier is the full-night value; day = 1. cooldown ×0.55, alert radius ×1.6, leash ×1.3, breath dps ×1.25,
     // retreat threshold ×0.5 (fights on longer before resting).
@@ -880,6 +882,12 @@
     function cityGuard(d, c) {
       var f = d.f; if (f.mode !== 'fly') return;
       var R = tune.cityR, B = tune.cityBuffer;
+      if (tune.cityNoFly) {   // keep-out ring: the target never lies inside it, and a dragon already inside flies radially out
+        var lim = (R + tune.noFlyBuffer) * U, rc = hyp2(c.tx, c.tz), rf = hyp2(f.x, f.z);
+        if (rc < lim) { if (rc > 1e-6) { c.tx *= lim / rc; c.tz *= lim / rc; } else { c.tx = lim; c.tz = 0; } }
+        if (rf < lim + 60 * U) { var ux = rf > 1e-6 ? f.x / rf : 1, uz = rf > 1e-6 ? f.z / rf : 0, far = lim + 300 * U; c.tx = ux * far; c.tz = uz * far; c.dive = false; }
+        if (hyp2(c.tx, c.tz) >= lim && rf >= lim) return;   // all outside: nothing more to guard
+      }
       var r = Math.min(hyp2(f.x, f.z), hyp2(f.x + f.hvx * 8 * U, f.z + f.hvz * 8 * U), hyp2(c.tx, c.tz)) / U;
       if (r >= R + B) return;
       var k = clamp((R + B - r) / B, 0, 1), base = c.minClear != null ? c.minClear : tune.clearPatrolTarget;
