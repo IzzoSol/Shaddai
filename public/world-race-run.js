@@ -71,6 +71,7 @@
       R.standings().forEach(function (r) { if (r.id === srcId || r.dnf) return; var p = riderPos(r.id, pose); if (!p) return; var d = dist(me, p), dot = ((p.x - me.x) * fx + (p.z - me.z) * fz) / (d || 1); if (d < bd && dot > 0.2) { bd = d; best = r.id; } }); return best;
     }
     function hitRider(targetId, dmg, stunS, why) {
+      var isMe0 = targetId === api.playerId; if (isMe0 && root.WorldSkyDock && root.WorldSkyDock.mult) dmg = Math.max(1, Math.round(dmg * 100 / (100 + root.WorldSkyDock.mult().hull)));   // hull plating upgrade
       var res = R.hit(targetId, dmg), isMe = targetId === api.playerId; if (!res) return res;
       if (isMe) { if (!res.blocked) { if (stunS && hover && hover.setModifier) hover.setModifier({ stun: stunS }); } } else { var a = st.ais.filter(function (x) { return x.id === targetId; })[0]; if (a && !res.blocked && stunS) a.stun = Math.max(a.stun, stunS); }
       if (res.respawned) { if (isMe) { var g = st.gates[Math.max(0, R.rider(targetId).gate - 1)] || st.gates[0]; ev('respawn', { id: targetId, x: g.x, z: g.z, y: g.y }); if (hover && hover.setModifier) hover.setModifier({ stun: 1.4 }); } else { var a2 = st.ais.filter(function (x) { return x.id === targetId; })[0]; if (a2) a2.stun = 1.4; } }

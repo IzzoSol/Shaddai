@@ -22,7 +22,9 @@
     hawk:    { tall: 2.6, walk: 4,  run: 8,  turn: 2.0, fly: { cruise: 26, boost: 48, climb: 14, ceil: 320 } }
   };
   function kartDef(id) { var m = /^kart-(.+)$/.exec(String(id)); return m ? { id: id, name: 'Kart ' + m[1], kind: 'mount', flying: false, model: null, procedural: 'car:' + m[1], saddle: 'saddle', kart: true } : null; }
-  function feelOf(id) { if (FEEL[id]) return FEEL[id]; var m = /^kart-(.+)$/.exec(String(id)), k = m && root.WorldHoverCars && root.WorldHoverCars.KARTS && root.WorldHoverCars.KARTS[m[1]]; return k ? { tall: k.tall, walk: k.top * 0.7, run: k.top, turn: k.handle, hover: 0.55 } : FEEL.bull; }
+  /* SHIP UPGRADES (world-skydock.js): engine = top speed, handling = turning; applies to every ride */
+  function feelOf(id) { var f = feelBase(id), u = root.WorldSkyDock && root.WorldSkyDock.mult && root.WorldSkyDock.mult(); if (!u || (u.speed === 1 && u.turn === 1)) return f; var o2 = {}; for (var k in f) o2[k] = f[k]; o2.walk = f.walk * u.speed; o2.run = f.run * u.speed; o2.turn = f.turn * u.turn; return o2; }
+  function feelBase(id) { if (FEEL[id]) return FEEL[id]; var m = /^kart-(.+)$/.exec(String(id)), k = m && root.WorldHoverCars && root.WorldHoverCars.KARTS && root.WorldHoverCars.KARTS[m[1]]; return k ? { tall: k.tall, walk: k.top * 0.7, run: k.top, turn: k.handle, hover: 0.55 } : FEEL.bull; }
   var TUNE = { fovBase: 62, fovBoost: 8, summonDist: 6, mountRange: 9 };
 
   root.buildMountRide = function (o) {
