@@ -39,7 +39,7 @@
 
 | File | Responsibility |
 |---|---|
-| `backend/lib/academy/_testkit.js` | test runner + temp store + sample skill/benchmark/rubric fixtures (test-only) |
+| `backend/lib/academy/testkit.js` | test runner + temp store + sample skill/benchmark/rubric fixtures (test-only) |
 | `backend/lib/academy/canon.js` | canonical JSON, sha256, `stripMarkup` |
 | `backend/lib/academy/store.js` | atomic JSON + append-only JSONL store |
 | `backend/lib/academy/skill-schema.js` | skill package validation, secret scan, hashing |
@@ -65,13 +65,13 @@
 ### Task 1: Test kit, canonical hashing, store
 
 **Files:**
-- Create: `backend/lib/academy/_testkit.js`, `backend/lib/academy/canon.js`, `backend/lib/academy/store.js`
+- Create: `backend/lib/academy/testkit.js`, `backend/lib/academy/canon.js`, `backend/lib/academy/store.js`
 - Test: `backend/lib/academy/canon.test.js`
 
 **Interfaces:**
 - Produces: `canonical(v): string`, `sha256(s): string`, `hashOf(v): string`, `stripMarkup(s): string`; `createStore(dir?) -> { dir, read(name, fallback), write(name, data), append(name, obj), readLines(name) }`; testkit `runAll(name, tests)`, `tmpStore()`, `tmpDir()`, `sampleSkill(o)`, `sampleBenchmark(o)`, `sampleRubric(o)`.
 
-- [ ] **Step 1: Write the test kit** (`backend/lib/academy/_testkit.js`)
+- [ ] **Step 1: Write the test kit** (`backend/lib/academy/testkit.js`)
 
 ```js
 'use strict';
@@ -137,7 +137,7 @@ module.exports = { runAll, tmpDir, tmpStore, sampleSkill, sampleBenchmark, sampl
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { runAll, tmpDir } = require('./_testkit');
+const { runAll, tmpDir } = require('./testkit');
 const { canonical, hashOf, sha256, stripMarkup } = require('./canon');
 const { createStore } = require('./store');
 
@@ -233,7 +233,7 @@ Expected: 5 `ok` lines then `canon+store: all passed`.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add backend/lib/academy/_testkit.js backend/lib/academy/canon.js backend/lib/academy/store.js backend/lib/academy/canon.test.js
+git add backend/lib/academy/testkit.js backend/lib/academy/canon.js backend/lib/academy/store.js backend/lib/academy/canon.test.js
 git commit -m "feat(academy): test kit, canonical hashing, atomic store
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
@@ -256,7 +256,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, sampleSkill } = require('./_testkit');
+const { runAll, sampleSkill } = require('./testkit');
 const { validateSkill, TRACKS } = require('./skill-schema');
 
 runAll('skill-schema', {
@@ -435,7 +435,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, tmpStore, sampleSkill } = require('./_testkit');
+const { runAll, tmpStore, sampleSkill } = require('./testkit');
 const { createRegistry } = require('./registry');
 
 runAll('registry', {
@@ -573,7 +573,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, tmpStore, sampleBenchmark, sampleRubric } = require('./_testkit');
+const { runAll, tmpStore, sampleBenchmark, sampleRubric } = require('./testkit');
 const { GRADERS } = require('./graders');
 const { createBenchmarks } = require('./benchmarks');
 
@@ -803,7 +803,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, sampleRubric } = require('./_testkit');
+const { runAll, sampleRubric } = require('./testkit');
 const { gradeRubric, buildJudgePrompt, normalizeCritique } = require('./rubric');
 
 const R = sampleRubric();
@@ -953,7 +953,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, tmpStore, sampleSkill, sampleBenchmark, sampleRubric } = require('./_testkit');
+const { runAll, tmpStore, sampleSkill, sampleBenchmark, sampleRubric } = require('./testkit');
 const { createRegistry } = require('./registry');
 const { createBenchmarks } = require('./benchmarks');
 const { createExamService } = require('./exam');
@@ -1210,7 +1210,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { runAll, tmpStore, sampleSkill } = require('./_testkit');
+const { runAll, tmpStore, sampleSkill } = require('./testkit');
 const { validateSkill } = require('./skill-schema');
 const { createReceipts } = require('./receipts');
 const { installSkill } = require('./install');
@@ -1392,7 +1392,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, tmpStore, sampleRubric } = require('./_testkit');
+const { runAll, tmpStore, sampleRubric } = require('./testkit');
 const { createBenchmarks } = require('./benchmarks');
 const { createHomework } = require('./homework');
 
@@ -1564,7 +1564,7 @@ delete process.env.DATABASE_URL;
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { runAll, tmpDir, tmpStore, sampleSkill } = require('./_testkit');
+const { runAll, tmpDir, tmpStore, sampleSkill } = require('./testkit');
 const { validateSkill } = require('./skill-schema');
 const { EconomyService } = require('../../economy-service');
 const { ACADEMY_ECON, splitPrice, createAcademyEconomy } = require('./economy');
@@ -1752,7 +1752,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll, tmpStore, sampleSkill } = require('./_testkit');
+const { runAll, tmpStore, sampleSkill } = require('./testkit');
 const { createRegistry } = require('./registry');
 const { createRoles } = require('./roles');
 const { createClasses } = require('./classes');
@@ -2005,7 +2005,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```js
 'use strict';
 const assert = require('assert');
-const { runAll } = require('./_testkit');
+const { runAll } = require('./testkit');
 const { createHooks } = require('./hooks');
 
 runAll('academy-hooks', {
@@ -2164,7 +2164,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 delete process.env.DATABASE_URL;
 const assert = require('assert');
 const path = require('path');
-const { runAll, tmpDir, sampleSkill, sampleBenchmark, sampleRubric } = require('./_testkit');
+const { runAll, tmpDir, sampleSkill, sampleBenchmark, sampleRubric } = require('./testkit');
 const { EconomyService } = require('../../economy-service');
 const { createAcademy } = require('./academy-core');
 const { ACADEMY_ECON } = require('./economy');
