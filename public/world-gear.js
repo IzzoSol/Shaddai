@@ -92,6 +92,12 @@
           (!L ? '<button data-a="buy" data-i="' + c.id + '" style="' + G + '">BUY ' + c.price + '</button>' : (on ? '<button data-a="off" data-s="' + slot + '" style="' + B + '">UNEQUIP</button>' : '<button data-a="eq" data-i="' + c.id + '" style="' + B + '">EQUIP</button>') + (c.kind !== 'cosmetic' && L < MAXL ? '<button data-a="up" data-i="' + c.id + '" style="' + G + '">UPGRADE ' + c.up[L - 1] + '</button>' : '')) + '</div></div>';
       });
     });
+    if (root.WorldCampfire) {
+      var cf = root.WorldCampfire, cs = cf.state();
+      h += '<div style="color:#e8c45c;font-weight:700;margin:10px 0 3px">CAMPFIRE</div><div style="opacity:.7;font-size:12px">Camp kit ' + cs.kits + ' &middot; logs ' + cs.logs + ' &middot; light it with the Backslash key or the button. Warmth heals, animals keep away.</div><div style="margin:4px 0">' +
+        '<button data-a="ckit" style="' + G + '">KIT ' + cf.PRICES.kit + '</button><button data-a="clog" style="' + G + '">LOG ' + cf.PRICES.log + '</button><button data-a="clight" style="' + B + '">LIGHT FIRE</button><button data-a="caddlog" style="' + B + '">ADD LOG</button></div><div>' +
+        Object.keys(cf.STYLES).map(function (k) { var st = cf.STYLES[k], own = cs.owned.indexOf(k) >= 0; return '<button data-a="cstyle" data-i="' + k + '" style="' + (cs.style === k ? G : B) + '">' + st.name + (own ? '' : ' ' + st.price) + '</button>'; }).join('') + '</div>';
+    }
     if (root.WorldGadgets) {
       h += '<div style="color:#e8c45c;font-weight:700;margin:10px 0 3px">GADGETS</div>';
       root.WorldGadgets.CATALOG.forEach(function (c) {
@@ -107,7 +113,7 @@
     panel.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9600;width:min(94vw,440px);max-height:84vh;overflow:auto;padding:16px;border-radius:14px;background:linear-gradient(180deg,rgba(14,20,34,.97),rgba(5,8,15,.98));border:1px solid rgba(255,90,110,.5);color:#e9f4ee;font:600 13px Rajdhani,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.65)';
     panel.innerHTML = '<div style="display:flex;justify-content:space-between;color:#ff7a8a;font:900 16px Orbitron,sans-serif;letter-spacing:.14em"><span>ARMORY</span><span data-a="x" style="cursor:pointer">&#10005;</span></div><div id="gearBody"></div>'; document.body.appendChild(panel);
     panel.addEventListener('click', function (e) { var t = e.target.closest('[data-a]'); if (!t) return; var a = t.getAttribute('data-a'), id = t.getAttribute('data-i'), r; if (a === 'x') return close();
-      if (a === 'gbuy') r = root.WorldGadgets.buy(id); else if (a === 'guse') r = root.WorldGadgets.useScent(); else if (a === 'buy') r = buy(id); else if (a === 'eq') r = equip(id); else if (a === 'up') r = upgrade(id); else if (a === 'off') r = unequip(t.getAttribute('data-s'));
+      if (a === 'ckit') r = root.WorldCampfire.buyKit(); else if (a === 'clog') r = root.WorldCampfire.buyLog(); else if (a === 'clight') r = root.__campfire ? root.__campfire.place() : { ok: false, msg: 'Not ready' }; else if (a === 'caddlog') r = root.__campfire ? root.__campfire.addLog() : { ok: false, msg: 'Not ready' }; else if (a === 'cstyle') { r = root.WorldCampfire.state().owned.indexOf(id) >= 0 ? root.WorldCampfire.equipStyle(id) : root.WorldCampfire.buyStyle(id); } else if (a === 'gbuy') r = root.WorldGadgets.buy(id); else if (a === 'guse') r = root.WorldGadgets.useScent(); else if (a === 'buy') r = buy(id); else if (a === 'eq') r = equip(id); else if (a === 'up') r = upgrade(id); else if (a === 'off') r = unequip(t.getAttribute('data-s'));
       render(); var m = panel && panel.querySelector('#gearMsg'); if (m && r && r.msg) m.textContent = r.msg; if (r && r.msg) toast(r.msg); }); render();
   }
   root.WorldGear = { CATALOG: CATALOG, MAXL: MAXL, RECHARGE_S: RECHARGE_S, buy: buy, upgrade: upgrade, equip: equip, unequip: unequip, absorb: absorb, tick: tick, owned: owned, state: state, buildVisuals: buildVisuals, open: open, close: close, _reset: function () { S = fresh(); save(); } };
