@@ -13285,7 +13285,7 @@ window.enter3DWorld=function(){
           </div>
           <div>
             <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Display Name</label>
-            <input id="profileDisplayName" class="input" maxlength="80" placeholder="e.g. Brittany" oninput="profileSyncGreeting()">
+            <input id="profileDisplayName" class="input" maxlength="80" placeholder="e.g. Alex" oninput="profileSyncGreeting()">
             <label style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Avatar Emoji</label>
             <input id="profileAvatarEmoji" type="hidden" value="/assets/agents/SHADDAI-portrait.png">
             <div style="font-size:7px;color:var(--text-muted);margin:2px 0 4px">Pick your avatar (SHADDAI HF art)</div>
@@ -14526,7 +14526,7 @@ window.enter3DWorld=function(){
     <div class="card">
       <div class="card-head"><span class="card-title" style="color:#ff7b3d">🏷 Brand Analysis</span></div>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <input type="text" id="turtle-brand-name" class="input" style="flex:1;margin:0;font-size:11px" placeholder="Brand/artist name: e.g. Izzo, Dreamers, CloudzNCrownz...">
+        <input type="text" id="turtle-brand-name" class="input" style="flex:1;margin:0;font-size:11px" placeholder="Brand or artist name">
         <input type="text" id="turtle-brand-desc" class="input" style="flex:1;margin:0;font-size:11px" placeholder="Brief description...">
         <button class="btn btn-ghost" style="font-size:9px;border-color:#ff7b3d;color:#ff7b3d" onclick="analyzeBrand()">Analyze</button>
       </div>
@@ -15055,7 +15055,7 @@ const S = {
   socialConnectors: [], // New for Social Tab
 
   agents: [
-    { id: 0, name: 'SHADDAI', domain: 'EMPIRE', role: 'Supreme Commander', color: '#ffd700', status: 'COMMANDING', model: 'llama3.2:3b', caps: ['coordination', 'strategy', 'decision', 'leadership', 'income', 'empire'], mem: [], x: 350, y: 60, tx: null, ty: null, desk: true, dx: 350, dy: 60, frame: 0, systemPrompt: 'You are SHADDAI, Supreme Commander and Mission Control for creator Brittany (Izzo). Pisces/Wood Dog, father of a 1-year-old, building the Dreamers Ecosystem. Income-first thinking always. We thrive together or not at all.' },
+    { id: 0, name: 'SHADDAI', domain: 'EMPIRE', role: 'Supreme Commander', color: '#ffd700', status: 'COMMANDING', model: 'llama3.2:3b', caps: ['coordination', 'strategy', 'decision', 'leadership', 'income', 'empire'], mem: [], x: 350, y: 60, tx: null, ty: null, desk: true, dx: 350, dy: 60, frame: 0, systemPrompt: 'You are SHADDAI, Supreme Commander and Mission Control for the user. Income-first thinking always. We thrive together or not at all.' },
     { id: 1, name: 'ZEROX', domain: 'WEALTH', role: 'Wealth Engine', color: '#00ff88', status: 'IDLE', model: 'llama3.2:3b', caps: ['finance', 'trading', 'crypto', 'analysis'], mem: [], x: 150, y: 180, tx: null, ty: null, desk: true, dx: 150, dy: 180, frame: 0, systemPrompt: 'You are ZEROX, the Wealth Engine. Analyze markets, trading opportunities, and financial strategies.' },
     { id: 2, name: 'ORACLE', domain: 'WISDOM', role: 'Wisdom Keeper', color: '#ff6b6b', status: 'IDLE', model: 'phi3:mini', caps: ['astrology', 'esoteric', 'knowledge', 'wisdom'], mem: [], x: 250, y: 180, tx: null, ty: null, desk: true, dx: 250, dy: 180, frame: 0, systemPrompt: 'You are ORACLE, the Wisdom Keeper. Provide deep knowledge, esoteric insights, and astrological guidance.' },
     { id: 3, name: 'NEXUS', domain: 'ROUTING', role: 'Auto-Router', color: '#00f0ff', status: 'IDLE', model: 'llama3.2:3b', caps: ['routing', 'orchestration', 'coordination', 'tasks'], mem: [], x: 350, y: 180, tx: null, ty: null, desk: true, dx: 350, dy: 180, frame: 0, systemPrompt: 'You are NEXUS, the Auto-Router. Coordinate tasks between agents and manage workflows.' },
@@ -17687,7 +17687,7 @@ async function streamOllamaResponse(prompt, onToken, onComplete) {
 async function seedDreamersProject() {
   const PROJ_NAME = 'DREAMERS ECOSYSTEM';
   const FILE_NAME = 'DREAMERS ECOSYSTEM - MASTER BUILD P.txt';
-  const FILE_PATH = 'C:\\Users\\Brittany\\OneDrive\\Desktop\\DREAMERS APP\\DREAMERS ECOSYSTEM - MASTER BUILD P.txt';
+  const FILE_PATH = 'C:\\Users\\YOU\\OneDrive\\Desktop\\DREAMERS APP\\DREAMERS ECOSYSTEM - MASTER BUILD P.txt';
 
   // Add project if not already there
   if (!S.projects.find(p => p.name === PROJ_NAME)) {
@@ -23234,35 +23234,19 @@ async function sendMsgFull() {
 // ═══════════════════════════════════════════════
 // SHADDAI MISSION CONTROL — PRIME DIRECTIVE
 // ═══════════════════════════════════════════════
-const SHADDAI_PRIME = `You are SHADDAI — autonomous intelligence agent and Mission Control.
-
-YOUR CREATOR: Israel (artist name: Izzo). NOTE: This runs on Brittany's desktop — Brittany is the mother of Israel's son. The USER talking to you is ISRAEL, not Brittany.
+const SHADDAI_PRIME = `You are SHADDAI — autonomous intelligence agent and Mission Control for the user.
 
 RESPONSE RULES:
-- Be direct and concise. Do NOT recite the creator's profile, astrology, or identity back in every response.
-- Only mention astrology, birth data, or spiritual context when the user specifically asks about it.
-- Focus on answering the actual question. No filler, no flattery, no monologues.
-- When greeting, just respond naturally — don't dump the entire mission statement.
-
-CREATOR CONTEXT (reference only — do NOT repeat unless asked):
-- Artist/entrepreneur building the Dreamers Ecosystem
-- Has a 1-year-old son. Time is compressed.
-- #1 problem: No consistent monthly income. Target: $100k+/year
-- Fastest paths: Paid alpha group, KOL deals, Dreamers token/NFT, hosting fees
-- Web3 track record: Led $FreeRoss + others to multi-million caps
-- X: 1,900 followers / 780 verified (41% ratio)
-- Skills: Rapper, event host, speaker, PM, alpha caller, creative director
-
-THE DREAMERS ECOSYSTEM:
-Game (built v5.0) → Token → Marketplace → NFTs → DAO → Multiple Apps
+- Be direct and concise. No filler, no flattery, no monologues.
+- Answer the actual question. When greeting, respond naturally.
+- Never assume or state personal details about the user. Use only what they tell you in the conversation.
 
 YOUR MISSION:
-1. Prioritize income-generating actions — at least 1 per conversation
-2. Think deep, give specific steps, not vague advice
-3. Every response: "does this move Israel closer to income and a better life for his son?"
+1. Help the user get real work done: specific steps, not vague advice.
+2. Prefer actions that move their goals forward and say what to do next.
+3. Use the council agents and tools when they fit the task.
 
-AGENT HIERARCHY: You are Supreme Commander. Sub-agents report to you.
-We thrive together or not at all.`;
+AGENT HIERARCHY: You are Supreme Commander. Sub-agents report to you.`;
 
 // Independent popout conversation history
 const popoutHistory = [];
@@ -28307,10 +28291,10 @@ function notify(msg) {
 
 // ================== FILE SIDEBAR ==================
 const FILE_FOLDERS = [
-  { name: '🎮 Dreamers Games', path: 'C:\\Users\\Brittany\\Desktop\\MASTERY FOLDER\\02_GAME' },
-  { name: '📊 Dashboards', path: 'C:\\Users\\Brittany\\OneDrive\\Desktop\\02 Agents\\SHADDAI' },
-  { name: '️️ Projects', path: 'C:\\Users\\Brittany\\OneDrive\\Desktop\\THE DREAMERS ECOSYSTEM' },
-  { name: '📝 Obsidian', path: 'C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN' }
+  { name: '🎮 Dreamers Games', path: 'C:\\Users\\YOU\\Desktop\\MASTERY FOLDER\\02_GAME' },
+  { name: '📊 Dashboards', path: 'C:\\Users\\YOU\\OneDrive\\Desktop\\02 Agents\\SHADDAI' },
+  { name: '️️ Projects', path: 'C:\\Users\\YOU\\OneDrive\\Desktop\\THE DREAMERS ECOSYSTEM' },
+  { name: '📝 Obsidian', path: 'C:\\Users\\YOU\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN' }
 ];
 
 let fileTreeData = [];
@@ -42110,7 +42094,7 @@ async function _saveSkillToObsidian() {
     const r = await fetch('/api/write-file', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        filePath: `C:\\Users\\Brittany\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN\\Agents\\${agent}\\${name}.md`,
+        filePath: `C:\\Users\\YOU\\OneDrive\\Desktop\\OBSIDIAN\\SHADDAI OBSIDIAN\\Agents\\${agent}\\${name}.md`,
         content
       }),
       signal: AbortSignal.timeout(10000)
