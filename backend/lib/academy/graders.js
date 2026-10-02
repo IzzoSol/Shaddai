@@ -1,8 +1,12 @@
 'use strict';
 const clamp01 = (n) => (Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0);
 
+// Optional spec fields guard against keyword stuffing:
+//   maxChars   answers longer than this score half
+//   penalize   [{ any: [...], weight }] each matching group subtracts `weight` (a fraction of the full score)
 function checklist(input, spec, output) {
-  const text = String(output == null ? '' : output).slice(0, 20000).toLowerCase();
+  const raw = String(output == null ? '' : output).slice(0, 20000);
+  const text = raw.toLowerCase();
   let got = 0; let total = 0; const detail = [];
   for (const it of (spec && spec.items) || []) {
     const w = it.weight || 1; total += w;
@@ -10,7 +14,13 @@ function checklist(input, spec, output) {
     if (hit) got += w;
     detail.push({ id: it.id, hit });
   }
-  return { score: total ? clamp01(got / total) : 0, detail };
+  let score = total ? got / total : 0;
+  for (const p of (spec && spec.penalize) || []) {
+    if ((p.any || []).some((s) => text.includes(String(s).toLowerCase()))) { score -= Number(p.weight) || 0; detail.push({ penalized: true }); }
+  }
+  score = clamp01(score);
+  if (spec && spec.maxChars && raw.length > spec.maxChars) score *= 0.5;
+  return { score, detail };
 }
 
 function toolUse(input, spec, output) {
