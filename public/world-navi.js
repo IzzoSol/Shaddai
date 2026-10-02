@@ -22,7 +22,7 @@
     { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'market', label: 'MARKET', ic: '🛒' },
     { id: 'radio', label: 'RADIO', ic: '📡' }, { id: 'bots', label: 'BOTS', ic: '🤖' },
     { id: 'plots', label: 'PLOTS', ic: '⬡' }, { id: 'wallet', label: 'WALLET', ic: '👛' },
-    { id: 'academy', label: 'ACADEMY', ic: '🎓' }, { id: 'jobs', label: 'JOBS', ic: '💼' }
+    { id: 'academy', label: 'ACADEMY', ic: '🎓' }, { id: 'jobs', label: 'JOBS', ic: '💼' }, { id: 'signals', label: 'SIGNALS', ic: '📶' }
   ];
   var SLOTS = ['Dashboard', 'SkinForge', 'AutoPost', 'Aura', 'Terminal'];
 
@@ -308,6 +308,27 @@
   };
 
   var NEWS = [{ id: 'n1', t: 'Colosseum bracket opens', s: 'Tournament' }, { id: 'n2', t: 'Arctic realm trailer drops', s: 'World' }, { id: 'n3', t: 'Train line 2 online', s: 'World' }];
+  /* SIGNALS (owner 2026-10-01: Navi subscriptions): ZEROX call feed. The SERVER decides what you may see (free = delayed 3-call preview, paid = live feed with entry/stop/target);
+   * this module only renders what the server returned. Auth: the session token (localStorage shd_token) if any. Never fakes data: offline = says so. */
+  var SIG = { state: 'idle', data: null, at: 0 };
+  function sigLoad() {
+    if (SIG.state === 'loading' || (SIG.state === 'ready' && Date.now() - SIG.at < 30000)) return; SIG.state = 'loading';
+    var h = {}; try { var tk = localStorage.getItem('shd_token'); if (tk) h.Authorization = 'Bearer ' + tk; } catch (e) { }
+    var base = (window.SHADDAI_API_BASE || '').replace(/\/$/, '');
+    fetch(base + '/api/navi/signals', { headers: h, cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { SIG.data = j && j.ok ? j : null; SIG.state = j && j.ok ? 'ready' : 'error'; SIG.at = Date.now(); render(); }).catch(function () { SIG.state = 'error'; SIG.at = Date.now(); render(); });
+  }
+  M.signals = function () {
+    sigLoad(); var d = SIG.data, list = [];
+    if (d && d.calls) d.calls.forEach(function (c, i) { list.push({ id: 'sg' + i, t: (c.symbol || c.name || '?') + (c.chain ? ' · ' + c.chain : ''), s: d.live ? (c.peakMult != null ? 'peak x' + (Math.round(c.peakMult * 10) / 10) : 'live') : (c.ageMin + ' min ago'), tag: d.live ? 'LIVE' : 'DELAYED' }); });
+    return { title: 'SIGNALS · ' + (d ? (d.live ? 'LIVE' : 'FREE PREVIEW') : (SIG.state === 'loading' ? 'LOADING' : 'OFFLINE')), list: list, empty: SIG.state === 'error' ? 'Signals are offline right now.' : (SIG.state === 'loading' || SIG.state === 'idle' ? 'Loading ZEROX signals…' : 'No calls yet.'),
+      detail: function (id) {
+        var c = d && d.calls ? d.calls[+String(id).slice(2)] : null; if (!c) return '<div class="empty">' + (d && d.locked ? esc(d.upgrade.msg) : 'Select a call.') + '</div>';
+        if (!d.live) return '<h3>' + esc(c.symbol || '?') + '</h3><div>' + esc(c.chain || '') + ' · called ' + c.ageMin + ' min ago' + (c.peakMult != null ? ' · peak x' + c.peakMult : '') + '</div><div class="empty" style="margin-top:10px">' + esc(d.upgrade.msg) + '</div><a class="b g" style="display:inline-block;text-decoration:none" href="' + esc(d.upgrade.path) + '" target="_blank">SEE PLANS</a>';
+        var rows = [['Entry', c.entry], ['Stop', c.stop], ['Target', c.target], ['Peak', c.peakMult != null ? 'x' + c.peakMult : null], ['Source', c.source]].filter(function (r) { return r[1] != null && r[1] !== ''; }).map(function (r) { return '<div>' + r[0] + ': <b>' + esc(String(r[1])) + '</b></div>'; }).join('');
+        return '<h3>' + esc(c.symbol || c.name || '?') + '</h3><div>' + esc(c.chain || '') + '</div><div style="margin:8px 0">' + rows + '</div><div class="empty">Signals are information, not advice. You confirm every trade yourself.</div>';
+      },
+      act: function () { } };
+  };
   M.news = function () { return { title: 'NEWS', list: NEWS.map(function (n) { return { id: n.id, t: n.t, s: n.s }; }), empty: 'Quiet on the wires.', detail: function (id) { var n = NEWS.filter(function (x) { return x.id === id; })[0]; return n ? '<h3>' + esc(n.t) + '</h3><div>' + esc(n.s) + ' feed (mock — real ticker plugs in later)</div>' : '<div class="empty">Select a story.</div>'; } }; };
 
   var LISTINGS = [
