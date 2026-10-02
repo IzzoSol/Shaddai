@@ -17,7 +17,7 @@
     var grp = new THREE.Group(); grp.name = 'colosseum-floors'; root.add(grp);
     var time = 0, mode = null, hooks = [];
     var rnd = function (a, b) { return a + Math.random() * (b - a); };
-    var API = { modes: MODES, state: { mode: null, round: 0, score: { A: 0, B: 0 } }, onBattleEvent: null };
+    var API = { autoBattle: true, modes: MODES, state: { mode: null, round: 0, score: { A: 0, B: 0 } }, onBattleEvent: null };
     function evt(e) { if (API.onBattleEvent) try { API.onBattleEvent(e); } catch (x) { } if (window.Navi && window.Navi.toast && e.msg) window.Navi.toast(e.msg); }
 
     /* ---------- shared particle pool (fire, smoke, splash spray, sparks, fireworks) ---------- */
@@ -194,7 +194,7 @@
     function hideAll() { water.visible = lava.visible = false; lavaProps.visible = voidG.visible = shipGroup.visible = false; balls.forEach(function (b) { b.visible = false; b.userData.live = false; }); for (var i = 0; i < N; i++) { pl[i] = 0; ps[i] = 0; } }
     function apply(name) {
       hideAll(); mode = name; API.state.mode = name; arena.floorMesh.visible = true;
-      if (name === 'water') { arena.floorMesh.visible = true; water.visible = true; shipGroup.visible = true; resetBattle(); }
+      if (name === 'water') { arena.floorMesh.visible = true; water.visible = true; shipGroup.visible = API.autoBattle !== false; if (API.autoBattle !== false) resetBattle(); }
       else if (name === 'lava') { lava.visible = true; lavaProps.visible = true; }
       else if (name === 'void') { voidG.visible = true; plats.forEach(function (p) { p.visible = true; p.position.y = p.userData.y0; p.userData.state = 'up'; p.userData.t = rnd(2, 9); p.material.emissive.setHex(0x6a2cff); }); }
       else if (name === 'grass' || name === 'ice') { paint(name); }
@@ -209,7 +209,7 @@
     API.apply = apply; API.clear = clear; API.handles = function (m) { return MODES.indexOf(m) >= 0; };
     API.tick = function (dt) {
       if (!mode || !root.parent || !root.parent.visible) return; time += dt; wU.uT.value = time; lU.uT.value = time;
-      if (mode === 'water') tickNaval(dt); else if (mode === 'lava') tickLava(dt); else if (mode === 'void') tickVoid(dt);
+      if (mode === 'water') { if (API.autoBattle !== false) tickNaval(dt); } else if (mode === 'lava') tickLava(dt); else if (mode === 'void') tickVoid(dt);
       tickParticles(dt); tickRings(dt);
     };
     arena.floors = API; arena.__floorHook = API.tick;

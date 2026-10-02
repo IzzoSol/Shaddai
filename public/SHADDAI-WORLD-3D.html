@@ -311,6 +311,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-offices.js?v=20261001a"></script>
 <script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-gear.js?v=20261001a"></script>
+<script src="/world-naval.js?v=20261001a"></script>
+<script src="/world-naval-view.js?v=20261001a"></script>
 <script src="/world-gadgets.js?v=20261001a"></script>
 <script src="/world-hitfx.js?v=20261001a"></script>
 <script src="/world-farm3d.js?v=20261001a"></script>
@@ -4986,6 +4988,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── NAVAL BATTLE (world-naval.js + world-naval-view.js): first-person water game on the Colosseum water field; opened from I > Colosseum ──
+(function bootNaval(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.WorldNavalGame || !window.WorldNaval || !window.__loadPlayable) return; clearInterval(iv);
+  try{ window.__naval = window.WorldNavalGame.create({ THREE, getArena: function(){ return window.__colosseumArena; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }catch(e){ console.warn('[naval] init failed', e && e.message); } }, 1000); })();
 // ── HIT FEEDBACK + GADGETS (world-hitfx.js / world-gadgets.js): hit marker, damage numbers, hurt arc; radar / binoculars / jetpack / scent-away ──
 (function bootFeedback(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !window.__mobs || !window.WorldHitFX || !window.WorldGadgets) return; clearInterval(iv);
@@ -5203,7 +5209,7 @@ function animate(){
   if(window.__crowd && !(_interiors && _interiors.isInside())){ try{ window.__crowd.update(dt); }catch(e){ console.warn('[crowd] disabled after error', e && e.message); window.__crowd = null; } }   // citizens
   if(window.__skateJam){ try{ window.__skateJam.update(dt); }catch(e){ console.warn('[skatejam] disabled after error', e && e.message); window.__skateJam = null; } }   // skate jam run + hoverboard HUD (speed lines, stamina)
   if(window.__raceChallenge){ try{ window.__raceChallenge.update(dt); }catch(e){ console.warn('[racechallenge] disabled after error', e && e.message); window.__raceChallenge = null; } }   // challenge races: countdown, rivals, checkpoints, payout   // MOUNTS (world-mount-ride.js)
-_pctlOn = !!_pctl && !_spawnBusy && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
+_pctlOn = !!_pctl && !_spawnBusy && !window.__noWalk && !(window.WorldSit && window.WorldSit.isSeated()) && !bikeMode && !(veh.bike && veh.bike.isRiding()) && !(hover && hover.isRiding()) && !veh.mode
           && !(_interiors && _interiors.isInside()) && !(_elevators && _elevators.isRiding()) && !(_rideOn()) && !_onTrain;
 _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY() : null;
   if((controls.isLocked || _touchCtrl.on) && !_uiOpen){
@@ -5470,6 +5476,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
     playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
   } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
+  if(window.__naval && window.__naval.active()){ try{ window.__naval.update(dt); window.__naval.applyCamera(camera); }catch(e){ console.warn('[naval] stopped after error', e && e.message); try{ window.__naval.stop(); }catch(_){} } }
   if(window.WorldGadgets && !_rideOn()){ try{ window.WorldGadgets.applyFov(camera, dt); }catch(_){} }   // binoculars zoom
   if(_onTrain && playerAvatar.visible){ const _sy = window.__worldTransitApi.seatYaw(); if(_sy !== null){ playerAvatar.rotation.y = _sy; _avatarYaw = _sy; } }   // MAGLEV: seated → face along the seat
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
