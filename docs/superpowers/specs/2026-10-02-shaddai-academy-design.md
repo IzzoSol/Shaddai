@@ -175,19 +175,69 @@ teacher with a room (a sub-section of the building), a signature class set and a
 | QUILL | Scriptorium | copy, SEO, marketing, documentation |
 | PIKADON | Safety Bureau | security, guardrails, compliance, receipts and audit |
 
+Those rooms are **subject rooms**, not just offices: each room runs real classes in its subject and a shop for its own
+books and docs (4.10). Example subjects: ORACLE teaches astronomy, sky reading and research method; TURTLE runs the
+Co-Creation Studio plus image and design classes; QUILL runs writing, copy and SEO workshops; ZEROX trading and unit
+economics; NEXUS tool and agent craft; PIKADON security and receipts; SHADDAI strategy and capstones. A room may host
+several classes; player and bot teachers can rent or be granted a side room under a faculty room for their subject.
+
 Faculty agents run as `teacher` operatives flagged `house: true`: they author skills, review homework (using their persona
 prompts from `AGENT_SYSTEM_PROMPTS.md`), and proctor exams inside their own rooms. Their commission does not go to an owner.
 It funds the scholarship pool (subsidized tuition seats) and a Faculty prize fund, so house teaching never competes with
 player teachers for payout. House skills are the baseline curriculum; player and bot teachers sell advanced and niche skills
 and can be ranked beside the faculty on the Hall of Teachers.
 
-## 5. The 3D building (the visible front door)
+### 4.10 Room press: books and docs sold from the room
+
+Every subject room has a **Press** shelf (a holo-bookcase plus a counter) selling that room's own titles, straight from
+the room, in Navi, and on the dashboard:
+- **Course books**: compiled from a skill's lesson, checklist, worked examples and anonymized critique examples
+  (teacher-approved). Format: markdown plus a generated PDF. A book is versioned and tied to a skill version.
+- **Guides and docs**: QUILL-style how-tos, prompt packs, SEO audit templates, trading-journal templates, agent import guides.
+- **Co-created works**: in the Co-Creation Studio (TURTLE) a student and the teacher agent iterate on a piece
+  (image set, zine, prompt book); the finished work is published with a recorded authorship split (student, teacher, house).
+- Purchase uses Sparks via economy-service with idempotency keys (PayBox request for any fiat); the buyer gets an
+  **entitlement** (download plus a read-in-Navi reader), never a re-sellable file by default. Revenue split reuses 4.5
+  (author 80%, burn 5%, house 15%); house-faculty books feed the scholarship pool.
+- Moderation: PIKADON scan on every publish (secrets, markup, license claims, plagiarism check against the corpus),
+  admin approve for the first title of any new author. No promises of income in titles or blurbs.
+- Distinct from the Library, Museum and Observatory destinations: those are places to read and see; the Press sells the
+  Academy's own teaching material.
+
+## 5. The 3D building: "The Athenaeum Campus"
+
+**One massive campus building, built like the colosseum** (own island interior, `window.buildAthenaeumCampus(THREE,
+{scene})` returning a room record with `heightAt/contains/resolve`, lazy-built on first entry, entered from the city at the
+`academy-hall` marker and from the Athenaeum page). It holds the Seven Halls from `public/athenaeum.html` as wings around
+a central Arcade concourse, so the Observatory, Library, Museum, Council, Forge, Music hall and Arcade are all walkable
+in-world (today only three have `?room=` support and the Arcade link is greyed "building soon"). Academy subject rooms
+live inside the wings:
+
+| Wing (Athenaeum hall) | Academy rooms inside |
+|---|---|
+| Observatory (ORACLE) | Astronomy and Research Lab, data-reading classes, ORACLE Press |
+| Library (QUILL) | Scriptorium: writing, copy, SEO, QUILL Press (the main bookshop) |
+| Museum (TURTLE) | Atelier, Co-Creation Studio, design critique, TURTLE Press |
+| Council hall (SHADDAI) | Dean's Atrium, Safety Bureau (PIKADON), Admin Office |
+| Forge (NEXUS) | Tool Foundry: tool use, agent craft, import dock |
+| Music hall | music and sound classes (existing music bot), Press |
+| Central Arcade concourse | ZEROX Trading Desk (paper), Exam Hall, Trophy Gallery, Hall of Teachers, Directory |
+
+The Athenaeum web page keeps its 2D links, and each hall's "In the World" link now targets the campus wing
+(`?room=campus&wing=oracle`). The Arcade link is enabled.
+
+**City redundancy.** The campus is meant to consolidate the long runs of near-identical office and shop blocks. That
+change touches the grid-fabric placements (3,349 enterable buildings), so it is a separate, later, owner-approved
+stage after the campus exists: a data-driven pass that thins or repurposes repeated `sc-office` / `sc-storefront`
+frontage near the campus, with before/after counts and screenshots. It is not part of the first Academy release.
+
+### 5.1 Exterior, interior stations, interactivity (the former building section, now campus-wide)
 
 Replace the generic `campus` interior for canon `academy-hall` with a bespoke Academy building. The brief:
 futuristic only (owner rule: no normal architecture), obsidian `#06080b` / emerald `#00ff9c` / gold `#e8c45c` city palette,
 legible at a distance, performant.
 
-Exterior: a tiered spire-and-ring structure ("The Lyceum"): stepped obsidian base, a slow-rotating emerald orbital ring
+Exterior: a tiered spire-and-ring campus ("The Athenaeum Campus", Lyceum crown): stepped obsidian base, a slow-rotating emerald orbital ring
 carrying skill glyphs, a gold-lit atrium crown, glass facade with scrolling skill-track banners (one lane per track).
 Built from instanced and merged geometry; one emissive material family, so the building adds a small, fixed number of draw
 calls. LODs: silhouette at distance, detail inside 120 m. Night/day aware (reads the existing sky state).
@@ -251,10 +301,11 @@ store-to-visual state mapping. Existing suites (`agents.test.js`, `world-interio
 2. Homework critique loop and judge (+ tests with a fake judge).
 3. Economy, teachers, achievements/reputation hooks (+ tests).
 4. Routes, external-bot import kit, MCP tools, agent guide (+ bearer e2e test).
-5. Curriculum seed content and benchmark fixtures.
-6. 3D Lyceum exterior and interior, stations, live socket store.
+5. Curriculum seed content, benchmark fixtures and the room Press (books/docs, co-created works).
+6. 3D Athenaeum Campus: exterior, central concourse, seven wings, subject rooms, stations, live socket store; Athenaeum page links.
 7. Navi Academy module and city-actions wiring; dashboard receipts card.
 8. Polish pass, perf check, screenshots for owner review.
+9. (Later, owner-approved) thin the repeated office/shop frontage around the campus.
 
 ## 10. Open items to confirm during review
 
