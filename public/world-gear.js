@@ -92,6 +92,14 @@
           (!L ? '<button data-a="buy" data-i="' + c.id + '" style="' + G + '">BUY ' + c.price + '</button>' : (on ? '<button data-a="off" data-s="' + slot + '" style="' + B + '">UNEQUIP</button>' : '<button data-a="eq" data-i="' + c.id + '" style="' + B + '">EQUIP</button>') + (c.kind !== 'cosmetic' && L < MAXL ? '<button data-a="up" data-i="' + c.id + '" style="' + G + '">UPGRADE ' + c.up[L - 1] + '</button>' : '')) + '</div></div>';
       });
     });
+    if (root.WorldGadgets) {
+      h += '<div style="color:#e8c45c;font-weight:700;margin:10px 0 3px">GADGETS</div>';
+      root.WorldGadgets.CATALOG.forEach(function (c) {
+        var have = c.id === 'scent' ? root.WorldGadgets.state().scent : (root.WorldGadgets.has(c.id) ? 1 : 0), cap = c.id === 'scent' ? have >= c.stack : have > 0;
+        h += '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="display:flex;justify-content:space-between"><b>' + c.name + (c.id === 'scent' ? ' <small style="opacity:.7">x' + have + '</small>' : '') + '</b><span style="opacity:.6">' + c.price + '&#9889;</span></div><small style="opacity:.65">' + c.note + '</small><div>' +
+          (cap ? '<small style="opacity:.6">' + (c.id === 'scent' ? 'max carried' : 'owned') + '</small>' : '<button data-a="gbuy" data-i="' + c.id + '" style="' + G + '">BUY ' + c.price + '</button>') + (c.id === 'scent' && have > 0 ? '<button data-a="guse" style="' + B + '">USE NOW</button>' : '') + '</div></div>';
+      });
+    }
     panel.querySelector('#gearBody').innerHTML = h + '<div id="gearMsg" style="color:#e8c45c;min-height:18px;margin-top:6px"></div>';
   }
   function open() {
@@ -99,7 +107,7 @@
     panel.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9600;width:min(94vw,440px);max-height:84vh;overflow:auto;padding:16px;border-radius:14px;background:linear-gradient(180deg,rgba(14,20,34,.97),rgba(5,8,15,.98));border:1px solid rgba(255,90,110,.5);color:#e9f4ee;font:600 13px Rajdhani,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.65)';
     panel.innerHTML = '<div style="display:flex;justify-content:space-between;color:#ff7a8a;font:900 16px Orbitron,sans-serif;letter-spacing:.14em"><span>ARMORY</span><span data-a="x" style="cursor:pointer">&#10005;</span></div><div id="gearBody"></div>'; document.body.appendChild(panel);
     panel.addEventListener('click', function (e) { var t = e.target.closest('[data-a]'); if (!t) return; var a = t.getAttribute('data-a'), id = t.getAttribute('data-i'), r; if (a === 'x') return close();
-      if (a === 'buy') r = buy(id); else if (a === 'eq') r = equip(id); else if (a === 'up') r = upgrade(id); else if (a === 'off') r = unequip(t.getAttribute('data-s'));
+      if (a === 'gbuy') r = root.WorldGadgets.buy(id); else if (a === 'guse') r = root.WorldGadgets.useScent(); else if (a === 'buy') r = buy(id); else if (a === 'eq') r = equip(id); else if (a === 'up') r = upgrade(id); else if (a === 'off') r = unequip(t.getAttribute('data-s'));
       render(); var m = panel && panel.querySelector('#gearMsg'); if (m && r && r.msg) m.textContent = r.msg; if (r && r.msg) toast(r.msg); }); render();
   }
   root.WorldGear = { CATALOG: CATALOG, MAXL: MAXL, RECHARGE_S: RECHARGE_S, buy: buy, upgrade: upgrade, equip: equip, unequip: unequip, absorb: absorb, tick: tick, owned: owned, state: state, buildVisuals: buildVisuals, open: open, close: close, _reset: function () { S = fresh(); save(); } };

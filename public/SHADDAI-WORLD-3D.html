@@ -311,6 +311,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-offices.js?v=20261001a"></script>
 <script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-gear.js?v=20261001a"></script>
+<script src="/world-gadgets.js?v=20261001a"></script>
+<script src="/world-hitfx.js?v=20261001a"></script>
 <script src="/world-farm3d.js?v=20261001a"></script>
 <script src="/world-arcade.js?v=20261001a"></script>   <!-- arcade: slots, higher-lower, hover dash -->
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
@@ -3814,6 +3816,7 @@ window.__dragonShake = function(i, d){ _shakeI = Math.max(_shakeI, i || 0.4); _s
 window.__onDragonHit = function(dmg, kind, info){
   if(window.WorldGear){ try{ dmg = window.WorldGear.absorb(dmg); }catch(_){} }   // ARMORY: shields reduce / the aegis barrier soaks
   if(!(dmg > 0)) return;
+  if(window.__hitfx){ try{ const kb = info && info.knockback; window.__hitfx.hurt(dmg, kb ? { dx: -kb.x, dz: -kb.z } : null); }catch(_){} }   // red edge + direction arc
   window.__playerHP = Math.max(0, window.__playerHP - dmg);
   if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
   window.__dragonShake(kind === 'stagger' ? 0.25 : 0.6, 0.35);
@@ -4983,6 +4986,16 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── HIT FEEDBACK + GADGETS (world-hitfx.js / world-gadgets.js): hit marker, damage numbers, hurt arc; radar / binoculars / jetpack / scent-away ──
+(function bootFeedback(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.__loadPlayable || !window.__mobs || !window.WorldHitFX || !window.WorldGadgets) return; clearInterval(iv);
+  try{
+    const _pv = new THREE.Vector3();
+    window.__hitfx = window.WorldHitFX.create({ getYaw: function(){ return Math.atan2(fwd.x, fwd.z); }, project: function(x,y,z){ _pv.set(x,y,z).project(camera); return { x: (_pv.x*0.5+0.5)*innerWidth, y: (-_pv.y*0.5+0.5)*innerHeight, on: _pv.z > -1 && _pv.z < 1 }; } });
+    window.__mobs.on('hit', function(h){ window.__hitfx.hit(h); });
+    window.WorldGadgets.buildUI({ U: V4_U, getPlayer: function(){ return playerPos; }, getYaw: function(){ return Math.atan2(fwd.x, fwd.z); },
+      getBlips: function(P, r){ const out = window.__mobs.blips ? window.__mobs.blips(P, r) : []; try{ const sims = window.WorldBots && window.WorldBots._sim ? window.WorldBots._sim() : {}; Object.keys(sims).forEach(function(k){ const s = sims[k]; if(s && s.x != null) out.push({ x: s.x, z: s.z, kind: 'bot' }); }); }catch(_){} return out; } });
+  }catch(e){ console.warn('[feedback] init failed', e && e.message); } }, 1000); })();
 // ── ARMORY VISUALS (world-gear.js): shield plate / aegis barrier / halo / aura follow the avatar ──
 (function bootGear(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.WorldGear || !window.__loadPlayable || typeof playerAvatar === 'undefined') return; clearInterval(iv);
@@ -5180,6 +5193,8 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__hitfx){ try{ window.__hitfx.update(dt); }catch(_){} }
+  if(window.WorldGadgets){ try{ window.WorldGadgets.tick(dt); }catch(_){} }
   if(window.__gearVis){ try{ window.__gearVis.update(dt); }catch(e){ console.warn('[gear] disabled after error', e && e.message); try{ window.__gearVis.dispose(); }catch(_){} window.__gearVis = null; } }
   if(window.__farm3d){ try{ window.__farm3d.update(dt); }catch(e){ console.warn('[farm3d] disabled after error', e && e.message); try{ window.__farm3d.dispose(); }catch(_){} window.__farm3d = null; } }
   if(window.__traffic && !(_interiors && _interiors.isInside())){ try{ window.__traffic.update(dt); }catch(e){ console.warn('[traffic] disabled after error', e && e.message); window.__traffic = null; } }
@@ -5231,6 +5246,8 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
       playerPos.set(_pctlOut.pos.x, _pctlOut.pos.y, _pctlOut.pos.z);   // host keeps ownership of playerPos (y = feet)
       _vel.x = _pctlOut.vel.x; _vel.z = _pctlOut.vel.z;
       _onPctlEvents(_pctlOut.events);
+      /* JETPACK (world-gadgets.js): hold Space in the air (after a 0.3 s grace) -> thrust through the controller's own velocity */
+      if(window.WorldGadgets && window.WorldGadgets.jetpackOn()){ try{ const _j = window.WorldGadgets.jet(dt, { airborne: _pctlOut.state === 'airborne', hold: !!keys['Space'], vy: _pctlOut.vel.y / V4_U }); if(_j.burning) _pctl.setVel(_pctlOut.vel.x, _j.vy * V4_U, _pctlOut.vel.z); }catch(_){} }
     } else {
       _moveDir.set(0,0,0);
       if(keys['KeyW']||keys['ArrowUp'])    _moveDir.add(fwd);
@@ -5453,6 +5470,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
     playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
   } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
+  if(window.WorldGadgets && !_rideOn()){ try{ window.WorldGadgets.applyFov(camera, dt); }catch(_){} }   // binoculars zoom
   if(_onTrain && playerAvatar.visible){ const _sy = window.__worldTransitApi.seatYaw(); if(_sy !== null){ playerAvatar.rotation.y = _sy; _avatarYaw = _sy; } }   // MAGLEV: seated → face along the seat
   camFill.position.copy(camera.position);   // keep the fill light on whatever you're looking at
   skyDome.position.copy(camera.position);   // PERF: sky follows the camera (standard skybox trick) so the r=1400 dome is always centred on the viewer → the tightened far plane (1500) never clips it. Gradient is direction-based so the look is identical.
