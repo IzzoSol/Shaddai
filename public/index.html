@@ -4326,7 +4326,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 </div>
 
 <!-- Boot overlay is the FIRST element rendered — visible before any JS runs -->
-<div id="shaddai-boot-overlay"></div>
+<div id="shaddai-boot-overlay"><div class="sbo-inner" style="justify-content:center;gap:22px"><div class="sbo-logo-wrap"><div class="sbo-logo" id="sboLogo">SHADDAI</div><div class="sbo-version">v101.3 &nbsp;·&nbsp; 7 agents</div></div><div class="sbo-footer" style="max-width:420px;margin:0 auto;width:100%"><div class="sbo-progress-track"><div class="sbo-progress-fill" id="sboFill" style="width:8%"></div></div><div class="sbo-status-txt" id="sboStatus">Loading the dashboard…</div></div></div></div>
+<script>try{if(sessionStorage.getItem('shd_boot_seen')==='1'){var __o=document.getElementById('shaddai-boot-overlay');if(__o)__o.remove();}}catch(e){}setTimeout(function(){var o=document.getElementById('shaddai-boot-overlay');if(o){o.style.transition='opacity .35s';o.style.opacity='0';setTimeout(function(){o.remove()},400);}},25000);</script>
 
 <div id="topBar" style="display:grid !important;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px">
   <!-- FIX(header overlap): LEFT cell — live status readouts in their own grid column (no more absolute overlap) -->
@@ -4423,27 +4424,27 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <nav id="mainNav">
   <button class="nav-btn" onclick="location.href='/quickstart.html'" style="color:#00e5ff;font-weight:700" title="Quick Start — answer a few questions, get what you need">⚡ Quick Start</button>
   <button class="nav-btn active nav-img" onclick="showView('dash')" style="--nav-img:url(/assets/nav/dashboard.jpg)">🎛️ Dashboard</button>
-  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
-  <button class="nav-btn nav-img" onclick="showView('workflow')" style="--nav-img:url(/assets/nav/workflow.jpg)"><img src="/api/forge/art/module-triggers.png" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
-  <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
-  <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
+  <button class="nav-btn nav-img" onclick="showView('agents')" style="--nav-img:url(/assets/nav/agents.jpg)"><img src="/api/forge/art/agent-shaddai.png?w=64" alt="" onerror="this.outerHTML='🧠'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Agents</button>
+  <button class="nav-btn nav-img" onclick="showView('workflow')" style="--nav-img:url(/assets/nav/workflow.jpg)"><img src="/api/forge/art/module-triggers.png?w=160" alt="" onerror="this.outerHTML='🔀'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Workflow</button>
+  <button class="nav-btn nav-img" onclick="showView('automation')" style="--nav-img:url(/assets/nav/automation.jpg)"><img src="/api/forge/art/module-automation.png?w=160" alt="" onerror="this.outerHTML='⚙️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Automation</button>
+  <button class="nav-btn nav-img" onclick="showView('pipeline')" style="--nav-img:url(/assets/nav/markets.jpg)"><img src="/api/forge/art/module-pipeline.png?w=160" alt="" onerror="this.outerHTML='📊'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Markets</button>
   <button class="nav-btn nav-img" onclick="showView('office')" data-guest-lock="Office" style="color:#ffd700;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏢 Office</button>
   <button class="nav-btn nav-img" onclick="showView('hall');try{renderHallRooms()}catch(e){}" data-guest-lock="Hall" style="color:#cc44ff;font-weight:700;--nav-img:url(/assets/nav/office.jpg)">🏛️ The Hall</button>
-  <button class="nav-btn nav-img" onclick="showView('chat')" style="--nav-img:url(/assets/nav/chat.jpg)"><img src="/api/forge/art/module-aiwriter.png" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
+  <button class="nav-btn nav-img" onclick="showView('chat')" style="--nav-img:url(/assets/nav/chat.jpg)"><img src="/api/forge/art/module-aiwriter.png?w=160" alt="" onerror="this.outerHTML='💬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Chat</button>
   <!-- E3 REMOVED: 📖 Lib & Notes nav — now lives inside Office ▸ Library sub-tab -->
   <!-- E3 REMOVED: 🗂️ Projects nav — now lives inside Office ▸ Projects sub-tab -->
   <button class="nav-btn nav-img" onclick="showView('apis')" style="--nav-img:url(/assets/nav/apis.jpg)">🔌 APIs</button>
   <button class="nav-btn nav-img" onclick="showView('social')" style="--nav-img:url(/assets/nav/social.jpg)">📡 Social</button>
-  <button class="nav-btn nav-img" onclick="showView('media')" style="--nav-img:url(/assets/nav/media.jpg)"><img src="/api/forge/art/module-videostudio.png" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
+  <button class="nav-btn nav-img" onclick="showView('media')" style="--nav-img:url(/assets/nav/media.jpg)"><img src="/api/forge/art/module-videostudio.png?w=160" alt="" onerror="this.outerHTML='🎬'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(0,229,160,0.35)"> Media</button>
   <!-- E3 REMOVED: ⚡ Skills nav — now lives inside Office ▸ Skills sub-tab -->
   <button class="nav-btn" onclick="showView('brain');try{brainInit()}catch(e){}" style="color:#b16cff;font-weight:700" title="The Brain — search & ask the council's RAG knowledge">🧠 Brain</button>
   <button class="nav-btn" data-tbnav="1" onclick="showView('toolbrowser')" style="color:#00e5a0;font-weight:700" title="Browse & run all 219 backend tools">🛠️ Tools</button>
   <!-- Registry tab removed -->
   <!-- Wallet tab removed -->
   <button class="nav-btn" onclick="showView('settings')">🎚️ Settings</button>
-  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
+  <button class="nav-btn" onclick="showView('security')" style="border-color:#ef4444;color:#ef4444"><img src="/api/forge/art/agent-pikadon.png?w=64" alt="" onerror="this.outerHTML='🛡️'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(239,68,68,0.4)"> Security</button>
   <!-- Rooms moved into the 🌐 Worlds chooser — out of the main work-flow -->
-  <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
+  <button class="nav-btn" onclick="showView('sentiment')" style="color:#8b5cf6;font-weight:700"><img src="/api/forge/art/module-chartsignal.png?w=160" alt="" onerror="this.outerHTML='📈'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(139,92,246,0.4)"> Sentiment</button>
   <button class="nav-btn" onclick="showView('news')" style="color:#22d3ee;font-weight:700">📰 News</button>
   <!-- Commerce tab removed -->
   <!-- A4 REMOVED: 💳 Billing nav — now lives inside Office ▸ Billing sub-tab -->
@@ -11476,7 +11477,7 @@ window.enter3DWorld=function(){
       <!-- Image Gen Module -->
       <div class="mm-card" onclick="launchMediaModule('image')" style="--acc:#00E5A0;--acc2:#00c8ff">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-imagegen.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-imagegen.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">IMAGE GEN</div>
         <div class="mm-sub">Prompt · Style · Negative</div>
         <div class="mm-chips"><span>Flux</span><span>Midjourney</span><span>Leonardo</span></div>
@@ -11486,7 +11487,7 @@ window.enter3DWorld=function(){
       <!-- Video Studio Module -->
       <div class="mm-card" onclick="launchMediaModule('video')" style="--acc:#00E5FF;--acc2:#00ff88">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-videostudio.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-videostudio.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">VIDEO STUDIO</div>
         <div class="mm-sub">Script · Storyboard · Hook · AI Prompt</div>
         <div class="mm-chips"><span>HeyGen</span><span>Runway</span><span>Kling</span><span>Pika</span></div>
@@ -11496,7 +11497,7 @@ window.enter3DWorld=function(){
       <!-- Music + Audio Module -->
       <div class="mm-card" onclick="launchMediaModule('music')" style="--acc:#ffb020;--acc2:#ff7b3d">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-musicaudio.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-musicaudio.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">MUSIC + AUDIO</div>
         <div class="mm-sub">Lyrics · Beats · Sound Design</div>
         <div class="mm-chips"><span>Suno</span><span>Udio</span><span>Splash</span></div>
@@ -11506,7 +11507,7 @@ window.enter3DWorld=function(){
       <!-- Voice / TTS Module -->
       <div class="mm-card" onclick="launchMediaModule('voice')" style="--acc:#8b5cf6;--acc2:#c084fc">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-voicetts.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-voicetts.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">VOICE / TTS</div>
         <div class="mm-sub">Clone · Generate · Script</div>
         <div class="mm-chips"><span>Web Speech</span><span class="mm-chip-free">Free</span><span>ElevenLabs</span></div>
@@ -11516,7 +11517,7 @@ window.enter3DWorld=function(){
       <!-- Content Writer Module -->
       <div class="mm-card" onclick="launchMediaModule('content')" style="--acc:#ff4070;--acc2:#ff8fb0">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-aiwriter.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-aiwriter.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">AI WRITER</div>
         <div class="mm-sub">Threads · Captions · Blogs · Copy</div>
         <div class="mm-chips"><span>QUILL</span><span>Platform-native</span></div>
@@ -11526,7 +11527,7 @@ window.enter3DWorld=function(){
       <!-- Gallery Module -->
       <div class="mm-card" onclick="launchMediaModule('gallery')" style="--acc:#FFD54E;--acc2:#ffb020">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-gallery.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-gallery.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">GALLERY</div>
         <div class="mm-sub">Saved images · video · prompts</div>
         <div class="mm-chips"><span>Images</span><span>Video</span><span>Export</span></div>
@@ -11536,7 +11537,7 @@ window.enter3DWorld=function(){
       <!-- Video Clipper Module — UNLOCKED (opens the clipper overlay: Manual trim + Auto highlights) -->
       <div class="mm-card" onclick="launchMediaModule('clipper')" style="--acc:#00E5A0;--acc2:#ffd45e;position:relative">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-videoclipper.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-videoclipper.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">VIDEO CLIPPER <span class="mm-badge">NEW</span></div>
         <div class="mm-sub">Long video → captioned vertical shorts</div>
         <div class="mm-chips"><span>ffmpeg</span><span>Whisper</span><span>TikTok/Reels</span></div>
@@ -11546,7 +11547,7 @@ window.enter3DWorld=function(){
       <!-- Chart Signal Module -->
       <div class="mm-card" onclick="launchMediaModule('signal')" style="--acc:#00ff88;--acc2:#00c8ff">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-chartsignal.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-chartsignal.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">CHART SIGNAL</div>
         <div class="mm-sub">Ticker + notes → signal post</div>
         <div class="mm-chips"><span>ORACLE</span><span>Twitter</span><span>Telegram</span></div>
@@ -11556,7 +11557,7 @@ window.enter3DWorld=function(){
       <!-- Content Series Module -->
       <div class="mm-card" onclick="launchMediaModule('series')" style="--acc:#00c8ff;--acc2:#8b5cf6">
         <div class="mm-mesh"></div><div class="mm-scan"></div><div class="mm-sheen"></div>
-        <div class="mm-icon-shell"><img src="/api/forge/art/module-contentseries.png" alt="" loading="lazy" class="media-mod-icon"></div>
+        <div class="mm-icon-shell"><img src="/api/forge/art/module-contentseries.png?w=160" alt="" loading="lazy" class="media-mod-icon"></div>
         <div class="mm-title">CONTENT SERIES</div>
         <div class="mm-sub">Topic → full day-by-day series</div>
         <div class="mm-chips"><span>QUILL</span><span>3–30 days</span><span>Any platform</span></div>
@@ -53764,119 +53765,47 @@ input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); ou
     document.addEventListener('mouseenter', () => { dot.style.opacity = ring.style.opacity = '1'; });
   }
 
-  // ── BOOT ANIMATION v80 — Full sovereign initialization sequence ──
+  // ── BOOT LOADER (v101.3) ──
+  // The old version was a fixed ~5s scripted show with invented diagnostics ("quantum bridge", "blockchain sync",
+  // "16.4 GB mapped") that always ended in "all systems nominal". This one reports real readiness and is gone
+  // as soon as the app answers: once per session, 0.5s minimum, 3s maximum.
   function injectBoot() {
     const ov = document.getElementById('shaddai-boot-overlay');
     if (!ov) return;
-
-    const AGENTS = [
-      { name:'SHADDAI',  role:'SOVEREIGN ORCHESTRATOR',  color:'#00ff88' },
-      { name:'NEXUS',    role:'TECHNICAL ARCHITECT',      color:'#3b82f6' },
-      { name:'ZEROX',    role:'REVENUE ENGINE',           color:'#f59e0b' },
-      { name:'ORACLE',   role:'INTELLIGENCE MATRIX',      color:'#a855f7' },
-      { name:'TURTLE',   role:'CREATIVE SYSTEMS',         color:'#10b981' },
-      { name:'QUILL',    role:'COMMS ARRAY',              color:'#f97316' },
-      { name:'PIKADON',  role:'SECURITY PERIMETER',       color:'#ef4444' },
-    ];
-    const DIAGS = [
-      ['NEURAL ARCHITECTURE',   'OK'],
-      ['MEMORY ALLOCATION',     '16.4 GB MAPPED'],
-      ['QUANTUM BRIDGE',        'SYNCHRONIZED'],
-      ['TOOL REGISTRY',         '200+ LIVE'],
-      ['BLOCKCHAIN SYNC',       'MAINNET · LIVE'],
-      ['ENCRYPTION LAYER',      'AES-256 · ACTIVE'],
-      ['SOVEREIGN PROTOCOLS',   'INITIALIZED'],
-      ['EMPIRE NETWORK',        'CONNECTED'],
-    ];
+    try { if (sessionStorage.getItem('shd_boot_seen') === '1') { ov.remove(); return; } } catch (e) {}
 
     ov.innerHTML = `
       <div class="sbo-scanlines"></div>
-      <div class="sbo-inner">
+      <div class="sbo-inner" style="justify-content:center;gap:22px">
         <div class="sbo-logo-wrap">
-          <div class="sbo-logo sbo-glitch" id="sboLogo">SHADDAI</div>
-          <div class="sbo-version">v94 &nbsp;·&nbsp; SOVEREIGN TERMINAL &nbsp;·&nbsp; 7 AGENTS</div>
-          <div class="sbo-hr"></div>
+          <div class="sbo-logo" id="sboLogo">SHADDAI</div>
+          <div class="sbo-version">v101.3 &nbsp;·&nbsp; 7 agents</div>
         </div>
-        <div class="sbo-panels">
-          <div class="sbo-panel-box" id="sboDiagBox">
-            <div class="sbo-panel-head">▸ SYSTEM DIAGNOSTICS</div>
-            <div id="sboDiag"></div>
-          </div>
-          <div class="sbo-panel-box" id="sboAgentsBox">
-            <div class="sbo-panel-head">▸ AGENT INITIALIZATION</div>
-            <div id="sboAgents"></div>
-          </div>
+        <div class="sbo-footer" style="max-width:420px;margin:0 auto;width:100%">
+          <div class="sbo-progress-track"><div class="sbo-progress-fill" id="sboFill" style="width:8%"></div></div>
+          <div class="sbo-status-txt" id="sboStatus">Loading the dashboard…</div>
         </div>
-        <div class="sbo-footer">
-          <div class="sbo-progress-track"><div class="sbo-progress-fill" id="sboFill"></div></div>
-          <div class="sbo-status-txt" id="sboStatus">INITIALIZING SOVEREIGN SYSTEMS...</div>
-        </div>
-      </div>
-      <div class="sbo-access-granted" id="sboGranted" style="opacity:0;display:none">ACCESS GRANTED</div>
-    `;
-
-    const diagEl   = document.getElementById('sboDiag');
-    const agentsEl = document.getElementById('sboAgents');
-    const fillEl   = document.getElementById('sboFill');
+      </div>`;
+    const fillEl = document.getElementById('sboFill');
     const statusEl = document.getElementById('sboStatus');
-    const grantedEl = document.getElementById('sboGranted');
-
-    function setProgress(pct, txt) {
-      fillEl.style.width = pct + '%';
-      if (txt) statusEl.textContent = txt;
-    }
-    function addDiag(label, val) {
-      const row = document.createElement('div');
-      row.className = 'sbo-diag-row';
-      row.innerHTML = `<span class="sbo-diag-label">◉ ${label}</span><span class="sbo-diag-val">${val}</span>`;
-      diagEl.appendChild(row);
-    }
-    function addAgent(a) {
-      const row = document.createElement('div');
-      row.className = 'sbo-agent-row';
-      row.style.borderLeft = '2px solid ' + a.color;
-      row.innerHTML = `<span class="sbo-aname" style="color:${a.color}">${a.name}</span><span class="sbo-arole">${a.role}</span><span class="sbo-astatus">ONLINE ✓</span>`;
-      agentsEl.appendChild(row);
-    }
-
-    // Phase 1 — Diagnostics (600ms – 2000ms)
-    DIAGS.forEach((d, i) => {
-      const t = 600 + i * 185;
-      setTimeout(() => addDiag(d[0], d[1]), t);
-      setTimeout(() => setProgress(Math.round((i + 1) / DIAGS.length * 44), 'RUNNING DIAGNOSTICS...'), t + 60);
-    });
-
-    // Phase 2 — Agent init (2100ms – 3600ms)
-    AGENTS.forEach((a, i) => {
-      const t = 2100 + i * 215;
-      setTimeout(() => addAgent(a), t);
-      setTimeout(() => setProgress(44 + Math.round((i + 1) / AGENTS.length * 44), 'INITIALIZING AGENT FLEET...'), t + 60);
-    });
-
-    // Phase 3 — Security + finalize (3700ms – 4200ms)
-    setTimeout(() => setProgress(92, 'PIKADON SECURITY SCAN...'), 3720);
-    setTimeout(() => {
-      setProgress(100, 'ALL SYSTEMS NOMINAL · EMPIRE STATUS: SOVEREIGN');
-      statusEl.style.color = 'rgba(0,229,160,0.9)';
-      statusEl.style.fontWeight = '700';
-    }, 4100);
-
-    // Phase 4 — ACCESS GRANTED flash (4300ms)
-    setTimeout(() => {
-      grantedEl.style.display = 'flex';
-      requestAnimationFrame(() => { grantedEl.style.opacity = '1'; });
+    const t0 = performance.now();
+    let done = false;
+    function set(pct, txt) { fillEl.style.width = pct + '%'; if (txt) statusEl.textContent = txt; }
+    function finish(txt) {
+      if (done) return; done = true;
+      set(100, txt);
+      const wait = Math.max(0, 500 - (performance.now() - t0));
       setTimeout(() => {
-        grantedEl.style.opacity = '0';
-        grantedEl.style.letterSpacing = '0.4em';
-        grantedEl.style.transition = 'opacity 0.4s ease, letter-spacing 0.4s ease';
-      }, 500);
-    }, 4300);
-
-    // Phase 5 — Split-wipe reveal (4900ms)
-    setTimeout(() => {
-      ov.style.clipPath = 'inset(0 50% 0 50%)';
-      setTimeout(() => ov.remove(), 700);
-    }, 4900);
+        try { sessionStorage.setItem('shd_boot_seen', '1'); } catch (e) {}
+        ov.style.transition = 'opacity .35s ease'; ov.style.opacity = '0';
+        setTimeout(() => ov.remove(), 380);
+      }, wait);
+    }
+    set(35, 'Starting agents…');
+    fetch('/api/health', { signal: AbortSignal.timeout(2800) })
+      .then(r => finish(r.ok ? 'Ready' : 'Ready (some services offline)'))
+      .catch(() => finish('Ready (offline mode)'));
+    setTimeout(() => finish('Ready'), 3000);
   }
 
   function init() {
