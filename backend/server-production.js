@@ -1874,6 +1874,7 @@ try {
 // VIRTUALS ACP — read-only identity/marketplace/wallet surface for the terminals
 // (mirrors the MCP zerox_virtuals_* tools; GET-only, never exposes the API key).
 try {
+try { app.use('/api/intel', softAuth, require('./markets').createDefault()); console.log('[prod] market intel mounted'); } catch (e) { console.warn('[prod] market intel skipped:', e.message); } // Market Intelligence Engine: signals/quotes/correlations (public) + paper ledger (login)
   app.use(require('./routes/virtuals-routes'));
   console.log('[prod] Virtuals ACP REST mounted (/api/virtuals/*)');
 } catch (e) {
