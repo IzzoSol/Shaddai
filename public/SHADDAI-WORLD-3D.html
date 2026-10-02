@@ -311,6 +311,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-offices.js?v=20261001a"></script>
 <script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-gear.js?v=20261001a"></script>
+<script src="/world-skydock.js?v=20261001a"></script>
 <script src="/world-naval.js?v=20261001a"></script>
 <script src="/world-naval-view.js?v=20261001a"></script>
 <script src="/world-gadgets.js?v=20261001a"></script>
@@ -4988,6 +4989,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── SKY DOCK (world-skydock.js): launch pads + vendor on the Sky Nexus deck (top of the city) ──
+(function bootSkyDock(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
+  if(!window.WorldSkyDock || !window.SHADDAI_SKY || !window.__loadPlayable) return; clearInterval(iv);
+  try{ const S = window.SHADDAI_SKY; window.__skyDock = window.WorldSkyDock.build({ THREE, scene, U: V4_U, anchor: { x: S.nexusX || 0, z: S.nexusZ || 0, y: S.nexusY }, getPlayer: function(){ return { pos: playerPos }; } }); }catch(e){ console.warn('[skydock] failed', e && e.message); } }, 1000); })();
 // ── NAVAL BATTLE (world-naval.js + world-naval-view.js): first-person water game on the Colosseum water field; opened from I > Colosseum ──
 (function bootNaval(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
   if(!window.WorldNavalGame || !window.WorldNaval || !window.__loadPlayable) return; clearInterval(iv);
@@ -5199,6 +5204,7 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__skyDock){ try{ window.__skyDock.update(dt); }catch(e){ console.warn('[skydock] disabled after error', e && e.message); try{ window.__skyDock.dispose(); }catch(_){} window.__skyDock = null; } }
   if(window.__hitfx){ try{ window.__hitfx.update(dt); }catch(_){} }
   if(window.WorldGadgets){ try{ window.WorldGadgets.tick(dt); }catch(_){} }
   if(window.__gearVis){ try{ window.__gearVis.update(dt); }catch(e){ console.warn('[gear] disabled after error', e && e.message); try{ window.__gearVis.dispose(); }catch(_){} window.__gearVis = null; } }

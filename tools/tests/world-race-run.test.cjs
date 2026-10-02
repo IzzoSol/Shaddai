@@ -73,4 +73,10 @@ t('track keeper: driving the wrong way warns once per 3 s and never resets you',
   const { run, events } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const c = at(0.30), wrong = { x: c.x, z: c.z, y: 0, yaw: Math.PI }; run.update(0.05, { x: c.x, z: c.z, y: 0, yaw: 0 });
   tick(run, wrong, 2.2); assert.strictEqual(events.filter(e => e.type === 'warn' && e.kind === 'wrongway').length, 1); assert(!events.some(e => e.type === 'respawn'));
 });
+t('hull plating upgrade: an AI Spark Shell does 22 to the player normally and 17 with +30 hull', () => {
+  const hit = (hull) => { if (hull) global.WorldSkyDock = { mult: () => ({ hull }) }; else delete global.WorldSkyDock;
+    const { run } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const st = run._st(), R = run.race(), a = st.ais[0], me = { x: at(0.3).x, z: at(0.3).z, y: 0, yaw: 0 };
+    a.tot = 0.3 - 0.0125; a.u = a.tot; R.rider('ai0').item = 'shell'; a.itemT = 0; for (let i = 0; i < 80 && R.rider('you').hp === 100; i++) run.update(0.05, me); delete global.WorldSkyDock; return 100 - R.rider('you').hp; };
+  assert.strictEqual(hit(0), 22); assert.strictEqual(hit(30), 17);
+});
 console.log(pass + ' passed');

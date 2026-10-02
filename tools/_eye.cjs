@@ -11,7 +11,7 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
 (async () => {
   const mode = process.argv[2] || 'entrances';
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const p = await b.newPage(); await p.setViewport({ width: 1000, height: 600 }); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 120)));
+  const p = await b.newPage(); await p.setViewport({ width: +(process.env.EYE_W||1000), height: +(process.env.EYE_H||600) }); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 120)));
   await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html', { waitUntil: 'domcontentloaded', timeout: 90000 });
   for (let i = 0; i < 150; i++) { await sleep(2000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
   await sleep(12000);
@@ -23,13 +23,25 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
     await p.evaluate((px, pz, tx, tz, up, ty) => { const D = window.__w3dDebug, H = D.terrainV4 || D.terrain, L = window.__camLock; D.playerPos.x = px; D.playerPos.z = pz; const gy = H.heightAt(px, pz), ty0 = H.heightAt(tx, tz); L.on = true; L.px = px; L.py = gy + up; L.pz = pz; L.tx = tx; L.ty = ty0 + ty; L.tz = tz; }, px, pz, tx, tz, up, ty);
     await sleep(6500); await p.screenshot({ path: OUT + '/' + name + '.png' }); console.log('shot', name);
   }
-  if (mode === 'list') { console.log(JSON.stringify(await p.evaluate(() => window.__entrances))); }
+  if (mode === 'probe') { console.log(JSON.stringify(await p.evaluate(() => { const S = window.SHADDAI_SKY || null, E = window.__shaddaiElevators || null, D = window.__w3dDebug, H = D.terrainV4 || D.terrain; return { sky: S && { nexusY: S.nexusY, nexusR: S.nexusR, temple: S.templeX != null ? [S.templeX, S.templeZ] : null, keys: Object.keys(S).slice(0, 30) }, elevators: !!E, platforms: E && E.platforms ? E.platforms.length : 0, ents: (window.__entrances || []).map(e => [e.code, Math.round(e.x), Math.round(e.z)]), groundAtOrigin: H.heightAt(0, 0), bTop: window.__measuredFootprints ? Object.keys(window.__measuredFootprints).length : 0 }; }))); }
+  else if (mode === 'list') { console.log(JSON.stringify(await p.evaluate(() => window.__entrances))); }
   else if (mode === 'entrances') {
     const only = process.argv.slice(3), ents = (await p.evaluate(() => window.__entrances || [])).filter(e => !only.length || only.includes(e.code));
     for (const e of ents) {
       await shot('ent-' + e.code + '-a', e.x + e.nx * 45, e.z + e.nz * 45, e.x, 0, e.z, 9, 12);
       await shot('ent-' + e.code + '-b', e.x + e.nx * 20 + e.nz * 8, e.z + e.nz * 20 - e.nx * 8, e.x, 0, e.z, 3.5, 6);
     }
+  } else if (mode === 'colo') {   // node tools/_eye.cjs colo [field...]  -> eye-level views from the arena floor (default fields: sand lava water)
+    const fields = process.argv.slice(3).length ? process.argv.slice(3) : ['sand', 'lava', 'water'], U = 7 / 1.8;
+    console.log(await p.evaluate(() => window.__travel.colospot('arena'))); await sleep(14000);
+    for (const f of fields) {
+      console.log(await p.evaluate(f => window.__travel.field(f), f)); await sleep(5000);
+      for (const [tag, dx, dz, up] of [['n', 0, -1, 1.7], ['e', 1, 0, 1.7], ['down', 0.001, -0.001, 40]]) {
+        await p.evaluate((dx, dz, up, U) => { const D = window.__w3dDebug, L = window.__camLock, pp = D.playerPos; L.on = true; L.px = pp.x; L.py = pp.y + up * U; L.pz = pp.z; L.tx = pp.x + dx * 30 * U; L.ty = up > 5 ? pp.y : pp.y + 4 * U; L.tz = pp.z + dz * 30 * U; }, dx, dz, up, U);
+        await sleep(3500); await p.screenshot({ path: OUT + '/colo-' + f + '-' + tag + '.png' }); console.log('shot colo', f, tag);
+      }
+    }
+    console.log('POS', JSON.stringify(await p.evaluate(() => { const q = window.__w3dDebug.playerPos; return [q.x | 0, q.y | 0, q.z | 0]; })));
   } else if (mode === 'at') {
     const [name, x, z, dist = 40, h = 8, yaw = 0] = process.argv.slice(3); const U = 7 / 1.8, a = (+yaw) * Math.PI / 180;
     await shot(name, +x * U + Math.sin(a) * +dist * U, +z * U + Math.cos(a) * +dist * U, +x * U, 0, +z * U, +h * U, 4 * U);
