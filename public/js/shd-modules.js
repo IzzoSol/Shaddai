@@ -366,10 +366,8 @@
       id: 'brain', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
       blurb: 'Ask the library. Every answer cited to its source.',
       items: [
-        { id: 'brain-classic', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag',
-          blurb: 'The readable view — ask, read the answer, see the tools, models and wallets.' },
-        { id: 'brain-3d',      name: '3D BRAIN', accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
-          blurb: 'The same library, rendered — see which regions an answer came from.' },
+        { id: 'brain-main', name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag',
+          blurb: 'One brain: ask, see the agent, read the sources — 2D or 3D.' },
       ],
     },
     {
