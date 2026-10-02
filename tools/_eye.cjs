@@ -12,7 +12,7 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
   const mode = process.argv[2] || 'entrances';
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: +(process.env.EYE_W||1000), height: +(process.env.EYE_H||600) }); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 120)));
-  await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html', { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html' + (process.env.EYE_QS || ''), { waitUntil: 'domcontentloaded', timeout: 90000 });
   for (let i = 0; i < 150; i++) { await sleep(2000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
   await sleep(12000);
   await p.evaluate(() => { const els = [...document.querySelectorAll('*')].filter(e => e.children.length < 4 && /Source Temple/i.test(e.textContent || '') && e.offsetParent); const t = els.sort((a, b) => (a.textContent || '').length - (b.textContent || '').length)[0]; if (t) (t.closest('button,[class*=portal],[class*=card],[onclick]') || t).click(); });
@@ -23,7 +23,40 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
     await p.evaluate((px, pz, tx, tz, up, ty) => { const D = window.__w3dDebug, H = D.terrainV4 || D.terrain, L = window.__camLock; D.playerPos.x = px; D.playerPos.z = pz; const gy = H.heightAt(px, pz), ty0 = H.heightAt(tx, tz); L.on = true; L.px = px; L.py = gy + up; L.pz = pz; L.tx = tx; L.ty = ty0 + ty; L.tz = tz; }, px, pz, tx, tz, up, ty);
     await sleep(6500); await p.screenshot({ path: OUT + '/' + name + '.png' }); console.log('shot', name);
   }
-  if (mode === 'probe') { console.log(JSON.stringify(await p.evaluate(() => { const S = window.SHADDAI_SKY || null, E = window.__shaddaiElevators || null, D = window.__w3dDebug, H = D.terrainV4 || D.terrain; return { sky: S && { nexusY: S.nexusY, nexusR: S.nexusR, temple: S.templeX != null ? [S.templeX, S.templeZ] : null, keys: Object.keys(S).slice(0, 30) }, elevators: !!E, platforms: E && E.platforms ? E.platforms.length : 0, ents: (window.__entrances || []).map(e => [e.code, Math.round(e.x), Math.round(e.z)]), groundAtOrigin: H.heightAt(0, 0), bTop: window.__measuredFootprints ? Object.keys(window.__measuredFootprints).length : 0 }; }))); }
+  if (mode === 'avatar') {   // node tools/_eye.cjs avatar FORGE-VANGUARD FORGE-GHOST ...  : third-person shots of the chosen operative standing in the world
+    const codes = process.argv.slice(3).length ? process.argv.slice(3) : ['FORGE-VANGUARD'], U = 7 / 1.8;
+    for (const code of codes) {
+      await p.evaluate(c => { window.setPlayerCharacter(c); }, code); await sleep(14000);
+      const info = await p.evaluate(() => { const q = window.__w3dDebug.playerPos; return [q.x, q.y, q.z]; });
+      for (const [tag, ox, oz] of [['front', 0, -5.5], ['side', 5.5, 0]]) {
+        await p.evaluate((x, y, z, ox, oz, U) => { const L = window.__camLock; L.on = true; L.px = x + ox * U; L.py = y + 1.5 * U; L.pz = z + oz * U; L.tx = x; L.ty = y + 1.0 * U; L.tz = z; }, info[0], info[1], info[2], ox, oz, U);
+        await sleep(4500); await p.screenshot({ path: OUT + '/avatar-' + code + '-' + tag + '.png' }); console.log('shot avatar', code, tag);
+      }
+    }
+  } else if (mode === 'deck') {   // node tools/_eye.cjs deck : the Sky Nexus deck + Sky Dock (absolute camera heights; the world camera is locked, the player stays on the ground)
+    const info = await p.evaluate(() => ({ sky: window.SHADDAI_SKY ? { y: window.SHADDAI_SKY.nexusY, r: window.SHADDAI_SKY.nexusR } : null, dock: window.__skyDock ? { v: window.__skyDock.vendor, pads: window.__skyDock.pads.map(q => [Math.round(q.x), Math.round(q.z)]) } : null }));
+    console.log('DECK', JSON.stringify(info)); if (info.sky && info.dock) {
+      const U = 7 / 1.8, y = info.sky.y, v = info.dock.v;
+      const cam = async (name, px, py, pz, tx, ty, tz) => { await p.evaluate((px, py, pz, tx, ty, tz) => { const L = window.__camLock; L.on = true; L.px = px; L.py = py; L.pz = pz; L.tx = tx; L.ty = ty; L.tz = tz; }, px, py, pz, tx, ty, tz); await sleep(5500); await p.screenshot({ path: OUT + '/' + name + '.png' }); console.log('shot', name); };
+      await cam('deck-overview', 0, y + 70 * U, 140 * U, 0, y, 0);
+      await cam('deck-vendor', v.x * 0.45, y + 6 * U, v.z * 0.45, v.x, y + 3 * U, v.z);
+      await cam('deck-pad', info.dock.pads[0][0] * 0.55, y + 5 * U, info.dock.pads[0][1] * 0.55, info.dock.pads[0][0], y, info.dock.pads[0][1]);
+    }
+  } else if (mode === 'env') {   // node tools/_eye.cjs env      (use EYE_QS="?time=0.02" for midnight, 0.5 noon, 0.8 sunset)
+    const info = await p.evaluate(async () => {
+      const D = window.__w3dDebug, half = (D.terrainV4.meta || {}).half_units, allow = await window.WorldGrass.loadGreenMask('/assets/terrain/color.jpg', half, 256), U = 7 / 1.8; let best = null;
+      for (let x = -half; x < half; x += 160) for (let z = -half; z < half; z += 160) { if (!allow(x, z)) continue; const r = Math.hypot(x, z); if (r < 1800 * U) continue; let ok = 0; for (let k = 0; k < 8; k++) if (allow(x + Math.cos(k) * 120, z + Math.sin(k) * 120)) ok++; if (ok >= 7 && (!best || r < best.r)) best = { x, z, r }; }
+      return { half, best, coverage: allow.coverage, night: window.__skyExtras && window.__skyExtras.stats().night, grassReady: !!window.__grass };
+    });
+    console.log('ENV', JSON.stringify(info)); if (!info.best) { console.log('no green spot'); } else {
+      const U = 7 / 1.8, x = info.best.x, z = info.best.z;
+      await p.evaluate((x, z) => { window.__w3dDebug.playerPos.x = x; window.__w3dDebug.playerPos.z = z; }, x, z); await sleep(9000);
+      console.log('GRASS', JSON.stringify(await p.evaluate(() => window.__grass ? window.__grass.stats() : null)), 'SKY', JSON.stringify(await p.evaluate(() => window.__skyExtras ? window.__skyExtras.stats() : null)));
+      await shot('env-horizon', x, z, x + 60 * U, 0, z - 80 * U, 1.7 * U, 14 * U);
+      await shot('env-sky', x, z, x + 40 * U, 0, z - 60 * U, 1.7 * U, 70 * U);
+      await shot('env-grass', x, z, x + 6 * U, 0, z - 4 * U, 1.5 * U, 0.2 * U);
+    }
+  } else if (mode === 'probe') { console.log(JSON.stringify(await p.evaluate(() => { const S = window.SHADDAI_SKY || null, E = window.__shaddaiElevators || null, D = window.__w3dDebug, H = D.terrainV4 || D.terrain; return { sky: S && { nexusY: S.nexusY, nexusR: S.nexusR, temple: S.templeX != null ? [S.templeX, S.templeZ] : null, keys: Object.keys(S).slice(0, 30) }, elevators: !!E, platforms: E && E.platforms ? E.platforms.length : 0, ents: (window.__entrances || []).map(e => [e.code, Math.round(e.x), Math.round(e.z)]), groundAtOrigin: H.heightAt(0, 0), bTop: window.__measuredFootprints ? Object.keys(window.__measuredFootprints).length : 0 }; }))); }
   else if (mode === 'list') { console.log(JSON.stringify(await p.evaluate(() => window.__entrances))); }
   else if (mode === 'entrances') {
     const only = process.argv.slice(3), ents = (await p.evaluate(() => window.__entrances || [])).filter(e => !only.length || only.includes(e.code));
