@@ -129,7 +129,7 @@
       // work, see RAG_BRAIN_REBUILD memory) gets wired in here -- what this
       // door currently opens is NOT that, so it's gated shut rather than
       // left live showing the wrong thing.
-      gate: '9999',
+      gate: '4444',
       lockNote: 'The RAG Brain is being rebuilt right now — check back soon.'
     },
     {
