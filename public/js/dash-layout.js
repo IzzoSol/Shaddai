@@ -199,7 +199,7 @@
       var sec = document.createElement('div'); sec.id = 'shdLayoutSetting'; sec.className = 'settings-section'; sec.setAttribute('data-sgrp', 'appearance');
       sec.innerHTML = '<div class="settings-title">Layout</div><div style="font-size:12px;color:var(--text-muted);margin:6px 0 10px">Choose which tabs, tiles and buttons you see, reorder them, and set the interface size.</div>';
       var sb = document.createElement('button'); sb.className = 'btn btn-accent'; sb.type = 'button'; sb.textContent = 'Customize layout'; sb.addEventListener('click', open);
-      sec.appendChild(sb); first.parentNode.insertBefore(sec, first);
+      sec.appendChild(sb); first.parentNode.insertBefore(sec, first.nextSibling);   // right after Theme, so Theme stays the open one
     }
   }
 
