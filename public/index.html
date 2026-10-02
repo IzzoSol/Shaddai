@@ -4272,6 +4272,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   }).catch(function(){});
 })();
 </script>
+<link rel="stylesheet" href="/css/sh-ui.css?v=1013">
 <style id="v1013-fixes">
 /* v101.3: floating buttons no longer pile on top of each other (help / chat / shop) */
 #popChatBtn{ right:18px !important; bottom:18px !important; left:auto !important; top:auto !important; transform:none !important; }
@@ -5449,10 +5450,10 @@ window.enter3DWorld=function(){
   <!-- Agents -->
   <div id="agentsView" class="view cyber-scanlines" data-tab="roster">
     <style id="agtabs-css">
-      #agentsView .ag-tabs{display:flex;gap:4px;margin:0 0 12px;border-bottom:1px solid var(--border,rgba(255,255,255,.1))}
-      #agentsView .ag-tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--text-muted,#8a99a6);padding:10px 18px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+      #agentsView .ag-tabs{display:inline-flex;gap:2px;padding:4px;margin:0 0 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(120,150,140,.22));max-width:100%;overflow-x:auto}
+      #agentsView .ag-tab{background:none;border:0;border-radius:8px;color:var(--text-muted,#8a99a6);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
       #agentsView .ag-tab:hover{color:var(--accent,#00e5a0)}
-      #agentsView .ag-tab.on{color:#fff;border-bottom-color:var(--accent,#00e5a0)}
+      #agentsView .ag-tab.on{background:var(--accent,#00e5a0);color:#04120c}
       #agentsView[data-tab="roster"] .ag-sec:not(.ag-roster),
       #agentsView[data-tab="manage"] .ag-sec:not(.ag-manage),
       #agentsView[data-tab="wallets"] .ag-sec:not(.ag-wallets),
@@ -5564,10 +5565,10 @@ window.enter3DWorld=function(){
   <!-- Tasks -->
   <div id="workflowView" class="view" data-tab="quick">
     <style id="wftabs-css">
-      #workflowView .wf-tabs{display:flex;gap:4px;margin:0 0 12px;border-bottom:1px solid var(--border,rgba(255,255,255,.1))}
-      #workflowView .wf-tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--text-muted,#8a99a6);padding:10px 18px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+      #workflowView .wf-tabs{display:inline-flex;gap:2px;padding:4px;margin:0 0 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(120,150,140,.22));max-width:100%;overflow-x:auto}
+      #workflowView .wf-tab{background:none;border:0;border-radius:8px;color:var(--text-muted,#8a99a6);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
       #workflowView .wf-tab:hover{color:var(--accent,#00e5a0)}
-      #workflowView .wf-tab.on{color:#fff;border-bottom-color:var(--accent,#00e5a0)}
+      #workflowView .wf-tab.on{background:var(--accent,#00e5a0);color:#04120c}
       #workflowView[data-tab="quick"] .wf-sec:not(.wf-quick),
       #workflowView[data-tab="chains"] .wf-sec:not(.wf-chains),
       #workflowView[data-tab="tasks"] .wf-sec:not(.wf-tasks){display:none !important}
@@ -7509,10 +7510,10 @@ window.enter3DWorld=function(){
         #officeLibrary .lib2-head h2{font:700 18px 'Rajdhani',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0}
         #officeLibrary .lib2-stats{display:flex;gap:18px;margin-left:auto;font:600 11px 'Share Tech Mono',monospace;color:var(--text-muted)}
         #officeLibrary .lib2-stats b{display:block;font-size:16px;color:var(--text-primary,#e9efe9)}
-        #officeLibrary .lib2-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
-        #officeLibrary .lib2-tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--text-muted);padding:10px 16px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+        #officeLibrary .lib2-tabs{display:inline-flex;gap:2px;padding:4px;margin-bottom:14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);max-width:100%;overflow-x:auto}
+        #officeLibrary .lib2-tab{background:none;border:0;border-radius:8px;color:var(--text-muted);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
         #officeLibrary .lib2-tab:hover{color:var(--accent)}
-        #officeLibrary .lib2-tab.on{color:#fff;border-bottom-color:var(--accent)}
+        #officeLibrary .lib2-tab.on{background:var(--accent);color:#04120c}
         #officeLibrary .lib2-pane{display:none} #officeLibrary .lib2-pane.on{display:block}
         #officeLibrary .lib2-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
         #officeLibrary .lib2-hint{font-size:11px;color:var(--text-muted);margin:0 0 12px;line-height:1.5}
