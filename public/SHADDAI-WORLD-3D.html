@@ -5544,7 +5544,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   if (_riders) {   // RIDERS: seat the player on the bike / dragon (after both placed themselves), then solve every rider
     if (window.__riderBike) _riders.sync(playerAvatar, !!veh.bike.isRiding(), window.__riderBike, 'seat', { visible: function(){ return thirdPerson; } });
     if (window.__dragonRide) { window.__riderDragon = window.__riderDragon || _riders.dragonVehicle(window.__dragonRide); _riders.sync(playerAvatar, window.__dragonRide.isRiding(), window.__riderDragon, 'saddle'); }
-    if (window.__mountRide) { window.__riderMount = window.__riderMount || _riders.dragonVehicle(window.__mountRide); _riders.sync(playerAvatar, window.__mountRide.isRiding(), window.__riderMount, 'saddle'); }
+    if (window.__mountRide) { window.__riderMount = window.__riderMount || _riders.dragonVehicle(window.__mountRide); _riders.sync(playerAvatar, window.__mountRide.isRiding(), window.__riderMount, window.__mountRide.seatKind ? window.__mountRide.seatKind() : 'saddle'); }
     _riders.update(dt);
   }
   const t=clock.elapsedTime;

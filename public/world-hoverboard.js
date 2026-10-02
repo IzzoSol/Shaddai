@@ -163,7 +163,7 @@ window.buildWorldHoverboard = function (opts) {
   function setStyle(id, palette) {
     if (!KIT) return null;
     if (kit) { inner.remove(kit); kit.userData.dispose(); }
-    kit = KIT.build(THREE, id || 'sunburst', palette || opts.palette);
+    kit = KIT.build(THREE, id || 'obsidian', palette || opts.palette);
     styleId = kit.userData.style;
     kit.scale.setScalar(U);
     inner.add(kit);

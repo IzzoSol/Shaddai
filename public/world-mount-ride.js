@@ -216,6 +216,7 @@
       rentRace: function (id, x, z, yaw) { var d = Mo.def(id) || kartDef(id); if (!d) return false; if (st.riding) dismount(); show(id, x, z, yaw); if (!cur) return false; M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; playerPos.x = x; playerPos.z = z; st.riding = true; st.id = id; CAM.init = false; raceMode = true; return true; },
       placeAt: function (x, z, yaw) { M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; },
       update: update, isRiding: function () { return st.riding; }, mount: mount, dismount: dismount, summon: summon, stow: stow, panel: panel, near: near,
+      seatKind: function () { return /^(car-|kart-)|^skiff$/.test(String(cur || '')) ? 'seat' : 'saddle'; },   /* cars, karts and the skiff are SAT IN; beasts are straddled */
       saddle: function () { return SAD; }, camera: function () { return CAM; }, tune: TUNE, boosting: function () { return st.boosting; }, stamina: function () { return 1; },
       state: function () { return { riding: st.riding, id: cur, x: M.x, y: M.y, z: M.z, yaw: M.yaw, sp: M.sp / U, flying: M.fl, visible: holder.visible }; },
       on: function () { }, off: function () { }, dispose: function () { scene.remove(holder); if (pnl) pnl.remove(); removeEventListener('keydown', key, true); }

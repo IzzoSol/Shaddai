@@ -44,7 +44,7 @@
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
   }
   function make(THREE, id) {
-    var T = meta(id), L = T.len, W = T.w, parts = [], base = 0.5, nose = L / 2, tail = -L / 2, hw = W / 2;
+    var T = meta(id), L = T.len, W = T.w, parts = [], gparts = [], base = 0.5, nose = L / 2, tail = -L / 2, hw = W / 2;
     var Bc = hexRGB(BODY[id]), Ac = hexRGB(ACCENT[id]), Gc = hexRGB(GLASS), Dc = hexRGB(DARK), Cc = hexRGB(CHROME);
     function bodyCol(sy, sx) { if (sy < -0.4) return Dc; if (Math.abs(sy) < 0.2 && Math.abs(sx) > 0.9) return Ac; return Bc; }                 // dark underside, accent belt stripe, painted top
     function glassCol(sy) { return sy > 0.8 ? Bc : Gc; }                                                                                     // roof painted, sides glass
@@ -55,24 +55,26 @@
     var ring = 12, b = base;
     if (id === 'pod') {   // Rimba racer: smooth tub, bubble canopy, four big nacelles with glowing rings, nose bumper
       parts.push(loft(THREE, [S(-0.5, 0.18, 0.18, 0.36, 2.4), S(-0.4, 0.5, 0.05, 0.62, 2.6), S(-0.1, 0.62, 0, 0.7, 2.6), S(0.2, 0.55, 0.02, 0.62, 2.6), S(0.5, 0.16, 0.16, 0.34, 2.4)], ring, bodyCol));
-      part(solid(new THREE.SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), Gc).scale(hw * 0.5, 0.62, L * 0.27), 0, b + 0.62, -0.15);
+      gparts.push(solid(new THREE.SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), Gc).scale(hw * 0.52, 0.9, L * 0.28).translate(0, b + 0.55, -0.1));
       [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(function (p) { var x = p[0] * (hw - 0.2), z = p[1] * (L / 2 - 0.5); part(solid(new THREE.CylinderGeometry(0.36, 0.42, 0.8, 9), hexRGB(0xdfe3e8)), x, b + 0.38, z); part(solid(new THREE.CylinderGeometry(0.46, 0.46, 0.08, 10), Ac), x, b - 0.04, z); part(solid(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 8), Dc), x, b + 0.8, z); });
       box(0, b + 0.5, nose - 0.1, 0.9, 0.18, 0.3, 0xcfd6de);
     } else if (id === 'pickup') {
       parts.push(loft(THREE, [S(-0.5, 0.5, 0.15, 0.55, 3), S(-0.44, 0.96, 0.05, 0.78, 3.4), S(-0.1, 1, 0, 0.8, 3.4), S(0.2, 1, 0, 0.82, 3.6), S(0.44, 0.9, 0.05, 0.62, 3.2), S(0.5, 0.4, 0.15, 0.44, 3)], ring, bodyCol));
-      parts.push(loft(THREE, [S(0.04, 0.8, 0.78, 0.86, 2.8), S(0.1, 0.78, 0.78, 1.5, 2.8), S(0.24, 0.76, 0.78, 1.6, 2.8), S(0.34, 0.7, 0.78, 1.18, 2.8), S(0.38, 0.62, 0.78, 0.9, 2.8)], 12, glassCol));
+      gparts.push(loft(THREE, [S(0.04, 0.8, 0.78, 0.86, 2.8), S(0.1, 0.78, 0.78, 1.75, 2.8), S(0.24, 0.76, 0.78, 1.85, 2.8), S(0.34, 0.7, 0.78, 1.35, 2.8), S(0.38, 0.62, 0.78, 0.9, 2.8)], 12, glassCol));
+      box(0, b + 1.87, 0.17 * L, W * 0.52, 0.07, 0.34 * L * 0.7, 0x4a5a2a);   // roof slab
       [-1, 1].forEach(function (s) { box(s * (hw * 0.94), b + 1.0, -L * 0.26, 0.1, 0.5, L * 0.38, 0x5a4326); }); box(0, b + 0.88, -L * 0.44, W * 0.9, 0.5, 0.12, 0x5a4326); box(0, b + 0.9, -L * 0.1, W * 0.9, 0.5, 0.12, 0x5a4326);   // open cargo bed rails
       box(0.35, b + 1.2, -L * 0.28, 0.8, 0.6, 0.8, 0xb89a62); box(-0.4, b + 1.1, -L * 0.34, 0.7, 0.5, 0.7, 0xa5834a);
     } else if (id === 'bus' || id === 'van') {
       var hv = T.h; parts.push(loft(THREE, [S(-0.5, 0.82, 0.08, hv * 0.55, 4.5), S(-0.46, 1, 0, hv * 0.9, 4.8), S(0.2, 1, 0, hv * 0.9, 4.8), S(0.46, 0.96, 0.02, hv * 0.78, 4.4), S(0.5, 0.62, 0.1, hv * 0.5, 4)], ring, function (sy, sx) { if (sy < -0.4) return Dc; if (sy > 0.3 && sy < 0.7) return Gc;   /* window band on the upper sides */ if (Math.abs(sy) < 0.2 && Math.abs(sx) > 0.9) return Ac; return Bc; }));
     } else {   // sedan / coupe / roadster / limo / wagon / mini / wedge: sleek lofted body + canopy
-      var cabF0 = -0.27, cabF1 = 0.12, cabH = 1.28, noseK = 0.3, roof = true;
-      if (id === 'coupe') { cabF0 = -0.22; cabF1 = 0.08; cabH = 1.12; } else if (id === 'roadster') { cabF0 = -0.12; cabF1 = 0.1; cabH = 0.98; roof = false; } else if (id === 'limo') { cabF0 = -0.36; cabF1 = 0.1; cabH = 1.3; }
-      else if (id === 'wagon') { cabF0 = -0.4; cabF1 = 0.12; cabH = 1.45; } else if (id === 'mini') { cabF0 = -0.3; cabF1 = 0.2; cabH = 1.5; noseK = 0.45; } else if (id === 'wedge') { cabF0 = -0.18; cabF1 = 0.06; cabH = 1.0; noseK = 0.1; }
+      var cabF0 = -0.27, cabF1 = 0.12, cabH = 1.62, noseK = 0.3, roof = true;
+      if (id === 'coupe') { cabF0 = -0.22; cabF1 = 0.08; cabH = 1.5; } else if (id === 'roadster') { cabF0 = -0.12; cabF1 = 0.1; cabH = 1.5; roof = false; } else if (id === 'limo') { cabF0 = -0.36; cabF1 = 0.1; cabH = 1.66; }
+      else if (id === 'wagon') { cabF0 = -0.4; cabF1 = 0.12; cabH = 1.74; } else if (id === 'mini') { cabF0 = -0.3; cabF1 = 0.2; cabH = 1.74; noseK = 0.45; } else if (id === 'wedge') { cabF0 = -0.18; cabF1 = 0.06; cabH = 1.45; noseK = 0.1; }
       var topN = id === 'wedge' ? 0.5 : 0.66;
       parts.push(loft(THREE, [S(-0.5, 0.25, 0.12, 0.36, 3), S(-0.42, 0.84, 0.04, 0.68, 3.2), S(-0.22, 1, 0, 0.74, 3.4), S(0.02, 1, 0, 0.74, 3.4), S(0.24, 0.96, 0, id === 'wedge' ? 0.4 : 0.62, 3.2), S(0.42, 0.8, 0.05, id === 'wedge' ? 0.3 : 0.48, 3), S(0.5, noseK, 0.12, id === 'wedge' ? 0.22 : 0.3, 2.8)], ring, bodyCol));
       var cx0 = cabF0, cx1 = cabF1, m = (cx0 + cx1) / 2;
-      parts.push(loft(THREE, [S(cx0, 0.78, 0.66, 0.7, 2.8), S(cx0 + 0.06, 0.76, 0.66, cabH * 0.9, 2.6), S(m, 0.72, 0.66, cabH, 2.4), S(cx1 - 0.04, 0.7, 0.66, cabH * 0.86, 2.6), S(cx1 + 0.02, 0.62, 0.64, 0.8, 2.8)], 10, roof ? glassCol : function (sy) { return sy > 0.1 ? Gc : Bc; }));
+      gparts.push(loft(THREE, [S(cx0, 0.78, 0.66, 0.7, 2.8), S(cx0 + 0.06, 0.76, 0.66, cabH * 0.9, 2.6), S(m, 0.72, 0.66, cabH, 2.4), S(cx1 - 0.04, 0.7, 0.66, cabH * 0.86, 2.6), S(cx1 + 0.02, 0.62, 0.64, 0.8, 2.8)], 10, roof ? glassCol : function (sy) { return sy > 0.1 ? Gc : Bc; }));
+      if (roof) box(0, b + cabH * 0.99, m * L, W * 0.5, 0.07, (cx1 - cx0) * L * 0.55, BODY[id]);   // opaque roof over the glass greenhouse
       if (id === 'roadster') { box(0, b + 0.95, -L * 0.2, W * 0.5, 0.1, 0.5, 0xe9e9e9); box(0, b + 0.82, -L * 0.34, W * 0.7, 0.34, 0.5, 0x7a2a2a); }                                  // roll hoop + seat back
       if (id === 'wagon') { box(0, b + 0.64 + cabH * 0.76, -L * 0.2, W * 0.64, 0.1, L * 0.5, 0x2a2e36); box(0.2, b + 0.64 + cabH * 0.9, -L * 0.2, 0.9, 0.5, 0.7, 0x4a6a62); box(-0.4, b + 0.64 + cabH * 0.86, -L * 0.28, 0.8, 0.4, 0.6, 0x8a6a3a); }   // roof rack + cargo
       if (id === 'sedan' || id === 'wedge' || id === 'coupe') { box(0, b + (id === 'wedge' ? 0.72 : 0.9), tail + 0.12, W * 0.8, 0.07, 0.4, id === 'wedge' ? 0x2a2a2a : ACCENT[id]); [-1, 1].forEach(function (s) { box(s * W * 0.34, b + 0.78, tail + 0.14, 0.07, 0.3, 0.34, 0x2a2e36); }); }   // rear wing on two posts
@@ -83,22 +85,25 @@
       [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(function (p) { var x = p[0] * (hw - 0.28), z = p[1] * (L / 2 - 0.75); part(solid(new THREE.CylinderGeometry(0.22, 0.26, 0.34, 8), Dc), x, b - 0.04, z); part(solid(new THREE.CylinderGeometry(0.27, 0.27, 0.06, 9), Ac), x, b - 0.24, z); });
       box(0, b + 0.18, nose + 0.02, W * 0.9, 0.14, 0.1, CHROME); box(0, b + 0.2, tail - 0.02, W * 0.86, 0.12, 0.1, CHROME);
     }
-    // merge
-    var total = 0; parts.forEach(function (g) { total += g.attributes.position.count; });
-    var pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3), idx = [], off = 0;
-    parts.forEach(function (g) { var p = g.attributes.position.array, n = g.attributes.normal.array, c = g.attributes.color.array; pos.set(p, off * 3); nor.set(n, off * 3); col.set(c, off * 3); var ix = g.index.array; for (var i = 0; i < ix.length; i++) idx.push(ix[i] + off); off += g.attributes.position.count; });
-    var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeBoundingSphere();
-    return { geo: geo, glow: { nose: nose, tail: tail, hw: W / 2 - 0.35, y: base + 0.5 }, tris: idx.length / 3 };
+    // merge: body (opaque), glass (transparent in rideable cars), and body+glass together (instanced traffic)
+    function merge(list) { var total = 0; list.forEach(function (g) { total += g.attributes.position.count; });
+      var pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3), idx = [], off = 0;
+      list.forEach(function (g) { var p = g.attributes.position.array, n = g.attributes.normal.array, c = g.attributes.color.array; pos.set(p, off * 3); nor.set(n, off * 3); col.set(c, off * 3); var ix = g.index.array; for (var i = 0; i < ix.length; i++) idx.push(ix[i] + off); off += g.attributes.position.count; });
+      var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeBoundingSphere(); return geo; }
+    gparts.forEach(function (g) { if (!g.attributes.normal) g.computeVertexNormals(); });
+    var geo = merge(parts.concat(gparts)), geoBody = merge(parts), geoGlass = gparts.length ? merge(gparts) : null, idx = geo.index.array;
+    return { geo: geo, body: geoBody, glassGeo: geoGlass, glow: { nose: nose, tail: tail, hw: W / 2 - 0.35, y: base + 0.5 }, tris: idx.length / 3 };
   }
   var cache = {};
   function kit(THREE, id) { var k = cache[id]; if (!k || k.THREE !== THREE) { k = make(THREE, id); k.THREE = THREE; cache[id] = k; } return k; }
 
   function buildGroup(THREE, id, hex) {
-    var k = kit(THREE, id), g = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, color: hex != null ? hex : 0xffffff }), body = new THREE.Mesh(k.geo, mat); g.add(body);
+    var k = kit(THREE, id), g = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ vertexColors: true, color: hex != null ? hex : 0xffffff }), body = new THREE.Mesh(k.glassGeo ? k.body : k.geo, mat); g.add(body);
+    if (k.glassGeo) { var gm = new THREE.Mesh(k.glassGeo, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide })); gm.renderOrder = 1; g.add(gm); }
     var emis = function (c) { return new THREE.MeshBasicMaterial({ color: c }); };
     [-1, 1].forEach(function (s) { var hl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.16, 0.08), emis(0xfff2c0)); hl.position.set(s * k.glow.hw, k.glow.y, k.glow.nose + 0.03); g.add(hl); var tl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.08), emis(0xff3a3a)); tl.position.set(s * k.glow.hw, k.glow.y, k.glow.tail - 0.03); g.add(tl); });
     var ug = new THREE.Mesh(new THREE.CircleGeometry(1, 20), new THREE.MeshBasicMaterial({ color: ACCENT[id], transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); ug.rotation.x = -Math.PI / 2; ug.scale.set(meta(id).w * 0.8, meta(id).len * 0.7, 1); ug.position.y = 0.1; g.add(ug);
-    var seat = new THREE.Object3D(); seat.name = 'saddle'; seat.position.set(0, 1.25, id === 'pod' ? 0.1 : -0.2); g.add(seat); g.userData.saddle = seat; g.userData.tris = k.tris; return g;
+    var seat = new THREE.Object3D(); seat.name = 'saddle'; seat.position.set(0, id === 'pod' ? 1.05 : 1.22, id === 'pod' ? 0.1 : -0.2); g.add(seat); g.userData.saddle = seat; g.userData.tris = k.tris; return g;
   }
 
   // ───────────────── AIR TRAFFIC ─────────────────

@@ -29,9 +29,9 @@ function mk(THREE, over) {
 
 console.log('world-hoverboards tests');
 
-test('9 styles, each builds under 2.5k tris with thrusters, flames, underglow, stand socket', () => {
-  assert.strictEqual(KIT.STYLES.length, 9);
-  assert.strictEqual(new Set(KIT.ids).size, 9);
+test('10 styles, each builds under 2.5k tris with thrusters, flames, underglow, stand socket', () => {
+  assert.strictEqual(KIT.STYLES.length, 10);
+  assert.strictEqual(new Set(KIT.ids).size, 10);
   const out = [];
   KIT.ids.forEach(id => {
     const g = KIT.build(T, id), ud = g.userData;
