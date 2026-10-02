@@ -48,6 +48,31 @@ Existing pieces to hook: `world-quests.js` (daily board, QUILL library), `world-
     - On a mount or tamed dragon: big health, fixed attack patterns, stamina-limited.
     - Passive-mode players cannot be hit or loot; Void ignores the toggle.
 
+## Realm hazards and protective gear (BUILT: `public/world-realm-hazards.js`, 6 tests)
+- **Castle realm**: crowded with enemies; purple lava under the bridge (contact damage) and poison gas. Gas needs a **gas mask level 10** for full protection; a lower mask protects proportionally (level 5 = about half).
+- **Lava mask** (fire hazards), **arctic mask** (removes the extra stamina drain of deep cold), **clothing per element** (fire suit, frost suit, void suit): each piece resists one element, pieces stack to an 85 % cap.
+- Zones are circles or boxes per realm (`zoneAt`); the host reads `tick(zone, gear, dt)` for health loss and a stamina-drain multiplier, and shows the warning text ("Need gas mask level 10").
+- The Void drain has no counter mask; the only answer there is Fight mode and clothing.
+- Host wiring still to do: realm zone lists, a gear slot UI (masks + clothing), HUD warning, damage applied to the player health.
+
+## Bots, play modes, mobile (IDEA)
+- **Agent-vs-agent in real 3D**: humanoid bots play the hoverskate park, races and the Colosseum in the world itself, with spectator seating. You can watch, or take over.
+- **Two control modes**: **Autopilot** (bot skills drive; you give simple intent like "go for the podium") and **Full control** (your input drives; bot skills only assist, second to you). Keep them as separate modes.
+- **Friend bots**: talk to a bot over time; after it knows you it gifts fish or Forge items. Needs a per-bot friendship counter + a gift table, easy to add on `world-npcs.js` / `npc-dialog.js`.
+- **Academy / Grok / Muse bots** are added as teachers and shop clerks; skills they teach are the same flags used by taming/crafting.
+- **Mobile mode** later: touch sticks + two action buttons, quality ladder defaulting to the lowest tier. The app-store build is a thin shell around the same world.
+- **Last**: controller, first person, VR; then Navi terminal, PayBox trading, signals, X posting.
+
+## Build order (easiest to hardest, weighted to look, clutter, fun, tools, Colosseum, hover feel, rigging, race and park)
+1. **Look and clutter**: audit and de-duplicate office/shop layouts, one naming and street grid pass, fewer redundant buildings (data/layout edits, low risk).
+2. **Wire what is already built**: taming + crafting bench, passive/fight toggle with the Void bounds, realm hazards with a gear slot UI, material drops from wolves and skeletons.
+3. **Hover feel pass**: board float/sway/lights (done), cars float and bank correctly with seated riders (done, needs a visual check), tune values live.
+4. **Race and hoverskate park**: finish line, modes (done), curated park routes and track dressing.
+5. **Colosseum**: dynamic terrain changes, seating, spectating, modes.
+6. **Content**: fish, grass, house items and layouts, villages, conversations, friend bots with gifts.
+7. **Bots in real 3D**: spectating and autopilot vs full control.
+8. **Mobile mode**, then Navi/PayBox/signals/X, then controller, first person, VR.
+
 ## Open questions for the owner
 - Where exactly does **the Void** start and end (bounds or a radius around the Void gate)? The mode module needs that area test.
 - Is Sparks the only currency for scrolls, or do materials also pay for them?
