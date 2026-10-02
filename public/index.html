@@ -1,6 +1,33 @@
 <!DOCTYPE html>
 <html lang="en" data-theme-skin="glitch">
 <head>
+<script>
+/* v101.3 request coalescer: the dashboard fired 100+ API calls at boot, many identical (tasks x14, operatives x7, ollama-tags x6).
+   Identical same-origin GET /api/* calls inside 2.5s now share one network request. Any non-GET call clears the cache,
+   so a write is never followed by a stale read. */
+(function(){
+  if (window.__shdCoalesce) return; window.__shdCoalesce = 1;
+  var of = window.fetch.bind(window), C = new Map(), TTL = 2500;
+  function key(u){ try { var x = new URL(u, location.href); return x.origin === location.origin && x.pathname.indexOf('/api/') === 0 ? x.pathname + x.search : null; } catch (e) { return null; } }
+  window.fetch = function(input, init){
+    try {
+      var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      var url = typeof input === 'string' ? input : (input && input.url);
+      if (method !== 'GET') { C.clear(); return of(input, init); }
+      var hasSignal = (init && init.signal) || (input && input.signal);
+      var k = key(url);
+      if (!k || hasSignal) return of(input, init);   // calls with their own AbortSignal are never shared
+      var hit = C.get(k), now = Date.now();
+      if (hit && now - hit.t < TTL) return hit.p.then(function(r){ return r.clone(); });
+      var p = of(input, init);
+      C.set(k, { t: now, p: p });
+      p.catch(function(){ C.delete(k); });
+      return p.then(function(r){ if (!r.ok) C.delete(k); return r.clone(); });
+    } catch (e) { return of(input, init); }
+  };
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 <meta name="theme-color" content="#00ff88">
@@ -4252,6 +4279,8 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 #shdOnboardBtn{ right:22px !important; bottom:126px !important; left:auto !important; top:auto !important; transform:none !important; }
 /* tab-dock "Move" is a niche control; the sidebar is the default. Still reachable via Settings. */
 #tbNavMoverWrap{ display:none !important; }
+/* guest banner: small card bottom-left instead of a bar across the middle of the content */
+#shdGuestNudge{ left:16px !important; right:auto !important; bottom:58px !important; transform:none !important; max-width:340px; flex-wrap:wrap; gap:8px; font-size:11px; padding:10px 12px; }
 </style>
 </head>
 <body data-theme="dark" class="at-home">
@@ -6050,7 +6079,7 @@ window.enter3DWorld=function(){
         </div>
       </div>
       <div style="height:560px;position:relative;background:#05070a">
-        <iframe id="tuFishIframe" src="/tufish.html" style="width:100%;height:100%;border:0;display:block" title="TuFish Sentiment Swimmer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        <iframe id="tuFishIframe" data-lazy-src="/tufish.html" style="width:100%;height:100%;border:0;display:block" title="TuFish Sentiment Swimmer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
       </div>
     </div>
 
@@ -7029,7 +7058,7 @@ window.enter3DWorld=function(){
     <!-- The flat RAG brain is the primary read; the 3D cockpit remains at /brain.html
          as the optional spatial view. Same backend, one connection. -->
     <div style="margin:0 0 14px;border:1px solid rgba(177,108,255,.28);border-radius:14px;overflow:hidden;background:#01030a">
-      <iframe src="/rag" title="RAG Brain" loading="lazy"
+      <iframe data-lazy-src="/rag" title="RAG Brain"
               style="width:100%;height:620px;border:0;display:block"></iframe>
     </div>
     <div class="brn-sub" style="margin:-6px 0 14px;color:rgba(255,255,255,.45)">
@@ -7586,7 +7615,7 @@ window.enter3DWorld=function(){
           </div>
         </div>
         <div id="securityLog" style="margin-top:12px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:10px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:9px;color:var(--text-secondary)">
-          <div style="color:var(--accent)">[PIKADON] Security room initialized. All systems nominal.</div>
+          <div style="color:var(--accent)">[PIKADON] Security room ready. Run a scan or check the API endpoints.</div>
         </div>
       </div>
     </div>
@@ -8100,22 +8129,22 @@ window.enter3DWorld=function(){
     </div>
     <div id="forge2dPanel" class="forge-panel" style="display:block;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(0,255,136,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-        <iframe id="forgeFrame2d" src="/forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 2D Forge" loading="lazy"></iframe>
+        <iframe id="forgeFrame2d" data-lazy-src="/forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 2D Forge" loading="lazy"></iframe>
       </div>
     </div>
     <div id="forge3dPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(124,58,237,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-        <iframe id="forgeFrame3d" src="/forge-3d.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 3D Forge" loading="lazy"></iframe>
+        <iframe id="forgeFrame3d" data-lazy-src="/forge-3d.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 3D Forge" loading="lazy"></iframe>
       </div>
     </div>
     <div id="forgeMarketPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(232,196,92,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-        <iframe id="forgeFrameMarket" src="/pixel-forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Marketplace" loading="lazy"></iframe>
+        <iframe id="forgeFrameMarket" data-lazy-src="/pixel-forge.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI Marketplace" loading="lazy"></iframe>
       </div>
     </div>
     <div id="forgeAgentPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(255,255,255,0.14);border-radius:0 0 8px 8px;overflow:hidden;background:#06080b;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-        <iframe id="forgeFrameAgent" src="/agent-forge.html" style="width:100%;height:100%;border:0;display:block" title="Forge an Agent" loading="lazy"></iframe>
+        <iframe id="forgeFrameAgent" data-lazy-src="/agent-forge.html" style="width:100%;height:100%;border:0;display:block" title="Forge an Agent" loading="lazy"></iframe>
       </div>
     </div>
     <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
@@ -31656,16 +31685,13 @@ function showLicenseModal() {
 
 // ======= LIBRARY FUNCTIONS =======
 function quickScanLibrary() {
-  notify('Scanning for new documents...');
-  const paths = ['C:/Users/Brittany/OneDrive/Desktop', 'C:/Users/Brittany/Documents'];
-  let found = 0;
-  paths.forEach(p => {
-    if (!S.files) S.files = [];
-    S.files.push({ id: Date.now() + Math.random(), name: 'Scan_' + p.split('/').pop() + '_' + Date.now(), path: p, size: 0, time: new Date().toISOString(), type: 'folder' });
-    found++;
-  });
-  renderLibrary(); save();
-  notify(`Quick scan complete: ${found} paths processed`);
+  // Honest version: scanning a path needs the server to read that folder, so it only works on a local install.
+  // (The old version inserted fake entries for hard-coded personal paths into every user's library.)
+  if (typeof showScanFolderUI === 'function') {
+    var p = document.getElementById('scanFolderPanel');
+    if (p && p.style.display === 'none') showScanFolderUI();
+  }
+  notify('Enter a folder path to scan. Folder scanning works on a local install.');
 }
 
 function manualLibraryAdd() {
@@ -31689,21 +31715,31 @@ function runSecurityScan() {
   document.getElementById('secLastAudit').textContent = new Date().toLocaleString();
   document.getElementById('secThreatsBlocked').textContent = (S.audit?.filter(a => a.action === 'THREAT_BLOCKED')?.length || 0);
   const logView = document.getElementById('securityLogView');
-  if (logView) logView.innerHTML += `<div>[${new Date().toLocaleTimeString()}] Security scan complete — All systems nominal</div>`;
+  if (logView) logView.innerHTML += `<div>[${new Date().toLocaleTimeString()}] Security scan complete — score ${score}, ${apiKeys} stored key(s)</div>`;
   const safetyLog = document.getElementById('securityLog');
-  if (safetyLog) safetyLog.innerHTML += `<div style="color:var(--accent)">[${new Date().toLocaleTimeString()}] Security scan complete — All systems nominal</div>`;
+  if (safetyLog) safetyLog.innerHTML += `<div style="color:var(--accent)">[${new Date().toLocaleTimeString()}] Security scan complete — score ${score}</div>`;
   notify('Security scan complete');
 }
 
-function checkAPIEndpoints() {
+async function checkAPIEndpoints() {
   notify('Checking API endpoints...');
-  const endpoints = ['/api/chat', '/api/files', '/api/notes', '/api/agents'];
-  let results = '';
-  endpoints.forEach(e => results += `${e}: OK\n`);
-  if (document.getElementById('securityLog')) {
-    document.getElementById('securityLog').innerHTML += `<div style="color:var(--tertiary)">[${new Date().toLocaleTimeString()}] API check: ${endpoints.length} endpoints verified</div>`;
+  const endpoints = ['/api/health', '/api/status', '/api/overview', '/api/tools'];
+  const log = document.getElementById('securityLog');
+  let okCount = 0;
+  for (const e of endpoints) {
+    let line;
+    try {
+      const t0 = performance.now();
+      const r = await fetch(e, { signal: AbortSignal.timeout(6000) });
+      const ms = Math.round(performance.now() - t0);
+      if (r.ok) okCount++;
+      line = `<div style="color:${r.ok ? 'var(--accent)' : '#ff6b6b'}">[${new Date().toLocaleTimeString()}] ${e} → ${r.status} (${ms} ms)</div>`;
+    } catch (err) {
+      line = `<div style="color:#ff6b6b">[${new Date().toLocaleTimeString()}] ${e} → unreachable</div>`;
+    }
+    if (log) log.innerHTML += line;
   }
-  notify('API endpoints verified');
+  notify(`API check: ${okCount}/${endpoints.length} endpoints responding`);
 }
 
 function scanForVulnerabilities() {
@@ -46041,7 +46077,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     ov.id = 'mediaPop';
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(2,5,10,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center';
     var frame = document.createElement('iframe');
-    frame.src = '/media.html';
+    frame.setAttribute('data-lazy-src', '/media.html');
     frame.style.cssText = 'width:min(880px,94vw);height:min(760px,92vh);border:1px solid rgba(0,229,160,.4);border-radius:14px;background:#03060b;box-shadow:0 0 60px rgba(0,229,160,.15)';
     var close = document.createElement('button');
     close.type = 'button';
@@ -46049,7 +46085,7 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
     close.style.cssText = 'position:fixed;top:20px;right:22px;z-index:100000;background:transparent;border:1px solid rgba(0,229,160,.4);color:#00e5a0;font-family:inherit;font-size:10px;letter-spacing:1px;padding:7px 14px;border-radius:999px;cursor:pointer';
     ov.appendChild(close); ov.appendChild(frame);
     document.body.appendChild(ov);
-    function openM(){ ov.style.display = 'flex'; }
+    function openM(){ ov.style.display = 'flex'; if (!frame.src) frame.src = frame.getAttribute('data-lazy-src'); }
     function closeM(){ ov.style.display = 'none'; }
     close.addEventListener('click', closeM);
     ov.addEventListener('click', function(e){ if (e.target === ov) closeM(); });
@@ -59781,6 +59817,20 @@ html, body, main{ overflow-x:hidden; max-width:100%; }
 <script src="/world-agents-ui.js?v=20261001a"></script>
 <script src="/dashboard-agents.js?v=20261001a"></script>
 <script src="/js/dash-nav.js?v=1013" defer></script>
+<script>
+/* v101.3 lazy iframes: hidden tabs no longer load at boot. A frame gets its src the first time it becomes visible. */
+(function(){
+  function arm(f){
+    if (f._lz) return; f._lz = 1;
+    var io = new IntersectionObserver(function(es){
+      if (es.some(function(e){ return e.isIntersecting; })) { var u = f.getAttribute('data-lazy-src'); if (u && !f.getAttribute('src')) f.setAttribute('src', u); io.disconnect(); }
+    }, { rootMargin: '200px' });
+    io.observe(f);
+  }
+  function scan(){ [].forEach.call(document.querySelectorAll('iframe[data-lazy-src]'), arm); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
+})();
+</script>
 </body>
 </html>
 

@@ -112,6 +112,29 @@
     addEventListener('resize', closeMenu);
   }
 
-  function boot() { var tries = 0, t = setInterval(function () { tries++; build(); if (document.getElementById('shGroupNav') || tries > 40) clearInterval(t); }, 250); }
+  /* Sidebar highlight follows the real current view (it used to change only when a sidebar item was clicked). */
+  function wrapShowView() {
+    if (typeof window.showView !== 'function' || window.showView.__shdSync) return;
+    var orig = window.showView;
+    var ALIAS = { tools: 'automation', dashboard: 'dash', markets: 'pipeline', tasks: 'workflow' };
+    var w = function (v) {
+      var r = orig.apply(this, arguments);
+      try {
+        var id = ALIAS[v] || v;
+        var hit = null;
+        [].forEach.call(document.querySelectorAll('.sbt'), function (b) {
+          var oc = b.getAttribute('onclick') || '';
+          if (!hit && (oc.indexOf("showView('" + id + "')") > -1 || oc.indexOf("showView('" + v + "')") > -1)) hit = b;
+        });
+        if (hit && typeof window.lySetSb === 'function') window.lySetSb(hit);
+      } catch (e) {}
+      return r;
+    };
+    w.__shdSync = 1; window.showView = w;
+  }
+  function boot() {
+    var n = 0, t = setInterval(function () { wrapShowView(); if (++n > 20) clearInterval(t); }, 500);
+    // guest banner should not nag forever
+    setTimeout(function () { var g = document.getElementById('shdGuestNudge'); if (g) g.classList.remove('on'); }, 25000); var tries = 0, t = setInterval(function () { tries++; build(); if (document.getElementById('shGroupNav') || tries > 40) clearInterval(t); }, 250); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
