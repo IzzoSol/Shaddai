@@ -85,6 +85,8 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
         await sleep(2500); await p.screenshot({ path: OUT + '/ride-' + id + '-' + nm + '.png' }); console.log('shot', id, nm);
       }
     }
+  } else if (mode === 'districts') {   // node tools/_eye.cjs districts : one street-level view in each Grid district (Campus NE, Commons SE, Plots SW, Race NW) for the QA gate
+    const U = 7 / 1.8; for (const [nm, x, z, yaw] of [['campus', 380, -380, 45], ['commons', 380, 380, 135], ['plots', -380, 380, 225], ['race', -380, -380, 315]]) await shot('district-' + nm, x * U + Math.sin(yaw * Math.PI / 180) * 70 * U, z * U + Math.cos(yaw * Math.PI / 180) * 70 * U, x * U, 0, z * U, 14 * U, 22 * U);
   } else if (mode === 'at') {
     const [name, x, z, dist = 40, h = 8, yaw = 0] = process.argv.slice(3); const U = 7 / 1.8, a = (+yaw) * Math.PI / 180;
     await shot(name, +x * U + Math.sin(a) * +dist * U, +z * U + Math.cos(a) * +dist * U, +x * U, 0, +z * U, +h * U, 4 * U);
