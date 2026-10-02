@@ -23,7 +23,8 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
     await p.evaluate((px, pz, tx, tz, up, ty) => { const D = window.__w3dDebug, H = D.terrainV4 || D.terrain, L = window.__camLock; D.playerPos.x = px; D.playerPos.z = pz; const gy = H.heightAt(px, pz), ty0 = H.heightAt(tx, tz); L.on = true; L.px = px; L.py = gy + up; L.pz = pz; L.tx = tx; L.ty = ty0 + ty; L.tz = tz; }, px, pz, tx, tz, up, ty);
     await sleep(6500); await p.screenshot({ path: OUT + '/' + name + '.png' }); console.log('shot', name);
   }
-  if (mode === 'avatar') {   // node tools/_eye.cjs avatar FORGE-VANGUARD FORGE-GHOST ...  : third-person shots of the chosen operative standing in the world
+  if (mode === 'eval') { console.log('EVAL', JSON.stringify(await p.evaluate(new Function('return (' + process.argv[3] + ')')))); }   // node tools/_eye.cjs eval "expression"
+  else if (mode === 'avatar') {   // node tools/_eye.cjs avatar FORGE-VANGUARD FORGE-GHOST ...  : third-person shots of the chosen operative standing in the world
     const codes = process.argv.slice(3).length ? process.argv.slice(3) : ['FORGE-VANGUARD'], U = 7 / 1.8;
     for (const code of codes) {
       await p.evaluate(c => { window.setPlayerCharacter(c); }, code); await sleep(14000);
