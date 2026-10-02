@@ -4288,10 +4288,32 @@ body :is(.dl-lbl,.dl-badge,.agent-stat,.quick-meta,.stat-label,.op-chip,.op-tool
 /* tap targets: buttons never smaller than 30px tall; 44px on touch */
 body .btn, body button.btn-ghost, body button.btn-accent, body button.btn-secondary{ min-height:30px; }
 @media (pointer:coarse){ body .btn, body button{ min-height:40px; } }
+/* ── v101.3 sleek control layer — built ONLY from theme variables so every skin (dark and light) stays correct ── */
+body .btn{ font:600 12px/1 'Rajdhani','Share Tech Mono',sans-serif !important; letter-spacing:.09em !important; text-transform:uppercase !important; border-radius:9px !important;
+  min-height:32px; padding:0 14px !important; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;
+  transition:transform .14s, box-shadow .14s, background .14s, border-color .14s, color .14s !important; }
+body .btn:hover{ transform:translateY(-1px); }
+body .btn:active{ transform:translateY(0); }
+body .btn:focus-visible{ outline:0; box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#00e5a0) 32%, transparent) !important; }
+body .btn-accent{ background:linear-gradient(180deg, color-mix(in srgb, var(--accent,#00e5a0) 82%, #fff), var(--accent,#00e5a0)) !important; color:var(--bg-deep,#03150f) !important;
+  border:1px solid color-mix(in srgb, #fff 22%, transparent) !important;
+  box-shadow:0 6px 18px -8px var(--accent,#00e5a0), inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent) !important; }
+body .btn-accent:hover{ box-shadow:0 10px 24px -8px var(--accent,#00e5a0), inset 0 1px 0 color-mix(in srgb, #fff 45%, transparent) !important; filter:brightness(1.05); }
+body .btn-ghost{ background:color-mix(in srgb, var(--text-primary,#e9efe9) 5%, transparent) !important; border:1px solid color-mix(in srgb, var(--text-primary,#e9efe9) 26%, transparent) !important; color:var(--text-primary,#e9efe9) !important; }
+body .btn-ghost:hover{ border-color:var(--accent,#00e5a0) !important; color:var(--accent,#00e5a0) !important; background:color-mix(in srgb, var(--accent,#00e5a0) 8%, transparent) !important; }
+body .btn-secondary{ background:color-mix(in srgb, var(--accent,#00e5a0) 12%, transparent) !important; border:1px solid color-mix(in srgb, var(--accent,#00e5a0) 38%, transparent) !important; color:var(--accent,#00e5a0) !important; }
+body .btn-secondary:hover{ background:color-mix(in srgb, var(--accent,#00e5a0) 20%, transparent) !important; }
+body .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+body .input, body .select, body select.input, body textarea.input{ border-radius:9px !important; background:var(--bg-deep,#070b11) !important; color:var(--text-primary,#e9efe9) !important;
+  border:1px solid color-mix(in srgb, var(--text-primary,#e9efe9) 26%, transparent) !important; min-height:34px; }
+body .input:focus, body .select:focus{ outline:0; border-color:var(--accent,#00e5a0) !important; box-shadow:0 0 0 3px color-mix(in srgb, var(--accent,#00e5a0) 20%, transparent) !important; }
+body .card{ border-radius:14px !important; border:1px solid color-mix(in srgb, var(--text-primary,#e9efe9) 16%, transparent) !important; }
+body .card-title{ font-size:12px !important; letter-spacing:.14em !important; }
+body .view{ line-height:1.55; }
 /* guest badge sits right of the side rail instead of on top of it */
 body.ly-sb #shdGuestBadge{ left:226px !important; bottom:12px !important; }
 /* v101.3 baseline: anything without its own styling matches the theme instead of falling back to browser-default grey */
-body button:not([class]):not([style]){ font:600 11px 'Rajdhani','Share Tech Mono',monospace; letter-spacing:.08em; text-transform:uppercase; background:rgba(0,229,160,.08); color:#cfeee4; border:1px solid rgba(0,229,160,.35); border-radius:6px; padding:8px 14px; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
+body button:not([class]):not([style]){ font:600 11px 'Rajdhani','Share Tech Mono',monospace; letter-spacing:.08em; text-transform:uppercase; background:color-mix(in srgb, var(--accent,#00e5a0) 9%, transparent); color:var(--text-primary,#cfeee4); border:1px solid color-mix(in srgb, var(--accent,#00e5a0) 38%, transparent); border-radius:6px; padding:8px 14px; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
 body button:not([class]):not([style]):hover{ background:rgba(0,229,160,.18); border-color:rgba(0,229,160,.7); color:#fff; }
 body button:not([class]):not([style]):disabled{ opacity:.45; cursor:not-allowed; }
 body select:not([class]):not([style]), body textarea:not([class]):not([style]), body input[type=text]:not([class]):not([style]), body input[type=search]:not([class]):not([style]), body input[type=email]:not([class]):not([style]), body input[type=password]:not([class]):not([style]), body input[type=number]:not([class]):not([style]){
@@ -5463,7 +5485,7 @@ window.enter3DWorld=function(){
       #agentsView .ag-tabs{display:inline-flex;gap:2px;padding:4px;margin:0 0 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(120,150,140,.22));max-width:100%;overflow-x:auto}
       #agentsView .ag-tab{background:none;border:0;border-radius:8px;color:var(--text-muted,#8a99a6);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
       #agentsView .ag-tab:hover{color:var(--accent,#00e5a0)}
-      #agentsView .ag-tab.on{background:var(--accent,#00e5a0);color:#04120c}
+      #agentsView .ag-tab.on{background:var(--accent,#00e5a0);color:var(--bg-deep,#04120c)}
       #agentsView[data-tab="roster"] .ag-sec:not(.ag-roster),
       #agentsView[data-tab="manage"] .ag-sec:not(.ag-manage),
       #agentsView[data-tab="wallets"] .ag-sec:not(.ag-wallets),
@@ -5578,7 +5600,7 @@ window.enter3DWorld=function(){
       #workflowView .wf-tabs{display:inline-flex;gap:2px;padding:4px;margin:0 0 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(120,150,140,.22));max-width:100%;overflow-x:auto}
       #workflowView .wf-tab{background:none;border:0;border-radius:8px;color:var(--text-muted,#8a99a6);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
       #workflowView .wf-tab:hover{color:var(--accent,#00e5a0)}
-      #workflowView .wf-tab.on{background:var(--accent,#00e5a0);color:#04120c}
+      #workflowView .wf-tab.on{background:var(--accent,#00e5a0);color:var(--bg-deep,#04120c)}
       #workflowView[data-tab="quick"] .wf-sec:not(.wf-quick),
       #workflowView[data-tab="chains"] .wf-sec:not(.wf-chains),
       #workflowView[data-tab="tasks"] .wf-sec:not(.wf-tasks){display:none !important}
@@ -7523,7 +7545,7 @@ window.enter3DWorld=function(){
         #officeLibrary .lib2-tabs{display:inline-flex;gap:2px;padding:4px;margin-bottom:14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);max-width:100%;overflow-x:auto}
         #officeLibrary .lib2-tab{background:none;border:0;border-radius:8px;color:var(--text-muted);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
         #officeLibrary .lib2-tab:hover{color:var(--accent)}
-        #officeLibrary .lib2-tab.on{background:var(--accent);color:#04120c}
+        #officeLibrary .lib2-tab.on{background:var(--accent);color:var(--bg-deep,#04120c)}
         #officeLibrary .lib2-pane{display:none} #officeLibrary .lib2-pane.on{display:block}
         #officeLibrary .lib2-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
         #officeLibrary .lib2-hint{font-size:11px;color:var(--text-muted);margin:0 0 12px;line-height:1.5}

@@ -5,7 +5,7 @@
 
 :root{
   --shui-accent: var(--accent, #00e5a0);
-  --shui-accent-ink: #04120c;
+  --shui-accent-ink: var(--bg-deep, #04120c);
   --shui-bg: var(--bg-card, #0a0e13);
   --shui-raised: rgba(255,255,255,.04);
   --shui-line: var(--border, rgba(120,150,140,.22));
