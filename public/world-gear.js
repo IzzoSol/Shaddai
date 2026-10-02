@@ -15,6 +15,7 @@
     { id: 'buckler', slot: 'shield', name: 'Buckler', kind: 'reduce', base: 0.15, per: 0.05, price: 150, up: [200, 400], note: 'Light round shield. -15% damage.' },
     { id: 'tower', slot: 'shield', name: 'Tower Shield', kind: 'reduce', base: 0.30, per: 0.04, price: 600, up: [500, 900], note: 'Heavy plate. -30% damage.' },
     { id: 'aegis', slot: 'shield', name: 'Aegis Barrier', kind: 'barrier', base: 60, per: 20, price: 1500, up: [900, 1600], note: 'Energy barrier: soaks 60 damage, recharges when you are left alone.' },
+    { id: 'ember-boots', slot: 'boots', name: 'Ember Boots', kind: 'resist', resist: 0.65, price: 900, note: 'Lava burns 65% slower.' },
     { id: 'halo', slot: 'halo', name: 'Gold Halo', kind: 'cosmetic', price: 300, color: 0xffd36a, note: 'A ring of light above your head.' },
     { id: 'halo-void', slot: 'halo', name: 'Void Halo', kind: 'cosmetic', price: 300, color: 0xb06bff, note: 'Violet ring.' },
     { id: 'aura-emerald', slot: 'aura', name: 'Emerald Aura', kind: 'cosmetic', price: 400, color: 0x00ff9c, note: 'A soft emerald glow around you.' },
@@ -31,6 +32,7 @@
   function owned() { return CATALOG.filter(function (c) { return lvl(c.id) > 0; }).map(function (c) { return { id: c.id, level: lvl(c.id), equipped: S.equipped[c.slot] === c.id }; }); }
   function shield() { var id = S.equipped.shield; return id && lvl(id) ? byId[id] : null; }
   function power(c) { return c.base + c.per * (lvl(c.id) - 1); }     // reduction fraction, or barrier hp
+  function lavaResist() { var id = S.equipped.boots, c = id && lvl(id) ? byId[id] : null; return c && c.resist ? c.resist : 0; }
   function barrierMax() { var c = shield(); return c && c.kind === 'barrier' ? power(c) : 0; }
   function sync() { var m = barrierMax(); if (!m) S.barrier = null; else if (S.barrier == null || S.barrier > m) S.barrier = m; }
   function buy(id) {
@@ -84,7 +86,7 @@
   function render() {
     if (!panel) return; var B = 'background:linear-gradient(180deg,rgba(0,255,156,.28),rgba(0,120,80,.4));border:1px solid #00ff9c;border-radius:7px;color:#eafff6;padding:4px 9px;cursor:pointer;font:700 12px Rajdhani,sans-serif;margin:2px 3px 0 0', G = B.replace(/0,255,156/g, '232,196,92').replace('#00ff9c', '#e8c45c').replace('0,120,80', '120,80,10').replace('#eafff6', '#ffe9b0'), sp = root.ShdSparks && root.ShdSparks.get ? root.ShdSparks.get() : 0, st = state();
     var h = '<div style="opacity:.7;margin-bottom:6px">Sparks ' + sp + (st.barrierMax ? ' · barrier ' + Math.round(st.barrier || 0) + '/' + st.barrierMax : '') + (st.reduction ? ' · shield -' + Math.round(st.reduction * 100) + '%' : '') + '</div>';
-    ['shield', 'halo', 'aura', 'trail'].forEach(function (slot) {
+    ['shield', 'boots', 'halo', 'aura', 'trail'].forEach(function (slot) {
       h += '<div style="color:#e8c45c;font-weight:700;margin:8px 0 3px;text-transform:uppercase">' + slot + 's</div>';
       CATALOG.filter(function (c) { return c.slot === slot; }).forEach(function (c) {
         var L = lvl(c.id), on = S.equipped[slot] === c.id;
@@ -116,5 +118,5 @@
       if (a === 'ckit') r = root.WorldCampfire.buyKit(); else if (a === 'clog') r = root.WorldCampfire.buyLog(); else if (a === 'clight') r = root.__campfire ? root.__campfire.place() : { ok: false, msg: 'Not ready' }; else if (a === 'caddlog') r = root.__campfire ? root.__campfire.addLog() : { ok: false, msg: 'Not ready' }; else if (a === 'cstyle') { r = root.WorldCampfire.state().owned.indexOf(id) >= 0 ? root.WorldCampfire.equipStyle(id) : root.WorldCampfire.buyStyle(id); } else if (a === 'gbuy') r = root.WorldGadgets.buy(id); else if (a === 'guse') r = root.WorldGadgets.useScent(); else if (a === 'buy') r = buy(id); else if (a === 'eq') r = equip(id); else if (a === 'up') r = upgrade(id); else if (a === 'off') r = unequip(t.getAttribute('data-s'));
       render(); var m = panel && panel.querySelector('#gearMsg'); if (m && r && r.msg) m.textContent = r.msg; if (r && r.msg) toast(r.msg); }); render();
   }
-  root.WorldGear = { CATALOG: CATALOG, MAXL: MAXL, RECHARGE_S: RECHARGE_S, buy: buy, upgrade: upgrade, equip: equip, unequip: unequip, absorb: absorb, tick: tick, owned: owned, state: state, buildVisuals: buildVisuals, open: open, close: close, _reset: function () { S = fresh(); save(); } };
+  root.WorldGear = { CATALOG: CATALOG, MAXL: MAXL, RECHARGE_S: RECHARGE_S, buy: buy, upgrade: upgrade, equip: equip, unequip: unequip, absorb: absorb, lavaResist: lavaResist, tick: tick, owned: owned, state: state, buildVisuals: buildVisuals, open: open, close: close, _reset: function () { S = fresh(); save(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

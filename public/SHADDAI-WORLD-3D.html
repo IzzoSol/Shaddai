@@ -312,6 +312,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-gear.js?v=20261001a"></script>
 <script src="/world-skydock.js?v=20261001a"></script>
+<script src="/world-hazards.js?v=20261001a"></script>
 <script src="/world-grass.js?v=20261001a"></script>
 <script src="/world-nightsky-extras.js?v=20261001a"></script>
 <script src="/world-campfire.js?v=20261001a"></script>
@@ -4993,6 +4994,12 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── HAZARDS (world-hazards.js): lava burns you (overworld lava = molten pixels of the terrain colour map; Colosseum lava field); hover above it to cross; water puts you out ──
+(function bootHazards(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
+  if(!window.WorldHazards || !_v4T || !_v4Meta || !_v4Meta.half_units || !window.__loadPlayable) return; clearInterval(iv);
+  const make = function(allow){ try{ window.__hazards = window.buildWorldHazards({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, lavaAllow: allow, getPlayer: function(){ return { pos: playerPos, alive: (window.__playerHP == null || window.__playerHP > 0) && !(_interiors && _interiors.isInside() && !(window._currentInterior === 'COLOSSEUM')) }; }, getAvatar: function(){ return playerAvatar; },
+      isSwimming: function(){ return !!_swimming; }, getArena: function(){ return window.__colosseumArena; }, survival: window.WorldSurvival, resist: function(){ return window.WorldGear && window.WorldGear.lavaResist ? window.WorldGear.lavaResist() : 0; }, onHurt: function(d){ if(window.__hitfx) window.__hitfx.hurt(d, null); } }); }catch(e){ console.warn('[hazards] failed', e && e.message); } };
+  const img = new Image(); img.onload = function(){ try{ const cv = document.createElement('canvas'); cv.width = cv.height = 256; const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, 256, 256); const m = window.WorldHazards.lavaMask(g.getImageData(0, 0, 256, 256).data, 256, _v4Meta.half_units); console.log('[hazards] lava coverage', (m.coverage*100).toFixed(2) + '%'); make(m.coverage > 0 ? m : null); }catch(e){ make(null); } }; img.onerror = function(){ make(null); }; img.src = '/assets/terrain/color.jpg'; }, 1000); })();
 // ── REAL GRASS (world-grass.js): wind-swayed tufts that bend away from you; grows only where the terrain colour map is green; scales with the quality tier ──
 (function bootGrass(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
   if(!window.WorldGrass || !_v4T || !_v4Meta || !_v4Meta.half_units || !window.__loadPlayable) return; clearInterval(iv);
@@ -5229,6 +5236,7 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__hazards){ try{ window.__hazards.update(dt); }catch(e){ console.warn('[hazards] disabled after error', e && e.message); try{ window.__hazards.dispose(); }catch(_){} window.__hazards = null; } }
   if(window.__grass){ try{ window.__grass.update(dt); if((_animFrame & 127) === 0){ const q = String(window.__quality || 'MEDIUM').toUpperCase(); window.__grass.setQuality(q === 'ULTRA' ? 'HIGH' : q); } }catch(e){ console.warn('[grass] disabled after error', e && e.message); try{ window.__grass.dispose(); }catch(_){} window.__grass = null; } }
   if(window.__skyExtras){ try{ window.__skyExtras.update(dt); }catch(e){ console.warn('[skyextras] disabled after error', e && e.message); try{ window.__skyExtras.dispose(); }catch(_){} window.__skyExtras = null; } }
   if(window.__campfire){ try{ window.__campfire.update(dt); }catch(e){ console.warn('[campfire] disabled after error', e && e.message); try{ window.__campfire.dispose(); }catch(_){} window.__campfire = null; } }

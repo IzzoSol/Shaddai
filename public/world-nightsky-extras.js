@@ -48,18 +48,38 @@
       for (var j = 0; j < TRAIL; j++) { var g = clamp(f - tail * (j / (TRAIL - 1)), 0, 1), p = meteorPoint(m, g), b = (1 - j / (TRAIL - 1)) * fade; pos.setXYZ(j, p[0] * R, p[1] * R, p[2] * R); col.setXYZ(j, b, b * 0.95, b * 0.85); }
       pos.needsUpdate = true; col.needsUpdate = true;
     }
+
+    // ---- real STARS + MILKY WAY (the base sky's hashed stars are too faint to read): 2 Points layers, 1 draw call each, twinkle in the vertex shader ----
+    function starLayer(n, spread, tintSeed) {
+      var pos = new Float32Array(n * 3), col = new Float32Array(n * 3), size = new Float32Array(n), ph = new Float32Array(n), r = rng, nrm = [0.3, 0.8, 0.5], nl = Math.hypot(nrm[0], nrm[1], nrm[2]); nrm = [nrm[0] / nl, nrm[1] / nl, nrm[2] / nl];
+      for (var i = 0; i < n; i++) {
+        var d;
+        if (spread) { do { var u = r() * 2 - 1, az = r() * TWO_PI, c = Math.sqrt(1 - u * u), q = [Math.cos(az) * c, u, Math.sin(az) * c], dot = q[0] * nrm[0] + q[1] * nrm[1] + q[2] * nrm[2], g = (r() + r() + r() - 1.5) * spread, k = Math.sqrt(Math.max(0, 1 - g * g)); d = [q[0] - nrm[0] * dot, q[1] - nrm[1] * dot, q[2] - nrm[2] * dot]; var dl = Math.hypot(d[0], d[1], d[2]) || 1; d = [d[0] / dl * k + nrm[0] * g, d[1] / dl * k + nrm[1] * g, d[2] / dl * k + nrm[2] * g]; } while (d[1] < 0.03); }
+        else { do { var u2 = r(), az2 = r() * TWO_PI, c2 = Math.sqrt(1 - u2 * u2); d = [Math.cos(az2) * c2, u2, Math.sin(az2) * c2]; } while (d[1] < 0.03); }
+        pos[i * 3] = d[0] * R; pos[i * 3 + 1] = d[1] * R; pos[i * 3 + 2] = d[2] * R;
+        var t = r(), warm = t > 0.86, blue = t < 0.3; col[i * 3] = warm ? 1 : (blue ? 0.7 : 0.95); col[i * 3 + 1] = warm ? 0.82 : (blue ? 0.82 : 0.95); col[i * 3 + 2] = warm ? 0.6 : (blue ? 1 : 1);
+        size[i] = spread ? 1.4 + r() * 1.2 : 1.6 + Math.pow(r(), 3) * 4.2; ph[i] = r();
+      }
+      var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('aColor', new THREE.BufferAttribute(col, 3)); geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1)); geo.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
+      var u = { uTime: { value: 0 }, uNight: { value: 0 }, uGain: { value: spread ? 0.55 : 1 } };
+      var mat = new THREE.ShaderMaterial({ uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexShader: 'attribute float aSize; attribute float aPhase; attribute vec3 aColor; uniform float uTime; varying vec3 vC; varying float vT; void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * (0.85 + 0.3 * sin(uTime * (1.2 + aPhase * 2.5) + aPhase * 40.0)); vC = aColor; vT = 0.7 + 0.3 * sin(uTime * (0.8 + aPhase * 3.0) + aPhase * 17.0); }',
+        fragmentShader: 'uniform float uNight; uniform float uGain; varying vec3 vC; varying float vT; void main(){ float r = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.05, r); gl_FragColor = vec4(vC * vT, a * uNight * uGain); }' });
+      var pts = setup(new THREE.Points(geo, mat)); pts.material.fog = false; grp.add(pts); return { pts: pts, u: u };
+    }
+    var starsL = starLayer(o.stars || 1500, 0), milky = starLayer(o.milky || 1400, 0.16);
     // ---- moon 2 ----
-    var m2 = null, mt = moonTex(THREE); if (mt) { m2 = setup(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: mt, transparent: true, color: 0xdfe8ff }))); var s = R * 0.030; m2.scale.set(s, s, 1); grp.add(m2); }
+    var m2 = null, mt = moonTex(THREE); if (mt) { m2 = setup(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: mt, transparent: true, color: 0xdfe8ff }))); var s = R * 0.058; m2.scale.set(s, s, 1); grp.add(m2); }
     // ---- planets ----
     var planets = [], defs = [
-      { name: 'gas', az: 40, el: 28, size: 0.095, bands: ['#e8c88a', '#c9955a', '#f0dcae', '#b57a45', '#e6c58c', '#9a6a3c', '#f2e2bd'], ring: true, rim: [1.0, 0.8, 0.5], halo: null },
-      { name: 'ice', az: 210, el: 18, size: 0.055, bands: ['#6a4aa8', '#3fa0b0', '#8d6fd0', '#2f7f95', '#7a5bbf'], ring: false, rim: [0.5, 0.8, 1.0], halo: '120,190,255' },
-      { name: 'ember', az: 300, el: 40, size: 0.032, bands: ['#a63a22', '#e0702a', '#7a2a1e', '#d9582a'], ring: false, rim: [1.0, 0.5, 0.3], halo: '255,120,70' }
+      { name: 'gas', az: 40, el: 28, size: 0.21, bands: ['#e8c88a', '#c9955a', '#f0dcae', '#b57a45', '#e6c58c', '#9a6a3c', '#f2e2bd'], ring: true, rim: [1.0, 0.8, 0.5], halo: null },
+      { name: 'ice', az: 210, el: 18, size: 0.12, bands: ['#6a4aa8', '#3fa0b0', '#8d6fd0', '#2f7f95', '#7a5bbf'], ring: false, rim: [0.5, 0.8, 1.0], halo: '120,190,255' },
+      { name: 'ember', az: 300, el: 40, size: 0.07, bands: ['#a63a22', '#e0702a', '#7a2a1e', '#d9582a'], ring: false, rim: [1.0, 0.5, 0.3], halo: '255,120,70' }
     ];
     defs.forEach(function (d) {
       var tex = bandTex(THREE, d.bands); if (!tex) return; var u = { uMap: { value: tex }, uLight: { value: new THREE.Vector3(0.6, 0.4, 0.7) }, uOpacity: { value: 0 }, uRim: { value: new THREE.Vector3(d.rim[0], d.rim[1], d.rim[2]) } };
       var sph = setup(new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), new THREE.ShaderMaterial({ uniforms: u, vertexShader: PLANET_VERT, fragmentShader: PLANET_FRAG, transparent: true }))), pg = new THREE.Group(), rad = R * d.size * 0.5; sph.scale.setScalar(rad); pg.add(sph); var ring = null, halo = null;
-      if (d.ring) { var rt = ringTex(THREE); ring = setup(new THREE.Mesh(new THREE.RingGeometry(1.5, 2.6, 64, 1), new THREE.MeshBasicMaterial({ map: rt, transparent: true, side: THREE.DoubleSide, opacity: 0 }))); ring.scale.setScalar(rad); ring.rotation.x = Math.PI / 2 - 0.4; ring.rotation.y = 0.35; pg.add(ring); }
+      if (d.ring) { var rt = ringTex(THREE); var rg = new THREE.RingGeometry(1.5, 2.6, 64, 1), rp = rg.attributes.position, ruv = rg.attributes.uv; for (var vi = 0; vi < rp.count; vi++) { ruv.setXY(vi, (Math.hypot(rp.getX(vi), rp.getY(vi)) - 1.5) / 1.1, 0.5); }   // RADIAL uvs: the gradient runs from the inner to the outer edge
+      ring = setup(new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ map: rt, transparent: true, side: THREE.DoubleSide, opacity: 0 }))); ring.scale.setScalar(rad); ring.rotation.x = 1.1; ring.rotation.z = 0.5; /* tilted ~63 degrees from the camera: a clear ellipse, not an edge-on line */ pg.add(ring); }
       if (d.halo) { var ht = haloTex(THREE, d.halo); halo = setup(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: ht, transparent: true, blending: THREE.AdditiveBlending, opacity: 0 }))); halo.scale.setScalar(rad * 3.4); pg.add(halo); }
       grp.add(pg); planets.push({ def: d, group: pg, sph: sph, ring: ring, halo: halo, u: u, az: d.az * DEG, el: d.el * DEG });
     });
@@ -68,11 +88,12 @@
       if (cam) grp.position.copy(cam.position);
       if (night > 0.45) { nextMeteor -= dt; if (nextMeteor <= 0) { spawnShootingStar(); nextMeteor = nextMeteorIn(rng, night); } }
       meteors.forEach(function (m) { if (m.alive) stepMeteor(m, dt); });
+      starsL.u.uTime.value = t; milky.u.uTime.value = t * 0.7; var sv = smooth(0.08, 0.55, night); starsL.u.uNight.value = sv; milky.u.uNight.value = sv; starsL.pts.visible = milky.pts.visible = sv > 0.01;
       var vis = planetVisibility(night);
       planets.forEach(function (p) { p.az += dt * 0.0015; var d = dirFromAzEl(p.az, p.el); p.group.position.set(d[0] * R, d[1] * R, d[2] * R); p.group.lookAt(0, 0, 0); p.u.uOpacity.value = vis * 0.95; p.sph.visible = vis > 0.01; if (p.ring) { p.ring.material.opacity = vis * 0.9; p.ring.visible = vis > 0.01; } if (p.halo) { p.halo.material.opacity = vis * 0.8; p.halo.visible = vis > 0.01; } });
       if (m2) { var md = moon2Dir(time); m2.position.set(md.dir[0] * R, md.dir[1] * R, md.dir[2] * R); m2.lookAt(0, 0, 0); m2.material.opacity = md.el > -0.05 ? smooth(0.0, 0.25, night + 0.2) * clamp((md.el + 0.05) / 0.2, 0, 1) : 0; m2.visible = m2.material.opacity > 0.01; }
     }
-    return { group: grp, update: update, spawnShootingStar: spawnShootingStar, stats: function () { return { meteorsAlive: meteors.filter(function (m) { return m.alive; }).length, planets: planets.length, moon2: !!m2, night: night, radius: R }; }, _planets: planets, _moon2: function () { return m2; }, _meteors: meteors, dispose: function () { o.scene.remove(grp); } };
+    return { group: grp, update: update, spawnShootingStar: spawnShootingStar, stats: function () { return { meteorsAlive: meteors.filter(function (m) { return m.alive; }).length, stars: starsL.pts.geometry.attributes.position.count, milkyWay: milky.pts.geometry.attributes.position.count, planets: planets.length, moon2: !!m2, night: night, radius: R }; }, _planets: planets, _stars: function () { return starsL; }, _milky: function () { return milky; }, _moon2: function () { return m2; }, _meteors: meteors, dispose: function () { o.scene.remove(grp); } };
   }
   root.buildNightSkyExtras = buildNightSkyExtras; root.WorldNightSkyExtras = { dirFromAzEl: dirFromAzEl, planetVisibility: planetVisibility, nextMeteorIn: nextMeteorIn, meteorPoint: meteorPoint, moon2Dir: moon2Dir };
 })(typeof window !== 'undefined' ? window : globalThis);
