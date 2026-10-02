@@ -1,8 +1,14 @@
 'use strict';
 
-function installSkill({ operatives, operativeId, receipt, skill }) {
+// When `receipts` is given the receipt is looked up in the store and verified; a caller-built object is never trusted.
+function installSkill({ operatives, operativeId, receipt, skill, receipts }) {
   const op = operatives.get(operativeId);
   if (!op) return { ok: false, error: 'unknown operative' };
+  if (receipts) {
+    const stored = receipt && receipts.get(receipt.receiptId);
+    if (!stored || stored.hash !== receipt.hash || !receipts.verifyChain(operativeId).ok) return { ok: false, error: 'receipt not found or chain invalid' };
+    receipt = stored;
+  }
   if (!receipt || receipt.agentId !== operativeId || receipt.skillId !== skill.id || receipt.skillHash !== skill.hash) {
     return { ok: false, error: 'receipt does not match this operative and skill' };
   }

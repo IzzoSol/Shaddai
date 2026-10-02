@@ -5,8 +5,7 @@ const TRACKS = ['trading', 'image', 'marketing', 'tools', 'research', 'writing',
 const TIERS = ['spark', 'adept', 'prime'];
 const TEACHER_TYPES = ['operative', 'owner', 'house'];
 const LICENSES = ['single', 'transferable'];
-const SECRET_KEY = /private|secret|seed|mnemonic|password|api_?key/i;
-const SECRET_VAL = /\bsk-[a-z0-9]{8,}|\bxai-[a-z0-9]{8,}|\b[0-9a-f]{64}\b/i;
+const { SECRET_KEY, hasSecretValue } = require('./secrets');
 const ID_RE = /^[a-z0-9][a-z0-9-]{2,48}$/;
 const VER_RE = /^\d+\.\d+\.\d+$/;
 const ALLOW_RE = /^[a-z0-9_.:-]{1,60}$/i;
@@ -14,7 +13,7 @@ const MAX = { name: 80, summary: 400, prompt: 6000, text: 400, example: 2000, it
 
 function scanSecrets(v, where, errors) {
   if (v === null || v === undefined) return;
-  if (typeof v === 'string') { if (SECRET_VAL.test(v)) errors.push(where + ': looks like a secret'); return; }
+  if (typeof v === 'string') { if (hasSecretValue(v)) errors.push(where + ': looks like a secret'); return; }
   if (typeof v !== 'object') return;
   for (const k of Object.keys(v)) {
     if (SECRET_KEY.test(k)) errors.push(where + '.' + k + ': secret-like key rejected');

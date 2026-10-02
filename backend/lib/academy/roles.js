@@ -1,5 +1,7 @@
 'use strict';
 
+const { isSafeId, hasOwn } = require('./ids');
+
 const PERMS = {
   student: ['enroll'],
   teacher: ['skill.publish', 'class.create', 'review.write'],
@@ -14,8 +16,10 @@ function createRoles({ store, adminIds, now = Date.now }) {
 
   function rolesOf(userId) {
     const out = new Set(['student']);
+    if (!isSafeId(userId)) return Array.from(out);
     if (admins.has(userId)) out.add('admin');
-    for (const r of load().users[userId] || []) out.add(r);
+    const users = load().users;
+    for (const r of (hasOwn(users, userId) ? users[userId] : [])) out.add(r);
     return Array.from(out);
   }
   function can(userId, action) {
@@ -24,7 +28,8 @@ function createRoles({ store, adminIds, now = Date.now }) {
   function change(by, target, role, add) {
     if (!rolesOf(by).includes('admin')) return { ok: false, error: 'admin only' };
     if (!ROLES.includes(role) || role === 'student') return { ok: false, error: 'invalid role' };
-    const d = load(); const cur = new Set(d.users[target] || []);
+    if (!isSafeId(target)) return { ok: false, error: 'invalid target' };
+    const d = load(); const cur = new Set(hasOwn(d.users, target) ? d.users[target] : []);
     if (add) cur.add(role); else cur.delete(role);
     d.users[target] = Array.from(cur); store.write('roles', d);
     store.append('audit', { at: now(), by, target, role, action: add ? 'grant' : 'revoke' });

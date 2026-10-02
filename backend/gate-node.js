@@ -48,7 +48,8 @@ const SCRIPTS = [
   'lib/academy/economy.test.js',
   'lib/academy/classes.test.js',
   'lib/academy/hooks.test.js',
-  'lib/academy/academy-core.test.js'
+  'lib/academy/academy-core.test.js',
+  'lib/academy/review-fixes.test.js'
 ];
 
 let passed = 0, failed = 0;

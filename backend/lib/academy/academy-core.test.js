@@ -41,8 +41,7 @@ async function takeExam(a, out) {
 runAll('academy-core e2e', {
   async 'learn, pass, pay, receipt, install'() {
     const { economy, opsDb, events, academy: a } = await world();
-    const skill = a.registry.get('tool-hygiene');
-    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skill, windowId: 'w1' });
+    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skillId: 'tool-hygiene', windowId: 'w1' });
     assert.ok(enr.ok);
     await takeBaseline(a, []);
     await takeExam(a, GOOD);
@@ -62,8 +61,7 @@ runAll('academy-core e2e', {
   },
   async 'fail: no lift means no install, 50/50 split, failed hook'() {
     const { economy, opsDb, events, academy: a } = await world();
-    const skill = a.registry.get('tool-hygiene');
-    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skill, windowId: 'w1' });
+    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skillId: 'tool-hygiene', windowId: 'w1' });
     await takeBaseline(a, GOOD); await takeExam(a, GOOD);                                  // already good: lift 0
     const r = await a.finishExam({ agentId: 'op1', skillId: 'tool-hygiene', enrollmentId: enr.enrollment.id });
     assert.ok(r.ok); assert.strictEqual(r.passed, false);
@@ -79,7 +77,7 @@ runAll('academy-core e2e', {
   },
   async 'a skill republished after the exam is not installed'() {
     const { opsDb, academy: a } = await world();
-    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skill: a.registry.get('tool-hygiene'), windowId: 'w1' });
+    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skillId: 'tool-hygiene', windowId: 'w1' });
     await takeBaseline(a, []); await takeExam(a, GOOD);
     assert.ok(a.registry.publish(sampleSkill({ version: '1.1.0' })).ok);
     const r = await a.finishExam({ agentId: 'op1', skillId: 'tool-hygiene', enrollmentId: enr.enrollment.id });
@@ -90,7 +88,7 @@ runAll('academy-core e2e', {
     const { events, academy: a } = await world();
     const cls = a.classes.create('owner1', { name: 'Tools 101', track: 'tools', tier: 'spark', syllabus: ['tool-hygiene'], teacher: { type: 'house', id: 'NEXUS' }, room: 'tool-foundry', capacity: 5, kind: 'open' }).class;
     a.classes.join({ classId: cls.id, agentId: 'op1' });
-    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skill: a.registry.get('tool-hygiene'), windowId: 'w1' });
+    const enr = await a.tuition.enroll({ ownerId: 'owner1', agentId: 'op1', skillId: 'tool-hygiene', windowId: 'w1' });
     await takeBaseline(a, []); await takeExam(a, GOOD);
     const r = await a.finishExam({ agentId: 'op1', skillId: 'tool-hygiene', enrollmentId: enr.enrollment.id, classId: cls.id });
     assert.ok(r.ok); assert.strictEqual(r.classCompleted, true);

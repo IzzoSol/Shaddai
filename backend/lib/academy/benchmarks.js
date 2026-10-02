@@ -1,5 +1,6 @@
 'use strict';
 const { KINDS } = require('./graders');
+const { isSafeId } = require('./ids');
 
 const ID = /^[a-z0-9][a-z0-9-]{2,48}$/;
 const SEMVER = /^\d+\.\d+\.\d+$/;
@@ -20,7 +21,7 @@ function createBenchmarks(store) {
     else {
       const seen = new Set();
       for (const t of b.tasks) {
-        if (!t || typeof t.id !== 'string' || typeof t.prompt !== 'string' || seen.has(t.id)) { errors.push('each task needs a unique id and a prompt'); break; }
+        if (!t || !isSafeId(t.id) || typeof t.prompt !== 'string' || seen.has(t.id)) { errors.push('each task needs a unique safe id and a prompt'); break; }
         seen.add(t.id);
       }
     }

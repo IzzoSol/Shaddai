@@ -1,9 +1,12 @@
 'use strict';
-const { hashOf } = require('./canon');
+const { hashOf, stripMarkup } = require('./canon');
 const { GRADERS, clamp01 } = require('./graders');
 const { gradeRubric } = require('./rubric');
+const { hasSecret } = require('./secrets');
+const { isSafeId, hasOwn } = require('./ids');
 
 const err = (error) => ({ ok: false, error });
+const MAX_OUT = 20000;   // serialized size cap for one task output
 
 function seedFrom(str) {
   let h = 1779033703 ^ str.length;
@@ -24,14 +27,24 @@ function sample(arr, n, seedStr) {
   return a.slice(0, n);
 }
 
+// One task output -> { value } safe to grade, or { rejected } when it must not reach a grader or a judge.
+function cleanOutput(out) {
+  if (out === undefined || out === null) return { value: null };
+  if (hasSecret(out)) return { rejected: 'secret' };
+  let s;
+  try { s = JSON.stringify(out); } catch (_) { return { value: null }; }
+  if (s === undefined || s.length > MAX_OUT) return { value: null, oversized: true };
+  return { value: typeof out === 'string' ? stripMarkup(out).slice(0, 8000) : out };
+}
+
 function createExamService({ store, registry, benchmarks, judge, now = Date.now, cooldownMs = 10 * 60 * 1000, dailyCap = 5, windowMs = 30 * 60 * 1000 }) {
-  const load = () => store.read('attempts', { attempts: {} });
+  const load = () => store.read('attempts', { attempts: {}, nextSeq: 1 });
   const history = (d, agentId, skillId) => Object.values(d.attempts)
     .filter((a) => a.agentId === agentId && a.skillId === skillId).sort((x, y) => x.seq - y.seq);
   const benchOf = (a) => { const [id, ver] = a.benchmark.split('@'); return benchmarks.get(id, ver); };
 
   function begin({ agentId, skillId, kind, withSkill }) {
-    if (!agentId || typeof agentId !== 'string') return err('agentId required');
+    if (!isSafeId(agentId)) return err('agentId required');
     if (kind !== 'baseline' && kind !== 'exam') return err('kind must be baseline or exam');
     if (kind === 'baseline' && withSkill) return err('baseline must be taken without the skill');
     if (kind === 'exam' && !withSkill) return err('exam must be taken with the skill installed');
@@ -44,51 +57,68 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     const last = h.filter((a) => a.kind === kind).pop();
     if (last && t - last.startedAt < cooldownMs) return err('cooldown active');
     if (kind === 'exam' && !h.some((a) => a.kind === 'baseline' && a.status === 'graded' && a.skillHash === skill.hash)) return err('a graded baseline is required first');
+    const seq = d.nextSeq || 1;
     const seed = [agentId, skillId, skill.hash, kind, h.length].join('|');
     const tasks = sample(bench.tasks, bench.perAttempt, seed);
-    const id = 'att_' + hashOf({ seed, t }).slice(0, 16);
+    const id = 'att_' + hashOf({ seed, t, seq }).slice(0, 16);
     d.attempts[id] = {
-      id, agentId, skillId, skillHash: skill.hash, benchmark: bench.id + '@' + bench.version, kind, seq: Object.keys(d.attempts).length,
+      id, agentId, skillId, skillHash: skill.hash, benchmark: bench.id + '@' + bench.version, kind, seq,
       withSkill: !!withSkill, taskIds: tasks.map((x) => x.id), startedAt: t, expiresAt: t + windowMs, status: 'open'
     };
+    d.nextSeq = seq + 1;
     store.write('attempts', d);
     return { ok: true, attemptId: id, expiresAt: t + windowMs, tasks: tasks.map(benchmarks.publicTask) };
   }
 
-  async function submit({ attemptId, outputs }) {
-    const d = load(); const a = d.attempts[attemptId];
-    if (!a) return err('unknown attempt');
-    if (a.status !== 'open') return err('attempt already ' + a.status);
-    if (now() > a.expiresAt) { a.status = 'expired'; store.write('attempts', d); return err('attempt expired'); }
+  async function gradeAll(a, outputs) {
     const bench = benchOf(a);
     const outs = outputs && typeof outputs === 'object' ? outputs : {};
     const perTask = []; let needsReview = false;
     for (const tid of a.taskIds) {
       const task = bench.tasks.find((x) => x.id === tid);
-      const out = outs[tid];
+      const c = cleanOutput(hasOwn(outs, tid) ? outs[tid] : undefined);
+      if (c.rejected) { perTask.push({ taskId: tid, score: 0, status: 'rejected' }); continue; }
       if (bench.grader === 'rubric') {
-        const r = await gradeRubric({ rubric: bench.rubric, submission: { task: task.prompt, output: out }, judge });
+        if (c.value === null) { perTask.push({ taskId: tid, score: 0, status: 'graded' }); continue; }   // nothing usable: no judge spend
+        const r = await gradeRubric({ rubric: bench.rubric, submission: { task: task.prompt, output: c.value }, judge });
         if (r.status === 'needs_review') { needsReview = true; perTask.push({ taskId: tid, score: null, status: 'needs_review' }); }
         else perTask.push({ taskId: tid, score: r.score, status: 'graded' });
       } else {
         let score = 0;
-        try { score = clamp01(GRADERS[bench.grader](task.input, task.spec, out).score); } catch (_) { score = 0; }
+        try { score = clamp01(GRADERS[bench.grader](task.input, task.spec, c.value).score); } catch (_) { score = 0; }
         perTask.push({ taskId: tid, score, status: 'graded' });
       }
     }
-    a.perTask = perTask; a.submittedAt = now();
-    if (needsReview) { a.status = 'needs_review'; a.score = null; }
-    else { a.status = 'graded'; a.score = perTask.reduce((s, p) => s + p.score, 0) / perTask.length; }
+    if (needsReview) return { status: 'needs_review', score: null, perTask };
+    return { status: 'graded', score: perTask.reduce((s, p) => s + p.score, 0) / perTask.length, perTask };
+  }
+
+  async function submit({ attemptId, outputs }) {
+    if (!isSafeId(attemptId)) return err('unknown attempt');
+    const d = load();
+    const a = hasOwn(d.attempts, attemptId) ? d.attempts[attemptId] : null;
+    if (!a) return err('unknown attempt');
+    if (a.status !== 'open') return err('attempt already ' + a.status);
+    if (now() > a.expiresAt) { a.status = 'expired'; store.write('attempts', d); return err('attempt expired'); }
+    a.status = 'grading';                       // claim synchronously, before any await: a second submit sees 'grading'
     store.write('attempts', d);
-    return { ok: true, status: a.status, score: a.score, perTask };
+    let result;
+    try { result = await gradeAll(a, outputs); } catch (_) { result = { status: 'needs_review', score: null, perTask: [] }; }
+    const d2 = load();                          // re-read after the await so concurrent writes are never overwritten
+    const a2 = d2.attempts[attemptId];
+    a2.perTask = result.perTask; a2.submittedAt = now(); a2.status = result.status; a2.score = result.score;
+    store.write('attempts', d2);
+    return { ok: true, status: a2.status, score: a2.score, perTask: a2.perTask };
   }
 
   function evaluate({ agentId, skillId }) {
+    if (!isSafeId(agentId)) return err('agentId required');
     const d = load(); const h = history(d, agentId, skillId);
     const exam = h.filter((a) => a.kind === 'exam' && a.status === 'graded').pop();
     if (!exam) return err('no graded exam');
-    const base = h.filter((a) => a.kind === 'baseline' && a.status === 'graded' && a.skillHash === exam.skillHash && a.seq < exam.seq).pop();
-    if (!base) return err('no matching baseline');
+    const bases = h.filter((a) => a.kind === 'baseline' && a.status === 'graded' && a.skillHash === exam.skillHash && a.seq < exam.seq);
+    if (!bases.length) return err('no matching baseline');
+    const base = bases.reduce((best, b) => (b.score > best.score ? b : best), bases[0]);   // best prior baseline: re-sandbagging cannot inflate lift
     const bench = benchOf(exam);
     const lift = exam.score - base.score;
     const passed = exam.score >= bench.passMark && lift >= bench.minLift;
@@ -102,4 +132,4 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
   return { begin, submit, evaluate };
 }
 
-module.exports = { createExamService, sample };
+module.exports = { createExamService, sample, cleanOutput };

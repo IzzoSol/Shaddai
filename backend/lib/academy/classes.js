@@ -1,12 +1,13 @@
 'use strict';
 const { hashOf, stripMarkup } = require('./canon');
+const { isSafeId, hasOwn } = require('./ids');
 
 const KINDS = ['open', 'scheduled', 'masterclass', 'bootcamp'];
 const err = (error) => ({ ok: false, error });
 
 function createClasses({ store, registry, roles }) {
   const load = () => store.read('classes', { items: {} });
-  const get = (id) => load().items[id] || null;
+  const get = (id) => { const d = load(); return isSafeId(id) && hasOwn(d.items, id) ? d.items[id] : null; };
 
   function create(by, spec) {
     if (!roles.can(by, 'class.create')) return err('not allowed to create classes');
@@ -32,9 +33,10 @@ function createClasses({ store, registry, roles }) {
   }
 
   function seat(classId, agentId, scholarship) {
-    const d = load(); const c = d.items[classId];
+    if (!isSafeId(agentId)) return err('invalid agent id');
+    const d = load(); const c = isSafeId(classId) && hasOwn(d.items, classId) ? d.items[classId] : null;
     if (!c) return err('unknown class');
-    if (c.members[agentId]) return { ok: true, member: c.members[agentId] };
+    if (hasOwn(c.members, agentId)) return { ok: true, member: c.members[agentId] };
     if (Object.keys(c.members).length >= c.capacity) return err('class is full');
     c.members[agentId] = { agentId, scholarship: !!scholarship, passed: [], joinedAt: Date.now(), completed: false };
     store.write('classes', d);
@@ -48,15 +50,16 @@ function createClasses({ store, registry, roles }) {
     const c = get(classId);
     if (!c) return err('unknown class');
     const used = Object.values(c.members).filter((m) => m.scholarship).length;
-    if (!c.members[agentId] && used >= c.scholarshipSeats) return err('no scholarship seats left');
+    if (!isSafeId(agentId)) return err('invalid agent id');
+    if (!hasOwn(c.members, agentId) && used >= c.scholarshipSeats) return err('no scholarship seats left');
     return seat(classId, agentId, true);
   }
 
   function recordPass({ classId, agentId, skillId }) {
-    const d = load(); const c = d.items[classId];
+    const d = load(); const c = isSafeId(classId) && hasOwn(d.items, classId) ? d.items[classId] : null;
     if (!c) return err('unknown class');
+    if (!isSafeId(agentId) || !hasOwn(c.members, agentId)) return err('not a member');
     const m = c.members[agentId];
-    if (!m) return err('not a member');
     if (!c.syllabus.includes(skillId)) return err('skill not in syllabus');
     if (!m.passed.includes(skillId)) m.passed.push(skillId);
     const classComplete = c.syllabus.every((s) => m.passed.includes(s));

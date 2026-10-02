@@ -7,14 +7,26 @@ const { validateSkill } = require('./skill-schema');
 const { EconomyService } = require('../../economy-service');
 const { ACADEMY_ECON, splitPrice, createAcademyEconomy } = require('./economy');
 
+const mk = (o) => validateSkill(sampleSkill(o)).skill;
+const SKILLS = {
+  'tool-hygiene': mk(),                                                                                       // house teacher, price 20
+  'player-skill': mk({ id: 'player-skill', teacher: { type: 'operative', id: 'teach1' } }),                   // owned by teacherUser
+  'self-skill': mk({ id: 'self-skill', teacher: { type: 'operative', id: 'selfteach' } }),                    // owned by the learner
+  'pricey-skill': mk({ id: 'pricey-skill', price_sparks: 5000 }),
+  'free-skill': mk({ id: 'free-skill', price_sparks: 0 })
+};
+const OWNERS = { op1: 'learner', teach1: 'teacherUser', selfteach: 'learner' };
 async function setup() {
   const economy = new EconomyService({ filePath: path.join(tmpDir(), 'economy.json') });
   await economy.grant('learner', 100, 'test.seed', 'seed-learner');
-  const ae = createAcademyEconomy({ economy, store: tmpStore() });
+  const ae = createAcademyEconomy({
+    economy, store: tmpStore(),
+    getSkill: (id) => (Object.prototype.hasOwnProperty.call(SKILLS, id) ? SKILLS[id] : null),
+    ownerOfAgent: (id) => OWNERS[id] || null,
+    teacherOwnerOf: (skill) => (skill.teacher.type === 'house' ? null : OWNERS[skill.teacher.id] || null)
+  });
   return { economy, ae };
 }
-const house = () => validateSkill(sampleSkill()).skill;                                                  // house teacher, price 20
-const player = () => validateSkill(sampleSkill({ id: 'player-skill', teacher: { type: 'owner', id: 'teach1' } })).skill;
 
 runAll('academy-economy', {
   'splitPrice follows the constants and never loses a spark'() {
@@ -28,27 +40,25 @@ runAll('academy-economy', {
   },
   async 'enroll charges tuition once, even under concurrency'() {
     const { economy, ae } = await setup();
-    const args = { ownerId: 'learner', agentId: 'op1', skill: house(), windowId: 'w1' };
+    const args = { ownerId: 'learner', agentId: 'op1', skillId: 'tool-hygiene', windowId: 'w1' };
     const rs = await Promise.all([1, 2, 3, 4, 5].map(() => ae.enroll(args)));
     assert.ok(rs.every((r) => r.ok));
     assert.strictEqual(await economy.getBalance('learner'), 80);
   },
   async 'enroll fails cleanly without funds and stores nothing'() {
     const { economy, ae } = await setup();
-    const pricey = validateSkill(sampleSkill({ id: 'pricey-skill', price_sparks: 5000 })).skill;
-    const r = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skill: pricey, windowId: 'w1' });
+    const r = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skillId: 'pricey-skill', windowId: 'w1' });
     assert.strictEqual(r.ok, false); assert.strictEqual(r.insufficient, true);
     assert.strictEqual(await economy.getBalance('learner'), 100);
   },
   async 'free skills enroll without a ledger call'() {
     const { economy, ae } = await setup();
-    const free = validateSkill(sampleSkill({ id: 'free-skill', price_sparks: 0 })).skill;
-    const r = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skill: free, windowId: 'w1' });
+    const r = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skillId: 'free-skill', windowId: 'w1' });
     assert.ok(r.ok); assert.strictEqual(await economy.getBalance('learner'), 100);
   },
   async 'pass: player teacher 80%, house 15%, 5% burned; double settle pays once'() {
     const { economy, ae } = await setup();
-    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skill: player(), teacherOwnerId: 'teacherUser', windowId: 'w1' });
+    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skillId: 'player-skill', windowId: 'w1' });
     const [s1, s2] = await Promise.all([ae.settle({ enrollmentId: e.enrollment.id, passed: true }), ae.settle({ enrollmentId: e.enrollment.id, passed: true })]);
     assert.ok(s1.ok && s2.ok);
     assert.strictEqual(await economy.getBalance('teacherUser'), 16);
@@ -58,20 +68,20 @@ runAll('academy-economy', {
   },
   async 'fail: teacher 50%, house 50%'() {
     const { economy, ae } = await setup();
-    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skill: player(), teacherOwnerId: 'teacherUser', windowId: 'w1' });
+    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skillId: 'player-skill', windowId: 'w1' });
     await ae.settle({ enrollmentId: e.enrollment.id, passed: false });
     assert.strictEqual(await economy.getBalance('teacherUser'), 10);
     assert.strictEqual(await economy.getBalance(ACADEMY_ECON.houseAccount), 10);
   },
   async 'house faculty teacher share funds the scholarship pool'() {
     const { economy, ae } = await setup();
-    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skill: house(), windowId: 'w1' });
+    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skillId: 'tool-hygiene', windowId: 'w1' });
     await ae.settle({ enrollmentId: e.enrollment.id, passed: true });
     assert.strictEqual(await economy.getBalance(ACADEMY_ECON.scholarshipAccount), 16);
   },
   async 'self-dealing: teacher owner equals learner owner earns nothing'() {
     const { economy, ae } = await setup();
-    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skill: player(), teacherOwnerId: 'learner', windowId: 'w1' });
+    const e = await ae.enroll({ ownerId: 'learner', agentId: 'op1', skillId: 'self-skill', windowId: 'w1' });
     const s = await ae.settle({ enrollmentId: e.enrollment.id, passed: true });
     assert.strictEqual(s.split.selfDeal, true);
     assert.strictEqual(await economy.getBalance('learner'), 80);                                  // no payout back to the learner

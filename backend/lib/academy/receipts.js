@@ -32,6 +32,10 @@ function createReceipts({ store, key }) {
     for (let i = 0; i < rs.length; i++) {
       const r = rs[i];
       if (r.prev !== prev || hashOf(core(r)) !== r.hash) return { ok: false, brokenAt: i };
+      if (key) {                                       // with a signing key every receipt must carry a valid HMAC
+        const want = crypto.createHmac('sha256', key).update(r.hash).digest('hex');
+        if (r.sig !== want) return { ok: false, brokenAt: i };
+      }
       prev = r.hash;
     }
     return { ok: true, count: rs.length };
