@@ -59803,7 +59803,12 @@ function agentsTab(name) {
   var v = document.getElementById('agentsView'); if (!v) return;
   v.setAttribute('data-tab', name);
   [].forEach.call(v.querySelectorAll('.ag-tab'), function (b) { b.classList.toggle('on', b.getAttribute('data-agtab') === name); });
-  try { if (name === 'wallets' && typeof renderAgentWallets === 'function') renderAgentWallets(); } catch (e) {}
+  if (name === 'wallets') {
+    try { if (typeof renderAgentWallets === 'function') renderAgentWallets(); } catch (e) {}
+    var wp = document.getElementById('agentWalletsPanel'), wc = wp && wp.closest('.card');
+    if (wc) wc.style.display = '';
+    if (wp && !wp.children.length && !(wp.textContent || '').trim()) wp.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:12px 0">No agent wallets yet. Forge an agent that spends money and it gets a budgeted wallet here.</div>';
+  }
   try { if (name === 'roster' && typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); } catch (e) {}
 }
 </script>
