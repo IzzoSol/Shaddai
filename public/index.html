@@ -4279,6 +4279,14 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 #shdOnboardBtn{ right:22px !important; bottom:126px !important; left:auto !important; top:auto !important; transform:none !important; }
 /* tab-dock "Move" is a niche control; the sidebar is the default. Still reachable via Settings. */
 #tbNavMoverWrap{ display:none !important; }
+/* v101.3 baseline: anything without its own styling matches the theme instead of falling back to browser-default grey */
+body button:not([class]):not([style]){ font:600 11px 'Rajdhani','Share Tech Mono',monospace; letter-spacing:.08em; text-transform:uppercase; background:rgba(0,229,160,.08); color:#cfeee4; border:1px solid rgba(0,229,160,.35); border-radius:6px; padding:8px 14px; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
+body button:not([class]):not([style]):hover{ background:rgba(0,229,160,.18); border-color:rgba(0,229,160,.7); color:#fff; }
+body button:not([class]):not([style]):disabled{ opacity:.45; cursor:not-allowed; }
+body select:not([class]):not([style]), body textarea:not([class]):not([style]), body input[type=text]:not([class]):not([style]), body input[type=search]:not([class]):not([style]), body input[type=email]:not([class]):not([style]), body input[type=password]:not([class]):not([style]), body input[type=number]:not([class]):not([style]){
+  background:#06080d; color:#e9efe9; border:1px solid rgba(120,150,140,.3); border-radius:6px; padding:8px 10px; font:inherit; outline:none; }
+body select:not([class]):not([style]):focus, body textarea:not([class]):not([style]):focus, body input:not([class]):not([style]):focus{ border-color:var(--accent,#00e5a0); }
+
 /* guest banner: small card bottom-left instead of a bar across the middle of the content */
 #shdGuestNudge{ left:16px !important; right:auto !important; bottom:58px !important; transform:none !important; max-width:340px; flex-wrap:wrap; gap:8px; font-size:11px; padding:10px 12px; }
 </style>
@@ -5439,7 +5447,23 @@ window.enter3DWorld=function(){
   </div>
 
   <!-- Agents -->
-  <div id="agentsView" class="view cyber-scanlines">
+  <div id="agentsView" class="view cyber-scanlines" data-tab="roster">
+    <style id="agtabs-css">
+      #agentsView .ag-tabs{display:flex;gap:4px;margin:0 0 12px;border-bottom:1px solid var(--border,rgba(255,255,255,.1))}
+      #agentsView .ag-tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--text-muted,#8a99a6);padding:10px 18px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+      #agentsView .ag-tab:hover{color:var(--accent,#00e5a0)}
+      #agentsView .ag-tab.on{color:#fff;border-bottom-color:var(--accent,#00e5a0)}
+      #agentsView[data-tab="roster"] .ag-sec:not(.ag-roster),
+      #agentsView[data-tab="manage"] .ag-sec:not(.ag-manage),
+      #agentsView[data-tab="wallets"] .ag-sec:not(.ag-wallets),
+      #agentsView[data-tab="brainstorm"] .ag-sec:not(.ag-brainstorm){display:none !important}
+    </style>
+    <div class="ag-tabs" role="tablist">
+      <button class="ag-tab on" data-agtab="roster" onclick="agentsTab('roster')">Roster</button>
+      <button class="ag-tab" data-agtab="manage" onclick="agentsTab('manage')">Manage</button>
+      <button class="ag-tab" data-agtab="wallets" onclick="agentsTab('wallets')">Wallets</button>
+      <button class="ag-tab" data-agtab="brainstorm" onclick="agentsTab('brainstorm')">Brainstorm</button>
+    </div>
     <div class="card cyber-card">
       <div class="card-head">
         <span class="card-title cyber-header" style="font-size:13px">⚡ Agent Empire</span>
@@ -5452,7 +5476,7 @@ window.enter3DWorld=function(){
       </div>
 
       <!-- Brain Level + Model Selector bar -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="ag-sec ag-manage" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div style="padding:10px 14px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.18);border-radius:8px">
           <div style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🧠 Brain Level</div>
           <div id="brainLevelDisplay" style="font-size:11px;font-weight:700;color:#00ff88">Detecting...</div>
@@ -5470,20 +5494,20 @@ window.enter3DWorld=function(){
       <!-- A3 — VIEW TOGGLE: Grid cards vs the swivel Deployment-Interface (character sheets).
            Both surfaces show the same 7 (+ forged) agents; the swivel node is relocated in
            here on demand by setAgentsView() so there's one consolidated agent surface. -->
-      <div id="agentsViewToggle" style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
+      <div id="agentsViewToggle" class="ag-sec ag-roster" style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
         <button id="agViewGridBtn" class="ag-view-tab active" onclick="setAgentsView('grid')">▤ Grid</button>
         <button id="agViewSwivelBtn" class="ag-view-tab" onclick="setAgentsView('swivel')">⬡ Swivel</button>
         <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,160,0.55)">// AGENT ROSTER</span>
       </div>
 
       <!-- 3D Agent Cards (Nano Banana powered) -->
-      <div id="agent3DGrid" class="agent-3d-grid" style="margin-bottom:16px"></div>
+      <div id="agent3DGrid" class="agent-3d-grid ag-sec ag-roster" style="margin-bottom:16px"></div>
 
       <!-- Swivel mount — the #agentDeployCard node is moved in here when the Swivel view is active -->
-      <div id="agentSwivelMount" style="display:none;margin-bottom:16px"></div>
+      <div id="agentSwivelMount" class="ag-sec ag-roster" style="display:none;margin-bottom:16px"></div>
 
       <!-- Agent Performance Leaderboard -->
-      <div style="margin-bottom:14px">
+      <div class="ag-sec ag-roster" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.1em;color:#ffd700">🏆 PERFORMANCE LEADERBOARD</div>
           <button onclick="renderAgentLeaderboard()" style="font-size:7px;padding:2px 8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);color:#ffd700;cursor:pointer;border-radius:2px">↻ REFRESH</button>
@@ -5492,7 +5516,7 @@ window.enter3DWorld=function(){
       </div>
 
       <!-- Nano Banana Avatar Flow -->
-      <div id="nanoBananaFlow" style="display:none;padding:14px;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.2);border-radius:8px;margin-bottom:14px">
+      <div id="nanoBananaFlow" class="ag-sec ag-roster" style="display:none;padding:14px;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.2);border-radius:8px;margin-bottom:14px">
         <div style="font-size:10px;font-weight:700;color:#ffb020;margin-bottom:8px">🍌 Nano Banana AI Avatar Generator</div>
         <div style="font-size:9px;color:var(--text-muted);margin-bottom:10px">Generate unique AI art for all 7 agents. Requires AceDataCloud API token.</div>
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
@@ -5506,17 +5530,17 @@ window.enter3DWorld=function(){
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div class="ag-sec ag-manage" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Agent Management</span>
       </div>
-      <table class="data-table">
+      <table class="data-table ag-sec ag-manage">
         <thead><tr><th>Agent</th><th>Domain</th><th>Role Override</th><th>Model</th><th>Status</th><th>Mem</th><th>Actions</th></tr></thead>
         <tbody id="agentTable"></tbody>
       </table>
     </div>
 
     <!-- Agent Wallets -->
-    <div class="card cyber-card">
+    <div class="card cyber-card ag-sec ag-wallets">
       <div class="card-head">
         <span class="card-title cyber-header" style="font-size:12px">💰 Agent Wallets &amp; Budgets</span>
         <button class="btn btn-ghost" style="font-size:8px;padding:4px 10px" onclick="renderAgentWallets()">↺ Refresh</button>
@@ -5525,7 +5549,7 @@ window.enter3DWorld=function(){
       <div id="agentWalletsPanel"></div>
     </div>
 
-    <div class="card cyber-card">
+    <div class="card cyber-card ag-sec ag-brainstorm">
       <div class="card-head"><span class="card-title cyber-header" style="font-size:12px">Agent Brainstorm Grid</span></div>
       <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">Send a topic to all agents simultaneously and collect their unique perspectives</div>
       <textarea id="brainstormTopic" class="input" rows="2" placeholder="Topic or problem to brainstorm across all agents..."></textarea>
@@ -59759,6 +59783,15 @@ html, body, main{ overflow-x:hidden; max-width:100%; }
   function scan(){ [].forEach.call(document.querySelectorAll('iframe[data-lazy-src]'), arm); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan); else scan();
 })();
+</script>
+<script>
+function agentsTab(name) {
+  var v = document.getElementById('agentsView'); if (!v) return;
+  v.setAttribute('data-tab', name);
+  [].forEach.call(v.querySelectorAll('.ag-tab'), function (b) { b.classList.toggle('on', b.getAttribute('data-agtab') === name); });
+  try { if (name === 'wallets' && typeof renderAgentWallets === 'function') renderAgentWallets(); } catch (e) {}
+  try { if (name === 'roster' && typeof renderAgentLeaderboard === 'function') renderAgentLeaderboard(); } catch (e) {}
+}
 </script>
 </body>
 </html>
