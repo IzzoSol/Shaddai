@@ -5597,6 +5597,22 @@ window.enter3DWorld=function(){
   <!-- Tasks -->
   <div id="workflowView" class="view" data-tab="quick">
     <style id="wftabs-css">
+      .wiz-steps{display:grid !important;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+      .wiz-steps .wz{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:104px;padding:10px 12px;border-radius:12px;overflow:hidden;text-align:left;cursor:default;
+        border:1px solid color-mix(in srgb,var(--text-primary,#e9efe9) 18%,transparent);background:#05080c;color:var(--text-primary,#e9efe9);transition:border-color .2s,transform .2s,opacity .2s;opacity:.62}
+      .wiz-steps .wz.done{opacity:.9;cursor:pointer}
+      .wiz-steps .wz.done:hover{transform:translateY(-2px);border-color:var(--accent,#00e5a0)}
+      .wiz-steps .wz.on{opacity:1;border-color:var(--accent,#00e5a0);box-shadow:0 0 0 1px var(--accent,#00e5a0),0 12px 28px -14px var(--accent,#00e5a0)}
+      .wiz-steps .wz-img{position:absolute;inset:0;background-size:cover;background-position:50% 25%;filter:saturate(.9) brightness(.55);transition:filter .25s,transform .4s}
+      .wiz-steps .wz.on .wz-img{filter:saturate(1.05) brightness(.8);transform:scale(1.04)}
+      .wiz-steps .wz::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(2,5,9,.88))}
+      .wiz-steps .wz>span{position:relative;z-index:1}
+      .wiz-steps .wz-t{font:700 14px 'Rajdhani',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+      .wiz-steps .wz-t b{display:inline-grid;place-items:center;width:20px;height:20px;margin-right:4px;border-radius:50%;font-size:11px;background:var(--accent,#00e5a0);color:var(--bg-deep,#03150f)}
+      .wiz-steps .wz.done .wz-t b{background:transparent;border:1px solid var(--accent,#00e5a0);color:var(--accent,#00e5a0)}
+      .wiz-steps .wz-d{font-size:11px;color:color-mix(in srgb,var(--text-primary,#e9efe9) 78%,transparent)}
+      @media(max-width:700px){.wiz-steps{grid-template-columns:repeat(2,1fr)}}
+
       #workflowView .wf-tabs{display:inline-flex;gap:2px;padding:4px;margin:0 0 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(120,150,140,.22));max-width:100%;overflow-x:auto}
       #workflowView .wf-tab{background:none;border:0;border-radius:8px;color:var(--text-muted,#8a99a6);padding:8px 16px;min-height:32px;font:600 12px 'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
       #workflowView .wf-tab:hover{color:var(--accent,#00e5a0)}
@@ -57959,7 +57975,14 @@ try{
   let sw={step:1,goal:null,agent:'AUTO',details:{},engine:null};
   const $=id=>document.getElementById(id);
   const NSTEPS=4;
-  function steps(){const s=$('wizSteps');if(!s)return;let h='';for(let n=1;n<=NSTEPS;n++){h+=`<div class="b ${sw.step===n?'on':(sw.step>n?'done':'')}">${sw.step>n?'✓':n}</div>`;if(n<NSTEPS)h+='<div class="bar"></div>';}s.innerHTML=h;}
+  function steps(){const s=$('wizSteps');if(!s)return;
+    // image-led progress: each step is a card with its own picture, a plain-language label, and a state
+    const WZ=[{n:'What',d:'Pick the job',img:'/assets/nav/workflow.jpg'},{n:'Details',d:'Fill in the specifics',img:'/assets/nav/office.jpg'},{n:'Who',d:'Choose your agent',img:'/assets/agents/SHADDAI-portrait.png'},{n:'Go',d:'Run it and review',img:'/assets/nav/automation.jpg'}];
+    let h='';for(let n=1;n<=NSTEPS;n++){const w=WZ[n-1],st=sw.step===n?'on':(sw.step>n?'done':'');
+      h+=`<button type="button" class="wz ${st}" data-n="${n}" ${sw.step>n?'':'tabindex="-1"'} aria-label="Step ${n}: ${w.n}"><span class="wz-img" style="background-image:url('${w.img}')"></span><span class="wz-t"><b>${sw.step>n?'✓':n}</b> ${w.n}</span><span class="wz-d">${w.d}</span></button>`;}
+    s.innerHTML=h;
+    // finished steps are clickable so you can go back and change an answer
+    s.querySelectorAll('.wz.done').forEach(el=>el.addEventListener('click',()=>{ captureDetails(); sw.step=+el.dataset.n; render(); }));}
   function captureDetails(){ // read step-2 inputs into sw.details/engine
     const p=SM_GOALS[sw.goal]; if(!p)return;
     (p.fields||[]).forEach(f=>{const el=$('smf_'+f.k); if(el) sw.details[f.k]=el.value;});
