@@ -105,6 +105,9 @@
     function toWorld(lx, ly, lz) { G.updateMatrixWorld(true); var v = new THREE.Vector3(lx, ly, lz).applyMatrix4(R.matrixWorld); return { x: v.x, y: v.y, z: v.z }; }
     function dispose() { scene.remove(G); G.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); }
     return { group: G, rooms: ROOMS.map(function (r) { var v = new THREE.Vector3(r.x, 0, r.z); G.updateMatrixWorld(true); v.applyMatrix4(R.matrixWorld); return { id: r.id, name: r.name, x: v.x, z: v.z, r: r.r * U, tag: r.tag }; }), entrance: (function () { G.updateMatrixWorld(true); var v = new THREE.Vector3(0, 0, D - 14).applyMatrix4(R.matrixWorld); return { x: v.x, z: v.z }; })(), deckY: deckY, heightAt: heightAtWorld, gates: gates, ribbon: ribbon, crates: crates, update: update, dispose: dispose, loop: LOOP,
+      railsWorld: function () { var out = [], S2 = ROOMS[2], L2 = ROOMS[3], seg = function (x0, x1, z, y) { var a = toWorld(x0, y, z), b = toWorld(x1, y, z); return { x0: a.x, z0: a.z, x1: b.x, z1: b.z, y: (a.y + b.y) / 2 }; };
+        for (var ri = 0; ri < 3; ri++) out.push(seg(S2.x - 23, S2.x + 23, S2.z - 6 - ri * 9, 1.16));   // the three Spine magnet rails
+        out.push(seg(L2.x - 6, L2.x + 18, L2.z + 8, 0.93)); return out; },   // the Plaza ledge
       setCrateVisible: function (i, v) { crVis[i] = !!v; }, cratesWorld: function () { return crPos.map(function (c) { return toWorld(c[0], c[1], c[2]); }); }, padsWorld: function () { return padLoc.map(function (q) { var w = toWorld(q[0], 0.3, q[1]); w.yaw = q[2] + yaw; return w; }); }, loopWorld: function () { return LOOP.map(function (q) { return toWorld(q[0], 0.4, q[1]); }); } };
   }
   function ribbonMesh(THREE, pts, width) {
