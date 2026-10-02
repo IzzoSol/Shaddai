@@ -27,7 +27,7 @@
 
     function start(cid, opts) {
       opts = opts || {}; var C = WR.CIRCUITS[cid]; if (!C) return null; stop();
-      var nAI = Math.max(1, Math.min(7, opts.ais == null ? 5 : opts.ais)), ridersDef = [{ id: api.playerId, name: 'You', deck: 'park' }], names = ['ORION', 'LIRA', 'KAI', 'NOVA', 'ASH', 'RIVET', 'VEGA'];
+      var nAI = Math.max(0, Math.min(7, opts.ais == null ? 5 : opts.ais))   /* 0 = TIME TRIAL (solo) */, ridersDef = [{ id: api.playerId, name: 'You', deck: 'park' }], names = ['ORION', 'LIRA', 'KAI', 'NOVA', 'ASH', 'RIVET', 'VEGA'];
       for (var i = 0; i < nAI; i++) ridersDef.push({ id: 'ai' + i, name: names[i], deck: i % 3 === 0 ? 'race' : (i % 3 === 1 ? 'street' : 'park') });
       R = WR.create(C, { ranked: !!opts.ranked, riders: ridersDef, rng: opts.rng });
       var tw = WR.trackWorld ? WR.trackWorld(cid, U) : null, gates, crates, pads;
@@ -93,6 +93,18 @@
       else if (item === 'pinch') { var t5 = nearestAhead(id, pose, 40); if (t5) hitRider(t5, 0, 1.2, 'pinch'); }
       return { item: item };
     }
+
+    /* PERSONAL BESTS (time trial + races): best total time and best lap per circuit, saved in localStorage 'shd_pb_v1' */
+    var PBK = 'shd_pb_v1';
+    function pbLoad() { try { return JSON.parse((root.localStorage && root.localStorage.getItem(PBK)) || '{}') || {}; } catch (e) { return {}; } }
+    function pbSave(cid, timeS, lapS) {
+      var all = pbLoad(), b = all[cid] || {}, res = { newTotal: false, newLap: false, prevTotal: b.total == null ? null : b.total, prevLap: b.lap == null ? null : b.lap };
+      if (timeS != null && isFinite(timeS) && (b.total == null || timeS < b.total)) { b.total = +timeS.toFixed(2); res.newTotal = true; }
+      if (lapS != null && isFinite(lapS) && (b.lap == null || lapS < b.lap)) { b.lap = +lapS.toFixed(2); res.newLap = true; }
+      if (res.newTotal || res.newLap) { all[cid] = b; try { root.localStorage.setItem(PBK, JSON.stringify(all)); } catch (e) { } }
+      return res;
+    }
+    api.pb = function (cid) { return pbLoad()[cid] || null; };
     api.input = { drift: false, accel: false };   // host sets these each frame: drift (key X), accel (W) for the rocket start
     api.setInput = function (i) { api.input.drift = !!(i && i.drift); api.input.accel = !!(i && i.accel); };
     api.useItem = function () { if (!st || !R || st.phase !== 'race') return null; return useFor(api.playerId, st.lastPose); };
@@ -170,7 +182,7 @@
       // shells travel + hit
       for (var si = st.shells.length - 1; si >= 0; si--) { var sh = st.shells[si], tp = riderPos(sh.to, pose); sh.life -= dt; if (!tp || sh.life <= 0) { if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); continue; } var dx = tp.x - sh.x, dz = tp.z - sh.z, dd = Math.hypot(dx, dz), stepM = FX.SHELL_MS * (sh.kind === 'seeker' ? 1.5 : 1) * U * dt; if (dd <= stepM + 1.2 * U) { hitRider(sh.to, sh.dmg, sh.kind === 'seeker' ? 2.0 : 0.7, sh.kind === 'seeker' ? 'seeker' : 'shell'); if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); } else { sh.x += dx / dd * stepM; sh.z += dz / dd * stepM; if (sh.mesh) { sh.mesh.position.set(sh.x, sh.y, sh.z); if (sh.kind === 'seeker') sh.mesh.rotation.z = Math.atan2(dx, dz); } } }
       // finish
-      if (R.finished() || (me.finished && !st.result)) { if (R.finished() || me.finished) { st.phase = 'done'; var s2 = R.standings(), mine = s2.filter(function (x) { return x.id === api.playerId; })[0]; var prize = (FX.PRIZE[mine.place - 1] || 0) * (st.ranked ? FX.PRIZE_RANKED_MUL : 1); st.result = { place: mine.place, of: s2.length, timeS: me.finalS != null ? me.finalS : R.score(api.playerId), prize: prize, standings: s2 }; if (prize && o.sparks && o.sparks.add) o.sparks.add(prize, 'race-prize', st.cid); ev('finish', st.result); } }
+      if (R.finished() || (me.finished && !st.result)) { if (R.finished() || me.finished) { st.phase = 'done'; var s2 = R.standings(), mine = s2.filter(function (x) { return x.id === api.playerId; })[0]; var prize = (FX.PRIZE[mine.place - 1] || 0) * (st.ranked ? FX.PRIZE_RANKED_MUL : 1); st.result = { place: mine.place, of: s2.length, timeS: me.finalS != null ? me.finalS : R.score(api.playerId), prize: prize, standings: s2 }; try { st.result.pb = pbSave(st.cid, st.result.timeS, st.P.lapTimes.length ? Math.min.apply(null, st.P.lapTimes) : null); } catch (e) { } if (prize && o.sparks && o.sparks.add) o.sparks.add(prize, 'race-prize', st.cid); ev('finish', st.result); } }
       hudUpdate();
     };
     api.startPose = function (cid) { var tw = WR.trackWorld ? WR.trackWorld(cid, U) : null; if (tw) { if (o.heightAt) tw.forEach(function (p) { p.y = o.heightAt(p.x, p.z); }); setLoop(tw); } else setLoop(park.loopWorld()); var p0 = posAt(0.99); return { x: p0.x, y: p0.y, z: p0.z, yaw: p0.yaw }; };
