@@ -310,6 +310,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-inventory.js?v=20261001a"></script>
 <script src="/world-offices.js?v=20261001a"></script>
 <script src="/world-quests.js?v=20261001a"></script>
+<script src="/world-gear.js?v=20261001a"></script>
 <script src="/world-farm3d.js?v=20261001a"></script>
 <script src="/world-arcade.js?v=20261001a"></script>   <!-- arcade: slots, higher-lower, hover dash -->
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
@@ -428,6 +429,7 @@ scene.fog = new THREE.FogExp2(0x070b1a, 0.0006);   // MAP v2: 5000u world — so
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 6000);   // MAP v2: see distant realms + the mountain ring  // PERF: far 2000→1500. Nothing real lives past ~1300 (world half=380, starfield≤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
 camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple — that made the warm-up frame show "inside shaddai's temple")
 window.__w3dDebug = { scene, camera, renderer };
+window.__THREE = THREE;   // exposed for headless tools (tools/_sign-scan.cjs uses THREE.Raycaster)
 try{ window.startPerfHud && window.startPerfHud(renderer); }catch(_){}   // probe/diagnostic hook (same pattern as __worldBuilt / __quality)
 // ── MAP v4 FLAG (?map=v4) — Blender-baked ~10 km heightmap terrain (world-terrain-v4.js) + Tidewater-style
 // water (world-water.js). OFF by default: without the flag nothing below changes. See docs/MAP-V4-INTEGRATION.md.
@@ -3810,6 +3812,8 @@ function _playerSig(){ return _SIGNATURE[(window._playerCharacter||'').toUpperCa
 window.__playerHP = 100; let _dragonKB = null, _shakeT = 0, _shakeI = 0;
 window.__dragonShake = function(i, d){ _shakeI = Math.max(_shakeI, i || 0.4); _shakeT = Math.max(_shakeT, d || 0.3); };
 window.__onDragonHit = function(dmg, kind, info){
+  if(window.WorldGear){ try{ dmg = window.WorldGear.absorb(dmg); }catch(_){} }   // ARMORY: shields reduce / the aegis barrier soaks
+  if(!(dmg > 0)) return;
   window.__playerHP = Math.max(0, window.__playerHP - dmg);
   if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
   window.__dragonShake(kind === 'stagger' ? 0.25 : 0.6, 0.35);
@@ -4979,6 +4983,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── ARMORY VISUALS (world-gear.js): shield plate / aegis barrier / halo / aura follow the avatar ──
+(function bootGear(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
+  if(!window.WorldGear || !window.__loadPlayable || typeof playerAvatar === 'undefined') return; clearInterval(iv);
+  try{ window.__gearVis = window.WorldGear.buildVisuals({ THREE, scene, U: V4_U, height: PLAYER_BODY_HEIGHT, getAvatar: function(){ return playerAvatar; } }); }catch(e){ console.warn('[gear] visuals failed', e && e.message); } }, 1000); })();
 // ── FARM PATCH (world-farm3d.js): six beds in the SW, growth visible, tap-to-tend button when near ──
 (function bootFarm3D(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFarm3D || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
@@ -5169,6 +5177,7 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__gearVis){ try{ window.__gearVis.update(dt); }catch(e){ console.warn('[gear] disabled after error', e && e.message); try{ window.__gearVis.dispose(); }catch(_){} window.__gearVis = null; } }
   if(window.__farm3d){ try{ window.__farm3d.update(dt); }catch(e){ console.warn('[farm3d] disabled after error', e && e.message); try{ window.__farm3d.dispose(); }catch(_){} window.__farm3d = null; } }
   if(window.__traffic && !(_interiors && _interiors.isInside())){ try{ window.__traffic.update(dt); }catch(e){ console.warn('[traffic] disabled after error', e && e.message); window.__traffic = null; } }
   if(window.__facade && !(_interiors && _interiors.isInside())){ try{ window.__facade.update(dt); }catch(e){ console.warn('[facade] disabled after error', e && e.message); window.__facade = null; } }
