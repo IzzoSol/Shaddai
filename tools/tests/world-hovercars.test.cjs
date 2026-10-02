@@ -11,7 +11,7 @@ const scene = () => { const c = []; return { children: c, add: o => c.push(o), r
 
 test('11 designs from the owner refs (sedan..pod); every one builds a group with a saddle and sane triangle budget', () => {
   assert.strictEqual(HC.TYPES.length, 11); assert.ok(HC.TYPES.some(t => t.id === 'pod'), 'Rimba pod racer');
-  HC.TYPES.forEach(t => { const g = HC.buildGroup(THREE, t.id); assert.ok(g.userData.saddle, t.id + ' saddle'); const tris = g.userData.tris; assert.ok(tris > 40 && tris < 700, t.id + ' tris ' + tris);
+  HC.TYPES.forEach(t => { const g = HC.buildGroup(THREE, t.id); assert.ok(g.userData.saddle, t.id + ' saddle'); const tris = g.userData.tris; assert.ok(tris > 200 && tris < 800, t.id + ' tris ' + tris);
     const box = new THREE.Box3().setFromObject(g), sz = box.getSize(new THREE.Vector3()); assert.ok(sz.z > t.len * 0.6 && sz.z < t.len * 1.6, t.id + ' length ' + sz.z.toFixed(2)); assert.ok(isFinite(sz.x + sz.y + sz.z)); });
 });
 test('traffic: ~100 cars + 18 flying riders, <= 20 draw calls, matrices stay finite over 3 simulated minutes', () => {
