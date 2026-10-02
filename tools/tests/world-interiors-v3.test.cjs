@@ -295,6 +295,18 @@ test('sand houses (4 archetypes + round realm habitats): door gap, closed shell,
   assert.ok(P.makeLayout(P.registerBoard(SAND_SPECS[2]), null).uses.some(u => u.type === 'roof'), 'stepped block: stairs to the roof');
 });
 
+test('WALKABLE STAIRS: the stepped sand house has a run of ascending step colliders the controller can climb (riser <= 0.45 m, head clear of the ceiling)', () => {
+  const L = P.makeLayout(P.registerBoard(SAND_SPECS[2]), null), steps = L.colliders.filter(c => c.kind === 'step');
+  assert.ok(steps.length >= 6, 'steps: ' + steps.length); assert.strictEqual(steps.length, L.steps.length);
+  const hs = steps.map(c => c.h); for (let i = 0; i < hs.length; i++) assert.ok(Math.abs(hs[i] - (i + 1) * 0.2) < 1e-9, 'rises 0.2 m per step');
+  for (let i = 1; i < steps.length; i++) assert.ok(hs[i] - hs[i - 1] <= 0.45, 'each riser is steppable');
+  assert.ok(L.ceil - hs[hs.length - 1] >= 1.8, 'the top tread leaves 1.8 m of headroom: ceil ' + L.ceil + ' top ' + hs[hs.length - 1]);
+  // consecutive treads are contiguous along the ascent and share the same width
+  const dz = steps.slice(1).map((c, i) => Math.hypot(c.x - steps[i].x, c.z - steps[i].z)); dz.forEach(d => assert.ok(d > 0.3 && d < 0.6, 'tread spacing ' + d));
+  assert.ok(steps.every(c => Math.abs(c.hx - steps[0].hx) < 1e-9 || Math.abs(c.hz - steps[0].hz) < 1e-9));
+  assert.ok(steps.every(c => Math.abs(c.x) < L.W / 2 && Math.abs(c.z) < L.D / 2), 'inside the room');
+});
+
 test('growth-farm tower: ownerId slot, farmer slot, harvest stations, SPARKS market counter, rentable pods (data hooks only)', () => {
   const b = P.registerBoard({ key: 'farm-tower', x: 2000, z: -300 }), L = P.makeLayout(b, null);
   assert.strictEqual(L.style, 'farm');

@@ -48,6 +48,9 @@ Existing pieces to hook: `world-quests.js` (daily board, QUILL library), `world-
     - On a mount or tamed dragon: big health, fixed attack patterns, stamina-limited.
     - Passive-mode players cannot be hit or loot; Void ignores the toggle.
 
+## Done so far (running list)
+- Race modes + personal bests · hoverboard idle sway/lights/trick flashes · Obsidian board from ref · seated riders in cars + glass cabins · taming rules · passive/fight mode + Void forced fight · realm hazards wired (gas/cold/heat, HP floor 25) · Grid districts (Campus/Commons/Plots/Race) + named streets · **walkable stairs in interiors (colliders + treads; landing/roof access still to do)**
+
 ## Realm hazards and protective gear (BUILT: `public/world-realm-hazards.js`, 6 tests)
 - **Castle realm**: crowded with enemies; purple lava under the bridge (contact damage) and poison gas. Gas needs a **gas mask level 10** for full protection; a lower mask protects proportionally (level 5 = about half).
 - **Lava mask** (fire hazards), **arctic mask** (removes the extra stamina drain of deep cold), **clothing per element** (fire suit, frost suit, void suit): each piece resists one element, pieces stack to an 85 % cap.
