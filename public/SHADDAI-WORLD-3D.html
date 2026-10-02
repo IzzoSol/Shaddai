@@ -312,6 +312,9 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-gear.js?v=20261001a"></script>
 <script src="/world-skydock.js?v=20261001a"></script>
+<script src="/world-grass.js?v=20261001a"></script>
+<script src="/world-nightsky-extras.js?v=20261001a"></script>
+<script src="/world-campfire.js?v=20261001a"></script>
 <script src="/world-naval.js?v=20261001a"></script>
 <script src="/world-naval-view.js?v=20261001a"></script>
 <script src="/world-gadgets.js?v=20261001a"></script>
@@ -3819,6 +3822,7 @@ window.__dragonShake = function(i, d){ _shakeI = Math.max(_shakeI, i || 0.4); _s
 window.__onDragonHit = function(dmg, kind, info){
   if(window.WorldGear){ try{ dmg = window.WorldGear.absorb(dmg); }catch(_){} }   // ARMORY: shields reduce / the aegis barrier soaks
   if(!(dmg > 0)) return;
+  if(window.__campfire){ try{ window.__campfire.hurt(); }catch(_){} }   // no fire-healing for 3 s after a hit
   if(window.__hitfx){ try{ const kb = info && info.knockback; window.__hitfx.hurt(dmg, kb ? { dx: -kb.x, dz: -kb.z } : null); }catch(_){} }   // red edge + direction arc
   window.__playerHP = Math.max(0, window.__playerHP - dmg);
   if(info && info.knockback) _dragonKB = { x: info.knockback.x, z: info.knockback.z, t: 0.35 };
@@ -4989,6 +4993,27 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+// ── REAL GRASS (world-grass.js): wind-swayed tufts that bend away from you; grows only where the terrain colour map is green; scales with the quality tier ──
+(function bootGrass(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
+  if(!window.WorldGrass || !_v4T || !_v4Meta || !_v4Meta.half_units || !window.__loadPlayable) return; clearInterval(iv);
+  window.WorldGrass.loadGreenMask('/assets/terrain/color.jpg', _v4Meta.half_units, 256).then(function(allow){
+    window.__grass = window.buildWorldGrass({ THREE, scene, heightAt: _v4T.heightAt, getPlayer: function(){ return { pos: playerPos }; }, allow: allow, waterAt: function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; }, quality: 'MEDIUM' });
+    window.__w3dDebug.grass = window.__grass; console.log('[grass] ready, green coverage', Math.round(allow.coverage*100) + '%');
+  }).catch(function(e){ console.warn('[grass] off:', e && e.message); }); }, 1000); })();
+// ── NIGHT SKY EXTRAS (world-nightsky-extras.js): shooting stars, a second moon, strange planets ──
+(function bootNightSky(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
+  if(!window.buildNightSkyExtras || !_v4Sky || !window.__loadPlayable) return; clearInterval(iv);
+  try{ window.__skyExtras = window.buildNightSkyExtras({ THREE, scene, camera, getNight: function(){ const nf = _v4Sky.nightFactor; return typeof nf === 'function' ? nf() : (nf || 0); }, getTime: function(){ return _v4Sky.getTime ? _v4Sky.getTime() : 0; } }); }catch(e){ console.warn('[skyextras] failed', e && e.message); } }, 1000); })();
+// ── CAMPFIRE (world-campfire.js): buy a kit, press Backslash to light; kneel, sparks, flame; warmth heals; animals keep away ──
+(function bootCampfire(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
+  if(!window.WorldCampfire || !_v4T || !window.__loadPlayable) return; clearInterval(iv);
+  try{
+    window.__campfire = window.WorldCampfire.create({ THREE, scene, heightAt: _v4T.heightAt, getPlayer: function(){ return { pos: playerPos }; }, getYaw: function(){ return Math.atan2(fwd.x, fwd.z); },
+      getNight: function(){ if(!_v4Sky) return 0; const nf = _v4Sky.nightFactor; return typeof nf === 'function' ? nf() : (nf || 0); }, waterAt: function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; },
+      onKneel: function(on){ window.__forceCrouch = !!on; }, onHeal: function(h){ window.__playerHP = Math.min(100, (window.__playerHP == null ? 100 : window.__playerHP) + h); } });
+    if(window.__mobs && window.__mobs.setSafeFn) window.__mobs.setSafeFn(function(x,z){ return window.__campfire && window.__campfire.isSafe(x,z); });
+    addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat) return; try{ const r = window.__campfire.place(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.msg); }catch(_){} });
+  }catch(e){ console.warn('[campfire] failed', e && e.message); } }, 1000); })();
 // ── SKY DOCK (world-skydock.js): launch pads + vendor on the Sky Nexus deck (top of the city) ──
 (function bootSkyDock(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
   if(!window.WorldSkyDock || !window.SHADDAI_SKY || !window.__loadPlayable) return; clearInterval(iv);
@@ -5204,6 +5229,9 @@ function animate(){
     window.__dragonRide.update(dt, _ri);
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
+  if(window.__grass){ try{ window.__grass.update(dt); if((_animFrame & 127) === 0){ const q = String(window.__quality || 'MEDIUM').toUpperCase(); window.__grass.setQuality(q === 'ULTRA' ? 'HIGH' : q); } }catch(e){ console.warn('[grass] disabled after error', e && e.message); try{ window.__grass.dispose(); }catch(_){} window.__grass = null; } }
+  if(window.__skyExtras){ try{ window.__skyExtras.update(dt); }catch(e){ console.warn('[skyextras] disabled after error', e && e.message); try{ window.__skyExtras.dispose(); }catch(_){} window.__skyExtras = null; } }
+  if(window.__campfire){ try{ window.__campfire.update(dt); }catch(e){ console.warn('[campfire] disabled after error', e && e.message); try{ window.__campfire.dispose(); }catch(_){} window.__campfire = null; } }
   if(window.__skyDock){ try{ window.__skyDock.update(dt); }catch(e){ console.warn('[skydock] disabled after error', e && e.message); try{ window.__skyDock.dispose(); }catch(_){} window.__skyDock = null; } }
   if(window.__hitfx){ try{ window.__hitfx.update(dt); }catch(_){} }
   if(window.WorldGadgets){ try{ window.WorldGadgets.tick(dt); }catch(_){} }
@@ -5254,7 +5282,7 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
         fwd: !!(keys['KeyW']||keys['ArrowUp']), back: !!(keys['KeyS']||keys['ArrowDown']),
         left: !!(keys['KeyA']||keys['ArrowLeft']), right: !!(keys['KeyD']||keys['ArrowRight']),
         sprint: !!(keys['ShiftLeft']||keys['ShiftRight']), jump: !!keys['Space'],
-        roll: !!keys['KeyC'], crouch: !!keys['KeyZ'], walk: _walkToggle }, _camYaw);
+        roll: !!keys['KeyC'], crouch: !!keys['KeyZ'] || !!window.__forceCrouch, walk: _walkToggle }, _camYaw);
       playerPos.set(_pctlOut.pos.x, _pctlOut.pos.y, _pctlOut.pos.z);   // host keeps ownership of playerPos (y = feet)
       _vel.x = _pctlOut.vel.x; _vel.z = _pctlOut.vel.z;
       _onPctlEvents(_pctlOut.events);

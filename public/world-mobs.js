@@ -114,7 +114,7 @@
             continue;
           }
           g.visible = vis; if (!sim) continue;
-          var dx = P.x - m.x, dz = P.z - m.z, d = Math.hypot(dx, dz) / U, aggro = TUNE.aggroM * (1 + 0.3 * nt) * (tp.pack ? 1.35 : 1) * (tp.scent && now < scentUntil ? 0.12 : 1), home = Math.hypot(m.x - m.hx, m.z - m.hz) / U, dmgK = 1 + 0.3 * nt;
+          var dx = P.x - m.x, dz = P.z - m.z, d = Math.hypot(dx, dz) / U, aggro = TUNE.aggroM * (1 + 0.3 * nt) * (tp.pack ? 1.35 : 1) * (tp.scent && now < scentUntil ? 0.12 : 1) * (safeFn && safeFn(P.x, P.z) ? (tp.pack ? 0.1 : 0.6) : 1), home = Math.hypot(m.x - m.hx, m.z - m.hz) / U, dmgK = 1 + 0.3 * nt;
           m.cd -= dt; m.flash -= dt; m.bob += dt * (m.state === 'chase' ? 9 : 3);
           if (m.state === 'idle') { m.t -= dt; if (m.t <= 0) { m.t = 2 + Math.random() * 4; var wa = Math.random() * 6.28, wr = Math.random() * TUNE.wanderM * U; m.wx = m.hx + Math.cos(wa) * wr; m.wz = m.hz + Math.sin(wa) * wr; }
             var ex = m.wx - m.x, ez = m.wz - m.z, ed = Math.hypot(ex, ez); if (ed > 0.5 * U) { m.x += ex / ed * tp.speed * 0.35 * U * dt; m.z += ez / ed * tp.speed * 0.35 * U * dt; m.yaw = Math.atan2(ex, ez); }
@@ -134,7 +134,7 @@
         }
       }
     }
-    var tmpQ = new THREE.Quaternion(), scentUntil = 0;
+    var tmpQ = new THREE.Quaternion(), scentUntil = 0, safeFn = null;
     function nowS() { return (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000; }
 
     function hit(mob, dmg) {
@@ -151,7 +151,7 @@
     function nearestCamp(pos) { var b = null, bd = 1e12; camps.forEach(function (c) { var d = Math.hypot(pos.x - c.x, pos.z - c.z); if (d < bd) { bd = d; b = c; } }); if (!b) return null; var nowS = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000, alive = 0, next = 1e9;
       b.mobs.forEach(function (m) { if (!m.dead) alive++; else next = Math.min(next, m.respawnAt - nowS); }); return { id: b.id, kind: b.kind, name: TYPES[b.kind].name, distM: Math.round(bd / U), alive: alive, total: b.mobs.length, respawnIn: alive < b.mobs.length ? Math.max(0, Math.round(next)) : null, x: b.x, z: b.z }; }
     function blips(P, rU) { var out = []; camps.forEach(function (c) { if (!c.near) return; c.mobs.forEach(function (m) { if (m.dead) return; if (Math.hypot(m.x - P.x, m.z - P.z) <= rU * 1.6) out.push({ x: m.x, z: m.z, kind: 'enemy', type: m.kind }); }); }); return out; }
-    return { blips: blips, setScentless: function (sec) { scentUntil = nowS() + Math.max(0, sec || 0); return scentUntil; }, isScentless: function () { return nowS() < scentUntil; }, TYPES: TYPES, update: update, meleeHit: meleeHit, boltHit: boltHit, camps: function () { return camps.map(function (c) { return { id: c.id, kind: c.kind, x: c.x, z: c.z }; }); }, nearestCamp: nearestCamp, stats: function () { return { camps: camps.length, mobs: st.spawned, kills: st.kills, hits: st.hits }; },
+    return { setSafeFn: function (f) { safeFn = f; }, blips: blips, setScentless: function (sec) { scentUntil = nowS() + Math.max(0, sec || 0); return scentUntil; }, isScentless: function () { return nowS() < scentUntil; }, TYPES: TYPES, update: update, meleeHit: meleeHit, boltHit: boltHit, camps: function () { return camps.map(function (c) { return { id: c.id, kind: c.kind, x: c.x, z: c.z }; }); }, nearestCamp: nearestCamp, stats: function () { return { camps: camps.length, mobs: st.spawned, kills: st.kills, hits: st.hits }; },
       on: function (e, f) { (listeners[e] = listeners[e] || []).push(f); }, TYPES: TYPES, TUNE: TUNE, group: group,
       // test hooks
       _mobs: function () { var a = []; camps.forEach(function (c) { c.mobs.forEach(function (m) { a.push(m); }); }); return a; }, _hit: hit, dispose: function () { scene.remove(group); } };
