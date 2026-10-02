@@ -21,6 +21,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=384"   # free tier = 512MB RSS; cap heap so GC runs before Render OOM-kills
       - key: GROQ_API_KEY
         sync: false        # set in Render dashboard (secret) — free at console.groq.com/keys
       - key: OPENROUTER_API_KEY

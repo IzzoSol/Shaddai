@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHADDAI MCP Tools</title>
+<meta name="description" content="Every SHADDAI MCP tool, what it does, and how to use it — agents, knowledge, markets, game dev with TURTLE, and more.">
+<style>
+  :root { --bg:#06080b; --card:#0d1117; --line:#1c2430; --text:#e6edf3; --dim:#8a96a5; --ok:#00ff9c; --gold:#e8c45c; --code:#0a0f15; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 system-ui,sans-serif; padding:24px 16px 70px; }
+  main { max-width:900px; margin:0 auto; }
+  h1 { font-size:26px; margin:0 0 6px; } h2 { font-size:18px; margin:34px 0 4px; } h3 { font-size:15px; margin:0; }
+  p { margin:6px 0; } .dim { color:var(--dim); } a { color:var(--ok); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:10px 0; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:12px; overflow:auto; font:13px/1.5 ui-monospace,Consolas,monospace; margin:8px 0; }
+  code { font:13px ui-monospace,Consolas,monospace; background:var(--code); padding:1px 6px; border-radius:5px; }
+  pre code { background:none; padding:0; }
+  .steps { counter-reset:s; padding:0; list-style:none; } .steps li { counter-increment:s; padding-left:34px; position:relative; margin:10px 0; }
+  .steps li::before { content:counter(s); position:absolute; left:0; top:0; width:24px; height:24px; border-radius:50%; background:var(--ok); color:#06080b; font-weight:700; text-align:center; line-height:24px; font-size:13px; }
+  #q { width:100%; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:11px 14px; font:inherit; margin:10px 0 4px; }
+  #q:focus { outline:none; border-color:var(--ok); }
+  nav { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+  nav a { text-decoration:none; background:var(--card); border:1px solid var(--line); border-radius:99px; padding:4px 12px; font-size:13px; color:var(--text); }
+  nav a:hover { border-color:var(--ok); } nav a span { color:var(--dim); margin-left:4px; }
+  details { border-top:1px solid var(--line); padding:9px 0; } details:first-of-type { border-top:0; }
+  summary { cursor:pointer; list-style:none; display:flex; gap:10px; align-items:baseline; }
+  summary::-webkit-details-marker { display:none; } summary code { color:var(--ok); white-space:nowrap; }
+  summary .one { color:var(--dim); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .body { padding:8px 0 4px 2px; font-size:14px; }
+  table { border-collapse:collapse; width:100%; margin:8px 0; font-size:13.5px; } td,th { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--dim); font-weight:500; }
+  .req { color:var(--gold); font-size:11px; margin-left:4px; }
+  .try { font-size:13px; color:var(--dim); } .try b { color:var(--text); font-weight:500; }
+  .hero { border:1px solid var(--line); background:linear-gradient(135deg,#0d1117,#0a1a14); }
+  .empty { color:var(--dim); padding:20px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>SHADDAI MCP Tools</h1>
+  <p class="dim"><span id="count">…</span> tools in one connection. Plug SHADDAI into Claude, Cursor or any MCP client and your assistant can use the 7-agent council, the knowledge brain, live markets, and the game-dev library — all through plain conversation.</p>
+
+  <div class="card hero">
+    <h3>Connect in 60 seconds</h3>
+    <ol class="steps">
+      <li><b>Add SHADDAI to your MCP client.</b> In Claude Desktop, open Settings → Developer → Edit Config and add:
+<pre><code>{
+  "mcpServers": {
+    "shaddai": {
+      "command": "npx",
+      "args": ["-y", "shaddai-mcp"],
+      "env": { "SHADDAI_API_URL": "https://shaddai-g81x.onrender.com" }
+    }
+  }
+}</code></pre>
+      Cursor and Claude Code use the same block in their MCP settings.</li>
+      <li><b>Restart the client.</b> You should see the SHADDAI tools listed.</li>
+      <li><b>Just ask.</b> You never call tools by name — describe what you want and the assistant picks the tool. Examples are under each section below.</li>
+    </ol>
+    <p class="dim">Optional: set <code>SHADDAI_API_KEY</code> to raise free-tier limits. Money tools stay disabled unless the operator sets <code>SHADDAI_ENABLE_MONEY=1</code>.</p>
+  </div>
+
+  <div class="card" style="border-color:#e8c45c55">
+    <h3>🐢 Build games and motion videos with TURTLE</h3>
+    <p>TURTLE draws on a game-dev library (skills, patterns, shaders, genre templates for Three.js and ECS) and a motion studio that renders showreels, launch films and UI-morph loops from code — on top of its design knowledge.</p>
+    <p class="try"><b>Try:</b> “Use shaddai_turtle_build to make a 20-second vertical launch film for my product, beat-synced.” · “Use shaddai_turtle_build to make a 3D action game with enemies and a health bar.” · “Search gamedev for ECS archetype queries.” · “List the game-dev shader skills.”</p>
+    <p class="dim">Fast path: <code>gamedev_search</code> → <code>gamedev_get</code> for the full text. Guided path: <code>shaddai_turtle_build</code> combines the library, TURTLE's knowledge and the agent into one build plan with code.</p>
+  </div>
+
+  <input id="q" type="search" placeholder="Search tools — e.g. “price”, “physics”, “workflow”…" autocomplete="off">
+  <nav id="nav"></nav>
+  <div id="out"><p class="empty">Loading tools…</p></div>
+</main>
+<script>
+const EXAMPLES = {
+  'Game Dev (TURTLE)': '“Build me a 2D platformer scaffold with TURTLE.” · “Search the game-dev library for water shaders.” · “Review my game at localhost:5173, then fix what looks wrong.”',
+  'Agents': '“Have ORACLE research X.” · “Orchestrate the council to plan my launch.”',
+  'Knowledge & RAG': '“What does SHADDAI know about position sizing?” · “Search my memory for my pricing notes.”',
+  'Markets & ZEROX': '“What’s the price and sentiment on SOL?” · “Scan the market for movers.”',
+  'Hall & Community': '“Show the Hall leaderboard.” · “What are today’s quests?”',
+  'Money & Ledger': '“Show my agent ledger.” · “Quote the cost before I confirm.”',
+  'Automation': '“Create a workflow that scrapes then summarizes.” · “Schedule this every morning.”',
+  'Web & Media': '“Search the web for X.” · “Generate a logo image.”'
+};
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+let DATA = null;
+
+function toolHTML(t) {
+  const first = (t.description || '').split(/(?<=[.!?])\s/)[0];
+  const params = t.params.length ? `<table><tr><th>Parameter</th><th>Type</th><th>What it is</th></tr>${t.params.map(p =>
+    `<tr><td><code>${esc(p.name)}</code>${p.required ? '<span class="req">required</span>' : ''}</td><td>${esc(p.type)}</td><td>${esc(p.description)}</td></tr>`).join('')}</table>`
+    : '<p class="dim">No parameters.</p>';
+  return `<details><summary><code>${esc(t.name)}</code><span class="one">${esc(first)}</span></summary><div class="body"><p>${esc(t.description)}</p>${params}</div></details>`;
+}
+function render() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const match = (t) => !q || (t.name + ' ' + t.description + ' ' + t.params.map(p => p.name).join(' ')).toLowerCase().includes(q);
+  let html = '', nav = '';
+  for (const c of DATA.categories) {
+    const ts = DATA.tools.filter(t => t.category === c.name && match(t));
+    if (!ts.length) continue;
+    nav += `<a href="#${slug(c.name)}">${esc(c.name)}<span>${ts.length}</span></a>`;
+    html += `<section id="${slug(c.name)}"><h2>${esc(c.name)} <span class="dim" style="font-weight:400;font-size:14px">· ${ts.length}</span></h2><p class="dim">${esc(c.blurb)}</p>
+      ${EXAMPLES[c.name] ? `<p class="try"><b>Try:</b> ${esc(EXAMPLES[c.name])}</p>` : ''}
+      <div class="card">${ts.map(toolHTML).join('')}</div></section>`;
+  }
+  document.getElementById('nav').innerHTML = nav;
+  document.getElementById('out').innerHTML = html || '<p class="empty">No tools match that search.</p>';
+}
+fetch('/mcp-tools.json').then(r => r.json()).then(d => {
+  DATA = d; document.getElementById('count').textContent = d.count; render();
+  document.getElementById('q').addEventListener('input', render);
+}).catch(() => { document.getElementById('out').innerHTML = '<p class="empty">Could not load the tool list.</p>'; });
+</script>
+</body>
+</html>

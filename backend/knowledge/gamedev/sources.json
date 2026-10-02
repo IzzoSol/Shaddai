@@ -1,0 +1,20 @@
+{
+  "motion-studio": {
+    "license": "SHADDAI (own)",
+    "origin": "Reel Forge — original",
+    "files": 11,
+    "sections": 11,
+    "bytes": 29620,
+    "skippedOverCap": 0,
+    "ingestedAt": "2026-10-01T20:50:14.890Z"
+  },
+  "game-forge": {
+    "license": "SHADDAI (own)",
+    "origin": "SHADDAI Game Forge",
+    "files": 82,
+    "sections": 89,
+    "bytes": 266453,
+    "skippedOverCap": 0,
+    "ingestedAt": "2026-10-01T22:48:53.894Z"
+  }
+}
