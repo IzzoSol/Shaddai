@@ -63,6 +63,14 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   #intro.gone{opacity:0;pointer-events:none}
   /* ── LIGHT LOADING SCREEN (default; ?intro=cinematic restores the cinematic intro above) ── */
   #introLite{display:none}
+  /* NEW INTRO MOTION (motion-lab language: RGB-split glitch-in, scan sweep, caption rise) — GPU-only CSS, off for reduced-motion */
+  #introLite .wm{text-shadow:0 0 22px rgba(0,255,156,.35);animation:introGlitchIn 1.3s steps(1,end) both,introGlitchLoop 7s 2s infinite}
+  @keyframes introGlitchIn{0%{opacity:0;transform:translateX(-6px) skewX(8deg);text-shadow:-6px 0 #ff2fa0,6px 0 #27e0ff}15%{opacity:1;transform:translateX(5px);text-shadow:5px 0 #ff2fa0,-5px 0 #27e0ff}30%{opacity:.4;transform:translateX(-3px) skewX(-6deg)}45%{opacity:1;transform:none;text-shadow:-3px 0 #ff2fa0,3px 0 #27e0ff}70%{text-shadow:2px 0 #ff2fa0,-2px 0 #27e0ff}100%{opacity:1;transform:none;text-shadow:0 0 22px rgba(0,255,156,.35)}}
+  @keyframes introGlitchLoop{0%,93%,100%{transform:none;text-shadow:0 0 22px rgba(0,255,156,.35)}94%{transform:translateX(3px);text-shadow:-4px 0 #ff2fa0,4px 0 #27e0ff}96%{transform:translateX(-2px) skewX(4deg);text-shadow:3px 0 #ff2fa0,-3px 0 #27e0ff}98%{transform:none}}
+  #liteSlides::after{content:'';position:absolute;left:0;right:0;height:140px;top:-140px;background:linear-gradient(180deg,transparent,rgba(0,255,156,.08) 60%,rgba(0,255,156,.22) 98%,transparent);animation:introScan 5.5s linear infinite;pointer-events:none}
+  @keyframes introScan{to{transform:translateY(calc(100vh + 280px))}}
+  @keyframes capIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){#introLite .wm{animation:none}#liteSlides::after{display:none}}
   #liteSlides{display:none}
   html.intro-lite #liteSlides{display:block}
   html.intro-lite #introLite{position:relative;z-index:5}

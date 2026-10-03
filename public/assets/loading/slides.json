@@ -1,0 +1,37 @@
+[
+ {
+  "src": "/assets/loading/agent-shaddai.webp",
+  "who": "SHADDAI",
+  "line": "One world. Every agent. Yours to shape."
+ },
+ {
+  "src": "/assets/loading/agent-nexus.webp",
+  "who": "NEXUS",
+  "line": "Every skill, one tap away."
+ },
+ {
+  "src": "/assets/loading/agent-zerox.webp",
+  "who": "ZEROX",
+  "line": "Markets move. We read them first."
+ },
+ {
+  "src": "/assets/loading/agent-oracle.webp",
+  "who": "ORACLE",
+  "line": "Know the night before it comes."
+ },
+ {
+  "src": "/assets/loading/agent-turtle.webp",
+  "who": "TURTLE",
+  "line": "Make it beautiful. Make it move."
+ },
+ {
+  "src": "/assets/loading/agent-quill.webp",
+  "who": "QUILL",
+  "line": "Say it clearly. Say it once."
+ },
+ {
+  "src": "/assets/loading/agent-pikadon.webp",
+  "who": "PIKADON",
+  "line": "Nothing gets past the shield."
+ }
+]
