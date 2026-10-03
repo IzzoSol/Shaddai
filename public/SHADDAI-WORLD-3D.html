@@ -4100,7 +4100,9 @@ addEventListener('keydown', e=>{
   if(e.code==='Escape') document.getElementById('dossier').classList.remove('open');  // Esc closes dossier + releases mouse
   if((e.code==='KeyB' || e.code==='KeyO') && _onTrainNow()) return;   // maglev cabin: no bike / hoverboard aboard
   if(e.code==='KeyB' && typeof hover!=='undefined' && hover && hover.isRiding()) hover.dismount();   // one vehicle at a time
-  if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
+  // DISABLED 2026-10-03: B key conflicts with castle interaction system (causes unwanted "enter castle" popups)
+  // DEBUG TODO: find which other handler is firing on B key press and fix the conflict
+  // if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
   if(e.code==='KeyO' && !e.repeat && typeof hover!=='undefined' && hover && !(_interiors && _interiors.isInside())){   // O = hoverboard V2
     if(bikeMode){ bikeMode=false; const h=document.getElementById('bikeHud'); if(h) h.style.display='none'; trailPos.length=0; updateTrail(); }
     if(hover.isRiding()) hover.dismount();
