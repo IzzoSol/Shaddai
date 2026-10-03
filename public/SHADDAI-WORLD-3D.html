@@ -381,7 +381,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-spawn.js?v=20260925a"></script>
 <script src="/world-themes.js?v=20260703h"></script>
 <script src="/athenaeum-layout.js?v=20261003a"></script>
-<script src="/world-athenaeum.js?v=20261003a"></script>
+<script src="/world-athenaeum.js?v=20261003b"></script>
 <script src="/world-interiors.js?v=20261003a"></script>
 <script src="/world-cutscene.js?v=20260704d"></script>
 <script src="/world-npcs.js?v=20260703g"></script>
@@ -772,7 +772,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('wildlife', function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
       if(!api || !_v4Meta) return api;
-      if(!/[?&]wildlife=1/.test(location.search)) return api;   // PERF 2026-10-03: wolves off until rigged/needed (opt-in ?wildlife=1)
+      if(/[?&]wildlife=0/.test(location.search)) return api;   // owner wants wolves/skeletons kept (2026-10-03); ?wildlife=0 turns them off for perf tests
       return _loadScript('/world-wildlife-v4.js?v=20260927a').then(function(){
         const wl = new GLTFLoader(); wl.setMeshoptDecoder(MeshoptDecoder);
         window.__wildlife = window.buildWorldWildlifeV4({ THREE, scene, loader: wl, cloneSkinned, heightAt: api.heightAt, terrainMeta: _v4Meta,

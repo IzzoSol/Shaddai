@@ -217,6 +217,45 @@
     board('teachers', 'HALL OF TEACHERS', 0xf0d27a, 60, R - 0.2, 6, 9, 4.5);
     board('trophy', 'TROPHY GALLERY', 0xe8c45c, 120, R - 0.2, 6, 9, 4.5);
     board('navi', 'NAVI', 0x00ff9c, 346, R - 0.2, 5, 4, 2);
+
+    // ── teaching posters (owner refs 2026-10-03: thinking standards, logic types, thinking maps, knowledge map, organisers) ──
+    // Drawn on canvas in SHADDAI colours with our own wording (crisp text; no AI lettering). One opaque draw each.
+    var POSTERS = [
+      { t: 'THE NINE STANDARDS', s: 'of clear thinking', cards: [['CLARITY', '#FF1E1E', 'Can you show an example?'], ['ACCURACY', '#FF6A00', 'How do we check it?'], ['PRECISION', '#FFC107', 'Can you be more exact?'], ['RELEVANCE', '#39FF14', 'Does it answer the question?'], ['DEPTH', '#10B981', 'What makes this hard?'], ['BREADTH', '#00D4FF', 'Who sees it differently?'], ['LOGIC', '#1E3A8A', 'Does it follow the evidence?'], ['FAIRNESS', '#FF69B4', 'Facts, or only opinion?'], ['SIGNIFICANCE', '#7C3AED', 'What matters most here?']] },
+      { t: 'SEVEN WAYS TO REASON', s: 'think deeper · decide smarter', cards: [['DEDUCTIVE', '#00D4FF', 'Rule → case'], ['INDUCTIVE', '#10B981', 'Cases → rule'], ['ABDUCTIVE', '#FFC107', 'Clues → best guess'], ['MODAL', '#7C3AED', 'Possible vs necessary'], ['FUZZY', '#FF69B4', 'Truth on a spectrum'], ['DIALECTICAL', '#FF6A00', 'Thesis ⇄ antithesis → synthesis'], ['INFORMAL', '#E8C45C', 'Claim → argument → conclusion']] },
+      { t: 'THINKING MAPS', s: 'pick the map for the question', cards: [['CIRCLE', '#00FF9C', 'Define in context'], ['BUBBLE', '#00D4FF', 'Describe qualities'], ['DOUBLE BUBBLE', '#7C3AED', 'Compare + contrast'], ['TREE', '#10B981', 'Classify'], ['BRACE', '#FFC107', 'Part → whole'], ['FLOW', '#FF6A00', 'Sequence'], ['MULTI-FLOW', '#FF1E1E', 'Cause + effect'], ['BRIDGE', '#E8C45C', 'Analogies']] },
+      { t: 'MAP OF KNOWLEDGE', s: 'after the Encyclopédie tree, 1751', cards: [['MEMORY', '#00D4FF', 'History: sacred, civil, natural'], ['REASON', '#00FF9C', 'Philosophy: logic, ethics, nature'], ['IMAGINATION', '#E8C45C', 'Poetry, music, painting, architecture'], ['SCIENCE OF MAN', '#10B981', 'Thinking, remembering, communicating'], ['SCIENCE OF NATURE', '#7C3AED', 'Mathematics, physics, astronomy'], ['ARTS + CRAFTS', '#FF6A00', 'Forge, glass, stone, silk, gold']] },
+      { t: 'GRAPHIC ORGANISERS', s: 'make thinking visible', cards: [['GROUP', '#00D4FF', 'Spider · cluster · concept map'], ['SEQUENCE', '#10B981', 'Cycle · flow chart · spiral'], ['CAUSE', '#FF6A00', 'Futures wheel · bridge · fishbone'], ['ANALYSE', '#7C3AED', 'Y chart · T chart · Venn'], ['DECIDE', '#E8C45C', 'Scales · storyboard · pulse graph']] }
+    ];
+    function posterTex(P) {
+      if (typeof document === 'undefined') return null;
+      var W = 768, H = 1056, cv = document.createElement('canvas'); cv.width = W; cv.height = H; var c = cv.getContext('2d');
+      c.fillStyle = '#06080b'; c.fillRect(0, 0, W, H); c.strokeStyle = '#e8c45c'; c.lineWidth = 6; c.strokeRect(10, 10, W - 20, H - 20);
+      c.textAlign = 'center'; c.fillStyle = '#e8c45c'; c.font = 'bold 54px Georgia, serif'; c.fillText(P.t, W / 2, 92);
+      c.fillStyle = '#00ff9c'; c.font = 'italic 26px Georgia, serif'; c.fillText(P.s, W / 2, 132);
+      var cols = P.cards.length > 6 ? 3 : 2, rows = Math.ceil(P.cards.length / cols), gx = 34, top = 168, cw = (W - gx * (cols + 1)) / cols, ch = (H - top - 40 - gx * (rows - 1)) / rows;
+      P.cards.forEach(function (k, i) {
+        var x = gx + (i % cols) * (cw + gx), y = top + Math.floor(i / cols) * (ch + gx);
+        c.fillStyle = '#0d1218'; c.fillRect(x, y, cw, ch); c.fillStyle = k[1]; c.fillRect(x, y, cw, 8);
+        c.font = 'bold ' + (cols === 3 ? 26 : 34) + 'px system-ui, sans-serif'; c.fillText(k[0], x + cw / 2, y + ch * 0.42);
+        c.fillStyle = '#dfe7ee'; c.font = (cols === 3 ? 19 : 24) + 'px system-ui, sans-serif';
+        var words = k[2].split(' '), line = '', ly = y + ch * 0.42 + 40, maxW = cw - 24;
+        words.forEach(function (wd) { var tst = line ? line + ' ' + wd : wd; if (c.measureText(tst).width > maxW && line) { c.fillText(line, x + cw / 2, ly); ly += 28; line = wd; } else line = tst; });
+        if (line) c.fillText(line, x + cw / 2, ly);
+      });
+      var t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+    }
+    var used = [240, 60, 120, 346], posterAngles = [20, 90, 150, 200, 280, 310, 170, 30, 0, 45, 75, 105, 135, 165, 185, 215, 255, 295, 325].filter(function (a) {
+      var nearDoor = doors.some(function (d) { return Math.abs(((a - d.a + 540) % 360) - 180) < d.half + 6; });
+      var nearBoard = used.some(function (u) { return Math.abs(((a - u + 540) % 360) - 180) < 14; });
+      if (nearDoor || nearBoard) return false; used.push(a); return true;
+    });
+    POSTERS.forEach(function (P, i) {
+      var a = posterAngles[i]; if (a == null) return;
+      var p = polar(a, R - 0.25), tex = posterTex(P), m = tex ? new THREE.MeshBasicMaterial({ map: tex }) : new THREE.MeshBasicMaterial({ color: 0x0d1218 });
+      labelMats.push(m); var mesh = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 7.7), m); mesh.name = 'board:poster-' + i;
+      mesh.position.set(p.x, 4.6, p.z); mesh.rotation.y = Math.atan2(-p.x, p.z) + Math.PI; rootG.add(mesh);
+    });
     var tdesk = polar(300, 31.5); addTo('obsidian', xf(new THREE.BoxGeometry(4.2, 1.1, 1.4), { x: tdesk.x, y: 0.55, z: tdesk.z, ry: -(300 * Math.PI / 180) }));
     addTo('em-2dd4a0', xf(new THREE.BoxGeometry(3.6, 0.06, 0.8), { x: tdesk.x, y: 1.13, z: tdesk.z, ry: -(300 * Math.PI / 180) }));
     board('trading', 'TRADING DESK · PAPER ONLY', 0x2dd4a0, 300, R - 0.2, 6, 9, 4.5);

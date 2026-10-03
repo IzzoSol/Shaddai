@@ -100,3 +100,5 @@ User opened Blender instance — can now:
 - Colosseum: finish the inside; lobby -> crowd stands route; arena floor via an ADMIN GATE with keypad code 4444 -> back area with animals, boats/water, terrain switches; bots can work back there and be hired.
 - Later pass: colosseum metro connects to the maglev train station.
 - Pending owner answer: re-plan city frontage (rows facing avenues).
+- Houses (later): varied sizes, buy with Sparks, enter/own/customize, tracked in Navi.
+- Logo: owner says a spinning star 'looks like Baphomet' -> make it SHADDAI; location unconfirmed (colosseum octahedron? void-castle sigil? interior floor sigil?).
