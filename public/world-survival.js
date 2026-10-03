@@ -79,7 +79,8 @@
     setTimeout(function () { respawn(); el.style.opacity = '0'; state.dead = false; }, 1800);
   }
   function damage(n, kind) {
-    if (state.dead) return; state.hp = Math.max(0, (window.__playerHP != null ? window.__playerHP : state.hp) - n); window.__playerHP = state.hp;
+    if (state.dead) return; if (window.WorldDodge && window.WorldDodge.blocks(kind || 'damage')) return;   /* dodge-roll i-frames (hazards are not dodgeable) */
+    state.hp = Math.max(0, (window.__playerHP != null ? window.__playerHP : state.hp) - n); window.__playerHP = state.hp;
     if (state.hp <= 0) die(kind || 'damage');
   }
 

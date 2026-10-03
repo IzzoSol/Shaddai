@@ -333,6 +333,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-combat-mode.js?v=20261002a"></script>
 <script src="/world-realm-zones.js?v=20261002a"></script>
 <script src="/world-footprints.js?v=20261002a"></script>
+<script src="/world-dodge.js?v=20261003a"></script>
 <script src="/world-batch.js?v=20261003a"></script>
 <script src="/world-touch-buttons.js?v=20261003a"></script>
 <script src="/world-districts.js?v=20261002a"></script>
@@ -3849,6 +3850,7 @@ function _playerSig(){ return _SIGNATURE[(window._playerCharacter||'').toUpperCa
 window.__playerHP = 100; let _dragonKB = null, _shakeT = 0, _shakeI = 0;
 window.__dragonShake = function(i, d){ _shakeI = Math.max(_shakeI, i || 0.4); _shakeT = Math.max(_shakeT, d || 0.3); };
 window.__onDragonHit = function(dmg, kind, info){
+  if(window.WorldDodge && window.WorldDodge.blocks(kind || 'dragon')){ if(window.__hitfx && window.__hitfx.text) { try{ window.__hitfx.text('DODGE', playerAvatar && playerAvatar.position); }catch(_){} } return; }   // i-frames of the dodge roll
   if(window.WorldGear){ try{ dmg = window.WorldGear.absorb(dmg); }catch(_){} }   // ARMORY: shields reduce / the aegis barrier soaks
   if(!(dmg > 0)) return;
   if(window.__campfire){ try{ window.__campfire.hurt(); }catch(_){} }   // no fire-healing for 3 s after a hit
@@ -4047,6 +4049,7 @@ addEventListener('keydown', e=>{ if(_typingNow()||e.repeat) return;
   if(e.code==='KeyQ') playerProjectile();
   else if(e.code==='KeyF') playerFlipOrFly();
   else if(e.code==='KeyK') playerKick();
+  else if(e.code==='KeyZ' && window.WorldDodge && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !(window.__mountRide && window.__mountRide.isRiding()) && !(window.__dragonRide && window.__dragonRide.isRiding())){ if(window.WorldDodge.trigger()){ playPlayerOnce('roll',{timeScale:1.35}) || playPlayerOnce('slide',{timeScale:1.3}) || playPlayerOnce('flip',{timeScale:1.3}); } }   // on-foot dodge roll (Z; on a board Z is the barrel roll)
 });
 
 addEventListener('click', (ev)=>{
