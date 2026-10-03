@@ -332,6 +332,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-combat-mode.js?v=20261002a"></script>
 <script src="/world-realm-zones.js?v=20261002a"></script>
 <script src="/world-footprints.js?v=20261002a"></script>
+<script src="/world-batch.js?v=20261003a"></script>
 <script src="/world-districts.js?v=20261002a"></script>
 <script src="/world-tame.js?v=20261002a"></script>
 <script src="/world-skydock.js?v=20261001a"></script>
@@ -5033,6 +5034,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
     toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); }catch(e){ console.warn('[realm-zones] failed', e && e.message); }
   addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat || !controls.isLocked) return; const r = window.WorldCombatMode.toggle(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON - no one can hurt you, you cannot fight' : 'Fight mode ON')); });
 }, 1500); })();
+// ── STATIC BATCHER (world-batch.js): once the world is playable and has settled, merge the thousands of tiny STATIC meshes into a few draw calls (moving ones are left alone). ?batch=0 turns it off; window.__batchReport shows what happened ──
+(function bootBatch(){ if(/[?&]batch=0/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; } if(!(window.__loadPlayable && window.WorldBatch && window.__w3dDebug && window.__w3dDebug.scene)) return; clearInterval(iv);
+  setTimeout(function(){ try{ window.WorldBatch.run({ THREE, scene: window.__w3dDebug.scene, U: 7/1.8, settleMs: 3000, log: function(m){ console.log(m); } }).then(function(r){ window.__batchReport = r; }).catch(function(e){ console.warn('[batch] failed', e && e.message); }); }catch(e){ console.warn('[batch] failed', e && e.message); } }, 4000);
+}, 1000); })();
 // ── FOOTPRINTS (world-footprints.js): prints in snow (Arctic) and sand (Desert) that fade back into the ground; 1 draw call ──
 (function bootFootprints(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } if(!(window.buildWorldFootprints && window.WORLD_HEIGHT_AT && window.__realmZones)) return; clearInterval(iv);
   try{ window.__footprints = window.buildWorldFootprints({ THREE, scene, U: 7/1.8, heightAt: function(x,z){ return window.WORLD_HEIGHT_AT(x,z); },

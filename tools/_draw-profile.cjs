@@ -8,7 +8,8 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   const p = await b.newPage(); await p.setViewport({ width: 700, height: 420 });
   await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html' + (process.argv[2] || '?time=0.5'), { waitUntil: 'domcontentloaded', timeout: 120000 });
   for (let i = 0; i < 300; i++) { await sleep(1000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
-  await sleep(4000);
+  for (let i = 0; i < 90 && !(await p.evaluate(() => !!window.__batchReport).catch(() => false)); i++) await sleep(1000);   // wait for the static batcher (skip with ?batch=0)
+  const rep = await p.evaluate(() => window.__batchReport || null); console.log('batch report', JSON.stringify(rep)); await sleep(2000);
   const out = await p.evaluate(() => {
     const D = window.__w3dDebug, scene = D.scene, cam = D.camera, THREE_ = cam.constructor; const fr = {}; let tot = { calls: 0, tris: 0 };
     const vis = o => { for (let a = o; a; a = a.parent) if (!a.visible) return false; return true; };
