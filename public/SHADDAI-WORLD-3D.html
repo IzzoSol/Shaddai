@@ -5019,10 +5019,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   const T = window.__worldTransitApi; if(!T || !T.stations || !T.stations.length){ if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev is still loading'); return; }
   if(_interiors && _interiors.isInside && _interiors.isInside()) return;
   let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } });
-  /* U NO LONGER TELEPORTS (owner 2026-10-03: it stranded you on the platform with no ground loaded). It points you to the nearest station: Navi waypoint + distance and compass direction. */
-  if(!best) return; const dxm = (best.x - playerPos.x) / (7/1.8), dzm = (best.z - playerPos.z) / (7/1.8), distM = Math.round(Math.hypot(dxm, dzm)), dirs = ['north','north-east','east','south-east','south','south-west','west','north-west'], deg = (Math.atan2(dxm, -dzm) * 180 / Math.PI + 360) % 360, dir = dirs[Math.round(deg / 45) % 8];
-  if(window.Navi && window.Navi.setWaypoint){ try{ window.Navi.setWaypoint({ x: best.x, z: best.z, label: (best.name || 'Maglev') + ' station', kind: 'Train' }); }catch(_){ } }
-  if(window.Navi && window.Navi.toast) window.Navi.toast('Nearest maglev: ' + (best.name || 'station') + ' - ' + distM + ' m ' + dir + '. Walk onto the glowing lift pad and press E. (Waypoint set in Navi.)'); });
+  if(!best) return; playerPos.x = best.x; playerPos.z = best.z + 20;   // TELEPORT TO NEAREST STATION (2026-10-03: re-enabled for realm travel)
+  if(window.Navi && window.Navi.toast) window.Navi.toast('Warped to ' + (best.name || 'station')); });
 // ── FACADE DETAILS (world-facade-details.js): rooftop vents/antennas + ground-floor glow bands in district colours, instanced, near the player only ──
 (function bootFacade(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFacadeDetails || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
