@@ -76,6 +76,7 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   html.intro-lite #introLite{position:relative;z-index:5}
   html.intro-lite #intro{background:#06080b;transition:opacity .45s ease-out;isolation:auto}
   html.intro-lite #intro::before,html.intro-lite #intro::after{display:none}
+  html.intro-lite #intro{z-index:99999}   /* the loading screen covers every HUD pill (Sparks / Navi / cursor mode) while it is up; .gone ignores pointer events */
   html.intro-lite #portalCv,html.intro-lite #introInner{display:none}
   html.intro-lite #introLite{display:block;text-align:center;width:min(460px,86vw)}
   #introLite .wm{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(34px,7vw,72px);letter-spacing:.16em;color:#00ff9c;line-height:1}
@@ -327,6 +328,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-hazards.js?v=20261002a"></script>
 <script src="/world-combat-mode.js?v=20261002a"></script>
 <script src="/world-realm-zones.js?v=20261002a"></script>
+<script src="/world-footprints.js?v=20261002a"></script>
 <script src="/world-districts.js?v=20261002a"></script>
 <script src="/world-tame.js?v=20261002a"></script>
 <script src="/world-skydock.js?v=20261001a"></script>
@@ -5028,6 +5030,13 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
     toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); }catch(e){ console.warn('[realm-zones] failed', e && e.message); }
   addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat || !controls.isLocked) return; const r = window.WorldCombatMode.toggle(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON - no one can hurt you, you cannot fight' : 'Fight mode ON')); });
 }, 1500); })();
+// ── FOOTPRINTS (world-footprints.js): prints in snow (Arctic) and sand (Desert) that fade back into the ground; 1 draw call ──
+(function bootFootprints(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } if(!(window.buildWorldFootprints && window.WORLD_HEIGHT_AT && window.__realmZones)) return; clearInterval(iv);
+  try{ window.__footprints = window.buildWorldFootprints({ THREE, scene, U: 7/1.8, heightAt: function(x,z){ return window.WORLD_HEIGHT_AT(x,z); },
+    getPlayer: function(){ const riding = (typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) || (window.__mountRide && window.__mountRide.isRiding()) || (window.__dragonRide && window.__dragonRide.isRiding());
+      return { pos: playerPos, grounded: !riding, flying: !!riding }; },
+    surfaceAt: function(){ const z = window.__realmZones.state(); const r = z && z.realm; return r === 'arctic' ? 'snow' : (r === 'desert' ? 'sand' : null); } }); }catch(e){ console.warn('[footprints] failed', e && e.message); }
+}, 1800); })();
 // ── DISTRICT NAMES (world-districts.js): entering Campus / Commons / Plots / Race inside The Grid shows the district + street once ──
 (function bootDistrictToast(){ let last = null; setInterval(function(){ try{ const WD = window.WorldDistricts; if(!WD || typeof playerPos === 'undefined') return; const k = 7/1.8, x = playerPos.x / k, y = -playerPos.z / k;
   if(Math.hypot(x, y) < 170 || Math.hypot(x, y) > 1600){ last = null; return; } const d = WD.at(x, y); if(d.id !== last){ last = d.id; if(window.Navi && window.Navi.toast) window.Navi.toast(d.name + ' District - ' + d.blurb + ' (' + WD.streetAt(x, y) + ')'); } }catch(_){} }, 1500); })();
@@ -5271,6 +5280,7 @@ function animate(){
   }
   if(window.__mountRide){ playerPos.__yaw = Math.atan2(fwd.x, fwd.z); const _mi = window.__mountIn || (window.__mountIn = {}), _mu = _uiOpen; _mi.fwd = !_mu && !!(keys['KeyW']||keys['ArrowUp']); _mi.back = !_mu && !!(keys['KeyS']||keys['ArrowDown']); _mi.left = !_mu && !!(keys['KeyA']||keys['ArrowLeft']); _mi.right = !_mu && !!(keys['KeyD']||keys['ArrowRight']); _mi.climb = !_mu && !!keys['Space']; _mi.dive = !_mu && !!(keys['ShiftLeft']||keys['ShiftRight']); window.__mountRide.update(dt, _mi); }
   if(window.__realmZones){ try{ window.__realmZones.update(dt); }catch(e){ console.warn('[realm-zones] disabled after error', e && e.message); window.__realmZones = null; } }
+  if(window.__footprints){ try{ window.__footprints.update(dt); }catch(e){ console.warn('[footprints] disabled after error', e && e.message); window.__footprints = null; } }
   if(window.__hazards){ try{ window.__hazards.update(dt); }catch(e){ console.warn('[hazards] disabled after error', e && e.message); try{ window.__hazards.dispose(); }catch(_){} window.__hazards = null; } }
   if(window.__grass){ try{ window.__grass.update(dt); if((_animFrame & 127) === 0){ const q = String(window.__quality || 'MEDIUM').toUpperCase(); window.__grass.setQuality(q === 'ULTRA' ? 'HIGH' : q); } }catch(e){ console.warn('[grass] disabled after error', e && e.message); try{ window.__grass.dispose(); }catch(_){} window.__grass = null; } }
   if(window.__skyExtras){ try{ window.__skyExtras.update(dt); }catch(e){ console.warn('[skyextras] disabled after error', e && e.message); try{ window.__skyExtras.dispose(); }catch(_){} window.__skyExtras = null; } }

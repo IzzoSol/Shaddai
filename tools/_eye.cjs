@@ -13,6 +13,7 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: +(process.env.EYE_W||1000), height: +(process.env.EYE_H||600) }); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 120)));
   await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html' + (process.env.EYE_QS || ''), { waitUntil: 'domcontentloaded', timeout: 90000 });
+  if (mode === 'intro') { await sleep(4500); await p.screenshot({ path: OUT + '/intro-1.png' }); await sleep(7500); await p.screenshot({ path: OUT + '/intro-2.png' }); console.log('shot intro'); console.log('ERRS', JSON.stringify(errs.slice(0, 3))); await b.close(); return; }   // loading screen: wordmark glitch + slideshow
   for (let i = 0; i < 150; i++) { await sleep(2000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
   await sleep(12000);
   await p.evaluate(() => { const els = [...document.querySelectorAll('*')].filter(e => e.children.length < 4 && /Source Temple/i.test(e.textContent || '') && e.offsetParent); const t = els.sort((a, b) => (a.textContent || '').length - (b.textContent || '').length)[0]; if (t) (t.closest('button,[class*=portal],[class*=card],[onclick]') || t).click(); });
@@ -78,7 +79,7 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
     console.log('POS', JSON.stringify(await p.evaluate(() => { const q = window.__w3dDebug.playerPos; return [q.x | 0, q.y | 0, q.z | 0]; })));
   } else if (mode === 'ride') {   // node tools/_eye.cjs ride kart-sedan kart-pod car-van board : third-person side + 3/4 shots of the rider ON each ride ('board' = the hoverboard)
     const U = 7 / 1.8; for (const id of process.argv.slice(3)) {
-      await p.evaluate((id, U) => { const D = window.__w3dDebug, x = D.playerPos.x, z = D.playerPos.z; if (window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if (id === 'board') window.__rideBoard('obsidian'); else window.__mountRide.rentRace(id, x, z, 0); }, id, U);
+      await p.evaluate((id, U) => { const D = window.__w3dDebug; D.playerPos.x = 0; D.playerPos.z = -800 * U; const x = D.playerPos.x, z = D.playerPos.z;   /* quiet north avenue, away from the spawn-plaza crowd */ if (window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if (id === 'board') window.__rideBoard('obsidian'); else window.__mountRide.rentRace(id, x, z, 0); }, id, U);
       await sleep(4000);
       for (const [nm, ox, oz, oy] of [['side', 5.5, 0, 1.4], ['q34', 4, -4.5, 2.2]]) {
         await p.evaluate((ox, oz, oy, U) => { const D = window.__w3dDebug, L = window.__camLock, P = D.playerPos, H = D.terrainV4 || D.terrain, gy = H.heightAt(P.x, P.z); L.on = true; L.px = P.x + ox * U; L.py = gy + oy * U + 1.5 * U; L.pz = P.z + oz * U; L.tx = P.x; L.ty = P.y + 0.3 * U; L.tz = P.z; }, ox, oz, oy, U);
