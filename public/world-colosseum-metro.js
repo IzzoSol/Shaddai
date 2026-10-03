@@ -83,10 +83,10 @@
       var to = near(M.lobbyPad) ? [M.metroPad[0] + 3.2, M.metroPad[1]] : (near(M.metroPad) ? [M.lobbyPad[0] - 3.4, M.lobbyPad[1]] : null); if (!to) return false;
       fade.style.opacity = '1'; setTimeout(function () { place(to[0], to[1]); setTimeout(function () { fade.style.opacity = '0'; }, 120); }, 240); return true;
     }
-    addEventListener('keydown', function (e) { if (e.code === 'KeyE' && !e.repeat && arena.group.visible && useElevator()) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    addEventListener('keydown', function (e) { if (e.code === 'KeyE' && !e.repeat && (arena && arena.group && arena.group.visible) && useElevator()) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
     var hintT = 0;
     function tick(dt) {
-      if (!arena.group.visible) return; drawBoard();
+      if (!(arena && arena.group && arena.group.visible)) return; drawBoard();
       hintT -= dt; if (hintT <= 0 && (near(M.lobbyPad) || near(M.metroPad))) { hintT = 3; if (window.__toast) window.__toast('[E] Elevator ' + (near(M.lobbyPad) ? '▼ to the metro platform' : '▲ back to the Colosseum')); }
     }
 

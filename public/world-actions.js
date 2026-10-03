@@ -488,24 +488,24 @@ window.buildWorldActions = function (opts) {
   var TO_KEY = 'shd.tourney';
   function tourney() { try { return JSON.parse(localStorage.getItem(TO_KEY) || '{"fightPool":0,"fightN":0,"skatePool":0,"skateN":0}'); } catch (e) { return { fightPool: 0, fightN: 0, skatePool: 0, skateN: 0 }; } }
   function saveTourney(t) { try { localStorage.setItem(TO_KEY, JSON.stringify(t)); } catch (e) {} }
+  /* COLOSSEUM DESK (owner 2026-10-03): walking in is FREE. Fees apply ONLY while a real event is live (window.__colosseumEvent = { name, fee, pool }).
+   * Otherwise: sign up for the next event (free), spectate, or free practice. The old 2D grid tactics game is a free optional practice mode, not "the Colosseum". */
+  var SIGN_KEY = 'shd.colo.signup';
+  function signedUp() { try { return localStorage.getItem(SIGN_KEY) === '1'; } catch (e) { return false; } }
   function openArena() {
-    var T = tourney();
+    var ev = window.__colosseumEvent || null, T = tourney(), btns = [];
+    if (ev && ev.fee > 0) {
+      btns.push({ label: 'ENTER EVENT (' + ev.fee + '⚡)', disabled: sparks() < ev.fee, fn: function () { addSparks(-ev.fee); var t = tourney(); t.fightPool += ev.fee; t.fightN++; saveTourney(t); closeModal(); pop('ENTERED: ' + (ev.name || 'event') + ' · pool ' + t.fightPool + '⚡', '#c084fc'); } });
+    } else {
+      btns.push({ label: signedUp() ? 'SIGNED UP ✓ (free)' : 'SIGN UP FOR EVENTS (free)', disabled: signedUp(), fn: function () { try { localStorage.setItem(SIGN_KEY, '1'); } catch (e) {} closeModal(); pop('You are on the Colosseum list. Events open here with an announcement.', '#00ff9c'); } });
+    }
+    btns.push({ label: 'PRACTICE: CLASSIC TACTICS (free)', fn: function () { closeModal(); var X = window.__worldTactics; if (X && X.startFight({ entry: 0, pool: 0, tier: 0 })) pop('Practice match: no entry fee, no pool.', '#c084fc'); else pop('Practice engine loading...', '#c084fc'); } });
+    btns.push({ label: 'SPECTATE', fn: closeModal });
     openModal('⚔ SHADDAI COLOSSEUM',
-      '<b>FIGHTING</b> — entry 50⚡ · pool ' + T.fightPool + '⚡ · ' + T.fightN + ' entered<br>'
-      + '<b>SKATE JAM</b> — entry 30⚡ · pool ' + T.skatePool + '⚡ · ' + T.skateN + ' entered<br>'
-      + '<span style="opacity:.65;font-size:11px">Winner takes the pool. Matches open with the coming build — entry sparks are held in the pool.</span>',
-      [
-        { label: 'ENTER FIGHT (50⚡)', disabled: sparks() < 50, fn: function () {
-            addSparks(-50); var t = tourney(); t.fightPool += 50; t.fightN++; saveTourney(t);
-            closeModal();
-            var T = window.__worldTactics;
-            if (T && T.startFight({ entry: 50, pool: t.fightPool - 50, tier: Math.min(3, Math.floor((t.wins || 0) / 2)) })) {
-              pop('FIGHT! tier ' + Math.min(3, Math.floor((t.wins || 0) / 2)) + ' · pot ' + (t.fightPool) + '⚡', '#c084fc');
-            } else { pop('ENTERED — FIGHT POOL ' + t.fightPool + '⚡ (engine loading)', '#c084fc'); }
-          } },
-        { label: 'ENTER SKATE (30⚡)', disabled: sparks() < 30, fn: function () { addSparks(-30); var t = tourney(); t.skatePool += 30; t.skateN++; saveTourney(t); pop('ENTERED — SKATE POOL ' + t.skatePool + '⚡', '#c084fc'); closeModal(); } },
-        { label: 'SPECTATE', fn: closeModal },
-      ]);
+      (ev ? '<b>EVENT LIVE: ' + (ev.name || 'Tournament') + '</b> — entry ' + (ev.fee || 0) + '⚡ · pool ' + T.fightPool + '⚡<br>' : '<b>Free entry.</b> No event is running right now.<br>')
+      + 'Walk the lobby, shop the kiosks, watch the arena. Sign up to be told when the next event opens (events are the only time entry costs Sparks).<br>'
+      + '<span style="opacity:.65;font-size:11px">3D battles (terrain fields, boats, modes) are the main Colosseum game; the grid tactics board is a free practice mode.</span>',
+      btns);
   }
 
   addEventListener('keydown', function (e) {

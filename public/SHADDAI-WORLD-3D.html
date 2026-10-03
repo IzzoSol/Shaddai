@@ -206,7 +206,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
   <a href="/home.html" title="Home">⌂ <span>Home</span></a>
   <a class="dash" href="/index.html" title="Dashboard">▦ <span>Dashboard</span></a>
 </nav>
-<div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44</div></div>
+<div class="hud" id="top"><h1>SHADDAI <b>WORLD</b></h1><div class="sub">THE GRID · 3D · v94.44 · build 1003d</div></div>
 <div class="hud" id="cross"></div>
 <div class="hud" id="coords">X 0 · Z 0</div>
 <div class="hud" id="hint" aria-label="Controls">
@@ -491,7 +491,7 @@ const __LD = window.__LD = { steps: {}, order: [], long: [], t0: 0, done: false,
                : ['buildings','first-frame'],
   // steps the SPAWN AREA needs before the loading screen lifts (the light loader's progress bar); the rest streams after entry
   critical: MAP_V4 ? ['terrain','realm-modules','buildings','canon','grid-fabric','city-v3','sky'] : ['buildings'] };
-window.__loadTimings = [];
+window.__build = '1003d-batcher-off'; window.__loadTimings = [];
 try{ new PerformanceObserver(function(l){ l.getEntries().forEach(function(e){ __LD.long.push([e.startTime, e.duration]); }); }).observe({ type:'longtask', buffered:true }); }catch(_){}
 function _ldBegin(name){
   if(__LD.steps[name]) return; const t = performance.now();
