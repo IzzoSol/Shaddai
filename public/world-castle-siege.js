@@ -24,6 +24,13 @@
     if (now < start - ANNOUNCE_H * 3600000) return 'idle'; if (now < start - GATHER_MIN * MIN) return 'announce'; if (now < start) return 'gather';
     if (now < start + LIVE_MIN * MIN) return 'live'; return 'ended';
   }
+  /* ACTIVATION GATE (owner 2026-10-03): the siege is wired and ready but stays DORMANT until the server is big enough (default 50 active players; tune to 50-100).
+   * Dormant = the schedule and a "Siege Day unlocks at N players (now M)" preview still show, but nobody can start or join a battle. */
+  var ACTIVATE_MIN = 50;
+  function status(now, start, activeUsers, min) {
+    var need = min == null ? ACTIVATE_MIN : min, ph = phase(now, start), on = (activeUsers || 0) >= need;
+    return { phase: on ? ph : 'dormant', schedule: ph, active: on, need: need, have: activeUsers || 0, message: on ? null : 'Castle Siege Day unlocks at ' + need + ' active players (now ' + (activeUsers || 0) + ')' };
+  }
   function create(o) {
     o = o || {}; var rng = o.rng || Math.random, fighters = {}, clans = {}, dragons = {}, order = Object.keys(DRAGONS), done = false, log = [];
     function scale() { return Math.max(1, Object.keys(fighters).length); }
@@ -52,5 +59,5 @@
     function results() { return { done: done, dragons: order.map(function (k) { var d = dragons[k]; return { id: k, name: d.name, dead: d.dead, hp: d.hp, max: d.max }; }), topPlayers: Object.keys(fighters).map(function (k) { return fighters[k]; }).sort(function (a, b) { return b.dmg - a.dmg; }).slice(0, 10), topClans: Object.keys(clans).map(function (k) { return clans[k]; }).sort(function (a, b) { return b.dmg - a.dmg; }).slice(0, 5) }; }
     return { join: join, hit: hit, state: function () { return { fighters: Object.keys(fighters).length, dragons: dragons, done: done }; }, results: results, end: function () { done = true; }, vulnerable: vulnerable };
   }
-  root.WorldCastleSiege = { DRAGONS: DRAGONS, nextStart: nextStart, phase: phase, create: create, LIVE_MIN: LIVE_MIN, GATHER_MIN: GATHER_MIN, ANNOUNCE_H: ANNOUNCE_H };
+  root.WorldCastleSiege = { ACTIVATE_MIN: ACTIVATE_MIN, status: status, DRAGONS: DRAGONS, nextStart: nextStart, phase: phase, create: create, LIVE_MIN: LIVE_MIN, GATHER_MIN: GATHER_MIN, ANNOUNCE_H: ANNOUNCE_H };
 })(typeof window !== 'undefined' ? window : globalThis);

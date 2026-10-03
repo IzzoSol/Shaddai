@@ -23,4 +23,9 @@ t('victory when all five fall; results rank players and clans; hits after the en
   const r = b.results(); assert(r.done && r.dragons.every(d => d.dead)); assert.strictEqual(r.topPlayers[0].id, 'a'); assert.strictEqual(r.topClans[0].id, 'x'); assert.deepStrictEqual(b.hit('a', 'ember', 5), []);
 });
 t('invalid hits are ignored: unknown player, unknown dragon, zero/negative damage', () => { const b = S.create(); b.join('a'); assert.deepStrictEqual(b.hit('zz', 'ember', 5), []); assert.deepStrictEqual(b.hit('a', 'nope', 5), []); assert.deepStrictEqual(b.hit('a', 'ember', 0), []); assert.deepStrictEqual(b.hit('a', 'ember', -4), []); });
+t('dormant until the server is big enough: schedule still previews, nobody can start; switches on at the threshold (default 50, tunable)', () => {
+  const st = S.nextStart(Date.UTC(2026, 9, 7, 12)), live = st + 10 * 60000;
+  const d = S.status(live, st, 12); assert.strictEqual(d.phase, 'dormant'); assert.strictEqual(d.schedule, 'live'); assert(!d.active && /unlocks at 50 active players \(now 12\)/.test(d.message));
+  const on = S.status(live, st, 50); assert.strictEqual(on.phase, 'live'); assert(on.active && on.message === null); assert.strictEqual(S.status(live, st, 60, 100).phase, 'dormant'); assert.strictEqual(S.status(live, st, 100, 100).phase, 'live'); assert.strictEqual(S.ACTIVATE_MIN, 50);
+});
 console.log(pass + ' passed');

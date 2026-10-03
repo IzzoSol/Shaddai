@@ -10,9 +10,9 @@ t('a cell always grows the same tuft (no popping or reshuffling), and about 60% 
 t('edge fade: full size well inside the ring, shrinking to zero at the rim, monotonic', () => {
   const R = 100; assert.strictEqual(W.edgeScale(10, R), 1); assert.strictEqual(W.edgeScale(100, R), 0); let prev = 1; for (let d = 70; d <= 100; d += 2) { const s = W.edgeScale(d, R); assert(s <= prev + 1e-12); prev = s; }
 });
-t('grass appears around the player, inside the ring, within the quality budget, as one draw call', () => {
-  const { g, scene, P } = mk(); g.update(0.016); const n = g.stats().tufts; assert(n > 1500 && n <= 7000, 'tufts ' + n); const R = W.R_M * U, M = new THREE.Matrix4(), v = new THREE.Vector3();
-  for (let i = 0; i < n; i += 37) { g.mesh.getMatrixAt(i, M); v.setFromMatrixPosition(M); assert(Math.hypot(v.x, v.z) < R + 1e-6, 'inside ring'); } assert.strictEqual(scene.children.filter(c => c.isInstancedMesh).length, 1);
+t('grass appears around the player, inside the ring, within the quality budget (blades + clumps = 2 draw calls)', () => {
+  const { g, scene, P } = mk(); g.update(0.016); const n = g.stats().tufts; assert(n > 1500 && n <= 9000, 'tufts ' + n); const R = W.R_M * U, M = new THREE.Matrix4(), v = new THREE.Vector3();
+  for (let i = 0; i < n; i += 37) { g.mesh.getMatrixAt(i, M); v.setFromMatrixPosition(M); assert(Math.hypot(v.x, v.z) < R + 1e-6, 'inside ring'); } assert.strictEqual(scene.children.filter(c => c.isInstancedMesh).length, 2, 'blade tufts + textured clumps = 2 draw calls');
 });
 t('it follows the player: after moving more than 6 m the ring is rebuilt around the new spot, standing still does not rebuild', () => {
   const { g, P } = mk(); g.update(0.016); const first = g.mesh.instanceMatrix.version; P.pos.x = 2 * U; g.update(0.016); assert.strictEqual(g.mesh.instanceMatrix.version, first, 'small step: no rebuild');
@@ -25,7 +25,7 @@ t('grows only where allowed, never on water, never on steep ground', () => {
   const dry = mk({ waterAt: () => null }); dry.g.update(0.016); assert(dry.g.stats().tufts > 1000);
 });
 t('quality tiers cap the count; POTATO grows nothing; switching rebuilds', () => {
-  const { g } = mk(); g.update(0.016); const high = g.stats().tufts; g.setQuality('LOW'); g.update(0.016); assert(g.stats().tufts <= 2200 && g.stats().tufts < high); g.setQuality('POTATO'); g.update(0.016); assert.strictEqual(g.stats().tufts, 0); assert.strictEqual(g.mesh.count, 0);
+  const { g } = mk(); g.update(0.016); const high = g.stats().tufts; g.setQuality('LOW'); g.update(0.016); assert(g.stats().tufts <= 2800 && g.stats().tufts < high); g.setQuality('POTATO'); g.update(0.016); assert.strictEqual(g.stats().tufts, 0); assert.strictEqual(g.mesh.count, 0);
   g.setQuality('HIGH'); g.update(0.016); assert(g.stats().tufts > 1500); g.setQuality('nonsense'); assert.strictEqual(g.stats().quality, 'HIGH');
 });
 t('over budget keeps the NEAREST tufts (what you stand in), not random ones', () => {
@@ -45,5 +45,19 @@ t('green mask: grass only where the ground colour map is green (not snow, sand, 
   const half = 1000, ok = W.greenMask(px, n, half); assert(ok(-1000, -1000), 'north-west corner is green'); assert(ok(1000, 1000), 'south-east corner is green'); assert(!ok(1000, -1000), 'north-east is grey');
   const cell = 2000 / (n - 1); assert(!ok(-1000 + cell, -1000 + cell), 'snow'); assert(!ok(-1000 + 2 * cell, -1000 + cell), 'sand'); assert(!ok(-1000 + cell, -1000 + 2 * cell), 'lava'); assert(!ok(-1000 + 2 * cell, -1000 + 2 * cell), 'water'); assert(!ok(5000, 0) && !ok(0, -5000), 'outside the map');
   assert(Math.abs(ok.coverage - 2 / 16) < 1e-9, 'coverage ' + ok.coverage);
+});
+
+t('CLUMPS (threex.grass textures): deterministic per cell, ~45% of cells, flowers are the minority, tiles are 0..3, normals tweaked straight up, crossed quads', () => {
+  const a = W.clumpFor(7, -3), b = W.clumpFor(7, -3); assert.deepStrictEqual(a, b); let keep = 0, fl = 0, n = 4000; const tiles = {};
+  for (let i = 0; i < 60; i++) for (let j = 0; j < 60; j++) { const c = W.clumpFor(i, j); if (c.keep) { keep++; if (c.flower) fl++; tiles[c.tile] = (tiles[c.tile] || 0) + 1; assert(c.tile >= 0 && c.tile <= 3 && (c.tile >= 2) === c.flower); } }
+  assert(keep / 3600 > 0.4 && keep / 3600 < 0.6, 'keep ' + keep / 3600); assert(fl / keep > 0.08 && fl / keep < 0.26, 'flowers ' + fl / keep); assert(Object.keys(tiles).length === 4);
+  const g = W.clumpGeometry(THREE, U), nr = g.attributes.normal; assert.strictEqual(g.attributes.position.count, 8); for (let i = 0; i < nr.count; i++) assert(nr.getY(i) === 1 && nr.getX(i) === 0);
+});
+t('clump layer: instances near the player within its own budget, hidden until the atlas loads (no solid quads), POTATO grows none, the atlas file exists and is small', () => {
+  const { g, P } = mk(); g.update(0.016); const s = g.stats(); assert(s.clumps > 100 && s.clumps <= W.CLUMP.QUALITY.HIGH, 'clumps ' + s.clumps); assert.strictEqual(g.clumpMesh.visible, false, 'hidden without the atlas texture');
+  const R = W.CLUMP.R_M * U, M = new THREE.Matrix4(), v = new THREE.Vector3(); for (let i = 0; i < g.clumpMesh.count; i += 11) { g.clumpMesh.getMatrixAt(i, M); v.setFromMatrixPosition(M); assert(Math.hypot(v.x, v.z) < R + 1e-6); }
+  g.setQuality('POTATO'); g.update(0.016); g.rebuild(P.pos.x, P.pos.z); assert.strictEqual(g.stats().clumps, 0);
+  const f = 'public/assets/grass/clumps-atlas.webp'; assert(fs.existsSync(f) && fs.statSync(f).size < 150 * 1024); assert(fs.existsSync('public/assets/grass/threex.grass-LICENSE.txt'), 'MIT license kept with the art');
+  const off = mk({ clumps: false }); off.g.update(0.016); assert.strictEqual(off.g.stats().clumps, 0, 'can be switched off');
 });
 console.log(pass + ' passed');

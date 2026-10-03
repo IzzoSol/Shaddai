@@ -17,6 +17,21 @@
   }
   function edgeScale(d, R) { var t = Math.max(0, Math.min(1, (R - d) / (R * 0.25))); return t * t * (3 - 2 * t); }
 
+  /* TEXTURED CLUMPS (owner 2026-10-03: take the threex.grass pack, MIT): alpha-cut tufts + flower clumps on crossed quads, normals tweaked straight up for even lighting,
+   * packed in one 2x2 atlas (grass01, grass02, flowers01, flowers02). A second InstancedMesh (1 draw call) on the same wind shader, sparser and nearer than the blade tufts. */
+  var CLUMP = { H_M: 0.75, W_M: 1.05, R_M: 20, CELL_M: 2.3, ATLAS: '/assets/grass/clumps-atlas.webp', QUALITY: { HIGH: 700, MEDIUM: 420, LOW: 180, POTATO: 0 } };
+  function clumpFor(cx, cz) {
+    var a = hash2(cx * 3 + 11, cz * 5 - 7), b = hash2(cz + 301, cx - 57), c = hash2(cx * 11 + 5, cz * 7 - 3), d = hash2(cx - 90, cz + 33), e = hash2(cx + 71, cz * 13 + 9), f = hash2(cx * 17 - 4, cz - 41);
+    var flower = e < 0.16;
+    return { keep: a < 0.5, dx: b, dz: c, rot: d * Math.PI * 2, scale: 0.8 + f * 0.55, tile: flower ? 2 + (f < 0.5 ? 0 : 1) : (f < 0.5 ? 0 : 1), flower: flower, tint: hash2(cx + 5, cz + 19) };
+  }
+  function clumpGeometry(THREE, U) {   // two crossed quads, base at y = 0, all normals (0,1,0) (airborn-trees trick: soft even light, no dark backfaces)
+    var W = CLUMP.W_M * U, H = CLUMP.H_M * U, pos = [], uv = [], idx = [];
+    for (var k = 0; k < 2; k++) { var a = k * Math.PI / 2, cx = Math.cos(a) * W / 2, sz = Math.sin(a) * W / 2, b = pos.length / 3;
+      pos.push(-cx, 0, -sz, cx, 0, sz, cx, H, sz, -cx, H, -sz); uv.push(0, 0, 1, 0, 1, 1, 0, 1); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); }
+    var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    var nrm = []; for (var i = 0; i < pos.length / 3; i++) nrm.push(0, 1, 0); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); g.setIndex(idx); return g;
+  }
   var BLADE_H_M = 0.55, BLADES = 7;
   function tuftGeometry(THREE, U) {   // 7 fine, leaning, differently tall blades per tuft; colour darkens to the root (cheap: 7 triangles)
     var pos = [], col = [], uv = [], H = BLADE_H_M * U, W = 0.05 * U;
@@ -46,6 +61,19 @@
     });
   }
 
+  /* wind + push-away vertex program shared by the blade tufts and the textured clumps: hM = full height in metres of the thing being bent (bend grows with height squared) */
+  function windProject(hM, U) {
+    return 'vec4 mvPosition = instanceMatrix * vec4(transformed, 1.0);\n' +
+          '  vec3 gb = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz; float gh = clamp(position.y / ' + (hM * U).toFixed(3) + ', 0.0, 1.0); float gk = gh * gh;\n' +
+          '  float gust = sin(uTime * 0.7 + gb.x * 0.045 + gb.z * 0.03) * 0.5 + 0.5;\n' +
+          '  float sw = sin(uTime * 1.9 + gb.x * 0.31 + gb.z * 0.23) * 0.55 + sin(uTime * 3.1 + gb.z * 0.5) * 0.18;\n' +
+          '  mvPosition.x += (sw * (0.35 + gust * 0.65)) * ' + (0.2 * U).toFixed(3) + ' * gk * uWind;\n' +
+          '  mvPosition.z += (cos(uTime * 1.5 + gb.x * 0.2) * 0.3 * (0.3 + gust * 0.7)) * ' + (0.14 * U).toFixed(3) + ' * gk * uWind;\n' +
+          '  vec2 away = gb.xz - uPlayer.xz; float pd = length(away); float push = smoothstep(uPush * 2.2, 0.0, pd) * gk; vec2 pdir = away / max(pd, 0.001);\n' +
+          '  mvPosition.x += pdir.x * push * ' + (0.8 * U).toFixed(3) + '; mvPosition.z += pdir.y * push * ' + (0.8 * U).toFixed(3) + '; mvPosition.y -= push * ' + (0.35 * U).toFixed(3) + ' * gh;\n' +
+          '  mvPosition = modelViewMatrix * mvPosition; gl_Position = projectionMatrix * mvPosition;';
+  }
+
   function buildWorldGrass(o) {
     var THREE = o.THREE, U = o.U || U0, R = R_M * U, CELL = CELL_M * U, heightAt = o.heightAt, allow = o.allow || function () { return true; }, waterAt = o.waterAt || null;
     var qName = o.quality || 'MEDIUM', cap = QUALITY[qName] != null ? QUALITY[qName] : QUALITY.MEDIUM;
@@ -54,18 +82,34 @@
     mat.onBeforeCompile = function (sh) {
       sh.uniforms.uTime = uniforms.uTime; sh.uniforms.uPlayer = uniforms.uPlayer; sh.uniforms.uWind = uniforms.uWind; sh.uniforms.uPush = uniforms.uPush;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime; uniform vec3 uPlayer; uniform float uWind; uniform float uPush;')
-        .replace('#include <project_vertex>',
-          'vec4 mvPosition = instanceMatrix * vec4(transformed, 1.0);\n' +
-          '  vec3 gb = (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz; float gh = clamp(position.y / ' + (BLADE_H_M * U).toFixed(3) + ', 0.0, 1.0); float gk = gh * gh;\n' +
-          '  float gust = sin(uTime * 0.7 + gb.x * 0.045 + gb.z * 0.03) * 0.5 + 0.5;\n' +
-          '  float sw = sin(uTime * 1.9 + gb.x * 0.31 + gb.z * 0.23) * 0.55 + sin(uTime * 3.1 + gb.z * 0.5) * 0.18;\n' +
-          '  mvPosition.x += (sw * (0.35 + gust * 0.65)) * ' + (0.2 * U).toFixed(3) + ' * gk * uWind;\n' +
-          '  mvPosition.z += (cos(uTime * 1.5 + gb.x * 0.2) * 0.3 * (0.3 + gust * 0.7)) * ' + (0.14 * U).toFixed(3) + ' * gk * uWind;\n' +
-          '  vec2 away = gb.xz - uPlayer.xz; float pd = length(away); float push = smoothstep(uPush * 2.2, 0.0, pd) * gk; vec2 pdir = away / max(pd, 0.001);\n' +
-          '  mvPosition.x += pdir.x * push * ' + (0.8 * U).toFixed(3) + '; mvPosition.z += pdir.y * push * ' + (0.8 * U).toFixed(3) + '; mvPosition.y -= push * ' + (0.35 * U).toFixed(3) + ' * gh;\n' +
-          '  mvPosition = modelViewMatrix * mvPosition; gl_Position = projectionMatrix * mvPosition;');
+        .replace('#include <project_vertex>', windProject(BLADE_H_M, U));
     };
     var geo = tuftGeometry(THREE, U), mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, QUALITY.HIGH)); mesh.name = 'world-grass'; mesh.frustumCulled = false; mesh.count = 0; mesh.castShadow = false; mesh.receiveShadow = false; o.scene.add(mesh);
+    // ── textured clumps (second layer) ──
+    var ccap = CLUMP.QUALITY[qName] != null ? CLUMP.QUALITY[qName] : CLUMP.QUALITY.MEDIUM, cuni = uniforms, cNo = o.clumps === false;
+    var cmat = new THREE.MeshLambertMaterial({ color: 0xcfe8b8, side: THREE.DoubleSide, alphaTest: 0.5, emissive: 0x2c5a26, emissiveIntensity: 0.55 });
+    cmat.onBeforeCompile = function (sh) {
+      sh.uniforms.uTime = cuni.uTime; sh.uniforms.uPlayer = cuni.uPlayer; sh.uniforms.uWind = cuni.uWind; sh.uniforms.uPush = cuni.uPush;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime; uniform vec3 uPlayer; uniform float uWind; uniform float uPush; attribute float aTile;')
+        .replace('#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\n  vMapUv = vMapUv * 0.5 + vec2(mod(aTile, 2.0) * 0.5, 0.5 - floor(aTile / 2.0) * 0.5);\n#endif')
+        .replace('#include <project_vertex>', windProject(CLUMP.H_M, U));
+    };
+    var cgeo = clumpGeometry(THREE, U), tileAttr = new THREE.InstancedBufferAttribute(new Float32Array(CLUMP.QUALITY.HIGH), 1); cgeo.setAttribute('aTile', tileAttr);
+    var cmesh = new THREE.InstancedMesh(cgeo, cmat, Math.max(1, CLUMP.QUALITY.HIGH)); cmesh.name = 'world-grass-clumps'; cmesh.frustumCulled = false; cmesh.count = 0; cmesh.visible = false; cmesh.castShadow = false; cmesh.receiveShadow = false; if (!cNo) o.scene.add(cmesh);
+    if (!cNo && typeof document !== 'undefined' && THREE.TextureLoader) { try { new THREE.TextureLoader().load(o.clumpAtlas || CLUMP.ATLAS, function (tx) { tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 2; cmat.map = tx; cmat.needsUpdate = true; cmesh.visible = true; }, undefined, function () { }); } catch (e) { } }   // hidden until the atlas arrives (alpha-test without a map would draw solid quads)
+    var cCount = 0;
+    function rebuildClumps(px, pz) {
+      cCount = 0; if (cNo || ccap <= 0) { cmesh.count = 0; return; }
+      var CR = CLUMP.R_M * U, CC = CLUMP.CELL_M * U, i0 = Math.floor((px - CR) / CC), i1 = Math.floor((px + CR) / CC), j0 = Math.floor((pz - CR) / CC), j1 = Math.floor((pz + CR) / CC), pick = [];
+      for (var i = i0; i <= i1; i++) for (var j = j0; j <= j1; j++) { var t = clumpFor(i, j); if (!t.keep) continue; var x = (i + t.dx) * CC, z = (j + t.dz) * CC, d = Math.hypot(x - px, z - pz); if (d >= CR) continue; pick.push({ x: x, z: z, d: d, t: t }); }
+      if (pick.length > ccap) { pick.sort(function (a, b) { return a.d - b.d; }); pick.length = ccap; }
+      for (var k = 0; k < pick.length; k++) {
+        var p = pick[k], y = heightAt(p.x, p.z); if (!allow(p.x, p.z) || (waterAt && waterAt(p.x, p.z) != null && waterAt(p.x, p.z) > y - 0.2 * U) || !slopeOk(p.x, p.z, y)) continue;
+        var s2 = p.t.scale * edgeScale(p.d, CR); if (s2 < 0.05) continue; q.setFromAxisAngle(up, p.t.rot); sc.set(s2, s2, s2); pv.set(p.x, y, p.z); m4.compose(pv, q, sc); cmesh.setMatrixAt(cCount, m4);
+        tmp.setRGB(0.8 + p.t.tint * 0.3, 0.92 + p.t.tint * 0.1, 0.75 + p.t.tint * 0.2); cmesh.setColorAt(cCount, tmp); tileAttr.array[cCount] = p.t.tile; cCount++;
+      }
+      cmesh.count = cCount; cmesh.instanceMatrix.needsUpdate = true; if (cmesh.instanceColor) cmesh.instanceColor.needsUpdate = true; tileAttr.needsUpdate = true;
+    }
     var cA = new THREE.Color(0x6aa83a), cB = new THREE.Color(0xc4d86a), tmp = new THREE.Color(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pv = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     var lastX = 1e9, lastZ = 1e9, count = 0, time = 0;
     function slopeOk(x, z, y) { var e = 2 * U; return Math.abs(heightAt(x + e, z) - y) < 1.1 * e && Math.abs(heightAt(x, z + e) - y) < 1.1 * e; }
@@ -81,14 +125,14 @@
         var s = p.t.scale * edgeScale(p.d, R); if (s < 0.05) continue; q.setFromAxisAngle(up, p.t.rot); sc.set(s, s, s); pv.set(p.x, y, p.z); m4.compose(pv, q, sc); mesh.setMatrixAt(count, m4);
         tmp.copy(cA).lerp(cB, p.t.tint * 0.8); mesh.setColorAt(count, tmp); count++;
       }
-      mesh.count = count; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; lastX = px; lastZ = pz;
+      mesh.count = count; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; lastX = px; lastZ = pz; rebuildClumps(px, pz);
     }
     function update(dt) {
       time += dt; uniforms.uTime.value = time; var pl = o.getPlayer && o.getPlayer(); if (!pl || !pl.pos) return; uniforms.uPlayer.value.set(pl.pos.x, pl.pos.y, pl.pos.z);
       if (cap > 0 && Math.hypot(pl.pos.x - lastX, pl.pos.z - lastZ) > REBUILD_M * U) rebuild(pl.pos.x, pl.pos.z);
     }
-    function setQuality(n) { if (QUALITY[n] == null) return; qName = n; cap = QUALITY[n]; lastX = 1e9; if (cap === 0) { mesh.count = 0; count = 0; } }
-    return { mesh: mesh, uniforms: uniforms, update: update, setQuality: setQuality, rebuild: rebuild, stats: function () { return { tufts: count, quality: qName, cap: cap }; }, setWind: function (k) { uniforms.uWind.value = k; }, dispose: function () { o.scene.remove(mesh); geo.dispose(); mat.dispose(); } };
+    function setQuality(n) { if (QUALITY[n] == null) return; qName = n; cap = QUALITY[n]; ccap = CLUMP.QUALITY[n]; lastX = 1e9; if (cap === 0) { mesh.count = 0; count = 0; cmesh.count = 0; cCount = 0; } }
+    return { mesh: mesh, uniforms: uniforms, update: update, setQuality: setQuality, rebuild: rebuild, stats: function () { return { tufts: count, clumps: cCount, quality: qName, cap: cap }; }, setWind: function (k) { uniforms.uWind.value = k; }, dispose: function () { o.scene.remove(mesh); o.scene.remove(cmesh); geo.dispose(); mat.dispose(); cgeo.dispose(); cmat.dispose(); if (cmat.map) cmat.map.dispose(); }, clumpMesh: cmesh };
   }
-  root.buildWorldGrass = buildWorldGrass; root.WorldGrass = { greenMask: greenMask, loadGreenMask: loadGreenMask, hash2: hash2, tuftFor: tuftFor, edgeScale: edgeScale, QUALITY: QUALITY, R_M: R_M, CELL_M: CELL_M };
+  root.buildWorldGrass = buildWorldGrass; root.WorldGrass = { clumpFor: clumpFor, clumpGeometry: clumpGeometry, CLUMP: CLUMP, greenMask: greenMask, loadGreenMask: loadGreenMask, hash2: hash2, tuftFor: tuftFor, edgeScale: edgeScale, QUALITY: QUALITY, R_M: R_M, CELL_M: CELL_M };
 })(typeof window !== 'undefined' ? window : globalThis);
