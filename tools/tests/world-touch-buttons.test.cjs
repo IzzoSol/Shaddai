@@ -1,0 +1,15 @@
+// node tools/tests/world-touch-buttons.test.cjs — phone buttons drive the game's keyboard handling: tap, hold, latch, release-all, first-press hook, unique codes
+const assert = require('assert'); const ev = []; const win = { dispatchEvent: e => { ev.push(e.type + ':' + e.code); }, KeyboardEvent: undefined, navigator: {} }; global.window = global; require('../../public/world-touch-buttons.js'); const WT = global.WorldTouch;
+let pass = 0; const t = async (n, f) => { try { await f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
+const mk = (o) => { ev.length = 0; return WT.create(Object.assign({ root: win, document: null, vibrate: () => { } }, o)); };
+(async () => {
+  await t('every button has a unique id and key code; the essentials are all there (jump, interact, attack, kick, flip, sprint, board, navi, map, camera, passive)', () => {
+    const ids = WT.BUTTONS.map(b => b.id), codes = WT.BUTTONS.map(b => b.code); assert.strictEqual(new Set(ids).size, ids.length); assert.strictEqual(new Set(codes).size, codes.length);
+    ['jump', 'use', 'attack', 'kick', 'flip', 'sprint', 'board', 'navi', 'map', 'cam', 'passive'].forEach(i => assert(ids.includes(i), i)); assert.strictEqual(WT.BUTTONS.find(b => b.id === 'passive').code, 'Backslash'); assert.strictEqual(WT.BUTTONS.find(b => b.id === 'kick').code, 'KeyK');
+  });
+  await t('hold keys (jump) stay down until release; a second press while held does nothing; release sends keyup once', () => { const tb = mk(); tb.press('jump'); tb.press('jump'); assert.deepStrictEqual(ev, ['keydown:Space']); assert.deepStrictEqual(tb.held(), ['jump']); tb.release('jump'); tb.release('jump'); assert.deepStrictEqual(ev, ['keydown:Space', 'keyup:Space']); });
+  await t('tap keys (interact) send keydown now and keyup shortly after', async () => { const tb = mk(); tb.press('use'); assert.deepStrictEqual(ev, ['keydown:KeyE']); await new Promise(r => setTimeout(r, 120)); assert.deepStrictEqual(ev, ['keydown:KeyE', 'keyup:KeyE']); assert.deepStrictEqual(tb.held(), []); });
+  await t('sprint latches: tap on = Shift down, tap again = Shift up; releaseAll lets go of everything held or latched', () => { const tb = mk(); tb.press('sprint'); assert.deepStrictEqual(tb.held(), ['sprint']); tb.press('jump'); tb.releaseAll(); assert.deepStrictEqual(ev, ['keydown:ShiftLeft', 'keydown:Space', 'keyup:Space', 'keyup:ShiftLeft']); assert.deepStrictEqual(tb.held(), []); const t2 = mk(); t2.press('sprint'); t2.press('sprint'); assert.deepStrictEqual(ev, ['keydown:ShiftLeft', 'keyup:ShiftLeft']); });
+  await t('the first press fires the play-mode hook exactly once; unknown buttons are ignored; hide releases held keys', () => { let n = 0; const tb = mk({ onFirstPress: () => n++ }); tb.press('kick'); tb.press('flip'); assert.strictEqual(n, 1); assert.strictEqual(tb.press('nope'), false); const t3 = mk(); t3.press('jump'); t3.hide(); assert.deepStrictEqual(ev, ['keydown:Space', 'keyup:Space']); });
+  console.log(pass + ' passed');
+})();
