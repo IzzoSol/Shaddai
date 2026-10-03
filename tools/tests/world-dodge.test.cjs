@@ -1,0 +1,7 @@
+// node tools/tests/world-dodge.test.cjs — dodge roll: i-frame window, cooldown, hazards not dodgeable
+const assert = require('assert'); global.window = global; require('../../public/world-dodge.js'); const D = global.WorldDodge; let now = 100; D._setClock(() => now);
+let pass = 0; const t = (n, f) => { try { f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
+t('no i-frames until a roll starts; a roll is invulnerable only inside its window, then vulnerable again', () => { assert(!D.invulnerable()); assert(D.trigger()); assert(D.rolling()); assert(!D.invulnerable(), 'not in the first instant'); now += 0.1; assert(D.invulnerable()); now += 0.3; assert(D.invulnerable()); now += 0.1; assert(!D.invulnerable() && D.rolling(), 'rolling but exposed at the tail'); now += 0.2; assert(!D.rolling()); });
+t('cooldown: cannot roll again until 0.9 s after the last roll started; then it works', () => { now += 10; assert(D.trigger()); now += 0.5; assert(!D.trigger()); assert(D.cooldownLeft() > 0.3); now += 0.5; assert(D.trigger()); });
+t('blocks(kind): enemy/dragon damage is dodged, hazards are not (lava, drowning, falls, gas, cold, heat, void)', () => { now += 10; D.trigger(); now += 0.2; assert(D.blocks('damage') && D.blocks('mob') && D.blocks('dragon')); ['lava', 'drown', 'fall', 'gas', 'cold', 'heat', 'void', 'burn'].forEach(k => assert(!D.blocks(k), k)); now += 5; assert(!D.blocks('damage')); });
+console.log(pass + ' passed');
