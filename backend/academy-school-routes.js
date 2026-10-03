@@ -23,7 +23,7 @@ function publicSkill(s) {
 function codeFor(r) {
   if (r && r.insufficient) return 402;
   const e = String((r && r.error) || '');
-  if (/admin only|not allowed|does not belong|not your|not yours/i.test(e)) return 403;
+  if (/admin only|not allowed|does not belong|not your|not yours|role required|do not own/i.test(e)) return 403;
   if (/^unknown|not found/i.test(e)) return 404;
   return 400;
 }
@@ -49,6 +49,15 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
   const send = (res, r, shape) => (r && r.ok ? ok(res, shape(r)) : fail(res, codeFor(r), (r && r.error) || 'failed', r && r.errors ? { errors: r.errors } : undefined));
   const isAdmin = (u) => academy.roles.rolesOf(u).includes('admin');
   const ownerOf = (agentId) => { const op = isSafeId(agentId) ? operatives.get(agentId) : null; return (op && op.owner) || null; };
+
+  // Prerequisites: every skill in `requires` must already be installed on the agent.
+  const missingPrereqs = (agentId, skillId) => {
+    const skill = isSafeId(skillId) ? academy.registry.get(skillId) : null;
+    if (!skill || !skill.requires.length) return [];
+    const op = isSafeId(agentId) ? operatives.get(agentId) : null;
+    const have = new Set(((op && op.skills) || []).map((s) => s.skillId));
+    return skill.requires.filter((r) => !have.has(r));
+  };
 
   // An enrollment is "open" until an exam attempt has used it; repeat enroll calls return it instead of charging again.
   const openEnrollment = (agentId, skillId) => academy.tuition.forAgent(agentId, skillId).find((e) => e.status === 'paid' && !academy.exams.enrollmentKinds(e.id).includes('exam')) || null;
@@ -120,6 +129,8 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
     const b = bodyOf(req);
     if (!isStr(b.agentId) || !isStr(b.skillId)) return fail(res, 400, 'agentId and skillId required');
     if (ownerOf(b.agentId) !== u) return fail(res, 403, 'not your agent');
+    const missing = missingPrereqs(b.agentId, b.skillId);
+    if (missing.length) return fail(res, 400, 'requires skills you do not have yet: ' + missing.join(', '));
     if (!isStr(b.windowId)) {
       const open = openEnrollment(b.agentId, b.skillId);
       if (open) return ok(res, { enrollment: open, replay: true });
@@ -191,8 +202,31 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
     send(res, academy.exams.resolve({ attemptId: req.params.attemptId, by: u, taskScores: bodyOf(req).taskScores }), (r) => ({ score: r.score }))
   )));
 
-  // bot side is added in the next task
-  if (agentAuth) router.use('/xagent', createBotRouter({ academy, operatives, agentAuth, fail, ok, wrap, bodyOf, send, isStr, publicSkill, badBody, openEnrollment, pickEnrollment }));
+  // ── room Press: books and docs sold from the subject rooms ────────────────
+  router.get('/press/titles', wrap(async (req, res) => ok(res, { titles: academy.press.list({ room: isStr(req.query.room) ? req.query.room : undefined }) })));
+  router.get('/press/titles/:id', wrap(async (req, res) => {
+    const t = academy.press.get(req.params.id);
+    return t ? ok(res, { title: t }) : fail(res, 404, 'title not found');
+  }));
+  router.post('/press/titles', authed((req, res, u) => {
+    const b = bodyOf(req);
+    return send(res, academy.press.publish({ by: u, room: b.room, title: b.title, kind: b.kind, body: b.body, price_sparks: b.price_sparks, authors: b.authors }), (r) => ({ title: r.title }));
+  }));
+  router.post('/press/buy', authed(async (req, res, u) => {
+    const b = bodyOf(req);
+    if (!isStr(b.titleId)) return fail(res, 400, 'titleId required');
+    return send(res, await academy.press.buy({ ownerId: u, titleId: b.titleId }), (r) => ({ entitlement: r.entitlement }));
+  }));
+  router.get('/press/read/:id', authed((req, res, u) => send(res, academy.press.read({ ownerId: u, titleId: req.params.id }), (r) => ({ title: r.title, body: r.body }))));
+  router.get('/press/pending', adminOnly((req, res) => ok(res, { titles: academy.press.pending() })));
+  router.post('/press/approve', adminOnly((req, res, u) => {
+    const b = bodyOf(req);
+    if (!isStr(b.titleId)) return fail(res, 400, 'titleId required');
+    return send(res, academy.press.approve({ by: u, titleId: b.titleId, approve: b.approve === true }), (r) => ({ title: r.title }));
+  }));
+
+  // bot side
+  if (agentAuth) router.use('/xagent', createBotRouter({ academy, operatives, agentAuth, fail, ok, wrap, bodyOf, send, isStr, publicSkill, badBody, openEnrollment, pickEnrollment, missingPrereqs }));
 
   router.use((err, req, res, next) => {    // eslint-disable-line no-unused-vars
     if (err && err.type === 'entity.parse.failed') return fail(res, 400, 'invalid JSON');
@@ -204,7 +238,7 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
 }
 
 // Bot side: identity comes from the bearer token only. The agent is the token's operative, the payer is its owner.
-function createBotRouter({ academy, operatives, agentAuth, fail, ok, wrap, bodyOf, send, isStr, publicSkill, badBody, openEnrollment, pickEnrollment }) {
+function createBotRouter({ academy, operatives, agentAuth, fail, ok, wrap, bodyOf, send, isStr, publicSkill, badBody, openEnrollment, pickEnrollment, missingPrereqs }) {
   const r = express.Router();
   const mountPath = (req) => req.baseUrl.replace(/\/xagent$/, '');
   r.get('/tools', (req, res) => ok(res, buildToolManifest({
@@ -235,6 +269,8 @@ function createBotRouter({ academy, operatives, agentAuth, fail, ok, wrap, bodyO
   r.post('/enroll', wrap(async (req, res) => {
     const b = bodyOf(req); const { agentId, ownerId } = who(req);
     if (!isStr(b.skillId)) return fail(res, 400, 'skillId required');
+    const missing = missingPrereqs(agentId, b.skillId);
+    if (missing.length) return fail(res, 400, 'requires skills you do not have yet: ' + missing.join(', '));
     if (!isStr(b.windowId)) {
       const open = openEnrollment(agentId, b.skillId);
       if (open) return ok(res, { enrollment: open, replay: true });

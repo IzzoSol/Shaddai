@@ -105,6 +105,20 @@ runAll('press', {
     assert.ok(!press.read({ ownerId: 'author2', titleId: t.id }).ok);
     assert.ok(!press.read({ ownerId: 'buyer', titleId: '__proto__' }).ok);
   },
+  async 'publishHouse is internal, approved immediately, room comes from the faculty, and repeats are no-ops'() {
+    const { press } = await setup();
+    const a = press.publishHouse({ agent: 'QUILL', title: 'House Guide', kind: 'course-book', body: BODY + ' house', price_sparks: 10 });
+    assert.ok(a.ok && a.created);
+    assert.strictEqual(a.title.status, 'approved');
+    assert.strictEqual(a.title.room, 'scriptorium');
+    assert.deepStrictEqual(a.title.authors, [{ type: 'house', id: 'QUILL', share: 100 }]);
+    const b = press.publishHouse({ agent: 'QUILL', title: 'House Guide', kind: 'course-book', body: BODY + ' house', price_sparks: 10 });
+    assert.ok(b.ok && !b.created);
+    assert.strictEqual(b.title.id, a.title.id);
+    assert.strictEqual(press.list({}).length, 1);
+    assert.ok(!press.publishHouse({ agent: 'NOPE', title: 'X book', kind: 'guide', body: BODY, price_sparks: 1 }).ok);
+    assert.ok(!press.publishHouse({ agent: 'QUILL', title: 'Leaky', kind: 'guide', body: BODY + ' sk-abcdefghijklmnopqrstuv', price_sparks: 1 }).ok);
+  },
   async 'rejecting a title removes it from the queue and blocks purchase'() {
     const { press } = await setup();
     const t = press.publish(Object.assign({ by: 'author' }, book())).title;

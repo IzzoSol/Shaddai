@@ -57,7 +57,8 @@ const SCRIPTS = [
   'lib/academy/academy-instance.test.js',
   'lib/academy/press.test.js',
   'academy-school-fixes.test.js',
-  'lib/academy/curriculum.test.js'
+  'lib/academy/curriculum.test.js',
+  'academy-press-routes.test.js'
 ];
 
 let passed = 0, failed = 0;

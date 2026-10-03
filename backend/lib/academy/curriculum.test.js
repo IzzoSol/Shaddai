@@ -85,12 +85,15 @@ runAll('curriculum', {
   'seeding registers everything once, never overwrites, and a second seed is a no-op'() {
     const { academy } = makeAcademy();
     const first = seedCurriculum(academy);
-    assert.deepStrictEqual([first.skills, first.benchmarks, first.rubrics], [11, 11, RUBRICS.length]);
+    assert.deepStrictEqual([first.skills, first.benchmarks, first.rubrics, first.books], [11, 11, RUBRICS.length, 11]);
+    assert.strictEqual(academy.press.list({}).length, 11);
+    for (const f of FACULTY) assert.ok(academy.press.list({ room: f.room }).length >= 1, f.room + ' has no books');
     assert.strictEqual(academy.registry.list({}).length, 11);
     const edited = Object.assign({}, ENTRIES[0].skill, { version: '1.1.0', summary: 'Edited by the teacher.' });
     assert.ok(academy.registry.publish(edited).ok);
     const second = seedCurriculum(academy);
-    assert.deepStrictEqual([second.skills, second.benchmarks, second.rubrics], [0, 0, 0]);
+    assert.deepStrictEqual([second.skills, second.benchmarks, second.rubrics, second.books], [0, 0, 0, 0]);
+    assert.strictEqual(academy.press.list({}).length, 11);
     assert.strictEqual(academy.registry.get(ENTRIES[0].skill.id).version, '1.1.0');
     assert.strictEqual(academy.registry.get(ENTRIES[0].skill.id).summary, 'Edited by the teacher.');
   },

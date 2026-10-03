@@ -33,11 +33,8 @@ function createPress({ store, economy, roles, econ = ACADEMY_ECON, now = Date.no
   const normBody = (b) => b.toLowerCase().replace(/\s+/g, ' ').trim();
   const summary = (t) => ({ id: t.id, room: t.room, title: t.title, kind: t.kind, price_sparks: t.price_sparks, authors: t.authors, status: t.status, version: t.version, createdAt: t.createdAt });
 
-  function publish({ by, room, title, kind, body, price_sparks, authors }) {
-    if (!isSafeId(by)) return err('sign in first');
-    const admin = roles.rolesOf(by).includes('admin');
-    if (!admin && !roles.can(by, 'skill.publish')) return err('teacher role required to publish');
-    if (!ROOMS.has(room)) return err('unknown room');
+  // Shared content rules for every way a title can be created.
+  function checkContent({ title, kind, body, price_sparks }) {
     if (!KINDS.includes(kind)) return err('kind must be one of ' + KINDS.join(','));
     const t = stripMarkup(title).slice(0, 120);
     if (t.length < 3) return err('title needs at least 3 characters');
@@ -47,6 +44,34 @@ function createPress({ store, economy, roles, econ = ACADEMY_ECON, now = Date.no
     if (clean.length > 200000) return err('body is too long (max 200000 characters)');
     if (hasSecret(clean) || hasSecret(t)) return err('body looks like it contains a secret');
     if (!Number.isInteger(price_sparks) || price_sparks < 0 || price_sparks > 5000) return err('price_sparks must be an integer 0..5000');
+    return { ok: true, t, clean };
+  }
+
+  // Internal only (never wired to a request body): a house faculty book, approved at once, into that agent's own room.
+  // Repeating the same body is a no-op, so seeding twice changes nothing.
+  function publishHouse({ agent, title, kind, body, price_sparks }) {
+    const f = FACULTY.find((x) => x.agent === agent);
+    if (!f) return err('unknown house agent');
+    const c = checkContent({ title, kind, body, price_sparks });
+    if (!c.ok) return c;
+    const d = load();
+    const bodyHash = sha256(normBody(c.clean));
+    const dupe = Object.values(d.titles).find((x) => x.bodyHash === bodyHash);
+    if (dupe) return { ok: true, created: false, title: summary(dupe) };
+    const id = 'bk_' + hashOf({ t: c.t, bodyHash, agent }).slice(0, 12);
+    d.titles[id] = { id, room: f.room, title: c.t, kind, price_sparks, authors: [{ type: 'house', id: agent, share: 100 }], status: 'approved', bodyHash, body: c.clean, by: 'house:' + agent, version: 1, createdAt: now() };
+    store.write('press', d);
+    return { ok: true, created: true, title: summary(d.titles[id]) };
+  }
+
+  function publish({ by, room, title, kind, body, price_sparks, authors }) {
+    if (!isSafeId(by)) return err('sign in first');
+    const admin = roles.rolesOf(by).includes('admin');
+    if (!admin && !roles.can(by, 'skill.publish')) return err('teacher role required to publish');
+    if (!ROOMS.has(room)) return err('invalid room');
+    const c = checkContent({ title, kind, body, price_sparks });
+    if (!c.ok) return c;
+    const { t, clean } = c;
     if (!Array.isArray(authors) || authors.length < 1 || authors.length > 5) return err('1 to 5 authors required');
     const seen = new Set(); let total = 0;
     for (const a of authors) {
@@ -121,7 +146,7 @@ function createPress({ store, economy, roles, econ = ACADEMY_ECON, now = Date.no
     return { ok: true, title: summary(t), body: t.body };
   }
 
-  return { publish, approve, list, pending, get, buy, read };
+  return { publish, publishHouse, approve, list, pending, get, buy, read };
 }
 
 module.exports = { createPress, compileBook, ROOMS, KINDS };

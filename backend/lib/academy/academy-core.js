@@ -8,6 +8,7 @@ const { createHomework } = require('./homework');
 const { createAcademyEconomy } = require('./economy');
 const { createRoles } = require('./roles');
 const { createClasses } = require('./classes');
+const { createPress } = require('./press');
 const { createHooks } = require('./hooks');
 const { installSkill } = require('./install');
 const { isSafeId, hasOwn } = require('./ids');
@@ -30,6 +31,7 @@ function createAcademy({ dir, economy, operatives, judge, hooks, now = Date.now,
   const tuition = createAcademyEconomy({ economy, store, getSkill: registry.get, ownerOfAgent, teacherOwnerOf });
   const roles = createRoles({ store, adminIds, now });
   const classes = createClasses({ store, registry, roles });
+  const press = createPress({ store, economy, roles });
   hooks = hooks || createHooks({ achievements: require('../../achievements'), reputation: require('../reputation-engine') });
 
   const loadDone = () => store.read('finished', { byExam: {}, byEnrollment: {}, conferred: {} });
@@ -90,7 +92,7 @@ function createAcademy({ dir, economy, operatives, judge, hooks, now = Date.now,
     return { ok: true, passed: ev.passed, receipt, split: settled.split, installed, classCompleted };
   }
 
-  return { store, registry, benchmarks, exams, receipts, homework, tuition, roles, classes, finishExam };
+  return { store, registry, benchmarks, exams, receipts, homework, tuition, roles, classes, press, finishExam };
 }
 
 module.exports = { createAcademy };
