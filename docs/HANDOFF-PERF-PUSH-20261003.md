@@ -94,3 +94,9 @@ User opened Blender instance — can now:
 1. Owner decision: re-plan city frontage (buildings in rows facing avenues) in grid-city-v4.json via Blender map-top review.
 2. Name + instance the ~1,770 unnamed top-level meshes (biggest outdoor draw-call bucket).
 3. Walk-in arcade, stairs/doors audit, mobile stall (last).
+
+## Owner asks logged 2026-10-03 (not started)
+- HF images: character LIKENESS loading slides (image-to-image from the in-game portraits, not text-only), Athenaeum interior paintings, billboards.
+- Colosseum: finish the inside; lobby -> crowd stands route; arena floor via an ADMIN GATE with keypad code 4444 -> back area with animals, boats/water, terrain switches; bots can work back there and be hired.
+- Later pass: colosseum metro connects to the maglev train station.
+- Pending owner answer: re-plan city frontage (rows facing avenues).
