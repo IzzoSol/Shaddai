@@ -73,6 +73,7 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   @keyframes introScan{to{transform:translateY(calc(100vh + 280px))}}
   @keyframes capIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){#introLite .wm{animation:none}#liteSlides::after{display:none}}
+  body.touch-ui #hint,body.touch-ui #modeToggle{display:none!important}   /* phone: no keyboard legend, no cursor/play toggle; the touch buttons replace them */
   #liteSlides{display:none}
   html.intro-lite #liteSlides{display:block}
   html.intro-lite #introLite{position:relative;z-index:5}
@@ -333,6 +334,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-zones.js?v=20261002a"></script>
 <script src="/world-footprints.js?v=20261002a"></script>
 <script src="/world-batch.js?v=20261003a"></script>
+<script src="/world-touch-buttons.js?v=20261003a"></script>
 <script src="/world-districts.js?v=20261002a"></script>
 <script src="/world-tame.js?v=20261002a"></script>
 <script src="/world-skydock.js?v=20261001a"></script>
@@ -3143,7 +3145,7 @@ if(_TOUCH_AWARE){
   }
   _tzMove.addEventListener('touchstart', function(e){
     e.preventDefault();
-    if(window._uiMode!=='play'){ _touchCtrl.on=true; window._uiMode='play'; _reflectMode(); }
+    if(window._uiMode!=='play'){ _touchCtrl.on=true; window._uiMode='play'; controls.isLocked=true; _reflectMode(); }   // touch has no pointer-lock: flag it locked so every key/action handler gated on controls.isLocked works
     for(const t of e.changedTouches){
       if(_joyId>=0) continue;
       _joyId=t.identifier; _joyOx=_joyX=t.clientX; _joyOy=_joyY=t.clientY;
@@ -3167,7 +3169,7 @@ if(_TOUCH_AWARE){
   }, {passive:false});
   _tzLook.addEventListener('touchstart', function(e){
     e.preventDefault();
-    if(window._uiMode!=='play'){ _touchCtrl.on=true; window._uiMode='play'; _reflectMode(); }
+    if(window._uiMode!=='play'){ _touchCtrl.on=true; window._uiMode='play'; controls.isLocked=true; _reflectMode(); }   // touch has no pointer-lock: flag it locked so every key/action handler gated on controls.isLocked works
     if(!_look.init) _seedLook();
     for(const t of e.changedTouches){ if(_lookId<0){ _lookId=t.identifier; _lx=t.clientX; _ly=t.clientY; } }
   }, {passive:false});
@@ -5034,6 +5036,11 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
     toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); }catch(e){ console.warn('[realm-zones] failed', e && e.message); }
   addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat || !controls.isLocked) return; const r = window.WorldCombatMode.toggle(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON - no one can hurt you, you cannot fight' : 'Fight mode ON')); });
 }, 1500); })();
+// ── PHONE BUTTONS (world-touch-buttons.js): jump / interact / attack / kick / flip / run / ride + Navi / Map / View / Passive + a tray; drive the normal key handlers. Touch devices only (or ?touch=1) ──
+(function bootTouchButtons(){ if(typeof _TOUCH_AWARE === 'undefined' || !_TOUCH_AWARE) return; let n = 0; const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; } if(!(window.__loadPlayable && window.WorldTouch)) return; clearInterval(iv);
+  try{ const tb = window.WorldTouch.create({ onFirstPress: function(){ if(window._uiMode !== 'play'){ _touchCtrl.on = true; window._uiMode = 'play'; controls.isLocked = true; _reflectMode(); } } }); window.__touchButtons = tb;
+    setInterval(function(){ const inWorld = document.body.classList.contains('in-world') && window.__spawnBusy === false; if(inWorld && !tb.isShown()){ tb.show(); document.body.classList.add('touch-ui'); } else if(!inWorld && tb.isShown()){ tb.hide(); document.body.classList.remove('touch-ui'); } }, 700); }catch(e){ console.warn('[touch] failed', e && e.message); }
+}, 1000); })();
 // ── STATIC BATCHER (world-batch.js): once the world is playable and has settled, merge the thousands of tiny STATIC meshes into a few draw calls (moving ones are left alone). ?batch=0 turns it off; window.__batchReport shows what happened ──
 (function bootBatch(){ if(/[?&]batch=0/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; } if(!(window.__loadPlayable && window.WorldBatch && window.__w3dDebug && window.__w3dDebug.scene)) return; clearInterval(iv);
   setTimeout(function(){ try{ window.WorldBatch.run({ THREE, scene: window.__w3dDebug.scene, U: 7/1.8, settleMs: 3000, log: function(m){ console.log(m); } }).then(function(r){ window.__batchReport = r; }).catch(function(e){ console.warn('[batch] failed', e && e.message); }); }catch(e){ console.warn('[batch] failed', e && e.message); } }, 4000);
