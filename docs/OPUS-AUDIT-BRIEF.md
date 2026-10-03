@@ -53,3 +53,19 @@ race modes (race / time trial / free ride) + AI levels + hit immunity + agentic 
 - **Revenue streams** and the books/courses angle: keep docs/JOURNEY-LOG.md current.
 
 **Machine notes:** 8 GB laptop; keep Blender and the headless browser from running at once; the Blender add-on socket (port 9876) works via tools/blender/bl.cjs even when the Blender MCP server does not connect; never delete without asking.
+
+## HOME THEME COVERAGE BY REALM (measured from code 2026-10-03; owner: "different home themes, streets organized")
+Existing: `public/world-realm-homes.js` (instanced, 5 types, all enterable + furnished through world-interiors-v3 recipes: bed = respawn rest point, stash, wardrobe, mail, arcade cabinets, trade counter, workbench, hydration, comms) and `world-interiors-v3.js` sand houses 01-04 (desert), farm tower, HUB_HOME units (Grid).
+| Realm | Home themes today | Gap / next |
+|---|---|---|
+| Meadow | earth-burrow, cave-home | ok; add a village street layout (rh.village exists) |
+| Forest | leaf-tree-home, pod-home | ok |
+| Arctic | arctic-dome | add an ice-lodge / snowboard hut (snowboarding perk) |
+| Desert | sand houses 01-04 (stepped block, courtyard...) | ok; roof access for the stepped block (stairs now walkable; landing + roof still open) |
+| Suburb | mushroom-pods model exists | wire as an enterable theme + street rows |
+| Volcano / Forge | none | lava-forge homes (obsidian + glowing seams, forge bench; "forging with lava is cheaper" perk) |
+| Ocean / Harbor | none | stilt homes + houseboats; fishing dock (fishing rules exist) |
+| Darkforest / Castle | none | skeleton-valley homes under the bridge near the purple lava; guild halls for clans / Siege Day |
+| Void | none | crystal / floating homes (forced-fight area: safe rooms need rules) |
+| Grid (city) | HUB_HOME units, apartments | district-themed interiors by building role (WorldDistricts.roleFor) |
+Streets: use `WorldDistricts` avenue/ring names; add per-district street furniture rhythm (lamps, benches, planters, signs facing the walkway) and a village street generator for realm homes so rows never repeat identically. All of it must stay instanced/batched (see FPS levers above).
