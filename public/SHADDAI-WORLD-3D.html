@@ -5123,6 +5123,21 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 (function bootRaceLandmarks(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   try{ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace }); D.raceLandmarks = window.__raceLandmarks; }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
+// ── OUTDOOR HIDE (PERF 2026-10-03): interiors sit on a far island but the city kept drawing (~2,000 calls) behind the walls.
+// Inside: hide every top-level owner that is far from the room (named world groups AND the unnamed ones), never lights/cameras/the sky;
+// exit restores exactly what was visible before. Called by world-interiors enter() and by the frame loop on any state change.
+window.__setOutdoorHidden = function(on, roomX){
+  if(on === !!window.__outdoorHidden) return; window.__outdoorHidden = on;
+  const KEEP = { 'world-sky-v4':1 }, sc = window.__w3dDebug && window.__w3dDebug.scene; if(!sc) return;
+  for(const o of sc.children){
+    if(on){
+      if(!o.visible || KEEP[o.name] || o.isLight || o.isCamera || /^interior_/.test(o.name)) continue;
+      if(Math.abs(o.position.x - roomX) < 3000) continue;   // on the room island (player avatar, room props)
+      let hasLight = false; o.traverse(function(c){ if(c.isLight || c.isCamera) hasLight = true; }); if(hasLight) continue;
+      o.userData._outVis = true; o.visible = false;
+    } else if(o.userData._outVis){ o.visible = true; delete o.userData._outVis; }
+  }
+};
 // ── ACADEMY CAMPUS stations: E at a station opens its panel (world-academy-client.js); capture phase so the interiors door key never sees it ──
 addEventListener('keydown', function(e){
   if(e.code !== 'KeyE' || e.repeat || !window.__athStation || !window.WorldAcademy) return;
@@ -5670,13 +5685,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
       // PERF 2026-10-03: interiors live on a far island, but the outdoor city kept drawing (~2,000 calls) behind the walls.
       // Hide the heavy outdoor owners (by name, measured with tools/_draw-profile.cjs) while inside; restore exactly on exit.
       const _inNow = _interiors.isInside();
-      if(_inNow !== !!window.__outdoorHidden){
-        window.__outdoorHidden = _inNow;
-        const OUT = { 'world-transit':1, 'static-merge':1, 'world-terrain-v4':1, 'hoverpark':1, 'world-fill-v4':1, 'grid-fabric-v4':1, 'dragon-gate-landmarks':1, 'building-entrances':1, 'world-nature':1, 'sky-dock':1, 'realm-homes':1, 'farm-patch':1, 'world-realm-props':1, 'world-fal-props':1, 'entrance-beacon':1, 'world-water':1, 'air-traffic':1, 'world-canon-v4':1, 'colosseum-exterior':1 };
-        for(const o of scene.children){ if(!OUT[o.name]) continue;
-          if(_inNow){ o.userData._outVis = o.visible; o.visible = false; }
-          else if(o.userData._outVis !== undefined){ o.visible = o.userData._outVis; delete o.userData._outVis; } }
-      }
+      if(_inNow !== !!window.__outdoorHidden) window.__setOutdoorHidden(_inNow, playerPos.x);
       const _ath = window.__athenaeumCampus;   // ACADEMY CAMPUS: animate + "[E] station" prompt while inside
       if(_ath && _ath.group.visible){ _ath.tick(dt); const st = _ath.nearestStation(playerPos.x, playerPos.z); if(st !== window.__athStation){ window.__athStation = st; if(st && window.__toast) window.__toast('[E] ' + st.label + (st.locked ? ' 🔒' : '')); } }
       else if(window.__athStation) window.__athStation = null;

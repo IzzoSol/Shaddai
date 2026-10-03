@@ -3238,6 +3238,7 @@
           }
           if (room.group) room.group.visible = true;
           global.__wiRoomReady = true;   /* interior is now on-screen → safe to reveal */
+          if (global.__setOutdoorHidden) global.__setOutdoorHidden(true, room.origin.x);   /* PERF: stop drawing the city behind the walls */
 
           var o = room.origin;
           playerPos.x = o.x;

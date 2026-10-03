@@ -15,7 +15,9 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
     try { I.enter('ATHENAEUM'); } catch (e) { out.enterErr = e.message; }
     await new Promise(r => setTimeout(r, 6000));
     const C = window.__athenaeumCampus; out.campus = !!C; out.inside = I.isInside();
-    if (C) { out.visible = C.group.visible; out.stations = C.stations.length; out.playerIn = C.contains(D.playerPos.x, D.playerPos.z); out.calls = D.renderer.info.render.calls; out.station = window.__athStation ? window.__athStation.label : null; }
+    if (C) { out.visible = C.group.visible; out.stations = C.stations.length; out.playerIn = C.contains(D.playerPos.x, D.playerPos.z); out.calls = D.renderer.info.render.calls; out.station = window.__athStation ? window.__athStation.label : null; out.hidden = !!window.__outdoorHidden;
+      const top = {}; D.scene.children.forEach(o => { if (!o.visible) return; let n = 0; o.traverseVisible(c => { if (c.isMesh) n++; }); if (n) { const k = (o.name || o.type) + (o === C.group ? '*' : ''); top[k] = (top[k] || 0) + n; } });
+      out.top = Object.entries(top).sort((a, b) => b[1] - a[1]).slice(0, 25); }
     return out;
   });
   if (process.argv[2]) await p.screenshot({ path: process.argv[2] });
