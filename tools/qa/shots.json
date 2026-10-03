@@ -1,6 +1,16 @@
 {
  "groups": [
   {
+   "name": "loading screen",
+   "args": [
+    "intro"
+   ],
+   "files": [
+    "intro-1.png",
+    "intro-2.png"
+   ]
+  },
+  {
    "name": "environment",
    "args": [
     "env"
