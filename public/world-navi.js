@@ -15,22 +15,6 @@
   if (window.Navi) return;
 
   var KEY = 'shd_navi_v1';
-  /* MODES: quick toggles (passive/fight) + a live read-out of the realm hazard you are standing in. More toggles slot in here (quality, audio, HUD hints). */
-  M.modes = function () {
-    var CM = window.WorldCombatMode, RZ = window.__realmZones, z = RZ && RZ.state ? RZ.state() : null, locked = CM && CM.locked(), pas = CM && CM.passive();
-    var rows = [
-      { id: 'passive', t: 'Passive mode', s: locked ? 'Locked: the Void forces fight' : (pas ? 'On: nobody can hurt you, you cannot fight' : 'Off: normal combat'), tag: pas ? 'ON' : 'OFF' },
-      { id: 'zone', t: 'Realm hazard', s: z && z.zone ? z.zone.replace('-', ' ') + (z.warn ? ' - ' + z.warn : ' - protected') : 'None here', tag: z && z.zone ? '!' : '' }
-    ];
-    return {
-      title: 'MODES', list: rows, empty: '',
-      detail: function (id) {
-        if (id === 'zone') { var g = RZ && RZ.gear ? RZ.gear() : null; return '<h3>Realm hazard</h3><div>' + esc(z && z.zone ? z.zone : 'none') + '</div><div>' + esc(z && z.warn ? z.warn : 'You are protected, or not in a hazard zone.') + '</div><div class="empty">Masks: gas ' + (g ? g.masks.gas : 0) + ' · lava ' + (g ? g.masks.lava : 0) + ' · arctic ' + (g ? g.masks.arctic : 0) + '. Clothing resist: fire ' + (g ? g.resist.fire : 0) + ' · cold ' + (g ? g.resist.cold : 0) + '. Learn and buy gear at the Academy and Upgrade Shop.</div>'; }
-        return '<h3>Passive mode</h3><div>' + (locked ? 'The Void forces you to fight.' : pas ? 'PASSIVE: players and monsters cannot hurt you and you cannot fight.' : 'FIGHT: normal combat.') + '</div>' + (locked ? '' : '<button class="b g" data-a="tp">' + (pas ? 'TURN PASSIVE OFF' : 'TURN PASSIVE ON') + '</button>') + '<div class="empty">Also on the \ (backslash) key in case of danger.</div>';
-      },
-      act: function (id, a) { if (a === 'tp' && CM) { var r = CM.toggle(); toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON' : 'Fight mode ON')); } }
-    };
-  };
   var THEME = { navy: '#050814', cyan: '#00D4FF', blue: '#1B6CFF', gold: '#F5A623', white: '#E8F6FF' };
   var MODULES = [
     { id: 'map', label: 'MAP', ic: '🗺' }, { id: 'inv', label: 'INV', ic: '🎒' },
@@ -407,6 +391,22 @@
   function closeModal() { if (modalEl) { modalEl.remove(); modalEl = null; } }
 
   var STATIONS = { Agent: ['Agent FM 107.7', 'Nexus Nights'], Human: ['City Pulse 88.1', 'Colosseum Live'], Mixed: ['Shaddai Mix 99.9'] };
+  /* MODES: quick toggles (passive/fight) + a live read-out of the realm hazard you are standing in. More toggles slot in here (quality, audio, HUD hints). */
+  M.modes = function () {
+    var CM = window.WorldCombatMode, RZ = window.__realmZones, z = RZ && RZ.state ? RZ.state() : null, locked = CM && CM.locked(), pas = CM && CM.passive();
+    var rows = [
+      { id: 'passive', t: 'Passive mode', s: locked ? 'Locked: the Void forces fight' : (pas ? 'On: nobody can hurt you, you cannot fight' : 'Off: normal combat'), tag: pas ? 'ON' : 'OFF' },
+      { id: 'zone', t: 'Realm hazard', s: z && z.zone ? z.zone.replace('-', ' ') + (z.warn ? ' - ' + z.warn : ' - protected') : 'None here', tag: z && z.zone ? '!' : '' }
+    ];
+    return {
+      title: 'MODES', list: rows, empty: '',
+      detail: function (id) {
+        if (id === 'zone') { var g = RZ && RZ.gear ? RZ.gear() : null; return '<h3>Realm hazard</h3><div>' + esc(z && z.zone ? z.zone : 'none') + '</div><div>' + esc(z && z.warn ? z.warn : 'You are protected, or not in a hazard zone.') + '</div><div class="empty">Masks: gas ' + (g ? g.masks.gas : 0) + ' · lava ' + (g ? g.masks.lava : 0) + ' · arctic ' + (g ? g.masks.arctic : 0) + '. Clothing resist: fire ' + (g ? g.resist.fire : 0) + ' · cold ' + (g ? g.resist.cold : 0) + '. Learn and buy gear at the Academy and Upgrade Shop.</div>'; }
+        return '<h3>Passive mode</h3><div>' + (locked ? 'The Void forces you to fight.' : pas ? 'PASSIVE: players and monsters cannot hurt you and you cannot fight.' : 'FIGHT: normal combat.') + '</div>' + (locked ? '' : '<button class="b g" data-a="tp">' + (pas ? 'TURN PASSIVE OFF' : 'TURN PASSIVE ON') + '</button>') + '<div class="empty">Also on the \ (backslash) key in case of danger.</div>';
+      },
+      act: function (id, a) { if (a === 'tp' && CM) { var r = CM.toggle(); toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON' : 'Fight mode ON')); } }
+    };
+  };
   M.radio = function () {
     var st = []; Object.keys(STATIONS).forEach(function (b) { STATIONS[b].forEach(function (s) { st.push({ id: b + '|' + s, t: s, s: b + ' band', tag: S.radio.station === s && S.radio.playing ? '▶' : '' }); }); });
     return {
