@@ -13,7 +13,10 @@ async function runAll(name, tests) {
   process.exit(failed ? 1 : 0);
 }
 
-function tmpDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 'academy-')); }
+// Every temp dir a test run creates is removed when the process exits (only dirs this run created).
+const made = [];
+process.on('exit', () => { for (const d of made) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (_) {} } });
+function tmpDir() { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'academy-')); made.push(d); return d; }
 function tmpStore() { return require('./store').createStore(tmpDir()); }
 
 function sampleSkill(o) {

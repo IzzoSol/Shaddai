@@ -43,7 +43,7 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     .filter((a) => a.agentId === agentId && a.skillId === skillId).sort((x, y) => x.seq - y.seq);
   const benchOf = (a) => { const [id, ver] = a.benchmark.split('@'); return benchmarks.get(id, ver); };
 
-  function begin({ agentId, skillId, kind, withSkill }) {
+  function begin({ agentId, skillId, kind, withSkill, enrollmentId }) {
     if (!isSafeId(agentId)) return err('agentId required');
     if (kind !== 'baseline' && kind !== 'exam') return err('kind must be baseline or exam');
     if (kind === 'baseline' && withSkill) return err('baseline must be taken without the skill');
@@ -56,13 +56,17 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     if (h.filter((a) => t - a.startedAt < 86400000).length >= dailyCap) return err('daily attempt cap reached');
     const last = h.filter((a) => a.kind === kind).pop();
     if (last && t - last.startedAt < cooldownMs) return err('cooldown active');
+    if (enrollmentId !== undefined) {             // one tuition payment covers one baseline and one exam
+      if (!isSafeId(enrollmentId)) return err('invalid enrollment');
+      if (Object.values(d.attempts).some((x) => x.enrollmentId === enrollmentId && x.kind === kind)) return err('this enrollment already has a ' + kind + ' attempt; enroll again');
+    }
     if (kind === 'exam' && !h.some((a) => a.kind === 'baseline' && a.status === 'graded' && a.skillHash === skill.hash)) return err('a graded baseline is required first');
     const seq = d.nextSeq || 1;
     const seed = [agentId, skillId, skill.hash, kind, h.length].join('|');
     const tasks = sample(bench.tasks, bench.perAttempt, seed);
     const id = 'att_' + hashOf({ seed, t, seq }).slice(0, 16);
     d.attempts[id] = {
-      id, agentId, skillId, skillHash: skill.hash, benchmark: bench.id + '@' + bench.version, kind, seq,
+      id, agentId, skillId, skillHash: skill.hash, benchmark: bench.id + '@' + bench.version, kind, seq, enrollmentId: enrollmentId || null,
       withSkill: !!withSkill, taskIds: tasks.map((x) => x.id), startedAt: t, expiresAt: t + windowMs, status: 'open'
     };
     d.nextSeq = seq + 1;
@@ -126,7 +130,7 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     const passed = exam.score >= bench.passMark && lift >= bench.minLift;
     return {
       ok: true, passed, lift, baseline: base.score, exam: exam.score,
-      examAttemptId: exam.id, baselineAttemptId: base.id, skillHash: exam.skillHash,
+      examAttemptId: exam.id, baselineAttemptId: base.id, skillHash: exam.skillHash, enrollmentId: exam.enrollmentId || null,
       graderVersion: exam.benchmark, attempts: h.length
     };
   }
@@ -148,7 +152,7 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
       return {
         attemptId: a.id, agentId: a.agentId, skillId: a.skillId, benchmark: a.benchmark, kind: a.kind,
         tasks: a.perTask.filter((p) => p.status === 'needs_review').map((p) => {
-          const task = bench.tasks.find((x) => x.id === p.taskId);
+          const task = bench ? bench.tasks.find((x) => x.id === p.taskId) : null;
           return { taskId: p.taskId, prompt: task ? task.prompt : '', output: hasOwn(a.outputs || {}, p.taskId) ? a.outputs[p.taskId] : null };
         })
       };
@@ -163,6 +167,7 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     const a = d.attempts[attemptId];
     if (a.status !== 'needs_review') return err('attempt is not awaiting review');
     const pending = a.perTask.filter((p) => p.status === 'needs_review').map((p) => p.taskId);
+    if (!pending.length) return err('nothing to resolve: the attempt has no review tasks');
     const given = taskScores && typeof taskScores === 'object' ? Object.keys(taskScores) : [];
     if (given.some((k) => !pending.includes(k))) return err('score given for a task that is not in review');
     for (const tid of pending) {
@@ -176,7 +181,12 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     return { ok: true, score: a.score };
   }
 
-  return { begin, submit, evaluate, get, needsReview, resolve };
+  // Which kinds ('baseline' / 'exam') an enrollment has already used.
+  function enrollmentKinds(enrollmentId) {
+    return Object.values(load().attempts).filter((a) => a.enrollmentId === enrollmentId).map((a) => a.kind);
+  }
+
+  return { begin, submit, evaluate, get, needsReview, resolve, enrollmentKinds };
 }
 
 module.exports = { createExamService, sample, cleanOutput };

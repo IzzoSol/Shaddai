@@ -1,6 +1,7 @@
 'use strict';
 const { hashOf, stripMarkup } = require('./canon');
 const { isSafeId, hasOwn } = require('./ids');
+const { TRACKS, TIERS } = require('./skill-schema');
 
 const KINDS = ['open', 'scheduled', 'masterclass', 'bootcamp'];
 const err = (error) => ({ ok: false, error });
@@ -17,13 +18,17 @@ function createClasses({ store, registry, roles }) {
     for (const s of spec.syllabus) if (!registry.get(s)) return err('unknown skill in syllabus: ' + s);
     if (spec.kind === 'scheduled' && !(spec.schedule && Number.isFinite(spec.schedule.start) && Number.isFinite(spec.schedule.end) && spec.schedule.end > spec.schedule.start)) return err('scheduled classes need schedule {start,end}');
     if (!spec.teacher || !spec.teacher.id) return err('teacher required');
+    if (!['house', 'owner', 'operative'].includes(spec.teacher.type)) return err('invalid teacher type');
+    if (spec.track != null && !TRACKS.includes(spec.track)) return err('invalid track');
+    if (spec.tier != null && !TIERS.includes(spec.tier)) return err('invalid tier');
+    if (spec.room != null && !/^[a-z0-9-]{0,60}$/.test(String(spec.room))) return err('invalid room');
     const name = stripMarkup(spec.name).slice(0, 80);
     if (!name) return err('name required');
     const capacity = Number.isInteger(spec.capacity) && spec.capacity > 0 ? spec.capacity : 30;
     const id = 'cls_' + hashOf({ name, by, t: Date.now(), n: Object.keys(load().items).length }).slice(0, 12);
     const cls = {
       id, name, track: spec.track || null, tier: spec.tier || null, kind: spec.kind, syllabus: spec.syllabus.slice(),
-      teacher: { type: spec.teacher.type, id: String(spec.teacher.id) }, room: String(spec.room || ''), capacity,
+      teacher: { type: spec.teacher.type, id: stripMarkup(String(spec.teacher.id)).slice(0, 80) }, room: String(spec.room || ''), capacity,
       schedule: spec.kind === 'scheduled' ? { start: spec.schedule.start, end: spec.schedule.end } : null,
       scholarshipSeats: Number.isInteger(spec.scholarshipSeats) && spec.scholarshipSeats > 0 ? spec.scholarshipSeats : 0,
       createdBy: by, createdAt: Date.now(), members: {}

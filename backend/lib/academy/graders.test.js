@@ -22,6 +22,12 @@ runAll('graders+benchmarks', {
     close(GRADERS.checklist({}, { items: spec.items }, 'audit the title ' + 'padding '.repeat(20)).score, 1);   // options are optional
     close(GRADERS.checklist({}, { penalize: [{ any: ['x'], weight: 5 }], items: spec.items }, 'audit title x').score, 0);   // never below zero
   },
+  'checklist minSentences halves keyword salad that has no sentences'() {
+    const spec = { minSentences: 2, items: [{ id: 'a', any: ['audit'] }, { id: 'b', any: ['title'] }] };
+    close(GRADERS.checklist({}, spec, 'audit title').score, 0.5);                                    // salad: one fragment
+    close(GRADERS.checklist({}, spec, 'We audit the page. We fix the title.').score, 1);
+    close(GRADERS.checklist({}, spec, 'Audit it\nFix the title').score, 1);                         // newlines separate sentences
+  },
   'tool_use rewards correct calls and zeroes forbidden ones'() {
     const spec = { expect: [{ tool: 'search', args: { query: 'string' } }], forbid: ['wire_funds'] };
     close(GRADERS.tool_use({}, spec, [{ tool: 'search', args: { query: 'x' } }]).score, 1);

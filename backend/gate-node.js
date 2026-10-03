@@ -55,7 +55,8 @@ const SCRIPTS = [
   'academy-school-routes.test.js',
   'academy-xagent.test.js',
   'lib/academy/academy-instance.test.js',
-  'lib/academy/press.test.js'
+  'lib/academy/press.test.js',
+  'academy-school-fixes.test.js'
 ];
 
 let passed = 0, failed = 0;

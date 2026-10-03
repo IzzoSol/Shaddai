@@ -7,6 +7,12 @@ const { createLock } = require('./lock');
 
 const err = (error) => ({ ok: false, error });
 
+function capArgs(a) {                 // tool args go into every judge prompt: keep them small
+  if (!a || typeof a !== 'object') return {};
+  let s; try { s = JSON.stringify(a); } catch (_) { return {}; }
+  return s.length > 1000 ? { truncated: true } : a;
+}
+
 function createHomework({ store, benchmarks, judge, now = Date.now, maxRounds = 3, minImprovement = 0.1 }) {
   const lock = createLock();
   const load = () => store.read('homework', { rounds: {} });
@@ -36,13 +42,18 @@ function createHomework({ store, benchmarks, judge, now = Date.now, maxRounds = 
     if (clean.text === undefined && clean.url === undefined) return Promise.resolve(err('artifact needs text or url'));
     const prov = {
       prompt: stripMarkup(provenance.prompt).slice(0, 4000),
-      tools: Array.isArray(provenance.tools) ? provenance.tools.slice(0, 20).map((t) => ({ tool: stripMarkup(t && t.tool).slice(0, 60), args: t && t.args && typeof t.args === 'object' ? t.args : {} })) : []
+      tools: Array.isArray(provenance.tools) ? provenance.tools.slice(0, 20).map((t) => ({ tool: stripMarkup(t && t.tool).slice(0, 60), args: capArgs(t && t.args) })) : []
     };
     const k = keyOf(agentId, skillId);
 
     // Serialized per agent+skill: the round limit is checked and the round written under the same lock.
     return lock(k, async () => {
-      if (own(load().rounds, k).length >= maxRounds) return err('round limit reached (' + maxRounds + ')');
+      const d0 = load();
+      if (own(d0.rounds, k).length >= maxRounds) return err('round limit reached (' + maxRounds + ')');
+      d0.tries = d0.tries || {};                // every judged attempt counts, even ones that end in review, so judge spend is bounded
+      const n = Object.prototype.hasOwnProperty.call(d0.tries, k) ? d0.tries[k] : 0;
+      if (n >= maxRounds * 2) return err('attempt limit reached (' + maxRounds * 2 + ')');
+      d0.tries[k] = n + 1; store.write('homework', d0);
       const g = await gradeRubric({ rubric, submission: { artifact: clean, provenance: prov }, judge });
       if (g.status === 'needs_review') return { ok: false, status: 'needs_review', error: 'needs review' };
       const d = load();                         // re-read after the await: other agents' writes must survive

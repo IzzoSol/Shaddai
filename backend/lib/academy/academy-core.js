@@ -45,6 +45,7 @@ function createAcademy({ dir, economy, operatives, judge, hooks, now = Date.now,
     const skill = registry.get(skillId);
     if (!skill) return err('unknown or retired skill');
     if (skill.hash !== ev.skillHash) return err('skill changed since the exam; retake with the new version');
+    if (ev.enrollmentId && ev.enrollmentId !== enr.id) return err('that exam was taken under a different enrollment'); 
 
     let done = loadDone();
     if (hasOwn(done.byEnrollment, enr.id) && done.byEnrollment[enr.id] !== ev.examAttemptId) {

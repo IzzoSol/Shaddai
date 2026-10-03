@@ -2155,7 +2155,9 @@ try {
   const { createSchoolRouter } = require('./academy-school-routes');
   const { getAcademy, uidFromReq } = require('./lib/academy/academy-instance');
   const _ext_school = require('../server/externalAgents');
-  app.use('/api/school', softAuth, createSchoolRouter({
+  // shdx_ bot bearers are not user sessions: skip softAuth for them (no wasted token verification, and they keep working if REQUIRE_AUTH is on).
+  const _schoolAuth = (req, res, next) => (/^Bearer\s+shdx_/.test(String(req.headers.authorization || '')) ? next() : softAuth(req, res, next));
+  app.use('/api/school', _schoolAuth, createSchoolRouter({
     academy: getAcademy(), operatives: require('./lib/operatives'), uidOf: uidFromReq, agentAuth: _ext_school.agentAuth
   }));
 } catch (e) { console.warn('[school] not mounted:', e && e.message); }

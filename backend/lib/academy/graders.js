@@ -4,6 +4,7 @@ const clamp01 = (n) => (Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0);
 // Optional spec fields guard against keyword stuffing:
 //   maxChars   answers longer than this score half
 //   penalize   [{ any: [...], weight }] each matching group subtracts `weight` (a fraction of the full score)
+//   minSentences  fewer sentences/lines than this scores half
 function checklist(input, spec, output) {
   const raw = String(output == null ? '' : output).slice(0, 20000);
   const text = raw.toLowerCase();
@@ -20,6 +21,10 @@ function checklist(input, spec, output) {
   }
   score = clamp01(score);
   if (spec && spec.maxChars && raw.length > spec.maxChars) score *= 0.5;
+  if (spec && spec.minSentences) {                                // a list of keywords is one fragment, not an answer
+    const sentences = raw.split(/[.!?\n]+/).map((s) => s.trim()).filter((s) => s.length > 2).length;
+    if (sentences < spec.minSentences) score *= 0.5;
+  }
   return { score, detail };
 }
 
