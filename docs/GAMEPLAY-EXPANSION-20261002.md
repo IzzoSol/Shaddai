@@ -51,6 +51,18 @@ Existing pieces to hook: `world-quests.js` (daily board, QUILL library), `world-
 ## Done so far (running list)
 - Race modes + personal bests · hoverboard idle sway/lights/trick flashes · Obsidian board from ref · seated riders in cars + glass cabins · taming rules · passive/fight mode (Backslash key; K is Kick) + Void forced fight · realm hazards wired (gas/cold/heat, HP floor 25) · Grid districts (Campus/Commons/Plots/Race) + named streets · **walkable stairs in interiors (colliders + treads; landing/roof access still to do)**
 
+## Latest owner asks (2026-10-02, evening): checklist additions
+- **Race is AGENTIC, not Mario Kart**: hover lasers and high-end agentic racing. Items renamed (Laser Bolt, EMP Pulse, Lock-On Drone, Aegis Field, Data Siphon, Jam Signal, Gravity Snare, Static Veil, Orbital Lance, Overclock); laser bolts are streaks, not shells. Reference repos are mechanics-only ideas (docs/RACE-REFERENCES.md). *To do:* original item art/VFX, laser beam hitscan variants, agent-driven racers with skills, per-agent race perks.
+- **Loading + cutscene slideshows (BUILT: world-loading-slides.js)**: agent art slides behind the progress bar with the new glitch-in intro motion; extend via `public/assets/loading/slides.json`. *To do:* slides for cutscenes and long building-entry loads (world-cutscene already holds a loader), per-realm slide sets, replace generated art with the owner's reference-correct agent art (LF2/MODELS FOR FAL), more motion (motion-lab.html and the huashu-design demos).
+- **Collisions**: owner screenshots show oversized boxy pillars, overlapping/intersecting shapes and glitchy walls in realm areas and many buildings. *To do:* collision audit per realm (Blender open), fitted colliders instead of boxes, remove stray geometry, QA shots at each realm hub.
+- **Colosseum lobby**: vending locations, dynamics, mechanics; dynamic terrain, seating, spectating, modes.
+- **Navi, movement, controls**: controls pass, NPCs and missions, more toggles in the Navi (MODES tab exists).
+- **Terrain and atmosphere polish (small real-game touches, not overdone)**: snow footsteps, grass sway (done), fire smoke (campfire has smoke; audit), fireflies, wolves, fires, sun and moon lighting, night sky extras (done).
+- **Speed, FPS, textures, rigging, mechanics audit**: profile draw calls and triangles per realm, texture sizes, lazy-load council GLBs (~9 MB), three.js CDN risk, quality ladder; Blender for rigging (docs/RIG-AUDIT.md).
+- **Unified Brain** (docs/UNIFIED-BRAIN-DESIGN.md) and **Dashboard/RAG fixes** in the main Shaddai repo (sparse working copy at C:/Users/Brittany/Shaddai-brain, branch feat/unified-brain).
+- **ZEROX skills**: trading entry models saved (docs/zerox-skills); wire after the game work.
+- **Model plan**: build passes on Sonnet 5.5; one Opus final audit pass near the end (see chat 2026-10-02).
+
 ## Realm hazards and protective gear (BUILT: `public/world-realm-hazards.js`, 6 tests)
 - **Castle realm**: crowded with enemies; purple lava under the bridge (contact damage) and poison gas. Gas needs a **gas mask level 10** for full protection; a lower mask protects proportionally (level 5 = about half).
 - **Lava mask** (fire hazards), **arctic mask** (removes the extra stamina drain of deep cold), **clothing per element** (fire suit, frost suit, void suit): each piece resists one element, pieces stack to an 85 % cap.
