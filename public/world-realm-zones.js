@@ -14,10 +14,11 @@
   var REALM_ZONE = { arctic: 'arctic-cold', volcano: 'ember-heat' };
   function create(o) {
     var H = o.hazards || root.WorldRealmHazards, M = o.mode || root.WorldCombatMode, U = 7 / 1.8, acc = 0, st = { realm: null, zone: null, warn: null, drain: 1, forcedFight: false }, warnT = -99, now = o.clock || function () { return Date.now() / 1000; };
+    function bf(el) { var B = o.buffs || root.WorldBuffs; return B ? B.resist(el) : 0; }   // food and drink buffs add to clothing resistance
     function gear() {
       var p = o.perk || function () { return 0; };
       return { masks: { gas: +p('mask-gas') || 0, lava: +p('mask-lava') || 0, arctic: +p('mask-arctic') || 0 },
-        resist: { fire: +p('resist-fire') || 0, cold: +p('resist-cold') || 0, poison: +p('resist-poison') || 0, void: +p('resist-void') || 0 } };
+        resist: { fire: (+p('resist-fire') || 0) + bf('fire'), cold: (+p('resist-cold') || 0) + bf('cold'), poison: (+p('resist-poison') || 0) + bf('poison'), void: (+p('resist-void') || 0) + bf('void') } };
     }
     function norm(d) { d %= 360; return d < 0 ? d + 360 : d; }
     /* strict realm: inside the wedge (compass degrees, clockwise from north) AND the radius band; null in the Grid core, ring zone and wilderness */
@@ -45,7 +46,7 @@
       var b = realmAt(P.x, P.z), zid = zoneFor(b, P);
       st.realm = b ? b.id : null; st.zone = zid; st.forcedFight = !!(M && M.locked()); st.warn = null; st.drain = 1;
       if (!zid || !H) return st;
-      var r = H.tick(zid, gear(), step); st.warn = r.warn; st.drain = 1 + r.stamina;
+      var r = H.tick(zid, gear(), step); st.warn = r.warn; st.drain = 1 + r.stamina * ((o.buffs || root.WorldBuffs) ? (o.buffs || root.WorldBuffs).drainMult() : 1);
       if (r.hp > 0) {
         var hp = o.getHP(); if (hp > FLOOR) { var nhp = Math.max(FLOOR, hp - r.hp); o.setHP(nhp); if (o.onHurt && hp - nhp > 0.5) o.onHurt(hp - nhp); }
       }
