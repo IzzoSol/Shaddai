@@ -1,7 +1,7 @@
 /* world-realm-homes.js — realm home kits built from the owner's refs (fal-assets/refs/world/*), all CODE ($0), instanced, lazy.
  *
  *   var rh = window.buildWorldRealmHomes({ THREE, scene, heightAt, interiors?: iv3 api, layout?: WORLD_LAYOUT, cullM?: 650 })
- *     rh.types                       -> { 'earth-burrow', 'cave-home', 'leaf-tree-home', 'pod-home', 'arctic-dome' } (label, size, sink, style)
+ *     rh.types                       -> { 'earth-burrow', 'cave-home', 'leaf-tree-home', 'pod-home', 'arctic-dome', 'forge-home' } (label, size, sink, style)
  *     rh.place(type, x, z, { yaw?, ownerId?, id?, faceDownhill? })  -> home { id, type, x, y, z, yaw, rest }   (grounded; half-buried types sink into the slope)
  *     rh.village(type, cx, cz, n, { radius, seed })                  -> n homes on a spiral with a winding path (terraced on slopes)
  *     rh.update(px, pz)                                              -> call ~2 Hz: fills the instance buffers with homes within cullM (constant draw calls)
@@ -18,7 +18,7 @@
   'use strict';
   var U = 7 / 1.8, CAP = 48;
   var COL = { grass: 0x5f9a3f, grassDk: 0x3f7a30, wood: 0xb58a55, woodDk: 0x7a5530, stone: 0x8c9088, rock: 0x8d8778, glass: 0xffdca0, water: 0x3fc6d8, white: 0xeef2f4,
-    leaf: 0x86c44a, leafDk: 0x5f9a35, blue: 0x49b8ff, silver: 0xc9d2d8, dark: 0x2a2f36, ice: 0xdff3fb, cyan: 0x66f0ff, orb: 0xc770ff, gold: 0xe8c45c };
+    obsidian: 0x15121a, ember: 0xff6a1a, leaf: 0x86c44a, leafDk: 0x5f9a35, blue: 0x49b8ff, silver: 0xc9d2d8, dark: 0x2a2f36, ice: 0xdff3fb, cyan: 0x66f0ff, orb: 0xc770ff, gold: 0xe8c45c };
 
   function defineInteriorStyles(pure) {
     if (!pure || pure.__realmHomes) return; pure.__realmHomes = true;
@@ -27,6 +27,7 @@
     S.cave = { wall: 0x8d8778, floor: 0x6f6a5c, ceil: 0x777063, seam: 0xffb060, glassWalls: false };     // carved rock, lantern glow
     S.leaf = { wall: 0xe8efe6, floor: 0xc9d8c2, ceil: 0x9cc27a, seam: 0x49b8ff, glassWalls: false };     // white lacquer, leaf ceiling, blue ribbing
     S.pod = { wall: 0xd7dde2, floor: 0x9a7a52, ceil: 0xc9d2d8, seam: 0x7dffd8, glassWalls: false };      // pale shell, wood floor
+    S.forge = { wall: 0x1c1822, floor: 0x2a2428, ceil: 0x15121a, seam: 0xff7a24, glassWalls: false };   // obsidian + glowing lava seams (volcano / forge realm)
     S.ice = { wall: 0xdff3fb, floor: 0xb9d9e6, ceil: 0xeaf8ff, seam: 0x66f0ff, glassWalls: false };      // frosted white, cyan seam
     var F = pure.FALLBACK; F.stool = F.stool || { fp: [0.5, 0.5], h: 0.45, color: 0x6b5033 }; F.bench = F.bench || { fp: [1.8, 0.5], h: 0.45, color: 0x6b5033 }; F.chair = F.chair || { fp: [0.6, 0.6], h: 0.9, color: 0x6b5033 };   // seats (WorldSit reads them)
     var R = pure.RECIPES, first = function (c, kind, xs, z, q, o) { for (var i = 0; i < xs.length; i++) { var it = c.place(kind, xs[i], z, q, o); if (it) return it; } return null; };
@@ -50,6 +51,7 @@
     R['cave-home'] = { label: 'Cave home: carved rock rooms — sleep/respawn, stash, arcade, trade, craft', style: 'cave', ceil: 3.6, size: [16, 8, 4.6], build: homeRecipe(function (c, i) { c.partZ(i.z0 + 3.4, i.x0, i.x0 + (i.x1 - i.x0) * 0.42, [{ x: i.x0 + 2.5, w: 1.6 }]); }) };
     R['leaf-tree-home'] = { label: 'Leaf tree home: white tower rooms — sleep/respawn, stash, arcade, trade, craft', style: 'leaf', ceil: 3.6, size: [10, 10, 9], build: homeRecipe() };
     R['pod-home'] = { label: 'Pod home: egg pod on a deck — sleep/respawn, stash, arcade, trade, craft', style: 'pod', ceil: 3.2, size: [10, 6.5, 3.6], build: homeRecipe() };
+    R['forge-home'] = { label: 'Forge home: obsidian lodge with lava seams — sleep/respawn, stash, arcade, trade, craft (forging is cheaper in the lava realm)', style: 'forge', ceil: 3.6, size: [11, 9, 4.2], build: homeRecipe() };
     R['arctic-dome'] = { label: 'Arctic dome: frosted dome home — sleep/respawn, stash, arcade, trade, craft', style: 'ice', ceil: 3.6, size: [11, 9, 4.2], build: homeRecipe() };
   }
 
@@ -66,6 +68,7 @@
       water: mat('water', COL.water, { emissive: COL.water, emissiveIntensity: 0.35, transparent: true, opacity: 0.9 }),
       white: mat('white', COL.white), leaf: mat('leaf', COL.leaf, { side: THREE.DoubleSide }), leafDk: mat('leafDk', COL.leafDk, { side: THREE.DoubleSide }),
       blue: mat('blue', 0x0a2a44, { emissive: COL.blue, emissiveIntensity: 1.3 }), silver: mat('silver', COL.silver), dark: mat('dark', COL.dark),
+      obsidian: mat('obsidian', COL.obsidian), lava: mat('lava', 0x3a0e04, { emissive: COL.ember, emissiveIntensity: 1.6 }),
       ice: mat('ice', COL.ice), cyan: mat('cyan', 0x0a3a44, { emissive: COL.cyan, emissiveIntensity: 1.4 }), orb: mat('orb', 0x2a0a44, { emissive: COL.orb, emissiveIntensity: 1.6 }), gold: mat('gold', COL.gold, { emissive: COL.gold, emissiveIntensity: 0.25 })
     };
     var _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(1, 1, 1);
@@ -155,6 +158,16 @@
       part(L, 'woodDk', box(12.4, 0.5, 0.1), 0, 1.4, 4.3); part(L, 'gold', box(0.9, 0.14, 0.06), 0, 3.6, 3.2);
     } };
     // 5) ARCTIC DOME — frosted white dome, glowing cyan band, entrance tunnel, ice ring base
+    KITS['forge-home'] = { label: 'Forge home', size: [14, 14, 7.4], sink: 0.3, style: 'forge', build: function (L) {
+      part(L, 'stone', new THREE.CylinderGeometry(7.2, 7.4, 0.3, 8), 0, 0.15, 0);
+      part(L, 'obsidian', new THREE.CylinderGeometry(5.6, 6.2, 3.2, 8), 0, 1.9, 0);                 // faceted obsidian body
+      part(L, 'obsidian', new THREE.ConeGeometry(6.5, 3.4, 8), 0, 5.2, 0);                          // heavy faceted roof
+      part(L, 'lava', new THREE.TorusGeometry(6.0, 0.14, 6, 8), 0, 1.1, 0, Math.PI / 2, 0, 0); part(L, 'lava', new THREE.TorusGeometry(5.7, 0.12, 6, 8), 0, 3.1, 0, Math.PI / 2, 0, 0);   // glowing seams
+      part(L, 'obsidian', new THREE.CylinderGeometry(0.7, 0.9, 3.4, 8), 2.6, 6.0, -2.2); part(L, 'lava', new THREE.CylinderGeometry(0.58, 0.58, 0.2, 8), 2.6, 7.75, -2.2);   // chimney with a lava cap
+      part(L, 'glass', arch(2.4, 2.6, 0.3), 0, 0.3, 6.15); part(L, 'lava', new THREE.BoxGeometry(2.9, 0.2, 0.3), 0, 3.0, 6.25);   // door arch + lava lintel
+      part(L, 'obsidian', new THREE.BoxGeometry(1.0, 0.5, 0.55), 3.4, 0.55, 7.6); part(L, 'obsidian', new THREE.ConeGeometry(0.2, 0.7, 5), 4.0, 0.55, 7.6, 0, 0, -Math.PI / 2);   // anvil
+      for (var i = 0; i < 5; i++) { var a = i / 5 * Math.PI * 2 + 0.7; part(L, 'obsidian', new THREE.ConeGeometry(0.5, 2.0 + (i % 3) * 0.7, 5), Math.sin(a) * 8.6, 1.0, Math.cos(a) * 8.6); }   // shards
+    } };
     KITS['arctic-dome'] = { label: 'Arctic dome', size: [14, 14, 6.6], sink: 0.3, style: 'ice', build: function (L) {
       part(L, 'ice', new THREE.SphereGeometry(1, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), 0, 0, 0, 0, 0, 0, 6.4, 5.6, 6.4);
       part(L, 'cyan', new THREE.TorusGeometry(6.35, 0.16, 6, 36), 0, 1.05, 0, Math.PI / 2, 0, 0); part(L, 'cyan', new THREE.TorusGeometry(4.9, 0.12, 6, 36), 0, 3.6, 0, Math.PI / 2, 0, 0);

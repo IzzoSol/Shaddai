@@ -882,7 +882,7 @@ window.__worldBuilt = false;
         // REALM HOMES (world-realm-homes.js, docs/REALM-HOMES.md): earth burrows, cave homes, leaf tree homes, pod homes, arctic domes — instanced, enterable
         return window.__interiorsV3.ready.then(function(){ return _loadScript('/world-realm-homes.js?v=20260929a'); }).then(function(){
           const rh = window.__realmHomes = window.buildWorldRealmHomes({ THREE, scene, heightAt: api.heightAt, interiors: window.__interiorsV3, layout: window.WORLD_LAYOUT });
-          const PLAN = { meadow: [['earth-burrow', 6], ['cave-home', 2]], suburb: [['pod-home', 5]], forge: [['cave-home', 4]], darkvault: [['leaf-tree-home', 4]], arctic: [['arctic-dome', 6]], harbor: [['pod-home', 3]] };
+          const PLAN = { meadow: [['earth-burrow', 6], ['cave-home', 2]], suburb: [['pod-home', 5]], forge: [['forge-home', 4]], darkvault: [['leaf-tree-home', 4]], arctic: [['arctic-dome', 6]], harbor: [['pod-home', 3]] };
           ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations) || []).forEach(function(st){
             const plan = PLAN[st.id]; if(!plan) return; const len = Math.hypot(st.pos[0], st.pos[1]) || 1, ux = st.pos[0]/len, uz = st.pos[1]/len;
             plan.forEach(function(pl, k){ rh.village(pl[0], st.pos[0] + ux*(170 + k*90), st.pos[1] + uz*(170 + k*90), pl[1], { radius: 26, seed: 11 + k }); });

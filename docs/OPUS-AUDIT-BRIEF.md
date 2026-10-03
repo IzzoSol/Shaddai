@@ -63,7 +63,7 @@ Existing: `public/world-realm-homes.js` (instanced, 5 types, all enterable + fur
 | Arctic | arctic-dome | add an ice-lodge / snowboard hut (snowboarding perk) |
 | Desert | sand houses 01-04 (stepped block, courtyard...) | ok; roof access for the stepped block (stairs now walkable; landing + roof still open) |
 | Suburb | mushroom-pods model exists | wire as an enterable theme + street rows |
-| Volcano / Forge | none | lava-forge homes (obsidian + glowing seams, forge bench; "forging with lava is cheaper" perk) |
+| Volcano / Forge | **forge-home (built 2026-10-03: obsidian lodge, lava seams, anvil, chimney; village at the forge station)** | add more variety: forge halls, smelter towers; lava-forge homes (obsidian + glowing seams, forge bench; "forging with lava is cheaper" perk) |
 | Ocean / Harbor | none | stilt homes + houseboats; fishing dock (fishing rules exist) |
 | Darkforest / Castle | none | skeleton-valley homes under the bridge near the purple lava; guild halls for clans / Siege Day |
 | Void | none | crystal / floating homes (forced-fight area: safe rooms need rules) |
