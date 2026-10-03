@@ -27,7 +27,7 @@ t('ram: closing speed drives damage 8..18 (x1.25 boosting); wall ram = 6; hp<=0 
   assert.strictEqual(r.ram('a', 'b', 0).damage, 8); assert.strictEqual(r.ram('a', 'b', 20).damage, 18); r.rider('a').boosting = true; assert.strictEqual(r.ram('a', 'b', 20).damage, 22.5);
   assert.strictEqual(r.wallRam('c').hp, 94); r.rider('b').item = 'boost'; r.update(2); const dead = r.hit('b', 999); assert(dead.respawned); const b = r.rider('b'); assert.strictEqual(b.freeze, 1.4); assert.strictEqual(b.item, null); assert.strictEqual(b.energy, 0.4); assert.strictEqual(b.hp, 100);
 });
-t('items: weighted crate roll, Blue Line is Prime-only, shell 22 dmg, Ward Plate eats one hit', () => {
+t('items: weighted crate roll, Orbital Lance is Prime-only, shell 22 dmg, Aegis Field eats one hit', () => {
   const r = mk('plaza-cup'); r.start(); assert.strictEqual(r.grabCrate('a').id, 'boost'); assert.strictEqual(r.grabCrate('a'), null, 'one item slot');
   const r2 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }, { id: 'b' }], rng: () => 0.9999 }); r2.start(); assert.notStrictEqual(r2.grabCrate('a', false).id, 'blue'); const r3 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }], rng: () => 0.9999 }); assert.strictEqual(r3.grabCrate('a', true).id, 'blue');
   r.rider('b').item = null; r.rider('a').item = 'shell'; assert.strictEqual(r.useItem('a', 'b').hit.hp, 78); r.rider('b').ward = true; assert(r.hit('b', 50).blocked);

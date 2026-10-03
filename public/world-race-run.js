@@ -1,13 +1,13 @@
-/* world-race-run.js — the RACE RUNTIME (Mario-Kart layer on the Hoverskate rules): item crates you drive through, turbo pads, power-ups and attacks, AI riders,
+/* world-race-run.js — the RACE RUNTIME (agentic arcade-racing layer on the Hoverskate rules): item crates you drive through, turbo pads, power-ups and attacks, AI riders,
  * lap/place/item/hp HUD, countdown, results + Sparks prizes. It drives world-race.js (rules) and the host hoverboard (world-hoverboard.js setModifier).
  *
  *   var run = WorldRaceRun.create({ THREE?, scene?, park, hover, sparks?, onEvent?, U? })
  *   run.start(circuitId, { ranked, ais: 0..7, rubber?, level?: 'rookie'|'pro'|'elite' }) · run.update(dt, pose?) each frame (pose optional: read from hover.state())
  *   run.useItem() (key R)  · run.stop() · run.state()  · run.hud (DOM) · run.playerId
- *   Items: Boost (turbo 1.6 s) · Spark Shell (22 dmg, homing-lite, travels) · Wide Wave (cone knock-back stun) · Ink Veil (blind + FOV mess) · Ward Plate (eats a hit)
- *          Magnet Yank (steal a rival's item within 12 m) · Sway Dust (steer noise 2 s) · Dragon Pinch (1.2 s stall) · Triple Shell · Blue Line (first place; Prime only).
+ *   Items: Boost (turbo 1.6 s) · Laser Bolt (22 dmg, homing-lite, travels) · EMP Pulse (cone knock-back stun) · Static Veil (blind + FOV mess) · Aegis Field (eats a hit)
+ *          Data Siphon (steal a rival's item within 12 m) · Jam Signal (steer noise 2 s) · Gravity Snare (1.2 s stall) · Triple Laser · Orbital Lance (first place; Prime only).
  *   Turbo pads on the track: 1.0 s x1.35. Crates respawn after 8 s. Pocket vials (Pad Rush, Foil Sip) are OFF in ranked heats (run.canUsePocket).
- *   Bots: follow the loop, use items after a readable delay, cannot fire Blue Line unless Prime; rubber-band +-8% only when opts.rubber (12+ fields).
+ *   Bots: follow the loop, use items after a readable delay, cannot fire Orbital Lance unless Prime; rubber-band +-8% only when opts.rubber (12+ fields).
  */
 (function (root) {
   'use strict';
@@ -57,7 +57,7 @@
       var ink = document.createElement('div'); ink.id = 'rhInk'; ink.style.cssText = 'position:fixed;inset:0;z-index:7450;pointer-events:none;opacity:0;transition:opacity .2s;background:radial-gradient(circle at 30% 40%,#000 0 14%,transparent 15%),radial-gradient(circle at 70% 55%,#000 0 18%,transparent 19%),radial-gradient(circle at 50% 30%,#000 0 12%,transparent 13%)';
       h.appendChild(big); h.appendChild(ink); document.body.appendChild(h); api.hud = h;
     }
-    var ICON = { seeker: '➤ SEEKER', boost: '▲ BOOST', shell: '● SHELL', wave: '◗ WAVE', ink: '◍ INK', ward: '◈ WARD', yank: '⬍ YANK', sway: '≈ SWAY', pinch: '✦ PINCH', triple: '●●● TRIPLE', blue: '◆ BLUE LINE' };
+    var ICON = { seeker: '➤ LOCK-ON DRONE', boost: '▲ OVERCLOCK', shell: '▬ LASER BOLT', wave: '◗ EMP PULSE', ink: '◍ STATIC VEIL', ward: '◈ AEGIS FIELD', yank: '⬍ DATA SIPHON', sway: '≈ JAM SIGNAL', pinch: '✦ GRAVITY SNARE', triple: '▬▬▬ TRIPLE LASER', blue: '◆ ORBITAL LANCE' };
     function hudUpdate() {
       if (!api.hud || !R) return; var me = R.rider(api.playerId), s = R.standings(), mine = s.filter(function (x) { return x.id === api.playerId; })[0], q = function (id) { return api.hud.querySelector(id); };
       var lt = st.P.lapTimes, fmt = function (x) { var m = Math.floor(x / 60); return m + ':' + ('0' + (x - m * 60).toFixed(1)).slice(-4); }; q('#rhLap').textContent = 'LAP ' + Math.min(R.circuit.laps, me.lap + 1) + '/' + R.circuit.laps + (lt.length ? '  last ' + fmt(lt[lt.length - 1]) + '  best ' + fmt(Math.min.apply(null, lt)) : '') + (st.P.drift.active ? '  DRIFT ' + ['', 'BLUE', 'ORANGE', 'PURPLE'][st.P.drift.level] : '') + (st.P.slipOn ? '  DRAFT' : ''); q('#rhPlace').textContent = 'P' + (mine ? mine.place : '-') + '/' + s.length; q('#rhItem').textContent = me.item ? ICON[me.item] : (me.ward ? '◈ WARD ON' : '— no item —');
@@ -79,7 +79,7 @@
       if (res.respawned) { if (isMe) { var g = st.gates[Math.max(0, R.rider(targetId).gate - 1)] || st.gates[0]; ev('respawn', { id: targetId, x: g.x, z: g.z, y: g.y }); if (hover && hover.setModifier) hover.setModifier({ stun: 1.4 }); } else { var a2 = st.ais.filter(function (x) { return x.id === targetId; })[0]; if (a2) a2.stun = 1.4; } }
       ev('hit', { id: targetId, dmg: dmg, why: why || '', blocked: !!res.blocked, respawned: !!res.respawned }); return res;
     }
-    function spawnShell(srcId, targetId, dmg, kind) { var sp = riderPos(srcId, st.lastPose); if (!sp || !targetId) return; var seek = kind === 'seeker', sh = { from: srcId, to: targetId, x: sp.x, z: sp.z, y: (sp.y || 0) + 1.2 * U, dmg: dmg, life: seek ? 9 : 4, kind: kind || 'shell', mesh: null }; if (THREE && scene) { sh.mesh = seek ? new THREE.Mesh(new THREE.ConeGeometry(0.45 * U, 1.6 * U, 8), new THREE.MeshBasicMaterial({ color: 0xff3a3a })) : new THREE.Mesh(new THREE.SphereGeometry(0.5 * U, 10, 8), new THREE.MeshBasicMaterial({ color: 0x00D4FF })); if (seek) sh.mesh.rotation.x = Math.PI / 2; scene.add(sh.mesh); } st.shells.push(sh); ev(seek ? 'seeker' : 'shell', { from: srcId, to: targetId }); if (seek && targetId === api.playerId) ev('warn', { kind: 'incoming' }); }
+    function spawnShell(srcId, targetId, dmg, kind) { var sp = riderPos(srcId, st.lastPose); if (!sp || !targetId) return; var seek = kind === 'seeker', sh = { from: srcId, to: targetId, x: sp.x, z: sp.z, y: (sp.y || 0) + 1.2 * U, dmg: dmg, life: seek ? 9 : 4, kind: kind || 'shell', mesh: null }; if (THREE && scene) { sh.mesh = seek ? new THREE.Mesh(new THREE.OctahedronGeometry(0.55 * U, 0), new THREE.MeshBasicMaterial({ color: 0xff3a3a })) : new THREE.Mesh(new THREE.BoxGeometry(0.16 * U, 0.16 * U, 2.4 * U), new THREE.MeshBasicMaterial({ color: 0x39ffcf, toneMapped: false })); sh.mesh.rotation.order = 'YXZ'; scene.add(sh.mesh);   /* laser bolt = long emissive streak that points where it flies; drone = red octahedron */ } st.shells.push(sh); ev(seek ? 'seeker' : 'shell', { from: srcId, to: targetId }); if (seek && targetId === api.playerId) ev('warn', { kind: 'incoming' }); }
     function useFor(id, pose) {
       var r = R.rider(id); if (!r || !r.item || r.freeze > 0) return null; var item = r.item, me = riderPos(id, pose);
       if (item === 'ward' || item === 'boost') { var out = R.useItem(id); if (item === 'boost') { if (id === api.playerId) { if (hover && hover.setModifier) hover.setModifier({ mul: FX.ITEM_BOOST.mul * (1 + ((root.ShdInv && root.ShdInv.perk('boostBonus')) || 0)), dur: FX.ITEM_BOOST.dur }); } else { var a = st.ais.filter(function (x) { return x.id === id; })[0]; if (a) a.boostT = FX.ITEM_BOOST.dur; } r.boosting = false; ev('boost', { id: id }); } else ev('ward', { id: id }); return out; }
@@ -156,7 +156,7 @@
           if (P.wrongT >= FX.WRONG_WAY_S && P.warnCd <= 0) { P.warnCd = 3; ev('warn', { kind: 'wrongway' }); }
         }
       }
-      /* DRIFT + SLIPSTREAM + LAP SPLITS (owner 2026-10-02: Mario-Kart mechanics) */
+      /* DRIFT + SLIPSTREAM + LAP SPLITS (owner 2026-10-02: drift + slipstream mechanics, original agentic racing) */
       { var P2 = st.P, spd = 0, yr = 0; if (P2.lx != null) { spd = Math.hypot(pose.x - P2.lx, pose.z - P2.lz) / U / Math.max(dt, 1e-4); var dyw = pose.yaw != null && P2.lyaw != null ? ((pose.yaw - P2.lyaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI : 0; yr = dyw / Math.max(dt, 1e-4); } P2.lx = pose.x; P2.lz = pose.z; P2.lyaw = pose.yaw; P2.speed = spd; P2.yawRate = yr;
         if (!me.finished && !me.dnf && me.freeze <= 0) {
           var dr = WR.driftStep(P2.drift, dt, { drift: api.input.drift, speed: spd, yawRate: yr });
@@ -182,7 +182,7 @@
         if (r.item) { a.itemT -= dt; if (a.itemT <= 0) { if (r.item === 'blue' && !st.prime) r.item = null; else useFor(a.id, pose); a.itemT = 0; } }
       });
       // shells travel + hit
-      for (var si = st.shells.length - 1; si >= 0; si--) { var sh = st.shells[si], tp = riderPos(sh.to, pose); sh.life -= dt; if (!tp || sh.life <= 0) { if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); continue; } var dx = tp.x - sh.x, dz = tp.z - sh.z, dd = Math.hypot(dx, dz), stepM = FX.SHELL_MS * (sh.kind === 'seeker' ? 1.5 : 1) * U * dt; if (dd <= stepM + 1.2 * U) { hitRider(sh.to, sh.dmg, sh.kind === 'seeker' ? 2.0 : 0.7, sh.kind === 'seeker' ? 'seeker' : 'shell'); if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); } else { sh.x += dx / dd * stepM; sh.z += dz / dd * stepM; if (sh.mesh) { sh.mesh.position.set(sh.x, sh.y, sh.z); if (sh.kind === 'seeker') sh.mesh.rotation.z = Math.atan2(dx, dz); } } }
+      for (var si = st.shells.length - 1; si >= 0; si--) { var sh = st.shells[si], tp = riderPos(sh.to, pose); sh.life -= dt; if (!tp || sh.life <= 0) { if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); continue; } var dx = tp.x - sh.x, dz = tp.z - sh.z, dd = Math.hypot(dx, dz), stepM = FX.SHELL_MS * (sh.kind === 'seeker' ? 1.5 : 1) * U * dt; if (dd <= stepM + 1.2 * U) { hitRider(sh.to, sh.dmg, sh.kind === 'seeker' ? 2.0 : 0.7, sh.kind === 'seeker' ? 'seeker' : 'shell'); if (sh.mesh && scene) scene.remove(sh.mesh); st.shells.splice(si, 1); } else { sh.x += dx / dd * stepM; sh.z += dz / dd * stepM; if (sh.mesh) { sh.mesh.position.set(sh.x, sh.y, sh.z); if (sh.kind === 'seeker') { sh.mesh.rotation.y += dt * 6; } else sh.mesh.rotation.y = Math.atan2(dx, dz); } } }
       // finish
       if (R.finished() || (me.finished && !st.result)) { if (R.finished() || me.finished) { st.phase = 'done'; var s2 = R.standings(), mine = s2.filter(function (x) { return x.id === api.playerId; })[0]; var prize = (FX.PRIZE[mine.place - 1] || 0) * (st.ranked ? FX.PRIZE_RANKED_MUL : 1); st.result = { place: mine.place, of: s2.length, timeS: me.finalS != null ? me.finalS : R.score(api.playerId), prize: prize, standings: s2 }; try { st.result.pb = pbSave(st.cid, st.result.timeS, st.P.lapTimes.length ? Math.min.apply(null, st.P.lapTimes) : null); } catch (e) { } if (prize && o.sparks && o.sparks.add) o.sparks.add(prize, 'race-prize', st.cid); ev('finish', st.result); } }
       hudUpdate();

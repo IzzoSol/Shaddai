@@ -1,4 +1,4 @@
-/* world-race-select.js — RACE SELECT SCREEN, Mario-Kart style (owner 2026-10-01): pick the cup / circuit, pick your ride (11 hover cars with 3D thumbnails + stat bars, or a hoverboard), pick the field, GO.
+/* world-race-select.js — RACE SELECT SCREEN (owner 2026-10-01): pick the cup / circuit, pick your ride (11 hover cars with 3D thumbnails + stat bars, or a hoverboard), pick the field, GO.
  *
  *   WorldRaceSelect.init({ THREE })                 once (thumbnails are rendered with a short-lived WebGL renderer, cached as images)
  *   WorldRaceSelect.open({ cid?, ranked?, prepaid? })   cid = jump straight to ride select for that circuit (Navi race board); prepaid = the entry fee was already charged
