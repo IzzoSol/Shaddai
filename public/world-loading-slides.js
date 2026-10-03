@@ -6,11 +6,11 @@
 (function (root) {
   'use strict';
   var SLIDES = [
-    { src: '/assets/loading/s1-storm.webp', who: 'SHADDAI', line: 'One world. Every agent. Yours to shape.' },
+    { src: '/assets/loading/s1-custom.jpg', who: 'SHADDAI', line: 'One world. Every agent. Yours to shape.' },
     { src: '/assets/loading/agent-oracle.webp', who: 'ORACLE', line: 'Know the night before it comes.' },
-    { src: '/assets/loading/s2-phoenix.webp', who: 'THE PHOENIX', line: 'Rise through the rain.' },
+    { src: '/assets/loading/s2-custom.jpg', who: 'THE PHOENIX', line: 'Rise through the rain.' },
     { src: '/assets/loading/agent-nexus.webp', who: 'NEXUS', line: 'Every skill, one tap away.' },
-    { src: '/assets/loading/s3-orb.webp', who: 'THE COUNCIL', line: 'Seven agents. One army.' },
+    { src: '/assets/loading/s3-custom.jpg', who: 'THE COUNCIL', line: 'Seven agents. One army.' },
     { src: '/assets/loading/agent-zerox.webp', who: 'ZEROX', line: 'Markets move. We read them first.' },
     { src: '/assets/loading/s4-squad.webp', who: 'THE SQUAD', line: 'Never fight alone.' },
     { src: '/assets/loading/agent-turtle.webp', who: 'TURTLE', line: 'Make it beautiful. Make it move.' },
