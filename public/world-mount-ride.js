@@ -27,6 +27,13 @@
   function feelBase(id) { if (FEEL[id]) return FEEL[id]; var m = /^kart-(.+)$/.exec(String(id)), k = m && root.WorldHoverCars && root.WorldHoverCars.KARTS && root.WorldHoverCars.KARTS[m[1]]; return k ? { tall: k.tall, walk: k.top * 0.7, run: k.top, turn: k.handle, hover: 0.55 } : FEEL.bull; }
   var TUNE = { fovBase: 62, fovBoost: 8, summonDist: 6, mountRange: 9 };
 
+  /* HOVER TILT (idea from the thruster-hovercar reference: one hover force per corner, so the body follows the ground): sample the ground ahead/behind/left/right of the car,
+   * pitch with the slope, roll with the cross-slope, and lean into turns. Pure: gY(x,z) -> height (game units); returns radians. */
+  function hoverTilt(gY, x, z, yaw, hl, hw, turn, speedK) {
+    var sx = Math.sin(yaw), cz = Math.cos(yaw), hf = gY(x + sx * hl, z + cz * hl), hb = gY(x - sx * hl, z - cz * hl), hL = gY(x + cz * hw, z - sx * hw), hR = gY(x - cz * hw, z + sx * hw);
+    return { pitch: -Math.atan2(hf - hb, 2 * hl) * 0.85, bank: Math.atan2(hL - hR, 2 * hw) * 0.25 + turn * speedK * 0.16 };
+  }
+
   root.buildMountRide = function (o) {
     var THREE = o.THREE, scene = o.scene, loader = o.loader, heightAt = o.heightAt, playerPos = o.playerPos, Mo = o.mounts || root.WorldMounts;
     var st = { riding: false, id: null, boosting: false }, MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0, turn: 1, tt: 0 }, raceMode = false;   // MOD = race modifiers (boost pads / items / stun / steer noise), set by world-race-run through raceAdapter()
@@ -120,7 +127,8 @@
           M.pitch = approach(M.pitch, -M.vy / (f.fly.climb * U) * 0.5, 2 * dt); M.bank = approach(M.bank, turn * 0.5, 2.5 * dt);
         } else {
           var top = ((inp.dive || raceMode) ? f.run : f.walk) * U * topK; M.sp = approach(M.sp, thr * top * (MOD.stun > 0 ? 0 : 1), (thr ? (raceMode ? 22 : 14) : 24) * U * dt); if (MOD.noise > 0) M.yaw += (Math.random() - 0.5) * MOD.noise * dt * 5;
-          M.pitch = 0; M.bank = 0;
+          if (f.hover) { var tl = hoverTilt(gY, M.x, M.z, M.yaw, 2.0 * U, 0.9 * U, turn, Math.min(1, Math.abs(M.sp) / Math.max(1, top))); M.pitch = approach(M.pitch, tl.pitch, 6 * dt); M.bank = approach(M.bank, tl.bank, 6 * dt); }   // hover cars follow slopes and lean into turns
+          else { M.pitch = 0; M.bank = 0; }
         }
       } else { M.sp = approach(M.sp, 0, 30 * U * dt); M.vy = 0; if (M.fl) M.y = Math.max(gY(M.x, M.z), M.y - 20 * U * dt); }
       M.x += Math.sin(M.yaw) * M.sp * dt; M.z += Math.cos(M.yaw) * M.sp * dt;
@@ -137,7 +145,7 @@
       holder.updateMatrixWorld(true);
       if (saddleNode) { saddleNode.getWorldPosition(tmp); SAD.x = tmp.x; SAD.y = tmp.y; SAD.z = tmp.z; }
       else { SAD.x = M.x; SAD.y = M.y + f.tall * U * 0.7; SAD.z = M.z; }
-      SAD.yaw = M.yaw; SAD.pitch = M.pitch; SAD.bank = M.bank;
+      SAD.yaw = M.yaw; SAD.pitch = -M.pitch; SAD.bank = -M.bank;   /* world-riders dragonVehicle applies pitchSign/bankSign -1 (the dragon ride's convention), so hand it negated angles: the rider tilts WITH the vehicle */
       if (ride) {
         playerPos.x = SAD.x; playerPos.y = SAD.y; playerPos.z = SAD.z;
         var back = f.tall * 3.4 * U, up = f.tall * 1.1 * U, tx = SAD.x - Math.sin(M.yaw) * back, tz = SAD.z - Math.cos(M.yaw) * back, ty = SAD.y + up;
@@ -222,4 +230,5 @@
       on: function () { }, off: function () { }, dispose: function () { scene.remove(holder); if (pnl) pnl.remove(); removeEventListener('keydown', key, true); }
     };
   };
+  root.buildMountRide.hoverTilt = hoverTilt;
 })(typeof window !== 'undefined' ? window : globalThis);
