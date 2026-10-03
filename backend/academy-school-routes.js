@@ -28,7 +28,7 @@ function codeFor(r) {
   return 400;
 }
 
-function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
+function createSchoolRouter({ academy, operatives, uidOf, agentAuth, runner }) {
   const router = express.Router();
   router.use(express.json({ limit: '256kb' }));
   // Body checks run AFTER authentication so anonymous callers never trigger any scanning work.
@@ -51,13 +51,7 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
   const ownerOf = (agentId) => { const op = isSafeId(agentId) ? operatives.get(agentId) : null; return (op && op.owner) || null; };
 
   // Prerequisites: every skill in `requires` must already be installed on the agent.
-  const missingPrereqs = (agentId, skillId) => {
-    const skill = isSafeId(skillId) ? academy.registry.get(skillId) : null;
-    if (!skill || !skill.requires.length) return [];
-    const op = isSafeId(agentId) ? operatives.get(agentId) : null;
-    const have = new Set(((op && op.skills) || []).map((s) => s.skillId));
-    return skill.requires.filter((r) => !have.has(r));
-  };
+  const missingPrereqs = (agentId, skillId) => academy.missingPrereqs(agentId, skillId);
 
   // An enrollment is "open" until an exam attempt has used it; repeat enroll calls return it instead of charging again.
   const openEnrollment = (agentId, skillId) => academy.tuition.forAgent(agentId, skillId).find((e) => e.status === 'paid' && !academy.exams.enrollmentKinds(e.id).includes('exam')) || null;
@@ -177,6 +171,26 @@ function createSchoolRouter({ academy, operatives, uidOf, agentAuth }) {
     if (ownerOf(b.agentId) !== u) return fail(res, 403, 'not your agent');
     const r = await academy.finishExam({ agentId: b.agentId, skillId: b.skillId, enrollmentId: b.enrollmentId, classId: isStr(b.classId) ? b.classId : undefined });
     return send(res, r, (x) => ({ passed: x.passed, installed: x.installed, classCompleted: !!x.classCompleted, receipt: x.receipt, split: x.split }));
+  }));
+
+  // Run the whole learning loop for one of the owner's own agents (their brain takes the baseline and the exam).
+  const learning = new Set();                       // in-flight agent+skill pairs: a double click must not run it twice
+  router.post('/agents/:agentId/learn', authed(async (req, res, u) => {
+    if (ownerOf(req.params.agentId) !== u) return fail(res, 403, 'not your agent');
+    const b = bodyOf(req);
+    if (!isStr(b.skillId)) return fail(res, 400, 'skillId required');
+    if (!runner) return fail(res, 503, 'the agent runner is not configured on this server');
+    const key = req.params.agentId + '|' + b.skillId;
+    if (learning.has(key)) return fail(res, 409, 'this agent is already learning that skill');
+    learning.add(key);
+    try {
+      const r = await runner.learn({ ownerId: u, agentId: req.params.agentId, skillId: b.skillId });
+      if (!r.ok) return fail(res, r.insufficient ? 402 : codeFor(r), r.error, { stage: r.stage });
+      return ok(res, {
+        passed: !!r.passed, installed: !!r.installed, pending: !!r.pending, status: r.status, baseline: r.baseline, exam: r.exam, lift: r.lift,
+        receiptId: r.receipt ? r.receipt.receiptId : null, enrollmentId: r.enrollmentId
+      });
+    } finally { learning.delete(key); }
   }));
 
   router.get('/agents/:agentId/receipts', authed((req, res, u) => {

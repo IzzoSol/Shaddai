@@ -34,6 +34,15 @@ function createAcademy({ dir, economy, operatives, judge, hooks, now = Date.now,
   const press = createPress({ store, economy, roles });
   hooks = hooks || createHooks({ achievements: require('../../achievements'), reputation: require('../reputation-engine') });
 
+  // Skills named in `requires` must already be installed on the agent.
+  function missingPrereqs(agentId, skillId) {
+    const skill = isSafeId(skillId) ? registry.get(skillId) : null;
+    if (!skill || !skill.requires.length) return [];
+    const op = isSafeId(agentId) ? operatives.get(agentId) : null;
+    const have = new Set(((op && op.skills) || []).map((x) => x.skillId));
+    return skill.requires.filter((r) => !have.has(r));
+  }
+
   const loadDone = () => store.read('finished', { byExam: {}, byEnrollment: {}, conferred: {} });
 
   async function finishExam({ agentId, skillId, enrollmentId, classId }) {
@@ -92,7 +101,7 @@ function createAcademy({ dir, economy, operatives, judge, hooks, now = Date.now,
     return { ok: true, passed: ev.passed, receipt, split: settled.split, installed, classCompleted };
   }
 
-  return { store, registry, benchmarks, exams, receipts, homework, tuition, roles, classes, press, finishExam };
+  return { store, registry, benchmarks, exams, receipts, homework, tuition, roles, classes, press, missingPrereqs, finishExam };
 }
 
 module.exports = { createAcademy };

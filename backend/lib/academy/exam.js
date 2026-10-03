@@ -54,11 +54,11 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
     if (!bench) return err('benchmark missing');
     const d = load(); const h = history(d, agentId, skillId); const t = now();
     if (h.filter((a) => t - a.startedAt < 86400000).length >= dailyCap) return err('daily attempt cap reached');
-    const last = h.filter((a) => a.kind === kind).pop();
+    const last = h.filter((a) => a.kind === kind && a.status !== 'abandoned').pop();
     if (last && t - last.startedAt < cooldownMs) return err('cooldown active');
     if (enrollmentId !== undefined) {             // one tuition payment covers one baseline and one exam
       if (!isSafeId(enrollmentId)) return err('invalid enrollment');
-      if (Object.values(d.attempts).some((x) => x.enrollmentId === enrollmentId && x.kind === kind)) return err('this enrollment already has a ' + kind + ' attempt; enroll again');
+      if (Object.values(d.attempts).some((x) => x.enrollmentId === enrollmentId && x.kind === kind && x.status !== 'abandoned')) return err('this enrollment already has a ' + kind + ' attempt; enroll again');
     }
     if (kind === 'exam' && !h.some((a) => a.kind === 'baseline' && a.status === 'graded' && a.skillHash === skill.hash)) return err('a graded baseline is required first');
     const seq = d.nextSeq || 1;
@@ -183,10 +183,22 @@ function createExamService({ store, registry, benchmarks, judge, now = Date.now,
 
   // Which kinds ('baseline' / 'exam') an enrollment has already used.
   function enrollmentKinds(enrollmentId) {
-    return Object.values(load().attempts).filter((a) => a.enrollmentId === enrollmentId).map((a) => a.kind);
+    return Object.values(load().attempts).filter((a) => a.enrollmentId === enrollmentId && a.status !== 'abandoned').map((a) => a.kind);
   }
 
-  return { begin, submit, evaluate, get, needsReview, resolve, enrollmentKinds };
+  // The runner could not finish an attempt (provider outage etc.). Free its enrollment slot and cooldown; nothing was graded.
+  function abandon({ attemptId }) {
+    if (!isSafeId(attemptId)) return err('unknown attempt');
+    const d = load();
+    if (!hasOwn(d.attempts, attemptId)) return err('unknown attempt');
+    const a = d.attempts[attemptId];
+    if (a.status !== 'open') return err('only an open attempt can be abandoned');
+    a.status = 'abandoned';
+    store.write('attempts', d);
+    return { ok: true };
+  }
+
+  return { begin, submit, evaluate, get, needsReview, resolve, enrollmentKinds, abandon };
 }
 
 module.exports = { createExamService, sample, cleanOutput };

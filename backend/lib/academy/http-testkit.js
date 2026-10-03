@@ -9,7 +9,8 @@ const { EconomyService } = require('../../economy-service');
 const { createAcademy } = require('./academy-core');
 const { createSchoolRouter } = require('../../academy-school-routes');
 
-async function boot() {
+async function boot(opts) {
+  opts = opts || {};
   const economy = new EconomyService({ filePath: path.join(tmpDir(), 'economy.json') });
   for (const u of ['owner1', 'owner2', 'teacherUser']) await economy.grant(u, 200, 'test.seed', 'seed-' + u);
   const opsDb = {
@@ -29,7 +30,7 @@ async function boot() {
   assert.ok(academy.registry.publish(sampleSkill()).ok);
   const app = express();
   app.use('/school', createSchoolRouter({
-    academy, operatives,
+    academy, operatives, runner: opts.runner,
     uidOf: (req) => String(req.headers['x-test-uid'] || ''),
     agentAuth: (req, res, next) => {
       const a = { 'bot-1': { id: 'xa_1', operativeId: 'op1', owner: 'owner1', name: 'Bot1' }, 'bot-2': { id: 'xa_2', operativeId: 'op2', owner: 'owner2', name: 'Bot2' } }[String(req.headers['x-test-agent'] || '')];

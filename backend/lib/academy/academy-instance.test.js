@@ -32,6 +32,12 @@ runAll('academy-instance', {
     assert.strictEqual(typeof j, 'function');
     return assert.rejects(() => inst.defaultJudge({ chat: async () => { throw new Error('no provider'); } })({ criteria: [] }, {}, 'A'), /no provider/);
   },
+  'getRunner builds the agent runner on the shared academy and routes chat through the llm router lazily'() {
+    const academy = inst.buildAcademy({ dir: tmpDir(), economy: new EconomyService({ filePath: path.join(tmpDir(), 'economy.json') }), operatives: { get: () => null, update: () => null }, judge: async () => ({ scores: {} }), hooks: { passed() {}, failed() {}, homeworkImproved() {}, taught() {}, classCompleted() {} } });
+    const runner = inst.buildRunner({ academy, operatives: { get: () => null }, chat: async () => ({ text: '[]' }) });
+    assert.strictEqual(typeof runner.learn, 'function');
+    assert.strictEqual(typeof inst.getRunner, 'function');
+  },
   'uidFromReq accepts a verified uid and rejects empty, local and oversized ids'() {
     assert.strictEqual(inst.uidFromReq({ userId: 'u_123' }), 'u_123');
     assert.strictEqual(inst.uidFromReq({ userId: 'local' }), '');
@@ -50,6 +56,7 @@ runAll('academy-instance', {
     const src = fs.readFileSync(SERVER, 'utf8');
     assert.ok(/app\.use\('\/api\/school'/.test(src), 'school router is not mounted');
     assert.ok(/createSchoolRouter/.test(src));
+    assert.ok(/runner:\s*getRunner\(\)/.test(src), 'the agent runner must be passed to the school router');
     assert.ok(/agentAuth:\s*_ext\w*\.agentAuth/.test(src), 'bot routes must use the existing bearer middleware');
     assert.ok(src.indexOf("app.use('/api/school'") > src.indexOf("app.use('/api/academy'"));
   }

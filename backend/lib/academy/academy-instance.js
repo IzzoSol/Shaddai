@@ -3,6 +3,7 @@
 const { createAcademy } = require('./academy-core');
 const { createLlmJudge } = require('./judge');
 const { seedCurriculum } = require('./curriculum');
+const { createAgentRunner } = require('./agent-runner');
 
 // The router only trusts the verified uid that softAuth set; never a header or a body field.
 function uidFromReq(req) {
@@ -37,4 +38,19 @@ function getAcademy() {
   return _instance;
 }
 
-module.exports = { buildAcademy, getAcademy, defaultJudge, uidFromReq, seed: seedCurriculum };
+// Runs the learning loop for an owner's own agents using their brain through the shared LLM router (resolved lazily).
+function buildRunner(opts) {
+  opts = opts || {};
+  return createAgentRunner({
+    academy: opts.academy || getAcademy(),
+    operatives: opts.operatives || require('../operatives'),
+    chat: opts.chat || ((messages, o) => require('../llm-router').chat(messages, o))
+  });
+}
+let _runner = null;
+function getRunner() {
+  if (!_runner) _runner = buildRunner();
+  return _runner;
+}
+
+module.exports = { buildAcademy, getAcademy, buildRunner, getRunner, defaultJudge, uidFromReq, seed: seedCurriculum };

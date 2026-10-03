@@ -23,6 +23,27 @@ const run = async (svc, agentId, kind, out) => {
 };
 
 runAll('exam-admin', {
+  async 'an abandoned attempt frees its enrollment slot and the cooldown, but only while open'() {
+    const store = tmpStore(); const registry = createRegistry(store); const benchmarks = createBenchmarks(store);
+    assert.ok(benchmarks.register(sampleBenchmark()).ok);
+    assert.ok(registry.publish(sampleSkill()).ok);
+    let t = 1700000000000;
+    const svc = createExamService({ store, registry, benchmarks, judge: async () => ({ scores: {} }), now: () => t });
+    const first = svc.begin({ agentId: 'a1', skillId: 'tool-hygiene', kind: 'baseline', withSkill: false, enrollmentId: 'enr_1' });
+    assert.ok(first.ok);
+    assert.ok(!svc.begin({ agentId: 'a1', skillId: 'tool-hygiene', kind: 'baseline', withSkill: false, enrollmentId: 'enr_1' }).ok);   // slot used
+    assert.deepStrictEqual(svc.enrollmentKinds('enr_1'), ['baseline']);
+    assert.ok(svc.abandon({ attemptId: first.attemptId }).ok);
+    assert.deepStrictEqual(svc.enrollmentKinds('enr_1'), []);
+    const again = svc.begin({ agentId: 'a1', skillId: 'tool-hygiene', kind: 'baseline', withSkill: false, enrollmentId: 'enr_1' });
+    assert.ok(again.ok, again.error);                                                       // no cooldown, no second payment
+    assert.strictEqual((await svc.submit({ attemptId: again.attemptId, outputs: {} })).status, 'graded');
+    assert.ok(!svc.abandon({ attemptId: again.attemptId }).ok);                             // graded attempts cannot be abandoned
+    assert.ok(!svc.abandon({ attemptId: 'att_nope' }).ok);
+    const done = svc.get(first.attemptId);
+    assert.strictEqual(done.status, 'abandoned');
+    assert.ok(!(await svc.submit({ attemptId: first.attemptId, outputs: {} })).ok);         // an abandoned attempt cannot be submitted
+  },
   async 'get returns a safe summary without outputs or answer data'() {
     const { svc } = setup();
     const { b } = await run(svc, 'a1', 'baseline', 'my plan');

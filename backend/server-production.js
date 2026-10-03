@@ -2153,12 +2153,12 @@ app.use('/x402/academy', _academyRoutes.paylabRouter); // merchant: sell the pay
 // SHADDAI School: Academy skills, exams, homework, learning receipts. Human side = softAuth's verified uid; bot side = the existing shdx_ bearer (agentAuth).
 try {
   const { createSchoolRouter } = require('./academy-school-routes');
-  const { getAcademy, uidFromReq } = require('./lib/academy/academy-instance');
+  const { getAcademy, getRunner, uidFromReq } = require('./lib/academy/academy-instance');
   const _ext_school = require('../server/externalAgents');
   // shdx_ bot bearers are not user sessions: skip softAuth for them (no wasted token verification, and they keep working if REQUIRE_AUTH is on).
   const _schoolAuth = (req, res, next) => (/^Bearer\s+shdx_/.test(String(req.headers.authorization || '')) ? next() : softAuth(req, res, next));
   app.use('/api/school', _schoolAuth, createSchoolRouter({
-    academy: getAcademy(), operatives: require('./lib/operatives'), uidOf: uidFromReq, agentAuth: _ext_school.agentAuth
+    academy: getAcademy(), operatives: require('./lib/operatives'), runner: getRunner(), uidOf: uidFromReq, agentAuth: _ext_school.agentAuth
   }));
 } catch (e) { console.warn('[school] not mounted:', e && e.message); }
 // ZEROX live market data scan (GET /api/zerox/scan?symbol=<mint_or_symbol>). The

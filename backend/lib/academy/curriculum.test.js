@@ -38,6 +38,20 @@ runAll('curriculum', {
       assert.ok(e.bench.grader !== 'rubric', 'exams are deterministic; creative quality is trained through homework');
     }
   },
+  'tool-use exams publish a tool catalog (names and arg types) but never the answer'() {
+    const toolEntries = ENTRIES.filter((e) => e.bench.grader === 'tool_use');
+    assert.ok(toolEntries.length >= 2);
+    for (const e of toolEntries) for (const t of e.bench.tasks) {
+      assert.ok(Array.isArray(t.input.tools) && t.input.tools.length >= 5, e.skill.id + '/' + t.id + ' has no tool catalog');
+      for (const tool of t.input.tools) {
+        assert.ok(/^[a-z_]+$/.test(tool.name) && tool.args && typeof tool.args === 'object' && typeof tool.description === 'string');
+        assert.ok(!/protocol|always|first|before|never/i.test(tool.description), 'catalog descriptions must not teach the skill: ' + tool.name);
+      }
+      const names = t.input.tools.map((x) => x.name);
+      for (const need of t.spec.expect) assert.ok(names.includes(need.tool), t.id + ' expects ' + need.tool + ' which is not in the catalog');
+      for (const f of t.spec.forbid) assert.ok(names.includes(f), 'forbidden tool ' + f + ' should exist in the catalog so restraint is tested');
+    }
+  },
   'all seven faculty teach, as house teachers, and prices fit the tiers'() {
     for (const f of FACULTY) assert.ok(ENTRIES.some((e) => e.skill.teacher.type === 'house' && e.skill.teacher.id === f.agent), f.agent + ' teaches nothing');
     for (const e of ENTRIES) {
