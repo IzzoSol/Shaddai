@@ -80,3 +80,17 @@ User opened Blender instance â€” can now:
 - Render top-down map reference with `map-top.py`
 
 **Token saved:** ~50K by avoiding re-reading large files next session.
+
+## Session 2 (Opus, 2026-10-03 evening) — done + verified headless
+- ROOT CAUSE of freezes/crash: the "aggressive merge" commit (5K/100K tris, min 4) baked instances one by one -> RAM spike, boot crash. Reverted to 2K/60K/min 12.
+- Train: boarding verified (E at Central -> 8-stop menu -> walkable ride, doors open). Train statics baked per material in world-transit.js (doors live).
+- Interiors: far outdoor owners hidden on enter (Academy 2,164 -> 524 draw calls), restored on exit (`window.__setOutdoorHidden`).
+- Wildlife `?wildlife=1`, unrigged citizens `?crowd=1` now opt-in.
+- Academy/Athenaeum wired into the realm per ACADEMY-HANDOFF section 3 (door at CLASS_01 marker 3958.8,-3117.6; [E] stations). Tests 14/14 + 15/15; live probe: inside, 28 stations, 0 errors.
+- Blender: map-top.py fixed (camera clip_end) -> top-down plan renders. Finding: 983 buildings scattered inside wedges, not aligned to streets = the "clutter".
+- Outdoor still ~2,160 draw calls (budget <150): world-transit 284, terrain 190, hoverpark 169, ~1,770 in unnamed top-level Mesh/Group.
+- Probes: tools/_train-probe.cjs, tools/_academy-probe.cjs.
+## Next
+1. Owner decision: re-plan city frontage (buildings in rows facing avenues) in grid-city-v4.json via Blender map-top review.
+2. Name + instance the ~1,770 unnamed top-level meshes (biggest outdoor draw-call bucket).
+3. Walk-in arcade, stairs/doors audit, mobile stall (last).

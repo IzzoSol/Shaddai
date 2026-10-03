@@ -56,7 +56,7 @@ for k, lst in buckets.items():
     make('bld_' + k, k, lambda bm, lst=lst: [box(bm, b['x_m'], b['y_m'], b['w_m'], b['d_m'], b['h_m'], b.get('rot_deg', 0)) for b in lst])
 make('spires', 'spire', lambda bm: [box(bm, b['x_m'], b['y_m'], b['w_m'], b['d_m'], b['h_m'], b.get('rot_deg', 0)) for b in spires])
 # top-down orthographic camera + workbench render (fast, flat colours)
-cam = bpy.data.cameras.new('cam'); cam.type = 'ORTHO'; cam.ortho_scale = (R + 80) * 2; co = bpy.data.objects.new('cam', cam); bpy.context.scene.collection.objects.link(co); co.location = (0, 0, 2000); co.rotation_euler = (0, 0, 0); bpy.context.scene.camera = co
+cam = bpy.data.cameras.new('cam'); cam.type = 'ORTHO'; cam.ortho_scale = (R + 80) * 2; cam.clip_end = 10000; co = bpy.data.objects.new('cam', cam); bpy.context.scene.collection.objects.link(co); co.location = (0, 0, 2000); co.rotation_euler = (0, 0, 0); bpy.context.scene.camera = co
 sc = bpy.context.scene; sc.render.engine = 'BLENDER_WORKBENCH'; sc.render.resolution_x = RES; sc.render.resolution_y = RES; sc.render.filepath = OUT; sc.render.image_settings.file_format = 'PNG'
 sc.display.shading.light = 'FLAT'; sc.display.shading.color_type = 'MATERIAL'; sc.display.shading.show_cavity = False; sc.view_settings.view_transform = 'Standard'
 sc.world = bpy.data.worlds.new('w') if sc.world is None else sc.world; sc.world.color = (0.02, 0.02, 0.03)
