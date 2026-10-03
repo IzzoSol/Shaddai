@@ -2,6 +2,12 @@
 
 Status key: OK · FIX · MISSING. Update one line per asset after each audit. Process is in `docs/QA-PROCESS.md`.
 
+## CORRECTION 2026-10-03 (measured with Blender + the clip library)
+- The shared clip library `public/assets/anim/agent-clips.glb` already has **75 clips** (Universal Animation Library 1 + 2, CC0), retargeted onto the agents' 24-bone skeleton by `tools/ual/bake-ual.mjs`: Roll, Backflip, Flying_Fist_Kick, Lunge_Roundhouse_Kick, Double_kick_forward, Kung_Fu_Punch, Left_Jab_from_Guard, Melee_Hook(+Rec), Sword_Regular_A/B/C(+Rec), Sword_Heavy_Combo, Sword_Block, Sword_Dash, Shield_Dash/OneShot, Hit_Knockback, Sit_Chair_Loop, Slide_*, NinjaJump_*, ClimbUp_1m, OverhandThrow, Farm_*, Chest_Open, Consume, TreeChopping_Loop, Walk_Carry_Loop, dances, and more. The earlier "only idle/run/walk" finding was about the clips embedded in each agent GLB, not the shared library.
+- **Still missing** from the shared library: death, directional hit reactions (only Hit_Knockback), swim/tread, crouch walk, spell cast, fishing cast/reel, mount/dismount, car/boat sit (procedural IK exists), friend-bot emotes (wave, gift). UAL2 also has a Zombie set (Zombie_Idle_Loop, Zombie_Scratch, Zombie_Walk_Fwd_Loop) not yet baked: ideal for skeleton/zombie enemies.
+- Agent GLBs are 31k-52k polygons each (24 bones): LOD or decimated variants are the main FPS lever for characters.
+- Tools: `tools/blender/audit-rigs.py`, `tools/blender/list-fbx-clips.py` (run through `tools/blender/bl.cjs`).
+
 ## Shared humanoid skeleton (every agent, Forge character and bot reuses it)
 | Clip / need | Status | Notes |
 |---|---|---|
