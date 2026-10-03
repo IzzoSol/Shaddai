@@ -278,6 +278,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
     <div class="lbar"><i id="liteBar"></i></div>
     <div class="lrow"><span id="liteStep">Loading the ground</span><b id="litePct">0%</b></div>
     <div class="tip" id="liteTip"></div>
+    <div class="tip" id="liteSlow" style="display:none;margin-top:8px;color:#e8c45c"></div>
   </div>
   <canvas id="portalCv"></canvas>
   <div id="introInner">
@@ -4518,6 +4519,7 @@ window.removeAgent = function(a){
   //    streams in after entry (time-sliced). Once they're done: async shader warm-up (compileAsync, no main-thread
   //    stall) + two quiet renders behind the screen, then fade straight into the sky-dive — no ENTER click, no warp. ──
   function _liteLoader(){
+    setTimeout(function(){ if(!window.__loadPlayable){ var sl = document.getElementById('liteSlow'); if(sl){ sl.style.display = 'block'; sl.textContent = 'First visit downloads the whole world (about 30 MB). It is still working - later visits load much faster.'; } } }, 40000);   // honest slow-load note, never a silent wait
     try{ if(window.WorldLoadingSlides) window.__liteSlides = window.WorldLoadingSlides.start(document.getElementById('liteSlides')); }catch(_){ }   // agent art slideshow behind the progress bar
     var bar=document.getElementById('liteBar'), pct=document.getElementById('litePct'), stepEl=document.getElementById('liteStep'), tipEl=document.getElementById('liteTip');
     var LABEL={ terrain:'Loading the ground', 'realm-modules':'Raising the realms', buildings:'Building the council towers', canon:'Building the Grid', 'grid-fabric':'Filling the city blocks', 'city-v3':'Lighting the plots', sky:'Painting the sky', warm:'Warming up the renderer' };
