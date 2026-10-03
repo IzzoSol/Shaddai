@@ -25,7 +25,7 @@ t('lava = DNF on lava circuits', () => { const r = mk('rift-cut'); r.start(); as
 t('ram: closing speed drives damage 8..18 (x1.25 boosting); wall ram = 6; hp<=0 respawns at the last checkpoint, frozen 1.4 s, item cleared, energy 40%', () => {
   const r = mk('forum-grand'); r.start(); r.passGate('a', 0, { mode: 'pad', altM: 0 }); r.passGate('b', 0, { mode: 'pad', altM: 0 });
   assert.strictEqual(r.ram('a', 'b', 0).damage, 8); assert.strictEqual(r.ram('a', 'b', 20).damage, 18); r.rider('a').boosting = true; assert.strictEqual(r.ram('a', 'b', 20).damage, 22.5);
-  assert.strictEqual(r.wallRam('c').hp, 94); r.rider('b').item = 'boost'; const dead = r.hit('b', 999); assert(dead.respawned); const b = r.rider('b'); assert.strictEqual(b.freeze, 1.4); assert.strictEqual(b.item, null); assert.strictEqual(b.energy, 0.4); assert.strictEqual(b.hp, 100);
+  assert.strictEqual(r.wallRam('c').hp, 94); r.rider('b').item = 'boost'; r.update(2); const dead = r.hit('b', 999); assert(dead.respawned); const b = r.rider('b'); assert.strictEqual(b.freeze, 1.4); assert.strictEqual(b.item, null); assert.strictEqual(b.energy, 0.4); assert.strictEqual(b.hp, 100);
 });
 t('items: weighted crate roll, Blue Line is Prime-only, shell 22 dmg, Ward Plate eats one hit', () => {
   const r = mk('plaza-cup'); r.start(); assert.strictEqual(r.grabCrate('a').id, 'boost'); assert.strictEqual(r.grabCrate('a'), null, 'one item slot');
@@ -40,4 +40,10 @@ t('3 city-scale tracks: Quarter Loop ~4.4 km, Grid Ring = the whole r1600 circle
   assert.strictEqual(W.CIRCUITS['grid-ring'].gates.length, 8); assert.strictEqual(W.CIRCUITS['grid-ring'].laps, 1); assert(W.CIRCUITS['train-ring'].openWorld); assert.strictEqual(W.CIRCUITS['quarter-loop'].scale, 'quarter');
   const U = 7 / 1.8, g = W.trackWorld('grid-ring', U); assert(Math.abs(g[0].x) < 1e-6 && Math.abs(g[0].z + 1600 * U) < 1e-6, 'starts at the north gate (0, 1600 m) = world z -1600U'); const q = g[24]; assert(q.x < 0, 'counter-clockwise: 90 deg along the ring is WEST (CP_02 = (-1600, 0))');
 });
+
+t('after a hit a rider is immune for 1.2 s (no chain-stun), then hittable again; ward still eats a hit first; respawn grants immunity', () => {
+  const r = mk('plaza-cup'); r.start(); assert.strictEqual(r.hit('a', 20).hp, 80); assert(r.hit('a', 20).immune); assert.strictEqual(r.rider('a').hp, 80); r.update(1.3); assert.strictEqual(r.hit('a', 20).hp, 60);
+  r.rider('a').ward = true; assert(r.hit('a', 5).blocked); r.update(1.3); r.hit('a', 999); assert(r.rider('a').grace > 1.4, 'immune through the respawn freeze');
+});
+
 console.log(pass + ' passed');

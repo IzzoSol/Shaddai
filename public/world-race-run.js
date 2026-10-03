@@ -2,7 +2,7 @@
  * lap/place/item/hp HUD, countdown, results + Sparks prizes. It drives world-race.js (rules) and the host hoverboard (world-hoverboard.js setModifier).
  *
  *   var run = WorldRaceRun.create({ THREE?, scene?, park, hover, sparks?, onEvent?, U? })
- *   run.start(circuitId, { ranked, ais: 3..7, rubber? }) · run.update(dt, pose?) each frame (pose optional: read from hover.state())
+ *   run.start(circuitId, { ranked, ais: 0..7, rubber?, level?: 'rookie'|'pro'|'elite' }) · run.update(dt, pose?) each frame (pose optional: read from hover.state())
  *   run.useItem() (key R)  · run.stop() · run.state()  · run.hud (DOM) · run.playerId
  *   Items: Boost (turbo 1.6 s) · Spark Shell (22 dmg, homing-lite, travels) · Wide Wave (cone knock-back stun) · Ink Veil (blind + FOV mess) · Ward Plate (eats a hit)
  *          Magnet Yank (steal a rival's item within 12 m) · Sway Dust (steer noise 2 s) · Dragon Pinch (1.2 s stall) · Triple Shell · Blue Line (first place; Prime only).
@@ -12,6 +12,8 @@
 (function (root) {
   'use strict';
   var U0 = 7 / 1.8;
+  /* AI difficulty (owner 2026-10-02, reference: 50/100/150cc classes + rubber-band strength per level): rookie slower but catches up harder, elite faster with a light leash */
+  var LEVELS = { rookie: { mul: 0.88, rubber: 0.12 }, pro: { mul: 1.0, rubber: 0.08 }, elite: { mul: 1.1, rubber: 0.05 } };
   var FX = { OOB_M: 38, WARN_M: 22, OOB_GRACE_S: 2.2, FALL_M: 30, RESET_PENALTY_S: 3, RESET_COOLDOWN_S: 4, WRONG_WAY_S: 1.6, PICK_M: 3.5, PAD_M: 4.5, GATE_M: 8, SHELL_MS: 34, SHELL_RANGE_M: 60, WAVE_M: 16, YANK_M: 12, CRATE_RESPAWN_S: 8, AI_BASE_MS: 12.5, AI_ITEM_DELAY_S: [1.2, 3.5], PRIZE: [60, 35, 20], PRIZE_RANKED_MUL: 2, PAD_BOOST: { mul: 1.35, dur: 1.0 }, ITEM_BOOST: { mul: 1.6, dur: 1.6 } };
   function create(o) {
     var park = o.park, hover = o.hover, U = o.U || U0, scene = o.scene, THREE = o.THREE, emit = o.onEvent || function () { }, WR = root.WorldRace, R = null, st = null;
@@ -37,8 +39,8 @@
         crates = []; for (var ck = 0; ck < 24; ck++) { var qc = posAt((ck + 0.5) / 24), off = (ck % 2 ? 1 : -1) * 3 * U; crates.push({ x: qc.x + Math.cos(qc.yaw) * off, y: qc.y, z: qc.z - Math.sin(qc.yaw) * off, on: true, t: 0, u: (ck + 0.5) / 24, i: ck, track: true }); }
         pads = []; for (var pk = 0; pk < 16; pk++) { var qp = posAt((pk + 0.25) / 16); pads.push({ x: qp.x, y: qp.y, z: qp.z, yaw: qp.yaw }); }
       } else { setLoop(park.loopWorld()); gates = park.gates(cid); crates = park.cratesWorld().map(function (c, i) { return { x: c.x, y: c.y, z: c.z, on: true, t: 0, u: uOf(c.x, c.z), i: i }; }); pads = park.padsWorld(); }
-      var ais = ridersDef.slice(1).map(function (r, i) { var lane = ((i % 4) - 1.5) * 2.2 * U; return { id: r.id, u: 0.985 - i * 0.004, tot: -(0.015 + i * 0.004), lane: lane, speedMul: 1, stun: 0, noise: 0, ink: 0, gateU: 0, itemT: 0, spawned: true, x: 0, y: 0, z: 0, yaw: 0, mesh: null }; });
-      st = { cid: cid, C: C, gates: gates, crates: crates, pads: pads, ais: ais, phase: 'count', count: 3.4, t: 0, P: { gate: 0, cool: 0, inkT: 0, lastCheckpoint: 0, done: false, oobT: 0, wrongT: 0, resetCd: 0, lat: 0, warnCd: 0, drift: { active: false, dir: 0, charge: 0, level: 0 }, slipT: 0, slipOn: false, lx: null, lz: null, lyaw: null, speed: 0, yawRate: 0, lapSeen: 0, lapStart: 0, lapTimes: [], early: false, rocket: false }, result: null, ranked: !!opts.ranked, rubber: !!opts.rubber, shells: [], prime: !!C.prime, padCool: 0 };
+      var LV = LEVELS[opts.level] || LEVELS.pro; var ais = ridersDef.slice(1).map(function (r, i) { var lane = ((i % 4) - 1.5) * 2.2 * U; return { id: r.id, u: 0.985 - i * 0.004, tot: -(0.015 + i * 0.004), lane: lane, speedMul: LV.mul, stun: 0, noise: 0, ink: 0, gateU: 0, itemT: 0, spawned: true, x: 0, y: 0, z: 0, yaw: 0, mesh: null }; });
+      st = { cid: cid, C: C, gates: gates, crates: crates, pads: pads, ais: ais, phase: 'count', count: 3.4, t: 0, P: { gate: 0, cool: 0, inkT: 0, lastCheckpoint: 0, done: false, oobT: 0, wrongT: 0, resetCd: 0, lat: 0, warnCd: 0, drift: { active: false, dir: 0, charge: 0, level: 0 }, slipT: 0, slipOn: false, lx: null, lz: null, lyaw: null, speed: 0, yawRate: 0, lapSeen: 0, lapStart: 0, lapTimes: [], early: false, rocket: false }, result: null, ranked: !!opts.ranked, rubber: opts.rubber != null ? !!opts.rubber : !!opts.level, rubberK: (LEVELS[opts.level] || LEVELS.pro).rubber, level: LEVELS[opts.level] ? opts.level : 'pro', shells: [], prime: !!C.prime, padCool: 0 };
       ais.forEach(function (a) { var p = posAt(a.u); place(a, p); a.mesh = mkMesh(a); });
       if (tw && THREE && scene && WR.ribbon) { var rp = tw.map(function (p) { return { x: p.x, y: p.y + 0.3 * U, z: p.z }; }); st.ribMesh = WR.ribbon(THREE, rp, 9 * U, true); scene.add(st.ribMesh); }
       buildHud(); ev('start', { circuit: cid, ranked: !!opts.ranked, scale: C.scale || 'park', lengthM: C.lengthM || null }); return api;
@@ -171,7 +173,7 @@
       var playerProg = me.lap + uOf(pose.x, pose.z);
       st.ais.forEach(function (a) {
         var r = R.rider(a.id); if (r.finished || r.dnf) return; if (a.stun > 0) { a.stun -= dt; } if (a.ink > 0) a.ink -= dt; if (a.noise > 0) a.noise -= dt; if (a.boostT > 0) a.boostT -= dt;
-        var mul = a.speedMul * (a.stun > 0 ? 0.15 : 1) * (a.ink > 0 ? 0.8 : 1) * (a.boostT > 0 ? 1.5 : 1) * (a.noise > 0 ? 0.9 : 1); if (st.rubber) { var gap = playerProg - (r.lap + a.u); mul *= 1 + Math.max(-1, Math.min(1, gap / 0.5)) * 0.08; }
+        var mul = a.speedMul * (a.stun > 0 ? 0.15 : 1) * (a.ink > 0 ? 0.8 : 1) * (a.boostT > 0 ? 1.5 : 1) * (a.noise > 0 ? 0.9 : 1); if (st.rubber) { var gap = playerProg - (r.lap + a.u); mul *= 1 + Math.max(-1, Math.min(1, gap / 0.5)) * (st.rubberK || 0.08); }
         var deckK = { race: 1.0, park: 1.0, street: 0.97 }[r.deck] || 1, du = (FX.AI_BASE_MS * U * deckK * mul * dt) / LEN, N = st.gates.length; a.tot += du; a.u = ((a.tot % 1) + 1) % 1;
         var guard = 6; while (guard-- > 0 && !r.finished && a.tot >= r.lap + r.gate / N) { var gk = st.gates[r.gate]; R.passGate(a.id, r.gate, { mode: gk.kind === 'foil' ? 'foil' : 'pad', altM: gk.kind === 'foil' ? 6 : 0.2, kissed: true }); }
         var p = posAt(a.u); place(a, p); if (a.mesh) { a.mesh.position.set(a.x, a.y + 0.6 * U, a.z); a.mesh.rotation.y = a.yaw; }
