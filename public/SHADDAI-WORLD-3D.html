@@ -5175,7 +5175,7 @@ window.__travel = {
         if(window.__raceKart){ if(!M) return false; if(hover.isRiding()) hover.dismount(); if(!M.rentRace(o.vehicle, sp.x, sp.z, sp.yaw || 0)) return false; run.setVehicle(M.raceAdapter); }
         else { if(M){ if(M.isRiding()) M.dismount(); M.setRaceMode(false); } run.setVehicle(null); playerPos.x = sp.x; playerPos.z = sp.z; if(!hover.isRiding() && typeof playerAvatar !== 'undefined') hover.toggle(playerAvatar, {}); if(o.style && hover.setStyle) hover.setStyle(o.style); }
         if(o.free){ if(window.Navi && window.Navi.toast) window.Navi.toast('Free ride: the whole track is yours. Open I > Races any time to start a race.'); return true; }   // no race state: just placed on the start line, mounted
-        run.start(cid, { ranked: !!o.ranked, ais: o.ais == null ? 5 : o.ais }); return true; }catch(err){ console.warn('[race] start failed', err && err.message); return false; } };
+        run.start(cid, { ranked: !!o.ranked, ais: o.ais == null ? 5 : o.ais, level: o.level }); return true; }catch(err){ console.warn('[race] start failed', err && err.message); return false; } };
       addEventListener('keydown', function(e){ if(e.code === 'KeyR' && run.state() && run.state().phase === 'race' && !e.repeat){ run.useItem(); e.stopImmediatePropagation(); } }, true);
       window.__raceTick = function(dt){ park.update(dt); run.setInput({ drift: !!keys['KeyX'], accel: !!(keys['KeyW'] || keys['ArrowUp']) }); run.update(dt); };   // X = drift, W held at GO = rocket start
       console.info('[race] hoverskate park built at PLAZA_SKATE', Math.round(mk.pos.x), Math.round(mk.pos.z));

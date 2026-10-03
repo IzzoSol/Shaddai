@@ -11,7 +11,7 @@
  */
 (function (root) {
   'use strict';
-  var TUNE = { washS: 1.2, missPadS: 0.8, trickCapPct: 0.08, trickTenth: 0.1, ramDmgMin: 8, ramDmgMax: 18, ramBoostMul: 1.25, wallDmg: 6, shellDmg: 22, respawnFreezeS: 1.4, respawnEnergy: 0.4, padGateMaxAlt: 1.0, hp: 100, maxRiders: 8 };
+  var TUNE = { washS: 1.2, missPadS: 0.8, trickCapPct: 0.08, trickTenth: 0.1, ramDmgMin: 8, ramDmgMax: 18, ramBoostMul: 1.25, wallDmg: 6, shellDmg: 22, respawnFreezeS: 1.4, hitGraceS: 1.2, respawnEnergy: 0.4, padGateMaxAlt: 1.0, hp: 100, maxRiders: 8 };
   var ITEMS = [
     { id: 'boost', name: 'Boost', weight: 24, dur: 1.6 }, { id: 'shell', name: 'Spark Shell', weight: 20, dmg: 22, homing: 'lite' }, { id: 'wave', name: 'Wide Wave', weight: 12, knock: true },
     { id: 'ink', name: 'Ink Veil', weight: 12, dur: 2.5 }, { id: 'ward', name: 'Ward Plate', weight: 12 }, { id: 'yank', name: 'Magnet Yank', weight: 6, range: 12 },
@@ -84,7 +84,7 @@
     var N = circuit.gates.length;
     function rd(id) { return riders[id]; }
     R.start = function () { started = true; t = 0; };
-    R.update = function (dt) { if (!started) return; t += dt; order.forEach(function (id) { var r = riders[id]; if (r.finished || r.dnf) return; r.time += dt; if (r.freeze > 0) r.freeze = Math.max(0, r.freeze - dt); }); };
+    R.update = function (dt) { if (!started) return; t += dt; order.forEach(function (id) { var r = riders[id]; if (r.finished || r.dnf) return; r.time += dt; if (r.freeze > 0) r.freeze = Math.max(0, r.freeze - dt); if (r.grace > 0) r.grace = Math.max(0, r.grace - dt); }); };
     R.passGate = function (id, gateIdx, s) {
       var r = rd(id); if (!r || r.finished || r.dnf || r.freeze > 0) return { ok: false, why: 'not racing' }; if (gateIdx !== r.gate) return { ok: false, why: 'wrong gate (next is ' + r.gate + ')' };
       var g = circuit.gates[gateIdx], mode = s && s.mode || 'pad', alt = s && s.altM || 0, note = '';
@@ -98,8 +98,8 @@
     R.score = function (id) { var r = rd(id); if (!r) return null; var cap = circuit.cleanLapS * TUNE.trickCapPct * circuit.laps; return +(r.time + r.penaltyS - Math.min(r.trickS, cap)).toFixed(2); };
     R.wash = function (id) { var r = rd(id); if (!r) return; r.penaltyS += TUNE.washS; r.washes++; };
     R.lavaTouch = function (id) { var r = rd(id); if (!r) return null; if (circuit.lavaKill !== false) { r.dnf = true; return { dnf: true }; } r.penaltyS += 5; return { dnf: false }; };
-    function respawn(r) { r.hp = TUNE.hp; r.freeze = TUNE.respawnFreezeS; r.item = null; r.energy = TUNE.respawnEnergy; r.gate = (r.checkpoint + 1) % N; }
-    R.hit = function (id, dmg) { var r = rd(id); if (!r || r.dnf || r.finished) return null; if (r.ward) { r.ward = false; return { blocked: true, hp: r.hp }; } r.hp = Math.max(0, r.hp - dmg); if (r.hp <= 0) { respawn(r); return { respawned: true, hp: r.hp }; } return { hp: r.hp }; };
+    function respawn(r) { r.hp = TUNE.hp; r.grace = TUNE.respawnFreezeS + TUNE.hitGraceS; r.freeze = TUNE.respawnFreezeS; r.item = null; r.energy = TUNE.respawnEnergy; r.gate = (r.checkpoint + 1) % N; }
+    R.hit = function (id, dmg) { var r = rd(id); if (!r || r.dnf || r.finished) return null; if (r.ward) { r.ward = false; return { blocked: true, hp: r.hp }; } if (r.grace > 0) return { immune: true, hp: r.hp };   /* just hit: brief immunity so shells cannot chain-stun a rider */ r.hp = Math.max(0, r.hp - dmg); if (r.hp <= 0) { respawn(r); return { respawned: true, hp: r.hp }; } r.grace = TUNE.hitGraceS; return { hp: r.hp }; };
     R.ram = function (a, b, closing) { var ra = rd(a), rb = rd(b); if (!ra || !rb || ra.freeze > 0 || rb.freeze > 0) return null; var c = Math.max(0, closing), d = TUNE.ramDmgMin + (TUNE.ramDmgMax - TUNE.ramDmgMin) * Math.min(1, c / 20); if (ra.boosting) d *= TUNE.ramBoostMul; return { impulse: +(c * 0.55).toFixed(2), damage: +d.toFixed(1), result: R.hit(b, d) }; };
     R.wallRam = function (id) { return R.hit(id, TUNE.wallDmg); };
     R.grabCrate = function (id, prime) { var r = rd(id); if (!r || r.item) return null; var stand = R.standings(), pl = 1, n0 = stand.length; for (var si0 = 0; si0 < stand.length; si0++) if (stand[si0].id === id) pl = stand[si0].place || (si0 + 1); var W = itemWeights(pl, n0, prime), pool = ITEMS.filter(function (i) { return (!i.primeOnly || prime) && (W[i.id] || 0) > 0; }), tot = pool.reduce(function (s, i) { return s + W[i.id]; }, 0), x = rng() * tot, pick = pool[0]; for (var i = 0; i < pool.length; i++) { x -= W[pool[i].id]; if (x <= 0) { pick = pool[i]; break; } } r.item = pick.id; return pick; };

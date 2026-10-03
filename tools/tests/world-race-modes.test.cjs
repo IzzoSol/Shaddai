@@ -31,4 +31,10 @@ t('select: RACE costs the entry fee and sends your rivals; TIME TRIAL is free wi
   starts.length = 0; spent.length = 0; RS._test.go({ rm: 'free', cid: 'dragon-gate' }); assert.strictEqual(starts[0][1].free, true); assert.strictEqual(starts[0][1].ais, 0); assert.strictEqual(spent.length, 0); assert.strictEqual(starts[0][0], 'dragon-gate');
 });
 t('select: ranked only applies to real races (a trial or free ride is never ranked)', () => { starts.length = 0; RS._test.go({ rm: 'trial', ranked: true, cid: 'plaza-cup' }); assert.strictEqual(starts[0][1].ranked, false); starts.length = 0; RS._test.go({ rm: 'race', ranked: true, cid: 'plaza-cup' }); assert.strictEqual(starts[0][1].ranked, true); });
+t('difficulty levels: rookie AI is slower with a harder catch-up leash, elite faster with a light one; default is pro; select screen passes the level only for real races', () => {
+  const mkRun = lv => { const run = W.create({ park, hover: hover(), sparks: { add() { } }, onEvent: () => { }, U }); run.start('plaza-cup', { ais: 3, level: lv }); return run._st(); };
+  const a = mkRun('rookie'), b = mkRun('pro'), c = mkRun('elite'), d = mkRun(undefined);
+  assert(a.ais[0].speedMul < b.ais[0].speedMul && b.ais[0].speedMul < c.ais[0].speedMul); assert(a.rubberK > b.rubberK && b.rubberK > c.rubberK); assert.strictEqual(d.level, 'pro'); assert.strictEqual(d.rubber, false, 'no level -> no rubber-band (unchanged default)'); assert.strictEqual(a.rubber, true);
+  starts.length = 0; RS._test.go({ rm: 'race', lvl: 'elite', ais: 3, cid: 'plaza-cup' }); assert.strictEqual(starts[0][1].level, 'elite'); starts.length = 0; RS._test.go({ rm: 'trial', lvl: 'elite', cid: 'plaza-cup' }); assert.strictEqual(starts[0][1].level, undefined);
+});
 console.log(pass + ' passed');
