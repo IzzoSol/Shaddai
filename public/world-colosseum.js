@@ -524,7 +524,7 @@
       try {
         Promise.all([import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/loaders/DRACOLoader.js')]).then(function (m) {
           var L = new m[0].GLTFLoader(); L.setMeshoptDecoder(m[1].MeshoptDecoder);
-          var dr = new m[2].DRACOLoader(); dr.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/'); L.setDRACOLoader(dr); ok(L);
+          var dr = new m[2].DRACOLoader(); dr.setDecoderPath('/vendor/three/addons/libs/draco/'); L.setDRACOLoader(dr); ok(L);
         }).catch(function () { cb(null); });
       } catch (e) { cb(null); }
     }
