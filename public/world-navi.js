@@ -396,6 +396,7 @@
     var CM = window.WorldCombatMode, RZ = window.__realmZones, z = RZ && RZ.state ? RZ.state() : null, locked = CM && CM.locked(), pas = CM && CM.passive();
     var rows = [
       { id: 'passive', t: 'Passive mode', s: locked ? 'Locked: the Void forces fight' : (pas ? 'On: nobody can hurt you, you cannot fight' : 'Off: normal combat'), tag: pas ? 'ON' : 'OFF' },
+      { id: 'buffs', t: 'Active buffs', s: (window.WorldBuffs && window.WorldBuffs.active().length) ? window.WorldBuffs.active().map(function (b) { return b.name + ' ' + b.left_s + 's'; }).join(' · ') : 'None. Eat or drink at the Colosseum kiosks.', tag: (window.WorldBuffs ? window.WorldBuffs.active().length : 0) || '' },
       { id: 'zone', t: 'Realm hazard', s: z && z.zone ? z.zone.replace('-', ' ') + (z.warn ? ' - ' + z.warn : ' - protected') : 'None here', tag: z && z.zone ? '!' : '' }
     ];
     return {

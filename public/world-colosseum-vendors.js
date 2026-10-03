@@ -29,7 +29,7 @@
     pnl.addEventListener('click', function (e) {
       var t = e.target; if (t.getAttribute('data-x')) return close(); var k = t.getAttribute('data-k'); if (k == null) return; var it = v.items[+k];
       if (!spend(it[1], v.id + ':' + it[0])) return toast('Not enough Sparks (' + it[1] + ')');
-      S.inv.push({ v: v.id, item: it[0], at: Date.now() }); save(); toast(it[0] + ' - ' + it[2]);
+      S.inv.push({ v: v.id, item: it[0], at: Date.now() }); save(); var bid = root.WorldBuffs && root.WorldBuffs.fromItem(it[0]); if (bid) root.WorldBuffs.add(bid); toast(it[0] + ' - ' + it[2] + (bid ? '  [' + root.WorldBuffs.DEFS[bid].name + ': ' + root.WorldBuffs.DEFS[bid].note + ']' : ''));
     });
   }
   function poll() {
