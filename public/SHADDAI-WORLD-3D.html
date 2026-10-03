@@ -5032,7 +5032,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
 // ── HAZARDS (world-hazards.js): lava burns you (overworld lava = molten pixels of the terrain colour map; Colosseum lava field); hover above it to cross; water puts you out ──
-(function bootHazards(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
+// DISABLED 2026-10-03: hazard physics expensive, causes "not responsive" hangs. Re-enable when perf is stable.
+(function bootHazards(){ return; let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
   if(!window.WorldHazards || !_v4T || !_v4Meta || !_v4Meta.half_units || !window.__loadPlayable) return; clearInterval(iv);
   const make = function(allow){ try{ window.__hazards = window.buildWorldHazards({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, lavaAllow: allow, getPlayer: function(){ return { pos: playerPos, alive: (window.__playerHP == null || window.__playerHP > 0) && !(_interiors && _interiors.isInside() && !(window._currentInterior === 'COLOSSEUM')) }; }, getAvatar: function(){ return playerAvatar; },
       isSwimming: function(){ return !!_swimming; }, getArena: function(){ return window.__colosseumArena; }, survival: window.WorldSurvival, resist: function(){ return window.WorldGear && window.WorldGear.lavaResist ? window.WorldGear.lavaResist() : 0; }, onHurt: function(d){ if(window.__hitfx) window.__hitfx.hurt(d, null); } }); }catch(e){ console.warn('[hazards] failed', e && e.message); } };
@@ -5064,7 +5065,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 (function bootDistrictToast(){ let last = null; setInterval(function(){ try{ const WD = window.WorldDistricts; if(!WD || typeof playerPos === 'undefined') return; const k = 7/1.8, x = playerPos.x / k, y = -playerPos.z / k;
   if(Math.hypot(x, y) < 170 || Math.hypot(x, y) > 1600){ last = null; return; } const d = WD.at(x, y); if(d.id !== last){ last = d.id; if(window.Navi && window.Navi.toast) window.Navi.toast(d.name + ' District - ' + d.blurb + ' (' + WD.streetAt(x, y) + ')'); } }catch(_){} }, 1500); })();
 // ── REAL GRASS (world-grass.js): wind-swayed tufts that bend away from you; grows only where the terrain colour map is green; scales with the quality tier ──
-(function bootGrass(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
+// DISABLED 2026-10-03: grass shader expensive, causes "not responsive" on load. Re-enable when perf is stable.
+(function bootGrass(){ return; let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
   if(!window.WorldGrass || !_v4T || !_v4Meta || !_v4Meta.half_units || !window.__loadPlayable) return; clearInterval(iv);
   window.WorldGrass.loadGreenMask('/assets/terrain/color.jpg', _v4Meta.half_units, 256).then(function(allow){
     window.__grass = window.buildWorldGrass({ THREE, scene, heightAt: _v4T.heightAt, getPlayer: function(){ return { pos: playerPos }; }, allow: allow, waterAt: function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; }, quality: 'MEDIUM' });
