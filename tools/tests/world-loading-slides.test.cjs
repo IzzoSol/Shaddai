@@ -1,0 +1,9 @@
+// node tools/tests/world-loading-slides.test.cjs — loading slideshow data: files exist, merge/next logic, never blocks
+const assert = require('assert'), fs = require('fs'), path = require('path'); global.window = global; require('../../public/world-loading-slides.js');
+const L = global.WorldLoadingSlides, PUB = path.join(__dirname, '..', '..', 'public'); let pass = 0; const t = (n, f) => { try { f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
+t('every built-in slide image exists, is a small webp, and has a speaker + line', () => { L.SLIDES.forEach(s => { const f = path.join(PUB, s.src); assert(fs.existsSync(f), s.src); assert(fs.statSync(f).size < 400 * 1024, s.src + ' too big for a loading screen'); assert(s.who && s.line); }); assert(L.SLIDES.length >= 4); });
+t('merge appends new slides, ignores duplicates and junk, keeps order', () => { const m = L.merge(L.SLIDES, [{ src: '/x.webp', who: 'ZEROX', line: 'l' }, { src: L.SLIDES[0].src }, null, {}, { src: '/y.webp' }]); assert.strictEqual(m.length, L.SLIDES.length + 2); assert.strictEqual(m[L.SLIDES.length].who, 'ZEROX'); assert.strictEqual(m[m.length - 1].who, ''); });
+t('next wraps around; empty list is safe', () => { assert.strictEqual(L.next(0, 3), 1); assert.strictEqual(L.next(2, 3), 0); assert.strictEqual(L.next(0, 0), 0); });
+t('start without a DOM or element is a safe no-op', () => { const h = L.start(null); h.stop(); });
+t('the 7 council agents are all covered once the slides.json is filled (manifest lists them)', () => { const f = path.join(PUB, 'assets', 'loading', 'slides.json'); if (!fs.existsSync(f)) return; const j = JSON.parse(fs.readFileSync(f, 'utf8')); j.forEach(s => assert(fs.existsSync(path.join(PUB, s.src)), 'missing ' + s.src)); });
+console.log(pass + ' passed');

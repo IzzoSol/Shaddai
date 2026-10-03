@@ -1,4 +1,4 @@
-// node tools/tests/world-race-mariokart.test.cjs — rank-based items, Seeker Missile, drift mini-turbos, slipstream, rocket start, lap splits
+// node tools/tests/world-race-mariokart.test.cjs — rank-based items, Lock-On Drone, drift mini-turbos, slipstream, rocket start, lap splits
 const assert = require('assert'); global.window = global; require('../../public/world-race.js'); require('../../public/world-race-run.js');
 const U = 7 / 1.8; const W = global.WorldRaceRun, WR = global.WorldRace;
 const sq = [[0, 0], [400, 0], [400, 400], [0, 400]].map(p => ({ x: p[0] * U, y: 0, z: p[1] * U }));
@@ -13,14 +13,14 @@ let seed = 11; const rng = () => { seed = (seed * 1664525 + 1013904223) >>> 0; r
 t('item odds: back of the pack gets boosts/triples/seekers; the leader gets defence and never a Seeker', () => {
   const lead = WR.itemWeights(1, 8, false), last = WR.itemWeights(8, 8, false), mid = WR.itemWeights(4, 8, false);
   assert(last.boost > lead.boost * 1.8 && last.triple > lead.triple * 4 && last.seeker > 5 && lead.seeker === 0 && mid.seeker === 0 || mid.seeker < last.seeker);
-  assert(lead.ward > last.ward && lead.ink > last.ink && lead.shell > last.shell); assert.strictEqual(lead.blue, 0, 'Blue Line is Prime only'); assert(WR.itemWeights(8, 8, true).blue > 5);
+  assert(lead.ward > last.ward && lead.ink > last.ink && lead.shell > last.shell); assert.strictEqual(lead.blue, 0, 'Orbital Lance is Prime only'); assert(WR.itemWeights(8, 8, true).blue > 5);
   Object.values(last).concat(Object.values(lead)).forEach(w => assert(w >= 0 && isFinite(w)));
 });
 t('rolling many crates: last place really does get far more Seekers/Boosts than first; first never gets a Seeker', () => {
   const roll = (place) => { const counts = {}; for (let i = 0; i < 4000; i++) { const R = WR.create(WR.CIRCUITS['plaza-cup'], { rng, riders: Array.from({ length: 8 }, (_, k) => ({ id: 'r' + k })) }); const ord = R.standings(); R.rider(ord[place - 1].id); const id = ord[place - 1].id; const it = R.grabCrate(id, false); counts[it.id] = (counts[it.id] || 0) + 1; } return counts; };
   const first = roll(1), lastP = roll(8); assert(!first.seeker, 'leader never gets a seeker'); assert(lastP.seeker > 150, 'last place seekers ' + lastP.seeker); assert(lastP.boost > first.boost, 'boosts ' + lastP.boost + ' vs ' + first.boost);
 });
-t('Seeker Missile: homes on FIRST place, hits for 30 and stalls them 2 s; the target gets an INCOMING warning if it is the player', () => {
+t('Lock-On Drone: homes on FIRST place, hits for 30 and stalls them 2 s; the target gets an INCOMING warning if it is the player', () => {
   const { run, events } = mk(); run.start('plaza-cup', { ais: 3 }); tick(run, at(0.2), 3.6); const st = run._st(), R = run.race(); st.ais.forEach((a, i) => { a.tot = 0.5 + i * 0.01; a.u = a.tot; }); const me = at(0.05); R.rider('you').item = 'seeker'; run.update(0.05, me); const lead = R.standings()[0].id; assert.notStrictEqual(lead, 'you', 'AI leads');
   run.useItem(); assert(events.some(e => e.type === 'seeker' && e.to === lead)); assert.strictEqual(st.shells.length, 1); assert.strictEqual(st.shells[0].kind, 'seeker'); R.rider(lead).ward = false; const hp0 = R.rider(lead).hp; for (let i = 0; i < 400 && st.shells.length; i++) { R.rider(lead).ward = false; run.update(0.05, me); } assert.strictEqual(hp0 - R.rider(lead).hp, 30, 'seeker damage'); const a = st.ais.find(x => x.id === lead); assert(a.stun >= 1.5, 'stunned ' + a.stun);
 });

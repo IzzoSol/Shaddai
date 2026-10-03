@@ -63,6 +63,9 @@ window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search);
   #intro.gone{opacity:0;pointer-events:none}
   /* ── LIGHT LOADING SCREEN (default; ?intro=cinematic restores the cinematic intro above) ── */
   #introLite{display:none}
+  #liteSlides{display:none}
+  html.intro-lite #liteSlides{display:block}
+  html.intro-lite #introLite{position:relative;z-index:5}
   html.intro-lite #intro{background:#06080b;transition:opacity .45s ease-out;isolation:auto}
   html.intro-lite #intro::before,html.intro-lite #intro::after{display:none}
   html.intro-lite #portalCv,html.intro-lite #introInner{display:none}
@@ -256,6 +259,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <div id="intro">
+  <div id="liteSlides" aria-hidden="true"></div>
   <div id="introLite" aria-live="polite">
     <div class="wm">SHADDAI</div>
     <div class="wm-sub">World</div>
@@ -297,6 +301,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </div>
 
 <!-- shared world layout + procedural modules (classic scripts: define window.build* before the module runs) -->
+<script src="/world-loading-slides.js?v=20261002a"></script>
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
@@ -4494,6 +4499,7 @@ window.removeAgent = function(a){
   //    streams in after entry (time-sliced). Once they're done: async shader warm-up (compileAsync, no main-thread
   //    stall) + two quiet renders behind the screen, then fade straight into the sky-dive — no ENTER click, no warp. ──
   function _liteLoader(){
+    try{ if(window.WorldLoadingSlides) window.__liteSlides = window.WorldLoadingSlides.start(document.getElementById('liteSlides')); }catch(_){ }   // agent art slideshow behind the progress bar
     var bar=document.getElementById('liteBar'), pct=document.getElementById('litePct'), stepEl=document.getElementById('liteStep'), tipEl=document.getElementById('liteTip');
     var LABEL={ terrain:'Loading the ground', 'realm-modules':'Raising the realms', buildings:'Building the council towers', canon:'Building the Grid', 'grid-fabric':'Filling the city blocks', 'city-v3':'Lighting the plots', sky:'Painting the sky', warm:'Warming up the renderer' };
     var TIPS=['Press <span>V</span> to switch first / third person.','Hold <span>Shift</span> to sprint.','Press <span>E</span> at a glowing marker to interact.','Press <span>N</span> to fast-forward the day.','The gold ring is the maglev: walk onto a station and press <span>E</span>.','Beat a crossing dragon and its bridge stays open for good.','Press <span>Tab</span> to free the cursor.'];
@@ -4511,7 +4517,7 @@ window.removeAgent = function(a){
       p = Promise.race([p, new Promise(function(r){ setTimeout(r, 6000); })]);   // PERF: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in
       p.catch(function(e){ console.warn('warmup', e && e.message); }).then(function(){
         _introWarming = true;   // animate() does quiet composer renders behind the screen (GPU uploads happen now, not on reveal)
-        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); window.__loadPlayable = true; document.getElementById('enterBtn').click(); }); });
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } window.__loadPlayable = true; document.getElementById('enterBtn').click(); }); });
       });
     })();
   }

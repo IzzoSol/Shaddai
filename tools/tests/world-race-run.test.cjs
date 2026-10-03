@@ -16,21 +16,21 @@ t('driving through a crate rolls an item and hides the crate; it respawns after 
   tick(run, { x: 0, z: 99999, y: 0, yaw: 0 }, 8.2); assert.strictEqual(park.vis[0], true);
 });
 t('turbo pad = 1 s x1.35 boost through the board modifier', () => { const { run, hover } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const p = park.padsWorld()[0]; run.update(0.05, { x: p.x, z: p.z, y: 0, yaw: 0 }); assert(hover.calls.some(c => c.mul === 1.35 && c.dur === 1)); });
-t('Boost item = x1.6 for 1.6 s; Ward Plate eats the next hit', () => {
+t('Boost item = x1.6 for 1.6 s; Aegis Field eats the next hit', () => {
   const { run, hover } = mk(); run.start('plaza-cup', { ais: 2 }); tick(run, at(0.99), 3.6); const R = run.race(); R.rider('you').item = 'boost'; run.useItem(); assert(hover.calls.some(c => c.mul === 1.6 && c.dur === 1.6));
   R.rider('you').item = 'ward'; run.useItem(); assert(R.rider('you').ward); assert(R.hit('you', 50).blocked); assert.strictEqual(R.rider('you').hp, 100);
 });
-t('Spark Shell travels to the rider ahead, hits for 22 and stalls them', () => {
+t('Laser Bolt travels to the rider ahead, hits for 22 and stalls them', () => {
   const { run } = mk(); run.start('plaza-cup', { ais: 3 }); tick(run, at(0.9), 3.6); const st = run._st(), R = run.race(); const target = st.ais[0]; const me = { x: target.x - Math.sin(target.yaw) * 20 * U, z: target.z - Math.cos(target.yaw) * 20 * U, y: 0, yaw: target.yaw, mode: 'pad', altM: 0 };
   R.rider('you').item = 'shell'; run.update(0.01, me); run.useItem(); assert.strictEqual(st.shells.length, 1); for (let i = 0; i < 40; i++) run.update(0.05, me); const lost = st.ais.map(a => 100 - R.rider(a.id).hp); assert.strictEqual(lost.reduce((x, y) => x + y, 0), 22, 'exactly one AI took 22: ' + lost); assert(st.ais.some(a => a.stun > 0 || R.rider(a.id).hp < 100));
 });
-t('Wide Wave stuns everyone close; Magnet Yank steals a nearby rival\'s item; Sway/Pinch hit the rider ahead', () => {
+t('EMP Pulse stuns everyone close; Data Siphon steals a nearby rival\'s item; Sway/Pinch hit the rider ahead', () => {
   const { run } = mk(); run.start('plaza-cup', { ais: 3 }); tick(run, at(0.99), 3.6); const st = run._st(), R = run.race(); const a0 = st.ais[0]; const me = { x: a0.x - Math.sin(a0.yaw) * 3 * U, z: a0.z - Math.cos(a0.yaw) * 3 * U, y: 0, yaw: a0.yaw };
   R.rider('you').item = 'wave'; run.update(0.01, me); run.useItem(); assert(R.rider(a0.id).hp < 100 && a0.stun > 0);
   R.rider(a0.id).item = 'sway'; R.rider('you').item = 'yank'; run.useItem(); assert.strictEqual(R.rider('you').item, 'sway'); assert.strictEqual(R.rider(a0.id).item, null);
   R.rider('you').item = 'pinch'; st.ais.forEach(a => { a.stun = 0; }); run.useItem(); assert(st.ais.some(a => a.stun >= 1.2), 'pinch stalls the nearest rider ahead');
 });
-t('Blue Line only rolls in Prime circuits; AI cannot fire it elsewhere', () => { const { run } = mk(); run.start('plaza-cup', { ais: 2, rng: () => 0.9999 }); tick(run, at(0.99), 3.6); assert.notStrictEqual(run.race().grabCrate('ai0', false).id, 'blue'); const p = mk(); p.run.start('rift-cut', { ais: 2 }); assert(p.run._st().prime); });
+t('Orbital Lance only rolls in Prime circuits; AI cannot fire it elsewhere', () => { const { run } = mk(); run.start('plaza-cup', { ais: 2, rng: () => 0.9999 }); tick(run, at(0.99), 3.6); assert.notStrictEqual(run.race().grabCrate('ai0', false).id, 'blue'); const p = mk(); p.run.start('rift-cut', { ais: 2 }); assert(p.run._st().prime); });
 t('AI riders lap the circuit, pass gates in order and finish; prize goes to the player only by place; ranked doubles it', () => {
   const { run, events, sparks } = mk(); run.start('plaza-cup', { ais: 3 }); tick(run, { x: 1e6, z: 1e6, y: 0, yaw: 0 }, 3.6); const R = run.race(); const me = R.rider('you');   // player never moves: AI finish, player DNF-ish
   for (let i = 0; i < 6000; i++) { run.update(0.1, { x: 1e6, z: 1e6, y: 0, yaw: 0 }); if (R.rider('ai0').finished && R.rider('ai1').finished && R.rider('ai2').finished) break; }
@@ -73,7 +73,7 @@ t('track keeper: driving the wrong way warns once per 3 s and never resets you',
   const { run, events } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const c = at(0.30), wrong = { x: c.x, z: c.z, y: 0, yaw: Math.PI }; run.update(0.05, { x: c.x, z: c.z, y: 0, yaw: 0 });
   tick(run, wrong, 2.2); assert.strictEqual(events.filter(e => e.type === 'warn' && e.kind === 'wrongway').length, 1); assert(!events.some(e => e.type === 'respawn'));
 });
-t('hull plating upgrade: an AI Spark Shell does 22 to the player normally and 17 with +30 hull', () => {
+t('hull plating upgrade: an AI Laser Bolt does 22 to the player normally and 17 with +30 hull', () => {
   const hit = (hull) => { if (hull) global.WorldSkyDock = { mult: () => ({ hull }) }; else delete global.WorldSkyDock;
     const { run } = mk(); run.start('plaza-cup', { ais: 1 }); tick(run, at(0.99), 3.6); const st = run._st(), R = run.race(), a = st.ais[0], me = { x: at(0.3).x, z: at(0.3).z, y: 0, yaw: 0 };
     a.tot = 0.3 - 0.0125; a.u = a.tot; R.rider('ai0').item = 'shell'; a.itemT = 0; for (let i = 0; i < 80 && R.rider('you').hp === 100; i++) run.update(0.05, me); delete global.WorldSkyDock; return 100 - R.rider('you').hp; };

@@ -13,13 +13,13 @@
   'use strict';
   var TUNE = { washS: 1.2, missPadS: 0.8, trickCapPct: 0.08, trickTenth: 0.1, ramDmgMin: 8, ramDmgMax: 18, ramBoostMul: 1.25, wallDmg: 6, shellDmg: 22, respawnFreezeS: 1.4, hitGraceS: 1.2, respawnEnergy: 0.4, padGateMaxAlt: 1.0, hp: 100, maxRiders: 8 };
   var ITEMS = [
-    { id: 'boost', name: 'Boost', weight: 24, dur: 1.6 }, { id: 'shell', name: 'Spark Shell', weight: 20, dmg: 22, homing: 'lite' }, { id: 'wave', name: 'Wide Wave', weight: 12, knock: true },
-    { id: 'ink', name: 'Ink Veil', weight: 12, dur: 2.5 }, { id: 'ward', name: 'Ward Plate', weight: 12 }, { id: 'yank', name: 'Magnet Yank', weight: 6, range: 12 },
-    { id: 'sway', name: 'Sway Dust', weight: 6, dur: 2 }, { id: 'pinch', name: 'Dragon Pinch', weight: 3, dur: 1.2 }, { id: 'triple', name: 'Triple Shell', weight: 3 }, { id: 'blue', name: 'Blue Line', weight: 1, primeOnly: true }, { id: 'seeker', name: 'Seeker Missile', weight: 0, dmg: 30 }
+    { id: 'boost', name: 'Overclock', weight: 24, dur: 1.6 }, { id: 'shell', name: 'Laser Bolt', weight: 20, dmg: 22, homing: 'lite' }, { id: 'wave', name: 'EMP Pulse', weight: 12, knock: true },
+    { id: 'ink', name: 'Static Veil', weight: 12, dur: 2.5 }, { id: 'ward', name: 'Aegis Field', weight: 12 }, { id: 'yank', name: 'Data Siphon', weight: 6, range: 12 },
+    { id: 'sway', name: 'Jam Signal', weight: 6, dur: 2 }, { id: 'pinch', name: 'Gravity Snare', weight: 3, dur: 1.2 }, { id: 'triple', name: 'Triple Laser', weight: 3 }, { id: 'blue', name: 'Orbital Lance', weight: 1, primeOnly: true }, { id: 'seeker', name: 'Lock-On Drone', weight: 0, dmg: 30 }
   ];
   var POCKET = ['pad-rush', 'foil-sip'];
-  /* MARIO-KART ODDS (owner 2026-10-02): the further back you are, the better your crate. t = 0 leader .. 1 last.
-   * Leaders get defence + attacks (ward, shell, wave); the back of the pack gets boosts, triples and the SEEKER MISSILE (only from the lower half), which homes on FIRST place. Blue Line stays Prime-only. */
+  /* RANK-WEIGHTED ODDS (owner 2026-10-02; NOT a Mario Kart clone: agentic hover-laser racing): the further back you are, the better your crate. t = 0 leader .. 1 last.
+   * Leaders get defence + attacks (aegis, laser, EMP); the back of the pack gets boosts, triples and the LOCK-ON DRONE (only from the lower half), which homes on FIRST place. Orbital Lance stays Prime-only. */
   function itemWeights(place, n, prime) {
     var t = n > 1 ? Math.max(0, Math.min(1, (place - 1) / (n - 1))) : 0;
     return { boost: 18 + 26 * t, shell: 24 - 10 * t, wave: 12 - 3 * t, ink: 14 - 10 * t, ward: 14 - 8 * t, yank: 6, sway: 6, pinch: 3 + 3 * t, triple: 2 + 12 * t, seeker: t >= 0.5 ? (t - 0.4) * 28 : 0, blue: prime ? 1 + 8 * t : 0 };
