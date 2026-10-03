@@ -102,3 +102,23 @@ User opened Blender instance — can now:
 - Pending owner answer: re-plan city frontage (rows facing avenues).
 - Houses (later): varied sizes, buy with Sparks, enter/own/customize, tracked in Navi.
 - Logo: owner says a spinning star 'looks like Baphomet' -> make it SHADDAI; location unconfirmed (colosseum octahedron? void-castle sigil? interior floor sigil?).
+
+## Owner asks logged 2026-10-03 night (queue, in owner's words where useful)
+- FIX: player base model stands in T-POSE, animations not wired (screenshot: green twin-tail char riding a unicycle-like thing). Bike (B) must appear + work.
+- FIX: elevator into buildings: real floor, clean collisions, can't walk off and float.
+- FIX: walkway connections to buildings not clean; collisions wrong; perfect spacing everywhere.
+- REMOVE: the environment/terrain switch button (snow etc.) - weather comes later.
+- CLEAN: clutter under/around the 7 SHADDAI agent buildings; polish their exteriors + elevators; no stray buildings lying around.
+- SMOOTH: loading screen -> character in game transition.
+- PLACES: Athenaeum (built), TURTLE museum, ZEROX trading center, QUILL library, ORACLE observatory are built in 3D; they need entryways. Idea: door/teleport inside each of the 7 SHADDAI buildings to them, or floating buildings you fly to. If already a building in game, leave it.
+- ARCADE: walk-up themed arcade machine per finished game (Dreamers Climb etc.), 1 Spark to play.
+- STILL TO SEE/FINISH: fighting, dragon attacks, dynamic hoverboard riding, the skate park + race track (owner has never seen them).
+- CARS: mechanics good; the bought car model is basic -> better model later.
+- Owner screenshots to fix: Desktop/New folder/Screenshots/Screenshot 2026-07-19 055543.png, 060135.png, 060338.png.
+- RULE: FPS must improve with every addition; nothing broken; verify visually.
+- VEHICLE (later): arctic/terrain trike concept (owner image: white+orange armored 3-wheel bike with huge drum wheels) - better in snow/lava; build in code if cheap.
+- FINAL VISION refs (owner, keep in view): Desktop/New folder/Downloads/f9fba5d189245ce9111cb6a9d6be4969.jpg, e18d8f344c3f5da76510262abfc83a53.jpg, e83d0128798fb022e629de42fb092a93.jpg
+- NAVI + FORGE look refs (owner): Desktop/New folder/Downloads/image (40).jpg, image (13).jpg, image (28).jpg, image (36).jpg, image (37).jpg - use TURTLE + design skills for the polish pass.
+- ITEMS to sell later (owner gear sheet): squad tactical computer, e-binoculars, cellular regenerator, psi helmet, zero-G backpack, long-range communicator, translation unit, respirator, bug, alarm sensor, holoprojector, cryostasis unit, hoverboard, geiger counter, dressing spray, medical scanner, tac-com relay, mechanoid, rappelling belt, gravbelt, holowall, military scanner, magboots, EMP, jetpack, rope. Quality bar: NOT basic three.js (the bought car was too basic).
+- VISION moods (owner 2026-10-03): lava realm citadel city w/ lava rivers; neon K-street signage; neon skater; eco-island hex domes + canals; Mars hyperloop glass terminal (train station look); grass cliff road over a cloud sea.
+- DONE 2026-10-03: environment switch button hidden; forge bodies' one-frame clip0 no longer used as idle (was the T-pose).
