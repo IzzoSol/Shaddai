@@ -2834,7 +2834,8 @@ function refreshVisitors(){
     });
   }).catch(()=>{});
 }
-refreshVisitors(); setInterval(refreshVisitors, 20000);
+// DISABLED 2026-10-03: visitor entities causing lag. Re-enable when Grok bots + real characters are ready.
+// refreshVisitors(); setInterval(refreshVisitors, 20000);
 
 // ── 3D MARKETS — live holographic candlestick chart (ZEROX's trading floor) ──
 // Chart lives at ZEROX's "The Markets" sector so the holo candlesticks sit at the exchange building.
@@ -5673,7 +5674,8 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(window._libraryFX) window._libraryFX.update(t, dt);            // TURTLE: QUILL library reading-nook ambience
     if(window._chakraFX) window._chakraFX.update(t, dt, playerPos);   // TURTLE: chakra path — step-to-open bridges + holo panels + fruit
     if(window._libraryEmberFX) window._libraryEmberFX.update(t, dt);  // TURTLE: QUILL ember fireplace + book aisles
-    if(window._ambienceFX) window._ambienceFX.update(t, dt);          // TURTLE: floating orbs/runes/motes + floor glow
+    // DISABLED 2026-10-03: ambience FX causing lag. Re-enable when performance optimized.
+    // if(window._ambienceFX) window._ambienceFX.update(t, dt);          // TURTLE: floating orbs/runes/motes + floor glow
     if(window._muralFX) window._muralFX.update(t, dt, playerPos);     // TURTLE: TURTLE STUDIO mural painter — proximity pad + live canvas→jumbotron + "let it dry"
     // ATMOSPHERE POLISH: drift the camera-following dust motes. Throttled to every 3rd frame (~20Hz) — the drift is
     // slow enough that this is imperceptible, and it keeps the single 260-point buffer write off the hot 60Hz path.

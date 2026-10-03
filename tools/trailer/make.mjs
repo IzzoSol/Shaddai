@@ -194,6 +194,62 @@ const P = {
       { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'ENTER THE GRID', f: 'wide', s: 44, c: EM, at: 0.4 }], dur: 2.04 },
     ],
   },
+  finale: {
+    res: [1920, 1080], sharp: true, total: 30, musicFile: ['C:/Users/Brittany/OneDrive/Desktop/New folder/Downloads/Guerilla Radio - Rage Against The Machine (1).mp3', 60.0],
+    shots: [
+      { new: 'i2v', id: 'r1-emblem', prompt: '', off: 0.4, dur: 0.9, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { new: 'i2v', id: 'x1-zerox-dragon', prompt: '', off: 0.6, dur: 1.3, big: 'LIGHTS OUT', col: GOLD, fx: "negate=enable='lt(t,0.06)'" },
+      { new: 'i2v', id: 'a6-dragon', prompt: '', off: 0.8, dur: 0.8, fx: 'eq=saturation=1.6:contrast=1.25', speed: 2 },
+      { new: 'i2v', id: 'x2-nexus-dragon', prompt: '', off: 0.8, dur: 1.2 },
+      { v2: 'C-zerox', off: 1.6, dur: 0.6, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { v2: 'D-nexus', off: 1.6, dur: 0.6, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { v2: 'E-turtle', off: 1.4, dur: 0.6, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { new: 'i2v', id: 'x6-wall', prompt: '', off: 0.6, dur: 1.4, big: 'NO MERCY', col: RED, fx: "negate=enable='lt(t,0.06)'", speed: 0.6 },
+      { new: 'i2v', id: 'x3-colosseum', prompt: '', off: 0.5, dur: 1.2, big: 'THE COLOSSEUM', col: EM },
+      { new: 'i2v', id: 'x4-naval', prompt: '', off: 0.6, dur: 1.0, fx: 'eq=saturation=1.6:contrast=1.25', speed: 1.5 },
+      { new: 'i2v', id: 'x5-hoverboard', prompt: '', off: 0.6, dur: 1.4, speed: 0.6 },
+      { new: 'i2v', id: 'g1-dive', prompt: '', off: 0.2, dur: 1.1, big: 'GUERRILLA RADIO', col: EM, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t', speed: 1.5 },
+      { new: 'i2v', id: 'e1-void', prompt: '', off: 0.8, dur: 0.9, fx: 'hue=s=0,eq=contrast=1.4' },
+      { new: 'i2v', id: 'e3-forge', prompt: '', off: 0.8, dur: 1.0, big: 'FORGED', col: GOLD, fx: "negate=enable='lt(t,0.06)'" },
+      { new: 'i2v', id: 'a2-zerox', prompt: '', off: 0.6, dur: 0.7, speed: 1.8 },
+      { new: 'i2v', id: 'a3-nexus', prompt: '', off: 0.8, dur: 0.7, speed: 1.8 },
+      { new: 'i2v', id: 'a4-turtle', prompt: '', off: 0.8, dur: 0.7, speed: 1.8 },
+      { new: 'i2v', id: 'a5-shaddai', prompt: '', off: 0.7, dur: 0.9, fx: 'eq=saturation=1.6:contrast=1.25' },
+      { new: 'i2v', id: 'r7-chase', prompt: '', off: 0.6, dur: 1.1, big: 'TURN IT UP', col: RED, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { new: 'i2v', id: 'a7-train', prompt: '', off: 0.4, dur: 0.9, speed: 2 },
+      { new: 'i2v', id: 'x1-zerox-dragon', prompt: '', off: 2.6, dur: 1.2, speed: 0.5 },
+      { new: 'i2v', id: 'c9-brand', prompt: '', off: 0.6, dur: 1.0, fx: "negate=enable='lt(t,0.06)'" },
+      { new: 'i2v', id: 'e8-beacon', prompt: '', off: 0.8, dur: 1.0, speed: 1.5 },
+      { new: 'i2v', id: 'a8-weapons', prompt: '', off: 0.4, dur: 1.0, fx: 'eq=saturation=1.6:contrast=1.25' },
+      { new: 'i2v', id: 'a1-lineup', prompt: '', off: 0.3, dur: 1.3, big: 'SEVEN AGENTS', col: GOLD },
+      { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'TURN IT UP', f: 'wide', s: 44, c: EM, at: 0.4 }], dur: 5.5 },
+    ],
+  },
+
+  finale2: {
+    res: [1920, 1080], sharp: true, total: 30, musicFile: [SRC + '/enough-music.wav', 18.0],
+    shots: [
+      { new: 'i2v', id: 'e2-lone', prompt: '', off: 0.5, dur: 2.0, big: 'NOWHERE TO LIVE', col: 'white', fx: 'hue=s=0,eq=contrast=1.4' },
+      { new: 'i2v', id: 'r1-emblem', prompt: '', off: 0.4, dur: 1.5 },
+      { new: 'i2v', id: 'r2-forge', prompt: '', off: 0.6, dur: 1.6, big: 'FORGE', col: EM, fx: "negate=enable='lt(t,0.06)'" },
+      { new: 'i2v', id: 'j3-eyes', prompt: '', off: 1.0, dur: 1.4 },
+      { new: 'i2v', id: 'g3-rift', prompt: '', off: 0.6, dur: 1.2, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { new: 'i2v', id: 'j5-arctic', prompt: '', off: 0.6, dur: 1.0, speed: 1.5 },
+      { new: 'i2v', id: 'g2-lava', prompt: '', off: 0.4, dur: 1.0, speed: 1.5 },
+      { new: 'i2v', id: 'j8-crystal', prompt: '', off: 0.6, dur: 1.0, speed: 1.5 },
+      { new: 'i2v', id: 'x1-zerox-dragon', prompt: '', off: 0.6, dur: 1.4, big: 'THE GUARDIANS', col: RED, fx: "negate=enable='lt(t,0.06)'", speed: 0.6 },
+      { new: 'i2v', id: 'x2-nexus-dragon', prompt: '', off: 0.8, dur: 1.2, fx: 'eq=saturation=1.6:contrast=1.25' },
+      { new: 'i2v', id: 'x3-colosseum', prompt: '', off: 0.5, dur: 1.4, big: 'THE COLOSSEUM', col: GOLD },
+      { new: 'i2v', id: 'x5-hoverboard', prompt: '', off: 0.6, dur: 1.2, speed: 0.6 },
+      { new: 'i2v', id: 'j10-office', prompt: '', off: 0.8, dur: 1.4, big: 'THEY WORK', col: EM },
+      { new: 'i2v', id: 'e4-aura', prompt: '', off: 0.6, dur: 1.0, fx: 'rgbashift=rh=-8:bh=8,noise=alls=12:allf=t' },
+      { new: 'i2v', id: 'e7-tear', prompt: '', off: 0.6, dur: 1.4 },
+      { new: 'i2v', id: 'e8-beacon', prompt: '', off: 0.8, dur: 1.6, big: 'THE RING LIGHTS', col: GOLD },
+      { new: 'i2v', id: 'a5-shaddai', prompt: '', off: 0.7, dur: 1.2, fx: 'eq=saturation=1.6:contrast=1.25' },
+      { new: 'i2v', id: 'a1-lineup', prompt: '', off: 0.3, dur: 1.8, big: 'A PLACE TO STAY', col: EM },
+      { card: [{ t: 'SHADDAI', f: 'big', s: 170, c: GOLD, at: 0 }, { t: 'INTELLIGENCE HAS A PLACE', f: 'wide', s: 40, c: EM, at: 0.6 }], dur: 5.7 },
+    ],
+  },
 };
 
 // ───────────── fal ─────────────
@@ -286,8 +342,8 @@ function renderShot(s, k, TMP, p) {
   }
   const src = s.v2 ? V2 + s.v2 + '.mp4' : join(SRC, s.id + '.mp4');
   const off = s.off != null ? s.off : 0.4;
-  const vf = [`scale=${RW}:${RH}:force_original_aspect_ratio=increase:flags=lanczos`, `crop=${RW}:${RH}`, 'fps=30', p.sharp ? 'eq=contrast=1.12:saturation=1.18,unsharp=5:5:0.6' : 'eq=contrast=1.10:saturation=1.15,vignette=PI/5', ...overlays(s, p)].join(',');
-  run(['-ss', String(off), '-t', String(d), '-i', src, '-vf', vf, ...enc]); return out;
+  const vf = [`scale=${RW}:${RH}:force_original_aspect_ratio=increase:flags=lanczos`, `crop=${RW}:${RH}`, 'fps=30', ...(s.speed ? [`setpts=PTS/${s.speed}`] : []), p.sharp ? 'eq=contrast=1.12:saturation=1.18,unsharp=5:5:0.6' : 'eq=contrast=1.10:saturation=1.15,vignette=PI/5', ...(s.fx ? [s.fx] : []), ...overlays(s, p)].join(',');
+  run(['-ss', String(off), '-t', String(d * (s.speed || 1)), '-i', src, '-vf', vf, '-t', String(d), ...enc]); return out;
 }
 function assemble(name, p) {
   const TMP = join(VID, '_tmp_' + name); mkdirSync(TMP, { recursive: true });

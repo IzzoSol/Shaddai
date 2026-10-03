@@ -29,4 +29,18 @@ t('moon 2 is hidden when below the horizon and visible (dimmed by day) when up',
   const dayMoon = mk(0, 0.35); dayMoon.s.update(0.016); assert(dayMoon.s._moon2().material.opacity < a.s._moon2().material.opacity + 1e-9 || !a.s._moon2().visible);
 });
 t('dispose removes the group', () => { const { s, scene } = mk(1); s.dispose(); assert.strictEqual(scene.children.length, 0); });
+t('real star layer + Milky Way: ~1500 stars over the whole sky, ~1400 hugging one great circle, all above the horizon, fade in with the night', () => {
+  const { s } = mk(1); s.update(0.016); assert(s.stats().stars >= 1400 && s.stats().milkyWay >= 1200); const R = s.stats().radius;
+  const check = (L) => { const a = L.pts.geometry.attributes.position; let low = 0; for (let i = 0; i < a.count; i++) { const y = a.getY(i) / R; if (y < 0.03 - 1e-9) low++; assert(Math.abs(Math.hypot(a.getX(i), a.getY(i), a.getZ(i)) - R) < 1e-3 * R); } assert.strictEqual(low, 0, 'nothing below the horizon'); return a; };
+  check(s._stars()); const m = check(s._milky()); const nrm = [0.3, 0.8, 0.5], nl = Math.hypot(...nrm); let near = 0; for (let i = 0; i < m.count; i++) { const d = Math.abs((m.getX(i) * nrm[0] + m.getY(i) * nrm[1] + m.getZ(i) * nrm[2]) / (R * nl)); if (d < 0.2) near++; } assert(near / m.count > 0.85, 'band concentration ' + near / m.count);
+  assert(s._stars().u.uNight.value > 0.99 && s._stars().pts.visible); const day = mk(0); day.s.update(0.016); assert(day.s._stars().u.uNight.value === 0 && !day.s._stars().pts.visible);
+  const dusk = mk(0.3); dusk.s.update(0.016); assert(dusk.s._stars().u.uNight.value > 0 && dusk.s._stars().u.uNight.value < 1, 'stars come out at dusk');
+});
+t('stars twinkle (time uniform advances) and have varied sizes and colours (warm, white, blue)', () => {
+  const { s } = mk(1); s.update(0.5); const t1 = s._stars().u.uTime.value; s.update(0.5); assert(s._stars().u.uTime.value > t1); const sz = s._stars().pts.geometry.attributes.aSize, col = s._stars().pts.geometry.attributes.aColor; let mn = 99, mx = 0, warm = 0, blue = 0; for (let i = 0; i < sz.count; i++) { mn = Math.min(mn, sz.getX(i)); mx = Math.max(mx, sz.getX(i)); if (col.getZ(i) < 0.7) warm++; if (col.getX(i) < 0.8) blue++; } assert(mx > mn * 2 && warm > 50 && blue > 200, `size ${mn}-${mx} warm ${warm} blue ${blue}`);
+});
+t('planets are big enough to read (gas giant ~6 deg across) and the ring has radial uvs from inner to outer edge', () => {
+  const { s } = mk(1); s.update(0.016); const gas = s._planets[0], R = s.stats().radius; const ang = 2 * Math.atan(gas.sph.scale.x / R) * 180 / Math.PI; assert(ang > 8 && ang < 30, 'gas giant apparent diameter ' + ang.toFixed(1) + ' deg');
+  const uv = gas.ring.geometry.attributes.uv, pos = gas.ring.geometry.attributes.position; let lo = 9, hi = -9; for (let i = 0; i < uv.count; i++) { const r = Math.hypot(pos.getX(i), pos.getY(i)); const u = uv.getX(i); lo = Math.min(lo, u); hi = Math.max(hi, u); if (Math.abs(r - 1.5) < 1e-6) assert(Math.abs(u) < 1e-6); if (Math.abs(r - 2.6) < 1e-6) assert(Math.abs(u - 1) < 1e-6); } assert(Math.abs(lo) < 1e-6 && Math.abs(hi - 1) < 1e-6);
+});
 console.log(pass + ' passed');

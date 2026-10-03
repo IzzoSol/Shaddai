@@ -168,7 +168,7 @@ window.FAL_BOARD = {
     "family": "agent",
     "name": "SHADDAI — The Source",
     "canary": false,
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "slot": {
      "file": "public/assets/models/chars/ + fal-assets/characters/shaddai-council/",
      "note": "replaces shaddai-council-rigged.glb in place; 2D sprites re-captured free via capture-sprites.mjs"
@@ -188,7 +188,12 @@ window.FAL_BOARD = {
     "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
     "weapon": "(signature weapon TBD)",
     "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-    "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png"
+    "pose_ref": "refs/agent-quill/quill-tpose-owner-20260928.png",
+    "concepts": [
+     "production/concepts/agent-shaddai/agent-shaddai-fal-20260928-152043-1-nohorns.png",
+     "production/concepts/agent-shaddai/agent-shaddai-fal-20260928-194946-1-tpose.png",
+     "production/concepts/agent-shaddai/agent-shaddai-fal-20260928-194946-2-tpose.png"
+    ]
    },
    {
     "id": "agent-nexus",
@@ -205,10 +210,13 @@ window.FAL_BOARD = {
     "silhouette": "TALL full-body heavy mech-armored architect (about 7.5-8 heads tall, long legs, NOT stocky) built from the helmet design: widest shoulders, helmet with ear-rings, segmented armor plates, conduit cables along arms and legs, power-core chest panel, gauntlets with coil emitters (electric attacks); clearly visible glowing electric-blue arc coils wrapped around both forearms and a lightning conduit down the spine",
     "refs": {
      "have": [
-      "refs/agents/agent-nexus.png"
+      "refs/agents/agent-nexus.png",
+      "production/refs/agent-nexus/nexus-tpose-final.jpg",
+      "production/refs/agent-nexus/nexus-tpose-final.png"
      ],
      "current_state": "characters/nexus-council/sprites/nexus-council-walking-00.png",
-     "need": []
+     "need": [],
+     "dropped": 2
     },
     "defects": "portrait-only ref (owner OK'd 2026-09-24: 'you can see the idea'): the HF concept step invents the body — owner MUST approve the T-pose before any fal mesh spend",
     "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
@@ -219,7 +227,9 @@ window.FAL_BOARD = {
      "production/concepts/agent-nexus/agent-nexus-fal-20260928-060203-1.png",
      "production/concepts/agent-nexus/agent-nexus-fal-20260928-060405-1.png",
      "production/concepts/agent-nexus/agent-nexus-fal-20260928-145958-1.png",
-     "production/concepts/agent-nexus/agent-nexus-fal-20260928-150040-1.png"
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-150040-1.png",
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-152110-1-noweapon.png",
+     "production/concepts/agent-nexus/agent-nexus-fal-20260928-152139-1-tpose.png"
     ]
    },
    {
@@ -239,11 +249,13 @@ window.FAL_BOARD = {
      "have": [
       "refs/agents/ZEROX-council.png",
       "refs/agents/ZEROX-fullbody-ref.png",
-      "production/refs/agent-zerox/zerox-fullbody-katana.png"
+      "production/refs/agent-zerox/zerox-fullbody-katana.png",
+      "production/refs/agent-zerox/zerox-katana-weapon.jpg",
+      "production/refs/agent-zerox/zerox-tpose-final.png"
      ],
      "current_state": "characters/zerox-council/sprites/zerox-council-walking-00.png",
      "need": [],
-     "dropped": 1
+     "dropped": 3
     },
     "defects": "OWNER: note issues",
     "batch": "hub10",
@@ -308,16 +320,23 @@ window.FAL_BOARD = {
     "refs": {
      "have": [
       "refs/agents/green-flail-character-ref.png",
-      "refs/agents/agent-turtle.png"
+      "refs/agents/agent-turtle.png",
+      "production/refs/agent-turtle/turtle-tpose-final.jpg",
+      "production/refs/agent-turtle/turtle-tpose-final.png"
      ],
      "current_state": "characters/turtle-council/sprites/turtle-council-walking-00.png",
-     "need": []
+     "need": [],
+     "dropped": 2
     },
     "defects": "OWNER: note issues",
     "charm_rule": "SHADDAI emerald S-sigil charms/emblems only; absolutely NO bears, bear heads, bear charms or bear logos anywhere",
     "weapon": "electric spiked flail (chrome spiked ball on chain, crackling with electricity)",
     "weapon_rule": "weapon is a SEPARATE item asset — NOT in the T-pose image (hands empty); attached to the hand bone in game",
-    "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg"
+    "pose_ref": "refs/agent-oracle/oracle-tpose-owner.jpg",
+    "concepts": [
+     "production/concepts/agent-turtle/agent-turtle-fal-20260928-152216-1-noweapon.png",
+     "production/concepts/agent-turtle/agent-turtle-fal-20260928-152244-1-noweapon2.png"
+    ]
    },
    {
     "id": "agent-quill",
@@ -1878,6 +1897,132 @@ window.FAL_BOARD = {
     "step": "concept",
     "usd": 0.08,
     "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T15:20:54.166Z",
+    "id": "agent-shaddai",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T15:21:25.558Z",
+    "id": "agent-nexus",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T15:21:48.911Z",
+    "id": "agent-nexus",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T15:22:30.030Z",
+    "id": "agent-turtle",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T15:22:50.732Z",
+    "id": "agent-turtle",
+    "step": "concept",
+    "usd": 0.04,
+    "note": "fal flux-pro/kontext T-pose concept"
+   },
+   {
+    "at": "2026-09-28T19:50:00.070Z",
+    "id": "agent-shaddai",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T19:50:12.888Z",
+    "id": "agent-shaddai",
+    "step": "concept",
+    "usd": 0.08,
+    "note": "fal kontext max/multi + mannequin T-pose"
+   },
+   {
+    "at": "2026-09-28T20:10:05.183Z",
+    "id": "agent-zerox",
+    "step": "mesh",
+    "usd": 0.96,
+    "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+   },
+   {
+    "at": "2026-09-28T20:10:05.506Z",
+    "id": "agent-nexus",
+    "step": "mesh",
+    "usd": 0.96,
+    "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+   },
+   {
+    "at": "2026-09-28T20:10:05.845Z",
+    "id": "agent-quill",
+    "step": "mesh",
+    "usd": 0.96,
+    "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+   },
+   {
+    "at": "2026-09-28T20:10:06.174Z",
+    "id": "agent-shaddai",
+    "step": "mesh",
+    "usd": 0.96,
+    "note": "hunyuan v2 + meshy rig (basic, superseded by meshy6)"
+   },
+   {
+    "at": "2026-09-28T20:10:06.419Z",
+    "id": "agent-turtle",
+    "step": "mesh",
+    "usd": 0.16,
+    "note": "hunyuan v2 mesh; rig failed"
+   },
+   {
+    "at": "2026-09-28T20:10:06.702Z",
+    "id": "agent-zerox",
+    "step": "mesh",
+    "usd": 0.16,
+    "note": "hunyuan v2, stopped (old ref)"
+   },
+   {
+    "at": "2026-09-28T20:10:06.968Z",
+    "id": "agent-shaddai",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 50k T-pose rig"
+   },
+   {
+    "at": "2026-09-28T20:24:28.086Z",
+    "id": "agent-zerox",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 50k T-pose rig (remake)"
+   },
+   {
+    "at": "2026-09-28T20:24:28.388Z",
+    "id": "agent-nexus",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 50k T-pose rig (remake)"
+   },
+   {
+    "at": "2026-09-28T20:24:28.989Z",
+    "id": "agent-turtle",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 50k T-pose rig (remake)"
+   },
+   {
+    "at": "2026-09-28T20:24:29.225Z",
+    "id": "agent-quill",
+    "step": "mesh",
+    "usd": 0.8,
+    "note": "meshy v6 50k T-pose rig (remake)"
    }
   ]
  },
@@ -1887,7 +2032,7 @@ window.FAL_BOARD = {
    {
     "id": "agent-shaddai",
     "family": "agent",
-    "status": "concept-approved",
+    "status": "mesh-approved",
     "refsHave": 1,
     "refsNeed": 0
    },
@@ -1895,14 +2040,14 @@ window.FAL_BOARD = {
     "id": "agent-nexus",
     "family": "agent",
     "status": "ready-concept",
-    "refsHave": 1,
+    "refsHave": 3,
     "refsNeed": 0
    },
    {
     "id": "agent-zerox",
     "family": "agent",
     "status": "ready-concept",
-    "refsHave": 3,
+    "refsHave": 5,
     "refsNeed": 0
    },
    {
@@ -1916,7 +2061,7 @@ window.FAL_BOARD = {
     "id": "agent-turtle",
     "family": "agent",
     "status": "ready-concept",
-    "refsHave": 2,
+    "refsHave": 4,
     "refsNeed": 0
    },
    {
@@ -2421,6 +2566,6 @@ window.FAL_BOARD = {
    }
   }
  },
- "spent": 13.9,
- "builtAt": "2026-09-28T15:00:56.250Z"
+ "spent": 22.5,
+ "builtAt": "2026-09-28T20:24:29.232Z"
 };

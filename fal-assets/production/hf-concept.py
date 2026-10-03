@@ -117,7 +117,7 @@ def main():
     a = A.get(ar.id)
     if not a:
         sys.exit(f"BLOCKED: no manifest row '{ar.id}'")
-    if a["status"] != "ready-concept" and not (ar.edit and a["status"] == "concept-approved"):
+    if a["status"] != "ready-concept" and not ((ar.edit or ar.src) and a["status"] == "concept-approved"):
         sys.exit(f"BLOCKED: {ar.id} is '{a['status']}' — concepts only run at 'ready-concept'")
     ref = (ar.src if os.path.isabs(ar.src) else os.path.join(FAL, ar.src)) if ar.src else pick_ref(a)
     if ref and not os.path.exists(ref): sys.exit(f"BLOCKED: --src not found: {ref}")

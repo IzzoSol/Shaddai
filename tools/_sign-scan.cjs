@@ -18,15 +18,9 @@ const puppeteer = require('puppeteer'); const fs = require('fs'); const sleep = 
     scene.updateMatrixWorld(true);
     const Vec = scene.position.constructor, Ray = (() => { try { return window.__RaycasterCtor; } catch (e) { return null; } })();
     // find Raycaster via a mesh's own prototype chain is not possible; use the camera's class module on window if exposed, else a tiny AABB test below
-    const solids = []; scene.traverse(o => { if (o.isMesh && o.visible && o.geometry && !(o.material && o.material.map && o.material.map.isCanvasTexture) && !o.isInstancedMesh && !o.isSkinnedMesh) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); solids.push(o); } });
-    function hitsSolid(origin, dir, maxD, self) {
-      // slab test against each solid's world AABB (cheap + conservative); step along the ray in 0.2 m increments checking containment in the mesh AABB
-      const bb = new origin.constructor(); let hit = null;
-      for (const s of solids) { if (s === self || s.parent === self.parent) continue; const box = s.geometry.boundingBox.clone().applyMatrix4(s.matrixWorld); if (box.max.y - box.min.y < 0.3) continue;
-        for (let d = 0.15; d <= maxD; d += 0.2) { const px = origin.x + dir.x * d, py = origin.y + dir.y * d, pz = origin.z + dir.z * d; if (px > box.min.x && px < box.max.x && py > box.min.y && py < box.max.y && pz > box.min.z && pz < box.max.z) { hit = s.name || s.parent && s.parent.name || 'mesh'; break; } }
-        if (hit) break; }
-      return hit;
-    }
+    const T = window.__THREE, rc = new T.Raycaster(); rc.near = 0.05; rc.far = 5;   // 5 world units = 1.3 m
+    const solids = []; scene.traverse(o => { if (o.isMesh && o.visible && o.geometry && !(o.material && o.material.map && o.material.map.isCanvasTexture) && !o.isSkinnedMesh && !/sky|cloud|aurora|star|water|glow|beam|halo|fog/i.test((o.name || '') + (o.parent && o.parent.name || ''))) solids.push(o); });
+    function hitsSolid(origin, dir, self) { rc.set(new T.Vector3(origin.x, origin.y, origin.z), new T.Vector3(dir.x, dir.y, dir.z)); const h = rc.intersectObjects(solids, false).filter(x => x.distance < 5 && x.object !== self); const f = h.find(x => !x.face || x.face.normal.clone().transformDirection(x.object.matrixWorld).dot(new T.Vector3(dir.x, dir.y, dir.z)) < -0.2); return f ? (f.object.name || (f.object.parent && f.object.parent.name) || 'mesh') + ' @' + f.distance.toFixed(1) : null; }
     scene.traverse(o => {
       if (!o.isMesh || !o.material) return; const mats = Array.isArray(o.material) ? o.material : [o.material], m = mats[0], map = m && m.map; if (!map || !map.isCanvasTexture) return;
       if (!o.geometry || !/Plane|Box/.test(o.geometry.type)) return; out.scanned++;
@@ -35,7 +29,7 @@ const puppeteer = require('puppeteer'); const fs = require('fs'); const sleep = 
       if (det < 0) out.mirrored.push({ tag, pos });
       if (m.side === 2) out.doubleSidedText.push({ tag, pos });
       const nz = { x: e[8], y: e[9], z: e[10] }, L = Math.hypot(nz.x, nz.y, nz.z) || 1, n = { x: nz.x / L, y: nz.y / L, z: nz.z / L };
-      if (o.geometry.type === 'PlaneGeometry') { const org = { x: pos.x + n.x * 0.05, y: pos.y + n.y * 0.05, z: pos.z + n.z * 0.05, constructor: Object }; const h = hitsSolid(org, n, 1.6, o); if (h) out.wallFacing.push({ tag, pos, hits: String(h).slice(0, 30) }); }
+      if (o.geometry.type === 'PlaneGeometry') { const org = { x: pos.x + n.x * 0.05, y: pos.y + n.y * 0.05, z: pos.z + n.z * 0.05, constructor: Object }; const h = hitsSolid(org, n, o); if (h) out.wallFacing.push({ tag, pos, hits: String(h).slice(0, 30) }); }
     });
     out.wallFacing = out.wallFacing.slice(0, 60); out.doubleSidedText = out.doubleSidedText.slice(0, 40); out.mirrored = out.mirrored.slice(0, 40); return out;
   });

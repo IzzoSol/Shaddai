@@ -22,10 +22,13 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
       if (!o.isInstancedMesh && o.geometry) { const k = o.geometry.uuid; unb[k] = (unb[k] || 0) + 1; } });
     const dup = Object.values(unb).filter(n => n > 8).sort((a, b) => b - a).slice(0, 8);
     const rows = Object.keys(groups).map(k => [k, groups[k].calls, Math.round(groups[k].tris), groups[k].neverCulled]).sort((a, b) => b[1] - a[1]).slice(0, 30);
-    return { scene_children: scene.children.length, drawn_candidates: tot, renderer_info: { calls: D.renderer.info.render.calls, triangles: D.renderer.info.render.triangles }, rows, shared_geometry_meshes_over_8: dup, quality: window.__quality };
+    const direct = {}; scene.children.forEach(c => { if (!c.isMesh) return; const k = (c.geometry.type || '?') + ' tris~' + Math.round(tri(c) / 50) * 50 + ' mat=' + (c.material && c.material.type) + ' shadow=' + (c.castShadow ? 1 : 0) + ' cull=' + (c.frustumCulled ? 1 : 0); direct[k] = (direct[k] || 0) + 1; });
+    const directRows = Object.keys(direct).map(k => [k, direct[k]]).sort((a, b) => b[1] - a[1]).slice(0, 10); const tr = scene.getObjectByName('world-transit'); const trKids = tr ? tr.children.map(c => (c.name || c.type) + ':' + (function z(x) { let n = 0; x.traverse(o => { if (o.isMesh) n++; }); return n; })(c)).slice(0, 14) : [];
+    return { directRows, trKids, scene_children: scene.children.length, drawn_candidates: tot, renderer_info: { calls: D.renderer.info.render.calls, triangles: D.renderer.info.render.triangles }, rows, shared_geometry_meshes_over_8: dup, quality: window.__quality };
   });
   console.log('renderer.info calls', out.renderer_info.calls, 'tris', out.renderer_info.triangles, '| candidate meshes', out.drawn_candidates.calls, '| quality', out.quality);
   console.log('shared-geometry clone counts (>8 separate meshes using one geometry = batch/instance candidates):', JSON.stringify(out.shared_geometry_meshes_over_8));
   console.log('calls  tris  neverCulled  group'); out.rows.forEach(r => console.log(String(r[1]).padStart(5), String(r[2]).padStart(8), String(r[3]).padStart(5), ' ', r[0]));
+  console.log('DIRECT scene meshes (not batched):'); out.directRows.forEach(r => console.log(String(r[1]).padStart(5), r[0])); console.log('world-transit children (meshes):', out.trKids.join(' | '));
   await b.close();
 })().catch(e => { console.log('crash', e.message.slice(0, 200)); process.exit(2); });

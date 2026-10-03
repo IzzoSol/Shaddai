@@ -6,7 +6,7 @@ p.on('pageerror',e=>logs.push('PAGEERROR '+(e&&e.message)));
 await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html',{waitUntil:'domcontentloaded',timeout:90000});
 for(let i=0;i<150;i++){await sleep(2000);if(await p.evaluate(()=>!!window.__loadPlayable).catch(()=>false))break;}
 await sleep(140000);
-const r=await p.evaluate(()=>({done:!!window.__staticMergeDone,playableAt:window.__loadPlayableAt||null,now:Math.round(performance.now()),
+const r=await p.evaluate(()=>({passes:(window.__staticMergeN||0),playableAt:window.__loadPlayableAt||null,now:Math.round(performance.now()),
   animFrame:window._animFrame||null,arm:window.__mergeArm?Math.round(window.__mergeArm):null,
   merged:(window.__w3dDebug.scene.children||[]).filter(c=>c.name==='static-merge').length,
   unnamedGroup:(function(){let n=0;window.__w3dDebug.scene.traverseVisible(function(o){if(!o.isMesh||o.name)return;let top=o;while(top.parent&&top.parent!==window.__w3dDebug.scene)top=top.parent;if(top!==o&&!top.name)n++;});return n;})()}));
