@@ -29,6 +29,7 @@
   var ROOM_ISLAND_X  = (typeof global.ROOM_ISLAND_X === 'number' && isFinite(global.ROOM_ISLAND_X)) ? global.ROOM_ISLAND_X : (_MAP_V4 ? 30000 : 6000);
   global.ROOM_ISLAND_X = ROOM_ISLAND_X;   /* set early (parse time) — world-colosseum.js builds its arena lazily */
   var COLOSSEUM_ISLAND_DX = 6000;
+  var ATHENAEUM_ISLAND_DX = 9000;   // Academy campus (world-athenaeum.js default origin = ROOM_ISLAND_X + 9000)
   var ROOM_SPACING   = 500;
   var ROOM_W         = 80;
   var ROOM_H         = 22;
@@ -80,6 +81,7 @@
     // the strongest existing room-builders with new accents; Thursday's fal pass dresses
     // each with its own furniture kit + dressed walls in the same code slots.
     COLOSSEUM: { label: 'COLOSSEUM — Tourney Hall', accent: 0xe8c45c, floor: 0x141005, propFn: 'tradingFloor' },
+    ATHENAEUM: { label: 'THE ATHENAEUM: Academy Campus', accent: 0x00ff9c, floor: 0x16222a, propFn: 'tradingFloor' },
     GARAGE   : { label: 'GARAGE — Hover Works',     accent: 0x00ff9c, floor: 0x00140d, propFn: 'serverRoom'   },
     FORTRESS : { label: 'EMBERFALL — War Room',     accent: 0xff5a10, floor: 0x140802, propFn: 'throneRoom'  },
     CASTLE   : { label: 'DARKREALM — Siege Keep',    accent: 0x9b59f5, floor: 0x0c0514, propFn: 'arcaneLibrary' },
@@ -116,9 +118,11 @@
     if (_cw) COLLIDER_R.COLOSSEUM = 4;
     if (_fo) COLLIDER_R.FORTRESS = _fo.r;
     if (_ca) COLLIDER_R.CASTLE = _ca.r;
+    COLLIDER_R.ATHENAEUM = 6;
     var REALM_SECTORS = [
       // colosseum: sector centre sits just inside the lobby doors so the door leaf lands ON them, facing the city
       { code: 'COLOSSEUM', name: 'The Colosseum', pos: _cw ? [_cw.door[0] - _cw.front[0] * 4.5, _cw.door[1] - _cw.front[1] * 4.5] : [0, 1210], color: 0xe8c45c },
+      { code: 'ATHENAEUM', name: 'The Athenaeum', pos: [3958.8, -3117.6], color: 0x00ff9c },  // Academy campus door = CLASS_01 academy-hall marker (move to the real front door in the Blender audit)
       { code: 'GARAGE',    name: 'The Garage',     pos: [26, 96],   color: 0x00ff9c },  // plaza east
       { code: 'FORTRESS',  name: 'Emberfall Keep', pos: _fo ? [_fo.x, _fo.z] : [1477, -642], color: 0xff5a10 },
       { code: 'CASTLE',    name: 'Darkrealm Keep', pos: _ca ? [_ca.x, _ca.z] : [-1970, -635], color: 0x9b59f5 },
@@ -145,7 +149,7 @@
        ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX (v3: x=12000, ±1200 walkable). Anything outside this X band is the
        normal map → you are NOT inside. (v3: [5000, 14500]; v4: [29000, 38500] — beyond the ±19444u terrain.) */
     var ISLAND_X_MIN  = ROOM_ISLAND_X - 1000;
-    var ISLAND_X_MAX  = ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX + 2500;
+    var ISLAND_X_MAX  = Math.max(ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX + 2500, ROOM_ISLAND_X + ATHENAEUM_ISLAND_DX + 1500);
     var ROOM_BAND     = 240;   /* generic 80×80 room: past this from its origin you walked out through a wall */
 
     /* ── basic helpers ── */
@@ -2426,6 +2430,7 @@
       var r = rooms[uc];
       if (!r) return;
       try {
+        if (typeof r.dispose === 'function') { r.dispose(); if (r === global.__athenaeumCampus) global.__athenaeumCampus = null; delete rooms[uc]; return; }
         if (r.group) {
           if (r.group.parent)      r.group.parent.remove(r.group);
           else if (scene && scene.remove) scene.remove(r.group);
@@ -2463,6 +2468,12 @@
       if (uc === 'COLOSSEUM' && global.buildColosseumArena) {
         disposeAllExcept(uc);
         rooms[uc] = global.buildColosseumArena(THREE, { scene: scene });
+        return;
+      }
+      /* ATHENAEUM = the Academy campus (world-athenaeum.js): self-animating via tick, own dispose. */
+      if (uc === 'ATHENAEUM' && global.buildAthenaeumCampus) {
+        disposeAllExcept(uc);
+        rooms[uc] = global.__athenaeumCampus = global.buildAthenaeumCampus(THREE, { scene: scene });
         return;
       }
       /* PERF: only ONE interior in memory at a time — free every other built
@@ -3254,7 +3265,7 @@
 
           var theme = themeOf(uc);
           showHint(theme.label + '   ·   [E] or [ESC] to exit');
-          showToolPanel(uc);   /* in-interior HUD: this agent's REAL tools (+ games in NEXUS) */
+          if (uc !== 'ATHENAEUM') showToolPanel(uc);   /* in-interior HUD (the Academy campus uses its own E-stations): this agent's REAL tools (+ games in NEXUS) */
         } finally {
           _entering = false;
           global.__wiRoomReady = true;

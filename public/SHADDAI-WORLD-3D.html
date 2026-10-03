@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <script src="/beta-api-shim.js"></script>
@@ -318,7 +318,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
-<script src="/world-transit.js?v=20260928train2"></script>
+<script src="/world-transit.js?v=20261003merge"></script>
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
@@ -380,7 +380,9 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-operatives.js?v=20261001a"></script>
 <script src="/world-spawn.js?v=20260925a"></script>
 <script src="/world-themes.js?v=20260703h"></script>
-<script src="/world-interiors.js?v=20260926v4"></script>
+<script src="/athenaeum-layout.js?v=20261003a"></script>
+<script src="/world-athenaeum.js?v=20261003a"></script>
+<script src="/world-interiors.js?v=20261003a"></script>
 <script src="/world-cutscene.js?v=20260704d"></script>
 <script src="/world-npcs.js?v=20260703g"></script>
 <script src="/world-elevators.js?v=20260719fix"></script>
@@ -399,6 +401,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-bots.js?v=20260929a"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
+<script src="/world-academy-client.js?v=20261003a"></script>
 <script src="/world-navi.js?v=20260929a"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
@@ -769,6 +772,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('wildlife', function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
       if(!api || !_v4Meta) return api;
+      if(!/[?&]wildlife=1/.test(location.search)) return api;   // PERF 2026-10-03: wolves off until rigged/needed (opt-in ?wildlife=1)
       return _loadScript('/world-wildlife-v4.js?v=20260927a').then(function(){
         const wl = new GLTFLoader(); wl.setMeshoptDecoder(MeshoptDecoder);
         window.__wildlife = window.buildWorldWildlifeV4({ THREE, scene, loader: wl, cloneSkinned, heightAt: api.heightAt, terrainMeta: _v4Meta,
@@ -4932,12 +4936,12 @@ function _staticMerge(){
       const g = o.geometry;
       const perInstance = (g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0)) / 3;
       const tris = o.isInstancedMesh ? perInstance * o.count : perInstance;
-      if(tris > (namedOk ? 100000 : 5000)) return;   // PERF 2026-10-03: increased limits (2K→5K unnamed, 60K→100K named) to merge more aggressively, reduce draw calls
+      if(tris > (namedOk ? 60000 : 2000)) return;   // 2026-10-03: the 5K/100K + min-4 experiment spiked RAM (instances baked one by one) and froze boots — keep these limits
       const m = o.material; if(!m || Array.isArray(m) || !m.isMaterial) return;
       if(m.transparent && m.blending !== THREE.AdditiveBlending) return;   // alpha sort order matters — skip
       cand.push(o);
     });
-    if(cand.length < 4){ console.info('[static-merge] only ' + cand.length + ' candidates — skipping'); return; }   // PERF 2026-10-03: lowered from 12→4 to merge smaller groups (more aggressive draw-call reduction)
+    if(cand.length < 12){ console.info('[static-merge] only ' + cand.length + ' candidates — skipping'); return; }
     import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
       const byKey = {};
       const _im4 = new THREE.Matrix4(), _wm = new THREE.Matrix4();
@@ -5119,8 +5123,14 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 (function bootRaceLandmarks(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
   try{ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace }); D.raceLandmarks = window.__raceLandmarks; }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
+// ── ACADEMY CAMPUS stations: E at a station opens its panel (world-academy-client.js); capture phase so the interiors door key never sees it ──
+addEventListener('keydown', function(e){
+  if(e.code !== 'KeyE' || e.repeat || !window.__athStation || !window.WorldAcademy) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  try{ (window.__academy = window.__academy || window.WorldAcademy.create({ toast: window.__toast })).open(window.__athStation); }catch(er){ console.warn('[academy] open failed', er && er.message); }
+}, true);
 // ── CITIZENS (world-crowd.js): ~90 pedestrians strolling between entrances / forum / kiosks / stations; never inside measured building footprints ──
-(function bootCrowd(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
+(function bootCrowd(){ if(!/[?&]crowd=1/.test(location.search)) return;   /* PERF 2026-10-03: unrigged citizens off (opt-in ?crowd=1) */ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildWorldCrowd || !H || !H.heightAt || !window.__loadPlayable || !window.__entrances) return; clearInterval(iv);
   window.__crowd = window.buildWorldCrowd({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; }, footprints: function(){ return window.__measuredFootprints || null; },
     onTalk: function(c){ try{ const d = window.WorldCopy.district(c.x, c.z), line = window.WorldCopy.pick('citizens.' + d); if(!line) return; let b = document.getElementById('citizenBubble');
@@ -5391,7 +5401,8 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
         const _run = Math.hypot(playerPos.x - _px0, playerPos.z - _pz0), _flying = veh.mode && veh.baseY(_h1) > _h1 + 2;
         if (!_flying && _run > 1e-4 && (_h1 - _h0) / _run > 0.84) { playerPos.x = _px0; playerPos.z = _pz0; _vel.x *= -0.2; _vel.z *= -0.2; }
       } }
-    if(window.__colosseumArena && _interiors && _interiors.isInside() && window.__colosseumArena.contains(playerPos.x, playerPos.z)) window.__colosseumArena.resolve(playerPos, _px0, _pz0);   // arena: 1 m step-up rule (walls/podium solid, tiers + ramps walkable)
+    if(window.__colosseumArena && _interiors && _interiors.isInside() && window.__colosseumArena.contains(playerPos.x, playerPos.z)) window.__colosseumArena.resolve(playerPos, _px0, _pz0);   // arena: 1 m
+      if(window.__athenaeumCampus && window.__athenaeumCampus.group.visible && window.__athenaeumCampus.contains(playerPos.x, playerPos.z)) window.__athenaeumCampus.resolve(playerPos, _px0, _pz0);   // Academy campus walls step-up rule (walls/podium solid, tiers + ramps walkable)
     veh.flyControl(veh.speed(11), dt);                          // VEHICLE-HOOK: craft up/down (Space/Shift)
     if(bikeMode){ trailPos.push(playerPos.x, veh.bike ? veh.bike.trailY() : 0.35, playerPos.z); if(trailPos.length>240) trailPos.splice(0,3); updateTrail(); }
     // Inside a building interior the player is teleported far off-map (rooms at x≈6000) — skip the
@@ -5656,6 +5667,19 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(_themes) _themes.update(dt);                // theme particle animation (snow/sand/etc.)
     if(_interiors){                                // interiors: animate props + show "Press E" door prompt
       _interiors.update(dt, t);
+      // PERF 2026-10-03: interiors live on a far island, but the outdoor city kept drawing (~2,000 calls) behind the walls.
+      // Hide the heavy outdoor owners (by name, measured with tools/_draw-profile.cjs) while inside; restore exactly on exit.
+      const _inNow = _interiors.isInside();
+      if(_inNow !== !!window.__outdoorHidden){
+        window.__outdoorHidden = _inNow;
+        const OUT = { 'world-transit':1, 'static-merge':1, 'world-terrain-v4':1, 'hoverpark':1, 'world-fill-v4':1, 'grid-fabric-v4':1, 'dragon-gate-landmarks':1, 'building-entrances':1, 'world-nature':1, 'sky-dock':1, 'realm-homes':1, 'farm-patch':1, 'world-realm-props':1, 'world-fal-props':1, 'entrance-beacon':1, 'world-water':1, 'air-traffic':1, 'world-canon-v4':1, 'colosseum-exterior':1 };
+        for(const o of scene.children){ if(!OUT[o.name]) continue;
+          if(_inNow){ o.userData._outVis = o.visible; o.visible = false; }
+          else if(o.userData._outVis !== undefined){ o.visible = o.userData._outVis; delete o.userData._outVis; } }
+      }
+      const _ath = window.__athenaeumCampus;   // ACADEMY CAMPUS: animate + "[E] station" prompt while inside
+      if(_ath && _ath.group.visible){ _ath.tick(dt); const st = _ath.nearestStation(playerPos.x, playerPos.z); if(st !== window.__athStation){ window.__athStation = st; if(st && window.__toast) window.__toast('[E] ' + st.label + (st.locked ? ' 🔒' : '')); } }
+      else if(window.__athStation) window.__athStation = null;
       if(window.__zeroxLoungePoll) window.__zeroxLoungePoll();   // auto-open/close ZEROX lounge on room change
       if(window._doorPrompt){
         let _dpTxt='';   // desired prompt text ('' = hidden)

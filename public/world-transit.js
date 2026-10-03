@@ -257,6 +257,37 @@
       e.stopImmediatePropagation(); e.preventDefault(); menu(s);
     }, true);
 
+    // Bake every static mesh of a model into one mesh per material (door panels + skinned/morph meshes stay live).
+    // Plain concat of non-indexed position/normal(/uv) — no addon import needed in this classic script.
+    function mergeStatic(model) {
+      if (model.userData._merged) return; model.userData._merged = true;
+      model.updateMatrixWorld(true);
+      var inv = new THREE.Matrix4().copy(model.matrixWorld).invert(), m4 = new THREE.Matrix4(), byMat = new Map(), kill = [];
+      model.traverse(function (o) {
+        if (!o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || Array.isArray(o.material)) return;
+        if (o.userData && o.userData.doorIdx != null) return;
+        var g = o.geometry; if (!g || !g.attributes.position || (g.morphAttributes && Object.keys(g.morphAttributes).length)) return;
+        g = g.index ? g.toNonIndexed() : g.clone();
+        if (!g.attributes.normal) g.computeVertexNormals();
+        g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld));
+        var k = o.material; if (!byMat.has(k)) byMat.set(k, { geos: [], cast: false, recv: false }); var e = byMat.get(k);
+        e.geos.push(g); e.cast = e.cast || o.castShadow; e.recv = e.recv || o.receiveShadow; kill.push(o);
+      });
+      kill.forEach(function (o) { if (o.parent) o.parent.remove(o); });
+      byMat.forEach(function (e, mat) {
+        var uv = e.geos.every(function (g) { return !!g.attributes.uv; }), n = 0, off = 0;
+        e.geos.forEach(function (g) { n += g.attributes.position.count; });
+        var P = new Float32Array(n * 3), N = new Float32Array(n * 3), UV = uv ? new Float32Array(n * 2) : null;
+        e.geos.forEach(function (g) {
+          P.set(g.attributes.position.array, off * 3); N.set(g.attributes.normal.array, off * 3);
+          if (UV) UV.set(g.attributes.uv.array, off * 2); off += g.attributes.position.count; g.dispose();
+        });
+        var mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(P, 3)); mg.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+        if (UV) mg.setAttribute('uv', new THREE.BufferAttribute(UV, 2)); mg.computeBoundingSphere();
+        var mesh = new THREE.Mesh(mg, mat); mesh.name = 'train-merged'; mesh.castShadow = e.cast; mesh.receiveShadow = e.recv; model.add(mesh);
+      });
+    }
+
     var api = {
       // Swap the procedural capsule cars for a real train model (owner download: Superconductor maglev, 60 m, length along
       // the model's Z). Each train becomes 2 coupled 60 m units; placeTrain keeps driving them along the ring.
@@ -264,7 +295,8 @@
       setTrainModel: function (model, unitLenM, units) {   // units: coupled copies per train (default 2; a full trainset = 1)
         CAR = (unitLenM || 60) * PM; GAP = 0.8 * PM;
         var ud = model.userData || {};
-        WALK = (units === 1 && ud.floors && ud.colliders && ud.seats && ud.cabin) ? ud : null;
+        mergeStatic(model);   // PERF 2026-10-03: the code-built trainset was ~300 draw calls per copy → ~1 per material
+        WALK =(units === 1 && ud.floors && ud.colliders && ud.seats && ud.cabin) ? ud : null;
         occ = WALK ? WALK.seats.map(function () { return false; }) : [];
         trains.forEach(function (tr) {
           tr.cars.forEach(function (m) { group.remove(m); });
