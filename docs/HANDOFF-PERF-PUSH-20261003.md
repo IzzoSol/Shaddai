@@ -81,7 +81,7 @@ User opened Blender instance — can now:
 
 **Token saved:** ~50K by avoiding re-reading large files next session.
 
-## Session 2 (Opus, 2026-10-03 evening) � done + verified headless
+## Session 2 (Opus, 2026-10-03 evening) � done + verified headless
 - ROOT CAUSE of freezes/crash: the "aggressive merge" commit (5K/100K tris, min 4) baked instances one by one -> RAM spike, boot crash. Reverted to 2K/60K/min 12.
 - Train: boarding verified (E at Central -> 8-stop menu -> walkable ride, doors open). Train statics baked per material in world-transit.js (doors live).
 - Interiors: far outdoor owners hidden on enter (Academy 2,164 -> 524 draw calls), restored on exit (`window.__setOutdoorHidden`).
@@ -127,3 +127,6 @@ User opened Blender instance — can now:
 - VISUAL IDENTITY refs (owner): LF2/MODELS FOR FAL/7b8b90197acb8be9a59454cca2aa318f.jpg, generated-image (4).png, generated-image (18).png, generated-image (19).png, image_2ca59ee0-e96a-4ebb-98cc-e5eb83892733_0.png
 - Owner also wants: fighting/attack rigging done well, health drops, terrain finished, academy + rooms interiors with walk-in items.
 - LATER (not now): casino arcade near SHADDAI Royale with a Sparks burn mechanism + Sparks gamble; mascot ref = slot-machine mech (LF2/MODELS FOR FAL/4a08a35e3f1cd502d2e9ce35718d156e.jpg). Check gambling/legal before any real-value Sparks.
+- FPS: CONTINUOUS - measure + improve with every change (not a last step).
+- VERY LAST (before push): mobile controls (virtual joystick etc.) so owner can play-test on phone until Thursday.
+- ELEVATOR refs: Downloads/7f365af6c53ee2f116d9520aa4a52bc6.jpg (chrome+glass capsule pods). TERRAIN refs: Downloads/17ce9c81fb80814180630987bf29387f.jpg (rippled dunes), 86dacbb396db32731c69578820885a7b.jpg (black rock + glowing lava cracks).
