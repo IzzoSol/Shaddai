@@ -4539,7 +4539,7 @@ window.removeAgent = function(a){
       p = Promise.race([p, new Promise(function(r){ setTimeout(r, 6000); })]);   // PERF: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in
       p.catch(function(e){ console.warn('warmup', e && e.message); }).then(function(){
         _introWarming = true;   // animate() does quiet composer renders behind the screen (GPU uploads happen now, not on reveal)
-        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } window.__loadPlayable = true; document.getElementById('enterBtn').click(); }); });
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } setTimeout(function(){ window.__loadPlayable = true; document.getElementById('enterBtn').click(); }, 3000); }); });
       });
     })();
   }
