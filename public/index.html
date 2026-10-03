@@ -9359,8 +9359,8 @@ window.enter3DWorld=function(){
             <div style="background:#06080d;border:1px solid var(--border);border-radius:10px;padding:12px"><div style="font-size:8px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Volume (✦)</div><div style="font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#e8c45c" id="whBazaarVol">—</div></div>
           </div>
         </div>
-        <!-- STAKING POOL -->
-        <div class="wh-card">
+        <!-- STAKING POOL — removed from the UI 2026-10-02 (owner: Sparks stay closed-loop, no yield). Markup kept hidden so the page's scripts that update these ids don't throw. -->
+        <div class="wh-card" hidden style="display:none !important">
           <div class="wh-card-hd">
             <div><div class="wh-card-title">📈 SPARKS STAKING POOL</div><div style="font-size:9px;color:var(--text-muted);margin-top:3px">1% of Bazaar sales flow here · Proportional rewards</div></div>
             <button class="wh-btn-p" onclick="_whStakeSparks()">Stake Sparks</button>
