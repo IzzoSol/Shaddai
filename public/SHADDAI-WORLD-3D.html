@@ -5018,8 +5018,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   const T = window.__worldTransitApi; if(!T || !T.stations || !T.stations.length){ if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev is still loading'); return; }
   if(_interiors && _interiors.isInside && _interiors.isInside()) return;
   let best = null, bd = 1e18; T.stations.forEach(function(s){ const d = Math.hypot(s.x - playerPos.x, s.z - playerPos.z); if(d < bd){ bd = d; best = s; } });
-  if(!best) return; playerPos.x = best.x; playerPos.z = best.z + 14; if(hover && hover.isRiding && hover.isRiding()) hover.dismount();
-  if(window.Navi && window.Navi.toast) window.Navi.toast('Maglev: ' + best.name + ' - step onto the glowing lift pad and press E'); });
+  /* U NO LONGER TELEPORTS (owner 2026-10-03: it stranded you on the platform with no ground loaded). It points you to the nearest station: Navi waypoint + distance and compass direction. */
+  if(!best) return; const dxm = (best.x - playerPos.x) / (7/1.8), dzm = (best.z - playerPos.z) / (7/1.8), distM = Math.round(Math.hypot(dxm, dzm)), dirs = ['north','north-east','east','south-east','south','south-west','west','north-west'], deg = (Math.atan2(dxm, -dzm) * 180 / Math.PI + 360) % 360, dir = dirs[Math.round(deg / 45) % 8];
+  if(window.Navi && window.Navi.setWaypoint){ try{ window.Navi.setWaypoint({ x: best.x, z: best.z, label: (best.name || 'Maglev') + ' station', kind: 'Train' }); }catch(_){ } }
+  if(window.Navi && window.Navi.toast) window.Navi.toast('Nearest maglev: ' + (best.name || 'station') + ' - ' + distM + ' m ' + dir + '. Walk onto the glowing lift pad and press E. (Waypoint set in Navi.)'); });
 // ── FACADE DETAILS (world-facade-details.js): rooftop vents/antennas + ground-floor glow bands in district colours, instanced, near the player only ──
 (function bootFacade(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFacadeDetails || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
@@ -5264,10 +5266,12 @@ function animate(){
       out.sort(function(a, b){ return a[0] - b[0]; }); st.best = out; }
     for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], e = st.best[i], o = e && e[1];
       if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
-  if((window.__staticMergeN || 0) < 3 && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
-    if(window.__mergeArm == null) window.__mergeArm = performance.now();
-    else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
-  }
+  // DISABLED 2026-10-03: _staticMerge breaks materials on merged geometry (buildings flat gold, terrain shows grid wireframe).
+  // The merged meshes lose texture/material data. Re-enable only after fixing material preservation in merge.
+  // if((window.__staticMergeN || 0) < 3 && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
+  //   if(window.__mergeArm == null) window.__mergeArm = performance.now();
+  //   else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
+  // }
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
   if(worldSpawn) worldSpawn.update(dt, clock.elapsedTime);
