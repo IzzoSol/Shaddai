@@ -5266,12 +5266,10 @@ function animate(){
       out.sort(function(a, b){ return a[0] - b[0]; }); st.best = out; }
     for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], e = st.best[i], o = e && e[1];
       if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
-  // DISABLED 2026-10-03: _staticMerge breaks materials on merged geometry (buildings flat gold, terrain shows grid wireframe).
-  // The merged meshes lose texture/material data. Re-enable only after fixing material preservation in merge.
-  // if((window.__staticMergeN || 0) < 3 && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
-  //   if(window.__mergeArm == null) window.__mergeArm = performance.now();
-  //   else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
-  // }
+  if((window.__staticMergeN || 0) < 3 && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
+    if(window.__mergeArm == null) window.__mergeArm = performance.now();
+    else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
+  }
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
   if(worldSpawn) worldSpawn.update(dt, clock.elapsedTime);
