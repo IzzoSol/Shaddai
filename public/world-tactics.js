@@ -255,7 +255,7 @@ window.buildWorldTactics = function (opts) {
       cfg = cfg || {};
       buildDOM();
       var tier = cfg.tier || Math.min(3, Math.floor((TOURN.wins || 0) / 2));   // enemies scale with wins
-      st = { over: false, active: null, entry: cfg.entry || 50, pool: cfg.pool || 0, tier: tier, units: [] };
+      st = { over: false, active: null, entry: cfg.entry != null ? cfg.entry : 0, pool: cfg.pool || 0, tier: tier, units: [] };
       st.units.push(mkUnit('PILOT', 'P', 2, 4, true, false));
       st.units.push(mkUnit('SHADDAI', 'P', 1, 2, false, true));
       st.units.push(mkUnit('ORACLE', 'P', 1, 6, false, true));

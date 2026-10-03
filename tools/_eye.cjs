@@ -12,7 +12,7 @@ const OUT = 'C:/Users/Brittany/eye'; fs.mkdirSync(OUT, { recursive: true });
   const mode = process.argv[2] || 'entrances';
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: +(process.env.EYE_W||1000), height: +(process.env.EYE_H||600) }); const errs = []; p.on('pageerror', e => errs.push(e.message.slice(0, 120)));
-  await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html' + (process.env.EYE_QS || ''), { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await p.goto((process.env.EYE_BASE || 'http://localhost:3013') + '/SHADDAI-WORLD-3D.html' + (process.env.EYE_QS || ''), { waitUntil: 'domcontentloaded', timeout: 90000 });
   if (mode === 'intro') { await sleep(4500); await p.screenshot({ path: OUT + '/intro-1.png' }); await sleep(7500); await p.screenshot({ path: OUT + '/intro-2.png' }); console.log('shot intro'); console.log('ERRS', JSON.stringify(errs.slice(0, 3))); await b.close(); return; }   // loading screen: wordmark glitch + slideshow
   for (let i = 0; i < 150; i++) { await sleep(2000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
   await sleep(12000);
