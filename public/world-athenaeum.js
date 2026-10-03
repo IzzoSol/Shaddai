@@ -30,8 +30,8 @@
     // ── helpers ─────────────────────────────────────────────────────────────────
     var mats = {};
     function std(name, color, o) { o = o || {}; var m = new THREE.MeshStandardMaterial({ color: color, roughness: o.rough == null ? 0.5 : o.rough, metalness: o.metal == null ? 0.2 : o.metal, emissive: o.emissive == null ? 0x000000 : o.emissive, emissiveIntensity: o.ei == null ? 1 : o.ei, side: o.side || THREE.FrontSide, transparent: !!o.transparent, opacity: o.opacity == null ? 1 : o.opacity }); m.name = name; if (o.depthWrite === false) m.depthWrite = false; mats[name] = m; return m; }
-    std('obsidian', 0x0a0d12, { rough: 0.32, metal: 0.6 });
-    std('floor', 0x080b0f, { rough: 0.22, metal: 0.5 });
+    std('obsidian', 0x222d37, { rough: 0.5, metal: 0.18 });
+    std('floor', 0x16222a, { rough: 0.3, metal: 0.12 });
     std('inlay', 0x003b2a, { emissive: 0x00ff9c, ei: 1.0, rough: 0.4 });
     std('glass', 0x7fffd8, { rough: 0.08, metal: 0.1, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
     var wireMat = new THREE.MeshBasicMaterial({ color: 0x00ff9c, wireframe: true, transparent: true, opacity: 0.2, depthWrite: false }); wireMat.name = 'wire'; mats.wire = wireMat;
@@ -70,7 +70,7 @@
       addTo(mat, xf(new THREE.BoxGeometry(len, y1 - y0, t || 0.8), { x: (x1 + x2) / 2, y: (y0 + y1) / 2, z: (z1 + z2) / 2, ry: -Math.atan2(z2 - z1, x2 - x1) }));
     }
     function arc(mat, cx, cz, r, a0, a1, y0, y1, t, step) {
-      step = step || 4; var n = Math.max(1, Math.ceil(Math.abs(a1 - a0) / step));
+      step = step || 2; var n = Math.max(1, Math.ceil(Math.abs(a1 - a0) / step));
       for (var i = 0; i < n; i++) { var p = polar(a0 + (a1 - a0) * i / n, r, cx, cz), q = polar(a0 + (a1 - a0) * (i + 1) / n, r, cx, cz); wall(mat, p.x, p.z, q.x, q.z, y0, y1, t); }
     }
     function floorPlane(w, d, x, z, ry) { addTo('floor', xf(new THREE.PlaneGeometry(w, d), { x: x, y: 0, z: z, rx: -Math.PI / 2, ry: ry })); }
@@ -105,13 +105,16 @@
     doors.forEach(function (d, i) {
       var next = doors[(i + 1) % doors.length], from = d.a + d.half, to = (i === doors.length - 1 ? next.a + 360 : next.a) - next.half;
       arc('obsidian', 0, 0, R + 0.4, from, to, 0, DRUM, 0.9);
-      arc('obsidian', 0, 0, R + 0.4, d.a - d.half, d.a + d.half, 10, DRUM, 0.9, 3);               // lintel over the doorway
+      arc('obsidian', 0, 0, R + 0.4, d.a - d.half, d.a + d.half, 10, DRUM, 0.9, 2);               // lintel over the doorway
       [-1, 1].forEach(function (s) { var p = polar(d.a + s * d.half, R); addTo('em-' + d.color.toString(16), xf(new THREE.BoxGeometry(0.5, 10, 1.1), { x: p.x, y: 5, z: p.z, ry: -((d.a + s * d.half) * Math.PI / 180) })); });
     });
     var domeGeo = new THREE.SphereGeometry(R + 0.4, 64, 24, 0, TAU, 0.3, Math.PI / 2 - 0.3);
     addTo('glass', xf(domeGeo.clone(), { y: DRUM, sy: DOME / (R + 0.4) }));
-    addTo('wire', xf(domeGeo.clone(), { y: DRUM, sy: DOME / (R + 0.4) }));
     domeGeo.dispose();
+    var wireDome = new THREE.SphereGeometry(R + 0.4, 36, 11, 0, TAU, 0.3, Math.PI / 2 - 0.3);
+    addTo('wire', xf(wireDome.clone(), { y: DRUM + 0.05, sy: DOME / (R + 0.4) }));
+    wireDome.dispose();
+    addTo('em-00ff9c', xf(new THREE.TorusGeometry(R + 0.4, 0.14, 8, 128), { y: DRUM, rx: Math.PI / 2 }));                // drum rim: reads from outside
     addTo('em-e8c45c', xf(new THREE.TorusGeometry(Math.sin(0.3) * (R + 0.4), 0.3, 8, 64), { y: DRUM + Math.cos(0.3) * DOME, rx: Math.PI / 2 }));   // oculus rim
     addTo('beam', xf(new THREE.CylinderGeometry(0.5, 0.9, DRUM + DOME - 2, 16, 1, true), { y: (DRUM + DOME) / 2 }));
 
@@ -128,6 +131,8 @@
       for (var k = 0; k < 4; k++) {                                                                   // skylight strips under the roof
         var sp = wingFrame(w, a0 + 7 + k * 10, 0); addTo(ac, xf(new THREE.BoxGeometry(hw * 1.5, 0.12, 1.2), { x: sp.x, y: h - 0.05, z: sp.z, ry: wingRy(w) }));
       }
+      [-1, 1].forEach(function (s) { var rp = wingFrame(w, (a0 + a1) / 2, s * (hw + 0.8)); addTo(ac, xf(new THREE.BoxGeometry(0.25, 0.25, L.WING_LEN + 1.4), { x: rp.x, y: h + 0.62, z: rp.z, ry: wingRy(w) })); });
+      var re = wingFrame(w, a1 + 0.9, 0); addTo(ac, xf(new THREE.BoxGeometry(hw * 2 + 1.8, 0.25, 0.25), { x: re.x, y: h + 0.62, z: re.z, ry: wingRy(w) }));
       [-1, 1].forEach(function (s) { var tp = wingFrame(w, (a0 + a1) / 2, s * (hw - 0.1)); addTo(ac, xf(new THREE.BoxGeometry(0.2, 0.2, L.WING_LEN - 2), { x: tp.x, y: 3.2, z: tp.z, ry: wingRy(w) })); });   // wall light line
     });
 
@@ -138,6 +143,7 @@
     var apseDome = new THREE.SphereGeometry(ap.r + 0.4, 48, 16, 0, TAU, 0, Math.PI / 2);
     addTo('glass', xf(apseDome.clone(), { x: ap.cx, y: ap.h, z: ap.cz, sy: 0.55 })); addTo('wire', xf(apseDome.clone(), { x: ap.cx, y: ap.h, z: ap.cz, sy: 0.55 })); apseDome.dispose();
     addTo('em-e8c45c', xf(new THREE.TorusGeometry(ap.r * 0.55, 0.25, 8, 64), { x: ap.cx, y: ap.h + 3.6, z: ap.cz, rx: Math.PI / 2 }));
+    addTo('em-e8c45c', xf(new THREE.TorusGeometry(ap.r + 0.4, 0.14, 8, 96), { x: ap.cx, y: ap.h, z: ap.cz, rx: Math.PI / 2 }));
     var g = L.gate;
     [-1, 1].forEach(function (s) { wall('obsidian', s * (g.halfW + 0.4), R - 3, s * (g.halfW + 0.4), g.endZ, 0, g.h, 0.8); });
     addTo('obsidian', xf(new THREE.BoxGeometry(g.halfW * 2 + 1.6, 0.6, g.endZ - (R - 3)), { y: g.h + 0.3, z: (g.endZ + R - 3) / 2 }));
@@ -312,6 +318,13 @@
       var w = W[s.wing]; figure(s.agent, s.x + w.dx * 4.8, s.z + w.dz * 4.8, Math.atan2(-w.dx, -w.dz));
     });
 
+    // the Dean's crown hologram over the Dean's lectern
+    var crown = new THREE.Group(); crown.name = 'dean:crown'; crown.position.set(L.apse.cx, 9.5, L.apse.cz); rootG.add(crown);
+    var crownRings = [3.4, 2.5, 1.7].map(function (r, i) { var m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.09, 8, 64), em(i === 1 ? 0xfff0b0 : 0xe8c45c)); m.rotation.set(Math.PI / 2 - i * 0.5, i * 0.7, 0); crown.add(m); return m; });
+    crown.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.9), em(0xfff0b0)));
+    addTo('beam', xf(new THREE.CylinderGeometry(0.35, 0.7, 20, 14, 1, true), { x: L.apse.cx, y: 10, z: L.apse.cz }));
+    [-1, 1].forEach(function (sd) { addTo('em-e8c45c', xf(new THREE.BoxGeometry(0.5, 14, 0.5), { x: L.apse.cx + sd * 9, y: 7, z: L.apse.cz - 3 })); });
+
     // ── station rings (one instanced mesh) ──────────────────────────────────────
     var ringGeo = new THREE.RingGeometry(0.78, 1, 40); ringGeo.rotateX(-Math.PI / 2);
     var sRings = new THREE.InstancedMesh(ringGeo, ringMat, L.stations.length); sRings.name = 'station-rings';
@@ -337,12 +350,13 @@
     });
 
     // ── lights (≤ 8) ────────────────────────────────────────────────────────────
-    var hemi = new THREE.HemisphereLight(0x9ff5dc, 0x05070a, 0.9); rootG.add(hemi);
-    var key = new THREE.PointLight(0x9bffe0, 90, 80 * U, 1.8); key.position.set(0, DRUM + 4, 0); group.add(key); key.position.set(X0, DRUM * U + 4 * U, Z0);
+    var hemi = new THREE.HemisphereLight(0xa8fff0, 0x0c1a1a, 1.5); rootG.add(hemi);
+    var fill = new THREE.AmbientLight(0x3f6a60, 1.7); rootG.add(fill);
+    var key = new THREE.PointLight(0xbfffec, 260, 95 * U, 1.0); key.position.set(0, DRUM + 4, 0); group.add(key); key.position.set(X0, DRUM * U + 4 * U, Z0);
     var accentLights = [];
-    function addLight(color, i, m, wx, wy, wz) { var l = new THREE.PointLight(color, i, m * U, 1.8); l.position.set(X0 + wx * U, wy * U, Z0 + wz * U); group.add(l); accentLights.push(l); return l; }
-    addLight(L.AGENT_COLOR.SHADDAI, 70, 40, L.apse.cx, 9, L.apse.cz);
-    [60, 180, 300].forEach(function (deg, i) { var p = polar(deg, 66); addLight([0x5fe0ff, 0x4da3ff, 0xff6a5a][i], 60, 60, p.x, 8, p.z); });
+    function addLight(color, i, m, wx, wy, wz) { var l = new THREE.PointLight(color, i, m * U, 1.0); l.position.set(X0 + wx * U, wy * U, Z0 + wz * U); group.add(l); accentLights.push(l); return l; }
+    addLight(L.AGENT_COLOR.SHADDAI, 170, 45, L.apse.cx, 9, L.apse.cz);
+    [60, 180, 300].forEach(function (deg, i) { var p = polar(deg, 66); addLight([0x8fe9ff, 0xaad0ff, 0xffa090][i], 210, 70, p.x, 9, p.z); });
     var qName = 'HIGH', baseIntensity = accentLights.map(function (l) { return l.intensity; });
     function setQuality(name) {
       name = String(name || '').toUpperCase(); if (!Object.prototype.hasOwnProperty.call(QUALITY, name)) return qName;
@@ -374,6 +388,7 @@
     function tick(dt) {
       if (!(dt >= 0)) dt = 0; if (dt > 0.25) dt = 0.25; clock += dt;
       orbit.rotation.y += dt * 0.12;
+      crown.rotation.y += dt * 0.25; crownRings[0].rotation.z += dt * 0.6; crownRings[1].rotation.x += dt * 0.45; crownRings[2].rotation.y += dt * 0.7;
       tree.rotation.y += dt * 0.3; tree.position.y = 7 + Math.sin(clock * 0.8) * 0.25;
       treeRings[0].rotation.x += dt * 0.5; treeRings[1].rotation.y += dt * 0.35; treeRings[2].rotation.z += dt * 0.28; core.rotation.y += dt * 0.9;
       var i;
