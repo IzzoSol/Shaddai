@@ -2,6 +2,7 @@
 // Production wiring for the Academy: real economy, real operatives, real LLM judge, lazy singleton.
 const { createAcademy } = require('./academy-core');
 const { createLlmJudge } = require('./judge');
+const { seedCurriculum } = require('./curriculum');
 
 // The router only trusts the verified uid that softAuth set; never a header or a body field.
 function uidFromReq(req) {
@@ -17,7 +18,7 @@ function defaultJudge(opts) {
 
 function buildAcademy(opts) {
   opts = opts || {};
-  return createAcademy({
+  const academy = createAcademy({
     dir: opts.dir,
     economy: opts.economy || require('../../economy-service').getDefault(),
     operatives: opts.operatives || require('../operatives'),
@@ -26,12 +27,14 @@ function buildAcademy(opts) {
     adminIds: opts.adminIds,
     receiptKey: opts.receiptKey
   });
+  if (opts.seed) seedCurriculum(academy);            // idempotent: existing (or teacher-edited) content is never overwritten
+  return academy;
 }
 
 let _instance = null;
 function getAcademy() {
-  if (!_instance) _instance = buildAcademy();
+  if (!_instance) _instance = buildAcademy({ seed: true });
   return _instance;
 }
 
-module.exports = { buildAcademy, getAcademy, defaultJudge, uidFromReq };
+module.exports = { buildAcademy, getAcademy, defaultJudge, uidFromReq, seed: seedCurriculum };

@@ -7,6 +7,7 @@ const { execFileSync } = require('child_process');
 const { runAll, tmpDir, sampleSkill } = require('./testkit');
 const { EconomyService } = require('../../economy-service');
 const inst = require('./academy-instance');
+const { RUBRICS } = require('./curriculum');
 
 const SERVER = path.join(__dirname, '..', '..', 'server-production.js');
 
@@ -17,6 +18,14 @@ runAll('academy-instance', {
     const a = inst.buildAcademy({ dir: tmpDir(), economy, operatives, judge: async () => ({ scores: {} }), hooks: { passed() {}, failed() {}, homeworkImproved() {}, taught() {}, classCompleted() {} } });
     assert.strictEqual(typeof a.finishExam, 'function');
     assert.ok(a.registry.publish(sampleSkill()).ok);
+  },
+  'buildAcademy seeds the curriculum only when asked, and seeding twice changes nothing'() {
+    const mk = (seed) => inst.buildAcademy({ dir: tmpDir(), seed, economy: new EconomyService({ filePath: path.join(tmpDir(), 'economy.json') }), operatives: { get: () => null, update: () => null }, judge: async () => ({ scores: {} }), hooks: { passed() {}, failed() {}, homeworkImproved() {}, taught() {}, classCompleted() {} } });
+    assert.strictEqual(mk(false).registry.list({}).length, 0);
+    const a = mk(true);
+    assert.strictEqual(a.registry.list({}).length, 11);
+    assert.strictEqual(a.press.list({}).length, 11);
+    assert.deepStrictEqual(inst.seed(a), { rubrics: 0, benchmarks: 0, skills: 0, books: 0, skipped: RUBRICS.length + 33 });
   },
   'default judge goes through the llm router lazily and fails closed without a key'() {
     const j = inst.defaultJudge();
