@@ -16,10 +16,12 @@
 window.__INTRO_CINEMATIC = /[?&]intro=cinematic(?:&|$|#)/.test(location.search); if(!window.__INTRO_CINEMATIC) document.documentElement.classList.add('intro-lite');</script>
 <script type="importmap">
 { "imports": {
-  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
-  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+  "three": "/vendor/three/three.module.js",
+  "three/addons/": "/vendor/three/addons/"
 } }
 </script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%2306080b%27/%3E%3Cpath d=%27M9 21c0 3 3 4 7 4s7-1 7-4-3-4-7-4-7-1-7-4 3-4 7-4 7 1 7 4%27 fill=%27none%27 stroke=%27%2300ff9c%27 stroke-width=%273%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="modulepreload" href="/vendor/three/three.module.js"><link rel="modulepreload" href="/vendor/three/three.core.js"><link rel="modulepreload" href="/vendor/three/addons/loaders/GLTFLoader.js">
 <style>
   :root{ --gold:#ffcf4a; --cyan:#27e0ff; --void:#04060d; }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -412,7 +414,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { attachUAL } from './ual-retarget.js?v=20260925a';   // Quaternius UAL2 (CC0) moves on any rigged body — no stretching (docs/COLOSSEUM…, /ual-lab.html)   // ocean/mount GLBs are meshopt-compressed
 // shared Draco decoder so the optimized (Draco-compressed) agent/vehicle GLBs load
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://unpkg.com/three@0.180.0/examples/jsm/libs/draco/');
+dracoLoader.setDecoderPath('/vendor/three/addons/libs/draco/');
 // Enable Three.js binary cache so repeated loads of the same URL skip the network round-trip
 THREE.Cache.enabled = true;
 
