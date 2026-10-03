@@ -855,7 +855,8 @@ window.__worldBuilt = false;
       }).catch(function(e){ console.warn('[map-v4] void castle failed:', e && e.message); }).then(function(){ return api; });
     }))
     .then(_ldStep('sky-traffic', function(api){   // MAP v4 SKY TRAFFIC (world-sky-traffic.js): 40 voxel ships on 12 lanes over The Grid, night running lights
-      if(!api) return api;
+      // DISABLED 2026-10-03: 40 moving ships = expensive overhead. Polishing core gameplay first.
+      if(!api) return api; return api;   // skip sky-traffic load
       return _loadScript('/world-sky-traffic.js?v=20260928a').then(function(){
         const sl = new GLTFLoader(); sl.setMeshoptDecoder(MeshoptDecoder);
         window.__skyTraffic = window.buildWorldSkyTraffic({ THREE, scene, loader: sl, heightAt: api.heightAt,
