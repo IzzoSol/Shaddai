@@ -4929,12 +4929,12 @@ function _staticMerge(){
       const g = o.geometry;
       const perInstance = (g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0)) / 3;
       const tris = o.isInstancedMesh ? perInstance * o.count : perInstance;
-      if(tris > (namedOk ? 60000 : 2000)) return;   // baked tris = drawn tris, so IMs of any size are fair game
+      if(tris > (namedOk ? 100000 : 5000)) return;   // PERF 2026-10-03: increased limits (2K→5K unnamed, 60K→100K named) to merge more aggressively, reduce draw calls
       const m = o.material; if(!m || Array.isArray(m) || !m.isMaterial) return;
       if(m.transparent && m.blending !== THREE.AdditiveBlending) return;   // alpha sort order matters — skip
       cand.push(o);
     });
-    if(cand.length < 12){ console.info('[static-merge] only ' + cand.length + ' candidates — skipping'); return; }
+    if(cand.length < 4){ console.info('[static-merge] only ' + cand.length + ' candidates — skipping'); return; }   // PERF 2026-10-03: lowered from 12→4 to merge smaller groups (more aggressive draw-call reduction)
     import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
       const byKey = {};
       const _im4 = new THREE.Matrix4(), _wm = new THREE.Matrix4();
