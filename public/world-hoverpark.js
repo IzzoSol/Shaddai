@@ -104,6 +104,31 @@
     }
     function toWorld(lx, ly, lz) { G.updateMatrixWorld(true); var v = new THREE.Vector3(lx, ly, lz).applyMatrix4(R.matrixWorld); return { x: v.x, y: v.y, z: v.z }; }
     function dispose() { scene.remove(G); G.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); }
+    // PERF 2026-10-03: the park was ~169 draw calls for ~8k tris (one material per piece). Bake the provably STATIC
+    // pieces into one mesh per identical-looking material. Live parts stay separate: gates + ribbon (race feedback), crates (spin).
+    (function mergeParkStatic() {
+      var skip = new Set(); function mark(x) { if (!x) return; if (Array.isArray(x)) { x.forEach(mark); return; } if (x.isObject3D) x.traverse(function (o) { skip.add(o); }); else if (typeof x === 'object') Object.keys(x).forEach(function (k) { if (x[k] && x[k].isObject3D) mark(x[k]); }); }
+      mark(gates); mark(ribbon); mark(crates);
+      G.updateMatrixWorld(true); var inv = new THREE.Matrix4().copy(G.matrixWorld).invert(), m4 = new THREE.Matrix4(), byKey = new Map(), kill = [];
+      G.traverse(function (o) {
+        if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || skip.has(o) || Array.isArray(o.material) || !o.geometry.attributes.position) return;
+        var m = o.material, k = m.type + '|' + (m.color ? m.color.getHex() : '') + '|' + (m.emissive ? m.emissive.getHex() + ':' + m.emissiveIntensity : '') + '|' + m.transparent + ':' + m.opacity + ':' + m.blending + ':' + m.side + ':' + m.depthWrite + '|' + (m.map ? m.map.uuid : '') + '|' + (m.roughness != null ? m.roughness + ':' + m.metalness : '');
+        var g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); if (!g.attributes.normal) g.computeVertexNormals();
+        g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld));
+        if (!byKey.has(k)) byKey.set(k, { mat: m, geos: [] }); byKey.get(k).geos.push(g); kill.push(o);
+      });
+      var merged = 0; byKey.forEach(function (e) {
+        if (e.geos.length < 2) { e.geos.forEach(function (g) { g.dispose(); }); e.solo = true; return; }
+        var uv = e.geos.every(function (g) { return g.attributes.uv && g.attributes.uv.itemSize === 2; }), n = 0, off = 0; e.geos.forEach(function (g) { n += g.attributes.position.count; });
+        var P = new Float32Array(n * 3), N = new Float32Array(n * 3), UV = uv ? new Float32Array(n * 2) : null;
+        e.geos.forEach(function (g) { P.set(g.attributes.position.array, off * 3); N.set(g.attributes.normal.array, off * 3); if (UV) UV.set(g.attributes.uv.array, off * 2); off += g.attributes.position.count; g.dispose(); });
+        var mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(P, 3)); mg.setAttribute('normal', new THREE.BufferAttribute(N, 3)); if (UV) mg.setAttribute('uv', new THREE.BufferAttribute(UV, 2)); mg.computeBoundingSphere();
+        var mesh = new THREE.Mesh(mg, e.mat); mesh.name = 'park-merged'; G.add(mesh); merged++; e.done = true;
+      });
+      var keep = new Set(); byKey.forEach(function (e) { if (e.solo) keep.add(e.mat); });
+      kill.forEach(function (o) { if (keep.has(o.material)) return; if (o.parent) o.parent.remove(o); });
+      G.userData.mergedGroups = merged;
+    })();
     return { group: G, rooms: ROOMS.map(function (r) { var v = new THREE.Vector3(r.x, 0, r.z); G.updateMatrixWorld(true); v.applyMatrix4(R.matrixWorld); return { id: r.id, name: r.name, x: v.x, z: v.z, r: r.r * U, tag: r.tag }; }), entrance: (function () { G.updateMatrixWorld(true); var v = new THREE.Vector3(0, 0, D - 14).applyMatrix4(R.matrixWorld); return { x: v.x, z: v.z }; })(), deckY: deckY, heightAt: heightAtWorld, gates: gates, ribbon: ribbon, crates: crates, update: update, dispose: dispose, loop: LOOP,
       railsWorld: function () { var out = [], S2 = ROOMS[2], L2 = ROOMS[3], seg = function (x0, x1, z, y) { var a = toWorld(x0, y, z), b = toWorld(x1, y, z); return { x0: a.x, z0: a.z, x1: b.x, z1: b.z, y: (a.y + b.y) / 2 }; };
         for (var ri = 0; ri < 3; ri++) out.push(seg(S2.x - 23, S2.x + 23, S2.z - 6 - ri * 9, 1.16));   // the three Spine magnet rails
