@@ -79,6 +79,7 @@
     [-1, 1].forEach(function (side) { var ep = pts.map(function (p, i) { var q = pts[(i + 1) % pts.length], o2 = pts[(i + pts.length - 1) % pts.length], dx = q.x - o2.x, dz = q.z - o2.z, L = Math.hypot(dx, dz) || 1, nx = dz / L, nz = -dx / L, x = p.x + nx * side * 4 * U, z = p.z + nz * side * 4 * U; return { x: x, y: hy(x, z) + 0.34 * U, z: z }; });
       var e = WR.ribbon(THREE, ep, 0.55 * U, true); if (e.material) { e.material.opacity = 0.9; e.material.blending = THREE.AdditiveBlending; } e.name = 'track-edge'; grp.add(e); });
     o.scene.add(grp);
+    if (root.WorldMerge) try { grp.userData.bake = root.WorldMerge.bake(grp, THREE, { name: 'race-landmarks' }); } catch (e) { }   // PERF 2026-10-04: all static (~71 draws of tiny pieces)
     return { group: grp, pos: { x: p0.x, z: p0.z, yaw: yaw }, dispose: function () { o.scene.remove(grp); } };
   }
   root.buildRaceLandmarks = buildRaceLandmarks; root.startFinishMesh = startFinish;
