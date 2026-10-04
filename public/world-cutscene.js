@@ -341,26 +341,15 @@ window.buildWorldCutscene = (function () {
               var gr    = short * 0.052;                            // glyph / ring radius
               var ly    = cy + short * 0.17;                        // loader Y (below title)
 
-              // rotating SHADDAI hexagram (two overlaid triangles)
+              // SHADDAI mark (owner 2026-10-04: the rotating hexagram read wrong) — a still gold ring with an emerald-lit "S"
               ctx.save();
-              ctx.globalCompositeOperation = 'lighter';
-              ctx.globalAlpha = la * 0.85;
+              ctx.globalAlpha = la * 0.95;
               ctx.translate(cx, ly);
-              ctx.rotate(t * 0.0007);
-              ctx.strokeStyle = hex;
-              ctx.lineWidth = 2;
-              ctx.shadowColor = hex;
-              ctx.shadowBlur = 14;
-              var gg = gr * 0.62;
-              for (var tri = 0; tri < 2; tri++) {
-                ctx.beginPath();
-                for (var v = 0; v < 3; v++) {
-                  var ga = tri * Math.PI + (v / 3) * PI2 - Math.PI / 2;
-                  var gx = Math.cos(ga) * gg, gy2 = Math.sin(ga) * gg;
-                  if (v === 0) ctx.moveTo(gx, gy2); else ctx.lineTo(gx, gy2);
-                }
-                ctx.closePath(); ctx.stroke();
-              }
+              ctx.strokeStyle = '#e8c45c'; ctx.lineWidth = 2; ctx.shadowColor = '#e8c45c'; ctx.shadowBlur = 10;
+              ctx.beginPath(); ctx.arc(0, 0, gr * 0.7, 0, PI2); ctx.stroke();
+              ctx.shadowColor = '#00ff9c'; ctx.shadowBlur = 16; ctx.fillStyle = '#e8c45c';
+              ctx.font = '700 ' + Math.round(gr * 0.95) + 'px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText('S', 0, gr * 0.04);
               ctx.restore();
 
               // sweeping progress arc around the glyph
