@@ -345,7 +345,8 @@ window.buildWorldHoverboard = function (opts) {
       } else if (s.flying && s.vy < -B.glideSinkMS * U) {
         s.vy += (-B.glideSinkMS * U - s.vy) * kf;          // glide: bleed a dive back to a gentle sink
       } else {
-        s.vy -= 9.81 * B.gravityK * U * dt * (s.flying ? 0.35 : 1);   // glide sinks gently, a hop is snappy
+        var _apex = (!s.flying && Math.abs(s.vy) < 2.2 * U) ? 0.55 : 1;   // HANGTIME: soften gravity near the top of the arc (float, then swoosh down)
+        s.vy -= 9.81 * B.gravityK * U * dt * (s.flying ? 0.35 : 1) * _apex;   // glide sinks gently, a hop is snappy
         if (s.flying && s.vy < -B.glideSinkMS * U) s.vy = -B.glideSinkMS * U;
       }
       s.y += s.vy * dt;
@@ -375,6 +376,10 @@ window.buildWorldHoverboard = function (opts) {
       // follows rolling terrain at speed instead of lagging into the slope / floating off crests
       var K = B.springK, C = 2 * Math.sqrt(K) * B.damping;
       var gv = s.restPrevOk ? Math.max(-40 * U, Math.min(40 * U, (rest - s.restPrev) / Math.max(dt, 1e-4))) : 0;
+      // RAMP LAUNCH (owner 2026-10-04: "hit the ramp, hangtime"): climbing fast and the ground falls away at a lip → fly off
+      // with the climb speed instead of the spring gluing the board back down the far side.
+      if (s.gvPrev > 2.5 * U && gv < s.gvPrev - 6 * U && Math.abs(s.v) > 6) { s.air = true; s.airT = 0; s.flying = false; s.vy = s.gvPrev * 1.05; s.gvPrev = 0; }
+      else s.gvPrev = gv;
       s.vy += (K * (rest - s.y) - C * (s.vy - gv)) * dt;
       s.y += s.vy * dt;
       if (s.y < s.surface + 0.08 * U) { s.y = s.surface + 0.08 * U; if (s.vy < 0) s.vy = 0; }   // never scrape through

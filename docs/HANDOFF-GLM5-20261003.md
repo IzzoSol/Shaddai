@@ -19,3 +19,11 @@ Claude (Opus) audits and merges this work on Thursday. Work on a NEW branch off 
 ## Deliver
 - Branch `glm5/side-tasks`, plus a short `docs/wip/GLM5-REPORT.md` saying what changed, how it was tested, and any open questions.
 - For tasks 1 and 3: before/after screenshots and draw-call numbers.
+
+## Added 2026-10-04 (Opus, end of week budget) — finish these next
+5. **Hoverskate feel pass** (`public/world-hoverboard.js`, tests in `tools/tests/world-hoverboard*.test.cjs` must stay green):
+   - Ramp launch + apex hangtime were just added (search `RAMP LAUNCH`, `HANGTIME`). Tune on the v2 park kickers: launch threshold, `1.05` launch gain, `0.55` apex gravity. Owner wants a "drop and swoosh": a strong dive after the apex, a satisfying landing compression, a camera FOV kick on launch.
+   - Drop tower (south of the v2 park): make it reachable (elevator pad or a jump-pad at the base, top deck at 14 m), so the drop-in ramp into the bowl works.
+   - Half-pipes: verify the board rides up the walls (`heightAt` gives the U profile) and pops vert at the coping.
+6. **Hoverpark v2 visual polish** (`public/world-hoverpark-v2.js`): it's laid out to the owner's plan (`Downloads/` hub image). Add texture/detail without extra draws: emissive edge lines on the kickers, zone sign plates (canvas text) for HALF-PIPES / RAILS / RAMPS / DROP TOWER, a brighter gold ring. Keep it at one merged mesh per material.
+7. **Petal race course** (owner drawing): a 4-petal circuit around the city, sweeping out over the open wedges and back through the centre. Add it to `CIRCUITS` / `TRACKS` in `public/world-race.js`, following the existing pattern (`pol`, `arc`). Ask the owner which city layout the open wedges come from (canon city vs `grid-city-v4.json`).
