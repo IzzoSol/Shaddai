@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>window.__isMobile = (function(){ try{ return /[?&]mobile=1/.test(location.search) || (matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 900); }catch(e){ return false; } })();</script>
 <script src="/beta-api-shim.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -772,7 +773,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('wildlife', function(api){   // MAP v4 WILDLIFE (world-wildlife-v4.js): wolf packs in the wilderness — calm by day, more + hunting at night
       if(!api || !_v4Meta) return api;
-      if(/[?&]wildlife=0/.test(location.search)) return api;   // owner wants wolves/skeletons kept (2026-10-03); ?wildlife=0 turns them off for perf tests
+      if(/[?&]wildlife=0/.test(location.search) || window.__isMobile) return api;   // wolves off on phones   // owner wants wolves/skeletons kept (2026-10-03); ?wildlife=0 turns them off for perf tests
       return _loadScript('/world-wildlife-v4.js?v=20260927a').then(function(){
         const wl = new GLTFLoader(); wl.setMeshoptDecoder(MeshoptDecoder);
         window.__wildlife = window.buildWorldWildlifeV4({ THREE, scene, loader: wl, cloneSkinned, heightAt: api.heightAt, terrainMeta: _v4Meta,
@@ -4926,6 +4927,7 @@ function _dedupMaterials(){
   }catch(e){ console.warn('[mat-dedup] failed:', e && e.message); }
 }
 function _staticMerge(){
+  if(window.__isMobile) return;   // MOBILE (2026-10-04: phones froze): the merge duplicates geometry = memory spike; phones skip it
   if(window.__staticMergeN >= (/[?&]merge3=1/.test(location.search) ? 3 : 1)) return;   /* FREEZE FIX 2026-10-04: passes 2+3 (+40 s, +100 s) hitched mid-play; one pass right after load (?merge3=1 = old behaviour) */ window.__staticMergeN = (window.__staticMergeN || 0) + 1;   // up to 3 passes: +8s, +40s, +100s — later passes catch meshes the streaming steps added
   try{
     _dedupMaterials();
@@ -5026,6 +5028,7 @@ function _updateGovernor(dt){
 _applyQualityTier(_Q.tier);
 // Public handles: the Navi caps quality while open, the ?perf=1 HUD forces tiers (keys 1-5, 0 = auto). cooldownS holds the governor off so it can't fight the request.
 window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.cooldown = cooldownS == null ? 8 : cooldownS; _Q.below45 = 0; _Q.above58 = 0; };
+if(window.__isMobile) try{ window.__setQualityTier(0, 30); }catch(_){}   // MOBILE: start at the lowest tier; the governor may climb later
 window.__getQualityTier = function(){ return _Q.tier; };
 // ── MAGLEV SHORTCUT: press U to go to the nearest maglev station (walk onto the glowing lift pad, press E, pick a destination / ride the ring) ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) return; const tg = e.target && e.target.tagName; if(tg === 'INPUT' || tg === 'TEXTAREA') return;
