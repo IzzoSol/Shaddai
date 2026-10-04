@@ -1257,11 +1257,8 @@
         archGlow.rotation.y = -ang + Math.PI / 2;
         archGlow.position.set(px, R * 0.92, pz);
         _plaza.add(archGlow);
-        if (ri % 2 === 1) {
-          var lp = new THREE.PointLight(colorHex, 0.5, 44, 2);
-          lp.position.set(px, 4.5, pz);
-          _plaza.add(lp);
-        }
+        // PERF 2026-10-04: the dim per-arch PointLights are gone — each one taxed every lit material world-wide for a
+        // barely-visible 0.5-intensity pool; the emissive archGlow ring above carries the look.
       }
     }
 

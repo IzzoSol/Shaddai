@@ -25,7 +25,7 @@
   function load() { try { var j = JSON.parse(root.localStorage.getItem(KEY) || 'null'); if (j && j.owned) return j; } catch (e) { } return { owned: {} }; }
   var S = load();
   function save() { try { root.localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
-  function all() { return /[?&]unlockall\b/.test((root.location && root.location.search) || ''); }
+  function all() { if (/[?&]unlockall\b/.test((root.location && root.location.search) || '')) return true; try { return root.localStorage && root.localStorage.getItem('shd_access') === '4444'; } catch (e) { return false; } }   // owner test access: ?unlockall or the 4444 access code (bottom-right key)
   var ALL = [];
   BASES.forEach(function (b) { ALL.push({ code: 'FORGE-' + b.id.toUpperCase(), name: b.name, color: b.color, base: true, price: 0, portrait: '/assets/forge-models/' + b.id + '-portrait.png', glb: '/assets/forge-models/' + b.id + '-walk.glb?v=3' }); });
   PREMIUM.forEach(function (p) { ALL.push({ code: p.code, name: p.code, color: p.color, base: false, price: p.price, portrait: '/assets/agents/' + p.code + (p.code === 'VILLAIN' ? '-action' : '-portrait') + '.png', glb: '/assets/agents/' + p.code + '.glb?v=13' }); });

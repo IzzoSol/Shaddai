@@ -377,7 +377,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260926obb"></script>
 <script src="/world-player-controller.js?v=20260926a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
-<script src="/world-operatives.js?v=20261001a"></script>
+<script src="/world-operatives.js?v=20261004k"></script>
 <script src="/world-spawn.js?v=20260925a"></script>
 <script src="/world-themes.js?v=20260703h"></script>
 <script src="/athenaeum-layout.js?v=20261003a"></script>
@@ -385,7 +385,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-interiors.js?v=20261003a"></script>
 <script src="/world-cutscene.js?v=20260704d"></script>
 <script src="/world-npcs.js?v=20260703g"></script>
-<script src="/world-elevators.js?v=20261003cap"></script>
+<script src="/world-elevators.js?v=20261004nl"></script>
 <script src="/world-chat.js?v=20260703e"></script>
 <script src="/world-markets-screen.js?v=20260703d"></script>
 <script src="/world-minimap.js?v=20260719fix"></script>
@@ -6363,5 +6363,6 @@ window._x402refresh();
   try{ new MutationObserver(function(){ clean(); }).observe(document.body||document.documentElement,{childList:true,subtree:true}); }catch(e){}
 })();
 </script>
+<button id="accessKey" title="Access code" style="position:fixed;right:10px;bottom:10px;z-index:100000;width:30px;height:30px;border-radius:8px;border:1px solid rgba(232,196,92,.45);background:rgba(6,8,11,.85);color:#e8c45c;font-size:14px;cursor:pointer;opacity:.55" onclick="(function(){ var c = prompt('Access code'); if(c === '4444'){ try{ localStorage.setItem('shd_access','4444'); }catch(e){} location.reload(); } else if(c !== null){ alert('Wrong code'); } })()">&#128273;</button>
 </body>
 </html>
