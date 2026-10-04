@@ -5699,12 +5699,26 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
       // screen and makes every distance test pass (ghost "ENTER CASTLE", dragon bar). Restore the last finite spot, drop any ride, log the mode.
       if(!(isFinite(playerPos.x) && isFinite(playerPos.z) && isFinite(playerPos.y))){
         const g = window.__lastGoodPos || { x: 0, y: 0, z: -100 };
-        console.warn('[nan-guard] player position went NaN — restoring', { mount: !!(window.__mountRide && window.__mountRide.isRiding && window.__mountRide.isRiding()), hover: !!(window.__hover && window.__hover.isRiding && window.__hover.isRiding()) });
+        console.warn('[nan-guard] player position went NaN — restoring', { mount: !!(window.__mountRide && window.__mountRide.isRiding && window.__mountRide.isRiding()), hover: !!(typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding()) });
         try{ if(window.__mountRide && window.__mountRide.dismount) window.__mountRide.dismount(); }catch(_){}
-        try{ const hs = window.__hover && window.__hover.state && window.__hover.state(); if(hs){ hs.x = g.x; hs.z = g.z; hs.y = g.y; hs.v = 0; hs.vy = 0; } if(window.__hover && window.__hover.dismount) window.__hover.dismount(); }catch(_){}
+        try{ const hv0 = (typeof hover !== 'undefined' && hover) || window.__hover, hs = hv0 && hv0.state && hv0.state(); if(hs){ hs.x = g.x; hs.z = g.z; hs.y = g.y; hs.v = 0; hs.vy = 0; } if(hv0 && hv0.dismount) hv0.dismount(); }catch(_){}
         playerPos.x = g.x; playerPos.y = g.y; playerPos.z = g.z;
         if(window.__toast) window.__toast('Position glitch caught - you were put back');
       } else { const g = window.__lastGoodPos || (window.__lastGoodPos = { x: 0, y: 0, z: 0 }); g.x = playerPos.x; g.y = playerPos.y; g.z = playerPos.z; }
+      // BOARD + CAMERA GUARD (owner 2026-10-04: "hoverboard + Space → black screen, have to reset the game"): the board's own state or the
+      // camera can go non-finite while the player position looks fine. Reset both to the player, drop the board, log what broke.
+      try{
+        const hv = (typeof hover !== 'undefined' && hover) || window.__hover, hs = hv && hv.state && hv.state();
+        const bad = hs && [hs.x, hs.y, hs.z, hs.v, hs.vy, hs.psi].some(function(v){ return v != null && !isFinite(v); });
+        const cp = camera.position, cq = camera.quaternion, camBad = !(isFinite(cp.x) && isFinite(cp.y) && isFinite(cp.z) && isFinite(cq.x) && isFinite(cq.w));
+        if(bad || camBad){
+          console.warn('[nan-guard] board/camera went non-finite', { board: bad ? { x: hs.x, y: hs.y, z: hs.z, v: hs.v, vy: hs.vy, psi: hs.psi, air: hs.air, flying: hs.flying } : 'ok', camera: camBad });
+          if(hs){ hs.x = playerPos.x; hs.z = playerPos.z; hs.y = playerPos.y; hs.v = 0; hs.vy = 0; if(!isFinite(hs.psi)) hs.psi = 0; hs.air = false; hs.flying = false; }
+          try{ if(hv && hv.dismount) hv.dismount(); }catch(_){}
+          if(camBad){ camera.position.set(playerPos.x, playerPos.y + 12, playerPos.z + 24); camera.quaternion.set(0, 0, 0, 1); camera.lookAt(playerPos.x, playerPos.y + 4, playerPos.z); camera.updateMatrixWorld(true); }
+          if(window.__toast) window.__toast('Board glitch caught - reset');
+        }
+      }catch(_){}
       // WORLD EDGE (owner 2026-10-04: "I keep flying into blackness"): a soft wall just inside the terrain rim (4 800 m). Skipped indoors —
       // interiors live on a far island. Mounts clamp themselves to the same radius (world-mount-ride.js reads window.__worldRimU).
       if(!_interiors.isInside()){ const _R = window.__worldRimU || (window.__worldRimU = 4650 * V4_U), _r = Math.hypot(playerPos.x, playerPos.z);
