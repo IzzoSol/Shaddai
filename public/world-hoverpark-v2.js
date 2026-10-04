@@ -29,7 +29,8 @@
   function build(o) {
     var THREE = o.THREE, scene = o.scene, U = o.U || U0, anchor = o.anchor, hAt = o.heightAt || function () { return 0; }, yaw = o.yaw || 0;
     var G = new THREE.Group(); G.name = 'hoverpark'; scene.add(G);
-    var maxH = -1e9, minH = 1e9; for (var sx = -PR; sx <= PR; sx += 42) for (var sz = -PR; sz <= PR; sz += 42) { var hh = hAt(anchor.x + sx * U, anchor.z + sz * U); maxH = Math.max(maxH, hh); minH = Math.min(minH, hh); }
+    var maxH = -1e9, minH = 1e9; for (var sx = -PR; sx <= PR; sx += 42) for (var sz = -PR; sz <= PR; sz += 42) { var hh = hAt(anchor.x + sx * U, anchor.z + sz * U); if (!isFinite(hh)) continue; maxH = Math.max(maxH, hh); minH = Math.min(minH, hh); }
+    if (!isFinite(maxH)) { maxH = 0; minH = 0; }   // NaN guard: a non-finite terrain sample used to make deckY NaN → NaN ground → NaN player
     var deckY = maxH + 1.2 * U; G.position.set(anchor.x, deckY, anchor.z); G.rotation.y = yaw;
     var R = new THREE.Group(); R.scale.setScalar(U); G.add(R);
     var MAT = {
@@ -141,7 +142,7 @@
       var tdx = lx - TOWER.x, tdz = lz - TOWER.z, tr = Math.hypot(tdx, tdz);
       if (tr < 8) h = Math.max(h, TOWER.deck + 0.4);
       else if (tr >= SPIRAL.r0 && tr <= SPIRAL.r1) { var th = (Math.atan2(tdx, -tdz) * 180 / Math.PI + 360) % 360; if (th >= SPIRAL.a0) h = Math.max(h, SPIRAL.h * (th - SPIRAL.a0) / (SPIRAL.a1 - SPIRAL.a0)); }
-      return h * U + deckY;
+      var out = h * U + deckY; return isFinite(out) ? out : null;   // never feed NaN into the world's ground height
     }
     function toWorld(lx, ly, lz) { G.updateMatrixWorld(true); var v = new THREE.Vector3(lx, ly, lz).applyMatrix4(R.matrixWorld); return { x: v.x, y: v.y, z: v.z }; }
     function dispose() { scene.remove(G); G.traverse(function (o2) { if (o2.geometry) o2.geometry.dispose(); }); }
