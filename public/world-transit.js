@@ -259,22 +259,23 @@
 
     // Bake every static mesh of a model into one mesh per material (door panels + skinned/morph meshes stay live).
     // Plain concat of non-indexed position/normal(/uv) — no addon import needed in this classic script.
-    function mergeStatic(model) {
+    function mergeStatic(model, skip) {   // skip: Set of live objects (and their subtrees) to leave alone
       if (model.userData._merged) return; model.userData._merged = true;
       model.updateMatrixWorld(true);
       var inv = new THREE.Matrix4().copy(model.matrixWorld).invert(), m4 = new THREE.Matrix4(), byMat = new Map(), kill = [];
       model.traverse(function (o) {
         if (!o.isMesh || o.isSkinnedMesh || o.isInstancedMesh || Array.isArray(o.material)) return;
         if (o.userData && o.userData.doorIdx != null) return;
+        if (skip) for (var a = o; a && a !== model; a = a.parent) if (skip.has(a)) return;
         var g = o.geometry; if (!g || !g.attributes.position || (g.morphAttributes && Object.keys(g.morphAttributes).length)) return;
         g = g.index ? g.toNonIndexed() : g.clone();
         if (!g.attributes.normal) g.computeVertexNormals();
         g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld));
-        var k = o.material; if (!byMat.has(k)) byMat.set(k, { geos: [], cast: false, recv: false }); var e = byMat.get(k);
+        var mt = o.material, k = skip ? (mt.type + '|' + (mt.color ? mt.color.getHex() : '') + '|' + (mt.emissive ? mt.emissive.getHex() + ':' + mt.emissiveIntensity : '') + '|' + mt.transparent + ':' + mt.opacity + ':' + mt.blending + ':' + mt.side + '|' + (mt.map ? mt.map.uuid : '') + '|' + mt.roughness + ':' + mt.metalness) : mt; if (!byMat.has(k)) byMat.set(k, { geos: [], cast: false, recv: false, mat: mt }); var e = byMat.get(k);
         e.geos.push(g); e.cast = e.cast || o.castShadow; e.recv = e.recv || o.receiveShadow; kill.push(o);
       });
       kill.forEach(function (o) { if (o.parent) o.parent.remove(o); });
-      byMat.forEach(function (e, mat) {
+      byMat.forEach(function (e, key) { var mat = e.mat;
         var uv = e.geos.every(function (g) { return !!g.attributes.uv; }), n = 0, off = 0;
         e.geos.forEach(function (g) { n += g.attributes.position.count; });
         var P = new Float32Array(n * 3), N = new Float32Array(n * 3), UV = uv ? new Float32Array(n * 2) : null;
@@ -287,6 +288,9 @@
         var mesh = new THREE.Mesh(mg, mat); mesh.name = 'train-merged'; mesh.castShadow = e.cast; mesh.receiveShadow = e.recv; model.add(mesh);
       });
     }
+
+    // PERF 2026-10-03: stations/viaduct/canopies were ~280 draw calls of static pieces → one mesh per identical material. Trains + beacons stay live.
+    (function () { var live = new Set(); trains.forEach(function (tr) { tr.cars.forEach(function (c) { live.add(c); }); }); beacons.forEach(function (b) { live.add(b); }); mergeStatic(group, live); group.userData._merged = false; })();
 
     var api = {
       // Swap the procedural capsule cars for a real train model (owner download: Superconductor maglev, 60 m, length along

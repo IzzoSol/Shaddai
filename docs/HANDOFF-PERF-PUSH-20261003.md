@@ -130,3 +130,4 @@ User opened Blender instance — can now:
 - FPS: CONTINUOUS - measure + improve with every change (not a last step).
 - VERY LAST (before push): mobile controls (virtual joystick etc.) so owner can play-test on phone until Thursday.
 - ELEVATOR refs: Downloads/7f365af6c53ee2f116d9520aa4a52bc6.jpg (chrome+glass capsule pods). TERRAIN refs: Downloads/17ce9c81fb80814180630987bf29387f.jpg (rippled dunes), 86dacbb396db32731c69578820885a7b.jpg (black rock + glowing lava cracks).
+- HOVERSKATE refs (owner): Downloads/9FDB5BEF-0387-4706-94C5-7C4F754CC120.jpg, 306AEAA8-4CA0-4D9F-B67A-5FB906CA0CD7.jpg, 1856C3DE-4B7F-4B51-AB74-1EF00DD34EDA.jpg, D0F3FBAF-2757-4C3D-AADB-32E1199A52F3.jpg (+1 more coming)
