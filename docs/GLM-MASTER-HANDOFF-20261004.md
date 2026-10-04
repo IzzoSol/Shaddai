@@ -45,3 +45,12 @@ Suspects, in order:
 
 ## Deliver
 `docs/wip/GLM-SPEED-REPORT.md`: every change with its before/after numbers (draws, triangles, worst frame, time to playable) and the regression results.
+
+## 6. Open owner bugs (2026-10-04, late) — fix safely, flag-gated
+- **White "cloud layer" + white floating dots when flying (Arctic side):** likely the arctic theme fog/sky tint plus a snow particle system. Theme particles in `world-themes.js` are now off (`?themefx=1`). Check the `world-biomes.js` PointsMaterial systems (~lines 423, 440, 717, 992) and the arctic fog values; make particles round (sprite map) or off, and keep the fog subtle.
+- **NAVI map doesn't work** (`world-navi.js`): reproduce, fix, and keep the DOM hidden when closed.
+- **Can't see far:** the fog/draw distance is very short. Raise it gently per quality tier without dropping FPS (fog-aware LOD in `world-clusters-v4.js`).
+- **Sky Hawk left/right feels inverted "randomly"** (`world-mount-ride.js`: steering `turn = left - right`, camera at about line 152). Probably the camera swings in front of the hawk. Lock the chase camera behind the mount's yaw while flying.
+- **Buttons that ignore real clicks:** the train menu is fixed (it picks on pointerdown in the capture phase, plus keys 1-8). Apply the same pattern to the mount panel (I) and any in-world menu, or fix the root cause in the host's play-mode mouse re-grab (`_safeLock` / `controls.lock` in `SHADDAI-WORLD-3D.html`): don't re-lock when the mousedown target is inside a UI element.
+- **Floating clutter:** the sky dock is off (`?skydock=1`). Air traffic (`WorldHoverCars.buildTraffic`, about line 5044 in the HTML) is still on; gate it with `?traffic=1` if the owner agrees.
+- **Stray empty file** `world-hoverpark-v2.js` at the repo root (an accident). Ask the owner before deleting it.
