@@ -136,3 +136,9 @@ User opened Blender instance — can now:
 - Owner video (car + road look basic): Desktop/New folder/Downloads/CF891529-8EE3-42A6-884D-71CA0475439E.mp4 -> upgrade car model + road/street surfaces (high quality, not basic three.js).
 - Thursday full polish with Blender rendering pass by pass: Colosseum (inside, terrain switches, water/boats, walkways, 4444 gate), building structures, cars, roads/streets, no clutter/glitched areas; fighting + dragon blasts + flying rigs; hoverskate tricks rig check; FPS + load across all realms.
 - Done 2026-10-04: WorldMerge.bake shared helper; dragon-gate 71->15; building-entrances baked (verify count); hover feel pass (swoosh, hop 6.2, glide 1.15, slope 0.5); drop-tower lift + spiral.
+
+## Blender full-map audit 2026-10-04 (place-world-v4 on terrain-v4 preview; 4,421 objects; render: scratchpad world-top.png)
+- How to reopen: node tools/blender/bl.cjs tools/blender/terrain-v4.py SHD_OUT_DIR=<scratch dir, NOT public/assets> SHD_N=1024 SHD_PREVIEW_STEP=8 ; then node tools/blender/bl.cjs tools/blender/place-world-v4.py SHD_REPO=<repo> SHD_CACHE=<repo>/.bl-cache . (Never point SHD_OUT_DIR at public/assets/terrain - it overwrites the game terrain.)
+- City core dense + organized. NW + E realms: dark crystal/spire structures; NE: gold rock/tree clusters; lakes + SW sea/islands present.
+- GAP: S, SE, W realms and most of the outer ring are nearly EMPTY (no homes, no realm buildings). Next: themed realm homes per the owner's vision images (lava citadel, eco-island domes, dunes, etc.), placed per realm, merged per material, then re-render this view.
+- Not in Blender view: code-built content (Athenaeum, hoverpark, colosseum arena, transit) - check in-game.
