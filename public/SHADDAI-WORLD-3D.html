@@ -5028,7 +5028,7 @@ function _updateGovernor(dt){
 _applyQualityTier(_Q.tier);
 // Public handles: the Navi caps quality while open, the ?perf=1 HUD forces tiers (keys 1-5, 0 = auto). cooldownS holds the governor off so it can't fight the request.
 window.__setQualityTier = function(i, cooldownS){ _applyQualityTier(i); _Q.cooldown = cooldownS == null ? 8 : cooldownS; _Q.below45 = 0; _Q.above58 = 0; };
-if(window.__isMobile) try{ window.__setQualityTier(0, 30); }catch(_){}   // MOBILE: start at the lowest tier; the governor may climb later
+if(window.__isMobile) try{ window.__setQualityTier(2, 20); }catch(_){}   // MOBILE: start at MEDIUM (owner: keep quality); the governor adjusts from there - the crash fix is skipping the merge, not low quality
 window.__getQualityTier = function(){ return _Q.tier; };
 // ── MAGLEV SHORTCUT: press U to go to the nearest maglev station (walk onto the glowing lift pad, press E, pick a destination / ride the ring) ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) return; const tg = e.target && e.target.tagName; if(tg === 'INPUT' || tg === 'TEXTAREA') return;
