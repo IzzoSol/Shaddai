@@ -67,3 +67,6 @@ Suspects, in order:
 ## 9. Still open after the final push
 - NaN source: NOT the park (terrain ignores non-finite extras: world-terrain-v4.js:174 `ex > hb`). Repro with the `[nan-guard]` console log (foil board / hoverboard / keys) and fix the source; the guard keeps it playable meanwhile.
 - MOBILE freezes and stops (owner 2026-10-04): phones can't hold the full world. Add a mobile quality tier: halve draw distance, skip nature + realm props beyond 600 m, no static merge pass, pixelRatio 1, no shadows, theme FX off; check memory in Chrome remote debugging. Touch controls: world-touch-buttons.js.
+
+## Loop log (Opus, 2026-10-04)
+- iter 1: board/camera NaN guard (hoverboard + Space black screen); floating-square sweep (untextured outdoor Points hidden every 4 s; keeps board trail + interiors; ?fx=1 keeps all). Next: NAVI look/flow, then FPS items in section 2.
