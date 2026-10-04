@@ -4926,7 +4926,7 @@ function _dedupMaterials(){
   }catch(e){ console.warn('[mat-dedup] failed:', e && e.message); }
 }
 function _staticMerge(){
-  if(window.__staticMergeN >= 3) return; window.__staticMergeN = (window.__staticMergeN || 0) + 1;   // up to 3 passes: +8s, +40s, +100s — later passes catch meshes the streaming steps added
+  if(window.__staticMergeN >= (/[?&]merge3=1/.test(location.search) ? 3 : 1)) return;   /* FREEZE FIX 2026-10-04: passes 2+3 (+40 s, +100 s) hitched mid-play; one pass right after load (?merge3=1 = old behaviour) */ window.__staticMergeN = (window.__staticMergeN || 0) + 1;   // up to 3 passes: +8s, +40s, +100s — later passes catch meshes the streaming steps added
   try{
     _dedupMaterials();
     const skip = _mergeSkipSet();
@@ -5306,7 +5306,7 @@ function animate(){
       out.sort(function(a, b){ return a[0] - b[0]; }); st.best = out; }
     for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], e = st.best[i], o = e && e[1];
       if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
-  if((window.__staticMergeN || 0) < 3 && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
+  if((window.__staticMergeN || 0) < (/[?&]merge3=1/.test(location.search) ? 3 : 1) && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
     if(window.__mergeArm == null) window.__mergeArm = performance.now();
     else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
   }
