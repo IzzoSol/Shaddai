@@ -25,7 +25,7 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
     const btn = [...document.querySelectorAll('button[data-to]')];
     out.menuButtons = btn.length;
     const toasts = []; const ot = window.__toast; window.__toast = m => { toasts.push(m); if (ot) ot(m); };
-    if (btn.length) btn[0].click();
+    if (btn.length) btn[0].dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
     await new Promise(r => setTimeout(r, 1500));
     out.status = T.status(); out.aboard = T.aboard(); out.toasts = toasts;
     return out;

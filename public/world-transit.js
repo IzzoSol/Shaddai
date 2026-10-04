@@ -226,7 +226,14 @@
         '<div style="color:#7a8794;font-size:12px;margin-top:8px">Esc to close</div>';
       document.body.appendChild(ui);
       if (document.exitPointerLock) document.exitPointerLock();
-      ui.addEventListener('click', function (e) { var to = e.target.getAttribute('data-to'); if (!to) return; var dest = stations.find(function (s) { return s.id === to; }); ui.remove(); ui = null; ride(from, dest); if (window.enterPlayMode) try { window.enterPlayMode(); } catch (er) {} });   // the click is a user gesture → re-grab the mouse so you can walk aboard
+      // FIX 2026-10-04 (owner: "buttons don't work"): in play mode the host re-grabs the mouse on mousedown, so a real 'click'
+      // never reached the buttons. Pick on POINTERDOWN in the capture phase (stopped before the host sees it), or with keys 1-8.
+      function pick(to) { var dest = stations.find(function (s) { return s.id === to; }); if (!dest || !ui) return; ui.remove(); ui = null; removeEventListener('keydown', onKey, true); ride(from, dest); if (window.enterPlayMode) try { window.enterPlayMode(); } catch (er) {} }
+      ui.addEventListener('pointerdown', function (e) { var b = e.target.closest ? e.target.closest('button[data-to]') : null; e.stopPropagation(); e.preventDefault(); if (b) pick(b.getAttribute('data-to')); }, true);
+      ui.addEventListener('click', function (e) { e.stopPropagation(); }, true);
+      var btns = ui.querySelectorAll('button[data-to]'); btns.forEach(function (b, i) { if (i < 9) b.textContent = (i + 1) + '  ' + b.textContent; });
+      function onKey(e) { if (!ui) { removeEventListener('keydown', onKey, true); return; } var n = parseInt(e.key, 10); if (e.key === 'Escape') { ui.remove(); ui = null; removeEventListener('keydown', onKey, true); return; } if (n >= 1 && n <= btns.length) { e.stopImmediatePropagation(); e.preventDefault(); pick(btns[n - 1].getAttribute('data-to')); } }
+      addEventListener('keydown', onKey, true);
     }
     function ride(from, dest) {
       if (window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id)) {   // crossing dragons: beaten once = open forever
