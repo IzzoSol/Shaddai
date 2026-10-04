@@ -23,6 +23,7 @@
   var RAILS = [-36, -18, 0, 18, 36].map(function (z, i) { return { z: z, x0: -152, x1: -76, kink: -114 + (i % 2) * 10, yHi: 1.2, yLo: 0.75 }; });
   var KICK = [[96, -40, -0.5], [128, -22, -0.25], [104, 4, 0], [132, 30, 0.3], [96, 42, 0.6]].map(function (k) { return { x: k[0], z: k[1], yaw: k[2] + Math.PI / 2, L: 14, W: 9, H: 3.4 }; });   // yaw: ramp rises toward the bowl
   var TOWER = { x: 0, z: 118, r: 5, h: 26, deck: 14 }, DROP = { z0: 110, z1: 38, w: 9, h0: 14 };
+  var SPIRAL = { r0: 8.6, r1: 12.6, rm: 10.6, a0: 40, a1: 360, h: 14 };   // rideable climb round the tower (degrees clockwise from north)
 
   function build(o) {
     var THREE = o.THREE, scene = o.scene, U = o.U || U0, anchor = o.anchor, hAt = o.heightAt || function () { return 0; }, yaw = o.yaw || 0;
@@ -81,6 +82,13 @@
     var dL = Math.hypot(DROP.z0 - DROP.z1, DROP.h0), dA = Math.atan2(DROP.h0, DROP.z0 - DROP.z1);
     put(new THREE.BoxGeometry(DROP.w, 0.6, dL), 'obsidian2', 0, DROP.h0 / 2, (DROP.z0 + DROP.z1) / 2, -dA);
     [-1, 1].forEach(function (s) { put(new THREE.BoxGeometry(0.3, 0.4, dL), 'gold', s * DROP.w / 2, DROP.h0 / 2 + 0.5, (DROP.z0 + DROP.z1) / 2, -dA); });
+    // ── spiral climb round the drop tower: 40°→360° clockwise from north, 0 → 14 m, ends at the top deck where the drop-in starts ──
+    var slope = SPIRAL.h / (SPIRAL.rm * (SPIRAL.a1 - SPIRAL.a0) * Math.PI / 180);
+    for (var sa = SPIRAL.a0; sa < SPIRAL.a1; sa += 10) {
+      var am = (sa + 5) * Math.PI / 180, hm = SPIRAL.h * (sa + 5 - SPIRAL.a0) / (SPIRAL.a1 - SPIRAL.a0), sx3 = TOWER.x + SPIRAL.rm * Math.sin(am), sz3 = TOWER.z - SPIRAL.rm * Math.cos(am), ry3 = Math.atan2(Math.cos(am), Math.sin(am));
+      var seg = new THREE.BoxGeometry(SPIRAL.r1 - SPIRAL.r0, 0.5, SPIRAL.rm * 0.1745 + 0.25); seg.rotateX(-Math.atan(slope)); put(seg, 'obsidian2', sx3, hm - 0.25, sz3, 0, ry3, 0);
+      var lip = new THREE.BoxGeometry(0.25, 0.5, SPIRAL.rm * 0.1745 + 0.25); lip.rotateX(-Math.atan(slope)); var ox = TOWER.x + (SPIRAL.r1 + 0.1) * Math.sin(am), oz = TOWER.z - (SPIRAL.r1 + 0.1) * Math.cos(am); put(lip, 'gold', ox, hm + 0.2, oz, 0, ry3, 0);
+    }
     // ── entrance gate (south edge): SHADDAI arch ──
     [-1, 1].forEach(function (s) { put(new THREE.BoxGeometry(1.6, 16, 1.6), 'obsidian', s * 11, 8, 162); put(new THREE.BoxGeometry(0.4, 15, 0.5), 'lane', s * 11, 8, 161); });
     put(new THREE.BoxGeometry(26, 1.6, 2.2), 'gold', 0, 16.4, 162);
@@ -125,7 +133,9 @@
       for (var i = 0; i < HP.length; i++) { var p = HP[i], ax = lx - p.x; if (Math.abs(lz - p.z) <= HP_L / 2 && Math.abs(ax) <= HP_W / 2) { var e = HP_W / 2 - Math.abs(ax); if (e < HP_R) h = Math.max(h, HP_R - Math.sqrt(Math.max(0, HP_R * HP_R - (HP_R - e) * (HP_R - e)))); } }
       for (i = 0; i < KICK.length; i++) { var k2 = KICK[i], kx = lx - k2.x, kz = lz - k2.z, c = Math.cos(-k2.yaw), s = Math.sin(-k2.yaw), u = kx * c + kz * s, v = -kx * s + kz * c; if (Math.abs(u) <= k2.W / 2 && Math.abs(v) <= k2.L / 2) h = Math.max(h, k2.H * (0.5 - v / k2.L)); }
       if (Math.abs(lx) <= DROP.w / 2 && lz <= DROP.z0 && lz >= DROP.z1) h = Math.max(h, DROP.h0 * (lz - DROP.z1) / (DROP.z0 - DROP.z1));
-      if (Math.hypot(lx - TOWER.x, lz - TOWER.z) < 8) h = Math.max(h, TOWER.deck + 0.4);
+      var tdx = lx - TOWER.x, tdz = lz - TOWER.z, tr = Math.hypot(tdx, tdz);
+      if (tr < 8) h = Math.max(h, TOWER.deck + 0.4);
+      else if (tr >= SPIRAL.r0 && tr <= SPIRAL.r1) { var th = (Math.atan2(tdx, -tdz) * 180 / Math.PI + 360) % 360; if (th >= SPIRAL.a0) h = Math.max(h, SPIRAL.h * (th - SPIRAL.a0) / (SPIRAL.a1 - SPIRAL.a0)); }
       return h * U + deckY;
     }
     function toWorld(lx, ly, lz) { G.updateMatrixWorld(true); var v = new THREE.Vector3(lx, ly, lz).applyMatrix4(R.matrixWorld); return { x: v.x, y: v.y, z: v.z }; }
