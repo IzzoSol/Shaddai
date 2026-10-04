@@ -236,7 +236,8 @@
       addEventListener('keydown', onKey, true);
     }
     function ride(from, dest) {
-      if (window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id)) {   // crossing dragons: beaten once = open forever
+      var _owner = false; try { _owner = localStorage.getItem('shd_access') === '4444'; } catch (e) { }   // owner test access opens every dragon gate
+      if (!_owner && window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id)) {   // crossing dragons: beaten once = open forever
         if (window.__toast) window.__toast('🐉 A dragon guards ' + dest.name + ' — defeat it at the crossing first'); return;
       }
       var tr = trains[0], a0 = Math.atan2(from.z, from.x), a1 = Math.atan2(dest.z, dest.x);

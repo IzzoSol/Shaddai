@@ -418,7 +418,8 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
     for (var i = 0; i < ks.length; i++) {
       _particles[ks[i]].visible = false;
     }
-    if (preset && _particles[preset]) _particles[preset].visible = true;
+    // owner 2026-10-04: the theme flakes rendered as grey floating squares (clutter + per-frame cost) - off unless ?themefx=1
+    if (preset && _particles[preset] && typeof location !== 'undefined' && /[?&]themefx=1/.test(location.search)) _particles[preset].visible = true;
   }
 
 

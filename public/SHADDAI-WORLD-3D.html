@@ -318,7 +318,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-layout.js?v=20260926canon"></script>
 <script src="/world-editor.js?v=20260926i"></script>
 <script src="/world-perf-hud.js?v=20260926a"></script>   <!-- ?perf=1 profiler -->
-<script src="/world-transit.js?v=20261004pd"></script>
+<script src="/world-transit.js?v=20261004z"></script>
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
@@ -379,7 +379,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-player-controller.js?v=20260926a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
 <script src="/world-operatives.js?v=20261004k"></script>
 <script src="/world-spawn.js?v=20260925a"></script>
-<script src="/world-themes.js?v=20260703h"></script>
+<script src="/world-themes.js?v=20261004z"></script>
 <script src="/athenaeum-layout.js?v=20261003a"></script>
 <script src="/world-athenaeum.js?v=20261003b"></script>
 <script src="/world-interiors.js?v=20261003a"></script>
@@ -722,7 +722,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
       if(!api) return api;
-      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20260929a')]).then(function(){
+      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20261004z')]).then(function(){
         const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
         window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts, onDismount: function(yaw){ try{ playerAvatar.rotation.set(0, yaw, 0); _avatarYaw = yaw; playerAvatar.position.y = playerPos.y; }catch(_){} } });
         window.__w3dDebug.mountRide = window.__mountRide;
@@ -5099,7 +5099,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   }catch(e){ console.warn('[campfire] failed', e && e.message); } }, 1000); })();
 // ── SKY DOCK (world-skydock.js): launch pads + vendor on the Sky Nexus deck (top of the city) ──
 (function bootSkyDock(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
-  if(!window.WorldSkyDock || !window.SHADDAI_SKY || !window.__loadPlayable) return; clearInterval(iv);
+  if(!/[?&]skydock=1/.test(location.search)){ clearInterval(iv); return; }   /* owner 2026-10-04: floating sky clutter off (perf); ?skydock=1 */ if(!window.WorldSkyDock || !window.SHADDAI_SKY || !window.__loadPlayable) return; clearInterval(iv);
   try{ const S = window.SHADDAI_SKY; window.__skyDock = window.WorldSkyDock.build({ THREE, scene, U: V4_U, anchor: { x: S.nexusX || 0, z: S.nexusZ || 0, y: S.nexusY }, getPlayer: function(){ return { pos: playerPos }; } }); }catch(e){ console.warn('[skydock] failed', e && e.message); } }, 1000); })();
 // ── NAVAL BATTLE (world-naval.js + world-naval-view.js): first-person water game on the Colosseum water field; opened from I > Colosseum ──
 (function bootNaval(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
