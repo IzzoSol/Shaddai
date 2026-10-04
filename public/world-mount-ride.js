@@ -132,6 +132,7 @@
         }
       } else { M.sp = approach(M.sp, 0, 30 * U * dt); M.vy = 0; if (M.fl) M.y = Math.max(gY(M.x, M.z), M.y - 20 * U * dt); }
       M.x += Math.sin(M.yaw) * M.sp * dt; M.z += Math.cos(M.yaw) * M.sp * dt;
+        var _rim = root.__worldRimU, _mr = Math.hypot(M.x, M.z); if (_rim && _mr > _rim) { M.x *= _rim / _mr; M.z *= _rim / _mr; }   // world edge (host sets __worldRimU)
       if (!M.fl) { var gy = gY(M.x, M.z) + (f.hover || 0) * U; M.y += (gy - M.y) * Math.min(1, 14 * dt); }
       var bob = (cache[cur] && cache[cur].proc) ? Math.sin(performance.now() / 320) * 0.12 * U : 0;
       holder.position.set(M.x, M.y + bob, M.z); holder.rotation.set(M.pitch, M.yaw, M.bank);

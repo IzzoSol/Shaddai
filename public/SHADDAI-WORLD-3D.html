@@ -379,7 +379,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-player-controller.js?v=20260926a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
 <script src="/world-operatives.js?v=20261004k"></script>
 <script src="/world-spawn.js?v=20260925a"></script>
-<script src="/world-themes.js?v=20261004z"></script>
+<script src="/world-themes.js?v=20261004edge"></script>
 <script src="/athenaeum-layout.js?v=20261003a"></script>
 <script src="/world-athenaeum.js?v=20261003b"></script>
 <script src="/world-interiors.js?v=20261003a"></script>
@@ -722,7 +722,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
       if(!api) return api;
-      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20261004z')]).then(function(){
+      return Promise.all([_loadScript('/world-mounts.js?v=20260929a'), _loadScript('/world-mount-ride.js?v=20261004edge')]).then(function(){
         const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
         window.__mountRide = window.buildMountRide({ THREE, scene, loader: ml, heightAt: api.heightAt, playerPos, mounts: window.WorldMounts, onDismount: function(yaw){ try{ playerAvatar.rotation.set(0, yaw, 0); _avatarYaw = yaw; playerAvatar.position.y = playerPos.y; }catch(_){} } });
         window.__w3dDebug.mountRide = window.__mountRide;
@@ -5692,6 +5692,10 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(worldNPCs && _animFrame%2===0) worldNPCs.update(dt*2);
     if(_themes) _themes.update(dt);                // theme particle animation (snow/sand/etc.)
     if(_interiors){                                // interiors: animate props + show "Press E" door prompt
+      // WORLD EDGE (owner 2026-10-04: "I keep flying into blackness"): a soft wall just inside the terrain rim (4 800 m). Skipped indoors —
+      // interiors live on a far island. Mounts clamp themselves to the same radius (world-mount-ride.js reads window.__worldRimU).
+      if(!_interiors.isInside()){ const _R = window.__worldRimU || (window.__worldRimU = 4650 * V4_U), _r = Math.hypot(playerPos.x, playerPos.z);
+        if(_r > _R){ playerPos.x *= _R / _r; playerPos.z *= _R / _r; if(!window.__edgeToastT || performance.now() - window.__edgeToastT > 4000){ window.__edgeToastT = performance.now(); if(window.__toast) window.__toast('Edge of the Ringed Realm'); } } }
       _interiors.update(dt, t);
       // PERF 2026-10-03: interiors live on a far island, but the outdoor city kept drawing (~2,000 calls) behind the walls.
       // Hide the heavy outdoor owners (by name, measured with tools/_draw-profile.cjs) while inside; restore exactly on exit.

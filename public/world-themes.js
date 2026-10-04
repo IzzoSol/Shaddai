@@ -385,7 +385,7 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
       if (U.horizon) U.horizon.copy(_T.sky.horizon);
       if (U.glow)    U.glow.copy(_T.sky.glow);
     }
-    var f = refs.fog;
+    var f = _themeFog() ? refs.fog : null;   // 2026-10-04: theme fog was tuned for the old small map and buried every realm (black / white wall); the sky module owns fog now (?themefx=1 = old)
     if (f) { f.color.copy(_T.fog); f.density = _T.fogDensity; }
     if (scene && scene.background && scene.background.copy) scene.background.copy(_T.bg);
     var L = refs.lights;
@@ -413,6 +413,7 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
     if (t && typeof t.applyGround === 'function') t.applyGround(def);
   }
 
+  function _themeFog() { return typeof location !== 'undefined' && /[?&]themefx=1/.test(location.search); }
   function _setParticles(preset) {
     var ks = Object.keys(_particles);
     for (var i = 0; i < ks.length; i++) {
@@ -478,7 +479,7 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
         if (U.horizon) U.horizon.lerp(_T.sky.horizon, a);
         if (U.glow)    U.glow.lerp(_T.sky.glow, a);
       }
-      var f = refs.fog;
+      var f = _themeFog() ? refs.fog : null;
       if (f) {
         f.color.lerp(_T.fog, a);
         f.density += (_T.fogDensity - f.density) * a;
