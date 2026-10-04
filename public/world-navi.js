@@ -228,6 +228,10 @@
   function harvestPins() {
     var out = [], c = colosseumPin(); if (c) out.push(c);
     try { var st = window.__worldTransitApi && window.__worldTransitApi.stations; if (st) st.forEach(function (q) { out.push({ id: 'st-' + q.id, t: (q.name || q.id) + ' Station', kind: 'Train', x: q.x, z: q.z }); }); } catch (e) { }
+    // 2026-10-04 (owner: "get to things easier"): the big destinations are always on the map
+    try { var hp = window.__hoverPark; if (hp && hp.entrance) out.unshift({ id: 'park', t: 'Hoverskate Park', kind: 'Park', x: hp.entrance.x, z: hp.entrance.z }); } catch (e) { }
+    try { var ent = window.__entrances; if (ent) ent.forEach(function (q) { out.push({ id: 'door-' + q.code, t: q.code + ' Building', kind: 'Building', x: q.x + q.nx * 30, z: q.z + q.nz * 30 }); }); } catch (e) { }
+    out.unshift({ id: 'academy', t: 'The Athenaeum (Academy)', kind: 'Academy', x: 3958.8, z: -3117.6 });
     return out;
   }
   function knownPins() {
@@ -241,15 +245,25 @@
       title: 'MAP', list: pins.map(function (p) { return { id: p.id, t: p.t, s: p.kind, tag: '' }; }),
       empty: 'No pins yet. The world registers places here as you discover them.',
       detail: function (id) {
-        var pp = window.__w3dDebug && window.__w3dDebug.playerPos, R = 400, dots = '<u class="me" style="left:50%;top:50%"></u>';
-        pins.forEach(function (p) { if (!pp) return; var dx = (p.x - pp.x) / R, dz = (p.z - pp.z) / R; if (Math.abs(dx) < .5 && Math.abs(dz) < .5) dots += '<u style="left:' + (50 + dx * 100) + '%;top:' + (50 + dz * 100) + '%"></u>'; });
+        var pp = window.__w3dDebug && window.__w3dDebug.playerPos, dots = '<u class="me" style="left:50%;top:50%"></u>';
         var p = pins.filter(function (x) { return x.id === id; })[0];
-        return '<h3>' + (p ? esc(p.t) : 'RADAR') + '</h3><div class="radar">' + dots + '</div>' + (p ? '<div style="margin-top:8px">' + esc(p.kind) + (p.when ? ' · ' + esc(p.when) : '') + '</div>' +
-          '<button class="b g" data-a="wp">SET WAYPOINT</button>' : '') + '<button class="b" data-a="clr">CLEAR</button>';
+        // radar auto-zooms: fit the selected pin (or every pin) instead of a fixed ~100 m window that showed nothing
+        var R = 400; if (pp) { var far = 0; (p ? [p] : pins).forEach(function (q) { far = Math.max(far, Math.abs(q.x - pp.x), Math.abs(q.z - pp.z)); }); R = Math.max(400, far * 2.3); }
+        pins.forEach(function (q) { if (!pp) return; var dx = (q.x - pp.x) / R, dz = (q.z - pp.z) / R; if (Math.abs(dx) < .5 && Math.abs(dz) < .5) dots += '<u style="left:' + (50 + dx * 100) + '%;top:' + (50 + dz * 100) + '%' + (q === p ? ';background:#e8c45c;width:10px;height:10px' : '') + '"></u>'; });
+        var dist = (p && pp) ? Math.round(Math.hypot(p.x - pp.x, p.z - pp.z) / (7 / 1.8)) : null;
+        return '<h3>' + (p ? esc(p.t) : 'RADAR') + '</h3><div class="radar">' + dots + '</div>' + (p ? '<div style="margin-top:8px">' + esc(p.kind) + (dist != null ? ' · ' + dist + ' m away' : '') + (p.when ? ' · ' + esc(p.when) : '') + '</div>' +
+          '<button class="b g" data-a="go">TRAVEL</button><button class="b" data-a="wp">SET WAYPOINT</button>' : '') + '<button class="b" data-a="clr">CLEAR</button>';
       },
       act: function (id, a) {
         if (a === 'clr') return clearWaypoint();
-        var p = pins.filter(function (x) { return x.id === id; })[0]; if (p) setWaypoint({ x: p.x, z: p.z, label: p.t, kind: p.kind });
+        var p = pins.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+        if (a === 'go') {   // TRAVEL: fast-travel next to the place (height comes from the terrain each frame); also leaves a waypoint
+          var pp = window.__w3dDebug && window.__w3dDebug.playerPos; if (!pp) return;
+          var I = window.__w3dDebug.interiors; if (I && I.isInside && I.isInside() && I.exit) try { I.exit(); } catch (e) { }
+          pp.x = p.x; pp.z = p.z + 12; setWaypoint({ x: p.x, z: p.z, label: p.t, kind: p.kind }); toast('Travelled to ' + p.t);
+          try { window.Navi.close(); } catch (e) { } return;
+        }
+        setWaypoint({ x: p.x, z: p.z, label: p.t, kind: p.kind });
       }
     };
   };

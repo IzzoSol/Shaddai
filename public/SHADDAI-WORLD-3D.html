@@ -382,7 +382,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-themes.js?v=20261004edge"></script>
 <script src="/athenaeum-layout.js?v=20261003a"></script>
 <script src="/world-athenaeum.js?v=20261003b"></script>
-<script src="/world-interiors.js?v=20261003a"></script>
+<script src="/world-interiors.js?v=20261004nan"></script>
 <script src="/world-cutscene.js?v=20260704d"></script>
 <script src="/world-npcs.js?v=20260703g"></script>
 <script src="/world-elevators.js?v=20261004nl"></script>
@@ -402,7 +402,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-academy-client.js?v=20261003a"></script>
-<script src="/world-navi.js?v=20260929a"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
+<script src="/world-navi.js?v=20261004nan"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
 <script src="/portals/portal-plots.js?v=20260719fix"></script>
@@ -5692,6 +5692,16 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(worldNPCs && _animFrame%2===0) worldNPCs.update(dt*2);
     if(_themes) _themes.update(dt);                // theme particle animation (snow/sand/etc.)
     if(_interiors){                                // interiors: animate props + show "Press E" door prompt
+      // NaN GUARD (owner 2026-10-04 screenshot "X NaN · Z NaN" after riding the foil/board): one NaN in the player position blacks the
+      // screen and makes every distance test pass (ghost "ENTER CASTLE", dragon bar). Restore the last finite spot, drop any ride, log the mode.
+      if(!(isFinite(playerPos.x) && isFinite(playerPos.z) && isFinite(playerPos.y))){
+        const g = window.__lastGoodPos || { x: 0, y: 0, z: -100 };
+        console.warn('[nan-guard] player position went NaN — restoring', { mount: !!(window.__mountRide && window.__mountRide.isRiding && window.__mountRide.isRiding()), hover: !!(window.__hover && window.__hover.isRiding && window.__hover.isRiding()) });
+        try{ if(window.__mountRide && window.__mountRide.dismount) window.__mountRide.dismount(); }catch(_){}
+        try{ const hs = window.__hover && window.__hover.state && window.__hover.state(); if(hs){ hs.x = g.x; hs.z = g.z; hs.y = g.y; hs.v = 0; hs.vy = 0; } if(window.__hover && window.__hover.dismount) window.__hover.dismount(); }catch(_){}
+        playerPos.x = g.x; playerPos.y = g.y; playerPos.z = g.z;
+        if(window.__toast) window.__toast('Position glitch caught - you were put back');
+      } else { const g = window.__lastGoodPos || (window.__lastGoodPos = { x: 0, y: 0, z: 0 }); g.x = playerPos.x; g.y = playerPos.y; g.z = playerPos.z; }
       // WORLD EDGE (owner 2026-10-04: "I keep flying into blackness"): a soft wall just inside the terrain rim (4 800 m). Skipped indoors —
       // interiors live on a far island. Mounts clamp themselves to the same radius (world-mount-ride.js reads window.__worldRimU).
       if(!_interiors.isInside()){ const _R = window.__worldRimU || (window.__worldRimU = 4650 * V4_U), _r = Math.hypot(playerPos.x, playerPos.z);

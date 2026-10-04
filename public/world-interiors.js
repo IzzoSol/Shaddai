@@ -185,7 +185,9 @@
     for (var _di = 0; _di < allSectors.length; _di++) {
       var _ds  = allSectors[_di];
       if (String(_ds.code).toUpperCase() === 'SHADDAI') continue;   // SHADDAI temple moved to the sky observatory — no "[E] ENTER SHADDAI" at the ground center (that's the open bazaar/forum now)
-      var _thr = colliderR(_ds.code) + DOOR_EXTRA;
+      // FIX 2026-10-04 (owner: "ENTERING CASTLE" fired far from any castle): realm structures take their collider from the WHOLE model
+      // (castle/fortress radius = hundreds of units), so their "door" covered half the map and stole every E. Cap at the biggest agent building.
+      var _thr = Math.min(colliderR(_ds.code) + DOOR_EXTRA, 140);
       var _sx  = _ds.pos ? _ds.pos[0] : 0;
       var _sz  = _ds.pos ? _ds.pos[1] : 0;
       /* front vector = normalize(centre - buildingPos). SHADDAI sits at centre so its
@@ -3238,7 +3240,6 @@
           }
           if (room.group) room.group.visible = true;
           global.__wiRoomReady = true;   /* interior is now on-screen → safe to reveal */
-          if (global.__setOutdoorHidden) global.__setOutdoorHidden(true, room.origin.x);   /* PERF: stop drawing the city behind the walls */
 
           var o = room.origin;
           playerPos.x = o.x;
@@ -3262,6 +3263,7 @@
           }
 
           currentCode = uc;
+          if (global.__setOutdoorHidden) global.__setOutdoorHidden(true, room.origin.x);   /* PERF: stop drawing the city behind the walls — only AFTER a confirmed landing (an aborted enter left the world hidden = black screen) */
           fadeOut();
 
           var theme = themeOf(uc);
@@ -3347,6 +3349,7 @@
          and the returned {code,dist} object is only allocated on a hit —
          identical to the previous public contract. */
       var bestCode = null, bestDistSq = Infinity;
+      if (!isFinite(x) || !isFinite(z)) return null;   // a NaN position made every comparison false → first door "in range" (ghost ENTER CASTLE)
       for (var i = 0; i < doors.length; i++) {
         var d      = doors[i];
         var dx     = x - d.sx;
