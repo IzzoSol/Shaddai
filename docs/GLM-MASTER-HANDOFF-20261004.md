@@ -70,3 +70,4 @@ Suspects, in order:
 
 ## Loop log (Opus, 2026-10-04)
 - iter 1: board/camera NaN guard (hoverboard + Space black screen); floating-square sweep (untextured outdoor Points hidden every 4 s; keeps board trail + interiors; ?fx=1 keeps all). Next: NAVI look/flow, then FPS items in section 2.
+- iter 2 (stopped at owner's usage limit): NAVI left as-is (owner: don't break it). NEXT for GLM: decorative PointLights in world-landmarks.js (~26, ~38) and world-buildings.js (~4389-4391) -> emissive stand-ins, measure before/after.
