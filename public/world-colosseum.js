@@ -143,9 +143,10 @@
       var ped = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: 8, bevelEnabled: false }), mats.stone); ped.position.set(0, LOBBY_H + 0.4, LOBBY_D / 2 - 2); ped.castShadow = true; lob.add(ped);   // pediment
       var door = new THREE.Mesh(new THREE.BoxGeometry(12, 16, 0.6), M(0x6b4a22, { metalness: 0.7, roughness: 0.4 })); door.position.set(0, 8 + 2, LOBBY_D / 2 + 0.35); lob.add(door);
       var star = new THREE.Mesh(new THREE.OctahedronGeometry(3.2, 0), mats.star); star.scale.set(1, 1.5, 0.35); star.position.set(0, LOBBY_H + 5, LOBBY_D / 2 + 6.5); lob.add(star);
-      var glow = new THREE.PointLight(0x5fe0ff, 60, 60 * U, 1.8); glow.position.set(0, LOBBY_H + 5, LOBBY_D / 2 + 10); lob.add(glow);
+      mats.star.emissiveIntensity = 3.2;   // PERF 2026-10-04: was a PointLight (every extra light costs every lit material world-wide); the emissive star carries the glow
       var sign = (function () { var cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; var x = cv.getContext('2d'); x.fillStyle = '#e8dcc0'; x.fillRect(0, 0, 1024, 128); x.fillStyle = '#5a4520'; x.font = '700 72px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SOUTHERN COLOSSEUM', 512, 68); var tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; return new THREE.Mesh(new THREE.PlaneGeometry(44, 5.5), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.8 })); })();
       sign.position.set(0, LOBBY_H - 0.8, LOBBY_D / 2 + 6.05); lob.add(sign);
+      if (window.WorldMerge) try { group.userData.bake = window.WorldMerge.bake(group, THREE, { skip: new Set([star]), name: 'colosseum-exterior' }); } catch (e) { }   // PERF: static exterior (~49 draws); the star keeps spinning
       scene.add(group);
       if (window.__registerPlaceable) window.__registerPlaceable('landmark:colosseum', group, { source: 'world-colosseum.js' });
       return { group: group, door: ext.door, update: function (t) { star.rotation.y = t * 0.6; } };
