@@ -166,6 +166,7 @@ test('on the board: fly up, Shift+W front flip + A spin, land clean → onTrick 
 
 test('on the board: still mid-flip at touchdown → bail, speed cut, board wobbles', () => {
   const { h, run, ev } = mk(T, { heightAt: () => 0 });
+  h.tune.hopMS = 4.2;                                   // a SHORT hop so the flip is still unfinished at touchdown (the default hop now gives full trick time)
   run(3, IN({ fwd: true }));
   const v0 = h.speedMS();
   run(0.05, IN({ fwd: true, jump: true }));            // hop

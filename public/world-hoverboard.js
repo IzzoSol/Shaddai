@@ -55,14 +55,16 @@ window.buildWorldHoverboard = function (opts) {
     reverseMS: 3,        // S from a stop drifts backwards
     coastMS2: 1.2,       // friction-free-ish glide when no input
     dragK: 0.012,        // aero drag (per m of v^2)
-    slopeGravity: 0.35,  // hovering feels hills less than wheels do
+    slopeGravity: 0.5,    // hovering feels hills less than wheels do
     steerGain: 5,        // heading chases camera yaw (mouse steers)
     carveOffset: 0.5,    // A/D add ±rad to the heading target
     turnRateLow: 3.0,    // rad/s at a crawl…
     turnRateHigh: 1.6,   // …and at top speed
     rollMaxDeg: 25,      // carve lean clamp; lean = atan(v·yawRate/g)
     poseSmooth: 9,       // pitch/roll smoothing (1/s)
-    hopMS: 5.2,          // jump impulse (m/s up) → ~0.7 m hop
+    hopMS: 6.2,          // jump impulse (m/s up) → ~0.7 m hop
+    swooshMS: 4,         // landing kick per second of clean air (2026-10-04 feel pass)
+    swooshMaxMS: 6,      // cap on that kick
     gravityK: 1.6,       // airborne gravity multiplier (snappy, arcade)
     radiusM: 0.45,       // collision radius vs colliders
     impactLoss: 0.7,
@@ -78,7 +80,7 @@ window.buildWorldHoverboard = function (opts) {
     flyDelay: 0.22,      // s of air before a held Space turns into FLY (so a tap is still a hop)
     flyClimbMS: 7,       // climb rate while held
     flyAccel: 4,         // 1/s - how fast vy chases the climb / glide rate
-    glideSinkMS: 1.6,    // gentle sink after releasing (or when out of stamina)
+    glideSinkMS: 1.15,    // gentle sink after releasing (or when out of stamina)
     flyMaxAltM: 45,      // ceiling above the surface under you
     staminaDrain: 0.2,   // per second of climbing (~5 s of climb from full)
     staminaRegen: 0.3,   // per second while hovering on the ground
@@ -401,10 +403,12 @@ window.buildWorldHoverboard = function (opts) {
 
   // touchdown: the trick core checks spin/flip/varial residuals + board tilt -> clean or BAIL
   function land() {
+    var airT = s.airT || 0, wasFlying = s.flying;
     s.air = false; s.flying = false; s.airT = 0;
-    if (!TR) return;
-    var tilt = Math.max(Math.abs(s.pitch), Math.abs(s.roll));
-    if (!TR.land(tilt)) { s.v *= TUNE.bailSpeedK; s.bail = TUNE.bailTime; if (s.vy > 0) s.vy = 0; }
+    var clean = true;
+    if (TR) { var tilt = Math.max(Math.abs(s.pitch), Math.abs(s.roll)); if (!TR.land(tilt)) { clean = false; s.v *= TUNE.bailSpeedK; s.bail = TUNE.bailTime; if (s.vy > 0) s.vy = 0; } }
+    // SWOOSH (owner 2026-10-04): a clean landing after real air rolls out FASTER — longer air = bigger kick, capped above boost speed
+    if (clean && !wasFlying && airT > 0.45) { var dir = s.v >= 0 ? 1 : -1, kick = Math.min(TUNE.swooshMaxMS, TUNE.swooshMS * (airT - 0.3)); s.v = dir * Math.min(TUNE.boostMS * 1.2, Math.abs(s.v) + kick); s.swoosh = 0.6; }
   }
 
   /* pose(dt) — VISUALS: board transform, glow, trail, rider stance. Call after the host has
@@ -412,6 +416,7 @@ window.buildWorldHoverboard = function (opts) {
   function pose(dt, ctx) {
     ctx = ctx || {};
     var B = TUNE, k = 1 - Math.exp(-B.poseSmooth * dt);
+    if (s.swoosh > 0) s.swoosh = Math.max(0, s.swoosh - dt);   // swoosh trail flash decays over 0.6 s
     if (board.visible) {
       if (!s.riding) {                                   // parked: idle hover where you left it
         s.surface = surfaceAt(s.x, s.z);
@@ -537,7 +542,7 @@ window.buildWorldHoverboard = function (opts) {
     }
     var sp = Math.min(1, Math.abs(s.v) / TUNE.boostMS);
     for (var i = 0; i < NT; i++) {
-      var f = i < trailCount ? Math.pow(1 - i / NT, 1.6) * TUNE.trailIntensity * (0.5 + 0.5 * sp) : 0;
+      var f = i < trailCount ? Math.pow(1 - i / NT, 1.6) * TUNE.trailIntensity * (0.5 + 0.5 * sp) * (1 + 2.2 * Math.max(0, s.swoosh || 0)) : 0;
       for (var side = 0; side < 2; side++) {
         var o = (i * 2 + side) * 3;
         tCol[o] = trailC.r * f; tCol[o + 1] = trailC.g * f; tCol[o + 2] = trailC.b * f;
