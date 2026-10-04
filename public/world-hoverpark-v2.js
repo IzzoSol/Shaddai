@@ -23,6 +23,7 @@
   var RAILS = [-36, -18, 0, 18, 36].map(function (z, i) { return { z: z, x0: -152, x1: -76, kink: -114 + (i % 2) * 10, yHi: 1.2, yLo: 0.75 }; });
   var KICK = [[96, -40, -0.5], [128, -22, -0.25], [104, 4, 0], [132, 30, 0.3], [96, 42, 0.6]].map(function (k) { return { x: k[0], z: k[1], yaw: k[2] + Math.PI / 2, L: 14, W: 9, H: 3.4 }; });   // yaw: ramp rises toward the bowl
   var TOWER = { x: 0, z: 118, r: 5, h: 26, deck: 14 }, DROP = { z0: 110, z1: 38, w: 9, h0: 14 };
+  var LIFT = { base: [0, 134], top: [0, 111.5], r: 3 };   // tower lift stops (local metres): south base door → deck edge at the drop-in
   var SPIRAL = { r0: 8.6, r1: 12.6, rm: 10.6, a0: 40, a1: 360, h: 14 };   // rideable climb round the tower (degrees clockwise from north)
 
   function build(o) {
@@ -82,6 +83,10 @@
     var dL = Math.hypot(DROP.z0 - DROP.z1, DROP.h0), dA = Math.atan2(DROP.h0, DROP.z0 - DROP.z1);
     put(new THREE.BoxGeometry(DROP.w, 0.6, dL), 'obsidian2', 0, DROP.h0 / 2, (DROP.z0 + DROP.z1) / 2, -dA);
     [-1, 1].forEach(function (s) { put(new THREE.BoxGeometry(0.3, 0.4, dL), 'gold', s * DROP.w / 2, DROP.h0 / 2 + 0.5, (DROP.z0 + DROP.z1) / 2, -dA); });
+    // ── tower LIFT (owner 2026-10-04: "elevator inside the drop"): gold door + emerald pad at the south base, top stop at the head of the drop-in ──
+    put(new THREE.BoxGeometry(0.5, 4.6, 0.6), 'gold', LIFT.base[0] - 2.4, 2.3, LIFT.base[1] + 2.2); put(new THREE.BoxGeometry(0.5, 4.6, 0.6), 'gold', LIFT.base[0] + 2.4, 2.3, LIFT.base[1] + 2.2);
+    put(new THREE.BoxGeometry(5.3, 0.5, 0.6), 'gold', LIFT.base[0], 4.8, LIFT.base[1] + 2.2); put(new THREE.BoxGeometry(4.3, 0.12, 0.12), 'lane', LIFT.base[0], 4.4, LIFT.base[1] + 2.2);
+    put(new THREE.CylinderGeometry(2.2, 2.2, 0.08, 32), 'lane', LIFT.base[0], 0.05, LIFT.base[1]); put(new THREE.CylinderGeometry(1.8, 1.8, 0.08, 32), 'lane', LIFT.top[0], TOWER.deck + 0.45, LIFT.top[1]);
     // ── spiral climb round the drop tower: 40°→360° clockwise from north, 0 → 14 m, ends at the top deck where the drop-in starts ──
     var slope = SPIRAL.h / (SPIRAL.rm * (SPIRAL.a1 - SPIRAL.a0) * Math.PI / 180);
     for (var sa = SPIRAL.a0; sa < SPIRAL.a1; sa += 10) {
@@ -144,6 +149,10 @@
       rooms: ROOMS.map(function (r) { var v = toWorld(r.x, 0, r.z); return { id: r.id, name: r.name, x: v.x, z: v.z, r: r.r * U, tag: r.tag }; }),
       entrance: (function () { var v = toWorld(0, 0, PR - 6); return { x: v.x, z: v.z }; })(),
       railsWorld: function () { return railSegs.map(function (s) { var a = toWorld(s.x0, s.y, s.z), b = toWorld(s.x1, s.y, s.z); return { x0: a.x, z0: a.z, x1: b.x, z1: b.z, y: (a.y + b.y) / 2 }; }); },
+      // tower lift: host calls towerLift(x, z) on E; returns the other stop (world x/z) when you stand on a lift pad, else null
+      towerLift: function (wx, wz) { var l = local(wx, wz), b = LIFT.base, t2 = LIFT.top, to = null;
+        if (Math.hypot(l[0] - b[0], l[1] - b[1]) < LIFT.r) to = t2; else if (Math.hypot(l[0] - t2[0], l[1] - t2[1]) < LIFT.r) to = b;
+        if (!to) return null; var v = toWorld(to[0], 0, to[1]); return { x: v.x, z: v.z, up: to === t2 }; },
       setCrateVisible: function (i, v) { crVis[i] = !!v; }, cratesWorld: function () { return crPos.map(function (c2) { return toWorld(c2[0], c2[1], c2[2]); }); },
       padsWorld: function () { return padLoc.map(function (q5) { var w = toWorld(q5[0], 0.3, q5[1]); w.yaw = q5[2] + yaw; return w; }); },
       loopWorld: function () { return LOOP.map(function (q6) { return toWorld(q6[0], 0.4, q6[1]); }); } };
