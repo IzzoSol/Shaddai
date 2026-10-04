@@ -4693,6 +4693,7 @@ const _bldgColliders = (function(){
     const beam = new THREE.Mesh(beamG, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); beam.scale.set(1, 520, 1); beam.position.set(0, 260, 2); g.add(beam);
     window.__entrances.push({ code: sec.code, x: px, z: pz, nx: nx, nz: nz }); });
   console.info('[entrances] built', window.__entrances.length);
+  if(window.WorldMerge) try{ root.userData.bake = window.WorldMerge.bake(root, THREE, { name: 'entrances' }); }catch(e){ console.warn('[entrances] bake skipped', e && e.message); }   // PERF 2026-10-04: all static (~66 draws)
 }, 1000); })();
 // SHAPE-AWARE solid collision with a real door opening:
 //  • BOX buildings → axis-aligned box (blocks flat faces AND corners correctly — no "barrier at the face
