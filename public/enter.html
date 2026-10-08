@@ -1766,7 +1766,8 @@ if (renderer) {
   var KEY = 'shd_rail';
   var grid = document.getElementById('grid'), bg = document.getElementById('railBg');
   if (!grid || !bg) return;
-  var on = true; try { on = localStorage.getItem(KEY) !== '0'; } catch (e) {}
+  /* Default = vertical sections all on screen (owner). Rail is opt-in via the toggle (localStorage shd_rail=1). */
+  var on = false; try { on = localStorage.getItem(KEY) === '1'; } catch (e) {}
   var prev = document.getElementById('railPrev'), next = document.getElementById('railNext');
   var track = document.querySelector('#railTrack i'), lbl = document.getElementById('railLbl'), tog = document.getElementById('btnRail');
   var imgs = [].slice.call(bg.querySelectorAll('i'));
