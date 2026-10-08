@@ -2029,6 +2029,9 @@ scene.fog.density = 0.0006;   // MAP v2 (see scene.fog above)
 // MAP v4: FogExp2 = 1-exp(-(d·ρ)²). ρ=0.000055 → ~6% haze at 5 000u, ~50% at ~15 000u, ~95% at ~31 000u, so the
 // far rim of a 39 000u world fades out before the 48 000u far plane instead of a hard cut.
 if(MAP_V4) scene.fog.density = 0.000026;   // owner: 'I can't see far' - roughly half the old haze (0.000055); the sky module clamps its palette multiplier too
+// OWNER 2026-10-08: fog removed. Default = no fog (density 0). ?fog=1 restores the old haze for comparison.
+window.__SHD_FOG_ON = /[?&]fog=1\b/.test(location.search);
+if(!window.__SHD_FOG_ON) scene.fog.density = 0;
 if(MAP_V4){
   skyDome.visible = false; starGroup.visible = false;   // replaced by world-sky-v4.js (stars/clouds/moon are in its shader)
   sun2.visible = false; rim.visible = false;            // one directional light only: the sky drives `sun`
