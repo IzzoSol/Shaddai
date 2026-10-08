@@ -215,3 +215,4 @@ public/assets/terrain/_test/
 # consultancy engagements hold client user ids — runtime data, never commit
 backend/data/engagements.json
 backend/data/engagements.json.tmp
+backend/data/onboarding/

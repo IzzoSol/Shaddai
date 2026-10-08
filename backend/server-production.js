@@ -2141,6 +2141,7 @@ try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefa
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
 app.use('/api/work', softAuth, require('./work-sessions'));           // agent work loop: real work -> Sparks payout + while-away summary + live feed; softAuth so userId comes from the verified session, not a caller-supplied body field
 app.use('/api/stage', softAuth, require('./stage-routes'));           // dashboard stage (free/user/client): identity from the verified session only; engagement writes are admin-only
+app.use('/api/onboarding', softAuth, require('./onboarding-routes')); // goal-first onboarding wizard; per-user, identity from the verified session only
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
 // Paybox — customer-facing wallet endpoints (tip links etc). Separate from
