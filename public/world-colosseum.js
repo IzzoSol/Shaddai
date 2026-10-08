@@ -696,7 +696,9 @@
       if (group.visible && !env.saved) {
         if (window.__shdVisitDistrict) window.__shdVisitDistrict('colosseum');
         startKit();
-        env.saved = { fog: scene.fog, far: cam ? cam.far : null }; scene.fog = env.fog;
+        // owner 2026-10-08: no fog. Swapping FogExp2 -> Fog also changed every material's shader key = a full
+        // recompile freeze on entering the arena, so with fog off the world fog object is left alone (?fog=1 = old haze).
+        env.saved = { fog: scene.fog, far: cam ? cam.far : null }; if (window.__SHD_FOG_ON) scene.fog = env.fog;
         if (cam && cam.far < 5000) { cam.far = 5000; cam.updateProjectionMatrix(); }
       } else if (!group.visible && env.saved) {
         scene.fog = env.saved.fog; if (cam && env.saved.far) { cam.far = env.saved.far; cam.updateProjectionMatrix(); }

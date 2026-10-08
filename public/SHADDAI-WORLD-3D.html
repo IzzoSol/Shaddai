@@ -1879,7 +1879,7 @@ const TERRAIN = {
 };
 window.applyTerrain = function(k){
   const P=TERRAIN[k]; if(!P) return;
-  scene.background.set(P.bg); scene.fog.color.set(P.fog); scene.fog.density=P.density*0.25;   // MAP v2: presets were tuned for a 760u world
+  scene.background.set(P.bg); scene.fog.color.set(P.fog); scene.fog.density=window.__SHD_FOG_ON ? P.density*0.25 : 0;   // MAP v2: presets were tuned for a 760u world; owner 2026-10-08: no fog unless ?fog=1
   key.color.set(P.l1); gold.color.set(P.l2);
   const GC={ grid:null, snow:0xcfe0f0, desert:0xc8903c, void:null, neon:0x3a1050, meadow:0x8fd99a };
   const gc=GC[k]; ground.visible=(gc!=null);
