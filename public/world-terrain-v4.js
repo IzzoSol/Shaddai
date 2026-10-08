@@ -209,6 +209,55 @@
     });
     material.name = 'terrain-v4';
 
+    // ── SURFACE SHADING (2026-10-08, owner refs: jet-combat / Tesana mountains) ──────────────────────────────────
+    // The colour map is ~10 m per pixel, so up close the ground read as one flat smear. On top of it, per pixel:
+    // macro brightness variation (breaks the smear), rock on steep slopes (keeps the realm's hue: desert rock stays
+    // red, forest rock grey-green), snow on high ground (not on cliffs), wet darker sand at the shoreline.
+    // Two value-noise lookups + a few mixes: no textures, no extra draws. ?tsplat=0 = old flat look.
+    var SPLAT = !(typeof location !== 'undefined' && /[?&]tsplat=0\b/.test(location.search));
+    if (SPLAT) {
+      var SU = {
+        uSnowLo: { value: (opts.snowLoM != null ? opts.snowLoM : 430) * PM }, uSnowHi: { value: (opts.snowHiM != null ? opts.snowHiM : 520) * PM },
+        uSea: { value: SEA_U }, uRock: { value: opts.rockMix != null ? opts.rockMix : 1.0 }
+      };
+      material.customProgramCacheKey = function () { return 'tv4-splat'; };
+      material.onBeforeCompile = function (sh) {
+        for (var k in SU) sh.uniforms[k] = SU[k];
+        sh.vertexShader = 'varying vec3 vTWP; varying vec3 vTWN;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+          '#include <begin_vertex>\n  vTWP = (modelMatrix * vec4(position, 1.0)).xyz; vTWN = normalize(mat3(modelMatrix) * objectNormal);');
+        sh.fragmentShader = [
+          'varying vec3 vTWP; varying vec3 vTWN; uniform float uSnowLo, uSnowHi, uSea, uRock;',
+          'float tvH(vec2 p){ p = fract(p * vec2(127.1, 311.7)); p += dot(p, p + 34.5); return fract(p.x * p.y); }',
+          'float tvN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+          '  return mix(mix(tvH(i), tvH(i + vec2(1.0, 0.0)), f.x), mix(tvH(i + vec2(0.0, 1.0)), tvH(i + vec2(1.0, 1.0)), f.x), f.y); }'
+        ].join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', [
+          '#include <map_fragment>',
+          '  {',
+          '    float n1 = tvN(vTWP.xz * 0.004), n2 = tvN(vTWP.xz * 0.045) * 0.6 + tvN(vTWP.xz * 0.21) * 0.4;',
+          '    vec3 base = diffuseColor.rgb;',
+          '    base *= 0.88 + 0.24 * n1;',                                                            // macro variation
+          '    float lum = dot(base, vec3(0.299, 0.587, 0.114));',
+          '    base = max(mix(vec3(lum), base, 1.18), 0.0);',                                         // a touch more colour (refs are saturated)
+          '    float green = smoothstep(0.0, 0.05, base.g - max(base.r, base.b));',                   // grassland: patchy light/dark grass
+          '    base = mix(base, base * mix(vec3(0.78, 0.86, 0.72), vec3(1.16, 1.12, 0.86), n2), green * 0.85);',
+          '    float slope = 1.0 - clamp(vTWN.y, 0.0, 1.0);',
+          '    float rock = smoothstep(0.24, 0.46, slope + (n2 - 0.5) * 0.14) * uRock;',
+          '    vec3 grey = mix(vec3(0.16, 0.15, 0.15), vec3(0.52, 0.50, 0.47), smoothstep(0.04, 0.30, lum));',   // bright realm = light rock, volcano/void = dark rock
+          '    vec3 rockCol = mix(grey, base, 0.25) * (0.80 + 0.40 * n2);',                          // a little realm hue kept, grainy
+          '    base = mix(base, rockCol, rock);',
+          '    float snow = smoothstep(uSnowLo, uSnowHi, vTWP.y + (n1 - 0.5) * (uSnowHi - uSnowLo)) * (1.0 - smoothstep(0.38, 0.62, slope));',
+          '    base = mix(base, vec3(0.90, 0.93, 0.97) * (0.94 + 0.06 * n2), snow);',
+          '    float wet = 1.0 - smoothstep(uSea + 2.0, uSea + 14.0, vTWP.y);',                         // shoreline band
+          '    base = mix(base, base * 0.68, wet * 0.8);',
+          '    float near = 1.0 - smoothstep(60.0, 420.0, distance(vTWP, cameraPosition));',          // fine grain only where you can see it
+          '    if (near > 0.0) { float n3 = tvN(vTWP.xz * 0.9) * 0.6 + tvN(vTWP.xz * 2.3) * 0.4; base *= mix(1.0, 0.80 + 0.40 * n3, near * 0.9); }',
+          '    diffuseColor.rgb = base;',
+          '  }'
+        ].join('\n'));
+      };
+      material.userData.splat = SU;
+    }
+
     var group = new THREE.Group(); group.name = 'world-terrain-v4';
     if (scene) scene.add(group);
 
