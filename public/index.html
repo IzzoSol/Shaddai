@@ -111,6 +111,7 @@
         if(typeof window.shdRenderAuth==='function') window.shdRenderAuth();   // close the gate IMMEDIATELY on sign-in
         window.SHD_AUTH.token=u? await u.getIdToken().catch(function(){return null;}) : null;   // fetch token after (never blocks the UI)
         if(window.SHDTier&&window.SHDTier.onAuthChange) window.SHDTier.onAuthChange();   // re-resolve guest/free/pro after auth settles
+        if(window.SHDStage&&window.SHDStage.refresh) window.SHDStage.refresh(true);   // re-resolve free/user/client after auth settles
       });
       // If we returned from a Google redirect sign-in, surface any error (e.g. unauthorized-domain) in the gate.
       firebase.auth().getRedirectResult().catch(function(e){
@@ -4250,6 +4251,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 <script src="/free-use-tracker.js?v=1" defer></script>
 <script src="/media-studio.js?v=2" defer></script>
 <script src="/shd-tier.js?v=1" defer></script>
+<script src="/shd-stage.js?v=1" defer></script>
 <style id="shaddai-icon-css">.shaddai-icon{filter:drop-shadow(0 0 3px currentColor);vertical-align:-2px;display:inline-block}</style>
 <style id="shd-perf">/* Open-lag fix: the dashboard holds ~24 views in one huge DOM. Let the browser
    SKIP rendering the ones you're not looking at until they're shown — big cut to

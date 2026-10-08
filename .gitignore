@@ -211,3 +211,7 @@ fal-assets/production/models/*-obj/
 .probe-profile/
 public/assets/terrain/_test/
 .bl-cache/
+
+# consultancy engagements hold client user ids — runtime data, never commit
+backend/data/engagements.json
+backend/data/engagements.json.tmp

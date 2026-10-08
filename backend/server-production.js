@@ -2140,6 +2140,7 @@ app.use('/api/economy', softAuth, require('./economy-routes')());     // Sparks 
 try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
 app.use('/api/sub-billing', require('./sub-billing-routes'));         // Stripe subscriptions + per-deliverable unlock paywall
 app.use('/api/work', softAuth, require('./work-sessions'));           // agent work loop: real work -> Sparks payout + while-away summary + live feed; softAuth so userId comes from the verified session, not a caller-supplied body field
+app.use('/api/stage', softAuth, require('./stage-routes'));           // dashboard stage (free/user/client): identity from the verified session only; engagement writes are admin-only
 // AURA — cost layer: /chat cache-check (called before any paid provider), /record, /stats, /route
 app.use('/api/aura', require('./aura-routes'));
 // Paybox — customer-facing wallet endpoints (tip links etc). Separate from
