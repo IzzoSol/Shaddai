@@ -5282,8 +5282,12 @@ window.__travel = {
 
 window.__qualityTierCount = _Q.tiers.length;
 
+// PERF (GLM handoff sec.1): long-frame logger, opt-in via ?perf=1. Logs any frame over 50 ms so
+// start-of-game freezes can be traced to the system that ran. Off by default: no console cost.
+var _perfOn=/[?&]perf=1\b/.test(location.search), _perfLast=0;
 function animate(){
   requestAnimationFrame(animate);
+  if(_perfOn){ var _pn=performance.now(); if(_perfLast && _pn-_perfLast>50) console.warn('[perf] long frame '+Math.round(_pn-_perfLast)+' ms at '+Math.round(_pn)+' ms'); _perfLast=_pn; }
   // INTRO PERF: while the intro overlay is still up (before ENTER), do NOT run the heavy 3D
   // updates + render — the intro covers the canvas, so rendering the whole world behind it was
   // wasting the frame budget and making the intro laggy/janky. Resume once ENTER adds '.gone'.
