@@ -135,7 +135,7 @@
     var ex = document.getElementById(HOOK_ID);
     if (ex) {
       ex.querySelector('.shdProMsg').innerHTML = msg(name, isIn);
-      ex.querySelector('.shdProPri').textContent = isIn ? 'Upgrade to Pro — $30/mo →' : 'Sign in first →';
+      ex.querySelector('.shdProPri').textContent = isIn ? 'Upgrade to Pro — $49/mo →' : 'Sign in first →';
       ex.classList.add('on');
       return;
     }
@@ -146,7 +146,7 @@
       '<div class="c">' +
       '<h2>🔒 ' + name + ' is a Pro feature</h2>' +
       '<p class="shdProMsg"></p>' +
-      '<button class="shdProPri">' + (isIn ? 'Upgrade to Pro — $30/mo →' : 'Sign in first →') + '</button>' +
+      '<button class="shdProPri">' + (isIn ? 'Upgrade to Pro — $49/mo →' : 'Sign in first →') + '</button>' +
       '<button class="x shdProX">Maybe later</button>' +
       '</div>';
     d.querySelector('.shdProMsg').innerHTML = msg(name, isIn);
@@ -163,7 +163,7 @@
     if (!isIn) {
       return 'Sign in to keep your work and unlock more — then upgrade to Pro to use <b style="color:#efe9ff">' + name + '</b>.';
     }
-    return '<b style="color:#efe9ff">' + name + '</b> is included in Pro — one flat $30/mo: SHADDAI MCP, premium brains, workflow chains, media generation &amp; priority compute.';
+    return '<b style="color:#efe9ff">' + name + '</b> is included in Pro — one flat $49/mo: SHADDAI MCP, premium brains, workflow chains, media generation &amp; priority compute.';
   }
 
   /* ── data-pro gating ──────────────────────────────────────────── */
