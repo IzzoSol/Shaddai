@@ -556,6 +556,34 @@ function _ldReport(){
   console.info('[load] summary', JSON.stringify(window.__loadSummary));
 }
 window.__loadReport = _ldReport;
+// POST-ENTRY BUILDER TIMING (W1 freeze trace): the boot* builders below the frame loop run after __loadPlayable; _bootT times each
+// one into window.__bootTimings { name, at (ms since page start), ms } so tools/_freeze-trace.cjs can line them up with long frames.
+window.__bootTimings = [];
+function _bootT(name, fn){ const t = performance.now(); try{ return fn(); } finally { window.__bootTimings.push({ name: name, at: Math.round(t), ms: Math.round(performance.now() - t) }); } }
+// FREEZE FIX W1 (2026-10-08): measured 84 shader programs at entry → 159 thirty seconds later; every new one compiled
+// synchronously on its first visible frame (28 s / 51 s / 107 s frames headless, no JS running). After entry, anything added
+// to the scene stays hidden until renderer.compileAsync (KHR_parallel_shader_compile, off the main thread) says its shaders
+// are ready, then shows. Game code that sets .visible meanwhile is remembered and applied on reveal. ?precompile=0 = old behaviour.
+window.__precompile = { pending: 0, done: 0, maxWaitMs: 0 };
+if(!/[?&]precompile=0\b/.test(location.search)){
+  const _sceneAdd = scene.add;
+  scene.add = function(){
+    const r = _sceneAdd.apply(this, arguments);
+    if(!window.__loadPlayable || typeof renderer === 'undefined' || !renderer.compileAsync) return r;
+    for(let i = 0; i < arguments.length; i++){
+      const o = arguments[i]; if(!o || o.isLight || o.isCamera || o.userData.__pcPending || !o.visible) continue;
+      let want = true; o.userData.__pcPending = true; window.__precompile.pending++;
+      Object.defineProperty(o, 'visible', { configurable: true, get: function(){ return false; }, set: function(v){ want = !!v; } });
+      const t0 = performance.now();
+      const reveal = function(){ if(!o.userData.__pcPending) return; delete o.userData.__pcPending; delete o.visible; o.visible = want;
+        const P = window.__precompile; P.pending--; P.done++; P.maxWaitMs = Math.max(P.maxWaitMs, Math.round(performance.now() - t0)); };
+      setTimeout(function(){   // next task: builders often add an empty group and fill it in the same call
+        try{ Promise.race([renderer.compileAsync(o, camera, scene), new Promise(function(res){ setTimeout(res, 15000); })]).then(reveal, reveal); }catch(_){ reveal(); }
+      }, 0);
+    }
+    return r;
+  };
+}
 
 const ambient = new THREE.AmbientLight(0x223355, 0.7); scene.add(ambient);
 const key = new THREE.PointLight(0x27e0ff, 1.2, 200); key.position.set(0,40,0); scene.add(key);
@@ -4552,7 +4580,7 @@ window.removeAgent = function(a){
       if(warm) return; warm=true; set(94, LABEL.warm);
       _ldBegin('warm');
       var p = (renderer.compileAsync ? renderer.compileAsync(scene, camera) : Promise.resolve(renderer.compile(scene, camera)));
-      p = Promise.race([p, new Promise(function(r){ setTimeout(r, 6000); })]);   // PERF: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in
+      p = Promise.race([p, new Promise(function(r){ setTimeout(r, /[?&]precompile=0\b/.test(location.search) ? 6000 : 30000); })]);   // FREEZE FIX W1: 6 s → 30 s cap; past the cap the rest compiled synchronously on the first in-world frame (21-31 s frame headless). Old PERF note: the whole-scene shader warm-up took 40+ s (the '94%' stall) - cap it; the rest compiles lazily while streaming in
       p.catch(function(e){ console.warn('warmup', e && e.message); }).then(function(){
         _introWarming = true;   // animate() does quiet composer renders behind the screen (GPU uploads happen now, not on reveal)
         requestAnimationFrame(function(){ requestAnimationFrame(function(){ _ldEnd('warm'); set(100); try{ if(window.__liteSlides) window.__liteSlides.stop(); }catch(_){ } setTimeout(function(){ window.__loadPlayable = true; document.getElementById('enterBtn').click(); }, 350); }); });   // 2026-10-03: was a flat 3 s wait after 100% (dead time); 350 ms = one clean fade
@@ -4953,7 +4981,8 @@ function _staticMerge(){
       cand.push(o);
     });
     if(cand.length < 12){ console.info('[static-merge] only ' + cand.length + ' candidates — skipping'); return; }
-    import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
+    window.__bootTimings.push({ name: 'static-merge-scan', at: Math.round(performance.now()), ms: 0, cand: cand.length });
+    import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){ _bootT('static-merge-build', function(){
       const byKey = {};
       const _im4 = new THREE.Matrix4(), _wm = new THREE.Matrix4();
       for(const o of cand){
@@ -4989,7 +5018,7 @@ function _staticMerge(){
         savedTris += merged.index ? merged.index.count / 3 : 0;
       }
       console.info('[static-merge] merged ' + mergedN + ' batches (' + savedN + ' meshes → ' + mergedN + ' draws, ~' + Math.round(savedTris/1000) + 'k tris kept)');
-    }).catch(function(e){ console.warn('[static-merge] import failed:', e && e.message); });
+    }); }).catch(function(e){ console.warn('[static-merge] import failed:', e && e.message); });
   }catch(e){ console.warn('[static-merge] failed:', e && e.message); }
 }
 
@@ -5043,11 +5072,11 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 // ── FACADE DETAILS (world-facade-details.js): rooftop vents/antennas + ground-floor glow bands in district colours, instanced, near the player only ──
 (function bootFacade(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFacadeDetails || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  window.__facade = window.buildFacadeDetails({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.facade = window.__facade; }, 1000); })();
+  _bootT('facade', function(){ window.__facade = window.buildFacadeDetails({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.facade = window.__facade; }); }, 1000); })();
 // ── AIR TRAFFIC (world-hovercars.js): ~100 hover cars on altitude lanes + 18 flying riders; a local ring follows you so traffic is always in view ──
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }, 1000); })();
+  _bootT('traffic', function(){ window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }); }, 1000); })();
 // ── HAZARDS (world-hazards.js): lava burns you (overworld lava = molten pixels of the terrain colour map; Colosseum lava field); hover above it to cross; water puts you out ──
 // DISABLED 2026-10-03: hazard physics expensive, causes "not responsive" hangs. Re-enable when perf is stable.
 (function bootHazards(){ return; let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
@@ -5092,14 +5121,14 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 // ── NIGHT SKY EXTRAS (world-nightsky-extras.js): shooting stars, a second moon, strange planets ──
 (function bootNightSky(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
   if(!window.buildNightSkyExtras || !_v4Sky || !window.__loadPlayable) return; clearInterval(iv);
-  try{ window.__skyExtras = window.buildNightSkyExtras({ THREE, scene, camera, getNight: function(){ const nf = _v4Sky.nightFactor; return typeof nf === 'function' ? nf() : (nf || 0); }, getTime: function(){ return _v4Sky.getTime ? _v4Sky.getTime() : 0; } }); }catch(e){ console.warn('[skyextras] failed', e && e.message); } }, 1000); })();
+  try{ _bootT('nightsky', function(){ window.__skyExtras = window.buildNightSkyExtras({ THREE, scene, camera, getNight: function(){ const nf = _v4Sky.nightFactor; return typeof nf === 'function' ? nf() : (nf || 0); }, getTime: function(){ return _v4Sky.getTime ? _v4Sky.getTime() : 0; } }); }); }catch(e){ console.warn('[skyextras] failed', e && e.message); } }, 1000); })();
 // ── CAMPFIRE (world-campfire.js): buy a kit, press Backslash to light; kneel, sparks, flame; warmth heals; animals keep away ──
 (function bootCampfire(){ let n = 0; const iv = setInterval(function(){ if(++n > 500){ clearInterval(iv); return; }
   if(!window.WorldCampfire || !_v4T || !window.__loadPlayable) return; clearInterval(iv);
   try{
-    window.__campfire = window.WorldCampfire.create({ THREE, scene, heightAt: _v4T.heightAt, getPlayer: function(){ return { pos: playerPos }; }, getYaw: function(){ return Math.atan2(fwd.x, fwd.z); },
+    _bootT('campfire', function(){ window.__campfire = window.WorldCampfire.create({ THREE, scene, heightAt: _v4T.heightAt, getPlayer: function(){ return { pos: playerPos }; }, getYaw: function(){ return Math.atan2(fwd.x, fwd.z); },
       getNight: function(){ if(!_v4Sky) return 0; const nf = _v4Sky.nightFactor; return typeof nf === 'function' ? nf() : (nf || 0); }, waterAt: function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; },
-      onKneel: function(on){ window.__forceCrouch = !!on; }, onHeal: function(h){ window.__playerHP = Math.min(100, (window.__playerHP == null ? 100 : window.__playerHP) + h); } });
+      onKneel: function(on){ window.__forceCrouch = !!on; }, onHeal: function(h){ window.__playerHP = Math.min(100, (window.__playerHP == null ? 100 : window.__playerHP) + h); } }); });
     if(window.__mobs && window.__mobs.setSafeFn) window.__mobs.setSafeFn(function(x,z){ return window.__campfire && window.__campfire.isSafe(x,z); });
     addEventListener('keydown', function(e){ if(e.code !== 'Backslash' || e.repeat) return; try{ const r = window.__campfire.place(); if(window.Navi && window.Navi.toast) window.Navi.toast(r.msg); }catch(_){} });
   }catch(e){ console.warn('[campfire] failed', e && e.message); } }, 1000); })();
@@ -5110,7 +5139,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 // ── NAVAL BATTLE (world-naval.js + world-naval-view.js): first-person water game on the Colosseum water field; opened from I > Colosseum ──
 (function bootNaval(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
   if(!window.WorldNavalGame || !window.WorldNaval || !window.__loadPlayable) return; clearInterval(iv);
-  try{ window.__naval = window.WorldNavalGame.create({ THREE, getArena: function(){ return window.__colosseumArena; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }catch(e){ console.warn('[naval] init failed', e && e.message); } }, 1000); })();
+  try{ _bootT('naval', function(){ window.__naval = window.WorldNavalGame.create({ THREE, getArena: function(){ return window.__colosseumArena; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }); }catch(e){ console.warn('[naval] init failed', e && e.message); } }, 1000); })();
 // ── HIT FEEDBACK + GADGETS (world-hitfx.js / world-gadgets.js): hit marker, damage numbers, hurt arc; radar / binoculars / jetpack / scent-away ──
 (function bootFeedback(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !window.__mobs || !window.WorldHitFX || !window.WorldGadgets) return; clearInterval(iv);
@@ -5124,17 +5153,17 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 // ── ARMORY VISUALS (world-gear.js): shield plate / aegis barrier / halo / aura follow the avatar ──
 (function bootGear(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.WorldGear || !window.__loadPlayable || typeof playerAvatar === 'undefined') return; clearInterval(iv);
-  try{ window.__gearVis = window.WorldGear.buildVisuals({ THREE, scene, U: V4_U, height: PLAYER_BODY_HEIGHT, getAvatar: function(){ return playerAvatar; } }); }catch(e){ console.warn('[gear] visuals failed', e && e.message); } }, 1000); })();
+  try{ _bootT('gear', function(){ window.__gearVis = window.WorldGear.buildVisuals({ THREE, scene, U: V4_U, height: PLAYER_BODY_HEIGHT, getAvatar: function(){ return playerAvatar; } }); }); }catch(e){ console.warn('[gear] visuals failed', e && e.message); } }, 1000); })();
 // ── FARM PATCH (world-farm3d.js): six beds in the SW, growth visible, tap-to-tend button when near ──
 (function bootFarm3D(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildFarm3D || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  window.__farm3d = window.buildFarm3D({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.farm3d = window.__farm3d; }, 1000); })();
+  _bootT('farm', function(){ window.__farm3d = window.buildFarm3D({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.farm3d = window.__farm3d; }); }, 1000); })();
 // ── RACE RESET KEY (T): put yourself back on the course (+3 s, 4 s cooldown). Ignored when a dialogue is open or no race is running. ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) return; try{ if(window.__raceRun && !(window._dialogue && window._dialogue.isOpen && window._dialogue.isOpen())) window.__raceRun.manualReset(); }catch(_){} });
 // ── DRAGON GATE CIRCUIT landmarks (world-race-landmarks.js): torii start gate, lantern posts, cones, faint track ribbon ──
 (function bootRaceLandmarks(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  try{ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace }); D.raceLandmarks = window.__raceLandmarks; }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
+  try{ _bootT('race-landmarks', function(){ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace }); D.raceLandmarks = window.__raceLandmarks; }); }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
 // ── OUTDOOR HIDE (PERF 2026-10-03): interiors sit on a far island but the city kept drawing (~2,000 calls) behind the walls.
 // Inside: hide every top-level owner that is far from the room (named world groups AND the unnamed ones), never lights/cameras/the sky;
 // exit restores exactly what was visible before. Called by world-interiors enter() and by the frame loop on any state change.
@@ -5173,14 +5202,14 @@ addEventListener('keydown', function(e){
 window.__rideBoard = function(styleId){ try{ if(!hover) return false; if(window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if(!hover.isRiding()) hover.toggle(playerAvatar, {}); if(styleId && hover.setStyle){ const ids = (window.HoverboardKit && window.HoverboardKit.STYLES || []).map(function(x){ return x.id; }); hover.setStyle(ids.indexOf(styleId) >= 0 ? styleId : (ids[0] || styleId)); }
     try{ const dye = window.ShdInv && window.ShdInv.perk('dye'); if(dye && hover.setPalette){ const c = parseInt(String(dye).replace('#',''), 16); hover.setPalette({ deck: c, trim: 0xffffff, accent: c, glow: c }); } }catch(_){} return hover.isRiding(); }catch(e){ return false; } };
 (function bootJam(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } if(!window.buildSkateJam || typeof hover === 'undefined' || !hover || !window.__loadPlayable) return; clearInterval(iv);
-  window.__skateJam = window.buildSkateJam({ hover, playerPos, toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); window.__w3dDebug.skateJam = window.__skateJam; }, 1000); })();
+  _bootT('skate-jam', function(){ window.__skateJam = window.buildSkateJam({ hover, playerPos, toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); window.__w3dDebug.skateJam = window.__skateJam; }); }, 1000); })();
 // ── CHALLENGE RACES (world-race-challenge.js): I > Races. Rival speed follows YOUR ride; wagers are Sparks (closed loop, 5% burn) ──
 (function bootChallenge(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.buildRaceChallenge || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  window.__raceChallenge = window.buildRaceChallenge({ THREE, scene, heightAt: H.heightAt, playerPos,
+  _bootT('race-challenge', function(){ window.__raceChallenge = window.buildRaceChallenge({ THREE, scene, heightAt: H.heightAt, playerPos,
     getRider: function(){ const M = window.__mountRide; if(M && M.isRiding()){ const st = M.state(); return { id: st.id || 'bull', kind: st.flying ? 'fly' : 'ground' }; } if(typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding()) return { id: 'board', kind: 'board' }; return { id: 'foot', kind: 'foot' }; },
     spend: function(a, k, i){ return window.ShdSparks ? window.ShdSparks.spend(a, k, i) : false; }, add: function(a, k, i){ if(window.ShdSparks) window.ShdSparks.add(a, k, i); },
-    toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } });
+    toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); });
 }, 1000); })();
 // ── TRAVEL (M panel > Travel): jump to the maglev / hoverskate park / Colosseum / Grid centre so every area can be tested quickly ──
 window.__travel = {
@@ -5324,7 +5353,7 @@ function animate(){
       if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
   if((window.__staticMergeN || 0) < (/[?&]merge3=1/.test(location.search) ? 3 : 1) && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
     if(window.__mergeArm == null) window.__mergeArm = performance.now();
-    else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _staticMerge();
+    else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _bootT('static-merge', _staticMerge);
   }
   _updateGovernor(dt);   // FPS governor: auto-adjusts pixelRatio/bloom/cullR every frame (cheap EMA)
   // SKY-DIVE SPAWN: drives portal markers + the sky/descent camera. While animating it OWNS the camera.
