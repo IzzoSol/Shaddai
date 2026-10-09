@@ -848,10 +848,22 @@ window.__worldBuilt = false;
             if(!window.__worldBuilt) return false;
             if(!document.body.classList.contains('in-world')) return false;
             if(!worldSpawn) return true;   // no sky-dive system on this build — in-world is enough
-            return window.__spawnBusy === false && !!window.__spawnEverBusy;
+            if(window.__spawnBusy !== false){ window.__gotoIdleAt = 0; return false; }
+            if(window.__spawnEverBusy) return true;
+            // GOTO FIX 2026-10-09: a run that never sky-dives (intro skipped, headless, deep link) never sets __spawnEverBusy, so
+            // goto waited forever. Same fallback the loader's landed check uses: spawn idle + in-world for 4 s straight.
+            if(!window.__gotoIdleAt) window.__gotoIdleAt = performance.now();
+            return performance.now() - window.__gotoIdleAt > 4000;
           },
           onDone: function(found){   // face the marker the same instant the player arrives (snap, like fast travel)
             if(found && window.__worldGoto && window.__worldGoto.approach) { _look.yaw = _look.tYaw = window.__worldGoto.approach.bearing; }
+            if(!found) return;
+            // PLAZA_SKATE lands at the park GATE (the raw marker sits inside the deck apron); then hold x/z for ~1 s so the park's
+            // late setHeightExtra / spawn settling can't drag the player back
+            const T = window.__worldGoto.target, P = window.__hoverPark, name = (T ? String(T.name || '') + ' ' + String(T.dashboard_id || '') : '') + ' ' + location.search;
+            if(/PLAZA_SKATE/i.test(name) && P && P.entrance){ playerPos.x = P.entrance.x; playerPos.z = P.entrance.z; }
+            const hx = playerPos.x, hz = playerPos.z; let k = 0;
+            const hold = setInterval(function(){ if(++k > 10){ clearInterval(hold); return; } playerPos.x = hx; playerPos.z = hz; }, 100);
           }
         });
         window.__worldGoto.resolve();
