@@ -160,10 +160,15 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
         if (pushed && window.buildWorldCollision && window.WORLD_LAYOUT) window.buildWorldCollision(window.WORLD_LAYOUT);   // full rebuild — skip when nothing new
         console.info(TAG + st.items + ' pieces · ' + st.types + ' model types · ' + st.cells + ' cells · ' + st.meshes + ' chunk meshes · ' + Math.round(CELL / U) + ' m cells · ' + pushed + ' colliders (LOD: full < ' + Math.round(NEAR / U) + ' m, lod1 < ' + Math.round(FAR / U) + ' m' + (WANT2 ? ', lod2 < ' + Math.round(HIDE / U) + ' m' : '') + ')' + (st.failed.length ? ' · failed ' + st.failed.join(',') : '') + (st.noLod2.length ? ' · no lod2: ' + st.noLod2.join(',') : ''));
         var acc = 1, lastYaw = 9, lastX = 1e9, lastZ = 1e9;
+        // FRUSTUM CULL (FPS S1, 2026-10-09): cells outside the view no longer draw (before, only cells clearly BEHIND the camera were
+        // skipped, so whole side cells of fabric - ~1.3M tris - drew off-screen). Tall sphere per cell (towers reach ~320 m) and a 1.6x
+        // radius margin so cells coming into view on a turn are already on; near cells always stay. ?fcull=0 = old behaviour.
+        var FCULL = !(typeof location !== 'undefined' && /[?&]fcull=0\b/.test(location.search)), _frus = new THREE.Frustum(), _fm = new THREE.Matrix4(), _sph = new THREE.Sphere(new THREE.Vector3(), 1);
+        var CELL_R = Math.hypot(CELL * 0.75, 170 * U) * 1.6;
         return {
           group: group,
           update: function (t, dt, cam) {       // re-pick LODs 4×/s — cells are 1 km, so that's plenty
-            acc += dt || 0; if (acc < 0.25 || !cam) return; acc = 0; st.near = st.mid = st.far = st.hidden = 0;
+            acc += dt || 0; if (acc < (FCULL ? 0.15 : 0.25) || !cam) return; acc = 0; st.near = st.mid = st.far = st.hidden = 0; st.frustumHidden = 0;
             // QUALITY-GOVERNOR LOD: scale the tier bands by the FPS governor's quality tier — a weak GPU
             // tightens the bands (less full-detail inventory, fewer cells → fewer draw calls), a fast machine
             // keeps the full preset distances. Content never changes: same models, same cells, only which
@@ -177,6 +182,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
             nF = Math.min(nF, Math.max(fogD, nN * 1.1)); nH = Math.min(nH, Math.max(fogD, nF)); st.fogCutoffM = isFinite(fogD) ? Math.round(fogD / U) : null;
             var dirty = false, cx = cam.x, cz = cam.z, fx = 0, fz = 0, camObj = window.__w3dDebug && window.__w3dDebug.camera;
             if (camObj) { var me = camObj.matrixWorld.elements; fx = -me[8]; fz = -me[10]; var fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl; }
+            var useF = FCULL && camObj; if (useF) { camObj.updateMatrixWorld(); _fm.multiplyMatrices(camObj.projectionMatrix, camObj.matrixWorldInverse); _frus.setFromProjectionMatrix(_fm); _sph.radius = CELL_R; }
             var yawNow = Math.atan2(fx, fz), turned = Math.abs(Math.atan2(Math.sin(yawNow - lastYaw), Math.cos(yawNow - lastYaw))) > 0.26 || Math.hypot(cx - lastX, cz - lastZ) > 40 * U;   // >15 deg or 40 m
             Object.keys(cells).forEach(function (ck) {
               var c = cells[ck], dx = c.centre.x - cx, dz = c.centre.z - cz, d = Math.hypot(dx, dz) - CELL * 0.7;
@@ -191,6 +197,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
               // cells clearly BEHIND the camera are skipped (a cheap stand-in for per-chunk frustum culling); nearby cells always stay in
               var back = d > CELL * 1.5 && camObj && (dx * fx + dz * fz) < -0.35 * Math.hypot(dx, dz);
               if (back) s = 3;
+              else if (useF && s < 3 && d > CELL * 0.5) { _sph.center.set(c.centre.x, 85 * U, c.centre.z); if (!_frus.intersectsSphere(_sph)) { s = 3; st.frustumHidden++; } }
               if (s === 0) st.near++; else if (s === 1) st.mid++; else if (s === 2) st.far++; else st.hidden++;
               if (s !== c.state) { c.state = s; dirty = true; }
             });
