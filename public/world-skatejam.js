@@ -9,15 +9,19 @@
  * Scoring (every number is provisional - TUNE is the single knob table):
  *   each CLEAN landing (hover.onTrick 'summary') scores its trick score x COMBO multiplier; consecutive clean tricks within COMBO_WINDOW keep the chain
  *   (mult = 1 + 0.5 per chain link, max 6); a BAIL resets the chain and costs BAIL_PENALTY. First clean landing in each park room = ROOM_BONUS; all rooms = LINE_BONUS.
- * Payout (closed-loop Sparks, no cash-out): stake is spent at start; reach a tier target to win stake x tier multiplier. Daily payout cap protects the economy (print < sinks).
+ * Payout - CLOSED LOOP, NO MINTING (fixed 2026-10-09; the old rule paid stake x up to 6 from nothing). There is no house pool, so a run can never
+ * return more than it staked: the stake is escrowed at start; reach any tier (BRONZE+) and the stake is REFUNDED in full; miss every tier and
+ * LOSS_FEE (5%) is burned and the rest returned (WorldEconomy.settle - pure math, conserves exactly: payout + burn === stake).
+ * Tiers now reward points/leaderboard rank, not Sparks. Daily cap (dailyCap = 600) limits Sparks WAGERED per day; free runs (stake 0) are unlimited.
+ * A future bonus may only be paid out of a real burn-funded pool; do not add a multiplier without one.
  * Effects: coloured screen pulse per trick kind (spin cyan / flip magenta / varial gold / grab green), floating trick feed, combo bar, speed lines above ~16 m/s, stamina bar while flying.
  * Hook for real leaderboards: LB entries {score, tier, ts} (localStorage now; POST /api/skate/score later).
  */
 (function (root) {
   'use strict';
   var U = 7 / 1.8;
-  var TUNE = { duration: 90, comboWindow: 4.0, comboStep: 0.5, comboMax: 6, bailPenalty: 40, roomBonus: 80, lineBonus: 600, speedLinesMS: 16, dailyCap: 600,
-    tiers: [{ name: 'BRONZE', score: 500, mult: 1.5 }, { name: 'SILVER', score: 1400, mult: 3 }, { name: 'GOLD', score: 2800, mult: 6 }], stakes: [30, 100, 300] };
+  var TUNE = { duration: 90, comboWindow: 4.0, comboStep: 0.5, comboMax: 6, bailPenalty: 40, roomBonus: 80, lineBonus: 600, speedLinesMS: 16, dailyCap: 600, lossFee: 0.05,
+    tiers: [{ name: 'BRONZE', score: 500 }, { name: 'SILVER', score: 1400 }, { name: 'GOLD', score: 2800 }], stakes: [30, 100, 300] };
   var KIND_COL = { spin: '#27e0ff', flip: '#ff3ea5', varial: '#e8c45c', grab: '#34e5b0', combo: '#ffffff', bail: '#ff5a6e' };
   var LBKEY = 'shd_jam_lb_v1', CAPKEY = 'shd_jam_cap_v1';
   function today() { return new Date().toISOString().slice(0, 10); }
@@ -34,6 +38,12 @@
     function bal() { return o.balance ? o.balance() : (root.ShdSparks ? root.ShdSparks.get() : 0); }
     function spend(n) { return o.spend ? o.spend(n, 'skate-jam', 'entry') : (root.ShdSparks ? root.ShdSparks.spend(n, 'skate-jam', 'entry') : false); }
     function add(n, why) { if (o.add) o.add(n, 'skate-win', why); else if (root.ShdSparks) root.ShdSparks.add(n, 'skate-win', why); }
+    // closed-loop settlement: WorldEconomy.settle when loaded, identical inline math otherwise
+    function settleRun(stake, won) {
+      var fee = won ? 0 : TUNE.lossFee;
+      if (root.WorldEconomy) { var r = root.WorldEconomy.settle({ stakes: [stake], shares: [1], feePct: fee }); return { payout: r.payouts[0] || 0, burn: r.burn }; }
+      var burn = Math.floor(stake * Math.round(fee * 10000) / 10000); return { payout: stake - burn, burn: burn };
+    }
     function riding() { return !!(hover && hover.isRiding && hover.isRiding()); }
 
     // ---------- DOM ----------
@@ -72,19 +82,22 @@
     function start(cfg) {
       if (S.phase === 'run' || S.phase === 'count') return { ok: false, why: 'a run is already going' };
       if (!riding()) return { ok: false, why: 'ride your hoverboard first (I > Boards > Ride)' };
-      var stake = Math.max(0, Math.round((cfg && cfg.stake) || 30)); if (stake && bal() < stake) return { ok: false, why: 'not enough Sparks (' + stake + ')' };
+      var stake = Math.max(0, Math.round(cfg && cfg.stake != null && isFinite(cfg.stake) ? cfg.stake : 30));   // stake 0 = free run (was `|| 30`, which charged free runs 30)
+      if (stake && bal() < stake) return { ok: false, why: 'not enough Sparks (' + stake + ')' };
+      if (stake) { var cp = capLoad(); if (cp.t + stake > TUNE.dailyCap) return { ok: false, why: 'daily wager cap reached (' + cp.t + '/' + TUNE.dailyCap + ') - try a free run' }; }
       if (stake && !spend(stake)) return { ok: false, why: 'wager refused' };
+      if (stake) { var cw = capLoad(); cw.t += stake; capSave(cw); }
       S.stake = stake; S.score = 0; S.chain = 0; S.mult = 1; S.tricks = 0; S.bails = 0; S.rooms = {}; S.lineDone = 0; S.timeLeft = TUNE.duration; S.phase = 'count'; S.cd = 3; ensureDom(); close();
       toast('SKATE JAM  -  ' + (stake ? stake + ' Sparks wagered' : 'free run') + '. Land clean tricks to build a combo!'); return { ok: true };
     }
     function finish() {
       S.phase = 'done'; var tier = null; TUNE.tiers.forEach(function (t) { if (S.score >= t.score) tier = t; });
-      var payout = 0; if (tier && S.stake) { payout = Math.round(S.stake * tier.mult); var cap = capLoad(), room = Math.max(0, TUNE.dailyCap - cap.t); if (payout > room) payout = room; cap.t += payout; capSave(cap); if (payout > 0) add(payout, tier.name); }
+      var payout = 0, burned = 0; if (S.stake) { var st = settleRun(S.stake, !!tier); payout = st.payout; burned = st.burn; if (payout > 0) add(payout, tier ? 'refund ' + tier.name : 'refund minus fee'); S.stake = 0; }
       var lb = lbLoad(); lb.push({ score: S.score, tier: tier ? tier.name : '-', ts: Date.now() }); lb.sort(function (a, b) { return b.score - a.score; }); lbSave(lb); S.best = lb[0] ? lb[0].score : S.score;
-      pulse(tier ? '#e8c45c' : '#8fa3b8'); toast('SKATE JAM over - ' + S.score + ' pts' + (tier ? ' - ' + tier.name + (payout ? '  +' + payout + ' Sparks' : '  (daily cap reached)') : ' - no tier'));
+      pulse(tier ? '#e8c45c' : '#8fa3b8'); toast('SKATE JAM over - ' + S.score + ' pts' + (tier ? ' - ' + tier.name : ' - no tier') + (payout || burned ? '  (stake back: ' + payout + (burned ? ', ' + burned + ' burned' : '') + ')' : ''));
       setTimeout(function () { if (S.phase === 'done') { S.phase = 'idle'; draw(); } }, 7000);
     }
-    function stop() { if (S.phase === 'count' && S.stake) { add(S.stake, 'cancelled'); } S.phase = 'idle'; draw(); }
+    function stop() { if (S.phase === 'count' && S.stake) { add(S.stake, 'cancelled'); S.stake = 0; } S.phase = 'idle'; draw(); }
     function draw() {
       ensureDom(); if (S.phase === 'idle') { el.style.display = 'none'; return; } el.style.display = 'block';
       var nextT = null; TUNE.tiers.forEach(function (t) { if (!nextT && S.score < t.score) nextT = t; });
@@ -116,9 +129,9 @@
       panel.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9500;width:min(92vw,420px);padding:16px;border-radius:14px;background:linear-gradient(180deg,rgba(14,20,34,.97),rgba(5,8,15,.98));border:1px solid rgba(232,196,92,.5);color:#e9f4ee;font:600 13px "Chakra Petch",Rajdhani,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.65)';
       panel.innerHTML = '<div style="display:flex;justify-content:space-between;color:#e8c45c;font-size:16px;letter-spacing:.12em"><span>SKATE JAM</span><span data-act="x" style="cursor:pointer">&#10005;</span></div>' +
         '<div style="opacity:.75;margin:6px 0 8px">90 seconds. Land CLEAN tricks (Space hop, then hold Space to fly; in the air: A/D spin, Shift+W/S flips, grab). Chain them within 4 s to build a multiplier. Visit every park room for bonuses.</div>' +
-        '<div style="display:flex;gap:6px;margin-bottom:8px">' + TUNE.tiers.map(function (t) { return '<div style="flex:1;text-align:center;padding:6px;border:1px solid rgba(232,196,92,.35);border-radius:8px"><b style="color:#e8c45c">' + t.name + '</b><br>' + t.score + ' pts<br><small>win x' + t.mult + '</small></div>'; }).join('') + '</div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:8px">' + TUNE.tiers.map(function (t) { return '<div style="flex:1;text-align:center;padding:6px;border:1px solid rgba(232,196,92,.35);border-radius:8px"><b style="color:#e8c45c">' + t.name + '</b><br>' + t.score + ' pts<br><small>stake back</small></div>'; }).join('') + '</div>' +
         '<div style="margin-bottom:8px">Wager: ' + TUNE.stakes.map(function (s) { return '<button data-act="go" data-s="' + s + '" style="margin:0 6px 0 0;padding:7px 12px;border-radius:8px;cursor:pointer;background:linear-gradient(180deg,rgba(0,255,156,.3),rgba(0,120,80,.4));border:1px solid #00ff9c;border-bottom-width:3px;color:#eafff6;font:700 13px inherit">' + s + '&#9889;</button>'; }).join('') + '<button data-act="go" data-s="0" style="padding:7px 12px;border-radius:8px;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.3);color:#cfe;font:700 13px inherit">Free run</button></div>' +
-        '<div style="opacity:.7;font-size:12px">Your ride: <b style="color:' + (riding() ? '#00ff9c' : '#ff5a6e') + '">' + (riding() ? 'hoverboard ready' : 'NOT on a hoverboard (I &gt; Boards &gt; Ride)') + '</b> &middot; payout cap today ' + cap.t + '/' + TUNE.dailyCap + ' Sparks</div>' +
+        '<div style="opacity:.7;font-size:12px">Your ride: <b style="color:' + (riding() ? '#00ff9c' : '#ff5a6e') + '">' + (riding() ? 'hoverboard ready' : 'NOT on a hoverboard (I &gt; Boards &gt; Ride)') + '</b> &middot; wagered today ' + cap.t + '/' + TUNE.dailyCap + ' Sparks &middot; reach BRONZE to get your stake back, miss it and 5% burns</div>' +
         '<div style="margin-top:8px;color:#e8c45c;letter-spacing:.1em">LEADERBOARD</div>' + (lb.length ? lb.slice(0, 5).map(function (e, i) { return '<div style="display:flex;justify-content:space-between;opacity:.9"><span>' + (i + 1) + '. ' + e.score + ' pts</span><span style="opacity:.7">' + e.tier + '</span></div>'; }).join('') : '<div style="opacity:.6">no runs yet</div>');
       document.body.appendChild(panel);
       panel.addEventListener('click', function (e) { var t = e.target.closest('[data-act]'); if (!t) return; if (t.getAttribute('data-act') === 'x') close(); else { var r = start({ stake: +t.getAttribute('data-s') }); if (!r.ok) toast(r.why); } });
