@@ -33,6 +33,8 @@
   root.buildSkateJam = function (o) {
     var hover = o.hover, P = o.playerPos, park = function () { return root.__hoverPark || o.park || null; };
     var S = { phase: 'idle', score: 0, chain: 0, chainT: 0, mult: 1, timeLeft: 0, tricks: 0, bails: 0, stake: 0, rooms: {}, best: 0, cd: 0 };
+    var scorer = null;   // WorldTrickScore instance (fresh per run) when the module is loaded; null = inline fallback scoring
+    function newScorer() { scorer = root.WorldTrickScore ? root.WorldTrickScore.create({ tune: { window: TUNE.comboWindow, step: TUNE.comboStep, max: TUNE.comboMax } }) : null; }
     var el = null, feed = null, flashEl = null, speedEl = null, panel = null, stBar = null;
     function toast(m) { if (o.toast) o.toast(m); else if (root.Navi && root.Navi.toast) root.Navi.toast(m); }
     function bal() { return o.balance ? o.balance() : (root.ShdSparks ? root.ShdSparks.get() : 0); }
@@ -67,14 +69,23 @@
       if (S.phase !== 'run' || !e) return;
       if (e.kind === 'summary') {
         if (e.clean) {
-          S.chain++; S.chainT = TUNE.comboWindow; S.mult = Math.min(TUNE.comboMax, 1 + TUNE.comboStep * (S.chain - 1));
-          var pts = Math.round((e.score || 0) * S.mult); S.score += pts; S.tricks++; pulse(KIND_COL[S.lastKind] || '#27e0ff');
+          var pts;
+          if (scorer) {   // delegated: WorldTrickScore owns chain/mult/variety/repeat (falls back to inline math when the module isn't loaded)
+            var b0 = scorer.state().banked;
+            scorer.event({ kind: 'trick', sub: S.lastKind, name: S.lastName || 'combo', base: e.score || 0, clean: true }, S.clock);
+            scorer.event({ kind: 'land', clean: true }, S.clock);
+            var ss = scorer.state(); pts = ss.banked - b0; S.chain = ss.chain; S.mult = ss.mult; S.chainT = TUNE.comboWindow; S.score += pts;
+          } else {
+            S.chain++; S.chainT = TUNE.comboWindow; S.mult = Math.min(TUNE.comboMax, 1 + TUNE.comboStep * (S.chain - 1));
+            pts = Math.round((e.score || 0) * S.mult); S.score += pts;
+          }
+          S.tricks++; pulse(KIND_COL[S.lastKind] || '#27e0ff');
           pop('+' + pts + (S.mult > 1 ? '   x' + S.mult.toFixed(1) : ''), S.mult >= 3 ? '#e8c45c' : '#27e0ff', S.mult >= 3); if (S.mult >= 3 && S.chain % 3 === 0 && root.WorldCopy) pop(root.WorldCopy.pick('toasts.jam_combo'), '#9fb0cf', false);
           // park room bonus (first clean landing inside each room)
           var pk = park(); if (pk && pk.rooms) pk.rooms.forEach(function (r) { if (S.rooms[r.id]) return; if (Math.hypot(P.x - r.x, P.z - r.z) < (r.r || 40 * U) * 1.1) { S.rooms[r.id] = 1; S.score += TUNE.roomBonus; pop('ROOM CLEARED  +' + TUNE.roomBonus, '#34e5b0', false); } });
           if (pk && pk.rooms && pk.rooms.length && Object.keys(S.rooms).length >= pk.rooms.length && !S.lineDone) { S.lineDone = 1; S.score += TUNE.lineBonus; pop('FULL PARK LINE  +' + TUNE.lineBonus, '#ffffff', true); pulse('#ffffff'); }
-        } else { S.bails++; S.chain = 0; S.mult = 1; S.chainT = 0; S.score = Math.max(0, S.score - TUNE.bailPenalty); pop('BAIL  -' + TUNE.bailPenalty + (root.WorldCopy ? '  \u2014 ' + root.WorldCopy.pick('toasts.jam_bail') : ''), KIND_COL.bail, false); pulse('#ff5a6e'); }
-      } else if (e.kind && e.name && e.kind !== 'summary') { S.lastKind = e.kind; if (KIND_COL[e.kind]) pulse(KIND_COL[e.kind]); pop(String(e.name).toUpperCase() + (e.deg ? '  ' + Math.round(e.deg) + '°' : ''), KIND_COL[e.kind] || '#fff', false); }
+        } else { if (scorer) scorer.event({ kind: 'bail' }, S.clock); S.bails++; S.chain = 0; S.mult = 1; S.chainT = 0; S.score = Math.max(0, S.score - TUNE.bailPenalty); pop('BAIL  -' + TUNE.bailPenalty + (root.WorldCopy ? '  \u2014 ' + root.WorldCopy.pick('toasts.jam_bail') : ''), KIND_COL.bail, false); pulse('#ff5a6e'); }
+      } else if (e.kind && e.name && e.kind !== 'summary') { S.lastKind = e.kind; S.lastName = String(e.name); if (KIND_COL[e.kind]) pulse(KIND_COL[e.kind]); pop(String(e.name).toUpperCase() + (e.deg ? '  ' + Math.round(e.deg) + '°' : ''), KIND_COL[e.kind] || '#fff', false); }
     }
     if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('shaddai:trick', function (ev) { onTrick(ev.detail); });
 
@@ -87,7 +98,7 @@
       if (stake) { var cp = capLoad(); if (cp.t + stake > TUNE.dailyCap) return { ok: false, why: 'daily wager cap reached (' + cp.t + '/' + TUNE.dailyCap + ') - try a free run' }; }
       if (stake && !spend(stake)) return { ok: false, why: 'wager refused' };
       if (stake) { var cw = capLoad(); cw.t += stake; capSave(cw); }
-      S.stake = stake; S.score = 0; S.chain = 0; S.mult = 1; S.tricks = 0; S.bails = 0; S.rooms = {}; S.lineDone = 0; S.timeLeft = TUNE.duration; S.phase = 'count'; S.cd = 3; ensureDom(); close();
+      S.stake = stake; S.score = 0; S.chain = 0; S.mult = 1; S.tricks = 0; S.bails = 0; S.rooms = {}; S.lineDone = 0; S.clock = 0; S.lastName = ''; S.lastKind = ''; newScorer(); S.timeLeft = TUNE.duration; S.phase = 'count'; S.cd = 3; ensureDom(); close();
       toast('SKATE JAM  -  ' + (stake ? stake + ' Sparks wagered' : 'free run') + '. Land clean tricks to build a combo!'); return { ok: true };
     }
     function finish() {
@@ -106,7 +117,12 @@
       el.innerHTML = '<div style="display:flex;justify-content:space-between;font-size:12px;letter-spacing:.14em;color:#8fa3b8"><span>' + (S.phase === 'done' ? 'FINAL' : 'TIME ' + Math.ceil(S.timeLeft) + 's') + '</span><span>' + S.tricks + ' tricks &middot; ' + S.bails + ' bails</span></div>' +
         '<div style="font-size:30px;font-weight:700;color:#e8c45c;letter-spacing:.06em">' + S.score + '</div>' +
         '<div style="height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:2px 0 4px"><i style="display:block;height:100%;width:' + barW + '%;background:linear-gradient(90deg,#ff3ea5,#e8c45c)"></i></div>' +
-        '<div style="font-size:12px;color:#9fb0cf">' + (S.mult > 1 ? '<b style="color:#e8c45c">x' + S.mult.toFixed(1) + ' COMBO</b> &middot; ' : '') + (nextT ? 'next: ' + nextT.name + ' ' + nextT.score : '<b style="color:#00ff9c">GOLD CLEARED</b>') + '</div>';
+        '<div style="font-size:12px;color:#9fb0cf">' + (S.mult > 1 ? '<b style="color:#e8c45c">x' + S.mult.toFixed(1) + ' COMBO</b> &middot; ' : '') + (nextT ? 'next: ' + nextT.name + ' ' + nextT.score : '<b style="color:#00ff9c">GOLD CLEARED</b>') + '</div>' +
+        (scorer ? scoreLine() : '');
+    }
+    function scoreLine() {   // banked vs pending, multiplier, last-3 feed (reads WorldTrickScore's reused state object)
+      var s = scorer.state(), f = s.feed;
+      return '<div style="font-size:11px;color:#8fa3b8">banked ' + s.banked + ' &middot; pending ' + s.pending + ' &middot; x' + s.mult.toFixed(1) + (f[2] ? ' &middot; ' + f[0] + ' ' + f[1] + ' ' + f[2] : '') + '</div>';
     }
     function update(dt) {
       ensureDom();
@@ -115,7 +131,8 @@
       if (r && (hover.isFlying && (hover.isFlying() || hover.isAirborne()))) { stBar.style.display = 'block'; stBar.firstChild.style.width = Math.round((hover.stamina ? hover.stamina() : 1) * 100) + '%'; } else stBar.style.display = 'none';
       if (S.phase === 'count') { S.cd -= dt; if (S.cd <= 0) { S.phase = 'run'; pop('GO!', '#00ff9c', true); } draw(); return; }
       if (S.phase !== 'run') return;
-      S.timeLeft -= dt; if (S.chainT > 0) { S.chainT -= dt; if (S.chainT <= 0) { S.chain = 0; S.mult = 1; } }
+      S.timeLeft -= dt; S.clock += dt; if (scorer) scorer.tick(S.clock);
+      if (S.chainT > 0) { S.chainT -= dt; if (S.chainT <= 0) { S.chain = 0; S.mult = 1; } }
       if (!r) { S.offT = (S.offT || 0) + dt; if (S.offT > 6) { pop('OFF THE BOARD', KIND_COL.bail, false); S.timeLeft = 0; } } else S.offT = 0;
       if (S.timeLeft <= 0) { S.timeLeft = 0; finish(); }
       draw();

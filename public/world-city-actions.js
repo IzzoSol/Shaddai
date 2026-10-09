@@ -628,7 +628,71 @@
       });
     };
 
+    // ?shops=1 (or opts.shops): real store menu from world-shops.js. Closed-loop SPARKS: buy = sink, sell = 40% refund.
+    function shopsOn() {
+      if (opts.shops != null) return !!opts.shops;
+      try { return /[?&]shops=1(&|$)/.test(String((win.location && win.location.search) || '')); } catch (e) { return false; }
+    }
+    var shopCache = {};
+    function renderShop(ctx, type) {
+      var WS = win.WorldShops, m = ctx.marker, tab = 'buy', armed = null;
+      var shop = shopCache[m.name] || (shopCache[m.name] = WS.create({ key: m.name, type: type, seed: m.name }));
+      function refresh() {
+        if (!ctx.alive()) return;
+        clear(ctx.body);
+        var bal = add(ctx.body, el('div', 'ca-balance', shop.balance() + ' SPARKS'));
+        bal.setAttribute('data-shop-balance', '1');
+        add(ctx.body, el('div', 'ca-sub', 'Your SPARKS balance · ' + prettyId(type)));
+        if (shop.isBank()) { add(ctx.body, el('p', 'ca-sub', 'The ledger desk. Read-only: SPARKS stay in the city and are only spent here.')); return; }
+        var tabs = add(ctx.body, el('div', 'ca-row'));
+        add(tabs, btn('Buy', tab === 'buy' ? 'gold' : 'ghost', function () { tab = 'buy'; armed = null; refresh(); }, 'tab:buy'));
+        add(tabs, btn('Sell', tab === 'sell' ? 'gold' : 'ghost', function () { tab = 'sell'; armed = null; refresh(); }, 'tab:sell'));
+        var list = add(ctx.body, el('div'));
+        if (tab === 'buy') {
+          shop.stock().forEach(function (it) {
+            var row = add(list, el('div', 'ca-row'));
+            var g = add(row, el('div', 'ca-grow'));
+            add(g, el('div', null, it.name));
+            add(g, el('div', 'ca-sub', it.desc + ' · ' + it.qty + ' left'));
+            add(row, priceSpan(it.price, 'SPARKS'));
+            var can = it.qty > 0 && shop.balance() >= it.price;
+            var b = add(row, btn(armed === it.id ? 'Confirm' : 'Buy', armed === it.id ? 'gold' : null, function () {
+              if (armed !== it.id) { armed = it.id; say('Check the price, then confirm.', 'info'); refresh(); return; }
+              armed = null;
+              var r = shop.buy(it.id);
+              say(r.msg, r.ok ? 'ok' : 'err');
+              if (r.ok) ping({ type: 'sparks:sink', sparks: -r.price, text: clean('Shop · ' + it.name) });
+              refresh();
+            }, 'buy:' + it.id));
+            if (!can) b.disabled = true;
+          });
+        } else {
+          var own = shop.owned();
+          if (!own.length) add(list, el('p', 'ca-sub', 'Nothing to sell. The shop pays 40% of the price.'));
+          own.forEach(function (o) {
+            var row = add(list, el('div', 'ca-row'));
+            var g = add(row, el('div', 'ca-grow'));
+            add(g, el('div', null, o.name));
+            add(g, el('div', 'ca-sub', 'x' + o.count));
+            add(row, priceSpan(o.refund, 'SPARKS'));
+            add(row, btn('Sell', null, function () {
+              var r = shop.sell(o.id);
+              say(r.msg, r.ok ? 'ok' : 'err');
+              if (r.ok && r.refund > 0) ping({ type: 'sparks:mint', sparks: r.refund, text: 'Shop refund' });
+              refresh();
+            }, 'sell:' + o.id));
+          });
+        }
+      }
+      refresh();
+      return Promise.resolve();
+    }
+
     FAMILIES.bazaar = function (ctx) {
+      if (shopsOn() && win.WorldShops) {
+        var st = win.WorldShops.typeForMarker(ctx.marker);
+        if (st) return renderShop(ctx, st);
+      }
       clear(ctx.body);
       var list = add(ctx.body, el('div'));
       return api('GET', '/api/bazaar/list').then(function (res) {

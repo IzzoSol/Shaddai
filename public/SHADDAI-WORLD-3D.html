@@ -357,7 +357,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-race-select.js?v=20261001a"></script>   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
 <script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
 <script src="/world-crowd.js?v=20261001a"></script>   <!-- ~90 citizens walking the city -->
-<script src="/world-skatejam.js?v=20261001a"></script>   <!-- Skate Jam trick game (I > Races) -->
+<script src="/world-trick-score.js?v=20261009a"></script><script src="/world-shops.js?v=20261009a"></script><script src="/world-skatejam.js?v=20261009a"></script>   <!-- Skate Jam trick game (I > Races) -->
 <script src="/world-race-challenge.js?v=20261001a"></script>   <!-- challenge races + Sparks wagers (I > Races) -->
 <script src="/world-colosseum-vendors.js?v=20260929a"></script>   <!-- concourse vendors: E at any kiosk (snacks, drinks, gear, mounts, cosmetics, wagers) -->
 <script src="/world-colosseum.js?v=20261004b"></script>
@@ -732,7 +732,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('city-actions', function(api){   // MAP v4 CITY ACTIONS (world-city-actions.js): E at a marker → action panel (kiosk, hire, academy, seat, home, race, stalls, plots)
       if(!api || !window.__cityV3) return api;
-      return _loadScript('/world-city-actions.js?v=20260927a').then(function(){
+      return _loadScript('/world-city-actions.js?v=20261009a').then(function(){
         window.__cityActions = window.buildCityActions({
           city: window.__cityV3,
           // apiBase: 'https://<api-host>',   // only if the world is not served by the API server itself
