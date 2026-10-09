@@ -110,7 +110,16 @@
       var p = s[i], q = s[(i + 1) % n], tx = q.x - p.x, tz = q.z - p.z, tl = Math.hypot(tx, tz) || 1, sx = tz / tl, sz = -tx / tl;
       gr[i] = Math.max(groundAt(p.x, p.z), groundAt(p.x + sx * HW, p.z + sz * HW), groundAt(p.x - sx * HW, p.z - sz * HW));
     }
+    // FLYOVERS: where the circuit crosses itself (figure-8) the later strand climbs over the earlier one on a ramped bridge,
+    // otherwise each strand's barriers would cut across the other road. Lift = clearance under the bridge + deck depth.
+    var lift = new Array(n).fill(0), LIFT = (o.flyoverM || 9.5) * U, RAMP = Math.round(150 * U / STEP), near2 = Math.pow(2.2 * (HW + KERB + 0.4 * U), 2), seen = {};
+    for (i = 0; i < n; i++) for (k = i + Math.round(60 * U / STEP); k < n; k++) {
+      var di = Math.min(k - i, n - (k - i)); if (di < Math.round(60 * U / STEP)) continue;
+      var ddx = s[i].x - s[k].x, ddz = s[i].z - s[k].z; if (ddx * ddx + ddz * ddz > near2 || seen[k]) continue;
+      for (var r2 = -RAMP; r2 <= RAMP; r2++) { var jj = (k + r2 + n) % n, w = 0.5 + 0.5 * Math.cos(Math.PI * Math.min(1, Math.abs(r2) / RAMP)); lift[jj] = Math.max(lift[jj], LIFT * Math.min(1, w * 1.6)); seen[jj] = true; }
+    }
     var deck = deckProfile(gr, CLEAR, Math.max(2, Math.round(40 * U / STEP)), 0.06 * STEP);   // bridges dips up to ~80 m, max 6% grade
+    for (i = 0; i < n; i++) deck[i] += lift[i];
     var bank = bankProfile(s, (o.maxBankDeg || 14) * Math.PI / 180, o.bankGain || 9);
 
     // frames: T (tangent), S (side, banked), N (deck normal)
@@ -169,7 +178,9 @@
     }
     // pylons: every 24 m where the deck sits > 2.5 m above ground, centre pier
     var pyl = [];
-    for (i = 0; i < n; i += Math.max(1, Math.round(24 * U / STEP))) { var hgt = F[i].P.y - DT * 1.6 - F[i].g; if (hgt > 2.5 * U) pyl.push({ f: F[i], h: hgt }); }
+    var onRoad2 = Math.pow(HW + KERB + 1.5 * U, 2), sepN = Math.round(60 * U / STEP);
+    function footOnOtherStrand(ci) { for (var j = 0; j < n; j++) { var dj = Math.abs(j - ci); if (Math.min(dj, n - dj) <= sepN) continue; var dx = F[j].P.x - F[ci].P.x, dz = F[j].P.z - F[ci].P.z; if (dx * dx + dz * dz < onRoad2) return true; } return false; }
+    for (i = 0; i < n; i += Math.max(1, Math.round(24 * U / STEP))) { var hgt = F[i].P.y - DT * 1.6 - F[i].g; if (hgt > 2.5 * U && !footOnOtherStrand(i)) pyl.push({ f: F[i], h: hgt }); }   // never a pier on the road below a flyover
     inst(new THREE.CylinderGeometry(0.9 * U, 1.3 * U, 1, 10), underMat, pyl, 'track-pylons', function (it, d) { d.position.set(it.f.P.x, it.f.g + it.h / 2, it.f.P.z); d.rotation.set(0, 0, 0); d.scale.set(1, it.h + 0.5 * U, 1); });
     // gantries: arch over the track every ~220 m (two posts + beam = one merged geometry) + an emissive strip under the beam
     var gEvery = Math.max(8, Math.round(220 * U / STEP)), gan = [];
@@ -189,7 +200,7 @@
     inst(new THREE.PlaneGeometry(6 * U, 2.2 * U).translate(0, 2.0 * U, 0), chevMat, chev, 'track-chevrons', function (it, d) {
       frameTo(it.f, d, 0); d.position.addScaledVector(it.f.S, it.side * (GW + 0.4 * U));
       d.rotateY(Math.PI);                                   // face back down the track, toward the oncoming rider
-      d.scale.x = it.side > 0 ? -1 : 1;                     // arrows point into the turn (outside wall = side)
+      d.scale.x = it.side > 0 ? 1 : -1;                     // arrows point into the turn (outside wall = side); flipped after the v1 review shot
     });
     // boost pads: 4 per lap on the straightest stretches
     var straight = []; for (i = 0; i < n; i++) straight.push({ i: i, b: Math.abs(F[i].bank) });

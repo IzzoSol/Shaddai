@@ -80,6 +80,13 @@ const fwd = new THREE.Vector3(), right = new THREE.Vector3(), UP = new THREE.Vec
 
 window.buildWorldTerrainV4({ THREE, scene, camera, base: BASE, G: +qs.get('G') || undefined }).then((t) => {   // ?G=64 = patch-size A/B
   api = t; window.__lab = { api, camera, scene, renderer, THREE };
+  if (qs.get('track')) {   // ?track=dragon-gate : race track on the real terrain (light review, no city)
+    const load = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    Promise.all([load('world-race.js'), load('world-race-track.js'), import('three/addons/utils/BufferGeometryUtils.js')]).then(([, , BGU]) => {
+      window.__lab.track = window.buildRaceTrack({ THREE, scene, groundAt: t.groundAt, WorldRace: window.WorldRace, circuit: qs.get('track'), mergeGeometries: BGU.mergeGeometries });
+      t.addRideExtra(window.__lab.track.surfaceAt);
+    }).catch((e) => { errEl.textContent += 'track: ' + e.message + '\n'; });
+  }
   if (qs.has('wire')) api.material.wireframe = true;
   // sea plane at sea level — lab-only visual so the basin reads as water
   sea = new THREE.Mesh(new THREE.PlaneGeometry(api.half * 2.4, api.half * 2.4), new THREE.MeshStandardMaterial({ color: 0x1f5a7a, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.82 }));

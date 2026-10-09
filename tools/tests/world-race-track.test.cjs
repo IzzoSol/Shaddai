@@ -42,4 +42,8 @@ t('surfaceAt off the track = null', tr.surfaceAt(f0.P.x + 200 * U, f0.P.z + 200 
 t('pylons where the deck crosses the dip', !!tr.group.getObjectByName('track-pylons'));
 t('4 boost pads, boostAt true on one', tr.pads.length === 4 && tr.boostAt(F[tr.pads[0]].P.x, F[tr.pads[0]].P.z));
 t('gantries + chevrons placed', !!tr.group.getObjectByName('track-gantries') && !!tr.group.getObjectByName('track-chevrons'));
+// figure-8 crossing = flyover: where two strands overlap in plan, decks differ by >= 8 m (no barrier across the other road)
+let minSep = Infinity; const n = F.length;
+for (let i = 0; i < n; i++) for (let k = i + 30; k < n; k++) { if (Math.min(k - i, n - (k - i)) < 30) continue; if (Math.hypot(F[i].P.x - F[k].P.x, F[i].P.z - F[k].P.z) < 4 * U) minSep = Math.min(minSep, Math.abs(F[i].P.y - F[k].P.y)); }
+t('figure-8 crossing is a flyover (>= 8 m vertical separation), sep=' + (minSep / U).toFixed(1) + ' m', minSep >= 8 * U);
 console.log(ok + ' passed, ' + bad + ' failed'); process.exit(bad ? 1 : 0);
