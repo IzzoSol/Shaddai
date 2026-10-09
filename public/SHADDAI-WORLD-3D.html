@@ -2108,7 +2108,7 @@ composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.14, 0.4, 0.92); // strength starts at MEDIUM (0.14); FPS governor climbs to 0.28 if machine can handle it
 composer.addPass(bloom);
 // VFX engine: pooled bursts / trails / decals, <= 8 draws, never adds lights (flash hook left empty until it writes into the light pool)
-window.__vfx = _VFX_ON ? window.WorldVFX.create({ THREE, scene, camera, unit: V4_U, getTier: function(){ return (typeof _Q !== 'undefined' && _Q.tiers[_Q.tier]) ? _Q.tiers[_Q.tier].name : 'MEDIUM'; },
+window.__vfx = _VFX_ON ? window.WorldVFX.create({ THREE, scene, camera, unit: V4_U, getTier: function(){ try{ return _Q.tiers[_Q.tier].name; }catch(_){ return 'MEDIUM'; } },   // _Q is declared later (TDZ): `typeof _Q` THROWS there, so try/catch; _applyQualityTier sets the real tier
   getViewHeight: function(){ return renderer.domElement.height; } }) : null;
 // DEVKIT suspects (F9 cycles: one OFF at a time, then all ON) — compare a frozen frame (F8) before touching any uniform
 if(window.__devkit){
