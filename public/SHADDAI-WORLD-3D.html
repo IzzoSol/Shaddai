@@ -5194,10 +5194,18 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 (function bootRaceTrack(){ if(/[?&]track=0\b/.test(location.search)){ window.__raceTrackDone = true; return; } let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); window.__raceTrackDone = true; return; } const D = window.__w3dDebug, H = D && D.terrainV4;
   if(!window.buildRaceTrack || !window.WorldRace || !H || !H.groundAt || !window.__loadPlayable) return; clearInterval(iv);
   const m = /[?&]tracks=([\w,-]+)/.exec(location.search), ids = m ? m[1].split(',') : ['dragon-gate'];
-  import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
-    window.__raceTracks = {};
+  // CITY CIRCUITS (S2.2): quarter-loop / grid-ring fly over the towers — deck clears building tops (grid-city-v4.json tiers) by 12 m.
+  // The 2 m height raster takes ~2-4 s to build, so it is only built when a city circuit is requested (TODO: move into a Worker).
+  const needCity = ids.some(function(c){ return c === 'quarter-loop' || c === 'grid-ring'; });
+  const cityH = !needCity ? Promise.resolve(null) : _loadScript('/world-city-heights.js?v=20261009a').then(function(){ return fetch('/assets/world/grid-city-v4.json'); })
+    .then(function(r){ return r.json(); }).then(function(plan){ return _bootT('city-heights', function(){ return window.WorldCityHeights.build({ plan: plan, U: V4_U, cell: 2 }); }); })
+    .catch(function(e){ console.warn('[race-track] city heights off:', e && e.message); return null; });
+  Promise.all([import('three/addons/utils/BufferGeometryUtils.js'), cityH]).then(function(res){ const BGU = res[0], CH = res[1];
+    window.__raceTracks = {}; window.__cityHeights = CH;
     ids.forEach(function(cid){ try{ _bootT('race-track:' + cid, function(){
-      const t = window.buildRaceTrack({ THREE, scene, groundAt: H.groundAt, WorldRace: window.WorldRace, circuit: cid, U: V4_U, mergeGeometries: BGU.mergeGeometries });
+      const city = CH && (cid === 'quarter-loop' || cid === 'grid-ring');
+      const t = window.buildRaceTrack({ THREE, scene, groundAt: H.groundAt, WorldRace: window.WorldRace, circuit: cid, U: V4_U, mergeGeometries: BGU.mergeGeometries,
+        obstacleAt: city ? CH.topAt : undefined, obstacleClearM: 12, maxDeckM: 250 });
       if(t){ window.__raceTracks[cid] = t; H.addRideExtra(t.surfaceAt); }
     }); }catch(e){ console.warn('[race-track] ' + cid + ' failed', e && e.message); } });
     D.raceTracks = window.__raceTracks;

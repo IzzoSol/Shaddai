@@ -118,7 +118,25 @@
       var ddx = s[i].x - s[k].x, ddz = s[i].z - s[k].z; if (ddx * ddx + ddz * ddz > near2 || seen[k]) continue;
       for (var r2 = -RAMP; r2 <= RAMP; r2++) { var jj = (k + r2 + n) % n, w = 0.5 + 0.5 * Math.cos(Math.PI * Math.min(1, Math.abs(r2) / RAMP)); lift[jj] = Math.max(lift[jj], LIFT * Math.min(1, w * 1.6)); seen[jj] = true; }
     }
-    var deck = deckProfile(gr, CLEAR, Math.max(2, Math.round(40 * U / STEP)), 0.06 * STEP);   // bridges dips up to ~80 m, max 6% grade
+    // OBSTACLES (optional o.obstacleAt(x,z) -> top height or -Infinity, e.g. WorldCityHeights.build(..).topAt): the deck must clear
+    // every footprint under its width (centre, edges, mid-lanes, and half a step either side along the track) by o.obstacleClearM.
+    var obstacleAt = o.obstacleAt, deckBase = gr, groundWin = Math.max(2, Math.round(40 * U / STEP)), grade = 0.06;
+    if (typeof obstacleAt === 'function') {
+      var OCL = (o.obstacleClearM == null ? 12 : o.obstacleClearM) * U, RW = HW + KERB, lats = [-RW, -HW, -HW / 2, 0, HW / 2, HW, RW], alongs = [-0.5, 0, 0.5];
+      deckBase = new Array(n);
+      for (i = 0; i < n; i++) {
+        var pp = s[i], qq = s[(i + 1) % n], aa = s[(i + n - 1) % n], ox = qq.x - aa.x, oz = qq.z - aa.z, ol = Math.hypot(ox, oz) || 1, osx = oz / ol, osz = -ox / ol, top = -Infinity;
+        for (var ai = 0; ai < alongs.length; ai++) {
+          var ap = alongs[ai] * STEP, ax = pp.x + ox / ol * ap, az = pp.z + oz / ol * ap;
+          for (k = 0; k < lats.length; k++) { var ot = obstacleAt(ax + osx * lats[k], az + osz * lats[k]); if (ot > top) top = ot; }
+        }
+        deckBase[i] = top > -Infinity ? Math.max(gr[i], top + OCL - CLEAR) : gr[i];
+      }
+      groundWin = Math.max(groundWin, Math.round(80 * U / STEP));   // obstacle ramps are at least 80 m either side
+      grade = o.obstacleGrade || 0.12;
+    }
+    var deck = deckProfile(deckBase, CLEAR, groundWin, grade * STEP);   // bridges dips up to ~80 m, max 6% grade (12% over obstacles)
+    if (deckBase !== gr) { var DCAP = (o.maxDeckM || 250) * U; for (i = 0; i < n; i++) deck[i] = Math.max(gr[i] + CLEAR, Math.min(deck[i], gr[i] + DCAP)); }
     for (i = 0; i < n; i++) deck[i] += lift[i];
     var bank = bankProfile(s, (o.maxBankDeg || 14) * Math.PI / 180, o.bankGain || 9);
 
@@ -180,7 +198,7 @@
     var pyl = [];
     var onRoad2 = Math.pow(HW + KERB + 1.5 * U, 2), sepN = Math.round(60 * U / STEP);
     function footOnOtherStrand(ci) { for (var j = 0; j < n; j++) { var dj = Math.abs(j - ci); if (Math.min(dj, n - dj) <= sepN) continue; var dx = F[j].P.x - F[ci].P.x, dz = F[j].P.z - F[ci].P.z; if (dx * dx + dz * dz < onRoad2) return true; } return false; }
-    for (i = 0; i < n; i += Math.max(1, Math.round(24 * U / STEP))) { var hgt = F[i].P.y - DT * 1.6 - F[i].g; if (hgt > 2.5 * U && !footOnOtherStrand(i)) pyl.push({ f: F[i], h: hgt }); }   // never a pier on the road below a flyover
+    for (i = 0; i < n; i += Math.max(1, Math.round(24 * U / STEP))) { var hgt = F[i].P.y - DT * 1.6 - F[i].g; if (hgt > 2.5 * U && !footOnOtherStrand(i) && !(o.obstacleAt && o.obstacleAt(F[i].P.x, F[i].P.z) > F[i].g + 1 * U)) pyl.push({ f: F[i], h: hgt }); }   // never a pier on the road below a flyover
     inst(new THREE.CylinderGeometry(0.9 * U, 1.3 * U, 1, 10), underMat, pyl, 'track-pylons', function (it, d) { d.position.set(it.f.P.x, it.f.g + it.h / 2, it.f.P.z); d.rotation.set(0, 0, 0); d.scale.set(1, it.h + 0.5 * U, 1); });
     // gantries: arch over the track every ~220 m (two posts + beam = one merged geometry) + an emissive strip under the beam
     var gEvery = Math.max(8, Math.round(220 * U / STEP)), gan = [];
