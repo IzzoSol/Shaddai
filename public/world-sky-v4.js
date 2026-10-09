@@ -173,6 +173,7 @@
     '  vDir = position;',
     '  vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
     '  gl_Position = p.xyww;',   // depth = far plane → drawn after the opaque world, early-Z culls covered pixels
+    '  gl_Position.z = p.w * 0.99999;',   // 2026-10-08: exactly z=w rounds past 1.0 on some GPUs (and SwiftShader) → whole dome clipped = black sky at noon
     '}'
   ].join('\n');
 

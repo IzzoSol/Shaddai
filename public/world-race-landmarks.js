@@ -48,8 +48,8 @@
     g.fillStyle = '#f2f4f8'; g.font = '900 54px Orbitron, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('START / FINISH', 256, 66);
     var t = new THREE.CanvasTexture(cv); if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace; return t;
   }
-  function startFinish(THREE, U, withArch) {
-    var g = new THREE.Group(), W = 8 * U; g.name = 'start-finish';
+  function startFinish(THREE, U, withArch, halfM) {
+    var g = new THREE.Group(), W = 2 * (halfM || 4) * U; g.name = 'start-finish';
     var ct = checkerTex(THREE), line = new THREE.Mesh(new THREE.PlaneGeometry(W, 2.4 * U), new THREE.MeshBasicMaterial(ct ? { map: ct, transparent: true, opacity: 0.95, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 } : { color: 0xf2f4f8, transparent: true, opacity: 0.9, depthWrite: false })); line.rotation.x = -Math.PI / 2; line.position.y = 0.42 * U; g.add(line);
     var slot = new THREE.InstancedMesh(new THREE.PlaneGeometry(2.1 * U, 4.2 * U), new THREE.MeshBasicMaterial({ color: 0xf2f4f8, transparent: true, opacity: 0.38, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }), 8), m = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
     for (var r = 0; r < 4; r++) for (var c = 0; c < 2; c++) { m.compose(new THREE.Vector3((c ? 1 : -1) * 2 * U, 0.4 * U, -(4 + r * 7 + (c ? 3 : 0)) * U), q, new THREE.Vector3(1, 1, 1)); slot.setMatrixAt(r * 2 + c, m); }   // staggered like a real grid
@@ -64,19 +64,20 @@
   }
   function buildRaceLandmarks(o) {
     var THREE = o.THREE, WR = o.WorldRace || root.WorldRace, U = o.U || 7 / 1.8, hy = o.heightAt;
+    var HM = o.trackHalfM || 4, POST = o.trackHalfM ? HM + 3.2 : 8;   // 2026-10-08: with the real track (half 7 m + kerb + wall) posts stand outside the barrier
     var pts = WR.trackWorld('dragon-gate', U); if (!pts || pts.length < 4) return null;
     var p0 = pts[0], p1 = pts[1], yaw = Math.atan2(p1.x - p0.x, p1.z - p0.z), grp = new THREE.Group(); grp.name = 'dragon-gate-landmarks';
     var gate = torii(THREE, U); gate.position.set(p0.x, hy(p0.x, p0.z), p0.z); gate.rotation.y = yaw; grp.add(gate);
-    var sfg = startFinish(THREE, U, false); sfg.position.set(p0.x, hy(p0.x, p0.z), p0.z); sfg.rotation.y = yaw; grp.add(sfg);
+    var sfg = startFinish(THREE, U, false, HM); sfg.position.set(p0.x, hy(p0.x, p0.z), p0.z); sfg.rotation.y = yaw; grp.add(sfg);
     ['quarter-loop', 'grid-ring'].forEach(function (cid) { try { var tp = WR.trackWorld(cid, U); if (!tp || tp.length < 4) return; var a = tp[0], b2 = tp[1], y2 = Math.atan2(b2.x - a.x, b2.z - a.z), sg = startFinish(THREE, U, true); sg.position.set(a.x, hy(a.x, a.z), a.z); sg.rotation.y = y2; sg.name = 'start-finish:' + cid; grp.add(sg); } catch (e) { } });
     var sx = Math.cos(yaw), sz = -Math.sin(yaw);   // unit vector across the track
-    for (var k = 1; k <= 6; k++) { var pt = pts[Math.min(pts.length - 1, k * 2)]; [-1, 1].forEach(function (s) { var lp = lanternPost(THREE, U), x = pt.x + sx * s * 8 * U, z = pt.z + sz * s * 8 * U; lp.position.set(x, hy(x, z), z); grp.add(lp); }); }
+    for (var k = 1; k <= 6; k++) { var pt = pts[Math.min(pts.length - 1, k * 2)]; [-1, 1].forEach(function (s) { var lp = lanternPost(THREE, U), x = pt.x + sx * s * POST * U, z = pt.z + sz * s * POST * U; lp.position.set(x, hy(x, z), z); grp.add(lp); }); }
     var cone = new THREE.InstancedMesh(new THREE.ConeGeometry(0.4 * U, 1.1 * U, 7), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5500, emissiveIntensity: 0.25, roughness: 0.6 }), 14), m = new THREE.Matrix4();
     for (var c = 0; c < 14; c++) { var f = (c - 6.5) / 6.5, x2 = p0.x + sx * f * 7.5 * U + Math.sin(yaw) * 4 * U, z2 = p0.z + sz * f * 7.5 * U + Math.cos(yaw) * 4 * U; m.makeTranslation(x2, hy(x2, z2) + 0.55 * U, z2); cone.setMatrixAt(c, m); }
     cone.instanceMatrix.needsUpdate = true; grp.add(cone);
-    var rib = WR.ribbon(THREE, pts.map(function (p) { return { x: p.x, y: hy(p.x, p.z) + 0.3 * U, z: p.z }; }), 8 * U, true); if (rib.material) rib.material.opacity = 0.34; grp.add(rib);
+    if (!o.noRibbon) { var rib = WR.ribbon(THREE, pts.map(function (p) { return { x: p.x, y: hy(p.x, p.z) + 0.3 * U, z: p.z }; }), 8 * U, true); if (rib.material) rib.material.opacity = 0.34; grp.add(rib); }   // noRibbon: world-race-track.js draws the real deck
     /* EDGE LINES: two bright strips along the kerbs so the course reads at night and from far away (track half-width 4 m) */
-    [-1, 1].forEach(function (side) { var ep = pts.map(function (p, i) { var q = pts[(i + 1) % pts.length], o2 = pts[(i + pts.length - 1) % pts.length], dx = q.x - o2.x, dz = q.z - o2.z, L = Math.hypot(dx, dz) || 1, nx = dz / L, nz = -dx / L, x = p.x + nx * side * 4 * U, z = p.z + nz * side * 4 * U; return { x: x, y: hy(x, z) + 0.34 * U, z: z }; });
+    if (!o.noRibbon) [-1, 1].forEach(function (side) { var ep = pts.map(function (p, i) { var q = pts[(i + 1) % pts.length], o2 = pts[(i + pts.length - 1) % pts.length], dx = q.x - o2.x, dz = q.z - o2.z, L = Math.hypot(dx, dz) || 1, nx = dz / L, nz = -dx / L, x = p.x + nx * side * 4 * U, z = p.z + nz * side * 4 * U; return { x: x, y: hy(x, z) + 0.34 * U, z: z }; });
       var e = WR.ribbon(THREE, ep, 0.55 * U, true); if (e.material) { e.material.opacity = 0.9; e.material.blending = THREE.AdditiveBlending; } e.name = 'track-edge'; grp.add(e); });
     o.scene.add(grp);
     if (root.WorldMerge) try { grp.userData.bake = root.WorldMerge.bake(grp, THREE, { name: 'race-landmarks' }); } catch (e) { }   // PERF 2026-10-04: all static (~71 draws of tiny pieces)

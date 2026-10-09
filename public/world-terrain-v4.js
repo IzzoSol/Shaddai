@@ -160,7 +160,16 @@
     // WHY Uint16 not a Float32 copy: 4096² would be 64 MB of floats; the affine HA+HB·v after interpolation is
     // two flops. Clamped at the footprint edge (the world is an island; beyond is the edge sea).
     var EXTRA = { fn: null };   // setHeightExtra(fn): (x,z) -> height or null; the world takes max(terrain, extra). Used by the Hoverskate park (deck, banks, ramps).
+    // RIDE EXTRAS (2026-10-08, race track): surfaces the player/boards stand on but the terrain MESH must not rise to
+    // (an elevated track deck would otherwise pull the ground up into a wall under it). heightAt = mesh height + these;
+    // the patch builder uses meshHeightAt. addRideExtra(fn): fn(x,z) -> height or null.
+    var RIDE = [];
     function heightAt(x, z) {
+      var h = meshHeightAt(x, z);
+      for (var ri = 0; ri < RIDE.length; ri++) { var e = RIDE[ri](x, z); if (e !== null && e > h) h = e; }
+      return h;
+    }
+    function meshHeightAt(x, z) {
       var u = (x + HALF) * INV_CELL, v = (z + HALF) * INV_CELL;
       if (u < 0) u = 0; else if (u > NM1) u = NM1;
       if (v < 0) v = 0; else if (v > NM1) v = NM1;
@@ -308,7 +317,7 @@
     function makeNode(lvl, x0, z0, size) {
       var hmin = Infinity, hmax = -Infinity, S = 8;
       for (var b = 0; b <= S; b++) for (var a = 0; a <= S; a++) {
-        var h = heightAt(x0 + size * a / S, z0 + size * b / S); if (h < hmin) hmin = h; if (h > hmax) hmax = h;
+        var h = meshHeightAt(x0 + size * a / S, z0 + size * b / S); if (h < hmin) hmin = h; if (h > hmax) hmax = h;
       }
       return { lvl: lvl, x0: x0, z0: z0, size: size, cx: x0 + size / 2, cz: z0 + size / 2, hmin: hmin, hmax: hmax, kids: null, mesh: null, usedFrame: 0 };
     }
@@ -323,7 +332,7 @@
     function buildNode(nd) {
       var geo = takeGeo(), P = geo.attributes.position.array, NR = geo.attributes.normal.array, UV = geo.attributes.uv.array, UV1 = geo.attributes.uv1.array;
       var sp = nd.size / G, hmin = Infinity, hmax = -Infinity, inv2 = 1 / (2 * HALF);
-      for (var bj = 0; bj < BW; bj++) for (var bi = 0; bi < BW; bi++) HB_[bj * BW + bi] = heightAt(nd.x0 + (bi - 1) * sp, nd.z0 + (bj - 1) * sp);
+      for (var bj = 0; bj < BW; bj++) for (var bi = 0; bi < BW; bi++) HB_[bj * BW + bi] = meshHeightAt(nd.x0 + (bi - 1) * sp, nd.z0 + (bj - 1) * sp);
       var sp2 = 2 * sp;
       for (var jj = 0; jj < GV; jj++) for (var ii = 0; ii < GV; ii++) {
         var x = nd.x0 + ii * sp, z = nd.z0 + jj * sp, c0 = (jj + 1) * BW + ii + 1, h = HB_[c0], v = jj * GV + ii;
@@ -447,6 +456,9 @@
     var api = {
       ready: false, mesh: group, material: material, meta: meta, seaLevel: SEA_U, half: HALF, source: hm.src,
       heightAt: heightAt, setHeightExtra: function (f) { EXTRA.fn = typeof f === 'function' ? f : null; },
+      meshHeightAt: meshHeightAt,   // ground the terrain mesh shows (no ride extras) — for builders that sit things ON the ground under a deck
+      groundAt: function (x, z) { var u = (x + HALF) * INV_CELL, v = (z + HALF) * INV_CELL; u = u < 0 ? 0 : (u > NM1 ? NM1 : u); v = v < 0 ? 0 : (v > NM1 ? NM1 : v); var i = Math.min(u | 0, NM1 - 1), j = Math.min(v | 0, NM1 - 1), fx = u - i, fy = v - j, k = j * N + i, t = HD[k] + (HD[k + 1] - HD[k]) * fx, b = HD[k + N] + (HD[k + N + 1] - HD[k + N]) * fx; return HA + HB * (t + (b - t) * fy); },   // raw heightmap only
+      addRideExtra: function (f) { if (typeof f === 'function') RIDE.push(f); return function () { var i = RIDE.indexOf(f); if (i >= 0) RIDE.splice(i, 1); }; },
       normalAt: function (x, z, out) { return normalAt(x, z, out); },
       update: update,
       stats: function () { var s = {}; for (var k in stats_) s[k] = stats_[k]; s.lodCounts = JSON.parse(JSON.stringify(stats_.lodCounts)); return s; },

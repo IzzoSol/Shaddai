@@ -78,7 +78,7 @@ let api = null, sea = null, fpsN = 0, fpsT = performance.now(), fps = 0;
 const clock = new THREE.Clock();
 const fwd = new THREE.Vector3(), right = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
 
-window.buildWorldTerrainV4({ THREE, scene, camera, base: BASE }).then((t) => {
+window.buildWorldTerrainV4({ THREE, scene, camera, base: BASE, G: +qs.get('G') || undefined }).then((t) => {   // ?G=64 = patch-size A/B
   api = t; window.__lab = { api, camera, scene, renderer, THREE };
   if (qs.has('wire')) api.material.wireframe = true;
   // sea plane at sea level — lab-only visual so the basin reads as water

@@ -395,7 +395,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
 <script src="/world-race.js?v=20260929b"></script>
-<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261004a"></script>
+<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261004a"></script><script src="/world-race-track.js?v=20261008a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261004nan"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
@@ -5160,10 +5160,26 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   _bootT('farm', function(){ window.__farm3d = window.buildFarm3D({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.farm3d = window.__farm3d; }); }, 1000); })();
 // ── RACE RESET KEY (T): put yourself back on the course (+3 s, 4 s cooldown). Ignored when a dialogue is open or no race is running. ──
 addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) return; try{ if(window.__raceRun && !(window._dialogue && window._dialogue.isOpen && window._dialogue.isOpen())) window.__raceRun.manualReset(); }catch(_){} });
+// ── RACE TRACK (world-race-track.js, owner race ref 2026-10-08): real anti-grav track on the circuit — banked deck, kerbs, glowing rails,
+//    pylons, gantries, chevrons, boost pads; ~9 draws per circuit. The deck is a RIDE surface (terrain.addRideExtra), the ground mesh is not raised.
+//    ?track=0 = old ribbon only. ?tracks=dragon-gate,quarter-loop picks circuits (default dragon-gate while the look is reviewed).
+(function bootRaceTrack(){ if(/[?&]track=0\b/.test(location.search)){ window.__raceTrackDone = true; return; } let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); window.__raceTrackDone = true; return; } const D = window.__w3dDebug, H = D && D.terrainV4;
+  if(!window.buildRaceTrack || !window.WorldRace || !H || !H.groundAt || !window.__loadPlayable) return; clearInterval(iv);
+  const m = /[?&]tracks=([\w,-]+)/.exec(location.search), ids = m ? m[1].split(',') : ['dragon-gate'];
+  import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
+    window.__raceTracks = {};
+    ids.forEach(function(cid){ try{ _bootT('race-track:' + cid, function(){
+      const t = window.buildRaceTrack({ THREE, scene, groundAt: H.groundAt, WorldRace: window.WorldRace, circuit: cid, U: V4_U, mergeGeometries: BGU.mergeGeometries });
+      if(t){ window.__raceTracks[cid] = t; H.addRideExtra(t.surfaceAt); }
+    }); }catch(e){ console.warn('[race-track] ' + cid + ' failed', e && e.message); } });
+    D.raceTracks = window.__raceTracks;
+  }).catch(function(e){ console.warn('[race-track] off:', e && e.message); }).then(function(){ window.__raceTrackDone = true; });
+}, 1000); })();
 // ── DRAGON GATE CIRCUIT landmarks (world-race-landmarks.js): torii start gate, lantern posts, cones, faint track ribbon ──
 (function bootRaceLandmarks(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
-  if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  try{ _bootT('race-landmarks', function(){ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace }); D.raceLandmarks = window.__raceLandmarks; }); }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
+  if(!window.buildRaceLandmarks || !window.WorldRace || !H || !H.heightAt || !window.__loadPlayable || !window.__raceTrackDone) return; clearInterval(iv);   // after the track: start line / posts sit on the deck
+  const realTrack = !!(window.__raceTracks && window.__raceTracks['dragon-gate']);   // the deck replaces the old ribbon + edge strips; posts/start line sized to the real deck
+  try{ _bootT('race-landmarks', function(){ window.__raceLandmarks = window.buildRaceLandmarks({ THREE, scene, heightAt: H.heightAt, WorldRace: window.WorldRace, noRibbon: realTrack, trackHalfM: realTrack ? 7 : 0 }); D.raceLandmarks = window.__raceLandmarks; }); }catch(e){ console.warn('[race-landmarks] failed', e && e.message); } }, 1000); })();
 // ── OUTDOOR HIDE (PERF 2026-10-03): interiors sit on a far island but the city kept drawing (~2,000 calls) behind the walls.
 // Inside: hide every top-level owner that is far from the room (named world groups AND the unnamed ones), never lights/cameras/the sky;
 // exit restores exactly what was visible before. Called by world-interiors enter() and by the frame loop on any state change.

@@ -11,7 +11,10 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   const p = await b.newPage(); await p.setViewport({ width: 900, height: 520 }); p.on('pageerror', e => errs.push(String(e.message).slice(0, 160)));
   await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html' + qs, { waitUntil: 'domcontentloaded', timeout: 120000 });
   for (let i = 0; i < 300; i++) { await sleep(1000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
-  await sleep(20000);
+  await sleep(12000);
+  await p.evaluate(() => { const els = [...document.querySelectorAll('*')].filter(e => e.children.length < 4 && /Source Temple/i.test(e.textContent || '') && e.offsetParent); const t = els.sort((a, b) => (a.textContent || '').length - (b.textContent || '').length)[0]; if (t) (t.closest('button,[class*=portal],[class*=card],[onclick]') || t).click(); });   // pick the default portal (same as _eye)
+  for (let i = 0; i < 80 && !(await p.evaluate(() => window.__spawnBusy === false).catch(() => false)); i++) await sleep(3000);
+  await sleep(6000);
   const st = await p.evaluate(() => {
     const D = window.__w3dDebug, sc = D && D.scene, cam = D && D.camera; let sky = null;
     sc && sc.traverse(o => { if (o.name === 'world-sky-v4') sky = o; });
@@ -24,6 +27,13 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   console.log(JSON.stringify(st, null, 1));
   await p.evaluate(() => { const D = window.__w3dDebug, r0 = D.renderer.render.bind(D.renderer); D.renderer.render = (s, c) => { c.rotation.order = 'YXZ'; c.rotation.x = 0.6; c.updateMatrixWorld(true); r0(s, c); }; });
   await sleep(8000); await p.screenshot({ path: 'C:/Users/Brittany/eye/sky-probe.png' });
-  console.log(JSON.stringify({ shot: 'C:/Users/Brittany/eye/sky-probe.png', errs: errs.slice(0, 5) }));
+  // isolate: hide every top-level object except the sky (and lights/camera) → is the dome itself drawing?
+  const iso = await p.evaluate(() => { const D = window.__w3dDebug, sc = D.scene, hidden = [];
+    sc.children.forEach(o => { if (o.name !== 'world-sky-v4' && !o.isLight && !o.isCamera && o.visible) { o.visible = false; hidden.push(o.name || o.type); } });
+    let sky = null; sc.traverse(o => { if (o.name === 'world-sky-v4') sky = o; });
+    const pr = D.renderer.properties.get(sky.material), prog = pr && pr.currentProgram;
+    return { hiddenTop: hidden.length, skyProgram: !!prog, diag: prog && prog.diagnostics ? JSON.stringify(prog.diagnostics).slice(0, 400) : null }; });
+  await sleep(8000); await p.screenshot({ path: 'C:/Users/Brittany/eye/sky-probe-only.png' });
+  console.log(JSON.stringify({ iso, shot: 'C:/Users/Brittany/eye/sky-probe.png', only: 'C:/Users/Brittany/eye/sky-probe-only.png', errs: errs.slice(0, 5) }));
   await b.close();
 })().catch(e => { console.log(JSON.stringify({ crash: String(e.message).slice(0, 200) })); process.exit(2); });
