@@ -9,6 +9,7 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   const qs = process.argv[2] || '?time=0.5', errs = [];
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: 900, height: 520 }); p.on('pageerror', e => errs.push(String(e.message).slice(0, 160)));
+  const glErrs = []; p.on('console', m => { const t = m.text(); if (/shader|program|THREE\.WebGL|GLSL|ERROR:/i.test(t)) glErrs.push(t.slice(0, 600)); });   // shader compile/link failures (three logs them, then skips the draw)
   await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html' + qs, { waitUntil: 'domcontentloaded', timeout: 120000 });
   for (let i = 0; i < 300; i++) { await sleep(1000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
   await sleep(12000);
@@ -34,6 +35,7 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
     const pr = D.renderer.properties.get(sky.material), prog = pr && pr.currentProgram;
     return { hiddenTop: hidden.length, skyProgram: !!prog, diag: prog && prog.diagnostics ? JSON.stringify(prog.diagnostics).slice(0, 400) : null }; });
   await sleep(8000); await p.screenshot({ path: 'C:/Users/Brittany/eye/sky-probe-only.png' });
+  console.log(JSON.stringify({ glErrs: glErrs.slice(0, 6) }, null, 1));
   console.log(JSON.stringify({ iso, shot: 'C:/Users/Brittany/eye/sky-probe.png', only: 'C:/Users/Brittany/eye/sky-probe-only.png', errs: errs.slice(0, 5) }));
   await b.close();
 })().catch(e => { console.log(JSON.stringify({ crash: String(e.message).slice(0, 200) })); process.exit(2); });

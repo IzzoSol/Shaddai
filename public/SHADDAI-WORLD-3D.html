@@ -394,7 +394,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
-<script src="/world-race.js?v=20260929b"></script>
+<script src="/world-devkit.js?v=20261008a"></script><script src="/world-race.js?v=20260929b"></script>
 <script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261004a"></script><script src="/world-race-track.js?v=20261008a"></script><script src="/world-speed-fx.js?v=20261008a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261004nan"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
@@ -415,6 +415,9 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// DEVKIT (world-devkit.js, plan S0a): every GLTF (Meshy included) gets its normals sanitized before use; ?devkit=1 F8 freeze / F9 suspects; ?gui=1
+window.__devkit = window.WorldDevkit ? window.WorldDevkit.create({ THREE }) : null;
+if(window.__devkit) window.__devkit.patchGLTFLoader(GLTFLoader);
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';   // skeleton-safe clone (plain .clone() breaks skinned meshes)
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
@@ -569,7 +572,7 @@ if(!/[?&]precompile=0\b/.test(location.search)){
   const _sceneAdd = scene.add;
   scene.add = function(){
     const r = _sceneAdd.apply(this, arguments);
-    if(!window.__loadPlayable || typeof renderer === 'undefined' || !renderer.compileAsync) return r;
+    if(!window.__loadPlayable || window.__precompile.off || typeof renderer === 'undefined' || !renderer.compileAsync) return r;   // .off = devkit suspect toggle
     for(let i = 0; i < arguments.length; i++){
       const o = arguments[i]; if(!o || o.isLight || o.isCamera || o.userData.__pcPending || !o.visible) continue;
       let want = true; o.userData.__pcPending = true; window.__precompile.pending++;
@@ -2088,6 +2091,17 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.14, 0.4, 0.92); // strength starts at MEDIUM (0.14); FPS governor climbs to 0.28 if machine can handle it
 composer.addPass(bloom);
+// DEVKIT suspects (F9 cycles: one OFF at a time, then all ON) — compare a frozen frame (F8) before touching any uniform
+if(window.__devkit){
+  const _dk = window.__devkit, _byName = function(n){ return scene.getObjectByName(n); };
+  _dk.suspect('bloom', function(on){ bloom.enabled = on && _Q.tiers[_Q.tier].bloomStr > 0; });
+  _dk.suspect('sky-v4', function(on){ const s = _byName('world-sky-v4'); if(s) s.visible = on; });
+  _dk.suspect('speedfx', function(on){ window.__speedFxOff = !on; });
+  _dk.suspect('precompile-hold', function(on){ if(window.__precompile) window.__precompile.off = !on; });
+  _dk.suspect('water-v4', function(on){ const w = window.__w3dDebug && window.__w3dDebug.waterV4; if(w && w.mesh) w.mesh.visible = on; });
+  _dk.suspect('terrain-rock-snow', function(on){ const T = window.__w3dDebug && window.__w3dDebug.terrainV4, S = T && T.material && T.material.userData.splat; if(S) S.uRock.value = on ? 1 : 0; });
+  _dk.gui();
+}
 
 // ── agent billboards ──
 const loader = new THREE.TextureLoader(__loadMgr);
@@ -4884,7 +4898,9 @@ function _applyQualityTier(idx){
   renderer.setPixelRatio(pr);
   renderer.setSize(innerWidth, innerHeight);
   // Size composer to physical pixel count so bloom renders at correct resolution
-  composer.setSize(Math.round(innerWidth * pr), Math.round(innerHeight * pr));
+  // FPS FIX 2026-10-08: EffectComposer.setSize already multiplies by its own _pixelRatio (captured from the renderer at
+  // construction), so passing innerWidth*pr scaled the bloom targets twice (1.6-2.25x the pixels on a scaled laptop screen).
+  composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
   bloom.strength = t.bloomStr;
   bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
   _Q.tier = idx;
@@ -5350,7 +5366,8 @@ function animate(){
     _ldBegin('first-frame'); requestAnimationFrame(function(){ _ldEnd('first-frame'); if(window.__loadPlayableAt == null) window.__loadPlayableAt = performance.now(); });
   }
   _animFrame++;
-  const dt=Math.min(0.05, clock.getDelta());
+  const _rawDt=Math.min(0.05, clock.getDelta());   // always read the clock so a thaw never jumps
+  const dt=(window.__devkit && window.__devkit.frozen) ? 0 : _rawDt;   // devkit F8: freeze the sim, keep rendering
   // PERF LIGHT POOL: three shades every lit pixel against EVERY visible light (was 38-40, mostly small accent lights scattered over the
   // city core, the volcano, interiors and the far room island). All accent PointLights are now registered here, hidden, and a FIXED pool
   // of POOL_N real lights follows the nearest ones (position/colour/intensity/range copied from the originals every frame, so their own
@@ -6036,7 +6053,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
       tracks: function(){ const T = window.__raceTracks; return T ? Object.keys(T).map(function(k){ return T[k]; }) : []; },
       onBoost: function(){ hover.setModifier({ mul: 1.45, dur: 1.4 }); if(window.Navi && window.Navi.toast) window.Navi.toast('BOOST'); } });
   }
-  if(window.__speedFx) window.__speedFx.update(dt);
+  if(window.__speedFx && !window.__speedFxOff) window.__speedFx.update(dt);
   composer.render();
   window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }
