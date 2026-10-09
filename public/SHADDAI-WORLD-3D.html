@@ -5358,6 +5358,29 @@ window.__qualityTierCount = _Q.tiers.length;
 // PERF (GLM handoff sec.1): long-frame logger, opt-in via ?perf=1. Logs any frame over 50 ms so
 // start-of-game freezes can be traced to the system that ran. Off by default: no console cost.
 var _perfOn=/[?&]perf=1\b/.test(location.search), _perfLast=0;
+// LIGHT POOL step (was an IIFE re-created every frame). FPS S1b: the whole-scene traverse that registers accent lights now runs
+// only when the scene changed (child count / geometry count) — plus a 20 s safety rescan — instead of every 4 s; the nearest-N
+// pick reuses fixed arrays (no per-tick [score,obj] tuples + sort). Behaviour unchanged: same POOL_N, same scoring, same copy.
+function _lightPoolStep(dt){
+  const POOL_N = 6, st = window.__lightSweep = window.__lightSweep || { inside: null, t: 0, safe: 0, sig: '', sel: 0, acc: [], pool: null, v: new THREE.Vector3(), reg: new Set(), bs: new Float64Array(POOL_N), bo: new Array(POOL_N), bn: 0 };
+  if(!st.pool){ st.pool = []; for(let i = 0; i < POOL_N; i++){ const L = new THREE.PointLight(0xffffff, 0, 60, 2); L.name = 'accent-pool'; scene.add(L); st.pool.push(L); } }
+  const inside = !!(_interiors && _interiors.isInside && _interiors.isInside()); st.t -= dt; st.sel -= dt; st.safe -= dt;
+  if(st.t <= 0){ st.t = 1;
+    const sig = scene.children.length + ':' + renderer.info.memory.geometries;
+    if(sig !== st.sig || st.safe <= 0){ st.sig = sig; st.safe = 20;
+      scene.traverse(function(o){ if(!o.isPointLight || o.name === 'accent-pool' || o === key || o === gold || o === camFill || st.reg.has(o)) return; st.reg.add(o); st.acc.push(o); o.visible = false; }); } }
+  if(inside !== st.inside){ st.inside = inside; st.sel = 0; }
+  if(st.sel <= 0){ st.sel = 0.3; const cp = camera.position; st.bn = 0;
+    for(let i = 0; i < st.acc.length; i++){ const o = st.acc[i]; if(o.visible) o.visible = false; o.getWorldPosition(st.v); const far = Math.abs(st.v.x) > 5500 || Math.abs(st.v.z) > 5500;
+      if(inside ? !far : far) continue; const dx = st.v.x - cp.x, dy = st.v.y - cp.y, dz = st.v.z - cp.z, d = Math.sqrt(dx*dx + dy*dy + dz*dz), rng = (o.distance || 60), sc = d - rng * 0.8;
+      if(!(d < rng * 2.2 && o.intensity > 0.001)) continue;
+      // insertion into the fixed best-N list (ascending score)
+      let j; if(st.bn < POOL_N) j = st.bn++; else { if(sc >= st.bs[POOL_N - 1]) continue; j = POOL_N - 1; }
+      while(j > 0 && st.bs[j-1] > sc){ st.bs[j] = st.bs[j-1]; st.bo[j] = st.bo[j-1]; j--; }
+      st.bs[j] = sc; st.bo[j] = o; } }
+  for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], o = i < st.bn ? st.bo[i] : null;
+    if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; }
+}
 function animate(){
   requestAnimationFrame(animate);
   if(_perfOn){ var _pn=performance.now(); if(_perfLast && _pn-_perfLast>50) console.warn('[perf] long frame '+Math.round(_pn-_perfLast)+' ms at '+Math.round(_pn)+' ms'); _perfLast=_pn; }
@@ -5384,18 +5407,7 @@ function animate(){
   // city core, the volcano, interiors and the far room island). All accent PointLights are now registered here, hidden, and a FIXED pool
   // of POOL_N real lights follows the nearest ones (position/colour/intensity/range copied from the originals every frame, so their own
   // animation code keeps working). The light COUNT never changes after setup, so no shader recompiles mid-play.
-  (function(){ const POOL_N = 6, st = window.__lightSweep = window.__lightSweep || { inside: null, t: 0, sel: 0, acc: [], pool: null, v: new THREE.Vector3(), reg: new Set(), best: [] };
-    if(!st.pool){ st.pool = []; for(let i = 0; i < POOL_N; i++){ const L = new THREE.PointLight(0xffffff, 0, 60, 2); L.name = 'accent-pool'; scene.add(L); st.pool.push(L); } }
-    const inside = !!(_interiors && _interiors.isInside && _interiors.isInside()); st.t -= dt; st.sel -= dt;
-    if(st.t <= 0){ st.t = 4; scene.traverse(function(o){ if(!o.isPointLight || o.name === 'accent-pool' || o === key || o === gold || o === camFill || st.reg.has(o)) return; st.reg.add(o); st.acc.push(o); o.visible = false; }); }
-    if(inside !== st.inside){ st.inside = inside; st.sel = 0; }
-    if(st.sel <= 0){ st.sel = 0.3; const cp = camera.position, out = [];
-      for(let i = 0; i < st.acc.length; i++){ const o = st.acc[i]; if(o.visible) o.visible = false; o.getWorldPosition(st.v); const far = Math.abs(st.v.x) > 5500 || Math.abs(st.v.z) > 5500;
-        if(inside ? !far : far) continue; const dx = st.v.x - cp.x, dy = st.v.y - cp.y, dz = st.v.z - cp.z, d = Math.sqrt(dx*dx + dy*dy + dz*dz), rng = (o.distance || 60), sc = d - rng * 0.8;
-        if(d < rng * 2.2 && o.intensity > 0.001) out.push([sc, o]); }
-      out.sort(function(a, b){ return a[0] - b[0]; }); st.best = out; }
-    for(let i = 0; i < POOL_N; i++){ const L = st.pool[i], e = st.best[i], o = e && e[1];
-      if(o){ o.getWorldPosition(L.position); L.color.copy(o.color); L.intensity = o.intensity; L.distance = o.distance; L.decay = o.decay; } else L.intensity = 0; } })();
+  _lightPoolStep(dt);
   if((window.__staticMergeN || 0) < (/[?&]merge3=1/.test(location.search) ? 3 : 1) && window.__loadPlayable){   // draw-call cut: merge tiny unnamed static meshes; pass 1 at +8s, later passes catch streaming additions
     if(window.__mergeArm == null) window.__mergeArm = performance.now();
     else if(performance.now() - window.__mergeArm > (window.__staticMergeN === 1 ? 8000 : window.__staticMergeN === 2 ? 40000 : 100000)) _bootT('static-merge', _staticMerge);
