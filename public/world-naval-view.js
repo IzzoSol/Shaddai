@@ -17,6 +17,8 @@
   function el(tag, css, html) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (html != null) e.innerHTML = html; return e; }
 
   function create(o) {
+    var BSF = o.broadside != null ? !!o.broadside : !!(root.location && /[?&]broadside=1(&|$)/.test(root.location.search || '')), bs = null, view = 'cockpit', chaseYaw = 0, boomFn = null;   // ?broadside=1 : WorldBroadside FX + chase camera (default off)
+    function wrapA(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
     var THREE = o.THREE, WN = root.WorldNaval, game = null, group = null, objs = {}, fxs = [], keys = {}, seen = {}, me = 'you', mode = 'fleet', hud = null, panel = null, shake = 0, msgT = 0, tNow = 0, camYaw = 0, ended = null, shotPool = [], teamCol = { A: 0x27e0ff, B: 0xff4a5e, C: 0xffcf4a, crew: 0x27e0ff };
     function mat(c, e) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0.2, emissive: e || 0x000000, emissiveIntensity: e ? 0.6 : 0 }); }
     var M = { wood: mat(0x6b4a2a), dark: mat(0x1d232b), metal: mat(0x9aa8b6), sail: new THREE.MeshStandardMaterial({ color: 0xf0e6cc, roughness: 0.9, side: THREE.DoubleSide, emissive: 0x8a7a5a, emissiveIntensity: 0.55 }), glass: mat(0x2a4a5a, 0x1a6a8a) };
@@ -57,18 +59,23 @@
       var dims = A.dims || { A: 62, B: 44 }; game = WN.create({ mode: mode, A: dims.A * 0.9, B: dims.B * 0.9, seed: (Date.now() & 0xffff) | 1, boats: boats, monsters: mode === 'fleet' ? true : undefined });
       group = new THREE.Group(); group.name = 'naval-play'; A.root.add(group); objs = { boats: {}, mons: {}, picks: {}, shots: {} }; fxs = []; ended = null; shake = 0; window.__noWalk = true;
       game.state().boats.forEach(function (b) { var m = boatMesh(b); group.add(m); objs.boats[b.id] = m; });
+      if (BSF && root.WorldBroadside && root.WorldRNG) {
+        if (!boomFn) { boomFn = o.audio || null; if (!boomFn && root.AudioContext && root.WorldBroadside.synthBoom) { var lazy = null; boomFn = function (k, v) { try { lazy = lazy || root.WorldBroadside.synthBoom(new root.AudioContext()); lazy(k, v); } catch (e) { } }; } }
+        bs = root.WorldBroadside.create({ THREE: THREE, scene: group, rng: root.WorldRNG.create(((Date.now() & 0xffff) | 1) ^ 0x5bd1), waterHeightAt: function () { return WATER_Y; }, baseY: WATER_Y, vfx: root.__vfx || null, audio: boomFn });
+      }
+      view = cfg.view === 'chase' && BSF ? 'chase' : 'cockpit'; chaseYaw = 0;
       if (A.floors) A.floors.autoBattle = false;   // the old AI-vs-AI galleys step aside while you play
       try { if (A.setField) A.setField('water'); } catch (e) { }
       buildHud(); if (panel) { panel.remove(); panel = null; } bindKeys(true); toast(MODES[mode].name + ' - ' + WN.CLASSES[cls].name); return true;
     }
     function stop() {
       if (!group) return; var A = o.getArena && o.getArena(); if (A && A.root) { A.root.remove(group); if (A.floors) { A.floors.autoBattle = true; try { if (A.floors.state && A.floors.state.mode === 'water') A.setField('water'); } catch (e) { } } }
-      group = null; game = null; window.__noWalk = false; bindKeys(false); if (hud) { hud.remove(); hud = null; }
+      if (bs) { bs.dispose(); bs = null; } group = null; game = null; window.__noWalk = false; bindKeys(false); if (hud) { hud.remove(); hud = null; }
     }
     function toast(m) { if (root.Navi && root.Navi.toast) root.Navi.toast(m); }
 
     // ---------- input ----------
-    function onKey(e) { if (/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) return; if (e.code === 'Escape') { stop(); e.preventDefault(); return; } if (['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'KeyQ', 'KeyE', 'KeyX', 'ShiftLeft', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) >= 0) { keys[e.code] = e.type === 'keydown'; seen[e.code] = 1; e.preventDefault(); e.stopPropagation(); } }
+    function onKey(e) { if (/input|textarea|select/i.test((document.activeElement || {}).tagName || '')) return; if (e.code === 'Escape') { stop(); e.preventDefault(); return; } if (BSF && e.code === 'KeyC') { if (e.type === 'keydown' && !e.repeat) view = view === 'chase' ? 'cockpit' : 'chase'; seen.KeyC = 1; e.preventDefault(); e.stopPropagation(); return; } if (['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'KeyQ', 'KeyE', 'KeyX', 'ShiftLeft', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) >= 0) { keys[e.code] = e.type === 'keydown'; seen[e.code] = 1; e.preventDefault(); e.stopPropagation(); } }
     function onMouse(e) { if (e.button === 0) keys.Mouse0 = e.type === 'mousedown'; else if (e.button === 2) { keys.Mouse2 = e.type === 'mousedown'; e.preventDefault(); } }
     function noCtx(e) { e.preventDefault(); }
     function bindKeys(on) { var f = on ? addEventListener : removeEventListener; f('keydown', onKey, true); f('keyup', onKey, true); f('mousedown', onMouse, true); f('mouseup', onMouse, true); f('contextmenu', noCtx, true); if (!on) { keys = {}; if (typeof KeyboardEvent !== 'undefined' && typeof dispatchEvent === 'function') Object.keys(seen).forEach(function (c) { try { dispatchEvent(new KeyboardEvent('keyup', { code: c })); } catch (e) { } }); seen = {}; } }   // the host never saw our keyups: tell it every swallowed key is released
@@ -112,6 +119,7 @@
       sync('picks', s.pickups, function (p) { return p.id; }, function (p) { return pickMesh(p.kind); }, function (p, g) { g.position.set(p.x, WATER_Y, p.z); g.userData.m.position.y = 1.1 + Math.sin(tNow * 2 + p.id) * 0.3; g.userData.m.rotation.y = tNow * 1.5; });
       sync('shots', s.shots, function (x) { return x.id; }, function (x) { return shotMesh(x.kind); }, function (x, g) { g.position.set(x.x, WATER_Y + (x.kind === 'torpedo' ? -0.2 : 1.6), x.z); g.rotation.y = Math.atan2(x.vx, x.vz); });
       game.drain().forEach(function (e) {
+        if (bs && e.type === 'fire' && e.kind === 'cannon') { var fb = game.boat(e.id); if (fb && fb.cls === 'galleon' && bs.fire(wrapA(e.ang - fb.psi) > 0 ? 'starboard' : 'port', fb) && e.id === me) shake = Math.min(1, shake + 0.25); }   // 3 sim shots per broadside: first one fires the FX, the rest hit the 0.35 s cooldown
         if (e.type === 'hit' && e.id === me) { shake = Math.min(1, shake + (e.dmg || 5) / 40); } else if (e.type === 'hit' && e.id !== me && e.src === me) { var tb = game.boat(e.id); if (root.__hitfx) root.__hitfx.hit({ killed: !!tb && !tb.alive }); } else if (e.type === 'monster-hit' && e.by === me && root.__hitfx) root.__hitfx.hit({ killed: e.hp <= 0 });
         if (e.type === 'sunk') { var sb = game.boat(e.id); if (sb) fx('ball', sb.x, sb.z, 7, 0xff9a2a); say(e.id === me ? 'YOU WERE SUNK' : 'SUNK: ' + sb.name); }
         else if (e.type === 'kraken-wind') { fx('ring', e.x, e.z, 7, 0xff3a3a); say('KRAKEN!'); } else if (e.type === 'kraken-slam') fx('ring', e.x, e.z, e.r, 0xffffff);
@@ -120,6 +128,7 @@
         else if (e.type === 'end') finish(e.winner, e.why);
       });
       for (var i = fxs.length - 1; i >= 0; i--) { var f = fxs[i]; f.t += dt; var k = f.t / f.dur; f.m.scale.setScalar(Math.max(0.01, f.r * (f.ring ? (0.4 + k) : (0.3 + k)))); f.m.material.opacity = 0.8 * (1 - k); if (k >= 1) { group.remove(f.m); fxs.splice(i, 1); } }
+      if (bs) bs.update(dt);
       if (b) updateHud(s, b);
     }
     function sync(key, list, idOf, make, place) {
@@ -129,6 +138,11 @@
     var _v = null;
     function applyCamera(camera) {
       if (!game || !group) return; var b = game.boat(me); if (!b) return; var A = o.getArena(), C = WN.CLASSES[b.cls]; _v = _v || new THREE.Vector3();
+      if (BSF && view === 'chase') {   // chase cam: behind and above, heading smoothed so turns swing the view; deterministic shake (no Math.random)
+        if (!chaseYaw) chaseYaw = b.psi; chaseYaw = wrapA(chaseYaw + wrapA(b.psi - chaseYaw) * 0.08); var gal = b.cls === 'galleon', back = gal ? 20 : 11, hgt = gal ? 9 : 5, shk = shake * 0.5 * Math.sin(tNow * 53); shake = Math.max(0, shake - 0.03);
+        _v.set(b.x - Math.sin(chaseYaw) * back, WATER_Y + hgt + shk, b.z - Math.cos(chaseYaw) * back); A.root.localToWorld(_v); camera.position.copy(_v);
+        _v.set(b.x + Math.sin(b.psi) * 14, WATER_Y + (gal ? 3 : 1.5), b.z + Math.cos(b.psi) * 14); A.root.localToWorld(_v); camera.lookAt(_v); return;
+      }
       var eye = b.cls === 'galleon' ? 5.2 : b.cls === 'skimmer' ? 1.9 : (b.sub ? 0.9 : 2.8), fw = b.cls === 'galleon' ? 3.5 : 0.8;
       _v.set(b.x + Math.sin(b.psi) * fw, WATER_Y + eye + (b.sub ? -1.0 : 0), b.z + Math.cos(b.psi) * fw); A.root.localToWorld(_v); camera.position.copy(_v);
       var sh = shake * 0.35; shake = Math.max(0, shake - 0.03); var ang = b.psi + (b.alive ? 0 : tNow * 0.3);
@@ -149,7 +163,7 @@
       panel.addEventListener('click', function (e) { var t = e.target.closest('[data-a],[data-m],[data-c]'); if (!t) return; if (t.dataset.m) { sel.mode = t.dataset.m; draw(); } else if (t.dataset.c) { sel.cls = t.dataset.c; draw(); } else if (t.dataset.a === 'x') { panel.remove(); panel = null; } else if (t.dataset.a === 'go') start(sel); });
       draw(); document.body.appendChild(panel);
     }
-    return { open: open, start: start, stop: stop, active: function () { return !!game; }, update: update, applyCamera: applyCamera, game: function () { return game; }, MODES: MODES, _reward: addReward, _dayReward: dayReward };
+    return { open: open, start: start, stop: stop, active: function () { return !!game; }, update: update, applyCamera: applyCamera, game: function () { return game; }, broadside: function () { return bs; }, view: function () { return view; }, setView: function (v) { if (BSF) view = v === 'chase' ? 'chase' : 'cockpit'; }, MODES: MODES, _reward: addReward, _dayReward: dayReward };
   }
   root.WorldNavalGame = { create: create, MODES: MODES, REWARD_CAP: REWARD_CAP };
 })(typeof window !== 'undefined' ? window : globalThis);
