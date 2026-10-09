@@ -395,7 +395,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
 <script src="/world-race.js?v=20260929b"></script>
-<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261004a"></script><script src="/world-race-track.js?v=20261008a"></script>
+<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261004a"></script><script src="/world-race-track.js?v=20261008a"></script><script src="/world-speed-fx.js?v=20261008a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261004nan"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
@@ -6029,6 +6029,14 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
 
   if(window.__probeCam){ const pc=window.__probeCam; camera.position.set(pc.pos[0],pc.pos[1],pc.pos[2]); camera.lookAt(pc.look[0],pc.look[1],pc.look[2]); }   // probe-only camera override (tools/probe-falprops.cjs); unset in normal play
   if(_shakeT > 0){ _shakeT -= dt; camera.position.x += (Math.random()-0.5)*_shakeI; camera.position.y += (Math.random()-0.5)*_shakeI; }   // dragon hits / stomps
+  // RACING FEEL (world-speed-fx.js): FOV kick + edge speed lines on the board, boost pads on the race track (?speedfx=0 = off)
+  if(!window.__speedFx && window.WorldSpeedFX && typeof hover !== 'undefined' && hover && hover.tune){
+    window.__speedFx = window.WorldSpeedFX.create({ camera, topMS: hover.tune.topMS, boostMS: hover.tune.boostMS,
+      getRiding: function(){ return hover.isRiding(); }, getSpeed: function(){ return hover.speedMS(); }, getPos: function(){ return playerPos; },
+      tracks: function(){ const T = window.__raceTracks; return T ? Object.keys(T).map(function(k){ return T[k]; }) : []; },
+      onBoost: function(){ hover.setModifier({ mul: 1.45, dur: 1.4 }); if(window.Navi && window.Navi.toast) window.Navi.toast('BOOST'); } });
+  }
+  if(window.__speedFx) window.__speedFx.update(dt);
   composer.render();
   window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }
