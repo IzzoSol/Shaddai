@@ -394,7 +394,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-dialogue.js?v=20260703d"></script>
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
-<script src="/world-devkit.js?v=20261008a"></script><script src="/world-rng.js?v=20261009a"></script><script src="/world-economy.js?v=20261009a"></script><script src="/world-race.js?v=20260929b"></script>
+<script src="/world-devkit.js?v=20261008a"></script><script src="/world-vfx.js?v=20261009a"></script><script src="/world-rng.js?v=20261009a"></script><script src="/world-economy.js?v=20261009a"></script><script src="/world-race.js?v=20260929b"></script>
 <script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261004a"></script><script src="/world-race-track.js?v=20261008a"></script><script src="/world-speed-fx.js?v=20261008a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261004nan"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
@@ -418,6 +418,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // DEVKIT (world-devkit.js, plan S0a): every GLTF (Meshy included) gets its normals sanitized before use; ?devkit=1 F8 freeze / F9 suspects; ?gui=1
 window.__devkit = window.WorldDevkit ? window.WorldDevkit.create({ THREE }) : null;
 if(window.__devkit) window.__devkit.patchGLTFLoader(GLTFLoader);
+// VFX (world-vfx.js, plan V): soft ROUND points instead of PointsMaterial squares (the owner's "little squares floating").
+// ?vfx=0 = the old PointsMaterial everywhere. The engine (bursts/trails/decals) is created once the camera/renderer exist.
+const _VFX_ON = !!window.WorldVFX && !/[?&]vfx=0\b/.test(location.search);
+function _softPM(o){ return _VFX_ON ? window.WorldVFX.softPointsMaterial(THREE, { color: o.color, size: o.size, opacity: o.opacity != null ? o.opacity : 1, additive: o.blending !== THREE.NormalBlending, vertexColors: !!o.vertexColors }) : new THREE['PointsMaterial'](o); }
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';   // skeleton-safe clone (plain .clone() breaks skinned meshes)
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
@@ -1151,7 +1155,7 @@ window.__worldBuilt = false;
   const CN=42; const cpos=new Float32Array(CN*3);
   for(let i=0;i<CN;i++){ const a=Math.random()*6.28, r=6+Math.random()*22; cpos[i*3]=Math.cos(a)*r; cpos[i*3+1]=40+Math.random()*26; cpos[i*3+2]=Math.sin(a)*r; }
   const cgeo=new THREE.BufferGeometry(); cgeo.setAttribute('position',new THREE.BufferAttribute(cpos,3));
-  oracleGroup.add(new THREE.Points(cgeo, new THREE.PointsMaterial({ color:0xf0e6ff, size:0.7, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false })));
+  oracleGroup.add(new THREE.Points(cgeo, _softPM({ color:0xf0e6ff, size:0.7, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false })));
   const lpos=[]; for(let i=0;i<CN;i++){ const j=(i+1+((i*7)%3))%CN; lpos.push(cpos[i*3],cpos[i*3+1],cpos[i*3+2], cpos[j*3],cpos[j*3+1],cpos[j*3+2]); }
   const lgeo=new THREE.BufferGeometry(); lgeo.setAttribute('position',new THREE.Float32BufferAttribute(lpos,3));
   const constellations=new THREE.LineSegments(lgeo, new THREE.LineBasicMaterial({ color:PURPLE, transparent:true, opacity:0.28, blending:THREE.AdditiveBlending, depthWrite:false }));
@@ -1172,7 +1176,7 @@ window.__worldBuilt = false;
   const SD=120; const sdpos=new Float32Array(SD*3), sdph=new Float32Array(SD);
   for(let i=0;i<SD;i++){ const a=Math.random()*6.28,r=Math.random()*34; sdpos[i*3]=Math.cos(a)*r; sdpos[i*3+1]=2+Math.random()*36; sdpos[i*3+2]=Math.sin(a)*r; sdph[i]=Math.random()*6.28; }
   const sdgeo=new THREE.BufferGeometry(); sdgeo.setAttribute('position',new THREE.BufferAttribute(sdpos,3));
-  const stardust=new THREE.Points(sdgeo, new THREE.PointsMaterial({ color:0xd8c8ff, size:0.5, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false }));
+  const stardust=new THREE.Points(sdgeo, _softPM({ color:0xd8c8ff, size:0.5, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false }));
   oracleGroup.add(stardust);
 
   // holographic projection screens — hovering translucent panels facing the plaza
@@ -1675,7 +1679,7 @@ window.__worldBuilt = false;
   const MO=180; const mp=new Float32Array(MO*3), mph=new Float32Array(MO);
   for(let i=0;i<MO;i++){ const a=Math.random()*6.28, rr=Math.random()*230; mp[i*3]=Math.cos(a)*rr; mp[i*3+1]=Math.random()*40; mp[i*3+2]=Math.sin(a)*rr; mph[i]=Math.random()*6.28; }
   const mgeo=new THREE.BufferGeometry(); mgeo.setAttribute('position', new THREE.BufferAttribute(mp,3));
-  const motes=new THREE.Points(mgeo, new THREE.PointsMaterial({ color:0xffd9a0, size:0.55, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false }));
+  const motes=new THREE.Points(mgeo, _softPM({ color:0xffd9a0, size:0.55, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending, depthWrite:false }));
   root.add(motes);
 
   window._ambienceFX={ update:function(t,dt){
@@ -1973,7 +1977,7 @@ const starGroup = new THREE.Group();
       pos[i*3+2]= r*Math.sin(ph)*Math.sin(th);
     }
     const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-    const pts=new THREE.Points(geo, new THREE.PointsMaterial({ color, size, sizeAttenuation:true, transparent:true, opacity, blending:THREE.AdditiveBlending, depthWrite:false }));
+    const pts=new THREE.Points(geo, _softPM({ color, size, sizeAttenuation:true, transparent:true, opacity, blending:THREE.AdditiveBlending, depthWrite:false }));
     pts.frustumCulled=false;                              // camera-centred → never cull
     starGroup.add(pts);
   }
@@ -1981,7 +1985,7 @@ const starGroup = new THREE.Group();
   starLayer( 360, 640, 200, 0xffffff, 2.0, 0.95);        // bright near-ish layer (crisp white highlights)
   starGroup.add(new THREE.Points(                        // a sparse warm-violet accent to match the neon palette
     (function(){ const N=120,pos=new Float32Array(N*3); for(let i=0;i<N;i++){ const r=650+Math.random()*180,th=Math.random()*6.283185,ph=Math.acos(Math.random()); pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph)+40; pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);} const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); return g; })(),
-    new THREE.PointsMaterial({ color:0xc9a8ff, size:1.6, sizeAttenuation:true, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false })
+    _softPM({ color:0xc9a8ff, size:1.6, sizeAttenuation:true, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false })
   ));
   starGroup.children.forEach(c=>{ c.frustumCulled=false; });
   scene.add(starGroup);
@@ -2004,7 +2008,7 @@ for(let i=0;i<_moteN;i++){
 }
 const _moteGeo = new THREE.BufferGeometry();
 _moteGeo.setAttribute('position', new THREE.BufferAttribute(_motePos,3));
-const _moteMat = new THREE.PointsMaterial({ color:0x9fc4ff, size:0.5, sizeAttenuation:true, transparent:true, opacity:0.32, blending:THREE.AdditiveBlending, depthWrite:false });
+const _moteMat = _softPM({ color:0x9fc4ff, size:0.5, sizeAttenuation:true, transparent:true, opacity:0.32, blending:THREE.AdditiveBlending, depthWrite:false });
 const _motes = new THREE.Points(_moteGeo, _moteMat);
 _motes.frustumCulled = false;   // it's always centred on the camera, so never cull it
 scene.add(_motes);
@@ -2103,6 +2107,9 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.14, 0.4, 0.92); // strength starts at MEDIUM (0.14); FPS governor climbs to 0.28 if machine can handle it
 composer.addPass(bloom);
+// VFX engine: pooled bursts / trails / decals, <= 8 draws, never adds lights (flash hook left empty until it writes into the light pool)
+window.__vfx = _VFX_ON ? window.WorldVFX.create({ THREE, scene, camera, unit: V4_U, getTier: function(){ return (typeof _Q !== 'undefined' && _Q.tiers[_Q.tier]) ? _Q.tiers[_Q.tier].name : 'MEDIUM'; },
+  getViewHeight: function(){ return renderer.domElement.height; } }) : null;
 // DEVKIT suspects (F9 cycles: one OFF at a time, then all ON) — compare a frozen frame (F8) before touching any uniform
 if(window.__devkit){
   const _dk = window.__devkit, _byName = function(n){ return scene.getObjectByName(n); };
@@ -2296,7 +2303,7 @@ function createAura(hexColor, center){
   const positions=new Float32Array(count*3), phases=new Float32Array(count);
   for(let i=0;i<count;i++){ phases[i]=(i/count)*Math.PI*2; positions[i*3]=Math.cos(phases[i])*1.6; positions[i*3+1]=(Math.random()-0.5)*4; positions[i*3+2]=Math.sin(phases[i])*1.6; }
   geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
-  const mat=new THREE.PointsMaterial({ color:new THREE.Color(hexColor), size:0.13, transparent:true, opacity:0.75, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+  const mat=_softPM({ color:new THREE.Color(hexColor), size:0.13, transparent:true, opacity:0.75, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
   const points=new THREE.Points(geo,mat); points.position.copy(center); scene.add(points);
   const update=(time,speed)=>{ const pos=geo.attributes.position.array; const sp=speed||0.5, radius=2.2;
     for(let i=0;i<count;i++){ const ph=phases[i]+time*sp; pos[i*3]=Math.cos(ph)*radius; pos[i*3+1]=Math.sin(ph*2+time)*0.8+Math.sin(phases[i]*3)*1.4+1.0; pos[i*3+2]=Math.sin(ph)*radius; }
@@ -4073,6 +4080,7 @@ function _attackFlash(){
   const p=_muzzle();
   _spawnVFX('flash', p, col, {r0:0.4, r1:1.6, life:0.16, opacity:0.85});
   _spawnVFX('arc',   p, col, {r0:1.0, r1:2.4, life:0.20, opacity:0.75});
+  if(window.__vfx) window.__vfx.burst('hit', p, { color: col, count: 10 });   // spark spray in the attacker's signature colour
 }
 // ── /VFX POLISH ────────────────────────────────────────────────────────────────
 function fireSignatureVFX(sig){
@@ -4914,6 +4922,7 @@ function _applyQualityTier(idx){
   // construction), so passing innerWidth*pr scaled the bloom targets twice (1.6-2.25x the pixels on a scaled laptop screen).
   composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
   bloom.strength = t.bloomStr;
+  if(window.__vfx) window.__vfx.setTier(t.name);   // particle budget follows the quality tier
   bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
   _Q.tier = idx;
   window.__quality = t.name;
@@ -6078,9 +6087,10 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     window.__speedFx = window.WorldSpeedFX.create({ camera, topMS: hover.tune.topMS, boostMS: hover.tune.boostMS,
       getRiding: function(){ return hover.isRiding(); }, getSpeed: function(){ return hover.speedMS(); }, getPos: function(){ return playerPos; },
       tracks: function(){ const T = window.__raceTracks; return T ? Object.keys(T).map(function(k){ return T[k]; }) : []; },
-      onBoost: function(){ hover.setModifier({ mul: 1.45, dur: 1.4 }); if(window.Navi && window.Navi.toast) window.Navi.toast('BOOST'); } });
+      onBoost: function(){ hover.setModifier({ mul: 1.45, dur: 1.4 }); if(window.Navi && window.Navi.toast) window.Navi.toast('BOOST'); if(window.__vfx) window.__vfx.burst('boost', playerPos); } });
   }
   if(window.__speedFx && !window.__speedFxOff) window.__speedFx.update(dt);
+  if(window.__vfx) window.__vfx.update(dt);   // also keeps the shared soft-point size uniform (viewport height) current
   composer.render();
   window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }
