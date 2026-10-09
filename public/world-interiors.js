@@ -258,10 +258,12 @@
       }
       var geo  = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      var pMat = new THREE.PointsMaterial({
-        color: accent, size: 0.15, transparent: true, opacity: 0.50,
-        depthWrite: false, blending: THREE.AdditiveBlending,
-      });
+      var pMat = (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial)
+        ? WorldVFX.softPointsMaterial(THREE, { color: accent, size: 0.15, opacity: 0.50, additive: true })
+        : new THREE.PointsMaterial({
+          color: accent, size: 0.15, transparent: true, opacity: 0.50,
+          depthWrite: false, blending: THREE.AdditiveBlending,
+        });
       var pts = new THREE.Points(geo, pMat);
       group.add(pts);
       return { pts: pts, vel: vel, count: count, hs: hs, falling: !!falling };

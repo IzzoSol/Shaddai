@@ -718,7 +718,7 @@
       var n = 36, hs = 30 * U, pos = new Float32Array(n * 3), vel = new Float32Array(n * 3);
       for (var i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * hs * 2; pos[i * 3 + 1] = Math.random() * 20 + 1; pos[i * 3 + 2] = (Math.random() - 0.5) * hs * 2; vel[i * 3] = (Math.random() - 0.5) * 0.02; vel[i * 3 + 1] = Math.random() * 0.012 + 0.003; vel[i * 3 + 2] = (Math.random() - 0.5) * 0.02; }
       var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      var pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffe0a0, size: 0.6, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending }));
+      var pts = new THREE.Points(geo, (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial ? WorldVFX.softPointsMaterial(THREE, { color: 0xffe0a0, size: 0.6, opacity: 0.4, additive: true }) : new THREE.PointsMaterial({ color: 0xffe0a0, size: 0.6, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending })));
       pts.frustumCulled = false; group.add(pts);
       return { pts: pts, vel: vel, count: n, hs: hs, falling: false };
     })();

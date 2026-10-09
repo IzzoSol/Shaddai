@@ -16,6 +16,9 @@
   var KIND_COLOR = { pods: 0x00ff9c, press: 0xe8c45c, directory: 0x5fe0ff, teachers: 0xf0d27a, trophy: 0xe8c45c, trading: 0x2dd4a0, import: 0x4da3ff, admin: 0xff6a5a, navi: 0x00ff9c, dais: 0x00ff9c, lectern: 0x00ff9c };
   var QUALITY = { POTATO: 0, LOW: 1, MEDIUM: 2, HIGH: 3, ULTRA: 3 };
 
+  // soft round points when WorldVFX is loaded; plain PointsMaterial otherwise (tests / other pages)
+  function _pm(T, o, legacy) { return (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial) ? WorldVFX.softPointsMaterial(T, o) : new T.PointsMaterial(legacy); }
+
   function build(THREE, opts) {
     opts = opts || {};
     var L = Layout.build();
@@ -337,7 +340,7 @@
     function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
     for (var si = 0; si < starN; si++) { var spp = L.at(W.observatory, 40 + rnd() * L.WING_LEN, (rnd() - 0.5) * W.observatory.halfW * 2); starPos[si * 3] = spp.x; starPos[si * 3 + 1] = W.observatory.h - 0.4 - rnd() * 0.3; starPos[si * 3 + 2] = spp.z; }
     var starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    var stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xbfeaff, size: 0.22, sizeAttenuation: true, transparent: true, opacity: 0.9, depthWrite: false })); stars.name = 'stars'; rootG.add(stars);
+    var stars = new THREE.Points(starGeo, _pm(THREE, { color: 0xbfeaff, size: 0.22, opacity: 0.9, additive: false }, { color: 0xbfeaff, size: 0.22, sizeAttenuation: true, transparent: true, opacity: 0.9, depthWrite: false })); stars.name = 'stars'; rootG.add(stars);
 
     // ── faculty figures (hologram avatars) ──────────────────────────────────────
     var figures = [];
@@ -379,7 +382,7 @@
     var MN = 90, mPos = new Float32Array(MN * 3), mVel = new Float32Array(MN * 3);
     for (var mi = 0; mi < MN; mi++) { var ma = rnd() * TAU, mr = Math.sqrt(rnd()) * (R - 2); mPos[mi * 3] = Math.cos(ma) * mr; mPos[mi * 3 + 1] = 1 + rnd() * 24; mPos[mi * 3 + 2] = Math.sin(ma) * mr; mVel[mi * 3] = (rnd() - 0.5) * 0.004; mVel[mi * 3 + 1] = 0.004 + rnd() * 0.006; mVel[mi * 3 + 2] = (rnd() - 0.5) * 0.004; }
     var mGeo = new THREE.BufferGeometry(); mGeo.setAttribute('position', new THREE.BufferAttribute(mPos, 3));
-    var motes = new THREE.Points(mGeo, new THREE.PointsMaterial({ color: 0x9bffe0, size: 0.16, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })); motes.name = 'motes'; motes.frustumCulled = false; rootG.add(motes);
+    var motes = new THREE.Points(mGeo, _pm(THREE, { color: 0x9bffe0, size: 0.16, opacity: 0.55, additive: true }, { color: 0x9bffe0, size: 0.16, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })); motes.name = 'motes'; motes.frustumCulled = false; rootG.add(motes);
 
     // ── merge static parts: one mesh per material ───────────────────────────────
     Object.keys(parts).forEach(function (name) {

@@ -475,12 +475,14 @@
         'position',
         new THREE.BufferAttribute(particlePositions, 3)
       );
-      var particleMat = new THREE.PointsMaterial({
-        color: col.clone().offsetHSL(0, 0.05, 0.14), size: 0.24,
-        transparent: true, opacity: 0.82,
-        blending: THREE.AdditiveBlending, depthWrite: false,
-        sizeAttenuation: true, toneMapped: false,
-      });
+      var particleMat = (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial)
+        ? WorldVFX.softPointsMaterial(THREE, { color: col.clone().offsetHSL(0, 0.05, 0.14), size: 0.24, opacity: 0.82, additive: true })
+        : new THREE.PointsMaterial({
+          color: col.clone().offsetHSL(0, 0.05, 0.14), size: 0.24,
+          transparent: true, opacity: 0.82,
+          blending: THREE.AdditiveBlending, depthWrite: false,
+          sizeAttenuation: true, toneMapped: false,
+        });
       grp.add(new THREE.Points(particleGeo, particleMat));
 
       // ── Soft point light — colour fill around the gateway base ───────────

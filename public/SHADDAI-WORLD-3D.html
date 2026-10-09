@@ -5242,7 +5242,10 @@ window.__setOutdoorHidden = function(on, roomX){
 };
 // ── FLOATING-SQUARE SWEEP (owner 2026-10-04: "little squares floating in the air" — untextured THREE.Points render as squares): every 4 s hide
 // outdoor Points without a sprite map (biome motes, fireflies, spawn dust, theme flakes). Keeps board trails + anything inside a room. ?fx=1 = keep all.
-(function sweepSquares(){ if(/[?&]fx=1/.test(location.search)) return; setInterval(function(){ const sc = window.__w3dDebug && window.__w3dDebug.scene; if(!sc) return;
+(function sweepSquares(){ if(/[?&]fx=1/.test(location.search)) return;
+  if(_VFX_ON) return;   // RETIRED with VFX on (2026-10-09): every Points material is now a soft round WorldVFX material, so there are no squares to hide
+                        // (and soft materials have no .map, so this sweep would wrongly hide them). It also removes a whole-scene traverse every 4 s.
+  setInterval(function(){ const sc = window.__w3dDebug && window.__w3dDebug.scene; if(!sc) return;
   sc.traverse(function(o){ if(!o.isPoints || !o.visible || (o.material && o.material.map)) return;
     for(let a = o; a; a = a.parent){ if(/^interior_|trail|board/i.test(a.name || '')) return; }
     o.visible = false; o.userData._sweptSquare = true; }); }, 4000); })();

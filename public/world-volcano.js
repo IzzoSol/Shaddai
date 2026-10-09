@@ -84,7 +84,7 @@ window.buildWorldVolcano = function (opts) {
       a[i * 3 + 2] = (Math.random() - 0.5) * RAD * 0.9;
     }
     g.setAttribute('position', new THREE.BufferAttribute(a, 3));
-    var p = new THREE.Points(g, track(new THREE.PointsMaterial({
+    var p = new THREE.Points(g, track((typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial) ? WorldVFX.softPointsMaterial(THREE, { color: 0xff8a3a, size: 0.4, opacity: 0.9, additive: true }) : new THREE.PointsMaterial({
       color: 0xff8a3a, size: 0.4, transparent: true, opacity: 0.9,
       depthWrite: false, blending: THREE.AdditiveBlending,
     })));

@@ -240,10 +240,12 @@ window.buildWorldThemes = function buildWorldThemes(_ref) {
     }
     var geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    var mat = new THREE.PointsMaterial({
-      color: color, size: size, sizeAttenuation: true,
-      transparent: true, opacity: 0.75, depthWrite: false,
-    });
+    var mat = (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial)
+      ? WorldVFX.softPointsMaterial(THREE, { color: color, size: size, opacity: 0.75, additive: false })
+      : new THREE.PointsMaterial({
+        color: color, size: size, sizeAttenuation: true,
+        transparent: true, opacity: 0.75, depthWrite: false,
+      });
     var pts = new THREE.Points(geo, mat);
     pts.visible = false;
     scene.add(pts);

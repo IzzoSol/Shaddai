@@ -363,8 +363,10 @@
     var geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3).setUsage(THREE.DynamicDrawUsage));
-    var mat = new THREE.PointsMaterial({ size: opts.size || 0.9, vertexColors: true, transparent: true, depthWrite: false,
-      blending: THREE.AdditiveBlending, sizeAttenuation: true, toneMapped: false });
+    var mat = (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial)
+      ? WorldVFX.softPointsMaterial(THREE, { size: opts.size || 0.9, vertexColors: true, additive: true })
+      : new THREE.PointsMaterial({ size: opts.size || 0.9, vertexColors: true, transparent: true, depthWrite: false,
+        blending: THREE.AdditiveBlending, sizeAttenuation: true, toneMapped: false });
     var pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.name = 'hoverboard-fx';
     if (scene) scene.add(pts);
     var head = 0, live = 0, _c = new THREE.Color(), _v = new THREE.Vector3(), _d = new THREE.Vector3(), _q = new THREE.Quaternion();
