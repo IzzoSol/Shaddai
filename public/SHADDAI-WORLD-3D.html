@@ -584,7 +584,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
             s.position.set(c0.x + sx * t * 48 * V4_U, _wy0 + 4 * V4_U, c0.z + sz * t * 48 * V4_U); s.name = 'row' + si + '-' + k; scene.add(s); }
         }); }).catch(function(e){ console.warn('[reef] spokes failed:', e && e.message); });
       // HUB SPOKES: a walking deck from the hub out to each reef station (240 m, six 40 m segments per spoke)
-      _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene, H = _sites[0];
+      _gl.loadAsync('/assets/reef/reef-glass-bridge.glb').then(function(sg){ const segSrc = sg.scene, H = _sites[0];   // hub spokes are glass bridges too (one connection language)
         _sites.slice(1).forEach(function(st, si){ const dx = st.x - H.x, dz = st.z - H.z, n = 6;
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const w = _v4Water.waterHeightAt(H.x + dx * t, H.z + dz * t); s.position.set(H.x + dx * t, (w != null ? w : _wy0) + 4 * V4_U, H.z + dz * t); s.name = 'hub-spoke' + si + '-' + k; scene.add(s); } }); })
