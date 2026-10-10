@@ -545,7 +545,8 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           .catch(function(e){ console.warn('[reef] central tube station failed:', e && e.message); });
         console.log('[reef] tube line to the main station: ' + Math.round(TD / V4_U) + ' m, ' + tn + ' segments'); }
       // CENTRAL TOWER in the middle of the city: at the first station's origin, base on the water, rising ~100 m
-      _gl.loadAsync('/assets/reef/reef-tower.glb').then(function(tw){ const tower = tw.scene; tower.name = 'reef-tower'; tower.scale.setScalar(V4_U);
+      // OFF: the cone tower was placed in the middle of the sets. Kept as an asset for the city buildings later (?tower=1 shows it).
+      if(/[?&]tower=1\b/.test(location.search)) _gl.loadAsync('/assets/reef/reef-tower.glb').then(function(tw){ const tower = tw.scene; tower.name = 'reef-tower'; tower.scale.setScalar(V4_U);
         tower.position.set(_p0.x, _wy0, _p0.z); scene.add(tower); })
         .catch(function(e){ console.warn('[reef] tower GLB failed:', e && e.message); });
       // THE RING AROUND THE TOWER: homes (S, M, L), the water shop and the dome, each on a walking spoke from the tower (75 m out)
