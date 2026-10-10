@@ -589,6 +589,10 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const w = _v4Water.waterHeightAt(H.x + dx * t, H.z + dz * t); s.position.set(H.x + dx * t, (w != null ? w : _wy0) + 4 * V4_U, H.z + dz * t); s.name = 'hub-spoke' + si + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] hub spokes failed:', e && e.message); });
+      // MAIN CITY HUB at the centre (site 0): the black domes with gold rings, gold temple pavilions and white walkways
+      _gl.loadAsync('/assets/reef/reef-hub.glb').then(function(hb){ const hub = hb.scene; hub.name = 'reef-hub'; hub.scale.setScalar(V4_U);
+        const hw = _v4Water.waterHeightAt(_sites[0].x, _sites[0].z); hub.position.set(_sites[0].x, (hw != null ? hw : 0), _sites[0].z); scene.add(hub); })
+        .catch(function(e){ console.warn('[reef] hub GLB failed:', e && e.message); });
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
