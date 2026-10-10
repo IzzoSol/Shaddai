@@ -336,6 +336,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-zones.js?v=20261002a"></script>
 <script src="/world-footprints.js?v=20261002a"></script>
 <script src="/world-dodge.js?v=20261003a"></script>
+<script src="/world-reef.js?v=20261010a"></script>
 <script src="/world-lockon.js?v=20261009a"></script>
 <script src="/world-combat-music.js?v=20261009a"></script>
 <script src="/world-batch.js?v=20261003a"></script>
@@ -481,6 +482,18 @@ scene.fog = new THREE.FogExp2(0x070b1a, 0.0006);   // MAP v2: 5000u world â€�
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 6000);   // MAP v2: see distant realms + the mountain ring  // PERF: far 2000â†’1500. Nothing real lives past ~1300 (world half=380, starfieldâ‰¤900 from origin, skyDome now camera-follows at r=1400). Tighter far = better z-precision + culls the empty 1500-2000 band.
 camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY (not [0,2.2,26], which is now INSIDE the enlarged temple â€” that made the warm-up frame show "inside shaddai's temple")
 window.__w3dDebug = { scene, camera, renderer, THREE };
+// REEF STATION (?reef=1, off by default): world-reef.js on the existing ocean. Finds the first stretch of water by a coarse
+// grid search over the map, sits the station on it, and logs where it went. No second ocean: it reads _v4Water.
+(function bootReef(){ if(!/[?&]reef=1\b/.test(location.search)) return; let n = 0;
+  const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
+    if(!window.__loadPlayable || !window.WorldReef || !_v4Water || !_v4T) return; clearInterval(iv);
+    const at = (function(){ const R = 3600 * V4_U / 7 * 7; for(let r = 600; r <= R; r += 200){ for(let a = 0; a < 16; a++){ const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
+      if(_v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) return { x: x, z: z }; } } return null; })();
+    if(!at){ console.warn('[reef] no water found on the map grid'); return; }
+    window.__reef = window.WorldReef.create({ THREE: THREE, scene: scene, U: V4_U, x: at.x, z: at.z,
+      waterY: function(x, z){ return _v4Water.waterHeightAt(x, z); }, groundY: function(x, z){ return _v4T.heightAt(x, z); } });
+    console.log('[reef] station at x=' + Math.round(at.x) + ' z=' + Math.round(at.z) + ' draws=' + window.__reef.draws);
+  }, 250); })();
 // BACKGROUND SHADER COMPILE (after playable): streamed-in objects are hidden until compiled; this keeps compiling what is
 // visible-but-not-yet-compiled every 2.5 s for 90 s, so the render pass does not compile new programs mid-play. ?bgcompile=0 = off.
 (function bgCompile(){ if(/[?&]bgcompile=0\b/.test(location.search)) return; let n = 0;
