@@ -591,7 +591,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         .catch(function(e){ console.warn('[reef] hub spokes failed:', e && e.message); });
       // MAIN CITY HUB at the centre (site 0): the black domes with gold rings, gold temple pavilions and white walkways
       _gl.loadAsync('/assets/reef/reef-city-hub.glb').then(function(hb){ const hub = hb.scene; hub.name = 'reef-city-hub'; hub.scale.setScalar(V4_U);   // the focal city: 1.6x, its plaza at deck height (+4 m) so the walkways meet the spokes
-        const hw = _v4Water.waterHeightAt(_sites[0].x, _sites[0].z); hub.position.set(_sites[0].x, (hw != null ? hw : 0) + 4 * V4_U, _sites[0].z); scene.add(hub); })
+        const hw = _v4Water.waterHeightAt(_sites[0].x, _sites[0].z); hub.position.set(_sites[0].x, (hw != null ? hw : 0) + 4 * V4_U, _sites[0].z); scene.add(hub); window.__reefHubPos = _sites[0]; })
         .catch(function(e){ console.warn('[reef] hub GLB failed:', e && e.message); });
       // SET RING WALKWAYS: a walkway chord between each pair of neighbouring sets (N-E, E-S, S-W, W-N), so the four sets join each other and the hub
       _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
