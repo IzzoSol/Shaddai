@@ -494,11 +494,44 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
     // If it fails to load, the code-built station is used instead.
     const _gl = new GLTFLoader(), _dr = new DRACOLoader(); _dr.setDecoderPath('/vendor/three/addons/libs/draco/'); _gl.setDRACOLoader(_dr);
     const _wy = _v4Water.waterHeightAt(at.x, at.z);
+    // CITY: up to four stations on water, >= 600 m apart (the first site is the search hit above)
+    const _sites = [at];
+    (function(){ for(let r = 600; r <= 3600 && _sites.length < 4; r += 200){ for(let a = 0; a < 16 && _sites.length < 4; a++){
+      const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
+      if(_sites.every(function(s){ return Math.hypot(s.x - x, s.z - z) > 600 * V4_U; }) && _v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) _sites.push({ x: x, z: z }); } } })();
     const _fallback = function(){ window.__reef = window.WorldReef.create({ THREE: THREE, scene: scene, U: V4_U, x: at.x, z: at.z,
       waterY: function(x, z){ return _v4Water.waterHeightAt(x, z); }, groundY: function(x, z){ return _v4T.heightAt(x, z); } }); };
     _gl.loadAsync('/assets/reef/reef-station.glb').then(function(g){ const s = g.scene; s.name = 'reef-station-glb'; s.scale.setScalar(V4_U);
-      s.position.set(at.x, (_wy != null ? _wy : 0), at.z); scene.add(s); window.__reef = { group: s, draws: -1 };
-      console.log('[reef] Blender station at x=' + Math.round(at.x) + ' z=' + Math.round(at.z)); })
+      // one loaded GLB, cloned per site (shared geometry and materials)
+      window.__reefSites = _sites.map(function(p, i){ const c = g.scene.clone(true); c.name = 'reef-station-' + i; c.scale.setScalar(V4_U); c.rotation.y = i * 0.7;
+        const w = _v4Water.waterHeightAt(p.x, p.z); c.position.set(p.x, (w != null ? w : 0), p.z); scene.add(c); return c; });
+      // DOCK + SUBMERSIBLE: the dock runs along x, 70 m off the first station so it clears the pods; the sub floats beside it
+      const _p0 = _sites[0], _w0 = _v4Water.waterHeightAt(_p0.x, _p0.z), _wy0 = (_w0 != null ? _w0 : 0);
+      _gl.loadAsync('/assets/reef/reef-dock.glb').then(function(d){ const dk = d.scene; dk.name = 'reef-dock'; dk.scale.setScalar(V4_U);
+        dk.position.set(_p0.x - 22 * V4_U, _wy0, _p0.z + 70 * V4_U); scene.add(dk); })
+        .catch(function(e){ console.warn('[reef] dock GLB failed:', e && e.message); });
+      _gl.loadAsync('/assets/reef/reef-sub.glb').then(function(s){ const sb = s.scene; sb.name = 'reef-sub'; sb.scale.setScalar(V4_U);
+        sb.position.set(_p0.x, _wy0, _p0.z + 82 * V4_U); scene.add(sb); })
+        .catch(function(e){ console.warn('[reef] sub GLB failed:', e && e.message); });
+      // CONNECTORS: walkways at the first station's origin (pod north -> dock, pod south -> tube station)
+      _gl.loadAsync('/assets/reef/reef-walkways.glb').then(function(w){ const wk = w.scene; wk.name = 'reef-walkways'; wk.scale.setScalar(V4_U);
+        wk.position.set(_p0.x, _wy0, _p0.z); scene.add(wk); })
+        .catch(function(e){ console.warn('[reef] walkways GLB failed:', e && e.message); });
+      // INTERIOR + ELEVATOR (in pods D and E) and the UNDERWATER TUBE to the main train station (from the station's south side).
+      // Offsets match the Blender layout: the station origin is the water surface; decks are 4 m above it; the tube runs 6 m under.
+      const _ph = function(name, x, y, z){ _gl.loadAsync('/assets/reef/' + name).then(function(q){ const m = q.scene; m.name = name; m.scale.setScalar(V4_U); m.position.set(x, y, z); scene.add(m); })
+        .catch(function(e){ console.warn('[reef] ' + name + ' failed:', e && e.message); }); };
+      _ph('reef-interior.glb', _p0.x - 16 * V4_U, _wy0 + 4 * V4_U, _p0.z - 12 * V4_U);
+      _ph('reef-elevator.glb', _p0.x + 30 * V4_U, _wy0 + 4 * V4_U, _p0.z - 6 * V4_U);
+      _ph('reef-tube-station.glb', _p0.x + 2 * V4_U, _wy0, _p0.z - 60 * V4_U);
+      _ph('reef-tube.glb', _p0.x + 52 * V4_U, _wy0 - 6 * V4_U, _p0.z - 60 * V4_U);
+      // WALKING DECKS between the city stations: a 40 m segment chained along each straight line, deck 4 m above the water
+      _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
+        for(let i = 0; i + 1 < _sites.length; i++){ const A = _sites[i], B = _sites[i + 1], dx = B.x - A.x, dz = B.z - A.z, D = Math.hypot(dx, dz), n = Math.max(1, Math.floor(D / (40 * V4_U)));
+          for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz), s = segSrc.clone(true);
+            s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'reef-deck-' + i + '-' + k; scene.add(s); } } })
+        .catch(function(e){ console.warn('[reef] deck segments failed:', e && e.message); });
+      console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
 // BACKGROUND SHADER COMPILE (after playable): streamed-in objects are hidden until compiled; this keeps compiling what is
