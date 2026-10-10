@@ -579,14 +579,14 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
         _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), dx = c0.x - _sites[0].x, dz = c0.z - _sites[0].z, sx = Math.cos(a), sz = Math.sin(a);
           const nS = Math.ceil(Math.hypot(dx, dz) / (40 * V4_U));   // enough 40 m segments to cover the spoke with no gaps
-          for(let k = 0; k < nS; k++){ const t = (k + 0.5) / nS, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
+          for(let k = 0; k < 0; k++){   // OFF: replaced by continuous bridges (reefSpan) const t = (k + 0.5) / nS, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             s.position.set(_sites[0].x + dx * t, _wy0 + 4 * V4_U, _sites[0].z + dz * t); s.name = 'spoke' + si + '-' + k; scene.add(s); }
-          for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2 - 0.5, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-sz, sx);
+          for(let k = 0; k < 0; k++){ const t = (k + 0.5) / 2 - 0.5, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-sz, sx);
             s.position.set(c0.x + sx * t * 48 * V4_U, _wy0 + 4 * V4_U, c0.z + sz * t * 48 * V4_U); s.name = 'row' + si + '-' + k; scene.add(s); }
         }); }).catch(function(e){ console.warn('[reef] spokes failed:', e && e.message); });
       // HUB SPOKES: a walking deck from the hub out to each reef station (240 m, six 40 m segments per spoke)
       _gl.loadAsync('/assets/reef/reef-glass-bridge.glb').then(function(sg){ const segSrc = sg.scene, H = _sites[0];   // hub spokes are glass bridges too (one connection language)
-        _sites.slice(1).forEach(function(st, si){ const dx = st.x - H.x, dz = st.z - H.z, n = 6;
+        _sites.slice(1).forEach(function(st, si){ const dx = st.x - H.x, dz = st.z - H.z, n = 0;
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const w = _v4Water.waterHeightAt(H.x + dx * t, H.z + dz * t); s.position.set(H.x + dx * t, (w != null ? w : _wy0) + 4 * V4_U, H.z + dz * t); s.name = 'hub-spoke' + si + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] hub spokes failed:', e && e.message); });
@@ -600,7 +600,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         .catch(function(e){ console.warn('[reef] hub GLB failed:', e && e.message); });
       // SET RING WALKWAYS: a walkway chord between each pair of neighbouring sets (N-E, E-S, S-W, W-N), so the four sets join each other and the hub
       _gl.loadAsync('/assets/reef/reef-glass-bridge.glb').then(function(sg){ const segSrc = sg.scene;   // glass bridges join the sets (as in the connection references)
-        [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI), dx = B.x - A.x, dz = B.z - A.z, n = Math.ceil(Math.hypot(dx, dz) / (40 * V4_U));   // ring chords: enough segments, no gaps
+        [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI), dx = B.x - A.x, dz = B.z - A.z, n = 0;   // OFF: replaced by continuous bridges (reefSpan)
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'set-ring-' + pair[0] + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] set ring failed:', e && e.message); });
@@ -610,11 +610,30 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           _row.forEach(function(it){ const bx = c0.x + sx * it[1] * V4_U, bz = c0.z + sz * it[1] * V4_U, d = dsrc.clone(true);
             d.scale.setScalar(V4_U); d.position.set(bx + tx * 8 * V4_U, _wy0 + 4 * V4_U, bz + tz * 8 * V4_U); d.rotation.y = Math.atan2(-tx, -tz); d.name = 'door-' + si + '-' + it[0]; scene.add(d); }); }); })
         .catch(function(e){ console.warn('[reef] doors failed:', e && e.message); });
+      // CONTINUOUS BRIDGES: one bridge per connection, built to its exact length from start to end (no chained-segment gaps).
+      // Local +X runs along the bridge; the deck top is at y. The walkability registry reads each bridge's length from userData.
+      const _bdeck = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.45, roughness: 0.05 });
+      const _bglow = new THREE.MeshBasicMaterial({ color: 0x4fe3ff });
+      const _brail = new THREE.MeshStandardMaterial({ color: 0xf4f7fa, roughness: 0.35 });
+      let _bn = 0;
+      window.reefSpan = function(ax, az, bx, bz, y, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
+        const g = new THREE.Group(); g.name = name || ('span-' + (_bn++));
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(L, 0.5 * V4_U, 4 * V4_U), _bdeck); deck.position.y = -0.25 * V4_U; g.add(deck);
+        for(const s of [-1, 1]){ const strip = new THREE.Mesh(new THREE.BoxGeometry(L, 0.06 * V4_U, 0.12 * V4_U), _bglow); strip.position.set(0, 0.03 * V4_U, s * 1.98 * V4_U); g.add(strip);
+          const rail = new THREE.Mesh(new THREE.BoxGeometry(L, 1.0 * V4_U, 0.1 * V4_U), _brail); rail.position.set(0, 0.5 * V4_U, s * 2.0 * V4_U); g.add(rail); }
+        g.userData.len = L; g.position.set((ax + bx) / 2, y, (az + bz) / 2); g.rotation.y = Math.atan2(-dz, dx); scene.add(g); return g; };
+      const _ry = _wy0 + 4 * V4_U, _H = _sites[0];
+      _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);
+        reefSpan(_H.x, _H.z, c0.x, c0.z, _ry, 'spoke-' + si);                                  // hub -> set
+        reefSpan(c0.x - sx * 24 * V4_U, c0.z - sz * 24 * V4_U, c0.x + sx * 24 * V4_U, c0.z + sz * 24 * V4_U, _ry, 'row-' + si); }); // walkway along the row
+      [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair, i){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI);
+        reefSpan(A.x, A.z, B.x, B.z, _ry, 'set-ring-' + i); });                                  // set-to-set ring
+      _sites.slice(1).forEach(function(st, si){ reefSpan(_H.x, _H.z, st.x, st.z, _ry, 'span-st-' + si); });   // hub -> station
       // WALKABILITY (reef docs): every deck segment (hub spokes, set spokes, set ring, station spokes) is a walkable surface at its deck top.
       // The registry reads the placed segments and registers one surface function with the terrain's ride-extra hook (the race deck uses it too).
       (function reefWalk(){ let n = 0; const iv = setInterval(function(){ if(++n > 60){ clearInterval(iv); return; }
         if(!window.__loadPlayable || !_v4T || !_v4T.addRideExtra) return; clearInterval(iv);
-        const segs = []; scene.traverse(function(o){ if(/^(hub-spoke|spoke|row|set-ring)/.test(o.name || '')) segs.push({ x: o.position.x, z: o.position.z, rot: o.rotation.y, len: 40 * V4_U, w: 4 * V4_U, y: o.position.y }); });
+        const segs = []; scene.traverse(function(o){ if(/^(hub-spoke|spoke|row|set-ring|span-)/.test(o.name || '')) segs.push({ x: o.position.x, z: o.position.z, rot: o.rotation.y, len: (o.userData && o.userData.len) || 40 * V4_U, w: 4 * V4_U, y: o.position.y }); });
         // local frame: the segment's long axis is (cos rot, -sin rot) in (x, z); u along it, v across it
         const surf = function(x, z){ for(let i = 0; i < segs.length; i++){ const s = segs[i], dx = x - s.x, dz = z - s.z, c = Math.cos(s.rot), sn = Math.sin(s.rot);
           const u = dx * c - dz * sn, v = dx * sn + dz * c; if(Math.abs(u) <= s.len / 2 && Math.abs(v) <= s.w / 2) return s.y; } return null; };
