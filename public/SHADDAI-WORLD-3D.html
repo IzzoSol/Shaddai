@@ -569,7 +569,10 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);   // sideways unit vector along the row
         _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
           _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'set' + si + '-' + it[0]; m.scale.setScalar(V4_U); m.position.set(ox, _wy0 + 4 * V4_U, oz); m.rotation.y = a; scene.add(m); })
-            .catch(function(e){ console.warn('[reef] ' + it[0] + ' failed:', e && e.message); }); });
+            .catch(function(e){ console.warn('[reef] ' + it[0] + ' failed:', e && e.message); });
+          // the dome's INTERIOR (the living room from the reference: skylight, sunken sofa, glass walls) inside the dome
+          if(it[0] === 'reef-dome.glb') _gl.loadAsync('/assets/reef/reef-interior.glb').then(function(q){ const m = q.scene; m.name = 'set' + si + '-dome-interior'; m.scale.setScalar(V4_U); m.position.set(ox, _wy0 + 4 * V4_U, oz); m.rotation.y = a; scene.add(m); })
+            .catch(function(e){ console.warn('[reef] dome interior failed:', e && e.message); }); });
       });
       _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
         _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), dx = c0.x - _p0.x, dz = c0.z - _p0.z, sx = Math.cos(a), sz = Math.sin(a);
