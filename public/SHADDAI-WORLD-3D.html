@@ -638,6 +638,13 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _sites.slice(1).forEach(function(st, si){ _gl.loadAsync('/assets/reef/reef-int-lounge.glb').then(function(q){ const m = q.scene; m.name = 'lounge-' + si;
         m.scale.setScalar(V4_U); m.position.set(st.x, _wyAt(st.x, st.z) + 4 * V4_U, st.z); scene.add(m); })
         .catch(function(e){ console.warn('[reef] lounge failed:', e && e.message); }); });
+      // CENTRAL ELEVATOR at the hub (22 m off the spire): from the plaza deck down to an underwater stop for the train and the water ships
+      _gl.loadAsync('/assets/reef/reef-elevator.glb').then(function(e){ const el = e.scene; el.name = 'hub-elevator'; el.scale.setScalar(V4_U);
+        el.position.set(_sites[0].x + 22 * V4_U, _ry, _sites[0].z); scene.add(el); })
+        .catch(function(e){ console.warn('[reef] hub elevator failed:', e && e.message); });
+      _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(t){ const ts = t.scene; ts.name = 'hub-underwater-stop'; ts.scale.setScalar(V4_U);
+        ts.position.set(_sites[0].x + 22 * V4_U, _wyAt(_sites[0].x, _sites[0].z) - 8 * V4_U, _sites[0].z); scene.add(ts); })
+        .catch(function(e){ console.warn('[reef] hub underwater stop failed:', e && e.message); });
       // RAMPS: from the water up to the deck, on the outer side of each station and each set (so people can step onto the decks)
       const _rmp = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.5, roughness: 0.05 });
       window.reefRamp = function(ax, az, bx, bz, y0, y1, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
