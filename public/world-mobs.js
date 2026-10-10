@@ -140,7 +140,8 @@
     function hit(mob, dmg) {
       if (mob.dead) return false; mob.hp -= dmg; mob.flash = 0.1; st.hits++; setBar(mob); emit('hit', { type: mob.kind, name: TYPES[mob.kind].name, dmg: dmg, x: mob.x, y: hAt(mob.x, mob.z) + 2.4 * TYPES[mob.kind].scale * U, z: mob.z, killed: mob.hp <= 0, hp: Math.max(0, mob.hp), max: mob.max }); if (mob.state === 'idle' || mob.state === 'return') mob.state = 'chase';
       if (mob.hp <= 0) { var tp = TYPES[mob.kind], nt = night(), loot = Math.round((tp.loot[0] + Math.random() * (tp.loot[1] - tp.loot[0])) * (1 + 0.5 * nt)); mob.dead = true; mob.deadT = 0; mob.respawnAt = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000 + TUNE.respawnS * (1 - 0.25 * nt); st.kills++;
-        var info = { type: mob.kind, name: tp.name, sparks: loot, x: mob.x, z: mob.z, night: nt > 0.5, camp: mob.camp.id }; emit('kill', info); if (o.onKill) o.onKill(info); }
+        /* hx/hz = stable home id, matches the WorldLockOn target id */
+        var info = { type: mob.kind, name: tp.name, sparks: loot, x: mob.x, z: mob.z, hx: mob.hx, hz: mob.hz, night: nt > 0.5, camp: mob.camp.id }; emit('kill', info); if (o.onKill) o.onKill(info); }
       return true;
     }
     function cone(pos, fwd, reach, dmg, cosMin) { var n = 0, fl = Math.hypot(fwd.x, fwd.z) || 1, fx = fwd.x / fl, fz = fwd.z / fl;
