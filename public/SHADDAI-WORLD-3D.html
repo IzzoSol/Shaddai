@@ -578,7 +578,8 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       });
       _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
         _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), dx = c0.x - _sites[0].x, dz = c0.z - _sites[0].z, sx = Math.cos(a), sz = Math.sin(a);
-          for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
+          const nS = Math.ceil(Math.hypot(dx, dz) / (40 * V4_U));   // enough 40 m segments to cover the spoke with no gaps
+          for(let k = 0; k < nS; k++){ const t = (k + 0.5) / nS, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             s.position.set(_sites[0].x + dx * t, _wy0 + 4 * V4_U, _sites[0].z + dz * t); s.name = 'spoke' + si + '-' + k; scene.add(s); }
           for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2 - 0.5, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-sz, sx);
             s.position.set(c0.x + sx * t * 48 * V4_U, _wy0 + 4 * V4_U, c0.z + sz * t * 48 * V4_U); s.name = 'row' + si + '-' + k; scene.add(s); }
@@ -599,7 +600,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         .catch(function(e){ console.warn('[reef] hub GLB failed:', e && e.message); });
       // SET RING WALKWAYS: a walkway chord between each pair of neighbouring sets (N-E, E-S, S-W, W-N), so the four sets join each other and the hub
       _gl.loadAsync('/assets/reef/reef-glass-bridge.glb').then(function(sg){ const segSrc = sg.scene;   // glass bridges join the sets (as in the connection references)
-        [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI), dx = B.x - A.x, dz = B.z - A.z, n = 2;
+        [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI), dx = B.x - A.x, dz = B.z - A.z, n = Math.ceil(Math.hypot(dx, dz) / (40 * V4_U));   // ring chords: enough segments, no gaps
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'set-ring-' + pair[0] + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] set ring failed:', e && e.message); });
