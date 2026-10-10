@@ -18,8 +18,9 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   // 1 + 2: deck height along the centreline
   const deck = await p.evaluate(() => {
     const t = window.__raceTracks['quarter-loop'];
-    const pts = window.WorldRace.trackWorld('quarter-loop', window.__w3dDebug ? 1 : 1) || [];
-    const U = 7 / 1.8; const samp = [];
+    const U = 7 / 1.8;   // the world's units per metre (V4_U): trackWorld must be asked for the same units the deck uses
+    const pts = window.WorldRace.trackWorld('quarter-loop', U) || [];
+    const samp = [];
     for (let i = 0; i < pts.length; i += Math.max(1, Math.floor(pts.length / 40))) samp.push(pts[i]);
     const hits = samp.filter(p => t.surfaceAt(p.x, p.z) != null).length;
     return { built: !!t.surfaceAt, samples: samp.length, hits: hits, lengthM: t.lengthM };
