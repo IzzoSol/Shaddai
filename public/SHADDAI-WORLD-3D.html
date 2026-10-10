@@ -548,6 +548,18 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _gl.loadAsync('/assets/reef/reef-tower.glb').then(function(tw){ const tower = tw.scene; tower.name = 'reef-tower'; tower.scale.setScalar(V4_U);
         tower.position.set(_p0.x, _wy0, _p0.z); scene.add(tower); })
         .catch(function(e){ console.warn('[reef] tower GLB failed:', e && e.message); });
+      // THE RING AROUND THE TOWER: homes (S, M, L), the water shop and the dome, each on a walking spoke from the tower (75 m out)
+      const _ring = [['reef-home-S.glb', 0], ['reef-shop.glb', 72], ['reef-dome.glb', 144], ['reef-home-M.glb', 216], ['reef-home-L.glb', 288]];
+      _ring.forEach(function(it){ const a = it[1] / 180 * Math.PI, R = 75 * V4_U, x = _p0.x + Math.sin(a) * R, z = _p0.z - Math.cos(a) * R;
+        _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = it[0]; m.scale.setScalar(V4_U); m.position.set(x, _wy0 + 4 * V4_U, z); scene.add(m); })
+          .catch(function(e){ console.warn('[reef] ' + it[0] + ' failed:', e && e.message); });
+      });
+      // the spokes: deck segments from the tower's base out to each building
+      _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
+        _ring.forEach(function(it, si){ const a = it[1] / 180 * Math.PI, R = 75 * V4_U, ex = _p0.x + Math.sin(a) * R, ez = _p0.z - Math.cos(a) * R, dx = ex - _p0.x, dz = ez - _p0.z, n = 2;
+          for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, px = _p0.x + dx * t, pz = _p0.z + dz * t, s = segSrc.clone(true);
+            s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx); s.position.set(px, _wy0 + 4 * V4_U, pz); s.name = 'reef-spoke-' + si + '-' + k; scene.add(s); } }); })
+        .catch(function(e){ console.warn('[reef] spokes failed:', e && e.message); });
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
