@@ -549,7 +549,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         tower.position.set(_p0.x, _wy0, _p0.z); scene.add(tower); })
         .catch(function(e){ console.warn('[reef] tower GLB failed:', e && e.message); });
       // THE RING AROUND THE TOWER: homes (S, M, L), the water shop and the dome, each on a walking spoke from the tower (75 m out)
-      const _ring = [['reef-home-S.glb', 0], ['reef-shop.glb', 72], ['reef-dome.glb', 144], ['reef-home-M.glb', 216], ['reef-home-L.glb', 288]];
+      const _ring = [];   // superseded by the four sets below
       _ring.forEach(function(it){ const a = it[1] / 180 * Math.PI, R = 75 * V4_U, x = _p0.x + Math.sin(a) * R, z = _p0.z - Math.cos(a) * R;
         _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = it[0]; m.scale.setScalar(V4_U); m.position.set(x, _wy0 + 4 * V4_U, z); scene.add(m); })
           .catch(function(e){ console.warn('[reef] ' + it[0] + ' failed:', e && e.message); });
@@ -560,6 +560,23 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, px = _p0.x + dx * t, pz = _p0.z + dz * t, s = segSrc.clone(true);
             s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx); s.position.set(px, _wy0 + 4 * V4_U, pz); s.name = 'reef-spoke-' + si + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] spokes failed:', e && e.message); });
+      // FOUR SETS AROUND THE TOWER: each set is the five buildings (home S, shop, dome, home M, home L) in a row 75 m out on its
+      // own bearing (0, 90, 180, 270 deg). Each set gets one spoke from the tower and a 48 m walkway along its row.
+      const _sets = [0, 90, 180, 270];
+      const _row = [['reef-home-S.glb', -24], ['reef-shop.glb', -12], ['reef-dome.glb', 0], ['reef-home-M.glb', 12], ['reef-home-L.glb', 24]];   // metres sideways from the set centre
+      const _sp = function(a){ return { x: _p0.x + Math.sin(a) * 75 * V4_U, z: _p0.z - Math.cos(a) * 75 * V4_U }; };
+      _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);   // sideways unit vector along the row
+        _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
+          _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'set' + si + '-' + it[0]; m.scale.setScalar(V4_U); m.position.set(ox, _wy0 + 4 * V4_U, oz); m.rotation.y = a; scene.add(m); })
+            .catch(function(e){ console.warn('[reef] ' + it[0] + ' failed:', e && e.message); }); });
+      });
+      _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
+        _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), dx = c0.x - _p0.x, dz = c0.z - _p0.z, sx = Math.cos(a), sz = Math.sin(a);
+          for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
+            s.position.set(_p0.x + dx * t, _wy0 + 4 * V4_U, _p0.z + dz * t); s.name = 'spoke' + si + '-' + k; scene.add(s); }
+          for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2 - 0.5, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-sz, sx);
+            s.position.set(c0.x + sx * t * 48 * V4_U, _wy0 + 4 * V4_U, c0.z + sz * t * 48 * V4_U); s.name = 'row' + si + '-' + k; scene.add(s); }
+        }); }).catch(function(e){ console.warn('[reef] spokes failed:', e && e.message); });
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
