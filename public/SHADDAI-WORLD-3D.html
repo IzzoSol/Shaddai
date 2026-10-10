@@ -497,7 +497,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
     // CITY: up to four stations on water, >= 600 m apart (the first site is the search hit above)
     // LAYOUT: site 0 is the HUB (the main city). Four reef stations sit 240 m out on the four bearings, so their ~110 m footprints don't overlap.
     const _sites = [at];
-    [0, 90, 180, 270].forEach(function(deg){ const a = deg / 180 * Math.PI; _sites.push({ x: at.x + Math.sin(a) * 170 * V4_U, z: at.z - Math.cos(a) * 170 * V4_U }); });
+    [0, 90, 180, 270].forEach(function(deg){ const a = deg / 180 * Math.PI; _sites.push({ x: at.x + Math.sin(a) * 200 * V4_U, z: at.z - Math.cos(a) * 200 * V4_U }); });
     (function(){ for(let r = 600; r <= 3600 && false; r += 200){ for(let a = 0; a < 16 && _sites.length < 4; a++){
       const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
       if(_sites.every(function(s){ return Math.hypot(s.x - x, s.z - z) > 600 * V4_U; }) && _v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) _sites.push({ x: x, z: z }); } } })();
@@ -567,7 +567,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       // own bearing (0, 90, 180, 270 deg). Each set gets one spoke from the tower and a 48 m walkway along its row.
       const _sets = [0, 90, 180, 270];
       const _row = [['reef-home-M.glb', -12], ['reef-shop.glb', 0], ['reef-dome.glb', 12]];   // metres sideways from the set centre: three buildings per set
-      const _sp = function(a){ return { x: _sites[0].x + Math.sin(a) * 62 * V4_U, z: _sites[0].z - Math.cos(a) * 62 * V4_U }; };   // the sets ring the HUB at 100 m (clears the 1.6x hub)
+      const _sp = function(a){ return { x: _sites[0].x + Math.sin(a) * 92 * V4_U, z: _sites[0].z - Math.cos(a) * 92 * V4_U }; };   // the sets ring the HUB at 100 m (clears the 1.6x hub)
       _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);   // sideways unit vector along the row
         _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
           _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'set' + si + '-' + it[0]; m.scale.setScalar(V4_U); m.position.set(ox, _wy0 + 4 * V4_U, oz); m.rotation.y = a; scene.add(m); })
