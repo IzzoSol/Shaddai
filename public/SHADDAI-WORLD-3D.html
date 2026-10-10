@@ -495,18 +495,20 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
     const _gl = new GLTFLoader(), _dr = new DRACOLoader(); _dr.setDecoderPath('/vendor/three/addons/libs/draco/'); _gl.setDRACOLoader(_dr);
     const _wy = _v4Water.waterHeightAt(at.x, at.z);
     // CITY: up to four stations on water, >= 600 m apart (the first site is the search hit above)
+    // LAYOUT: site 0 is the HUB (the main city). Four reef stations sit 240 m out on the four bearings, so their ~110 m footprints don't overlap.
     const _sites = [at];
-    (function(){ for(let r = 600; r <= 3600 && _sites.length < 4; r += 200){ for(let a = 0; a < 16 && _sites.length < 4; a++){
+    [0, 90, 180, 270].forEach(function(deg){ const a = deg / 180 * Math.PI; _sites.push({ x: at.x + Math.sin(a) * 240 * V4_U, z: at.z - Math.cos(a) * 240 * V4_U }); });
+    (function(){ for(let r = 600; r <= 3600 && false; r += 200){ for(let a = 0; a < 16 && _sites.length < 4; a++){
       const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
       if(_sites.every(function(s){ return Math.hypot(s.x - x, s.z - z) > 600 * V4_U; }) && _v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) _sites.push({ x: x, z: z }); } } })();
     const _fallback = function(){ window.__reef = window.WorldReef.create({ THREE: THREE, scene: scene, U: V4_U, x: at.x, z: at.z,
       waterY: function(x, z){ return _v4Water.waterHeightAt(x, z); }, groundY: function(x, z){ return _v4T.heightAt(x, z); } }); };
     _gl.loadAsync('/assets/reef/reef-station.glb').then(function(g){ const s = g.scene; s.name = 'reef-station-glb'; s.scale.setScalar(V4_U);
       // one loaded GLB, cloned per site (shared geometry and materials)
-      window.__reefSites = _sites.map(function(p, i){ const c = g.scene.clone(true); c.name = 'reef-station-' + i; c.scale.setScalar(V4_U); c.rotation.y = i * 0.7;
+      window.__reefSites = _sites.slice(1).map(function(p, i){ const c = g.scene.clone(true); c.name = 'reef-station-' + i; c.scale.setScalar(V4_U); c.rotation.y = i * 0.7;
         const w = _v4Water.waterHeightAt(p.x, p.z); c.position.set(p.x, (w != null ? w : 0), p.z); scene.add(c); return c; });
       // DOCK + SUBMERSIBLE: the dock runs along x, 70 m off the first station so it clears the pods; the sub floats beside it
-      const _p0 = _sites[0], _w0 = _v4Water.waterHeightAt(_p0.x, _p0.z), _wy0 = (_w0 != null ? _w0 : 0);
+      const _p0 = _sites[1], _w0 = _v4Water.waterHeightAt(_p0.x, _p0.z), _wy0 = (_w0 != null ? _w0 : 0);   // _p0 = station 0 (bearing 0); the hub is _sites[0]
       _gl.loadAsync('/assets/reef/reef-dock.glb').then(function(d){ const dk = d.scene; dk.name = 'reef-dock'; dk.scale.setScalar(V4_U);
         dk.position.set(_p0.x - 22 * V4_U, _wy0, _p0.z + 70 * V4_U); scene.add(dk); })
         .catch(function(e){ console.warn('[reef] dock GLB failed:', e && e.message); });
@@ -527,7 +529,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _ph('reef-tube.glb', _p0.x + 52 * V4_U, _wy0 - 6 * V4_U, _p0.z - 60 * V4_U);
       // WALKING DECKS between the city stations: a 40 m segment chained along each straight line, deck 4 m above the water
       _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
-        for(let i = 0; i + 1 < _sites.length; i++){ const A = _sites[i], B = _sites[i + 1], dx = B.x - A.x, dz = B.z - A.z, D = Math.hypot(dx, dz), n = Math.max(1, Math.floor(D / (40 * V4_U)));
+        for(let i = 0; i + 1 < 0; i++){ const A = _sites[i], B = _sites[i + 1], dx = B.x - A.x, dz = B.z - A.z, D = Math.hypot(dx, dz), n = Math.max(1, Math.floor(D / (40 * V4_U)));   // OFF: stations connect to the HUB by spokes (below), not to each other
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz), s = segSrc.clone(true);
             s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'reef-deck-' + i + '-' + k; scene.add(s); } } })
         .catch(function(e){ console.warn('[reef] deck segments failed:', e && e.message); });
@@ -565,7 +567,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       // own bearing (0, 90, 180, 270 deg). Each set gets one spoke from the tower and a 48 m walkway along its row.
       const _sets = [0, 90, 180, 270];
       const _row = [['reef-home-M.glb', -12], ['reef-shop.glb', 0], ['reef-dome.glb', 12]];   // metres sideways from the set centre: three buildings per set
-      const _sp = function(a){ return { x: _p0.x + Math.sin(a) * 75 * V4_U, z: _p0.z - Math.cos(a) * 75 * V4_U }; };
+      const _sp = function(a){ return { x: _sites[0].x + Math.sin(a) * 75 * V4_U, z: _sites[0].z - Math.cos(a) * 75 * V4_U }; };   // the sets ring the HUB
       _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);   // sideways unit vector along the row
         _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
           _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'set' + si + '-' + it[0]; m.scale.setScalar(V4_U); m.position.set(ox, _wy0 + 4 * V4_U, oz); m.rotation.y = a; scene.add(m); })
@@ -575,12 +577,18 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
             .catch(function(e){ console.warn('[reef] dome interior failed:', e && e.message); }); });
       });
       _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
-        _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), dx = c0.x - _p0.x, dz = c0.z - _p0.z, sx = Math.cos(a), sz = Math.sin(a);
+        _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), dx = c0.x - _sites[0].x, dz = c0.z - _sites[0].z, sx = Math.cos(a), sz = Math.sin(a);
           for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
-            s.position.set(_p0.x + dx * t, _wy0 + 4 * V4_U, _p0.z + dz * t); s.name = 'spoke' + si + '-' + k; scene.add(s); }
+            s.position.set(_sites[0].x + dx * t, _wy0 + 4 * V4_U, _sites[0].z + dz * t); s.name = 'spoke' + si + '-' + k; scene.add(s); }
           for(let k = 0; k < 2; k++){ const t = (k + 0.5) / 2 - 0.5, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-sz, sx);
             s.position.set(c0.x + sx * t * 48 * V4_U, _wy0 + 4 * V4_U, c0.z + sz * t * 48 * V4_U); s.name = 'row' + si + '-' + k; scene.add(s); }
         }); }).catch(function(e){ console.warn('[reef] spokes failed:', e && e.message); });
+      // HUB SPOKES: a walking deck from the hub out to each reef station (240 m, six 40 m segments per spoke)
+      _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene, H = _sites[0];
+        _sites.slice(1).forEach(function(st, si){ const dx = st.x - H.x, dz = st.z - H.z, n = 6;
+          for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
+            const w = _v4Water.waterHeightAt(H.x + dx * t, H.z + dz * t); s.position.set(H.x + dx * t, (w != null ? w : _wy0) + 4 * V4_U, H.z + dz * t); s.name = 'hub-spoke' + si + '-' + k; scene.add(s); } }); })
+        .catch(function(e){ console.warn('[reef] hub spokes failed:', e && e.message); });
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
