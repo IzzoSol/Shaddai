@@ -544,6 +544,10 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           t2.rotation.y = Math.atan2(-tdz, tdx); t2.position.set(ex, _v4T.heightAt(ex, ez) + 1 * V4_U, ez); scene.add(t2); })
           .catch(function(e){ console.warn('[reef] central tube station failed:', e && e.message); });
         console.log('[reef] tube line to the main station: ' + Math.round(TD / V4_U) + ' m, ' + tn + ' segments'); }
+      // CENTRAL TOWER in the middle of the city: at the first station's origin, base on the water, rising ~100 m
+      _gl.loadAsync('/assets/reef/reef-tower.glb').then(function(tw){ const tower = tw.scene; tower.name = 'reef-tower'; tower.scale.setScalar(V4_U);
+        tower.position.set(_p0.x, _wy0, _p0.z); scene.add(tower); })
+        .catch(function(e){ console.warn('[reef] tower GLB failed:', e && e.message); });
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
