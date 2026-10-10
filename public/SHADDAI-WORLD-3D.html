@@ -564,7 +564,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       // FOUR SETS AROUND THE TOWER: each set is the five buildings (home S, shop, dome, home M, home L) in a row 75 m out on its
       // own bearing (0, 90, 180, 270 deg). Each set gets one spoke from the tower and a 48 m walkway along its row.
       const _sets = [0, 90, 180, 270];
-      const _row = [['reef-home-S.glb', -24], ['reef-shop.glb', -12], ['reef-dome.glb', 0], ['reef-home-M.glb', 12], ['reef-home-L.glb', 24]];   // metres sideways from the set centre
+      const _row = [['reef-home-M.glb', -12], ['reef-shop.glb', 0], ['reef-dome.glb', 12]];   // metres sideways from the set centre: three buildings per set
       const _sp = function(a){ return { x: _p0.x + Math.sin(a) * 75 * V4_U, z: _p0.z - Math.cos(a) * 75 * V4_U }; };
       _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);   // sideways unit vector along the row
         _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
