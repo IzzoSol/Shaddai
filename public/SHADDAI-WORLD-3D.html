@@ -662,6 +662,18 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           let best = null, bd = 1e9; shopAt.forEach(function(p){ const d = Math.hypot(playerPos.x - p.x, playerPos.z - p.z); if(d < bd){ bd = d; best = p; } });
           if(best && bd < 20 * V4_U){ open = best.si; draw(); } });
       })();
+      // HUB MISSION BOARD (placeholder for agent missions): press M near the hub to see the mission slots. Missions come from window.__hubMissions
+      (function reefHubBoard(){ const hub = _sites[0]; const panel = document.createElement('div'); panel.id = 'reefHubBoard';
+        panel.style.cssText = 'position:fixed;left:18px;top:90px;width:280px;z-index:70;background:rgba(6,8,11,.92);border:1px solid #00ff9c;color:#fff;font:13px system-ui,sans-serif;padding:12px;display:none;border-radius:8px';
+        document.body.appendChild(panel); let open = false;
+        function draw(){ panel.style.display = open ? 'block' : 'none'; if(!open) return; const list = window.__hubMissions || [];
+          panel.innerHTML = '<div style="color:#00ff9c;font-weight:700;letter-spacing:.12em">HUB MISSION BOARD</div>' +
+            (list.length ? list.map(function(m){ return '<div style="margin:6px 0">' + m.title + '</div>'; }).join('') :
+            '<div style="margin:8px 0;color:#aaa">No missions posted yet. Agents will post missions here.</div>') + '<div style="margin-top:8px;color:#888">M to close</div>'; }
+        addEventListener('keydown', function(e){ if(e.code !== 'KeyM' || e.repeat) return;
+          if(open){ open = false; draw(); return; }
+          if(Math.hypot(playerPos.x - hub.x, playerPos.z - hub.z) < 60 * V4_U){ open = true; draw(); } });
+      })();
       // RAMPS: from the water up to the deck, on the outer side of each station and each set (so people can step onto the decks)
       const _rmp = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.5, roughness: 0.05 });
       window.reefRamp = function(ax, az, bx, bz, y0, y1, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
