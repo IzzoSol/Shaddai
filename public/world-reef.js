@@ -47,6 +47,19 @@
     var deck = new THREE.Mesh(new THREE.BoxGeometry(DECK_M * U, DECK_T * U, DECK_M * U * 0.5), wood);
     deck.position.set(cx, baseY - 0.2 * DECK_T * U, cz); g.add(deck); draws++;
 
+    // Walkways: one InstancedMesh (one draw) — a raised plank from the centre pod out to each outer pod, as in the reference
+    var walkGeo = new THREE.BoxGeometry(1, 0.5 * U, 2.2 * U);
+    var walk = new THREE.InstancedMesh(walkGeo, wood, PODS.length - 1);
+    var wm = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), tp = new THREE.Vector3(), wn = 0;
+    for (var k = 1; k < PODS.length; k++) {
+      var ax = cx + PODS[k][0] * U, az = cz + PODS[k][1] * U, dx = ax - cx, dz = az - cz, len = Math.hypot(dx, dz);
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-dz, dx));   // local +X (the long axis) maps onto (dx, dz)
+      sc.set(len, 1, 1);   // X length (box is 1 wide along X before rotation)
+      tp.set((cx + ax) / 2, baseY + 0.25 * U, (cz + az) / 2);
+      wm.compose(tp, q, sc); walk.setMatrixAt(wn++, wm);
+    }
+    walk.count = wn; walk.instanceMatrix.needsUpdate = true; g.add(walk); draws++;
+
     // Gold rail: a tube along the deck's outer edge (rectangle, 4 segments)
     var hw = DECK_M * U / 2, hd = DECK_M * U * 0.25, y = baseY + 1.1 * U;
     var pts = [

@@ -20,7 +20,7 @@ t('builds the station group with the expected parts', () => {
 t('draw budget stays under 16 (5 pods + 5 glass bands + deck + rail + piles)', () => {
   const r = WorldReef.create({ THREE, scene: null, U, x: 0, z: 0, waterY: flatWater });
   assert.ok(r.draws <= 16, 'draws=' + r.draws);
-  assert.strictEqual(r.draws, 5 + 5 + 1 + 1 + 1, 'exact count');
+  assert.strictEqual(r.draws, 5 + 5 + 1 + 1 + 1 + 1, 'exact count (5 pods, 5 glass, deck, walkways, rail, piles)');
 });
 
 t('pods sit on the water surface plus their height offset, not underground', () => {
