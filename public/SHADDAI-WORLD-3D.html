@@ -629,6 +629,11 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair, i){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI);
         reefSpan(A.x, A.z, B.x, B.z, _ry, 'set-ring-' + i); });                                  // set-to-set ring
       _sites.slice(1).forEach(function(st, si){ reefSpan(_H.x, _H.z, st.x, st.z, _ry, 'span-st-' + si); });   // hub -> station
+      // INTERIORS: the home and the water shop in each set get their rooms (the same footprint as the exterior)
+      _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);
+        [['reef-int-home.glb', -12], ['reef-int-shop.glb', 0]].forEach(function(it){ _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'int-' + si + '-' + it[0];
+          m.scale.setScalar(V4_U); m.position.set(c0.x + sx * it[1] * V4_U, _ry, c0.z + sz * it[1] * V4_U); m.rotation.y = a; scene.add(m); })
+          .catch(function(e){ console.warn('[reef] interior ' + it[0] + ' failed:', e && e.message); }); }); });
       // RAMPS: from the water up to the deck, on the outer side of each station and each set (so people can step onto the decks)
       const _rmp = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.5, roughness: 0.05 });
       window.reefRamp = function(ax, az, bx, bz, y0, y1, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
