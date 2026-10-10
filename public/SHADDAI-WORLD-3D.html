@@ -531,6 +531,19 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz), s = segSrc.clone(true);
             s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'reef-deck-' + i + '-' + k; scene.add(s); } } })
         .catch(function(e){ console.warn('[reef] deck segments failed:', e && e.message); });
+      // UNDERWATER TRAIN LINE to the WORLD train: tube segments from the reef tube station's east end (22 m east of its origin)
+      // to the main station (WORLD_LAYOUT.stations[0].pos), 6 m under the water, or just under the ground on land. A tube station ends it.
+      const _cs = (window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations && window.WORLD_LAYOUT.stations[0]) ? window.WORLD_LAYOUT.stations[0].pos : null;
+      if(_cs){ const sx = _p0.x + 22 * V4_U, sz = _p0.z - 60 * V4_U, ex = _cs[0], ez = _cs[1], tdx = ex - sx, tdz = ez - sz, TD = Math.hypot(tdx, tdz), tn = Math.max(1, Math.ceil(TD / (60 * V4_U)));
+        _gl.loadAsync('/assets/reef/reef-tube.glb').then(function(tg){ const tsrc = tg.scene;
+          for(let k = 0; k < tn; k++){ const t = (k + 0.5) / tn, px = sx + tdx * t, pz = sz + tdz * t, w = _v4Water.waterHeightAt(px, pz), s = tsrc.clone(true);
+            const y = (w != null ? w - 6 * V4_U : _v4T.heightAt(px, pz) - 2 * V4_U);
+            s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-tdz, tdx); s.position.set(px, y, pz); s.name = 'reef-tube-' + k; scene.add(s); } })
+          .catch(function(e){ console.warn('[reef] tube line failed:', e && e.message); });
+        _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(ts){ const t2 = ts.scene; t2.name = 'central-tube-station'; t2.scale.setScalar(V4_U);
+          t2.rotation.y = Math.atan2(-tdz, tdx); t2.position.set(ex, _v4T.heightAt(ex, ez) + 1 * V4_U, ez); scene.add(t2); })
+          .catch(function(e){ console.warn('[reef] central tube station failed:', e && e.message); });
+        console.log('[reef] tube line to the main station: ' + Math.round(TD / V4_U) + ' m, ' + tn + ' segments'); }
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
