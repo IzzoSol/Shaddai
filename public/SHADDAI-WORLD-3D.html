@@ -599,6 +599,15 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'set-ring-' + pair[0] + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] set ring failed:', e && e.message); });
+      // WALKABILITY (reef docs): every deck segment (hub spokes, set spokes, set ring, station spokes) is a walkable surface at its deck top.
+      // The registry reads the placed segments and registers one surface function with the terrain's ride-extra hook (the race deck uses it too).
+      (function reefWalk(){ let n = 0; const iv = setInterval(function(){ if(++n > 60){ clearInterval(iv); return; }
+        if(!window.__loadPlayable || !_v4T || !_v4T.addRideExtra) return; clearInterval(iv);
+        const segs = []; scene.traverse(function(o){ if(/^(hub-spoke|spoke|row|set-ring)/.test(o.name || '')) segs.push({ x: o.position.x, z: o.position.z, rot: o.rotation.y, len: 40 * V4_U, w: 4 * V4_U, y: o.position.y }); });
+        // local frame: the segment's long axis is (cos rot, -sin rot) in (x, z); u along it, v across it
+        const surf = function(x, z){ for(let i = 0; i < segs.length; i++){ const s = segs[i], dx = x - s.x, dz = z - s.z, c = Math.cos(s.rot), sn = Math.sin(s.rot);
+          const u = dx * c - dz * sn, v = dx * sn + dz * c; if(Math.abs(u) <= s.len / 2 && Math.abs(v) <= s.w / 2) return s.y; } return null; };
+        _v4T.addRideExtra(surf); window.__reefDeckSegs = segs.length; console.log('[reef] walkable deck segments: ' + segs.length); }, 500); })();
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
