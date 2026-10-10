@@ -590,11 +590,15 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
             const w = _v4Water.waterHeightAt(H.x + dx * t, H.z + dz * t); s.position.set(H.x + dx * t, (w != null ? w : _wy0) + 4 * V4_U, H.z + dz * t); s.name = 'hub-spoke' + si + '-' + k; scene.add(s); } }); })
         .catch(function(e){ console.warn('[reef] hub spokes failed:', e && e.message); });
       // MAIN CITY HUB at the centre (site 0): the black domes with gold rings, gold temple pavilions and white walkways
+      // HUB ATRIUM: the interior (glass dome, spire core, teal pool, planters) sits inside the hub at its centre
+      _gl.loadAsync('/assets/reef/reef-atrium.glb').then(function(at2){ const atr = at2.scene; atr.name = 'reef-atrium'; atr.scale.setScalar(V4_U);
+        const aw = _v4Water.waterHeightAt(_sites[0].x, _sites[0].z); atr.position.set(_sites[0].x, (aw != null ? aw : 0) + 4 * V4_U, _sites[0].z); scene.add(atr); })
+        .catch(function(e){ console.warn('[reef] atrium failed:', e && e.message); });
       _gl.loadAsync('/assets/reef/reef-city-hub.glb').then(function(hb){ const hub = hb.scene; hub.name = 'reef-city-hub'; hub.scale.setScalar(V4_U);   // the focal city: 1.6x, its plaza at deck height (+4 m) so the walkways meet the spokes
         const hw = _v4Water.waterHeightAt(_sites[0].x, _sites[0].z); hub.position.set(_sites[0].x, (hw != null ? hw : 0) + 4 * V4_U, _sites[0].z); scene.add(hub); window.__reefHubPos = _sites[0]; })
         .catch(function(e){ console.warn('[reef] hub GLB failed:', e && e.message); });
       // SET RING WALKWAYS: a walkway chord between each pair of neighbouring sets (N-E, E-S, S-W, W-N), so the four sets join each other and the hub
-      _gl.loadAsync('/assets/reef/reef-deck-segment.glb').then(function(sg){ const segSrc = sg.scene;
+      _gl.loadAsync('/assets/reef/reef-glass-bridge.glb').then(function(sg){ const segSrc = sg.scene;   // glass bridges join the sets (as in the connection references)
         [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI), dx = B.x - A.x, dz = B.z - A.z, n = 2;
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, s = segSrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
             const px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'set-ring-' + pair[0] + '-' + k; scene.add(s); } }); })
