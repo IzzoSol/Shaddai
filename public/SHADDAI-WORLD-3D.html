@@ -645,6 +645,23 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(t){ const ts = t.scene; ts.name = 'hub-underwater-stop'; ts.scale.setScalar(V4_U);
         ts.position.set(_sites[0].x + 22 * V4_U, _wyAt(_sites[0].x, _sites[0].z) - 8 * V4_U, _sites[0].z); scene.add(ts); })
         .catch(function(e){ console.warn('[reef] hub underwater stop failed:', e && e.message); });
+      // WATER SHOP MENU: press E near a water shop (one per set) for its stock (WorldShops, Sparks in a closed loop)
+      (function reefShopUI(){ if(!window.WorldShops || !window.ShdSparks) return;
+        const shopAt = []; _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a); shopAt.push({ x: c0.x, z: c0.z, si: si }); });
+        const shops = {}; const panel = document.createElement('div'); panel.id = 'reefShopPanel';
+        panel.style.cssText = 'position:fixed;right:18px;top:90px;width:270px;max-height:60vh;overflow:auto;z-index:70;background:rgba(6,8,11,.92);border:1px solid #e8c45c;color:#fff;font:13px system-ui,sans-serif;padding:12px;display:none;border-radius:8px';
+        document.body.appendChild(panel); let open = null;
+        function shopFor(si){ if(!shops[si]) shops[si] = window.WorldShops.create({ key: 'reef-water-' + si, type: 'storefront', seed: si + 1 }); return shops[si]; }
+        function draw(){ if(open == null){ panel.style.display = 'none'; return; } const s = shopFor(open); panel.style.display = 'block';
+          panel.innerHTML = '<div style="color:#e8c45c;font-weight:700;letter-spacing:.12em">WATER SHOP ' + (open + 1) + '</div>' +
+            s.stock().map(function(it){ return '<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0"><span>' + it.name + '</span><button data-id="' + it.id + '" style="background:#00ff9c;color:#06080b;border:0;padding:3px 8px;border-radius:4px;cursor:pointer">' + it.price + ' Sparks</button></div>'; }).join('') +
+            '<div style="margin-top:8px;color:#888">E to close</div>';
+          panel.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ s.buy(b.dataset.id); draw(); }; }); }
+        addEventListener('keydown', function(e){ if(e.code !== 'KeyE' || e.repeat) return;
+          if(open != null){ open = null; draw(); return; }
+          let best = null, bd = 1e9; shopAt.forEach(function(p){ const d = Math.hypot(playerPos.x - p.x, playerPos.z - p.z); if(d < bd){ bd = d; best = p; } });
+          if(best && bd < 20 * V4_U){ open = best.si; draw(); } });
+      })();
       // RAMPS: from the water up to the deck, on the outer side of each station and each set (so people can step onto the decks)
       const _rmp = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.5, roughness: 0.05 });
       window.reefRamp = function(ax, az, bx, bz, y0, y1, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
