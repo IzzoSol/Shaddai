@@ -5633,6 +5633,13 @@ function animate(){
     if(_lt && _look && _look.init){ const _px = playerPos.x / V4_U, _pz = playerPos.z / V4_U, _want = Math.atan2(-(_lt.x - _px), -(_lt.z - _pz));   // look dir = (-sin yaw, -cos yaw)
       let _d = _want - _look.yaw; while(_d > Math.PI) _d -= 2*Math.PI; while(_d < -Math.PI) _d += 2*Math.PI;
       const _k = _d * (1 - Math.exp(-4 * Math.min(dt, 0.05))); _look.yaw += _k; _look.tYaw += _k; } }
+  // UNDERWATER LOOK (water terrain): camera below the water surface -> a deep-teal tint over the view (the fog is rewritten every frame
+  // by the sky and themes, so a full-screen tint is the reliable layer). Above the water it is off.
+  if(_v4Water){ const _wy = _v4Water.isWater(camera.position.x, camera.position.z) ? _v4Water.waterHeightAt(camera.position.x, camera.position.z) : null;
+    const _under = _wy != null && camera.position.y < _wy;
+    if(_under !== window.__uwOn){ window.__uwOn = _under; let _o = document.getElementById('uwOverlay');
+      if(!_o){ _o = document.createElement('div'); _o.id = 'uwOverlay'; _o.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:5;background:rgba(11,76,107,0.32);mix-blend-mode:multiply;display:none;transition:opacity .4s'; document.body.appendChild(_o); }
+      _o.style.display = _under ? 'block' : 'none'; } }
   if(window.__combatMusic) window.__combatMusic.update(dt);
   if(window.__crowd && !(_interiors && _interiors.isInside())){ try{ window.__crowd.update(dt); }catch(e){ console.warn('[crowd] disabled after error', e && e.message); window.__crowd = null; } }   // citizens
   if(window.__skateJam){ try{ window.__skateJam.update(dt); }catch(e){ console.warn('[skatejam] disabled after error', e && e.message); window.__skateJam = null; } }   // skate jam run + hoverboard HUD (speed lines, stamina)
