@@ -490,9 +490,16 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
     const at = (function(){ const R = 3600 * V4_U / 7 * 7; for(let r = 600; r <= R; r += 200){ for(let a = 0; a < 16; a++){ const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
       if(_v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) return { x: x, z: z }; } } return null; })();
     if(!at){ console.warn('[reef] no water found on the map grid'); return; }
-    window.__reef = window.WorldReef.create({ THREE: THREE, scene: scene, U: V4_U, x: at.x, z: at.z,
-      waterY: function(x, z){ return _v4Water.waterHeightAt(x, z); }, groundY: function(x, z){ return _v4T.heightAt(x, z); } });
-    console.log('[reef] station at x=' + Math.round(at.x) + ' z=' + Math.round(at.z) + ' draws=' + window.__reef.draws);
+    // Blender station (assets/reef/reef-station.glb, Draco, 7 meshes, metres): scaled to world units, sat on the water.
+    // If it fails to load, the code-built station is used instead.
+    const _gl = new GLTFLoader(), _dr = new DRACOLoader(); _dr.setDecoderPath('/vendor/three/addons/libs/draco/'); _gl.setDRACOLoader(_dr);
+    const _wy = _v4Water.waterHeightAt(at.x, at.z);
+    const _fallback = function(){ window.__reef = window.WorldReef.create({ THREE: THREE, scene: scene, U: V4_U, x: at.x, z: at.z,
+      waterY: function(x, z){ return _v4Water.waterHeightAt(x, z); }, groundY: function(x, z){ return _v4T.heightAt(x, z); } }); };
+    _gl.loadAsync('/assets/reef/reef-station.glb').then(function(g){ const s = g.scene; s.name = 'reef-station-glb'; s.scale.setScalar(V4_U);
+      s.position.set(at.x, (_wy != null ? _wy : 0), at.z); scene.add(s); window.__reef = { group: s, draws: -1 };
+      console.log('[reef] Blender station at x=' + Math.round(at.x) + ' z=' + Math.round(at.z)); })
+      .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
 // BACKGROUND SHADER COMPILE (after playable): streamed-in objects are hidden until compiled; this keeps compiling what is
 // visible-but-not-yet-compiled every 2.5 s for 90 s, so the render pass does not compile new programs mid-play. ?bgcompile=0 = off.
