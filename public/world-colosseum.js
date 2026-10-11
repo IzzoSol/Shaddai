@@ -147,13 +147,14 @@
       [-12, 0, 12].forEach(function (dx) { var d1 = new THREE.Mesh(doorG, doorM); d1.position.set(dx, 5.5 + 3.5, LOBBY_D / 2 + 0.35); lob.add(d1);
         var tr = new THREE.Mesh(new THREE.BoxGeometry(6, 2.4, 0.5), mats.star); tr.position.set(dx, 11 + 3.5 + 1.4, LOBBY_D / 2 + 0.4); lob.add(tr); });
       var star = new THREE.Mesh(new THREE.OctahedronGeometry(3.2, 0), mats.star); star.scale.set(1, 1.5, 0.35); star.position.set(0, LOBBY_H + 5, LOBBY_D / 2 + 6.5); lob.add(star);
+      var FORE = typeof location !== 'undefined' && /[?&]forecourt=1/.test(location.search || '');   // owner: stuff in front of the door is in the way - off by default
       // FORECOURT (2026-10-11): paved plaza in front of the stair, lamp posts, statue plinths, a fountain
-      var plz = new THREE.Mesh(new THREE.BoxGeometry(140, 0.3, 70), M(0x9d9484, { roughness: 0.9 })); plz.position.set(0, 0.1, LOBBY_D / 2 + 3 + 40); lob.add(plz);
+      var plz = new THREE.Mesh(new THREE.BoxGeometry(140, 0.3, 70), M(0x9d9484, { roughness: 0.9 })); plz.position.set(0, 0.1, LOBBY_D / 2 + 3 + 40); if (FORE) lob.add(plz);
       var lampG = new THREE.CylinderGeometry(0.5, 0.6, 9, 8), lampIM = new THREE.InstancedMesh(lampG, mats.trim, 16), lm = new THREE.Matrix4();
-      for (var li = 0; li < 16; li++) { var lxx = (li < 8 ? -1 : 1) * (46 + (li % 8) * 6); lm.setPosition(lxx, 4.5, LOBBY_D / 2 + 3 + 22); lampIM.setMatrixAt(li, lm); } lob.add(lampIM);
-      [-1, 1].forEach(function (sd) { var pl = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 3.5, 12), mats.dark); pl.position.set(sd * 34, 1.75, LOBBY_D / 2 + 3 + 14); lob.add(pl);
-        var sdn = new THREE.Mesh(new THREE.CapsuleGeometry(1.0, 6, 4, 10), mats.stone); sdn.position.set(sd * 34, 3.5 + 4, LOBBY_D / 2 + 3 + 14); lob.add(sdn); });
-      var fn = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.5, 1.2, 28), mats.star); fn.position.set(0, 0.7, LOBBY_D / 2 + 3 + 40); lob.add(fn);
+      for (var li = 0; li < 16; li++) { var lxx = (li < 8 ? -1 : 1) * (46 + (li % 8) * 6); lm.setPosition(lxx, 4.5, LOBBY_D / 2 + 3 + 22); lampIM.setMatrixAt(li, lm); } if (FORE) lob.add(lampIM);
+      [-1, 1].forEach(function (sd) { var pl = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 3.5, 12), mats.dark); pl.position.set(sd * 34, 1.75, LOBBY_D / 2 + 3 + 14); if (FORE) lob.add(pl);
+        var sdn = new THREE.Mesh(new THREE.CapsuleGeometry(1.0, 6, 4, 10), mats.stone); sdn.position.set(sd * 34, 3.5 + 4, LOBBY_D / 2 + 3 + 14); if (FORE) lob.add(sdn); });
+      var fn = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.5, 1.2, 28), mats.star); fn.position.set(0, 0.7, LOBBY_D / 2 + 3 + 40); if (FORE) lob.add(fn);
       // HOLOGRAPHIC STATUE CROWN on the cornice: 56 additive figures (one instanced draw)
       var holoM = new THREE.MeshBasicMaterial({ color: 0x4ad8ff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
       var crown = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.9, 8, 4, 8), holoM, 56), cm4 = new THREE.Matrix4(), cp = new THREE.Vector3(), cq = new THREE.Quaternion(), cs = new THREE.Vector3(1, 1, 1);
