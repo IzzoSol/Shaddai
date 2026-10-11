@@ -450,7 +450,7 @@ if(!window.__toast){ let _tt = null, _tm = 0; window.__toast = function(msg){ tr
     return L.call(this, url, function(g){ try{ g.scene.traverse(function(o){ if(!o.isMesh && !o.isSkinnedMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
         ms.forEach(function(m){ if(!m || !m.isMeshStandardMaterial) return; m.metalness = 0; if(m.roughness < 0.6) m.roughness = 0.8;
           if(!m.map && m.emissiveMap) m.map = m.emissiveMap;
-          if(m.map || m.emissiveMap){ if(!m.emissiveMap) m.emissiveMap = m.map; m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.55); }
+          if(m.map || m.emissiveMap){ if(!m.emissiveMap) m.emissiveMap = m.map; m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.8); }
           if(m.color && m.color.r + m.color.g + m.color.b < 0.3 && m.map) m.color.setRGB(1, 1, 1); m.needsUpdate = true; }); }); }catch(_){}
       if(onLoad) onLoad(g); }, onProgress, onError); }; })();
 (function textureDiet(){ if(/[?&]texdiet=0\b/.test(location.search)) return;
@@ -958,7 +958,7 @@ window.__worldBuilt = false;
       const _ocLoader = new GLTFLoader(__loadMgr);
       _ocLoader.setDRACOLoader(dracoLoader); _ocLoader.setMeshoptDecoder(MeshoptDecoder);
       if(!MAP_V4 && L && window.buildWorldOcean)     worldOcean      = window.buildWorldOcean({ THREE, scene, layout: L, loader: _ocLoader });   // v4: replaced by world-water.js
-      if(L && window.buildWorldVolcano)   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
+      if(L && window.buildWorldVolcano && /[?&]volcano=1/.test(location.search))   worldVolcano    = window.buildWorldVolcano({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(L && window.buildWorldRealmProps) worldRealmProps = window.buildWorldRealmProps({ THREE, scene, layout: L, loader: _ocLoader, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });
       if(!MAP_V4 && L && window.buildWorldLandmarks) worldLandmarks  = window.buildWorldLandmarks({ THREE, scene, layout: L, loader: _ocLoader });   // v4: skipped (no heightAt â†’ floats/buries on v4 ground)
       if(window.buildColosseumExterior) window.__colosseumExt = window.buildColosseumExterior(THREE, { scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // real-size Southern Colosseum on the map (lobby doors â†’ E â†’ arena)
@@ -4167,6 +4167,7 @@ window.setPlayerCharacter = function(code){
         if(hasTex && 'colorSpace' in mm.map) mm.map.colorSpace = THREE.SRGBColorSpace; // albedo must be sRGB or it renders washed/flat
         if(mm.color){ mm.color.set(0xffffff); if(!hasTex) mm.color.lerp(_pacc, 0.6); }  // textured: show real albedo; plain blob: tint to agent color
         if('emissiveIntensity' in mm) mm.emissiveIntensity = Math.min(mm.emissiveIntensity != null ? mm.emissiveIntensity : 0, 0.3);
+        if(hasTex && mm.emissive){ mm.emissive.setRGB(1,1,1); if(!mm.emissiveMap) mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.8; }   // 2026-10-11 owner: bodies render black - the painted map drives the glow so lights/normals can never black them out
         if('metalness' in mm) mm.metalness = Math.min(mm.metalness != null ? mm.metalness : 0.5, 0.15);
         if('roughness' in mm) mm.roughness = Math.max(mm.roughness != null ? mm.roughness : 0.5, 0.6);
         if('envMapIntensity' in mm) mm.envMapIntensity = 0.7;                           // IBL gives the body form

@@ -23,3 +23,6 @@ Not done yet: terrain look + floors polish (basic), texture audit, Colosseum ent
 - All 7 agent GLBs (SHADDAI, ZEROX, ORACLE, NEXUS, TURTLE, QUILL, PIKADON + VILLAIN) are tracked in git and present in public/assets/agents.
 - Colliders for the removed realm models (bld-*, homes-*, hero-* except hero-castle / hero-fortress) are no longer registered either (world-layout.js), so there are no invisible walls where they stood. `?realmbuildings=1` restores both model and collider.
 - Checked: all 19 loading-slide images and all 8 operative portraits/GLBs exist.
+- Emberfall / volcano structures (fortress, forge towers, bridges, ritual circle) are not built, their colliders and the FORTRESS door are dropped. Back with `?volcano=1`.
+- Links to /signals.html now point to /simple-signals.html (signals.html is a redirect stub; the old page is in git history).
+- Player body: the painted map now drives an 0.8 emissive so lights/normals can never render the agents black.

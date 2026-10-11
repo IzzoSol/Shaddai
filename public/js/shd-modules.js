@@ -282,7 +282,7 @@
        LAUNCH KIT  internal. Never belonged on a customer menu.
 
      PRO SIGNALS pointed at /pro-signals.html, which is the OLD page. The rebuilt
-     four-mode mobile one is /signals.html. A stale link to a superseded page is
+     four-mode mobile one is /simple-signals.html. A stale link to a superseded page is
      worse than a dead one, because it looks like it worked.
 
      The rule applied throughout: one idea per button, nothing that leads
@@ -321,12 +321,12 @@
       items: [
         /* Two honest surfaces, same live feed:
            SIMPLE (one-thumb, this entry) at /simple-signals.html and the full
-           desktop terminal at /signals.html (list/bubbles/heatmap/ranked,
+           desktop terminal at /simple-signals.html (list/bubbles/heatmap/ranked,
            tokenomics + hire ZEROX). */
         { id: 'pro', name: 'SIMPLE SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html',
           blurb: 'One-thumb signals — heatmap, calls, top 25 DEX, ZEROX paybox. Swipe it.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/tufish.html', blurb: 'Sentiment swimmer — scan coins & topics, the fish glows green/red (fal.ai visuals).' },
-        { id: 'swarm', name: 'SWARM',       accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html#swarm', blurb: 'MiroFish — the 7-agent swarm terminal, inside the Master Terminal (PIN 4444).' },
+        { id: 'swarm', name: 'SWARM',       accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html#swarm', blurb: 'MiroFish — the 7-agent swarm terminal, inside the Master Terminal (PIN 4444).' },
       ],
     },
     {

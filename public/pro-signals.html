@@ -6,7 +6,7 @@
 
    This terminal is 2,800 lines of desktop-first layout with three media
    queries — it was never built for a phone, and making it responsive properly
-   is a real job rather than a patch. /signals.html already IS that job: the
+   is a real job rather than a patch. /simple-signals.html already IS that job: the
    same feed, built thumb-first, with list, bubbles, heatmap and ranked.
 
    So rather than one compromised page, this is one DOOR: arrive here on a
@@ -23,7 +23,7 @@
     var forced = /[?&]full=1/.test(location.search);
     if (forced) { try { sessionStorage.setItem('shd_sig_full', '1'); } catch (e) {} return; }
     if (sessionStorage.getItem('shd_sig_full') === '1') return;
-    if (window.innerWidth < 820) location.replace('/signals.html');
+    if (window.innerWidth < 820) location.replace('/simple-signals.html');
   } catch (e) {}
 })();
 </script>
