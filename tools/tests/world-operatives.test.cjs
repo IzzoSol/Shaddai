@@ -1,8 +1,9 @@
 const vm = require('vm'), fs = require('fs');
 let ok = 0, bad = 0;
 function t(n, c) { c ? ok++ : (bad++, console.log('FAIL', n)); }
+// legacy rules (?basics=1&strict=1: bases visible, council agents priced) are tested first; the alpha defaults are asserted at the bottom
 const store = {}; let sparks = 0;
-const ctx = { console, localStorage: { getItem: k => store[k] || null, setItem: (k, v) => store[k] = v }, location: { search: '?basics=1&strict=1' },   // the legacy rules (bases visible, council agents priced); the alpha defaults are asserted at the bottom ShdSparks: { spend: n => { if (sparks < n) return false; sparks -= n; return true; } } };
+const ctx = { console, localStorage: { getItem: k => store[k] || null, setItem: (k, v) => store[k] = v }, location: { search: '?basics=1&strict=1' }, ShdSparks: { spend: n => { if (sparks < n) return false; sparks -= n; return true; } } };
 ctx.window = ctx; vm.createContext(ctx);
 vm.runInContext(fs.readFileSync('public/world-operatives.js', 'utf8'), ctx);
 const O = ctx.WorldOperatives, L = O.list();
