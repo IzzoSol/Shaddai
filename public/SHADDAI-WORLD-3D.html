@@ -441,6 +441,18 @@ if(!window.__toast){ let _tt = null, _tm = 0; window.__toast = function(msg){ tr
 // TEXTURE DIET (2026-10-11, owner: "stuck loading for minutes"): a measured tab sat at 2.2 GB on an 8 GB / HD 620 machine. 436 textures, a lot of 2048-4096 px PNG/JPG, each
 // uploaded as full RGBA + mips. Every colour/detail texture is now downscaled to at most `cap` px on its longest side BEFORE the first GPU upload (4x less memory per halving).
 // cap: 1024 default, ?tex=2048 for big GPUs, ?texdiet=0 off. Covers TextureLoader (props, terrain splat) and ImageBitmapLoader (GLB-embedded textures). Never touches DataTexture / compressed / cube.
+// AGENT BODY FIX (2026-10-11, owner: "the characters are coming up as black"): the painted agent GLBs ship metallic (no metallicFactor) with the colour baked in
+// base + emissive maps. Whenever the painted map fails to bind (or lights drop), they render black. Force matte + a visible emissive floor on every
+// /assets/agents/ and forge-models GLB the moment it parses. ?agentfix=0 = off.
+(function agentBodyFix(){ if(/[?&]agentfix=0/.test(location.search)) return; const L = GLTFLoader.prototype.load;
+  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){
+    if(!/\/assets\/(agents|forge-models|characters)\//.test(String(url))) return L.call(this, url, onLoad, onProgress, onError);
+    return L.call(this, url, function(g){ try{ g.scene.traverse(function(o){ if(!o.isMesh && !o.isSkinnedMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+        ms.forEach(function(m){ if(!m || !m.isMeshStandardMaterial) return; m.metalness = 0; if(m.roughness < 0.6) m.roughness = 0.8;
+          if(!m.map && m.emissiveMap) m.map = m.emissiveMap;
+          if(m.map || m.emissiveMap){ if(!m.emissiveMap) m.emissiveMap = m.map; m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.55); }
+          if(m.color && m.color.r + m.color.g + m.color.b < 0.3 && m.map) m.color.setRGB(1, 1, 1); m.needsUpdate = true; }); }); }catch(_){}
+      if(onLoad) onLoad(g); }, onProgress, onError); }; })();
 (function textureDiet(){ if(/[?&]texdiet=0\b/.test(location.search)) return;
   const m = /[?&]tex=(\d+)/.exec(location.search), cap = m ? Math.max(256, +m[1]) : 1024; window.__texCap = cap; let shrunk = 0, saved = 0;
   const fit = function(w, h){ const k = cap / Math.max(w, h); return k >= 1 ? null : [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))]; };
