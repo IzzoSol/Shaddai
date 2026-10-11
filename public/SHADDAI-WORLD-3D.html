@@ -5764,7 +5764,20 @@ window.__travel = {
         run.start(cid, { ranked: !!ranked, ais: 5 });
       };
       // RACE START with a chosen ride (world-race-select.js): kart-<type> = a rented hover car, anything else = hoverboard
-      window.__raceStart = function(cid, o){ o = o || {}; try{ const M = window.__mountRide, sp = run.startPose(cid); window.__raceKart = !!(o.vehicle && /^kart-/.test(o.vehicle));
+      // EXIT RACE / MODE (2026-10-11, owner: "I can't exit the race mode without restarting"): stops the run, drops the kart or board, puts you on foot where you are.
+      window.__raceExit = function(){ try{ try{ run.stop(); }catch(_){}
+        window.__freeRide = null; window.__raceKart = false; run.shipId = null; try{ run.setVehicle(null); }catch(_){}
+        const M = window.__mountRide; if(M){ try{ M.setRaceMode(false); }catch(_){} try{ if(M.isRiding()) M.dismount(true); }catch(_){} try{ M.stow(); }catch(_){} }
+        try{ if(hover.isRiding()) hover.dismount(); if(hover.hide) hover.hide(); }catch(_){}
+        window.__raceActive = false; const b = document.getElementById('raceExitBtn'); if(b) b.remove();
+        if(window.Navi && window.Navi.toast) window.Navi.toast('Left the race - you are on foot'); return true; }catch(e){ console.warn('[race-exit]', e && e.message); return false; } };
+      (function raceExitBtn(){ setInterval(function(){ const on = !!window.__raceActive, b = document.getElementById('raceExitBtn');
+        if(on && !b){ const e = document.createElement('button'); e.id = 'raceExitBtn'; e.textContent = 'EXIT RACE  [Backspace]';
+          e.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:9800;padding:8px 18px;border-radius:10px;border:1px solid #ff5f5f;background:rgba(40,8,8,.88);color:#ffb0b0;font:900 12px Orbitron,sans-serif;letter-spacing:.15em;cursor:pointer';
+          e.addEventListener('click', function(){ window.__raceExit(); }); document.body.appendChild(e); }
+        else if(!on && b) b.remove(); }, 500);
+        addEventListener('keydown', function(e){ if(e.code === 'Backspace' && window.__raceActive && !/input|textarea/i.test((document.activeElement||{}).tagName||'')){ e.preventDefault(); window.__raceExit(); } }, true); })();
+      window.__raceStart = function(cid, o){ o = o || {}; try{ const M = window.__mountRide, sp = run.startPose(cid); window.__raceKart = !!(o.vehicle && /^kart-/.test(o.vehicle)); window.__raceActive = true;
         if(window.__raceKart){ if(!M) return false; if(hover.isRiding()) hover.dismount(); if(hover.hide) hover.hide(); if(!M.rentRace(o.vehicle, sp.x, sp.z, sp.yaw || 0)) return false; run.setVehicle(M.raceAdapter); run.shipId = String(o.vehicle).replace(/^kart-/, ''); }
         else { run.shipId = null; if(M){ if(M.isRiding()) M.dismount(); M.setRaceMode(false); } run.setVehicle(null); playerPos.x = sp.x; playerPos.z = sp.z; if(!hover.isRiding() && typeof playerAvatar !== 'undefined') hover.toggle(playerAvatar, {}); if(o.style && hover.setStyle) hover.setStyle(o.style); }
         if(o.free){ window.__freeRide = { cid: cid, t: 0, fallT: 0 }; window.__wireEdges(); if(window.Navi && window.Navi.toast) window.Navi.toast('Free ride: the whole track is yours. Open I > Races any time to start a race.'); return true; }   // no race state: just placed on the start line, mounted
