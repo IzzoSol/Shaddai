@@ -38,6 +38,8 @@
       el.textContent = 'tier ' + s.quality + '  lights ' + s.lights + '  (keys 1-5 force, 0 auto)\n' + 'FPS ' + s.fps + '  frame ' + s.frameMs + ' ms (p95 ' + s.p95Ms + ', jank ±' + s.jankMs + ')\n' +
         'draw calls ' + calls + (calls > 500 ? '  ⚠ >500' : '') + '  tris ' + (tris / 1000).toFixed(0) + 'k\n' +
         'geo ' + s.geometries + '  tex ' + s.textures + '  shaders ' + s.programs + (mem != null ? '  heap ' + mem + ' MB' : '') + '\n' +
+        'cpu: sim ' + (window.__perfSplit ? window.__perfSplit.simMs : '?') + ' ms  render-submit ' + (window.__perfSplit ? window.__perfSplit.renderCpuMs : '?') + ' ms  (frame > both = GPU bound)' + '
+' +
         'quality ' + s.quality;
       acc = 0; frames = 0;
     }

@@ -5822,6 +5822,7 @@ function animate(){
     _ldBegin('first-frame'); requestAnimationFrame(function(){ _ldEnd('first-frame'); if(window.__loadPlayableAt == null) window.__loadPlayableAt = performance.now(); });
   }
   _animFrame++;
+  const _pt0 = _perfOn ? performance.now() : 0;   // ?perf=1: CPU split (sim vs render submit)
   const _rawDt=Math.min(0.05, clock.getDelta());   // always read the clock so a thaw never jumps
   const dt=(window.__devkit && window.__devkit.frozen) ? 0 : _rawDt;   // devkit F8: freeze the sim, keep rendering
   // PERF LIGHT POOL: three shades every lit pixel against EVERY visible light (was 38-40, mostly small accent lights scattered over the
@@ -6508,7 +6509,9 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   }
   if(window.__speedFx && !window.__speedFxOff) window.__speedFx.update(dt);
   if(window.__vfx) window.__vfx.update(dt);   // also keeps the shared soft-point size uniform (viewport height) current
+  const _pt1 = _perfOn ? performance.now() : 0;
   composer.render();
+  if(_perfOn){ const _pt2 = performance.now(); window.__perfSplit = { simMs: +(_pt1 - _pt0).toFixed(1), renderCpuMs: +(_pt2 - _pt1).toFixed(1) }; }
   window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }
 animate();
