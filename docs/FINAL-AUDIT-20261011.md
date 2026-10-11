@@ -15,7 +15,7 @@ Everything visual: Colosseum exterior, academy exterior/props, city variety, par
 
 ## Open (ordered)
 1. One measured boot: `node tools/_boot-smoke.cjs "?time=0.5"`, then `?reef=1`, `?waterways=1`, a Meridian start; then fix the top cost.
-2. Per-element dragon look (tint / wing / spike variants from the element sheet); new meshes only if wanted.
+2. Dragons: CORRECTION 2026-10-11, the per-element look already exists (`world-dragons.js` ELEMENTS palette body/belly/membrane/glow, shader tint on the rigged GLB, 7 element FX styles; `docs/DRAGON-ELEMENTS.md`, tests 24 + 11 + 11 green). Only wing / spike SHAPE variants per element would be new work.
 3. Waterfront plots: game integration (place buildings / sell through the plot system; markers only so far).
 4. Forest + Void realms: no checklist items found open in `WORLD-COMPLETION-PLAN.md` beyond skeleton packs / lava castle; need the owner's list.
 5. Colosseum stages 7+ (understage, agent floor, server arena routes); return pads in the seven halls; billboards.
