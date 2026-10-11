@@ -46,7 +46,7 @@
   // 24 promenade kiosks (module scope so hLocal can make them solid — still the ONE collision source)
   var KIOSK_D = LOW1 + 3.6, KIOSKS = (function () {
     var out = [], a = A + KIOSK_D, b = B + KIOSK_D;
-    for (var i = 0; i < 24; i++) { var t = (i + 0.5) / 24 * Math.PI * 2, x = a * Math.cos(t), z = b * Math.sin(t), nx = x / (a * a), nz = z / (b * b), nl = Math.hypot(nx, nz); nx /= nl; nz /= nl; out.push({ id: i, x: x, z: z, nx: nx, nz: nz, yaw: Math.atan2(-nx, -nz) }); }
+    for (var i = 0; i < 24; i++) { var t = (i + 0.5) / 24 * Math.PI * 2; if (Math.abs(t - Math.PI / 2) < 0.75) continue; /* owner 2026-10-11: shops sat in front of the door - the lobby arc stays clear */ var x = a * Math.cos(t), z = b * Math.sin(t), nx = x / (a * a), nz = z / (b * b), nl = Math.hypot(nx, nz); nx /= nl; nz /= nl; out.push({ id: i, x: x, z: z, nx: nx, nz: nz, yaw: Math.atan2(-nx, -nz) }); }
     return out;
   })();
   window.COLOSSEUM_KIOSKS = KIOSKS;
