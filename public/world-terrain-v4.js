@@ -200,7 +200,7 @@
     var LEAF_SPACING = opts.leafSpacing || Math.max(2, CELL * 0.5);   // ½ px: vertices land on + between samples
     var ROOT = 2 * HALF, MAX_LEVEL = 0;
     while (MAX_LEVEL < 12 && ROOT / Math.pow(2, MAX_LEVEL) / G > LEAF_SPACING * 1.001) MAX_LEVEL++;
-    var DETAIL_TILE = opts.detailTile || 8 * PM;   // 8 m per detail repeat
+    var DETAIL_TILE = opts.detailTile || 5 * PM;   // 8 m per detail repeat
 
     // ── shared material ──────────────────────────────────────────────────────────────────────────────────────
     var colorTex = hm.colorTex;
@@ -213,7 +213,7 @@
     detail.channel = 1;   // WHY channel 1: normal map tiles on the 'uv1' attribute (world/DETAIL_TILE); colour on 'uv' (0..1 footprint)
     var material = new THREE.MeshStandardMaterial({
       map: colorTex || null, color: colorTex ? 0xffffff : 0x7a8a6a,
-      normalMap: detail, normalScale: new THREE.Vector2(0.55, 0.55),
+      normalMap: detail, normalScale: new THREE.Vector2(0.85, 0.85),
       roughness: 0.94, metalness: 0.0,
     });
     material.name = 'terrain-v4';
