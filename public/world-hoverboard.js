@@ -558,6 +558,7 @@ window.buildWorldHoverboard = function (opts) {
     tune: TUNE,
     mount: mount,
     dismount: dismount,
+    hide: function () { if (!s.riding) board.visible = false; },   // 2026-10-11: race karts hide the parked board (owner: a board she can't ride shows up in race mode)
     toggle: function (avatar, o) { if (s.riding) dismount(); else mount(avatar, o); return s.riding; },
     isRiding: function () { return s.riding; },
     isActive: function () { return s.riding || s.w > 0; },          // still fading the rider off
