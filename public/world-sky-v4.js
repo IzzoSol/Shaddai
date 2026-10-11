@@ -276,8 +276,9 @@
       nightExposure: opts.nightExposure != null ? opts.nightExposure : 0.8, moonIllum: 1
     };
     var dayLenMin = url.daylen || opts.dayLengthMin || 24;
-    var time = url.time != null ? url.time : (opts.startTime != null ? opts.startTime : 0.35);
-    var dayIndex = 0, paused = false;
+    var time = url.time != null ? url.time : (opts.startTime != null ? opts.startTime : 0.46);
+    var _q = (typeof location !== 'undefined' && location.search) || '';
+    var dayIndex = 0, paused = !/[?&]skyclock=1/.test(_q);   // 2026-10-11 owner: no sky clock for now - a fixed clear day (?skyclock=1 restores the cycle)
     var moonDays = opts.moonCycleDays || 8, moonStart = opts.moonPhaseStart != null ? opts.moonPhaseStart : 0.5;
     var fog = opts.fog !== undefined ? opts.fog : scene.fog;
     var baseFogDensity = fog && fog.density != null ? fog.density : 0.000055;
@@ -316,7 +317,7 @@
       uEmeraldCol: { value: new THREE.Color(0x00ff9c) },
       uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uMoonDir: { value: new THREE.Vector3(0, -1, 0) }, uSunColor: { value: new THREE.Vector3(1, 1, 1) },
       uTime: { value: 0 }, uWarm: { value: 0 }, uEmerald: { value: 0 }, uStars: { value: 0 }, uSunVis: { value: 1 }, uMoonVis: { value: 0 },
-      uMoonPhase: { value: Math.PI }, uCloudCover: { value: opts.cloudCover != null ? opts.cloudCover : 0.42 }, uCloudOct: { value: 4 },
+      uMoonPhase: { value: Math.PI }, uCloudCover: { value: opts.cloudCover != null ? opts.cloudCover : (typeof location !== 'undefined' && /[?&]clouds=1/.test(location.search) ? 0.42 : 0.0) }, uCloudOct: { value: 4 },
       uStars2: { value: 1 }, uSunSize: { value: opts.sunSize || 0.022 }, uMoonSize: { value: opts.moonSize || 0.03 },
       uWind: { value: new THREE.Vector2(opts.windX != null ? opts.windX : 0.004, opts.windZ != null ? opts.windZ : 0.0015) },
       uStarRot: { value: new THREE.Matrix3() }
