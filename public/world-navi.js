@@ -212,7 +212,7 @@
       act: function (id, a) {
         var it = S.inventory.filter(function (x) { return x.id === id; })[0]; if (!it) return;
         if (a === 'equip' && /^op:/.test(id)) { if (window.setPlayerCharacter) { window.setPlayerCharacter(id.slice(3)); toast('Switching to ' + it.name + '...'); } return; }
-        if (a === 'equip' && /^mt:/.test(id)) { var R = window.__mountRide, mid = id.slice(3); if (R) { if (S.flags.mountedId === id) { R.stow(); S.flags.mountedId = null; } else { R.summon(mid); S.flags.mountedId = id; } } return; }
+        if (a === 'equip' && /^mt:/.test(id)) { var R = window.__mountRide, mid = id.slice(3); if (R) { if (S.flags.mountedId === id) { R.stow(); S.flags.mountedId = null; } else { R.summon(mid, true); S.flags.mountedId = id; } } return; }
         if (a === 'equip' && /^it:/.test(id)) { toast('Use this at an office, the farm or the exchange.'); return; }
         if (a === 'equip') {
           it.equipped = !it.equipped;

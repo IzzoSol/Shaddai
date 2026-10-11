@@ -54,18 +54,18 @@
 
     function load(id, done) {
       if (cache[id]) return done(cache[id]);
-      var d = Mo.def(id) || kartDef(id); if (!d) return;
+      var d = Mo.def(id) || kartDef(id); if (!d) { toast('Unknown ride: ' + id); return; }
       if (!d.model && d.procedural === 'skiff') { var sk = buildSkiff(); sk.scale.setScalar(U); cache[id] = { scene: sk, anims: [], def: d, proc: true }; return done(cache[id]); }   // authored in metres -> world units
       if (!d.model && d.procedural && d.procedural.indexOf('car:') === 0 && root.WorldHoverCars) { var dye = root.ShdInv && root.ShdInv.perk('dye'), cg = root.WorldHoverCars.buildGroup(THREE, d.procedural.slice(4), dye ? parseInt(String(dye).replace('#', ''), 16) : undefined);   /* Turtle dye tints the body */
        cg.scale.setScalar(U); cache[id] = { scene: cg, anims: [], def: d, proc: true }; return done(cache[id]); }
-      if (!d.model) return;
+      if (!d.model) { toast(d.name + ' has no model yet'); return; }
       loader.load(d.model, function (g) {
         var root3 = g.scene, box = new THREE.Box3().setFromObject(root3), sz = new THREE.Vector3(); box.getSize(sz);
         var f = feelOf(id), k = f.tall * U / Math.max(sz.y, 0.001);
         root3.scale.multiplyScalar(k); root3.position.y -= box.min.y * k;   // feet on the ground
         root3.traverse(function (n) { if (n.isMesh || n.isSkinnedMesh) { n.frustumCulled = false; n.castShadow = false; } });
         cache[id] = { scene: root3, anims: g.animations || [], def: d }; done(cache[id]);
-      }, undefined, function (e) { console.warn('[mount-ride] load failed', id, e && e.message); });
+      }, undefined, function (e) { console.warn('[mount-ride] load failed', id, e && e.message); toast('Could not load ' + (d.name || id) + ' - try again'); });
     }
     function buildSkiff() {   // code-built hover ship: hull, canopy, wings, twin thrusters + underglow (Shaddai gold/cyan), ~1.5 m tall, +z forward
       var g = new THREE.Group(), hull = new THREE.MeshStandardMaterial({ color: 0x141a22, metalness: 0.85, roughness: 0.3, emissive: 0x0a2a30, emissiveIntensity: 0.6 }),
@@ -82,7 +82,7 @@
       var stripe = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 2.2), neon); stripe.position.set(0, 0.86, 0); g.add(stripe);
       return g;
     }
-    function show(id, x, z, yaw) {
+    function show(id, x, z, yaw, auto) {
       load(id, function (c) {
         while (holder.children.length) holder.remove(holder.children[0]);
         holder.add(c.scene); cur = id; M.def = feelOf(id); M.fl = !!(c.def.flying && M.def.fly);
@@ -90,18 +90,18 @@
         mixer = new THREE.AnimationMixer(c.scene); acts = {};
         c.anims.forEach(function (a) { acts[a.name] = mixer.clipAction(a); });
         saddleNode = null; c.scene.traverse(function (n) { if (n.name === (c.def.saddle || 'saddle')) saddleNode = n; });
-        holder.visible = true; lastAnim = ''; play('idle', 0);
+        holder.visible = true; lastAnim = ''; play('idle', 0); if (auto) mount();
       });
     }
     function play(name, fade) {
       var want = (name === 'idle' && !acts.idle) ? null : name; if (want === lastAnim) return; lastAnim = want;
       Object.keys(acts).forEach(function (k) { var a = acts[k]; if (k === want) { a.enabled = true; a.reset().fadeIn(fade == null ? 0.25 : fade).play(); } else if (a.isRunning()) a.fadeOut(fade == null ? 0.25 : fade); });
     }
-    function summon(id) {
+    function summon(id, auto) {
       if (!Mo || !Mo.has(id)) { toast('You do not own that mount'); return false; }
-      var s = Mo.summon(id); if (!s || s.kind !== 'mount') { toast('Boards are ridden with B'); return false; }
+      var s = Mo.summon(id); if (!s || s.kind !== 'mount') { toast('Boards are ridden with O'); return false; }
       var yaw = playerPos.__yaw != null ? playerPos.__yaw : 0, fx = Math.sin(yaw), fz = Math.cos(yaw);
-      show(id, playerPos.x + fx * TUNE.summonDist * U, playerPos.z + fz * TUNE.summonDist * U, yaw + Math.PI); toast(s.id + ' summoned - E to mount'); return true;
+      show(id, playerPos.x + fx * TUNE.summonDist * U, playerPos.z + fz * TUNE.summonDist * U, yaw + Math.PI, auto); toast(s.id + (auto ? ' summoned - E to dismount' : ' summoned - E to mount')); return true;
     }
     function stow() { if (st.riding) return; holder.visible = false; cur = null; }
     function near() { return !!cur && holder.visible && Math.hypot(M.x - playerPos.x, M.z - playerPos.z) < TUNE.mountRange * U; }
@@ -213,7 +213,7 @@
         else if (a === 'travel') { var tr = root.__travel && root.__travel[id] && root.__travel[id](); toast(tr ? 'Traveled: ' + tr : 'Not ready yet'); panel(); }
         else if (a === 'bbuy') { var rb = root.WorldBots.buy(id, o.spend || function (n, k, i) { return root.ShdSparks ? root.ShdSparks.spend(n, k, i) : false; }); toast(rb.ok ? 'Bought ' + rb.def.name + ' for ' + rb.paid : rb.why); panel(true); }
         else if (a === 'bcall') { try { root.WorldBots.call(id); toast('Calling ' + id); } catch (e) { toast('Could not call'); } panel(); }
-        else if (a === 'go') { summon(id); panel(); } else if (a === 'stow') { stow(); panel(); }
+        else if (a === 'go') { if (st.riding) dismount(); summon(id, true); panel(); } else if (a === 'stow') { stow(); panel(); }
       });
     }
     function key(e) {

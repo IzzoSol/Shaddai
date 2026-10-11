@@ -449,7 +449,7 @@ if(!window.__toast){ let _tt = null, _tm = 0; window.__toast = function(msg){ tr
     return TL.call(this, url, function(tex){ try{ const im = tex.image, w = im && (im.naturalWidth || im.width), h = im && (im.naturalHeight || im.height), d = w && h ? fit(w, h) : null;
       if(d && im.getContext === undefined){ const c = document.createElement('canvas'); c.width = d[0]; c.height = d[1]; c.getContext('2d').drawImage(im, 0, 0, d[0], d[1]); tex.image = c; tex.needsUpdate = true; shrunk++; saved += (w * h - d[0] * d[1]) * 4; } }catch(_){}
       if(onLoad) onLoad(tex); }, onProgress, onError); };
-  if(THREE.ImageBitmapLoader){ const IB = THREE.ImageBitmapLoader.prototype.load;
+  if(THREE.ImageBitmapLoader && /[?&]bmdiet=1/.test(location.search)){ const IB = THREE.ImageBitmapLoader.prototype.load;   // opt-in: GLB mounts/characters load untouched by default
     THREE.ImageBitmapLoader.prototype.load = function(url, onLoad, onProgress, onError){
       return IB.call(this, url, function(bm){ try{ const d = fit(bm.width, bm.height); if(d && typeof createImageBitmap === 'function'){ createImageBitmap(bm, { resizeWidth: d[0], resizeHeight: d[1], resizeQuality: 'medium' }).then(function(nb){ shrunk++; saved += (bm.width * bm.height - d[0] * d[1]) * 4; try{ bm.close(); }catch(_){} if(onLoad) onLoad(nb); }, function(){ if(onLoad) onLoad(bm); }); return; } }catch(_){}
         if(onLoad) onLoad(bm); }, onProgress, onError); }; }
@@ -5166,6 +5166,7 @@ try{
         return h;
       },
       colliders: window.buildPlayerController.worldColliders(window),
+      tune: /[?&]slow=1/.test(location.search) ? {} : { walk: 4.4, run: 9.5, sprint: 17, staminaSeconds: 14 },   // 2026-10-11 owner: "walking is very slow" - the world is ~6 km, so alpha runs 9.5 m/s / sprints 17 (?slow=1 = old 6.5 / 9.5)
       waterHeightAt: MAP_V4 ? function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; } : function(){ return 0.05; },
     });
   }

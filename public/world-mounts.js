@@ -27,6 +27,8 @@
   var byId = {}; CATALOG.forEach(function (c) { byId[c.id] = c; });
   var S = (function () { try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && j.owned) return j; } catch (e) { } return { owned: [], lost: [] }; })();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+  // ALPHA (2026-10-11, owner: "the mounts don't appear (sky hawk)"): every mount and board is owned from the start; `?strict=1` restores the Sparks stores.
+  if (typeof location !== 'undefined' && !/[?&]strict=1/.test(location.search || '')) { CATALOG.forEach(function (c) { if (!has(c.id) && S.lost.indexOf(c.id) < 0) S.owned.push({ id: c.id, at: Date.now(), hp: 100 }); }); }
   function has(id) { return S.owned.some(function (o) { return o.id === id; }); }
   function storesAt(station) { return CATALOG.filter(function (c) { return c.store.indexOf(station) >= 0; }); }
   function replaceCost(id) { var c = byId[id]; if (!c) return 0; return S.lost.indexOf(id) >= 0 ? Math.round(c.price * (1 - TUNE.rebuyDiscount)) : c.price; }
