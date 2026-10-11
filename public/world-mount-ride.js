@@ -103,6 +103,12 @@
       var yaw = playerPos.__yaw != null ? playerPos.__yaw : 0, fx = Math.sin(yaw), fz = Math.cos(yaw);
       show(id, playerPos.x + fx * TUNE.summonDist * U, playerPos.z + fz * TUNE.summonDist * U, yaw + Math.PI, auto); toast(s.id + (auto ? ' summoned - E to dismount' : ' summoned - E to mount')); return true;
     }
+    function summonKart(id) {   // free-roam ships / hover cars (2026-10-11 owner: "the ships aren't showing up" - they were race-select only)
+      var kd = kartDef(id); if (!kd) { toast('Unknown ship'); return false; }
+      if (st.riding) dismount();
+      var yaw = playerPos.__yaw != null ? playerPos.__yaw : 0, fx = Math.sin(yaw), fz = Math.cos(yaw);
+      show(id, playerPos.x + fx * TUNE.summonDist * U, playerPos.z + fz * TUNE.summonDist * U, yaw + Math.PI, true); toast('Boarding ' + kd.name + ' - E to get out'); return true;
+    }
     function stow() { if (st.riding) return; holder.visible = false; cur = null; }
     function near() { return !!cur && holder.visible && Math.hypot(M.x - playerPos.x, M.z - playerPos.z) < TUNE.mountRange * U; }
     function mount() {
@@ -180,6 +186,9 @@
         [['maglev', 'Maglev station'], ['park', 'Hoverskate park'], ['colosseum', 'Colosseum'], ['grid', 'The Grid']].forEach(function (t) { h += '<button data-a="travel" data-id="' + t[0] + '" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:4px 9px;cursor:pointer">' + t[1] + '</button>'; }); h += '</div>'; }
       h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">HOVERBOARDS <small style="opacity:.6;font-weight:400">tricks, flight, Skate Jam</small></div>';
       Mo.CATALOG.filter(function (c) { return c.kind === 'board'; }).forEach(function (c) { var own = Mo.has(c.id); h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #1d2a26"><span>' + c.name + (c.flying ? ' &#9992;' : '') + '<br><small style="opacity:.6">' + (own ? 'owned' : Mo.replaceCost(c.id) + ' Sparks') + '</small></span><button data-id="' + c.id + '" data-a="' + (own ? 'ride' : 'buy') + '" style="background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 10px;cursor:pointer">' + (own ? 'Ride' : 'Buy') + '</button></div>'; });
+      var HC0 = root.WorldHoverCars;
+      if (HC0 && HC0.TYPES && HC0.TYPES.length) { h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">SHIPS &amp; CARS <small style="opacity:.6;font-weight:400">free to drive</small></div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+        HC0.TYPES.forEach(function (t) { h += '<button data-a="kart" data-id="kart-' + t.id + '" style="background:#0d1a16;color:#27e0ff;border:1px solid #27e0ff;border-radius:8px;padding:4px 9px;cursor:pointer">' + (t.name || t.id) + '</button>'; }); h += '</div>'; }
       if (root.__skateJam) h += '<div style="margin-top:6px"><button data-a="jam" style="background:#1a1608;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:5px 11px;cursor:pointer">Skate Jam (trick game)</button></div>';
       var bs = 'background:#0d1a16;color:#00ff9c;border:1px solid #00ff9c;border-radius:8px;padding:5px 11px;cursor:pointer';
       if (root.WorldArcade || root.WorldFarm || root.WorldQuests || root.WorldGear) h += '<div style="font-weight:700;color:#e8c45c;margin:10px 0 4px">ARCADE &amp; FARM</div><div style="display:flex;gap:6px;flex-wrap:wrap">' + (root.WorldArcade ? ['slots|Slots', 'hl|Higher-Lower', 'dash|Hover Dash'].map(function (x) { var q = x.split('|'); return '<button data-a="arcade" data-id="' + q[0] + '" style="' + bs + '">' + q[1] + '</button>'; }).join('') : '') + (root.WorldGear ? '<button data-a="gear" style="background:#0d1a16;color:#ff7a8a;border:1px solid #ff7a8a;border-radius:8px;padding:5px 11px;cursor:pointer">Armory</button>' : '') + (root.WorldQuests ? '<button data-a="quests" style="background:#0d1a16;color:#e8c45c;border:1px solid #e8c45c;border-radius:8px;padding:5px 11px;cursor:pointer">Quest board</button>' : '') + (root.WorldFarm ? '<button data-a="farm" data-id="farm" style="background:#0d1a16;color:#34e5b0;border:1px solid #34e5b0;border-radius:8px;padding:5px 11px;cursor:pointer">Farm beds</button>' : '') + '</div>';
@@ -199,6 +208,7 @@
         var t = e.target; if (t.id === 'msx') { panel(); return; } var a = t.getAttribute && t.getAttribute('data-a'); if (!a) return; var id = t.getAttribute('data-id');
         if (a === 'buy') { var r = Mo.buy(id, o.spend || function (n, k, i) { return root.ShdSparks ? root.ShdSparks.spend(n, k, i) : false; }); toast(r.ok ? 'Bought ' + r.item.name + ' for ' + r.paid : r.why); panel(true); }
         else if (a === 'ride') { var bd = Mo.def(id); var okR = root.__rideBoard && root.__rideBoard(bd && bd.style); toast(okR ? 'Riding ' + (bd ? bd.name : 'board') + ' - Space hop, hold Space to fly, Shift boost' : 'Could not mount the board'); panel(); }
+        else if (a === 'kart') { summonKart(id); panel(); }
         else if (a === 'arcade') { panel(); if (root.WorldArcade) root.WorldArcade.open(id); }
         else if (a === 'naval') { panel(); if (root.__naval) root.__naval.open(); }
         else if (a === 'gear') { panel(); if (root.WorldGear) root.WorldGear.open(); }
@@ -233,7 +243,7 @@
       /* rentRace(id, x, z, yaw): put a RENTED kart on the grid and ride it (no ownership needed - race selection screen karts are free to pick) */
       rentRace: function (id, x, z, yaw) { var d = Mo.def(id) || kartDef(id); if (!d) return false; if (st.riding) dismount(); show(id, x, z, yaw); if (!cur) return false; M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; playerPos.x = x; playerPos.z = z; st.riding = true; st.id = id; CAM.init = false; raceMode = true; return true; },
       placeAt: function (x, z, yaw, keepSpeed) { M.x = x; M.z = z; M.yaw = yaw; if (!keepSpeed) M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; },
-      update: update, isRiding: function () { return st.riding; }, mount: mount, dismount: dismount, summon: summon, stow: stow, panel: panel, near: near,
+      update: update, isRiding: function () { return st.riding; }, mount: mount, dismount: dismount, summon: summon, summonKart: summonKart, stow: stow, panel: panel, near: near,
       seatKind: function () { return /^(car-|kart-)|^skiff$/.test(String(cur || '')) ? 'seat' : 'saddle'; },   /* cars, karts and the skiff are SAT IN; beasts are straddled */
       saddle: function () { return SAD; }, camera: function () { return CAM; }, tune: TUNE, boosting: function () { return st.boosting; }, stamina: function () { return 1; },
       state: function () { return { riding: st.riding, id: cur, x: M.x, y: M.y, z: M.z, yaw: M.yaw, sp: M.sp / U, flying: M.fl, visible: holder.visible }; },

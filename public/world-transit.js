@@ -259,6 +259,7 @@
     addEventListener('keydown', function (e) {
       if (e.code !== 'KeyE' || e.repeat) return;
       if (riding && riding.walk) { e.stopImmediatePropagation(); e.preventDefault(); sitToggle(); return; }   // aboard: E = sit / stand (the ONLY key the ride takes)
+      if (ui && ui.isConnected === false) ui = null;   // another module tore the menu down: never leave the line dead
       if (riding || ui) return;
       var P = window.__w3dDebug && window.__w3dDebug.playerPos; if (!P) return;
       var I = window.__w3dDebug.interiors; if (I && I.isInside && I.isInside()) return;
@@ -371,7 +372,7 @@
           if (rw.phase === 'board') {
             doorsTo(rw.tr, 1, dt);
             if (inside()) rw.inT += dt;
-            if (rw.inT > 1.5 || rw.t > 30) {   // aboard (or the 30 s all-aboard): doors shut, depart
+            if (rw.inT > 1.5 || rw.t > 7) {   // aboard (or the 7 s all-aboard - alpha: nobody should stand on a platform wondering if the train works): doors shut, depart
               if (!inside()) { if (window.__toast) window.__toast('🚄 All aboard!'); ab.z = nearestDoorZ(rw.side); ab.x = 0; ab.y = WALK.cabin.floorY; }
               else if (Math.abs(ab.x) > WALK.cabin.halfW - 0.3) ab.x = (ab.x > 0 ? 1 : -1) * (WALK.cabin.halfW - 0.3);
               rw.phase = 'run'; rw.t = 0;
