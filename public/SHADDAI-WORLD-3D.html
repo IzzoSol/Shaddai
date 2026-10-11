@@ -1008,7 +1008,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race â€” Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      (window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261011a')).then(function(){
+      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261011a'); }).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
           onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m Â· lod1 <900 Â· block lod2 <2600

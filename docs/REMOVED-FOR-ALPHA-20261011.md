@@ -17,3 +17,7 @@
 | Run 9.5 / sprint 17 m/s | feel | `?slow=1` = old 6.5 / 9.5 |
 
 Not done yet: terrain look + floors polish (basic), texture audit, Colosseum entrance on the far side, MODES > Colosseum black screen (needs console log).
+
+## Track clearance (final pass)
+- 570 of 4,183 city-fabric pieces that overlapped any Meridian / quarter-loop deck are dropped (`public/assets/world/track-clear-v4.json`, generated from `docs/track-*.json`; footprint + 10 m). `?trackclear=0` restores them. Regenerate the JSON after changing a circuit.
+- All 7 agent GLBs (SHADDAI, ZEROX, ORACLE, NEXUS, TURTLE, QUILL, PIKADON + VILLAIN) are tracked in git and present in public/assets/agents.

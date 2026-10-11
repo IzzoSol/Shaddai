@@ -122,6 +122,9 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       // 2026-10-11 (owner: "so many office buildings that don't appear and are janky"): thin the dense city fabric to ~60% by a stable hash of position;
       // fewer instances = fewer cells to rebuild and less popping. ?fullcity=1 restores every piece.
       if (/grid-fabric/.test(String(url)) && plan.items.length > 300 && !(typeof location !== 'undefined' && /[?&]fullcity=1/.test(location.search))) plan.items = plan.items.filter(function (it) { var h = Math.abs(Math.sin(it.x_m * 12.9898 + it.y_m * 78.233) * 43758.5453) % 1; return h < 0.3; });
+      // 2026-10-11: buildings may not sit on a race deck - the keys come from tools/ (docs/track-*.json vs the fabric). ?trackclear=0 disables.
+      var _tc = (typeof location !== 'undefined' && /[?&]trackclear=0/.test(location.search)) ? null : window.__trackClear;
+      if (_tc && /grid-fabric/.test(String(url))) plan.items = plan.items.filter(function (it) { return !_tc[it.x_m + ',' + it.y_m]; });
       var byKey = {};
       plan.items.forEach(function (it) { (byKey[it.key] = byKey[it.key] || []).push(it); });
       var keys = Object.keys(byKey); st.types = keys.length; st.items = plan.items.length;
