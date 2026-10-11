@@ -674,6 +674,18 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           if(open){ open = false; draw(); return; }
           if(Math.hypot(playerPos.x - hub.x, playerPos.z - hub.z) < 60 * V4_U){ open = true; draw(); } });
       })();
+      // WATER FERRY: runs back and forth between the hub and station 0, 8 m off the walkway, bobbing on the water
+      (function reefFerry(){ const H = _sites[0], S = _sites[1]; let ferry = null;
+        _gl.loadAsync('/assets/reef/reef-ferry.glb').then(function(f){ ferry = f.scene; ferry.name = 'reef-ferry'; ferry.scale.setScalar(V4_U); scene.add(ferry); })
+          .catch(function(e){ console.warn('[reef] ferry failed:', e && e.message); });
+        const L = Math.hypot(S.x - H.x, S.z - H.z), ux = (S.x - H.x) / L, uz = (S.z - H.z) / L, px = -uz, pz = ux, SPEED = 6 * V4_U, END = 30 * V4_U;
+        let s = END, dir = 1, t0 = performance.now();
+        (function tick(){ requestAnimationFrame(tick); if(!ferry) return;
+          const now = performance.now(), dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
+          s += dir * SPEED * dt; if(s > L - END){ dir = -1; s = L - END; } if(s < END){ dir = 1; s = END; }
+          const x = H.x + ux * s + px * 8 * V4_U, z = H.z + uz * s + pz * 8 * V4_U;
+          ferry.position.set(x, _wyAt(x, z) + Math.sin(now / 600) * 0.2 * V4_U, z);
+          ferry.rotation.y = Math.atan2(-(dir * uz), dir * ux); })(); })();
       // RAMPS: from the water up to the deck, on the outer side of each station and each set (so people can step onto the decks)
       const _rmp = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.5, roughness: 0.05 });
       window.reefRamp = function(ax, az, bx, bz, y0, y1, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
