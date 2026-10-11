@@ -191,7 +191,7 @@
     var out = [], WO = window.WorldOperatives, WM = window.WorldMounts, IV = window.ShdInv, cur = window._playerCharacter;
     if (WO) WO.list().forEach(function (o) { if (o.owned) out.push({ id: 'op:' + o.code, cat: 'Skins', name: o.name, rarity: o.base ? 'Base operative' : 'Council operative', power: o.base ? 8 : Math.round(o.price / 100), tradable: false, equipped: cur === o.code, img: o.portrait }); });
     if (WM) WM.owned().forEach(function (m) { var d = WM.def(m.id); if (d) out.push({ id: 'mt:' + m.id, cat: 'Mounts', name: d.name, rarity: d.flying ? 'Flying · hp ' + m.hp : 'hp ' + m.hp, power: Math.round((d.price || 0) / 100), tradable: false, equipped: S.flags.mountedId === 'mt:' + m.id }); });
-    if (IV) { var all = IV.all(); Object.keys(all).forEach(function (k) { var crop = /^crop-/.test(k); out.push({ id: 'it:' + k, cat: crop ? 'Consumables' : 'Gear', name: k.replace(/^crop-/, '').replace(/-/g, ' ').replace(/\w/g, function (c) { return c.toUpperCase(); }) + ' x' + all[k], rarity: crop ? 'Harvest' : 'Kit', power: 0, tradable: false, equipped: false }); }); }
+    if (IV) { var all = IV.all(); Object.keys(all).forEach(function (k) { var crop = /^crop-/.test(k); out.push({ id: 'it:' + k, cat: crop ? 'Consumables' : 'Gear', name: k.replace(/^crop-/, '').replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + ' x' + all[k], rarity: crop ? 'Harvest' : 'Kit', power: 0, tradable: false, equipped: false }); }); }
     return out;
   }
   M.inv = function () {

@@ -441,7 +441,7 @@ if(!window.__toast){ let _tt = null, _tm = 0; window.__toast = function(msg){ tr
 // TEXTURE DIET (2026-10-11, owner: "stuck loading for minutes"): a measured tab sat at 2.2 GB on an 8 GB / HD 620 machine. 436 textures, a lot of 2048-4096 px PNG/JPG, each
 // uploaded as full RGBA + mips. Every colour/detail texture is now downscaled to at most `cap` px on its longest side BEFORE the first GPU upload (4x less memory per halving).
 // cap: 1024 default, ?tex=2048 for big GPUs, ?texdiet=0 off. Covers TextureLoader (props, terrain splat) and ImageBitmapLoader (GLB-embedded textures). Never touches DataTexture / compressed / cube.
-(function textureDiet(){ if(/[?&]texdiet=0/.test(location.search)) return;
+(function textureDiet(){ if(/[?&]texdiet=0\b/.test(location.search)) return;
   const m = /[?&]tex=(\d+)/.exec(location.search), cap = m ? Math.max(256, +m[1]) : 1024; window.__texCap = cap; let shrunk = 0, saved = 0;
   const fit = function(w, h){ const k = cap / Math.max(w, h); return k >= 1 ? null : [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))]; };
   const TL = THREE.TextureLoader.prototype.load;
@@ -972,7 +972,7 @@ window.__worldBuilt = false;
   // MAP v4: load terrain â†’ water, THEN the heightAt-dependent realm modules + buildings (below).
   window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261009c'))
     .then(()=> _loadScript('/world-water.js?v=20260925v4a'))
-    .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
+    .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
       _v4T = api; _v4Meta = api.meta || null; window.__w3dDebug.terrainV4 = api;
       try{ _v4Water = _buildV4Water(api); window.__w3dDebug.waterV4 = _v4Water; }catch(e){ console.warn('[map-v4] water build failed:', e && e.message); }
@@ -2231,7 +2231,7 @@ const gridBike = (function(){
 // Tron grid floor (two layers)
 const g1 = new THREE.GridHelper(600, 120, 0x27e0ff, 0x0c4654); g1.material.transparent=true; g1.material.opacity=.5;
 const g2 = new THREE.GridHelper(600, 600, 0x06303a, 0x06303a); g2.material.transparent=true; g2.material.opacity=.22; g2.position.y=-0.02;
-if(/[?&]grid=1/.test(location.search)){ scene.add(g1); scene.add(g2); }   // 2026-10-11: the two Tron GridHelpers (a 120x120 and a 600x600 line grid at the origin) were an early debug-look leftover drawn every frame; opt-in with ?grid=1
+if(/[?&]grid=1\b/.test(location.search)){ scene.add(g1); scene.add(g2); }   // 2026-10-11: the two Tron GridHelpers (a 120x120 and a 600x600 line grid at the origin) were an early debug-look leftover drawn every frame; opt-in with ?grid=1
 if(MAP_V4){ g1.visible=false; g2.visible=false; }   // v4: flat y=0 Tron grids would cut through the heightmap (themes may re-show them)
 
 // real terrain ground â€” displaced plane (rolling hills / dunes), shown for snow/desert/neon
@@ -5425,7 +5425,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
     setInterval(function(){ const inWorld = document.body.classList.contains('in-world') && window.__spawnBusy === false; if(inWorld && !tb.isShown()){ tb.show(); document.body.classList.add('touch-ui'); } else if(!inWorld && tb.isShown()){ tb.hide(); document.body.classList.remove('touch-ui'); } }, 700); }catch(e){ console.warn('[touch] failed', e && e.message); }
 }, 1000); })();
 // â”€â”€ STATIC BATCHER (world-batch.js): once the world is playable and has settled, merge the thousands of tiny STATIC meshes into a few draw calls (moving ones are left alone). opt-in ONLY with ?batch=1 (off by default); window.__batchReport shows what happened â”€â”€
-(function bootBatch(){ if(!/[?&]batch=1/.test(location.search)) return;   /* OFF BY DEFAULT (2026-10-03): merging removed original meshes (parked bike vanished, ground/buildings broke); opt-in with ?batch=1 until it is made owner-safe */ let n = 0; const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; } if(!(window.__loadPlayable && window.WorldBatch && window.__w3dDebug && window.__w3dDebug.scene)) return; clearInterval(iv);
+(function bootBatch(){ if(!/[?&]batch=1\b/.test(location.search)) return;   /* OFF BY DEFAULT (2026-10-03): merging removed original meshes (parked bike vanished, ground/buildings broke); opt-in with ?batch=1 until it is made owner-safe */ let n = 0; const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; } if(!(window.__loadPlayable && window.WorldBatch && window.__w3dDebug && window.__w3dDebug.scene)) return; clearInterval(iv);
   setTimeout(function(){ try{ window.WorldBatch.run({ THREE, scene: window.__w3dDebug.scene, U: 7/1.8, settleMs: 3000, log: function(m){ console.log(m); } }).then(function(r){ window.__batchReport = r; }).catch(function(e){ console.warn('[batch] failed', e && e.message); }); }catch(e){ console.warn('[batch] failed', e && e.message); } }, 4000);
 }, 1000); })();
 // â”€â”€ FOOTPRINTS (world-footprints.js): prints in snow (Arctic) and sand (Desert) that fade back into the ground; 1 draw call â”€â”€
@@ -5533,7 +5533,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
     lift: function(){ const h = _v4Meta && _v4Meta.harbor && _v4Meta.harbor.lift; return h && h.canal_m ? { x: h.canal_m[0] * V4_U, z: -h.canal_m[1] * V4_U } : null; } });
 }, 1000); })();
 // STATIC BATCH (default ON, ?batch=0 = off): merge frozen loose meshes that share material values into one mesh each (world-static-batch.js). `?batch=0` / default = off.
-(function bootStaticBatch(){ if(!/[?&]batch=1/.test(location.search)) return; let n = 0;   // OFF by default again (2026-10-11): the merge runs on the main thread right after playable and can stall low-end GPUs; opt in with ?batch=1
+(function bootStaticBatch(){ if(!/[?&]batch=1\b/.test(location.search)) return; let n = 0;   // OFF by default again (2026-10-11): the merge runs on the main thread right after playable and can stall low-end GPUs; opt in with ?batch=1
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
     if(!window.__loadPlayable || !window.WorldStaticBatch) return; clearInterval(iv);
     setTimeout(function(){ import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){

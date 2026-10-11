@@ -237,7 +237,7 @@
     }
     function ride(from, dest) {
       var _owner = false; try { _owner = localStorage.getItem('shd_access') === '4444'; } catch (e) { }   // owner test access opens every dragon gate
-      if (!_owner && window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id) && /[?&]dragongates=1/.test(location.search)) {   // crossing dragons: beaten once = open forever (strict mode only: ?dragongates=1)
+      if (!_owner && window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id) && /[?&]dragongates=1\b/.test(location.search)) {   // crossing dragons: beaten once = open forever (strict mode only: ?dragongates=1)
         if (window.__toast) window.__toast('A dragon guards ' + dest.name + ' - defeat it at the crossing first'); return;
       }
       if (!_owner && window.__dragons && window.__dragons.isOpen && !window.__dragons.isOpen(dest.id) && window.__toast) window.__toast('Alpha: the dragon at ' + dest.name + ' is still free, riding anyway');   // 2026-10-11: the gate no longer blocks the train silently

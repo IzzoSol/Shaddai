@@ -477,7 +477,7 @@
     });
 
     // ── update: cell distance culling, near/far LOD swap, shadow toggle, adaptive far distance, island bob ──
-    var EDIT = false; try { EDIT = /[?&]edit=1/.test(root.location.search); } catch (e) {}
+    var EDIT = false; try { EDIT = /[?&]edit=1\b/.test(root.location.search); } catch (e) {}
     var acc = 1e9, lastCam = new THREE.Vector3(1e9, 0, 0), frustum = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sph = new THREE.Sphere();
     var vis = { cells: 0, draws: 0, tris: 0 }, farDist = K.farDist, nearDist = K.nearDist;
     function refresh(cam) {

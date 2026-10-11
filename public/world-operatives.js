@@ -23,7 +23,7 @@
   ];
   // ALPHA (2026-10-11, owner: "remove the basic characters from the intro"): the eight forge archetypes are hidden from character select (?basics=1 brings them back)
   // and the eight council agents are free (?strict=1 restores the Sparks prices), so a new player always has real agents to choose from.
-  var QS = (root.location && root.location.search) || '', SHOW_BASICS = /[?&]basics=1/.test(QS), ALPHA_FREE = !/[?&]strict=1/.test(QS);
+  var QS = (root.location && root.location.search) || '', SHOW_BASICS = /[?&]basics=1\b/.test(QS), ALPHA_FREE = !/[?&]strict=1\b/.test(QS);
   var KEY = 'shd_ops_v1';
   function load() { try { var j = JSON.parse(root.localStorage.getItem(KEY) || 'null'); if (j && j.owned) return j; } catch (e) { } return { owned: {} }; }
   var S = load();
