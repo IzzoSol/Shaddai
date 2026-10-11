@@ -66,7 +66,7 @@ function load(opts) {
     enterPlayMode: () => { stats.play = (stats.play || 0) + 1; },
   };
   if (opts.dragons) window.__dragons = opts.dragons;
-  const ctx = { window, Math, console, document: fakeDocument(stats), addEventListener: (type, fn, cap) => listeners.push({ type, fn, cap }) };
+  const ctx = { window, Math, console, location: { search: opts.search || '' }, document: fakeDocument(stats), addEventListener: (type, fn, cap) => listeners.push({ type, fn, cap }) };
   vm.createContext(ctx);
   ['world-train-v2.js', 'world-transit.js'].forEach((f) => vm.runInContext(fs.readFileSync(path.join(ROOT, 'public', f), 'utf8'), ctx, { filename: f }));
   const scene = { add() {}, remove() {} };
@@ -279,8 +279,15 @@ function expectedWorld(W) {   // three.js ground truth: model point through the 
     assert.ok(Math.abs(sum - (w.rotation.y - y0)) < 1e-9 && Math.abs(sum) > 1e-4, 'sum ' + sum);
   });
 
-  test('dragon gate kept: a guarded destination refuses the ride', () => {
+  test('alpha default: a guarded destination still rides, with a toast', () => {
     const W = load({ dragons: { isOpen: (id) => id !== 'north' } });
+    W.api.ride(W.station('east'), W.station('north'));
+    assert.ok(W.api.aboard() || W.api.status() !== null);
+    assert.ok(!W.stats.toasts.some((t) => /dragon guards/.test(t)));
+  });
+
+  test('dragon gate kept (?dragongates=1): a guarded destination refuses the ride', () => {
+    const W = load({ search: '?dragongates=1', dragons: { isOpen: (id) => id !== 'north' } });
     W.api.ride(W.station('east'), W.station('north'));
     assert.ok(!W.api.aboard() && W.api.status() === null);
     assert.ok(W.stats.toasts.some((t) => /dragon guards/.test(t)));

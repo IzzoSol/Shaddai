@@ -3684,6 +3684,10 @@ if (window.buildWorldInteriors) {
     addEventListener('keydown', e=>{
       if(e.code!=='KeyE' || !_interiors) return;
       if(_cutscene && _cutscene.isPlaying()) return;
+      // 2026-10-11 (owner: "when I press the hoverboard it takes me to the castle in a glitch"): E is also the mount/board/dismount key. If a mount or the
+      // hoverboard is active, or one was boarded / dismounted a moment ago, this E belongs to the vehicle, not to the door.
+      try{ const _M = window.__mountRide; if(_M && _M.isRiding && _M.isRiding()) return; if(typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding()) return;
+        const _now = performance.now(); if(window.__lastMountKey && _now - window.__lastMountKey < 700) return; }catch(_){}
       if(_interiors.isInside()){
         // cinematic wipe, teleport OUT at midpoint
         if(_cutscene) _cutscene.play({ name:'THE GRID', color:0x27e0ff, kind:'exit' }, function(){ _interiors.exit(); window._currentInterior=null; window._updateZeroxTerminal&&window._updateZeroxTerminal(); if(window.__shaddaiChat)window.__shaddaiChat.setRoom("lobby"); });
@@ -4439,7 +4443,7 @@ addEventListener('keydown', function(e){   // DRAGON RIDING keys (capture: runs 
   const R = window.__dragonRide; if(!R || e.repeat) return;
   if(_onTrainNow()) return;   // aboard the maglev: no dragon mount / dismount keys
   if(R.isRiding()){
-    if(e.code==='KeyE' || e.code==='KeyF'){ e.stopImmediatePropagation(); e.preventDefault(); R.dismount(); }
+    if(e.code==='KeyE' || e.code==='KeyF'){ window.__lastMountKey = performance.now(); e.stopImmediatePropagation(); e.preventDefault(); R.dismount(); }
     else if(e.code==='KeyB' || e.code==='KeyO' || e.code==='KeyH'){ e.stopImmediatePropagation(); }   // one mount at a time
     return;
   }
