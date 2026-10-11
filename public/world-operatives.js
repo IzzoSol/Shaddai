@@ -21,6 +21,9 @@
     { code: 'NEXUS', color: 0x34e5b0, price: 1500 }, { code: 'TURTLE', color: 0x1fd6c4, price: 1500 }, { code: 'QUILL', color: 0xff9d3d, price: 1500 },
     { code: 'PIKADON', color: 0xff5a6e, price: 1500 }, { code: 'VILLAIN', color: 0xff2a4d, price: 3000 }
   ];
+  // ALPHA (2026-10-11, owner: "remove the basic characters from the intro"): the eight forge archetypes are hidden from character select (?basics=1 brings them back)
+  // and the eight council agents are free (?strict=1 restores the Sparks prices), so a new player always has real agents to choose from.
+  var QS = (root.location && root.location.search) || '', SHOW_BASICS = /[?&]basics=1/.test(QS), ALPHA_FREE = !/[?&]strict=1/.test(QS);
   var KEY = 'shd_ops_v1';
   function load() { try { var j = JSON.parse(root.localStorage.getItem(KEY) || 'null'); if (j && j.owned) return j; } catch (e) { } return { owned: {} }; }
   var S = load();
@@ -30,7 +33,7 @@
   BASES.forEach(function (b) { ALL.push({ code: 'FORGE-' + b.id.toUpperCase(), name: b.name, color: b.color, base: true, price: 0, portrait: '/assets/forge-models/' + b.id + '-portrait.png', glb: '/assets/forge-models/' + b.id + '-walk.glb?v=3' }); });
   PREMIUM.forEach(function (p) { ALL.push({ code: p.code, name: p.code, color: p.color, base: false, price: p.price, portrait: '/assets/agents/' + p.code + (p.code === 'VILLAIN' ? '-action' : '-portrait') + '.png', glb: '/assets/agents/' + p.code + '.glb?v=13' }); });
   function def(code) { code = String(code || '').toUpperCase(); for (var i = 0; i < ALL.length; i++) if (ALL[i].code === code) return ALL[i]; return null; }
-  function owned(code) { var d = def(code); return !!d && (d.base || d.price === 0 || all() || !!S.owned[d.code]); }
+  function owned(code) { var d = def(code); return !!d && (d.base || d.price === 0 || ALPHA_FREE || all() || !!S.owned[d.code]); }
   function price(code) { var d = def(code); return d ? d.price : 0; }
   function unlock(code) {
     var d = def(code); if (!d) return { ok: false, msg: 'Unknown operative' };
@@ -39,8 +42,8 @@
     if (!sp.spend(d.price, 'operative', d.code)) return { ok: false, msg: d.name + ' costs ' + d.price + ' Sparks' };
     S.owned[d.code] = 1; save(); return { ok: true, msg: d.name + ' unlocked' };
   }
-  function list() { return ALL.map(function (d) { return { code: d.code, name: d.name, color: d.color, portrait: d.portrait, base: d.base, price: d.price, owned: owned(d.code), glb: d.glb }; }); }
-  function defaultCode() { for (var i = 0; i < ALL.length; i++) if (owned(ALL[i].code)) return ALL[i].code; return ALL[0].code; }
+  function list() { return ALL.filter(function (d) { return !d.base || SHOW_BASICS; }).map(function (d) { return { code: d.code, name: d.name, color: d.color, portrait: d.portrait, base: d.base, price: d.price, owned: owned(d.code), glb: d.glb }; }); }
+  function defaultCode() { var L = ALL.filter(function (d) { return !d.base || SHOW_BASICS; }); for (var i = 0; i < L.length; i++) if (owned(L[i].code)) return L[i].code; return (L[0] || ALL[0]).code; }
   function glbFor(code) { var d = def(code); return d ? d.glb : '/assets/agents/' + encodeURIComponent(String(code).toUpperCase()) + '.glb?v=13'; }
   root.WorldOperatives = { list: list, owned: owned, price: price, unlock: unlock, defaultCode: defaultCode, glbFor: glbFor, def: def, _reset: function () { S = { owned: {} }; save(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

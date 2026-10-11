@@ -433,6 +433,11 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { attachUAL } from './ual-retarget.js?v=20260925a';   // Quaternius UAL2 (CC0) moves on any rigged body â€” no stretching (docs/COLOSSEUMâ€¦, /ual-lab.html)   // ocean/mount GLBs are meshopt-compressed
 
+// GLOBAL TOAST (2026-10-11): ~dozens of modules call window.__toast(msg) behind an `if (window.__toast)` guard, but nothing ever defined it, so every one of those
+// messages (train "dragon guards this stop", vendors, races...) was silently dropped and the action looked dead. Now: Navi.toast when present, else a small DOM toast.
+if(!window.__toast){ let _tt = null, _tm = 0; window.__toast = function(msg){ try{ if(window.Navi && window.Navi.toast) return window.Navi.toast(msg); }catch(_){}
+  try{ if(!_tt){ _tt = document.createElement('div'); _tt.style.cssText = 'position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:99999;max-width:70vw;padding:10px 18px;background:rgba(6,10,12,.92);border:1px solid #e8c45c;border-radius:10px;color:#eafff3;font:700 14px Rajdhani,Segoe UI,sans-serif;pointer-events:none;opacity:0;transition:opacity .2s'; document.body.appendChild(_tt); }
+    _tt.textContent = String(msg); _tt.style.opacity = '1'; clearTimeout(_tm); _tm = setTimeout(function(){ _tt.style.opacity = '0'; }, 3200); }catch(_){} }; }
 // TEXTURE DIET (2026-10-11, owner: "stuck loading for minutes"): a measured tab sat at 2.2 GB on an 8 GB / HD 620 machine. 436 textures, a lot of 2048-4096 px PNG/JPG, each
 // uploaded as full RGBA + mips. Every colour/detail texture is now downscaled to at most `cap` px on its longest side BEFORE the first GPU upload (4x less memory per halving).
 // cap: 1024 default, ?tex=2048 for big GPUs, ?texdiet=0 off. Covers TextureLoader (props, terrain splat) and ImageBitmapLoader (GLB-embedded textures). Never touches DataTexture / compressed / cube.
