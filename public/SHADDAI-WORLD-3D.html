@@ -643,7 +643,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         el.position.set(_sites[0].x + 22 * V4_U, _ry, _sites[0].z); scene.add(el); })
         .catch(function(e){ console.warn('[reef] hub elevator failed:', e && e.message); });
       _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(t){ const ts = t.scene; ts.name = 'hub-underwater-stop'; ts.scale.setScalar(V4_U);
-        ts.position.set(_sites[0].x + 22 * V4_U, _wyAt(_sites[0].x, _sites[0].z) - 8 * V4_U, _sites[0].z); scene.add(ts); })
+        ts.position.set(_sites[0].x + 22 * V4_U, _ry - 8 * V4_U, _sites[0].z); scene.add(ts); })   // same depth as the elevator shaft's bottom (8 m below the deck)
         .catch(function(e){ console.warn('[reef] hub underwater stop failed:', e && e.message); });
       // WATER SHOP MENU: press E near a water shop (one per set) for its stock (WorldShops, Sparks in a closed loop)
       (function reefShopUI(){ if(!window.WorldShops || !window.ShdSparks) return;
