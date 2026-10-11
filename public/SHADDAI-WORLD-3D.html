@@ -497,7 +497,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
     // CITY: up to four stations on water, >= 600 m apart (the first site is the search hit above)
     // LAYOUT: site 0 is the HUB (the main city). Four reef stations sit 240 m out on the four bearings, so their ~110 m footprints don't overlap.
     const _sites = [at];
-    [0, 90, 180, 270].forEach(function(deg){ const a = deg / 180 * Math.PI; _sites.push({ x: at.x + Math.sin(a) * 200 * V4_U, z: at.z - Math.cos(a) * 200 * V4_U }); });
+    [0, 90, 180, 270].forEach(function(deg){ const a = deg / 180 * Math.PI; _sites.push({ x: at.x + Math.sin(a) * 150 * V4_U, z: at.z - Math.cos(a) * 150 * V4_U }); });
     (function(){ for(let r = 600; r <= 3600 && false; r += 200){ for(let a = 0; a < 16 && _sites.length < 4; a++){
       const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
       if(_sites.every(function(s){ return Math.hypot(s.x - x, s.z - z) > 600 * V4_U; }) && _v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) _sites.push({ x: x, z: z }); } } })();
@@ -566,8 +566,8 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       // FOUR SETS AROUND THE TOWER: each set is the five buildings (home S, shop, dome, home M, home L) in a row 75 m out on its
       // own bearing (0, 90, 180, 270 deg). Each set gets one spoke from the tower and a 48 m walkway along its row.
       const _sets = [0, 90, 180, 270];
-      const _row = [['reef-home-M.glb', -12], ['reef-shop.glb', 0], ['reef-dome.glb', 12]];   // metres sideways from the set centre: three buildings per set
-      const _sp = function(a){ return { x: _sites[0].x + Math.sin(a) * 92 * V4_U, z: _sites[0].z - Math.cos(a) * 92 * V4_U }; };   // the sets ring the HUB at 100 m (clears the 1.6x hub)
+      const _row = [['reef-home-M.glb', -22], ['reef-shop.glb', 0], ['reef-dome.glb', 22]];   // metres sideways from the set centre: three buildings per set
+      const _sp = function(a){ return { x: _sites[0].x + Math.sin(a) * 66 * V4_U, z: _sites[0].z - Math.cos(a) * 66 * V4_U }; };   // the sets ring the HUB at 100 m (clears the 1.6x hub)
       _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);   // sideways unit vector along the row
         _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
           _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'set' + si + '-' + it[0]; m.scale.setScalar(V4_U); m.position.set(ox, _wy0 + 4 * V4_U, oz); m.rotation.y = a; scene.add(m); })
@@ -608,7 +608,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       _gl.loadAsync('/assets/reef/reef-door.glb').then(function(dq){ const dsrc = dq.scene;
         _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), tx = -Math.sin(a), tz = Math.cos(a), sx = Math.cos(a), sz = Math.sin(a);
           _row.forEach(function(it){ const bx = c0.x + sx * it[1] * V4_U, bz = c0.z + sz * it[1] * V4_U, d = dsrc.clone(true);
-            d.scale.setScalar(V4_U); d.position.set(bx + tx * 8 * V4_U, _wy0 + 4 * V4_U, bz + tz * 8 * V4_U); d.rotation.y = Math.atan2(-tx, -tz); d.name = 'door-' + si + '-' + it[0]; scene.add(d); }); }); })
+            d.scale.setScalar(V4_U); const _edge = it[0] === 'reef-shop.glb' ? 2.6 : 11.5; d.position.set(bx + tx * _edge * V4_U, _wy0 + 4 * V4_U, bz + tz * _edge * V4_U); d.rotation.y = Math.atan2(-tx, -tz); d.name = 'door-' + si + '-' + it[0]; scene.add(d); }); }); })
         .catch(function(e){ console.warn('[reef] doors failed:', e && e.message); });
       // CONTINUOUS BRIDGES: one bridge per connection, built to its exact length from start to end (no chained-segment gaps).
       // Local +X runs along the bridge; the deck top is at y. The walkability registry reads each bridge's length from userData.
@@ -623,15 +623,21 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           const rail = new THREE.Mesh(new THREE.BoxGeometry(L, 1.0 * V4_U, 0.1 * V4_U), _brail); rail.position.set(0, 0.5 * V4_U, s * 2.0 * V4_U); g.add(rail); }
         g.userData.len = L; g.position.set((ax + bx) / 2, y, (az + bz) / 2); g.rotation.y = Math.atan2(-dz, dx); scene.add(g); return g; };
       const _ry = _wy0 + 4 * V4_U, _H = _sites[0];
-      _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);
-        reefSpan(_H.x, _H.z, c0.x, c0.z, _ry, 'spoke-' + si);                                  // hub -> set
-        reefSpan(c0.x - sx * 24 * V4_U, c0.z - sz * 24 * V4_U, c0.x + sx * 24 * V4_U, c0.z + sz * 24 * V4_U, _ry, 'row-' + si); }); // walkway along the row
-      [[0, 90], [90, 180], [180, 270], [270, 0]].forEach(function(pair, i){ const A = _sp(pair[0] / 180 * Math.PI), B = _sp(pair[1] / 180 * Math.PI);
-        reefSpan(A.x, A.z, B.x, B.z, _ry, 'set-ring-' + i); });                                  // set-to-set ring
-      _sites.slice(1).forEach(function(st, si){ reefSpan(_H.x, _H.z, st.x, st.z, _ry, 'span-st-' + si); });   // hub -> station
+      // LAYOUT (matches the Blender reef view): front walkway 13 m toward the hub from each set, ends at +-34 m; hub spoke from the plaza edge (44 m);
+      // set ring joins the nearest ends of neighbouring front walkways; station spoke from the plaza edge to the station's hub-side edge (110 m).
+      const _fw = _sets.map(function(deg){ const a = deg / 180 * Math.PI, c0 = _sp(a), ux = Math.sin(a), uz = -Math.cos(a), lx = Math.cos(a), lz = Math.sin(a);
+        const fc = { x: c0.x - ux * 13 * V4_U, z: c0.z - uz * 13 * V4_U };
+        return { fc: fc, u: { x: ux, z: uz }, a: { x: fc.x - lx * 34 * V4_U, z: fc.z - lz * 34 * V4_U }, b: { x: fc.x + lx * 34 * V4_U, z: fc.z + lz * 34 * V4_U } }; });
+      _fw.forEach(function(f, si){ reefSpan(_H.x + f.u.x * 44 * V4_U, _H.z + f.u.z * 44 * V4_U, f.fc.x, f.fc.z, _ry, 'spoke-' + si);   // hub -> front walkway
+        reefSpan(f.a.x, f.a.z, f.b.x, f.b.z, _ry, 'row-' + si); });                                                                     // front walkway
+      [[0, 1], [1, 2], [2, 3], [3, 0]].forEach(function(p, i){ const A = [_fw[p[0]].a, _fw[p[0]].b], B = [_fw[p[1]].a, _fw[p[1]].b]; let best = null, bd = 1e18;
+        A.forEach(function(q){ B.forEach(function(r){ const d = Math.hypot(q.x - r.x, q.z - r.z); if(d < bd){ bd = d; best = [q, r]; } }); });
+        reefSpan(best[0].x, best[0].z, best[1].x, best[1].z, _ry, 'set-ring-' + i); });                                                  // set ring
+      _sites.slice(1).forEach(function(st, si){ const dx = st.x - _H.x, dz = st.z - _H.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L;
+        reefSpan(_H.x + ux * 44 * V4_U, _H.z + uz * 44 * V4_U, _H.x + ux * 110 * V4_U, _H.z + uz * 110 * V4_U, _ry, 'span-st-' + si); });   // hub -> station
       // INTERIORS: the home and the water shop in each set get their rooms (the same footprint as the exterior)
       _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = _sp(a), sx = Math.cos(a), sz = Math.sin(a);
-        [['reef-int-home.glb', -12], ['reef-int-shop.glb', 0]].forEach(function(it){ _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'int-' + si + '-' + it[0];
+        [['reef-int-home.glb', -22], ['reef-int-shop.glb', 0]].forEach(function(it){ _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ const m = q.scene; m.name = 'int-' + si + '-' + it[0];
           m.scale.setScalar(V4_U); m.position.set(c0.x + sx * it[1] * V4_U, _ry, c0.z + sz * it[1] * V4_U); m.rotation.y = a; scene.add(m); })
           .catch(function(e){ console.warn('[reef] interior ' + it[0] + ' failed:', e && e.message); }); }); });
       // STATION LOUNGE: one lounge room in the middle of each reef station (on its deck)
