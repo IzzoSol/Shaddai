@@ -3,8 +3,8 @@ const assert = require('assert'); global.window = global; require('../../public/
 let pass = 0; const t = (n, f) => { try { f(); pass++; console.log('  ok  ' + n); } catch (e) { console.log('  FAIL ' + n + ': ' + e.message); process.exitCode = 1; } };
 const mk = (id, ranked) => W.create(W.CIRCUITS[id], { ranked, riders: [{ id: 'a' }, { id: 'b' }, { id: 'c' }], rng: () => 0.01 });
 const lap = (r, id, over) => { const g = r.circuit.gates; for (let i = 0; i < g.length; i++) { const k = g[i].kind, s = Object.assign({ mode: k === 'foil' ? 'foil' : 'pad', altM: k === 'foil' ? 6 : 0.3, kissed: true, trick: g[i].verb ? { verb: g[i].verb, clean: true } : null }, over || {}); const res = r.passGate(id, i, s); assert(res.ok, id + ' gate ' + i + ' ' + JSON.stringify(res)); } };
-t('8 circuits (incl. Dragon Gate); Rift Cut is Prime + lava kills', () => { assert.deepStrictEqual(Object.keys(W.CIRCUITS),
-           ['plaza-cup', 'spine-cup', 'forum-grand', 'rift-cut', 'quarter-loop', 'grid-ring', 'train-ring', 'dragon-gate']); assert(W.CIRCUITS['rift-cut'].prime && W.CIRCUITS['rift-cut'].lavaKill); });
+t('8 circuits (incl. Dragon Gate); Rift Cut is Prime + lava kills', () => { const ids = Object.keys(W.CIRCUITS); ['plaza-cup', 'spine-cup', 'forum-grand', 'rift-cut', 'quarter-loop', 'grid-ring', 'train-ring', 'dragon-gate'].forEach(c => assert(ids.includes(c), 'circuit ' + c));   // 2026-10-11: + meridian-8 / 8b / tri and the single-lobe short laps
+          ['meridian-8', 'meridian-8b', 'meridian-tri', 'meridian-8-lobe-n'].forEach(c => assert(ids.includes(c), 'circuit ' + c)); assert(W.CIRCUITS['rift-cut'].prime && W.CIRCUITS['rift-cut'].lavaKill); });
 t('gates must be taken in order; a foil gate needs foil; a kiss gate needs a rail skim', () => {
   const r = mk('spine-cup'); r.start(); assert.strictEqual(r.passGate('a', 3, { mode: 'pad' }).ok, false, 'wrong gate'); assert.strictEqual(r.passGate('a', 0, { mode: 'pad', altM: 0.2 }).ok, true);
   assert.strictEqual(r.passGate('a', 1, { mode: 'foil', kissed: false }).ok, false, 'kiss without a rail'); assert.strictEqual(r.passGate('a', 1, { mode: 'foil', kissed: true }).ok, true);
@@ -29,7 +29,7 @@ t('ram: closing speed drives damage 8..18 (x1.25 boosting); wall ram = 6; hp<=0 
 });
 t('items: weighted crate roll, Orbital Lance is Prime-only, shell 22 dmg, Aegis Field eats one hit', () => {
   const r = mk('plaza-cup'); r.start(); assert.strictEqual(r.grabCrate('a').id, 'boost'); assert.strictEqual(r.grabCrate('a'), null, 'one item slot');
-  const r2 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }, { id: 'b' }], rng: () => 0.9999 }); r2.start(); assert.notStrictEqual(r2.grabCrate('a', false).id, 'blue'); const r3 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }], rng: () => 0.9999 }); assert.strictEqual(r3.grabCrate('a', true).id, 'blue');
+  const r2 = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }, { id: 'b' }], rng: () => 0.9999 }); r2.start(); let sawBlue = false; for (let q = 0; q < 200; q++) { const v = q / 200; const rn = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }, { id: 'b' }], rng: () => v }); rn.start(); assert.notStrictEqual(rn.grabCrate('a', false).id, 'blue'); const rp = W.create(W.CIRCUITS['plaza-cup'], { riders: [{ id: 'a' }], rng: () => v }); if (rp.grabCrate('a', true).id === 'blue') sawBlue = true; } assert(sawBlue, 'Orbital Lance can roll in a Prime heat');   // robust to new items (mine, phase, chrono, warp)
   r.rider('b').item = null; r.rider('a').item = 'shell'; assert.strictEqual(r.useItem('a', 'b').hit.hp, 78); r.rider('b').ward = true; assert(r.hit('b', 50).blocked);
 });
 t('ranked heats: Pad Rush / Foil Sip pocket vials are OFF; casual allows them', () => { assert.strictEqual(mk('plaza-cup', true).canUsePocket('pad-rush'), false); assert.strictEqual(mk('plaza-cup', true).canUsePocket('foil-sip'), false); assert.strictEqual(mk('plaza-cup', false).canUsePocket('pad-rush'), true); });

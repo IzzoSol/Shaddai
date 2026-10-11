@@ -71,11 +71,13 @@
   }
   function deckTex(THREE) {   // across = x (0..1 over the deck), along = y (one tile = 8 m)
     return canvasTex(THREE, 256, 256, function (g, w, h) {
-      g.fillStyle = '#1b1e25'; g.fillRect(0, 0, w, h);
-      for (var i = 0; i < 2600; i++) { var v = 20 + Math.random() * 22 | 0; g.fillStyle = 'rgb(' + v + ',' + v + ',' + (v + 5) + ')'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
-      g.fillStyle = 'rgba(230,236,242,0.9)'; g.fillRect(w * 0.035, 0, w * 0.012, h); g.fillRect(w * 0.953, 0, w * 0.012, h);      // edge lines
-      g.fillStyle = 'rgba(230,236,242,0.8)'; g.fillRect(w * 0.33, 0, w * 0.008, h * 0.45); g.fillRect(w * 0.662, 0, w * 0.008, h * 0.45);   // lane dashes
-      g.fillStyle = 'rgba(0,229,255,0.22)'; g.fillRect(w * 0.497, 0, w * 0.006, h);                                               // faint centre glow line
+      g.fillStyle = '#0d1117'; g.fillRect(0, 0, w, h);                                                                                 // graphite
+      for (var i = 0; i < 2600; i++) { var v = 14 + Math.random() * 16 | 0; g.fillStyle = 'rgb(' + v + ',' + (v + 3) + ',' + (v + 4) + ')'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+      g.fillStyle = 'rgba(232,196,92,0.34)'; [0.25, 0.5, 0.75].forEach(function (q) { g.fillRect(0, h * q, w, 1.5); }); g.fillRect(w * 0.25, 0, 1.5, h); g.fillRect(w * 0.75, 0, 1.5, h);   // gold panel seams
+      g.fillStyle = 'rgba(43,255,136,0.16)'; for (var k = 0; k < 6; k++) { var vx = w * (0.08 + 0.16 * k) + (k % 2 ? 6 : 0); g.fillRect(vx, h * (k % 3) / 3, 1.5, h / 3); g.fillRect(vx, h * (k % 3) / 3 + h / 3, 14, 1.5); }   // emerald veins
+      g.fillStyle = 'rgba(232,196,92,0.95)'; g.fillRect(w * 0.035, 0, w * 0.014, h); g.fillRect(w * 0.951, 0, w * 0.014, h);            // gold edge lines
+      g.fillStyle = 'rgba(43,255,136,0.9)'; g.fillRect(w * 0.327, 0, w * 0.012, h * 0.45); g.fillRect(w * 0.661, 0, w * 0.012, h * 0.45);   // emerald lane dashes
+      g.fillStyle = 'rgba(43,255,136,0.30)'; g.fillRect(w * 0.494, 0, w * 0.012, h);                                                    // centre glow line
     });
   }
   function kerbTex(THREE) {
@@ -137,7 +139,15 @@
     }
     var deck = deckProfile(deckBase, CLEAR, groundWin, grade * STEP);   // bridges dips up to ~80 m, max 6% grade (12% over obstacles)
     if (deckBase !== gr) { var DCAP = (o.maxDeckM || 250) * U; for (i = 0; i < n; i++) deck[i] = Math.max(gr[i] + CLEAR, Math.min(deck[i], gr[i] + DCAP)); }
-    for (i = 0; i < n; i++) deck[i] += lift[i];
+    var BASE_LIFT = (o.baseLiftM || 0) * U;   // optional whole-circuit lift
+    // OVERPASS (twin figure-8): o.overpassOf(x,z) -> another built deck's top or null. Wherever that deck is under ours, keep >= overpassGapM above it, ramped over ~150 m
+    if (typeof o.overpassOf === 'function') {
+      var OVG = (o.overpassGapM || 16) * U, ORAMP = Math.round(150 * U / STEP), ol = new Array(n).fill(0);
+      for (i = 0; i < n; i++) { var oy = o.overpassOf(s[i].x, s[i].z); if (oy == null) continue; var need = oy + OVG - (deck[i] + lift[i]); if (need <= 0) continue;
+        for (var rr = -ORAMP; rr <= ORAMP; rr++) { var oj = (i + rr + n) % n, ow = 0.5 + 0.5 * Math.cos(Math.PI * Math.min(1, Math.abs(rr) / ORAMP)); ol[oj] = Math.max(ol[oj], need * Math.min(1, ow * 1.6)); } }
+      for (i = 0; i < n; i++) lift[i] += ol[i];
+    }
+    for (i = 0; i < n; i++) deck[i] += lift[i] + BASE_LIFT;
     var bank = bankProfile(s, (o.maxBankDeg || 14) * Math.PI / 180, o.bankGain || 9);
 
     // frames: T (tangent), S (side, banked), N (deck normal)
@@ -177,7 +187,7 @@
     var X = HW + KERB, WT = 0.35 * U;
     var wL = strip([[-X - WT, -DT, 0], [-X - WT, WALL, 0.3], [-X, WALL, 0.6], [-X, 0, 1]], 6 * U), wR = strip([[X, 0, 0], [X, WALL, 0.4], [X + WT, WALL, 0.7], [X + WT, -DT, 1]], 6 * U);
     // glow rails on top of the barriers (bloom picks them up; toneMapped off keeps them bright)
-    var railMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, toneMapped: false });
+    var railMat = new THREE.MeshBasicMaterial({ color: 0x2bff88, toneMapped: false });
     var rL = strip([[-X - WT * 0.75, WALL, 0], [-X - WT * 0.75, WALL + 0.14 * U, 0.5], [-X - WT * 0.25, WALL + 0.14 * U, 1]], 6 * U);
     var rR = strip([[X + WT * 0.25, WALL + 0.14 * U, 0], [X + WT * 0.75, WALL + 0.14 * U, 0.5], [X + WT * 0.75, WALL, 1]], 6 * U);
     var merge = o.mergeGeometries || (THREE.BufferGeometryUtils || root.BufferGeometryUtils || {}).mergeGeometries;   // host passes BGU.mergeGeometries
@@ -187,6 +197,13 @@
       var mesh = new THREE.Mesh(g, mat); mesh.name = name; mesh.receiveShadow = true; grp.add(mesh); return mesh;
     }
     add([deckGeo], deckMat, 'track-deck'); add([underGeo], underMat, 'track-under'); add([kL, kR], kerbMat, 'track-kerb'); add([wL, wR], wallMat, 'track-wall'); add([rL, rR], railMat, 'track-rail');
+    // FORCE FIELD (owner 2026-10-11): translucent energy wall above each barrier, one draw call. It marks the line the kart is held to (world-mount-ride edge provider). ?forcefield=0 / o.forceField === false = off.
+    if (o.forceField !== false) {
+      var ffMat = new THREE.MeshBasicMaterial({ color: 0x2bff88, transparent: true, opacity: 0.17, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
+      var FH = (o.forceFieldM || 8) * U;
+      var ffL = strip([[-X - WT * 0.5, WALL + 0.14 * U, 0], [-X - WT * 0.5, WALL + FH, 1]], 10 * U), ffR = strip([[X + WT * 0.5, WALL + 0.14 * U, 0], [X + WT * 0.5, WALL + FH, 1]], 10 * U);
+      add([ffL, ffR], ffMat, 'track-forcefield');
+    }
 
     // instanced dressing
     var dummy = new THREE.Object3D(), up = new THREE.Vector3(0, 1, 0);
@@ -210,6 +227,26 @@
     inst(archGeo, wallMat, gan, 'track-gantries', function (f, d) { frameTo(f, d, 0); });
     var lightMat = new THREE.MeshBasicMaterial({ color: 0xfff1d6, toneMapped: false });
     inst(new THREE.BoxGeometry(GW * 1.7, 0.18 * U, 0.5 * U).translate(0, GH - 0.55 * U, 0), lightMat, gan, 'track-gantry-lights', function (f, d) { frameTo(f, d, 0); });
+    // MARKINGS (TURTLE spec 2026-10-11, scaled up so they read at 600 km/h): gold double stripe + emerald grid slots at the line, gold sector bars at 1/3 and 2/3, gold distance ticks every 500 m
+    if (o.markings !== false) {
+      var goldMat = new THREE.MeshBasicMaterial({ color: 0xe8c45c, toneMapped: false }), emMat = new THREE.MeshBasicMaterial({ color: 0x2bff88, toneMapped: false });
+      var lineW = HW * 2, stripe = new THREE.BoxGeometry(lineW, 0.05 * U, 0.7 * U);
+      var lineF = [F[0]], barF = [F[Math.round(n / 3)], F[Math.round(2 * n / 3)]];
+      inst(stripe.clone().translate(0, 0.06 * U, 0.55 * U), goldMat, lineF, 'track-startline-a', function (f, d) { frameTo(f, d, 0); });
+      inst(stripe.clone().translate(0, 0.06 * U, -0.55 * U), goldMat, lineF, 'track-startline-b', function (f, d) { frameTo(f, d, 0); });
+      inst(new THREE.BoxGeometry(lineW, 0.05 * U, 1.1 * U).translate(0, 0.06 * U, 0), goldMat, barF, 'track-sector-bars', function (f, d) { frameTo(f, d, 0); });
+      var slots = []; for (var gr = 0; gr < 4; gr++) { var gf = F[(0 - Math.round((10 + gr * 9) * U / STEP) + n) % n]; slots.push({ f: gf, side: -1 }, { f: gf, side: 1 }); }
+      inst(new THREE.BoxGeometry(3.4 * U, 0.04 * U, 6 * U).translate(0, 0.05 * U, 0), emMat, slots, 'track-grid-slots', function (it, d) { frameTo(it.f, d, 0); d.position.addScaledVector(it.f.S, it.side * 4.6 * U); });
+      var ticks = [], tickEvery = Math.max(1, Math.round(500 * U / STEP));
+      for (var ti = tickEvery; ti < n; ti += tickEvery) { ticks.push({ f: F[ti], side: -1 }, { f: F[ti], side: 1 }); }
+      inst(new THREE.BoxGeometry(0.5 * U, 3.2 * U, 0.5 * U).translate(0, 1.6 * U, 0), goldMat, ticks, 'track-distance-ticks', function (it, d) { frameTo(it.f, d, 0); d.position.addScaledVector(it.f.S, it.side * (X + WT + 0.4 * U)); });
+    }
+    // sector gate arches (2026-10-11): 4 half-torus arches at the quarter points of the lap (the sector boundaries), spanning deck + kerbs
+    if (o.gates !== false) {
+      var gateF = [0, 1, 2, 3].map(function (q) { return F[Math.round(q * n / 4) % n]; });
+      var gateMat = new THREE.MeshBasicMaterial({ color: 0xffd25a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide });
+      inst(new THREE.TorusGeometry(HW + KERB, 0.6 * U, 8, 36, Math.PI), gateMat, gateF, 'track-sector-gates', function (f, d) { frameTo(f, d, 0); });
+    }
     // chevron boards on the OUTSIDE wall of sharp corners, facing oncoming riders
     var chev = [], lastC = -99;
     for (i = 0; i < n; i++) { if (Math.abs(F[i].bank) > 0.6 * (o.maxBankDeg || 14) * Math.PI / 180 && i - lastC > Math.round(30 * U / STEP)) { chev.push({ f: F[i], side: F[i].bank > 0 ? -1 : 1 }); lastC = i; } }
@@ -223,15 +260,60 @@
     // boost pads: 4 per lap on the straightest stretches
     var straight = []; for (i = 0; i < n; i++) straight.push({ i: i, b: Math.abs(F[i].bank) });
     straight.sort(function (a, b) { return a.b - b.b; });
-    var pads = [], minGap = Math.round(n / 6), clearN = Math.round(30 * U / STEP), clr2 = Math.pow(3 * (HW + KERB), 2);
+    var pads = [], PADN = o.padCount || 4, minGap = Math.round(n / (PADN + 2)), clearN = Math.round(30 * U / STEP), clr2 = Math.pow(3 * (HW + KERB), 2);
     function crossingNear(ci) {   // another strand of the track within ~3 deck widths (figure-8 crossing, hairpins): no pad there
       for (var j = 0; j < n; j++) { var dj = Math.abs(j - ci); if (Math.min(dj, n - dj) <= clearN) continue; var dx = F[j].P.x - F[ci].P.x, dz = F[j].P.z - F[ci].P.z; if (dx * dx + dz * dz < clr2) return true; }
       return false;
     }
-    for (var si = 0; si < straight.length && pads.length < 4; si++) { var cand = straight[si].i; if (!crossingNear(cand) && pads.every(function (pi) { var d0 = Math.abs(pi - cand); return Math.min(d0, n - d0) > minGap; })) pads.push(cand); }
+    for (var si = 0; si < straight.length && pads.length < PADN; si++) { var cand = straight[si].i; if (!crossingNear(cand) && pads.every(function (pi) { var d0 = Math.abs(pi - cand); return Math.min(d0, n - d0) > minGap; })) pads.push(cand); }
     var boostMat = new THREE.MeshBasicMaterial({ map: boostTex(THREE), transparent: true, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending });
     var padF = pads.map(function (pi) { return F[pi]; });
     inst(new THREE.PlaneGeometry(HW * 0.9, 12 * U).rotateX(-Math.PI / 2).translate(0, 0.06 * U, 0), boostMat, padF, 'track-boost', function (f, d) { frameTo(f, d, 0); });
+
+    if (typeof o.overpassOf === 'function') {
+      var tun = []; for (i = 0; i < n; i += Math.max(1, Math.round(6 * U / STEP))) { if (o.overpassOf(F[i].P.x, F[i].P.z) != null && F[i].P.y - o.overpassOf(F[i].P.x, F[i].P.z) < 40 * U) tun.push(F[i]); }
+      if (tun.length) {
+        var panelMat = new THREE.MeshBasicMaterial({ color: 0xbfffd8, toneMapped: false });
+        [-1, 1].forEach(function (sd) { inst(new THREE.BoxGeometry(1.4 * U, 0.12 * U, 3.2 * U), panelMat, tun, 'track-tunnel-lights', function (f, d) { frameTo(f, d, -DT * 1.7); d.position.addScaledVector(f.S, sd * HW * 0.45); }); });
+      }
+    }
+
+    // TUNNEL THROUGH A BUILDING (o.tunnels, metres e/n + rot CCW deg): portal frames at the facade entry/exit + a lit ceiling inside
+    if (o.tunnels && o.tunnels.length) {
+      var portalMat = new THREE.MeshBasicMaterial({ color: 0xffd25a, toneMapped: false }), ceilMat = new THREE.MeshBasicMaterial({ color: 0xbfffd8, toneMapped: false });
+      var PW = X + WT + 0.6 * U, PH = 10 * U, PT = 0.7 * U;
+      var pParts = [new THREE.BoxGeometry(PT, PH, PT).translate(-PW, PH / 2, 0), new THREE.BoxGeometry(PT, PH, PT).translate(PW, PH / 2, 0), new THREE.BoxGeometry(PW * 2 + PT, PT, PT).translate(0, PH, 0)];
+      var portalGeo = merge ? merge(pParts, false) : pParts[2];
+      o.tunnels.forEach(function (tn) {
+        var th = tn.rot * Math.PI / 180, ct = Math.cos(th), st2 = Math.sin(th), pf = [], ins = [], prev = false;
+        function inRect(p) { var e = p.x / U, nn = -p.z / U, dx = e - tn.e, dy = nn - tn.n, u = dx * ct + dy * st2, v = -dx * st2 + dy * ct; return Math.abs(u) <= tn.w / 2 + 5 && Math.abs(v) <= tn.d / 2 + 5; }
+        for (i = 0; i <= n; i++) { var fr = F[i % n], cur = inRect(fr.P); if (cur !== prev && i > 0) pf.push(F[i % n]); if (cur && i < n && i % 2 === 0) ins.push(fr); prev = cur; }
+        if (pf.length) inst(portalGeo, portalMat, pf, 'track-portals', function (f, d) { frameTo(f, d, 0); });
+        if (ins.length) inst(new THREE.BoxGeometry((X + WT) * 1.6, 0.14 * U, 2.6 * U), ceilMat, ins, 'track-tunnel-ceiling', function (f, d) { frameTo(f, d, PH - 0.4 * U); });
+      });
+    }
+
+    // GATE TOWERS (o.gateTowers = count, evenly spaced round the lap so a symmetric circuit stays symmetric): two slabs + a lintel straddling the deck, violet-lit. Each is slid
+    // up to +-40 frames to a spot where no city tower stands within 40 m of the footprint.
+    if (o.gateTowers) {
+      var gtF = [], gtN = o.gateTowers, GTH = 62 * U, GTX = X + 13 * U;
+      for (var gq = 0; gq < gtN; gq++) {
+        var base = Math.round((gq + 0.5) * n / gtN), pick = -1;
+        for (var gs = 0; gs <= 40 && pick < 0; gs++) for (var gsg = -1; gsg <= 1 && pick < 0; gsg += 2) {
+          var gi = (base + gs * gsg + n) % n, gf = F[gi], clear = true;
+          if (o.obstacleAt) for (var gl = -3; gl <= 3 && clear; gl++) for (var ga = -2; ga <= 2 && clear; ga++) { var gx = gf.P.x + gf.S.x * gl * 12 * U + gf.T.x * ga * 12 * U, gz = gf.P.z + gf.S.z * gl * 12 * U + gf.T.z * ga * 12 * U; if (o.obstacleAt(gx, gz) > gf.P.y - 6 * U) clear = false; }
+          if (clear) pick = gi;
+        }
+        if (pick >= 0) gtF.push(F[pick]);
+      }
+      if (gtF.length) {
+        var gtBody = new THREE.MeshStandardMaterial({ color: 0x151a22, roughness: 0.4, metalness: 0.75 }), gtGlow = new THREE.MeshBasicMaterial({ color: 0xffd25a, toneMapped: false });
+        var slabW = 9 * U, slabD = 16 * U, lint = [new THREE.BoxGeometry(slabW, GTH + 4 * U, slabD).translate(-GTX, GTH / 2 - 2 * U, 0), new THREE.BoxGeometry(slabW, GTH + 4 * U, slabD).translate(GTX, GTH / 2 - 2 * U, 0), new THREE.BoxGeometry(GTX * 2 + slabW, 8 * U, slabD).translate(0, GTH - 4 * U, 0)];
+        inst(merge ? merge(lint, false) : lint[2], gtBody, gtF, 'track-gate-towers', function (f, d) { frameTo(f, d, 0); });
+        var glow = [new THREE.BoxGeometry(0.8 * U, GTH * 0.9, 0.8 * U).translate(-GTX + slabW / 2 + 0.2 * U, GTH * 0.45, slabD / 2 + 0.1 * U), new THREE.BoxGeometry(0.8 * U, GTH * 0.9, 0.8 * U).translate(GTX - slabW / 2 - 0.2 * U, GTH * 0.45, slabD / 2 + 0.1 * U), new THREE.BoxGeometry(GTX * 2 - slabW, 0.8 * U, 0.8 * U).translate(0, GTH - 8.3 * U, slabD / 2 + 0.1 * U)];
+        inst(merge ? merge(glow, false) : glow[2], gtGlow, gtF, 'track-gate-tower-glow', function (f, d) { frameTo(f, d, 0); });
+      }
+    }
 
     // ── surfaceAt: grid hash of segments → deck top under (x,z), banking included ──
     var CELL = 48 * U, H = {}, R = HW + KERB;
@@ -256,6 +338,15 @@
     return {
       group: grp, samples: n, lengthM: s.lengthU / U, frames: F, pads: pads,
       surfaceAt: function (x, z) { var r = locate(x, z); return r ? r.y : null; },
+      // EDGE QUERY (2026-10-11): nearest deck frame (brute force over the ~1800 frames: ~20 us). over = beyond the wall line; (cx, cz) = the point pulled back onto it; y = deck top there.
+      edgeAt: function (x, z) {
+        var bi = -1, bd = Infinity, k, dx, dz, d2;
+        for (k = 0; k < n; k++) { dx = F[k].P.x - x; dz = F[k].P.z - z; d2 = dx * dx + dz * dz; if (d2 < bd) { bd = d2; bi = k; } }
+        if (bi < 0) return null; var f = F[bi], sl = Math.hypot(f.S.x, f.S.z) || 1, sx = f.S.x / sl, sz = f.S.z / sl, lat = (x - f.P.x) * sx + (z - f.P.z) * sz, W = HW + KERB + 0.3 * U;
+        if (Math.abs(lat) > W + 14 * U) return null;   // not near this deck
+        var sg = lat < 0 ? -1 : 1, over = Math.abs(lat) > W;
+        return { over: over, lat: lat, y: f.P.y + f.S.y * lat, cx: over ? x - sx * (lat - sg * W) : x, cz: over ? z - sz * (lat - sg * W) : z, nx: sx * sg, nz: sz * sg, yaw: Math.atan2(f.T.x, f.T.z), px: f.P.x, pz: f.P.z, py: f.P.y, i: bi };
+      },
       boostAt: function (x, z) { var r = locate(x, z); return !!(r && padSet[r.i] && Math.abs(r.lat) < HW * 0.5); },
       dispose: function () { if (grp.parent) grp.parent.remove(grp); grp.traverse(function (c) { if (c.geometry) c.geometry.dispose(); }); }
     };

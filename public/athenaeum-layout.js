@@ -26,12 +26,12 @@
   var AGENT_COLOR = { SHADDAI: 0xe8c45c, ZEROX: 0x2dd4a0, ORACLE: 0x5fe0ff, NEXUS: 0x4da3ff, TURTLE: 0x00ff9c, QUILL: 0xf0d27a, PIKADON: 0xff6a5a };
 
   var WING_DEFS = [
-    { id: 'observatory', hall: 'oracle',  angleDeg: 30,  room: 'observatory-lab',    agent: 'ORACLE',  label: 'The Observatory' },
-    { id: 'library',     hall: 'quill',   angleDeg: 90,  room: 'scriptorium',        agent: 'QUILL',   label: 'The Library' },
-    { id: 'museum',      hall: 'turtle',  angleDeg: 150, room: 'co-creation-studio', agent: 'TURTLE',  label: 'The Museum' },
-    { id: 'forge',       hall: 'forge',   angleDeg: 210, room: 'tool-foundry',       agent: 'NEXUS',   label: 'The Forge' },
-    { id: 'music',       hall: 'music',   angleDeg: 270, room: 'music-hall',         agent: null,      label: 'The Sound Studio' },
-    { id: 'council',     hall: 'council', angleDeg: 330, room: 'safety-bureau',      agent: 'PIKADON', label: 'The Council Hall' }
+    { id: 'observatory', hall: 'oracle',  angleDeg: 30,  room: 'observatory-lab',    agent: 'ORACLE',  label: 'Observatory Lab' },
+    { id: 'library',     hall: 'quill',   angleDeg: 90,  room: 'scriptorium',        agent: 'QUILL',   label: 'Scriptorium' },
+    { id: 'museum',      hall: 'turtle',  angleDeg: 150, room: 'co-creation-studio', agent: 'TURTLE',  label: 'Co-Creation Studio' },
+    { id: 'forge',       hall: 'forge',   angleDeg: 210, room: 'tool-foundry',       agent: 'NEXUS',   label: 'Tool Foundry' },
+    { id: 'music',       hall: 'music',   angleDeg: 270, room: 'music-hall',         agent: null,      label: 'Music Hall' },
+    { id: 'council',     hall: 'council', angleDeg: 330, room: 'safety-bureau',      agent: 'PIKADON', label: 'Safety Bureau' }
   ];
 
   function rad(d) { return d * Math.PI / 180; }
@@ -93,6 +93,7 @@
     st('import', 'import', 'tool-foundry', 'Import Dock', imp.x, imp.z, 3.5, { wing: 'forge' });
     var adm = at(council, WING_ALONG0 + WING_LEN - 6, 0);
     st('admin', 'admin', 'admin-office', 'Admin Office', adm.x, adm.z, 3, { locked: 'admin', wing: 'council' });
+    st('portal-nexus', 'portal', 'arcade-concourse', 'Portal Nexus: city halls', -11, 0, 3.6, {});   // field trips: the academy teaches classes, the seven real halls stay in the city
     st('lectern-deans', 'lectern', 'deans-atrium', "Dean's Lectern", apse.cx, apse.cz + 4.5, 4, { agent: 'SHADDAI' });
     st('press-deans', 'press', 'deans-atrium', "Dean's Press", apse.cx + 7, apse.cz + 4, 3.5, { agent: 'SHADDAI' });
     st('press-trading', 'press', 'trading-desk', 'Trading Desk Press', p300.x + 2.5, p300.z + 3.2, 3.5, { agent: 'ZEROX' });

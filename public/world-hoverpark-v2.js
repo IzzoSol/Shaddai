@@ -19,9 +19,9 @@
     { id: 'pool', name: 'Light Lanes', x: 60, z: -60, r: 20, tag: 'Speed lanes between zones.' }
   ];
   var BOWL = { r: 34, depth: 6.5 };
-  var HP = [{ x: -30, z: -112 }, { x: 30, z: -112 }], HP_W = 26, HP_L = 40, HP_R = 7;                 // half-pipes: span x ±HP_W/2, length along z
+  var HP = [{ x: -34, z: -112 }, { x: 34, z: -112 }], HP_W = 40, HP_L = 56, HP_R = 9;   // 2026-10-11: pipes scaled up to the owner's plan proportions (they read as big as the bowl in the reference)                 // half-pipes: span x ±HP_W/2, length along z
   var RAILS = [-36, -18, 0, 18, 36].map(function (z, i) { return { z: z, x0: -152, x1: -76, kink: -114 + (i % 2) * 10, yHi: 1.2, yLo: 0.75 }; });
-  var KICK = [[96, -40, -0.5], [128, -22, -0.25], [104, 4, 0], [132, 30, 0.3], [96, 42, 0.6]].map(function (k) { return { x: k[0], z: k[1], yaw: k[2] + Math.PI / 2, L: 14, W: 9, H: 3.4 }; });   // yaw: ramp rises toward the bowl
+  var KICK = [[96, -40, -0.5], [128, -22, -0.25], [104, 4, 0], [132, 30, 0.3], [96, 42, 0.6]].map(function (k) { return { x: k[0], z: k[1], yaw: k[2] + Math.PI / 2, L: 18, W: 11, H: 4.4 }; });   // yaw: ramp rises toward the bowl
   var TOWER = { x: 0, z: 118, r: 5, h: 26, deck: 14 }, DROP = { z0: 110, z1: 38, w: 9, h0: 14 };
   var LIFT = { base: [0, 134], top: [0, 111.5], r: 3 };   // tower lift stops (local metres): south base door → deck edge at the drop-in
   var SPIRAL = { r0: 8.6, r1: 12.6, rm: 10.6, a0: 40, a1: 360, h: 14 };   // rideable climb round the tower (degrees clockwise from north)

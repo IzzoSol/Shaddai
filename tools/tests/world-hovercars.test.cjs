@@ -10,8 +10,8 @@ let pass = 0, fail = 0; const test = (n, f) => { try { f(); pass++; console.log(
 const scene = () => { const c = []; return { children: c, add: o => c.push(o), remove: o => { const i = c.indexOf(o); if (i >= 0) c.splice(i, 1); } }; };
 
 test('11 designs from the owner refs (sedan..pod); every one builds a group with a saddle and sane triangle budget', () => {
-  assert.strictEqual(HC.TYPES.length, 11); assert.ok(HC.TYPES.some(t => t.id === 'pod'), 'Rimba pod racer');
-  HC.TYPES.forEach(t => { const g = HC.buildGroup(THREE, t.id); assert.ok(g.userData.saddle, t.id + ' saddle'); const tris = g.userData.tris; assert.ok(tris > 200 && tris < 800, t.id + ' tris ' + tris);
+  assert.strictEqual(HC.TYPES.length, 21);   // 11 road/pod designs + 5 race ships + the six-seat sub + 4 light-cycles (2026-10-11) assert.ok(HC.TYPES.some(t => t.id === 'pod'), 'Rimba pod racer');
+  HC.TYPES.forEach(t => { const g = HC.buildGroup(THREE, t.id); assert.ok(g.userData.saddle, t.id + ' saddle'); const tris = g.userData.tris; assert.ok(tris > 200 && tris < 1700, t.id + ' tris ' + tris);
     const box = new THREE.Box3().setFromObject(g), sz = box.getSize(new THREE.Vector3()); assert.ok(sz.z > t.len * 0.6 && sz.z < t.len * 1.6, t.id + ' length ' + sz.z.toFixed(2)); assert.ok(isFinite(sz.x + sz.y + sz.z)); });
 });
 test('traffic: ~100 cars + 18 flying riders, <= 20 draw calls, matrices stay finite over 3 simulated minutes', () => {

@@ -33,7 +33,7 @@ test('every faculty room exists, with its own agent, and the extra rooms are nam
 });
 
 test('stations have unique ids, valid kinds, and sit inside the walkable area but outside colliders', () => {
-  const kinds = new Set(['lectern', 'press', 'pods', 'directory', 'teachers', 'trophy', 'trading', 'import', 'admin', 'navi', 'dais']);
+  const kinds = new Set(['lectern', 'press', 'pods', 'directory', 'teachers', 'trophy', 'trading', 'import', 'admin', 'navi', 'dais', 'portal']);
   assert.strictEqual(new Set(C.stations.map((s) => s.id)).size, C.stations.length);
   for (const s of C.stations) {
     assert.ok(kinds.has(s.kind), 'bad kind ' + s.kind);

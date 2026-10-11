@@ -13,7 +13,7 @@
   'use strict';
   var Layout = (typeof module === 'object' && module.exports && typeof require === 'function') ? require('./athenaeum-layout.js') : root.AthenaeumLayout;
 
-  var KIND_COLOR = { pods: 0x00ff9c, press: 0xe8c45c, directory: 0x5fe0ff, teachers: 0xf0d27a, trophy: 0xe8c45c, trading: 0x2dd4a0, import: 0x4da3ff, admin: 0xff6a5a, navi: 0x00ff9c, dais: 0x00ff9c, lectern: 0x00ff9c };
+  var KIND_COLOR = { pods: 0x00ff9c, press: 0xe8c45c, directory: 0x5fe0ff, teachers: 0xf0d27a, trophy: 0xe8c45c, trading: 0x2dd4a0, import: 0x4da3ff, admin: 0xff6a5a, navi: 0x00ff9c, dais: 0x00ff9c, portal: 0x2bff88, lectern: 0x00ff9c };
   var QUALITY = { POTATO: 0, LOW: 1, MEDIUM: 2, HIGH: 3, ULTRA: 3 };
 
   // soft round points when WorldVFX is loaded; plain PointsMaterial otherwise (tests / other pages)
@@ -391,6 +391,83 @@
       var mesh = new THREE.Mesh(merge(parts[name]), mat); mesh.name = 'static:' + name; rootG.add(mesh);
     });
 
+    // ── POSTERS (2026-10-11): six ORIGINAL code-drawn posters in one atlas (1 draw call): robot-themed art in emerald/gold, hung between the rotunda doorways and at the end of each wing.
+    //    Inspired by the owner's reference robot art, not copies of it.
+    (function posters() {
+      if (typeof document === 'undefined') return;
+      var CW = 512, CH = 640, COLS = 3, ROWS = 2, cv = document.createElement('canvas'); cv.width = CW * COLS; cv.height = CH * ROWS; var g = cv.getContext('2d');
+      function cell(i, fn) { g.save(); g.translate((i % COLS) * CW, Math.floor(i / COLS) * CH); g.beginPath(); g.rect(0, 0, CW, CH); g.clip(); fn(); g.restore(); }
+      function title(t, sub) { g.fillStyle = 'rgba(8,16,16,.72)'; g.fillRect(0, CH - 96, CW, 96); g.fillStyle = '#e8c45c'; g.font = '800 34px Orbitron, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(t, CW / 2, CH - 54); g.fillStyle = '#2bff88'; g.font = '600 18px Arial, sans-serif'; g.fillText(sub, CW / 2, CH - 24); g.strokeStyle = '#e8c45c'; g.lineWidth = 6; g.strokeRect(8, 8, CW - 16, CH - 16); }
+      function sky(top, bot) { var gr = g.createLinearGradient(0, 0, 0, CH); gr.addColorStop(0, top); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, CW, CH); }
+      function stars(n, seed) { var r = seed; for (var i = 0; i < n; i++) { r = (r * 9301 + 49297) % 233280; var x = r / 233280 * CW; r = (r * 9301 + 49297) % 233280; var y = r / 233280 * CH * 0.8; g.fillStyle = 'rgba(255,255,255,' + (0.4 + (i % 5) * 0.12) + ')'; g.fillRect(x, y, 1 + (i % 3 === 0 ? 1 : 0), 1 + (i % 3 === 0 ? 1 : 0)); } }
+      cell(0, function () { sky('#0a1030', '#1c2a5a'); stars(160, 7);
+        g.fillStyle = '#5a2c12'; g.fillRect(CW - 120, 0, 70, CH); g.beginPath(); g.moveTo(CW - 120, 40); g.quadraticCurveTo(CW - 230, 100, CW - 260, 30); g.lineTo(CW - 120, 90); g.fill();
+        g.fillStyle = '#12301a'; g.fillRect(0, CH - 220, CW, 130); g.fillStyle = '#f0b830'; g.beginPath(); g.arc(250, 320, 38, 0, 7); g.fill(); g.fillRect(212, 350, 82, 120);
+        g.beginPath(); g.moveTo(212, 470); g.lineTo(150, 520); g.lineTo(330, 520); g.lineTo(294, 470); g.fill(); g.fillRect(150, 500, 220, 24);
+        g.fillStyle = '#d8402a'; g.beginPath(); g.arc(262, 316, 9, 0, 7); g.fill(); title('LOOK UP', 'THE FIRST LESSON IS CURIOSITY'); });
+      cell(1, function () { sky('#2b2f36', '#14161a');
+        g.fillStyle = '#4a4036'; g.fillRect(190, 120, 132, 360); g.fillStyle = '#c8321e'; g.fillRect(150, 150, 60, 120); g.fillRect(302, 150, 60, 120); g.fillRect(205, 170, 102, 130);
+        g.fillStyle = '#3a342c'; g.fillRect(205, 60, 102, 70); g.fillStyle = '#c8321e'; g.fillRect(215, 70, 82, 30); g.fillStyle = '#e8c45c'; g.fillRect(246, 80, 20, 8);
+        g.fillStyle = '#c8321e'; g.fillRect(200, 300, 52, 160); g.fillRect(260, 300, 52, 160); g.fillStyle = '#2bff88'; g.fillRect(225, 210, 62, 10); title('FRAME-7', 'BUILT TO CARRY THE WORK'); });
+      cell(2, function () { sky('#c8d0d8', '#8a96a2');
+        g.fillStyle = '#16181c'; g.fillRect(150, 230, 212, 150); g.fillRect(246, 380, 20, 90); g.fillRect(190, 450, 132, 60);
+        [190, 322].forEach(function (x) { g.fillStyle = '#9aa4ad'; g.beginPath(); g.arc(x, 280, 52, 0, 7); g.fill(); g.fillStyle = '#0a0c10'; g.beginPath(); g.arc(x, 280, 36, 0, 7); g.fill(); g.fillStyle = '#2bff88'; g.beginPath(); g.arc(x - 10, 270, 8, 0, 7); g.fill(); });
+        g.fillStyle = '#e8c45c'; g.fillRect(120, 210, 270, 8); g.fillRect(246, 150, 20, 60); title('FIRST LIGHT', 'EVERY AGENT STARTS CURIOUS'); });
+      cell(3, function () { sky('#f1e9d6', '#d9ccb0');
+        g.strokeStyle = '#2a2a2a'; g.lineWidth = 4; g.fillStyle = '#e2dccb'; g.beginPath(); g.arc(250, 220, 52, 0, 7); g.fill(); g.stroke(); g.fillRect(205, 270, 100, 130); g.strokeRect(205, 270, 100, 130);
+        g.beginPath(); g.moveTo(205, 400); g.lineTo(130, 470); g.lineTo(380, 470); g.lineTo(305, 400); g.stroke(); g.beginPath(); g.arc(150, 520, 38, 0, 7); g.fill(); g.stroke(); g.strokeRect(330, 480, 60, 60); g.strokeRect(300, 520, 40, 40);
+        g.fillStyle = '#2a2a2a'; g.fillRect(228, 205, 18, 10); g.fillRect(268, 205, 18, 10); title('LEARNING TO PLAY', 'PRACTICE IS HOW SKILLS STICK'); });
+      cell(4, function () { sky('#05140e', '#0a2a1c'); g.strokeStyle = 'rgba(43,255,136,.35)'; g.lineWidth = 2; for (var y = 40; y < CH - 120; y += 40) { g.beginPath(); g.moveTo(40, y); g.lineTo(CW - 40, y); g.stroke(); }
+        g.fillStyle = '#2bff88'; g.font = '800 56px Orbitron, Arial, sans-serif'; g.textAlign = 'center'; ['BASELINE', 'LESSON', 'EXAM'].forEach(function (t, i) { g.fillText(t, CW / 2, 170 + i * 120); });
+        g.fillStyle = '#e8c45c'; g.font = '600 24px Arial, sans-serif'; g.fillText('SKILLS INSTALL ONLY ON A REAL SCORE LIFT', CW / 2, 500); title('THE METHOD', 'ATHENAEUM ACADEMY'); });
+      cell(5, function () { sky('#1a1408', '#3a2a0a'); g.fillStyle = '#e8c45c'; g.beginPath(); g.arc(CW / 2, 250, 120, 0, 7); g.fill(); g.fillStyle = '#1a1408'; g.beginPath(); g.arc(CW / 2, 250, 96, 0, 7); g.fill();
+        g.fillStyle = '#2bff88'; g.beginPath(); g.moveTo(CW / 2, 170); g.lineTo(CW / 2 + 60, 290); g.lineTo(CW / 2 - 60, 290); g.closePath(); g.fill(); title('ENROL TODAY', 'BRING YOUR AGENT'); });
+      var tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+      var pos = [], uv = [], idx = [], vi = 0;
+      function quad(cx, cy, cz, nx, nz, w, h, design) {
+        var tx = nz, tz = -nx, hw = w / 2, hh = h / 2, u0 = (design % COLS) / COLS, u1 = u0 + 1 / COLS, v1 = 1 - Math.floor(design / COLS) / ROWS, v0 = v1 - 1 / ROWS;
+        pos.push(cx - tx * hw, cy - hh, cz - tz * hw, cx + tx * hw, cy - hh, cz + tz * hw, cx + tx * hw, cy + hh, cz + tz * hw, cx - tx * hw, cy + hh, cz - tz * hw);
+        uv.push(u0, v0, u1, v0, u1, v1, u0, v1); idx.push(vi, vi + 1, vi + 2, vi, vi + 2, vi + 3); vi += 4;
+      }
+      for (var k = 0; k < 6; k++) { var a = (k * 60) * Math.PI / 180, rr = R - 0.7, nx = -Math.sin(a), nz = Math.cos(a);
+        quad(Math.sin(a) * rr, 11, -Math.cos(a) * rr, nx, nz, 7, 8.75, k % 6); }
+      L.wings.forEach(function (w, i) { var al = w.along1 - 0.5, nx = -w.dx, nz = -w.dz;
+        quad(w.dx * al, 6.5, w.dz * al, nx, nz, 7, 8.75, (i + 2) % 6); });
+      var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+      var mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, toneMapped: false })); mesh.name = 'athenaeum-posters'; rootG.add(mesh);
+    })();
+
+    // ── INTERIOR PROPS (2026-10-11, owner refs: atrium with balconies + holo world table; glass classroom with holo lecturer, curved desks, vertical gardens) ──
+    //    ~10 draw calls, all instanced / merged; visual only (no new colliders, walkability unchanged).
+    (function interiorProps() {
+      var white = new THREE.MeshStandardMaterial({ color: 0xeceee6, roughness: 0.35, metalness: 0.1 }), goldM = new THREE.MeshStandardMaterial({ color: 0xe8c45c, roughness: 0.3, metalness: 0.8, emissive: 0x3a2c08 });
+      var holoM = new THREE.MeshBasicMaterial({ color: 0x2bff88, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+      var scrM = new THREE.MeshBasicMaterial({ color: 0x5fe8ff, toneMapped: false }), greenM = new THREE.MeshStandardMaterial({ color: 0x2f7a3c, roughness: 0.95 });
+      // balconies: two annular levels inside the drum + gold rails
+      [[9, 'balcony-1'], [17, 'balcony-2']].forEach(function (b) {
+        var ring = new THREE.Mesh(new THREE.RingGeometry(R - 7.5, R - 1.2, 64, 1), white); ring.rotation.x = -Math.PI / 2; ring.position.y = b[0]; ring.material.side = THREE.DoubleSide; ring.name = 'athenaeum-' + b[1]; rootG.add(ring);
+        var rail = new THREE.Mesh(new THREE.TorusGeometry(R - 7.5, 0.16, 6, 64), goldM); rail.rotation.x = Math.PI / 2; rail.position.y = b[0] + 1.1; rail.name = 'athenaeum-' + b[1] + '-rail'; rootG.add(rail);
+      });
+      // holo world table at the skill-tree dais: plinth, ring, hovering globe
+      var dz = 10.5;
+      var plinth = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 5.2, 1.0, 36), white); plinth.position.set(0, 0.5, dz); plinth.name = 'athenaeum-holo-plinth'; rootG.add(plinth);
+      var globe = new THREE.Mesh(new THREE.SphereGeometry(2.6, 24, 16), holoM); globe.position.set(0, 4.6, dz); globe.name = 'athenaeum-holo-globe'; rootG.add(globe);
+      var halo = new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.1, 6, 48), goldM); halo.position.set(0, 4.6, dz); halo.rotation.x = Math.PI / 2.6; halo.name = 'athenaeum-holo-halo'; rootG.add(halo);
+      // curved console desks in the rotunda (two arcs, skipping the six doorways) + their screens
+      var dm = new THREE.Matrix4(), dq = new THREE.Quaternion(), ds = new THREE.Vector3(1, 1, 1), dp = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+      var desks = [], screens = [];
+      [21.5, 25.0].forEach(function (rr) { for (var k = 0; k < 36; k++) { var deg = k * 10 + 5, near = false; for (var w = 0; w < L.wings.length; w++) { var dd = Math.abs(((deg - L.wings[w].angleDeg + 540) % 360) - 180); if (dd < 15) near = true; } if (near) continue;
+        var a = deg * Math.PI / 180; desks.push([Math.sin(a) * rr, -Math.cos(a) * rr, a, 0.55]); screens.push([Math.sin(a) * (rr - 0.35), -Math.cos(a) * (rr - 0.35), a, 1.25]); } });
+      // classroom rows in each wing: three rows x two flanking columns, a holo lecturer plinth, green wall panels
+      var greens = [];
+      L.wings.forEach(function (w) { for (var row = 0; row < 3; row++) for (var sd = -1; sd <= 1; sd += 2) { var al = w.along0 + 12 + row * 8, x = w.dx * al + w.nx * sd * 6.5, z = w.dz * al + w.nz * sd * 6.5, ang = Math.atan2(w.dx, w.dz); desks.push([x, z, ang, 0.55]); screens.push([x, z, ang, 1.25]); }
+        for (var g = 0; g < 4; g++) { var ga = w.along0 + 8 + g * 8, gx = w.dx * ga + w.nx * (w.halfW - 0.5), gz = w.dz * ga + w.nz * (w.halfW - 0.5); greens.push([gx, gz, Math.atan2(w.dx, w.dz), 4.5]); } });
+      function inst(list, geo, mat, name, y) { var im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach(function (d, i) { dp.set(d[0], y != null ? y : d[3], d[1]); dq.setFromAxisAngle(up, d[2]); dm.compose(dp, dq, ds); im.setMatrixAt(i, dm); }); im.instanceMatrix.needsUpdate = true; im.name = name; im.frustumCulled = false; rootG.add(im); return im; }
+      inst(desks, new THREE.BoxGeometry(3.6, 1.1, 1.3), white, 'athenaeum-desks');
+      inst(screens, new THREE.BoxGeometry(2.6, 1.0, 0.08), scrM, 'athenaeum-desk-screens');
+      inst(greens, new THREE.BoxGeometry(0.5, 7.0, 5.2), greenM, 'athenaeum-green-wall');
+    })();
+
     // ── lights (≤ 8) ────────────────────────────────────────────────────────────
     var hemi = new THREE.HemisphereLight(0xa8fff0, 0x0c1a1a, 1.5); rootG.add(hemi);
     var fill = new THREE.AmbientLight(0x3f6a60, 1.7); rootG.add(fill);
@@ -474,3 +551,48 @@
   if (typeof module === 'object' && module.exports) module.exports = out;
   if (root) root.buildAthenaeumCampus = build;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+
+
+/* ── ATHENAEUM EXTERIOR (2026-10-11, TURTLE brief): the open-world face of the academy, built from the same plan as the campus interior.
+ *   var ext = window.buildAthenaeumExterior(THREE, { scene, x, y, z, yaw, scale })   // world units; scale 1 = real metres x 7/1.8
+ * Rotunda drum + emerald glass fins every 4 m + glass dome with a gold lattice rim, six wings with gold-capped columns and agent-coloured roof strips,
+ * the Dean's apse with a gold dome and a pulsing emerald beacon, a south gate arch. ~12 draw calls, no lights, collider = one circle (r 36 m). */
+(function (root) {
+  'use strict';
+  root.buildAthenaeumExterior = function (THREE, o) {
+    o = o || {}; var A = root.AthenaeumLayout || (typeof require === 'function' ? require('./athenaeum-layout.js') : null); if (!A) return null;
+    var L = A.build(), U = 7 / 1.8, S = (o.scale || 1) * U, g = new THREE.Group(); g.name = 'athenaeum-exterior';
+    var stone = new THREE.MeshStandardMaterial({ color: 0xdcd3bc, roughness: 0.6 }), gold = new THREE.MeshStandardMaterial({ color: 0xe8c45c, roughness: 0.3, metalness: 0.8, emissive: 0x4a3608 });
+    var glass = new THREE.MeshStandardMaterial({ color: 0x66e0c0, transparent: true, opacity: 0.35, roughness: 0.1, metalness: 0.2, emissive: 0x0a3a2c }), fin = new THREE.MeshBasicMaterial({ color: 0x2bff88, transparent: true, opacity: 0.55, toneMapped: false });
+    var R = L.R, H = L.ROTUNDA_H, rot = new THREE.Group(); g.add(rot);
+    function add(geo, mat, x, y, z, name) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; rot.add(m); return m; }
+    add(new THREE.CylinderGeometry(R, R + 1.5, H, 64, 1, true), stone, 0, H / 2, 0, 'ext-drum');
+    add(new THREE.CylinderGeometry(R + 1.2, R + 1.2, 1.4, 64), gold, 0, H - 0.7, 0, 'ext-cornice');
+    var dome = add(new THREE.SphereGeometry(R * 0.98, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), glass, 0, H, 0, 'ext-dome');
+    add(new THREE.TorusGeometry(R * 0.98, 0.3, 6, 64), gold, 0, H + 0.3, 0, 'ext-dome-rim').rotation.x = Math.PI / 2;
+    // fins: one InstancedMesh, a 1 x 24 x 0.4 m glass blade every 4 m round the drum
+    var n = Math.floor(2 * Math.PI * (R + 0.8) / 4), fi = new THREE.InstancedMesh(new THREE.BoxGeometry(0.4, 24, 1.0), fin, n), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
+    for (var i = 0; i < n; i++) { var a = 2 * Math.PI * i / n; p.set(Math.sin(a) * (R + 0.8), 13, Math.cos(a) * (R + 0.8)); q.setFromAxisAngle(up, a); m4.compose(p, q, sc); fi.setMatrixAt(i, m4); }
+    fi.instanceMatrix.needsUpdate = true; fi.name = 'ext-fins'; rot.add(fi);
+    // wings: boxes + a coloured roof strip + two gold columns at the entrance
+    L.wings.forEach(function (w) {
+      var len = w.along1 - w.along0, mx = w.dx * (w.along0 + w.along1) / 2, mz = w.dz * (w.along0 + w.along1) / 2, ang = Math.atan2(w.dx, w.dz);
+      var box = add(new THREE.BoxGeometry(w.halfW * 2, w.h, len), stone, mx, w.h / 2, mz, 'ext-wing-' + w.id); box.rotation.y = ang;
+      var strip = add(new THREE.BoxGeometry(w.halfW * 2 + 0.6, 0.5, len + 0.6), new THREE.MeshBasicMaterial({ color: w.accent, toneMapped: false }), mx, w.h + 0.25, mz); strip.rotation.y = ang;
+      [-1, 1].forEach(function (sd) { add(new THREE.CylinderGeometry(1.0, 0.9, w.h + 4, 14), gold, w.dx * (w.along0 + 1.5) + w.nx * sd * (w.halfW + 0.5), (w.h + 4) / 2, w.dz * (w.along0 + 1.5) + w.nz * sd * (w.halfW + 0.5)); });
+    });
+    // Dean's apse (north): gold dome and the pulse beacon
+    var ap = L.apse; add(new THREE.CylinderGeometry(ap.r, ap.r, ap.h, 40), stone, ap.cx, ap.h / 2, ap.cz, 'ext-apse');
+    add(new THREE.SphereGeometry(ap.r, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), gold, ap.cx, ap.h, ap.cz, 'ext-apse-dome');
+    var beacon = add(new THREE.SphereGeometry(2.6, 16, 12), new THREE.MeshBasicMaterial({ color: 0x2bff88, toneMapped: false }), ap.cx, ap.h + ap.r + 3.5, ap.cz, 'ext-beacon');
+    // south gate corridor + gold arch
+    var gt = L.gate; add(new THREE.BoxGeometry(gt.halfW * 2, gt.h, gt.endZ - gt.startZ), stone, 0, gt.h / 2, (gt.startZ + gt.endZ) / 2, 'ext-gate');
+    add(new THREE.TorusGeometry(gt.halfW + 1.5, 0.7, 8, 36, Math.PI), gold, 0, gt.h, gt.endZ + 0.5, 'ext-gate-arch');
+    g.scale.setScalar(S); g.position.set(o.x || 0, o.y || 0, o.z || 0); g.rotation.y = o.yaw || 0;
+    var t = 0;
+    function tick(dt) { t += dt; var k = 0.6 + 0.4 * Math.sin(t * Math.PI / 2); beacon.scale.setScalar(0.85 + 0.3 * k); beacon.material.opacity = 1; }   // 4 s emerald pulse
+    function dispose() { if (g.parent) g.parent.remove(g); g.traverse(function (m) { if (m.geometry) m.geometry.dispose(); }); }
+    if (o.scene) o.scene.add(g);
+    return { group: g, tick: tick, dispose: dispose, radiusM: R + 3, footprintM: 2 * (L.WING_ALONG0 + L.WING_LEN) };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

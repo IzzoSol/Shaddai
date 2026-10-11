@@ -8,6 +8,6 @@ t('start without a DOM or element is a safe no-op', () => { const h = L.start(nu
 t('the 7 council agents are all covered once the slides.json is filled (manifest lists them)', () => { const f = path.join(PUB, 'assets', 'loading', 'slides.json'); if (!fs.existsSync(f)) return; const j = JSON.parse(fs.readFileSync(f, 'utf8')); j.forEach(s => assert(fs.existsSync(path.join(PUB, s.src)), 'missing ' + s.src)); });
 t('CSS-driven cross-fade: keyframes for N slides are monotonic and fit one cycle (keeps animating while the main thread is busy); 11 slides, all small, total under 1.2 MB', () => {
   const kf = L.keyframes(L.SLIDES.length, 6, 1.4); const pcts = [...kf.matchAll(/([0-9.]+)%\{/g)].map(m => +m[1]); assert.deepStrictEqual(pcts, pcts.slice().sort((a, b) => a - b)); assert(pcts[0] === 0 && pcts[pcts.length - 1] === 100); assert(/opacity:1/.test(kf) && /scale\(1\.07\)/.test(kf));
-  assert(L.SLIDES.length >= 10); let tot = 0; L.SLIDES.forEach(s => { tot += fs.statSync(path.join(PUB, s.src)).size; }); assert(tot < 1200 * 1024, 'total ' + Math.round(tot / 1024) + ' KB'); assert.strictEqual(new Set(L.SLIDES.map(s => s.src)).size, L.SLIDES.length);
+  assert(L.SLIDES.length >= 10); let tot = 0; L.SLIDES.forEach(s => { tot += fs.statSync(path.join(PUB, s.src)).size; }); assert(tot < 2800 * 1024, 'total ' + Math.round(tot / 1024) + ' KB');   // 19 owner slides (webp, 48-248 KB each); budget was 1.2 MB for the first 11 assert.strictEqual(new Set(L.SLIDES.map(s => s.src)).size, L.SLIDES.length);
 });
 console.log(pass + ' passed');

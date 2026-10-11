@@ -211,3 +211,6 @@ fal-assets/production/models/*-obj/
 .probe-profile/
 public/assets/terrain/_test/
 .bl-cache/
+
+# Blender autosave backups
+*.blend1

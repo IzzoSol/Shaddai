@@ -15,14 +15,16 @@
   var ITEMS = [
     { id: 'boost', name: 'Overclock', weight: 24, dur: 1.6 }, { id: 'shell', name: 'Laser Bolt', weight: 20, dmg: 22, homing: 'lite' }, { id: 'wave', name: 'EMP Pulse', weight: 12, knock: true },
     { id: 'ink', name: 'Static Veil', weight: 12, dur: 2.5 }, { id: 'ward', name: 'Aegis Field', weight: 12 }, { id: 'yank', name: 'Data Siphon', weight: 6, range: 12 },
-    { id: 'sway', name: 'Jam Signal', weight: 6, dur: 2 }, { id: 'pinch', name: 'Gravity Snare', weight: 3, dur: 1.2 }, { id: 'triple', name: 'Triple Laser', weight: 3 }, { id: 'blue', name: 'Orbital Lance', weight: 1, primeOnly: true }, { id: 'seeker', name: 'Lock-On Drone', weight: 0, dmg: 30 }
+    { id: 'sway', name: 'Jam Signal', weight: 6, dur: 2 }, { id: 'pinch', name: 'Gravity Snare', weight: 3, dur: 1.2 }, { id: 'triple', name: 'Triple Laser', weight: 3 }, { id: 'blue', name: 'Orbital Lance', weight: 1, primeOnly: true }, { id: 'seeker', name: 'Lock-On Drone', weight: 0, dmg: 30 },
+    // 2026-10-11 prize-box additions: Mag Mine (dropped behind), Phase Shift (3 s untouchable), Chrono Field (slows everyone within 140 m), Warp Jump (blink 110 m up the course, never past the next gate)
+    { id: 'mine', name: 'Mag Mine', weight: 8, dmg: 14 }, { id: 'phase', name: 'Phase Shift', weight: 6, dur: 3 }, { id: 'chrono', name: 'Chrono Field', weight: 4, dur: 3.5 }, { id: 'warp', name: 'Warp Jump', weight: 4, range: 110 }
   ];
   var POCKET = ['pad-rush', 'foil-sip'];
   /* RANK-WEIGHTED ODDS (owner 2026-10-02; NOT a Mario Kart clone: agentic hover-laser racing): the further back you are, the better your crate. t = 0 leader .. 1 last.
    * Leaders get defence + attacks (aegis, laser, EMP); the back of the pack gets boosts, triples and the LOCK-ON DRONE (only from the lower half), which homes on FIRST place. Orbital Lance stays Prime-only. */
   function itemWeights(place, n, prime) {
     var t = n > 1 ? Math.max(0, Math.min(1, (place - 1) / (n - 1))) : 0;
-    return { boost: 18 + 26 * t, shell: 24 - 10 * t, wave: 12 - 3 * t, ink: 14 - 10 * t, ward: 14 - 8 * t, yank: 6, sway: 6, pinch: 3 + 3 * t, triple: 2 + 12 * t, seeker: t >= 0.5 ? (t - 0.4) * 28 : 0, blue: prime ? 1 + 8 * t : 0 };
+    return { boost: 18 + 26 * t, shell: 24 - 10 * t, wave: 12 - 3 * t, ink: 14 - 10 * t, ward: 14 - 8 * t, yank: 6, sway: 6, pinch: 3 + 3 * t, triple: 2 + 12 * t, seeker: t >= 0.5 ? (t - 0.4) * 28 : 0, blue: prime ? 1 + 8 * t : 0, mine: 11 - 7 * t, phase: 9 - 5 * t, chrono: 1 + 9 * t, warp: 1 + 8 * t };
   }
   /* DRIFT: hold the drift key while turning hard at speed -> charge; release for a MINI-TURBO. Levels: blue 0.9 s (x1.25 for 0.8 s), orange 1.8 s (x1.35 for 1.2 s), purple 2.8 s (x1.5 for 1.8 s).
    * S = {active, dir, charge, level}; c = {drift, speed (m/s), yawRate (rad/s)} -> { released:{level,mul,dur}|null, level, active } */
@@ -65,11 +67,43 @@
    * The two lobes cross in the middle (a junction: gates are sequential by index so the crossing cannot be used as a shortcut). Chosen from the real heightmap: land all round, relief < 12 m, water within reach. */
   var DG = { cx: 2100, cn: -300, a: 300 };
   CIRCUITS['dragon-gate'] = { id: 'dragon-gate', name: 'Dragon Gate Circuit', scale: 'quarter', laps: 3, cleanLapS: 105, rooms: ['dragon'], lengthM: 1570, prime: false, torii: true, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'pad' }, { kind: 'foil' }, { kind: 'either' }, { kind: 'pad' }] };
+  // MERIDIAN FIGURE-8 (2026-10-10): one lemniscate across the whole Grid. Searched on grid-city-v4.json tops: corridor max 207 m (clears all 270-320 m spires
+  // under the 250 m deck cap), crossing in open air (flyover lift handles the overpass), 236 m off the core spire, stays inside r1500, ~7.2 km.
+  var M8 = { cx: -332.5, cn: 201.9, a: 1365.2, rot: 67.8 };
+  CIRCUITS['meridian-8'] = { id: 'meridian-8', name: 'Meridian Figure-8', scale: 'grid', laps: 2, cleanLapS: 300, rooms: ['grid'], lengthM: 7158, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }] };
+  // TWIN (owner 2026-10-10: second figure-8 for perfect symmetry): the same lemniscate rotated 180 deg about the Grid centre. Corridor max 219 m, nothing over the 250 m cap,
+  // crosses the first 8 four times (+-150,+-445 / +-472,+-1055); the track builder keeps it >= 16 m over the first 8's deck (overpassOf) so every crossing is an overpass. A mirror across the N-S axis was rejected (clips a 294 m spire).
+  var M8B = { cx: 332.5, cn: -201.9, a: 1365.2, rot: 67.8 };
+  CIRCUITS['meridian-8b'] = { id: 'meridian-8b', name: 'Meridian Figure-8 (Twin)', scale: 'grid', laps: 2, cleanLapS: 300, rooms: ['grid'], lengthM: 7158, prime: false, gates: CIRCUITS['meridian-8'].gates.slice() };
+  // LAP MODES (owner 2026-10-10: "small laps or full track"): each figure-8 also runs as a single-LOBE lap (~3.6 km, 3 laps) on the same deck.
+  // -lobe-n = the lobe toward the +x end of the lemniscate, -lobe-s = the -x end; both close at the crossing. The host aliases their deck to the full 8's.
+  [['meridian-8', 'Meridian Figure-8'], ['meridian-8b', 'Meridian Figure-8 (Twin)']].forEach(function (pr) {
+    [['n', 'North lobe'], ['s', 'South lobe']].forEach(function (lb) {
+      var id = pr[0] + '-lobe-' + lb[0], full = CIRCUITS[pr[0]];
+      CIRCUITS[id] = { id: id, name: pr[1] + ' - ' + lb[1] + ' (short lap)', scale: 'grid', laps: 3, cleanLapS: 150, rooms: ['grid'], lengthM: Math.round(full.lengthM / 2), prime: false, gates: full.gates.slice(0, 6), deckOf: pr[0] };
+    });
+  });
+  // MERIDIAN TREFOIL (2026-10-11, owner: "make the track more symmetrical so you can turn easy"): a 3-fold symmetric trefoil projection (three equal petals, three flyover crossings round
+  // the core). x = sin t + 2 sin 2t, y = cos t - 2 cos 2t, scaled 420 m and rotated 40 deg: ~10.7 km, min turn radius ~420 m, corridor tops <= 169 m (all 270-320 m spires dodged), inside r1260.
+  var MT = { scale: 420, rot: 40 };
+  CIRCUITS['meridian-tri'] = { id: 'meridian-tri', name: 'Meridian Trefoil', scale: 'grid', laps: 2, cleanLapS: 420, rooms: ['grid'], lengthM: 10721, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }],
+    // GATE TOWERS: three purpose-built arch towers (one per petal, 3-fold symmetric) the deck threads through; placed by the track builder where the footprint is clear of city towers.
+    gateTowers: 3 };
   var DEG = Math.PI / 180;
   function pol(r, b) { return [r * Math.sin(b * DEG), r * Math.cos(b * DEG)]; }          // bearing (deg clockwise from north) -> metres [east, north]
   function arc(r, b0, b1, n) { var o = []; for (var i = 0; i <= n; i++) o.push(pol(r, b0 + (b1 - b0) * i / n)); return o; }
   function lemniscate(n) { var o = []; for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, d = 1 + Math.sin(t) * Math.sin(t); o.push([DG.cx + DG.a * Math.cos(t) / d, DG.cn + DG.a * Math.sin(t) * Math.cos(t) / d]); } return o; }
+  function meridian8(n, P) { P = P || M8; var o = [], r = P.rot * DEG, cr = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, d = 1 + Math.sin(t) * Math.sin(t), x = P.a * Math.cos(t) / d, y = P.a * Math.sin(t) * Math.cos(t) / d; o.push([P.cx + x * cr - y * sr, P.cn + x * sr + y * cr]); } return o; }
+  function meridianLobe(P, north, n) { var o = [], r = P.rot * DEG, cr = Math.cos(r), sr = Math.sin(r), t0 = north ? -Math.PI / 2 : Math.PI / 2; for (var i = 0; i < n; i++) { var t = t0 + Math.PI * i / n, d = 1 + Math.sin(t) * Math.sin(t), x = P.a * Math.cos(t) / d, y = P.a * Math.sin(t) * Math.cos(t) / d; o.push([P.cx + x * cr - y * sr, P.cn + x * sr + y * cr]); } return o; }
+  function trefoil(n) { var o = [], r = MT.rot * DEG, cr = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, x = Math.sin(t) + 2 * Math.sin(2 * t), y = Math.cos(t) - 2 * Math.cos(2 * t); o.push([MT.scale * (x * cr - y * sr), MT.scale * (x * sr + y * cr)]); } return o; }
   var TRACKS = {
+    'meridian-tri': function () { return trefoil(216); },
+    'meridian-8-lobe-n': function () { return meridianLobe(M8, true, 72); },
+    'meridian-8-lobe-s': function () { return meridianLobe(M8, false, 72); },
+    'meridian-8b-lobe-n': function () { return meridianLobe(M8B, true, 72); },
+    'meridian-8b-lobe-s': function () { return meridianLobe(M8B, false, 72); },
+    'meridian-8': function () { return meridian8(144); },
+    'meridian-8b': function () { return meridian8(144, M8B); },
     'dragon-gate': function () { return lemniscate(72); },
     'grid-ring': function () { return arc(1600, 0, -360, 96).slice(0, -1); },
     'train-ring': function () { return arc(2829, 0, -360, 144).slice(0, -1); },

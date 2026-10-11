@@ -11,7 +11,7 @@
  */
 (function (root) {
   'use strict';
-  var PANEL_KINDS = ['dais', 'pods', 'directory', 'teachers', 'trophy', 'trading', 'navi', 'lectern', 'press', 'import', 'admin'];
+  var PANEL_KINDS = ['dais', 'pods', 'directory', 'teachers', 'trophy', 'trading', 'navi', 'lectern', 'press', 'import', 'admin', 'portal'];
   var ACH = [['first_lesson', 'First Lesson', '🎓'], ['honor_roll', 'Honor Roll', '📚'], ['quick_study', 'Quick Study', '⚡'], ['red_pen', 'Red Pen', '🖍️'],
     ['mentor_1', 'Mentor I', '🧑‍🏫'], ['mentor_2', 'Mentor II', '🏅'], ['mentor_3', 'Mentor III', '🏆'], ['grand_curriculum', 'Grand Curriculum', '🎖️']];
 
@@ -216,7 +216,14 @@
             '<h4>Books awaiting approval</h4>' + (pend.length ? pend.map(function (t) { return '<div class="ac-row"><b>' + esc(t.title) + '</b> <small>' + esc(t.room) + ' · ' + esc(t.price_sparks) + ' Sparks</small> <button data-act="approve" data-title="' + esc(t.id) + '">Approve</button> <button data-act="reject" data-title="' + esc(t.id) + '">Reject</button></div>'; }).join('') : '<div class="ac-note">No books pending.</div>') + '<div id="acOut"></div>';
         });
       },
-      navi: function (st) { return Promise.resolve(head(st, 'Opening your Navi Academy tab.')); }
+      navi: function (st) { return Promise.resolve(head(st, 'Opening your Navi Academy tab.')); },
+      // FIELD TRIPS: the academy is classes only; the seven agent halls are the real buildings in the city (Source Temple, Navigator, Library, Esoteric Wing, Museum, Aegis, Markets)
+      portal: function (st) {
+        var HALLS = [['SHADDAI', 'The Source Temple', 'strategy and the council'], ['NEXUS', 'The Navigator', 'tools and systems'], ['QUILL', 'The Library', 'writing and records'], ['ORACLE', 'The Esoteric Wing', 'research and the observatory'],
+          ['TURTLE', 'The Museum', 'art, design and music'], ['PIKADON', 'The Aegis', 'security and compliance'], ['ZEROX', 'The Markets', 'trading and the economy']];
+        return Promise.resolve(head(st, 'Take a field trip: apply what you learned in the real hall. Every hall has a return pad back here.') +
+          HALLS.map(function (h) { return '<div class="ac-row"><b>' + esc(h[1]) + '</b> <small>' + esc(h[0]) + ' · ' + esc(h[2]) + '</small> <button data-act="hall" data-code="' + esc(h[0]) + '">Go</button></div>'; }).join(''));
+      }
     };
 
     function render(st) { var fn = PANELS[st && st.kind]; return fn ? fn(st) : Promise.resolve('<div class="ac-err">Nothing to show here.</div>'); }
@@ -237,6 +244,7 @@
       if (act === 'learn') { out('<div class="ac-note">Running… this can take a minute.</div>'); actions.learn(state.agentId, t.dataset.skill).then(out); }
       else if (act === 'learn-selected') { var sk = doc.querySelector('#acSkill'); out('<div class="ac-note">Running the baseline, then the exam… this can take a minute.</div>'); actions.learn(state.agentId, sk && sk.value).then(out); }
       else if (act === 'buy') { out('<div class="ac-note">Opening…</div>'); actions.buy(t.dataset.title).then(out); }
+      else if (act === 'hall') { var go = root.__interiorsEnter; close(); if (go) go(t.dataset.code); }
       else if (act === 'join') actions.join(t.dataset['class'], state.agentId).then(out);
       else if (act === 'approve' || act === 'reject') actions.approve(t.dataset.title, act === 'approve').then(out);
       else if (act === 'resolve') { var scores = {}; t.parentNode.querySelectorAll('input[data-task]').forEach(function (i) { scores[i.dataset.task] = Number(i.value); }); actions.resolve(t.dataset.attempt, scores).then(out); }

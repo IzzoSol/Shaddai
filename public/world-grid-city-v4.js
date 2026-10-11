@@ -75,7 +75,7 @@
     m.onBeforeCompile = function (sh) {
       sh.uniforms.uNight = uni.uNight; sh.uniforms.uAccentGain = uni.uAccentGain; sh.uniforms.uInvU = uni.uInvU;
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute vec3 aAux;\nvarying float vKind;\nvarying float vRoof;\nuniform float uInvU;')
+        .replace('#include <common>', '#include <common>\nattribute vec3 aAux;\nvarying float vKind;\nvarying float vRoof;\nvarying float vSeed;\nuniform float uInvU;')
         .replace('#include <uv_vertex>', [
           '#include <uv_vertex>',
           '#ifdef USE_INSTANCING',
@@ -85,7 +85,10 @@
           '#endif',
           // side faces: u spans the face width (x faces span depth, z faces span width), v spans the height
           '  float gcFaceW = abs(normal.x) > 0.5 ? gcSize.z : gcSize.x;',
-          '  vec2 gcUv = vec2(uv.x * gcFaceW / ' + TILE_W.toFixed(1) + ' + aAux.z, uv.y * gcSize.y / ' + TILE_H.toFixed(1) + ' + fract(aAux.z * 7.31));',
+          // FACADE RHYTHM from the seed (2026-10-11, owner: "the buildings are all the same"): punched grid / wide ribbon bands / tall slim fins
+          '  float gcS = fract(aAux.z * 13.7); float gcUm = gcS < 0.34 ? 1.0 : (gcS < 0.67 ? 0.55 : 1.8); float gcVm = gcS < 0.34 ? 1.0 : (gcS < 0.67 ? 1.7 : 0.75);',
+          '  vec2 gcUv = vec2(uv.x * gcUm * gcFaceW / ' + TILE_W.toFixed(1) + ' + aAux.z, uv.y * gcVm * gcSize.y / ' + TILE_H.toFixed(1) + ' + fract(aAux.z * 7.31));',
+          '  vSeed = aAux.z;',
           '#ifdef USE_MAP',
           '  vMapUv = gcUv;',
           '#endif',
@@ -98,10 +101,10 @@
           '  vKind = aAux.y;',
           '  vRoof = step(0.5, abs(normal.y));'].join('\n'));
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying float vKind;\nvarying float vRoof;\nuniform float uNight;\nuniform float uAccentGain;')
+        .replace('#include <common>', '#include <common>\nvarying float vKind;\nvarying float vRoof;\nvarying float vSeed;\nuniform float uNight;\nuniform float uAccentGain;')
         .replace('#include <map_fragment>', [
           '#ifdef USE_MAP',
-          '  if (vKind < 0.5 && vRoof < 0.5) diffuseColor *= texture2D(map, vMapUv);',   // only facades get windows
+          '  if (vKind < 0.5 && vRoof < 0.5) { diffuseColor *= texture2D(map, vMapUv); float gB = fract(vSeed * 5.17); diffuseColor.rgb *= (0.78 + 0.34 * gB) * (gB < 0.18 ? 0.62 : 1.0); }',   // per-building brightness, some tinted-dark glass
           '#endif'].join('\n'))
         .replace('#include <color_fragment>', [
           '#include <color_fragment>',
@@ -112,12 +115,13 @@
         .replace('#include <emissivemap_fragment>', [
           '#include <emissivemap_fragment>',
           '  totalEmissiveRadiance *= uNight;',
+          '  if (vKind < 0.5) { float gH = fract(vSeed * 3.91); totalEmissiveRadiance *= gH < 0.5 ? vec3(1.0) : (gH < 0.78 ? vec3(0.55, 0.95, 1.15) : vec3(0.6, 1.15, 0.8)); }',   // warm / cyan / emerald lit windows
           '  if (vRoof > 0.5 || vKind > 1.5) totalEmissiveRadiance = vec3(0.0);',
           '#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )',
           '  if (vKind > 0.5 && vKind < 1.5) totalEmissiveRadiance = vColor.rgb * uAccentGain;',
           '#endif'].join('\n'));
     };
-    m.customProgramCacheKey = function () { return 'grid-city-v4-facade'; };
+    m.customProgramCacheKey = function () { return 'grid-city-v4-facade-var1'; };
     return m;
   }
 
@@ -154,7 +158,10 @@
     var byId = {}, colliderRefs = [], L = window.WORLD_LAYOUT;
     var nTiers = 0, nAccents = 0;
     var TAPER = [1, 0.62, 0.25, 1, 0.04];
+    // HOVERSKATE PARK KEEP-OUT (2026-10-11): the park (r 170 m) is built at the PLAZA_SKATE marker; plan buildings whose footprint touches it are skipped so towers do not stand in the pipes
+    var PARK = { x: -694.46, y: 1039.34, r: 172 };
     plan.buildings.forEach(function (b) {
+      if (Math.hypot(b.x_m - PARK.x, b.y_m - PARK.y) < PARK.r + Math.max(b.w_m, b.d_m) * 0.5) { byId[b.id] = { b: b, gy: 0 }; return; }
       var ch = chunks[chunkOf(b.x_m, b.y_m)], rho = b.rot_deg * RAD;
       var gy = groundY(b.x_m, b.y_m, Math.max(b.w_m, b.d_m) * 0.5);
       var WD = window.WorldDistricts, tint = WD ? WD.tintFor(b, rnd) : TINTS[Math.floor(rnd() * TINTS.length)], acc = ACCENT[WD ? WD.accentFor(b) : b.accent] || ACCENT.teal;   // district identity: accent + facade palette per quarter
@@ -173,6 +180,15 @@
           box(ch, b.x_m, b.y_m, rho, gy, ox + w / 2, oy + d / 2, z0, 0.9, 0.9, h, 1, 1, acc); nAccents++;
         }
       });
+      // ROOFTOPS (2026-10-11): roofs read differently building to building - mast, roof garden, glowing crown ring, double mast
+      (function () {
+        var top = b.tiers[0]; if (!top || b.h_m < 40) return;
+        var hh = Math.abs(Math.sin(b.x_m * 12.9898 + b.y_m * 78.233) * 43758.5453), hv = hh - Math.floor(hh), z = top[2] + top[3];
+        if (hv < 0.22) { box(ch, b.x_m, b.y_m, rho, gy, top[4], top[5], z, 0.9, 0.9, 10 + hv * 90, 1, 1, acc); nAccents++; }                         // antenna mast
+        else if (hv < 0.40) { box(ch, b.x_m, b.y_m, rho, gy, top[4], top[5], z, top[0] * 0.82, top[1] * 0.82, 1.1, 1, 2, 0x1d4a2c); }               // roof garden pad
+        else if (hv < 0.52) { box(ch, b.x_m, b.y_m, rho, gy, top[4], top[5], z - 0.2, top[0] + 1.6, top[1] + 1.6, 1.2, 1, 1, acc); nAccents++; }     // crown ring
+        else if (hv < 0.60) { box(ch, b.x_m, b.y_m, rho, gy, top[4] - top[0] * 0.25, top[5], z, 0.7, 0.7, 16, 1, 1, acc); box(ch, b.x_m, b.y_m, rho, gy, top[4] + top[0] * 0.25, top[5], z, 0.7, 0.7, 9, 1, 1, acc); nAccents += 2; }   // twin masts
+      })();
       // colliders: circles along the widest ground tier (halls get 3, square footprints 1)
       if (L && Array.isArray(L.realmColliders)) {
         var g = b.tiers.filter(function (t) { return t[2] < 3 && t[6] !== 3; }).sort(function (p, q) { return q[0] * q[1] - p[0] * p[1]; })[0];

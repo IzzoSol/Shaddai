@@ -109,7 +109,7 @@
       group.rotation.y = Math.atan2(fX, fZ);   // local +z → front (toward the city), local +x → (sX, sZ)
       var root = new THREE.Group(); root.scale.setScalar(U); group.add(root);
       var M = function (c, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0.05 }, o || {})); };
-      var mats = { stone: M(0xd8c9a8), dark: M(0x6f624d), recess: M(0x2a241c), trim: M(0xc9a24a, { metalness: 0.6, roughness: 0.35 }), seat: M(0xbfae8c), sand: M(0xd9c08a, { roughness: 1 }), banner: M(0x9e1b1b, { side: THREE.DoubleSide }),
+      var mats = { stone: M(0xd8c9a8), dark: M(0x6f624d), recess: M(0x2a241c, { emissive: 0xff7a1c, emissiveIntensity: 0.55 }), trim: M(0xc9a24a, { metalness: 0.6, roughness: 0.35 }), seat: M(0xbfae8c), sand: M(0xd9c08a, { roughness: 1 }), banner: M(0x9e1b1b, { side: THREE.DoubleSide }),
         star: new THREE.MeshStandardMaterial({ color: 0x5fe0ff, emissive: 0x5fe0ff, emissiveIntensity: 2.2, roughness: 0.2 }) };
       function ell(d, y, h, mat, open) { var m = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, h, 160, 1, !!open), mat); m.scale.set(A + d, 1, B + d); m.position.y = y + h / 2; if (open) m.material.side = THREE.DoubleSide; root.add(m); return m; }
       // outer wall: dark arch recesses behind a colonnade of pillars, 4 storeys, gold cornices; attic storey on top
@@ -134,15 +134,31 @@
       for (var b = 0; b < 20; b++) { var tb = b / 20 * Math.PI * 2, bn = new THREE.Mesh(bg, mats.banner); bn.position.set((A + SHELL + 0.9) * Math.cos(tb), CROWN_H - 12, (B + SHELL + 0.9) * Math.sin(tb)); bn.lookAt(bn.position.x * 2, CROWN_H - 12, bn.position.z * 2); root.add(bn); }
       // lobby: temple front — podium steps, 8 columns, pediment, bronze doors, the atlas star emblem
       var lob = new THREE.Group(); lob.position.set(0, 0, LOBBY_Z0 + LOBBY_D / 2); root.add(lob);
-      var hall = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W, LOBBY_H, LOBBY_D), mats.stone); hall.position.y = LOBBY_H / 2; hall.castShadow = true; lob.add(hall);
-      for (var st = 0; st < 4; st++) { var step = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W + 8 - st * 2, 0.5, 6 - st * 1.2), mats.dark); step.position.set(0, 0.25 + st * 0.5, LOBBY_D / 2 + 3 - st * 0.6); lob.add(step); }
+      var vh = new THREE.Shape(), vw = LOBBY_W / 2, wallH = LOBBY_H - 12;   // 2026-10-11 owner: "the big square is odd": walls + a 12 m vault, not a box
+      vh.moveTo(-vw, 0); vh.lineTo(vw, 0); vh.lineTo(vw, wallH); for (var vi = 1; vi < 24; vi++) { var va = Math.PI * vi / 24; vh.lineTo(vw * Math.cos(va), wallH + 12 * Math.sin(va)); } vh.lineTo(-vw, wallH); vh.closePath();
+      var hall = new THREE.Mesh(new THREE.ExtrudeGeometry(vh, { depth: LOBBY_D, bevelEnabled: false, curveSegments: 24 }), mats.stone); hall.position.z = -LOBBY_D / 2; hall.castShadow = true; lob.add(hall);
+      for (var st = 0; st < 10; st++) { var step = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W + 14 - st * 1.2, 0.35, 1.6 + (10 - st) * 0.9), mats.dark); step.position.set(0, 0.175 + st * 0.35, LOBBY_D / 2 + 3 - st * 0.1 + (10 - st) * 0.45); lob.add(step); }
       var colG = new THREE.CylinderGeometry(1.2, 1.4, LOBBY_H - 4, 20);
       for (var cx2 = -3.5; cx2 <= 3.5; cx2++) { var col = new THREE.Mesh(colG, mats.stone); col.position.set(cx2 * 7.8, 2 + (LOBBY_H - 4) / 2, LOBBY_D / 2 + 3); col.castShadow = true; lob.add(col); }
       var ent = new THREE.Mesh(new THREE.BoxGeometry(LOBBY_W + 4, 2.4, 8), mats.trim); ent.position.set(0, LOBBY_H - 0.8, LOBBY_D / 2 + 2); lob.add(ent);
       var tri = new THREE.Shape(); tri.moveTo(-(LOBBY_W + 4) / 2, 0); tri.lineTo((LOBBY_W + 4) / 2, 0); tri.lineTo(0, 8); tri.closePath();
       var ped = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: 8, bevelEnabled: false }), mats.stone); ped.position.set(0, LOBBY_H + 0.4, LOBBY_D / 2 - 2); ped.castShadow = true; lob.add(ped);   // pediment
-      var door = new THREE.Mesh(new THREE.BoxGeometry(12, 16, 0.6), M(0x6b4a22, { metalness: 0.7, roughness: 0.4 })); door.position.set(0, 8 + 2, LOBBY_D / 2 + 0.35); lob.add(door);
+      var doorM = M(0x6b4a22, { metalness: 0.7, roughness: 0.4 }), doorG = new THREE.BoxGeometry(7, 11, 0.6);
+      [-12, 0, 12].forEach(function (dx) { var d1 = new THREE.Mesh(doorG, doorM); d1.position.set(dx, 5.5 + 3.5, LOBBY_D / 2 + 0.35); lob.add(d1);
+        var tr = new THREE.Mesh(new THREE.BoxGeometry(6, 2.4, 0.5), mats.star); tr.position.set(dx, 11 + 3.5 + 1.4, LOBBY_D / 2 + 0.4); lob.add(tr); });
       var star = new THREE.Mesh(new THREE.OctahedronGeometry(3.2, 0), mats.star); star.scale.set(1, 1.5, 0.35); star.position.set(0, LOBBY_H + 5, LOBBY_D / 2 + 6.5); lob.add(star);
+      // FORECOURT (2026-10-11): paved plaza in front of the stair, lamp posts, statue plinths, a fountain
+      var plz = new THREE.Mesh(new THREE.BoxGeometry(140, 0.3, 70), M(0x9d9484, { roughness: 0.9 })); plz.position.set(0, 0.1, LOBBY_D / 2 + 3 + 40); lob.add(plz);
+      var lampG = new THREE.CylinderGeometry(0.5, 0.6, 9, 8), lampIM = new THREE.InstancedMesh(lampG, mats.trim, 16), lm = new THREE.Matrix4();
+      for (var li = 0; li < 16; li++) { var lxx = (li < 8 ? -1 : 1) * (46 + (li % 8) * 6); lm.setPosition(lxx, 4.5, LOBBY_D / 2 + 3 + 22); lampIM.setMatrixAt(li, lm); } lob.add(lampIM);
+      [-1, 1].forEach(function (sd) { var pl = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.8, 3.5, 12), mats.dark); pl.position.set(sd * 34, 1.75, LOBBY_D / 2 + 3 + 14); lob.add(pl);
+        var sdn = new THREE.Mesh(new THREE.CapsuleGeometry(1.0, 6, 4, 10), mats.stone); sdn.position.set(sd * 34, 3.5 + 4, LOBBY_D / 2 + 3 + 14); lob.add(sdn); });
+      var fn = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.5, 1.2, 28), mats.star); fn.position.set(0, 0.7, LOBBY_D / 2 + 3 + 40); lob.add(fn);
+      // HOLOGRAPHIC STATUE CROWN on the cornice: 56 additive figures (one instanced draw)
+      var holoM = new THREE.MeshBasicMaterial({ color: 0x4ad8ff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+      var crown = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.9, 8, 4, 8), holoM, 56), cm4 = new THREE.Matrix4(), cp = new THREE.Vector3(), cq = new THREE.Quaternion(), cs = new THREE.Vector3(1, 1, 1);
+      for (var ci2 = 0; ci2 < 56; ci2++) { var ca = ci2 / 56 * Math.PI * 2; cp.set((A + SHELL + 0.2) * Math.cos(ca), CROWN_H + 5, (B + SHELL + 0.2) * Math.sin(ca)); cm4.compose(cp, cq, cs); crown.setMatrixAt(ci2, cm4); }
+      crown.name = 'colosseum-holo-crown'; crown.frustumCulled = false; root.add(crown);
       mats.star.emissiveIntensity = 3.2;   // PERF 2026-10-04: was a PointLight (every extra light costs every lit material world-wide); the emissive star carries the glow
       var sign = (function () { var cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; var x = cv.getContext('2d'); x.fillStyle = '#e8dcc0'; x.fillRect(0, 0, 1024, 128); x.fillStyle = '#5a4520'; x.font = '700 72px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SOUTHERN COLOSSEUM', 512, 68); var tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; return new THREE.Mesh(new THREE.PlaneGeometry(44, 5.5), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.8 })); })();
       sign.position.set(0, LOBBY_H - 0.8, LOBBY_D / 2 + 6.05); lob.add(sign);

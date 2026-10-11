@@ -24,7 +24,7 @@
   function kartDef(id) { var m = /^kart-(.+)$/.exec(String(id)); return m ? { id: id, name: 'Kart ' + m[1], kind: 'mount', flying: false, model: null, procedural: 'car:' + m[1], saddle: 'saddle', kart: true } : null; }
   /* SHIP UPGRADES (world-skydock.js): engine = top speed, handling = turning; applies to every ride */
   function feelOf(id) { var f = feelBase(id), u = root.WorldSkyDock && root.WorldSkyDock.mult && root.WorldSkyDock.mult(); if (!u || (u.speed === 1 && u.turn === 1)) return f; var o2 = {}; for (var k in f) o2[k] = f[k]; o2.walk = f.walk * u.speed; o2.run = f.run * u.speed; o2.turn = f.turn * u.turn; return o2; }
-  function feelBase(id) { if (FEEL[id]) return FEEL[id]; var m = /^kart-(.+)$/.exec(String(id)), k = m && root.WorldHoverCars && root.WorldHoverCars.KARTS && root.WorldHoverCars.KARTS[m[1]]; return k ? { tall: k.tall, walk: k.top * 0.7, run: k.top, turn: k.handle, hover: 0.55 } : FEEL.bull; }
+  function feelBase(id) { if (FEEL[id]) return FEEL[id]; var m = /^kart-(.+)$/.exec(String(id)), k = m && root.WorldHoverCars && root.WorldHoverCars.KARTS && root.WorldHoverCars.KARTS[m[1]]; return k ? { tall: k.tall, walk: k.top * 0.7, run: k.top, turn: k.handle, hover: 0.55, accel: k.accel, weight: k.weight } : FEEL.bull; }
   var TUNE = { fovBase: 62, fovBoost: 8, summonDist: 6, mountRange: 9 };
 
   /* HOVER TILT (idea from the thruster-hovercar reference: one hover force per corner, so the body follows the ground): sample the ground ahead/behind/left/right of the car,
@@ -36,6 +36,7 @@
 
   root.buildMountRide = function (o) {
     var THREE = o.THREE, scene = o.scene, loader = o.loader, heightAt = o.heightAt, playerPos = o.playerPos, Mo = o.mounts || root.WorldMounts;
+    var edgeFn = null;   // setEdgeProvider(fn(x, z, y) -> {over, cx, cz} | null): invisible wall line along elevated race decks (host wires it for city circuits)
     var st = { riding: false, id: null, boosting: false }, MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0, turn: 1, tt: 0 }, raceMode = false;   // MOD = race modifiers (boost pads / items / stun / steer noise), set by world-race-run through raceAdapter()
     var M = { x: 0, z: 0, y: 0, yaw: 0, pitch: 0, bank: 0, sp: 0, vy: 0, def: null, fl: false };
     var SAD = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, bank: 0 };
@@ -46,6 +47,10 @@
     function approach(v, t, d) { return v < t ? Math.min(t, v + d) : Math.max(t, v - d); }
     function toast(m) { if (o.toast) o.toast(m); else if (root.Navi && root.Navi.toast) root.Navi.toast(m); }
     function gY(x, z) { return heightAt ? heightAt(x, z) : 0; }
+    // WATER CRAFT (2026-10-11): the six-seat sub-hover and the Rimba pod ride ON the water surface (rivers, the Harbor Ring Canal, the sea) instead of sinking to the bed.
+    var waterAt = o.waterAt, _wcFor = null, _wc = false;
+    function isWaterCraft() { if (_wcFor !== cur) { _wcFor = cur; var m = /^kart-(.+)$/.exec(String(cur || '')), HC = root.WorldHoverCars, t = m && HC && HC.TYPES ? HC.TYPES.filter(function (x) { return x.id === m[1]; })[0] : null; _wc = !!(t && t.water); } return _wc; }
+    function surfY(x, z) { var g = gY(x, z); if (waterAt && isWaterCraft()) { var w = waterAt(x, z); if (w != null && w > g) return w; } return g; }
 
     function load(id, done) {
       if (cache[id]) return done(cache[id]);
@@ -126,17 +131,19 @@
           M.y = Math.max(gY(M.x, M.z) + 2 * U, Math.min(f.fly.ceil * U, M.y + M.vy * dt));
           M.pitch = approach(M.pitch, -M.vy / (f.fly.climb * U) * 0.5, 2 * dt); M.bank = approach(M.bank, turn * 0.5, 2.5 * dt);
         } else {
-          var top = ((inp.dive || raceMode) ? f.run : f.walk) * U * topK; M.sp = approach(M.sp, thr * top * (MOD.stun > 0 ? 0 : 1), (thr ? (raceMode ? 22 : 14) : 24) * U * dt); if (MOD.noise > 0) M.yaw += (Math.random() - 0.5) * MOD.noise * dt * 5;
+          var top = ((inp.dive || raceMode) ? f.run : f.walk) * U * topK; M.sp = approach(M.sp, thr * top * (MOD.stun > 0 ? 0 : 1), (thr ? (raceMode ? 22 * (f.accel ? 0.7 + 0.1 * f.accel : 1) : 14) : 24) * U * dt); if (MOD.noise > 0) M.yaw += (Math.random() - 0.5) * MOD.noise * dt * 5;
           if (f.hover) { var tl = hoverTilt(gY, M.x, M.z, M.yaw, 2.0 * U, 0.9 * U, turn, Math.min(1, Math.abs(M.sp) / Math.max(1, top))); M.pitch = approach(M.pitch, tl.pitch, 6 * dt); M.bank = approach(M.bank, tl.bank, 6 * dt); }   // hover cars follow slopes and lean into turns
           else { M.pitch = 0; M.bank = 0; }
         }
       } else { M.sp = approach(M.sp, 0, 30 * U * dt); M.vy = 0; if (M.fl) M.y = Math.max(gY(M.x, M.z), M.y - 20 * U * dt); }
       M.x += Math.sin(M.yaw) * M.sp * dt; M.z += Math.cos(M.yaw) * M.sp * dt;
+      if (edgeFn && st.riding) { var eg = edgeFn(M.x, M.z, M.y); if (eg && eg.over) { M.x = eg.cx; M.z = eg.cz; M.sp *= 1 - Math.min(0.5, 2.2 * dt); } }   // wall: pulled back onto the deck edge, scrapes 2.2 /s
         var _rim = root.__worldRimU, _mr = Math.hypot(M.x, M.z); if (_rim && _mr > _rim) { M.x *= _rim / _mr; M.z *= _rim / _mr; }   // world edge (host sets __worldRimU)
-      if (!M.fl) { var gy = gY(M.x, M.z) + (f.hover || 0) * U; M.y += (gy - M.y) * Math.min(1, 14 * dt); }
+      if (!M.fl) { var gy = surfY(M.x, M.z) + (f.hover || 0) * U; M.y += (gy - M.y) * Math.min(1, 14 * dt); }
       var bob = (cache[cur] && cache[cur].proc) ? Math.sin(performance.now() / 320) * 0.12 * U : 0;
       holder.position.set(M.x, M.y + bob, M.z); holder.rotation.set(M.pitch, M.yaw, M.bank);
-      if (bob !== 0 && cache[cur].scene) cache[cur].scene.traverse(function (n) { if (n.name === 'flame') n.scale.y = 0.6 + Math.min(1.6, Math.abs(M.sp) / (30 * U)) + Math.sin(performance.now() / 60) * 0.12; });
+      if (bob !== 0 && cache[cur].scene) cache[cur].scene.traverse(function (n) { if (n.name === 'flame') n.scale.y = 0.6 + Math.min(2.6, Math.abs(M.sp) / ((f.run || 30) * U) * 2.6) + Math.sin(performance.now() / 60) * 0.12; });
+      if (cache[cur] && cache[cur].proc && cache[cur].scene) { var _boostOn = MOD.t > 0 && MOD.mul > 1.05; cache[cur].scene.traverse(function (n) { if (n.name === 'boostRing') n.visible = _boostOn; }); }
       if (mixer) {
         var spd = Math.abs(M.sp) / U;
         if (M.fl) play(ride && (M.sp > 4 * U || M.vy > 0) ? (st.boosting || M.vy > 0 ? 'fly' : 'glide') : (M.y - gY(M.x, M.z) > 3 * U ? 'glide' : 'idle'), 0.3);
@@ -220,11 +227,12 @@
 
     return {
       // ── race hooks (world-race-run.js drives a ride exactly like the hoverboard) ──
-      raceAdapter: { setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } if (o.turn != null) { MOD.turn = o.turn; MOD.tt = o.turnDur || 0.15; } }, state: function () { return { x: M.x, y: M.y, z: M.z, psi: M.yaw }; }, isFlying: function () { return M.fl; }, altitudeM: function () { return (M.y - gY(M.x, M.z)) / U; }, isRiding: function () { return st.riding; } },
+      raceAdapter: { setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) { var _wf = cur ? feelOf(cur) : null; MOD.stun = o.stun * (_wf && _wf.weight ? 1.3 - 0.1 * _wf.weight : 1); } if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } if (o.turn != null) { MOD.turn = o.turn; MOD.tt = o.turnDur || 0.15; } }, state: function () { return { x: M.x, y: M.y, z: M.z, psi: M.yaw }; }, isFlying: function () { return M.fl; }, altitudeM: function () { return (M.y - gY(M.x, M.z)) / U; }, isRiding: function () { return st.riding; } },
+      setEdgeProvider: function (fn) { edgeFn = typeof fn === 'function' ? fn : null; },
       setRaceMode: function (on) { raceMode = !!on; if (!on) { MOD.mul = 1; MOD.t = 0; MOD.stun = 0; MOD.noise = 0; } },
       /* rentRace(id, x, z, yaw): put a RENTED kart on the grid and ride it (no ownership needed - race selection screen karts are free to pick) */
       rentRace: function (id, x, z, yaw) { var d = Mo.def(id) || kartDef(id); if (!d) return false; if (st.riding) dismount(); show(id, x, z, yaw); if (!cur) return false; M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; playerPos.x = x; playerPos.z = z; st.riding = true; st.id = id; CAM.init = false; raceMode = true; return true; },
-      placeAt: function (x, z, yaw) { M.x = x; M.z = z; M.yaw = yaw; M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; },
+      placeAt: function (x, z, yaw, keepSpeed) { M.x = x; M.z = z; M.yaw = yaw; if (!keepSpeed) M.sp = 0; M.y = gY(x, z) + ((M.def && M.def.hover) || 0) * U; },
       update: update, isRiding: function () { return st.riding; }, mount: mount, dismount: dismount, summon: summon, stow: stow, panel: panel, near: near,
       seatKind: function () { return /^(car-|kart-)|^skiff$/.test(String(cur || '')) ? 'seat' : 'saddle'; },   /* cars, karts and the skiff are SAT IN; beasts are straddled */
       saddle: function () { return SAD; }, camera: function () { return CAM; }, tune: TUNE, boosting: function () { return st.boosting; }, stamina: function () { return 1; },
