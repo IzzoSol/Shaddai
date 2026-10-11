@@ -696,6 +696,9 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           const x = H.x + ux * s + px * 8 * V4_U, z = H.z + uz * s + pz * 8 * V4_U;
           ferry.position.set(x, _wyAt(x, z) + Math.sin(now / 600) * 0.2 * V4_U, z);
           ferry.rotation.y = Math.atan2(-(dir * uz), dir * ux); })(); })();
+      // HARBOUR CONNECTIONS: station 0 -> harbour office (212 m), harbour office -> pier (235 m)
+      reefSpan(_sites[0].x, _sites[0].z - 186 * V4_U, _sites[0].x, _sites[0].z - 200 * V4_U, _ry, 'harbour-span-a');
+      reefSpan(_sites[0].x, _sites[0].z - 224 * V4_U, _sites[0].x, _sites[0].z - 228 * V4_U, _ry, 'harbour-span-b');
       // RAMPS: from the water up to the deck, on the outer side of each station and each set (so people can step onto the decks)
       const _rmp = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.5, roughness: 0.05 });
       window.reefRamp = function(ax, az, bx, bz, y0, y1, name){ const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz); if(L < 1e-3) return;
