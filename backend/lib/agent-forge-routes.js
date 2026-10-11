@@ -28,6 +28,14 @@ try { softAuth = require('../auth-guard').softAuth || softAuth; } catch (_) {}
 
 router.use(softAuth);
 
+// Forging, importing and removing agents all create or destroy things with
+// tools and wallets attached, so they need a real signed-in identity. The
+// read-only catalogue (/kits, /traits) stays public so the page can render.
+function requireSignedIn(req, res, next) {
+  if (req.isAuthenticated && req.userId && req.userId !== 'local') return next();
+  res.status(401).json({ ok: false, error: 'Sign in to forge or import agents.', signIn: '/' });
+}
+
 // 'local' is what softAuth uses for an unverified caller. Keeping that as the
 // owner key means a single-user local install works with no sign-in at all,
 // while a signed-in user gets their own namespace.
@@ -46,7 +54,7 @@ router.get('/traits', (_req, res) => {
   });
 });
 
-router.get('/mine', (req, res) => {
+router.get('/mine', requireSignedIn, (req, res) => {
   const mine = forge.listByOwner(ownerOf(req)).map((a) => ({
     id: a.id, name: a.name, emoji: a.emoji, role: a.role, color: a.color,
     kits: a.kits || [], skills: a.skills || [], walletKey: a.walletKey || null,
@@ -55,7 +63,7 @@ router.get('/mine', (req, res) => {
   res.json({ ok: true, agents: mine, count: mine.length });
 });
 
-router.post('/', express.json({ limit: '64kb' }), (req, res) => {
+router.post('/', requireSignedIn, express.json({ limit: '64kb' }), (req, res) => {
   const spec = Object.assign({}, req.body || {}, { owner: ownerOf(req) });
   const result = forge.forgeAgent(spec);
   if (!result.ok) return res.status(400).json(result);
@@ -71,6 +79,8 @@ router.post('/', express.json({ limit: '64kb' }), (req, res) => {
     // What the person can do with it right now, so the UI never has to guess.
     next: {
       hire: `/api/agents/${a.id}`,
+      dashboard: '/dashboard#office',
+      world: '/SHADDAI-WORLD-3D.html',
       wallet: a.walletKey ? `/api/agent-wallet/${a.walletKey}` : null,
       note: a.walletKey
         ? 'The wallet opens empty. Fund it before this agent can spend.'
@@ -79,10 +89,35 @@ router.post('/', express.json({ limit: '64kb' }), (req, res) => {
   });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', requireSignedIn, (req, res) => {
   const r = forge.removeAgent(String(req.params.id || ''), ownerOf(req));
   if (!r.ok) return res.status(404).json(r);
   res.json({ ok: true });
+});
+
+// Bring an existing bot/agent in (Grok, OpenAI-style, or a plain persona + tool
+// list). It becomes a dashboard agent with a verified owner, usable in chat, the
+// office, and the realm. API keys are never stored (grok-connect keeps a flag).
+router.post('/import', requireSignedIn, express.json({ limit: '64kb' }), (req, res) => {
+  try {
+    const b = req.body || {};
+    const name = String(b.name || '').trim();
+    if (!name) return res.status(400).json({ ok: false, error: 'name is required' });
+    const source = ['grok', 'openai', 'custom'].includes(b.source) ? b.source : 'custom';
+    const tools = Array.isArray(b.tools) ? b.tools.filter((t) => typeof t === 'string').slice(0, 24) : undefined;
+    const grok = require('../grok-connect');
+    const { bot, tools: usable } = grok.buildAndRegisterBot({
+      name, persona: b.persona || b.instructions, tools, ownerId: ownerOf(req), apiKey: b.apiKey,
+    });
+    res.json({
+      ok: true,
+      agent: { id: bot.id, name: bot.name, source, tools: usable, hasKey: bot.hasKey },
+      dropped: tools ? tools.filter((t) => !usable.includes(t)) : [],
+      next: { dashboard: '/dashboard#office', world: '/SHADDAI-WORLD-3D.html' },
+    });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
 });
 
 module.exports = router;

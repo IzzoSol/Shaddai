@@ -50,7 +50,7 @@
     "secret": "alice-webhook-secret-xyz",
     "createdAt": "2026-08-28T20:37:36.451Z",
     "fireCount": 0,
-    "errorCount": 333,
+    "errorCount": 334,
     "lastError": "getaddrinfo ENOTFOUND hooks.example.com"
   }
 ]

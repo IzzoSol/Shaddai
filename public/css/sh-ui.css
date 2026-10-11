@@ -1,0 +1,90 @@
+/* SH-UI — SHADDAI's small vanilla design system (v101.3)
+   Patterns distilled from the reference libraries in ../ (Nuxt UI dashboard theme, shadcn/ui, Material UI),
+   all MIT/Apache. No framework, no build step: plain classes that sit on the dashboard's existing variables.
+   Rule of thumb: one control vocabulary everywhere — shui-btn, shui-tabs, shui-field, shui-card, shui-empty, shui-table. */
+
+:root{
+  --shui-accent: var(--accent, #00e5a0);
+  --shui-accent-ink: var(--bg-deep, #04120c);
+  --shui-bg: var(--bg-card, #0a0e13);
+  --shui-raised: rgba(255,255,255,.04);
+  --shui-line: var(--border, rgba(120,150,140,.22));
+  --shui-line-strong: rgba(120,150,140,.42);
+  --shui-ink: var(--text-primary, #e9efe9);
+  --shui-muted: var(--text-muted, #8a99a6);
+  --shui-danger: #ff6b6b;
+  --shui-radius: 8px;
+  --shui-focus: 0 0 0 3px color-mix(in srgb, var(--shui-accent) 28%, transparent);
+  --shui-font: 'Rajdhani','Inter',system-ui,sans-serif;
+  --shui-mono: 'Share Tech Mono',ui-monospace,monospace;
+}
+
+/* ── buttons: solid / soft / ghost / danger, three sizes ── */
+.shui-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:var(--shui-radius);
+  border:1px solid transparent;font:600 12px var(--shui-font);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  background:var(--shui-accent);color:var(--shui-accent-ink);transition:filter .15s,background .15s,border-color .15s,color .15s}
+.shui-btn:hover{filter:brightness(1.08)}
+.shui-btn:focus-visible{outline:0;box-shadow:var(--shui-focus)}
+.shui-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.shui-btn.soft{background:color-mix(in srgb,var(--shui-accent) 12%,transparent);color:var(--shui-accent);border-color:color-mix(in srgb,var(--shui-accent) 35%,transparent)}
+.shui-btn.ghost{background:transparent;color:var(--shui-ink);border-color:var(--shui-line-strong)}
+.shui-btn.ghost:hover{border-color:var(--shui-accent);color:var(--shui-accent);filter:none}
+.shui-btn.danger{background:transparent;color:var(--shui-danger);border-color:color-mix(in srgb,var(--shui-danger) 45%,transparent)}
+.shui-btn.sm{min-height:30px;padding:0 10px;font-size:11px}
+.shui-btn.lg{min-height:44px;padding:0 20px;font-size:13px}
+
+/* ── tabs: pill rail with an active chip (Nuxt UI "pill") ── */
+.shui-tabs{display:inline-flex;gap:2px;padding:4px;border-radius:calc(var(--shui-radius) + 2px);background:var(--shui-raised);border:1px solid var(--shui-line);max-width:100%;overflow-x:auto}
+.shui-tabs>button{min-height:32px;padding:0 14px;border:0;border-radius:var(--shui-radius);background:transparent;color:var(--shui-muted);
+  font:600 12px var(--shui-font);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.shui-tabs>button:hover{color:var(--shui-ink)}
+.shui-tabs>button.on,.shui-tabs>button[aria-selected=true]{background:var(--shui-accent);color:var(--shui-accent-ink)}
+.shui-tabs>button:focus-visible{outline:0;box-shadow:var(--shui-focus)}
+
+/* ── fields: input / select / textarea share one look ── */
+.shui-field{display:block;width:100%;min-height:36px;padding:8px 12px;border-radius:var(--shui-radius);border:1px solid var(--shui-line-strong);
+  background:#06080d;color:var(--shui-ink);font:400 13px var(--shui-font);outline:0;transition:border-color .15s,box-shadow .15s}
+.shui-field::placeholder{color:var(--shui-muted)}
+.shui-field:focus{border-color:var(--shui-accent);box-shadow:var(--shui-focus)}
+select.shui-field{appearance:none;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--shui-muted) 50%),linear-gradient(135deg,var(--shui-muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.shui-label{display:block;margin:0 0 6px;font:600 11px var(--shui-font);letter-spacing:.1em;text-transform:uppercase;color:var(--shui-muted)}
+
+/* ── card / panel / toolbar ── */
+.shui-card{border:1px solid var(--shui-line);border-radius:calc(var(--shui-radius) + 4px);background:var(--shui-bg);padding:16px}
+.shui-card>header{display:flex;align-items:center;gap:10px;margin:-4px 0 12px}
+.shui-card>header h3{margin:0;font:700 14px var(--shui-font);letter-spacing:.1em;text-transform:uppercase;color:var(--shui-accent)}
+.shui-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
+.shui-toolbar .grow{flex:1;min-width:160px}
+
+/* ── badge / chip ── */
+.shui-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;border:1px solid var(--shui-line-strong);font:600 10px var(--shui-mono);letter-spacing:.06em;color:var(--shui-muted)}
+.shui-badge.ok{color:var(--shui-accent);border-color:color-mix(in srgb,var(--shui-accent) 40%,transparent)}
+.shui-badge.warn{color:#ffce63;border-color:rgba(255,206,99,.4)}
+.shui-badge.bad{color:var(--shui-danger);border-color:color-mix(in srgb,var(--shui-danger) 40%,transparent)}
+
+/* ── empty state: icon, title, one sentence, one action (Nuxt UI "empty") ── */
+.shui-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 16px;text-align:center;border:1px dashed var(--shui-line-strong);border-radius:calc(var(--shui-radius) + 4px)}
+.shui-empty .ic{font-size:28px;line-height:1;opacity:.85}
+.shui-empty h4{margin:0;font:700 15px var(--shui-font);letter-spacing:.06em;color:var(--shui-ink)}
+.shui-empty p{margin:0;max-width:42ch;font-size:13px;line-height:1.55;color:var(--shui-muted)}
+
+/* ── table: sticky blurred header, calm rows ── */
+.shui-table{width:100%;border-collapse:separate;border-spacing:0;font:400 13px var(--shui-font)}
+.shui-table thead th{position:sticky;top:0;z-index:1;padding:10px 12px;text-align:left;font:700 11px var(--shui-font);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--shui-muted);background:rgba(6,8,13,.78);backdrop-filter:blur(6px);border-bottom:1px solid var(--shui-line-strong)}
+.shui-table td{padding:12px;border-bottom:1px solid var(--shui-line);color:var(--shui-ink);vertical-align:middle}
+.shui-table tbody tr:hover{background:var(--shui-raised)}
+
+/* ── dialog + toast + skeleton ── */
+.shui-dialog{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(2,5,10,.78);backdrop-filter:blur(6px)}
+.shui-dialog.on{display:flex}
+.shui-dialog>div{width:min(560px,94vw);max-height:90vh;overflow:auto;border:1px solid var(--shui-line-strong);border-radius:14px;background:#070b11;padding:20px}
+.shui-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100001;padding:10px 16px;border-radius:999px;border:1px solid var(--shui-line-strong);background:#070b11;color:var(--shui-ink);font:600 12px var(--shui-font)}
+.shui-skel{border-radius:var(--shui-radius);background:linear-gradient(90deg,var(--shui-raised),rgba(255,255,255,.09),var(--shui-raised));background-size:200% 100%;animation:shui-sk 1.2s linear infinite}
+@keyframes shui-sk{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.shui-skel{animation:none}.shui-btn,.shui-tabs>button{transition:none}}
+
+/* ── hit-target + readability floor (applies to anything using shui-*) ── */
+.shui-btn,.shui-tabs>button,.shui-field{min-height:32px}
+@media(pointer:coarse){.shui-btn,.shui-tabs>button,.shui-field{min-height:44px}}

@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-core';
 
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const BASE = "http://localhost:3000";
-const OUT = "C:/Users/Brittany/Desktop/SHADDAI MASTER FINAL BUILD/public/_audit_shots";
+const OUT = "./_audit_shots";
 
 const pages = [
   "/home.html","/agents.html","/aura.html","/codex.html","/collectibles-nft.html",

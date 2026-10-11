@@ -137,6 +137,7 @@
 
     ov.innerHTML =
       '<div id="shdOb-modal">' +
+        '<button class="shd-ob-x" id="shdObX" type="button" aria-label="Close — do this later">&times;</button>' +
         '<div class="shd-ob-eyebrow">SHADDAI // INITIALIZE</div>' +
         '<h1>Power up your <span class="cy">7 agents</span></h1>' +
         '<div class="shd-ob-sub">Your agents are ready — they just need a brain. Pick <b>one</b> free option below (~30 seconds) and every workflow, forge agent, and command runs on a real model.</div>' +
@@ -180,6 +181,9 @@
       }
     });
     ov.querySelector('#shdObDone').addEventListener('click', function () { if (!this.disabled) close(); });
+    var xBtn = ov.querySelector('#shdObX'); if (xBtn) xBtn.addEventListener('click', function () { close(); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && ov.classList.contains('on')) close(); });
+    ov.addEventListener('mousedown', function (ev) { if (ev.target === ov) close(); });
     var laterBtn = ov.querySelector('#shdObLater');
     if (laterBtn) laterBtn.addEventListener('click', function () { close(); });
     ov.querySelectorAll('.shd-ob-key').forEach(function (inp) {

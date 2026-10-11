@@ -3330,7 +3330,7 @@ app.get('/dashboard', (req, res) => {
 });
 // RAG brain — the 7-agent knowledge system UI (knowledge bases + live cloud search).
 app.get('/brain', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/brain.html'));
+  res.sendFile(path.join(__dirname, '../public/rag.html'));
 });
 // Flat RAG brain — the mobile-friendly read view (no 3D): agents, tools, wallets,
 // accurate routed + grounded ask. Same backend, single shared connection.

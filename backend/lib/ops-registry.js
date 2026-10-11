@@ -42,6 +42,9 @@ function save() {
 }
 
 function enabled(id) {
+  // BETA_MODE=1 turns EVERY background service off (signals, bots, news, PNL, discovery, keep-alive, warmers)
+  // so a beta/staging deploy idles at near-zero memory and Render can spin it down. Unset on production.
+  if (process.env.BETA_MODE === '1') return false;
   if (process.env['DISABLE_' + id.toUpperCase().replace(/-/g, '_')] === '1') return false;
   const t = load();
   return t[id] !== false; // default on
