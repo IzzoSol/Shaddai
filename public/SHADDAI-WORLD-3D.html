@@ -773,7 +773,7 @@ let _v4T = null, _v4Water = null, _v4Meta = null, _v4Fill = null;
 let _v4Sky = null;                        // MAP v4 sky/day-night (world-sky-v4.js)   // terrain api / water api / terrain.json once loaded
 window.__MAP_V4 = MAP_V4;
 if(MAP_V4){
-  camera.near = 0.5; camera.far = 48000; camera.updateProjectionMatrix();   // ~39 000-unit-wide world (half 19 444)
+  camera.near = 1.5; camera.far = 48000; camera.updateProjectionMatrix();   // near 0.5->1.5 (0.38 m): 3x finer depth at 5 km, kills the far z-fight shimmer on roads/track decks   // ~39 000-unit-wide world (half 19 444)
   window.__w3dDebug.mapV4 = true;
 }
 function _loadScript(src){ return new Promise(function(res, rej){ const s=document.createElement('script'); s.src=src; s.async=false; s.onload=()=>res(); s.onerror=()=>rej(new Error('script 404 '+src)); document.head.appendChild(s); }); }
@@ -1063,6 +1063,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js â† realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
+      if(!/[?&]realmclusters=1/.test(location.search)) return api;   // 2026-10-11 owner: doorless model districts in the realms are removed (also the biggest triangle bill); ?realmclusters=1 brings them back
       return _loadScript('/world-clusters-v4.js?v=20261009c').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
@@ -3588,6 +3589,29 @@ addEventListener('keydown', function(e){
   e.preventDefault(); window.toggleWorldMode();
 });
 _reflectMode();
+// TRAIN FAILSAFE (2026-10-11, owner: "the walkable train doesn't work or appear"): the maglev model is attached inside the canon load step, which is skipped if any earlier
+// step returned nothing. Poll after playable and attach SHADDAI's own walkable trainset if the ride is still on the capsule placeholders.
+(function trainFailsafe(){ let n = 0; const iv = setInterval(function(){ if(++n > 120){ clearInterval(iv); return; }
+  const T = window.__worldTransitApi; if(!T || !T._debug || !window.__loadPlayable || !window.buildMaglevTrainV2) return;
+  clearInterval(iv);
+  try{ if(!T._debug.walkLayout()){ const tv = window.buildMaglevTrainV2({ THREE }); T.setTrainModel(tv, tv.userData.lengthM, 1); console.info('[transit] failsafe attached the walkable maglev'); } }catch(e){ console.warn('[transit] failsafe failed:', e && e.message); }
+}, 1000); })();
+// AUTO CURSOR (2026-10-11, owner: "we have to press Tab to move the mouse around"): any button panel that opens over the game (mounts I, MODES, tunnel line,
+// shops, race select...) frees the cursor by itself and the mouse is re-captured when the last one closes. Tab still works. ?autocursor=0 = off.
+(function autoCursor(){ if(/[?&]autocursor=0\b/.test(location.search) || typeof MutationObserver === 'undefined') return;
+  const open = new Set(); let released = false;
+  const isPanel = function(n){ try{
+    if(!n || n.nodeType !== 1 || n.tagName === 'BUTTON' || n.tagName === 'CANVAS' || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') return false;
+    const cs = getComputedStyle(n); if(cs.position !== 'fixed' || (parseInt(cs.zIndex, 10) || 0) < 9000) return false;
+    return !!n.querySelector('button,[data-a],[data-i],[data-s],[data-r],[data-to],[data-x]'); }catch(_){ return false; } };
+  const settle = function(){ setTimeout(function(){ open.forEach(function(n){ if(!n.isConnected) open.delete(n); });
+    if(open.size === 0 && released){ released = false; try{ if(window._uiMode !== 'play') window.enterPlayMode(); }catch(_){} } }, 80); };
+  new MutationObserver(function(muts){
+    for(const m of muts){
+      m.addedNodes.forEach(function(n){ if(isPanel(n)){ open.add(n); if(controls.isLocked){ released = true; try{ document.exitPointerLock(); }catch(_){} } } });
+      m.removedNodes.forEach(function(n){ if(open.has(n)){ open.delete(n); settle(); } });
+    } }).observe(document.body, { childList: true });
+})();
 
 const raycaster = new THREE.Raycaster();
 const center = new THREE.Vector2(0,0);
@@ -6221,7 +6245,9 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     // (maglev update moved to the top of the frame, before player movement â€” see _onTrainNow)
     if(worldLandmarks) worldLandmarks.update(t);
     if(worldRealmProps) worldRealmProps.update(t, camera.position);   // distance-hide far realm GLBs (was never called: 28 full-detail landmarks with zero culling)
-    if(window.__colosseumExt) window.__colosseumExt.update(t);
+    if(window.__colosseumExt){ window.__colosseumExt.update(t);
+      const _ce = window.COLOSSEUM_WORLD, _cg = window.__colosseumExt.group;   // 2026-10-11 owner: colosseum "janky": its ~50 draws / hundreds of k tris only draw within 1.8 km (+ always while you are inside the island)
+      if(_ce && _cg){ const _cd = Math.hypot(_ce.x - playerPos.x, _ce.z - playerPos.z), _show = _cd < 7000; if(_cg.visible !== _show) _cg.visible = _show; } }
     if(worldTerrain)  worldTerrain.update(t);
     if(worldMarkets)  worldMarkets.update(t);
     if(worldBuildings) worldBuildings.update(t);

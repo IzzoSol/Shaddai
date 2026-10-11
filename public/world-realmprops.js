@@ -77,7 +77,7 @@ window.buildWorldRealmProps = function (opts) {
   // 2026-10-11 (owner: "buildings that aren't needed in the realms that have no entry need to be removed"): the filler bld-* / homes-* blocks have no door,
   // no interior and no collider purpose - they only cost draws. Hero landmarks, rocks and crystals stay. ?realmbuildings=1 puts them back.
   if (typeof location === 'undefined' || !/[?&]realmbuildings=1/.test(location.search || '')) {
-    MANIFESTS.forEach(function (mf) { mf.models = mf.models.filter(function (c) { return !/^(bld-|homes-)/.test(String(c.id)); }); });
+    MANIFESTS.forEach(function (mf) { mf.models = mf.models.filter(function (c) { return !/^(bld-|homes-|hero-)/.test(String(c.id)) || /^hero-castle/.test(String(c.id)); }); });
   }
   MANIFESTS.forEach(function (mf) {
     var b = biome(mf.biome);

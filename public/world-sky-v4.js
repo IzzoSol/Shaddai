@@ -62,9 +62,9 @@
     { e: -0.14, zen: 0x040a18, hor: 0x0c2230, glow: 0x0b2c2a, cLit: 0x1e2c3c, cDark: 0x070a12, hSky: 0x12233f, hGnd: 0x06070c, warm: 0.15, em: 0.60, stars: 0.85, fog: 1.05 },
     { e: -0.04, zen: 0x121840, hor: 0xa85a3a, glow: 0xe8c45c, cLit: 0xcc7858, cDark: 0x2a1c30, hSky: 0x3a3560, hGnd: 0x1a1210, warm: 0.90, em: 0.35, stars: 0.30, fog: 1.15 },
     { e: 0.04, zen: 0x22306a, hor: 0xe29a52, glow: 0xe8c45c, cLit: 0xf0b070, cDark: 0x5a4050, hSky: 0x6a7090, hGnd: 0x3a2a1c, warm: 1.00, em: 0.08, stars: 0.00, fog: 1.15 },
-    { e: 0.14, zen: 0x2f5596, hor: 0xe6c8a0, glow: 0xe8c45c, cLit: 0xfff0d6, cDark: 0x8a8090, hSky: 0x9ab4d8, hGnd: 0x4a3e2e, warm: 0.45, em: 0.00, stars: 0.00, fog: 1.05 },
-    { e: 0.35, zen: 0x2a68c4, hor: 0xa8c6e4, glow: 0xfff4e0, cLit: 0xffffff, cDark: 0xb0bccc, hSky: 0xbcd4f0, hGnd: 0x4a4638, warm: 0.05, em: 0.00, stars: 0.00, fog: 1.00 },
-    { e: 1.00, zen: 0x1f5cbc, hor: 0xb4d0ec, glow: 0xfff8ec, cLit: 0xffffff, cDark: 0xb8c4d4, hSky: 0xc4dcf4, hGnd: 0x4e4a3c, warm: 0.00, em: 0.00, stars: 0.00, fog: 1.00 }
+    { e: 0.14, zen: 0x2f5596, hor: 0xd8b48c, glow: 0xe8c45c, cLit: 0xfff0d6, cDark: 0x8a8090, hSky: 0x9ab4d8, hGnd: 0x4a3e2e, warm: 0.45, em: 0.00, stars: 0.00, fog: 1.05 },
+    { e: 0.35, zen: 0x2a68c4, hor: 0x78a8dc, glow: 0xfff4e0, cLit: 0xffffff, cDark: 0xb0bccc, hSky: 0xbcd4f0, hGnd: 0x4a4638, warm: 0.05, em: 0.00, stars: 0.00, fog: 1.00 },
+    { e: 1.00, zen: 0x1f5cbc, hor: 0x80b0e4, glow: 0xfff8ec, cLit: 0xffffff, cDark: 0xb8c4d4, hSky: 0xc4dcf4, hGnd: 0x4e4a3c, warm: 0.00, em: 0.00, stars: 0.00, fog: 1.00 }
   ];
   var COLOR_KEYS = ['zen', 'hor', 'glow', 'cLit', 'cDark', 'hSky', 'hGnd'], SCALAR_KEYS = ['warm', 'em', 'stars', 'fog'];
   var PALETTE = PALETTE_SRC.map(function (k) {
