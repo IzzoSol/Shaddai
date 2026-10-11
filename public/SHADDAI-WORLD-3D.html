@@ -684,7 +684,7 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       (function reefFerry(){ const H = _sites[0], S = _sites[1]; let ferry = null;
         _gl.loadAsync('/assets/reef/reef-ferry.glb').then(function(f){ ferry = f.scene; ferry.name = 'reef-ferry'; ferry.scale.setScalar(V4_U); scene.add(ferry); })
           .catch(function(e){ console.warn('[reef] ferry failed:', e && e.message); });
-        const L = Math.hypot(S.x - H.x, S.z - H.z), ux = (S.x - H.x) / L, uz = (S.z - H.z) / L, px = -uz, pz = ux, SPEED = 6 * V4_U, END = 30 * V4_U;
+        const L = Math.hypot(S.x - H.x, S.z - H.z), ux = (S.x - H.x) / L, uz = (S.z - H.z) / L, px = -uz, pz = ux, SPEED = 6 * V4_U, END = 44 * V4_U;   // runs from the plaza edge (44 m) to the station's hub-side edge (~110 m from the hub)
         let s = END, dir = 1, t0 = performance.now();
         (function tick(){ requestAnimationFrame(tick); if(!ferry) return;
           const now = performance.now(), dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
