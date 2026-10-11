@@ -21,3 +21,5 @@ Not done yet: terrain look + floors polish (basic), texture audit, Colosseum ent
 ## Track clearance (final pass)
 - 570 of 4,183 city-fabric pieces that overlapped any Meridian / quarter-loop deck are dropped (`public/assets/world/track-clear-v4.json`, generated from `docs/track-*.json`; footprint + 10 m). `?trackclear=0` restores them. Regenerate the JSON after changing a circuit.
 - All 7 agent GLBs (SHADDAI, ZEROX, ORACLE, NEXUS, TURTLE, QUILL, PIKADON + VILLAIN) are tracked in git and present in public/assets/agents.
+- Colliders for the removed realm models (bld-*, homes-*, hero-* except hero-castle / hero-fortress) are no longer registered either (world-layout.js), so there are no invisible walls where they stood. `?realmbuildings=1` restores both model and collider.
+- Checked: all 19 loading-slide images and all 8 operative portraits/GLBs exist.
