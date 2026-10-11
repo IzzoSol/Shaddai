@@ -401,7 +401,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261009c"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20260929b"></script>
 <script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261009c"></script><script src="/world-speed-fx.js?v=20261009c"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261004nan"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
-<script src="/world-race-prizebox.js?v=20261010a"></script><script src="/world-cutscene-travel.js?v=20261011a"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
+<script src="/world-race-prizebox.js?v=20261010a"></script><script src="/world-cutscene-travel.js?v=20261011a"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261011a"></script><script src="/world-race-run.js?v=20260929a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
 <script src="/world-bots.js?v=20260929a"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
@@ -5509,8 +5509,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
     reef: function(){ return window.__reefAnchor || null; },
     lift: function(){ const h = _v4Meta && _v4Meta.harbor && _v4Meta.harbor.lift; return h && h.canal_m ? { x: h.canal_m[0] * V4_U, z: -h.canal_m[1] * V4_U } : null; } });
 }, 1000); })();
-// STATIC BATCH (?batch=1, opt-in 2026-10-11): merge frozen loose meshes that share material values into one mesh each (world-static-batch.js). `?batch=0` / default = off.
-(function bootStaticBatch(){ if(!/[?&]batch=1/.test(location.search)) return; let n = 0;
+// STATIC BATCH (default ON, ?batch=0 = off): merge frozen loose meshes that share material values into one mesh each (world-static-batch.js). `?batch=0` / default = off.
+(function bootStaticBatch(){ if(/[?&]batch=0/.test(location.search)) return; let n = 0;   // default ON (2026-10-11 push); ?batch=0 turns it off
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
     if(!window.__loadPlayable || !window.WorldStaticBatch) return; clearInterval(iv);
     setTimeout(function(){ import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
