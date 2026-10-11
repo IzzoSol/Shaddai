@@ -76,6 +76,7 @@
   // Continuous in e (smoothstep blend between neighbouring keys) → fog/sky never jump.
   function samplePalette(e, out) {
     out = out || {};
+    if (!(e === e) || !isFinite(e)) e = 0.5;   // NaN sun elevation -> noon, never a NaN palette
     var P = PALETTE, i = 0;
     if (e <= P[0].e) i = 0; else if (e >= P[P.length - 1].e) i = P.length - 2;
     else while (i < P.length - 2 && e > P[i + 1].e) i++;
@@ -412,6 +413,8 @@
       sunDir: sunDir, lightDir: lightDir, moonDir: moonDir,
       update: function (dt, playerPos) {
         dt = Math.min(Math.max(dt || 0, 0), 1);
+        if (!isFinite(time)) time = 0.35;   // 2026-10-11: a NaN clock turns the palette NaN -> flat white sky + black (unlit) characters
+        if (!isFinite(clock)) clock = 0;
         clock += dt; frameNo++;
         uniforms.uTime.value = clock;
         if (!paused) {
@@ -422,7 +425,7 @@
         apply(playerPos);
         waterAcc += dt; syncWater(false);
       },
-      setTime: function (t) { time = ((+t % 1) + 1) % 1; apply(null); syncWater(true); },
+      setTime: function (t) { t = +t; if (!isFinite(t)) return; time = ((t % 1) + 1) % 1; apply(null); syncWater(true); },
       getTime: function () { return time; },
       isNight: function () { return ls.night >= 0.5; },
       setPaused: function (b) { paused = !!b; },

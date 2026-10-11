@@ -2371,7 +2371,7 @@ if(!window.__SHD_FOG_ON) scene.fog.density = 0;
 if(MAP_V4){
   skyDome.visible = false; starGroup.visible = false;   // replaced by world-sky-v4.js (stars/clouds/moon are in its shader)
   sun2.visible = false; rim.visible = false;            // one directional light only: the sky drives `sun`
-  _ldBegin('sky'); _loadScript('/world-sky-v4.js?v=20261011a').then(function(){
+  _ldBegin('sky'); _loadScript('/world-sky-v4.js?v=20261011c').then(function(){
     _v4Sky = window.buildWorldSkyV4({ THREE, scene, renderer, camera, sunLight: sun, hemiLight: hemi, ambientLight: ambient,
       fog: scene.fog, water: _v4Water, dayLengthMin: 24,
       shadows: /[?&]shadows\b/.test(location.search) });   // PERF: shadow pass OFF by default (measured ~4,900 casters = a 2nd full scene draw on an HD 620); add ?shadows for it
@@ -5779,7 +5779,8 @@ window.__travel = {
         addEventListener('keydown', function(e){ if(e.code === 'Backspace' && window.__raceActive && !/input|textarea/i.test((document.activeElement||{}).tagName||'')){ e.preventDefault(); window.__raceExit(); } }, true); })();
       window.__raceStart = function(cid, o){ o = o || {}; try{ const M = window.__mountRide, sp = run.startPose(cid); window.__raceKart = !!(o.vehicle && /^kart-/.test(o.vehicle)); window.__raceActive = true;
         if(window.__raceKart){ if(!M) return false; if(hover.isRiding()) hover.dismount(); if(hover.hide) hover.hide(); if(!M.rentRace(o.vehicle, sp.x, sp.z, sp.yaw || 0)) return false; run.setVehicle(M.raceAdapter); run.shipId = String(o.vehicle).replace(/^kart-/, ''); }
-        else { run.shipId = null; if(M){ if(M.isRiding()) M.dismount(); M.setRaceMode(false); } run.setVehicle(null); playerPos.x = sp.x; playerPos.z = sp.z; if(!hover.isRiding() && typeof playerAvatar !== 'undefined') hover.toggle(playerAvatar, {}); if(o.style && hover.setStyle) hover.setStyle(o.style); }
+        else { run.shipId = null; if(M){ if(M.isRiding()) M.dismount(); M.setRaceMode(false); } run.setVehicle(null); playerPos.x = sp.x; playerPos.z = sp.z; if(!hover.isRiding() && typeof playerAvatar !== 'undefined') hover.toggle(playerAvatar, { yaw: sp.yaw || 0 }); if(o.style && hover.setStyle) hover.setStyle(o.style);
+          setTimeout(function(){ try{ if(window.__raceActive && !window.__raceKart && !hover.isRiding()) hover.mount(playerAvatar, { yaw: sp.yaw || 0 }); }catch(_){} }, 500); }
         if(o.free){ window.__freeRide = { cid: cid, t: 0, fallT: 0 }; window.__wireEdges(); if(window.Navi && window.Navi.toast) window.Navi.toast('Free ride: the whole track is yours. Open I > Races any time to start a race.'); return true; }   // no race state: just placed on the start line, mounted
         window.__freeRide = null; window.__wireEdges();
         run.start(cid, { ranked: !!o.ranked, ais: o.ais == null ? 5 : o.ais, level: o.level });
