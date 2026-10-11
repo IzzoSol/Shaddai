@@ -3710,7 +3710,7 @@ if (window.buildWorldInteriors) {
       if(_cutscene && _cutscene.isPlaying()) return;
       // 2026-10-11 (owner: "when I press the hoverboard it takes me to the castle in a glitch"): E is also the mount/board/dismount key. If a mount or the
       // hoverboard is active, or one was boarded / dismounted a moment ago, this E belongs to the vehicle, not to the door.
-      try{ const _M = window.__mountRide; if(_M && _M.isRiding && _M.isRiding()) return; if(typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding()) return;
+      try{ const _M = window.__mountRide; if(_M && ((_M.isRiding && _M.isRiding()) || (_M.near && _M.near()))) return;   // riding, or a summoned mount is within reach: E means mount if(typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding()) return;
         const _now = performance.now(); if(window.__lastMountKey && _now - window.__lastMountKey < 700) return; }catch(_){}
       if(_interiors.isInside()){
         // cinematic wipe, teleport OUT at midpoint

@@ -187,7 +187,7 @@
       if (String(_ds.code).toUpperCase() === 'SHADDAI') continue;   // SHADDAI temple moved to the sky observatory — no "[E] ENTER SHADDAI" at the ground center (that's the open bazaar/forum now)
       // FIX 2026-10-04 (owner: "ENTERING CASTLE" fired far from any castle): realm structures take their collider from the WHOLE model
       // (castle/fortress radius = hundreds of units), so their "door" covered half the map and stole every E. Cap at the biggest agent building.
-      var _thr = Math.min(colliderR(_ds.code) + DOOR_EXTRA, 140);
+      var _thr = Math.min(colliderR(_ds.code) + DOOR_EXTRA, (_ds.code === 'CASTLE' || _ds.code === 'FORTRESS') ? 60 : 140);   // 2026-10-11: realm keeps need you at the gate, not 36 m away (owner: hoverboard/E "takes me to the castle")
       var _sx  = _ds.pos ? _ds.pos[0] : 0;
       var _sz  = _ds.pos ? _ds.pos[1] : 0;
       /* front vector = normalize(centre - buildingPos). SHADDAI sits at centre so its
