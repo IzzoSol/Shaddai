@@ -98,6 +98,7 @@
       Object.keys(acts).forEach(function (k) { var a = acts[k]; if (k === want) { a.enabled = true; a.reset().fadeIn(fade == null ? 0.25 : fade).play(); } else if (a.isRunning()) a.fadeOut(fade == null ? 0.25 : fade); });
     }
     function summon(id, auto) {
+      root.__vehicleActionAt = (root.performance || Date).now();
       if (!Mo || !Mo.has(id)) { toast('You do not own that mount'); return false; }
       var s = Mo.summon(id); if (!s || s.kind !== 'mount') { toast('Boards are ridden with O'); return false; }
       var yaw = playerPos.__yaw != null ? playerPos.__yaw : 0, fx = Math.sin(yaw), fz = Math.cos(yaw);
@@ -112,6 +113,7 @@
     function stow() { if (st.riding) return; holder.visible = false; cur = null; }
     function near() { return !!cur && holder.visible && Math.hypot(M.x - playerPos.x, M.z - playerPos.z) < TUNE.mountRange * U; }
     function mount() {
+      root.__vehicleActionAt = (root.performance || Date).now();
       if (st.riding || !near()) return false; st.riding = true; st.id = cur; CAM.init = false;
       M.sp = 0; if (M.fl) M.y = gY(M.x, M.z); return true;
     }

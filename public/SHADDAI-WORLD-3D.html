@@ -3698,6 +3698,11 @@ let _interiors = null;
 if (window.buildWorldInteriors) {
   try {
     _interiors = window.buildWorldInteriors({ THREE, scene, camera, controls, playerPos, layout: window.WORLD_LAYOUT });
+    // VEHICLE GUARD (2026-10-11, owner: "clicking the hoverboard at all takes me to the castle"): realm keeps can never be entered within 2 s of a mount / board
+    // action, whichever handler asked. Door entry from E is also gated by distance (world-interiors.js) and by __lastMountKey (see the E handler).
+    try{ const _en = _interiors.enter; _interiors.enter = function(code){ const c = String(code||'').toUpperCase();
+      if((c === 'CASTLE' || c === 'FORTRESS') && window.__vehicleActionAt && performance.now() - window.__vehicleActionAt < 2000){ console.warn('[interiors] blocked ' + c + ' entry right after a vehicle action'); return; }
+      return _en.apply(this, arguments); }; }catch(_){}
     window.__w3dDebug.interiors = _interiors;   // probe hook (tools/probe-colosseum.cjs)
     const _doorPrompt = document.createElement('div');
     _doorPrompt.style.cssText = 'position:fixed;bottom:96px;left:50%;transform:translateX(-50%);display:none;background:rgba(4,7,14,0.82);color:#eaf2ff;border:1px solid rgba(39,224,255,0.4);padding:7px 18px;border-radius:6px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;z-index:30;pointer-events:none;text-shadow:0 0 10px rgba(39,224,255,0.6)';
@@ -4496,6 +4501,7 @@ addEventListener('keydown', e=>{
   // DEBUG TODO: find which other handler is firing on B key press and fix the conflict
   // if(e.code==='KeyB'){ bikeMode=!bikeMode; const h=document.getElementById('bikeHud'); if(h) h.style.display=bikeMode?'block':'none'; if(bikeMode){ thirdPerson=true; } else { trailPos.length=0; updateTrail(); } }  // B = mount/dismount Grid Bike (auto 3rd-person so you see the cycle)
   if(e.code==='KeyO' && !e.repeat && typeof hover!=='undefined' && hover && !(_interiors && _interiors.isInside())){   // O = hoverboard V2
+    window.__vehicleActionAt = performance.now();
     if(bikeMode){ bikeMode=false; const h=document.getElementById('bikeHud'); if(h) h.style.display='none'; trailPos.length=0; updateTrail(); }
     if(hover.isRiding()) hover.dismount();
     else { thirdPerson=true; hover.mount(playerAvatar, { yaw: Math.atan2(fwd.x, fwd.z), speedMS: Math.hypot(_vel.x,_vel.z)/(7/1.8) }); }
@@ -5660,7 +5666,7 @@ addEventListener('keydown', function(e){
       if(!b){ b = document.createElement('div'); b.id = 'citizenBubble'; b.style.cssText = 'position:fixed;left:50%;bottom:168px;transform:translateX(-50%);z-index:9100;max-width:min(88vw,430px);padding:9px 16px;border-radius:14px;background:linear-gradient(180deg,rgba(12,18,30,.94),rgba(5,8,15,.97));border:1px solid rgba(0,255,156,.45);color:#e9f4ee;font:600 13px "Chakra Petch",Rajdhani,sans-serif;letter-spacing:.04em;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.5);pointer-events:none;opacity:0;transition:opacity .25s'; document.body.appendChild(b); }
       const names = { commons: 'Commons', campus: 'Campus', race_quarter: 'Race Quarter', plots: 'Plots' }; b.innerHTML = '<div style="color:#00ff9c;font-size:10px;letter-spacing:.2em;margin-bottom:2px">CITIZEN \u00B7 ' + String(names[d] || d).toUpperCase() + '</div>' + line; b.style.opacity = '1'; clearTimeout(b.__t); b.__t = setTimeout(function(){ b.style.opacity = '0'; }, 4200); }catch(_){} } }); D.crowd = window.__crowd; }, 1000); })();
 // â”€â”€ HOVERBOARD RIDE + SKATE JAM: I panel > Boards > Ride mounts the board (style from the catalog); I > Races > Skate Jam starts the trick game â”€â”€
-window.__rideBoard = function(styleId){ try{ if(!hover) return false; if(window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if(!hover.isRiding()) hover.toggle(playerAvatar, {}); if(styleId && hover.setStyle){ const ids = (window.HoverboardKit && window.HoverboardKit.STYLES || []).map(function(x){ return x.id; }); hover.setStyle(ids.indexOf(styleId) >= 0 ? styleId : (ids[0] || styleId)); }
+window.__rideBoard = function(styleId){ try{ window.__vehicleActionAt = performance.now(); if(!hover) return false; if(window.__mountRide && window.__mountRide.isRiding()) window.__mountRide.dismount(); if(!hover.isRiding()) hover.toggle(playerAvatar, {}); if(styleId && hover.setStyle){ const ids = (window.HoverboardKit && window.HoverboardKit.STYLES || []).map(function(x){ return x.id; }); hover.setStyle(ids.indexOf(styleId) >= 0 ? styleId : (ids[0] || styleId)); }
     try{ const dye = window.ShdInv && window.ShdInv.perk('dye'); if(dye && hover.setPalette){ const c = parseInt(String(dye).replace('#',''), 16); hover.setPalette({ deck: c, trim: 0xffffff, accent: c, glow: c }); } }catch(_){} return hover.isRiding(); }catch(e){ return false; } };
 (function bootJam(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } if(!window.buildSkateJam || typeof hover === 'undefined' || !hover || !window.__loadPlayable) return; clearInterval(iv);
   _bootT('skate-jam', function(){ window.__skateJam = window.buildSkateJam({ hover, playerPos, toast: function(m){ if(window.Navi && window.Navi.toast) window.Navi.toast(m); } }); window.__w3dDebug.skateJam = window.__skateJam; }); }, 1000); })();
