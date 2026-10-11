@@ -511,7 +511,10 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       const _p0 = _sites[1], _w0 = _v4Water.waterHeightAt(_p0.x, _p0.z), _wy0 = (_w0 != null ? _w0 : 0);   // _p0 = station 0 (bearing 0); the hub is _sites[0]
       // ONE HARBOUR at the outer edge of the city (215 m out, past station 0), with 8 boat berths and 4 moored boats
       _gl.loadAsync('/assets/reef/reef-harbor.glb').then(function(d){ const dk = d.scene; dk.name = 'reef-harbor'; dk.scale.setScalar(V4_U);
-        dk.position.set(_sites[0].x, _wy0, _sites[0].z - 215 * V4_U); scene.add(dk); })
+        dk.position.set(_sites[0].x, _wy0, _sites[0].z - 235 * V4_U); scene.add(dk); })
+        .catch(function(e){ console.warn('[reef] harbour failed:', e && e.message); });
+      _gl.loadAsync('/assets/reef/reef-harbor-house.glb').then(function(hh){ const hse = hh.scene; hse.name = 'reef-harbor-house'; hse.scale.setScalar(V4_U);
+        hse.position.set(_sites[0].x, _wy0, _sites[0].z - 212 * V4_U); scene.add(hse); })
         .catch(function(e){ console.warn('[reef] dock GLB failed:', e && e.message); });
       _gl.loadAsync('/assets/reef/reef-sub.glb').then(function(s){ const sb = s.scene; sb.name = 'reef-sub'; sb.scale.setScalar(V4_U);
         sb.position.set(_p0.x, _wy0, _p0.z + 82 * V4_U); scene.add(sb); })
