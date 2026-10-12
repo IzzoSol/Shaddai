@@ -133,7 +133,7 @@
       { realm: 'arctic', n: 200, cls: 'tree', models: DEAD, far: LOD_DEAD, size: [7, 14], tint: 0xdfe9f2, space: 10 },
       { realm: 'volcano', n: 30, cls: 'big', models: ['mountain05'], size: [40, 110], mode: 'w', tint: 0x3a2e2a, space: 0, sink: 0.18 },
       { realm: 'volcano', n: 200, cls: 'tree', models: DEAD, far: LOD_DEAD, size: [7, 14], tint: 0x2e2522, space: 10 },
-      { realm: 'desert', n: 60, cls: 'big', models: ['sand-mount'], size: [30, 90], mode: 'w', tint: 0xffffff, space: 0, sink: 0.05 },
+      // 2026-10-11 owner: the black dune blobs in the desert are removed (sand-mount rendered black)
       { realm: 'void', n: 6, cls: 'big', models: ['portal-effect02'], size: [10, 16], mode: 'w', tint: 0xffffff, space: 80, lift: [3, 9] },
       { realm: null, n: 1300, cls: 'small', models: WILD_SMALL, size: [0.6, 1.8], space: 1.8, cluster: [4, 10, 16] },
       { realm: null, n: 700, cls: 'tree', models: ['mapletree-1', 'mapletree-4', 'birchtree-4'], far: LOD_LEAFY, size: [9, 14], tint: 0xffffff, space: 12 },

@@ -129,7 +129,7 @@
     var THREE = opts.THREE, scene = opts.scene, plan = opts.plan;
     if (!THREE || !scene || !plan || !plan.buildings) throw new Error('buildGridCityV4: THREE, scene and plan are required');
     // 2026-10-11 owner: "remove like half of these" - keep ~half of the blocks by a stable position hash (?fullcity=1 = all)
-    if ((typeof location !== 'undefined' && !/[?&]fullcity=1/.test(location.search || '')) && plan.buildings.length > 100) plan = Object.assign({}, plan, { buildings: plan.buildings.filter(function (b) { var x = b.x_m != null ? b.x_m : (b.pos_m ? b.pos_m[0] : 0), y = b.y_m != null ? b.y_m : (b.pos_m ? b.pos_m[1] : 0); return Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1 < 0.5; }) });
+    if ((typeof location !== 'undefined' && !/[?&]fullcity=1/.test(location.search || '')) && plan.buildings.length > 100) plan = Object.assign({}, plan, { buildings: plan.buildings.filter(function (b) { var x = b.x_m != null ? b.x_m : (b.pos_m ? b.pos_m[0] : 0), y = b.y_m != null ? b.y_m : (b.pos_m ? b.pos_m[1] : 0); return Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1 < 0.35; }) });
     var heightAt = typeof opts.heightAt === 'function' ? opts.heightAt : function () { return 0; };
     var U = +plan.units_per_m || 7 / 1.8, RAD = Math.PI / 180;
     var rnd = mulberry((plan.seed || 1) + 17);

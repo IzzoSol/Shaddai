@@ -325,7 +325,8 @@
     var mat = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: VERT, fragmentShader: FRAG, side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false });
     mat.name = 'world-sky-v4';
     var mesh = new THREE.Mesh(new THREE.SphereGeometry(100, 48, 24), mat);
-    mesh.name = 'world-sky-v4'; mesh.frustumCulled = false; mesh.renderOrder = 1e6;   // last opaque → early-Z skips covered pixels
+    mesh.name = 'world-sky-v4'; mesh.frustumCulled = false; mesh.renderOrder = 1e6;
+    mesh.visible = typeof location !== 'undefined' ? /[?&]skyfx=1/.test(location.search) : true;   // 2026-10-11 owner: the white film/sky stuff is gone - a flat horizon-colour sky via scene.background (?skyfx=1 = shader sky)   // last opaque → early-Z skips covered pixels
     mesh.onBeforeRender = function (r, s, cam) { mesh.position.copy(cam.position); mesh.updateMatrixWorld(); };
     scene.add(mesh);
 
