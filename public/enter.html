@@ -1764,7 +1764,7 @@ if (renderer) {
 <script>
 /* RAIL behaviour: wheel travels sideways while the pointer is over the rail; arrows + progress line; backdrop follows. */
 (function () {
-  var KEY = 'shd_rail';
+  var KEY = 'shd_rail_v2';  /* v2: previous code persisted 'shd_rail=1' on every load, pinning everyone to the rail; a new key makes GRID the default again. */
   var grid = document.getElementById('grid'), bg = document.getElementById('railBg');
   if (!grid || !bg) return;
   /* GRID is the default front door (owner: all doors visible at once, not a sideways carousel).
