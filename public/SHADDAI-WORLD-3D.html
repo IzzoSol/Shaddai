@@ -450,7 +450,7 @@ if(!window.__toast){ let _tt = null, _tm = 0; window.__toast = function(msg){ tr
     return L.call(this, url, function(g){ try{ g.scene.traverse(function(o){ if(!o.isMesh && !o.isSkinnedMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
         ms.forEach(function(m){ if(!m || !m.isMeshStandardMaterial) return; m.metalness = 0; if(m.roughness < 0.6) m.roughness = 0.8;
           if(!m.map && m.emissiveMap) m.map = m.emissiveMap;
-          if(m.map || m.emissiveMap){ if(!m.emissiveMap) m.emissiveMap = m.map; m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.8); }
+          if(m.map || m.emissiveMap){ if(!m.emissiveMap) m.emissiveMap = m.map; m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 3.0); }
           if(m.color && m.color.r + m.color.g + m.color.b < 0.3 && m.map) m.color.setRGB(1, 1, 1); m.needsUpdate = true; }); }); }catch(_){}
       if(onLoad) onLoad(g); }, onProgress, onError); }; })();
 (function textureDiet(){ if(/[?&]texdiet=0\b/.test(location.search)) return;
@@ -1017,7 +1017,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('city-v3', function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
       if(!api) return api;
-      return _loadScript('/world-city-v3.js?v=20261011i').then(function(){
+      return _loadScript('/world-city-v3.js?v=20261011j').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(_rideOn()),
@@ -4167,7 +4167,7 @@ window.setPlayerCharacter = function(code){
         if(hasTex && 'colorSpace' in mm.map) mm.map.colorSpace = THREE.SRGBColorSpace; // albedo must be sRGB or it renders washed/flat
         if(mm.color){ mm.color.set(0xffffff); if(!hasTex) mm.color.lerp(_pacc, 0.6); }  // textured: show real albedo; plain blob: tint to agent color
         if('emissiveIntensity' in mm) mm.emissiveIntensity = Math.min(mm.emissiveIntensity != null ? mm.emissiveIntensity : 0, 0.3);
-        if(hasTex && mm.emissive){ mm.emissive.setRGB(1,1,1); if(!mm.emissiveMap) mm.emissiveMap = mm.map; mm.emissiveIntensity = 0.8; }   // 2026-10-11 owner: bodies render black - the painted map drives the glow so lights/normals can never black them out
+        if(hasTex && mm.emissive){ mm.emissive.setRGB(1,1,1); if(!mm.emissiveMap) mm.emissiveMap = mm.map; mm.emissiveIntensity = 3.0; mm.color.setRGB(3,3,3); }   // 2026-10-11 owner: bodies render black - the agent textures are very dark (mean ~50/255), so lift them x3 in both the lit and glow channels - the painted map drives the glow so lights/normals can never black them out
         if('metalness' in mm) mm.metalness = Math.min(mm.metalness != null ? mm.metalness : 0.5, 0.15);
         if('roughness' in mm) mm.roughness = Math.max(mm.roughness != null ? mm.roughness : 0.5, 0.6);
         if('envMapIntensity' in mm) mm.envMapIntensity = 0.7;                           // IBL gives the body form
