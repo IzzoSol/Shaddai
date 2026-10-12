@@ -1837,7 +1837,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&panel.classList.contains('open'))closeRagBrain(); });
   window.addEventListener('message',function(e){ if(e.data==='close-brain')closeRagBrain(); });
   window.closeRagBrain=function(){ panel.classList.remove('open'); };
-  window.openRagBrain=function(){ location.href='/rag'; };
+  window.openRagBrain=function(){ frame.src='/brain.html'; panel.classList.add('open'); };
 })();
 
 /* ── scroll reveals (staggered grid-child cascade) ── */
