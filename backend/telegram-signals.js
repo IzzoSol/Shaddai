@@ -222,7 +222,7 @@ const _ENRICH_CAP = 18;           // max token-detail fetches per trending poll 
 //   pancakeswap:43 — BSC DEX leaking into Solana feed; zero wins
 //   meteora-dbc:36, meteora-damm-v2:9, raydium-launchlab:3 — historically dead
 // venue:unknown (818 calls, 21% win rate) = real Raydium pairs — intentionally NOT blocked
-const _BAD_VENUES = new Set(['pumpswap', 'pump-fun', 'pancakeswap', 'meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
+const _BAD_VENUES = new Set(['pancakeswap', 'meteora-dbc', 'meteora-damm-v2', 'raydium-launchlab']);
 
 // Scam symbol + name blocklist. Strip non-alphanumeric before testing.
 // Patterns confirmed 0% win rate over 700+ calls in corpus:
@@ -493,6 +493,11 @@ function _cfg() {
     bonded: cc.bonded !== false,
     newpools: cc.newpools !== false,
     trending: cc.trending !== false,
+    // DexScreener paid boosts — OFF by default (2026-10-11). The 683-call
+    // backtest: boosted = 79% of slots, >=2x rate indistinguishable from
+    // baseline (p=0.62), while trending/seed hit 47-62% (p<0.02). Its poller
+    // also hard-fails on timeout spam. Re-enable: "boosted": true in tg-config.json.
+    boosted: cc.boosted === true,
     rugFilter: cc.rugFilter !== false,
     rugMinScore: Number(cc.rugMinScore) || 60,
     minHolders: Number(cc.minHolders) || 40,
@@ -509,6 +514,8 @@ function _cfg() {
     minTop10Pct: Number(cc.minTop10Pct) || 0,
     maxBundlerPct: Number(cc.maxBundlerPct) || 12,
     maxSnipersPct: Number(cc.maxSnipersPct) || 0,
+    maxInsiders: Number(cc.maxInsiders) || 3,     // insider/sniper wallet COUNT cap (X consensus: 0-3)
+    devMaxPct: Number(cc.devMaxPct) || 7,         // launch/dev wallet % of supply (Photon base: 5-7%)
     minVolM5: Number(cc.minVolM5) || 0,
     requireNoSnipers: cc.requireNoSnipers === true,
     requireNoBundlers: cc.requireNoBundlers === true,
@@ -529,7 +536,7 @@ const HARD_FDV_CAP = 5000000;  // $5M absolute ceiling
 const HARD_FDV_CAP_MAX = HARD_FDV_CAP;  // alias — used by validator/audit endpoint
 const HARD_FDV_CAP_TRENDING = 2000000;  // $2M for trending (tighter filter)
 const RUG_MIN_SCORE = 60;               // default cfg.rugMinScore floor (matches _cfg() default)
-const AGE_GATE_SECONDS = 30;            // matches _passesAgeGate's 30s minimum
+const AGE_GATE_SECONDS = 300;           // matches _passesAgeGate's 5-minute minimum (product spec 2026-10-12)
 const MULTIPLIER_CAP_DISCOVERY = 3;     // matches _passesMultiplierGate's 3x cap
 const LP_LOCK_PERCENT_MINIMUM = 80;     // matches _lpLockedOk's 80% requirement
 const BUNDLE_MAX_PERCENT = 12;          // matches _cfg() default maxBundlerPct
@@ -551,11 +558,13 @@ function _passesMultiplierGate(curFdv, entryFdv) {
   const mult = curFdv / entryFdv;
   return mult <= 3;  // reject if already 3x+
 }
-// Age gate — reject tokens created < 30 seconds ago (too fresh to trade safely)
+// Age gate — reject tokens created < 5 minutes ago (product spec 2026-10-12:
+// the first minutes of a pool are the most rug-dense window, and a signal
+// channel subscriber needs 1-2 minutes just to open the chart)
 function _passesAgeGate(createdAtMs) {
   if (!createdAtMs || createdAtMs <= 0) return true;  // no timestamp = allow
   const ageMs = Date.now() - createdAtMs;
-  return ageMs >= 30000;  // require at least 30 seconds old
+  return ageMs >= 300000;  // require at least 5 minutes old
 }
 // holders gate — must clear the minimum when we have the data
 function _holdersOk(cfg, rs) { return !(rs && rs.checked && rs.holders && rs.holders < cfg.minHolders); }
@@ -573,14 +582,27 @@ function _bundlersOk(cfg, rs) {
   if (!rs || !rs.checked || !cfg.maxBundlerPct) return true;
   return !(rs.hasBundlers && (rs.bundlePct || 0) > cfg.maxBundlerPct);
 }
-// sniper/bundler gate — reject if snipers+bundlers combined ≥ 10% of holders
+// sniper/bundler gate — reject if snipers+bundlers combined ≥ 10% of holders,
+// or if the insider-wallet COUNT exceeds maxInsiders (X consensus: 0-3).
 function _snipersOk(cfg, rs) {
   if (!rs || !rs.checked) return true;  // fail-open if no data
+  if (cfg.maxInsiders && rs.insiders != null && rs.insiders > cfg.maxInsiders) return false;
   if (!cfg.maxSnipersPct) return true;
   const total = rs.holders || 100;
   const bad = (rs.hasSnipers ? 1 : 0) + (rs.hasBundlers ? 1 : 0);
   const pct = total > 0 ? (bad / total * 100) : 0;
   return pct < cfg.maxSnipersPct;
+}
+
+// dev/launch-wallet concentration gate (spec 2026-10-12: dev ≤ 5-7%, Photon
+// popular base 0-7%). A launch wallet holding more than devMaxPct % of supply
+// can dump the book at will — hard reject. Fail-open when no holder data.
+function _devOk(cfg, rs) {
+  try {
+    const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs);
+    if (lw && lw.pct > (Number(cfg.devMaxPct) || 7)) return false;
+  } catch (e) {}
+  return true;
 }
 
 // ── GOPLUS SECURITY (Solana, free, no key) ────────────────────────────────────
@@ -1187,11 +1209,15 @@ async function _pollOnce() {
     }
     if (!_liqMatches(cfg, Number(pair.liquidity && pair.liquidity.usd || 0), _tFdv2)) { _logReject('liq_mismatch', _tSym2, _tFdv2, { liq: Number(pair.liquidity && pair.liquidity.usd || 0) }); _seen.add(addr); continue; }
     if (_overCap(cfg, _tFdv2, rs)) { _logReject('over_fdv_cap', _tSym2, _tFdv2, {}); _seen.add(addr); continue; }
+    // ≥1 real social (spec 2026-10-12) — measured score floor, fail-open on API loss
+    if (!_passesSocial(cfg, social)) { _logReject('social_fail', _tSym2, _tFdv2, { social: social && social.score }); _seen.add(addr); continue; }
+    // dev/launch wallet ≤ devMaxPct of supply
+    if (!_devOk(cfg, rs)) { _logReject('dev_concentration', _tSym2, _tFdv2, {}); _seen.add(addr); continue; }
     // wallet cross-reference disabled (wallet tracker turned off — too many rug alerts from seeded wallets)
     const walletLine = '';
     // launch wallet / dev analysis
     let launchLine = '';
-    try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 15) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
+    try { const lw = wallets.analyzeLaunchWallet((rs && rs.topHolders) || [], rs); if (lw && lw.pct > 3) launchLine = `\n⚠️ <b>Dev wallet</b> ${_esc(lw.shortAddr)} holds ${lw.pct.toFixed(1)}%`; } catch (e) {}
     // scam filter — symbol + name patterns + cooldown
     const _sym = pair.baseToken && pair.baseToken.symbol;
     const _tName = pair.baseToken && pair.baseToken.name;
@@ -1205,14 +1231,20 @@ async function _pollOnce() {
     const _flexLine = _isDexFlex ? '\n\n🟡 <b>DEX FLEX</b> — paid boost · metrics slightly outside standard gates · verify extra carefully' : '';
     const _profData = _profileMap.get(addr);
     const _ctoTag = (_profData && _profData.cto) ? '\n👥 <b>CTO</b> — community takeover project' : '';
-    // GoPlus: warn on mintable/honeypot flags but don't hard-block trending (already rug-checked)
+    // GoPlus: HARD BLOCK on mintable supply / hidden owner / pausable / sell tax
+    // (spec 2026-10-12: clean contract permissions + no honeypot. Warn-only let
+    // dev-controlled supply through on the highest-volume feed.)
     let _gpTrendLabel = '';
     if (chain === 'solana') {
-      try { const _gpT = await _goplusCheck(addr); if (_gpT && _gpT.label) _gpTrendLabel = '\n' + _gpT.label; } catch (e) {}
+      try {
+        const _gpT = await _goplusCheck(addr);
+        if (_gpT && !_gpT.ok) { _logReject('goplus_block', _tSym2, _tFdv2, { flags: _gpT.label }); _seen.add(addr); continue; }
+        if (_gpT && _gpT.label) _gpTrendLabel = '\n' + _gpT.label;
+      } catch (e) {}
     }
     const _boostData = _boostInfo(addr);
     const _brainTrend = await _brainInsight({ top10Pct: rs && rs.top10Pct, liqPct: _tFdv2 > 0 ? (Number(pair.liquidity && pair.liquidity.usd || 0) / _tFdv2 * 100) : 0, boosted: !!_boostData, volAccel: !!_accel, fdv: _tFdv2, source: 'trending' });
-    const _msg = '🆕 <b>NEW SIGNAL</b>\n' + card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
+    const _msg = '🆕 <b>NEW SIGNAL</b> · <i>TRENDING</i>\n' + card + _detailBlock(rs, social, _extra) + (_brainTrend || '') + walletLine + launchLine + _gpTrendLabel + _accel + _hourTag + _ctoTag + _flexLine;
     // Image priority: SHADDAI LABS branded card (FLUX bg + crisp text) > profile icon > pair image
     const _imgUrl = (_profData && _profData.icon) || (_boostData && _boostData.icon) || (pair.info && pair.info.imageUrl) || _randomBotImg();
     let _cardBuf = null;
@@ -1421,6 +1453,8 @@ async function _pollBonded() {
       if (!_top10Ok(cfg, rs)) continue;
       if (!_snipersOk(cfg, rs)) continue;
       if (!_bundlersOk(cfg, rs)) continue;
+      if (!_devOk(cfg, rs)) continue;                                  // dev/launch wallet ≤7% (spec 2026-10-12)
+      if (!_passesFdv(cfg, usdMc)) { _seenBond.add(mint); continue; }   // enforce the $20k floor — bonded never checked a minimum before (spec 2026-10-12)
     }
     // BANNER REQUIRED at $30K–$75K FDV: DexScreener banners cost ~$200 to publish.
     // Projects that paid for a banner at this MC are committed — rugs don't pay $200 to brand
@@ -1495,7 +1529,7 @@ async function _pollBonded() {
 // ── PRE-BONDING FEED (pump.fun bonding curve — approaching graduation) ────────
 // Watches the hottest NON-graduated pump.fun tokens. Posts when they're approaching
 // graduation ($45K-$68K MC) with strong volume + community, before the bond-dump crowd.
-const PF_VOLUME_HOT = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=volume&order=DESC&includeNsfw=false';
+const PF_VOLUME_HOT = 'https://frontend-api-v3.pump.fun/coins?offset=0&limit=50&sort=market_cap&order=DESC&includeNsfw=false';
 const _seenPreBond = new Set();
 const _preBondBannerAlerted = new Set();  // track which pre-bond mints we've sent a "DEX BANNER PAID" alert for
 let _preBondSeeded = false;
@@ -1625,8 +1659,7 @@ function _poolCard(net, kind, a, addr) {
     `📊 Vol24h <b>${vol}</b>   Vol1h <b>${vol1h}</b>\n` +
     `💵 <b>${_esc(price)}</b>   ${volHealth} Vol/Liq ${volLiqRatio.toFixed(1)}x\n` +
     (addr ? `\n<code>${_esc(addr)}</code>\n` : '') +
-    (url ? `🔗 <a href="${_esc(url)}">Chart</a>` : '') +
-    `\n\n<i>NFA · rug-check first</i>`
+    (url ? `🔗 <a href="${_esc(url)}">Chart</a>` : '')
   );
 }
 
@@ -1636,17 +1669,13 @@ function _detailBlock(rs, social, extra) {
   const e = extra || {};
   const parts = [];
 
-  // ── CONTRACT ADDRESS + KEY DATA ───────────────────────────────────────
+  // ── CONTRACT + FLOW — only what the base card does NOT already show ───
+  // MC / Liq / Vol live in the base card (_signalCard / _poolCard / _bondCard).
+  // Repeating them here in a second format made every card state the same
+  // number twice, differently ("$150.0K" and "FDV: $0.2M" for one token).
+  // Holders lives in the SAFETY block below, not here.
   parts.push('\n━━ 📋 DATA ━━');
-  if (e.mint) {
-    const shortMint = e.mint.slice(0, 4) + '…' + e.mint.slice(-4);
-    parts.push(`<code>${e.mint}</code>`);
-    parts.push(`<b>CA:</b> ${shortMint}`);
-  }
-  if (e.fdv) parts.push(`<b>FDV:</b> $${(e.fdv/1000000).toFixed(1)}M`);
-  if (e.liq) parts.push(`<b>Liq:</b> $${(e.liq/1000).toFixed(0)}K`);
-  if (rs && rs.holders) parts.push(`<b>Holders:</b> ${rs.holders.toLocaleString()}`);
-  if (e.vol24) parts.push(`<b>Vol 24h:</b> $${(e.vol24/1000).toFixed(0)}K`);
+  if (e.mint) parts.push(`<code>${_esc(e.mint)}</code>`);
   // SUPPLY — derived from FDV ÷ price (no extra API call). Shows the full minted supply
   // so subscribers see dilution potential: a huge supply with tiny FDV = micro-cap dump risk.
   if (e.supply != null && Number(e.supply) > 0) {
@@ -1661,20 +1690,19 @@ function _detailBlock(rs, social, extra) {
     parts.push(`${icon} <b>Buys ${bs.buys}</b>  ·  <b>Sells ${bs.sells}</b>  (${Math.round(bs.ratio*100)}% buys)`);
   }
 
-  // ── ENTRY / EXIT / STOP LOSS BLOCK ────────────────────────────────────
-  // Calculate TP targets from entry price at call time
+  // ── PLAN — the discipline the model portfolio actually follows ─────────
+  // The old block printed "TP 1.5x / 3x / 5x, SL -15%" that nothing executed:
+  // the PNL tracker announces 2x/5x/10x milestone wins (never stop-outs), the
+  // 683-call backtest showed a 9.8% median capture of peak, and a -15% stop on
+  // micro-caps is fantasy (they gap through it in minutes). This is the real
+  // plan: ladder at the levels the channel celebrates, trail the runner,
+  // stop at 0.50x. Paper-tracked by the PNL engine from the moment it posts.
   if (e.entryPrice && typeof e.entryPrice === 'number' && e.entryPrice > 0) {
     const entry = e.entryPrice;
-    const tp1 = entry * 1.5;
-    const tp2 = entry * 3;
-    const tp3 = entry * 5;
-    const sl = entry * 0.85;  // 15% stop loss
-    parts.push('\n━━ 🎯 ENTRY / EXIT ━━');
-    parts.push(`📍 ENTRY   <b>${_fmtPrice(entry)}</b>`);
-    parts.push(`✅ 1TP (50%)   <b>${_fmtPrice(tp1)}</b>`);
-    parts.push(`✅ 2TP (200%)  <b>${_fmtPrice(tp2)}</b>`);
-    parts.push(`✅ 3TP (500%)  <b>${_fmtPrice(tp3)}</b>`);
-    parts.push(`⛔ STOP     <b>${_fmtPrice(sl)}</b>  (-15%)`);
+    parts.push('\n━━ 🎯 PLAN ━━');
+    parts.push(`📍 Entry <b>${_fmtPrice(entry)}</b>`);
+    parts.push(`🪜 Ladder <b>2x→20% · 3x→20% · 5x→25% · 10x→25%</b> of the book, 10% runner`);
+    parts.push(`🧵 Runner trails −25% from peak (arms at 1.5x) · ⛔ stop <b>${_fmtPrice(entry * 0.5)}</b> (0.50x)`);
   }
 
   // ── SAFETY BLOCK ──────────────────────────────────────────────────────
@@ -1736,16 +1764,13 @@ function _detailBlock(rs, social, extra) {
   if (e.url) linkParts.push(`📊 <a href="${_esc(e.url)}">Chart</a>`);
   if (linkParts.length) parts.push('\n' + linkParts.join('  '));
 
-  // ── CONTRACT ADDRESS ──────────────────────────────────────────────────
-  if (e.mint) parts.push(`\n<code>${_esc(e.mint)}</code>`);
-
-  // ── PNL TRACKING ──────────────────────────────────────────────────────
-  parts.push('\n━━ 📊 PNL TRACKING ━━');
-  parts.push('<i>🖼 PNL images generated on call + real-time updates</i>');
-  parts.push('<b>ZEROX SIGNALS</b> — AI-powered trading intelligence');
-
   // ── FOOTER ────────────────────────────────────────────────────────────
-  parts.push('\n<i>NFA · DYOR</i>');
+  // One honest line. These calls are paper-tracked by the PNL engine
+  // (recordCall -> 2x/5x/10x milestone wins) and the PLAN block above is
+  // what the model portfolio follows — subscribers deserve to know both.
+  // The old card ended with a 3-line "PNL TRACKING / ZEROX SIGNALS" promo
+  // block plus a repeated CA; neither earned its channel space.
+  parts.push('\n<i>🧪 Model portfolio · ladder-tracked · not financial advice</i>');
 
   return '\n' + parts.join('\n');
 }
@@ -1949,6 +1974,8 @@ async function _pollGecko() {
           if (!_lpLockedOk(cfg, rs)) { _markBadMint(_dk); continue; }    // LP must be locked ≥80%
           if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
           if (!_bundlersOk(cfg, rs)) continue;                           // no BIG bundles (>maxBundlerPct)
+          if (!_devOk(cfg, rs)) continue;                               // dev/launch wallet ≤7% (spec 2026-10-12)
+          if (cfg.rugFilter) { const gp = await _goplusCheck(_taddr || _dk); if (gp && !gp.ok) continue; }  // no honeypot / mintable / hidden owner
           if (!_liqMatches(cfg, liq, fdv)) continue;                     // liq must match mcap
           if (_overCap(cfg, fdv, rs)) continue;                          // >maxFdv unless premium safety
           const _u = a.address ? `https://www.geckoterminal.com/${net}/pools/${a.address}` : '';
@@ -2091,6 +2118,8 @@ async function _pollHelius() {
     if (!_holdersOk(cfg, rs) || !_top10Ok(cfg, rs)) { _heliusSeen.add(mint); continue; }
     if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); _heliusSeen.add(mint); continue; }
     if (!_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) { _heliusSeen.add(mint); continue; }
+    if (!_devOk(cfg, rs)) { _heliusSeen.add(mint); continue; }               // dev/launch wallet ≤7% (spec 2026-10-12)
+    if (cfg.rugFilter) { const gp = await _goplusCheck(mint); if (gp && !gp.ok) { _heliusSeen.add(mint); continue; } }  // no honeypot / mintable / hidden owner
     if (!_liqMatches(cfg, liq, fdv) || _overCap(cfg, fdv, rs)) { _heliusSeen.add(mint); continue; }
 
     // Gecko-shaped card data so _poolCard/_detailBlock reuse the exact same rendering.
@@ -2303,10 +2332,17 @@ function startTelegramSignals() {
     const _preBondTimer = setInterval(() => { _pollPreBonded().catch(() => {}); }, 3 * 60000);   // every 3 min
     if (_preBondTimer.unref) _preBondTimer.unref();
   }
-  // Boost watcher — DexScreener paid boosts with active 1h volume spike
-  setTimeout(() => { _pollBoosts().catch(() => {}); }, 7000);
-  _boostTimer = setInterval(() => { _pollBoosts().catch(() => {}); }, 5 * 60000);   // every 5 min
-  if (_boostTimer.unref) _boostTimer.unref();
+  // Boost watcher — DexScreener paid boosts with active 1h volume spike.
+  // Toggled OFF by default 2026-10-11: worst-performing source in the record
+  // (38 deaths vs 6 wins on aged calls, per the 2026-08-27 tightening note)
+  // and the poller was timing out on every pass. Config: "boosted": true.
+  if (cfg.boosted) {
+    setTimeout(() => { _pollBoosts().catch(() => {}); }, 7000);
+    _boostTimer = setInterval(() => { _pollBoosts().catch(() => {}); }, 5 * 60000);   // every 5 min
+    if (_boostTimer.unref) _boostTimer.unref();
+  } else {
+    console.log('[tg-signals] boosted feed OFF — worst source in the backtest; re-enable with "boosted": true in tg-config.json');
+  }
   // GeckoTerminal new/trending pools — seed first, then post only NEW pools
   setTimeout(() => { _pollGecko().catch(() => {}); }, 6000);
   _geckoTimer = setInterval(() => { _pollGecko().catch(() => {}); }, cfg.geckoInterval);
@@ -2376,6 +2412,7 @@ async function _pipelineCycle(pipeline) {
 module.exports = {
   startTelegramSignals,
   _pollOnce, _pollBonded, _pollGecko, _pollHelius, _pollBoosts,
+  _signalCard, _detailBlock, _chgStr, _fmtUsd, _fmtPrice,
   _socialScore, _passesSocial, _brainInsight, _brainAngle,
   // Analytics exports for /api/signals/analytics endpoint
   _analyzeDeadCoins,

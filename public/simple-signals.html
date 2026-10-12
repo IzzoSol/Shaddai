@@ -49,7 +49,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
 #btn-refresh:active{background:var(--panel)}
 
 /* ---------- views ---------- */
-#views{position:fixed;top:52px;bottom:70px;left:0;right:0;overflow:hidden}
+#views{position:fixed;top:96px;bottom:70px;left:0;right:0;overflow:hidden}
 .view{
   position:absolute; inset:0; display:none; flex-direction:column;
   padding:10px 12px 18px; overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -93,9 +93,9 @@ html[data-theme="light"] .bub.fb::after{background:linear-gradient(0deg,rgba(248
 .bub-spark{display:block;width:100%;height:18px;margin-top:2px;position:relative;z-index:1;opacity:.95}
 .pc24{font-family:var(--f-mono);font-size:9px;letter-spacing:.05em}
 .pc24.up{color:var(--emerald)}.pc24.dn{color:var(--amber)}
-.px{color:var(--txt2);font-size:11px;padding:1px 6px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel)}
+.px{color:var(--txt);font-size:11px;padding:1px 6px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel)}
 .new-pill{font-size:8px;letter-spacing:.08em;color:#03120c;background:linear-gradient(92deg,#10e5a4,#59f0c0);border-radius:4px;padding:2px 5px;font-weight:800}
-.csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
+.csearch{width:100%;margin:6px 0 8px;border:1px solid var(--edge2);background:var(--panel);color:var(--txt);border-radius:999px;padding:8px 12px;font-family:var(--f-mono);font-size:12px;box-sizing:border-box}
 .csearch:focus{outline:none;border-color:var(--gold)}
 .chip.tog.on{outline:1px solid var(--gold);outline-offset:0}
 .bub .sy{font-family:var(--f-mono);font-weight:700;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
@@ -356,17 +356,20 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 
 
 <style>
-/* ═══ ZEROX·SIGNALS — NEON OBSIDIAN DESIGN SYSTEM ═══ */
+/* ═══ ZEROX·SIGNALS — NEON OBSIDIAN · TURTLE CYBER ALIGNMENT (2026-10-12) ═══
+   Palette shifted to the TURTLE cyber mood system: void #07070f dominant,
+   violet #8b5cf6 support, brand gold #f5c542, cyan #00e5ff, magenta #ff3fd8.
+   Data semantics untouched: emerald = gains, red/amber = risk. */
 :root{
-  --bg:#05070c; --bg2:#0b1018; --panel:#0d1320; --edge:#1d2737; --edge2:#29354b;
+  --bg:#07070f; --bg2:#0b0a1a; --panel:#0d1320; --edge:#1d2737; --edge2:#29354b;
   --txt:#e9eef7; --soft:#a4b0c6; --faint:#7c8aa3;
-  --gold:#e8c45c; --emerald:#10e5a4; --red:#ff3d5a; --amber:#f5b04c; --cyan:#38e0ff; --magenta:#e879f9;
+  --gold:#f5c542; --emerald:#10e5a4; --red:#ff3d5a; --amber:#f5b04c; --cyan:#00e5ff; --magenta:#ff3fd8; --violet:#8b5cf6;
   --ok:#0f2b23; --bad:#2b1218;
-  --grad:linear-gradient(92deg,#38e0ff 0%,#10e5a4 55%,#e879f9 115%);
+  --grad:linear-gradient(92deg,#00e5ff 0%,#10e5a4 55%,#ff3fd8 115%);
   --f-mono:'JetBrains Mono','Cascadia Code','Share Tech Mono',Consolas,monospace;
   --f-sans:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;
   --rad:14px;
-  --glow:0 0 0 1px rgba(56,224,255,.06),0 12px 34px -14px rgba(0,0,0,.9),0 0 24px -8px rgba(56,224,255,.18);
+  --glow:0 0 0 1px rgba(0,229,255,.06),0 12px 34px -14px rgba(0,0,0,.9),0 0 24px -8px rgba(139,92,246,.20);
   --card-shadow:0 6px 18px -12px rgba(0,0,0,.75);
   --card-shadow-up:0 6px 18px -12px rgba(0,0,0,.75),0 0 16px -9px rgba(16,229,164,.35);
   --card-shadow-dn:0 6px 18px -12px rgba(0,0,0,.75),0 0 16px -9px rgba(255,61,90,.28);
@@ -389,7 +392,7 @@ body{background:
 #top{
   background:
     linear-gradient(180deg, rgba(5,7,12,.2) 0%, rgba(5,7,12,.94) 90%);
-  border-bottom:1px solid var(--edge2); height:54px;
+  border-bottom:1px solid var(--edge2); height:auto; min-height:54px;
 }
 #top::before{
   content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
@@ -611,12 +614,51 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
 .row-act:hover{border-color:var(--cyan);color:var(--cyan)}
 .row-act:active{transform:scale(.95)}
 .row-act.done{color:var(--emerald);border-color:var(--emerald)}
+
+/* ═══ TURTLE CYBER ADDITIONS — 2026-10-12 ═══
+   Call ratings (A+ 10x / A 5x / B 2x / C 1.5x / D below), weekly scoreboard,
+   brand avatar, flower-of-life empty-state watermark. Type sizes on the
+   Fibonacci scale (8/10/13/21) where touched. */
+
+/* rating badges — tier colors from the cyber palette: gold = the moonshot
+   tier, emerald = runner, cyan = doubled, amber = moved, faint = dead money */
+.rt-badge{font-family:var(--f-mono);font-size:8px;font-weight:800;letter-spacing:.07em;padding:2px 6px;border-radius:5px;border:1px solid;flex-shrink:0;line-height:1.5}
+.r-ap{color:var(--gold);border-color:var(--gold);background:rgba(245,197,66,.10)}
+.r-a{color:var(--emerald);border-color:rgba(16,229,164,.55);background:rgba(16,229,164,.08)}
+.r-b{color:var(--cyan);border-color:rgba(0,229,255,.55);background:rgba(0,229,255,.08)}
+.r-c{color:var(--amber);border-color:rgba(245,176,76,.55);background:rgba(245,176,76,.08)}
+.r-d{color:var(--faint);border-color:var(--edge2);background:rgba(124,138,163,.08)}
+
+/* 7-day rated scoreboard — violet support tone from the TURTLE system */
+.ratecard{background:linear-gradient(150deg,rgba(139,92,246,.12),rgba(245,197,66,.05));border:1px solid rgba(139,92,246,.34);border-radius:var(--rad);padding:13px;margin:2px 2px 10px;box-shadow:var(--glow)}
+.ratecard .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:9px}
+.ratecard .ph span:first-child{font-family:var(--f-mono);font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--violet);text-transform:uppercase}
+.ratecard .ph .ch{font-family:var(--f-mono);font-size:9px;color:var(--soft);margin-left:auto;white-space:nowrap}
+.ratecard .rt-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ratecard .rt-badge{font-size:9px;padding:3px 7px}
+.ratecard .rt-badge b{margin-left:3px;font-weight:800}
+.ratecard .rt-grade{margin-left:auto;font-family:var(--f-mono);font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--gold)}
+.ratecard .rt-grade small{display:block;font-size:8px;letter-spacing:.12em;color:var(--faint);font-weight:700;text-align:right}
+.ratecard .rt-note{font-family:var(--f-mono);font-size:8.5px;color:var(--faint);margin-top:8px;letter-spacing:.04em;line-height:1.6}
+html[data-theme="light"] .ratecard{background:linear-gradient(150deg,rgba(139,92,246,.08),rgba(245,197,66,.04));border-color:rgba(139,92,246,.30)}
+html[data-theme="light"] .ratecard .ph span:first-child{color:#6d28d9}
+html[data-theme="light"] .ratecard .rt-grade{color:#9a7510}
+
+/* ZEROX brand avatar (assets/agents/ZEROX-portrait.png) */
+#brand-ava{width:24px;height:24px;border-radius:8px;border:1px solid var(--edge2);object-fit:cover;flex-shrink:0;box-shadow:0 0 12px -3px rgba(245,197,66,.55)}
+html[data-theme="light"] #brand-ava{box-shadow:0 0 10px -4px rgba(154,117,16,.4)}
+
+/* flower-of-life watermark on empty states (sacred geometry, whisper-quiet) */
+.empty{position:relative}
+.empty::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cg fill='none' stroke='%23f5c542' stroke-width='1'%3E%3Ccircle cx='70' cy='70' r='35'/%3E%3Ccircle cx='35' cy='52' r='35'/%3E%3Ccircle cx='105' cy='52' r='35'/%3E%3Ccircle cx='35' cy='88' r='35'/%3E%3Ccircle cx='105' cy='88' r='35'/%3E%3Ccircle cx='70' cy='35' r='35'/%3E%3Ccircle cx='70' cy='105' r='35'/%3E%3C/g%3E%3C/svg%3E") center/140px repeat;opacity:.07;pointer-events:none}
+html[data-theme="light"] .empty::before{opacity:.10}
 </style>
 <script src="/sw-heal.js"></script>
 </head>
 <body>
 
 <header id="top">
+  <img id="brand-ava" src="/assets/agents/ZEROX-portrait.png" alt="ZEROX">
   <div id="brand">ZEROX<b>·SIGNALS</b></div>
   <span id="clock" title="Local time"></span>
   <span id="updated"></span>
@@ -664,12 +706,16 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
     </button>
     <div class="chips" id="adv-panel" role="group" aria-label="Source filter" hidden>
       <button class="chip on" aria-pressed="true" data-src="all">All Sources</button>
-      <button class="chip" aria-pressed="false" data-src="boosted">Boosted</button>
+      <button class="chip" aria-pressed="false" data-src="trending_pools">Trending Pools</button>
+      <button class="chip" aria-pressed="false" data-src="trending">Trending</button>
       <button class="chip" aria-pressed="false" data-src="new_pools">New Pools</button>
+      <button class="chip" aria-pressed="false" data-src="pipeline">Pipeline</button>
       <button class="chip" aria-pressed="false" data-src="bonded">Bonded</button>
       <button class="chip" aria-pressed="false" data-src="pre_bonding">Pre-Bond</button>
-      <button class="chip" aria-pressed="false" data-src="trending">Trending</button>
+      <button class="chip" aria-pressed="false" data-src="helius">Helius</button>
+      <button class="chip" aria-pressed="false" data-src="boosted">Boosted</button>
     </div>
+    <div id="rate-card"></div>
     <div id="calls-list"></div>
   </section>
 
@@ -763,7 +809,7 @@ var IMG = function (id) { return id ? 'https://cdn.dexscreener.com/cms/images/' 
 var dec = function (n) { n = Number(n); if (!isFinite(n)) return '—'; return n < 0.00001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumSignificantDigits: 4 }); };
 var pct = function (n) { n = Number(n); return isFinite(n) ? Math.round(n) + '%' : '—' };
 
-var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'calls', heat: 'new', source: 'all', liveFlag: 0, newFlag: 0, q: '', firstFeed: true };
+var state = { feed: [], dex: [], wallets: [], risk: 'all', sort: 'score', tab: 'heat', heat: 'new', source: 'all', liveFlag: 0, newFlag: 0, q: '', firstFeed: true };
 var coinOpen = null;
 
 /* ---------------- sparkline helper ---------------- */
@@ -820,7 +866,9 @@ async function refresh() {
   var ok = r.filter(function (x) { return x.status === 'fulfilled'; }).length;
   renderAll();
   stamp();
-  setText('updated', ok < 3 ? 'partial · ' + Date.now().toString().slice(-5) : '');
+  // keep the timestamp on a clean refresh — it was being erased on full
+  // success, so subscribers could never see how fresh the sheet was
+  if (ok < 3) setText('updated', 'partial · ' + Date.now().toString().slice(-5));
 }
 /* Fast self-refresh while user is on DEX */
 setInterval(function () {
@@ -1126,6 +1174,56 @@ function renderHeat() {
   bubSparks();
 }
 
+/* ---------------- call ratings (2026-10-12) ----------------
+   Tier by PEAK multiple — the honest outcome of the call, not the current
+   price: A+ >=10x, A >=5x, B >=2x, C >=1.5x, D below. Unmeasured calls
+   (peak exactly 1.00, price never re-checked) carry no rating rather than a
+   fake D — same lesson as the backtest's FACT-0 dead-tracker rows. */
+function ratingOf(c) {
+  var p = Number(c.peakMult) || 0;
+  if (p > 10) return 'A+';
+  if (p >= 5) return 'A';
+  if (p >= 2) return 'B';
+  if (p >= 1.5) return 'C';
+  if (p > 1.01) return 'D';
+  return null;
+}
+function ratingClass(t) { return t === 'A+' ? 'r-ap' : t === 'A' ? 'r-a' : t === 'B' ? 'r-b' : t === 'C' ? 'r-c' : 'r-d'; }
+function ratingBadge(c) {
+  var t = ratingOf(c);
+  return t ? '<span class="rt-badge ' + ratingClass(t) + '" title="call rating: peak ' + (Number(c.peakMult) || 0).toFixed(1) + 'x">' + t + '</span>' : '';
+}
+
+/* 7-day rated scoreboard. Grade from the tracked >=2x rate (n>=15 measured
+   or honestly '?'), same rubric as the channel audit. */
+function renderRate() {
+  var box = el('rate-card');
+  if (!box) return;
+  var now = Date.now();
+  var week = state.feed.filter(function (c) { return c.ts && (now - c.ts) < 7 * 86400000; });
+  if (!week.length) { box.innerHTML = ''; box.style.display = 'none'; return; }
+  box.style.display = '';
+  var counts = { 'A+': 0, 'A': 0, 'B': 0, 'C': 0, 'D': 0 };
+  var measured = 0;
+  week.forEach(function (c) {
+    var t = ratingOf(c);
+    if (t) { counts[t] += 1; measured += 1; }
+  });
+  var tracked2x = counts['A+'] + counts['A'] + counts['B'];
+  var r2 = measured ? tracked2x / measured : 0;
+  var grade = measured >= 15 ? (r2 >= 0.5 ? 'A' : r2 >= 0.4 ? 'B' : r2 >= 0.3 ? 'C' : 'D') : '?';
+  var pend = week.length - measured;
+  box.innerHTML =
+    '<div class="ph"><span>7-Day Rating</span><span class="ch">' + measured + ' measured · ' + week.length + ' calls</span></div>' +
+    '<div class="rt-row">' +
+      ['A+', 'A', 'B', 'C', 'D'].map(function (t) {
+        return '<span class="rt-badge ' + ratingClass(t) + '">' + t + '<b>' + counts[t] + '</b></span>';
+      }).join('') +
+      '<span class="rt-grade">' + grade + '<small>2x+ ' + Math.round(r2 * 100) + '%</small></span>' +
+    '</div>' +
+    (pend ? '<div class="rt-note">' + pend + ' call' + (pend > 1 ? 's' : '') + ' pending price check — not graded</div>' : '');
+}
+
 /* ---------------- recent calls ---------------- */
 function filtered() {
   var list = state.feed.slice();
@@ -1174,7 +1272,7 @@ function renderCalls() {
     var fdv = Number(c.curFdv || c.entryFdv) || 0;
     var fdvTxt = fdv >= 1e6 ? (fdv / 1e6).toFixed(1) + 'M' : (fdv >= 1000 ? Math.round(fdv / 1000) + 'K' : Math.round(fdv).toLocaleString());
     r.innerHTML =
-      '<span class="l1"><span class="tla">' + esc(c.symbol || '?') + '</span>' +
+      '<span class="l1"><span class="tla">' + esc(c.symbol || '?') + '</span>' + ratingBadge(c) +
       '<span class="nm">' + esc(c.name || c.mint.slice(0, 6)) + '</span>' +
       '<span class="mx" style="color:' + (m >= 1 ? 'var(--emerald)' : 'var(--amber)') + '">' + (m ? m.toFixed(2) + '×' : 'NEW') + '</span></span>' +
       '<span class="l2">' +
@@ -1390,6 +1488,7 @@ function coinSheet(c, e) {
   var img = (e && e.image) ? '<img src="' + esc(e.image) + '" onerror="this.outerHTML=\'\'" alt="" style="width:100%;height:100%;object-fit:cover">' : '';
   var grid = [
     ['Score', c.score || 0],
+    ['Rating', ratingOf(c) || '—'],
     ['Risk', c.riskTier || 'medium'],
     ['Safety', (c.safetyScore != null ? c.safetyScore + ' ' + safetyLabel(c.safetyScore) : '—')],
     ['24h', c.pc24 != null ? pct(c.pc24) : '—'],
@@ -1716,13 +1815,13 @@ function tickClock() {
 }
 tickClock();
 setInterval(tickClock, 1000);
-function renderAll() { renderHeat(); renderCalls(); renderPulse(); renderDex(); renderWallet(); renderPNL(); }
+function renderAll() { renderHeat(); renderCalls(); renderRate(); renderPulse(); renderDex(); renderWallet(); renderPNL(); }
 
 try { var t = localStorage.getItem('ss_tab'); if (tabs.indexOf(t) >= 0) setTab(t); } catch (e) {}/* ── market weather + news ticker (key-free) ── */
 function sWfmt(n){ n=Number(n)||0; if(n>=1e9)return (n/1e9).toFixed(1)+'B'; if(n>=1e6)return (n/1e6).toFixed(1)+'M'; if(n>=1e3)return (n/1e3).toFixed(1)+'K'; return n.toFixed(2); }
 function sEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); }
-function loadWeather(){ var b=document.getElementById('mktChips'); if(!b)return; fetch('/api/tufish/watch?ids=bitcoin,ethereum,solana',{signal:AbortSignal.timeout(8000)}).then(function(r){return r.json();}).then(function(d){ if(!d||!d.coins||!d.coins.length)return; b.innerHTML=d.coins.map(function(c){ var ch=Number(c.change24h)||0,up=ch>=0; return '<span class="mkt"><b>'+sEsc(c.symbol)+'</b> '+(up?'▲ ':'▼ ')+'$'+sWfmt(c.price)+' '+(up?'+':'')+ch.toFixed(1)+'%</span>'; }).join(''); }).catch(function(){}); }
-function loadTicker(){ var t=document.getElementById('ttrack'); if(!t)return; fetch('/api/tufish/news?q=crypto',{signal:AbortSignal.timeout(10000)}).then(function(r){return r.json();}).then(function(d){ var items=(d&&d.items)||[]; if(!items.length)return; var one=items.map(function(it){ return '<span class="tt"><span class="ts">'+sEsc(it.source||'NEWS')+'</span><a href="'+sEsc(it.link)+'" target="_blank" rel="noopener">'+sEsc(it.title)+'</a></span>'; }).join(''); t.innerHTML=one+one; }).catch(function(){}); }
+function loadWeather(){ var b=document.getElementById('mktChips'); if(!b)return; fetch(API + '/api/tufish/watch?ids=bitcoin,ethereum,solana',{signal:AbortSignal.timeout(8000)}).then(function(r){return r.json();}).then(function(d){ if(!d||!d.coins||!d.coins.length)return; b.innerHTML=d.coins.map(function(c){ var ch=Number(c.change24h)||0,up=ch>=0; return '<span class="mkt"><b>'+sEsc(c.symbol)+'</b> '+(up?'▲ ':'▼ ')+'$'+sWfmt(c.price)+' '+(up?'+':'')+ch.toFixed(1)+'%</span>'; }).join(''); }).catch(function(){}); }
+function loadTicker(){ var t=document.getElementById('ttrack'); if(!t)return; fetch(API + '/api/tufish/news?q=crypto',{signal:AbortSignal.timeout(10000)}).then(function(r){return r.json();}).then(function(d){ var items=(d&&d.items)||[]; if(!items.length)return; var one=items.map(function(it){ return '<span class="tt"><span class="ts">'+sEsc(it.source||'NEWS')+'</span><a href="'+sEsc(it.link)+'" target="_blank" rel="noopener">'+sEsc(it.title)+'</a></span>'; }).join(''); t.innerHTML=one+one; }).catch(function(){}); }
 loadWeather();
 loadTicker();
 initPnlImages().then(renderPNL);

@@ -273,14 +273,31 @@ router.get('/feed', (req, res) => {
       calls = calls.filter(c => getRiskTier(c) === prefs.riskFilter);
     }
 
-    // Sort by score (bid opportunities first)
-    calls = calls.map(c => ({
-      ...c,
-      score: scoreCall(c),
-      safetyScore: safetyScore(c),
-      riskTier: getRiskTier(c),
-      isQuickXs: isQuickXs(c),
-    })).sort((a, b) => b.score - a.score);
+    // Honor ?limit= (the mobile sheet asks for 250). The old handler shipped the
+    // FULL record — 680KB+ including per-call topHolders arrays the page never
+    // renders — to a phone on a 60-second poll.
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 250, 1), 500);
+
+    // Sort by score (bid opportunities first), then project: drop the heavy
+    // legacy fields no consumer of this endpoint reads (topHolders is the
+    // bulk of the payload; riskScore/viabilityScore were hardcoded fallback
+    // constants — see the tg-calls post-mortem).
+    calls = calls.map(c => {
+      const e = {
+        ...c,
+        score: scoreCall(c),
+        safetyScore: safetyScore(c),
+        riskTier: getRiskTier(c),
+        isQuickXs: isQuickXs(c),
+      };
+      delete e.topHolders;
+      delete e.riskScore;
+      delete e.viabilityScore;
+      delete e.trail;   // per-call price-history array, ~12KB each — the page never renders it
+      return e;
+    }).sort((a, b) => b.score - a.score);
+
+    calls = calls.slice(0, limit);
 
     res.json({
       userId,
