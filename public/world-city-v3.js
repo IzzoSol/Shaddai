@@ -240,6 +240,7 @@
         if (!p || !p.plot_id || !Array.isArray(p.beacon_m) || !isFinite(p.beacon_m[0]) || !isFinite(p.beacon_m[1])) { warn('bad plot row ' + (p && p.plot_id)); return; }
         if (plotIdx[p.plot_id] != null) { warn('duplicate plot ' + p.plot_id); return; }
         if (STATES.indexOf(p.state) < 0) p.state = 'empty';
+        if ((typeof location !== 'undefined' && !/[?&]fullcity=1/.test(location.search || '')) && Math.abs(Math.sin(p.beacon_m[0] * 12.9898 + p.beacon_m[1] * 78.233) * 43758.5453) % 1 >= 0.5) return;   // owner 2026-10-11: half of the plot grid (?fullcity=1 = all)
         plotIdx[p.plot_id] = plots.length; plots.push(p);
       });
       arr(res[2], 'slots').forEach(function (s) {
