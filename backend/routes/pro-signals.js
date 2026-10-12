@@ -293,6 +293,7 @@ router.get('/feed', (req, res) => {
       delete e.topHolders;
       delete e.riskScore;
       delete e.viabilityScore;
+      delete e.trail;   // per-call price-history array, ~12KB each — the page never renders it
       return e;
     }).sort((a, b) => b.score - a.score);
 
