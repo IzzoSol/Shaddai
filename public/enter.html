@@ -495,6 +495,7 @@ footer{ position:relative; z-index:10; text-align:center; font-family:var(--f-mo
   letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint);
   padding:0 16px calc(16px + env(safe-area-inset-bottom)); }
 footer b{ color:var(--ink-soft); font-weight:400; }
+footer a{ color:var(--ink-soft); } footer a:hover{ color:var(--accent); text-decoration:underline; }
 
 @media (prefers-reduced-motion: reduce){
   *{ transition-duration:.001s !important; animation-duration:.001s !important; }
@@ -933,7 +934,7 @@ setTimeout(end,9000);
 <div id="railNav" aria-label="Scroll the modules"><button type="button" id="railPrev" aria-label="Previous module">&#8592;</button><div id="railTrack"><i></i></div><button type="button" id="railNext" aria-label="Next module">&#8594;</button></div>
 </main>
 
-<footer>Seven agents · one council · <b id="footNote">tap ✎ to rearrange</b></footer>
+<footer>Seven agents · one council · <a href="/terms.html">terms of service</a> · <b id="footNote">tap ✎ to rearrange</b></footer>
 
 <!-- ── drawer: swap a module into a slot ───────────────────────────── -->
 <div class="scrim" id="scrim"></div>
@@ -1766,7 +1767,9 @@ if (renderer) {
   var KEY = 'shd_rail';
   var grid = document.getElementById('grid'), bg = document.getElementById('railBg');
   if (!grid || !bg) return;
-  var on = true; try { on = localStorage.getItem(KEY) !== '0'; } catch (e) {}
+  /* GRID is the default front door (owner: all doors visible at once, not a sideways carousel).
+     The rail is still one click away via the ⇄ button; only an explicit '1' turns it back on. */
+  var on = false; try { var _rp = localStorage.getItem(KEY); if (_rp !== null) on = _rp === '1'; } catch (e) {}
   var prev = document.getElementById('railPrev'), next = document.getElementById('railNext');
   var track = document.querySelector('#railTrack i'), lbl = document.getElementById('railLbl'), tog = document.getElementById('btnRail');
   var imgs = [].slice.call(bg.querySelectorAll('i'));
