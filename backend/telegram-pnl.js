@@ -361,9 +361,19 @@ async function trackTick() {
       }
 
       // Slow climber updates removed — channel posts wins (milestones) only.
-    }
 
-    // Rug alerts and round-trip alerts removed — wins only channel.
+      // ROUND-TRIP notice (restored 2026-10-12, owner mandate): the audit
+      // showed 42% of "2x+ wins" were flash-rugs — median 16 minutes from peak
+      // to sub-1x. The channel announced the 2x WIN and then went silent while
+      // the token died. The honesty loop closes both ends: one notice per
+      // call, fires when a >=2x peak falls back under entry.
+      if (call.roundTripped !== true && (call.peakMult || 1) >= 2 && call.curMult < 1) {
+        call.roundTripped = true; changed = true;
+        if (HAS_BOT) {
+          try { await core.broadcast(_roundTripCard(call), { buttons: core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true }) }); } catch (e) {}
+        }
+      }
+    }
   }
   if (changed) _write(_state);
   // Rug prune: calls whose LIVE fdv ≤ $4k for >1h disappear (only when we have a live price)
@@ -373,6 +383,17 @@ async function trackTick() {
   try { pruneDead(6 * 3600 * 1000, 0.8, prices); } catch (e) {}
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
   try { if (core.getConfig().autoPrune !== false) pruneLosers(1.5, 6); } catch (e) {}
+}
+
+// Round-trip close-out: the win was announced; the death is announced too.
+function _roundTripCard(call) {
+  const peak = _capM(call, call.peakMult);
+  const cur = _capM(call, call.curMult);
+  const mins = call.ts ? Math.max(1, Math.round((Date.now() - call.ts) / 60000)) : 0;
+  const durTxt = call.ts ? ` \n⏱ call age ${mins >= 60 ? Math.round(mins / 60) + 'h' : mins + 'm'} at close` : '';
+  return `💀 <b>${_esc(call.symbol || call.name || call.mint.slice(0, 4))} ROUND-TRIP</b>\n` +
+    `peak <b>${peak.toFixed(1)}x</b> → now <b>${cur.toFixed(2)}x</b>${durTxt}\n` +
+    `The x-window was not exitable for a follower — counted as a durable-loss in the honest stats.`;
 }
 
 // ── stats: daily / weekly / monthly ─────────────────────────────────────────
@@ -386,6 +407,12 @@ function stats(period) {
   const hits5 = rows.filter(c => _capM(c, c.peakMult) >= 5).length;
   const hits10 = rows.filter(c => _capM(c, c.peakMult) >= 10).length;
   const hitRate = total ? Math.round((hits2 / total) * 100) : 0;
+  // DURABLE vs FLASH (2026-10-12): a 2x that round-tripped to <0.5x was never
+  // an exitable win — the audit put 42% of historical "wins" in that bucket.
+  // The number subscribers should trust is durable 2x+ (still >= 0.5x).
+  const durable2 = rows.filter(c => _capM(c, c.peakMult) >= 2 && (c.curMult || 0) >= 0.5).length;
+  const flash2 = Math.max(0, hits2 - durable2);
+  const durableRate = total ? Math.round((durable2 / total) * 100) : 0;
   const avgPeak = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total).toFixed(1) : '0';
   const best = rows.slice().sort((a, b) => _capM(b, b.peakMult) - _capM(a, a.peakMult)).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
@@ -404,7 +431,7 @@ function stats(period) {
   const ch = core.channel() || '@ShaddaiLabs';
   return (
     `📊 <b>SHADDAI ${label} SCORECARD</b>\n\n` +
-    `Calls: <b>${total}</b>  ·  2x: <b>${hits2}</b> (<b>${hitRate}%</b>)  ·  5x: <b>${hits5}</b>  ·  10x+: <b>${hits10}</b>\n` +
+    `Calls: <b>${total}</b>  ·  2x: <b>${hits2}</b> (<b>${hitRate}%</b>${flash2 ? ` · durable <b>${durableRate}%</b> (${flash2} flash-rug${flash2 === 1 ? '' : 's'})` : ' · all durable'})  ·  5x: <b>${hits5}</b>  ·  10x+: <b>${hits10}</b>\n` +
     `Avg peak: <b>${avgPeak}x</b>\n\n` +
     (srcLines ? `<b>By source</b>\n<pre>${srcLines}</pre>\n\n` : '') +
     `🏆 <b>Best ${label.toLowerCase()}</b>\n${bestTxt}\n\n` +

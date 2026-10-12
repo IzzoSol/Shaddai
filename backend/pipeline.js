@@ -46,6 +46,7 @@ async function _discover() {
   const now = Date.now();
   const cfg = core.getConfig();
   if (!cfg.signals && !cfg.newpools && !cfg.trending) return;
+  const chains = String(cfg.chains || 'solana').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
   // DexScreener boosts (every 20s)
   if (now - _lastDex >= 20000) {
@@ -56,7 +57,7 @@ async function _discover() {
         for (const item of boosts) {
           const chain = String(item.chainId || '').toLowerCase();
           const addr = item.tokenAddress;
-          if (!addr || !cfg.chains.includes(chain)) continue;
+          if (!addr || !chains.includes(chain)) continue;
           if (_cooldowns.has(addr) && now - _cooldowns.get(addr) < COOLDOWN_MS) continue;
           _addCandidate(addr, chain, 'dexscreener', { boost: true });
         }
@@ -67,7 +68,7 @@ async function _discover() {
   // GeckoTerminal new pools (every 30s)
   if (now - _lastGt >= 30000) {
     _lastGt = now;
-    for (const chain of cfg.chains) {
+    for (const chain of chains) {
       if (!cfg.newpools && !cfg.trending) continue;
       try {
         const kinds = [];
@@ -308,7 +309,16 @@ async function _enrich() {
 
     // final filters
     if (!c.metrics.fdv || c.metrics.fdv <= 0) { _reject(c, 'unknown mcap — cannot size'); continue; }   // no mcap = no post
+    // 2026-10-12 user bar: the $3k-coin leak. The pipeline checked maxFdv but
+    // NEVER a minimum — microcaps sailed through this stage into the channel.
+    if (c.metrics.fdv < (cfg.minFdv || 20000)) { _reject(c, 'fdv $' + Math.round(c.metrics.fdv) + ' < $' + Math.round(cfg.minFdv || 20000) + ' floor'); continue; }
     if (cfg.maxFdv && c.metrics.fdv > cfg.maxFdv) { _reject(c, 'fdv $' + (c.metrics.fdv/1000).toFixed(0) + 'K > $' + (cfg.maxFdv/1000).toFixed(0) + 'K'); continue; }
+    // hard volume floor regardless of config: no calls under $1k volume (user spec 2026-10-12)
+    if (c.metrics.vol24h < 1000) { _reject(c, 'vol $' + c.metrics.vol24h.toFixed(0) + ' < $1K hard floor'); continue; }
+    // no weird bundles: a detected bundler cluster in the top holders is a batch-buy
+    // footprint — reject outright (user spec 2026-10-12). Main feeds use maxBundlerPct;
+    // the pipeline detects clusters and previously only FLAGGED them on the card.
+    if (c.metrics.bundlers) { _reject(c, 'bundler cluster detected in top holders'); continue; }
     if (cfg.minLiq && c.metrics.liq < cfg.minLiq) { _reject(c, 'liq $' + c.metrics.liq.toFixed(0) + ' < $' + cfg.minLiq); continue; }
     // OWNER RULE: liquidity must "match" the token — ≥ minLiqPct% of mcap (thin book vs big mcap = drainable)
     if (cfg.minLiqPct && (c.metrics.liq / c.metrics.fdv * 100) < cfg.minLiqPct) { _reject(c, 'liq ' + (c.metrics.liq / c.metrics.fdv * 100).toFixed(1) + '% of mcap < ' + cfg.minLiqPct + '%'); continue; }
