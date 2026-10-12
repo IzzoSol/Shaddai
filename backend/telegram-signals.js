@@ -26,9 +26,11 @@ const path = require('path');
 const fs = require('fs');
 
 // bot banner images — used as fallback when a token has no DexScreener imageUrl
+// (2026-10-12: new AI-generated brand set — img-1..img-10.jpg; the old png set
+// lives in old-basic/ as backup)
 const _BOT_IMG_DIR = path.join(__dirname, '../public/assets/bot');
 const _BOT_IMGS = (() => {
-  try { return fs.readdirSync(_BOT_IMG_DIR).filter(f => f.startsWith('img-') && f.endsWith('.png')).map(f => path.join(_BOT_IMG_DIR, f)); }
+  try { return fs.readdirSync(_BOT_IMG_DIR).filter(f => /^img-.*\.(png|jpe?g)$/i.test(f)).sort().map(f => path.join(_BOT_IMG_DIR, f)); }
   catch (e) { return []; }
 })();
 function _randomBotImg() { return _BOT_IMGS.length ? _BOT_IMGS[Math.floor(Math.random() * _BOT_IMGS.length)] : null; }
@@ -721,10 +723,10 @@ function _holderConvictionScore(topHolders, totalHolders, cfg) {
 // Fail-open: if the API errors, return a neutral score so good calls aren't lost.
 // SNIPER/BUNDLER DETECTION: top10 concentration, insider flags, similar amounts
 async function _rugScore(mint) {
-  if (!mint) return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false };
+  if (!mint) return { checked: false, score: 0, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false };
   try {
     const r = await fetch('https://api.rugcheck.xyz/v1/tokens/' + mint + '/report', { signal: AbortSignal.timeout(9000) });
-    if (!r.ok) return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false };
+    if (!r.ok) return { checked: false, score: 0, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false };
     const j = await r.json();
     let score = 100; const notes = [];
     // LP locked %
@@ -800,7 +802,7 @@ async function _rugScore(mint) {
         insider: !!h.insider,
       })),
       label: `🛡 Safety ${badge} <b>${score}/100</b>${notes.length ? '  ·  ' + notes.join(' ') : ''}` };
-  } catch (e) { return { checked: false, score: 60, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
+  } catch (e) { return { checked: false, score: 0, label: '', top10Pct: 0, hasSnipers: false, hasBundlers: false }; }
 }
 
 // ── SOCIAL SCORE (website, X, TG, Discord, Instagram, locked) — 0..10 ────────
@@ -1971,7 +1973,7 @@ async function _pollGecko() {
           if (rs && rs.checked && rs.score < cfg.rugMinScore) { _markBadMint(_dk); continue; }   // below safety floor
           if (!_holdersOk(cfg, rs)) continue;                            // must have holders
           if (!_top10Ok(cfg, rs)) continue;                              // top10 concentration
-          if (!_lpLockedOk(cfg, rs)) { _markBadMint(_dk); continue; }    // LP must be locked ≥80%
+          if (!_lpLockedOk(cfg, rs)) { if (rs && rs.checked) _markBadMint(_dk); continue; }    // LP must be locked ≥80% (transient API blip = retry next cycle, NOT a permanent bad-mint)
           if (!_snipersOk(cfg, rs)) continue;                            // no snipers/bundlers
           if (!_bundlersOk(cfg, rs)) continue;                           // no BIG bundles (>maxBundlerPct)
           if (!_devOk(cfg, rs)) continue;                               // dev/launch wallet ≤7% (spec 2026-10-12)

@@ -320,6 +320,41 @@ async function sendAudio(chatId, audio, filename, caption, title) {
     return r.ok;
   } catch (e) { return false; }
 }
+
+// Send an MP4 video (local path or Buffer) with an HTML caption — multipart
+// for local files (Telegram bot API accepts up to 50MB), JSON body for URLs.
+// Used for the big milestone WIN drops (assets/bot/video/win-*.mp4).
+async function sendVideo(chatId, video, caption, buttons) {
+  const t = token(); if (!t || chatId == null || !video) return false;
+  try {
+    if (!/^https?:/i.test(video) && fs.existsSync(video)) {
+      const fd = new FormData();
+      fd.append('chat_id', String(chatId));
+      if (caption) { fd.append('caption', caption.slice(0, 1024)); fd.append('parse_mode', 'HTML'); }
+      if (buttons) fd.append('reply_markup', JSON.stringify(buttons));
+      fd.append('supports_streaming', 'true');
+      fd.append('video', new Blob([fs.readFileSync(video)], { type: 'video/mp4' }), 'win.mp4');
+      const r = await fetch(TG(t, 'sendVideo'), { method: 'POST', body: fd });
+      if (r.status === 403) removeChat(chatId);
+      return r.ok;
+    }
+    const body = { chat_id: chatId, video, caption: (caption || '').slice(0, 1024), parse_mode: 'HTML', supports_streaming: true };
+    if (buttons) body.reply_markup = buttons;
+    const r = await fetch(TG(t, 'sendVideo'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (r.status === 403) removeChat(chatId);
+    return r.ok;
+  } catch (e) { return false; }
+}
+async function broadcastVideo(video, caption, buttons) {
+  const t = token(); if (!t) return 0;
+  const targets = new Set(); const ch = channel(); if (ch) targets.add(ch);
+  chats().forEach(c => targets.add(c.id));
+  let ok = 0; for (const id of targets) { if (await sendVideo(id, video, caption, buttons)) ok++; }
+  return ok;
+}
 async function broadcastPhoto(photo, caption, buttons) {
   const t = token(); if (!t) return 0;
   const targets = new Set(); const ch = channel(); if (ch) targets.add(ch);
@@ -358,5 +393,5 @@ function buildButtons(mint, chain, chartUrl, opts) {
 }
 
 module.exports = { token, channel, addChat, removeChat, chats, getConfig, setConfig, send, broadcast, sendPhoto, sendAudio,
-  sendDice, sendGame, setGameScore, getGameHighScores, broadcastPhoto, buildButtons, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset,
+  sendDice, sendGame, setGameScore, getGameHighScores, broadcastPhoto, sendVideo, broadcastVideo, buildButtons, wasAlerted, markAlerted, resetAlerted, acquireBroadcastLock, listPresets, applyPreset,
   getPreset, activePresetKey };

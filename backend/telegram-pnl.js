@@ -18,6 +18,19 @@ const DATA_DIR = process.env.TG_DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'tg-calls.json');
 const BOT_DIR = path.join(__dirname, '..', 'public', 'assets', 'bot');
 const MILESTONES_DIR = path.join(BOT_DIR, 'milestones');
+
+// Big-win videos (assets/bot/video/win-*.mp4) — 10x+ milestone drops post a
+// video instead of a static card when one is staged; rotates through the set.
+let _winVideoIdx = 0;
+function _winVideo() {
+  try {
+    const dir = path.join(BOT_DIR, 'video');
+    const vids = fs.readdirSync(dir).filter(f => f.endsWith('.mp4')).sort().map(f => path.join(dir, f));
+    if (!vids.length) return null;
+    _winVideoIdx = (_winVideoIdx + 1) % vids.length;
+    return vids[_winVideoIdx];
+  } catch (e) { return null; }
+}
 // pick a random existing PNL celebration image (pnl-1..10.png) or null
 function _pnlImage() {
   try {
@@ -331,10 +344,18 @@ async function trackTick() {
           // at most one update per token every 45 minutes.
           if (HAS_BOT && Date.now() - (call.lastMsPosted || call.ts) >= MS_BROADCAST_GAP) {
             call.lastMsPosted = Date.now();
-            const img = _vaultImageFor(call) || milestoneImage(hit) || _pnlImage();
             const btns = core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true });
-            if (img) await core.broadcastPhoto(img, _milestoneCard(call, hit), btns);
-            else await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
+            let posted = false;
+            // 10x+ wins drop a VIDEO (win-*.mp4); everything else the image chain.
+            if (hit >= 10 && typeof core.broadcastVideo === 'function') {
+              const vid = _winVideo();
+              if (vid) posted = (await core.broadcastVideo(vid, _milestoneCard(call, hit), btns)) > 0;
+            }
+            if (!posted) {
+              const img = _vaultImageFor(call) || milestoneImage(hit) || _pnlImage();
+              if (img) posted = (await core.broadcastPhoto(img, _milestoneCard(call, hit), btns)) > 0;
+            }
+            if (!posted) await core.broadcast(_milestoneCard(call, hit), { buttons: btns });
           }
         }
       }
