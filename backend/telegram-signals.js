@@ -1619,6 +1619,22 @@ async function _pollPreBonded() {
       const sym = c.symbol || '';
       if (sym && _isScamSym(sym)) continue;
       if (!_symCooldownOk(sym)) continue;
+
+      // ── SAFETY GATES (2026-10-12): this feed previously posted on community
+      // replies ALONE — no rugcheck, no holders, no dev, no insiders. That was
+      // an accuracy hole, not a speed feature. Curve tokens are naturally
+      // exempt from the LP-lock gate (the pump.fun bonding curve IS the pool;
+      // no AMM LP exists pre-graduation), but every other gate applies.
+      if (cfg.rugFilter) {
+        const rs = await _rugScore(mint);
+        if (rs && rs.checked && rs.score < cfg.rugMinScore) { _markBadMint(mint); continue; }
+        if (!_holdersOk(cfg, rs)) continue;
+        if (!_top10Ok(cfg, rs)) continue;
+        if (!_snipersOk(cfg, rs)) continue;
+        if (!_bundlersOk(cfg, rs)) continue;
+        if (!_devOk(cfg, rs)) continue;
+      }
+
       const card = _preBondCard(c);
       const _preBondBrain = await _brainInsight({ fdv: Number(c.usd_market_cap) || 0, source: 'pre_bonding' });
       const _preBondMsg = card + (_preBondBrain || '');
