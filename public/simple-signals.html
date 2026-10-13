@@ -312,10 +312,10 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 #sheet{
   position:fixed; left:0; right:0; bottom:0; z-index:50;
   background:var(--bg2); border-top:1px solid var(--edge2); border-radius:18px 18px 0 0;
-  transform:translateY(105%); transition:transform .24s cubic-bezier(.2,.8,.3,1);
+  transform:translateY(105%); transition:transform .26s cubic-bezier(.4,0,.2,1);
   max-height:82dvh; overflow-y:auto; padding:14px 16px calc(20px + env(safe-area-inset-bottom));
 }
-#sheet.on{transform:translateY(0)}
+#sheet.on{transform:translateY(0);transition:transform .38s cubic-bezier(.2,.95,.25,1.08)}
 #sheet:focus{outline:none}
 #ghost{width:44px;height:4px;border-radius:2px;background:var(--edge2);margin:2px auto 12px}
 #sheet .s-symbol{font-family:var(--f-mono);font-size:22px;font-weight:700;letter-spacing:.06em}
@@ -573,6 +573,20 @@ html[data-theme="light"] .toast{background:rgba(255,255,255,.96);color:#8a6d1a}
 }
 @keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
+/* ---------- juice: tick-up + hit-flash + brand life (every-frame-is-code 10-games-juice, 08-kinetic) ---------- */
+@keyframes hitFlash{0%{box-shadow:0 0 0 0 rgba(16,229,164,.55)}100%{box-shadow:0 0 0 7px rgba(16,229,164,0)}}
+@keyframes muxPop{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes brandShimmer{to{background-position:220% center}}
+@media (prefers-reduced-motion:no-preference){
+  .row.hit{animation:hitFlash .9s ease-out}
+  .row.hit .mx{animation:muxPop .5s cubic-bezier(.2,.9,.25,1.1)}
+  #brand{background-size:220% auto;animation:brandShimmer 7s linear infinite}
+}
+@media (prefers-reduced-motion:reduce){
+  #brand,#brand b{animation:none}
+  #sheet.on{transition:transform .18s linear}
+}
+
 /* ---------- numerals: tabular so live prices/mults don't jitter on refresh ---------- */
 .mx,.sub-rt,.pc24,.px,.row .l2,.s-cell dd,.dc-pr,.dc-chg,.pv,.s-mx{font-variant-numeric:tabular-nums}
 
@@ -804,6 +818,22 @@ html[data-theme="light"] .empty::before{opacity:.10}
 'use strict';
 var API = (location.protocol === 'file:' ? 'http://127.0.0.1:3000' : '') + '';
 var el = function (id) { return document.getElementById(id); };
+/* motion helpers — every-frame-is-code/04-motion-easing (deterministic; rAF only for ticks) */
+var RM = (window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false });
+var clampN = function (x, a, b) { return Math.min(b, Math.max(a, x)); };
+var easeOutExpo = function (p) { return p >= 1 ? 1 : 1 - Math.pow(2, -10 * p); };
+function countUp(node, to, fmt, ms) {
+  if (!node) return;
+  var from = Number(node.getAttribute('data-v')); if (isNaN(from)) from = 0;
+  node.setAttribute('data-v', to);
+  if (RM.matches || from === to || Math.abs(to - from) < 0.001) { node.textContent = fmt(to); return; }
+  var t0 = performance.now(); ms = ms || 500;
+  (function step(now) { var p = clampN((now - t0) / ms, 0, 1); node.textContent = fmt(from + (to - from) * easeOutExpo(p)); if (p < 1) requestAnimationFrame(step); })(performance.now());
+}
+/* last live multiple per mint — a rising call gets a brief hit-flash (10-games-juice) */
+var MULT_PREV = {};
+/* last-rendered 7-day rating numbers — so they tick up from their previous value */
+var RATEPREV = { 'A+': 0, A: 0, B: 0, C: 0, D: 0, pct: 0 };
 function setText(id, txt) { var n = el(id); if (n) n.textContent = txt; }
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); };
 /* http(s)-only allowlist for third-party URLs (pairUrl, social links) — blocks
@@ -1223,11 +1253,18 @@ function renderRate() {
     '<div class="ph"><span>7-Day Rating</span><span class="ch">' + measured + ' measured · ' + week.length + ' calls</span></div>' +
     '<div class="rt-row">' +
       ['A+', 'A', 'B', 'C', 'D'].map(function (t) {
-        return '<span class="rt-badge ' + ratingClass(t) + '">' + t + '<b>' + counts[t] + '</b></span>';
+        return '<span class="rt-badge ' + ratingClass(t) + '">' + t + '<b data-v="' + RATEPREV[t] + '">' + RATEPREV[t] + '</b></span>';
       }).join('') +
-      '<span class="rt-grade">' + grade + '<small>2x+ ' + Math.round(r2 * 100) + '%</small></span>' +
+      '<span class="rt-grade">' + grade + '<small data-v="' + RATEPREV.pct + '">2x+ ' + RATEPREV.pct + '%</small></span>' +
     '</div>' +
     (pend ? '<div class="rt-note">' + pend + ' call' + (pend > 1 ? 's' : '') + ' pending price check — not graded</div>' : '');
+  var _bs = box.querySelectorAll('.rt-badge b');
+  ['A+', 'A', 'B', 'C', 'D'].forEach(function (t, i) {
+    countUp(_bs[i], counts[t], function (v) { return String(Math.round(v)); });
+    RATEPREV[t] = counts[t];
+  });
+  countUp(box.querySelector('.rt-grade small'), Math.round(r2 * 100), function (v) { return '2x+ ' + Math.round(v) + '%'; });
+  RATEPREV.pct = Math.round(r2 * 100);
 }
 
 /* ---------------- recent calls ---------------- */
@@ -1272,8 +1309,11 @@ function renderCalls() {
   var frag = document.createDocumentFragment();
   list.forEach(function (c) {
     var m = Number(c.curMult) || 0;
+    var prevM = MULT_PREV[c.mint];
+    MULT_PREV[c.mint] = m;
+    var rose = prevM != null && m > prevM + 0.001 && m >= 1;
     var r = document.createElement('button');
-    r.className = 'row ' + (m >= 1 ? 'up' : 'dn') + (isDeadCoin(c) ? ' dead' : '');
+    r.className = 'row ' + (m >= 1 ? 'up' : 'dn') + (isDeadCoin(c) ? ' dead' : '') + (rose ? ' hit' : '');
     var safeColor = c.safetyScore != null ? safetyColor(c.safetyScore) : (m >= 1 ? 'var(--emerald)' : (m > 0 ? 'var(--red)' : 'var(--edge)'));
     var fdv = Number(c.curFdv || c.entryFdv) || 0;
     var fdvTxt = fdv >= 1e6 ? (fdv / 1e6).toFixed(1) + 'M' : (fdv >= 1000 ? Math.round(fdv / 1000) + 'K' : Math.round(fdv).toLocaleString());
