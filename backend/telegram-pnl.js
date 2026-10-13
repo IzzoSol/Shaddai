@@ -662,6 +662,15 @@ async function discoverTick() {
 function startDiscovery() {
   if (_discoverTimer) return;
   if ((process.env.DISCOVERY || '1') === '0') { console.log('[tg-pnl] discovery disabled (DISCOVERY=0).'); return; }
+  // Broadcast-lock guard (2026-10-12): discovery seeds UNGATED boosted tokens
+  // straight into the call record — the "500x boosts are scams" entries, added
+  // every 10 minutes with no gates. It may only run on the instance that owns
+  // broadcasting; the standalone never starts it, so with the standalone
+  // live this lane is fully off.
+  if (typeof core.acquireBroadcastLock === 'function' && !core.acquireBroadcastLock()) {
+    console.log('[tg-pnl] another instance owns broadcasting — discovery not started here.');
+    return;
+  }
   console.log('[tg-pnl] discovery armed — streaming new boosted Solana calls every 10m (capped 6/tick).');
   setTimeout(() => { discoverTick().catch(() => {}); }, 30000);
   _discoverTimer = setInterval(() => { discoverTick().catch(() => {}); }, 10 * 60000);

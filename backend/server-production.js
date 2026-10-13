@@ -853,10 +853,10 @@ app.get('/api/health', (req, res) => {
 const memTracker = require('./lib/mem-tracker');
 memTracker.start({
   onCritical: () => cache.clear(),
-  // Telegram DM at every 20% step of the memory limit (uses SHADDAI_ADMIN_ID, or OWNER_TG_CHAT_ID if set).
+  // Telegram DM at every 20% step of the memory limit (needs TELEGRAM_BOT_TOKEN + OWNER_TG_CHAT_ID).
   onBand: (band, m, dir) => {
     console.log(`[mem] band ${band}% (${dir}) — RSS ${m.rssMB} MB / ${m.limitMB} MB`);
-    const chat = process.env.OWNER_TG_CHAT_ID || process.env.SHADDAI_ADMIN_ID;
+    const chat = process.env.OWNER_TG_CHAT_ID;
     if (!chat) return;
     const icon = band >= 80 ? '🔴' : band >= 60 ? '🟠' : band >= 40 ? '🟡' : '🟢';
     const verb = dir === 'down' ? 'dropped to' : dir === 'start' ? 'started at' : 'crossed';
@@ -1571,22 +1571,6 @@ app.get('/api/signals/calls', async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String((e && e.message) || e) }); }
 });
 
-// GET /api/navi/signals — the Navi SIGNALS module. Tier is decided HERE from a VERIFIED Firebase identity (req.userEmail is only set on the verified path);
-// an X-User-ID header or ?userId= is never enough to unlock the paid feed. Free = delayed 3-call preview, paid = live feed. See lib/navi-signals.js.
-app.get('/api/navi/signals', async (req, res) => {
-  try {
-    const { buildSignalsResponse } = require('./lib/navi-signals');
-    let tier = 'free';
-    if ((req.headers.authorization || '').startsWith('Bearer ')) {
-      await new Promise((resolve) => { require('./auth-guard').verifyFirebaseToken(req, { status: () => ({ json: () => resolve() }), json: () => resolve() }, resolve); });
-      if (req.userEmail && req.userId) { try { const info = await BillingService.getSubscriptionInfo(req.userId); tier = (info && (info.tier || (info.subscription && info.subscription.tier))) || 'free'; } catch (e) { tier = 'free'; } }
-    }
-    const pnl = require('./telegram-pnl'); const calls = pnl.callsJson({ limit: 100 });
-    res.set('Cache-Control', 'private, no-store');
-    res.json(buildSignalsResponse({ tier, calls, now: Date.now() }));
-  } catch (e) { res.status(500).json({ ok: false, error: 'signals unavailable' }); }
-});
-
 app.get('/api/signals/stats', (req, res) => {
   try {
     const pnl = require('./telegram-pnl');
@@ -2114,16 +2098,6 @@ app.use('/api/collectables', require('./collectables/collectables-routes'));
 app.use('/api/rooms', require('./rooms/rooms-routes'));
 // Operatives — the unified Operative store (identity+look+brain+inventory+economy+stats)
 app.use('/api/operatives', require('./lib/operatives-routes'));
-// ── MMO agent layer (server/agentBodies.js + externalAgents.js): body grants, external agents (Grok/Muse/...), jobs market. Identity = softAuth's verified uid ONLY
-//    (the x-user-id header is overwritten); Sparks go through the production economy-service (SHADDAI_LEDGER=economy), so there is ONE economy. ──
-try {
-  process.env.SHADDAI_LEDGER = process.env.SHADDAI_LEDGER || 'economy';
-  const _mmoId = (req, res, next) => { req.headers['x-user-id'] = req.userId || ''; next(); };
-  const _ext = require('../server/externalAgents');
-  app.use('/api/mmo/agent', softAuth, _mmoId, require('../server/agentServer'));
-  app.use('/api/mmo/xagent', softAuth, _mmoId, _ext.xagent);
-  app.use('/api/mmo/jobs', softAuth, _mmoId, _ext.jobs);
-} catch (e) { console.warn('[mmo-agents] not mounted:', e && e.message); }
 app.use('/api/radio', require('./lib/radio-routes'));                 // Shaddai Radio: community tracks + city bulletin
 app.use('/api/portal-plots', require('./lib/portal-plots-routes'));   // rentable/buyable portal-world plots
 app.use('/api/security', require('./lib/security-routes'));           // PIKADON security scan engine + review queue
@@ -2150,17 +2124,6 @@ app.use('/api/lesson-plan', require('./lesson-plan')); // grok-style lesson plan
 const _academyRoutes = require('./academy-routes'); // Agent Academy / Grok Training — pay agents to teach via MCP
 app.use('/api/academy', _academyRoutes);
 app.use('/x402/academy', _academyRoutes.paylabRouter); // merchant: sell the pay-lab lesson via x402
-// SHADDAI School: Academy skills, exams, homework, learning receipts. Human side = softAuth's verified uid; bot side = the existing shdx_ bearer (agentAuth).
-try {
-  const { createSchoolRouter } = require('./academy-school-routes');
-  const { getAcademy, getRunner, uidFromReq } = require('./lib/academy/academy-instance');
-  const _ext_school = require('../server/externalAgents');
-  // shdx_ bot bearers are not user sessions: skip softAuth for them (no wasted token verification, and they keep working if REQUIRE_AUTH is on).
-  const _schoolAuth = (req, res, next) => (/^Bearer\s+shdx_/.test(String(req.headers.authorization || '')) ? next() : softAuth(req, res, next));
-  app.use('/api/school', _schoolAuth, createSchoolRouter({
-    academy: getAcademy(), operatives: require('./lib/operatives'), runner: getRunner(), uidOf: uidFromReq, agentAuth: _ext_school.agentAuth
-  }));
-} catch (e) { console.warn('[school] not mounted:', e && e.message); }
 // ZEROX live market data scan (GET /api/zerox/scan?symbol=<mint_or_symbol>). The
 // underlying module exports a bare helper function, so wire it as a real route
 // instead of an app.use mount (mounting the object crashed startup with
@@ -3330,7 +3293,7 @@ app.get('/dashboard', (req, res) => {
 });
 // RAG brain — the 7-agent knowledge system UI (knowledge bases + live cloud search).
 app.get('/brain', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/rag.html'));
+  res.sendFile(path.join(__dirname, '../public/brain.html'));
 });
 // Flat RAG brain — the mobile-friendly read view (no 3D): agents, tools, wallets,
 // accurate routed + grounded ask. Same backend, single shared connection.
@@ -3435,19 +3398,33 @@ if (!process.env.VERCEL_ENV) {
     const ops = require('./lib/ops-registry');
     logger.info('SERVER', `SHADDAI Production Server v62 started on port ${PORT}`);
 
-    // Public DexScreener → Telegram signals feed (no-op unless TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL set).
-    try { ops.boot('tg-signals', () => require('./telegram-signals').startTelegramSignals()); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
-    // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
-    try { ops.boot('tg-bot', () => { require('./telegram-bot').startTelegramBot(); return () => require('./telegram-bot').stopTelegramBot(); }); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
+    // ── TELEGRAM LANES — exactly ONE broadcaster fleet-wide ─────────────────
+    // 2026-10-12: the broadcast lock is a LOCAL file, so the Render deployment
+    // and this server each "owned" it on their own filesystem and BOTH ran the
+    // signal/news/pnl lanes with the same bot token — the double-sending. The
+    // standalone (tg-signals-standalone.js) is the single broadcaster; servers
+    // run these lanes ONLY when TG_LANES=1 AND they hold the lock. Render (no
+    // env var) is now a pure web API. This also stops the stale in-memory call
+    // record from overwriting resets, and the ungated discovery loop from
+    // seeding boosted scam entries every 10 minutes.
+    const tgOwner = (process.env.TG_LANES === '1') && (() => { try { return require('./telegram-core').acquireBroadcastLock(); } catch (e) { return false; } })();
+    if (tgOwner) {
+      // Public DexScreener → Telegram signals feed (no-op unless TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL set).
+      try { ops.boot('tg-signals', () => require('./telegram-signals').startTelegramSignals()); } catch (e) { console.warn('[tg-signals] init skipped:', e && e.message); }
+      // Interactive Telegram bot — long-polls for commands (no-op unless TELEGRAM_BOT_TOKEN set).
+      try { ops.boot('tg-bot', () => { require('./telegram-bot').startTelegramBot(); return () => require('./telegram-bot').stopTelegramBot(); }); } catch (e) { console.warn('[tg-bot] init skipped:', e && e.message); }
+      // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
+      try { ops.boot('tg-news', () => require('./telegram-news').startNewsPoster()); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
+      // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
+      try { ops.boot('tg-pnl', () => require('./telegram-pnl').startTracker()); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
+      // DexScreener discovery loop → pushes new boosted tokens into signals.
+      try { ops.boot('tg-discovery', () => require('./telegram-pnl').startDiscovery()); console.log('[discovery] DexScreener boosted-token discovery armed'); } catch (e) { console.warn('[discovery] init skipped:', e && e.message); }
+      console.log('[tg] this server owns broadcasting — TG lanes started.');
+    } else {
+      console.log('[tg] TG lanes OFF on this process (standalone bot owns broadcasting; set TG_LANES=1 to override).');
+    }
     // @TurtleMusicBot — dedicated music bot (no-op unless TURTLE_MUSIC_BOT_TOKEN set).
     try { ops.boot('turtle-music-bot', () => { require('./turtle-music-bot').start(); return () => require('./turtle-music-bot').stop(); }); } catch (e) { console.warn('[turtle-music-bot] init skipped:', e && e.message); }
-    // Scheduled market-pulse / news broadcaster (dashboard-configurable interval).
-    try { ops.boot('tg-news', () => require('./telegram-news').startNewsPoster()); } catch (e) { console.warn('[tg-news] init skipped:', e && e.message); }
-    // Call PNL tracker — re-prices calls, posts milestone wins, powers hit-rate stats.
-    try { ops.boot('tg-pnl', () => require('./telegram-pnl').startTracker()); } catch (e) { console.warn('[tg-pnl] init skipped:', e && e.message); }
-
-    // Start DexScreener discovery loop (free, no key) → pushes new boosted tokens into signals
-    try { ops.boot('tg-discovery', () => require('./telegram-pnl').startDiscovery()); console.log('[discovery] DexScreener boosted-token discovery armed'); } catch (e) { console.warn('[discovery] init skipped:', e && e.message); }
 
     // ── KEEP-ALIVE: Render's free plan spins the service DOWN after ~15 min idle, which stops the
     // signal pollers (no calls when nobody's visiting). Self-ping the public URL every ~10 min so the

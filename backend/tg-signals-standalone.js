@@ -6,22 +6,31 @@ process.chdir(__dirname);
 require('dotenv').config();
 try {
   const sig = require('./telegram-signals');
-  if (typeof sig.startTelegramSignals === 'function') {
-    sig.startTelegramSignals();
-    console.log('[tg-signals-launcher] started. Keeping process alive.');
-  } else {
-    console.log('[tg-signals-launcher] ERROR: startTelegramSignals not exported');
-    process.exit(1);
-  }
-  // PNL tracker: this process holds the broadcast lock, so the re-pricer +
-  // milestone wins must live HERE. startTracker() refuses on any process that
-  // does not own the lock, so there is exactly one tracker fleet-wide —
-  // the 2026-10-12 audit showed nobody was re-pricing (server's copy saw the
-  // lock held and stood down; this launcher never started one) and 139
-  // recent calls sat flat at 1.00x, poisoning the hit rate to ~8%.
-  try { require('./telegram-pnl').startTracker(); console.log('[tg-launcher] pnl tracker started (this instance owns broadcasting)'); } catch (e) { console.error('[tg-launcher] pnl tracker failed:', e && e.message); }
-  try { require('./telegram-bot').startTelegramBot(); console.log('[tg-launcher] bot started (commands + DM chats)'); } catch (e) { console.error('[tg-launcher] bot failed:', e && e.message); }
-  try { require('./telegram-news').startNewsPoster(); console.log('[tg-launcher] news poster started (pulse/headlines/top25/movers/promo)'); } catch (e) { console.error('[tg-launcher] news failed:', e && e.message); }
+  const core = require('./telegram-core');
+  const pnl = require('./telegram-pnl');
+  const bot = require('./telegram-bot');
+  const news = require('./telegram-news');
+
+  const bootLanes = (phase) => {
+    // All lane starters are idempotent (internal _timer guards), so calling
+    // them again after a failed lock acquisition is a safe RETRY — the
+    // 2026-10-12 restart race: the old server's lock heartbeat was still
+    // fresh when this process booted, every lane stood down, and NOTHING
+    // ever retried → a silent dead broadcaster ("no signals").
+    const owner = core.acquireBroadcastLock();
+    if (sig.startTelegramSignals) sig.startTelegramSignals();
+    if (pnl.startTracker) pnl.startTracker();
+    if (bot.startTelegramBot) bot.startTelegramBot();
+    if (news.startNewsPoster) news.startNewsPoster();
+    console.log('[tg-launcher] lanes boot (' + phase + ') — broadcast lock ' + (owner ? 'ACQUIRED' : 'HELD ELSEWHERE (will retry at +100s)'));
+  };
+
+  bootLanes('initial');
+
+  // Lock-failure retry: the broadcast lock is a 90s heartbeat. If another
+  // process's stale heartbeat blocked us at boot, it is definitely dead by
+  // +100s — boot once more and this process takes over.
+  setTimeout(() => { try { bootLanes('retry+100s'); } catch (e) { console.error('[tg-launcher] retry failed:', e && e.message); } }, 100 * 1000);
 } catch (e) {
   console.error('[tg-signals-launcher] FAILED:', e && e.stack || e);
   process.exit(1);

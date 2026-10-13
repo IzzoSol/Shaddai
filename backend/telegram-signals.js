@@ -1442,9 +1442,14 @@ async function _pollBonded() {
     let card = _bondCard(c, _bondSocial.label, { vol1h: Number(pair.volume && pair.volume.h1) || 0, hasBanner: _bondHasBanner, price: Number(pair.priceUsd) || 0, bannerLabel: _bondBannerLabel, buyPressure: _bp.label });
     if (cfg.rugFilter) {
       if (rs.checked && rs.score < cfg.rugMinScore) { _markBadMint(mint); continue; }
-      // Bonded hard cap: $20K — corpus shows $25-75K bonded = 52% rug rate, 19% 2x (net negative).
-      // <$10K bonded = 60% 2x, 5% rug. $10-25K = 31% 2x, 31% rug. Cut everything above $20K.
-      if (usdMc > 20000) { _seenBond.add(mint); continue; }
+      // Bonded band cap: was a $20K hard cap (old corpus: $25-75K bonded = 52%
+      // rug — measured PRE-tightening, before vetted gates and the banner
+      // rule existed). 2026-10-12: the audit showed bonded was the BEST real
+      // source (60% 2x+, 27% 5x+, n=15) and the $20K cap made bonded
+      // impossible under the $20K global floor (only exactly-$20K coins could
+      // pass = zero calls). Cap is now the band top; every gate still applies,
+      // INCLUDING the $200-banner requirement at $30-75K.
+      if (usdMc > (cfg.maxFdv || 80000)) { _seenBond.add(mint); continue; }
       if (_overCap(cfg, usdMc, rs)) continue;         // standard maxFdv check (catches anything above global maxFdv)
       if (!_holdersOk(cfg, rs)) continue;
       if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }

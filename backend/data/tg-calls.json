@@ -1,3 +1,3044 @@
 {
-  "calls": []
+  "calls": [
+    {
+      "mint": "3YjsaRgomXiypYTxBR8xw1bamBXeGfs2YCPpyECtBDvg",
+      "chain": "solana",
+      "name": "Mouse / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 9088.690782,
+      "entryPrice": 0.00002108189104442051,
+      "holders": 118,
+      "ts": 1784397996568,
+      "peakMult": 10.5936049877156,
+      "curMult": 4.085696267007183,
+      "curFdv": 37133.63,
+      "milestones": [
+        2,
+        5,
+        10
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "8GBF9wS8tQn9ykweZLAvyVN7QMyhzYzYw1HNFxULpump",
+      "chain": "solana",
+      "name": "PumpHouseGame",
+      "symbol": "PHG",
+      "source": "trending",
+      "entryFdv": 43330,
+      "entryPrice": 0.00004333,
+      "holders": 557,
+      "ts": 1784398596165,
+      "peakMult": 3.1248096007385184,
+      "curMult": 0.8016155088852989,
+      "curFdv": 34734,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "GuSborgzpo6Hc7msoRouQyPJ3psxgAHm4amC9iDhpump",
+      "chain": "solana",
+      "name": "Meccha Chameleon",
+      "symbol": "Chameleon",
+      "source": "trending",
+      "entryFdv": 98271,
+      "entryPrice": 0.00009828,
+      "holders": 5520,
+      "ts": 1784406472907,
+      "peakMult": 1.2308310691862299,
+      "curMult": 0.14099785287623,
+      "curFdv": 13856,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "iB1umQs5Jzq6ysaRk5yRKaJ4XJcWgqHDxsdVtjipump",
+      "chain": "solana",
+      "name": "The Black Baby Bull",
+      "symbol": "BABYANSEM",
+      "source": "trending",
+      "entryFdv": 11711,
+      "entryPrice": 0.00001171,
+      "holders": 3021,
+      "ts": 1784410432637,
+      "peakMult": 1.4682776876440953,
+      "curMult": 0.9445820169071812,
+      "curFdv": 11062,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "BgVMUdzzKUAgjrKmLTT9aKXJUoew9YAqHrJUfs7xpump",
+      "chain": "solana",
+      "name": "Cantina's Talking Pigeon",
+      "symbol": "Peigengoo",
+      "source": "trending",
+      "entryFdv": 82037,
+      "entryPrice": 0.00008205,
+      "holders": 2253,
+      "ts": 1784411032597,
+      "peakMult": 4.665297365822738,
+      "curMult": 0.8769091995075393,
+      "curFdv": 71939,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "BRAqayUqHhhacDLHgpz1oSYuonK6RQkAWshKsAXXBjHt",
+      "chain": "solana",
+      "name": "HOME / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 37470.3367,
+      "entryPrice": 0.000042220887963766006,
+      "holders": 207,
+      "ts": 1784411035606,
+      "peakMult": 1.3939292944757553,
+      "curMult": 1.3939292944757553,
+      "curFdv": 52231,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "APhHKkSD3CucwoN4TFLmFoBDg87G7yprio8ZK6N1pump",
+      "chain": "solana",
+      "name": "Porkcoin",
+      "symbol": "PORK",
+      "source": "bonded",
+      "entryFdv": 29089,
+      "entryPrice": 0.00002908,
+      "holders": 94,
+      "ts": 1784411272623,
+      "peakMult": 2.9321736738973496,
+      "curMult": 1.2594107738320328,
+      "curFdv": 36635,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "6hKk9ymYMejWURC1GhKj66Rwcn6VNnHHe1E3JgE4pump",
+      "chain": "solana",
+      "name": "Ghosti",
+      "symbol": "GHOSTI",
+      "source": "trending",
+      "entryFdv": 86391,
+      "entryPrice": 0.00008728,
+      "holders": 6665,
+      "ts": 1784411633473,
+      "peakMult": 1.814471414846454,
+      "curMult": 0.08100380826706485,
+      "curFdv": 6998,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "G9VVud86SLgb7SnTqRKXJVUkzwLzCf4R89vknWVKbonk",
+      "chain": "solana",
+      "name": "Trump Coin",
+      "symbol": "Trump Coin",
+      "source": "trending",
+      "entryFdv": 114077,
+      "entryPrice": 0.000114,
+      "holders": 7956,
+      "ts": 1784413753018,
+      "peakMult": 1.6098775388553346,
+      "curMult": 0.22419944423503424,
+      "curFdv": 25576,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "9Aut7SWRmGixqLYRL6iDa6gPGrZV5QBuvYX7Ns4xpump",
+      "chain": "solana",
+      "name": "Quiet On The Creek",
+      "symbol": "CREEK",
+      "source": "bonded",
+      "entryFdv": 21231,
+      "entryPrice": 0.00002123,
+      "holders": 127,
+      "ts": 1784417264340,
+      "peakMult": 1.9874240497385898,
+      "curMult": 0.2751165748198389,
+      "curFdv": 5841,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "5whR534GcEEmrVPedDPZgWLXKQX3shhHMcdZ1FXCAMzi",
+      "chain": "solana",
+      "name": "banana cat ",
+      "symbol": "bcat",
+      "source": "trending",
+      "entryFdv": 95668,
+      "entryPrice": 0.00009606,
+      "holders": 5064,
+      "ts": 1784422286013,
+      "peakMult": 3.6127963373332777,
+      "curMult": 0.5114876447715014,
+      "curFdv": 48933,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "Wva8eLcnLpyGbjPnnT1MvEhui3niorejiqtbNSvqBV5",
+      "chain": "solana",
+      "name": "Pedophiles / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 55963.19534,
+      "entryPrice": 0.000057578367011054655,
+      "holders": 191,
+      "ts": 1784422887053,
+      "peakMult": 1.4266158233987645,
+      "curMult": 1.4266158233987645,
+      "curFdv": 79837.98,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "3SZXH5wfYVB92Hdg8P8BbDCdvnsrEsSbisr17b1Yipm5",
+      "chain": "solana",
+      "name": "Pedophiles / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 47416.4403,
+      "entryPrice": 0.00004722861740570832,
+      "holders": 210,
+      "ts": 1784423189632,
+      "peakMult": 1.4731662595937216,
+      "curMult": 1.4731662595937216,
+      "curFdv": 69852.3,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "6weTzoLKhoYGChmkhotrJhNKwZdB8TWBG7XG3qmGpump",
+      "chain": "solana",
+      "name": "Biscotti",
+      "symbol": "BISCOTTI",
+      "source": "bonded",
+      "entryFdv": 255412,
+      "entryPrice": 0.0002554,
+      "holders": 1785,
+      "ts": 1784426608666,
+      "peakMult": 1.6745415250653846,
+      "curMult": 0.21297746386230873,
+      "curFdv": 54397,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "HkSynU1AUSMxH7pF5ecczgGk9QRbsryrKU4sUkaFsqVn",
+      "chain": "solana",
+      "name": "CHAD / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 16914.66937,
+      "entryPrice": 0.000015287391261169,
+      "holders": 175,
+      "ts": 1784428230119,
+      "peakMult": 1.3738867424282382,
+      "curMult": 1.3738867424282382,
+      "curFdv": 23238.84,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "FjQLfuiXwHpf1XCCfXd2LqY3fJSbf38Tp7zmMWkwpump",
+      "chain": "solana",
+      "name": "The Himulation",
+      "symbol": "Himothy",
+      "source": "trending",
+      "entryFdv": 57100,
+      "entryPrice": 0.00005709,
+      "holders": 1072,
+      "ts": 1784434828795,
+      "peakMult": 1.9018038528896672,
+      "curMult": 0.08208406304728547,
+      "curFdv": 4687,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "4o8pNv6e9ikKRwaidY7m2NBCSYPJxT4JUe7oSx6E5JQm",
+      "chain": "solana",
+      "name": "SULLY / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 26788.06688,
+      "entryPrice": 0.000018464811886656085,
+      "holders": 146,
+      "ts": 1784434829884,
+      "peakMult": 1.4155183414265091,
+      "curMult": 1.382841851408727,
+      "curFdv": 37043.66,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "8qmR8EdybT4hp93hNR7RZmqvNDhoSVe1u6vzsW9Gk9j2",
+      "chain": "solana",
+      "name": "Debt / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 6795.884398,
+      "entryPrice": 0.00003377177754503191,
+      "holders": 205,
+      "ts": 1784436628247,
+      "peakMult": 36.488996203787394,
+      "curMult": 8.868368923070078,
+      "curFdv": 60268.41,
+      "milestones": [
+        2,
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "GnEpQfExqYrR1mbR5kE6gKQDsZZXcEbd8P1NefPcuR6L",
+      "chain": "solana",
+      "name": "Stickbug / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 65647.18589,
+      "entryPrice": 0.00004826509782030024,
+      "holders": 230,
+      "ts": 1784437829377,
+      "peakMult": 1.2429417787492614,
+      "curMult": 1.2429417787492614,
+      "curFdv": 81595.63,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "tUwzcdekSuzPTJxdjQZdzbv2EGkBmYx4HzAE847mnQd",
+      "chain": "solana",
+      "name": "COAP / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 6793.347818,
+      "entryPrice": 0.000037955132749611364,
+      "holders": 175,
+      "ts": 1784439927769,
+      "peakMult": 4.718096417067629,
+      "curMult": 4.718096417067629,
+      "curFdv": 32051.67,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "7cqoXrB49NRThbGKhMe2pb9gi8nqB9f1o4F1riKNzMjS",
+      "chain": "solana",
+      "name": "FFT / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 41583.41287,
+      "entryPrice": 0.000051644623992910737,
+      "holders": 149,
+      "ts": 1784440531033,
+      "peakMult": 1.7053730106689051,
+      "curMult": 1.7053730106689051,
+      "curFdv": 70915.23,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "GSPhfMGcxqRwiFHoZFzqtC5HX2wKEbQ7Ru72KdseYRnn",
+      "chain": "solana",
+      "name": "Shrek / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 17156.32694,
+      "entryPrice": 0.00002185888592389747,
+      "holders": 194,
+      "ts": 1784442633435,
+      "peakMult": 1.0599395816829775,
+      "curMult": 0.8356240849301512,
+      "curFdv": 14336.24,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "6B5bBNSQ4h4KBHmWBQpoMSta1QP7NSqVrxxShrXvcWAu",
+      "chain": "solana",
+      "name": "Susu / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 51750.79294,
+      "entryPrice": 0.00005033665272324327,
+      "holders": 138,
+      "ts": 1784442932475,
+      "peakMult": 1.0973829920991351,
+      "curMult": 1.0973829920991351,
+      "curFdv": 56790.44,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "354gr5tRCoCXuPtSG8UL1ogRWoL7TtBw7xtMeFo5utfH",
+      "chain": "solana",
+      "name": "BTCX / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 53647.15839,
+      "entryPrice": 0.0000613228409193478,
+      "holders": 159,
+      "ts": 1784443233419,
+      "peakMult": 1.5586950457302684,
+      "curMult": 1.5586950457302684,
+      "curFdv": 83619.56,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "3GmwabWYFcfug1gjBPkWjp74sFxeoczt2Qyg5mePHmqS",
+      "chain": "solana",
+      "name": "BTCX / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 7744.499137,
+      "entryPrice": 0.000007744499136722938,
+      "holders": 167,
+      "ts": 1784444733411,
+      "peakMult": 3.0055268375969604,
+      "curMult": 3.0055268375969604,
+      "curFdv": 23276.3,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "6gNWHrvzfWeAvru4FPC9fGuLrtaF4nRaJL2kh8krbhw4",
+      "chain": "solana",
+      "name": "BLUEY / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 18886.87783,
+      "entryPrice": 0.000026784091632983705,
+      "holders": 148,
+      "ts": 1784445334932,
+      "peakMult": 1.0778944081304518,
+      "curMult": 1.0778944081304518,
+      "curFdv": 20358.06,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "29fWrtGYywoU5atHTeLyPs8NCx68a8vM7VzUECMpzPtP",
+      "chain": "solana",
+      "name": "Signal / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 6356.35304,
+      "entryPrice": 0.0000018862139450403293,
+      "holders": 117,
+      "ts": 1784448707128,
+      "peakMult": 1.9734618138831383,
+      "curMult": 1.9734618138831383,
+      "curFdv": 12544.02,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "Hv4BfrZCgfiuVrhzLbZz8TRPSCpk2FtJuzjLVFmXMrMe",
+      "chain": "solana",
+      "name": "Agamemnon / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 49176.92724,
+      "entryPrice": 0.00006003782265726494,
+      "holders": 128,
+      "ts": 1784449008060,
+      "peakMult": 1.6290977191197116,
+      "curMult": 1.6290977191197116,
+      "curFdv": 80114.02,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "CR9JD3eyzyApWkk8t4Sh7moVHLqLcJ5RHXGfUuheVXVq",
+      "chain": "solana",
+      "name": "Agamemnon / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 59809.88149,
+      "entryPrice": 0.00006131945951122544,
+      "holders": 141,
+      "ts": 1784449907269,
+      "peakMult": 1.0126309982762014,
+      "curMult": 1.0126309982762014,
+      "curFdv": 60565.34,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "FjpPiYxRFWNtsFVrGLyMj4M8pnN1ebykm43f6wb9514w",
+      "chain": "solana",
+      "name": "咻咻 / SOL",
+      "symbol": "",
+      "source": "new_pools",
+      "entryFdv": 7623.679144,
+      "entryPrice": 0.00005654499772536764,
+      "holders": 153,
+      "ts": 1784455907889,
+      "peakMult": 4.878185361364416,
+      "curMult": 4.878185361364416,
+      "curFdv": 37189.72,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "8FGi6CcN4mjuxsBJ83FFUbxQqmSGir8Yt1EbFpNkpump",
+      "chain": "solana",
+      "name": "SOIL",
+      "symbol": "SOIL",
+      "source": "bonded",
+      "entryFdv": 7832,
+      "entryPrice": 0.000007831,
+      "holders": 171,
+      "ts": 1784741143859,
+      "peakMult": 4.120868232890705,
+      "curMult": 0.7677477017364658,
+      "curFdv": 6013,
+      "milestones": [
+        2
+      ],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "5WZQjSbYd3zuzMzusJybgMMiVSNHmq44vgXuvQ3nHpXJ",
+      "chain": "solana",
+      "name": "The Bitcoin Bull",
+      "symbol": "DAVINCI",
+      "source": "trending",
+      "entryFdv": 132758,
+      "entryPrice": 0.000006321,
+      "holders": 1159,
+      "ts": 1784826053432,
+      "peakMult": 1.505265219421805,
+      "curMult": 0.15851398785760556,
+      "curFdv": 21044,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "94En5tkqTTQbt9pkcwBzw4Rh8UnWxS6HWRFMLwhgLDgR",
+      "chain": "solana",
+      "name": "KUKLUXKAT",
+      "symbol": "KuKlux",
+      "source": "bonded",
+      "entryFdv": 28834,
+      "entryPrice": 0.00003235,
+      "holders": 28,
+      "ts": 1784850423413,
+      "peakMult": 1.0844135395713395,
+      "curMult": 0.2756121245751543,
+      "curFdv": 7947,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "4PLUcCWgML3PEhR4LYp9CTEBdwjz584mHqmWLVxtiA4h",
+      "chain": "solana",
+      "name": "KittyWifHat",
+      "symbol": "KIF",
+      "source": "bonded",
+      "entryFdv": 24307,
+      "entryPrice": 0.0000285,
+      "holders": 28,
+      "ts": 1785015495914,
+      "peakMult": 1.2591623812070596,
+      "curMult": 1.2591623812070596,
+      "curFdv": 30606.46,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "8UhyqKadTW6F7K1VkdT2Rg7nt1mdSoQRF7fJpA9Vpump",
+      "chain": "solana",
+      "name": "Chubby Dog",
+      "symbol": "CHUBBYDOG",
+      "source": "trending",
+      "entryFdv": 148830,
+      "entryPrice": 0.0001509,
+      "holders": 2223,
+      "ts": 1785756954861,
+      "peakMult": 1.222905328226836,
+      "curMult": 0.04867298259759457,
+      "curFdv": 7244,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "TnVrpohwECFmCfXdNcYVSng9LTCXKNib57WdiUPpump",
+      "chain": "solana",
+      "name": "Transnational Oil Supply",
+      "symbol": "TNOS",
+      "source": "bonded",
+      "entryFdv": 648963,
+      "entryPrice": 0.0006489,
+      "holders": 408,
+      "ts": 1785763912424,
+      "peakMult": 1.0734864699528324,
+      "curMult": 1.0644782522270144,
+      "curFdv": 690807,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "8Byg9wi43TNzgJpYta6UXxPz3LPe8v6ZwvmWWoWQpump",
+      "chain": "solana",
+      "name": "BRICK / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 567289.671637207,
+      "entryPrice": 0.0005697984863201916,
+      "holders": 6509,
+      "ts": 1785791044718,
+      "peakMult": 1.1540612014150775,
+      "curMult": 0.020864120381111673,
+      "curFdv": 11836,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "h53m8BvAQK5r2upHRr791sHev24uMaDEGxChW5spump",
+      "chain": "solana",
+      "name": "mister bis ",
+      "symbol": "misterbis",
+      "source": "bonded",
+      "entryFdv": 39855,
+      "entryPrice": 0.00003992,
+      "holders": 218,
+      "ts": 1785843137845,
+      "peakMult": 1.6672688495797265,
+      "curMult": 0.13099987454522644,
+      "curFdv": 5221,
+      "milestones": [],
+      "closed": false,
+      "baseline": true
+    },
+    {
+      "mint": "5Zspimi8VD6LctJLtaSjLqaSUvmh3Rs849iPtGocpump",
+      "chain": "solana",
+      "name": "MIZO / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 78369.7854171588,
+      "entryPrice": 0.00008075572582429557,
+      "riskScore": 27,
+      "viabilityScore": 85,
+      "holders": 0,
+      "liq": 26654.7679,
+      "vol1h": 3165.8871124638,
+      "vol24": 391105.53803203,
+      "top10Pct": 0,
+      "lpPct": 100,
+      "insiders": 0,
+      "bundlers": false,
+      "snipers": false,
+      "rugScore": 100,
+      "rank": 0,
+      "topHolders": [],
+      "liqRatio": "34.01",
+      "holderDensity": 0,
+      "vol24Ratio": "499.05",
+      "ts": 1789435760040,
+      "peakMult": 1.7985120062500477,
+      "curMult": 0.06841922523404037,
+      "curFdv": 5362,
+      "milestones": [],
+      "closed": false,
+      "trail": [
+        {
+          "t": 1789492674385,
+          "fdv": 102272,
+          "mult": 1.304992727179369
+        },
+        {
+          "t": 1789493154384,
+          "fdv": 102967,
+          "mult": 1.3138609408193649
+        },
+        {
+          "t": 1789493634408,
+          "fdv": 99647,
+          "mult": 1.271497675661399
+        },
+        {
+          "t": 1789494114407,
+          "fdv": 100790,
+          "mult": 1.2860823780937949
+        },
+        {
+          "t": 1789494594417,
+          "fdv": 104454,
+          "mult": 1.3328350900030683
+        },
+        {
+          "t": 1789495074438,
+          "fdv": 101342,
+          "mult": 1.2931259089272882
+        },
+        {
+          "t": 1789495554438,
+          "fdv": 100076,
+          "mult": 1.276971724080907
+        },
+        {
+          "t": 1789496034451,
+          "fdv": 100076,
+          "mult": 1.276971724080907
+        },
+        {
+          "t": 1789496514445,
+          "fdv": 100076,
+          "mult": 1.276971724080907
+        },
+        {
+          "t": 1789496994458,
+          "fdv": 100076,
+          "mult": 1.276971724080907
+        },
+        {
+          "t": 1789497474460,
+          "fdv": 96934,
+          "mult": 1.23687974241635
+        },
+        {
+          "t": 1789504954891,
+          "fdv": 88083,
+          "mult": 1.1239408087075677
+        },
+        {
+          "t": 1789505430032,
+          "fdv": 91791,
+          "mult": 1.1712549614803804
+        },
+        {
+          "t": 1789505910040,
+          "fdv": 95042,
+          "mult": 1.2127377852841597
+        },
+        {
+          "t": 1789506390052,
+          "fdv": 91588,
+          "mult": 1.168664677496324
+        },
+        {
+          "t": 1789506870069,
+          "fdv": 91472,
+          "mult": 1.1671845152197204
+        },
+        {
+          "t": 1789507350405,
+          "fdv": 90537,
+          "mult": 1.15525389686951
+        },
+        {
+          "t": 1789507830075,
+          "fdv": 86147,
+          "mult": 1.0992374107118381
+        },
+        {
+          "t": 1789508310081,
+          "fdv": 85516,
+          "mult": 1.0911858383278994
+        },
+        {
+          "t": 1789508790087,
+          "fdv": 85583,
+          "mult": 1.092040759642834
+        },
+        {
+          "t": 1789509270093,
+          "fdv": 83595,
+          "mult": 1.0666738406265581
+        },
+        {
+          "t": 1789509750340,
+          "fdv": 84114,
+          "mult": 1.0732962908123969
+        },
+        {
+          "t": 1789510230147,
+          "fdv": 84990,
+          "mult": 1.0844740680046794
+        },
+        {
+          "t": 1789510710127,
+          "fdv": 87074,
+          "mult": 1.1110659489050412
+        },
+        {
+          "t": 1789511190125,
+          "fdv": 88226,
+          "mult": 1.1257654915140705
+        },
+        {
+          "t": 1789511670130,
+          "fdv": 89443,
+          "mult": 1.1412944353987826
+        },
+        {
+          "t": 1789512150468,
+          "fdv": 88668,
+          "mult": 1.1314054201887154
+        },
+        {
+          "t": 1789512630152,
+          "fdv": 87582,
+          "mult": 1.117548038874995
+        },
+        {
+          "t": 1789513110161,
+          "fdv": 87743,
+          "mult": 1.119602402034764
+        },
+        {
+          "t": 1789513590172,
+          "fdv": 84180,
+          "mult": 1.0741384521077058
+        },
+        {
+          "t": 1789514070187,
+          "fdv": 92779,
+          "mult": 1.183861860870763
+        },
+        {
+          "t": 1789514550494,
+          "fdv": 89069,
+          "mult": 1.1365221880586984
+        },
+        {
+          "t": 1789515030231,
+          "fdv": 89319,
+          "mult": 1.139712192965172
+        },
+        {
+          "t": 1789515510235,
+          "fdv": 88219,
+          "mult": 1.1256761713766892
+        },
+        {
+          "t": 1789515990247,
+          "fdv": 83871,
+          "mult": 1.0701956060433047
+        },
+        {
+          "t": 1789516470254,
+          "fdv": 90113,
+          "mult": 1.1498436485481311
+        },
+        {
+          "t": 1789516950539,
+          "fdv": 88519,
+          "mult": 1.1295041772644572
+        },
+        {
+          "t": 1789517430283,
+          "fdv": 90939,
+          "mult": 1.1603834247591192
+        },
+        {
+          "t": 1789517910285,
+          "fdv": 95786,
+          "mult": 1.2222312398858244
+        },
+        {
+          "t": 1789526455343,
+          "fdv": 93379,
+          "mult": 1.1915178726462992
+        },
+        {
+          "t": 1789526926951,
+          "fdv": 90617,
+          "mult": 1.1562746984395815
+        },
+        {
+          "t": 1789527406951,
+          "fdv": 90617,
+          "mult": 1.1562746984395815
+        },
+        {
+          "t": 1789527886960,
+          "fdv": 94740,
+          "mult": 1.20888425935714
+        },
+        {
+          "t": 1789538861100,
+          "fdv": 71024,
+          "mult": 0.9062676339094523
+        },
+        {
+          "t": 1789558690546,
+          "fdv": 75145,
+          "mult": 0.9588516747877589
+        },
+        {
+          "t": 1789559160094,
+          "fdv": 75382,
+          "mult": 0.9618757994390956
+        },
+        {
+          "t": 1789559636685,
+          "fdv": 82325,
+          "mult": 1.0504686157016736
+        },
+        {
+          "t": 1789560116691,
+          "fdv": 78033,
+          "mult": 0.9957026114673391
+        },
+        {
+          "t": 1789560596706,
+          "fdv": 77674,
+          "mult": 0.9911217644216433
+        },
+        {
+          "t": 1789561076987,
+          "fdv": 77674,
+          "mult": 0.9911217644216433
+        },
+        {
+          "t": 1789561556711,
+          "fdv": 70840,
+          "mult": 0.9039197902982878
+        },
+        {
+          "t": 1789562036711,
+          "fdv": 65348,
+          "mult": 0.8338417625128813
+        },
+        {
+          "t": 1789562516727,
+          "fdv": 66825,
+          "mult": 0.8526883115003259
+        },
+        {
+          "t": 1789562996737,
+          "fdv": 63043,
+          "mult": 0.8044299172751971
+        },
+        {
+          "t": 1789563477004,
+          "fdv": 65218,
+          "mult": 0.8321829599615153
+        },
+        {
+          "t": 1789563956759,
+          "fdv": 64867,
+          "mult": 0.8277041930728266
+        },
+        {
+          "t": 1789564436835,
+          "fdv": 66184,
+          "mult": 0.8445091389201282
+        },
+        {
+          "t": 1789565865017,
+          "fdv": 68109,
+          "mult": 0.869072176699973
+        },
+        {
+          "t": 1789566333017,
+          "fdv": 67380,
+          "mult": 0.8597701223926968
+        },
+        {
+          "t": 1789577172347,
+          "fdv": 82325,
+          "mult": 1.0504686157016736
+        },
+        {
+          "t": 1789577638589,
+          "fdv": 81301,
+          "mult": 1.0374023556047587
+        },
+        {
+          "t": 1789578118588,
+          "fdv": 80706,
+          "mult": 1.0298101439273522
+        },
+        {
+          "t": 1789578598593,
+          "fdv": 80706,
+          "mult": 1.0298101439273522
+        },
+        {
+          "t": 1789579078607,
+          "fdv": 74497,
+          "mult": 0.95058318207018
+        },
+        {
+          "t": 1789579558628,
+          "fdv": 73341,
+          "mult": 0.9358325993826473
+        },
+        {
+          "t": 1789586885454,
+          "fdv": 77290,
+          "mult": 0.9862219168853003
+        },
+        {
+          "t": 1789613915826,
+          "fdv": 84515,
+          "mult": 1.0784130586823801
+        },
+        {
+          "t": 1789614383831,
+          "fdv": 84515,
+          "mult": 1.0784130586823801
+        },
+        {
+          "t": 1789614863831,
+          "fdv": 84515,
+          "mult": 1.0784130586823801
+        },
+        {
+          "t": 1789616860872,
+          "fdv": 84515,
+          "mult": 1.0784130586823801
+        },
+        {
+          "t": 1789617328875,
+          "fdv": 65683,
+          "mult": 0.8381163690875557
+        },
+        {
+          "t": 1789617808885,
+          "fdv": 66439,
+          "mult": 0.8477629439247311
+        },
+        {
+          "t": 1789628856592,
+          "fdv": 87754,
+          "mult": 1.1197427622506486
+        },
+        {
+          "t": 1789635489523,
+          "fdv": 98845,
+          "mult": 1.2612641399214324
+        },
+        {
+          "t": 1789635968665,
+          "fdv": 98845,
+          "mult": 1.2612641399214324
+        },
+        {
+          "t": 1789636387871,
+          "fdv": 110259,
+          "mult": 1.4069070039313796
+        },
+        {
+          "t": 1789636511932,
+          "fdv": 105507,
+          "mult": 1.3462713906691341
+        },
+        {
+          "t": 1789754486678,
+          "fdv": 52874,
+          "mult": 0.6746732776994873
+        },
+        {
+          "t": 1789754954662,
+          "fdv": 52212,
+          "mult": 0.6662261447071458
+        },
+        {
+          "t": 1789755434688,
+          "fdv": 52212,
+          "mult": 0.6662261447071458
+        },
+        {
+          "t": 1789755914693,
+          "fdv": 52040,
+          "mult": 0.6640314213314921
+        },
+        {
+          "t": 1789756394697,
+          "fdv": 52056,
+          "mult": 0.6642355816455064
+        },
+        {
+          "t": 1789756874718,
+          "fdv": 52622,
+          "mult": 0.6714577527537621
+        },
+        {
+          "t": 1789757354722,
+          "fdv": 52922,
+          "mult": 0.6752857586415301
+        },
+        {
+          "t": 1789757834733,
+          "fdv": 52266,
+          "mult": 0.666915185766944
+        },
+        {
+          "t": 1789761397865,
+          "fdv": 53822,
+          "mult": 0.6867697763048342
+        },
+        {
+          "t": 1789761865851,
+          "fdv": 50070,
+          "mult": 0.6388941826684822
+        },
+        {
+          "t": 1789762345849,
+          "fdv": 49408,
+          "mult": 0.6304470496761407
+        },
+        {
+          "t": 1789762825871,
+          "fdv": 49408,
+          "mult": 0.6304470496761407
+        },
+        {
+          "t": 1789763305885,
+          "fdv": 49408,
+          "mult": 0.6304470496761407
+        },
+        {
+          "t": 1789763785970,
+          "fdv": 49408,
+          "mult": 0.6304470496761407
+        },
+        {
+          "t": 1789764265896,
+          "fdv": 49408,
+          "mult": 0.6304470496761407
+        },
+        {
+          "t": 1789764745894,
+          "fdv": 48081,
+          "mult": 0.6135145036325802
+        },
+        {
+          "t": 1789765225917,
+          "fdv": 47949,
+          "mult": 0.6118301810419623
+        },
+        {
+          "t": 1789777318612,
+          "fdv": 39736,
+          "mult": 0.5070321398544998
+        },
+        {
+          "t": 1789787334492,
+          "fdv": 40122,
+          "mult": 0.5119575074300947
+        },
+        {
+          "t": 1789787778875,
+          "fdv": 40414,
+          "mult": 0.5156834331608555
+        },
+        {
+          "t": 1789788258890,
+          "fdv": 40930,
+          "mult": 0.5222676032878165
+        },
+        {
+          "t": 1789788738896,
+          "fdv": 40930,
+          "mult": 0.5222676032878165
+        },
+        {
+          "t": 1789789218902,
+          "fdv": 41187,
+          "mult": 0.5255469283316712
+        },
+        {
+          "t": 1789790496850,
+          "fdv": 40719,
+          "mult": 0.5195752391467531
+        },
+        {
+          "t": 1789796298835,
+          "fdv": 40500,
+          "mult": 0.5167807948486823
+        },
+        {
+          "t": 1789796766983,
+          "fdv": 40500,
+          "mult": 0.5167807948486823
+        },
+        {
+          "t": 1789797246899,
+          "fdv": 39958,
+          "mult": 0.5098648642114482
+        },
+        {
+          "t": 1789801019951,
+          "fdv": 30331,
+          "mult": 0.38702415527297246
+        },
+        {
+          "t": 1789801500026,
+          "fdv": 30331,
+          "mult": 0.38702415527297246
+        },
+        {
+          "t": 1789812601800,
+          "fdv": 28614,
+          "mult": 0.3651152015753135
+        },
+        {
+          "t": 1789824532676,
+          "fdv": 32212,
+          "mult": 0.41102575218927795
+        },
+        {
+          "t": 1789825006091,
+          "fdv": 32212,
+          "mult": 0.41102575218927795
+        },
+        {
+          "t": 1789825486100,
+          "fdv": 32212,
+          "mult": 0.41102575218927795
+        },
+        {
+          "t": 1789825966112,
+          "fdv": 32212,
+          "mult": 0.41102575218927795
+        },
+        {
+          "t": 1789826446130,
+          "fdv": 32212,
+          "mult": 0.41102575218927795
+        },
+        {
+          "t": 1789826926968,
+          "fdv": 32212,
+          "mult": 0.41102575218927795
+        },
+        {
+          "t": 1789827406141,
+          "fdv": 31256,
+          "mult": 0.39882717342692386
+        },
+        {
+          "t": 1789827886144,
+          "fdv": 30855,
+          "mult": 0.3937104055569406
+        },
+        {
+          "t": 1789828366820,
+          "fdv": 30855,
+          "mult": 0.3937104055569406
+        },
+        {
+          "t": 1789828846786,
+          "fdv": 30855,
+          "mult": 0.3937104055569406
+        },
+        {
+          "t": 1789829327005,
+          "fdv": 34841,
+          "mult": 0.44457184378575165
+        },
+        {
+          "t": 1789829806804,
+          "fdv": 35985,
+          "mult": 0.4591693062377737
+        },
+        {
+          "t": 1789830287801,
+          "fdv": 35985,
+          "mult": 0.4591693062377737
+        },
+        {
+          "t": 1789830767814,
+          "fdv": 35710,
+          "mult": 0.455660300840653
+        },
+        {
+          "t": 1789831247813,
+          "fdv": 35710,
+          "mult": 0.455660300840653
+        },
+        {
+          "t": 1789837709237,
+          "fdv": 35346,
+          "mult": 0.45101565369682783
+        },
+        {
+          "t": 1789838184636,
+          "fdv": 35346,
+          "mult": 0.45101565369682783
+        },
+        {
+          "t": 1789838664647,
+          "fdv": 35346,
+          "mult": 0.45101565369682783
+        },
+        {
+          "t": 1789839355179,
+          "fdv": 36539,
+          "mult": 0.46623835711051864
+        },
+        {
+          "t": 1789839823168,
+          "fdv": 36640,
+          "mult": 0.46752711909273387
+        },
+        {
+          "t": 1789840303167,
+          "fdv": 36640,
+          "mult": 0.46752711909273387
+        },
+        {
+          "t": 1789848684135,
+          "fdv": 34682,
+          "mult": 0.4425430006652346
+        },
+        {
+          "t": 1789849165264,
+          "fdv": 34682,
+          "mult": 0.4425430006652346
+        },
+        {
+          "t": 1789849645267,
+          "fdv": 34682,
+          "mult": 0.4425430006652346
+        },
+        {
+          "t": 1789850125272,
+          "fdv": 34672,
+          "mult": 0.4424154004689757
+        },
+        {
+          "t": 1789850605278,
+          "fdv": 34672,
+          "mult": 0.4424154004689757
+        },
+        {
+          "t": 1789851085283,
+          "fdv": 34672,
+          "mult": 0.4424154004689757
+        },
+        {
+          "t": 1789859852334,
+          "fdv": 34692,
+          "mult": 0.44267060086149357
+        },
+        {
+          "t": 1789860312239,
+          "fdv": 34692,
+          "mult": 0.44267060086149357
+        },
+        {
+          "t": 1789860792773,
+          "fdv": 34692,
+          "mult": 0.44267060086149357
+        },
+        {
+          "t": 1789861272785,
+          "fdv": 34692,
+          "mult": 0.44267060086149357
+        },
+        {
+          "t": 1789861752795,
+          "fdv": 34692,
+          "mult": 0.44267060086149357
+        },
+        {
+          "t": 1789866793469,
+          "fdv": 33473,
+          "mult": 0.42711613693752953
+        },
+        {
+          "t": 1789867270086,
+          "fdv": 33473,
+          "mult": 0.42711613693752953
+        },
+        {
+          "t": 1789871320810,
+          "fdv": 33136,
+          "mult": 0.42281601032360344
+        },
+        {
+          "t": 1789871801471,
+          "fdv": 33136,
+          "mult": 0.42281601032360344
+        },
+        {
+          "t": 1789872281474,
+          "fdv": 33136,
+          "mult": 0.42281601032360344
+        },
+        {
+          "t": 1789917028039,
+          "fdv": 20750,
+          "mult": 0.2647704072372879
+        },
+        {
+          "t": 1789917502265,
+          "fdv": 20750,
+          "mult": 0.2647704072372879
+        },
+        {
+          "t": 1789917982275,
+          "fdv": 20842,
+          "mult": 0.2659443290428701
+        },
+        {
+          "t": 1789918462276,
+          "fdv": 19994,
+          "mult": 0.2551238324001125
+        },
+        {
+          "t": 1789921100830,
+          "fdv": 19861,
+          "mult": 0.2534267497898687
+        },
+        {
+          "t": 1789923438217,
+          "fdv": 19949,
+          "mult": 0.25454963151694726
+        },
+        {
+          "t": 1789923906192,
+          "fdv": 19949,
+          "mult": 0.25454963151694726
+        },
+        {
+          "t": 1789924386200,
+          "fdv": 19949,
+          "mult": 0.25454963151694726
+        },
+        {
+          "t": 1789924866200,
+          "fdv": 19949,
+          "mult": 0.25454963151694726
+        },
+        {
+          "t": 1790962365545,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790962839146,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790963315270,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790963795278,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790964275301,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790964756901,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790965235328,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790965715379,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790966195401,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790966675387,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790967155400,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790967635405,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790968115408,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790968595419,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790969075432,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790969555431,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790970035448,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790970515589,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790976349545,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790976819061,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790977299070,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790977779075,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790978259076,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790978739077,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790979219076,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790979699090,
+          "fdv": 5457,
+          "mult": 0.06963142709850025
+        },
+        {
+          "t": 1790980179094,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790980659701,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790981139099,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790981619100,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790982099723,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790982580324,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790983059097,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790983539098,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790984019150,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790984500854,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790984980867,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790985461933,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790995751037,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790996230789,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790996709229,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790997189237,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790997669243,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790998149254,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790998629265,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790999109281,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        },
+        {
+          "t": 1790999589280,
+          "fdv": 5362,
+          "mult": 0.06841922523404037
+        }
+      ],
+      "baseline": true
+    },
+    {
+      "mint": "EpEfnZxQyiBXppSKi8sncc8w4corn1UJbF9G91fQpump",
+      "chain": "solana",
+      "name": "PEPENOM / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 112010.533491685,
+      "entryPrice": 0.0001893145384855072,
+      "riskScore": 27,
+      "viabilityScore": 85,
+      "holders": 0,
+      "liq": 82025.2405,
+      "vol1h": 1682.320269355,
+      "vol24": 380331.00384041,
+      "top10Pct": 0,
+      "lpPct": 100,
+      "insiders": 0,
+      "bundlers": false,
+      "snipers": false,
+      "rugScore": 100,
+      "rank": 0,
+      "topHolders": [],
+      "liqRatio": "73.23",
+      "holderDensity": 0,
+      "vol24Ratio": "339.55",
+      "ts": 1789446593321,
+      "peakMult": 1.7879568443879152,
+      "curMult": 1.7191329600648193,
+      "curFdv": 192561,
+      "milestones": [],
+      "closed": false,
+      "trail": [
+        {
+          "t": 1789492674385,
+          "fdv": 91684,
+          "mult": 0.8185301608871105
+        },
+        {
+          "t": 1789493154384,
+          "fdv": 91487,
+          "mult": 0.8167713977256563
+        },
+        {
+          "t": 1789493634408,
+          "fdv": 91487,
+          "mult": 0.8167713977256563
+        },
+        {
+          "t": 1789494114407,
+          "fdv": 91608,
+          "mult": 0.8178516532715241
+        },
+        {
+          "t": 1789494594417,
+          "fdv": 92787,
+          "mult": 0.8283774490448969
+        },
+        {
+          "t": 1789495074438,
+          "fdv": 93289,
+          "mult": 0.8328591704004805
+        },
+        {
+          "t": 1789495554438,
+          "fdv": 92508,
+          "mult": 0.8258866118771522
+        },
+        {
+          "t": 1789496034451,
+          "fdv": 94401,
+          "mult": 0.842786808144323
+        },
+        {
+          "t": 1789496514445,
+          "fdv": 94081,
+          "mult": 0.8399299339734332
+        },
+        {
+          "t": 1789496994458,
+          "fdv": 94035,
+          "mult": 0.8395192583113676
+        },
+        {
+          "t": 1789497474460,
+          "fdv": 94274,
+          "mult": 0.8416529862077511
+        },
+        {
+          "t": 1789504954891,
+          "fdv": 93133,
+          "mult": 0.8314664442421716
+        },
+        {
+          "t": 1789505430032,
+          "fdv": 93133,
+          "mult": 0.8314664442421716
+        },
+        {
+          "t": 1789505910040,
+          "fdv": 93243,
+          "mult": 0.8324484947384151
+        },
+        {
+          "t": 1789506390052,
+          "fdv": 92595,
+          "mult": 0.8266633245423629
+        },
+        {
+          "t": 1789506870069,
+          "fdv": 92595,
+          "mult": 0.8266633245423629
+        },
+        {
+          "t": 1789507350405,
+          "fdv": 92595,
+          "mult": 0.8266633245423629
+        },
+        {
+          "t": 1789507830075,
+          "fdv": 92424,
+          "mult": 0.8251366824072935
+        },
+        {
+          "t": 1789508310081,
+          "fdv": 92424,
+          "mult": 0.8251366824072935
+        },
+        {
+          "t": 1789508790087,
+          "fdv": 92424,
+          "mult": 0.8251366824072935
+        },
+        {
+          "t": 1789509270093,
+          "fdv": 92241,
+          "mult": 0.8235029074908159
+        },
+        {
+          "t": 1789509750340,
+          "fdv": 92241,
+          "mult": 0.8235029074908159
+        },
+        {
+          "t": 1789510230147,
+          "fdv": 92241,
+          "mult": 0.8235029074908159
+        },
+        {
+          "t": 1789510710127,
+          "fdv": 91156,
+          "mult": 0.813816318505142
+        },
+        {
+          "t": 1789511190125,
+          "fdv": 91156,
+          "mult": 0.813816318505142
+        },
+        {
+          "t": 1789511670130,
+          "fdv": 92223,
+          "mult": 0.8233422083187033
+        },
+        {
+          "t": 1789512150468,
+          "fdv": 91672,
+          "mult": 0.8184230281057021
+        },
+        {
+          "t": 1789512630152,
+          "fdv": 91688,
+          "mult": 0.8185658718142467
+        },
+        {
+          "t": 1789513110161,
+          "fdv": 92284,
+          "mult": 0.8238867999575292
+        },
+        {
+          "t": 1789513590172,
+          "fdv": 91220,
+          "mult": 0.81438769333932
+        },
+        {
+          "t": 1789514070187,
+          "fdv": 92718,
+          "mult": 0.8277614355517987
+        },
+        {
+          "t": 1789514550494,
+          "fdv": 92856,
+          "mult": 0.828993462537995
+        },
+        {
+          "t": 1789515030231,
+          "fdv": 92851,
+          "mult": 0.8289488238790749
+        },
+        {
+          "t": 1789515510235,
+          "fdv": 92749,
+          "mult": 0.8280381952371036
+        },
+        {
+          "t": 1789515990247,
+          "fdv": 92613,
+          "mult": 0.8268240237144754
+        },
+        {
+          "t": 1789516470254,
+          "fdv": 92344,
+          "mult": 0.8244224638645711
+        },
+        {
+          "t": 1789516950539,
+          "fdv": 90687,
+          "mult": 0.8096292122984314
+        },
+        {
+          "t": 1789517430283,
+          "fdv": 90190,
+          "mult": 0.805192129601768
+        },
+        {
+          "t": 1789517910285,
+          "fdv": 90190,
+          "mult": 0.805192129601768
+        },
+        {
+          "t": 1789526455343,
+          "fdv": 89836,
+          "mult": 0.802031712550221
+        },
+        {
+          "t": 1789526926951,
+          "fdv": 88655,
+          "mult": 0.7914880613132802
+        },
+        {
+          "t": 1789527406951,
+          "fdv": 88266,
+          "mult": 0.7880151736492921
+        },
+        {
+          "t": 1789527886960,
+          "fdv": 88266,
+          "mult": 0.7880151736492921
+        },
+        {
+          "t": 1789538861100,
+          "fdv": 85895,
+          "mult": 0.7668475215893543
+        },
+        {
+          "t": 1789558690546,
+          "fdv": 69411,
+          "mult": 0.619682790861385
+        },
+        {
+          "t": 1789559160094,
+          "fdv": 69654,
+          "mult": 0.6218522296849046
+        },
+        {
+          "t": 1789559636685,
+          "fdv": 69654,
+          "mult": 0.6218522296849046
+        },
+        {
+          "t": 1789560116691,
+          "fdv": 69654,
+          "mult": 0.6218522296849046
+        },
+        {
+          "t": 1789560596706,
+          "fdv": 69654,
+          "mult": 0.6218522296849046
+        },
+        {
+          "t": 1789561076987,
+          "fdv": 69654,
+          "mult": 0.6218522296849046
+        },
+        {
+          "t": 1789561556711,
+          "fdv": 67308,
+          "mult": 0.6009077709195676
+        },
+        {
+          "t": 1789562036711,
+          "fdv": 67087,
+          "mult": 0.5989347421952967
+        },
+        {
+          "t": 1789562516727,
+          "fdv": 66715,
+          "mult": 0.5956136259716371
+        },
+        {
+          "t": 1789562996737,
+          "fdv": 66576,
+          "mult": 0.5943726712536568
+        },
+        {
+          "t": 1789563477004,
+          "fdv": 66541,
+          "mult": 0.5940602006412157
+        },
+        {
+          "t": 1789563956759,
+          "fdv": 66541,
+          "mult": 0.5940602006412157
+        },
+        {
+          "t": 1789564436835,
+          "fdv": 66340,
+          "mult": 0.5922657265526254
+        },
+        {
+          "t": 1789565865017,
+          "fdv": 67433,
+          "mult": 0.6020237373925714
+        },
+        {
+          "t": 1789566333017,
+          "fdv": 66574,
+          "mult": 0.5943548157900888
+        },
+        {
+          "t": 1789577172347,
+          "fdv": 70919,
+          "mult": 0.633145810391704
+        },
+        {
+          "t": 1789577638589,
+          "fdv": 71026,
+          "mult": 0.6341010776925954
+        },
+        {
+          "t": 1789578118588,
+          "fdv": 71042,
+          "mult": 0.6342439214011398
+        },
+        {
+          "t": 1789578598593,
+          "fdv": 69949,
+          "mult": 0.6244859105611938
+        },
+        {
+          "t": 1789579078607,
+          "fdv": 70969,
+          "mult": 0.6335921969809055
+        },
+        {
+          "t": 1789579558628,
+          "fdv": 69938,
+          "mult": 0.6243877055115694
+        },
+        {
+          "t": 1789586885454,
+          "fdv": 69891,
+          "mult": 0.62396810211772
+        },
+        {
+          "t": 1789613915826,
+          "fdv": 76742,
+          "mult": 0.6851319925701173
+        },
+        {
+          "t": 1789614383831,
+          "fdv": 75285,
+          "mult": 0.6721242873607839
+        },
+        {
+          "t": 1789614863831,
+          "fdv": 75285,
+          "mult": 0.6721242873607839
+        },
+        {
+          "t": 1789616860872,
+          "fdv": 76334,
+          "mult": 0.6814894780022326
+        },
+        {
+          "t": 1789617328875,
+          "fdv": 76334,
+          "mult": 0.6814894780022326
+        },
+        {
+          "t": 1789617808885,
+          "fdv": 76334,
+          "mult": 0.6814894780022326
+        },
+        {
+          "t": 1789628856592,
+          "fdv": 73724,
+          "mult": 0.6581880980459114
+        },
+        {
+          "t": 1789635489523,
+          "fdv": 100166,
+          "mult": 0.8942551818792626
+        },
+        {
+          "t": 1789635968665,
+          "fdv": 101000,
+          "mult": 0.9017009101871446
+        },
+        {
+          "t": 1789636387871,
+          "fdv": 101355,
+          "mult": 0.9048702549704756
+        },
+        {
+          "t": 1789636511932,
+          "fdv": 100027,
+          "mult": 0.8930142271612822
+        },
+        {
+          "t": 1789754486678,
+          "fdv": 116855,
+          "mult": 1.0432500976229582
+        },
+        {
+          "t": 1789754954662,
+          "fdv": 118292,
+          "mult": 1.056079248196611
+        },
+        {
+          "t": 1789755434688,
+          "fdv": 119603,
+          "mult": 1.0677835045654758
+        },
+        {
+          "t": 1789755914693,
+          "fdv": 117499,
+          "mult": 1.0489995568918742
+        },
+        {
+          "t": 1789756394697,
+          "fdv": 115354,
+          "mult": 1.0298495722151275
+        },
+        {
+          "t": 1789756874718,
+          "fdv": 116972,
+          "mult": 1.0442946422416899
+        },
+        {
+          "t": 1789757354722,
+          "fdv": 117103,
+          "mult": 1.045464175105398
+        },
+        {
+          "t": 1789757834733,
+          "fdv": 117318,
+          "mult": 1.0473836374389647
+        },
+        {
+          "t": 1789761397865,
+          "fdv": 113496,
+          "mult": 1.0132618465603975
+        },
+        {
+          "t": 1789761865851,
+          "fdv": 115802,
+          "mult": 1.0338491960543734
+        },
+        {
+          "t": 1789762345849,
+          "fdv": 115797,
+          "mult": 1.0338045573954533
+        },
+        {
+          "t": 1789762825871,
+          "fdv": 114340,
+          "mult": 1.02079685218612
+        },
+        {
+          "t": 1789763305885,
+          "fdv": 115613,
+          "mult": 1.0321618547471916
+        },
+        {
+          "t": 1789763785970,
+          "fdv": 115860,
+          "mult": 1.0343670044978472
+        },
+        {
+          "t": 1789764265896,
+          "fdv": 115676,
+          "mult": 1.0327243018495855
+        },
+        {
+          "t": 1789764745894,
+          "fdv": 115596,
+          "mult": 1.032010083306863
+        },
+        {
+          "t": 1789765225917,
+          "fdv": 114645,
+          "mult": 1.0235198103802494
+        },
+        {
+          "t": 1789777318612,
+          "fdv": 114337,
+          "mult": 1.0207700689907677
+        },
+        {
+          "t": 1789787334492,
+          "fdv": 118321,
+          "mult": 1.0563381524183477
+        },
+        {
+          "t": 1789787778875,
+          "fdv": 117960,
+          "mult": 1.0531152412443125
+        },
+        {
+          "t": 1789788258890,
+          "fdv": 119747,
+          "mult": 1.0690690979423763
+        },
+        {
+          "t": 1789788738896,
+          "fdv": 121525,
+          "mult": 1.0849426050543836
+        },
+        {
+          "t": 1789789218902,
+          "fdv": 128562,
+          "mult": 1.1477670536186106
+        },
+        {
+          "t": 1789790496850,
+          "fdv": 131171,
+          "mult": 1.1710595058431479
+        },
+        {
+          "t": 1789796298835,
+          "fdv": 130215,
+          "mult": 1.1625245942576141
+        },
+        {
+          "t": 1789796766983,
+          "fdv": 129695,
+          "mult": 1.1578821737299179
+        },
+        {
+          "t": 1789797246899,
+          "fdv": 130106,
+          "mult": 1.1615514714931547
+        },
+        {
+          "t": 1789801019951,
+          "fdv": 136964,
+          "mult": 1.2227778560680402
+        },
+        {
+          "t": 1789801500026,
+          "fdv": 135086,
+          "mult": 1.2060115757776297
+        },
+        {
+          "t": 1789812601800,
+          "fdv": 154221,
+          "mult": 1.3768437234650654
+        },
+        {
+          "t": 1789824532676,
+          "fdv": 152532,
+          "mult": 1.361764784481837
+        },
+        {
+          "t": 1789825006091,
+          "fdv": 152603,
+          "mult": 1.362398653438503
+        },
+        {
+          "t": 1789825486100,
+          "fdv": 152654,
+          "mult": 1.3628539677594889
+        },
+        {
+          "t": 1789825966112,
+          "fdv": 154569,
+          "mult": 1.3799505741259084
+        },
+        {
+          "t": 1789826446130,
+          "fdv": 154050,
+          "mult": 1.3753170813299962
+        },
+        {
+          "t": 1789826926968,
+          "fdv": 154804,
+          "mult": 1.3820485910951557
+        },
+        {
+          "t": 1789827406141,
+          "fdv": 151532,
+          "mult": 1.3528370526978057
+        },
+        {
+          "t": 1789827886144,
+          "fdv": 154134,
+          "mult": 1.376067010799855
+        },
+        {
+          "t": 1789828366820,
+          "fdv": 152830,
+          "mult": 1.3644252485534782
+        },
+        {
+          "t": 1789828846786,
+          "fdv": 151767,
+          "mult": 1.3549350696670532
+        },
+        {
+          "t": 1789829327005,
+          "fdv": 154077,
+          "mult": 1.375558130088165
+        },
+        {
+          "t": 1789829806804,
+          "fdv": 154299,
+          "mult": 1.37754008654422
+        },
+        {
+          "t": 1789830287801,
+          "fdv": 152737,
+          "mult": 1.3635949694975633
+        },
+        {
+          "t": 1789830767814,
+          "fdv": 151967,
+          "mult": 1.3567206160238594
+        },
+        {
+          "t": 1789831247813,
+          "fdv": 151829,
+          "mult": 1.3554885890376631
+        },
+        {
+          "t": 1789837709237,
+          "fdv": 153346,
+          "mult": 1.3690319581540382
+        },
+        {
+          "t": 1789838184636,
+          "fdv": 154488,
+          "mult": 1.3792274278514018
+        },
+        {
+          "t": 1789838664647,
+          "fdv": 155169,
+          "mult": 1.385307213196327
+        },
+        {
+          "t": 1789839355179,
+          "fdv": 153012,
+          "mult": 1.3660500957381718
+        },
+        {
+          "t": 1789839823168,
+          "fdv": 153526,
+          "mult": 1.3706389498751639
+        },
+        {
+          "t": 1789840303167,
+          "fdv": 151077,
+          "mult": 1.3487749347360716
+        },
+        {
+          "t": 1789848684135,
+          "fdv": 151878,
+          "mult": 1.3559260478950805
+        },
+        {
+          "t": 1789849165264,
+          "fdv": 150924,
+          "mult": 1.347408991773115
+        },
+        {
+          "t": 1789849645267,
+          "fdv": 148778,
+          "mult": 1.3282500793645842
+        },
+        {
+          "t": 1789850125272,
+          "fdv": 149275,
+          "mult": 1.3326871620612475
+        },
+        {
+          "t": 1789850605278,
+          "fdv": 150773,
+          "mult": 1.3460609042737262
+        },
+        {
+          "t": 1789851085283,
+          "fdv": 149685,
+          "mult": 1.3363475320927003
+        },
+        {
+          "t": 1789859852334,
+          "fdv": 134364,
+          "mult": 1.1995657534295594
+        },
+        {
+          "t": 1789860312239,
+          "fdv": 134833,
+          "mult": 1.2037528596362699
+        },
+        {
+          "t": 1789860792773,
+          "fdv": 134628,
+          "mult": 1.2019226746205436
+        },
+        {
+          "t": 1789861272785,
+          "fdv": 134996,
+          "mult": 1.205208079917067
+        },
+        {
+          "t": 1789861752795,
+          "fdv": 133599,
+          "mult": 1.1927360386147754
+        },
+        {
+          "t": 1789866793469,
+          "fdv": 133345,
+          "mult": 1.1904683947416317
+        },
+        {
+          "t": 1789867270086,
+          "fdv": 134692,
+          "mult": 1.2024940494547216
+        },
+        {
+          "t": 1789871320810,
+          "fdv": 131865,
+          "mult": 1.1772553517012656
+        },
+        {
+          "t": 1789871801471,
+          "fdv": 133632,
+          "mult": 1.1930306537636486
+        },
+        {
+          "t": 1789872281474,
+          "fdv": 133760,
+          "mult": 1.1941734034320044
+        },
+        {
+          "t": 1789917028039,
+          "fdv": 174362,
+          "mult": 1.5566571693272366
+        },
+        {
+          "t": 1789917502265,
+          "fdv": 171012,
+          "mult": 1.5267492678507324
+        },
+        {
+          "t": 1789917982275,
+          "fdv": 174496,
+          "mult": 1.5578534853862969
+        },
+        {
+          "t": 1789918462276,
+          "fdv": 170800,
+          "mult": 1.5248565887125176
+        },
+        {
+          "t": 1789921100830,
+          "fdv": 175805,
+          "mult": 1.5695398862915935
+        },
+        {
+          "t": 1789923438217,
+          "fdv": 175329,
+          "mult": 1.5652902859623947
+        },
+        {
+          "t": 1789923906192,
+          "fdv": 175315,
+          "mult": 1.5651652977174182
+        },
+        {
+          "t": 1789924386200,
+          "fdv": 176903,
+          "mult": 1.5793425357904598
+        },
+        {
+          "t": 1789924866200,
+          "fdv": 174789,
+          "mult": 1.560469310799018
+        },
+        {
+          "t": 1790962365545,
+          "fdv": 196835,
+          "mult": 1.7572900857097682
+        },
+        {
+          "t": 1790962839146,
+          "fdv": 199826,
+          "mult": 1.7839929314758054
+        },
+        {
+          "t": 1790963315270,
+          "fdv": 198665,
+          "mult": 1.7736278348745453
+        },
+        {
+          "t": 1790963795278,
+          "fdv": 199757,
+          "mult": 1.7833769179827073
+        },
+        {
+          "t": 1790964275301,
+          "fdv": 200270,
+          "mult": 1.7879568443879152
+        },
+        {
+          "t": 1790964756901,
+          "fdv": 200205,
+          "mult": 1.7873765418219532
+        },
+        {
+          "t": 1790965235328,
+          "fdv": 198660,
+          "mult": 1.7735831962156252
+        },
+        {
+          "t": 1790965715379,
+          "fdv": 198257,
+          "mult": 1.7699853203066607
+        },
+        {
+          "t": 1790966195401,
+          "fdv": 198046,
+          "mult": 1.76810156890023
+        },
+        {
+          "t": 1790966675387,
+          "fdv": 197091,
+          "mult": 1.7595755850464803
+        },
+        {
+          "t": 1790967155400,
+          "fdv": 194936,
+          "mult": 1.7403363230518931
+        },
+        {
+          "t": 1790967635405,
+          "fdv": 197131,
+          "mult": 1.7599326943178415
+        },
+        {
+          "t": 1790968115408,
+          "fdv": 198199,
+          "mult": 1.7694675118631868
+        },
+        {
+          "t": 1790968595419,
+          "fdv": 197916,
+          "mult": 1.766940963768306
+        },
+        {
+          "t": 1790969075432,
+          "fdv": 194125,
+          "mult": 1.733095932575044
+        },
+        {
+          "t": 1790969555431,
+          "fdv": 196878,
+          "mult": 1.7576739781764816
+        },
+        {
+          "t": 1790970035448,
+          "fdv": 197395,
+          "mult": 1.7622896155088257
+        },
+        {
+          "t": 1790970515589,
+          "fdv": 195178,
+          "mult": 1.7424968341436287
+        },
+        {
+          "t": 1790976349545,
+          "fdv": 194969,
+          "mult": 1.740630938200766
+        },
+        {
+          "t": 1790976819061,
+          "fdv": 197407,
+          "mult": 1.762396748290234
+        },
+        {
+          "t": 1790977299070,
+          "fdv": 198071,
+          "mult": 1.7683247621948308
+        },
+        {
+          "t": 1790977779075,
+          "fdv": 194805,
+          "mult": 1.739166790188185
+        },
+        {
+          "t": 1790978259076,
+          "fdv": 194744,
+          "mult": 1.7386221985493593
+        },
+        {
+          "t": 1790978739077,
+          "fdv": 198934,
+          "mult": 1.7760293947244497
+        },
+        {
+          "t": 1790979219076,
+          "fdv": 198967,
+          "mult": 1.7763240098733226
+        },
+        {
+          "t": 1790979699090,
+          "fdv": 199189,
+          "mult": 1.7783059663293777
+        },
+        {
+          "t": 1790980179094,
+          "fdv": 199363,
+          "mult": 1.779859391659799
+        },
+        {
+          "t": 1790980659701,
+          "fdv": 199461,
+          "mult": 1.780734309374634
+        },
+        {
+          "t": 1790981139099,
+          "fdv": 195993,
+          "mult": 1.7497729355476141
+        },
+        {
+          "t": 1790981619100,
+          "fdv": 196293,
+          "mult": 1.7524512550828235
+        },
+        {
+          "t": 1790982099723,
+          "fdv": 196349,
+          "mult": 1.7529512080627292
+        },
+        {
+          "t": 1790982580324,
+          "fdv": 196415,
+          "mult": 1.7535404383604751
+        },
+        {
+          "t": 1790983059097,
+          "fdv": 196115,
+          "mult": 1.7508621188252658
+        },
+        {
+          "t": 1790983539098,
+          "fdv": 196508,
+          "mult": 1.75437071741639
+        },
+        {
+          "t": 1790984019150,
+          "fdv": 196309,
+          "mult": 1.752594098791368
+        },
+        {
+          "t": 1790984500854,
+          "fdv": 196461,
+          "mult": 1.7539511140225406
+        },
+        {
+          "t": 1790984980867,
+          "fdv": 196572,
+          "mult": 1.754942092250568
+        },
+        {
+          "t": 1790985461933,
+          "fdv": 197275,
+          "mult": 1.761218287694742
+        },
+        {
+          "t": 1790995751037,
+          "fdv": 197701,
+          "mult": 1.7650215014347392
+        },
+        {
+          "t": 1790996230789,
+          "fdv": 197787,
+          "mult": 1.765789286368166
+        },
+        {
+          "t": 1790996709229,
+          "fdv": 197823,
+          "mult": 1.766110684712391
+        },
+        {
+          "t": 1790997189237,
+          "fdv": 197745,
+          "mult": 1.7654143216332365
+        },
+        {
+          "t": 1790997669243,
+          "fdv": 195294,
+          "mult": 1.7435324510305763
+        },
+        {
+          "t": 1790998149254,
+          "fdv": 198542,
+          "mult": 1.7725297238651094
+        },
+        {
+          "t": 1790998629265,
+          "fdv": 198519,
+          "mult": 1.7723243860340767
+        },
+        {
+          "t": 1790999109281,
+          "fdv": 195087,
+          "mult": 1.7416844105512819
+        },
+        {
+          "t": 1790999589280,
+          "fdv": 192561,
+          "mult": 1.7191329600648193
+        }
+      ],
+      "baseline": true
+    },
+    {
+      "mint": "CBLgLg4rjkqqwXuZjR1WAqWet2vR68Vne32J2bFLpump",
+      "chain": "solana",
+      "name": "DONATED / SOL",
+      "symbol": "",
+      "source": "trending_pools",
+      "entryFdv": 184311.879196902,
+      "entryPrice": 0.0001856146725665758,
+      "riskScore": 27,
+      "viabilityScore": 85,
+      "holders": 0,
+      "liq": 38384.2162,
+      "vol1h": 62153.8967604525,
+      "vol24": 1615416.14222408,
+      "top10Pct": 0,
+      "lpPct": 100,
+      "insiders": 0,
+      "bundlers": false,
+      "snipers": false,
+      "rugScore": 100,
+      "rank": 0,
+      "topHolders": [],
+      "liqRatio": "20.83",
+      "holderDensity": 0,
+      "vol24Ratio": "876.46",
+      "ts": 1789917034251,
+      "peakMult": 1.260124963252525,
+      "curMult": 0.026395477172703977,
+      "curFdv": 4865,
+      "milestones": [],
+      "closed": false,
+      "trail": [
+        {
+          "t": 1789917502265,
+          "fdv": 232256,
+          "mult": 1.260124963252525
+        },
+        {
+          "t": 1789917982275,
+          "fdv": 232256,
+          "mult": 1.260124963252525
+        },
+        {
+          "t": 1789918462276,
+          "fdv": 232256,
+          "mult": 1.260124963252525
+        },
+        {
+          "t": 1789921100830,
+          "fdv": 201714,
+          "mult": 1.0944167075878335
+        },
+        {
+          "t": 1789923438217,
+          "fdv": 170996,
+          "mult": 0.9277535487407378
+        },
+        {
+          "t": 1789923906192,
+          "fdv": 177729,
+          "mult": 0.9642840210539579
+        },
+        {
+          "t": 1789924386200,
+          "fdv": 166034,
+          "mult": 0.9008317897004589
+        },
+        {
+          "t": 1789924866200,
+          "fdv": 166034,
+          "mult": 0.9008317897004589
+        },
+        {
+          "t": 1790962365545,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790962839146,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790963315270,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790963795278,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790964275301,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790964756901,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790965235328,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790965715379,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790966195401,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790966675387,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790967155400,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790967635405,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790968115408,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790968595419,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790969075432,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790969555431,
+          "fdv": 4872,
+          "mult": 0.026433456276549593
+        },
+        {
+          "t": 1790970035448,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790970515589,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790976819061,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790978259076,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790978739077,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790979219076,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790979699090,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790980179094,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790980659701,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790981139099,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790981619100,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790982099723,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790982580324,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790983059097,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790983539098,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790984019150,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790984500854,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790984980867,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790985461933,
+          "fdv": 4765,
+          "mult": 0.025852918546338016
+        },
+        {
+          "t": 1790995751037,
+          "fdv": 4812,
+          "mult": 0.026107921100730017
+        },
+        {
+          "t": 1790996230789,
+          "fdv": 4812,
+          "mult": 0.026107921100730017
+        },
+        {
+          "t": 1790996709229,
+          "fdv": 4812,
+          "mult": 0.026107921100730017
+        },
+        {
+          "t": 1790997189237,
+          "fdv": 4865,
+          "mult": 0.026395477172703977
+        },
+        {
+          "t": 1790997669243,
+          "fdv": 4865,
+          "mult": 0.026395477172703977
+        },
+        {
+          "t": 1790998149254,
+          "fdv": 4865,
+          "mult": 0.026395477172703977
+        },
+        {
+          "t": 1790998629265,
+          "fdv": 4865,
+          "mult": 0.026395477172703977
+        },
+        {
+          "t": 1790999109281,
+          "fdv": 4865,
+          "mult": 0.026395477172703977
+        },
+        {
+          "t": 1790999589280,
+          "fdv": 4865,
+          "mult": 0.026395477172703977
+        }
+      ],
+      "baseline": true
+    }
+  ]
 }
