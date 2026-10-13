@@ -99330,17 +99330,17 @@
     ]
   },
   {
-    "id": "doc_1791857860824_7rbqmn",
+    "id": "doc_1791859536177_gf3k5p",
     "name": "quill-two-channel-v1",
     "text": "QUILL two-channel writing. QUILL two-channel: engagement log in engagement language 1-2 sentences per tool message; technical payloads (guides/answers/code/closing report) in English with anonymized placeholders; schema single # lines only; markdown one line per paragraph.",
-    "uploadedAt": "2026-10-13T02:17:40.824Z",
+    "uploadedAt": "2026-10-13T02:45:36.177Z",
     "kind": "doctrine",
     "title": "QUILL two-channel writing",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857860824_7rbqmn_c0",
+        "id": "doc_1791859536177_gf3k5p_c0",
         "text": "QUILL two-channel writing. QUILL two-channel: engagement log in engagement language 1-2 sentences per tool message; technical payloads (guides/answers/code/closing report) in English with anonymized placeholders; schema single # lines only; markdown one line per paragraph.",
         "t0": 0,
         "t1": 14,
