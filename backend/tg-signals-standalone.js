@@ -31,6 +31,23 @@ try {
   // process's stale heartbeat blocked us at boot, it is definitely dead by
   // +100s — boot once more and this process takes over.
   setTimeout(() => { try { bootLanes('retry+100s'); } catch (e) { console.error('[tg-launcher] retry failed:', e && e.message); } }, 100 * 1000);
+
+  // Missed-calls scanner every 6h — the gate-tuning feedback loop (ZEROX
+  // audit rec #1). Finds in-band runners we did not call and diagnoses which
+  // gate blocked them (or the feed gap). Appends to data/missed-calls.jsonl.
+  try {
+    const { spawn } = require('child_process');
+    const path = require('path');
+    const runScan = () => {
+      try {
+        console.log('[tg-launcher] missed-calls scan starting');
+        spawn(process.execPath, [path.join(__dirname, 'scripts', 'scan-missed.js'), '--quiet'], { cwd: __dirname, stdio: 'ignore', detached: true }).unref();
+      } catch (e) {}
+    };
+    setTimeout(runScan, 5 * 60 * 1000);        // first scan 5 min after boot
+    const scanTimer = setInterval(runScan, 6 * 3600 * 1000);
+    if (scanTimer.unref) scanTimer.unref();
+  } catch (e) {}
 } catch (e) {
   console.error('[tg-signals-launcher] FAILED:', e && e.stack || e);
   process.exit(1);
