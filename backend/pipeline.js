@@ -65,8 +65,14 @@ async function _discover() {
     } catch (e) {}
   }
 
-  // GeckoTerminal new pools (every 30s)
-  if (now - _lastGt >= 30000) {
+  // GeckoTerminal new pools — 3-minute cadence (was 30s). 2026-10-12: at 30s
+  // this stage alone burned ~4 req/min against gecko's 30/min sliding free
+  // tier, and combined with the gecko feeds + OHLCV enrichment it tripped the
+  // circuit breaker on a loop ("circuit OPEN — cooling down 5 min") — which
+  // killed ALL gecko-dependent discovery and was a big part of "no signals".
+  // New pools do not appear faster than this; the 20s STAGING cycle below
+  // still advances existing candidates between fetches.
+  if (now - _lastGt >= 180000) {
     _lastGt = now;
     for (const chain of chains) {
       if (!cfg.newpools && !cfg.trending) continue;
