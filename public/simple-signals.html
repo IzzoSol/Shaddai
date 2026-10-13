@@ -666,7 +666,10 @@ html[data-theme="light"] .row-act{background:rgba(0,0,0,.03)}
 .ratecard .ph .ch{font-family:var(--f-mono);font-size:9px;color:var(--soft);margin-left:auto;white-space:nowrap}
 .ratecard .rt-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .ratecard .rt-badge{font-size:9px;padding:3px 7px}
-.ratecard .rt-badge b{margin-left:3px;font-weight:800}
+.ratecard .rt-badge i{font-style:normal;opacity:.9}
+.ratecard .rt-badge b{margin-left:4px;font-weight:800}
+.ratecard .rt-key{font-family:var(--f-mono);font-size:8px;letter-spacing:.05em;color:var(--faint);opacity:.75;margin-top:7px}
+.row .rt-badge{font-size:9.5px;padding:1px 7px;border-radius:6px;flex-shrink:0;letter-spacing:.05em}
 .ratecard .rt-grade{margin-left:auto;font-family:var(--f-mono);font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--gold)}
 .ratecard .rt-grade small{display:block;font-size:8px;letter-spacing:.12em;color:var(--faint);font-weight:700;text-align:right}
 .ratecard .rt-note{font-family:var(--f-mono);font-size:8.5px;color:var(--faint);margin-top:8px;letter-spacing:.04em;line-height:1.6}
@@ -1263,10 +1266,11 @@ function renderRate() {
     '<div class="ph"><span>7-Day Rating</span><span class="ch">' + measured + ' measured · ' + week.length + ' calls</span></div>' +
     '<div class="rt-row">' +
       ['A+', 'A', 'B', 'C', 'D'].map(function (t) {
-        return '<span class="rt-badge ' + ratingClass(t) + '">' + t + '<b data-v="' + RATEPREV[t] + '">' + RATEPREV[t] + '</b></span>';
+        return '<span class="rt-badge ' + ratingClass(t) + '"><i>' + t + '</i><b data-v="' + RATEPREV[t] + '">' + RATEPREV[t] + '</b></span>';
       }).join('') +
-      '<span class="rt-grade">' + grade + '<small data-v="' + RATEPREV.pct + '">2x+ ' + RATEPREV.pct + '%</small></span>' +
+      '<span class="rt-grade">' + (grade === '?' ? 'PENDING' : grade) + '<small data-v="' + RATEPREV.pct + '">2x+ ' + RATEPREV.pct + '%</small></span>' +
     '</div>' +
+    '<div class="rt-key">by peak multiple — A+ ≥10× · A ≥5× · B ≥2× · C ≥1.5× · D &lt;1.5×</div>' +
     (pend ? '<div class="rt-note">' + pend + ' call' + (pend > 1 ? 's' : '') + ' pending price check — not graded</div>' : '');
   var _bs = box.querySelectorAll('.rt-badge b');
   ['A+', 'A', 'B', 'C', 'D'].forEach(function (t, i) {
