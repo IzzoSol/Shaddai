@@ -112938,17 +112938,17 @@
     ]
   },
   {
-    "id": "doc_1791857858879_vlfgjj",
+    "id": "doc_1791859534964_0vrulz",
     "name": "zerox-permit-v1",
     "text": "ZEROX permit layer. ZEROX permit layer: daily_cap + per_call_cap, ledger every spend, paper-first before real funds, check Base+Solana wallet gas pre-flight, append-only commissions owner 85/hall 15, never log keys.",
-    "uploadedAt": "2026-10-13T02:17:38.879Z",
+    "uploadedAt": "2026-10-13T02:45:34.964Z",
     "kind": "doctrine",
     "title": "ZEROX permit layer",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857858879_vlfgjj_c0",
+        "id": "doc_1791859534964_0vrulz_c0",
         "text": "ZEROX permit layer. ZEROX permit layer: daily_cap + per_call_cap, ledger every spend, paper-first before real funds, check Base+Solana wallet gas pre-flight, append-only commissions owner 85/hall 15, never log keys.",
         "t0": 0,
         "t1": 12,
