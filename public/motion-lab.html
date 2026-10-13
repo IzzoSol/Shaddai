@@ -632,7 +632,7 @@ body::before{
     var covers=['football','hoops','soccer','starfall','dodgeball','blackjack'];
     var items=[];
     AGENTS.forEach(function(name){ items.push({type:'agent', name:name, src:'/assets/agents/'+name+'-portrait.png', label:name}); });
-    covers.forEach(function(c){ items.push({type:'game', name:c, src:'/assets/games/covers/'+c+'.svg', label:c}); });
+    covers.forEach(function(c){ items.push({type:'game', name:c, src:'/assets/games/covers/'+c+'.png', label:c}); });
     items.forEach(function(it,idx){
       var d=document.createElement('div'); d.className='dof-item rv-g'; d.style.transitionDelay=(idx*45)+'ms';
       var img=new Image(); img.alt=it.label; img.src=it.src;

@@ -58,7 +58,7 @@
     injectStyles();
     ensureMV();
     var mv = document.createElement('model-viewer');
-    mv.id = 'forge3dMv'; mv.setAttribute('autoplay', '');   // agents ship a baked idle clip: never T-pose
+    mv.id = 'forge3dMv';
     mv.setAttribute('auto-rotate', '');
     mv.setAttribute('camera-controls', '');
     mv.setAttribute('disable-zoom', '');

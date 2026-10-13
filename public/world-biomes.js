@@ -17,8 +17,6 @@
  */
 window.buildWorldBiomes = function (THREE, scene, layout) {
   var _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  // soft round points when WorldVFX is loaded; plain PointsMaterial otherwise (tests / other pages)
-  function _pm(T, opts, legacy) { return (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial) ? WorldVFX.softPointsMaterial(T, opts) : new T.PointsMaterial(legacy); }
   layout = layout || window.WORLD_LAYOUT;
 
   // ── seeded PRNG (mulberry32) — stable scatter across reloads ──
@@ -422,7 +420,7 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     const ffGeo  = track(new THREE.BufferGeometry());
     const ffAttr = new THREE.BufferAttribute(ffArr, 3);
     ffGeo.setAttribute('position', ffAttr);
-    const ffMat  = track(_pm(THREE, { color: 0xaaffcc, size: 1.5, opacity: 0.72, additive: true }, {
+    const ffMat  = track(new THREE.PointsMaterial({
       color: 0xaaffcc, size: 1.5, transparent: true, opacity: 0.72,
       depthWrite: false, blending: THREE.AdditiveBlending,
     }));
@@ -439,7 +437,7 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     }
     const spGeo = track(new THREE.BufferGeometry());
     spGeo.setAttribute('position', new THREE.BufferAttribute(spPos, 3));
-    const spMat = track(_pm(THREE, { color: 0x9bffce, size: 1.3, opacity: 0.45, additive: false }, {
+    const spMat = track(new THREE.PointsMaterial({
       color: 0x9bffce, size: 1.3, transparent: true, opacity: 0.45, depthWrite: false,
     }));
     group.add(new THREE.Points(spGeo, spMat));
@@ -716,7 +714,7 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
     const smGeo  = track(new THREE.BufferGeometry());
     const smAttr = new THREE.BufferAttribute(smArr, 3);
     smGeo.setAttribute('position', smAttr);
-    const smMat  = track(_pm(THREE, { color: 0xd4a855, size: 0.9, opacity: 0.40, additive: true }, {
+    const smMat  = track(new THREE.PointsMaterial({
       color: 0xd4a855, size: 0.9, transparent: true, opacity: 0.40,
       depthWrite: false, blending: THREE.AdditiveBlending,
     }));
@@ -991,7 +989,7 @@ window.buildWorldBiomes = function (THREE, scene, layout) {
       }
       const geo = track(new THREE.BufferGeometry());
       geo.setAttribute('position', new THREE.BufferAttribute(base.slice(), 3));
-      const mat = track(_pm(THREE, { color: 0x8fd8ff, size: 2.2, opacity: 0.55, additive: true }, {
+      const mat = track(new THREE.PointsMaterial({
         color: 0x8fd8ff, size: 2.2, sizeAttenuation: true, transparent: true,
         opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false,
       }));

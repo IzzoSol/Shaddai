@@ -8,9 +8,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const sparksCore = require('./sparksCore');
 
-const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data'); // env override = test isolation
+const DATA_DIR = path.join(__dirname, 'data');
 const BONUS_FILE = path.join(DATA_DIR, 'bonus.json');
 const CHARS_FILE = path.join(DATA_DIR, 'characters.json');
 
@@ -71,7 +70,6 @@ router.post('/claim', (req, res) => {
     char.currency = char.currency || { sparks: 0 };
     char.currency.sparks = (char.currency.sparks || 0) + amount;
     saveChars(chars);
-    sparksCore.recordChange(char, amount, 'login-bonus', { note: 'streak ' + streak });
 
     db[characterId] = { lastClaim: today, streak };
     saveBonus(db);

@@ -6,7 +6,7 @@
 
    This terminal is 2,800 lines of desktop-first layout with three media
    queries — it was never built for a phone, and making it responsive properly
-   is a real job rather than a patch. /simple-signals.html already IS that job: the
+   is a real job rather than a patch. /signals.html already IS that job: the
    same feed, built thumb-first, with list, bubbles, heatmap and ranked.
 
    So rather than one compromised page, this is one DOOR: arrive here on a
@@ -23,7 +23,7 @@
     var forced = /[?&]full=1/.test(location.search);
     if (forced) { try { sessionStorage.setItem('shd_sig_full', '1'); } catch (e) {} return; }
     if (sessionStorage.getItem('shd_sig_full') === '1') return;
-    if (window.innerWidth < 820) location.replace('/simple-signals.html');
+    if (window.innerWidth < 820) location.replace('/signals.html');
   } catch (e) {}
 })();
 </script>
@@ -583,6 +583,17 @@ body::after{content:'';position:fixed;inset:0;background:var(--scan);pointer-eve
 .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:10px;font-family:'Share Tech Mono',monospace;line-height:2.2;}
 .eret{margin-top:8px;padding:7px 14px;border:1px solid rgba(0,255,156,.45);color:var(--P);background:rgba(0,255,156,.08);font:700 9px 'Share Tech Mono',monospace;letter-spacing:.12em;cursor:pointer;}
 .eret:hover{background:rgba(0,255,156,.18);box-shadow:0 0 12px rgba(0,255,156,.35);}
+/* Degraded live-feed state. Deliberately a full-width panel, not a toast:
+   the trader must be unable to mistake "no data" for "no opportunities".
+   Amber = unknown, so it can never be confused with the green/red P&L scale. */
+.feeddown{padding:34px 20px;text-align:center;border:1px dashed rgba(255,176,32,.34);
+  background:repeating-linear-gradient(135deg,rgba(255,176,32,.045) 0 10px,transparent 10px 20px);
+  font-family:'Share Tech Mono',monospace;}
+.feeddown-t{color:#ffb020;font-size:12px;font-weight:700;letter-spacing:.22em;}
+.feeddown-s{color:var(--muted);font-size:10px;letter-spacing:.06em;margin-top:9px;line-height:1.9;}
+.feeddown-r{color:rgba(255,176,32,.62);font-size:9px;margin-top:7px;word-break:break-word;}
+.feeddown .eret{border-color:rgba(255,176,32,.5);color:#ffb020;background:rgba(255,176,32,.08);}
+.feeddown .eret:hover{background:rgba(255,176,32,.18);box-shadow:0 0 12px rgba(255,176,32,.32);}
 
 /* ── RIGHT COL ────────────────────────────────────── */
 #rc{background:var(--bg1);display:flex;flex-direction:column;overflow:hidden;border-left:2px solid var(--border2);transition:opacity .22s ease;box-shadow:-3px 0 18px rgba(0,0,0,.3);}
@@ -1373,15 +1384,45 @@ function init(){
   setTimeout(checkMiro,2000);
   // New data feeds
   fetchFearGreed();fetchGlobal();fetchTrending();fetchDexHot();fetchJupiter();fetchSolNet();
-  setInterval(fetchCalls,30000);setInterval(fetchStats,60000);setInterval(fetchPoly,120000);setInterval(tickAlerts,30000);
-  setInterval(fetchFearGreed,3600000);setInterval(fetchGlobal,300000);
-  setInterval(fetchTrending,900000);setInterval(fetchDexHot,120000);
-  setInterval(fetchJupiter,30000);setInterval(fetchSolNet,30000);
+  /* Non-overlapping pollers. A plain setInterval re-fires even when the previous
+     request is still in flight, so a slow upstream (or an 8s model-health
+     timeout) stacks concurrent requests, renders responses out of order, and
+     amplifies load. poll() skips a tick while the previous run is pending and
+     enforces a per-task cooldown on failure. */
+  poll('calls',fetchCalls,30000);   poll('stats',fetchStats,60000);
+  poll('poly',fetchPoly,120000);    poll('alerts',tickAlerts,30000);
+  poll('fng',fetchFearGreed,3600000);poll('global',fetchGlobal,300000);
+  poll('trend',fetchTrending,900000);poll('dex',fetchDexHot,120000);
+  poll('jup',fetchJupiter,30000);  poll('solnet',fetchSolNet,30000);
   setupSrc();renderAlerts();restoreFil();
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAlerts();closeSent();if(typeof closeSentPay==='function')closeSentPay();}});
   // Restore panel state
   if(localStorage.getItem('rc_hidden')==='1') document.getElementById('app').classList.add('rc-hidden');
 }
+
+/* Scheduler for live feeds. One timer per task; a tick is skipped while the
+   previous fetch is still running so responses can never arrive out of order
+   for the same panel. Backoff doubles (capped) on throw. */
+const _pollBusy={},_pollFail={};
+function poll(key,fn,ms){
+  const MAXB=300000;
+  const step=async()=>{
+    if(_pollBusy[key]){_pollT[key]=setTimeout(step,ms);return;}
+    _pollBusy[key]=1;
+    try{ await fn(); _pollFail[key]=0; }
+    catch(e){
+      const n=(_pollFail[key]=(_pollFail[key]||0)+1);
+      console.warn('[poll:'+key+'] failed',n,e);
+    }finally{
+      _pollBusy[key]=0;
+      const n=_pollFail[key]||0;
+      const wait=n?Math.min(ms*Math.pow(2,n),MAXB):ms;
+      _pollT[key]=setTimeout(step,wait);
+    }
+  };
+  step();
+}
+const _pollT={};
 
 /* CLOCK */
 function tickClk(){
@@ -1413,7 +1454,30 @@ async function fetchCalls(){
     _calls.forEach(c=>{ if(c.mint&&c.img) _img[c.mint]=c.img; });
     renderSigs();
     tickAlerts();
-  }catch(e){dot(false);if(!_calls.length)demoData();}
+  }catch(e){
+    dot(false);
+    if(!_calls.length)feedDown(e);
+  }
+}
+/* Live feed unavailable. Previously this path called demoData(), which painted
+   hardcoded fake P&L (BONK 7x, DOGE 6.1x, PEPE 4.1x) into the same cards as real
+   calls with no visual distinction and a toast reading "Loading live signals…".
+   On a trading terminal that is a data-integrity failure: fabricated multiples
+   presented as live. Show an explicit degraded state instead. */
+let _feedDownAt=0;
+function feedDown(e){
+  const now=Date.now();
+  if(now-_feedDownAt<10000)return;   // don't thrash the UI on a flapping feed
+  _feedDownAt=now;
+  const host=document.getElementById('sigs')||document.getElementById('tab-live');
+  if(!host)return;
+  const msg=(e&&e.message)?String(e.message).slice(0,160):'upstream unreachable';
+  host.innerHTML='<div class="feeddown">'
+    +'<div class="feeddown-t">LIVE FEED UNAVAILABLE</div>'
+    +'<div class="feeddown-s">No signals shown. Showing nothing rather than sample data.</div>'
+    +'<div class="feeddown-r">'+esc(msg)+'</div>'
+    +'<button class="eret" onclick="fetchCalls()">RETRY</button></div>';
+  const tb=document.getElementById('tbcalls'); if(tb)tb.innerHTML='calls <em>—</em>';
 }
 function dot(on){const d=document.getElementById('wsdot');d.className='tb-dot'+(on?' on':'');}
 
@@ -2063,17 +2127,9 @@ function closeGallery(){const m=document.getElementById('gallerymodal');if(m)m.c
 function armCard(m,s){document.getElementById('alm').value=decodeURIComponent(s)||m;openAlerts();}
 function armSymbol(s){document.getElementById('alm').value=s;openAlerts();toast('ARMING: '+s);}
 
-/* DEMO */
-function demoData(){
-  _calls=[
-    {symbol:'BONK',name:'Bonk',source:'bonded',entryFdv:3200,currentMult:7,peakMult:7,entryPrice:0.00003992,ts:Date.now()-3600000,holders:850,liq:14000,milestones:[2,5],mint:'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'},
-    {symbol:'WIF',name:'dogwifhat',source:'trending',entryFdv:42000,currentMult:3,peakMult:3,entryPrice:0.00042,ts:Date.now()-7200000,holders:1420,liq:42000,milestones:[2],mint:'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm'},
-    {symbol:'NOVA',name:'Nova Signal',source:'new_pools',entryFdv:7800,currentMult:1.1,peakMult:1.1,entryPrice:0.0000078,ts:Date.now()-900000,holders:72,liq:5800,milestones:[],mint:''},
-    {symbol:'DOGE',name:'Dogecoin',source:'boosted',entryFdv:8500,currentMult:6.1,peakMult:6.1,entryPrice:0.000085,ts:Date.now()-10800000,holders:2100,liq:88000,milestones:[2,5],mint:''},
-    {symbol:'PEPE',name:'Pepe',source:'trending_pools',entryFdv:2900,currentMult:4.1,peakMult:4.1,entryPrice:0.0000029,ts:Date.now()-5400000,holders:380,liq:9200,milestones:[2],mint:''},
-  ];
-  renderSigs();toast('Loading live signals…');
-}
+/* DEMO — removed. demoData() painted hardcoded BONK/WIF/DOGE/PEPE multiples into
+   the live cards, indistinguishable from real calls. A trading terminal must
+   never synthesise price action; feedDown() now renders a degraded state. */
 
 /* STATS */
 async function fetchStats(){
@@ -2437,7 +2493,7 @@ function zxRender(body,j,sym){
     '<div class="zx-sect"><div class="zx-h">THESIS</div><div class="zx-p">'+esc(j.thesis||'')+'</div></div>'+
     '<div class="zx-sect"><div class="zx-h">MARKET PULSE</div>'+liveNums+
       '<div class="zx-meta">socials: <b>'+soc+'</b></div>'+
-      (mk.pairUrl?'<div class="zx-meta"><a href="'+esc(mk.pairUrl)+'" target="_blank" style="color:var(--C)">open on DexScreener ↗</a></div>':'')+
+      (mk.pairUrl?'<div class="zx-meta"><a href="'+escUrl(mk.pairUrl)+'" target="_blank" rel="noopener noreferrer" style="color:var(--C)">open on DexScreener ↗</a></div>':'')+
     '</div>'+
     '<div class="zx-sect"><div class="zx-h">ENTRY PLAN</div><div class="zx-meta">caught: <b>'+esc(ent.got||'scanner')+'</b> · don\'t chase past <b>'+ent.trimHint+'</b> tranches</div>'+zones+'</div>'+
     '<div class="zx-sect"><div class="zx-h">EXIT PLAN</div>'+targets+
@@ -2490,7 +2546,7 @@ async function openSentiment(){
       '<div style="font-size:9px;color:#93a49b;margin-bottom:4px">copy the address, send $1 from your wallet</div>'+
       wallet+
       '<div class="zxpay-row"><button class="zxpay-link" style="border:none;color:#00ff9c;background:none;cursor:pointer;padding:0;margin:0" onclick="copyTxt(\''+wallet+'\')">📋 COPY ADDRESS</button>'+
-      (checkout?'<a class="zxpay-link" href="'+esc(checkout)+'" target="_blank">💳 MOONPAY — PAY $1 CHECKOUT (if available)</a>':'')+
+      (checkout?'<a class="zxpay-link" href="'+escUrl(checkout)+'" target="_blank" rel="noopener noreferrer">💳 MOONPAY — PAY $1 CHECKOUT (if available)</a>':'')+
       '</div></div>'):'')+
     '<div style="margin-top:10px;font-size:9px;color:var(--muted)">or — if your wallet already holds Ask-ZEROX credits, paste it below and ZEROX uses 1 credit.</div>'+
     '<div class="zxpay-row">'+
@@ -2567,7 +2623,17 @@ function tickAlerts(){
 }
 
 /* UTILS */
-function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* Escape for HTML text AND quoted-attribute / inline-handler contexts.
+   Must include both quote styles: this value is used inside title="...",
+   onclick="f('...')" and href="..." with untrusted API data, so escaping
+   only & < > left a live XSS break-out. */
+function esc(s){return String(s==null?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+/* Allow only http(s) for href/src targets so a javascript:/data: URL from an
+   API response cannot execute. */
+function escUrl(u){const s=String(u==null?'':u).trim();
+  if(/^https?:\/\//i.test(s))return esc(s);return '';}
 function usd(n){const v=Number(n)||0;if(v>=1e9)return'$'+(v/1e9).toFixed(2)+'B';if(v>=1e6)return'$'+(v/1e6).toFixed(2)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';return'$'+v.toFixed(0);}
 function fmtPrice(n){const v=Number(n)||0;if(!v)return'—';if(v>=1)return'$'+v.toLocaleString(undefined,{maximumFractionDigits:2});if(v>=0.001)return'$'+v.toFixed(4);if(v>=1e-7)return'$'+v.toFixed(8);return'$'+v.toPrecision(2);}
 function ago(ts){const s=Math.max(0,(Date.now()-(ts||0))/1000);if(s<60)return Math.round(s)+'s';if(s<3600)return Math.round(s/60)+'m';if(s<86400)return Math.round(s/3600)+'h';return Math.round(s/86400)+'d';}

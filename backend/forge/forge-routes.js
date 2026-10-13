@@ -161,27 +161,14 @@ router.get('/models', (req, res) => {
 // BULLETPROOF: always returns a colorful image (falls back to a guaranteed preset) so agent
 // tiles never render blank/broken — they load every time.
 const DEFAULT_ART = ['arch-ghost.png', 'arch-vanguard.png', 'arch-oracle.png'];
-// Optional ?w=<px> returns a resized WebP (cached in memory). Small icons were pulling 1024px PNGs
-// (50-100 KB each x 30+ at boot). Falls back to the original PNG if sharp is unavailable.
-let _sharp = null; try { _sharp = require('sharp'); } catch (e) { _sharp = null; }
-const _thumbCache = new Map();
-function _sendArt(res, fp, maxAge, w) {
+function _sendArt(res, fp, maxAge) {
   res.set('Cache-Control', 'public, max-age=' + (maxAge || 86400));
-  const width = Math.max(0, Math.min(parseInt(w, 10) || 0, 768));
-  if (width >= 32 && _sharp) {
-    const key = fp + '@' + width;
-    const hit = _thumbCache.get(key);
-    if (hit) return res.type('image/webp').send(hit);
-    return _sharp(fp).resize({ width, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer()
-      .then((buf) => { if (_thumbCache.size < 400) _thumbCache.set(key, buf); res.type('image/webp').send(buf); })
-      .catch(() => res.type('png').send(fs.readFileSync(fp)));
-  }
   return res.type('png').send(fs.readFileSync(fp));
 }
 router.get('/art/:file', (req, res) => {
   const safe = path.basename(req.params.file);
   const fp = path.join(ART_DIR, safe);
-  if (fp.startsWith(ART_DIR) && fs.existsSync(fp)) return _sendArt(res, fp, 86400, req.query.w);
+  if (fp.startsWith(ART_DIR) && fs.existsSync(fp)) return _sendArt(res, fp, 86400);
   // self-heal: if a council character image is missing (e.g. fresh box where forge-art is
   // gitignored), kick off regeneration in the background for next load.
   const m = /^char-([a-z0-9_-]+)\.png$/.exec(safe);
@@ -197,7 +184,7 @@ router.get('/art/:file', (req, res) => {
       const staticDir = path.join(__dirname, '..', '..', 'public', 'assets', 'agents');
       for (const suffix of ['-portrait.png', '-action.png']) {
         const sp = path.join(staticDir, up + suffix);
-        if (sp.startsWith(staticDir) && fs.existsSync(sp)) return _sendArt(res, sp, 86400, req.query.w);
+        if (sp.startsWith(staticDir) && fs.existsSync(sp)) return _sendArt(res, sp, 86400);
       }
     }
   } catch (e) {}

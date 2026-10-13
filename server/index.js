@@ -7,7 +7,6 @@ const bonusRoutes = require('./bonusServer');
 const dailyRoutes = require('./dailyServer');
 const agentRoutes = require('./agentServer');
 const skillsRoutes = require('./skillsServer');
-const sparksRoutes = require('./sparksRoutes');
 const schedulerRoutes = require('./jobs/scheduler');
 
 const app = express();
@@ -17,8 +16,8 @@ app.use(express.json());
 // to allow the fetch() calls in public/js/mmo-client.js.
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, x-user-id, Authorization, Idempotency-Key');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
@@ -31,9 +30,7 @@ app.use('/plot', plotRoutes);
 app.use('/bonus', bonusRoutes);
 app.use('/daily', dailyRoutes);
 app.use('/agent', agentRoutes);
-const ext = require('./externalAgents'); app.use('/xagent', ext.xagent); app.use('/jobs', ext.jobs);   // external agents (Grok/Muse/...) + jobs market
 app.use('/skills', skillsRoutes);
-app.use('/sparks', sparksRoutes);   // server-authoritative Sparks (x-user-id) — public/sparks-ledger.js reads through it
 
 // Scheduler exposes a /health view of registered jobs
 app.use('/scheduler', schedulerRoutes);

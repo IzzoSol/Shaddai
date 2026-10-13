@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHADDAI Colosseum — Full Stadium</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Space Grotesk', system-ui; background: #0a0e0c; overflow: hidden; width: 100vw; height: 100vh; }
+    canvas { display: block; width: 100% !important; height: 100% !important; }
+
+    #ui {
+      position: fixed; top: 20px; left: 20px; z-index: 10;
+      background: rgba(6, 8, 11, 0.95); border: 2px solid #00ff9c; border-radius: 12px;
+      padding: 18px 24px; color: #e7f3ee; font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; line-height: 1.8; max-width: 380px;
+    }
+    #ui b { color: #00ff9c; font-size: 15px; display: block; margin-bottom: 10px; }
+    .row { display: flex; justify-content: space-between; margin: 5px 0; }
+    .label { color: #7fa79b; }
+    .value { color: #e8c45c; font-weight: bold; }
+
+    .mode-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid #1c2624;
+    }
+    .btn {
+      background: rgba(0, 255, 156, 0.15); border: 1px solid #00ff9c;
+      color: #00ff9c; padding: 8px; border-radius: 6px; cursor: pointer;
+      font-size: 11px; font-weight: bold; transition: all 0.15s;
+    }
+    .btn:hover { background: rgba(0, 255, 156, 0.3); }
+    .btn.active { background: #00ff9c; color: #06080b; }
+
+    #info {
+      position: fixed; bottom: 20px; right: 20px; z-index: 10;
+      background: rgba(6, 8, 11, 0.95); border: 1px solid #00ff9c;
+      border-radius: 8px; padding: 12px 16px; color: #00ff9c;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right;
+    }
+    #help {
+      position: fixed; bottom: 20px; left: 20px; z-index: 10;
+      background: rgba(6, 8, 11, 0.95); border: 1px solid #5fe0ff;
+      border-radius: 8px; padding: 12px 16px; color: #5fe0ff;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <b>🏛️ SHADDAI COLOSSEUM</b>
+    <div class="row"><span class="label">Outer:</span><span class="value">240m Ø</span></div>
+    <div class="row"><span class="label">Field:</span><span class="value">100×64m</span></div>
+    <div class="row"><span class="label">Height:</span><span class="value">35m</span></div>
+    <div class="row"><span class="label">Seats:</span><span class="value">40 rows</span></div>
+    <div class="row"><span class="label">Lobby:</span><span class="value">80×40×30m</span></div>
+
+    <div class="mode-grid">
+      <button class="btn active" onclick="switchMode('sand')">🏜️ Sand</button>
+      <button class="btn" onclick="switchMode('water')">💧 Water</button>
+      <button class="btn" onclick="switchMode('naval')">⛵ Naval</button>
+      <button class="btn" onclick="switchMode('terrain')">🏔️ Terrain</button>
+    </div>
+
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #1c2624;">
+      <small style="color: #7fa79b;">🎪 Arena Events</small><br>
+      <div id="event" style="color: #5fe0ff; margin-top: 6px; font-size: 10px;">Ready for combat...</div>
+    </div>
+  </div>
+
+  <div id="help">
+    <b>🎮 CONTROLS</b><br>
+    Drag: Orbit · Scroll: Zoom<br>
+    WASD: Walk · Space: Up
+  </div>
+
+  <div id="info">
+    <div>Pos: <span id="pos">(0,0,0)</span></div>
+    <div>Mode: <span id="mode">SAND</span></div>
+    <div id="fps">FPS: 60</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script>
+    let scene, camera, renderer, clock, colosseum;
+    let frameCount = 0, lastTime = Date.now();
+
+    function init() {
+      // Scene setup
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0e0c);
+      scene.fog = new THREE.Fog(0x0a0e0c, 250, 800);
+
+      camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000);
+      camera.position.set(120, 60, 150);
+      camera.lookAt(0, 25, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, precision: 'highp' });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+      document.body.appendChild(renderer.domElement);
+
+      clock = new THREE.Clock();
+
+      // Build complete colosseum
+      colosseum = buildFullColosseum(THREE, { scene });
+
+      // Setup controls
+      setupControls();
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+    }
+
+    function buildFullColosseum(THREE, opts) {
+      const scene = opts.scene;
+      const group = new THREE.Group();
+      group.name = 'COLOSSEUM';
+      scene.add(group);
+
+      // Constants
+      const FIELD_W = 100, FIELD_L = 64;
+      const FIELD_R_X = FIELD_W / 2, FIELD_R_Z = FIELD_L / 2;
+      const GROUND_Y = 0;
+      const PODIUM_H = 2;
+      const LOW_BLEACH_H = 15;
+      const PROM_H = 18;
+      const UP_BLEACH_H = 12;
+      const ROOF_H = 35;
+      const LOBBY_H = 30;
+
+      // Materials
+      const mats = {
+        concrete: new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.9, metalness: 0.05 }),
+        stone: new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.85, metalness: 0 }),
+        seat: new THREE.MeshStandardMaterial({ color: 0x9b7962, roughness: 0.8, metalness: 0 }),
+        steel: new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.5, metalness: 0.7 }),
+        sand: new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.95, metalness: 0 }),
+        water: new THREE.MeshStandardMaterial({ color: 0x1e90ff, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.8 }),
+        marble: new THREE.MeshStandardMaterial({ color: 0xe8e8e8, roughness: 0.4, metalness: 0.1 })
+      };
+
+      // ARENA FLOOR
+      const arenaGroup = new THREE.Group();
+      arenaGroup.name = 'ARENA';
+      group.add(arenaGroup);
+
+      const sandFloor = new THREE.Mesh(new THREE.PlaneGeometry(FIELD_W, FIELD_L, 32, 32), mats.sand);
+      sandFloor.name = 'SAND_FLOOR';
+      sandFloor.rotation.x = -Math.PI / 2;
+      sandFloor.position.y = 0.01;
+      sandFloor.receiveShadow = true;
+      arenaGroup.add(sandFloor);
+
+      const waterFloor = new THREE.Mesh(new THREE.PlaneGeometry(FIELD_W, FIELD_L, 64, 64), mats.water);
+      waterFloor.name = 'WATER_FLOOR';
+      waterFloor.rotation.x = -Math.PI / 2;
+      waterFloor.position.y = 0.5;
+      waterFloor.receiveShadow = true;
+      waterFloor.visible = false;
+      arenaGroup.add(waterFloor);
+
+      // BOATS
+      const boatsGroup = new THREE.Group();
+      boatsGroup.name = 'BOATS';
+      arenaGroup.add(boatsGroup);
+
+      function makeBoat(x, z) {
+        const b = new THREE.Group();
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 15), mats.steel);
+        hull.castShadow = true;
+        b.add(hull);
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 12), mats.steel);
+        mast.position.y = 8;
+        mast.castShadow = true;
+        b.add(mast);
+        const sail = new THREE.Mesh(new THREE.PlaneGeometry(6, 8), mats.marble);
+        sail.position.set(2, 6, 0);
+        b.add(sail);
+        b.position.set(x, 1.5, z);
+        b.userData.baseY = 1.5;
+        return b;
+      }
+      boatsGroup.add(makeBoat(-35, -25));
+      boatsGroup.add(makeBoat(35, 25));
+      boatsGroup.visible = false;
+
+      // TERRAIN ROCKS
+      const rocksGroup = new THREE.Group();
+      rocksGroup.name = 'ROCKS';
+      arenaGroup.add(rocksGroup);
+      for (let i = 0; i < 8; i++) {
+        const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(3 + Math.random() * 2, 2), mats.stone);
+        const angle = (i / 8) * Math.PI * 2;
+        rock.position.set(Math.cos(angle) * 40, 2, Math.sin(angle) * 40);
+        rock.castShadow = true;
+        rocksGroup.add(rock);
+      }
+      rocksGroup.visible = false;
+
+      // PODIUM
+      const podiumGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(FIELD_R_X, 0), new THREE.Vector2(FIELD_R_X + 3, 0),
+        new THREE.Vector2(FIELD_R_X + 3, PODIUM_H), new THREE.Vector2(FIELD_R_X, PODIUM_H)
+      ], 64);
+      const podium = new THREE.Mesh(podiumGeo, mats.concrete);
+      podium.castShadow = true;
+      podium.receiveShadow = true;
+      group.add(podium);
+
+      // BLEACHERS (Lower)
+      const rowCount = 20;
+      const rowHeight = LOW_BLEACH_H / rowCount;
+      const rowDepth = 2.5;
+
+      for (let i = 0; i < rowCount; i++) {
+        const startR = FIELD_R_X + 3 + i * rowDepth;
+        const endR = FIELD_R_X + 3 + (i + 1) * rowDepth;
+        const y = PODIUM_H + i * rowHeight;
+        const rowGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(startR, 0), new THREE.Vector2(endR, 0),
+          new THREE.Vector2(endR, rowHeight), new THREE.Vector2(startR, rowHeight)
+        ], 64);
+        const row = new THREE.Mesh(rowGeo, mats.seat);
+        row.position.y = y;
+        row.castShadow = true;
+        row.receiveShadow = true;
+        group.add(row);
+      }
+
+      // PROMENADE
+      const promR_in = FIELD_R_X + 3 + rowCount * rowDepth;
+      const promR_out = promR_in + 4;
+      const promGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(promR_in, 0), new THREE.Vector2(promR_out, 0),
+        new THREE.Vector2(promR_out, 1), new THREE.Vector2(promR_in, 1)
+      ], 64);
+      const prom = new THREE.Mesh(promGeo, mats.concrete);
+      prom.position.y = PROM_H;
+      prom.castShadow = true;
+      prom.receiveShadow = true;
+      group.add(prom);
+
+      // UPPER BLEACHERS
+      const upperRowHeight = UP_BLEACH_H / rowCount;
+      for (let i = 0; i < rowCount; i++) {
+        const startR = promR_out + i * rowDepth;
+        const endR = promR_out + (i + 1) * rowDepth;
+        const y = PROM_H + i * upperRowHeight;
+        const rowGeo = new THREE.LatheGeometry([
+          new THREE.Vector2(startR, 0), new THREE.Vector2(endR, 0),
+          new THREE.Vector2(endR, upperRowHeight), new THREE.Vector2(startR, upperRowHeight)
+        ], 64);
+        const row = new THREE.Mesh(rowGeo, mats.seat);
+        row.position.y = y;
+        row.castShadow = true;
+        row.receiveShadow = true;
+        group.add(row);
+      }
+
+      // ROOF SHELL
+      const roofR = promR_out + rowCount * rowDepth + 2;
+      const roofGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(roofR, 0), new THREE.Vector2(roofR + 8, 0),
+        new THREE.Vector2(roofR + 8, ROOF_H), new THREE.Vector2(roofR, ROOF_H)
+      ], 64);
+      const roof = new THREE.Mesh(roofGeo, mats.steel);
+      roof.castShadow = true;
+      roof.receiveShadow = true;
+      group.add(roof);
+
+      // PILLARS
+      for (let i = 0; i < 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        const x = Math.cos(angle) * roofR;
+        const z = Math.sin(angle) * roofR;
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, ROOF_H - 5, 12), mats.steel);
+        pillar.position.set(x, (ROOF_H - 5) / 2 + 5, z);
+        pillar.castShadow = true;
+        group.add(pillar);
+      }
+
+      // WALKWAYS
+      const walkGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(FIELD_R_X - 2, 0), new THREE.Vector2(FIELD_R_X + 4, 0),
+        new THREE.Vector2(FIELD_R_X + 4, 0.4), new THREE.Vector2(FIELD_R_X - 2, 0.4)
+      ], 64);
+      const walk = new THREE.Mesh(walkGeo, mats.concrete);
+      walk.position.y = 0.1;
+      walk.receiveShadow = true;
+      group.add(walk);
+
+      // GRAND LOBBY
+      const lobbyZ = roofR + 35;
+      const lobbyW = 80, lobbyD = 40;
+
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(lobbyW, lobbyD), mats.marble);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.set(0, PROM_H, lobbyZ);
+      floor.receiveShadow = true;
+      group.add(floor);
+
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(lobbyW, LOBBY_H, 1), mats.stone);
+      backWall.position.set(0, LOBBY_H / 2, lobbyZ + lobbyD / 2);
+      backWall.castShadow = true;
+      group.add(backWall);
+
+      [-1, 1].forEach(side => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(1, LOBBY_H, lobbyD), mats.stone);
+        wall.position.set(side * (lobbyW / 2), LOBBY_H / 2, lobbyZ);
+        wall.castShadow = true;
+        group.add(wall);
+      });
+
+      // Lobby columns
+      const colGeo = new THREE.CylinderGeometry(1.5, 1.5, LOBBY_H - 4, 12);
+      for (let cx = -3; cx <= 3; cx++) {
+        for (let cz = -1; cz <= 1; cz++) {
+          if (cx === 0 && cz === 0) continue;
+          const col = new THREE.Mesh(colGeo, mats.marble);
+          col.position.set(cx * 15, LOBBY_H / 2, lobbyZ + (cz - 0.5) * 15);
+          col.castShadow = true;
+          group.add(col);
+        }
+      }
+
+      // LIGHTING
+      const ambient = new THREE.AmbientLight(0xffffff, 0.65);
+      group.add(ambient);
+
+      const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+      sun.position.set(60, 80, 60);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = sun.shadow.mapSize.height = 4096;
+      sun.shadow.camera.far = 600;
+      group.add(sun);
+
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const light = new THREE.SpotLight(0xffd700, 1.8);
+        light.position.set(Math.cos(angle) * roofR, ROOF_H - 2, Math.sin(angle) * roofR);
+        light.target.position.set(0, PROM_H, 0);
+        light.castShadow = true;
+        group.add(light);
+      }
+
+      // API
+      let currentMode = 'sand';
+      return {
+        group,
+        setMode(mode) {
+          arenaGroup.getObjectByName('SAND_FLOOR').visible = mode === 'sand';
+          arenaGroup.getObjectByName('WATER_FLOOR').visible = (mode === 'water' || mode === 'naval');
+          arenaGroup.getObjectByName('BOATS').visible = (mode === 'water' || mode === 'naval');
+          arenaGroup.getObjectByName('ROCKS').visible = (mode === 'terrain');
+          currentMode = mode;
+          updateEvent(mode);
+        },
+        update(deltaTime) {
+          if (currentMode === 'water' || currentMode === 'naval') {
+            arenaGroup.getObjectByName('BOATS').children.forEach((boat, i) => {
+              if (!boat.userData.time) boat.userData.time = 0;
+              boat.userData.time += deltaTime;
+              boat.position.y = boat.userData.baseY + Math.sin(boat.userData.time * 2 + i * Math.PI) * 0.5;
+              boat.rotation.z = Math.sin(boat.userData.time * 1.5 + i * Math.PI) * 0.08;
+            });
+          }
+        }
+      };
+    }
+
+    function updateEvent(mode) {
+      const events = {
+        sand: '⚔️ Gladiator Combat — Fighters enter the arena!',
+        water: '🌊 Water Sports — The arena fills with water!',
+        naval: '⛵ Naval Battle — Boats engage in combat!',
+        terrain: '🏔️ Terrain Combat — Mixed environment fight!'
+      };
+      document.getElementById('event').textContent = events[mode] || 'Ready...';
+      document.getElementById('mode').textContent = mode.toUpperCase();
+    }
+
+    function setupControls() {
+      let isDragging = false, prevMouse = { x: 0, y: 0 };
+
+      document.addEventListener('mousedown', e => {
+        isDragging = true;
+        prevMouse = { x: e.clientX, y: e.clientY };
+      });
+
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const deltaX = e.clientX - prevMouse.x;
+        const deltaY = e.clientY - prevMouse.y;
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * 0.005);
+        prevMouse = { x: e.clientX, y: e.clientY };
+      });
+
+      document.addEventListener('mouseup', () => { isDragging = false; });
+
+      document.addEventListener('wheel', e => {
+        e.preventDefault();
+        const dir = camera.position.clone().normalize();
+        const dist = camera.position.length();
+        const newDist = Math.max(40, Math.min(450, dist + e.deltaY * 0.1));
+        camera.position.copy(dir.multiplyScalar(newDist));
+      });
+    }
+
+    function switchMode(mode) {
+      colosseum.setMode(mode);
+      document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const deltaTime = clock.getDelta();
+      colosseum.update(deltaTime);
+
+      frameCount++;
+      const now = Date.now();
+      if (now - lastTime >= 1000) {
+        document.getElementById('fps').textContent = `FPS: ${frameCount}`;
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      document.getElementById('pos').textContent = `(${camera.position.x.toFixed(0)},${camera.position.y.toFixed(0)},${camera.position.z.toFixed(0)})`;
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

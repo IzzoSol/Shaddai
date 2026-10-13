@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ SHADDAI Colosseum Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #06080b;
+      color: #00ff9c;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    .info-panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(6, 8, 11, 0.95);
+      border: 2px solid #00ff9c;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 350px;
+      font-size: 12px;
+      z-index: 100;
+    }
+    .info-panel h2 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px #00ff9c;
+    }
+    .info-panel p {
+      margin: 5px 0;
+      color: #888;
+    }
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 200;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #00ff9c;
+      border-top-color: #ffaa00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(6, 8, 11, 0.95);
+      border: 2px solid #00ff9c;
+      padding: 15px 25px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 11px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Loading Colosseum...</p>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="info-panel">
+    <h2>⚔️ COLOSSEUM</h2>
+    <p>Model: bld-mecha-arena</p>
+    <p id="modelInfo">Loading...</p>
+    <p style="margin-top: 15px; color: #666; font-size: 10px;">
+      Right-click + drag to rotate<br>
+      Scroll to zoom<br>
+      Middle-click + drag to pan
+    </p>
+  </div>
+
+  <div class="controls">
+    <p>Use mouse to view • Space = auto-rotate • R = reset view</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    let scene, camera, renderer, controls, model;
+    let autoRotate = false;
+
+    function init() {
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x001a33);
+      scene.fog = new THREE.Fog(0x001a33, 100, 500);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000
+      );
+      camera.position.set(0, 30, 50);
+      camera.lookAt(0, 0, 0);
+
+      // Renderer
+      const canvas = document.getElementById('canvas');
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+
+      // Controls
+      controls = new THREE.OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = false;
+      controls.autoRotateSpeed = 2;
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      directionalLight.position.set(50, 100, 50);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 4096;
+      directionalLight.shadow.mapSize.height = 4096;
+      directionalLight.shadow.camera.left = -200;
+      directionalLight.shadow.camera.right = 200;
+      directionalLight.shadow.camera.top = 200;
+      directionalLight.shadow.camera.bottom = -200;
+      scene.add(directionalLight);
+
+      // Load model
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        '/fal-assets/world/assets/bld-mecha-arena/bld-mecha-arena-mesh.glb',
+        (gltf) => {
+          model = gltf.scene;
+          model.castShadow = true;
+          model.receiveShadow = true;
+
+          // Traverse and set shadow properties
+          model.traverse((node) => {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true;
+            }
+          });
+
+          scene.add(model);
+
+          // Calculate bounds and center view
+          const box = new THREE.Box3().setFromObject(model);
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const fov = camera.fov * (Math.PI / 180);
+          let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+          cameraZ *= 1.5;
+
+          camera.position.set(center.x, center.y + size.y * 0.3, center.z + cameraZ);
+          camera.lookAt(center);
+          controls.target.copy(center);
+          controls.update();
+
+          // Update info
+          document.getElementById('modelInfo').innerHTML =
+            `Vertices: ${gltf.scene.children.length} meshes<br>` +
+            `Scale: ${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`;
+
+          document.getElementById('loading').style.display = 'none';
+        },
+        undefined,
+        (error) => {
+          console.error('Error loading model:', error);
+          document.getElementById('modelInfo').innerHTML =
+            `<span style="color: #ff3333;">Error loading model</span>`;
+          document.getElementById('loading').innerHTML =
+            `<p style="color: #ff3333;">Failed to load colosseum</p>
+             <p style="font-size: 10px; color: #888; margin-top: 20px;">Check console for details</p>`;
+        }
+      );
+
+      // Keyboard controls
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          autoRotate = !autoRotate;
+          controls.autoRotate = autoRotate;
+        }
+        if (e.code === 'KeyR') {
+          camera.position.set(0, 30, 50);
+          controls.target.set(0, 0, 0);
+          controls.update();
+        }
+      });
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

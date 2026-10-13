@@ -293,7 +293,17 @@ const entries = [
     keys: ['financial forecasting', 'projections', 'budget', 'financial model', 'assumptions model'],
     title: 'Financial Forecasting',
     text: 'A financial model projects revenue, costs, and cash based on explicit assumptions (growth rate, churn, CAC, conversion), turning strategy into numbers you can pressure-test. Its value is less in exact prediction and more in clarifying which levers matter most and stress-testing scenarios (base, upside, downside). Keep assumptions visible and tie them to real data as it arrives. Use it to plan hiring, spend, and fundraising timing, and update it as reality diverges.'
-  }
+  },
+  {
+    keys: ['diagram type selection', 'when to diagram', 'architecture vs workflow vs sequence', 'diagram choice', 'choose diagram type'],
+    title: 'Choosing the Right Diagram Type',
+    text: 'Ask whether the question is structure, process, or a single request. Architecture diagrams answer what a thing is made of and how pieces connect - use them for a repo, a platform, an MCP server, or a proposed pipeline; flow runs left to right and components are grouped into boundaries. Workflow diagrams answer who does what in what order - decisions, gates, retries, life cycles; flow runs top to bottom and steps are grouped into phases. Sequence diagrams answer what happens for one request - the order of calls and returns between participants, time flowing down a set of lifelines. A dataflow or bespoke lifecycle type is out of scope on purpose; if a story needs one, split it into two cards rather than stretching a type past its intent.'
+  },
+  {
+    keys: ['diagram portfolio', 'portfolio gallery', 'izosso diagrams', 'diagram gallery', 'diagram collection'],
+    title: 'The Diagram Portfolio',
+    text: 'The portfolio in shaddai-design-studio/portfolio is the one-page drawer of the IzzoSol stack: the SHADDAI platform (backend monolith, public frontend, shaddai-mcp, gateway and aura guard rails), the MCP server path from host agent through mcp-unified to eco-brain to the per-agent KBs, AURA as an ask-answer-remember workflow, the gamedev-tools kit of flat library, genre templates, skill hub and MCP bridge, a proposed content engine pipeline, and a sequence card for the hall_rag_nav request lifecycle. The gallery is static and offline-friendly, generated from portfolio.json, and every card links to the gated interactive HTML plus a pixel-measured preview. New cards go in as candidate JSON, pass the five-gate chain, and get added to the gallery by portfolio.mjs.'
+  },
 ];
 
 function lookup(query) {

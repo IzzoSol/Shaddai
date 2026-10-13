@@ -10,9 +10,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const sparksCore = require('./sparksCore');
 
-const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data'); // env override = test isolation
+const DATA_DIR = path.join(__dirname, 'data');
 const PLOTS_FILE = path.join(DATA_DIR, 'plots.json');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -29,12 +28,7 @@ function broadcast(event) {
 
 /* Plot price and idle-yield config */
 const PLOT_COST = 100;             // Sparks (matches starting capital)
-/* FAUCET FIX (2026-09-28): was 0.02/s = 1,728 Sparks/day PER PLOT, uncapped (83-minute payback). Now ~72/day per plot, max 3 plots,
-   and at most 24 h of yield banks between collects. Payback = 100/72 = ~1.4 days (~33 h). */
-const YIELD_PER_DAY = 72;
-const YIELD_PER_SEC = YIELD_PER_DAY / 86400;
-const MAX_PLOTS_PER_CHARACTER = 3;
-const MAX_ACCRUE_MS = 24 * 60 * 60 * 1000;
+const YIELD_PER_SEC = 0.02;        // Sparks per second while occupied (≈1.2/min)
 
 router.get('/list', (req, res) => {
   try {
@@ -51,7 +45,6 @@ router.post('/buy', (req, res) => {
     if (!characterId || !plotId) return res.status(400).json({ success: false, error: 'Missing fields' });
     const db = loadPlots();
     if (db[plotId]) return res.status(409).json({ success: false, error: 'Plot already owned' });
-    if (Object.values(db).filter(p => p.ownerId === characterId).length >= MAX_PLOTS_PER_CHARACTER) return res.status(409).json({ success: false, code: 'PLOT_CAP', error: 'Plot cap reached (' + MAX_PLOTS_PER_CHARACTER + ' per character)', cap: MAX_PLOTS_PER_CHARACTER });
 
     // Deduct Sparks from character store
     const charsPath = path.join(DATA_DIR, 'characters.json');
@@ -62,12 +55,11 @@ router.post('/buy', (req, res) => {
     if ((char.currency.sparks || 0) < PLOT_COST) return res.status(400).json({ success: false, error: 'Insufficient Sparks' });
     char.currency.sparks -= PLOT_COST;
     fs.writeFileSync(charsPath, JSON.stringify(chars, null, 2), 'utf8');
-    sparksCore.recordSink(char, PLOT_COST, 'plot-buy', { ref: plotId });
 
     db[plotId] = { id: plotId, ownerId: characterId, agent: null, lastCollectAt: Date.now(), purchasedAt: Date.now() };
     savePlots(db);
     broadcast({ type: 'plot_purchased', payload: db[plotId] });
-    res.json({ success: true, plot: db[plotId], price: PLOT_COST, yieldPerDay: YIELD_PER_DAY, cap: MAX_PLOTS_PER_CHARACTER });
+    res.json({ success: true, plot: db[plotId], price: PLOT_COST });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -98,13 +90,10 @@ router.post('/collect', (req, res) => {
     if (plot.ownerId !== characterId) return res.status(403).json({ success: false, error: 'Not your plot' });
     if (!plot.agent) return res.status(400).json({ success: false, error: 'No agent stationed' });
 
-    /* accrual is banked (capped at 24 h). Only the time actually PAID OUT is consumed, so collecting often never forfeits the fractional part
-       (the old code reset the clock every call and floor()ed the yield to 0). */
     const now = Date.now();
-    const elapsedMs = Math.min(now - plot.lastCollectAt, MAX_ACCRUE_MS);
-    const yieldAmount = Math.floor((elapsedMs / 1000) * YIELD_PER_SEC);
-    if (yieldAmount > 0) plot.lastCollectAt = (now - elapsedMs) + Math.round((yieldAmount / YIELD_PER_SEC) * 1000);
-    if (now - plot.lastCollectAt > MAX_ACCRUE_MS) plot.lastCollectAt = now - MAX_ACCRUE_MS;
+    const elapsed = (now - plot.lastCollectAt) / 1000;
+    const yieldAmount = Math.floor(elapsed * YIELD_PER_SEC);
+    plot.lastCollectAt = now;
     savePlots(db);
 
     if (yieldAmount > 0) {
@@ -115,12 +104,11 @@ router.post('/collect', (req, res) => {
         char.currency = char.currency || { sparks: 0 };
         char.currency.sparks = (char.currency.sparks || 0) + yieldAmount;
         fs.writeFileSync(charsPath, JSON.stringify(chars, null, 2), 'utf8');
-        sparksCore.recordChange(char, yieldAmount, 'plot-yield', { ref: plotId });
       }
     }
 
     broadcast({ type: 'plot_yield', payload: { plotId, yieldAmount } });
-    res.json({ success: true, yieldAmount, yieldPerDay: YIELD_PER_DAY });
+    res.json({ success: true, yieldAmount });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
 });
 

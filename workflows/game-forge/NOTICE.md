@@ -1,5 +1,3 @@
-# Notice
+# Provenance
 
-Copyright © 2026 SHADDAI Empire. Released under the MIT License (see `LICENSE`).
-
-No third-party source code, models or assets are bundled in this repository. Models and services you use with Atelier 3D keep their own licences; each output's provenance record notes them.
+Game Forge — code, guides and tests — was written for SHADDAI from first principles. It does not contain files, text or code from any other project. Game-development techniques (fixed timesteps, sparse sets, swept collision, spring cameras, sprite clips, etc.) are general engineering knowledge.

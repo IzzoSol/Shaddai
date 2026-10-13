@@ -5,46 +5,146 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Colosseum Viewer</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #06080b; font-family: system-ui, sans-serif; }
-    #ui { position: fixed; top: 12px; left: 12px; color: #e7f3ee; font: 12px/1.6 monospace; background: rgba(6,8,11,.8); border: 1px solid #1c2624; border-radius: 10px; padding: 10px 14px; z-index: 10; }
+    body { margin: 0; overflow: hidden; background: #06080b; font-family: 'Space Grotesk', system-ui, sans-serif; }
+    #canvas { display: block; width: 100vw; height: 100vh; }
+    #ui {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      color: #e7f3ee;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: rgba(6, 8, 11, 0.8);
+      border: 1px solid #1c2624;
+      border-radius: 10px;
+      padding: 12px 16px;
+      z-index: 10;
+      line-height: 1.6;
+    }
     #ui b { color: #00ff9c; }
-    button { margin: 2px 2px 0 0; padding: 4px 9px; background: rgba(0,255,156,.18); border: 1px solid #00ff9c; color: #00ff9c; border-radius: 4px; cursor: pointer; font: inherit; }
-    button:hover { background: rgba(0,255,156,.35); }
+    button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: rgba(0, 255, 156, 0.2);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+    }
+    button:hover { background: rgba(0, 255, 156, 0.35); }
   </style>
 </head>
 <body>
   <div id="ui">
-    <b>SHADDAI COLOSSEUM</b> &middot; drag = orbit, wheel = zoom<br>
-    Theme: <button data-t="classic">Classic</button><button data-t="royal">Royal</button><button data-t="night">Night</button><button data-t="festival">Festival</button><br>
-    Field: <button data-f="sand">Sand</button><button data-f="soccer">Soccer</button><button data-f="tactics">Tactics</button><button data-f="team-attack">Team</button><button data-f="party">Party</button><button data-f="water">Naval</button><button data-f="lava">Lava</button><button data-f="void">Void</button><button data-f="grass">Grass</button><button data-f="ice">Ice</button><br>
-    Quality: <button data-q="POTATO">Potato</button><button data-q="LOW">Low</button><button data-q="MEDIUM">Med</button><button data-q="HIGH">High</button><button data-q="ULTRA">Ultra</button>
+    <b>SHADDAI COLOSSEUM</b><br>
+    <small>Drag to look · Scroll to zoom</small><br>
+    <br>
+    <b>Theme:</b><br>
+    <button onclick="setTheme('classic')">Classic</button>
+    <button onclick="setTheme('royal')">Royal</button>
+    <button onclick="setTheme('night')">Night</button>
+    <button onclick="setTheme('festival')">Festival</button>
+    <br>
+    <b>Field:</b><br>
+    <button onclick="setField('sand')">Sand</button>
+    <button onclick="setField('soccer')">Soccer</button>
+    <button onclick="setField('tactics')">Tactics</button>
+    <button onclick="setField('team-attack')">Team Attack</button>
+    <button onclick="setField('party')">Party</button>
   </div>
-  <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.180.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/" } }</script>
-  <!-- world-colosseum.js is a classic IIFE: it publishes window.buildColosseumArena (it has NO ES exports), so load it as a plain script first -->
-  <script src="/world-colosseum-floors.js"></script>
-  <script src="/world-colosseum-metro.js"></script>
-  <script src="/world-colosseum.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
   <script type="module">
     import * as THREE from 'three';
-    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x06080b);
-    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 6000);
-    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight); document.body.appendChild(renderer.domElement);
-    const arena = window.buildColosseumArena(THREE, { scene });     // the API object: the Object3D is arena.group
-    arena.group.visible = true;
-    const U = arena.dims.U, cx = arena.group.position.x, cz = arena.group.position.z;
-    let yaw = 0.6, pitch = 0.45, dist = 260 * U * 0.5;
-    const place = () => { camera.position.set(cx + Math.sin(yaw) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, cz + Math.cos(yaw) * Math.cos(pitch) * dist); camera.lookAt(cx, 8 * U, cz); };
-    let drag = false, lx = 0, ly = 0;
-    addEventListener('pointerdown', e => { if (e.target.closest('#ui')) return; drag = true; lx = e.clientX; ly = e.clientY; });
-    addEventListener('pointerup', () => drag = false);
-    addEventListener('pointermove', e => { if (!drag) return; yaw -= (e.clientX - lx) * 0.006; pitch = Math.max(0.05, Math.min(1.4, pitch + (e.clientY - ly) * 0.004)); lx = e.clientX; ly = e.clientY; place(); });
-    addEventListener('wheel', e => { dist = Math.max(30, Math.min(2500, dist * (1 + e.deltaY * 0.001))); place(); }, { passive: true });
-    document.getElementById('ui').addEventListener('click', e => { const b = e.target; if (b.dataset.t) arena.setTheme(b.dataset.t); if (b.dataset.f) arena.setField(b.dataset.f); if (b.dataset.q && arena.setQuality) arena.setQuality(b.dataset.q); });
-    addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-    window.__viewer = { set(y, p, d) { yaw = y; pitch = p; dist = d; place(); }, arena, camera, look(x, y, z, tx, ty, tz) { camera.position.set(x, y, z); camera.lookAt(tx, ty, tz); } };
-    place(); let last = performance.now();
-    (function loop(now) { requestAnimationFrame(loop); const dt = Math.min(0.1, (now - last) / 1000); last = now; arena.tick(dt); if (!drag) {} renderer.render(scene, camera); })(last);
+
+    // Basic Three.js setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x06080b);
+    scene.fog = new THREE.Fog(0x06080b, 100, 500);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 30, 80);
+    camera.lookAt(0, 20, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Load colosseum
+    const { buildColosseumArena } = await import('./world-colosseum.js');
+    const arena = buildColosseumArena(THREE, { scene });
+    scene.add(arena);
+
+    // Make it visible
+    arena.visible = true;
+
+    // Camera controls
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    const cameraRotation = { x: 0, y: 0 };
+
+    document.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - previousMousePosition.x;
+      const deltaY = e.clientY - previousMousePosition.y;
+      cameraRotation.y += deltaX * 0.01;
+      cameraRotation.x += deltaY * 0.01;
+      camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * 0.01);
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Zoom
+    document.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const direction = camera.position.clone().normalize();
+      const distance = camera.position.length();
+      const newDistance = distance + e.deltaY * 0.1;
+      camera.position.copy(direction.multiplyScalar(Math.max(20, Math.min(300, newDistance))));
+    });
+
+    // Global functions for theme/field switching
+    window.setTheme = (themeName) => {
+      if (arena.setTheme) arena.setTheme(themeName);
+    };
+
+    window.setField = (fieldName) => {
+      if (arena.setField) arena.setField(fieldName);
+    };
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
   </script>
 </body>
 </html>

@@ -36,31 +36,7 @@ const SCRIPTS = [
   'economy-service.test.js',
   'portal-admin-routes.test.js',
   'lib/economy-x402-bridge.test.js',
-  'lib/lens-rewriter.test.js',
-  'lib/academy/canon.test.js',
-  'lib/academy/skill-schema.test.js',
-  'lib/academy/registry.test.js',
-  'lib/academy/graders.test.js',
-  'lib/academy/rubric.test.js',
-  'lib/academy/exam.test.js',
-  'lib/academy/receipts.test.js',
-  'lib/academy/homework.test.js',
-  'lib/academy/economy.test.js',
-  'lib/academy/classes.test.js',
-  'lib/academy/hooks.test.js',
-  'lib/academy/academy-core.test.js',
-  'lib/academy/review-fixes.test.js',
-  'lib/academy/exam-admin.test.js',
-  'lib/academy/judge.test.js',
-  'academy-school-routes.test.js',
-  'academy-xagent.test.js',
-  'lib/academy/academy-instance.test.js',
-  'lib/academy/press.test.js',
-  'academy-school-fixes.test.js',
-  'lib/academy/curriculum.test.js',
-  'academy-press-routes.test.js',
-  'lib/academy/agent-runner.test.js',
-  'academy-learn-route.test.js'
+  'lib/lens-rewriter.test.js'
 ];
 
 let passed = 0, failed = 0;

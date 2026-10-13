@@ -4,7 +4,7 @@
    (GET /api/admin/whoami, which verifies your Firebase email against the
    ADMIN_EMAILS allowlist server-side). The button showing is just UX — every
    action is authorized again on the server, so a spoofed client gets nothing.
-   Activate by setting ADMIN_EMAILS in the Render env.
+   Activate by setting ADMIN_EMAILS=cloudzncrownz@gmail.com in the Render env.
    Self-contained, null-safe.
    ══════════════════════════════════════════════════════════════════ */
 (function () {

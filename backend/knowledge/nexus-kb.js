@@ -345,7 +345,202 @@ const entries = [
     keys: ['dependency management', 'npm', 'semantic versioning', 'semver', 'lockfile', 'supply chain'],
     title: 'Dependencies & Semantic Versioning',
     text: 'SemVer (MAJOR.MINOR.PATCH) signals compatibility: patch = fixes, minor = backward-compatible features, major = breaking changes. Commit a lockfile so builds are reproducible across machines, and audit dependencies for vulnerabilities and supply-chain risk. Prefer few, well-maintained dependencies; each one is code you ship and must trust. Pin or range-pin deliberately and update on a schedule.'
-  }
+  },
+
+  // ---------- VIDEO & MEDIA TOOLING ----------
+  {
+    keys: ['ffmpeg', 'ffprobe', 'extract audio from video', 'video audio extraction', 'probe video'],
+    title: 'ffmpeg for Video and Audio Extraction',
+    text: 'ffprobe first: ffprobe -v error -show_format -show_streams -of json returns duration, fps, resolution, and codec before anything downstream commits, and a wrong assumption here is paid for in every later step. To pull audio for analysis use ffmpeg -i in.mp4 -vn -ac 1 -ar 22050 -c:a pcm_s16le -y out.wav — mono at 22050 matches librosa and beatlyzer defaults so nothing resamples twice; whisper.cpp instead wants 16000 Hz 16-bit WAV. The -vn flag drops video, -y overwrites without prompting. Ask for the file, then run these: you cannot hear audio from a transcript of a file you never opened.'
+  },
+  {
+    keys: ['transcribe video', 'speech to text', 'word timestamps', 'whisper', 'faster whisper'],
+    title: 'Choosing a Transcription Tool',
+    text: 'Default to faster-whisper on CPU: pip install, no build step, PyAV bundles ffmpeg so MP4 decodes without a system install, and its int8 small model benchmarks far faster and lighter than openai-whisper. Pass beam_size explicitly (openai-whisper defaults to 1, faster-whisper to 5, so unpinned comparisons are meaningless), word_timestamps=True for per-word timings, vad_filter=True with min_silence_duration_ms=500 to drop silence. The result is a generator — nothing runs until you iterate it, so list(segments) to force completion. Reach for whisper.cpp only for a standalone exe, lowest RAM, .wts word-timing export, per-word confidence, or VAD threshold tuning; reach for openai-whisper only for --task translate into English. None of them detect beats — that is a separate pass.'
+  },
+  {
+    keys: ['beat detection', 'bpm detection', 'beat timestamps', 'librosa', 'beatlyzer', 'onset detection'],
+    title: 'Beat and BPM Detection Pipeline',
+    text: 'Extract audio to WAV first, then choose by output type. For a human-readable report plus a four-panel PNG (waveform, event markers, brightness, spectrogram on one shared time axis) use beatlyzer: beatlyzer song.wav --format json --print-json --quiet, which yields tempo_bpm, events with strength_0_1, sections, and energy_profile. For arrays you will reshape into cut points use librosa: build ONE onset envelope with librosa.onset.onset_strength(aggregate=np.median), then feed it to librosa.feature.tempo and librosa.beat.beat_track — do not recompute per function. Keep units as seconds via units=time instead of hand-converting frames, and use backtrack=True when onsets mark cuts. Do not run both as a second opinion: beatlyzer is librosa underneath, so run it first for semantics, librosa second on the same WAV for numbers.'
+  },
+  {
+    keys: ['video mcp', 'video vision', 'analyze video', 'agent watch video', 'video analysis tool'],
+    title: 'Giving an Agent Eyes on Video',
+    text: 'Prefer MCP tools over uploading video — do not upload video when frames do. Three shapes: a server that acquires the URL itself (yt-dlp covers a thousand-plus platforms, useful when the source is a platform link), a perception-only server that makes zero LLM calls (best when cost, privacy, or attention matter), and a batch CLI that writes deterministic files another tool can path to. Escalate analysis modes cheapest-first: an evenly-spaced overview pass, then scene-change detection, then full mode with forced speech recognition. Plan with cheap signals — scene changes, silence, motion, blur, exposure, loudness — or a single contact sheet before committing any frame budget. When frames must survive reordering or montage, burn the timecode into the pixels rather than tracking it in filenames.'
+  },
+  {
+    keys: ['diagram engine', 'shaddai diagrams', 'diagram authoring', 'diagram contract', 'candidate json diagram'],
+    title: 'Diagram Authoring Contract',
+    text: 'shaddai-diagrams draws a system from a plain JSON candidate: schema_version 1, diagram_type (architecture, workflow, or sequence), meta.title plus meta.output, then the type-specific array - components, steps, or participants with messages. Every edge from/to must reference a declared id and every boundary or phase contains-list must reference real ids; the validator rejects dangling references before any rendering. Ids match ^[a-zA-Z][a-zA-Z0-9_-]* and are unique per diagram. Validated caps: 60 components or steps, 140 edges, 10 boundaries, 8 phases, 120 messages, 12 participants. External entities like Telegram or payment rails belong in the diagram as real nodes with kind external, and the meta.source block names the repo plus ref so every drawn claim stays tied to facts. A proposal marks itself as proposed in the source note.'
+  },
+  {
+    keys: ['finalize gates', 'gate chain diagram', 'diagram gates', 'browser check diagram', 'diagram perceptual check'],
+    title: 'Diagram Finalize Gate Chain',
+    text: 'finalize runs five gates in order and stops on the first failure: validate (schema plus referential integrity), deliver (layout and render, write a standalone HTML), check (strict provenance - written bytes must equal a clean re-render so output never drifts), browser-check (headless Playwright: zero console or page errors, node and edge counts match the layout, no clipped labels, full-page screenshot), and perceptual (pixel measurement via image-gate: title text contrast at least 4.5:1 and luminance sd at least 8, which catches a diagram that failed to render). Exit codes: 0 all pass, 1 a gate failed, 2 usage error. Reviews are reported honestly - a pixel-measured receipt is never claimed as a human review.'
+  },
+  {
+    keys: ['diagram layout', 'lane routing', 'long edges', 'diagram crossings', 'layered layout'],
+    title: 'Layered Diagram Layout and Edge Lanes',
+    text: 'shaddai-diagram layouts are layered graphs ranked by dependency. Forward edges that span more than one column would slice through the middle columns, so long forward edges auto-route on dedicated lanes above the graph for left-to-right diagrams or left of it for top-to-bottom; back edges run on a lane below the graph; same-column edges route around the right edge. Results stay readable without hand-placed routing. A geometry audit flags node overlaps, nodes escaping the canvas, and link paths punching through unrelated nodes. Keep labels short enough to wrap without clipping because the browser gate treats a clipped label as a failure.'
+  },
+{
+  "keys": [
+    "blueprint",
+    "orthographic",
+    "technical drawing",
+    "three view drawing",
+    "blueprint construction"
+  ],
+  "title": "Blueprint and Orthographic Construction",
+  "text": "Technical drawing starts with three orthographic views before any pictorial: FRONT, TOP, and RIGHT SIDE, drawn with straightedge discipline on one shared grid so front-top share width and front-side share height. Project each corner straight across the grid; never estimate where a line lands. Interior detail is hidden dashed lines; cutting planes and cross-sections reveal what the outside hides. Exploded views order every part along one axis and must account for every part exactly once - count parts before and after. A blueprint is read, not admired: dimensions are written, not implied, and the biggest faces get the flatest reads. Treat drawing like drafting: separate the note into layers (block-in, structure, line, tone, label) and merge them only at the end."
+},
+{
+  "keys": [
+    "primitives",
+    "construction drawing",
+    "drawing boxes",
+    "drawing cylinders",
+    "structure drawing"
+  ],
+  "title": "Everything Draws from Primitives",
+  "text": "Before any detail, every object is a stack of simple 3D primitives: BOX, CYLINDER, SPHERE, CONE, WEDGE, TORUS. Block in the biggest primitive first on a CENTERLINE, then attach smaller ones; never draw a surface tangent to a box until the box is right. A chair is boxes and cylinders; an arm is cylinders that taper; a head is a sphere plus a wedge jaw. Keep primitives transparent through the block-in so the far side is drawn too and every joint reads in 3D. Every primitive needs its own axis: give each cylinder an arrowhead centerline, each box three vanishing directions. After blocking, do the silhouette check - the outline alone must already read the subject. Detail is decoration on correct structure; structure without detail reads, detail without structure collapses."
+},
+{
+  "keys": [
+    "proportion system",
+    "head counts",
+    "figure canon",
+    "visual index drawing",
+    "measurements drawing"
+  ],
+  "title": "Quantified Proportion Systems",
+  "text": "Proportion is a NUMBER SYSTEM, and you can encode it. Figure canon (adult): total height 7.5 heads (heroic 8). Landmarks in heads from top: chin 1, nipples 2, navel 3, crotch 4, mid-thigh 5, knees 5.5, mid-calf 6.5, floor 7.5. Shoulders are 2 head-widths across, the waist just under one, hands hang to mid-thigh, elbows meet the waist, wrists meet the hip-notch. Face: eyes sit at the EXACT vertical middle of the skull - the classic beginner error is putting them too high - nose tip half of the lower third, mouth a third further, ears align eye-to-nose tip, one eye-width between the eyes, sideburns to outer eye. KNOWN-SIZE REFERENCE: draw the one thing you know the size of first (door 200cm, counter 90cm, chair seat 45cm, table 75cm), then derive everything else from it. This is the visual-index method: one true measurement anchors the whole drawing."
+},
+{
+  "keys": [
+    "drawing pipeline",
+    "drawing steps",
+    "drawing gates",
+    "step structure drawing",
+    "pre-production drawing"
+  ],
+  "title": "The Drawing Pipeline - Ordered Stages with Gates",
+  "text": "A drawing is a PIPELINE, not an act of inspiration, and every stage has a gate. Stage 0 GATHER: reference, mood, the one thing you want to say. Stage 1 THUMBNAILS: 3-8 tiny sketches (postage-stamp size) testing composition and readable silhouette at a glance. Stage 2 ENVELOPE: the big bounding shape of the whole subject, not the parts. Stage 3 BLOCK-IN: primitives on centerlines, every joint drawn in 3D, proportions checked against the number system. Stage 4 LINE: clean linework with a line-weight policy - outer contours thickest, interior detail thin, cast shadows medium. Stage 5 FLAT: big value or color families only - paper, halftone, shadow - no rendering yet. Stage 6 RENDER: subdivide values, add textures, only after flats read. Stage 7 COMPOSITE: step back, check the silhouette, check focal contrast, sign. At every gate check from arm's length, not nose-to-paper. A SMALL MODEL that prints the stage names and runs the checklist at each gate will outdraw a large one free-drawing."
+},
+{
+  "keys": [
+    "perspective",
+    "vanishing point",
+    "horizon line",
+    "foreshortening",
+    "isometric drawing"
+  ],
+  "title": "Perspective Geometry Rules",
+  "text": "Perspective is geometry you can state. ONE-POINT: a corridor or a flat-on wall; all depth lines converge to the single vanishing point on the horizon. TWO-POINT: most objects and scenes; verticals stay vertical, everything else converges to two points on the HORIZON LINE = EYE LEVEL: objects below eye level show their tops; objects above show their undersides. THREE-POINT: looking up or down at architecture; adds a third point above or below. Place the vanishing points FAR apart (off-canvas is fine) or you get sudden distortion. ELLIPSES are circles in perspective: as the circle lifts toward the horizon the ellipse flattens; the ellipse's minor axis always points at the vanishing direction. FORESHORTENING compresses the axis pointing at the viewer - the arm pointing at the camera is shorter, not larger. ISOMETRIC for technical flats: parallel lines stay parallel, three 120-degree axes, no distortion, good for blueprints and UI construction. RULE: you can only have ONE horizon in a scene; everything else derives from it."
+},
+{
+  "keys": [
+    "architectural blueprint",
+    "construction documents",
+    "floor plan",
+    "elevation",
+    "section detail"
+  ],
+  "title": "Architectural Blueprint Drawing",
+  "text": "Construction document set: cover -> site plan -> floor plans -> reflected ceiling -> roof plan -> elevations (N/S/E/W) -> sections (building/wall) -> details (window/stair/roof) -> schedules (door/window/finish/room). FLOOR PLAN: cut plane 4ft above floor. Walls: thick (concrete), medium (stud), thin (partition). Doors: swing arc. Windows: break with sill. Dimensions to face of stud. ELEVATIONS: true scale, material hatches, grade line, roof pitch. SECTIONS: cut through, show footing/foundation/slab/wall assembly/insulation/roof/ceiling at 3/4=1-0. DETAILS: 1:5 or 1:10, layers exterior->sheathing->insulation->stud->drywall->finish, flashing/weep/vapor. DIMENSIONING: continuous string openings, overall at top, no duplicates. SYMBOLS: north arrow, scale, section cuts, detail callouts, rev clouds. CAD: layers (A-WALL, A-DOOR, A-WIND, A-DIMS, A-TEXT, A-HATCH), line weights cut>projection>annotation. BIM: clash detection, data-rich elements."
+},
+{
+  "keys": [
+    "structural engineering",
+    "rebar",
+    "concrete",
+    "steel connections",
+    "column schedule"
+  ],
+  "title": "Structural Engineering Drawings",
+  "text": "FOUNDATION: footings (size/depth/rebar), piers, grade beams, slab (mesh/vapor). FRAMING: each level beams/girders/joists/decking. Steel: W-shapes/HSS, connections (moment/shear). Concrete: beam/stub schedules. COLUMNS: size, rebar (longitudinal/ties), splices. REBAR: sizes #3=3/8 #4=1/2 #5=5/8 #6=3/4, spacing, hooks (90/135/180), development, lap splices, chairs, cover (3 soil/2 formed/1.5 interior). CONNECTIONS: steel bolted (bearing/slip-critical), welded (CJP/PJP). Moment: stiffened flanges, continuity plates. Shear: single/double angle, end plate. ANCHOR RODS: diameter, embedment, projection. SHOP DRAWINGS: fabricator produces, engineer reviews. CODES: ACI 318, AISC 360, IBC."
+},
+{
+  "keys": [
+    "mep coordination",
+    "hvac",
+    "plumbing",
+    "electrical",
+    "clash detection"
+  ],
+  "title": "MEP Coordination Drawings",
+  "text": "HVAC: duct sizing (800-1200 fpm supply, 600-800 return), aspect max 4:1, round preferred, insulation R-value, VAV boxes, diffusers. PLUMBING: waste/vent slope 1/4 per ft, water pressure zones/hammer arrestors, gas sizing/seismic. Cleanouts at stack base, 100ft max. Fixture units -> pipe sizing. ELECTRICAL: panel schedules, lighting layouts (footcandles), power receptacle spacing (NEC 210.52), feeder sizing (voltage drop <3%), emergency egress/exit/generator. COORDINATION: 3D model (Navisworks/Revit). Clash: hard (pipe/beam), soft (clearance), workflow (access). Priority: structure > main ducts > main pipes > electrical > small ducts > small pipes. CLEARANCES: duct 6 above ceiling, pipe 4, conduit 2. PENETRATIONS: fire-rated = firestop UL listed. Sleeves = pipe OD + 2 min."
+},
+{
+  "keys": [
+    "construction details",
+    "wall assembly",
+    "roof detail",
+    "window flashing",
+    "waterproofing",
+    "thermal bridge"
+  ],
+  "title": "Construction Details Mastery",
+  "text": "WALL (outside-in): cladding -> air gap (rainscreen) -> WRB -> sheathing -> insulation (cavity+continuous) -> stud -> vapor control -> drywall. CRITICAL: air barrier CONTINUITY at transitions (wall-roof, wall-window, wall-foundation). ROOF: low slope (TPO/EPDM) taper 1/4 per ft, polyiso, cover board, membrane, flashing (base/counter/coping). Steep: ice/water shield eaves, drip edge, valley, ridge vent. WINDOW: RO = window + 3/4. Sill pan (back/end dams). Flash sequence: sill -> jambs -> head (shingle principle). Head extends past jambs. Backer rod + sealant (2-sided). STAIRS: rise 7 max, run 11 min, nosings, rails 34-38, guards 42, headroom 80. WATERPROOFING: positive side exterior. Membrane (sheet/fluid/bentonite), protection board, drainage board -> drain tile -> sump. Waterstops at cold joints. EXPANSION JOINTS: spacing per material, cover plates/bellows/sealant, fire barrier. THERMAL BRIDGES: continuous insulation OUTSIDE studs. Balcony = thermal break (Schock Isokorb). Parapet = wrap insulation."
+},
+{
+  "keys": [
+    "perspective architecture",
+    "building perspective",
+    "cityscape",
+    "measured perspective",
+    "vanishing points"
+  ],
+  "title": "Architectural Perspective Drawing",
+  "text": "Buildings in perspective. GRID FIRST: horizon=eye level. 1-point: corridors/frontal facades. 2-point: 99% buildings, verticals STAY VERTICAL. 3-point: looking up/down towers (zenith/nadir VP). ORDER: 1) horizon+VPs, 2) ground plane grid (measured squares in perspective), 3) building box (height from grid), 4) subdivide floors (horizontal to VPs), windows (vertical divisions), 5) details all to SAME VPs. ELLIPSES: domes/towers/columns = circles in perspective, minor axis points to VP, degree = cosine of angle to horizon. REPEATING: measuring line - draw one, project diagonals to center, replicate. INTERIORS: same grid, furniture boxes. SHADOWS: cast shadows project to VPs AND light source VP (on horizon for sun). CITYSCAPES: block masses first, atmospheric perspective (far=cooler/lighter/softer/less contrast). ERRORS: verticals converging in 2-point, windows off VPs, inconsistent floors, ignored ellipse degrees."
+},
+{
+  "keys": [
+    "architectural blueprint mastery",
+    "construction documents skill",
+    "floor plan skill"
+  ],
+  "title": "Architectural Blueprint Mastery Skill",
+  "text": "Construction doc set: cover->site->floor plans->RCP->roof->elevations->sections->details->schedules. FLOOR PLAN: cut plane 4ft above floor. Walls: thick (concrete), medium (stud), thin (partition). Doors: swing arc. Windows: break with sill. Dimensions to face of stud. ELEVATIONS: true scale, material hatches, grade line. SECTIONS: show footing to roof at 3/4=1-0. DETAILS 1:5/1:10: window (RO=window+3/4, sill pan, flashing sequence sill/jamb/head), wall assembly (cladding->air gap->WRB->sheathing->insulation->stud->vapor->drywall), roof (taper 1/4 per ft, membrane, flashing). DIMENSIONS: continuous string, overall top, no duplicates. CAD: layers A-WALL/A-DOOR/A-WIND/A-DIMS/A-TEXT/A-HATCH, line weights cut>projection>annotation. BIM: clash detection, data-rich elements."
+},
+{
+  "keys": [
+    "architectural perspective mastery",
+    "building perspective skill",
+    "measured perspective skill"
+  ],
+  "title": "Architectural Perspective Mastery Skill",
+  "text": "GRID FIRST: horizon=eye level. 1-point: corridors. 2-point: 99% buildings, VERTICALS STAY VERTICAL, 2 VPs on horizon far apart. 3-point: zenith/nadir for towers. ORDER: 1) horizon+VPs, 2) ground grid measured squares, 3) building box, 4) subdivide floors/windows to VPs, 5) details to SAME VPs. ELLIPSES: minor axis points to VP, degree=cosine to horizon. REPEATING: measuring line - draw one, diagonal to center, project to next. INTERIORS: same grid. SHADOWS: sun VP on horizon, shadow VP = sun projected to ground. CITYSCAPES: block masses, atmospheric (far=cooler/lighter/softer). ERRORS: verticals converging in 2-point, windows off VPs, inconsistent floors, guessed ellipses."
+},
+{
+  "keys": [
+    "structural engineering drawings",
+    "rebar detailing",
+    "steel connections"
+  ],
+  "title": "Structural Engineering Drawings Skill",
+  "text": "FOUNDATION: footings (size/depth/rebar), piers, grade beams, slab mesh/vapor. FRAMING: each level beams/girders/joists/decking. Steel: W-shapes/HSS, connections (moment/shear). Concrete: beam/stub schedules. COLUMNS: size, rebar (longitudinal/ties), splices. REBAR: #3=3/8 #4=1/2 #5=5/8 #6=3/4, spacing, hooks (90/135/180), development, lap splices, chairs, cover (3 soil/2 formed/1.5 interior). CONNECTIONS: bolted (bearing/slip-critical), welded (CJP/PJP). Moment: stiffened flanges, continuity plates. Shear: single/double angle, end plate. ANCHOR RODS: diameter, embedment, projection. SHOP DRAWINGS: fabricator produces, engineer reviews. CODES: ACI 318, AISC 360, IBC."
+},
+{
+  "keys": [
+    "mep coordination",
+    "hvac plumbing electrical",
+    "clash detection"
+  ],
+  "title": "MEP Coordination Skill",
+  "text": "HVAC: duct 800-1200 fpm supply, aspect max 4:1, round preferred, insulation R-value, VAV boxes, diffusers. PLUMBING: waste/vent slope 1/4 per ft, water pressure zones/hammer arrestors, gas sizing/seismic. Cleanouts at stack base 100ft max. Fixture units->pipe sizing. ELECTRICAL: panel schedules, lighting footcandles, receptacle spacing NEC 210.52, feeder voltage drop<3%, emergency egress/exit/generator. COORDINATION: 3D model (Navisworks/Revit). Clash: hard (pipe/beam), soft (clearance), workflow (access). Priority: structure>main ducts>main pipes>electrical>small ducts>small pipes. CLEARANCES: duct 6 above ceiling, pipe 4, conduit 2. PENETRATIONS: fire-rated=UL firestop. Sleeves=pipe OD+2 min."
+},
+{
+  "keys": [
+    "construction details mastery",
+    "wall assembly",
+    "roof detail",
+    "window flashing",
+    "thermal bridge"
+  ],
+  "title": "Construction Details Mastery Skill",
+  "text": "WALL (outside-in): cladding->air gap(rainscreen)->WRB->sheathing->insulation(cavity+continuous)->stud->vapor->drywall. CRITICAL: air barrier CONTINUITY at transitions (wall-roof, wall-window, wall-foundation). ROOF: low slope taper 1/4 per ft, polyiso, cover board, membrane, base/counter/coping flashing. Steep: ice/water shield eaves, drip edge, valley, ridge vent. WINDOW: RO=window+3/4, sill pan(back/end dams), flash sill->jambs->head(shingle principle), head extends past jambs, backer rod+sealant 2-sided. STAIRS: rise 7 max, run 11 min, nosings, rails 34-38, guards 42, headroom 80. WATERPROOFING: positive side exterior, membrane (sheet/fluid/bentonite), protection board, drainage board->drain tile->sump. Waterstops at cold joints. EXPANSION JOINTS: spacing per material, cover plates/bellows/sealant, fire barrier. THERMAL BRIDGES: continuous insulation OUTSIDE studs. Balcony=thermal break (Schock Isokorb). Parapet=wrap insulation."
+}
 ];
 
 function lookup(query) {
@@ -403,7 +598,8 @@ function lookup(query) {
 module.exports = {
   agent: 'NEXUS',
   domains: [
-    'architecture', 'apis', 'databases', 'scaling', 'performance', 'devops', 'node-js'
+    'architecture', 'apis', 'databases', 'scaling', 'performance', 'devops', 'node-js',
+    'video tooling', 'media pipelines', 'transcription', 'audio analysis'
   ],
   entries,
   lookup

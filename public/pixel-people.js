@@ -219,16 +219,11 @@ window.PixelPeople = (function () {
     _ctx.restore(); return true;
   }
   // load the sprite index once; harmless if absent (voxel fallback keeps working)
-  // (v101.3: lazy — the sheets are ~hundreds of KB per character; only fetch once something actually draws a sprite)
-  let _spritesAsked = false;
-  function loadSprites() {
-    if (_spritesAsked) return; _spritesAsked = true;
-    try { fetch('assets/characters/index.json').then(function (r) { return r.ok ? r.json() : []; })
-      .then(function (a) { a.forEach(registerSprite); }).catch(function () {}); } catch (e) {}
-  }
+  try { fetch('assets/characters/index.json').then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (a) { a.forEach(registerSprite); }).catch(function () {}); } catch (e) {}
 
   function draw(_ctx, rig, sx, sy, scale, t) {
-    if (rig && rig.sprite) { loadSprites(); if (drawSprite(_ctx, rig, sx, sy, scale, t)) return; }
+    if (rig && rig.sprite && drawSprite(_ctx, rig, sx, sy, scale, t)) return;
     ctx = _ctx; ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.round(sx), Math.round(sy)); ctx.scale(scale, scale);
     OX = 0; OY = 0; guy(rig, t || 0, rig.__phase || 0); ctx.restore();

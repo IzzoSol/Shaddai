@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ SHADDAI Colosseum Enhanced</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #06080b;
+      color: #00ff9c;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    .ui {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(6, 8, 11, 0.95);
+      border: 2px solid #00ff9c;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 350px;
+      z-index: 100;
+    }
+    .ui h2 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px #00ff9c;
+    }
+    .section {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #00ff9c;
+    }
+    .section:last-child { border-bottom: none; }
+    .label {
+      font-size: 10px;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: rgba(0, 255, 156, 0.1);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    button:hover {
+      background: rgba(0, 255, 156, 0.2);
+      box-shadow: 0 0 15px rgba(0, 255, 156, 0.3);
+    }
+    button.active {
+      background: #00ff9c;
+      color: #06080b;
+      font-weight: bold;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .grid button {
+      margin-bottom: 0;
+      padding: 8px;
+      font-size: 10px;
+    }
+    .info {
+      background: rgba(0, 100, 150, 0.1);
+      border-left: 3px solid #00aaff;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      line-height: 1.4;
+      color: #888;
+    }
+    .status {
+      font-size: 11px;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(0, 255, 156, 0.05);
+      border-radius: 4px;
+      color: #00ff9c;
+    }
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 200;
+      background: rgba(6, 8, 11, 0.95);
+      padding: 30px;
+      border: 2px solid #00ff9c;
+      border-radius: 8px;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #00ff9c;
+      border-top-color: #ffaa00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading Enhanced Colosseum...</p>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="ui">
+    <h2>⚔️ COLOSSEUM ENHANCED</h2>
+
+    <div class="section">
+      <div class="label">Level</div>
+      <button id="mainBtn" class="active">Main Arena</button>
+      <button id="basementBtn">Basement</button>
+    </div>
+
+    <div class="section">
+      <div class="label">Terrain</div>
+      <div class="grid">
+        <button class="terrain" data-t="grass">🟢 Grass</button>
+        <button class="terrain" data-t="water">💧 Water</button>
+        <button class="terrain" data-t="fire">🔥 Fire</button>
+        <button class="terrain" data-t="ice">❄️ Ice</button>
+        <button class="terrain" data-t="lava">🌋 Lava</button>
+        <button class="terrain" data-t="crystal">💎 Crystal</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <button id="rotateBtn" style="width: auto; flex: 1;">Space = Rotate</button>
+    </div>
+
+    <div class="section">
+      <div class="info">
+        Right-click + drag: rotate<br>
+        Scroll: zoom<br>
+        Space: auto-rotate
+      </div>
+    </div>
+
+    <div class="status">
+      <div>Level: <span id="levelText">Main Arena</span></div>
+      <div>Terrain: <span id="terrainText">Grass</span></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    let scene, camera, renderer, controls;
+    let mainGroup, basementGroup, terrainMesh;
+    let currentLevel = 'main', currentTerrain = 'grass';
+    let rotating = false;
+
+    const TERRAINS = {
+      grass: { color: 0x3a6b3a, emissive: 0x1a4a1a, name: 'Grass' },
+      water: { color: 0x001a4d, emissive: 0x000d2e, name: 'Water' },
+      fire: { color: 0x8b3a1a, emissive: 0xff4400, name: 'Fire' },
+      ice: { color: 0x1a3a4d, emissive: 0x4da6ff, name: 'Ice' },
+      lava: { color: 0x5a2a0a, emissive: 0xff6600, name: 'Lava' },
+      crystal: { color: 0x2a4a6a, emissive: 0x6699ff, name: 'Crystal' }
+    };
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x001a33);
+      scene.fog = new THREE.Fog(0x001a33, 400, 1200);
+
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 50, 120);
+
+      const canvas = document.getElementById('canvas');
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, precision: 'highp' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+
+      controls = new THREE.OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotateSpeed = 2;
+      controls.target.set(0, 0, 0);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+
+      const sun = new THREE.DirectionalLight(0xffffff, 1.8);
+      sun.position.set(150, 200, 150);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 8192;
+      sun.shadow.mapSize.height = 8192;
+      sun.shadow.camera.left = -400;
+      sun.shadow.camera.right = 400;
+      sun.shadow.camera.top = 400;
+      sun.shadow.camera.bottom = -400;
+      sun.shadow.camera.far = 1000;
+      scene.add(sun);
+
+      // Ambient reflection
+      const skyLight = new THREE.HemisphereLight(0x6699ff, 0xff9900, 0.5);
+      scene.add(skyLight);
+
+      mainGroup = new THREE.Group();
+      basementGroup = new THREE.Group();
+
+      buildMainArena();
+      buildBasement();
+      createTerrainPlane();
+
+      scene.add(mainGroup);
+      scene.add(basementGroup);
+      basementGroup.visible = false;
+
+      // Controls
+      document.getElementById('mainBtn').addEventListener('click', () => switchLevel('main'));
+      document.getElementById('basementBtn').addEventListener('click', () => switchLevel('basement'));
+
+      document.querySelectorAll('.terrain').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.terrain').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          switchTerrain(btn.dataset.t);
+        });
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          rotating = !rotating;
+          controls.autoRotate = rotating;
+        }
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      document.querySelector('[data-t="grass"]').classList.add('active');
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    function buildMainArena() {
+      // Load existing colosseum
+      const loader = new THREE.GLTFLoader();
+      loader.load('/fal-assets/world/assets/bld-mecha-arena/bld-mecha-arena-mesh.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+            // Enhance materials
+            if (node.material) {
+              node.material.metalness = Math.max(0.1, node.material.metalness || 0.5);
+              node.material.roughness = Math.max(0.3, node.material.roughness || 0.7);
+            }
+          }
+        });
+        mainGroup.add(model);
+      });
+
+      // Enhanced bleachers (golden)
+      for (let i = 0; i < 6; i++) {
+        const r = 100 + i * 18;
+        const h = 8 + i * 8;
+        const geo = new THREE.CylinderGeometry(r, r, 3, 96);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xe8c45c,
+          metalness: 0.7,
+          roughness: 0.2,
+          emissive: 0xaa8800,
+          emissiveIntensity: 0.3
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.y = h;
+        mesh.receiveShadow = true;
+        mainGroup.add(mesh);
+      }
+
+      // Cathedral arches (marble columns)
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const x = Math.cos(angle) * 110;
+        const z = Math.sin(angle) * 110;
+        const geo = new THREE.CylinderGeometry(5, 5, 80, 24);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xf5f5dc,
+          metalness: 0.3,
+          roughness: 0.4
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, 40, z);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mainGroup.add(mesh);
+      }
+
+      // Central golden orb (cathedral centerpiece)
+      const orbGeo = new THREE.SphereGeometry(20, 64, 64);
+      const orbMat = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        metalness: 0.95,
+        roughness: 0.05,
+        emissive: 0xffaa00,
+        emissiveIntensity: 0.8
+      });
+      const orb = new THREE.Mesh(orbGeo, orbMat);
+      orb.position.y = 70;
+      orb.castShadow = true;
+      mainGroup.add(orb);
+
+      // Arched dome roof
+      const domeGeo = new THREE.SphereGeometry(130, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+      const domeMat = new THREE.MeshStandardMaterial({
+        color: 0xb8860b,
+        roughness: 0.7,
+        side: THREE.BackSide,
+        emissive: 0x5a4a0a,
+        emissiveIntensity: 0.2
+      });
+      const dome = new THREE.Mesh(domeGeo, domeMat);
+      dome.position.y = 100;
+      dome.receiveShadow = true;
+      mainGroup.add(dome);
+    }
+
+    function buildBasement() {
+      // Basement floor (stone)
+      const floorGeo = new THREE.CylinderGeometry(180, 180, 3, 96);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x4a4a4a,
+        roughness: 0.9,
+        metalness: 0.1
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.position.y = -120;
+      floor.receiveShadow = true;
+      basementGroup.add(floor);
+
+      // Catacomb walls
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const x = Math.cos(angle) * 185;
+        const z = Math.sin(angle) * 185;
+        const wallGeo = new THREE.BoxGeometry(30, 100, 5);
+        const wallMat = new THREE.MeshStandardMaterial({
+          color: 0x3a3a3a,
+          roughness: 0.9
+        });
+        const wall = new THREE.Mesh(wallGeo, wallMat);
+        wall.position.set(x, -70, z);
+        wall.rotation.y = angle;
+        wall.castShadow = true;
+        basementGroup.add(wall);
+      }
+
+      // Support pillars
+      for (let i = 0; i < 20; i++) {
+        const angle = (i / 20) * Math.PI * 2;
+        const radius = 100;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const pillarGeo = new THREE.CylinderGeometry(6, 6, 100, 16);
+        const pillarMat = new THREE.MeshStandardMaterial({
+          color: 0x5a5a5a,
+          roughness: 0.8
+        });
+        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+        pillar.position.set(x, -70, z);
+        pillar.castShadow = true;
+        basementGroup.add(pillar);
+      }
+
+      // Center chamber (glowing)
+      const chamberGeo = new THREE.CylinderGeometry(50, 50, 80, 64);
+      const chamberMat = new THREE.MeshStandardMaterial({
+        color: 0x2a5a7a,
+        emissive: 0x004488,
+        emissiveIntensity: 0.4,
+        roughness: 0.6
+      });
+      const chamber = new THREE.Mesh(chamberGeo, chamberMat);
+      chamber.position.y = -70;
+      chamber.receiveShadow = true;
+      basementGroup.add(chamber);
+    }
+
+    function createTerrainPlane() {
+      const geo = new THREE.CylinderGeometry(140, 140, 1, 96);
+      const mat = new THREE.MeshStandardMaterial({
+        color: TERRAINS.grass.color,
+        emissive: TERRAINS.grass.emissive,
+        roughness: 0.8
+      });
+      terrainMesh = new THREE.Mesh(geo, mat);
+      terrainMesh.position.y = 0.5;
+      terrainMesh.receiveShadow = true;
+      mainGroup.add(terrainMesh);
+    }
+
+    function switchLevel(level) {
+      currentLevel = level;
+      const isMain = level === 'main';
+      mainGroup.visible = isMain;
+      basementGroup.visible = !isMain;
+
+      document.getElementById('mainBtn').classList.toggle('active', isMain);
+      document.getElementById('basementBtn').classList.toggle('active', !isMain);
+      document.getElementById('levelText').textContent = isMain ? 'Main Arena' : 'Basement';
+
+      controls.target.set(0, isMain ? 0 : -120, 0);
+    }
+
+    function switchTerrain(t) {
+      currentTerrain = t;
+      const data = TERRAINS[t];
+      terrainMesh.material.color.setHex(data.color);
+      terrainMesh.material.emissive.setHex(data.emissive);
+      document.getElementById('terrainText').textContent = data.name;
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

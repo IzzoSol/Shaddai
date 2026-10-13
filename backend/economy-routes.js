@@ -3,20 +3,16 @@
  * SHADDAI Economy routes — express Router.
  *
  * Mount example (in server-production.js, NOT edited here):
- *   const { softAuth } = require('./auth-guard');
  *   const economyRoutes = require('./economy-routes');
- *   app.use('/api/economy', softAuth, economyRoutes());
- *
- * softAuth is REQUIRED, not optional — see resolveScopedUserId() below.
+ *   app.use('/api/economy', economyRoutes());
  *
  * Assumes express.json() is applied globally. All handlers validate input and
  * translate errors into clean 4xx responses — they never 500-crash on bad
  * input. There is NO cash-out / withdraw endpoint (closed-loop by design).
  *
- * User identity: taken from req.user?.id / req.userId ONLY when the request is
- * actually authenticated, or from an explicit userId when the caller presents a
- * service token. A caller-supplied userId is NEVER trusted on its own, and
- * there is deliberately NO shared 'local' fallback wallet.
+ * User identity: taken from req.user?.id / req.userId if your auth middleware
+ * sets it; otherwise falls back to the request body/query userId for dev. In
+ * production, wire real auth and remove the fallback.
  */
 
 const express = require('express');
@@ -44,26 +40,13 @@ function adminTokenMatches(provided) {
   return timingSafeTokenMatch(provided, process.env.ADMIN_TOKEN)
     || timingSafeTokenMatch(provided, process.env.ARCADE_SERVICE_TOKEN);
 }
-// SHADDAI-Auth follow-up to issue #3 — THE SHARED-'local'-WALLET BUG.
-//
-// The full reasoning and the fix live in backend/lib/economy-identity.js —
-// read that header before changing anything here. Short version: softAuth sets
-// req.userId = 'local' on unauthenticated requests, and the old inline
-// resolveUserId preferred it over a caller-named userId, so /balance,
-// /inventory and /catalog/purchase all silently resolved to ONE shared
-// 'local' wallet. There is no shared-wallet path left.
-const { resolveScopedUserId: resolveIdentity } = require('./lib/economy-identity');
-
 const moneyMoveLimit = rateLimit({ windowMs: 60000, max: 30 });
 
-/** Header-only token check — never accept the credential from req.body. */
-function isServiceCaller(req) {
-  return adminTokenMatches(req.get('x-admin-token'));
-}
-
-/** Route-facing wrapper: null means "unidentifiable", so the route 401s. */
-function resolveScopedUserId(req, provided) {
-  return resolveIdentity(req, provided, adminTokenMatches);
+function resolveUserId(req, provided) {
+  if (req.user && typeof req.user.id === 'string' && req.user.id) return req.user.id;
+  if (typeof req.userId === 'string' && req.userId) return req.userId;
+  if (typeof provided === 'string' && provided) return provided;
+  return null;
 }
 
 function sendError(res, err) {
@@ -84,13 +67,10 @@ function createRouter(serviceOverride) {
   const svc = serviceOverride || getDefault();
 
   // --- GET /balance -------------------------------------------------------
-  // Wallet is per-user and private: you see your own balance, or any balance
-  // if you hold a service token. Anonymous callers get 401 rather than a
-  // shared 'local' bucket.
   router.get('/balance', async (req, res) => {
     try {
-      const userId = resolveScopedUserId(req, req.query.userId);
-      if (!userId) return res.status(401).json({ ok: false, error: 'authentication required', code: 'UNAUTHORIZED' });
+      const userId = resolveUserId(req, req.query.userId);
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required', code: 'VALIDATION' });
       const balance = await svc.getBalance(userId);
       return res.json({ ok: true, userId, sparks_balance: balance });
     } catch (err) {
@@ -101,8 +81,8 @@ function createRouter(serviceOverride) {
   // --- GET /inventory -----------------------------------------------------
   router.get('/inventory', async (req, res) => {
     try {
-      const userId = resolveScopedUserId(req, req.query.userId);
-      if (!userId) return res.status(401).json({ ok: false, error: 'authentication required', code: 'UNAUTHORIZED' });
+      const userId = resolveUserId(req, req.query.userId);
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required', code: 'VALIDATION' });
       const items = await svc.getInventory(userId);
       return res.json({ ok: true, userId, items });
     } catch (err) {
@@ -149,8 +129,8 @@ function createRouter(serviceOverride) {
   router.post('/catalog/purchase', async (req, res) => {
     try {
       const body = req.body || {};
-      const userId = resolveScopedUserId(req, body.userId);
-      if (!userId) return res.status(401).json({ ok: false, error: 'authentication required', code: 'UNAUTHORIZED' });
+      const userId = resolveUserId(req, body.userId);
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required', code: 'VALIDATION' });
 
       const catalogId = body.catalogId;
       if (typeof catalogId !== 'string' || !catalogId.trim()) {
@@ -233,9 +213,10 @@ function createRouter(serviceOverride) {
   router.post('/grant', moneyMoveLimit, async (req, res) => {
     try {
       if (!process.env.ADMIN_TOKEN && !process.env.ARCADE_SERVICE_TOKEN) {
-        return res.status(503).json({ ok: false, error: 'Admin grant disabled (neither ADMIN_TOKEN nor ARCADE_SERVICE_TOKEN is set)', code: 'DISABLED' });
+        return res.status(503).json({ ok: false, error: 'Admin grant disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
       }
-      if (!isServiceCaller(req)) {
+      const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
+      if (!adminTokenMatches(provided)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
       }
       const body = req.body || {};
@@ -268,9 +249,10 @@ function createRouter(serviceOverride) {
   router.post('/spend', moneyMoveLimit, async (req, res) => {
     try {
       if (!process.env.ADMIN_TOKEN && !process.env.ARCADE_SERVICE_TOKEN) {
-        return res.status(503).json({ ok: false, error: 'Admin spend disabled (neither ADMIN_TOKEN nor ARCADE_SERVICE_TOKEN is set)', code: 'DISABLED' });
+        return res.status(503).json({ ok: false, error: 'Admin spend disabled (ADMIN_TOKEN not set)', code: 'DISABLED' });
       }
-      if (!isServiceCaller(req)) {
+      const provided = req.get('x-admin-token') || (req.body && req.body.adminToken);
+      if (!adminTokenMatches(provided)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
       }
       const body = req.body || {};

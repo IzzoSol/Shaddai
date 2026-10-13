@@ -433,25 +433,6 @@ input.bad{ border-color:var(--rose); }
     <div class="bar"><button id="go" disabled>Forge this agent</button></div>
     <div class="err" id="eGo"></div>
 
-    <section class="step" id="importStep">
-      <div class="n">Or</div>
-      <h2>Bring a bot in.</h2>
-      <p class="hint">Import a Grok bot or any agent you already run. It gets a seat in your dashboard office and the 3D realm, keeps its persona, and can use the tools you pick. Sign-in required. API keys are never stored.</p>
-      <div class="seg" id="impSrc">
-        <button type="button" aria-pressed="true" data-s="grok">Grok</button>
-        <button type="button" data-s="openai">OpenAI-style</button>
-        <button type="button" data-s="custom">Custom</button>
-      </div>
-      <div class="row" style="margin-top:14px">
-        <label class="f"><i>Bot name</i><input type="text" id="impName" maxlength="40" placeholder="My Grok bot" autocomplete="off" /></label>
-        <label class="f"><i>Tools (comma separated)</i><input type="text" id="impTools" placeholder="search_web, fetch_price, wikipedia_search" autocomplete="off" /></label>
-      </div>
-      <label class="f" style="margin-top:12px"><i>Persona / instructions</i>
-        <textarea id="impPersona" placeholder="Paste the bot's system prompt or instructions..."></textarea></label>
-      <div class="bar"><button id="impGo" type="button">Import bot</button></div>
-      <div class="err" id="impMsg"></div>
-    </section>
-
     <section id="mine">
       <h3>Agents you have forged</h3>
       <div id="mineList"><div class="muted">Loading&hellip;</div></div>
@@ -464,8 +445,7 @@ input.bad{ border-color:var(--rose); }
     <h2 id="dName"></h2>
     <div id="dBody"></div>
     <div class="acts">
-      <a class="pri" id="dHire" href="/dashboard#office">Put it to work</a>
-      <a id="dWorld" href="/SHADDAI-WORLD-3D.html">See it in the realm</a>
+      <a class="pri" id="dHire" href="/index.html#agents">Put it to work</a>
       <button type="button" id="dAgain">Forge another</button>
       <a href="/enter.html">Back to the doors</a>
     </div>
@@ -687,8 +667,7 @@ input.bad{ border-color:var(--rose); }
           '<p class="muted" style="margin-top:10px">Persona written to ' + esc(a.personaFile || '—') +
           ' — edit that file to change how it talks.</p>' +
           (a.walletKey ? '<p class="muted">Wallet <b>' + esc(a.walletKey) + '</b>. ' + esc(n.note || '') + '</p>' : '');
-        $('dHire').href = n.dashboard || '/dashboard#office';
-        var w = document.getElementById('dWorld'); if (w) w.href = n.world || '/SHADDAI-WORLD-3D.html';
+        $('dHire').href = '/index.html#agents';
         window.scrollTo(0, 0);
         loadMine();
       })
@@ -733,37 +712,6 @@ input.bad{ border-color:var(--rose); }
       });
     }).catch(function () { $('mineList').innerHTML = '<div class="muted">Could not load.</div>'; });
   }
-
-  /* ── import a bot ──────────────────────────────────────────────────────── */
-  (function () {
-    var src = 'grok';
-    var btns = document.querySelectorAll('#impSrc button');
-    Array.prototype.forEach.call(btns, function (b) {
-      b.addEventListener('click', function () {
-        src = b.getAttribute('data-s');
-        Array.prototype.forEach.call(btns, function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-      });
-    });
-    $('impGo').addEventListener('click', function () {
-      var msg = $('impMsg'); msg.textContent = '';
-      if (!window.shdSignedIn()) { window.openForgeGate(); return; }
-      var name = $('impName').value.trim();
-      if (!name) { msg.textContent = 'Give the bot a name.'; return; }
-      var tools = $('impTools').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
-      var go = $('impGo'); go.disabled = true; go.textContent = 'Importing…';
-      fetch('/api/agent-forge/import', {
-        method: 'POST', headers: window.shdAuthHeaders(),
-        body: JSON.stringify({ source: src, name: name, persona: $('impPersona').value, tools: tools.length ? tools : undefined }),
-      }).then(function (r) { return r.json(); }).then(function (d) {
-        go.disabled = false; go.textContent = 'Import bot';
-        if (!d.ok) { msg.textContent = d.error || 'Could not import.'; return; }
-        msg.style.color = 'var(--accent)';
-        msg.innerHTML = esc(d.agent.name) + ' is in. Tools: ' + esc((d.agent.tools || []).join(', ') || 'none') +
-          (d.dropped && d.dropped.length ? ' (unknown, skipped: ' + esc(d.dropped.join(', ')) + ')' : '') +
-          ' &middot; <a href="/dashboard#office">open in office</a> &middot; <a href="/SHADDAI-WORLD-3D.html">see in the realm</a>';
-      }).catch(function () { go.disabled = false; go.textContent = 'Import bot'; msg.textContent = 'Could not reach the forge.'; });
-    });
-  })();
   loadMine();
   // Re-list my agents once auth settles (sign-in/out on this page or the dashboard).
   window.__forgeOnAuth = function () { try { loadMine(); } catch (e) {} };

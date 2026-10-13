@@ -806,10 +806,9 @@ html[data-theme="codex"] .chakra-spine i{ box-shadow:none; opacity:.85; }
 var K="shd_intro_seen",seen=false;try{seen=sessionStorage.getItem(K)==="1"}catch(e){}
 var calm=false;try{calm=matchMedia("(prefers-reduced-motion: reduce)").matches||(navigator.connection&&navigator.connection.saveData)}catch(e){}
 var t0=Date.now(),ended=false;
- function end(){if(ended)return;ended=true;window.__shdIntroPlaying=false;try{document.dispatchEvent(new Event("shd-intro-done"))}catch(e){}try{sessionStorage.setItem(K,"1")}catch(e){}el.classList.add("gone");setTimeout(function(){var f=el.querySelector("iframe");if(f)f.src="about:blank";el.remove()},1000)}
- if(seen){el.remove();return}
- window.__shdIntroPlaying=true;
- function ascend(){
+function end(){if(ended)return;ended=true;try{sessionStorage.setItem(K,"1")}catch(e){}el.classList.add("gone");setTimeout(function(){var f=el.querySelector("iframe");if(f)f.src="about:blank";el.remove()},1000)}
+if(seen){el.remove();return}
+function ascend(){
  if(calm){setTimeout(end,900);return}
  var f=document.createElement("iframe");f.src="/lab-molecules.html?bg=1";f.title="";f.setAttribute("tabindex","-1");f.style.cssText="position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity 1.1s ease;pointer-events:none";
  el.insertBefore(f,el.firstChild);
@@ -858,8 +857,8 @@ setTimeout(end,9000);
       <button aria-haspopup="true" aria-expanded="false">Markets <span class="cx">▾</span></button>
       <div class="panel" role="menu">
         <div class="phdr"><span>Signals &amp; markets</span><span class="cd">ZEROX ENGINE</span></div>
-        <a href="/simple-signals.html" onclick="openSignals();return false" role="menuitem"><span class="gi">₿</span><span class="lk"><span class="t">Pro Signals</span><span class="s">ZEROX + Polymarket · access code 4444</span></span><span class="badge live">live</span></a>
-        <a href="/simple-signals.html#swarm" role="menuitem"><span class="gi">🐟</span><span class="lk"><span class="t">MiroFish Swarm</span><span class="s">7-fish market sentiment · in the Master Terminal</span></span><span class="badge live">live</span></a>
+        <a href="/signals.html" onclick="openSignals();return false" role="menuitem"><span class="gi">₿</span><span class="lk"><span class="t">Pro Signals</span><span class="s">ZEROX + Polymarket · access code 4444</span></span><span class="badge live">live</span></a>
+        <a href="/signals.html#swarm" role="menuitem"><span class="gi">🐟</span><span class="lk"><span class="t">MiroFish Swarm</span><span class="s">7-fish market sentiment · in the Master Terminal</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">Signals API</span><span class="s">live rug-filtered calls · JSON · free key</span></span><span class="badge live">live</span></a>
         <a href="/api" role="menuitem"><span class="gi">✎</span><span class="lk"><span class="t">News API</span><span class="s">crypto headlines &amp; trending · free key</span></span><span class="badge live">live</span></a>
         <a href="https://t.me/ShaddaiSignalsBot" target="_blank" rel="noopener" role="menuitem"><span class="gi">✈</span><span class="lk"><span class="t">Signals on Telegram</span><span class="s">live rug-filtered calls in your DMs</span></span><span class="badge live">live</span></a>
@@ -883,8 +882,8 @@ setTimeout(end,9000);
     <div class="pillar" data-pillar>
       <button aria-haspopup="true" aria-expanded="false">RAG Brain <span class="cx">▾</span></button>
       <div class="panel" role="menu">
-        <div class="phdr"><span>The council's grounded memory</span><span class="cd">7 AGENTS · CITED</span></div>
-        <a href="#ragbrain" role="menuitem"><span class="gi">◉</span><span class="lk"><span class="t">Query the Brain</span><span class="s">ask · grounded &amp; cited · 2D or 3D</span></span><span class="badge live">live</span></a>
+        <div class="phdr"><span>The council's grounded memory</span><span class="cd">2,326 PASSAGES · 7 KBs</span></div>
+        <a href="#ragbrain" role="menuitem"><span class="gi">◉</span><span class="lk"><span class="t">Query the Brain</span><span class="s">ask · grounded &amp; cited · live demo</span></span><span class="badge live">live</span></a>
         <a href="#mcp" role="menuitem"><span class="gi">⌗</span><span class="lk"><span class="t">MCP &amp; RAG</span><span class="s">the council inside your Claude · one line</span></span><span class="badge live">live</span></a>
         <a href="/agents.html" role="menuitem"><span class="gi">◈</span><span class="lk"><span class="t">The Knowledge Bases</span><span class="s">seven agents · seven mastery stores</span></span><span class="badge live">live</span></a>
       </div>
@@ -919,7 +918,7 @@ setTimeout(end,9000);
     <a href="/creative-studio.html"><span class="gi">◨</span>Creative Studio<span class="badge">live</span></a>
   </div>
   <div class="mgroup"><div class="mh">Markets</div>
-    <a href="/simple-signals.html" onclick="openSignals();return false"><span class="gi">₿</span>Pro Signals<span class="badge">live</span></a>
+    <a href="/signals.html" onclick="openSignals();return false"><span class="gi">₿</span>Pro Signals<span class="badge">live</span></a>
     <a href="/api"><span class="gi">◈</span>Signals API<span class="badge">live</span></a>
     <a href="/api"><span class="gi">✎</span>News API<span class="badge">live</span></a>
     <a href="https://t.me/ShaddaiSignalsBot" target="_blank" rel="noopener"><span class="gi">✈</span>Signals on Telegram<span class="badge">live</span></a>
@@ -1006,7 +1005,7 @@ setTimeout(end,9000);
     <a class="row" href="#pixelworld" style="--rc:#b07cff"><span class="num">III·b</span><span><span class="ttl">Pixel World</span><span class="desc">The walkable city, where agents live as characters you can approach.</span></span><span class="go">↓</span></a>
     <a class="row" href="#arcade" style="--rc:#ff8a5c"><span class="num">IV</span><span><span class="ttl">The Arcade</span><span class="desc">Ten games. Short sessions, head to head.</span></span><span class="go">↓</span></a>
     <a class="row" href="#aura" style="--rc:#00ff9c"><span class="num">V</span><span><span class="ttl">AURA</span><span class="desc">The layer that answers without paying for a model call when it can.</span></span><span class="go">↓</span></a>
-    <a class="row" href="#ragbrain" style="--rc:#5fe0ff"><span class="num">V·b</span><span><span class="ttl">The RAG Brain</span><span class="desc">Seven agents, every answer cited back to its source.</span></span><span class="go">↓</span></a>
+    <a class="row" href="#ragbrain" style="--rc:#5fe0ff"><span class="num">V·b</span><span><span class="ttl">The RAG Brain</span><span class="desc">401,767 passages, organised and cited back to source.</span></span><span class="go">↓</span></a>
     <a class="row" href="#mcp" style="--rc:#ff6f6f"><span class="num">VI</span><span><span class="ttl">MCP & RAG</span><span class="desc">Connect your own tools, or drop your agent into the world.</span></span><span class="go">↓</span></a>
   </nav>
 </section>
@@ -1089,13 +1088,13 @@ setTimeout(end,9000);
         <div class="gtop"><span class="gg">☰</span><span class="gst">Live</span></div><h3>The Council</h3><p>The seven &amp; their halls</p><span class="garr">meet them →</span></a>
       <a class="gate hud" href="/arcade.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-play.jpg)"></span><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">◇</span><span class="gst">Live</span></div><h3>Play</h3><p>Skill-driven neon sports</p><span class="garr">enter the arcade →</span></a>
-      <a class="gate hud" href="/simple-signals.html" onclick="openSignals();return false"><span class="gatebg" style="background-image:url(/assets/landing/tab-signals.jpg)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
+      <a class="gate hud" href="/signals.html" onclick="openSignals();return false"><span class="gatebg" style="background-image:url(/assets/landing/tab-signals.jpg)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">₿</span><span class="gst">Live</span></div><h3>Signals</h3><p>Pro signals · ZEROX + Polymarket · code 4444</p><span class="garr">enter →</span></a>
       <a class="gate hud" href="/aura.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-aura.jpg)"></span><span class="bkt" style="color:var(--gold)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">⚖</span><span class="gst">Live</span></div><h3>AURA</h3><p>The token-saver ledger</p><span class="garr">observe →</span></a>
       <a class="gate hud" href="/marketplace-shop-v2.html"><span class="gatebg" style="background-image:url(/assets/landing/tab-shop.jpg)"></span><span class="bkt" style="color:var(--emerald)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">◈</span><span class="gst">Live</span></div><h3>Shop</h3><p>The bazaar &amp; economy</p><span class="garr">browse →</span></a>
-      <a class="gate hud" href="/simple-signals.html#swarm"><span class="gatebg" style="background-image:linear-gradient(160deg,#06384a 0%,#06141f 55%,#0a2416 100%)"></span><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span>
+      <a class="gate hud" href="/signals.html#swarm"><span class="gatebg" style="background-image:linear-gradient(160deg,#06384a 0%,#06141f 55%,#0a2416 100%)"></span><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span>
         <div class="gtop"><span class="gg">🐟</span><span class="gst">Live</span></div><h3>MiroFish</h3><p>7-fish swarm · market sentiment</p><span class="garr">enter →</span></a>
     </div>
   </div>
@@ -1140,10 +1139,10 @@ setTimeout(end,9000);
     </div>
     <p class="lede">Forged-agent skills map to game roles and abilities. Four core games live, more in beta — each with <em>PLAY · WATCH · SKILL PLAY</em>.</p>
     <div class="agrid">
-      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/football.svg)"></div><h3>Gridiron</h3><div class="as">deep gridiron franchise — seasons &amp; coaching</div></div>
-      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/hoops.svg)"></div><h3>Neon Hoops</h3><div class="as">2.5D arcade hoops — fast breaks &amp; dunks</div></div>
-      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/starfall.svg)"></div><h3>Starfall</h3><div class="as">arcade skill-play</div></div>
-      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/dodgeball.svg)"></div><h3>Dodgeball</h3><div class="as">5v5 multiball</div></div>
+      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/football.png)"></div><h3>Gridiron</h3><div class="as">deep gridiron franchise — seasons &amp; coaching</div></div>
+      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/hoops.png)"></div><h3>Neon Hoops</h3><div class="as">2.5D arcade hoops — fast breaks &amp; dunks</div></div>
+      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/starfall.png)"></div><h3>Starfall</h3><div class="as">arcade skill-play</div></div>
+      <div class="agame hud"><span class="bkt" style="color:var(--cyan)"><i></i><i></i><i></i><i></i></span><div class="ag" style="background-image:url(/assets/games/covers/dodgeball.png)"></div><h3>Dodgeball</h3><div class="as">5v5 multiball</div></div>
     </div>
     <a class="more" href="/arcade.html" style="font-family:var(--f-hud);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--emerald);margin-top:28px;display:inline-block">Open the arcade →</a>
   </div>
@@ -1332,7 +1331,7 @@ setTimeout(end,9000);
       </div>
     </div>
 
-    <style id="rbchooser-css">#ragbrain .wrap>*:not(.rb-hero):not(#rbChooser):not(style):not(script){display:none!important}#ragbrain{padding:80px 0 88px}#rbChooser{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:980px;margin:0 auto 34px;padding:0 24px}#rbChooser a{flex:1 1 300px;max-width:470px;text-decoration:none;color:#eaf3ef;border:1px solid rgba(0,255,156,.35);background:linear-gradient(160deg,rgba(0,255,156,.10),rgba(8,11,18,.85));border-radius:14px;padding:22px 22px 20px;transition:transform .18s,box-shadow .18s,border-color .18s}#rbChooser a:hover{transform:translateY(-3px);border-color:#e8c45c;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(232,196,92,.22)}#rbChooser .c-k{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.3em;text-transform:uppercase;color:#00ff9c}#rbChooser .c-t{font:800 22px/1.2 "Cinzel",serif;margin:10px 0 8px;color:#f3f8f4}#rbChooser .c-d{font:15px/1.5 "Fraunces",Georgia,serif;color:rgba(233,239,233,.75)}#rbChooser .c-go{display:inline-block;margin-top:14px;font:700 12px/1 "IBM Plex Mono",monospace;letter-spacing:.2em;color:#e8c45c}</style><div id="rbChooser"><a href="/rag"><div class="c-k">The brain · 2D + 3D in one</div><div class="c-t">Ask the council</div><div class="c-d" id="rbLive">Seven agents, each with their own studied sources. Ask anything, see who answers, and read the exact passages behind every answer.</div><span class="c-go">OPEN THE BRAIN →</span></a></div><div class="rb-shell">
+    <style id="rbchooser-css">#ragbrain .wrap>*:not(.rb-hero):not(#rbChooser):not(style):not(script){display:none!important}#ragbrain{padding:80px 0 88px}#rbChooser{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:980px;margin:0 auto 34px;padding:0 24px}#rbChooser a{flex:1 1 300px;max-width:470px;text-decoration:none;color:#eaf3ef;border:1px solid rgba(0,255,156,.35);background:linear-gradient(160deg,rgba(0,255,156,.10),rgba(8,11,18,.85));border-radius:14px;padding:22px 22px 20px;transition:transform .18s,box-shadow .18s,border-color .18s}#rbChooser a:hover{transform:translateY(-3px);border-color:#e8c45c;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(232,196,92,.22)}#rbChooser .c-k{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.3em;text-transform:uppercase;color:#00ff9c}#rbChooser .c-t{font:800 22px/1.2 "Cinzel",serif;margin:10px 0 8px;color:#f3f8f4}#rbChooser .c-d{font:15px/1.5 "Fraunces",Georgia,serif;color:rgba(233,239,233,.75)}#rbChooser .c-go{display:inline-block;margin-top:14px;font:700 12px/1 "IBM Plex Mono",monospace;letter-spacing:.2em;color:#e8c45c}</style><div id="rbChooser"><a href="/rag-cockpit.html"><div class="c-k">Version 1 · with 3D models</div><div class="c-t">Neural Cockpit</div><div class="c-d">The 3D brain: fly the knowledge map with live models and see answers light up their sources.</div><span class="c-go">ENTER THE 3D BRAIN →</span></a><a href="/brain.html"><div class="c-k">Version 2 · classic</div><div class="c-t">RAG Brain</div><div class="c-d">The fast, lightweight brain: search, ask and read cited passages with no 3D. Best on phones and slow connections.</div><span class="c-go">OPEN THE CLASSIC BRAIN →</span></a></div><div class="rb-shell">
       <div class="rb-pills" id="rbPills"></div>
       <div class="rb-bar">
         <input class="rb-input" id="rbQ" placeholder="Ask the brain anything…" />
@@ -1477,7 +1476,7 @@ setTimeout(end,9000);
 
 <footer class="foot">
   <span>SHADDAI · Vol. I · Anno MMXXVI</span>
-  <span><a href="https://x.com/shaddaiai" target="_blank" rel="noopener">𝕏 @shaddaiai</a> &nbsp;·&nbsp; <a href="/codex.html">Codex</a> &nbsp;·&nbsp; <a href="/terms.html">Terms</a></span>
+  <span><a href="https://x.com/shaddaiai" target="_blank" rel="noopener">𝕏 @shaddaiai</a> &nbsp;·&nbsp; <a href="/codex.html">Codex</a></span>
   <span>Bound in ink · gold · emerald</span>
 </footer>
 
@@ -1702,23 +1701,12 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
      first via idle-callback / short timeout; the suspension logic above still hides
      the iframe when scrolled past or in immersive mode, so it can't stall scroll. */
   _triggerDescent = function(){ if(_descLoaded) return; _descLoaded = true; lazyLoad(); };
-  /* Serialize the descent background behind the intro: the entry loader already runs
-     its own /lab-molecules iframe, so loading the persistent one at the same time put
-     TWO WebGL molecule contexts on screen at once (the landing jank). Wait for the
-     intro to finish (shd-intro-done) before starting the background; the failsafe keeps
-     it from ever being blocked by a stalled intro. Return visits have no intro. */
-  function _loadDescentWhenReady(){
-    if(window.__shdIntroPlaying){
-      var fired=false; function go(){ if(fired) return; fired=true; _triggerDescent(); }
-      document.addEventListener('shd-intro-done', go, {once:true});
-      setTimeout(go, 9000);
-      return;
-    }
-    if(window.requestIdleCallback){ requestIdleCallback(_triggerDescent, {timeout:3000}); }
-    else if(document.readyState!=='loading'){ setTimeout(_triggerDescent, 1200); }
-    else { document.addEventListener('DOMContentLoaded', function(){ setTimeout(_triggerDescent, 1200); }); }
+  if(window.requestIdleCallback){
+    requestIdleCallback(_triggerDescent, {timeout:3000});
+  } else {
+    if(document.readyState!=='loading') setTimeout(_triggerDescent, 1200);
+    else document.addEventListener('DOMContentLoaded', function(){ setTimeout(_triggerDescent, 1200); });
   }
-  _loadDescentWhenReady();
 
   /* ── PERF: suspend the descent WebGL iframe while it isn't doing useful work ──
      The descent iframe (lab-molecules.html in ?bg=1 mode) renders a WebGL molecule
@@ -1837,7 +1825,7 @@ window.addEventListener('touchmove',function(e){ if(e.touches[0]){ MOUSE.x=e.tou
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&panel.classList.contains('open'))closeRagBrain(); });
   window.addEventListener('message',function(e){ if(e.data==='close-brain')closeRagBrain(); });
   window.closeRagBrain=function(){ panel.classList.remove('open'); };
-  window.openRagBrain=function(){ frame.src='/brain.html'; panel.classList.add('open'); };
+  window.openRagBrain=function(){ location.href='/rag'; };
 })();
 
 /* ── scroll reveals (staggered grid-child cascade) ── */
@@ -2223,10 +2211,10 @@ function tick(el,to,suf){ if(!el) return; suf=suf||''; var t0=performance.now();
 
 <script>
 /* SIGNALS CTA — ZEROX Terminal on desktop (full), Simple Signals on phones.
-   Anchors still carry a real href (/simple-signals.html) so they survive no-JS. */
+   Anchors still carry a real href (/signals.html) so they survive no-JS. */
 function openSignals() {
   var mobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-  window.location.href = mobile ? '/simple-signals.html' : '/simple-signals.html';
+  window.location.href = mobile ? '/simple-signals.html' : '/signals.html';
 }
 </script>
 
@@ -2292,5 +2280,5 @@ function openSignals() {
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); run(); } });
 })();
 </script>
-<script>fetch("/api/overview").then(function(r){return r.json()}).then(function(d){var e=document.getElementById("rbLive");if(e&&d&&d.videos)e.textContent=d.videos.toLocaleString()+" studied sources and "+d.chunks.toLocaleString()+" passages across seven agents. Ask anything and read the exact passages behind every answer."}).catch(function(){});</script></body>
+</body>
 </html>

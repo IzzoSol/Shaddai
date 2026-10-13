@@ -6,12 +6,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const sparksCore = require('./sparksCore');
 
-/* same rule as cloudUid() (game.html:2258): only real signed-in ids link to a server wallet */
-function uidOf(req) { const u = String((req.headers && req.headers['x-user-id']) || '').trim(); return (!u || u.length > 128 || u === 'local' || u.indexOf('guest') === 0) ? null : u; }
-
-const DATA_DIR = process.env.SHADDAI_MMO_DATA || path.join(__dirname, 'data'); // env override = test isolation
+const DATA_DIR = path.join(__dirname, 'data');
 const CHAR_DB_PATH = path.join(DATA_DIR, 'characters.json');
 const GRAVE_DB_PATH = path.join(DATA_DIR, 'graves.json');
 const GRAVE_GRACE_MS = 10 * 60 * 1000; // 10 minutes to reclaim a gravestone
@@ -58,7 +54,6 @@ function handleDeath(char, dangerous = false) {
   if (dangerous && char.currency?.sparks) {
     sparksLost = Math.floor(char.currency.sparks * 0.1);
     char.currency.sparks -= sparksLost;
-    if (sparksLost > 0) sparksCore.recordSink(char, sparksLost, 'death-penalty', { note: '10% of Sparks lost to a dangerous death' });   // was invisible: now a ledgered sink
   }
   char.stats.hp = char.stats.maxHp;
   char.stats.energy = char.stats.maxEnergy;
@@ -112,12 +107,9 @@ router.get('/state', (req, res) => {
 router.post('/spawn', (req, res) => {
   try {
     const db = loadDB();
-    const uid = uidOf(req);
-    if (uid) { const have = Object.values(db).find(c => c.userId === uid); if (have) return res.json({ success: true, characterId: have.id, character: have, existing: true }); }
     const id = genId(db);
     const char = {
       id,
-      userId: uid || undefined,
       inventory: {},
       stats: { hp: 100, maxHp: 100, energy: 100, maxEnergy: 100 },
       location: { x: Math.floor(100 / 2), y: Math.floor(100 / 2) },
@@ -126,7 +118,6 @@ router.post('/spawn', (req, res) => {
     };
     db[id] = char;
     saveDB(db);
-    sparksCore.record({ kind: 'signup-grant', characterId: id, delta: 100, balanceAfter: 100, minted: 100, note: 'starting Sparks' });
     sendBridge({ type: 'character_created', payload: char });
     res.json({ success: true, characterId: id, character: char });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }
@@ -206,7 +197,6 @@ router.post('/shop', (req, res) => {
     char.currency.sparks -= item.price;
     addItemToChar(char, itemId, 1);
     saveDB(db);
-    sparksCore.recordSink(char, item.price, 'shop', { ref: itemId });
     sendBridge({ type: 'shop_purchase', payload: { characterId, itemId } });
     res.json({ success: true, character: char });
   } catch (e) { console.error(e); res.status(500).json({ success: false, error: e.message }); }

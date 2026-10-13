@@ -825,7 +825,7 @@ function prettifyClip(name, i){
   return s;
 }
 
-let THREE, GLTFLoader, OrbitControls, MeshoptDecoder;         // lazily imported once
+let THREE, GLTFLoader, OrbitControls;         // lazily imported once
 let libPromise = null;
 let ctx = null;                               // active viewer context (renderer/scene/…)
 let lastFocus = null;                         // element to restore focus to
@@ -837,7 +837,6 @@ function loadLibs(){
     const three = await import('three');
     const gltf  = await import('three/addons/loaders/GLTFLoader.js');
     const orbit = await import('three/addons/controls/OrbitControls.js');
-    try{ MeshoptDecoder = (await import('three/addons/libs/meshopt_decoder.module.js')).MeshoptDecoder; }catch(e){}
     THREE = three; GLTFLoader = gltf.GLTFLoader; OrbitControls = orbit.OrbitControls;
     return true;
   })();
@@ -895,7 +894,7 @@ async function buildScene(agent){
 
   // ── load GLB on demand ──
   const url = '/assets/agents/'+encodeURIComponent(agent.id)+'.glb';
-  const loader = new GLTFLoader(); if(MeshoptDecoder) loader.setMeshoptDecoder(MeshoptDecoder);
+  const loader = new GLTFLoader();
   await new Promise((resolve, reject)=>{
     loader.load(url, (gltf)=>{
       const root = gltf.scene || gltf.scenes[0];

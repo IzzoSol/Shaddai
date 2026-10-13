@@ -25,8 +25,8 @@ const path    = require('path');
 const router = express.Router();
 
 // ── PERSISTENCE ──────────────────────────────────────────────────────────────
-const DATA_FILE = process.env.ACHIEVEMENTS_FILE || path.join(__dirname, 'data', 'achievements.json'); // env override: tests must not touch real data
-const DATA_DIR  = path.dirname(DATA_FILE);
+const DATA_DIR  = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'achievements.json');
 
 // state = { subjects: { [subjectId]: SubjectRecord } }
 const state = { subjects: {} };
@@ -117,11 +117,7 @@ _installShutdownFlush();
 const XP_PER = {
   bounty_completed: 100,   // finishing a marketplace bounty
   task_run:         10,    // running an agent task / skill
-  dollar_earned:    1,     // +1 xp per $1 of budget earned
-  academy_skill_passed:      60,   // passing an Academy skill (measured lift)
-  academy_homework_improved: 25,   // improving across homework rounds
-  academy_taught:            15,   // a learner passed one of your skills
-  academy_class_completed:   150   // completing an Academy class
+  dollar_earned:    1      // +1 xp per $1 of budget earned
 };
 
 function levelForXp(xp) {
@@ -215,16 +211,7 @@ const ACHIEVEMENTS = [
     tier: 'bronze',
     xpBonus: 75,
     rule: (c) => c.nightJobs >= 1
-  },
-  // ── Academy ────────────────────────────────────────────────────────────────
-  { id: 'first_lesson', name: 'First Lesson', description: 'Pass your first Academy skill.', icon: '🎓', tier: 'bronze', xpBonus: 50, rule: (c) => c.lessonsPassed >= 1 },
-  { id: 'honor_roll', name: 'Honor Roll', description: 'Pass 10 Academy skills.', icon: '📚', tier: 'silver', xpBonus: 250, rule: (c) => c.lessonsPassed >= 10 },
-  { id: 'quick_study', name: 'Quick Study', description: 'Pass a skill with a 25%+ measured lift.', icon: '⚡', tier: 'silver', xpBonus: 200, rule: (c) => c.bestLift >= 0.25 },
-  { id: 'red_pen', name: 'Red Pen', description: 'Improve on 3 homework assignments.', icon: '🖍️', tier: 'bronze', xpBonus: 100, rule: (c) => c.homeworkImproved >= 3 },
-  { id: 'mentor_1', name: 'Mentor I', description: 'Teach 5 passing learners.', icon: '🧑‍🏫', tier: 'bronze', xpBonus: 100, rule: (c) => c.learnersTaught >= 5 },
-  { id: 'mentor_2', name: 'Mentor II', description: 'Teach 25 passing learners.', icon: '🏅', tier: 'silver', xpBonus: 300, rule: (c) => c.learnersTaught >= 25 },
-  { id: 'mentor_3', name: 'Mentor III', description: 'Teach 100 passing learners.', icon: '🏆', tier: 'gold', xpBonus: 800, rule: (c) => c.learnersTaught >= 100 },
-  { id: 'grand_curriculum', name: 'Grand Curriculum', description: 'Complete an Academy class.', icon: '🎖️', tier: 'gold', xpBonus: 400, rule: (c) => c.classesCompleted >= 1 }
+  }
 ];
 
 // Public-facing definition (strips the function so it's JSON-safe).
@@ -252,11 +239,6 @@ function _blankSubject(subjectId) {
       tasksRun:      0,
       failures:      0,
       nightJobs:     0,
-      lessonsPassed:    0,     // Academy
-      bestLift:         0,
-      homeworkImproved: 0,
-      learnersTaught:   0,
-      classesCompleted: 0,
       categories:    {}        // { category: count }
     },
     createdAt: new Date().toISOString(),
@@ -273,9 +255,6 @@ function _getSubject(subjectId) {
   // Defensive: heal any partially-shaped record loaded from disk.
   if (!s.counters) s.counters = _blankSubject(id).counters;
   if (!s.counters.categories) s.counters.categories = {};
-  for (const k of ['lessonsPassed', 'bestLift', 'homeworkImproved', 'learnersTaught', 'classesCompleted']) {
-    if (typeof s.counters[k] !== 'number') s.counters[k] = 0;   // records written before the Academy existed
-  }
   if (!Array.isArray(s.unlocked)) s.unlocked = [];
   if (typeof s.xp !== 'number') s.xp = 0;
   return s;
@@ -358,27 +337,6 @@ function recordEvent(subjectId, eventType, meta = {}) {
       case 'bounty_failed': {
         c.failures += 1;
         // No XP for failure; failures gate the "flawless" achievement.
-        break;
-      }
-      case 'academy_skill_passed': {
-        c.lessonsPassed += 1;
-        s.xp += XP_PER.academy_skill_passed;
-        c.bestLift = Math.max(c.bestLift, Math.min(1, Math.max(0, Number(meta.lift) || 0)));
-        break;
-      }
-      case 'academy_homework_improved': {
-        c.homeworkImproved += 1;
-        s.xp += XP_PER.academy_homework_improved;
-        break;
-      }
-      case 'academy_taught': {
-        c.learnersTaught += Math.min(100, Math.max(1, Math.floor(Number(meta.count) || 1)));
-        s.xp += XP_PER.academy_taught;
-        break;
-      }
-      case 'academy_class_completed': {
-        c.classesCompleted += 1;
-        s.xp += XP_PER.academy_class_completed;
         break;
       }
       default: {

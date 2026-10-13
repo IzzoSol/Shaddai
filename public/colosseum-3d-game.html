@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ SHADDAI Colosseum — 3D Arena</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #00ff9c;
+      overflow: hidden;
+    }
+
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .ui-overlay {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(6, 8, 11, 0.95);
+      border: 2px solid #00ff9c;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      box-shadow: 0 0 40px rgba(0, 255, 156, 0.2);
+    }
+
+    h1 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px #00ff9c;
+    }
+
+    .hero-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 10px;
+      background: rgba(0, 255, 156, 0.1);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    button:hover {
+      background: rgba(0, 255, 156, 0.3);
+      box-shadow: 0 0 15px rgba(0, 255, 156, 0.5);
+    }
+
+    button.active {
+      background: #00ff9c;
+      color: #06080b;
+      font-weight: bold;
+    }
+
+    .controls-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #00ff9c;
+    }
+
+    .section-label {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .terrain-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .game-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .game-controls button {
+      padding: 15px;
+      font-size: 10px;
+    }
+
+    .launch-button {
+      grid-column: 1 / -1;
+      padding: 15px !important;
+      background: rgba(0, 255, 156, 0.2) !important;
+      font-weight: bold !important;
+      margin-top: 10px;
+    }
+
+    .launch-button:hover {
+      background: rgba(0, 255, 156, 0.4) !important;
+    }
+
+    .status-box {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(0, 100, 150, 0.1);
+      border-left: 3px solid #00aaff;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .status-label {
+      color: #888;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .status-value {
+      color: #ffd700;
+      font-weight: bold;
+    }
+
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 200;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #00ff9c;
+      border-top-color: #ffaa00;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading Colosseum Arena...</p>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="ui-overlay" id="ui">
+    <h1>⚔️ COLOSSEUM ARENA</h1>
+
+    <div class="controls-section">
+      <div class="section-label">Select Hero</div>
+      <div class="hero-selector" id="heroSelect">
+        <button class="hero-btn" data-hero="ORACLE">ORACLE</button>
+        <button class="hero-btn" data-hero="ZEROX">ZEROX</button>
+        <button class="hero-btn" data-hero="NEXUS">NEXUS</button>
+        <button class="hero-btn" data-hero="PIKADON">PIKADON</button>
+        <button class="hero-btn" data-hero="TURTLE">TURTLE</button>
+        <button class="hero-btn" data-hero="QUILL">QUILL</button>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <div class="section-label">Pick Terrain</div>
+      <div class="terrain-grid" id="terrainSelect">
+        <button class="terrain-btn" data-terrain="grass">🟢 Grass</button>
+        <button class="terrain-btn" data-terrain="water">💧 Water</button>
+        <button class="terrain-btn" data-terrain="fire">🔥 Fire</button>
+        <button class="terrain-btn" data-terrain="ice">❄️ Ice</button>
+        <button class="terrain-btn" data-terrain="lava">🌋 Lava</button>
+        <button class="terrain-btn" data-terrain="void">🌌 Void</button>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <button class="launch-button" id="launchBtn">⚡ LAUNCH ARENA</button>
+    </div>
+
+    <div class="status-box">
+      <span class="status-label">Selected Hero:</span>
+      <span class="status-value" id="selectedHero">—</span>
+      <span class="status-label" style="margin-top: 8px;">Active Terrain:</span>
+      <span class="status-value" id="activeTerrain">—</span>
+    </div>
+
+    <div class="game-controls" id="gameControls" style="display: none; margin-top: 15px;">
+      <div class="section-label" style="grid-column: 1 / -1;">Game Controls</div>
+      <button id="attackBtn">⚔️ Attack</button>
+      <button id="jumpBtn">📈 Jump</button>
+      <button id="moveBtn">🚶 Move</button>
+      <button id="rollBtn">🔄 Roll</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="colosseum-polish.js"></script>
+  <script src="colosseum-ecs.js"></script>
+  <script src="colosseum-games.js"></script>
+  <script src="colosseum-characters-placeholder.js"></script>
+  <script>
+    // Game State
+    let gameState = {
+      selectedHero: null,
+      activeTerrain: null,
+      gameActive: false
+    };
+
+    let scene, camera, renderer, gameEngine;
+
+    // Initialize Three.js Scene
+    function initScene() {
+      const canvas = document.getElementById('canvas');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x001a33);
+
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+      camera.position.set(0, 20, 30);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+
+      // Build colosseum visuals
+      buildColosseum(scene);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+
+      const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+      sunLight.position.set(50, 50, 50);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 4096;
+      sunLight.shadow.mapSize.height = 4096;
+      scene.add(sunLight);
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    // Hero Selection
+    document.querySelectorAll('.hero-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.hero-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        gameState.selectedHero = btn.dataset.hero;
+        document.getElementById('selectedHero').textContent = gameState.selectedHero;
+      });
+    });
+
+    // Terrain Selection
+    document.querySelectorAll('.terrain-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.terrain-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        gameState.activeTerrain = btn.dataset.terrain;
+        document.getElementById('activeTerrain').textContent = gameState.activeTerrain.toUpperCase();
+
+        // Update terrain visuals in scene
+        updateTerrainVisuals(gameState.activeTerrain);
+      });
+    });
+
+    // Launch Game
+    document.getElementById('launchBtn').addEventListener('click', () => {
+      if (!gameState.selectedHero || !gameState.activeTerrain) {
+        alert('Select a hero and terrain first!');
+        return;
+      }
+
+      gameState.gameActive = true;
+      document.getElementById('gameControls').style.display = 'grid';
+      alert(`⚔️ Arena Launched!\n\nHero: ${gameState.selectedHero}\nTerrain: ${gameState.activeTerrain.toUpperCase()}\n\nReady to fight!`);
+    });
+
+    // Game Controls
+    document.getElementById('attackBtn').addEventListener('click', () => {
+      if (gameState.gameActive) {
+        console.log(`${gameState.selectedHero} attacks!`);
+      }
+    });
+
+    document.getElementById('jumpBtn').addEventListener('click', () => {
+      if (gameState.gameActive) {
+        console.log(`${gameState.selectedHero} jumps!`);
+      }
+    });
+
+    document.getElementById('moveBtn').addEventListener('click', () => {
+      if (gameState.gameActive) {
+        console.log(`${gameState.selectedHero} moves!`);
+      }
+    });
+
+    document.getElementById('rollBtn').addEventListener('click', () => {
+      if (gameState.gameActive) {
+        console.log(`${gameState.selectedHero} rolls!`);
+      }
+    });
+
+    // Update terrain visuals
+    function updateTerrainVisuals(terrain) {
+      switch(terrain) {
+        case 'grass':
+          scene.background = new THREE.Color(0x1a3a1a);
+          break;
+        case 'water':
+          scene.background = new THREE.Color(0x001a4d);
+          break;
+        case 'fire':
+          scene.background = new THREE.Color(0x4d1a00);
+          break;
+        case 'ice':
+          scene.background = new THREE.Color(0x1a3a4d);
+          break;
+        case 'lava':
+          scene.background = new THREE.Color(0x3a0000);
+          break;
+        case 'void':
+          scene.background = new THREE.Color(0x0a0a0a);
+          break;
+      }
+    }
+
+    // Initialize on load
+    window.addEventListener('load', initScene);
+  </script>
+</body>
+</html>

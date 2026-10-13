@@ -1034,6 +1034,15 @@
     <div id="banner" class="banner"></div>
   </div>
 
+  <!-- MORE GAMES — IN BETA (locked, password-gated) -->
+  <div class="beta-section" id="betaSection">
+    <h3 class="section-header">◆ MORE GAMES · <span class="beta-flag">IN BETA</span></h3>
+    <p class="beta-sub">Locked builds in active testing — enter the beta password to play. DM <a href="https://x.com/SHADDAIAI" target="_blank" rel="noopener noreferrer">@ShaddaiAI</a> for access.</p>
+    <div class="beta-grid" id="betaGrid">
+      <!-- tiles injected by JS -->
+    </div>
+  </div>
+
   <!-- PAGE FOOTER -->
   <footer class="page-footer">
     <div class="footer-links">
@@ -1047,10 +1056,25 @@
         <span class="fl-icon">⌥</span><span>GitHub</span>
       </a>
     </div>
-    <p class="footer-dm">DM for partnerships.</p>
+    <p class="footer-dm">DM for beta testing or partnerships.</p>
     <div class="footer-sep"></div>
     <p class="footer-copy">◈ SHADDAI — Agent Arcade</p>
   </footer>
+
+  <!-- BETA PASSWORD MODAL -->
+  <div id="betaModal" class="beta-modal" role="dialog" aria-modal="true" aria-label="Beta access">
+    <div class="beta-inner">
+      <button class="beta-close" id="btnBetaClose" aria-label="Close">✕</button>
+      <div class="beta-lock-emblem">🔒</div>
+      <h2>BETA ACCESS</h2>
+      <p id="betaGameName" class="beta-target">—</p>
+      <p class="beta-hint">This build is in private beta. Enter the access password to play.</p>
+      <input id="betaPassInput" class="beta-input" type="password" placeholder="Access password" autocomplete="off" spellcheck="false" />
+      <div id="betaError" class="beta-error"></div>
+      <button id="btnBetaUnlock" class="beta-unlock">▶ UNLOCK &amp; PLAY</button>
+      <p class="beta-dm">No password? DM <a href="https://x.com/SHADDAIAI" target="_blank" rel="noopener noreferrer">@ShaddaiAI</a> or <a href="https://t.me/ShaddaiCircle" target="_blank" rel="noopener noreferrer">@ShaddaiCircle</a> for beta testing.</p>
+    </div>
+  </div>
 
   <!-- HELP MODAL -->
   <div id="helpModal" class="help-modal" role="dialog" aria-modal="true" aria-label="SHADDAI Games Help">
@@ -1062,7 +1086,8 @@
       <p>SHADDAI Games lets you play arcade games alongside the SHADDAI agents. Each game has its own agent and team selection built in — pick your lineup once you're inside the game.</p>
 
       <h3>Status</h3>
-      <p>These games are actively being polished to match the 3D arcade. Expect new games, deeper agent skill integration, and ranked seasons. Your feedback shapes what we build next.</p>
+      <p><span class="beta-tag">● Actively Building — Beta</span></p>
+      <p>These games are actively in development and improving. Expect new games, deeper agent skill integration, and ranked seasons. Your feedback shapes what we build next.</p>
 
       <h3>How It Works</h3>
       <ul class="steps">
@@ -1070,6 +1095,9 @@
         <li><b>02 Play</b> — the game opens full-screen. Agent and team selection happens inside each game.</li>
         <li><b>Results</b> — scores and outcomes post back to this page automatically when a match finishes.</li>
       </ul>
+
+      <h3>More Games — In Beta</h3>
+      <p>XTO Adventure, SHADDAI Realms, and Soccer are locked beta builds. Click a locked cover and enter the beta password (or DM us for access) to play. Beta access resets on refresh.</p>
 
       <h3>Reach Out</h3>
       <p>Questions, bug reports, game ideas — find us here:</p>
@@ -1104,7 +1132,7 @@
       name:"SHADDAI Royale",
       genre:"CASINO · HIGH-STAKES 21",
       url:"/games/royale/index.html",
-      cover:"/assets/games/covers/blackjack.svg",
+      cover:"/assets/games/covers/blackjack.png",
       color:"#c9a227",
       glow:"rgba(201,162,39,0.5)",
       glowDim:"rgba(201,162,39,0.22)",
@@ -1117,7 +1145,7 @@
       name:"Gridiron",
       genre:"AGENT SPORT · 5v5",
       url:"/games/football.html",
-      cover:"/assets/games/covers/football.svg",
+      cover:"/assets/games/covers/football.png",
       color:"#ff2a2a",
       glow:"rgba(255,42,42,0.5)",
       glowDim:"rgba(255,42,42,0.2)",
@@ -1130,7 +1158,7 @@
       name:"Neon Hoops",
       genre:"ARCADE SPORT · 3v3",
       url:"/games/basketball.html",
-      cover:"/assets/games/covers/hoops.svg",
+      cover:"/assets/games/covers/hoops.png",
       color:"#ff9d3d",
       glow:"rgba(255,157,61,0.5)",
       glowDim:"rgba(255,157,61,0.2)",
@@ -1143,7 +1171,7 @@
       name:"Starfall",
       genre:"SHOOTER · WAVE DEFENSE",
       url:"/games/shaddai-shooting.html",
-      cover:"/assets/games/covers/starfall.svg",
+      cover:"/assets/games/covers/starfall.png",
       color:"#00f0ff",
       glow:"rgba(0,240,255,0.5)",
       glowDim:"rgba(0,240,255,0.2)",
@@ -1156,7 +1184,7 @@
       name:"Dodgeball",
       genre:"REFLEX · TEAM",
       url:"/games/dodgeball.html",
-      cover:"/assets/games/covers/dodgeball.svg",
+      cover:"/assets/games/covers/dodgeball.png",
       color:"#ff5db1",
       glow:"rgba(255,93,177,0.5)",
       glowDim:"rgba(255,93,177,0.2)",
@@ -1169,7 +1197,7 @@
       name:"Soccer",
       genre:"AGENT SPORT · 5v5",
       url:"/games/shaddai-soccer.html",
-      cover:"/assets/games/covers/soccer.svg",
+      cover:"/assets/games/covers/soccer.png",
       color:"#f5e000",
       glow:"rgba(245,224,0,0.5)",
       glowDim:"rgba(245,224,0,0.2)",
@@ -1182,26 +1210,46 @@
       name:"Dreamers Climb",
       genre:"PLATFORMER · CLIMB",
       url:"/games/dreamers-climb/index.html",
-      cover:"/assets/games/covers/dreamers-climb.svg",
+      cover:"/assets/games/covers/dreamers-climb.png",
       color:"#8a6aff",
       glow:"rgba(138,106,255,0.5)",
       glowDim:"rgba(138,106,255,0.22)",
       grad:"linear-gradient(160deg,#0a0018 0%,#1e0a3a 30%,#2a1466 60%,#0a0018 100%)",
       icon:"🪜",
       tagline:"Climb the dream, reach the sky"
+    }
+  ];
+
+  /* ============================================================
+     DATA — Beta games (locked, password-gated: SHADDAIGAMES)
+  ============================================================ */
+  var BETA_PASSWORD = "SHADDAIGAMES";
+  var BETA_GAMES = [
+    {
+      id:"xto-adventure",
+      name:"XTO Adventure",
+      genre:"ACTION · RPG",
+      url:"/games/xt-adventure.html",
+      cover:"/assets/games/covers/xto-adventure.png",
+      color:"#00ff88",
+      glow:"rgba(0,255,136,0.5)",
+      glowDim:"rgba(0,255,136,0.2)",
+      grad:"linear-gradient(160deg,#001408 0%,#003318 30%,#005530 60%,#001408 100%)",
+      icon:"🗡️",
+      tagline:"Blade through the unknown"
     },
     {
-      id:"white-house-accord",
-      name:"White House Accord",
-      genre:"SOCIAL · AURA · PRESS",
-      url:"/games/white-house-accord/index.html",
-      cover:"/assets/games/covers/white-house-accord.svg",
-      color:"#e8c96a",
-      glow:"rgba(232,201,106,0.5)",
-      glowDim:"rgba(232,201,106,0.22)",
-      grad:"linear-gradient(160deg,#0a0e1a 0%,#1a2236 30%,#3a2a14 60%,#0a0e1a 100%)",
-      icon:"🏛️",
-      tagline:"Work the room. Keep your aura. Survive the press."
+      id:"shaddai-realms",
+      name:"SHADDAI Realms",
+      genre:"STRATEGY · CONQUEST",
+      url:"/realms/",
+      cover:"/assets/games/covers/shaddai-realms.png",
+      color:"#f5e000",
+      glow:"rgba(245,224,0,0.5)",
+      glowDim:"rgba(245,224,0,0.2)",
+      grad:"linear-gradient(160deg,#100d00 0%,#2e2600 30%,#4a3e00 60%,#100d00 100%)",
+      icon:"◈",
+      tagline:"Build your empire"
     }
   ];
 
@@ -1230,6 +1278,7 @@
   var overlay          = $("overlay");
   var gameFrame        = $("gameFrame");
   var apiStatus        = $("apiStatus");
+  var betaGrid         = $("betaGrid");
 
   /* ============================================================
      HELPERS
@@ -1340,12 +1389,125 @@
   }
 
   /* ============================================================
+     BETA TILE BUILDER (locked, password-gated)
+  ============================================================ */
+  /* In-memory ONLY — intentionally NOT persisted, so a refresh re-locks. */
+  var betaUnlocked = false;
+  function isUnlocked(){ return betaUnlocked; }
+  function setUnlocked(){ betaUnlocked = true; }
+
+  function buildBetaTile(g){
+    var tile = document.createElement("div");
+    tile.className = "beta-tile";
+    tile.style.setProperty("--bt-accent", g.color);
+    tile.style.setProperty("--bt-grad",   g.grad);
+    tile.setAttribute("role","button");
+    tile.setAttribute("tabindex","0");
+    tile.setAttribute("aria-label", g.name + " — beta, locked");
+
+    var img = document.createElement("img");
+    img.className = "ct-img";
+    img.alt = g.name + " cover art";
+    img.loading = "lazy";
+    img.onload = function(){ img.classList.add("loaded"); tile.classList.add("img-loaded"); };
+    img.onerror = function(){ img.style.display = "none"; };
+    img.src = g.cover + "?v=agents2";
+
+    var ph = document.createElement("div");
+    ph.className = "ct-placeholder";
+    ph.innerHTML =
+      '<span class="ct-emblem" style="filter:drop-shadow(0 0 16px '+esc(g.color)+')">'+esc(g.icon)+'</span>'+
+      '<span class="ct-ph-name">'+esc(g.name)+'</span>';
+
+    var badge = document.createElement("div");
+    badge.className = "bt-badge";
+    badge.textContent = "BETA TEST";
+
+    var lock = document.createElement("div");
+    lock.className = "bt-lock";
+    lock.textContent = "🔒";
+
+    var tb = document.createElement("div");
+    tb.className = "bt-titlebar";
+    tb.innerHTML =
+      '<span class="bt-name">'+esc(g.name)+'</span>'+
+      '<span class="bt-genre">'+esc(g.genre)+'</span>'+
+      '<span class="bt-cta">🔒 Locked · Enter password</span>';
+
+    tile.appendChild(img);
+    tile.appendChild(ph);
+    tile.appendChild(badge);
+    tile.appendChild(lock);
+    tile.appendChild(tb);
+
+    function reflect(){
+      if(isUnlocked()){
+        tile.classList.add("unlocked");
+        tb.querySelector(".bt-cta").textContent = "▶ Play (beta)";
+      }
+    }
+    reflect();
+
+    function activate(e){
+      if(e && e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+      if(e && e.type === "keydown") e.preventDefault();
+      if(isUnlocked()){ launchGame(g); return; }
+      openBetaModal(g, reflect);
+    }
+    tile.addEventListener("click", activate);
+    tile.addEventListener("keydown", activate);
+    return tile;
+  }
+
+  /* ============================================================
+     BETA PASSWORD MODAL
+  ============================================================ */
+  var pendingBeta = null, pendingReflect = null;
+  function openBetaModal(g, reflectCb){
+    pendingBeta = g;
+    pendingReflect = reflectCb || null;
+    $("betaGameName").textContent = g.name.toUpperCase();
+    $("betaError").textContent = "";
+    var inp = $("betaPassInput");
+    inp.value = "";
+    $("betaModal").classList.add("show");
+    setTimeout(function(){ inp.focus(); }, 40);
+  }
+  function closeBetaModal(){
+    $("betaModal").classList.remove("show");
+    pendingBeta = null; pendingReflect = null;
+  }
+  function tryUnlock(){
+    var val = ($("betaPassInput").value || "").trim();
+    if(val.toUpperCase() === BETA_PASSWORD.toUpperCase()){
+      setUnlocked();
+      /* refresh all beta tiles' locked visuals */
+      renderBeta();
+      var g = pendingBeta;
+      closeBetaModal();
+      if(g) launchGame(g);
+    } else {
+      $("betaError").textContent = "✕ Incorrect password — DM @ShaddaiAI for access.";
+      var inp = $("betaPassInput");
+      inp.value = "";
+      inp.focus();
+    }
+  }
+
+  /* ============================================================
      RENDER
   ============================================================ */
   function renderFeatured(){
     coverGrid.innerHTML = "";
     FEATURED.forEach(function(g){
       coverGrid.appendChild(buildCoverTile(g));
+    });
+  }
+
+  function renderBeta(){
+    betaGrid.innerHTML = "";
+    BETA_GAMES.forEach(function(g){
+      betaGrid.appendChild(buildBetaTile(g));
     });
   }
 
@@ -1403,10 +1565,15 @@
         var apiId = fg.id === "hoops" ? "basketball" : (fg.id === "starfall" ? "shaddai-shooting" : fg.id);
         if(apiMap[apiId]) fg.url = apiMap[apiId].url;
       });
+      /* Update beta game URLs if the catalog knows better */
+      BETA_GAMES.forEach(function(bg){
+        if(apiMap[bg.id]) bg.url = apiMap[bg.id].url;
+      });
     }catch(e){
       setApiStatus(false);
     }
     renderFeatured();
+    renderBeta();
   }
 
   /* ============================================================
@@ -1420,10 +1587,22 @@
   helpModal.addEventListener("click",function(e){ if(e.target===helpModal) closeHelp(); });
 
   /* ============================================================
+     BETA PASSWORD MODAL WIRING
+  ============================================================ */
+  var betaModal = $("betaModal");
+  $("btnBetaClose").addEventListener("click", closeBetaModal);
+  $("btnBetaUnlock").addEventListener("click", tryUnlock);
+  betaModal.addEventListener("click", function(e){ if(e.target===betaModal) closeBetaModal(); });
+  $("betaPassInput").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ e.preventDefault(); tryUnlock(); }
+  });
+
+  /* ============================================================
      GLOBAL KEY
   ============================================================ */
   document.addEventListener("keydown",function(e){
     if(e.key==="Escape"){
+      if(betaModal.classList.contains("show")){ closeBetaModal(); return; }
       if(helpModal.classList.contains("show")){ closeHelp(); return; }
       if(overlay.classList.contains("show")) closeOverlay();
     }

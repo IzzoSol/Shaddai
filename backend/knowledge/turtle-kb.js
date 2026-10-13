@@ -373,7 +373,349 @@ const entries = [
     keys: ['dark mode design', 'dark mode', 'light mode', 'theming'],
     title: 'Dark Mode Design',
     text: 'Dark mode is not just inverted colors: avoid pure black and pure white, desaturate colors slightly (bright saturated hues vibrate on dark), and convey elevation with lighter surfaces rather than shadows. Reduce large white areas that cause glare, and re-check contrast, since ratios differ from light mode. Offer both themes and respect the OS preference.'
-  }
+  },
+
+  // ---------- VIDEO PERCEPTION & MOTION ----------
+  {
+    keys: ['contact sheet', 'contact sheets', 'video storyboard', 'storyboard from video', 'video overview'],
+    title: 'Contact Sheet as a Video Overview',
+    text: 'Before spending a frame budget on a video, build one contact-sheet montage: evenly spaced stills tiled into a single image. The agent spends one image to learn what the video looks like, whether deeper analysis is warranted, and where to look. It answers "what does this look like" at the cost of a thumbnail pass instead of a full extraction, and it doubles as the storyboard you hand a human. When you do not know where the interesting parts are, generate the contact sheet first and choose frames from it, not blindly by interval.'
+  },
+  {
+    keys: ['select frames', 'frame selection', 'extract frames', 'frame extraction', 'which frames', 'video frames', 'keyframe selection', 'sample frames from video'],
+    title: 'Selecting Frames Worth Looking At',
+    text: 'Never sample a video at a fixed interval when content varies — you get duplicates from static shots and missed cuts from fast ones. Select by content instead: deduplicate near-identical frames (SSIM), or key frames off optical-flow motion so still scenes are skipped and action-heavy ones sampled densely. Two useful signals are cumulative motion displacement and the survival ratio of tracked points; the second is a guardrail, because selecting frames after you have lost your tracks is exactly how you end up with redundant stills. Ask for a frame count when coverage is what matters, or set motion thresholds when explainability matters. Extract many, view few: plan with cheap signals, then show the agent only the chosen stills.'
+  },
+  {
+    keys: ['match art to a video', 'art that matches the video', 'make art from video', 'palette from a video', 'visual style from video'],
+    title: 'Making Art That Matches a Video',
+    text: 'Matching a output to a video needs two different readings. From the frames take the static qualities: dominant palette, contrast, grain, composition, focal lengths, and the mood those imply. From the timing take the dynamic qualities: cut points, beat grid, speech word-timings, and the pacing they imply. Frames alone cannot tell you when things happen and audio alone cannot tell you what it looks like — you need both, then you align the art to the beat grid while deriving its palette from representative stills. Start from a contact sheet to choose those stills, and burn the timecode into each one so ordering survives montage and re-arrangement.'
+  },
+  {
+    keys: ['beat sync', 'sync cuts to music', 'cuts to the beat', 'rhythm design', 'motion to music'],
+    title: 'Beat-Synced Motion Design',
+    text: 'To cut or animate on the beat, derive beat times as numbers, then map them to frames: cut_frames = round(beat_time * fps). Detect beats from the audio track, not the visuals — onset strength gives a shared envelope, tempo gives BPM, and beat tracking gives timestamps. Nudge onsets to the preceding energy minimum when they are being used as cut points rather than attack timings. Neither librosa nor beatlyzer detects downbeats, so derive them yourself (beat_times[i % 4] for 4/4) and state the assumption. Prefer landing within a frame or two of the beat over landing exactly on it if the alternative is a visible stutter.'
+  },
+  {
+    keys: ['burn timestamp', 'timestamp overlay', 'video timestamps', 'frame timestamps', 'timecode'],
+    title: 'Burning Timestamps into Frames',
+    text: 'Overlay the source timecode directly onto extracted frames rather than tracking it in a side-channel filename. Once frames are reordered, gridded, screenshotted into a montage, or passed between agents, the pixels still carry when each occurred and nothing has to be re-derived or kept in sync. This is the cheapest correctness guarantee in any frame-based pipeline: it costs a text draw at extraction time and removes an entire class of bookkeeping bugs when frames travel.'
+  },
+  {
+    keys: ['diagram legibility', 'diagram readability', 'diagram visual rules', 'diagram contrast', 'diagram readable'],
+    title: 'What Makes a Diagram Legible',
+    text: 'A shaddai-diagram card is legible when a viewer can trace any edge to its destination without hunting. The engine bakes in the rules: forward edges that run long route on lanes above the graph instead of through the middle columns, back edges run on a bottom lane, and same-column edges bend around the outside. Nothing overlaps by construction, labels wrap inside their node and a clipped label fails the browser gate, and the perceptual gate measures real pixels - title text must hold at least 4.5:1 contrast and the frame needs luminance spread (sd 8 or more) so an empty render can never pass. Cards are dark-first with the sh-ui accent green and a consistent kind-color language across client, frontend, backend, agent, database, security, tool and external - kept identical in light theme.'
+  },
+  {
+    keys: ['diagram legend', 'diagram kind colors', 'diagram color coding', 'diagram badges', 'diagram color language'],
+    title: 'Diagram Color Language and Legend',
+    text: 'Every shaddai-diagram uses one kind-color vocabulary so a viewer reads any card from its legend instead of from memory: clients and frontends are blues, backend and service are green and violet, agents are amber, databases and stores are pinks and reds, security is red, tools are yellow, externals are slate. The legend lists only the kinds actually present on the card. Region boundaries (directories, subsystems, phases) are dashed rounded boxes with uppercase mono labels, each node carries a small kind chip plus an icon when one matters, and edge style carries meaning - solid sync, dashed async, amber auth, red error. In the portfolio gallery the type badge distinguishes architecture, workflow, and sequence at a glance.'
+  },
+{
+  "keys": [
+    "drawing from scratch",
+    "start drawing",
+    "draw step by step",
+    "learn to draw",
+    "drawing method"
+  ],
+  "title": "Drawing from Scratch - the Order That Never Fails",
+  "text": "Drawing from zero is an ORDER, and the order is: GESTURE, STRUCTURE, PROPORTION, DETAIL. One: GESTURE - find the action line first, the single sweeping curve that carries the whole pose or object; draw it long, loose, and confident, with 30 seconds of life. Two: STRUCTURE - build from primitives on centerlines: egg for the skull, box for the torso, cylinders for the limbs; keep construction transparent so the far side is drawn too. Three: PROPORTION - measure with your pencil held at arm's length; the pencil is a ruler, and you can transfer any measurement onto it. Four: DETAIL - only when the block-in is right; detail never fixes structure. DRAW WHAT YOU SEE, NOT WHAT YOU KNOW: name each shape out loud as you draw it, because naming forces your eye to really look. Progress is a small loop repeated: big shapes, measure, refine, check, next. Never start a face by drawing an eye - start the head, then the eye belongs to it."
+},
+{
+  "keys": [
+    "human anatomy drawing",
+    "figure drawing",
+    "anatomy landmarks",
+    "draw human",
+    "draw face"
+  ],
+  "title": "Anatomy Made Drawable",
+  "text": "LEARN ANATOMY AS LANDMARKS AND MASSES, not a muscle chart. Figure proportion: 7.5 heads tall, shoulders 2 head-widths, elbows at the waist, wrists at the hip, hands to mid-thigh, crotch at the mid-point. GESTURE: weight goes on one leg (contrapposto is the heel of the pelvis slightly tilted toward the standing leg); the action line flows through neck-chest-hip-weight-foot. SIMPLIFIED MASSES: egg skull, bean-shaped ribcage, tilted pelvis, cylinders for limbs - twist between masses is what makes a pose alive. SILHOUETTE MUSCLES - the ones that actually change the outline: deltoid rounds the shoulder, pec marks under the collarbone, quads bulge above the knees (patella diamond between them), calf bulges high on the back of the lower leg, hamstring line splits the back thigh, traps slope from neck to shoulder, lats flare under the arms. FACE construction (Loomis method): ball plus jaw block, centerline curved in profile, eyes ON the vertical midpoint, brow on the upper third; an eye is a set of lids over a sphere, not a leaf shape; the mouth sits on a cylinder curve that turns WITH the head. Hands: palm is a box, knuckles a fan, thumb rides at the base joint, fingers are jointed tubes that curve toward the palm in rest."
+},
+{
+  "keys": [
+    "shading",
+    "values",
+    "light logic",
+    "core shadow",
+    "cast shadow",
+    "shading technique"
+  ],
+  "title": "Shading and Value Logic",
+  "text": "Light is a story with cast actors - KEEP THE CAST WHO YOU MUST: AMBIENT/KEY light decides everything: start by deciding ONE key light and one direction, then every form obeys it. Find FIVE values before you shade: paper, halftone, core shadow, cast shadow, deepest dark. FORM shadow is on the form, turning away from light; CAST shadow is thrown ONTO another surface by a form - cast shadows are the edge-darkest (occlusion contact) and they carry the shape of the thing that threw them. CORE shadow is the darkest strip ON the form just past the terminator; REFLECTED light is light bouncing back up into the shadow side - keep it DARKER than your halftone or the form reads as flat. OCCLUSION: wherever two surfaces touch, darken the contact line. Highlight sits where the surface faces the light most directly - on the round forms it is a small patch, not a streak. Value scale: work in NINE steps and never jump more than three in one pass. EDGES: hard edges at cast-shadow borders, soft edges in ambient occlusion and round-turning forms, LOST edges where two darks meet - hard/soft/lost is 3/4 of realism. TECHNIQUE: hatch follows form, cross-hatch for depth, blend late and only after flats read. RULE: block the big three (light, halftone, shadow) first - a correct big-block drawing beats a detailed wrong one."
+},
+{
+  "keys": [
+    "color theory drawing",
+    "color for artists",
+    "mixing skin tone",
+    "warm cool color",
+    "limited palette",
+    "atmospheric perspective"
+  ],
+  "title": "Color That Works on a Page",
+  "text": "Value first, hue second: if the grayscale of your painting reads, the color reads. Read ANY subject as THREE FAMILIES: light family, mid family, shadow family - push all your darks together and all your lights together, never one dark among lights. WARM-COOL LAW: warm light, cool shadow; cool light (window, overcast, moonlight), warm shadow - this law alone makes color credible. AMBIENT OCCLUSION in color: where surfaces touch, darken AND warm the contact a touch. Mixing SKIN: base tone plus a little red for the flush areas (cheeks, lips, ears, fingers), plus blue to slide into shadow, never straight black - black kills skin. Hair and cloth follow the same value logic: dark hair is darker shadows + a single light family, not an outline plus gray. LIMITED PALETTE trains your eye faster than any big box: try the Zorn palette (ivory black, white, vermilion, yellow ochre) - a whole portrait from four paints. ATMOSPHERIC PERSPECTIVE: distance desaturates, cools toward the ambient sky color, softens edges, lowers contrast - far mountains are pale lavender-blue. MOOD via light TEMPERATURE: golden hour warms everything and lengthens shadows; overcast is desaturated and shadow-light. Rule: temperature contrast does more work than saturation."
+},
+{
+  "keys": [
+    "draw materials",
+    "metal glass cloth drawing",
+    "draw hair skin",
+    "render materials",
+    "how things look",
+    "texture drawing"
+  ],
+  "title": "How Materials Actually Look",
+  "text": "Materials are LIGHT BEHAVIOR, memorize them as rules. METAL: mirrors its environment - a hard white highlight, very dark darks, and reflected shapes bent across the surface; value contrast is extreme. GLASS: you see THROUGH it, its content is background plus refraction, and its only solid marks are the rim highlights on the edges where light catches; keep glass thin, never freckle it with sparkles. CLOTH: folds hang from PINCH POINTS (a sleeve where the arm bends, a collar) and fall as spiral cones; tension straightens, looseness pools in bellows; render the big folds first, the fine wrinkles whisper late. SKIN: matte with a soft oil sheen on forehead/nose/lips; flush lives in cheeks, lips, ears, fingertips; blue-purple shows through at veins and temples; skin is translucent - shadows warm near the surface, cool in the creases. HAIR: draw the MASS first (a hair shape with a direction and a flow), then a few ribbons, then single strands only in the focal zone - hair is not a helmet and not a wire yard. WOOD: grain follows the form, knots are swirls; stain reads as long parallel tones. STONE/PLASTER: matte, low contrast, big soft shapes. Silicon-rubber trick of observers: FIVE SPOTS - lightest light, darkest dark, and three midtones placed so the eye travels - is enough to make anything read as real."
+},
+{
+  "keys": [
+    "design skills drawing",
+    "design fundamentals",
+    "silhouette design",
+    "shape hierarchy",
+    "line weight",
+    "style consistency"
+  ],
+  "title": "Using Drawing Skills in Real Design",
+  "text": "All drawing skill, engineering into design WORK. READABILITY: a design must read at postage-stamp size - silhouette first: refine the shape until the icon/character/logo is identifiable as pure black on white. SHAPE HIERARCHY: decide the ONE hero element, make it the largest or the highest-contrast, let every other element rank below it - that ranking IS the composition. THUMBNAILS BEFORE FINAL: for any page, card, diagram, or illustration, run 3-8 thumbnails and pick, never polish the first idea. LINE-WEIGHT grammar: outer contour thickest, interior detail thinnest third, shadow lines medium - a consistent weight system is what makes line art look professional. VALUE-BLOCK before color: do a grayscale flat study first; if it does not read in grayscale, color will not save it. STYLE GRAMMAR: pick ONE rendering level - line-art, flat color, semi-real, painterly - and stay inside it for a whole piece; mixing styles inside one image is the number-one amateur tell. COLOR SCRIPT: choose a mood palette per page (hero accent, surface neutrals, one warning color) and keep it consistent across all states. In the diagram engine these are the same rules: contrast for focal hierarchy, consistent kind-colors, silhouette-readable icons, value-ranked layouts - art fundamentals ARE design fundamentals."
+},
+{
+  "keys": [
+    "breast anatomy drawing",
+    "breast anatomy master",
+    "breasts chest",
+    "draw breasts",
+    "female figure"
+  ],
+  "title": "Master Breast Anatomy",
+  "text": "Breasts are teardrop masses on the pectoralis major, NOT spheres. Key: base wider than apex; inframammary fold (5th-6th rib) is the darkest value and defines the form; nipple on mound slightly lateral, pointing 20-30 degrees up/out; standing = upper pole concave, lower pole rounds; supine = falls laterally to axilla; axillary tail (Tail of Spence) extends to armpit; skin thin with radiating veins; areola 3-5cm darker. Drawing: ribcage box -> pec masses -> breast teardrop on top -> inframammary fold FIRST (darkest) -> nipple as cylinder -> model gradual turn chest wall to peak -> soft edges except fold. Errors: spheres, pointing nipples on flat, no fold, floating unattached, perfect circles."
+},
+{
+  "keys": [
+    "hip pelvis anatomy",
+    "hip drawing",
+    "pelvis landmarks",
+    "gluteal fold",
+    "greater trochanter",
+    "ASIS"
+  ],
+  "title": "Master Hip and Pelvis Anatomy",
+  "text": "Pelvis is the architectural center. Visible landmarks: ASIS (front hip corners, align horizontally), iliac crest (waist rim, top at waist level ~1 head above crotch), greater trochanter (widest femur, 1 hand below crest, outer hip bulge), pubic symphysis (bottom center, level with trochanters), gluteal fold (where maximus meets hamstring, 1/3 down buttock NOT at crotch), PSIS/dimples of Venus (sacrum top). Construction: pelvic bowl tilted forward 15 degrees, ASIS front, sacrum back, femurs insert at acetabulum. Gluteus maximus covers back/side, fold defines buttock form. Contrapposto: weight hip higher/compressed, free hip lower/stretched. Errors: cylinders, no ASIS, fold at crotch, femur at waist, symmetric hips in contrapposto."
+},
+{
+  "keys": [
+    "torso waist abdomen",
+    "ribcage pelvis connection",
+    "obliques drawing",
+    "abs drawing",
+    "costal arch"
+  ],
+  "title": "Master Torso Construction",
+  "text": "Torso = two boxes (rib cage egg 2 heads, pelvic bowl 1 head) connected by flexible waist cylinder (1-2 inches soft tissue). Rib cage: widest at 8th-9th rib (nipple line), costal arch (10th rib) flares as lower front rim. Pelvis: bowl tilted forward, ASIS front, PSIS back. Abdominals: rectus (6 bands pubis to sternum, linea alba), external obliques (diagonal straps ribs to iliac crest, interdigitate with serratus), flank tissue spills over iliac crest. Drawing: block masses -> centerline sternum to pubis -> waist cylinder -> oblique straps -> rectus bands -> costal arch rim. Breathing: rib cage expands laterally, waist thickens. Errors: fused ribcage/pelvis, flat abs, vertical obliques, ignored costal arch, untilted pelvis."
+},
+{
+  "keys": [
+    "figure drawing master",
+    "full body construction",
+    "figure pipeline",
+    "gesture structure proportion"
+  ],
+  "title": "Master Figure Construction Pipeline",
+  "text": "Complete pipeline: STAGE 0 INTENT (mood/weight/story in one sentence). STAGE 1 GESTURE (30-60s): action line head to weight foot, shoulder/hip opposite tilts, spine curve. STAGE 2 MASS BLOCK-IN (2-5min): head (Loomis ball+jaw), rib cage (egg tilted back), pelvis (bowl tilted forward), spine connects. STAGE 3 LIMBS: tapered cylinders on centerlines, joints as spheres, hands/feet as blocks. STAGE 4 LANDMARKS: every visible one (ASIS, iliac crest, trochanter, gluteal fold, costal arch, sternum, clavicles, acromion, olecranon, malleoli, patella, face landmarks). STAGE 5 MUSCLE MASSES: silhouette muscles only (deltoid, pec, lat, trap, abs, glutes, quads, hams, calves). STAGE 6 BREASTS (female): teardrop on pec, fold darkest, nipple cylinder. STAGE 7 HIPS: pelvis box, trochanter, gluteal fold 1/3 down. STAGE 8 LIGHT: one key light, 9 values, core/reflected/cast/occlusion, edge hierarchy. STAGE 9 COLOR: three zone map (cool forehead, warm cheeks, neutral jaw), subsurface glow at terminator. STAGE 10 MATERIALS: skin matte+sheen, hair mass->ribbons->strands, eyes lids over sphere. STAGE 11 FORESHORTENING: form pointing at you = shorter cross-section larger, centerline converges, joints as spheres, overlap decisive. STAGE 12 FINAL: silhouette, focal contrast, gesture alive, temperature zones."
+},
+{
+  "keys": [
+    "foreshortening figure",
+    "extreme angles",
+    "limb pointing at viewer",
+    "perspective body"
+  ],
+  "title": "Master Foreshortening",
+  "text": "Foreshortening = perspective on organic forms. Form pointing at you = SHORTER length, LARGER cross-section. Centerline converges to vanishing point FIRST. Joints become visible spheres (knee/elbow/shoulder balls). Overlap decisively - front occludes back. Hand/foot foreshortening: palm/sole faces you, block first, fingers/toes as converging cylinders. Torso: rib cage and pelvis as boxes/eggs in perspective, waist cylinder connects. Measure: foreshortened limb is 1/3 to 1/2 expected head height. Drill: cylinder in 1-point -> 2-point -> bent like limb -> egg (rib cage) + bowl (pelvis) in perspective. The body is bent primitives in perspective."
+},
+{
+  "keys": [
+    "shading master",
+    "light logic form",
+    "core shadow",
+    "reflected light",
+    "cast shadow",
+    "occlusion"
+  ],
+  "title": "Master Light on Form",
+  "text": "Four lights: 1 key (decides terminators), ambient/fill (softens, cool if key warm), reflected (bounces into shadow, ALWAYS darker than halftone, color = bounced surface), rim/backlight (separates form). Five values on sphere: highlight, light halftone, dark halftone, core shadow (darkest on form past terminator), reflected light. Cast shadow: umbra sharp, penumbra soft, antumbra faint, carries thrower shape. Occlusion: contact points = darkest. Edges: cast=hardest, terminator=firm, form turn=soft, occlusion=hard line, lost=two darks meet. Order: flat 3 families -> core shadows each mass -> reflected light -> cast shadows -> occlusion -> highlights last. Never render in isolation - forearm light depends on upper arm shadow."
+},
+{
+  "keys": [
+    "skin color master",
+    "skin temperature zones",
+    "subsurface scattering",
+    "Reilly zones",
+    "warm cool skin"
+  ],
+  "title": "Master Skin Color",
+  "text": "Skin = temperature zone map over translucent medium. Three zones (Reilly): COOL (forehead/temples/upper cheekbones) = base + blue/green; WARM (cheeks/nose/ears/chin/fingertips) = base + red/yellow; NEUTRAL/OLIVE (jawline/temple sides/neck) = base + raw umber/green. Subsurface: light penetrates, scatters in dermis, exits redder - at terminator add thin warm line (alizarin+transparent oxide red) between core and reflected. Veins: blue-green only thin skin (temples/wrists/inner arm) as glazes. Dark skin = high chroma, compressed value, SAME zones. Light temp: warm key -> cool shadows; cool key -> warm shadows. Master trick: grayscale underpainting first (values perfect), then glaze temperature zones thin."
+},
+{
+  "keys": [
+    "anime manga style",
+    "anime drawing",
+    "manga drawing",
+    "cel shading",
+    "anime proportions"
+  ],
+  "title": "Anime Manga Style Drawing",
+  "text": "Anime is a grammar with strict rules. PROPORTIONS: standard 7 heads (teens), 7.5 adults, chibi 2-3. Eyes = 1/4-1/3 face height at midline, spacing = one eye width. Nose = dot/small shadow, mouth = simple line. Jaw narrows to sharp chin (female) or boxier (male). LINE ART: single confident stroke, contour thick (2-3px), interior thin (0.5-1px), shadow medium. No sketch lines. CEL SHADING: 3 values max (base, shadow, highlight). Shadow = cool hue shift, graphic shape. Highlight = sharp geometric on hair/eyes/skin. NO gradients. HAIR: clumps as tapered wedges, highlight = zigzag band. EYES: base -> gradient -> pupil -> 2-3 highlights -> thick upper lash. WORKFLOW: thumb -> rough -> clean lineart -> flats -> cel shadows -> highlights -> screen tones."
+},
+{
+  "keys": [
+    "realistic portrait",
+    "hyperrealism",
+    "skin texture",
+    "subsurface scattering",
+    "portrait drawing"
+  ],
+  "title": "Realistic Portrait Mastery",
+  "text": "Realism = observation discipline. PROPORTIONS: same canon, but MEASURE everything - pupil to pupil, nose width = eye width, mouth corners at pupils. SKIN: do NOT draw pores individually. Texture impression: 1) perfect base values, 2) micro-variation 1-2 steps in halftones via stipple/fine cross-hatch/dry brush, 3) specular dots on oily zones, 4) peach fuzz = whisper strokes. SUBSURFACE: warm glaze (alizarin+transparent oxide red) at terminator. Veins = blue-green glazes at thin skin only. EYES: sclera = pale gray-blue, iris = concentric rings, cornea dome with highlight opposite light, lid thickness casts shadow. LIPS: vermillion border soft, upper darker, philtrum catches light, wet highlight lower center. HAIR: mass -> ribbons -> strands only at hairline/part. WORKFLOW: accurate block-in -> 5 value families -> render form by form -> micro-texture -> edge hierarchy."
+},
+{
+  "keys": [
+    "comic book style",
+    "graphic novel",
+    "inking",
+    "crosshatching",
+    "dynamic anatomy"
+  ],
+  "title": "Comic Book Graphic Novel Style",
+  "text": "Comics = clarity + drama. ANATOMY: heroic 8-8.5 heads, exaggerated (shoulders 3 heads, tiny waist) but STRUCTURE IS REAL. INKING: brush/nib. Line weight = depth + material. Contour thickest (3-5px), form medium (1-2px), texture thinnest (0.3-0.5px). Cast shadows = solid black shapes. FEATHERING: lines from black into midtone. CROSS-HATCH: parallel -> cross -> density = value. STIPPLING: dots for soft gradients. SHADOWS: high contrast, designed for composition. PANEL FLOW: establishing -> medium -> close-up -> extreme close-up. Z-pattern reading. COLOR: flats -> render -> atmosphere -> FX, limited palette per scene."
+},
+{
+  "keys": [
+    "stylized character design",
+    "shape language",
+    "silhouette",
+    "exaggeration",
+    "appeal"
+  ],
+  "title": "Stylized Character Design",
+  "text": "Style = intentional exaggeration with internal logic. SHAPE LANGUAGE: circle=friendly, square=stable, triangle=dangerous. Commit to ONE primary shape. SILHOUETTE TEST: fill black, readable at 1 inch. EXAGGERATION: pick 2-3 features to push (huge eyes, tiny nose, massive hands), rest grounded. PROPORTIONS: heroic 8.5 heads/3-head shoulders, cute 4-5 heads/huge head, grotesque distorted, fashion 9-10 heads. COLOR IDENTITY: 3-color max (hero, accent, neutral). TURNAROUNDS: front/3-4/side/back same proportions. APPEAL: asymmetry in expression, weight in pose (contrapposto even in cartoons)."
+},
+{
+  "keys": [
+    "advanced shading",
+    "rendering techniques",
+    "stippling",
+    "hatching",
+    "crosshatching",
+    "blending"
+  ],
+  "title": "Advanced Shading Techniques",
+  "text": "HATCHING FAMILIES: 1) PARALLEL - spacing=value, follows form. 2) CROSS-HATCH - 2nd layer 30-45 deg, 3rd near solid. 3) CONTOUR HATCH - wraps form (lat/long on sphere). 4) CONTOUR CROSS - lat + long. 5) BASKET WEAVE - alternating patches. 6) STIPPLING - dots, density=value, best for soft gradients. 7) SCUMBLING - scribbled circles, organic texture. 8) DRY BRUSH - drags on texture. 9) WASH - diluted tonal blocks. VALUE: 9-step scale, render sphere in each to same 5 values. EDGES: hard=crisp stop, soft=feather/fade, lost=same value adjacent. MATERIAL: metal=high contrast sharp, glass=minimal rim only, cloth=hatch follows fold, skin=stipple/fine contour, hair=ribbon hatch, stone=cross-hatch varied, water=horizontal broken reflections."
+},
+{
+  "keys": [
+    "lighting scenarios",
+    "key fill rim",
+    "Rembrandt",
+    "split",
+    "butterfly",
+    "golden hour",
+    "neon"
+  ],
+  "title": "Master Lighting Scenarios",
+  "text": "Light tells the story. 1) THREE-POINT: key 45/45 + fill opposite 1/2-1/4 + rim behind = clean professional. 2) REMBRANDT: key high 45 side, no fill, triangle on shadow cheek = dramatic. 3) SPLIT: key 90 side, half lit half shadow = duality. 4) LOOP: key above eye, small nose loop = flattering. 5) BUTTERFLY: key centered above, butterfly nose shadow = glamour. 6) UNDERLIGHTING: key from below = horror. 7) TOP LIGHT: deep sockets = harsh. 8) GOLDEN HOUR: low warm long shadows = romantic. 9) OVERCAST: soft wrap = subtle true color. 10) CANDLE: warm flicker high contrast = intimate. 11) NEON: colored keys (cyan/magenta), opposite rim, fog = synthetic. 12) AO ONLY: contact shadows only = flat graphic. Choose scenario that serves the EMOTION."
+},
+{
+  "keys": [
+    "perspective architecture",
+    "buildings drawing",
+    "cityscape",
+    "perspective grid",
+    "vanishing point"
+  ],
+  "title": "Perspective Architecture Drawing",
+  "text": "Buildings that stand. GRID FIRST: horizon=eye level. 1-point: corridors/frontal. 2-point: 99% buildings, verticals STAY VERTICAL. 3-point: looking up/down towers. ORDER: 1) horizon+VPs, 2) ground plane grid (measured squares), 3) building box (height from grid), 4) subdivide floors (horizontal to VPs), windows (vertical divisions), 5) details (doors/sills/cornices) all to SAME VPs. ELLIPSES: domes/towers/columns = circles in perspective, minor axis points to VP. REPEATING: measuring line method - draw one, project diagonals to center, replicate. INTERIORS: same grid, furniture boxes. SHADOWS: cast shadows project to VPs AND light source VP. CITYSCAPES: block masses first, atmospheric perspective (far=cooler/lighter/softer). ERRORS: verticals converging in 2-point, windows off VPs, inconsistent floors, ignored ellipse degrees."
+},
+{
+  "keys": [
+    "environment design",
+    "world building",
+    "mood composition",
+    "level design",
+    "atmospheric perspective"
+  ],
+  "title": "Environment Design World Building",
+  "text": "Worlds that feel real. COMPOSITION: foreground (frame) -> middleground (story) -> background (mood). Rule of thirds + golden spiral. VALUE STRUCTURE: 3-4 groups max. Foreground darkest, background lightest (atmospheric). SHAPE LANGUAGE: organic=peace, angular=threat, vertical=aspiration, horizontal=stability. PROPS AS STORY: coffee cup=someone was here, broken window=conflict. LIGHT AS CHARACTER: time/weather/season = protagonist. Fog=depth, rain=reflections, snow=silence. MATERIAL PALETTE: limit 5 materials, repeat with variation. LEVEL DESIGN: readable affordances, clear sightlines, landmarks, pacing (tight->open->tight). THUMBNAILS: 20+ in 30 min, pick 3, refine 1, value study, color script, final."
+},
+{
+  "keys": [
+    "anime manga mastery",
+    "anime skill",
+    "manga skill",
+    "cel shading skill"
+  ],
+  "title": "Anime Manga Mastery Skill",
+  "text": "Anime is a grammar: 7 heads standard, chibi 2-3, eyes 1/4-1/3 face at midline, one eye width apart. Line art: contour 2-3px, interior 0.5-1px, taper ends, no sketch lines. Cel shading: 3 values max (base/shadow/highlight), shadow = cool hue shift, hard edges, NO gradients. Hair: clumps as tapered wedges, highlight = zigzag band across clumps. Eyes: base->gradient->pupil->2-3 highlights->thick upper lash->sclera pale blue-gray. Clothing: sharp angular folds. Variants: Shonen (sharp/heavy), Shojo (soft/screen tones), Seinen (realistic), Moe (cute/round). Workflow: thumb->rough->clean lineart->flats->cel shadows->highlights->effects."
+},
+{
+  "keys": [
+    "realistic portrait mastery",
+    "hyperrealism skill",
+    "skin texture skill"
+  ],
+  "title": "Realistic Portrait Mastery Skill",
+  "text": "Realism = observation discipline. MEASURE: pupil-to-pupil unit, nose width=pupil distance, mouth corners at pupils, eyes at midline. SKIN: no individual pores - texture impression: 1) perfect 5-value base, 2) micro-variation 1-2 steps via stipple/fine cross-hatch/dry brush, 3) specular dots on oily zones, 4) peach fuzz whisper strokes. SUBSURFACE: warm glaze (alizarin+transparent oxide red) at terminator. Veins = blue-green glazes thin skin only. EYES: sclera pale gray-blue, iris concentric rings, cornea dome highlight opposite light, lid thickness casts shadow. LIPS: vermillion border soft, upper darker, philtrum columns catch light, wet highlight lower center. HAIR: mass->ribbons->strands only at hairline/part. Workflow: block-in->5 value families->render form by form->micro-texture->edge hierarchy."
+},
+{
+  "keys": [
+    "comic book skill",
+    "graphic novel skill",
+    "inking skill",
+    "crosshatching skill"
+  ],
+  "title": "Comic Book Graphic Novel Skill",
+  "text": "Clarity + Drama. ANATOMY: heroic 8-8.5 heads, shoulders 3 heads, structure real. INKING: brush/nib. Line weight = depth+material: contour 3-5px, form 1-2px, texture 0.3-0.5px, cast shadows SOLID BLACK. Feathering: lines from black into midtone. Cross-hatch: parallel->30-45 deg->density=value. Stippling: dots for gradients. SHADOWS: designed for composition, high contrast. PANELS: establishing->medium->close-up->extreme close-up, Z-pattern flow. SFX integrated into art. COLOR: flats->render->atmosphere->FX, limited palette. Dynamic poses: line of action, weight, twist, extension, follow-through."
+},
+{
+  "keys": [
+    "master shading techniques",
+    "advanced rendering",
+    "hatching stippling crosshatching"
+  ],
+  "title": "Master Shading Techniques Skill",
+  "text": "9 Hatching Families: 1) Parallel (flat planes), 2) Cross-Hatch (layers=deep shadows), 3) Contour Hatch (WRAPS form - ALL organic), 4) Contour Cross (lat+long grid), 5) Basket Weave (fabric), 6) Stippling (skin/soft gradients), 7) Scumbling (foliage/hair), 8) Dry Brush (charcoal/rough), 9) Wash (atmospherics). VALUE: 9-step, render sphere in EACH to same 5 values. EDGES: hard=crisp, soft=feather, lost=same value. MATERIAL: Metal=parallel+contour cross sharp reflections; Glass=minimal rim only; Cloth=contour follows fold; Skin=stipple/fine contour; Hair=ribbon hatch tapered; Stone=cross-hatch varied; Water=horizontal broken; Wood=parallel grain. WORKFLOW: flat 3 families->choose technique->core shadows->reflected light->cast shadows->occlusion->highlights last."
+},
+{
+  "keys": [
+    "master lighting scenarios",
+    "Rembrandt lighting",
+    "golden hour lighting",
+    "neon lighting"
+  ],
+  "title": "Master Lighting Scenarios Skill",
+  "text": "12 scenarios serving emotion: 1) Three-point (clean/pro) key 45/45 + fill 25-50% + rim. 2) Rembrandt (drama) key high 45 no fill, triangle on cheek. 3) Split (duality) 90 side half lit. 4) Loop (flattering) key above eye small nose loop. 5) Butterfly (glamour) centered above, butterfly nose shadow. 6) Underlighting (horror) from below. 7) Top light (harsh) deep sockets. 8) Golden hour (romance) low warm long shadows rim everywhere. 9) Overcast (truth) wrap soft shadowless. 10) Candle (intimate) point source warm flicker rapid falloff. 11) Neon (synthetic) colored keys cyan/magenta, opposite rim, volumetric fog. 12) AO only (graphic) contact shadows only. RULE: warm key->cool shadows; cool key->warm shadows. Choose scenario for the EMOTION."
+},
+{
+  "keys": [
+    "architectural perspective mastery",
+    "building perspective skill",
+    "cityscape drawing"
+  ],
+  "title": "Architectural Perspective Mastery Skill",
+  "text": "GRID FIRST: horizon=eye level. 1-point: corridors/frontal. 2-point: 99% buildings, VERTICALS STAY VERTICAL, 2 VPs on horizon. 3-point: up/down towers zenith/nadir VP. ORDER: 1) horizon+VPs, 2) ground grid (measured squares), 3) building box, 4) subdivide floors/windows to VPs, 5) details to SAME VPs. ELLIPSES: minor axis points to VP, degree=cosine angle to horizon. REPEATING: measuring line method - draw one, diagonal to center, project to next. SHADOWS: sun VP on horizon, shadow VP = sun projected to ground. CITYSCAPES: masses first, atmospheric (far=cooler/lighter/softer). ERRORS: verticals converging in 2-point, windows off VPs, inconsistent floors, guessed ellipse degrees."
+},
+{
+  "keys": [
+    "environment design",
+    "world building",
+    "level design",
+    "mood composition"
+  ],
+  "title": "Environment Design Mastery Skill",
+  "text": "Worlds that feel real. COMPOSITION: foreground(frame)->middleground(story)->background(mood). Rule of thirds + golden spiral. VALUE: 3-4 groups max, foreground darkest/background lightest. SHAPE LANGUAGE: organic=peace, angular=threat, vertical=aspiration, horizontal=stability. PROPS AS STORY: coffee cup=someone was here, broken window=conflict. LIGHT AS CHARACTER: time/weather/season=protagonist. Fog=depth, rain=reflections, snow=silence. MATERIAL PALETTE: limit 5, repeat with variation. LEVEL DESIGN: readable affordances, clear sightlines, landmarks, pacing (tight->open->tight). THUMBNAILS: 20+ in 30min, pick 3, refine 1, value study, color script, final."
+}
 ];
 
 function normalize(s) {
@@ -426,7 +768,8 @@ module.exports = {
   domains: [
     'color theory', 'color schemes', 'color psychology', 'palettes',
     'contrast & accessibility', 'typography', 'layout & UX principles',
-    'gestalt', 'design systems', 'design tokens', 'responsive design'
+    'gestalt', 'design systems', 'design tokens', 'responsive design',
+    'video perception', 'motion design', 'frame selection', 'visual analysis'
   ],
   entries,
   lookup

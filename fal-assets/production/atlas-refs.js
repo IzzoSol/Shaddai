@@ -23,9 +23,6 @@ window.ATLAS_REFS = {
  ],
  "ocean": [
   "refs/characters/crystal-sea-mecha-shark.jpg",
-  "refs/transit/transit-crystal-sea-dome-park.jpg",
-  "refs/transit/transit-crystal-sea-underwater-train.jpg",
-  "refs/transit/transit-crystal-sea-underwater-tube-city.jpg",
   "refs/world/crystal-sea-coastal-cliff-city.jpg",
   "refs/world/crystal-sea-dome-park.jpg",
   "refs/world/crystal-sea-farm-platforms.jpg",
@@ -36,9 +33,6 @@ window.ATLAS_REFS = {
  ],
  "arctic": [
   "refs/characters/dragon-blue-arctic.jpg",
-  "refs/transit/transit-arctic-aurora-city.jpg",
-  "refs/transit/transit-arctic-snow-canyon-city.jpg",
-  "refs/transit/transit-arctic-spiral-ice-city.jpg",
   "refs/world/arctic-aurora-city.jpg",
   "refs/world/arctic-mountain-tech-station.jpg",
   "refs/world/arctic-ringed-ice-city.jpg",
@@ -94,12 +88,6 @@ window.ATLAS_REFS = {
   "refs/world/meadow-walking-terrarium-pods.jpg",
   "refs/world/terraced-hills.jpg"
  ],
- "suburb": [
-  "refs/transit/transit-suburb-green-tower-boulevard.jpg",
-  "refs/world/suburb-giant-tree-road-b.jpg",
-  "refs/world/suburb-giant-tree-road.jpg",
-  "refs/world/suburb-green-tower-boulevard.jpg"
- ],
  "darkforest": [
   "refs/world/darkforest-green-cathedral-forest.jpg",
   "refs/world/darkforest-neon-swamp.jpg",
@@ -117,6 +105,11 @@ window.ATLAS_REFS = {
   "refs/world/wild-green-glow-cave.jpg",
   "refs/world/wild-overgrown-tank.jpg",
   "refs/world/wild-ring-portal-garden-city.jpg"
+ ],
+ "suburb": [
+  "refs/world/suburb-giant-tree-road-b.jpg",
+  "refs/world/suburb-giant-tree-road.jpg",
+  "refs/world/suburb-green-tower-boulevard.jpg"
  ],
  "void": [
   "refs/world/void-cloud-stair-tower.jpg",

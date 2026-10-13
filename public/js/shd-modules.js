@@ -129,7 +129,7 @@
       // work, see RAG_BRAIN_REBUILD memory) gets wired in here -- what this
       // door currently opens is NOT that, so it's gated shut rather than
       // left live showing the wrong thing.
-      gate: '4444',
+      gate: '9999',
       lockNote: 'The RAG Brain is being rebuilt right now — check back soon.'
     },
     {
@@ -282,7 +282,7 @@
        LAUNCH KIT  internal. Never belonged on a customer menu.
 
      PRO SIGNALS pointed at /pro-signals.html, which is the OLD page. The rebuilt
-     four-mode mobile one is /simple-signals.html. A stale link to a superseded page is
+     four-mode mobile one is /signals.html. A stale link to a superseded page is
      worse than a dead one, because it looks like it worked.
 
      The rule applied throughout: one idea per button, nothing that leads
@@ -321,12 +321,12 @@
       items: [
         /* Two honest surfaces, same live feed:
            SIMPLE (one-thumb, this entry) at /simple-signals.html and the full
-           desktop terminal at /simple-signals.html (list/bubbles/heatmap/ranked,
+           desktop terminal at /signals.html (list/bubbles/heatmap/ranked,
            tokenomics + hire ZEROX). */
         { id: 'pro', name: 'SIMPLE SIGNALS', accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html',
           blurb: 'One-thumb signals — heatmap, calls, top 25 DEX, ZEROX paybox. Swipe it.' },
         { id: 'tufish', name: 'TUFISH',      accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/tufish.html', blurb: 'Sentiment swimmer — scan coins & topics, the fish glows green/red (fal.ai visuals).' },
-        { id: 'swarm', name: 'SWARM',       accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/simple-signals.html#swarm', blurb: 'MiroFish — the 7-agent swarm terminal, inside the Master Terminal (PIN 4444).' },
+        { id: 'swarm', name: 'SWARM',       accent: C.emerald, art: '/assets/nav/markets.jpg', href: '/signals.html#swarm', blurb: 'MiroFish — the 7-agent swarm terminal, inside the Master Terminal (PIN 4444).' },
       ],
     },
     {
@@ -366,8 +366,10 @@
       id: 'brain', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg',
       blurb: 'Ask the library. Every answer cited to its source.',
       items: [
-        { id: 'brain-main', name: 'THE BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag',
-          blurb: 'One brain: ask, see the agent, read the sources — 2D or 3D.' },
+        { id: 'brain-classic', name: 'RAG BRAIN', accent: C.emerald, art: '/assets/nav/brain.jpg', href: '/rag',
+          blurb: 'The readable view — ask, read the answer, see the tools, models and wallets.' },
+        { id: 'brain-3d',      name: '3D BRAIN', accent: C.gold,    art: '/assets/nav/brain.jpg', href: '/brain.html',
+          blurb: 'The same library, rendered — see which regions an answer came from.' },
       ],
     },
     {

@@ -398,6 +398,68 @@ function _payCard() {
   return '💠 <b>SHADDAI TEMPLE — free + paid</b>\n━━━━━━━━━━━━━━━\n\n<b>Free every day:</b>\n• /signals · /price · /rug · /news — live markets\n• /music — procedural tracks by TURTLE\n• /menu — browse the 7 sections\n• <b>3</b> deep agent answers (ORACLE, TURTLE, NEXUS…)\n\n<b>Paid onchain:</b>\n• Unlimited agent runs with real tools (/check, /design, /zerox)\n• Hire ZEROX on <a href="' + ref + '">Virtuals</a> — escrow-protected jobs\n• USDC via x402 pay-per-call rails\n\n<i>The free taste is real. The paid Temple is deep.</i>';
 }
 
+// AURA BRAIN — teach the agents from a URL (/learn) + inspect their boxes (/boxes).
+// Backed by /api/aura-brain (Jina -> Firecrawl -> bundled ingest, per-box TF-IDF).
+// Identity: softAuth reads x-user-id (non-prod), so each chat keeps its own boxes.
+async function _auraLearn(t, chatId, cfg, arg) {
+  const parts = String(arg || '').trim().split(/\s+/).filter(Boolean);
+  const url = parts[0] || '';
+  const box = parts[1] || '';
+  if (!/^https?:\/\//i.test(url)) {
+    return _send(t, chatId, '📖 <b>Teach the agents</b>\n\nSend a URL and it gets chunked into a labeled knowledge box the brains answer from.\n\n<code>/learn https://docs.shaddai.xyz</code>\n<code>/learn https://example.com/post nexus</code>\n\n<i>Second word = box name. Daily free quota applies.</i>');
+  }
+  await _send(t, chatId, '📖 Ingesting <code>' + _esc(url) + '</code>…');
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/aura-brain/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': 'tg-' + chatId, 'X-Telegram-User-Id': String(chatId) },
+      body: JSON.stringify({ url, box: box || undefined }),
+      signal: AbortSignal.timeout(60000),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 402) return _send(t, chatId, '🔒 <b>Ingest quota used up for today.</b>\n\n<code>/pay</code> keeps the teaching flowing — or come back tomorrow.');
+    if (r.status === 403) return _send(t, chatId, '🛡 PIKADON blocked that URL — it points somewhere unsafe or private.\n<i>' + _esc(String(j.error || 'blocked')).slice(0, 300) + '</i>');
+    if (!r.ok || j.ok === false) return _send(t, chatId, '⚠️ Ingest failed — <i>' + _esc(String(j.error || 'nothing readable on that page')).slice(0, 300) + '</i>');
+    const q = j.quota || {};
+    return _send(t, chatId,
+      '✅ <b>Learned.</b>\n━━━━━━━━━━━━━━━\n' +
+      '📦 Box: <b>' + _esc(j.box || box || 'default') + '</b>\n' +
+      '🧵 ' + (j.chunks || 0) + ' chunks from <code>' + _esc(String(j.title || url)).slice(0, 80) + '</code>\n' +
+      '⚖️ Quota: ' + (q.left != null ? q.left + '/' + q.cap : 'n/a') + ' left today\n\n' +
+      'Ask it: <code>/ask what did I just teach you?</code> · see all: <code>/boxes</code>');
+  } catch (e) {
+    return _send(t, chatId, '⚠️ Ingest unreachable — the backend API did not answer. Try again shortly.');
+  }
+}
+
+async function _auraBoxes(t, chatId, cfg) {
+  try {
+    const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/aura-brain/boxes', {
+      headers: { 'X-User-Id': 'tg-' + chatId, 'X-Telegram-User-Id': String(chatId) },
+      signal: AbortSignal.timeout(20000),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.ok === false) return _send(t, chatId, '⚠️ Box registry unavailable — try again shortly.');
+    const boxes = j.boxes || [];
+    const q = j.quota || {};
+    const head = '📚 <b>AURA KNOWLEDGE BOXES</b>\n━━━━━━━━━━━━━━━\n' +
+      (q.left != null ? '⚖️ Ingest quota: ' + q.left + '/' + q.cap + ' left today\n' : '');
+    if (!boxes.length) {
+      return _send(t, chatId, head + '\n<i>No boxes yet — the brains are running on built-in knowledge only.</i>\n\nTeach them: <code>/learn https://your-favorite-docs-url</code>');
+    }
+    const line = (b) =>
+      '<b>' + _esc(String(b.title || b.slug || b.boxId).slice(0, 60)) + '</b>' +
+      ' · ' + _esc(String(b.boxId).slice(0, 48)) + '\n' +
+      '  🧵 ' + (b.chunkCount || 0) + ' chunks · ' + _esc(String(b.visibility || '?')) +
+      ' · updated ' + _esc(String(b.updatedAt || '').slice(0, 10)) + '\n';
+    return _send(t, chatId, (head + '\n' + boxes.slice(0, 20).map(line).join('') +
+      (boxes.length > 20 ? '\n…and ' + (boxes.length - 20) + ' more\n' : '') +
+      '\nAsk them: <code>/ask &lt;question&gt;</code> · add more: <code>/learn &lt;url&gt;</code>').slice(0, 3900));
+  } catch (e) {
+    return _send(t, chatId, '⚠️ Box registry unreachable — the backend API did not answer. Try again shortly.');
+  }
+}
+
 // Grounded brain answers (RAG) — the free taste. 402 = quota used → nudge.
 async function _brain(t, chatId, cfg, agent, q, k) {
   if (!q) return _send(t, chatId, 'Usage: /' + String(agent).toLowerCase() + ' &lt;your question&gt;');
@@ -1160,6 +1222,8 @@ case 'stats': case 'scorecard': { const per = /week/i.test(arg) ? 'week' : /mont
 // ── Telegram long-polling loop ─────────────────────────────────────────────
 async function _getUpdates(token, offset) {
   const r = await fetch(TG(token, 'getUpdates') + `?timeout=30&offset=${offset}`, { signal: AbortSignal.timeout(40000) });
+  if (r.status === 409) { await _sleep(15000); return []; }   // another poller on this token — back off, don't spin
+  if (!r.ok) { await _sleep(5000); return []; }
   const j = await r.json();
   return (j && j.result) || [];
 }
@@ -1254,6 +1318,24 @@ async function _registerCommands(token) {
   }
 }
 
+// getUpdates poll lock — ONLY ONE process may long-poll this token.
+// Two pollers on one token = Telegram answers 409 and updates get dropped.
+const _POLL_LOCK = require('path').join(__dirname, 'data', 'tg-poll-lock.json');
+const _POLL_LOCK_ID = 'pl-' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
+let _pollHb = null;
+function _acquirePollLock() {
+  try {
+    const fs = require('fs');
+    let cur = null;
+    try { cur = JSON.parse(fs.readFileSync(_POLL_LOCK, 'utf8')); } catch (e) {}
+    if (cur && cur.id !== _POLL_LOCK_ID && (Date.now() - (cur.ts || 0)) < 90000) return false;
+    fs.writeFileSync(_POLL_LOCK, JSON.stringify({ id: _POLL_LOCK_ID, ts: Date.now() }));
+    if (!_pollHb) _pollHb = setInterval(() => { try { fs.writeFileSync(_POLL_LOCK, JSON.stringify({ id: _POLL_LOCK_ID, ts: Date.now() })); } catch (e) {} }, 30000);
+    if (_pollHb.unref) _pollHb.unref();
+    return true;
+  } catch (e) { return true; } // fail-open: lock unwritable -> still poll
+}
+
 let _running = false;
 async function _loop() {
   const cfg = _cfg();
@@ -1263,7 +1345,13 @@ async function _loop() {
     try {
       const updates = await _getUpdates(cfg.token, offset);
       fails = 0;
-      for (const u of updates) { offset = u.update_id + 1; _handle(_cfg(), u).catch(() => {}); }
+      for (const u of updates) {
+        offset = u.update_id + 1;
+        _handle(_cfg(), u).catch((e) => {
+          const c = u && u.message && u.message.text ? String(u.message.text).slice(0, 40) : '?';
+          console.warn('[tg-bot] handler threw for', JSON.stringify(c), '—', e && (e.stack || e.message) || e);
+        });
+      }
     } catch (e) { fails++; await _sleep(Math.min(30000, 2000 * fails)); }
   }
 }
@@ -1272,6 +1360,7 @@ function startTelegramBot() {
   const cfg = _cfg();
   if (!cfg.token) { console.log('[tg-bot] disabled — set TELEGRAM_BOT_TOKEN to enable.'); return; }
   if (_running) return;
+  if (!_acquirePollLock()) { console.log('[tg-bot] another process already long-polls getUpdates - command bot not started here (prevents 409).'); return; }
   _running = true;
   console.log('[tg-bot] ENABLED — /lb /pnl /price /rug /preset /ask /stats /dist /signals /gm');
   _loop().catch(e => { console.warn('[tg-bot] loop ended:', e && e.message); _running = false; });

@@ -1,4 +1,13 @@
 {
+  "shaddai-threejs-gamedev": {
+    "license": "SHADDAI (own)",
+    "origin": "SHADDAI (own)",
+    "files": 71,
+    "sections": 77,
+    "bytes": 221480,
+    "skippedOverCap": 0,
+    "ingestedAt": "2026-10-01T21:23:26.486Z"
+  },
   "motion-studio": {
     "license": "SHADDAI (own)",
     "origin": "Reel Forge — original",
@@ -10,11 +19,11 @@
   },
   "game-forge": {
     "license": "SHADDAI (own)",
-    "origin": "SHADDAI Game Forge",
-    "files": 82,
-    "sections": 89,
-    "bytes": 266453,
+    "origin": "Game Forge — original",
+    "files": 24,
+    "sections": 24,
+    "bytes": 62205,
     "skippedOverCap": 0,
-    "ingestedAt": "2026-10-01T22:48:53.894Z"
+    "ingestedAt": "2026-10-01T20:50:14.336Z"
   }
 }

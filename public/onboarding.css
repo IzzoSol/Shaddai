@@ -128,10 +128,3 @@
   border: 1px solid rgba(0,240,255,.45) !important; color: #00f0ff !important;
 }
 #hhPowerBtn:hover { background: rgba(0,240,255,.9) !important; color: #001318 !important; }
-
-/* v101.3: always-visible way out */
-#shdOb-modal{ position:relative; }
-#shdOb-modal .shd-ob-x{ position:sticky; top:0; float:right; z-index:3; width:36px; height:36px; margin:-6px -6px 0 0;
-  border:1px solid rgba(0,255,156,.35); border-radius:50%; background:rgba(2,8,18,.9); color:#cfe; font-size:22px; line-height:1; cursor:pointer; }
-#shdOb-modal .shd-ob-x:hover{ background:#00ff9c; color:#04120c; }
-#shdOb-foot{ position:sticky; bottom:-1px; padding:12px 0 4px; background:linear-gradient(180deg,transparent,rgba(2,8,18,.96) 30%); z-index:2; }

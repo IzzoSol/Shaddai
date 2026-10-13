@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const FILE = process.env.SHADDAI_OPERATIVES_FILE || path.join(__dirname, '..', 'data', 'operatives.json');   // env override = test isolation
+const FILE = path.join(__dirname, '..', 'data', 'operatives.json');
 
 function load() {
   try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); }

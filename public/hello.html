@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      padding: 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>✓ HTML PAGE LOADED</h1>
+  <p>If you see this green text, the HTML is working.</p>
+  <p>Click buttons below:</p>
+  <button onclick="alert('Button works!')">Click Me</button>
+  <hr>
+  <p>Now trying Three.js...</p>
+  <div id="canvas" style="width: 100%; height: 500px; background: #111; border: 2px solid #0f0;"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/build/three.min.js"></script>
+  <script>
+    document.write('<p>Three.js loaded: ' + (typeof THREE !== "undefined" ? 'YES' : 'NO') + '</p>');
+  </script>
+</body>
+</html>

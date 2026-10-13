@@ -301,35 +301,9 @@
       cap.position.y = 0.28;
       group.add(cap);
 
-      if (isElev) group.add(_capsuleShell());   // glass capsule cab (owner ref 2026-10-03: chrome + glass pods, warm gold light)
-
       group.position.set(wx, gy, wz);
       scene.add(group);
       return { group: group, rim: rim, halo: halo };
-    }
-
-    // Glass capsule cab: one lathe (wall + dome) in glass, a chrome base collar and a gold crown band — 3 draws, shared
-    // geometry/materials across every lift, no extra lights (the gold band is emissive).
-    var _capGeo = null;
-    function _capsuleShell() {
-      if (!_capGeo) {
-        var R = 4.05, H = 8.6, pts = [], i;
-        for (i = 0; i <= 1; i++) pts.push(new THREE.Vector2(R, 0.3 + i * (H - 0.3)));
-        for (i = 1; i <= 10; i++) { var a = i / 10 * Math.PI / 2; pts.push(new THREE.Vector2(Math.max(0.01, R * Math.cos(a)), H + R * 0.55 * Math.sin(a))); }
-        _capGeo = {
-          glass: new THREE.LatheGeometry(pts, 40),
-          collar: new THREE.TorusGeometry(R + 0.12, 0.28, 10, 48),
-          crown: new THREE.TorusGeometry(R + 0.05, 0.16, 8, 48),
-          mGlass: new THREE.MeshStandardMaterial({ color: 0xcfe9ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }),
-          mChrome: new THREE.MeshStandardMaterial({ color: 0xd8dde3, metalness: 1.0, roughness: 0.18 }),
-          mGold: new THREE.MeshStandardMaterial({ color: 0x2a1e08, emissive: 0xe8c45c, emissiveIntensity: 1.6 })
-        };
-      }
-      var g = new THREE.Group(); g.name = 'lift-capsule';
-      var glass = new THREE.Mesh(_capGeo.glass, _capGeo.mGlass); glass.renderOrder = 2; g.add(glass);
-      var collar = new THREE.Mesh(_capGeo.collar, _capGeo.mChrome); collar.rotation.x = Math.PI / 2; collar.position.y = 0.32; g.add(collar);
-      var crown = new THREE.Mesh(_capGeo.crown, _capGeo.mGold); crown.rotation.x = Math.PI / 2; crown.position.y = 8.6; g.add(crown);
-      return g;
     }
 
     // ── ENERGY COLUMN BUILDER (vertical elevators only) ───────────────────
@@ -1257,8 +1231,11 @@
         archGlow.rotation.y = -ang + Math.PI / 2;
         archGlow.position.set(px, R * 0.92, pz);
         _plaza.add(archGlow);
-        // PERF 2026-10-04: the dim per-arch PointLights are gone — each one taxed every lit material world-wide for a
-        // barely-visible 0.5-intensity pool; the emissive archGlow ring above carries the look.
+        if (ri % 2 === 1) {
+          var lp = new THREE.PointLight(colorHex, 0.5, 44, 2);
+          lp.position.set(px, 4.5, pz);
+          _plaza.add(lp);
+        }
       }
     }
 
@@ -1694,14 +1671,6 @@
             playerPos.y += ddy;
             ridingElev = true;
             _ridingElevY = p.curPos.y;
-            // CAPSULE WALL (owner 2026-10-03: "you can walk off the elevator and float"): between floors the cab is
-            // closed — keep the rider inside the pad; stepping out is only possible once it is parked at a floor.
-            var _sy = p.stops || [p.lowY, p.highY], _parked = false;
-            for (var _sk = 0; _sk < _sy.length; _sk++) if (Math.abs(p.curPos.y - _sy[_sk]) < 0.35) { _parked = true; break; }
-            if (!_parked) {
-              var _cr = Math.min(3.5, Math.sqrt(p.padR2) * 0.85), _cx = playerPos.x - p.curPos.x, _cz = playerPos.z - p.curPos.z, _cd = Math.sqrt(_cx * _cx + _cz * _cz);
-              if (_cd > _cr) { playerPos.x = p.curPos.x + _cx / _cd * _cr; playerPos.z = p.curPos.z + _cz / _cd * _cr; }
-            }
           }
           // Transit pods: only XZ — they hover at constant height, Y unchanged
 

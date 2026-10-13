@@ -1,21 +1,31 @@
 {
   "reasons": {
     "low_rug_score": {
-      "count": 57,
-      "avgCurMult": 1.19,
+      "count": 342,
+      "avgCurMult": 1.07,
       "sources": {
-        "boosted": 57
+        "boosted": 342
       }
     },
     "no_holders": {
-      "count": 2,
-      "avgCurMult": 1.35,
+      "count": 4,
+      "avgCurMult": 1.3,
       "sources": {
-        "trending_pools": 2
+        "boosted": 1,
+        "trending_pools": 3
       }
     }
   },
-  "bySource": {},
+  "bySource": {
+    "pipeline": {
+      "rug score 1 < 60": 42,
+      "rug score 32 < 60": 4,
+      "rug score 50 < 60": 3,
+      "rug score 33 < 60": 3,
+      "rug score 29 < 60": 7,
+      "rug score 39 < 60": 2
+    }
+  },
   "byFdv": {},
-  "lastUpdated": 1789917022267
+  "lastUpdated": 1791856577737
 }

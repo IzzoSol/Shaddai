@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ SHADDAI Colosseum Arena Master</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: linear-gradient(135deg, #1a0033 0%, #06080b 50%, #001a33 100%);
+      color: #00ff9c;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .viewport { flex: 1; position: relative; background: #000; border-radius: 8px; overflow: hidden; }
+
+    .controls {
+      width: 380px;
+      background: rgba(6, 8, 11, 0.95);
+      border: 2px solid #00ff9c;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 0 0 40px rgba(0, 255, 156, 0.3);
+    }
+
+    .controls::-webkit-scrollbar { width: 8px; }
+    .controls::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 4px; }
+    .controls::-webkit-scrollbar-thumb { background: #00ff9c; border-radius: 4px; }
+    .controls::-webkit-scrollbar-thumb:hover { background: #00ff9c; }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px #00ff9c;
+      border-bottom: 2px solid #00ff9c;
+      padding-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 14px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #e8c45c;
+      text-transform: uppercase;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(0, 255, 156, 0.05);
+      border: 1px solid rgba(0, 255, 156, 0.2);
+      border-radius: 4px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .button-grid.full { grid-template-columns: 1fr; }
+
+    button {
+      padding: 10px;
+      background: rgba(0, 255, 156, 0.1);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    button:hover {
+      background: rgba(0, 255, 156, 0.3);
+      box-shadow: 0 0 15px rgba(0, 255, 156, 0.5);
+    }
+
+    button.active {
+      background: #00ff9c;
+      color: #06080b;
+      font-weight: bold;
+    }
+
+    button.danger {
+      border-color: #ff3333;
+      color: #ff3333;
+    }
+
+    button.danger:hover {
+      background: rgba(255, 51, 51, 0.3);
+      box-shadow: 0 0 15px rgba(255, 51, 51, 0.5);
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0, 255, 156, 0.1);
+      font-size: 12px;
+    }
+
+    .stat:last-child { border-bottom: none; }
+
+    .value {
+      color: #e8c45c;
+      font-weight: bold;
+    }
+
+    .event-log {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #00ff9c;
+      border-radius: 4px;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+
+    .event {
+      color: #00ff9c;
+      margin-bottom: 5px;
+      padding: 3px;
+      border-left: 2px solid #00ff9c;
+      padding-left: 8px;
+    }
+
+    .event.action { color: #00ff9c; }
+    .event.terrain { color: #00aaff; }
+    .event.mode { color: #ffaa00; }
+
+    select {
+      width: 100%;
+      padding: 8px;
+      background: rgba(0, 255, 156, 0.1);
+      border: 1px solid #00ff9c;
+      color: #00ff9c;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px !important;
+      font-size: 10px !important;
+    }
+
+    .info-box {
+      background: rgba(0, 100, 150, 0.1);
+      border-left: 3px solid #00aaff;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .title-banner {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      text-shadow: 0 0 30px #00ff9c;
+      margin-bottom: 5px;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      text-align: center;
+      color: #e8c45c;
+      margin-bottom: 15px;
+    }
+
+    .coming-soon {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="viewport">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="title-banner">⚔️ COLOSSEUM</div>
+      <div class="subtitle">AI Agent Arena Battles & Games</div>
+
+      <!-- GAME LAUNCHER -->
+      <div class="section">
+        <h2>🎮 Launch Game</h2>
+
+        <label style="display: block; margin-bottom: 5px; font-size: 11px;">Game Mode:</label>
+        <select id="gameModeSelect">
+          <option value="">Select game mode...</option>
+          <option value="combat">⚔️ Arena Combat</option>
+          <option value="king_of_hill">👑 King of the Hill</option>
+          <option value="capture_flag">🚩 Capture the Flag</option>
+          <option value="parkour">🏃 Parkour Challenge</option>
+          <option value="pole_vault">🎯 Pole Vault Sprint</option>
+          <option value="dodgeball">🎱 Dodgeball Arena</option>
+          <option value="lava_survival">🔥 Lava Survival</option>
+          <option value="ice_puzzle">❄️ Ice Slide Puzzle</option>
+          <option value="void_jump">🌌 Void Jump</option>
+        </select>
+
+        <label style="display: block; margin-bottom: 5px; font-size: 11px;">Terrain:</label>
+        <select id="terrainSelect">
+          <option value="">Select terrain...</option>
+          <option value="grass">🟢 Grass Arena</option>
+          <option value="water">💧 Water World</option>
+          <option value="fire">🔥 Inferno</option>
+          <option value="ice">❄️ Frozen Tundra</option>
+          <option value="sand">🏜️ Dune Wastes</option>
+          <option value="lava">🌋 Lava Chambers</option>
+          <option value="void">🌌 Void Portal</option>
+          <option value="crystal">💎 Crystal Realm</option>
+        </select>
+
+        <div class="button-grid full">
+          <button id="launchBtn" onclick="launchGame()">⚡ LAUNCH GAME</button>
+          <button id="randomBtn" onclick="randomGame()">🎲 RANDOM MATCH</button>
+        </div>
+
+        <div id="gameStatus" class="info-box" style="display: none;"></div>
+      </div>
+
+      <!-- TERRAIN CONTROL -->
+      <div class="section">
+        <h2>🌍 Mid-Game Terrain Switch</h2>
+        <div class="button-grid">
+          <button onclick="changeTerrain('grass')">Grass</button>
+          <button onclick="changeTerrain('water')">Water</button>
+          <button onclick="changeTerrain('fire')">Fire</button>
+          <button onclick="changeTerrain('ice')">Ice</button>
+          <button onclick="changeTerrain('sand')">Sand</button>
+          <button onclick="changeTerrain('lava')">Lava</button>
+          <button onclick="changeTerrain('void')">Void</button>
+          <button onclick="changeTerrain('crystal')">Crystal</button>
+        </div>
+      </div>
+
+      <!-- OBSTACLES & HAZARDS -->
+      <div class="section">
+        <h2>🏗️ Arena Obstacles</h2>
+        <div class="button-grid full">
+          <button onclick="generateObstacles('light')">Light (3)</button>
+          <button onclick="generateObstacles('moderate')">Moderate (6)</button>
+          <button onclick="generateObstacles('heavy')">Heavy (12)</button>
+          <button onclick="generateObstacles('extreme')">Extreme (20)</button>
+        </div>
+      </div>
+
+      <!-- GAME STATS -->
+      <div class="section">
+        <h2>📊 Game Status</h2>
+        <div id="stats">
+          <div class="stat">
+            <span>Game Status:</span>
+            <span class="value" id="statusVal">Idle</span>
+          </div>
+          <div class="stat">
+            <span>Duration:</span>
+            <span class="value" id="durationVal">00:00</span>
+          </div>
+          <div class="stat">
+            <span>Game Mode:</span>
+            <span class="value" id="modeVal">—</span>
+          </div>
+          <div class="stat">
+            <span>Terrain:</span>
+            <span class="value" id="terrainVal">—</span>
+          </div>
+          <div class="stat">
+            <span>Obstacles:</span>
+            <span class="value" id="obstaclesVal">0</span>
+          </div>
+          <div class="stat">
+            <span>Hazards:</span>
+            <span class="value" id="hazardsVal">0</span>
+          </div>
+          <div class="stat">
+            <span>Events:</span>
+            <span class="value" id="eventsVal">0</span>
+          </div>
+        </div>
+
+        <div id="eventLog" class="event-log">
+          <div class="event mode">Colosseum initialized</div>
+        </div>
+
+        <button id="endGameBtn" onclick="endGame()" class="button-grid full danger"
+                style="margin-top: 10px; display: none;">
+          🛑 END GAME
+        </button>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="section">
+        <h2>⚡ Quick Actions</h2>
+        <button onclick="playerAction('attack')" style="margin-bottom: 8px;">Player Attack</button>
+        <button onclick="playerAction('jump')" style="margin-bottom: 8px;">Player Jump</button>
+        <button onclick="playerAction('move')" style="margin-bottom: 8px;">Player Move</button>
+        <button onclick="showcaseTerrains()">📋 All Terrains</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="/colosseum-polish.js"></script>
+  <script src="/colosseum-games.js"></script>
+  <script src="/colosseum-integrated.js"></script>
+
+  <script>
+    // Three.js setup
+    const canvas = document.getElementById('canvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 10000);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+
+    // Camera position
+    camera.position.set(0, 50, 100);
+    camera.lookAt(0, 25, 0);
+
+    // Initialize colosseum
+    let colosseum = null;
+    let integrated = null;
+    let gameActive = false;
+    let startTime = 0;
+
+    function initColosseum() {
+      integrated = new ColosseumIntegrated(THREE, scene);
+      const result = integrated.initialize();
+
+      if (result.success) {
+        logEvent(`✅ Colosseum Ready - ${result.features.terrains} terrains, ${result.features.gameModes} game modes`, 'mode');
+        colosseum = integrated.colosseum;
+      }
+    }
+
+    // Game control functions
+    function launchGame() {
+      const mode = document.getElementById('gameModeSelect').value;
+      const terrain = document.getElementById('terrainSelect').value;
+
+      if (!mode || !terrain) {
+        logEvent('❌ Select game mode and terrain first', 'action');
+        return;
+      }
+
+      const result = integrated.launchGame({ gameMode: mode, terrain, players: ['Player 1', 'Player 2'] });
+
+      if (result.success) {
+        gameActive = true;
+        startTime = Date.now();
+        document.getElementById('launchBtn').style.display = 'none';
+        document.getElementById('randomBtn').style.display = 'none';
+        document.getElementById('endGameBtn').style.display = 'block';
+
+        logEvent(`🎮 Game Started: ${result.message}`, 'mode');
+        updateStats();
+      }
+    }
+
+    function randomGame() {
+      const suggestion = integrated.suggestRandomGame();
+      document.getElementById('gameModeSelect').value = suggestion.gameMode;
+      document.getElementById('terrainSelect').value = suggestion.terrain;
+
+      logEvent(`🎲 Random: ${suggestion.suggestion}`, 'mode');
+
+      setTimeout(() => launchGame(), 300);
+    }
+
+    function changeTerrain(terrain) {
+      if (!gameActive) {
+        logEvent('❌ No active game', 'action');
+        return;
+      }
+
+      const result = integrated.switchTerrain(terrain);
+      if (result.success) {
+        logEvent(`🌍 Terrain → ${result.terrain}`, 'terrain');
+        if (colosseum.setMode) colosseum.setMode(terrain === 'water' || terrain === 'naval' ? terrain : terrain);
+        updateStats();
+      }
+    }
+
+    function generateObstacles(intensity) {
+      if (!gameActive) {
+        logEvent('❌ No active game', 'action');
+        return;
+      }
+
+      integrated.gameEngine.generateObstacles(intensity);
+      logEvent(`🏗️ Generated ${integrated.gameEngine.obstacles.length} obstacles (${intensity})`, 'action');
+      updateStats();
+    }
+
+    function playerAction(action) {
+      if (!gameActive) {
+        logEvent('❌ No active game', 'action');
+        return;
+      }
+
+      let result;
+      if (action === 'attack') {
+        result = integrated.playerAttack('Player 1', 'Player 2');
+        logEvent(`⚔️ Attack! ${result.damage.toFixed(1)} damage`, 'action');
+      } else if (action === 'jump') {
+        result = integrated.playerJump('Player 1', 1.5);
+        logEvent(`📈 Jump! Height: ${result.jumpHeight.toFixed(2)}m`, 'action');
+      } else if (action === 'move') {
+        result = integrated.playerMove('Player 1', 'north');
+        logEvent(`🚶 Move north (speed: ${result.movement.speedModifier}x)`, 'action');
+      }
+      updateStats();
+    }
+
+    function endGame() {
+      if (!gameActive) return;
+
+      const result = integrated.endCurrentGame();
+      gameActive = false;
+
+      document.getElementById('launchBtn').style.display = 'block';
+      document.getElementById('randomBtn').style.display = 'block';
+      document.getElementById('endGameBtn').style.display = 'none';
+
+      logEvent(`🏁 Game Ended - ${result.totalEvents} events logged`, 'mode');
+      updateStats();
+    }
+
+    function showcaseTerrains() {
+      const result = integrated.showcaseAllTerrains();
+      const list = result.terrains.map(t => `• ${t.name}`).join('\n');
+      logEvent(`📋 ${result.terrains.length} Terrains Ready`, 'mode');
+    }
+
+    // UI Updates
+    function updateStats() {
+      if (!gameActive) {
+        document.getElementById('statusVal').textContent = 'Idle';
+        document.getElementById('durationVal').textContent = '00:00';
+        document.getElementById('modeVal').textContent = '—';
+        document.getElementById('terrainVal').textContent = '—';
+        document.getElementById('obstaclesVal').textContent = '0';
+        document.getElementById('hazardsVal').textContent = '0';
+        document.getElementById('eventsVal').textContent = '0';
+        return;
+      }
+
+      const status = integrated.getGameStatus();
+      const duration = Math.floor(status.duration / 1000);
+      const mins = Math.floor(duration / 60);
+      const secs = duration % 60;
+
+      document.getElementById('statusVal').textContent = '🎮 Active';
+      document.getElementById('durationVal').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      document.getElementById('modeVal').textContent = status.mode;
+      document.getElementById('terrainVal').textContent = status.terrain;
+      document.getElementById('obstaclesVal').textContent = status.obstacles;
+      document.getElementById('hazardsVal').textContent = status.hazards;
+      document.getElementById('eventsVal').textContent = status.events;
+    }
+
+    function logEvent(message, type = 'action') {
+      const log = document.getElementById('eventLog');
+      const event = document.createElement('div');
+      event.className = `event ${type}`;
+      event.textContent = message;
+      log.appendChild(event);
+      log.scrollTop = log.scrollHeight;
+
+      if (log.children.length > 15) {
+        log.removeChild(log.firstChild);
+      }
+    }
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (gameActive && colosseum) {
+        integrated.updateGame(0.016);
+        updateStats();
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Initialize
+    initColosseum();
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+  </script>
+</body>
+</html>

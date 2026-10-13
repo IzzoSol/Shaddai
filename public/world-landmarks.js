@@ -11,21 +11,20 @@ window.buildWorldLandmarks = function (opts) {
   // ── COLOSSEUM (south road end, [-14, 460]): bld-mecha-arena on a walk-in plateau ──
   var _coLm = layout && layout.landmark && layout.landmark('colosseum');
   var AR = _coLm ? { x: _coLm.pos[0], z: _coLm.pos[1] } : { x: -14, z: 460 };   // MAP v2: from WORLD_LAYOUT
-  var _realColo = !!window.buildColosseumExterior;   // MAP v3: the real-size exterior (world-colosseum.js) replaces this 92u placeholder
   var arenaFloor = new THREE.Mesh(track(new THREE.CircleGeometry(46, 48)),
     track(new THREE.MeshStandardMaterial({ color: 0x1a1626, roughness: 0.5, metalness: 0.4, emissive: 0x2a1a40, emissiveIntensity: 0.5 })));
   arenaFloor.rotation.x = -Math.PI / 2;
   arenaFloor.position.set(AR.x, 1.32, AR.z);
   arenaFloor.receiveShadow = true;
-  if (!_realColo) group.add(arenaFloor);
+  group.add(arenaFloor);
   var arenaRim = new THREE.Mesh(track(new THREE.TorusGeometry(46, 0.5, 8, 72)),
     track(new THREE.MeshStandardMaterial({ color: 0xe8c45c, roughness: 0.3, metalness: 0.9, emissive: 0xe8c45c, emissiveIntensity: 0.35 })));
   arenaRim.rotation.x = Math.PI / 2;
   arenaRim.position.set(AR.x, 1.42, AR.z);
-  if (!_realColo) group.add(arenaRim);
+  group.add(arenaRim);
   var arenaLight = new THREE.PointLight(0xc084fc, 120, 140, 1.6);
   arenaLight.position.set(AR.x, 14, AR.z);
-  if (!_realColo) group.add(arenaLight);
+  group.add(arenaLight);
 
   // ── CASTLE MOAT GLOW (darkforest castle ring) ──
   var df = (layout.biomes || []).find(function (b) { return b.id === 'darkforest'; });
@@ -51,7 +50,7 @@ window.buildWorldLandmarks = function (opts) {
   group.add(ring);
 
   // mecha-arena GLB seated on the plateau (fallback: skip — the platform still reads)
-  if (opts.loader && !_realColo) {
+  if (opts.loader) {
     opts.loader.load('/assets/models/bld-mecha-arena.glb', function (g) {
       var m = g.scene;
       var box = new THREE.Box3().setFromObject(m); var sz = box.getSize(new THREE.Vector3());
