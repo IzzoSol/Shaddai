@@ -300,6 +300,10 @@ function _milestoneCard(call, x) {
     ? '\n\n📈 <b>CONFIRMED RUNNER</b> — hit 2nd milestone. Historically these continue higher.' : '';
   const laterMilestones = call.milestones && call.milestones.length > 1
     ? `\n🎯 Hit milestones: ${call.milestones.map(m => m + 'x').join(' → ')}` : '';
+  const banked = call.ladderSoldPct
+    ? `\nModel banked <b>${call.ladderSoldPct}%</b> of the book at ${(call.ladderRungsHit || []).map((r) => r + 'x').join('/')}` +
+      (call.trailingStopMult ? ` · trail armed <b>${Number(call.trailingStopMult).toFixed(2)}x</b>` : '')
+    : '';
   const peakD = _dispPeak(call);
   const nowD = _dispCur(call);
   const peakNote = (Number(_capM(call, call && call.peakMult)) >= MULT_CAP) ? ' (capped)' : '';
@@ -309,7 +313,7 @@ function _milestoneCard(call, x) {
     `━━ 📊 PNL ━━\n` +
     `Entry: <b>${_usd(call.entryFdv)}</b>\n` +
     `Now:   <b>${_usd(call.curFdv)}</b>  <b>(${nowD}x)</b>\n` +
-    `Peak:  <b>${peakD}x${peakNote}</b>` + laterMilestones + confirmedRunner +
+    `Peak:  <b>${peakD}x${peakNote}</b>` + laterMilestones + confirmedRunner + banked +
     `\n\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
   );
 }
@@ -380,6 +384,22 @@ async function trackTick() {
 
       // Slow climber updates removed — channel posts wins (milestones) only.
 
+      // ── MODEL PORTFOLIO LADDER (2026-10-13): bank what the card promised ──
+      // One decision per tick: partials at 2/3/5/10x, then the 10% runner
+      // rides under the 25% trail until it (or the 0.50x hard stop / 48h
+      // time stop) closes the position. Exit cards only for positions that
+      // actually banked — quiet deaths stay quiet (round-trip notices and
+      // the prunes cover them).
+      if (hasRealLiq) {
+        const d = _ladderDecide(call);
+        if (d.action !== 'hold') { _ladderApply(call, d); changed = true; }
+        if (d.action === 'sell_all' && (call.ladderSoldPct || 0) >= 20 && !call.exitPosted && HAS_BOT && _rtAllowPost(Date.now())) {
+          call.exitPosted = true;
+          call.roundTripped = true;   // the exit card tells the whole story — no separate death notice
+          try { await core.broadcast(_ladderExitCard(call, d.reason), { buttons: core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true }) }); } catch (e) {}
+        }
+      }
+
       // ROUND-TRIP notice (restored 2026-10-12, owner mandate): the audit
       // showed 42% of "2x+ wins" were flash-rugs — median 16 minutes from peak
       // to sub-1x. The channel announced the 2x WIN and then went silent while
@@ -407,6 +427,71 @@ async function trackTick() {
   try { pruneDead(6 * 3600 * 1000, 0.8, prices); } catch (e) {}
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
   try { if (core.getConfig().autoPrune !== false) pruneLosers(1.5, 6); } catch (e) {}
+}
+
+// ── MODEL PORTFOLIO LADDER (ported from the v2 engine, 2026-10-13) ─────────
+// The PLAN block on every signal card promises: ladder 2/3/5/10x banking
+// 20/20/25/25% of the book with a 10% runner, trailing stop -25% from peak
+// armed at 1.5x, hard stop 0.50x, 48h time stop. Until now the tracker
+// recorded peaks but never BANKED a thing — the 707-call audit showed a
+// 9.8% median capture of peak (found winners, watched them round-trip).
+// This is the paper accounting that makes the card's plan real, and the
+// capture stat the scorecard reports.
+const LADDER_RUNGS = [{ m: 2, pct: 20 }, { m: 3, pct: 20 }, { m: 5, pct: 25 }, { m: 10, pct: 25 }];
+function _ladderDecide(call) {
+  const mult = call.curMult || 1;
+  const peak = call.peakMult || mult;
+  if (call.closed) return { action: 'hold' };
+  if (mult <= 0.5) return { action: 'sell_all', reason: 'hard_stop' };
+  const ageH = (Date.now() - (call.ts || Date.now())) / 3600000;
+  if (ageH >= 48 && mult < 1.2) return { action: 'sell_all', reason: 'time_stop' };
+  let stop = call.trailingStopMult != null ? call.trailingStopMult : null;
+  if (mult >= 1.5) {
+    const cand = peak * 0.75;
+    if (stop === null || cand > stop) stop = cand;
+    if (stop < 1) stop = 1;   // breakeven floor once armed
+  }
+  call.trailingStopMult = stop;
+  if (mult >= 1.5 && stop !== null && mult <= stop) {
+    return { action: 'sell_all', reason: stop >= 0.95 ? 'breakeven_stop' : 'trailing_stop' };
+  }
+  const remaining = 100 - (call.ladderSoldPct || 0);
+  if (remaining <= 10) return { action: 'hold' };   // the 10% runner rides under the trail
+  for (const r of LADDER_RUNGS) {
+    if (mult >= r.m && !(call.ladderRungsHit || []).includes(r.m)) {
+      return { action: 'sell_partial', pct: Math.min(r.pct, remaining), rung: r.m, reason: 'tp_' + r.m };
+    }
+  }
+  return { action: 'hold' };
+}
+function _ladderApply(call, d) {
+  if (d.action === 'sell_partial') {
+    call.ladderSoldPct = Math.round(((call.ladderSoldPct || 0) + d.pct) * 10) / 10;
+    call.ladderRungsHit = [...new Set([...(call.ladderRungsHit || []), d.rung])];
+    call.partials = call.partials || [];
+    call.partials.push({ t: Date.now(), mult: call.curMult, pct: d.pct, reason: d.reason });
+  } else if (d.action === 'sell_all') {
+    const remaining = Math.round((100 - (call.ladderSoldPct || 0)) * 10) / 10;
+    call.ladderSoldPct = 100;
+    call.closed = true;
+    call.exitReason = d.reason;
+    call.closedAt = Date.now();
+    call.partials = call.partials || [];
+    if (remaining > 0.5) call.partials.push({ t: Date.now(), mult: call.curMult, pct: remaining, reason: d.reason });
+  }
+  if (call.partials && call.partials.length) {
+    const realized = call.partials.reduce((s, x) => s + (x.pct / 100) * (x.mult || 1) * 100, 0);
+    call.realizedPct = Math.round(realized);
+    const pk = call.peakMult || 0;
+    call.peakCapture = pk > 0 ? Math.round((Math.max(0, realized) / 100) / pk * 1000) / 1000 : 0;
+  }
+}
+function _ladderExitCard(call, reason) {
+  const label = { hard_stop: 'hard stop (0.50x)', time_stop: 'dead money — 48h time stop', breakeven_stop: 'breakeven trail', trailing_stop: 'trailing stop (-25% from peak)' }[reason] || reason;
+  return `🏁 <b>${_esc(call.symbol || call.name || call.mint.slice(0, 4))} CLOSED</b> — ${_esc(label)}\n` +
+    `🪜 banked <b>${call.ladderRungsHit.map((r) => r + 'x').join('/') || '—'}</b> · sold <b>${call.ladderSoldPct}%</b> of the book\n` +
+    `realised <b>+${(call.realizedPct || 0).toFixed(0)}%</b> on the book · captured <b>${Math.round((call.peakCapture || 0) * 100)}%</b> of peak\n` +
+    `🧪 Model portfolio · not financial advice`;
 }
 
 // Round-trip close-out: the win was announced; the death is announced too.
@@ -444,6 +529,11 @@ function stats(period) {
   const durable2 = rows.filter(c => _capM(c, c.peakMult) >= 2 && (c.curMult || 0) >= 0.5).length;
   const flash2 = Math.max(0, hits2 - durable2);
   const durableRate = total ? Math.round((durable2 / total) * 100) : 0;
+  // MODEL CAPTURE: the money metric — what % of peak the ladder actually
+  // banked across positions that sold (median). The 707-call audit put the
+  // pre-ladder era at 9.8%; this is the live number proving the fix.
+  const caps = rows.filter((c) => (c.peakCapture || 0) > 0 && (c.ladderSoldPct || 0) > 0).map((c) => c.peakCapture).sort((a, b) => a - b);
+  const medCap = caps.length ? Math.round(caps[Math.floor(caps.length / 2)] * 100) : null;
   const avgPeak = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total).toFixed(1) : '0';
   const best = rows.slice().sort((a, b) => _capM(b, b.peakMult) - _capM(a, a.peakMult)).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
@@ -463,7 +553,9 @@ function stats(period) {
   return (
     `📊 <b>SHADDAI ${label} SCORECARD</b>\n\n` +
     `Calls: <b>${total}</b>  ·  2x: <b>${hits2}</b> (<b>${hitRate}%</b>${flash2 ? ` · durable <b>${durableRate}%</b> (${flash2} flash-rug${flash2 === 1 ? '' : 's'})` : ' · all durable'})  ·  5x: <b>${hits5}</b>  ·  10x+: <b>${hits10}</b>\n` +
-    `Avg peak: <b>${avgPeak}x</b>\n\n` +
+    `Avg peak: <b>${avgPeak}x</b>\n` +
+    (medCap != null ? `Ladder capture: <b>${medCap}%</b> of peak (median, banked books) <i>(was 9.8% pre-ladder)</i>\n` : '') +
+    `\n` +
     (srcLines ? `<b>By source</b>\n<pre>${srcLines}</pre>\n\n` : '') +
     `🏆 <b>Best ${label.toLowerCase()}</b>\n${bestTxt}\n\n` +
     `📡 ${_esc(ch)}  ·  <i>NFA. Track your own entries.</i>`
