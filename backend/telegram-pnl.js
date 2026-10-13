@@ -367,9 +367,15 @@ async function trackTick() {
       // to sub-1x. The channel announced the 2x WIN and then went silent while
       // the token died. The honesty loop closes both ends: one notice per
       // call, fires when a >=2x peak falls back under entry.
+      // CHANNEL-NOISE CONTROL (2026-10-12 same-day fix): the first run posted
+      // a death notice for EVERY pullback and flooded the channel. Now: only
+      // calls the channel actually CELEBRATED (a milestone win was broadcast)
+      // get a close-out post, max 2 per hour. Unannounced flash-rugs stay
+      // flagged for the durable stats without a post.
       if (call.roundTripped !== true && (call.peakMult || 1) >= 2 && call.curMult < 1) {
         call.roundTripped = true; changed = true;
-        if (HAS_BOT) {
+        const announced = Array.isArray(call.milestones) && call.milestones.length > 0;
+        if (HAS_BOT && announced && _rtAllowPost(Date.now())) {
           try { await core.broadcast(_roundTripCard(call), { buttons: core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true }) }); } catch (e) {}
         }
       }
@@ -386,6 +392,13 @@ async function trackTick() {
 }
 
 // Round-trip close-out: the win was announced; the death is announced too.
+// Throttled: max 2 posts per rolling hour — the first run flooded the channel.
+let _rtHourBucket = 0, _rtPostsThisHour = 0;
+function _rtAllowPost(now) {
+  const bucket = Math.floor(now / 3600000);
+  if (bucket !== _rtHourBucket) { _rtHourBucket = bucket; _rtPostsThisHour = 0; }
+  return ++_rtPostsThisHour <= 2;
+}
 function _roundTripCard(call) {
   const peak = _capM(call, call.peakMult);
   const cur = _capM(call, call.curMult);

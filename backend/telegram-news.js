@@ -256,8 +256,11 @@ function startNewsPoster() {
       // Header
       await core.broadcast(`🏆 <b>TOP 25 DEXSCREENER — ◎ SOLANA BOOSTS</b>\n━━━━━━━━━━━━━\n${ts} UTC\n<i>Paid boosts signal project commitment · NFA · DYOR</i>`).catch(() => {});
 
-      // Top 10: one photo card each (token art + full details + copyable CA)
-      for (const c of cards.slice(0, 10)) {
+      // Top 3: one photo card each (token art + full details + copyable CA).
+      // 2026-10-12 channel-quieting: this run used to post TWELVE messages
+      // (header + 10 photo cards + tail) every cycle — the single biggest
+      // source of channel noise. Now: header + 3 cards + one compact 4-25 list.
+      for (const c of cards.slice(0, 3)) {
         const caption =
           `${c.rank}. <b>${c.sym}</b>${c.name}\n` +
           (c.stats ? `${c.stats}\n` : '') +
@@ -272,13 +275,13 @@ function startNewsPoster() {
         await new Promise(res => setTimeout(res, 400));   // small delay to avoid flood
       }
 
-      // 11-25: compact list
-      if (cards.length > 10) {
-        const tail = cards.slice(10).map(c =>
+      // 4-25: compact list — same information, one message
+      if (cards.length > 3) {
+        const tail = cards.slice(3).map(c =>
           `${c.rank}. <b>${c.sym}</b>${c.name}  ${c.chg || ''}\n` +
           `${c.stats || ''}\n<code>${c.ca}</code>`
         ).join('\n\n');
-        await core.broadcast(`<b>11–25</b>\n━━━━━━━━━━━━━\n${tail}`).catch(() => {});
+        await core.broadcast(`<b>4–25</b>\n━━━━━━━━━━━━━\n${tail}`).catch(() => {});
       }
     }
   }, 60000);
@@ -308,7 +311,13 @@ function startNewsPoster() {
   }, 60000);
   if (_promoTimer.unref) _promoTimer.unref();
 
-  console.log('[tg-news] market-pulse(4h) + headlines(90m) + dex-top25(4h) + movers(6h) + promo armed.');
+  // Honest armed banner — prints the ACTUAL configured cadence, not a
+  // hardcoded guess (the old banner claimed 90m headlines while config ran 6h).
+  (function () {
+    const c = core.getConfig();
+    const h = (min) => Math.round((min || 0) / 60) + 'h';
+    console.log('[tg-news] market-pulse(' + h(c.newsIntervalMin || 240) + ') + headlines(' + h(c.headlinesIntervalMin || 90) + ') + dex-top25(' + h(c.dexTop25IntervalMin || 240) + ') + movers(' + h(c.topMoversIntervalMin || 360) + ') + promo(' + h(c.promoIntervalMin || 240) + ') armed. Top-25 posts 5 messages per cycle (was 12).');
+  })();
 }
 
 module.exports = { startNewsPoster, marketPulse, projectPromo, dexTop25, topMoversLeaderboard, _pollHeadlines, _botImage };
