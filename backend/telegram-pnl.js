@@ -274,6 +274,24 @@ async function _priceMap(mints) {
       });
     } catch (e) {}
   }
+  // ── FALLBACK RUNG: Jupiter lite (2026-10-12) ─────────────────────────────
+  // DexScreener was the ONLY price source here — a 429 or outage froze every
+  // call flat at 1.00x, the FACT-0 dead-tracker pattern that poisoned the hit
+  // rate for 14 weeks. Free-tier budget reality: DexScreener 60/min shared
+  // across five pollers + this re-pricer, so pressure is routine. Jupiter
+  // lite is free, keyless, per-mint, and returns fdv directly. Only mints
+  // DexScreener MISSED cost a request — steady-state fallback cost is zero.
+  const missed = mints.filter((m) => !out[m]);
+  for (const m of missed) {
+    try {
+      const r = await fetch('https://lite-api.jup.ag/tokens/v2/search?query=' + encodeURIComponent(m), { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const t = Array.isArray(j) && j[0];
+      const fdv = t && Number(t.fdv || t.mcap || 0);
+      if (fdv > 0) out[m] = fdv;
+    } catch (e) {}
+  }
   return out;
 }
 
