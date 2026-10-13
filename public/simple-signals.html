@@ -353,7 +353,7 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 .tt a{ color:inherit; text-decoration:none; }
 .tt a:active{ color:var(--gold); }
 .tt .ts{ color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.09em; font-size:9px; }
-
+</style>
 
 <style>
 /* ═══ ZEROX·SIGNALS — NEON OBSIDIAN · TURTLE CYBER ALIGNMENT (2026-10-12) ═══
@@ -378,7 +378,8 @@ html[data-theme="light"] .bub-ava{background:#eef1f8}
 html[data-theme="light"]{
   --bg:#eef1f8; --bg2:#e3e8f2; --panel:#ffffff; --edge:#dbe3f0; --edge2:#c6d2e6;
   --txt:#0c1322; --soft:#46546e; --faint:#66718c;
-  --gold:#9a7510; --emerald:#00a877; --red:#e0244a; --amber:#c07b16; --cyan:#0a7ea4; --magenta:#b13bc9;
+  --gold:#9a7510; --emerald:#00a877; --red:#e0244a; --amber:#c07b16; --cyan:#0a7ea4; --magenta:#b13bc9; --violet:#6d28d9;
+  --grad:linear-gradient(92deg,#0a7ea4 0%,#00a877 55%,#b13bc9 115%);
   --ok:#e2f6ee; --bad:#fde9ee;
   --glow:0 0 0 1px rgba(10,126,164,.08),0 12px 30px -18px rgba(15,23,42,.5);
   --card-shadow:0 6px 16px -12px rgba(15,23,42,.35);
@@ -393,7 +394,12 @@ body{background:
   background:
     linear-gradient(180deg, rgba(5,7,12,.2) 0%, rgba(5,7,12,.94) 90%);
   border-bottom:1px solid var(--edge2); height:auto; min-height:54px;
+  flex-wrap:wrap; align-content:flex-start;
 }
+#top .mktstrip{ flex:1 0 100%; border-top:1px solid var(--edge2); }
+#top #brand{min-width:0;overflow:hidden;text-overflow:ellipsis}
+#top #btn-refresh,#top #btn-theme,#top #live,#top #brand-ava{flex-shrink:0}
+@media (max-width:440px){ #top{gap:7px;padding:8px 10px calc(8px + env(safe-area-inset-top))} #clock,#updated{display:none} }
 #top::before{
   content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
   background:
@@ -552,7 +558,7 @@ html[data-theme="light"] .s-cell{background:#fff}
 .pnl-share:active{transform:scale(.92)}
 
 /* ---------- toast ---------- */
-.toast{position:fixed;top:54px;left:50%;transform:translate(-50%,-18px);z-index:60;max-width:86vw;padding:11px 16px;border-radius:12px;border:1px solid var(--gold);background:rgba(6,10,16,.94);color:var(--gold);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;box-shadow:0 12px 34px -10px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast{position:fixed;top:100px;left:50%;transform:translate(-50%,-18px);z-index:60;max-width:86vw;padding:11px 16px;border-radius:12px;border:1px solid var(--gold);background:rgba(6,10,16,.94);color:var(--gold);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;box-shadow:0 12px 34px -10px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 html[data-theme="light"] .toast{background:rgba(255,255,255,.96);color:#8a6d1a}
 
