@@ -47,5 +47,12 @@ console.log(`dropped: ${all.length - n} (seed/test · flat-unmeasured · sub-5x 
 if (DRY) { console.log('(dry run — record not written)'); process.exit(0); }
 
 for (const c of keep) c.baseline = true;
-fs.writeFileSync(RECORD, JSON.stringify({ calls: keep }, null, 2));
-console.log(`written: ${n} baseline calls -> data/tg-calls.json`);
+// MERGE, never overwrite: preserve any non-baseline (live new-era) calls in
+// the current record — a reseed refreshes the historical board only.
+let live = [];
+try {
+  const cur = JSON.parse(fs.readFileSync(RECORD, 'utf8'));
+  live = (cur.calls || []).filter((c) => !c.baseline);
+} catch (e) {}
+fs.writeFileSync(RECORD, JSON.stringify({ calls: [...keep, ...live] }, null, 2));
+console.log(`written: ${keep.length} baseline calls + ${live.length} live new-era calls -> data/tg-calls.json`);

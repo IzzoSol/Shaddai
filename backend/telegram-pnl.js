@@ -796,7 +796,7 @@ function pruneLosers(minPeak, minAgeHours) {
   const mp = Number(minPeak) || 1.5;
   const ageMs = (Number(minAgeHours) || 6) * 3600 * 1000;
   const before = _state.calls.length;
-  _state.calls = _state.calls.filter(c => c.source === 'seed' || c.peakMult >= mp || (_now - c.ts) < ageMs);
+  _state.calls = _state.calls.filter(c => c.baseline || c.source === 'seed' || c.peakMult >= mp || (_now - c.ts) < ageMs);
   const removed = before - _state.calls.length;
   if (removed > 0) _write(_state);
   return removed;
@@ -811,6 +811,7 @@ function pruneDead(minAgeMs, minPeak, prices) {
   const mpMin = Number(minPeak) || 0.8;
   const before = _state.calls.length;
   _state.calls = _state.calls.filter(c => {
+    if (c.baseline) return true;   // frozen history — prunes never touch the approved all-time board
     if (c.source === 'seed') return true;                                   // seeds always kept
     if ((c.peakMult || 0) >= mpMin) return true;                            // ran at least ~0.8x → has data value
     if ((_now - c.ts) < ageMs) return true;                                 // too young — give it time
@@ -836,12 +837,16 @@ function pruneRugs(maxFdv, minAgeHours, prices) {
   const ageMs = (Number(minAgeHours) || 1) * 3600 * 1000;
   const before = _state.calls.length;
   _state.calls = _state.calls.filter(c => {
+    if (c.baseline) return true;   // FROZEN HISTORY (2026-10-13): baseline calls are the owner-approved
+                                   // all-time board — prunes exist for stale ACTIVE positions, not for
+                                   // rewriting history. Left unchecked they already erased 29 baseline
+                                   // calls (278 -> 249) and silently drifted the hit rate upward.
     if (c.source === 'seed') return true;
     if ((_now - c.ts) < ageMs) return true;                        // too young — give it time
     const live = (prices && prices[c.mint] != null) ? prices[c.mint] : null;
-    if (live != null) return live > mf;                            // confirmed live price → keep if above rug floor
+    if (live != null) return live > mf;                            // confirmed live price — keep if above rug floor
     if (typeof c.curFdv === 'number' && c.curFdv > 0) return c.curFdv > mf;  // last known live price
-    return true;                                                    // no live price → can't confirm a rug → keep
+    return true;                                                    // no live price — can't confirm a rug — keep
   });
   const removed = before - _state.calls.length;
   if (removed > 0) _write(_state);
