@@ -5574,7 +5574,17 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   try{ _bootT('naval', function(){ window.__naval = window.WorldNavalGame.create({ THREE, getArena: function(){ return window.__colosseumArena; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }); }catch(e){ console.warn('[naval] init failed', e && e.message); } }, 1000); })();
 // ── HOVER LEAGUE (world-hoverleague-core.js + world-colosseum-hoverleague.js): Colosseum hover field mode; opened from I > Fight ──
 (function bootHoverLeague(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; } if(!window.HoverLeague || !window.HoverLeagueCore || typeof hover === 'undefined' || !hover) return; clearInterval(iv);
-  try{ window.__hoverLeague = window.HoverLeague.create({ THREE, GLTFLoader, getArena: function(){ return window.__colosseumArena; }, isInside: function(){ return !!(_interiors && _interiors.isInside() && window.__colosseumArena && window.__colosseumArena.group.visible); }, getHover: function(){ return hover; }, getPlayerPos: function(){ return playerPos; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }catch(e){ console.warn('[hoverleague] init failed', e && e.message); } }, 1000); })();
+  try{ window.__hoverLeague = window.HoverLeague.create({ THREE, GLTFLoader, getArena: function(){ return window.__colosseumArena; }, isInside: function(){ return !!(_interiors && _interiors.isInside() && window.__colosseumArena && window.__colosseumArena.group.visible); }, getHover: function(){ return hover; }, getPlayerPos: function(){ return playerPos; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} },
+    // bots = real rigged agents on full board rigs (same rider IK + moves as the player); light GLBs first
+    makeBotRider: function(i, team){
+      const codes = ['NEXUS','ORACLE','PIKADON','QUILL','TURTLE','ZEROX'], code = codes[i % codes.length], own = new THREE.Vector3();
+      const hb = window.buildWorldHoverboard({ THREE, scene, loader: _acLoader, playerPos: own, colliders: function(){ return []; }, time: function(){ return clock.elapsedTime; },
+        heightAt: function(x,z){ const h = window.__hoverLeague ? window.__hoverLeague.heightAtWorld(x,z) : NaN; return isFinite(h) ? h : 0; } });
+      return Promise.resolve(_pcPreload(code)).then(function(gl){
+        const av = cloneSkinned(gl.scene); const box = new THREE.Box3().setFromObject(av), sz = new THREE.Vector3(); box.getSize(sz); av.scale.multiplyScalar(AGENT_BODY_HEIGHT / (sz.y || 1));
+        av.traverse(function(c){ if(c.isMesh){ c.castShadow = true; c.frustumCulled = false; } }); scene.add(av); return { hover: hb, avatar: av, code: code };
+      }).catch(function(){ return { hover: hb, avatar: null, code: code }; });
+    } }); }catch(e){ console.warn('[hoverleague] init failed', e && e.message); } }, 1000); })();
 // ── COMBAT LOCK-ON (?combat=1, off by default): Tab or middle mouse locks the nearest wilderness mob; the look
 // yaw eases onto the target bearing; ENEMY FELLED card + combat stem on kill. Module: world-lockon.js (targeting, DOM).
 (function bootLockOn(){ if(!/[?&]combat=1\b/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }

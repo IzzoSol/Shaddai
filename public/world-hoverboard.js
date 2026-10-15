@@ -237,7 +237,12 @@ window.buildWorldHoverboard = function (opts) {
   var V3 = THREE.Vector3;
   var _up = new V3(), _fw = new V3(), _lf = new V3(), _rf = new V3(), _rl = new V3(), _tp = new V3();
   var _standP = new V3(), _standQ = new THREE.Quaternion(), _riderQ = new THREE.Quaternion(), _yq = new THREE.Quaternion();
-  var _trQ = new THREE.Quaternion(), _handR = new V3(), _elbR = new V3();
+  var _trQ = new THREE.Quaternion(), _handR = new V3(), _elbR = new V3(), _handL = new V3(), _elbL = new V3(), _bx = new V3(), _av1 = new V3();
+  // RIDER ACTIONS (2026-10-15 owner: "rig the characters on the hoverboard, all their moves and motions"): one-shot / held upper-body
+  // moves layered on the surf stance. hover.setAction(kind, dur) - kind: carry (held: hands open toward the orb in front) | shoot (throw)
+  // | bolt (lead-arm punch) | ram (shoulder charge) | stun (flinch). Automatic: pop (jump take-off), land (absorb), boost tuck,
+  // wall-ride hand drag, bail flail.
+  var ACT = { kind: null, t: 0, dur: 0, carry: false }, MOVE = { popT: 0, landT: 0, prevAir: false };
   var _Y = new V3(0, 1, 0);
   var T = { spineDir: new V3(), neckDir: new V3(), footL: new V3(), footR: new V3(),
             kneePoleL: new V3(), kneePoleR: new V3(), armDirL: new V3(), armDirR: new V3(), foreDirL: new V3(), foreDirR: new V3() };
@@ -497,7 +502,12 @@ window.buildWorldHoverboard = function (opts) {
     _up.set(0, 1, 0).applyQuaternion(_trQ);
     var grabW = TR ? TR.angles.grab : 0;
     var tuck = TR && TR.state.air ? Math.min(1, (Math.abs(TR.angles.flip) + Math.abs(TR.angles.roll || 0)) / 1.2) : 0;   // knees pulled in mid-flip/roll
-    var hipH = rig ? rig.hipH : 3.6, standH = rig && rig.hasBones ? (B.crouchM + 0.25 * grabW + 0.16 * tuck + 0.12 * (s.grindK || 0)) * U : 0;
+    if (s.air && !MOVE.prevAir) MOVE.popT = 0.32; if (!s.air && MOVE.prevAir) MOVE.landT = 0.3; MOVE.prevAir = s.air;
+    MOVE.popT = Math.max(0, MOVE.popT - dt); MOVE.landT = Math.max(0, MOVE.landT - dt); if (ACT.t > 0) { ACT.t = Math.max(0, ACT.t - dt); if (ACT.t <= 0) ACT.kind = null; }
+    var popP = MOVE.popT > 0 ? 1 - MOVE.popT / 0.32 : 1, popK = popP < 0.3 ? Math.sin(popP / 0.3 * Math.PI) : 0, popTuck = MOVE.popT > 0 && popP >= 0.3 ? Math.sin((popP - 0.3) / 0.7 * Math.PI) : 0,   /* ollie: snap tall, then knees tuck */ landK = MOVE.landT > 0 ? MOVE.landT / 0.3 : 0;
+    var boostK = s.riding && !s.air ? Math.max(0, Math.min(1, (s.v - B.topMS) / Math.max(1, B.boostMS - B.topMS) * 1.6)) : 0;
+    var ramK = ACT.kind === 'ram' ? Math.sin((1 - ACT.t / ACT.dur) * Math.PI) : 0;
+    var hipH = rig ? rig.hipH : 3.6, standH = rig && rig.hasBones ? (B.crouchM + 0.25 * grabW + 0.16 * tuck + 0.12 * (s.grindK || 0) - 0.14 * popK + 0.42 * popTuck + 0.22 * landK + 0.3 * boostK + 0.28 * ramK) * U : 0;
     _tp.set(0, deckTop - PIV, 0); trick.localToWorld(_tp);  // deck centre (world)
     _tp.addScaledVector(_up, -standH);                      // root drops → IK bends the knees
     _standP.copy(av.position); _standQ.copy(av.quaternion);
@@ -525,12 +535,58 @@ window.buildWorldHoverboard = function (opts) {
     T.armDirR.copy(_rl).multiplyScalar(-0.85).addScaledVector(_up, -0.42).addScaledVector(_rf, 0.18);
     T.foreDirL.copy(_rl).multiplyScalar(0.75).addScaledVector(_up, -0.2).addScaledVector(_rf, 0.4);
     T.foreDirR.copy(_rl).multiplyScalar(-0.75).addScaledVector(_up, -0.2).addScaledVector(_rf, 0.4);
+    // MOVES: boost tuck (lean to the nose, arms swept back) · ram (shoulder charge) · pop (arms rise)
+    if (boostK > 0 || ramK > 0) {
+      var lk = Math.max(boostK * 0.6, ramK);
+      T.spineDir.addScaledVector(_fw, 1.1 * lk).addScaledVector(_rf, 0.45 * lk).addScaledVector(_up, -0.25 * lk).normalize();
+      T.neckDir.copy(_up).multiplyScalar(0.7).addScaledVector(_fw, 0.9).normalize();
+      T.armDirL.lerp(_av1.copy(_rl).multiplyScalar(-0.3).addScaledVector(_up, -0.8).addScaledVector(_rf, 0.2), boostK * 0.8);
+      T.armDirR.lerp(_av1.copy(_rl).multiplyScalar(-0.75).addScaledVector(_up, -0.55).addScaledVector(_rf, -0.1), Math.max(boostK * 0.8, ramK));
+      if (ramK > 0) { T.armDirL.lerp(_av1.copy(_rl).multiplyScalar(0.4).addScaledVector(_up, -0.6).addScaledVector(_rf, 0.55), ramK); T.foreDirL.lerp(_av1.copy(_up).multiplyScalar(0.6).addScaledVector(_rf, 0.6), ramK); }
+    }
+    if (popK > 0) { T.armDirL.addScaledVector(_up, 0.7 * popK); T.armDirR.addScaledVector(_up, 0.7 * popK); }
+    if (popTuck > 0) { T.spineDir.addScaledVector(_rf, 0.35 * popTuck).normalize(); T.armDirL.addScaledVector(_up, 0.35 * popTuck); T.armDirR.addScaledVector(_up, 0.35 * popTuck); }
     // GRAB: trailing hand reaches down to the toe-side rail (two-bone IK), knees deeper
     if (grabW > 0.5) {
       _handR.copy(_tp).addScaledVector(_rf, 0.18 * U).addScaledVector(_fw, -0.12 * U).addScaledVector(_up, 0.05 * U);
       _elbR.copy(_rl).multiplyScalar(-0.6).addScaledVector(_up, 0.3).addScaledVector(_rf, 0.5);
       T.handR = _handR; T.elbowPoleR = _elbR;
     } else { T.handR = null; T.elbowPoleR = null; }
+    T.handL = null; T.elbowPoleL = null;
+    // WALL RIDE: the hand on the wall side drags along the face (sparks come off the board edge)
+    if (s.wallriding && grabW <= 0.5) {
+      _bx.set(1, 0, 0).applyQuaternion(_trQ); var side = (s.wallRoll || 0) > 0 ? -1 : 1, toe = _bx.dot(_rf) * side > 0;
+      var H = toe ? _handR : _handL, E = toe ? _elbR : _elbL;
+      H.copy(_tp).addScaledVector(_bx, side * 0.75 * U).addScaledVector(_fw, -0.25 * U).addScaledVector(_up, 0.35 * U);
+      E.copy(_up).multiplyScalar(0.6).addScaledVector(_bx, -side * 0.3);
+      if (toe) { T.handR = H; T.elbowPoleR = E; } else { T.handL = H; T.elbowPoleL = E; }
+    }
+    // ACTIONS (league / combat)
+    var ak = ACT.kind, ap = ACT.dur > 0 ? 1 - ACT.t / ACT.dur : 0;
+    if (ACT.carry || ak === 'carry') {          // energy ball held in front of the nose: both palms open toward it
+      T.armDirL.copy(_rl).multiplyScalar(0.9).addScaledVector(_up, 0.1).addScaledVector(_rf, 0.35); T.foreDirL.copy(_rl).multiplyScalar(0.8).addScaledVector(_up, 0.25).addScaledVector(_rf, 0.2);
+      T.armDirR.copy(_rl).multiplyScalar(0.55).addScaledVector(_up, 0.05).addScaledVector(_rf, 0.75); T.foreDirR.copy(_rl).multiplyScalar(0.85).addScaledVector(_up, 0.25);
+      T.spineDir.addScaledVector(_rl, 0.12).normalize(); T.neckDir.copy(_up).multiplyScalar(0.8).addScaledVector(_fw, 0.6).normalize();
+    }
+    if (ak === 'shoot') {                       // throw: trailing arm winds back then whips through toward the nose, chest twists with it
+      var wind = ap < 0.3 ? ap / 0.3 : 1 - (ap - 0.3) / 0.7, thru = ap < 0.3 ? 0 : Math.min(1, (ap - 0.3) / 0.35);
+      T.armDirR.copy(_rl).multiplyScalar(-0.9 * wind + 0.95 * thru).addScaledVector(_up, 0.45 * wind + 0.15 * thru).addScaledVector(_rf, 0.2 + 0.3 * thru);
+      T.foreDirR.copy(T.armDirR).addScaledVector(_up, 0.25 * wind);
+      T.spineDir.addScaledVector(_rl, 0.3 * thru - 0.2 * wind).normalize();
+      T.armDirL.copy(_rl).multiplyScalar(0.6 - 0.5 * thru).addScaledVector(_up, -0.3).addScaledVector(_rf, 0.4);
+    }
+    if (ak === 'bolt') {                        // energy bolt: lead arm punches straight at the nose, palm out
+      var pk = Math.min(1, ap / 0.25) * (ap > 0.7 ? (1 - ap) / 0.3 : 1);
+      T.armDirL.lerp(_av1.copy(_rl).addScaledVector(_up, 0.12), pk); T.foreDirL.lerp(_av1.copy(_rl).addScaledVector(_up, 0.15), pk);
+      T.armDirR.lerp(_av1.copy(_rl).multiplyScalar(-0.7).addScaledVector(_up, -0.2).addScaledVector(_rf, -0.2), pk);
+      T.spineDir.addScaledVector(_rl, 0.2 * pk).normalize(); T.neckDir.copy(_up).multiplyScalar(0.75).addScaledVector(_fw, 0.65).normalize();
+    }
+    if (ak === 'stun' || s.bail > 0) {          // flinch / bail: head snaps back, arms flail up and out
+      var fk = ak === 'stun' ? Math.min(1, ACT.t / Math.max(0.01, ACT.dur) * 1.5) : Math.min(1, s.bail / TUNE.bailTime), ws = Math.sin(s.t * 22);
+      T.armDirL.lerp(_av1.copy(_rl).multiplyScalar(0.5).addScaledVector(_up, 0.75 + 0.2 * ws).addScaledVector(_rf, -0.2), fk);
+      T.armDirR.lerp(_av1.copy(_rl).multiplyScalar(-0.5).addScaledVector(_up, 0.75 - 0.2 * ws).addScaledVector(_rf, -0.2), fk);
+      T.spineDir.addScaledVector(_rf, -0.35 * fk).normalize(); T.neckDir.copy(_up).addScaledVector(_rf, -0.5 * fk).normalize();
+    }
     RP.apply(e, T);
   }
 
@@ -575,6 +631,8 @@ window.buildWorldHoverboard = function (opts) {
     isRiding: function () { return s.riding; },
     isActive: function () { return s.riding || s.w > 0; },          // still fading the rider off
     speedMS: function () { return s.v; },
+    setAction: function (kind, dur) { if (kind === 'carry-on') { ACT.carry = true; return; } if (kind === 'carry-off') { ACT.carry = false; return; } ACT.kind = kind; ACT.dur = ACT.t = dur || ({ shoot: 0.55, bolt: 0.45, ram: 0.5, stun: 0.7 }[kind] || 0.5); },
+    action: function () { return { kind: ACT.kind, t: ACT.t, carry: ACT.carry, pop: MOVE.popT, land: MOVE.landT }; },
     setModifier: function (o) { o = o || {}; if (o.mul != null) { MOD.mul = o.mul; MOD.t = o.dur || 1; } if (o.stun != null) MOD.stun = o.stun; if (o.noise != null) { MOD.noise = o.noise; MOD.nt = o.noiseDur || 2; } if (o.turn != null) { MOD.turn = o.turn; MOD.tt = o.turnDur || 0.15; } },   // race power-ups / attacks / drift steering
     modifier: function () { return MOD; },
     heading: function () { return s.psi; },
@@ -599,7 +657,7 @@ window.buildWorldHoverboard = function (opts) {
     pose: pose,
     update: function (dt, input, camYaw, ctx) { step(dt, input, camYaw); pose(dt, ctx); },
     dispose: function () {
-      scene.remove(board); scene.remove(trail);
+      scene.remove(board); scene.remove(trail); scene.remove(pool);
       if (kit) kit.userData.dispose();
       if (fx) fx.dispose();
       disposables.forEach(function (d) { if (d.dispose) d.dispose(); });

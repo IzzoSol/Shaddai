@@ -1,6 +1,8 @@
 /* world-colosseum-hoverleague.js — HOVER LEAGUE in the Colosseum (owner 2026-10-15): a field mode like the naval battle. Rules live in
  * world-hoverleague-core.js (pure, tested); this file builds the look in arena.root (METRES, root.scale = U) and glues the player's board.
- *   var hl = HoverLeague.create({ THREE, GLTFLoader, getArena, getHover, getPlayerPos, enter })
+ *   var hl = HoverLeague.create({ THREE, GLTFLoader, getArena, getHover, getPlayerPos, enter, makeBotRider? })
+ *   makeBotRider(i, team) -> Promise<{ hover, avatar }>: a full world-hoverboard instance + a rigged agent (host-built) so bots ride with
+ *   the same rider IK, moves and actions as the player; without it bots use code placeholders.
  *   hl.open()              -> picker (mode League/Paint · ball Regular/Plasma/Inferno/Void/Solar · 1v1/2v2/3v3) then the match
  *   hl.start({mode, ball, size})   hl.stop()   hl.active()
  *   hl.update(dt)          every frame (host): reads the board, steps the rules, drives the view + HUD
@@ -154,7 +156,7 @@
     function tint(obj, color) { obj.traverse(function (c) { if (!c.isMesh) return; var ms = Array.isArray(c.material) ? c.material : [c.material]; ms = ms.map(function (m) { if (!m || !/hl_team|hl_net/.test(m.name)) return m; var n = m.clone(); n.color && n.color.setHex(color); if (n.emissive) n.emissive.setHex(color); return n; }); c.material = Array.isArray(c.material) ? ms : ms[0]; }); }
 
     function buildView() {
-      var V = { group: new THREE.Group(), pads: [], ups: [], bots: {}, bolts: [] }; V.group.name = 'hover-league';
+      var V = { group: new THREE.Group(), pads: [], ups: [], bots: {}, riders: {}, bolts: [] }; V.group.name = 'hover-league';
       V.group.add(rimMesh()); V.barrier = barrierMesh(); V.group.add(V.barrier);
       V.floor = floorCanvas();
       var fl = new THREE.Mesh(new THREE.CircleGeometry(1, 128), new THREE.MeshStandardMaterial({ map: V.floor.tex, metalness: 0.55, roughness: 0.3, emissive: 0xffffff, emissiveMap: V.floor.tex, emissiveIntensity: 0.55 }));
@@ -180,6 +182,15 @@
         if (!p.bot) return; var g = new THREE.Group();
         var kitB = root.HoverboardKit ? root.HoverboardKit.build(THREE, ['bluejet', 'racer', 'redline', 'sunburst', 'batwing', 'obsidian'][Object.keys(V.bots).length % 6], { glow: TEAM[p.team], trim: TEAM[p.team] }) : new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 1.8), mat(0x222, TEAM[p.team]));
         kitB.position.y = 0.3; g.add(kitB); var rd = riderMesh(p.team); rd.position.y = 0.42; g.add(rd); g.userData.rider = rd; V.group.add(g); V.bots[p.id] = g;
+        if (o.makeBotRider) {
+          var idx = Object.keys(V.bots).length - 1;
+          Promise.resolve(o.makeBotRider(idx, p.team)).then(function (r) {
+            if (!r || !r.hover || view !== V) { if (r && r.hover && view !== V) { r.hover.dispose(); if (r.avatar && r.avatar.parent) r.avatar.parent.remove(r.avatar); } return; }
+            try { if (r.hover.setStyle) r.hover.setStyle(['bluejet', 'racer', 'redline', 'sunburst', 'batwing', 'obsidian'][idx % 6], { glow: TEAM[p.team], trim: TEAM[p.team], accent: TEAM[p.team] }); } catch (_) { }
+            var w = toWorld(p.x, p.y, p.z); r.hover.mount(r.avatar, { yaw: p.psi }); var hs = r.hover.state(); hs.x = w.x; hs.z = w.z; hs.y = w.y + 0.35 * U;
+            V.riders[p.id] = r; g.visible = false; g.userData.real = true;
+          }).catch(function (e) { console.warn('[hoverleague] bot rider failed', e && e.message); });
+        }
       });
       var saveL = L.ball; L.ball = Object.assign({}, L.ball, { r: 0.42 });             // attack orbs: mini energy balls (owner refs) - cyon plasma, magma void
       for (var bi = 0; bi < 16; bi++) { var bm = ballMesh(bi % 2 ? 'void' : 'plasma'); bm.userData.kind = bi % 2 ? 'magma' : 'cyon'; bm.visible = false; V.group.add(bm); V.bolts.push(bm); }
@@ -261,7 +272,7 @@
     function stop(silent) {
       if (!active && !view) return;
       active = false; document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onMouse);
-      if (view) { arena && arena.root.remove(view.group); view.group.traverse(function (c) { if (c.geometry) c.geometry.dispose(); }); view = null; }
+      if (view) { Object.keys(view.riders).forEach(function (k) { var r = view.riders[k]; try { r.hover.dismount(); r.hover.dispose(); } catch (_) { } if (r.avatar && r.avatar.parent) r.avatar.parent.remove(r.avatar); }); var hv0 = o.getHover && o.getHover(); if (hv0 && hv0.setAction) hv0.setAction('carry-off'); arena && arena.root.remove(view.group); view.group.traverse(function (c) { if (c.geometry) c.geometry.dispose(); }); view = null; }
       if (hud) { hud.el.remove(); hud = null; }
       var hv = o.getHover && o.getHover(); if (hv && hv.wallride) hv.wallride.setWalls(savedWalls || (root.__parkDress && root.__parkDress.walls) || []);
       if (hv && hv.setModifier) hv.setModifier({ mul: 1, dur: 0.01 });
@@ -290,6 +301,17 @@
       // board modifiers: speed power-up, stun on drop/hit, respawn after a demo
       if (hv && hv.setModifier) { if (human.stun > 0 || human.out > 0) hv.setModifier({ stun: Math.max(human.stun, human.out) }); else hv.setModifier({ mul: human.power === 'speed' ? 1.35 : 1, dur: 0.2 }); }
       ev.forEach(function (e) {
+        var actor = e.id === 'you' ? hv : (view.riders[e.id] && view.riders[e.id].hover);   // rider body actions
+        if (actor && actor.setAction) {
+          if (e.type === 'grab') actor.setAction('carry-on');
+          else if (e.type === 'shot') { actor.setAction('carry-off'); actor.setAction('shoot'); }
+          else if (e.type === 'bolt') actor.setAction('bolt');
+          else if (e.type === 'drop') { actor.setAction('carry-off'); actor.setAction('stun', e.why === 'bolt' ? 0.8 : 0.6); }
+          else if (e.type === 'hit' && !e.blocked) actor.setAction('stun', 0.5);
+        }
+        if (e.type === 'drop' && e.why === 'ram' && e.by) { var rm = e.by === 'you' ? hv : (view.riders[e.by] && view.riders[e.by].hover); if (rm && rm.setAction) rm.setAction('ram'); }
+        if (e.type === 'demo') { var vr = e.victim === 'you' ? hv : (view.riders[e.victim] && view.riders[e.victim].hover); if (vr && vr.setAction) { vr.setAction('carry-off'); vr.setAction('stun', 1); } var rr = e.by === 'you' ? hv : (view.riders[e.by] && view.riders[e.by].hover); if (rr && rr.setAction) rr.setAction('ram'); }
+        if (e.type === 'kickoff') { if (hv && hv.setAction) hv.setAction('carry-off'); Object.keys(view.riders).forEach(function (k) { view.riders[k].hover.setAction('carry-off'); }); }
         if (e.type === 'goal') { flash('GOAL ' + (e.team === 'cyon' ? 'CYON' : 'MAGMA'), '#' + TEAM[e.team].toString(16).padStart(6, '0'), 2.2); var gl = L.goals.filter(function (g) { return g.team !== e.team; })[0]; burst(gl.x, gl.y, gl.z, TEAM[e.team], 220, 22); if (arena.setCrowdMood) arena.setCrowdMood(1); }
         else if (e.type === 'drop' && e.id === 'you') flash(e.why === 'bolt' ? 'HIT! DROPPED' : 'RAMMED!', '#FF6A6A', 1);
         else if (e.type === 'grab' && e.id === 'you') flash('GOT IT', '#E8C45C', 0.7);
@@ -302,9 +324,16 @@
       });
       // ball
       var b = st.ball; view.ball.position.set(b.x, b.y, b.z); view.ball.userData.tick(dt, t); view.light.position.copy(view.ball.position);
-      // bots (+ simple lean)
+      // bots: real rigged riders (full board instance) or code placeholders
       st.players.forEach(function (p) {
-        var g = view.bots[p.id]; if (!g) return; g.visible = p.out <= 0; g.position.set(p.x, p.y + 0.25 + Math.sin(t * 3 + p.x) * 0.05, p.z); g.rotation.y = p.psi;
+        var r = view.riders[p.id];
+        if (r) {
+          var hs = r.hover.state(), w = toWorld(p.x, p.y, p.z), dpsi = Math.atan2(Math.sin(p.psi - hs.psi), Math.cos(p.psi - hs.psi));
+          hs.x = w.x; hs.z = w.z; hs.y = w.y + 0.35 * U; hs.yawRate = dt > 0 ? dpsi / dt : 0; hs.psi = p.psi; hs.v = Math.hypot(p.vx, p.vz); hs.air = !!p.air; hs.t += dt; hs.vy = p.vy * U || 0;
+          r.hover.board.visible = p.out <= 0; if (r.avatar) r.avatar.visible = p.out <= 0;
+          r.hover.pose(dt, { showRider: p.out <= 0 }); return;
+        }
+        var g = view.bots[p.id]; if (!g) return; g.visible = p.out <= 0 && !g.userData.real; g.position.set(p.x, p.y + 0.25 + Math.sin(t * 3 + p.x) * 0.05, p.z); g.rotation.y = p.psi;
         var sp = Math.hypot(p.vx, p.vz); g.rotation.z = THREE.MathUtils.lerp(g.rotation.z, -Math.max(-0.4, Math.min(0.4, (p.vx * Math.cos(p.psi) - p.vz * Math.sin(p.psi)) * 0.02)), 0.15); g.rotation.x = p.stun > 0 ? Math.sin(t * 30) * 0.12 : -Math.min(0.15, sp * 0.006);
         var rd = g.userData.rider; if (rd) { rd.rotation.x = st.ball.holder === p.id ? -0.25 : 0; }
       });
