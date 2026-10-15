@@ -283,7 +283,7 @@
   var BOARDGLB = {}, boardsP = null;
   function loadGlb(THREE, GLTFLoader, url) {
     if (boardsP) return boardsP;
-    boardsP = new Promise(function (res) { new GLTFLoader().load(url || '/assets/kits/shaddai_hoverboards_v01.glb', function (gl) {
+    boardsP = new Promise(function (res) { new GLTFLoader().load(url || '/assets/kits/shaddai_hoverboards_v02.glb', function (gl) {
       var n = 0, list = []; gl.scene.traverse(function (c) { if (/^board_[a-z]+$/.test(c.name)) list.push(c); });
       list.forEach(function (c) { if (c.parent) c.parent.remove(c); c.position.set(0, 0, 0); BOARDGLB[c.name.slice(6)] = c; n++; }); res(n);
     }, undefined, function () { console.warn('[hoverboards] Blender board kit missing'); res(0); }); });
