@@ -1327,26 +1327,21 @@ async function _pollBonded() {
    // paused via config until one exists.
    let list = [];
    try {
-     const r = await fetch('https://api.dexscreener.com/latest/dex/search?q=SOL', { signal: AbortSignal.timeout(12000) });
-     if (r.ok) {
-       const j = await r.json();
-       const pairs = (j && j.pairs) || [];
-       const nowMs = Date.now();
-       list = pairs
-         .filter(p => p && p.chainId === 'solana' && p.dexId === 'pumpswap' &&
-                      p.pairCreatedAt && (nowMs - p.pairCreatedAt) < 2 * 3600 * 1000)
-         .map(p => ({
-           mint: p.baseToken && p.baseToken.address,
-           name: p.baseToken && p.baseToken.name,
-           symbol: p.baseToken && p.baseToken.symbol,
-           pumpMc: Number(p.fdv || p.marketCap) || 0,
-           holders: 0, devPct: 0, snipers: 0,
-           imageUri: (p.info && p.info.imageUrl) || '',
-         }))
-         .filter(c => c.mint);
-     }
+     // 2026-10-14 v2: gecko new_pools is the graduation source — every fresh
+     // pumpswap pool creation IS a graduation, and pump.fun mints end in
+     // "pump" by design. DexScreener search never surfaces brand-new pairs
+     // (ranks by relevance, not freshness), which is why the first rewire
+     // saw zero. The 2026-10-14 forensic (SAINDRA 7x, CYBERAXE live) showed
+     // EVERY path to these tokens was closed; this is the dedicated lane.
+     const pools = await geckoPools('new_pools');
+     const nowMs = Date.now();
+     list = pools
+       .filter(p => p.mint && p.mint.endsWith('pump') &&
+                    (p.fdv || 0) >= 15000 && (p.fdv || 0) <= 80000 &&
+                    p.createdAt && (nowMs - p.createdAt) < 2 * 3600 * 1000)
+       .map(p => ({ mint: p.mint, name: p.name || '', symbol: p.symbol || '', pumpMc: p.fdv || 0, holders: 0, devPct: 0, snipers: 0, imageUri: '' }));
    } catch (e) {}
-   if (!_bondSeeded && !list.length) console.warn('[tg-signals] bonded feed: no fresh pumpswap graduations this poll');
+   if (!_bondSeeded && !list.length) console.warn('[tg-signals] bonded feed: no fresh pump.fun graduations in band this poll');
   const _bondEffMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   // Always sort low-FDV first: <$5K bonded = 54% 5x rate (9.5x avg). Guarantees micro plays
   // get first slot in the _bondEffMaxPer budget before higher-FDV tokens consume it.
@@ -1942,24 +1937,35 @@ async function _pollGecko() {
         const a = p && p.attributes; const id = p && p.id; if (!a || !id) continue;
         if (_seenPool.has(id)) continue;
         const liq = Number(a.reserve_in_usd) || 0, vol = Number(a.volume_usd && a.volume_usd.h24) || 0, fdv = Number(a.fdv_usd) || 0;
+        const _bt = (p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id) || '';
+        const _taddr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt;
         // new_pools FDV gates (corpus audit 2026-08-06):
         // <$5K = 2% 3x rate — let bonded handle micro-FDV via pump.fun graduation
         // $10-25K = 48% rug rate, 23% 2x — net negative, skip. Sweet spot is $5-10K (27% 2x, 25% rug).
+        // 2026-10-14 GRADUATION EXCEPTION: pump.fun mints ending "pump" ARE ALLOWED in the
+        // full band — a fresh pumpswap pool at $69k is a graduation landing exactly in our
+        // entry window (SAINDRA/CYBERAXE forensic: this cap was one of the closed paths).
+        const _isPumpGrad = _taddr && _taddr.endsWith('pump') && fdv >= 15000 && fdv <= 80000;
         if (kind === 'new_pools' && fdv > 0 && fdv < 5000) { _seenPool.add(id); continue; }
-        if (kind === 'new_pools' && fdv > 10000) { _seenPool.add(id); continue; }
-        // Age gate: reject tokens < 30 seconds old (too fresh for safe entry)
+        if (kind === 'new_pools' && fdv > 10000 && !_isPumpGrad) { _seenPool.add(id); continue; }
+        // Age gate: reject tokens < 5 minutes old (too fresh for safe entry)
         const createdAtMs = a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0;
         if (createdAtMs > 0 && !_passesAgeGate(createdAtMs)) { _seenPool.add(id); continue; }
         // Micro-FDV relative volume gate: tokens under $15K FDV cannot have $15K+ 24h vol by definition.
         // Use vol/fdv ratio instead — Debt($7K,36x), speedun($9K,10x) had ~3-5x daily turnover.
+        // 2026-10-14 FRESH-POOL VOLUME FIX: a minutes-old pool CANNOT have $20k of 24h
+        // volume — the flat vol24 floor here is how fresh graduations silently died
+        // before any real gate ran (zero reject-log entries for 4 days while coins
+        // bonded). Pools < 90 min old now need only vol1h >= $2,000.
+        const _poolAgeMin = createdAtMs > 0 ? (Date.now() - createdAtMs) / 60000 : null;
         const _volOk = fdv > 0 && fdv < 15000
-          ? (vol / fdv) >= 1.5   // at least 150% daily turnover = explosive for its size
-          : vol >= cfg.minVol24h;
+          ? (vol / fdv) >= 1.5
+          : (_poolAgeMin !== null && _poolAgeMin < 90)
+            ? (Number(a.volume_usd && a.volume_usd.h1) || 0) >= 2000
+            : vol >= cfg.minVol24h;
         if (liq < cfg.minLiq || !_volOk || !_passesFdv(cfg, fdv)) continue;
         const _chg = Number(a.price_change_percentage && a.price_change_percentage.h24);
         if (cfg.bullishOnly && isFinite(_chg) && _chg < -10) continue;   // skip bearish (funnel)
-        const _bt = (p.relationships && p.relationships.base_token && p.relationships.base_token.data && p.relationships.base_token.data.id) || '';
-        const _taddr = _bt.indexOf('_') >= 0 ? _bt.slice(_bt.indexOf('_') + 1) : _bt;
         const _dk = _taddr || id;   // dedupe key: token address if present, else the pool id (always present)
         if (core.wasAlerted(_dk)) continue;   // GLOBAL persistent de-dupe (fixes GeckoTerminal repeats)
         if (_badMint(_dk)) continue;          // persisted rug/scam reject cache
