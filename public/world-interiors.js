@@ -88,6 +88,42 @@
   };
 
   /* ─── factory ────────────────────────────────────────────────────────────── */
+  /* per-room furniture plans: [kind, side (-1 left wall, +1 right wall, 0 back wall), along (-1..1 of the wall), rotY extra] */
+  var FURNISH = {
+    SHADDAI: [['sofa', -1, -0.2], ['sofa', -1, 0.25], ['rug', -1, 0.02], ['lectern', 1, 0], ['planter', 1, -0.7], ['holo-shelf', 1, 0.6]],
+    NEXUS:   [['server-rack', 1, -0.6], ['server-rack', 1, -0.35], ['server-rack', 1, -0.1], ['terminal', -1, -0.4], ['terminal', -1, 0], ['desk', -1, 0.45]],
+    ORACLE:  [['holo-shelf', -1, -0.55], ['holo-shelf', -1, -0.15], ['shelf', 1, -0.5], ['shelf', 1, -0.1], ['desk', 1, 0.45], ['rug', 0, 0]],
+    TURTLE:  [['gallery-frame', -1, -0.5], ['gallery-frame', -1, 0], ['gallery-frame', 1, -0.5], ['gallery-frame', 1, 0], ['workbench', 0, -0.5], ['planter', 0, 0.5]],
+    PIKADON: [['wardrobe', -1, -0.6], ['wardrobe', -1, -0.35], ['stash', -1, 0.1], ['stash', -1, 0.3], ['terminal', 1, -0.3], ['comms-console', 1, 0.2]],
+    ZEROX:   [['desk', -1, -0.5], ['desk', -1, 0], ['desk', 1, -0.5], ['desk', 1, 0], ['broadcast-desk', 0, 0], ['mail-terminal', 1, 0.5]],
+    QUILL:   [['shelf', -1, -0.6], ['shelf', -1, -0.25], ['shelf', 1, -0.6], ['shelf', 1, -0.25], ['lectern', 0, 0], ['class-desk-row', -1, 0.4]]
+  };
+  var PM_F = 7 / 1.8;   /* furniture is authored in metres */
+  function furnishRoom(group, code) {
+    var plan = FURNISH[code]; if (!plan || /[?&]roomfurn=0/.test(global.location ? global.location.search : '')) return;
+    var F, tries = 0;
+    var wait = function () {                    /* rooms build before world-furniture.js loads: poll (2 s, up to 2 min), then furnish once */
+      F = global.SHADDAI_FURNITURE;
+      if (F && F.kinds && F.kinds.length) return go();
+      if (F && F._p) return F._p.then(function (n) { if (n) go(); });
+      if (++tries < 60 && typeof setTimeout === 'function') setTimeout(wait, 2000);
+    };
+    var go = function () {
+      plan.concat([['planter', 0, -0.85], ['planter', 0, 0.85], ['ceiling-light', 2, -0.4], ['ceiling-light', 2, 0.4]]).forEach(function (it) {
+        var kind = it[0], side = it[1], along = it[2], meta = F.meta(kind), obj = F.build(kind); if (!obj) return;
+        var d = (meta && meta.footprint_m ? meta.footprint_m[1] : 1) * PM_F, half = ROOM_W / 2 - 1.5 - d / 2;
+        obj.scale.setScalar(PM_F);
+        if (side === -1) { obj.position.set(-half, 0, along * ROOM_D * 0.42); obj.rotation.y = Math.PI / 2; }        /* left wall, faces +x */
+        else if (side === 1) { obj.position.set(half, 0, along * ROOM_D * 0.42); obj.rotation.y = -Math.PI / 2; }    /* right wall, faces -x */
+        else if (side === 0) { obj.position.set(along * ROOM_W * 0.42, 0, -ROOM_D / 2 + 1.5 + d / 2); }             /* back wall, faces +z */
+        else { obj.position.set(0, ROOM_H - (meta ? meta.height_m * PM_F : 0.3), along * ROOM_D * 0.5); }          /* ceiling */
+        obj.name = 'furn-' + code + '-' + kind; group.add(obj);
+      });
+    };
+    wait();
+  }
+
+  global._interiorFurnish = { FURNISH: FURNISH, furnishRoom: furnishRoom };
   global.buildWorldInteriors = function (opts) {
     var THREE     = opts.THREE;
     var scene     = opts.scene;
@@ -2522,6 +2558,10 @@
       /* themed props */
       var fn = propBuilders[theme.propFn] || propBuilders.genericRoom;
       fn(group, theme.accent);
+
+      /* FURNITURE (2026-10-15, owner: "the insides of the shaddai buildings, all the furniture"): the Blender K12 library
+         (world-furniture.js) along the side walls / back corners, facing into the room - the hero props keep the centre. */
+      furnishRoom(group, uc);
 
       /* framed FLUX wall-art (left wall, eye height) — one themed piece per room.
          Added AFTER props so its glow material joins this room's glowEntries splice. */
