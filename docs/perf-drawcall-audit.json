@@ -1,0 +1,498 @@
+{
+ "patterns": [
+  {
+   "key": "BoxGeometry|MeshStandardMaterial|mesh|24v",
+   "n": 280,
+   "uniqueGeo": 278,
+   "uniqueMat": 111,
+   "sample": [
+    [
+     121,
+     196
+    ],
+    [
+     121,
+     196
+    ],
+    [
+     121,
+     196
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "BoxGeometry|MeshStandardMaterial|inst|24v",
+   "n": 191,
+   "uniqueGeo": 191,
+   "uniqueMat": 154,
+   "sample": [
+    [
+     121,
+     196
+    ],
+    [
+     109,
+     203
+    ],
+    [
+     124,
+     204
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "PlaneGeometry|MeshBasicMaterial|mesh|4v",
+   "n": 153,
+   "uniqueGeo": 130,
+   "uniqueMat": 126,
+   "sample": [
+    [
+     246,
+     16
+    ],
+    [
+     246,
+     16
+    ],
+    [
+     246,
+     -16
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "CylinderGeometry|MeshBasicMaterial|mesh|40v",
+   "n": 113,
+   "uniqueGeo": 58,
+   "uniqueMat": 64,
+   "sample": [
+    [
+     -155,
+     268
+    ],
+    [
+     -81,
+     102
+    ],
+    [
+     -81,
+     98
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "BoxGeometry|MeshBasicMaterial|mesh|24v",
+   "n": 60,
+   "uniqueGeo": 50,
+   "uniqueMat": 35,
+   "sample": [
+    [
+     112,
+     209
+    ],
+    [
+     166,
+     -313
+    ],
+    [
+     188,
+     -300
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "CylinderGeometry|MeshStandardMaterial|mesh|88v",
+   "n": 48,
+   "uniqueGeo": 1,
+   "uniqueMat": 25,
+   "sample": [
+    [
+     -81,
+     253
+    ],
+    [
+     -81,
+     253
+    ],
+    [
+     -87,
+     253
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "PlaneGeometry|MeshStandardMaterial|mesh|4v",
+   "n": 43,
+   "uniqueGeo": 43,
+   "uniqueMat": 32,
+   "sample": [
+    [
+     111,
+     193
+    ],
+    [
+     109,
+     194
+    ],
+    [
+     112,
+     194
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "CylinderGeometry|MeshStandardMaterial|mesh|64v",
+   "n": 37,
+   "uniqueGeo": 35,
+   "uniqueMat": 5,
+   "sample": [
+    [
+     108,
+     194
+    ],
+    [
+     -132,
+     279
+    ],
+    [
+     -143,
+     273
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "CylinderGeometry|MeshStandardMaterial|mesh|52v",
+   "n": 33,
+   "uniqueGeo": 20,
+   "uniqueMat": 24,
+   "sample": [
+    [
+     110,
+     191
+    ],
+    [
+     112,
+     209
+    ],
+    [
+     112,
+     209
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "TorusGeometry|MeshBasicMaterial|mesh|369v",
+   "n": 29,
+   "uniqueGeo": 17,
+   "uniqueMat": 29,
+   "sample": [
+    [
+     0,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     -130,
+     225
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "RingGeometry|MeshBasicMaterial|mesh|98v",
+   "n": 28,
+   "uniqueGeo": 28,
+   "uniqueMat": 28,
+   "sample": [
+    [
+     260,
+     -26
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     -130,
+     225
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "BoxGeometry|MeshBasicMaterial|inst|24v",
+   "n": 27,
+   "uniqueGeo": 26,
+   "uniqueMat": 27,
+   "sample": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "CircleGeometry|MeshBasicMaterial|mesh|42v",
+   "n": 26,
+   "uniqueGeo": 26,
+   "uniqueMat": 24,
+   "sample": [
+    [
+     292,
+     0
+    ],
+    [
+     305,
+     0
+    ],
+    [
+     318,
+     0
+    ]
+   ],
+   "names": []
+  },
+  {
+   "key": "CylinderGeometry|MeshStandardMaterial|mesh|292v",
+   "n": 24,
+   "uniqueGeo": 24,
+   "uniqueMat": 18,
+   "sample": [
+    [
+     94,
+     54
+    ],
+    [
+     -94,
+     -54
+    ],
+    [
+     94,
+     54
+    ]
+   ],
+   "names": []
+  }
+ ],
+ "totalDrawSubmissions": 2273,
+ "groups": 19,
+ "top": [
+  {
+   "group": "Mesh",
+   "draws": 916,
+   "meshes": 916,
+   "instances": 5405,
+   "kTris": 292,
+   "materials": 595,
+   "textures": 70,
+   "autoMatrix": 3
+  },
+  {
+   "group": "Group",
+   "draws": 895,
+   "meshes": 895,
+   "instances": 400,
+   "kTris": 160,
+   "materials": 450,
+   "textures": 17,
+   "autoMatrix": 13
+  },
+  {
+   "group": "world-terrain-v4",
+   "draws": 190,
+   "meshes": 190,
+   "instances": 0,
+   "kTris": 438,
+   "materials": 1,
+   "textures": 2,
+   "autoMatrix": 0
+  },
+  {
+   "group": "world-transit",
+   "draws": 125,
+   "meshes": 85,
+   "instances": 1029,
+   "kTris": 124,
+   "materials": 34,
+   "textures": 17,
+   "autoMatrix": 0
+  },
+  {
+   "group": "world-realm-props",
+   "draws": 22,
+   "meshes": 22,
+   "instances": 0,
+   "kTris": 0,
+   "materials": 22,
+   "textures": 0,
+   "autoMatrix": 0
+  },
+  {
+   "group": "world-water",
+   "draws": 20,
+   "meshes": 20,
+   "instances": 0,
+   "kTris": 292,
+   "materials": 20,
+   "textures": 0,
+   "autoMatrix": 0
+  },
+  {
+   "group": "entrance-beacon",
+   "draws": 20,
+   "meshes": 20,
+   "instances": 0,
+   "kTris": 5,
+   "materials": 20,
+   "textures": 0,
+   "autoMatrix": 0
+  },
+  {
+   "group": "world-canon-v4",
+   "draws": 16,
+   "meshes": 16,
+   "instances": 0,
+   "kTris": 630,
+   "materials": 16,
+   "textures": 3,
+   "autoMatrix": 0
+  },
+  {
+   "group": "colosseum-exterior",
+   "draws": 15,
+   "meshes": 15,
+   "instances": 392,
+   "kTris": 17,
+   "materials": 12,
+   "textures": 1,
+   "autoMatrix": 0
+  },
+  {
+   "group": "world-nature",
+   "draws": 14,
+   "meshes": 14,
+   "instances": 174,
+   "kTris": 365,
+   "materials": 14,
+   "textures": 21,
+   "autoMatrix": 14
+  },
+  {
+   "group": "world-volcano",
+   "draws": 12,
+   "meshes": 12,
+   "instances": 0,
+   "kTris": 126,
+   "materials": 12,
+   "textures": 23,
+   "autoMatrix": 6
+  },
+  {
+   "group": "Points",
+   "draws": 10,
+   "meshes": 10,
+   "instances": 0,
+   "kTris": 20,
+   "materials": 10,
+   "textures": 0,
+   "autoMatrix": 10
+  },
+  {
+   "group": "Scene",
+   "draws": 7,
+   "meshes": 7,
+   "instances": 0,
+   "kTris": 321,
+   "materials": 7,
+   "textures": 7,
+   "autoMatrix": 7
+  },
+  {
+   "group": "world-fal-props",
+   "draws": 4,
+   "meshes": 4,
+   "instances": 0,
+   "kTris": 51,
+   "materials": 1,
+   "textures": 1,
+   "autoMatrix": 4
+  },
+  {
+   "group": "GridHelper",
+   "draws": 2,
+   "meshes": 2,
+   "instances": 0,
+   "kTris": 1,
+   "materials": 2,
+   "textures": 0,
+   "autoMatrix": 2
+  },
+  {
+   "group": "world-actions",
+   "draws": 2,
+   "meshes": 2,
+   "instances": 0,
+   "kTris": 31,
+   "materials": 2,
+   "textures": 2,
+   "autoMatrix": 0
+  },
+  {
+   "group": "Line",
+   "draws": 1,
+   "meshes": 1,
+   "instances": 0,
+   "kTris": 0,
+   "materials": 1,
+   "textures": 0,
+   "autoMatrix": 1
+  },
+  {
+   "group": "hoverboard-fx",
+   "draws": 1,
+   "meshes": 1,
+   "instances": 0,
+   "kTris": 0,
+   "materials": 1,
+   "textures": 0,
+   "autoMatrix": 1
+  },
+  {
+   "group": "world-sky-v4",
+   "draws": 1,
+   "meshes": 1,
+   "instances": 0,
+   "kTris": 2,
+   "materials": 1,
+   "textures": 0,
+   "autoMatrix": 0
+  }
+ ],
+ "info": {
+  "calls": 3004,
+  "tris": 1846668,
+  "textures": 96,
+  "geometries": 1419
+ }
+}

@@ -1,0 +1,9 @@
+const puppeteer=require('puppeteer');const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{const b=await puppeteer.launch({headless:'new',protocolTimeout:600000,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const p=await b.newPage();await p.setViewport({width:900,height:560});const errs=[];p.on('pageerror',e=>errs.push(String(e.message).slice(0,180)));const logs=[];p.on('console',m=>{const t=m.text();if(/\[race\]/.test(t))logs.push(t.slice(0,160))});
+await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html?map=v4&peek=1',{waitUntil:'domcontentloaded',timeout:90000});
+let ok=false;for(let i=0;i<220;i++){await sleep(2500);ok=await p.evaluate(()=>!!(window.__hoverPark&&window.__raceRun)).catch(()=>false);if(ok)break;}
+if(!ok){console.log('NOT READY',JSON.stringify(await p.evaluate(()=>({markers:!!(window.__cityV3&&window.__cityV3.markers&&window.__cityV3.markers.length),terrain:!!(window.__w3dDebug&&window.__w3dDebug.terrain),park:!!window.WorldHoverPark,run:!!window.WorldRaceRun})).catch(e=>String(e))),logs);await b.close();return;}
+const r=await p.evaluate(async()=>{const P=window.__hoverPark,R=window.__raceRun,out={};const mk=window.__cityV3.markers.find(m=>m.name==='PLAZA_SKATE');out.marker=[Math.round(mk.pos.x),Math.round(mk.pos.z)];out.entrance=[Math.round(P.entrance.x),Math.round(P.entrance.z)];out.rooms=P.rooms.length;out.deckY=Math.round(P.deckY);
+ window.NaviHooks.onRaceEnter('quarter-loop',false);await new Promise(r=>setTimeout(r,1500));const st=R.state();out.phase=st&&st.phase;out.riders=st&&st.standings.length;out.riding=window.__w3dDebug&&null;return out;});
+console.log('RACE '+JSON.stringify(r),JSON.stringify(logs));console.log('ERRS '+JSON.stringify(errs.slice(0,5)));await b.close();})();

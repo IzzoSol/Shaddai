@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terrain v4 Lab</title>
+<!-- Standalone test bench for public/world-terrain-v4.js (NOT wired into SHADDAI-WORLD-3D.html).
+     ?set=real → /assets/terrain/ (the Blender export); default → /assets/terrain/_test/ (make-test-terrain.cjs)
+     ?cam=x,y,z → start position · ?noShadow · ?wire
+     Fly: WASD move, Q/E down/up, mouse-drag look, Shift = fast (×8), wheel = speed. -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --bg:#06080b; --fg:#cfe9dc; --accent:#00ff9c; --gold:#e8c45c; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); overflow:hidden; font:12px/1.45 ui-monospace, Consolas, monospace; }
+  canvas { display:block; }
+  #hud { position:fixed; left:10px; top:10px; padding:8px 10px; background:rgba(6,8,11,.78); border:1px solid rgba(0,255,156,.35); border-radius:6px; white-space:pre; pointer-events:none; min-width:220px; }
+  #hud b { color:var(--accent); font-weight:600; }
+  #help { position:fixed; right:10px; bottom:10px; padding:6px 9px; background:rgba(6,8,11,.7); border-radius:6px; color:#8aa; }
+  #err { position:fixed; left:10px; bottom:10px; color:#ff6b6b; white-space:pre-wrap; max-width:70vw; }
+</style>
+</head>
+<body>
+<div id="hud">loading terrain…</div>
+<div id="help">WASD move · Q/E down/up · drag look · Shift fast · wheel speed</div>
+<div id="err"></div>
+<script src="world-terrain-v4.js"></script>
+<script type="module">
+import * as THREE from 'three';
+
+const qs = new URLSearchParams(location.search);
+const BASE = qs.get('set') === 'real' ? 'assets/terrain/' : 'assets/terrain/_test/';
+const hud = document.getElementById('hud'), errEl = document.getElementById('err');
+window.addEventListener('error', (e) => { errEl.textContent += (e.message || e) + '\n'; });
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });   // log depth: 1 u near → 60 000 u far without z-fighting
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = !qs.has('noShadow');
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9cc7e6);
+scene.fog = new THREE.Fog(0x9cc7e6, 12000, 60000);
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1, 60000);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xdfefff, 0x4a4030, 0.9));
+const sun = new THREE.DirectionalLight(0xfff1dd, 2.2);
+sun.position.set(-3000, 5000, -2000);
+sun.castShadow = renderer.shadowMap.enabled;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -600, right: 600, top: 600, bottom: -600, near: 10, far: 12000 });
+scene.add(sun, sun.target);
+
+// fly camera ──────────────────────────────────────────────────────────────────────────────────────────────
+const keys = {}; let yaw = 0, pitch = -0.35, speed = 400, drag = null;
+addEventListener('keydown', (e) => { keys[e.code] = true; });
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+renderer.domElement.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; renderer.domElement.setPointerCapture(e.pointerId); });
+addEventListener('pointerup', () => { drag = null; });
+addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  yaw -= (e.clientX - drag.x) * 0.004; pitch = Math.max(-1.55, Math.min(1.55, pitch - (e.clientY - drag.y) * 0.004));
+  drag = { x: e.clientX, y: e.clientY };
+});
+addEventListener('wheel', (e) => { speed = Math.max(20, Math.min(20000, speed * (e.deltaY > 0 ? 0.8 : 1.25))); });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const c0 = (qs.get('cam') || '').split(',').map(Number);
+camera.position.set(c0.length === 3 && c0.every(isFinite) ? c0[0] : 0, c0.length === 3 ? c0[1] : 1200, c0.length === 3 ? c0[2] : 6000);
+
+let api = null, sea = null, fpsN = 0, fpsT = performance.now(), fps = 0;
+const clock = new THREE.Clock();
+const fwd = new THREE.Vector3(), right = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+
+window.buildWorldTerrainV4({ THREE, scene, camera, base: BASE, G: +qs.get('G') || undefined }).then((t) => {   // ?G=64 = patch-size A/B
+  api = t; window.__lab = { api, camera, scene, renderer, THREE };
+  if (qs.get('track')) {   // ?track=dragon-gate : race track on the real terrain (light review, no city)
+    const load = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    Promise.all([load('world-race.js'), load('world-race-track.js'), import('three/addons/utils/BufferGeometryUtils.js')]).then(([, , BGU]) => {
+      window.__lab.track = window.buildRaceTrack({ THREE, scene, groundAt: t.groundAt, WorldRace: window.WorldRace, circuit: qs.get('track'), mergeGeometries: BGU.mergeGeometries });
+      t.addRideExtra(window.__lab.track.surfaceAt);
+    }).catch((e) => { errEl.textContent += 'track: ' + e.message + '\n'; });
+  }
+  if (qs.has('wire')) api.material.wireframe = true;
+  // sea plane at sea level — lab-only visual so the basin reads as water
+  sea = new THREE.Mesh(new THREE.PlaneGeometry(api.half * 2.4, api.half * 2.4), new THREE.MeshStandardMaterial({ color: 0x1f5a7a, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.82 }));
+  sea.rotation.x = -Math.PI / 2; sea.position.y = api.seaLevel; scene.add(sea);
+  // don't spawn underground
+  const g = api.heightAt(camera.position.x, camera.position.z);
+  if (camera.position.y < g + 20) camera.position.y = g + 60;
+}).catch((e) => { errEl.textContent += 'terrain load failed: ' + e.message + '\n'; console.error(e); });
+
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.1, clock.getDelta()), t = clock.elapsedTime;
+  camera.rotation.set(pitch, yaw, 0, 'YXZ');
+  camera.getWorldDirection(fwd); right.crossVectors(fwd, UP).normalize();
+  const v = speed * (keys.ShiftLeft || keys.ShiftRight ? 8 : 1) * dt;
+  if (keys.KeyW) camera.position.addScaledVector(fwd, v);
+  if (keys.KeyS) camera.position.addScaledVector(fwd, -v);
+  if (keys.KeyD) camera.position.addScaledVector(right, v);
+  if (keys.KeyA) camera.position.addScaledVector(right, -v);
+  if (keys.KeyE) camera.position.y += v;
+  if (keys.KeyQ) camera.position.y -= v;
+  if (api) {
+    const g = api.heightAt(camera.position.x, camera.position.z);
+    if (camera.position.y < g + 3) camera.position.y = g + 3;
+    // shadow frustum follows the camera (terrain receives only)
+    sun.target.position.set(camera.position.x, g, camera.position.z);
+    sun.position.set(camera.position.x - 3000, g + 5000, camera.position.z - 2000);
+    api.update(t, dt);
+  }
+  renderer.render(scene, camera);
+  fpsN++;
+  const now = performance.now();
+  if (now - fpsT > 500) {
+    fps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now;
+    if (api) {
+      const s = api.stats(), p = camera.position;
+      const lods = Object.keys(s.lodCounts).sort((a, b) => a - b).map((k) => 'L' + k + ':' + s.lodCounts[k]).join(' ');
+      hud.innerHTML = `<b>terrain v4</b> · ${BASE} (${api.source})\nfps      ${fps.toFixed(0)}\nchunks   ${s.chunks}\ntris     ${(s.tris / 1000).toFixed(1)}k\nupdate   ${s.updateMs.toFixed(2)} ms\nbuilt    ${s.built} (pool ${s.pooled}, queue ${s.queued})\nlods     ${lods}\ncam      ${p.x.toFixed(0)}, ${p.y.toFixed(0)}, ${p.z.toFixed(0)}\nground   ${api.heightAt(p.x, p.z).toFixed(1)} u\nspeed    ${speed.toFixed(0)} u/s`;
+    }
+  }
+}
+loop();
+</script>
+</body>
+</html>

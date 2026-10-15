@@ -9,7 +9,205 @@
  * Plugs into the host's existing veh hooks (speed/baseY/flyControl/update/mode):
  *   let veh = window.buildWorldActions ? window.buildWorldActions({...}) : stub;
  *   veh.update(dt, fwd) is already called each frame by the host.
+ *
+ * 2026-09-26 VEHICLES V2 (docs/VEHICLES-V2.md):
+ *   • window.WorldRiderPose — a rig-agnostic procedural RIDER POSE (seated bike tuck, surf
+ *     stance…) solved with world-space aim + analytic two-bone IK on the avatar's own bones.
+ *     Shared by the Grid Bike below and public/world-hoverboard.js.
+ *   • veh.bike — Grid Bike physics + visuals (accel/brake/drag, terrain pitch/roll, banking,
+ *     collider slide, smooth mount/dismount, seated rider). Host calls veh.bike.step() in the
+ *     movement block and veh.bike.pose() where the old bikeMode block placed the mesh.
  */
+
+/* ════════════════════════════════════════════════════════════════════════════════════
+ * WorldRiderPose — procedural riding poses for ANY humanoid rig.
+ *
+ * WHY world-space aiming instead of "add 1.2 rad to the knee's rotation.x": every rig ships
+ * different bone-local axes (Mixamo, Meshy, UE-style, Blender .L/.R …) and a different rest
+ * pose (T vs A). A fixed local offset bends one rig correctly and folds the next one
+ * backwards. Instead we ask for a WORLD result — "this joint's child should sit THERE" —
+ * and compute the minimal rotation that gets it there, converted back into the bone's
+ * local frame. Same code, any rig, no per-model tuning.
+ *
+ * WHY analytic two-bone IK for limbs: the hands must land on the handlebars and the feet on
+ * the pegs / deck regardless of the character's proportions (short QUILL vs tall ZEROX).
+ * Law of cosines gives the elbow/knee position in closed form — no iterations, no allocs.
+ *
+ * Blending: the host's AnimationMixer may (or may not) write these bones each frame. We
+ * detect that by remembering what we wrote last frame: if a bone still holds our value,
+ * nothing else drives it, so the blend base is its REST pose (captured at bind); if it
+ * changed, the mixer wrote it this frame, so the blend base is the mixer's pose. That
+ * makes mount/dismount fade from/to whatever the body was doing — never a T-pose flash.
+ * ════════════════════════════════════════════════════════════════════════════════════ */
+window.WorldRiderPose = window.WorldRiderPose || (function () {
+  function create(THREE) {
+    var V = THREE.Vector3, Q = THREE.Quaternion;
+    var _a = new V(), _b = new V(), _d = new V(), _t = new V(), _q = new Q(), _wq = new Q(), _pq = new Q();
+    var _S = new V(), _E = new V(), _F = new V(), _dir = new V(), _p = new V(), _el = new V(), _tg = new V(), _tmp = new V();
+
+    var rig = null;          // bound bones for the current avatar model
+    var boundModel = null;   // the avatar child we bound to (hero switch swaps it → rebind)
+    var boundAvatar = null;
+
+    function wpos(o, out) { return out.setFromMatrixPosition(o.matrixWorld); }
+
+    // Strip rig prefixes + side tokens so "mixamorig:LeftUpLeg", "thigh_l", "UpperLeg.L",
+    // "Bip01 L Thigh" all collapse to a comparable limb word. SIDE is decided by position
+    // (see bind) — names lie more often than geometry does.
+    function limbWord(name) {
+      var n = String(name || '').toLowerCase();
+      n = n.replace(/mixamorig\d*[:_]?/, '').replace(/left|right/g, '');
+      n = n.replace(/(^|[_.\s:-])[lr](?=[_.\s:-]|$)/g, '$1');
+      return n.replace(/[_.\s:|-]/g, '');
+    }
+    function kindOf(w) {
+      if (/twist|roll|end$|nub|toe|finger|thumb|index|middle|ring|pinky|eye|jaw|ik|pole|target/.test(w)) return null;
+      if (/upleg|thigh|upperleg/.test(w)) return 'upleg';
+      if (/calf|shin|lowerleg|knee/.test(w) || /(^|[^pa-z])leg$/.test(w) || w === 'leg') return 'leg';
+      if (/foot|ankle/.test(w)) return 'foot';
+      if (/forearm|lowerarm|elbow/.test(w)) return 'fore';
+      if (/upperarm/.test(w) || /(^|[^e])arm$/.test(w)) return 'arm';
+      if (/hand$|wrist/.test(w)) return 'hand';
+      if (/neck/.test(w)) return 'neck';
+      if (/^head$|head$/.test(w)) return 'head';
+      if (/spine|chest|torso/.test(w)) return 'spine';
+      if (/hips?$|pelvis/.test(w)) return 'hips';
+      return null;
+    }
+
+    function bind(avatar) {
+      var model = avatar && avatar.children && avatar.children[0];
+      if (rig && boundAvatar === avatar && boundModel === model) return rig;
+      if (rig) restore();                            // leaving an old body — hand its bones back
+      boundAvatar = avatar; boundModel = model;
+      rig = { bones: [], rest: new Map(), last: new Map(), hasBones: false, hipH: 0, footH: 0, height: 0 };
+      if (!model) return rig;
+      avatar.updateMatrixWorld(true);
+      var found = {}, firstOf = {};
+      model.traverse(function (o) {
+        if (!o.isBone) return;
+        var k = kindOf(limbWord(o.name));
+        if (!k) return;
+        if (k === 'hips' || k === 'neck' || k === 'head') { if (!firstOf[k]) firstOf[k] = o; return; }
+        if (k === 'spine') { if (!firstOf.spine) firstOf.spine = o; return; }      // LOWEST spine bone → leans the whole torso
+        // side from geometry: avatar-local +X is the character's LEFT (it faces +Z)
+        avatar.worldToLocal(wpos(o, _tmp));
+        var side = _tmp.x >= 0 ? 'l' : 'r';
+        if (Math.abs(_tmp.x) < 1e-4) return;       // centre-line bone mis-tagged as a limb
+        var key = k + side;
+        if (!found[key]) found[key] = o;           // traverse is parent-first → keep the root-most match
+      });
+      var box = new THREE.Box3().setFromObject(model), sz = box.getSize(new V());
+      rig.height = sz.y || 7;
+      var b = {
+        hips: firstOf.hips, spine: firstOf.spine, neck: firstOf.neck, head: firstOf.head,
+        armL: found.arml, foreL: found.forel, handL: found.handl,
+        armR: found.armr, foreR: found.forer, handR: found.handr,
+        uplegL: found.uplegl, legL: found.legl, footL: found.footl,
+        uplegR: found.uplegr, legR: found.legr, footR: found.footr,
+      };
+      // a hand/foot the regex missed → use the first bone child of the lower limb as the "end"
+      ['L', 'R'].forEach(function (s) {
+        if (!b['hand' + s] && b['fore' + s]) b['hand' + s] = firstBoneChild(b['fore' + s]);
+        if (!b['foot' + s] && b['leg' + s]) b['foot' + s] = firstBoneChild(b['leg' + s]);
+      });
+      rig.b = b;
+      // posed bones in PARENT-FIRST order (blend + matrix updates rely on this)
+      [b.spine, b.neck, b.uplegL, b.legL, b.uplegR, b.legR, b.armL, b.foreL, b.armR, b.foreR]
+        .forEach(function (o) { if (o) { rig.bones.push(o); rig.rest.set(o, o.quaternion.clone()); } });
+      rig.hasBones = !!(b.uplegL && b.legL && b.footL && b.uplegR && b.legR && b.footR);
+      rig.hipH = b.hips ? avatar.worldToLocal(wpos(b.hips, _tmp)).y : rig.height * 0.52;
+      rig.footH = b.footL ? Math.max(0, avatar.worldToLocal(wpos(b.footL, _tmp)).y) : rig.height * 0.05;
+      rig.full = rig.bones.map(function () { return new Q(); });
+      rig.base = rig.bones.map(function () { return new Q(); });
+      return rig;
+    }
+    function firstBoneChild(o) { for (var i = 0; i < o.children.length; i++) if (o.children[i].isBone) return o.children[i]; return null; }
+
+    // rotate `bone` (minimal rotation) so the joint `tip` moves onto the ray toward `target`
+    function aimAt(bone, tip, target) {
+      if (!bone || !tip) return;
+      wpos(bone, _a); wpos(tip, _b);
+      _d.subVectors(_b, _a); _t.subVectors(target, _a);
+      if (_d.lengthSq() < 1e-10 || _t.lengthSq() < 1e-10) return;
+      _q.setFromUnitVectors(_d.normalize(), _t.normalize());
+      bone.getWorldQuaternion(_wq).premultiply(_q);
+      if (bone.parent) { bone.parent.getWorldQuaternion(_pq).invert(); _wq.premultiply(_pq); }
+      bone.quaternion.copy(_wq);
+      bone.updateMatrixWorld(true);
+    }
+    function aimDir(bone, tip, dir) { if (!bone || !tip) return; wpos(bone, _el); _el.add(dir); aimAt(bone, tip, _el); }
+
+    // analytic two-bone IK: place `end` at `target`, bending toward `pole` (world direction)
+    function twoBone(upper, lower, end, target, pole) {
+      if (!upper || !lower || !end) return;
+      wpos(upper, _S); wpos(lower, _E); wpos(end, _F);
+      var a = _S.distanceTo(_E), c = _E.distanceTo(_F);
+      _dir.subVectors(target, _S);
+      var d = _dir.length(); if (d < 1e-6 || a < 1e-6 || c < 1e-6) return;
+      _dir.divideScalar(d);
+      d = Math.max(Math.abs(a - c) * 1.02 + 1e-4, Math.min(d, (a + c) * 0.999));   // unreachable → straight limb pointing at it
+      var x = (a * a + d * d - c * c) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x));
+      if (pole) _p.copy(pole).addScaledVector(_dir, -pole.dot(_dir)); else _p.set(0, 0, 0);
+      if (_p.lengthSq() < 1e-8) _p.set(0, 1, 0).addScaledVector(_dir, -_dir.y);
+      _p.normalize();
+      _tg.copy(_S).addScaledVector(_dir, x).addScaledVector(_p, h);   // elbow/knee
+      aimAt(upper, lower, _tg);
+      _tg.copy(_S).addScaledVector(_dir, d);                            // (clamped) hand/foot
+      aimAt(lower, end, _tg);
+    }
+
+    /* apply(w, T): T is a world-space target set (all optional):
+     *   spineDir, neckDir           — unit directions for hips→neck / neck→head
+     *   footL, footR, kneePoleL/R   — ankle targets + knee bend directions
+     *   handL, handR, elbowPoleL/R  — wrist targets + elbow bend directions (IK)
+     *   armDirL/R, foreDirL/R       — OR plain directions for arms (no IK target)
+     * Caller must have placed + updateMatrixWorld()'d the avatar root first. */
+    function apply(w, T) {
+      if (!rig || !rig.bones.length || w <= 0.0005) return;
+      var bs = rig.bones, i;
+      // 1) pick the blend base per bone (mixer output, or rest if nobody else drives it)
+      for (i = 0; i < bs.length; i++) {
+        var lw = rig.last.get(bs[i]);
+        if (lw && lw.equals(bs[i].quaternion)) bs[i].quaternion.copy(rig.rest.get(bs[i]));
+        rig.base[i].copy(bs[i].quaternion);
+      }
+      boundModel.updateMatrixWorld(true);
+      // 2) solve the full pose (w = 1), torso first so limbs start from the leaned shoulders
+      var b = rig.b;
+      if (T.spineDir && b.spine && b.neck) aimDir(b.spine, b.neck, T.spineDir);
+      if (T.neckDir && b.neck && b.head) aimDir(b.neck, b.head, T.neckDir);
+      if (T.footL) twoBone(b.uplegL, b.legL, b.footL, T.footL, T.kneePoleL);
+      if (T.footR) twoBone(b.uplegR, b.legR, b.footR, T.footR, T.kneePoleR);
+      if (T.handL) twoBone(b.armL, b.foreL, b.handL, T.handL, T.elbowPoleL);
+      else if (T.armDirL) { aimDir(b.armL, b.foreL, T.armDirL); if (T.foreDirL) aimDir(b.foreL, b.handL, T.foreDirL); }
+      if (T.handR) twoBone(b.armR, b.foreR, b.handR, T.handR, T.elbowPoleR);
+      else if (T.armDirR) { aimDir(b.armR, b.foreR, T.armDirR); if (T.foreDirR) aimDir(b.foreR, b.handR, T.foreDirR); }
+      // 3) blend base → full by w, remember what we wrote
+      for (i = 0; i < bs.length; i++) {
+        rig.full[i].copy(bs[i].quaternion);
+        if (w < 0.999) bs[i].quaternion.slerpQuaternions(rig.base[i], rig.full[i], w);
+        var m = rig.last.get(bs[i]); if (!m) { m = new Q(); rig.last.set(bs[i], m); }
+        m.copy(bs[i].quaternion);
+      }
+      boundModel.updateMatrixWorld(true);
+    }
+
+    // hand every posed bone back to its rest pose (dismount complete / body swapped)
+    function restore() {
+      if (!rig) return;
+      rig.bones.forEach(function (o) { var r = rig.rest.get(o); if (r) o.quaternion.copy(r); });
+      rig.last.clear();
+    }
+
+    return {
+      bind: bind, apply: apply, restore: restore,
+      rig: function () { return rig; },
+    };
+  }
+  return { create: create };
+})();
+
 window.buildWorldActions = function (opts) {
   var THREE = opts.THREE, scene = opts.scene, loader = opts.loader;
   if (!THREE || !scene) return null;
@@ -290,24 +488,24 @@ window.buildWorldActions = function (opts) {
   var TO_KEY = 'shd.tourney';
   function tourney() { try { return JSON.parse(localStorage.getItem(TO_KEY) || '{"fightPool":0,"fightN":0,"skatePool":0,"skateN":0}'); } catch (e) { return { fightPool: 0, fightN: 0, skatePool: 0, skateN: 0 }; } }
   function saveTourney(t) { try { localStorage.setItem(TO_KEY, JSON.stringify(t)); } catch (e) {} }
+  /* COLOSSEUM DESK (owner 2026-10-03): walking in is FREE. Fees apply ONLY while a real event is live (window.__colosseumEvent = { name, fee, pool }).
+   * Otherwise: sign up for the next event (free), spectate, or free practice. The old 2D grid tactics game is a free optional practice mode, not "the Colosseum". */
+  var SIGN_KEY = 'shd.colo.signup';
+  function signedUp() { try { return localStorage.getItem(SIGN_KEY) === '1'; } catch (e) { return false; } }
   function openArena() {
-    var T = tourney();
+    var ev = window.__colosseumEvent || null, T = tourney(), btns = [];
+    if (ev && ev.fee > 0) {
+      btns.push({ label: 'ENTER EVENT (' + ev.fee + '⚡)', disabled: sparks() < ev.fee, fn: function () { addSparks(-ev.fee); var t = tourney(); t.fightPool += ev.fee; t.fightN++; saveTourney(t); closeModal(); pop('ENTERED: ' + (ev.name || 'event') + ' · pool ' + t.fightPool + '⚡', '#c084fc'); } });
+    } else {
+      btns.push({ label: signedUp() ? 'SIGNED UP ✓ (free)' : 'SIGN UP FOR EVENTS (free)', disabled: signedUp(), fn: function () { try { localStorage.setItem(SIGN_KEY, '1'); } catch (e) {} closeModal(); pop('You are on the Colosseum list. Events open here with an announcement.', '#00ff9c'); } });
+    }
+    btns.push({ label: 'PRACTICE: CLASSIC TACTICS (free)', fn: function () { closeModal(); var X = window.__worldTactics; if (X && X.startFight({ entry: 0, pool: 0, tier: 0 })) pop('Practice match: no entry fee, no pool.', '#c084fc'); else pop('Practice engine loading...', '#c084fc'); } });
+    btns.push({ label: 'SPECTATE', fn: closeModal });
     openModal('⚔ SHADDAI COLOSSEUM',
-      '<b>FIGHTING</b> — entry 50⚡ · pool ' + T.fightPool + '⚡ · ' + T.fightN + ' entered<br>'
-      + '<b>SKATE JAM</b> — entry 30⚡ · pool ' + T.skatePool + '⚡ · ' + T.skateN + ' entered<br>'
-      + '<span style="opacity:.65;font-size:11px">Winner takes the pool. Matches open with the coming build — entry sparks are held in the pool.</span>',
-      [
-        { label: 'ENTER FIGHT (50⚡)', disabled: sparks() < 50, fn: function () {
-            addSparks(-50); var t = tourney(); t.fightPool += 50; t.fightN++; saveTourney(t);
-            closeModal();
-            var T = window.__worldTactics;
-            if (T && T.startFight({ entry: 50, pool: t.fightPool - 50, tier: Math.min(3, Math.floor((t.wins || 0) / 2)) })) {
-              pop('FIGHT! tier ' + Math.min(3, Math.floor((t.wins || 0) / 2)) + ' · pot ' + (t.fightPool) + '⚡', '#c084fc');
-            } else { pop('ENTERED — FIGHT POOL ' + t.fightPool + '⚡ (engine loading)', '#c084fc'); }
-          } },
-        { label: 'ENTER SKATE (30⚡)', disabled: sparks() < 30, fn: function () { addSparks(-30); var t = tourney(); t.skatePool += 30; t.skateN++; saveTourney(t); pop('ENTERED — SKATE POOL ' + t.skatePool + '⚡', '#c084fc'); closeModal(); } },
-        { label: 'SPECTATE', fn: closeModal },
-      ]);
+      (ev ? '<b>EVENT LIVE: ' + (ev.name || 'Tournament') + '</b> — entry ' + (ev.fee || 0) + '⚡ · pool ' + T.fightPool + '⚡<br>' : '<b>Free entry.</b> No event is running right now.<br>')
+      + 'Walk the lobby, shop the kiosks, watch the arena. Sign up to be told when the next event opens (events are the only time entry costs Sparks).<br>'
+      + '<span style="opacity:.65;font-size:11px">3D battles (terrain fields, boats, modes) are the main Colosseum game; the grid tactics board is a free practice mode.</span>',
+      btns);
   }
 
   addEventListener('keydown', function (e) {
@@ -334,8 +532,250 @@ window.buildWorldActions = function (opts) {
     if (cur === 'GARAGE')    setTimeout(function () { if (window._currentInterior === 'GARAGE') openGarage(); }, 350);
   }, 400);
 
+  /* ══════════════════════════════════════════════════════════════════════════════════
+   * GRID BIKE V2 (2026-09-26) — owner: "the bike riding and the models not right" (rider
+   * T-posed, standing OVER a toy-sized bike that snapped to the camera and floated flat on
+   * hills). Everything here is data-driven by BIKE_TUNE; units in the table are REAL metres
+   * and converted with U (world units per metre) so the numbers read like a spec sheet.
+   * ══════════════════════════════════════════════════════════════════════════════════ */
+  var U = 7 / 1.8;                    // 1 m = 3.889 world units (characters are 7 u = 1.8 m)
+  var BIKE_TUNE = {
+    lengthM: 2.4,        // real light-cycle length; the host's primitive bike is ~1.0 m → rescaled on attach
+    topMS: 25,           // top speed (m/s) under full throttle — asymptotic via (1-(v/top)^2)
+    accelMS2: 8,         // throttle acceleration at low speed
+    brakeMS2: 14,        // S while rolling forward
+    reverseMS: 4,        // S from a standstill backs up, slowly
+    coastMS2: 1.4,       // rolling resistance with no input
+    dragK: 0.004,        // aero drag (per m of v^2) — makes the top end taper naturally
+    slopeGravity: 0.6,   // share of g·sin(slope) felt (hills slow you / downhill speeds you up)
+    steerGain: 4.5,      // heading chases camera yaw with this P-gain (1/s)
+    steerOffset: 0.55,   // A/D add ±this (rad) to the heading target (carve while looking ahead)
+    turnRateLow: 2.6,    // max yaw rate (rad/s) at low speed…
+    turnRateHigh: 1.15,  // …and at top speed (fast bikes turn wider)
+    pivotMin: 0.35,      // share of turn rate available at a standstill (walk the bike around)
+    bankMaxDeg: 34,      // lean clamp; lean = atan(v·yawRate/g) — real motorcycle physics
+    terrainRollK: 0.3,   // bikes stay mostly upright on side-slopes (only 30% of camber)
+    poseSmooth: 10,      // pitch/roll/height smoothing (1/s)
+    radiusM: 0.55,       // collision radius vs realmColliders
+    impactLoss: 0.75,    // speed lost on a head-on hit (scaled by impact angle)
+    mountTime: 0.35,     // seconds for the rider to swing on / step off
+    leanDeg: 42,         // rider torso tuck (from vertical)
+    dismountSideM: 0.9,  // rider steps off to the bike's left by this much
+  };
+  // rider contact points in the host gridBike's OWN (unscaled) coordinates, bike faces +Z
+  var BIKE_PTS = {
+    seat:  [0, 1.10, -0.62],   // top of the cockpit's rear half
+    gripL: [0.30, 1.15, 0.40], gripR: [-0.30, 1.15, 0.40],
+    pegL:  [0.30, 0.35, -1.20], pegR: [-0.30, 0.35, -1.20],   // rear-set pegs → sport tuck, legs clear the rear wheel
+  };
+  var bike = (function () {
+    var mesh = opts.bikeMesh || null, avatar = opts.avatar || null;
+    var heightAt = function (x, z) {
+      var f = opts.heightAt || window.WORLD_HEIGHT_AT;
+      var h = f ? f(x, z) : 0; return isFinite(h) ? h : 0;
+    };
+    var colliders = function () {
+      var c = opts.getColliders ? opts.getColliders() : (window.WORLD_LAYOUT && window.WORLD_LAYOUT.realmColliders);
+      return c || [];
+    };
+    var RP = window.WorldRiderPose ? window.WorldRiderPose.create(THREE) : null;
+    var s = {
+      riding: false, ever: false, w: 0, v: 0, psi: 0, yawRate: 0, thr: 0,
+      x: 0, z: 0, y: 0, pitch: 0, roll: 0, scale: 1, wb: 2.7, width: 0.6,
+      out: { speedMS: 0, vx: 0, vz: 0 },
+    };
+    var V3 = THREE.Vector3;
+    var _v = new V3(), _up = new V3(), _fw = new V3(), _lf = new V3(), _seat = new V3();
+    var _standP = new V3(), _standQ = new THREE.Quaternion();
+    var T = { spineDir: new V3(), neckDir: new V3(), footL: new V3(), footR: new V3(), handL: new V3(), handR: new V3(),
+              kneePoleL: new V3(), kneePoleR: new V3(), elbowPoleL: new V3(), elbowPoleR: new V3() };
+
+    // one-time: resize the primitive bike to real scale + add a seat pad and handlebar so the
+    // rider has something visible to sit on / hold (the old bike had neither)
+    function attach() {
+      if (!mesh || mesh.userData.__v2) return;
+      mesh.userData.__v2 = true;
+      mesh.rotation.order = 'YXZ';                    // yaw, then pitch, then roll — no gimbal mixing
+      mesh.scale.set(1, 1, 1); mesh.rotation.set(0, 0, 0);   // measure in the bike's own frame
+      mesh.updateMatrixWorld(true);
+      var box = new THREE.Box3().setFromObject(mesh), sz = box.getSize(new V3());
+      var len = Math.max(sz.z, 0.01);
+      s.scale = BIKE_TUNE.lengthM * U / len;
+      mesh.scale.setScalar(s.scale);
+      s.wb = 2.7 * s.scale;                            // host wheels sit at z=-1.4 / +1.3 (unscaled)
+      s.width = 0.6 * s.scale;
+      var dark = track(new THREE.MeshStandardMaterial({ color: 0x0a0c12, metalness: 0.85, roughness: 0.3 }));
+      var glow = track(new THREE.MeshBasicMaterial({ color: 0x27e0ff, toneMapped: false }));
+      var pad = new THREE.Mesh(track(new THREE.BoxGeometry(0.34, 0.07, 0.62)), dark);
+      pad.position.set(BIKE_PTS.seat[0], BIKE_PTS.seat[1] - 0.04, BIKE_PTS.seat[2]); mesh.add(pad);
+      var bar = new THREE.Mesh(track(new THREE.BoxGeometry(0.72, 0.05, 0.05)), dark);
+      bar.position.set(0, BIKE_PTS.gripL[1], BIKE_PTS.gripL[2]); mesh.add(bar);
+      var riser = new THREE.Mesh(track(new THREE.BoxGeometry(0.06, 0.2, 0.06)), dark);
+      riser.position.set(0, BIKE_PTS.gripL[1] - 0.1, BIKE_PTS.gripL[2] - 0.02); mesh.add(riser);
+      [BIKE_PTS.gripL, BIKE_PTS.gripR].forEach(function (g) {
+        var tip = new THREE.Mesh(track(new THREE.BoxGeometry(0.08, 0.06, 0.06)), glow);
+        tip.position.set(g[0] * 1.15, g[1], g[2]); mesh.add(tip);
+      });
+    }
+    function wrap(a) { while (a > Math.PI) a -= 6.283185307; while (a < -Math.PI) a += 6.283185307; return a; }
+    function ease(t) { return t * t * (3 - 2 * t); }
+    function local(p, out) { return mesh.localToWorld(out.set(p[0], p[1], p[2])); }
+
+    /* step(dt, input) — PHYSICS. Call in the host movement block INSTEAD of the walk velocity
+     * code while the bike is mounted (and once on the frame B toggles it off, so the
+     * dismount step-off happens). input = { riding, throttle(-1..1), steer(-1..1, +1 = right),
+     * camYaw, pos (host playerPos, mutated), vel ({x,z} units/s — optional, carried in on mount) }.
+     * Returns { speedMS, vx, vz } (vx/vz in world units/s so the host can sync its _vel). */
+    function step(dt, inp) {
+      attach();
+      var pos = inp.pos; if (!pos) return s.out;
+      dt = Math.min(dt, 0.05);                         // tab-switch hitch must not fling the bike
+      if (inp.riding && !s.riding) {                   // MOUNT — summon the bike under you, carry walk speed
+        s.riding = true; s.ever = true;
+        s.psi = isFinite(inp.camYaw) ? inp.camYaw : (avatar ? avatar.rotation.y : 0);
+        s.v = inp.vel ? Math.max(0, (inp.vel.x * Math.sin(s.psi) + inp.vel.z * Math.cos(s.psi)) / U) : 0;
+        s.x = pos.x; s.z = pos.z; s.y = heightAt(pos.x, pos.z); s.pitch = 0; s.roll = 0; s.yawRate = 0; s.thr = 0;
+      } else if (!inp.riding && s.riding) {            // DISMOUNT — park, rider steps off to the left
+        s.riding = false; s.v = 0; s.yawRate = 0;
+        pos.x = s.x + Math.cos(s.psi) * BIKE_TUNE.dismountSideM * U;   // bike-left = (cos ψ, -sin ψ)
+        pos.z = s.z - Math.sin(s.psi) * BIKE_TUNE.dismountSideM * U;
+      }
+      var o = s.out;
+      if (!s.riding) { o.speedMS = 0; o.vx = 0; o.vz = 0; return o; }
+      var B = BIKE_TUNE;
+      s.x = pos.x; s.z = pos.z;                        // host collision may have nudged us last frame
+      // ── steering: chase the camera heading (mouse steers), A/D carve an offset ──
+      var target = (isFinite(inp.camYaw) ? inp.camYaw : s.psi) - (inp.steer || 0) * B.steerOffset;
+      var av = Math.abs(s.v), sf = Math.min(1, av / B.topMS);
+      var maxRate = (B.turnRateLow + (B.turnRateHigh - B.turnRateLow) * sf) * (B.pivotMin + (1 - B.pivotMin) * Math.min(1, av / 3));
+      var rate = Math.max(-maxRate, Math.min(maxRate, wrap(target - s.psi) * B.steerGain));
+      s.psi = wrap(s.psi + rate * dt);
+      s.yawRate += (rate - s.yawRate) * (1 - Math.exp(-8 * dt));
+      // ── longitudinal: throttle / brake / reverse / coast + slope gravity ──
+      s.thr += ((inp.throttle || 0) - s.thr) * (1 - Math.exp(-8 * dt));   // no on/off snap
+      var th = s.thr, a;
+      if (th > 0.02) a = s.v < -0.2 ? B.brakeMS2 : B.accelMS2 * th * Math.max(0, 1 - (s.v / B.topMS) * (s.v / B.topMS));
+      else if (th < -0.02) a = s.v > 0.2 ? -B.brakeMS2 * -th : -B.accelMS2 * 0.5 * -th * Math.max(0, 1 + s.v / B.reverseMS);
+      else a = 0;
+      var drag = B.coastMS2 * (th > 0.02 ? 0.3 : 1) + B.dragK * s.v * s.v;
+      var sx = Math.sin(s.psi), cz = Math.cos(s.psi), hw = s.wb * 0.5;
+      var grade = (heightAt(s.x + sx * hw, s.z + cz * hw) - heightAt(s.x - sx * hw, s.z - cz * hw)) / Math.max(s.wb, 0.01);
+      a -= 9.81 * B.slopeGravity * grade / Math.sqrt(1 + grade * grade);
+      var vPrev = s.v;
+      s.v += a * dt;
+      if (Math.abs(th) <= 0.02 || (th > 0 && s.v > 0) || (th < 0 && s.v < 0)) {  // drag opposes motion, never reverses it
+        var dv = drag * dt;
+        s.v = Math.abs(s.v) <= dv ? 0 : s.v - Math.sign(s.v) * dv;
+      }
+      if (vPrev > 0 && s.v < 0 && th >= -0.02) s.v = 0;     // braking to zero stops; reversing needs S held
+      s.v = Math.max(-B.reverseMS, Math.min(B.topMS * 1.1, s.v));
+      // parking brake: no input + nearly stopped + gentle slope → stay put (no creeping downhill)
+      if (Math.abs(th) <= 0.02 && Math.abs(s.v) < 0.4 && Math.abs(grade) < 0.35) s.v = 0;
+      // ── move + slide along realm collider circles ──
+      var step_ = s.v * U * dt;
+      s.x += sx * step_; s.z += cz * step_;
+      var cs = colliders(), rb = B.radiusM * U;
+      for (var i = 0; i < cs.length; i++) {
+        var c = cs[i]; if (!c) continue;
+        var rr = c.r + rb, dx = s.x - c.x, dz = s.z - c.z;
+        if (dx > rr || dx < -rr || dz > rr || dz < -rr) continue;
+        var d2 = dx * dx + dz * dz;
+        if (d2 >= rr * rr || d2 < 1e-8) continue;
+        var d = Math.sqrt(d2), nx = dx / d, nz = dz / d;
+        s.x = c.x + nx * rr; s.z = c.z + nz * rr;             // push out → tangential motion survives = slide
+        var into = -(sx * nx + cz * nz) * Math.sign(s.v || 1); // 1 = head-on, 0 = grazing
+        if (into > 0) s.v *= 1 - B.impactLoss * into;
+      }
+      pos.x = s.x; pos.z = s.z;
+      o.speedMS = s.v; o.vx = sx * s.v * U; o.vz = cz * s.v * U;
+      return o;
+    }
+
+    /* pose(dt, ctx) — VISUALS. Call AFTER the host has placed playerAvatar for the frame
+     * (i.e. where the old `if(bikeMode){ gridBike.position.set(...) }` block was).
+     * ctx = { groundY (host ground under the player), flat (true inside interiors / on lifts) } */
+    function pose(dt, ctx) {
+      if (!mesh || !s.ever) return;
+      attach();
+      ctx = ctx || {};
+      var B = BIKE_TUNE, k = 1 - Math.exp(-B.poseSmooth * dt);
+      mesh.visible = true;                             // parked bike stays where you left it
+      // ── terrain contact: wheels front/back, sides left/right ──
+      var sx = Math.sin(s.psi), cz = Math.cos(s.psi), hw = s.wb * 0.5, ws = s.width * 0.5;
+      var hc = heightAt(s.x, s.z), gy = isFinite(ctx.groundY) ? ctx.groundY : hc;
+      var flat = ctx.flat || Math.abs(gy - hc) > 0.6 * U;   // on a deck / lift / interior floor → no terrain samples
+      var y, pT = 0, rT = 0;
+      if (flat) y = gy;
+      else if (hc < -0.45) y = 0.05;                    // over the sea: skim the surface (hydro-cycle)
+      else {
+        var hf = heightAt(s.x + sx * hw, s.z + cz * hw), hb = heightAt(s.x - sx * hw, s.z - cz * hw);
+        var hl = heightAt(s.x + cz * ws, s.z - sx * ws), hr = heightAt(s.x - cz * ws, s.z + sx * ws);
+        y = Math.max((hf + hb) * 0.5, hc - 0.05);        // both wheels touch; never sink below centre ground
+        pT = -Math.atan2(hf - hb, s.wb);                 // +X rotation tips the nose DOWN
+        rT = Math.atan2(hl - hr, s.width) * B.terrainRollK;
+      }
+      var bankMax = B.bankMaxDeg * Math.PI / 180;
+      var bank = s.riding ? -Math.atan(s.v * s.yawRate / 9.81) : 0;   // turning left (ψ↑) leans left (+X down)
+      bank = Math.max(-bankMax, Math.min(bankMax, bank));
+      s.pitch += (pT - s.pitch) * k;
+      s.roll += (rT + bank - s.roll) * k;
+      s.y = Math.abs(y - s.y) > 3 * U ? y : s.y + (y - s.y) * Math.min(1, k * 2);
+      mesh.position.set(s.x, s.y, s.z);
+      mesh.rotation.set(s.pitch, s.psi, s.roll, 'YXZ');
+      mesh.updateMatrixWorld(true);
+      // ── rider blend weight (smooth swing on / step off) ──
+      s.w = Math.max(0, Math.min(1, s.w + (s.riding ? dt : -dt) / B.mountTime));
+      if (!avatar) return;
+      if (s.w <= 0) {                                  // fully off: hand the bones back ONCE (the mixer owns them again)
+        if (!s.restored && RP && RP.rig()) RP.restore();
+        s.restored = true; return;
+      }
+      s.restored = false;
+      var e = ease(s.w);
+      var rig = RP ? RP.bind(avatar) : null;
+      var hipH = rig ? rig.hipH : 3.6;
+      // seated root: hips a hair above the seat pad, body leaned with the bike
+      _up.set(0, 1, 0).applyQuaternion(mesh.quaternion);
+      local(BIKE_PTS.seat, _seat).addScaledVector(_up, 0.08 * U - hipH);
+      _standP.copy(avatar.position); _standQ.copy(avatar.quaternion);
+      avatar.position.lerpVectors(_standP, _seat, e);
+      avatar.quaternion.slerpQuaternions(_standQ, mesh.quaternion, e);
+      avatar.visible = ctx.showRider !== false;
+      avatar.updateMatrixWorld(true);
+      if (!RP || !rig || !rig.hasBones) return;
+      // ── riding pose targets (world space) ──
+      _fw.set(0, 0, 1).applyQuaternion(mesh.quaternion);
+      _lf.set(1, 0, 0).applyQuaternion(mesh.quaternion);
+      var lean = (B.leanDeg + 8 * Math.min(1, Math.abs(s.v) / B.topMS)) * Math.PI / 180;   // tuck deeper at speed
+      T.spineDir.copy(_up).multiplyScalar(Math.cos(lean)).addScaledVector(_fw, Math.sin(lean));
+      T.neckDir.copy(_up).multiplyScalar(0.9).addScaledVector(_fw, 0.45).normalize();         // chin up, eyes on the road
+      local(BIKE_PTS.pegL, T.footL).addScaledVector(_up, rig.footH * 0.6);
+      local(BIKE_PTS.pegR, T.footR).addScaledVector(_up, rig.footH * 0.6);
+      local(BIKE_PTS.gripL, T.handL); local(BIKE_PTS.gripR, T.handR);
+      T.kneePoleL.copy(_fw).addScaledVector(_lf, 0.35).addScaledVector(_up, -0.2);
+      T.kneePoleR.copy(_fw).addScaledVector(_lf, -0.35).addScaledVector(_up, -0.2);
+      T.elbowPoleL.copy(_lf).multiplyScalar(0.8).addScaledVector(_up, -0.5).addScaledVector(_fw, -0.4);
+      T.elbowPoleR.copy(_lf).multiplyScalar(-0.8).addScaledVector(_up, -0.5).addScaledVector(_fw, -0.4);
+      RP.apply(e, T);
+    }
+
+    return {
+      tune: BIKE_TUNE, points: BIKE_PTS,
+      step: step, pose: pose,
+      isRiding: function () { return s.riding; },
+      visible: function () { return s.ever; },
+      speedMS: function () { return s.v; },
+      heading: function () { return s.psi; },
+      trailY: function () { return s.y + 0.35 * s.scale; },   // light-trail height follows the terrain
+      setAvatar: function (a) { avatar = a; },
+      setMesh: function (m) { mesh = m; },
+    };
+  })();
+
   var lastT = 0;
   return {
+    bike: bike,
+    bikeRide: bike.step,
     get mode() { return st.mode; },
     speed: function (base) {
       if (st.mode === 'hoverboard') return base * BOARD_SPD[garage().boardTier || 1];   // board = fast glide

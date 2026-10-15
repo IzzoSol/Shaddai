@@ -1,0 +1,17 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#1a1d24}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}</script></head><body><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const F=new URLSearchParams(location.search).get('f')||'scrap';const W=1600,H=800;
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true,preserveDrawingBuffer:true});r.setSize(W,H);r.setClearColor(0x1a1d24);r.setScissorTest(true);
+const s=new THREE.Scene();s.add(new THREE.HemisphereLight(0xffffff,0x555555,2.6));const d=new THREE.DirectionalLight(0xffffff,2);d.position.set(3,4,5);s.add(d);
+const l=new GLTFLoader();l.setMeshoptDecoder(MeshoptDecoder);
+l.load('/assets/bots/'+F+'.glb',g=>{s.add(g.scene);const mx=new THREE.AnimationMixer(g.scene);window.__names=g.animations.map(a=>a.name).join(',');
+ const box=new THREE.Box3().setFromObject(g.scene),c=box.getCenter(new THREE.Vector3()),z=box.getSize(new THREE.Vector3());window.__size=z.toArray().map(v=>+v.toFixed(2)).join('x');
+ const views=[['idle',0.4,'front'],['walk',0.15,'side'],['walk',0.6,'side'],['run',0.3,'side']];
+ views.forEach((v,i)=>{const clip=g.animations.find(a=>a.name===v[0]);mx.stopAllAction();mx.clipAction(clip).play();mx.setTime(v[1]*clip.duration);g.scene.updateMatrixWorld(true);
+  const x=(i%4)*400,y=0;r.setViewport(x,y,400,800);r.setScissor(x,y,400,800);const cam=new THREE.PerspectiveCamera(30,0.5,0.05,50);const dist=z.y*2.4;if(v[2]==='front')cam.position.set(c.x,c.y,c.z+dist);else cam.position.set(c.x+dist,c.y,c.z);cam.lookAt(c);r.render(s,cam);});
+ window.__done=1;},undefined,e=>{window.__err=String(e)});
+</script></body></html>
