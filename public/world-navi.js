@@ -268,20 +268,33 @@
     };
   };
 
+  // CHAT (2026-10-15): pick a display name once (stored locally, sent with every message), then talk on Nearby / Global /
+  // Party / Agent. world-navi-chat.js relays the channels through /api/mp and feeds replies back via Navi.chatSet().
+  var NAME_KEY = 'shd_display_name', NAME_RE = /^[A-Za-z0-9_ .-]{2,24}$/;
+  function myName() { try { return localStorage.getItem(NAME_KEY) || ''; } catch (e) { return ''; } }
   M.chat = function () {
-    var ch = S.chat.channel, log = S.chat.log[ch];
+    var ch = S.chat.channel, log = S.chat.log[ch], name = myName();
     return {
       title: 'CHAT', list: ['Nearby', 'Global', 'Party', 'Agent'].map(function (c) { return { id: c, t: c, s: S.chat.log[c].length + ' msgs' }; }),
       empty: '', selId: ch,
       detail: function () {
-        return '<h3>#' + esc(ch) + '</h3><div style="max-height:46vh;overflow:auto">' + (log.length ? log.map(function (m) { return '<div><em style="color:' + (m.me ? THEME.gold : THEME.cyan) + '">' + esc(m.u) + '</em>: ' + esc(m.t) + '</div>'; }).join('') : '<div class="empty">No messages in ' + esc(ch) + ' yet.</div>') +
+        if (!name) return '<h3>Choose your name</h3><div style="opacity:.75;margin-bottom:8px">This is how other players and agents see you in chat. 2-24 letters, numbers, space, dot, dash or underscore.</div>' +
+          '<input id="nvNameIn" placeholder="Your name" maxlength="24"><button class="b g" data-a="name">JOIN CHAT</button>';
+        return '<h3>#' + esc(ch) + ' <small style="opacity:.6;font-weight:400">as ' + esc(name) + '</small></h3><div style="max-height:46vh;overflow:auto">' + (log.length ? log.map(function (m) { return '<div><em style="color:' + (m.me ? THEME.gold : THEME.cyan) + '">' + esc(m.u) + '</em>: ' + esc(m.t) + '</div>'; }).join('') : '<div style="opacity:.6">No messages yet. Say hi.</div>') +
           '</div><input id="nvChatIn" placeholder="Type message…" maxlength="240"><button class="b" data-a="send">SEND</button>';
       },
       act: function (id, a) {
         if (!a) { S.chat.channel = id; return; }
+        if (a === 'name') {
+          var ni = root.querySelector('#nvNameIn'), nv = ni && ni.value.trim();
+          if (!nv || !NAME_RE.test(nv)) { toast('Name: 2-24 letters, numbers, space . - _'); return; }
+          try { localStorage.setItem(NAME_KEY, nv); } catch (e) { }
+          if (hooks().onName) hooks().onName(nv); toast('Welcome, ' + nv); return;
+        }
         var el = root.querySelector('#nvChatIn'), t = el && el.value.trim(); if (!t) return;
-        S.chat.log[ch].push({ u: 'you', t: t, me: true, at: Date.now() });
-        if (hooks().sendChat) hooks().sendChat(ch, t);
+        S.chat.log[ch].push({ u: name || 'you', t: t, me: true, at: Date.now() });
+        if (S.chat.log[ch].length > 80) S.chat.log[ch].splice(0, S.chat.log[ch].length - 80);
+        if (hooks().sendChat) hooks().sendChat(ch, t, name);
       }
     };
   };
@@ -582,12 +595,22 @@
     if (dist < 6) { toast('Arrived: ' + S.waypoint.label); clearWaypoint(); }
   }, 250);
 
+  function chatRerender(ch) {   // keep what the player is typing (and focus) across a re-render
+    if (!root || S.module !== 'chat' || S.chat.channel !== ch) return;
+    var el = root.querySelector('#nvChatIn'), v = el ? el.value : '', f = el && document.activeElement === el;
+    render();
+    var n = root.querySelector('#nvChatIn'); if (n) { n.value = v; if (f) { n.focus(); n.setSelectionRange(v.length, v.length); } }
+  }
   window.Navi = {
     open: open, close: close, toggle: toggle, setModule: setModule, setWaypoint: setWaypoint, clearWaypoint: clearWaypoint,
     registerPin: function (p) { S.pins = S.pins.filter(function (x) { return x.id !== p.id; }); S.pins.push(p); },
     toast: function (m) { var c = document.getElementById('naviToasts'); if (!c) return; var d = document.createElement('div'); d.textContent = m; c.appendChild(d); while (c.children.length > 3) c.firstChild.remove(); setTimeout(function () { d.remove(); }, 4000); },
     on: function (ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); },
-    enableSlot: function (name, fn) { S.flags.slots[name] = fn || function () { }; if (root) render(); }
+    enableSlot: function (name, fn) { S.flags.slots[name] = fn || function () { }; if (root) render(); },
+    /* chat bridge: replace a channel's log with server messages [{u,t,me,at}] and re-render if CHAT is showing */
+    chatSet: function (ch, msgs) { if (!S.chat.log[ch]) return; S.chat.log[ch] = msgs.slice(-80); chatRerender(ch); },
+    chatPush: function (ch, m) { if (!S.chat.log[ch]) return; S.chat.log[ch].push(m); chatRerender(ch); },
+    chatName: myName
   };
   toast = function (m) { window.Navi.toast(m); };
   if (document.body) build(); else addEventListener('DOMContentLoaded', build);

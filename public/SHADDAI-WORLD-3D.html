@@ -408,7 +408,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-academy-client.js?v=20261011a"></script>
-<script src="/world-navi.js?v=20261011a"></script>   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
+<script src="/world-navi.js?v=20261015a"></script>
+<script src="/world-navi-chat.js?v=20261015a"></script>   <!-- Navi CHAT relay (/api/mp) + name sign-up; ?chat=0 = local only -->   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
 <script src="/portals/portal-plots.js?v=20260719fix"></script>
@@ -5773,6 +5774,7 @@ window.__travel = {
       // Navi pins: the 7 rooms + the gate
       if(window.Navi && window.Navi.registerPin){ park.rooms.forEach(function(r){ window.Navi.registerPin({ id: 'park-' + r.id, t: 'Hoverskate · ' + r.name, kind: 'Hoverskate', x: r.x, z: r.z, when: r.tag }); }); window.Navi.registerPin({ id: 'park-gate', t: 'Hoverskate Park (SHADDAI gate)', kind: 'Hoverskate', x: park.entrance.x, z: park.entrance.z }); }
       window.NaviHooks = window.NaviHooks || {};
+      if(window.WorldNaviChat && !/[?&]chat=0/.test(location.search)) window.WorldNaviChat.start({ getPlayer: function(){ return playerPos; } });
       if(window.WorldRaceSelect) window.WorldRaceSelect.init({ THREE });
       window.NaviHooks.onRaceEnter = function(cid, ranked){
         if(window.WorldRaceSelect){ window.WorldRaceSelect.open({ cid: cid, ranked: !!ranked, prepaid: true }); return; }   // Navi already charged the entry: pick your ride, then GO
