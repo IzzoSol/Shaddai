@@ -2629,7 +2629,7 @@ const RARITY_CONFIG = {
 // clips) retargeted onto ITS skeleton by world-anim.js: canonical idle/walk/run, jumpStart/Loop/Land, roll, hit, death, getUp,
 // block, plus attack1/attack2/heavy/kick. Library clips own these core moves (baked ones kept as baked_<name>; dances/flips
 // untouched). Retarget runs at the rest pose. ?agentlib=0 = off.
-const _AGENT_LIB_ATTACKS = { attack1: 'Left_Jab_from_Guard', attack2: 'Lunge_Spin_Kick', heavy: 'Sword_Heavy_Combo', kick: 'Large_step_then_high_kick', combo: 'Double_Combo_Attack' };
+const _AGENT_LIB_ATTACKS = { idle: 'Idle_FoldArms_Loop' /* library default Idle_No_Loop is a head-shake 'no' gesture (TURTLE looked slumped) */, attack1: 'Left_Jab_from_Guard', attack2: 'Lunge_Spin_Kick', heavy: 'Sword_Heavy_Combo', kick: 'Large_step_then_high_kick', combo: 'Double_Combo_Attack' };
 let _agentLibP = null;
 function _agentAnimLib(){
   if(_agentLibP) return _agentLibP;
