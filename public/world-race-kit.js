@@ -5,6 +5,7 @@
  * In place of the code pieces (same positions, read back from the track's own InstancedMeshes):
  *   track-pylons -> foot + unit shaft (stretched to the deck) + fork head · track-gantries -> race_gantry
  *   track-sector-gates -> race_checkpoint (hex arch) · track-boost pads -> a race_boost_ring floating over each pad
+ *   track-gate-towers -> race_gate_tower (fitted to the code span/height) · a race_holo_billboard on the ground beside each checkpoint
  * Added: race_start_gate (5 start lights) on the start line, a grandstand + pit garages beside the start at ground level,
  * and a glass START ELEVATOR from the ground up to the deck (E at either end; owner 2026-10-15 "an elevator to the start").
  * Kit frame == the track's frame basis (x = side S, y = deck normal N, z = travel T), metres -> scale U.
@@ -20,7 +21,7 @@
     var THREE = o.THREE, t = o.track, U = o.U || 7 / 1.8, base = o.base || BASE;
     if (!t || !t.group || !t.frames || !t.frames.length) return Promise.resolve(null);
     var loader = new o.GLTFLoader(), out = new THREE.Group(); out.name = 'race-kit'; t.group.add(out);
-    var stats = { pylons: 0, gantries: 0, checkpoints: 0, rings: 0, instancedMeshes: 0 };
+    var stats = { pylons: 0, gantries: 0, checkpoints: 0, rings: 0, gateTowers: 0, billboards: 0, instancedMeshes: 0 };
     return Promise.all([load(loader, base + 'shaddai_race_kit_v01.glb'), load(loader, base + 'shaddai_race_extras_v01.glb')]).then(function (g) {
       var kit = g[0], ex = g[1]; if (!kit) return { group: out, stats: stats };
       kit.scene.updateMatrixWorld(true); if (ex) ex.scene.updateMatrixWorld(true);
@@ -55,7 +56,30 @@
       stats.pylons = place('race_pylon_foot', feet); place('race_pylon_shaft', shafts); place('race_pylon_head', heads);
       matsOf('track-gantry-lights');
       stats.gantries = place('race_gantry', matsOf('track-gantries').map(function (m) { return m.clone().multiply(S); }));
-      stats.checkpoints = place('race_checkpoint', matsOf('track-sector-gates').map(function (m) { return m.clone().multiply(S); }));
+      var sectorMats = matsOf('track-sector-gates');
+      stats.checkpoints = place('race_checkpoint', sectorMats.map(function (m) { return m.clone().multiply(S); }));
+      // GATE TOWERS: the K6b race_gate_tower fitted to the code tower's span + height (code slabs + glow hidden)
+      var gtIm = named(t.group, 'track-gate-towers'), gtNode = ex && named(ex.scene, 'race_gate_tower');
+      if (gtIm && gtIm.isInstancedMesh && gtNode) {
+        gtIm.geometry.computeBoundingBox(); var cb = gtIm.geometry.boundingBox, kb = new THREE.Box3();
+        var gInv = new THREE.Matrix4().copy(gtNode.matrixWorld).invert();
+        gtNode.traverse(function (mm) { if (mm.isMesh) { mm.geometry.computeBoundingBox(); kb.union(mm.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(gInv, mm.matrixWorld))); } });
+        var ks = kb.getSize(new THREE.Vector3()), cs = cb.getSize(new THREE.Vector3()), kc = kb.getCenter(new THREE.Vector3()), cc = cb.getCenter(new THREE.Vector3());
+        var sx = cs.x / Math.max(1e-3, ks.x), sy = cs.y / Math.max(1e-3, ks.y);
+        var fit = new THREE.Matrix4().makeTranslation(cc.x, cb.min.y, cc.z).multiply(new THREE.Matrix4().makeScale(sx, sy, sx)).multiply(new THREE.Matrix4().makeTranslation(-kc.x, -kb.min.y, -kc.z));
+        stats.gateTowers = place('race_gate_tower', matsOf('track-gate-towers').map(function (m) { return m.clone().multiply(fit); }));
+        matsOf('track-gate-tower-glow');
+      }
+      // HOLO BILLBOARDS: one on the ground beside each checkpoint, outer side, screen turned toward the deck
+      if (ex && sectorMats.length) {
+        var bb = [], ax = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+        sectorMats.forEach(function (m) {
+          m.decompose(p, q, s); ax.setFromMatrixColumn(m, 0).setY(0).normalize();
+          var bx = p.x + ax.x * 60 * U, bz = p.z + ax.z * 60 * U, by = o.groundAt ? o.groundAt(bx, bz) : 0;
+          bb.push(new THREE.Matrix4().compose(new THREE.Vector3(bx, by, bz), new THREE.Quaternion().setFromAxisAngle(up, Math.atan2(-ax.x, -ax.z)), new THREE.Vector3(U * 1.6, U * 1.6, U * 1.6)));
+        });
+        stats.billboards = place('race_holo_billboard', bb);
+      }
       // boost rings hover 4 m over each boost pad (pads stay: they are the gameplay trigger)
       var boost = named(t.group, 'track-boost'), rings = [];
       if (boost && boost.isInstancedMesh) for (var b = 0; b < boost.count; b++) { var bm = new THREE.Matrix4(); boost.getMatrixAt(b, bm); bm.decompose(p, q, s); rings.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, p.y + 4.6 * U, p.z), q, new THREE.Vector3(U, U, U))); }
