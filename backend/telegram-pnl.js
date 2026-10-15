@@ -769,6 +769,67 @@ async function discoverTick() {
     return added;
   } catch (e) { return 0; }
 }
+// ── GRADUATION SURGE WATCHER (2026-10-14) ──────────────────────────────────
+// Owner observation: bonded coins massively outperform non-bonded, and some
+// run to 500k-11M completely undetected. Entry CALLS above the band cap are
+// the worst measured band (100-250k = 29.7% 2x+), so the system won't call at
+// 150k — but a graduation we SAW running hard is an event the channel must
+// hear about. Every in-band graduation sighting (called OR gate-rejected OR
+// out-of-band-at-the-time) is recorded; when its FDV crosses a threshold it
+// posts a SURGE card — a momentum event, clearly not an entry call.
+const SURGE_THRESHOLDS = [100000, 150000, 250000, 500000, 1000000, 5000000];
+const SURGE_WATCH_FILE = path.join(__dirname, 'data', 'grad-watchlist.json');
+let _surgeTimer = null;
+function _loadSurgeWatch() { try { return JSON.parse(fs.readFileSync(SURGE_WATCH_FILE, 'utf8')); } catch (e) { return []; } }
+function _saveSurgeWatch(list) { try { fs.mkdirSync(path.dirname(SURGE_WATCH_FILE), { recursive: true }); fs.writeFileSync(SURGE_WATCH_FILE, JSON.stringify(list)); } catch (e) {} }
+
+/** Record a graduation sighting (idempotent by mint). Called by the bonded
+ *  feed for every in-band fresh pool it sees — regardless of gate outcome. */
+function recordGraduation({ mint, symbol, name, gradFdv }) {
+  if (!mint) return;
+  const list = _loadSurgeWatch();
+  if (list.some((x) => x.mint === mint)) return;
+  list.push({ mint, symbol: symbol || '', name: name || '', gradFdv: Number(gradFdv) || 0, gradAt: Date.now(), alerts: [], lastFdv: null });
+  _saveSurgeWatch(list.slice(-500));
+}
+
+async function surgeTick() {
+  const HAS_BOT = !!core.token();
+  const now = Date.now();
+  const list = _loadSurgeWatch();
+  const active = list.filter((x) => (now - x.gradAt) < 48 * 3600 * 1000 && (x.alerts || []).length < 3);
+  if (!active.length) { _saveSurgeWatch(list.filter((x) => (now - x.gradAt) < 48 * 3600 * 1000)); return; }
+  const prices = await _priceMap([...new Set(active.map((x) => x.mint))]);
+  for (const x of active) {
+    const fdv = prices[x.mint];
+    if (!fdv) continue;
+    x.lastFdv = Math.round(fdv);
+    const crossed = SURGE_THRESHOLDS.filter((t) => fdv >= t && !(x.alerts || []).includes(t));
+    if (!crossed.length) continue;
+    const t = crossed[crossed.length - 1];   // highest newly crossed — one card per crossing
+    x.alerts = (x.alerts || []).concat(t);
+    if (HAS_BOT && _rtAllowPost(now)) {   // shared 2/hour throttle with round-trips/exits
+      const mult = x.gradFdv > 0 ? fdv / x.gradFdv : 0;
+      const ageH = Math.max(1, Math.round((now - x.gradAt) / 3600000));
+      const card = `🚀 <b>SURGE — $${_esc(x.symbol || x.name || '?')}</b>\n` +
+        `Bonded ~${ageH}h ago at ${_usd(x.gradFdv)} — now <b>${_usd(fdv)}</b>${mult >= 2 ? ` (<b>${mult.toFixed(1)}x from the bond</b>)` : ''}\n` +
+        `<i>Momentum event, not an entry call — the ladder/stop plan lives on the signal cards. NFA.</i>`;
+      try { await core.broadcast(card, { buttons: core.buildButtons(x.mint, 'solana', null) }); } catch (e) {}
+    }
+  }
+  _saveSurgeWatch(list.filter((x) => (now - x.gradAt) < 48 * 3600 * 1000));
+}
+
+function startSurgeWatcher() {
+  if (_surgeTimer) return;
+  const HAS_BOT = !!core.token();
+  if (HAS_BOT && typeof core.acquireBroadcastLock === 'function' && !core.acquireBroadcastLock()) { console.log('[tg-pnl] another instance owns broadcasting - surge watcher not started here.'); return; }
+  console.log('[tg-pnl] graduation surge watcher armed - 10 min cadence, thresholds $100K/$150K/$250K/$500K/$1M/$5M.');
+  setTimeout(() => { surgeTick().catch(() => {}); }, 90 * 1000);
+  _surgeTimer = setInterval(() => { surgeTick().catch(() => {}); }, 10 * 60 * 1000);
+  if (_surgeTimer.unref) _surgeTimer.unref();
+}
+
 function startDiscovery() {
   if (_discoverTimer) return;
   if ((process.env.DISCOVERY || '1') === '0') { console.log('[tg-pnl] discovery disabled (DISCOVERY=0).'); return; }
@@ -1048,4 +1109,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages, _calcRiskScore, _calcViabilityScore };
+module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages, _calcRiskScore, _calcViabilityScore, recordGraduation, startSurgeWatcher };

@@ -1347,6 +1347,9 @@ async function _pollBonded() {
        .map(p => ({ mint: p.mint, name: p.name || '', symbol: p.symbol || '', pumpMc: p.fdv || 0, holders: 0, devPct: 0, snipers: 0, imageUri: '' }));
    } catch (e) {}
    if (!_bondSeeded && !list.length) console.warn('[tg-signals] bonded feed: no fresh pump.fun graduations in band this poll');
+   // SURGE WATCHLIST: every in-band graduation sighting is recorded — called
+   // or not — so the surge watcher can alert when one runs to 100k+ later.
+   if (list.length) { for (const g of list) { try { pnl.recordGraduation({ mint: g.mint, symbol: g.symbol, name: g.name, gradFdv: g.pumpMc || 0 }); } catch (e) {} } }
   const _bondEffMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   // Always sort low-FDV first: <$5K bonded = 54% 5x rate (9.5x avg). Guarantees micro plays
   // get first slot in the _bondEffMaxPer budget before higher-FDV tokens consume it.
@@ -1958,14 +1961,30 @@ async function _pollGecko() {
         // new_pools FDV gates (corpus audit 2026-08-06):
         // <$5K = 2% 3x rate — let bonded handle micro-FDV via pump.fun graduation
         // $10-25K = 48% rug rate, 23% 2x — net negative, skip. Sweet spot is $5-10K (27% 2x, 25% rug).
-        // 2026-10-14 GRADUATION EXCEPTION: ANY fresh pool in the full band is allowed —
-        // not just pump.fun. The SI forensic ($12M, stonkfun launchpad, mint doesn't
-        // end in "pump") showed non-pump launchpads are a whole uncovered lane; a
-        // fresh AMM pool at $50-100k with real flow IS a graduation/launch moment
-        // for any launchpad, and the fresh-pool volume rule below keeps the noise out.
-        const _isPumpGrad = _taddr && fdv >= 15000 && fdv <= 100000;
+        // 2026-10-14 CURATED LAUNCHPAD ALLOWLIST (owner spec): pump + stonkfun
+        // ONLY — other launchpads "don't float but dump even after running up,
+        // no room to take profit" (owner). pump.fun mints are identified by
+        // the definitive "pump" suffix; non-pump candidates get ONE Jupiter
+        // launchpad lookup (cached 60s) and pass only if launchpad === stonkfun.
+        // Fail-closed: unknown launchpad = not allowed.
+        let _isPumpGrad = false;
+        if (fdv >= 15000 && fdv <= 100000 && _taddr) {
+          if (_taddr.endsWith('pump')) _isPumpGrad = true;
+          else {
+            try {
+              const jr = await fetch('https://lite-api.jup.ag/tokens/v2/search?query=' + encodeURIComponent(_taddr), { signal: AbortSignal.timeout(8000) });
+              if (jr.ok) {
+                const jup = await jr.json();
+                const t0 = Array.isArray(jup) && jup[0];
+                if (t0 && t0.launchpad === 'stonkfun') _isPumpGrad = true;
+              }
+            } catch (e) {}
+          }
+        }
         if (kind === 'new_pools' && fdv > 0 && fdv < 5000) { _seenPool.add(id); continue; }
         if (kind === 'new_pools' && fdv > 10000 && !_isPumpGrad) { _seenPool.add(id); continue; }
+        // allowlisted graduation sighting -> surge watchlist (called or not)
+        if (_isPumpGrad) { try { pnl.recordGraduation({ mint: _taddr, symbol: (a.name || '').split('/')[0].trim(), name: a.name || '', gradFdv: fdv }); } catch (e) {} }
         // Age gate: reject tokens < 5 minutes old (too fresh for safe entry)
         const createdAtMs = a.pool_created_at ? new Date(a.pool_created_at).getTime() : 0;
         if (createdAtMs > 0 && !_passesAgeGate(createdAtMs)) { _seenPool.add(id); continue; }
@@ -2263,7 +2282,7 @@ async function _pollBoosts() {
       // being the highest-volume source, dragging overall win rate down the most). A paid
       // DexScreener boost signals marketing budget, not fundamentals — high-FDV boosted plays
       // are disproportionately late-stage pumps bought as exit liquidity.
-      if (fdv > 150000) continue;
+      if (fdv > (cfg.maxFdv || 100000)) continue;   // 2026-10-14: band top (re-enabled by owner under full gates)
       if (liq < cfg.minLiq) continue;
       // Buy pressure check — skip if clearly dumping
       const _bp = _buyPressure(pair);
@@ -2281,7 +2300,7 @@ async function _pollBoosts() {
       if (!_top10Ok(cfg, rs)) continue;
       if (!_snipersOk(cfg, rs)) continue;
       if (!_bundlersOk(cfg, rs)) continue;
-      if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }
+      if (!_lpLockedOk(cfg, rs)) { if (rs && rs.checked) _markBadMint(mint); continue; }   // vetted-unlocked bans; unvetted (not indexed yet) retries next poll
       // GoPlus hard block
       const gp = await _goplusCheck(mint);
       if (gp && !gp.ok) continue;

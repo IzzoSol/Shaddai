@@ -4,7 +4,7 @@
   "preBonding": false,
   "newpools": true,
   "trending": true,
-  "boosted": false,
+  "boosted": true,
   "news": true,
   "newsIntervalMin": 480,
   "headlines": true,

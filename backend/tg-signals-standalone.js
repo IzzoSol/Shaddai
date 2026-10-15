@@ -20,6 +20,7 @@ try {
     const owner = core.acquireBroadcastLock();
     if (sig.startTelegramSignals) sig.startTelegramSignals();
     if (pnl.startTracker) pnl.startTracker();
+    if (pnl.startSurgeWatcher) pnl.startSurgeWatcher();   // graduation surge alerts (pump/stonk watchlist, 100k+ crossings)
     if (bot.startTelegramBot) bot.startTelegramBot();
     if (news.startNewsPoster) news.startNewsPoster();
     console.log('[tg-launcher] lanes boot (' + phase + ') — broadcast lock ' + (owner ? 'ACQUIRED' : 'HELD ELSEWHERE (will retry at +100s)'));
