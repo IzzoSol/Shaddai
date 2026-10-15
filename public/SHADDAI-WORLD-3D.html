@@ -2627,8 +2627,8 @@ const RARITY_CONFIG = {
 // only carried the 2-20 clips baked into their own GLB (ORACLE/PIKADON: walk+run only, so they idled in a slowed walk and had no
 // attacks/jump). Every rigged body now also gets the shared /assets/anim/agent-clips library (Meshy + Quaternius UAL2 CC0, 75
 // clips) retargeted onto ITS skeleton by world-anim.js: canonical idle/walk/run, jumpStart/Loop/Land, roll, hit, death, getUp,
-// block, plus attack1/attack2/heavy/kick. Baked clips that already exist are kept (the library only fills gaps and replaces a
-// slowed-walk idle). Retarget runs at the rest pose. ?agentlib=0 = off.
+// block, plus attack1/attack2/heavy/kick. Library clips own these core moves (baked ones kept as baked_<name>; dances/flips
+// untouched). Retarget runs at the rest pose. ?agentlib=0 = off.
 const _AGENT_LIB_ATTACKS = { attack1: 'Left_Jab_from_Guard', attack2: 'Lunge_Spin_Kick', heavy: 'Sword_Heavy_Combo', kick: 'Large_step_then_high_kick', combo: 'Double_Combo_Attack' };
 let _agentLibP = null;
 function _agentAnimLib(){
@@ -2651,11 +2651,13 @@ function _fillAgentClipsFromLibrary(entry, body){
       const want = Object.assign({ idle: L.idle, walk: L.walk, run: L.run }, X, _AGENT_LIB_ATTACKS);
       Object.keys(want).forEach(function(k){
         const src = want[k]; if(!src || !anim.has(src)) return;
-        const replaceIdle = k === 'idle' && entry._idleSlow;                  // a slowed walk is not an idle
-        if(A[k] && !replaceIdle) return;
+        // owner 2026-10-15 ("some agents are deformed"): the baked Meshy clips deform badly on several rigs (TURTLE idle head
+        // slump, QUILL neck into the collar, ZEROX chest crumple on kicks). The library clips passed the geometric checks on every
+        // rig (tools/tests/world-anim-agents), so they OWN the core moves; the baked clip stays reachable as baked_<name>.
         const clip = anim.clip(src); if(!clip) return;
+        if(A[k]) A['baked_' + k] = A[k];
         A[k] = entry._mixer.clipAction(clip); added.push(k);
-        if(replaceIdle) entry._idleSlow = false;
+        if(k === 'idle') entry._idleSlow = false;
       });
       entry._agentLib = { clips: added.length, hit: lib.meta };
       playAgentAction(entry, 'idle', { crossfadeDuration: 0.3, force: true });
