@@ -78,6 +78,7 @@
       collars.setMatrixAt(k, mm.compose(pv.set(p[0], DECK_Y - DECK_T - 0.4 * PM, p[1]), q.identity(), sv.set(1, 1, 1)));
     });
     cols.castShadow = true; group.add(cols); group.add(collars);
+    var pylonInfo = { cols: cols, collars: collars, list: all.map(function (p) { var g = heightAt(p[0], p[1]); return { x: p[0], z: p[1], g: g }; }), deckBottom: DECK_Y - DECK_T, PM: PM };   // world-transit-kit.js swaps these for the Blender pylon kit
     // spoke decks (straight) from each hub / Central Station out to the ring, with a crossbeam on every bent
     var beams = [];
     spokes.forEach(function (sp) {
@@ -126,13 +127,13 @@
       var S = new THREE.Group(); S.position.set(sx, 0, sz); S.rotation.y = -ang - Math.PI / 2; group.add(S);   // local +x = along the track, +z = toward the city
       var ground = heightAt(sx, sz), top = onRing ? DECK_Y : ground + 9 * PM;
       var plat = new THREE.Mesh(new THREE.BoxGeometry(40 * PM, 1.2 * PM, 7 * PM), M.white); plat.position.set(0, top - 0.6 * PM, (onRing ? DECK_W / 2 + 3.5 * PM : 0)); S.add(plat);
-      var canopy = new THREE.Mesh(new THREE.CylinderGeometry(9 * PM, 9 * PM, 40 * PM, 32, 1, true, 0, Math.PI), M.glass); canopy.rotation.z = Math.PI / 2; canopy.position.set(0, top + 1 * PM, plat.position.z * 0.5); S.add(canopy);
-      for (var ri = -4; ri <= 4; ri++) { var rib = new THREE.Mesh(new THREE.TorusGeometry(9 * PM, 0.25 * PM, 6, 24, Math.PI), M.gold); rib.rotation.y = Math.PI / 2; rib.position.set(ri * 5 * PM, top + 1 * PM, plat.position.z * 0.5); S.add(rib); }
+      var canopy = new THREE.Mesh(new THREE.CylinderGeometry(9 * PM, 9 * PM, 40 * PM, 32, 1, true, 0, Math.PI), M.glass); canopy.rotation.z = Math.PI / 2; canopy.position.set(0, top + 1 * PM, plat.position.z * 0.5); canopy.userData.codeCanopy = true; plat.userData.codePlatform = true; S.add(canopy);
+      for (var ri = -4; ri <= 4; ri++) { var rib = new THREE.Mesh(new THREE.TorusGeometry(9 * PM, 0.25 * PM, 6, 24, Math.PI), M.gold); rib.rotation.y = Math.PI / 2; rib.position.set(ri * 5 * PM, top + 1 * PM, plat.position.z * 0.5); rib.userData.codeCanopy = true; S.add(rib); }
       var board = nameBoard(st.name); board.position.set(0, top + 11 * PM, plat.position.z + 3 * PM); S.add(board);
       var lift = new THREE.Mesh(new THREE.CylinderGeometry(2.2 * PM, 2.2 * PM, top - ground, 16, 1, true), M.glass); lift.position.set(0, ground + (top - ground) / 2, plat.position.z + 6 * PM); S.add(lift);
       var pad = new THREE.Mesh(new THREE.CylinderGeometry(4 * PM, 4 * PM, 0.3 * PM, 32), M.gold); pad.position.set(0, ground + 0.15 * PM, plat.position.z + 6 * PM); S.add(pad);
       S.updateMatrixWorld(true); var wp = new THREE.Vector3(); pad.getWorldPosition(wp);
-      stations.push({ id: st.id, name: st.name, x: wp.x, z: wp.z, group: S });
+      stations.push({ id: st.id, name: st.name, x: wp.x, z: wp.z, group: S, realm: st.realm, top: top, onRing: onRing });
       if (window.__registerPlaceable) window.__registerPlaceable('transit:' + st.id, S, { source: 'world-transit.js', id: st.id });
     });
     // ── trains: 2 × 5 capsule cars, one per track, opposite directions ──
@@ -332,7 +333,7 @@
         stations.push(s); return s;
       },
       removeStation: function (id) { var s = stations.find(function (x) { return x.id === id && x.external; }); if (s) stations.splice(stations.indexOf(s), 1); return !!s; },
-      group: group, stations: stations, hubs: hubs, near: near, deckY: DECK_Y, ride: ride,
+      group: group, stations: stations, hubs: hubs, near: near, deckY: DECK_Y, ride: ride, pylons: pylonInfo,
       _frames: 0,
       status: function () { return riding ? { f: api._frames, t: +riding.t.toFixed(2), dur: +riding.dur.toFixed(2), to: riding.dest.id, phase: riding.phase || 'cutscene' } : null; },   // probe/debug
       // ── aboard API for the host (SHADDAI-WORLD-3D.html) ──
