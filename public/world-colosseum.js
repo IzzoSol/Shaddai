@@ -606,7 +606,7 @@
     // agents: the council as vendors / ushers / greeter. Static poses driven by their baked idle clip (one mixer each, updated from the clock hook).
     var vendorPosts = [];
     (function () {
-      var ks = [0, 6, 12, 18], tag = ['ZEROX', 'ORACLE', 'QUILL', 'TURTLE'];
+      var ks = [0, 1, 2, 3].map(function (q) { return Math.floor(q * KIOSKS.length / 4); }), tag = ['ZEROX', 'ORACLE', 'QUILL', 'TURTLE'];   // spread over the kiosks that exist (lobby arc skips some)
       ks.forEach(function (ki, n) { var k = KIOSKS[ki]; vendorPosts.push({ agent: tag[n], x: k.x + k.nz * 1.9, y: H_LOW, z: k.z - k.nx * 1.9, face: k.yaw + Math.PI, role: 'vendor', kiosk: ki }); });
       [0, 4].forEach(function (vi, n) { var th = VOM0 + vi * Math.PI * 2 / NVOM, cs = Math.cos(th), sn = Math.sin(th), rF = 1 / Math.sqrt((cs / A) * (cs / A) + (sn / B) * (sn / B)) - 2.2;
         var ux = rF * cs + sn * (STAIR_HALF + 1.4), uz = rF * sn - cs * (STAIR_HALF + 1.4); vendorPosts.push({ agent: n ? 'NEXUS' : 'PIKADON', x: ux, y: 0, z: uz, face: Math.atan2(-ux, -uz), role: 'usher' }); });
