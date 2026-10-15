@@ -49,7 +49,7 @@
     // ── PAD: plaza ring + shop kiosk ──
     var P = ROOMS[0]; add(new THREE.CylinderGeometry(P.r, P.r, 0.12, 48), navy2, P.x, 0.06, P.z); add(new THREE.TorusGeometry(P.r - 0.4, 0.25, 6, 48), cyan, P.x, 0.2, P.z, Math.PI / 2); add(new THREE.CylinderGeometry(3, 3.4, 3, 8), gold, P.x + 18, 1.5, P.z - 8);
     // ── BANKS: two facing quarter-pipe banks ──
-    function bankGeo(width, radius) { var s = new THREE.Shape(); s.moveTo(0, 0); for (var i = 0; i <= 20; i++) { var a = i / 20 * Math.PI / 2; s.lineTo(radius - Math.cos(a) * radius, Math.sin(a) * radius); } s.lineTo(radius, 0); s.lineTo(0, 0); var g = new THREE.ExtrudeGeometry(s, { depth: width, bevelEnabled: false }); g.translate(0, 0, -width / 2); return g; }
+    function bankGeo(width, radius) { var s = new THREE.Shape(); s.moveTo(0, 0); for (var i = 0; i <= 20; i++) { var a = i / 20 * Math.PI / 2; s.lineTo(Math.sin(a) * radius, radius - Math.cos(a) * radius); }   /* concave transition: flat at the foot, vertical at the lip (was convex - a wall at the foot) */ s.lineTo(radius, 0); s.lineTo(0, 0); var g = new THREE.ExtrudeGeometry(s, { depth: width, bevelEnabled: false }); g.translate(0, 0, -width / 2); return g; }
     var bg = bankGeo(26, 6.5), B = ROOMS[1]; add(bg, stone, B.x - 12, 0, B.z, 0, 0, 0); var b2 = add(bg, stone, B.x + 12, 0, B.z, 0, Math.PI, 0); add(new THREE.BoxGeometry(0.2, 0.2, 26), cyan, B.x - 12 + 0.1, 6.5, B.z); add(new THREE.BoxGeometry(0.2, 0.2, 26), cyan, B.x + 12 - 0.1, 6.5, B.z);
     // ── SPINE: two ramps back to back + a long magnet rail on posts ──
     var S = ROOMS[2]; add(bankGeo(14, 5), stone, S.x - 4, 0, S.z + 12, 0, Math.PI / 2, 0); add(bankGeo(14, 5), stone, S.x + 4, 0, S.z + 12, 0, -Math.PI / 2, 0);
@@ -92,7 +92,7 @@
     // ── extra surface height (world units) for banks / kicker / bowl so the board can ride them ──
     var cy = Math.cos(yaw), sy = Math.sin(yaw);
     function local(wx, wz) { var dx = (wx - anchor.x) / U, dz = (wz - anchor.z) / U; return [dx * cy - dz * sy, dx * sy + dz * cy]; }   // inverse of the group rotation
-    function quarter(x0, z0, w, r, dir, lx, lz) { var dz = Math.abs(lz - z0); if (dz > w / 2) return 0; var t = dir > 0 ? lx - x0 : x0 - lx; if (t < 0 || t > r) return 0; return r - Math.sqrt(Math.max(0, r * r - (r - t) * (r - t))) < 0 ? 0 : Math.sqrt(Math.max(0, r * r - (r - t) * (r - t))); }
+    function quarter(x0, z0, w, r, dir, lx, lz) { var dz = Math.abs(lz - z0); if (dz > w / 2) return 0; var t = dir > 0 ? lx - x0 : x0 - lx; if (t < 0 || t > r) return 0; return r - Math.sqrt(Math.max(0, r * r - t * t)); }   // same concave arc as bankGeo (centre at (0, r))
     function heightAtWorld(wx, wz) {
       var ddx = wx - anchor.x, ddz = wz - anchor.z, far = (W + D + 60) * U; if (ddx * ddx + ddz * ddz > far * far) return null;   // cheap early-out (this is called for every terrain height query)
       var l = local(wx, wz), lx = l[0], lz = l[1], ox = Math.max(Math.abs(lx) - W, 0), oz = Math.max(Math.abs(lz) - D, 0);
