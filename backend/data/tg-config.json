@@ -1,7 +1,7 @@
 {
   "signals": true,
   "bonded": true,
-  "preBonding": true,
+  "preBonding": false,
   "newpools": true,
   "trending": true,
   "boosted": false,

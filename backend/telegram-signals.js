@@ -1315,33 +1315,38 @@ function _bondCard(c, socialLabel, opts) {
 }
 async function _pollBonded() {
   const cfg = _cfg();
-  if (!cfg.token || !cfg.bonded) return;
-  // Prefer the ADVANCED pump.fun API (rich: holders, snipers, dev%, ATH, bonding progress); fall back to frontend-v3.
-  let list = [];
-  try {
-    const r = await fetch(PF_GRADUATED, { headers: PF_HEADERS });
-    if (r.ok) {
-      const j = await r.json();
-      const arr = Array.isArray(j) ? j : (j && (j.data || j.coins)) || [];
-      list = arr.map(c => ({
-        mint: c.coinMint, name: c.name, symbol: c.ticker,
-        pumpMc: Number(c.marketCap) || 0, pumpAth: Number(c.allTimeHighMarketCap) || 0,
-        holders: Number(c.numHolders) || 0, snipers: Number(c.sniperCount) || 0,
-        devPct: Number(c.devHoldingsPercentage) || 0, bcProg: Number(c.bondingCurveProgress) || 0,
-        imageUri: c.image_uri || c.imageUri || '',
-      })).filter(c => c.mint);
-    }
-  } catch (e) {}
-  if (!list.length) {   // fallback → frontend-api-v3
-    try {
-      const r = await fetch(PF_COINS, { headers: PF_HEADERS });
-      if (!r.ok) { if (!_bondSeeded) console.warn('[tg-signals] pump.fun bonded poll HTTP', r.status); return; }
-      const coins = await r.json();
-      const arr = Array.isArray(coins) ? coins : (coins && coins.coins) || [];
-      list = arr.filter(c => c.complete === true || !!c.raydium_pool || c.graduated === true)
-                .map(c => ({ mint: c.mint || c.address, name: c.name, symbol: c.symbol, holders: 0, devPct: 0, snipers: 0, imageUri: c.image_uri || '' }));
-    } catch (e) { return; }
-  }
+   if (!cfg.token || !cfg.bonded) return;
+   // ── 2026-10-14: pump.fun's unofficial APIs are DEAD ─────────────────────
+   // advanced-api-v2 → Cloudflare error 1016 (zone gone); frontend-api-v3 →
+   // bot-challenge 403 on every poll. The bonded feed now reads FRESH
+   // GRADUATIONS from DexScreener instead: a new PumpSwap pair = a pump.fun
+   // token that just graduated to the AMM. Same gates as always; the
+   // pump.fun-native extras (snipers/dev% from the advanced API) are gone —
+   // rugcheck's composite covers those signals. The PRE-BOND feed (curve
+   // tokens approaching graduation) has no non-pump.fun data source and is
+   // paused via config until one exists.
+   let list = [];
+   try {
+     const r = await fetch('https://api.dexscreener.com/latest/dex/search?q=SOL', { signal: AbortSignal.timeout(12000) });
+     if (r.ok) {
+       const j = await r.json();
+       const pairs = (j && j.pairs) || [];
+       const nowMs = Date.now();
+       list = pairs
+         .filter(p => p && p.chainId === 'solana' && p.dexId === 'pumpswap' &&
+                      p.pairCreatedAt && (nowMs - p.pairCreatedAt) < 2 * 3600 * 1000)
+         .map(p => ({
+           mint: p.baseToken && p.baseToken.address,
+           name: p.baseToken && p.baseToken.name,
+           symbol: p.baseToken && p.baseToken.symbol,
+           pumpMc: Number(p.fdv || p.marketCap) || 0,
+           holders: 0, devPct: 0, snipers: 0,
+           imageUri: (p.info && p.info.imageUrl) || '',
+         }))
+         .filter(c => c.mint);
+     }
+   } catch (e) {}
+   if (!_bondSeeded && !list.length) console.warn('[tg-signals] bonded feed: no fresh pumpswap graduations this poll');
   const _bondEffMaxPer = _isDeadHour() ? 1 : (_isPeakHour() ? Math.min(cfg.maxPer + 3, 10) : _isWeekend() ? Math.min(cfg.maxPer + 3, 10) : cfg.maxPer);
   // Always sort low-FDV first: <$5K bonded = 54% 5x rate (9.5x avg). Guarantees micro plays
   // get first slot in the _bondEffMaxPer budget before higher-FDV tokens consume it.
