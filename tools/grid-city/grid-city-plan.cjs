@@ -27,6 +27,7 @@ const REPO = path.resolve(__dirname, '..', '..');
 const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
 const SEED = +arg('--seed', 5888);
+const DENSITY = Math.max(0.05, Math.min(1, +arg('--density', 1)));   // owner 2026-10-15: fewer, spaced-out buildings (1 = old ~983)
 const OUT = path.resolve(REPO, arg('--out', 'public/assets/world/grid-city-v4.json'));
 
 const T = JSON.parse(fs.readFileSync(path.join(REPO, 'public/assets/terrain/terrain.json'), 'utf8'));
@@ -197,6 +198,11 @@ for (const L of lots) {
       [w * 0.3, w * 0.3, h * 0.85, h * 0.07, 0, 0, 2],
       [2.4, 2.4, h * 0.92, h * 0.08, 0, 0, 4]] };
   } else B = buildLot(L);
+  if (!landmarkIdx.has(L) && B.kind !== 'plaza' && B.kind !== 'park' && DENSITY < 1 && rr(0, 1) > DENSITY) {
+    const f = rr(0, 1);                              // thinned lot: breathing room instead of another office block
+    if (f < 0.6) continue;                           // open ground
+    B = { kind: f < 0.8 ? 'plaza' : 'park', rot: B.rot };
+  }
   if (B.kind === 'plaza' || B.kind === 'park') {
     const w = r1(L.w), d = r1(L.d);
     if (!fits(L.x, L.y, B.rot, [[w, d, 0, 1, 0, 0, 0]])) continue;
