@@ -16,8 +16,20 @@
   function addReward(n) { var have = dayReward(), give = Math.max(0, Math.min(n, REWARD_CAP - have)); if (give > 0) { try { root.localStorage.setItem(RKEY, JSON.stringify({ d: today(), n: have + give })); } catch (e) { } if (root.ShdSparks && root.ShdSparks.add) root.ShdSparks.add(give, 'naval', 'battle'); } return give; }
   function el(tag, css, html) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (html != null) e.innerHTML = html; return e; }
 
+  /* BLENDER K24 boats (2026-10-15, owner ref: tall-ship broadside video): WorldNavalGame.loadKit(THREE, GLTFLoader) preloads
+     galleon / skimmer / nautilus; boats spawned after that use them, earlier ones keep the code meshes. ?navalkit=0 = code meshes. */
+  var KIT = {}, kitP = null;
+  function loadKit(THREE, GLTFLoader, url) {
+    if (kitP) return kitP;
+    kitP = new Promise(function (res) { new GLTFLoader().load(url || '/assets/kits/shaddai_naval_v01.glb', function (gl) { var n = 0, list = [];
+      gl.scene.traverse(function (c) { var m = /^naval_(galleon|skimmer|nautilus)$/.exec(c.name); if (m) list.push([m[1], c]); });
+      list.forEach(function (e) { if (e[1].parent) e[1].parent.remove(e[1]); e[1].position.set(0, 0, 0); KIT[e[0]] = e[1]; n++; }); res(n);
+    }, undefined, function () { console.warn('[naval] Blender boat kit missing'); res(0); }); });
+    return kitP;
+  }
+
   function create(o) {
-    var BSF = o.broadside != null ? !!o.broadside : !!(root.location && /[?&]broadside=1(&|$)/.test(root.location.search || '')), bs = null, view = 'cockpit', chaseYaw = 0, boomFn = null;   // ?broadside=1 : WorldBroadside FX + chase camera (default off)
+    var BSF = o.broadside != null ? !!o.broadside : !(root.location && /[?&]broadside=0(&|$)/.test(root.location.search || '')), bs = null, view = 'cockpit', chaseYaw = 0, boomFn = null;   // WorldBroadside FX + chase camera: ON by default since 2026-10-15 (owner ref: broadside smoke video); ?broadside=0 = off
     function wrapA(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
     var THREE = o.THREE, WN = root.WorldNaval, game = null, group = null, objs = {}, fxs = [], keys = {}, seen = {}, me = 'you', mode = 'fleet', hud = null, panel = null, shake = 0, msgT = 0, tNow = 0, camYaw = 0, ended = null, shotPool = [], teamCol = { A: 0x27e0ff, B: 0xff4a5e, C: 0xffcf4a, crew: 0x27e0ff };
     function mat(c, e) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0.2, emissive: e || 0x000000, emissiveIntensity: e ? 0.6 : 0 }); }
@@ -26,6 +38,8 @@
     // ---------- meshes ----------
     function boatMesh(b) {
       var g = new THREE.Group(), col = teamCol[b.team] || 0xffffff, trim = mat(col, col), body = new THREE.Group(); g.add(body); g.userData.body = body;
+      var kitB = KIT[b.cls] && !/[?&]navalkit=0/.test(root.location ? root.location.search : '') ? KIT[b.cls] : null;   // Blender K24 boat (team trim re-tinted)
+      if (kitB) { var kc = kitB.clone(true); kc.traverse(function (m) { if (m.isMesh && m.material && /naval_trim/.test(m.material.name)) m.material = trim; }); body.add(kc); return g; }
       if (b.cls === 'galleon') {
         var hull = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.2, 9), M.wood); hull.position.y = 0.9; body.add(hull);
         var bow = new THREE.Mesh(new THREE.ConeGeometry(2.3, 3.2, 4), M.wood); bow.rotation.x = Math.PI / 2; bow.rotation.y = Math.PI / 4; bow.position.set(0, 0.9, 6.1); bow.scale.set(1, 1, 0.55); body.add(bow);
@@ -165,5 +179,5 @@
     }
     return { open: open, start: start, stop: stop, active: function () { return !!game; }, update: update, applyCamera: applyCamera, game: function () { return game; }, broadside: function () { return bs; }, view: function () { return view; }, setView: function (v) { if (BSF) view = v === 'chase' ? 'chase' : 'cockpit'; }, MODES: MODES, _reward: addReward, _dayReward: dayReward };
   }
-  root.WorldNavalGame = { create: create, MODES: MODES, REWARD_CAP: REWARD_CAP };
+  root.WorldNavalGame = { create: create, loadKit: loadKit, _kit: KIT, MODES: MODES, REWARD_CAP: REWARD_CAP };
 })(typeof window !== 'undefined' ? window : globalThis);

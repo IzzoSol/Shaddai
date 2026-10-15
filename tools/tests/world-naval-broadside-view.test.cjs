@@ -11,8 +11,8 @@ const U = 7 / 1.8; let pass = 0, fail = 0; const t = (n, f) => { try { f(); pass
 function mk(ctx) { const root = new THREE.Group(); root.scale.setScalar(U); root.updateMatrixWorld(true); const arena = { root, dims: { A: 62, B: 44 }, floors: { autoBattle: true, state: {} }, setField() { } }; return { N: ctx.WorldNavalGame.create({ THREE, getArena: () => arena }), arena }; }
 const key = (code) => handler({ code, type: 'keydown', repeat: false, preventDefault() { }, stopPropagation() { } });
 
-t('default (no flag): no broadside FX, no chase view, C key ignored', () => {
-  const ctx = load(''); const { N } = mk(ctx); N.start({ mode: 'fleet', cls: 'galleon' }); assert.strictEqual(N.broadside(), null); handler({ code: 'KeyC', type: 'keydown', repeat: false, preventDefault() { }, stopPropagation() { } }); assert.strictEqual(N.view(), 'cockpit'); N.stop();
+t('?broadside=0 (default is ON since 2026-10-15): no broadside FX, no chase view, C key ignored', () => {
+  const ctx = load('?broadside=0'); const { N } = mk(ctx); N.start({ mode: 'fleet', cls: 'galleon' }); assert.strictEqual(N.broadside(), null); handler({ code: 'KeyC', type: 'keydown', repeat: false, preventDefault() { }, stopPropagation() { } }); assert.strictEqual(N.view(), 'cockpit'); N.stop();
 });
 t('?broadside=1: galleon broadside routes through WorldBroadside; AI fire too; stop disposes', () => {
   const ctx = load('?broadside=1'); const { N, arena } = mk(ctx); N.start({ mode: 'fleet', cls: 'galleon' }); const B = N.broadside(); assert(B); const g = N.game(), me = g.boat('you'); me.x = 0; me.z = 0; me.psi = 0;
