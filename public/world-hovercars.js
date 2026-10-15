@@ -198,6 +198,17 @@
   var cache = {};
   function kit(THREE, id) { var k = cache[id]; if (!k || k.THREE !== THREE) { k = make(THREE, id); k.THREE = THREE; cache[id] = k; } return k; }
 
+  /* BLENDER SHIPS (K5, 2026-10-15): WorldHoverCars.loadShips(THREE, GLTFLoader) preloads the five race-ship hulls; groups built after
+     that use them (built before = code hull). ?shipglb=0 = code hulls only. */
+  var SHIPGLB = {}, SHIP_IDS = ['arrow', 'viper', 'raptor', 'lancer', 'bruiser'], shipsP = null;
+  function loadShips(THREE, GLTFLoader, base) {
+    if (shipsP) return shipsP; var L = new GLTFLoader(); base = base || '/assets/kits/';
+    shipsP = Promise.all(SHIP_IDS.map(function (id) { return new Promise(function (res) { L.load(base + 'shaddai_ship_' + id + '_v01.glb', function (g) {
+      var w = new THREE.Group(); w.name = 'shaddai_ship_' + id;
+      g.scene.children.slice().forEach(function (c) { w.add(c); }); SHIPGLB[id] = w; res(1); }, undefined, function () { console.warn('[hovercars] missing ship', id); res(0); }); }); }))
+      .then(function (r) { return r.reduce(function (a, b) { return a + b; }, 0); });
+    return shipsP;
+  }
   function buildGroup(THREE, id, hex) {
     var k = kit(THREE, id), g = new THREE.Group(), hero = !!(meta(id).ship || meta(id).bike || meta(id).water), mat = hero ? new THREE.MeshPhongMaterial({ vertexColors: true, color: hex != null ? hex : 0xffffff, shininess: 110, specular: 0x7fa890 }) : new THREE.MeshLambertMaterial({ vertexColors: true, color: hex != null ? hex : 0xffffff }), body = new THREE.Mesh(k.glassGeo ? k.body : k.geo, mat); g.add(body);
     if (k.glassGeo) { var gm = new THREE.Mesh(k.glassGeo, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide })); gm.renderOrder = 1; g.add(gm); }
@@ -207,6 +218,8 @@
     if (k.thr) k.thr.forEach(function (t) { var d = new THREE.Mesh(new THREE.CircleGeometry(t[3] * 0.85, 14), emis(0xb8ffd8)); d.position.set(t[0], t[1], t[2] - 0.05); d.rotation.y = Math.PI; g.add(d);   // cyan thruster discs (always lit)
       var h = new THREE.Mesh(new THREE.CircleGeometry(t[3] * 1.9, 14), new THREE.MeshBasicMaterial({ color: ACCENT[id], transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); h.position.set(t[0], t[1], t[2] - 0.12); h.rotation.y = Math.PI; g.add(h); });
     if (k.rings) k.rings.forEach(function (rg) { var rm = new THREE.Mesh(new THREE.TorusGeometry(rg[3] * 0.97, 0.06, 6, 28), new THREE.MeshBasicMaterial({ color: ACCENT[id], toneMapped: false })); rm.rotation.y = Math.PI / 2; rm.position.set(rg[0], rg[1], rg[2]); g.add(rm); });
+    var codeBits = g.children.filter(function (c) { return c !== ug; }), hull = SHIPGLB[id] && !/[?&]shipglb=0/.test(root.location ? root.location.search : '') ? SHIPGLB[id] : null;
+    if (hull) { codeBits.forEach(function (c) { c.visible = false; }); var hc = hull.clone(true); hc.name = 'blenderHull'; g.add(hc); }   // Blender K5 hull replaces the code hull (effects below stay)
     if (k.seats) k.seats.forEach(function (sp, si) { var so = new THREE.Object3D(); so.name = 'seat' + si; so.position.set(sp[0], sp[1], sp[2]); g.add(so); });   // passenger anchors (riders / agents)
     if ((meta(id).ship || meta(id).bike || meta(id).water) && k.thr) {
       // exhaust sockets + plume cones: world-mount-ride scales every node named 'flame' on Y with speed (0.6 m idle, ~2.2 m at 30 m/s+); the cone's base sits on the nacelle, apex points rearward
@@ -222,7 +235,11 @@
       var ring = new THREE.Mesh(new THREE.TorusGeometry(Math.max(meta(id).w, meta(id).len * 0.5) * 0.55, 0.07, 8, 32), new THREE.MeshBasicMaterial({ color: 0x39ff8a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
       ring.name = 'boostRing'; ring.rotation.x = Math.PI / 2; ring.position.y = 0.12; ring.visible = false; g.add(ring);   // shown only while the rider's boost timer runs (world-mount-ride)
     }
-    var seat = new THREE.Object3D(); seat.name = 'saddle'; seat.position.set(0, id === 'pod' ? 1.05 : ((meta(id).ship || meta(id).bike) ? 0.98 : 1.22), id === 'pod' ? 0.1 : ((meta(id).ship || meta(id).bike) ? 0.1 : -0.2)); g.add(seat); g.userData.saddle = seat; g.userData.tris = k.tris; return g;
+    if (hull) {   // sockets from the Blender hooks: each exhaust to the nearest hook_exhaust_*, saddle to saddle_<id>
+      var hooks = []; hull.traverse(function (n) { if (/^hook_exhaust_/.test(n.name)) hooks.push(n.position); });
+      g.children.forEach(function (c) { if (!/^exhaust/.test(c.name) || !hooks.length) return; var best = hooks[0]; hooks.forEach(function (h) { if (h.distanceTo(c.position) < best.distanceTo(c.position)) best = h; }); c.position.copy(best); });
+    }
+    var seat = new THREE.Object3D(); seat.name = 'saddle'; seat.position.set(0, id === 'pod' ? 1.05 : ((meta(id).ship || meta(id).bike) ? 0.98 : 1.22), id === 'pod' ? 0.1 : ((meta(id).ship || meta(id).bike) ? 0.1 : -0.2)); if (hull) hull.traverse(function (n) { if (n.name === 'saddle_' + id) seat.position.copy(n.position); }); g.add(seat); g.userData.saddle = seat; g.userData.tris = k.tris; return g;
   }
 
   // ───────────────── AIR TRAFFIC ─────────────────
@@ -266,5 +283,5 @@
     }
     return { update: update, stats: function () { return { cars: st.cars, riders: st.riders, nearPlayer: st.near, drawCalls: Object.keys(meshes).length + 7 }; }, dispose: function () { scene.remove(group); }, group: group };
   }
-  root.WorldHoverCars = { KARTS: KARTS, SHIPINFO: SHIPINFO, ACCENT: ACCENT, BODY: BODY, TYPES: TYPES, buildGroup: buildGroup, buildTraffic: buildTraffic, kit: kit };
+  root.WorldHoverCars = { KARTS: KARTS, SHIPINFO: SHIPINFO, ACCENT: ACCENT, BODY: BODY, TYPES: TYPES, buildGroup: buildGroup, buildTraffic: buildTraffic, kit: kit, loadShips: loadShips, _shipGlb: SHIPGLB };
 })(typeof window !== 'undefined' ? window : globalThis);
