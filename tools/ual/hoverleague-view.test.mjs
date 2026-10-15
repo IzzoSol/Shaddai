@@ -64,5 +64,5 @@ await t('paint mode: ball hidden, floor paints, % HUD', async () => {
 await t('stop(): removes the field, restores walls, frees the HUD', async () => {
   HL.stop(true); assert(!HL.active()); let left = 0; aroot.traverse((c) => { if (c.name === 'hover-league') left++; }); assert.strictEqual(left, 0); assert(Array.isArray(walls));
 });
-for (const k of ['regular', 'plasma', 'inferno', 'solar']) await t('ball look builds: ' + k, async () => { await HL.start({ mode: 'league', ball: k, size: 1 }); HL._view().ball.userData.tick(0.016, 2); HL.stop(true); });
+for (const k of ['shaddai', 'regular', 'plasma', 'inferno', 'solar']) await t('ball look builds: ' + k, async () => { await HL.start({ mode: 'league', ball: k, size: 1 }); HL._view().ball.userData.tick(0.016, 2); HL.stop(true); });
 console.log(pass + ' passed, ' + fail + ' failed'); if (fail) process.exitCode = 1;

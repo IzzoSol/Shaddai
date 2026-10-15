@@ -16,6 +16,7 @@
   var Core = root.HoverLeagueCore;
   var TEAM = { cyon: 0x27E0FF, magma: 0xFF3FA4 };
   var BALL_LOOK = {
+    shaddai: { a: 0x06261A, b: 0x00FF9C, core: 0xFFF6D8, energy: true, gold: true },   // our own: obsidian core, emerald lightning, gold rim
     regular: { a: 0xDDE6EE, b: 0x9FD8FF, core: 0xFFFFFF, energy: false },
     plasma: { a: 0x0FA9D6, b: 0x7DF4FF, core: 0xF2FFFF, energy: true },
     inferno: { a: 0xD8360A, b: 0xFFB15A, core: 0xFFF2C8, energy: true },
@@ -28,7 +29,7 @@
 
   function create(o) {
     var THREE = o.THREE, L = null, layoutP = null, kitP = null, KIT = {};
-    var G = null, arena = null, game = null, human = null, active = false, view = null, hud = null, attackQ = false, opts = { mode: 'league', ball: 'regular', size: 2 };
+    var G = null, arena = null, game = null, human = null, active = false, view = null, hud = null, attackQ = false, opts = { mode: 'league', ball: 'shaddai', size: 2 };
     var savedWalls = null, U = 7 / 1.8, t = 0, paintT = 0;
 
     function getLayout() { if (!layoutP) layoutP = fetch('/assets/world/hoverleague-layout.json').then(function (r) { return r.json(); }).then(function (j) { L = j; return j; }); return layoutP; }
@@ -120,6 +121,7 @@
         vertexShader: 'varying vec3 vN,vV; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }',
         fragmentShader: 'uniform vec3 cA,cB; uniform float uT; varying vec3 vN,vV; void main(){ float f=pow(clamp(-dot(vN,vV),0.,1.),2.6); gl_FragColor=vec4(mix(cA,cB,.4)*f*(1.1+.25*sin(uT*9.)),1.); }' }));
       g.add(halo);
+      if (look.gold) { var gr = new THREE.Mesh(new THREE.TorusGeometry(r * 1.32, 0.05, 6, 64), new THREE.MeshBasicMaterial({ color: 0xE8C45C, toneMapped: false })); gr.rotation.x = Math.PI / 2.4; g.add(gr); var gr2 = gr.clone(); gr2.rotation.set(Math.PI / 2, 0.7, 0); g.add(gr2); }
       var arcs = [];   // crackle arcs: short jagged lines re-rolled every few frames
       var arcMat = new THREE.LineBasicMaterial({ color: look.b, transparent: true, blending: THREE.AdditiveBlending, toneMapped: false });
       for (var ai = 0; ai < 5; ai++) { var ag = new THREE.BufferGeometry(); ag.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(8 * 3), 3)); var ln = new THREE.Line(ag, arcMat); g.add(ln); arcs.push(ln); }
@@ -179,8 +181,9 @@
         var kitB = root.HoverboardKit ? root.HoverboardKit.build(THREE, ['bluejet', 'racer', 'redline', 'sunburst', 'batwing', 'obsidian'][Object.keys(V.bots).length % 6], { glow: TEAM[p.team], trim: TEAM[p.team] }) : new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 1.8), mat(0x222, TEAM[p.team]));
         kitB.position.y = 0.3; g.add(kitB); var rd = riderMesh(p.team); rd.position.y = 0.42; g.add(rd); g.userData.rider = rd; V.group.add(g); V.bots[p.id] = g;
       });
-      var boltGeo = new THREE.CapsuleGeometry(0.22, 1.4, 4, 8).rotateX(Math.PI / 2);
-      for (var bi = 0; bi < 16; bi++) { var bm = new THREE.Mesh(boltGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, toneMapped: false })); bm.visible = false; V.group.add(bm); V.bolts.push(bm); }
+      var saveL = L.ball; L.ball = Object.assign({}, L.ball, { r: 0.42 });             // attack orbs: mini energy balls (owner refs) - cyon plasma, magma void
+      for (var bi = 0; bi < 16; bi++) { var bm = ballMesh(bi % 2 ? 'void' : 'plasma'); bm.userData.kind = bi % 2 ? 'magma' : 'cyon'; bm.visible = false; V.group.add(bm); V.bolts.push(bm); }
+      L.ball = saveL;
       V.fx = []; return V;
     }
     function burst(x, y, z, color, n, speed) {   // tiny pooled spark burst (goals, demos, hits)
@@ -214,7 +217,7 @@
       function row(label, key, items) { return '<div style="margin:12px 0 6px;letter-spacing:.2em;font-size:11px;color:#E8C45C">' + label + '</div><div style="display:flex;flex-wrap:wrap;gap:8px">' + items.map(function (it) { return '<button data-' + key + '="' + it[0] + '" style="flex:1 1 30%;min-width:96px;cursor:pointer;background:#0d141c;color:#e8f6ff;border:1px solid #2a3442;border-radius:10px;padding:9px 8px;font:600 13px inherit">' + it[1] + (it[2] ? '<br><small style="opacity:.6;font-weight:400">' + it[2] + '</small>' : '') + '</button>'; }).join('') + '</div>'; }
       p.innerHTML = '<div style="font-size:22px;font-weight:800;letter-spacing:.08em">HOVER LEAGUE</div><div style="opacity:.7;font-size:13px">Colosseum field mode · Cyon vs Magma</div>' +
         row('MODE', 'mode', [['league', 'League', 'hold, shoot, score'], ['paint', 'Paint', 'cover the floor']]) +
-        row('BALL', 'ball', Object.keys(Core.BALLS).map(function (k) { return [k, Core.BALLS[k].name, { regular: 'chrome, standard', plasma: 'bouncy', inferno: 'heavy hits', void: 'floaty', solar: 'fast' }[k]]; })) +
+        row('BALL', 'ball', Object.keys(Core.BALLS).map(function (k) { return [k, Core.BALLS[k].name, { shaddai: 'signature, lively', regular: 'chrome, standard', plasma: 'bouncy', inferno: 'heavy hits', void: 'floaty', solar: 'fast' }[k]]; })) +
         row('TEAMS', 'size', [['1', '1 v 1'], ['2', '2 v 2'], ['3', '3 v 3']]) +
         '<div style="display:flex;gap:10px;margin-top:16px"><button data-go="1" style="flex:2;cursor:pointer;background:#27E0FF;color:#041018;border:0;border-radius:10px;padding:12px;font:800 15px inherit;letter-spacing:.12em">PLAY</button><button data-x="1" style="flex:1;cursor:pointer;background:transparent;color:#e8f6ff;border:1px solid #2a3442;border-radius:10px;padding:12px;font:600 14px inherit">Close</button></div>';
       function mark() { p.querySelectorAll('button[data-mode],button[data-ball],button[data-size]').forEach(function (b) { var on = b.dataset.mode === opts.mode || b.dataset.ball === opts.ball || b.dataset.size === String(opts.size); b.style.borderColor = on ? '#27E0FF' : '#2a3442'; b.style.boxShadow = on ? '0 0 12px rgba(39,224,255,.35)' : 'none'; }); }
@@ -309,7 +312,9 @@
       st.pads.forEach(function (pd, i) { var v = view.pads[i]; if (!v) return; var on = pd.t <= 0; v.g.children.forEach(function (c) { if (/orb/.test(c.name)) { c.visible = on; c.rotation.z += dt * 2; c.position.z = 1.6 + Math.sin(t * 2 + i) * 0.15; } }); });
       st.ups.forEach(function (u, i) { var v = view.ups[i]; if (v && v.cube) { v.cube.visible = u.t <= 0; v.cube.rotation.z += dt * 1.5; v.cube.rotation.x += dt; } });
       // bolts
-      view.bolts.forEach(function (bm, i) { var bo = st.bolts[i]; bm.visible = !!bo; if (!bo) return; bm.position.set(bo.x, bo.y, bo.z); bm.rotation.y = Math.atan2(bo.vx, bo.vz); bm.material.color.setHex(TEAM[bo.team]); });
+      var pool = { cyon: view.bolts.filter(function (b) { return b.userData.kind === 'cyon'; }), magma: view.bolts.filter(function (b) { return b.userData.kind === 'magma'; }) }, used = { cyon: 0, magma: 0 };
+      view.bolts.forEach(function (bm) { bm.visible = false; });
+      st.bolts.forEach(function (bo) { var bm = pool[bo.team][used[bo.team]++]; if (!bm) return; bm.visible = true; bm.position.set(bo.x, bo.y, bo.z); bm.userData.tick(dt, t * 1.6); });
       // fx
       for (var fi = view.fx.length - 1; fi >= 0; fi--) { var f = view.fx[fi]; f.t -= dt; var pa = f.pts.geometry.attributes.position.array; for (var k = 0; k < f.v.length; k++) { f.v[k].y -= 14 * dt; pa[k * 3] += f.v[k].x * dt; pa[k * 3 + 1] += f.v[k].y * dt; pa[k * 3 + 2] += f.v[k].z * dt; } f.pts.geometry.attributes.position.needsUpdate = true; f.pts.material.opacity = Math.max(0, f.t); if (f.t <= 0) { view.group.remove(f.pts); f.pts.geometry.dispose(); view.fx.splice(fi, 1); } }
       view.barrier.material.uniforms.uT.value = t;

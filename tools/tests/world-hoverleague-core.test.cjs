@@ -61,8 +61,8 @@ t('paint mode: skating paints cells, repainting steals them', () => {
   assert(g.state.paint.cyon >= 19); assert.strictEqual(g.state.paint.magma, 0);
 });
 t('ball types: 5 selectable energy/regular balls with distinct physics', () => {
-  assert.deepStrictEqual(Object.keys(C.BALLS), ['regular', 'plasma', 'inferno', 'void', 'solar']);
-  const g = C.create(L, { ball: 'void' }); assert(g.ballInfo().grav < C.BALLS.regular.grav); assert.strictEqual(C.create(L, { ball: 'nope' }).ballInfo().id, 'regular');
+  assert.deepStrictEqual(Object.keys(C.BALLS), ['shaddai', 'regular', 'plasma', 'inferno', 'void', 'solar']);
+  const g = C.create(L, { ball: 'void' }); assert(g.ballInfo().grav < C.BALLS.regular.grav); assert.strictEqual(C.create(L, { ball: 'nope' }).ballInfo().id, 'shaddai');
 });
 t('2v2 bots play a full 5-min match: touches, shots, a result, ball never escapes', () => {
   const g = C.create(L, { bots: { cyon: 2, magma: 2 }, seed: 11 }); const ev = [];

@@ -20,6 +20,7 @@
 (function (root) {
   'use strict';
   var BALLS = {
+    shaddai: { name: 'SHADDAI Ball', grav: 8.2, bounce: 0.7, hit: 1.1, drag: 0.1, color: '#00FF9C', glow: '#E8C45C' },
     regular: { name: 'Regular', grav: 9.0, bounce: 0.62, hit: 1.0, drag: 0.12, color: '#EEF3F7', glow: '#9FD8FF' },
     plasma: { name: 'Plasma Orb', grav: 9.0, bounce: 0.82, hit: 1.0, drag: 0.10, color: '#27E0FF', glow: '#7DF4FF' },
     inferno: { name: 'Inferno Core', grav: 11.5, bounce: 0.5, hit: 1.25, drag: 0.14, color: '#FF6A1A', glow: '#FFB15A' },
@@ -37,7 +38,7 @@
     opts = opts || {};
     var A = L.A, B = L.B, QW = L.QP_W, QH = L.QP_H, BAR = L.BAR_H, rand = rng(opts.seed || 7);
     var mode = opts.mode === 'paint' ? 'paint' : 'league';
-    var BK = BALLS[opts.ball] ? opts.ball : 'regular', BP = BALLS[BK];
+    var BK = BALLS[opts.ball] ? opts.ball : 'shaddai', BP = BALLS[BK];
     var cell = (L.paint && L.paint.cell) || 2, GX = Math.ceil(2 * A / cell), GZ = Math.ceil(2 * B / cell);
     var grid = new Int8Array(GX * GZ), floorCells = 0;   // 0 none · 1 cyon · -1 magma · 99 off-field
     for (var gi = 0; gi < GX; gi++) for (var gj = 0; gj < GZ; gj++) { var cx = -A + (gi + 0.5) * cell, cz = -B + (gj + 0.5) * cell; if (innerOffset(cx, cz) >= QW) floorCells++; else grid[gj * GX + gi] = 99; }
