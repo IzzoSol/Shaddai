@@ -1194,7 +1194,12 @@ async function _pollOnce() {
     const _tFdv2 = Number(pair.fdv || pair.marketCap || 0);
     if (rs && rs.checked && rs.score < _trendRugMin) { _logReject('rug_score', _tSym2, _tFdv2, { score: rs.score, min: _trendRugMin }, addr); _seen.add(addr); continue; }
     if (!_holdersOk(cfg, rs)) { _logReject('min_holders', _tSym2, _tFdv2, { holders: rs && rs.holders }); _seen.add(addr); continue; }
-    if (!_lpLockedOk(cfg, rs)) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}, addr); _seen.add(addr); continue; }
+      // 2026-10-14 LP-DEFER: unvetted (rugcheck not indexed yet) must not
+      // permanently skip a token — plain continue retries next poll.
+      if (!_lpLockedOk(cfg, rs)) {
+        if (rs && rs.checked) { _logReject('lp_not_locked', _tSym2, _tFdv2, {}, addr); _seen.add(addr); continue; }   // vetted: genuinely unlocked
+        continue;   // unvetted — re-check next poll
+      }
     // REJECT paid boosts that don't meet core gates (no flex bonus for poor holders/distribution)
     let _isDexFlex = false;
     if (!_top10Ok(cfg, rs) || !_snipersOk(cfg, rs) || !_bundlersOk(cfg, rs)) {
@@ -1452,7 +1457,18 @@ async function _pollBonded() {
       if (usdMc > (cfg.maxFdv || 80000)) { _seenBond.add(mint); continue; }
       if (_overCap(cfg, usdMc, rs)) continue;         // standard maxFdv check (catches anything above global maxFdv)
       if (!_holdersOk(cfg, rs)) continue;
-      if (!_lpLockedOk(cfg, rs)) { _markBadMint(mint); continue; }
+      // 2026-10-14 LP-DEFER: a minutes-old pool is often not in rugcheck yet —
+      // missing LP-lock data reads as "unlocked" and the old code PERMANENTLY
+      // bad-minted the token for it, banning exactly the fast graduations this
+      // feed exists to catch. Unvetted now defers (retry next poll, give up
+      // after 6 ≈ 12 min); vetted-but-unlocked is a real fail and still bans.
+      if (!_lpLockedOk(cfg, rs)) {
+        if (rs && rs.checked) { _markBadMint(mint); continue; }   // vetted: LP genuinely unlocked
+        c._lpRetries = (c._lpRetries || 0) + 1;
+        _seenBond.delete(mint);
+        if (c._lpRetries >= 6) { _seenBond.add(mint); continue; }
+        continue;   // rugcheck hasn't indexed this fresh pool yet — re-check next poll
+      }
       // No paid-boost flex on concentration/sniper/bundler checks (removed 2026-08-27):
       // live data showed 'bonded' scoring 15/100 (worst of all real sources) — a paid boost
       // does not make a concentrated/sniped/bundled token safer, so it no longer earns
@@ -1942,10 +1958,12 @@ async function _pollGecko() {
         // new_pools FDV gates (corpus audit 2026-08-06):
         // <$5K = 2% 3x rate — let bonded handle micro-FDV via pump.fun graduation
         // $10-25K = 48% rug rate, 23% 2x — net negative, skip. Sweet spot is $5-10K (27% 2x, 25% rug).
-        // 2026-10-14 GRADUATION EXCEPTION: pump.fun mints ending "pump" ARE ALLOWED in the
-        // full band — a fresh pumpswap pool at $69k is a graduation landing exactly in our
-        // entry window (SAINDRA/CYBERAXE forensic: this cap was one of the closed paths).
-        const _isPumpGrad = _taddr && _taddr.endsWith('pump') && fdv >= 15000 && fdv <= 80000;
+        // 2026-10-14 GRADUATION EXCEPTION: ANY fresh pool in the full band is allowed —
+        // not just pump.fun. The SI forensic ($12M, stonkfun launchpad, mint doesn't
+        // end in "pump") showed non-pump launchpads are a whole uncovered lane; a
+        // fresh AMM pool at $50-100k with real flow IS a graduation/launch moment
+        // for any launchpad, and the fresh-pool volume rule below keeps the noise out.
+        const _isPumpGrad = _taddr && fdv >= 15000 && fdv <= 100000;
         if (kind === 'new_pools' && fdv > 0 && fdv < 5000) { _seenPool.add(id); continue; }
         if (kind === 'new_pools' && fdv > 10000 && !_isPumpGrad) { _seenPool.add(id); continue; }
         // Age gate: reject tokens < 5 minutes old (too fresh for safe entry)
