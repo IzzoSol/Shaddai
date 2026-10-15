@@ -13,7 +13,7 @@
  */
 (function (root) {
   'use strict';
-  var URL = '/assets/kits/shaddai_accessories_v01.glb';
+  var URLS = ['/assets/kits/shaddai_accessories_v01.glb', '/assets/kits/shaddai_weapons_v01.glb'];   // accessories (K16) + weapons/orbs (K17)
   var src = {}, items = [], THREE_ = null;
 
   function findBone(model, name) {
@@ -29,15 +29,15 @@
     load: function (THREE, GLTFLoader) {
       THREE_ = THREE;
       if (api._p) return api._p;
-      api._p = new Promise(function (resolve) {
-        new GLTFLoader().load(URL, function (gltf) {
-          gltf.scene.traverse(function (o) {
-            if (!o.name || o.name.indexOf('acc_') !== 0 || !o.userData || !o.userData.bone) return;
-            api._add(o);
-          });
-          resolve(items.map(function (i) { return i.name; }));
-        }, undefined, function (e) { console.warn('[agent-gear] kit failed to load:', e && e.message); resolve([]); });
-      });
+      var loader = new GLTFLoader();
+      api._p = Promise.all(URLS.map(function (url) {
+        return new Promise(function (resolve) {
+          loader.load(url, function (gltf) {
+            gltf.scene.traverse(function (o) { if (o.name && o.name.indexOf('acc_') === 0 && o.userData && o.userData.bone) api._add(o); });
+            resolve();
+          }, undefined, function (e) { console.warn('[agent-gear] kit failed to load:', url, e && e.message); resolve(); });
+        });
+      })).then(function () { return items.map(function (i) { return i.name; }); });
       return api._p;
     },
     equip: function (model, name) {
