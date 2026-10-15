@@ -2566,7 +2566,7 @@ function _nextAgentBody(){
           // walk, since the stealth variants hold a deep forward lean that looks tilted when slowed.
           if(!pick) for(const cl of C){ if(/walk/i.test(cl.name) && !/sneak|stealth|crouch|creep/i.test(cl.name)){ pick=cl; entry._idleSlow=true; break; } }
           if(!pick) for(const cl of C){ if(/walk/i.test(cl.name)){ pick=cl; entry._idleSlow=true; break; } }
-          if(!pick && C.length) pick = C[0];                          // last resort: SOME motion, not a T-pose
+          if(!pick && C.length){ pick = C[0]; entry._idleSlow = true; }   // last resort (often a bind/T-pose clip): the shared library replaces it
           if(pick){
             // Strip root/hip TRANSLATION so the looping idle plays IN PLACE — otherwise the clip's
             // root motion drifts the body off its plaza spot (the "standing still but off-center" bug),
