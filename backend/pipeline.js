@@ -65,8 +65,14 @@ async function _discover() {
     } catch (e) {}
   }
 
-  // GeckoTerminal new pools (every 30s)
-  if (now - _lastGt >= 30000) {
+  // GeckoTerminal new pools — 3-minute cadence (was 30s). 2026-10-12: at 30s
+  // this stage alone burned ~4 req/min against gecko's 30/min sliding free
+  // tier, and combined with the gecko feeds + OHLCV enrichment it tripped the
+  // circuit breaker on a loop ("circuit OPEN — cooling down 5 min") — which
+  // killed ALL gecko-dependent discovery and was a big part of "no signals".
+  // New pools do not appear faster than this; the 20s STAGING cycle below
+  // still advances existing candidates between fetches.
+  if (now - _lastGt >= 180000) {
     _lastGt = now;
     for (const chain of chains) {
       if (!cfg.newpools && !cfg.trending) continue;
@@ -87,7 +93,15 @@ async function _discover() {
             const fdv = Number(a.fdv_usd) || 0;
             const liq = Number(a.reserve_in_usd) || 0;
             const vol = Number(a.volume_usd && a.volume_usd.h24) || 0;
-            if (liq < (cfg.minLiq || 1000) || vol < (cfg.minVol24h || 500)) continue;
+            // 2026-10-14 FRESH-POOL VOLUME FIX (SAINDRA/CYBERAXE forensic): a
+            // minutes-old pool cannot have $20k of 24h volume — the flat vol24
+            // floor silently killed every fresh graduation before any gate
+            // ran. Pools < 90 min old need only vol1h >= $2,000.
+            const ageMin = a.pool_created_at ? (Date.now() - Date.parse(a.pool_created_at)) / 60000 : null;
+            const volOk = (ageMin !== null && ageMin < 90)
+              ? (Number(a.volume_usd && a.volume_usd.h1) || 0) >= 2000
+              : vol >= (cfg.minVol24h || 500);
+            if (liq < (cfg.minLiq || 1000) || !volOk) continue;
             if (cfg.maxFdv && fdv > cfg.maxFdv) continue;
             _addCandidate(addr, chain, 'geckoterminal', { fdv, liq, vol, name: a.name, kind });
           }

@@ -274,6 +274,24 @@ async function _priceMap(mints) {
       });
     } catch (e) {}
   }
+  // ── FALLBACK RUNG: Jupiter lite (2026-10-12) ─────────────────────────────
+  // DexScreener was the ONLY price source here — a 429 or outage froze every
+  // call flat at 1.00x, the FACT-0 dead-tracker pattern that poisoned the hit
+  // rate for 14 weeks. Free-tier budget reality: DexScreener 60/min shared
+  // across five pollers + this re-pricer, so pressure is routine. Jupiter
+  // lite is free, keyless, per-mint, and returns fdv directly. Only mints
+  // DexScreener MISSED cost a request — steady-state fallback cost is zero.
+  const missed = mints.filter((m) => !out[m]);
+  for (const m of missed) {
+    try {
+      const r = await fetch('https://lite-api.jup.ag/tokens/v2/search?query=' + encodeURIComponent(m), { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const t = Array.isArray(j) && j[0];
+      const fdv = t && Number(t.fdv || t.mcap || 0);
+      if (fdv > 0) out[m] = fdv;
+    } catch (e) {}
+  }
   return out;
 }
 
@@ -282,6 +300,10 @@ function _milestoneCard(call, x) {
     ? '\n\n📈 <b>CONFIRMED RUNNER</b> — hit 2nd milestone. Historically these continue higher.' : '';
   const laterMilestones = call.milestones && call.milestones.length > 1
     ? `\n🎯 Hit milestones: ${call.milestones.map(m => m + 'x').join(' → ')}` : '';
+  const banked = call.ladderSoldPct
+    ? `\nModel banked <b>${call.ladderSoldPct}%</b> of the book at ${(call.ladderRungsHit || []).map((r) => r + 'x').join('/')}` +
+      (call.trailingStopMult ? ` · trail armed <b>${Number(call.trailingStopMult).toFixed(2)}x</b>` : '')
+    : '';
   const peakD = _dispPeak(call);
   const nowD = _dispCur(call);
   const peakNote = (Number(_capM(call, call && call.peakMult)) >= MULT_CAP) ? ' (capped)' : '';
@@ -291,7 +313,7 @@ function _milestoneCard(call, x) {
     `━━ 📊 PNL ━━\n` +
     `Entry: <b>${_usd(call.entryFdv)}</b>\n` +
     `Now:   <b>${_usd(call.curFdv)}</b>  <b>(${nowD}x)</b>\n` +
-    `Peak:  <b>${peakD}x${peakNote}</b>` + laterMilestones + confirmedRunner +
+    `Peak:  <b>${peakD}x${peakNote}</b>` + laterMilestones + confirmedRunner + banked +
     `\n\n📡 Live calls: ${core.channel() || '@ShaddaiLabs'}`
   );
 }
@@ -362,6 +384,22 @@ async function trackTick() {
 
       // Slow climber updates removed — channel posts wins (milestones) only.
 
+      // ── MODEL PORTFOLIO LADDER (2026-10-13): bank what the card promised ──
+      // One decision per tick: partials at 2/3/5/10x, then the 10% runner
+      // rides under the 25% trail until it (or the 0.50x hard stop / 48h
+      // time stop) closes the position. Exit cards only for positions that
+      // actually banked — quiet deaths stay quiet (round-trip notices and
+      // the prunes cover them).
+      if (hasRealLiq) {
+        const d = _ladderDecide(call);
+        if (d.action !== 'hold') { _ladderApply(call, d); changed = true; }
+        if (d.action === 'sell_all' && (call.ladderSoldPct || 0) >= 20 && !call.exitPosted && HAS_BOT && _rtAllowPost(Date.now())) {
+          call.exitPosted = true;
+          call.roundTripped = true;   // the exit card tells the whole story — no separate death notice
+          try { await core.broadcast(_ladderExitCard(call, d.reason), { buttons: core.buildButtons(call.mint, call.chain || 'solana', null, { pnl: true }) }); } catch (e) {}
+        }
+      }
+
       // ROUND-TRIP notice (restored 2026-10-12, owner mandate): the audit
       // showed 42% of "2x+ wins" were flash-rugs — median 16 minutes from peak
       // to sub-1x. The channel announced the 2x WIN and then went silent while
@@ -389,6 +427,71 @@ async function trackTick() {
   try { pruneDead(6 * 3600 * 1000, 0.8, prices); } catch (e) {}
   // auto-prune aged losers → keeps the public scoreboard winners-fresh
   try { if (core.getConfig().autoPrune !== false) pruneLosers(1.5, 6); } catch (e) {}
+}
+
+// ── MODEL PORTFOLIO LADDER (ported from the v2 engine, 2026-10-13) ─────────
+// The PLAN block on every signal card promises: ladder 2/3/5/10x banking
+// 20/20/25/25% of the book with a 10% runner, trailing stop -25% from peak
+// armed at 1.5x, hard stop 0.50x, 48h time stop. Until now the tracker
+// recorded peaks but never BANKED a thing — the 707-call audit showed a
+// 9.8% median capture of peak (found winners, watched them round-trip).
+// This is the paper accounting that makes the card's plan real, and the
+// capture stat the scorecard reports.
+const LADDER_RUNGS = [{ m: 2, pct: 20 }, { m: 3, pct: 20 }, { m: 5, pct: 25 }, { m: 10, pct: 25 }];
+function _ladderDecide(call) {
+  const mult = call.curMult || 1;
+  const peak = call.peakMult || mult;
+  if (call.closed) return { action: 'hold' };
+  if (mult <= 0.5) return { action: 'sell_all', reason: 'hard_stop' };
+  const ageH = (Date.now() - (call.ts || Date.now())) / 3600000;
+  if (ageH >= 48 && mult < 1.2) return { action: 'sell_all', reason: 'time_stop' };
+  let stop = call.trailingStopMult != null ? call.trailingStopMult : null;
+  if (mult >= 1.5) {
+    const cand = peak * 0.75;
+    if (stop === null || cand > stop) stop = cand;
+    if (stop < 1) stop = 1;   // breakeven floor once armed
+  }
+  call.trailingStopMult = stop;
+  if (mult >= 1.5 && stop !== null && mult <= stop) {
+    return { action: 'sell_all', reason: stop >= 0.95 ? 'breakeven_stop' : 'trailing_stop' };
+  }
+  const remaining = 100 - (call.ladderSoldPct || 0);
+  if (remaining <= 10) return { action: 'hold' };   // the 10% runner rides under the trail
+  for (const r of LADDER_RUNGS) {
+    if (mult >= r.m && !(call.ladderRungsHit || []).includes(r.m)) {
+      return { action: 'sell_partial', pct: Math.min(r.pct, remaining), rung: r.m, reason: 'tp_' + r.m };
+    }
+  }
+  return { action: 'hold' };
+}
+function _ladderApply(call, d) {
+  if (d.action === 'sell_partial') {
+    call.ladderSoldPct = Math.round(((call.ladderSoldPct || 0) + d.pct) * 10) / 10;
+    call.ladderRungsHit = [...new Set([...(call.ladderRungsHit || []), d.rung])];
+    call.partials = call.partials || [];
+    call.partials.push({ t: Date.now(), mult: call.curMult, pct: d.pct, reason: d.reason });
+  } else if (d.action === 'sell_all') {
+    const remaining = Math.round((100 - (call.ladderSoldPct || 0)) * 10) / 10;
+    call.ladderSoldPct = 100;
+    call.closed = true;
+    call.exitReason = d.reason;
+    call.closedAt = Date.now();
+    call.partials = call.partials || [];
+    if (remaining > 0.5) call.partials.push({ t: Date.now(), mult: call.curMult, pct: remaining, reason: d.reason });
+  }
+  if (call.partials && call.partials.length) {
+    const realized = call.partials.reduce((s, x) => s + (x.pct / 100) * (x.mult || 1) * 100, 0);
+    call.realizedPct = Math.round(realized);
+    const pk = call.peakMult || 0;
+    call.peakCapture = pk > 0 ? Math.round((Math.max(0, realized) / 100) / pk * 1000) / 1000 : 0;
+  }
+}
+function _ladderExitCard(call, reason) {
+  const label = { hard_stop: 'hard stop (0.50x)', time_stop: 'dead money — 48h time stop', breakeven_stop: 'breakeven trail', trailing_stop: 'trailing stop (-25% from peak)' }[reason] || reason;
+  return `🏁 <b>${_esc(call.symbol || call.name || call.mint.slice(0, 4))} CLOSED</b> — ${_esc(label)}\n` +
+    `🪜 banked <b>${call.ladderRungsHit.map((r) => r + 'x').join('/') || '—'}</b> · sold <b>${call.ladderSoldPct}%</b> of the book\n` +
+    `realised <b>+${(call.realizedPct || 0).toFixed(0)}%</b> on the book · captured <b>${Math.round((call.peakCapture || 0) * 100)}%</b> of peak\n` +
+    `🧪 Model portfolio · not financial advice`;
 }
 
 // Round-trip close-out: the win was announced; the death is announced too.
@@ -426,6 +529,11 @@ function stats(period) {
   const durable2 = rows.filter(c => _capM(c, c.peakMult) >= 2 && (c.curMult || 0) >= 0.5).length;
   const flash2 = Math.max(0, hits2 - durable2);
   const durableRate = total ? Math.round((durable2 / total) * 100) : 0;
+  // MODEL CAPTURE: the money metric — what % of peak the ladder actually
+  // banked across positions that sold (median). The 707-call audit put the
+  // pre-ladder era at 9.8%; this is the live number proving the fix.
+  const caps = rows.filter((c) => (c.peakCapture || 0) > 0 && (c.ladderSoldPct || 0) > 0).map((c) => c.peakCapture).sort((a, b) => a - b);
+  const medCap = caps.length ? Math.round(caps[Math.floor(caps.length / 2)] * 100) : null;
   const avgPeak = total ? (rows.reduce((s, c) => s + _capM(c, c.peakMult), 0) / total).toFixed(1) : '0';
   const best = rows.slice().sort((a, b) => _capM(b, b.peakMult) - _capM(a, a.peakMult)).slice(0, 5);
   const label = period === 'week' ? 'WEEKLY' : period === 'month' ? 'MONTHLY' : 'DAILY';
@@ -445,7 +553,9 @@ function stats(period) {
   return (
     `📊 <b>SHADDAI ${label} SCORECARD</b>\n\n` +
     `Calls: <b>${total}</b>  ·  2x: <b>${hits2}</b> (<b>${hitRate}%</b>${flash2 ? ` · durable <b>${durableRate}%</b> (${flash2} flash-rug${flash2 === 1 ? '' : 's'})` : ' · all durable'})  ·  5x: <b>${hits5}</b>  ·  10x+: <b>${hits10}</b>\n` +
-    `Avg peak: <b>${avgPeak}x</b>\n\n` +
+    `Avg peak: <b>${avgPeak}x</b>\n` +
+    (medCap != null ? `Ladder capture: <b>${medCap}%</b> of peak (median, banked books) <i>(was 9.8% pre-ladder)</i>\n` : '') +
+    `\n` +
     (srcLines ? `<b>By source</b>\n<pre>${srcLines}</pre>\n\n` : '') +
     `🏆 <b>Best ${label.toLowerCase()}</b>\n${bestTxt}\n\n` +
     `📡 ${_esc(ch)}  ·  <i>NFA. Track your own entries.</i>`
@@ -659,6 +769,67 @@ async function discoverTick() {
     return added;
   } catch (e) { return 0; }
 }
+// ── GRADUATION SURGE WATCHER (2026-10-14) ──────────────────────────────────
+// Owner observation: bonded coins massively outperform non-bonded, and some
+// run to 500k-11M completely undetected. Entry CALLS above the band cap are
+// the worst measured band (100-250k = 29.7% 2x+), so the system won't call at
+// 150k — but a graduation we SAW running hard is an event the channel must
+// hear about. Every in-band graduation sighting (called OR gate-rejected OR
+// out-of-band-at-the-time) is recorded; when its FDV crosses a threshold it
+// posts a SURGE card — a momentum event, clearly not an entry call.
+const SURGE_THRESHOLDS = [100000, 150000, 250000, 500000, 1000000, 5000000];
+const SURGE_WATCH_FILE = path.join(__dirname, 'data', 'grad-watchlist.json');
+let _surgeTimer = null;
+function _loadSurgeWatch() { try { return JSON.parse(fs.readFileSync(SURGE_WATCH_FILE, 'utf8')); } catch (e) { return []; } }
+function _saveSurgeWatch(list) { try { fs.mkdirSync(path.dirname(SURGE_WATCH_FILE), { recursive: true }); fs.writeFileSync(SURGE_WATCH_FILE, JSON.stringify(list)); } catch (e) {} }
+
+/** Record a graduation sighting (idempotent by mint). Called by the bonded
+ *  feed for every in-band fresh pool it sees — regardless of gate outcome. */
+function recordGraduation({ mint, symbol, name, gradFdv }) {
+  if (!mint) return;
+  const list = _loadSurgeWatch();
+  if (list.some((x) => x.mint === mint)) return;
+  list.push({ mint, symbol: symbol || '', name: name || '', gradFdv: Number(gradFdv) || 0, gradAt: Date.now(), alerts: [], lastFdv: null });
+  _saveSurgeWatch(list.slice(-500));
+}
+
+async function surgeTick() {
+  const HAS_BOT = !!core.token();
+  const now = Date.now();
+  const list = _loadSurgeWatch();
+  const active = list.filter((x) => (now - x.gradAt) < 48 * 3600 * 1000 && (x.alerts || []).length < 3);
+  if (!active.length) { _saveSurgeWatch(list.filter((x) => (now - x.gradAt) < 48 * 3600 * 1000)); return; }
+  const prices = await _priceMap([...new Set(active.map((x) => x.mint))]);
+  for (const x of active) {
+    const fdv = prices[x.mint];
+    if (!fdv) continue;
+    x.lastFdv = Math.round(fdv);
+    const crossed = SURGE_THRESHOLDS.filter((t) => fdv >= t && !(x.alerts || []).includes(t));
+    if (!crossed.length) continue;
+    const t = crossed[crossed.length - 1];   // highest newly crossed — one card per crossing
+    x.alerts = (x.alerts || []).concat(t);
+    if (HAS_BOT && _rtAllowPost(now)) {   // shared 2/hour throttle with round-trips/exits
+      const mult = x.gradFdv > 0 ? fdv / x.gradFdv : 0;
+      const ageH = Math.max(1, Math.round((now - x.gradAt) / 3600000));
+      const card = `🚀 <b>SURGE — $${_esc(x.symbol || x.name || '?')}</b>\n` +
+        `Bonded ~${ageH}h ago at ${_usd(x.gradFdv)} — now <b>${_usd(fdv)}</b>${mult >= 2 ? ` (<b>${mult.toFixed(1)}x from the bond</b>)` : ''}\n` +
+        `<i>Momentum event, not an entry call — the ladder/stop plan lives on the signal cards. NFA.</i>`;
+      try { await core.broadcast(card, { buttons: core.buildButtons(x.mint, 'solana', null) }); } catch (e) {}
+    }
+  }
+  _saveSurgeWatch(list.filter((x) => (now - x.gradAt) < 48 * 3600 * 1000));
+}
+
+function startSurgeWatcher() {
+  if (_surgeTimer) return;
+  const HAS_BOT = !!core.token();
+  if (HAS_BOT && typeof core.acquireBroadcastLock === 'function' && !core.acquireBroadcastLock()) { console.log('[tg-pnl] another instance owns broadcasting - surge watcher not started here.'); return; }
+  console.log('[tg-pnl] graduation surge watcher armed - 10 min cadence, thresholds $100K/$150K/$250K/$500K/$1M/$5M.');
+  setTimeout(() => { surgeTick().catch(() => {}); }, 90 * 1000);
+  _surgeTimer = setInterval(() => { surgeTick().catch(() => {}); }, 10 * 60 * 1000);
+  if (_surgeTimer.unref) _surgeTimer.unref();
+}
+
 function startDiscovery() {
   if (_discoverTimer) return;
   if ((process.env.DISCOVERY || '1') === '0') { console.log('[tg-pnl] discovery disabled (DISCOVERY=0).'); return; }
@@ -686,7 +857,7 @@ function pruneLosers(minPeak, minAgeHours) {
   const mp = Number(minPeak) || 1.5;
   const ageMs = (Number(minAgeHours) || 6) * 3600 * 1000;
   const before = _state.calls.length;
-  _state.calls = _state.calls.filter(c => c.source === 'seed' || c.peakMult >= mp || (_now - c.ts) < ageMs);
+  _state.calls = _state.calls.filter(c => c.baseline || c.source === 'seed' || c.peakMult >= mp || (_now - c.ts) < ageMs);
   const removed = before - _state.calls.length;
   if (removed > 0) _write(_state);
   return removed;
@@ -701,6 +872,7 @@ function pruneDead(minAgeMs, minPeak, prices) {
   const mpMin = Number(minPeak) || 0.8;
   const before = _state.calls.length;
   _state.calls = _state.calls.filter(c => {
+    if (c.baseline) return true;   // frozen history — prunes never touch the approved all-time board
     if (c.source === 'seed') return true;                                   // seeds always kept
     if ((c.peakMult || 0) >= mpMin) return true;                            // ran at least ~0.8x → has data value
     if ((_now - c.ts) < ageMs) return true;                                 // too young — give it time
@@ -726,12 +898,16 @@ function pruneRugs(maxFdv, minAgeHours, prices) {
   const ageMs = (Number(minAgeHours) || 1) * 3600 * 1000;
   const before = _state.calls.length;
   _state.calls = _state.calls.filter(c => {
+    if (c.baseline) return true;   // FROZEN HISTORY (2026-10-13): baseline calls are the owner-approved
+                                   // all-time board — prunes exist for stale ACTIVE positions, not for
+                                   // rewriting history. Left unchecked they already erased 29 baseline
+                                   // calls (278 -> 249) and silently drifted the hit rate upward.
     if (c.source === 'seed') return true;
     if ((_now - c.ts) < ageMs) return true;                        // too young — give it time
     const live = (prices && prices[c.mint] != null) ? prices[c.mint] : null;
-    if (live != null) return live > mf;                            // confirmed live price → keep if above rug floor
+    if (live != null) return live > mf;                            // confirmed live price — keep if above rug floor
     if (typeof c.curFdv === 'number' && c.curFdv > 0) return c.curFdv > mf;  // last known live price
-    return true;                                                    // no live price → can't confirm a rug → keep
+    return true;                                                    // no live price — can't confirm a rug — keep
   });
   const removed = before - _state.calls.length;
   if (removed > 0) _write(_state);
@@ -933,4 +1109,4 @@ function findTokenJson(q) {
   return Object.assign({ called: true }, _shape(c));
 }
 
-module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages, _calcRiskScore, _calcViabilityScore };
+module.exports = { recordCall, trackTick, stats, startTracker, startDiscovery, discoverTick, pnlImage, pnlCaption, resetCalls, pnlForToken, distribution, seedCall, pruneLosers, pruneRugs, savePnlSnapshot, savedPnlImage, milestoneImage, survivors, _findCall, callsJson, leaderboardJson, statsJson, findTokenJson, lastCalls, activeCalls, pnlImages, _calcRiskScore, _calcViabilityScore, recordGraduation, startSurgeWatcher };

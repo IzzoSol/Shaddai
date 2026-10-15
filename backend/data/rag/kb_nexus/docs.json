@@ -27981,152 +27981,17 @@
     ]
   },
   {
-    "id": "doc_ffmpeg_probe_extract",
-    "name": "ffmpeg ffprobe probe video extract audio",
-    "text": "PROBE AND EXTRACTION WITH FFMPEG - concrete commands. Probe first: ffprobe -v error -show_format -show_streams -of json returns duration, fps, resolution, and codec before anything downstream commits, and a wrong assumption here is paid for in every later step. Extract audio for analysis with ffmpeg -i input.mp4 -vn -ac 1 -ar 22050 -c:a pcm_s16le -y output.wav: mono at 22050 matches the librosa and beatlyzer defaults so nothing resamples twice. whisper.cpp instead requires 16000 Hz 16-bit PCM WAV: ffmpeg -i in.mp4 -ar 16000 -ac 1 -c:a pcm_s16le out.wav. The -vn flag drops video, -y overwrites without prompting. You cannot hear audio from a transcript of a file you never opened - ask for the file path, then run these. This machine has ffmpeg 8.1.2, ffprobe, opencv 4.13, python 3.12 and node 25 installed, and no whisper, librosa, beatlyzer or decord package yet, so install deliberately.",
-    "uploadedAt": "2026-10-06T17:19:02.297Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_transcription_tool_choice",
-    "name": "transcription whisper word timestamps speech to text",
-    "text": "CHOOSING A TRANSCRIPTION TOOL - speech to text with word timestamps. Default to faster-whisper on CPU: pip install faster-whisper, no build step, PyAV bundles ffmpeg so an MP4 decodes without a system ffmpeg install, and its int8 small model benchmarks far faster and lighter than openai-whisper. Pass beam_size explicitly - openai_whisper defaults to 1 while faster-whisper defaults to 5, so unpinned comparisons are meaningless. Use word_timestamps=True for per-word timings and vad_filter=True with vad_parameters dict min_silence_duration_ms=500 to drop silence. The segments result is a generator: nothing runs until you iterate it, so call list(segments) to force completion. Reach for whisper.cpp only for a standalone executable, lowest RAM, the -owts word-timing export, --print-colors per-word confidence, or VAD threshold tuning with --vad --vad-threshold 0.5; it requires a 16000 Hz mono 16-bit WAV input. Reach for openai-whisper only for --task translate into English. None of the whisper implementations detect beats - that is a separate pass.",
-    "uploadedAt": "2026-10-06T17:19:02.297Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_beat_bpm_pipeline",
-    "name": "beat detection bpm librosa beatlyzer onset",
-    "text": "BEAT AND BPM DETECTION PIPELINE - extract audio to WAV first, then choose by output type. For a human-readable report plus a four-panel PNG sharing one time axis - waveform, event markers, brightness, spectrogram - use beatlyzer: beatlyzer song.wav --format json --print-json --quiet, which yields tempo_bpm, events with strength_0_1, sections, energy_profile, a versioned schema beatlyzer.analysis/v1, and an ai_notes block declaring units. For arrays you will reshape into cut points, use librosa: build ONE onset envelope with librosa.onset.onset_strength(y, sr, aggregate=np.median) then feed it to librosa.feature.tempo and librosa.beat.beat_track, and do not recompute per function. Keep units as seconds with units=time rather than hand-converting frames. Do not run both as a second opinion - beatlyzer is librosa underneath - so run beatlyzer first for semantics and the PNG, librosa second on the same WAV for numbers. Derive downbeats yourself as beat_times[i % 4] for 4/4 and mark the assumption, since neither library detects them.",
-    "uploadedAt": "2026-10-06T17:19:02.297Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_agent_video_vision",
-    "name": "video mcp vision analyze video agent eyes",
-    "text": "GIVING AN AGENT EYES ON VIDEO - tool routing for video perception. Prefer MCP tools over uploading video: do not upload video when frames do. Three shapes exist. A server that acquires the URL itself, using yt-dlp across more than a thousand platforms, best when the source is a platform link and you want one call to answer. A perception-only server that makes zero LLM calls, best when cost, privacy or attention matter and the file is local. A batch CLI that writes deterministic files another tool can path to, best for subtitles or multilingual batch. Escalate analysis modes cheapest first: an evenly spaced overview pass of about fourteen frames, then scene-change detection, then full mode with forced speech recognition. The perception-only server exposes video_analyze for scene changes silence motion blur exposure and loudness, then a coarse video_watch pass, then video_detail to drill into exact timestamps; its frame_mode is a host contract of images inline, paths as a timestamp to absolute path list, or descriptions with no server-side LLM call.",
-    "uploadedAt": "2026-10-06T17:19:02.297Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_video_pipeline_composite",
-    "name": "video pipeline composite MP4 to output workflow",
-    "text": "COMPOSITE VIDEO PIPELINE - MP4 in, matched output out, step by step. Step 1 probe with ffprobe for duration, fps and resolution before spending anything. Step 2 plan with scene motion blur and exposure analysis or a single contact sheet montage, which decides where to look. Step 3 extract frames by target count (video-to-keyframes --target-frames N) or by optical-flow motion thresholds. Step 4 burn the timecode into the pixels. Step 5 extract audio: ffmpeg -i in.mp4 -vn -ac 1 -ar 22050 -c:a pcm_s16le -y in.wav. Step 6 beats: beatlyzer for the report and PNG, then librosa on the same WAV for beat and onset arrays. Step 7 speech: faster-whisper with word_timestamps=True. Steps 2 through 4 answer what it looks like, supplying palette and composition; steps 5 through 7 answer when things happen, supplying cuts and easing. An output that must match the video needs both. Every artifact crossing an agent boundary carries a versioned schema, explicit units, and stated assumptions. Full routing tables and per-tool gotchas live in shaddai-design-studio tools/VIDEO.md, and a video-perception agent skill holds the when-to-use and how-to-use summary.",
-    "uploadedAt": "2026-10-06T17:19:02.297Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_diagram_engine_nexus",
-    "name": "diagram engine authoring layout gates",
-    "text": "The shaddai-diagrams engine in shaddai-design-studio defines three diagram types - architecture, workflow, sequence - each drawn from a plain JSON candidate. authoring contract: schema_version 1, diagram_type, meta.title plus meta.output, then the type-specific array. Every edge from/to references a declared id and every boundary or phase contains-list references real ids; the validator rejects dangling references before any rendering. Ids match a strict pattern and stay unique. Validated caps: 60 components or steps, 140 edges, 10 boundaries, 8 phases, 120 messages, 12 participants. Layout is layered by rank; forward edges spanning more than one column auto-route on lanes above the graph (left-right) or left of it (top-bottom), back edges run on a bottom lane, and same-column edges bend around the right edge, so links never slice through the middle columns. finalize runs a five-gate chain in order and stops on first failure: validate, deliver (layout and render to a standalone HTML), check (strict provenance - written bytes equal a clean re-render), browser-check (headless Playwright: no console or page errors, node and edge counts match the layout, no clipped labels, full-page screenshot), and perceptual (real pixels: title contrast at least 4.5:1 and luminance sd at least 8). Exit codes are 0 all pass, 1 a gate failed, 2 usage error. A pixel-measured receipt is never claimed as a human review. The gallery is generated by tools/portfolio.mjs and audited by tools/gallery-check.mjs.",
-    "uploadedAt": "2026-10-06T19:50:52.771Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_draw_blueprint_construction",
-    "name": "blueprint orthographic construction technical drawing",
-    "text": "BLUEPRINT AND ORTHOGRAPHIC CONSTRUCTION. Technical drawing starts from three orthographic views before any pictorial: FRONT, TOP, and RIGHT SIDE, drawn with straightedge discipline on ONE shared grid so the front and top share width and the front and side share height. Project every corner straight across the grid; never estimate where a line lands. Interior detail is hidden dashed lines; CUTTING PLANES and cross-sections reveal what the outside hides. EXPLODED VIEWS order every part along a single axis and must account for every part exactly once - count before and after. A blueprint is read, not admired: dimensions are written, never implied, and the big faces get the flattest reads. Treat any object drawing like drafting: split the work into separate layers (block-in, structure, line, tone, label) and merge them only at the end so a bad tone never ruins a good structure. For the diagram engine, apply the same discipline: each component card is a drafting layer - outline, fill, accent, label - and the whole system merges them only in final render.",
-    "uploadedAt": "2026-10-06T22:18:52.033Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_draw_primitives_structure",
-    "name": "primitives construction drawing boxes cylinders structure block-in",
-    "text": "EVERYTHING DRAWS FROM PRIMITIVES. Before any detail, every object is a stack of simple 3D primitives: BOX, CYLINDER, SPHERE, CONE, WEDGE, TORUS. Block in the biggest primitive first, on a CENTERLINE, then attach the smaller ones; never draw a surface tangent to a box until the box is right. A chair is boxes and cylinders; an arm is tapering cylinders; a head is a sphere plus a wedge jaw. Keep primitives transparent through the block-in so the far side is drawn too and every joint reads in 3D. Give each primitive its own axis: an arrowhead centerline for each cylinder, three vanishing directions for each box. After blocking, run the SILHOUETTE CHECK: the outline alone must already read the subject. Detail is decoration on correct structure; structure without detail reads, detail without structure collapses. The step for any model: name the biggest primitive, draw it transparent, then add parts in decreasing size, then check the silhouette before rendering.",
-    "uploadedAt": "2026-10-06T22:18:52.033Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_draw_proportion_systems",
-    "name": "proportion system head counts figure canon landmarks visual index measurement",
-    "text": "QUANTIFIED PROPORTION SYSTEMS. Proportion is a number system, and it can be encoded. FIGURE CANON (adult): total height 7.5 heads, heroic 8. Landmarks in heads from the top: chin 1, nipples 2, navel 3, crotch 4, mid-thigh 5, knees 5.5, mid-calf 6.5, floor 7.5. Shoulders are 2 head-widths across, the waist just under one, hands hang to mid-thigh, elbows meet the waist, wrists meet the hip notch. FACE: eyes sit at the EXACT vertical middle of the skull (the classic beginner error is eyes too high); nose tip at half the lower third; mouth a third further down; ears align eye-to-nose-tip; one eye-width between the eyes, sideburns to the outer eye. KNOWN-SIZE REFERENCE (the visual-index method): draw the one thing you know the size of first - a door is 200cm, a counter 90cm, a chair seat 45cm, a table 75cm - then derive everything else from it. One true measurement anchors the whole drawing; without it, every estimate drifts.",
-    "uploadedAt": "2026-10-06T22:18:52.033Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_draw_pipeline_gates",
-    "name": "drawing pipeline ordered stages gates pre-production step structure thumbnails",
-    "text": "THE DRAWING PIPELINE - ORDERED STAGES WITH GATES. A drawing is a pipeline, not an act of inspiration, and every stage has a gate - print the stage names and run the checklist. STAGE 0 GATHER: reference, mood, the one thing the image says. STAGE 1 THUMBNAILS: 3-8 postage-stamp sketches testing composition and a silhouette that reads at a glance. STAGE 2 ENVELOPE: the big bounding shape of the whole subject, not the parts. STAGE 3 BLOCK-IN: primitives on centerlines, every joint drawn in 3D, proportions checked against the number system. STAGE 4 LINE: clean linework with a line-weight policy - outer contours thickest, interior detail thin, cast shadows medium. STAGE 5 FLAT: only the big value or color families - paper, halftone, shadow - no rendering yet. STAGE 6 RENDER: subdivide values, add textures, but only after the flats read. STAGE 7 COMPOSITE: step back, check the silhouette, check focal contrast, sign. Every gate check happens at arm's length. A small model that runs the stages and checks the checklist at each gate will outdraw a large one free-drawing.",
-    "uploadedAt": "2026-10-06T22:18:52.033Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_draw_perspective_geometry",
-    "name": "perspective vanishing point horizon line foreshortening isometric ellipses eye level",
-    "text": "PERSPECTIVE GEOMETRY RULES. Perspective is geometry you can state. ONE-POINT: a corridor or flat-on wall; all depth lines converge to the single vanishing point on the horizon. TWO-POINT: most objects and scenes; verticals stay vertical, everything else converges to two points on the horizon. HORIZON = EYE LEVEL: objects below eye level show their tops; objects above show their undersides. THREE-POINT: looking up or down at architecture; adds a third point above or below. Place vanishing points FAR apart (off-canvas is fine) or you get sudden distortion. ELLIPSES are circles in perspective: as a circle lifts toward the horizon the ellipse flattens, and its minor axis always points at the vanishing direction. FORESHORTENING compresses the axis pointing at the viewer - the arm pointing at the camera is SHORTER, not larger. ISOMETRIC for technical flats: parallel lines stay parallel, three 120-degree axes, no distortion - ideal for blueprints and UI construction. RULE: one horizon per scene; everything else derives from it.",
-    "uploadedAt": "2026-10-06T22:18:52.033Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_architectural_drawing_blueprint",
-    "name": "architectural drawing blueprint construction documents technical",
-    "text": "MASTER ARCHITECTURAL BLUEPRINT DRAWING - CONSTRUCTION DOCUMENTS.\nDRAWING SET: Cover sheet -> Site plan -> Floor plans -> Reflected ceiling -> Roof plan -> Elevations (N/S/E/W) -> Sections (building, wall) -> Details (window, stair, roof) -> Schedules (door, window, finish, room).\nFLOOR PLAN RULES: Cut plane 4ft above floor. Walls: thick lines (6-8\" concrete), medium (2x4 stud), thin (partition). Doors: swing arc shown. Windows: break in wall with sill line. Dimensions: to face of stud, not finish. Annotations: room names, floor finishes, ceiling heights.\nELEVATIONS: True scale, no perspective. Materials hatched (brick, siding, stone). Grade line shown. Roof pitch noted.\nSECTIONS: Cut through building. Show: footing, foundation, slab, wall assembly, insulation, roof structure, ceiling. Scale: 3/4\"=1'-0\" or 1:50.\nDETAILS: 1:5 or 1:10. Show LAYERS: exterior -> sheathing -> insulation -> stud -> drywall -> finish. Flashing, weep holes, vapor barrier.\nDIMENSIONING: Continuous string for openings, overall at top. Never duplicate. Tolerance notes.\nSYMBOLS: North arrow, scale bar, section cut symbols, detail callouts, revision clouds.\nCAD STANDARDS: Layers (A-WALL, A-DOOR, A-WIND, A-DIMS, A-TEXT, A-HATCH). Line weights: cut=thickest, projection=medium, annotation=thin. Plot styles (CTB/STB).\nBIM COORDINATION: Clash detection (MEP vs structure). Model element = data-rich (fire rating, cost, manufacturer).",
-    "uploadedAt": "2026-10-06T22:37:46.205Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_structural_engineering_drawings",
-    "name": "structural drawings rebar concrete steel connections",
-    "text": "MASTER STRUCTURAL ENGINEERING DRAWINGS.\nFOUNDATION PLAN: Footings (size, depth, reinforcement), piers, grade beams, slab on grade (mesh, vapor barrier). Column grid referenced.\nFRAMING PLANS: Each level. Beams (size, camber), girders, joists, decking. Steel: W-shapes, HSS, connections (moment, shear). Concrete: beam/stub schedules.\nCOLUMN SCHEDULES: Size, reinforcement (longitudinal, ties), splice lengths.\nREINFORCING DETAILS: Bar sizes (#3=3/8\", #4=1/2\", #5=5/8\", #6=3/4\"...), spacing, hooks (90°, 135°, 180°), development lengths, lap splices. Chair supports, cover (3\" soil, 2\" formed, 1.5\" interior).\nCONNECTIONS: Steel - bolted (bearing, slip-critical), welded (CJP, PJP). Moment: stiffened flanges, continuity plates. Shear: single/double angle, end plate.\nANCHOR RODS: Diameter, embedment, projection, template.\nSHOP DRAWINGS: Fabricator produces. Engineer reviews (approved, revise, reject). Not design intent - fabrication intent.\nCODE REFERENCES: ACI 318 (concrete), AISC 360 (steel), IBC. Special inspections noted.",
-    "uploadedAt": "2026-10-06T22:37:46.205Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_mep_coordination",
-    "name": "mep drawings hvac plumbing electrical coordination clash",
-    "text": "MASTER MEP COORDINATION DRAWINGS.\nHVAC: Duct sizing (velocity 800-1200 fpm supply, 600-800 return). Rectangular aspect ratio max 4:1. Round preferred. Insulation (R-value). VAV boxes, diffusers (throw, NC). Duct priority: largest, least flexible.\nPLUMBING: Waste/vent (slope 1/4\" per ft min), water (pressure zones, hammer arrestors), gas (sizing, seismic valves). Cleanouts at base of stacks, 100ft max. Fixture units -> pipe sizing.\nELECTRICAL: Panel schedules (breaker, wire, conduit). Lighting layouts (footcandles, spacing). Power: receptacle spacing (NEC 210.52). Feeder sizing (voltage drop <3%). Emergency: egress, exit signs, generator.\nCOORDINATION: 3D model (Navisworks/Revit). Clash types: hard (pipe through beam), soft (clearance), workflow (maintenance access). Resolution priority: structure > main ducts > main pipes > electrical > small ducts > small pipes.\nCLEARANCES: Duct 6\" above ceiling, pipe 4\", conduit 2\". Access panels at valves, dampers, VAVs.\nPENETRATIONS: Fire-rated = firestop system (UL listed). Sleeve size = pipe OD + 2\" min.",
-    "uploadedAt": "2026-10-06T22:37:46.205Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_construction_details",
-    "name": "construction details wall roof window stair waterproofing",
-    "text": "MASTER CONSTRUCTION DETAILS - WHERE BUILDINGS FAIL OR SUCCEED.\nWALL ASSEMBLIES (outside to in): Cladding -> air gap (rainscreen) -> WRB -> sheathing -> insulation (cavity + continuous) -> stud -> vapor control -> drywall. CRITICAL: Air barrier CONTINUITY at transitions (wall-roof, wall-window, wall-foundation).\nROOF DETAILS: Low slope (TPO/EPDM/PVC) - taper system (1/4\" per ft), insulation (polyiso), cover board, membrane, flashing (base, counter, coping). Steep slope - underlayment (ice/water shield eaves), drip edge, valley flashing, ridge vent.\nWINDOW INSTALLATION: Rough opening = window + 3/4\". Sill pan (back dam, end dams). Flashing sequence: sill -> jambs -> head (shingle principle). Head flashing extends past jambs. Sealant BACKER ROD + sealant (2-sided adhesion).\nSTAIRS: Rise 7\" max, run 11\" min (IBC). Nosings, handrails (34-38\"), guards (42\"). Stringer vs platform. Headroom 80\".\nWATERPROOFING: Below grade - positive side (exterior) preferred. Membrane (sheet, fluid, bentonite). Protection board. Drainage board -> drain tile -> sump. Waterstops at cold joints (PVC, hydrophilic, metal).\nEXPANSION JOINTS: Spacing per material. Cover plates, bellows, sealant. Fire barrier continuity.\nTHERMAL BRIDGES: Continuous insulation OUTSIDE studs eliminates. Balcony = thermal break (Schöck Isokorb). Parapet = wrap insulation.",
-    "uploadedAt": "2026-10-06T22:37:46.205Z",
-    "chunks": [],
-    "kind": "knowledge",
-    "tsMode": "none"
-  },
-  {
-    "id": "doc_1791857855831_lvslyh",
+    "id": "doc_1791859533953_todj3a",
     "name": "nexus-bounds-v1",
     "text": "NEXUS executor and sandbox bounds. NEXUS enforcement (PentAGI-hardened): executor bounds 16KB results/1KB args/3h cap/10s closing writes; sandbox bridge-only, /work volume only, non-root, masked /proc; tool taxonomy environment/search_network/search_vector_db/agent/store_agent_result/barrier; regenerate gqlgen+sqlc+swagger+frontend together.",
-    "uploadedAt": "2026-10-13T02:17:35.832Z",
+    "uploadedAt": "2026-10-13T02:45:33.954Z",
     "kind": "doctrine",
     "title": "NEXUS executor and sandbox bounds",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857855831_lvslyh_c0",
+        "id": "doc_1791859533953_todj3a_c0",
         "text": "NEXUS executor and sandbox bounds. NEXUS enforcement (PentAGI-hardened): executor bounds 16KB results/1KB args/3h cap/10s closing writes; sandbox bridge-only, /work volume only, non-root, masked /proc; tool taxonomy environment/search_network/search_vector_db/agent/store_agent_result/barrier; regenerate gqlgen+sqlc+swagger+frontend together.",
         "t0": 0,
         "t1": 12,

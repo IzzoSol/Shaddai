@@ -2,16 +2,18 @@
 
 // scripts/seed-baseline.js — rebuild the call record's historical baseline.
 //
-// Owner spec (2026-10-12): "keep the all-time hit rate WITHOUT the calls that
-// were at 2x rugs — a balanced number based on obvious ones I wouldn't have
-// bought." Translation: keep the historical calls a real subscriber could
-// have acted on, drop everything that was never buyable or never exitable:
-//   KEEP   vetted calls (deep fields measured) with a measured outcome
-//   DROP   unvetted fail-open calls (83% of the record — never buyable)
-//   DROP   flash-rugs (peak>=2x then <0.5x — the X was never exitable)
-//   DROP   seed/test entries (paper seeds, not real signals)
-// The curated set is written into data/tg-calls.json (the live record) with
-// baseline:true so future audits can tell baseline from new-era calls.
+// Owner spec (2026-10-12, refined): "trim the OBVIOUS SCAM from the all-time
+// hit rate" — not a gut-job. The strict vetted-only cut (41 calls / 5% 5x+)
+// erased real winners the owner remembers. This curation keeps history and
+// drops only what was never buyable or never real:
+//   DROP   seed/test entries (paper seeds, not signals)
+//   DROP   flat unmeasured rows (dead-tracker era — missing data, not losses)
+//   DROP   sub-5x flash-rugs (the "2x rugs": small paper peaks that died
+//          within minutes and were never exitable)
+//   DROP   thin-liquidity unvetted calls (no real book to buy)
+//   KEEP   every 5x+ winner INCLUDING ones that later round-tripped — their
+//          exit windows were real ("we had more than 5% 5x+")
+// Result: the credible all-time board — real calls, real wins, no scams.
 //
 //   node scripts/seed-baseline.js [--dry]
 
@@ -28,10 +30,10 @@ const measured = (c) => (Number(c.peakMult) || 0) > 1.01 || !!c.closed || (Array
 const flashRug = (c) => (Number(c.peakMult) || 0) >= 2 && (Number(c.curMult) || 0) > 0 && (Number(c.curMult) || 0) < 0.5;
 
 const keep = all.filter((c) =>
-  !unvetted(c) &&                                   // vetted: deep fields were measured
-  measured(c) &&                                    // price outcome was tracked
-  !flashRug(c) &&                                   // the X was exitable (no 2x-rug round-trips)
-  c.source !== 'seed' && c.source !== 'test'        // real signal feeds only
+  c.source !== 'seed' && c.source !== 'test' &&
+  measured(c) &&
+  !((Number(c.peakMult) || 0) < 5 && flashRug(c)) &&
+  !(unvetted(c) && (Number(c.liq) || 0) < 10000)
 );
 
 const n = keep.length;
@@ -40,10 +42,17 @@ const w5 = keep.filter((c) => (c.peakMult || 0) >= 5).length;
 const dur = keep.filter((c) => (c.peakMult || 0) >= 2 && (c.curMult || 0) >= 0.5).length;
 console.log(`archive: ${all.length} calls`);
 console.log(`curated baseline: ${n} calls  ·  2x+ ${Math.round((w2 / n) * 100)}%  ·  durable-2x+ ${Math.round((dur / n) * 100)}%  ·  5x+ ${Math.round((w5 / n) * 100)}%`);
-console.log(`dropped: ${all.length - n} (unvetted / untracked / flash-rug / seed-test)`);
+console.log(`dropped: ${all.length - n} (seed/test · flat-unmeasured · sub-5x flash-rugs · thin-liq unvetted)`);
 
 if (DRY) { console.log('(dry run — record not written)'); process.exit(0); }
 
 for (const c of keep) c.baseline = true;
-fs.writeFileSync(RECORD, JSON.stringify({ calls: keep }, null, 2));
-console.log(`written: ${n} baseline calls -> data/tg-calls.json`);
+// MERGE, never overwrite: preserve any non-baseline (live new-era) calls in
+// the current record — a reseed refreshes the historical board only.
+let live = [];
+try {
+  const cur = JSON.parse(fs.readFileSync(RECORD, 'utf8'));
+  live = (cur.calls || []).filter((c) => !c.baseline);
+} catch (e) {}
+fs.writeFileSync(RECORD, JSON.stringify({ calls: [...keep, ...live] }, null, 2));
+console.log(`written: ${keep.length} baseline calls + ${live.length} live new-era calls -> data/tg-calls.json`);

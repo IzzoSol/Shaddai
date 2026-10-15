@@ -46010,17 +46010,17 @@
     ]
   },
   {
-    "id": "doc_1791857856408_vcfyya",
+    "id": "doc_1791859534316_02aac4",
     "name": "oracle-searcher-v1",
     "text": "ORACLE searcher discipline. ORACLE searcher discipline: check Graphiti + SearchGuide memory before new recon, web_search mode=exploit for PoCs, English-only queries (store is English-indexed), store only novel anonymized TTPs, engine as opaque string. Watch IOCs: pentagi-terminal- names, mass guide writes.",
-    "uploadedAt": "2026-10-13T02:17:36.408Z",
+    "uploadedAt": "2026-10-13T02:45:34.317Z",
     "kind": "doctrine",
     "title": "ORACLE searcher discipline",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857856408_vcfyya_c0",
+        "id": "doc_1791859534316_02aac4_c0",
         "text": "ORACLE searcher discipline. ORACLE searcher discipline: check Graphiti + SearchGuide memory before new recon, web_search mode=exploit for PoCs, English-only queries (store is English-indexed), store only novel anonymized TTPs, engine as opaque string. Watch IOCs: pentagi-terminal- names, mass guide writes.",
         "t0": 0,
         "t1": 16,

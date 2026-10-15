@@ -12714,17 +12714,17 @@
     ]
   },
   {
-    "id": "doc_1791857854214_jzadtf",
+    "id": "doc_1791859533152_skse8i",
     "name": "pikadon-pentagi-offense-v1",
     "text": "PIKADON PentAGI offense chain. PentAGI offense chain (vxcontrol/pentagi): primary_agent orchestrates, generator/refiner plan subtasks one at a time, specialists pentester/coder/searcher/installer/memorist execute. Tools: terminal+file in per-flow Docker container, web_search orchestrator over DuckDuckGo/Google/Tavily/Firecrawl/Traversaal/Perplexity/Searxng/Sploitus with mode=exploit, agent delegation coder/pentester/memorist/search, pgvector+Graphiti memory. Replicate authorized-only: scope file required, search memory first, anonymize stored guides to {target_ip} {target_domain} {username} {password} {token}, English-only vector payloads, 16KB result caps, barrier-tool close.",
-    "uploadedAt": "2026-10-13T02:17:34.217Z",
+    "uploadedAt": "2026-10-13T02:45:33.153Z",
     "kind": "doctrine",
     "title": "PIKADON PentAGI offense chain",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857854214_jzadtf_c0",
+        "id": "doc_1791859533152_skse8i_c0",
         "text": "PIKADON PentAGI offense chain. PentAGI offense chain (vxcontrol/pentagi): primary_agent orchestrates, generator/refiner plan subtasks one at a time, specialists pentester/coder/searcher/installer/memorist execute. Tools: terminal+file in per-flow Docker container, web_search orchestrator over DuckDuckGo/Google/Tavily/Firecrawl/Traversaal/Perplexity/Searxng/Sploitus with mode=exploit, agent delegation coder/pentester/memorist/search, pgvector+Graphiti memory. Replicate authorized-only: scope file required, search memory first, anonymize stored guides to {target_ip} {target_domain} {username} {password} {token}, English-only vector payloads, 16KB result caps, barrier-tool close.",
         "t0": 0,
         "t1": 25,
@@ -12803,17 +12803,17 @@
     ]
   },
   {
-    "id": "doc_1791857854231_m4vngo",
+    "id": "doc_1791859533167_04j4no",
     "name": "pikadon-pentagi-defense-v1",
     "text": "PIKADON PentAGI defense blocks. PentAGI defense blocks: deny Privileged, caps SYS_ADMIN/SYS_MODULE/NET_ADMIN, host network, docker.sock and /etc mounts, userns host (see sandbox_probe.sh self-tests). Executor bounds: 16KB results, 1KB args, 3h cap +5s, 500ms quick-check, 10s closing writes fail-closed. Auth: AuthUserRequired/AuthTokenRequired/TryAuth + PrivilegesRequired per route + login throttle; cookies HttpOnly + Secure on HTTPS, salt+TENANT_ID signing. Password 8-72 bytes: 16+ any OR 8-15 lower+upper+number+special !@#$&*. GraphQL introspection is public by design: no triple-quoted descriptions. Secrets masked via GetSecretPatterns; tenant-isolated pgvector.",
-    "uploadedAt": "2026-10-13T02:17:34.231Z",
+    "uploadedAt": "2026-10-13T02:45:33.167Z",
     "kind": "doctrine",
     "title": "PIKADON PentAGI defense blocks",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857854231_m4vngo_c0",
+        "id": "doc_1791859533167_04j4no_c0",
         "text": "PIKADON PentAGI defense blocks. PentAGI defense blocks: deny Privileged, caps SYS_ADMIN/SYS_MODULE/NET_ADMIN, host network, docker.sock and /etc mounts, userns host (see sandbox_probe.sh self-tests). Executor bounds: 16KB results, 1KB args, 3h cap +5s, 500ms quick-check, 10s closing writes fail-closed. Auth: AuthUserRequired/AuthTokenRequired/TryAuth + PrivilegesRequired per route + login throttle; cookies HttpOnly + Secure on HTTPS, salt+TENANT_ID signing. Password 8-72 bytes: 16+ any OR 8-15 lower+upper+number+special !@#$&*. GraphQL introspection is public by design: no triple-quoted descriptions. Secrets masked via GetSecretPatterns; tenant-isolated pgvector.",
         "t0": 0,
         "t1": 31,
@@ -12903,17 +12903,17 @@
     ]
   },
   {
-    "id": "doc_1791857854231_kzwemi",
+    "id": "doc_1791859533167_xiwke9",
     "name": "pikadon-swarm-v1",
     "text": "PIKADON swarm playbook. Swarm as one: SHADDAI opens scoped flow (no scope = stand down, PIKADON veto holds). ORACLE searches memory first then web_search mode=exploit in English. NEXUS builds in isolated container with executor bounds. PIKADON gates each stage. ZEROX enforces spend caps + paper-first. TURTLE never renders raw tool output. QUILL writes engagement-lang log + English technical payloads. Close with done/ask barrier tool. Defense always on: bridge-only net, per-route privileges, anonymized tenant-isolated memory, IOC alerts on pentagi-terminal- names and exploit-mode bursts.",
-    "uploadedAt": "2026-10-13T02:17:34.231Z",
+    "uploadedAt": "2026-10-13T02:45:33.167Z",
     "kind": "doctrine",
     "title": "PIKADON swarm playbook",
     "source": "pikadon-defense",
     "tsMode": "estimate",
     "chunks": [
       {
-        "id": "doc_1791857854231_kzwemi_c0",
+        "id": "doc_1791859533167_xiwke9_c0",
         "text": "PIKADON swarm playbook. Swarm as one: SHADDAI opens scoped flow (no scope = stand down, PIKADON veto holds). ORACLE searches memory first then web_search mode=exploit in English. NEXUS builds in isolated container with executor bounds. PIKADON gates each stage. ZEROX enforces spend caps + paper-first. TURTLE never renders raw tool output. QUILL writes engagement-lang log + English technical payloads. Close with done/ask barrier tool. Defense always on: bridge-only net, per-route privileges, anonymized tenant-isolated memory, IOC alerts on pentagi-terminal- names and exploit-mode bursts.",
         "t0": 0,
         "t1": 33,
