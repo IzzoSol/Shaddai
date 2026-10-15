@@ -376,7 +376,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/sparks-ledger.js?v=20260924a"></script>
 <script src="/world-actions.js?v=20260926v2"></script>
 <script src="/world-hoverboard-moves.js?v=20261002a"></script>
-<script src="/world-hoverboards.js?v=20261009c"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
+<script src="/world-hoverboards.js?v=20261015a"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
 <script src="/world-hoverboard.js?v=20261011b"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
 <script src="/world-anim.js?v=20261015a"></script>         <!-- shared agent animation library (retarget); was never loaded -->
 <script src="/world-riders.js?v=20260928a"></script>       <!-- RIDERS: generic mount(rider, vehicle, {seat}) for bike / dragon / ships -->
@@ -5504,7 +5504,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
 // ── AIR TRAFFIC (world-hovercars.js): ~100 hover cars on altitude lanes + 18 flying riders; a local ring follows you so traffic is always in view ──
 (function bootTraffic(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; } const D = window.__w3dDebug, H = D && (D.terrainV4 || D.terrain);
   if(!window.WorldHoverCars || !H || !H.heightAt || !window.__loadPlayable) return; clearInterval(iv);
-  if(window.WorldHoverCars.loadShips) window.WorldHoverCars.loadShips(THREE, GLTFLoader);   // Blender K5 race-ship hulls (race karts + ship mounts built after this use them)
+  if(window.WorldHoverCars.loadShips) window.WorldHoverCars.loadShips(THREE, GLTFLoader);
+  if(window.HoverboardKit && window.HoverboardKit.loadGlb) window.HoverboardKit.loadGlb(THREE, GLTFLoader);   // Blender K22 boards (boards built after this use them)   // Blender K5 race-ship hulls (race karts + ship mounts built after this use them)
   _bootT('traffic', function(){ window.__traffic = window.WorldHoverCars.buildTraffic({ THREE, scene, heightAt: H.heightAt, getPlayer: function(){ return { pos: playerPos }; } }); D.traffic = window.__traffic; }); }, 1000); })();
 // ── HAZARDS (world-hazards.js): lava burns you (overworld lava = molten pixels of the terrain colour map; Colosseum lava field); hover above it to cross; water puts you out ──
 // DISABLED 2026-10-03: hazard physics expensive, causes "not responsive" hangs. Re-enable when perf is stable.

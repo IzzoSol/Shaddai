@@ -280,6 +280,15 @@
     },
   };
 
+  var BOARDGLB = {}, boardsP = null;
+  function loadGlb(THREE, GLTFLoader, url) {
+    if (boardsP) return boardsP;
+    boardsP = new Promise(function (res) { new GLTFLoader().load(url || '/assets/kits/shaddai_hoverboards_v01.glb', function (gl) {
+      var n = 0, list = []; gl.scene.traverse(function (c) { if (/^board_[a-z]+$/.test(c.name)) list.push(c); });
+      list.forEach(function (c) { if (c.parent) c.parent.remove(c); c.position.set(0, 0, 0); BOARDGLB[c.name.slice(6)] = c; n++; }); res(n);
+    }, undefined, function () { console.warn('[hoverboards] Blender board kit missing'); res(0); }); });
+    return boardsP;
+  }
   function build(THREE, id, palette) {
     var st = BY_ID[id] || STYLES[0];
     var pal = {}, k;
@@ -314,6 +323,18 @@
       flames.push(f);
     }
     DESIGNS[st.id](B, mats, N);
+    // BLENDER K22 (2026-10-15): if HoverboardKit.loadGlb() has landed, the bevelled Blender board replaces the design meshes (same
+    // layout + nozzles); its parts are re-skinned by slot (hb_<id>_<slot>) so palettes / dyes keep working. ?boardglb=0 = code boards.
+    var kitBoard = BOARDGLB[st.id] && !/[?&]boardglb=0/.test(root.location ? root.location.search : '') ? BOARDGLB[st.id] : null;
+    if (kitBoard) {
+      var keep = {}; nozzles.forEach(function (n) { keep[n.uuid] = 1; }); flames.forEach(function (f) { keep[f.uuid] = 1; });
+      var ringsN = g.children.filter(function (c) { return c.isMesh && c.material === mats.glow && c.geometry && c.geometry.type === 'CylinderGeometry' && c.geometry.parameters.height <= 0.0125; });
+      ringsN.forEach(function (c) { keep[c.uuid] = 1; });
+      g.children.forEach(function (c) { if (c.isMesh && !keep[c.uuid]) c.visible = false; });
+      var kb = kitBoard.clone(true); kb.name = 'blenderBoard';
+      kb.traverse(function (o) { if (!o.isMesh) return; var sl = /_([a-z]+)$/.exec(o.material && o.material.name || ''); if (sl && mats[sl[1]]) o.material = mats[sl[1]]; o.castShadow = sl ? sl[1] !== 'glow' : true; });
+      g.add(kb);
+    }
     // underglow: an additive oval under the whole board ("reads" as glow at zero lighting cost)
     var box = new THREE.Box3().setFromObject(g), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
     var ug = B.cyl(0.5, 0.5, 0.001, 20, c.x, box.min.y - 0.03, c.z, mats.under);
@@ -352,7 +373,7 @@
     return g;
   }
 
-  root.HoverboardKit = { STYLES: STYLES, build: build, countTris: countTris, ids: STYLES.map(function (s) { return s.id; }) };
+  root.HoverboardKit = { STYLES: STYLES, build: build, loadGlb: loadGlb, _glb: BOARDGLB, countTris: countTris, ids: STYLES.map(function (s) { return s.id; }) };
 
   // ── pooled particle trail: ONE THREE.Points ring buffer, additive, colour fades to black ──
   root.buildHoverboardFX = function (opts) {
