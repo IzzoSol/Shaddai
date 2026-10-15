@@ -3312,9 +3312,12 @@
           var theme = themeOf(uc);
           showHint(theme.label + '   ·   [E] or [ESC] to exit');
           if (uc !== 'ATHENAEUM') showToolPanel(uc);   /* in-interior HUD (the Academy campus uses its own E-stations): this agent's REAL tools (+ games in NEXUS) */
+        } catch (err) {
+          _warnOnce('enter:' + uc, 'enter(' + uc + ') failed mid-fade: ' + (err && err.message));
         } finally {
           _entering = false;
           global.__wiRoomReady = true;
+          fadeOut();   /* 2026-10-15 (old handoff #4 "MODES > Colosseum = black screen"): an exception after fadeIn used to skip fadeOut and leave the overlay opaque; the door path hid it behind its cutscene */
         }
       });
     }
