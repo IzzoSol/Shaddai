@@ -248,6 +248,7 @@
       update: update, isRiding: function () { return st.riding; }, mount: mount, dismount: dismount, summon: summon, summonKart: summonKart, stow: stow, panel: panel, near: near,
       seatKind: function () { return /^(car-|kart-)|^skiff$/.test(String(cur || '')) ? 'seat' : 'saddle'; },   /* cars, karts and the skiff are SAT IN; beasts are straddled */
       saddle: function () { return SAD; }, camera: function () { return CAM; }, tune: TUNE, boosting: function () { return st.boosting; }, stamina: function () { return 1; },
+      speedMS: function () { return Math.abs(M.sp) / U; },
       state: function () { return { riding: st.riding, id: cur, x: M.x, y: M.y, z: M.z, yaw: M.yaw, sp: M.sp / U, flying: M.fl, visible: holder.visible }; },
       on: function () { }, off: function () { }, dispose: function () { scene.remove(holder); if (pnl) pnl.remove(); removeEventListener('keydown', key, true); }
     };

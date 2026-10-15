@@ -403,7 +403,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
 <script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261009c"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20261011a"></script>
-<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261011a"></script><script src="/world-speed-fx.js?v=20261009c"></script>
+<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261011a"></script><script src="/world-speed-fx.js?v=20261009c"></script><script src="/world-shiplock.js?v=20261015a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261011a"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-prizebox.js?v=20261011a"></script><script src="/world-cutscene-travel.js?v=20261015a"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261011a"></script><script src="/world-race-run.js?v=20261011a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
@@ -6273,7 +6273,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     const _ar = _AR(), _c = _ar.camera(), _s = _ar.saddle();
     if(window.__rideBaseFov == null) window.__rideBaseFov = camera.fov;
     camera.position.set(_c.x, _c.y, _c.z); camera.lookAt(_c.lx, _c.ly, _c.lz);
-    const _fov = window.__rideBaseFov + (_c.fov - _ar.tune.fovBase);   // boost FOV kick relative to the host FOV
+    const _fov = window.__rideBaseFov + (_c.fov - _ar.tune.fovBase) + (window.__shipLock ? window.__shipLock.fovAdd() : 0);   // boost FOV kick relative to the host FOV
     if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
     playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
   } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
@@ -6624,6 +6624,21 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
       onBoost: function(){ hover.setModifier({ mul: 1.45, dur: 1.4 }); if(window.Navi && window.Navi.toast) window.Navi.toast('BOOST'); if(window.__vfx) window.__vfx.burst('boost', playerPos); } });
   }
   if(window.__speedFx && !window.__speedFxOff) window.__speedFx.update(dt);
+  // SHIP LOCK-ON + SPEED FEEL (world-shiplock.js; ?lockon=0 = off): reticle/brackets/lock on dragons, km/h, FOV (read above), pull-back + boost shake, left mouse fires at the lock
+  if(window.__shipLock === undefined && window.WorldShipLock && window.__mountRide){
+    const _slD = new THREE.Vector3(), _slP = new THREE.Vector3(), _slMR = () => window.__mountRide.isRiding(), _slHV = () => (typeof hover !== 'undefined' && hover && hover.isRiding && hover.isRiding());
+    window.__shipLock = window.WorldShipLock.create({ camera, U: V4_U, doc: document, topMS: 30, boostMS: 60,
+      getRide: () => _slMR() || _slHV(), speedMS: () => _slMR() ? window.__mountRide.speedMS() : hover.speedMS(),
+      boosting: () => _slMR() ? window.__mountRide.boosting() : (hover.tune ? hover.speedMS() > hover.tune.topMS * 1.05 : false),
+      inRace: () => !!window.__raceActive, streaks: () => _slMR(),   // hoverboard already has world-speed-fx lines
+      getTargets: () => (window.__worldDragons || window.__dragons || { dragons: [] }).dragons,
+      posOf: (t, o) => { o.x = t.f.x; o.y = t.f.y; o.z = t.f.z; return o; },
+      camState: (o) => { camera.getWorldDirection(_slD); o.x = camera.position.x; o.y = camera.position.y; o.z = camera.position.z; o.dx = _slD.x; o.dy = _slD.y; o.dz = _slD.z; return o; },
+      project: (x, y, z, o) => { _slP.set(x, y, z).project(camera); o.x = (_slP.x * 0.5 + 0.5) * innerWidth; o.y = (-_slP.y * 0.5 + 0.5) * innerHeight; o.on = _slP.z > -1 && _slP.z < 1; return o; },
+      damage: (id, amt, pos, type) => { const W = window.__worldDragons || window.__dragons; return !!(W && W.damage(id, amt, pos, type)); } });
+    addEventListener('mousedown', function(e){ if(e.button === 0 && controls.isLocked && window.__shipLock && window.__shipLock.target() !== null) window.__shipLock.fire(); }, true);   // ship shots only while a lock is held; on-foot attack untouched
+  }
+  if(window.__shipLock){ try{ window.__shipLock.update(dt); window.__shipLock.applyCamera(); }catch(e){ console.warn('[shiplock] disabled after error', e && e.message); window.__shipLock = null; } }
   if(window.__vfx) window.__vfx.update(dt);   // also keeps the shared soft-point size uniform (viewport height) current
   const _pt1 = _perfOn ? performance.now() : 0;
   composer.render();
