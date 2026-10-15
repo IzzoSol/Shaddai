@@ -1223,7 +1223,8 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('interiors-v3', function(api){   // MAP v4 INTERIORS v3 (world-interiors-v3.js): 3,349 walk-in shops/offices/labs/market/homes/culture lane/deed office/campus (docs/INTERIORS-V3.md). Lazy: data index only until you are within 40 m.
       if(!api) return api;
-      const furn = window.SHADDAI_FURNITURE ? Promise.resolve() : Promise.resolve();   // optional world-furniture.js does not exist yet: built-in box fallback
+      // furniture library (world-furniture.js, Blender kit K12): registers at once, GLB loads in the background; rooms laid out before it lands keep the box fallback. ?furniture=0 = boxes only
+      const furn = /[?&]furniture=0/.test(location.search) ? Promise.resolve() : _loadScript('/world-furniture.js?v=20261015a').then(function(){ if(window.SHADDAI_FURNITURE) window.SHADDAI_FURNITURE.load(THREE, GLTFLoader); }).catch(function(e){ console.warn('[furniture] loader failed', e); });
       return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20260928a'); }).then(function(){
         window.__interiorsV3 = window.buildWorldInteriorsV3({ THREE, scene, heightAt: api.heightAt, city: window.__cityV3,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
