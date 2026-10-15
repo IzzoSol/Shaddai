@@ -189,7 +189,7 @@
     });
     var sl = root.querySelector('#nvSlots');
     SLOTS.forEach(function (s) {
-      var e = document.createElement('span'); e.textContent = s.toUpperCase() + ' · SOON'; e.dataset.s = s;
+      var e = document.createElement('span'); e.textContent = s.toUpperCase(); e.style.display = 'none'; e.dataset.s = s;
       e.onclick = function () { var f = S.flags.slots[s]; if (f) f(); }; sl.appendChild(e);
     });
     var btn = document.createElement('div'); btn.id = 'naviBtn'; btn.textContent = 'NAVI [Y]'; btn.onclick = toggle; document.body.appendChild(btn);
