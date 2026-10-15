@@ -241,6 +241,10 @@
         var white = new THREE.DataTexture(new Uint8Array([200, 200, 200, 255]), 1, 1); white.needsUpdate = true;
         var LTEX = { tLava: 'lava-crust.webp', tDune: 'dunes.png', tMoss: 'root-moss-floor.webp', tFrost: 'frost-plates.webp', tRego: 'red-regolith.webp', tObs: 'obsidian-plaza.webp', tHarv: 'harvest-field.webp', tGrass: 'emerald-grass.webp' };
         var tl = new THREE.TextureLoader(), lbase = opts.base || '/assets/terrain/';
+        ['tRipN', 'tRipH'].forEach(function (k) {   // K23 sand ripples (Blender-previewed, kits/_src/k23_sand_ripples.py): 6 m tile, linear data
+          SU[k] = { value: white };
+          tl.load(lbase + (k === 'tRipN' ? 'sand_ripple_n.webp' : 'sand_ripple_h.webp'), function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = 8; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] ripple map missing', k); });
+        });
         Object.keys(LTEX).forEach(function (k) {
           SU[k] = { value: white };
           tl.load(lbase + LTEX[k], function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] layer texture missing', LTEX[k]); });
@@ -253,8 +257,8 @@
           '#include <begin_vertex>\n  vTWP = (modelMatrix * vec4(position, 1.0)).xyz; vTWN = normalize(mat3(modelMatrix) * objectNormal);');
         sh.fragmentShader = [
           'varying vec3 vTWP; varying vec3 vTWN; uniform float uSnowLo, uSnowHi, uSea, uRock;',
-          (LAYERS ? '#define TV_LAYERS\nuniform vec4 uRA[10]; uniform float uRB[10]; uniform float uTime;\nuniform sampler2D tLava, tDune, tMoss, tFrost, tRego, tObs, tHarv, tGrass;' : ''),
-          'vec3 tvEmit = vec3(0.0); float tvRough = -1.0;',
+          (LAYERS ? '#define TV_LAYERS\nuniform vec4 uRA[10]; uniform float uRB[10]; uniform float uTime;\nuniform sampler2D tLava, tDune, tMoss, tFrost, tRego, tObs, tHarv, tGrass, tRipN, tRipH;' : ''),
+          'vec3 tvEmit = vec3(0.0); float tvRough = -1.0; float tvRip = 0.0;',
           'float tvH(vec2 p){ p = fract(p * vec2(127.1, 311.7)); p += dot(p, p + 34.5); return fract(p.x * p.y); }',
           'float tvN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
           '  return mix(mix(tvH(i), tvH(i + vec2(1.0, 0.0)), f.x), mix(tvH(i + vec2(0.0, 1.0)), tvH(i + vec2(1.0, 1.0)), f.x), f.y); }',
@@ -297,6 +301,10 @@
           '        if (w8 > 0.0) lay += tvTx(tFrost, 16.0) * w8;',
           '        float far = smoothstep(900.0, 7000.0, distance(vTWP, cameraPosition));',
           '        base = mix(base, lay / sw, clamp(sw, 0.0, 1.0) * mix(0.82, 0.45, far));',
+          '        if (w2 + w6 > 0.0) {',                                                                // wind ripples (desert + beaches): fade by 600 u, none on slip faces
+          '          tvRip = (w2 + w6 * 0.6) * (1.0 - smoothstep(80.0, 600.0, distance(vTWP, cameraPosition))) * smoothstep(0.78, 0.95, flat0);',
+          '          float rh = texture2D(tRipH, vTWP.xz / 23.3333).r; base *= mix(1.0, 0.95 + 0.08 * rh, tvRip);',
+          '        }',
           '        if (w3 > 0.0) {',
           '          float crack = clamp((lavaT.r - lavaT.g) * 2.4, 0.0, 1.0);',
           '          float pulse = 0.72 + 0.28 * sin(uTime * 1.6 + tvN(vTWP.xz * 0.01) * 6.2831853);',
@@ -331,6 +339,7 @@
           '    diffuseColor.rgb = base;',
           '  }'
         ].join('\n'))
+          .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n#ifdef TV_LAYERS\n  if (tvRip > 0.001) { vec3 rn = texture2D(tRipN, vTWP.xz / 23.3333).xyz * 2.0 - 1.0; vec3 nW = normalize(vTWN + vec3(rn.x, 0.0, rn.y) * 1.1); normal = normalize(mix(normal, normalize((viewMatrix * vec4(nW, 0.0)).xyz), tvRip)); }\n#endif')
           .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += tvEmit;')
           .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  if (tvRough >= 0.0) roughnessFactor = tvRough;');
       };
