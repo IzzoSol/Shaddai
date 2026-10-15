@@ -11,7 +11,7 @@ const PM = 7 / 1.8;
 
 function node(name) { const g = new THREE.Group(); g.name = name; g.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial()), new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial())); return g; }
 function station(id, realm, x, z, rot) { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; return { id, realm, onRing: true, group: g }; }
-const transit = { stations: [station('forge', 'volcano', 1000, 0, 0.3), station('desert', 'desert', 0, 2000, 1.2), station('central', 'grid', 0, 700, 0)] };
+const transit = { stations: [station('forge', 'volcano', 1000, 0, 0.3), station('desert', 'desert', 0, 20000, 1.2), station('central', 'grid', 0, 700, 0)] };
 transit.stations[2].onRing = false;
 class Loader {
   load(url, ok, _p, err) {
@@ -36,11 +36,19 @@ await t('only ring stations get towns; every piece is instanced; colliders only 
   const scene = new THREE.Scene();
   const r = await K.build({ THREE, GLTFLoader: Loader, scene, transit, heightAt: () => 5 });
   assert.strictEqual(r.stats.towns, 2);
-  const ims = r.group.children; assert(ims.length > 0 && ims.every((m) => m.isInstancedMesh));
+  const ims = []; r.group.traverse((o) => { if (o.isInstancedMesh) ims.push(o); }); assert(ims.length > 0);
   assert(ims.some((m) => /bld:volcano:hall/.test(m.name)) && !ims.some((m) => /bld:desert/.test(m.name)) && !ims.some((m) => /mesa/.test(m.name)));
   const labels = WORLD_LAYOUT.realmColliders.map((c) => c.label);
-  assert(labels.includes('realmkit:bld:volcano:hall') && !labels.some((l) => /bld:desert|mesa/.test(l)), 'colliders follow loaded models');
+  assert(labels.some((l) => /bld:volcano:hall$/.test(l)) && !labels.some((l) => /bld:desert|mesa/.test(l)), 'colliders follow loaded models');
   assert.strictEqual(rebuilt, 1);
   const m = new THREE.Matrix4(), p = new THREE.Vector3(); ims[0].getMatrixAt(0, m); p.setFromMatrixPosition(m); near(p.y, 5);
+});
+await t('FPS: each town is its own group and only towns near the player draw', async () => {
+  globalThis.WORLD_LAYOUT = { realmColliders: [] };
+  const me = { x: 1000, z: 0 };
+  const r = await K.build({ THREE, GLTFLoader: Loader, scene: new THREE.Scene(), transit, heightAt: () => 0, getPlayer: () => me, autoUpdate: false });
+  assert.strictEqual(r.group.children.length, 2);                         // forge town + desert town (desert has props only)
+  assert.strictEqual(r.towns.forge.visible, true); assert.strictEqual(r.towns.desert.visible, false);
+  me.x = 0; me.z = 20000; r.update(me); assert.strictEqual(r.towns.forge.visible, false); assert.strictEqual(r.towns.desert.visible, true);
 });
 console.log(`${pass} passed, 0 failed`);

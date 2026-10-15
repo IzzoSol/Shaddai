@@ -51,18 +51,18 @@
     var group = new THREE.Group(); group.name = 'world-realm-kits'; o.scene.add(group);
     var stats = { towns: 0, instancedMeshes: 0, instances: 0, colliders: 0 }, L = root.WORLD_LAYOUT, cols = L && L.realmColliders;
     var loader = new o.GLTFLoader(), stations = stationList(o.transit);
-    var batches = {}, solids = {};                                        // key -> [Matrix4] ; key -> [collider] (only registered once the model exists)
+    var batches = {}, solids = {}, towns = {};                                        // key -> [Matrix4] ; key -> [collider] (only registered once the model exists)
     var m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pv = new THREE.Vector3(), sv = new THREE.Vector3();
     function add(key, p, solidR) {
       (batches[key] = batches[key] || []).push(m4.compose(pv.set(p.x, heightAt(p.x, p.z), p.z), q.setFromAxisAngle(up, p.yaw), sv.setScalar(PM * p.s)).clone());
       if (solidR) (solids[key] = solids[key] || []).push({ x: Math.round(p.x), z: Math.round(p.z), r: Math.round(solidR * PM * p.s), label: 'realmkit:' + key });
     }
     stations.forEach(function (st) {
-      stats.towns++;
-      placements(st, BUILDINGS).forEach(function (p) { add('bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]); });
+      stats.towns++; var sk = st.id + '|';
+      placements(st, BUILDINGS).forEach(function (p) { add(sk + 'bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]); });
       var pr = PROPS[PROP_REALM[st.realm]] || {};
       Object.keys(pr).forEach(function (name) {
-        placements(st, pr[name].map(function (t) { return [name, t[0], t[1], t[2], t[3]]; })).forEach(function (p) { add('prop:' + PROP_REALM[st.realm] + ':' + name, p, SOLID_R[name]); });
+        placements(st, pr[name].map(function (t) { return [name, t[0], t[1], t[2], t[3]]; })).forEach(function (p) { add(sk + 'prop:' + PROP_REALM[st.realm] + ':' + name, p, SOLID_R[name]); });
       });
     });
     var realms = {}; stations.forEach(function (st) { realms[st.realm] = 1; });
@@ -78,7 +78,8 @@
         });
       });
       Object.keys(batches).forEach(function (key) {
-        var node = nodes[key]; if (!node) return;
+        var bar = key.indexOf('|'), sid = key.slice(0, bar), node = nodes[key.slice(bar + 1)]; if (!node) return;
+        var town = towns[sid]; if (!town) { var st0 = stations.filter(function (q) { return q.id === sid; })[0]; town = towns[sid] = new THREE.Group(); town.name = 'realm-town-' + sid; town.userData.x = st0.x; town.userData.z = st0.z; group.add(town); }
         if (solids[key] && cols) solids[key].forEach(function (c) { cols.push(c); stats.colliders++; });
         var inv = new THREE.Matrix4().copy(node.matrixWorld).invert(), list = batches[key];
         node.traverse(function (mesh) {
@@ -87,12 +88,17 @@
           var im = new THREE.InstancedMesh(mesh.geometry, mesh.material, list.length); im.name = 'realmkit-' + key;
           list.forEach(function (w, i) { im.setMatrixAt(i, m4.multiplyMatrices(w, local)); });
           im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); im.castShadow = true; im.receiveShadow = true;
-          group.add(im); stats.instancedMeshes++; stats.instances += list.length;
+          town.add(im); stats.instancedMeshes++; stats.instances += list.length;
         });
       });
       if (stats.colliders && root.buildWorldCollision && L) { try { root.buildWorldCollision(L); } catch (e) { console.warn('[realm-kits] collision rebuild', e && e.message); } }
+      // FPS: only towns near the player draw (each town is its own group; far ones hidden). Budget: < 80 draw calls total.
+      var R2 = Math.pow((o.viewM || 1200) * PM, 2);
+      function update(pos) { if (!pos) return; var on = 0; Object.keys(towns).forEach(function (k) { var t = towns[k], dx = t.userData.x - pos.x, dz = t.userData.z - pos.z; t.visible = dx * dx + dz * dz < R2; if (t.visible) on++; }); stats.visibleTowns = on; }
+      update(o.getPlayer && o.getPlayer());
+      if (o.getPlayer && typeof setInterval === 'function' && o.autoUpdate !== false) setInterval(function () { update(o.getPlayer()); }, 500);
       console.info('[realm-kits]', stats);
-      return { group: group, stats: stats };
+      return { group: group, towns: towns, stats: stats, update: update };
     });
   }
 
