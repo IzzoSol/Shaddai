@@ -404,7 +404,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
 <script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261009c"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20261011a"></script>
 <script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261011a"></script><script src="/world-speed-fx.js?v=20261009c"></script><script src="/world-shiplock.js?v=20261015a"></script>
-<script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261011a"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
+<script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261011a"></script><script src="/world-park-dress.js?v=20261015a"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-prizebox.js?v=20261011a"></script><script src="/world-cutscene-travel.js?v=20261015a"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261011a"></script><script src="/world-race-run.js?v=20261011a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
 <script src="/world-bots.js?v=20260929a"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
@@ -5805,6 +5805,7 @@ window.__travel = {
     try {
       const park = window.__hoverPark = window.WorldHoverPark.build({ THREE, scene, anchor: { x: mk.pos.x, z: mk.pos.z }, heightAt: T.heightAt, yaw: Math.atan2(-mk.pos.x, -mk.pos.z), U: V4_U });
       try{ if(hover && hover.moves && park.railsWorld) hover.moves.setRails(park.railsWorld()); }catch(_){}
+      if(window.WorldParkDress) window.WorldParkDress.dress({ THREE, GLTFLoader, park, U: V4_U }).then(function(r){ if(r) window.__parkDress = r; }).catch(function(e){ console.warn('[park-dress]', e && e.message); });   // Blender K25 gate / stands / lamps / rim posts / signs / crown
       if(park.towerLift) addEventListener('keydown', function(e){   // DROP TOWER LIFT (park v2): E on a lift pad = ride to the other stop (height comes from park.heightAt)
         if(e.code !== 'KeyE' || e.repeat) return; const to = park.towerLift(playerPos.x, playerPos.z); if(!to) return;
         e.stopImmediatePropagation(); e.preventDefault(); playerPos.x = to.x; playerPos.z = to.z;
