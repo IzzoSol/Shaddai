@@ -26,6 +26,7 @@
       { t: 'Harbor Ring boat run', s: 'tunnel line to the canal lift, then a pod or sub round the city', run: function () { var W = root.WorldCutsceneTravel; if (W && W.travelTo && W.travelTo('lift')) return; toast('Stand at a station and press J (tunnel line)'); } },
       { t: 'Naval battle', s: 'cannons, pickups, sea monsters', run: function () { if (root.__naval && root.__naval.open) root.__naval.open(); else toast('Naval arena not ready'); } }] });
     S.push({ h: 'FIGHT', c: '#e8c45c', items: [
+      { t: 'Hover League', s: 'Colosseum hover field: hold + shoot energy balls, rams, bolts, boost pads; Paint mode', run: function () { if (root.__hoverLeague && root.__hoverLeague.open) root.__hoverLeague.open(); else toast('Hover League not ready'); } },
       { t: 'Colosseum arena', s: 'duels, tactics, team attack, soccer, party (host kiosk inside)', run: function () { if (T.colosseum) T.colosseum(); else if (root.__interiorsEnter) root.__interiorsEnter('COLOSSEUM'); } },
       { t: 'Arena field: tactics grid', s: 'only inside the arena', run: function () { var A = root.__colosseumArena; if (A && A.setField) { A.setField('tactics'); toast('Arena field: tactics'); } else toast('Enter the arena first'); } },
       { t: 'Arena field: team attack', s: 'only inside the arena', run: function () { var A = root.__colosseumArena; if (A && A.setField) { A.setField('team-attack'); toast('Arena field: team attack'); } else toast('Enter the arena first'); } }] });

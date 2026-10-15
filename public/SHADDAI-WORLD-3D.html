@@ -354,6 +354,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-naval.js?v=20261001a"></script>
 <script src="/world-broadside.js?v=20261009c"></script><script src="/world-ships.js?v=20261009c"></script>
 <script src="/world-naval-view.js?v=20261015a"></script>
+<script src="/world-hoverleague-core.js?v=20261015a"></script><script src="/world-colosseum-hoverleague.js?v=20261015a"></script>  <!-- HOVER LEAGUE: Colosseum hover field mode (I > Fight) -->
 <script src="/world-gadgets.js?v=20261001a"></script>
 <script src="/world-hitfx.js?v=20261001a"></script>
 <script src="/world-farm3d.js?v=20261001a"></script>
@@ -5230,7 +5231,7 @@ let hover = null;
 try{
   if (window.buildWorldHoverboard && _acLoader) hover = window.buildWorldHoverboard({
     THREE, scene, loader: _acLoader, playerPos,
-    heightAt: function(x,z){ return window.WORLD_HEIGHT_AT ? window.WORLD_HEIGHT_AT(x,z) : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(x,z) : 0); },
+    heightAt: function(x,z){ if(window.__hoverLeague && window.__hoverLeague.active()){ const _h = window.__hoverLeague.heightAtWorld(x,z); if(isFinite(_h)) return _h; } return window.WORLD_HEIGHT_AT ? window.WORLD_HEIGHT_AT(x,z) : ((worldTerrain && worldTerrain.heightAt) ? worldTerrain.heightAt(x,z) : 0); },   // HOVER LEAGUE: rim quarter-pipe while a match runs
     colliders: function(){ return (window.WORLD_LAYOUT && window.WORLD_LAYOUT.realmColliders) || []; },
     time: function(){ return clock.elapsedTime; },
   });
@@ -5571,6 +5572,9 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   if(!window.WorldNavalGame || !window.WorldNaval || !window.__loadPlayable) return; clearInterval(iv);
   try{ if(window.WorldNavalGame && window.WorldNavalGame.loadKit) window.WorldNavalGame.loadKit(THREE, GLTFLoader); }catch(e){}   // Blender K24 galleon / skimmer / nautilus
   try{ _bootT('naval', function(){ window.__naval = window.WorldNavalGame.create({ THREE, getArena: function(){ return window.__colosseumArena; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }); }catch(e){ console.warn('[naval] init failed', e && e.message); } }, 1000); })();
+// ── HOVER LEAGUE (world-hoverleague-core.js + world-colosseum-hoverleague.js): Colosseum hover field mode; opened from I > Fight ──
+(function bootHoverLeague(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; } if(!window.HoverLeague || !window.HoverLeagueCore || typeof hover === 'undefined' || !hover) return; clearInterval(iv);
+  try{ window.__hoverLeague = window.HoverLeague.create({ THREE, GLTFLoader, getArena: function(){ return window.__colosseumArena; }, isInside: function(){ return !!(_interiors && _interiors.isInside() && window.__colosseumArena && window.__colosseumArena.group.visible); }, getHover: function(){ return hover; }, getPlayerPos: function(){ return playerPos; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }catch(e){ console.warn('[hoverleague] init failed', e && e.message); } }, 1000); })();
 // ── COMBAT LOCK-ON (?combat=1, off by default): Tab or middle mouse locks the nearest wilderness mob; the look
 // yaw eases onto the target bearing; ENEMY FELLED card + combat stem on kill. Module: world-lockon.js (targeting, DOM).
 (function bootLockOn(){ if(!/[?&]combat=1\b/.test(location.search)) return; let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; }
@@ -6279,6 +6283,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(Math.abs(camera.fov - _fov) > 0.05){ camera.fov = _fov; camera.updateProjectionMatrix(); }
     playerAvatar.visible = true; playerAvatar.position.set(_s.x, _s.y, _s.z); playerAvatar.rotation.set(0, _s.yaw, 0);
   } else if(window.__rideBaseFov != null){ camera.fov = window.__rideBaseFov; camera.updateProjectionMatrix(); window.__rideBaseFov = null; }
+  if(window.__hoverLeague && window.__hoverLeague.active()){ try{ window.__hoverLeague.update(dt); }catch(e){ console.warn('[hoverleague] stopped after error', e && e.message); try{ window.__hoverLeague.stop(); }catch(_){} } }
   if(window.__naval && window.__naval.active()){ try{ window.__naval.update(dt); window.__naval.applyCamera(camera); }catch(e){ console.warn('[naval] stopped after error', e && e.message); try{ window.__naval.stop(); }catch(_){} } }
   if(window.WorldGadgets && !_rideOn()){ try{ window.WorldGadgets.applyFov(camera, dt); }catch(_){} }   // binoculars zoom
   if(_onTrain && playerAvatar.visible){ const _sy = window.__worldTransitApi.seatYaw(); if(_sy !== null){ playerAvatar.rotation.y = _sy; _avatarYaw = _sy; } }   // MAGLEV: seated → face along the seat
