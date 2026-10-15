@@ -26,6 +26,25 @@
     { id: 'modes', label: 'MODES', ic: '⚙' }
   ];
   var SLOTS = ['Dashboard', 'SkinForge', 'AutoPost', 'Aura', 'Terminal'];
+  // Line icons (2026-10-15, owner Navi refs): one stroke style for every module, replaces the emoji.
+  var IC = {
+    map: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
+    inv: '<path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3M4 13h16"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/>',
+    sparks: '<path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/>',
+    news: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"/>',
+    market: '<path d="M3 4h3l2.5 11h10L21 8H7"/><circle cx="10" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/>',
+    radio: '<circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 0 0 0 8M16 8a6 6 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>',
+    bots: '<path d="M6 9h12v9H6z"/><path d="M12 5v4M9.5 13h.01M14.5 13h.01M9 16h6M3 12v3M21 12v3"/>',
+    plots: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+    wallet: '<path d="M4 7h15v12H4z"/><path d="M4 7l11-3v3M15 12h4v3h-4z"/>',
+    academy: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
+    jobs: '<path d="M4 8h16v11H4z"/><path d="M9 8V5h6v3M4 13h16"/>',
+    signals: '<path d="M4 20V14M9 20V10M14 20V6M19 20V3"/>',
+    modes: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
+  };
+  function icon(id) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[id] || IC.modes) + '</svg>'; }
+
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
   var saved = load();
@@ -73,7 +92,7 @@
 
   /* ---------------- styles ---------------- */
   var css = '' +
-    '#navi{position:fixed;inset:0;z-index:9000;display:none;font-family:Rajdhani,"Segoe UI",sans-serif;color:' + THEME.white + ';user-select:none}' +
+    '#navi{position:fixed;inset:0;z-index:9000;display:none;font-family:"Chakra Petch",Rajdhani,"Segoe UI",sans-serif;color:' + THEME.white + ';user-select:none}' +
     '#navi.on{display:block}#navi .bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(5,8,20,.55),rgba(5,8,20,.82));}' +
     '#navi .scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,212,255,.035) 0 1px,transparent 1px 3px)}' +
     '#navi .stage{position:absolute;inset:0;transform:scale(.94);opacity:0;transition:transform .28s cubic-bezier(.2,.9,.3,1),opacity .28s}#navi.show .stage{transform:none;opacity:1}' +
@@ -91,7 +110,7 @@
     '#navi .row{display:flex;justify-content:space-between;gap:8px;padding:7px 8px;margin:3px 0;border:1px solid transparent;border-left:2px solid rgba(0,212,255,.4);background:rgba(0,212,255,.04);cursor:pointer;font-size:14px}' +
     '#navi .row:hover,#navi .row.sel{border-color:rgba(0,212,255,.6);background:rgba(0,212,255,.13)}#navi .row em{font-style:normal;font-size:12px;color:' + THEME.cyan + '}' +
     '#navi .empty{padding:18px 6px;color:#7fa8c8;font-size:14px;line-height:1.4}' +
-    '#navi button.b{background:rgba(27,108,255,.25);color:' + THEME.white + ';border:1px solid ' + THEME.cyan + ';padding:8px 12px;margin:6px 6px 0 0;font:600 13px Rajdhani,sans-serif;letter-spacing:.1em;cursor:pointer}' +
+    '#navi button.b{background:rgba(27,108,255,.25);color:' + THEME.white + ';border:1px solid ' + THEME.cyan + ';padding:8px 12px;margin:6px 6px 0 0;font:600 13px "Chakra Petch",sans-serif;letter-spacing:.1em;cursor:pointer}' +
     '#navi button.b:hover{background:rgba(0,212,255,.3)}#navi button.b.g{border-color:' + THEME.gold + ';color:' + THEME.gold + '}#navi button.b[disabled]{opacity:.4;cursor:not-allowed}' +
     '#navi .swivel{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);display:flex;align-items:center;gap:10px}' +
     '#navi .hx{width:74px;height:82px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:rgba(0,212,255,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;cursor:pointer;opacity:.8;transition:.18s;border:0}' +
@@ -102,15 +121,17 @@
     '#navi .kpi b{display:block;font-size:11px;letter-spacing:.2em;color:' + THEME.cyan + '}#navi .kpi span{font-size:22px;font-weight:700}#navi .kpi.gd span{color:' + THEME.gold + '}' +
     '#navi .slots{position:absolute;left:2.2%;bottom:2.5%;display:flex;gap:5px;flex-wrap:wrap;max-width:26vw}#navi .slots span{font-size:10px;letter-spacing:.1em;padding:3px 7px;border:1px dashed rgba(0,212,255,.35);color:#6f93b3}#navi .slots span.on{border-style:solid;color:' + THEME.gold + ';cursor:pointer}' +
     '#navi .x{position:absolute;right:2.2%;top:2.5%;font-size:12px;letter-spacing:.12em;color:' + THEME.cyan + ';cursor:pointer;border:1px solid rgba(0,212,255,.4);padding:5px 10px}' +
-    '#navi input,#navi textarea,#navi select{width:100%;box-sizing:border-box;background:rgba(0,0,0,.4);color:' + THEME.white + ';border:1px solid rgba(0,212,255,.45);padding:7px;font:14px Rajdhani,sans-serif;margin-top:6px}' +
+    '#navi input,#navi textarea,#navi select{width:100%;box-sizing:border-box;background:rgba(0,0,0,.4);color:' + THEME.white + ';border:1px solid rgba(0,212,255,.45);padding:7px;font:14px "Chakra Petch",sans-serif;margin-top:6px}' +
     '#navi .modal{position:absolute;inset:0;background:rgba(2,6,16,.7);display:flex;align-items:center;justify-content:center;z-index:5}#navi .modal>div{width:min(90vw,420px);padding:18px;border:1px solid ' + THEME.gold + ';background:rgba(6,14,34,.96)}' +
     '#navi .bar{height:7px;background:rgba(255,255,255,.1);margin:3px 0 8px}#navi .bar i{display:block;height:100%;background:linear-gradient(90deg,' + THEME.blue + ',' + THEME.cyan + ')}' +
     '#navi .radar{width:100%;aspect-ratio:1;border-radius:50%;border:1px solid ' + THEME.cyan + ';background:radial-gradient(circle,transparent 30%,rgba(0,212,255,.15) 31%,transparent 32%,transparent 60%,rgba(0,212,255,.15) 61%,transparent 62%),repeating-linear-gradient(0deg,rgba(0,212,255,.07) 0 1px,transparent 1px 22px),repeating-linear-gradient(90deg,rgba(0,212,255,.07) 0 1px,transparent 1px 22px);position:relative;overflow:hidden}' +
     '#navi .radar u{position:absolute;width:8px;height:8px;margin:-4px;border-radius:50%;background:' + THEME.gold + ';box-shadow:0 0 8px ' + THEME.gold + ';text-decoration:none}#navi .radar u.me{background:' + THEME.cyan + ';box-shadow:0 0 10px ' + THEME.cyan + '}' +
-    '#naviBtn{position:fixed;right:14px;top:96px;z-index:8000;padding:9px 13px;font:700 12px Rajdhani,sans-serif;letter-spacing:.16em;color:' + THEME.cyan + ';background:rgba(5,14,34,.85);border:1px solid ' + THEME.cyan + ';cursor:pointer;box-shadow:0 0 14px rgba(0,212,255,.35)}' +
-    '#naviWp{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:7999;display:none;padding:5px 14px;font:700 13px Rajdhani,sans-serif;letter-spacing:.12em;color:' + THEME.gold + ';background:rgba(5,14,34,.8);border:1px solid ' + THEME.gold + '}' +
-    '#naviToasts{position:fixed;left:14px;bottom:70px;z-index:7998;display:flex;flex-direction:column;gap:4px;pointer-events:none}#naviToasts div{background:rgba(5,14,34,.85);border-left:3px solid ' + THEME.cyan + ';padding:5px 10px;font:14px Rajdhani,sans-serif;color:' + THEME.white + '}' +
+    '#naviBtn{position:fixed;right:14px;top:96px;z-index:8000;padding:9px 13px;font:700 12px "Chakra Petch",sans-serif;letter-spacing:.16em;color:' + THEME.cyan + ';background:rgba(5,14,34,.85);border:1px solid ' + THEME.cyan + ';cursor:pointer;box-shadow:0 0 14px rgba(0,212,255,.35)}' +
+    '#naviWp{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:7999;display:none;padding:5px 14px;font:700 13px "Chakra Petch",sans-serif;letter-spacing:.12em;color:' + THEME.gold + ';background:rgba(5,14,34,.8);border:1px solid ' + THEME.gold + '}' +
+    '#naviToasts{position:fixed;left:14px;bottom:70px;z-index:7998;display:flex;flex-direction:column;gap:4px;pointer-events:none}#naviToasts div{background:rgba(5,14,34,.85);border-left:3px solid ' + THEME.cyan + ';padding:5px 10px;font:14px "Chakra Petch",sans-serif;color:' + THEME.white + '}' +
     '@media(max-width:820px){#navi .plate{width:46vw;top:6%;bottom:36%;font-size:12px}#navi .orbwrap{display:none}#navi .hx{width:46px;height:52px;font-size:14px}#navi .hx.c{width:64px;height:72px}#navi .hx.n2{display:none}#navi .kpi{min-width:82px;padding:5px 8px}#navi .kpi span{font-size:15px}#navi .slots{display:none}}';
+  css += '#navi .ic{width:22px;height:22px;display:block;margin-bottom:2px}#navi .hx .ic{width:24px;height:24px}#navi .hx.c .ic{width:34px;height:34px}#navi .node{color:' + THEME.cyan + '}#navi .node.act,#navi .node:hover{color:' + THEME.gold + '}' +
+    '#navi .node:focus-visible,#navi .hx:focus-visible,#navi button.b:focus-visible,#navi .row:focus-visible{outline:2px solid ' + THEME.gold + ';outline-offset:3px}#navi .hx{color:' + THEME.white + '}';
   css += '' +
     /* NAVI 3D SKIN (2026-10-01): bevelled glass orbs, tilted glass plates, glossy hex row, solid-key buttons, floor grid, lit core. Pure CSS (no blur, no extra passes). */
     '#navi .stage{perspective:1500px}' +
@@ -164,7 +185,7 @@
     MODULES.forEach(function (m, i) {
       var a = (i / MODULES.length) * Math.PI * 2 - Math.PI / 2, n = document.createElement('div');
       n.className = 'node'; n.dataset.m = m.id; n.style.left = (50 + 50 * Math.cos(a)) + '%'; n.style.top = (50 + 50 * Math.sin(a)) + '%';
-      n.innerHTML = m.ic + '<small>' + m.label + '</small>'; n.onclick = function () { setModule(m.id); }; elNodes.appendChild(n);
+      n.innerHTML = icon(m.id) + '<small>' + m.label + '</small>'; n.title = m.label; n.setAttribute('role', 'button'); n.tabIndex = 0; n.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setModule(m.id); } }; n.onclick = function () { setModule(m.id); }; elNodes.appendChild(n);
     });
     var sl = root.querySelector('#nvSlots');
     SLOTS.forEach(function (s) {
@@ -543,12 +564,12 @@
     elR.onclick = function (e) { var b = e.target.closest('button[data-a]'); if (!b || b.disabled) return; if (mod.act) mod.act(sel, b.dataset.a); persist(); render(); };
     // swivel
     var i = idx(), h = '';
-    for (var d = -3; d <= 3; d++) { var m = MODULES[(i + d + 12) % 12], c = d === 0 ? 'c' : (Math.abs(d) === 1 ? 'n1' : (Math.abs(d) === 2 ? 'n2' : 'n2')); h += '<button class="hx ' + c + '" data-m="' + m.id + '">' + m.ic + '<small>' + m.label + '</small></button>'; }
+    for (var d = -3; d <= 3; d++) { var NM = MODULES.length, m = MODULES[((i + d) % NM + NM) % NM], c = d === 0 ? 'c' : (Math.abs(d) === 1 ? 'n1' : (Math.abs(d) === 2 ? 'n2' : 'n2')); h += '<button class="hx ' + c + '" data-m="' + m.id + '" aria-label="' + m.label + '">' + icon(m.id) + '<small>' + m.label + '</small></button>'; }
     elSw.innerHTML = h; elSw.onclick = function (e) { var b = e.target.closest('.hx'); if (b) setModule(b.dataset.m); };
     var n = elNodes.children; for (var k = 0; k < n.length; k++) n[k].classList.toggle('act', n[k].dataset.m === S.module);
     elKp.innerHTML = '<div class="kpi gd"><b>SPARKS</b><span>' + sparks() + '</span></div><div class="kpi"><b>PAYBOX</b><span>' + pay() + '</span></div><div class="kpi"><b>AGENT REV</b><span>' + rev() + '</span></div>';
     var ab = S.bots.filter(function (b) { return b.id === S.flags.activeBot; })[0]; elCore.textContent = ab ? ab.name : 'NO ACTIVE BOT';
-    SLOTS.forEach(function (s) { var e = root.querySelector('[data-s="' + s + '"]'); if (e) { e.classList.toggle('on', !!S.flags.slots[s]); e.textContent = s.toUpperCase() + (S.flags.slots[s] ? '' : ' · SOON'); } });
+    SLOTS.forEach(function (s) { var e = root.querySelector('[data-s="' + s + '"]'); if (e) { e.classList.toggle('on', !!S.flags.slots[s]); e.textContent = s.toUpperCase(); e.style.display = S.flags.slots[s] ? '' : 'none'; } });
   }
   function setModule(id) { if (!M[id]) return; S.module = id; selected = null; persist(); render(); root.classList.add('spin'); setTimeout(function () { root && root.classList.remove('spin'); }, 260); }
 
