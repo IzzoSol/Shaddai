@@ -376,6 +376,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-hoverboard-moves.js?v=20261002a"></script>
 <script src="/world-hoverboards.js?v=20261009c"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
 <script src="/world-hoverboard.js?v=20261011b"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
+<script src="/world-anim.js?v=20261015a"></script>         <!-- shared agent animation library (retarget); was never loaded -->
 <script src="/world-riders.js?v=20260928a"></script>       <!-- RIDERS: generic mount(rider, vehicle, {seat}) for bike / dragon / ships -->
 <script src="/world-tactics.js?v=20260924a"></script>
 <script src="/world-trails.js?v=20260925m3"></script>
@@ -2577,6 +2578,7 @@ function _nextAgentBody(){
         body.userData.__hasMixer = true;
         entry._mixer = mixer; entry._actions = actions; entry._curAction = null;
         entry._poseSnap = _snapshotPose(body);   // rest pose → restore after one-shot clips so flip/attack don't leave the body facing backward
+        _fillAgentClipsFromLibrary(entry, body);   // shared 75-clip library (idle/walk/run/jump/attacks/block/hit) retargeted onto this rig
         console.log('🕺 '+code+' rig clips:', Object.keys(actions).join(','));
         // UAL2 moves (CC0): a real idle + sword/heavy/flip for agents whose rig ships only walk/run. attachUAL
         // captures this body's rest pose NOW (before the mixer first updates), clips build when the data arrives.
@@ -2620,6 +2622,47 @@ const RARITY_CONFIG = {
   common:{crown:null,speed:0.35}, uncommon:{crown:0x18cae6,speed:0.6}, rare:{crown:0x7dfdfe,speed:1.0},
   epic:{crown:0xb06aff,speed:1.3}, legendary:{crown:0xffad2e,speed:1.6}, mythic:{crown:0xffffff,speed:2.0},
 };
+
+// ── AGENT ANIMATION LIBRARY (2026-10-15, owner: "agents rigged to perfection - fighting walking run jump"): the 7 council bodies
+// only carried the 2-20 clips baked into their own GLB (ORACLE/PIKADON: walk+run only, so they idled in a slowed walk and had no
+// attacks/jump). Every rigged body now also gets the shared /assets/anim/agent-clips library (Meshy + Quaternius UAL2 CC0, 75
+// clips) retargeted onto ITS skeleton by world-anim.js: canonical idle/walk/run, jumpStart/Loop/Land, roll, hit, death, getUp,
+// block, plus attack1/attack2/heavy/kick. Baked clips that already exist are kept (the library only fills gaps and replaces a
+// slowed-walk idle). Retarget runs at the rest pose. ?agentlib=0 = off.
+const _AGENT_LIB_ATTACKS = { attack1: 'Left_Jab_from_Guard', attack2: 'Lunge_Spin_Kick', heavy: 'Sword_Heavy_Combo', kick: 'Large_step_then_high_kick', combo: 'Double_Combo_Attack' };
+let _agentLibP = null;
+function _agentAnimLib(){
+  if(_agentLibP) return _agentLibP;
+  _agentLibP = Promise.all([
+    new Promise(function(res, rej){ agentBodyLoader.load('/assets/anim/agent-clips.glb', function(g){ res(g.animations || []); }, undefined, rej); }),
+    fetch('/assets/anim/agent-clips.json').then(function(r){ return r.json(); })
+  ]).then(function(r){ return { clips: r[0], meta: r[1] }; }).catch(function(e){ console.warn('[agent-lib] library failed to load:', e && e.message); return null; });
+  return _agentLibP;
+}
+function _fillAgentClipsFromLibrary(entry, body){
+  if(/[?&]agentlib=0/.test(location.search) || !window.buildAgentAnimator || !entry._actions) return;
+  _agentAnimLib().then(function(lib){
+    if(!lib || !entry._mixer || entry.body !== body) return;
+    try{
+      const playing = entry._curAction; if(playing) playing.stop();
+      _restorePose(entry._poseSnap); body.updateMatrixWorld(true);              // retarget measures the REST pose
+      const anim = window.buildAgentAnimator({ THREE, model: body, clips: lib.clips, meta: lib.meta });
+      const L = lib.meta.locomotion || {}, X = lib.meta.actions || {}, A = entry._actions, added = [];
+      const want = Object.assign({ idle: L.idle, walk: L.walk, run: L.run }, X, _AGENT_LIB_ATTACKS);
+      Object.keys(want).forEach(function(k){
+        const src = want[k]; if(!src || !anim.has(src)) return;
+        const replaceIdle = k === 'idle' && entry._idleSlow;                  // a slowed walk is not an idle
+        if(A[k] && !replaceIdle) return;
+        const clip = anim.clip(src); if(!clip) return;
+        A[k] = entry._mixer.clipAction(clip); added.push(k);
+        if(replaceIdle) entry._idleSlow = false;
+      });
+      entry._agentLib = { clips: added.length, hit: lib.meta };
+      playAgentAction(entry, 'idle', { crossfadeDuration: 0.3, force: true });
+      console.log('[agent-lib] ' + (entry.a && entry.a.code || '?') + ' +' + added.length + ' clips:', added.join(','));
+    }catch(e){ console.warn('[agent-lib] retarget failed for', entry.a && entry.a.code, e && e.message); }
+  });
+}
 
 // ── Reusable crossfade driver for any rigged agent body (one pattern for the whole roster) ──
 // playAgentAction(entry,'attack1',{once:true}) → fades out the current clip, fades in the new one.

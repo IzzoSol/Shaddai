@@ -59,10 +59,14 @@
         m.decompose(bp, bq, new THREE.Vector3()); bindW[b.name] = { q: bq, p: bp };
       }
     });
+    function restW(name) { var m = new THREE.Matrix4().multiplyMatrices(modelInv, bone[name].matrixWorld), bp = new THREE.Vector3(), bq = new THREE.Quaternion(); m.decompose(bp, bq, new THREE.Vector3()); return { q: bq, p: bp }; }
+    // Re-packed GLBs (gltfpack / meshopt + KHR_mesh_quantization) can store inverse binds in a re-quantized frame that no longer
+    // matches the skeleton (measured on the council agents: hips 0.17 m vs 1.05 m). The model is at its rest pose here (contract),
+    // so when the skin's bind disagrees with the node rest pose by more than 5 cm at the hips, trust the rest pose for every bone.
+    if (bindW.Hips && bone.Hips && bindW.Hips.p.distanceTo(restW('Hips').p) > 0.05) bindW = {};
     skel.bones.forEach(function (name) {
       if (!bone[name] || bindW[name]) return;
-      var m = new THREE.Matrix4().multiplyMatrices(modelInv, bone[name].matrixWorld), bp = new THREE.Vector3(), bq = new THREE.Quaternion();
-      m.decompose(bp, bq, new THREE.Vector3()); bindW[name] = { q: bq, p: bp };
+      bindW[name] = restW(name);
     });
     // the Armature (Hips parent) relative to the model: rotation A, and the inverse to map model space -> Hips local
     var armM = new THREE.Matrix4().multiplyMatrices(modelInv, hips.parent.matrixWorld), armInv = armM.clone().invert();
