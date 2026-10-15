@@ -229,16 +229,38 @@
         uSnowLo: { value: (opts.snowLoM != null ? opts.snowLoM : 430) * PM }, uSnowHi: { value: (opts.snowHiM != null ? opts.snowHiM : 520) * PM },
         uSea: { value: SEA_U }, uRock: { value: opts.rockMix != null ? opts.rockMix : 1.0 }
       };
-      material.customProgramCacheKey = function () { return 'tv4-splat'; };
+      // REALM SURFACE LAYERS (2026-10-15, owner: "get the terrains done"): each realm wedge from terrain.json realms[]
+      // gets its own tiled material (the previously unused assets/terrain/*.webp set); Emberfall gets glowing crust cracks
+      // + molten rivers in the flats, the forest swamp puddles + mud, the Void violet veins. ?tlayers=0 = off.
+      var LAYERS = !(typeof location !== 'undefined' && /[?&]tlayers=0\b/.test(location.search)) && Array.isArray(meta.realms);
+      if (LAYERS) {
+        var LAYER_ID = { void: 1, desert: 2, volcano: 3, forest: 4, meadow: 5, ocean: 6, darkforest: 7, arctic: 8 }, RA = [], RB = [];
+        meta.realms.forEach(function (r) { var id = LAYER_ID[r.id]; if (!id) return; RA.push(new THREE.Vector4(r.c0 * Math.PI / 180, r.c1 * Math.PI / 180, r.r0_m * PM, r.r1_m * PM)); RB.push(id); });
+        while (RA.length < 10) { RA.push(new THREE.Vector4(0, 0, 0, 0)); RB.push(0); }
+        SU.uRA = { value: RA.slice(0, 10) }; SU.uRB = { value: RB.slice(0, 10) }; SU.uTime = { value: 0 };
+        var white = new THREE.DataTexture(new Uint8Array([200, 200, 200, 255]), 1, 1); white.needsUpdate = true;
+        var LTEX = { tLava: 'lava-crust.webp', tDune: 'dunes.png', tMoss: 'root-moss-floor.webp', tFrost: 'frost-plates.webp', tRego: 'red-regolith.webp', tObs: 'obsidian-plaza.webp', tHarv: 'harvest-field.webp', tGrass: 'emerald-grass.webp' };
+        var tl = new THREE.TextureLoader(), lbase = opts.base || '/assets/terrain/';
+        Object.keys(LTEX).forEach(function (k) {
+          SU[k] = { value: white };
+          tl.load(lbase + LTEX[k], function (tx) { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8; SU[k].value = tx; }, undefined, function () { console.warn('[terrain-v4] layer texture missing', LTEX[k]); });
+        });
+      }
+      material.customProgramCacheKey = function () { return LAYERS ? 'tv4-splat-layers' : 'tv4-splat'; };
       material.onBeforeCompile = function (sh) {
         for (var k in SU) sh.uniforms[k] = SU[k];
         sh.vertexShader = 'varying vec3 vTWP; varying vec3 vTWN;\n' + sh.vertexShader.replace('#include <begin_vertex>',
           '#include <begin_vertex>\n  vTWP = (modelMatrix * vec4(position, 1.0)).xyz; vTWN = normalize(mat3(modelMatrix) * objectNormal);');
         sh.fragmentShader = [
           'varying vec3 vTWP; varying vec3 vTWN; uniform float uSnowLo, uSnowHi, uSea, uRock;',
+          (LAYERS ? '#define TV_LAYERS\nuniform vec4 uRA[10]; uniform float uRB[10]; uniform float uTime;\nuniform sampler2D tLava, tDune, tMoss, tFrost, tRego, tObs, tHarv, tGrass;' : ''),
+          'vec3 tvEmit = vec3(0.0); float tvRough = -1.0;',
           'float tvH(vec2 p){ p = fract(p * vec2(127.1, 311.7)); p += dot(p, p + 34.5); return fract(p.x * p.y); }',
           'float tvN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
-          '  return mix(mix(tvH(i), tvH(i + vec2(1.0, 0.0)), f.x), mix(tvH(i + vec2(0.0, 1.0)), tvH(i + vec2(1.0, 1.0)), f.x), f.y); }'
+          '  return mix(mix(tvH(i), tvH(i + vec2(1.0, 0.0)), f.x), mix(tvH(i + vec2(0.0, 1.0)), tvH(i + vec2(1.0, 1.0)), f.x), f.y); }',
+          '#ifdef TV_LAYERS',
+          'vec3 tvTx(sampler2D t, float tileM){ vec2 u = vTWP.xz / (tileM * 3.8889); return mix(texture2D(t, u).rgb, texture2D(t, u * 0.29 + 0.37).rgb, 0.35); }',
+          '#endif'
         ].join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', [
           '#include <map_fragment>',
           '  {',
@@ -249,6 +271,52 @@
           '    base = max(mix(vec3(lum), base, 1.18), 0.0);',                                         // a touch more colour (refs are saturated)
           '    float green = smoothstep(0.0, 0.05, base.g - max(base.r, base.b));',                   // grassland: patchy light/dark grass
           '    base = mix(base, base * mix(vec3(0.78, 0.86, 0.72), vec3(1.16, 1.12, 0.86), n2), green * 0.85);',
+          '#ifdef TV_LAYERS',
+          '    {',
+          '      vec2 Pm = vec2(vTWP.x, -vTWP.z); float rad = length(Pm), cmp = atan(Pm.x, Pm.y); if (cmp < 0.0) cmp += 6.2831853;',
+          '      float w1 = 0.0, w2 = 0.0, w3 = 0.0, w4 = 0.0, w5 = 0.0, w6 = 0.0, w7 = 0.0, w8 = 0.0;',
+          '      for (int i = 0; i < 10; i++) {',
+          '        vec4 R = uRA[i]; int id = int(uRB[i] + 0.5); if (id == 0) continue;',
+          '        float span = R.y - R.x; if (span < 0.0) span += 6.2831853;',
+          '        float d = cmp - R.x; if (d < 0.0) d += 6.2831853; if (d > 6.2831853 - 0.05) d -= 6.2831853;',
+          '        float ww = smoothstep(-0.05, 0.05, d) * (1.0 - smoothstep(span - 0.05, span + 0.05, d));',
+          '        ww *= smoothstep(R.z - 160.0, R.z + 160.0, rad) * (1.0 - smoothstep(R.w - 260.0, R.w + 260.0, rad));',
+          '        if (id == 1) w1 = max(w1, ww); else if (id == 2) w2 = max(w2, ww); else if (id == 3) w3 = max(w3, ww); else if (id == 4) w4 = max(w4, ww);',
+          '        else if (id == 5) w5 = max(w5, ww); else if (id == 6) w6 = max(w6, ww); else if (id == 7) w7 = max(w7, ww); else w8 = max(w8, ww);',
+          '      }',
+          '      float sw = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;',
+          '      if (sw > 0.001) {',
+          '        float flat0 = clamp(vTWN.y, 0.0, 1.0); vec3 lay = vec3(0.0); vec3 lavaT = vec3(0.0);',
+          '        if (w1 > 0.0) lay += tvTx(tObs, 20.0) * vec3(0.55, 0.5, 0.78) * w1;',
+          '        if (w2 > 0.0) lay += mix(tvTx(tDune, 30.0), tvTx(tRego, 22.0), smoothstep(0.1, 0.3, 1.0 - flat0)) * w2;',
+          '        if (w3 > 0.0) { lavaT = tvTx(tLava, 24.0); lay += vec3(dot(lavaT, vec3(0.3, 0.4, 0.3))) * vec3(0.5, 0.46, 0.46) * w3; }',
+          '        if (w4 > 0.0) lay += tvTx(tMoss, 12.0) * 0.85 * w4;',
+          '        if (w5 > 0.0) lay += mix(tvTx(tHarv, 10.0), tvTx(tGrass, 8.0), smoothstep(0.35, 0.65, n1)) * w5;',
+          '        if (w6 > 0.0) lay += tvTx(tDune, 26.0) * vec3(1.06, 1.03, 0.97) * w6;',
+          '        if (w7 > 0.0) lay += tvTx(tMoss, 12.0) * vec3(0.42, 0.48, 0.55) * w7;',
+          '        if (w8 > 0.0) lay += tvTx(tFrost, 16.0) * w8;',
+          '        float far = smoothstep(900.0, 7000.0, distance(vTWP, cameraPosition));',
+          '        base = mix(base, lay / sw, clamp(sw, 0.0, 1.0) * mix(0.82, 0.45, far));',
+          '        if (w3 > 0.0) {',
+          '          float crack = clamp((lavaT.r - lavaT.g) * 2.4, 0.0, 1.0);',
+          '          float pulse = 0.72 + 0.28 * sin(uTime * 1.6 + tvN(vTWP.xz * 0.01) * 6.2831853);',
+          '          tvEmit += vec3(1.0, 0.32, 0.04) * crack * pulse * w3 * 1.3;',
+          '          float rv = 1.0 - smoothstep(0.012, 0.045, abs(tvN(vTWP.xz * 0.0011) - 0.5));',
+          '          rv *= smoothstep(0.86, 0.96, flat0) * w3;',
+          '          float flow = 0.65 + 0.35 * tvN(vTWP.xz * 0.05 + vec2(uTime * 0.3, uTime * 0.11));',
+          '          base = mix(base, vec3(0.3, 0.06, 0.01), rv);',
+          '          tvEmit += vec3(1.0, 0.42, 0.06) * rv * flow * 3.2; tvRough = mix(0.94, 0.45, rv);',
+          '        }',
+          '        if (w4 > 0.0) {',
+          '          float pn = tvN(vTWP.xz * 0.006 + 11.0), fl = smoothstep(0.9, 0.97, flat0) * w4;',
+          '          float mud = smoothstep(0.5, 0.56, pn) * fl, pud = smoothstep(0.57, 0.62, pn) * fl;',
+          '          base = mix(base, base * vec3(0.55, 0.45, 0.32), mud * 0.8);',
+          '          base = mix(base, vec3(0.04, 0.08, 0.07), pud); tvRough = mix(tvRough < 0.0 ? 0.94 : tvRough, 0.06, pud);',
+          '        }',
+          '        if (w1 > 0.0) { float vein = 1.0 - smoothstep(0.0, 0.03, abs(tvN(vTWP.xz * 0.0016 + 5.0) - 0.5)); tvEmit += vec3(0.55, 0.25, 1.0) * vein * w1 * 0.9; }',
+          '      }',
+          '    }',
+          '#endif',
           '    float slope = 1.0 - clamp(vTWN.y, 0.0, 1.0);',
           '    float rock = smoothstep(0.24, 0.46, slope + (n2 - 0.5) * 0.14) * uRock;',
           '    vec3 grey = mix(vec3(0.16, 0.15, 0.15), vec3(0.52, 0.50, 0.47), smoothstep(0.04, 0.30, lum));',   // bright realm = light rock, volcano/void = dark rock
@@ -262,7 +330,9 @@
           '    if (near > 0.0) { float n3 = tvN(vTWP.xz * 0.9) * 0.6 + tvN(vTWP.xz * 2.3) * 0.4; base *= mix(1.0, 0.80 + 0.40 * n3, near * 0.9); }',
           '    diffuseColor.rgb = base;',
           '  }'
-        ].join('\n'));
+        ].join('\n'))
+          .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += tvEmit;')
+          .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  if (tvRough >= 0.0) roughnessFactor = tvRough;');
       };
       material.userData.splat = SU;
     }
@@ -439,6 +509,7 @@
 
     function update(/* t, dt */) {
       if (!api.ready) return;
+      if (material.userData.splat && material.userData.splat.uTime) material.userData.splat.uTime.value = performance.now() / 1000;   // lava pulse + flow
       var t0 = performance.now();
       frame++;
       if (camera) camera.getWorldPosition(cam);
