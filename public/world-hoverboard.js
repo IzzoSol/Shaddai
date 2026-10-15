@@ -128,7 +128,8 @@ window.buildWorldHoverboard = function (opts) {
   var fx = (useKit && window.buildHoverboardFX) ? window.buildHoverboardFX({ THREE: THREE, scene: scene, max: 160, size: 0.35 * U }) : null;
   var MOD = { mul: 1, t: 0, stun: 0, noise: 0, nt: 0, turn: 1, tt: 0 };   // external race modifiers (see setModifier)
   var TR = window.HoverboardTricks ? window.HoverboardTricks.create(opts.trickTune) : null;
-  var MV = window.HoverboardMoves ? window.HoverboardMoves.create() : null;   // rail grinds + manuals (world-hoverboard-moves.js)
+  var MV = window.HoverboardMoves ? window.HoverboardMoves.create() : null;
+  var WR = window.HoverboardWallRide ? window.HoverboardWallRide.create() : null;   // wall rides on the park's Matrix walls (world-hoverboard-wallride.js)   // rail grinds + manuals (world-hoverboard-moves.js)
 
   // Normalise any board model: longest horizontal axis → +Z, length → TUNE.lengthM, bottom
   // on y=0, centred. WHY: fal exports arrive with arbitrary axes/scales; one routine means a
@@ -399,6 +400,17 @@ window.buildWorldHoverboard = function (opts) {
       } else s.grinding = false;
       if (mo.events.length && TR && TR.inject) mo.events.forEach(function (ev) { TR.inject(ev); });
     } catch (e) { MV = null; if (window.console) console.warn('[hoverboard] moves disabled:', e && e.message); } }
+    /* WALL RIDES (guarded like the moves): lock along a wall face, bank into it, sparks off the contact edge */
+    if (WR && !s.grinding) { try {
+      var wo = WR.step(dt, { x: s.x, y: s.y, z: s.z, psi: s.psi, v: s.v, air: s.air, vy: s.vy, inp: { jump: !!inp.jump }, U: U });
+      if (wo.lock) {
+        s.x = wo.lock.x; s.z = wo.lock.z; pos.x = s.x; pos.z = s.z; s.y = wo.lock.y; s.vy = 0; s.air = false; s.airT = 0; s.psi = wo.lock.psi; s.v = wo.lock.v; s.wallRoll = wo.lock.roll; s.wallriding = true;
+        if (wo.pop) { s.vy = TUNE.hopMS * U; s.air = true; s.wallriding = false; s.jumpHeld = true; }
+        else if (wo.lock.ended) { s.air = true; s.vy = 0; s.wallriding = false; }
+        if (fx && wo.spark) for (var sq = 0; sq < 4; sq++) fx.emit(wo.spark.x, wo.spark.y, wo.spark.z, (wo.spark.nx * 1.5 + (Math.random() - 0.5) * 2.4) * U, (0.6 + Math.random() * 2.2) * U, (wo.spark.nz * 1.5 + (Math.random() - 0.5) * 2.4) * U, sq ? 0xffa53a : 0xfff0b8, 0.25 + Math.random() * 0.35);
+      } else s.wallriding = false;
+      if (wo.events.length && TR && TR.inject) wo.events.forEach(function (ev) { TR.inject(ev); });
+    } catch (e) { WR = null; if (window.console) console.warn('[hoverboard] wall rides disabled:', e && e.message); } }
   }
 
   // touchdown: the trick core checks spin/flip/varial residuals + board tilt -> clean or BAIL
@@ -436,7 +448,7 @@ window.buildWorldHoverboard = function (opts) {
       var rmax = B.rollMaxDeg * Math.PI / 180;
       var carve = s.riding ? Math.max(-rmax, Math.min(rmax, -Math.atan(s.v * s.yawRate / 9.81))) : 0;
       s.pitch += (pT - s.pitch) * k;
-      s.roll += (rT + carve - s.roll) * k;
+      s.roll += ((s.wallriding ? (s.wallRoll || 0) : rT + carve) - s.roll) * Math.min(1, k * (s.wallriding ? 2.5 : 1));   /* wall ride: bank into the face */
       var wob = s.bail > 0 ? Math.sin(s.t * 26) * 0.18 * (s.bail / TUNE.bailTime) : 0;   // bail wobble
       board.position.set(s.x, s.y, s.z);
       board.rotation.set(s.pitch, s.psi, s.roll + wob, 'YXZ');
@@ -573,7 +585,7 @@ window.buildWorldHoverboard = function (opts) {
     setPalette: function (p) { if (kit) kit.userData.setPalette(p); },
     style: function () { return styleId; },
     kit: function () { return kit; },
-    moves: MV, trickNode: trick,
+    moves: MV, wallride: WR, trickNode: trick,
     fx: fx,
     tricks: TR,
     onTrick: function (fn) { return TR ? TR.onTrick(fn) : function () {}; },
