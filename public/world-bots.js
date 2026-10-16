@@ -113,20 +113,25 @@
     g.userData.parts = parts; g.userData.def = def; return g;
   }
   // Rigged Meshy/procedural GLBs (public/assets/bots/*.glb, meshopt): loaded lazily; the code-built body shows until (and if) the file arrives. Companions are SMALLER than the player.
-  var BOT_GLB = { scrap: '/assets/bots/scrap.glb', lanky: '/assets/bots/lanky.glb', unicycle: '/assets/bots/uni9.glb', analyst: '/assets/bots/analyst.glb' }, BOT_H = { humanoid: 1.35, wheeled: 1.15 }, glbFail = {};
+  var BOT_GLB = { scrap: '/assets/bots/scrap.glb', lanky: '/assets/bots/lanky.glb', unicycle: '/assets/bots/uni9.glb', analyst: '/assets/bots/analyst.glb', grok: '/assets/kits/shaddai_bot_grok_v01.glb', muse: '/assets/kits/shaddai_bot_muse_v01.glb' },
+    GLB_FOR = { porter: 'grok', clerk: 'muse' }, /* 2026-10-15: Blender K14 wheel-bots for the two wheeled bots that had no art (code fallback body unchanged) */ BOT_H = { humanoid: 1.35, wheeled: 1.15 }, glbFail = {};
   function pickClip(anims, re) { for (var i = 0; i < anims.length; i++) if (re.test(anims[i].name)) return anims[i]; return null; }
   function upgradeToGlb(id) {
-    var url = BOT_GLB[BODY[id]], def = byId[id]; if (!url || !ctx || !ctx.loader || glbFail[url]) return;
+    var url = BOT_GLB[GLB_FOR[id] || BODY[id]], def = byId[id]; if (!url || !ctx || !ctx.loader || glbFail[url]) return;
     ctx.loader.load(url, function (g) {
       var old = bodies[id]; if (!old) return; var THREE = ctx.THREE, src = g.scene, inst = ctx.clone ? ctx.clone(src) : src.clone(true), U = 3.889;
       inst.updateMatrixWorld(true); inst.traverse(function (o) { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });   // NORMALIZE BEFORE ADD: skinned meshes sit under a 0.01-scaled armature, so the plain node-based box reads ~0.02 tall and the old code scaled bots up ~260x ('giants'); measure the real skinned (precise) box instead
       var box = new THREE.Box3().setFromObject(inst, true), h = Math.max(0.01, box.max.y - box.min.y), k = U * BOT_H[def.kind] / h; inst.scale.multiplyScalar(k); inst.updateMatrixWorld(true);
       var b2 = new THREE.Box3().setFromObject(inst); inst.position.y -= b2.min.y; var wrap = new THREE.Group(); wrap.add(inst); wrap.userData.glb = true;
       var swimClip = pickClip(g.animations, /swim|tread|float/i), idle = pickClip(g.animations, /idle|stand|breath/i) || g.animations[0], walk = pickClip(g.animations, /walk|roll|drive|move/i) || idle, run = pickClip(g.animations, /run|sprint/i) || walk;
+      // clip-less node rigs (K14: wheel_* spins on X, arm_L/R_*): hand their nodes to the code animator instead of an AnimationMixer
+      var byRe = function (re) { var f = null; inst.traverse(function (o) { if (!f && re.test(o.name)) f = o; }); return f; };
+      wrap.userData.parts = g.animations.length ? {} : { wheel: byRe(/^wheel_/), armL: byRe(/^arm_L_/), armR: byRe(/^arm_R_/) };
       ctx.scene.remove(old); ctx.scene.add(wrap); bodies[id] = wrap;
       // SIZE FIX (bots were giants): once the skeleton has run a few frames, measure the REAL skinned height and rescale the wrapper to the target companion height
       setTimeout(function () { var w = bodies[id]; if (!w || !w.userData.glb) return; w.updateMatrixWorld(true); w.traverse(function (o) { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });
-        var bb = new THREE.Box3().setFromObject(w, true), hh = bb.max.y - bb.min.y, tgt = U * BOT_H[def.kind]; if (hh > 0.01 && (hh > tgt * 1.2 || hh < tgt * 0.8)) { w.scale.multiplyScalar(tgt / hh); w.updateMatrixWorld(true); } }, 1500); var sm = sim[id]; if (sm) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run, swim: swimClip } }; sm.clip = null; sm.act = null; }
+        var bb = new THREE.Box3().setFromObject(w, true), hh = bb.max.y - bb.min.y, tgt = U * BOT_H[def.kind]; if (hh > 0.01 && (hh > tgt * 1.2 || hh < tgt * 0.8)) { w.scale.multiplyScalar(tgt / hh); w.updateMatrixWorld(true); } }, 1500); var sm = sim[id]; if (sm && !g.animations.length) { sm.mixer = null; sm.bot = null; sm.act = null; sm.clip = null; }   /* clip-less rig: drop the placeholder's mixer so the parts animator runs */
+      if (sm && g.animations.length) { sm.mixer = new THREE.AnimationMixer(inst); sm.bot = { clips: { idle: idle, walk: walk, run: run, swim: swimClip } }; sm.clip = null; sm.act = null; }
     }, undefined, function () { glbFail[url] = true; });
   }
   function spawnBodies(THREE, scene, heightAt, opts) { ctx = { THREE: THREE, scene: scene, heightAt: heightAt || function () { return 0; }, loader: opts && opts.loader, clone: opts && opts.cloneSkinned, water: opts && opts.water }; syncBodies(); return bodies; }
@@ -162,7 +167,7 @@
       if (s.mixer) {   // real rig: crossfade idle <-> walk clips
         var want = swimming && s.bot.clips.swim ? 'swim' : (moving ? 'walk' : 'idle'); if (s.clip !== want) { var a = s.mixer.clipAction(s.bot.clips[want] || s.bot.clips.idle); if (s.act) s.act.fadeOut(0.25); a.reset().fadeIn(0.25).play(); s.act = a; s.clip = want; } s.mixer.timeScale = swimming ? 1.5 : 1; s.mixer.update(dt); return;
       }
-      var P = m.userData.parts, sw = moving ? Math.sin(s.ph) * 0.7 : 0;
+      var P = m.userData.parts || {}, sw = moving ? Math.sin(s.ph) * 0.7 : 0;
       if (swimming) sw = Math.sin(s.ph * 0.9 + 1) * 0.9;   /* flutter-kick while swimming */
       if (P.legL) { P.legL.rotation.x = sw; P.legR.rotation.x = -sw; } if (P.armL) { P.armL.rotation.x = -sw * 0.8; P.armR.rotation.x = sw * 0.8; } if (P.wheel) P.wheel.rotation.x += moving ? dt * 6 : 0;
     });
