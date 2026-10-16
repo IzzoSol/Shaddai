@@ -641,6 +641,10 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(ts){ const t2 = ts.scene; t2.name = 'reef-shore-station'; t2.scale.setScalar(V4_U);
           const L = legs[legs.length - 1]; t2.rotation.y = Math.atan2(-L.dz, L.dx); t2.position.set(REEF_SHORE.x, _v4T.heightAt(REEF_SHORE.x, REEF_SHORE.z) + 1 * V4_U, REEF_SHORE.z); _sceneW.add(t2); })
           .catch(function(e){ console.warn('[reef] shore station failed:', e && e.message); });
+        // the glass stop alone vanished on the beach (headless shot 2026-10-16): the ocean realm's K8 station canopy marks the shore station from afar
+        _gl.loadAsync('/assets/kits/shaddai_station_ocean_v01.glb').then(function(q){ const c = q.scene; c.name = 'reef-shore-canopy'; c.scale.setScalar(V4_U);
+          const L = legs[legs.length - 1]; c.rotation.y = Math.atan2(L.dx, L.dz); c.position.set(REEF_SHORE.x, _v4T.heightAt(REEF_SHORE.x, REEF_SHORE.z), REEF_SHORE.z); _sceneW.add(c); })
+          .catch(function(e){ console.warn('[reef] shore canopy failed:', e && e.message); });
         // THE TRAIN: three coupled white capsule cars (60 m) with a cyan window band, shuttling end to end with a 12 s dwell at each station
         (function reefTrain(){ if(/[?&]reeftrain=0\b/.test(location.search)) return;
           const g = new THREE.Group(); g.name = 'reef-train'; const mBody = new THREE.MeshStandardMaterial({ color: 0xf2f5f8, metalness: 0.55, roughness: 0.25 }),
