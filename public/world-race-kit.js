@@ -84,6 +84,12 @@
       var boost = named(t.group, 'track-boost'), rings = [];
       if (boost && boost.isInstancedMesh) for (var b = 0; b < boost.count; b++) { var bm = new THREE.Matrix4(); boost.getMatrixAt(b, bm); bm.decompose(p, q, s); rings.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, p.y + 4.6 * U, p.z), q, new THREE.Vector3(U, U, U))); }
       stats.rings = place('race_boost_ring', rings);
+      // BLENDER BOOST PADS (K6b race_boost_pad, 2026-10-16: was built but never placed): the kit pad sits on each code pad in the pad's own deck frame
+      // (x = S, y = N, z = T); the flat code decal hides when the kit lands. The gameplay trigger is t.boostAt (positions), not the mesh.
+      var padMats = [];
+      if (boost && boost.isInstancedMesh) for (var b2 = 0; b2 < boost.count; b2++) { var pm = new THREE.Matrix4(); boost.getMatrixAt(b2, pm); pm.decompose(p, q, s); padMats.push(new THREE.Matrix4().compose(p.clone(), q.clone(), new THREE.Vector3(U, U, U))); }
+      stats.pads = place('race_boost_pad', padMats);
+      if (stats.pads && boost) boost.visible = false;
       // start gate on the start line (frame 0): the code frame basis (S, N, T) at the deck point
       var F0 = t.frames[0], start = new THREE.Matrix4().makeBasis(F0.S, F0.N, F0.T).setPosition(F0.P).multiply(S);
       place('race_start_gate', [start], 'start_gate');

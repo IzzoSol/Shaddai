@@ -11,7 +11,7 @@ const tr = ctx.buildRaceTrack({ THREE, scene: new THREE.Scene(), groundAt, World
 const node = (n) => { const g = new THREE.Group(); g.name = n; g.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial())); return g; };
 class Loader { load(url, ok) { const s = new THREE.Group();
   if (/race_kit/.test(url)) ['race_pylon_foot', 'race_pylon_shaft', 'race_pylon_head', 'race_gantry', 'race_checkpoint', 'race_boost_ring', 'race_start_gate'].forEach((n) => s.add(node(n)));
-  else ['race_grandstand', 'race_pit_garage', 'race_gate_tower', 'race_holo_billboard'].forEach((n) => s.add(node(n)));
+  else ['race_grandstand', 'race_pit_garage', 'race_gate_tower', 'race_holo_billboard', 'race_boost_pad'].forEach((n) => s.add(node(n)));
   ok({ scene: s }); } }
 let pass = 0; const t = async (n, fn) => { await fn(); pass++; console.log('  ok ', n); };
 (async () => {
@@ -25,6 +25,7 @@ let pass = 0; const t = async (n, fn) => { await fn(); pass++; console.log('  ok
     for (const n of ['track-pylons', 'track-gantries', 'track-gantry-lights', 'track-sector-gates']) assert.strictEqual(tr.group.getObjectByName(n).visible, false, n);
     assert.strictEqual(kit('race_pylon_foot').count, nPyl); assert.strictEqual(kit('race_gantry').count, nGan); assert.strictEqual(kit('race_checkpoint').count, nGate);
     assert(kit('race_boost_ring').count === 4 && kit('start_gate').count === 1 && kit('grandstand') && kit('pits'));
+    assert.strictEqual(kit('race_boost_pad').count, 4, 'Blender boost pad on every code pad'); assert.strictEqual(tr.group.getObjectByName('track-boost').visible, false, 'flat decal hidden');
   });
   await t('each shaft reaches its fork head; foot sits on the ground', () => {
     const a = new THREE.Matrix4(), b = new THREE.Matrix4(), c = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
