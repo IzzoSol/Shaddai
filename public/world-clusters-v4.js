@@ -125,6 +125,9 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       // 2026-10-11: buildings may not sit on a race deck - the keys come from tools/ (docs/track-*.json vs the fabric). ?trackclear=0 disables.
       var _tc = (typeof location !== 'undefined' && /[?&]trackclear=0/.test(location.search)) ? null : window.__trackClear;
       if (_tc && /grid-fabric/.test(String(url))) plan.items = plan.items.filter(function (it) { return !_tc[it.x_m + ',' + it.y_m]; });
+      // HOVERSKATE PARK KEEP-OUT (2026-10-15, seen in the Blender world): 18 live fabric shops/labs/gardens stood inside the park (r 170 m at the PLAZA_SKATE
+      // marker) and poked through its deck. Same rule world-grid-city-v4.js used. ?parkclear=0 disables.
+      if (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&]parkclear=0/.test(location.search))) plan.items = plan.items.filter(function (it) { return Math.hypot(it.x_m + 694.46, it.y_m - 1039.34) >= 172 + (it.len_m || 0) * 0.5; });
       var byKey = {};
       plan.items.forEach(function (it) { (byKey[it.key] = byKey[it.key] || []).push(it); });
       var keys = Object.keys(byKey); st.types = keys.length; st.items = plan.items.length;
