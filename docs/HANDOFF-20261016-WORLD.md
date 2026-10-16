@@ -64,3 +64,9 @@ FPS/front-end/backend plan from the other terminal: `docs/HANDOFF-FPS-FRONTEND-B
 `docs/blender/shaddai_world_20261015.blend` mirrors the game (00_WORLD visible; 10_KIT_LIBRARY + 20_STUDIO hidden; old 318-plan city hidden).
 Export tools: `tools/ual/race-kit-export.mjs`, `tools/ual/scene-export.mjs`. Drive Blender via its socket (127.0.0.1:9876); keep queries
 light (a per-polygon scan of the city crashed Blender for memory). Kit generators live in `C:\Users\Brittany\Shaddai\public\assets\kits\_src`.
+
+## 6. Owner reference images to compare against (2026-10-16)
+`OneDrive\Desktop\New folder\Downloads\image (57).jpg`-`(60)` = Hover League concepts (energy ball + goal, colosseum crowd/banners, concept map, mayhem team fight).
+`image (61)`-`(65)` = sent last, NOT yet reviewed. Owner asked "didn't we upgrade to this?" -> what is built: the Hover League FIELD mode (rim, goals,
+pads, dais, energy balls, bots) inside the existing Colosseum; the hoverskate PARK was kept as the skate park (owner 2026-10-15). The concept-art
+level (stadium crowds, banners, holo goal frames, neon floor art) is NOT matched yet -> next model: open these images, list the gaps, upgrade.
