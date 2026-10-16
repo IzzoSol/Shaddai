@@ -20,7 +20,7 @@ function test(name, fn) {
   catch (e) { fail++; console.log('  FAIL ' + name + '\n       ' + (e && e.message)); }
 }
 
-const FABRIC_KEYS = ['sc-storefront-s', 'sc-storefront-l', 'sc-office', 'sc-office-mid', 'sc-market', 'sc-techlab', 'sc-garden', 'sc-teleport', 'sc-civic-tower', 'sc-ad-pylon'];
+const FABRIC_KEYS = ['sc-storefront-s', 'sc-storefront-l', 'sc-office', 'sc-office-mid', 'sc-market', 'sc-techlab', 'sc-garden', 'sc-teleport', 'sc-civic-tower', 'sc-ad-pylon', 'sc-tower-slab', 'sc-tower-setback', 'sc-tower-spire']   // sc-tower-* = Blender K1 towers (tools/grid-city/k1-fabric-pick.cjs);
 
 test('script exposes loader + internals', () => {
   assert.strictEqual(typeof window.buildWorldClustersV4, 'function');

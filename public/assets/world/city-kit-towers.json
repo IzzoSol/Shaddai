@@ -1,0 +1,198 @@
+{
+ "version": 2,
+ "note": "K1 towers in the LIVE city = grid-fabric-v4.json items with key sc-tower-* (tools/grid-city/k1-fabric-pick.cjs). Metres, X east, Y north.",
+ "towers": [
+  {
+   "key": "sc-tower-spire",
+   "x_m": 617.4,
+   "y_m": -835.3,
+   "yaw": 143.53,
+   "h_m": 170,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 477.8,
+   "y_m": -891,
+   "yaw": 151.8,
+   "h_m": 140,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 543.4,
+   "y_m": -687.6,
+   "yaw": 141.68,
+   "h_m": 120,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 695.5,
+   "y_m": -986.2,
+   "yaw": 144.81,
+   "h_m": 160,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 795.5,
+   "y_m": -868.6,
+   "yaw": 137.52,
+   "h_m": 130,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 762.4,
+   "y_m": -705.5,
+   "yaw": 132.78,
+   "h_m": 110,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 328.4,
+   "y_m": -843.4,
+   "yaw": 158.73,
+   "h_m": 150,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 484.8,
+   "y_m": -1073.4,
+   "yaw": 155.69,
+   "h_m": 120,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 663.4,
+   "y_m": -572.7,
+   "yaw": 130.8,
+   "h_m": 100,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 327.4,
+   "y_m": -660.7,
+   "yaw": 153.64,
+   "h_m": 170,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 293,
+   "y_m": -996.5,
+   "yaw": 163.62,
+   "h_m": 140,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 392.3,
+   "y_m": -519.6,
+   "yaw": 142.95,
+   "h_m": 120,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 783.7,
+   "y_m": 526.6,
+   "yaw": 56.1,
+   "h_m": 160,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 654.6,
+   "y_m": 434.6,
+   "yaw": 56.42,
+   "h_m": 130,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 621.2,
+   "y_m": 623,
+   "yaw": 44.92,
+   "h_m": 110,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 785.5,
+   "y_m": 736,
+   "yaw": 46.86,
+   "h_m": 150,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 451.5,
+   "y_m": 521.5,
+   "yaw": 40.89,
+   "h_m": 120,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 675.6,
+   "y_m": 252.5,
+   "yaw": 69.5,
+   "h_m": 100,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 525.2,
+   "y_m": 343.5,
+   "yaw": 56.81,
+   "h_m": 170,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 959.7,
+   "y_m": 318,
+   "yaw": 71.66,
+   "h_m": 140,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 1044.8,
+   "y_m": 448.6,
+   "yaw": 66.76,
+   "h_m": 120,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 534.6,
+   "y_m": 778.3,
+   "yaw": 34.48,
+   "h_m": 160,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 688.5,
+   "y_m": 866.8,
+   "yaw": 38.46,
+   "h_m": 130,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 821.6,
+   "y_m": 206.4,
+   "yaw": 75.9,
+   "h_m": 110,
+   "cluster": "ne-campus"
+  }
+ ]
+}
