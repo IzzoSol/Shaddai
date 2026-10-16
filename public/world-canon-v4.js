@@ -28,6 +28,18 @@
         ms.forEach(function (m) { if (m && m.emissive && m.emissiveIntensity > 0) m.toneMapped = true; });
       });
       root.updateMatrixWorld(true);
+      // HOVERSKATE PARK KEEP-OUT (2026-10-16, found in the Blender world): CULTURE_LANE kiosk tops (up to 19 m) stand at the park rim (r 165-178 m around
+      // the PLAZA_SKATE marker) and poke over the deck edge - drop its triangles inside r 178 m. ?parkclear=0 = untouched.
+      if (!(typeof location !== 'undefined' && /[?&]parkclear=0/.test(location.search))) root.traverse(function (o) {
+        if (!o.isMesh || !/^CULTURE_LANE/.test(o.name) || !o.geometry.attributes.position) return;
+        var g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry, p = g.attributes.position, v = new THREE.Vector3(), keep = [], n = p.count;
+        for (var i = 0; i < n; i += 3) { var cx = 0, cz = 0; for (var k = 0; k < 3; k++) { v.fromBufferAttribute(p, i + k).applyMatrix4(o.matrixWorld); cx += v.x; cz += v.z; }
+          cx /= 3 * U; cz /= -3 * U; if (Math.hypot(cx + 694.46, cz - 1039.34) >= 178) keep.push(i); }
+        if (keep.length * 3 === n) return;
+        var out = new THREE.BufferGeometry(); Object.keys(g.attributes).forEach(function (name) { var src = g.attributes[name], sz = src.itemSize, arr = new src.array.constructor(keep.length * 3 * sz);
+          keep.forEach(function (i, t) { for (var k = 0; k < 3 * sz; k++) arr[t * 3 * sz + k] = src.array[i * sz + k]; }); out.setAttribute(name, new THREE.BufferAttribute(arr, sz, src.normalized)); });
+        o.geometry = out; st.parkCut = (st.parkCut || 0) + (n / 3 - keep.length);
+      });
       scene.add(root);
       var L = window.WORLD_LAYOUT, tops = window.WORLD_WALKABLE_TOPS = window.WORLD_WALKABLE_TOPS || [];
       if (L && L.realmColliders) {

@@ -1025,7 +1025,7 @@ window.__worldBuilt = false;
       if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel && window.buildMaglevTrainV2){ try{ const tv2 = window.buildMaglevTrainV2({ THREE }); window.__worldTransitApi.setTrainModel(tv2, tv2.userData.lengthM, 1); if(_v4Sky && _v4Sky.addEmissive) tv2.userData.emissiveMats.forEach(function(m){ _v4Sky.addEmissive(m); }); window.__trainV2 = tv2; }catch(e){ console.warn('[transit] train v2 failed:', e && e.message); } }
       else if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
         tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
-      return _loadScript('/world-canon-v4.js?v=20260927s7').then(function(){
+      return _loadScript('/world-canon-v4.js?v=20261016a').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
