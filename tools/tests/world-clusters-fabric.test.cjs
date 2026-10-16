@@ -112,5 +112,21 @@ test('grid-fabric-v4.json: cell count estimate (draw-call budget)', () => {
   console.log('       ' + cells.size + ' cells · ' + pairs + ' (cell, key) instanced batches per visible tier (× mesh parts per model)');
 });
 
+test('GHOST WALLS: canon fabric solids with no live building are dropped; live buildings + non-fabric solids keep theirs; park lots clear', () => {
+  const ROOT = path.join(__dirname, '..', '..', 'public', 'assets', 'world');
+  const C = JSON.parse(fs.readFileSync(path.join(ROOT, 'canon-colliders-v4.json'), 'utf8')), F = JSON.parse(fs.readFileSync(path.join(ROOT, 'grid-fabric-v4.json'), 'utf8'));
+  const clear = new Set(JSON.parse(fs.readFileSync(path.join(ROOT, 'track-clear-v4.json'), 'utf8')).keys);
+  const live = F.items.filter((it) => Math.abs(Math.sin(it.x_m * 12.9898 + it.y_m * 78.233) * 43758.5453) % 1 < 0.3 && !/office/.test(it.key) && !clear.has(it.x_m + ',' + it.y_m) && Math.hypot(it.x_m + 694.46, it.y_m - 1039.34) >= 172 + it.len_m * 0.5);
+  const solids = [...C.obb, ...C.circle].filter((b) => !b.walkableTop).map((b) => ({ x: b.x, z: b.z, label: 'canon:' + b.kind }));
+  const kept = I.ghostFilter(live, solids, (c) => c.label.slice(6)), U = I.U;
+  const fab = (c) => /^(commons|ne-campus|nw-race)-/.test(c.label.slice(6));
+  assert.strictEqual(kept.filter((c) => !fab(c)).length, solids.filter((c) => !fab(c)).length, 'non-fabric solids untouched');
+  const removed = solids.length - kept.length; assert(removed > 2000, 'ghost walls removed: ' + removed);
+  const inPark = kept.filter((c) => fab(c) && Math.hypot(c.x / U + 694.46, -c.z / U - 1039.34) < 160); assert.strictEqual(inPark.length, 0, 'park clear');
+  const sample = live.filter((it) => /storefront|techlab|sc-tower/.test(it.key)), hit = sample.filter((it) => kept.some((c) => fab(c) && Math.hypot(c.x / U - it.x_m, -c.z / U - it.y_m) < 12));
+  assert.strictEqual(hit.length, sample.length, 'every live storefront / techlab / K1 tower keeps its collider (gardens, markets, teleports never had one)');
+  console.log('       removed ' + removed + ' of ' + solids.length + ' canon solids');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -85,7 +85,22 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
     if (d < hide) return has2 ? 2 : (has1 ? 1 : 0);
     return 3;
   }
-  window.__clustersV4Internals = { U: U, CELL_M: CELL_M, urlOf: urlOf, presetFor: presetFor, pickTier: pickTier, collides: collides, glowFor: glowFor };
+  // GHOST WALLS (2026-10-15): canon-colliders-v4.json was baked for the FULL fabric, but this loader keeps ~30% (hash) and drops offices + park/track
+  // lots, so ~2400 box colliders + walkable roofs stood in empty lots (invisible walls all over the city). Keep a fabric-named canon solid only when a
+  // live building stands on it. Pure: (live items in metres, solids in units) -> kept solids. Kinds outside the 3 fabric clusters are never touched.
+  var FAB_KIND = /^(commons|ne-campus|nw-race)-/;
+  function ghostFilter(items, solids, kindOf) {
+    var B = 24, grid = {};
+    items.forEach(function (it) { var k = Math.floor(it.x_m / B) + ',' + Math.floor(it.y_m / B); (grid[k] = grid[k] || []).push(it); });
+    function live(xm, ym) {
+      var gx = Math.floor(xm / B), gy = Math.floor(ym / B);
+      for (var i = -1; i <= 1; i++) for (var j = -1; j <= 1; j++) { var c = grid[(gx + i) + ',' + (gy + j)]; if (!c) continue;
+        for (var n = 0; n < c.length; n++) if (Math.hypot(c[n].x_m - xm, c[n].y_m - ym) < Math.max(6, (c[n].len_m || 10) * 0.6)) return true; }
+      return false;
+    }
+    return solids.filter(function (s) { var k = kindOf(s); return !(k && FAB_KIND.test(k)) || live(s.x / U, -s.z / U); });
+  }
+  window.__clustersV4Internals = { U: U, CELL_M: CELL_M, urlOf: urlOf, presetFor: presetFor, pickTier: pickTier, collides: collides, glowFor: glowFor, ghostFilter: ghostFilter };
 
   window.buildWorldClustersV4 = function (opts) {
     var THREE = opts.THREE, scene = opts.scene, loader = opts.loader, heightAt = opts.heightAt || function () { return 0; };
@@ -128,6 +143,13 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       // HOVERSKATE PARK KEEP-OUT (2026-10-15, seen in the Blender world): 18 live fabric shops/labs/gardens stood inside the park (r 170 m at the PLAZA_SKATE
       // marker) and poked through its deck. Same rule world-grid-city-v4.js used. ?parkclear=0 disables.
       if (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&]parkclear=0/.test(location.search))) plan.items = plan.items.filter(function (it) { return Math.hypot(it.x_m + 694.46, it.y_m - 1039.34) >= 172 + (it.len_m || 0) * 0.5; });
+      if (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&](fullcity|ghostwalls)=1/.test(location.search))) {
+        var LL = window.WORLD_LAYOUT, n0 = 0, n1 = 0;
+        var inPlace = function (arr, kept) { arr.length = 0; Array.prototype.push.apply(arr, kept); };   // other modules hold these arrays: filter in place
+        if (LL && LL.realmColliders) { n0 = LL.realmColliders.length; inPlace(LL.realmColliders, ghostFilter(plan.items, LL.realmColliders, function (c) { return /^canon:/.test(c.label || '') ? c.label.slice(6) : null; })); n1 = LL.realmColliders.length; }
+        if (window.WORLD_WALKABLE_TOPS) inPlace(window.WORLD_WALKABLE_TOPS, ghostFilter(plan.items, window.WORLD_WALKABLE_TOPS, function (t) { return t.kind || null; }));
+        if (n0 !== n1) { console.info(TAG + 'ghost walls removed: ' + (n0 - n1) + ' canon solids with no live building'); if (window.buildWorldCollision) try { window.buildWorldCollision(LL); } catch (e) { } }
+      }
       var byKey = {};
       plan.items.forEach(function (it) { (byKey[it.key] = byKey[it.key] || []).push(it); });
       var keys = Object.keys(byKey); st.types = keys.length; st.items = plan.items.length;
