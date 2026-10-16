@@ -27,8 +27,7 @@ park finished → boats/dock at the reef + furniture everywhere → FPS + polish
 - [ ] Jump ramps on the deck (K6b race_jump_ramp + ramp physics) · Upgrades shop
 - [~] FULL COURSE v2 (owner Blender lines): north + south connectors (X flyover by the HQ) join Dragon Gate to the sky ring; lap =
       connector up, ring + crossovers, connector down, a Dragon Gate figure-8 (13.2 km); Race HQ at the owner's spot, 1.5x + beacon
-- [ ] Blender world file is BEHIND the code after the 2026-10-16 crash: re-run k27 (1.5x HQ at 1737,-302.9) and re-import the v2 deck
-      (tools/ual/race-kit-export.mjs grand-course) into WORLD_race_skyline; the owner's annotation lines were not saved
+- [x] Blender world file re-synced after the 2026-10-16 crash (1.5x HQ at 1737,-302.9 + v2 full-course deck), saved
 - [ ] NEXT (owner 2026-10-16): every realm city finished with its own aesthetic · terrain (snow, trees) · designed roads · collisions
       on buildings/roads · REAL USES for the many buildings (needs a design pass with the owner: shop / job / home / service per building)
 
