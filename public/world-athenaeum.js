@@ -101,6 +101,10 @@
     addTo('inlay', xf(new THREE.RingGeometry(L.apse.r - 3, L.apse.r - 2.8, 64), { x: L.apse.cx, y: 0.03, z: L.apse.cz, rx: -Math.PI / 2 }));
 
     // ── rotunda drum, doors, dome ───────────────────────────────────────────────
+    // (2026-10-15) with the Blender K15 rotunda coming (shaddai_athenaeum_rotunda_v01.glb) these pieces merge into their own '#rot' meshes so they can
+    // hide when the kit lands; ?athkit=0 or no loader = the code rotunda as before.
+    var ROTKIT = !!(root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athkit=0/.test(location.search || ''))), _addTo0 = addTo;
+    if (ROTKIT) addTo = function (n, g) { _addTo0(n + '#rot', g); };
     var doors = L.wings.map(function (w) { return { a: w.angleDeg, half: Math.asin(L.DOOR_HALF / R) * 180 / Math.PI, color: w.accent }; });
     doors.push({ a: 0, half: Math.asin(L.apse.doorHalf / R) * 180 / Math.PI, color: L.AGENT_COLOR.SHADDAI });
     doors.push({ a: 180, half: Math.asin(L.DOOR_HALF / R) * 180 / Math.PI, color: 0x00ff9c });
@@ -121,6 +125,7 @@
     addTo('em-e8c45c', xf(new THREE.TorusGeometry(Math.sin(0.3) * (R + 0.4), 0.3, 8, 64), { y: DRUM + Math.cos(0.3) * DOME, rx: Math.PI / 2 }));   // oculus rim
     addTo('beam', xf(new THREE.CylinderGeometry(0.5, 0.9, DRUM + DOME - 2, 16, 1, true), { y: (DRUM + DOME) / 2 }));
 
+    addTo = _addTo0;
     // ── wings: walls, roofs, skylights ──────────────────────────────────────────
     L.wings.forEach(function (w) {
       var a0 = L.WING_ALONG0, a1 = a0 + L.WING_LEN, h = w.h, hw = w.halfW, ac = 'em-' + w.accent.toString(16);
@@ -385,10 +390,13 @@
     var motes = new THREE.Points(mGeo, _pm(THREE, { color: 0x9bffe0, size: 0.16, opacity: 0.55, additive: true }, { color: 0x9bffe0, size: 0.16, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })); motes.name = 'motes'; motes.frustumCulled = false; rootG.add(motes);
 
     // ── merge static parts: one mesh per material ───────────────────────────────
+    var rotMeshes = [];
     Object.keys(parts).forEach(function (name) {
-      var mat = mats[name] || (name.indexOf('em-') === 0 ? em(parseInt(name.slice(3), 16)) : null);
+      var base = name.split('#')[0];
+      var mat = mats[base] || (base.indexOf('em-') === 0 ? em(parseInt(base.slice(3), 16)) : null);
       if (!mat) throw new Error('no material for part ' + name);
       var mesh = new THREE.Mesh(merge(parts[name]), mat); mesh.name = 'static:' + name; rootG.add(mesh);
+      if (name !== base) rotMeshes.push(mesh);
     });
 
     // ── POSTERS (2026-10-11): six ORIGINAL code-drawn posters in one atlas (1 draw call): robot-themed art in emerald/gold, hung between the rotunda doorways and at the end of each wing.
@@ -471,6 +479,14 @@
     // ── lights (≤ 8) ────────────────────────────────────────────────────────────
     var hemi = new THREE.HemisphereLight(0xa8fff0, 0x0c1a1a, 1.5); rootG.add(hemi);
     var fill = new THREE.AmbientLight(0x3f6a60, 1.7); rootG.add(fill);
+    // BLENDER K15 ROTUNDA (owner refs: balconies at 9 + 17 m, holo table, twin grand stairs 0.18 x 0.30): origin = rotunda centre floor, apse north (-z)
+    // like polar(). On load the '#rot' shell + the code balconies hide; wings, desks, holo globe and stations stay.
+    if (ROTKIT) new root.__GLTFLoaderClass().load('/assets/kits/shaddai_athenaeum_rotunda_v01.glb', function (gl) {
+      var shell = gl.scene.getObjectByName('shaddai_athenaeum_rotunda'), props = gl.scene.getObjectByName('athenaeum_props'); if (!shell) return;
+      var kit = new THREE.Group(); kit.name = 'athenaeum-k15'; kit.add(shell.clone(true)); if (props) kit.add(props.clone(true)); rootG.add(kit);
+      rotMeshes.forEach(function (m) { m.visible = false; });
+      rootG.children.forEach(function (o) { if (/^athenaeum-balcony/.test(o.name)) o.visible = false; });
+    }, undefined, function () { console.warn('[athenaeum] K15 rotunda missing, code rotunda kept'); });
     var key = new THREE.PointLight(0xbfffec, 260, 95 * U, 1.0); key.position.set(0, DRUM + 4, 0); group.add(key); key.position.set(X0, DRUM * U + 4 * U, Z0);
     var accentLights = [];
     function addLight(color, i, m, wx, wy, wz) { var l = new THREE.PointLight(color, i, m * U, 1.0); l.position.set(X0 + wx * U, wy * U, Z0 + wz * U); group.add(l); accentLights.push(l); return l; }

@@ -163,7 +163,17 @@
       mats.star.emissiveIntensity = 3.2;   // PERF 2026-10-04: was a PointLight (every extra light costs every lit material world-wide); the emissive star carries the glow
       var sign = (function () { var cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; var x = cv.getContext('2d'); x.fillStyle = '#e8dcc0'; x.fillRect(0, 0, 1024, 128); x.fillStyle = '#5a4520'; x.font = '700 72px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SOUTHERN COLOSSEUM', 512, 68); var tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; return new THREE.Mesh(new THREE.PlaneGeometry(44, 5.5), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.8 })); })();
       sign.position.set(0, LOBBY_H - 0.8, LOBBY_D / 2 + 6.05); lob.add(sign);
-      if (window.WorldMerge) try { group.userData.bake = window.WorldMerge.bake(group, THREE, { skip: new Set([star]), name: 'colosseum-exterior' }); } catch (e) { }   // PERF: static exterior (~49 draws); the star keeps spinning
+      // BLENDER K13 GRAND LOBBY (shaddai_colosseum_lobby_v01.glb: 60x32x26, 3 crimson portals, gold-ribbed vault; origin = back-wall centre on the
+      // ground at LOBBY_Z0, front = +z). The code lobby stays out of the merge until the kit lands, then hides (the podium steps stay). ?lobbykit=0 = code.
+      var LCK = window.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]lobbykit=0/.test(location.search || ''));
+      lob.children.forEach(function (o) { if (o.geometry && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.height === 0.35) o.userData.keepWithKit = true; });   // podium steps
+      if (window.WorldMerge) try { group.userData.bake = window.WorldMerge.bake(group, THREE, { skip: new Set(LCK ? [star, lob] : [star]), name: 'colosseum-exterior' }); } catch (e) { }
+      if (LCK) new window.__GLTFLoaderClass().load('/assets/kits/shaddai_colosseum_lobby_v01.glb', function (gl) {
+        var k = gl.scene.getObjectByName('shaddai_colosseum_lobby'); if (!k) return;
+        k = k.clone(true); k.position.set(0, 0, LOBBY_Z0); k.name = 'colosseum-lobby-k13';
+        lob.children.forEach(function (o) { if (o !== star && !o.userData.keepWithKit) o.visible = false; });
+        k.traverse(function (o) { if (o.isMesh) o.castShadow = true; }); root.add(k); group.userData.lobbyKit = k;
+      }, undefined, function () { console.warn('[colosseum] K13 lobby missing, code lobby kept'); });   // PERF: static exterior (~49 draws); the star keeps spinning
       scene.add(group);
       if (window.__registerPlaceable) window.__registerPlaceable('landmark:colosseum', group, { source: 'world-colosseum.js' });
       return { group: group, door: ext.door, update: function (t) { star.rotation.y = t * 0.6; } };
