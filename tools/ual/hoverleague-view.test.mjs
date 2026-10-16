@@ -27,7 +27,7 @@ window.__rideBoard = () => true;
 const HL = window.HoverLeague.create({ THREE, GLTFLoader: Loader, getArena: () => arena, isInside: () => true, getHover: () => hover, getPlayerPos: () => playerPos });
 
 await t('starts a 2v2 league match inside the arena (K26 kit, bots, HUD, walls)', async () => {
-  const ok = await HL.start({ mode: 'league', ball: 'void', size: 2 }); assert.strictEqual(ok, true); assert(HL.active()); assert(arena.cleared, 'other floors cleared');
+  const ok = await HL.start({ mode: 'league', ball: 'void', size: 2, seed: 7 }); assert.strictEqual(ok, true); assert(HL.active()); assert(arena.cleared, 'other floors cleared');
   const v = HL._view(); assert(v.group.parent === aroot); assert.strictEqual(Object.keys(v.bots).length, 3); assert(v.pads.length === 22 && v.ups.length === 4);
   let goals = 0; v.group.traverse((c) => { if (c.name === 'hl_goal_hoop') goals++; }); assert.strictEqual(goals, 2, 'two Blender goals');
   assert(walls.length > 40, 'rim wall-ride faces handed to the board'); assert(walls[0].x0 > 11000, 'walls in WORLD units');

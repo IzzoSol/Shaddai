@@ -254,7 +254,7 @@
         if (!inside) { if ((o2 && o2._tries || 0) > 8) return false; if (o.enter) o.enter(); return new Promise(function (res) { setTimeout(function () { res(start(Object.assign({}, o2, { _tries: ((o2 && o2._tries) || 0) + 1 }))); }, 1200); }); }
         stop(true); U = arena.root.scale.x || U;
         var n = Math.max(1, Math.min(3, opts.size | 0));
-        game = Core.create(L, { mode: opts.mode, ball: opts.ball, bots: { cyon: n - 1, magma: n }, seed: (Date.now() & 0xffff) || 1 }); human = game.setHuman({ team: 'cyon' });
+        game = Core.create(L, { mode: opts.mode, ball: opts.ball, bots: { cyon: n - 1, magma: n }, seed: opts.seed || (Date.now() & 0xffff) || 1 }); human = game.setHuman({ team: 'cyon' });
         if (arena.floors && arena.floors.clear) try { arena.floors.clear(); } catch (_) { }
         view = buildView(); arena.root.add(view.group); hud = buildHud();
         hud.q('sub').textContent = opts.mode === 'paint' ? 'PAINT · ' + Core.BALLS[opts.ball].name.toUpperCase() : Core.BALLS[opts.ball].name.toUpperCase(); hud.q('paint').style.display = opts.mode === 'paint' ? 'block' : 'none';
