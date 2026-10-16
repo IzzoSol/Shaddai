@@ -1,0 +1,227 @@
+{
+ "version": 1,
+ "note": "K1 towers replacing grid-city plan buildings (tools/grid-city/k1-tower-pick.cjs). Frame = grid-city-v4 (metres, X east, Y north).",
+ "kits": {
+  "slab": "shaddai_tower_slab_v01.glb",
+  "setback": "shaddai_tower_setback_v01.glb",
+  "spire": "shaddai_tower_spire_v01.glb"
+ },
+ "towers": [
+  {
+   "id": "b128",
+   "kit": "spire",
+   "x_m": 386.6,
+   "y_m": 103.6,
+   "rot_deg": -75,
+   "scale": 0.911,
+   "h_m": 170.5
+  },
+  {
+   "id": "b69",
+   "kit": "spire",
+   "x_m": 319.3,
+   "y_m": 319.3,
+   "rot_deg": -45,
+   "scale": 0.897,
+   "h_m": 167.9
+  },
+  {
+   "id": "b122",
+   "kit": "slab",
+   "x_m": 200.6,
+   "y_m": 53.7,
+   "rot_deg": -75,
+   "scale": 1.093,
+   "h_m": 164.3
+  },
+  {
+   "id": "b288",
+   "kit": "slab",
+   "x_m": 348.3,
+   "y_m": -260.4,
+   "rot_deg": -126.8,
+   "scale": 1.057,
+   "h_m": 158.8
+  },
+  {
+   "id": "b286",
+   "kit": "setback",
+   "x_m": 305.5,
+   "y_m": -230.5,
+   "rot_deg": -127,
+   "scale": 1.077,
+   "h_m": 156.4
+  },
+  {
+   "id": "b213",
+   "kit": "slab",
+   "x_m": 488.6,
+   "y_m": -102.3,
+   "rot_deg": -101.8,
+   "scale": 1.008,
+   "h_m": 151.5
+  },
+  {
+   "id": "b287",
+   "kit": "setback",
+   "x_m": 270.6,
+   "y_m": -270.6,
+   "rot_deg": -135,
+   "scale": 0.978,
+   "h_m": 142.1
+  },
+  {
+   "id": "b290",
+   "kit": "slab",
+   "x_m": 367.1,
+   "y_m": -328.7,
+   "rot_deg": -131.8,
+   "scale": 0.943,
+   "h_m": 141.7
+  },
+  {
+   "id": "b72",
+   "kit": "slab",
+   "x_m": 436.5,
+   "y_m": 526.3,
+   "rot_deg": 50.3,
+   "scale": 0.902,
+   "h_m": 135.6
+  },
+  {
+   "id": "b350",
+   "kit": "slab",
+   "x_m": 175.6,
+   "y_m": -655.5,
+   "rot_deg": -165,
+   "scale": 0.898,
+   "h_m": 134.9
+  },
+  {
+   "id": "b418",
+   "kit": "slab",
+   "x_m": -257.6,
+   "y_m": -556.4,
+   "rot_deg": -204.8,
+   "scale": 0.887,
+   "h_m": 133.3
+  },
+  {
+   "id": "b686",
+   "kit": "setback",
+   "x_m": -341.8,
+   "y_m": 382.1,
+   "rot_deg": -318.2,
+   "scale": 0.84,
+   "h_m": 122
+  },
+  {
+   "id": "b70",
+   "kit": "slab",
+   "x_m": 336.3,
+   "y_m": 375.8,
+   "rot_deg": -41.8,
+   "scale": 0.801,
+   "h_m": 120.4
+  },
+  {
+   "id": "b493",
+   "kit": "setback",
+   "x_m": -567.4,
+   "y_m": -387.5,
+   "rot_deg": -235.7,
+   "scale": 0.799,
+   "h_m": 116.1
+  },
+  {
+   "id": "b561",
+   "kit": "setback",
+   "x_m": -747.4,
+   "y_m": -370.4,
+   "rot_deg": -243.6,
+   "scale": 0.79,
+   "h_m": 114.8
+  },
+  {
+   "id": "b148",
+   "kit": "setback",
+   "x_m": 840,
+   "y_m": 53.2,
+   "rot_deg": -86.4,
+   "scale": 0.783,
+   "h_m": 113.7
+  },
+  {
+   "id": "b293",
+   "kit": "setback",
+   "x_m": 382.7,
+   "y_m": -560,
+   "rot_deg": -145.6,
+   "scale": 0.78,
+   "h_m": 113.3
+  },
+  {
+   "id": "b137",
+   "kit": "setback",
+   "x_m": 619.2,
+   "y_m": 297.5,
+   "rot_deg": -64.3,
+   "scale": 0.755,
+   "h_m": 109.6
+  },
+  {
+   "id": "b78",
+   "kit": "slab",
+   "x_m": 559,
+   "y_m": 712.3,
+   "rot_deg": -38.1,
+   "scale": 0.729,
+   "h_m": 109.6
+  },
+  {
+   "id": "b625",
+   "kit": "setback",
+   "x_m": -751.8,
+   "y_m": 372.8,
+   "rot_deg": -296.4,
+   "scale": 0.754,
+   "h_m": 109.5
+  },
+  {
+   "id": "b433",
+   "kit": "slab",
+   "x_m": -52.5,
+   "y_m": -954.9,
+   "rot_deg": -183.1,
+   "scale": 0.707,
+   "h_m": 106.2
+  },
+  {
+   "id": "b302",
+   "kit": "setback",
+   "x_m": 801.3,
+   "y_m": -523.3,
+   "rot_deg": -123.1,
+   "scale": 0.728,
+   "h_m": 105.7
+  },
+  {
+   "id": "b27",
+   "kit": "setback",
+   "x_m": 276.8,
+   "y_m": 920.9,
+   "rot_deg": -16.7,
+   "scale": 0.721,
+   "h_m": 104.7
+  },
+  {
+   "id": "b233",
+   "kit": "setback",
+   "x_m": 929.9,
+   "y_m": -249.2,
+   "rot_deg": -105,
+   "scale": 0.715,
+   "h_m": 103.8
+  }
+ ]
+}
