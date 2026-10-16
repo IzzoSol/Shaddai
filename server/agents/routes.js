@@ -4,7 +4,7 @@
 // Mount (later, owner-approved):  app.use('/api/agents', require('./agents/routes').makeRouter({ gateway, auth, resolveAgent, allowedOrigins }))
 const express = require('express');
 
-function makeRouter({ gateway, auth, resolveAgent, adapterFor, allowedOrigins = [], production = process.env.NODE_ENV === 'production', adminIds = [] }) {
+function makeRouter({ gateway, auth, resolveAgent, listAgents, adapterFor, allowedOrigins = [], production = process.env.NODE_ENV === 'production', adminIds = [] }) {
   if (production && (!allowedOrigins || allowedOrigins.length === 0)) throw new Error('ALLOWED_ORIGINS required in production (refusing to start)');
   const r = express.Router();
   r.use(express.json({ limit: '32kb' }));
@@ -18,6 +18,23 @@ function makeRouter({ gateway, auth, resolveAgent, adapterFor, allowedOrigins = 
   r.use(need);
 
   const sse = (res, ev) => res.write('data: ' + JSON.stringify(ev) + '\n\n');
+  const suspended = new Map();   // approvalId -> { userId, agentId, alias, resumeState }  (server-side; never sent to the browser)
+  const newRid = () => 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const ctxFor = (userId, agent) => ({ userId, agentId: agent.id, requestId: newRid(), grants: new Set(agent.grants || []),
+    provider: agent.provider, byok: !!agent.byok, privacy: !!agent.privacy, persona: agent.persona });
+  const openSSE = res => res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
+  async function stream(res, ac, args, meta) {
+    try {
+      for await (const ev of gateway.run(args)) {
+        if (ac.signal.aborted) break;
+        if (ev.type === 'approval_required') {
+          suspended.set(ev.approvalId, Object.assign({}, meta, { resumeState: ev.resumeState }));
+          sse(res, Object.assign({}, ev, { resumeState: undefined }));          // the browser never sees run state
+        } else sse(res, ev);
+      }
+    } catch (_) { sse(res, { type: 'error', code: 'internal' }); }
+    res.end();
+  }
 
   r.post('/chat', async (req, res) => {
     const { agentId, message, alias } = req.body || {};      // identity fields in the body are IGNORED by design
@@ -26,17 +43,31 @@ function makeRouter({ gateway, auth, resolveAgent, adapterFor, allowedOrigins = 
     if (!agent) return res.status(404).json({ error: 'not_found' });
     const ac = new AbortController();
     res.on('close', () => ac.abort());                       // stop spending when the client leaves
-    res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
-    const ctx = { userId: req.user.id, agentId: agent.id, requestId: 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-      grants: new Set(agent.grants || []), provider: agent.provider, byok: !!agent.byok, privacy: !!agent.privacy, persona: agent.persona };
-    try {
-      const { adapter, providerCfg } = adapterFor(agent);
-      for await (const ev of gateway.run({ ctx, message, adapter, alias: alias && agent.allowedAliases && agent.allowedAliases.includes(alias) ? alias : agent.defaultAlias,
-        providerCfg, signal: ac.signal })) { if (ac.signal.aborted) break; sse(res, ev.resumeState ? Object.assign({}, ev, { resumeState: undefined }) : ev); }
-    } catch (_) { sse(res, { type: 'error', code: 'internal' }); }
-    res.end();
+    openSSE(res);
+    const { adapter, providerCfg } = adapterFor(agent);
+    const alias2 = alias && agent.allowedAliases && agent.allowedAliases.includes(alias) ? alias : agent.defaultAlias;
+    await stream(res, ac, { ctx: ctxFor(req.user.id, agent), message, adapter, alias: alias2, providerCfg, signal: ac.signal },
+      { userId: req.user.id, agentId: agent.id, alias: alias2 });
   });
 
+  // After the OWNER approves, the client asks the server to continue the suspended run (SSE).
+  r.post('/approvals/:id/resume', async (req, res) => {
+    const s = suspended.get(req.params.id);
+    const rec = gateway.approvals.get(req.params.id);
+    if (!s || s.userId !== req.user.id || !rec) return res.status(404).json({ error: 'not_found' });
+    if (rec.status !== 'approved') return res.status(409).json({ error: 'not_approved', status: rec.status });
+    const agent = await resolveAgent(req.user.id, s.agentId);
+    if (!agent) return res.status(404).json({ error: 'not_found' });
+    suspended.delete(req.params.id);                           // single use
+    const ac = new AbortController();
+    res.on('close', () => ac.abort());
+    openSSE(res);
+    const { adapter, providerCfg } = adapterFor(agent);
+    await stream(res, ac, { ctx: ctxFor(req.user.id, agent), adapter, alias: s.alias, providerCfg, signal: ac.signal, resume: s.resumeState },
+      { userId: req.user.id, agentId: agent.id, alias: s.alias });
+  });
+
+  r.get('/roster', async (req, res) => res.json({ agents: listAgents ? await listAgents(req.user.id) : [] }));
   r.get('/approvals', (req, res) => res.json({ pending: gateway.approvals.pendingFor(req.user.id) }));
   r.post('/approvals/:id/decision', (req, res) => {
     const d = req.body && req.body.decision;
