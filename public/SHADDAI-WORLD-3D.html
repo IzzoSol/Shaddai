@@ -362,7 +362,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
 <script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
 <script src="/world-hovercars.js?v=20261015a"></script>
-<script src="/world-race-select.js?v=20261016s"></script><script src="/world-race-hq.js?v=20261016b"></script>   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
+<script src="/world-race-select.js?v=20261016s"></script><script src="/world-race-hq.js?v=20261016c"></script>   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
 <script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
 <script src="/world-crowd.js?v=20261001a"></script>   <!-- ~90 citizens walking the city -->
 <script src="/world-trick-score.js?v=20261009c"></script><script src="/world-shops.js?v=20261009c"></script><script src="/world-skatejam.js?v=20261009c"></script>   <!-- Skate Jam trick game (I > Races) -->
@@ -556,6 +556,12 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       const c = Math.cos(yaw), s = Math.sin(yaw); g.position.set(H.x - (H.x * c + H.z * s), 0, H.z - (-H.x * s + H.z * c)); _sceneW.add(g); g.updateMatrixWorld(true); return g; };
     const _rotAbout = function(p, H, yaw){ const c = Math.cos(yaw), s = Math.sin(yaw), dx = p.x - H.x, dz = p.z - H.z; return { x: H.x + dx * c + dz * s, z: H.z - dx * s + dz * c }; };
     const scene = _pivot(at, YAW_A, 'reef-a-pivot');
+    // FPS (draw profile 2026-10-16: the two reef cities cost 577 draw calls from spawn): each reef pivot + the bridge + the train only draw within 1.6 km
+    // of the player; the instanced glass tube stays (2 draws). ?reefcull=0 = always draw.
+    if(!/[?&]reefcull=0/.test(location.search)) setInterval(function(){ const P = playerPos, R2 = Math.pow(1600 * V4_U, 2);
+      [['reef-a-pivot', at], ['reef-b-pivot', window.__reefTwin], ['reef-bridge', window.__reefTwin ? { x: (at.x + window.__reefTwin.x) / 2, z: (at.z + window.__reefTwin.z) / 2 } : null]].forEach(function(e){
+        if(!e[1]) return; const o = _sceneW.getObjectByName(e[0]); if(!o) return; const dx = P.x - e[1].x, dz = P.z - e[1].z; o.visible = dx * dx + dz * dz < R2; });
+      const tr = window.__reefTrain; if(tr){ const dx = P.x - tr.position.x, dz = P.z - tr.position.z; tr.visible = dx * dx + dz * dz < R2; } }, 500);
     // Blender station (assets/reef/reef-station.glb, Draco, 7 meshes, metres): scaled to world units, sat on the water.
     // If it fails to load, the code-built station is used instead.
     const _gl = new GLTFLoader(), _dr = new DRACOLoader(); _dr.setDecoderPath('/vendor/three/addons/libs/draco/'); _gl.setDRACOLoader(_dr);

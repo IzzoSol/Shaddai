@@ -67,6 +67,8 @@
       if (panel && panel.style.display === 'block') { close(); return; }
       if (nearInside()) { draw('home'); e.stopImmediatePropagation(); }
     }, true);
+    // FPS: the HQ (shell + showroom ships, ~74 draws) only draws within 1.2 km
+    setInterval(function () { var p = H.getPlayer && H.getPlayer(); if (p && grp) grp.visible = Math.hypot(p.x - center.x, p.z - center.z) < 1200 * U; }, 500);
     var last = false; setInterval(function () { var n = !!nearInside(); if (n && !last) toast('Race HQ - press E for the race desk'); if (!n && panel) close(); last = n; }, 600);
     (function spin() { requestAnimationFrame(spin); for (var i = 0; i < tables.length; i++) tables[i].rotation.y += 0.004; if (beacon) beacon.rotation.y += 0.01; })();
     root.__raceHQ = { pos: center, owned: function () { return garage().owned.slice(); } };
