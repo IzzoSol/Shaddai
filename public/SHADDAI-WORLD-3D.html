@@ -1378,7 +1378,7 @@ window.__worldBuilt = false;
       if(!api) return api;
       // furniture library (world-furniture.js, Blender kit K12): registers at once, GLB loads in the background; rooms laid out before it lands keep the box fallback. ?furniture=0 = boxes only
       const furn = /[?&]furniture=0/.test(location.search) ? Promise.resolve() : _loadScript('/world-furniture.js?v=20261015a').then(function(){ if(window.SHADDAI_FURNITURE) window.SHADDAI_FURNITURE.load(THREE, GLTFLoader); }).catch(function(e){ console.warn('[furniture] loader failed', e); });
-      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20260928a'); }).then(function(){
+      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20261016a'); }).then(function(){
         window.__interiorsV3 = window.buildWorldInteriorsV3({ THREE, scene, heightAt: api.heightAt, city: window.__cityV3,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           onUse: function(e){ if(window.__onInteriorUse) window.__onInteriorUse(e); else console.info('[interiors-v3] use', e.type, e.kind, e.building.id); },
@@ -1387,6 +1387,8 @@ window.__worldBuilt = false;
         const prev = window.__onCityInteract;
         window.__onCityInteract = function(m){ const mine = window.__interiorsV3.handleInteract(m); if(prev && !(mine && m.interior && m.interior.type === 'lift')) prev(m); };
         window.__w3dDebug.interiorsV3 = window.__interiorsV3;
+        // REAL AGENTS INSIDE (2026-10-16): staff + seated agents instead of capsules (world-interior-agents.js, ?interioragents=0 = capsules)
+        _loadScript('/world-interior-agents.js?v=20261016a').then(function(){ if(window.WorldInteriorAgents) window.WorldInteriorAgents.attach({ THREE, interiors: window.__interiorsV3, loader: agentBodyLoader, cloneSkinned: cloneSkinned, animLib: _agentAnimLib }); }).catch(function(e){ console.warn('[interior-agents]', e && e.message); });
         // REALM HOMES (world-realm-homes.js, docs/REALM-HOMES.md): earth burrows, cave homes, leaf tree homes, pod homes, arctic domes — instanced, enterable
         return window.__interiorsV3.ready.then(function(){ return _loadScript('/world-realm-homes.js?v=20261015c'); }).then(function(){
           const rh = window.__realmHomes = window.buildWorldRealmHomes({ THREE, scene, heightAt: api.heightAt, interiors: window.__interiorsV3, layout: window.WORLD_LAYOUT });

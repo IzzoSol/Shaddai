@@ -76,7 +76,7 @@
     'holo-shelf': { fp: [1.6, 0.6], h: 2.0, color: 0x0f3a33 },
     'desk': { fp: [1.6, 1.6], h: 0.75, col: [0.8, 0.35], colZ: 0.4, use: [0, 1.2], npc: [[0, -0.45]], color: 0x2a2f36 },
     'meeting-table': { fp: [3.6, 2.4], h: 0.75, col: [1.5, 0.6], use: [0, 1.6], npc: [[-0.8, -1.0], [0.8, -1.0]], color: 0x2a2f36 },
-    'sofa': { fp: [2.2, 0.9], h: 0.8, color: 0x303844 },
+    'sofa': { fp: [2.2, 0.9], h: 0.8, seat: [[-0.55, 0.06], [0.55, 0.06]], seatY: 0.45, color: 0x303844 },   // seats: agents sit here (world-interior-agents.js)
     'bed-pod': { fp: [2.2, 1.3], h: 1.1, use: [0, 1.1], color: 0x1d2b3a },
     'wardrobe': { fp: [1.2, 0.6], h: 2.2, use: [0, 0.8], color: 0x262a30 },
     'stash': { fp: [1.0, 0.6], h: 0.9, use: [0, 0.8], color: 0x3a3320 },
@@ -166,7 +166,7 @@
     var W = b.w, D = b.d, H = b.h, dw = R.doorW || 2.4;
     var L = { id: b.id, recipe: b.recipe, W: W, D: D, H: H, ceil: clamp(Math.min(H - 0.3, R.ceil || 4.2), 3.0, 8), open: !!R.open,
       door: { x: clamp(b.doorX || 0, -W / 2 + dw / 2 + 0.6, W / 2 - dw / 2 - 0.6), w: dw, h: Math.min(3.0, H - 0.4) },
-      walls: [], items: [], clear: [], uses: [], npcs: [], lights: [], colliders: [], solids: (b.solids || []).slice(), style: R.style || null };
+      walls: [], items: [], clear: [], uses: [], npcs: [], seats: [], lights: [], colliders: [], solids: (b.solids || []).slice(), style: R.style || null };
     var T = WALL_T, inner = { x0: -W / 2 + T, x1: W / 2 - T, z0: -D / 2 + T, z1: D / 2 - T };
     var rng = rngOf(hash(b.id + '|' + b.recipe)), metas = {};
     function M(kind) { return metas[kind] || (metas[kind] = metaFor(kind, furniture)); }
@@ -221,6 +221,7 @@
         if (s.t === 'use' && rectsOverlap({ x: s.x, z: s.z, hx: PLAYER_R, hz: PLAYER_R }, rect)) return null;   // stand in front, not in it
       }
       L.items.push(item);
+      if (m.seat && L.seats) m.seat.forEach(function (sp) { var sp2 = rotPt(sp[0], sp[1], q); L.seats.push({ t: 'seat', role: 'guest', x: x + sp2[0], z: z + sp2[1], face: q, kind: kind, seatY: m.seatY || 0.45 }); });
       for (i = 0; i < spots.length; i++) {
         s = spots[i];
         clearRect(s.x, s.z, PLAYER_R + 0.1, PLAYER_R + 0.1, s.t);
@@ -847,6 +848,11 @@
         if (!obj) { obj = new THREE.Mesh(npcGeo, npcMat(n.role)); var v = new THREE.Mesh(visorGeo, mats.trim); obj.add(v); }
         obj.position.set(n.x, 0, n.z); obj.rotation.y = n.face * Math.PI / 2; obj.name = 'int3-npc:' + n.role; g.add(obj);
         npcs.push({ obj: obj, slot: n, phase: (k * 1.7) % 6.28, base: n.face * Math.PI / 2, wx: 0, wz: 0 });
+      });
+      // SEATED agents (2026-10-16): up to 3 sofa seats per room get a seated agent - only with a real agent factory (no seated capsules)
+      if (npcFactory) (L.seats || []).slice(0, 3).forEach(function (n, k) {
+        var obj = null; try { obj = npcFactory(n, b); } catch (e) { obj = null; } if (!obj) return;
+        obj.position.set(n.x, 0, n.z); obj.rotation.y = n.face * Math.PI / 2; obj.name = 'int3-seated:' + k; g.add(obj);
       });
       var cols = worldColliders(b, L, floorY);
       var markers = L.uses.map(function (u) {
