@@ -199,7 +199,7 @@
       var sz = T.size, solid = null;
       // solid shell (OBB) + enterable interior
       if (layout && layout.realmColliders) { solid = { x: x, z: z, hx: sz[0] / 2 * U * 0.92, hz: sz[1] / 2 * U * 0.92, rot: yaw, top: y + sz[2] * U, label: 'realmhome:' + id }; layout.realmColliders.push(solid); }
-      if (iv3 && iv3.register) { try { iv3.register({ id: id, key: type, recipe: type, x: x, z: z, rot: yaw, w: Math.min(sz[0] - 2, 14), d: Math.min(sz[1] - 2, 9), h: sz[2], canon: solid, ownerId: h.ownerId }); h.enterable = true; } catch (e) { h.enterable = false; } }
+      if (iv3 && iv3.register) { try { iv3.register({ id: id, key: type, recipe: T.recipe || type, x: x, z: z, rot: yaw, w: Math.min(sz[0] - 2, 14), d: Math.min(sz[1] - 2, 9), h: sz[2], canon: solid, ownerId: h.ownerId }); h.enterable = true; } catch (e) { h.enterable = false; } }
       // the bed = a respawn rest point (public realm bed until someone owns it)
       var WS = root.WorldSurvival; if (WS && WS.registerRestPoint) WS.registerRestPoint({ id: id, kind: h.ownerId ? 'home' : 'realm-bed', name: T.label + (h.ownerId ? '' : ' (rest house)'), x: x, z: z, r: sz[0] * 0.7 });
       return h;
@@ -222,7 +222,37 @@
         T.meshes.forEach(function (im) { im.count = n; im.instanceMatrix.needsUpdate = true; });
       });
     }
-    return { types: types, place: place, village: village, update: update, homes: homes, group: group, byId: byId, mats: mats,
+    // BLENDER HOME KITS (2026-10-15): K18 desert homes (4) + K21 forest pods (3) as extra home types. Each GLB node is merged per material into
+    // one InstancedMesh per (type, material) like the code kits; the interior borrows an existing recipe (def.recipe). Door = +z in both.
+    //   rh.addGlbKits(loader, url, [{ type, node, label, recipe, sink? }]) -> Promise<[type ids added]>
+    function mergeGlb(geos) {
+      var n = 0; geos.forEach(function (g) { n += g.attributes.position.count; });
+      var pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2), o = 0;
+      geos.forEach(function (g) { pos.set(g.attributes.position.array, o * 3); if (!g.attributes.normal) g.computeVertexNormals(); nor.set(g.attributes.normal.array, o * 3); if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2); o += g.attributes.position.count; g.dispose(); });
+      var out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); out.computeBoundingSphere(); return out;
+    }
+    function addGlbKits(loader, url, defs) {
+      return new Promise(function (res) {
+        loader.load(url, function (gl) {
+          var added = [];
+          defs.forEach(function (d) {
+            var node = gl.scene.getObjectByName(d.node); if (!node || types[d.type]) return;
+            node.position.set(0, 0, 0); node.rotation.set(0, 0, 0); node.updateMatrixWorld(true);
+            var inv = new THREE.Matrix4().copy(node.matrixWorld).invert(), byMat = {}, box = new THREE.Box3();
+            node.traverse(function (m) {
+              if (!m.isMesh) return; var g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+              g.computeBoundingBox(); box.union(g.boundingBox); var key = m.material.name || m.material.uuid; (byMat[key] = byMat[key] || { mat: m.material, geos: [] }).geos.push(g);
+            });
+            var meshes = Object.keys(byMat).map(function (key) { var im = new THREE.InstancedMesh(mergeGlb(byMat[key].geos), byMat[key].mat, CAP); im.count = 0; im.frustumCulled = false; im.name = 'rh-' + d.type + '-' + key; group.add(im); return im; });
+            var sz = box.getSize(new THREE.Vector3());
+            types[d.type] = { id: d.type, label: d.label, size: [Math.max(6, sz.x), Math.max(6, sz.z), Math.max(3, sz.y)], sink: d.sink || 0, style: 'glb', faceDownhill: false, meshes: meshes, homes: [], recipe: d.recipe };
+            added.push(d.type);
+          });
+          res(added);
+        }, undefined, function () { console.warn('[realm-homes] kit missing:', url); res([]); });
+      });
+    }
+    return { types: types, place: place, village: village, update: update, homes: homes, group: group, byId: byId, mats: mats, addGlbKits: addGlbKits,
       stats: function () { var t = 0, dc = 0; Object.keys(types).forEach(function (k) { dc += types[k].meshes.length; t += types[k].homes.length; }); return { homes: t, drawCallsMax: dc }; } };
   }
   root.buildWorldRealmHomes = build; root.__realmHomesDefineStyles = defineInteriorStyles;
