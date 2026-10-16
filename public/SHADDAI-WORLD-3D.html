@@ -321,7 +321,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-perf-hud.js?v=20261011a"></script>   <!-- ?perf=1 profiler -->
 <script src="/world-transit.js?v=20261015a"></script>
 <script src="/world-transit-kit.js?v=20261015a"></script>
-<script src="/world-realm-kits.js?v=20261016t"></script>
+<script src="/world-realm-kits.js?v=20261016u"></script>
 <script src="/world-race-kit.js?v=20261016a"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -362,7 +362,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
 <script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
 <script src="/world-hovercars.js?v=20261015a"></script>
-<script src="/world-race-select.js?v=20261016s"></script><script src="/world-race-hq.js?v=20261016c"></script>   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
+<script src="/world-race-select.js?v=20261016s"></script><script src="/world-race-hq.js?v=20261016c"></script><script src="/world-home-deeds.js?v=20261016a"></script>   <!-- realm-town homes for Sparks (server deeds) -->   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
 <script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
 <script src="/world-crowd.js?v=20261001a"></script>   <!-- ~90 citizens walking the city -->
 <script src="/world-trick-score.js?v=20261009c"></script><script src="/world-shops.js?v=20261009c"></script><script src="/world-skatejam.js?v=20261009c"></script>   <!-- Skate Jam trick game (I > Races) -->
@@ -5839,6 +5839,10 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
       const toB = near(st, A), toA = near(st, Bz); if((toB || toA) && Math.abs(st.sp) < 9){ held += 0.25; } else held = 0;
       if(held >= 1.2){ const dst = toB ? Bz : A; M.placeAt(dst.x, dst.z, st.yaw); held = 0; last = now; if(window.Navi && window.Navi.toast) window.Navi.toast(toB ? 'Harbor lift: up to the Ring Canal' : 'Harbor lift: down to the Crystal Sea'); } }catch(_){} }, 250);
     console.info('[harbor] ring canal extras: buoys', B.length, '| lift', Math.round(Math.hypot(A.x - Bz.x, A.z - Bz.z) / V4_U), 'm span, level', Hh.level_m, 'm'); }, 1000); })();
+// HOME DEEDS (2026-10-16): buy realm-town homes with Sparks at their front doors (world-home-deeds.js -> /api/home-deeds; ?homedeeds=0 off)
+(function bootHomeDeeds(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
+  if(!window.__loadPlayable || !window.WorldHomeDeeds || !window.__homeLots) return; clearInterval(iv);
+  try{ window.WorldHomeDeeds.init({ U: V4_U, getPlayer: function(){ return (_interiors && _interiors.isInside && _interiors.isInside()) ? null : playerPos; } }); }catch(e){ console.warn('[home-deeds]', e && e.message); } }, 1000); })();
 // RACE HQ (2026-10-16): the starting point for both races; showroom + race desk (world-race-hq.js, ?racehq=0 off)
 (function bootRaceHQ(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !window.WorldRaceHQ || !_v4T || !_v4T.heightAt) return; clearInterval(iv);

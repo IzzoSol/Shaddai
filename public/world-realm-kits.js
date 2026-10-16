@@ -65,6 +65,10 @@
       (batches[key] = batches[key] || []).push(m4.compose(pv.set(p.x, heightAt(p.x, p.z), p.z), q.setFromAxisAngle(up, p.yaw), sv.setScalar(PM * p.s)).clone());
       if (solidR) (solids[key] = solids[key] || []).push({ x: Math.round(p.x), z: Math.round(p.z), r: Math.round(solidR * PM * p.s), label: 'realmkit:' + key });
     }
+    var homeLots = [];   // HOME DEEDS: every K10b home lot -> id 'home:<stationId>:<lot>' (backend/home-deed-routes.js), door point in world units
+    if (towns_on) stations.forEach(function (st) { var lot = 0; placements(st, TOWN.filter(function (t) { return t[0] === 'home'; })).forEach(function (p) {
+      var fx = Math.sin(p.yaw), fz = Math.cos(p.yaw); homeLots.push({ id: 'home:' + st.id + ':' + (lot++), realm: st.realm, x: p.x + fx * 6 * PM, z: p.z + fz * 6 * PM }); }); });
+    root.__homeLots = homeLots;
     stations.forEach(function (st) {
       stats.towns++; var sk = st.id + '|';
       placements(st, BUILDINGS.concat(towns_on ? TOWN : [])).forEach(function (p) { add(sk + 'bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]); });
