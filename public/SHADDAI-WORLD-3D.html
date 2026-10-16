@@ -830,6 +830,22 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         _v4T.addRideExtra(surf); window.__reefDeckSegs = segs.length; console.log('[reef] walkable deck segments: ' + segs.length); }, 500); })();
       // REEF B - THE TWIN (owner sketch 2026-10-16: the rectangle south-west of Reef A). Same hub + atrium + 4 sets + elevator + underwater stop,
       // laid out exactly like Reef A, joined to it by the REEF BRIDGE. ?reeftwin=0 = Reef A only.
+      // BOAT HIRE (owner 2026-10-16: "add the boats and a dock in the reef area"): at each harbour house press E for a water craft - the six-seat
+      // Aqua Cabin-Glider or the Rimba Pod - put on the water at the pier end (world-mount-ride summonKart; water craft ride the surface). Free hire.
+      function reefBoatHire(docks){ window.__reefDocks = docks; let pnl = null, cur = null;
+        const close = function(){ if(pnl) pnl.style.display = 'none'; cur = null; };
+        const open = function(d){ cur = d; if(!pnl){ pnl = document.createElement('div'); pnl.id = 'reefBoatHire'; pnl.style.cssText = 'position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:9300;min-width:300px;padding:14px 18px;background:rgba(4,16,24,.94);border:2px solid #4ac8ff;border-radius:10px;color:#eaf8ff;font:700 14px Rajdhani,sans-serif';
+            document.body.appendChild(pnl); pnl.addEventListener('click', function(e){ const t = e.target.closest('[data-k]'); if(!t || !cur) return; hire(cur, t.getAttribute('data-k')); }); }
+          pnl.innerHTML = '<div style="font:900 12px Orbitron,sans-serif;letter-spacing:.25em;color:#4ac8ff;margin-bottom:8px">BOAT HIRE · ' + d.name.toUpperCase() + '</div>' +
+            [['kart-sub6', 'Aqua Cabin-Glider', 'six seats, steady'], ['kart-pod', 'Rimba Pod', 'fast, dives and hovers']].map(function(b, i){ return '<div data-k="' + b[0] + '" style="cursor:pointer;padding:8px 10px;margin:4px 0;border-radius:7px;border:1px solid #4ac8ff;background:rgba(74,200,255,.06)">' + (i + 1) + ' · ' + b[1] + ' <small style="opacity:.65">' + b[2] + '</small></div>'; }).join('') +
+            '<div style="opacity:.6;font-size:12px;margin-top:6px">Free hire · E to close</div>'; pnl.style.display = 'block'; };
+        const hire = function(d, k){ close(); const M = window.__mountRide; if(!M || !M.summonKart){ if(window.Navi && window.Navi.toast) window.Navi.toast('Boats are not ready yet'); return; }
+          if(M.summonKart(k)){ M.placeAt(d.water.x, d.water.z, d.yaw); if(window.Navi && window.Navi.toast) window.Navi.toast('Your boat is at the end of the pier - E to board'); } };
+        addEventListener('keydown', function(e){ if(e.repeat) return;
+          if(pnl && pnl.style.display === 'block'){ if(e.code === 'KeyE' || e.code === 'Escape'){ close(); e.stopImmediatePropagation(); } else if(e.code === 'Digit1' || e.code === 'Digit2'){ hire(cur, e.code === 'Digit1' ? 'kart-sub6' : 'kart-pod'); e.stopImmediatePropagation(); } return; }
+          if(e.code !== 'KeyE') return; const d = docks.filter(function(q){ return Math.hypot(playerPos.x - q.hire.x, playerPos.z - q.hire.z) < 16 * V4_U; })[0];
+          if(d && !(window.__mountRide && window.__mountRide.isRiding && window.__mountRide.isRiding())){ open(d); e.stopImmediatePropagation(); } }, true);
+        let last = null; setInterval(function(){ const d = docks.filter(function(q){ return Math.hypot(playerPos.x - q.hire.x, playerPos.z - q.hire.z) < 16 * V4_U; })[0]; if(d && d !== last && window.Navi && window.Navi.toast) window.Navi.toast(d.name + ': E for boat hire'); if(!d && cur) close(); last = d; }, 700); }
       if(/[?&]reeftwin=0\b/.test(location.search)) reefLine(_rotAbout({ x: at.x + 22 * V4_U, z: at.z }, at, YAW_A));
       else (function twinReef(){
         const tA = _v4Water.isWater(REEF_B.x, REEF_B.z) ? REEF_B : _waterNear(REEF_B, 300); if(!tA){ console.warn('[reef] twin: no water patch near the owner site'); reefLine(_rotAbout({ x: at.x + 22 * V4_U, z: at.z }, at, YAW_A)); return; }
@@ -861,6 +877,12 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           toB(reefSpan(tA.x + ux * 44 * V4_U, tA.z + uz * 44 * V4_U, tA.x + ux * 110 * V4_U, tA.z + uz * 110 * V4_U, tRy, 'twin-span-st-' + si));
           const P0 = { x: st.x + ux * 75 * V4_U, z: st.z + uz * 75 * V4_U }, P1 = { x: st.x + ux * 55 * V4_U, z: st.z + uz * 55 * V4_U };
           toB(reefRamp(P0.x, P0.z, P1.x, P1.z, sy, tRy, 'twin-ramp-st-' + si)); });
+        // HARBOUR (same as Reef A): pier with berths + moored boats 235 m out past station 0, harbour house at 212 m, walkway spans
+        const tWy = tRy - 4 * V4_U;
+        put('reef-harbor.glb', 'reef-twin-harbor', tA.x, tWy, tA.z - 235 * V4_U); put('reef-harbor-house.glb', 'reef-twin-harbor-house', tA.x, tWy, tA.z - 212 * V4_U);
+        toB(reefSpan(tA.x, tA.z - 186 * V4_U, tA.x, tA.z - 200 * V4_U, tRy, 'twin-harbour-span-a')); toB(reefSpan(tA.x, tA.z - 224 * V4_U, tA.x, tA.z - 228 * V4_U, tRy, 'twin-harbour-span-b'));
+        reefBoatHire([{ name: 'Reef A Harbour', hire: _rotAbout({ x: at.x, z: at.z - 212 * V4_U }, at, YAW_A), water: _rotAbout({ x: at.x + 26 * V4_U, z: at.z - 250 * V4_U }, at, YAW_A), yaw: YAW_A + Math.PI },
+          { name: 'Reef B Harbour', hire: _rotAbout({ x: tA.x, z: tA.z - 212 * V4_U }, tA, YAW_B), water: _rotAbout({ x: tA.x + 26 * V4_U, z: tA.z - 250 * V4_U }, tA, YAW_B), yaw: YAW_B + Math.PI }]);
         put('reef-elevator.glb', 'twin-hub-elevator', tA.x + 22 * V4_U, tRy, tA.z); put('reef-tube-station.glb', 'twin-underwater-stop', tA.x + 22 * V4_U, tRy - 8 * V4_U, tA.z);
         // THE REEF BRIDGE: hub A plaza edge -> hub B plaza edge. Glass deck 8 m wide, lifted over any island on the way (ramps at both ends), pylons every 48 m.
         (function reefBridge(){ const H = _sites[0], dx = tA.x - H.x, dz = tA.z - H.z, D = Math.hypot(dx, dz), ux = dx / D, uz = dz / D;
