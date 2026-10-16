@@ -16,14 +16,15 @@
 
   var KEY = 'shd_navi_v1';
   var THEME = { navy: '#050814', cyan: '#00D4FF', blue: '#1B6CFF', gold: '#F5A623', white: '#E8F6FF' };
+  // ORDER (owner 2026-10-16: "organized and polished, not random buttons"): related modules sit together round the ring -
+  // PLAY (map, modes, jobs) · OWN (items + mounts, shop, homes, wallet, sparks) · AGENTS + LEARN (agents, academy) · SOCIAL (chat, news, radio).
+  // ZEROX signals are off the ring for now (owner: later); M.signals stays in the code.
   var MODULES = [
-    { id: 'map', label: 'MAP', ic: '🗺' }, { id: 'inv', label: 'INV', ic: '🎒' },
-    { id: 'chat', label: 'CHAT', ic: '💬' }, { id: 'sparks', label: 'SPARKS', ic: '✦' },
-    { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'market', label: 'MARKET', ic: '🛒' },
-    { id: 'radio', label: 'RADIO', ic: '📡' }, { id: 'bots', label: 'BOTS', ic: '🤖' },
-    { id: 'plots', label: 'PLOTS', ic: '⬡' }, { id: 'wallet', label: 'WALLET', ic: '👛' },
-    { id: 'academy', label: 'ACADEMY', ic: '🎓' }, { id: 'jobs', label: 'JOBS', ic: '💼' }, { id: 'signals', label: 'SIGNALS', ic: '📶' },
-    { id: 'modes', label: 'MODES', ic: '⚙' }
+    { id: 'map', label: 'MAP', ic: '🗺' }, { id: 'modes', label: 'MODES', ic: '⚙' }, { id: 'jobs', label: 'JOBS', ic: '💼' },
+    { id: 'inv', label: 'ITEMS', ic: '🎒' }, { id: 'market', label: 'SHOP', ic: '🛒' }, { id: 'plots', label: 'HOMES', ic: '⬡' },
+    { id: 'wallet', label: 'WALLET', ic: '👛' }, { id: 'sparks', label: 'SPARKS', ic: '✦' },
+    { id: 'bots', label: 'AGENTS', ic: '🤖' }, { id: 'academy', label: 'ACADEMY', ic: '🎓' },
+    { id: 'chat', label: 'CHAT', ic: '💬' }, { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'radio', label: 'RADIO', ic: '📡' }
   ];
   var SLOTS = ['Dashboard', 'SkinForge', 'AutoPost', 'Aura', 'Terminal'];
   // Line icons (2026-10-15, owner Navi refs): one stroke style for every module, replaces the emoji.
