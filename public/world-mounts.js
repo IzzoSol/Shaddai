@@ -20,7 +20,22 @@
     { id: 'car-sedan', name: 'Streak Sedan', kind: 'mount', flying: false, store: ['central', 'suburb'], price: 700, model: null, procedural: 'car:sedan', clips: null, saddle: 'saddle', note: 'retro hover sedan' },
     { id: 'car-van', name: 'Courier Van', kind: 'mount', flying: false, store: ['central', 'suburb', 'forge'], price: 500, model: null, procedural: 'car:van', clips: null, saddle: 'saddle', note: 'hover van - slow, roomy' },
     { id: 'board-street', name: 'Street Hoverboard', kind: 'board', flying: false, store: ['central', 'suburb', 'harbor'], price: 150, style: 'sunburst', note: 'ground board (pad)' },
-    { id: 'board-foil', name: 'Foil Hoverboard', kind: 'board', flying: true, store: ['central', 'harbor'], price: 0, style: 'racer', note: 'flying board (foil) - costs more' }
+    { id: 'board-foil', name: 'Foil Hoverboard', kind: 'board', flying: true, store: ['central', 'harbor'], price: 0, style: 'racer', note: 'flying board (foil) - costs more' },
+    // HOVERBOARDS v02 (owner 2026-10-16: "the new hoverboard and new ships in the prices"): every K22 board design is its own buy (ground boards)
+    { id: 'board-obsidian', name: 'Obsidian Gold Board', kind: 'board', flying: false, store: ['central', 'forge'], price: 450, style: 'obsidian', note: 'v02 board' },
+    { id: 'board-redline', name: 'Redline H-Frame Board', kind: 'board', flying: false, store: ['central', 'suburb'], price: 300, style: 'redline', note: 'v02 board' },
+    { id: 'board-batwing', name: 'Night Batwing Board', kind: 'board', flying: false, store: ['darkvault', 'central'], price: 350, style: 'batwing', note: 'v02 board' },
+    { id: 'board-checker', name: 'Checker Rail Board', kind: 'board', flying: false, store: ['meadow', 'central'], price: 250, style: 'checker', note: 'v02 board' },
+    { id: 'board-ringfan', name: 'Quad Ring-Fan Board', kind: 'board', flying: false, store: ['harbor', 'central'], price: 350, style: 'ringfan', note: 'v02 board' },
+    { id: 'board-bluejet', name: 'Blue Twin-Jet Board', kind: 'board', flying: false, store: ['arctic', 'central'], price: 300, style: 'bluejet', note: 'v02 board' },
+    { id: 'board-hauler', name: 'Brass Hauler Board', kind: 'board', flying: false, store: ['desert', 'central'], price: 200, style: 'hauler', note: 'v02 board' },
+    { id: 'board-skullpunk', name: 'Skull Punk Board', kind: 'board', flying: false, store: ['volcano', 'central'], price: 400, style: 'skullpunk', note: 'v02 board' },
+    // RACE SHIPS (K5 Blender ships, world-hovercars.js): rideable anywhere as mounts (kart-* = the racing handling); also rentable per race at Race HQ
+    { id: 'kart-arrow', name: 'Meridian Arrowhead (race ship)', kind: 'mount', flying: false, store: ['central', 'grid'], price: 1500, model: null, procedural: 'car:arrow', clips: null, saddle: 'saddle', note: 'race ship' },
+    { id: 'kart-viper', name: 'Void Viper (race ship)', kind: 'mount', flying: false, store: ['central', 'void'], price: 1500, model: null, procedural: 'car:viper', clips: null, saddle: 'saddle', note: 'race ship' },
+    { id: 'kart-raptor', name: 'Night Raptor (race ship)', kind: 'mount', flying: false, store: ['central', 'darkvault'], price: 1600, model: null, procedural: 'car:raptor', clips: null, saddle: 'saddle', note: 'race ship' },
+    { id: 'kart-lancer', name: 'Gilded Lancer (race ship)', kind: 'mount', flying: false, store: ['central', 'forge'], price: 1700, model: null, procedural: 'car:lancer', clips: null, saddle: 'saddle', note: 'race ship' },
+    { id: 'kart-bruiser', name: 'Iron Bruiser (race ship)', kind: 'mount', flying: false, store: ['central', 'volcano'], price: 1800, model: null, procedural: 'car:bruiser', clips: null, saddle: 'saddle', note: 'race ship' }
   ];
   var BASE = { hawk: 700, skiff: 900, 'board-foil': 350 };   // price before the flying multiplier
   CATALOG.forEach(function (c) { if (c.flying && !c.price) c.price = Math.round(BASE[c.id] * TUNE.flyMul); });

@@ -1208,7 +1208,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('mount-ride', function(api){   // MOUNTS (world-mount-ride.js + world-mounts.js): M = Mount Store, E = mount / dismount
       if(!api) return api;
-      return Promise.all([_loadScript('/world-mounts.js?v=20261011a'), _loadScript('/world-mount-ride.js?v=20261011a')]).then(function(){
+      return Promise.all([_loadScript('/world-mounts.js?v=20261016a'), _loadScript('/world-mount-ride.js?v=20261011a')]).then(function(){
         const ml = new GLTFLoader(); ml.setDRACOLoader(dracoLoader); ml.setMeshoptDecoder(MeshoptDecoder);
         window.__interiorsExit = function(){ try{ if(_interiors && _interiors.isInside && _interiors.isInside() && _interiors.exit) _interiors.exit(); }catch(_){} };
         window.__interiorsEnter = function(code){ try{ if(_interiors && _interiors.enter){ if(_interiors.isInside && _interiors.isInside() && _interiors.exit) _interiors.exit(); _interiors.enter(code); } }catch(e){ console.warn('[academy] field trip failed:', e && e.message); } };
