@@ -6007,6 +6007,15 @@ window.__travel = {
       // Navi pins: the 7 rooms + the gate
       if(window.Navi && window.Navi.registerPin){ park.rooms.forEach(function(r){ window.Navi.registerPin({ id: 'park-' + r.id, t: 'Hoverskate · ' + r.name, kind: 'Hoverskate', x: r.x, z: r.z, when: r.tag }); }); window.Navi.registerPin({ id: 'park-gate', t: 'Hoverskate Park (SHADDAI gate)', kind: 'Hoverskate', x: park.entrance.x, z: park.entrance.z }); }
       window.NaviHooks = window.NaviHooks || {};
+      // NAVI -> BACKEND (2026-10-16, backend/navi-routes.js): name, event signup and class enrolment are stored server-side (the Navi UI still updates at once).
+      (function(){ const H = window.NaviHooks, base = (window.SHADDAI_API_BASE || '').replace(/\/$/, '');
+        const post = function(path, body){ const h = { 'content-type': 'application/json' }; try{ const tk = localStorage.getItem('shd_token'); if(tk) h.Authorization = 'Bearer ' + tk; }catch(_){}
+          return fetch(base + '/api/navi/' + path, { method: 'POST', headers: h, body: JSON.stringify(body) }).then(function(r){ return r.json(); })
+            .then(function(j){ if(!j.ok && window.Navi && window.Navi.toast) window.Navi.toast(j.error === 'sign in first' ? 'Sign in to save this to your account' : 'Navi: ' + (j.error || 'not saved')); return j; })
+            .catch(function(){ if(window.Navi && window.Navi.toast) window.Navi.toast('Navi is offline - saved on this device only'); }); };
+        if(!H.onName) H.onName = function(n){ post('name', { name: n }); };
+        if(!H.onSparksSignup) H.onSparksSignup = function(id){ post('signup', { eventId: id }); };
+        if(!H.onEnrollBot) H.onEnrollBot = function(cls, bot){ post('enroll', { classId: cls, botId: bot == null ? null : String(bot) }); }; })();
       if(window.WorldNaviChat && !/[?&]chat=0/.test(location.search)) window.WorldNaviChat.start({ getPlayer: function(){ return playerPos; } });
       if(window.WorldRaceSelect) window.WorldRaceSelect.init({ THREE });
       window.NaviHooks.onRaceEnter = function(cid, ranked){
