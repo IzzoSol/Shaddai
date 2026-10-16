@@ -91,7 +91,7 @@
   //    you're inside the arena instance above. Parse time: publishes the door + pushes shell/lobby colliders. ──
   var _L = window.WORLD_LAYOUT, _lm = _L && _L.landmark && _L.landmark('colosseum');
   if (_lm) {
-    var CX = _lm.pos[0], CZ = _lm.pos[1], FACE = Math.atan2(-CZ, -CX);   // unit dir from the colosseum toward the city
+    var CX = _lm.pos[0], CZ = _lm.pos[1], FACE = Math.atan2(-CZ, -CX) + (/[?&]colface=city/.test(location.search) ? 0 : Math.PI);   // 2026-10-15 owner: not enough room city-side -> the lobby/entrance faces OUTWARD (away from the city); ?colface=city = old
     var fX = Math.cos(FACE), fZ = Math.sin(FACE), sX = fZ, sZ = -fX;       // front (lobby side) + side axes = three.js local +z / +x at rotation.y = atan2(fX, fZ)
     // local metres (lx along the long axis, lz toward the lobby/front) → world units
     var W = function (lx, lz) { return [CX + (sX * lx + fX * lz) * U, CZ + (sZ * lx + fZ * lz) * U]; };

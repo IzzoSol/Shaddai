@@ -144,10 +144,10 @@ test('GLB kit: Box3 fit-to-span (m) + ground snap, kiosks instanced, code geomet
   assert.deepEqual(Object.keys(a.kit.failed), [], JSON.stringify(a.kit.failed));
   assert.ok(a.kit.done.kiosk && a.kit.done.seat && a.kit.done.arch);
   const km = a.kit.group.children.filter(o => o.name.startsWith('kit-kiosk')); assert.equal(km.length, 1);
-  assert.equal(km[0].count, 8, 'MEDIUM shows 8 GLB kiosks');
+  assert.equal(km[0].count, 9, 'MEDIUM shows 9 GLB kiosks (18 kiosks since the 6 south-arc ones were removed, old handoff #7)');
   const m = new THREE.Matrix4(); km[0].getMatrixAt(0, m); const b = new THREE.Box3().copy(km[0].geometry.boundingBox || (km[0].geometry.computeBoundingBox(), km[0].geometry.boundingBox)).applyMatrix4(m);
   assert.ok(Math.abs((b.max.y - b.min.y) - 2.8) < 0.02, 'kiosk fitted to 2.8 m, got ' + (b.max.y - b.min.y)); assert.ok(Math.abs(b.min.y - a.dims.H_LOW) < 0.02, 'kiosk grounded on the promenade');
-  const codeK = a.group.children[0].children.find(o => o.name === 'kiosks-code'); assert.equal(codeK.count, 16, 'code kiosks compacted to the uncovered 16');
+  const codeK = a.group.children[0].children.find(o => o.name === 'kiosks-code'); assert.equal(codeK.count, 9, 'code kiosks compacted to the uncovered 9');
   const seats = a.kit.group.children.filter(o => o.name.startsWith('kit-vipseat')); assert.equal(seats[0].count, 160);
   const code = []; a.group.traverse(o => { if (o.name === 'portals-code' || o.name === 'vip-seats') code.push(o.visible); }); assert.deepEqual(code, [false, false]);
 });
@@ -158,7 +158,7 @@ test('GLB kit: a failing loader leaves the code geometry fully intact (arena nev
   a.startKit(); await wait(150);
   assert.ok(Object.keys(a.kit.failed).length >= 3); assert.equal(Object.keys(a.kit.agentObjs).length, 0);
   const vis = {}; a.group.traverse(o => { if (['portals-code', 'vip-seats', 'kiosks-code'].includes(o.name)) vis[o.name] = o.visible; }); assert.deepEqual(vis, { 'portals-code': true, 'vip-seats': true, 'kiosks-code': true });
-  const codeK = []; a.group.traverse(o => { if (o.name === 'kiosks-code') codeK.push(o.count); }); assert.deepEqual(codeK, [24, 24]);
+  const codeK = []; a.group.traverse(o => { if (o.name === 'kiosks-code') codeK.push(o.count); }); assert.deepEqual(codeK, [18, 18]);   // 18 kiosks (6 south-arc removed)
 });
 
 test('GLB kit: agents become vendors/ushers/greeter by tier (MEDIUM 3, HIGH 7, LOW none) with idle mixers', T, async () => {
