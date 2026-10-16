@@ -72,6 +72,19 @@ Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
 - [ ] Park dressing 41 draws → BatchedMesh per material (~10) · terrain tile merge (~190 draws) · shared building materials
 - [ ] Streaming: load < 1400 m, unload > 1800 m (contract 10) · light loading screen
 
+
+## 2026-10-16 progress (Blender-first pass)
+- [x] GAME FIXES found through the Blender world: layout v4 default (stations ~2.5 km off, Colosseum inside the city) · ~2400 ghost walls
+      (canon colliders of thinned fabric lots) · 18 fabric buildings inside the park · K1 towers picked from lots the game really shows
+- [x] Homes: K21 forest pods (suburb + harbor) + K18 desert village (desert station) — enterable · Bots: K14 Grok/Muse on PORTER/CLERK
+- [x] Blender world matches the game: game city (canon + live fabric + K1), park at PLAZA_SKATE, 15 Blender homes, Dragon Gate race + race kit
+      (tools/ual/race-kit-export.mjs), the REAL Colosseum exterior + K13 lobby (tools/ual/scene-export.mjs) with the Hover League field inside,
+      coloured viewport (terrain colour map, sea), v3/v4 check markers (hidden)
+- [ ] Reef City + glass-tube line only load with ?reef=1 (decide in the FPS pass) · district signs (place in the browser pass) · Meridian-8 is
+      not the default circuit (?tracks=meridian-8) · realm code homes not in Blender (code-built)
+- Branch: the other terminal moved the shared checkout to agents/1; world commits continue there (feat/world3d is an ancestor). Owner picks (a)/(b).
+- NEXT: FPS pass from docs/HANDOFF-FPS-FRONTEND-BACKEND-20261016.md + the owner's FPS file, then the browser walk-through.
+
 ## Notes
 - PUSH: main push stopped at branch slice 40/102 (system low on memory with Blender open). Restart only when the owner says (branch slices first, then main).
 - Disk C: was 432 MB free on 2026-10-16; world .blend1 deleted (owner OK). Owner wants unused GLB/zip files found and removed - list first, owner picks.
