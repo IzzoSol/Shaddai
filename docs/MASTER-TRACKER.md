@@ -28,7 +28,7 @@ Legend: [x] done + tested · [~] partly · [ ] open · (flag) = URL switch to tu
 
 ## 2. Colosseum finish
 - [ ] Headless check: enter via MODES and via the door (no black screen), walk in through the flipped lobby, nothing clips the terrain/ring
-- [ ] K13 Blender grand lobby (60x32x26, 3 crimson portals, gold vault) placed on the exterior lobby (built, NOT in game)
+- [x] K13 Blender grand lobby on the exterior (?lobbykit=0) — tools/ual/landmark-kits.test.mjs
 - [ ] Stairs + stair-walk proportions (owner list) · colosseum interior polish pass
 
 ## 3. Train
@@ -50,9 +50,9 @@ Legend: [x] done + tested · [~] partly · [ ] open · (flag) = URL switch to tu
 
 ## 6. Cities + homes + furniture + interiors + Athenaeum
 Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
-- [ ] K1 towers (slab/setback/spire, owner: "this tower looks great") → city plan buildings
+- [x] K1 towers: 24 in the LIVE city (grid fabric sc-tower-*, Blender LODs, survive the game's fabric filters) — tools/grid-city/k1-*.{cjs,mjs}, fabric test
 - [ ] K2 sign kit (8 signs) → districts
-- [ ] K15 Athenaeum rotunda → campus (1040, 800) + Athenaeum rooms + cowork hall
+- [x] K15 Athenaeum rotunda replaces the code rotunda shell + balconies (?athkit=0) · [ ] Athenaeum rooms + cowork hall
 - [ ] K18 desert homes · K21 forest pod homes → realm towns
 - [ ] K11 hoverskate kit · K14 Grok/Muse wheel-bots
 - [ ] 7 SHADDAI buildings in + out · doors on every enterable building · futuristic furniture kit v2 (owner home-inventory refs)
@@ -60,6 +60,8 @@ Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
 - [ ] Realm city buildings per realm (K10 is wired via world-realm-kits.js — check look) · floating billboards (fixed ad slots, approval queue)
 
 ## 7. Full-world polish (Blender first, then the game)
+- [x] Blender file organised: 00_WORLD (visible) / 10_KIT_LIBRARY / 20_STUDIO (hidden); world collections un-hidden; .blend1 backups off
+- [x] Blender city = the GAME city: canon-v4.glb + the 827 live grid-fabric buildings (same filters as the game) as library instances; old 318-plan city kept hidden in 20_STUDIO
 - [ ] Bring the Blender world file (docs/blender/shaddai_world_20261015.blend) in line with the game: every wired kit placed at its
       game position, every unwired kit above placed, then compare against the game layout (WORLD_LAYOUT) and fix gaps
 - [ ] Headless walk-through: city, each realm, Athenaeum, Colosseum, park, race, reef, harbor — screenshots + console
@@ -69,6 +71,11 @@ Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
 - [ ] Measure first (?perf=1 HUD + headless timings): load time, draw calls, tris per area
 - [ ] Park dressing 41 draws → BatchedMesh per material (~10) · terrain tile merge (~190 draws) · shared building materials
 - [ ] Streaming: load < 1400 m, unload > 1800 m (contract 10) · light loading screen
+
+## Notes
+- PUSH: main push stopped at branch slice 40/102 (system low on memory with Blender open). Restart only when the owner says (branch slices first, then main).
+- Disk C: was 432 MB free on 2026-10-16; world .blend1 deleted (owner OK). Owner wants unused GLB/zip files found and removed - list first, owner picks.
+- The game city = canon-v4.glb + grid-fabric-v4.json (world-clusters-v4.js keeps ~30% by hash and drops offices); world-grid-city-v4.js is NOT loaded.
 
 ## Owner decisions waiting
 - agents-not-tpose: retire baked-clip checks or re-bake (section 4) · re-rig spend for ORACLE/PIKADON/VILLAIN
