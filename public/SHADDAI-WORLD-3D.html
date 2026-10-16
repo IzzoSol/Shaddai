@@ -525,7 +525,7 @@ camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY 
 window.__w3dDebug = { scene, camera, renderer, THREE };
 // REEF STATION (?reef=1, off by default): world-reef.js on the existing ocean. Finds the first stretch of water by a coarse
 // grid search over the map, sits the station on it, and logs where it went. No second ocean: it reads _v4Water.
-(function bootReef(){ if(!/[?&]reef=1\b/.test(location.search)) return; let n = 0;
+(function bootReef(){ if(!/[?&]reef=[12]\b/.test(location.search)) return; let n = 0;
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
     if(!window.__loadPlayable || !window.WorldReef || !_v4Water || !_v4T) return; clearInterval(iv);
     // 2026-10-11: anchor in the CRYSTAL SEA (atlas: southwest, beside the Harbor Line Station) instead of the first water near spawn. Spiral out from the ocean realm's dock, then its
@@ -789,7 +789,55 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
         const surf = function(x, z){ for(let i = 0; i < segs.length; i++){ const s = segs[i], dx = x - s.x, dz = z - s.z, c = Math.cos(s.rot), sn = Math.sin(s.rot);
           const u = dx * c - dz * sn, v = dx * sn + dz * c; if(Math.abs(u) <= s.len / 2 && Math.abs(v) <= s.w / 2) return s.y; } return null; };
         _v4T.addRideExtra(surf); window.__reefDeckSegs = segs.length; console.log('[reef] walkable deck segments: ' + segs.length); }, 500); })();
-      console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
+      console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' '));
+      // TWIN REEF (?reef=2 or ?reeftwin=1 with ?reef=1): a second copy of the city on another water patch 550-950 m out,
+      // same hub + 4 sets + elevator + underwater stop, joined to the main hub by a walking bridge + an underwater tube.
+      // Default ?reef=1 is untouched (zero visual change); the twin only builds with the extra flag.
+      if(/[?&](reef=2|reeftwin=1)\b/.test(location.search)){ (function twinReef(){
+        var tA = null;
+        for(var rr = 550; rr <= 950 && !tA; rr += 50){ for(var aa = 0; aa < 12 && !tA; aa++){ var tt = aa / 12 * Math.PI * 2, px = at.x + Math.cos(tt) * rr * V4_U, pz = at.z + Math.sin(tt) * rr * V4_U;
+          if(_v4Water.isWater(px, pz) && _v4Water.isWater(px + 80 * V4_U, pz) && _v4Water.isWater(px, pz + 80 * V4_U) && _v4Water.isWater(px - 80 * V4_U, pz) && _v4Water.isWater(px, pz - 80 * V4_U)) tA = { x: px, z: pz }; } }
+        if(!tA){ console.warn('[reef] twin: no second water patch found'); return; }
+        window.__reefTwin = tA;
+        var tW = _v4Water.waterHeightAt(tA.x, tA.z), tWy = (tW != null ? tW : 0), tRy = tWy + 4 * V4_U;
+        var tSp = function(a){ return { x: tA.x + Math.sin(a) * 66 * V4_U, z: tA.z - Math.cos(a) * 66 * V4_U }; };
+        _gl.loadAsync('/assets/reef/reef-city-hub.glb').then(function(hb){ var hub = hb.scene; hub.name = 'reef-twin-hub'; hub.scale.setScalar(V4_U); hub.position.set(tA.x, tRy, tA.z); scene.add(hub); })
+          .catch(function(e){ console.warn('[reef] twin hub failed:', e && e.message); });
+        _gl.loadAsync('/assets/reef/reef-atrium.glb').then(function(q){ var m = q.scene; m.name = 'reef-twin-atrium'; m.scale.setScalar(V4_U); m.position.set(tA.x, tRy, tA.z); scene.add(m); })
+          .catch(function(e){ console.warn('[reef] twin atrium failed:', e && e.message); });
+        _sets.forEach(function(deg, si){ var a = deg / 180 * Math.PI, c0 = tSp(a), sx = Math.cos(a), sz = Math.sin(a);
+          _row.forEach(function(it){ var ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
+            _gl.loadAsync('/assets/reef/' + it[0]).then(function(q){ var m = q.scene; m.name = 'twin-set' + si + '-' + it[0]; m.scale.setScalar(V4_U); m.position.set(ox, tRy, oz); m.rotation.y = a; scene.add(m); })
+              .catch(function(e){ console.warn('[reef] twin ' + it[0] + ' failed:', e && e.message); });
+            if(it[0] === 'reef-dome.glb') _gl.loadAsync('/assets/reef/reef-interior.glb').then(function(q){ var m = q.scene; m.name = 'twin-set' + si + '-dome-interior'; m.scale.setScalar(V4_U); m.position.set(ox, tRy, oz); m.rotation.y = a; scene.add(m); })
+              .catch(function(e){});
+          });
+          reefSpan(tA.x + Math.sin(a) * 44 * V4_U, tA.z - Math.cos(a) * 44 * V4_U, c0.x - Math.sin(a) * 13 * V4_U, c0.z + Math.cos(a) * 13 * V4_U, tRy, 'twin-spoke-' + si);
+        });
+        _gl.loadAsync('/assets/reef/reef-elevator.glb').then(function(e){ var el = e.scene; el.name = 'twin-hub-elevator'; el.scale.setScalar(V4_U); el.position.set(tA.x + 22 * V4_U, tRy, tA.z); scene.add(el); })
+          .catch(function(e){ console.warn('[reef] twin elevator failed:', e && e.message); });
+        _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(t){ var ts = t.scene; ts.name = 'twin-underwater-stop'; ts.scale.setScalar(V4_U); ts.position.set(tA.x + 22 * V4_U, tRy - 8 * V4_U, tA.z); scene.add(ts); })
+          .catch(function(e){});
+        _gl.loadAsync('/assets/reef/reef-dock.glb').then(function(d){ var dk = d.scene; dk.name = 'reef-twin-dock'; dk.scale.setScalar(V4_U); dk.position.set(tA.x, tWy, tA.z - 120 * V4_U); scene.add(dk); })
+          .catch(function(e){ console.warn('[reef] twin dock failed:', e && e.message); });
+        // BRIDGE between the two hubs (walkable: reefSpan registers length, reefWalk picks up ^span- names)
+        reefSpan(_sites[0].x, _sites[0].z, tA.x, tA.z, (_ry + tRy) / 2, 'twin-bridge');
+        // UNDERWATER TUBE between the two underwater stops (same depth convention: 8 m below each deck)
+        var ax = _sites[0].x + 22 * V4_U, az = _sites[0].z, bx = tA.x + 22 * V4_U, bz = tA.z;
+        var dx = bx - ax, dz = bz - az, TD = Math.hypot(dx, dz);
+        if(/[?&]glasstube=0/.test(location.search)){ _gl.loadAsync('/assets/reef/reef-tube.glb').then(function(tg){ var src = tg.scene, n = Math.max(1, Math.ceil(TD / (60 * V4_U)));
+            for(var k = 0; k < n; k++){ var t = (k + 0.5) / n, s = src.clone(true); s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx);
+              s.position.set(ax + dx * t, (_ry - 8 * V4_U + tRy - 8 * V4_U) / 2, az + dz * t); s.name = 'twin-tube-' + k; scene.add(s); } })
+          .catch(function(e){ console.warn('[reef] twin tube failed:', e && e.message); }); }
+        else _gl.loadAsync('/assets/kits/shaddai_transit_kit_v01.glb').then(function(r){ var tile = r.scene.getObjectByName('glass_tube_18m'); if(!tile) return;
+            var N = Math.max(1, Math.ceil(TD / (18 * V4_U))), yaw = Math.atan2(dx, dz), m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), sc = new THREE.Vector3(V4_U, V4_U, V4_U), p3 = new THREE.Vector3();
+            tile.updateMatrixWorld(true); tile.traverse(function(src){ if(!src.isMesh) return; var rel = new THREE.Matrix4().copy(tile.matrixWorld).invert().multiply(src.matrixWorld);
+              var im = new THREE.InstancedMesh(src.geometry, src.material, N); im.name = 'twin-glass-tube-' + src.name; im.frustumCulled = false;
+              for(var k = 0; k < N; k++){ var t = (k + 0.5) / N; p3.set(ax + dx * t, (_ry - 8 * V4_U) + ((tRy - 8 * V4_U) - (_ry - 8 * V4_U)) * t - 0 * V4_U, az + dz * t); m4.compose(p3, q, sc).multiply(rel); im.setMatrixAt(k, m4); }
+              scene.add(im); }); })
+          .catch(function(e){ console.warn('[reef] twin glass tube failed:', e && e.message); });
+        console.log('[reef] twin city at (' + Math.round(tA.x / V4_U) + ',' + Math.round(tA.z / V4_U) + '), bridge + tube linked');
+      })(); } })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
 // BACKGROUND SHADER COMPILE (after playable): streamed-in objects are hidden until compiled; this keeps compiling what is
@@ -1041,7 +1089,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('city-v3', function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
       if(!api) return api;
-      return _loadScript('/world-city-v3.js?v=20261011k').then(function(){
+      return _loadScript('/world-city-v3.js?v=20261016a').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(_rideOn()),
