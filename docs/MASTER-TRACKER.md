@@ -11,7 +11,22 @@ visuals · `*.glb` gitignored (`git add -f`) · bump `?v=` on edited script tags
 
 Legend: [x] done + tested · [~] partly · [ ] open · (flag) = URL switch to turn it off
 
-## 0. Done 2026-10-15 (this session)
+## 0a. Done 2026-10-16 (Opus session) — node-tested, NOT yet seen in a browser
+**Owner order (2026-10-16):** reefs + race tracks → Colosseum polish (Hover League to concept art) → Navi + mounts wired → hoverskate
+park finished → boats/dock at the reef + furniture everywhere → FPS + polish → agent rigging, hoverboard moves, agent fighting.
+- [~] REEFS ON BY DEFAULT (?reef=0): Reef A + Reef B at the owner's Blender spots/rotations (REEF_A/REEF_B empties, collection
+      30_REEF_CITIES), hub pivots, glass bridge A<->B (walkable), undersea glass tube + shuttle train Reef B -> west islands -> Reef Line
+      Shore station (city SW edge); tunnel-line cutscene Shore <-> Colosseum subway, Reef <-> Reef B (?reeftwin=0 ?reeftrain=0)
+- [~] Reef B harbour + BOAT HIRE at both harbour houses (E: Aqua Cabin-Glider / Rimba Pod)
+- [~] SKYLINE CIRCUIT = the long race ('grand-course', replaces Meridian-8, which is hidden from the menu, kept in code; Blender
+      W_race_meridian8 hidden, WORLD_race_skyline added): r1450 sky ring, ground pit at Race HQ with ~1 km climbs, two trochoid
+      crossover loops (N -10 deg, S 170 deg, flyovers), deck rises when selected — world-race-skyline 7 tests
+- [~] RACE HQ (Blender K27, kits/_src/k27_race_hq.py): showroom + race desk (short race / full course / showroom / upgrades soon)
+      beside Dragon Gate — world-race-hq 3 tests. Car ownership is client-side (shd.raceGarage) like the old garage -> server before money.
+- [ ] Headless browser pass of all of the above (needs Blender closed: 1.1 GB free with it open)
+- [ ] Jump ramps on the deck (K6b race_jump_ramp + ramp physics) · Upgrades shop
+
+## 0. Done 2026-10-15
 - [x] Hoverboards v02 detail pass (turbine pods, kicked armour, rim band, fins, chamfered pods) — `_src/k22b_board_details.py`, 11 tests
 - [x] HOVER LEAGUE Colosseum field mode: rules core (hold/shoot/drop on ram or bolt, goals, boost, power-ups, demos, paint mode, bots),
       view (rim quarter-pipe, energy barrier, Cyon/Magma floor, K26 goals/pads/dais), 6 balls (SHADDAI default + regular chrome +
