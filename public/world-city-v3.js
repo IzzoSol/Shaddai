@@ -236,11 +236,17 @@
         if (byName[mk.name]) warn('duplicate marker ' + mk.name);
         byName[mk.name] = mk; markers.push(mk);
       });
+      var __search = (typeof location !== 'undefined' && location.search) || '';
+      var __fullCity = /[?&]fullcity=1\b/.test(__search);
+      var __swOff = /[?&]swhalf=0\b/.test(__search);
+      var __swKeep = 0.34, __m = /[?&]swkeep=([0-9.]+)\b/.exec(__search);
+      if (__m) __swKeep = Math.min(1, Math.max(0, parseFloat(__m[1])));
       arr(res[1], 'plots').forEach(function (p) {
         if (!p || !p.plot_id || !Array.isArray(p.beacon_m) || !isFinite(p.beacon_m[0]) || !isFinite(p.beacon_m[1])) { warn('bad plot row ' + (p && p.plot_id)); return; }
         if (plotIdx[p.plot_id] != null) { warn('duplicate plot ' + p.plot_id); return; }
         if (STATES.indexOf(p.state) < 0) p.state = 'empty';
-        if ((typeof location !== 'undefined' && !/[?&]fullcity=1/.test(location.search || '')) && Math.abs(Math.sin(p.beacon_m[0] * 12.9898 + p.beacon_m[1] * 78.233) * 43758.5453) % 1 >= 0.2) return;   // owner 2026-10-11: a third of the plot grid (?fullcity=1 = all)
+        var __isCity = p.plot_id.indexOf('PLOT-CITY-') === 0;
+        if (!__fullCity && !__swOff && !__isCity && Math.abs(Math.sin(p.beacon_m[0] * 12.9898 + p.beacon_m[1] * 78.233) * 43758.5453) % 1 >= __swKeep) return;   // owner 2026-10-16: hide ~2/3 SW grid (?fullcity=1 = all, ?swhalf=0 = off, ?swkeep=0..1 tune)
         plotIdx[p.plot_id] = plots.length; plots.push(p);
       });
       arr(res[2], 'slots').forEach(function (s) {
