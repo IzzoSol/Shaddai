@@ -3,7 +3,7 @@
  *   WorldCutsceneTravel.init({ getPos():{x,z}, teleport(x,z,yaw), enter(code), exit(), inside():bool, layout, reef():{x,z}|null, lift():{x,z}|null })
  *   Stand inside a station zone (40 m) and press J: a small menu lists the lines from there; pick one (click or 1-9) and a 4.5 s cutscene plays
  *   (rail = amber light streaks, water = teal bubbles), the player is moved at the midpoint, then the overlay fades out.
- *   Zones: COLOSSEUM metro platform, Central Station, Harbor Line Station, Reef City hub, Ring Canal sea lift.
+ *   Zones: COLOSSEUM metro platform, Central Station, Harbor Line Station, Reef City hub, Reef Twin hub, Reef Line Shore (mainland), Ring Canal sea lift.
  *   Pure DOM, no WebGL, no per-frame cost outside a 250 ms zone poll. ?cutscene=0 disables.
  */
 (function (root) {
@@ -17,6 +17,9 @@
     if (central) out.push({ id: 'central', name: 'Central Station', x: central[0], z: central[1] });
     if (harbor && harbor.pos) out.push({ id: 'harbor', name: 'Harbor Line Station', x: harbor.pos[0], z: harbor.pos[1] });
     var r = H.reef && H.reef(); if (r) out.push({ id: 'reef', name: 'Reef City', x: r.x, z: r.z });
+    // 2026-10-16 owner sketch: Reef B (the twin across the bridge) + the REEF LINE SHORE station where the undersea tube lands on the mainland
+    var r2 = root.__reefTwin; if (r2) out.push({ id: 'reef2', name: 'Reef Twin', x: r2.x, z: r2.z });
+    var sh = root.__reefShore; if (sh) out.push({ id: 'shore', name: 'Reef Line Shore', x: sh.x, z: sh.z });
     var l = H.lift && H.lift(); if (l) out.push({ id: 'lift', name: 'Ring Canal Lift', x: l.x, z: l.z });
     // VOID UNDERCROFT (owner 2026-10-15): the void exit of the Colosseum metro, 150 m out from Rift Gate Station (no tunnel is
     // dug in the realm - the cutscene IS the tunnel). Toxic air: arrive without a gas mask and you must get back on the line.
@@ -24,8 +27,8 @@
     if (rift && rift.pos) { var rx = rift.pos[0], rz = rift.pos[1], rl = Math.hypot(rx, rz) || 1; out.push({ id: 'void', name: 'Void Undercroft', x: rx + rx / rl * 150 * U, z: rz + rz / rl * 150 * U, toxic: true }); }
     return out;
   }
-  var LINES = { colosseum: ['central', 'harbor', 'reef', 'void'], central: ['colosseum', 'harbor'], harbor: ['colosseum', 'central', 'reef', 'lift'], reef: ['harbor', 'lift', 'colosseum'], lift: ['harbor', 'reef'], void: ['colosseum'] };
-  function styleOf(a, b) { if (a === 'void' || b === 'void') return 'void'; return (a === 'reef' || b === 'reef' || a === 'lift' || b === 'lift') ? 'water' : 'rail'; }
+  var LINES = { colosseum: ['shore', 'central', 'harbor', 'reef', 'void'], central: ['colosseum', 'harbor', 'shore'], harbor: ['colosseum', 'central', 'reef', 'lift'], reef: ['shore', 'reef2', 'harbor', 'lift', 'colosseum'], reef2: ['reef', 'shore'], shore: ['colosseum', 'reef', 'reef2', 'central'], lift: ['harbor', 'reef'], void: ['colosseum'] };
+  function styleOf(a, b) { if (a === 'void' || b === 'void') return 'void'; var W = { reef: 1, reef2: 1, lift: 1 }; return (W[a] || W[b]) ? 'water' : 'rail'; }
   function zoneAt(p) { var zs = zones(), best = null, bd = ZR; zs.forEach(function (z) { var d = Math.hypot(z.x - p.x, z.z - p.z); if (d < bd) { bd = d; best = z; } }); return best; }
   function el(tag, css, html) { var e = document.createElement(tag); if (css) e.style.cssText = css; if (html != null) e.innerHTML = html; return e; }
   function closeMenu() { if (menu && menu.parentNode) menu.parentNode.removeChild(menu); menu = null; }

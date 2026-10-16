@@ -14,7 +14,10 @@ global.COLOSSEUM_ISLAND = { x: 0, z: 12000, U }; global.COLOSSEUM_METRO = { metr
 let pass = 0; const t = (n, fn) => { fn(); pass++; console.log('  ok ', n); };
 const tick = () => ivs.slice().forEach((f) => f && f());
 t('Colosseum metro reaches Central, Harbor, Reef (undersea) and the Void Undercroft; void returns only to the Colosseum', () => {
-  assert.deepStrictEqual(C._lines.colosseum, ['central', 'harbor', 'reef', 'void']); assert.deepStrictEqual(C._lines.void, ['colosseum']);
+  assert.deepStrictEqual(C._lines.colosseum, ['shore', 'central', 'harbor', 'reef', 'void']);
+  // 2026-10-16 reef line: shore <-> Colosseum subway is the maglev; Reef A <-> Reef B and either reef <-> shore are undersea
+  assert.ok(C._lines.shore.includes('colosseum') && C._lines.reef.includes('reef2') && C._lines.reef2.includes('shore'));
+  assert.strictEqual(C._style('shore', 'colosseum'), 'rail'); assert.strictEqual(C._style('reef2', 'shore'), 'water'); assert.strictEqual(C._style('reef', 'reef2'), 'water'); assert.deepStrictEqual(C._lines.void, ['colosseum']);
   assert.strictEqual(C._style('colosseum', 'reef'), 'water'); assert.strictEqual(C._style('colosseum', 'void'), 'void'); assert.strictEqual(C._style('colosseum', 'central'), 'rail');
 });
 t('Void Undercroft sits 150 m beyond Rift Gate Station (outward), flagged toxic', () => {

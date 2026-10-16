@@ -406,7 +406,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261009c"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20261011a"></script>
 <script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261016a"></script><script src="/world-speed-fx.js?v=20261009c"></script><script src="/world-shiplock.js?v=20261015a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261011a"></script><script src="/world-park-dress.js?v=20261015b"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
-<script src="/world-race-prizebox.js?v=20261011a"></script><script src="/world-cutscene-travel.js?v=20261015a"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261015c"></script><script src="/world-race-run.js?v=20261011a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
+<script src="/world-race-prizebox.js?v=20261011a"></script><script src="/world-cutscene-travel.js?v=20261016r"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261015c"></script><script src="/world-race-run.js?v=20261011a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
 <script src="/world-bots.js?v=20261015c"></script>   <!-- 10 agent bots: humanoid followers + city wheel-bots -->
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
@@ -525,9 +525,18 @@ camera.position.set(110, 380, 0); camera.lookAt(0, 0, 0);   // START IN THE SKY 
 window.__w3dDebug = { scene, camera, renderer, THREE };
 // REEF STATION (?reef=1, off by default): world-reef.js on the existing ocean. Finds the first stretch of water by a coarse
 // grid search over the map, sits the station on it, and logs where it went. No second ocean: it reads _v4Water.
-(function bootReef(){ if(!/[?&]reef=1\b/.test(location.search)) return; let n = 0;
+// 2026-10-16 (owner sketch on the Blender map): REEF A sits in the bay EAST of the Crystal Sea islands, REEF B (twin) in the bay to its
+// south-west, a glass bridge joins them, and the undersea glass-tube train runs from Reef A back to the mainland REEF LINE SHORE station
+// at the city's south-west edge (Blender Reef_Site_A); J there = tunnel-line cutscene to the Colosseum subway. ON by default; ?reef=0 = off.
+// Blender metres (x, y) -> game units (x*U, -y*U).
+(function bootReef(){ if(/[?&]reef=0\b/.test(location.search)) return; let n = 0;
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
     if(!window.__loadPlayable || !window.WorldReef || !_v4Water || !_v4T) return; clearInterval(iv);
+    const _bm = function(bx, by){ return { x: bx * V4_U, z: -by * V4_U }; };
+    const REEF_A = _bm(-2188, -3647), REEF_B = _bm(-3149, -3004), REEF_SHORE = _bm(-1308, -1308);
+    const REEF_ROUTE = [_bm(-2013, -3131), _bm(-1340, -2741), _bm(-1132, -2231)];   // tube bends between Reef A and the shore (owner's cyan line)
+    const _waterNear = function(c, maxR){ for(let r = 0; r <= maxR; r += 20){ const steps = r === 0 ? 1 : Math.max(8, Math.round(r / 10)); for(let a = 0; a < steps; a++){ const t = a / steps * Math.PI * 2, x = c.x + Math.cos(t) * r * V4_U, z = c.z + Math.sin(t) * r * V4_U;
+      if(_v4Water.isWater(x, z) && _v4Water.isWater(x + 80 * V4_U, z) && _v4Water.isWater(x, z + 80 * V4_U) && _v4Water.isWater(x - 80 * V4_U, z) && _v4Water.isWater(x, z - 80 * V4_U)) return { x: x, z: z }; } } return null; };
     // 2026-10-11: anchor in the CRYSTAL SEA (atlas: southwest, beside the Harbor Line Station) instead of the first water near spawn. Spiral out from the ocean realm's dock, then its
     // centre, until a 40 m water patch is found; falls back to the old whole-map grid search if the layout or water is unavailable.
     const atCrystal = (function(){ try{ const L = window.WORLD_LAYOUT, oc = L && L.biomes && L.biomes.find(function(b){ return b.id === 'ocean'; }); if(!oc) return null;
@@ -535,13 +544,16 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       for(let c = 0; c < cs.length; c++){ for(let r = 0; r <= 520; r += 40){ const steps = r === 0 ? 1 : Math.max(8, Math.round(r / 20)); for(let a = 0; a < steps; a++){ const t = a / steps * Math.PI * 2, x = cs[c][0] + Math.cos(t) * r * V4_U, z = cs[c][1] + Math.sin(t) * r * V4_U;
         if(_v4Water.isWater(x, z) && _v4Water.isWater(x + 80 * V4_U, z) && _v4Water.isWater(x, z + 80 * V4_U) && _v4Water.isWater(x - 80 * V4_U, z) && _v4Water.isWater(x, z - 80 * V4_U)) return { x: x, z: z }; } } }
       return null; }catch(e){ return null; } })();
-    const at = atCrystal || (function(){ const R = 3600 * V4_U / 7 * 7; for(let r = 600; r <= R; r += 200){ for(let a = 0; a < 16; a++){ const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
+    const at = _waterNear(REEF_A, 400) || atCrystal || (function(){ const R = 3600 * V4_U / 7 * 7; for(let r = 600; r <= R; r += 200){ for(let a = 0; a < 16; a++){ const x = Math.cos(a / 16 * Math.PI * 2) * r * V4_U, z = Math.sin(a / 16 * Math.PI * 2) * r * V4_U;
       if(_v4Water.isWater(x, z) && _v4Water.isWater(x + 40, z) && _v4Water.isWater(x, z + 40)) return { x: x, z: z }; } } return null; })();
     if(!at){ console.warn('[reef] no water found on the map grid'); return; }
     window.__reefAnchor = at;   // read by world-cutscene-travel.js (Reef City tunnel-line zone)
     // Blender station (assets/reef/reef-station.glb, Draco, 7 meshes, metres): scaled to world units, sat on the water.
     // If it fails to load, the code-built station is used instead.
     const _gl = new GLTFLoader(), _dr = new DRACOLoader(); _dr.setDecoderPath('/vendor/three/addons/libs/draco/'); _gl.setDRACOLoader(_dr);
+    // one fetch + parse per GLB: Reef A and the twin share geometry and materials (every caller gets its own clone)
+    const _glRaw = _gl.loadAsync.bind(_gl), _glMemo = {};
+    _gl.loadAsync = function(url){ if(!_glMemo[url]) _glMemo[url] = _glRaw(url); return _glMemo[url].then(function(g){ return { scene: g.scene.clone(true) }; }); };
     const _wy = _v4Water.waterHeightAt(at.x, at.z);
     // CITY: up to four stations on water, >= 600 m apart (the first site is the search hit above)
     // LAYOUT: site 0 is the HUB (the main city). Four reef stations sit 240 m out on the four bearings, so their ~110 m footprints don't overlap.
@@ -586,36 +598,55 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
           for(let k = 0; k < n; k++){ const t = (k + 0.5) / n, px = A.x + dx * t, pz = A.z + dz * t, w = _v4Water.waterHeightAt(px, pz), s = segSrc.clone(true);
             s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-dz, dx); s.position.set(px, (w != null ? w : _wy0) + 4 * V4_U, pz); s.name = 'reef-deck-' + i + '-' + k; scene.add(s); } } })
         .catch(function(e){ console.warn('[reef] deck segments failed:', e && e.message); });
-      // UNDERWATER TRAIN LINE to the WORLD train: tube segments from the reef tube station's east end (22 m east of its origin)
-      // to the main station (WORLD_LAYOUT.stations[0].pos), 6 m under the water, or just under the ground on land. A tube station ends it.
-      const _hs = window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations && window.WORLD_LAYOUT.stations.find(function(st){ return st.id === 'harbor'; });   // 2026-10-11: the tube ends at the HARBOR LINE STATION (the ring train's stop beside the Crystal Sea), not the far Central Station
-      const _cs = _hs ? _hs.pos : ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations && window.WORLD_LAYOUT.stations[0]) ? window.WORLD_LAYOUT.stations[0].pos : null);
-      if(_cs){ const sx = _p0.x + 22 * V4_U, sz = _p0.z - 60 * V4_U, ex = _cs[0], ez = _cs[1], tdx = ex - sx, tdz = ez - sz, TD = Math.hypot(tdx, tdz), tn = Math.max(1, Math.ceil(TD / (60 * V4_U)));
-        // 2026-10-15 train finish: the Blender K9 ARCHED GLASS TUBE (owner ref: train in arched glass tubes) tiles the line every 18 m (instanced, ~2 draws per mesh part)
-        // + the K9b SHORE PORTAL where the line leaves the sea; the old reef-tube.glb stays as the fallback (?glasstube=0).
+      // UNDERSEA TRAIN LINE (2026-10-16, owner sketch): from the hub's underwater stop (22 m east of the hub, under the elevator) along the
+      // owner's route (REEF_ROUTE bends) to the REEF LINE SHORE station on the mainland. Tiles 6 m under the water, 2 m under the ground on land;
+      // the K9 arched glass tube tiles every 18 m (instanced, one draw per mesh part), the K9b shore portal where it leaves the sea.
+      // A white capsule train shuttles inside it. ?glasstube=0 = the old reef-tube.glb tiles.
+      (function reefLine(){
+        const P = [{ x: _sites[0].x + 22 * V4_U, z: _sites[0].z }].concat(REEF_ROUTE, [REEF_SHORE]);
+        const tileY = function(x, z){ const w = _v4Water.waterHeightAt(x, z); return w != null ? w - 6 * V4_U : _v4T.heightAt(x, z) - 2 * V4_U; };
+        const legs = []; let TD = 0;
+        for(let i = 0; i + 1 < P.length; i++){ const dx = P[i + 1].x - P[i].x, dz = P[i + 1].z - P[i].z, L = Math.hypot(dx, dz); legs.push({ a: P[i], dx: dx, dz: dz, L: L, s0: TD }); TD += L; }
+        const at = function(s){ s = Math.max(0, Math.min(TD - 1e-3, s)); let g = legs[0]; for(let i = 0; i < legs.length; i++){ if(s >= legs[i].s0) g = legs[i]; }
+          const t = (s - g.s0) / g.L; return { x: g.a.x + g.dx * t, z: g.a.z + g.dz * t, yaw: Math.atan2(g.dx, g.dz) }; };
+        const STEP = 18 * V4_U, N = Math.max(1, Math.ceil(TD / STEP)), tiles = [];
+        let shoreK = -1;
+        for(let k = 0; k < N; k++){ const p = at((k + 0.5) * TD / N); p.y = tileY(p.x, p.z); tiles.push(p); if(shoreK < 0 && k > 0 && _v4Water.waterHeightAt(p.x, p.z) == null) shoreK = k; }
+        window.__reefLine = { length_m: Math.round(TD / V4_U), tiles: N, at: at, total: TD, tileY: tileY };
+        window.__reefShore = REEF_SHORE;
         const _oldTube = function(){ _gl.loadAsync('/assets/reef/reef-tube.glb').then(function(tg){ const tsrc = tg.scene;
-          for(let k = 0; k < tn; k++){ const t = (k + 0.5) / tn, px = sx + tdx * t, pz = sz + tdz * t, w = _v4Water.waterHeightAt(px, pz), s = tsrc.clone(true);
-            const y = (w != null ? w - 6 * V4_U : _v4T.heightAt(px, pz) - 2 * V4_U);
-            s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-tdz, tdx); s.position.set(px, y, pz); s.name = 'reef-tube-' + k; scene.add(s); } })
+          for(let k = 0; k < N; k += 3){ const p = tiles[k], s = tsrc.clone(true); s.scale.setScalar(V4_U); s.rotation.y = p.yaw - Math.PI / 2; s.position.set(p.x, p.y, p.z); s.name = 'reef-tube-' + k; scene.add(s); } })
           .catch(function(e){ console.warn('[reef] tube line failed:', e && e.message); }); };
         if(/[?&]glasstube=0/.test(location.search)) _oldTube();
         else Promise.all([_gl.loadAsync('/assets/kits/shaddai_transit_kit_v01.glb'), _gl.loadAsync('/assets/kits/shaddai_water_link_v01.glb').catch(function(){ return null; })]).then(function(r){
           const tile = r[0].scene.getObjectByName('glass_tube_18m'); if(!tile){ _oldTube(); return; }
-          const N = Math.max(1, Math.ceil(TD / (18 * V4_U))), yaw = Math.atan2(tdx, tdz), m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), sc = new THREE.Vector3(V4_U, V4_U, V4_U), p3 = new THREE.Vector3();
-          let shoreK = -1; const ys = [];
-          for(let k = 0; k < N; k++){ const t = (k + 0.5) / N, px = sx + tdx * t, pz = sz + tdz * t, w = _v4Water.waterHeightAt(px, pz); ys.push(w != null ? w - 6 * V4_U : _v4T.heightAt(px, pz) - 2 * V4_U); if(shoreK < 0 && w == null && k > 0) shoreK = k; }
+          const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3(V4_U, V4_U, V4_U), p3 = new THREE.Vector3();
           tile.updateMatrixWorld(true); tile.traverse(function(src){ if(!src.isMesh) return; const rel = new THREE.Matrix4().copy(tile.matrixWorld).invert().multiply(src.matrixWorld);
             const im = new THREE.InstancedMesh(src.geometry, src.material, N); im.name = 'reef-glass-tube-' + src.name; im.frustumCulled = false;
-            for(let k = 0; k < N; k++){ const t = (k + 0.5) / N; p3.set(sx + tdx * t, ys[k], sz + tdz * t); m4.compose(p3, q, sc).multiply(rel); im.setMatrixAt(k, m4); }
+            for(let k = 0; k < N; k++){ const p = tiles[k]; q.setFromAxisAngle(Y, p.yaw); p3.set(p.x, p.y, p.z); m4.compose(p3, q, sc).multiply(rel); im.setMatrixAt(k, m4); }
             scene.add(im); });
           const portal = r[1] && r[1].scene.getObjectByName('shore_portal');
-          if(portal && shoreK > 0){ const t = shoreK / N, px = sx + tdx * t, pz = sz + tdz * t, sp = portal.clone(true); sp.scale.setScalar(V4_U); sp.rotation.y = yaw + Math.PI;   // sea toward the reef end
-            const w0 = _v4Water.waterHeightAt(sx, sz); sp.position.set(px, (w0 != null ? w0 : _v4T.heightAt(px, pz)), pz); sp.name = 'reef-shore-portal'; scene.add(sp); }
+          if(portal && shoreK > 0){ const p = tiles[shoreK], sp = portal.clone(true); sp.scale.setScalar(V4_U); sp.rotation.y = p.yaw + Math.PI;
+            const w0 = _v4Water.waterHeightAt(tiles[shoreK - 1].x, tiles[shoreK - 1].z); sp.position.set(p.x, (w0 != null ? w0 : _v4T.heightAt(p.x, p.z)), p.z); sp.name = 'reef-shore-portal'; scene.add(sp); }
         }).catch(function(e){ console.warn('[reef] glass tube failed, old tube:', e && e.message); _oldTube(); });
-        _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(ts){ const t2 = ts.scene; t2.name = 'central-tube-station'; t2.scale.setScalar(V4_U);
-          t2.rotation.y = Math.atan2(-tdz, tdx); t2.position.set(ex, _v4T.heightAt(ex, ez) + 1 * V4_U, ez); scene.add(t2); })
-          .catch(function(e){ console.warn('[reef] central tube station failed:', e && e.message); });
-        console.log('[reef] tube line to the main station: ' + Math.round(TD / V4_U) + ' m, ' + tn + ' segments'); }
+        // REEF LINE SHORE station on the mainland end (J here: Colosseum subway / Reef City / Reef Twin)
+        _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(ts){ const t2 = ts.scene; t2.name = 'reef-shore-station'; t2.scale.setScalar(V4_U);
+          const L = legs[legs.length - 1]; t2.rotation.y = Math.atan2(-L.dz, L.dx); t2.position.set(REEF_SHORE.x, _v4T.heightAt(REEF_SHORE.x, REEF_SHORE.z) + 1 * V4_U, REEF_SHORE.z); scene.add(t2); })
+          .catch(function(e){ console.warn('[reef] shore station failed:', e && e.message); });
+        // THE TRAIN: three coupled white capsule cars (60 m) with a cyan window band, shuttling end to end with a 12 s dwell at each station
+        (function reefTrain(){ if(/[?&]reeftrain=0\b/.test(location.search)) return;
+          const g = new THREE.Group(); g.name = 'reef-train'; const mBody = new THREE.MeshStandardMaterial({ color: 0xf2f5f8, metalness: 0.55, roughness: 0.25 }),
+            mWin = new THREE.MeshStandardMaterial({ color: 0x0a1a22, emissive: 0x66f0ff, emissiveIntensity: 0.9 }), mGold = new THREE.MeshStandardMaterial({ color: 0xe8c45c, emissive: 0xe8c45c, emissiveIntensity: 0.4 });
+          const body = new THREE.CapsuleGeometry(1.7 * V4_U, 16 * V4_U, 6, 16); body.rotateX(Math.PI / 2);
+          const band = new THREE.BoxGeometry(3.5 * V4_U, 0.7 * V4_U, 15 * V4_U), skid = new THREE.BoxGeometry(1.2 * V4_U, 0.3 * V4_U, 18 * V4_U);
+          for(let c = -1; c <= 1; c++){ const z0 = c * 20 * V4_U; const b = new THREE.Mesh(body, mBody); b.position.set(0, 2.2 * V4_U, z0); g.add(b);
+            const w = new THREE.Mesh(band, mWin); w.position.set(0, 2.6 * V4_U, z0); g.add(w); const s = new THREE.Mesh(skid, mGold); s.position.set(0, 0.35 * V4_U, z0); g.add(s); }
+          scene.add(g); window.__reefTrain = g;
+          const V = 45 * V4_U, DWELL = 12; let s = 0, dir = 1, wait = DWELL, t0 = performance.now();
+          (function tick(){ requestAnimationFrame(tick); const now = performance.now(), dt = Math.min(0.1, (now - t0) / 1000); t0 = now;
+            if(wait > 0) wait -= dt; else { s += dir * V * dt; if(s >= TD - 30 * V4_U){ s = TD - 30 * V4_U; dir = -1; wait = DWELL; } if(s <= 30 * V4_U){ s = 30 * V4_U; dir = 1; wait = DWELL; } }
+            const p = at(s); g.position.set(p.x, tileY(p.x, p.z), p.z); g.rotation.y = p.yaw; })(); })();
+        console.log('[reef] undersea line Reef A -> shore: ' + Math.round(TD / V4_U) + ' m, ' + N + ' glass tiles, portal at tile ' + shoreK); })();
       // CENTRAL TOWER in the middle of the city: at the first station's origin, base on the water, rising ~100 m
       // OFF: the cone tower was placed in the middle of the sets. Kept as an asset for the city buildings later (?tower=1 shows it).
       if(/[?&]tower=1\b/.test(location.search)) _gl.loadAsync('/assets/reef/reef-tower.glb').then(function(tw){ const tower = tw.scene; tower.name = 'reef-tower'; tower.scale.setScalar(V4_U);
@@ -784,11 +815,66 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       // The registry reads the placed segments and registers one surface function with the terrain's ride-extra hook (the race deck uses it too).
       (function reefWalk(){ let n = 0; const iv = setInterval(function(){ if(++n > 60){ clearInterval(iv); return; }
         if(!window.__loadPlayable || !_v4T || !_v4T.addRideExtra) return; clearInterval(iv);
-        const segs = []; scene.traverse(function(o){ if(/^(hub-spoke|spoke|row|set-ring|span-)/.test(o.name || '')) segs.push({ x: o.position.x, z: o.position.z, rot: o.rotation.y, len: (o.userData && o.userData.len) || 40 * V4_U, w: 4 * V4_U, y: o.position.y }); });
+        const segs = []; scene.traverse(function(o){ if(/^(twin-)?(hub-spoke|spoke|row|set-ring|span-)/.test(o.name || '')) segs.push({ x: o.position.x, z: o.position.z, rot: o.rotation.y, len: (o.userData && o.userData.len) || 40 * V4_U, w: 4 * V4_U, y: o.position.y }); });
         // local frame: the segment's long axis is (cos rot, -sin rot) in (x, z); u along it, v across it
         const surf = function(x, z){ for(let i = 0; i < segs.length; i++){ const s = segs[i], dx = x - s.x, dz = z - s.z, c = Math.cos(s.rot), sn = Math.sin(s.rot);
           const u = dx * c - dz * sn, v = dx * sn + dz * c; if(Math.abs(u) <= s.len / 2 && Math.abs(v) <= s.w / 2) return s.y; } return null; };
         _v4T.addRideExtra(surf); window.__reefDeckSegs = segs.length; console.log('[reef] walkable deck segments: ' + segs.length); }, 500); })();
+      // REEF B - THE TWIN (owner sketch 2026-10-16: the rectangle south-west of Reef A). Same hub + atrium + 4 sets + elevator + underwater stop,
+      // laid out exactly like Reef A, joined to it by the REEF BRIDGE. ?reeftwin=0 = Reef A only.
+      if(!/[?&]reeftwin=0\b/.test(location.search)) (function twinReef(){
+        const tA = _waterNear(REEF_B, 300); if(!tA){ console.warn('[reef] twin: no water patch near the owner site'); return; }
+        window.__reefTwin = tA;
+        const tW = _v4Water.waterHeightAt(tA.x, tA.z), tRy = (tW != null ? tW : _wy0) + 4 * V4_U;
+        const tSp = function(a){ return { x: tA.x + Math.sin(a) * 66 * V4_U, z: tA.z - Math.cos(a) * 66 * V4_U }; };
+        const put = function(file, name, x, y, z, ry){ _gl.loadAsync('/assets/reef/' + file).then(function(q){ const m = q.scene; m.name = name; m.scale.setScalar(V4_U); m.position.set(x, y, z); if(ry) m.rotation.y = ry; scene.add(m); })
+          .catch(function(e){ console.warn('[reef] twin ' + file + ' failed:', e && e.message); }); };
+        put('reef-city-hub.glb', 'reef-twin-hub', tA.x, tRy, tA.z); put('reef-atrium.glb', 'reef-twin-atrium', tA.x, tRy, tA.z);
+        _sets.forEach(function(deg, si){ const a = deg / 180 * Math.PI, c0 = tSp(a), sx = Math.cos(a), sz = Math.sin(a);
+          _row.forEach(function(it){ const ox = c0.x + sx * it[1] * V4_U, oz = c0.z + sz * it[1] * V4_U;
+            put(it[0], 'twin-set' + si + '-' + it[0], ox, tRy, oz, a);
+            if(it[0] === 'reef-dome.glb') put('reef-interior.glb', 'twin-set' + si + '-dome-interior', ox, tRy, oz, a); }); });
+        // walkways: same pattern as Reef A (hub -> front walkway, front walkway, set ring)
+        const fw = _sets.map(function(deg){ const a = deg / 180 * Math.PI, c0 = tSp(a), ux = Math.sin(a), uz = -Math.cos(a), lx = Math.cos(a), lz = Math.sin(a);
+          const fc = { x: c0.x - ux * 13 * V4_U, z: c0.z - uz * 13 * V4_U };
+          return { fc: fc, u: { x: ux, z: uz }, a: { x: fc.x - lx * 34 * V4_U, z: fc.z - lz * 34 * V4_U }, b: { x: fc.x + lx * 34 * V4_U, z: fc.z + lz * 34 * V4_U } }; });
+        fw.forEach(function(f, si){ reefSpan(tA.x + f.u.x * 44 * V4_U, tA.z + f.u.z * 44 * V4_U, f.fc.x, f.fc.z, tRy, 'twin-spoke-' + si); reefSpan(f.a.x, f.a.z, f.b.x, f.b.z, tRy, 'twin-row-' + si); });
+        [[0, 1], [1, 2], [2, 3], [3, 0]].forEach(function(p, i){ const A = [fw[p[0]].a, fw[p[0]].b], B = [fw[p[1]].a, fw[p[1]].b]; let best = null, bd = 1e18;
+          A.forEach(function(q){ B.forEach(function(r){ const d = Math.hypot(q.x - r.x, q.z - r.z); if(d < bd){ bd = d; best = [q, r]; } }); });
+          reefSpan(best[0].x, best[0].z, best[1].x, best[1].z, tRy, 'twin-set-ring-' + i); });
+        // the four POD-CLUSTER stations 150 m out on the four bearings (the same Blender reef-station.glb as Reef A), each with its lounge, spoke and ramp
+        [0, 90, 180, 270].forEach(function(deg, si){ const a = deg / 180 * Math.PI, ux = Math.sin(a), uz = -Math.cos(a), st = { x: tA.x + ux * 150 * V4_U, z: tA.z + uz * 150 * V4_U };
+          const sw = _v4Water.waterHeightAt(st.x, st.z), sy = (sw != null ? sw : tRy - 4 * V4_U);
+          _gl.loadAsync('/assets/reef/reef-station.glb').then(function(q){ const m = q.scene; m.name = 'twin-station-' + si; m.scale.setScalar(V4_U); m.rotation.y = si * 0.7; m.position.set(st.x, sy, st.z); scene.add(m); })
+            .catch(function(e){ console.warn('[reef] twin station failed:', e && e.message); });
+          put('reef-int-lounge.glb', 'twin-lounge-' + si, st.x, sy + 4 * V4_U, st.z);
+          reefSpan(tA.x + ux * 44 * V4_U, tA.z + uz * 44 * V4_U, tA.x + ux * 110 * V4_U, tA.z + uz * 110 * V4_U, tRy, 'twin-span-st-' + si);
+          const P0 = { x: st.x + ux * 75 * V4_U, z: st.z + uz * 75 * V4_U }, P1 = { x: st.x + ux * 55 * V4_U, z: st.z + uz * 55 * V4_U };
+          reefRamp(P0.x, P0.z, P1.x, P1.z, sy, tRy, 'twin-ramp-st-' + si); });
+        put('reef-elevator.glb', 'twin-hub-elevator', tA.x + 22 * V4_U, tRy, tA.z); put('reef-tube-station.glb', 'twin-underwater-stop', tA.x + 22 * V4_U, tRy - 8 * V4_U, tA.z);
+        // THE REEF BRIDGE: hub A plaza edge -> hub B plaza edge. Glass deck 8 m wide, lifted over any island on the way (ramps at both ends), pylons every 48 m.
+        (function reefBridge(){ const H = _sites[0], dx = tA.x - H.x, dz = tA.z - H.z, D = Math.hypot(dx, dz), ux = dx / D, uz = dz / D;
+          const ax = H.x + ux * 44 * V4_U, az = H.z + uz * 44 * V4_U, L = D - 88 * V4_U, y0 = _ry, y1 = tRy;
+          let top = Math.max(y0, y1); for(let s = 0; s <= L; s += 8 * V4_U){ const x = ax + ux * s, z = az + uz * s; if(_v4Water.waterHeightAt(x, z) == null) top = Math.max(top, _v4T.heightAt(x, z) + 4 * V4_U); }
+          const RA = top > y0 + 0.5 * V4_U ? Math.min(L * 0.3, Math.max(60 * V4_U, (top - y0) * 8)) : 0, RB = top > y1 + 0.5 * V4_U ? Math.min(L * 0.3, Math.max(60 * V4_U, (top - y1) * 8)) : 0;
+          const yAt = function(s){ if(s < RA) return y0 + (top - y0) * (s / RA); if(s > L - RB) return y1 + (top - y1) * ((L - s) / RB); return top; };
+          const W = 8 * V4_U, g = new THREE.Group(); g.name = 'reef-bridge';
+          const mDeck = new THREE.MeshPhysicalMaterial({ color: 0xbfe8f5, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0.1 }), mGlow = new THREE.MeshBasicMaterial({ color: 0x4fe3ff }), mRail = new THREE.MeshStandardMaterial({ color: 0xf4f7fa, roughness: 0.35 }), mGold = new THREE.MeshStandardMaterial({ color: 0xe8c45c, metalness: 0.7, roughness: 0.3, emissive: 0x3a2a08 });
+          const yaw = Math.atan2(-dz, dx), piece = function(s0, s1){ const Lp = s1 - s0; if(Lp < 1e-3) return; const ya = yAt(s0), yb = yAt(s1), p = new THREE.Group(); p.rotation.order = 'YZX';
+            const dk = new THREE.Mesh(new THREE.BoxGeometry(Lp, 0.6 * V4_U, W), mDeck); dk.position.y = -0.3 * V4_U; p.add(dk);
+            for(const sd of [-1, 1]){ const st = new THREE.Mesh(new THREE.BoxGeometry(Lp, 0.08 * V4_U, 0.16 * V4_U), mGlow); st.position.set(0, 0.04 * V4_U, sd * (W / 2 - 0.1 * V4_U)); p.add(st);
+              const rl = new THREE.Mesh(new THREE.BoxGeometry(Lp, 1.1 * V4_U, 0.14 * V4_U), mRail); rl.position.set(0, 0.55 * V4_U, sd * W / 2); p.add(rl); }
+            const mx = (s0 + s1) / 2; p.position.set(ax + ux * mx, (ya + yb) / 2, az + uz * mx); p.rotation.y = yaw; p.rotation.z = Math.atan2(yb - ya, Lp); g.add(p); };
+          piece(0, RA); piece(RA, L - RB); piece(L - RB, L);
+          const NP = Math.max(1, Math.floor(L / (48 * V4_U))), pyl = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.9 * V4_U, 1.2 * V4_U, 1, 10), mGold, NP * 2), m4 = new THREE.Matrix4(), q0 = new THREE.Quaternion();
+          for(let k = 0; k < NP; k++){ const s = (k + 0.5) * L / NP, x = ax + ux * s, z = az + uz * s, w = _v4Water.waterHeightAt(x, z), base = (w != null ? w - 12 * V4_U : _v4T.heightAt(x, z) - 2 * V4_U), h = Math.max(1, yAt(s) - base);
+            for(let sd = 0; sd < 2; sd++){ const ox = -uz * (sd ? 1 : -1) * (W / 2 + 0.6 * V4_U), oz = ux * (sd ? 1 : -1) * (W / 2 + 0.6 * V4_U); m4.compose(new THREE.Vector3(x + ox, base + h / 2, z + oz), q0, new THREE.Vector3(1, h, 1)); pyl.setMatrixAt(k * 2 + sd, m4); } }
+          g.add(pyl); scene.add(g);
+          window.__reefBridge = { length_m: Math.round(L / V4_U), top_m: Math.round((top - y0) / V4_U), ramps_m: [Math.round(RA / V4_U), Math.round(RB / V4_U)] };
+          if(_v4T.addRideExtra) _v4T.addRideExtra(function(x, z){ const rx = x - ax, rz = z - az, u = rx * ux + rz * uz, v = -rx * uz + rz * ux; if(u < 0 || u > L || Math.abs(v) > W / 2) return null; return yAt(u); });
+          console.log('[reef] bridge A<->B: ' + window.__reefBridge.length_m + ' m, lifted ' + window.__reefBridge.top_m + ' m over the islands'); })();
+        console.log('[reef] twin city at (' + Math.round(tA.x / V4_U) + ',' + Math.round(-tA.z / V4_U) + ') Blender m');
+      })();
       console.log('[reef] stations placed: ' + _sites.length + ' at ' + _sites.map(function(p){ return '(' + Math.round(p.x / V4_U) + ',' + Math.round(p.z / V4_U) + ')'; }).join(' ')); })
       .catch(function(e){ console.warn('[reef] GLB failed, code station used:', e && e.message); _fallback(); });
   }, 250); })();
