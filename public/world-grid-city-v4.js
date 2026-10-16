@@ -153,9 +153,8 @@
     function box(ch, cx, cy, rho, gy, ox, oy, z0, w, d, h, taper, kind, color) {
       var c = Math.cos(rho), s = Math.sin(rho);
       ch.box.push({ x: (cx + ox * c - oy * s) * U, y: gy + z0 * U, z: -(cy + ox * s + oy * c) * U, rho: rho,
-        sx: w * U, sy: h * U, sz: d * U, t: taper, k: kind, c: color, seed: rnd(), bid: curBid });
+        sx: w * U, sy: h * U, sz: d * U, t: taper, k: kind, c: color, seed: rnd() });
     }
-    var curBid = null;   // plan building that box() is filling (K1 tower swap hides a building's instances by id)
 
     // ── buildings ──
     var byId = {}, colliderRefs = [], L = window.WORLD_LAYOUT;
@@ -168,7 +167,7 @@
       var ch = chunks[chunkOf(b.x_m, b.y_m)], rho = b.rot_deg * RAD;
       var gy = groundY(b.x_m, b.y_m, Math.max(b.w_m, b.d_m) * 0.5);
       var WD = window.WorldDistricts, tint = WD ? WD.tintFor(b, rnd) : TINTS[Math.floor(rnd() * TINTS.length)], acc = ACCENT[WD ? WD.accentFor(b) : b.accent] || ACCENT.teal;   // district identity: accent + facade palette per quarter
-      byId[b.id] = { b: b, gy: gy }; curBid = b.id;
+      byId[b.id] = { b: b, gy: gy };
       b.tiers.forEach(function (t, i) {
         var w = t[0], d = t[1], z0 = t[2], h = t[3], ox = t[4], oy = t[5], ty = t[6];
         if (ty === 4) { box(ch, b.x_m, b.y_m, rho, gy, ox, oy, z0, w, d, h, TAPER[4], 1, acc); nTiers++; return; }   // glowing needle
@@ -253,7 +252,7 @@
     var baseDome = new THREE.SphereGeometry(1, 9, 5, 0, Math.PI * 2, 0, Math.PI / 2); baseDome.scale(1, 0.8, 1);
     var owned = [baseBox, baseDome, mat, canopyMat, tx.map, tx.emissive], meshes = [];
     var M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), S = new THREE.Vector3(), YAX = new THREE.Vector3(0, 1, 0);
-    var totalInst = 0, instByBid = {};   // bid -> [[InstancedMesh, index], ...]
+    var totalInst = 0;
     chunks.forEach(function (ch, idx) {
       if (ch.box.length) {
         var g = baseBox.clone(), aux = new Float32Array(ch.box.length * 3);
@@ -262,7 +261,6 @@
           Q.setFromAxisAngle(YAX, o.rho); P.set(o.x, o.y, o.z); S.set(o.sx, o.sy, o.sz);
           im.setMatrixAt(i, M4.compose(P, Q, S)); im.setColorAt(i, col.setHex(o.c));
           aux[i * 3] = o.t; aux[i * 3 + 1] = o.k; aux[i * 3 + 2] = o.seed;
-          if (o.bid) (instByBid[o.bid] = instByBid[o.bid] || []).push([im, i]);
         });
         g.setAttribute('aAux', new THREE.InstancedBufferAttribute(aux, 3));
         finish(im, 'grid-city-box-' + idx); owned.push(g); totalInst += ch.box.length;
@@ -290,54 +288,13 @@
       try { window.buildWorldCollision(L); } catch (e) { console.warn('[grid-city-v4] collision rebuild failed:', e && e.message); }
     }
 
-    curBid = null;
-    // ── BLENDER K1 TOWERS (owner 2026-10-15: "this tower looks great"): assets/world/city-kit-towers.json (tools/grid-city/k1-tower-pick.cjs, also read
-    // by the Blender world) names the plan towers that become slab / setback / spire kits. Each kit mesh = ONE InstancedMesh over all its towers;
-    // the replaced buildings' boxes collapse to zero scale (colours of every other building unchanged). No kits / ?k1=0 = the code city as before.
-    var kitTowers = { group: null, count: 0 }, ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
-    function mergeNonIndexed(geos) {   // position/normal/uv of non-indexed geometries -> one BufferGeometry
-      var n = 0; geos.forEach(function (g) { n += g.attributes.position.count; });
-      var pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2), o = 0;
-      geos.forEach(function (g) { pos.set(g.attributes.position.array, o * 3); if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3); if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2); o += g.attributes.position.count; g.dispose(); });
-      var out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); return out;
-    }
-    function hideBuilding(bid) { (instByBid[bid] || []).forEach(function (r) { r[0].setMatrixAt(r[1], ZERO); r[0].instanceMatrix.needsUpdate = true; }); }
-    if (window.__GLTFLoaderClass && typeof fetch === 'function' && !(typeof location !== 'undefined' && /[?&]k1=0/.test(location.search || ''))) {
-      fetch('/assets/world/city-kit-towers.json').then(function (r) { return r.json(); }).then(function (doc) {
-        var types = Object.keys(doc.kits || {}), loader = new window.__GLTFLoaderClass();
-        return Promise.all(types.map(function (k) { return new Promise(function (res) { loader.load('/assets/kits/' + doc.kits[k], function (g) { res([k, g]); }, undefined, function () { res([k, null]); }); }); })).then(function (loaded) {
-          var kg = new THREE.Group(); kg.name = 'grid-city-k1-towers'; var placed = {};
-          loaded.forEach(function (kv) {
-            var k = kv[0], gl = kv[1], list = (doc.towers || []).filter(function (t) { return t.kit === k && byId[t.id]; }); if (!gl || !list.length) return;
-            var src = gl.scene.children[0] || gl.scene; src.position.set(0, 0, 0); src.updateMatrixWorld(true);
-            var inv = new THREE.Matrix4().copy(src.matrixWorld).invert();
-            var worlds = list.map(function (t) { var gy = byId[t.id].gy; return new THREE.Matrix4().compose(P.set(t.x_m * U, gy, -t.y_m * U), Q.setFromAxisAngle(YAX, t.rot_deg * RAD), S.set(t.scale * U, t.scale * U, t.scale * U)); });
-            // merge the kit's ~50-86 part meshes into ONE geometry per material (kit frame), then one InstancedMesh each: 3-4 draws per tower type
-            var byMat = {};
-            src.traverse(function (m) {
-              if (!m.isMesh) return; var rel = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld), gg = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(rel);
-              var key = m.material.name || m.material.uuid; (byMat[key] = byMat[key] || { mat: m.material, geos: [] }).geos.push(gg);
-            });
-            Object.keys(byMat).forEach(function (key) {
-              var geo = mergeNonIndexed(byMat[key].geos), im = new THREE.InstancedMesh(geo, byMat[key].mat, list.length);
-              worlds.forEach(function (w, i) { im.setMatrixAt(i, w); });
-              im.name = 'k1-' + k + '-' + key; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); im.castShadow = !!opts.shadows; kg.add(im); meshes.push(im); owned.push(geo);
-            });
-            list.forEach(function (t) { hideBuilding(t.id); placed[t.id] = 1; });
-          });
-          root.add(kg); kitTowers.group = kg; kitTowers.count = Object.keys(placed).length;
-          console.info('[grid-city-v4] K1 towers:', kitTowers.count, 'buildings ->', kg.children.length, 'instanced meshes');
-        });
-      }).catch(function (e) { console.warn('[grid-city-v4] K1 towers skipped:', e && e.message); });
-    }
-
     var st = { buildings: plan.buildings.length, tiers: nTiers, accents: nAccents, skybridges: nBridges,
       plazas: (plan.plazas || []).length, parks: (plan.parks || []).length, trees: nTrees, lamps: (plan.lamps || []).length,
       instances: totalInst, meshes: meshes.length, colliders: colliderRefs.length };
     console.info('[grid-city-v4]', st.buildings, 'buildings ·', st.instances, 'instances ·', st.meshes, 'meshes (max draw calls)');
 
     return {
-      group: root, kitTowers: kitTowers, hideBuilding: hideBuilding,
+      group: root,
       update: function (t, dt, camPos) {
         if (typeof opts.getNight === 'function') { var k = +opts.getNight(t); if (isFinite(k)) uni.uNight.value = Math.max(0, Math.min(1, k)); }
         uni.uAccentGain.value = 1.7 + 0.25 * Math.sin((t || 0) * 0.8);   // slow breathing on the light strips
