@@ -936,7 +936,7 @@ let _v4T = null, _v4Water = null, _v4Meta = null, _v4Fill = null;
 let _v4Sky = null;                        // MAP v4 sky/day-night (world-sky-v4.js)   // terrain api / water api / terrain.json once loaded
 window.__MAP_V4 = MAP_V4;
 if(MAP_V4){
-  camera.near = 1.5; camera.far = 48000; camera.updateProjectionMatrix();   // near 0.5->1.5 (0.38 m): 3x finer depth at 5 km, kills the far z-fight shimmer on roads/track decks   // ~39 000-unit-wide world (half 19 444)
+  camera.near = 1.5; camera.far = window.__qFar || 48000; camera.updateProjectionMatrix();   // near 0.5->1.5 (0.38 m): 3x finer depth at 5 km, kills the far z-fight shimmer on roads/track decks   // ~39 000-unit-wide world (half 19 444)
   window.__w3dDebug.mapV4 = true;
 }
 function _loadScript(src){ return new Promise(function(res, rej){ const s=document.createElement('script'); s.src=src; s.async=false; s.onload=()=>res(); s.onerror=()=>rej(new Error('script 404 '+src)); document.head.appendChild(s); }); }
@@ -2766,7 +2766,11 @@ function _nextAgentBody(){
       if(entry.frame){ entry.frame.visible = false; }
     }catch(e){ console.warn('[agent body] process', code, e.message); }
     setTimeout(_nextAgentBody, 200);           // next one
-  }, undefined, (err)=>{ console.warn('[agent body]', code, err && err.message); setTimeout(_nextAgentBody, 200); });
+  }, undefined, (err)=>{ console.warn('[agent body]', code, err && err.message);
+    // owner 2026-10-16: "agents CANT be missing" - a failed fetch (network blip, busy server) re-queues the body up to 3 times (2 s, 5 s, 10 s)
+    entry._tries = (entry._tries || 0) + 1;
+    if(entry._tries <= 3) setTimeout(function(){ _bodyQueue.push(entry); if(!_bodyBusy){ _bodyBusy = true; _nextAgentBody(); } }, [2000, 5000, 10000][entry._tries - 1]);
+    setTimeout(_nextAgentBody, 200); });
 }
 
 // ── Aura particle ring (build-plan §2) — a living halo of light orbiting each agent ──
@@ -5477,6 +5481,10 @@ function _applyQualityTier(idx){
   bloom.strength = t.bloomStr;
   if(window.__vfx) window.__vfx.setTier(t.name);   // particle budget follows the quality tier
   bloom.enabled  = t.bloomStr > 0;   // at POTATO/LOW fully SKIP the multi-pass bloom (was still rendering it at strength 0 = wasted GPU)
+  // DRAW DISTANCE (owner 2026-10-16: "there CANT be any lag"): the two lowest tiers stop drawing past 4 km / 6 km (frustum culling drops
+  // far terrain tiles, towns and props; the sky follows the camera so it never clips). MEDIUM+ keep the full 12 km view. ?farcut=0 = off.
+  if(!/[?&]farcut=0/.test(location.search)){ const FAR_M = { POTATO: 4000, LOW: 6000 }; window.__qFar = FAR_M[t.name] ? FAR_M[t.name] * 7 / 1.8 : 48000;
+    if(camera.far > 6000 || window.__qFar < camera.far){ camera.far = window.__qFar; camera.updateProjectionMatrix(); } }
   _Q.tier = idx;
   window.__quality = t.name;
   window.__w3dTierIdx = idx;   // broadcast for the LOD systems (clusters/fill/realmprops tighten their bands on weak GPUs, restore on fast ones)
