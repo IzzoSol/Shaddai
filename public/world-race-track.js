@@ -80,12 +80,43 @@
       g.fillStyle = 'rgba(43,255,136,0.30)'; g.fillRect(w * 0.494, 0, w * 0.012, h);                                                    // centre glow line
     });
   }
+  // ── NEON STYLE (owner 2026-10-16: "#1" = the Wipeout race ref): dark glass-asphalt deck with glowing cyan lanes + magenta edges + speed chevrons,
+  //    cyan/magenta kerb blocks, obsidian barriers with SHADDAI sponsor panels, cyan (left) / magenta (right) edge rails. ?racestyle=gold = the gold deck.
+  var NEON = !(typeof location !== 'undefined' && /[?&]racestyle=gold/.test(location.search || ''));
+  function neonDeck(g, w, h, glowOnly) {
+    g.fillStyle = glowOnly ? '#000' : '#06080e'; g.fillRect(0, 0, w, h);
+    if (!glowOnly) for (var i = 0; i < 2200; i++) { var v = 8 + Math.random() * 12 | 0; g.fillStyle = 'rgb(' + v + ',' + (v + 2) + ',' + (v + 6) + ')'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    if (!glowOnly) { g.fillStyle = 'rgba(120,160,220,0.07)'; [0.5].forEach(function (q) { g.fillRect(0, h * q, w, 1); }); }                    // glass panel seam
+    g.fillStyle = 'rgba(255,63,164,0.95)'; g.fillRect(w * 0.03, 0, w * 0.018, h); g.fillRect(w * 0.952, 0, w * 0.018, h);                     // magenta edge lines
+    g.fillStyle = 'rgba(39,224,255,0.95)'; g.fillRect(w * 0.327, 0, w * 0.012, h * 0.4); g.fillRect(w * 0.661, 0, w * 0.012, h * 0.4);        // cyan lane dashes
+    g.fillStyle = 'rgba(39,224,255,0.22)'; g.fillRect(w * 0.494, 0, w * 0.012, h);                                                            // centre glow line
+    g.strokeStyle = 'rgba(39,224,255,0.16)'; g.lineWidth = 3;                                                                                  // speed chevrons (point along travel = +v)
+    [0.2, 0.8].forEach(function (cx) { var y = h * 0.62; g.beginPath(); g.moveTo(w * (cx - 0.09), y + h * 0.07); g.lineTo(w * cx, y); g.lineTo(w * (cx + 0.09), y + h * 0.07); g.stroke(); });
+  }
+  function deckTexNeon(THREE) { return canvasTex(THREE, 256, 256, function (g, w, h) { neonDeck(g, w, h, false); }); }
+  function deckGlowNeon(THREE) { return canvasTex(THREE, 256, 256, function (g, w, h) { neonDeck(g, w, h, true); }); }
+  function kerbTexNeon(THREE) {
+    return canvasTex(THREE, 32, 128, function (g, w, h) { g.fillStyle = '#27e0ff'; g.fillRect(0, 0, w, h / 2); g.fillStyle = '#ff3fa4'; g.fillRect(0, h / 2, w, h / 2); g.fillStyle = '#05070b'; g.fillRect(0, h / 2 - 3, w, 6); g.fillRect(0, h - 3, w, 3); });
+  }
+  function wallTexNeon(THREE) {   // u across the wall profile, v along the track (one tile = 6 m): obsidian panels + a sponsor name per tile
+    var names = ['FORGE', 'ARCADE', 'SIGNALS', 'ACADEMY', 'SHADDAI', 'COLOSSEUM'], k = 0;
+    return canvasTex(THREE, 128, 1024, function (g, w, h) {
+      g.fillStyle = '#10141c'; g.fillRect(0, 0, w, h);
+      for (var t = 0; t < 4; t++) { var y0 = t * h / 4;
+        var nm = names[k++ % names.length], col = t % 2 ? '#ff3fa4' : '#27e0ff';
+        [[0.62, 0.8, -1], [0.02, 0.2, 1]].forEach(function (c) {   // inner face: left wall u 0.6..1, right wall u 0..0.4 (strip profiles run opposite ways)
+          g.fillStyle = '#1a2130'; g.fillRect(w * c[0], y0 + 8, w * 0.36, h / 4 - 16);
+          g.save(); g.translate(w * c[1], y0 + h / 8); g.rotate(c[2] * Math.PI / 2); g.font = '900 30px Orbitron, Arial Black, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.fillStyle = col; g.fillText(nm, 0, 0); g.restore();
+          g.fillStyle = 'rgba(232,196,92,0.8)'; g.fillRect(w * c[0], y0 + 6, w * 0.36, 2); }); }
+    });
+  }
   function kerbTex(THREE) {
     return canvasTex(THREE, 32, 128, function (g, w, h) { g.fillStyle = '#e8ecf0'; g.fillRect(0, 0, w, h); g.fillStyle = '#d4202c'; g.fillRect(0, 0, w, h / 2); });
   }
   function chevronTex(THREE) {
     return canvasTex(THREE, 256, 96, function (g, w, h) {
-      g.fillStyle = '#101216'; g.fillRect(0, 0, w, h); g.fillStyle = '#ff9a1a';
+      g.fillStyle = '#101216'; g.fillRect(0, 0, w, h); g.fillStyle = NEON ? '#ff3fa4' : '#ff9a1a';
       for (var i = 0; i < 3; i++) { var x = 30 + i * 70; g.beginPath(); g.moveTo(x, 12); g.lineTo(x + 34, h / 2); g.lineTo(x, h - 12); g.lineTo(x + 20, h - 12); g.lineTo(x + 54, h / 2); g.lineTo(x + 20, 12); g.closePath(); g.fill(); }
     });
   }
@@ -175,15 +206,19 @@
     var grp = new THREE.Group(); grp.name = 'race-track:' + cid;
     var T8 = 8 * U, DT = 1.4 * U;   // deck texture tile length, deck thickness
     // deck: top (left→right) + underside box section
-    var deckMat = new THREE.MeshStandardMaterial({ map: deckTex(THREE), color: 0xffffff, roughness: 0.62, metalness: 0.15 });
+    var deckMat = NEON ? new THREE.MeshStandardMaterial({ map: deckTexNeon(THREE), color: 0xffffff, roughness: 0.22, metalness: 0.55, emissive: 0xffffff, emissiveMap: deckGlowNeon(THREE), emissiveIntensity: 1.1 })
+      : new THREE.MeshStandardMaterial({ map: deckTex(THREE), color: 0xffffff, roughness: 0.62, metalness: 0.15 });
     var deckGeo = strip([[-HW, 0, 0], [HW, 0, 1]], T8);
     var underGeo = strip([[HW, 0, 0], [HW, -DT, 0.1], [HW * 0.7, -DT * 1.6, 0.2], [-HW * 0.7, -DT * 1.6, 0.8], [-HW, -DT, 0.9], [-HW, 0, 1]], T8);
     var underMat = new THREE.MeshStandardMaterial({ color: 0x2a3140, roughness: 0.55, metalness: 0.55 });
     // kerbs: raised red/white strips just outside the lane, both sides
-    var kerbMat = new THREE.MeshStandardMaterial({ map: kerbTex(THREE), roughness: 0.5, metalness: 0.05 });
+    var kerbMat = NEON ? new THREE.MeshStandardMaterial({ map: kerbTexNeon(THREE), roughness: 0.4, metalness: 0.1, emissive: 0xffffff, emissiveMap: kerbTexNeon(THREE), emissiveIntensity: 0.85 })
+      : new THREE.MeshStandardMaterial({ map: kerbTex(THREE), roughness: 0.5, metalness: 0.05 });
     var kL = strip([[-HW - KERB, 0.02 * U, 0], [-HW, 0.12 * U, 1]], 4 * U), kR = strip([[HW, 0.12 * U, 0], [HW + KERB, 0.02 * U, 1]], 4 * U);
     // barriers: low walls outside the kerbs (inner face, top, outer face)
-    var wallMat = new THREE.MeshStandardMaterial({ color: 0xc9d2dc, roughness: 0.35, metalness: 0.6 });
+    var wallTex = NEON ? wallTexNeon(THREE) : null;
+    var wallMat = NEON ? new THREE.MeshStandardMaterial({ map: wallTex, color: 0xffffff, roughness: 0.3, metalness: 0.65, emissive: 0xffffff, emissiveMap: wallTex, emissiveIntensity: 0.55 })
+      : new THREE.MeshStandardMaterial({ color: 0xc9d2dc, roughness: 0.35, metalness: 0.6 });
     var X = HW + KERB, WT = 0.35 * U;
     var wL = strip([[-X - WT, -DT, 0], [-X - WT, WALL, 0.3], [-X, WALL, 0.6], [-X, 0, 1]], 6 * U), wR = strip([[X, 0, 0], [X, WALL, 0.4], [X + WT, WALL, 0.7], [X + WT, -DT, 1]], 6 * U);
     // glow rails on top of the barriers (bloom picks them up; toneMapped off keeps them bright)
@@ -196,7 +231,9 @@
       if (!g) { geos.forEach(function (x) { var mm = new THREE.Mesh(x, mat); mm.name = name; grp.add(mm); }); return; }
       var mesh = new THREE.Mesh(g, mat); mesh.name = name; mesh.receiveShadow = true; grp.add(mesh); return mesh;
     }
-    add([deckGeo], deckMat, 'track-deck'); add([underGeo], underMat, 'track-under'); add([kL, kR], kerbMat, 'track-kerb'); add([wL, wR], wallMat, 'track-wall'); add([rL, rR], railMat, 'track-rail');
+    add([deckGeo], deckMat, 'track-deck'); add([underGeo], underMat, 'track-under'); add([kL, kR], kerbMat, 'track-kerb'); add([wL, wR], wallMat, 'track-wall');
+    if (NEON) { add([rL], new THREE.MeshBasicMaterial({ color: 0x27e0ff, toneMapped: false }), 'track-rail'); add([rR], new THREE.MeshBasicMaterial({ color: 0xff3fa4, toneMapped: false }), 'track-rail-r'); }
+    else add([rL, rR], railMat, 'track-rail');
     // FORCE FIELD (owner 2026-10-11): translucent energy wall above each barrier, one draw call. It marks the line the kart is held to (world-mount-ride edge provider). ?forcefield=0 / o.forceField === false = off.
     if (o.forceField !== false) {
       var ffMat = new THREE.MeshBasicMaterial({ color: 0x2bff88, transparent: true, opacity: 0.17, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });

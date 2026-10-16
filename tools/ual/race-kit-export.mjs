@@ -34,8 +34,9 @@ const grab = (root) => root.traverse((o) => {
 if (r) grab(r.group);
 // visible non-instanced code meshes of the track (deck ribbon, rails, edges) -> one OBJ in Blender metres
 let obj = '', vo = 1; const v = new THREE.Vector3(), hidden = (o) => { for (let a = o; a; a = a.parent) if (!a.visible) return true; return false; };
-tr.group.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || hidden(o)) return; const p = o.geometry.attributes.position, idx = o.geometry.index; obj += 'o ' + (o.name || 'deck') + '\n';
+tr.group.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || hidden(o)) return; const p = o.geometry.attributes.position, uv = o.geometry.attributes.uv, idx = o.geometry.index; obj += 'o ' + (o.name || 'deck') + '\n';
   for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); obj += `v ${(v.x / U).toFixed(3)} ${(v.y / U).toFixed(3)} ${(v.z / U).toFixed(3)}\n`; }
-  const n = idx ? idx.count : p.count; for (let i = 0; i < n; i += 3) { const a = idx ? idx.getX(i) : i, b = idx ? idx.getX(i + 1) : i + 1, c = idx ? idx.getX(i + 2) : i + 2; obj += `f ${a + vo} ${b + vo} ${c + vo}\n`; } vo += p.count; });
+  for (let i = 0; i < p.count; i++) obj += uv ? `vt ${uv.getX(i).toFixed(4)} ${uv.getY(i).toFixed(4)}\n` : 'vt 0 0\n';   // UVs: the neon deck / kerb / wall textures are rebuilt in Blender
+  const n = idx ? idx.count : p.count; for (let i = 0; i < n; i += 3) { const a = (idx ? idx.getX(i) : i) + vo, b = (idx ? idx.getX(i + 1) : i + 1) + vo, c = (idx ? idx.getX(i + 2) : i + 2) + vo; obj += `f ${a}/${a} ${b}/${b} ${c}/${c}\n`; } vo += p.count; });
 fs.writeFileSync(OUT, JSON.stringify({ circuit: cid, U, instances: inst })); if (OBJ) fs.writeFileSync(OBJ, obj);
 const by = {}; inst.forEach((i) => (by[i.node] = (by[i.node] || 0) + 1)); console.log(cid, 'kit instances', inst.length, JSON.stringify(by), '| deck verts', vo - 1);
