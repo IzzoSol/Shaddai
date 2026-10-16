@@ -20,7 +20,11 @@ const ctx = { console: { info() {}, warn: console.warn, log() {} }, THREE, Math,
 ctx.window = ctx; vm.createContext(ctx);
 for (const f of ['world-race.js', 'world-race-track.js', 'world-race-kit.js']) vm.runInContext(fs.readFileSync(path.join(PUB, f), 'utf8'), ctx);
 const U = 7 / 1.8, C = ctx.WorldRace.CIRCUITS[cid] || {};
-const tr = ctx.buildRaceTrack({ THREE, scene: new THREE.Scene(), groundAt: heightAt, WorldRace: ctx.WorldRace, circuit: cid, U, mergeGeometries, tunnels: C.tunnels, gateTowers: C.gateTowers || 0, obstacleClearM: 12, maxDeckM: 250 });
+// CITY CIRCUITS (Skyline / Meridian): the deck clears building tops like the game (world-city-heights.js on grid-city-v4.json)
+let obstacleAt; if (/^(meridian-(8|tri)|grand-course|quarter-loop|grid-ring)/.test(cid)) { vm.runInContext(fs.readFileSync(path.join(PUB, 'world-city-heights.js'), 'utf8'), ctx);
+  obstacleAt = ctx.WorldCityHeights.build({ plan: JSON.parse(fs.readFileSync(path.join(PUB, 'assets/world/grid-city-v4.json'), 'utf8')), U: 7 / 1.8, cell: 2 }).topAt; }
+const tr = ctx.buildRaceTrack({ THREE, scene: new THREE.Scene(), groundAt: heightAt, WorldRace: ctx.WorldRace, circuit: cid, U, mergeGeometries, tunnels: C.tunnels, gateTowers: C.gateTowers || 0, obstacleAt, obstacleClearM: 12, maxDeckM: 250, padCount: /^(meridian|grand)/.test(cid) ? 6 : 4 });
+if (tr.frames) { const hs = tr.frames.map((f) => (f.P.y - heightAt(f.P.x, f.P.z)) / U), q = (i) => hs[Math.floor(i * hs.length)].toFixed(0); console.log('deck above ground m: start', hs[0].toFixed(1), 'min', Math.min(...hs).toFixed(1), 'max', Math.max(...hs).toFixed(1), '| at 5/10/25/50/75/90/95%:', [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95].map(q).join(' '), '| length m', Math.round(tr.lengthM)); }
 class Loader { load(url, ok, _p, err) { const b = fs.readFileSync(path.join(PUB, url)); new GL().parse(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength), '', ok, err); } }
 const r = await ctx.WorldRaceKit.dress({ THREE, GLTFLoader: Loader, track: tr, U, groundAt: heightAt, getPlayer: () => ({ x: 1e9, y: 0, z: 1e9 }) });
 tr.group.updateMatrixWorld(true); if (r) r.group.updateMatrixWorld(true);

@@ -168,6 +168,15 @@
       groundWin = Math.max(groundWin, Math.round(80 * U / STEP));   // obstacle ramps are at least 80 m either side
       grade = o.obstacleGrade || 0.12;
     }
+    // MIN DECK HEIGHT (Skyline Circuit, 2026-10-16): raw points may carry h = minimum deck height above ground in metres (0 at the HQ pit, 70 m on the
+    // sky ring). Mapped onto the resampled deck by arc-length fraction; deckProfile below then smooths the climb within the grade limit.
+    if (raw[0].h != null) {
+      var cum = [0], ri; for (ri = 1; ri <= raw.length; ri++) { var ra = raw[ri - 1], rb = raw[ri % raw.length]; cum.push(cum[ri - 1] + Math.hypot(rb.x - ra.x, rb.z - ra.z)); }
+      var TOT = cum[raw.length], rj = 0; if (deckBase === gr) deckBase = gr.slice();
+      for (i = 0; i < n; i++) { var fd = i / n * TOT; while (rj < raw.length - 1 && cum[rj + 1] < fd) rj++;
+        var seg = cum[rj + 1] - cum[rj] || 1, ft = (fd - cum[rj]) / seg, h0 = raw[rj].h || 0, h1 = raw[(rj + 1) % raw.length].h || 0;
+        deckBase[i] = Math.max(deckBase[i], gr[i] + (h0 + (h1 - h0) * ft) * U); }
+    }
     var deck = deckProfile(deckBase, CLEAR, groundWin, grade * STEP);   // bridges dips up to ~80 m, max 6% grade (12% over obstacles)
     if (deckBase !== gr) { var DCAP = (o.maxDeckM || 250) * U; for (i = 0; i < n; i++) deck[i] = Math.max(gr[i] + CLEAR, Math.min(deck[i], gr[i] + DCAP)); }
     var BASE_LIFT = (o.baseLiftM || 0) * U;   // optional whole-circuit lift

@@ -89,12 +89,40 @@
   CIRCUITS['meridian-tri'] = { id: 'meridian-tri', name: 'Meridian Trefoil', scale: 'grid', laps: 2, cleanLapS: 420, rooms: ['grid'], lengthM: 10721, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }],
     // GATE TOWERS: three purpose-built arch towers (one per petal, 3-fold symmetric) the deck threads through; placed by the track builder where the footprint is clear of city towers.
     gateTowers: 3 };
+  // SKYLINE CIRCUIT = the FULL COURSE (owner 2026-10-16: "the top track doesnt have to be a figure 8 ... a circle aligned with the train ... then some figure 8s ...
+  // a way to get to the top track from the bottom one in a smooth way ... back down to the building"). Replaces Meridian-8 as the long race.
+  //   RING  r 1450 m round the city, concentric with the maglev ring; corridor tops <= 81 m (grid-city-v4), deck >= 70 m up.
+  //   PIT   by RACE HQ (bearing 100 deg) the ring swings out to r 1720 m and comes down to the ground: start/finish in front of the HQ, then a ~1 km climb each way.
+  //   LOOPS two CROSSOVERS (trochoid R 140 m, k 2.2): the deck dives 616 m into the city and crosses back over itself at ~90 deg on a flyover.
+  //         North at -10 deg (tops <= 71 m) and south at 170 deg (tops <= 57 m): picked by a tops scan of every 5 deg.
+  //   Points carry a 3rd value = minimum deck height above ground (m), read by the track builder.
+  var GC = { hx: 1612, hn: -296, ringR: 1450, pitR: 1720, pitB: 100.4, pitFlat: 6, pitRamp: 40, skyH: 70, loops: [-10, 170], loopR: 140, loopK: 2.2 };
+  CIRCUITS['grand-course'] = { id: 'grand-course', name: 'Skyline Circuit (Full Course)', scale: 'grid', laps: 1, cleanLapS: 500, rooms: ['grid'], lengthM: 12000, prime: false, hq: true,
+    gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'either' }, { kind: 'trick', verb: 'flip' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'either' }, { kind: 'pad' }] };
+  // Meridian circuits stay in the code (and Blender history) but leave the race menu: the Skyline Circuit is the long race now.
+  ['meridian-8', 'meridian-8b', 'meridian-tri', 'meridian-8-lobe-n', 'meridian-8-lobe-s', 'meridian-8b-lobe-n', 'meridian-8b-lobe-s'].forEach(function (id) { if (CIRCUITS[id]) CIRCUITS[id].hidden = true; });
+  CIRCUITS['dragon-gate'].hq = true;   // the short race also starts at Race HQ
   var DEG = Math.PI / 180;
   function pol(r, b) { return [r * Math.sin(b * DEG), r * Math.cos(b * DEG)]; }          // bearing (deg clockwise from north) -> metres [east, north]
   function arc(r, b0, b1, n) { var o = []; for (var i = 0; i <= n; i++) o.push(pol(r, b0 + (b1 - b0) * i / n)); return o; }
   function lemniscate(n) { var o = []; for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, d = 1 + Math.sin(t) * Math.sin(t); o.push([DG.cx + DG.a * Math.cos(t) / d, DG.cn + DG.a * Math.sin(t) * Math.cos(t) / d]); } return o; }
   function meridian8(n, P) { P = P || M8; var o = [], r = P.rot * DEG, cr = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, d = 1 + Math.sin(t) * Math.sin(t), x = P.a * Math.cos(t) / d, y = P.a * Math.sin(t) * Math.cos(t) / d; o.push([P.cx + x * cr - y * sr, P.cn + x * sr + y * cr]); } return o; }
   function meridianLobe(P, north, n) { var o = [], r = P.rot * DEG, cr = Math.cos(r), sr = Math.sin(r), t0 = north ? -Math.PI / 2 : Math.PI / 2; for (var i = 0; i < n; i++) { var t = t0 + Math.PI * i / n, d = 1 + Math.sin(t) * Math.sin(t), x = P.a * Math.cos(t) / d, y = P.a * Math.sin(t) * Math.cos(t) / d; o.push([P.cx + x * cr - y * sr, P.cn + x * sr + y * cr]); } return o; }
+  function grandCourse() {
+    var o = [], b, i, wrap = function (d) { return ((d % 360) + 540) % 360 - 180; };
+    var pit = function (bb) { var d = Math.abs(wrap(bb - GC.pitB)); return d <= GC.pitFlat ? 1 : d >= GC.pitFlat + GC.pitRamp ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * (d - GC.pitFlat) / GC.pitRamp); };
+    var push = function (bb, r, h) { o.push([r * Math.sin(bb * DEG), r * Math.cos(bb * DEG), h]); };
+    var half = GC.loops.map(function () { return Math.PI * GC.loopR / GC.ringR / DEG; });
+    for (b = GC.pitB; b > GC.pitB - 360; b -= 1) {   // counter-clockwise (bearing decreasing) from the HQ start line
+      var li = -1; GC.loops.forEach(function (c, j) { if (Math.abs(wrap(b - c)) < half[j]) li = j; });
+      if (li >= 0) { if (o.loopDone && o.loopDone[li]) continue; (o.loopDone = o.loopDone || {})[li] = true;
+        var c = GC.loops[li], R = GC.loopR, k = GC.loopK;
+        for (i = 0; i <= 60; i++) { var t = -Math.PI + 2 * Math.PI * i / 60, x = R * (t - k * Math.sin(t)), y = R * k * (1 + Math.cos(t)); push(c - x / GC.ringR / DEG, GC.ringR - y, GC.skyH); }
+        continue; }
+      var w = pit(b); push(b, GC.ringR + (GC.pitR - GC.ringR) * w, GC.skyH * (1 - w));
+    }
+    delete o.loopDone; return o;
+  }
   function trefoil(n) { var o = [], r = MT.rot * DEG, cr = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, x = Math.sin(t) + 2 * Math.sin(2 * t), y = Math.cos(t) - 2 * Math.cos(2 * t); o.push([MT.scale * (x * cr - y * sr), MT.scale * (x * sr + y * cr)]); } return o; }
   var TRACKS = {
     'meridian-tri': function () { return trefoil(216); },
@@ -104,12 +132,13 @@
     'meridian-8b-lobe-s': function () { return meridianLobe(M8B, false, 72); },
     'meridian-8': function () { return meridian8(144); },
     'meridian-8b': function () { return meridian8(144, M8B); },
+    'grand-course': function () { return grandCourse(); },
     'dragon-gate': function () { return lemniscate(72); },
     'grid-ring': function () { return arc(1600, 0, -360, 96).slice(0, -1); },
     'train-ring': function () { return arc(2829, 0, -360, 144).slice(0, -1); },
     'quarter-loop': function () { var out = arc(1600, 0, -67.5, 36), i, r; for (i = 1; i <= 8; i++) { r = 1600 - 100 * i; out.push(pol(r, -67.5)); } out = out.concat(arc(800, -67.5, 0, 24).slice(1)); for (i = 1; i < 8; i++) { r = 800 + 100 * i; out.push(pol(r, 0)); } return out; }
   };
-  function trackWorld(cid, U) { var f = TRACKS[cid]; if (!f) return null; return f().map(function (p) { return { x: p[0] * U, y: 0, z: -p[1] * U }; }); }   // world: x east, z = -north (atlas rule)
+  function trackWorld(cid, U) { var f = TRACKS[cid]; if (!f) return null; return f().map(function (p) { return p.length > 2 ? { x: p[0] * U, y: 0, z: -p[1] * U, h: p[2] } : { x: p[0] * U, y: 0, z: -p[1] * U }; }); }   // optional p[2] = min deck height above ground (m)   // world: x east, z = -north (atlas rule)
   function trackLengthM(cid) { var f = TRACKS[cid]; if (!f) return 0; var p = f(), L = 0; for (var i = 0; i < p.length; i++) { var a = p[i], b = p[(i + 1) % p.length]; L += Math.hypot(b[0] - a[0], b[1] - a[1]); } return L; }
 
   function create(circuit, opts) {
