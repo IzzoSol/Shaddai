@@ -89,14 +89,16 @@
   CIRCUITS['meridian-tri'] = { id: 'meridian-tri', name: 'Meridian Trefoil', scale: 'grid', laps: 2, cleanLapS: 420, rooms: ['grid'], lengthM: 10721, prime: false, gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'trick', verb: 'flip' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }],
     // GATE TOWERS: three purpose-built arch towers (one per petal, 3-fold symmetric) the deck threads through; placed by the track builder where the footprint is clear of city towers.
     gateTowers: 3 };
-  // SKYLINE CIRCUIT = the FULL COURSE (owner 2026-10-16: "the top track doesnt have to be a figure 8 ... a circle aligned with the train ... then some figure 8s ...
-  // a way to get to the top track from the bottom one in a smooth way ... back down to the building"). Replaces Meridian-8 as the long race.
-  //   RING  r 1450 m round the city, concentric with the maglev ring; corridor tops <= 81 m (grid-city-v4), deck >= 70 m up.
-  //   PIT   by RACE HQ (bearing 100 deg) the ring swings out to r 1720 m and comes down to the ground: start/finish in front of the HQ, then a ~1 km climb each way.
-  //   LOOPS two CROSSOVERS (trochoid R 140 m, k 2.2): the deck dives 616 m into the city and crosses back over itself at ~90 deg on a flyover.
-  //         North at -10 deg (tops <= 71 m) and south at 170 deg (tops <= 57 m): picked by a tops scan of every 5 deg.
+  // SKYLINE CIRCUIT = the FULL COURSE (owner 2026-10-16). v2 from the owner's Blender lines: TWO CONNECTORS join Dragon Gate to the sky ring
+  // (they cross in an X west of Dragon Gate -> flyover). Lap: start by RACE HQ on Dragon Gate's south side -> NORTH connector up to the ring
+  // (bearing 85) -> sky ring counter-clockwise with the two crossover loops -> SOUTH connector down (bearing 120) -> a full Dragon Gate figure-8 -> finish.
+  //   RING  r 1450 m, concentric with the maglev; corridor tops <= 81 m (grid-city-v4); deck >= 70 m up. Swings out to the connector feet (r ~1725).
+  //   LOOPS trochoid R 140 m, k 2.2 at -10 deg (tops <= 71 m) and 170 deg (tops <= 57 m), picked by a tops scan of every 5 deg.
   //   Points carry a 3rd value = minimum deck height above ground (m), read by the track builder.
-  var GC = { hx: 1612, hn: -296, ringR: 1450, pitR: 1720, pitB: 100.4, pitFlat: 6, pitRamp: 40, skyH: 70, loops: [-10, 170], loopR: 140, loopK: 2.2 };
+  var GC = { ringR: 1450, upB: 85.1, downB: 120.0, taper: 15, skyH: 70, loops: [-10, 170], loopR: 140, loopK: 2.2,
+    // owner's lines (Blender metres, east/north), traced from the viewport annotation 2026-10-16, ~55 m spacing
+    north: [[1933, -409], [1885, -382], [1871, -325], [1853, -267], [1837, -209], [1813, -143], [1781, -92], [1759, -27], [1729, 22], [1720, 80], [1722, 148]],
+    south: [[1489, -860], [1538, -805], [1597, -737], [1649, -680], [1695, -618], [1724, -559], [1761, -491], [1790, -434], [1820, -376], [1840, -310], [1872, -251], [1920, -201], [1971, -161]] };
   CIRCUITS['grand-course'] = { id: 'grand-course', name: 'Skyline Circuit (Full Course)', scale: 'grid', laps: 1, cleanLapS: 500, rooms: ['grid'], lengthM: 12000, prime: false, hq: true,
     gates: [{ kind: 'pad' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'either' }, { kind: 'trick', verb: 'flip' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'kiss' }, { kind: 'either' }, { kind: 'foil' }, { kind: 'pad' }, { kind: 'either' }, { kind: 'pad' }] };
   // Meridian circuits stay in the code (and Blender history) but leave the race menu: the Skyline Circuit is the long race now.
@@ -109,19 +111,26 @@
   function meridian8(n, P) { P = P || M8; var o = [], r = P.rot * DEG, cr = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, d = 1 + Math.sin(t) * Math.sin(t), x = P.a * Math.cos(t) / d, y = P.a * Math.sin(t) * Math.cos(t) / d; o.push([P.cx + x * cr - y * sr, P.cn + x * sr + y * cr]); } return o; }
   function meridianLobe(P, north, n) { var o = [], r = P.rot * DEG, cr = Math.cos(r), sr = Math.sin(r), t0 = north ? -Math.PI / 2 : Math.PI / 2; for (var i = 0; i < n; i++) { var t = t0 + Math.PI * i / n, d = 1 + Math.sin(t) * Math.sin(t), x = P.a * Math.cos(t) / d, y = P.a * Math.sin(t) * Math.cos(t) / d; o.push([P.cx + x * cr - y * sr, P.cn + x * sr + y * cr]); } return o; }
   function grandCourse() {
-    var o = [], b, i, wrap = function (d) { return ((d % 360) + 540) % 360 - 180; };
-    var pit = function (bb) { var d = Math.abs(wrap(bb - GC.pitB)); return d <= GC.pitFlat ? 1 : d >= GC.pitFlat + GC.pitRamp ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * (d - GC.pitFlat) / GC.pitRamp); };
+    var o = [], b, i, wrap = function (d) { return ((d % 360) + 540) % 360 - 180; }, rOf = function (p) { return Math.hypot(p[0], p[1]); };
+    var ramp = function (pts, h0, h1) { var n = pts.length; for (var j = 0; j < n; j++) o.push([pts[j][0], pts[j][1], Math.round(h0 + (h1 - h0) * j / (n - 1))]); };
     var push = function (bb, r, h) { o.push([r * Math.sin(bb * DEG), r * Math.cos(bb * DEG), h]); };
-    var half = GC.loops.map(function () { return Math.PI * GC.loopR / GC.ringR / DEG; });
-    for (b = GC.pitB; b > GC.pitB - 360; b -= 1) {   // counter-clockwise (bearing decreasing) from the HQ start line
-      var li = -1; GC.loops.forEach(function (c, j) { if (Math.abs(wrap(b - c)) < half[j]) li = j; });
-      if (li >= 0) { if (o.loopDone && o.loopDone[li]) continue; (o.loopDone = o.loopDone || {})[li] = true;
-        var c = GC.loops[li], R = GC.loopR, k = GC.loopK;
+    var rUp = rOf(GC.north[GC.north.length - 1]), rDn = rOf(GC.south[0]);
+    ramp(GC.north, 0, GC.skyH * 0.75);                                                   // NORTH connector: Dragon Gate -> ring (climbing)
+    var half = Math.PI * GC.loopR / GC.ringR / DEG, done = {}, end = GC.downB - 360;
+    for (b = GC.upB - 1.5; b > end + 1; b -= 1) {                                          // ring, counter-clockwise (bearing decreasing)
+      var li = -1; GC.loops.forEach(function (c, j) { if (Math.abs(wrap(b - c)) < half) li = j; });
+      if (li >= 0) { if (done[li]) continue; done[li] = true; var c = GC.loops[li], R = GC.loopR, k = GC.loopK;
         for (i = 0; i <= 60; i++) { var t = -Math.PI + 2 * Math.PI * i / 60, x = R * (t - k * Math.sin(t)), y = R * k * (1 + Math.cos(t)); push(c - x / GC.ringR / DEG, GC.ringR - y, GC.skyH); }
         continue; }
-      var w = pit(b); push(b, GC.ringR + (GC.pitR - GC.ringR) * w, GC.skyH * (1 - w));
+      var fu = Math.max(0, 1 - (GC.upB - b) / GC.taper), fd = Math.max(0, 1 - (b - end) / GC.taper);   // swing out to the connector feet
+      var f = Math.max(fu, fd), rr = GC.ringR + ((fu >= fd ? rUp : rDn) - GC.ringR) * (0.5 - 0.5 * Math.cos(Math.PI * f));
+      push(b, rr, GC.skyH);
     }
-    delete o.loopDone; return o;
+    ramp(GC.south, GC.skyH * 0.75, 0);                                                   // SOUTH connector: ring -> Dragon Gate (descending)
+    var dg = lemniscate(72), near = function (q) { var bi = 0, bd = 1e9; dg.forEach(function (p, j) { var d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (d < bd) { bd = d; bi = j; } }); return bi; };
+    var iIn = near(GC.south[GC.south.length - 1]), iOut = near(GC.north[0]);
+    for (i = (iIn + 1) % dg.length; i !== iOut; i = (i + 1) % dg.length) o.push([dg[i][0], dg[i][1], 0]);   // a full Dragon Gate figure-8 to the finish
+    return o;
   }
   function trefoil(n) { var o = [], r = MT.rot * DEG, cr = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2, x = Math.sin(t) + 2 * Math.sin(2 * t), y = Math.cos(t) - 2 * Math.cos(2 * t); o.push([MT.scale * (x * cr - y * sr), MT.scale * (x * sr + y * cr)]); } return o; }
   var TRACKS = {

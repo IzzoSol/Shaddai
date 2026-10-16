@@ -2,7 +2,7 @@
  * that could be the starting point, and you can do the short race or the long one across the map and back down to the building").
  *
  *   WorldRaceHQ.init({ THREE, scene, GLTFLoader, heightAt(x,z), getPlayer():{x,z}|null, U })
- *   Places the Blender K27 Race HQ (assets/kits/shaddai_race_hq_v01.glb) on the ground beside Dragon Gate, its door facing the Skyline Circuit pit straight
+ *   Places the Blender K27 Race HQ (1.5x, gold-capped beacon spire spins) (assets/kits/shaddai_race_hq_v01.glb) on the ground beside Dragon Gate, its door facing the Skyline Circuit pit straight
  *   (the long race starts there). Four showroom turntables carry slowly turning race ships. E anywhere inside the showroom opens the HQ desk:
  *     1 Short race (Dragon Gate)   2 Full Course (Skyline Circuit)   3 Showroom (buy a ride with Sparks)   4 Upgrades (coming soon)
  *   Owned rides: localStorage 'shd.raceGarage' = { owned:[typeId] } (client-side like the existing garage; must move server-side before real money).
@@ -10,10 +10,10 @@
  */
 (function (root) {
   'use strict';
-  var POS_M = { e: 1612, n: -296 }, YAW = -0.182, FOOT_M = 28, KEY = 'shd.raceGarage';
+  var POS_M = { e: 1737, n: -302.9 }, YAW = -0.182, SC = 1.5, FOOT_M = 28 * SC, KEY = 'shd.raceGarage';   // owner moved it to Dragon Gate's west tip (Blender); 1.5x (TURTLE), 12 m west so the podium clears the deck
   var FEATURED = ['arrow', 'viper', 'raptor', 'lancer'];
   var PRICE = function (T) { return T.ship ? 1500 : T.bike ? 900 : T.water ? 1100 : 600; };
-  var H = null, grp = null, panel = null, tables = [], center = null, inner = 0;
+  var H = null, grp = null, panel = null, tables = [], center = null, inner = 0, beacon = null;
 
   function garage() { try { var g = JSON.parse(localStorage.getItem(KEY) || '{}'); g.owned = g.owned || []; return g; } catch (e) { return { owned: [] }; } }
   function save(g) { try { localStorage.setItem(KEY, JSON.stringify(g)); } catch (e) {} }
@@ -55,12 +55,12 @@
     if (typeof location !== 'undefined' && /[?&]racehq=0\b/.test(location.search)) return null;
     H = h; var THREE = h.THREE, U = h.U || 7 / 1.8, x = POS_M.e * U, z = -POS_M.n * U, y = -Infinity;
     for (var r = 0; r <= FOOT_M; r += FOOT_M / 2) for (var a = 0; a < 8; a++) y = Math.max(y, h.heightAt(x + Math.cos(a * Math.PI / 4) * r * U, z + Math.sin(a * Math.PI / 4) * r * U));   // highest ground under the footprint (the podium skirt covers the rest)
-    center = { x: x, y: y, z: z }; inner = 24 * U;
+    center = { x: x, y: y, z: z }; inner = 24 * SC * U;
     grp = new THREE.Group(); grp.name = 'race-hq'; grp.position.set(x, y, z); grp.rotation.y = YAW; h.scene.add(grp);
     new h.GLTFLoader().load('/assets/kits/shaddai_race_hq_v01.glb', function (g) {
-      var m = g.scene; m.scale.setScalar(U); grp.add(m); m.updateMatrixWorld(true);
+      var m = g.scene; m.scale.setScalar(U * SC); grp.add(m); m.updateMatrixWorld(true); beacon = m.getObjectByName('race_hq_beacon');
       for (var k = 0; k < 4; k++) { var hk = m.getObjectByName('hook_plinth_' + k); if (!hk || !root.WorldHoverCars) continue;
-        var car = root.WorldHoverCars.buildGroup(THREE, FEATURED[k]), tt = new THREE.Group(); tt.position.copy(hk.position).multiplyScalar(U); tt.add(car); car.scale.setScalar(U * 0.95); grp.add(tt); tables.push(tt); }
+        var car = root.WorldHoverCars.buildGroup(THREE, FEATURED[k]), tt = new THREE.Group(); tt.position.copy(hk.position).multiplyScalar(U * SC); tt.add(car); car.scale.setScalar(U * 1.2); grp.add(tt); tables.push(tt); }
     }, undefined, function (e) { if (root.console) console.warn('[race-hq] GLB failed:', e && e.message); });
     document.addEventListener('keydown', function (e) {
       if (e.code !== 'KeyE' || e.repeat) return;
@@ -68,7 +68,7 @@
       if (nearInside()) { draw('home'); e.stopImmediatePropagation(); }
     }, true);
     var last = false; setInterval(function () { var n = !!nearInside(); if (n && !last) toast('Race HQ - press E for the race desk'); if (!n && panel) close(); last = n; }, 600);
-    (function spin() { requestAnimationFrame(spin); for (var i = 0; i < tables.length; i++) tables[i].rotation.y += 0.004; })();
+    (function spin() { requestAnimationFrame(spin); for (var i = 0; i < tables.length; i++) tables[i].rotation.y += 0.004; if (beacon) beacon.rotation.y += 0.01; })();
     root.__raceHQ = { pos: center, owned: function () { return garage().owned.slice(); } };
     return root.__raceHQ;
   }
