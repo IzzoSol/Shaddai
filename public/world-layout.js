@@ -186,7 +186,9 @@
   // module (transit, colosseum, realm props/volcano, interiors doors, colliders) lands on the v4 terrain.
   // Without the flag nothing below runs and the layout is exactly Map v3. See docs/LAYOUT-V4.md.
   var MAP_V4 = false;
-  try { MAP_V4 = /[?&]map=v4(?:&|$|#)/.test(location.search); } catch (e) {}
+  // 2026-10-15: v4 is the DEFAULT, same rule as SHADDAI-WORLD-3D.html (c394ac74 flipped only the host, so /world ran v4 terrain with v3 positions:
+  // stations ~2.5 km off, Colosseum inside the city). ?map=v3 or ?map=legacy = the old layout.
+  try { MAP_V4 = !/[?&]map=(?:v3|legacy)(?:&|$|#)/.test(location.search); } catch (e) { MAP_V4 = true; }
   window.WORLD_LAYOUT.mapVersion = MAP_V4 ? 'v4' : 'v3';
   window.WORLD_LAYOUT.terrainMeta = null;
   if (MAP_V4) (function (L) {
