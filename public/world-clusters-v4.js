@@ -88,6 +88,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
   // GHOST WALLS (2026-10-15): canon-colliders-v4.json was baked for the FULL fabric, but this loader keeps ~30% (hash) and drops offices + park/track
   // lots, so ~2400 box colliders + walkable roofs stood in empty lots (invisible walls all over the city). Keep a fabric-named canon solid only when a
   // live building stands on it. Pure: (live items in metres, solids in units) -> kept solids. Kinds outside the 3 fabric clusters are never touched.
+  var FABRIC_KEEP = 0.15;   // share of grid-fabric pieces shown (stable position hash); was 0.3 until 2026-10-16
   var FAB_KIND = /^(commons|ne-campus|nw-race)-/;
   function ghostFilter(items, solids, kindOf) {
     var B = 24, grid = {};
@@ -136,7 +137,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
     return fetch(url).then(function (r) { return r.json(); }).then(function (plan) {
       // 2026-10-11 (owner: "so many office buildings that don't appear and are janky"): thin the dense city fabric to ~60% by a stable hash of position;
       // fewer instances = fewer cells to rebuild and less popping. ?fullcity=1 restores every piece.
-      if (/grid-fabric/.test(String(url)) && plan.items.length > 300 && !(typeof location !== 'undefined' && /[?&]fullcity=1/.test(location.search))) plan.items = plan.items.filter(function (it) { var h = Math.abs(Math.sin(it.x_m * 12.9898 + it.y_m * 78.233) * 43758.5453) % 1; return h < 0.3 && !/office/.test(String(it.key)); });
+      if (/grid-fabric/.test(String(url)) && plan.items.length > 300 && !(typeof location !== 'undefined' && /[?&]fullcity=1/.test(location.search))) plan.items = plan.items.filter(function (it) { var h = Math.abs(Math.sin(it.x_m * 12.9898 + it.y_m * 78.233) * 43758.5453) % 1; return /^sc-tower-/.test(String(it.key)) || (h < (opts.keepFrac != null ? opts.keepFrac : FABRIC_KEEP) && !/office|garden/.test(String(it.key))); });   /* 2026-10-16 owner: keep ~half of what was shown (0.3 -> 0.15), K1 towers always, gardens become for-sale plots (world-sale-plots.js) */
       // 2026-10-11: buildings may not sit on a race deck - the keys come from tools/ (docs/track-*.json vs the fabric). ?trackclear=0 disables.
       var _tc = (typeof location !== 'undefined' && /[?&]trackclear=0/.test(location.search)) ? null : window.__trackClear;
       if (_tc && /grid-fabric/.test(String(url))) plan.items = plan.items.filter(function (it) { return !_tc[it.x_m + ',' + it.y_m]; });
