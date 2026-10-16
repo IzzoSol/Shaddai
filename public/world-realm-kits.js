@@ -18,6 +18,14 @@
   // layouts in station-local METRES: [x along the track, z toward the lift/city, yawDeg, scale]; mirrored pairs use +-x
   function pair(x, z, yaw, s) { return [[x, z, yaw || 0, s || 1], [-x, z, -(yaw || 0), s || 1]]; }
   var BUILDINGS = [['hall', 0, 78, 180, 1], ['shop', 30, 46, -90, 1], ['shop', -30, 46, 90, 1], ['tower', 34, 104, -135, 1], ['tower', -34, 104, 135, 1]];
+  // REALM TOWN (owner 2026-10-16: "finish each realm city ... buildings ... the roads"): K10b kinds (home / workshop / inn / apartments, each realm's
+  // own style) laid out on streets. MAIN AVENUE runs from behind the hall (z 96) to the inn (z 196) along x = 0; CROSS STREET at z 140 from x -132..132.
+  // Homes front the cross street on both sides (8 lots each side: buyable with Sparks in P6), workshops + apartments face the avenue. Yaw (as K10): 180 faces the
+  // station (-z), 0 faces the city (+z); +-90 faces the avenue. Fronts (doors) always face a street. ?realmtowns=0 = the old 5-building towns only.
+  var TOWN = [['inn', 0, 196, 180, 1], ['workshop', 29, 123, -90, 1], ['workshop', -29, 123, 90, 1], ['apartments', 26, 172, -90, 1], ['apartments', -26, 172, 90, 1]];
+  [44, 62, 80, 98, 116].forEach(function (x, i) { TOWN.push(['home', x, 124, 0, 1], ['home', -x, 124, 0, 1]); if (i < 3) TOWN.push(['home', x + 9, 156, 180, 1], ['home', -x - 9, 156, 180, 1]); });
+  // STREETS in station-local metres: [x0, z0, x1, z1, widthM]
+  var STREETS = [[0, 96, 0, 182, 12], [-132, 140, 132, 140, 10]];
   var PROPS = {
     emberfall: { rune_pad: [[0, 30, 0, 1]], obsidian_spire: pair(11, 22, 20, 0.8).concat(pair(13, 56, -30, 0.7), pair(150, 190, 40, 2.4)), ember_vent: pair(55, 70, 0, 0.9), lava_rock: pair(46, 36, 30, 1.2) },
     swamp: { moss_pillar: pair(22, 40, 15, 1.6).concat(pair(28, 84, 70, 1.8)), glow_mushrooms: pair(10, 30, 0, 3).concat(pair(16, 64, 40, 3), [[0, 96, 0, 3]]), reed_clump: pair(42, 58, 0, 1.4), dead_tree: pair(120, 150, 30, 1.7) },
@@ -28,7 +36,7 @@
     arctic: { ice_spire: pair(18, 46, 0, 1.3).concat(pair(25, 86, 40, 1.4), pair(135, 175, 20, 2.5)) },
     darkforest: { rune_stone: [[0, 30, 0, 1], [0, 72, 0, 1]] }
   };
-  var SOLID_R = { hall: 13, shop: 8.5, tower: 10, obsidian_spire: 2.6, moss_pillar: 4.2, sand_arch: 0, hoodoo: 1.6, mesa: 14, rune_arch: 3.5, rift_gate: 0, ice_spire: 3, rune_stone: 0, reef_ruin: 0, ember_vent: 2.8, lava_rock: 2 };
+  var SOLID_R = { hall: 13, shop: 8.5, tower: 10, home: 6.5, workshop: 10, inn: 10, apartments: 8.5, obsidian_spire: 2.6, moss_pillar: 4.2, sand_arch: 0, hoodoo: 1.6, mesa: 14, rune_arch: 3.5, rift_gate: 0, ice_spire: 3, rune_stone: 0, reef_ruin: 0, ember_vent: 2.8, lava_rock: 2 };
 
   function load(loader, url) { return new Promise(function (res) { loader.load(url, res, undefined, function () { console.warn('[realm-kits] missing', url); res(null); }); }); }
 
@@ -50,7 +58,7 @@
     var THREE = o.THREE, base = o.base || BASE, heightAt = o.heightAt || function () { return 0; };
     var group = new THREE.Group(); group.name = 'world-realm-kits'; o.scene.add(group);
     var stats = { towns: 0, instancedMeshes: 0, instances: 0, colliders: 0 }, L = root.WORLD_LAYOUT, cols = L && L.realmColliders;
-    var loader = new o.GLTFLoader(), stations = stationList(o.transit);
+    var loader = new o.GLTFLoader(), stations = stationList(o.transit), towns_on = o.towns !== false && !(typeof location !== 'undefined' && /[?&]realmtowns=0/.test(location.search || ''));
     var batches = {}, solids = {}, towns = {};                                        // key -> [Matrix4] ; key -> [collider] (only registered once the model exists)
     var m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pv = new THREE.Vector3(), sv = new THREE.Vector3();
     function add(key, p, solidR) {
@@ -59,7 +67,7 @@
     }
     stations.forEach(function (st) {
       stats.towns++; var sk = st.id + '|';
-      placements(st, BUILDINGS).forEach(function (p) { add(sk + 'bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]); });
+      placements(st, BUILDINGS.concat(towns_on ? TOWN : [])).forEach(function (p) { add(sk + 'bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]); });
       var pr = PROPS[PROP_REALM[st.realm]] || {};
       Object.keys(pr).forEach(function (name) {
         placements(st, pr[name].map(function (t) { return [name, t[0], t[1], t[2], t[3]]; })).forEach(function (p) { add(sk + 'prop:' + PROP_REALM[st.realm] + ':' + name, p, SOLID_R[name]); });
@@ -67,7 +75,8 @@
     });
     var realms = {}; stations.forEach(function (st) { realms[st.realm] = 1; });
     var jobs = [load(loader, base + 'shaddai_realm_props_v01.glb').then(function (g) { return { kind: 'prop', g: g }; })];
-    Object.keys(realms).forEach(function (r) { jobs.push(load(loader, base + 'shaddai_realm_buildings_' + r + '_v01.glb').then(function (g) { return { kind: 'bld', realm: r, g: g }; })); });
+    Object.keys(realms).forEach(function (r) { jobs.push(load(loader, base + 'shaddai_realm_buildings_' + r + '_v01.glb').then(function (g) { return { kind: 'bld', realm: r, g: g }; }));
+      if (towns_on) jobs.push(load(loader, base + 'shaddai_realm_town_' + r + '_v01.glb').then(function (g) { return { kind: 'bld', realm: r, g: g }; })); });
     return Promise.all(jobs).then(function (res) {
       var nodes = {};
       res.forEach(function (r) {
@@ -91,6 +100,7 @@
           town.add(im); stats.instancedMeshes++; stats.instances += list.length;
         });
       });
+      if (towns_on) stations.forEach(function (st) { var town = towns[st.id]; if (town) { var rd = buildStreets(THREE, st, heightAt); if (rd) { town.add(rd); stats.streets = (stats.streets || 0) + 1; } } });
       if (stats.colliders && root.buildWorldCollision && L) { try { root.buildWorldCollision(L); } catch (e) { console.warn('[realm-kits] collision rebuild', e && e.message); } }
       // FPS: only towns near the player draw (each town is its own group; far ones hidden). Budget: < 80 draw calls total.
       var R2 = Math.pow((o.viewM || 1200) * PM, 2);
@@ -102,5 +112,29 @@
     });
   }
 
-  root.WorldRealmKits = { build: build, _placements: placements, _stations: stationList, BUILDINGS: BUILDINGS, PROPS: PROPS, PROP_REALM: PROP_REALM };
+  // STREETS: one merged ribbon mesh per town that follows the ground (2 m steps), dark paving with realm-coloured edge lines. 2 draw calls per town.
+  var STREET_GLOW = { grid: 0xe8c45c, void: 0xb06cff, desert: 0xffb24a, volcano: 0xff5a2a, forest: 0x2bff88, suburb: 0xaab4c2, meadow: 0xa8ff6a, ocean: 0x4ac8ff, darkforest: 0x2affd0, arctic: 0xbfe8ff };
+  var STREET_PAVE = { arctic: 0x9aa6b2, desert: 0x6b5a44, volcano: 0x2a2220, meadow: 0x4a4f44, forest: 0x34403a, darkforest: 0x22262a, ocean: 0x3c4a52, suburb: 0x4a4d52, void: 0x1c1826, grid: 0x23262c };
+  function buildStreets(THREE, st, heightAt) {
+    var c = Math.cos(st.rot), s = Math.sin(st.rot), pave = [], glow = [];
+    function W(lx, lz) { var x = lx * PM, z = lz * PM; return [st.x + x * c + z * s, st.z - x * s + z * c]; }
+    function strip(out, x0, z0, x1, z1, half, lift) {
+      var L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.ceil(L / 2)), ux = (x1 - x0) / L, uz = (z1 - z0) / L, nx = -uz, nz = ux;
+      for (var i = 0; i < n; i++) { var a = i / n * L, b = (i + 1) / n * L, q = [];
+        [[a, -half], [a, half], [b, half], [b, -half]].forEach(function (t) { var w = W(x0 + ux * t[0] + nx * t[1], z0 + uz * t[0] + nz * t[1]); q.push([w[0], heightAt(w[0], w[1]) + lift * PM, w[1]]); });
+        out.push(q[0], q[1], q[2], q[0], q[2], q[3]); }
+    }
+    STREETS.forEach(function (r) { var h = r[4] / 2; strip(pave, r[0], r[1], r[2], r[3], h, 0.12);
+      var L = Math.hypot(r[2] - r[0], r[3] - r[1]), nx = -(r[3] - r[1]) / L, nz = (r[2] - r[0]) / L;
+      [-1, 1].forEach(function (sd) { strip(glow, r[0] + nx * sd * (h - 0.4), r[1] + nz * sd * (h - 0.4), r[2] + nx * sd * (h - 0.4), r[3] + nz * sd * (h - 0.4), 0.18, 0.16); }); });
+    var g = new THREE.Group(); g.name = 'realm-streets-' + st.id;
+    [[pave, new THREE.MeshStandardMaterial({ color: STREET_PAVE[st.realm] || 0x2a2d33, roughness: 0.82, metalness: 0.08, side: THREE.DoubleSide })],
+     [glow, new THREE.MeshBasicMaterial({ color: STREET_GLOW[st.realm] || 0x2bff88, side: THREE.DoubleSide })]].forEach(function (pm) {
+      var arr = new Float32Array(pm[0].length * 3); pm[0].forEach(function (v, i) { arr[i * 3] = v[0]; arr[i * 3 + 1] = v[1]; arr[i * 3 + 2] = v[2]; });
+      var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(arr, 3)); geo.computeVertexNormals();
+      var mesh = new THREE.Mesh(geo, pm[1]); mesh.receiveShadow = true; g.add(mesh); });
+    return g;
+  }
+
+  root.WorldRealmKits = { build: build, _placements: placements, _stations: stationList, BUILDINGS: BUILDINGS, TOWN: TOWN, STREETS: STREETS, PROPS: PROPS, PROP_REALM: PROP_REALM };
 })(typeof window !== 'undefined' ? window : globalThis);
