@@ -31,6 +31,7 @@
     function box(w, h, d, m, x, y, z) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); g.add(b); return b; }
     var cx = (M.x0 + M.x1) / 2, cz = (M.z0 + M.z1) / 2, pz1 = M.z0 + M.platform;
     // floor (platform tiles) + trench + ceiling + walls
+    var _shell0 = g.children.length;   // code hall shell [floor .. rails] - replaced by the Blender K9 hall when it loads
     var tc = document.createElement('canvas'); tc.width = tc.height = 256; var t = tc.getContext('2d'); t.fillStyle = '#2a2f38'; t.fillRect(0, 0, 256, 256); t.strokeStyle = '#3b4250'; t.lineWidth = 3; t.strokeRect(0, 0, 256, 256); t.strokeStyle = '#e8c45c'; t.lineWidth = 6; t.beginPath(); t.moveTo(0, 246); t.lineTo(256, 246); t.stroke();
     var tex = new THREE.CanvasTexture(tc); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(W / 4, M.platform / 4); tex.colorSpace = THREE.SRGBColorSpace;
     var floor = new THREE.Mesh(new THREE.PlaneGeometry(W, M.platform), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.25, emissive: 0x2a3140, emissiveMap: tex, emissiveIntensity: 0.55 })); floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, M.z0 + M.platform / 2); g.add(floor);
@@ -42,7 +43,18 @@
     box(W, 0.3, 0.3, mGold, cx, 0.02, pz1 - 0.3); box(W, 0.12, 0.4, mTrim, cx, H - 0.1, M.z0 + 0.4);   // platform edge strip + cyan cove
     for (var x = M.x0 + 6; x < M.x1 - 4; x += 8) box(3.2, 0.12, 1.0, mLight, x, H - 0.05, pz1 - 4);   // ceiling light strips
     for (var p = M.x0 + 12; p < M.x1 - 6; p += 14) box(1.0, H, 1.0, mWall, p, H / 2, pz1 + 3.6);         // pillars in the trench zone
+    var _shell1 = g.children.length;   // the code rails below stay: the metro train runs on them
     [pz1 + 2.2, pz1 + 5.0].forEach(function (rz) { box(W, 0.14, 0.14, mRail, cx, -0.6, rz); box(W, 0.5, 0.5, mTrim, cx, -0.9, rz); });   // rails + glow guide
+    // BLENDER K9 METRO HALL (shaddai_transit_kit_v01.glb, metro_hall_100m: same 100 x 24 x 8 m box, origin = hall centre on the platform floor,
+    // kit +Y = the z0 side). On load the code shell (floor, walls, ceiling, frame, pillars, light strips) hides; rails, boards, elevator and train stay.
+    var LC = window.__GLTFLoaderClass;
+    if (LC && !/[?&]metrokit=0/.test(location.search)) new LC().load('/assets/kits/shaddai_transit_kit_v01.glb', function (gl) {
+      var hall = gl.scene.getObjectByName('metro_hall_100m'); if (!hall || !g.parent) return;
+      hall = hall.clone(true); hall.position.set(cx, 0, cz); hall.rotation.set(0, 0, 0); hall.name = 'colosseum-metro-k9';
+      var kr = hall.getObjectByName('metro_hall_rails'); if (kr) kr.visible = false;   // kit's twin tracks sit off the code train's line (code rails kept)
+      for (var k = _shell0; k < _shell1; k++) if (g.children[k]) g.children[k].visible = false;
+      g.add(hall); arena.metroKit = hall;
+    }, undefined, function () { console.warn('[colosseum-metro] K9 hall missing, code hall kept'); });
     // parked maglev (3 cars) on the track, doors toward the platform
     for (var c = 0; c < 3; c++) { var carx = M.x0 + 40 + c * 19; box(18, 3.4, 3.8, mCar, carx, 1.2, pz1 + 3.7); box(15, 1.1, 0.06, mWin, carx, 2.0, pz1 + 1.78); box(2.4, 2.6, 0.08, mGlass, carx, 1.3, pz1 + 1.76); }
     // benches

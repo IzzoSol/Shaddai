@@ -591,11 +591,27 @@ window.__w3dDebug = { scene, camera, renderer, THREE };
       const _hs = window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations && window.WORLD_LAYOUT.stations.find(function(st){ return st.id === 'harbor'; });   // 2026-10-11: the tube ends at the HARBOR LINE STATION (the ring train's stop beside the Crystal Sea), not the far Central Station
       const _cs = _hs ? _hs.pos : ((window.WORLD_LAYOUT && window.WORLD_LAYOUT.stations && window.WORLD_LAYOUT.stations[0]) ? window.WORLD_LAYOUT.stations[0].pos : null);
       if(_cs){ const sx = _p0.x + 22 * V4_U, sz = _p0.z - 60 * V4_U, ex = _cs[0], ez = _cs[1], tdx = ex - sx, tdz = ez - sz, TD = Math.hypot(tdx, tdz), tn = Math.max(1, Math.ceil(TD / (60 * V4_U)));
-        _gl.loadAsync('/assets/reef/reef-tube.glb').then(function(tg){ const tsrc = tg.scene;
+        // 2026-10-15 train finish: the Blender K9 ARCHED GLASS TUBE (owner ref: train in arched glass tubes) tiles the line every 18 m (instanced, ~2 draws per mesh part)
+        // + the K9b SHORE PORTAL where the line leaves the sea; the old reef-tube.glb stays as the fallback (?glasstube=0).
+        const _oldTube = function(){ _gl.loadAsync('/assets/reef/reef-tube.glb').then(function(tg){ const tsrc = tg.scene;
           for(let k = 0; k < tn; k++){ const t = (k + 0.5) / tn, px = sx + tdx * t, pz = sz + tdz * t, w = _v4Water.waterHeightAt(px, pz), s = tsrc.clone(true);
             const y = (w != null ? w - 6 * V4_U : _v4T.heightAt(px, pz) - 2 * V4_U);
             s.scale.setScalar(V4_U); s.rotation.y = Math.atan2(-tdz, tdx); s.position.set(px, y, pz); s.name = 'reef-tube-' + k; scene.add(s); } })
-          .catch(function(e){ console.warn('[reef] tube line failed:', e && e.message); });
+          .catch(function(e){ console.warn('[reef] tube line failed:', e && e.message); }); };
+        if(/[?&]glasstube=0/.test(location.search)) _oldTube();
+        else Promise.all([_gl.loadAsync('/assets/kits/shaddai_transit_kit_v01.glb'), _gl.loadAsync('/assets/kits/shaddai_water_link_v01.glb').catch(function(){ return null; })]).then(function(r){
+          const tile = r[0].scene.getObjectByName('glass_tube_18m'); if(!tile){ _oldTube(); return; }
+          const N = Math.max(1, Math.ceil(TD / (18 * V4_U))), yaw = Math.atan2(tdx, tdz), m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), sc = new THREE.Vector3(V4_U, V4_U, V4_U), p3 = new THREE.Vector3();
+          let shoreK = -1; const ys = [];
+          for(let k = 0; k < N; k++){ const t = (k + 0.5) / N, px = sx + tdx * t, pz = sz + tdz * t, w = _v4Water.waterHeightAt(px, pz); ys.push(w != null ? w - 6 * V4_U : _v4T.heightAt(px, pz) - 2 * V4_U); if(shoreK < 0 && w == null && k > 0) shoreK = k; }
+          tile.updateMatrixWorld(true); tile.traverse(function(src){ if(!src.isMesh) return; const rel = new THREE.Matrix4().copy(tile.matrixWorld).invert().multiply(src.matrixWorld);
+            const im = new THREE.InstancedMesh(src.geometry, src.material, N); im.name = 'reef-glass-tube-' + src.name; im.frustumCulled = false;
+            for(let k = 0; k < N; k++){ const t = (k + 0.5) / N; p3.set(sx + tdx * t, ys[k], sz + tdz * t); m4.compose(p3, q, sc).multiply(rel); im.setMatrixAt(k, m4); }
+            scene.add(im); });
+          const portal = r[1] && r[1].scene.getObjectByName('shore_portal');
+          if(portal && shoreK > 0){ const t = shoreK / N, px = sx + tdx * t, pz = sz + tdz * t, sp = portal.clone(true); sp.scale.setScalar(V4_U); sp.rotation.y = yaw + Math.PI;   // sea toward the reef end
+            const w0 = _v4Water.waterHeightAt(sx, sz); sp.position.set(px, (w0 != null ? w0 : _v4T.heightAt(px, pz)), pz); sp.name = 'reef-shore-portal'; scene.add(sp); }
+        }).catch(function(e){ console.warn('[reef] glass tube failed, old tube:', e && e.message); _oldTube(); });
         _gl.loadAsync('/assets/reef/reef-tube-station.glb').then(function(ts){ const t2 = ts.scene; t2.name = 'central-tube-station'; t2.scale.setScalar(V4_U);
           t2.rotation.y = Math.atan2(-tdz, tdx); t2.position.set(ex, _v4T.heightAt(ex, ez) + 1 * V4_U, ez); scene.add(t2); })
           .catch(function(e){ console.warn('[reef] central tube station failed:', e && e.message); });
@@ -5572,6 +5588,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyU' || e.repeat) retur
   if(!window.WorldNavalGame || !window.WorldNaval || !window.__loadPlayable) return; clearInterval(iv);
   try{ if(window.WorldNavalGame && window.WorldNavalGame.loadKit) window.WorldNavalGame.loadKit(THREE, GLTFLoader); }catch(e){}   // Blender K24 galleon / skimmer / nautilus
   try{ _bootT('naval', function(){ window.__naval = window.WorldNavalGame.create({ THREE, getArena: function(){ return window.__colosseumArena; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} } }); }); }catch(e){ console.warn('[naval] init failed', e && e.message); } }, 1000); })();
+window.__GLTFLoaderClass = window.__GLTFLoaderClass || GLTFLoader;   // for classic-script modules that load Blender kits (colosseum metro K9 hall, water link)
 // ── HOVER LEAGUE (world-hoverleague-core.js + world-colosseum-hoverleague.js): Colosseum hover field mode; opened from I > Fight ──
 (function bootHoverLeague(){ let n = 0; const iv = setInterval(function(){ if(++n > 400){ clearInterval(iv); return; } if(!window.HoverLeague || !window.HoverLeagueCore || typeof hover === 'undefined' || !hover) return; clearInterval(iv);
   try{ window.__hoverLeague = window.HoverLeague.create({ THREE, GLTFLoader, getArena: function(){ return window.__colosseumArena; }, isInside: function(){ return !!(_interiors && _interiors.isInside() && window.__colosseumArena && window.__colosseumArena.group.visible); }, getHover: function(){ return hover; }, getPlayerPos: function(){ return playerPos; }, enter: function(){ try{ if(window.__travel && window.__travel.colospot) window.__travel.colospot('arena'); }catch(_){} },
