@@ -70,3 +70,13 @@ light (a per-polygon scan of the city crashed Blender for memory). Kit generator
 `image (61)`-`(65)` = sent last, NOT yet reviewed. Owner asked "didn't we upgrade to this?" -> what is built: the Hover League FIELD mode (rim, goals,
 pads, dais, energy balls, bots) inside the existing Colosseum; the hoverskate PARK was kept as the skate park (owner 2026-10-15). The concept-art
 level (stadium crowds, banners, holo goal frames, neon floor art) is NOT matched yet -> next model: open these images, list the gaps, upgrade.
+
+## 7. Owner priorities for the NEXT session (2026-10-16, end of day)
+1. **Race:** the track OVER THE CITY (Meridian-8 figure-8) was meant to be the MAIN circuit. Make it the default and connect it to Dragon Gate in an
+   upgraded long-race mode (e.g. a bridge appears / opens to join the two circuits). Place the jump ramps (needs deck ramp physics).
+2. **Verify everything is IN and working in the browser** (headless OK): hoverboards v02, the 5 hover ships (K5, world-hovercars.js), reef city +
+   glass-tube line (turn `?reef=1` on by default if FPS allows), homes (forest pods + desert village), Colosseum Hover League, Athenaeum K15,
+   train (K7 pylons, K8 stations, K9 metro), park (v2 + K25 dressing), city (311 buildings + 24 K1 towers + plots).
+3. Hide ~half the SW plot district; upgrade the Hover League to the concept-art level (refs in section 6).
+4. Then FPS (section 4) -> agents last.
+Blender: the grey box inside the Athenaeum (non-shell mesh > 15 m) was hidden in the world file.
