@@ -212,7 +212,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <div class="hud" id="coords">X 0 · Z 0</div>
 <div class="hud" id="hint" aria-label="Controls">
   <span class="hk"><b>W</b><b>A</b><b>S</b><b>D</b><em>Move</em></span><span class="hk"><b>Shift</b><em>Run</em></span><span class="hk"><b>Space</b><em>Jump</em></span><span class="hk"><b>Mouse</b><em>Look</em></span>
-  <span class="hk"><b>E</b><em>Interact</em></span><span class="hk"><b>V</b><em>Camera</em></span><span class="hk"><b>I</b><em>Mounts &amp; Travel</em></span><span class="hk"><b>U</b><em>Maglev</em></span>
+  <span class="hk"><b>E</b><em>Interact</em></span><span class="hk"><b>V</b><em>Camera</em></span><span class="hk"><b>O</b><em>Hoverboard</em></span><span class="hk"><b>I</b><em>Mounts &amp; Travel</em></span><span class="hk"><b>U</b><em>Maglev</em></span>
   <span class="hk"><b>Y</b><em>Navi</em></span><span class="hk"><b>H</b><em>Map</em></span><span class="hk"><b>Tab</b><em>Cursor</em></span><span class="hk"><b>Esc</b><em>Menu</em></span>
 </div>
 <div id="bikeHud" class="hud" style="display:none;top:18px;right:120px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:#27e0ff;text-shadow:0 0 12px #27e0ff">🏍 GRID BIKE</div>
@@ -6523,6 +6523,13 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
     if(bikeMode){ gridBike.position.set(playerPos.x, groundY, playerPos.z); gridBike.rotation.y = Math.atan2(fwd.x, fwd.z); playerAvatar.visible = true; playerAvatar.position.set(playerPos.x, groundY+0.6, playerPos.z); }
   }
   if (hover) hover.pose(dt, { showRider: thirdPerson ? true : undefined });
+  // BOARD TRICK STRIP (owner 2026-10-16: "never seen the hoverboard stuff"): while riding, the trick keys sit above the controls panel
+  if (hover && hover.isRiding) { const on = !!hover.isRiding(); let el = document.getElementById('boardTricksHud');
+    if (on && !el) { el = document.createElement('div'); el.id = 'boardTricksHud';
+      el.style.cssText = 'position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:60;padding:7px 14px;border-radius:10px;background:rgba(5,10,16,.82);border:1px solid #27e0ff;color:#dff6ff;font:700 12px Rajdhani,sans-serif;letter-spacing:.04em;pointer-events:none;white-space:nowrap';
+      el.innerHTML = '<b style="color:#27e0ff">BOARD</b> &nbsp; Space pop (hold = fly) · in air: A/D spin · Shift+W/S flip · Shift grab · Shift+A/D varial · Z/C roll · G manual · Shift+G nose manual · O get off';
+      document.body.appendChild(el); }
+    if (el) el.style.display = on ? 'block' : 'none'; }
   if (_riders) {   // RIDERS: seat the player on the bike / dragon (after both placed themselves), then solve every rider
     if (window.__riderBike) _riders.sync(playerAvatar, !!veh.bike.isRiding(), window.__riderBike, 'seat', { visible: function(){ return thirdPerson; } });
     if (window.__dragonRide) { window.__riderDragon = window.__riderDragon || _riders.dragonVehicle(window.__dragonRide); _riders.sync(playerAvatar, window.__dragonRide.isRiding(), window.__riderDragon, 'saddle'); }
