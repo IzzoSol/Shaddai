@@ -4,50 +4,26 @@
  "towers": [
   {
    "key": "sc-tower-spire",
-   "x_m": 617.4,
-   "y_m": -835.3,
-   "yaw": 143.53,
+   "x_m": 477.1,
+   "y_m": -922.7,
+   "yaw": 152.66,
    "h_m": 170,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 477.8,
-   "y_m": -891,
-   "yaw": 151.8,
+   "x_m": 543.4,
+   "y_m": -687.6,
+   "yaw": 141.68,
    "h_m": 140,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 543.4,
-   "y_m": -687.6,
-   "yaw": 141.68,
-   "h_m": 120,
-   "cluster": "commons"
-  },
-  {
-   "key": "sc-tower-spire",
-   "x_m": 695.5,
-   "y_m": -986.2,
-   "yaw": 144.81,
-   "h_m": 160,
-   "cluster": "commons"
-  },
-  {
-   "key": "sc-tower-slab",
    "x_m": 795.5,
    "y_m": -868.6,
    "yaw": 137.52,
-   "h_m": 130,
-   "cluster": "commons"
-  },
-  {
-   "key": "sc-tower-setback",
-   "x_m": 762.4,
-   "y_m": -705.5,
-   "yaw": 132.78,
-   "h_m": 110,
+   "h_m": 120,
    "cluster": "commons"
   },
   {
@@ -55,46 +31,70 @@
    "x_m": 328.4,
    "y_m": -843.4,
    "yaw": 158.73,
+   "h_m": 160,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 658.9,
+   "y_m": -1076.2,
+   "yaw": 148.52,
+   "h_m": 130,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 700.6,
+   "y_m": -617.1,
+   "yaw": 131.37,
+   "h_m": 110,
+   "cluster": "commons"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 306.9,
+   "y_m": -1079.5,
+   "yaw": 164.13,
    "h_m": 150,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 484.8,
-   "y_m": -1073.4,
-   "yaw": 155.69,
+   "x_m": 815,
+   "y_m": -1106.7,
+   "yaw": 143.63,
    "h_m": 120,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 663.4,
-   "y_m": -572.7,
-   "yaw": 130.8,
+   "x_m": 885.6,
+   "y_m": -644,
+   "yaw": 126.03,
    "h_m": 100,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-spire",
-   "x_m": 327.4,
-   "y_m": -660.7,
-   "yaw": 153.64,
+   "x_m": 915.7,
+   "y_m": -988.1,
+   "yaw": 137.18,
    "h_m": 170,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 293,
-   "y_m": -996.5,
-   "yaw": 163.62,
+   "x_m": 673.9,
+   "y_m": -469.3,
+   "yaw": 124.85,
    "h_m": 140,
    "cluster": "commons"
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 392.3,
-   "y_m": -519.6,
-   "yaw": 142.95,
+   "x_m": 184.4,
+   "y_m": -713.9,
+   "yaw": 165.52,
    "h_m": 120,
    "cluster": "commons"
   },
@@ -108,42 +108,18 @@
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 654.6,
-   "y_m": 434.6,
-   "yaw": 56.42,
+   "x_m": 590.1,
+   "y_m": 518.8,
+   "yaw": 48.68,
    "h_m": 130,
    "cluster": "ne-campus"
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 621.2,
-   "y_m": 623,
-   "yaw": 44.92,
+   "x_m": 755.9,
+   "y_m": 214.6,
+   "yaw": 74.15,
    "h_m": 110,
-   "cluster": "ne-campus"
-  },
-  {
-   "key": "sc-tower-spire",
-   "x_m": 785.5,
-   "y_m": 736,
-   "yaw": 46.86,
-   "h_m": 150,
-   "cluster": "ne-campus"
-  },
-  {
-   "key": "sc-tower-slab",
-   "x_m": 451.5,
-   "y_m": 521.5,
-   "yaw": 40.89,
-   "h_m": 120,
-   "cluster": "ne-campus"
-  },
-  {
-   "key": "sc-tower-setback",
-   "x_m": 675.6,
-   "y_m": 252.5,
-   "yaw": 69.5,
-   "h_m": 100,
    "cluster": "ne-campus"
   },
   {
@@ -151,46 +127,70 @@
    "x_m": 525.2,
    "y_m": 343.5,
    "yaw": 56.81,
+   "h_m": 150,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 538.2,
+   "y_m": 696,
+   "yaw": 37.71,
+   "h_m": 120,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 1116.7,
+   "y_m": 347,
+   "yaw": 72.74,
+   "h_m": 100,
+   "cluster": "ne-campus"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 677.7,
+   "y_m": 793.9,
+   "yaw": 40.49,
    "h_m": 170,
    "cluster": "ne-campus"
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 959.7,
-   "y_m": 318,
-   "yaw": 71.66,
+   "x_m": 826.3,
+   "y_m": 870.6,
+   "yaw": 43.51,
    "h_m": 140,
    "cluster": "ne-campus"
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 1044.8,
-   "y_m": 448.6,
-   "yaw": 66.76,
+   "x_m": 237.8,
+   "y_m": 407.5,
+   "yaw": 30.26,
    "h_m": 120,
    "cluster": "ne-campus"
   },
   {
    "key": "sc-tower-spire",
-   "x_m": 534.6,
-   "y_m": 778.3,
-   "yaw": 34.48,
+   "x_m": 301.7,
+   "y_m": 168.7,
+   "yaw": 60.79,
    "h_m": 160,
    "cluster": "ne-campus"
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 688.5,
-   "y_m": 866.8,
-   "yaw": 38.46,
+   "x_m": 1338.4,
+   "y_m": 244.9,
+   "yaw": 79.63,
    "h_m": 130,
    "cluster": "ne-campus"
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 821.6,
-   "y_m": 206.4,
-   "yaw": 75.9,
+   "x_m": 1249.5,
+   "y_m": 812,
+   "yaw": 56.98,
    "h_m": 110,
    "cluster": "ne-campus"
   }

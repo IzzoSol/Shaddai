@@ -12,9 +12,13 @@ if (process.argv.includes('--undo')) { fs.writeFileSync(FAB, dump(fab)); console
 const N = +(process.argv[2] || 24);
 const track = JSON.parse(fs.readFileSync(path.join(__dirname, '../../docs/track-meridian-8.json'), 'utf8')).frames.map((f) => [f.p[0], -f.p[2]]);
 const nearTrack = (x, y) => track.some((p) => Math.hypot(p[0] - x, p[1] - y) < 70);
+// world-clusters-v4.js keeps only items whose position hash < 0.3 AND drops every *office* key (owner 2026-10-11 'janky offices'), and drops
+// race-deck keys (track-clear-v4.json). So: pick office spots that pass the hash = lots that are EMPTY in the game today -> the tower fills them.
+const kept = (it) => Math.abs(Math.sin(it.x_m * 12.9898 + it.y_m * 78.233) * 43758.5453) % 1 < 0.3;
+const clear = new Set(JSON.parse(fs.readFileSync(path.join(__dirname, '../../public/assets/world/track-clear-v4.json'), 'utf8')).keys);
 const per = { commons: Math.ceil(N / 2), 'ne-campus': Math.floor(N / 2) }, picked = [];
 for (const cl of Object.keys(per)) {
-  const items = fab.items.filter((it) => it.cluster === cl && it.key === 'sc-office-mid');
+  const items = fab.items.filter((it) => it.cluster === cl && it.key === 'sc-office-mid' && kept(it) && !clear.has(it.x_m + ',' + it.y_m));
   const cx = items.reduce((s, i) => s + i.x_m, 0) / items.length, cy = items.reduce((s, i) => s + i.y_m, 0) / items.length;
   items.sort((a, b) => Math.hypot(a.x_m - cx, a.y_m - cy) - Math.hypot(b.x_m - cx, b.y_m - cy) || a.x_m - b.x_m);
   let n = 0;
