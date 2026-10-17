@@ -28,6 +28,16 @@ let acc = 0, last = null;
 Z.plotRing.concat([Z.plotRing[0]]).forEach((p) => { if (last) acc += Math.hypot(p[0] - last[0], p[1] - last[1]); last = p;
   if (acc >= 110) { acc = 0; if (!clear(p[0], p[1], 45)) return; const b = (Math.atan2(p[0], p[1]) * 180 / Math.PI + 360) % 360;
     L.plots.push({ id: 'PLOT-RING-' + String(L.plots.length + 1).padStart(2, '0'), district: b < 90 ? 'trade' : b < 180 ? 'residential' : b < 270 ? 'forge' : 'academy', x_m: +p[0].toFixed(1), y_m: +p[1].toFixed(1), size_m: 84, yaw: +b.toFixed(1) }); } });
+// (2b) INNER PLOT ROW behind the districts (owner: "fill the plots in behind the districts" - the drawn line was not perfect): r 1250, every 105 m
+for (let i = 0, N = Math.floor(2 * Math.PI * 1250 / 105); i < N; i++) { const b = i / N * 360, br = b * Math.PI / 180, x = 1250 * Math.sin(br), y = 1250 * Math.cos(br);
+  if (!clear(x, y, 45) || L.items.some((q) => Math.hypot(q.x_m - x, q.y_m - y) < 50) || L.plots.some((q) => Math.hypot(q.x_m - x, q.y_m - y) < 90)) continue;
+  L.plots.push({ id: 'PLOT-INNER-' + String(i + 1).padStart(2, '0'), district: b < 90 ? 'trade' : b < 180 ? 'residential' : b < 270 ? 'forge' : 'academy', x_m: +x.toFixed(1), y_m: +y.toFixed(1), size_m: 80, yaw: +b.toFixed(1) }); }
+// (2c) CITY BUILDINGS next to the districts: open land r 480-1120 gets 4-building blocks of our existing models (>= 45 m from anything placed)
+const MIX = { academy: ['sc-techlab', 'sc-storefront-s', 'sc-techlab', 'sc-office-mid'], trade: ['sc-storefront-s', 'sc-storefront-l', 'sc-market', 'sc-storefront-s'], forge: ['sc-storefront-l', 'sc-techlab', 'sc-storefront-l', 'sc-office'], residential: ['sc-storefront-s', 'sc-storefront-l', 'sc-office-mid', 'sc-storefront-s'] };
+for (let gx = -1120; gx <= 1120; gx += 115) for (let gy = -1120; gy <= 1120; gy += 115) { const r = Math.hypot(gx, gy); if (r < 480 || r > 1120) continue;
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy], k) => { const x = gx + sx * 30, y = gy + sy * 30; if (!clear(x, y, 14) || L.items.some((q) => Math.hypot(q.x_m - x, q.y_m - y) < 45) || L.plots.some((q) => Math.hypot(q.x_m - x, q.y_m - y) < 70)) return;
+    const b = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360, d = b < 90 ? 'trade' : b < 180 ? 'residential' : b < 270 ? 'forge' : 'academy';
+    L.items.push({ key: MIX[d][Math.floor(hash(Math.round(x) + k, Math.round(y)) * 4)], x_m: +x.toFixed(1), y_m: +y.toFixed(1), len_m: 30, yaw: sx > 0 ? 90 : 270, lift_m: 0, by_height: false, cluster: d, role: 'fill' }); }); }
 // (3) ROAD along the inside of the plot ring
 for (let i = 0; i < Z.plotRing.length; i++) { const a = Z.plotRing[i], b = Z.plotRing[(i + 1) % Z.plotRing.length], s = 0.95; L.roads.push({ district: 'ring', ring: true, x0: +(a[0] * s).toFixed(1), y0: +(a[1] * s).toFixed(1), x1: +(b[0] * s).toFixed(1), y1: +(b[1] * s).toFixed(1), w: 26 }); }
 L.version = 5; L.note = 'owner-placed (Blender) + owner drawing (city-zones-v1.json): original buildings restored inside the C loops, plot ring on the drawn line';
