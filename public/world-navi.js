@@ -220,9 +220,11 @@
     S.inventory = realInventory();
     var cats = ['Skins', 'Skills', 'Mounts', 'Gear', 'Consumables', 'Quest'], out = [];
     cats.forEach(function (c) { var arr = S.inventory.filter(function (i) { return i.cat === c; }); if (arr.length) { out.push({ head: c + ' · ' + arr.length }); arr.forEach(function (i) { out.push({ id: i.id, t: i.name, s: i.rarity, tag: i.equipped ? 'EQUIPPED' : '' }); }); } });
+    out.unshift({ id: 'mounts-store', t: 'Mounts & Travel', s: 'your rides, boards, ships, cars - buy, summon, stow (also the I key)', tag: 'OPEN' });
     return {
-      title: 'INVENTORY', list: out, empty: 'Your bag is empty. Visit the Market or finish a bounty.',
+      title: 'ITEMS', list: out, empty: 'Your bag is empty. Visit the Market or finish a bounty.',
       detail: function (id) {
+        if (id === 'mounts-store') return '<h3>Mounts &amp; Travel</h3><div>Mounts, hover cars, race ships and hoverboards: buy with Sparks, summon, stow. Boards: O to ride.</div><button class="b g" data-a="mounts">OPEN MOUNTS &amp; TRAVEL</button>';
         var it = S.inventory.filter(function (x) { return x.id === id; })[0]; if (!it) return '<div class="empty">Select an item.</div>';
         var home = S.flags.hasHome;
         return '<h3>' + esc(it.name) + '</h3><div>' + esc(it.cat) + ' · ' + esc(it.rarity) + '</div><div style="margin:8px 0">POWER ' + it.power + ' · ' + (it.tradable ? 'TRADABLE' : 'SOULBOUND') + '</div>' +
@@ -232,6 +234,7 @@
           '<button class="b" data-a="drop"' + (it.tradable ? '' : ' disabled') + '>DROP</button>';
       },
       act: function (id, a) {
+        if (id === 'mounts-store') { if (a === 'mounts') { var MR = window.__mountRide; close(); if (MR && MR.panel) MR.panel(); else toast('Mounts are not ready yet'); } return; }
         var it = S.inventory.filter(function (x) { return x.id === id; })[0]; if (!it) return;
         if (a === 'equip' && /^op:/.test(id)) { if (window.setPlayerCharacter) { window.setPlayerCharacter(id.slice(3)); toast('Switching to ' + it.name + '...'); } return; }
         if (a === 'equip' && /^mt:/.test(id)) { var R = window.__mountRide, mid = id.slice(3); if (R) { if (S.flags.mountedId === id) { R.stow(); S.flags.mountedId = null; } else { R.summon(mid, true); S.flags.mountedId = id; } } return; }
@@ -443,18 +446,24 @@
   /* MODES: quick toggles (passive/fight) + a live read-out of the realm hazard you are standing in. More toggles slot in here (quality, audio, HUD hints). */
   M.modes = function () {
     var CM = window.WorldCombatMode, RZ = window.__realmZones, z = RZ && RZ.state ? RZ.state() : null, locked = CM && CM.locked(), pas = CM && CM.passive();
-    var rows = [
+    // GAME MODES first (owner 2026-10-16: modes in the Navi, not an extra button): every mode from world-game-modes.js, launch on select
+    var GS = (window.WorldGameModes && window.WorldGameModes.sections) ? window.WorldGameModes.sections() : [], gm = [];
+    GS.forEach(function (sec, si) { gm.push({ head: sec.h }); sec.items.forEach(function (it, ii) { gm.push({ id: 'gm:' + si + ':' + ii, t: it.t, s: it.s, tag: 'PLAY' }); }); });
+    if (gm.length) gm.push({ head: 'SETTINGS' });
+    var rows = gm.concat([
       { id: 'passive', t: 'Passive mode', s: locked ? 'Locked: the Void forces fight' : (pas ? 'On: nobody can hurt you, you cannot fight' : 'Off: normal combat'), tag: pas ? 'ON' : 'OFF' },
       { id: 'buffs', t: 'Active buffs', s: (window.WorldBuffs && window.WorldBuffs.active().length) ? window.WorldBuffs.active().map(function (b) { return b.name + ' ' + b.left_s + 's'; }).join(' · ') : 'None. Eat or drink at the Colosseum kiosks.', tag: (window.WorldBuffs ? window.WorldBuffs.active().length : 0) || '' },
       { id: 'zone', t: 'Realm hazard', s: z && z.zone ? z.zone.replace('-', ' ') + (z.warn ? ' - ' + z.warn : ' - protected') : 'None here', tag: z && z.zone ? '!' : '' }
-    ];
+    ]);
     return {
       title: 'MODES', list: rows, empty: '',
       detail: function (id) {
+        if (/^gm:/.test(id)) { var q = id.split(':'), it = GS[+q[1]] && GS[+q[1]].items[+q[2]]; return it ? '<h3>' + esc(it.t) + '</h3><div>' + esc(it.s || '') + '</div><button class="b g" data-a="play">PLAY</button>' : '<div class="empty">Select a mode.</div>'; }
         if (id === 'zone') { var g = RZ && RZ.gear ? RZ.gear() : null; return '<h3>Realm hazard</h3><div>' + esc(z && z.zone ? z.zone : 'none') + '</div><div>' + esc(z && z.warn ? z.warn : 'You are protected, or not in a hazard zone.') + '</div><div class="empty">Masks: gas ' + (g ? g.masks.gas : 0) + ' · lava ' + (g ? g.masks.lava : 0) + ' · arctic ' + (g ? g.masks.arctic : 0) + '. Clothing resist: fire ' + (g ? g.resist.fire : 0) + ' · cold ' + (g ? g.resist.cold : 0) + '. Learn and buy gear at the Academy and Upgrade Shop.</div>'; }
         return '<h3>Passive mode</h3><div>' + (locked ? 'The Void forces you to fight.' : pas ? 'PASSIVE: players and monsters cannot hurt you and you cannot fight.' : 'FIGHT: normal combat.') + '</div>' + (locked ? '' : '<button class="b g" data-a="tp">' + (pas ? 'TURN PASSIVE OFF' : 'TURN PASSIVE ON') + '</button>') + '<div class="empty">Also on the \ (backslash) key in case of danger.</div>';
       },
-      act: function (id, a) { if (a === 'tp' && CM) { var r = CM.toggle(); toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON' : 'Fight mode ON')); } }
+      act: function (id, a) { if (/^gm:/.test(id) && a === 'play') { var q = id.split(':'), it = GS[+q[1]] && GS[+q[1]].items[+q[2]]; if (it && it.run) { close(); try { it.run(); } catch (e) { toast('Could not start: ' + (e && e.message)); } } return; }
+        if (a === 'tp' && CM) { var r = CM.toggle(); toast(r.locked ? r.reason : (r.passive ? 'Passive mode ON' : 'Fight mode ON')); } }
     };
   };
   M.radio = function () {

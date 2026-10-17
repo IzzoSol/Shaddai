@@ -19,7 +19,7 @@
     var WR = (root.WorldRace && root.WorldRace.CIRCUITS) || {}, T = root.__travel || {}, has = function (c) { return !!WR[c]; };
     var S = [];
     var rc = [];
-    [['meridian-tri', 'Meridian Trefoil', '10.7 km, flyovers, 2 laps'], ['meridian-8', 'Figure-8', '7.2 km, 2 laps'], ['meridian-8-lobe-n', 'Short lap', 'one lobe, 3 laps'], ['dragon-gate', 'Dragon Gate', 'figure-8 under the torii']].forEach(function (c) { if (has(c[0])) rc.push({ t: c[1], s: c[2], run: race(c[0]) }); });
+    [['dragon-gate', 'Short race: Dragon Gate', 'ground figure-8 beside Race HQ, 3 laps'], ['grand-course', 'Full course: Skyline Circuit', 'Race HQ -> sky ring round the city -> back, 13 km']].forEach(function (c) { if (has(c[0])) rc.push({ t: c[1], s: c[2], run: race(c[0]) }); });
     rc.push({ t: 'Pick ride and rivals', s: 'ships, light-cycles, hoverboards, cups', run: function () { if (root.WorldRaceSelect) root.WorldRaceSelect.open(); else toast('Race select not ready'); } });
     S.push({ h: 'RACE', c: '#2bff88', items: rc });
     S.push({ h: 'BOAT', c: '#4ac8ff', items: [
@@ -57,11 +57,12 @@
   }
   function init() {
     if (typeof document === 'undefined' || /[?&]modes=0\b/.test(location.search) || btn) return;
+    if (!/[?&]modesbtn=1\b/.test(location.search)) return;   // owner 2026-10-16: modes live in the Navi (MODES tab), not an extra button; ?modesbtn=1 = the old floating button
     btn = document.createElement('button'); btn.textContent = 'MODES';
     btn.style.cssText = 'position:fixed;right:18px;top:150px;z-index:9290;padding:8px 18px;border-radius:10px;border:1px solid #e8c45c;background:rgba(10,14,12,.85);color:#e8c45c;font:900 13px Orbitron,sans-serif;letter-spacing:.2em;cursor:pointer';
     btn.addEventListener('click', function () { if (panel) close(); else open(); });
     document.body.appendChild(btn);
   }
-  root.WorldGameModes = { init: init, open: open, close: close };
+  root.WorldGameModes = { init: init, open: open, close: close, sections: sections };   // sections(): Navi MODES lists the same modes (owner 2026-10-16: modes in the Navi)
   if (typeof document !== 'undefined') { var n = 0, iv = setInterval(function () { if (++n > 400) return clearInterval(iv); if (root.__loadPlayable) { clearInterval(iv); init(); } }, 1000); }
 })(typeof window !== 'undefined' ? window : globalThis);
