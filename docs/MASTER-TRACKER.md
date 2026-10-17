@@ -11,6 +11,17 @@ visuals · `*.glb` gitignored (`git add -f`) · bump `?v=` on edited script tags
 
 Legend: [x] done + tested · [~] partly · [ ] open · (flag) = URL switch to turn it off
 
+## 0b. END OF 2026-10-16 (late) — state for the next session (owner at ~10% weekly usage)
+- CITY = owner-driven: Blender 37_LAYOUT_PREVIEW (owner-placed 223 district buildings) + owner drawing (assets/world/city-zones-v1.json:
+  4 C loops = original city restored, plot ring line, river loop) -> tools/city-fill.cjs -> assets/world/grid-fabric-districts-v1.json (v5: 886
+  items, 118 plots, roads). Rendered by world-clusters-v4 (fabric), world-city-layout.js (roads/plots), world-canon-v4 (canon strips clipped to the
+  loops), world-rivers.js (boats ride via _v4Water). Interiors + facade details read the same layout. DO NOT run tools/city-layout-gen.cjs --force.
+- Hoverskate park MOVED to (-1382, 1647) m (PLAZA_SKATE marker + all keep-outs). Interiors staffed by K14 bots. Navi: modes + Mounts & Travel inside.
+- ROOT CAUSE fixed (5c0dc9c8): three r180 skinned Box3 threw -> agents never loaded, player = capsule, board riderless. NEEDS OWNER BROWSER TEST.
+- OPEN: owner browser test (agent appears, O = board + rider, city look, river, park); district/realm aesthetic polish (glow per district,
+  hero building looks); loading screen + agent select (ask owner what is wrong); dragons spawn check; Colosseum/Hover League final pass;
+  push to main (Render autodeploys main; ~120 commits on agents/1 incl. the agents terminal's work) ONLY on owner "push".
+
 ## 0a. Done 2026-10-16 (Opus session) — node-tested, NOT yet seen in a browser
 **Owner order (2026-10-16):** reefs + race tracks → Colosseum polish (Hover League to concept art) → Navi + mounts wired → hoverskate
 park finished → boats/dock at the reef + furniture everywhere → FPS + polish → agent rigging, hoverboard moves, agent fighting.
