@@ -151,7 +151,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       if (_tc && /grid-fabric/.test(String(url))) plan.items = plan.items.filter(function (it) { return !_tc[it.x_m + ',' + it.y_m]; });
       // HOVERSKATE PARK KEEP-OUT (2026-10-15, seen in the Blender world): 18 live fabric shops/labs/gardens stood inside the park (r 170 m at the PLAZA_SKATE
       // marker) and poked through its deck. Same rule world-grid-city-v4.js used. ?parkclear=0 disables.
-      if (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&]parkclear=0/.test(location.search))) plan.items = plan.items.filter(function (it) { return Math.hypot(it.x_m + 820, it.y_m - 0) >= 172 + (it.len_m || 0) * 0.5; });
+      if (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&]parkclear=0/.test(location.search))) plan.items = plan.items.filter(function (it) { return Math.hypot(it.x_m + 854, it.y_m + 18) >= 172 + (it.len_m || 0) * 0.5; });
       if (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&](fullcity|ghostwalls)=1/.test(location.search))) {
         var LL = window.WORLD_LAYOUT, n0 = 0, n1 = 0;
         var inPlace = function (arr, kept) { arr.length = 0; Array.prototype.push.apply(arr, kept); };   // other modules hold these arrays: filter in place
