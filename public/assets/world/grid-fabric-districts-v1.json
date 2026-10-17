@@ -42,6 +42,17 @@
    "role": "district-hero"
   },
   {
+   "key": "sc-techlab",
+   "x_m": -459.6,
+   "y_m": 599,
+   "len_m": 62,
+   "yaw": 142.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "athenaeum",
+   "role": "district-secondary"
+  },
+  {
    "key": "sc-market",
    "x_m": 599,
    "y_m": -459.6,
@@ -87,10 +98,10 @@
   },
   {
    "key": "sc-techlab",
-   "x_m": -459.6,
-   "y_m": 599,
+   "x_m": -288.9,
+   "y_m": 697.5,
    "len_m": 62,
-   "yaw": 142.5,
+   "yaw": 157.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "athenaeum",
@@ -153,6 +164,17 @@
   },
   {
    "key": "sc-storefront-l",
+   "x_m": -459.6,
+   "y_m": -599,
+   "len_m": 44,
+   "yaw": 37.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "home"
+  },
+  {
+   "key": "sc-storefront-l",
    "x_m": -380.5,
    "y_m": -495.8,
    "len_m": 44,
@@ -163,11 +185,11 @@
    "role": "home"
   },
   {
-   "key": "sc-storefront-l",
-   "x_m": -459.6,
-   "y_m": -599,
+   "key": "sc-storefront-s",
+   "x_m": -495.8,
+   "y_m": -380.5,
    "len_m": 44,
-   "yaw": 37.5,
+   "yaw": 52.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "residential",
@@ -185,11 +207,22 @@
    "role": "home"
   },
   {
-   "key": "sc-storefront-s",
-   "x_m": -495.8,
-   "y_m": -380.5,
+   "key": "sc-storefront-l",
+   "x_m": -697.5,
+   "y_m": -288.9,
    "len_m": 44,
-   "yaw": 52.5,
+   "yaw": 67.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "home"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -577.4,
+   "y_m": -239.2,
+   "len_m": 44,
+   "yaw": 67.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "residential",
@@ -373,8 +406,8 @@
   },
   {
    "key": "sc-office-mid",
-   "x_m": -288.9,
-   "y_m": 697.5,
+   "x_m": -338.7,
+   "y_m": 817.6,
    "len_m": 44,
    "yaw": 157.5,
    "lift_m": 0,
@@ -410,6 +443,17 @@
    "y_m": 495.8,
    "len_m": 44,
    "yaw": 142.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "athenaeum",
+   "role": "office"
+  },
+  {
+   "key": "sc-office",
+   "x_m": -697.5,
+   "y_m": 288.9,
+   "len_m": 44,
+   "yaw": 112.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "athenaeum",
@@ -15493,7 +15537,7 @@
   }
  ],
  "counts": {
-  "items": 165,
+  "items": 169,
   "roads": 1501,
   "plots": 159
  },
