@@ -161,7 +161,7 @@
     var nTiers = 0, nAccents = 0;
     var TAPER = [1, 0.62, 0.25, 1, 0.04];
     // HOVERSKATE PARK KEEP-OUT (2026-10-11): the park (r 170 m) is built at the PLAZA_SKATE marker; plan buildings whose footprint touches it are skipped so towers do not stand in the pipes
-    var PARK = { x: -1382, y: 1647, r: 172 };   // park moved 2026-10-16
+    var PARK = { x: -264, y: -1636, r: 172 };   // park moved 2026-10-16
     plan.buildings.forEach(function (b) {
       if (Math.hypot(b.x_m - PARK.x, b.y_m - PARK.y) < PARK.r + Math.max(b.w_m, b.d_m) * 0.5) { byId[b.id] = { b: b, gy: 0 }; return; }
       var ch = chunks[chunkOf(b.x_m, b.y_m)], rho = b.rot_deg * RAD;
