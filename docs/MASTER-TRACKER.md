@@ -18,6 +18,8 @@ Legend: [x] done + tested · [~] partly · [ ] open · (flag) = URL switch to tu
   loops), world-rivers.js (boats ride via _v4Water). Interiors + facade details read the same layout. DO NOT run tools/city-layout-gen.cjs --force.
 - Hoverskate park MOVED to (-1382, 1647) m (PLAZA_SKATE marker + all keep-outs). Interiors staffed by K14 bots. Navi: modes + Mounts & Travel inside.
 - ROOT CAUSE fixed (5c0dc9c8): three r180 skinned Box3 threw -> agents never loaded, player = capsule, board riderless. NEEDS OWNER BROWSER TEST.
+- 2026-10-17 fix-up: _safeBox measures SKINNED meshes from bone world positions now - the raw bind-pose geometry measured 0.018 m
+  (scale lives in the armature) -> auto-scale 389x = GIANT agents. Repro/numbers: `node tools/ual/measure-agents.mjs` (bone union 1.748 m, scale 4.0 = correct).
 - OPEN: owner browser test (agent appears, O = board + rider, city look, river, park); district/realm aesthetic polish (glow per district,
   hero building looks); loading screen + agent select (ask owner what is wrong); dragons spawn check; Colosseum/Hover League final pass;
   push to main (Render autodeploys main; ~120 commits on agents/1 incl. the agents terminal's work) ONLY on owner "push".

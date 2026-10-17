@@ -1090,8 +1090,16 @@ addEventListener('keydown', e=>{ if(e.code==='KeyN'){ if(_v4Sky) _v4Sky.setDayLe
 // walking every vertex's bone indices; on the Meshy agent rigs that throws "reading 'matrixWorld'". GLTFLoader catches the throw and reports a LOAD
 // FAILURE, so every agent body stayed a billboard and the player rig fell through hero -> robot -> SHADDAI -> "capsule avatar kept" (invisible rider).
 // This measures the bind-pose geometry instead (what the old three did): same numbers for static meshes, never throws on a rig.
-function _safeBox(obj){ const box = new THREE.Box3(), bb = new THREE.Box3(); obj.updateMatrixWorld(true);
-  obj.traverse(function(o){ if(!o.isMesh || !o.geometry) return; const g = o.geometry; if(!g.boundingBox) g.computeBoundingBox(); if(!g.boundingBox) return; bb.copy(g.boundingBox).applyMatrix4(o.matrixWorld); box.union(bb); });
+// 2026-10-17 FIX (agents HUGE): on Meshy/Mixamo rigs the real size lives in the ARMATURE (bone scale), so raw geometry x matrixWorld
+// measured ~0 and the auto-scale (AGENT_BODY_HEIGHT / h) ballooned every rig. Skinned meshes are now measured from their
+// skeleton's bone world positions (bind pose) - that IS the rendered size; raw-geometry bounds stay for static meshes.
+function _safeBox(obj){ const box = new THREE.Box3(), bb = new THREE.Box3(), _bp = new THREE.Vector3();
+  obj.updateMatrixWorld(true);
+  obj.traverse(function(o){
+    if(o.isSkinnedMesh && o.skeleton && o.skeleton.bones){
+      for(let i = 0; i < o.skeleton.bones.length; i++){ const b = o.skeleton.bones[i]; if(b && b.matrixWorld){ bb.makeEmpty(); bb.expandByPoint(_bp.setFromMatrixPosition(b.matrixWorld)); box.union(bb); } }
+      return; }
+    if(!o.isMesh || !o.geometry) return; const g = o.geometry; if(!g.boundingBox) g.computeBoundingBox(); if(!g.boundingBox) return; bb.copy(g.boundingBox).applyMatrix4(o.matrixWorld); box.union(bb); });
   if(box.isEmpty()) box.setFromCenterAndSize(new THREE.Vector3(), new THREE.Vector3(1, 1, 1)); return box; }
 // Every module shares this THREE: make Box3.setFromObject itself fall back to the bind-pose bounds when the skinned path throws
 // (dragons, bots, riders, interior agents all measure rigged GLBs the same way).
