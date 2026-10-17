@@ -1086,6 +1086,16 @@ addEventListener('keydown', e=>{ if(e.code==='KeyN'){ if(_v4Sky) _v4Sky.setDayLe
 // (Was previously declared lower in the file, which threw a temporal-dead-zone error and silently
 //  skipped ALL building placement.)
 // ── SHARED LOADING MANAGER: drives the boot progress bar + gates entry until the world is ready ──
+// SAFE BOUNDS (2026-10-16 ROOT CAUSE of "no agents appear / nobody rides the board"): three r180 Box3.setFromObject() computes SKINNED bounds by
+// walking every vertex's bone indices; on the Meshy agent rigs that throws "reading 'matrixWorld'". GLTFLoader catches the throw and reports a LOAD
+// FAILURE, so every agent body stayed a billboard and the player rig fell through hero -> robot -> SHADDAI -> "capsule avatar kept" (invisible rider).
+// This measures the bind-pose geometry instead (what the old three did): same numbers for static meshes, never throws on a rig.
+function _safeBox(obj){ const box = new THREE.Box3(), bb = new THREE.Box3(); obj.updateMatrixWorld(true);
+  obj.traverse(function(o){ if(!o.isMesh || !o.geometry) return; const g = o.geometry; if(!g.boundingBox) g.computeBoundingBox(); if(!g.boundingBox) return; bb.copy(g.boundingBox).applyMatrix4(o.matrixWorld); box.union(bb); });
+  if(box.isEmpty()) box.setFromCenterAndSize(new THREE.Vector3(), new THREE.Vector3(1, 1, 1)); return box; }
+// Every module shares this THREE: make Box3.setFromObject itself fall back to the bind-pose bounds when the skinned path throws
+// (dragons, bots, riders, interior agents all measure rigged GLBs the same way).
+{ const _sfo = THREE.Box3.prototype.setFromObject; THREE.Box3.prototype.setFromObject = function(o, precise){ try{ return _sfo.call(this, o, precise); }catch(e){ return this.copy(_safeBox(o)); } }; }
 const __loadMgr = new THREE.LoadingManager();
 window.__assetsReady = false;
 __loadMgr.onProgress = function(url, loaded, total){
@@ -2680,12 +2690,12 @@ function _nextAgentBody(){
         }
       });
       // auto-scale to target height + base on ground, centered at the agent's plaza spot
-      const box = new THREE.Box3().setFromObject(body);
+      const box = _safeBox(body);
       const size = new THREE.Vector3(); box.getSize(size);
       const h = size.y || 1;
       const s = AGENT_BODY_HEIGHT / h;
       if(isFinite(s) && s>0) body.scale.setScalar(s);
-      const box2 = new THREE.Box3().setFromObject(body);
+      const box2 = _safeBox(body);
       const c2 = new THREE.Vector3(); box2.getCenter(c2);
       body.position.x = entry.x - c2.x;
       body.position.z = entry.z - c2.z;
@@ -4332,9 +4342,9 @@ function _loadHero(file, gen){
     if(gen!==_playerRigGen) return;   // a picked operative (or newer load) superseded this default body
     while(playerAvatar.children.length) playerAvatar.remove(playerAvatar.children[0]); // drop placeholder
     const m=g.scene;
-    const box=new THREE.Box3().setFromObject(m); const sz=new THREE.Vector3(); box.getSize(sz);
+    const box=_safeBox(m); const sz=new THREE.Vector3(); box.getSize(sz);
     m.scale.setScalar(PLAYER_BODY_HEIGHT/(sz.y||1));   // height-match the world's agents (was 3.6 → felt tiny)
-    const b2=new THREE.Box3().setFromObject(m); m.position.y=-b2.min.y;
+    const b2=_safeBox(m); m.position.y=-b2.min.y;
     m.traverse(c=>{ if(c.isMesh){ c.castShadow=true; c.frustumCulled=false; } });
     playerAvatar.add(m);
     _setupPlayerRig(m, g.animations, 'hero '+file, gen);
@@ -4370,9 +4380,9 @@ window.setPlayerCharacter = function(code){
     // clone() is ~5ms vs. 200-500ms for a fresh parse.
     const m = cloneSkinned(g.scene);   // SkeletonUtils clone: rebinds the skeleton so rigged bodies actually render
     m.updateMatrixWorld(true);          // pose the cloned skeleton's matrices BEFORE measuring, else box is degenerate → mis-scaled/invisible
-    const box=new THREE.Box3().setFromObject(m); const sz=new THREE.Vector3(); box.getSize(sz);
+    const box=_safeBox(m); const sz=new THREE.Vector3(); box.getSize(sz);
     m.scale.setScalar(PLAYER_BODY_HEIGHT/(sz.y||1));   // height-match the world's agents (was 3.6 → felt tiny)
-    const b2=new THREE.Box3().setFromObject(m); m.position.y=-b2.min.y;
+    const b2=_safeBox(m); m.position.y=-b2.min.y;
     const _pa = AGENTS.find(a=>(a.codename||'').toUpperCase()===code);
     const _pacc = new THREE.Color((_pa && _pa.color) || '#9fb0e0');
     m.traverse(function(c){ if(c.isMesh){ c.castShadow=true; c.frustumCulled=false;
@@ -4544,7 +4554,7 @@ function _pushProj(o,speed,life,spin,extra){
   halo.scale.setScalar(2.4); o.add(halo);
   scene.add(o); _projectiles.push(Object.assign({o,vel:fwd.clone().multiplyScalar(speed),life,age:0,spin:spin||0,fade:null,halo}, extra||{})); }
 function _spawnMeshProjectile(src,color,speed,scale,spin){ const o=src.clone(true);
-  const box=new THREE.Box3().setFromObject(o); const sz=new THREE.Vector3(); box.getSize(sz); o.scale.setScalar(scale/(sz.y||1));
+  const box=_safeBox(o); const sz=new THREE.Vector3(); box.getSize(sz); o.scale.setScalar(scale/(sz.y||1));
   o.traverse(c=>{ if(c.isMesh){ c.castShadow=false; c.frustumCulled=false;
     const mats=Array.isArray(c.material)?c.material:[c.material];
     const cm=mats.map(m=>{ if(!m) return m; const mm=m.clone();
@@ -5751,7 +5761,7 @@ window.__GLTFLoaderClass = window.__GLTFLoaderClass || GLTFLoader;   // for clas
       const hb = window.buildWorldHoverboard({ THREE, scene, loader: _acLoader, playerPos: own, colliders: function(){ return []; }, time: function(){ return clock.elapsedTime; },
         heightAt: function(x,z){ const h = window.__hoverLeague ? window.__hoverLeague.heightAtWorld(x,z) : NaN; return isFinite(h) ? h : 0; } });
       return Promise.resolve(_pcPreload(code)).then(function(gl){
-        const av = cloneSkinned(gl.scene); const box = new THREE.Box3().setFromObject(av), sz = new THREE.Vector3(); box.getSize(sz); av.scale.multiplyScalar(AGENT_BODY_HEIGHT / (sz.y || 1));
+        const av = cloneSkinned(gl.scene); const box = _safeBox(av), sz = new THREE.Vector3(); box.getSize(sz); av.scale.multiplyScalar(AGENT_BODY_HEIGHT / (sz.y || 1));
         av.traverse(function(c){ if(c.isMesh){ c.castShadow = true; c.frustumCulled = false; } }); scene.add(av); return { hover: hb, avatar: av, code: code };
       }).catch(function(){ return { hover: hb, avatar: null, code: code }; });
     } }); }catch(e){ console.warn('[hoverleague] init failed', e && e.message); } }, 1000); })();
