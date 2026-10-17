@@ -134,7 +134,12 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       for (k = 0; k < 8; k++) { a = k / 8 * Math.PI * 2; m = Math.min(m, heightAt(x + Math.cos(a) * r, z + Math.sin(a) * r)); }
       return m;
     }
-    return fetch(url).then(function (r) { return r.json(); }).then(function (plan) {
+    // DISTRICTS (owner 2026-10-16, authored in Blender 35_DISTRICTS -> assets/world/districts-v1.json via tools/districts-select.cjs): the Grid shows
+    // ONLY the buildings the districts chose (Academy NE, Trade SE, Forge NW, core + the 24 K1 towers); no file = the old hash thinning. ?districts=0 = off.
+    var _distP = (/grid-fabric/.test(String(url)) && !(typeof location !== 'undefined' && /[?&](districts=0|fullcity=1)/.test(location.search)))
+      ? fetch('/assets/world/districts-v1.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }) : Promise.resolve(null);
+    return Promise.all([fetch(url).then(function (r) { return r.json(); }), _distP]).then(function (pr) { var plan = pr[0], dist = pr[1];
+      if (dist && dist.keep && dist.keep.length) { var ks = {}; dist.keep.forEach(function (k) { ks[k] = 1; }); plan.items = plan.items.filter(function (it) { return ks[it.x_m + "," + it.y_m]; }); window.__districts = dist; }
       // 2026-10-11 (owner: "so many office buildings that don't appear and are janky"): thin the dense city fabric to ~60% by a stable hash of position;
       // fewer instances = fewer cells to rebuild and less popping. ?fullcity=1 restores every piece.
       if (/grid-fabric/.test(String(url)) && plan.items.length > 300 && !(typeof location !== 'undefined' && /[?&]fullcity=1/.test(location.search))) plan.items = plan.items.filter(function (it) { var h = Math.abs(Math.sin(it.x_m * 12.9898 + it.y_m * 78.233) * 43758.5453) % 1; return /^sc-tower-/.test(String(it.key)) || (h < (opts.keepFrac != null ? opts.keepFrac : FABRIC_KEEP) && !/office|garden/.test(String(it.key))); });   /* 2026-10-16 owner: keep ~half of what was shown (0.3 -> 0.15), K1 towers always, gardens become for-sale plots (world-sale-plots.js) */
