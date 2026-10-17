@@ -29,7 +29,7 @@
     var dummy = new THREE.Object3D(), col = new THREE.Color(), yA = new THREE.Vector3(0, 1, 0);
 
     function load() {
-      var url = o.url || '/assets/world/grid-fabric-v4.json';
+      var url = o.url || ((typeof location !== 'undefined' && /[?&](citylayout=0|fullcity=1)/.test(location.search)) ? '/assets/world/grid-fabric-v4.json' : '/assets/world/grid-fabric-districts-v1.json');   // follow the designed layout (2026-10-16)
       fetch(url).then(function (r) { return r.json(); }).then(function (j) { items = (j.items || []).filter(function (it) { return DIMS[it.key]; }); }).catch(function (e) { if (root.console) console.warn('[facade-details] load failed', e && e.message); });
     }
     function rebuild(px, pz) {

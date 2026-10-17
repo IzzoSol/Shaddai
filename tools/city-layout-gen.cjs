@@ -12,7 +12,7 @@ const D = [   // id, bearing (deg clockwise from N), heroes [key, len_m], block 
   { id: 'forge', b: 225, heroes: [['sc-storefront-l', 44], ['sc-techlab', 36], ['sc-techlab', 36], ['sc-storefront-l', 34], ['sc-teleport', 20]], blocks: ['sc-storefront-l', 'sc-techlab'] },
   { id: 'residential', b: 135, heroes: [['sc-storefront-l', 40], ['sc-storefront-s', 30], ['sc-storefront-s', 30], ['sc-storefront-s', 30], ['sc-teleport', 20]], blocks: ['sc-storefront-s', 'sc-storefront-s'] }
 ];
-const R = 820, BLOCK = 130, ROAD = 30, COLS = 4, ROWS = 3, PLOTS = [[0, 2], [3, 0], [3, 2]], HERO = [[1, 1], [2, 1]];
+const R = 860, BLOCK = 140, ROAD = 34, COLS = 5, ROWS = 4, PLOTS = [[0, 0], [4, 0], [0, 3], [4, 3], [1, 3]], HERO = [[2, 1], [2, 2]];   // owner 2026-10-16: space out more, more buildings + plots
 const items = [], roads = [], plots = [], districts = [];
 const hash = (a, b) => Math.abs(Math.sin(a * 12.9898 + b * 78.233) * 43758.5453) % 1;
 D.forEach((d) => {
@@ -27,13 +27,13 @@ D.forEach((d) => {
     if (isHero) continue;
     if (isPlot) { const p = at(bu, bv); plots.push({ id: 'PLOT-' + d.id.toUpperCase() + '-' + (plots.filter((q) => q.district === d.id).length + 1), district: d.id, x_m: +p[0].toFixed(1), y_m: +p[1].toFixed(1), size_m: BLOCK - 12, yaw: d.b }); continue; }
     [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([su, sv], k) => {   // 4 buildings per block, fronts toward the nearest road
-      const u = bu + su * 32, v = bv + sv * 32, p = at(u, v), key = d.blocks[Math.floor(hash(c * 7 + k, r * 13 + d.b) * d.blocks.length)];
-      items.push({ key, x_m: +p[0].toFixed(1), y_m: +p[1].toFixed(1), len_m: 34, yaw: +yawFace(su, sv).toFixed(1), lift_m: 0, by_height: false, cluster: d.id, role: 'block' });
+      const u = bu + su * 36, v = bv + sv * 36, p = at(u, v), key = d.blocks[Math.floor(hash(c * 7 + k, r * 13 + d.b) * d.blocks.length)];
+      items.push({ key, x_m: +p[0].toFixed(1), y_m: +p[1].toFixed(1), len_m: 36, yaw: +yawFace(su, sv).toFixed(1), lift_m: 0, by_height: false, cluster: d.id, role: 'block' });
     });
   }
   // HERO PLAZA: the two middle blocks + the road between them = one plaza; 1 big hero in the middle, 4 around it, all facing the centre
-  const [h0u, h0v] = blockC(1, 1), [h1u] = blockC(2, 1), pu = (h0u + h1u) / 2, pv = h0v;
-  const spots = [[0, 0], [-88, -36], [88, -36], [-88, 36], [88, 36]];
+  const [h0u, h0v] = blockC(2, 1), [, h1v] = blockC(2, 2), pu = h0u, pv = (h0v + h1v) / 2;   // plaza = the two centre blocks of the middle column (radial)
+  const spots = [[0, 0], [-42, -105], [42, -105], [-42, 105], [42, 105]];
   d.heroes.forEach(([key, len], i) => { const p = at(pu + spots[i][0], pv + spots[i][1]); items.push({ key, x_m: +p[0].toFixed(1), y_m: +p[1].toFixed(1), len_m: Math.round(len * 1.4), yaw: +(i === 0 ? (d.b + 180) % 360 : yawFace(-spots[i][0], -spots[i][1])).toFixed(1), lift_m: 0, by_height: false, cluster: d.id, role: 'hero' }); });
   // ROADS: perimeter ring, internal grid, and an avenue back to the Shaddai city plaza (r 300 m)
   const seg = (u0, v0, u1, v1, w) => { const a = at(u0, v0), b = at(u1, v1); roads.push({ district: d.id, x0: +a[0].toFixed(1), y0: +a[1].toFixed(1), x1: +b[0].toFixed(1), y1: +b[1].toFixed(1), w }); };
@@ -44,8 +44,10 @@ D.forEach((d) => {
   seg(0, -H / 2 - E, 0, -(R - 300), 30);   // district avenue to the city plaza
   districts.push({ id: d.id, bearing: d.b, centre_m: [+ox.toFixed(1), +oy.toFixed(1)], size_m: [W, H] });
 });
-// keep the 24 K1 landmark towers where they stand (hard work, skyline)
-fabric.items.filter((it) => /^sc-tower-/.test(it.key)).forEach((it) => items.push(Object.assign({}, it, { role: 'landmark' })));
+// keep the 24 K1 landmark towers where they stand (hard work, skyline); block buildings within 30 m of a tower give way
+const towers = fabric.items.filter((it) => /^sc-tower-/.test(it.key));
+for (let i = items.length - 1; i >= 0; i--) if (items[i].role === 'block' && towers.some((t) => Math.hypot(t.x_m - items[i].x_m, t.y_m - items[i].y_m) < 30)) items.splice(i, 1);
+towers.forEach((it) => items.push(Object.assign({}, it, { role: 'landmark' })));
 const out = { version: 1, note: 'designed district layout (tools/city-layout-gen.cjs, owner ref image 66); grid-fabric item format + roads + plots', units_per_m: fabric.units_per_m, counts: { items: items.length, roads: roads.length, plots: plots.length }, districts, items, roads, plots };
 fs.writeFileSync(path.join(PUB, 'assets/world/grid-fabric-districts-v1.json'), JSON.stringify(out, null, 1));
 console.log('items', items.length, '(heroes', items.filter((i) => i.role === 'hero').length, 'blocks', items.filter((i) => i.role === 'block').length, 'towers', items.filter((i) => i.role === 'landmark').length + ') roads', roads.length, 'plots', plots.length);
