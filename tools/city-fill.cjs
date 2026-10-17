@@ -11,7 +11,7 @@ L.items = L.items.filter((it) => it.role !== 'fill' && it.role !== 'restored'); 
 const inPoly = (x, y, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
 const inZone = (x, y) => Z.buildingZones.some((P) => inPoly(x, y, P));
 const hash = (a, b) => Math.abs(Math.sin(a * 12.9898 + b * 78.233) * 43758.5453) % 1;
-const KEEP = [{ x: -694.46, y: 1039.34, r: 230 }, { x: 1017.98, y: 801.67, r: 230 }];   // hoverskate park, Athenaeum
+const KEEP = [{ x: -1382, y: 1647, r: 230 }, { x: 1017.98, y: 801.67, r: 230 }];   // hoverskate park, Athenaeum
 const isFiller = (k) => k === 'grid-block' || k === 'suburb-block' || /^(commons|ne-campus|nw-race)-/.test(k);
 canon.obb.filter((b) => !isFiller(b.kind)).forEach((b) => KEEP.push({ x: b.x / U, y: -b.z / U, r: Math.hypot(b.hx, b.hz) / U + 10 }));
 const clear = (x, y, rad) => !KEEP.some((k) => Math.hypot(k.x - x, k.y - y) < k.r + rad);

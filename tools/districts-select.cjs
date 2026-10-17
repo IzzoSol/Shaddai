@@ -9,7 +9,7 @@ const D = JSON.parse(fs.readFileSync(DF, 'utf8')), plan = JSON.parse(fs.readFile
 const kindOf = (k) => String(k).replace(/^sc-/, '').split('-')[0];
 const hash = (x, y) => Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
 const bearing = (x, y) => (Math.atan2(x, y) * 180 / Math.PI + 360) % 360;
-const inPark = (it) => Math.hypot(it.x_m + 694.46, it.y_m - 1039.34) < 172 + (it.len_m || 0) * 0.5;
+const inPark = (it) => Math.hypot(it.x_m + 1382, it.y_m - 1647) < 172 + (it.len_m || 0) * 0.5;
 const keep = new Set(), used = new Set();
 plan.items.forEach((it) => { if (/^sc-tower-/.test(it.key)) keep.add(it.x_m + ',' + it.y_m); });
 D.districts.forEach((d) => {

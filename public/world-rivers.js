@@ -14,11 +14,11 @@
       var P = line.map(function (p) { return [p[0] * U, -p[1] * U]; }), acc = 0;
       for (var i = 0; i + 1 < P.length; i++) {
         var a = P[i], b = P[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); if (L < 1e-3) continue;
-        var s = { ax: a[0], az: a[1], dx: dx, dz: dz, L: L, ya: H(a[0], a[1]) + 0.5 * U, yb: H(b[0], b[1]) + 0.5 * U }; segs.push(s);
+        var s = { ax: a[0], az: a[1], dx: dx, dz: dz, L: L, ya: H(a[0], a[1]) + 1.4 * U, yb: H(b[0], b[1]) + 1.4 * U }; segs.push(s);
         var x0 = Math.min(a[0], b[0]) - W, x1 = Math.max(a[0], b[0]) + W, z0 = Math.min(a[1], b[1]) - W, z1 = Math.max(a[1], b[1]) + W;
         for (var gx = Math.floor(x0 / CELL); gx <= Math.floor(x1 / CELL); gx++) for (var gz = Math.floor(z0 / CELL); gz <= Math.floor(z1 / CELL); gz++) (grid[gx + ',' + gz] = grid[gx + ',' + gz] || []).push(s);
         var n = Math.max(1, Math.ceil(L / (6 * U))), nx = -dz / L * W / 2, nz = dx / L * W / 2;   // ribbon, 6 m steps, follows the ground
-        for (var k = 0; k < n; k++) { var t0 = k / n, t1 = (k + 1) / n, q = [[t0, -1], [t0, 1], [t1, 1], [t1, -1]].map(function (c) { var x = a[0] + dx * c[0] + nx * c[1], z = a[1] + dz * c[0] + nz * c[1]; return [x, H(x, z) + 0.5 * U, z, (acc + L * c[0]) / (40 * U), c[1] * 0.5 + 0.5]; });
+        for (var k = 0; k < n; k++) { var t0 = k / n, t1 = (k + 1) / n, q = [[t0, -1], [t0, 1], [t1, 1], [t1, -1]].map(function (c) { var x = a[0] + dx * c[0] + nx * c[1], z = a[1] + dz * c[0] + nz * c[1]; return [x, H(x, z) + 1.4 * U, z, (acc + L * c[0]) / (40 * U), c[1] * 0.5 + 0.5]; });
           [0, 1, 2, 0, 2, 3].forEach(function (j) { pos.push(q[j][0], q[j][1], q[j][2]); uv.push(q[j][3], q[j][4]); }); }
         acc += L;
       }
