@@ -4,6 +4,7 @@
 // Shaddai city in the middle (r < 300 m) is untouched; districts sit at r ~800 m on the quadrant bisectors; landmark K1 towers stay where they are.
 // Deterministic (no randomness beyond a fixed hash).
 const fs = require('fs'), path = require('path');
+{ const cur = path.join(__dirname, '..', 'public/assets/world/grid-fabric-districts-v1.json'); try { if (JSON.parse(fs.readFileSync(cur, 'utf8')).version >= 3 && !process.argv.includes('--force')) { console.log('grid-fabric-districts-v1.json is OWNER-PLACED (Blender 37_LAYOUT_PREVIEW, v3) - not overwriting. Use --force to regenerate.'); process.exit(0); } } catch (e) {} }
 const PUB = path.join(__dirname, '..', 'public');
 const fabric = JSON.parse(fs.readFileSync(path.join(PUB, 'assets/world/grid-fabric-v4.json'), 'utf8'));
 const D = [   // id, bearing (deg clockwise from N), heroes [key, len_m], block building keys
