@@ -5874,8 +5874,8 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 // DISTRICT SIGNS (2026-10-16): holo pylon per Grid district + a toast when you cross into one (world-districts.js, data = Blender-authored districts-v1.json)
 (function bootDistricts(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !_v4T || !_v4T.heightAt) return; clearInterval(iv);
-  Promise.all([_loadScript('/world-districts.js?v=20261016a'), fetch('/assets/world/districts-v1.json').then(function(r){ return r.json(); })]).then(function(r){
-    if(window.WorldDistricts) window.__districtSigns = window.WorldDistricts.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, data: r[1], getPlayer: function(){ return playerPos; } }); })
+  Promise.all([_loadScript('/world-district-signs.js?v=20261016a'), fetch('/assets/world/districts-v1.json').then(function(r){ return r.json(); })]).then(function(r){
+    if(window.WorldDistrictSigns) window.__districtSigns = window.WorldDistrictSigns.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, data: r[1], getPlayer: function(){ return playerPos; } }); })
     .catch(function(e){ console.warn('[districts]', e && e.message); }); }, 1000); })();
 // RACE HQ (2026-10-16): the starting point for both races; showroom + race desk (world-race-hq.js, ?racehq=0 off)
 (function bootRaceHQ(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
