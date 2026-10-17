@@ -239,13 +239,14 @@
       var __search = (typeof location !== 'undefined' && location.search) || '';
       var __fullCity = /[?&]fullcity=1\b/.test(__search);
       var __swOff = /[?&]swhalf=0\b/.test(__search);
-      var __swKeep = 0.12,   /* owner 2026-10-16: 'so many plots' - 0.25 -> 0.12 */ __m = /[?&]swkeep=([0-9.]+)\b/.exec(__search);
+      var __swKeep = 0.05,   /* owner 2026-10-16: 'way too many plots' - 0.25 -> 0.12 -> 0.05 (refs image 66/72: low density) */ __m = /[?&]swkeep=([0-9.]+)\b/.exec(__search);
       if (__m) __swKeep = Math.min(1, Math.max(0, parseFloat(__m[1])));
       arr(res[1], 'plots').forEach(function (p) {
         if (!p || !p.plot_id || !Array.isArray(p.beacon_m) || !isFinite(p.beacon_m[0]) || !isFinite(p.beacon_m[1])) { warn('bad plot row ' + (p && p.plot_id)); return; }
         if (plotIdx[p.plot_id] != null) { warn('duplicate plot ' + p.plot_id); return; }
         if (STATES.indexOf(p.state) < 0) p.state = 'empty';
         var __isCity = p.plot_id.indexOf('PLOT-CITY-') === 0;
+        if (!__fullCity && __isCity && Math.abs(Math.sin(p.beacon_m[0] * 39.346 + p.beacon_m[1] * 11.135) * 43758.5453) % 1 >= 0.35) return;   // city garden plots: keep ~1/3 (owner: too many plots)
         if (!__fullCity && !__swOff && !__isCity && Math.abs(Math.sin(p.beacon_m[0] * 12.9898 + p.beacon_m[1] * 78.233) * 43758.5453) % 1 >= __swKeep) return;   // owner 2026-10-16: hide ~75% SW grid (?fullcity=1 = all, ?swhalf=0 = off, ?swkeep=0..1 tune)
         plotIdx[p.plot_id] = plots.length; plots.push(p);
       });

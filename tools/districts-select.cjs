@@ -19,7 +19,7 @@ D.districts.forEach((d) => {
     if (!d.kinds.includes(kindOf(it.key)) || /^sc-tower-/.test(it.key) || inPark(it) || used.has(it.x_m + ',' + it.y_m)) return false;
     const r = Math.hypot(it.x_m, it.y_m), b = bearing(it.x_m, it.y_m); return r >= r0 && r <= r1 && (full || (b >= b0 && b <= b1));
   }).map((it) => ({ it, s: (full ? Math.hypot(it.x_m, it.y_m) : Math.hypot(it.x_m - cx, it.y_m - cy)) / (r1 || 1) + 0.15 * hash(it.x_m, it.y_m) }))
-    .sort((a, b) => a.s - b.s).slice(0, d.target);
+    .sort((a, b) => a.s - b.s).reduce((acc, c) => { if (acc.length < d.target && acc.every((q) => Math.hypot(q.it.x_m - c.it.x_m, q.it.y_m - c.it.y_m) >= 80)) acc.push(c); return acc; }, []);   // >= 80 m apart (TURTLE spacing)
   cand.forEach((c) => { const k = c.it.x_m + ',' + c.it.y_m; keep.add(k); used.add(k); });
   d.keep = cand.length;
 });
