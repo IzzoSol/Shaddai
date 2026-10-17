@@ -1398,7 +1398,7 @@ window.__worldBuilt = false;
         window.__onCityInteract = function(m){ const mine = window.__interiorsV3.handleInteract(m); if(prev && !(mine && m.interior && m.interior.type === 'lift')) prev(m); };
         window.__w3dDebug.interiorsV3 = window.__interiorsV3;
         // REAL AGENTS INSIDE (2026-10-16): staff + seated agents instead of capsules (world-interior-agents.js, ?interioragents=0 = capsules)
-        _loadScript('/world-interior-agents.js?v=20261016a').then(function(){ if(window.WorldInteriorAgents) window.WorldInteriorAgents.attach({ THREE, interiors: window.__interiorsV3, loader: agentBodyLoader, cloneSkinned: cloneSkinned, animLib: _agentAnimLib }); }).catch(function(e){ console.warn('[interior-agents]', e && e.message); });
+        _loadScript('/world-interior-agents.js?v=20261016b').then(function(){ if(window.WorldInteriorAgents) window.WorldInteriorAgents.attach({ THREE, interiors: window.__interiorsV3, loader: agentBodyLoader, cloneSkinned: cloneSkinned, animLib: _agentAnimLib }); }).catch(function(e){ console.warn('[interior-agents]', e && e.message); });
         // REALM HOMES (world-realm-homes.js, docs/REALM-HOMES.md): earth burrows, cave homes, leaf tree homes, pod homes, arctic domes — instanced, enterable
         return window.__interiorsV3.ready.then(function(){ return _loadScript('/world-realm-homes.js?v=20261015c'); }).then(function(){
           const rh = window.__realmHomes = window.buildWorldRealmHomes({ THREE, scene, heightAt: api.heightAt, interiors: window.__interiorsV3, layout: window.WORLD_LAYOUT });
