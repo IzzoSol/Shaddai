@@ -6,7 +6,7 @@
  */
 (function (root) {
   'use strict';
-  var EDGE = { academy: 0x4b8bf5, trade: 0x2bff88, forge: 0xff9a3c, residential: 0xb06cff };
+  var EDGE = { academy: 0x4b8bf5, trade: 0xe67e22, forge: 0xc0392b, residential: 0x27ae60, ring: 0xe8c45c };   // TURTLE district palette
   function build(o) {
     if (typeof location !== 'undefined' && /[?&]citylayout=0\b/.test(location.search)) return null;
     var THREE = o.THREE, U = o.U || 7 / 1.8, L = o.layout || {}, H = o.heightAt || function () { return 0; }, g = new THREE.Group(); g.name = 'city-layout'; o.scene.add(g);

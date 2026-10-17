@@ -15,7 +15,7 @@
   // model sizes in metres (x, y, z) measured from public/assets/models/shaddai-city/*.glb
   var DIMS = { 'sc-civic-tower': [16.6, 48.4, 16.9], 'sc-garden': [24.9, 2.7, 20], 'sc-market': [29, 7.2, 21], 'sc-office-mid': [20.6, 18, 16.6], 'sc-office': [20.9, 14.8, 20.6], 'sc-storefront-l': [24.6, 11.6, 17.1], 'sc-storefront-s': [17.6, 8.4, 13.4], 'sc-techlab': [24.3, 13.6, 17.2], 'sc-teleport': [16, 6.3, 16] };
   var BAND = { 'sc-office-mid': 1, 'sc-office': 1, 'sc-storefront-l': 1, 'sc-storefront-s': 1, 'sc-techlab': 1, 'sc-market': 1 };
-  var CLUSTER_COL = { commons: 0xe8c45c, 'ne-campus': 0x27e0ff, 'nw-race': 0xff3ea5 };
+  var CLUSTER_COL = { commons: 0xe8c45c, 'ne-campus': 0x27e0ff, 'nw-race': 0xff3ea5, academy: 0x4b8bf5, trade: 0xe67e22, forge: 0xc0392b, residential: 0x27ae60 };   // district glow bands (TURTLE palette 2026-10-16)
   function hash(i) { var x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); }
 
   root.buildFacadeDetails = function (o) {
