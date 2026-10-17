@@ -49,7 +49,7 @@ items.filter((i) => i.role === 'office' || i.role === 'home').slice().forEach((i
     add(home ? 'sc-storefront-s' : 'sc-office-mid', c.x, c.y, 44, home ? 'home' : 'office', q, c.b + 180); }); });
 // NOTHING ON A ROAD: drop any building whose footprint touches a road segment (district centrepieces excepted - they sit inside their circle road)
 const segDist = (x, y, r) => { const dx = r.x1 - r.x0, dy = r.y1 - r.y0, t = Math.max(0, Math.min(1, ((x - r.x0) * dx + (y - r.y0) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(x - r.x0 - dx * t, y - r.y0 - dy * t); };
-for (let k = items.length - 1; k >= 0; k--) { const it = items[k]; if (it.role === 'district-hero') continue; const half = it.len_m * 0.42;
+for (let k = items.length - 1; k >= 0; k--) { const it = items[k]; if (it.role === 'district-hero') continue; const half = it.len_m * 0.75;   // full footprint + margin: touching a road = removed (owner)
   if (roads.some((r) => segDist(it.x_m, it.y_m, r) < r.w / 2 + half)) items.splice(k, 1); }
 const plots = V8.plots.filter((p) => !blocked(p.x_m, p.y_m, 40));
 const L = Object.assign({}, V8, { version: 14, note: 'owner final grid drawing, geometric polar grid (tools/city-polar.cjs)', items, roads, plots, districts: DIST, park: PARK, counts: { items: items.length, roads: roads.length, plots: plots.length } });

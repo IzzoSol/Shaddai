@@ -395,17 +395,6 @@
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 115.6,
-   "y_m": 581.1,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-slab",
    "x_m": 43,
    "y_m": 656.1,
    "len_m": 26,
@@ -656,17 +645,6 @@
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
-  },
-  {
-   "key": "sc-tower-slab",
-   "x_m": -115.6,
-   "y_m": -581.1,
-   "len_m": 26,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
   },
   {
    "key": "sc-tower-slab",
@@ -15471,7 +15449,7 @@
   }
  ],
  "counts": {
-  "items": 163,
+  "items": 161,
   "roads": 1501,
   "plots": 159
  },
