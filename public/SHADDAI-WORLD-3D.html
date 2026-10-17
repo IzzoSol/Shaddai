@@ -1180,7 +1180,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('city-v3', function(api){   // MAP v4 CITY v3 RUNTIME (world-city-v3.js ← markers/plots/art-slots-v4.json): E-prompts, plot beacons (lights = ledger), art slots
       if(!api) return api;
-      return _loadScript('/world-city-v3.js?v=20261016c').then(function(){
+      return _loadScript('/world-city-v3.js?v=20261016d').then(function(){
         window.__cityV3 = window.buildWorldCityV3({ THREE, scene, heightAt: api.heightAt,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           canInteract: ()=> !(typeof bikeMode!=='undefined' && bikeMode) && !(typeof hover!=='undefined' && hover && hover.isRiding && hover.isRiding()) && !((document.getElementById('dossier')||{classList:{contains:()=>false}}).classList.contains('open')) && !(_rideOn()),
