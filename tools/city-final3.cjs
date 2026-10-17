@@ -46,6 +46,9 @@ circle(0, 0, 576, 24, 'grid'); circle(0, 0, 992, 24, 'grid'); for (let a = 0; a 
 DIST.concat([{ id: 'park', x: PARK.x, y: PARK.y, r: PARK.r }]).forEach((d) => { circle(d.x, d.y, d.r + 14, 24, d.id); const len = Math.hypot(d.x, d.y), ux = d.x / len, uy = d.y / len;
   seg([ux * 440, uy * 440], [d.x - ux * (d.r + 14), d.y - uy * (d.r + 14)], 26, d.id); });
 const plots = V8.plots.filter((p) => DIST.every((d) => Math.hypot(p.x_m - d.x, p.y_m - d.y) > d.r + 50));
+// owner: the first 3 dots nearest each district = its secondary buildings (60 m, district-themed)
+const SEC = { athenaeum: 'sc-techlab', forge: 'sc-civic-tower', trade: 'sc-market', residential: 'sc-storefront-l' };
+DIST.forEach((d) => items.filter((i) => (i.role === 'office' || i.role === 'residential') && Math.hypot(i.x_m - d.x, i.y_m - d.y) < 520).sort((a, b) => Math.hypot(a.x_m - d.x, a.y_m - d.y) - Math.hypot(b.x_m - d.x, b.y_m - d.y)).slice(0, 3).forEach((i) => Object.assign(i, { key: SEC[d.id], len_m: 60, role: 'district-secondary', cluster: d.id })));
 const L = Object.assign({}, V8, { version: 12, note: 'owner colour-coded final map (tools/city-final3.cjs)', items, roads, plots, districts: DIST, park: PARK, counts: { items: items.length, roads: roads.length, plots: plots.length } });
 fs.writeFileSync(F, JSON.stringify(L, null, 1));
 const Z = JSON.parse(fs.readFileSync(path.join(PUB, 'assets/world/city-zones-v1.json'), 'utf8')); Z.districts = DIST; Z.park = PARK; fs.writeFileSync(path.join(PUB, 'assets/world/city-zones-v1.json'), JSON.stringify(Z));

@@ -346,15 +346,15 @@
    "role": "district-hero"
   },
   {
-   "key": "sc-office",
+   "key": "sc-techlab",
    "x_m": -909.7,
    "y_m": 443,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 116,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "athenaeum",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office-mid",
@@ -379,15 +379,15 @@
    "role": "office"
   },
   {
-   "key": "sc-office-mid",
+   "key": "sc-techlab",
    "x_m": -478.3,
    "y_m": 864.2,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 151,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "athenaeum",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office",
@@ -423,15 +423,15 @@
    "role": "office"
   },
   {
-   "key": "sc-office-mid",
+   "key": "sc-techlab",
    "x_m": -853.2,
    "y_m": 542.3,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 122.4,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "athenaeum",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office",
@@ -500,15 +500,15 @@
    "role": "office"
   },
   {
-   "key": "sc-office-mid",
+   "key": "sc-civic-tower",
    "x_m": 395.3,
    "y_m": 692.1,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 209.7,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "forge",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office",
@@ -533,26 +533,26 @@
    "role": "office"
   },
   {
-   "key": "sc-office",
+   "key": "sc-civic-tower",
    "x_m": 823.9,
    "y_m": 522.1,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 237.6,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "forge",
+   "role": "district-secondary"
   },
   {
-   "key": "sc-office-mid",
+   "key": "sc-civic-tower",
    "x_m": 504.8,
    "y_m": 822.3,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 211.5,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "forge",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office",
@@ -610,15 +610,15 @@
    "role": "office"
   },
   {
-   "key": "sc-office-mid",
+   "key": "sc-market",
    "x_m": 667.1,
    "y_m": -417,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 302,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "trade",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office",
@@ -643,15 +643,15 @@
    "role": "office"
   },
   {
-   "key": "sc-office",
+   "key": "sc-market",
    "x_m": 828.3,
    "y_m": -557.8,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 304,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "trade",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office-mid",
@@ -665,15 +665,15 @@
    "role": "office"
   },
   {
-   "key": "sc-office",
+   "key": "sc-market",
    "x_m": 633.7,
    "y_m": -914.7,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 325.3,
    "lift_m": 0,
    "by_height": false,
-   "cluster": "office",
-   "role": "office"
+   "cluster": "trade",
+   "role": "district-secondary"
   },
   {
    "key": "sc-office-mid",
@@ -712,12 +712,12 @@
    "key": "sc-storefront-l",
    "x_m": -557.7,
    "y_m": -806.5,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 34.7,
    "lift_m": 0,
    "by_height": false,
    "cluster": "residential",
-   "role": "residential"
+   "role": "district-secondary"
   },
   {
    "key": "sc-storefront-s",
@@ -734,23 +734,23 @@
    "key": "sc-storefront-l",
    "x_m": -663.9,
    "y_m": -902.4,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 36.3,
    "lift_m": 0,
    "by_height": false,
    "cluster": "residential",
-   "role": "residential"
+   "role": "district-secondary"
   },
   {
    "key": "sc-storefront-l",
    "x_m": -911.8,
    "y_m": -671,
-   "len_m": 32,
+   "len_m": 60,
    "yaw": 53.7,
    "lift_m": 0,
    "by_height": false,
    "cluster": "residential",
-   "role": "residential"
+   "role": "district-secondary"
   },
   {
    "key": "sc-storefront-s",
