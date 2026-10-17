@@ -460,31 +460,9 @@
    "role": "office"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-storefront-l",
    "x_m": 38.8,
    "y_m": 591.2,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-slab",
-   "x_m": 128.3,
-   "y_m": 644.9,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-techlab",
-   "x_m": 115.6,
-   "y_m": 581.1,
    "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
@@ -494,8 +472,8 @@
   },
   {
    "key": "sc-storefront-s",
-   "x_m": 43,
-   "y_m": 656.1,
+   "x_m": 128.3,
+   "y_m": 644.9,
    "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
@@ -505,25 +483,47 @@
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 190.5,
-   "y_m": 561.1,
+   "x_m": 115.6,
+   "y_m": 581.1,
    "len_m": 26,
-   "yaw": 202.5,
+   "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
   },
   {
-   "key": "sc-tower-setback",
-   "x_m": 290.8,
-   "y_m": 589.7,
+   "key": "sc-tower-slab",
+   "x_m": 43,
+   "y_m": 656.1,
    "len_m": 26,
-   "yaw": 202.5,
+   "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 190.5,
+   "y_m": 561.1,
+   "len_m": 22,
+   "yaw": 202.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 290.8,
+   "y_m": 589.7,
+   "len_m": 22,
+   "yaw": 202.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
   },
   {
    "key": "sc-storefront-s",
@@ -537,29 +537,29 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-slab",
    "x_m": 211.3,
    "y_m": 622.6,
-   "len_m": 22,
-   "yaw": 202.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-tower-setback",
-   "x_m": 531.4,
-   "y_m": 262.1,
    "len_m": 26,
-   "yaw": 247.5,
+   "yaw": 202.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-techlab",
+   "x_m": 531.4,
+   "y_m": 262.1,
+   "len_m": 22,
+   "yaw": 247.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-tower-slab",
    "x_m": 622.6,
    "y_m": 211.3,
    "len_m": 26,
@@ -570,7 +570,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-techlab",
    "x_m": 561.1,
    "y_m": 190.5,
    "len_m": 22,
@@ -581,7 +581,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-l",
    "x_m": 589.7,
    "y_m": 290.8,
    "len_m": 22,
@@ -592,18 +592,18 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-storefront-l",
    "x_m": 581.1,
    "y_m": 115.6,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 262.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-spire",
    "x_m": 656.1,
    "y_m": 43,
    "len_m": 26,
@@ -614,7 +614,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-s",
    "x_m": 591.2,
    "y_m": 38.8,
    "len_m": 22,
@@ -625,7 +625,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-techlab",
    "x_m": 644.9,
    "y_m": 128.3,
    "len_m": 22,
@@ -636,29 +636,29 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-storefront-s",
    "x_m": 591.2,
    "y_m": -38.8,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 277.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-setback",
-   "x_m": 644.9,
-   "y_m": -128.3,
-   "len_m": 26,
-   "yaw": 277.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
    "key": "sc-storefront-s",
+   "x_m": 644.9,
+   "y_m": -128.3,
+   "len_m": 22,
+   "yaw": 277.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-storefront-l",
    "x_m": 581.1,
    "y_m": -115.6,
    "len_m": 22,
@@ -669,37 +669,37 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-setback",
    "x_m": 656.1,
    "y_m": -43,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 277.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 115.6,
+   "y_m": -581.1,
+   "len_m": 22,
+   "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
   },
   {
-   "key": "sc-tower-setback",
-   "x_m": 115.6,
-   "y_m": -581.1,
-   "len_m": 26,
-   "yaw": 352.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-spire",
+   "key": "sc-storefront-l",
    "x_m": 43,
    "y_m": -656.1,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
    "key": "sc-storefront-l",
@@ -713,7 +713,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-s",
    "x_m": 128.3,
    "y_m": -644.9,
    "len_m": 22,
@@ -724,42 +724,20 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-storefront-l",
    "x_m": -38.8,
    "y_m": -591.2,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-storefront-s",
    "x_m": -128.3,
    "y_m": -644.9,
-   "len_m": 26,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-techlab",
-   "x_m": -115.6,
-   "y_m": -581.1,
-   "len_m": 22,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-storefront-s",
-   "x_m": -43,
-   "y_m": -656.1,
    "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
@@ -770,20 +748,20 @@
   {
    "key": "sc-tower-slab",
    "x_m": -115.6,
-   "y_m": 581.1,
+   "y_m": -581.1,
    "len_m": 26,
-   "yaw": 172.5,
+   "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
   },
   {
-   "key": "sc-tower-setback",
+   "key": "sc-tower-slab",
    "x_m": -43,
-   "y_m": 656.1,
+   "y_m": -656.1,
    "len_m": 26,
-   "yaw": 172.5,
+   "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
@@ -791,6 +769,28 @@
   },
   {
    "key": "sc-storefront-s",
+   "x_m": -115.6,
+   "y_m": 581.1,
+   "len_m": 22,
+   "yaw": 172.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -43,
+   "y_m": 656.1,
+   "len_m": 22,
+   "yaw": 172.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-storefront-l",
    "x_m": -38.8,
    "y_m": 591.2,
    "len_m": 22,
@@ -801,7 +801,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-storefront-s",
    "x_m": -128.3,
    "y_m": 644.9,
    "len_m": 22,
@@ -812,31 +812,9 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-setback",
+   "key": "sc-storefront-l",
    "x_m": 47.3,
    "y_m": 721,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-spire",
-   "x_m": 153.6,
-   "y_m": 772.4,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-storefront-l",
-   "x_m": 141,
-   "y_m": 708.6,
    "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
@@ -846,14 +824,36 @@
   },
   {
    "key": "sc-techlab",
-   "x_m": 51.5,
-   "y_m": 785.8,
+   "x_m": 153.6,
+   "y_m": 772.4,
    "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 141,
+   "y_m": 708.6,
+   "len_m": 26,
+   "yaw": 187.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 51.5,
+   "y_m": 785.8,
+   "len_m": 26,
+   "yaw": 187.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
   },
   {
    "key": "sc-tower-spire",
@@ -867,7 +867,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-spire",
    "x_m": 348.3,
    "y_m": 706.3,
    "len_m": 26,
@@ -889,18 +889,18 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-slab",
    "x_m": 253.1,
    "y_m": 745.7,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 202.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-spire",
    "x_m": 648,
    "y_m": 319.6,
    "len_m": 26,
@@ -911,7 +911,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-setback",
+   "key": "sc-tower-spire",
    "x_m": 745.7,
    "y_m": 253.1,
    "len_m": 26,
@@ -922,26 +922,26 @@
    "role": "tower"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-spire",
    "x_m": 684.2,
    "y_m": 232.2,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 247.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-setback",
    "x_m": 706.3,
    "y_m": 348.3,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 247.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
    "key": "sc-tower-setback",
@@ -955,18 +955,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-storefront-s",
    "x_m": 785.8,
    "y_m": 51.5,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 262.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-storefront-s",
    "x_m": 721,
    "y_m": 47.3,
    "len_m": 22,
@@ -977,7 +977,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-l",
    "x_m": 772.4,
    "y_m": 153.6,
    "len_m": 22,
@@ -1010,18 +1010,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-tower-slab",
    "x_m": 708.6,
    "y_m": -141,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 277.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-storefront-l",
    "x_m": 785.8,
    "y_m": -51.5,
    "len_m": 22,
@@ -1032,29 +1032,29 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-storefront-s",
    "x_m": 141,
    "y_m": -708.6,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-tower-setback",
+   "key": "sc-storefront-l",
    "x_m": 51.5,
    "y_m": -785.8,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-techlab",
    "x_m": 47.3,
    "y_m": -721,
    "len_m": 22,
@@ -1065,42 +1065,20 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-setback",
    "x_m": 153.6,
    "y_m": -772.4,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-tower-setback",
-   "x_m": -47.3,
-   "y_m": -721,
-   "len_m": 26,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-spire",
-   "x_m": -153.6,
-   "y_m": -772.4,
-   "len_m": 26,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
    "role": "tower"
   },
   {
    "key": "sc-storefront-l",
-   "x_m": -141,
-   "y_m": -708.6,
+   "x_m": -47.3,
+   "y_m": -721,
    "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
@@ -1110,8 +1088,8 @@
   },
   {
    "key": "sc-techlab",
-   "x_m": -51.5,
-   "y_m": -785.8,
+   "x_m": -153.6,
+   "y_m": -772.4,
    "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
@@ -1120,26 +1098,48 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-tower-slab",
    "x_m": -141,
-   "y_m": 708.6,
+   "y_m": -708.6,
    "len_m": 26,
-   "yaw": 172.5,
+   "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-spire",
    "x_m": -51.5,
-   "y_m": 785.8,
+   "y_m": -785.8,
    "len_m": 26,
-   "yaw": 172.5,
+   "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -141,
+   "y_m": 708.6,
+   "len_m": 22,
+   "yaw": 172.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -51.5,
+   "y_m": 785.8,
+   "len_m": 22,
+   "yaw": 172.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
   },
   {
    "key": "sc-techlab",
@@ -1153,37 +1153,37 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-setback",
    "x_m": -153.6,
    "y_m": 772.4,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 172.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": 55.8,
+   "y_m": 850.7,
+   "len_m": 22,
+   "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
-   "x_m": 55.8,
-   "y_m": 850.7,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-setback",
+   "key": "sc-storefront-s",
    "x_m": 179,
    "y_m": 899.9,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
    "key": "sc-storefront-s",
@@ -1197,11 +1197,22 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-slab",
    "x_m": 60,
    "y_m": 915.5,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 187.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": 274,
+   "y_m": 807.3,
+   "len_m": 22,
+   "yaw": 202.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
@@ -1209,17 +1220,6 @@
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 274,
-   "y_m": 807.3,
-   "len_m": 26,
-   "yaw": 202.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-spire",
    "x_m": 405.8,
    "y_m": 822.9,
    "len_m": 26,
@@ -1241,18 +1241,18 @@
    "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-tower-setback",
    "x_m": 294.9,
    "y_m": 868.8,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 202.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-tower-setback",
    "x_m": 764.6,
    "y_m": 377.1,
    "len_m": 26,
@@ -1263,7 +1263,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-spire",
    "x_m": 868.8,
    "y_m": 294.9,
    "len_m": 26,
@@ -1274,7 +1274,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-l",
    "x_m": 807.3,
    "y_m": 274,
    "len_m": 22,
@@ -1285,11 +1285,22 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-spire",
    "x_m": 822.9,
    "y_m": 405.8,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 247.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 836.1,
+   "y_m": 166.3,
+   "len_m": 22,
+   "yaw": 262.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
@@ -1297,17 +1308,6 @@
   },
   {
    "key": "sc-tower-slab",
-   "x_m": 836.1,
-   "y_m": 166.3,
-   "len_m": 26,
-   "yaw": 262.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-setback",
    "x_m": 915.5,
    "y_m": 60,
    "len_m": 26,
@@ -1329,11 +1329,22 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-spire",
    "x_m": 899.9,
    "y_m": 179,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 262.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 850.7,
+   "y_m": -55.8,
+   "len_m": 22,
+   "yaw": 277.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
@@ -1341,17 +1352,6 @@
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 850.7,
-   "y_m": -55.8,
-   "len_m": 26,
-   "yaw": 277.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-spire",
    "x_m": 899.9,
    "y_m": -179,
    "len_m": 26,
@@ -1362,7 +1362,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-storefront-s",
    "x_m": 836.1,
    "y_m": -166.3,
    "len_m": 22,
@@ -1373,18 +1373,18 @@
    "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-tower-spire",
    "x_m": 915.5,
    "y_m": -60,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 277.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-tower-setback",
    "x_m": 166.3,
    "y_m": -836.1,
    "len_m": 26,
@@ -1395,18 +1395,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-techlab",
    "x_m": 60,
    "y_m": -915.5,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-s",
    "x_m": 55.8,
    "y_m": -850.7,
    "len_m": 22,
@@ -1417,37 +1417,37 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-spire",
    "x_m": 179,
    "y_m": -899.9,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 352.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -55.8,
+   "y_m": -850.7,
+   "len_m": 22,
+   "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
-   "x_m": -55.8,
-   "y_m": -850.7,
-   "len_m": 26,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-setback",
+   "key": "sc-storefront-s",
    "x_m": -179,
    "y_m": -899.9,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
    "key": "sc-storefront-s",
@@ -1461,15 +1461,15 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-slab",
    "x_m": -60,
    "y_m": -915.5,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
    "key": "sc-tower-setback",
@@ -1483,18 +1483,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-techlab",
    "x_m": -60,
    "y_m": 915.5,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 172.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-storefront-s",
    "x_m": -55.8,
    "y_m": 850.7,
    "len_m": 22,
@@ -1505,18 +1505,18 @@
    "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-tower-spire",
    "x_m": -179,
    "y_m": 899.9,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 172.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-tower-setback",
    "x_m": 64.3,
    "y_m": 980.4,
    "len_m": 26,
@@ -1527,18 +1527,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-techlab",
    "x_m": 204.4,
    "y_m": 1027.4,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-s",
    "x_m": 191.7,
    "y_m": 963.6,
    "len_m": 22,
@@ -1549,20 +1549,42 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-spire",
    "x_m": 68.5,
    "y_m": 1045.3,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 187.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 315.8,
+   "y_m": 930.4,
+   "len_m": 22,
+   "yaw": 202.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
-   "x_m": 315.8,
-   "y_m": 930.4,
+   "key": "sc-techlab",
+   "x_m": 463.3,
+   "y_m": 939.5,
+   "len_m": 22,
+   "yaw": 202.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "compact"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 434.5,
+   "y_m": 881.2,
    "len_m": 26,
    "yaw": 202.5,
    "lift_m": 0,
@@ -1572,8 +1594,8 @@
   },
   {
    "key": "sc-tower-setback",
-   "x_m": 463.3,
-   "y_m": 939.5,
+   "x_m": 336.7,
+   "y_m": 991.9,
    "len_m": 26,
    "yaw": 202.5,
    "lift_m": 0,
@@ -1583,52 +1605,8 @@
   },
   {
    "key": "sc-storefront-s",
-   "x_m": 434.5,
-   "y_m": 881.2,
-   "len_m": 22,
-   "yaw": 202.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-storefront-l",
-   "x_m": 336.7,
-   "y_m": 991.9,
-   "len_m": 22,
-   "yaw": 202.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-tower-setback",
    "x_m": 881.2,
    "y_m": 434.5,
-   "len_m": 26,
-   "yaw": 247.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-tower-spire",
-   "x_m": 991.9,
-   "y_m": 336.7,
-   "len_m": 26,
-   "yaw": 247.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
-   "key": "sc-storefront-l",
-   "x_m": 930.4,
-   "y_m": 315.8,
    "len_m": 22,
    "yaw": 247.5,
    "lift_m": 0,
@@ -1638,14 +1616,36 @@
   },
   {
    "key": "sc-techlab",
-   "x_m": 939.5,
-   "y_m": 463.3,
+   "x_m": 991.9,
+   "y_m": 336.7,
    "len_m": 22,
    "yaw": 247.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 930.4,
+   "y_m": 315.8,
+   "len_m": 26,
+   "yaw": 247.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 939.5,
+   "y_m": 463.3,
+   "len_m": 26,
+   "yaw": 247.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "towers",
+   "role": "tower"
   },
   {
    "key": "sc-tower-spire",
@@ -1659,18 +1659,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-storefront-s",
    "x_m": 1045.3,
    "y_m": 68.5,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 262.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-s",
    "x_m": 980.4,
    "y_m": 64.3,
    "len_m": 22,
@@ -1681,7 +1681,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-storefront-l",
    "x_m": 1027.4,
    "y_m": 204.4,
    "len_m": 22,
@@ -1692,7 +1692,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-setback",
    "x_m": 980.4,
    "y_m": -64.3,
    "len_m": 26,
@@ -1703,18 +1703,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-setback",
+   "key": "sc-storefront-s",
    "x_m": 1027.4,
    "y_m": -204.4,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 277.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-techlab",
    "x_m": 963.6,
    "y_m": -191.7,
    "len_m": 22,
@@ -1725,7 +1725,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-storefront-s",
    "x_m": 1045.3,
    "y_m": -68.5,
    "len_m": 22,
@@ -1747,7 +1747,7 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-tower-setback",
    "x_m": 68.5,
    "y_m": -1045.3,
    "len_m": 26,
@@ -1758,15 +1758,15 @@
    "role": "tower"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-tower-slab",
    "x_m": 64.3,
    "y_m": -980.4,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 352.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
    "key": "sc-techlab",
@@ -1780,7 +1780,7 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-spire",
+   "key": "sc-tower-setback",
    "x_m": -64.3,
    "y_m": -980.4,
    "len_m": 26,
@@ -1791,18 +1791,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-techlab",
    "x_m": -204.4,
    "y_m": -1027.4,
-   "len_m": 26,
+   "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "tower"
+   "role": "compact"
   },
   {
-   "key": "sc-techlab",
+   "key": "sc-storefront-s",
    "x_m": -191.7,
    "y_m": -963.6,
    "len_m": 22,
@@ -1813,18 +1813,18 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-spire",
    "x_m": -68.5,
    "y_m": -1045.3,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 7.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-tower-slab",
+   "key": "sc-tower-setback",
    "x_m": -191.7,
    "y_m": 963.6,
    "len_m": 26,
@@ -1846,18 +1846,18 @@
    "role": "tower"
   },
   {
-   "key": "sc-storefront-s",
+   "key": "sc-tower-slab",
    "x_m": -64.3,
    "y_m": 980.4,
-   "len_m": 22,
+   "len_m": 26,
    "yaw": 172.5,
    "lift_m": 0,
    "by_height": false,
    "cluster": "towers",
-   "role": "compact"
+   "role": "tower"
   },
   {
-   "key": "sc-storefront-l",
+   "key": "sc-techlab",
    "x_m": -204.4,
    "y_m": 1027.4,
    "len_m": 22,

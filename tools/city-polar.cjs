@@ -39,8 +39,8 @@ LB.map(cen).forEach((p) => { const c = nearest(p[0], p[1]); if (!c) return; c.us
 // RED sectors: each cell split 2x2 by the red roads -> 2 towers + 2 compact buildings, diagonal pattern
 const TOW = ['sc-tower-spire', 'sc-tower-slab', 'sc-tower-setback'], SMALL = ['sc-storefront-s', 'sc-storefront-l', 'sc-techlab'];
 let nt = 0, ns = 0; cells.filter((c) => c.red && !blocked(c.x, c.y, 40)).forEach((c, k) => { const dr = (c.r === 625 ? 65 : 65) / 2;
-  [[-1, -1], [1, 1], [-1, 1], [1, -1]].forEach(([si, sj], q) => { const p = P(c.r + si * dr, c.b + sj * STEP / 4), tower = q < 2;
-    add(tower ? TOW[(k + q) % 3] : SMALL[(k + q) % 3], p[0], p[1], tower ? 26 : 22, tower ? 'tower' : 'compact', 'towers', c.b + 180); tower ? nt++ : ns++; }); });
+  [[-1, -1], [1, 1], [-1, 1], [1, -1]].forEach(([si, sj], q) => { const p = P(c.r + si * dr, c.b + sj * STEP / 4), h = Math.abs(Math.sin(p[0] * 12.9898 + p[1] * 78.233) * 43758.5453) % 1, tower = h < 0.5;
+    add(tower ? TOW[Math.floor(h * 6) % 3] : SMALL[Math.floor(h * 7) % 3], p[0], p[1], tower ? 26 : 22, tower ? 'tower' : 'compact', 'towers', c.b + 180); tower ? nt++ : ns++; }); });   // Shaddai towers + Shaddai buildings, randomized (owner)
 const plots = V8.plots.filter((p) => !blocked(p.x_m, p.y_m, 40));
 const L = Object.assign({}, V8, { version: 14, note: 'owner final grid drawing, geometric polar grid (tools/city-polar.cjs)', items, roads, plots, districts: DIST, park: PARK, counts: { items: items.length, roads: roads.length, plots: plots.length } });
 fs.writeFileSync(F, JSON.stringify(L, null, 1));
