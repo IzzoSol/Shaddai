@@ -196,28 +196,6 @@
    "role": "office"
   },
   {
-   "key": "sc-office-mid",
-   "x_m": 495.8,
-   "y_m": -380.5,
-   "len_m": 44,
-   "yaw": 307.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "trade",
-   "role": "office"
-  },
-  {
-   "key": "sc-office",
-   "x_m": 577.4,
-   "y_m": -239.2,
-   "len_m": 44,
-   "yaw": 292.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "trade",
-   "role": "office"
-  },
-  {
    "key": "sc-office",
    "x_m": 697.5,
    "y_m": -288.9,
@@ -307,17 +285,6 @@
   },
   {
    "key": "sc-office-mid",
-   "x_m": -239.2,
-   "y_m": 577.4,
-   "len_m": 44,
-   "yaw": 157.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "athenaeum",
-   "role": "office"
-  },
-  {
-   "key": "sc-office-mid",
    "x_m": -338.7,
    "y_m": 817.6,
    "len_m": 44,
@@ -375,17 +342,6 @@
    "key": "sc-storefront-l",
    "x_m": 38.8,
    "y_m": 591.2,
-   "len_m": 22,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-storefront-s",
-   "x_m": 128.3,
-   "y_m": 644.9,
    "len_m": 22,
    "yaw": 187.5,
    "lift_m": 0,
@@ -614,31 +570,9 @@
    "role": "compact"
   },
   {
-   "key": "sc-storefront-s",
-   "x_m": 128.3,
-   "y_m": -644.9,
-   "len_m": 22,
-   "yaw": 352.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
    "key": "sc-storefront-l",
    "x_m": -38.8,
    "y_m": -591.2,
-   "len_m": 22,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
-  },
-  {
-   "key": "sc-storefront-s",
-   "x_m": -128.3,
-   "y_m": -644.9,
    "len_m": 22,
    "yaw": 7.5,
    "lift_m": 0,
@@ -722,17 +656,6 @@
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
-  },
-  {
-   "key": "sc-tower-slab",
-   "x_m": 141,
-   "y_m": 708.6,
-   "len_m": 26,
-   "yaw": 187.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
   },
   {
    "key": "sc-tower-spire",
@@ -988,17 +911,6 @@
    "role": "compact"
   },
   {
-   "key": "sc-tower-slab",
-   "x_m": -141,
-   "y_m": -708.6,
-   "len_m": 26,
-   "yaw": 7.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "tower"
-  },
-  {
    "key": "sc-tower-spire",
    "x_m": -51.5,
    "y_m": -785.8,
@@ -1096,17 +1008,6 @@
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
-  },
-  {
-   "key": "sc-techlab",
-   "x_m": 274,
-   "y_m": 807.3,
-   "len_m": 22,
-   "yaw": 202.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
   },
   {
    "key": "sc-tower-setback",
@@ -1448,17 +1349,6 @@
    "by_height": false,
    "cluster": "towers",
    "role": "tower"
-  },
-  {
-   "key": "sc-storefront-l",
-   "x_m": 315.8,
-   "y_m": 930.4,
-   "len_m": 22,
-   "yaw": 202.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "towers",
-   "role": "compact"
   },
   {
    "key": "sc-techlab",
@@ -15449,7 +15339,7 @@
   }
  ],
  "counts": {
-  "items": 161,
+  "items": 151,
   "roads": 1501,
   "plots": 159
  },
