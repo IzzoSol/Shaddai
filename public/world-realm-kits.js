@@ -17,16 +17,12 @@
   var PROP_REALM = { volcano: 'emberfall', forest: 'swamp', desert: 'desert', ocean: 'ocean', meadow: 'meadow', void: 'void', arctic: 'arctic', darkforest: 'darkforest' };
   // layouts in station-local METRES: [x along the track, z toward the lift/city, yawDeg, scale]; mirrored pairs use +-x
   function pair(x, z, yaw, s) { return [[x, z, yaw || 0, s || 1], [-x, z, -(yaw || 0), s || 1]]; }
-  var BUILDINGS = [['hall', 0, 78, 180, 1], ['shop', 30, 46, -90, 1], ['shop', -30, 46, 90, 1], ['tower', 34, 104, -135, 1], ['tower', -34, 104, 135, 1]];
-  // REALM TOWN (owner 2026-10-16: "finish each realm city ... buildings ... the roads"): K10b kinds (home / workshop / inn / apartments, each realm's
-  // own style) laid out on streets. MAIN AVENUE runs from behind the hall (z 96) to the inn (z 196) along x = 0; CROSS STREET at z 140 from x -132..132.
-  // Homes front the cross street on both sides (8 lots each side: buyable with Sparks in P6), workshops + apartments face the avenue. Yaw (as K10): 180 faces the
-  // station (-z), 0 faces the city (+z); +-90 faces the avenue. Fronts (doors) always face a street. ?realmtowns=0 = the old 5-building towns only.
-  // trimmed 2026-10-16 (owner: 'too many buildings'): inn + one workshop + 4 buyable homes per station (was 21)
-  var TOWN = [['inn', 0, 196, 180, 1], ['workshop', 29, 123, -90, 1]];
-  [44, 62].forEach(function (x) { TOWN.push(['home', x, 124, 0, 1], ['home', -x, 124, 0, 1]); });
+  // COMPACT STATION CLUSTER (owner refs 2026-10-16, image 70/76/81: vast realm land + one compact functional cluster per station):
+  // hall + shop + tower at the station, then a short avenue to the inn, a workshop and 2 buyable homes on a cross street. 7 buildings, all within ~150 m.
+  var BUILDINGS = [['hall', 0, 70, 180, 1], ['shop', 30, 40, -90, 1], ['tower', -34, 96, 135, 1]];
+  var TOWN = [['inn', 0, 150, 180, 1], ['workshop', 30, 140, -90, 1], ['home', 56, 104, 0, 1], ['home', -56, 104, 0, 1]];
   // STREETS in station-local metres: [x0, z0, x1, z1, widthM]
-  var STREETS = [[0, 96, 0, 182, 12], [-76, 140, 76, 140, 10]];
+  var STREETS = [[0, 92, 0, 136, 12], [-70, 118, 70, 118, 10]];
   var PROPS = {
     emberfall: { rune_pad: [[0, 30, 0, 1]], obsidian_spire: pair(11, 22, 20, 0.8).concat(pair(13, 56, -30, 0.7), pair(150, 190, 40, 2.4)), ember_vent: pair(55, 70, 0, 0.9), lava_rock: pair(46, 36, 30, 1.2) },
     swamp: { moss_pillar: pair(22, 40, 15, 1.6).concat(pair(28, 84, 70, 1.8)), glow_mushrooms: pair(10, 30, 0, 3).concat(pair(16, 64, 40, 3), [[0, 96, 0, 3]]), reed_clump: pair(42, 58, 0, 1.4), dead_tree: pair(120, 150, 30, 1.7) },

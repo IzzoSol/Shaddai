@@ -7,7 +7,7 @@
  *   GET  /api/home-deeds/mine         -> { ok, homes: [homeId] }                          (signed in)
  *   POST /api/home-deeds/buy {homeId} -> { ok, homeId, price, replayed? }                 (signed in; 402 not enough Sparks, 409 owned by someone else)
  *
- * homeId = 'home:<stationId>:<lot>' — stationId [a-z0-9-]{2,32}, lot 0..3 (the 4 home lots of world-realm-kits.js TOWN per station).
+ * homeId = 'home:<stationId>:<lot>' — stationId [a-z0-9-]{2,32}, lot 0..1 (the 2 home lots of world-realm-kits.js TOWN per station).
  * Money path: EconomyService.spend() is the ONLY Sparks writer; idempotency key 'deed:<homeId>:<userId>' so a retried request never
  * charges twice. Purchases are serialized by the deed store lock: the ownership check, the spend and the record are one unit.
  */
@@ -17,7 +17,7 @@ const { JsonStore } = require('./lib/json-store');
 
 const HOME_ID_RE = /^home:([a-z0-9-]{2,32}):(\d{1,2})$/;
 const UID_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
-const HOME_LOTS = 4;   // world-realm-kits TOWN: 4 home lots per station (trimmed 2026-10-16)
+const HOME_LOTS = 2;   // world-realm-kits TOWN: 2 home lots per compact station cluster (2026-10-16)
 const MAX_HOMES_PER_USER = 3;
 
 function validHomeId(id) { const m = HOME_ID_RE.exec(String(id || '')); return !!m && Number(m[2]) < HOME_LOTS; }
