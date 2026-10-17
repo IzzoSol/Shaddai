@@ -1,38 +1,39 @@
-/* world-districts.js — DISTRICT IDENTITY for The Grid (pure data + lookups; the plan file stays untouched).
- * City Brief v2: Campus NE · Commons SE · Plots SW · Race NW. Each district has its own accent colour, facade palette, building roles and street names,
- * so the city stops being 983 identical towers and every street says where you are.
- *   WorldDistricts.at(xM, yM)          -> district {id,name,...}   (metres, X east, Y north, same frame as grid-city-v4.json)
- *   WorldDistricts.accentFor(b)        -> 'teal'|'emerald'|'gold'  the building's accent (spires stay gold)
- *   WorldDistricts.tintFor(b, rnd)     -> 0xRRGGBB   a facade tint from the district palette (rnd() in [0,1))
- *   WorldDistricts.roleFor(b)          -> 'office'|'shop'|'home'|'hall'|'arcade'|'race'|'landmark'  what the building is FOR
- *   WorldDistricts.streetAt(xM, yM)    -> 'Campus Avenue' / 'Inner Ring'  nearest named street (avenues every 30 deg, rings at 576 and 992 m)
+/* world-districts.js — district identity in the Grid (owner 2026-10-16, districts authored in Blender -> assets/world/districts-v1.json).
+ *   WorldDistricts.build({ THREE, scene, heightAt, U, data })  -> { group, signs }
+ * One tall holo pylon per district at its centroid (bearing mid, radius mid): district name + what you do there, in the district colour,
+ * double-sided, always facing the Grid centre so you read it as you arrive. A toast names the district when you cross into it.
+ * 2 meshes per district (pylon + panel) -> ~10 draw calls total. ?districtsigns=0 = off.
  */
 (function (root) {
   'use strict';
-  var DISTRICTS = [
-    { id: 'campus',  name: 'Campus',  c0: 0,   c1: 90,  accent: 'teal',    tints: [0xe4eaef, 0xd3dbe2, 0xc2ccd6, 0xaebccb], blurb: 'Academy, library and the council offices',
-      roles: { tower: 'office', terrace: 'home', podium: 'shop', hall: 'hall', spire: 'landmark' } },
-    { id: 'commons', name: 'Commons', c0: 90,  c1: 180, accent: 'gold',    tints: [0xe9e3d8, 0xdad0bd, 0xc9bfa9, 0xe4eaef], blurb: 'Market, community hall, fishing and farms',
-      roles: { tower: 'home', terrace: 'home', podium: 'shop', hall: 'hall', spire: 'landmark' } },
-    { id: 'plots',   name: 'Plots',   c0: 180, c1: 270, accent: 'emerald', tints: [0xaebccb, 0xc2ccd6, 0xd3dbe2, 0xcfd9cf], blurb: 'Homes and owned land',
-      roles: { tower: 'home', terrace: 'home', podium: 'shop', hall: 'hall', spire: 'landmark' } },
-    { id: 'race',    name: 'Race',    c0: 270, c1: 360, accent: 'emerald', tints: [0x2c343d, 0x3b4550, 0xc2ccd6, 0xe4eaef], blurb: 'Hover quarter, park and the arcade strip',
-      roles: { tower: 'office', terrace: 'arcade', podium: 'race', hall: 'arcade', spire: 'landmark' } }
-  ];
-  var STREETS = ['North', 'NNE', 'ENE', 'East', 'ESE', 'SSE', 'South', 'SSW', 'WSW', 'West', 'WNW', 'NNW'];   // 12 avenues, one every 30 degrees
-  var RINGS = [{ r: 576, name: 'Inner Ring' }, { r: 992, name: 'Outer Ring' }, { r: 1600, name: 'Grid Edge' }];
-  function bearing(x, y) { var d = Math.atan2(x, y) * 180 / Math.PI; return d < 0 ? d + 360 : d; }
-  function at(x, y) { var d = bearing(x, y); for (var i = 0; i < DISTRICTS.length; i++) if (d >= DISTRICTS[i].c0 && d < DISTRICTS[i].c1) return DISTRICTS[i]; return DISTRICTS[0]; }
-  function accentFor(b) { return b && b.kind === 'spire' ? 'gold' : at(b.x_m, b.y_m).accent; }
-  function tintFor(b, rnd) { var t = at(b.x_m, b.y_m).tints; return t[Math.floor(rnd() * t.length) % t.length]; }
-  function roleFor(b) { return at(b.x_m, b.y_m).roles[b.kind] || 'office'; }
-  function streetAt(x, y) {
-    var r = Math.hypot(x, y), best = null, bd = 1e9, i;
-    for (i = 0; i < RINGS.length; i++) { var d = Math.abs(r - RINGS[i].r); if (d < bd) { bd = d; best = RINGS[i].name; } }
-    var a = bearing(x, y), k = Math.round(a / 30) % 12, off = Math.abs(a - (k === 0 && a > 180 ? 360 : k * 30));
-    var da = Math.sin(off * Math.PI / 180) * r;   // metres from the avenue centreline
-    if (da < bd) { return at(x, y).name + ' ' + STREETS[k] + ' Avenue'; }
-    return best;
+  var WHAT = { core: 'Athenaeum · Job Hall · quests', academy: 'Lessons · agent training · skill books', trade: 'Shops · market screens · auctions',
+    residential: 'Homes for Sparks · plots · agent dorms', forge: 'Workshops · boards · ships · upgrades' };
+  function panelTex(THREE, d) {
+    var c = document.createElement('canvas'); c.width = 1024; c.height = 384; var g = c.getContext('2d');
+    g.fillStyle = 'rgba(4,8,14,0.82)'; g.fillRect(0, 0, 1024, 384); g.strokeStyle = d.color; g.lineWidth = 10; g.strokeRect(8, 8, 1008, 368);
+    g.fillStyle = d.color; g.font = '900 92px Orbitron, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(String(d.label).split(' - ')[0].split(' / ')[0], 512, 170);
+    g.fillStyle = '#e8f6ff'; g.font = '700 46px Rajdhani, Arial, sans-serif'; g.fillText(WHAT[d.id] || '', 512, 270);
+    var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
-  root.WorldDistricts = { DISTRICTS: DISTRICTS, at: at, accentFor: accentFor, tintFor: tintFor, roleFor: roleFor, streetAt: streetAt, bearing: bearing };
+  function build(o) {
+    if (typeof location !== 'undefined' && /[?&]districtsigns=0\b/.test(location.search)) return null;
+    var THREE = o.THREE, U = o.U || 7 / 1.8, D = (o.data && o.data.districts) || [], group = new THREE.Group(); group.name = 'world-district-signs'; o.scene.add(group);
+    var signs = [];
+    D.forEach(function (d) {
+      var full = d.bearing[1] - d.bearing[0] >= 359, bm = (d.bearing[0] + d.bearing[1]) / 2 * Math.PI / 180, rm = full ? 150 : (d.radius_m[0] + d.radius_m[1]) / 2;
+      var x = rm * Math.sin(bm) * U, z = -rm * Math.cos(bm) * U, y = o.heightAt ? o.heightAt(x, z) : 0, col = new THREE.Color(d.color);
+      var pylon = new THREE.Mesh(new THREE.CylinderGeometry(1.2 * U, 1.6 * U, 44 * U, 8), new THREE.MeshStandardMaterial({ color: 0x0b0f16, emissive: col, emissiveIntensity: 0.35, metalness: 0.6, roughness: 0.35 }));
+      pylon.position.set(x, y + 22 * U, z); group.add(pylon);
+      var panel = new THREE.Mesh(new THREE.PlaneGeometry(40 * U, 15 * U), new THREE.MeshBasicMaterial({ map: panelTex(THREE, d), side: THREE.DoubleSide, transparent: true, toneMapped: false }));
+      panel.position.set(x, y + 36 * U, z); panel.lookAt(0, y + 36 * U, 0); group.add(panel);
+      signs.push({ id: d.id, x: x, z: z });
+    });
+    // crossing into a district names it (bearing + radius band from the same data)
+    var last = null;
+    if (o.getPlayer) setInterval(function () { var p = o.getPlayer(); if (!p) return; var xm = p.x / U, ym = -p.z / U, r = Math.hypot(xm, ym), b = (Math.atan2(xm, ym) * 180 / Math.PI + 360) % 360, cur = null;
+      D.forEach(function (d) { if (r >= d.radius_m[0] && r <= d.radius_m[1] && (d.bearing[1] - d.bearing[0] >= 359 || (b >= d.bearing[0] && b <= d.bearing[1]))) cur = d; });
+      if (cur && cur !== last && root.Navi && root.Navi.toast) root.Navi.toast(String(cur.label) + ' - ' + (WHAT[cur.id] || '')); last = cur; }, 1000);
+    return { group: group, signs: signs };
+  }
+  root.WorldDistricts = { build: build, WHAT: WHAT };
 })(typeof window !== 'undefined' ? window : globalThis);
