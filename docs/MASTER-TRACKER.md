@@ -21,6 +21,9 @@ Legend: [x] done + tested · [~] partly · [ ] open · (flag) = URL switch to tu
 - OPEN: owner browser test (agent appears, O = board + rider, city look, river, park); district/realm aesthetic polish (glow per district,
   hero building looks); loading screen + agent select (ask owner what is wrong); dragons spawn check; Colosseum/Hover League final pass;
   push to main (Render autodeploys main; ~120 commits on agents/1 incl. the agents terminal's work) ONLY on owner "push".
+- [x] PUSHED 2026-10-17: main = d954aad1 (merge of agents/1; tip tree byte-identical to agents/1). The 136-commit agents/1 history IS main's ancestry.
+      NOTE: main's history also carries 6 "chore(push): staging chunk" commits + 2 seed rounds (`seedblobs/`, `seedblobs2/` carriers) - they were the only way past GitHub's 2GB/push limit
+      (~2.6GB of fal-assets/docs-video binaries landed in one eaac7fde commit). Do NOT revert them; the merge after them is the deploy point. Render auto-deploys main.
 
 ## 0a. Done 2026-10-16 (Opus session) — node-tested, NOT yet seen in a browser
 **Owner order (2026-10-16):** reefs + race tracks → Colosseum polish (Hover League to concept art) → Navi + mounts wired → hoverskate
