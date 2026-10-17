@@ -40,35 +40,17 @@
           keep.forEach(function (i, t) { for (var k = 0; k < 3 * sz; k++) arr[t * 3 * sz + k] = src.array[i * sz + k]; }); out.setAttribute(name, new THREE.BufferAttribute(arr, sz, src.normalized)); });
         o.geometry = out; st.parkCut = (st.parkCut || 0) + (n / 3 - keep.length);
       });
-      // SPREAD THE CITY (owner 2026-10-16: "way too many plots and buildings ... spread them out ... better layouts and streets"): keep a spaced set of the
-      // generic grid + suburb blocks (>= 80 m apart, <= 32 per quadrant - see FILLER BY SPACING), cut each dropped
-      // block's triangles out of the merged canon meshes and drop its collider. Landmarks, halls, plazas, streets, culture lane: never touched.
-      // ?cityspread=0 = every block.
-      var DROP = [], KEEP = { 'grid-block': 0.3, 'suburb-block': 0.25 };
-      if (!(typeof location !== 'undefined' && /[?&]cityspread=0/.test(location.search))) {
-        // FILLER BY SPACING (TURTLE 2026-10-16: ~30 filler blocks per district, ~80 m apart; owner refs image 66 + 72 = low density): blocks are visited in a
-        // stable hash order and kept only if no kept block is within 80 m and their quadrant has < 32; everything else is cut. Deterministic.
-        var SPACE = 80 * U, PERQ = 32, kept = [], perQ = {}, cand = C.obb.filter(function (b) { return KEEP[b.kind] != null; });
-        cand.sort(function (a, b) { return (Math.abs(Math.sin(a.x * 12.9898 + a.z * 78.233) * 43758.5453) % 1) - (Math.abs(Math.sin(b.x * 12.9898 + b.z * 78.233) * 43758.5453) % 1); });
-        var keepSet = new Set();
-        cand.forEach(function (b) { var q = (b.x >= 0 ? 'E' : 'W') + (b.z <= 0 ? 'N' : 'S'); if ((perQ[q] || 0) >= PERQ) return;
-          for (var i = 0; i < kept.length; i++) if (Math.hypot(kept[i].x - b.x, kept[i].z - b.z) < SPACE) return;
-          kept.push(b); perQ[q] = (perQ[q] || 0) + 1; keepSet.add(b); });
-        C.obb = C.obb.filter(function (b) { if (KEEP[b.kind] == null || keepSet.has(b)) return true; DROP.push(b); return false; });
-        var CELL = 200, grid = {}; DROP.forEach(function (b, i) { var r = Math.hypot(b.hx, b.hz); for (var gx = Math.floor((b.x - r) / CELL); gx <= Math.floor((b.x + r) / CELL); gx++) for (var gz = Math.floor((b.z - r) / CELL); gz <= Math.floor((b.z + r) / CELL); gz++) (grid[gx + ',' + gz] = grid[gx + ',' + gz] || []).push(i); });
-        var inDrop = function (x, z) { var l = grid[Math.floor(x / CELL) + ',' + Math.floor(z / CELL)]; if (!l) return false;
-          for (var j = 0; j < l.length; j++) { var b = DROP[l[j]], c = Math.cos(b.rot), s = Math.sin(b.rot), dx = x - b.x, dz = z - b.z, u = dx * c - dz * s, w = dx * s + dz * c; if (Math.abs(u) <= b.hx + 0.5 && Math.abs(w) <= b.hz + 0.5) return true; } return false; };
-        var PROTECT = /^(ACADEMY_HALL|FORGE|TRACK_MAIN|COMMONS_PLAZA|LM_|TXT_|PERCH_|EMB_|PAD_|CULTURE_LANE)/;
-        root.traverse(function (o) {
-          if (!o.isMesh || PROTECT.test(o.name || '') || !o.geometry.attributes.position) return;
-          var g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry, p = g.attributes.position, v = new THREE.Vector3(), keep = [], n = p.count;
-          for (var i = 0; i < n; i += 3) { var cx = 0, cz = 0; for (var k = 0; k < 3; k++) { v.fromBufferAttribute(p, i + k).applyMatrix4(o.matrixWorld); cx += v.x; cz += v.z; } if (!inDrop(cx / 3, cz / 3)) keep.push(i); }
-          if (keep.length * 3 === n) return;
-          var out = new THREE.BufferGeometry(); Object.keys(g.attributes).forEach(function (name) { var src = g.attributes[name], sz = src.itemSize, arr = new src.array.constructor(keep.length * 3 * sz);
-            keep.forEach(function (i, t) { for (var k = 0; k < 3 * sz; k++) arr[t * 3 * sz + k] = src.array[i * sz + k]; }); out.setAttribute(name, new THREE.BufferAttribute(arr, sz, src.normalized)); });
-          out.computeBoundingSphere(); o.geometry = out; st.spreadCut = (st.spreadCut || 0) + (n / 3 - keep.length);
-        });
-        st.blocksDropped = DROP.length;
+      // DESIGNED CITY (owner 2026-10-16, ref image 66): the dense merged meshes give way to the district layout (grid-fabric-districts-v1.json via
+      // world-clusters-v4 + world-city-layout.js roads/plots). Old note: CONSOLIDATED CITY (refs image 66 / 72 / 31: low density, bigger buildings, open streets; built in Blender 36_PREVIEW_LOWDENSITY):
+      // the three dense merged meshes (ACADEMY_HALL strips 396k tris, CULTURE_LANE kiosks 106k, BLD_Grid_CardinalWedges blocks 90k) are replaced by
+      // canon-consolidated-v1.glb = 120 academy blocks (>= 90 m apart, 1.3x) + 240 culture-lane buildings (>= 45 m apart, 1.6x). The wedge strips'
+      // filler colliders go with them. Landmarks, halls, plazas, streets, Forge, monument: untouched. ?cityspread=0 = the old dense city.
+      var spread = !(typeof location !== 'undefined' && /[?&]cityspread=0/.test(location.search)), consolidated = null;
+      var isFiller = function (k) { return k === 'grid-block' || k === 'suburb-block' || /^(commons|ne-campus|nw-race)-/.test(k); };
+      if (spread) {
+        root.traverse(function (o) { if (o.isMesh && /^(ACADEMY_HALL|CULTURE_LANE|BLD_Grid_CardinalWedges)/.test(o.name || '')) { o.visible = false; o.geometry.dispose(); o.geometry = new THREE.BufferGeometry(); st.consolidatedOut = (st.consolidatedOut || 0) + 1; } });
+        var before = C.obb.length; C.obb = C.obb.filter(function (b) { return !isFiller(b.kind); }); st.fillerColliders = before - C.obb.length;
+        if (false) consolidated = new Promise(function (res) { loader.load('/assets/world/canon-consolidated-v1.glb?v=1', function (g) { g.scene.name = 'canon-consolidated'; g.scene.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.matrixAutoUpdate = false; o.updateMatrix(); } }); root.add(g.scene); root.updateMatrixWorld(true); res(true); }, undefined, function (e) { console.warn('[canon-v4] consolidated city missing:', e && e.message); res(false); }); });
       }
       scene.add(root);
       var L = window.WORLD_LAYOUT, tops = window.WORLD_WALKABLE_TOPS = window.WORLD_WALKABLE_TOPS || [];

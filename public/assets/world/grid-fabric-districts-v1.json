@@ -1,0 +1,2318 @@
+{
+ "version": 1,
+ "note": "designed district layout (tools/city-layout-gen.cjs, owner ref image 66); grid-fabric item format + roads + plots",
+ "units_per_m": 3.888888888888889,
+ "counts": {
+  "items": 156,
+  "roads": 40,
+  "plots": 12
+ },
+ "districts": [
+  {
+   "id": "academy",
+   "bearing": 315,
+   "centre_m": [
+    -579.8,
+    579.8
+   ],
+   "size_m": [
+    610,
+    450
+   ]
+  },
+  {
+   "id": "trade",
+   "bearing": 45,
+   "centre_m": [
+    579.8,
+    579.8
+   ],
+   "size_m": [
+    610,
+    450
+   ]
+  },
+  {
+   "id": "forge",
+   "bearing": 225,
+   "centre_m": [
+    -579.8,
+    -579.8
+   ],
+   "size_m": [
+    610,
+    450
+   ]
+  },
+  {
+   "id": "residential",
+   "bearing": 135,
+   "centre_m": [
+    579.8,
+    -579.8
+   ],
+   "size_m": [
+    610,
+    450
+   ]
+  }
+ ],
+ "items": [
+  {
+   "key": "sc-storefront-s",
+   "x_m": -636.4,
+   "y_m": 251.7,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -591.1,
+   "y_m": 297,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -681.7,
+   "y_m": 297,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -636.4,
+   "y_m": 342.2,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -749.5,
+   "y_m": 364.9,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -704.3,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -794.8,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -749.5,
+   "y_m": 455.4,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -523.3,
+   "y_m": 364.9,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -478,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -568.5,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -523.3,
+   "y_m": 455.4,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -749.5,
+   "y_m": 591.1,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -704.3,
+   "y_m": 636.4,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -794.8,
+   "y_m": 636.4,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -749.5,
+   "y_m": 681.7,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -410.1,
+   "y_m": 478,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -364.9,
+   "y_m": 523.3,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -455.4,
+   "y_m": 523.3,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -410.1,
+   "y_m": 568.5,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -636.4,
+   "y_m": 704.3,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -591.1,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -681.7,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -636.4,
+   "y_m": 794.8,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -410.1,
+   "y_m": 704.3,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -364.9,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -455.4,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -410.1,
+   "y_m": 794.8,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -579.8,
+   "y_m": 579.8,
+   "len_m": 62,
+   "yaw": 135,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "hero"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -616.6,
+   "y_m": 492.1,
+   "len_m": 48,
+   "yaw": 22.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "hero"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -492.1,
+   "y_m": 616.6,
+   "len_m": 48,
+   "yaw": 247.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "hero"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -667.5,
+   "y_m": 543.1,
+   "len_m": 48,
+   "yaw": 67.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "hero"
+  },
+  {
+   "key": "sc-teleport",
+   "x_m": -543.1,
+   "y_m": 667.5,
+   "len_m": 28,
+   "yaw": 202.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "academy",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 251.7,
+   "y_m": 636.4,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 297,
+   "y_m": 591.1,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 297,
+   "y_m": 681.7,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 342.2,
+   "y_m": 636.4,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 364.9,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 410.1,
+   "y_m": 704.3,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 410.1,
+   "y_m": 794.8,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 455.4,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 364.9,
+   "y_m": 523.3,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 410.1,
+   "y_m": 478,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 410.1,
+   "y_m": 568.5,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 455.4,
+   "y_m": 523.3,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 591.1,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 636.4,
+   "y_m": 704.3,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 636.4,
+   "y_m": 794.8,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 681.7,
+   "y_m": 749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 478,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 523.3,
+   "y_m": 364.9,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 523.3,
+   "y_m": 455.4,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 568.5,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 704.3,
+   "y_m": 636.4,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": 591.1,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": 681.7,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 794.8,
+   "y_m": 636.4,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 704.3,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": 364.9,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 749.5,
+   "y_m": 455.4,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 794.8,
+   "y_m": 410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "block"
+  },
+  {
+   "key": "sc-market",
+   "x_m": 579.8,
+   "y_m": 579.8,
+   "len_m": 64,
+   "yaw": 225,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "hero"
+  },
+  {
+   "key": "sc-market",
+   "x_m": 492.1,
+   "y_m": 616.6,
+   "len_m": 50,
+   "yaw": 112.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "hero"
+  },
+  {
+   "key": "sc-market",
+   "x_m": 616.6,
+   "y_m": 492.1,
+   "len_m": 50,
+   "yaw": 337.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 543.1,
+   "y_m": 667.5,
+   "len_m": 48,
+   "yaw": 157.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "hero"
+  },
+  {
+   "key": "sc-ad-pylon",
+   "x_m": 667.5,
+   "y_m": 543.1,
+   "len_m": 25,
+   "yaw": 292.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "trade",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -251.7,
+   "y_m": -636.4,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -297,
+   "y_m": -591.1,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -297,
+   "y_m": -681.7,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -342.2,
+   "y_m": -636.4,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -364.9,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -410.1,
+   "y_m": -704.3,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -410.1,
+   "y_m": -794.8,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -455.4,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -364.9,
+   "y_m": -523.3,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -410.1,
+   "y_m": -478,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -410.1,
+   "y_m": -568.5,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -455.4,
+   "y_m": -523.3,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -591.1,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -636.4,
+   "y_m": -704.3,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -636.4,
+   "y_m": -794.8,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -681.7,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -478,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -523.3,
+   "y_m": -364.9,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -523.3,
+   "y_m": -455.4,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -568.5,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -704.3,
+   "y_m": -636.4,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -749.5,
+   "y_m": -591.1,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -749.5,
+   "y_m": -681.7,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -794.8,
+   "y_m": -636.4,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -704.3,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -749.5,
+   "y_m": -364.9,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -749.5,
+   "y_m": -455.4,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -794.8,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -579.8,
+   "y_m": -579.8,
+   "len_m": 62,
+   "yaw": 45,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "hero"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -492.1,
+   "y_m": -616.6,
+   "len_m": 50,
+   "yaw": 292.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "hero"
+  },
+  {
+   "key": "sc-techlab",
+   "x_m": -616.6,
+   "y_m": -492.1,
+   "len_m": 50,
+   "yaw": 157.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": -543.1,
+   "y_m": -667.5,
+   "len_m": 48,
+   "yaw": 337.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "hero"
+  },
+  {
+   "key": "sc-teleport",
+   "x_m": -667.5,
+   "y_m": -543.1,
+   "len_m": 28,
+   "yaw": 112.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "forge",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 636.4,
+   "y_m": -251.7,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 591.1,
+   "y_m": -297,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 681.7,
+   "y_m": -297,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 636.4,
+   "y_m": -342.2,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": -364.9,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 704.3,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 794.8,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": -455.4,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 523.3,
+   "y_m": -364.9,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 478,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 568.5,
+   "y_m": -410.1,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 523.3,
+   "y_m": -455.4,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": -591.1,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 704.3,
+   "y_m": -636.4,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 794.8,
+   "y_m": -636.4,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 749.5,
+   "y_m": -681.7,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 410.1,
+   "y_m": -478,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 364.9,
+   "y_m": -523.3,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 455.4,
+   "y_m": -523.3,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 410.1,
+   "y_m": -568.5,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 636.4,
+   "y_m": -704.3,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 591.1,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 681.7,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 636.4,
+   "y_m": -794.8,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 410.1,
+   "y_m": -704.3,
+   "len_m": 34,
+   "yaw": 0,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 364.9,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 270,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 455.4,
+   "y_m": -749.5,
+   "len_m": 34,
+   "yaw": 90,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 410.1,
+   "y_m": -794.8,
+   "len_m": 34,
+   "yaw": 180,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "block"
+  },
+  {
+   "key": "sc-storefront-l",
+   "x_m": 579.8,
+   "y_m": -579.8,
+   "len_m": 56,
+   "yaw": 315,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 616.6,
+   "y_m": -492.1,
+   "len_m": 42,
+   "yaw": 202.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 492.1,
+   "y_m": -616.6,
+   "len_m": 42,
+   "yaw": 67.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "hero"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": 667.5,
+   "y_m": -543.1,
+   "len_m": 42,
+   "yaw": 247.2,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "hero"
+  },
+  {
+   "key": "sc-teleport",
+   "x_m": 543.1,
+   "y_m": -667.5,
+   "len_m": 28,
+   "yaw": 22.8,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "hero"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 184.4,
+   "y_m": -713.9,
+   "len_m": 120,
+   "yaw": 165.52,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 673.9,
+   "y_m": -469.3,
+   "len_m": 140,
+   "yaw": 124.85,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 543.4,
+   "y_m": -687.6,
+   "len_m": 140,
+   "yaw": 141.68,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 328.4,
+   "y_m": -843.4,
+   "len_m": 160,
+   "yaw": 158.73,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 700.6,
+   "y_m": -617.1,
+   "len_m": 110,
+   "yaw": 131.37,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 477.1,
+   "y_m": -922.7,
+   "len_m": 170,
+   "yaw": 152.66,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 885.6,
+   "y_m": -644,
+   "len_m": 100,
+   "yaw": 126.03,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 306.9,
+   "y_m": -1079.5,
+   "len_m": 150,
+   "yaw": 164.13,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 795.5,
+   "y_m": -868.6,
+   "len_m": 120,
+   "yaw": 137.52,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 658.9,
+   "y_m": -1076.2,
+   "len_m": 130,
+   "yaw": 148.52,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 915.7,
+   "y_m": -988.1,
+   "len_m": 170,
+   "yaw": 137.18,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 815,
+   "y_m": -1106.7,
+   "len_m": 120,
+   "yaw": 143.63,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "commons",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 301.7,
+   "y_m": 168.7,
+   "len_m": 160,
+   "yaw": 60.79,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 237.8,
+   "y_m": 407.5,
+   "len_m": 120,
+   "yaw": 30.26,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 525.2,
+   "y_m": 343.5,
+   "len_m": 150,
+   "yaw": 56.81,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 590.1,
+   "y_m": 518.8,
+   "len_m": 130,
+   "yaw": 48.68,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 755.9,
+   "y_m": 214.6,
+   "len_m": 110,
+   "yaw": 74.15,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 538.2,
+   "y_m": 696,
+   "len_m": 120,
+   "yaw": 37.71,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 783.7,
+   "y_m": 526.6,
+   "len_m": 160,
+   "yaw": 56.1,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-spire",
+   "x_m": 677.7,
+   "y_m": 793.9,
+   "len_m": 170,
+   "yaw": 40.49,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 1116.7,
+   "y_m": 347,
+   "len_m": 100,
+   "yaw": 72.74,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 826.3,
+   "y_m": 870.6,
+   "len_m": 140,
+   "yaw": 43.51,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-slab",
+   "x_m": 1338.4,
+   "y_m": 244.9,
+   "len_m": 130,
+   "yaw": 79.63,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  },
+  {
+   "key": "sc-tower-setback",
+   "x_m": 1249.5,
+   "y_m": 812,
+   "len_m": 110,
+   "yaw": 56.98,
+   "lift_m": 0,
+   "by_height": true,
+   "cluster": "ne-campus",
+   "was": {
+    "key": "sc-office-mid",
+    "len_m": 20.57,
+    "by_height": false
+   },
+   "role": "landmark"
+  }
+ ],
+ "roads": [
+  {
+   "district": "academy",
+   "x0": -636.4,
+   "y0": 183.8,
+   "x1": -183.8,
+   "y1": 636.4,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -975.8,
+   "y0": 523.3,
+   "x1": -523.3,
+   "y1": 975.8,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -636.4,
+   "y0": 183.8,
+   "x1": -975.8,
+   "y1": 523.3,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -183.8,
+   "y0": 636.4,
+   "x1": -523.3,
+   "y1": 975.8,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -533.9,
+   "y0": 307.6,
+   "x1": -852.1,
+   "y1": 625.8,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -420.7,
+   "y0": 420.7,
+   "x1": -738.9,
+   "y1": 738.9,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -307.6,
+   "y0": 533.9,
+   "x1": -625.8,
+   "y1": 852.1,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -738.9,
+   "y0": 307.6,
+   "x1": -307.6,
+   "y1": 738.9,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -852.1,
+   "y0": 420.7,
+   "x1": -420.7,
+   "y1": 852.1,
+   "w": 30
+  },
+  {
+   "district": "academy",
+   "x0": -410.1,
+   "y0": 410.1,
+   "x1": -212.1,
+   "y1": 212.1,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 183.8,
+   "y0": 636.4,
+   "x1": 636.4,
+   "y1": 183.8,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 523.3,
+   "y0": 975.8,
+   "x1": 975.8,
+   "y1": 523.3,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 183.8,
+   "y0": 636.4,
+   "x1": 523.3,
+   "y1": 975.8,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 636.4,
+   "y0": 183.8,
+   "x1": 975.8,
+   "y1": 523.3,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 307.6,
+   "y0": 533.9,
+   "x1": 625.8,
+   "y1": 852.1,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 420.7,
+   "y0": 420.7,
+   "x1": 738.9,
+   "y1": 738.9,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 533.9,
+   "y0": 307.6,
+   "x1": 852.1,
+   "y1": 625.8,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 307.6,
+   "y0": 738.9,
+   "x1": 738.9,
+   "y1": 307.6,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 420.7,
+   "y0": 852.1,
+   "x1": 852.1,
+   "y1": 420.7,
+   "w": 30
+  },
+  {
+   "district": "trade",
+   "x0": 410.1,
+   "y0": 410.1,
+   "x1": 212.1,
+   "y1": 212.1,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -183.8,
+   "y0": -636.4,
+   "x1": -636.4,
+   "y1": -183.8,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -523.3,
+   "y0": -975.8,
+   "x1": -975.8,
+   "y1": -523.3,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -183.8,
+   "y0": -636.4,
+   "x1": -523.3,
+   "y1": -975.8,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -636.4,
+   "y0": -183.8,
+   "x1": -975.8,
+   "y1": -523.3,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -307.6,
+   "y0": -533.9,
+   "x1": -625.8,
+   "y1": -852.1,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -420.7,
+   "y0": -420.7,
+   "x1": -738.9,
+   "y1": -738.9,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -533.9,
+   "y0": -307.6,
+   "x1": -852.1,
+   "y1": -625.8,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -307.6,
+   "y0": -738.9,
+   "x1": -738.9,
+   "y1": -307.6,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -420.7,
+   "y0": -852.1,
+   "x1": -852.1,
+   "y1": -420.7,
+   "w": 30
+  },
+  {
+   "district": "forge",
+   "x0": -410.1,
+   "y0": -410.1,
+   "x1": -212.1,
+   "y1": -212.1,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 636.4,
+   "y0": -183.8,
+   "x1": 183.8,
+   "y1": -636.4,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 975.8,
+   "y0": -523.3,
+   "x1": 523.3,
+   "y1": -975.8,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 636.4,
+   "y0": -183.8,
+   "x1": 975.8,
+   "y1": -523.3,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 183.8,
+   "y0": -636.4,
+   "x1": 523.3,
+   "y1": -975.8,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 533.9,
+   "y0": -307.6,
+   "x1": 852.1,
+   "y1": -625.8,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 420.7,
+   "y0": -420.7,
+   "x1": 738.9,
+   "y1": -738.9,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 307.6,
+   "y0": -533.9,
+   "x1": 625.8,
+   "y1": -852.1,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 738.9,
+   "y0": -307.6,
+   "x1": 307.6,
+   "y1": -738.9,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 852.1,
+   "y0": -420.7,
+   "x1": 420.7,
+   "y1": -852.1,
+   "w": 30
+  },
+  {
+   "district": "residential",
+   "x0": 410.1,
+   "y0": -410.1,
+   "x1": 212.1,
+   "y1": -212.1,
+   "w": 30
+  }
+ ],
+ "plots": [
+  {
+   "id": "PLOT-ACADEMY-1",
+   "district": "academy",
+   "x_m": -862.7,
+   "y_m": 523.3,
+   "size_m": 118,
+   "yaw": 315
+  },
+  {
+   "id": "PLOT-ACADEMY-2",
+   "district": "academy",
+   "x_m": -297,
+   "y_m": 636.4,
+   "size_m": 118,
+   "yaw": 315
+  },
+  {
+   "id": "PLOT-ACADEMY-3",
+   "district": "academy",
+   "x_m": -523.3,
+   "y_m": 862.7,
+   "size_m": 118,
+   "yaw": 315
+  },
+  {
+   "id": "PLOT-TRADE-1",
+   "district": "trade",
+   "x_m": 523.3,
+   "y_m": 862.7,
+   "size_m": 118,
+   "yaw": 45
+  },
+  {
+   "id": "PLOT-TRADE-2",
+   "district": "trade",
+   "x_m": 636.4,
+   "y_m": 297,
+   "size_m": 118,
+   "yaw": 45
+  },
+  {
+   "id": "PLOT-TRADE-3",
+   "district": "trade",
+   "x_m": 862.7,
+   "y_m": 523.3,
+   "size_m": 118,
+   "yaw": 45
+  },
+  {
+   "id": "PLOT-FORGE-1",
+   "district": "forge",
+   "x_m": -523.3,
+   "y_m": -862.7,
+   "size_m": 118,
+   "yaw": 225
+  },
+  {
+   "id": "PLOT-FORGE-2",
+   "district": "forge",
+   "x_m": -636.4,
+   "y_m": -297,
+   "size_m": 118,
+   "yaw": 225
+  },
+  {
+   "id": "PLOT-FORGE-3",
+   "district": "forge",
+   "x_m": -862.7,
+   "y_m": -523.3,
+   "size_m": 118,
+   "yaw": 225
+  },
+  {
+   "id": "PLOT-RESIDENTIAL-1",
+   "district": "residential",
+   "x_m": 862.7,
+   "y_m": -523.3,
+   "size_m": 118,
+   "yaw": 135
+  },
+  {
+   "id": "PLOT-RESIDENTIAL-2",
+   "district": "residential",
+   "x_m": 297,
+   "y_m": -636.4,
+   "size_m": 118,
+   "yaw": 135
+  },
+  {
+   "id": "PLOT-RESIDENTIAL-3",
+   "district": "residential",
+   "x_m": 523.3,
+   "y_m": -862.7,
+   "size_m": 118,
+   "yaw": 135
+  }
+ ]
+}

@@ -1164,14 +1164,14 @@ window.__worldBuilt = false;
       if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel && window.buildMaglevTrainV2){ try{ const tv2 = window.buildMaglevTrainV2({ THREE }); window.__worldTransitApi.setTrainModel(tv2, tv2.userData.lengthM, 1); if(_v4Sky && _v4Sky.addEmissive) tv2.userData.emissiveMats.forEach(function(m){ _v4Sky.addEmissive(m); }); window.__trainV2 = tv2; }catch(e){ console.warn('[transit] train v2 failed:', e && e.message); } }
       else if(window.__worldTransitApi && window.__worldTransitApi.setTrainModel){ const tl = new GLTFLoader(); tl.setMeshoptDecoder(MeshoptDecoder);
         tl.load('/assets/vehicles/maglev-train.glb?v=1', function(g){ try{ window.__worldTransitApi.setTrainModel(g.scene, 60); }catch(e){ console.warn('[transit] train model failed:', e && e.message); } }, undefined, function(){}); }
-      return _loadScript('/world-canon-v4.js?v=20261016b').then(function(){
+      return _loadScript('/world-canon-v4.js?v=20261016c').then(function(){
         const kl = new GLTFLoader(); kl.setDRACOLoader(dracoLoader); kl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldCanonV4({ THREE, scene, loader: kl });
       }).then(function(c){ window.__w3dDebug.canonV4 = c; }).catch(function(e){ console.warn('[map-v4] canon failed:', e && e.message); }).then(function(){ return api; });
     }))
     .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261016d'); }).then(function(){
+      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261016e'); }).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
           onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
@@ -1239,7 +1239,7 @@ window.__worldBuilt = false;
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
       if(!/[?&]realmclusters=1/.test(location.search)) return api;   // 2026-10-11 owner: doorless model districts in the realms are removed (also the biggest triangle bill); ?realmclusters=1 brings them back
-      return _loadScript('/world-clusters-v4.js?v=20261016d').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20261016e').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
@@ -5871,6 +5871,11 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 (function bootHomeDeeds(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !window.WorldHomeDeeds || !window.__homeLots) return; clearInterval(iv);
   try{ window.WorldHomeDeeds.init({ U: V4_U, getPlayer: function(){ return (_interiors && _interiors.isInside && _interiors.isInside()) ? null : playerPos; } }); }catch(e){ console.warn('[home-deeds]', e && e.message); } }, 1000); })();
+// CITY LAYOUT ROADS + PLOTS (2026-10-16, ref image 66): the designed district layout's roads and claimable plots (world-city-layout.js; ?citylayout=0 off)
+(function bootCityLayout(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
+  if(!window.__loadPlayable || !_v4T || !_v4T.heightAt || !window.__cityLayout) return; clearInterval(iv);
+  _loadScript('/world-city-layout.js?v=20261016a').then(function(){ if(window.WorldCityLayout) window.__cityLayoutView = window.WorldCityLayout.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, layout: window.__cityLayout }); })
+    .catch(function(e){ console.warn('[city-layout]', e && e.message); }); }, 1000); })();
 // DISTRICT SIGNS (2026-10-16): holo pylon per Grid district + a toast when you cross into one (world-districts.js, data = Blender-authored districts-v1.json)
 (function bootDistricts(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !_v4T || !_v4T.heightAt) return; clearInterval(iv);
