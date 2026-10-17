@@ -18,8 +18,9 @@
     var st = { meshes: 0, obb: 0, circle: 0 };
     var glb = new Promise(function (res, rej) { loader.load('/assets/world/canon-v4.glb?v=7', res, undefined, rej); });
     var col = fetch('/assets/world/canon-colliders-v4.json?v=7').then(function (r) { return r.json(); });
-    return Promise.all([glb, col]).then(function (both) {
-      var g = both[0], C = both[1];
+    var zonesP = fetch('/assets/world/city-zones-v1.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });   // owner drawing: city-building loops
+    return Promise.all([glb, col, zonesP]).then(function (both) {
+      var g = both[0], C = both[1], Z = both[2];
       var root = g.scene; root.name = 'world-canon-v4'; root.scale.setScalar(U);   // metres → units (axes already match)
       root.traverse(function (o) {
         if (!o.isMesh) return;
@@ -48,8 +49,19 @@
       var spread = !(typeof location !== 'undefined' && /[?&]cityspread=0/.test(location.search)), consolidated = null;
       var isFiller = function (k) { return k === 'grid-block' || k === 'suburb-block' || /^(commons|ne-campus|nw-race)-/.test(k); };
       if (spread) {
-        root.traverse(function (o) { if (o.isMesh && /^(ACADEMY_HALL|CULTURE_LANE|BLD_Grid_CardinalWedges)/.test(o.name || '')) { o.visible = false; o.geometry.dispose(); o.geometry = new THREE.BufferGeometry(); st.consolidatedOut = (st.consolidatedOut || 0) + 1; } });
-        var before = C.obb.length; C.obb = C.obb.filter(function (b) { return !isFiller(b.kind); }); st.fillerColliders = before - C.obb.length;
+        // OWNER DRAWING (city-zones-v1.json): the basic city blocks come back INSIDE the 4 drawn loops only (triangles + colliders clipped to them)
+        var loops = (Z && Z.buildingZones) || [], inPoly = function (x, y, P) { var c = false; for (var i = 0, j = P.length - 1; i < P.length; j = i++) { var xi = P[i][0], yi = P[i][1], xj = P[j][0], yj = P[j][1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+        var inZone = function (xm, ym) { for (var k = 0; k < loops.length; k++) if (inPoly(xm, ym, loops[k])) return true; return false; };
+        root.traverse(function (o) {
+          if (!o.isMesh || !/^(ACADEMY_HALL|CULTURE_LANE|BLD_Grid_CardinalWedges)/.test(o.name || '')) return;
+          if (!loops.length) { o.visible = false; return; }
+          var g0 = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry, p = g0.attributes.position, v = new THREE.Vector3(), keep = [], n = p.count;
+          for (var i = 0; i < n; i += 3) { var cx = 0, cz = 0; for (var k = 0; k < 3; k++) { v.fromBufferAttribute(p, i + k).applyMatrix4(o.matrixWorld); cx += v.x; cz += v.z; } if (inZone(cx / 3 / U, -cz / 3 / U)) keep.push(i); }
+          var out = new THREE.BufferGeometry(); Object.keys(g0.attributes).forEach(function (name) { var src = g0.attributes[name], sz = src.itemSize, arr = new src.array.constructor(keep.length * 3 * sz);
+            keep.forEach(function (i, t) { for (var k = 0; k < 3 * sz; k++) arr[t * 3 * sz + k] = src.array[i * sz + k]; }); out.setAttribute(name, new THREE.BufferAttribute(arr, sz, src.normalized)); });
+          out.computeBoundingSphere(); o.geometry = out; st.zoneKept = (st.zoneKept || 0) + keep.length;
+        });
+        var before = C.obb.length; C.obb = C.obb.filter(function (b) { return !isFiller(b.kind) || inZone(b.x / U, -b.z / U); }); st.fillerColliders = before - C.obb.length;
         if (false) consolidated = new Promise(function (res) { loader.load('/assets/world/canon-consolidated-v1.glb?v=1', function (g) { g.scene.name = 'canon-consolidated'; g.scene.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.matrixAutoUpdate = false; o.updateMatrix(); } }); root.add(g.scene); root.updateMatrixWorld(true); res(true); }, undefined, function (e) { console.warn('[canon-v4] consolidated city missing:', e && e.message); res(false); }); });
       }
       scene.add(root);
