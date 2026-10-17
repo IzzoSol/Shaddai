@@ -88,7 +88,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
   // GHOST WALLS (2026-10-15): canon-colliders-v4.json was baked for the FULL fabric, but this loader keeps ~30% (hash) and drops offices + park/track
   // lots, so ~2400 box colliders + walkable roofs stood in empty lots (invisible walls all over the city). Keep a fabric-named canon solid only when a
   // live building stands on it. Pure: (live items in metres, solids in units) -> kept solids. Kinds outside the 3 fabric clusters are never touched.
-  var FABRIC_KEEP = 0.15;   // share of grid-fabric pieces shown (stable position hash); was 0.3 until 2026-10-16
+  var FABRIC_KEEP = 0.07;   // share of grid-fabric pieces shown (stable position hash); 0.3 -> 0.15 -> 0.07 (owner 2026-10-16: 'too many buildings', ~145 kept; districts get the uses)
   var FAB_KIND = /^(commons|ne-campus|nw-race)-/;
   function ghostFilter(items, solids, kindOf) {
     var B = 24, grid = {};

@@ -239,7 +239,7 @@
       var __search = (typeof location !== 'undefined' && location.search) || '';
       var __fullCity = /[?&]fullcity=1\b/.test(__search);
       var __swOff = /[?&]swhalf=0\b/.test(__search);
-      var __swKeep = 0.25, __m = /[?&]swkeep=([0-9.]+)\b/.exec(__search);
+      var __swKeep = 0.12,   /* owner 2026-10-16: 'so many plots' - 0.25 -> 0.12 */ __m = /[?&]swkeep=([0-9.]+)\b/.exec(__search);
       if (__m) __swKeep = Math.min(1, Math.max(0, parseFloat(__m[1])));
       arr(res[1], 'plots').forEach(function (p) {
         if (!p || !p.plot_id || !Array.isArray(p.beacon_m) || !isFinite(p.beacon_m[0]) || !isFinite(p.beacon_m[1])) { warn('bad plot row ' + (p && p.plot_id)); return; }

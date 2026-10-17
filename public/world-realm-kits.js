@@ -22,10 +22,11 @@
   // own style) laid out on streets. MAIN AVENUE runs from behind the hall (z 96) to the inn (z 196) along x = 0; CROSS STREET at z 140 from x -132..132.
   // Homes front the cross street on both sides (8 lots each side: buyable with Sparks in P6), workshops + apartments face the avenue. Yaw (as K10): 180 faces the
   // station (-z), 0 faces the city (+z); +-90 faces the avenue. Fronts (doors) always face a street. ?realmtowns=0 = the old 5-building towns only.
-  var TOWN = [['inn', 0, 196, 180, 1], ['workshop', 29, 123, -90, 1], ['workshop', -29, 123, 90, 1], ['apartments', 26, 172, -90, 1], ['apartments', -26, 172, 90, 1]];
-  [44, 62, 80, 98, 116].forEach(function (x, i) { TOWN.push(['home', x, 124, 0, 1], ['home', -x, 124, 0, 1]); if (i < 3) TOWN.push(['home', x + 9, 156, 180, 1], ['home', -x - 9, 156, 180, 1]); });
+  // trimmed 2026-10-16 (owner: 'too many buildings'): inn + one workshop + 4 buyable homes per station (was 21)
+  var TOWN = [['inn', 0, 196, 180, 1], ['workshop', 29, 123, -90, 1]];
+  [44, 62].forEach(function (x) { TOWN.push(['home', x, 124, 0, 1], ['home', -x, 124, 0, 1]); });
   // STREETS in station-local metres: [x0, z0, x1, z1, widthM]
-  var STREETS = [[0, 96, 0, 182, 12], [-132, 140, 132, 140, 10]];
+  var STREETS = [[0, 96, 0, 182, 12], [-76, 140, 76, 140, 10]];
   var PROPS = {
     emberfall: { rune_pad: [[0, 30, 0, 1]], obsidian_spire: pair(11, 22, 20, 0.8).concat(pair(13, 56, -30, 0.7), pair(150, 190, 40, 2.4)), ember_vent: pair(55, 70, 0, 0.9), lava_rock: pair(46, 36, 30, 1.2) },
     swamp: { moss_pillar: pair(22, 40, 15, 1.6).concat(pair(28, 84, 70, 1.8)), glow_mushrooms: pair(10, 30, 0, 3).concat(pair(16, 64, 40, 3), [[0, 96, 0, 3]]), reed_clump: pair(42, 58, 0, 1.4), dead_tree: pair(120, 150, 30, 1.7) },
