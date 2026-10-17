@@ -21,6 +21,8 @@ window.buildWorldRealmProps = function (opts) {
   var disposables = [];
   var track = function (o) { disposables.push(o); return o; };
   var placed = 0;
+  var placedList = [];   // { m, x, z, r } — for update()'s distance-hide (landmarks are km apart; far ones are behind fog)
+  var upAcc = 1e9, upCam = null;
 
   function biome(id) { return (layout.biomes || []).find(function (x) { return x.id === id; }); }
   function fit(m, w) {
@@ -72,6 +74,11 @@ window.buildWorldRealmProps = function (opts) {
     return g;
   }
 
+  // 2026-10-11 (owner: "buildings that aren't needed in the realms that have no entry need to be removed"): the filler bld-* / homes-* blocks have no door,
+  // no interior and no collider purpose - they only cost draws. Hero landmarks, rocks and crystals stay. ?realmbuildings=1 puts them back.
+  if (typeof location === 'undefined' || !/[?&]realmbuildings=1/.test(location.search || '')) {
+    MANIFESTS.forEach(function (mf) { mf.models = mf.models.filter(function (c) { return !/^(bld-|homes-|hero-)/.test(String(c.id)) || /^hero-castle/.test(String(c.id)); }); });
+  }
   MANIFESTS.forEach(function (mf) {
     var b = biome(mf.biome);
     if (!b) return;
@@ -88,6 +95,11 @@ window.buildWorldRealmProps = function (opts) {
         m.rotation.y = cfg.ry || 0;
         group.add(m);
         placed++;
+        // track for the distance-hide: bounding radius from the fitted box (computed once per model at load)
+        try {
+          var bb = new THREE.Box3().setFromObject(m), bsz = bb.getSize(new THREE.Vector3());
+          placedList.push({ m: m, x: P.x, z: P.z, r: Math.max(bsz.x, bsz.z) * 0.6 });
+        } catch (e) { placedList.push({ m: m, x: P.x, z: P.z, r: P.w * 0.6 }); }
         if (window.__registerPlaceable) window.__registerPlaceable('realm:' + mf.biome + ':' + cfg.id, m, { source: 'world-layout.js realmModels', realm: mf.biome, id: cfg.id });
       }
       if (opts.loader) {
@@ -102,7 +114,20 @@ window.buildWorldRealmProps = function (opts) {
   var api = {
     group: group,
     count: function () { return placed; },
-    update: function () {},
+    update: function (t, camPos) {   // distance-hide far realm GLBs — throttled 2×/s, never per-frame
+      var cam = camPos || (window.__w3dDebug && window.__w3dDebug.camera && window.__w3dDebug.camera.position); if (!cam || !placedList.length) return;
+      upAcc += 0.016; if (upAcc < 0.5 && upCam && Math.abs(cam.x - upCam.x) + Math.abs(cam.z - upCam.z) < 200) return;
+      upAcc = 0; upCam = { x: cam.x, z: cam.z };
+      // hide radius scales with the FPS governor's tier — weak GPUs hide farther-out landmarks sooner.
+      // Everything is fog-covered at these distances (base 0.0006 × ~4 u/m), so the hide is invisible;
+      // a model reappears the moment you approach. Full quality (ULTRA) never hides.
+      var qi = window.__w3dTierIdx, hideM = qi === 0 ? 900 : qi === 1 ? 1200 : qi === 2 ? 1800 : qi === 3 ? 2400 : Infinity;
+      var h2 = hideM * hideM;
+      for (var i = 0; i < placedList.length; i++) {
+        var e = placedList[i], dx = e.x - cam.x, dz = e.z - cam.z;
+        e.m.visible = (dx * dx + dz * dz) < h2;
+      }
+    },
     dispose: function () {
       scene.remove(group);
       disposables.forEach(function (d) { if (d.geometry) d.geometry.dispose(); if (d.material) d.material.dispose(); });

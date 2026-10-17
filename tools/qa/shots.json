@@ -1,0 +1,73 @@
+{
+ "groups": [
+  {
+   "name": "loading screen",
+   "args": [
+    "intro"
+   ],
+   "files": [
+    "intro-1.png",
+    "intro-2.png"
+   ]
+  },
+  {
+   "name": "environment",
+   "args": [
+    "env"
+   ],
+   "files": [
+    "env-sky.png",
+    "env-horizon.png"
+   ]
+  },
+  {
+   "name": "districts",
+   "args": [
+    "districts"
+   ],
+   "files": [
+    "district-campus.png",
+    "district-commons.png",
+    "district-plots.png",
+    "district-race.png"
+   ],
+   "env": {
+    "EYE_QS": "?time=0.5"
+   }
+  },
+  {
+   "name": "sky dock",
+   "args": [
+    "deck"
+   ],
+   "files": [
+    "deck-overview.png",
+    "deck-pad.png",
+    "deck-vendor.png"
+   ],
+   "env": {
+    "EYE_QS": "?time=0.5"
+   }
+  },
+  {
+   "name": "rides",
+   "args": [
+    "ride",
+    "kart-sedan",
+    "kart-pod",
+    "board"
+   ],
+   "files": [
+    "ride-kart-sedan-side.png",
+    "ride-kart-sedan-q34.png",
+    "ride-kart-pod-side.png",
+    "ride-kart-pod-q34.png",
+    "ride-board-side.png",
+    "ride-board-q34.png"
+   ],
+   "env": {
+    "EYE_QS": "?time=0.5"
+   }
+  }
+ ]
+}

@@ -22,7 +22,14 @@
   'use strict';
 
   /* ─── layout constants ──────────────────────────────────────────────────── */
-  var ROOM_ISLAND_X  = 6000;
+  /* Off-map room island. world-layout.js publishes window.ROOM_ISLAND_X (Map v3: 6000; ?map=v4: 30000, because the
+     v4 terrain reaches ±19444u). The colosseum arena instance sits at ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX
+     (v3: 12000) — world-colosseum.js must read the same global (see docs/LAYOUT-V4.md). */
+  var _MAP_V4 = false; try { _MAP_V4 = /[?&]map=v4(?:&|$|#)/.test(global.location.search); } catch (e) {}
+  var ROOM_ISLAND_X  = (typeof global.ROOM_ISLAND_X === 'number' && isFinite(global.ROOM_ISLAND_X)) ? global.ROOM_ISLAND_X : (_MAP_V4 ? 30000 : 6000);
+  global.ROOM_ISLAND_X = ROOM_ISLAND_X;   /* set early (parse time) — world-colosseum.js builds its arena lazily */
+  var COLOSSEUM_ISLAND_DX = 6000;
+  var ATHENAEUM_ISLAND_DX = 9000;   // Academy campus (world-athenaeum.js default origin = ROOM_ISLAND_X + 9000)
   var ROOM_SPACING   = 500;
   var ROOM_W         = 80;
   var ROOM_H         = 22;
@@ -74,12 +81,49 @@
     // the strongest existing room-builders with new accents; Thursday's fal pass dresses
     // each with its own furniture kit + dressed walls in the same code slots.
     COLOSSEUM: { label: 'COLOSSEUM — Tourney Hall', accent: 0xe8c45c, floor: 0x141005, propFn: 'tradingFloor' },
+    ATHENAEUM: { label: 'THE ATHENAEUM: Academy Campus', accent: 0x00ff9c, floor: 0x16222a, propFn: 'tradingFloor' },
     GARAGE   : { label: 'GARAGE — Hover Works',     accent: 0x00ff9c, floor: 0x00140d, propFn: 'serverRoom'   },
     FORTRESS : { label: 'EMBERFALL — War Room',     accent: 0xff5a10, floor: 0x140802, propFn: 'throneRoom'  },
     CASTLE   : { label: 'DARKREALM — Siege Keep',    accent: 0x9b59f5, floor: 0x0c0514, propFn: 'arcaneLibrary' },
   };
 
   /* ─── factory ────────────────────────────────────────────────────────────── */
+  /* per-room furniture plans: [kind, side (-1 left wall, +1 right wall, 0 back wall), along (-1..1 of the wall), rotY extra] */
+  var FURNISH = {
+    SHADDAI: [['sofa', -1, -0.2], ['sofa', -1, 0.25], ['rug', -1, 0.02], ['lectern', 1, 0], ['planter', 1, -0.7], ['holo-shelf', 1, 0.6]],
+    NEXUS:   [['server-rack', 1, -0.6], ['server-rack', 1, -0.35], ['server-rack', 1, -0.1], ['terminal', -1, -0.4], ['terminal', -1, 0], ['desk', -1, 0.45]],
+    ORACLE:  [['holo-shelf', -1, -0.55], ['holo-shelf', -1, -0.15], ['shelf', 1, -0.5], ['shelf', 1, -0.1], ['desk', 1, 0.45], ['rug', 0, 0]],
+    TURTLE:  [['gallery-frame', -1, -0.5], ['gallery-frame', -1, 0], ['gallery-frame', 1, -0.5], ['gallery-frame', 1, 0], ['workbench', 0, -0.5], ['planter', 0, 0.5]],
+    PIKADON: [['wardrobe', -1, -0.6], ['wardrobe', -1, -0.35], ['stash', -1, 0.1], ['stash', -1, 0.3], ['terminal', 1, -0.3], ['comms-console', 1, 0.2]],
+    ZEROX:   [['desk', -1, -0.5], ['desk', -1, 0], ['desk', 1, -0.5], ['desk', 1, 0], ['broadcast-desk', 0, 0], ['mail-terminal', 1, 0.5]],
+    QUILL:   [['shelf', -1, -0.6], ['shelf', -1, -0.25], ['shelf', 1, -0.6], ['shelf', 1, -0.25], ['lectern', 0, 0], ['class-desk-row', -1, 0.4]]
+  };
+  var PM_F = 7 / 1.8;   /* furniture is authored in metres */
+  function furnishRoom(group, code) {
+    var plan = FURNISH[code]; if (!plan || /[?&]roomfurn=0/.test(global.location ? global.location.search : '')) return;
+    var F, tries = 0;
+    var wait = function () {                    /* rooms build before world-furniture.js loads: poll (2 s, up to 2 min), then furnish once */
+      F = global.SHADDAI_FURNITURE;
+      if (F && F.kinds && F.kinds.length) return go();
+      if (F && F._p) return F._p.then(function (n) { if (n) go(); });
+      if (++tries < 60 && typeof setTimeout === 'function') setTimeout(wait, 2000);
+    };
+    var go = function () {
+      plan.concat([['planter', 0, -0.85], ['planter', 0, 0.85], ['ceiling-light', 2, -0.4], ['ceiling-light', 2, 0.4]]).forEach(function (it) {
+        var kind = it[0], side = it[1], along = it[2], meta = F.meta(kind), obj = F.build(kind); if (!obj) return;
+        var d = (meta && meta.footprint_m ? meta.footprint_m[1] : 1) * PM_F, half = ROOM_W / 2 - 1.5 - d / 2;
+        obj.scale.setScalar(PM_F);
+        if (side === -1) { obj.position.set(-half, 0, along * ROOM_D * 0.42); obj.rotation.y = Math.PI / 2; }        /* left wall, faces +x */
+        else if (side === 1) { obj.position.set(half, 0, along * ROOM_D * 0.42); obj.rotation.y = -Math.PI / 2; }    /* right wall, faces -x */
+        else if (side === 0) { obj.position.set(along * ROOM_W * 0.42, 0, -ROOM_D / 2 + 1.5 + d / 2); }             /* back wall, faces +z */
+        else { obj.position.set(0, ROOM_H - (meta ? meta.height_m * PM_F : 0.3), along * ROOM_D * 0.5); }          /* ceiling */
+        obj.name = 'furn-' + code + '-' + kind; group.add(obj);
+      });
+    };
+    wait();
+  }
+
+  global._interiorFurnish = { FURNISH: FURNISH, furnishRoom: furnishRoom };
   global.buildWorldInteriors = function (opts) {
     var THREE     = opts.THREE;
     var scene     = opts.scene;
@@ -102,13 +146,25 @@
     // ── REALM STRUCTURES as enterable doors (interior law, 2026-09-23) ─────────────
     // Each sits at its real position on the big map — realms are separated by terrain
     // and distance; these doors are the E-portals into sized-correct interior instances.
+    // MAP v3 (2026-09-25): positions come from the live layout — the old hard-coded v2 spots left doors floating
+    // in empty terrain ("press E everywhere"). Colosseum door = its real lobby doors (world-colosseum.js);
+    // keeps = the hero models' real collider circles.
+    var _LY = global.WORLD_LAYOUT || {}, _rc = function (id) { return (_LY.realmColliders || []).find(function (c) { return c.label === id; }); };
+    var _cw = global.COLOSSEUM_WORLD, _fo = _rc('hero-fortress'), _ca = _rc('hero-castle');
+    if (_cw) COLLIDER_R.COLOSSEUM = 4;
+    if (_fo) COLLIDER_R.FORTRESS = _fo.r;
+    if (_ca) COLLIDER_R.CASTLE = _ca.r;
+    COLLIDER_R.ATHENAEUM = 6;
     var REALM_SECTORS = [
-      { code: 'COLOSSEUM', name: 'The Colosseum', pos: [-14, 460], color: 0xe8c45c },  // south trail end
+      // colosseum: sector centre sits just inside the lobby doors so the door leaf lands ON them, facing the city
+      { code: 'COLOSSEUM', name: 'The Colosseum', pos: _cw ? [_cw.door[0] - _cw.front[0] * 4.5, _cw.door[1] - _cw.front[1] * 4.5] : [0, 1210], color: 0xe8c45c },
+      { code: 'ATHENAEUM', name: 'The Athenaeum', pos: [3958.8, -3117.6], color: 0x00ff9c },  // Academy campus door = CLASS_01 academy-hall marker (move to the real front door in the Blender audit)
       { code: 'GARAGE',    name: 'The Garage',     pos: [26, 96],   color: 0x00ff9c },  // plaza east
-      { code: 'FORTRESS',  name: 'Emberfall Keep', pos: [420, -380], color: 0xff5a10 }, // volcano crater shelf
-      { code: 'CASTLE',    name: 'Darkrealm Keep', pos: [-420, -380], color: 0x9b59f5 },// darkforest castle
+      { code: 'FORTRESS',  name: 'Emberfall Keep', pos: _fo ? [_fo.x, _fo.z] : [1477, -642], color: 0xff5a10 },
+      { code: 'CASTLE',    name: 'Darkrealm Keep', pos: _ca ? [_ca.x, _ca.z] : [-1970, -635], color: 0x9b59f5 },
     ];
-    for (var _ri = 0; _ri < REALM_SECTORS.length; _ri++) allSectors.push(REALM_SECTORS[_ri]);
+    var _noVolcano = typeof location !== 'undefined' && !/[?&]volcano=1/.test(location.search || '');   // Emberfall removed for now (owner 2026-10-11)
+    for (var _ri = 0; _ri < REALM_SECTORS.length; _ri++) { if (_noVolcano && REALM_SECTORS[_ri].code === 'FORTRESS') continue; allSectors.push(REALM_SECTORS[_ri]); }
 
     /* ── state ── */
     var currentCode   = null;
@@ -120,6 +176,18 @@
     var outdoorDoors  = [];   /* animated door leaves standing at each building entrance */
     var doorsBuilt    = false;
     var _disposeTimer = null;  /* pending grace-period disposal of the room just left (see scheduleDispose) */
+    /* INSIDE-STATE GUARDS (2026-09-25, stuck "COLOSSEUM — Tourney Hall" HUD outdoors):
+       _entering / _exiting cover the 170ms fade window so a 2nd E press, key-repeat or deep link can't
+       double-enter or enter/exit bounce; _warnedOnce keeps the per-frame guard's console.warn to one line. */
+    var _entering     = false;
+    var _exiting      = false;
+    var _warnedOnce   = {};
+    /* the room island band: rooms at ROOM_ISLAND_X + idx*ROOM_SPACING, the colosseum instance at
+       ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX (v3: x=12000, ±1200 walkable). Anything outside this X band is the
+       normal map → you are NOT inside. (v3: [5000, 14500]; v4: [29000, 38500] — beyond the ±19444u terrain.) */
+    var ISLAND_X_MIN  = ROOM_ISLAND_X - 1000;
+    var ISLAND_X_MAX  = Math.max(ROOM_ISLAND_X + COLOSSEUM_ISLAND_DX + 2500, ROOM_ISLAND_X + ATHENAEUM_ISLAND_DX + 1500);
+    var ROOM_BAND     = 240;   /* generic 80×80 room: past this from its origin you walked out through a wall */
 
     /* ── basic helpers ── */
     function upperCode(c) { return (c || '').toUpperCase(); }
@@ -154,7 +222,9 @@
     for (var _di = 0; _di < allSectors.length; _di++) {
       var _ds  = allSectors[_di];
       if (String(_ds.code).toUpperCase() === 'SHADDAI') continue;   // SHADDAI temple moved to the sky observatory — no "[E] ENTER SHADDAI" at the ground center (that's the open bazaar/forum now)
-      var _thr = colliderR(_ds.code) + DOOR_EXTRA;
+      // FIX 2026-10-04 (owner: "ENTERING CASTLE" fired far from any castle): realm structures take their collider from the WHOLE model
+      // (castle/fortress radius = hundreds of units), so their "door" covered half the map and stole every E. Cap at the biggest agent building.
+      var _thr = Math.min(colliderR(_ds.code) + DOOR_EXTRA, (_ds.code === 'CASTLE' || _ds.code === 'FORTRESS') ? 60 : 140);   // 2026-10-11: realm keeps need you at the gate, not 36 m away (owner: hoverboard/E "takes me to the castle")
       var _sx  = _ds.pos ? _ds.pos[0] : 0;
       var _sz  = _ds.pos ? _ds.pos[1] : 0;
       /* front vector = normalize(centre - buildingPos). SHADDAI sits at centre so its
@@ -225,10 +295,12 @@
       }
       var geo  = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      var pMat = new THREE.PointsMaterial({
-        color: accent, size: 0.15, transparent: true, opacity: 0.50,
-        depthWrite: false, blending: THREE.AdditiveBlending,
-      });
+      var pMat = (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial)
+        ? WorldVFX.softPointsMaterial(THREE, { color: accent, size: 0.15, opacity: 0.50, additive: true })
+        : new THREE.PointsMaterial({
+          color: accent, size: 0.15, transparent: true, opacity: 0.50,
+          depthWrite: false, blending: THREE.AdditiveBlending,
+        });
       var pts = new THREE.Points(geo, pMat);
       group.add(pts);
       return { pts: pts, vel: vel, count: count, hs: hs, falling: !!falling };
@@ -2399,6 +2471,7 @@
       var r = rooms[uc];
       if (!r) return;
       try {
+        if (typeof r.dispose === 'function') { r.dispose(); if (r === global.__athenaeumCampus) global.__athenaeumCampus = null; delete rooms[uc]; return; }
         if (r.group) {
           if (r.group.parent)      r.group.parent.remove(r.group);
           else if (scene && scene.remove) scene.remove(r.group);
@@ -2436,6 +2509,12 @@
       if (uc === 'COLOSSEUM' && global.buildColosseumArena) {
         disposeAllExcept(uc);
         rooms[uc] = global.buildColosseumArena(THREE, { scene: scene });
+        return;
+      }
+      /* ATHENAEUM = the Academy campus (world-athenaeum.js): self-animating via tick, own dispose. */
+      if (uc === 'ATHENAEUM' && global.buildAthenaeumCampus) {
+        disposeAllExcept(uc);
+        rooms[uc] = global.__athenaeumCampus = global.buildAthenaeumCampus(THREE, { scene: scene });
         return;
       }
       /* PERF: only ONE interior in memory at a time — free every other built
@@ -2479,6 +2558,10 @@
       /* themed props */
       var fn = propBuilders[theme.propFn] || propBuilders.genericRoom;
       fn(group, theme.accent);
+
+      /* FURNITURE (2026-10-15, owner: "the insides of the shaddai buildings, all the furniture"): the Blender K12 library
+         (world-furniture.js) along the side walls / back corners, facing into the room - the hero props keep the centre. */
+      furnishRoom(group, uc);
 
       /* framed FLUX wall-art (left wall, eye height) — one themed piece per room.
          Added AFTER props so its glow material joins this room's glowEntries splice. */
@@ -2973,6 +3056,8 @@
     function showToolPanel(uc) {
       if (typeof document === 'undefined') return;
       hideToolPanel();   /* never stack two panels */
+      /* only ever show the in-room HUD while actually inside THIS room, on the room island */
+      if (!isInside() || currentCode !== uc) return;
       var accent = _accentHex(uc);
       var theme  = themeOf(uc);
 
@@ -3091,6 +3176,7 @@
 
       fetchAgentTools().then(function (tools) {
         if (toolPanelEl !== root) return;   /* exited before fetch resolved */
+        if (!isInside() || currentCode !== uc) { hideToolPanel(); return; }   /* left (or healed) mid-fetch */
         var mine = tools.filter(function (t) {
           var ags = t && t.agents;
           if (!ags || !ags.length) return false;
@@ -3127,12 +3213,62 @@
        the player now EXITS the building (exit() → back at the door) and rides the
        outside lift up. Nothing calls ascendToSky anymore. */
 
+    /* ── inside-state helpers (2026-09-25 stuck-HUD fix) ───────────────────────
+       ROOT CAUSE: the inside-HUD (hint "… · [E] or [ESC] to exit" + "<ROOM> — TOOLS" panel) was tied to
+       currentCode, but currentCode could outlive the teleport: (1) other systems move the player through
+       the shared playerPos handle (spawn picker / sky-dive, transit fast-travel, respawn) without calling
+       exit(); (2) enter()/exit() had no in-flight flag, so a 2nd E press / key-repeat / deep link during the
+       170ms fade double-entered or enter→exit bounced; (3) exit() with currentCode already null never cleaned
+       the HUD; (4) nothing stopped you walking out through a room wall onto the empty island (collisions are
+       off inside), and the old heal only fired west of x=5000. Now: one clearInsideState() teardown used by
+       exit()/heal/guard, a per-frame guard in update(), and the tools panel refuses to show unless inside. */
+    function _warnOnce(key, msg) {
+      if (_warnedOnce[key]) return;
+      _warnedOnce[key] = true;
+      try { console.warn('[world-interiors] ' + msg); } catch (e) {}
+    }
+    function playerOnIsland() {
+      if (!playerPos) return false;
+      var x = playerPos.x;
+      return typeof x === 'number' && isFinite(x) && x >= ISLAND_X_MIN && x <= ISLAND_X_MAX;
+    }
+    /* is (x,z) within the walkable footprint of room `uc`? (colosseum = its own contains()) */
+    function inRoomBounds(uc, x, z) {
+      var r = rooms[uc];
+      if (!r) return false;
+      if (typeof r.contains === 'function') { try { return !!r.contains(x, z); } catch (e) { return true; } }
+      var o = r.origin || roomOrigin(uc);
+      return Math.abs(x - o.x) <= ROOM_BAND && Math.abs(z - o.z) <= ROOM_BAND;
+    }
+    /* Tear down EVERY bit of inside-state + inside-UI. Idempotent; never teleports. */
+    function clearInsideState() {
+      var was = currentCode;
+      if (was && rooms[was] && rooms[was].group) rooms[was].group.visible = false;
+      currentCode = null;
+      hideHint();
+      hideToolPanel();
+      if (overlayEl) overlayEl.style.opacity = '0';
+      global.__wiRoomReady = true;
+      /* host globals the HTML / world-actions read (window._currentInterior, chat room, ZEROX terminal) */
+      try {
+        if (global._currentInterior) {
+          global._currentInterior = null;
+          if (global._updateZeroxTerminal) global._updateZeroxTerminal();
+          if (global.__shaddaiChat && global.__shaddaiChat.setRoom) global.__shaddaiChat.setRoom('lobby');
+        }
+      } catch (e) {}
+      if (was) scheduleDispose(was);
+    }
+
     function enter(code) {
-      if (currentCode) return;
+      if (currentCode || _entering || _exiting) return;   /* already inside / a fade is in flight */
       var uc   = upperCode(code);
       global.__wiRoomReady = false;             /* cutscene can gate its reveal on this */
-      var room = getOrBuild(uc);                /* if warmed on approach this is instant */
-      if (!room) { global.__wiRoomReady = true; return; }
+      var room;
+      try { room = getOrBuild(uc); }            /* if warmed on approach this is instant */
+      catch (err) { global.__wiRoomReady = true; _warnOnce('build:' + uc, 'room build failed for ' + uc + ': ' + (err && err.message)); return; }
+      if (!room || !room.origin) { global.__wiRoomReady = true; return; }
+      _entering = true;
       openDoor(uc);                             /* the door we walked through is fully open */
 
       outdoorReturn.x = playerPos.x;
@@ -3140,75 +3276,117 @@
       outdoorReturn.y = (camera && camera.position) ? camera.position.y : 0;   // remember height so exiting an elevated temple (observatory) returns you UP THERE, not on the ground
 
       fadeIn(function () {
-        var keys = Object.keys(rooms);
-        for (var k = 0; k < keys.length; k++) {
-          if (rooms[keys[k]] && rooms[keys[k]].group) rooms[keys[k]].group.visible = false;
+        try {
+          var keys = Object.keys(rooms);
+          for (var k = 0; k < keys.length; k++) {
+            if (rooms[keys[k]] && rooms[keys[k]].group) rooms[keys[k]].group.visible = false;
+          }
+          if (room.group) room.group.visible = true;
+          global.__wiRoomReady = true;   /* interior is now on-screen → safe to reveal */
+
+          var o = room.origin;
+          playerPos.x = o.x;
+          playerPos.z = o.z + SPAWN_Z_OFFSET;
+          if (playerPos.y !== undefined) playerPos.y = 0;
+
+          camera.position.set(o.x, PLAYER_EYE_Y, o.z + SPAWN_Z_OFFSET + 2);
+          camera.lookAt(o.x, PLAYER_EYE_Y, o.z);
+
+          if (controls && controls.target && controls.target.set) {
+            controls.target.set(o.x, PLAYER_EYE_Y, o.z);
+            if (controls.update) controls.update();
+          }
+
+          /* never flip inside-state without an actual teleport onto the island */
+          if (!playerOnIsland()) {
+            _warnOnce('enter-noteleport', 'enter(' + uc + ') aborted — player did not land on the room island (x=' + playerPos.x + ')');
+            if (room.group) room.group.visible = false;
+            fadeOut();
+            return;
+          }
+
+          currentCode = uc;
+          if (global.__setOutdoorHidden) global.__setOutdoorHidden(true, room.origin.x);   /* PERF: stop drawing the city behind the walls — only AFTER a confirmed landing (an aborted enter left the world hidden = black screen) */
+          fadeOut();
+
+          var theme = themeOf(uc);
+          showHint(theme.label + '   ·   [E] or [ESC] to exit');
+          if (uc !== 'ATHENAEUM') showToolPanel(uc);   /* in-interior HUD (the Academy campus uses its own E-stations): this agent's REAL tools (+ games in NEXUS) */
+        } catch (err) {
+          _warnOnce('enter:' + uc, 'enter(' + uc + ') failed mid-fade: ' + (err && err.message));
+        } finally {
+          _entering = false;
+          global.__wiRoomReady = true;
+          fadeOut();   /* 2026-10-15 (old handoff #4 "MODES > Colosseum = black screen"): an exception after fadeIn used to skip fadeOut and leave the overlay opaque; the door path hid it behind its cutscene */
         }
-        if (room.group) room.group.visible = true;
-        global.__wiRoomReady = true;   /* interior is now on-screen → safe to reveal */
-
-        var o = room.origin;
-        playerPos.x = o.x;
-        playerPos.z = o.z + SPAWN_Z_OFFSET;
-        if (playerPos.y !== undefined) playerPos.y = 0;
-
-        camera.position.set(o.x, PLAYER_EYE_Y, o.z + SPAWN_Z_OFFSET + 2);
-        camera.lookAt(o.x, PLAYER_EYE_Y, o.z);
-
-        if (controls && controls.target && controls.target.set) {
-          controls.target.set(o.x, PLAYER_EYE_Y, o.z);
-          if (controls.update) controls.update();
-        }
-
-        currentCode = uc;
-        fadeOut();
-
-        var theme = themeOf(uc);
-        showHint(theme.label + '   ·   [E] or [ESC] to exit');
-        showToolPanel(uc);   /* in-interior HUD: this agent's REAL tools (+ games in NEXUS) */
       });
     }
 
     function exit() {
-      if (!currentCode) return;
+      if (_exiting) return;                      /* 2nd call during the fade → no-op */
+      if (!currentCode) { clearInsideState(); fadeOut(); return; }   /* already out → just make sure no inside-UI lingers */
+      _exiting = true;
       var _leftUc = currentCode;                 /* remember which room to free */
       fadeIn(function () {
-        if (rooms[currentCode] && rooms[currentCode].group) rooms[currentCode].group.visible = false;
+        try {
+          if (currentCode !== _leftUc) return;   /* healed / moved elsewhere mid-fade → don't teleport (finally cleans) */
+          if (rooms[currentCode] && rooms[currentCode].group) rooms[currentCode].group.visible = false;
 
-        var rx = outdoorReturn.x, rz = outdoorReturn.z;
-        playerPos.x = rx;
-        playerPos.z = rz;
-        // Return to the height we entered from. If you entered at ground, this ≈ ground; if you entered
-        // from an elevated deck (the observatory), this keeps you up there (the deck's groundY takes over).
-        var eyeY = outdoorReturn.y || ((global.WORLD_HEIGHT_AT ? global.WORLD_HEIGHT_AT(rx, rz) : 0) + PLAYER_EYE_Y);
-        if (playerPos.y !== undefined) playerPos.y = eyeY - PLAYER_EYE_Y;
-        camera.position.set(rx, eyeY, rz + 12);
-        camera.lookAt(rx, eyeY - PLAYER_EYE_Y + 2, rz);
+          var rx = outdoorReturn.x, rz = outdoorReturn.z;
+          playerPos.x = rx;
+          playerPos.z = rz;
+          // Return to the height we entered from. If you entered at ground, this ≈ ground; if you entered
+          // from an elevated deck (the observatory), this keeps you up there (the deck's groundY takes over).
+          var eyeY = outdoorReturn.y || ((global.WORLD_HEIGHT_AT ? global.WORLD_HEIGHT_AT(rx, rz) : 0) + PLAYER_EYE_Y);
+          if (playerPos.y !== undefined) playerPos.y = eyeY - PLAYER_EYE_Y;
+          camera.position.set(rx, eyeY, rz + 12);
+          camera.lookAt(rx, eyeY - PLAYER_EYE_Y + 2, rz);
 
-        if (controls && controls.target && controls.target.set) {
-          controls.target.set(rx, eyeY - PLAYER_EYE_Y + 2, rz);
-          if (controls.update) controls.update();
+          if (controls && controls.target && controls.target.set) {
+            controls.target.set(rx, eyeY - PLAYER_EYE_Y + 2, rz);
+            if (controls.update) controls.update();
+          }
+        } finally {
+          /* ALWAYS: clear currentCode + hint + tools panel + overlay (+ host globals), free the room */
+          clearInsideState();
+          fadeOut();
+          _exiting = false;
         }
-
-        currentCode = null;
-        fadeOut();
-        hideHint();
-        hideToolPanel();   /* tear down the in-interior tool HUD — no DOM/listener leak */
-        /* PERF: free the interior we just left (grace period lets an immediate
-           re-enter reuse it; otherwise its geometry/materials/textures are freed). */
-        scheduleDispose(_leftUc);
       });
     }
 
     function isInside() {
-      /* SAFETY NET (2026-09-25): every room lives on an off-map island (x ≥ ROOM_ISLAND_X). If we think we're
-         inside but the player is standing on the normal map (e.g. a spawn sky-dive moved them after enter()),
-         clear the stuck state — otherwise collisions, terrain height and door prompts all switch off outdoors. */
-      if (currentCode !== null && playerPos && playerPos.x < ROOM_ISLAND_X - 1000) {
-        if (rooms[currentCode] && rooms[currentCode].group) rooms[currentCode].group.visible = false;
-        currentCode = null; hideHint(); hideToolPanel();
+      /* SAFETY NET: every room lives on the off-map island band. If we think we're inside but the player is
+         on the normal map (spawn sky-dive, transit, respawn moved them after enter()), clear the stuck state —
+         otherwise collisions, terrain height and door prompts all switch off outdoors and the HUD sticks. */
+      if (currentCode !== null && !_exiting && !playerOnIsland()) {
+        _warnOnce('heal-offisland', 'inside ' + currentCode + ' but player is off the room island (x=' +
+                  (playerPos && playerPos.x) + ') — clearing inside state/HUD');
+        clearInsideState();
       }
       return currentCode !== null;
+    }
+
+    /* E-key gate — registered on window (bubble) at build time, i.e. BEFORE the host's interiors E handler
+       (SHADDAI-WORLD-3D.html registers right after buildWorldInteriors returns), so it runs first for the same
+       press. Capture-phase consumers (world-transit station menu, npc-dialog) already stopImmediatePropagation
+       before either runs. Here we swallow ONLY the presses that would wrongly toggle a room:
+         - typing E in any input/textarea/contenteditable (chat) while at a door or inside
+         - auto-repeat from holding E (enter/exit bounce)
+         - E already consumed (defaultPrevented) by another handler
+         - E during an enter/exit fade in flight */
+    if (typeof global.addEventListener === 'function') {
+      global.addEventListener('keydown', function (e) {
+        if (e.code !== 'KeyE') return;
+        var relevant = _entering || _exiting || currentCode !== null ||
+                       !!(playerPos && nearestDoor(playerPos.x, playerPos.z));
+        if (!relevant) return;
+        var a = (typeof document !== 'undefined') && document.activeElement;
+        var typing = !!(a && (/^(INPUT|TEXTAREA|SELECT)$/i.test(a.tagName || '') || a.isContentEditable));
+        if (typing || e.repeat || e.defaultPrevented || _entering || _exiting) {
+          e.stopImmediatePropagation();
+        }
+      });
     }
 
     function nearestDoor(x, z) {
@@ -3217,6 +3395,7 @@
          and the returned {code,dist} object is only allocated on a hit —
          identical to the previous public contract. */
       var bestCode = null, bestDistSq = Infinity;
+      if (!isFinite(x) || !isFinite(z)) return null;   // a NaN position made every comparison false → first door "in range" (ghost ENTER CASTLE)
       for (var i = 0; i < doors.length; i++) {
         var d      = doors[i];
         var dx     = x - d.sx;
@@ -3248,6 +3427,28 @@
          or not the player is inside a room (doors close themselves while inside). */
       if (!doorsBuilt) buildOutdoorDoors();
       updateOutdoorDoors(playerPos ? playerPos.x : 0, playerPos ? playerPos.z : 0, dt);
+
+      /* PER-FRAME INSIDE GUARD — inside-UI may only exist while the player is really in the room.
+         (1) currentCode set but player off the room island → clear state/HUD (no teleport).
+         (2) on the island but walked out of the room's footprint (collisions are off inside) → proper exit()
+             back to the door, instead of wandering the empty island with the HUD up.
+         (3) not inside and no fade in flight, but a hint / tools panel / host _currentInterior lingers → clear. */
+      if (!_entering && !_exiting) {
+        if (currentCode !== null) {
+          if (!playerOnIsland()) {
+            _warnOnce('guard-offisland', 'update(): inside ' + currentCode + ' but player x=' + (playerPos && playerPos.x) +
+                      ' is outside the room island band [' + ISLAND_X_MIN + ',' + ISLAND_X_MAX + '] — clearing inside state/HUD');
+            clearInsideState();
+          } else if (rooms[currentCode] && !inRoomBounds(currentCode, playerPos.x, playerPos.z)) {
+            _warnOnce('guard-outofroom:' + currentCode, 'update(): player walked out of ' + currentCode + ' footprint — exiting to the door');
+            exit();
+          }
+        } else if ((hintEl && hintEl.style.display !== 'none') || toolPanelEl ||
+                   (global._currentInterior && THEMES[upperCode(global._currentInterior)])) {
+          _warnOnce('guard-orphanui', 'update(): inside-UI visible while not inside — clearing');
+          clearInsideState();
+        }
+      }
 
       /* PERF: interior prop animation only matters while the player is actually
          inside a room — every interior is off-map and invisible otherwise.

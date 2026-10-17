@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Water Lab</title>
+<!-- same three build as SHADDAI-WORLD-3D.html -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+} }
+</script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#04060d;overflow:hidden;font:12px/1.4 ui-monospace,Consolas,monospace;color:#cfe8ff}
+  canvas{display:block}
+  #hud{position:fixed;top:10px;left:10px;background:rgba(4,8,16,.72);padding:10px 12px;border-radius:8px;min-width:230px}
+  #hud label{display:block;margin-top:6px}
+  #hud input{width:100%}
+  #fps{font-weight:bold;color:#7fffd0}
+  #credit{position:fixed;bottom:8px;right:10px;opacity:.6;font-size:11px}
+  #credit a{color:#9fd8ff}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div id="fps">-- fps</div>
+  <div id="info"></div>
+  <label>time of day <span id="todv"></span><input id="tod" type="range" min="0" max="1" step="0.001" value="0.42"></label>
+  <label>wave scale <span id="wsv"></span><input id="ws" type="range" min="0" max="2.5" step="0.05" value="1"></label>
+  <div id="probe"></div>
+</div>
+<div id="credit">water techniques ported from <a href="https://github.com/dgreenheck/tidewater">Tidewater</a> (MIT, DRG Software Solutions LLC)</div>
+<script src="world-water.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const errors = [];
+window.__waterLab = { ready: false, errors, frames: 0 };
+const PM = 7 / 1.8;
+
+// ── synthetic island: central peak, a flat plateau holding a crater lake, a carved river down to the sea,
+//    a shallow sandy shelf and a deep drop-off further out (to show the turquoise → navy absorption ramp)
+const LAKE = { c: [180, -140], r: 150, level: 100 };
+const RIVER = [[292, -150], [360, -120], [430, -160], [500, -120], [580, -150], [660, -120], [760, -140]];
+function distToPath(x, z, path) {
+  let best = 1e9;
+  for (let i = 0; i < path.length - 1; i++) {
+    const [ax, az] = path[i], [bx, bz] = path[i + 1], ex = bx - ax, ez = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez)));
+    best = Math.min(best, Math.hypot(ax + ex * t - x, az + ez * t - z));
+  }
+  return best;
+}
+function sstep(a, b, x) { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+function heightAt(x, z) {
+  const r = Math.hypot(x, z * 1.25);
+  let h = 170 * Math.exp(-((r / 520) ** 2)) - 70 + 60 * Math.exp(-((r / 900) ** 2)) - 220 * sstep(1400, 3200, r);
+  h += 10 * Math.sin(x * 0.013) * Math.cos(z * 0.011) + 4 * Math.sin((x + z) * 0.031);
+  const dl = Math.hypot(x - LAKE.c[0], z - LAKE.c[1]);
+  const w = Math.exp(-((dl / 200) ** 4));                 // flat plateau around the lake
+  h = h * (1 - w) + 110 * w;
+  h -= 40 * Math.exp(-((dl / 100) ** 2));                 // crater bowl
+  const dr = distToPath(x, z, RIVER);
+  h -= 9 * sstep(30, 8, dr) * sstep(90, 200, dl + 60);    // river channel (not through the lake bowl)
+  return h;
+}
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.debug.onShaderError = (gl, program, vs, fs) => {
+  const msg = 'SHADER ERROR: ' + gl.getShaderInfoLog(vs) + ' ' + gl.getShaderInfoLog(fs) + ' ' + gl.getProgramInfoLog(program);
+  errors.push(msg); console.error(msg);
+};
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x9fb8d0, 0.00011);
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.5, 9000);
+camera.position.set(980, 190, 260);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(560, 0, -120); controls.update();
+
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); scene.add(sun); scene.add(sun.target);
+const hemi = new THREE.HemisphereLight(0xbfd8ff, 0x3a3020, 0.6); scene.add(hemi);
+
+// terrain (vertex-coloured: wet sand, sand, grass, rock)
+const tg = new THREE.PlaneGeometry(4400, 4400, 360, 360); tg.rotateX(-Math.PI / 2);
+const tp = tg.attributes.position, cols = new Float32Array(tp.count * 3), c = new THREE.Color();
+for (let i = 0; i < tp.count; i++) {
+  const x = tp.getX(i), z = tp.getZ(i), h = heightAt(x, z); tp.setY(i, h);
+  if (h < 6) c.setRGB(0.76, 0.66, 0.46); else if (h < 18) c.setRGB(0.85, 0.77, 0.56);
+  else if (h < 90) c.setRGB(0.25, 0.45, 0.18); else c.setRGB(0.42, 0.40, 0.36);
+  if (distToPath(x, z, RIVER) < 22 && h > 4) c.setRGB(0.45, 0.40, 0.30);
+  cols.set([c.r, c.g, c.b], i * 3);
+}
+tg.setAttribute('color', new THREE.BufferAttribute(cols, 3)); tg.computeVertexNormals();
+scene.add(new THREE.Mesh(tg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 })));
+
+// sky dome: same gradient the water reflects, so the horizon matches
+const skyU = { zen: { value: new THREE.Vector3() }, hor: { value: new THREE.Vector3() }, sd: { value: new THREE.Vector3() }, sc: { value: new THREE.Vector3() } };
+const sky = new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), new THREE.ShaderMaterial({
+  uniforms: skyU, side: THREE.BackSide, depthWrite: false, fog: false,
+  vertexShader: 'varying vec3 vD; void main(){ vD = normalize((modelMatrix*vec4(position,1.0)).xyz - cameraPosition); gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4(position,1.0);} ',
+  fragmentShader: 'uniform vec3 zen,hor,sd,sc; varying vec3 vD; void main(){ vec3 d=normalize(vD); vec3 col=mix(hor,zen,pow(clamp(d.y,0.0,1.0),0.5)); float s=max(dot(d,normalize(sd)),0.0); col+=sc*(0.08*pow(s,8.0)+step(0.9995,s)*6.0); gl_FragColor=vec4(col,1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'
+}));
+sky.renderOrder = -10; scene.add(sky);
+
+const water = window.buildWorldWater({
+  THREE, scene, camera, renderer, sun, heightAt,
+  bodies: [
+    { type: 'ocean', center: [0, 0], radius: 7000, level: 0 },
+    { type: 'lake', center: LAKE.c, radius: LAKE.r, level: LAKE.level },
+    { type: 'river', path: RIVER, width: 34 }
+  ]
+});
+window.__waterLab.water = water;
+// test hook: close-up of the lake + river head
+window.__labCam = () => { camera.position.set(420, 190, 60); controls.target.set(260, 95, -140); controls.update(); };
+
+const $ = (id) => document.getElementById(id);
+function setTod(f) {
+  const d = window.buildWorldWater.sunDirectionForTime(f);
+  const night = d[1] < 0, dir = new THREE.Vector3(night ? -d[0] : d[0], Math.max(Math.abs(d[1]), 0.05), night ? -d[2] : d[2]);
+  water.setTimeOfDay(f);
+  const U = water.uniforms;
+  sun.position.copy(dir).multiplyScalar(3000).add(controls.target); sun.target.position.copy(controls.target);
+  sun.color.setRGB(U.uSunColor.value.x, U.uSunColor.value.y, U.uSunColor.value.z); sun.intensity = 1.6;
+  hemi.intensity = 0.25 + 1.2 * U.uSkyIrr.value.y;
+  skyU.zen.value.copy(U.uSkyZenith.value); skyU.hor.value.copy(U.uSkyHorizon.value); skyU.sd.value.copy(dir); skyU.sc.value.copy(U.uSunColor.value);
+  const h = U.uSkyHorizon.value; scene.fog.color.setRGB(h.x, h.y, h.z, THREE.LinearSRGBColorSpace);
+  $('todv').textContent = f.toFixed(2);
+}
+$('tod').oninput = (e) => setTod(+e.target.value);
+$('ws').oninput = (e) => { water.group.children.forEach((m) => { if (m.material.uniforms.uAmp && m.name.startsWith('water-ocean')) m.material.uniforms.uAmp.value = +e.target.value; }); $('wsv').textContent = (+e.target.value).toFixed(2); };
+setTod(0.42);
+$('info').textContent = `build ${water.buildMs} ms · ${water.waves.length} Gerstner waves`;
+
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+const clock = new THREE.Clock();
+let acc = 0, n = 0;
+function frame() {
+  const dt = clock.getDelta(), t = clock.elapsedTime;
+  controls.update();
+  water.update(t, dt);
+  sky.position.copy(camera.position);
+  renderer.render(scene, camera);
+  acc += dt; n++; window.__waterLab.frames++;
+  if (acc > 0.5) {
+    $('fps').textContent = (n / acc).toFixed(0) + ' fps · ' + renderer.info.render.calls + ' draws · ' + (renderer.info.render.triangles / 1000).toFixed(0) + 'k tris';
+    const px = controls.target.x, pz = controls.target.z, y = water.waterHeightAt(px, pz, t);
+    $('probe').textContent = 'target ' + (water.isWater(px, pz) ? 'water y=' + (y == null ? '-' : y.toFixed(2)) : 'land');
+    acc = 0; n = 0;
+  }
+  window.__waterLab.ready = true;
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

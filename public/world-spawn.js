@@ -136,7 +136,9 @@
     var layout     = opts.layout;              // window.WORLD_LAYOUT
     var onArrive   = opts.onArrive || function () {};
     var characters = opts.characters || [];
+    var access = opts.access || null;   // optional { owned(code), price(code), unlock(code)->{ok,msg} }: premium operatives cost Sparks
     var _chosenChar = (characters[0] && characters[0].code) || null;
+    if (access) { for (var _ci = 0; _ci < characters.length; _ci++) { if (access.owned(characters[_ci].code)) { _chosenChar = characters[_ci].code; break; } } }
 
     var portals = layout.spawnPortals;         // 7 entries
     var skydive = layout.skydive;              // { altitude, descendSec, lookDown }
@@ -473,12 +475,14 @@
         'position',
         new THREE.BufferAttribute(particlePositions, 3)
       );
-      var particleMat = new THREE.PointsMaterial({
-        color: col.clone().offsetHSL(0, 0.05, 0.14), size: 0.24,
-        transparent: true, opacity: 0.82,
-        blending: THREE.AdditiveBlending, depthWrite: false,
-        sizeAttenuation: true, toneMapped: false,
-      });
+      var particleMat = (typeof WorldVFX !== 'undefined' && WorldVFX.softPointsMaterial)
+        ? WorldVFX.softPointsMaterial(THREE, { color: col.clone().offsetHSL(0, 0.05, 0.14), size: 0.24, opacity: 0.82, additive: true })
+        : new THREE.PointsMaterial({
+          color: col.clone().offsetHSL(0, 0.05, 0.14), size: 0.24,
+          transparent: true, opacity: 0.82,
+          blending: THREE.AdditiveBlending, depthWrite: false,
+          sizeAttenuation: true, toneMapped: false,
+        });
       grp.add(new THREE.Points(particleGeo, particleMat));
 
       // ── Soft point light — colour fill around the gateway base ───────────
@@ -770,11 +774,22 @@
           cb.appendChild(img);
           var nm = document.createElement('div');
           nm.className = 'sp-char-nm';
-          nm.textContent = c.code;
+          nm.textContent = c.label || c.code;
           nm.style.color = hex;
           cb.appendChild(nm);
+          var lockEl = null;
+          if (access && !access.owned(c.code)) {
+            lockEl = document.createElement('div'); lockEl.className = 'sp-char-lock';
+            lockEl.style.cssText = 'font:700 8px Orbitron,sans-serif;letter-spacing:.06em;color:#e8c45c;margin-top:2px';
+            lockEl.textContent = access.price(c.code) + ' SPARKS'; cb.appendChild(lockEl); cb.style.opacity = '0.78';
+          }
           cb.addEventListener('click', function () {
-            _chosenChar = c.code;
+            if (lockEl) {
+              var r = access.unlock(c.code);
+              if (!r.ok) { var was = lockEl.textContent; lockEl.textContent = r.msg; lockEl.style.color = '#ff7a8a'; setTimeout(function () { lockEl.textContent = was; lockEl.style.color = '#e8c45c'; }, 2200); return; }
+              lockEl.remove(); lockEl = null; cb.style.opacity = '';
+            }
+            _chosenChar = c.code; try { if (window.__pcPreload) window.__pcPreload(c.code); } catch (e) { }   // start downloading the body now, while you pick a portal
             chRow.querySelectorAll('.sp-char').forEach(function (x) {
               var on = x.getAttribute('data-code') === _chosenChar;
               x.classList.toggle('on', on);
@@ -1094,6 +1109,7 @@
       pickPortal:    pickPortal,
       update:        update,
       isAnimating:   isAnimating,
+      state:         function () { return _state; },   // debug/probe
       portalMarkers: portalMarkers,
     };
   };

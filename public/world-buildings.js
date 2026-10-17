@@ -4884,11 +4884,15 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
     g.fillStyle = hex; g.font = 'bold 34px Orbitron, Arial, sans-serif';
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(title, 256, 50);
     const tex = new THREE.CanvasTexture(cv); tex.needsUpdate = true;
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(fp * 0.34, fp * 0.064),
-      new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
-    const sr = fp * 0.34;
-    sign.position.set(x + frontDir.x * sr, groundY + fp * 0.075, z + frontDir.z * sr);
-    sign.rotation.y = faceAng; sign.renderOrder = 3; scene.add(sign);
+    /* SIGN FIX (2026-10-01, eyes audit): the old DoubleSide plane showed MIRRORED text from behind and sat low where lounge props/pillars covered it.
+     * Now: a front plane facing the plaza + a second plane facing the other way (text reads correctly from both sides), raised above the props. */
+    const geo = new THREE.PlaneGeometry(fp * 0.34, fp * 0.064), sr = fp * 0.40, sy = groundY + fp * 0.2;
+    [0, Math.PI].forEach(function (flip) {
+      const sign = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.FrontSide, depthWrite: false }));
+      const off = flip ? -0.08 : 0;
+      sign.position.set(x + frontDir.x * (sr + off), sy, z + frontDir.z * (sr + off));
+      sign.rotation.y = faceAng + flip; sign.renderOrder = 3; scene.add(sign);
+    });
   }
 
   // ── PROCEDURAL BUILDING PLACER ────────────────────────────────────────────

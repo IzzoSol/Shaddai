@@ -1,0 +1,1898 @@
+{
+ "v": 1,
+ "fps": 30,
+ "credits": {
+  "meshy": "Meshy AI animation library, generated on the owner's Meshy account (Emerald Enforcer + Neon Valkyrie merged-animation exports)",
+  "ual2": "Universal Animation Library 2 [Standard] by Quaternius — CC0 1.0"
+ },
+ "skeleton": {
+  "rig": "meshy-v6 (canonical bind = ZEROX _m6)",
+  "bones": [
+   "Hips",
+   "LeftUpLeg",
+   "LeftLeg",
+   "LeftFoot",
+   "LeftToeBase",
+   "RightUpLeg",
+   "RightLeg",
+   "RightFoot",
+   "RightToeBase",
+   "Spine02",
+   "Spine01",
+   "Spine",
+   "LeftShoulder",
+   "LeftArm",
+   "LeftForeArm",
+   "LeftHand",
+   "RightShoulder",
+   "RightArm",
+   "RightForeArm",
+   "RightHand",
+   "neck",
+   "Head",
+   "head_end",
+   "headfront"
+  ],
+  "parents": [
+   -1,
+   0,
+   1,
+   2,
+   3,
+   0,
+   5,
+   6,
+   7,
+   0,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   11,
+   16,
+   17,
+   18,
+   11,
+   20,
+   21,
+   21
+  ],
+  "armatureScale": 0.009999999776482582,
+  "hipsY": 105.616,
+  "legM": 0.8634,
+  "ankleM": 0.1473,
+  "hipsM": [
+   0.0084,
+   1.0562,
+   -0.0082
+  ],
+  "hipM": 1.0562,
+  "bindWorldQ": {
+   "Hips": [
+    -0.026445,
+    -0.027833,
+    -0.027833,
+    0.998875
+   ],
+   "LeftUpLeg": [
+    0.985595,
+    0.117075,
+    -0.117075,
+    0.034481
+   ],
+   "LeftLeg": [
+    0.9485,
+    0.222662,
+    -0.222662,
+    -0.034506
+   ],
+   "LeftFoot": [
+    0.919704,
+    0.018455,
+    -0.018456,
+    0.391745
+   ],
+   "LeftToeBase": [
+    0.706708,
+    0.023733,
+    -0.023736,
+    0.706708
+   ],
+   "RightUpLeg": [
+    0.984224,
+    -0.12237,
+    0.12237,
+    0.036791
+   ],
+   "RightLeg": [
+    0.947802,
+    -0.224489,
+    0.224489,
+    -0.029669
+   ],
+   "RightFoot": [
+    0.91446,
+    -0.019332,
+    0.019333,
+    0.403752
+   ],
+   "RightToeBase": [
+    0.706686,
+    -0.024389,
+    0.024382,
+    0.706686
+   ],
+   "Spine02": [
+    -0.018221,
+    -0.006124,
+    0.006124,
+    0.999796
+   ],
+   "Spine01": [
+    -0.018221,
+    -0.006124,
+    0.006124,
+    0.999796
+   ],
+   "Spine": [
+    -0.06405,
+    -0.020851,
+    0.020851,
+    0.997511
+   ],
+   "LeftShoulder": [
+    -0.484151,
+    -0.515361,
+    0.515362,
+    -0.484151
+   ],
+   "LeftArm": [
+    -0.45941,
+    -0.520566,
+    0.520567,
+    -0.496955
+   ],
+   "LeftForeArm": [
+    0.551296,
+    0.417782,
+    -0.417781,
+    0.589059
+   ],
+   "LeftHand": [
+    0.545205,
+    0.474642,
+    -0.474642,
+    0.502177
+   ],
+   "RightShoulder": [
+    -0.485588,
+    0.514008,
+    -0.514008,
+    -0.485588
+   ],
+   "RightArm": [
+    -0.456426,
+    0.521189,
+    -0.521189,
+    -0.498397
+   ],
+   "RightForeArm": [
+    0.553963,
+    -0.418808,
+    0.418808,
+    0.585085
+   ],
+   "RightHand": [
+    0.5616,
+    -0.470897,
+    0.470897,
+    0.491038
+   ],
+   "neck": [
+    -0.018052,
+    -0.014284,
+    0.014284,
+    0.999633
+   ],
+   "Head": [
+    0.29803,
+    -0.008991,
+    0.008991,
+    0.954472
+   ],
+   "head_end": [
+    0.098339,
+    -0.012282,
+    0.012282,
+    0.995001
+   ],
+   "headfront": [
+    0.707107,
+    0,
+    0,
+    0.707107
+   ]
+  },
+  "upper": [
+   "Spine02",
+   "Spine01",
+   "Spine",
+   "LeftShoulder",
+   "LeftArm",
+   "LeftForeArm",
+   "LeftHand",
+   "RightShoulder",
+   "RightArm",
+   "RightForeArm",
+   "RightHand",
+   "neck",
+   "Head",
+   "head_end",
+   "headfront"
+  ]
+ },
+ "locomotion": {
+  "idle": "Idle_No_Loop",
+  "walk": "Walking",
+  "run": "Running",
+  "sprint": null
+ },
+ "actions": {
+  "jumpStart": "NinjaJump_Start",
+  "jumpLoop": "NinjaJump_Idle_Loop",
+  "jumpLand": "NinjaJump_Land",
+  "doubleJump": "Backflip",
+  "roll": "Roll",
+  "vault": "Parkour_Vault_with_Roll",
+  "climb": "ClimbUp_1m",
+  "slideStart": "Slide_Start",
+  "slideLoop": "Slide_Loop",
+  "slideExit": "Slide_Exit",
+  "hit": "Hit_Knockback",
+  "death": "Lie_Down",
+  "getUp": "LayToIdle",
+  "sit": "Sit_Chair_Loop",
+  "block": "Sword_Block"
+ },
+ "clips": [
+  {
+   "name": "360_Power_Spin_Jump",
+   "duration": 3.0667,
+   "frames": 93,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.832,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.037,
+    3.147
+   ],
+   "groundFixM": 0.027,
+   "tags": [
+    "attack",
+    "traversal"
+   ],
+   "hitFrames": [
+    31,
+    41,
+    59
+   ],
+   "hitTimes": [
+    1.033,
+    1.367,
+    1.967
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Backflip",
+   "duration": 2.1333,
+   "frames": 65,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.207,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.001,
+    -0.006
+   ],
+   "groundFixM": 0.044,
+   "tags": [
+    "traversal"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Backflip_Sweep_Kick",
+   "duration": 4.8333,
+   "frames": 146,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.772,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.91,
+    -0.411
+   ],
+   "groundFixM": 0.054,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    52,
+    63,
+    85,
+    100,
+    116,
+    123
+   ],
+   "hitTimes": [
+    1.733,
+    2.1,
+    2.833,
+    3.333,
+    3.867,
+    4.1
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Boxing_Practice",
+   "duration": 6.8333,
+   "frames": 206,
+   "loop": true,
+   "inPlace": false,
+   "excursionM": 1.413,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.614,
+    0.193
+   ],
+   "groundFixM": -0.032,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    19,
+    38,
+    48,
+    57,
+    77,
+    109
+   ],
+   "hitTimes": [
+    0.633,
+    1.267,
+    1.6,
+    1.9,
+    2.567,
+    3.633
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Cardio_Dance",
+   "duration": 4.3,
+   "frames": 130,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.154,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.001,
+    0
+   ],
+   "groundFixM": 0.051,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Charged_Upward_Slash",
+   "duration": 3.2,
+   "frames": 97,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.845,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.001,
+    0
+   ],
+   "groundFixM": -0.065,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    34
+   ],
+   "hitTimes": [
+    1.133
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Chest_Open",
+   "duration": 1.3667,
+   "frames": 42,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.055,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.067,
+   "tags": [
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "ClimbUp_1m",
+   "duration": 0.6667,
+   "frames": 21,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.153,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "traversal"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Confident_Strut",
+   "duration": 2.6667,
+   "frames": 81,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.042,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Consume",
+   "duration": 1.3333,
+   "frames": 41,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.002,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "social",
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Crystal_Beads",
+   "duration": 6.1667,
+   "frames": 186,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.592,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.114,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Denim_Pop_Dance",
+   "duration": 16,
+   "frames": 481,
+   "loop": true,
+   "inPlace": false,
+   "excursionM": 1.015,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.107,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Double_Blade_Spin",
+   "duration": 5.6667,
+   "frames": 171,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 1.826,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.983,
+    2.467
+   ],
+   "groundFixM": -0.007,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    25,
+    34,
+    48
+   ],
+   "hitTimes": [
+    0.833,
+    1.133,
+    1.6
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Double_Combo_Attack",
+   "duration": 2.8333,
+   "frames": 86,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.447,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.001,
+    1.709
+   ],
+   "groundFixM": -0.061,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    20,
+    36
+   ],
+   "hitTimes": [
+    0.667,
+    1.2
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Double_kick_forward",
+   "duration": 2.6,
+   "frames": 79,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.445,
+   "speedMps": 0,
+   "rootMotionM": [
+    -1.225,
+    1.225
+   ],
+   "groundFixM": 0.044,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    28,
+    39,
+    45
+   ],
+   "hitTimes": [
+    0.933,
+    1.3,
+    1.5
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Farm_Harvest",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.155,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Farm_PlantSeed",
+   "duration": 2.7667,
+   "frames": 84,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.058,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.067,
+   "tags": [
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Farm_Watering",
+   "duration": 3.8,
+   "frames": 115,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.04,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Flirty_Strut_inplace",
+   "duration": 3.2333,
+   "frames": 98,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.069,
+   "speedMps": 0.903,
+   "speedFrom": "feet",
+   "footPhase": 0.948,
+   "rootMotionM": [
+    -0.001,
+    0.002
+   ],
+   "groundFixM": -0.019,
+   "tags": [
+    "locomotion",
+    "emote"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Flying_Fist_Kick",
+   "duration": 4.6667,
+   "frames": 141,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 1.121,
+   "speedMps": 0,
+   "rootMotionM": [
+    1.599,
+    2.437
+   ],
+   "groundFixM": -0.011,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    59,
+    88
+   ],
+   "hitTimes": [
+    1.967,
+    2.933
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "FunnyDancing_03",
+   "duration": 8.0333,
+   "frames": 242,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.349,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.001,
+    0.002
+   ],
+   "groundFixM": -0.014,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Gangnam_Groove",
+   "duration": 10.1333,
+   "frames": 305,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.349,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.004,
+    -0.004
+   ],
+   "groundFixM": -0.088,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Hip_Hop_Dance_4",
+   "duration": 4.9,
+   "frames": 148,
+   "loop": true,
+   "inPlace": false,
+   "excursionM": 0.646,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.002,
+    1.594
+   ],
+   "groundFixM": 0.054,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Hit_Knockback",
+   "duration": 0.8333,
+   "frames": 26,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.092,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.096,
+   "tags": [
+    "react"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_FoldArms_Loop",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.009,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "social",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_Lantern_Loop",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.002,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_No_Loop",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.009,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "emote",
+    "social",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_Rail_Call",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.011,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.012,
+   "tags": [
+    "social",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_Rail_Loop",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.001,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.011,
+   "tags": [
+    "social",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_Shield_Break",
+   "duration": 1.0667,
+   "frames": 33,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.14,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "block",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_Shield_Loop",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.009,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "block",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Idle_TalkingPhone_Loop",
+   "duration": 2.9333,
+   "frames": 89,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.006,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "social",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Indoor_Swing",
+   "duration": 8,
+   "frames": 241,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.343,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.379,
+    -0.33
+   ],
+   "groundFixM": -0.065,
+   "tags": [
+    "emote"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Kung_Fu_Punch",
+   "duration": 7.3,
+   "frames": 220,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 1.814,
+   "speedMps": 0,
+   "rootMotionM": [
+    -1.803,
+    -1.029
+   ],
+   "groundFixM": 0.017,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    31,
+    42,
+    83,
+    112
+   ],
+   "hitTimes": [
+    1.033,
+    1.4,
+    2.767,
+    3.733
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Large_step_then_high_kick",
+   "duration": 2,
+   "frames": 61,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.811,
+   "speedMps": 0,
+   "rootMotionM": [
+    -1.052,
+    0.886
+   ],
+   "groundFixM": 0.123,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    28,
+    48
+   ],
+   "hitTimes": [
+    0.933,
+    1.6
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "LayToIdle",
+   "duration": 1.5333,
+   "frames": 47,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.171,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "idle",
+    "react",
+    "getup"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Left_Jab_from_Guard",
+   "duration": 1.7667,
+   "frames": 54,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.6,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.001,
+    0.001
+   ],
+   "groundFixM": -0.089,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    14,
+    30
+   ],
+   "hitTimes": [
+    0.467,
+    1
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Lie_Down",
+   "duration": 1.5333,
+   "frames": 47,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.171,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "react",
+    "death"
+   ],
+   "source": "ual2, LayToIdle reversed"
+  },
+  {
+   "name": "Lunge_Roundhouse_Kick",
+   "duration": 3,
+   "frames": 91,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 1.569,
+   "speedMps": 0,
+   "rootMotionM": [
+    1.274,
+    1.933
+   ],
+   "groundFixM": 0.061,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    16,
+    27,
+    62,
+    68,
+    81
+   ],
+   "hitTimes": [
+    0.533,
+    0.9,
+    2.067,
+    2.267,
+    2.7
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Lunge_Spin_Kick",
+   "duration": 1.6333,
+   "frames": 50,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.535,
+   "speedMps": 0,
+   "rootMotionM": [
+    1.566,
+    1.578
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    28,
+    41
+   ],
+   "hitTimes": [
+    0.933,
+    1.367
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Melee_Hook",
+   "duration": 0.4667,
+   "frames": 15,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.184,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.066,
+    0.321
+   ],
+   "groundFixM": 0.08,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    8
+   ],
+   "hitTimes": [
+    0.267
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Melee_Hook_Rec",
+   "duration": 0.6,
+   "frames": 19,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.036,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.01,
+    -0.373
+   ],
+   "groundFixM": 0.078,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    11
+   ],
+   "hitTimes": [
+    0.367
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "NinjaJump_Idle_Loop",
+   "duration": 2,
+   "frames": 61,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.019,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "traversal",
+    "idle"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "NinjaJump_Land",
+   "duration": 1.2667,
+   "frames": 39,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.159,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.081,
+   "tags": [
+    "traversal"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "NinjaJump_Start",
+   "duration": 0.9667,
+   "frames": 30,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.156,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.084,
+   "tags": [
+    "traversal"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "One_Arm_Handstand",
+   "duration": 3.8333,
+   "frames": 116,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 1.027,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.008,
+    -0.07
+   ],
+   "groundFixM": 0.044,
+   "tags": [
+    "traversal",
+    "emote"
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "OverhandThrow",
+   "duration": 1.3333,
+   "frames": 41,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.358,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.077,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    11
+   ],
+   "hitTimes": [
+    0.367
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Parkour_Vault_with_Roll",
+   "duration": 2.1,
+   "frames": 64,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.729,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.022,
+    7.54
+   ],
+   "groundFixM": 0.044,
+   "tags": [
+    "traversal"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Rising_Flying_Kick",
+   "duration": 1.5,
+   "frames": 46,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.733,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.069,
+    2.435
+   ],
+   "groundFixM": 0.073,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    13,
+    27,
+    36
+   ],
+   "hitTimes": [
+    0.433,
+    0.9,
+    1.2
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Roll",
+   "duration": 1.1333,
+   "frames": 35,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.407,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.152,
+    1.968
+   ],
+   "groundFixM": 0.044,
+   "tags": [
+    "traversal"
+   ],
+   "source": "meshy:enforcer, cut from Run_Jump_and_Roll 2.02-3.15s"
+  },
+  {
+   "name": "Run_Jump_and_Roll",
+   "duration": 3.4333,
+   "frames": 104,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.543,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.182,
+    5.317
+   ],
+   "groundFixM": 0.044,
+   "tags": [
+    "traversal"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Running",
+   "duration": 0.6333,
+   "frames": 20,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.049,
+   "speedMps": 5.814,
+   "speedFrom": "feet",
+   "footPhase": 0.211,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.055,
+   "tags": [
+    "locomotion"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Shield_Dash",
+   "duration": 1.1,
+   "frames": 34,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.308,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.078,
+    -0.01
+   ],
+   "groundFixM": 0.13,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    7
+   ],
+   "hitTimes": [
+    0.233
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Shield_OneShot",
+   "duration": 0.8333,
+   "frames": 26,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.049,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.069,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    5
+   ],
+   "hitTimes": [
+    0.167
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sit_Chair_Loop",
+   "duration": 1,
+   "frames": 31,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "social",
+    "sit"
+   ],
+   "source": "ual2-synthetic (UAL direction pose)"
+  },
+  {
+   "name": "Slide_Exit",
+   "duration": 0.5,
+   "frames": 16,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.168,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "traversal"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Slide_Loop",
+   "duration": 2,
+   "frames": 61,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.033,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "traversal"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Slide_Start",
+   "duration": 0.8333,
+   "frames": 26,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.108,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.074,
+   "tags": [
+    "traversal"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sneaky_Walk_inplace",
+   "duration": 2.8667,
+   "frames": 87,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.244,
+   "speedMps": 0.492,
+   "speedFrom": "feet",
+   "footPhase": 0.477,
+   "rootMotionM": [
+    -0.001,
+    0.001
+   ],
+   "groundFixM": 0.051,
+   "tags": [
+    "locomotion"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Step_in_High_Kick",
+   "duration": 1.3,
+   "frames": 40,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.757,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.001,
+    0.002
+   ],
+   "groundFixM": 0.101,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    15
+   ],
+   "hitTimes": [
+    0.5
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Step_Step_Turn_Kick",
+   "duration": 2,
+   "frames": 61,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 1.175,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.843,
+    0.447
+   ],
+   "groundFixM": 0.116,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    38,
+    48
+   ],
+   "hitTimes": [
+    1.267,
+    1.6
+   ],
+   "source": "meshy:valkyrie"
+  },
+  {
+   "name": "Sword_Block",
+   "duration": 1.2333,
+   "frames": 38,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.119,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.072,
+   "tags": [
+    "block"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Dash",
+   "duration": 1.5667,
+   "frames": 48,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.189,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.109,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    11
+   ],
+   "hitTimes": [
+    0.367
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Heavy_Combo",
+   "duration": 4.3333,
+   "frames": 131,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.48,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.002,
+    0.001
+   ],
+   "groundFixM": 0.09,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    20,
+    40,
+    60,
+    77
+   ],
+   "hitTimes": [
+    0.667,
+    1.333,
+    2,
+    2.567
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Regular_A",
+   "duration": 0.4333,
+   "frames": 14,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.162,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    -0.045,
+    -0.024
+   ],
+   "groundFixM": 0.114,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    10
+   ],
+   "hitTimes": [
+    0.333
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Regular_A_Rec",
+   "duration": 0.9667,
+   "frames": 30,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.085,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.107,
+   "tags": [
+    "attack"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Regular_B",
+   "duration": 0.5333,
+   "frames": 17,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.109,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.035,
+    -0.012
+   ],
+   "groundFixM": 0.108,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    8
+   ],
+   "hitTimes": [
+    0.267
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Regular_B_Rec",
+   "duration": 1.0333,
+   "frames": 32,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.103,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.066,
+   "tags": [
+    "attack"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Regular_C",
+   "duration": 2,
+   "frames": 61,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.209,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.098,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    20
+   ],
+   "hitTimes": [
+    0.667
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Sword_Regular_Combo",
+   "duration": 3,
+   "frames": 91,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.225,
+   "upperOk": true,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.114,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    10,
+    23,
+    37,
+    50
+   ],
+   "hitTimes": [
+    0.333,
+    0.767,
+    1.233,
+    1.667
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "TreeChopping_Loop",
+   "duration": 0.9667,
+   "frames": 30,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.073,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.077,
+   "tags": [
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Triple_Combo_Attack",
+   "duration": 4.3333,
+   "frames": 131,
+   "loop": false,
+   "inPlace": false,
+   "excursionM": 0.93,
+   "speedMps": 0,
+   "rootMotionM": [
+    0.275,
+    2.095
+   ],
+   "groundFixM": -0.03,
+   "tags": [
+    "attack"
+   ],
+   "hitFrames": [
+    28,
+    48,
+    68
+   ],
+   "hitTimes": [
+    0.933,
+    1.6,
+    2.267
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Walk_Carry_Loop",
+   "duration": 2,
+   "frames": 61,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.063,
+   "speedMps": 0.654,
+   "speedFrom": "feet",
+   "footPhase": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.082,
+   "tags": [
+    "locomotion",
+    "work"
+   ],
+   "source": "ual2"
+  },
+  {
+   "name": "Walking",
+   "duration": 1.0333,
+   "frames": 32,
+   "loop": true,
+   "inPlace": true,
+   "excursionM": 0.064,
+   "speedMps": 1.67,
+   "speedFrom": "feet",
+   "footPhase": 0.194,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.046,
+   "tags": [
+    "locomotion"
+   ],
+   "source": "meshy:enforcer"
+  },
+  {
+   "name": "Yes",
+   "duration": 2.5,
+   "frames": 76,
+   "loop": false,
+   "inPlace": true,
+   "excursionM": 0.014,
+   "speedMps": 0,
+   "rootMotionM": [
+    0,
+    0
+   ],
+   "groundFixM": 0.068,
+   "tags": [
+    "emote",
+    "social"
+   ],
+   "source": "ual2"
+  }
+ ]
+}

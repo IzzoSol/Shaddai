@@ -38,6 +38,10 @@
     // hub-dock held back: the harbor already has a dock + boats there (probe-overlap); it goes to the ocean farm field next
   ];
 
+  // owner 2026-10-15: the two doorless fal buildings in the middle of SHADDAI City (shop + arcade) are gone by default -
+  // they had no doors/interiors and blocked the plaza. ?falbld=1 brings them back (models + colliders).
+  if (!(typeof location !== 'undefined' && /[?&]falbld=1/.test(location.search))) ITEMS = ITEMS.filter(function (it) { return it.id !== 'bld-shop' && it.id !== 'bld-arcade'; });
+
   // pre-measured footprint radius (units) for colliders, from each model's real size and aspect
   var ASPECT = { 'bld-shop': 1.0, 'bld-arcade': 0.96, 'prop-neon-tree': 1.22, 'prop-signpost': 0.62, 'prop-crate': 1.4, 'hub-dock': 1 };   // width/height, measured in-world (probe-falprops)
   ITEMS.forEach(function (it) {

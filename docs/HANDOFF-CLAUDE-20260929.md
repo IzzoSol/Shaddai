@@ -1,0 +1,49 @@
+# HANDOFF — session 2026-09-28/29 (branch `feat/world3d`, nothing pushed)
+
+Read first: `docs/WORLD-COMPLETION-PLAN.md`, then this. The owner's idea banks (fluid, "take the best") live in the memory folder:
+`project_navi_and_forge_direction`, `project_economy_and_homes_direction`, `reference_academy_100_skills_ideas` (catalogs A+B), `project_hoverskate_game`, `reference_home_kit_items_ideas`, `project_agent_bots_roster`, `project_pikadon_oracle_redo_refs`.
+Owner rules that still apply: no lag / smooth / no long loads; confirm before deleting or spending; SPARKS closed-loop (no cash-out); futuristic only; one heavy job at a time (8 GB laptop, C: nearly full).
+
+## Shipped this session (all committed, headless-verified unless noted)
+| Area | Files | Notes |
+|---|---|---|
+| **NAVI** command center | `public/world-navi.js`, `docs/NAVI.md` | Key **Y** or `` ` ``. 12 modules + swivel + KPIs. Map harvests real Colosseum door + train stations. Plots tab = respawn spots. Bots tab = 10-bot roster. Market/Wallet never fake payments (PayBox hook or "not connected"). Slots: Dashboard/SkinForge/AutoPost/Aura/Terminal are `SOON`. |
+| **Colosseum floors** | `world-colosseum-floors.js` | `arena.setField('water'|'lava'|'void'|'grass'|'ice')`. Water = 3v3 galley battle (cannons, fire, sinking, rematch). Not walkable-on yet (visual + AI). |
+| **Colosseum Underground** | `world-colosseum-metro.js` (+ hLocal/contains edits in `world-colosseum.js`) | Platform hall east of the lobby, lobby<->platform elevator (E), registers a maglev stop at load (unlock: 3 districts or own a room, `?metro=1` forces). Real-game verified. |
+| **Hoverskate tricks** | `world-hoverboards.js`, `world-hoverboard.js`, `docs/RIDERS.md` | Barrel roll (Z/C), named combos, `setMode('battle'|'hoverskate')` (battle = no points, moves). 14/14 tests. Park, race track, foil mode NOT built (design bank in memory). |
+| **Survival** | `world-survival.js`, test | Dive X / surface Space, breath meter, drowning, death -> respawn spots (home>plot>office>bed>Bazaar). No swim animation yet. |
+| **Realm homes** | `world-realm-homes.js`, `docs/REALM-HOMES.md`, `realm-homes-preview.html` | 5 ref-built kits, instanced (<=33 draw calls), enterable, themed interiors, beds = respawn points. |
+| **Sitting** | `world-sit.js` | E on sofa/bench/stool/chair (all v3 interiors). Logic written + syntax OK; the real-game run was still in flight at handoff (see "Verify first"). |
+| **Agent bots** | `world-bots.js`, `tools/tests/world-bots.test.cjs` | 10 bots (5 humanoid, 5 wheeled), 1-of-2 starter, rest earned; PvP rule; destroyed-body rebuild; lagging follower; bodies code-built for SCRAP/LANKY/UNI-9. 8/8 rules tests. |
+| **Agents** | `public/assets/agents/PIKADON.glb`, `ORACLE.glb`, refs in `fal-assets/production/refs/agent-{pikadon,oracle}` | Redone from owner refs (Meshy v6). ORACLE needed a pedestal-free ref. Trailers still show the OLD models -> recut. |
+| **Trailers** | `C:\Users\Brittany\Videos\SHADDAI-trailers\shaddai-{arctic,dragons}.mp4`, `mk.sh` | 30 s each. |
+
+## Verify first (next session)
+1. `node tools/tests/world-bots.test.cjs`, `world-survival.test.cjs`, `world-hoverboards.test.cjs` (all green at handoff).
+2. Real-game sit + bots run (`tools/_combo.cjs` pattern: wait for `__realmHomes && WorldSit && WorldBots && __botZone`, enter a pod-home via `__interiorsV3.enter(id)`, `WorldSit.sitNearest()`). SwiftShader is slow: allow 5+ min.
+3. One human look in a normal browser: Navi (Y), a realm village, sit on a sofa, the Colosseum lobby elevator + metro, `colosseum-viewer.html` naval battle.
+
+## Not done, in the owner's priority order (with the shortest path)
+1. **Agent buildings in the world** (TURTLE gallery, ORACLE observatory, QUILL library): the interior rooms exist in `world-interiors.js` (v2 codes `TURTLE/ORACLE/QUILL`, propFn galleries/orrery/scriptorium) and `bld-neon-observatory.glb` exists. Missing = exterior placement on the map at the right spots + walkable entry + the **submission surface**: v3 `gallery` recipe already gives `SLOT_GALLERY_01..08` frames (use marker `SLOT_GALLERY_n`); wire each slot to "owner uploads art / lists a book or track / NFT showcase". Backend to reuse: `backend/bazaar-routes.js` (`/api/bazaar/list-item`, `/buy`), `backend/cosmetics-routes.js`, `economy-routes.js`.
+2. **Ad space**: `sc-ad-pylon` fabric instances already exist (stay open, no interior). Add `AdSlots` = {slotId, ownerId, imageHash, until, priceSparks, review:'pending|ok'}; buy via `economy-service.spend`; PIKADON reviews the image before it renders on the pylon texture; Navi Market tab "Ad space". Building "swap" = later (skip).
+3. **PayBox / chain readiness (Hedera)**: keep "no keys in game, addresses only". Add a `ChainAdapter` interface {attest(kind, hash, meta), mintNFT(meta), verifyOwner(account)} with a **Hedera** implementation (HCS topic for receipts = the "receipts are a scoreboard" idea; HTS for NFT showcases) and a `noop` default. Sparks stay off-chain soft currency. Existing: `backend/paybox-routes.js`, `paybox-guard.js`, `wallet-routes.js` (nonce/session/debit), `x402-*`, `reputation-routes.js`.
+4. **Commerce backend**: `backend/economy-service.js` is the ONLY Sparks writer (closed loop, integer, atomic, idempotent; routes `/balance /inventory /catalog /catalog/purchase /grant /spend`). Add on top (through the service, never around it): event **escrow/settle** (entry fees -> pot -> winner, burn %, referral %), tickets (shop Ticket object), and an `ITEMS` table. `backend/arena/*` (matchmaker/referee/rulesets rps, hi-lo, trivia, chess) is a real agent-vs-agent engine to reuse for Colosseum brackets.
+5. **Colosseum events**: signups, brackets, brawls for Sparks/PayBox, wagers later. Navi Sparks module has demo events only.
+6. **Hoverskate park + race track + foil**: reference image in memory; needs the vehicle art the owner promised. All numbers into one `HOVERSKATE_TUNING` object.
+7. **Polish** (owner asked; repos cloned to the session scratchpad, will be gone): `majidmanzarpour/threejs-game-skills` -> game-feel recipes worth porting: trauma-based screenshake, hitstop, FOV punch, impact flash (`skills/threejs-gameplay-systems/references/game-feel.md`), fresnel rim / dissolve / wind-sway `onBeforeCompile` patterns + sky dome + post chain (`skills/threejs-aaa-graphics-builder/references/shader-cookbook.md`). Existing hook to upgrade: `window.__dragonShake` (host line ~3726, applied ~5349). **Night fire**: `_v4Sky.stats().night` (0..1) is the night factor; plan = one instanced additive flame-card mesh + one ember mesh (no lights: the scene already carries 53), campfires at realm homes, braziers at the Colosseum door. `heygen-com/hyperframes` is an HTML->video framework (useful for the trailers, not the game).
+8. **Cosmetics / furniture / shields / potions / farm**: ITEMS table + farm beds + kitchen (see `reference_home_kit_items_ideas`); interiors v3 furniture library is the place to add pieces.
+9. Remaining bot art (7 designs need owner refs), first-person view (later), swim rig/animation, more realm homes (crystal/ember/void) + castles, trailers recut with new PIKADON/ORACLE.
+
+## Dev notes
+- Test pages: `public/colosseum-viewer.html` (arena, `__viewer.look(...)`), `public/realm-homes-preview.html`.
+- Headless: puppeteer needs `executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe'`, args `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`. Serve `public/` with `python -m http.server 3013 --directory public`.
+- `git` here shows the whole repo dirty (other sessions' files); commit only your paths.
+- Agent GLB build: `ONLY=pikadon,oracle node tools/anim/build-agent-glbs.mjs` (meshopt+webp, baked idle/walk/run).
+
+## Addendum (later the same session)
+- **Council buildings already exist in-world**: QUILL Library, ORACLE Esoteric Wing, TURTLE Museum are v2 portal buildings (`world-layout.js` council ring, rooms in `world-interiors.js`). The missing piece was USES, now built as a data + Navi layer:
+  - `public/world-showcase.js`: submit **art -> TURTLE**, **book -> QUILL**, **track / NFT showcase -> ORACLE**; review-first (nothing lists or sells before approval); Sparks sale split burn 5% / house 5% / creator 90% (tunable); proof required (file hash or https link); **ad space** (8 slots, 40 Sparks/day, image reviewed before it may draw); `WorldChain` adapter (default honest DRYRUN; `enable('hedera'|'solana')` calls server routes; no keys client-side). 6/6 tests. Navi Market shows listings, "Submit ..." rows and ad slots. Real-game check: script loads; the Navi page render was verified headless.
+  - Docs: `docs/CHAIN-READINESS.md`, `docs/server-stubs/chain-routes.example.js` (NOT mounted).
+- **Still to do for these buildings**: draw approved art on the museum frames / approved ad images on the pylons (needs the frame/pylon mesh handles), show owned items in the Navi Inventory, and mount the server routes + moderation queue (PIKADON review) in `Shaddai/backend`. Local mode stores in `localStorage shd_showcase_v1` (dev only); production must go through `economy-service`.
+- Sitting is verified by `tools/tests/world-sit.test.cjs` (7/7). A real-game visual of a seated avatar and of bot bodies has NOT been seen (headless frame loop is too slow) - look in a normal browser.
+- Left for next session (owner asked, not built): Hoverskate park + race track + foil + competitions rigs (need vehicle art), night fire + juice polish (plan above), textures/shading pass to make homes and buildings less boxy (homes are code-built first passes; a texture/normal-map pass and richer silhouettes are the next quality step; the threejs-game-skills `threejs-aaa-graphics-builder` references are the guide), agent buildings' exteriors polish, cosmetics/furniture/farm data (`ITEMS` table).

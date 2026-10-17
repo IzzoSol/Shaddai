@@ -1,0 +1,17 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bot bodies preview</title><style>html,body{margin:0;background:#0b1016;overflow:hidden;font:12px monospace;color:#9fd}#i{position:fixed;left:8px;top:6px}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js"}}</script></head><body><div id="i">bots: scrap · lanky · unicycle · analyst · casino — clips: idle / walk / wave / talk (drag = orbit)</div>
+<script src="/world-bot-bodies.js"></script>
+<script type="module">
+import * as THREE from 'three';
+const r=new THREE.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);document.body.appendChild(r.domElement);
+const s=new THREE.Scene();s.background=new THREE.Color(0x2a3540);s.add(new THREE.HemisphereLight(0xffffff,0x445566,1.7));const d=new THREE.DirectionalLight(0xfff2d8,2.4);d.position.set(3,6,5);s.add(d);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(9,48),new THREE.MeshStandardMaterial({color:0x33404a,roughness:0.9}));floor.rotation.x=-Math.PI/2;s.add(floor);
+const kinds=window.WorldBotBodies.KINDS, bots=[];
+kinds.forEach((k,i)=>{const b=window.WorldBotBodies.build(THREE,k);b.root.position.set((i-2)*1.9,0,0);s.add(b.root);const mx=new THREE.AnimationMixer(b.root);bots.push({b,mx});});
+window.__bots=bots;window.__play=(clip)=>bots.forEach(o=>{o.mx.stopAllAction();const c=o.b.clips[clip]||o.b.clips.idle;o.mx.clipAction(c).play();});window.__play('idle');
+const cam=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.1,100);let yaw=0.25,pitch=0.15,dist=9.5;const place=()=>{cam.position.set(Math.sin(yaw)*dist,1.5+pitch*6,Math.cos(yaw)*dist);cam.lookAt(0,1.1,0);};place();
+let drag=false,lx=0;addEventListener('pointerdown',e=>{drag=true;lx=e.clientX});addEventListener('pointerup',()=>drag=false);addEventListener('pointermove',e=>{if(drag){yaw-=(e.clientX-lx)*0.006;lx=e.clientX;place();}});
+addEventListener('keydown',e=>{const m={Digit1:'idle',Digit2:'walk',Digit3:'run',Digit4:'wave',Digit5:'talk'}[e.code];if(m)window.__play(m);});
+const clock=new THREE.Clock();(function loop(){requestAnimationFrame(loop);const dt=clock.getDelta();bots.forEach(o=>{o.mx.update(dt);o.b.blink&&o.b.blink(clock.elapsedTime);});r.render(s,cam);})();
+window.__ready=1;window.__step=(t)=>{bots.forEach(o=>{o.mx.setTime(t);o.b.root.updateMatrixWorld(true);});r.render(s,cam);};
+</script></body></html>

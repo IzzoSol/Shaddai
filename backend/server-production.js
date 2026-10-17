@@ -2109,6 +2109,8 @@ app.use('/api', require('./dashboard-patches'));                      // P0 patc
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
 app.use('/api/mp', require('./multiplayer'));                         // multiplayer presence + chat relay (poll-based, in-memory)
+app.use('/api/navi', softAuth, require('./navi-routes').makeRouter());
+app.use('/api/home-deeds', softAuth, require('./home-deed-routes').makeRouter());   // buy a realm-town home with Sparks (server-side deed; no NFT, no cash)   // Navi backend: tiered ZEROX signals, server-side name / event signup / class enrolment (2026-10-16)
 app.use('/api/economy', softAuth, require('./economy-routes')());     // Sparks ledger (append-only, idempotent; Postgres or atomic dev store) — economy-routes exports a factory; must be CALLED; softAuth sets req.userId so resolveUserId() stops trusting caller-supplied body/query userId once authenticated
 // Seed the shop catalog once (idempotent; only if empty) so /api/economy/catalog has items.
 try { require('./catalog-seed').seedCatalog(require('./economy-service').getDefault(), { onlyIfEmpty: true }).catch(e => console.error('[catalog-seed]', e.message)); } catch (e) { console.error('[catalog-seed]', e.message); }
