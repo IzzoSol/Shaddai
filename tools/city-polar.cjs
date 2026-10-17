@@ -41,6 +41,16 @@ const TOW = ['sc-tower-spire', 'sc-tower-slab', 'sc-tower-setback'], SMALL = ['s
 let nt = 0, ns = 0; cells.filter((c) => c.red && !blocked(c.x, c.y, 40)).forEach((c, k) => { const dr = (c.r === 625 ? 65 : 65) / 2;
   [[-1, -1], [1, 1], [-1, 1], [1, -1]].forEach(([si, sj], q) => { const p = P(c.r + si * dr, c.b + sj * STEP / 4), h = Math.abs(Math.sin(p[0] * 12.9898 + p[1] * 78.233) * 43758.5453) % 1, tower = h < 0.5;
     add(tower ? TOW[Math.floor(h * 6) % 3] : SMALL[Math.floor(h * 7) % 3], p[0], p[1], tower ? 26 : 22, tower ? 'tower' : 'compact', 'towers', c.b + 180); tower ? nt++ : ns++; }); });   // Shaddai towers + Shaddai buildings, randomized (owner)
+// SYMMETRY (owner): every office/home cell is mirrored into all 4 quadrants (b, 360-b, 180-b, 180+b); SW = homes
+const used = new Set(cells.filter((c) => c.used).map((c) => c.r + '|' + c.b));
+items.filter((i) => i.role === 'office' || i.role === 'home').slice().forEach((i) => { const r = Math.round(Math.hypot(i.x_m, i.y_m)), b = brg(i.x_m, i.y_m);
+  [360 - b, 180 - b, 180 + b].forEach((bb) => { bb = ((bb % 360) + 360) % 360; const c = cells.find((q) => Math.abs(q.r - r) < 5 && Math.abs(((q.b - bb + 540) % 360) - 180) < 1);
+    if (!c || c.red || used.has(c.r + '|' + c.b) || blocked(c.x, c.y, 30)) return; used.add(c.r + '|' + c.b); const q = quad(c.x, c.y), home = q === 'residential';
+    add(home ? 'sc-storefront-s' : 'sc-office-mid', c.x, c.y, 44, home ? 'home' : 'office', q, c.b + 180); }); });
+// NOTHING ON A ROAD: drop any building whose footprint touches a road segment (district centrepieces excepted - they sit inside their circle road)
+const segDist = (x, y, r) => { const dx = r.x1 - r.x0, dy = r.y1 - r.y0, t = Math.max(0, Math.min(1, ((x - r.x0) * dx + (y - r.y0) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(x - r.x0 - dx * t, y - r.y0 - dy * t); };
+for (let k = items.length - 1; k >= 0; k--) { const it = items[k]; if (it.role === 'district-hero') continue; const half = it.len_m * 0.42;
+  if (roads.some((r) => segDist(it.x_m, it.y_m, r) < r.w / 2 + half)) items.splice(k, 1); }
 const plots = V8.plots.filter((p) => !blocked(p.x_m, p.y_m, 40));
 const L = Object.assign({}, V8, { version: 14, note: 'owner final grid drawing, geometric polar grid (tools/city-polar.cjs)', items, roads, plots, districts: DIST, park: PARK, counts: { items: items.length, roads: roads.length, plots: plots.length } });
 fs.writeFileSync(F, JSON.stringify(L, null, 1));

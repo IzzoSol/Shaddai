@@ -119,50 +119,6 @@
    "role": "district-secondary"
   },
   {
-   "key": "sc-storefront-s",
-   "x_m": -338.7,
-   "y_m": -817.6,
-   "len_m": 44,
-   "yaw": 22.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "residential",
-   "role": "home"
-  },
-  {
-   "key": "sc-storefront-s",
-   "x_m": -388.4,
-   "y_m": -937.7,
-   "len_m": 44,
-   "yaw": 22.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "residential",
-   "role": "home"
-  },
-  {
-   "key": "sc-storefront-s",
-   "x_m": -288.9,
-   "y_m": -697.5,
-   "len_m": 44,
-   "yaw": 22.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "residential",
-   "role": "home"
-  },
-  {
-   "key": "sc-storefront-s",
-   "x_m": -239.2,
-   "y_m": -577.4,
-   "len_m": 44,
-   "yaw": 22.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "residential",
-   "role": "home"
-  },
-  {
    "key": "sc-storefront-l",
    "x_m": -459.6,
    "y_m": -599,
@@ -227,50 +183,6 @@
    "by_height": false,
    "cluster": "residential",
    "role": "home"
-  },
-  {
-   "key": "sc-office-mid",
-   "x_m": 388.4,
-   "y_m": -937.7,
-   "len_m": 44,
-   "yaw": 337.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "trade",
-   "role": "office"
-  },
-  {
-   "key": "sc-office-mid",
-   "x_m": 338.7,
-   "y_m": -817.6,
-   "len_m": 44,
-   "yaw": 337.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "trade",
-   "role": "office"
-  },
-  {
-   "key": "sc-office-mid",
-   "x_m": 288.9,
-   "y_m": -697.5,
-   "len_m": 44,
-   "yaw": 337.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "trade",
-   "role": "office"
-  },
-  {
-   "key": "sc-office-mid",
-   "x_m": 239.2,
-   "y_m": -577.4,
-   "len_m": 44,
-   "yaw": 337.5,
-   "lift_m": 0,
-   "by_height": false,
-   "cluster": "trade",
-   "role": "office"
   },
   {
    "key": "sc-office",
@@ -1866,6 +1778,28 @@
    "by_height": false,
    "cluster": "towers",
    "role": "compact"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -817.6,
+   "y_m": -338.7,
+   "len_m": 44,
+   "yaw": 67.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "home"
+  },
+  {
+   "key": "sc-storefront-s",
+   "x_m": -937.7,
+   "y_m": -388.4,
+   "len_m": 44,
+   "yaw": 67.5,
+   "lift_m": 0,
+   "by_height": false,
+   "cluster": "residential",
+   "role": "home"
   }
  ],
  "roads": [
@@ -15537,7 +15471,7 @@
   }
  ],
  "counts": {
-  "items": 169,
+  "items": 163,
   "roads": 1501,
   "plots": 159
  },
