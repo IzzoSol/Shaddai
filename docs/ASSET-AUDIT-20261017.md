@@ -83,18 +83,133 @@ Every character exported 5-7 ways: -mesh, -rigged, -walking, -running, -action, 
 - `public/assets/forge-models/` — old forge art (superseded)
 - `public/assets/council/` — old council (superseded by agents/)
 
-## 4. FOR THE OPUS SESSION (Blender rigging prep)
+## 4. ASSET PLACEMENT MAP — WHERE EVERYTHING GOES IN THE WORLD
 
-- **Player + council**: `_m6/*-rigged.glb` or `*council/*-rigged.glb`
-- **NPC types**: gabi, engineer, mage, scout, warrior, leadr
-- **Mounts**: already in `public/assets/mounts/`
-- **Race ships**: in `public/assets/kits/shaddai_ship_*_v01.glb`
-- **Hoverboards**: in `public/assets/kits/shaddai_hoverboards_v02.glb`
-- **World landmarks**: `fal-assets/production/ship/*.glb`
-- **Dragon**: `fal-assets/world/assets/volcano-dragon/volcano-dragon-mesh.glb`
-- **Viewer**: `localhost:3014/public/__viewer.html` to inspect any model
+### THE WORLD (Seed of Life geometry)
+```
+                 [ARCTIC] (N-NW)
+              ·   ·   ·   ·
+           [VOID]     [MEADOW]
+            ·    THE GRID    ·
+         [DARKFOREST]  [OCEAN/HARBOR]
+              ·   ·   ·   ·
+           [VOLCANO/FORGE]  [SUBURB]
+                 [DESERT] (S-SW)
+```
+Center: SHADDAI (The Source) at [0,0]. 6 agents on a hexagon at r=260.
+10 realm stations on the maglev ring. 4 districts on the diagonals at r~800m.
 
-## 5. RESULT AFTER CLEANUP
+### A. THE GRID — CENTER CITY
+
+| Asset | Where |
+|-------|-------|
+| 7 council agents | Plaza hexagon: center + 6 at r=260, 60° apart |
+| shaddai_race_hq_v01.glb | [1737, -303] beside Dragon Gate |
+| 5 race ships | Race HQ showroom + on the circuits |
+| shaddai_hoverboards_v02.glb | Mount stores (10 board designs) |
+| shaddai_colosseum_lobby_v01.glb | Colosseum entrance |
+| shaddai_hover_league_v01.glb | Colosseum arena (Hover League mode) |
+| shaddai_athenaeum_rotunda_v01.glb | Athenaeum district NW [-512, 709] |
+| shaddai_furniture_kit_v01.glb | All building interiors |
+| shaddai_bot_grok/muse_v01.glb | Shop counters, offices |
+| shaddai_maglev_kit_v01.glb | Ring stations at r=2829m |
+| shaddai_sign_kit_v01.glb | District signs throughout |
+| shaddai_race_kit_v01.glb | Track dressing (gates, barriers) |
+| Tower kits (spire/slab/setback) | 24 landmark towers from grid-city-v4.json |
+
+### B. THE 4 DISTRICTS (diagonals, r ~800m)
+
+| District | Direction | Uses |
+|----------|-----------|------|
+| ACADEMY | NW | Athenaeum rotunda, tech labs, library interiors |
+| FORGE | SW | Workshops, upgrade stations, forge fires |
+| TRADE | NE | Markets, shops, auction house |
+| RESIDENTIAL | SE | Homes, gardens, parks |
+
+### C. THE 10 REALM STATIONS (maglev ring, r ~2829m)
+
+| Realm | Station GLB | Town GLB | Extra assets |
+|-------|-------------|-----------|--------------|
+| grid | station_grid_v01 | town_grid_v01 | — |
+| void | station_void_v01 | town_void_v01 | rift gate |
+| desert | station_desert_v01 | town_desert_v01 | desert_homes_v01, sand arches |
+| volcano | station_volcano_v01 | town_volcano_v01 | ember vents, lava rocks, **VOLCANO DRAGON** |
+| forest | station_forest_v01 | town_forest_v01 | forest_homes_v01, moss, mushrooms |
+| suburb | station_suburb_v01 | town_suburb_v01 | — |
+| meadow | station_meadow_v01 | town_meadow_v01 | rune arches, reed clumps |
+| ocean | station_ocean_v01 | town_ocean_v01 | naval_v01, water_link_v01, coral |
+| darkforest | station_darkforest_v01 | town_darkforest_v01 | dead trees, **CASTLE SIEGE** |
+| arctic | station_arctic_v01 | town_arctic_v01 | ice formations |
+
+Shared: shaddai_realm_props_v01.glb (universal props) + shaddai_transit_kit_v01.glb (gates).
+
+### D. REEF CITIES (bays southwest)
+
+27 reef GLBs (hub, atrium, harbor, station, sets, homes, shops, elevator, tube) distributed between Reef A and Reef B, connected by the glass tube train to the shore station.
+
+### E. MOUNTS
+
+| Mount | GLB | Where to get it |
+|-------|-----|----------------|
+| Sky Hawk | hawk.glb | Harbor realm (free) |
+| Glacier Mammoth | mammoth.glb | Arctic realm |
+| Forge Bull | bull.glb | Volcano forge, meadow |
+| Canopy Gorilla | gorilla.glb | Darkforest, suburb |
+
+### F. VEHICLES
+
+| Vehicle | GLB | Where |
+|---------|-----|-------|
+| 5 race ships | shaddai_ship_*_v01.glb | Race HQ + circuits |
+| 10 hoverboard designs | shaddai_hoverboards_v02.glb | Mount stores |
+| Catamaran | veh-ocean-catamaran.glb | circling the reef |
+| Superyacht | veh-ocean-superyacht.glb | docked near reef |
+| Submarine | veh-ocean-submarine.glb | half-sunk near reef |
+| Skiff | veh-skiff.glb | ocean realm |
+| Mining powerarmor | vehicle-mining-powerarmor | volcano (fal source) |
+| Monowheel mech | veh-monowheel-mech | city (fal source) |
+
+### G. CHARACTERS — WHO GOES WHERE
+
+| Character | Source | Game role |
+|-----------|--------|-----------|
+| SHADDAI | _m6/shaddai-rigged.glb | The Source at [0,0] |
+| ZEROX | _m6/zerox-rigged.glb | Plaza agent |
+| NEXUS | _m6/nexus-rigged.glb | Plaza agent |
+| ORACLE | oracle-council-rigged.glb | Plaza agent |
+| TURTLE | _m6/turtle-rigged.glb | Plaza agent |
+| QUILL | _m6/quill-rigged.glb | Plaza agent |
+| PIKADON | pikadon-rigged.glb | Plaza agent |
+| VILLAIN | VILLAIN.glb | Antagonist |
+| Gabi | gabi-rigged.glb | NPC: suburb/meadow towns |
+| Engineer | engineer-rigged.glb | NPC: Race HQ mechanic, forge |
+| Mage | mage-rigged.glb | NPC: Athenaeum, void realm |
+| Scout | scout-rigged.glb | NPC: darkforest, desert camps |
+| Warrior | warrior-rigged.glb | NPC: colosseum, arenas |
+| Leadr | leadr-rigged.glb | NPC: district leader |
+| Shaddai v2 | shaddai-v2-rigged.glb | Alt player character |
+
+### H. SPECIAL / SET PIECES
+
+| Asset | Where |
+|-------|-------|
+| volcano-dragon-mesh.glb | Volcano realm — the dragon |
+| castle-siege-mesh.glb | Darkforest realm — castle |
+| shaddai_hoverskate_kit_v01.glb | Hoverskate park at [-880, 0] |
+| shaddai_park_dress_v01.glb | Park dressing at the plaza |
+| shaddai_weapons_v01.glb | Weapon displays in shops |
+| iodine-mesh.glb | Void realm creature |
+
+## 5. FOR THE OPUS SESSION (Blender + rigging)
+
+1. Load: `docs/blender/shaddai_world_20261015.blend`
+2. The placement map above IS the world — every coordinate and realm assignment
+3. Use the viewer (`localhost:3014/public/__viewer.html`) to inspect any GLB
+4. For new buildings: fal-assets world/assets/*-mesh.glb → compress → place at the coordinates above
+5. For new characters: fal-assets _m6/*-rigged.glb → retarget with agent-clips.glb
+6. For rigging fixes: the shared animation library (75 clips) already works on all council rigs — verify with the agents-not-tpose test
+
+## 6. RESULT AFTER CLEANUP
 
 | Metric | Before | After |
 |---------|--------|-------|
