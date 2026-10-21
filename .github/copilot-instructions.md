@@ -179,3 +179,37 @@ The owner is building this while working a regular job and is newer to code. Tha
 - **Reduce before adding.** The product already sprawls across 109 pages. Consolidation is usually worth more than a new surface.
 - **Say plainly what is broken.** Never describe an unfinished thing as if it works.
 - **Small verifiable steps** beat large autonomous runs.
+---
+
+## 10. The society layer and the master plan (added 2026-10-20)
+
+**Read `docs/PLAN-SOCIETY-LAYER-20261020.md` before starting any work.** It is the master plan: the verified audit of what actually runs, a 27-item gap register with severity and evidence, four work tracks (A society layer, B Grok training + forging, C the 3D realm, D money), the operating doctrine, and the status table in section 11.
+
+### What is live right now (measured 2026-10-20)
+
+- **Headless gateway** — `http://127.0.0.1:3000/api/headless/*`, mounted in `Shaddai-Beta/backend/server-production.js`. A REST twin of the MCP so bots, n8n, curl, cron and Telegram get the same surface. Endpoints: `/health` `/tools` `/tools/:name` `/call` `/skills` `/manifest` `/workflows` `/workflow/run` `/openapi.json`.
+- **Tool registry** — 1,074 tools (971 hosted by the gateway plus ~103 proxied to the live MCP over stdio), 1,633 workflows, 1,356 n8n exports, 270 curated skill playbooks over a 3,022-skill catalog, 16 knowledge frameworks.
+- **Workflow integrity** — every workflow declares its external requirements (`requires`), and `workflow_list` plus the gateway both show `— NEEDS: ...`. 1,536 of 1,633 are fully self-contained. **Zero silent failures.** This is the house standard for honesty.
+
+### Known gaps in the gateway (fix them, do not build around them)
+
+These were found by measuring the running system, not by reading docs:
+
+1. An unknown tool returns **HTTP 200 with `ok:true`** and `"Unknown tool: X"` in the body. It must be `404` plus `ok:false`. (plan A-1)
+2. `/tools` lists only the 971 hosted tools. The ~103 proxied MCP tools are callable but **invisible**. (plan A-3)
+3. `/manifest` teaches bots to call `health_check` and `intent_route` — **neither exists** — and its `endpoints` are double-prefixed (`/api/headless/api/headless/call`). (plan A-2)
+4. `/openapi.json` has summary strings and **no schemas**. (plan A-3)
+5. The same **270 skill playbooks are implemented twice** — `shaddai-mcp/skills-tools.js` and `shaddai-mcp/mcp-unified.js`. One file must own them. (plan A-4)
+
+### Pricing — one source of truth
+
+`prices.json` (in `shaddai-n8n`) is the master price plan and is the only place prices live. **The tier numbers in section 6 above are stale and the tier names disagree across three documents.** Reconciling them changes live Stripe Payment Links, so it needs explicit owner approval — see plan package **D-1**. Until that is approved: never hardcode a price, always read `prices.json`.
+
+### The 3D world has no MCP surface yet
+
+Nothing in the 1,074 tools knows the world conventions — `U = 7/1.8` world units per metre, bone-union rig measurement (raw bounds lie on Meshy rigs: 0.018 m versus 1.75 m), the council hexagon at `r = 260`, the realm coordinate map, the asset placement queue, or the `_boot-smoke` / `_draw-profile` probes. The Blender toolkit (`Shaddai-3d/tools/blender_toolkit.py`) exists as a script but is not exposed as tools. Plans **C-1** and **C-2** fix this. Until then, read `Shaddai-3d/docs/` directly.
+
+### Reporting rule
+
+If you finish a package from the plan, tick its row in the status table and put the real before/after numbers in the `Evidence` column and in the commit message. If you find a gap that is not on the register, add it to the register with its evidence and severity. **One plan, one table — do not create a second tracker.**
+
