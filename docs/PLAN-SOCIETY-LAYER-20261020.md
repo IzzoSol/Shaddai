@@ -20,7 +20,7 @@
 | **Never delete to free disk without asking.** | C: is at 2.7 GB. |
 
 **Reading order for a fresh session:** §1 (map) → §3 (audit, so you know what is real) → §4 (gap register) → the track for your task → §9 (doctrine) → §11 (status).
-**Track E lives in a companion document:** `docs/PLAN-AGENT-LIFECYCLE-20261021.md` — the forged-agent lifecycle (forge → register → body → equip → work → earn) and the connector layer. Gaps G-28..G-42 and packages E-1..E-12 belong to it. Read it before any agent, forge, connector or job work.
+**Two companion documents:** `docs/PLAN-AGENT-LIFECYCLE-20261021.md` — the forged-agent lifecycle (forge → register → body → equip → work → earn) and the connector layer. Gaps G-28..G-42 and packages E-1..E-12 belong to it. Read it before any agent, forge, connector or job work.
 
 ---
 
@@ -190,7 +190,7 @@ Every number below was measured against the running system on 2026-10-20.
 | Claim | Reality | Gap |
 |---|---|---|
 | "`/tools` — every tool with schemas" | Only the 971 hosted. ~103 proxied-only tools (`x402_*`, `hall_*`, `shaddai_*`, `forge_*`, `graph_*`, `brain_*`, `aura_*`) are **callable but invisible**. | G-02 |
-| "`/manifest` — bot-onboarding payload" | `start_with` names **`health_check`** and **`intent_route`** — **neither exists**. `endpoints` are **double-prefixed**: `POST /api/headless/api/headless/call` -> 404. `tool_count` 971. Frameworks 13/16. | G-03 G-04 G-05 |
+| "`/manifest` — bot-onboarding payload" | `start_with` step 2 names **`intent_route`** — it does **not exist** as a tool (only as text in `creative-tools.js`). `health_check` **works** (verified live 2026-10-21). `high_value_tools` also lists `usecase_list` and `workflow_categories` — both ghosts. `endpoints` are **double-prefixed**: `POST /api/headless/api/headless/call` -> 404. `tool_count` 971. Frameworks 13/16. | G-03 G-04 G-05 |
 | "Unknown tool" handling | **HTTP 200, `ok:true`,** body `"Unknown tool: x402_pay"`. A bot sees success on a call that never happened. | **G-01** |
 | "`/openapi.json` — machine-readable contract" | 890 bytes, summary strings, **zero schemas**. | G-06 |
 | "One source of truth / no drift" | The same **270 skill playbooks** are implemented **twice**: `shaddai-mcp/skills-tools.js` (7.4 KB) and `mcp-unified.js` (144.6 KB). | **G-07** |
@@ -238,7 +238,7 @@ Severity: **S1** = breaks a promise to a bot/user · **S2** = blocks a track · 
 |---|---|---|---|---|
 | G-01 | Unknown tool returns HTTP 200 `ok:true` — false success | **S1** | `POST /call {"name":"x402_pay"}` -> `{"ok":true,"result":"Unknown tool: x402_pay"}` | A-1 |
 | G-02 | `/tools` omits ~103 proxied MCP tools | **S1** | `total: 971`; `x402_*`/`hall_*`/`shaddai_*` absent from listing | A-3 |
-| G-03 | `/manifest` start_with names 2 non-existent tools | **S1** | `health_check`, `intent_route` not in either registry | A-2 |
+| G-03 | The manifest teaches bots to call tools that do not exist | **S1** | CORRECTED 2026-10-21: `health_check` **works** (verified live). The ghosts are `intent_route` (step 2 of `start_with`), plus `usecase_list` and `workflow_categories` in `high_value_tools` — 3 of 26. `intent_route` exists only as text inside `creative-tools.js:448-485`, never as a tool. | A-2 |
 | G-04 | `/manifest` endpoints double-prefixed | **S1** | `POST /api/headless/api/headless/call` | A-2 |
 | G-05 | Manifest frameworks 13 vs 16; `tool_count` 971 vs 1,074 | S2 | `knowledge-tools.js` defines 16 | A-2 |
 | G-06 | `openapi.json` has no schemas | S2 | 890 B, summary strings only | A-3 |
