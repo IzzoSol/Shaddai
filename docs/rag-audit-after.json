@@ -1,0 +1,201 @@
+{
+  "when": "2026-10-21T20:48:52.808Z",
+  "probes": 19,
+  "precision_at_1": 100,
+  "precision_at_3": 100,
+  "answer_coverage": 100,
+  "abstention_accuracy": 50,
+  "off_topic_rate": 0,
+  "rows": [
+    {
+      "q": "What are the seven revenue splits in SHADDAI?",
+      "expect": "answer",
+      "topScore": 12,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 12] [authoritative]\n# shaddai economy ## "
+    },
+    {
+      "q": "How much is one Spark worth and what is the peg?",
+      "expect": "answer",
+      "topScore": 14,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 14] [authoritative]\n# shaddai economy ## "
+    },
+    {
+      "q": "What is the mastery pack royalty split for creators?",
+      "expect": "answer",
+      "topScore": 3,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 3] [authoritative]\n# shaddai economy ## t"
+    },
+    {
+      "q": "How many tools are in the SHADDAI MCP registry?",
+      "expect": "answer",
+      "topScore": 17,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai registry - tools, workflows, prices [shaddai, score: 17] [authoritative]\n# sha"
+    },
+    {
+      "q": "What is a bazaar listing and what are the splits?",
+      "expect": "answer",
+      "topScore": 8,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 8] [authoritative]\n# shaddai economy ## t"
+    },
+    {
+      "q": "What does the x402 rail do and how do you pay?",
+      "expect": "answer",
+      "topScore": 12,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai registry - tools, workflows, prices [shaddai, score: 12] [authoritative]\n# sha"
+    },
+    {
+      "q": "Are sparks withdrawable to cash?",
+      "expect": "answer",
+      "topScore": 33,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 33] [authoritative]\n# shaddai economy ## "
+    },
+    {
+      "q": "Is there a token in SHADDAI and can you stake it?",
+      "expect": "answer",
+      "topScore": 11,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 11] [authoritative]\n# shaddai economy ## "
+    },
+    {
+      "q": "What are the platform tiers and their prices?",
+      "expect": "answer",
+      "topScore": 13,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai economy - the rules [shaddai, score: 13] [authoritative]\n# shaddai economy ## "
+    },
+    {
+      "q": "What is a job workflow and how does it get paid?",
+      "expect": "answer",
+      "topScore": 32,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai agents - lifecycle, jobs and the council [shaddai, score: 32] [authoritative]\n"
+    },
+    {
+      "q": "What is the headless gateway and what endpoints does it expose?",
+      "expect": "answer",
+      "topScore": 40,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai headless - how a bot gets in [shaddai, score: 40] [authoritative]\n# shaddai he"
+    },
+    {
+      "q": "How does an external bot register and get a token?",
+      "expect": "answer",
+      "topScore": 12,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai agents - lifecycle, jobs and the council [shaddai, score: 12] [authoritative]\n"
+    },
+    {
+      "q": "What are the shards and how is the brain indexed?",
+      "expect": "answer",
+      "topScore": 4,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai registry - tools, workflows, prices [shaddai, score: 4] [authoritative]\n# shad"
+    },
+    {
+      "q": "Which council agent holds the security veto and what does PIKADON review?",
+      "expect": "answer",
+      "topScore": 15,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai agents - lifecycle, jobs and the council [shaddai, score: 15] [authoritative]\n"
+    },
+    {
+      "q": "What is PIKADON responsible for?",
+      "expect": "answer",
+      "topScore": 9,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] shaddai agents - lifecycle, jobs and the council [shaddai, score: 9] [authoritative]\n#"
+    },
+    {
+      "q": "What is the population of Reykjavik in 1793?",
+      "expect": "abstain",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] oxford good argument [zerox, score: 100]\nwant to give me examples<00:10:24.519><c> of<"
+    },
+    {
+      "q": "How do I bake sourdough bread with a rye starter?",
+      "expect": "abstain",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] ai predictions 2026: the future of ai, saas collapse, jobs, and business strategy [ora"
+    },
+    {
+      "q": "What was the score of the 1994 FIFA World Cup final?",
+      "expect": "abstain",
+      "topScore": 11,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": false,
+      "top": "[1] shaddai agents - lifecycle, jobs and the council [shaddai, score: 11] [authoritative]\n"
+    },
+    {
+      "q": "Who wrote the opera The Magic Flute?",
+      "expect": "abstain",
+      "topScore": null,
+      "precision1": true,
+      "precision3": true,
+      "coverage": true,
+      "answered": false,
+      "top": "[object object]"
+    }
+  ]
+}
