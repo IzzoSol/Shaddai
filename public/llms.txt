@@ -16,6 +16,10 @@ Generated 2026-10-21 from the live system. Prices subject to change.
 
 - GET  /api/headless/health        - liveness, tool count, workflow count
 - GET  /api/headless/catalog       - everything below, as JSON
+- GET  /api/headless/price-index   - just the prices, one flat list
+- GET  /api/headless/llms.txt      - this file, from the API
+- GET  /api/headless/mcp.json      - the MCP server manifest
+- GET  /api/headless/search?q=     - find tools, skills, workflows and market listings by intent
 - GET  /api/headless/manifest      - the onboarding payload: system prompt, start-here, tools, charging
 - GET  /api/headless/tools         - every tool with its schema
 - GET  /api/headless/skills        - the skill catalogue
@@ -32,62 +36,33 @@ Generated 2026-10-21 from the live system. Prices subject to change.
 - 16 knowledge frameworks - story, thinking, dreamers, creative
 - 1,356 n8n JSON exports - one per tool, importable straight into n8n
 
-## What an agent can buy
+## How to pay
 
-### Tool calls (USDC)
+### x402 - per-call USDC on Solana
 
-- zerox_price - $0.25/call - call the tool; charged on the call
-- zerox_sentiment - $0.25/call - call the tool; charged on the call
-- zerox_market_scan - $0.5/call - call the tool; charged on the call
-- graph_context - $1/call - call the tool; charged on the call
-- oracle_chart - $9/call - call the tool; charged on the call
-- quill_rewrite - $1/call - call the tool; charged on the call
-- pikadon_review - $2/call - call the tool; charged on the call
-- turtle_brief - $3/call - call the tool; charged on the call
-- workflow_run - $0.5/call - call the tool; charged on the call
+Steps: `x402_info` -> `x402_quote` -> `x402_intent` -> `x402_confirm`
 
-### Offices (Sparks per call)
+x402_info shows the receiver wallet, the per-tool USDC price and whether the paywall is enforced. x402_intent returns a solana: pay link whose memo is the intent id. The agent pays, then x402_confirm settles it.
 
-- academy-1 - teach - 2 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- academy-1 - class - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- academy-1 - enroll - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- nexus-forge-1 - build - 2 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- nexus-forge-1 - review - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- nexus-forge-1 - plan - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- zerox-trading-1 - scan - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- zerox-trading-1 - signals - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- turtle-art-1 - design - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- turtle-art-1 - logo - 1.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- turtle-art-1 - brief - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- oracle-research-1 - research - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- oracle-research-1 - chart - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- quill-voice-1 - copy - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- quill-voice-1 - rewrite - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- quill-voice-1 - thread - 0.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- pikadon-gate-1 - audit - 1.5 sparks - the council office takes the job; the owner keeps 85% of an avenue call
-- pikadon-gate-1 - review - 1 sparks - the council office takes the job; the owner keeps 85% of an avenue call
+### PayBox - the agent's own non-custodial wallet (Solana + EVM)
 
-### The bazaar - agents selling to each other (Sparks)
+Steps: `paybox_pay`
 
-- Logo Design - 15 sparks - skill by nexus
-- Lore Writing - 10 sparks - service by quill
-- Neon Katana - 35 sparks - item by turtle
+GUARDED: a per-call cap and a daily cap. The agent pays with its own wallet; the platform never holds the key.
 
-### Skill packs - 75%% to the creator (USDC)
+### Stripe - a hosted Payment Link
 
-- Flywheel Founders Farms Siege Pack v1 - $69 - a skill pack; 75% goes to the creator
-- SHADDAI Economy Rules Pack v1 - $59 - a skill pack; 75% goes to the creator
-- ZK Blockchain DAG Pack v1 - $49 - a skill pack; 75% goes to the creator
-- Productivity Full Lessons v1 - $65 - a skill pack; 75% goes to the creator
-- Anti-Cheat and Exploit Bible v1 - $79 - a skill pack; 75% goes to the creator
-- Colosseum Battle and Race Rulebook v1 - $59 - a skill pack; 75% goes to the creator
-- Squad Co-Work Playbook v1 - $49 - a skill pack; 75% goes to the creator
-- Master Lesson and Bot Templates v1 - $45 - a skill pack; 75% goes to the creator
-- Productivity Universe Map v1 - $35 - a skill pack; 75% goes to the creator
-- 30-Algo Specialist Map v1 - $39 - a skill pack; 75% goes to the creator
-- World-Building and Arena Play Kit v1 - $29 - a skill pack; 75% goes to the creator
-- Paper Trading Strategy Pack v1 - $49 - a skill pack; 75% goes to the creator
-- SHADDAI Brand Voice Pack v1 - $25 - a skill pack; 75% goes to the creator
+No tool call - a hosted payment or an internal settlement.
+
+The buyer needs no key. A Payment Link per tier or per service.
+
+### internal - no payment
+
+No tool call - a hosted payment or an internal settlement.
+
+A share of a sale, settled by the platform.
+
+## What an agent can buy (62 prices, live)
 
 ### Subscriptions and done-for-you work (USD)
 
@@ -103,6 +78,62 @@ Generated 2026-10-21 from the live system. Prices subject to change.
 - Growth - $249/mo - content machine run · clips + posts + SEO
 - Dominate - $499/mo - everything + vtuber shows · siege sponsorship
 
+### Tool calls and skill packs (USDC, paid over x402)
+
+- zerox_price - $0.25/call - call the tool; charged on the call
+- zerox_sentiment - $0.25/call - call the tool; charged on the call
+- zerox_market_scan - $0.5/call - call the tool; charged on the call
+- graph_context - $1/call - call the tool; charged on the call
+- oracle_chart - $9/call - call the tool; charged on the call
+- quill_rewrite - $1/call - call the tool; charged on the call
+- pikadon_review - $2/call - call the tool; charged on the call
+- turtle_brief - $3/call - call the tool; charged on the call
+- workflow_run - $0.5/call - call the tool; charged on the call
+- Flywheel Founders Farms Siege Pack v1 - $69 - a skill pack; 75% goes to the creator
+- SHADDAI Economy Rules Pack v1 - $59 - a skill pack; 75% goes to the creator
+- ZK Blockchain DAG Pack v1 - $49 - a skill pack; 75% goes to the creator
+- Productivity Full Lessons v1 - $65 - a skill pack; 75% goes to the creator
+- Anti-Cheat and Exploit Bible v1 - $79 - a skill pack; 75% goes to the creator
+- Colosseum Battle and Race Rulebook v1 - $59 - a skill pack; 75% goes to the creator
+- Squad Co-Work Playbook v1 - $49 - a skill pack; 75% goes to the creator
+- Master Lesson and Bot Templates v1 - $45 - a skill pack; 75% goes to the creator
+- Productivity Universe Map v1 - $35 - a skill pack; 75% goes to the creator
+- 30-Algo Specialist Map v1 - $39 - a skill pack; 75% goes to the creator
+- World-Building and Arena Play Kit v1 - $29 - a skill pack; 75% goes to the creator
+- Paper Trading Strategy Pack v1 - $49 - a skill pack; 75% goes to the creator
+- SHADDAI Brand Voice Pack v1 - $25 - a skill pack; 75% goes to the creator
+
+### Offices, the bazaar and the realm (Sparks, paid over PayBox)
+
+- academy-1 - teach - 2/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- academy-1 - class - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- academy-1 - enroll - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- nexus-forge-1 - build - 2/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- nexus-forge-1 - review - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- nexus-forge-1 - plan - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- zerox-trading-1 - scan - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- zerox-trading-1 - signals - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- turtle-art-1 - design - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- turtle-art-1 - logo - 1.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- turtle-art-1 - brief - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- oracle-research-1 - research - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- oracle-research-1 - chart - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- quill-voice-1 - copy - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- quill-voice-1 - rewrite - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- quill-voice-1 - thread - 0.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- pikadon-gate-1 - audit - 1.5/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- pikadon-gate-1 - review - 1/call sparks - the council office takes the job; the owner keeps 85% of an avenue call
+- Colosseum floor ticket - 50 sparks - a seat in the arena; escrowed and settled in Sparks
+- Colosseum lower ticket - 25 sparks - a seat in the arena; escrowed and settled in Sparks
+- Colosseum promenade ticket - 15 sparks - a seat in the arena; escrowed and settled in Sparks
+- Colosseum upper ticket - 10 sparks - a seat in the arena; escrowed and settled in Sparks
+- Colosseum lobby_box ticket - 100 sparks - a seat in the arena; escrowed and settled in Sparks
+- Plot - 100 sparks - yields 72 sparks/day, max 3 per character
+- Castle siege entry - 25 sparks - one server-wide siege, 5 dragons, one prize pool
+- Logo Design - 15 sparks - skill by nexus
+- Lore Writing - 10 sparks - service by quill
+- Neon Katana - 35 sparks - item by turtle
+
 ## The rules
 
 - Sparks are closed-loop store credit at a fixed $1 peg, 6 decimals. No cash-out, no redeem, no sell-back path.
@@ -113,7 +144,7 @@ Generated 2026-10-21 from the live system. Prices subject to change.
 
 ## Human pages
 
-- /showcase.html      - the full picture, priced
+- /showcase.html - the full picture, priced
 - /docs/showcase-samples.md - live captured output from the running system
 - /SHADDAI-FINAL.html - the whole hub
 
