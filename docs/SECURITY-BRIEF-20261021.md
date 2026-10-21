@@ -227,6 +227,49 @@ REPORT AFTER EACH TASK
 
 ---
 
+## 3b. The discovery layer and the value boundary (added 2026-10-21)
+
+**The rule:** *the index is free and complete; the execution and the content are metered.*
+
+A crawler must be able to learn that we exist, what we do, what it costs and which rail to pay on, all without a key. It must NOT be able to lift the product.
+
+### What is now free (and should stay free)
+
+| Surface | For |
+|---|---|
+| `llms.txt` | The machine index: what we are, the registry counts, all 62 prices, the rails, the three steps, the endpoints, the splits, the rules, and the terms. |
+| `llms-full.txt` | Every tool with its input schema. The contract, not the content. |
+| `.well-known/mcp.json` | The MCP server manifest - the exact path an agent registry looks for to discover a server. |
+| `.well-known/ai-plugin.json` | Plugin manifest, `"auth": {"type": "none"}`. |
+| `/api/headless/capabilities` | What the system can do, by domain, priced. |
+| `/api/headless/sitemap` | The whole surface as one machine index. |
+| `/api/headless/price-index` | The flat price list, each row with its currency, rail and payment steps. |
+| `/api/headless/feeds/*.xml` | RSS, for feed watchers and n8n. |
+| `/api/headless/openapi.json` | A real OpenAPI 3.1 spec, 264 KB, generated from the live registry. |
+| `sitemap.xml`, `robots.txt` | For crawlers. The API is explicitly allowed - it is meant to be called by bots. |
+
+### What is now protected
+
+| Risk | Fix |
+|---|---|
+| **`skill_get` returned the full methodology ungated.** ~7 MB of premium content free to any scraper - and it is exactly what the mastery packs sell, where the creator keeps 75%. | The open REST path returns a **700-char preview** plus the full length, and says why. A keyed agent gets the whole method. The MCP stdio path is deliberately unchanged: an agent doing work inside the system is not a scraper. |
+| No rate limiting, so a crawler could drain the free index | Two buckets: **discovery 120/min**, **execution 30/min**, per client, with `X-RateLimit-*` and `Retry-After`. They stay independent: a crawler reading prices is never blocked by an agent running workflows. |
+| Every response was re-fetchable | `Cache-Control: public, max-age=300, stale-while-revalidate=86400` on the GETs, so a well-behaved crawler fetches once. |
+| No terms | `llms.txt` states it plainly: the index is free and complete, the content is metered, please attribute, please respect the rate limits. |
+
+**The metering model, in one place** (`x-shaddai` in the OpenAPI spec):
+
+```
+metering:
+  index:        free, rate-limited, cacheable
+  execution:    metered per call
+  skillContent: preview only without a key
+```
+
+**Bugs found and fixed while building this, worth recording:**
+- The first rate limiter was a **no-op**: `make()` built a fresh bucket object per request and never wrote it back to the map, so the counter was always 1. Caught by firing 40 parallel calls - every one returned 200 and `remaining` never moved off 29. After the fix the same 40 calls return **30x 200 and 10x 429**. **A limiter that has never been load-tested is a guess.**
+- The free tool list does **not** leak skill content: max description 289 chars, median 136, zero over 1,500. Only `skill_get` leaked, and only there.
+
 ## 4. Status
 
 | # | Action | Sev | Gate | Owner | Status |
