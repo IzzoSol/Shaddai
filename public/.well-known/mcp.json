@@ -1,0 +1,57 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schema/2025-07-09/server.schema.json",
+  "name": "io.github.izzosol/shaddai",
+  "description": "One registry for AI agents: 1,074 tools, 1,633 workflows, 270 curated skills and 16 knowledge frameworks. Pay per call over x402 (USDC on Solana) or per service over PayBox. Bring your own brain - no model resale, no token, no staking.",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/IzzoSol/Shaddai",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "shaddai-mcp",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "node"
+    },
+    {
+      "registryType": "remotes",
+      "identifier": "https://shaddai.onrender.com/api/headless",
+      "version": "1.0.0",
+      "transport": {
+        "type": "streamable-http"
+      },
+      "runtimeHint": "node"
+    }
+  ],
+  "websiteUrl": "https://shaddai.onrender.com",
+  "remotes": [
+    {
+      "transport": {
+        "type": "streamable-http"
+      },
+      "url": "https://shaddai.onrender.com/api/headless"
+    }
+  ],
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    },
+    "resources": {
+      "listChanged": true
+    },
+    "prompts": {
+      "listChanged": true
+    }
+  },
+  "categories": [
+    "business",
+    "productivity",
+    "developer-tools",
+    "data",
+    "education"
+  ]
+}
