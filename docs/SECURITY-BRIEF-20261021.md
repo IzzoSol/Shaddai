@@ -1,4 +1,4 @@
-﻿# SHADDAI — SECURITY BRIEF (2026-10-21)
+# SHADDAI — SECURITY BRIEF (2026-10-21)
 
 **Status:** operational · **Owner:** Izzo · **Author:** Opus session, 2026-10-21
 **Trigger:** the PHP critical-RCE advisory (2 CVSS 9.2 flaws, patches "upcoming" per php.net).
