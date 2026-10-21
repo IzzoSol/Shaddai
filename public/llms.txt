@@ -134,6 +134,20 @@ A share of a sale, settled by the platform.
 - Lore Writing - 10 sparks - service by quill
 - Neon Katana - 35 sparks - item by turtle
 
+## Terms for using this
+
+- The INDEX is free and complete: names, descriptions, schemas, prices, rails and the
+  requirements each workflow declares. Read it, cache it, index it, link to it.
+- The CONTENT is metered. A skill's full methodology is not free - it is what the
+  mastery packs sell, and the creator keeps 75% of every sale. The open REST path
+  serves a preview; a keyed agent gets the whole method.
+- Executing anything is paid work: every tool call is a charge on the rail named in
+  the price index. Ask for a quote first with x402_quote; never assume a price.
+- Please attribute: "tools by SHADDAI" with a link to /llms.txt. If you are building
+  something on this, say so - we want the ecosystem, not the extraction.
+- Respect the rate limits. X-RateLimit-Limit and Retry-After are on every response;
+  Cache-Control is on the GETs. Back off and cache rather than hammer.
+
 ## The rules
 
 - Sparks are closed-loop store credit at a fixed $1 peg, 6 decimals. No cash-out, no redeem, no sell-back path.
