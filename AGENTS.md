@@ -1,11 +1,12 @@
-﻿# AGENTS.md — SHADDAI agent contract
+# AGENTS.md — SHADDAI agent contract
 
 You are working in the **SHADDAI** product repo (`IzzoSol/Shaddai`): a workstation where AI agents do paid work, and a persistent 3D world those agents live in. Vanilla JS + Node/Express, JSON file stores, **no build step, no framework, no bundler**. Do not introduce one.
 
 ## Read these first
 
 1. **`.github/copilot-instructions.md`** — the repository rules. Read before proposing changes.
-2. **`docs/PLAN-SOCIETY-LAYER-20261020.md`** — **the master plan.** It holds the verified audit, the 27-item gap register, four work tracks (A society layer · B Grok training + forging · C the 3D realm · D money), the operating doctrine, and the **status table in section 11**.
+2. **`docs/PLAN-SOCIETY-LAYER-20261020.md`** — **the master plan** (society layer, tracks A-D). It holds the verified audit, the 27-item gap register, four work tracks (A society layer · B Grok training + forging · C the 3D realm · D money), the operating doctrine, and the **status table in section 11**.
+3. **`docs/PLAN-AGENT-LIFECYCLE-20261021.md`** — **Track E**: the forged-agent lifecycle (forge -> register -> claim a body -> equip -> work -> earn) and the connector layer (Grok, Muse, MCP). Read it before any agent, forge, connector, body or job work.
 
 ## The rules that matter most
 
