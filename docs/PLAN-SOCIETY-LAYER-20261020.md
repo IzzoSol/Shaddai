@@ -1,4 +1,4 @@
-﻿# SHADDAI — SOCIETY LAYER & FINAL BUILD PLAN (2026-10-20)
+# SHADDAI — SOCIETY LAYER & FINAL BUILD PLAN (2026-10-20)
 
 **Status:** MASTER PLAN · **Owner:** Izzo · **Author:** Opus session, 2026-10-20
 **Repos:** `IzzoSol/Shaddai` (product, Render auto-deploys `main`) · `IzzoSol/Shaddai-Beta` (lab) · `shaddai-n8n` (hub) · `Shaddai-3d` (world, pushes to `IzzoSol/Shaddai`)
@@ -20,6 +20,7 @@
 | **Never delete to free disk without asking.** | C: is at 2.7 GB. |
 
 **Reading order for a fresh session:** §1 (map) → §3 (audit, so you know what is real) → §4 (gap register) → the track for your task → §9 (doctrine) → §11 (status).
+**Track E lives in a companion document:** `docs/PLAN-AGENT-LIFECYCLE-20261021.md` — the forged-agent lifecycle (forge → register → body → equip → work → earn) and the connector layer. Gaps G-28..G-42 and packages E-1..E-12 belong to it. Read it before any agent, forge, connector or job work.
 
 ---
 
@@ -61,7 +62,7 @@
 | `Shaddai-Frames` agent MCP | LIVE | |
 | `tg-signals`, `tg-virtuals` | LIVE | Keep running. |
 | Academy `:8787` | live (per 10-15) | |
-| MMO `:3001` | **DEAD** | → G-16 |
+| MMO `:3001` | **DEAD** | 2026-10-21: the server files EXIST (`sparksCore.js`, `sparksRoutes.js`, `agentBodies.js`, `externalAgents.js`) but **none are mounted** and the server is not running. -> Track E-1 |
 | Game-forge MCP | port clash `:3001` | → G-17 |
 
 ---
@@ -160,7 +161,7 @@ Sticky notes also flag: **BLOCKER — MMO :3001 cannot boot** and **do not run 2
 
 ### 2.7 The 5 revenue blockers (master handoff, in order)
 
-1. Build `sparksRoutes.js` + `sparksCore.js` (spec in `Shaddai-consultancy/docs/wip/colosseum-economy-wip.patch`) — **MMO `:3001` cannot boot without them.**
+1. ~~Build `sparksRoutes.js` + `sparksCore.js`~~ — **RESOLVED 2026-10-21: both exist in `Shaddai-3d/server/`.** The real blocker is that they are **not mounted** and the server is not running. See Track E-1.
 2. Move game-forge MCP bridge off `:3001` (clash) -> `:3002`.
 3. Import 4 n8n workflows; set creds (`ACADEMY_BASE`, `MMO_BASE`, `X_USER_ID`, Telegram, Sheets).
 4. Fund wallets (Base ETH + Solana SOL); flip the paywall **deliberately**.
@@ -250,7 +251,7 @@ Severity: **S1** = breaks a promise to a bot/user · **S2** = blocks a track · 
 | G-13 | World cosmetics prices hardcoded, not from `prices.json` | S2 | `colosseum-cosmetics-system.js` cost 0/500/1500/2000 | D-1, C-5 |
 | G-14 | On-chain rails exist ahead of their own gate | S2 | 4 `x402_*` tools + PayBox + USDC prices + siege USDC payouts | D-7 |
 | G-15 | Revenue reconcile node is an unimplemented TODO | S2 | `// TODO(Claude): compare academy paybox totals vs hall ledger_summary gross` | D-6 |
-| G-16 | MMO `:3001` cannot boot | **S1** | missing `sparksRoutes.js` + `sparksCore.js` | D-3 |
+| G-16 | MMO `:3001` is unmounted and stopped | **S1** | CORRECTED 2026-10-21: the files exist in `Shaddai-3d/server/` but **no `require` mounts them**; port 3001 is DOWN. A wiring job, not a build job. -> Track E-1 |
 | G-17 | 4 n8n workflows unimported; game-forge MCP port clash | S2 | creds unset; `:3001` vs `:3002` | D-5, D-3 |
 | G-18 | Wallets unfunded, paywall off, $0 receipts | **S1** | honesty ledger 2026-10-15 | D-4 |
 | G-19 | 276 deletions uncommitted (~1.25 GB) | S2 | `git status` in Shaddai-3d | C-3 |
@@ -262,6 +263,21 @@ Severity: **S1** = breaks a promise to a bot/user · **S2** = blocks a track · 
 | G-25 | No per-bot identity / key / quota layer on the gateway | **S1** | no auth in `headless-routes.js`; `MCP-CHARGING` describes rails with no key layer | A-6 |
 | G-26 | Per-deliverable unlock ($2.99) missing from `prices.json` | S2 | documented first dollar, absent from master | D-1 |
 | G-27 | `teach_grok_bot` returns a *description* of a pack, not a pack | S2 | returns JSON metadata, no SKILL.md/workflow.json/tools.json emitted | B-2 |
+| G-28 | Four agent registries, none authoritative | **S1** | `custom_agents.json` / `operatives.json` / `external-agents.json` / in-memory `engine.AGENTS` | E-3 |
+| G-29 | `custom_agents.json` agents are NOT resolvable by the engine | **S1** | `agent-engine.js:3086` is `resolveAgent(name) || AGENTS.SHADDAI` -> a forged agent answers as SHADDAI | E-3 |
+| G-30 | Connector grants are keyed by agent **name**, not id | **S1** | `getAgentAPIs(agentName.toLowerCase())` -> a forged agent named "zerox" inherits ZEROX's connectors | E-7 |
+| G-31 | Meta Muse exists in **no** product list | **S1** | the vault has `xai` but no `muse`; the only Muse config is in the **unwired** gateway `server/agents/providers/config.js` | E-7 |
+| G-32 | `mcp__*` tools bypass the tool allow-list | **S1** | `agent-engine.js:3458` is `if (!isMcp && allowList && ...)` -> any agent can call any MCP tool | E-5 |
+| G-33 | Agent tool calls are regex-parsed out of model text, one nesting level | S2 | `agent-engine.js:3446` | E-6 |
+| G-34 | Unknown tool returns a **result string**, not an error (the agent-layer twin of G-01) | **S1** | `agent-engine.js:3456` | E-6 |
+| G-35 | The imported-Grok-bot roster is in-memory only | S2 | `grok-connect.js` -> `const connected = []` -> lost on every restart | E-3 |
+| G-36 | Two job systems with different models | S2 | `job-workflow.js` (bids + award) vs `externalAgents.js` `/jobs` (Sparks escrow) | E-9 |
+| G-37 | Two parallel body / shift implementations | S2 | `agentServer.js` `/hire` `/shift/:key` vs `agentBodies.js` `/claim` `/shift/:grantId` | E-1 |
+| G-38 | The 19-file agent gateway (21/21 tests) is mounted nowhere | **S1** | `Shaddai-3d/server/agents/` has zero `require` in either `server-production.js` | E-8 |
+| G-39 | Two connector catalogs disagree | S2 | `lib/api-vault.js` (25+ providers) vs `api-proxy-routes.js` `AVAILABLE_APIS` (15) | E-7 |
+| G-40 | Forged agents have no `preferredProvider` | S2 | only the council have one -> forged agents fall through to the global chain | E-7 |
+| G-41 | The secret scan misses `hf_` / `gsk_` / `sk-` / `AIza` shapes | **S1** | `externalAgents.js` `findSecret()` only matches `sk-` and `xai-` | E-2 |
+| G-42 | The whole agent-body + external-agent + sparks stack is unmounted and the server is stopped | **S1** | port 3001 DOWN; no `require` mounts `externalAgents.js` / `agentBodies.js` / `sparksRoutes.js` | E-1 |
 
 ---
 
@@ -397,9 +413,9 @@ Already priced in `prices.json`: `setup_sprint $499` (brand voice pack · templa
 **Gate** an engagement can be created, tasks tracked, an invoice issued, and a second client cannot see it.
 
 ### D-3 · Make the Spark rail real `OPUS` · G-16 G-17
-Build `sparksRoutes.js` + `sparksCore.js` (spec: `Shaddai-consultancy/docs/wip/colosseum-economy-wip.patch`) so **MMO `:3001` boots**. Move the game-forge MCP bridge to `:3002`.
+**Superseded by Track E-1** (see `docs/PLAN-AGENT-LIFECYCLE-20261021.md`): `sparksRoutes.js` + `sparksCore.js` already exist in `Shaddai-3d/server/` — the job is to **mount** `/xagent` `/jobs` `/agent` `/sparks` and run the server, not to write the files. Move the game-forge MCP bridge to `:3002`.
 **Rules** Sparks are closed-loop: **no cash-out, no redeem, no sell-back code path may exist** — that shield is the money-transmitter and securities protection. Every `wallet_update` names its rail. Idempotent quote_ids. PIKADON veto before payout.
-**Gate** `:3001` boots, `GET /api/health` is 200, a plot purchase moves Sparks and writes an append-only ledger entry, and a repo-wide search for redeem/cashout/withdraw/sellback returns nothing that pays out.
+**Gate** `:3001` boots with `/xagent` `/jobs` `/agent` `/sparks` mounted, `GET /` is 200, a plot purchase moves Sparks and writes an append-only ledger entry, and a repo-wide search for redeem/cashout/withdraw/sellback returns nothing that pays out.
 
 ### D-4 · Fund and flip, deliberately `OPUS` · G-18
 Fund wallets (Base ETH + Solana SOL). Flip the paywall **deliberately**, not by accident. Open the first paper trades -> weekly win/lose reports -> publish at 30+ closed trades.
@@ -501,6 +517,18 @@ Replace the `// TODO(Claude): compare academy paybox totals vs hall ledger_summa
 | D-5 | Import 4 n8n workflows | D | S2 | nightly poll reconciles | yes | todo | — |
 | D-6 | Reconcile node implemented | D | S2 | injected mismatch alerts | yes | todo | — |
 | D-7 | Token decision doc | D | S2 | one page next to prices.json | yes | todo | — |
+| E-1 | Mount the world server (`/xagent` `/jobs` `/agent` `/sparks`) | E | S1 | register -> claim -> shift -> collect, no double yield | yes | todo | - |
+| E-2 | Secret scan + no route leak on health | E | S1 | each secret shape rejected, not echoed | yes | todo | - |
+| E-3 | Unified Agent Record + one resolver | E | S1 | a forged agent answers as itself | yes | todo | - |
+| E-4 | One forge, one transaction | E | S1 | one call -> one record | yes | todo | - |
+| E-5 | Entitlement: tools / workflows / skills | E | S1 | blocked tool -> no access; `mcp__` blocked too | yes | todo | - |
+| E-6 | Native tool calling + honest failures | E | S1 | unknown tool -> `ok:false` | yes | todo | - |
+| E-7 | Unified connector layer (Grok, Muse, MCP) | E | S1 | grants keyed by id; Muse contributor refused for private | yes | todo | - |
+| E-8 | Mount the agent gateway | E | S1 | audited, budgeted, kill-switchable | yes | todo | - |
+| E-9 | One job market (escrow + bids + award) | E | S2 | post -> escrow -> bid -> award -> deliver -> pay | yes | todo | - |
+| E-10 | Cosmetics + gear + world joined | E | S2 | one price file; the chassis renders | yes | todo | - |
+| E-11 | World calls the headless API | E | S2 | in-game task via the gateway | yes | todo | - |
+| E-12 | Legacy migration (read-through) | E | S2 | counts match before/after | yes | todo | - |
 
 ---
 
