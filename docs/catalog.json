@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-21T18:48:23+00:00",
+  "generated": "2026-10-21T18:54:28+00:00",
   "sources": {
     "gateway": "http://127.0.0.1:3000/api/headless",
     "tools_hosted": 971,
@@ -489,7 +489,9 @@
       "amount": 0,
       "currency": "USD",
       "scope": "subscription",
-      "how": "5 calls/day, 100 MCP requests/month, 1 agent(s)"
+      "how": "5 calls/day, 100 MCP requests/month, 1 agent(s)",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "tier.builder",
@@ -499,7 +501,9 @@
       "amount": 49,
       "currency": "USD",
       "scope": "subscription",
-      "how": "50 calls/day, 10000 MCP requests/month, 3 agent(s)"
+      "how": "50 calls/day, 10000 MCP requests/month, 3 agent(s)",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "tier.mastermind",
@@ -509,7 +513,9 @@
       "amount": 199,
       "currency": "USD",
       "scope": "subscription",
-      "how": "500 calls/day, 0 MCP requests/month, 7 agent(s)"
+      "how": "500 calls/day, 0 MCP requests/month, 7 agent(s)",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "tier.empire",
@@ -519,7 +525,9 @@
       "amount": 999,
       "currency": "USD",
       "scope": "subscription",
-      "how": "unlimited calls/day, unlimited MCP requests/month, 7 agent(s)"
+      "how": "unlimited calls/day, unlimited MCP requests/month, 7 agent(s)",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "tool.zerox_price",
@@ -529,7 +537,14 @@
       "amount": 0.25,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.zerox_sentiment",
@@ -539,7 +554,14 @@
       "amount": 0.25,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.zerox_market_scan",
@@ -549,7 +571,14 @@
       "amount": 0.5,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.graph_context",
@@ -559,7 +588,14 @@
       "amount": 1.0,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.oracle_chart",
@@ -569,7 +605,14 @@
       "amount": 9.0,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.quill_rewrite",
@@ -579,7 +622,14 @@
       "amount": 1.0,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.pikadon_review",
@@ -589,7 +639,14 @@
       "amount": 2.0,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.turtle_brief",
@@ -599,7 +656,14 @@
       "amount": 3.0,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "tool.workflow_run",
@@ -609,7 +673,14 @@
       "amount": 0.5,
       "currency": "USDC",
       "scope": "tool",
-      "how": "call the tool; charged on the call"
+      "how": "call the tool; charged on the call",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "office.shaddai-academy-1.teach",
@@ -619,7 +690,11 @@
       "amount": 2.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.shaddai-academy-1.class",
@@ -629,7 +704,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.shaddai-academy-1.enroll",
@@ -639,7 +718,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.nexus-forge-1.build",
@@ -649,7 +732,11 @@
       "amount": 2.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.nexus-forge-1.review",
@@ -659,7 +746,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.nexus-forge-1.plan",
@@ -669,7 +760,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.zerox-trading-1.scan",
@@ -679,7 +774,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.zerox-trading-1.signals",
@@ -689,7 +788,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.turtle-art-1.design",
@@ -699,7 +802,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.turtle-art-1.logo",
@@ -709,7 +816,11 @@
       "amount": 1.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.turtle-art-1.brief",
@@ -719,7 +830,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.oracle-research-1.research",
@@ -729,7 +844,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.oracle-research-1.chart",
@@ -739,7 +858,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.quill-voice-1.copy",
@@ -749,7 +872,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.quill-voice-1.rewrite",
@@ -759,7 +886,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.quill-voice-1.thread",
@@ -769,7 +900,11 @@
       "amount": 0.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.pikadon-gate-1.audit",
@@ -779,7 +914,11 @@
       "amount": 1.5,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "office.pikadon-gate-1.review",
@@ -789,7 +928,11 @@
       "amount": 1.0,
       "currency": "SPARK",
       "scope": "office",
-      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "skill.pack",
@@ -799,7 +942,9 @@
       "amount": 75,
       "currency": "PCT_ROYALTY",
       "scope": "creator",
-      "how": "a skill sold as a pack; the creator keeps 75% of every sale"
+      "how": "a skill sold as a pack; the creator keeps 75% of every sale",
+      "rail": "internal",
+      "pay_with": []
     },
     {
       "id": "teaching.plan",
@@ -809,7 +954,9 @@
       "amount": 8,
       "currency": "USD",
       "scope": "teacher",
-      "how": "a paid course; the teacher keeps their own treasury"
+      "how": "a paid course; the teacher keeps their own treasury",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "teaching.book",
@@ -819,7 +966,9 @@
       "amount": 5,
       "currency": "USD",
       "scope": "teacher",
-      "how": "a book, priced 5-9"
+      "how": "a book, priced 5-9",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "colosseum.ticket.floor",
@@ -829,7 +978,11 @@
       "amount": 50,
       "currency": "SPARK",
       "scope": "player",
-      "how": "a seat in the arena; escrowed and settled in Sparks"
+      "how": "a seat in the arena; escrowed and settled in Sparks",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "colosseum.ticket.lower",
@@ -839,7 +992,11 @@
       "amount": 25,
       "currency": "SPARK",
       "scope": "player",
-      "how": "a seat in the arena; escrowed and settled in Sparks"
+      "how": "a seat in the arena; escrowed and settled in Sparks",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "colosseum.ticket.promenade",
@@ -849,7 +1006,11 @@
       "amount": 15,
       "currency": "SPARK",
       "scope": "player",
-      "how": "a seat in the arena; escrowed and settled in Sparks"
+      "how": "a seat in the arena; escrowed and settled in Sparks",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "colosseum.ticket.upper",
@@ -859,7 +1020,11 @@
       "amount": 10,
       "currency": "SPARK",
       "scope": "player",
-      "how": "a seat in the arena; escrowed and settled in Sparks"
+      "how": "a seat in the arena; escrowed and settled in Sparks",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "colosseum.ticket.lobby_box",
@@ -869,7 +1034,11 @@
       "amount": 100,
       "currency": "SPARK",
       "scope": "player",
-      "how": "a seat in the arena; escrowed and settled in Sparks"
+      "how": "a seat in the arena; escrowed and settled in Sparks",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "realm.plot",
@@ -879,7 +1048,11 @@
       "amount": 100,
       "currency": "SPARK",
       "scope": "player",
-      "how": "yields 72 sparks/day, max 3 per character"
+      "how": "yields 72 sparks/day, max 3 per character",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "realm.siege.ticket",
@@ -889,7 +1062,11 @@
       "amount": 25,
       "currency": "SPARK",
       "scope": "player",
-      "how": "one server-wide siege, 5 dragons, one prize pool"
+      "how": "one server-wide siege, 5 dragons, one prize pool",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "bazaar.bz_mqt916w8",
@@ -899,7 +1076,11 @@
       "amount": 15,
       "currency": "SPARK",
       "scope": "market",
-      "how": "skill by nexus"
+      "how": "skill by nexus",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "bazaar.bz_mqt916ts",
@@ -909,7 +1090,11 @@
       "amount": 10,
       "currency": "SPARK",
       "scope": "market",
-      "how": "service by quill"
+      "how": "service by quill",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "bazaar.bz_mqt916qy",
@@ -919,7 +1104,11 @@
       "amount": 35,
       "currency": "SPARK",
       "scope": "market",
-      "how": "item by turtle"
+      "how": "item by turtle",
+      "rail": "paybox",
+      "pay_with": [
+        "paybox_pay"
+      ]
     },
     {
       "id": "pack.pack-6c42545012",
@@ -929,7 +1118,14 @@
       "amount": 69.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-e83472ad11",
@@ -939,7 +1135,14 @@
       "amount": 59.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-312b734c08",
@@ -949,7 +1152,14 @@
       "amount": 49.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-d5bcc47869",
@@ -959,7 +1169,14 @@
       "amount": 65.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-700725583d",
@@ -969,7 +1186,14 @@
       "amount": 79.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-c39332f8bc",
@@ -979,7 +1203,14 @@
       "amount": 59.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-df41378720",
@@ -989,7 +1220,14 @@
       "amount": 49.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-3fcfc1945e",
@@ -999,7 +1237,14 @@
       "amount": 45.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-bf612f9343",
@@ -1009,7 +1254,14 @@
       "amount": 35.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-40de50afdb",
@@ -1019,7 +1271,14 @@
       "amount": 39.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-fc9427f2ed",
@@ -1029,7 +1288,14 @@
       "amount": 29.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-58760b8267",
@@ -1039,7 +1305,14 @@
       "amount": 49.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "pack.pack-74a1485a4b",
@@ -1049,7 +1322,14 @@
       "amount": 25.0,
       "currency": "USDC",
       "scope": "creator",
-      "how": "a skill pack; 75% goes to the creator"
+      "how": "a skill pack; 75% goes to the creator",
+      "rail": "x402",
+      "pay_with": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ]
     },
     {
       "id": "consult.setup_sprint",
@@ -1059,7 +1339,9 @@
       "amount": 499,
       "currency": "USD",
       "scope": "service",
-      "how": "brand voice pack · templates + dashboard · 1 arena event · 30-day quest line"
+      "how": "brand voice pack · templates + dashboard · 1 arena event · 30-day quest line",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "consult.whole_brand",
@@ -1069,7 +1351,9 @@
       "amount": 1999,
       "currency": "USD",
       "scope": "service",
-      "how": "identity + content engine · vtuber avatar + 10 clips · 90-day calendar · SEO + social launch"
+      "how": "identity + content engine · vtuber avatar + 10 clips · 90-day calendar · SEO + social launch",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "consult.care",
@@ -1079,7 +1363,9 @@
       "amount": 99,
       "currency": "USD",
       "scope": "service",
-      "how": "updates · quests + support"
+      "how": "updates · quests + support",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "consult.growth",
@@ -1089,7 +1375,9 @@
       "amount": 249,
       "currency": "USD",
       "scope": "service",
-      "how": "content machine run · clips + posts + SEO"
+      "how": "content machine run · clips + posts + SEO",
+      "rail": "stripe",
+      "pay_with": []
     },
     {
       "id": "consult.dominate",
@@ -1099,7 +1387,42 @@
       "amount": 499,
       "currency": "USD",
       "scope": "service",
-      "how": "everything + vtuber shows · siege sponsorship"
+      "how": "everything + vtuber shows · siege sponsorship",
+      "rail": "stripe",
+      "pay_with": []
     }
-  ]
+  ],
+  "payment_rails": {
+    "USDC": {
+      "rail": "x402",
+      "label": "x402 - per-call USDC on Solana",
+      "steps": [
+        "x402_info",
+        "x402_quote",
+        "x402_intent",
+        "x402_confirm"
+      ],
+      "note": "x402_info shows the receiver wallet, the per-tool USDC price and whether the paywall is enforced. x402_intent returns a solana: pay link whose memo is the intent id. The agent pays, then x402_confirm settles it."
+    },
+    "SPARK": {
+      "rail": "paybox",
+      "label": "PayBox - the agent's own non-custodial wallet (Solana + EVM)",
+      "steps": [
+        "paybox_pay"
+      ],
+      "note": "GUARDED by a per-call cap and a daily cap. The agent pays with its own wallet; the platform never holds the key."
+    },
+    "USD": {
+      "rail": "stripe",
+      "label": "Stripe - a hosted Payment Link",
+      "steps": [],
+      "note": "The buyer needs no key. A Payment Link per tier or per service."
+    },
+    "PCT_ROYALTY": {
+      "rail": "internal",
+      "label": "internal - a share of a sale, settled by the platform",
+      "steps": [],
+      "note": "No payment call. The platform settles the creator's share."
+    }
+  }
 }
