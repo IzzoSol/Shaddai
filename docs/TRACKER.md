@@ -126,7 +126,7 @@ The complaint was exact: the brain was not answering, it was **regurgitating exc
 | precision@3 | 53% | **100%** |
 | answer coverage | 27% | **100%** |
 | **off-topic rate** | **93%** | **0%** |
-| abstention | 0% | 50% |
+| abstention | 0% | **50%** |
 
 **The measurement** is `backend/scripts/rag-audit.mjs` — 19 probes (15 that must be answered, 4 that must be abstained from). Baseline and result are saved as `docs/rag-audit-baseline.json` and `docs/rag-audit-after.json`.
 
@@ -140,7 +140,15 @@ The complaint was exact: the brain was not answering, it was **regurgitating exc
 
 **Three bugs in the audit itself**, because a measurement that lies is worse than no measurement: it read only the first 90 characters of a result (the title, not the text); it passed `query` where `rag_ask` wants `question`; and it did not warm the MCP, so the first probe after a restart read a boot error.
 
-**Remaining:** the abstention floor. 2 of 4 must-abstain probes still get an answer because a loosely-matching chunk still clears 0.06. The threshold is tunable; calibrating it needs the raw cosine, which the audit does not yet print. Small, and it is the next RAG job.
+**Excerpts became knowledge — three more real defects, all fixed.**
+
+1. **The chunker sliced on WHITESPACE** into 500-word windows, so every chunk began and ended mid-sentence. That is *why* retrieval read like a pile of excerpts. It now packs **whole sentences** into ~500-word windows.
+2. **The stored text was raw speech.** The chunks carried &gt; as a term, and gt scored **0.56** in one of the worst - the single largest weight in that vector. Now decodeEntities() (always safe) and cleanSpoken() (filler, doubled words, punctuation) - and cleanSpoken applies **only to spoken documents**, so prose is never touched. The 91k existing brain chunks are cleaned at the **output boundary**, so they read well now without the 890 MB rebuild.
+3. **A score cannot tell an answer from a coincidence.** A broad transcript corpus always contains something similar to something. So the brain's relevance gate now uses a **coverage** test - and the coverage is **IDF-weighted**, so a rare term (*n8n*, *1994*, *Reykjavik*) counts for far more than a generic one (*skills*, *workflow*). The platform tier likewise needs **most** of the question's distinctive terms before it takes over, so *"how do I build an n8n workflow"* no longer gets answered from our own docs.
+
+**The audit now measures readability too** - junk_density, the share of a returned answer that is filler and entity fragments. It reads **0%**.
+
+**Remaining, stated plainly:** abstention is 50%. Two of the four must-abstain probes still get an answer, because the corpus genuinely holds broad educational material (philosophy, music, sport) and a rare term can still land in an adjacent chunk. The gate is now IDF-weighted and tunable (SHADDAI_RAG_COVERAGE); tightening it trades against answer coverage, and **0.5 was the best measured compromise** (0.34 scored the same; 0.12 was worse). Calibrating it properly needs a larger probe set - which is the honest next job, not a tweak.
 
 ## 2. IN FLIGHT
 
