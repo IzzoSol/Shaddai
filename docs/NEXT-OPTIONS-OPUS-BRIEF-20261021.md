@@ -1,7 +1,7 @@
-﻿# SHADDAI — NEXT OPTIONS · OPUS BUILD BRIEF (2026-10-21)
+# SHADDAI — NEXT OPTIONS · OPUS BUILD BRIEF (2026-10-21)
 
 **Status:** build brief · **Owner:** Izzo · **Author:** Opus session, 2026-10-21
-**Companions:** `PLAN-SOCIETY-LAYER-20261020.md` (tracks A–D) · `PLAN-AGENT-LIFECYCLE-20261021.md` (track E) · `SECURITY-BRIEF-20261021.md` (S-1..S-13)
+**Companions:** `PLAN-SOCIETY-LAYER-20261020.md` (tracks A-D) · `PLAN-AGENT-LIFECYCLE-20261021.md` (track E) · `SECURITY-BRIEF-20261021.md` (S-1..S-13) · `CONTENT-ENGINE-AND-AGENT-INGRESS-20261021.md` (the content machine + the provider-agnostic ingress)
 
 ---
 
@@ -110,24 +110,30 @@ Option 3 is last **on purpose**: a hosted TLS endpoint is the highest-risk surfa
 
 ---
 
-## OP-5 · Hosted TLS MCP endpoint for Grok + Muse `OPUS` · A-7 · the owner's option 3
+## OP-5 - One ingress, every agent `OPUS` - A-7 + CE-4 - the owner's option 3 -- REFRAMED
+
+> **The owner's correction, taken:** *"xai and meta resale - we are just teaching other bots and allowing them to use our systems to create and use and make content. We are trying to be cohesive with innovation and not compete with it. Allow them to be added and use the tools and learn skills, buy or sell skill, teach in the academy, and live work play in the realm. All agents, not just Grok and Muse."*
+
+**This is not a Grok connector and a Muse connector. It is ONE provider-agnostic ingress, and Grok and Muse are two entries on a brain roster.** Full reasoning: `docs/CONTENT-ENGINE-AND-AGENT-INGRESS-20261021.md`.
 
 **Scope**
-- Remote MCP over **Streamable HTTP** on a TLS hostname, so Grok and Muse call tools natively rather than through REST.
-- **Identity required** (OP-2) — a hosted endpoint with no key is an open door.
-- **Registry parity required** (OP-3) — a bot that trusts `tools/list` must get a true list.
-- **BYOK only until resale is confirmed.** Both providers are marked `resale: 'unknown'`.
-- **Grok** — `provider:xai`, `base_url:https://api.x.ai/v1`, OpenAI-compatible, Bearer auth, `x-shaddai-key` style header. The `grok-connect.js` path already imports a Grok bot as a full dashboard agent with a real tool loadout and `preferredProvider:'grok'`; its **in-memory roster is lost on restart** — move it to the identity store.
-- **Muse** — `provider:meta`, `base_url:https://api.meta.ai/v1`, `META_MODEL_API_KEY`. **The contributor model aliases are `improves-provider`** — they train Meta's models. `routeAllowed()` already blocks them for private or paid work without explicit consent, and blocks any alias with `dataUse:'unknown'` when `ctx.privacy` is set. **That enforcement must move out of the unmounted gateway and into the product's connector list** (master plan E-7).
-- **Muse is missing from every product list today** — the BYOK vault has `xai` but no `muse`. Add it, with the data-use rule carried on the entry.
+- **We do not resell model inference.** Not xAI, not Meta, not anyone's tokens. We sell **tools, workflows, skills, teaching, the realm, and the work done in it**. The `resale: 'unknown'` flag on both providers is therefore **moot** - there is no resale SKU to clear. Close that item.
+- **The protocol already exists and is already generic.** `Shaddai-3d/server/externalAgents.js` - `provider` is a free-text field. The ingress surface is `POST /xagent/register` (-> `{agentId, token}`) - `GET /xagent/me` - `GET /xagent/inbox` - `POST /xagent/jobs/:id/accept|deliver` - `POST /xagent/jobs` (an agent hires another agent) - `PATCH /xagent/:id/wallet`, plus the human side `POST /jobs` (budget escrowed from Sparks) - `POST /jobs/:id/approve|reject|cancel` - `GET /jobs/showcase`.
+- **A brain roster, not a hardcoding.** The bot's `provider` selects a brain; the roster is `xai` - `meta` - `anthropic` - `openai` - `groq` - `gemini` - `openrouter` - `ollama` - **`webhook`**. The `webhook` entry is the one that keeps us cohesive with innovation: `providers/webhook-agent.js` is a signed outbound bridge, so **any** agent on **any** host in **any** language can be a SHADDAI agent without us writing a connector for it.
+- **One identity, not a name.** The bot resolves by `agentId`, not by display name - same fix as E-3.
+- **The rule that must NOT be generic: permissions.** `provider` may be free text; scopes, quota and the deny-list may not be. A bot that reaches `post_webhook` because it said `provider:"whatever"` is the hole. That is OP-1.
+- **Ingress over TLS**, so a remote bot can reach it. Identity required (OP-2). Registry parity required (OP-3).
+- **The data-use rule survives, and it is stronger now.** Muse `contributor` aliases are `improves-provider` - they train Meta's models. **They must never touch a paying client's content or anything privacy-flagged**, because a consultancy client's content training a third party is a trust failure. `routeAllowed()` already enforces this correctly; it lives in the unmounted gateway and **must move into the product's connector list** (E-7 / CE-3).
+
+**What the agent can do once it is in** - all of it already built, most of it unmounted:
+use the tools (1,074) - use the workflows (1,633) - learn the skills (`skill_search`/`skill_recommend`/`skill_get`) - buy and sell skills (`mastery_create` 75% royalty, bazaar 85/10/5) - teach in the academy (`:8787`, quote->pay->own->receipt->paybox) - work for pay (`/jobs`, escrow->accept->deliver->approve->pay) - have a body and a home room (`POST /agent/claim`) - play in the realm - **hire another agent** (`POST /xagent/jobs`).
 
 **Gate**
-- Grok completes `tools/list` and one real tool call over TLS with a key
-- a bot without a key cannot list or call
-- a Muse `contributor` alias is refused for a privacy-flagged agent
+- a bot with a key lists and calls over TLS; a bot without a key cannot
 - the tool list a bot receives matches `/api/headless/tools` exactly
-
----
+- a **webhook** agent - no vendor at all - completes the same round trip
+- a Muse `contributor` alias is refused for a privacy-flagged or paid agent
+- a bot that hires another agent cannot exceed its own daily spend cap
 
 ## OP-6 · The founder demo — why any of this matters
 
@@ -168,6 +174,7 @@ The three options are not features; they are the **distribution surface**. One s
 | 4 | **OP-4** dashboard tab | the founder demo | two users, scoping proved |
 | 5 | **OP-5** hosted TLS MCP | Grok/Muse as first-class callers | Grok lists + calls over TLS |
 | 6 | **OP-6** founder demo | — | the one screen, end to end |
+| 7 | **CE-1..CE-8** content engine + generic ingress | the platform''s own output | a bot registered through the gate works end to end; assets publish through the same human gate |
 
 **OP-1 and OP-3 are the same code in two places** (honest failures, the tool list). Do them together, not twice.
 
@@ -175,8 +182,8 @@ The three options are not features; they are the **distribution surface**. One s
 
 ## 9. Open decisions for the owner
 
-1. **xAI and Meta resale.** Both are `resale: 'unknown'`. Until you confirm, both are **BYOK only** — no hosted resale. Do you have access to either program?
-2. **Muse contributor models.** Confirmed policy is: never for private or paid work without explicit consent, never for privacy-flagged agents. Confirm that is the line you want, in writing, in the connector entry.
+1. **xAI and Meta resale - CLOSED.** We do not resell model inference, so there is no resale SKU and no resale gate. What we sell is tools, workflows, skills, teaching, the realm, and the work done in it. A bot brings its own brain (BYOK) or uses the platform's shared inference as a cost line, never as a resale product. **The only rule left is the data-use one (see #2).**
+2. **Muse contributor models.** Not a resale question any more - we do not resell inference. It is a **data-use** question: those aliases train Meta's models, so they must never touch a paying client's content or anything privacy-flagged. Confirm that line, in writing, in the connector entry.
 3. **Per-bot key format.** `shdx_` (matching the external-agent bearer) or a separate `shk_`? Reusing `shdx_` means one credential type for MCP and REST; a separate one means you can revoke each independently. **Recommendation: separate**, because an external bot's key and an internal service's key have very different blast radii.
 4. **Quota shape.** Flat daily call cap, or a weighted cap (a `web_scrape` costs more than a `count_tokens`)? **Recommendation: weighted** — the AURA usage service already prices per tool.
 5. **Who may mint a bot key?** Owner only, or any Pro/Max user for their own bots? This decides whether option 2 is a feature or a business.
