@@ -1,4 +1,4 @@
-﻿# SHADDAI — AGENT LIFECYCLE & CONNECTOR PLAN (2026-10-21)
+# SHADDAI — AGENT LIFECYCLE & CONNECTOR PLAN (2026-10-21)
 
 **Status:** MASTER PLAN, part 2 · **Owner:** Izzo · **Author:** Opus session, 2026-10-21
 **Companion:** `docs/PLAN-SOCIETY-LAYER-20261020.md` (society layer, tracks A-D). This document covers **Track E — the agent lifecycle and the connector layer.**
