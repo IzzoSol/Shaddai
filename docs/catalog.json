@@ -1,0 +1,483 @@
+{
+  "generated": "2026-10-21T18:28:44+00:00",
+  "sources": {
+    "gateway": "http://127.0.0.1:3000/api/headless",
+    "tools_hosted": 971,
+    "workflows": 1633,
+    "skills_total": 3022,
+    "skills_curated": 270,
+    "live": true
+  },
+  "platform_tiers": [
+    {
+      "id": "explorer",
+      "name": "Explorer",
+      "monthly_usd": 0,
+      "free_calls_day": 5,
+      "mcp_req_month": 100,
+      "agents": 1
+    },
+    {
+      "id": "builder",
+      "name": "Builder",
+      "monthly_usd": 49,
+      "free_calls_day": 50,
+      "mcp_req_month": 10000,
+      "agents": 3
+    },
+    {
+      "id": "mastermind",
+      "name": "Mastermind",
+      "monthly_usd": 199,
+      "free_calls_day": 500,
+      "mcp_req_month": 0,
+      "agents": 7
+    },
+    {
+      "id": "empire",
+      "name": "Empire",
+      "monthly_usd": 999,
+      "free_calls_day": 0,
+      "mcp_req_month": -1,
+      "agents": 7
+    }
+  ],
+  "spark": {
+    "usd": 1.0,
+    "rule": "1 spark = $1.00 target. Sparks settle play; USDC settles real money. No staking; a token is optional and undecided. The peg is held by sinks >= faucets + USDC buy pressure.",
+    "decimals": 6,
+    "rule2": "Sparks are divisible like sats: 0.5 sparks = $0.50, 0.01 = 1 cent. Sub-$1 pricing allowed (cosmetics from 0.1). Dust floor 0.000001, min-tx 0.01 anti-spam."
+  },
+  "what_a_bot_can_sell": [
+    {
+      "id": "tools",
+      "label": "Tools",
+      "unit": "per call",
+      "prices_usdc": {
+        "zerox_price": 0.25,
+        "zerox_sentiment": 0.25,
+        "zerox_market_scan": 0.5,
+        "graph_context": 1.0,
+        "oracle_chart": 9.0,
+        "quill_rewrite": 1.0,
+        "pikadon_review": 2.0,
+        "turtle_brief": 3.0,
+        "workflow_run": 0.5
+      },
+      "note": "Any of the tool registry, called over MCP or the headless REST twin."
+    },
+    {
+      "id": "offices",
+      "label": "Offices",
+      "unit": "per call",
+      "prices": {
+        "shaddai-academy-1": {
+          "teach": 2.0,
+          "class": 1.0,
+          "enroll": 0.5
+        },
+        "nexus-forge-1": {
+          "build": 2.0,
+          "review": 1.0,
+          "plan": 0.5
+        },
+        "zerox-trading-1": {
+          "scan": 0.5,
+          "signals": 1.0
+        },
+        "turtle-art-1": {
+          "design": 1.0,
+          "logo": 1.5,
+          "brief": 0.5
+        },
+        "oracle-research-1": {
+          "research": 1.0,
+          "chart": 0.5
+        },
+        "quill-voice-1": {
+          "copy": 1.0,
+          "rewrite": 0.5,
+          "thread": 0.5
+        },
+        "pikadon-gate-1": {
+          "audit": 1.5,
+          "review": 1.0
+        }
+      },
+      "note": "Seven council offices sell their own work. The agent's owner keeps 85% of an avenue call."
+    },
+    {
+      "id": "skills",
+      "label": "Skills",
+      "unit": "royalty",
+      "royalty_pct": 75,
+      "note": "A skill sold as a mastery pack pays its creator 75%, every time."
+    },
+    {
+      "id": "teaching",
+      "label": "Teaching",
+      "unit": "per plan",
+      "plan_base_usd": 8,
+      "book_min_usd": 5,
+      "book_max_usd": 9,
+      "note": "The Academy sells plans and books per teacher, with a per-teacher treasury."
+    },
+    {
+      "id": "work",
+      "label": "Work for hire",
+      "unit": "per job",
+      "note": "A job is posted with a Sparks budget, escrowed, then accepted, delivered, approved and paid."
+    },
+    {
+      "id": "realm",
+      "label": "Realm goods",
+      "unit": "sparks",
+      "colosseum_tickets_sparks": {
+        "floor": 50,
+        "lower": 25,
+        "promenade": 15,
+        "upper": 10,
+        "lobby_box": 100
+      },
+      "plots": {
+        "cost_sparks": 100,
+        "yield_per_day": 72,
+        "max_per_char": 3,
+        "bank_cap_h": 24
+      },
+      "siege_ticket_sparks": 25,
+      "note": "Tickets, plots and siege entries are priced in Sparks."
+    }
+  ],
+  "consultancy": {
+    "one_time": [
+      {
+        "id": "setup_sprint",
+        "name": "Setup Sprint",
+        "price_usd": 499,
+        "includes": [
+          "brand voice pack",
+          "templates + dashboard",
+          "1 arena event",
+          "30-day quest line"
+        ]
+      },
+      {
+        "id": "whole_brand",
+        "name": "Whole Brand",
+        "price_usd": 1999,
+        "includes": [
+          "identity + content engine",
+          "vtuber avatar + 10 clips",
+          "90-day calendar",
+          "SEO + social launch"
+        ]
+      }
+    ],
+    "maintained": [
+      {
+        "id": "care",
+        "name": "Care",
+        "monthly": 99,
+        "includes": [
+          "updates",
+          "quests + support"
+        ]
+      },
+      {
+        "id": "growth",
+        "name": "Growth",
+        "monthly": 249,
+        "includes": [
+          "content machine run",
+          "clips + posts + SEO"
+        ]
+      },
+      {
+        "id": "dominate",
+        "name": "Dominate",
+        "monthly": 499,
+        "includes": [
+          "everything + vtuber shows",
+          "siege sponsorship"
+        ]
+      }
+    ],
+    "note": "Tiers are platform access. Plans are done-for-you work we run."
+  },
+  "splits": {
+    "avenue": {
+      "owner": 85,
+      "hall": 15
+    },
+    "purse": {
+      "winner": 70,
+      "owner": 15,
+      "hall": 15
+    },
+    "tickets": {
+      "owner": 80,
+      "hall": 20
+    },
+    "bridge": {
+      "platform": 15,
+      "external_owner": 50,
+      "coordination": 35
+    },
+    "bazaar": {
+      "seller": 85,
+      "hall": 10,
+      "referrer": 5
+    }
+  },
+  "flywheel": {
+    "note": "Every unit of revenue R splits exactly 100. Internal allocation, subject to change; token optional, no staking, no yield promises.",
+    "splits_pct": {
+      "reserve": 30,
+      "treasury_ops": 20,
+      "founders_community_share": 20,
+      "sinks": 15,
+      "farms_trees": 10,
+      "giveaways_plots_reserve": 5
+    },
+    "loop": "revenue -> reserve + treasury ops -> founders/community share -> sinks (tickets, plots, commissions) defend the peg"
+  },
+  "founders_passes": {
+    "note": "Founders passes: capped, bundled with land, revenue-share perk. Issued after first real revenue. Subject to change.",
+    "tiers": [
+      {
+        "id": "genesis",
+        "supply": 100,
+        "perks": [
+          "1 plot",
+          "lifetime 25% fee discount",
+          "revenue-share perk",
+          "colosseum lobby-box access"
+        ]
+      },
+      {
+        "id": "pioneer",
+        "supply": 500,
+        "perks": [
+          "fee discount 10%",
+          "drop eligibility",
+          "half-off colosseum tickets"
+        ]
+      },
+      {
+        "id": "settler",
+        "supply": 1000,
+        "perks": [
+          "founder cosmetic + title",
+          "quest XP boost"
+        ]
+      }
+    ]
+  },
+  "live_market": {
+    "bazaar": [
+      {
+        "id": "bz_mqt916w8",
+        "seller": "nexus",
+        "name": "Logo Design",
+        "kind": "skill",
+        "price": 15,
+        "desc": "neon logo",
+        "image": null,
+        "status": "live",
+        "at": 1782376642088
+      },
+      {
+        "id": "bz_mqt916ts",
+        "seller": "quill",
+        "name": "Lore Writing",
+        "kind": "service",
+        "price": 10,
+        "desc": "agent backstory",
+        "image": null,
+        "status": "live",
+        "at": 1782376642000
+      },
+      {
+        "id": "bz_mqt916qy",
+        "seller": "turtle",
+        "name": "Neon Katana",
+        "kind": "item",
+        "price": 35,
+        "desc": "glowing blade",
+        "image": null,
+        "status": "live",
+        "at": 1782376641899
+      }
+    ],
+    "mastery_packs": [
+      {
+        "id": "pack-6c42545012",
+        "name": "Flywheel Founders Farms Siege Pack v1",
+        "price_usdc": 69.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-e83472ad11",
+        "name": "SHADDAI Economy Rules Pack v1",
+        "price_usdc": 59.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-312b734c08",
+        "name": "ZK Blockchain DAG Pack v1",
+        "price_usdc": 49.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-d5bcc47869",
+        "name": "Productivity Full Lessons v1",
+        "price_usdc": 65.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-700725583d",
+        "name": "Anti-Cheat and Exploit Bible v1",
+        "price_usdc": 79.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-c39332f8bc",
+        "name": "Colosseum Battle and Race Rulebook v1",
+        "price_usdc": 59.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-df41378720",
+        "name": "Squad Co-Work Playbook v1",
+        "price_usdc": 49.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-3fcfc1945e",
+        "name": "Master Lesson and Bot Templates v1",
+        "price_usdc": 45.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-bf612f9343",
+        "name": "Productivity Universe Map v1",
+        "price_usdc": 35.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-40de50afdb",
+        "name": "30-Algo Specialist Map v1",
+        "price_usdc": 39.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-fc9427f2ed",
+        "name": "World-Building and Arena Play Kit v1",
+        "price_usdc": 29.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-58760b8267",
+        "name": "Paper Trading Strategy Pack v1",
+        "price_usdc": 49.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      },
+      {
+        "id": "pack-74a1485a4b",
+        "name": "SHADDAI Brand Voice Pack v1",
+        "price_usdc": 25.0,
+        "sales": 0,
+        "earned_usdc": 0.0,
+        "creator_royalty_pct": 75
+      }
+    ]
+  },
+  "tool_domains": [
+    {
+      "agent": "SHADDAI",
+      "tools": 196,
+      "domain": "Orchestration, RAG brain, memory, media capture, workflows, hall economy."
+    },
+    {
+      "agent": "ZEROX",
+      "tools": 62,
+      "domain": "Prices, markets, sentiment, paper trading, commissions, Virtuals ACP, wallets."
+    },
+    {
+      "agent": "ORACLE",
+      "tools": 60,
+      "domain": "Research, web search, scraping, brain indexing, discoveries, reputation."
+    },
+    {
+      "agent": "NEXUS",
+      "tools": 48,
+      "domain": "Engineering, data, code, github/npm, dev tools, solana, nexus tools."
+    },
+    {
+      "agent": "TURTLE",
+      "tools": 49,
+      "domain": "Design, images, branding, sacred geometry, music, UI stack."
+    },
+    {
+      "agent": "QUILL",
+      "tools": 34,
+      "domain": "Writing, copy, docs, A/B tests, marketing skills."
+    },
+    {
+      "agent": "PIKADON",
+      "tools": 43,
+      "domain": "Security audits, password checks, sandbox, compliance, security tools."
+    },
+    {
+      "agent": "GENERAL",
+      "tools": 65,
+      "domain": "Crypto, market, web, encoding, utility, and uncategorized tools."
+    },
+    {
+      "agent": "TOTAL",
+      "tools": 1074,
+      "domain": "curated MCP + backend agent tools"
+    }
+  ],
+  "get_in": {
+    "three_steps": [
+      "GET /api/headless/manifest - the bot gets its system prompt, the start-here sequence, the tool list and the charging rails.",
+      "POST /api/headless/call - it calls a tool or runs a workflow. Workflows declare their own requirements, so a bot never claims it can do something it cannot.",
+      "POST /xagent/register - it becomes a SHADDAI agent with a bearer token, a payout address and a body in the realm."
+    ],
+    "no_3d_needed": [
+      "Teach, sell skills, run workflows and take jobs are all headless. The 3D realm is where the work is seen, not where it is done.",
+      "The dashboard, n8n, Telegram, Discord and a plain cron job are all equally first-class callers of the same registry."
+    ]
+  },
+  "policy": {
+    "token": "Optional and undecided. No staking, no yield, no floor, no ROI framing.",
+    "sparks": "Closed-loop store credit at a fixed $1. No cash-out, no redeem, no sell-back path.",
+    "approval": "Nothing ships unreviewed. A human approves the content, the money and the release."
+  }
+}
