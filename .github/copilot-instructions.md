@@ -212,4 +212,48 @@ Nothing in the 1,074 tools knows the world conventions — `U = 7/1.8` world uni
 ### Reporting rule
 
 If you finish a package from the plan, tick its row in the status table and put the real before/after numbers in the `Evidence` column and in the commit message. If you find a gap that is not on the register, add it to the register with its evidence and severity. **One plan, one table — do not create a second tracker.**
+---
 
+## 11. The agent lifecycle and the connector layer (added 2026-10-21)
+
+**Read `docs/PLAN-AGENT-LIFECYCLE-20261021.md`** before touching agents, forging, connectors, bodies or jobs. It is Track E of the master plan.
+
+### The one fact that matters most
+
+The complete loop — **forge -> register a bot -> claim a body in the 3D world -> work shifts -> collect Sparks -> spend them** — is **already written**. `Shaddai-3d/server/externalAgents.js` (19 KB), `server/agentBodies.js` (10 KB), `server/sparksRoutes.js` + `sparksCore.js`, `server/lib/ledger.js` and `server/lib/atomic.js` are all present, with PIKADON-grade safety rules (address-only wallets, secret rejection, hashed revocable bearer tokens, idempotent collect, 5% burn, per-key mutex, rate limits, read-only trading signals).
+
+**None of it is mounted, and port 3001 is not running.** That is a wiring job (package E-1), not a build job.
+
+### The agent contract that already exists (do not redesign it)
+
+```
+AGENT SIDE  (bearer shdx_...)          HUMAN SIDE  (softAuth)
+POST /xagent/register  -> {agentId, token}    POST /jobs        (budget escrowed from Sparks)
+GET  /xagent/me                              GET  /jobs
+GET  /xagent/inbox   (jobs by capability)     POST /jobs/:id/approve | reject | cancel
+POST /xagent/jobs/:id/accept | deliver        GET  /jobs/showcase
+POST /xagent/jobs    (an agent hires another) GET  /xagent/list
+PATCH /xagent/:id/wallet
+```
+
+An agent then claims a body with `POST /agent/claim {operativeId}` and gets a home room, shifts, and Sparks. The world never mints identity — it grants a body to an identity that already exists.
+
+### Known structural problems (all in the plan's gap register)
+
+- **Four agent registries**, none authoritative: `custom_agents.json`, `operatives.json`, `external-agents.json`, and an in-memory `engine.AGENTS` roster.
+- `custom_agents.json` agents are **not resolvable by the engine** — `agent-engine.js` falls back to `AGENTS.SHADDAI`, so a forged agent answers as SHADDAI.
+- Connector grants are keyed by **agent name**, so a forged agent named "zerox" inherits ZEROX's connectors.
+- `mcp__*` tools **bypass the tool allow-list** — any agent can call any MCP tool.
+- The 19-file agent gateway (`server/agents/`, 21/21 tests) is **mounted nowhere**.
+- **Meta Muse is in no product list.** It exists only in the unmounted gateway config, where it correctly carries the rule that "contributor" model variants are `improves-provider` and must be refused for private or paid work without consent.
+
+### Rules for this area
+
+- **One identity.** A Unified Agent Record keyed by `agentId`, with every legacy store becoming a projection. Read-through migration, never a second authority.
+- **One forge call, one transaction, one record.** The self-heal sync in `lib/operatives.js` exists because the forge currently makes two calls with no shared transaction — fix the cause, retire the symptom.
+- **Grants are keyed by id, never by name.**
+- **Tool calls must fail honestly.** An unknown tool is `ok:false`, not a result string that says "Unknown tool". This applies to the agent layer as well as the gateway.
+- **MCP tools obey the same allow-list as everything else.**
+- **The world grants bodies; it never mints identity.**
+- **Sparks stay closed-loop.** No cash-out, no redeem, no sell-back path may exist.
+- **Cosmetics are never an investment.** No floor, no ROI, no revenue-share framing. Real money buys deterministic known-contents goods; random rewards use earned Sparks only.
