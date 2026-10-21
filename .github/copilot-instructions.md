@@ -197,7 +197,7 @@ These were found by measuring the running system, not by reading docs:
 
 1. An unknown tool returns **HTTP 200 with `ok:true`** and `"Unknown tool: X"` in the body. It must be `404` plus `ok:false`. (plan A-1)
 2. `/tools` lists only the 971 hosted tools. The ~103 proxied MCP tools are callable but **invisible**. (plan A-3)
-3. `/manifest` teaches bots to call `health_check` and `intent_route` — **neither exists** — and its `endpoints` are double-prefixed (`/api/headless/api/headless/call`). (plan A-2)
+3. `/manifest` step 2 tells bots to call `intent_route` — it **does not exist** as a tool (only as text inside `creative-tools.js`). `health_check` **works** (verified live 2026-10-21). `high_value_tools` also lists `usecase_list` and `workflow_categories` — both ghosts. Its `endpoints` are double-prefixed (`/api/headless/api/headless/call`). (plan A-2)
 4. `/openapi.json` has summary strings and **no schemas**. (plan A-3)
 5. The same **270 skill playbooks are implemented twice** — `shaddai-mcp/skills-tools.js` and `shaddai-mcp/mcp-unified.js`. One file must own them. (plan A-4)
 
@@ -257,3 +257,16 @@ An agent then claims a body with `POST /agent/claim {operativeId}` and gets a ho
 - **The world grants bodies; it never mints identity.**
 - **Sparks stay closed-loop.** No cash-out, no redeem, no sell-back path may exist.
 - **Cosmetics are never an investment.** No floor, no ROI, no revenue-share framing. Real money buys deterministic known-contents goods; random rewards use earned Sparks only.
+---
+
+## 12. Security brief (added 2026-10-21)
+
+**Read `docs/SECURITY-BRIEF-20261021.md`** before touching the headless gateway, the scraper, credentials, or any public route.
+
+**The PHP advisory does not apply to us.** 0 `.php` files across 9 repos; Render runtime is `node`; php.net confirms the release is "upcoming". Do not apply PHP mitigations.
+
+**The real exposure is ours.** The headless gateway has **zero auth middleware** and turns money on by default (`SHADDAI_ENABLE_MONEY || '1'`), with no tool deny-list. It is **not deployed yet** — that is the window. **Do not deploy it before the gate exists.**
+
+Blocking items, in order: auth on all 9 routes · money default off · deny-list (`forge_run` first — it takes raw file paths) · per-bot identity and quota · honest failures (unknown tool -> 404, not `ok:true`) · scraped content treated as data, never as orders · extend `findSecret()` to `hf_`/`gsk_`/`sk-`/`AIza`/`Bearer` · remove the `isMcp` allow-list exemption in `agent-engine.js` · rotate the keys that were printed into chat · encrypt and move the credentials vault out of the synced folder.
+
+**Standing orders for any agent** are in the brief, section 2 — copy them verbatim rather than writing new ones.
