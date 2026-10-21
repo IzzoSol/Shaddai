@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://shaddai.onrender.com/showcase.html</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/llms.txt</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/llms-full.txt</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/docs/showcase-samples.md</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/SHADDAI-FINAL.html</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/content/users.html</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/content/founders.html</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shaddai.onrender.com/content/consultants.html</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+</urlset>
