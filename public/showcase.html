@@ -122,9 +122,9 @@ code{font:13px ui-monospace,monospace;background:var(--panel);border:1px solid v
       }).join('');
     }
     var gen=q('[data-live="generated"]');
-    if(gen) gen.textContent = 'live from '+c.generated.slice(0,10);
+    if(gen) gen.textContent = 'LIVE from '+c.generated.slice(0,10);
     document.body.setAttribute('data-catalog-live','1');
-  }).catch(function(){});
+  }).catch(function(){ var g=q('[data-live="generated"]'); if(g) g.textContent='SNAPSHOT - the headless gateway is not reachable from this host'; });
 })();
 </script>
 </body></html>
