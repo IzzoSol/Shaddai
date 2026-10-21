@@ -1,4 +1,4 @@
-﻿# SHADDAI — MASTER TRACKER
+# SHADDAI — MASTER TRACKER
 
 **One page. Everything done, everything left, in order.**
 Last updated **2026-10-21**. Every "done" row below was **verified**, not assumed.
