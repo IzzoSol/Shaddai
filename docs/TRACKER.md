@@ -116,6 +116,32 @@ Plus, in the site root: `llms.txt` · `llms-full.txt` · `.well-known/mcp.json` 
 | The **discovery layer was mounted inside a `try` block** that was split by a bad patch, which broke the server. | `node --check` caught it before a restart. | Syntax-check every server edit. |
 
 ---
+### 1.7 The RAG brain now answers about SHADDAI
+
+The complaint was exact: the brain was not answering, it was **regurgitating excerpts** and returning **random useless information**. Now it is measured, diagnosed and fixed.
+
+| Metric | Before | After |
+|---|---|---|
+| precision@1 | **7%** | **100%** |
+| precision@3 | 53% | **100%** |
+| answer coverage | 27% | **100%** |
+| **off-topic rate** | **93%** | **0%** |
+| abstention | 0% | 50% |
+
+**The measurement** is `backend/scripts/rag-audit.mjs` — 19 probes (15 that must be answered, 4 that must be abstained from). Baseline and result are saved as `docs/rag-audit-baseline.json` and `docs/rag-audit-after.json`.
+
+**The diagnosis:** the corpus is almost entirely spoken-word video transcripts with **no authoritative statement of the platform's own rules** — so the nearest thing to an answer was a business course that happened to say "revenue". Measured, not guessed: *"what are the seven revenue splits"* retrieved **"battle pass design secrets"**; *"how do I pay"* retrieved **"jump transport — instant fast travel in vanilla Minecraft"**.
+
+**The fix — two tiers:**
+- **Tier 1, platform knowledge.** Four authored, structured documents generated from `prices.json` and `catalog/catalog.json` so they **cannot drift** from the real numbers: the economy · the registry and its prices · how a bot gets in · the agent lifecycle, job market and council. A platform question is answered from it **directly** — exact, cited, **no LLM in the loop, nothing to hallucinate**.
+- **Tier 2, the brain.** 91k transcript chunks, still right for everything else, and the fallback when tier 1 does not apply.
+- **Hygiene.** `tokenize` now undoes HTML entities first (`&gt;` `&amp;` `&#39;` leak out of transcripts and carried the largest tf-idf weights in the worst chunks — `"gt"` scored **0.56** in one), drops two-character tokens (`um`, `uh`, `gt`, `ve`, `ll`), and drops transcript filler (`like`, `really`, `gonna`, `kinda`...).
+- **A tunable floor.** `MIN_RELEVANCE` and the `relevant` flag are now env-tunable, so abstention is calibrated against the audit instead of guessed.
+
+**Three bugs in the audit itself**, because a measurement that lies is worse than no measurement: it read only the first 90 characters of a result (the title, not the text); it passed `query` where `rag_ask` wants `question`; and it did not warm the MCP, so the first probe after a restart read a boot error.
+
+**Remaining:** the abstention floor. 2 of 4 must-abstain probes still get an answer because a loosely-matching chunk still clears 0.06. The threshold is tunable; calibrating it needs the raw cosine, which the audit does not yet print. Small, and it is the next RAG job.
+
 ## 2. IN FLIGHT
 
 | Item | State | What is left |
