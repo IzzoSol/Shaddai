@@ -5,8 +5,9 @@ You are working in the **SHADDAI** product repo (`IzzoSol/Shaddai`): a workstati
 ## Read these first
 
 1. **`.github/copilot-instructions.md`** — the repository rules. Read before proposing changes.
-2. **`docs/PLAN-SOCIETY-LAYER-20261020.md`** — **the master plan** (society layer, tracks A-D). It holds the verified audit, the 27-item gap register, four work tracks (A society layer · B Grok training + forging · C the 3D realm · D money), the operating doctrine, and the **status table in section 11**.
-3. **`docs/PLAN-AGENT-LIFECYCLE-20261021.md`** — **Track E**: the forged-agent lifecycle (forge -> register -> claim a body -> equip -> work -> earn) and the connector layer (Grok, Muse, MCP). Read it before any agent, forge, connector, body or job work.
+2. **`docs/TRACKER.md`** - **THE MASTER TRACKER.** One page: what is DONE with its evidence, what is IN FLIGHT, what is NOT STARTED in order with its gate, and the decisions only the owner can close. Start here, then follow the links.
+3. **docs/PLAN-SOCIETY-LAYER-20261020.md** — **the master plan** (society layer, tracks A-D). It holds the verified audit, the 27-item gap register, four work tracks (A society layer · B Grok training + forging · C the 3D realm · D money), the operating doctrine, and the **status table in section 11**.
+4. **`docs/PLAN-AGENT-LIFECYCLE-20261021.md`** — **Track E**: the forged-agent lifecycle (forge -> register -> claim a body -> equip -> work -> earn) and the connector layer (Grok, Muse, MCP). Read it before any agent, forge, connector, body or job work.
 
 ## The rules that matter most
 
