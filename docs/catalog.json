@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-21T18:28:44+00:00",
+  "generated": "2026-10-21T18:48:23+00:00",
   "sources": {
     "gateway": "http://127.0.0.1:3000/api/headless",
     "tools_hosted": 971,
@@ -479,5 +479,627 @@
     "token": "Optional and undecided. No staking, no yield, no floor, no ROI framing.",
     "sparks": "Closed-loop store credit at a fixed $1. No cash-out, no redeem, no sell-back path.",
     "approval": "Nothing ships unreviewed. A human approves the content, the money and the release."
-  }
+  },
+  "price_index": [
+    {
+      "id": "tier.explorer",
+      "label": "Explorer plan",
+      "category": "platform",
+      "unit": "month",
+      "amount": 0,
+      "currency": "USD",
+      "scope": "subscription",
+      "how": "5 calls/day, 100 MCP requests/month, 1 agent(s)"
+    },
+    {
+      "id": "tier.builder",
+      "label": "Builder plan",
+      "category": "platform",
+      "unit": "month",
+      "amount": 49,
+      "currency": "USD",
+      "scope": "subscription",
+      "how": "50 calls/day, 10000 MCP requests/month, 3 agent(s)"
+    },
+    {
+      "id": "tier.mastermind",
+      "label": "Mastermind plan",
+      "category": "platform",
+      "unit": "month",
+      "amount": 199,
+      "currency": "USD",
+      "scope": "subscription",
+      "how": "500 calls/day, 0 MCP requests/month, 7 agent(s)"
+    },
+    {
+      "id": "tier.empire",
+      "label": "Empire plan",
+      "category": "platform",
+      "unit": "month",
+      "amount": 999,
+      "currency": "USD",
+      "scope": "subscription",
+      "how": "unlimited calls/day, unlimited MCP requests/month, 7 agent(s)"
+    },
+    {
+      "id": "tool.zerox_price",
+      "label": "zerox_price",
+      "category": "tool",
+      "unit": "call",
+      "amount": 0.25,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.zerox_sentiment",
+      "label": "zerox_sentiment",
+      "category": "tool",
+      "unit": "call",
+      "amount": 0.25,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.zerox_market_scan",
+      "label": "zerox_market_scan",
+      "category": "tool",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.graph_context",
+      "label": "graph_context",
+      "category": "tool",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.oracle_chart",
+      "label": "oracle_chart",
+      "category": "tool",
+      "unit": "call",
+      "amount": 9.0,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.quill_rewrite",
+      "label": "quill_rewrite",
+      "category": "tool",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.pikadon_review",
+      "label": "pikadon_review",
+      "category": "tool",
+      "unit": "call",
+      "amount": 2.0,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.turtle_brief",
+      "label": "turtle_brief",
+      "category": "tool",
+      "unit": "call",
+      "amount": 3.0,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "tool.workflow_run",
+      "label": "workflow_run",
+      "category": "tool",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "USDC",
+      "scope": "tool",
+      "how": "call the tool; charged on the call"
+    },
+    {
+      "id": "office.shaddai-academy-1.teach",
+      "label": "academy-1 - teach",
+      "category": "office",
+      "unit": "call",
+      "amount": 2.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.shaddai-academy-1.class",
+      "label": "academy-1 - class",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.shaddai-academy-1.enroll",
+      "label": "academy-1 - enroll",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.nexus-forge-1.build",
+      "label": "nexus-forge-1 - build",
+      "category": "office",
+      "unit": "call",
+      "amount": 2.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.nexus-forge-1.review",
+      "label": "nexus-forge-1 - review",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.nexus-forge-1.plan",
+      "label": "nexus-forge-1 - plan",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.zerox-trading-1.scan",
+      "label": "zerox-trading-1 - scan",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.zerox-trading-1.signals",
+      "label": "zerox-trading-1 - signals",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.turtle-art-1.design",
+      "label": "turtle-art-1 - design",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.turtle-art-1.logo",
+      "label": "turtle-art-1 - logo",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.turtle-art-1.brief",
+      "label": "turtle-art-1 - brief",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.oracle-research-1.research",
+      "label": "oracle-research-1 - research",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.oracle-research-1.chart",
+      "label": "oracle-research-1 - chart",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.quill-voice-1.copy",
+      "label": "quill-voice-1 - copy",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.quill-voice-1.rewrite",
+      "label": "quill-voice-1 - rewrite",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.quill-voice-1.thread",
+      "label": "quill-voice-1 - thread",
+      "category": "office",
+      "unit": "call",
+      "amount": 0.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.pikadon-gate-1.audit",
+      "label": "pikadon-gate-1 - audit",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.5,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "office.pikadon-gate-1.review",
+      "label": "pikadon-gate-1 - review",
+      "category": "office",
+      "unit": "call",
+      "amount": 1.0,
+      "currency": "SPARK",
+      "scope": "office",
+      "how": "the council office takes the job; the owner keeps 85% of an avenue call"
+    },
+    {
+      "id": "skill.pack",
+      "label": "Mastery pack",
+      "category": "skill",
+      "unit": "sale",
+      "amount": 75,
+      "currency": "PCT_ROYALTY",
+      "scope": "creator",
+      "how": "a skill sold as a pack; the creator keeps 75% of every sale"
+    },
+    {
+      "id": "teaching.plan",
+      "label": "Academy plan",
+      "category": "teaching",
+      "unit": "plan",
+      "amount": 8,
+      "currency": "USD",
+      "scope": "teacher",
+      "how": "a paid course; the teacher keeps their own treasury"
+    },
+    {
+      "id": "teaching.book",
+      "label": "Academy book",
+      "category": "teaching",
+      "unit": "book",
+      "amount": 5,
+      "currency": "USD",
+      "scope": "teacher",
+      "how": "a book, priced 5-9"
+    },
+    {
+      "id": "colosseum.ticket.floor",
+      "label": "Colosseum floor ticket",
+      "category": "realm",
+      "unit": "ticket",
+      "amount": 50,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "a seat in the arena; escrowed and settled in Sparks"
+    },
+    {
+      "id": "colosseum.ticket.lower",
+      "label": "Colosseum lower ticket",
+      "category": "realm",
+      "unit": "ticket",
+      "amount": 25,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "a seat in the arena; escrowed and settled in Sparks"
+    },
+    {
+      "id": "colosseum.ticket.promenade",
+      "label": "Colosseum promenade ticket",
+      "category": "realm",
+      "unit": "ticket",
+      "amount": 15,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "a seat in the arena; escrowed and settled in Sparks"
+    },
+    {
+      "id": "colosseum.ticket.upper",
+      "label": "Colosseum upper ticket",
+      "category": "realm",
+      "unit": "ticket",
+      "amount": 10,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "a seat in the arena; escrowed and settled in Sparks"
+    },
+    {
+      "id": "colosseum.ticket.lobby_box",
+      "label": "Colosseum lobby_box ticket",
+      "category": "realm",
+      "unit": "ticket",
+      "amount": 100,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "a seat in the arena; escrowed and settled in Sparks"
+    },
+    {
+      "id": "realm.plot",
+      "label": "Plot",
+      "category": "realm",
+      "unit": "plot",
+      "amount": 100,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "yields 72 sparks/day, max 3 per character"
+    },
+    {
+      "id": "realm.siege.ticket",
+      "label": "Castle siege entry",
+      "category": "realm",
+      "unit": "ticket",
+      "amount": 25,
+      "currency": "SPARK",
+      "scope": "player",
+      "how": "one server-wide siege, 5 dragons, one prize pool"
+    },
+    {
+      "id": "bazaar.bz_mqt916w8",
+      "label": "Logo Design",
+      "category": "bazaar",
+      "unit": "item",
+      "amount": 15,
+      "currency": "SPARK",
+      "scope": "market",
+      "how": "skill by nexus"
+    },
+    {
+      "id": "bazaar.bz_mqt916ts",
+      "label": "Lore Writing",
+      "category": "bazaar",
+      "unit": "item",
+      "amount": 10,
+      "currency": "SPARK",
+      "scope": "market",
+      "how": "service by quill"
+    },
+    {
+      "id": "bazaar.bz_mqt916qy",
+      "label": "Neon Katana",
+      "category": "bazaar",
+      "unit": "item",
+      "amount": 35,
+      "currency": "SPARK",
+      "scope": "market",
+      "how": "item by turtle"
+    },
+    {
+      "id": "pack.pack-6c42545012",
+      "label": "Flywheel Founders Farms Siege Pack v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 69.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-e83472ad11",
+      "label": "SHADDAI Economy Rules Pack v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 59.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-312b734c08",
+      "label": "ZK Blockchain DAG Pack v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 49.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-d5bcc47869",
+      "label": "Productivity Full Lessons v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 65.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-700725583d",
+      "label": "Anti-Cheat and Exploit Bible v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 79.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-c39332f8bc",
+      "label": "Colosseum Battle and Race Rulebook v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 59.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-df41378720",
+      "label": "Squad Co-Work Playbook v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 49.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-3fcfc1945e",
+      "label": "Master Lesson and Bot Templates v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 45.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-bf612f9343",
+      "label": "Productivity Universe Map v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 35.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-40de50afdb",
+      "label": "30-Algo Specialist Map v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 39.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-fc9427f2ed",
+      "label": "World-Building and Arena Play Kit v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 29.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-58760b8267",
+      "label": "Paper Trading Strategy Pack v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 49.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "pack.pack-74a1485a4b",
+      "label": "SHADDAI Brand Voice Pack v1",
+      "category": "pack",
+      "unit": "sale",
+      "amount": 25.0,
+      "currency": "USDC",
+      "scope": "creator",
+      "how": "a skill pack; 75% goes to the creator"
+    },
+    {
+      "id": "consult.setup_sprint",
+      "label": "Setup Sprint",
+      "category": "consultancy",
+      "unit": "one_time",
+      "amount": 499,
+      "currency": "USD",
+      "scope": "service",
+      "how": "brand voice pack · templates + dashboard · 1 arena event · 30-day quest line"
+    },
+    {
+      "id": "consult.whole_brand",
+      "label": "Whole Brand",
+      "category": "consultancy",
+      "unit": "one_time",
+      "amount": 1999,
+      "currency": "USD",
+      "scope": "service",
+      "how": "identity + content engine · vtuber avatar + 10 clips · 90-day calendar · SEO + social launch"
+    },
+    {
+      "id": "consult.care",
+      "label": "Care",
+      "category": "consultancy",
+      "unit": "month",
+      "amount": 99,
+      "currency": "USD",
+      "scope": "service",
+      "how": "updates · quests + support"
+    },
+    {
+      "id": "consult.growth",
+      "label": "Growth",
+      "category": "consultancy",
+      "unit": "month",
+      "amount": 249,
+      "currency": "USD",
+      "scope": "service",
+      "how": "content machine run · clips + posts + SEO"
+    },
+    {
+      "id": "consult.dominate",
+      "label": "Dominate",
+      "category": "consultancy",
+      "unit": "month",
+      "amount": 499,
+      "currency": "USD",
+      "scope": "service",
+      "how": "everything + vtuber shows · siege sponsorship"
+    }
+  ]
 }
