@@ -597,6 +597,30 @@
       var strip = add(new THREE.BoxGeometry(w.halfW * 2 + 0.6, 0.5, len + 0.6), new THREE.MeshBasicMaterial({ color: w.accent, toneMapped: false }), mx, w.h + 0.25, mz); strip.rotation.y = ang;
       [-1, 1].forEach(function (sd) { add(new THREE.CylinderGeometry(1.0, 0.9, w.h + 4, 14), gold, w.dx * (w.along0 + 1.5) + w.nx * sd * (w.halfW + 0.5), (w.h + 4) / 2, w.dz * (w.along0 + 1.5) + w.nz * sd * (w.halfW + 0.5)); });
     });
+    // FACADE PASS (2026-10-23, owner: "the agent academy is very important" - plain wing boxes read crude): glowing glass ribbon
+    // windows on every wing (2 storeys, both long sides), gold pilasters every 6 m, two glass bands round the drum, a paved
+    // forecourt ring with an emerald edge and entrance steps. Repeated pieces are InstancedMeshes (5 extra draws in total).
+    var ribbonM = new THREE.MeshStandardMaterial({ color: 0x0c2a24, emissive: 0x1fbf8a, emissiveIntensity: 0.55, roughness: 0.15, metalness: 0.3 });
+    var ribs = [], pils = [];
+    L.wings.forEach(function (w) {
+      var len = w.along1 - w.along0, ang = Math.atan2(w.dx, w.dz);
+      [-1, 1].forEach(function (sd) {
+        [0.3, 0.68].forEach(function (fy) {   // two storeys of ribbon glazing per side
+          ribs.push({ x: w.dx * (w.along0 + w.along1) / 2 + w.nx * sd * (w.halfW + 0.05), y: w.h * fy, z: w.dz * (w.along0 + w.along1) / 2 + w.nz * sd * (w.halfW + 0.05), ang: ang, sx: 0.12, sy: 2.2, sz: len - 3 });
+        });
+        for (var a2 = w.along0 + 3; a2 < w.along1 - 1; a2 += 6) pils.push({ x: w.dx * a2 + w.nx * sd * (w.halfW + 0.35), y: w.h / 2, z: w.dz * a2 + w.nz * sd * (w.halfW + 0.35), ang: ang, sx: 0.7, sy: w.h, sz: 0.7 });
+      });
+    });
+    function inst(list, mat, name) {
+      var im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, list.length), mm = new THREE.Matrix4(), qq = new THREE.Quaternion(), yy = new THREE.Vector3(0, 1, 0);
+      list.forEach(function (b, i) { qq.setFromAxisAngle(yy, b.ang); mm.compose(new THREE.Vector3(b.x, b.y, b.z), qq, new THREE.Vector3(b.sx, b.sy, b.sz)); im.setMatrixAt(i, mm); });
+      im.instanceMatrix.needsUpdate = true; im.name = name; rot.add(im); return im;
+    }
+    inst(ribs, ribbonM, 'ext-wing-glazing'); inst(pils, gold, 'ext-wing-pilasters');
+    [H * 0.32, H * 0.62].forEach(function (yb) { add(new THREE.CylinderGeometry(R + 0.25, R + 0.25, 2.4, 64, 1, true), ribbonM, 0, yb, 0, 'ext-drum-band'); });
+    var plaza = add(new THREE.RingGeometry(R + 3, R + 26, 64), new THREE.MeshStandardMaterial({ color: 0x2a2f36, roughness: 0.85 }), 0, 0.06, 0, 'ext-forecourt'); plaza.rotation.x = -Math.PI / 2;
+    var edge = add(new THREE.RingGeometry(R + 25.4, R + 26, 64), new THREE.MeshBasicMaterial({ color: 0x2bff88, toneMapped: false }), 0, 0.09, 0, 'ext-forecourt-edge'); edge.rotation.x = -Math.PI / 2;
+    for (var st = 0; st < 5; st++) add(new THREE.BoxGeometry(L.gate.halfW * 2 + 6 - st * 0.8, 0.35, 1.6), stone, 0, 0.18 + st * 0.35, L.gate.endZ + 7 - st * 1.5, 'ext-steps');
     // Dean's apse (north): gold dome and the pulse beacon
     var ap = L.apse; add(new THREE.CylinderGeometry(ap.r, ap.r, ap.h, 40), stone, ap.cx, ap.h / 2, ap.cz, 'ext-apse');
     add(new THREE.SphereGeometry(ap.r, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), gold, ap.cx, ap.h, ap.cz, 'ext-apse-dome');

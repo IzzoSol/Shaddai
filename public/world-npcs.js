@@ -278,7 +278,7 @@ window.buildWorldNPCs = function (THREE, scene, loader, heightAt, opts) {
 
   // ── load each agent GLB ───────────────────────────────────────────────────
   AGENTS.forEach(function (agent, idx) {
-    var url = '/assets/agents/' + agent.code + '.glb?v=9';
+    var url = '/assets/agents/' + agent.code + '.glb?v=14';
 
     loader.load(url, function (gltf) {
       try {

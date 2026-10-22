@@ -71,9 +71,9 @@
   var THEMES = {
     SHADDAI : { label: 'SHADDAI — The Source',    accent: 0xffcf4a, floor: 0x100d00, propFn: 'throneRoom'    },
     NEXUS   : { label: 'NEXUS — Navigator Core',  accent: 0x34e5b0, floor: 0x001a10, propFn: 'serverRoom'    },
-    QUILL   : { label: 'QUILL — The Library',     accent: 0xb98cff, floor: 0x0d0820, propFn: 'scriptorium'   },
-    ORACLE  : { label: 'ORACLE — Esoteric Wing',  accent: 0xc084fc, floor: 0x0c0820, propFn: 'arcaneLibrary' },
-    TURTLE  : { label: 'TURTLE — The Museum',     accent: 0x1fd6c4, floor: 0x001414, propFn: 'artStudio'     },
+    QUILL   : { label: 'QUILL — The Library',     accent: 0xb98cff, floor: 0x0d0820, propFn: 'library'       },
+    ORACLE  : { label: 'ORACLE — The Observatory', accent: 0xc084fc, floor: 0x0c0820, propFn: 'observatory'   },
+    TURTLE  : { label: 'TURTLE — The Museum',     accent: 0x1fd6c4, floor: 0x001414, propFn: 'museum'        },
     PIKADON : { label: 'PIKADON — The Aegis',     accent: 0xff5a6e, floor: 0x1a0206, propFn: 'vaultRoom'     },
     ZEROX   : { label: 'ZEROX — The Markets',     accent: 0x27e0ff, floor: 0x001220, propFn: 'tradingFloor'  },
     bazaar  : { label: 'THE BAZAAR — Agora Hall', accent: 0x00e5a0, floor: 0x000d08, propFn: 'bazaarHall'    },
@@ -1653,6 +1653,100 @@
       },
 
       /* ── TURTLE — art studio / museum ── */
+      /* ── ORACLE — OBSERVATORY (2026-10-23, owner: "ORACLE observatory with telescopes"; TURTLE spec: triple-lens array,
+         observation chairs, holo star-map table, starfield dome). Keeps the whole arcane room (pillars, runes, orrery) and adds the
+         instruments; a separate builder so the castle (which reuses arcaneLibrary) does not get telescopes. Units = room units. ── */
+      observatory: function (group, accent) {
+        propBuilders.arcaneLibrary(group, accent);
+        var anim = group.userData.animObjs || (group.userData.animObjs = []);
+        var steel = mat(0x1a1d24, 0x000000, 0, 0.35, 0.75), brass = mat(0x8a6a2a, 0x3a2a08, 0.12, 0.30, 0.85), lens = mat(0x0a1420, accent, 0.45, 0.05, 0.2, true, 0.85);
+        /* telescope array: rotating mount at the back wall, three tubes tilted up toward the dome */
+        var mount = new THREE.Group(); mount.position.set(0, 0, -30); group.add(mount);
+        var base = new THREE.Mesh(new THREE.CylinderGeometry(5, 6, 3, 24), steel); base.position.y = 1.5; mount.add(base);
+        var ring = new THREE.Mesh(new THREE.TorusGeometry(5.6, 0.25, 8, 40), brass); ring.rotation.x = Math.PI / 2; ring.position.y = 3.05; mount.add(ring);
+        var yoke = new THREE.Group(); yoke.position.y = 3; mount.add(yoke); anim.push({ mesh: yoke, axis: 'y', speed: 0.06 });
+        [-1.5, 0, 1.5].forEach(function (sx, i) {
+          var tilt = new THREE.Group(); tilt.position.set(sx * 2.4, 4 + (i === 1 ? 1 : 0), 0); tilt.rotation.x = -0.9; yoke.add(tilt);
+          var L = i === 1 ? 16 : 12,   /* fits ROOM_H 22: top ~ 3 + 5 + 16*cos(0.9) = 18 */ r = i === 1 ? 1.5 : 1.0;
+          var tube = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.2, L, 20), steel); tube.position.y = L / 2; tilt.add(tube);
+          var band = new THREE.Mesh(new THREE.TorusGeometry(r * 1.22, 0.18, 6, 24), brass); band.rotation.x = Math.PI / 2; band.position.y = L * 0.3; tilt.add(band);
+          var glass = new THREE.Mesh(new THREE.CircleGeometry(r * 0.95, 20), lens); glass.rotation.x = -Math.PI / 2; glass.position.y = L + 0.02; tilt.add(glass);
+        });
+        var post = new THREE.Mesh(new THREE.BoxGeometry(1.2, 6, 1.2), steel); post.position.set(0, 3, 0); yoke.add(post);
+        /* observation chairs between the pillars, facing the array */
+        [[-12, -14], [12, -14], [-16, -2], [16, -2]].forEach(function (c) {
+          var ch = new THREE.Group(); ch.position.set(c[0], 0, c[1]); ch.lookAt(0, 0, -30); group.add(ch);
+          var seat = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 3), steel); seat.position.y = 2; ch.add(seat);
+          var back = new THREE.Mesh(new THREE.BoxGeometry(3, 3.4, 0.6), steel); back.position.set(0, 3.6, -1.3); back.rotation.x = -0.45; ch.add(back);
+          var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, 2, 10), brass); stem.position.y = 1; ch.add(stem);
+        });
+        /* holo star-map table */
+        var tbl = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.6, 32), steel); tbl.position.set(14, 3.4, 12); group.add(tbl);
+        var leg = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 2.0, 3.1, 16), brass); leg.position.set(14, 1.55, 12); group.add(leg);
+        var mapM = mat(0x050a14, accent, 0.5, 0.2, 0.1, true, 0.55); glow(mapM, 0.35, 0.3, 0.12);
+        var holo = new THREE.Mesh(new THREE.SphereGeometry(3, 18, 12), mapM); holo.position.set(14, 7.5, 12); group.add(holo); anim.push({ mesh: holo, axis: 'y', speed: 0.35 });
+        /* starfield dome overhead */
+        var sp = [], n = 260; for (var k = 0; k < n; k++) { var u = Math.random() * Math.PI * 2, v = Math.random() * 0.5 * Math.PI, R = 34; sp.push(Math.cos(u) * Math.cos(v) * R, 14 + Math.sin(v) * 7, Math.sin(u) * Math.cos(v) * R); }   /* under the 22-unit ceiling */
+        var sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+        var stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xe8f0ff, size: 0.35, transparent: true, opacity: 0.85, depthWrite: false })); group.add(stars);
+        anim.push({ mesh: stars, axis: 'y', speed: 0.01 });
+      },
+
+      /* ── QUILL — LIBRARY hero (2026-10-23, TURTLE spec): the Quill Tree, branches holding floating glowing scrolls. Wraps scriptorium. ── */
+      library: function (group, accent) {
+        propBuilders.scriptorium(group, accent);
+        var anim = group.userData.animObjs || (group.userData.animObjs = []);
+        var bark = mat(0x2a1d16, 0x000000, 0, 0.9, 0.05), scrollM = mat(0xf2e6c8, accent, 0.4, 0.6, 0.0);
+        var tree = new THREE.Group(); tree.position.set(0, 0, -22); group.add(tree);
+        var trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 2.2, 12, 9), bark); trunk.position.y = 6; tree.add(trunk);
+        for (var b = 0; b < 6; b++) {
+          var a0 = b * Math.PI / 3, br = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.6, 8, 6), bark);
+          br.position.set(Math.cos(a0) * 3, 13, Math.sin(a0) * 3); br.rotation.set(Math.sin(a0) * 0.9, 0, -Math.cos(a0) * 0.9); tree.add(br);
+          var sc = new THREE.Group(); sc.position.set(Math.cos(a0) * 6.5, 16 + (b % 2) * 1.2, Math.sin(a0) * 6.5); tree.add(sc);
+          var roll = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 2.6, 10), scrollM); roll.rotation.z = Math.PI / 2; sc.add(roll);
+          anim.push({ mesh: sc, axis: 'y', speed: 0.4 + b * 0.05 });
+        }
+        var crown = new THREE.Mesh(new THREE.IcosahedronGeometry(5.5, 0), mat(0x1a3a26, accent, 0.18, 0.8, 0.0)); crown.position.y = 17.5; crown.scale.y = 0.55; tree.add(crown);
+        /* FLOATING SWIVEL BOOKCASES (owner ref 2026-10-23: tall library, book-filled blocks hanging in the air, slowly turning) */
+        var shelfM = mat(0x3a2414, 0x000000, 0, 0.85, 0.05), spineCols = [0x7a2e2e, 0x2e4a7a, 0x6a5a2a, 0x2e6a4a, 0x5a2e6a, 0xb98cff];
+        [[-26, -8, 12], [26, -12, 15], [-24, 18, 16], [24, 16, 11], [0, 26, 17]].forEach(function (c, k) {
+          var piv = new THREE.Group(); piv.position.set(c[0], c[2], c[1]); group.add(piv);
+          var bc = new THREE.Group(); piv.add(bc);
+          var frame = new THREE.Mesh(new THREE.BoxGeometry(7, 6, 2.2), shelfM); bc.add(frame);
+          for (var row = 0; row < 3; row++) for (var bk = 0; bk < 9; bk++) {
+            var bh = 1.2 + ((bk * 7 + row * 3) % 4) * 0.12, spine = new THREE.Mesh(new THREE.BoxGeometry(0.62, bh, 0.25), mat(spineCols[(bk + row + k) % 6], spineCols[(bk + row) % 6], 0.12, 0.7, 0.05));
+            spine.position.set(-2.9 + bk * 0.72, -1.9 + row * 1.9 + bh / 2 - 0.6, 1.15); bc.add(spine);
+            var back = spine.clone(); back.position.z = -1.15; bc.add(back);
+          }
+          var halo = new THREE.Mesh(new THREE.TorusGeometry(4.6, 0.08, 6, 36), mat(accent, accent, 0.5, 0.3, 0.2, true, 0.6)); halo.rotation.x = Math.PI / 2; halo.position.y = -3.6; bc.add(halo);
+          anim.push({ mesh: bc, axis: 'y', speed: 0.12 + k * 0.03 * (k % 2 ? -1 : 1) });
+        });
+      },
+
+      /* ── TURTLE — MUSEUM hero (2026-10-23, TURTLE spec): "Genesis", a faceted sculpture rotating on a gold-rimmed plinth. Wraps artStudio. ── */
+      museum: function (group, accent) {
+        propBuilders.artStudio(group, accent);
+        var anim = group.userData.animObjs || (group.userData.animObjs = []);
+        var plinth = new THREE.Mesh(new THREE.CylinderGeometry(6, 7, 2.4, 6), mat(0x0a0a0a, 0x000000, 0, 0.4, 0.6)); plinth.position.set(0, 1.2, -18); group.add(plinth);
+        var rim = new THREE.Mesh(new THREE.TorusGeometry(6.6, 0.25, 6, 6), mat(0xd4af37, 0x6a5010, 0.3, 0.3, 0.9)); rim.rotation.x = Math.PI / 2; rim.position.set(0, 2.45, -18); group.add(rim);
+        var gen = new THREE.Group(); gen.position.set(0, 2.4, -18); group.add(gen); anim.push({ mesh: gen, axis: 'y', speed: 0.18 });
+        var gm = mat(0x10302c, accent, 0.35, 0.25, 0.55);
+        var g1 = new THREE.Mesh(new THREE.OctahedronGeometry(4.2, 0), gm); g1.position.y = 8; g1.scale.set(0.8, 1.6, 0.8); gen.add(g1);
+        var g2 = new THREE.Mesh(new THREE.TetrahedronGeometry(2.6, 0), mat(0xd4af37, 0x6a5010, 0.35, 0.3, 0.9)); g2.position.set(0, 15.2, 0); gen.add(g2);
+        var g3 = new THREE.Mesh(new THREE.TorusGeometry(5.2, 0.3, 6, 7), gm); g3.position.y = 8; g3.rotation.x = 1.1; gen.add(g3);
+        var spot = new THREE.Mesh(new THREE.TorusGeometry(7.5, 0.2, 6, 40), mat(0xd4af37, 0xd4af37, 0.5, 0.3, 0.6)); spot.rotation.x = Math.PI / 2; spot.position.set(0, 20.5, -18); group.add(spot);
+        /* LISTENING RING (owner ref 2026-10-23): the studio's collaborative listening room - 7 coloured wedges round a dark centre;
+           stand on it and press L (world-listening-room.js reads global.__listeningRing). */
+        var lr = new THREE.Group(); lr.position.set(18, 0.05, 14); lr.userData.radius = 9; group.add(lr);
+        [0xe0457b, 0x2fb7c9, 0xf06a8a, 0xf0a03a, 0x6fd39a, 0x5a7cf0, 0xb45af0].forEach(function (c, k) {
+          var w = new THREE.Mesh(new THREE.RingGeometry(3.2, 7, 12, 1, k * 2 * Math.PI / 7 + 0.03, 2 * Math.PI / 7 - 0.06), mat(c, c, 0.45, 0.5, 0.1, true, 0.75));
+          w.rotation.x = -Math.PI / 2; w.position.y = 0.06; lr.add(w);
+        });
+        var core = new THREE.Mesh(new THREE.CircleGeometry(3, 32), mat(0x0d1226, accent, 0.25, 0.4, 0.2)); core.rotation.x = -Math.PI / 2; core.position.y = 0.08; lr.add(core);
+        var wave = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.08, 6, 40), mat(0x2fb7c9, 0x2fb7c9, 0.5, 0.3, 0.2)); wave.position.y = 2.2; lr.add(wave); anim.push({ mesh: wave, axis: 'y', speed: 0.8 });
+        global.__listeningRing = lr;
+      },
+
       artStudio: function (group, accent) {
         group.userData.animObjs = [];
 

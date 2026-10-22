@@ -22,6 +22,8 @@
     { id: 'jetpack', name: 'Jetpack', price: 1800, key: 'Space', icon: 'JET', note: 'Hold Space in the air to climb. 100 fuel, recharges on the ground.' },
     { id: 'scent', name: 'Scent-Away', price: 60, key: 'Semicolon', icon: 'SCENT', stack: 5, note: 'Wolves ignore you for 90 s.' },
     { id: 'respirator', name: 'Void Respirator', price: 900, icon: 'MASK', wear: true, note: 'Breathe in the Void Castle gas. Gas damage way down, void damage -20%.' },
+    { id: 'desert-wrap', name: 'Desert Wrap', price: 700, icon: 'WRAP', wear: true, note: 'Sand-cloth wrap for head and feet. Shrugs off the Searing Sun of the Sand Sea.' },
+    { id: 'frost-kit', name: 'Frost Kit', price: 700, icon: 'FROST', wear: true, note: 'Ice cleats + face shield. Walk the Arctic Vault without the Deep Cold sapping you.' },
     { id: 'emp', name: 'EMP Charge', price: 150, key: 'Period', icon: 'EMP', stack: 3, note: '30 m pulse: staggers dragons 2.5 s and hits them for 40 storm damage.' }
   ];
   var EMP = { rangeM: 30, stagger: 2.5, dmg: 40 };
@@ -69,7 +71,7 @@
     else if (has(id)) return { ok: false, msg: 'Already owned' };
     var sp = root.ShdSparks; if (!sp || !sp.spend || !sp.spend(c.price, 'gadget', id)) return { ok: false, msg: 'Needs ' + c.price + ' Sparks' };
     if (c.id === 'scent') { S.scent++; S.owned.scent = 1; } else if (c.id === 'emp') { S.emp = (S.emp || 0) + 1; S.owned.emp = 1; } else S.owned[id] = 1;
-    if (c.id === 'respirator') wearRespirator();
+    if (c.wear) wearGear(c.id);
     save(); renderBar(); return { ok: true, msg: c.name + ' ready' };
   }
   var hooks = { onScent: null };
@@ -77,11 +79,15 @@
     if (S.scent <= 0) return { ok: false, msg: 'No Scent-Away left' }; S.scent--; S.scentUntil = Date.now() + SCENT_S * 1000; save();
     if (hooks.onScent) hooks.onScent(SCENT_S); if (root.__mobs && root.__mobs.setScentless) root.__mobs.setScentless(SCENT_S); renderBar(); toast('Scent-Away: wolves will ignore you for ' + SCENT_S + ' s'); return { ok: true, msg: 'Scent masked' };
   }
-  function wearRespirator() {   // passive gear: the perks world-realm-zones.js reads (never lowers a better perk you already have)
-    var I = root.ShdInv; if (!I || !I.setPerk) return false;
-    var up = function (k, v) { if (!((+I.perk(k) || 0) >= v)) I.setPerk(k, v); };
-    up('mask-gas', 1); up('resist-poison', 0.5); up('resist-void', 0.2); return true;
+  // passive realm gear: the perks world-realm-zones.js reads (never lowers a better perk you already have)
+  var WEAR = { respirator: { 'mask-gas': 1, 'resist-poison': 0.5, 'resist-void': 0.2 },
+    'desert-wrap': { 'mask-wrap': 1, 'resist-sun': 0.5 },
+    'frost-kit': { 'mask-arctic': 3, 'resist-cold': 0.4 } };
+  function wearGear(id) {
+    var I = root.ShdInv, w = WEAR[id]; if (!I || !I.setPerk || !w) return false;
+    Object.keys(w).forEach(function (k) { if (!((+I.perk(k) || 0) >= w[k])) I.setPerk(k, w[k]); }); return true;
   }
+  function wearRespirator() { return wearGear('respirator'); }
   function useEmp(me) {
     if ((S.emp || 0) <= 0) return { ok: false, msg: 'No EMP charges left' };
     var D = root.__worldDragons, U = (ui && ui.U) || U0, P = me || (ui && ui.getPlayer && ui.getPlayer() && ui.getPlayer().pos);
@@ -108,7 +114,7 @@
     if (!bar) return; var ids = owned(), h = '';
     CATALOG.forEach(function (c) {
       if (ids.indexOf(c.id) < 0) return; var on = c.id === 'radar' ? S.radarOn : c.id === 'binoculars' ? S.zoomWant : false;
-      var extra = c.id === 'scent' ? ' x' + S.scent : c.id === 'emp' ? ' x' + (S.emp || 0) : c.id === 'respirator' ? ' ON' : c.id === 'jetpack' ? ' ' + Math.round(S.fuel) + '%' : '';
+      var extra = c.id === 'scent' ? ' x' + S.scent : c.id === 'emp' ? ' x' + (S.emp || 0) : c.wear ? ' ON' : c.id === 'jetpack' ? ' ' + Math.round(S.fuel) + '%' : '';
       h += '<button data-g="' + c.id + '" title="' + c.name + ' - ' + c.note + '" style="pointer-events:auto;cursor:pointer;margin:2px;padding:5px 9px;border-radius:8px;border:1px solid ' + (on ? '#00ff9c' : '#3a5a6a') + ';background:' + (on ? 'rgba(0,255,156,.22)' : 'rgba(8,14,26,.82)') + ';color:#e9f4ee;font:700 11px Rajdhani,sans-serif;letter-spacing:.06em">' + c.icon + extra + '</button>';
     });
     bar.innerHTML = h;

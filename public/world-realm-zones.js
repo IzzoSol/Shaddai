@@ -11,14 +11,14 @@
 (function (root) {
   'use strict';
   var FLOOR = 25, TICK = 0.25, GAS_R_M = 120, PIT_R_M = 165, LAVA_BELOW_M = 25;
-  var REALM_ZONE = { arctic: 'arctic-cold', volcano: 'ember-heat' };
+  var REALM_ZONE = { arctic: 'arctic-cold', volcano: 'ember-heat', desert: 'desert-sun' };
   function create(o) {
     var H = o.hazards || root.WorldRealmHazards, M = o.mode || root.WorldCombatMode, U = 7 / 1.8, acc = 0, st = { realm: null, zone: null, warn: null, drain: 1, forcedFight: false }, warnT = -99, now = o.clock || function () { return Date.now() / 1000; };
     function bf(el) { var B = o.buffs || root.WorldBuffs; return B ? B.resist(el) : 0; }   // food and drink buffs add to clothing resistance
     function gear() {
       var p = o.perk || function () { return 0; };
-      return { masks: { gas: +p('mask-gas') || 0, lava: +p('mask-lava') || 0, arctic: +p('mask-arctic') || 0 },
-        resist: { fire: (+p('resist-fire') || 0) + bf('fire'), cold: (+p('resist-cold') || 0) + bf('cold'), poison: (+p('resist-poison') || 0) + bf('poison'), void: (+p('resist-void') || 0) + bf('void') } };
+      return { masks: { gas: +p('mask-gas') || 0, lava: +p('mask-lava') || 0, arctic: +p('mask-arctic') || 0, wrap: +p('mask-wrap') || 0 },
+        resist: { fire: (+p('resist-fire') || 0) + bf('fire'), cold: (+p('resist-cold') || 0) + bf('cold'), poison: (+p('resist-poison') || 0) + bf('poison'), void: (+p('resist-void') || 0) + bf('void'), sun: (+p('resist-sun') || 0) + bf('sun') } };
     }
     function norm(d) { d %= 360; return d < 0 ? d + 360 : d; }
     /* strict realm: inside the wedge (compass degrees, clockwise from north) AND the radius band; null in the Grid core, ring zone and wilderness */

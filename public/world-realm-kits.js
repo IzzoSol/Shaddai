@@ -60,7 +60,8 @@
     var m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pv = new THREE.Vector3(), sv = new THREE.Vector3();
     function add(key, p, solidR) {
       (batches[key] = batches[key] || []).push(m4.compose(pv.set(p.x, heightAt(p.x, p.z), p.z), q.setFromAxisAngle(up, p.yaw), sv.setScalar(PM * p.s)).clone());
-      if (solidR) (solids[key] = solids[key] || []).push({ x: Math.round(p.x), z: Math.round(p.z), r: Math.round(solidR * PM * p.s), label: 'realmkit:' + key });
+      var c = null; if (solidR) (solids[key] = solids[key] || []).push(c = { x: Math.round(p.x), z: Math.round(p.z), r: Math.round(solidR * PM * p.s), label: 'realmkit:' + key });
+      return c;
     }
     var homeLots = [];   // HOME DEEDS: every K10b home lot -> id 'home:<stationId>:<lot>' (backend/home-deed-routes.js), door point in world units
     if (towns_on) stations.forEach(function (st) { var lot = 0; placements(st, TOWN.filter(function (t) { return t[0] === 'home'; })).forEach(function (p) {
@@ -68,7 +69,8 @@
     root.__homeLots = homeLots;
     stations.forEach(function (st) {
       stats.towns++; var sk = st.id + '|';
-      placements(st, BUILDINGS.concat(towns_on ? TOWN : [])).forEach(function (p) { add(sk + 'bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]); });
+      placements(st, BUILDINGS.concat(towns_on ? TOWN : [])).forEach(function (p, i) { var c = add(sk + 'bld:' + st.realm + ':' + p.name, p, SOLID_R[p.name]);
+        if (p.name !== 'home') (root.__realmKitBuildings = root.__realmKitBuildings || []).push({ id: 'realmbld:' + st.id + ':' + p.name + ':' + i, realm: st.realm, kind: p.name, x: p.x, z: p.z, yaw: p.yaw, s: p.s, canon: c }); });   // walk-in interiors: world-realm-interiors.js (homes: world-realm-homes.js)
       var pr = PROPS[PROP_REALM[st.realm]] || {};
       Object.keys(pr).forEach(function (name) {
         placements(st, pr[name].map(function (t) { return [name, t[0], t[1], t[2], t[3]]; })).forEach(function (p) { add(sk + 'prop:' + PROP_REALM[st.realm] + ':' + name, p, SOLID_R[name]); });
@@ -109,6 +111,7 @@
       update(o.getPlayer && o.getPlayer());
       if (o.getPlayer && typeof setInterval === 'function' && o.autoUpdate !== false) setInterval(function () { update(o.getPlayer()); }, 500);
       console.info('[realm-kits]', stats);
+      if (root.WorldRealmInteriors) root.WorldRealmInteriors.sync();
       return { group: group, towns: towns, stats: stats, update: update };
     });
   }

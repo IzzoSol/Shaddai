@@ -219,7 +219,7 @@
       navi: function (st) { return Promise.resolve(head(st, 'Opening your Navi Academy tab.')); },
       // FIELD TRIPS: the academy is classes only; the seven agent halls are the real buildings in the city (Source Temple, Navigator, Library, Esoteric Wing, Museum, Aegis, Markets)
       portal: function (st) {
-        var HALLS = [['SHADDAI', 'The Source Temple', 'strategy and the council'], ['NEXUS', 'The Navigator', 'tools and systems'], ['QUILL', 'The Library', 'writing and records'], ['ORACLE', 'The Esoteric Wing', 'research and the observatory'],
+        var HALLS = [['SHADDAI', 'The Source Temple', 'strategy and the council'], ['NEXUS', 'The Navigator', 'tools and systems'], ['QUILL', 'The Library', 'writing and records'], ['ORACLE', 'The Observatory', 'research and the observatory'],
           ['TURTLE', 'The Museum', 'art, design and music'], ['PIKADON', 'The Aegis', 'security and compliance'], ['ZEROX', 'The Markets', 'trading and the economy']];
         return Promise.resolve(head(st, 'Take a field trip: apply what you learned in the real hall. Every hall has a return pad back here.') +
           HALLS.map(function (h) { return '<div class="ac-row"><b>' + esc(h[1]) + '</b> <small>' + esc(h[0]) + ' · ' + esc(h[2]) + '</small> <button data-act="hall" data-code="' + esc(h[0]) + '">Go</button></div>'; }).join(''));

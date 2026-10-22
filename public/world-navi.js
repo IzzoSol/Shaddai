@@ -169,6 +169,17 @@
 
 
   /* ---------------- DOM ---------------- */
+  // HOLO ARC (owner ref 2026-10-23: panels floating in a curved arc off the palm, "swivel more three.js"): CSS-3D only - the plates
+  // swing in on an arc, the orb ring tilts like a palm projection, the deck swivels with the pointer (vars --nvSw / --nvTilt).
+  css += '#navi .stage{perspective:1100px;transform-style:preserve-3d}' +
+    '#navi .orbwrap{transform:translate(-50%,-50%) rotateX(var(--nvTilt,14deg)) rotateY(var(--nvSw,0deg));transform-style:preserve-3d;transition:transform .35s cubic-bezier(.2,.9,.3,1)}' +
+    '#navi .plate.pl{transform:rotateY(calc(24deg + var(--nvSw,0deg))) translateZ(-30px);transform-origin:0 50%;transition:transform .35s cubic-bezier(.2,.9,.3,1);animation:nvfloatL 7s ease-in-out infinite}' +
+    '#navi .plate.pr{transform:rotateY(calc(-24deg + var(--nvSw,0deg))) translateZ(-30px);transform-origin:100% 50%;transition:transform .35s cubic-bezier(.2,.9,.3,1);animation:nvfloatR 7s ease-in-out infinite}' +
+    '#navi .plate{backdrop-filter:blur(6px) saturate(1.2);box-shadow:0 0 0 1px rgba(0,212,255,.35),0 0 34px rgba(0,212,255,.16),0 24px 60px rgba(0,0,0,.55)}' +
+    '#navi .plate:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(140,230,255,.10) 45%,transparent 60%);background-size:260% 100%;animation:nvsheen 6s linear infinite}' +
+    '@keyframes nvfloatL{0%,100%{margin-top:0}50%{margin-top:-6px}}@keyframes nvfloatR{0%,100%{margin-top:-6px}50%{margin-top:0}}@keyframes nvsheen{from{background-position:200% 0}to{background-position:-60% 0}}' +
+    '#navi .swivel{transform:translateX(-50%) rotateX(calc(var(--nvTilt,14deg) * .6))}' +
+    '@media (prefers-reduced-motion:reduce){#navi .plate{animation:none}#navi .plate:before{animation:none}}';
   var root, elL, elR, elSw, elKp, elNodes, elCore, modalEl;
   function build() {
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
@@ -179,6 +190,10 @@
       '<div class="plate pl" id="nvL"></div><div class="plate pr" id="nvR"></div>' +
       '<div class="swivel" id="nvSw"></div><div class="kpis" id="nvKp"></div><div class="slots" id="nvSlots"></div><div class="x" id="nvX">ESC · CLOSE</div></div>';
     document.body.appendChild(root);
+    root.addEventListener('mousemove', function (e) {   // HOLO ARC swivel: pointer parallax (cheap: two CSS vars, no layout)
+      var sw = ((e.clientX / innerWidth) - 0.5) * 18, tl = 14 - ((e.clientY / innerHeight) - 0.5) * 12;
+      root.style.setProperty('--nvSw', sw.toFixed(1) + 'deg'); root.style.setProperty('--nvTilt', tl.toFixed(1) + 'deg');
+    });
     elL = root.querySelector('#nvL'); elR = root.querySelector('#nvR'); elSw = root.querySelector('#nvSw'); elKp = root.querySelector('#nvKp');
     elNodes = root.querySelector('#nvNodes'); elCore = root.querySelector('#nvAgent');
     root.querySelector('#nvX').onclick = close;

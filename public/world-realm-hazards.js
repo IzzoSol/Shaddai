@@ -1,11 +1,11 @@
 /* world-realm-hazards.js — REALM HAZARDS + PROTECTIVE GEAR (pure rules, no DOM).
  *   Each realm has hazard zones (poison gas, purple lava, cold, heat). Gear lowers the damage / stamina drain:
- *     masks:   mask-gas (level 1..), mask-lava, mask-arctic   -> a mask only fully protects at or above the zone's required level
+ *     masks:   mask-gas (level 1..), mask-lava, mask-arctic, mask-wrap (desert head + feet wrap)   -> a mask only fully protects at or above the zone's required level
  *     clothes: suit-fire, suit-frost, suit-void               -> each piece resists one element (0..0.6), pieces of the same element stack to a cap
  *   WorldRealmHazards.ZONES            known zone templates
  *   WorldRealmHazards.tick(zone, gear, dt) -> { hp, stamina, warn }   damage per second applied over dt (hp = damage dealt, stamina = drain multiplier extra)
  *   WorldRealmHazards.zoneAt(realmZones, x, z) -> zone | null   (circles / boxes)
- * gear = { masks: { gas: 0..n, lava: 0..n, arctic: 0..n }, resist: { fire: 0..1, cold: 0..1, poison: 0..1, void: 0..1 } }
+ * gear = { masks: { gas: 0..n, lava: 0..n, arctic: 0..n, wrap: 0..n }, resist: { fire: 0..1, cold: 0..1, poison: 0..1, void: 0..1, sun: 0..1 } }
  */
 (function (root) {
   'use strict';
@@ -15,7 +15,8 @@
     'castle-lava':  { name: 'Purple Lava',  element: 'fire',   dps: 14, drain: 0.3, need: { mask: 'lava', level: 5 }, contact: true },
     'arctic-cold':  { name: 'Deep Cold',    element: 'cold',   dps: 2,  drain: 1.2, need: { mask: 'arctic', level: 3 } },
     'ember-heat':   { name: 'Scorching Air', element: 'fire',  dps: 3,  drain: 0.8, need: { mask: 'lava', level: 2 } },
-    'void-drain':   { name: 'Void Drain',   element: 'void',   dps: 4,  drain: 1.0, need: null }
+    'void-drain':   { name: 'Void Drain',   element: 'void',   dps: 4,  drain: 1.0, need: { mask: 'gas', level: 1 } },   // owner 2026-10-22: the void needs a gas mask (Void Respirator)
+    'desert-sun':   { name: 'Searing Sun',  element: 'sun',    dps: 2,  drain: 1.0, need: { mask: 'wrap', level: 1 } }   // owner 2026-10-22: Desert Wrap covers head + feet
   };
   var CAP = 0.85;
   function lvl(gear, m) { return (gear && gear.masks && gear.masks[m]) || 0; }

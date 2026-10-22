@@ -1,0 +1,1514 @@
+{
+ "version": 1,
+ "source": "docs/blender/realm-scenes-20261022.blend",
+ "realms": {
+  "arctic": [
+   {
+    "file": "/assets/kits/shaddai_realm_landmarks_arctic_v01.glb",
+    "x": -110,
+    "z": 90,
+    "yaw": 90,
+    "h": 41.3,
+    "col": 12
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 7
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 2.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_arctic_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   }
+  ],
+  "darkforest": [
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 2.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 4
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 4.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_darkforest_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree02.glb",
+    "x": -34,
+    "z": 60,
+    "yaw": 0,
+    "h": 11,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree02.glb",
+    "x": 38,
+    "z": 66,
+    "yaw": 30,
+    "h": 12,
+    "col": 1,
+    "batch": "viewer-20261023"
+   }
+  ],
+  "desert": [
+   {
+    "file": "/assets/kits/shaddai_realm_landmarks_desert_v01.glb",
+    "x": -110,
+    "z": 90,
+    "yaw": 90,
+    "h": 35.5,
+    "col": 12
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 7.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 2.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 6.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_desert_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   }
+  ],
+  "forest": [
+   {
+    "file": "/assets/kits/shaddai_dist_forest_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_forest_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_forest_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 2.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_forest_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_forest_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 4.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_forest_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 6.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_forest_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/plant-02.glb",
+    "x": -14,
+    "z": 76,
+    "yaw": 0,
+    "h": 1.2,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/grass03.glb",
+    "x": 14,
+    "z": 82,
+    "yaw": 0,
+    "h": 0.6,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": -30,
+    "z": 62,
+    "yaw": 0,
+    "h": 9,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": 34,
+    "z": 70,
+    "yaw": 40,
+    "h": 10,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": -36,
+    "z": 84,
+    "yaw": 80,
+    "h": 8,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": 40,
+    "z": 88,
+    "yaw": 10,
+    "h": 9,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/fixed/block-chain-tower.glb",
+    "x": 60,
+    "z": -70,
+    "yaw": 0,
+    "h": 40,
+    "col": 5,
+    "batch": "fixq-20261023"
+   }
+  ],
+  "grid": [
+   {
+    "file": "/assets/kits/shaddai_dist_grid_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 8
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_grid_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_grid_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_grid_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_grid_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_grid_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_grid_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/fal/prop-statue-shaddai.glb",
+    "x": -22,
+    "z": 46,
+    "yaw": 180,
+    "h": 6,
+    "col": 1.5,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/retro-computer-booth.glb",
+    "x": 22,
+    "z": 46,
+    "yaw": 180,
+    "h": 3,
+    "col": 1.5,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/veh-monowheel-mech.glb",
+    "x": 110,
+    "z": 170,
+    "yaw": 0,
+    "h": 3.5,
+    "col": 1.5,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/bld-holo-market-v2.glb",
+    "x": 60,
+    "z": -70,
+    "yaw": 0,
+    "h": 10,
+    "col": 12,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/tower-crescent.glb",
+    "x": 0,
+    "z": -40,
+    "yaw": 0,
+    "h": 14,
+    "col": 0,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/veh-hover-pod-blue.glb",
+    "x": 160,
+    "z": 30,
+    "yaw": 30,
+    "h": 2.2,
+    "col": 2,
+    "batch": "fixq-20261023"
+   }
+  ],
+  "meadow": [
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 7
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 7
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_meadow_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/plant-02.glb",
+    "x": -14,
+    "z": 76,
+    "yaw": 0,
+    "h": 1.2,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/plant-02.glb",
+    "x": 16,
+    "z": 72,
+    "yaw": 40,
+    "h": 1.2,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/grass03.glb",
+    "x": -18,
+    "z": 86,
+    "yaw": 0,
+    "h": 0.6,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/grass03.glb",
+    "x": 20,
+    "z": 90,
+    "yaw": 0,
+    "h": 0.6,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": -30,
+    "z": 62,
+    "yaw": 0,
+    "h": 8,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": 34,
+    "z": 74,
+    "yaw": 20,
+    "h": 9,
+    "col": 1,
+    "batch": "viewer-20261023"
+   }
+  ],
+  "ocean": [
+   {
+    "file": "/assets/kits/shaddai_realm_landmarks_ocean_v01.glb",
+    "x": 0,
+    "z": -110,
+    "yaw": 180,
+    "h": 33,
+    "col": 12
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 2.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 4.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_ocean_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/ocean-farm-platform.glb",
+    "x": 60,
+    "z": -70,
+    "yaw": 0,
+    "h": 4,
+    "col": 9,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/ocean-harbor-hub.glb",
+    "x": -60,
+    "z": -70,
+    "yaw": 0,
+    "h": 5,
+    "col": 6,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/fal/veh-skiff.glb",
+    "x": -6,
+    "z": -152,
+    "yaw": 90,
+    "h": 1.4,
+    "col": 0,
+    "batch": "final-20261023"
+   }
+  ],
+  "suburb": [
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 7
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_suburb_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/fal/prop-holo-fountain.glb",
+    "x": 0,
+    "z": 46,
+    "yaw": 0,
+    "h": 4,
+    "col": 2.5,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": -20,
+    "z": 96,
+    "yaw": 0,
+    "h": 8,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": 20,
+    "z": 96,
+    "yaw": 0,
+    "h": 8,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": -20,
+    "z": 126,
+    "yaw": 0,
+    "h": 8,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree01.glb",
+    "x": 20,
+    "z": 126,
+    "yaw": 0,
+    "h": 8,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/veh-hover-pod-green.glb",
+    "x": 160,
+    "z": 30,
+    "yaw": -20,
+    "h": 2,
+    "col": 2,
+    "batch": "fixq-20261023"
+   }
+  ],
+  "void": [
+   {
+    "file": "/assets/kits/shaddai_realm_landmarks_void_v01.glb",
+    "x": -110,
+    "z": 90,
+    "yaw": 90,
+    "h": 52.3,
+    "col": 12
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 2.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 7
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_void_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 14,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree04.glb",
+    "x": -32,
+    "z": 62,
+    "yaw": 0,
+    "h": 11,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree-01.glb",
+    "x": 34,
+    "z": 66,
+    "yaw": 30,
+    "h": 7,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/tree04.glb",
+    "x": -38,
+    "z": 90,
+    "yaw": 60,
+    "h": 10,
+    "col": 1,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/bld-sky-dome-v2.glb",
+    "x": 60,
+    "z": -70,
+    "yaw": 0,
+    "h": 12,
+    "col": 9,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/fal/hub-door.glb",
+    "x": 0,
+    "z": -40,
+    "yaw": 0,
+    "h": 9,
+    "col": 0,
+    "batch": "fixq-20261023"
+   },
+   {
+    "file": "/assets/models/tower-crescent2.glb",
+    "x": -24,
+    "z": 48,
+    "yaw": 180,
+    "h": 12,
+    "col": 2,
+    "batch": "fixq-20261023"
+   }
+  ],
+  "volcano": [
+   {
+    "file": "/assets/models/fur-forge-station.glb",
+    "x": -28,
+    "z": 132,
+    "yaw": 90,
+    "h": 1.9,
+    "col": 1.2
+   },
+   {
+    "file": "/assets/models/fur-forge-station.glb",
+    "x": -42,
+    "z": 132,
+    "yaw": 90,
+    "h": 1.9,
+    "col": 1.2
+   },
+   {
+    "file": "/assets/models/fal/prop-ore-node.glb",
+    "x": 44,
+    "z": 156,
+    "yaw": 0,
+    "h": 1.4,
+    "col": 1
+   },
+   {
+    "file": "/assets/models/fal/prop-ore-node.glb",
+    "x": 48,
+    "z": 150,
+    "yaw": 47,
+    "h": 1.6,
+    "col": 1
+   },
+   {
+    "file": "/assets/models/fal/prop-ore-node.glb",
+    "x": 40,
+    "z": 161,
+    "yaw": 94,
+    "h": 1.4,
+    "col": 1
+   },
+   {
+    "file": "/assets/models/fal/prop-ore-node.glb",
+    "x": 51,
+    "z": 158,
+    "yaw": 141,
+    "h": 1.6,
+    "col": 1
+   },
+   {
+    "file": "/assets/models/fal/prop-crate.glb",
+    "x": 22,
+    "z": 128,
+    "yaw": 0,
+    "h": 1.2,
+    "col": 0.8
+   },
+   {
+    "file": "/assets/models/fal/prop-crate.glb",
+    "x": 24.2,
+    "z": 130.5,
+    "yaw": 15,
+    "h": 1.2,
+    "col": 0.8
+   },
+   {
+    "file": "/assets/models/fal/prop-crate.glb",
+    "x": 20.4,
+    "z": 131,
+    "yaw": -10,
+    "h": 1.2,
+    "col": 0.8
+   },
+   {
+    "file": "/assets/models/fal/prop-crate.glb",
+    "x": 40,
+    "z": 30,
+    "yaw": 5,
+    "h": 1.2,
+    "col": 0.8
+   },
+   {
+    "file": "/assets/models/fal/prop-crate.glb",
+    "x": 42.3,
+    "z": 32.4,
+    "yaw": 30,
+    "h": 1.2,
+    "col": 0.8
+   },
+   {
+    "file": "/assets/models/vehicle-mining-powerarmor.glb",
+    "x": 46,
+    "z": 126,
+    "yaw": -90,
+    "h": 3.2,
+    "col": 1.8
+   },
+   {
+    "file": "/assets/kits/shaddai_realm_landmarks_volcano_v01.glb",
+    "x": -100,
+    "z": 92,
+    "yaw": 90,
+    "h": 36.3,
+    "col": 12
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_b1_v01.glb",
+    "x": 95,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_b2_v01.glb",
+    "x": 130,
+    "z": 50,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_b3_v01.glb",
+    "x": 95,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 6
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_b4_v01.glb",
+    "x": 130,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_home_a_v01.glb",
+    "x": 95,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_home_b_v01.glb",
+    "x": 128,
+    "z": 140,
+    "yaw": -90,
+    "s": 1,
+    "col": 5.5
+   },
+   {
+    "file": "/assets/kits/shaddai_dist_volcano_farm_v01.glb",
+    "x": 178,
+    "z": 95,
+    "yaw": -90,
+    "s": 1,
+    "col": 0
+   },
+   {
+    "file": "/assets/models/fal/prop-transit-stop.glb",
+    "x": 24,
+    "z": 22,
+    "yaw": 180,
+    "h": 3.2,
+    "col": 1.2,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 100,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": 9,
+    "z": 124,
+    "yaw": -90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 100,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/kit/bench-01.glb",
+    "x": -9,
+    "z": 124,
+    "yaw": 90,
+    "h": 0.9,
+    "col": 0,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/fur-workbench.glb",
+    "x": -35,
+    "z": 124,
+    "yaw": 0,
+    "h": 1.1,
+    "col": 0.8,
+    "batch": "viewer-20261023"
+   },
+   {
+    "file": "/assets/models/fur-armor-stand.glb",
+    "x": -46,
+    "z": 126,
+    "yaw": 0,
+    "h": 2,
+    "col": 0.5,
+    "batch": "viewer-20261023"
+   }
+  ]
+ }
+}

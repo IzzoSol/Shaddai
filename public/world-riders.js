@@ -328,7 +328,7 @@
     }
 
     // ── companions: an AI agent riding along (placeholder capsule → real rigged GLB when it lands) ──
-    function characterUrl(name) { return opts.characterUrl ? opts.characterUrl(name) : '/assets/agents/' + encodeURIComponent(String(name).toUpperCase()) + '.glb?v=12'; }
+    function characterUrl(name) { return opts.characterUrl ? opts.characterUrl(name) : '/assets/agents/' + encodeURIComponent(String(name).toUpperCase()) + '.glb?v=14'; }
     var capGeo = null, capMat = null;
     function placeholder(color) {
       if (!capGeo) {

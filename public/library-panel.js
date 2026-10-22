@@ -232,7 +232,7 @@
       body.innerHTML = '';
       var g = el('div', 'gate');
       g.appendChild(el('div', 'seal', '❖')); // ❖
-      g.appendChild(el('p', null, msg || 'The Esoteric Wing is sealed by ORACLE. Enter with a Builder, Pro, or Alpha tier.'));
+      g.appendChild(el('p', null, msg || 'The Observatory is sealed by ORACLE. Enter with a Builder, Pro, or Alpha tier.'));
       body.appendChild(g);
     }
 

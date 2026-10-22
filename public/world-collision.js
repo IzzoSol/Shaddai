@@ -44,7 +44,7 @@
    */
   var FOOTPRINTS = {
     NEXUS   : { shape: 'circle', r: 88 },        // The Navigator — round dome (was 63, too small → walk-in)
-    ORACLE  : { shape: 'circle', r: 88 },        // The Esoteric Wing — round spires (was 62)
+    ORACLE  : { shape: 'circle', r: 88 },        // The Observatory — round spires (was 62)
     QUILL   : { shape: 'box', hx: 118, hz: 118 },// The Library — enlarged 1.5×, big walls (correct)
     PIKADON : { shape: 'box', hx: 92,  hz: 92 }, // The Aegis fortress (was 65)
     TURTLE  : { shape: 'box', hx: 90,  hz: 90 }, // The Museum gallery (was 63)

@@ -18,7 +18,7 @@ sparks = 1600; const r = O.unlock('ZEROX');
 t('affordable -> unlocked and charged', r.ok && O.owned('ZEROX') && sparks === 100);
 t('unlock persists', JSON.parse(store.shd_ops_v1).owned.ZEROX === 1);
 t('unlocking again is free', O.unlock('ZEROX').ok && sparks === 100);
-t('forge glb url', O.glbFor('FORGE-STREET-DEITY').indexOf('/assets/forge-models/street-deity-walk.glb') === 0);
+t('forge glb url', O.glbFor('FORGE-STREET-DEITY').indexOf('/assets/forge-models/street-deity-final.glb') === 0);   // 2026-10-23: finalized bodies (baked library clips, A-pose arm alignment, idle legs at rest)
 t('council glb url', O.glbFor('NEXUS').indexOf('/assets/agents/NEXUS.glb') === 0);
 ctx.location.search = '?unlockall'; t('?unlockall owns everything', O.owned('SHADDAI'));
 for (const o of L) { const f = o.portrait.replace(/^\//, ''); t('portrait exists ' + o.code, fs.existsSync('public/' + f)); }

@@ -30,7 +30,7 @@
   function save() { try { root.localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
   function all() { if (/[?&]unlockall\b/.test((root.location && root.location.search) || '')) return true; try { return root.localStorage && root.localStorage.getItem('shd_access') === '4444'; } catch (e) { return false; } }   // owner test access: ?unlockall or the 4444 access code (bottom-right key)
   var ALL = [];
-  BASES.forEach(function (b) { ALL.push({ code: 'FORGE-' + b.id.toUpperCase(), name: b.name, color: b.color, base: true, price: 0, portrait: '/assets/forge-models/' + b.id + '-portrait.png', glb: '/assets/forge-models/' + b.id + '-walk.glb?v=3' }); });
+  BASES.forEach(function (b) { ALL.push({ code: 'FORGE-' + b.id.toUpperCase(), name: b.name, color: b.color, base: true, price: 0, portrait: '/assets/forge-models/' + b.id + '-portrait.png', glb: '/assets/forge-models/' + b.id + '-final.glb?v=4' }); });
   PREMIUM.forEach(function (p) { ALL.push({ code: p.code, name: p.code, color: p.color, base: false, price: p.price, portrait: '/assets/agents/' + p.code + (p.code === 'VILLAIN' ? '-action' : '-portrait') + '.png', glb: '/assets/agents/' + p.code + '.glb?v=13' }); });
   function def(code) { code = String(code || '').toUpperCase(); for (var i = 0; i < ALL.length; i++) if (ALL[i].code === code) return ALL[i]; return null; }
   function owned(code) { var d = def(code); return !!d && (d.base || d.price === 0 || ALPHA_FREE || all() || !!S.owned[d.code]); }
@@ -44,6 +44,6 @@
   }
   function list() { return ALL.filter(function (d) { return !d.base || SHOW_BASICS; }).map(function (d) { return { code: d.code, name: d.name, color: d.color, portrait: d.portrait, base: d.base, price: d.price, owned: owned(d.code), glb: d.glb }; }); }
   function defaultCode() { var L = ALL.filter(function (d) { return !d.base || SHOW_BASICS; }); for (var i = 0; i < L.length; i++) if (owned(L[i].code)) return L[i].code; return (L[0] || ALL[0]).code; }
-  function glbFor(code) { var d = def(code); return d ? d.glb : '/assets/agents/' + encodeURIComponent(String(code).toUpperCase()) + '.glb?v=13'; }
+  function glbFor(code) { var d = def(code); return d ? d.glb : '/assets/agents/' + encodeURIComponent(String(code).toUpperCase()) + '.glb?v=14'; }
   root.WorldOperatives = { list: list, owned: owned, price: price, unlock: unlock, defaultCode: defaultCode, glbFor: glbFor, def: def, _reset: function () { S = { owned: {} }; save(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

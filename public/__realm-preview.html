@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realm Preview</title>
+<style>
+  :root { --bg: #0a0f18; --panel: #111a26; --line: #22314a; --ink: #e6edf6; --dim: #8fa3b8; --accent: #ff6a30; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, Segoe UI, sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px;
+         background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 10px; }
+  #bar b { font-weight: 600; margin-right: 6px; }
+  select, button { background: #0d1520; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font: inherit; cursor: pointer; }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  #info { color: var(--dim); margin-left: auto; font-size: 12px; }
+  @media (max-width: 640px) { #info { width: 100%; margin-left: 0; } }
+</style>
+<script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/addons/" } }</script>
+<script src="/world-realm-interiors.js?v=20261022a"></script>
+<script src="/world-realm-kits.js?v=20261022a"></script>
+<script src="/world-townsfolk.js?v=20261023b"></script>
+<script src="/world-realm-dress.js?v=20261023b"></script>
+</head>
+<body>
+<div id="bar">
+  <b>Realm preview</b>
+  <select id="realm"></select>
+  <button id="night" class="on">Night</button>
+  <button id="bloom" class="on">Bloom</button>
+  <span id="info">loading…</span>
+</div>
+<script type="module">
+// Runs the GAME's own modules (world-realm-kits.js, world-realm-dress.js, world-townsfolk.js) against one station at the origin,
+// with the world's lighting + the kit colour fix, so a realm can be reviewed without booting the whole world (8 GB box).
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { installKitColorFix } from '/kit-color-fix.js?v=20261022a';
+installKitColorFix(GLTFLoader);
+const PM = 7 / 1.8, REALMS = ['volcano', 'desert', 'arctic', 'void', 'ocean', 'meadow', 'forest', 'darkforest', 'suburb', 'grid'];
+const GROUND = { arctic: 0xdfe8ef, desert: 0xc9a46a, volcano: 0x2a1610, meadow: 0x4f7a3a, forest: 0x2a4d33, darkforest: 0x182219, ocean: 0xcdb98e, suburb: 0x5d6672, void: 0x120c1d, grid: 0x0f1620 };
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.97; renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const amb = new THREE.AmbientLight(0x223355, 0.7), hemi = new THREE.HemisphereLight(0xeaf2ff, 0x241d2e, 1.15);
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(30, 60, 20);
+const sun2 = new THREE.DirectionalLight(0xcfe2ff, 0.7); sun2.position.set(-40, 40, -30);
+const rim = new THREE.DirectionalLight(0xffb066, 0.5); rim.position.set(-60, 24, 60);
+scene.add(amb, hemi, sun, sun2, rim);
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 20000);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+const composer = new EffectComposer(renderer); composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.55, 0.6, 0.85));
+let useBloom = true, night = true, live = [], gen = 0;   // gen: a realm switch discards builds still in flight from the previous realm
+const sel = document.getElementById('realm'), info = document.getElementById('info');
+REALMS.forEach((r) => { const o = document.createElement('option'); o.value = r; o.textContent = r; sel.appendChild(o); });
+function setSky() { const c = night ? 0x0a0f18 : 0x8fb3d9; scene.background = new THREE.Color(c); scene.fog = new THREE.Fog(c, 900, 4200); sun.intensity = night ? 1.5 : 2.6; hemi.intensity = night ? 1.15 : 1.6; }
+function clear() { live.forEach((x) => { if (x.dispose) x.dispose(); else if (x.parent) x.parent.remove(x); }); live = []; }
+async function show(realm) {
+  const my = ++gen; clear(); info.textContent = 'building ' + realm + '…';
+  const keep = (x) => { if (!x) return; if (my !== gen) { if (x.dispose) x.dispose(); else if (x.parent) x.parent.remove(x); else if (x.group && x.group.parent) x.group.parent.remove(x.group); return; } live.push(x.group || x); };
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(900 * PM, 72), new THREE.MeshStandardMaterial({ color: GROUND[realm], roughness: 0.95 }));
+  ground.rotation.x = -Math.PI / 2; scene.add(ground); live.push(ground);
+  const group = new THREE.Group(); scene.add(group); live.push(group);   // stand-in for the maglev station node (station-local frame)
+  const transit = { stations: [{ id: 'preview-' + realm, realm, onRing: true, group }] };
+  new GLTFLoader().load('/assets/kits/shaddai_station_' + realm + '_v01.glb', (g) => { g.scene.scale.setScalar(PM); group.add(g.scene); });
+  const t0 = performance.now();
+  const kits = await window.WorldRealmKits.build({ THREE, GLTFLoader, scene, transit, heightAt: () => 0, autoUpdate: false });
+  keep(kits); if (my !== gen) return;
+  const dress = await window.WorldRealmDress.build({ THREE, GLTFLoader, meshopt: MeshoptDecoder, scene, transit, heightAt: () => 0 });
+  keep(dress); if (my !== gen) return;
+  const folk = window.buildWorldTownsfolk({ THREE, GLTFLoader, meshopt: MeshoptDecoder, cloneSkinned, scene, transit, heightAt: () => 0, getPlayer: () => ({ x: 0, z: 60 * PM }) });
+  keep(folk);
+  const r = 260 * PM; controls.target.set(0, 0, 80 * PM); camera.position.set(r * 0.55, r * 0.55, -r * 0.35); controls.update();
+  info.textContent = realm + ' · kits ' + (kits ? kits.stats.instances : 0) + ' · dressing ' + (dress ? dress.stats.entries : 0) + ' · ' + Math.round(performance.now() - t0) + ' ms';
+}
+document.getElementById('night').onclick = (e) => { night = !night; e.target.classList.toggle('on', night); setSky(); };
+document.getElementById('bloom').onclick = (e) => { useBloom = !useBloom; e.target.classList.toggle('on', useBloom); };
+sel.onchange = () => show(sel.value);
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
+renderer.setAnimationLoop(() => { controls.update(); useBloom ? composer.render() : renderer.render(scene, camera); });
+window.__preview = { camera, controls, PM, ready: () => (info.textContent || '').includes(' ms') };
+setSky(); const qr = (location.search.match(/[?&]realm=([a-z]+)/) || [])[1]; if (qr && REALMS.includes(qr)) sel.value = qr; show(sel.value);
+</script>
+</body>
+</html>
