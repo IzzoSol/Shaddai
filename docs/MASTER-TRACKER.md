@@ -170,6 +170,23 @@ Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
   Later: polish void + harbor landmarks; furniture kit; Forge rig retarget; bots rig fix; townsfolk probe.
 - [ ] Next: run the townsfolk probe; props batch (world-placements module, keepers measured in Blender); wilderness fighters (council-lookalike rigs); doors on buildings; fix-pile.
 
+## 2026-10-23 progress (edge realms + studio)
+- [x] Pushed agents/1: 708665bb (code) + 25ac17d1 (105 GLBs). Not main.
+- [~] **EDGE REALMS (owner: beyond the rim, not on map, foot only + unreleased cosmetic)** — Blender kit K31 (`Shaddai/.../k31_edge_realms.py`,
+  headless `tools/k31_export_bg.py`): Cloud Harbor (ocean side), Ascension Arch (arctic), Scripture Veil (desert, glyph ribbons),
+  Ringworld Rise (meadow; ring-arch city + crest RING ROAD with ambient ring cars), cloud sea ring + world-edge monolith curtain,
+  SKYWARD PORTAL floating off the Sky Nexus deck (sealed). Runtime `world-edge-realms.js` (?edgerealms=0): gate toasts "foot only" /
+  "sealed — Skyward Pilgrim Veil (not yet released)". NOT built: actually crossing (needs server-side cosmetic check + rim-clamp
+  exception + deck ground height), boarding ring cars, walkable portal stair. Sky realm = later.
+- [x] TURTLE studio **Binary Vision** (`world-binary-vision.js`, button in the Listening Room): live mix or a dropped local file as
+  glitch byte-grid / digraph (method: binary-visualization, BSD-2, Mitja Felicijan). Owner glitch refs = the target look.
+- [ ] Owner refs to use: elevator pods (Athenaeum + academy lifts: glass capsule cars on chrome rails), NAVI (central emblem + module
+  ring + hex bar + side panels; holo command-centre rings), furniture sheet (furniture kit pass), agent art (cymatics / pixel glitch / chakra chart).
+- [ ] PERF (measured 2026-10-23, `tools/_perf-breakdown.cjs`): ~1,365-1,650 draw calls everywhere (budget < 80), ~4.3M tris, far plane 4 km.
+  Top: unnamed Mesh/Group ~590 in view, static-merge 160, world-fill 70. Needs an owner-approved plan (merge/instancing + view-distance tiers).
+- [ ] Skinned-mesh `matrixWorld of undefined` x4 (three frustum test computeBoundingSphere on a SkinnedMesh with a missing bone) — find + fix.
+- [ ] 276 tracked GLB deletions: 275 referenced only by QA lists (__asset-notes / __glb-scan / __opus-placement-queue); 1 in realm-dress-v1.json — identify before committing deletions.
+
 ## Notes
 - PUSH: main push stopped at branch slice 40/102 (system low on memory with Blender open). Restart only when the owner says (branch slices first, then main).
 - Disk C: was 432 MB free on 2026-10-16; world .blend1 deleted (owner OK). Owner wants unused GLB/zip files found and removed - list first, owner picks.

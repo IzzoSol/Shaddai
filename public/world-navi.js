@@ -24,7 +24,7 @@
     { id: 'inv', label: 'ITEMS', ic: '🎒' }, { id: 'market', label: 'SHOP', ic: '🛒' }, { id: 'plots', label: 'HOMES', ic: '⬡' },
     { id: 'wallet', label: 'WALLET', ic: '👛' }, { id: 'sparks', label: 'SPARKS', ic: '✦' },
     { id: 'bots', label: 'AGENTS', ic: '🤖' }, { id: 'academy', label: 'ACADEMY', ic: '🎓' },
-    { id: 'chat', label: 'CHAT', ic: '💬' }, { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'radio', label: 'RADIO', ic: '📡' }
+    { id: 'chat', label: 'CHAT', ic: '💬' }, { id: 'markets', label: 'MARKETS', ic: '📈' }, { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'radio', label: 'RADIO', ic: '📡' }
   ];
   var SLOTS = ['Dashboard', 'SkinForge', 'AutoPost', 'Aura', 'Terminal'];
   // Line icons (2026-10-15, owner Navi refs): one stroke style for every module, replaces the emoji.
@@ -33,6 +33,7 @@
     inv: '<path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3M4 13h16"/>',
     chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/>',
     sparks: '<path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/>',
+    markets: '<path d="M4 19h16M6 16l4-5 3 3 5-7"/><path d="M15 7h3v3"/>',
     news: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"/>',
     market: '<path d="M3 4h3l2.5 11h10L21 8H7"/><circle cx="10" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/>',
     radio: '<circle cx="12" cy="12" r="2"/><path d="M8 8a6 6 0 0 0 0 8M16 8a6 6 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>',
@@ -397,7 +398,30 @@
       },
       act: function () { } };
   };
-  M.news = function () { return { title: 'NEWS', list: NEWS.map(function (n) { return { id: n.id, t: n.t, s: n.s }; }), empty: 'Quiet on the wires.', detail: function (id) { var n = NEWS.filter(function (x) { return x.id === id; })[0]; return n ? '<h3>' + esc(n.t) + '</h3><div>' + esc(n.s) + ' feed (mock — real ticker plugs in later)</div>' : '<div class="empty">Select a story.</div>'; } }; };
+  /* MARKETS + NEWS (2026-10-23): live free feeds through world-live-feeds.js (server-cached CoinGecko / alternative.me / Cointelegraph).
+   * Offline = says so; nothing is invented. Information only, not advice. */
+  function feed(k) { var F = window.WorldFeeds; return F ? F.get(k) : { state: 'offline', data: null }; }
+  if (window.WorldFeeds) window.WorldFeeds.on(function () { if (typeof render === 'function') try { render(); } catch (e) { } });
+  function fmt(n) { return n == null ? '-' : (n >= 1000 ? '$' + Math.round(n).toLocaleString() : '$' + (+n).toPrecision(4)); }
+  M.markets = function () {
+    var T = feed('tickers'), G = feed('fng'), R = feed('trending'), list = [];
+    if (G.data) list.push({ id: 'mk-fng', t: 'Fear & Greed: ' + G.data.value, s: G.data.value_classification, tag: 'MOOD' });
+    (T.data || []).forEach(function (c, i) { list.push({ id: 'mk' + i, t: c.symbol + '  ' + fmt(c.price), s: (c.change24h >= 0 ? '+' : '') + c.change24h + '% 24h', tag: c.change24h >= 0 ? 'UP' : 'DOWN' }); });
+    (R.data || []).forEach(function (c, i) { list.push({ id: 'tr' + i, t: 'Trending: ' + c.symbol, s: c.name + (c.rank ? ' · rank ' + c.rank : ''), tag: 'HOT' }); });
+    return { title: 'MARKETS · ' + (T.state === 'ready' ? 'LIVE' : T.state === 'offline' ? 'OFFLINE' : 'LOADING'), list: list,
+      empty: T.state === 'offline' ? 'Markets are offline right now (server not reachable).' : 'Loading live markets…',
+      detail: function (id) { var it = list.filter(function (x) { return x.id === id; })[0]; return it ? '<h3>' + esc(it.t) + '</h3><div>' + esc(it.s) + '</div><div class="empty" style="margin-top:10px">Live data: CoinGecko · alternative.me. Information, not advice.</div>' : '<div class="empty">Select a market.</div>'; },
+      act: function () { } };
+  };
+  M.news = function () {
+    var N = feed('news'), items = N.data || [];
+    var list = items.length ? items.map(function (n, i) { return { id: 'nw' + i, t: n.title, s: (n.date || '').slice(0, 16) + ' · Cointelegraph' }; }) : NEWS.map(function (n) { return { id: n.id, t: n.t, s: n.s + ' · world' }; });
+    return { title: 'NEWS · ' + (N.state === 'ready' ? 'LIVE' : N.state === 'offline' ? 'WORLD ONLY (feed offline)' : 'LOADING'), list: list, empty: 'Quiet on the wires.',
+      detail: function (id) {
+        if (/^nw/.test(id)) { var n = items[+id.slice(2)]; return n ? '<h3>' + esc(n.title) + '</h3><div>' + esc(n.date || '') + '</div><div class="empty" style="margin-top:10px">Source: Cointelegraph' + (n.link ? ' — ' + esc(n.link) : '') + '</div>' : ''; }
+        var w = NEWS.filter(function (x) { return x.id === id; })[0]; return w ? '<h3>' + esc(w.t) + '</h3><div>' + esc(w.s) + ' (world bulletin)</div>' : '';
+      }, act: function () { } };
+  };
 
   var LISTINGS = [
     { id: 'l1', t: 'Stardust Trail · Hoverboard Skin', s: 'seller: orion', price: 1250, cur: 'PBC', cat: 'Skins' },

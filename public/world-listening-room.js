@@ -114,6 +114,8 @@
       var paint = function () { b.textContent = d[1](); b.style.opacity = (d[0] === 'a4' || FX[d[0]]) ? 1 : 0.45; b.style.borderColor = (d[0] === 'a4' ? (FX.a4 === 432 ? '#ffd02c' : '#2a3155') : (FX[d[0]] ? '#22e0ff' : '#2a3155')); };
       b.onclick = function () { d[2](); saveFx(); paint(); }; paint(); tog.appendChild(b);
     });
+    if (root.WorldBinaryVision) { var bv = el('button', 'padding:7px 12px;border-radius:16px;border:1px solid #2cff6a;background:#0b0f20;color:#fff;font:600 12px system-ui;cursor:pointer', 'Binary Vision');   // TURTLE: the mix as glitch art
+      bv.onclick = function () { root.WorldBinaryVision.open(); }; tog.appendChild(bv); }
     ui.addEventListener('keydown', function (e) { if (e.code === 'Escape') close(); });
   }
   function render() {
@@ -186,5 +188,5 @@
       if (near || ui) { e.preventDefault(); toggle(); }
     });
   }
-  root.WorldListeningRoom = { open: open, close: close, toggle: toggle, attach: attach, PARTS: PARTS, _lanes: function () { return lanes; } };
+  root.WorldListeningRoom = { open: open, close: close, toggle: toggle, attach: attach, PARTS: PARTS, _lanes: function () { return lanes; }, analyser: function () { return analyser; } };
 })(typeof window !== 'undefined' ? window : this);

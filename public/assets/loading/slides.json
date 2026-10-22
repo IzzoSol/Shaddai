@@ -5,12 +5,12 @@
   "line": "One world. Every agent. Yours to shape."
  },
  {
-  "src": "/assets/loading/agent-nexus.webp",
+  "src": "/assets/loading/agent-nexus.webp?v=20261023",
   "who": "NEXUS",
   "line": "Every skill, one tap away."
  },
  {
-  "src": "/assets/loading/agent-zerox.webp",
+  "src": "/assets/loading/agent-zerox.webp?v=20261023",
   "who": "ZEROX",
   "line": "Markets move. We read them first."
  },
@@ -25,12 +25,12 @@
   "line": "Make it beautiful. Make it move."
  },
  {
-  "src": "/assets/loading/agent-quill.webp",
+  "src": "/assets/loading/agent-quill.webp?v=20261023",
   "who": "QUILL",
   "line": "Say it clearly. Say it once."
  },
  {
-  "src": "/assets/loading/agent-pikadon.webp",
+  "src": "/assets/loading/agent-pikadon.webp?v=20261023",
   "who": "PIKADON",
   "line": "Nothing gets past the shield."
  }

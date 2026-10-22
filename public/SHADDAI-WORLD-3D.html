@@ -325,6 +325,9 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
 <script src="/world-realm-dress.js?v=20261023b"></script>
+<script src="/world-perf-guard.js?v=20261023b"></script>
+<script src="/world-underground-bazaar.js?v=20261023e"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
+<script src="/world-edge-realms.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261016a"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -337,7 +340,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-quests.js?v=20261001a"></script>
 <script src="/world-gear.js?v=20261001a"></script>
 <script src="/world-gear-wear.js?v=20261022a"></script>
-<script src="/world-listening-room.js?v=20261023c"></script>
+<script src="/world-binary-vision.js?v=20261023a"></script><script src="/world-listening-room.js?v=20261023d"></script>
 <script src="/world-colosseum-intro.js?v=20261023a"></script>   <!-- arena entry cinematic (skippable); ?colointro=0 = off -->   <!-- TURTLE studio Listening Room (owner ref): stand on the ring in the museum, press L -->   <!-- realm protective gear on the body (respirator / desert wrap / frost kit); ?gearwear=0 = off -->
 <script src="/world-buffs.js?v=20261003a"></script>
 <script src="/world-realm-hazards.js?v=20261002a"></script>
@@ -392,7 +395,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-landmarks.js?v=20260925m3"></script>
 <script src="/world-buildings.js?v=20260719fix2"></script>
 <script src="/world-collision.js?v=20260926obb"></script>
-<script src="/world-player-controller.js?v=20260926a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
+<script src="/world-player-controller.js?v=20261023a"></script>   <!-- kinematic capsule player (docs/PLAYER-CONTROLLER.md) -->
 <script src="/world-operatives.js?v=20261023a"></script>
 <script src="/world-spawn.js?v=20261009c"></script>
 <script src="/world-themes.js?v=20261009c"></script>
@@ -418,7 +421,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-academy-client.js?v=20261011a"></script>
-<script src="/world-navi.js?v=20261023a"></script>
+<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023a"></script><script src="/world-navi.js?v=20261023b"></script>
 <script src="/world-navi-chat.js?v=20261015a"></script>   <!-- Navi CHAT relay (/api/mp) + name sign-up; ?chat=0 = local only -->   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
@@ -1144,7 +1147,11 @@ window.__worldBuilt = false;
       if(window.__worldTransitApi && window.WorldTransitKit && !/[?&]transitkit=0/.test(location.search)) window.WorldTransitKit.dress({ THREE, GLTFLoader, api: window.__worldTransitApi }).catch(function(e){ console.warn('[transit-kit]', e && e.message); });
       if(window.__worldTransitApi && window.WorldRealmKits && !/[?&]realmkits=0/.test(location.search)) window.WorldRealmKits.build({ THREE, GLTFLoader, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmKits = r; }).catch(function(e){ console.warn('[realm-kits]', e && e.message); });  // Ringed Realm maglev (stations, trains, E to ride)
       if(window.__worldTransitApi && window.buildWorldTownsfolk) try{ window.__townsfolk = window.buildWorldTownsfolk({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, cloneSkinned, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }); }catch(e){ console.warn('[townsfolk]', e && e.message); }   // 2026-10-22 rigged NPCs at their posts (baked clips)
-      if(window.__worldTransitApi && window.WorldRealmDress) window.WorldRealmDress.build({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmDress = r; }).catch(function(e){ console.warn('[realm-dress]', e && e.message); });   // 2026-10-22 Blender-authored realm dressing (realm-dress-v1.json)
+      if(window.__worldTransitApi && window.WorldRealmDress) window.WorldRealmDress.build({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, scene, transit: window.__worldTransitApi, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmDress = r; }).catch(function(e){ console.warn('[realm-dress]', e && e.message); });
+      if(window.WorldEdgeRealms) window.WorldEdgeRealms.build({ THREE, GLTFLoader, scene, meta: _v4Meta, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0), getPlayer: function(){ return playerPos; }, isOnFoot: function(){ return !bikeMode && !veh.mode && !(hover && hover.isRiding && hover.isRiding()) && !_rideOn(); } }).catch(function(e){ console.warn('[edge-realms]', e && e.message); });   // 2026-10-23 K31 edge realms
+      if(window.WorldUndergroundBazaar) window.WorldUndergroundBazaar.build({ THREE, GLTFLoader, scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0), getPlayer: function(){ return playerPos; }, isInside: function(){ return !!(_interiors && _interiors.isInside()); },
+        setPlayer: function(x,y,z){ playerPos.set(x,y,z); if(_pctl) _pctl.setPos(x,y,z); } }).catch(function(e){ console.warn('[bazaar]', e && e.message); });   // 2026-10-23 K32 underground bazaar
+      try{ if(window.WorldCityScreens) window.WorldCityScreens.build({ THREE, scene, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0), getPlayer: function(){ return playerPos; } }); }catch(e){ console.warn('[screens]', e && e.message); }   // ZEROX market wall + SHADDAI news screen (live free feeds)   // 2026-10-22 Blender-authored realm dressing (realm-dress-v1.json)
       if(!MAP_V4 && L && window.buildWorldTrails)    worldTrails     = window.buildWorldTrails({ THREE, scene, layout: L, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   // v4: skipped (Map v3 mountain-pass roads)
   }
   try{
@@ -1162,7 +1169,7 @@ window.__worldBuilt = false;
     // if(L && window.buildWorldMarketsScreen) worldMarkets = window.buildWorldMarketsScreen(THREE, scene, L);
   }catch(e){ console.warn('world core build failed:', e && e.message); }
   // MAP v4: load terrain → water, THEN the heightAt-dependent realm modules + buildings (below).
-  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261015a'))
+  window.__mapV4Ready = !MAP_V4 ? Promise.resolve(null) : (_ldBegin('terrain'), _loadScript('/world-terrain-v4.js?v=20261023a'))
     .then(()=> _loadScript('/world-water.js?v=20260925v4a'))
     .then(()=> window.buildWorldTerrainV4({ THREE, scene, camera, base: /[?&]waterways=1\b/.test(location.search) ? '/assets/terrain-ww/' : '/assets/terrain/' }))   // ?waterways=1: patched heightmap + Harbor Ring Canal (tools/carve-ring-canal.py)
     .then(function(api){
@@ -1414,6 +1421,7 @@ window.__worldBuilt = false;
         const prev = window.__onCityInteract;
         window.__onCityInteract = function(m){ const mine = window.__interiorsV3.handleInteract(m); if(prev && !(mine && m.interior && m.interior.type === 'lift')) prev(m); };
         window.__w3dDebug.interiorsV3 = window.__interiorsV3;
+        _loadScript('/world-interior-levels.js?v=20261023a').then(function(){ if(window.WorldInteriorLevels) window.WorldInteriorLevels.attach({ THREE, scene, interiors: window.__interiorsV3, getPlayer: function(){ return playerPos; } }); }).catch(function(e){ console.warn('[levels]', e && e.message); });   // building upper floors + roof via the lift
         // REAL AGENTS INSIDE (2026-10-16): staff + seated agents instead of capsules (world-interior-agents.js, ?interioragents=0 = capsules)
         _loadScript('/world-interior-agents.js?v=20261016b').then(function(){ if(window.WorldInteriorAgents) window.WorldInteriorAgents.attach({ THREE, interiors: window.__interiorsV3, loader: agentBodyLoader, cloneSkinned: cloneSkinned, animLib: _agentAnimLib }); }).catch(function(e){ console.warn('[interior-agents]', e && e.message); });
         // REALM HOMES (world-realm-homes.js, docs/REALM-HOMES.md): earth burrows, cave homes, leaf tree homes, pod homes, arctic domes — instanced, enterable
@@ -5454,12 +5462,14 @@ try{
     _pctl = window.buildPlayerController({
       THREE,
       heightAt: function(x,z){
+        if (window.__groundAtHooks) for (let _k = 0; _k < window.__groundAtHooks.length; _k++) { const _g = window.__groundAtHooks[_k](x, z); if (_g != null && isFinite(_g)) return _g; }   // bazaar floor / building upper floors
         let h = _terrH(x,z);
         if (_pctlDeckY != null && _pctlDeckY > h && Math.abs(x-playerPos.x) < 4 && Math.abs(z-playerPos.z) < 4) h = _pctlDeckY;
         if (window.WORLD_BRIDGE_GROUNDY) { const b = window.WORLD_BRIDGE_GROUNDY(x, z, playerPos.y, 2.5); if (b !== null && b > h) h = b; }
         return h;
       },
       colliders: window.buildPlayerController.worldColliders(window),
+      skipWalls: function(){ return !!(window.__bazaar && window.__bazaar.isInside()); },   // the surface city's walls do not exist in the cavern
       tune: /[?&]slow=1/.test(location.search) ? {} : { walk: 4.4, run: 9.5, sprint: 17, staminaSeconds: 14 },   // 2026-10-11 owner: "walking is very slow" - the world is ~6 km, so alpha runs 9.5 m/s / sprints 17 (?slow=1 = old 6.5 / 9.5)
       waterHeightAt: MAP_V4 ? function(x,z){ return _v4Water ? _v4Water.waterHeightAt(x,z) : null; } : function(){ return 0.05; },
     });
@@ -6417,6 +6427,9 @@ _pctlDeckY = (_pctlOn && _elevators && _elevators.groundY) ? _elevators.groundY(
   if(_onTrain) groundY = playerPos.y;   // MAGLEV: the cabin floor under you (world-transit.js writes playerPos.y)
   if(!isFinite(groundY)) groundY = 0;   // guard: a bad height sample must never drop the player through the floor
   if(_interiors && _interiors.isInside()) groundY = (window.__colosseumArena && window.__colosseumArena.contains(playerPos.x, playerPos.z)) ? Math.min(window.__colosseumArena.heightAt(playerPos.x, playerPos.z), 400) : 0;   // interiors: flat floor, except the real-size colosseum (walkable tiers)
+  // GROUND HOOKS (2026-10-23): building upper floors (world-interior-levels.js), the underground bazaar, the portal stair. Each hook
+  // returns a floor height for the player's spot or null; the last non-null wins.
+  if(window.__groundHooks && !_onTrain) for(let _gi = 0; _gi < window.__groundHooks.length; _gi++){ try{ const _g = window.__groundHooks[_gi](playerPos, groundY); if(_g != null && isFinite(_g)) groundY = _g; }catch(_e){} }
   // ── SWIM LAW (five-laws §14.3): if the terrain under us is below the waterline, the player
   // FLOATS on the surface (bob included) instead of walking the seafloor. Water bodies are
   // the Crystal Sea basin + any biome marked water:true with a floor below ~-0.45.
@@ -6594,6 +6607,13 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   const t=clock.elapsedTime;
   // MAP v4: stream terrain LOD + animate water EVERY frame (also during the sky-dive, so the landing zone
   // is already refined when you touch down). Budgeted inside the module (≤4 patch builds / 2.5 ms).
+  // 2026-10-23 finish-pass ticks: each guarded so one failure never stops the others (first error kept in window.__tickErr for the audit)
+  { const _tk = function(n, f){ try{ f(); }catch(e){ if(!window.__tickErr){ window.__tickErr = n + ': ' + (e && e.message); console.warn('[tick]', window.__tickErr); } } };
+    _tk('bazaar', function(){ if(window.__bazaar) window.__bazaar.tick(t); });
+    _tk('screens', function(){ if(window.__cityScreens) window.__cityScreens.tick(t); });
+    _tk('edge', function(){ if(window.__edgeRealms) window.__edgeRealms.tick(t); });
+    _tk('perfguard', function(){ if(window.__perfGuard === undefined && window.WorldPerfGuard) window.__perfGuard = window.WorldPerfGuard.attach({ THREE, scene, camera, renderer }) || false;
+      if(window.__perfGuard) window.__perfGuard.tick(dt); }); }   // speck cull (< 2 px meshes skip their draw) + skinned-mesh bounds guard
   if(MAP_V4){ if(_v4Sky) _v4Sky.update(dt, playerPos); if(_v4T) _v4T.update(t, dt); if(_v4Water) _v4Water.update(t, dt); if(_v4Fill) _v4Fill.update(t, dt, camera.position); if(window.__w3dDebug.clustersV4 && window.__w3dDebug.clustersV4.update) window.__w3dDebug.clustersV4.update(t, dt, camera.position); if(window.__w3dDebug.gridFabricV4 && window.__w3dDebug.gridFabricV4.update) window.__w3dDebug.gridFabricV4.update(t, dt, camera.position); }
   if(MAP_V4 && window.__dragons && !_spawnBusy) window.__dragons.update(dt);
   if(MAP_V4 && window.__wildlife && !_spawnBusy) window.__wildlife.update(dt);

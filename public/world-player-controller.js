@@ -218,6 +218,7 @@
     var W = { nx: 0, nz: 0, top: Infinity };
     var P = { x: 0, z: 0 };
     function wallActive(c, feetY, reach) {
+      if (opts.skipWalls && opts.skipWalls()) return false;               // host says: no surface walls here (underground bazaar)
       if (c.top != null && c.top <= feetY + reach) return false;       // low enough to step onto / stand on
       if (c.bottom != null && c.bottom >= feetY + D.h) return false;   // overhead (bridge deck etc.)
       return true;
