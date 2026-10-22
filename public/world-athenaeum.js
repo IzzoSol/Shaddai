@@ -103,7 +103,7 @@
     // ── rotunda drum, doors, dome ───────────────────────────────────────────────
     // (2026-10-15) with the Blender K15 rotunda coming (shaddai_athenaeum_rotunda_v01.glb) these pieces merge into their own '#rot' meshes so they can
     // hide when the kit lands; ?athkit=0 or no loader = the code rotunda as before.
-    var ROTKIT = !!(root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athkit=0/.test(location.search || ''))), _addTo0 = addTo;
+    var ROTKIT = !!(root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athkit=0/.test(location.search || '')) && (typeof location !== 'undefined' && /[?&]athk33=0/.test(location.search || ''))), _addTo0 = addTo;   // K15 only when K33 is switched off
     if (ROTKIT) addTo = function (n, g) { _addTo0(n + '#rot', g); };
     var doors = L.wings.map(function (w) { return { a: w.angleDeg, half: Math.asin(L.DOOR_HALF / R) * 180 / Math.PI, color: w.accent }; });
     doors.push({ a: 0, half: Math.asin(L.apse.doorHalf / R) * 180 / Math.PI, color: L.AGENT_COLOR.SHADDAI });
@@ -487,6 +487,26 @@
       rotMeshes.forEach(function (m) { m.visible = false; });
       rootG.children.forEach(function (o) { if (/^athenaeum-balcony/.test(o.name)) o.visible = false; });
     }, undefined, function () { console.warn('[athenaeum] K15 rotunda missing, code rotunda kept'); });
+    // BLENDER K33 INTERIOR (2026-10-23, owner refs: white + gold rotunda, geodesic glass dome, hanging ring core over a holo-globe pool,
+    // window-wall classrooms with holo desks + green walls, Dean's Atrium with tiered balconies). Same plan as athenaeum-layout.js, so
+    // stations, colliders, pods, boards, posters, faculty and wing furniture all stay; the code shell / columns / balconies / centre
+    // hologram (and the K15 shell) hide. ?athk33=0 = keep the old look.
+    if (root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athk33=0/.test(location.search || ''))) new root.__GLTFLoaderClass().load('/assets/kits/shaddai_athenaeum_interior_v01.glb?v=20261023a', function (gl) {
+      var shell = gl.scene; shell.name = 'athenaeum-k33';
+      shell.traverse(function (n) {
+        if (!n.isMesh || !n.material) return; var nm = n.material.name || '';
+        if (/^ath_glass/.test(nm)) n.material = new THREE.MeshStandardMaterial({ color: 0xd6f0ff, transparent: true, opacity: 0.16, roughness: 0.05, metalness: 0.15, depthWrite: false, side: THREE.DoubleSide });
+        else if (/^ath_holo/.test(nm)) { n.material = new THREE.MeshBasicMaterial({ color: 0x7fe8ff, transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false }); }
+        else n.material.side = THREE.DoubleSide;
+      });
+      rootG.add(shell);
+      rootG.children.forEach(function (o) {
+        if (o === shell) return;
+        if (/^static:|^columns$|^column-bands$|^athenaeum-balcony|^athenaeum-k15$|^dais:tree$|^orbit-ring$|^tree-nodes$|^orbit-glyphs$|^athenaeum-holo|^athenaeum-plinth/.test(o.name)) o.visible = false;
+      });
+      rotMeshes.forEach(function (m) { m.visible = false; });
+      hemi.color.set(0xfff8ec); hemi.groundColor.set(0x3a3428); fill.color.set(0xfff0dc); fill.intensity = 1.1;
+    }, undefined, function () { console.warn('[athenaeum] K33 interior missing, previous look kept'); });
     var key = new THREE.PointLight(0xbfffec, 260, 95 * U, 1.0); key.position.set(0, DRUM + 4, 0); group.add(key); key.position.set(X0, DRUM * U + 4 * U, Z0);
     var accentLights = [];
     function addLight(color, i, m, wx, wy, wz) { var l = new THREE.PointLight(color, i, m * U, 1.0); l.position.set(X0 + wx * U, wy * U, Z0 + wz * U); group.add(l); accentLights.push(l); return l; }
