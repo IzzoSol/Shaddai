@@ -1,0 +1,37 @@
+﻿Contact: mailto:izzohicks28@gmail.com
+Preferred-Languages: en
+Expires: 2027-10-21T00:00:00.000Z
+Policy: https://shaddai.onrender.com/showcase.html
+Canonical: https://shaddai.onrender.com/.well-known/security.txt
+
+# Vulnerability disclosure
+
+If you find a security issue in SHADDAI, please email izzohicks28@gmail.com
+with: what you found, how to reproduce it, and the impact you believe it has.
+
+What we ask:
+  - Give us a reasonable window to fix it before public disclosure.
+  - Do not access data belonging to other users, do not run automated scans
+    against the live surface, and do not test the payment or custody rails
+    with real funds.
+  - We will not pursue legal action over good-faith research that follows the
+    rules above.
+
+What you get:
+  - Acknowledgement within 3 business days.
+  - A fix or a mitigation plan, and credit in the changelog if you want it.
+  - Early access to the founder tier when it is open.
+
+# What is and is not protected
+
+The server code is never served: the static roots are public/ and the site
+directory only, and every unknown path returns the dashboard. A source-path
+denylist refuses backend/, server/, shaddai-mcp/, docs/, .git/, *.map, *.ts,
+*.sql, *.log, package*.json and key files with a clean 404.
+
+The client code ships to a browser and CANNOT be reverse engineered. It is
+minified to raise the cost of reading, and the value is being moved
+server-side. Please do not mass-extract the client bundle or the skill
+methodologies - the methodology is what the mastery packs sell, and its
+creator keeps 75% of every sale. The discovery index is free and complete by
+design: /llms.txt, /api/headless/catalog, /api/headless/price-index.

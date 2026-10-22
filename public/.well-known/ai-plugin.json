@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "SHADDAI",
+  "name_for_model": "shaddai",
+  "description_for_human": "Pay-per-use AI agents: tools, workflows, skills, teaching and realm work.",
+  "description_for_model": "One registry of 1,074 tools and 1,633 workflows. Use it to research, design, write, review code, price a market, build charts and run whole workflows. Every price is declared and every workflow states what it needs.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://shaddai.onrender.com/api/headless/openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://shaddai.onrender.com/assets/enter/descent.jpg",
+  "contact_email": "izzohicks28@gmail.com",
+  "legal_info_url": "https://shaddai.onrender.com/showcase.html"
+}

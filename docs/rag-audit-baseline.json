@@ -1,0 +1,201 @@
+{
+  "when": "2026-10-21T20:20:37.164Z",
+  "probes": 19,
+  "precision_at_1": 7,
+  "precision_at_3": 53,
+  "answer_coverage": 20,
+  "abstention_accuracy": 0,
+  "off_topic_rate": 93,
+  "rows": [
+    {
+      "q": "What are the seven revenue splits in SHADDAI?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] shaddai [shaddai, score: 100]"
+    },
+    {
+      "q": "How much is one Spark worth and what is the peg?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] abdaal study masterclass 2h [zerox, score: 100]"
+    },
+    {
+      "q": "What is the mastery pack royalty split for creators?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] 00 - knowledge hub [shaddai, score: 100]"
+    },
+    {
+      "q": "How many tools are in the SHADDAI MCP registry?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] shaddai [shaddai, score: 100]"
+    },
+    {
+      "q": "What is a bazaar listing and what are the splits?",
+      "expect": "answer",
+      "topScore": 107,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] mastery_course-marketplace-sales-v1 [zerox, score: 107]"
+    },
+    {
+      "q": "What does the x402 rail do and how do you pay?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] jump transport - instant fast travel in vanilla minecraft (tutorial) [turtle, score: 1"
+    },
+    {
+      "q": "Are sparks withdrawable to cash?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] buffett_advice_success [shaddai, score: 100]"
+    },
+    {
+      "q": "Is there a token in SHADDAI and can you stake it?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] shaddai [shaddai, score: 100]"
+    },
+    {
+      "q": "What are the platform tiers and their prices?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": true,
+      "answered": true,
+      "top": "[1] battle pass design secrets | game success guild | episode 3 [zerox, score: 100]"
+    },
+    {
+      "q": "What is a job workflow and how does it get paid?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] n8n tutorial – zero to hero course [nexus, score: 100]"
+    },
+    {
+      "q": "What is the headless gateway and what endpoints does it expose?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] node js microservices full course 2026 | neon postgres, docker, kafka [nexus, score: 1"
+    },
+    {
+      "q": "How does an external bot register and get a token?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] how to create your own cryptocurrency trading bot with freqtrade and docker [nexus, sc"
+    },
+    {
+      "q": "What are the shards and how is the brain indexed?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] dispenza_seminar [shaddai, score: 100]"
+    },
+    {
+      "q": "What is the blacksource and how does it stop a scorer",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] you’ll finally understand ai evals after watching this [nexus, score: 100]"
+    },
+    {
+      "q": "What is PIKADON responsible for?",
+      "expect": "answer",
+      "topScore": 100,
+      "precision1": true,
+      "precision3": true,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] pikadon [shaddai, score: 100]"
+    },
+    {
+      "q": "What is the population of Reykjavik in 1793?",
+      "expect": "abstain",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] oxford good argument [zerox, score: 100]"
+    },
+    {
+      "q": "How do I bake sourdough bread with a rye starter?",
+      "expect": "abstain",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] ai predictions 2026: the future of ai, saas collapse, jobs, and business strategy [ora"
+    },
+    {
+      "q": "What was the score of the 1994 FIFA World Cup final?",
+      "expect": "abstain",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] techlore - ehp8j7r3nnu [pikadon, score: 100]"
+    },
+    {
+      "q": "Who wrote the opera The Magic Flute?",
+      "expect": "abstain",
+      "topScore": 100,
+      "precision1": false,
+      "precision3": false,
+      "coverage": false,
+      "answered": true,
+      "top": "[1] classicalnerd - ezfxvda8joe [turtle, score: 100]"
+    }
+  ]
+}

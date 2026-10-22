@@ -1,0 +1,11 @@
+﻿# SHADDAI - the agent registry. The API is meant to be called by bots.
+User-agent: *
+Allow: /api/headless/
+Allow: /showcase.html
+Allow: /llms.txt
+Allow: /docs/
+
+# One plain-text machine index: what we are, what it costs, how to call it.
+# https://llmstxt.org
+
+Sitemap: /sitemap.xml

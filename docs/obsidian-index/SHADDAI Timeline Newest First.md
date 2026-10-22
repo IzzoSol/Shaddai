@@ -1,0 +1,1536 @@
+---
+title: SHADDAI Timeline Newest First
+date: 2026-10-22
+area: shaddai/sessions
+tags: [shaddai, shaddai/sessions, index, timeline]
+---
+
+# SHADDAI Timeline - Newest to Oldest
+
+**1488 curated notes** (everything except the 5,321 `SKILL.md` playbooks, which are
+rolled up in [[SHADDAI Skill Library Map]]). Dates are the files' real authoring
+dates, restored after the metadata pass so this order is true.
+
+Filter by area in Obsidian with the tag pane, or jump to an area from
+[[SHADDAI Master Index 2026-10-22]].
+
+
+## 2026-10  (96 notes)
+
+- `2026-10-22` `SHADDAI Dashboard Working Copy - 2026-10-22` â€” *Dashboard & Front-of-House*
+- `2026-10-22` `00-INDEX` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `REA Engineer Skill - Reverse Engineer Anything` â€” *The 7 Agents & Skill Library*
+- `2026-10-22` `MCP-WORKFLOWS` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `00-INDEX` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `REPO-ORGANIZATION` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `MCP-HEADLESS-GATEWAY` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `MCP-BOT-TEACHING` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `SHADDAI MCP Build-Out - 2026-10-20` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `SHADDAI Headless Society - 2026-10-20` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `MCP-CHARGING` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `SESSION-CHANGELOG-2026-09-06` â€” *Session Logs & Build Logs*
+- `2026-10-22` `MCP-SKILLS` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `MCP-RETRIEVAL` â€” *RAG Brain, Retrieval & Knowledge*  Â· also MCP, Headless Gateway & Discovery
+- `2026-10-22` `MCP-ARCHITECTURE` â€” *MCP, Headless Gateway & Discovery*  Â· also Backend, APIs & Infrastructure
+- `2026-10-22` `MASTER-VISION` â€” *Content, Marketing & Founder Material*
+- `2026-10-22` `40-ECONOMY-SPINE` â€” *Economy, Pricing & Payments*
+- `2026-10-22` `Welcome` â€” *Content, Marketing & Founder Material*
+- `2026-10-22` `SHADDAI Hub + Agent Gateway - 2026-10-16` â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` `SHADDAI Asset Audit & World-Finish Prep - 2026-10-20` â€” *3D World & Games*
+- `2026-10-22` `ASIMOV Films - Status 2026-10-10` â€” *Front End & Creative Pipeline*
+- `2026-10-22` [[Monid CLI — Skill To Set Up (when funded)]] â€” *Economy, Pricing & Payments*  Â· also The 7 Agents & Skill Library
+- `2026-10-22` [[SHADDAI Football 4v4 — Doc1 Master Build Spec 2026-07-09]] â€” *3D World & Games*  Â· also Master Plans, Specs & Blueprints, Dashboard & Front-of-House
+- `2026-10-22` [[SHADDAI 3-TERMINAL MASTER BUILD PLAN 2026-07-08]] â€” *Master Plans, Specs & Blueprints*  Â· also Dashboard & Front-of-House
+- `2026-10-22` [[Rooms Revamp — Holographic Command Deck (spec 2026-07-09)]] â€” *Dashboard & Front-of-House*  Â· also Master Plans, Specs & Blueprints, 3D World & Games
+- `2026-10-22` [[CROSS-TERMINAL HANDOFF 2026-07-09]] â€” *Session Logs & Build Logs*  Â· also Front End & Creative Pipeline
+- `2026-10-22` [[Build Log — 2026-07-11 Blackjack + Games Audit]] â€” *3D World & Games*  Â· also Session Logs & Build Logs
+- `2026-10-22` [[AURA MCP — Open-Source Token Saver]] â€” *RAG Brain, Retrieval & Knowledge*  Â· also MCP, Headless Gateway & Discovery
+- `2026-10-22` [[SHADDAI Football 4v4 — Doc3 Repo Context Dump 2026-07-09]] â€” *3D World & Games*
+- `2026-10-22` [[SHADDAI Football 4v4 — Doc2 Engineering Constraints 2026-07-09]] â€” *3D World & Games*
+- `2026-10-22` [[SHADDAI Arcade Platform — Doc0 Universal Architecture Brief 2026-07-09]] â€” *Backend, APIs & Infrastructure*  Â· also 3D World & Games
+- `2026-10-22` [[GITHUB CLEANUP NOTES 2026-07-08]] â€” *Backend, APIs & Infrastructure*
+- `2026-10-22` [[Build Log — 2026-07-06 Big Session]] â€” *Session Logs & Build Logs*
+- `2026-10-22` [[B1 — Forged Agents in Chamber (spec 2026-07-09)]] â€” *Master Plans, Specs & Blueprints*  Â· also 3D World & Games, The 7 Agents & Skill Library
+- `2026-10-22` [[3-TERMINAL TASK SPLIT 2026-07-08]] â€” *Backend, APIs & Infrastructure*
+- `2026-10-22` [[SHADDAI LOCKED PLAN — Forge Agents Rooms]] â€” *3D World & Games*
+- `2026-10-22` [[SHADDAI Grand Masterplan + 8gent (Manus)]] â€” *Master Plans, Specs & Blueprints*
+- `2026-10-22` [[SHADDAI AURA Deep-Dive + No-Token Legacy Strategy (Manus)]] â€” *RAG Brain, Retrieval & Knowledge*  Â· also Economy, Pricing & Payments, Content, Marketing & Founder Material
+- `2026-10-22` [[Portal Admin — Open Testing Mode]] â€” *Dashboard & Front-of-House*
+- `2026-10-22` [[SHADDAI — Folders, Backups & Repos Map]] â€” *Dashboard & Front-of-House*
+- `2026-10-22` [[SHADDAI Pre-Launch Master Doc — Reconciled]] â€” *Front End & Creative Pipeline*
+- `2026-10-22` [[SHADDAI Monetization & Launch Plan]] â€” *Economy, Pricing & Payments*  Â· also Front End & Creative Pipeline, Master Plans, Specs & Blueprints
+- `2026-10-22` [[SHADDAI Canonical Product Flow]] â€” *The 7 Agents & Skill Library*
+- `2026-10-22` [[SHADDAI Agents MCP — Use Your Agents in Claude]] â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` [[Meshy & 3D Models — Workflow]] â€” *3D World & Games*
+- `2026-10-22` [[HuggingFace FLUX — Image Workflow]] â€” *Front End & Creative Pipeline*
+- `2026-10-22` [[AURA — Product Workflow]] â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-10-22` [[SHADDAI_WORLD_BUILD_STATUS]] â€” *3D World & Games*  Â· also Dashboard & Front-of-House
+- `2026-10-22` [[_START_HERE]] â€” *Master Plans, Specs & Blueprints*
+- `2026-10-22` [[VAULT_FILE_MANIFEST]] â€” *MCP, Headless Gateway & Discovery*
+- `2026-10-22` [[REORGANIZATION_SUMMARY_2026-06-25]] â€” *The 7 Agents & Skill Library*
+- `2026-10-22` [[00_MASTER_INDEX]] â€” *The 7 Agents & Skill Library*
+- `2026-10-22` [[THREEWS_COMPETITIVE_STRATEGY]] â€” *Content, Marketing & Founder Material*
+- `2026-10-22` [[SHADDAI_README]] â€” *Backend, APIs & Infrastructure*
+- `2026-10-22` [[SHADDAI_BUILD_STATUS]] â€” *Dashboard & Front-of-House*
+- `2026-10-22` [[SHADDAI v93 MASTER BUILDER PLAN]] â€” *Master Plans, Specs & Blueprints*  Â· also Dashboard & Front-of-House
+- `2026-10-22` [[SHADDAI v92 Master Plan]] â€” *Master Plans, Specs & Blueprints*
+- `2026-10-22` [[SHADDAI v92 Master Cohesive Design]] â€” *Master Plans, Specs & Blueprints*
+- `2026-10-22` [[Operative Forge Master Asset Catalog]] â€” *3D World & Games*
+- `2026-10-22` [[HOW-TO-RUN]] â€” *Dashboard & Front-of-House*
+- `2026-10-22` [[FOUNDATION_HARDENING]] â€” *Security, Audit & Credentials*
+- `2026-10-22` [[AURA AINL Parity Roadmap]] â€” *RAG Brain, Retrieval & Knowledge*  Â· also Master Plans, Specs & Blueprints
+- `2026-10-22` [[AGENT_MANIFEST]] â€” *MCP, Headless Gateway & Discovery*  Â· also The 7 Agents & Skill Library
+- `2026-10-22` [[3Ps Customer Qualification Framework]] â€” *Master Plans, Specs & Blueprints*
+- `2026-10-22` [[000_VAULT_REORGANIZATION_PLAN]] â€” *Master Plans, Specs & Blueprints*
+- `2026-10-22` [[SHADDAI_REMAINING_WORK]] â€” *Backend, APIs & Infrastructure*
+- `2026-10-22` [[2026-06-03-foundation-hardening]] â€” *Security, Audit & Credentials*
+- `2026-10-22` [[2026-06-03-foundation-hardening-design]] â€” *Security, Audit & Credentials*  Â· also Master Plans, Specs & Blueprints
+- `2026-10-22` [[ZEROX_MOONPAY_AGENT_SKILL]] â€” *The 7 Agents & Skill Library*
+- `2026-10-22` [[SHADDAI_VISION]] â€” *Content, Marketing & Founder Material*
+- `2026-10-22` [[SHADDAI_TOOLS_AGENTS_COMPLETION_PLAN]] â€” *Master Plans, Specs & Blueprints*  Â· also The 7 Agents & Skill Library, MCP, Headless Gateway & Discovery
+- `2026-10-22` [[SHADDAI_REVIEW_QUESTIONS]] â€” *Backend, APIs & Infrastructure*
+- `2026-10-22` [[SHADDAI_PIKADON_AUDIT]] â€” *The 7 Agents & Skill Library*  Â· also Security, Audit & Credentials
+- `2026-10-22` [[SHADDAI_WHITEPAPER]] â€” *Content, Marketing & Founder Material*
+- `2026-10-22` `DREAMERS_INDEX` â€” *Security, Audit & Credentials*
+- `2026-10-22` `07-FIX-MODULES` â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-10-22` `03-CRITICAL-ISSUES` â€” *Security, Audit & Credentials*
+- `2026-10-22` `02-QUICK-START` â€” *Dashboard & Front-of-House*
+- `2026-10-22` `01-PROJECT-OVERVIEW` â€” *Dashboard & Front-of-House*
+- `2026-10-22` `SECURITY_SCAN_REPORT` â€” *Security, Audit & Credentials*
+- `2026-10-22` `README` â€” *Security, Audit & Credentials*
+- `2026-10-22` `GITHUB_CODE_ANALYSIS` â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-10-22` `FIXES_CHEATSHEET` â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-10-22` `INTEGRATION_GUIDE` â€” *Dashboard & Front-of-House*  Â· also Content, Marketing & Founder Material
+- `2026-10-22` `SOLANA-SKILLS-PACK` â€” *The 7 Agents & Skill Library*
+- `2026-10-22` `SHADDAI-v41.11-COMPREHENSIVE-AUDIT-PLAN` â€” *Master Plans, Specs & Blueprints*  Â· also Security, Audit & Credentials
+- `2026-10-22` `SHADDAI-MINIFY-OBFUSCATE-EXPLAINED` â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-10-22` `PHASE-1-SECURITY-FIXES` â€” *Security, Audit & Credentials*
+- `2026-10-22` `Welcome` â€” *Content, Marketing & Founder Material*
+- `2026-10-22` `2026-03-19` â€” *Content, Marketing & Founder Material*
+- `2026-10-22` `2026-03-19` â€” *Content, Marketing & Founder Material*
+- `2026-10-22` `Welcome` â€” *Content, Marketing & Founder Material*
+- `2026-10-22` [[API KEYS]] â€” *Security, Audit & Credentials*  Â· also Backend, APIs & Infrastructure
+- `2026-10-22` [[API_KEYS]] â€” *Backend, APIs & Infrastructure*
+- `2026-10-15` [[03 Builds/World Handoff 2026-10-15]] â€” *Session Logs & Build Logs*  Â· also 3D World & Games
+- `2026-10-15` [[03 Builds/V101.3 Handoff 2026-10-02]] â€” *Session Logs & Build Logs*
+
+
+## 2026-09  (4 notes)
+
+- `2026-09-05` [[07 Credentials/⭐ MASTER API KEYS (all-in-one)]] â€” *Security, Audit & Credentials*
+- `2026-09-05` [[07 Credentials/ZEROX - Virtuals Protocol (ACP)]] â€” *Security, Audit & Credentials*
+- `2026-09-04` [[07 Credentials/API Keys & Endpoints]] â€” *Security, Audit & Credentials*
+- `2026-09-04` [[03 Builds/SHADDAI Dashboard Historical Versions (Pixel Office)]] â€” *Dashboard & Front-of-House*
+
+
+## 2026-08  (7 notes)
+
+- `2026-08-26` [[04 Dreamers/DREAMERS-MASTER-SPEC]] â€” *Economy, Pricing & Payments*  Â· also Master Plans, Specs & Blueprints
+- `2026-08-26` [[04 Dreamers/Dreamers Financial Ecosystem — Multi-Token Flywheel]] â€” *Economy, Pricing & Payments*
+- `2026-08-26` [[04 Dreamers/Dream World — Metaverse Ecosystem Spec]] â€” *3D World & Games*  Â· also Economy, Pricing & Payments
+- `2026-08-26` [[04 Dreamers/Dreamers OG — Execution Plan]] â€” *Economy, Pricing & Payments*  Â· also Master Plans, Specs & Blueprints
+- `2026-08-26` [[04 Dreamers/DreamerBox NFT — Genesis Spec]] â€” *Economy, Pricing & Payments*  Â· also Master Plans, Specs & Blueprints, 3D World & Games
+- `2026-08-22` [[03 Builds/2026-08-22-council-scale-assessment-and-tomorrow-punchlist]] â€” *The 7 Agents & Skill Library*
+- `2026-08-22` [[03 Builds/2026-08-22-7-agent-system-audit-and-plan-correction]] â€” *The 7 Agents & Skill Library*
+
+
+## 2026-07  (23 notes)
+
+- `2026-07-16` [[03 Builds/SHADDAI SIGNALS — ZEROX CALL DATA & ANALYSIS]] â€” *The 7 Agents & Skill Library*
+- `2026-07-15` [[03 Builds/SHADDAI SIGNAL CONTROL PANEL — PRODUCTION SPEC (2026-07-15)]] â€” *Master Plans, Specs & Blueprints*
+- `2026-07-14` [[03 Builds/SHADDAI PRO TIER + TOKEN ECONOMY + PERKS — PLAN (2026-07-14)]] â€” *Economy, Pricing & Payments*
+- `2026-07-14` [[03 Builds/SHADDAI FORGE PIPELINE — FREE 3D via NVIDIA (three.ws model) — PLAN (2026-07-14)]] â€” *3D World & Games*  Â· also Master Plans, Specs & Blueprints
+- `2026-07-14` [[03 Builds/SHADDAI 2D LAYER + PIXEL FORGE + x402 COMMERCE — PLAN (2026-07-14)]] â€” *Economy, Pricing & Payments*
+- `2026-07-13` [[03 Builds/ROOMS + OFFICE FINALIZATION (2026-07-13)]] â€” *3D World & Games*  Â· also Dashboard & Front-of-House
+- `2026-07-13` [[03 Builds/SHADDAI — MASTER BLUEPRINT (2026-07-13)]] â€” *Master Plans, Specs & Blueprints*  Â· also The 7 Agents & Skill Library
+- `2026-07-13` [[03 Builds/BLUEPRINT-SECTIONS/04-TECH-AUDIT-FIXES-SCALE]] â€” *Security, Audit & Credentials*
+- `2026-07-13` [[03 Builds/BLUEPRINT-SECTIONS/03-SECURITY-COMPLIANCE]] â€” *Security, Audit & Credentials*
+- `2026-07-13` [[03 Builds/BLUEPRINT-SECTIONS/05-PRODUCT-ONBOARDING-WHITEPAPER]] â€” *MCP, Headless Gateway & Discovery*  Â· also Content, Marketing & Founder Material, Front End & Creative Pipeline
+- `2026-07-13` [[03 Builds/BLUEPRINT-SECTIONS/02-MARKETING-DISTRIBUTION-ASSETS-IOS]] â€” *Front End & Creative Pipeline*  Â· also 3D World & Games, Content, Marketing & Founder Material
+- `2026-07-13` [[03 Builds/BLUEPRINT-SECTIONS/01-REVENUE-AND-SCALE]] â€” *Economy, Pricing & Payments*
+- `2026-07-13` [[00 Docs/Hub Published/Pricing Strategies/pricing-strategy-for-29-mo-ai-tool]] â€” *Economy, Pricing & Payments*
+- `2026-07-13` [[03 Builds/SHADDAI WORLD — UNIFIED BLUEPRINT (2026-07-13)]] â€” *Master Plans, Specs & Blueprints*
+- `2026-07-13` [[03 Builds/SHADDAI AGENT ECONOMY — MASTER PLAN (2026-07-13)]] â€” *Master Plans, Specs & Blueprints*  Â· also Economy, Pricing & Payments
+- `2026-07-12` [[03 Builds/SHADDAI DASHBOARD UPGRADE — STAGE 2 (2026-07-12)]] â€” *Dashboard & Front-of-House*
+- `2026-07-12` [[03 Builds/SHADDAI DASHBOARD UPGRADE — NEXT STAGE (2026-07-11)]] â€” *Dashboard & Front-of-House*
+- `2026-07-10` [[Agents/Marketing Skills/ad-creative/references/generative-tools]] â€” *Content, Marketing & Founder Material*
+- `2026-07-10` [[01 Index/01 SKILLS MASTER INDEX]] â€” *The 7 Agents & Skill Library*
+- `2026-07-06` [[07 Credentials/Fal.ai — Personal + Dashboard Keys]] â€” *Security, Audit & Credentials*
+- `2026-07-06` [[07 Credentials/Stripe Payments — SHADDAI]] â€” *Security, Audit & Credentials*  Â· also Economy, Pricing & Payments
+- `2026-07-05` [[07 Credentials/Firebase Auth — SHADDAI]] â€” *Security, Audit & Credentials*
+- `2026-07-05` [[07 Credentials/LLM Key Pool — Groq + Ollama Cloud]] â€” *Security, Audit & Credentials*
+
+
+## 2026-06  (9 notes)
+
+- `2026-06-30` [[03 Builds/AURA Token-Saver Engine — Build Notes]] â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-06-25` [[03 Builds/2026-06-23 World Districts, x402, Museum, Render-Ready]] â€” *Economy, Pricing & Payments*  Â· also 3D World & Games
+- `2026-06-25` [[03 Builds/BUILD_TIMELINE]] â€” *Master Plans, Specs & Blueprints*  Â· also Dashboard & Front-of-House
+- `2026-06-25` [[06 Sessions/2026-06-25-SHADDAI-ASSET-GENERATION]] â€” *Session Logs & Build Logs*
+- `2026-06-11` [[03 Builds/2026-06-11-scale-hardening-and-audit]] â€” *Security, Audit & Credentials*
+- `2026-06-02` [[specs/SPEC_agentic-commerce]] â€” *Master Plans, Specs & Blueprints*
+- `2026-06-02` [[specs/SPEC_magic-moment-loop]] â€” *Master Plans, Specs & Blueprints*
+- `2026-06-02` [[specs/SPEC_security-hardening]] â€” *Master Plans, Specs & Blueprints*  Â· also Security, Audit & Credentials
+- `2026-06-02` [[specs/SPEC_skill-tool-binding]] â€” *Master Plans, Specs & Blueprints*
+
+
+## 2026-05  (95 notes)
+
+- `2026-05-29` [[03 Builds/STREAMBUDDY/STREAMBUDDY - API Reference]] â€” *Backend, APIs & Infrastructure*
+- `2026-05-29` [[03 Builds/STREAMBUDDY/STREAMBUDDY - Overview]] â€” *Backend, APIs & Infrastructure*
+- `2026-05-29` [[03 Builds/STREAMBUDDY/STREAMBUDDY - Upgrade Log]] â€” *Dashboard & Front-of-House*
+- `2026-05-29` [[03 Builds/STREAMBUDDY/STREAMBUDDY - Architecture]] â€” *Backend, APIs & Infrastructure*
+- `2026-05-28` [[06 Sessions/2026-05-28 Hermes Agent Install]] â€” *Session Logs & Build Logs*
+- `2026-05-24` [[03 Builds/SHADDAI v80 — Final Build]] â€” *Dashboard & Front-of-House*
+- `2026-05-21` [[03 Builds/SHADDAI-v78.0-Build-Notes]] â€” *Dashboard & Front-of-House*
+- `2026-05-17` [[03 Builds/SHADDAI-v73.33-Build-Notes]] â€” *Dashboard & Front-of-House*
+- `2026-05-16` [[03 Builds/SHADDAI-v72.22-Build-Notes]] â€” *Dashboard & Front-of-House*
+- `2026-05-15` [[06 Sessions/2026-05-15 SHADDAI v62 Session]] â€” *Session Logs & Build Logs*
+- `2026-05-09` [[06 Sessions/2026-05-09-FINAL-BUILD-SUMMARY]] â€” *Session Logs & Build Logs*
+- `2026-05-09` [[06 Sessions/2026-05-09-BACKEND-COMPLETE]] â€” *Session Logs & Build Logs*
+- `2026-05-09` [[06 Sessions/2026-05-09-Full-Backend-Connect]] â€” *Session Logs & Build Logs*
+- `2026-05-09` [[06 Sessions/2026-05-08-Real-Tech-Build]] â€” *Session Logs & Build Logs*
+- `2026-05-07` [[03 Builds/SHADDAI v60 Platform/SHADDAI_v60_FULL_BUILD_PLAN]] â€” *Master Plans, Specs & Blueprints*  Â· also Dashboard & Front-of-House
+- `2026-05-04` [[Agents/Agent Skills]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/PIKADON]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/QUILL]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/TURTLE]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/ORACLE]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/XEROX]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/NEXUS]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/SHADDAI]] â€” *The 7 Agents & Skill Library*
+- `2026-05-04` [[Agents/Marketing Skills/ab-test-setup/references/sample-size-guide]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/ab-test-setup/references/test-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/ad-creative/references/platform-specs]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/ai-seo/references/content-patterns]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/ai-seo/references/platform-ranking-factors]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/analytics-tracking/references/event-library]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/analytics-tracking/references/ga4-implementation]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/analytics-tracking/references/gtm-implementation]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/aso-audit/references/apple-specs]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/aso-audit/references/benchmarks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/aso-audit/references/google-play-specs]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/aso-audit/references/report-template]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/aso-audit/references/scoring-criteria]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/churn-prevention/references/cancel-flow-patterns]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/churn-prevention/references/dunning-playbook]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/cold-email/references/benchmarks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/cold-email/references/follow-up-sequences]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/cold-email/references/frameworks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/cold-email/references/personalization]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/cold-email/references/subject-lines]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/competitor-alternatives/references/content-architecture]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/competitor-alternatives/references/templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/competitor-profiling/references/templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/competitor-profiling/references/tool-reference]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/content-strategy/references/headless-cms]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/copy-editing/references/content-refresh]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/copy-editing/references/plain-english-alternatives]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/copywriting/references/copy-frameworks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/copywriting/references/natural-transitions]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/customer-research/references/source-guides]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/directory-submissions/references/directory-list]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/directory-submissions/references/positioning-variations]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/email-sequence/references/copy-guidelines]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/email-sequence/references/email-types]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/email-sequence/references/sequence-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/free-tool-strategy/references/tool-types]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/image/references/ai-image-prompting]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/lead-magnets/references/benchmarks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/lead-magnets/references/format-guide]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/marketing-ideas/references/ideas-by-category]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/onboarding-cro/references/experiments]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/page-cro/references/experiments]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/paid-ads/references/ad-copy-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/paid-ads/references/audience-targeting]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/paid-ads/references/conversion-tracking]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/paid-ads/references/platform-setup-checklists]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/paywall-upgrade-cro/references/experiments]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/pricing-strategy/references/research-methods]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/pricing-strategy/references/tier-structure]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/programmatic-seo/references/playbooks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/referral-program/references/affiliate-programs]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/referral-program/references/program-examples]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/revops/references/automation-playbooks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/revops/references/lifecycle-definitions]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/revops/references/routing-rules]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/revops/references/scoring-models]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/sales-enablement/references/deck-frameworks]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/sales-enablement/references/demo-scripts]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/sales-enablement/references/objection-library]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/sales-enablement/references/one-pager-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/schema-markup/references/schema-examples]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/seo-audit/references/ai-writing-detection]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/seo-audit/references/international-seo]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/site-architecture/references/mermaid-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/site-architecture/references/navigation-patterns]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/site-architecture/references/site-type-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/social-content/references/platform-limits]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/social-content/references/platforms]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/social-content/references/post-templates]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/social-content/references/reverse-engineering]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/social-content/references/short-form-video]] â€” *Content, Marketing & Founder Material*
+- `2026-05-04` [[Agents/Marketing Skills/video/references/ai-video-prompting]] â€” *Content, Marketing & Founder Material*
+
+
+## 2026-04  (1227 notes)
+
+- `2026-04-25` [[04 Dreamers/DistroKid - Izzo Releases]] â€” *Economy, Pricing & Payments*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/README]] â€” *Master Plans, Specs & Blueprints*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part10-Obsidian-Sync]] â€” *Session Logs & Build Logs*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part9-Custom-Agents]] â€” *The 7 Agents & Skill Library*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part8-Knowledge-Graph]] â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part7-Learning-Engine]] â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part6-Skill-Evolution]] â€” *The 7 Agents & Skill Library*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part5-User-System]] â€” *Dashboard & Front-of-House*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part4-Preference-Learner]] â€” *The 7 Agents & Skill Library*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part3-API-Client]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part2-Auto-Router]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-23` [[03 Builds/SHADDAI v58.88 Unified/Part1-Master-Server]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-17` [[01 Index/00 MASTER INDEX]] â€” *The 7 Agents & Skill Library*
+- `2026-04-17` [[02 Architecture/SHADDAI-VERSION-HISTORY]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-17` [[03 Builds/SHADDAI-v51.00-BUILD-LOG]] â€” *Dashboard & Front-of-House*
+- `2026-04-12` [[01 Index/SKILLS_OFFICIAL_COUNT]] â€” *The 7 Agents & Skill Library*
+- `2026-04-12` [[03 Builds/Dreamers Dashboard/Dreamers Dashboard v4.0]] â€” *Dashboard & Front-of-House*
+- `2026-04-12` [[03 Builds/SHADDAI Dashboard Architecture]] â€” *Dashboard & Front-of-House*  Â· also Backend, APIs & Infrastructure
+- `2026-04-12` [[01 Index/AI-Image-Prompts]] â€” *The 7 Agents & Skill Library*
+- `2026-04-12` [[01 Index/SHADDAI-Agent-Collective-Description]] â€” *The 7 Agents & Skill Library*
+- `2026-04-11` [[01 Index/Agent-Self-Description-Prompts]] â€” *The 7 Agents & Skill Library*
+- `2026-04-11` [[Agents/XEROX/Skills/system-access/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-11` [[Agents/SHADDAI/Skills/sprite-execution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-11` [[Agents/SHADDAI/Skills/blender-execution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-10` [[03 Builds/SHADDAI v44.44 Pixel Office Upgrade]] â€” *Dashboard & Front-of-House*
+- `2026-04-10` [[03 Builds/README]] â€” *Dashboard & Front-of-House*
+- `2026-04-10` [[03 Builds/SHADDAI v44.44 Build]] â€” *Dashboard & Front-of-House*
+- `2026-04-10` [[03 Builds/SHADDAI v43.33 Build Audit]] â€” *Security, Audit & Credentials*  Â· also Dashboard & Front-of-House
+- `2026-04-10` [[02 Architecture/API Keys & Endpoints]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-10` [[03 Builds/SHADDAI v44.44 Phantom Integration Plan]] â€” *Master Plans, Specs & Blueprints*
+- `2026-04-10` [[Agents/TURTLE/Skills/_ASCII_AGENTS_INDEX]] â€” *The 7 Agents & Skill Library*
+- `2026-04-10` [[Agents/PHANTOM_MCP]] â€” *MCP, Headless Gateway & Discovery*
+- `2026-04-09` [[03 Builds/SHADDAI-v43.33-BUILD-LOG]] â€” *Dashboard & Front-of-House*
+- `2026-04-09` [[Agents/Agent_Marketplace_Knowledge]] â€” *Content, Marketing & Founder Material*  Â· also RAG Brain, Retrieval & Knowledge
+- `2026-04-08` [[03 Builds/SHADDAI-v42.23-BUILD-LOG]] â€” *Dashboard & Front-of-House*
+- `2026-04-08` [[SHADDAI/all-agents-skills]] â€” *The 7 Agents & Skill Library*
+- `2026-04-08` [[TURTLE Skills/_SKILLS_INDEX]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[00 Docs/Actually Relevant News API]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-07` [[00 Docs/Actually Relevant News Widget]] â€” *RAG Brain, Retrieval & Knowledge*
+- `2026-04-07` [[Agents/XEROX/Skills/algorithmic-trading-advanced/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/cross-asset-correlation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/factor-investing-advanced/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/market-microstructure/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/market-regime-detection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/portfolio-rebalancing-automation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/quantitative-risk-modeling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/risk-adjusted-returns/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/advanced-quantitative-modeling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/advanced-quantitative-modeling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/omni-integration-complete/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/classical-music/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/electronic-music/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/jazz-improvisation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/world-music/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/audio-engineering/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/copyright-licensing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/genre-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/instrument-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/live-performance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/mixing-mastering/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/music-business/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/music-history/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/music-therapy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/songwriting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/sound-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/vocal-training/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/arrangement-techniques/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/melody-creation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/music-production/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/orchestration/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/rhythm-patterns/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/composition-techniques/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/harmony-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/music-theory-complete/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/etf-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/index-investing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/momentum-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/mutual-fund-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/dividend-investing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/etf-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/growth-investing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/index-investing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/momentum-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/mutual-fund-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/value-investing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/arbitrage-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/commodity-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/hedge-fund-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/pairs-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/private-equity/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/real-estate-investment/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/venture-capital/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/arbitrage-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/commodity-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/hedge-fund-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/market-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/pairs-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/private-equity/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/real-estate-investment/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/statistical-arbitrage/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/venture-capital/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/forex-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/futures-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/options-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/algorithmic-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/derivatives-pricing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/portfolio-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/quantitative-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/risk-management-advanced/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/algorithmic-trading/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/derivatives-pricing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/portfolio-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/quantitative-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/risk-management-advanced/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/XEROX/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/alert-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/auto-scaling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/backup-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/deployment-automation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/alert-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/auto-scaling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/backup-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/cache-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/capacity-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/deployment-automation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/disaster-recovery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/incident-response/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/infrastructure-monitoring/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/load-balancing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/log-aggregation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/message-queue/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/analytics-processing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/data-pipeline-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/event-streaming/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/metrics-collection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/real-time-updates/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/skill-performance-monitoring/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/system-health-monitoring/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/user-preference-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/visualization-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/analytics-processing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/data-pipeline-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/event-streaming/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/metrics-collection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/real-time-updates/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/skill-performance-monitoring/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/state-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/system-health-monitoring/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/user-preference-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/visualization-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/api-endpoint-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/dashboard-connectivity/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/api-endpoint-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/dashboard-connectivity/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/TURTLE/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/audit-logging/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/certificate-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/hashing-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/key-rotation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/secret-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/signature-verification/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/audit-logging/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/hashing-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/key-rotation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/secret-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/signature-verification/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/authentication-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/authorization-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/context-window-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/encryption-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/gemini-temperature-control/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/input-sanitization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/jailbreak-detection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/model-fallback-handling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/multi-model-orchestration/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/output-filtering/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/output-formatting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/rate-limiting-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/response-validation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/security-prompt-injection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/token-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/authentication-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/authorization-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/context-window-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/encryption-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/gemini-temperature-control/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/input-sanitization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/jailbreak-detection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/model-fallback-handling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/multi-model-orchestration/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/output-filtering/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/output-formatting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/rate-limiting-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/response-validation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/security-prompt-injection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/token-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/claude-prompt-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/ollama-model-selection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/openai-parameter-tuning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/claude-prompt-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/ollama-model-selection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/openai-parameter-tuning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/PIKADON/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/architecture-appreciation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/art-history/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/communication-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/leadership-classics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/mythology-world/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/narrative-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/religion-comparative/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/rhetoric-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/self-mastery-books/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/spirituality-mysticism/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/storytelling-ancient/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/architecture-appreciation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/art-history/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/communication-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/leadership-classics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/mythology-world/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/narrative-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/religion-comparative/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/rhetoric-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/self-mastery-books/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/spirituality-mysticism/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/storytelling-ancient/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/anthropology-wisdom/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/drama-theater/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/economics-principles/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/history-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/literature-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/mathematics-foundation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/poetry-appreciation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/political-science/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/science-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/sociology-understanding/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/anthropology-wisdom/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/drama-theater/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/economics-principles/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/history-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/literature-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/mathematics-foundation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/poetry-appreciation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/political-science/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/science-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/sociology-understanding/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/great-books-western/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/philosophy-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/psychology-insights/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/great-books-western/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/philosophy-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/psychology-insights/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/QUILL/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/metrics-collection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/api-endpoint-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/conditional-routing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/context-aware-routing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/dynamic-skill-selection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/ecosystem-synergy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/error-propagation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/fallback-handling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/multi-agent-orchestration/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/parallel-execution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/priority-queuing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/real-time-updates/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/retry-mechanisms/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/sequential-workflows/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/skill-chaining/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/state-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/conditional-routing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/context-aware-routing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/dynamic-skill-selection/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/ecosystem-synergy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/error-propagation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/fallback-handling/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/multi-agent-orchestration/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/parallel-execution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/priority-queuing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/retry-mechanisms/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/sequential-workflows/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/skill-chaining/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/broadcast-messaging/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/context-sharing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/event-publishing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/inter-agent-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/result-subscription/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/skill-messaging-protocol/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/state-synchronization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/workflow-coordination/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/broadcast-messaging/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/context-sharing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/event-publishing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/inter-agent-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/result-subscription/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/skill-messaging-protocol/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/state-synchronization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/SHADDAI/Skills/workflow-coordination/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/NEXUS/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/classical-music/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/jazz-improvisation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/arrangement-techniques/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/audio-engineering/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/copyright-licensing/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/electronic-music/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/genre-analysis/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/instrument-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/live-performance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/mixing-mastering/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/music-business/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/music-history/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/music-production/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/music-therapy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/songwriting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/sound-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/vocal-training/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/world-music/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/communication-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/composition-techniques/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/conflict-resolution/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/critical-thinking-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/decision-making/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/emotional-intelligence/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/goal-setting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/habit-formation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/harmony-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/leadership-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/melody-creation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/music-theory-complete/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/networking-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/orchestration/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/problem-solving-life/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/public-speaking/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/relationship-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/rhythm-patterns/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/stress-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/budgeting-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/car-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/career-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/credit-building/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/debt-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/financial-planning-basics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/home-buying-guide/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/insurance-navigation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/interview-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/investing-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/job-search-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/productivity-systems/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/retirement-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/salary-negotiation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/tax-planning-personal/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/values-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/workplace-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/adhd-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/anxiety-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/autism-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/bedtime-routines/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/bullying-prevention/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/cultural-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/depression-support-child/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/divorce-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/family-meal-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/gifted-child-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/grief-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/learning-disabilities-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/mental-health-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/screen-time-management/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/sibling-rivalry/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/social-media-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/special-needs-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/spiritual-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/teen-communication/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/trauma-informed-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/adoptive-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/attachment-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/authoritative-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/blended-family-dynamics/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/co-parenting-strategies/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/college-prep-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/conscious-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/elementary-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/foster-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/gentle-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/high-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/middle-school-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/positive-discipline/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/preschooler-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/single-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/toddler-parenting/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/young-adult-guidance/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/adult-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/career-technical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/collaboration-skills/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/college-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/communication-skills-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/creativity-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/critical-thinking-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/educational-psychology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/infant-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/lifelong-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/newborn-care-essentials/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/problem-solving-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/research-skills-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/study-skills-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/test-preparation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/arts-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/character-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/civic-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/digital-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/financial-literacy-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/health-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/history-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/information-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/media-literacy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/music-education-theory/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/physical-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/social-emotional-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/educational-technology/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/gamification-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/inquiry-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/literacy-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/montessori-methods/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/numeracy-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/project-based-learning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/science-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/steam-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/stem-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/waldorf-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/assessment-design/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/college-education-strategy/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/curriculum-development/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/elementary-education-mastery/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/gifted-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/high-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/homeschool-curriculum/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/kindergarten-readiness/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/learning-styles-adaptation/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/lesson-planning/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/middle-school-education/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/online-learning-optimization/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/preschool-education-fundamentals/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-07` [[Agents/ORACLE/Skills/special-education-support/prompt_template]] â€” *The 7 Agents & Skill Library*
+- `2026-04-06` [[Agents/_SKILL_USAGE_GUIDE]] â€” *The 7 Agents & Skill Library*
+- `2026-04-06` [[02 Architecture/SHADDAI-v41.11-COMPLETE-SPEC]] â€” *Backend, APIs & Infrastructure*  Â· also Master Plans, Specs & Blueprints
+- `2026-04-06` [[00 Docs/KEMETIC-MUSIC-IMPLEMENTATION]] â€” *The 7 Agents & Skill Library*
+- `2026-04-06` [[02 Architecture/SHADDAI-CURRENT-ARCHITECTURE]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-06` [[03 Builds/Game/Dreamers Climb v22]] â€” *Dashboard & Front-of-House*
+- `2026-04-05` [[Agents/SHADDAI/Skills/revenue-modeling]] â€” *The 7 Agents & Skill Library*  Â· also Economy, Pricing & Payments
+- `2026-04-05` [[Agents/SHADDAI/Skills/referral-programs]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/affiliate-marketing]] â€” *The 7 Agents & Skill Library*  Â· also Front End & Creative Pipeline, Content, Marketing & Founder Material
+- `2026-04-05` [[Agents/SHADDAI/Skills/seo-strategy]] â€” *The 7 Agents & Skill Library*  Â· also Front End & Creative Pipeline, Content, Marketing & Founder Material
+- `2026-04-05` [[Agents/SHADDAI/Skills/email-marketing]] â€” *The 7 Agents & Skill Library*  Â· also Front End & Creative Pipeline, Content, Marketing & Founder Material
+- `2026-04-05` [[Agents/SHADDAI/Skills/social-media-strategy]] â€” *Content, Marketing & Founder Material*  Â· also The 7 Agents & Skill Library
+- `2026-04-05` [[Agents/SHADDAI/Skills/pr-strategy]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/product-launch]] â€” *The 7 Agents & Skill Library*  Â· also Front End & Creative Pipeline
+- `2026-04-05` [[Agents/SHADDAI/Skills/event-planning]] â€” *The 7 Agents & Skill Library*  Â· also Master Plans, Specs & Blueprints
+- `2026-04-05` [[Agents/SHADDAI/Skills/community-building]] â€” *The 7 Agents & Skill Library*  Â· also Content, Marketing & Founder Material
+- `2026-04-05` [[Agents/SHADDAI/Skills/partnership-development]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/contract-negotiation]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/budget-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/vendor-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/stakeholder-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/crisis-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/change-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/conflict-resolution]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/coaching]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/mentoring]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/delegation]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/prioritization]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/time-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/goal-setting]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/performance-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/quality-assurance]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/workflow-optimization]] â€” *The 7 Agents & Skill Library*  Â· also MCP, Headless Gateway & Discovery
+- `2026-04-05` [[Agents/SHADDAI/Skills/automation-strategy]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/data-analysis]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/growth-hacking]] â€” *The 7 Agents & Skill Library*  Â· also Front End & Creative Pipeline
+- `2026-04-05` [[Agents/SHADDAI/Skills/content-strategy]] â€” *The 7 Agents & Skill Library*  Â· also Content, Marketing & Founder Material
+- `2026-04-05` [[Agents/SHADDAI/Skills/brand-building]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/retention-strategy]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/customer-acquisition]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/product-development]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/competitive-analysis]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/market-research]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/financial-analysis]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/problem-solving]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/negotiation-tactics]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/communication-strategy]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/team-building]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/innovation-strategy]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/risk-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/resource-allocation]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/decision-making-framework]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/leadership-development]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/project-management]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/business-development]] â€” *The 7 Agents & Skill Library*
+- `2026-04-05` [[Agents/SHADDAI/Skills/strategic-planning]] â€” *The 7 Agents & Skill Library*  Â· also Content, Marketing & Founder Material, Master Plans, Specs & Blueprints
+- `2026-04-04` [[03 Builds/SHADDAI v37.77 Master Build Plan]] â€” *Master Plans, Specs & Blueprints*  Â· also The 7 Agents & Skill Library, Dashboard & Front-of-House
+- `2026-04-04` [[03 Builds/SHADDAI v37.77 Final Build]] â€” *Dashboard & Front-of-House*
+- `2026-04-03` [[05 Forum/ChillQuill-Activity-Log]] â€” *Content, Marketing & Founder Material*
+- `2026-04-03` [[05 Forum/Forum-Intel-Report]] â€” *Content, Marketing & Founder Material*
+- `2026-04-03` [[05 Forum/API-and-Credentials]] â€” *Content, Marketing & Founder Material*  Â· also Security, Audit & Credentials
+- `2026-04-03` [[03 Builds/SHADDAI v36.99 Build Status]] â€” *Dashboard & Front-of-House*
+- `2026-04-03` [[03 Builds/SHADDAI v36.99 Security-First API Expansion Strategy]] â€” *Security, Audit & Credentials*
+- `2026-04-03` [[03 Builds/SHADDAI v36.0 Build Complete]] â€” *The 7 Agents & Skill Library*  Â· also Dashboard & Front-of-House
+- `2026-04-03` [[02 Architecture/Origin]] â€” *Backend, APIs & Infrastructure*
+- `2026-04-03` [[02 Architecture/SHADDAI Agent Empire]] â€” *Backend, APIs & Infrastructure*  Â· also The 7 Agents & Skill Library
+- `2026-04-02` [[03 Builds/Dreamers Dashboard/Dreamers Dashboard v3.0]] â€” *Dashboard & Front-of-House*
+- `2026-04-02` [[03 Builds/SHADDAI v35.55 Build]] â€” *Dashboard & Front-of-House*
+- `2026-04-02` [[03 Builds/Space-Scan-Results]] â€” *Dashboard & Front-of-House*
+- `2026-04-01` [[03 Builds/SHADDAI v34.44]] â€” *The 7 Agents & Skill Library*
+- `2026-04-01` [[03 Builds/n8n MCP Setup]] â€” *MCP, Headless Gateway & Discovery*
+- `2026-04-01` [[04 Dreamers/Dreamers Climb v20-minimax]] â€” *Economy, Pricing & Payments*
+
+
+## 2026-03  (27 notes)
+
+- `2026-03-29` [[07 Credentials/X_API_CREDENTIALS]] â€” *Security, Audit & Credentials*
+- `2026-03-29` [[05 Forum/README]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[05 Forum/Forum_Lore]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[00 Docs/What_We_Would_Build]] â€” *Dashboard & Front-of-House*
+- `2026-03-29` [[05 Forum/Agent_Summit]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[05 Forum/All_Agents]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[05 Forum/Learned_Skills]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[05 Forum/Lore]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[05 Forum/PINGLE_BRAIN]] â€” *Content, Marketing & Founder Material*
+- `2026-03-29` [[04 Dreamers/The Dreamers Ecosystem]] â€” *Economy, Pricing & Payments*  Â· also The 7 Agents & Skill Library
+- `2026-03-28` [[03 Builds/SHADDAI v30.33 Build]] â€” *Dashboard & Front-of-House*
+- `2026-03-28` [[04 Dreamers/Dreamers Games]] â€” *Economy, Pricing & Payments*  Â· also 3D World & Games
+- `2026-03-28` [[03 Builds/Dashboards]] â€” *Dashboard & Front-of-House*
+- `2026-03-28` [[03 Builds/MiroFish Polymarket]] â€” *Content, Marketing & Founder Material*
+- `2026-03-28` [[03 Builds/Astrology Dashboard]] â€” *Dashboard & Front-of-House*
+- `2026-03-28` [[06 Sessions/Session Log — March 22, 2026/Older Claude Memory Save]] â€” *Session Logs & Build Logs*
+- `2026-03-28` [[06 Sessions/Session Log — March 22, 2026/Session Log — March 22, 2026]] â€” *Session Logs & Build Logs*
+- `2026-03-28` [[04 Dreamers/Dreamers Budget & Partnerships]] â€” *Economy, Pricing & Payments*
+- `2026-03-28` [[00 Docs/(Izzo)]] â€” *Front End & Creative Pipeline*
+- `2026-03-24` [[04 Dreamers/Dreamers DAO]] â€” *Economy, Pricing & Payments*
+- `2026-03-24` [[04 Dreamers/Dreamers Marketplace]] â€” *Economy, Pricing & Payments*  Â· also Content, Marketing & Founder Material
+- `2026-03-24` [[04 Dreamers/Dreamers Artist Showcase]] â€” *Economy, Pricing & Payments*  Â· also Content, Marketing & Founder Material
+- `2026-03-24` [[04 Dreamers/Dreamers NFT System]] â€” *Economy, Pricing & Payments*
+- `2026-03-24` [[04 Dreamers/Dreamers Token Economy]] â€” *Economy, Pricing & Payments*
+- `2026-03-23` [[06 Sessions/Session Log — March 22, 2026/Older OpenClaw Memory Save]] â€” *Session Logs & Build Logs*
+- `2026-03-22` [[03 Builds/Dreamers Dashboard/Dreamers Dashboard v2.0]] â€” *Dashboard & Front-of-House*
+- `2026-03-22` [[02 Architecture/Multi-Agent Architecture Principles]] â€” *Backend, APIs & Infrastructure*
+
