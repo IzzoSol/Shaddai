@@ -71,7 +71,24 @@
     setInterval(function () { var p = H.getPlayer && H.getPlayer(); if (p && grp) grp.visible = Math.hypot(p.x - center.x, p.z - center.z) < 1200 * U; }, 500);
     var last = false; setInterval(function () { var n = !!nearInside(); if (n && !last) toast('Race HQ - press E for the race desk'); if (!n && panel) close(); last = n; }, 600);
     (function spin() { requestAnimationFrame(spin); for (var i = 0; i < tables.length; i++) tables[i].rotation.y += 0.004; if (beacon) beacon.rotation.y += 0.01; })();
-    root.__raceHQ = { pos: center, owned: function () { return garage().owned.slice(); } };
+    // ORGANIZED FLOW (owner 2026-10-23: "click the mode and go to the track lobby then start from there ... when you're on the track you're
+    // in a car, no walking around"): every race entry goes through this lobby; the race select (car pick) opens here; on-foot players on a
+    // race deck are walked back to the lobby.
+    function goLobby(then) {
+      var D = root.__w3dDebug, P = D && D.playerPos; if (!P) return false;
+      var near = Math.hypot(P.x - center.x, P.z - center.z) < inner * 1.5;
+      if (!near) { P.set(center.x + Math.sin(YAW) * 6 * U, center.y + 0.2, center.z + Math.cos(YAW) * 6 * U); toast('Race HQ lobby: pick your race and your car'); }
+      if (then) setTimeout(then, near ? 0 : 900); return true;
+    }
+    var RS = root.WorldRaceSelect;
+    if (RS && RS.open && !RS.__lobbyWrapped) { var open0 = RS.open; RS.__lobbyWrapped = true; RS.open = function (o) { var args = arguments; return goLobby(function () { open0.apply(RS, args); }); }; }
+    setInterval(function () {                                                                    // track keeper: no walking on race decks
+      if (root.__raceActive || root.__freeRide) return; var D = root.__w3dDebug, P = D && D.playerPos, T = root.__raceTracks; if (!P || !T) return;
+      var M = root.__mountRide; if (M && M.isRiding && M.isRiding()) return;
+      for (var k in T) { var t = T[k]; if (!t || !t.surfaceAt || (t.group && !t.group.visible)) continue; var y = t.surfaceAt(P.x, P.z);
+        if (y != null && Math.abs(P.y - y) < 4 * U && y > center.y + 2 * U) { goLobby(); toast('Race decks are car-only: start a race from the Race HQ desk'); return; } }
+    }, 700);
+    root.__raceHQ = { pos: center, owned: function () { return garage().owned.slice(); }, goLobby: goLobby, desk: function () { goLobby(function () { draw('home'); }); } };
     return root.__raceHQ;
   }
   root.WorldRaceHQ = { init: init, PRICE: PRICE, POS_M: POS_M, _owns: owns };

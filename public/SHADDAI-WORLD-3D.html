@@ -326,7 +326,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-townsfolk.js?v=20261023b"></script>
 <script src="/world-realm-dress.js?v=20261023b"></script>
 <script src="/world-perf-guard.js?v=20261023c"></script>
-<script src="/world-underground-bazaar.js?v=20261023f"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
+<script src="/world-underground-bazaar.js?v=20261023g"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
 <script src="/world-edge-realms.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261016a"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
@@ -371,7 +371,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
 <script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
 <script src="/world-hovercars.js?v=20261015a"></script>
-<script src="/world-race-select.js?v=20261016s"></script><script src="/world-race-hq.js?v=20261016c"></script><script src="/world-home-deeds.js?v=20261016a"></script>   <!-- realm-town homes for Sparks (server deeds) -->   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
+<script src="/world-race-select.js?v=20261016sx"></script><script src="/world-race-hq.js?v=20261016cx"></script><script src="/world-home-deeds.js?v=20261016a"></script>   <!-- realm-town homes for Sparks (server deeds) -->   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
 <script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
 <script src="/world-crowd.js?v=20261001a"></script>   <!-- ~90 citizens walking the city -->
 <script src="/world-trick-score.js?v=20261009c"></script><script src="/world-shops.js?v=20261009c"></script><script src="/world-skatejam.js?v=20261009c"></script>   <!-- Skate Jam trick game (I > Races) -->
@@ -6140,7 +6140,7 @@ window.__travel = {
           e.addEventListener('click', function(){ window.__raceExit(); }); document.body.appendChild(e); }
         else if(!on && b) b.remove(); }, 500);
         addEventListener('keydown', function(e){ if(e.code === 'Backspace' && window.__raceActive && !/input|textarea/i.test((document.activeElement||{}).tagName||'')){ e.preventDefault(); window.__raceExit(); } }, true); })();
-      window.__raceStart = function(cid, o){ o = o || {}; try{ const M = window.__mountRide, sp = run.startPose(cid); window.__raceKart = !!(o.vehicle && /^kart-/.test(o.vehicle)); window.__raceActive = true;
+      window.__raceStart = function(cid, o){ o = o || {}; if(!o.vehicle && !o.free && window.WorldHoverCars && window.WorldHoverCars.TYPES && window.WorldHoverCars.TYPES[0]) o.vehicle = 'kart-' + window.WorldHoverCars.TYPES[0].id;   /* track races: always in a car */ try{ const M = window.__mountRide, sp = run.startPose(cid); window.__raceKart = !!(o.vehicle && /^kart-/.test(o.vehicle)); window.__raceActive = true;
         if(window.__raceKart){ if(!M) return false; if(hover.isRiding()) hover.dismount(); if(hover.hide) hover.hide(); if(!M.rentRace(o.vehicle, sp.x, sp.z, sp.yaw || 0)) return false; run.setVehicle(M.raceAdapter); run.shipId = String(o.vehicle).replace(/^kart-/, ''); }
         else { run.shipId = null; if(M){ if(M.isRiding()) M.dismount(); M.setRaceMode(false); } run.setVehicle(null); playerPos.x = sp.x; playerPos.z = sp.z; if(!hover.isRiding() && typeof playerAvatar !== 'undefined') hover.toggle(playerAvatar, { yaw: sp.yaw || 0 }); if(o.style && hover.setStyle) hover.setStyle(o.style);
           setTimeout(function(){ try{ if(window.__raceActive && !window.__raceKart && !hover.isRiding()) hover.mount(playerAvatar, { yaw: sp.yaw || 0 }); }catch(_){} }, 500); }

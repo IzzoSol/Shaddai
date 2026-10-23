@@ -13,7 +13,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, DEPTH_M = 288, SHAFT_M = 145, PAD_R_M = 162, FILE = '/assets/kits/shaddai_bazaar_city_v01.glb?v=20261023e'   // shaft = the Grid's centre circle (canon-v4: empty disc r ~150 m), USE_M = 9;
+  var U = 7 / 1.8, DEPTH_M = 288, SHAFT_M = 145, PAD_R_M = 162, FILE = '/assets/kits/shaddai_bazaar_city_v01.glb?v=20261023f'   // shaft = the Grid's centre circle (canon-v4: empty disc r ~150 m), USE_M = 9;
   function build(o) {
     if (typeof location !== 'undefined' && /[?&]bazaar=0/.test(location.search || '')) return Promise.resolve(null);
     var THREE = o.THREE, A = (o.anchor && o.anchor()) || { x: 0, z: 0 };
@@ -101,8 +101,26 @@
       document.body.appendChild(picker); setTimeout(function () { addEventListener('keydown', escPick, true); }, 0);
     }
     function escPick(e) { if (e.code === 'Escape') { closePicker(); removeEventListener('keydown', escPick, true); } }
+    // HIDDEN FIGHT CLUB (owner 2026-10-23: "the boxing ring inside the pyramid, just a hidden door with access code"). The code is a
+    // world secret for now (window.SHADDAI_PIT_CODE overrides); when fights carry prizes it must be checked server-side.
+    var PIT_CODE = String(root.SHADDAI_PIT_CODE || '0777'), codeBox = null;
+    function askCode() {
+      if (codeBox) return; codeBox = document.createElement('div');
+      codeBox.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9700;background:rgba(10,6,8,.95);border:1px solid #ff2fa0;border-radius:14px;padding:16px 18px;font:600 13px system-ui;color:#ffd6ec;text-align:center;min-width:240px';
+      codeBox.innerHTML = '<div style="letter-spacing:.25em;font-size:11px;opacity:.7">ACCESS CODE</div><input id="pitCode" maxlength="8" inputmode="numeric" style="margin:10px 0;width:150px;text-align:center;font:700 22px monospace;letter-spacing:.3em;background:#000;color:#ff7ac8;border:1px solid #5a1a3a;border-radius:8px;padding:6px"><div style="opacity:.55;font-size:11px">Enter to try · Esc to leave</div>';
+      document.body.appendChild(codeBox); var inp = codeBox.querySelector('#pitCode'); setTimeout(function () { inp.focus(); }, 30);
+      inp.addEventListener('keydown', function (e) {
+        e.stopPropagation();
+        if (e.key === 'Escape') { codeBox.remove(); codeBox = null; }
+        if (e.key === 'Enter') { var ok = inp.value.trim() === PIT_CODE; codeBox.remove(); codeBox = null;
+          if (ok) { var S2 = hookWorld('hook_pitspawn'); if (S2) { st.inPit = true; ride({ x: S2.x, y: S2.y, z: S2.z, inside: true }, 'The door slides open... welcome to the Pit'); } }
+          else if (root.__toast) root.__toast('Wrong code. The door stays shut.'); }
+      });
+    }
     function use() {
       var p = o.getPlayer && o.getPlayer(); if (!p || st.busy) return false;
+      if (st.inside) { var PD = hookWorld('hook_pitdoor'); if (!st.inPit && near(p, PD, 4)) { askCode(); return true; }
+        if (st.inPit && PD && Math.hypot(p.x - PD.x, p.z - (PD.z - 8 * U)) < 6 * U) { st.inPit = false; ride({ x: PD.x, y: PD.y, z: PD.z - 2 * U, inside: true }, 'Back out into the Bazaar'); return true; } }
       if (o.isInside && o.isInside()) return false;
       if (picker) { closePicker(); return true; }
       if (!st.inside && Math.hypot(p.x - padX, p.z - A.z) < 10 * U && Math.abs(p.y - padY) < 6 * U) { openPicker('grid'); return true; }
@@ -125,6 +143,11 @@
       var lx = (p.x - A.x) / U, lz = (p.z - A.z) / U, r = Math.hypot(lx, lz), wr = st.wallR - 3;
       var stx = lx < -wr + 2 && Math.abs(lz) < 40 && lx > -wr - 122;                                  // station hall (west, beyond the wall)
       if (!stx && r > wr) { lx *= wr / r; lz *= wr / r; }
+      if (st.inPit) {   // inside the pyramid: the fight hall (|x| < 47, z 18..102 game = Blender y -102..-18) + the corridor to the door
+        var inHall = Math.abs(lx) < 47 && lz > 15 && lz < 105, inCor = Math.abs(lx) < 3.6 && lz >= 105 && lz < 130;
+        if (!inHall && !inCor) { lx = Math.max(-46, Math.min(46, lx)); lz = Math.max(16, Math.min(129, lz)); if (lz >= 105) lx = Math.max(-3.5, Math.min(3.5, lx)); }
+        p.x = A.x + lx * U; p.z = A.z + lz * U; return BY + 0.06 * U;
+      }
       var PB = 132; if (Math.abs(lx) < PB && Math.abs(lz) < PB) { if (Math.abs(lx) > Math.abs(lz)) lx = lx < 0 ? -PB : PB; else lz = lz < 0 ? -PB : PB; }   // pyramid base is solid (K32: base 260 m)
       var rr = Math.hypot(lx, lz), ang = Math.atan2(lz, lx), onBridge = false;
       for (var k = 0; k < 4; k++) { var d = Math.abs(Math.atan2(Math.sin(ang - (k * Math.PI / 2 + Math.PI / 4)), Math.cos(ang - (k * Math.PI / 2 + Math.PI / 4)))); if (d * rr < 7) onBridge = true; }

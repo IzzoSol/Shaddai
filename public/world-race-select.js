@@ -49,7 +49,8 @@
   function bar(v, max) { var n = Math.max(0, Math.min(5, Math.round(v / max * 5))), h = ''; for (var i = 0; i < 5; i++) h += '<i style="display:inline-block;width:13px;height:6px;margin-right:2px;border-radius:2px;background:' + (i < n ? 'linear-gradient(90deg,#2bff88,#e8c45c)' : 'rgba(255,255,255,.14)') + '"></i>'; return h; }
   function rideCards() {
     var out = [], HC = root.WorldHoverCars; if (HC) HC.TYPES.forEach(function (t) { var k = HC.KARTS[t.id]; out.push({ id: 'kart-' + t.id, kind: 'car', name: t.name, thumb: thumbs[t.id], speed: k.top / 44 * 5, handle: k.handle / 2.8 * 5, accel: k.accel, weight: k.weight, ship: !!t.ship, bike: !!t.bike, water: !!t.water, seats: t.seats || 1, info: HC.SHIPINFO && HC.SHIPINFO[t.id], accent: HC.ACCENT && HC.ACCENT[t.id], topKmh: Math.round(k.top * 3.6) }); });
-    var BS = (root.HoverboardKit && root.HoverboardKit.STYLES) || []; BS.forEach(function (b) { out.push({ id: 'board-' + b.id, kind: 'board', name: b.name, style: b.id, thumb: thumbs['board-' + b.id], color: b.palette && ('#' + ('000000' + b.palette.deck.toString(16)).slice(-6)), speed: 3, handle: 5, accel: 4, weight: 1 }); });
+    var BS = (root.__raceAllowBoards && root.HoverboardKit && root.HoverboardKit.STYLES) || []; BS.forEach(   // track races are CAR-ONLY (owner 2026-10-23); boards stay in hoverskate
+      function (b) { out.push({ id: 'board-' + b.id, kind: 'board', name: b.name, style: b.id, thumb: thumbs['board-' + b.id], color: b.palette && ('#' + ('000000' + b.palette.deck.toString(16)).slice(-6)), speed: 3, handle: 5, accel: 4, weight: 1 }); });
     return out;
   }
 
