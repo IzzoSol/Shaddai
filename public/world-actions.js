@@ -492,20 +492,19 @@ window.buildWorldActions = function (opts) {
    * Otherwise: sign up for the next event (free), spectate, or free practice. The old 2D grid tactics game is a free optional practice mode, not "the Colosseum". */
   var SIGN_KEY = 'shd.colo.signup';
   function signedUp() { try { return localStorage.getItem(SIGN_KEY) === '1'; } catch (e) { return false; } }
+  /* MODE SCREEN (owner 2026-10-23: "normal entry walk in, and when you get to the colosseum inside doors THEN you get asked what mode or
+   * spectate, tournament sign up (coming soon)"). Opens at the lobby's inner arena doors (or B inside). Each mode opens its own picker. */
   function openArena() {
     var ev = window.__colosseumEvent || null, T = tourney(), btns = [];
-    if (ev && ev.fee > 0) {
-      btns.push({ label: 'ENTER EVENT (' + ev.fee + '⚡)', disabled: sparks() < ev.fee, fn: function () { addSparks(-ev.fee); var t = tourney(); t.fightPool += ev.fee; t.fightN++; saveTourney(t); closeModal(); pop('ENTERED: ' + (ev.name || 'event') + ' · pool ' + t.fightPool + '⚡', '#c084fc'); } });
-    } else {
-      btns.push({ label: signedUp() ? 'SIGNED UP ✓ (free)' : 'SIGN UP FOR EVENTS (free)', disabled: signedUp(), fn: function () { try { localStorage.setItem(SIGN_KEY, '1'); } catch (e) {} closeModal(); pop('You are on the Colosseum list. Events open here with an announcement.', '#00ff9c'); } });
-    }
-    btns.push({ label: 'PRACTICE: CLASSIC TACTICS (free)', fn: function () { closeModal(); var X = window.__worldTactics; if (X && X.startFight({ entry: 0, pool: 0, tier: 0 })) pop('Practice match: no entry fee, no pool.', '#c084fc'); else pop('Practice engine loading...', '#c084fc'); } });
-    btns.push({ label: 'SPECTATE', fn: closeModal });
+    btns.push({ label: '👁  SPECTATE · walk into the arena', fn: closeModal });
+    if (window.__hoverLeague && window.__hoverLeague.open) btns.push({ label: '🛹  HOVER LEAGUE · hover-skate match', fn: function () { closeModal(); try { window.__hoverLeague.open(); } catch (e) { pop('Hover League is warming up, try again in a moment.', '#ff6a5a'); } } });
+    if (window.__naval && window.__naval.open) btns.push({ label: '⚓  NAVAL BATTLE · flood the arena', fn: function () { closeModal(); try { window.__naval.open(); } catch (e) { pop('Naval battle is warming up, try again in a moment.', '#ff6a5a'); } } });
+    btns.push({ label: '♟  PRACTICE · classic tactics (free)', fn: function () { closeModal(); var X = window.__worldTactics; if (X && X.startFight({ entry: 0, pool: 0, tier: 0 })) pop('Practice match: no entry fee, no pool.', '#c084fc'); else pop('Practice is loading, try again in a moment.', '#ff6a5a'); } });
+    if (ev && ev.fee > 0) btns.push({ label: '🏆  ENTER EVENT · ' + (ev.name || 'tournament') + ' (' + ev.fee + '⚡)', disabled: sparks() < ev.fee, fn: function () { addSparks(-ev.fee); var t = tourney(); t.fightPool += ev.fee; t.fightN++; saveTourney(t); closeModal(); pop('ENTERED: ' + (ev.name || 'event'), '#e8c45c'); } });
+    else btns.push({ label: '🏆  TOURNAMENT SIGN-UP · coming soon', disabled: true, fn: function () {} });
     openModal('⚔ SHADDAI COLOSSEUM',
-      (ev ? '<b>EVENT LIVE: ' + (ev.name || 'Tournament') + '</b> — entry ' + (ev.fee || 0) + '⚡ · pool ' + T.fightPool + '⚡<br>' : '<b>Free entry.</b> No event is running right now.<br>')
-      + 'Walk the lobby, shop the kiosks, watch the arena. Sign up to be told when the next event opens (events are the only time entry costs Sparks).<br>'
-      + '<span style="opacity:.65;font-size:11px">3D battles (terrain fields, boats, modes) are the main Colosseum game; the grid tactics board is a free practice mode.</span>',
-      btns);
+      '<b>Choose how you enter.</b> Spectating and practice are always free.' + (ev ? '<br><b>EVENT LIVE: ' + (ev.name || 'Tournament') + '</b> · pool ' + T.fightPool + '⚡' : '') +
+      '<br><span style="opacity:.65;font-size:11px">B reopens this screen anywhere inside the Colosseum.</span>', btns);
   }
 
   addEventListener('keydown', function (e) {
@@ -528,9 +527,17 @@ window.buildWorldActions = function (opts) {
     var cur = window._currentInterior || null;
     if (cur === _lastInterior) return;
     _lastInterior = cur;
-    if (cur === 'COLOSSEUM') setTimeout(function () { if (window._currentInterior === 'COLOSSEUM') openArena(); }, 350);
+    // COLOSSEUM: no greeting on entry any more - the mode screen waits at the lobby's inner arena doors (see the door watcher below)
     if (cur === 'GARAGE')    setTimeout(function () { if (window._currentInterior === 'GARAGE') openGarage(); }, 350);
   }, 400);
+  var _doorArmed = true;
+  setInterval(function () {
+    if (window._currentInterior !== 'COLOSSEUM') { _doorArmed = true; return; }
+    var I = window.COLOSSEUM_ISLAND, p = P(); if (!I || !p) return;
+    var dx = (p.x - I.x) / I.U, dz = (p.z - I.z) / I.U - (I.lobbyZ0 + 2), d = Math.hypot(dx, dz);   // arena metres; inner doors = lobby back wall
+    if (_doorArmed && d < 7 && Math.abs(dx) < 10) { _doorArmed = false; openArena(); }
+    else if (!_doorArmed && d > 14) _doorArmed = true;
+  }, 300);
 
   /* ══════════════════════════════════════════════════════════════════════════════════
    * GRID BIKE V2 (2026-09-26) — owner: "the bike riding and the models not right" (rider

@@ -384,7 +384,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-volcano.js?v=20261009c"></script>
 <script src="/world-realmprops.js?v=20261011a"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
-<script src="/world-actions.js?v=20260926v2"></script>
+<script src="/world-actions.js?v=20261023a"></script>
 <script src="/world-hoverboard-moves.js?v=20261002a"></script>
 <script src="/world-hoverboards.js?v=20261015c"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
 <script src="/world-hoverboard-wallride.js?v=20261015a"></script><script src="/world-hoverboard.js?v=20261015c"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
@@ -421,7 +421,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-academy-client.js?v=20261011a"></script>
-<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023a"></script><script src="/world-navi.js?v=20261023b"></script>
+<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023b"></script><script src="/world-hud-clean.js?v=20261023a"></script><script src="/world-navi.js?v=20261023c"></script>
 <script src="/world-navi-chat.js?v=20261015a"></script>   <!-- Navi CHAT relay (/api/mp) + name sign-up; ?chat=0 = local only -->   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
@@ -3731,7 +3731,9 @@ function _safeLock(){ try{ if(!controls.isLocked) controls.lock(); }catch(e){} }
 // locked, so this is the single source of truth for look (1st- AND 3rd-person).
 try { controls.pointerSpeed = 0; } catch(e){}
 const _look = { yaw:0, pitch:0, tYaw:0, tPitch:0, init:false };
-const _LOOK_SENS = 0.0020;     // radians per mouse unit (matches PLC default feel)
+let _LOOK_SENS = 0.0020;       // radians per mouse unit (matches PLC default feel); NAVI Settings changes it (window.__setLookSens)
+let _LOOK_INV = 1;
+window.__setLookSens = function(mult, invert){ _LOOK_SENS = 0.0020 * (+mult || 1); _LOOK_INV = invert ? -1 : 1; };
 const _LOOK_DAMP = 24;         // higher = snappier / closer to raw; lower = floatier
 const _LOOK_PLIM = Math.PI/2 - 0.02;   // pitch clamp (just shy of straight up/down)
 const _lookEuler = new THREE.Euler(0,0,0,'YXZ');
@@ -3741,7 +3743,7 @@ addEventListener('mousemove', function(e){
   if(window._uiMode!=='play' || !controls.isLocked) return;
   if(!_look.init) _seedLook();
   _look.tYaw   -= e.movementX * _LOOK_SENS;
-  _look.tPitch -= e.movementY * _LOOK_SENS;
+  _look.tPitch -= e.movementY * _LOOK_SENS * _LOOK_INV;
   if(_look.tPitch >  _LOOK_PLIM) _look.tPitch =  _LOOK_PLIM;
   if(_look.tPitch < -_LOOK_PLIM) _look.tPitch = -_LOOK_PLIM;
 }, { passive:true });
@@ -3825,7 +3827,7 @@ if(_TOUCH_AWARE){
       const dx=(t.clientX-_lx), dy=(t.clientY-_ly); _lx=t.clientX; _ly=t.clientY;
       if(!_look.init) _seedLook();
       _look.tYaw   -= dx * _LOOK_SENS;
-      _look.tPitch -= dy * _LOOK_SENS;
+      _look.tPitch -= dy * _LOOK_SENS * _LOOK_INV;
       if(_look.tPitch >  _LOOK_PLIM) _look.tPitch =  _LOOK_PLIM;
       if(_look.tPitch < -_LOOK_PLIM) _look.tPitch = -_LOOK_PLIM;
     }

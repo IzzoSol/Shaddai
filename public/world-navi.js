@@ -24,7 +24,7 @@
     { id: 'inv', label: 'ITEMS', ic: '🎒' }, { id: 'market', label: 'SHOP', ic: '🛒' }, { id: 'plots', label: 'HOMES', ic: '⬡' },
     { id: 'wallet', label: 'WALLET', ic: '👛' }, { id: 'sparks', label: 'SPARKS', ic: '✦' },
     { id: 'bots', label: 'AGENTS', ic: '🤖' }, { id: 'academy', label: 'ACADEMY', ic: '🎓' },
-    { id: 'chat', label: 'CHAT', ic: '💬' }, { id: 'markets', label: 'MARKETS', ic: '📈' }, { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'radio', label: 'RADIO', ic: '📡' }
+    { id: 'chat', label: 'CHAT', ic: '💬' }, { id: 'markets', label: 'MARKETS', ic: '📈' }, { id: 'news', label: 'NEWS', ic: '📰' }, { id: 'radio', label: 'RADIO', ic: '📡' }, { id: 'settings', label: 'SETTINGS', ic: '⚙' }
   ];
   var SLOTS = ['Dashboard', 'SkinForge', 'AutoPost', 'Aura', 'Terminal'];
   // Line icons (2026-10-15, owner Navi refs): one stroke style for every module, replaces the emoji.
@@ -33,6 +33,7 @@
     inv: '<path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3M4 13h16"/>',
     chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/>',
     sparks: '<path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
     markets: '<path d="M4 19h16M6 16l4-5 3 3 5-7"/><path d="M15 7h3v3"/>',
     news: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"/>',
     market: '<path d="M3 4h3l2.5 11h10L21 8H7"/><circle cx="10" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/>',
@@ -403,6 +404,25 @@
   function feed(k) { var F = window.WorldFeeds; return F ? F.get(k) : { state: 'offline', data: null }; }
   if (window.WorldFeeds) window.WorldFeeds.on(function () { if (typeof render === 'function') try { render(); } catch (e) { } });
   function fmt(n) { return n == null ? '-' : (n >= 1000 ? '$' + Math.round(n).toLocaleString() : '$' + (+n).toPrecision(4)); }
+  /* SETTINGS (2026-10-23): clean-screen toggles + camera feel + the full controls list (world-hud-clean.js owns the prefs). */
+  M.settings = function () {
+    var H = window.WorldHudPrefs, p = H ? H.get() : {}, list = [];
+    list.push({ id: 'st-controls-list', t: 'Controls', s: 'every key, in one place (F1 flashes them in game)', tag: 'VIEW' });
+    list.push({ id: 'st-cam', t: 'Camera', s: 'look speed x' + (p.lookSens || 1).toFixed(1) + (p.invertY ? ' · inverted' : ''), tag: 'TUNE' });
+    if (H) Object.keys(H.LABELS).forEach(function (k) { list.push({ id: 'st-' + k, t: H.LABELS[k], s: p[k] ? 'shown' : 'hidden', tag: p[k] ? 'ON' : 'OFF' }); });
+    return { title: 'SETTINGS', list: list, empty: 'Settings are loading.',
+      detail: function (id) {
+        if (id === 'st-controls-list') return '<h3>CONTROLS</h3><div style="line-height:1.9">' + [['W A S D', 'move'], ['Shift', 'run'], ['Space', 'jump'], ['Mouse', 'look'], ['E', 'interact / doors / lifts'], ['V', 'camera (1st / 3rd person)'], ['O', 'hoverboard'], ['I', 'mounts & travel'], ['U', 'maglev'], ['Y', 'NAVI'], ['H', 'map'], ['Tab', 'cursor'], ['B', 'venue board (Colosseum / Garage)'], ['L', 'Listening Room (on the ring)'], ['F1', 'flash these controls'], ['Esc', 'menu']].map(function (r) { return '<b>' + r[0] + '</b> &nbsp;' + r[1]; }).join('<br>') + '</div>';
+        if (id === 'st-cam') return '<h3>CAMERA</h3><div>Look speed: x' + (p.lookSens || 1).toFixed(1) + '</div><button class="b" data-a="slow">SLOWER</button> <button class="b" data-a="fast">FASTER</button><div style="margin-top:8px">Invert Y: ' + (p.invertY ? 'on' : 'off') + '</div><button class="b" data-a="inv">TOGGLE INVERT</button>';
+        var k = String(id).slice(3); return H && H.LABELS[k] ? '<h3>' + esc(H.LABELS[k]) + '</h3><div>' + (p[k] ? 'Shown on screen.' : 'Hidden for a clean screen.') + '</div><button class="b g" data-a="tog">' + (p[k] ? 'HIDE' : 'SHOW') + '</button>' : '';
+      },
+      act: function (id, a) {
+        if (!H) return; var q = H.get();
+        if (id === 'st-cam') { if (a === 'slow') H.set('lookSens', Math.max(0.3, Math.round((q.lookSens - 0.1) * 10) / 10)); if (a === 'fast') H.set('lookSens', Math.min(3, Math.round((q.lookSens + 0.1) * 10) / 10)); if (a === 'inv') H.set('invertY', !q.invertY); }
+        else if (a === 'tog') { var k = String(id).slice(3); H.set(k, !q[k]); }
+        render();
+      } };
+  };
   M.markets = function () {
     var T = feed('tickers'), G = feed('fng'), R = feed('trending'), list = [];
     if (G.data) list.push({ id: 'mk-fng', t: 'Fear & Greed: ' + G.data.value, s: G.data.value_classification, tag: 'MOOD' });

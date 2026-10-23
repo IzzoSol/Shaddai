@@ -71,7 +71,9 @@
       P.group.lookAt(toward.x, y, toward.z); o.scene.add(P.group); return P;
     }
     var d = Math.hypot(zx.x, zx.z) || 1;
-    var mk = place(panel(THREE, 22, 11, 0xffcf4a), zx.x - zx.x / d * 46 * U, zx.z - zx.z / d * 46 * U, { x: 0, z: 0 }, 14); mk.kind = 'markets'; screens.push(mk);
+    // beside the entrance (not in front of it): 34 m to the side of the door axis, 40 m out, 9 m up, angled to face the plaza approach
+    var ux = -zx.x / d, uz = -zx.z / d, sx = -uz, sz = ux, mx = zx.x + ux * 40 * U + sx * 34 * U, mz = zx.z + uz * 40 * U + sz * 34 * U;
+    var mk = place(panel(THREE, 18, 9, 0xffcf4a), mx, mz, { x: zx.x + ux * 120 * U, z: zx.z + uz * 120 * U }, 9); mk.kind = 'markets'; screens.push(mk);
     var nw = place(panel(THREE, 18, 8, 0x27e0ff), cx.x, cx.z - 48 * U, { x: cx.x, z: cx.z + 100 }, 12); nw.kind = 'news'; screens.push(nw);
     var last = 0;
     function tick(t) {
