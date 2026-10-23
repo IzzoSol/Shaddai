@@ -15,16 +15,19 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023s', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023w', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
     // floating island (Veil) beyond it, Ringworld Rise (the half-circle city) further out, Cloud Harbor floating underneath; sky bridges
     // join them (see bridges below). r = metres from the world centre (head of the realm's causeway), z = metres above the rim ground.
-    { id: 'skycity', deg: 98, r: 4797, z: 170, label: 'Aurelia Sky City' },
-    { id: 'veil', deg: 106, r: 5150, z: 90, label: 'Scripture Veil' },
-    { id: 'rise', deg: 98, r: 4950, z: 0, label: 'Ringworld Rise' },
-    { id: 'harbor', deg: 90, r: 4900, z: -70, label: 'Cloud Harbor' },
+    // 2026-10-23 owner re-layout (TURTLE): ONE AXIS at compass 97 - Star City on the land, Cloud Harbor just past the island's edge (r 5060 m, deck +40 m - at 4830 m its hanging rocks sat in the rim terrain) bridged to
+    // it, Aurelia Sky City behind the harbor (deck +100 m, ramp up from the harbor), Scripture Veil (north) and Ringworld Rise (south) flanking
+    // the Sky City at the same deck height with 150 m gaps. All share yaw 97 so the cluster reads as one composition. y = absolute metres.
+    { id: 'harbor', deg: 97, r: 5060, y: 40, yaw: 97, label: 'Cloud Harbor' },
+    { id: 'skycity', deg: 97, r: 6400, y: 100, yaw: 97, label: 'Aurelia Sky City' },
+    { id: 'veil', deg: 90.36, r: 6443, y: 100, yaw: 97, label: 'Scripture Veil' },
+    { id: 'rise', deg: 108.02, r: 6520, y: 100, yaw: 97, label: 'Ringworld Rise' },
     { id: 'arch', deg: 335.6, r: 4040, y: 756, yaw: 330, label: 'Ascension Arch' }   // owner placed it in Blender 2026-10-23: floating over the north-west mountains
   ];
   function glyphTexture(THREE) {   // light-script for the Scripture Veil ribbons (procedural strokes; no font, no file)
@@ -45,21 +48,37 @@
     // SKY BRIDGES: arched glowing decks between realm anchor points (Blender-local metres of each GLB -> world). One mesh per material.
     function wp(id, bx, by, bz) { var A2 = anchors[id]; if (!A2) return null; var v = new THREE.Vector3(bx, bz, -by); A2.s.localToWorld(v); return v; }
     function bridges() {
-      var L = [['skycity', 0, 680, 70, 'veil', 0, 550, 6], ['veil', 0, 620, 6, 'rise', 0, 520, 0], ['skycity', 0, 680, 70, 'harbor', 0, 260, 2], ['harbor', 0, 760, 2, 'rise', -240, 520, 0]];
-      var deck = [], rail = [];
+      // [from, bx, by, bz, to, bx, by, bz, widthM] in each GLB's Blender-local metres (+x = south, +y = outward). TURTLE: axial 30 m, side 20 m.
+      var L = [['star', 0, 340, 18, 'harbor', 0, 8, 0, 30], ['harbor', 0, 1110, 0, 'skycity', 0, 8, 0, 30],
+               ['skycity', -322, 480, 0, 'veil', 255, 400, 0, 20], ['skycity', 322, 480, 0, 'rise', -755, 520, 0, 20]];
+      var deck = [], rail = [], blamps = [], under = [];
       L.forEach(function (b) {
         var p0 = wp(b[0], b[1], b[2], b[3]), p1 = wp(b[4], b[5], b[6], b[7]); if (!p0 || !p1) return;
-        var d = new THREE.Vector3().subVectors(p1, p0), len = d.length(), side = new THREE.Vector3(-d.z, 0, d.x).normalize(), N = 40, W = 5 * U, arch = Math.min(60 * U, len * 0.12);
+        var d = new THREE.Vector3().subVectors(p1, p0), len = d.length(), side = new THREE.Vector3(-d.z, 0, d.x).normalize(), N = 40, W = (b[8] || 10) / 2 * U, arch = Math.min(25 * U, len * 0.06);
         for (var i = 0; i < N; i++) {
           var t0 = i / N, t1 = (i + 1) / N, a0 = p0.clone().lerp(p1, t0), a1 = p0.clone().lerp(p1, t1); a0.y += Math.sin(Math.PI * t0) * arch; a1.y += Math.sin(Math.PI * t1) * arch;
           var l0 = a0.clone().addScaledVector(side, -W), r0 = a0.clone().addScaledVector(side, W), l1 = a1.clone().addScaledVector(side, -W), r1 = a1.clone().addScaledVector(side, W);
           deck.push(l0, r0, r1, l0, r1, l1, l0, r1, r0, l0, l1, r1);
+          if (i % 5 === 0) { blamps.push(l0.clone(), r0.clone()); }
+          var u0 = a0.clone().setY(a0.y - 1.2 * U), u1 = a1.clone().setY(a1.y - 1.2 * U), uw = W * 0.35; under.push(u0.clone().addScaledVector(side, -uw), u1.clone().addScaledVector(side, -uw), u1.clone().addScaledVector(side, uw), u0.clone().addScaledVector(side, -uw), u1.clone().addScaledVector(side, uw), u0.clone().addScaledVector(side, uw));
           [[l0, l1], [r0, r1]].forEach(function (e) { var u0 = e[0].clone(), u1 = e[1].clone(), h = 1.1 * U; rail.push(u0, u1, u1.clone().setY(u1.y + h), u0, u1.clone().setY(u1.y + h), u0.clone().setY(u0.y + h)); rail.push(u0, u1.clone().setY(u1.y + h), u1, u0, u0.clone().setY(u0.y + h), u1.clone().setY(u1.y + h)); });
         }
       });
-      function mesh(pts, mat) { var g = new THREE.BufferGeometry().setFromPoints(pts); g.computeVertexNormals(); var m2 = new THREE.Mesh(g, mat); m2.name = 'sky-bridges'; group.add(m2); }
+      function mesh(pts, mat) { var g = new THREE.BufferGeometry().setFromPoints(pts); g.computeVertexNormals(); var m2 = new THREE.Mesh(g, mat); m2.name = 'sky-bridges'; group.add(m2); return m2; }
       if (deck.length) mesh(deck, new THREE.MeshStandardMaterial({ color: 0xece6d8, roughness: 0.5, metalness: 0.2, side: THREE.DoubleSide }));
-      if (rail.length) mesh(rail, new THREE.MeshBasicMaterial({ color: 0x8ffff0, transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false }));
+      if (rail.length) {   // TURTLE: edge light shifts from soft amber low to cool teal at altitude
+        var rm = mesh(rail, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.6, side: THREE.DoubleSide, toneMapped: false })), pa = rm.geometry.attributes.position, ca = new Float32Array(pa.count * 3);
+        var lo = new THREE.Color(0xffb347), hi = new THREE.Color(0x5fffe0), cc = new THREE.Color(), y0 = -40 * U, y1 = 120 * U;
+        for (var i = 0; i < pa.count; i++) { cc.copy(lo).lerp(hi, Math.max(0, Math.min(1, (pa.getY(i) - y0) / (y1 - y0)))); ca[i * 3] = cc.r; ca[i * 3 + 1] = cc.g; ca[i * 3 + 2] = cc.b; }
+        rm.geometry.setAttribute('color', new THREE.BufferAttribute(ca, 3));
+      }
+      if (under.length) mesh(under, new THREE.MeshBasicMaterial({ color: 0x5fffe0, transparent: true, opacity: 0.5, side: THREE.DoubleSide, toneMapped: false }));   /* underside glow strip */
+      if (blamps.length) {   // bridge light posts (both rails): white post + warm cap
+        var pg = new THREE.CylinderGeometry(0.12 * U, 0.18 * U, 5 * U, 6); pg.translate(0, 2.5 * U, 0); var cg = new THREE.SphereGeometry(0.5 * U, 10, 8); cg.translate(0, 5.2 * U, 0);
+        var pm = new THREE.InstancedMesh(pg, new THREE.MeshStandardMaterial({ color: 0xece6d8, roughness: 0.4, metalness: 0.3 }), blamps.length), cm = new THREE.InstancedMesh(cg, new THREE.MeshBasicMaterial({ color: 0xffd9a0, toneMapped: false }), blamps.length), bm4 = new THREE.Matrix4();
+        blamps.forEach(function (v, k) { bm4.makeTranslation(v.x, v.y, v.z); pm.setMatrixAt(k, bm4); cm.setMatrixAt(k, bm4); });
+        [pm, cm].forEach(function (m) { m.name = 'sky-bridge-lamps'; m.computeBoundingSphere(); group.add(m); });
+      }
       stats.bridges = L.length;
     }
     function load(file) { return new Promise(function (res) { loader.load(BASE + file + V, function (g) { stats.loaded++; res(g.scene); }, null, function (e) { stats.failed++; console.warn('[edge-realms]', file, e && e.message); res(null); }); }); }
@@ -91,7 +110,14 @@
       if (!s) return; var a = 97 * Math.PI / 180, cx = Math.sin(a) * 4330 * U, cz = -Math.cos(a) * 4330 * U, g = -Infinity;
       for (var rr = 0; rr <= 480; rr += 160) for (var k = 0; k < 12; k++) { var t = k * Math.PI / 6; if (o.heightAt) g = Math.max(g, o.heightAt(cx + Math.cos(t) * rr * U, cz + Math.sin(t) * rr * U)); }
       if (!isFinite(g)) g = 0;
-      s.scale.setScalar(U * 1.25); s.position.set(cx, g - 20 * U, cz); s.rotation.y = -a; dress(s); group.add(s); s.updateMatrixWorld(true); stats.starCity = true;
+      s.scale.setScalar(U * 1.25); s.position.set(cx, g - 20 * U, cz); s.rotation.y = -a; dress(s); group.add(s); s.updateMatrixWorld(true); stats.starCity = true; anchors.star = { s: s };
+    }));
+    // ARCTIC PEAK CITY (K36, owner 2026-10-23): ice towers on four arctic summits joined by glass ice-bridges in a loop, a skyway from the summit
+    // tower to the Ascension Arch and a walkway down to an ice dock on the arctic river. The GLB is in WORLD metres (placed at the origin).
+    // Boats from the dock need thermal gear (same sealed-gate check as the sky realms; the real ownership check must move server-side).
+    jobs.push(load('shaddai_arctic_peaks_v01.glb').then(function (s) {
+      if (!s) return; s.scale.setScalar(U); dress(s); group.add(s); s.updateMatrixWorld(true); stats.arcticPeaks = true;
+      var DK = [-1572.2, 2912.3, 4.5]; heads.push({ id: 'icedock', label: 'Ice Dock - boats need thermal gear', x: DK[0] * U, z: -DK[1] * U, y: DK[2] * U, cosmetic: 'arctic-thermal-suit' });
     }));
     jobs.push(load('shaddai_edge_portal_v01.glb').then(function (s) {
       if (!s) return; var A = (o.portalAnchor && o.portalAnchor()) || { x: 0, y: 200, z: 118, yaw: Math.PI };

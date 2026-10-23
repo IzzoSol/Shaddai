@@ -29,6 +29,12 @@
         ms.forEach(function (m) { if (m && m.emissive && m.emissiveIntensity > 0) m.toneMapped = true; });
       });
       root.updateMatrixWorld(true);
+      // EMBERFALL CLEAN-UP (owner 2026-10-23: "get rid of the random grey buildings that dont align"): the terrace ring of stacked grey towers and
+      // the loose lava-bridge slabs are hidden (meshes + their colliders); the realm-heart town (realm-towns-v2.json) now fills the terrace.
+      // ?embertowers=1 brings them back.
+      var EMB_HIDE = !(typeof location !== 'undefined' && /[?&]embertowers=1/.test(location.search));
+      if (EMB_HIDE) { root.traverse(function (o) { if (/^EMB_(Terrace_Towers|Road_Lava_Bridges)/.test(o.name || '')) { o.visible = false; st.embHidden = (st.embHidden || 0) + 1; } });
+        C.obb = C.obb.filter(function (b) { return b.kind !== 'ember-tower' && b.kind !== 'ember-bridge'; }); C.circle = C.circle.filter(function (b) { return b.kind !== 'ember-tower' && b.kind !== 'ember-bridge'; }); }
       // HOVERSKATE PARK KEEP-OUT (2026-10-16, found in the Blender world): CULTURE_LANE kiosk tops (up to 19 m) stand at the park rim (r 165-178 m around
       // the PLAZA_SKATE marker) and poke over the deck edge - drop its triangles inside r 178 m. ?parkclear=0 = untouched.
       if (!(typeof location !== 'undefined' && /[?&]parkclear=0/.test(location.search))) root.traverse(function (o) {

@@ -326,6 +326,10 @@
         var px = cx + (ox * Math.cos(ang) - oz * Math.sin(ang)) * dist, pz = cz + (oz * Math.cos(ang) + ox * Math.sin(ang)) * dist;
         var h = heightAt(px, pz); if (!best || h > best.h) best = { x: px, z: pz, h: h };
       }
+      // LAIRS (owner 2026-10-23: "dragons sleeping in each terrain ... a mission to defeat each and obtain the shard"): the host may give each
+      // dragon a lair deep in its realm (opts.lairFor(station, element) -> {x, z} units); it sleeps there and its home/leash is the lair.
+      var lair = opts.lairFor ? opts.lairFor(s, el) : null;
+      if (lair) { best = { x: lair.x, z: lair.z, h: heightAt(lair.x, lair.z) }; cx = lair.x + ox * 40 * U; cz = lair.z + oz * 40 * U; }
       pushOut(best);                                                      // never perch inside The Grid
       var span = lerp(tune.wingspan[0], tune.wingspan[1], rnd());
       var yaw0 = Math.atan2(cx - best.x, cz - best.z);                   // perched facing the crossing
@@ -336,7 +340,7 @@
         home: { x: cx, z: cz }, out: { x: ox, z: oz }, perch: { x: best.x, z: best.z },
         landSpot: pushOut({ x: cx + ox * tune.landOffset * U, z: cz + oz * tune.landOffset * U }),
         hpMax: tune.hp, hp: tune.hp, defeated: def, rested: false,
-        state: def ? 'peaceful' : 'perch', stateT: 0, atk: null, cooldown: 1.5, staggerT: 0, leashT: 0,
+        state: def ? 'peaceful' : (lair ? 'sleep' : 'perch'), lair: !!lair, stateT: 0, atk: null, cooldown: 1.5, staggerT: 0, leashT: 0,
         orbitDir: rnd() < 0.5 ? 1 : -1, orbitPhase: rnd() * 6.28, attackCount: 0, rnd: rnd,
         f: createFlight(best.x, best.h + span * 0.16 * U, best.z, yaw0),
         breathing: false, inhaling: false, jaw: 0, coneAxis: null, mouth: null, headYaw: 0, headPitch: 0, bow: 0,
@@ -732,6 +736,10 @@
       }
 
       switch (d.state) {
+        case 'sleep':   // curled up at the lair: head down, wakes only when you come close (tune.sleepWake m) or hit it
+          cmdFly(d, f.x + Math.sin(f.yaw), 0, f.z + Math.cos(f.yaw), 0); d.bow = Math.min(1, d.bow + dt * 0.5);
+          if (engaged && hyp2(P.x - f.x, P.z - f.z) / U < (tune.sleepWake || 45)) { d.bow = 0; emit('wake', { id: d.id, name: d.name }); setState(d, 'alert'); d.atk = { id: ++attackSeq, kind: 'roar', phase: 'setup', t: 0, telegraphAt: null }; }
+          break;
         case 'perch':
           cmdFly(d, f.x + Math.sin(f.yaw), 0, f.z + Math.cos(f.yaw), 0);
           if (engaged && pH < tune.alertRadius * aggr(NIGHT.alertMul)) { setState(d, 'alert'); d.atk = { id: ++attackSeq, kind: 'roar', phase: 'setup', t: 0, telegraphAt: null }; }
@@ -777,10 +785,10 @@
         case 'rest':
           cmdFly(d, P ? P.x : f.x, 0, P ? P.z : f.z, 0);
           d.hp = Math.min(d.hpMax, d.hp + d.hpMax * tune.restRegenFrac / tune.restTime * dt);
-          if (d.stateT > tune.restTime) { d.rested = true; if (engaged && pH < tune.leashRadius) beginTakeoff(d); else setState(d, 'perch'); }
+          if (d.stateT > tune.restTime) { d.rested = true; if (engaged && pH < tune.leashRadius) beginTakeoff(d); else setState(d, d.lair ? 'sleep' : 'perch'); }
           break;
         case 'return':
-          if (flyLand(d, d.perch, dt, tune.speedCruise)) { landedNow(d, 'perch'); d.hp = d.hpMax; d.rested = false; setState(d, 'perch'); }
+          if (flyLand(d, d.perch, dt, tune.speedCruise)) { landedNow(d, 'perch'); d.hp = d.hpMax; d.rested = false; setState(d, d.lair ? 'sleep' : 'perch'); }
           break;
         case 'grounded':   // after a ground roar: back into the land attack loop or take off
           beginTakeoff(d); break;
@@ -847,7 +855,8 @@
       d.invulnUntil = now + tune.dragonIFrames;
       d.hp = Math.max(0, d.hp - amount);
       emit('hurt', { id: d.id, dmg: amount, hp: d.hp, hpMax: d.hpMax, pos: hitPos || null, type: type || 'physical', resisted: res });
-      if (d.state === 'perch' || d.state === 'rest' || d.state === 'return') {   // woken up by the hit
+      if (d.state === 'sleep' || d.state === 'perch' || d.state === 'rest' || d.state === 'return') {   // woken up by the hit
+        d.bow = 0;
         if (d.state !== 'return' && d.f.mode === 'ground') { setState(d, 'alert'); d.atk = { id: ++attackSeq, kind: 'roar', phase: 'setup', t: 0, telegraphAt: null }; }
       }
       d.staggerT = 0.6;
@@ -1439,6 +1448,20 @@
         if (!bones.head && BONE_RX.head.test(n) && !BONE_RX.jaw.test(n)) bones.head = o;
         if (BONE_RX.neck.test(n)) bones.neck.push(o); else if (BONE_RX.tail.test(n)) bones.tail.push(o);
         if (o.isMesh || o.isSkinnedMesh) o.frustumCulled = false;
+      });
+      // element colourway (owner 2026-10-23: "same rigged dragon, different colours"): clones share materials, so each dragon gets its
+      // own copies tinted toward its element body colour, with the element glow as emissive. Textures stay; the tint multiplies them.
+      var EC = ELEMENTS[ELEMENT_ALIAS[el] || el] || ELEMENTS.lava, tint = new THREE.Color(EC.body).lerp(new THREE.Color(EC.belly), 0.3), tintMats = new Map();
+      tint.lerp(new THREE.Color(0xffffff), 0.25);
+      sceneCopy.traverse(function (o) {
+        if (!o.isMesh || !o.material) return;
+        var one = function (m) {
+          if (tintMats.has(m)) return tintMats.get(m);
+          var c = m.clone(); if (c.color) c.color.multiply(tint).multiplyScalar(1.6);
+          if (c.emissive) { c.emissive.setHex(EC.glow); c.emissiveIntensity = (ELEMENT_ALIAS[el] || el) === 'lava' ? 0.35 : 0.12; }
+          tintMats.set(m, c); track(c); return c;
+        };
+        o.material = Array.isArray(o.material) ? o.material.map(one) : one(o.material);
       });
       var mixer = null, actions = {};
       if (gltf.animations && gltf.animations.length) {

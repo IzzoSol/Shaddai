@@ -201,6 +201,17 @@ Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
 - [ ] NEXT: load-timing boot + load-speed pass (needs RAM - restart Blender first); draw calls ~1600 vs 80 budget (merge/instancing)
 - [ ] LATER: building look polish (roofs/accents/cluster variety), realm wilderness fill, garden-city roads, hover-skate park rework, affiliate mall, agent arcade
 
+## 2026-10-23 (late) realm finish pass - agents/1, Blender REALM_VIEW mirrored (collection FINISH_20261023; backup realm-view-20261023-before-finish.blend)
+- [x] Dragons: the rigged dragon GLB now takes each element's colourway (BoneRig tints cloned materials) - 7 distinct dragons; dragon tests 46/46
+- [x] ROADS to every realm (world-realm-roads.js <- realm-roads-v1.json <- tools/gen-realm-roads.cjs): city edge -> under the rail spoke -> station -> realm-heart town; bridges over river/sea; accent glow strips
+- [x] SKYLINE SPUR rail: Suburb station -> Star City stop (on the ring train menu) -> Cloud Harbor gate (sealed); shuttle runs it
+- [x] REALM-HEART TOWNS (realm-towns-v2.json <- tools/gen-realm-towns.cjs, TURTLE patterns): 8 towns, 137 kit buildings; Emberfall town INSIDE the terrace ring; Crystal Sea town on a floating deck
+- [x] BIOME SCATTER (world-biome-scatter.js <- biome-scatter-v1.json <- tools/gen-biome-scatter.cjs): 6701 code-built pines/broadleaf/snow pines/boulders/hoodoos/crystals/lava rocks/shrubs + 3 sand arches, chunked 1200 m + culled
+- [x] SKY CLUSTER re-layout on one axis (compass 97): Star City -> bridge -> Cloud Harbor (-20 m) -> ramp -> Sky City (+60 m), Veil north + Rise south flanking with 150 m gaps; TURTLE bridges 30/20 m, amber->teal edge light
+- [x] Cloud bank under the sky cluster: +2600 m outward, 1.7x billows (k31 cloudsea re-exported)
+- [x] Blender: maglev ring + spokes + station platforms, joined river ribbons (old flat city_rivers hidden, not deleted)
+- [ ] Owner look: Emberfall terrace town + sky layout in Blender; then the speed/FPS pass
+
 ## Notes
 - PUSH: main push stopped at branch slice 40/102 (system low on memory with Blender open). Restart only when the owner says (branch slices first, then main).
 - Disk C: was 432 MB free on 2026-10-16; world .blend1 deleted (owner OK). Owner wants unused GLB/zip files found and removed - list first, owner picks.

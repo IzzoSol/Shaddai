@@ -14,7 +14,7 @@
  */
 (function (root) {
   'use strict';
-  var PM = 7 / 1.8, VIEW_M = 1200, DATA = '/assets/world/realm-dress-v1.json?v=20261023f';
+  var PM = 7 / 1.8, VIEW_M = 1200, DATA = '/assets/world/realm-dress-v1.json?v=20261023f', TOWNS2 = '/assets/world/realm-towns-v2.json?v=20261023a';
   function stationList(transit) {
     var out = (transit && transit.stations || []).filter(function (t) { return t.onRing !== false && t.realm && t.group; })   // owner 2026-10-23: the grid dress at Central read as a random cluster - not placed
       .map(function (t) { return { id: t.id, realm: t.realm, x: t.group.position.x, z: t.group.position.z, rot: t.group.rotation.y }; });
@@ -39,9 +39,19 @@
     var THREE = o.THREE, heightAt = o.heightAt || function () { return 0; }, L = root.WORLD_LAYOUT, cols = L && L.realmColliders;
     var group = new THREE.Group(); group.name = 'world-realm-dress'; o.scene.add(group);
     var stats = { entries: 0, files: 0, instancedMeshes: 0, instances: 0, colliders: 0, missing: [] };
-    return fetch(DATA).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (data) {
+    var getJ = function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
+    return Promise.all([getJ(DATA), /[?&]realmtowns=0/.test(location.search || '') ? null : getJ(TOWNS2)]).then(function (both) {
+      var data = both[0], t2 = both[1];
       if (!data || !data.realms) { console.info('[realm-dress] no data'); return { group: group, stats: stats }; }
       var stations = stationList(o.transit), byFile = {}, towns = {};
+      // REALM-HEART TOWNS (realm-towns-v2.json, tools/gen-realm-towns.cjs, TURTLE layouts 2026-10-23): one pseudo-station per town at its
+      // centre (rot 0, so item x/z are plain game-metre offsets). float: the Crystal Sea town stands on a deck at the water line.
+      ((t2 && t2.towns) || []).forEach(function (t) {
+        var key = 'town2:' + t.realm; data.realms[key] = t.items;
+        var st = { id: t.id, realm: key, x: t.c[0] * PM, z: t.c[1] * PM, rot: 0 };
+        var wy = o.waterAt ? o.waterAt(st.x, st.z) : null; if (wy != null) st.floatY = wy + 1.2 * PM;
+        stations.push(st); stats.towns2 = (stats.towns2 || 0) + 1;
+      });
       stations.forEach(function (st) {
         (data.realms[st.realm] || []).forEach(function (p) {
           var w = toWorld(st, p); stats.entries++;
@@ -59,8 +69,9 @@
           byFile[file].forEach(function (e) { (perTown[e.st.id] = perTown[e.st.id] || { st: e.st, list: [] }).list.push(e); });
           Object.keys(perTown).forEach(function (sid) {
             var t = perTown[sid], town = towns[sid];
-            if (!town) { town = towns[sid] = new THREE.Group(); town.name = 'realm-dress-' + sid; town.userData.x = t.st.x; town.userData.z = t.st.z; group.add(town); }
-            var mats = t.list.map(function (e) { return m4.compose(pv.set(e.w.x, heightAt(e.w.x, e.w.z), e.w.z), q.setFromAxisAngle(up, e.w.yaw), sv.setScalar(PM * (e.h ? e.h / rawH : e.w.s))).clone(); });
+            if (!town) { town = towns[sid] = new THREE.Group(); town.name = 'realm-dress-' + sid; town.userData.x = t.st.x; town.userData.z = t.st.z; group.add(town);
+              if (t.st.floatY != null) { var dk = new THREE.Mesh(new THREE.CylinderGeometry(160 * PM, 150 * PM, 2.4 * PM, 48), new THREE.MeshStandardMaterial({ color: 0xdfe8ee, roughness: 0.4, metalness: 0.3 })); dk.position.set(t.st.x, t.st.floatY - 1.2 * PM, t.st.z); dk.receiveShadow = true; town.add(dk); } }
+            var mats = t.list.map(function (e) { return m4.compose(pv.set(e.w.x, t.st.floatY != null ? Math.max(heightAt(e.w.x, e.w.z), t.st.floatY) : heightAt(e.w.x, e.w.z), e.w.z), q.setFromAxisAngle(up, e.w.yaw), sv.setScalar(PM * (e.h ? e.h / rawH : e.w.s))).clone(); });
             g.scene.traverse(function (mesh) {
               if (!mesh.isMesh) return;
               if (mesh.material && mesh.material.map) mesh.material.map.colorSpace = THREE.SRGBColorSpace;

@@ -127,8 +127,8 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
         if (opts.onMaterial && o.material && !seenMat[o.material.uuid]) { seenMat[o.material.uuid] = true; opts.onMaterial(o.material); }
         out.push({ geo: geo, mat: o.material });
       });
-      if (crownKey && CROWN_KEYS[crownKey] && !(typeof location !== 'undefined' && /[?&]roofs=0/.test(location.search))) out.push(roofCrown(size, crownKey));
-      return { parts: out, wid: Math.max(size.x, size.z, 1e-4), hgt: Math.max(size.y, 1e-4) };
+      if (crownKey && CROWN_KEYS[crownKey] && (typeof location !== 'undefined' && /[?&]roofs=old/.test(location.search))) out.push(roofCrown(size, crownKey));   /* 2026-10-23: replaced by world-city-crowns.js per-district crowns; ?roofs=old = the single crown */
+      return { parts: out, wid: Math.max(size.x, size.z, 1e-4), hgt: Math.max(size.y, 1e-4), sx: size.x, sz: size.z };
     }
     /* ROOF CROWN (2026-10-23, owner: "the tops of the square buildings are basic"): every flat-roofed city model gets a sci-fi crown - parapet
        walls, a glowing edge trim, a roof garden, a glass rooftop pavilion and solar fins - built ONCE per model type in model units (base-centred,
@@ -189,6 +189,11 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
         if (window.WORLD_WALKABLE_TOPS) inPlace(window.WORLD_WALKABLE_TOPS, ghostFilter(plan.items, window.WORLD_WALKABLE_TOPS, function (t) { return t.kind || null; }));
         if (n0 !== n1) { console.info(TAG + 'ghost walls removed: ' + (n0 - n1) + ' canon solids with no live building'); if (window.buildWorldCollision) try { window.buildWorldCollision(LL); } catch (e) { } }
       }
+      var crownReqs = [], marks = [];
+      // DISTRICT LANDMARKS (owner 2026-10-23: "you just added the tower on the top of the square building ... laughable"): the podium + hero tower
+      // stacks are replaced by one designed landmark per district (K37: The Anvil / The Exchange Spire / The Hearth). ?oldheroes=1 = the old stacks.
+      if (_designed === 'done' && !(typeof location !== 'undefined' && /[?&]oldheroes=1/.test(location.search))) plan.items = plan.items.filter(function (it) {
+        if (it.role === 'district-podium') { marks.push(it); return false; } return it.role !== 'district-hero'; });
       var byKey = {};
       plan.items.forEach(function (it) { (byKey[it.key] = byKey[it.key] || []).push(it); });
       var keys = Object.keys(byKey); st.types = keys.length; st.items = plan.items.length;
@@ -202,6 +207,8 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
           byKey[key].forEach(function (it) {   // sized from the FULL model (lods share the same bounds, so one matrix fits all)
             var k = (it.by_height ? it.len_m / L0.hgt : it.len_m / L0.wid) * U, x = it.x_m * U, z = -it.y_m * U;
             var y = minGround(x, z, L0.wid * k * 0.35) + (it.lift_m || 0) * U;
+            if (_designed === 'done' && CROWN_KEYS[key]) { var cb = (Math.atan2(it.x_m, it.y_m) * 180 / Math.PI + 360) % 360, cd = cb < 90 ? 'forge' : cb < 180 ? 'trade' : cb < 270 ? 'residential' : 'athenaeum';
+              crownReqs.push({ d: /^(forge|trade|residential|athenaeum)$/.test(it.cluster) ? it.cluster : cd, x: x, z: z, y: y + L0.hgt * k, w: L0.sx * k, dz: L0.sz * k, yaw: -(it.yaw || 0) * Math.PI / 180 }); }
             var ck = Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
             (byCell[ck] = byCell[ck] || []).push(m4.compose(p.set(x, y, z), q.setFromAxisAngle(yA, -(it.yaw || 0) * Math.PI / 180), s.set(k, k, k)).clone());
           });
@@ -225,6 +232,15 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
           allK.push(K);
         }).catch(function (e) { st.failed.push(key); console.warn(TAG + key + ' failed: ' + (e && e.message)); });
       })).then(function () {
+        if (crownReqs.length && window.WorldCityCrowns) try { window.WorldCityCrowns.build({ THREE: THREE, parent: group, reqs: crownReqs }); } catch (e) { console.warn(TAG + 'crowns', e && e.message); }
+        var LM = { forge: 'anvil', trade: 'exchange', residential: 'hearth' };
+        marks.forEach(function (it) { var id = LM[it.cluster]; if (!id) return;
+          load('/assets/kits/shaddai_landmark_' + id + '_v01.glb?v=20261023a').then(function (g) {
+            var x = it.x_m * U, z = -it.y_m * U, o = g.scene; o.scale.setScalar(U); o.position.set(x, minGround(x, z, 50 * U), z); o.rotation.y = -(it.yaw || 0) * Math.PI / 180; o.name = 'landmark-' + id;
+            o.traverse(function (m) { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); group.add(o);
+            var LL = window.WORLD_LAYOUT; if (LL && LL.realmColliders) { LL.realmColliders.push({ x: Math.round(x), z: Math.round(z), r: Math.round(30 * U), label: 'landmark:' + id }); if (window.buildWorldCollision) try { window.buildWorldCollision(LL); } catch (e) { } }
+          }).catch(function (e) { console.warn(TAG + 'landmark ' + id, e && e.message); });
+        });
         Object.keys(cells).forEach(function (ck) { var c = cells[ck]; c.centre.x /= c.n; c.centre.z /= c.n; });
         st.cells = Object.keys(cells).length;
         if (pushed && window.buildWorldCollision && window.WORLD_LAYOUT) window.buildWorldCollision(window.WORLD_LAYOUT);   // full rebuild — skip when nothing new
