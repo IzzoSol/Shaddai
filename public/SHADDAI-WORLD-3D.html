@@ -325,8 +325,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
 <script src="/world-realm-dress.js?v=20261023b"></script>
-<script src="/world-perf-guard.js?v=20261023b"></script>
-<script src="/world-underground-bazaar.js?v=20261023e"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
+<script src="/world-perf-guard.js?v=20261023c"></script>
+<script src="/world-underground-bazaar.js?v=20261023f"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
 <script src="/world-edge-realms.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261016a"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
@@ -400,8 +400,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-spawn.js?v=20261009c"></script>
 <script src="/world-themes.js?v=20261009c"></script>
 <script src="/athenaeum-layout.js?v=20261011a"></script>
-<script src="/world-athenaeum.js?v=20261023b"></script>
-<script src="/world-interiors.js?v=20261023d"></script>
+<script src="/world-athenaeum.js?v=20261023c"></script><script src="/world-athenaeum-lifts.js?v=20261023a"></script>
+<script src="/world-interiors.js?v=20261023e"></script>
 <script src="/world-cutscene.js?v=20261004own"></script>
 <script src="/world-npcs.js?v=20261022a"></script>
 <script src="/world-elevators.js?v=20261004nl"></script>
@@ -442,7 +442,21 @@ if(window.__devkit) window.__devkit.patchGLTFLoader(GLTFLoader);
 // ?vfx=0 = the old PointsMaterial everywhere. The engine (bursts/trails/decals) is created once the camera/renderer exist.
 const _VFX_ON = !!window.WorldVFX && !/[?&]vfx=0\b/.test(location.search);
 function _softPM(o){ return _VFX_ON ? window.WorldVFX.softPointsMaterial(THREE, { color: o.color, size: o.size, opacity: o.opacity != null ? o.opacity : 1, additive: o.blending !== THREE.NormalBlending, vertexColors: !!o.vertexColors }) : new THREE['PointsMaterial'](o); }
-import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';   // skeleton-safe clone (plain .clone() breaks skinned meshes)
+import { clone as _cloneSkinnedByName } from 'three/addons/utils/SkeletonUtils.js';   // skeleton-safe clone (plain .clone() breaks skinned meshes)
+// SAFE SKINNED CLONE (2026-10-23): SkeletonUtils.clone re-links bones BY NAME; when a name does not resolve the slot is undefined and the
+// body renders as an explosion of shards (seen on the player in every hall) + the red "matrixWorld of undefined" banner. Fallback: clone
+// the hierarchy and re-link every skeleton by POSITION in a parallel traversal (exact for any rig, names or not).
+function cloneSkinned(src){
+  const c = _cloneSkinnedByName(src); let bad = false;
+  c.traverse(function(o){ if(o.isSkinnedMesh && (!o.skeleton || o.skeleton.bones.some(function(b){ return !b; }))) bad = true; });
+  if(!bad) return c;
+  const sl = [], dl = [], c2 = src.clone(true); src.traverse(function(o){ sl.push(o); }); c2.traverse(function(o){ dl.push(o); });
+  const map = new Map(); for(let i = 0; i < sl.length; i++) map.set(sl[i], dl[i]);
+  for(let i = 0; i < dl.length; i++){ const d = dl[i], s0 = sl[i];
+    if(d.isSkinnedMesh && s0.skeleton){ const bones = s0.skeleton.bones.map(function(b){ return map.get(b); });
+      if(bones.every(function(b){ return !!b; })) d.bind(new THREE.Skeleton(bones, s0.skeleton.boneInverses.map(function(m){ return m.clone(); })), d.bindMatrix.clone()); } }
+  console.warn('[cloneSkinned] name re-link failed; re-linked by hierarchy position'); return c2;
+}
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { initRideables } from './world-rideables.js';   // rideable voyager vehicles (board with G)
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -6610,6 +6624,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   // 2026-10-23 finish-pass ticks: each guarded so one failure never stops the others (first error kept in window.__tickErr for the audit)
   { const _tk = function(n, f){ try{ f(); }catch(e){ if(!window.__tickErr){ window.__tickErr = n + ': ' + (e && e.message); console.warn('[tick]', window.__tickErr); } } };
     _tk('bazaar', function(){ if(window.__bazaar) window.__bazaar.tick(t); });
+    _tk('athlifts', function(){ if(window.WorldAthenaeumLifts && !window.__athLifts) window.WorldAthenaeumLifts.attach({ getPlayer: function(){ return playerPos; }, setPlayer: function(x,y,z){ playerPos.set(x,y,z); }, isInsideAthenaeum: function(){ return !!(_interiors && _interiors.isInside && _interiors.isInside()); } }); if(window.__athLifts) window.__athLifts.tick(dt); });
     _tk('screens', function(){ if(window.__cityScreens) window.__cityScreens.tick(t); });
     _tk('edge', function(){ if(window.__edgeRealms) window.__edgeRealms.tick(t); });
     _tk('perfguard', function(){ if(window.__perfGuard === undefined && window.WorldPerfGuard) window.__perfGuard = window.WorldPerfGuard.attach({ THREE, scene, camera, renderer }) || false;

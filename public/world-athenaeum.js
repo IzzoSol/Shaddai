@@ -491,7 +491,7 @@
     // window-wall classrooms with holo desks + green walls, Dean's Atrium with tiered balconies). Same plan as athenaeum-layout.js, so
     // stations, colliders, pods, boards, posters, faculty and wing furniture all stay; the code shell / columns / balconies / centre
     // hologram (and the K15 shell) hide. ?athk33=0 = keep the old look.
-    if (root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athk33=0/.test(location.search || ''))) new root.__GLTFLoaderClass().load('/assets/kits/shaddai_athenaeum_interior_v01.glb?v=20261023a', function (gl) {
+    if (root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athk33=0/.test(location.search || ''))) new root.__GLTFLoaderClass().load('/assets/kits/shaddai_athenaeum_interior_v01.glb?v=20261023b', function (gl) {
       var shell = gl.scene; shell.name = 'athenaeum-k33';
       shell.traverse(function (n) {
         if (!n.isMesh || !n.material) return; var nm = n.material.name || '';
@@ -500,6 +500,7 @@
         else n.material.side = THREE.DoubleSide;
       });
       rootG.add(shell);
+      root.__athK33 = { shell: shell, rootG: rootG, U: U, X0: X0, Z0: Z0, group: group };   // world-athenaeum-lifts.js: 2nd floor + capsule elevators
       rootG.children.forEach(function (o) {
         if (o === shell) return;
         if (/^static:|^columns$|^column-bands$|^athenaeum-balcony|^athenaeum-k15$|^dais:tree$|^orbit-ring$|^tree-nodes$|^orbit-glyphs$|^athenaeum-holo|^athenaeum-plinth/.test(o.name)) o.visible = false;

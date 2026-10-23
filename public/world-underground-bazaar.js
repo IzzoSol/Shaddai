@@ -76,14 +76,39 @@
       });
     }
     function near(p, v, m) { return v && Math.hypot(p.x - v.x, p.z - v.z) < (m || USE_M) * U; }
+    // THE GRID LIFT (owner 2026-10-23: "the elevators go to the underground bazaar and to the top platform"): three stops, one gold pad
+    // at each - Grid (circle rim), Underground Bazaar (cavern lift), Sky Nexus (the top platform floating over the circle). E on any pad
+    // opens the stop picker.
+    var DECK_Y = 200, DECK_PAD = { x: A.x + 60, z: A.z };                                              // world-elevators.js PLAZA_Y (units)
+    var deckPad = pad.clone(); deckPad.position.set(DECK_PAD.x, DECK_Y, DECK_PAD.z); deckPad.scale.setScalar(U * 0.7); o.scene.add(deckPad);
+    function stops() {
+      var L = hookWorld('hook_lift');
+      return [{ id: 'bazaar', label: 'Underground Bazaar', to: L && { x: L.x, y: L.y, z: L.z, inside: true }, msg: 'Descending to the Underground Bazaar' },
+        { id: 'grid', label: 'SHADDAI Grid', to: { x: padX + 13 * U, y: padY, z: A.z, inside: false }, msg: 'The Grid — the pyramid tip' },
+        { id: 'sky', label: 'Sky Nexus (top platform)', to: { x: DECK_PAD.x + 10, y: DECK_Y + 0.6, z: DECK_PAD.z, inside: false }, msg: 'Rising to the Sky Nexus' }];
+    }
+    var picker = null;
+    function closePicker() { if (picker) picker.remove(); picker = null; }
+    function openPicker(here) {
+      closePicker(); picker = document.createElement('div');
+      picker.style.cssText = 'position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:9600;background:rgba(10,8,4,.92);border:1px solid #6b5420;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:6px;font:600 13px system-ui;color:#fff3d6';
+      var t = document.createElement('div'); t.textContent = 'GRID LIFT'; t.style.cssText = 'text-align:center;opacity:.65;font-size:11px;letter-spacing:.22em'; picker.appendChild(t);
+      stops().forEach(function (sx) {
+        var b = document.createElement('button'); b.textContent = sx.label + (sx.id === here ? '  (here)' : '');
+        b.style.cssText = 'min-width:210px;padding:9px 12px;border-radius:10px;border:1px solid ' + (sx.id === here ? '#ffc35a' : '#3a2e14') + ';background:#14100a;color:#fff;cursor:pointer;font:inherit;text-align:left';
+        b.disabled = sx.id === here || !sx.to; b.onclick = function () { closePicker(); ride(sx.to, sx.msg); }; picker.appendChild(b);
+      });
+      document.body.appendChild(picker); setTimeout(function () { addEventListener('keydown', escPick, true); }, 0);
+    }
+    function escPick(e) { if (e.code === 'Escape') { closePicker(); removeEventListener('keydown', escPick, true); } }
     function use() {
       var p = o.getPlayer && o.getPlayer(); if (!p || st.busy) return false;
       if (o.isInside && o.isInside()) return false;
-      if (!st.inside && Math.hypot(p.x - padX, p.z - A.z) < 10 * U && Math.abs(p.y - padY) < 6 * U) {
-        var L = hookWorld('hook_lift'); if (!L) return false; ride({ x: L.x, y: L.y, z: L.z, inside: true }, 'Descending to the Underground Bazaar'); return true;
-      }
+      if (picker) { closePicker(); return true; }
+      if (!st.inside && Math.hypot(p.x - padX, p.z - A.z) < 10 * U && Math.abs(p.y - padY) < 6 * U) { openPicker('grid'); return true; }
+      if (!st.inside && Math.hypot(p.x - DECK_PAD.x, p.z - DECK_PAD.z) < 8 * U && Math.abs(p.y - DECK_Y) < 6 * U) { openPicker('sky'); return true; }
       if (!st.inside) return false;
-      var L2 = hookWorld('hook_lift'); if (near(p, L2)) { ride({ x: padX + 13 * U, y: padY, z: A.z, inside: false }, 'Rising to the Grid — the pyramid tip'); return true; }
+      var L2 = hookWorld('hook_lift'); if (near(p, L2)) { openPicker('bazaar'); return true; }
       var C = hookWorld('hook_line_colosseum'), CW = root.COLOSSEUM_WORLD;
       if (near(p, C, 12) && CW) { var dx = CW.door[0] + CW.front[0] * 30 * U, dz = CW.door[1] + CW.front[1] * 30 * U; ride({ x: dx, y: o.heightAt ? o.heightAt(dx, dz) : 0, z: dz, inside: false }, 'Colosseum Line — next stop: the Colosseum'); return true; }
       var W = hookWorld('hook_line_undersea');
@@ -100,12 +125,12 @@
       var lx = (p.x - A.x) / U, lz = (p.z - A.z) / U, r = Math.hypot(lx, lz), wr = st.wallR - 3;
       var stx = lx < -wr + 2 && Math.abs(lz) < 40 && lx > -wr - 122;                                  // station hall (west, beyond the wall)
       if (!stx && r > wr) { lx *= wr / r; lz *= wr / r; }
-      if (Math.abs(lx) < 77 && Math.abs(lz) < 77) { if (Math.abs(lx) > Math.abs(lz)) lx = lx < 0 ? -77 : 77; else lz = lz < 0 ? -77 : 77; }   // pyramid base is solid
+      var PB = 132; if (Math.abs(lx) < PB && Math.abs(lz) < PB) { if (Math.abs(lx) > Math.abs(lz)) lx = lx < 0 ? -PB : PB; else lz = lz < 0 ? -PB : PB; }   // pyramid base is solid (K32: base 260 m)
       var rr = Math.hypot(lx, lz), ang = Math.atan2(lz, lx), onBridge = false;
       for (var k = 0; k < 4; k++) { var d = Math.abs(Math.atan2(Math.sin(ang - (k * Math.PI / 2 + Math.PI / 4)), Math.cos(ang - (k * Math.PI / 2 + Math.PI / 4)))); if (d * rr < 7) onBridge = true; }
-      if (!onBridge && rr > 117 && rr < 147) { var to = rr < 132 ? 117 : 147; lx *= to / rr; lz *= to / rr; }   // canal: walk the bridges
+      if (!onBridge && rr > 191 && rr < 221) { var to = rr < 206 ? 191 : 221; lx *= to / rr; lz *= to / rr; }   // canal (192-220 m): walk the bridges
       p.x = A.x + lx * U; p.z = A.z + lz * U;
-      return BY + (onBridge && rr > 117 && rr < 147 ? 2.0 * U * Math.sin(Math.PI * (rr - 116) / 33) : 0) + (stx ? 1.3 * U : 0);
+      return BY + (onBridge && rr > 190 && rr < 222 ? 2.0 * U * Math.sin(Math.PI * (rr - 190) / 32) : 0) + (stx ? 1.3 * U : 0);
     });
     (root.__groundAtHooks = root.__groundAtHooks || []).push(function (x, z) { return st.inside ? BY : null; });   // controller floor in the cavern
     (root.__groundHooks = root.__groundHooks || []).push(function (p) {   // surface: the shaft is open — hold walkers outside the collar

@@ -21,7 +21,9 @@
     if (!bad) return;
     if (!g.boundingSphere) g.computeBoundingSphere(); m.boundingSphere = g.boundingSphere.clone(); m.boundingBox = null;
     if (!g.boundingBox) g.computeBoundingBox(); m.boundingBox = g.boundingBox.clone();
-    var p = path(m); S.badSkins.push(p); console.warn('[perf-guard] skinned mesh with out-of-range skin indices (bounds pinned):', p);
+    var top = m; while (top.parent && top.parent.parent) top = top.parent;
+    var p = path(m) + ' | top=' + (top.name || top.type) + ' bones=' + nb + ' maxIdx=' + (si ? Math.max.apply(null, Array.prototype.slice.call(si.array, 0, 40000)) : -1) + ' undefinedBones=' + (m.skeleton ? m.skeleton.bones.filter(function (b) { return !b; }).length : 'noskel');
+    S.badSkins.push(p); console.warn('[perf-guard] skinned mesh with out-of-range skin indices (bounds pinned):', p);
   }
   function scan() {
     var list = [];
