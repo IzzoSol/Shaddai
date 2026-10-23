@@ -43,7 +43,7 @@
     return Promise.all([getJ(DATA), /[?&]realmtowns=0/.test(location.search || '') ? null : getJ(TOWNS2)]).then(function (both) {
       var data = both[0], t2 = both[1];
       if (!data || !data.realms) { console.info('[realm-dress] no data'); return { group: group, stats: stats }; }
-      var stations = stationList(o.transit), byFile = {}, towns = {};
+      var stations = stationList(o.transit), byFile = {}, towns = {}, crownReqs = [];
       // REALM-HEART TOWNS (realm-towns-v2.json, tools/gen-realm-towns.cjs, TURTLE layouts 2026-10-23): one pseudo-station per town at its
       // centre (rot 0, so item x/z are plain game-metre offsets). float: the Crystal Sea town stands on a deck at the water line.
       ((t2 && t2.towns) || []).forEach(function (t) {
@@ -84,6 +84,10 @@
                 [[gD, new THREE.MeshStandardMaterial({ color: 0x1d3a44, roughness: 0.5, metalness: 0.4 })], [gW, new THREE.MeshStandardMaterial({ color: 0xeef2f5, roughness: 0.35, metalness: 0.3 })], [gG, new THREE.MeshBasicMaterial({ color: 0x5fe8ff, toneMapped: false })]]
                   .forEach(function (e) { var mm = new THREE.Mesh(mg(e[0]), e[1]); mm.receiveShadow = true; town.add(mm); });
               } }
+            if (/_b[1-4]_v01\.glb$/.test(file) && root.WorldCityCrowns) t.list.forEach(function (e) {   // REALM CROWNS (owner 2026-10-24: realm buildings read basic) - same crown kit as the Grid, styled per realm
+              var k2 = PM * (e.h ? e.h / rawH : e.w.s), gy = t.st.floatY != null ? Math.max(heightAt(e.w.x, e.w.z), t.st.floatY) : heightAt(e.w.x, e.w.z), rl = String(t.st.realm).replace('town2:', '');
+              var dist = /volcano|desert/.test(rl) ? 'forge' : /arctic|ocean/.test(rl) ? 'trade' : /void/.test(rl) ? 'athenaeum' : 'residential';
+              crownReqs.push({ d: dist, x: e.w.x, z: e.w.z, y: gy + rawH * k2, w: (bb.max.x - bb.min.x) * k2, dz: (bb.max.z - bb.min.z) * k2, yaw: e.w.yaw }); });
             var mats = t.list.map(function (e) { return m4.compose(pv.set(e.w.x, t.st.floatY != null ? Math.max(heightAt(e.w.x, e.w.z), t.st.floatY) : heightAt(e.w.x, e.w.z), e.w.z), q.setFromAxisAngle(up, e.w.yaw), sv.setScalar(PM * (e.h ? e.h / rawH : e.w.s))).clone(); });
             g.scene.traverse(function (mesh) {
               if (!mesh.isMesh) return;
@@ -108,6 +112,7 @@
         });
       });
       return Promise.all(jobs).then(function () {
+        if (crownReqs.length && root.WorldCityCrowns) try { var cr = root.WorldCityCrowns.build({ THREE: THREE, parent: group, reqs: crownReqs }); stats.crowns = cr && cr.stats; } catch (e) { console.warn('[realm-dress] crowns', e && e.message); }
         if (stats.colliders && root.buildWorldCollision && L) { try { root.buildWorldCollision(L); } catch (e) { console.warn('[realm-dress] collision rebuild', e && e.message); } }
         var R2 = Math.pow(VIEW_M * PM, 2);
         function update(pos) { if (!pos) return; Object.keys(towns).forEach(function (k) { var t = towns[k], dx = t.userData.x - pos.x, dz = t.userData.z - pos.z; t.visible = dx * dx + dz * dz < R2; }); }
