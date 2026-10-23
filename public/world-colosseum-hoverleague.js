@@ -224,8 +224,10 @@
     }
     function flash(text, color, secs) { if (!hud) return; var m = hud.q('msg'); m.textContent = text; m.style.color = color || '#fff'; m.style.opacity = 1; hud.msgT = secs || 1.6; }
     function picker() {
+      [].forEach.call(document.querySelectorAll('[data-shd-modal="colo"]'), function (n) { n.remove(); });   // one mode picker at a time
       var p = css(document.createElement('div'), 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;width:min(560px,92vw);background:rgba(6,8,12,.96);border:1px solid #E8C45C;border-radius:16px;padding:18px 20px;color:#e8f6ff;font-family:"Chakra Petch",system-ui,sans-serif;box-shadow:0 0 40px rgba(39,224,255,.2)');
       function row(label, key, items) { return '<div style="margin:12px 0 6px;letter-spacing:.2em;font-size:11px;color:#E8C45C">' + label + '</div><div style="display:flex;flex-wrap:wrap;gap:8px">' + items.map(function (it) { return '<button data-' + key + '="' + it[0] + '" style="flex:1 1 30%;min-width:96px;cursor:pointer;background:#0d141c;color:#e8f6ff;border:1px solid #2a3442;border-radius:10px;padding:9px 8px;font:600 13px inherit">' + it[1] + (it[2] ? '<br><small style="opacity:.6;font-weight:400">' + it[2] + '</small>' : '') + '</button>'; }).join('') + '</div>'; }
+      p.setAttribute('data-shd-modal', 'colo');
       p.innerHTML = '<div style="font-size:22px;font-weight:800;letter-spacing:.08em">HOVER LEAGUE</div><div style="opacity:.7;font-size:13px">Colosseum field mode · Cyon vs Magma</div>' +
         row('MODE', 'mode', [['league', 'League', 'hold, shoot, score'], ['paint', 'Paint', 'cover the floor']]) +
         row('BALL', 'ball', Object.keys(Core.BALLS).map(function (k) { return [k, Core.BALLS[k].name, { shaddai: 'signature, lively', regular: 'chrome, standard', plasma: 'bouncy', inferno: 'heavy hits', void: 'floaty', solar: 'fast' }[k]]; })) +

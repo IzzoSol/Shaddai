@@ -29,6 +29,10 @@
   }
   function set(k, v) { if (!(k in DEF)) return; P[k] = v; save(); apply(); }
   addEventListener('keydown', function (e) { if (e.code === 'F1') { e.preventDefault(); flash = Date.now() + 6000; apply(); setTimeout(apply, 6100); } });
+  // MODE PICKERS (Hover League / Naval, tagged data-shd-modal="colo"): Esc closes the top one; leaving the Colosseum closes them all
+  addEventListener('keydown', function (e) { if (e.code !== 'Escape') return; var m = document.querySelectorAll('[data-shd-modal]'); if (m.length) { m[m.length - 1].remove(); e.stopImmediatePropagation(); } }, true);
+  setInterval(function () { var A = root.__colosseumArena, inside = !!(A && A.group && A.group.visible) || root._currentInterior === 'COLOSSEUM';
+    if (!inside) [].forEach.call(document.querySelectorAll('[data-shd-modal="colo"]'), function (n) { n.remove(); }); }, 800);
   setInterval(apply, 1500);                                                                   // late-built elements (chat button, pill) get the rule too
   if (document.readyState !== 'loading') apply(); else addEventListener('DOMContentLoaded', apply);
   root.WorldHudPrefs = { get: function () { return Object.assign({}, P); }, set: set, apply: apply, LABELS: LABELS };

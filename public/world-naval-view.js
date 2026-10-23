@@ -165,7 +165,9 @@
 
     // ---------- picker ----------
     function open() {
+      [].forEach.call(document.querySelectorAll('[data-shd-modal="colo"]'), function (n) { n.remove(); });   // one mode picker at a time
       if (panel) panel.remove(); var sel = { mode: 'fleet', cls: 'skimmer' }; panel = el('div', 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9700;width:min(96vw,640px);max-height:88vh;overflow:auto;padding:18px;border-radius:14px;background:linear-gradient(180deg,rgba(14,20,34,.97),rgba(5,8,15,.98));border:1px solid rgba(39,224,255,.5);color:#e9f4ee;font:600 13px Rajdhani,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.65)');
+      panel.setAttribute('data-shd-modal', 'colo');
       function draw() {
         var B = function (on) { return 'cursor:pointer;padding:10px;border-radius:10px;border:1px solid ' + (on ? '#00ff9c' : 'rgba(255,255,255,.18)') + ';background:' + (on ? 'rgba(0,255,156,.14)' : 'rgba(255,255,255,.04)') + ';flex:1;min-width:150px'; };
         var h = '<div style="display:flex;justify-content:space-between;color:#27e0ff;font:900 17px Orbitron,sans-serif;letter-spacing:.14em"><span>NAVAL BATTLE</span><span data-a="x" style="cursor:pointer">&#10005;</span></div><div style="opacity:.7;margin:6px 0 10px">Water-field game in the Colosseum. Rewards are Sparks (closed loop, ' + REWARD_CAP + '/day cap).</div><div style="color:#e8c45c;font-weight:700;margin-bottom:4px">MODE</div><div style="display:flex;gap:8px;flex-wrap:wrap">';

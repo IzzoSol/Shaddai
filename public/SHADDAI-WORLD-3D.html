@@ -362,8 +362,8 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-campfire.js?v=20261009c"></script>
 <script src="/world-naval.js?v=20261001a"></script>
 <script src="/world-broadside.js?v=20261009c"></script><script src="/world-ships.js?v=20261009c"></script>
-<script src="/world-naval-view.js?v=20261015a"></script>
-<script src="/world-hoverleague-core.js?v=20261015c"></script><script src="/world-colosseum-hoverleague.js?v=20261015c"></script>  <!-- HOVER LEAGUE: Colosseum hover field mode (I > Fight) -->
+<script src="/world-naval-view.js?v=20261023m"></script>
+<script src="/world-hoverleague-core.js?v=20261015c"></script><script src="/world-colosseum-hoverleague.js?v=20261023m"></script>  <!-- HOVER LEAGUE: Colosseum hover field mode (I > Fight) -->
 <script src="/world-gadgets.js?v=20261001a"></script>
 <script src="/world-hitfx.js?v=20261001a"></script>
 <script src="/world-farm3d.js?v=20261001a"></script>
@@ -384,7 +384,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-volcano.js?v=20261009c"></script>
 <script src="/world-realmprops.js?v=20261011a"></script>
 <script src="/sparks-ledger.js?v=20260924a"></script>
-<script src="/world-actions.js?v=20261023a"></script>
+<script src="/world-actions.js?v=20261023b"></script>
 <script src="/world-hoverboard-moves.js?v=20261002a"></script>
 <script src="/world-hoverboards.js?v=20261015c"></script>  <!-- RIDERS: 9 code-built board styles + fly/trick core (docs/RIDERS.md) -->
 <script src="/world-hoverboard-wallride.js?v=20261015a"></script><script src="/world-hoverboard.js?v=20261015c"></script>   <!-- VEHICLES V2: hoverboard (O); after world-actions (WorldRiderPose) -->
@@ -401,7 +401,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-themes.js?v=20261009c"></script>
 <script src="/athenaeum-layout.js?v=20261011a"></script>
 <script src="/world-athenaeum.js?v=20261023c"></script><script src="/world-athenaeum-lifts.js?v=20261023a"></script>
-<script src="/world-interiors.js?v=20261023f"></script>
+<script src="/world-interiors.js?v=20261023g"></script>
 <script src="/world-cutscene.js?v=20261004own"></script>
 <script src="/world-npcs.js?v=20261022a"></script>
 <script src="/world-elevators.js?v=20261004nl"></script>
@@ -421,7 +421,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-sit.js?v=20260929a"></script>   <!-- E on sofas/benches/stools sits you down -->
 <script src="/world-survival.js?v=20260929a"></script>   <!-- dive/breath + respawn spots (settable in Navi > Plots) -->
 <script src="/world-academy-client.js?v=20261011a"></script>
-<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023b"></script><script src="/world-hud-clean.js?v=20261023a"></script><script src="/world-navi.js?v=20261023c"></script>
+<script src="/world-live-feeds.js?v=20261023a"></script><script src="/world-city-screens.js?v=20261023b"></script><script src="/world-hud-clean.js?v=20261023m"></script><script src="/world-navi.js?v=20261023c"></script>
 <script src="/world-navi-chat.js?v=20261015a"></script>   <!-- Navi CHAT relay (/api/mp) + name sign-up; ?chat=0 = local only -->   <!-- NAVI: Y or ` opens the holographic command center (docs/NAVI.md) -->
 <script src="/world-lounge.js?v=1"></script>
 <script src="/portals/portals-registry.js?v=20260703d"></script>
@@ -4521,15 +4521,17 @@ function playPlayerOnce(clipName, opts){
 // character → signature projectile. vfx: glow(Oracle,PURPLE)/blast(SHADDAI,NEXUS)/feather(Quill)/orb.
 //   glide:true → boneless glide locomotion (skip step-bob, forward lean + hover). (SHADDAI, NEXUS)
 //   e2 → SHADDAI's SECOND projectile fired on E (he's the only agent with two).
+// 2026-10-23: every council body is rigged now (library clips baked in), so all seven punctuate Q with their 'heavy' clip
+// (playPlayerOnce falls back to the procedural lunge if a rig lacks it).
 const _SIGNATURE = {
   // ORACLE Q = PURPLE blast bolt (oracle-glow prop tinted purple via sig.color). (2026-07-09)
-  ORACLE:{vfx:'glow',clip:'heavy',color:0x9b30ff}, SHADDAI:{vfx:'blast',clip:null,color:0xffcf4a,glide:true,e2:{vfx:'orb',color:0xffe27a}},
+  ORACLE:{vfx:'glow',clip:'heavy',color:0x9b30ff}, SHADDAI:{vfx:'blast',clip:'heavy',color:0xffcf4a,glide:true,e2:{vfx:'orb',color:0xffe27a}},
   // QUILL = "floating scholar" glide (owner-approved 2026-07-09): boneless glide like SHADDAI/NEXUS,
   // but with a slightly UPRIGHT lean + a subtle page-flutter idle sway. glideStyle:'scholar' selects it.
-  QUILL:{vfx:'feather',clip:null,color:0xb98cff,glide:true,glideStyle:'scholar'},  ZEROX:{vfx:'orb',clip:'heavy',color:0x27e0ff},
+  QUILL:{vfx:'feather',clip:'heavy',color:0xb98cff,glide:true,glideStyle:'scholar'},  ZEROX:{vfx:'orb',clip:'heavy',color:0x27e0ff},
   TURTLE:{vfx:'orb',clip:'heavy',color:0x1fd6c4},  PIKADON:{vfx:'orb',clip:'heavy',color:0xff5a6e},
   // NEXUS shares SHADDAI's 'blast' snowball projectile (both are the "creator/source" pair) + glides. (2026-07-09)
-  VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'blast',clip:null,color:0x34e5b0,glide:true},
+  VILLAIN:{vfx:'orb',clip:'heavy',color:0xff2a4d}, NEXUS:{vfx:'blast',clip:'heavy',color:0x34e5b0,glide:true},
 };
 // Return the active player's signature entry (or a sane default).
 function _playerSig(){ return _SIGNATURE[(window._playerCharacter||'').toUpperCase()] || {vfx:'orb',clip:null,color:0x9fb0e0}; }

@@ -3299,7 +3299,8 @@
           return false;
         });
         if (!mine.length) {
-          status.textContent = 'No dedicated tools registered for ' + uc + '.';
+          if (!root.querySelector('button:not([data-x])') || root.querySelectorAll('button').length <= 1) { hideToolPanel(); return; }   // nothing to offer: no empty panel on screen (clean HUD)
+          status.textContent = '';
           return;
         }
         status.textContent = mine.length + ' tool' + (mine.length === 1 ? '' : 's') +

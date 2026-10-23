@@ -515,7 +515,7 @@ window.buildWorldActions = function (opts) {
     var L = window.__worldLandmarks;
     if (L && Math.hypot(p.x - L.garagePos[0], p.z - L.garagePos[1]) < 22) openGarage();
     // realm venue boards: B reopens the panel while inside the Colosseum / Garage halls
-    else if (window._currentInterior === 'COLOSSEUM') openArena();
+    else if (window._currentInterior === 'COLOSSEUM' || (window.__colosseumArena && window.__colosseumArena.group && window.__colosseumArena.group.visible)) openArena();
     else if (window._currentInterior === 'GARAGE') openGarage();
   });
 
@@ -530,9 +530,10 @@ window.buildWorldActions = function (opts) {
     // COLOSSEUM: no greeting on entry any more - the mode screen waits at the lobby's inner arena doors (see the door watcher below)
     if (cur === 'GARAGE')    setTimeout(function () { if (window._currentInterior === 'GARAGE') openGarage(); }, 350);
   }, 400);
+  function inColosseum() { var A = window.__colosseumArena; return window._currentInterior === 'COLOSSEUM' || !!(A && A.group && A.group.visible); }
   var _doorArmed = true;
   setInterval(function () {
-    if (window._currentInterior !== 'COLOSSEUM') { _doorArmed = true; return; }
+    if (!inColosseum()) { _doorArmed = true; return; }
     var I = window.COLOSSEUM_ISLAND, p = P(); if (!I || !p) return;
     var dx = (p.x - I.x) / I.U, dz = (p.z - I.z) / I.U - (I.lobbyZ0 + 2), d = Math.hypot(dx, dz);   // arena metres; inner doors = lobby back wall
     if (_doorArmed && d < 7 && Math.abs(dx) < 10) { _doorArmed = false; openArena(); }
