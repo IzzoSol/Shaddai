@@ -24,7 +24,9 @@
     wolf:     { name: 'Ash Wolf',      hp: 34, dmg: 6,  speed: 8.4, loot: [10, 15], scale: 0.85, eye: 0xffb24a, tint: 0x7d7f86, pack: true, scent: true },                 // fast pack hunter; ignores you (mostly) while Scent-Away is active
     golem:    { name: 'Stone Golem',   hp: 150, dmg: 16, speed: 2.4, loot: [30, 44], scale: 1.9, eye: 0xff8a3a, tint: 0x6f6a62, windup: 1.1, kb: 7 },                     // slow, huge telegraph, big knockback
     spitter:  { name: 'Venom Spitter', hp: 30, dmg: 5,  speed: 4.6, loot: [11, 16], scale: 0.9, eye: 0xb6ff3a, tint: 0x3d6b2a, ranged: 22, windup: 0.8 },                   // keeps its distance and spits (0.8 s tell)
-    scorpion: { name: 'Rift Scorpion', hp: 58, dmg: 9,  speed: 5.4, loot: [16, 22], scale: 0.95, eye: 0xff3a3a, tint: 0x5a2f55, windup: 0.45 }                              // low, quick sting
+    scorpion: { name: 'Rift Scorpion', hp: 58, dmg: 9,  speed: 5.4, loot: [16, 22], scale: 0.95, eye: 0xff3a3a, tint: 0x5a2f55, windup: 0.45 },
+    /* CITADEL GUARD (owner 2026-10-23: skeletons in front of the castle that come after you only if you get really, really close): aggro 10 m, leash 35 m */
+    skeleton: { name: 'Citadel Skeleton', hp: 64, dmg: 8,  speed: 5.0, loot: [12, 18], scale: 1.05, eye: 0x9a6bff, tint: 0xe8e2d2, aggroM: 10, leashM: 35, windup: 0.5 }                              // low, quick sting
   };
   var ORDER = ['mummy', 'imp', 'wraith', 'stalker'], ORDER_ALL = ORDER.concat(['wolf', 'golem', 'spitter', 'scorpion']);
   var TUNE = { campsN: 8, perCamp: 4, ringExtraM: 420, ring2N: 8, ring2ExtraM: 1400, ring2PerCamp: 5, aggroM: 40, leashM: 95, reachM: 2.6, windup: 0.6, cd: 1.9, maxAttackers: 2, respawnS: 90, simM: 260, showM: 520, wanderM: 11 };
@@ -98,6 +100,15 @@
         }
       }
     });
+    // EXTRA CAMPS from the host (e.g. the citadel guard): o.extraCamps = [{ id, kind, x, z (world units), n, spread_m }] - no camp fire, guards stand in a line
+    (o.extraCamps || []).forEach(function (ec) {
+      var camp = { id: ec.id || ('xcamp' + campIdx++), kind: ec.kind, x: ec.x, z: ec.z, mobs: [], marker: new THREE.Group(), fire: new THREE.Object3D(), near: false, ring: 3 }; camps.push(camp);
+      for (var mi = 0; mi < (ec.n || 4); mi++) {
+        var off = (mi - ((ec.n || 4) - 1) / 2) * (ec.spread_m || 8) * U, hx = ec.x + off, hz = ec.z, g = buildMob(ec.kind), tp = TYPES[ec.kind];
+        var mob = { g: g, kind: ec.kind, camp: camp, hx: hx, hz: hz, x: hx, z: hz, yaw: Math.PI, hp: tp.hp, max: tp.hp, state: 'idle', t: Math.random() * 6, windup: 0, cd: 0, dead: false, deadT: 0, respawnAt: 0, wx: hx, wz: hz, flash: 0, bob: Math.random() * 6, guard: true };
+        g.position.set(hx, hAt(hx, hz), hz); g.visible = false; group.add(g); camp.mobs.push(mob); st.spawned++;
+      }
+    });
 
     function night() { return o.nightFactor ? o.nightFactor() : 0; }
     function setBar(mob) { var p = mob.g.userData.parts, k = Math.max(0, mob.hp / mob.max); p.fg.scale.x = Math.max(0.001, k * 1.12); p.fg.position.x = -(1 - k) * 0.56; }
@@ -114,13 +125,13 @@
             continue;
           }
           g.visible = vis; if (!sim) continue;
-          var dx = P.x - m.x, dz = P.z - m.z, d = Math.hypot(dx, dz) / U, aggro = TUNE.aggroM * (1 + 0.3 * nt) * (tp.pack ? 1.35 : 1) * (tp.scent && now < scentUntil ? 0.12 : 1) * (safeFn && safeFn(P.x, P.z) ? (tp.pack ? 0.1 : 0.6) : 1), home = Math.hypot(m.x - m.hx, m.z - m.hz) / U, dmgK = 1 + 0.3 * nt;
+          var dx = P.x - m.x, dz = P.z - m.z, d = Math.hypot(dx, dz) / U, aggro = (tp.aggroM || TUNE.aggroM) * (1 + 0.3 * nt) * (tp.pack ? 1.35 : 1) * (tp.scent && now < scentUntil ? 0.12 : 1) * (safeFn && safeFn(P.x, P.z) ? (tp.pack ? 0.1 : 0.6) : 1), home = Math.hypot(m.x - m.hx, m.z - m.hz) / U, dmgK = 1 + 0.3 * nt;
           m.cd -= dt; m.flash -= dt; m.bob += dt * (m.state === 'chase' ? 9 : 3);
           if (m.state === 'idle') { m.t -= dt; if (m.t <= 0) { m.t = 2 + Math.random() * 4; var wa = Math.random() * 6.28, wr = Math.random() * TUNE.wanderM * U; m.wx = m.hx + Math.cos(wa) * wr; m.wz = m.hz + Math.sin(wa) * wr; }
             var ex = m.wx - m.x, ez = m.wz - m.z, ed = Math.hypot(ex, ez); if (ed > 0.5 * U) { m.x += ex / ed * tp.speed * 0.35 * U * dt; m.z += ez / ed * tp.speed * 0.35 * U * dt; m.yaw = Math.atan2(ex, ez); }
             if (alive && d < aggro) { m.state = 'chase'; emit('aggro', { type: m.kind }); if (tp.pack) camp.mobs.forEach(function (q) { if (q.kind === m.kind && q.state === 'idle' && !q.dead) q.state = 'chase'; }); } }
           else if (m.state === 'chase') {
-            if (!alive || d > TUNE.leashM || home > TUNE.leashM) { m.state = 'return'; }
+            if (!alive || d > (tp.leashM || TUNE.leashM) || home > (tp.leashM || TUNE.leashM)) { m.state = 'return'; }
             else if (tp.ranged) { var wr2 = tp.ranged; if (d > wr2) { m.x += dx / (d * U) * tp.speed * U * dt; m.z += dz / (d * U) * tp.speed * U * dt; } else if (d < wr2 * 0.6) { m.x -= dx / (d * U) * tp.speed * U * dt; m.z -= dz / (d * U) * tp.speed * U * dt; } m.yaw = Math.atan2(dx, dz);
               if (d <= wr2 * 1.15 && m.cd <= 0) { var busy2 = 0; for (var q2 = 0; q2 < camp.mobs.length; q2++) if (camp.mobs[q2].state === 'windup') busy2++; if (busy2 < TUNE.maxAttackers) { m.state = 'windup'; m.windup = tp.windup || TUNE.windup; } } }
             else if (d > TUNE.reachM) { m.x += dx / (d * U) * tp.speed * U * dt; m.z += dz / (d * U) * tp.speed * U * dt; m.yaw = Math.atan2(dx, dz); }

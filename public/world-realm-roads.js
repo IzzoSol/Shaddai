@@ -13,7 +13,7 @@
  */
 (function (root) {
   'use strict';
-  var DATA = '/assets/world/realm-roads-v1.json?v=20261023b';
+  var DATA = '/assets/world/realm-roads-v1.json?v=20261024a';
   var ACCENT = { void: 0x9a40ff, desert: 0xffc94a, volcano: 0xff6b35, suburb: 0xc9a227, meadow: 0x9be15d, ocean: 0x00c2ff, darkforest: 0x5fe0b0, arctic: 0x9fe8ff, forest: 0x7dff9a };
   function build(o) {
     if (typeof location !== 'undefined' && /[?&]realmroads=0\b/.test(location.search)) return Promise.resolve(null);
@@ -27,7 +27,7 @@
       // per-point deck heights: ground (3 across) or bridge level, then a 1:12 ramp limit both ways so bridges ease in
       function profile(P) {
         var n = P.length, y = new Array(n), wet = new Array(n), i;
-        for (i = 0; i < n; i++) { var w = WAT(P[i][0], P[i][1]); wet[i] = w != null; y[i] = wet[i] ? Math.max(H(P[i][0], P[i][1]) + 0.45 * U, w + 3.5 * U) : -Infinity; }
+        for (i = 0; i < n; i++) { var w = WAT(P[i][0], P[i][1]); wet[i] = w != null; y[i] = wet[i] ? Math.max(H(P[i][0], P[i][1]) + 0.9 * U, w + 3.5 * U) : -Infinity; }
         for (i = 0; i < n; i++) if (wet[i]) { for (var k = 1; k < 12; k++) { var lim = y[i] - k * 10 * U / 12; if (i - k >= 0 && !wet[i - k]) y[i - k] = Math.max(y[i - k], lim); if (i + k < n && !wet[i + k]) y[i + k] = Math.max(y[i + k], lim); } }
         return { y: y, wet: wet };
       }
@@ -36,7 +36,7 @@
         for (var i = 0; i < n; i++) { var a = P[Math.max(0, i - 1)], b = P[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; side.push([-dz / l, dx / l]); }
         function vtx(i, t) {   // t in [-1, 1] across the deck
           var x = P[i][0] + side[i][0] * t * W / 2, z = P[i][1] + side[i][1] * t * W / 2;
-          var yy = isFinite(pr.y[i]) ? pr.y[i] : H(x, z) + 0.45 * U; if (!pr.wet[i] && isFinite(pr.y[i])) yy = Math.max(yy, H(x, z) + 0.45 * U);
+          var yy = isFinite(pr.y[i]) ? pr.y[i] : H(x, z) + 0.9 * U; if (!pr.wet[i] && isFinite(pr.y[i])) yy = Math.max(yy, H(x, z) + 0.9 * U);
           return [x, yy, z];
         }
         col.setHex(accent);

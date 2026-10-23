@@ -2,7 +2,7 @@
 import bpy, bmesh, json, math
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
-_T=bpy.data.objects['realm_terrain']; _te=_T.evaluated_get(bpy.context.evaluated_depsgraph_get()); _tm=_te.to_mesh(); _bvh=BVHTree.FromPolygons([_T.matrix_world@v.co for v in _tm.vertices],[q.vertices[:] for q in _tm.polygons]); _te.to_mesh_clear()
+_T=bpy.data.objects['realm_terrain']; _te=_T.evaluated_get(bpy.context.evaluated_depsgraph_get()); _tm=_te.to_mesh(); _tm.calc_loop_triangles(); _bvh=BVHTree.FromPolygons([_T.matrix_world@v.co for v in _tm.vertices],[q.vertices[:] for q in _tm.loop_triangles]); _te.to_mesh_clear()
 def gz(x,y):
     h=_bvh.ray_cast(Vector((x,y,3000)),Vector((0,0,-1))); return h[0].z if h[0] else 0
 SC=bpy.data.scenes['REALM_VIEW']; T=json.load(open(r'C:/Users/Brittany/Shaddai-3d/public/assets/terrain/terrain.json'))

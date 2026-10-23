@@ -15,7 +15,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261024a', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261024b', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
@@ -143,9 +143,9 @@
         var LL = root.WORLD_LAYOUT; (J.colliders || []).forEach(function (c) { if (LL && LL.realmColliders) LL.realmColliders.push({ x: Math.round(c[0] * U), z: Math.round(-c[1] * U), r: Math.round(c[2] * U), label: 'void-citadel' }); });
         if (root.buildWorldCollision && LL) try { root.buildWorldCollision(LL); } catch (e) { }
         var I = root.__realmDressInteriors = root.__realmDressInteriors || [];
-        I.push({ id: 'citadel-throne', recipe: 'shaddai-hall', x: J.keep_gate[0] * U, z: -J.keep_gate[1] * U, yaw: Math.PI, w: 23, d: 17, h: 8.5 });
-        I.push({ id: 'citadel-dungeon', recipe: 'forge', x: J.dungeon[0] * U, z: -J.dungeon[1] * U, yaw: Math.PI, w: 23, d: 17, h: 6 });   // the underground castle below the stair
-        (J.fort_gates || []).forEach(function (fg, k) { I.push({ id: 'citadel-fort-' + k, recipe: 'gallery', x: fg[0] * U, z: -fg[1] * U, yaw: Math.PI, w: 18, d: 14, h: 6 }); });
+        I.push({ id: 'citadel-throne', recipe: 'castle-hall', x: J.keep_gate[0] * U, z: -J.keep_gate[1] * U, yaw: Math.PI, w: 23, d: 17, h: 8.5 });
+        I.push({ id: 'citadel-dungeon', recipe: 'dungeon', x: J.dungeon[0] * U, z: -J.dungeon[1] * U, yaw: Math.PI, w: 30, d: 22, h: 7 });   // the underground castle below the stair
+        (J.fort_gates || []).forEach(function (fg, k) { I.push({ id: 'citadel-fort-' + k, recipe: 'castle-hall', x: fg[0] * U, z: -fg[1] * U, yaw: Math.PI, w: 18, d: 14, h: 6 }); });
         if (root.WorldRealmInteriors) try { root.WorldRealmInteriors.sync(); } catch (e) { }
         root.__citadel = J;
       }).catch(function (e) { console.warn('[edge-realms] citadel json', e && e.message); }); }));

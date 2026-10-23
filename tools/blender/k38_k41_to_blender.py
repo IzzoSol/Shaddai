@@ -20,7 +20,7 @@ TC = bpy.data.collections.get('TITANS_20261024') or bpy.data.collections.new('TI
 if TC.name not in [x.name for x in SC.collection.children]: SC.collection.children.link(TC)
 for o in list(TC.objects): bpy.data.objects.remove(o, do_unlink=True)
 T = bpy.data.objects['realm_terrain']; te = T.evaluated_get(bpy.context.evaluated_depsgraph_get()); tm = te.to_mesh()
-bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [p.vertices[:] for p in tm.polygons]); te.to_mesh_clear()
+tm.calc_loop_triangles(); bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [t.vertices[:] for t in tm.loop_triangles]); te.to_mesh_clear()   # displayed triangulation (quads split differently were up to 4 m off)
 def gz(x, y): h = bvh.ray_cast(Vector((x, y, 3000)), Vector((0, 0, -1))); return h[0].z if h[0] else 0
 REALMS = {'arctic': 330, 'darkforest': 285, 'desert': 24, 'volcano': 66, 'meadow': 152, 'suburb': 112, 'void': 8, 'forest': 100}
 for rid, deg in REALMS.items():

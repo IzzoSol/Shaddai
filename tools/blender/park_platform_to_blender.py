@@ -14,7 +14,7 @@ def imp(path):
         C.objects.link(o)
     return [o for o in new if o.parent is None]
 T = bpy.data.objects['realm_terrain']; te = T.evaluated_get(bpy.context.evaluated_depsgraph_get()); tm = te.to_mesh()
-bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [p.vertices[:] for p in tm.polygons]); te.to_mesh_clear()
+tm.calc_loop_triangles(); bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [t.vertices[:] for t in tm.loop_triangles]); te.to_mesh_clear()   # displayed triangulation (quads split differently were up to 4 m off)
 h = bvh.ray_cast(Vector((-880, 0, 3000)), Vector((0, 0, -1))); gz = h[0].z if h[0] else 6
 for r in imp(REPO + '/public/assets/kits/shaddai_hover_park_v01.glb'): r.location = (-880, 0, gz); r.rotation_euler = (0, 0, math.radians(90))
 imp(REPO + '/public/assets/kits/shaddai_ocean_platform_v01.glb')

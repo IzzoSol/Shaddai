@@ -25,7 +25,7 @@ FIN = coll('FINISH_20261023')
 
 T = bpy.data.objects['realm_terrain']
 dg = bpy.context.evaluated_depsgraph_get(); te = T.evaluated_get(dg); tm = te.to_mesh()
-bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [p.vertices[:] for p in tm.polygons]); te.to_mesh_clear()
+tm.calc_loop_triangles(); bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [t.vertices[:] for t in tm.loop_triangles]); te.to_mesh_clear()   # displayed triangulation (quads split differently were up to 4 m off)
 def ground(x, y):
     hit = bvh.ray_cast(Vector((x, y, 3000.0)), Vector((0, 0, -1)))
     return hit[0].z if hit[0] else 0.0
@@ -38,6 +38,8 @@ RIV += [[[1645, -1048], [1770, -1110], [1894, -1173]], [[-1947, -116], [-2018, -
 def water(x, y):   # water surface z or None (the Crystal Sea sector, or within a river's half width)
     c = (math.degrees(math.atan2(x, y)) + 360) % 360
     if OCEAN['c0'] <= c <= OCEAN['c1'] and math.hypot(x, y) >= OCEAN['r0_m']: return WL
+    for lw in TERR['water']:   # lakes too (the game's _v4Water.isWater covers them)
+        if lw['type'] == 'lake' and math.hypot(x - lw['center_m'][0], y - lw['center_m'][1]) <= lw['radius_m']: return lw.get('level_m', WL)
     hw = ZONES.get('riverWidth_m', 22) / 2
     for line in RIV:
         for a, b in zip(line, line[1:]):
@@ -67,7 +69,7 @@ ACC = dict(void=0x9a40ff, desert=0xffc94a, volcano=0xff6b35, suburb=0xc9a227, me
 m_deck = mat('fin_road_deck', srgb(0x161c26))
 for R in RD['roads']:
     P = R['pts']; n = len(P); S = sides(P); wet = [water(*p) for p in P]
-    zc = [max(ground(*p) + 0.45, w + 3.5) if w is not None else -1e9 for p, w in zip(P, wet)]
+    zc = [max(ground(*p) + 0.9, w + 3.5) if w is not None else -1e9 for p, w in zip(P, wet)]
     for i in range(n):
         if wet[i] is None: continue
         for k in range(1, 12):
@@ -79,7 +81,7 @@ for R in RD['roads']:
         row = []
         for t in (-1, 0, 1):
             x, y = p[0] + S[i][0] * t * RW / 2, p[1] + S[i][1] * t * RW / 2
-            z = zc[i] if wet[i] is not None else max(zc[i], ground(x, y) + 0.45)
+            z = zc[i] if wet[i] is not None else max(zc[i], ground(x, y) + 0.9)
             row.append(bm.verts.new((x, y, z)))
         rows.append(row)
     for i in range(n - 1):
@@ -88,6 +90,13 @@ for R in RD['roads']:
         lo = [bm.verts.new((r[side].co.x, r[side].co.y, ground(r[side].co.x, r[side].co.y) - 1.2)) for r in rows]
         for i in range(n - 1): bm.faces.new((rows[i][side], rows[i + 1][side], lo[i + 1], lo[i]))
     rowc = [[v.co.copy() for v in row] for row in rows]
+    gb = bmesh.new()   # glass rails on bridge sections (same as world-realm-roads.js)
+    for i in range(n - 1):
+        if wet[i] is None and wet[i + 1] is None: continue
+        for sd_ in (0, 2):
+            a0, a1 = rowc[i][sd_], rowc[i + 1][sd_]; v = [gb.verts.new(a0), gb.verts.new(a1), gb.verts.new(a1 + Vector((0, 0, 1.2))), gb.verts.new(a0 + Vector((0, 0, 1.2)))]; gb.faces.new(v)
+    if len(gb.verts): obj('road_rail_' + R['id'], gb, [mat('fin_road_rail', srgb(0x9fe8ff), 0.5)])
+    else: gb.free()
     obj('road_' + R['id'], bm, [m_deck])
     bm = bmesh.new(); ms = mat('fin_road_glow_' + R['realm'], srgb(ACC.get(R['realm'], 0x8ffff0)), 4.0)
     for sd in (-1, 1):

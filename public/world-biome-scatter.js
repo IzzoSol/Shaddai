@@ -9,7 +9,7 @@
  */
 (function (root) {
   'use strict';
-  var DATA = '/assets/world/biome-scatter-v1.json?v=20261023b', CH = 1200, VIEW_M = 1700;
+  var DATA = '/assets/world/biome-scatter-v1.json?v=20261024a', CH = 1200, VIEW_M = 1700;
   function protos(THREE) {
     var C = THREE.Color;
     function part(geo, hex, emis) { var g = geo.toNonIndexed(), n = g.attributes.position.count, c = new C(hex), arr = new Float32Array(n * 3), e = new Float32Array(n);

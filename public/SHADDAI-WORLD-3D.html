@@ -327,7 +327,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-dress.js?v=20261023v"></script>
 <script src="/world-perf-guard.js?v=20261023c"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
-<script src="/world-edge-realms.js?v=20261024a"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script><script src="/world-titans.js?v=20261024a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
+<script src="/world-edge-realms.js?v=20261024b"></script><script src="/world-realm-roads.js?v=20261024a"></script><script src="/world-biome-scatter.js?v=20261024a"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script><script src="/world-titans.js?v=20261024a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -1250,8 +1250,9 @@ window.__worldBuilt = false;
     // GAMEPLAY SYSTEMS FIRST (mobs + mounts + store panel): they load right after the city actions, ahead of the heavy visual extras (fill / clusters / dragons / wildlife)
     .then(_ldStep('mobs', function(api){   // WILDERNESS MOBS (world-mobs.js): 8 camps, themed enemies, Sparks loot, respawn timer
       if(!api) return api;
-      return _loadScript('/world-mobs.js?v=20261001a').then(function(){
+      return _loadScript('/world-mobs.js?v=20261024a').then(function(){
         window.__mobs = window.buildWorldMobs({ THREE, scene, camera, heightAt: api.heightAt, terrainMeta: _v4Meta || null,
+          extraCamps: [{ id: 'citadel-guard', kind: 'skeleton', x: 0, z: -4060 * V4_U, n: 6, spread_m: 9 }],   /* 2026-10-24 skeleton guard in front of the citadel gate (aggro only within 10 m) */
           getPlayer: ()=> ({ pos: playerPos, alive: !(_interiors && _interiors.isInside()) && (window.__playerHP == null || window.__playerHP > 0) && (!window.WorldCombatMode || window.WorldCombatMode.mobsTarget()) }),
           nightFactor: ()=> (_v4Sky && _v4Sky.nightFactor != null ? (typeof _v4Sky.nightFactor === 'function' ? _v4Sky.nightFactor() : _v4Sky.nightFactor) : 0),
           onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info),
@@ -1442,7 +1443,7 @@ window.__worldBuilt = false;
       if(!api) return api;
       // furniture library (world-furniture.js, Blender kit K12): registers at once, GLB loads in the background; rooms laid out before it lands keep the box fallback. ?furniture=0 = boxes only
       const furn = /[?&]furniture=0/.test(location.search) ? Promise.resolve() : _loadScript('/world-furniture.js?v=20261015a').then(function(){ if(window.SHADDAI_FURNITURE) window.SHADDAI_FURNITURE.load(THREE, GLTFLoader); }).catch(function(e){ console.warn('[furniture] loader failed', e); });
-      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20261023n'); }).then(function(){
+      return furn.then(function(){ return _loadScript('/world-interiors-v3.js?v=20261024a'); }).then(function(){
         window.__interiorsV3 = window.buildWorldInteriorsV3({ THREE, scene, heightAt: api.heightAt, city: window.__cityV3,
           getPlayer: ()=> ({ pos: (_interiors && _interiors.isInside()) ? null : playerPos }),
           onUse: function(e){ if(window.__onInteriorUse) window.__onInteriorUse(e); else console.info('[interiors-v3] use', e.type, e.kind, e.building.id); },

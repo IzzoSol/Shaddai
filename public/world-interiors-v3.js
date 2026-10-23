@@ -448,6 +448,24 @@
     c.run('server-rack', 'z', i.x1 - 0.52, 0.5, i.z1 - 2, 3, { gap: 0.2, max: 3 });
     lights3(c, [-1, -1, i.z0 + 2]);
   }
+  // CITADEL (owner 2026-10-24: the castle "needs an underground and interior"): a DUNGEON - cell rows of dark racks down both walls, chests, an altar at
+  // the back, a stair, dim light - and the CASTLE HALL (throne room): gallery frames down the walls, a long council table, the throne lectern, chests.
+  function dungeon(c) {
+    var i = c.inner;
+    c.run('server-rack', 'z', i.x0 + 0.52, i.z0 + 1, i.z1 - 3, 1, { gap: 1.4, max: 8 });
+    c.run('server-rack', 'z', i.x1 - 0.52, i.z0 + 1, i.z1 - 3, 3, { gap: 1.4, max: 8 });
+    c.run('stash', 'x', i.z0 + 0.6, i.x0 + 3, i.x1 - 3, 0, { gap: 2.4, max: 4 });
+    c.atBack('lectern', 0, { use: 'info' }, 0.6);
+    lights3(c, [0, 0, i.z0 + 3]);
+  }
+  function castleHall(c) {
+    var i = c.inner;
+    c.run('gallery-frame', 'z', i.x0 + 0.1, i.z0 + 1, i.z1 - 2, 1, { gap: 2.2, max: 6 });
+    c.run('gallery-frame', 'z', i.x1 - 0.1, i.z0 + 1, i.z1 - 2, 3, { gap: 2.2, max: 6 });
+    c.run('meeting-table', 'z', 0, i.z0 + 3, i.z1 - 4, 0, { gap: 1.0, max: 2, use: 'seat' });
+    c.atBack('lectern', 0, { use: 'info' }, 0.8); c.run('stash', 'x', i.z1 - 0.6, i.x0 + 1.5, i.x0 + 4, 0, { max: 1 }); c.run('stash', 'x', i.z1 - 0.6, i.x1 - 4, i.x1 - 1.5, 0, { max: 1 });
+    lights3(c, [0, 0, i.z0 + 3]);
+  }
   function hall(c) {
     var i = c.inner;
     c.run('casino-table', 'x', -0.5, i.x0 + 2, i.x1 - 2, 0, { gap: 3.0, max: 2, use: 'casino', npc: 'dealer', tag: 'blackjack' });
@@ -546,6 +564,8 @@
     'bank': { label: 'Bank: teller counters + SPARKS kiosks', doorW: 3.0, build: bank },
     'forge': { label: 'Forge: anvil stations + workbenches', doorW: 3.0, build: forge },
     'shaddai-hall': { label: 'SHADDAI Hall: casino tables, bar, cabinets', doorW: 3.0, build: hall },
+    'dungeon': { label: 'Citadel dungeon: cell rows, chests, altar', doorW: 3.0, build: dungeon },
+    'castle-hall': { label: 'Citadel throne hall: gallery, council table, throne', doorW: 3.0, build: castleHall },
     'sand-dome': { label: 'Sand house 01: twin domes + awning — sleep/respawn, hydration, workbench, comms', style: 'sand', ceil: 4.0, size: [14, 9, 5.5], build: sandDome },
     'sand-tower': { label: 'Sand house 02: round tower + solar wing — respawn, hydration, craft, comms + operator', style: 'sand', ceil: 4.2, size: [12, 12, 12], build: sandTower },
     'sand-stepped': { label: 'Sand house 03: stepped block, stairs to the roof terrace', style: 'sand', ceil: 3.8, size: [13, 10, 7], build: sandStepped },

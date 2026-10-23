@@ -32,11 +32,16 @@ const r1 = v => Math.round(v * 10) / 10;
 const roads = ROADS.map(R => {
   const a = P(R.deg, CITY_R), s = P(R.deg, RING_R), h = P(R.heart[0], R.heart[1]);
   const c = P(R.deg, RING_R + (R.heart[1] - RING_R) * 0.55);   // leave the station straight out, then bend toward the heart
-  let pts = [a].concat(line(a, s, 10), quad(s, c, h, 10));
+  // OFFSET from the rail spoke (owner 2026-10-23: "double roads"): the road ran exactly under the spoke deck, so from above it read as two roads.
+  // It now runs 18 m to the right of the spoke (clear of the +-7 m bents), easing back onto the station axis over the last 120 m.
+  const side = [Math.cos(R.deg * Math.PI / 180), -Math.sin(R.deg * Math.PI / 180)], OFF = 18;
+  const off = (p, k) => [p[0] + side[0] * OFF * k, p[1] + side[1] * OFF * k];
+  const spokeRun = line(a, s, 10).map(q => { const r = Math.hypot(q[0], q[1]), k = r > RING_R - 120 ? Math.max(0, (RING_R - r) / 120) : 1; return off(q, k); });
+  let pts = [off(a, 1)].concat(spokeRun, quad(s, c, h, 10));
   // Emberfall: the terrain carries its own ramp up to the terrace plateau (terrain.json features.emberfall.road_m, 6 m -> 50 m) - follow it
   // instead of running straight up the terrace cliff, then cross the plateau to the town gate.
   if (R.id === 'forge') { const E = TERR.features.emberfall, ramp = E.road_m.map(q => [q[0], q[1]]), tc = E.terrace_centre_m, last = ramp[ramp.length - 1];
-    pts = [a].concat(line(a, s, 10), line(s, ramp[0], 10), ramp.slice(1), line(last, [tc[0] - 60, tc[1]], 10)); }
+    pts = [off(a, 1)].concat(spokeRun, line(s, ramp[0], 10), ramp.slice(1), line(last, [tc[0] - 60, tc[1]], 10)); }
   return { id: R.id, realm: R.realm, kind: 'realm-road', pts: pts.map(p => [r1(p[0]), r1(p[1])]) };
 });
 // Quill Forest has no station (its wedge sits inside the ring at 86-120 deg): a branch off the Suburb road at r 2100 into the forest town.
