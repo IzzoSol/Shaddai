@@ -16,7 +16,7 @@
   'use strict';
   var PM = 7 / 1.8, VIEW_M = 1200, DATA = '/assets/world/realm-dress-v1.json?v=20261023f';
   function stationList(transit) {
-    var out = (transit && transit.stations || []).filter(function (t) { return t.realm && t.group && (t.onRing !== false || t.realm === 'grid'); })   // + Central (grid)
+    var out = (transit && transit.stations || []).filter(function (t) { return t.onRing !== false && t.realm && t.group; })   // owner 2026-10-23: the grid dress at Central read as a random cluster - not placed
       .map(function (t) { return { id: t.id, realm: t.realm, x: t.group.position.x, z: t.group.position.z, rot: t.group.rotation.y }; });
     // 2026-10-23 audit: realms with NO station (forest) got no town at all - anchor them at the middle of their terrain wedge, facing the city
     try {
