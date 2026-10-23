@@ -137,8 +137,35 @@
       });
     }).then(function (hm) {
       return loadColor(THREE, base).then(function (colorTex) { hm.colorTex = colorTex; return hm; });
-    }).then(function (hm) { return build(THREE, scene, camera, opts, hm, _t0); });
+    }).then(function (hm) {
+      // RIVER CHANNEL (owner 2026-10-24: the city river "needs to be ACTUAL terrain water"): carve the city river loop + its links into the
+      // heightfield before the mesh is built - 4 m deep across 32 m, banks easing out to 30 m from the centre line. world-rivers.js then sits
+      // its water 1.4 m above the new bed, i.e. down inside the channel. ?rivercarve=0 = flat (old ribbon on top).
+      if (typeof location !== 'undefined' && /[?&]rivercarve=0/.test(location.search)) return build(THREE, scene, camera, opts, hm, _t0);
+      return fetch('/assets/world/city-zones-v1.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (Z) {
+        try { if (Z && Z.rivers) carveRivers(hm, Z.rivers.concat([[[1645, -1048], [1770, -1110], [1894, -1173]], [[-1947, -116], [-2018, -115]]])); } catch (e) { console.warn('[terrain-v4] river carve', e && e.message); }
+        return build(THREE, scene, camera, opts, hm, _t0);
+      });
+    });
   };
+  function carveRivers(hm, lines) {
+    var meta = hm.meta, N = hm.n, HD = hm.data, HALFM = +meta.half_m || 5000, CELLM = 2 * HALFM / (N - 1), PER_M = 65535 / ((+meta.max_m) - (+meta.min_m));
+    var DEPTH = 4 * PER_M, CORE = 16, EDGE = 30, cut = new Float32Array(N * N), touched = [];
+    lines.forEach(function (L) {
+      for (var i = 0; i + 1 < L.length; i++) {
+        var ax = L[i][0], az = -L[i][1], bx = L[i + 1][0], bz = -L[i + 1][1], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1;
+        var c0 = Math.max(0, Math.floor((Math.min(ax, bx) - EDGE + HALFM) / CELLM)), c1 = Math.min(N - 1, Math.ceil((Math.max(ax, bx) + EDGE + HALFM) / CELLM));
+        var r0 = Math.max(0, Math.floor((Math.min(az, bz) - EDGE + HALFM) / CELLM)), r1 = Math.min(N - 1, Math.ceil((Math.max(az, bz) + EDGE + HALFM) / CELLM));
+        for (var r = r0; r <= r1; r++) for (var c = c0; c <= c1; c++) {
+          var x = c * CELLM - HALFM, z = r * CELLM - HALFM, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)), d = Math.hypot(x - ax - dx * t, z - az - dz * t);
+          if (d >= EDGE) continue; var k = r * N + c, amt = d <= CORE ? 1 : 0.5 + 0.5 * Math.cos(Math.PI * (d - CORE) / (EDGE - CORE));
+          if (cut[k] === 0) touched.push(k); if (amt > cut[k]) cut[k] = amt;
+        }
+      }
+    });
+    for (var j = 0; j < touched.length; j++) { var k2 = touched[j]; HD[k2] = Math.max(0, HD[k2] - Math.round(cut[k2] * DEPTH)); }
+    console.info('[terrain-v4] city river channel carved:', touched.length, 'samples');
+  }
 
   function loadColor(THREE, base) {
     var loader = new THREE.TextureLoader();
