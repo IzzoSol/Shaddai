@@ -217,6 +217,22 @@ def citadel_v1():   # K38 (first pass, superseded) THE EVIL CITADEL (owner 2026-
     for sx in (-1, 1):
         for k in range(5):
             y = CY - 175 + k * 14; m.cyl(stn, CX + sx * 10, y, Z + 6, 0.8, 1.1, 4, 6); m.cyl(emb, CX + sx * 10, y, Z + 10, 0.9, 0.2, 2.2, 6)
+    # VOID GOO (owner 2026-10-24 refs: glowing purple goop / lava, void vibes): violet + magenta lava pools and channels across the Void floor
+    import random as _r; R_ = _r.Random(6661); goo = mat('ct_goo', 0x9b2cff, 0.0, 0.2, 5.0); goo2 = mat('ct_goo2', 0xff2bd6, 0.0, 0.2, 4.0)
+    for k in range(38):
+        a = math.radians(R_.uniform(-20, 20)); r = R_.uniform(2300, 4600); x, y = r * math.sin(a), r * math.cos(a)
+        if abs(x) < 70 and 3800 < y < 4200: continue
+        rr = R_.uniform(14, 60); z = max(g(x + dx_, y + dy_) for dx_ in (-rr, 0, rr) for dy_ in (-rr, 0, rr)) + 0.8; m.cyl(goo if k % 3 else goo2, x, y, z - 0.2, rr, rr * 0.85, 0.5, 18); m.cyl(stn, x, y, z - 0.6, rr * 1.12, rr * 1.12, 0.5, 18)
+    for k in range(6):   # goo channels snaking toward the moat
+        x0 = R_.uniform(-900, 900); y0 = R_.uniform(3000, 3600)
+        for j in range(30):
+            x = x0 + math.sin(j * 0.35 + k) * 40; y = y0 + j * 22; z = max(g(x, y - 12), g(x, y), g(x, y + 12)) + 1.2; m.box(goo2 if k % 2 else goo, x, y, z - 0.2, 9, 24, 0.5, 0.3 * math.sin(j * 0.35 + k))
+    # THE WALKWAY: violet-vein causeway from the Void Castle (pit north lip ~ (0, 3890)) up to the keep bridge (0, 4095), torches both sides
+    for j in range(36):
+        y = 3890 + j * 6; z = max(g(-8, y), g(0, y), g(8, y)) + 1.2; m.box(stn, 0, y, z - 0.6, 16, 6.2, 1.2); m.box(vio, 0, y, z + 0.05, 11, 0.5, 0.08)
+        for sx in (-1, 1): m.box(stn, sx * 8.6, y, z - 0.4, 1.2, 6.2, 1.6)
+        if j % 3 == 0:
+            for sx in (-1, 1): m.cyl(stn, sx * 10, y, z, 0.9, 1.2, 4, 6); m.cyl(emb, sx * 10, y, z + 4, 1.0, 0.2, 2.4, 6)
     m.finish('citadel'); export(OUT + '/shaddai_void_citadel_v01.glb'); print('K38CITADEL', CX, CY, round(Z, 1))
 
 def ann(m, mt, r0, r1, z0, h, seg=72):   # open annulus (tube): outer + inner walls + top/bottom rims, no caps over the middle
@@ -382,8 +398,24 @@ def citadel():   # K38b THE EVIL CITADEL, huge (owner 2026-10-23: "needs to be h
         n = int(math.hypot(x1 - x0, y1 - y0) / 150)
         for k in range(n + 1): tower(x0 + (x1 - x0) * k / max(1, n), y0 + (y1 - y0) * k / max(1, n), z - 2, 14, 90)
     for x0 in (-1350, 1350): tower(x0, 4380, g(x0, 4380) - 2, 26, 170)
+    # VOID GOO (owner 2026-10-24 refs: glowing purple goop / lava, void vibes): violet + magenta lava pools and channels across the Void floor
+    import random as _r; R_ = _r.Random(6661); goo = mat('ct_goo', 0x9b2cff, 0.0, 0.2, 5.0); goo2 = mat('ct_goo2', 0xff2bd6, 0.0, 0.2, 4.0)
+    for k in range(38):
+        a = math.radians(R_.uniform(-20, 20)); r = R_.uniform(2300, 4600); x, y = r * math.sin(a), r * math.cos(a)
+        if abs(x) < 70 and 3800 < y < 4200: continue
+        rr = R_.uniform(14, 60); z = max(g(x + dx_, y + dy_) for dx_ in (-rr, 0, rr) for dy_ in (-rr, 0, rr)) + 0.8; m.cyl(goo if k % 3 else goo2, x, y, z - 0.2, rr, rr * 0.85, 0.5, 18); m.cyl(stn, x, y, z - 0.6, rr * 1.12, rr * 1.12, 0.5, 18)
+    for k in range(6):   # goo channels snaking toward the moat
+        x0 = R_.uniform(-900, 900); y0 = R_.uniform(3000, 3600)
+        for j in range(30):
+            x = x0 + math.sin(j * 0.35 + k) * 40; y = y0 + j * 22; z = max(g(x, y - 12), g(x, y), g(x, y + 12)) + 1.2; m.box(goo2 if k % 2 else goo, x, y, z - 0.2, 9, 24, 0.5, 0.3 * math.sin(j * 0.35 + k))
+    # THE WALKWAY: violet-vein causeway from the Void Castle (pit north lip ~ (0, 3890)) up to the keep bridge (0, 4095), torches both sides
+    for j in range(36):
+        y = 3890 + j * 6; z = max(g(-8, y), g(0, y), g(8, y)) + 1.2; m.box(stn, 0, y, z - 0.6, 16, 6.2, 1.2); m.box(vio, 0, y, z + 0.05, 11, 0.5, 0.08)
+        for sx in (-1, 1): m.box(stn, sx * 8.6, y, z - 0.4, 1.2, 6.2, 1.6)
+        if j % 3 == 0:
+            for sx in (-1, 1): m.cyl(stn, sx * 10, y, z, 0.9, 1.2, 4, 6); m.cyl(emb, sx * 10, y, z + 4, 1.0, 0.2, 2.4, 6)
     m.finish('citadel'); export(OUT + '/shaddai_void_citadel_v01.glb')
-    json.dump({'keep_gate': [KX, GY - 4, KZ + 6], 'dungeon': [DX, DY - 10, DZ], 'dragon': [KX + 70, KY - 250], 'colliders': COL,
+    json.dump({'keep_gate': [KX, GY - 4, KZ + 6], 'dungeon': [DX, DY - 10, DZ], 'secret_stop': [DX + 14, DY - 4, DZ - 12], 'dragon': [KX + 70, KY - 250], 'colliders': COL,
                'fort_gates': [[sx * 850.0, 4250.0 - 99, 0] for sx in (-1, 1)]}, open(OUT + '/shaddai_void_citadel_v01.json', 'w'))
     print('K38BCITADEL keep z', round(KZ, 1))
 

@@ -8,7 +8,7 @@
   'use strict';
   function build(o) {
     if (typeof location !== 'undefined' && /[?&]rivers=0\b/.test(location.search)) return null;
-    var THREE = o.THREE, U = o.U || 7 / 1.8, H = o.heightAt, Z = o.zones || {}, W = (Z.riverWidth_m || 22) * U;
+    var THREE = o.THREE, U = o.U || 7 / 1.8, H = o.heightAt, Z = o.zones || {}, W = Math.max(Z.riverWidth_m || 22, 40) * U;   /* 2026-10-24 owner: the 22 m river read as a line - 40 m channel */
     var segs = [], CELL = 120 * U, grid = {}, pos = [], uv = [];
     // DEDUPE (2026-10-23, owner: "make sure the rivers are all good looking"): six of the seven drawn strokes retrace the main loop a few metres
     // off it, which drew doubled, z-fighting water. Points within 18 m of an earlier stroke are skipped; the remaining runs still draw. Data untouched.

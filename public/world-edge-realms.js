@@ -15,7 +15,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261024b', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261024c', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
@@ -148,6 +148,13 @@
         (J.fort_gates || []).forEach(function (fg, k) { I.push({ id: 'citadel-fort-' + k, recipe: 'castle-hall', x: fg[0] * U, z: -fg[1] * U, yaw: Math.PI, w: 18, d: 14, h: 6 }); });
         if (root.WorldRealmInteriors) try { root.WorldRealmInteriors.sync(); } catch (e) { }
         root.__citadel = J;
+        // SECRET LINE (owner 2026-10-24: "an empty dungeon underneath that has a secret train to the bazaar"): an underground stop under the dungeon.
+        // It appears on the ring-train menu (and so on the Bazaar line) only once you have found the dungeon stair (kept per browser).
+        if (J.secret_stop) {
+          var SS = J.secret_stop, found = false; try { found = localStorage.getItem('w3d_citadel_secret') === '1'; } catch (e) { }
+          var addStop = function () { var Tr = root.__worldTransitApi; if (Tr && Tr.addStation) Tr.addStation({ id: 'citadel-secret', name: 'Citadel Dungeon (secret line)', x: SS[0] * U, z: -SS[1] * U, y: SS[2] * U, underground: true }); };
+          if (found) addStop(); else { var iv = setInterval(function () { var P = o.getPlayer && o.getPlayer(); if (!P) return; if (Math.hypot(P.x / U - J.dungeon[0], -P.z / U - J.dungeon[1]) < 30) { clearInterval(iv); try { localStorage.setItem('w3d_citadel_secret', '1'); } catch (e) { } addStop(); if (root.__toast) root.__toast('A hidden train line rumbles beneath the dungeon...'); } }, 1000); }
+        }
       }).catch(function (e) { console.warn('[edge-realms] citadel json', e && e.message); }); }));
     // NEON SAKURA HOVER ARENA (K39, owner refs 2026-10-23): the walled hover-skate colosseum beside the Southern Colosseum. Rideable bowl:
     // flat floor r < 48 m, quarter-pipe 48-62 m up to 10 m (terrain ride-extra, so boards and walkers both use it); the 66 m wall is the wall-ride face.

@@ -327,7 +327,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-dress.js?v=20261023v"></script>
 <script src="/world-perf-guard.js?v=20261023c"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
-<script src="/world-edge-realms.js?v=20261024b"></script><script src="/world-realm-roads.js?v=20261024a"></script><script src="/world-biome-scatter.js?v=20261024a"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script><script src="/world-titans.js?v=20261024a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
+<script src="/world-edge-realms.js?v=20261024c"></script><script src="/world-realm-roads.js?v=20261024a"></script><script src="/world-biome-scatter.js?v=20261024a"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script><script src="/world-titans.js?v=20261024a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -5947,7 +5947,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 // RIVERS (2026-10-16, owner drawing): a small river loop round the city; boats ride it (world-rivers.js; _v4Water answers for the river too). ?rivers=0 off
 (function bootRivers(){ let n = 0; const iv = setInterval(function(){ if(++n > 300){ clearInterval(iv); return; }
   if(!window.__loadPlayable || !_v4T || !_v4T.heightAt || !_v4Water) return; clearInterval(iv);
-  Promise.all([_loadScript('/world-rivers.js?v=20261023c'), fetch('/assets/world/city-zones-v1.json').then(function(r){ return r.json(); })]).then(function(r){
+  Promise.all([_loadScript('/world-rivers.js?v=20261024a'), fetch('/assets/world/city-zones-v1.json').then(function(r){ return r.json(); })]).then(function(r){
     if(!window.WorldRivers) return; const R = window.WorldRivers.build({ THREE, scene, U: V4_U, heightAt: _v4T.heightAt, zones: r[1] }); if(!R) return;
     const iw = _v4Water.isWater.bind(_v4Water), wh = _v4Water.waterHeightAt.bind(_v4Water);
     _v4Water.isWater = function(x, z){ return iw(x, z) || R.at(x, z) != null; };

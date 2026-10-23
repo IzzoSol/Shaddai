@@ -155,7 +155,7 @@ for t in TW['towns']:
 
 # ---- RIVERS v2: one continuous ribbon per river, mitred joints, 3 across, +1.4 m over the ground ----
 m_riv = bpy.data.materials.get('fin_river') or mat('fin_river', srgb(0x1aa0c8), 0.6)
-hw = ZONES.get('riverWidth_m', 22) / 2
+hw = max(ZONES.get('riverWidth_m', 22), 40) / 2   # 40 m channel (same as world-rivers.js)
 def _near(p, L):
     for a, b in zip(L, L[1:]):
         dx, dy = b[0] - a[0], b[1] - a[1]; l2 = dx * dx + dy * dy or 1; t = max(0, min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2))
