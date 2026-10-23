@@ -1209,7 +1209,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('grid-fabric', function(api){   // MAP v4 GRID FABRIC (city v3: Commons / NE campus / NW race — Shaddai building library, grid-fabric-v4.json)
       if(!api) return api;
-      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261023h'); }).then(function(){
+      fetch('/assets/world/track-clear-v4.json').then(function(r){ return r.json(); }).then(function(j){ const m = {}; j.keys.forEach(function(k){ m[k] = 1; }); window.__trackClear = m; }).catch(function(){}).then(function(){ return window.buildWorldClustersV4 ? Promise.resolve() : _loadScript('/world-clusters-v4.js?v=20261023i'); }).then(function(){
         const gl = new GLTFLoader(); gl.setDRACOLoader(dracoLoader); gl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: gl, heightAt: api.heightAt, url: '/assets/world/grid-fabric-v4.json', name: 'grid-fabric-v4',
           onMaterial: function(mat){ const I = window.__clustersV4Internals, g = I && I.glowFor ? I.glowFor(mat) : null; if(g && _v4Sky && _v4Sky.addEmissive) _v4Sky.addEmissive(mat, g); } });   // night glow: real emissive materials only (glass/trim/skylight/artslot/default buckets)   // full <250 m · lod1 <900 · block lod2 <2600
@@ -1277,7 +1277,7 @@ window.__worldBuilt = false;
     .then(_ldStep('clusters', function(api){   // MAP v4 DISTRICTS (world-clusters-v4.js ← realm-clusters-v4.json, same file as the Blender scene)
       if(!api) return api;
       if(!/[?&]realmclusters=1/.test(location.search)) return api;   // 2026-10-11 owner: doorless model districts in the realms are removed (also the biggest triangle bill); ?realmclusters=1 brings them back
-      return _loadScript('/world-clusters-v4.js?v=20261023h').then(function(){
+      return _loadScript('/world-clusters-v4.js?v=20261023i').then(function(){
         const cl = new GLTFLoader(); cl.setDRACOLoader(dracoLoader); cl.setMeshoptDecoder(MeshoptDecoder);
         return window.buildWorldClustersV4({ THREE, scene, loader: cl, heightAt: api.heightAt });
       }).then(function(c){ window.__w3dDebug.clustersV4 = c; }).catch(function(e){ console.warn('[map-v4] clusters failed:', e && e.message); }).then(function(){ return api; });
