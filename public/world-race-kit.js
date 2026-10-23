@@ -123,7 +123,10 @@
     document.addEventListener('keydown', function (e) {
       if (e.code !== 'KeyE' || e.repeat) return; var tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return;
       var p = o.getPlayer(); if (!p) return; var dest = null;
-      if (near(p, lift.base, lift.r)) dest = lift.top; else if (near(p, lift.top, lift.r * 2)) dest = lift.base;
+      // 2026-10-23 owner: "when you're on the track you're in a car": the lift no longer drops you on foot onto the deck - it opens the
+      // car select for this circuit, and the race starts you on the start line in your car. (Deck -> ground still works for anyone stuck up there.)
+      if (near(p, lift.base, lift.r)) { var RS = root.WorldRaceSelect; if (RS && (RS.openDirect || RS.open)) { (RS.openDirect || RS.open).call(RS, { cid: o.cid }); e.stopImmediatePropagation(); e.preventDefault(); return; } dest = lift.top; }
+      else if (near(p, lift.top, lift.r * 2)) dest = lift.base;
       if (!dest) return;
       p.x = dest.x; p.z = dest.z; if ('y' in p) p.y = dest.y + 0.2; e.stopImmediatePropagation(); e.preventDefault();
       if (root.Navi && root.Navi.toast) root.Navi.toast(dest === lift.top ? 'Start deck - race board is at the gate' : 'Ground level');

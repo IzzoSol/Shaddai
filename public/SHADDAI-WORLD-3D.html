@@ -328,7 +328,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-perf-guard.js?v=20261023c"></script>
 <script src="/world-underground-bazaar.js?v=20261023g"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
 <script src="/world-edge-realms.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
-<script src="/world-race-kit.js?v=20261016a"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
+<script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
 <script src="/world-nature.js?v=20260925m4"></script>
@@ -371,7 +371,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-farm.js?v=20261001a"></script>   <!-- farm beds -->   <!-- one unique verb per council office -->
 <script src="/world-agents-ui.js?v=20261001a"></script>   <!-- Agents & Jobs panel (I > Agents & Jobs): station agents, import Grok/Muse/..., jobs board -->
 <script src="/world-hovercars.js?v=20261015a"></script>
-<script src="/world-race-select.js?v=20261016sx"></script><script src="/world-race-hq.js?v=20261016cx"></script><script src="/world-home-deeds.js?v=20261016a"></script>   <!-- realm-town homes for Sparks (server deeds) -->   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
+<script src="/world-race-select.js?v=20261016sx"></script><script src="/world-race-hq.js?v=20261023m"></script><script src="/world-home-deeds.js?v=20261016a"></script>   <!-- realm-town homes for Sparks (server deeds) -->   <!-- Race HQ: Blender K27 building beside Dragon Gate, race desk + showroom (E) -->   <!-- Mario-Kart style race select: cup/circuit map, hover car + board picker, Grand Prix series -->   <!-- hover car kit: air traffic + rideable cars (owner refs: retro hover cars + Rimba pod) -->
 <script src="/world-copy.js?v=20261001a"></script>   <!-- copy bank: citizen chatter, agent greetings, vendor + toast lines -->
 <script src="/world-crowd.js?v=20261001a"></script>   <!-- ~90 citizens walking the city -->
 <script src="/world-trick-score.js?v=20261009c"></script><script src="/world-shops.js?v=20261009c"></script><script src="/world-skatejam.js?v=20261009c"></script>   <!-- Skate Jam trick game (I > Races) -->
@@ -5968,7 +5968,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
       if(t){ window.__raceTracks[cid] = t;
         // FULL COURSE: its deck (bridges + the Meridian run) exists only while it is the selected race; hidden = no surface, no walls
         if(cid === 'grand-course'){ t.group.visible = false; H.addRideExtra(function(x, z){ return t.group.visible ? t.surfaceAt(x, z) : null; }); } else H.addRideExtra(t.surfaceAt);
-        if(window.WorldRaceKit && !/[?&]racekit=0/.test(location.search)) window.WorldRaceKit.dress({ THREE, GLTFLoader, track: t, U: V4_U, groundAt: H.groundAt, getPlayer: function(){ return playerPos; } }).then(function(r){ t.kit = r; }).catch(function(e){ console.warn('[race-kit]', e && e.message); }); }
+        if(window.WorldRaceKit && !/[?&]racekit=0/.test(location.search)) window.WorldRaceKit.dress({ THREE, GLTFLoader, track: t, cid: cid, U: V4_U, groundAt: H.groundAt, getPlayer: function(){ return playerPos; } }).then(function(r){ t.kit = r; }).catch(function(e){ console.warn('[race-kit]', e && e.message); }); }
     }); }catch(e){ console.warn('[race-track] ' + cid + ' failed', e && e.message); } };
     window.__raceBuild = { build: buildCircuit, loadCH: loadCH, BGU: BGU };
     ids.forEach(function(cid){ buildCircuit(cid, CH); });

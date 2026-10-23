@@ -81,7 +81,7 @@
       if (then) setTimeout(then, near ? 0 : 900); return true;
     }
     var RS = root.WorldRaceSelect;
-    if (RS && RS.open && !RS.__lobbyWrapped) { var open0 = RS.open; RS.__lobbyWrapped = true; RS.open = function (o) { var args = arguments; return goLobby(function () { open0.apply(RS, args); }); }; }
+    if (RS && RS.open && !RS.__lobbyWrapped) { var open0 = RS.open; RS.__lobbyWrapped = true; RS.openDirect = open0;   // the start elevator opens the car select in place RS.open = function (o) { var args = arguments; return goLobby(function () { open0.apply(RS, args); }); }; }
     setInterval(function () {                                                                    // track keeper: no walking on race decks
       if (root.__raceActive || root.__freeRide) return; var D = root.__w3dDebug, P = D && D.playerPos, T = root.__raceTracks; if (!P || !T) return;
       var M = root.__mountRide; if (M && M.isRiding && M.isRiding()) return;

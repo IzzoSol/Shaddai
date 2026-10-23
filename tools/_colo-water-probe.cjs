@@ -7,7 +7,7 @@ const SHOT = (p, n) => p.screenshot({ path: 'C:/Users/Brittany/eye/cw-' + n + '.
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: 960, height: 560 }); const errs = new Map();
   p.on('error', e => console.log('PAGE CRASH', e.message)); p.on('framenavigated', f => { if (f === p.mainFrame()) console.log('NAV', f.url().slice(0, 90)); }); p.on('pageerror', e => { const k = (e.stack || e.message).split('\n').slice(0, 2).join(' | ').slice(0, 200); errs.set(k, (errs.get(k) || 0) + 1); });
-  await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html?colointro=0', { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html?colointro=0&bazaar=0&edgerealms=0', { waitUntil: 'domcontentloaded', timeout: 90000 });
   for (let i = 0; i < 150; i++) { await sleep(2000); if (await p.evaluate(() => !!window.__loadPlayable).catch(() => false)) break; }
   await sleep(8000);
   await p.evaluate(() => { const els = [...document.querySelectorAll('*')].filter(e => e.children.length < 4 && /Source Temple/i.test(e.textContent || '') && e.offsetParent); const t = els.sort((a, c) => (a.textContent || '').length - (c.textContent || '').length)[0]; if (t) (t.closest('button,[class*=portal],[class*=card],[onclick]') || t).click(); });
