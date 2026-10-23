@@ -140,7 +140,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       ? fetch('/assets/world/districts-v1.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }) : Promise.resolve(null);
     // DESIGNED LAYOUT (owner 2026-10-16, ref image 66): the Grid fabric comes from tools/city-layout-gen.cjs (districts: hero plaza + block grid + plots)
     var _designed = /grid-fabric-v4/.test(String(url)) && !(typeof location !== 'undefined' && /[?&](citylayout=0|fullcity=1)/.test(location.search));
-    var _planP = _designed ? fetch('/assets/world/grid-fabric-districts-v1.json').then(function (r) { if (!r.ok) throw new Error('no layout'); return r.json(); }).catch(function () { return fetch(url).then(function (r) { return r.json(); }); }) : fetch(url).then(function (r) { return r.json(); });
+    var _planP = _designed ? fetch('/assets/world/grid-fabric-districts-v1.json?v=20261023h').then(function (r) { if (!r.ok) throw new Error('no layout'); return r.json(); }).catch(function () { return fetch(url).then(function (r) { return r.json(); }); }) : fetch(url).then(function (r) { return r.json(); });
     return Promise.all([_planP, _designed ? Promise.resolve(null) : _distP]).then(function (pr) { var plan = pr[0], dist = pr[1]; if (plan && plan.roads) { window.__cityLayout = plan; _designed = 'done'; }
       if (dist && dist.keep && dist.keep.length) { var ks = {}; dist.keep.forEach(function (k) { ks[k] = 1; }); plan.items = plan.items.filter(function (it) { return ks[it.x_m + "," + it.y_m]; }); window.__districts = dist; }
       // 2026-10-11 (owner: "so many office buildings that don't appear and are janky"): thin the dense city fabric to ~60% by a stable hash of position;
