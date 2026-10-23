@@ -15,17 +15,17 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023q', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023r', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
     // floating island (Veil) beyond it, Ringworld Rise (the half-circle city) further out, Cloud Harbor floating underneath; sky bridges
     // join them (see bridges below). r = metres from the world centre (head of the realm's causeway), z = metres above the rim ground.
     { id: 'skycity', deg: 98, r: 4797, z: 170, label: 'Aurelia Sky City' },
-    { id: 'veil', deg: 106, r: 5720, z: 90, label: 'Scripture Veil' },
-    { id: 'rise', deg: 98, r: 6150, z: 0, label: 'Ringworld Rise' },
-    { id: 'harbor', deg: 90, r: 5150, z: -70, label: 'Cloud Harbor' },
-    { id: 'arch', deg: 330, label: 'Ascension Arch' }      // beyond ARCTIC (stays on the north-west rim)
+    { id: 'veil', deg: 106, r: 5150, z: 90, label: 'Scripture Veil' },
+    { id: 'rise', deg: 98, r: 4950, z: 0, label: 'Ringworld Rise' },
+    { id: 'harbor', deg: 90, r: 4900, z: -70, label: 'Cloud Harbor' },
+    { id: 'arch', deg: 335.6, r: 4040, y: 756, yaw: 330, label: 'Ascension Arch' }   // owner placed it in Blender 2026-10-23: floating over the north-west mountains
   ];
   function glyphTexture(THREE) {   // light-script for the Scripture Veil ribbons (procedural strokes; no font, no file)
     var c = document.createElement('canvas'); c.width = 256; c.height = 512; var g = c.getContext('2d');
@@ -75,8 +75,8 @@
     var jobs = REALMS.map(function (R) {
       return load('shaddai_edge_' + R.id + '_v01.glb').then(function (s) {
         if (!s) return; var a = R.deg * Math.PI / 180, dx = Math.sin(a), dz = -Math.cos(a), r0 = R.r ? R.r * U : rim - 3 * U;
-        var hx = dx * r0, hz = dz * r0, hy = Math.max(0, o.heightAt ? o.heightAt(dx * (rim - 15 * U), dz * (rim - 15 * U)) : 0) + (R.z || 0) * U;
-        s.scale.setScalar(U); s.position.set(hx, hy, hz); s.rotation.y = -a; dress(s); group.add(s); s.updateMatrixWorld(true);
+        var hx = dx * r0, hz = dz * r0, hy = R.y != null ? R.y * U : Math.max(0, o.heightAt ? o.heightAt(dx * (rim - 15 * U), dz * (rim - 15 * U)) : 0) + (R.z || 0) * U;   // y = absolute metres (owner-placed)
+        s.scale.setScalar(U); s.position.set(hx, hy, hz); s.rotation.y = -(R.yaw != null ? R.yaw * Math.PI / 180 : a); dress(s); group.add(s); s.updateMatrixWorld(true);
         heads.push({ id: R.id, label: R.label, x: hx, z: hz, y: hy, cosmetic: (s.children[0] && s.children[0].userData && s.children[0].userData.cosmetic) || 'skyward-pilgrim-veil' });
         if (R.id === 'rise') ringCars(s, hx, hz);
         anchors[R.id] = { s: s };
