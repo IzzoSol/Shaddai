@@ -238,7 +238,13 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
           load('/assets/kits/shaddai_landmark_' + id + '_v01.glb?v=20261023a').then(function (g) {
             var x = it.x_m * U, z = -it.y_m * U, o = g.scene; o.scale.setScalar(U); o.position.set(x, minGround(x, z, 50 * U), z); o.rotation.y = -(it.yaw || 0) * Math.PI / 180; o.name = 'landmark-' + id;
             o.traverse(function (m) { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); group.add(o);
-            var LL = window.WORLD_LAYOUT; if (LL && LL.realmColliders) { LL.realmColliders.push({ x: Math.round(x), z: Math.round(z), r: Math.round(30 * U), label: 'landmark:' + id }); if (window.buildWorldCollision) try { window.buildWorldCollision(LL); } catch (e) { } }
+            var LL = window.WORLD_LAYOUT, col = { x: Math.round(x), z: Math.round(z), r: Math.round(30 * U), label: 'landmark:' + id };
+            if (LL && LL.realmColliders) { LL.realmColliders.push(col); if (window.buildWorldCollision) try { window.buildWorldCollision(LL); } catch (e) { } }
+            // WALK-IN INTERIOR (owner 2026-10-23: "insides doors and insides on the buildings"): a ground-floor room in each landmark core, registered
+            // with world-interiors-v3 through world-realm-interiors.js (same path as the realm-town kit buildings).
+            var IR = { anvil: ['forge', 23, 17, 6], exchange: ['bank', 18, 14, 6], hearth: ['shaddai-hall', 23, 17, 6] }[id];
+            if (IR) { (window.__realmDressInteriors = window.__realmDressInteriors || []).push({ id: 'landmark-int:' + id, recipe: IR[0], x: x, z: z, yaw: o.rotation.y, w: IR[1], d: IR[2], h: IR[3], canon: col });
+              if (window.WorldRealmInteriors) try { window.WorldRealmInteriors.sync(); } catch (e) { } }
           }).catch(function (e) { console.warn(TAG + 'landmark ' + id, e && e.message); });
         });
         Object.keys(cells).forEach(function (ck) { var c = cells[ck]; c.centre.x /= c.n; c.centre.z /= c.n; });

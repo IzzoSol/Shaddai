@@ -34,6 +34,7 @@ ZONES = json.load(open(W('city-zones-v1.json')))
 TERR = json.load(open(os.path.join(REPO, 'public/assets/terrain/terrain.json')))
 OCEAN = next(r for r in TERR['realms'] if r['id'] == 'ocean'); WL = float(TERR.get('water_level_m', 2))
 RIV = [rv.get('points', rv) if isinstance(rv, dict) else rv for rv in ZONES['rivers']]
+RIV += [[[1645, -1048], [1770, -1110], [1894, -1173]], [[-1947, -116], [-2018, -115]]]   # waterway links (same as world-rivers.js LINKS)
 def water(x, y):   # water surface z or None (the Crystal Sea sector, or within a river's half width)
     c = (math.degrees(math.atan2(x, y)) + 360) % 360
     if OCEAN['c0'] <= c <= OCEAN['c1'] and math.hypot(x, y) >= OCEAN['r0_m']: return WL
@@ -83,6 +84,9 @@ for R in RD['roads']:
         rows.append(row)
     for i in range(n - 1):
         for s in range(2): bm.faces.new((rows[i][s], rows[i + 1][s], rows[i + 1][s + 1], rows[i][s + 1]))
+    for side in (0, 2):   # edge skirts down into the ground (same as world-realm-roads.js)
+        lo = [bm.verts.new((r[side].co.x, r[side].co.y, ground(r[side].co.x, r[side].co.y) - 1.2)) for r in rows]
+        for i in range(n - 1): bm.faces.new((rows[i][side], rows[i + 1][side], lo[i + 1], lo[i]))
     rowc = [[v.co.copy() for v in row] for row in rows]
     obj('road_' + R['id'], bm, [m_deck])
     bm = bmesh.new(); ms = mat('fin_road_glow_' + R['realm'], srgb(ACC.get(R['realm'], 0x8ffff0)), 4.0)
@@ -192,8 +196,8 @@ for a, ax, ay, az, b, bx, by_, bz, wd in BR:
     if not (p0 and p1): continue
     d = p1 - p0; sd = Vector((-d.y, d.x, 0)).normalized() * wd / 2; arch = min(25, d.length * 0.06); prev = None
     for i in range(41):
-        t = i / 40; c = p0.lerp(p1, t) + Vector((0, 0, math.sin(math.pi * t) * arch)); row = (bm.verts.new(c - sd), bm.verts.new(c + sd))
-        if prev: bm.faces.new((prev[0], row[0], row[1], prev[1]))
+        t = i / 40; c = p0.lerp(p1, t) + Vector((0, 0, math.sin(math.pi * t) * arch)); row = (bm.verts.new(c - sd), bm.verts.new(c + sd), bm.verts.new(c - sd + Vector((0, 0, 1.2))), bm.verts.new(c + sd + Vector((0, 0, 1.2))))
+        if prev: bm.faces.new((prev[0], row[0], row[1], prev[1])); bm.faces.new((prev[0], prev[2], row[2], row[0])); bm.faces.new((prev[1], row[1], row[3], prev[3]))   # deck + rail walls
         prev = row
 obj('sky_bridges_v2', bm, [m_white])
 old_br = bpy.data.objects.get('sky_bridges')

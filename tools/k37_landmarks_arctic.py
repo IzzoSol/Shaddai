@@ -133,15 +133,19 @@ def arctic():   # K36: ice towers on four arctic summits, glass ice-bridges in a
         m.cyl(gold, x, y, z + 4 + hgt, 0.8, 0.1, 14, 6)
         tops.append((x, y, z + 12))                                                                  # bridge deck level
     def bridge(a, b, w, glass=True):
-        d = Vector((b[0] - a[0], b[1] - a[1], b[2] - a[2])); L = d.length; n = max(8, int(L / 12)); sd = Vector((-d.y, d.x, 0)).normalized() * w / 2; bm = m.get(WHITE()); prev = None
+        d = Vector((b[0] - a[0], b[1] - a[1], b[2] - a[2])); L = d.length; n = max(8, int(L / 12)); sd = Vector((-d.y, d.x, 0)).normalized() * w / 2; bm = m.get(WHITE()); prev = None; prevr = None
         sag = min(18, L * 0.04)
         for i in range(n + 1):
             t = i / n; c = Vector(a) + d * t; c.z -= math.sin(math.pi * t) * sag
             row = (bm.verts.new(c - sd), bm.verts.new(c + sd))
-            if prev: bm.faces.new((prev[0], row[0], row[1], prev[1]))
-            prev = row
+            rb = m.get(ice); rl = (rb.verts.new(c - sd * 1.02), rb.verts.new(c - sd * 1.02 + Vector((0, 0, 1.2))), rb.verts.new(c + sd * 1.02), rb.verts.new(c + sd * 1.02 + Vector((0, 0, 1.2))))
+            if prev:
+                bm.faces.new((prev[0], row[0], row[1], prev[1]))
+                rb.faces.new((prevr[0], rl[0], rl[1], prevr[1])); rb.faces.new((prevr[2], prevr[3], rl[3], rl[2]))   # continuous glass rail walls (owner: bridge edges)
+            prev = row; prevr = rl
             if glass and i % 2 == 0: m.box(ice, c.x, c.y, c.z, 0.6, 0.6, 3.2)                           # glass rail posts
             if i % 4 == 0: m.box(gold, c.x + sd.x * 1.02, c.y + sd.y * 1.02, c.z + 3.0, 0.5, 0.5, 0.4); m.box(gold, c.x - sd.x * 1.02, c.y - sd.y * 1.02, c.z + 3.0, 0.5, 0.5, 0.4)
+    for t_ in tops: m.cyl(WHITE(), t_[0], t_[1], t_[2] - 1.0, 22, 22, 1.0, 24)                       # landing deck where the bridges meet each tower
     for i in range(4): bridge(tops[i], tops[(i + 1) % 4], 10)                                         # the square loop of ice bridges
     ARCH = (4040 * math.sin(math.radians(335.6)), 4040 * math.cos(math.radians(335.6)), 756.0)
     bridge((tops[0][0], tops[0][1], tops[0][2] + 40), ARCH, 12)                                         # skyway from the summit tower to the arch

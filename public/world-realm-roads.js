@@ -51,6 +51,10 @@
             }
           });
           if (pr.wet[j] && j % 3 === 0) { stats.bridgesM += 30; [-0.38, 0.38].forEach(function (t) { var v = vtx(j, t); pyl.push([v[0], v[2], v[1], H(v[0], v[2])]); }); }
+          [[A[0], B[0]], [A[2], B[2]]].forEach(function (e) {   // EDGE SKIRTS (owner: "finish the road edges"): a kerb face from each deck edge down into the ground, so no edge floats
+            var p0 = e[0], p1 = e[1], g0 = H(p0[0], p0[2]) - 1.2 * U, g1 = H(p1[0], p1[2]) - 1.2 * U;
+            [[p0[0], p0[1], p0[2]], [p1[0], p1[1], p1[2]], [p1[0], g1, p1[2]], [p0[0], p0[1], p0[2]], [p1[0], g1, p1[2]], [p0[0], g0, p0[2]]].forEach(function (v) { deck.push(v[0], v[1], v[2]); dcol.push(0.55, 0.58, 0.62); });
+          });
           if (j % 2 === 0) {   // dashed centre line: 10 m dash / 10 m gap, accent at 60 %
             var c0 = vtx(j, -0.02), c1 = vtx(j, 0.02), d0 = vtx(j + 1, -0.02), d1 = vtx(j + 1, 0.02);
             [c0, d0, d1, c0, d1, c1].forEach(function (v) { strip.push(v[0], v[1] + 0.06 * U, v[2]); scol.push(col.r * 0.6, col.g * 0.6, col.b * 0.6); });

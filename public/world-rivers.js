@@ -12,6 +12,10 @@
     var segs = [], CELL = 120 * U, grid = {}, pos = [], uv = [];
     // DEDUPE (2026-10-23, owner: "make sure the rivers are all good looking"): six of the seven drawn strokes retrace the main loop a few metres
     // off it, which drew doubled, z-fighting water. Points within 18 m of an earlier stroke are skipped; the remaining runs still draw. Data untouched.
+    // WATERWAY LINKS (owner 2026-10-23: "water ways connect in each realm"): the four realm rivers in terrain.json start at r 1950 m; two of them
+    // stopped short of this city loop (122 deg: 279 m, 267 deg: 72 m). Short channels close the gaps (Blender metres: river start -> nearest loop point).
+    var LINKS = [[[1645, -1048], [1770, -1110], [1894, -1173]], [[-1947, -116], [-2018, -115]]];
+    Z = Object.assign({}, Z, { rivers: (Z.rivers || []).concat(LINKS) });
     var kept = [], runs = [];
     function nearKept(p) { for (var a = 0; a < kept.length; a++) { var L = kept[a]; for (var i = 0; i + 1 < L.length; i++) { var A = L[i], B = L[i + 1], dx = B[0] - A[0], dy = B[1] - A[1], l2 = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((p[0] - A[0]) * dx + (p[1] - A[1]) * dy) / l2)); if (Math.hypot(p[0] - A[0] - dx * t, p[1] - A[1] - dy * t) < 18) return true; } } return false; }
     (Z.rivers || []).forEach(function (line) { var cur = []; line.forEach(function (p) { if (nearKept(p)) { if (cur.length > 1) runs.push(cur); cur = []; } else cur.push(p); }); if (cur.length > 1) runs.push(cur); kept.push(line); });
