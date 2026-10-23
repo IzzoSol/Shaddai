@@ -187,6 +187,20 @@ Kits BUILT in Blender but NOT in the game (copy to public/assets/kits + wire):
 - [ ] Skinned-mesh `matrixWorld of undefined` x4 (three frustum test computeBoundingSphere on a SkinnedMesh with a missing bone) — find + fix.
 - [ ] 276 tracked GLB deletions: 275 referenced only by QA lists (__asset-notes / __glb-scan / __opus-placement-queue); 1 in realm-dress-v1.json — identify before committing deletions.
 
+## 2026-10-23 finish pass - DONE on agents/1 (not main)
+- [x] Underground Bazaar under the Grid centre circle (neon cavern, pyramid tip in the circle, 3-stop Grid lift bazaar/grid/Sky Nexus, Colosseum + Undersea lines)
+- [x] Hidden fight pit INSIDE the pyramid (south-face keypad, code 0777 via window.SHADDAI_PIT_CODE - move server-side before prizes)
+- [x] Athenaeum K33 (white/gold, 2 floors, capsule lifts, vaulted roofs) + all 7 council halls K34 (colonnades, seating, centrepieces)
+- [x] Colosseum walk-in lobby, mode screen at the inner doors (spectate / hover league / naval / practice / tournament coming soon)
+- [x] Clean HUD + NAVI Settings (toggles, look speed, invert Y, controls list, F1); live MARKETS + NEWS (NAVI + ZEROX wall + news screen)
+- [x] Race flow: Race HQ lobby + start elevator open the car select, car-only tracks, walkers returned to the lobby
+- [x] Edge sky cluster off the east rim: Aurelia Sky City over the Suburb, Veil, Ringworld Rise, Cloud Harbor below, sky bridges; Ascension Arch NW
+- [x] Suburb garden star city K35 (TURTLE design: hexagram terraces, 12 themed gardens, <=50 domes, lifts/ladders to the sky city)
+- [x] District heroes = sci-fi towers (spire 300 / setback 240 / slab 220 m); floating pennants removed; forest + grid realm towns placed
+- [x] Emerald sparkle water tune; perf guard (speck cull, bad-skin bounds) - 0 runtime errors; new kit GLBs packed (tools/glb-pack.mjs)
+- [ ] NEXT: load-timing boot + load-speed pass (needs RAM - restart Blender first); draw calls ~1600 vs 80 budget (merge/instancing)
+- [ ] LATER: building look polish (roofs/accents/cluster variety), realm wilderness fill, garden-city roads, hover-skate park rework, affiliate mall, agent arcade
+
 ## Notes
 - PUSH: main push stopped at branch slice 40/102 (system low on memory with Blender open). Restart only when the owner says (branch slices first, then main).
 - Disk C: was 432 MB free on 2026-10-16; world .blend1 deleted (owner OK). Owner wants unused GLB/zip files found and removed - list first, owner picks.
