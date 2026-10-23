@@ -1250,7 +1250,7 @@
     var heightAt = opts.heightAt || function () { return 0; };
     var core = createDragonsCore({
       heightAt: heightAt, layout: opts.layout || root.WORLD_LAYOUT, getPlayer: opts.getPlayer, onHitPlayer: opts.onHitPlayer,
-      isDefeated: opts.isDefeated, setDefeated: opts.setDefeated, seed: opts.seed, tune: tune,
+      isDefeated: opts.isDefeated, setDefeated: opts.setDefeated, seed: opts.seed, tune: tune, lairFor: opts.lairFor,   /* 2026-10-24: lairs were never passed to the core */
     });
     var disposables = [];
     function track(o) { disposables.push(o); return o; }

@@ -1164,7 +1164,7 @@ window.__worldBuilt = false;
       if(window.__worldTransitApi && window.WorldRealmDress) window.WorldRealmDress.build({ THREE, GLTFLoader, meshopt: MeshoptDecoder, draco: dracoLoader, scene, transit: window.__worldTransitApi, waterAt: function(x,z){ if(_v4Water && _v4Water.isWater) return _v4Water.isWater(x,z) ? _v4Water.waterHeightAt(x,z) : null; const M = _v4Meta, R = M && (M.realms||[]).find(r=> r.id==='ocean'); if(!R) return null; const r = Math.hypot(x,z)/V4_U, c = (Math.atan2(x,-z)*180/Math.PI+360)%360; return (c>=R.c0 && c<=R.c1 && r>=R.r0_m) ? (+M.water_level_m||0)*V4_U : null; }, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) }).then(function(r){ window.__realmDress = r; }).catch(function(e){ console.warn('[realm-dress]', e && e.message); });
       // LOAD SPEED (2026-10-23): the edge realms, the bazaar and the city screens (~10 MB of GLBs) start only after the player has spawned,
       // so their downloads never compete with the boot. Nothing changes visually - they stream in a few seconds after landing.
-      (function _afterSpawn(){ if(!(document.body.classList.contains('in-world') && window.__spawnBusy === false)){ setTimeout(_afterSpawn, 1000); return; }
+      (function _afterSpawn(){ window.__afterSpawnT0 = window.__afterSpawnT0 || Date.now(); if(!((document.body.classList.contains('in-world') && window.__spawnBusy === false) || (window.__loadPlayable && Date.now() - window.__afterSpawnT0 > 30000))){ setTimeout(_afterSpawn, 1000); return; }   /* 2026-10-24 fallback: never wait forever on the intro flag */
       if(window.WorldBiomeScatter) window.WorldBiomeScatter.build({ THREE, scene, getPlayer: function(){ return playerPos; }, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0) });   /* 2026-10-23 forests / desert / mountains */
       if(window.WorldRealmRoads) window.WorldRealmRoads.build({ THREE, scene, transit: window.__worldTransitApi, heightAt: (x,z)=> (worldTerrain && worldTerrain.heightAt ? worldTerrain.heightAt(x,z) : 0),
         waterAt: function(x,z){ let y = null; const r = window.__rivers && window.__rivers.at(x,z); if(r != null) y = r; if(_v4Water && _v4Water.isWater && _v4Water.isWater(x,z)){ const w = _v4Water.waterHeightAt(x,z); if(w != null && (y == null || w > y)) y = w; } return y; } }).catch(function(e){ console.warn('[realm-roads]', e && e.message); });   /* 2026-10-23 roads to every realm + Skyline Spur rail */
@@ -1292,7 +1292,7 @@ window.__worldBuilt = false;
     }))
     .then(_ldStep('dragons', function(api){   // MAP v4 CROSSING DRAGONS (world-dragons.js) — one per ring station, beaten = crossing open forever
       if(!api) return api;
-      return _loadScript('/world-dragons.js?v=20261023l').then(function(){
+      return _loadScript('/world-dragons.js?v=20261024a').then(function(){
         const dl = new GLTFLoader(); dl.setDRACOLoader(dracoLoader); dl.setMeshoptDecoder(MeshoptDecoder);
         const KEY = 'w3d_dragons_defeated';
         const load = ()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(_){ return []; } };
