@@ -228,7 +228,7 @@
     // ── load ──
     function arr(j, key) { var a = j && (Array.isArray(j) ? j : j[key]); return Array.isArray(a) ? a : []; }
     var ready = Promise.all([
-      fetchJSON(base + 'markers-v4.json'), fetchJSON(base + 'plots-v4.json'), fetchJSON(base + 'art-slots-v4.json')
+      fetchJSON(base + 'markers-v4.json?v=20261023a'), fetchJSON(base + 'plots-v4.json'), fetchJSON(base + 'art-slots-v4.json')
     ]).then(function (res) {
       if (disposed) return api;
       arr(res[0], 'markers').forEach(function (m) {
