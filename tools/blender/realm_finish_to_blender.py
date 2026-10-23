@@ -300,9 +300,9 @@ def glb_into(path):
 for it in [i for i in DIST['items'] if i.get('role') == 'district-podium']:
     k = LMK.get(it.get('cluster'))
     if not k: continue
-    for r in glb_into(os.path.join(REPO, 'public/assets/kits/shaddai_landmark_%s_v01.glb' % k)):
+    for r in glb_into(os.path.join(REPO, '../Shaddai/fal-assets/backups/glb-prepack/shaddai_landmark_%s_v01.glb' % k)):
         r.location = (it['x_m'], it['y_m'], ground(it['x_m'], it['y_m'])); r.rotation_euler = (0, 0, math.radians(it.get('yaw', 0)))
-glb_into(os.path.join(REPO, 'public/assets/kits/shaddai_arctic_peaks_v01.glb'))
+glb_into(os.path.join(REPO, '../Shaddai/fal-assets/backups/glb-prepack/shaddai_arctic_peaks_v01.glb'))
 exec(open(os.path.join(REPO, 'tools/blender/ocean_deck_to_blender.py')).read())   # harbour platform replaces the plain deck disc
 
 bpy.ops.wm.save_mainfile()
