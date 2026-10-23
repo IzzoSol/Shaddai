@@ -660,12 +660,12 @@
       uDetailScale: { value: new THREE.Vector4(TILE1, TILE2, bandA.scale, bandB.scale) },
       uDetailOmega: { value: new THREE.Vector4(bandA.omega, bandB.omega, bandA.omega * r12, bandB.omega * r12) },
       uSunDir: { value: new THREE.Vector3(0.4, 0.8, 0.3).normalize() },
-      uSunColor: { value: new THREE.Vector3(1.25, 1.2, 1.1) },
+      uSunColor: { value: new THREE.Vector3(1.4, 1.32, 1.18) },   // brighter star glints on the swell
       uSkyZenith: { value: new THREE.Vector3(0.12, 0.3, 0.7) }, uSkyHorizon: { value: new THREE.Vector3(0.6, 0.7, 0.8) },
       uSkyIrr: { value: new THREE.Vector3(0.3, 0.4, 0.6) },
-      uAbsorption: { value: new THREE.Vector3(0.42, 0.075, 0.035) },   // Tidewater Frame.waterAbsorption (1/m)
-      uScattering: { value: new THREE.Vector3(0.012, 0.018, 0.024) },  // Tidewater Frame.waterScattering (1/m)
-      uBackscatter: { value: 0.035 }, uSSS: { value: 1.0 }, uRoughness: { value: 0.035 }, uWindSpeed: { value: opts.windSpeed || 7 },
+      uAbsorption: { value: new THREE.Vector3(0.46, 0.05, 0.085) },    // 2026-10-23 owner ref (emerald sparkle water): green carries, blue is absorbed (was 0.42, 0.075, 0.035)
+      uScattering: { value: new THREE.Vector3(0.010, 0.030, 0.022) },  // emerald in-scatter, lit-from-within (was 0.012, 0.018, 0.024)
+      uBackscatter: { value: 0.035 }, uSSS: { value: 1.0 }, uRoughness: { value: 0.022 }, uWindSpeed: { value: opts.windSpeed || 7 },
       uFoamBias: { value: 0.58 }, uFoamIntensity: { value: 1.0 }, uReflection: { value: 1.0 },
       uScatterGain: { value: opts.scatterGain != null ? opts.scatterGain : 1.4 }   // >1 lifts the physically dark deep sea a touch for a game camera
     };

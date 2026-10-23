@@ -18,10 +18,14 @@
   var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023a', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
-    { id: 'harbor', deg: 228, label: 'Cloud Harbor' },     // beyond OCEAN
-    { id: 'arch', deg: 330, label: 'Ascension Arch' },     // beyond ARCTIC
-    { id: 'veil', deg: 32, label: 'Scripture Veil' },      // beyond DESERT
-    { id: 'rise', deg: 147, label: 'Ringworld Rise' }      // beyond MEADOW
+    // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
+    // floating island (Veil) beyond it, Ringworld Rise (the half-circle city) further out, Cloud Harbor floating underneath; sky bridges
+    // join them (see bridges below). r = metres from the world centre (head of the realm's causeway), z = metres above the rim ground.
+    { id: 'skycity', deg: 98, r: 4797, z: 170, label: 'Aurelia Sky City' },
+    { id: 'veil', deg: 106, r: 5720, z: 90, label: 'Scripture Veil' },
+    { id: 'rise', deg: 98, r: 6150, z: 0, label: 'Ringworld Rise' },
+    { id: 'harbor', deg: 90, r: 5150, z: -70, label: 'Cloud Harbor' },
+    { id: 'arch', deg: 330, label: 'Ascension Arch' }      // beyond ARCTIC (stays on the north-west rim)
   ];
   function glyphTexture(THREE) {   // light-script for the Scripture Veil ribbons (procedural strokes; no font, no file)
     var c = document.createElement('canvas'); c.width = 256; c.height = 512; var g = c.getContext('2d');
@@ -37,23 +41,45 @@
     if (typeof location !== 'undefined' && /[?&]edgerealms=0/.test(location.search || '')) return Promise.resolve(null);
     var THREE = o.THREE, meta = o.meta || {}, rim = (+meta.rim_m || 4800) * U, seaY = (meta.cloud_sea_m != null ? +meta.cloud_sea_m : -160) * U;
     var loader = new o.GLTFLoader(), group = new THREE.Group(); group.name = 'edge-realms'; o.scene.add(group);
-    var heads = [], anim = [], lastMsg = 0, stats = { loaded: 0, failed: 0 };
+    var heads = [], anim = [], lastMsg = 0, stats = { loaded: 0, failed: 0 }, anchors = {};
+    // SKY BRIDGES: arched glowing decks between realm anchor points (Blender-local metres of each GLB -> world). One mesh per material.
+    function wp(id, bx, by, bz) { var A2 = anchors[id]; if (!A2) return null; var v = new THREE.Vector3(bx, bz, -by); A2.s.localToWorld(v); return v; }
+    function bridges() {
+      var L = [['skycity', 0, 680, 70, 'veil', 0, 550, 6], ['veil', 0, 620, 6, 'rise', 0, 520, 0], ['skycity', 0, 680, 70, 'harbor', 0, 260, 2], ['harbor', 0, 760, 2, 'rise', -240, 520, 0]];
+      var deck = [], rail = [];
+      L.forEach(function (b) {
+        var p0 = wp(b[0], b[1], b[2], b[3]), p1 = wp(b[4], b[5], b[6], b[7]); if (!p0 || !p1) return;
+        var d = new THREE.Vector3().subVectors(p1, p0), len = d.length(), side = new THREE.Vector3(-d.z, 0, d.x).normalize(), N = 40, W = 5 * U, arch = Math.min(60 * U, len * 0.12);
+        for (var i = 0; i < N; i++) {
+          var t0 = i / N, t1 = (i + 1) / N, a0 = p0.clone().lerp(p1, t0), a1 = p0.clone().lerp(p1, t1); a0.y += Math.sin(Math.PI * t0) * arch; a1.y += Math.sin(Math.PI * t1) * arch;
+          var l0 = a0.clone().addScaledVector(side, -W), r0 = a0.clone().addScaledVector(side, W), l1 = a1.clone().addScaledVector(side, -W), r1 = a1.clone().addScaledVector(side, W);
+          deck.push(l0, r0, r1, l0, r1, l1, l0, r1, r0, l0, l1, r1);
+          [[l0, l1], [r0, r1]].forEach(function (e) { var u0 = e[0].clone(), u1 = e[1].clone(), h = 1.1 * U; rail.push(u0, u1, u1.clone().setY(u1.y + h), u0, u1.clone().setY(u1.y + h), u0.clone().setY(u0.y + h)); rail.push(u0, u1.clone().setY(u1.y + h), u1, u0, u0.clone().setY(u0.y + h), u1.clone().setY(u1.y + h)); });
+        }
+      });
+      function mesh(pts, mat) { var g = new THREE.BufferGeometry().setFromPoints(pts); g.computeVertexNormals(); var m2 = new THREE.Mesh(g, mat); m2.name = 'sky-bridges'; group.add(m2); }
+      if (deck.length) mesh(deck, new THREE.MeshStandardMaterial({ color: 0xece6d8, roughness: 0.5, metalness: 0.2, side: THREE.DoubleSide }));
+      if (rail.length) mesh(rail, new THREE.MeshBasicMaterial({ color: 0x8ffff0, transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false }));
+      stats.bridges = L.length;
+    }
     function load(file) { return new Promise(function (res) { loader.load(BASE + file + V, function (g) { stats.loaded++; res(g.scene); }, null, function (e) { stats.failed++; console.warn('[edge-realms]', file, e && e.message); res(null); }); }); }
     function dress(obj) {
       obj.traverse(function (m) {
         if (!m.isMesh || !m.material) return; var n = m.material.name || '';
         m.matrixAutoUpdate = false; m.updateMatrix();
         if (n === 'edge_veil') { m.material = new THREE.MeshBasicMaterial({ color: m.material.emissive || 0x9fe4ff, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }); anim.push({ kind: 'veil', mat: m.material }); }
+        else if (n === 'edge_water') { m.material = new THREE.MeshStandardMaterial({ color: 0x0aa585, emissive: 0x0a5a4a, emissiveIntensity: 0.6, metalness: 0.35, roughness: 0.08, transparent: true, opacity: 0.86, side: THREE.DoubleSide }); anim.push({ kind: 'water', mat: m.material }); }   // emerald, glinting (owner water ref)
         else if (n === 'edge_script') { var t = glyphTexture(THREE); t.repeat.set(1, 1); m.material = new THREE.MeshBasicMaterial({ map: t, color: 0xffb347, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }); anim.push({ kind: 'script', tex: t }); }
       });
     }
     var jobs = REALMS.map(function (R) {
       return load('shaddai_edge_' + R.id + '_v01.glb').then(function (s) {
-        if (!s) return; var a = R.deg * Math.PI / 180, dx = Math.sin(a), dz = -Math.cos(a), r0 = rim - 3 * U;
-        var hx = dx * r0, hz = dz * r0, hy = Math.max(0, o.heightAt ? o.heightAt(dx * (rim - 15 * U), dz * (rim - 15 * U)) : 0);
+        if (!s) return; var a = R.deg * Math.PI / 180, dx = Math.sin(a), dz = -Math.cos(a), r0 = R.r ? R.r * U : rim - 3 * U;
+        var hx = dx * r0, hz = dz * r0, hy = Math.max(0, o.heightAt ? o.heightAt(dx * (rim - 15 * U), dz * (rim - 15 * U)) : 0) + (R.z || 0) * U;
         s.scale.setScalar(U); s.position.set(hx, hy, hz); s.rotation.y = -a; dress(s); group.add(s); s.updateMatrixWorld(true);
         heads.push({ id: R.id, label: R.label, x: hx, z: hz, y: hy, cosmetic: (s.children[0] && s.children[0].userData && s.children[0].userData.cosmetic) || 'skyward-pilgrim-veil' });
         if (R.id === 'rise') ringCars(s, hx, hz);
+        anchors[R.id] = { s: s };
       });
     });
     // THE SKYWARD PORTAL over the Grid (owner: "above the platform in the shaddai grid and floating with a big portal but it's closed"):
@@ -105,12 +131,13 @@
     var lastT = 0;
     function tick(t) {
       var dt = lastT ? Math.min(0.1, t - lastT) : 0; lastT = t; tickCars(dt);
-      for (var i = 0; i < anim.length; i++) { var A = anim[i]; if (A.kind === 'veil') A.mat.opacity = 0.26 + 0.12 * Math.sin(t * 1.7 + i); else A.tex.offset.y = -t * 0.035; }
+      for (var i = 0; i < anim.length; i++) { var A = anim[i]; if (A.kind === 'veil') A.mat.opacity = 0.26 + 0.12 * Math.sin(t * 1.7 + i); else if (A.kind === 'water') A.mat.emissiveIntensity = 0.5 + 0.25 * Math.sin(t * 3.1 + i); else A.tex.offset.y = -t * 0.035; }
       var c = check(), now = Date.now();
       if (c && now - lastMsg > 9000 && root.__toast) { root.__toast(c.msg); lastMsg = now; }
     }
     return Promise.all(jobs).then(function () {
-      var api = { group: group, heads: heads, cars: cars, check: check, tick: tick, owns: owns, stats: function () { return { realms: heads.length, loaded: stats.loaded, failed: stats.failed }; } };
+      try { bridges(); } catch (e) { console.warn('[edge-realms] bridges', e && e.message); }
+      var api = { group: group, heads: heads, cars: cars, check: check, tick: tick, owns: owns, stats: function () { return { realms: heads.length, loaded: stats.loaded, failed: stats.failed, bridges: stats.bridges || 0 }; } };
       root.__edgeRealms = api; return api;
     });
   }
