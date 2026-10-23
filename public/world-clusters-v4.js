@@ -116,7 +116,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
     var st = { items: 0, types: 0, cells: 0, meshes: 0, near: 0, mid: 0, far: 0, hidden: 0, failed: [], noLod2: [] }, cells = {};
     var seenMat = {};   // dedupe by material.uuid: onMaterial fires once per unique material even though it's reused across many cells/instances
     function load(url) { return new Promise(function (res, rej) { if (window.__queueLoad) window.__queueLoad(loader, url, res, rej); else loader.load(url, res, undefined, rej); }); }
-    function parts(root) {   // mesh parts with transforms baked relative to the model's base-centre (one instance matrix places the whole model)
+    function parts(root, crownKey) {   // mesh parts with transforms baked relative to the model's base-centre (one instance matrix places the whole model)
       root.updateMatrixWorld(true);
       var box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
       var toBase = new THREE.Matrix4().makeTranslation(-ctr.x, -box.min.y, -ctr.z), out = [];
@@ -127,7 +127,37 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
         if (opts.onMaterial && o.material && !seenMat[o.material.uuid]) { seenMat[o.material.uuid] = true; opts.onMaterial(o.material); }
         out.push({ geo: geo, mat: o.material });
       });
+      if (crownKey && CROWN_KEYS[crownKey] && !(typeof location !== 'undefined' && /[?&]roofs=0/.test(location.search))) out.push(roofCrown(size, crownKey));
       return { parts: out, wid: Math.max(size.x, size.z, 1e-4), hgt: Math.max(size.y, 1e-4) };
+    }
+    /* ROOF CROWN (2026-10-23, owner: "the tops of the square buildings are basic"): every flat-roofed city model gets a sci-fi crown - parapet
+       walls, a glowing edge trim, a roof garden, a glass rooftop pavilion and solar fins - built ONCE per model type in model units (base-centred,
+       added after the bounds are measured so sizing is unchanged) and instanced with the building. One part = one extra draw per model/LOD.
+       ?roofs=0 = off. */
+    var CROWN_KEYS = { 'sc-storefront-s': 1, 'sc-storefront-l': 1, 'sc-office': 1, 'sc-office-mid': 1, 'sc-market': 1, 'sc-techlab': 1, 'sc-civic-tower': 1 };
+    var CROWN_GLOW = { 'sc-storefront-s': 0x27e0ff, 'sc-storefront-l': 0xffcf4a, 'sc-office': 0x27e0ff, 'sc-office-mid': 0x9b6bff, 'sc-market': 0xffcf4a, 'sc-techlab': 0x34e5b0, 'sc-civic-tower': 0xffcf4a };
+    var crownMat = null;
+    function roofCrown(size, key) {
+      var P = [], N = [], C = [], col = new THREE.Color();
+      function box(x0, y0, z0, x1, y1, z1, hex) {
+        col.setHex(hex); var f = [[[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1], 1, 0, 0], [[x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [x0, y0, z0], -1, 0, 0],
+          [[x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0], 0, 1, 0], [[x0, y0, z1], [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], 0, -1, 0],
+          [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], 0, 0, 1], [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], 0, 0, -1]];
+        f.forEach(function (q) { [0, 1, 2, 0, 2, 3].forEach(function (i) { P.push(q[i][0], q[i][1], q[i][2]); N.push(q[4], q[5], q[6]); C.push(col.r, col.g, col.b); }); });
+      }
+      var w = size.x / 2, d = size.z / 2, h = size.y, t = Math.min(w, d) * 0.045, ph = Math.max(h * 0.035, t * 1.4), g = CROWN_GLOW[key] || 0x27e0ff;
+      box(-w, h, -d, w, h + ph, -d + t, 0xd9dde2); box(-w, h, d - t, w, h + ph, d, 0xd9dde2);                 // parapet
+      box(-w, h, -d, -w + t, h + ph, d, 0xd9dde2); box(w - t, h, -d, w, h + ph, d, 0xd9dde2);
+      var e = t * 0.35; box(-w - e, h + ph, -d - e, w + e, h + ph + e * 1.6, -d + e, g); box(-w - e, h + ph, d - e, w + e, h + ph + e * 1.6, d + e, g);   // glowing edge trim
+      box(-w - e, h + ph, -d, -w + e, h + ph + e * 1.6, d, g); box(w - e, h + ph, -d, w + e, h + ph + e * 1.6, d, g);
+      box(-w * 0.62, h, -d * 0.62, w * 0.1, h + ph * 0.35, d * 0.55, 0x3f8a4f);                                 // roof garden
+      for (var i = 0; i < 4; i++) { var tx = -w * 0.5 + i * w * 0.18, tz = -d * 0.35 + (i % 2) * d * 0.5; box(tx - t * 0.5, h, tz - t * 0.5, tx + t * 0.5, h + ph * 2.2, tz + t * 0.5, 0x2f6e40); }   // planter trees
+      box(w * 0.22, h, -d * 0.5, w * 0.78, h + ph * 2.6, d * 0.05, 0x9fd8ff);                                   // glass rooftop pavilion
+      box(w * 0.2, h + ph * 2.6, -d * 0.52, w * 0.8, h + ph * 2.8, d * 0.07, 0xd9dde2);                           // its canopy
+      for (var j = 0; j < 3; j++) { var sz = d * 0.25 + j * d * 0.16; box(w * 0.25, h + ph * 0.4, sz, w * 0.75, h + ph * 0.55, sz + d * 0.1, 0x1c2a44); }   // solar fins
+      var geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+      crownMat = crownMat || new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.25, emissive: 0x0a141a, side: THREE.DoubleSide });
+      return { geo: geo, mat: crownMat };
     }
     function minGround(x, z, r) {
       var m = heightAt(x, z), k, a;
@@ -165,7 +195,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
       return Promise.all(keys.map(function (key) {
         var none = function () { return null; };
         return Promise.all([load(urlOf(key, 0)), load(urlOf(key, 1)).catch(none), WANT2 ? load(urlOf(key, 2)).catch(none) : null]).then(function (gs) {
-          var L0 = parts(gs[0].scene), L1 = gs[1] ? parts(gs[1].scene) : null, L2 = gs[2] ? parts(gs[2].scene) : null;
+          var L0 = parts(gs[0].scene, key), L1 = gs[1] ? parts(gs[1].scene, key) : null, L2 = gs[2] ? parts(gs[2].scene) : null;   // roof crown on full + lod1 (lod2 is far away)
           if (WANT2 && !L2) st.noLod2.push(key);
           var m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), yA = new THREE.Vector3(0, 1, 0);
           var byCell = {};
