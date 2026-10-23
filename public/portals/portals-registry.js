@@ -75,7 +75,7 @@
       id:    'spawn-oracle',
       kind:  'spawn',
       code:  'ORACLE',
-      name:  'The Esoteric Wing',
+      name:  'The Observatory',
       pos:   [260, 0],
       color: 0xc084fc,
       notes: 'ORACLE sector — right hex vertex.',
