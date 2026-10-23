@@ -20,7 +20,8 @@
     var THREE = o.THREE, U = o.U || 7 / 1.8, H = o.heightAt || function () { return 0; }, WAT = o.waterAt || function () { return null; };
     var group = new THREE.Group(); group.name = 'realm-roads'; o.scene.add(group);
     var stats = { roads: 0, bridgesM: 0, spur: false, stops: 0 }, anim = [];
-    return fetch(DATA).then(function (r) { return r.json(); }).then(function (D) {
+    var tryJ = function (n) { return fetch(DATA).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(function (e) { if (n <= 0) throw e; return new Promise(function (res) { setTimeout(res, 900); }).then(function () { return tryJ(n - 1); }); }); };
+    return tryJ(3).then(function (D) {
       var W = (D.width_m || 11) * U, E = (D.edge_m || 0.6) * U;
       var deck = [], dcol = [], strip = [], scol = [], rail = [], pyl = [], lamps = [], gates = [], col = new THREE.Color();
       function g(p) { return [p[0] * U, -p[1] * U]; }

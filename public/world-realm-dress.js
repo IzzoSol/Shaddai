@@ -39,7 +39,7 @@
     var THREE = o.THREE, heightAt = o.heightAt || function () { return 0; }, L = root.WORLD_LAYOUT, cols = L && L.realmColliders;
     var group = new THREE.Group(); group.name = 'world-realm-dress'; o.scene.add(group);
     var stats = { entries: 0, files: 0, instancedMeshes: 0, instances: 0, colliders: 0, missing: [] };
-    var getJ = function (u) { return fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
+    var getJ = function (u, n) { n = n == null ? 3 : n; return fetch(u).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(function () { return n > 0 ? new Promise(function (res) { setTimeout(res, 900); }).then(function () { return getJ(u, n - 1); }) : null; }); };   /* retries: a dropped request must not leave every realm town empty */
     return Promise.all([getJ(DATA), /[?&]realmtowns=0/.test(location.search || '') ? null : getJ(TOWNS2)]).then(function (both) {
       var data = both[0], t2 = both[1];
       if (!data || !data.realms) { console.info('[realm-dress] no data'); return { group: group, stats: stats }; }

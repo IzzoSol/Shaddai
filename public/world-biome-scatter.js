@@ -38,7 +38,8 @@
     var THREE = o.THREE, PM = 7 / 1.8, H = o.heightAt || function () { return 0; };
     var group = new THREE.Group(); group.name = 'biome-scatter'; o.scene.add(group);
     var stats = { items: 0, meshes: 0 };
-    return fetch(DATA).then(function (r) { return r.json(); }).then(function (D) {
+    var tryJ = function (n) { return fetch(DATA).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(function (e) { if (n <= 0) throw e; return new Promise(function (res) { setTimeout(res, 900); }).then(function () { return tryJ(n - 1); }); }); };
+    return tryJ(3).then(function (D) {
       var P = protos(THREE), mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0.05, flatShading: true });
       mat.onBeforeCompile = function (sh) {   // aGlow: per-vertex emissive (glow bands, crystal flora, lava cracks) without a second material
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aGlow; varying float vGlow;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = aGlow;');
