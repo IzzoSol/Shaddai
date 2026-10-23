@@ -16,8 +16,19 @@
   'use strict';
   var PM = 7 / 1.8, VIEW_M = 1200, DATA = '/assets/world/realm-dress-v1.json?v=20261023f';
   function stationList(transit) {
-    return (transit && transit.stations || []).filter(function (t) { return t.onRing !== false && t.realm && t.group; })
+    var out = (transit && transit.stations || []).filter(function (t) { return t.realm && t.group && (t.onRing !== false || t.realm === 'grid'); })   // + Central (grid)
       .map(function (t) { return { id: t.id, realm: t.realm, x: t.group.position.x, z: t.group.position.z, rot: t.group.rotation.y }; });
+    // 2026-10-23 audit: realms with NO station (forest) got no town at all - anchor them at the middle of their terrain wedge, facing the city
+    try {
+      var M = root.__w3dDebug && root.__w3dDebug.terrainV4 && root.__w3dDebug.terrainV4.meta, have = {};
+      out.forEach(function (o) { have[o.realm] = 1; });
+      ((M && M.realms) || []).forEach(function (R) {
+        if (have[R.id]) return; var c0 = R.c0, c1 = R.c1 < c0 ? R.c1 + 360 : R.c1, cdeg = ((c0 + c1) / 2) % 360, rm = (+R.r0_m + +(R.r1_m || M.rim_m)) / 2;
+        var a = cdeg * Math.PI / 180, x = Math.sin(a) * rm * PM, z = -Math.cos(a) * rm * PM, ang = Math.atan2(z, x);
+        out.push({ id: 'anchor-' + R.id, realm: R.id, x: x, z: z, rot: -ang - Math.PI / 2 });
+      });
+    } catch (e) { }
+    return out;
   }
   function toWorld(st, p) {   // station-local metres -> world units (identical to world-realm-kits placements())
     var c = Math.cos(st.rot), s = Math.sin(st.rot), lx = p.x * PM, lz = p.z * PM;
