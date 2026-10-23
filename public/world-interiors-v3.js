@@ -983,8 +983,8 @@
       var base = opts.base || '/assets/world/';
       var fj = opts.fetchJSON || function (u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }); };
       // 2026-10-16: interiors follow the buildings that are actually drawn - the designed district layout (tools/city-layout-gen.cjs); ?citylayout=0 = old fabric
-      var fabFile = (typeof location !== 'undefined' && /[?&](citylayout=0|fullcity=1)/.test(location.search)) ? 'grid-fabric-v4.json' : 'grid-fabric-districts-v1.json';
-      ready = Promise.all([fj(base + fabFile).catch(function () { return fj(base + 'grid-fabric-v4.json'); }), fj(base + 'canon-colliders-v4.json?v=7'), fj(base + 'markers-v4.json')])
+      var fabFile = (typeof location !== 'undefined' && /[?&](citylayout=0|fullcity=1)/.test(location.search)) ? 'grid-fabric-v4.json' : 'grid-fabric-districts-v1.json?v=20261023n';
+      ready = Promise.all([fj(base + fabFile).catch(function () { return fj(base + 'grid-fabric-v4.json'); }), fj(base + 'canon-colliders-v4.json?v=7'), fj(base + 'markers-v4.json?v=20261023a')])
         .then(function (res) { return disposed ? api : ingest({ fabric: res[0], canon: res[1], markers: res[2] }); });
     }
     if (opts.data) loaded = true;
