@@ -15,7 +15,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023y', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023z', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
@@ -130,6 +130,9 @@
       var T4 = root.__w3dDebug && root.__w3dDebug.terrainV4;
       if (T4 && T4.addRideExtra) T4.addRideExtra(function (x, z) { var r = Math.hypot(x - ax, z - az) / U; if (r > 62) return null; return g + (r < 48 ? 0.6 : 10 * Math.pow((r - 48) / 14, 2)) * U; });
     }));
+    // CRYSTAL SEA PLATFORM (owner 2026-10-23: "make the platform a water platform same aesthetic and a bridge that connects to the other water buildings"):
+    // reef-language deck (white clearcoat, wood, gold rail, glass band, rim pods, piers) + the glass bridge to Reef B. World metres at the origin.
+    jobs.push(load('shaddai_ocean_platform_v01.glb').then(function (s) { if (!s) return; s.scale.setScalar(U); dress(s); group.add(s); s.updateMatrixWorld(true); stats.oceanPlatform = true; }));
     jobs.push(load('shaddai_edge_portal_v01.glb').then(function (s) {
       if (!s) return; var A = (o.portalAnchor && o.portalAnchor()) || { x: 0, y: 200, z: 118, yaw: Math.PI };
       s.scale.setScalar(U); s.position.set(A.x, A.y, A.z); s.rotation.y = A.yaw; dress(s); group.add(s); s.updateMatrixWorld(true);

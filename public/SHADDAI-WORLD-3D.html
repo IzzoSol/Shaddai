@@ -324,10 +324,10 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-interiors.js?v=20261022a"></script>
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
-<script src="/world-realm-dress.js?v=20261023u"></script>
+<script src="/world-realm-dress.js?v=20261023v"></script>
 <script src="/world-perf-guard.js?v=20261023c"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
-<script src="/world-edge-realms.js?v=20261023y"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
+<script src="/world-edge-realms.js?v=20261023z"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -6113,6 +6113,7 @@ window.__travel = {
         const say = (window.Navi && window.Navi.toast) ? window.Navi.toast : window.__toast; if(say) say(to.up ? 'Lift ▲ Drop deck: ride the ramp into the bowl' : 'Lift ▼ Ground');
       }, true);   // magnet rails + the plaza ledge are grindable
       if(T.setHeightExtra) T.setHeightExtra(park.heightAt);   // banks / kicker / bowl / deck + apron are now real ground for the player, boards, NPCs
+      if(window.WorldHoverParkK40) try{ window.WorldHoverParkK40.attach({ THREE, GLTFLoader, scene, park, T, hover, U: V4_U, anchor: { x: mk.pos.x, z: mk.pos.z } }); }catch(e){ console.warn('[park-k40]', e && e.message); }   /* 2026-10-23 K40 park look + ride surfaces (?park=v2 = old) */
       const run = window.__raceRun = window.WorldRaceRun.create({ THREE, scene, park, hover, sparks: window.ShdSparks, U: V4_U, heightAt: T.heightAt,
         aiMesh: function(a){ if(!window.__raceKart || !window.WorldHoverCars) return null; const T2 = window.WorldHoverCars.TYPES, i = (a.id.charCodeAt(2) || 0), g = window.WorldHoverCars.buildGroup(THREE, T2[(i * 7) % T2.length].id, [0xffffff,0x6fd0ff,0xff7aa8,0xffd36a,0x9affc2,0xc7a6ff,0xff9a5a][i % 7]); g.scale.setScalar(V4_U); return g; },
         onEvent: function(e){

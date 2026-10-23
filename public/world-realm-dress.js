@@ -70,7 +70,7 @@
           Object.keys(perTown).forEach(function (sid) {
             var t = perTown[sid], town = towns[sid];
             if (!town) { town = towns[sid] = new THREE.Group(); town.name = 'realm-dress-' + sid; town.userData.x = t.st.x; town.userData.z = t.st.z; group.add(town);
-              if (t.st.floatY != null) {   // HARBOUR PLATFORM (owner 2026-10-23: the plain white disc read as odd): dark teal tech-deck, white rim with a cyan glow edge,
+              if (t.st.floatY != null && /[?&]oceandeck=code/.test(location.search || '')) {   /* 2026-10-23: replaced by the reef-style GLB platform + glass bridge (world-edge-realms.js); ?oceandeck=code = this one */ // HARBOUR PLATFORM (owner 2026-10-23: the plain white disc read as odd): dark teal tech-deck, white rim with a cyan glow edge,
                 // eight piers out to the water with mooring posts. One merged mesh per material (3 draws).
                 var Y = t.st.floatY, cx = t.st.x, cz = t.st.z, gD = [], gW = [], gG = [];
                 var deckG = new THREE.CylinderGeometry(150 * PM, 146 * PM, 2.4 * PM, 64); deckG.translate(cx, Y - 1.2 * PM, cz); gD.push(deckG);

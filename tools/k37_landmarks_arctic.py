@@ -8,7 +8,7 @@ from mathutils import Matrix, Vector
 
 REPO = r'C:/Users/Brittany/Shaddai-3d'; OUT = REPO + '/public/assets/kits'
 ids = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-ids = ids or ['anvil', 'exchange', 'hearth', 'arctic', 'citadel', 'arena']
+ids = ids or ['anvil', 'exchange', 'hearth', 'arctic', 'citadel', 'arena', 'park', 'oceanplat']
 
 def clear():
     for o in list(bpy.data.objects): bpy.data.objects.remove(o, do_unlink=True)
@@ -235,6 +235,71 @@ def arena():   # K39 NEON SAKURA HOVER ARENA (owner refs image 61-64): wall-ride
     m.box(tor, 0, -14, 8.2, 12.5, 1.4, 1.0); m.box(tor, 0, -14, 9.6, 14, 1.6, 0.8)
     for k in range(3): ann(m, wl, 66, 66 + 5 * (k + 1), 0, 16 + k * 3 + 3)                   # stepped spectator tiers (open rings)
     m.finish('hover_arena'); export(OUT + '/shaddai_hover_arena_v01.glb')
+
+def park():   # K40 HOVERSKATE PARK (owner 2026-10-23 refs image 58-64: Ironreach / Colosseum Hover-Skate League): high wall-ride walls + stands, a drop-in
+    # tower with a glass elevator, the drop ramp into a big bowl, four ELECTRIC launch ramps (glowing coils), speed pads, floating rings, grind rails.
+    # Base-centred metres; local -Y = the entrance (the game turns it to face the city centre). Profile mirrored in public/world-hoverpark-k40.js.
+    clear(); m = MB()
+    fl = mat('pk_floor', 0x10141c, 0.5, 0.35); wl = mat('pk_wall', 0x262c38, 0.6, 0.4); org = mat('pk_orange', 0xff7a1a, 0.1, 0.3, 4.0); cy_ = mat('pk_cyan', 0x22d8ff, 0.1, 0.3, 4.0)
+    vio = mat('pk_violet', 0xb44bff, 0.1, 0.3, 3.5); wh = mat('pk_white', 0xe9edf1, 0.3, 0.35); gl = mat('pk_glass', 0x8fd8ff, 0.1, 0.05, 0.3, 0.45); gold = mat('pk_gold', 0xe8c45c, 0.8, 0.3, 0.6)
+    m.cyl(fl, 0, 0, -1.2, 150, 150, 1.6, 96)
+    for R, mt in ((60, cy_), (100, org), (140, cy_)): m.torus(mt, 0, 0, 0.42, R, 0.3, 0, 96, 6)
+    ann(m, wl, 150, 154, 0, 20, 96)                                                                      # wall-ride wall
+    for z, mt in ((4, org), (10, cy_), (16, org)): m.torus(mt, 0, 0, z, 149.8, 0.3, 0, 120, 6)
+    for k in range(4): ann(m, wl, 154, 159 + k * 5, 0, 20 + (k + 1) * 3, 96)                              # stands
+    for k in range(8):                                                                                   # light pylons on the stands
+        a = 2 * math.pi * k / 8 + 0.2; x, y = math.cos(a) * 172, math.sin(a) * 172; m.cyl(wl, x, y, 30, 1.2, 0.8, 22, 8); m.box(vio if k % 2 else cy_, x, y, 52, 6, 1, 3, a)
+    # big bowl (pool): quarter-pipe 34 -> 48 m up to 8 m, coping, outer apron 48 -> 60 m back to the floor
+    for k in range(14): r0 = 34 + k; ann(m, fl, r0 - 0.2, r0 + 1.2, -1, 8 * ((k + 1) / 14) ** 2 + 1, 72)
+    for k in range(12): r0 = 48 + k; ann(m, fl, r0 - 0.2, r0 + 1.2, -1, 8 * (1 - k / 12) + 1, 72)
+    m.torus(gold, 0, 0, 8.2, 48, 0.5, 0, 96, 6); m.torus(cy_, 0, 0, 0.45, 20, 0.3, 0, 64, 6)
+    # drop-in tower (back, +Y) with a glass elevator; drop ramp from the 46 m deck curving down into the bowl
+    m.box(wl, 0, 105, 0, 18, 16, 46); m.box(wh, 0, 105, 46, 20, 18, 1.2); m.box(org, 0, 96.2, 40, 16, 0.4, 0.8)
+    m.cyl(gl, 13, 105, 0, 3.2, 3.2, 50, 16); m.torus(cy_, 13, 105, 50, 3.2, 0.25, 0, 24, 4); m.box(wh, 13, 105, 0, 7, 7, 0.4)
+    for j in range(48):                                                                                  # drop ramp: z = 46 (1-d)^2 from y 97 -> 50
+        d0, d1 = j / 48, (j + 1) / 48; y0, y1 = 97 - 47 * d0, 97 - 47 * d1; z0 = 46 * (1 - d0) ** 2
+        m.box(fl, 0, (y0 + y1) / 2, -0.6, 10, abs(y1 - y0) + 0.2, z0 + 0.6);
+        if j % 4 == 0: m.box(org, -5.2, (y0 + y1) / 2, z0, 0.4, 1.2, 0.4); m.box(cy_, 5.2, (y0 + y1) / 2, z0, 0.4, 1.2, 0.4)
+    # four ELECTRIC launch ramps (kicker z = 10 (u/24)^2, 12 m wide) with coil rings + chevrons
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2; ux, uy = math.cos(a), math.sin(a); px, py = -uy, ux; c0 = 88
+        for j in range(24):
+            u = j + 0.5; z = 10 * (u / 24) ** 2; x, y = ux * (c0 + u), uy * (c0 + u); m.box(fl, x, y, -0.4, 12, 1.15, z + 0.4, a + math.pi / 2)
+            if j % 3 == 0: m.box(cy_ if k % 2 else vio, x, y, z + 0.05, 9, 0.35, 0.05, a + math.pi / 2)         # glowing chevrons on the face
+        for s_ in (-1, 1):
+            for j in range(0, 24, 4):
+                u = j + 2; x, y = ux * (c0 + u) + px * s_ * 6.6, uy * (c0 + u) + py * s_ * 6.6; m.torus(org if k % 2 else cy_, x, y, 10 * (u / 24) ** 2 + 1.0, 1.2, 0.18, math.pi / 2, 16, 4)
+    for k in range(8): a = 2 * math.pi * k / 8 + math.pi / 8; m.cyl(org if k % 2 else cy_, math.cos(a) * 75, math.sin(a) * 75, 0.4, 4, 4, 0.12, 24)   # speed pads
+    for k in range(6): a = 2 * math.pi * k / 6; m.torus(vio if k % 2 else cy_, math.cos(a) * 122, math.sin(a) * 122, 16, 6, 0.4, math.pi / 2, 32, 6)  # floating rings
+    for s_ in (-1, 1): m.box(gold, s_ * 70, -20, 1.0, 0.5, 34, 0.5); m.box(wl, s_ * 70, -36, 0, 0.6, 0.6, 1); m.box(wl, s_ * 70, -4, 0, 0.6, 0.6, 1)   # grind rails
+    m.box(wh, 0, -150, 0, 26, 6, 1.0); m.box(org, 0, -150, 12, 24, 1.2, 1.2); [m.box(wl, sx * 12, -150, 0, 2, 2, 13) for sx in (-1, 1)]       # entrance gate
+    m.finish('hover_park'); export(OUT + '/shaddai_hover_park_v01.glb')
+
+def oceanplat():   # Crystal Sea town platform in the REEF language (owner: "make the platform a water platform same aesthetic"): white clearcoat ring deck,
+    # wooden inlay, gold rail, glass band, pods on the rim, piers; plus the glass bridge to Reef B. WORLD coordinates (Blender metres).
+    clear(); m = MB(); wh = mat('op_white', 0xf4f7fa, 0.1, 0.3); wood = mat('op_wood', 0xa7774a, 0.0, 0.8); gold = mat('op_gold', 0xd4b46a, 1.0, 0.25, 0.3); gl = mat('op_glass', 0x9fd8e8, 0.1, 0.04, 0.2, 0.35); cy_ = mat('op_cyan', 0x4fe3ff, 0.1, 0.3, 3.0)
+    T = json.load(open(REPO + '/public/assets/world/realm-towns-v2.json'))['towns']; t = next(x for x in T if x['realm'] == 'ocean'); cx, cy, Y = t['c'][0], -t['c'][1], 3.2
+    m.cyl(wood, cx, cy, Y - 1.4, 146, 146, 1.4, 96); m.cyl(wh, cx, cy, Y - 3.0, 150, 147, 1.8, 96)
+    ann(m, wh, 146, 156, Y - 1.4, 1.6, 96)
+    for i in range(96): pass
+    bm = None
+    m.torus(gold, cx, cy, Y + 1.1, 156, 0.18, 0, 128, 6); m.torus(cy_, cx, cy, Y - 0.2, 157, 0.35, 0, 128, 6)
+    for k in range(12):                                                                                  # pier piles + rim pods (reef pods)
+        a = 2 * math.pi * k / 12; x, y = cx + math.cos(a) * 151, cy + math.sin(a) * 151; m.cyl(wl_ := mat('op_pile', 0x3a3f46, 0.2, 0.6), x, y, -6, 0.9, 0.9, Y + 4, 8)
+        if k % 3 == 0: m.dome(wh, cx + math.cos(a) * 168, cy + math.sin(a) * 168, Y - 0.5, 9); m.torus(gl, cx + math.cos(a) * 168, cy + math.sin(a) * 168, Y + 1.5, 9.2, 0.6, 0, 32, 6)
+    for k in range(8):
+        a = k * math.pi / 4 + math.pi / 8; ux, uy = math.sin(a), math.cos(a)
+        m.box(wood, cx + ux * 182, cy + uy * 182, Y - 1.4, 8, 60, 1.2, -a)
+    # glass bridge to Reef B (deck 4 m over the water, glass rails, cyan glow)
+    B = (-2714.5, -2774.8); d = Vector((B[0] - cx, B[1] - cy, 0)); L = d.length; dn = d.normalized(); A0 = Vector((cx, cy, 0)) + dn * 156; A1 = Vector(B + (0,)) - dn * 70
+    sd = Vector((-dn.y, dn.x, 0)) * 4; n = int((A1 - A0).length / 10); bmw = m.get(wh); bmg = m.get(gl); prev = None
+    for i in range(n + 1):
+        c = A0.lerp(A1, i / n); c.z = Y + 0.8 + math.sin(math.pi * i / n) * 6
+        row = (bmw.verts.new(c - sd), bmw.verts.new(c + sd)); rg = (bmg.verts.new(c - sd), bmg.verts.new(c - sd + Vector((0, 0, 1.2))), bmg.verts.new(c + sd), bmg.verts.new(c + sd + Vector((0, 0, 1.2))))
+        if prev: bmw.faces.new((prev[0][0], row[0], row[1], prev[0][1])); bmg.faces.new((prev[1][0], rg[0], rg[1], prev[1][1])); bmg.faces.new((prev[1][2], prev[1][3], rg[3], rg[2]))
+        if i % 3 == 0: m.cyl(mat('op_pile', 0x3a3f46, 0.2, 0.6), c.x, c.y, -6, 0.7, 0.7, c.z + 6, 8); m.box(cy_, c.x, c.y, c.z + 0.02, 6, 0.4, 0.05, math.atan2(dn.y, dn.x))
+        prev = (row, rg)
+    m.finish('ocean_platform'); export(OUT + '/shaddai_ocean_platform_v01.glb')
 
 for k in ids: globals()[k]()
 print('K37DONE')
