@@ -8,7 +8,7 @@ from mathutils import Matrix, Vector
 
 REPO = r'C:/Users/Brittany/Shaddai-3d'; OUT = REPO + '/public/assets/kits'
 ids = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-ids = ids or ['anvil', 'exchange', 'hearth', 'arctic']
+ids = ids or ['anvil', 'exchange', 'hearth', 'arctic', 'citadel', 'arena']
 
 def clear():
     for o in list(bpy.data.objects): bpy.data.objects.remove(o, do_unlink=True)
@@ -155,6 +155,86 @@ def arctic():   # K36: ice towers on four arctic summits, glass ice-bridges in a
     bridge(S, dz, 6); m.cyl(indigo, dz[0], dz[1], dz[2] - 2, 16, 16, 2, 24); m.torus(gold, dz[0], dz[1], dz[2], 16, 0.4, 0, 32, 6)
     o = m.finish('arctic_peaks'); o['dock'] = json.dumps(dz); o['skyway'] = json.dumps(ARCH)
     export(OUT + '/shaddai_arctic_peaks_v01.glb'); print('K36DOCK', json.dumps(dz))
+
+def _terrain():
+    T = json.load(open(REPO + '/public/assets/terrain/terrain.json')); raw = open(REPO + '/public/assets/terrain/height16.bin', 'rb').read(); N = int(math.sqrt(len(raw) / 2)); H = T['half_m']
+    def g(x, y):
+        u = (x + H) * (N - 1) / (2 * H); v = (-y + H) * (N - 1) / (2 * H); i, j = int(u), int(v); fx, fy = u - i, v - j
+        s_ = lambda a, b: struct.unpack_from('<H', raw, 2 * (b * N + a))[0]
+        t = s_(i, j) + (s_(i + 1, j) - s_(i, j)) * fx; bt = s_(i, j + 1) + (s_(i + 1, j + 1) - s_(i, j + 1)) * fx
+        return T['min_m'] + (T['max_m'] - T['min_m']) / 65535 * (t + (bt - t) * fy)
+    return T, g
+
+def citadel():   # K38 THE EVIL CITADEL (owner 2026-10-23 ref: giant indigo castle, brain dome, violet-vein cobble causeway, torches, magenta lava).
+    # WORLD coordinates, behind the Void Castle on the far side of the Deep Void pit: centre (0, 4250), ~300 m to the dome.
+    clear(); m = MB(); T, g = _terrain(); CX, CY = 0.0, 4250.0; Z = max(g(CX + dx, CY + dy) for dx in (-120, 0, 120) for dy in (-120, 0, 120)) - 6
+    ind = mat('ct_indigo', 0x1b1640, 0.3, 0.6); stn = mat('ct_stone', 0x262042, 0.2, 0.8); vio = mat('ct_violet', 0x7a3dff, 0.2, 0.3, 4.0)
+    mag = mat('ct_magenta', 0xff2bd6, 0.1, 0.4, 3.0); emb = mat('ct_ember', 0xff4a1a, 0.0, 0.5, 6.0); brain = mat('ct_brain', 0x3a2cff, 0.2, 0.4, 2.2)
+    m.cyl(stn, CX, CY, Z - 20, 175, 165, 26, 8)
+    m.cyl(mag, CX, CY, Z + 5.5, 160, 160, 0.6, 64); m.cyl(stn, CX, CY, Z + 5.6, 132, 132, 1.0, 64)
+    for k in range(8):
+        a0, a1 = 2 * math.pi * k / 8, 2 * math.pi * (k + 1) / 8; x0, y0, x1, y1 = CX + 120 * math.sin(a0), CY + 120 * math.cos(a0), CX + 120 * math.sin(a1), CY + 120 * math.cos(a1)
+        L = math.hypot(x1 - x0, y1 - y0); ang = -math.atan2(x1 - x0, y1 - y0) + math.pi / 2
+        m.box(ind, (x0 + x1) / 2, (y0 + y1) / 2, Z + 6, L, 7, 34, ang); m.box(vio, (x0 + x1) / 2, (y0 + y1) / 2, Z + 30, L * 0.9, 7.4, 1.2, ang)
+        m.cyl(ind, x0, y0, Z + 6, 15, 13, 90, 12); m.cyl(stn, x0, y0, Z + 96, 16, 0.5, 46, 12)
+        for z in range(20, 90, 14): m.cyl(vio, x0, y0, Z + z, 15.4, 15.2, 1.4, 12)
+    for k in range(6):
+        a = 2 * math.pi * k / 6 + 0.5; x, y = CX + 48 * math.sin(a), CY + 48 * math.cos(a); h = 150 + 20 * (k % 2)
+        m.cyl(ind, x, y, Z + 6, 17, 15, h, 12); m.cyl(stn, x, y, Z + 6 + h, 18, 0.5, 60, 12)
+        for z in range(30, int(h), 16): m.box(vio, x + 15.5 * math.sin(a + math.pi), y + 15.5 * math.cos(a + math.pi), Z + z, 3, 3, 6)
+    m.cyl(ind, CX, CY, Z + 6, 30, 24, 250, 16); m.cyl(stn, CX, CY, Z + 256, 26, 18, 16, 16)
+    for z in range(30, 250, 18):
+        for k in range(4):
+            a = k * math.pi / 2 + math.pi / 4; m.box(vio, CX + 27 * math.sin(a), CY + 27 * math.cos(a), Z + z, 4, 4, 8)
+    bm = m.get(brain); vs = []
+    for i in range(17):
+        th = math.pi * i / 16; row = []
+        for j in range(32):
+            ph = 2 * math.pi * j / 32; r = 46 * (1 + 0.06 * math.sin(7 * ph + 3 * th) + 0.05 * math.sin(11 * th)) * (0.5 if abs(math.cos(ph)) < 0.06 else 1)
+            row.append(bm.verts.new((CX + r * math.sin(th) * math.cos(ph), CY + r * math.sin(th) * math.sin(ph), Z + 300 + 0.8 * r * math.cos(th))))
+        vs.append(row)
+    for i in range(16):
+        for j in range(32): bm.faces.new((vs[i][j], vs[i][(j + 1) % 32], vs[i + 1][(j + 1) % 32], vs[i + 1][j]))
+    m.box(emb, CX, CY - 124, Z + 6, 14, 2, 22)
+    for k in range(9):
+        y = CY - 170 + k * 6; m.box(stn, CX, y, Z + 5, 16, 6.2, 1.2); m.box(vio, CX, y, Z + 6.25, 12, 0.5, 0.08)
+    for sx in (-1, 1):
+        for k in range(5):
+            y = CY - 175 + k * 14; m.cyl(stn, CX + sx * 10, y, Z + 6, 0.8, 1.1, 4, 6); m.cyl(emb, CX + sx * 10, y, Z + 10, 0.9, 0.2, 2.2, 6)
+    m.finish('citadel'); export(OUT + '/shaddai_void_citadel_v01.glb'); print('K38CITADEL', CX, CY, round(Z, 1))
+
+def ann(m, mt, r0, r1, z0, h, seg=72):   # open annulus (tube): outer + inner walls + top/bottom rims, no caps over the middle
+    bm = m.get(mt); rows = []
+    for (r, z) in ((r1, z0), (r1, z0 + h), (r0, z0 + h), (r0, z0)):
+        rows.append([bm.verts.new((r * math.cos(2 * math.pi * i / seg), r * math.sin(2 * math.pi * i / seg), z)) for i in range(seg)])
+    for k in range(4):
+        A, B = rows[k], rows[(k + 1) % 4]
+        for i in range(seg): bm.faces.new((A[i], A[(i + 1) % seg], B[(i + 1) % seg], B[i]))
+
+def arena():   # K39 NEON SAKURA HOVER ARENA (owner refs image 61-64): wall-ride walls, quarter-pipe bowl, ramps, E/W goal hoops, floating rings, tower + torii.
+    clear(); m = MB(); dk = mat('sa_floor', 0x141a26, 0.5, 0.4); wl = mat('sa_wall', 0x2a3142, 0.5, 0.4); cy_ = mat('sa_cyan', 0x22e6ff, 0.1, 0.3, 4.0)
+    mg = mat('sa_magenta', 0xff3fb4, 0.1, 0.3, 4.0); tor = mat('sa_torii', 0xd2301e, 0.2, 0.5, 0.6); wh = mat('sa_white', 0xe9edf1, 0.3, 0.35)
+    m.cyl(dk, 0, 0, -1, 48, 48, 1.6, 64)
+    for k in range(14):
+        r0 = 48 + k; z0 = 10 * (k / 14) ** 2; ann(m, dk, r0 - 0.2, r0 + 1.2, -1, z0 + 1)   # quarter-pipe steps (open rings)
+    ann(m, wl, 62.4, 66, 0, 16)                                                           # wall-ride wall
+    for z, mt in ((5, cy_), (9, mg), (13, cy_)): m.torus(mt, 0, 0, z, 62.5, 0.25, 0, 96, 6)
+    for R, mt in ((20, cy_), (34, mg)): m.torus(mt, 0, 0, 0.62, R, 0.35, 0, 72, 6)
+    for k in range(8):
+        a = 2 * math.pi * k / 8; m.box(cy_ if k % 2 else mg, math.cos(a) * 34, math.sin(a) * 34, 0.6, 28, 0.6, 0.06, a)
+    for k in range(6):
+        a = 2 * math.pi * k / 6 + math.pi / 6; cx, cy = math.cos(a) * 40, math.sin(a) * 40
+        m.box(wh, cx, cy, 0.6, 10, 6, 3.0, a)
+    for x, mt in ((52, cy_), (-52, mg)):
+        m.cyl(wl, x, 0, 0, 1.4, 1.2, 12, 8); m.torus(mt, x, 0, 19, 7, 0.6, math.pi / 2, 48, 8); m.torus(wh, x, 0, 19, 7.8, 0.3, math.pi / 2, 48, 6)
+    for k in range(6):
+        a = 2 * math.pi * k / 6; m.torus(cy_ if k % 2 else mg, math.cos(a) * 28, math.sin(a) * 28, 8, 3.2, 0.25, math.pi / 2, 32, 6)
+    for r, z, h in ((11, 0.6, 8), (8.5, 8.6, 8), (6, 16.6, 8), (3.5, 24.6, 6)):
+        m.cyl(wl, 0, 0, z, r, r * 0.92, h, 16); m.torus(cy_, 0, 0, z + h - 0.3, r * 0.95, 0.2, 0, 32, 4)
+    for sx in (-1, 1): m.box(tor, sx * 4.5, -14, 0.6, 1.2, 1.2, 9)
+    m.box(tor, 0, -14, 8.2, 12.5, 1.4, 1.0); m.box(tor, 0, -14, 9.6, 14, 1.6, 0.8)
+    for k in range(3): ann(m, wl, 66, 66 + 5 * (k + 1), 0, 16 + k * 3 + 3)                   # stepped spectator tiers (open rings)
+    m.finish('hover_arena'); export(OUT + '/shaddai_hover_arena_v01.glb')
 
 for k in ids: globals()[k]()
 print('K37DONE')

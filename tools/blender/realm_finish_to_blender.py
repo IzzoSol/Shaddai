@@ -294,6 +294,7 @@ for it in [i for i in DIST['items'] if i.get('role') == 'district-podium']:
     for r in glb_into(os.path.join(REPO, 'public/assets/kits/shaddai_landmark_%s_v01.glb' % k)):
         r.location = (it['x_m'], it['y_m'], ground(it['x_m'], it['y_m'])); r.rotation_euler = (0, 0, math.radians(it.get('yaw', 0)))
 glb_into(os.path.join(REPO, 'public/assets/kits/shaddai_arctic_peaks_v01.glb'))
+exec(open(os.path.join(REPO, 'tools/blender/ocean_deck_to_blender.py')).read())   # harbour platform replaces the plain deck disc
 
 bpy.ops.wm.save_mainfile()
 print('FINISH ok roads', len(RD['roads']), 'spur', len(RD['spurs']), 'town items', placed, 'missing', sorted(missing))

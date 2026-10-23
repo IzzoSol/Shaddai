@@ -70,7 +70,20 @@
           Object.keys(perTown).forEach(function (sid) {
             var t = perTown[sid], town = towns[sid];
             if (!town) { town = towns[sid] = new THREE.Group(); town.name = 'realm-dress-' + sid; town.userData.x = t.st.x; town.userData.z = t.st.z; group.add(town);
-              if (t.st.floatY != null) { var dk = new THREE.Mesh(new THREE.CylinderGeometry(160 * PM, 150 * PM, 2.4 * PM, 48), new THREE.MeshStandardMaterial({ color: 0xdfe8ee, roughness: 0.4, metalness: 0.3 })); dk.position.set(t.st.x, t.st.floatY - 1.2 * PM, t.st.z); dk.receiveShadow = true; town.add(dk); } }
+              if (t.st.floatY != null) {   // HARBOUR PLATFORM (owner 2026-10-23: the plain white disc read as odd): dark teal tech-deck, white rim with a cyan glow edge,
+                // eight piers out to the water with mooring posts. One merged mesh per material (3 draws).
+                var Y = t.st.floatY, cx = t.st.x, cz = t.st.z, gD = [], gW = [], gG = [];
+                var deckG = new THREE.CylinderGeometry(150 * PM, 146 * PM, 2.4 * PM, 64); deckG.translate(cx, Y - 1.2 * PM, cz); gD.push(deckG);
+                var rimG = new THREE.TorusGeometry(152 * PM, 3 * PM, 6, 96); rimG.rotateX(Math.PI / 2); rimG.translate(cx, Y - 0.2 * PM, cz); gW.push(rimG);
+                var glowG = new THREE.TorusGeometry(155.5 * PM, 0.6 * PM, 4, 96); glowG.rotateX(Math.PI / 2); glowG.translate(cx, Y - 0.6 * PM, cz); gG.push(glowG);
+                for (var pk = 0; pk < 8; pk++) { var pa = pk * Math.PI / 4 + Math.PI / 8, px = Math.sin(pa), pz = Math.cos(pa);
+                  var pier = new THREE.BoxGeometry(8 * PM, 1.2 * PM, 60 * PM); pier.rotateY(pa); pier.translate(cx + px * 182 * PM, Y - 0.8 * PM, cz + pz * 182 * PM); gW.push(pier);
+                  for (var mk = 0; mk < 3; mk++) { var post = new THREE.CylinderGeometry(0.4 * PM, 0.4 * PM, 3 * PM, 6), d = 165 + mk * 20, sd = (mk % 2 ? 1 : -1) * 5;
+                    post.translate(cx + px * d * PM + pz * sd * PM, Y + 0.3 * PM, cz + pz * d * PM - px * sd * PM); gG.push(post); } }
+                function mg(list) { var pos = []; list.forEach(function (g) { g = g.index ? g.toNonIndexed() : g; pos.push.apply(pos, g.attributes.position.array); }); var o2 = new THREE.BufferGeometry(); o2.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); o2.computeVertexNormals(); return o2; }
+                [[gD, new THREE.MeshStandardMaterial({ color: 0x1d3a44, roughness: 0.5, metalness: 0.4 })], [gW, new THREE.MeshStandardMaterial({ color: 0xeef2f5, roughness: 0.35, metalness: 0.3 })], [gG, new THREE.MeshBasicMaterial({ color: 0x5fe8ff, toneMapped: false })]]
+                  .forEach(function (e) { var mm = new THREE.Mesh(mg(e[0]), e[1]); mm.receiveShadow = true; town.add(mm); });
+              } }
             var mats = t.list.map(function (e) { return m4.compose(pv.set(e.w.x, t.st.floatY != null ? Math.max(heightAt(e.w.x, e.w.z), t.st.floatY) : heightAt(e.w.x, e.w.z), e.w.z), q.setFromAxisAngle(up, e.w.yaw), sv.setScalar(PM * (e.h ? e.h / rawH : e.w.s))).clone(); });
             g.scene.traverse(function (mesh) {
               if (!mesh.isMesh) return;

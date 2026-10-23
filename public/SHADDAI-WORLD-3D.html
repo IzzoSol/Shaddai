@@ -324,10 +324,10 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-interiors.js?v=20261022a"></script>
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
-<script src="/world-realm-dress.js?v=20261023t"></script>
+<script src="/world-realm-dress.js?v=20261023u"></script>
 <script src="/world-perf-guard.js?v=20261023c"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
-<script src="/world-edge-realms.js?v=20261023x"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
+<script src="/world-edge-realms.js?v=20261023y"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -5475,6 +5475,7 @@ try{
     colliders: function(){ return (window.WORLD_LAYOUT && window.WORLD_LAYOUT.realmColliders) || []; },
     time: function(){ return clock.elapsedTime; },
   });
+  window.__hover = hover;   /* probe handle (tools/_skate-probe.cjs) */
 }catch(e){ console.warn('world-hoverboard init failed:', e && e.message); }
 // RIDERS (world-riders.js, docs/RIDERS.md): the player's agent SITS on the Grid Bike and the dragon saddle (IK on its own
 // bones); AI companions ride sky-traffic ships. Hoverboard tricks → toast + 'shaddai:trick' event (SKATE feed).

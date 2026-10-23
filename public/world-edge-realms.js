@@ -15,7 +15,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023x', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023y', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
@@ -118,6 +118,17 @@
     jobs.push(load('shaddai_arctic_peaks_v01.glb').then(function (s) {
       if (!s) return; s.scale.setScalar(U); dress(s); group.add(s); s.updateMatrixWorld(true); stats.arcticPeaks = true;
       var DK = [-1572.2, 2912.3, 4.5]; heads.push({ id: 'icedock', label: 'Ice Dock - boats need thermal gear', x: DK[0] * U, z: -DK[1] * U, y: DK[2] * U, cosmetic: 'arctic-thermal-suit' });
+    }));
+    // THE EVIL CITADEL (K38, owner 2026-10-23): a ~300 m indigo fortress with a brain dome behind the Void Castle (world metres, placed at the origin).
+    jobs.push(load('shaddai_void_citadel_v01.glb').then(function (s) { if (!s) return; s.scale.setScalar(U); dress(s); group.add(s); s.updateMatrixWorld(true); stats.citadel = true;
+      var LL = root.WORLD_LAYOUT; if (LL && LL.realmColliders) LL.realmColliders.push({ x: 0, z: Math.round(-4250 * U), r: Math.round(125 * U), label: 'void-citadel' }); }));
+    // NEON SAKURA HOVER ARENA (K39, owner refs 2026-10-23): the walled hover-skate colosseum beside the Southern Colosseum. Rideable bowl:
+    // flat floor r < 48 m, quarter-pipe 48-62 m up to 10 m (terrain ride-extra, so boards and walkers both use it); the 66 m wall is the wall-ride face.
+    jobs.push(load('shaddai_hover_arena_v01.glb').then(function (s) {
+      if (!s) return; var ax = 380 * U, az = 3050 * U, g = o.heightAt ? o.heightAt(ax, az) : 0; s.scale.setScalar(U); s.position.set(ax, g, az); dress(s); group.add(s); s.updateMatrixWorld(true); stats.hoverArena = true;
+      root.__hoverArena = { x: ax, z: az, y: g, r: 62 * U };
+      var T4 = root.__w3dDebug && root.__w3dDebug.terrainV4;
+      if (T4 && T4.addRideExtra) T4.addRideExtra(function (x, z) { var r = Math.hypot(x - ax, z - az) / U; if (r > 62) return null; return g + (r < 48 ? 0.6 : 10 * Math.pow((r - 48) / 14, 2)) * U; });
     }));
     jobs.push(load('shaddai_edge_portal_v01.glb').then(function (s) {
       if (!s) return; var A = (o.portalAnchor && o.portalAnchor()) || { x: 0, y: 200, z: 118, yaw: Math.PI };
