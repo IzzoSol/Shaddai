@@ -85,6 +85,14 @@
     // THE SKYWARD PORTAL over the Grid (owner: "above the platform in the shaddai grid and floating with a big portal but it's closed"):
     // stair foot on the Sky Nexus deck (opposite SHADDAI's temple island, which floats off -Z), island + 22 m ring floating out past
     // the deck rail. Same sealed gate as the rim realms. o.portalAnchor() -> {x, y, z, yaw} overrides the default spot.
+    // SUBURB STAR CITY (K35, owner 2026-10-23 + TURTLE direction): the hexagram terrace city on the Suburb rim directly under the sky city,
+    // lift towers + braided ladders up to it. Compass 97, 4330 m out, sat on the highest ground of its footprint (terrace skirts reach 30 m down).
+    jobs.push(load('shaddai_suburb_star_v01.glb').then(function (s) {
+      if (!s) return; var a = 97 * Math.PI / 180, cx = Math.sin(a) * 4330 * U, cz = -Math.cos(a) * 4330 * U, g = -Infinity;
+      for (var rr = 0; rr <= 480; rr += 160) for (var k = 0; k < 12; k++) { var t = k * Math.PI / 6; if (o.heightAt) g = Math.max(g, o.heightAt(cx + Math.cos(t) * rr * U, cz + Math.sin(t) * rr * U)); }
+      if (!isFinite(g)) g = 0;
+      s.scale.setScalar(U * 1.25); s.position.set(cx, g - 20 * U, cz); s.rotation.y = -a; dress(s); group.add(s); s.updateMatrixWorld(true); stats.starCity = true;
+    }));
     jobs.push(load('shaddai_edge_portal_v01.glb').then(function (s) {
       if (!s) return; var A = (o.portalAnchor && o.portalAnchor()) || { x: 0, y: 200, z: 118, yaw: Math.PI };
       s.scale.setScalar(U); s.position.set(A.x, A.y, A.z); s.rotation.y = A.yaw; dress(s); group.add(s); s.updateMatrixWorld(true);
