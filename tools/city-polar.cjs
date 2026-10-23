@@ -29,7 +29,7 @@ const circle = (cx, cy, r, w, d) => { const n = 48; for (let i = 0; i < n; i++) 
 DIST.forEach((d) => circle(d.x, d.y, d.r + 14, 24, d.id)); circle(PARK.x, PARK.y, PARK.r + 14, 24, 'park');
 // CELLS: centre of every grid cell
 const cells = []; for (let i = 0; i + 1 < RINGS.length; i++) for (let b = 0; b < 360; b += STEP) { const r = (RINGS[i] + RINGS[i + 1]) / 2, bc = b + STEP / 2, p = P(r, bc); cells.push({ r, b: bc, x: p[0], y: p[1], used: false, red: inRed(bc) }); }
-DIST.forEach((d) => { const HERO = { athenaeum: null, forge: 'sc-tower-spire', trade: 'sc-tower-setback', residential: 'sc-tower-slab' }[d.id], HERO_H = { forge: 300, trade: 240, residential: 220 }; if (HERO) { add(HERO, d.x, d.y, HERO_H[d.id], 'district-hero', d.id); items[items.length - 1].by_height = true; }   // 2026-10-23 owner: keep them BIG but sci-fi - landmark towers sized by HEIGHT });
+DIST.forEach((d) => { const HERO = { athenaeum: null, forge: 'sc-tower-spire', trade: 'sc-tower-setback', residential: 'sc-tower-slab' }[d.id], HERO_H = { forge: 300, trade: 240, residential: 220 }; if (HERO) { add(HERO, d.x, d.y, HERO_H[d.id], 'district-hero', d.id); items[items.length - 1].by_height = true; } });   /* 2026-10-23 owner: keep them BIG but sci-fi - landmark towers sized by HEIGHT */
 const nearest = (x, y) => { let best = null, bd = 1e9; cells.forEach((c) => { if (c.used || c.red || blocked(c.x, c.y, 30)) return; const d = Math.hypot(c.x - x, c.y - y); if (d < bd) { bd = d; best = c; } }); return bd < 280 ? best : null; };
 const quad = (x, y) => (x < 0 && y < 0 ? 'residential' : x >= 0 && y >= 0 ? 'forge' : x >= 0 ? 'trade' : 'athenaeum');
 const SEC = { athenaeum: 'sc-techlab', forge: 'sc-civic-tower', trade: 'sc-market', residential: 'sc-storefront-l' };
