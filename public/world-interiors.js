@@ -32,7 +32,7 @@
   var ATHENAEUM_ISLAND_DX = 9000;   // Academy campus (world-athenaeum.js default origin = ROOM_ISLAND_X + 9000)
   var ROOM_SPACING   = 500;
   var ROOM_W         = 80;
-  var K34_HALLS      = { SHADDAI: 1, NEXUS: 1, ZEROX: 1, PIKADON: 1 };   // Blender council-hall shells (world-interiors buildRoom)
+  var K34_HALLS      = { SHADDAI: 1, NEXUS: 1, ZEROX: 1, PIKADON: 1, ORACLE: 1, QUILL: 1, TURTLE: 1 };   // Blender council-hall shells (world-interiors buildRoom)
   var ROOM_H         = 22;
   var ROOM_D         = 80;
   var PLAYER_EYE_Y   = 3.6;
@@ -2662,13 +2662,13 @@
          themed hero props hide; the exit frame, furniture, wall art, NPC slots and use-points stay. ?halls=0 = old look. */
       if (K34_HALLS[uc] && global.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]halls=0/.test(location.search || ''))) {
         var _hide = group.children.slice(_k0, _k1).concat(group.children.slice(_p0, _p1));
-        new global.__GLTFLoaderClass().load('/assets/kits/shaddai_hall_' + uc.toLowerCase() + '_v01.glb?v=20261023a', function (gl) {
+        new global.__GLTFLoaderClass().load('/assets/kits/shaddai_hall_' + uc.toLowerCase() + '_v01.glb?v=20261023b', function (gl) {
           if (!group.parent && rooms[uc] && rooms[uc].group !== group) return;   // room disposed while loading
           var k = gl.scene; k.name = 'k34-hall-' + uc;
           k.traverse(function (n) { if (!n.isMesh || !n.material) return; var nm = n.material.name || '';
             if (/^hall_glass/.test(nm)) n.material = new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.2, depthWrite: false });
             else if (/^hall_holo/.test(nm)) n.material = new THREE.MeshBasicMaterial({ color: n.material.emissive || 0xffffff, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }); });
-          group.add(k); _hide.forEach(function (o) { o.visible = false; });
+          group.add(k); _hide.forEach(function (o) { var keep = false; o.traverse(function (n) { if (n === global.__listeningRing) keep = true; }); if (!keep) o.visible = false; });   // TURTLE: the Listening Room ring stays
         }, undefined, function () { _warnOnce('k34:' + uc, 'K34 hall missing for ' + uc + ', code hall kept'); });
       }
 
