@@ -2,7 +2,7 @@
  * instance within 80 m that is small (< 4 m) and floats > 0.6 m above the ground, grouped by owner path + material colour. Read-only. */
 const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
-  if (os.freemem() / 1048576 < 700) { console.log('refused: low RAM'); process.exit(3); }
+  if (os.freemem() / 1048576 < 520) { console.log('refused: low RAM'); process.exit(3); }
   const b = await puppeteer.launch({ headless: 'new', protocolTimeout: 900000, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage(); await p.setViewport({ width: 700, height: 420 });
   await p.goto('http://localhost:3013/SHADDAI-WORLD-3D.html?colointro=0', { waitUntil: 'domcontentloaded', timeout: 90000 });
@@ -22,7 +22,8 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
       const gap = (box.min.y - H(c.x, c.z)) / U; if (gap < 0.6 || gap > 40) return;
       let top = o; const chain = []; for (let x = o; x && x !== S; x = x.parent) chain.push(x.name || x.type);
       const col = o.material && o.material.color ? '#' + o.material.color.getHexString() : '?';
-      const k = chain.reverse().join('>').slice(0, 120) + ' col=' + col; out[k] = (out[k] || 0) + 1;
+      const g = o.geometry, pr = g.parameters ? JSON.stringify(g.parameters).slice(0, 80) : '', ud = JSON.stringify(o.userData || {}).slice(0, 60);
+      const k = chain.reverse().join('>').slice(0, 80) + ' col=' + col + ' geo=' + g.type + pr + ' n=' + (o.isInstancedMesh ? o.count : 1) + ' gapM=' + Math.round(gap) + ' mat=' + (o.material && (o.material.name || o.material.type)) + ' ud=' + ud; out[k] = (out[k] || 0) + 1;
     }
     S.traverse(o => {
       if (!o.isMesh || !o.visible) return;

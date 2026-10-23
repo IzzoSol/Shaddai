@@ -4320,7 +4320,7 @@ window.buildWorldBuildings = function (THREE, scene, layout, heightAt, loader, o
       d.rotation.set(0.5, -a + Math.PI / 2, 0); d.scale.set(1, 1, 1); d.updateMatrix();
       bannerIM.setMatrixAt(i, d.matrix);
     }
-    bannerIM.instanceMatrix.needsUpdate = true; scene.add(bannerIM);
+    bannerIM.instanceMatrix.needsUpdate = true;   // 2026-10-23 owner: "de-clutter" - the pennants had no string and read as floating squares; built but not added
 
     // ── GRAND CENTRAL MONUMENT: tiered fountain + genie lamp + spinning holo ──
     const tierR = [13, 8.5, 5.0], tierH = 2.0, tierBaseY = [1.0, 3.4, 5.8];
