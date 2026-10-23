@@ -13,7 +13,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, DEPTH_M = 288, SHAFT_M = 145, PAD_R_M = 162, FILE = '/assets/kits/shaddai_bazaar_city_v01.glb?v=20261023f'   // shaft = the Grid's centre circle (canon-v4: empty disc r ~150 m), USE_M = 9;
+  var U = 7 / 1.8, DEPTH_M = 288, SHAFT_M = 145, PAD_R_M = 162, FILE = '/assets/kits/shaddai_bazaar_city_v01.glb?v=20261023p'   // shaft = the Grid's centre circle (canon-v4: empty disc r ~150 m), USE_M = 9;
   function build(o) {
     if (typeof location !== 'undefined' && /[?&]bazaar=0/.test(location.search || '')) return Promise.resolve(null);
     var THREE = o.THREE, A = (o.anchor && o.anchor()) || { x: 0, z: 0 };

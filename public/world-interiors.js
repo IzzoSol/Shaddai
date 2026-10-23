@@ -2662,7 +2662,7 @@
          themed hero props hide; the exit frame, furniture, wall art, NPC slots and use-points stay. ?halls=0 = old look. */
       if (K34_HALLS[uc] && global.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]halls=0/.test(location.search || ''))) {
         var _hide = group.children.slice(_k0, _k1).concat(group.children.slice(_p0, _p1));
-        new global.__GLTFLoaderClass().load('/assets/kits/shaddai_hall_' + uc.toLowerCase() + '_v01.glb?v=20261023b', function (gl) {
+        new global.__GLTFLoaderClass().load('/assets/kits/shaddai_hall_' + uc.toLowerCase() + '_v01.glb?v=20261023p', function (gl) {
           if (!group.parent && rooms[uc] && rooms[uc].group !== group) return;   // room disposed while loading
           var k = gl.scene; k.name = 'k34-hall-' + uc;
           k.traverse(function (n) { if (!n.isMesh || !n.material) return; var nm = n.material.name || '';

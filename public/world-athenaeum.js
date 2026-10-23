@@ -491,7 +491,7 @@
     // window-wall classrooms with holo desks + green walls, Dean's Atrium with tiered balconies). Same plan as athenaeum-layout.js, so
     // stations, colliders, pods, boards, posters, faculty and wing furniture all stay; the code shell / columns / balconies / centre
     // hologram (and the K15 shell) hide. ?athk33=0 = keep the old look.
-    if (root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athk33=0/.test(location.search || ''))) new root.__GLTFLoaderClass().load('/assets/kits/shaddai_athenaeum_interior_v01.glb?v=20261023b', function (gl) {
+    if (root.__GLTFLoaderClass && !(typeof location !== 'undefined' && /[?&]athk33=0/.test(location.search || ''))) new root.__GLTFLoaderClass().load('/assets/kits/shaddai_athenaeum_interior_v01.glb?v=20261023p', function (gl) {
       var shell = gl.scene; shell.name = 'athenaeum-k33';
       shell.traverse(function (n) {
         if (!n.isMesh || !n.material) return; var nm = n.material.name || '';
