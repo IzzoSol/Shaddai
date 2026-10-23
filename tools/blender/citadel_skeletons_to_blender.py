@@ -6,7 +6,7 @@ from mathutils.bvhtree import BVHTree
 REPO = r'C:/Users/Brittany/Shaddai-3d'; SC = bpy.data.scenes['REALM_VIEW']; bpy.context.window.scene = SC
 SP = bpy.data.collections['SETPIECES_20261023']
 for o in [o for o in SP.objects if o.name.startswith(('citadel', 'skeleton'))]: bpy.data.objects.remove(o, do_unlink=True)
-before = set(bpy.data.objects); bpy.ops.import_scene.gltf(filepath=REPO + '/public/assets/kits/shaddai_void_citadel_v01.glb')
+before = set(bpy.data.objects); bpy.ops.import_scene.gltf(filepath=REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_void_citadel_v01.glb')
 for o in [o for o in bpy.data.objects if o not in before]:
     for uc in list(o.users_collection): uc.objects.unlink(o)
     SP.objects.link(o)

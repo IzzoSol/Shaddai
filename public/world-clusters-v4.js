@@ -235,7 +235,7 @@ var _q = function (k, d) { try { var m = new RegExp('[?&]' + k + '=(\d+)').exec(
         if (crownReqs.length && window.WorldCityCrowns) try { window.WorldCityCrowns.build({ THREE: THREE, parent: group, reqs: crownReqs }); } catch (e) { console.warn(TAG + 'crowns', e && e.message); }
         var LM = { forge: 'anvil', trade: 'exchange', residential: 'hearth' };
         marks.forEach(function (it) { var id = LM[it.cluster]; if (!id) return;
-          load('/assets/kits/shaddai_landmark_' + id + '_v01.glb?v=20261023a').then(function (g) {
+          load('/assets/kits/shaddai_landmark_' + id + '_v01.glb?v=20261024a').then(function (g) {
             var x = it.x_m * U, z = -it.y_m * U, o = g.scene; o.scale.setScalar(U); o.position.set(x, minGround(x, z, 50 * U), z); o.rotation.y = -(it.yaw || 0) * Math.PI / 180; o.name = 'landmark-' + id;
             o.traverse(function (m) { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); group.add(o);
             var LL = window.WORLD_LAYOUT, col = { x: Math.round(x), z: Math.round(z), r: Math.round(30 * U), label: 'landmark:' + id };

@@ -28,7 +28,7 @@
     if (root.__parkDress && root.__parkDress.group) root.__parkDress.group.visible = false;
     if (T.setHeightExtra) T.setHeightExtra(heightAt);
     var loader = new o.GLTFLoader();
-    loader.load('/assets/kits/shaddai_hover_park_v01.glb?v=20261023a', function (gl) {
+    loader.load('/assets/kits/shaddai_hover_park_v01.glb?v=20261024a', function (gl) {
       var s = gl.scene; s.scale.setScalar(U); s.position.set(A.x, g0, A.z); s.rotation.y = th; s.name = 'hover-park-k40';
       s.traverse(function (m) { if (m.isMesh) { m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); } }); o.scene.add(s); S.built = true;
     }, undefined, function (e) { console.warn('[park-k40]', e && e.message); });

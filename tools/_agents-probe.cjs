@@ -13,7 +13,7 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   await sleep(6000);
   await p.evaluate(() => { const els = [...document.querySelectorAll('*')].filter(e => e.children.length < 4 && /Source Temple/i.test(e.textContent || '') && e.offsetParent); const t = els.sort((a, c) => (a.textContent || '').length - (c.textContent || '').length)[0]; if (t) (t.closest('button,[class*=portal],[class*=card],[onclick]') || t).click(); });
   for (let i = 0; i < 60 && !(await p.evaluate(() => window.__spawnBusy === false).catch(() => false)); i++) await sleep(3000);
-  await sleep(15000);
+  await sleep(45000);
   for (const code of ['SHADDAI', 'ZEROX', 'ORACLE', 'NEXUS', 'TURTLE', 'QUILL', 'PIKADON']) {
     await p.evaluate(c => window.setPlayerCharacter(c), code); await sleep(9000);
     const r = await p.evaluate(() => { const D = window.__w3dDebug, A = D.playerAnim && D.playerAnim(); let skinned = 0, bones = 0; const av = D.playerAvatar || (D.scene && D.scene.getObjectByName('playerAvatar'));
@@ -24,7 +24,7 @@ const puppeteer = require('puppeteer'), os = require('os'), sleep = ms => new Pr
   }
   const w = await p.evaluate(() => { const D = window.__dragons, RR = window.__realmRoads, T = window.__worldTransitApi, RD = window.__realmDress;
     const tints = []; const g = D && D.group || (window.__w3dDebug.scene.getObjectByName('world-dragons')); if (g) g.traverse(o => { if (o.isSkinnedMesh && o.material && o.material.color) tints.push(o.material.color.getHexString()); });
-    return { dragonTints: [...new Set(tints)].slice(0, 10), roads: RR && RR.stats, starcityStop: !!(T && T.stations.find(s => s.id === 'starcity')), towns2: RD && RD.stats && RD.stats.towns2, dressMissing: RD && RD.stats && RD.stats.missing }; });
+    return { dragonTints: [...new Set(tints)].slice(0, 10), dragonStates: D && D.dragons && D.dragons.map(d => d.state).join(','), titans: window.__titans && window.__titans.titans.length, skeletons: window.__mobs && window.__mobs.camps && window.__mobs.camps().filter(c => c.kind === 'skeleton').length, roads: RR && RR.stats, scatter: window.__biomeScatter && window.__biomeScatter.stats, crowns: window.__cityCrowns, starcityStop: !!(T && T.stations.find(s => s.id === 'starcity')), towns2: RD && RD.stats && RD.stats.towns2, realmCrowns: RD && RD.stats && RD.stats.crowns, dressMissing: RD && RD.stats && RD.stats.missing, parkK40: !!(window.__parkK40 && window.__parkK40.state.built), citadel: !!window.__citadel }; });
   console.log('world', JSON.stringify(w));
   console.log('pageerrors', errs.length, errs.slice(0, 5));
   await b.close();

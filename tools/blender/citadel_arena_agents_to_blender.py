@@ -17,11 +17,11 @@ def imp(path, c):
     return [o for o in new if o.parent is None]
 win = bpy.context.window; old = win.scene; win.scene = SC
 C = coll(SC, 'SETPIECES_20261023')
-imp(REPO + '/public/assets/kits/shaddai_void_citadel_v01.glb', C)
+imp(REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_void_citadel_v01.glb', C)
 T = bpy.data.objects['realm_terrain']; te = T.evaluated_get(bpy.context.evaluated_depsgraph_get()); tm = te.to_mesh()
 tm.calc_loop_triangles(); bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [t.vertices[:] for t in tm.loop_triangles]); te.to_mesh_clear()   # displayed triangulation (quads split differently were up to 4 m off)
 hit = bvh.ray_cast(Vector((380, -3050, 3000)), Vector((0, 0, -1))); gz = hit[0].z if hit[0] else 0
-for r in imp(REPO + '/public/assets/kits/shaddai_hover_arena_v01.glb', C): r.location = (380, -3050, gz)
+for r in imp(REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_hover_arena_v01.glb', C): r.location = (380, -3050, gz)
 AV = bpy.data.scenes.get('AGENTS_VIEW') or bpy.data.scenes.new('AGENTS_VIEW'); win.scene = AV
 A = coll(AV, 'AGENTS_RIGGED')
 for i, n in enumerate(['SHADDAI', 'ZEROX', 'ORACLE', 'NEXUS', 'TURTLE', 'QUILL', 'PIKADON']):

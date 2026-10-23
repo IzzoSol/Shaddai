@@ -16,8 +16,8 @@ def imp(path):
 T = bpy.data.objects['realm_terrain']; te = T.evaluated_get(bpy.context.evaluated_depsgraph_get()); tm = te.to_mesh()
 tm.calc_loop_triangles(); bvh = BVHTree.FromPolygons([T.matrix_world @ v.co for v in tm.vertices], [t.vertices[:] for t in tm.loop_triangles]); te.to_mesh_clear()   # displayed triangulation (quads split differently were up to 4 m off)
 h = bvh.ray_cast(Vector((-880, 0, 3000)), Vector((0, 0, -1))); gz = h[0].z if h[0] else 6
-for r in imp(REPO + '/public/assets/kits/shaddai_hover_park_v01.glb'): r.location = (-880, 0, gz); r.rotation_euler = (0, 0, math.radians(90))
-imp(REPO + '/public/assets/kits/shaddai_ocean_platform_v01.glb')
+for r in imp(REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_hover_park_v01.glb'): r.location = (-880, 0, gz); r.rotation_euler = (0, 0, math.radians(90))
+imp(REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_ocean_platform_v01.glb')
 for n in ('ocean_deck_teal', 'ocean_deck_white', 'ocean_deck_glow'):
     o = bpy.data.objects.get(n)
     if o: o.hide_set(True)

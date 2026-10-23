@@ -12,10 +12,10 @@ def imp(path, c):
     return [o for o in new if o.parent is None]
 SP = bpy.data.collections['SETPIECES_20261023']
 for o in [o for o in SP.objects if o.name.startswith('citadel')]: bpy.data.objects.remove(o, do_unlink=True)
-imp(REPO + '/public/assets/kits/shaddai_void_citadel_v01.glb', SP)
+imp(REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_void_citadel_v01.glb', SP)
 FIN = bpy.data.collections['FINISH_20261023']
 for o in [o for o in FIN.objects if o.name.startswith('arctic_peaks')]: bpy.data.objects.remove(o, do_unlink=True)
-imp(REPO + '/public/assets/kits/shaddai_arctic_peaks_v01.glb', FIN)
+imp(REPO + '/../Shaddai/fal-assets/backups/glb-prepack/shaddai_arctic_peaks_v01.glb', FIN)
 TC = bpy.data.collections.get('TITANS_20261024') or bpy.data.collections.new('TITANS_20261024')
 if TC.name not in [x.name for x in SC.collection.children]: SC.collection.children.link(TC)
 for o in list(TC.objects): bpy.data.objects.remove(o, do_unlink=True)
