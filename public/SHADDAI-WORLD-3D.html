@@ -327,7 +327,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-dress.js?v=20261023v"></script>
 <script src="/world-perf-guard.js?v=20261023c"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
-<script src="/world-edge-realms.js?v=20261023z"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
+<script src="/world-edge-realms.js?v=20261024a"></script><script src="/world-realm-roads.js?v=20261023c"></script><script src="/world-biome-scatter.js?v=20261023b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261023a"></script><script src="/world-titans.js?v=20261024a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
 <script src="/world-falprops.js?v=20260925m4"></script>
@@ -1305,7 +1305,7 @@ window.__worldBuilt = false;
           setDefeated: id => { const a = load(); if(a.indexOf(id) < 0){ a.push(id); try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(_){} } },
           // LAIRS (owner 2026-10-23: "dragons sleeping in each terrain ... a mission to defeat each and obtain the shard"): each dragon sleeps on the
           // highest dry ground of its realm 3.75-4.5 km out, off the road axis (+-6..18 deg), instead of perching at the train station. ?dragonlairs=0 = old perches.
-          lairFor: /[?&]dragonlairs=0/.test(location.search) ? null : function(st){ const c0 = Math.atan2(st.pos[0], -st.pos[1]) * 180 / Math.PI, wl = ((_v4Meta && +_v4Meta.water_level_m) || 2) + 6; let best = null;
+          lairFor: /[?&]dragonlairs=0/.test(location.search) ? null : function(st){ if(st.realm === 'void') return { x: 70 * V4_U, z: -4050 * V4_U };   /* the Void dragon sleeps by the citadel's keep gate (owner 2026-10-23) */ const c0 = Math.atan2(st.pos[0], -st.pos[1]) * 180 / Math.PI, wl = ((_v4Meta && +_v4Meta.water_level_m) || 2) + 6; let best = null;
             for(let dc = -18; dc <= 18; dc += 3){ if(Math.abs(dc) < 6) continue; for(let r = 3750; r <= 4500; r += 75){ const a = (c0 + dc) * Math.PI / 180, x = Math.sin(a) * r * V4_U, z = -Math.cos(a) * r * V4_U, g = api.heightAt(x, z);
               if(g > wl * V4_U && (!best || g > best.g)) best = { x, z, g }; } }
             return best; },
@@ -1318,6 +1318,7 @@ window.__worldBuilt = false;
         window.__dragons.on('defeated', function(e){ if(window.WorldDragonShards) window.WorldDragonShards.award(e); else if(window.__toast) window.__toast('🐉 ' + (e && e.name || 'The dragon') + ' bows'); });
         window.__dragons.on('wake', function(e){ if(window.__toast) window.__toast('🐉 ' + (e && e.name || 'A dragon') + ' wakes!'); });
         if(window.WorldDragonShards) window.WorldDragonShards.attach(window.__dragons);
+        if(window.WorldTitans) window.WorldTitans.build({ THREE, GLTFLoader, scene, cloneSkinned, heightAt: api.heightAt, meta: _v4Meta, getPlayer: ()=> (playerAvatar ? playerAvatar.position : playerPos), onHitPlayer: (dmg, kind, info)=> window.__onDragonHit && window.__onDragonHit(dmg, kind, info) }).catch(function(e){ console.warn('[titans]', e && e.message); });   /* 2026-10-24 realm titans */
         // element status (slow/burn/root/blind/drain/shock) → optional HUD/controller hook; movement reads __dragons.statusMods().speedMul
         window.__dragons.on('status', function(e){ if(window.__onDragonStatus) try{ window.__onDragonStatus(e); }catch(_){} });
       }).catch(function(e){ console.warn('[map-v4] dragons failed:', e && e.message); }).then(function(){ return api; });
@@ -4566,6 +4567,7 @@ window.__onDragonHit = function(dmg, kind, info){
 };
 function playerBasicAttack(){ const which=_pComboFlip?'attack2':'attack1'; _pComboFlip=!_pComboFlip;
   if(!playPlayerOnce(which,{timeScale:1.15})) _pTween={t:0,dur:0.3,kind:'lunge'};
+  if(window.__titans) window.__titans.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12);
   if(window.__dragons) window.__dragons.meleeHit(playerAvatar.position, fwd, 6*V4_U, 12); if(window.__wildlife) window.__wildlife.meleeHit(playerAvatar.position, fwd, 3*V4_U, 12); if(window.__mobs) window.__mobs.meleeHit(playerAvatar.position, fwd, 5*V4_U, 14); _attackFlash(); }   // VFX POLISH: quick slash-arc + muzzle flash so swings read clearly (cosmetic only)
 
 // ── Q = PROJECTILE — fire the current agent's signature bolt (+ a cast pose if the rig has one) ──
@@ -4729,6 +4731,7 @@ function _updateCombat(dt){
     p.age+=dt; p.o.position.addScaledVector(p.vel,dt);
       if(window.__dragons && !p.hitDragon){ const _hid = window.__dragons.hitTest(p.o.position, 1.5);
         if(_hid){ p.hitDragon = true; window.__dragons.damage(_hid, 18, p.o.position, p.dtype || 'arcane'); p.age = p.life; } }
+      if(window.__titans && p.age < p.life){ const _tid = window.__titans.hitTest(p.o.position, 1.5); if(_tid){ window.__titans.damage(_tid, 18); p.age = p.life; } }
       if(window.__wildlife && p.age < p.life){ const _wid = window.__wildlife.hitTest(p.o.position, 1.2); if(_wid){ window.__wildlife.damage(_wid, 18); p.age = p.life; } }
     if(p.spin) p.o.rotation.z += p.spin*dt;
     if(p.feather) p.o.rotation.y += 8*dt;

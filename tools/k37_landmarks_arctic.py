@@ -134,7 +134,12 @@ def arctic():   # K36: ice towers on four arctic summits, glass ice-bridges in a
         tops.append((x, y, z + 12))                                                                  # bridge deck level
     def bridge(a, b, w, glass=True):
         d = Vector((b[0] - a[0], b[1] - a[1], b[2] - a[2])); L = d.length; n = max(8, int(L / 12)); sd = Vector((-d.y, d.x, 0)).normalized() * w / 2; bm = m.get(WHITE()); prev = None; prevr = None
-        sag = min(18, L * 0.04)
+        sag = min(18, L * 0.04); SPANS.append([list(a), list(b), w, sag])
+        for e_, (P0, sgn) in enumerate(((a, 1), (b, -1))):   # lit door frame on the tower where the bridge arrives (owner: doors as you go up)
+            if any(math.hypot(P0[0] - q[0], P0[1] - q[1]) < 1 for q in tops) or P0 is b and b == ARCH_PT[0]:
+                dd = Vector((d.x, d.y, 0)).normalized() * sgn; fx, fy = P0[0] + dd.x * 15, P0[1] + dd.y * 15; ang = math.atan2(dd.y, dd.x) + math.pi / 2
+                for sx in (-1, 1): m.box(gold, fx + math.cos(ang) * sx * 3.2, fy + math.sin(ang) * sx * 3.2, P0[2], 0.8, 0.8, 5.2)
+                m.box(gold, fx, fy, P0[2] + 5.2, 7.2, 0.8, 0.8, ang); m.box(ice, fx, fy, P0[2], 5.6, 0.3, 5.0, ang); DOORS.append([fx, fy, P0[2]])
         for i in range(n + 1):
             t = i / n; c = Vector(a) + d * t; c.z -= math.sin(math.pi * t) * sag
             row = (bm.verts.new(c - sd), bm.verts.new(c + sd))
@@ -143,9 +148,19 @@ def arctic():   # K36: ice towers on four arctic summits, glass ice-bridges in a
                 bm.faces.new((prev[0], row[0], row[1], prev[1]))
                 rb.faces.new((prevr[0], rl[0], rl[1], prevr[1])); rb.faces.new((prevr[2], prevr[3], rl[3], rl[2]))   # continuous glass rail walls (owner: bridge edges)
             prev = row; prevr = rl
+            if i < n: c2 = Vector(a) + d * ((i + 1) / n); c2.z -= math.sin(math.pi * (i + 1) / n) * sag; mid = (c + c2) / 2; seg = (c2 - c).length
+            if i < n: m.box(indigo, mid.x, mid.y, mid.z - 1.15, w * 0.96, seg + 0.05, 1.0, math.atan2(d.y, d.x) - math.pi / 2)            # deck slab thickness
+            if i < n:
+                for sx in (-1, 1): m.box(cyan_e, mid.x + sd.x * sx * 1.0, mid.y + sd.y * sx * 1.0, mid.z - 0.7, 0.25, seg + 0.05, 0.25, math.atan2(d.y, d.x) - math.pi / 2)   # glowing edge fascia
             if glass and i % 2 == 0: m.box(ice, c.x, c.y, c.z, 0.6, 0.6, 3.2)                           # glass rail posts
             if i % 4 == 0: m.box(gold, c.x + sd.x * 1.02, c.y + sd.y * 1.02, c.z + 3.0, 0.5, 0.5, 0.4); m.box(gold, c.x - sd.x * 1.02, c.y - sd.y * 1.02, c.z + 3.0, 0.5, 0.5, 0.4)
-    for t_ in tops: m.cyl(WHITE(), t_[0], t_[1], t_[2] - 1.0, 22, 22, 1.0, 24)                       # landing deck where the bridges meet each tower
+    SPANS = []; DOORS = []; LIFTS = []; cyan_e = mat('ar_edge', 0x5fe8ff, 0.1, 0.3, 3.0)
+    ARCH_PT = [(4040 * math.sin(math.radians(335.6)), 4040 * math.cos(math.radians(335.6)), 756.0)]
+    for t_ in tops:
+        m.cyl(WHITE(), t_[0], t_[1], t_[2] - 1.0, 22, 22, 1.0, 24)                                       # landing deck where the bridges meet each tower
+        gz_ = g(t_[0] + 20, t_[1]); m.cyl(GLASS(), t_[0] + 20, t_[1], gz_ - 2, 2.6, 2.6, t_[2] - gz_ + 3, 12); m.torus(cyan_e, t_[0] + 20, t_[1], t_[2] + 1, 2.6, 0.2, 0, 16, 4)   # glass lift ground -> deck
+        m.box(WHITE(), t_[0] + 20, t_[1], gz_ - 0.2, 6, 6, 0.4); LIFTS.append([t_[0] + 20, t_[1], gz_, t_[2]])
+    m.cyl(WHITE(), tops[0][0], tops[0][1], tops[0][2] + 39, 20, 20, 1.0, 24)                              # skyway balcony on the summit tower
     for i in range(4): bridge(tops[i], tops[(i + 1) % 4], 10)                                         # the square loop of ice bridges
     ARCH = (4040 * math.sin(math.radians(335.6)), 4040 * math.cos(math.radians(335.6)), 756.0)
     bridge((tops[0][0], tops[0][1], tops[0][2] + 40), ARCH, 12)                                         # skyway from the summit tower to the arch
@@ -155,6 +170,7 @@ def arctic():   # K36: ice towers on four arctic summits, glass ice-bridges in a
     bridge(S, dz, 6); m.cyl(indigo, dz[0], dz[1], dz[2] - 2, 16, 16, 2, 24); m.torus(gold, dz[0], dz[1], dz[2], 16, 0.4, 0, 32, 6)
     o = m.finish('arctic_peaks'); o['dock'] = json.dumps(dz); o['skyway'] = json.dumps(ARCH)
     export(OUT + '/shaddai_arctic_peaks_v01.glb'); print('K36DOCK', json.dumps(dz))
+    json.dump({'tops': tops, 'spans': SPANS, 'doors': DOORS, 'lifts': LIFTS, 'balcony': [tops[0][0], tops[0][1], tops[0][2] + 40], 'dock': dz}, open(OUT + '/shaddai_arctic_peaks_v01.json', 'w'))
 
 def _terrain():
     T = json.load(open(REPO + '/public/assets/terrain/terrain.json')); raw = open(REPO + '/public/assets/terrain/height16.bin', 'rb').read(); N = int(math.sqrt(len(raw) / 2)); H = T['half_m']
@@ -165,7 +181,7 @@ def _terrain():
         return T['min_m'] + (T['max_m'] - T['min_m']) / 65535 * (t + (bt - t) * fy)
     return T, g
 
-def citadel():   # K38 THE EVIL CITADEL (owner 2026-10-23 ref: giant indigo castle, brain dome, violet-vein cobble causeway, torches, magenta lava).
+def citadel_v1():   # K38 (first pass, superseded) THE EVIL CITADEL (owner 2026-10-23 ref: giant indigo castle, brain dome, violet-vein cobble causeway, torches, magenta lava).
     # WORLD coordinates, behind the Void Castle on the far side of the Deep Void pit: centre (0, 4250), ~300 m to the dome.
     clear(); m = MB(); T, g = _terrain(); CX, CY = 0.0, 4250.0; Z = max(g(CX + dx, CY + dy) for dx in (-120, 0, 120) for dy in (-120, 0, 120)) - 6
     ind = mat('ct_indigo', 0x1b1640, 0.3, 0.6); stn = mat('ct_stone', 0x262042, 0.2, 0.8); vio = mat('ct_violet', 0x7a3dff, 0.2, 0.3, 4.0)
@@ -300,6 +316,76 @@ def oceanplat():   # Crystal Sea town platform in the REEF language (owner: "mak
         if i % 3 == 0: m.cyl(mat('op_pile', 0x3a3f46, 0.2, 0.6), c.x, c.y, -6, 0.7, 0.7, c.z + 6, 8); m.box(cy_, c.x, c.y, c.z + 0.02, 6, 0.4, 0.05, math.atan2(dn.y, dn.x))
         prev = (row, rg)
     m.finish('ocean_platform'); export(OUT + '/shaddai_ocean_platform_v01.glb')
+
+def citadel():   # K38b THE EVIL CITADEL, huge (owner 2026-10-23: "needs to be huge and sections of it taking the whole back area with insides and a dungeon
+    # that has an underground castle and one dragon next to the entrance"). WORLD coordinates, Void realm back area (compass ~344-16, r 4050-4650).
+    # Great keep (~420 m to the brain dome) at (0, 4300), fortress sections W/E at (+-850, 4250), curtain walls + towers across the back,
+    # magenta lava moat along the front, violet-vein bridges + torches to the gates, and the DUNGEON STAIR down from the keep's forecourt.
+    # Writes shaddai_void_citadel_v01.json (gates, dungeon stair, dragon spot, colliders) for the game.
+    clear(); m = MB(); T, g = _terrain()
+    ind = mat('ct_indigo', 0x1b1640, 0.3, 0.6); stn = mat('ct_stone', 0x262042, 0.2, 0.8); vio = mat('ct_violet', 0x7a3dff, 0.2, 0.3, 4.0)
+    mag = mat('ct_magenta', 0xff2bd6, 0.1, 0.4, 3.0); emb = mat('ct_ember', 0xff4a1a, 0.0, 0.5, 6.0); brain = mat('ct_brain', 0x3a2cff, 0.2, 0.4, 2.2); blk = mat('ct_black', 0x07060c, 0.0, 0.9)
+    def base_z(cx, cy, R): return max(g(cx + dx, cy + dy) for dx in (-R, 0, R) for dy in (-R, 0, R)) - 6
+    def tower(x, y, z, r, h, spire=True, bands=14):
+        m.cyl(ind, x, y, z, r, r * 0.88, h, 12)
+        if spire: m.cyl(stn, x, y, z + h, r * 1.08, 0.5, h * 0.45, 12)
+        for zz in range(int(bands), int(h), int(bands)): m.cyl(vio, x, y, z + zz, r * 1.02, r * 0.99, 1.4, 12)
+    def wall(x0, y0, x1, y1, z, h, t=9):
+        L = math.hypot(x1 - x0, y1 - y0); a = math.atan2(y1 - y0, x1 - x0)
+        m.box(ind, (x0 + x1) / 2, (y0 + y1) / 2, z, L, t, h, a); m.box(vio, (x0 + x1) / 2, (y0 + y1) / 2, z + h * 0.82, L * 0.96, t + 0.4, 1.4, a)
+        for k in range(int(L / 9)): m.box(stn, x0 + (x1 - x0) * (k + 0.5) / int(L / 9), y0 + (y1 - y0) * (k + 0.5) / int(L / 9), z + h, 4, t, 3, a)   # crenellations
+    COL = []
+    # GREAT KEEP
+    KX, KY = 0.0, 4300.0; KZ = base_z(KX, KY, 160)
+    m.cyl(stn, KX, KY, KZ - 30, 200, 185, 36, 8); m.cyl(mag, KX, KY, KZ + 5.5, 190, 190, 0.6, 72); m.cyl(stn, KX, KY, KZ + 5.6, 160, 160, 1.0, 72)
+    for k in range(8):
+        a0, a1 = 2 * math.pi * k / 8, 2 * math.pi * (k + 1) / 8
+        wall(KX + 150 * math.sin(a0), KY + 150 * math.cos(a0), KX + 150 * math.sin(a1), KY + 150 * math.cos(a1), KZ + 6, 44)
+        tower(KX + 150 * math.sin(a0), KY + 150 * math.cos(a0), KZ + 6, 18, 120)
+    for k in range(6):
+        a = 2 * math.pi * k / 6 + 0.5; tower(KX + 62 * math.sin(a), KY + 62 * math.cos(a), KZ + 6, 22, 210 + 25 * (k % 2))
+    m.cyl(ind, KX, KY, KZ + 6, 40, 32, 360, 16); m.cyl(stn, KX, KY, KZ + 366, 34, 24, 20, 16)
+    for zz in range(30, 360, 20):
+        for k in range(4): a = k * math.pi / 2 + math.pi / 4; m.box(vio, KX + 37 * math.sin(a), KY + 37 * math.cos(a), KZ + zz, 5, 5, 9)
+    bm = m.get(brain); vs = []
+    for i in range(17):
+        th = math.pi * i / 16; row = []
+        for j in range(32):
+            ph = 2 * math.pi * j / 32; r = 60 * (1 + 0.06 * math.sin(7 * ph + 3 * th) + 0.05 * math.sin(11 * th)) * (0.5 if abs(math.cos(ph)) < 0.06 else 1)
+            row.append(bm.verts.new((KX + r * math.sin(th) * math.cos(ph), KY + r * math.sin(th) * math.sin(ph), KZ + 420 + 0.8 * r * math.cos(th))))
+        vs.append(row)
+    for i in range(16):
+        for j in range(32): bm.faces.new((vs[i][j], vs[i][(j + 1) % 32], vs[i + 1][(j + 1) % 32], vs[i + 1][j]))
+    COL.append([KX, KY, 150])
+    # KEEP GATE (south) + bridge over the moat + torches; DUNGEON STAIR in the forecourt (west of the bridge foot)
+    GY = KY - 152; m.box(emb, KX, GY, KZ + 6, 20, 2, 30); m.box(stn, KX, GY, KZ + 36, 30, 6, 6)
+    for k in range(10): y = KY - 205 + k * 6; m.box(stn, KX, y, KZ + 5, 20, 6.2, 1.2); m.box(vio, KX, y, KZ + 6.25, 15, 0.5, 0.08)
+    for sx in (-1, 1):
+        for k in range(6): y = KY - 210 + k * 12; m.cyl(stn, KX + sx * 12, y, KZ + 6, 0.9, 1.2, 4, 6); m.cyl(emb, KX + sx * 12, y, KZ + 10, 1.0, 0.2, 2.4, 6)
+    DX, DY = KX - 60, KY - 235; DZ = g(DX, DY)
+    m.box(stn, DX, DY, DZ - 0.5, 22, 30, 1.0); m.box(blk, DX, DY + 2, DZ - 0.4, 12, 18, 0.5)
+    for k in range(10): m.box(stn, DX, DY - 8 + k * 2, DZ - 0.6 - k * 1.2, 12, 2, 0.6)                  # stair down into the dark
+    for sx in (-1, 1): m.box(stn, DX + sx * 8, DY, DZ, 2, 26, 8); m.cyl(emb, DX + sx * 8, DY - 12, DZ + 8, 1.0, 0.2, 2.4, 6)
+    m.box(stn, DX, DY - 12, DZ + 8, 18, 3, 3); m.box(vio, DX, DY - 13.6, DZ + 9.5, 14, 0.3, 1.0)
+    # FORTRESS SECTIONS W/E + the curtain wall across the whole back area
+    for sx in (-1, 1):
+        FX, FY = sx * 850.0, 4250.0; FZ = base_z(FX, FY, 110)
+        m.cyl(stn, FX, FY, FZ - 24, 130, 118, 30, 8); m.cyl(mag, FX, FY, FZ + 5.5, 124, 124, 0.6, 64)
+        for k in range(6):
+            a0, a1 = 2 * math.pi * k / 6, 2 * math.pi * (k + 1) / 6
+            wall(FX + 95 * math.sin(a0), FY + 95 * math.cos(a0), FX + 95 * math.sin(a1), FY + 95 * math.cos(a1), FZ + 6, 36); tower(FX + 95 * math.sin(a0), FY + 95 * math.cos(a0), FZ + 6, 15, 95)
+        tower(FX, FY, FZ + 6, 30, 230); tower(FX + 36, FY + 20, FZ + 6, 16, 160); tower(FX - 30, FY + 26, FZ + 6, 14, 140)
+        m.box(emb, FX, FY - 97, FZ + 6, 14, 2, 22); COL.append([FX, FY, 98])
+    pts = [(-1350, 4380), (-850 - 110, 4300), (-150, 4460), (150, 4460), (850 + 110, 4300), (1350, 4380)]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        z = min(g(x0, y0), g(x1, y1)); wall(x0, y0, x1, y1, z - 2, 60, 12)
+        n = int(math.hypot(x1 - x0, y1 - y0) / 150)
+        for k in range(n + 1): tower(x0 + (x1 - x0) * k / max(1, n), y0 + (y1 - y0) * k / max(1, n), z - 2, 14, 90)
+    for x0 in (-1350, 1350): tower(x0, 4380, g(x0, 4380) - 2, 26, 170)
+    m.finish('citadel'); export(OUT + '/shaddai_void_citadel_v01.glb')
+    json.dump({'keep_gate': [KX, GY - 4, KZ + 6], 'dungeon': [DX, DY - 10, DZ], 'dragon': [KX + 70, KY - 250], 'colliders': COL,
+               'fort_gates': [[sx * 850.0, 4250.0 - 99, 0] for sx in (-1, 1)]}, open(OUT + '/shaddai_void_citadel_v01.json', 'w'))
+    print('K38BCITADEL keep z', round(KZ, 1))
 
 for k in ids: globals()[k]()
 print('K37DONE')

@@ -15,7 +15,7 @@
  */
 (function (root) {
   'use strict';
-  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261023z', GATE_M = 60;
+  var U = 7 / 1.8, BASE = '/assets/kits/', V = '?v=20261024a', GATE_M = 60;
   // compass degrees (clockwise from north = -z) — each sits beyond the realm whose palette it echoes
   var REALMS = [
     // 2026-10-23 owner layout: the SKY CLUSTER off the east rim over the Suburb city - Sky City hangs off the edge above it, the single
@@ -118,10 +118,37 @@
     jobs.push(load('shaddai_arctic_peaks_v01.glb').then(function (s) {
       if (!s) return; s.scale.setScalar(U); dress(s); group.add(s); s.updateMatrixWorld(true); stats.arcticPeaks = true;
       var DK = [-1572.2, 2912.3, 4.5]; heads.push({ id: 'icedock', label: 'Ice Dock - boats need thermal gear', x: DK[0] * U, z: -DK[1] * U, y: DK[2] * U, cosmetic: 'arctic-thermal-suit' });
+      // WALKABLE (owner 2026-10-23: "make sure it's accessible"): bridge decks (with their sag), tower landing decks and the skyway balcony are ride
+      // surfaces; E at a glass lift (tower base) rides up to its deck and back. Geometry from the kit's sidecar JSON.
+      return fetch(BASE + 'shaddai_arctic_peaks_v01.json' + V).then(function (r) { return r.json(); }).then(function (J) {
+        var T4 = root.__w3dDebug && root.__w3dDebug.terrainV4; if (!T4 || !T4.addRideExtra) return;
+        T4.addRideExtra(function (x, z) { var bx = x / U, by = -z / U, best = null, i, q;
+          for (i = 0; i < J.tops.length; i++) { q = J.tops[i]; if (Math.hypot(bx - q[0], by - q[1]) < 22) best = Math.max(best == null ? -1e9 : best, q[2]); }
+          q = J.balcony; if (Math.hypot(bx - q[0], by - q[1]) < 20) best = Math.max(best == null ? -1e9 : best, q[2]);
+          for (i = 0; i < J.spans.length; i++) { var S = J.spans[i], a = S[0], b = S[1], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy || 1, t = ((bx - a[0]) * dx + (by - a[1]) * dy) / l2;
+            if (t < 0 || t > 1) continue; if (Math.hypot(bx - a[0] - dx * t, by - a[1] - dy * t) > S[2] / 2) continue;
+            var zz = a[2] + (b[2] - a[2]) * t - Math.sin(Math.PI * t) * S[3]; best = Math.max(best == null ? -1e9 : best, zz); }
+          return best == null ? null : best * U; });
+        addEventListener('keydown', function (e) {
+          if (e.code !== 'KeyE' || e.repeat) return; var P = root.__w3dDebug && root.__w3dDebug.playerPos; if (!P) return;
+          for (var i = 0; i < J.lifts.length; i++) { var L = J.lifts[i], d = Math.hypot(P.x / U - L[0], -P.z / U - L[1]); if (d > 6) continue;
+            var up = P.y / U < L[3] - 5; e.stopImmediatePropagation(); e.preventDefault(); P.y = (up ? L[3] + 0.5 : L[2] + 0.5) * U; if (up) { P.x = (L[0] - 12) * U; }
+            if (root.__toast) root.__toast(up ? 'Ice lift ▲ tower deck' : 'Ice lift ▼ ground'); return; }
+        }, true);
+      }).catch(function (e) { console.warn('[edge-realms] arctic json', e && e.message); });
     }));
     // THE EVIL CITADEL (K38, owner 2026-10-23): a ~300 m indigo fortress with a brain dome behind the Void Castle (world metres, placed at the origin).
     jobs.push(load('shaddai_void_citadel_v01.glb').then(function (s) { if (!s) return; s.scale.setScalar(U); dress(s); group.add(s); s.updateMatrixWorld(true); stats.citadel = true;
-      var LL = root.WORLD_LAYOUT; if (LL && LL.realmColliders) LL.realmColliders.push({ x: 0, z: Math.round(-4250 * U), r: Math.round(125 * U), label: 'void-citadel' }); }));
+      return fetch(BASE + 'shaddai_void_citadel_v01.json' + V).then(function (r) { return r.json(); }).then(function (J) {   // colliders + walk-in halls + the DUNGEON
+        var LL = root.WORLD_LAYOUT; (J.colliders || []).forEach(function (c) { if (LL && LL.realmColliders) LL.realmColliders.push({ x: Math.round(c[0] * U), z: Math.round(-c[1] * U), r: Math.round(c[2] * U), label: 'void-citadel' }); });
+        if (root.buildWorldCollision && LL) try { root.buildWorldCollision(LL); } catch (e) { }
+        var I = root.__realmDressInteriors = root.__realmDressInteriors || [];
+        I.push({ id: 'citadel-throne', recipe: 'shaddai-hall', x: J.keep_gate[0] * U, z: -J.keep_gate[1] * U, yaw: Math.PI, w: 23, d: 17, h: 8.5 });
+        I.push({ id: 'citadel-dungeon', recipe: 'forge', x: J.dungeon[0] * U, z: -J.dungeon[1] * U, yaw: Math.PI, w: 23, d: 17, h: 6 });   // the underground castle below the stair
+        (J.fort_gates || []).forEach(function (fg, k) { I.push({ id: 'citadel-fort-' + k, recipe: 'gallery', x: fg[0] * U, z: -fg[1] * U, yaw: Math.PI, w: 18, d: 14, h: 6 }); });
+        if (root.WorldRealmInteriors) try { root.WorldRealmInteriors.sync(); } catch (e) { }
+        root.__citadel = J;
+      }).catch(function (e) { console.warn('[edge-realms] citadel json', e && e.message); }); }));
     // NEON SAKURA HOVER ARENA (K39, owner refs 2026-10-23): the walled hover-skate colosseum beside the Southern Colosseum. Rideable bowl:
     // flat floor r < 48 m, quarter-pipe 48-62 m up to 10 m (terrain ride-extra, so boards and walkers both use it); the 66 m wall is the wall-ride face.
     jobs.push(load('shaddai_hover_arena_v01.glb').then(function (s) {
