@@ -31,10 +31,18 @@
         play(t, 'idle'); api.titans.push(t);
       });
       function play(t, n) { if (t.cur === n || !t.A[n]) return; var nx = t.A[n]; nx.reset().fadeIn(0.3).play(); if (t.cur && t.A[t.cur]) t.A[t.cur].fadeOut(0.3); t.cur = n; }
+      // PERF 2026-10-24: skinned titans are frustumCulled=false, so all of them drew (and cast into the shadow map) every frame. Cull by a
+      // 40 m-tall sphere against the camera instead, and cast shadows only near the player (the sun's shadow box is 60 m). No distance
+      // hiding: there is no fog, so titans stay visible on the horizon. ?titancull=0 = old behaviour.
+      var cull = !/[?&]titancull=0\b/.test(location.search), frus = new THREE.Frustum(), pv = new THREE.Matrix4(), sph = new THREE.Sphere();
+      function setCast(t, on) { if (t.cast === on) return; t.cast = on; t.o.traverse(function (m) { if (m.isMesh) m.castShadow = on; }); }
       api.update = function (dt) {
         var P = o.getPlayer && o.getPlayer(); if (!P) return;
+        var cam = cull && root.__w3dDebug && root.__w3dDebug.camera;
+        if (cam) { cam.updateMatrixWorld(); pv.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); frus.setFromProjectionMatrix(pv); }
         api.titans.forEach(function (t) {
           var dx = P.x - t.o.position.x, dz = P.z - t.o.position.z, d = Math.hypot(dx, dz) / U;
+          if (cam) { sph.center.set(t.o.position.x, t.o.position.y + 20 * U, t.o.position.z); sph.radius = 46 * U;   /* 46 m also covers a fallen (lying) titan */ t.o.visible = frus.intersectsSphere(sph); setCast(t, d < 200); }
           if (d > 2500) return;   // far: frozen (perf)
           t.mixer.update(dt);
           if (t.dead) return;

@@ -494,6 +494,9 @@ app.use(express.static(path.join(__dirname, '../public'), {
     // always reach the browser (a stale sw.js would let a stale worker survive updates).
     if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (/[\\/]dist[\\/]boot-\d+\.[0-9a-f]+\.js$/.test(filePath)) {
+      // world boot bundles carry a content hash in the name (tools/build-dist.cjs), so they never go stale
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));

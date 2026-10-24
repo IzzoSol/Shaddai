@@ -275,3 +275,19 @@ The winning strategy is:
 - and only then continue to reduce incremental cost
 
 This matches the real bottleneck in SHADDAI and matches the strongest external repo guidance for large 3D worlds.
+
+## Results 2026-10-24 (Claude, branch agents/1)
+Probe baseline (`node tools/_agents-probe.cjs`): playable 96.8 s, draw calls 1527, tris 5.03 M, 0 page errors, 7/7 agents OK.
+After phases 1+3 + titan culling: playable 109.2 s (noise, see A/B), draw calls **1422**, tris 4.96 M, 0 page errors, 7/7 agents OK.
+Boot A/B (`node tools/_boot-ab.cjs "?bundle=0" "?bundle=1"`, headless): unbundled 105.6 s / 118.2 s (176-180 JS requests), bundled 101.6 s (39 JS requests).
+Headless boot is dominated by world build in software GL and varies by about 13 s run to run, so the bundle win shows up mainly on the real network (144 requests -> 3, 2.7 MB -> 1.4 MB before gzip).
+- Phase 1 DONE: `node tools/build-dist.cjs` -> public/dist/boot-1..3.<hash>.js (rerun after editing any boot script; `--check` exits 1 if stale). `?bundle=0` = original files.
+  Production serves dist/boot-* as immutable (content-hashed names).
+- Phase 3 DONE: inline module -> public/world-main.js (HTML 655 KB -> 78 KB), cache-busted by hash via build-dist.
+- Phase 4 BUILT, OPT-IN: `WorldStaticBatch.runSafe` (siblings only, stable materials, sliced, self-reverting watchdog) via `?batch=safe`.
+  Verify with `node tools/_batch-ab.cjs` (draw calls + pixel diff, shots in tools/_out/), then make it default in world-main.js bootStaticBatch.
+- Phase 5: shadows were already near-player (60 m box following the player). Titans no longer cast unless within 200 m.
+- Phase 6: titans are view-culled (`?titancull=0` = old). NOT hidden by distance: fog is off by owner choice, so distant titans are visible on the horizon.
+- Phase 2 (deferring modules) NOT done: script load is not the measured bottleneck; deferring risks breaking boot coupling.
+- Phase 7 TODO: `node tools/glb-pack.mjs` on unquantized kits (naval 1.09 MB, hover_league, race_hq, forest_homes, colosseum_lobby, transit, desert_homes, station_ocean, water_link).
+- Phase 8: sw.js is a deliberate passthrough (old cache-first SW caused stale builds); caching is HTTP-header based. Left as is.
