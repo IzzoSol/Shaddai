@@ -155,7 +155,6 @@
       { realm: 'suburb',     id: 'bld-sea-terrace-spire',   len: 30, fx: 0.55,  fz: -0.2,  ry: -0.6, col: 0.8, office: true },
       { realm: 'suburb',     id: 'bld-holo-market-v2',      len: 32, fx: 0.0,   fz: 0.55,  ry: 3.14, col: 0.8 },
       { realm: 'meadow',     id: 'hero-mushroom-pods',      len: 40, fx: 0,     fz: 0,     ry: 0,    col: 0.75, src: 'fal' },
-      { realm: 'meadow',     id: 'hero-farm-sky-structure', len: 40, fx: 0.32,  fz: 0.30,  y: 120, ry: 0.4, col: 0, src: 'fal' },   // floats ~30 m above the fields
       { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 26, fx: -0.5,  fz: 0.4,   ry: 0.8,  col: 0.75 },
       { realm: 'meadow',     id: 'homes-mushroom-pods',     len: 24, fx: 0.45,  fz: -0.42, ry: 2.4,  col: 0.75 },
       // ── realm landmarks from fal (MAP v3): one centerpiece per realm, real size ──
@@ -289,7 +288,7 @@
       'volcano-bridge': [[64, 0.678, 64]], 'volcano-gate': [[61, 0.622, 241]], 'hero-city-megatower': [[100, 0.833, 0]],
       'bld-apartment-pod-block': [[94, 0.770, 0]], 'bld-inverted-cube-hab': [[109, 0.785, 0]], 'bld-neon-observatory': [[114, 0.881, 0]],
       'bld-sea-terrace-spire': [[90, 0.896, 0]], 'bld-holo-market-v2': [[104, 0.689, 284]], 'hero-forest-amphitheater': [[127, 0.793, 0]],
-      'hero-mushroom-pods': [[140, 0.704, 0]], 'hero-farm-sky-structure': [[152, 0.833, 0]],
+      'hero-mushroom-pods': [[140, 0.704, 0]],
       'homes-mushroom-pods': [[134, 0.748, 0], [146, 0.770, 0]], 'hero-sky-dome': [[338, 0.837, 0]], 'hero-arctic-outpost': [[332, 0.637, 152]],
       'hero-castle': [[292, 0.815, 112]], 'prop-obsidian-rocks': [[284, 0.704, null], [300, 0.759, null]],
       'prop-crystal-cluster': [[288, 0.870, null], [296, 0.667, null], [278, 0.796, null]], 'hero-beach-market-dome': [[224, 0.652, 44]]

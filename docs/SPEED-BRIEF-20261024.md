@@ -284,10 +284,12 @@ Headless boot is dominated by world build in software GL and varies by about 13 
 - Phase 1 DONE: `node tools/build-dist.cjs` -> public/dist/boot-1..3.<hash>.js (rerun after editing any boot script; `--check` exits 1 if stale). `?bundle=0` = original files.
   Production serves dist/boot-* as immutable (content-hashed names).
 - Phase 3 DONE: inline module -> public/world-main.js (HTML 655 KB -> 78 KB), cache-busted by hash via build-dist.
-- Phase 4 BUILT, OPT-IN: `WorldStaticBatch.runSafe` (siblings only, stable materials, sliced, self-reverting watchdog) via `?batch=safe`.
-  Verify with `node tools/_batch-ab.cjs` (draw calls + pixel diff, shots in tools/_out/), then make it default in world-main.js bootStaticBatch.
+- Phase 4: already covered by world-auto-merge.js (default ON, ?smerge=0 = off), which merges loose static meshes after a stability check.
+  A sibling-only safe batcher was tried and merged 0 meshes on top of it, so it was removed (no dead code).
 - Phase 5: shadows were already near-player (60 m box following the player). Titans no longer cast unless within 200 m.
 - Phase 6: titans are view-culled (`?titancull=0` = old). NOT hidden by distance: fog is off by owner choice, so distant titans are visible on the horizon.
 - Phase 2 (deferring modules) NOT done: script load is not the measured bottleneck; deferring risks breaking boot coupling.
-- Phase 7 TODO: `node tools/glb-pack.mjs` on unquantized kits (naval 1.09 MB, hover_league, race_hq, forest_homes, colosseum_lobby, transit, desert_homes, station_ocean, water_link).
+- Phase 7 DONE: tools/glb-pack.mjs on 9 kits (naval, hover_league, race_hq, forest_homes, colosseum_lobby, transit, desert_homes, station_ocean, water_link): 3.7 -> 2.7 MB, originals in fal-assets/backups/glb-prepack/. KTX2 skipped (quality risk).
+- Final probe: playable 112.9 s (headless noise band 97-118 s), draw calls 1445, tris 5.02 M, textures 218 (was 254), 0 page errors, 7/7 agents OK, dragons/titans/roads/towns/park/citadel OK.
+- Owner-deleted assets (276, mostly fal-assets sources) checked: none loaded by game code; the deleted hero-farm-sky-structure layout entry was removed to avoid a 404.
 - Phase 8: sw.js is a deliberate passthrough (old cache-first SW caused stale builds); caching is HTTP-header based. Left as is.

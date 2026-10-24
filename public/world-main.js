@@ -5483,13 +5483,11 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
       if(!window.WorldAutoMerge) return; return window.WorldAutoMerge.run({ THREE, scene, mergeGeometries: r[1].mergeGeometries, log: function(m){ console.info(m); } }).then(function(rep){ window.__autoMerge = rep; }); })
       .catch(function(e){ console.warn('[auto-merge] off:', e && e.message); }); }, 8000); }, 1000); })();
 // STATIC BATCH (default ON, ?batch=0 = off): merge frozen loose meshes that share material values into one mesh each (world-static-batch.js). `?batch=0` / default = off.
-(function bootStaticBatch(){ if(!/[?&]batch=(1|safe)\b/.test(location.search)) return; let n = 0;   /* 2026-10-24: ?batch=safe = SAFE mode (WorldStaticBatch.runSafe: siblings only, stable materials, sliced over frames, self-reverting watchdog); ?batch=1 = the old scene-wide merge. Stays opt-in until node tools/_batch-ab.cjs shows no visual diff, then flip this test to default ON */   // OFF by default again (2026-10-11): the merge runs on the main thread right after playable and can stall low-end GPUs; opt in with ?batch=1
+(function bootStaticBatch(){ if(!/[?&]batch=1\b/.test(location.search)) return; let n = 0;   // OFF by default again (2026-10-11): the merge runs on the main thread right after playable and can stall low-end GPUs; opt in with ?batch=1
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
     if(!window.__loadPlayable || !window.WorldStaticBatch) return; clearInterval(iv);
     setTimeout(function(){ import('three/addons/utils/BufferGeometryUtils.js').then(function(BGU){
-      const lg = function(m){ console.info(m); };
-      if(/[?&]batch=1\b/.test(location.search) || !window.WorldStaticBatch.runSafe){ window.__staticBatch = window.WorldStaticBatch.run({ THREE, scene, mergeGeometries: BGU.mergeGeometries, minGroup: 8, log: lg }); return; }
-      return window.WorldStaticBatch.runSafe({ THREE, scene, mergeGeometries: BGU.mergeGeometries, log: lg }).then(function(r){ window.__staticBatch = r; }); })
+      const r = window.WorldStaticBatch.run({ THREE, scene, mergeGeometries: BGU.mergeGeometries, minGroup: 8, log: function(m){ console.info(m); } }); window.__staticBatch = r; })
       .catch(function(e){ console.warn('[batch] off:', e && e.message); }); }, 4000); }, 1000); })();
 (function bootHarborCanal(){ if(!/[?&]waterways=1\b/.test(location.search)) return; let n = 0;
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
