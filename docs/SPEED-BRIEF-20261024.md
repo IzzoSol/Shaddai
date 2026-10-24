@@ -223,6 +223,49 @@ Do this in order:
 ## Hard stop rule for the next agent
 If any generated patch, file edit, or prompt contains an accidental trailing `//` marker, stop immediately, revert to the last clean checkpoint, and continue only after the file is clean. Do not continue writing after a stray `//` appears. The repo should never contain accidental trailing `//` syntax markers in docs or code.
 
+## Very low-context / high-signal agent flow
+- Read only:
+  - `docs/SPEED-BRIEF-20261024.md`
+  - `docs/PERF-REPO-STACK-20261024.md`
+  - the exact file implicated by the current optimization
+  - `tools/_agents-probe.cjs`
+- Do not read the whole repo.
+- Do not re-explain the architecture unless a file is directly causing the current issue.
+- One optimization pass at a time.
+- One measurement pass at a time.
+- No broad exploratory coding.
+
+## Minimal operational loop
+1. Read the brief.
+2. Read the specific file implicated by the next optimization.
+3. Run:
+   - `node tools/serve.cjs`
+   - `node tools/_agents-probe.cjs`
+4. Make one small, reversible change.
+5. Run the probe again.
+6. Stop and summarize.
+7. Move to the next item only if the previous one is clearly stable.
+
+## Performance rule for this project
+We are not removing visual quality. We are removing unnecessary work.
+- fewer blocking script requests
+- less startup parsing
+- fewer draw submissions
+- less shadow cost
+- less distant-object render cost
+- fewer redundant asset fetches
+- same gameplay, same quality, faster world
+
+This is the central rule for every optimization pass. The project must preserve the same gameplay feel and visual fidelity while reducing wasted work. No broad refactor, no feature stripping, and no “performance at any cost” changes. Every optimization must be measured, reversible, and quality-neutral.
+
+## Quality-first optimization law
+- Do not reduce visual fidelity.
+- Do not degrade gameplay feel.
+- Measure before and after.
+- Keep `?param=0` escape hatches.
+- Keep changes small and reversible.
+- If the visual result is worse, revert and fix the optimization in a more targeted way.
+
 ## Final summary
 The winning strategy is:
 - fix startup serialization first
