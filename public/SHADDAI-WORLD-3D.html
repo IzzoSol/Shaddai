@@ -325,7 +325,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
 <script src="/world-realm-dress.js?v=20261024b"></script>
-<script src="/world-perf-guard.js?v=20261023c"></script>
+<script src="/world-perf-guard.js?v=20261024a"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
 <script src="/world-edge-realms.js?v=20261024d"></script><script src="/world-realm-roads.js?v=20261024b"></script><script src="/world-biome-scatter.js?v=20261024b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261024a"></script><script src="/world-titans.js?v=20261024a"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
@@ -6994,7 +6994,7 @@ const _feetY = _pctlActive ? _pctlOut.renderPos.y - _diveY : null;             /
   const _pt1 = _perfOn ? performance.now() : 0;
   composer.render();
   if(_perfOn){ const _pt2 = performance.now(); window.__perfSplit = { simMs: +(_pt1 - _pt0).toFixed(1), renderCpuMs: +(_pt2 - _pt1).toFixed(1) }; }
-  window.__perfFrame(dt);   // ?perf=1 profiler (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
+  if(window.__perfFrame) window.__perfFrame(dt);   // ?perf=1 profiler (guarded: a dropped script must not throw every frame) (world-perf-hud.js; our gamedev repo's game-qa-performance pattern)
 }
 animate();
 // dev: overhead camera for screenshots — ?overhead=tx,tz overrides to a top-down view of that point

@@ -63,6 +63,9 @@
     var SM = o.THREE && o.THREE.SkinnedMesh;                                    // no frame may ever throw on a bad skin (red banner)
     if (SM && !SM.prototype.__pgPatched) {
       SM.prototype.__pgPatched = true;
+      var abt = SM.prototype.applyBoneTransform;   // 2026-10-24: raycasts hit the same bad-skin crash (three.core applyBoneTransform -> bones[i].matrixWorld)
+      if (abt) SM.prototype.applyBoneTransform = function (index, target) { var sk = this.skeleton, si = this.geometry && this.geometry.attributes.skinIndex;
+        if (sk && si) { for (var c = 0; c < 4; c++) { var bi = si.getComponent(index, c); if (bi >= sk.bones.length || !sk.bones[bi]) return target; } } return abt.call(this, index, target); };
       ['computeBoundingSphere', 'computeBoundingBox'].forEach(function (fn) {
         var orig = SM.prototype[fn]; if (!orig) return;
         SM.prototype[fn] = function () {
