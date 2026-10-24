@@ -8,6 +8,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.
 http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html';
   const f = path.join(ROOT, p); if (!f.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+  if (p === '/SHADDAI-WORLD-3D.html') { const h = Buffer.from(require('./boot-dist-guard.cjs').worldHtml()); res.writeHead(200, { 'Content-Type': MIME['.html'], 'Content-Length': h.length, 'Cache-Control': 'no-cache' }); return res.end(h); }   /* stale bundles -> original scripts */
   fs.stat(f, (e, st) => {
     if (e || !st.isFile()) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'Content-Type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', 'Content-Length': st.size, 'Cache-Control': 'no-cache' });

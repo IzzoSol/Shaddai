@@ -10,19 +10,10 @@ const PUB = path.join(__dirname, '..', 'public'), HTML = path.join(PUB, 'SHADDAI
 const CHECK = process.argv.includes('--check');
 const sha = s => crypto.createHash('sha1').update(s).digest('hex').slice(0, 10);
 
-let html = fs.readFileSync(HTML, 'utf8');
-const tpl = html.match(/<template id="boot-scripts">([\s\S]*?)<\/template>/);
-if (!tpl) { console.error('no <template id="boot-scripts"> in the HTML'); process.exit(2); }
-const srcs = [...tpl[1].matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
-const files = srcs.map(s => path.join(PUB, s.split('?')[0]));
-const raw = files.map(f => fs.readFileSync(f, 'utf8'));
-
-// split into N chunks of similar size, keeping order
-const total = raw.reduce((a, s) => a + s.length, 0), chunks = [[]]; let acc = 0;
-raw.forEach((s, i) => { if (acc > (total / N) * chunks.length && chunks.length < N) chunks.push([]); chunks[chunks.length - 1].push(i); acc += s.length; });
-const names = chunks.map((c, k) => '/dist/boot-' + (k + 1) + '.' + sha(c.map(i => srcs[i] + '\n' + raw[i]).join('\n')) + '.js');
-const mainHash = sha(fs.readFileSync(path.join(PUB, 'world-main.js'), 'utf8'));
-const bundlesLine = 'window.__BOOT_BUNDLES = ' + JSON.stringify(names) + ';';
+let html = fs.readFileSync(HTML, 'utf8').replace(/\r\n/g, '\n');
+const P = require('./boot-dist-guard.cjs').plan(html);
+if (!P) { console.error('no <template id="boot-scripts"> in the HTML'); process.exit(2); }
+const { srcs, files, raw, chunks, names, mainHash, bundlesLine } = P;
 
 if (CHECK) {
   const ok = html.includes(bundlesLine) && names.every(n => fs.existsSync(path.join(PUB, n))) && html.includes('/world-main.js?v=' + mainHash + '"');

@@ -477,6 +477,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// World page: if the boot bundles are stale (someone forgot node tools/build-dist.cjs), serve the original scripts instead, never old code
+app.get('/SHADDAI-WORLD-3D.html', (req, res, next) => { try { res.type('html').send(require('../tools/boot-dist-guard.cjs').worldHtml()); } catch (e) { next(); } });
+
 // Serve MiroFish React app
 app.use('/mirofish', express.static(path.join(__dirname, '../public/mirofish'), {
   index: 'index.html',
