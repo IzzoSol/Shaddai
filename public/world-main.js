@@ -709,6 +709,22 @@ __loadMgr.onProgress = function(url, loaded, total){
 };
 __loadMgr.onLoad = function(){ window.__assetsReady = true; };
 const agentBodyLoader = new GLTFLoader(__loadMgr); agentBodyLoader.setDRACOLoader(dracoLoader); agentBodyLoader.setMeshoptDecoder(MeshoptDecoder);   // agent bodies v11 are meshopt+webp (tools/ual/build-agent.mjs)
+/* SKIN REPAIR (2026-10-25): the agent bodies carry zero-weight skin indices up to 255 on a 24-bone skeleton (perf-guard: maxIdx=255). The GPU
+ * reads past the bone texture for those, 0 x garbage can be NaN, and the body renders as a burst of white shards. Point every out-of-range
+ * index at bone 0 (weights renormalised; zero-weight slots stay zero). Valid rigs are untouched. ?skinfix=0 = off. */
+function _repairSkins(root){ let fixed = 0;
+  root.traverse(function(o){ if(!o.isSkinnedMesh || !o.skeleton) return; const n = o.skeleton.bones.length, si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight; if(!si || !sw) return;
+    for(let v = 0; v < si.count; v++){ let bad = false, sum = 0; const w = [0,0,0,0];
+      for(let j = 0; j < 4; j++){ const b = si.getComponent(v, j); w[j] = sw.getComponent(v, j); if(b >= n || !o.skeleton.bones[b]){ w[j] = 0; bad = true; } sum += w[j]; }
+      if(!bad) continue; fixed++;
+      for(let j = 0; j < 4; j++){ const b = si.getComponent(v, j); if(b >= n || !o.skeleton.bones[b]) si.setComponent(v, j, 0); sw.setComponent(v, j, sum > 0 ? w[j] / sum : (j === 0 ? 1 : 0)); } }
+    si.needsUpdate = sw.needsUpdate = true; });
+  if(fixed) console.info('[skin-repair]', fixed, 'vertices fixed');
+  return fixed; }
+window.__repairSkins = _repairSkins;
+if(!/[?&]skinfix=0/.test(location.search) && !GLTFLoader.prototype.__skinFix){ const _gl0 = GLTFLoader.prototype.load;   /* every loader (agents, NPCs, bots, creatures) */
+  GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError){ return _gl0.call(this, url, function(g){ try{ if(g && g.scene) window.__skinRepaired = (window.__skinRepaired || 0) + _repairSkins(g.scene); }catch(e){ console.warn('[skin-repair]', e && e.message); } onLoad && onLoad(g); }, onProgress, onError); };
+  GLTFLoader.prototype.__skinFix = true; }
 
 // ── BUILD THE ORGANIZED WORLD: walkable terrain + biome regions/water + real vehicles ──
 let worldTerrain=null, worldBiomes=null, worldVehicles=null, worldMarkets=null, worldBuildings=null, worldNPCs=null, worldOcean=null, worldVolcano=null, worldRealmProps=null, worldTrails=null, worldLandmarks=null;
