@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Emerald Vine</title>
+<style>
+:root { --bg: #030805; --fg: #eafff3; --acc: #00ff9c; --gold: #e8c45c; --line: rgba(0,255,156,.4); }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--fg); font: 15px/1.5 system-ui, sans-serif; background: var(--bg) url('/assets/vine/bg.jpg') center top / cover fixed no-repeat; }
+.veil { min-height: 100vh; background: linear-gradient(180deg, rgba(3,8,5,.55), rgba(3,8,5,.88) 45%, rgba(3,8,5,.96)); }
+header { padding: 40px 16px 10px; text-align: center; }
+h1 { margin: 0; font-size: clamp(28px, 6vw, 52px); letter-spacing: .12em; color: var(--acc); text-shadow: 0 0 24px rgba(0,255,156,.5); }
+header p { margin: 6px 0 0; color: var(--gold); }
+header a { color: var(--fg); opacity: .75; }
+.links { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding: 18px 16px; }
+.b { font: 600 15px/1.2 system-ui, sans-serif; color: var(--fg); background: rgba(5,20,12,.8); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; cursor: pointer; text-decoration: none; }
+.b:hover, .b:focus-visible { border-color: var(--acc); box-shadow: 0 0 18px rgba(0,255,156,.35); outline: none; }
+.b small { display: block; font-weight: 400; opacity: .65; font-size: 11px; margin-top: 3px; }
+#gate { display: none; gap: 8px; justify-content: center; padding: 0 16px 10px; }
+#gate.on { display: flex; }
+#gate input { width: 120px; font: 16px system-ui; padding: 10px; border-radius: 8px; border: 1px solid rgba(232,196,92,.6); background: #06140c; color: #fff; text-align: center; letter-spacing: .3em; }
+#msg { align-self: center; color: #ffb3b3; font-size: 13px; }
+#open { display: none; flex-wrap: wrap; gap: 12px; justify-content: center; padding: 0 16px 10px; }
+h2 { text-align: center; color: var(--gold); letter-spacing: .1em; margin: 26px 0 0; font-size: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; padding: 16px 16px 48px; max-width: 1400px; margin: 0 auto; }
+.grid a { display: block; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #06140c; }
+.grid img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+</style>
+</head>
+<body>
+<div class="veil">
+  <header>
+    <h1>THE EMERALD VINE</h1>
+    <p>Calls · PNL · community</p>
+    <p><a href="/">← back</a></p>
+  </header>
+  <nav class="links" aria-label="Channels">
+    <a class="b" href="https://t.me/EMERALDLOUNGE" target="_blank" rel="noopener">◈ Emerald Lounge<small>open to everyone</small></a>
+    <button class="b" type="button" id="lock">🔒 SHADDAI Bot + Private Channel<small>members code required</small></button>
+  </nav>
+  <form id="gate" autocomplete="off">
+    <input id="code" inputmode="numeric" maxlength="8" placeholder="code" aria-label="Access code">
+    <button class="b" type="submit">Unlock</button><span id="msg" role="status"></span>
+  </form>
+  <div id="open"></div>
+  <h2>PNL</h2>
+  <main class="grid" id="grid" aria-label="PNL cards"></main>
+</div>
+<script>
+(function () {
+  var gate = document.getElementById('gate'), code = document.getElementById('code'), msg = document.getElementById('msg'), open = document.getElementById('open'), key = '';
+  document.getElementById('lock').onclick = function () { gate.classList.toggle('on'); if (gate.classList.contains('on')) code.focus(); };
+  function link(href, label) { var a = document.createElement('a'); a.className = 'b'; a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label; return a; }
+  gate.onsubmit = function (e) {
+    e.preventDefault(); msg.textContent = '';
+    fetch('/api/demo/unlock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code.value.trim() }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        if (!d || !d.url) { msg.textContent = 'Wrong code'; return; }
+        key = code.value.trim(); code.value = ''; gate.classList.remove('on'); open.innerHTML = ''; open.style.display = 'flex';
+        if (d.bot) open.appendChild(link(d.bot, '✈ SHADDAI Bot'));
+        open.appendChild(link(d.url, '🔐 Private Channel'));
+        var w = document.createElement('button'); w.className = 'b'; w.type = 'button'; w.textContent = '⬇ Tracked Wallets'; open.appendChild(w);
+        w.onclick = function () {
+          fetch('/api/demo/wallets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: key }) })
+            .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
+            .then(function (bl) { var u = URL.createObjectURL(bl), a = document.createElement('a'); a.href = u; a.download = 'shaddai-tracked-wallets.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); })
+            .catch(function () { w.textContent = 'Download failed - retry'; });
+        };
+      })
+      .catch(function () { msg.textContent = 'Unavailable - try again'; });
+  };
+  fetch('/assets/pnl/index.json').then(function (r) { return r.json(); }).then(function (list) {
+    var g = document.getElementById('grid');
+    list.forEach(function (f) { var a = document.createElement('a'); a.href = '/assets/pnl/' + f; a.target = '_blank'; a.rel = 'noopener';
+      var i = document.createElement('img'); i.src = '/assets/pnl/' + f; i.loading = 'lazy'; i.decoding = 'async'; i.alt = 'PNL card'; a.appendChild(i); g.appendChild(a); });
+  });
+})();
+</script>
+</body>
+</html>

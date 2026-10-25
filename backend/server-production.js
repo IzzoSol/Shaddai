@@ -480,7 +480,7 @@ app.use((req, res, next) => {
 // World page: if the boot bundles are stale (someone forgot node tools/build-dist.cjs), serve the original scripts instead, never old code
 app.get('/SHADDAI-WORLD-3D.html', (req, res, next) => { try { res.type('html').send(require('../tools/boot-dist-guard.cjs').worldHtml()); } catch (e) { next(); } });
 
-// DEMO BAR (owner 2026-10-24): the private channel link + tracked-wallet list are handed out only after the members code (4444); 8 tries per IP per 10 min
+// DEMO BAR (owner 2026-10-24): the private channel link + tracked-wallet list are handed out only after the members code (9999); 8 tries per IP per 10 min
 const _demoTries = new Map();
 function _demoGate(req, res) {
   const ip = req.ip || 'x', now = Date.now(), t = _demoTries.get(ip) || { n: 0, at: now };
@@ -488,10 +488,10 @@ function _demoGate(req, res) {
   if (++t.n > 8) { _demoTries.set(ip, t); res.status(429).json({ ok: false }); return false; }
   _demoTries.set(ip, t); if (_demoTries.size > 5000) _demoTries.clear();
   res.set('Cache-Control', 'no-store');
-  if (String((req.body && req.body.code) || '') === (process.env.DEMO_CHANNEL_CODE || '4444')) return true;
+  if (String((req.body && req.body.code) || '') === (process.env.DEMO_CHANNEL_CODE || '9999')) return true;
   res.status(403).json({ ok: false }); return false;
 }
-app.post('/api/demo/unlock', express.json({ limit: '1kb' }), (req, res) => { if (_demoGate(req, res)) res.json({ ok: true, url: process.env.DEMO_CHANNEL_URL || 'https://t.me/+jiuVgyyQK6ZkY2Rh' }); });
+app.post('/api/demo/unlock', express.json({ limit: '1kb' }), (req, res) => { if (_demoGate(req, res)) res.json({ ok: true, url: process.env.DEMO_CHANNEL_URL || 'https://t.me/+jiuVgyyQK6ZkY2Rh', bot: process.env.DEMO_BOT_URL || 'https://t.me/+RvXnjjRax6hjMTlh' }); });
 app.post('/api/demo/wallets', express.json({ limit: '1kb' }), (req, res) => { if (!_demoGate(req, res)) return;
   res.set('Content-Disposition', 'attachment; filename="shaddai-tracked-wallets.json"'); res.sendFile(path.join(__dirname, 'data', 'tracked-wallets.json')); });
 
