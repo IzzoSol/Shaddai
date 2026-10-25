@@ -327,7 +327,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-townsfolk.js?v=20261023b"></script>
 <script src="/world-realm-dress.js?v=20261024c"></script>
 <script src="/world-perf-guard.js?v=20261024a"></script>
-<script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
+<script src="/world-underground-bazaar.js?v=20261025a"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
 <script src="/world-edge-realms.js?v=20261024d"></script><script src="/world-realm-roads.js?v=20261024b"></script><script src="/world-biome-scatter.js?v=20261024b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261024a"></script><script src="/world-titans.js?v=20261024c"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
 <script src="/world-race-kit.js?v=20261023m"></script>   <!-- race kit dress + start elevator (K6/K6b); ?racekit=0 = off -->   <!-- realm towns at each ring station (K10 buildings + K19 props); ?realmkits=0 = off -->   <!-- Blender pylon + realm station kits (K7/K8); ?transitkit=0 = code geometry -->
 <script src="/world-train-v2.js?v=20260928"></script>
@@ -431,7 +431,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </template>
 <script>/* BOOT BUNDLES (2026-10-24, docs/SPEED-BRIEF-20261024.md): the scripts in #boot-scripts above are minified + concatenated in this order into
    public/dist by `node tools/build-dist.cjs` (rerun after editing any of them). ?bundle=0 = load the original files one by one. */
-window.__BOOT_BUNDLES = ["/dist/boot-1.7263d7d3a8.js","/dist/boot-2.4e6fe86db1.js","/dist/boot-3.e75d78f1b1.js"];
+window.__BOOT_BUNDLES = ["/dist/boot-1.26275bf172.js","/dist/boot-2.4e6fe86db1.js","/dist/boot-3.e75d78f1b1.js"];
 (function(){ var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
   if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
   else h = document.getElementById("boot-scripts").innerHTML;

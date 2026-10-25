@@ -15,7 +15,7 @@
   'use strict';
   var U = 7 / 1.8, DEPTH_M = 288, SHAFT_M = 145, PAD_R_M = 162, FILE = '/assets/kits/shaddai_bazaar_city_v01.glb?v=20261023p'   // shaft = the Grid's centre circle (canon-v4: empty disc r ~150 m), USE_M = 9;
   function build(o) {
-    if (typeof location !== 'undefined' && /[?&]bazaar=0/.test(location.search || '')) return Promise.resolve(null);
+    if (typeof location !== 'undefined' && !/[?&]bazaar=1/.test(location.search || '')) return Promise.resolve(null);   /* 2026-10-25 owner: OFF by default - its centre lift cut a hole in the Shaddai City floor; ?bazaar=1 = on */
     var THREE = o.THREE, A = (o.anchor && o.anchor()) || { x: 0, z: 0 };
     var gy = o.heightAt ? o.heightAt(A.x, A.z) : 0, BY = gy - DEPTH_M * U;   // shaft top = BY + 338 m, still under the Grid
     var st = { inside: false, busy: false, hooks: {}, root: null, wallR: 420 }, group = new THREE.Group(); group.name = 'underground-bazaar'; group.visible = false; o.scene.add(group);
