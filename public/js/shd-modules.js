@@ -83,7 +83,7 @@
     {
       id: 'entry',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'MAIN',
       kicker: 'The main site',
@@ -97,7 +97,7 @@
     {
       id: 'dashboard',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'DASHBOARD',
       kicker: 'Straight in',
@@ -111,7 +111,7 @@
     {
       id: 'simple',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'SIMPLE',
       kicker: 'One thumb, everything',
@@ -153,7 +153,7 @@
     {
       id: 'world2d',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: '2D REALM',
       kicker: 'Walk the city',
@@ -170,7 +170,7 @@
     {
       id: 'world3d',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: '3D REALM',
       kicker: 'The full realm',
@@ -184,7 +184,7 @@
     {
       id: 'market',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'MARKETPLACE',
       kicker: 'Buy and sell',
@@ -209,7 +209,7 @@
     {
       id: 'agentforge',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'FORGE',
       kicker: 'Build your own agent',
@@ -222,7 +222,7 @@
     {
       id: 'connect',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'CONNECT',
       kicker: 'Your keys · your assistant',
@@ -236,7 +236,7 @@
     {
       id: 'manual',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'MANUAL',
       kicker: 'How all of it works',
@@ -250,7 +250,7 @@
     {
       id: 'signals',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'SIGNALS',
       kicker: 'ZEROX calls',
@@ -264,7 +264,7 @@
     {
       id: 'emeraldvine',
       locked: true,
-      gate: '4444',
+      gate: '9999',
       lockNote: 'Enter the code',
       name: 'THE EMERALD VINE',
       kicker: 'Calls · PNL · lounge',
@@ -428,6 +428,11 @@
           blurb: 'Guides and lessons — the Academy curriculum.' },
         { id: 'academy',   name: 'CODEX',          accent: C.emerald, art: '/assets/athenaeum/quill-manuscript.jpg', href: '/codex.html',
           blurb: 'The reference — how the empire is built.' },
+        { id: 'seven',      name: 'MEET THE SEVEN',      accent: C.gold,    art: '/assets/agents/SHADDAI-portrait.png', href: '/agents.html',          blurb: 'Personas, roles and knowledge bases.' },
+        { id: 'observatory', name: 'ORACLE’S OBSERVATORY', accent: C.emerald, art: '/assets/agents/ORACLE-portrait.png', href: '/oracle-sky.html',      blurb: 'Research, manifestation, foresight.' },
+        { id: 'library',    name: 'QUILL’S LIBRARY',     accent: C.gold,    art: '/assets/agents/QUILL-portrait.png',   href: '/library.html',         blurb: 'Stoic writing and craft.' },
+        { id: 'museum',     name: 'TURTLE’S MUSEUM',     accent: C.emerald, art: '/assets/agents/TURTLE-portrait.png',  href: '/museum.html',          blurb: 'Art, design, creative process.' },
+        { id: 'studio',     name: 'CREATIVE STUDIO',     accent: C.emerald, art: '/assets/agents/TURTLE-action.png',    href: '/creative-studio.html', blurb: 'Beats, melody, art, hertz.' },
       ],
     },
     {
