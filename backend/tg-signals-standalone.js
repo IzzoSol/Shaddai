@@ -20,7 +20,9 @@ try {
     const owner = core.acquireBroadcastLock();
     if (sig.startTelegramSignals) sig.startTelegramSignals();
     if (pnl.startTracker) pnl.startTracker();
-    if (pnl.startSurgeWatcher) pnl.startSurgeWatcher();   // graduation surge alerts (pump/stonk watchlist, 100k+ crossings)
+    // Surge watcher REMOVED (owner 2026-10-24): "stop the surge calls" — the
+    // cards cluttered the channel. startSurgeWatcher is also hard-off unless
+    // TG_SURGE=1, so no entry point can silently restart it.
     if (bot.startTelegramBot) bot.startTelegramBot();
     if (news.startNewsPoster) news.startNewsPoster();
     console.log('[tg-launcher] lanes boot (' + phase + ') — broadcast lock ' + (owner ? 'ACQUIRED' : 'HELD ELSEWHERE (will retry at +100s)'));
