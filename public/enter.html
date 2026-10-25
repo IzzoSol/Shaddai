@@ -1019,7 +1019,8 @@ setTimeout(end,9000);
      Same tile, same dwell, same 3D — only the source list and the density
      change, so there is no second code path to keep in sync. */
   var showAll = false;
-  try { showAll = localStorage.getItem('shd_enter_full') === '1'; } catch (e) {}
+  try { showAll = localStorage.getItem('shd_enter_full') !== '0'; } catch (e) { showAll = true; }   /* 2026-10-25 owner: open on ALL doors by default */
+  try { document.body.classList.toggle('full', showAll); } catch (e) {}
 
   function render() {
     grid.innerHTML = '';
