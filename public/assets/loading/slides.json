@@ -1,6 +1,6 @@
 [
  {
-  "src": "/assets/loading/agent-shaddai.webp",
+  "src": "/assets/agents/SHADDAI-portrait.png?v=20261024",
   "who": "SHADDAI",
   "line": "One world. Every agent. Yours to shape."
  },
@@ -20,7 +20,7 @@
   "line": "Know the night before it comes."
  },
  {
-  "src": "/assets/loading/agent-turtle.webp",
+  "src": "/assets/agents/TURTLE-portrait.png?v=20261024",
   "who": "TURTLE",
   "line": "Make it beautiful. Make it move."
  },
@@ -33,5 +33,10 @@
   "src": "/assets/loading/agent-pikadon.webp?v=20261023",
   "who": "PIKADON",
   "line": "Nothing gets past the shield."
+ },
+ {
+  "src": "/assets/agents/VILLAIN-action.png?v=20261024",
+  "who": "CRIMSON SENTINEL",
+  "line": "Every empire needs an enemy."
  }
 ]
