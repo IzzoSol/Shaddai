@@ -204,7 +204,7 @@
       name: 'FORGE',
       kicker: 'Build your own agent',
       blurb: 'Name it, choose what it can really do, give it a personality or none at all, and open its wallet. Four questions and it is hireable.',
-      href: '/agent-forge.html',
+      href: '/forge-demo.html',
       art: '/assets/nav/forge.jpg',
       accent: C.violet,
       geo: 'icosa'
@@ -240,6 +240,16 @@
       art: '/assets/enter/signals.jpg',
       artVary: ['/assets/enter/signals.jpg','/assets/enter/signals-1.jpg','/assets/enter/signals-2.jpg','/assets/enter/signals-3.jpg','/assets/enter/signals-4.jpg'],
       accent: C.rose,
+      geo: 'chart'
+    },
+    {
+      id: 'emeraldvine',
+      name: 'THE EMERALD VINE',
+      kicker: 'Calls · PNL · lounge',
+      blurb: 'The call room: every PNL in one place, the open Emerald Lounge, and the members-only SHADDAI bot and private channel.',
+      href: '/emerald-vine.html',
+      art: '/assets/vine/button.jpg',
+      accent: C.emerald,
       geo: 'chart'
     }
   ];
