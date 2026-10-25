@@ -82,6 +82,9 @@
     },
     {
       id: 'entry',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'MAIN',
       kicker: 'The main site',
       blurb: 'The main site. What SHADDAI is, how it works, the seven agents, the worlds, the arcade and the brain — the whole story, in order.',
@@ -93,6 +96,9 @@
     },
     {
       id: 'dashboard',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'DASHBOARD',
       kicker: 'Straight in',
       blurb: 'Skip the fanfare. The Command Hub, sign-in, and every tool exactly where you left them. For people who already know what they came for.',
@@ -104,6 +110,9 @@
     },
     {
       id: 'simple',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'SIMPLE',
       kicker: 'One thumb, everything',
       blurb: 'A single object you spin with your thumb. Every part of SHADDAI on one wheel — agents, games, signals, forge, worlds. Swivel, sit on a choice to read it, tap to enter.',
@@ -120,7 +129,7 @@
       name: 'RAG BRAIN',
       kicker: 'The council’s memory',
       blurb: 'The knowledge graph behind every agent. Ask it anything and every answer is cited back to the exact passage it came from. No invention.',
-      href: '/rag',
+      href: '/brain.html',
       art: '/assets/enter/rag.jpg',
       artVary: ['/assets/enter/rag.jpg','/assets/enter/rag-1.jpg','/assets/enter/rag-2.jpg','/assets/enter/rag-3.jpg','/assets/enter/rag-4.jpg'],
       accent: C.emerald,
@@ -129,8 +138,6 @@
       // work, see RAG_BRAIN_REBUILD memory) gets wired in here -- what this
       // door currently opens is NOT that, so it's gated shut rather than
       // left live showing the wrong thing.
-      gate: '9999',
-      lockNote: 'The RAG Brain is being rebuilt right now — check back soon.'
     },
     {
       id: 'athenaeum',
@@ -145,6 +152,9 @@
     },
     {
       id: 'world2d',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: '2D REALM',
       kicker: 'Walk the city',
       blurb: 'The walkable pixel world. The seven agents live here as characters you can approach, talk to, and put to work.',
@@ -156,12 +166,12 @@
       /* Gated with a code, not open-closed. The door exists and the world
          behind it runs — the gate is the premium threshold someone crosses
          deliberately. unlockCode keeps working if the code ever changes. */
-      locked: true,
-      gate: '4444',
-      lockNote: 'Enter the code'
     },
     {
       id: 'world3d',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: '3D REALM',
       kicker: 'The full realm',
       blurb: 'The dimensional build of the same world — terrain, districts, interiors, and the council halls, rendered in full 3D.',
@@ -170,12 +180,12 @@
       artVary: ['/assets/worldlabs/thumbnail.jpg','/assets/enter/world3d.jpg','/assets/xto/road.jpg'],
       accent: C.emerald,
       geo: 'terrain',
-      locked: true,
-      gate: '4444',
-      lockNote: 'Enter the code'
     },
     {
       id: 'market',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'MARKETPLACE',
       kicker: 'Buy and sell',
       blurb: 'The bazaar — what the community has made. Sign in to buy, and browse what has been forged.',
@@ -184,9 +194,6 @@
       artVary: ['/assets/nav/apis.jpg','/assets/shops/launchpad.jpg','/assets/shops/neuralforge.jpg'],
       accent: C.gold,
       geo: 'octa',
-      locked: true,
-      gate: '4444',
-      lockNote: 'Enter the code'
     },
     {
       id: 'arcade',
@@ -201,6 +208,9 @@
     },
     {
       id: 'agentforge',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'FORGE',
       kicker: 'Build your own agent',
       blurb: 'Name it, choose what it can really do, give it a personality or none at all, and open its wallet. Four questions and it is hireable.',
@@ -211,6 +221,9 @@
     },
     {
       id: 'connect',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'CONNECT',
       kicker: 'Your keys · your assistant',
       blurb: 'Plug in the accounts you already pay for, and point your own Claude or Grok at the council. Twenty-two connectors, and we take nothing on what you make.',
@@ -222,6 +235,9 @@
     },
     {
       id: 'manual',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'MANUAL',
       kicker: 'How all of it works',
       blurb: 'The booklet — Sparks, the council, the forge, every game and its controls, and the flywheel. Read it like a cartridge manual.',
@@ -233,6 +249,9 @@
     },
     {
       id: 'signals',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'SIGNALS',
       kicker: 'ZEROX calls',
       blurb: 'Live market and coin intelligence from ZEROX — scored, timestamped, and tracked by hit rate rather than vibes.',
@@ -244,6 +263,9 @@
     },
     {
       id: 'emeraldvine',
+      locked: true,
+      gate: '4444',
+      lockNote: 'Enter the code',
       name: 'THE EMERALD VINE',
       kicker: 'Calls · PNL · lounge',
       blurb: 'The call room: every PNL in one place, the open Emerald Lounge, and the members-only SHADDAI bot and private channel.',
