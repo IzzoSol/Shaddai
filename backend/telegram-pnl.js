@@ -822,6 +822,9 @@ async function surgeTick() {
 
 function startSurgeWatcher() {
   if (_surgeTimer) return;
+  // Owner directive (2026-10-24): STOP the surge cards — they clutter the
+  // channel and read like calls. Hard-off unless TG_SURGE=1 is set explicitly.
+  if ((process.env.TG_SURGE || '0') !== '1') { console.log('[tg-pnl] surge watcher OFF (owner 2026-10-24: stop surge cards). Set TG_SURGE=1 to re-arm.'); return; }
   const HAS_BOT = !!core.token();
   if (HAS_BOT && typeof core.acquireBroadcastLock === 'function' && !core.acquireBroadcastLock()) { console.log('[tg-pnl] another instance owns broadcasting - surge watcher not started here.'); return; }
   console.log('[tg-pnl] graduation surge watcher armed - 10 min cadence, thresholds $100K/$150K/$250K/$500K/$1M/$5M.');
