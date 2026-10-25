@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHADDAI Calls - PNL</title>
+<style>
+:root { --bg: #05070d; --fg: #e8f4ff; --line: rgba(0,255,156,.35); --acc: #00ff9c; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+header { padding: 28px 16px 8px; text-align: center; }
+h1 { margin: 0; font-size: clamp(24px, 5vw, 40px); letter-spacing: .08em; color: var(--acc); }
+header p { margin: 6px 0 0; opacity: .7; }
+header a { color: var(--fg); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 18px 16px 40px; max-width: 1400px; margin: 0 auto; }
+.grid a { display: block; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #0a1020; }
+.grid img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.grid a:hover, .grid a:focus-visible { border-color: var(--acc); box-shadow: 0 0 18px rgba(0,255,156,.3); outline: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SHADDAI CALLS · PNL</h1>
+  <p>Real call results from the channel. <a href="/">← back</a></p>
+</header>
+<main class="grid" id="grid" aria-label="PNL cards"></main>
+<script>
+fetch('/assets/pnl/index.json').then(function (r) { return r.json(); }).then(function (list) {
+  var g = document.getElementById('grid');
+  list.forEach(function (f) {
+    var a = document.createElement('a'); a.href = '/assets/pnl/' + f; a.target = '_blank'; a.rel = 'noopener';
+    var i = document.createElement('img'); i.src = '/assets/pnl/' + f; i.loading = 'lazy'; i.alt = 'PNL card';
+    a.appendChild(i); g.appendChild(a);
+  });
+});
+</script>
+</body>
+</html>
