@@ -5479,7 +5479,7 @@ addEventListener('keydown', function(e){ if(e.code !== 'KeyT' || e.repeat) retur
 (function bootAutoMerge(){ if(/[?&]smerge=0/.test(location.search)) return; let n = 0;
   const iv = setInterval(function(){ if(++n > 600){ clearInterval(iv); return; }
     if(!window.__loadPlayable) return; clearInterval(iv);
-    setTimeout(function(){ Promise.all([_loadScript('/world-auto-merge.js?v=20261016a'), import('three/addons/utils/BufferGeometryUtils.js')]).then(function(r){
+    setTimeout(function(){ Promise.all([_loadScript('/world-auto-merge.js?v=20261024a'), import('three/addons/utils/BufferGeometryUtils.js')]).then(function(r){
       if(!window.WorldAutoMerge) return; return window.WorldAutoMerge.run({ THREE, scene, mergeGeometries: r[1].mergeGeometries, log: function(m){ console.info(m); } }).then(function(rep){ window.__autoMerge = rep; }); })
       .catch(function(e){ console.warn('[auto-merge] off:', e && e.message); }); }, 8000); }, 1000); })();
 // STATIC BATCH (default ON, ?batch=0 = off): merge frozen loose meshes that share material values into one mesh each (world-static-batch.js). `?batch=0` / default = off.

@@ -11,6 +11,8 @@
  *   One group per idle slice (no frame stall). Originals are detached (kept for undo()). ?smerge=0 = off.
  */
 (function (root) {
+  function _f32(g, THREE) { Object.keys(g.attributes).forEach(function (k) { var a = g.attributes[k]; if (k === 'skinIndex' || k === 'skinWeight' || (a.array instanceof Float32Array && !a.normalized && !a.isInterleavedBufferAttribute)) return; var s = a.itemSize, out = new Float32Array(a.count * s); for (var i = 0; i < a.count; i++) for (var j = 0; j < s; j++) out[i * s + j] = a.getComponent ? a.getComponent(i, j) : [a.getX(i), a.getY(i), a.getZ(i), a.getW(i)][j]; g.setAttribute(k, new THREE.BufferAttribute(out, s)); }); return g; }   /* 2026-10-24: packed GLBs (KHR_mesh_quantization) store int16 normalized vertices; copying them into world space clamped them into spikes - convert the merge copy to float first */
+
   'use strict';
   var DYNAMIC = /interior|agent|avatar|player|hover|board|rider|mob|dragon|wildlife|npc|bot|water|sky|ocean|reef|race|kart|car|ship|traffic|train|ferry|sub|particle|fx|vfx|portal|cursor|waypoint|marker|label|sign|hud|preview|ghost|league|colosseum-arena|ball/i;
   var CELL_U = 300 * 7 / 1.8, undo = [];
@@ -41,7 +43,7 @@
       var list = buckets[key]; if (list.length < 3) return;
       var geos = [], cast = false, recv = false, m4 = new THREE.Matrix4();
       list.forEach(function (o) {
-        var g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+        var g = _f32(o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(), THREE);
         Object.keys(g.attributes).forEach(function (a) { if (a !== 'position' && a !== 'normal' && a !== 'uv' && a !== 'color') g.deleteAttribute(a); });
         g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); g.morphAttributes = {}; geos.push(g); cast = cast || o.castShadow; recv = recv || o.receiveShadow;
       });

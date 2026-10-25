@@ -13,6 +13,8 @@
  * a town group is hidden beyond VIEW_M. col (metres, 0 = walk-through) pushes a circle collider. ?realmdress=0 = off.
  */
 (function (root) {
+  function _f32(g, THREE) { Object.keys(g.attributes).forEach(function (k) { var a = g.attributes[k]; if (k === 'skinIndex' || k === 'skinWeight' || (a.array instanceof Float32Array && !a.normalized && !a.isInterleavedBufferAttribute)) return; var s = a.itemSize, out = new Float32Array(a.count * s); for (var i = 0; i < a.count; i++) for (var j = 0; j < s; j++) out[i * s + j] = a.getComponent ? a.getComponent(i, j) : [a.getX(i), a.getY(i), a.getZ(i), a.getW(i)][j]; g.setAttribute(k, new THREE.BufferAttribute(out, s)); }); return g; }   /* 2026-10-24: packed GLBs (KHR_mesh_quantization) store int16 normalized vertices; copying them into world space clamped them into spikes - convert the merge copy to float first */
+
   'use strict';
   var PM = 7 / 1.8, VIEW_M = 1200, DATA = '/assets/world/realm-dress-v1.json?v=20261023f', TOWNS2 = '/assets/world/realm-towns-v2.json?v=20261023a';
   function stationList(transit) {
@@ -80,7 +82,7 @@
                   var pier = new THREE.BoxGeometry(8 * PM, 1.2 * PM, 60 * PM); pier.rotateY(pa); pier.translate(cx + px * 182 * PM, Y - 0.8 * PM, cz + pz * 182 * PM); gW.push(pier);
                   for (var mk = 0; mk < 3; mk++) { var post = new THREE.CylinderGeometry(0.4 * PM, 0.4 * PM, 3 * PM, 6), d = 165 + mk * 20, sd = (mk % 2 ? 1 : -1) * 5;
                     post.translate(cx + px * d * PM + pz * sd * PM, Y + 0.3 * PM, cz + pz * d * PM - px * sd * PM); gG.push(post); } }
-                function mg(list) { var pos = []; list.forEach(function (g) { g = g.index ? g.toNonIndexed() : g; pos.push.apply(pos, g.attributes.position.array); }); var o2 = new THREE.BufferGeometry(); o2.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); o2.computeVertexNormals(); return o2; }
+                function mg(list) { var pos = []; list.forEach(function (g) { g = _f32(g.index ? g.toNonIndexed() : g.clone(), THREE); pos.push.apply(pos, g.attributes.position.array); }); var o2 = new THREE.BufferGeometry(); o2.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); o2.computeVertexNormals(); return o2; }
                 [[gD, new THREE.MeshStandardMaterial({ color: 0x1d3a44, roughness: 0.5, metalness: 0.4 })], [gW, new THREE.MeshStandardMaterial({ color: 0xeef2f5, roughness: 0.35, metalness: 0.3 })], [gG, new THREE.MeshBasicMaterial({ color: 0x5fe8ff, toneMapped: false })]]
                   .forEach(function (e) { var mm = new THREE.Mesh(mg(e[0]), e[1]); mm.receiveShadow = true; town.add(mm); });
               } }

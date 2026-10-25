@@ -5,6 +5,8 @@
  * meshes, anything in `skip` (and its subtree) and meshes flagged userData.live. Merged meshes are children of `root`
  * in root-local space. Only call it on a group you KNOW is static after build (no per-frame transforms/visibility on children). */
 (function (root) {
+  function _f32(g, THREE) { Object.keys(g.attributes).forEach(function (k) { var a = g.attributes[k]; if (k === 'skinIndex' || k === 'skinWeight' || (a.array instanceof Float32Array && !a.normalized && !a.isInterleavedBufferAttribute)) return; var s = a.itemSize, out = new Float32Array(a.count * s); for (var i = 0; i < a.count; i++) for (var j = 0; j < s; j++) out[i * s + j] = a.getComponent ? a.getComponent(i, j) : [a.getX(i), a.getY(i), a.getZ(i), a.getW(i)][j]; g.setAttribute(k, new THREE.BufferAttribute(out, s)); }); return g; }   /* 2026-10-24: packed GLBs (KHR_mesh_quantization) store int16 normalized vertices; copying them into world space clamped them into spikes - convert the merge copy to float first */
+
   'use strict';
   function key(m) {
     return m.type + '|' + (m.color ? m.color.getHex() : '') + '|' + (m.emissive ? m.emissive.getHex() + ':' + m.emissiveIntensity : '') + '|' + m.transparent + ':' + m.opacity + ':' + m.blending + ':' + m.side + ':' + m.depthWrite + '|' + (m.map ? m.map.uuid : '') + '|' + (m.vertexColors ? 'vc' : '') + '|' + (m.roughness != null ? m.roughness + ':' + m.metalness : '');
@@ -24,7 +26,7 @@
     var after = before;
     byKey.forEach(function (e) {
       if (e.items.length < 2) return;
-      var geos = e.items.map(function (o) { var g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); if (!g.attributes.normal) g.computeVertexNormals(); return g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); });
+      var geos = e.items.map(function (o) { var g = _f32(o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(), THREE); if (!g.attributes.normal) g.computeVertexNormals(); return g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); });
       var uv = geos.every(function (g) { return g.attributes.uv && g.attributes.uv.itemSize === 2; }), vc = !!e.mat.vertexColors && geos.every(function (g) { return g.attributes.color && g.attributes.color.itemSize === 3; });
       var n = 0, off = 0; geos.forEach(function (g) { n += g.attributes.position.count; });
       var P = new Float32Array(n * 3), N = new Float32Array(n * 3), UV = uv ? new Float32Array(n * 2) : null, C = vc ? new Float32Array(n * 3) : null;

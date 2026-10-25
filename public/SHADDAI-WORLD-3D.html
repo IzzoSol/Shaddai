@@ -325,7 +325,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-realm-interiors.js?v=20261022a"></script>
 <script src="/world-realm-kits.js?v=20261022a"></script>
 <script src="/world-townsfolk.js?v=20261023b"></script>
-<script src="/world-realm-dress.js?v=20261024b"></script>
+<script src="/world-realm-dress.js?v=20261024c"></script>
 <script src="/world-perf-guard.js?v=20261024a"></script>
 <script src="/world-underground-bazaar.js?v=20261023p"></script>   <!-- K32 underground bazaar: centre lift, cavern city, Colosseum + Undersea lines; ?bazaar=0 = off -->
 <script src="/world-edge-realms.js?v=20261024d"></script><script src="/world-realm-roads.js?v=20261024b"></script><script src="/world-biome-scatter.js?v=20261024b"></script><script src="/world-city-crowns.js?v=20261023a"></script><script src="/world-dragon-shards.js?v=20261023a"></script><script src="/world-hoverpark-k40.js?v=20261024a"></script><script src="/world-titans.js?v=20261024c"></script>   <!-- K31 edge realms beyond the rim (not on map; sealed foot-only gate); ?edgerealms=0 = off -->
@@ -414,7 +414,7 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 <script src="/world-radio.js?v=20260703d"></script>
 <script src="/world-showcase.js?v=20260929a"></script>   <!-- showcase (art/book/music/NFT), ad space, chain adapter (hedera/solana ready) -->
 <script src="/world-devkit.js?v=20261009c"></script><script src="/world-vfx.js?v=20261009c"></script><script src="/world-rng.js?v=20261009c"></script><script src="/world-economy.js?v=20261009c"></script><script src="/world-race.js?v=20261016t"></script>
-<script src="/world-merge.js?v=20261004a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261016s"></script><script src="/world-speed-fx.js?v=20261009c"></script><script src="/world-shiplock.js?v=20261015a"></script>
+<script src="/world-merge.js?v=20261024a"></script><script src="/world-race-landmarks.js?v=20261009c"></script><script src="/world-race-track.js?v=20261016s"></script><script src="/world-speed-fx.js?v=20261009c"></script><script src="/world-shiplock.js?v=20261015a"></script>
 <script src="/world-hoverpark.js?v=20261003m"></script><script src="/world-hoverpark-v2.js?v=20261011a"></script><script src="/world-park-dress.js?v=20261015b"></script>   <!-- hoverskate park at the PLAZA_SKATE marker (NW race quarter) -->
 <script src="/world-race-prizebox.js?v=20261011a"></script><script src="/world-cutscene-travel.js?v=20261016r"></script><script src="/world-static-batch.js?v=20261011a"></script><script src="/world-game-modes.js?v=20261016b"></script><script src="/world-race-run.js?v=20261011a"></script>   <!-- race runtime: crates, pads, items, AI, HUD -->   <!-- hoverskate race rules: circuits, gates, penalties, items -->
 <script src="/world-bot-bodies.js?v=20260929a"></script>   <!-- rigged code-built bot bodies (SCRAP, LANKY, UNI-9, ANALYST, casino) -->
@@ -431,13 +431,13 @@ window.addEventListener('unhandledrejection',function(e){var msg=((e.reason&&e.r
 </template>
 <script>/* BOOT BUNDLES (2026-10-24, docs/SPEED-BRIEF-20261024.md): the scripts in #boot-scripts above are minified + concatenated in this order into
    public/dist by `node tools/build-dist.cjs` (rerun after editing any of them). ?bundle=0 = load the original files one by one. */
-window.__BOOT_BUNDLES = ["/dist/boot-1.e6385603e5.js","/dist/boot-2.4e6fe86db1.js","/dist/boot-3.9cd3dedcd0.js"];
+window.__BOOT_BUNDLES = ["/dist/boot-1.7263d7d3a8.js","/dist/boot-2.4e6fe86db1.js","/dist/boot-3.e75d78f1b1.js"];
 (function(){ var useB = window.__BOOT_BUNDLES.length && !/[?&]bundle=0/.test(location.search), h = "";
   if (useB) window.__BOOT_BUNDLES.forEach(function(s){ h += '<script src="' + s + '"><\/script>'; });
   else h = document.getElementById("boot-scripts").innerHTML;
   document.write(h); })();
 </script>
-<script type="module" src="/world-main.js?v=edd292a96a"></script>
+<script type="module" src="/world-main.js?v=84e6accbe3"></script>
 <!-- ════════ AGENT DISTRICTS ════════ -->
 <div id="district" class="dist"><div class="dist-card">
   <button class="dist-x" onclick="closeDistrict()">✕ EXIT</button>

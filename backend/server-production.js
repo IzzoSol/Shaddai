@@ -480,6 +480,18 @@ app.use((req, res, next) => {
 // World page: if the boot bundles are stale (someone forgot node tools/build-dist.cjs), serve the original scripts instead, never old code
 app.get('/SHADDAI-WORLD-3D.html', (req, res, next) => { try { res.type('html').send(require('../tools/boot-dist-guard.cjs').worldHtml()); } catch (e) { next(); } });
 
+// DEMO BAR (owner 2026-10-24): the signals call-channel link is handed out only after the members code; 8 tries per IP per 10 min
+const _demoTries = new Map();
+app.post('/api/demo/unlock', express.json({ limit: '1kb' }), (req, res) => {
+  const ip = req.ip || 'x', now = Date.now(), t = _demoTries.get(ip) || { n: 0, at: now };
+  if (now - t.at > 600000) { t.n = 0; t.at = now; }
+  if (++t.n > 8) { _demoTries.set(ip, t); return res.status(429).json({ ok: false }); }
+  _demoTries.set(ip, t); if (_demoTries.size > 5000) _demoTries.clear();
+  res.set('Cache-Control', 'no-store');
+  if (String((req.body && req.body.code) || '') === (process.env.DEMO_CHANNEL_CODE || '9999')) return res.json({ ok: true, url: process.env.DEMO_CHANNEL_URL || 'https://t.me/+jiuVgyyQK6ZkY2Rh' });
+  res.status(403).json({ ok: false });
+});
+
 // Serve MiroFish React app
 app.use('/mirofish', express.static(path.join(__dirname, '../public/mirofish'), {
   index: 'index.html',
