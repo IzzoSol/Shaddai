@@ -1,5 +1,5 @@
 'use strict';
-const fetch = require('node-fetch');
+const fetch = (typeof globalThis.fetch === 'function') ? globalThis.fetch : require('node-fetch');
 
 // ZeroX scan: pull live market data from DexScreener + Helius RPC fallback.
 // Returns JSON only: price, liq, 5m/1h/24h change, top pools, suggested entry, risks, timestamp, source URLs.
