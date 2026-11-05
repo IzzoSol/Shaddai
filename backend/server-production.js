@@ -3242,6 +3242,24 @@ try { app.use(require('./reputation-routes')); console.log('[prod] reputation + 
 catch (e) { console.warn('[prod] reputation failed:', e.message); }
 try { app.use(require('./referral-routes')); console.log('[prod] referral flywheel mounted'); }
 catch (e) { console.warn('[prod] referral failed:', e.message); }
+// S.A.P. (Shaddai Asimov Project) -- green-initiative payments leg:
+// transparent treasury, tree payments, Hyperliquid read-only market data.
+// No route in this file can place an order, sign a transaction, or move funds.
+try { app.use(require('./sap-routes')); console.log('[prod] SAP treasury + tree payments mounted (/api/sap/*)'); }
+catch (e) { console.warn('[prod] sap-routes failed:', e.message); }
+// SAP showcase + EduTwin static site. Point SAP_CANOPY_DIR at the sap-canopy
+// folder of the shaddai-asimov-project repo; falls back to a sibling ./sap-canopy.
+try {
+  const _fs = require('fs');
+  const _sapDir = process.env.SAP_CANOPY_DIR
+    || path.join(__dirname, '..', 'sap-canopy');
+  if (_fs.existsSync(path.join(_sapDir, 'showcase.html'))) {
+    app.use('/sap', express.static(_sapDir, { maxAge: '1h', index: 'showcase.html' }));
+    console.log('[prod] SAP showcase mounted at /sap/ (' + _sapDir + ')');
+  } else {
+    console.log('[prod] SAP showcase not found - set SAP_CANOPY_DIR to the sap-canopy folder');
+  }
+} catch (e) { console.warn('[prod] SAP showcase mount failed:', e.message); }
 try { app.use(require('./agent-room-routes')); console.log('[prod] canonical agent-rooms mounted'); }
 catch (e) { console.warn('[prod] agent-rooms failed:', e.message); }
 try { app.use(require('./markets-routes')); console.log('[prod] markets mounted'); }
