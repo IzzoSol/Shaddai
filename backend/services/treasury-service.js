@@ -13,8 +13,11 @@
  *   a separate, later, separately-reviewed sub-project. Keeping cash-out out of
  *   this module makes it impossible for a bug here to send real money anywhere.
  *
- * Amounts are integer CENTS. Idempotent on attributionId (one settlement per
- * attribution) so a replayed event never double-accrues.
+ * Amounts are integer CENTS — except credits-denominated fee allocations, which
+ * use integer CREDIT UNITS in their own collection and never touch the cents
+ * pools (see the CREDITS-DENOMINATED FEES section below). Idempotent on
+ * attributionId (one settlement per attribution) so a replayed event never
+ * double-accrues.
  *
  * Persistence: atomic JsonStore at backend/data/treasury.json.
  *
@@ -46,6 +49,24 @@
  *   own pool to manufacture TVL is wash-trading-shaped. Every one of those is
  *   a reason this ledger records INTENT and lets a human-reviewed settler
  *   decide what actually executes. See docs/SAP_TREASURY.md.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CREDITS-DENOMINATED FEES (2026-11-05)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * The x402 marketplace fee is denominated in SHAD-Credits — a CLOSED-LOOP soft
+ * currency, not real money. The x402 rail mints 100 free demo credits for
+ * every new wallet, so a credits balance can have NO money behind it at all.
+ *
+ * Writing a credits fee into the cents pools would therefore inflate the
+ * real-money totals (treasury / eco / asimovLiquidity / ...) with soft currency
+ * and corrupt every downstream reading of them. So credits fees get:
+ *   - their OWN collection (`creditFeeAllocations`),
+ *   - their OWN unit label ('SHAD-Credits', scaled by CREDIT_UNIT_SCALE),
+ *   - their OWN totals in the transparency report (`creditFeeRouting`),
+ * and they NEVER touch `pools`, `settlements` or `treePayments`.
+ *
+ * There is NO credits->USD conversion rate anywhere in this codebase, so no
+ * real-money value is ever computed for a credits fee. See CREDITS_NOTE.
  */
 
 const path = require('path');
@@ -54,10 +75,11 @@ const { JsonStore } = require('../lib/json-store');
 const POOLS = ['treasury', 'owner', 'referrer', 'eco', 'partner', 'asimovLiquidity'];
 
 const EMPTY = {
-  settlements: [],   // RevenueSettlement[]
+  settlements: [],   // RevenueSettlement[] — REAL MONEY (integer cents)
   pools: { treasury: 0, owner: 0, referrer: 0, eco: 0, partner: 0, asimovLiquidity: 0 }, // cents accrued (owed)
   ownerPayouts: {},  // ownerUserId -> cents owed (pending)
-  treePayments: [],  // TreePayment[] — payments for real planting work
+  treePayments: [],  // TreePayment[] — payments for real planting work (cents)
+  creditFeeAllocations: [], // CreditFeeAllocation[] — CLOSED-LOOP credits (NOT cents)
   onchainIntents: [],// OnchainIntent[] — recorded intent to move money on-chain
   _seq: 0,
 };
@@ -71,6 +93,32 @@ const TREE_PAYMENT_NOTE =
   'Payment for planting and verification services already rendered. Not an investment, '
   + 'not a promise of appreciation, and not redeemable for fiat.';
 
+/**
+ * Attached to every credits-denominated fee allocation. SHAD-Credits are a
+ * closed-loop soft currency: they are not cents, not USD and not USDC, and no
+ * conversion rate to real money exists in this codebase — so a credits fee
+ * carries no real-money value and is excluded from every cents total here.
+ */
+const CREDITS_NOTE =
+  'Denominated in SHAD-Credits, a closed-loop soft currency. NOT cents, NOT USD, NOT USDC. '
+  + 'No real-money value is implied: this codebase has no SHAD-Credits -> USD/USDC conversion rate, '
+  + 'so no real-money amount is derived from it and it is excluded from every real-money (cents) '
+  + 'total in this ledger.';
+
+/**
+ * 1 SHAD-Credit = 100 credit units. The x402 rail rounds credits to two
+ * decimal places, so integer credit units give an EXACT policy split with no
+ * unit created or lost — the same guarantee cents get from integer division.
+ */
+const CREDIT_UNIT_SCALE = 100;
+
+/** Where the three policy slices of a credits fee are earmarked. */
+const CREDIT_FEE_DESTINATIONS = {
+  treeFund: 'Treegens — real mangrove planting and Proof-of-Tree verification',
+  asimovLiquidity: '$ASIMOV liquidity on Solana (accounting bucket; settlement is a queued on-chain intent)',
+  platform: 'SHADDAI platform operations',
+};
+
 class TreasuryError extends Error {
   constructor(message, code) { super(message); this.name = 'TreasuryError'; this.code = code || 'TREASURY_ERROR'; }
 }
@@ -78,6 +126,13 @@ class TreasuryError extends Error {
 function assertCents(n, label) {
   if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || !Number.isSafeInteger(n)) {
     throw new TreasuryError(`${label} must be a non-negative integer (cents)`, 'VALIDATION');
+  }
+}
+
+/** Credit units are NOT cents — same integer discipline, different unit. */
+function assertCreditUnits(n, label) {
+  if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || !Number.isSafeInteger(n)) {
+    throw new TreasuryError(`${label} must be a non-negative integer (credit units)`, 'VALIDATION');
   }
 }
 
@@ -101,6 +156,7 @@ class TreasuryService {
     }
     if (!Array.isArray(db.settlements)) db.settlements = [];
     if (!Array.isArray(db.treePayments)) db.treePayments = [];
+    if (!Array.isArray(db.creditFeeAllocations)) db.creditFeeAllocations = [];
     if (!Array.isArray(db.onchainIntents)) db.onchainIntents = [];
     if (!db.ownerPayouts || typeof db.ownerPayouts !== 'object') db.ownerPayouts = {};
     if (typeof db._seq !== 'number') db._seq = 0;
@@ -273,6 +329,119 @@ class TreasuryService {
   }
 
   /**
+   * Record a CREDITS-denominated fee allocation — e.g. the x402 marketplace fee
+   * split by the SAP fee-routing policy (treeFund / asimovLiquidity / platform).
+   *
+   * THIS NEVER TOUCHES THE REAL-MONEY LEDGER:
+   *   - `db.pools` is untouched (those are USD/USDC cents owed)
+   *   - `db.settlements` is untouched (those are cents-denominated)
+   *   - `db.treePayments` is untouched (those are cents-denominated)
+   * The credits allocation lives in its own collection, carries its own unit
+   * label, and shows up in the transparency report under `creditFeeRouting`.
+   *
+   * Amounts are integer CREDIT UNITS (1 SHAD-Credit = CREDIT_UNIT_SCALE units),
+   * so the policy split is exact: no unit is created or lost.
+   *
+   * @param {object} a
+   * @param {string} a.allocationId        idempotency key for this allocation
+   * @param {string} a.source               event type (x402_fee, ...)
+   * @param {string} [a.refId]              link back to the originating event
+   * @param {number} a.grossCreditUnits     positive integer credit units
+   * @param {object} a.allocation           { treeFund, asimovLiquidity, platform } credit units
+   * @param {object} a.policy               { treeFundBps, asimovLiquidityBps, platformBps }
+   * @returns {Promise<object>} the persisted CreditFeeAllocation
+   */
+  async recordCreditFeeAllocation(a) {
+    if (!a || !a.allocationId) throw new TreasuryError('allocationId required', 'VALIDATION');
+    if (!a.source) throw new TreasuryError('source required', 'VALIDATION');
+    assertCreditUnits(a.grossCreditUnits, 'grossCreditUnits');
+    if (a.grossCreditUnits <= 0) {
+      throw new TreasuryError('grossCreditUnits must be a positive integer', 'VALIDATION');
+    }
+
+    const alloc = a.allocation || {};
+    for (const k of ['treeFund', 'asimovLiquidity', 'platform']) {
+      assertCreditUnits(alloc[k] || 0, `allocation.${k}`);
+    }
+    const allocSum = (alloc.treeFund || 0) + (alloc.asimovLiquidity || 0) + (alloc.platform || 0);
+    if (allocSum !== a.grossCreditUnits) {
+      throw new TreasuryError(`allocation sum ${allocSum} != grossCreditUnits ${a.grossCreditUnits}`, 'SPLIT_MISMATCH');
+    }
+
+    // The policy that produced the split must itself be a complete 10000 bps
+    // policy — a partial policy would mean credits went missing between the
+    // three buckets.
+    const policy = a.policy || {};
+    const bpsKeys = ['treeFundBps', 'asimovLiquidityBps', 'platformBps'];
+    for (const k of bpsKeys) assertCreditUnits(policy[k], `policy.${k}`);
+    const bpsSum = bpsKeys.reduce((acc, k) => acc + policy[k], 0);
+    if (bpsSum !== 10000) {
+      throw new TreasuryError(`policy must sum to 10000 bps (got ${bpsSum})`, 'BAD_POLICY');
+    }
+
+    return this.store.withLock(async (db) => {
+      this._normalize(db);
+      const prior = db.creditFeeAllocations.find((x) => x.allocationId === a.allocationId);
+      if (prior) return { ...prior, replayed: true };
+
+      db._seq = (db._seq || 0) + 1;
+      const toCredits = (u) => Math.round(u) / CREDIT_UNIT_SCALE;
+      const allocation = {
+        treeFund: alloc.treeFund || 0,
+        asimovLiquidity: alloc.asimovLiquidity || 0,
+        platform: alloc.platform || 0,
+      };
+      const entry = {
+        id: `cfa_${Date.now().toString(36)}_${db._seq}`,
+        allocationId: a.allocationId,
+        source: a.source,
+        refId: a.refId || null,
+        // ── unit labelling: unambiguous at every level ──────────────────
+        unit: 'SHAD-Credits',
+        currency: 'SHAD-Credits',
+        creditUnitScale: CREDIT_UNIT_SCALE,
+        grossCreditUnits: a.grossCreditUnits,
+        grossCredits: toCredits(a.grossCreditUnits),
+        allocation,                              // credit units
+        allocationCredits: {                     // credits
+          treeFund: toCredits(allocation.treeFund),
+          asimovLiquidity: toCredits(allocation.asimovLiquidity),
+          platform: toCredits(allocation.platform),
+        },
+        destinations: { ...CREDIT_FEE_DESTINATIONS },
+        policy: {
+          treeFundBps: policy.treeFundBps,
+          asimovLiquidityBps: policy.asimovLiquidityBps,
+          platformBps: policy.platformBps,
+        },
+        // The treeFund slice is a payment for planting and verification
+        // services already rendered — the same securities-safe framing every
+        // Treegens tree payment carries. It is NOT a token purchase and NOT a
+        // donation. It is NOT recorded as a cents treePayment: no real money
+        // changed hands, so the cents tree-payment ledger must stay clean.
+        treeFundPayment: {
+          serviceType: 'tree_planting',
+          amountCreditUnits: allocation.treeFund,
+          amountCredits: toCredits(allocation.treeFund),
+          note: TREE_PAYMENT_NOTE,
+          status: 'pending',
+        },
+        // No USD/USDC value is derived: there is no conversion rate to use.
+        realMoneyValue: null,
+        onchainIntentId: null,
+        settlement: 'not_applicable',
+        settlementNote: 'Closed-loop credits — no on-chain settlement and no USD/USDC conversion rate exists.',
+        note: CREDITS_NOTE,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        settledAt: null,
+      };
+      db.creditFeeAllocations.push(entry);
+      return { ...entry, replayed: false };
+    });
+  }
+
+  /**
    * Record an INTENT to move money on-chain. The treasury never executes it.
    *
    * @param {object} i
@@ -368,6 +537,18 @@ class TreasuryService {
     return list.slice().reverse().map((x) => ({ ...x }));
   }
 
+  /**
+   * List credits-denominated fee allocations, newest first. These are NOT
+   * cents — see CREDITS_NOTE — and they are never mixed into the pools.
+   */
+  async listCreditFeeAllocations(filter = {}) {
+    const db = this._normalize(await this.store.read());
+    let list = db.creditFeeAllocations;
+    if (filter.source) list = list.filter((x) => x.source === filter.source);
+    if (filter.allocationId) list = list.filter((x) => x.allocationId === filter.allocationId);
+    return list.slice().reverse().map((x) => ({ ...x }));
+  }
+
   /** Pool balances snapshot (cents owed per pool) — for the admin treasury dashboard. */
   async getPools() {
     const db = this._normalize(await this.store.read());
@@ -409,9 +590,29 @@ class TreasuryService {
       treeFundTotal += tp.allocation.treeFund;
       liquidityTotal += tp.allocation.asimovLiquidity;
     }
+    // Credits-denominated fee allocations — counted entirely separately from
+    // every cents total above. Never added into pools/settlements/treePayments.
+    let cfaCount = 0;
+    let cfaGross = 0;
+    let cfaTree = 0;
+    let cfaLiquidity = 0;
+    let cfaPlatform = 0;
+    const cfaBySource = {};
+    for (const c of db.creditFeeAllocations) {
+      cfaCount += 1;
+      cfaGross += c.grossCreditUnits || 0;
+      cfaTree += (c.allocation && c.allocation.treeFund) || 0;
+      cfaLiquidity += (c.allocation && c.allocation.asimovLiquidity) || 0;
+      cfaPlatform += (c.allocation && c.allocation.platform) || 0;
+      cfaBySource[c.source] = (cfaBySource[c.source] || 0) + (c.grossCreditUnits || 0);
+    }
     return {
       generatedAt: new Date().toISOString(),
       currency: 'cents',
+      currencies: {
+        realMoney: 'cents (USD / USDC)',
+        creditFeeRouting: 'SHAD-Credits (closed-loop soft currency — NOT cents, NOT USD, NOT USDC)',
+      },
       pools: { ...db.pools },
       poolMeanings: {
         treasury: 'platform operating revenue',
@@ -427,6 +628,38 @@ class TreasuryService {
         treeFundCents: treeFundTotal,
         asimovLiquidityCents: liquidityTotal,
       },
+      creditFeeRouting: {
+        unit: 'SHAD-Credits',
+        currency: 'SHAD-Credits',
+        creditUnitScale: CREDIT_UNIT_SCALE,
+        count: cfaCount,
+        grossCredits: cfaGross / CREDIT_UNIT_SCALE,
+        treeFundCredits: cfaTree / CREDIT_UNIT_SCALE,
+        asimovLiquidityCredits: cfaLiquidity / CREDIT_UNIT_SCALE,
+        platformCredits: cfaPlatform / CREDIT_UNIT_SCALE,
+        bySourceCredits: Object.fromEntries(
+          Object.entries(cfaBySource).map(([k, v]) => [k, v / CREDIT_UNIT_SCALE])
+        ),
+        // Machine-readable, not just prose: a reader (or a script) can tell
+        // these numbers apart from the cents totals without reading a caveat.
+        excludedFromRealMoneyTotals: true,
+        realMoneyValue: null,
+        note: CREDITS_NOTE,
+        entries: db.creditFeeAllocations.slice(-50).reverse().map((x) => ({
+          id: x.id,
+          allocationId: x.allocationId,
+          source: x.source,
+          refId: x.refId,
+          unit: x.unit,
+          creditUnitScale: x.creditUnitScale,
+          grossCredits: x.grossCredits,
+          allocationCredits: x.allocationCredits,
+          policy: x.policy,
+          treeFundNote: x.treeFundPayment ? x.treeFundPayment.note : null,
+          status: x.status,
+          createdAt: x.createdAt,
+        })),
+      },
       onchainIntents: {
         total: db.onchainIntents.length,
         byStatus,
@@ -441,6 +674,8 @@ class TreasuryService {
         'This ledger records settlement INTENT for on-chain transfers; it does not move money.',
         'Illustrative averages, not site-specific predictions.',
         'Tree payments are payment for planting and verification services already rendered.',
+        'creditFeeRouting totals are SHAD-Credits (closed-loop soft currency), NOT cents — they are excluded from pools, settlements and treePayments totals.',
+        'No SHAD-Credits -> USD/USDC conversion rate exists in this codebase, so no real-money value is derived from a credits fee.',
       ],
     };
   }
@@ -449,4 +684,12 @@ class TreasuryService {
   // settleToAccount() method. Cash-out is a separate, later sub-project.
 }
 
-module.exports = { TreasuryService, TreasuryError, POOLS, TREE_PAYMENT_NOTE };
+module.exports = {
+  TreasuryService,
+  TreasuryError,
+  POOLS,
+  TREE_PAYMENT_NOTE,
+  CREDITS_NOTE,
+  CREDIT_UNIT_SCALE,
+  CREDIT_FEE_DESTINATIONS,
+};

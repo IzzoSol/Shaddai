@@ -262,6 +262,17 @@ class TreegensService {
     }
     const liquidityVenue = this.env.ASIMOV_LIQUIDITY_VENUE || 'solana-amm';
     if (allocation.asimovLiquidity > 0) {
+      // The venue constraints travel WITH the intent. A settler reading this
+      // record must know HOW the destination may be used and what the
+      // non-obvious limits are — otherwise "deepen liquidity" reads like an
+      // ordinary add-liquidity call, and on this venue it is not one.
+      //
+      // `chain` stays the plain rail identifier ('solana-amm') so existing
+      // settler-side filters keep matching. The precise venue mechanics live
+      // in the route + note, which are carried in the memo.
+      const liquidityRoute = this.env.ASIMOV_LIQUIDITY_ROUTE || 'unknown-route';
+      const liquidityNote = this.env.ASIMOV_LIQUIDITY_NOTE
+        || 'Venue mechanics not configured. Re-verify the destination before settling anything.';
       intents.push(await this.treasury.queueOnchainIntent({
         intentId: `tree:${p.paymentId}:asimov`,
         chain: liquidityVenue,
@@ -270,7 +281,11 @@ class TreegensService {
         currency: p.currency || 'USD',
         destination: this.env.ASIMOV_LIQUIDITY_POOL || null,
         refId: payment.id,
-        memo: `Deepen $ASIMOV liquidity on ${liquidityVenue}`,
+        memo: [
+          `Deepen $ASIMOV liquidity on ${liquidityVenue} via ${liquidityRoute}.`,
+          `Venue constraints: ${liquidityNote}`,
+          'INTENT ONLY — a human-reviewed settler executes this. No HTTP route may trade or settle.',
+        ].join(' '),
       }));
     }
 

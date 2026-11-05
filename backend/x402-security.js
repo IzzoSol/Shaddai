@@ -20,7 +20,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const STATE_PATH = path.join(__dirname, 'data', 'x402-security.json');
+// Path is overridable so a test (or an operator with a different data root)
+// can point the state file elsewhere. Default is unchanged.
+const STATE_PATH = process.env.X402_SECURITY_STATE_FILE || path.join(__dirname, 'data', 'x402-security.json');
 const ENVELOPE_TTL_MS = 5 * 60 * 1000;   // 5-min clock-skew / replay window
 const DEFAULT_DAILY_LIMIT = 5000;         // SHAD-Credits per user per day (tune later; -1 = unlimited)
 
