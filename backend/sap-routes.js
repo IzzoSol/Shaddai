@@ -236,7 +236,11 @@ router.get('/api/sap/hyperliquid/fees/:address', async (req, res) => {
  */
 router.get('/api/sap/hip1/plan', (req, res) => {
   try {
-    const name = String(req.query.name || 'SAPCOIN');
+    // HIP-1 caps the token NAME at 6 alphanumeric characters. The previous
+    // default was "SAPCOIN" (7), so this route 400'd on every call that did
+    // not override the name. "ASIMOV" is exactly 6 and is the project's own
+    // name, so the route now works with no query string at all.
+    const name = String(req.query.name || 'ASIMOV');
     const szDecimals = Number(req.query.szDecimals || 2);
     const weiDecimals = Number(req.query.weiDecimals || 8);
     const maxSupplyWei = String(req.query.maxSupplyWei || '100000000000000000');
