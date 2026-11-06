@@ -105,3 +105,10 @@ first, audit-log entry per connection.
 - The standalone `C:\Users\Brittany\SHADDAI v119.html` is an abandoned prototype — delete or ignore.
 - `Shaddai-Beta` was not touched.
 - Wizard portraits: the Cinnamoroll image (`1Go8lHWg_400x400.jpg`) only exists as shortcuts; send the real file to use it.
+
+## 6. Outside-bot bridge (Grok Bot / Muse) - Phase 1 built (handoff section 4)
+- backend/platform-bridge.js mounted at /api/bridge: owner-minted scoped tokens (hash only stored), remote MCP at POST /api/bridge/mcp (initialize, tools/list, tools/call), runs with receipts, idempotency, owner-only approval, cancel, revoke, audit, world-state presence for the 3D client.
+- Tools: list_workflows, start_workflow (demo.ping, demo.needs-approval only), get_run_status, cancel_run, read_agent_state, list_plots, get_plot_state. All read-only or harmless demos. No money, trading or credentials.
+- Test: NODE_PATH=<node_modules> node backend/tests/platform-bridge.test.js (acceptance items 1-3, 5-8 and secret rejection pass).
+- Not built yet: OAuth 2.1 + PKCE (AddMcpServer consent), durable DB store (JSON file now), 3D client subscription to /api/bridge/world-state, real workflows, plots:maintain (waits for ASIMOV garden state + thresholds), hosted URL decision.
+- /api/school (Athenaeum) mounted; its /xagent bot surface is still off.

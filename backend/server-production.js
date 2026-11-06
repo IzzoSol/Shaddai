@@ -2126,6 +2126,9 @@ app.use('/api/tufish', require('./lib/tufish-routes'));               // TuFish 
 app.use('/api/terminal', require('./lib/terminal-bridge'));           // Terminal TG bridge — /code sandboxed runner + journal
 app.use('/api/arena', require('./arena/routes'));                     // SHADDAI Arena Tier 0: agent-vs-agent (RPS/hi-lo/trivia) + replays
 app.use('/api/grok', require('./grok-connect'));                      // Import a Grok bot as a dashboard agent (selectable in Arena)
+// Outside-Bot Bridge (Grok Bot / Muse / any MCP client): scoped tokens, remote MCP at POST /api/bridge/mcp, runs + receipts + owner approval, avatar presence.
+try { app.use('/api/bridge', require('./platform-bridge')); console.log('[prod] outside-bot bridge mounted (/api/bridge)'); }
+catch (e) { console.warn('[prod] bridge NOT mounted:', e && e.message); }
 app.use('/api', require('./dashboard-patches'));                      // P0 patch: auction/pricing/city-boost/news-analyze (dashboard wired calls)
 app.use('/api/leaderboard', require('./lib/leaderboard-routes'));     // SHADDAI games leaderboards
 app.use('/api/chat', require('./lib/chat-routes'));                   // realm + per-room chat (PIKADON-scanned)
