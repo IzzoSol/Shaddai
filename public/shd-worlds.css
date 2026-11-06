@@ -1,0 +1,40 @@
+/* SHADDAI V119 — Worlds hub: Overview · Plots · My Space · Arena · Athenaeum */
+html:not(.shd-legacy-nav) #worldsView .wh-tb[data-wbtn="city"],
+html:not(.shd-legacy-nav) #worldsView .wh-tb[data-wbtn="rooms"],
+html:not(.shd-legacy-nav) #worldsView .wh-tb[data-wbtn="economy"]{display:none!important}
+#worldsView .wh-tab-bar{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#worldsView .wh-tab-bar::-webkit-scrollbar{display:none}
+#worldsView .wh-tb{white-space:nowrap}
+
+.sw-tab{display:flex;flex-direction:column;gap:14px}
+.sw-box{background:var(--bg-card,#0d1424);border:1px solid var(--border,rgba(255,255,255,.12));border-radius:14px;overflow:hidden}
+.sw-hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border,rgba(255,255,255,.1))}
+.sw-hd b{font:800 11px 'Orbitron',sans-serif;letter-spacing:.14em;color:var(--accent,#00e5a0);text-transform:uppercase}
+.sw-hd span{font-size:11px;color:var(--text-muted,#8ea0c4)}
+.sw-body{padding:14px 16px}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.sw-card{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:12px;background:rgba(255,255,255,.025);min-width:0}
+.sw-card.slim{padding:9px 12px}
+.sw-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sw-row b{font-size:13px;color:var(--text-primary,#e8eefc);overflow:hidden;text-overflow:ellipsis}
+.sw-sub{font-size:11px;color:var(--text-muted,#8ea0c4);line-height:1.45;overflow-wrap:anywhere}
+.sw-chip{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.18));color:var(--text-secondary,#b8c9e6);white-space:nowrap}
+.sw-chip.ok{color:var(--accent,#00e5a0);border-color:var(--accent,#00e5a0)}
+.sw-chip.warn{color:#e8c45c;border-color:#e8c45c}
+.sw-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.sw-btn{background:var(--accent-dim,rgba(0,229,160,.14));border:1px solid var(--accent,#00e5a0);color:var(--accent,#00e5a0);font:800 10px 'Orbitron',sans-serif;letter-spacing:.08em;padding:7px 12px;border-radius:8px;cursor:pointer}
+.sw-btn:hover{background:var(--accent,#00e5a0);color:#04120d}
+.sw-btn.ghost{background:transparent;border-color:var(--border,rgba(255,255,255,.22));color:var(--text-secondary,#b8c9e6)}
+.sw-btn.ghost:hover{border-color:var(--accent,#00e5a0);color:var(--accent,#00e5a0);background:transparent}
+.sw-sel{background:var(--bg-input,#0a1020);color:var(--text-primary,#e8eefc);border:1px solid var(--border,rgba(255,255,255,.2));border-radius:8px;padding:6px 8px;font-size:11px;max-width:100%}
+.sw-msg{grid-column:1/-1;font-size:12px;color:var(--text-secondary,#b8c9e6);padding:6px 2px}
+.sw-msg.dim{color:var(--text-muted,#8ea0c4)}
+.sw-msg.warn{color:#e8c45c}
+.sw-framehost{min-height:48px}
+.sw-frame{width:100%;height:360px;border:0;border-radius:10px;background:#04060d;display:block}
+.sw-frame.tall{height:min(70vh,640px)}
+@media (max-width:768px){
+  .sw-grid{grid-template-columns:1fr}
+  .sw-frame.tall{height:56vh}
+  .sw-body{padding:12px}
+}
