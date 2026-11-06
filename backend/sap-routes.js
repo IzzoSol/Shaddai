@@ -42,6 +42,47 @@ function economy() {
 
 const CAVEAT = 'Illustrative averages, not site-specific predictions.';
 
+// ── HIP-1 deployment defaults ──────────────────────────────────────────────
+//
+// DEFAULT MAX SUPPLY for a SAP-native HIP-1 token: 1e17 wei, which at the
+// default 8 weiDecimals is 1e9 whole tokens.
+const DEFAULT_MAX_SUPPLY_WEI = '100000000000000000';
+
+// The system address of a Core spot token, per the HyperCore <-> HyperEVM
+// transfers doc: "the address with first byte 0x20 and the remaining bytes
+// all zeros, except for the token index encoded in big-endian format."
+// Index 200 -> 0x20000000000000000000000000000000000000c8.
+function systemAddressForTokenIndex(index) {
+  const i = Number(index);
+  if (!Number.isInteger(i) || i < 0 || i > 0xffffffff) return null;
+  return '0x20' + i.toString(16).padStart(38, '0');
+}
+
+// Used only when neither an explicit genesis address nor a configured
+// deployer address is available. It is the canonical burn sink, so the
+// failure mode of a plan that was executed without replacing it is
+// "tokens burned", not "tokens sent to a stranger".
+const PLACEHOLDER_GENESIS_ADDRESS = '0x000000000000000000000000000000000000dEaD';
+
+// The next FREE Core spot token index, read from live spot metadata. Spot
+// token indices are SPARSE (0..1308 with only 511 in use), so "next" is
+// max+1, not length. Returns null when the metadata cannot be read, so the
+// caller can degrade to a documented fallback instead of failing.
+async function nextFreeSpotTokenIndex() {
+  try {
+    const meta = await HL.getSpotMeta({ timeoutMs: 3000 });
+    const tokens = (meta && meta.tokens) || [];
+    let max = -1;
+    for (const t of tokens) {
+      const i = Number(t && t.index);
+      if (Number.isInteger(i) && i > max) max = i;
+    }
+    return max + 1;
+  } catch (e) {
+    return null;
+  }
+}
+
 function fail(res, e) {
   const status = e instanceof TreegensError || e instanceof TreasuryError
     ? (e.code === 'NOT_FOUND' ? 404 : (e.code === 'VALIDATION' || e.code === 'BAD_POLICY' ? 400 : 422))
@@ -234,7 +275,7 @@ router.get('/api/sap/hyperliquid/fees/:address', async (req, res) => {
  * Preview the HIP-1 + HIP-2 deployment plan for a SAP-native token.
  * Plans and validates; it never signs or broadcasts.
  */
-router.get('/api/sap/hip1/plan', (req, res) => {
+router.get('/api/sap/hip1/plan', async (req, res) => {
   try {
     // HIP-1 caps the token NAME at 6 alphanumeric characters. The previous
     // default was "SAPCOIN" (7), so this route 400'd on every call that did
@@ -243,10 +284,75 @@ router.get('/api/sap/hip1/plan', (req, res) => {
     const name = String(req.query.name || 'ASIMOV');
     const szDecimals = Number(req.query.szDecimals || 2);
     const weiDecimals = Number(req.query.weiDecimals || 8);
-    const maxSupplyWei = String(req.query.maxSupplyWei || '100000000000000000');
-    const genesisUsers = req.query.genesisAddress
-      ? [[String(req.query.genesisAddress), String(req.query.genesisWei || maxSupplyWei)]]
-      : [];
+
+    // ── The supply / genesis invariant ────────────────────────────────────
+    //
+    // lib/hip1-deploy.js enforces ONE hard rule, and it is deliberately NOT
+    // relaxed here:
+    //
+    //     maxSupplyWei === total(user-genesis allocation)
+    //
+    // The route's defaults used to disagree with it -- maxSupplyWei defaulted
+    // to 1e17 while the genesis list defaulted to EMPTY -- so every call
+    // without parameters 400'd with HIP1_SUPPLY_MISMATCH.
+    //
+    // The two are two views of ONE number, so whichever the caller states is
+    // authoritative and the other is derived from it. Stating BOTH with
+    // different values is a genuine conflict and still 400s, which is right.
+    const requestedMaxSupply = req.query.maxSupplyWei ? String(req.query.maxSupplyWei) : null;
+    const requestedGenesisWei = req.query.genesisWei ? String(req.query.genesisWei) : null;
+    const genesisWei = requestedGenesisWei || requestedMaxSupply || DEFAULT_MAX_SUPPLY_WEI;
+    const maxSupplyWei = requestedMaxSupply || genesisWei;
+
+    // ── The genesis address default ───────────────────────────────────────
+    //
+    // HIP-1's own documentation names the simplest setup: "For the simplest
+    // setup, during the genesis step, the deployer can put the max supply
+    // ... in the system address."
+    //
+    //   -- HIP-1: Native token standard
+    //
+    // and the system address of a Core spot token is "the address with first
+    // byte 0x20 and the remaining bytes all zeros, except for the token
+    // index encoded in big-endian format" (e.g. index 200 ->
+    // 0x20000000000000000000000000000000000000c8).
+    //
+    //   -- HyperCore <-> HyperEVM transfers
+    //
+    // Precedence: an explicit ?genesisAddress= always wins; then a configured
+    // HYPERLIQUID_ACCOUNT_ADDRESS (a concrete, operator-chosen holder); then
+    // the system address of the next free spot token index (protocol-canonical
+    // but PROVISIONAL, because the index is only assigned when step 1 lands).
+    const warnings = [];
+    let genesisAddress = req.query.genesisAddress ? String(req.query.genesisAddress) : null;
+    if (!genesisAddress) {
+      const configured = process.env.HYPERLIQUID_ACCOUNT_ADDRESS;
+      if (configured) {
+        genesisAddress = String(configured);
+        warnings.push(
+          `genesis defaults to HYPERLIQUID_ACCOUNT_ADDRESS (${genesisAddress}) -- the max supply lands there. ` +
+          `Pass ?genesisAddress= to allocate it elsewhere, including the token's system address.`
+        );
+      } else {
+        const nextIndex = await nextFreeSpotTokenIndex();
+        if (nextIndex != null) {
+          genesisAddress = systemAddressForTokenIndex(nextIndex);
+          warnings.push(
+            `genesis defaults to the SYSTEM ADDRESS of spot token index ${nextIndex} (${genesisAddress}) -- ` +
+            `HIP-1's documented "simplest setup". The index is PROVISIONAL: it is assigned when step 1 ` +
+            `(registerToken2) lands, so re-derive this address from the step-1 response before executing.`
+          );
+        } else {
+          genesisAddress = PLACEHOLDER_GENESIS_ADDRESS;
+          warnings.push(
+            'REPLACE THIS GENESIS ADDRESS BEFORE EXECUTING: spot metadata was unreachable and ' +
+            'HYPERLIQUID_ACCOUNT_ADDRESS is unset, so the plan fell back to a placeholder burn address.'
+          );
+        }
+      }
+    }
+    const genesisUsers = [[genesisAddress, genesisWei]];
+
     const plan = HIP1.buildDeployPlan({
       token: { name, szDecimals, weiDecimals },
       maxSupplyWei,
@@ -258,7 +364,7 @@ router.get('/api/sap/hip1/plan', (req, res) => {
       nSeededLevels: Number(req.query.nSeededLevels || 5),
       fullName: req.query.fullName || 'Shaddai Asimov Project',
     });
-    res.json({ ok: true, plan, feeSideMatrix: HIP1.FEE_SIDE_MATRIX, caveat: CAVEAT });
+    res.json({ ok: true, plan, warnings, feeSideMatrix: HIP1.FEE_SIDE_MATRIX, caveat: CAVEAT });
   } catch (e) {
     return res.status(400).json({ ok: false, error: e && e.message, code: e && e.code, details: e && e.details });
   }
