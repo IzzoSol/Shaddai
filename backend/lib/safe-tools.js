@@ -1,8 +1,8 @@
 'use strict';
 // Tools that outside bots and forged agents may run through the bridge. READ-ONLY data and pure computation only:
 // no writes, trades, posting, payments, code execution, file access or recursion. Default deny: a tool not listed here
-// Removed on purpose for the bridge: get_rss_feed (caller-chosen URL = server-side request forgery), regex_test (caller regex can hang the server).
 // cannot be called. (backend/grok-connect.js keeps its own copy of this list; fold it into this file when next touched.)
+// Removed on purpose for the bridge: get_rss_feed (caller-chosen URL = server-side request forgery), regex_test (caller regex can hang the server).
 module.exports = new Set([
   'fetch_price', 'get_fear_greed', 'get_trending', 'get_ohlcv', 'get_global_market', 'get_token_info',
   'whale_scan', 'get_defi_tvl', 'get_sol_balance', 'get_eth_balance', 'get_exchange_rates', 'search_web',
