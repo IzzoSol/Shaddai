@@ -56,3 +56,15 @@ html:not(.shd-legacy-nav) [onclick*="openPixelForge"]{display:none!important}
   #popChatBtn{right:116px!important}
   #shdFishBar{padding:8px 10px}
 }
+
+/* ── Worlds: the 3D Realm is the front door (the 2D realm is retired) ── */
+html:not(.shd-legacy-nav) .wh-portal.p2d{display:none!important}
+html:not(.shd-legacy-nav) .wh-portals{grid-template-columns:1fr!important}
+html:not(.shd-legacy-nav) .wh-portal.p3d{padding:46px 24px 36px;background:radial-gradient(900px 260px at 50% 0%,rgba(124,58,237,.30),transparent 70%),linear-gradient(135deg,#0e0a1a,#12062a,#1a0d3a)}
+html:not(.shd-legacy-nav) .wh-portal.p3d .pi{font-size:58px}
+html:not(.shd-legacy-nav) .wh-portal.p3d .pt{font-size:20px;letter-spacing:4px}
+html:not(.shd-legacy-nav) .wh-portal.p3d .pd{font-size:13px;max-width:540px;margin:0 auto 18px}
+
+/* ── The floating ◈ theme button sat on the sidebar footer and felt out of place.
+   Themes live in Settings → Look. Bring it back any time: localStorage.shd_legacy_nav = '1'. ── */
+html:not(.shd-legacy-nav) #shdSkinFab{display:none!important}

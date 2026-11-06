@@ -74,17 +74,27 @@
     mode('sentiment');
   }
 
+  /* ── Worlds: with the 2D realm retired, every "enter" goes to the 3D world (gate + portal cutscene) ── */
+  function worlds() {
+    if (document.documentElement.classList.contains('shd-legacy-nav')) return;
+    var q = document.querySelector('#worldsView .wh-btn-g[onclick*="game.html"]');
+    if (q) { q.setAttribute('onclick', 'enter3DWorld()'); q.textContent = 'Enter 3D World →'; }
+    var p3 = document.querySelector('#worldsView .wh-portal.p3d');
+    if (p3) { p3.setAttribute('onclick', 'enter3DWorld()'); }
+  }
+
   function wrapShowView() {
     var sv = window.showView; if (typeof sv !== 'function' || sv._tidy) return;
     window.showView = function (v) {
       var r = sv.apply(this, arguments);
-      try { if (v === 'pipeline') { setTimeout(tidyMarkets, 150); setTimeout(tidyMarkets, 900); } } catch (e) { /* never break navigation */ }
+      try { if (v === 'pipeline') { setTimeout(tidyMarkets, 150); setTimeout(tidyMarkets, 900); } if (v === 'worlds') worlds(); } catch (e) { /* never break navigation */ }
       return r;
     };
     window.showView._tidy = true;
   }
   wrapShowView(); window.addEventListener('load', function () { wrapShowView(); setTimeout(tidyMarkets, 1200); });
 
-  window.shdTidy = { markets: tidyMarkets, bolts: function () { swapIn(document.body); } };
+  window.shdTidy = { markets: tidyMarkets, worlds: worlds, bolts: function () { swapIn(document.body); } };
+  window.addEventListener('load', function () { setTimeout(worlds, 800); });
   if (document.body) startBolts(); else document.addEventListener('DOMContentLoaded', startBolts);
 })();
