@@ -22,6 +22,8 @@
   function uid() { try { return (root.localStorage && (root.localStorage.getItem('shd_uid') || root.localStorage.getItem('shd_player_code'))) || ''; } catch (e) { return ''; } }
   function call(method, path, body, extraHeaders) {
     var h = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {}), u = uid(); if (u) h['x-user-id'] = u;
+    // production identity = the verified session token (softAuth); x-user-id alone is only honoured on a local dev server (2026-11-06)
+    try { var tk = root.localStorage && root.localStorage.getItem('shd_token'); if (tk && !h.Authorization) h.Authorization = 'Bearer ' + tk; } catch (e) { }
     return fetch(base() + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j.__status = r.status; return j; }); })
       .catch(function () { return { success: false, error: 'agent server offline', __status: 0 }; });
   }

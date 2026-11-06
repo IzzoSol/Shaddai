@@ -246,7 +246,7 @@ function requireAdmin(req, res, next) {
 // ── Email-based admin (SECURE) ───────────────────────────────────────────────
 // Admin is decided by the caller's VERIFIED Firebase email (from the signed ID token),
 // checked against the ADMIN_EMAILS allowlist — NOT a client-claimed string. This is the
-// safe way to make a specific login (e.g. cloudzncrownz@gmail.com) an admin.
+// safe way to make a specific login (e.g. your own login) an admin.
 function adminEmails() {
   return (process.env.ADMIN_EMAILS || '')
     .split(',').map(function (e) { return e.trim().toLowerCase(); }).filter(Boolean);
