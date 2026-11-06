@@ -4175,7 +4175,9 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
 (function(){
   try{
     var skin = localStorage.getItem('shaddai_skin') || 'glitch';
-    if(['glitch','terminal','void','amber'].indexOf(skin) === -1) skin = 'glitch';
+    /* v119: whitelist matches the skins that exist (dusk/solar/parchment used to reset to glitch on reload) + holo */
+    if(['glitch','terminal','void','amber','dusk','solar','parchment','holo'].indexOf(skin) === -1) skin = 'glitch';
+    if(skin === 'holo'){ var hh = localStorage.getItem('shd_holo_hue'); if(hh && /^[0-9]{1,3}$/.test(hh)) document.documentElement.style.setProperty('--hh', hh); }
     document.documentElement.setAttribute('data-theme-skin', skin);
   }catch(e){ document.documentElement.setAttribute('data-theme-skin','glitch'); }
   window.setShaddaiSkin = function(id){
@@ -4301,7 +4303,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <!-- CENTER cell — brand/version (grid-centered, can't collide) -->
   <div id="tbBrand" style="justify-self:center;display:flex;align-items:center;gap:10px;white-space:nowrap">
     <span style="font-weight:900;letter-spacing:5px;color:var(--accent);text-shadow:0 0 14px rgba(0,229,160,.5);font-size:13px">SHADDAI</span>
-    <span style="font-weight:800;letter-spacing:2px;color:#ffce63;font-size:10px;padding:2px 8px;border:1px solid rgba(255,206,99,.35);border-radius:999px;background:linear-gradient(135deg,rgba(255,206,99,.12),rgba(255,206,99,.02))">V94.44</span>
+    <span style="font-weight:800;letter-spacing:2px;color:#ffce63;font-size:10px;padding:2px 8px;border:1px solid rgba(255,206,99,.35);border-radius:999px;background:linear-gradient(135deg,rgba(255,206,99,.12),rgba(255,206,99,.02))">V119</span>
   </div>
   <style>
     #topBar .tb-meter{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font:700 9px/1 'Share Tech Mono',monospace;color:#ffce63;background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(255,176,32,.03));border:1px solid rgba(255,176,32,.28);cursor:pointer;white-space:nowrap;transition:.2s;user-select:none}
@@ -4416,7 +4418,7 @@ html[data-theme-skin] body{ transition:background .4s ease, color .4s ease; }
   <button class="nav-btn nav-img" onclick="showView('aura');try{loadAuraTab()}catch(e){}" data-guest-lock="AURA" style="color:#27e0ff;font-weight:700;--nav-img:url(/assets/nav/aura.jpg)" title="AURA token-saver — live savings + MCP"><img src="/api/forge/art/part-aura-neon-pulse.png" alt="" onerror="this.outerHTML='⚡'" style="width:18px;height:18px;vertical-align:-4px;margin-right:4px;border-radius:4px;box-shadow:0 0 5px rgba(39,224,255,0.45)"> AURA</button>
   <!-- Games live in-world (NEXUS arcade) + on the Codex as "Shaddai Games" — no standalone dashboard games page (owner) -->
   <button class="nav-btn" onclick="window.open('/prove.html','_blank')" style="color:#00e5a0;font-weight:700" title="Live platform demo — no signup">▶ Demo</button>
-  <button class="nav-btn" onclick="window.open('/forge-3d.html','_blank')" data-guest-lock="3D Forge" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Forge — generate & trade GLB agent models">⬡ 3D Forge</button>
+  <button class="nav-btn" onclick="window.open('/forge-demo.html','_blank')" data-guest-lock="3D Forge" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="3D Forge — generate & trade GLB agent models">⬡ 3D Forge</button>
   <button class="nav-btn nav-img" onclick="window.open('/pricing.html','_blank')" style="color:#00ff88;font-weight:700;--nav-img:url(/assets/nav/plans.jpg)" title="Plans & pricing">◈ Plans</button>
   <button class="nav-btn" onclick="location.href='/signals.html'" style="color:#e8c45c;font-weight:700;border-color:rgba(232,196,92,0.3)" title="SHADDAI Master Terminal — Signals, Markets, MiroFish Swarm">📡 Terminal</button>
   <button class="nav-btn" onclick="location.href='/tufish.html'" style="color:#00d4dc;font-weight:700;border-color:rgba(0,212,220,0.3)" title="TuFish Sentiment Swimmer — scan coins & topics, the fish reacts">🐟 TuFish</button>
@@ -7998,7 +8000,7 @@ window.enter3DWorld=function(){
     </div>
     <div id="forge3dPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
       <div style="width:100%;height:100%;border:1px solid rgba(124,58,237,0.2);border-radius:0 0 8px 8px;overflow:hidden;background:#0b0805;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-        <iframe id="forgeFrame3d" src="/forge-3d.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 3D Forge" loading="lazy"></iframe>
+        <iframe id="forgeFrame3d" src="/forge-demo.html" style="width:100%;height:100%;border:0;display:block" title="SHADDAI 3D Forge" loading="lazy"></iframe>
       </div>
     </div>
     <div id="forgeMarketPanel" class="forge-panel" style="display:none;height:calc(100vh - 160px);min-height:580px">
@@ -8012,6 +8014,7 @@ window.enter3DWorld=function(){
       </div>
     </div>
     <style id="forgeEmbedHide">#forgeView > *:not(.forge-tabs):not(.forge-panel):not(#forgeEmbedHide){display:none !important}#forgeView{padding:0 !important}</style>
+    <style id="operatorForgeCss">
       #operatorForge .of-rarity-badge{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 12px/1 'Share Tech Mono',monospace;letter-spacing:3px;z-index:3;text-shadow:0 1px 5px #000;pointer-events:none}
       #operatorForge .of-rarity-badge.legendary{color:#d4af37}#operatorForge .of-rarity-badge.epic{color:#c084fc}#operatorForge .of-rarity-badge.rare{color:#22d3ee}#operatorForge .of-rarity-badge.common{color:#9fb0e0}
       #operatorForge.dragging .of-rotor{animation:none}
@@ -30448,7 +30451,7 @@ function renderOfficeGallery(){
         '<div style="font-size:22px;margin-bottom:8px">🧊</div>'+
         '<b>3D Gallery</b> — wire the 3D Forge &amp; marketplace to mint and store your GLB assets here.'+
         '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
-          '<button class="btn btn-accent" style="font-size:10px" onclick="window.open(\'/forge-3d.html\',\'_blank\')">⬡ Open 3D Forge</button>'+
+          '<button class="btn btn-accent" style="font-size:10px" onclick="window.open(\'/forge-demo.html\',\'_blank\')">⬡ Open 3D Forge</button>'+
           '<button class="btn btn-ghost" style="font-size:10px" onclick="sessionStorage.setItem(\'shd_3dg\',\'1\');renderOfficeGallery()">Unlock preview</button>'+
         '</div>'+
         '</div>';
@@ -57720,7 +57723,7 @@ Provide a comprehensive analysis:
     var alreadyOnboarded = localStorage.getItem(ONBOARD_FLAG);
     if (!alreadyOnboarded) {
       // Small delay so the rest of the page can load first
-      setTimeout(shdOnboardShow, 600);
+      /* v119: legacy 4-step overlay no longer auto-opens; the single holo wizard (shd-holo.js) runs after sign-in */
     }
   });
 })();
@@ -59301,7 +59304,9 @@ body.in-world #mainNav, body.in-world #sbNav { display:none !important; }
 <!-- home-hub.js removed — hub grid replaced by #dashLauncherCard -->
 <script defer src="/home-wallpaper.js"></script>
 <!-- founding.js removed from the dashboard command hub — the Founders offer lives on /pricing.html now -->>
+<link rel="stylesheet" href="/shd-holo.css?v=119">
 <script defer src="/onboarding.js"></script>
+<script defer src="/shd-holo.js?v=119"></script>
 <script defer src="/onboarding-pricing.js"></script>
 <script defer src="/bazaar-buy.js"></script>
 <script defer src="/results-inbox.js"></script>

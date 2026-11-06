@@ -222,7 +222,7 @@
     injectHubButton();
     var done = null;
     try { done = localStorage.getItem(DONE_KEY); } catch (e) {}
-    if (!done) { setTimeout(open, 900); }
+    /* v119: no auto-open; the single holo wizard (shd-holo.js) is the first-run flow. open() stays callable. */
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

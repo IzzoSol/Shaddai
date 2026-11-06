@@ -417,7 +417,8 @@ $('forgeBtn').onclick=async()=>{
   const persona=$('persona').value.trim()||('You are '+name+', a SHADDAI '+a.name+' operative.');
   try{ await fetch('/api/brains/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,persona,brainId:brainOf(),tools:[...skills],look:a.id,portrait,rarity})}); }catch(e){}
   try{ const op=await (await fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner,codename:name,archetype:a.id,rarity,portrait,look:{archetype:a.id},brain:{tier:core,brainId:brainOf(),persona},tools:[...skills],buildHash})})).json();
-    if(op&&op.operative){ log('✦ FORGED — "'+name+'" walks into Shaddai World · '+rarity.toUpperCase()+' · '+skills.size+' skills. Press ⚡ AWAKEN to put it to work.','var(--gold2)'); offerEditTools(op.operative); }
+    if(op&&op.operative){ log('✦ FORGED — "'+name+'" walks into Shaddai World · '+rarity.toUpperCase()+' · '+skills.size+' skills. Press ⚡ AWAKEN to put it to work.','var(--gold2)'); offerEditTools(op.operative);
+      try{ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'shd:operative-created',id:op.operative.id,name:name},location.origin); }catch(e){} }
     else log('⚠ '+((op&&op.error)||'forge failed'),'var(--ember)');
   }catch(e){ log('⚠ '+e.message,'var(--ember)'); }
   btn.disabled=false;

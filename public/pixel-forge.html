@@ -495,7 +495,7 @@ function pfForge(){
     fetch('/api/operatives',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ codename:name, owner:owner, archetype:'pixel', rarity:'common', look:{archetype:'pixel', rig:out.rig}, source:'pixel-forge' })})
       .then(function(r){ return r.json(); })
-      .then(function(g){ if(g && g.id){ myOperativeId=g.id; } })
+      .then(function(g){ if(g && g.id){ myOperativeId=g.id; try{ if(window.parent&&window.parent!==window) window.parent.postMessage({type:'shd:operative-created',id:g.id,name:name},location.origin); }catch(e){} } })
       .catch(function(){});
   }catch(e){}
   return out;
