@@ -19,7 +19,7 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
 (async () => {
   const calls = [];
   const tools = {
-    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); await new Promise((r) => setTimeout(r, 60)); return { symbol, usd: 100 }; } },
+    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); await new Promise((r) => setTimeout(r, 200)); return { symbol, usd: 100 }; } },
     get_fear_greed: { description: 'fg', execute: async () => ({ value: 55 }) },
     get_trending: { description: 'tr', execute: async () => ['a', 'b'] },
     search_web: { description: 'web', execute: async ({ query }) => 'results for ' + query + ' key sk-' + 'z'.repeat(30) },
@@ -29,8 +29,9 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   };
   const recipes = { 'price-check': { agent: 'ZEROX', description: 'price and mood', params: ['symbol'], steps: [{ tool: 'fetch_price', params: { symbol: '{{input.symbol||bitcoin}}' } }, { tool: 'get_fear_greed', params: {} }] }, 'bad-skill': { agent: 'NEXUS', description: 'runs code', params: [], steps: [{ tool: 'run_js', params: {} }] } };
   const skills = { getRecipe: (id) => recipes[id], listRecipes: () => Object.keys(recipes).map((id) => ({ id, agent: recipes[id].agent, description: recipes[id].description, params: recipes[id].params })), interpolate: (t, input) => (typeof t === 'string' ? t.replace(/{{input.(w+)||(w+)}}/g, (_, k, d) => (input && input[k]) || d) : t) };
+  const academy = { classes: { join: ({ classId, agentId }) => (classId === 'cls_full' ? { ok: false, error: 'class is full' } : classId === 'cls_open' ? { ok: true, member: { agentId } } : { ok: false, error: 'unknown class' }) } };
   const internal = { agents: async () => [{ agent_id: 'a1' }], plots: async () => [], balance: async () => ({ sparks: 42 }), classes: async () => [] };
-  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
+  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, academy, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
   const app = express(); app.use('/b', bridge);
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/b';
@@ -182,6 +183,17 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const tk2 = (await (await fetch(b2 + '/tokens', { method: 'POST', headers: { 'content-type': 'application/json', 'x-uid': 'alice' }, body: JSON.stringify({ scopes: ['workflows:run'] }) })).json()).token;
   const go = (k) => fetch(b2 + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tk2 }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'start_workflow', arguments: { workflow_id: 'demo.ping', idempotency_key: k } } }) }).then((r) => r.status);
   assert.deepStrictEqual([await go('q1'), await go('q2'), await go('q3')], [200, 200, 429], 'hourly run quota per account'); srv2.close();
+
+  // ── bots sign up for classes with THEIR agent; snapshot of the world ──
+  const bound = await mint('alice', { label: 'student', agent_id: 'a1', scopes: ['school:join', 'agents:read', 'school:read'] });
+  assert.strictEqual((await tool(bound.token, 'join_class', { class_id: 'cls_open' })).status, 200, 'a bot bound to a forged agent can join a class as that agent');
+  assert.strictEqual((await tool(bound.token, 'join_class', { class_id: 'cls_full' })).status, 409); assert.strictEqual((await tool(bound.token, 'join_class', { class_id: 'nope' })).status, 404);
+  assert.strictEqual((await tool(bound.token, 'join_class', { class_id: 'cls_open', agent_id: 'b1' })).status, 403, 'cannot enroll another agent');
+  const loose = await mint('alice', { label: 'loose', scopes: ['school:join'] });
+  assert.strictEqual((await tool(loose.token, 'join_class', { class_id: 'cls_open' })).status, 400, 'needs an agent');
+  assert.strictEqual((await tool(loose.token, 'join_class', { class_id: 'cls_open', agent_id: 'b1' })).status, 403, 'not your agent');
+  assert.strictEqual((await tool(ro.token, 'join_class', { class_id: 'cls_open' })).status, 403, 'school:join scope required');
+  const snap = out(await tool(bound.token, 'get_world_snapshot', {})); assert.ok(Array.isArray(snap.mine) && snap.others_by_station && typeof snap.others_by_station === 'object');
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');

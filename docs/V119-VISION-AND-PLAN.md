@@ -17,7 +17,7 @@ play live; **SAP/ASIMOV** is a district inside it; a **consultancy login** comes
 | B | **Agents & outside bots** | Forge agents; connect Grok/Muse/any MCP bot; scoped, audited, revocable | BUILT phase 1 (tokens, MCP endpoint, receipts, approvals). NOT STARTED: OAuth for AddMcpServer, model router, spend policy | NEXUS + PIKADON |
 | C | **Tools & skills ready to use** | Every dashboard tool/skill usable by a bot or forged agent, server-side | BUILT read-only: 73 vetted tools, 107 of 149 recipe skills, 5 workflows. NOT STARTED: write actions, your own workflows, step chaining | NEXUS |
 | D | **Collaboration & creation** | Projects where humans + bots co-create code, blogs, games, models; chat with bots | NOT STARTED (Projects entity, shared artifacts, comments, bot chat room) | NEXUS + QUILL |
-| E | **Companion (mini dashboard agent)** | A talking, moving agent with its own body that uses dashboard tools for you | PARTIAL: it can already move in Agent City (2D). NOT STARTED: chat brain, tool-use loop in UI, body/likeness, 3D body | TURTLE + NEXUS |
+| E | **Companions = the bots and forged agents themselves** (owner clarification) | Each bot/agent has a body (made in the 3D Forge), works in the dashboard, and lives in the 3D world: watches, plays, talks, directs workflows, signs up for classes. Grok Bot / Muse users use Shaddai alongside their bot; we do not compete | PARTIAL: bot is tied to a forged agent (its body), shows in Agent City and works via the bridge, can join classes. DASHBOARD BODY DISPLAY = "coming soon" (labelled in the UI). NOT STARTED: 3D client reading `/api/bridge/world-state`, in-world chat, bot play loops | TURTLE + NEXUS |
 | F | **Bodies & marketplace** | Better default models; users bring their own GLB from the marketplace | NOT STARTED (upload, validate, optimize, license, moderation, listing) | TURTLE + PIKADON |
 | G | **World integration** | Plots/offices/arena/Athenaeum in dashboard; deep links; spectate; inventory sync | PARTIAL: 4 live tabs. Missing: deep links, server-side spectate feed, inventory on account, 3D client reading `/api/bridge/world-state` | NEXUS (needs 3D terminal) |
 | H | **SAP / ASIMOV** | Garden plots, weather, food scan, maintenance by bots; value adapter | OTHER TERMINAL. Interface to agree: plots:read now, plots:maintain after garden state + numbers exist | ASIMOV terminal + ZEROX + PIKADON |
@@ -43,9 +43,11 @@ Push branch `feat/dashboard-v119` to the agreed remote, deploy, try one real Gro
 - Bridge tool `rag_search` over the 7 knowledge bases (read-only) so outside bots know the platform.
 - Move "4444" gates server-side.
 
-**Phase 3 — Companion v1 (TURTLE, NEXUS)**
-- Chat with a dashboard agent that picks tools/skills and runs them as a normal run (so it shows in Agent City, gets receipts, asks approval for anything sensitive).
-- Body in the dashboard: 2D now; the existing 3D template (`forge-demo.html`) as the likeness source.
+**Phase 3 — Bots and agents in the world (TURTLE, NEXUS)**
+- 3D Forge makes the body; the 3D client reads `/api/bridge/world-state` so a working bot's avatar shows `working / awaiting approval / celebrating / failed`.
+- Bots watch (`get_world_snapshot`), direct (workflows), enroll (`join_class`), and later communicate (world chat) and play, under the same rules as humans.
+- Dashboard shows the bodies ("coming soon" label today).
+- A forged agent can pick tools/skills from a chat and run them as a normal run.
 - Model router: BYOK → Ollama → free tiers → pooled credits (as in SAP v2).
 
 **Phase 4 — Projects & co-creation (NEXUS, QUILL)**

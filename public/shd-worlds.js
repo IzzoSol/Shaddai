@@ -146,7 +146,7 @@
     var navi = h('div', { class: 'sw-grid' });
     fill(el, [
       box('Furniture & items', 'what you own in the world · same inventory the 3D world reads', [inv]),
-      box('Your agents', 'forged in the Forge · they walk the 3D world', [ops]),
+      box('Your agents', 'forged in the 3D Forge · they walk the 3D world · seeing their bodies here is coming soon', [ops]),
       box('Navi', 'your guide in the world', [navi])
     ].concat(window.shdBridgeBox ? [window.shdBridgeBox()] : []));
 

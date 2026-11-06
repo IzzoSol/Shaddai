@@ -21,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
-const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read', 'inbox:write'];
+const SCOPES = ['workflows:read', 'workflows:run', 'runs:read', 'runs:cancel', 'agents:read', 'plots:read', 'tools:run', 'economy:read', 'school:read', 'school:join', 'inbox:write'];
 const RUNS_PER_HOUR = 30, INBOX_MAX = 100;
 const DEFAULT_SCOPES = ['workflows:read', 'runs:read', 'agents:read', 'plots:read'];
 const SAFE_TOOLS = require('./lib/safe-tools');
@@ -194,7 +194,7 @@ function createBridge(opts) {
     if (kind === 'agents') return (operatives && operatives.listByOwner ? operatives.listByOwner(owner) : []).map((o) => ({ agent_id: o.id, name: o.name, skills: (o.skills || []).length, presence: presenceOf(o.id, owner).presence }));
     if (kind === 'plots') { const all = readPlots(); return Object.keys(all).map((i) => all[i]).filter((p) => p.owner === owner).map((p) => ({ plot_id: p.id, name: p.name, status: p.status })); }
     if (kind === 'balance') { try { return require('./economy-service').getDefault().getBalance(owner).then((b) => ({ sparks: b && typeof b === 'object' ? (b.balance != null ? b.balance : b.sparks) : b })); } catch (e) { return Promise.reject(new Error('economy unavailable')); } }
-    if (kind === 'classes') { try { const a = require('./lib/academy/academy-instance').getAcademy(); const l = a.classes.list(); return (Array.isArray(l) ? l : Object.values(l || {})).slice(0, 20).map((c) => ({ id: c.id, name: c.name, kind: c.kind, track: c.track })); } catch (e) { return Promise.reject(new Error('school unavailable')); } }
+    if (kind === 'classes') { try { const a = require('./lib/academy/academy-instance').getAcademy(); const l = a.classes.list(); return (Array.isArray(l) ? l : Object.values(l || {})).slice(0, 30).map((c) => ({ id: c.id, name: c.name, kind: c.kind, track: c.track, tier: c.tier, teacher: c.teacher, capacity: c.capacity, seats_taken: c.seats, skills: (c.syllabus || []).length })); } catch (e) { return Promise.reject(new Error('school unavailable')); } }
     return Promise.reject(new Error('unknown internal step'));
   }
 
@@ -234,6 +234,8 @@ function createBridge(opts) {
     { name: 'list_tools', scope: 'tools:run', description: 'The read-only data tools you can run via the tool.run workflow, with their parameters.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'list_skills', scope: 'tools:run', description: 'Dashboard skills you can run with the skill.run workflow. runnable=false means the skill needs a tool that bots and agents may not use.', inputSchema: { type: 'object', properties: { query: { type: 'string' } }, additionalProperties: false } },
     { name: 'post_to_inbox', scope: 'inbox:write', description: 'Leave a short message in the owner\'s Shaddai inbox (their own account only). Max 2000 characters.', inputSchema: { type: 'object', required: ['subject', 'content'], properties: { subject: { type: 'string' }, content: { type: 'string' } }, additionalProperties: false } },
+    { name: 'join_class', scope: 'school:join', description: 'Sign YOUR agent up for an Athenaeum class (free classes only; paid skills need the owner). Uses the agent this token is bound to, or pass agent_id.', inputSchema: { type: 'object', required: ['class_id'], properties: { class_id: { type: 'string' }, agent_id: { type: 'string' } }, additionalProperties: false } },
+    { name: 'get_world_snapshot', scope: 'agents:read', description: 'Who is working where right now: your agents by name, everyone else as anonymous counts per station (office, market, library, garden, athenaeum, workshop).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'list_my_agents', scope: 'agents:read', description: 'Your forged agents with presence. Use an agent_id when starting a workflow so its avatar shows the work.', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'get_balance', scope: 'economy:read', description: 'Your Sparks balance (read-only; no spending is possible through the bridge).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
     { name: 'list_classes', scope: 'school:read', description: 'Athenaeum classes open on this server (read-only).', inputSchema: { type: 'object', properties: {}, additionalProperties: false } },
@@ -261,6 +263,19 @@ function createBridge(opts) {
         if (mine.length >= INBOX_MAX) { const oldest = mine[0]; db.inbox.splice(db.inbox.indexOf(oldest), 1); }
         const m = { id: rid('msg'), owner: tok.owner, from: tok.label, subject, content, ts: iso(now()), read: false }; db.inbox.push(m); persist();
         return { ok: true, id: m.id };
+      }
+      case 'join_class': {
+        const agentId = a.agent_id || tok.agent_id; if (!agentId || !safeId(agentId)) throw new ToolError(400, 'agent_id required (bind the token to an agent or pass one)');
+        if (tok.agent_id && a.agent_id && a.agent_id !== tok.agent_id) throw new ToolError(403, 'this token is bound to a different agent');
+        if (agentOwner(agentId) !== tok.owner) throw new ToolError(403, 'not your agent'); if (!safeId(a.class_id)) throw new ToolError(400, 'invalid class_id');
+        let academy; try { academy = opts.academy || require('./lib/academy/academy-instance').getAcademy(); } catch (_) { throw new ToolError(503, 'the school is not available on this server'); }
+        const r = academy.classes.join({ classId: a.class_id, agentId });
+        if (!r || r.ok === false) { const e = String((r && r.error) || 'could not join'); throw new ToolError(/unknown/i.test(e) ? 404 : /full/i.test(e) ? 409 : 400, e); }
+        return { ok: true, class_id: a.class_id, agent_id: agentId, joined: true };
+      }
+      case 'get_world_snapshot': {
+        const by = {}; Object.values(db.runs).filter((r) => r.owner !== tok.owner && (r.status === 'queued' || r.status === 'running')).forEach((r) => { const st = stationOf(r.steps.find((x) => x.status === 'running') || r.steps.find((x) => x.status === 'pending')); by[st] = (by[st] || 0) + 1; });
+        return Promise.resolve(internalStep('agents', tok.owner)).then((mine) => ({ at: iso(now()), mine, others_by_station: by }));
       }
       case 'list_my_agents': return internalStep('agents', tok.owner);
       case 'get_balance': return internalStep('balance', tok.owner);

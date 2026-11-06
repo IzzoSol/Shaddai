@@ -28,7 +28,8 @@
   }
   var SCOPE_HELP = {
     'workflows:read': 'See which workflows exist', 'workflows:run': 'Start workflows (demo ones for now)', 'runs:read': 'Read run status and receipts',
-    'runs:cancel': 'Cancel its own runs', 'agents:read': 'See your agents\' presence', 'plots:read': 'Read plots you own or that are free'
+    'runs:cancel': 'Cancel its own runs', 'agents:read': 'See your agents\' presence', 'plots:read': 'Read plots you own or that are free',
+    'tools:run': 'Use the read-only data tools and dashboard skills', 'economy:read': 'Read your Sparks balance (no spending)', 'school:read': 'See Athenaeum classes', 'school:join': 'Sign its agent up for free classes', 'inbox:write': 'Leave messages in your inbox'
   };
 
   window.shdBridgeBox = function () {
@@ -38,6 +39,12 @@
     var scopesBox = h('div', { class: 'sw-actions' }), label = h('input', { class: 'sw-sel', placeholder: 'Name (e.g. Grok Bot)', maxlength: '60', 'aria-label': 'Bot name' });
     var days = h('select', { class: 'sw-sel', 'aria-label': 'Expires' }, [h('option', { value: '7', text: '7 days' }), h('option', { value: '30', text: '30 days', selected: 'selected' }), h('option', { value: '90', text: '90 days' })]);
     var checks = {};
+    var agentSel = h('select', { class: 'sw-sel', 'aria-label': 'Body for this bot' }, [h('option', { value: '', text: 'No body (shows as a diamond)' })]);
+    var me = ''; try { me = localStorage.getItem('shd_userid') || ''; } catch (e) { /* ignore */ }
+    api('GET', '/api/operatives' + (me ? '?owner=' + encodeURIComponent(me) : '')).then(function (d) {
+      var l = (d && (d.operatives || (d.data && d.data.operatives))) || (Array.isArray(d) ? d : []);
+      l.forEach(function (o) { agentSel.appendChild(h('option', { value: o.id, text: 'Body: ' + (o.name || o.id) })); });
+    }).catch(function () { /* optional */ });
 
     function msg(t) { return h('div', { class: 'sw-msg dim', text: t }); }
     function render(d) {
@@ -97,7 +104,7 @@
     function mint() {
       var scopes = Object.keys(checks).filter(function (s) { return checks[s].checked; });
       if (!scopes.length) { toast('Pick at least one permission'); return; }
-      api('POST', '/api/bridge/tokens', { label: label.value || 'Outside bot', scopes: scopes, days: parseInt(days.value, 10) }).then(function (d) {
+      api('POST', '/api/bridge/tokens', { label: label.value || 'Outside bot', scopes: scopes, days: parseInt(days.value, 10), agent_id: agentSel.value || undefined }).then(function (d) {
         if (!d.ok) { toast(d.error || 'Could not create the token'); return; }
         reveal.textContent = '';
         reveal.appendChild(h('div', { class: 'sw-card' }, [
@@ -118,7 +125,8 @@
     ]));
     body.appendChild(h('div', { class: 'sw-card' }, [
       h('div', { class: 'sw-row' }, [h('b', { text: 'New bot token' })]),
-      h('div', { class: 'sw-actions' }, [label, days]), scopesBox,
+      h('div', { class: 'sw-actions' }, [label, days, agentSel]),
+      h('div', { class: 'sw-sub', text: 'A body is one of your forged agents. The bot works as that agent, so its avatar shows in the 3D world. Make a body in the 3D Forge; showing bodies inside the dashboard is coming soon.' }), scopesBox,
       h('div', { class: 'sw-actions' }, [h('button', { type: 'button', class: 'sw-btn', text: 'Create token', onclick: mint })]), reveal
     ]));
     body.appendChild(h('div', { class: 'sw-hd', style: 'padding:6px 0;border:0' }, [h('b', { text: 'Connected' })])); body.appendChild(tokensEl);
