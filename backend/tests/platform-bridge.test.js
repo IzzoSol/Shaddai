@@ -14,12 +14,12 @@ fs.writeFileSync(plotsFile, JSON.stringify({ plots: {
   'p-alice': { id: 'p-alice', name: 'Alice plot', status: 'rented', owner: 'alice', pos: [3, 4] },
   'p-bob': { id: 'p-bob', name: 'Bob plot', status: 'rented', owner: 'bob', pos: [5, 6] } } }));
 const ops = { a1: { id: 'a1', name: 'Bolt', owner: 'alice', skills: [] }, b1: { id: 'b1', name: 'Zed', owner: 'bob', skills: [] } };
-const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id) ? ops[id] : null) };
+const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id) ? ops[id] : null), listByOwner: (o) => Object.values(ops).filter((x) => x.owner === o) };
 
 (async () => {
   const calls = [];
   const tools = {
-    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); return { symbol, usd: 100 }; } },
+    fetch_price: { description: 'price', schema: { symbol: 'string' }, execute: async ({ symbol }) => { calls.push('fetch_price:' + symbol); await new Promise((r) => setTimeout(r, 60)); return { symbol, usd: 100 }; } },
     get_fear_greed: { description: 'fg', execute: async () => ({ value: 55 }) },
     get_trending: { description: 'tr', execute: async () => ['a', 'b'] },
     search_web: { description: 'web', execute: async ({ query }) => 'results for ' + query + ' key sk-' + 'z'.repeat(30) },
@@ -27,8 +27,10 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
     execute_trade: { description: 'NEVER', execute: async () => { calls.push('TRADE!'); return 'traded'; } },
     write_file: { description: 'NEVER', execute: async () => { calls.push('WRITE!'); return 'wrote'; } }
   };
+  const recipes = { 'price-check': { agent: 'ZEROX', description: 'price and mood', params: ['symbol'], steps: [{ tool: 'fetch_price', params: { symbol: '{{input.symbol||bitcoin}}' } }, { tool: 'get_fear_greed', params: {} }] }, 'bad-skill': { agent: 'NEXUS', description: 'runs code', params: [], steps: [{ tool: 'run_js', params: {} }] } };
+  const skills = { getRecipe: (id) => recipes[id], listRecipes: () => Object.keys(recipes).map((id) => ({ id, agent: recipes[id].agent, description: recipes[id].description, params: recipes[id].params })), interpolate: (t, input) => (typeof t === 'string' ? t.replace(/{{input.(w+)||(w+)}}/g, (_, k, d) => (input && input[k]) || d) : t) };
   const internal = { agents: async () => [{ agent_id: 'a1' }], plots: async () => [], balance: async () => ({ sparks: 42 }), classes: async () => [] };
-  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
+  const bridge = createBridge({ file: path.join(tmp, 'bridge.json'), plotsFile, operatives, tools, internal, skills, stepMs: 60, uidOf: (req) => req.headers['x-uid'] || '' });
   const app = express(); app.use('/b', bridge);
   const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/b';
@@ -152,6 +154,34 @@ const operatives = { get: (id) => (Object.prototype.hasOwnProperty.call(ops, id)
   const frRuns = (await http('GET', '/runs', { uid: 'alice' })).json.runs; const mineRun = frRuns.find((r) => r.run_id === fr.json.run.run_id);
   assert.strictEqual(mineRun.status, 'succeeded'); assert.ok(mineRun.outputs && mineRun.outputs.agents, 'forged agent run has outputs and a receipt'); assert.ok(mineRun.receipt);
   assert.ok((await http('GET', '/workflows', { uid: 'alice' })).json.workflows.some((w) => w.workflow_id === 'tool.run'));
+
+  // ── dashboard SKILLS, inbox, city view, quota ──
+  const sk = await mint('alice', { label: 'skiller', scopes: ['workflows:read', 'workflows:run', 'runs:read', 'agents:read', 'tools:run', 'inbox:write'] });
+  const sl = out(await tool(sk.token, 'list_skills', {})).items;
+  assert.strictEqual(sl.find((x) => x.skill === 'price-check').runnable, true); assert.strictEqual(sl.find((x) => x.skill === 'bad-skill').runnable, false, 'skills needing unsafe tools are marked not runnable');
+  assert.strictEqual((await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-bad', params: { skill: 'bad-skill' } })).status, 400, 'unsafe skill refused');
+  assert.strictEqual((await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-none', params: { skill: 'nope' } })).status, 400);
+  const sr = out(await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', agent_id: 'a1', idempotency_key: 'sk-1', params: { skill: 'price-check', input: { symbol: 'solana' } } }));
+  await sleep(25);
+  const cityWorking = (await http('GET', '/city', { uid: 'alice' })).json.me.find((m) => m.id === 'a1');
+  assert.strictEqual(cityWorking.presence, 'working'); assert.strictEqual(cityWorking.station, 'market', 'a price lookup walks the agent to the market');
+  assert.ok((await http('GET', '/city', { uid: 'bob' })).json.me.every((m) => m.id !== 'a1'), 'other users do not see your agent by name'); assert.ok((await http('GET', '/city', { uid: 'bob' })).json.others.length >= 1, 'but they see anonymous activity');
+  const srDone = await wait(sk.token, sr.run_id);
+  assert.strictEqual(srDone.status, 'succeeded'); assert.ok(calls.includes('fetch_price:solana'), 'skill input was interpolated into the tool call'); assert.deepStrictEqual(Object.keys(srDone.outputs), ['1. fetch_price', '2. get_fear_greed']);
+  const botRun = out(await tool(sk.token, 'start_workflow', { workflow_id: 'skill.run', idempotency_key: 'sk-2', params: { skill: 'price-check' } })); await sleep(25);
+  assert.ok((await http('GET', '/city', { uid: 'alice' })).json.me.some((m) => m.kind === 'bot' && m.name === 'skiller' && m.station === 'market'), 'an outside bot without an avatar appears by its token name'); await wait(sk.token, botRun.run_id);
+  assert.strictEqual((await tool(ro.token, 'post_to_inbox', { subject: 'x', content: 'y' })).status, 403, 'inbox:write required');
+  assert.strictEqual((await tool(sk.token, 'post_to_inbox', { subject: 'Report', content: 'BTC is 100' })).status, 200);
+  assert.strictEqual((await tool(sk.token, 'post_to_inbox', { subject: 'k', content: 'key sk-' + 'q'.repeat(30) })).status, 400, 'no secrets in messages');
+  const inbox = (await http('GET', '/inbox', { uid: 'alice' })).json.messages; assert.strictEqual(inbox.length, 1); assert.strictEqual(inbox[0].from, 'skiller');
+  assert.strictEqual((await http('GET', '/inbox', { uid: 'bob' })).json.messages.length, 0, 'inbox is private to its owner');
+  assert.strictEqual((await http('DELETE', '/inbox/' + inbox[0].id, { uid: 'bob' })).status, 404);
+  const tiny = createBridge({ file: path.join(tmp, 'tiny.json'), plotsFile, operatives, tools, internal, skills, stepMs: 5, runsPerHour: 2, uidOf: (req) => req.headers['x-uid'] || '' });
+  const app2 = express(); app2.use('/t', tiny); const srv2 = await new Promise((r) => { const x = app2.listen(0, () => r(x)); });
+  const b2 = 'http://127.0.0.1:' + srv2.address().port + '/t';
+  const tk2 = (await (await fetch(b2 + '/tokens', { method: 'POST', headers: { 'content-type': 'application/json', 'x-uid': 'alice' }, body: JSON.stringify({ scopes: ['workflows:run'] }) })).json()).token;
+  const go = (k) => fetch(b2 + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tk2 }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'start_workflow', arguments: { workflow_id: 'demo.ping', idempotency_key: k } } }) }).then((r) => r.status);
+  assert.deepStrictEqual([await go('q1'), await go('q2'), await go('q3')], [200, 200, 429], 'hourly run quota per account'); srv2.close();
 
   // 7. revocation takes effect on the next call
   const info = (await http('GET', '/tokens', { uid: 'alice' })).json.tokens.find((t) => t.label === 'runner');
