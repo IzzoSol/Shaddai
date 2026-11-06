@@ -557,12 +557,10 @@ function veinSvg(n){
   COUNCIL.forEach(function(a,i){
     var rev = (i%2===1);           // alternate portrait side
     var safe=a.name.replace(/[<>]/g,'');
-    // Dashboard's UPDATED, on-character HF art (e.g. ZEROX = cyan-katana Neon Valkyrie).
-    // Per-agent overrides so the card image MATCHES that agent's 3D model:
-    //  · SHADDAI → the old static portrait (matches SHADDAI.glb)
-    //  · ORACLE  → drop the purple-lightning sorceress at the path below to match ORACLE.glb
-    var IMGV = '?v=hf-20260719c';   // bump to bust the browser image cache when art is regenerated
-    var artOverride = { SHADDAI:'/assets/agents/SHADDAI-council.png', ORACLE:'/assets/agents/ORACLE-council.png', ZEROX:'/assets/agents/ZEROX-council.png', QUILL:'/assets/agents/QUILL-council.png' };
+    // Owner's canonical agent faces (2026-11-06): <A>-portrait.png for all seven; SHADDAI = the glowing SH crest.
+    // The old full-body concept art moved to <A>-body-ref.png (3D-model references only).
+    var IMGV = '?v=faces-20261106';   // bump to bust the browser image cache when art is regenerated
+    var artOverride = {}; ['SHADDAI','ZEROX','ORACLE','NEXUS','TURTLE','QUILL','PIKADON'].forEach(function(k){ artOverride[k]='/assets/agents/'+k+'-portrait.png'; });
     var portrait='/assets/agents/'+encodeURIComponent(a.id)+'-portrait.png'+IMGV;
     var artUrl = (artOverride[a.id] || ('/api/forge/art/agent-'+a.id.toLowerCase()+'.png'))+IMGV;
     var veins = veinSvg([9,7,6,6,8,6,7][i]);

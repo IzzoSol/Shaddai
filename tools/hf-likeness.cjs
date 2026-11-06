@@ -3,12 +3,12 @@
  *   node tools/hf-likeness.cjs painting AGENT [AGENT...]   → public/assets/athenaeum/candidates/<agent>-painting.webp (Athenaeum hall portrait)
  *   node tools/hf-likeness.cjs billboard AGENT [AGENT...]  → public/assets/billboards/candidates/<agent>-billboard.webp
  * Candidates only — owner approves before anything is wired in (gen-loading-slides.cjs --approve style).
- * Refs: in-game portraits, EXCEPT PIKADON/ORACLE which use the owner's corrected refs (LF2/MODELS FOR FAL, 2026-09-29).
+ * Refs: full-body art (assets/agents/<A>-body-ref.png; <A>-portrait.png became the owner's headshots 2026-11-06), EXCEPT PIKADON/ORACLE which use the owner's corrected refs (LF2/MODELS FOR FAL, 2026-09-29).
  * Keys: hf_ tokens from the owner's vault (never printed). Drops a key on 401/402/403 and moves to the owner's next HF account (owner-approved 2026-10-03). */
 const fs = require('fs'), path = require('path'), sharp = require('sharp');
 const ROOT = path.resolve(__dirname, '..'), PUB = path.join(ROOT, 'public');
 const FAL_REFS = 'C:/Users/Brittany/OneDrive/Pictures/LF2/MODELS FOR FAL/';
-const REF = a => ({ PIKADON: FAL_REFS + 'agent-pikadon.png', ORACLE: FAL_REFS + 'image.jpg' })[a] || path.join(PUB, 'assets', 'agents', a + '-portrait.png');
+const REF = a => ({ PIKADON: FAL_REFS + 'agent-pikadon.png', ORACLE: FAL_REFS + 'image.jpg' })[a] || path.join(PUB, 'assets', 'agents', a + '-body-ref.png');
 const KEEP = 'Keep this exact character: same face, hair, outfit, colours and silhouette.';
 const MODES = {
   slide: { dir: 'loading', w: 1280, p: a => `${KEEP} Cinematic anime key art of this character, ${a}, standing heroic on a rain-soaked night street between plain dark buildings with blank walls and no signage, emerald and gold rim light, wide shot, dramatic, no signs, no lettering, no text anywhere, no watermark.` },

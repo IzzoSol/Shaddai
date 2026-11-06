@@ -1,5 +1,5 @@
 # tools/k42_pikadon.py - PIKADON rebuilt on the council's shared 24-bone rig (owner 2026-10-23: the PIKADON.glb body was not PIKADON).
-# Reference: public/assets/agents/PIKADON-portrait.png - red ornate plate armour, horned helm with a glowing visor slit, gold trim, big shield.
+# Reference: public/assets/agents/PIKADON-body-ref.png - red ornate plate armour, horned helm with a glowing visor slit, gold trim, big shield.
 # Takes QUILL.glb's skeleton + all 23 clips (identical bone names on every agent), removes QUILL's mesh and builds the red armour as parts bound
 # rigidly to the bones, then exports public/assets/agents/PIKADON.glb (the old file is kept as PIKADON_old_model.glb).
 #   "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b --factory-startup --python tools/k42_pikadon.py
