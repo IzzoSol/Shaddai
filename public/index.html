@@ -50408,6 +50408,8 @@ if (typeof solanaWeb3 === 'undefined' && typeof window !== 'undefined') {
       votes = agents.map(name => ({ agent: name, vote: 'HOLD', confidence: 0, weight: CONSENSUS_WEIGHTS[name], offline: true }));
       weightedScore = 0; consensus = 'HOLD';
     }
+    // v119: the API can answer without a votes array (backend down / partial reply) — fall back instead of throwing on .map
+    if (!Array.isArray(votes)) { votes = Object.keys(CONSENSUS_WEIGHTS).map(function (name) { return { agent: name, vote: 'HOLD', confidence: 0, weight: CONSENSUS_WEIGHTS[name], offline: true }; }); weightedScore = 0; consensus = 'HOLD'; }
     // Update UI
     if (grid) {
       grid.innerHTML = votes.map(v => `<div style="background:${v.vote==='BUY'?'rgba(0,229,160,0.15)':v.vote==='SELL'?'rgba(255,64,112,0.15)':'rgba(255,255,255,0.06)'};border:1px solid ${v.vote==='BUY'?'rgba(0,229,160,0.4)':v.vote==='SELL'?'rgba(255,64,112,0.4)':'var(--border)'};padding:6px;text-align:center">
